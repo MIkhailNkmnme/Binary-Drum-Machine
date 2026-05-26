@@ -7,6 +7,7 @@
 Welcome to **Zerkalius: Genesis** (also known as the **Binary Drum Machine**) — a standalone, browser-based, high-performance generative art visualizer and VJ synthesizer. Based on cellular automata rules, binary logic, and multidimensional coordinate mapping, this tool transforms pure mathematical equations into hypnotic, real-time cyber-aesthetics.
 
 ### 🔗 [🚀 Experience Zerkalius Live at 1001100.online](https://1001100.online/)
+<img width="614" height="494" alt="изображение" src="https://github.com/user-attachments/assets/915b9aed-0b81-41a0-961d-71995184800e" />
 
 ---
 
