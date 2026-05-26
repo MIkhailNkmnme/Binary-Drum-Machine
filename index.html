@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 20.0 (The Architect's Grid)
+VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 22.0)</title>
+    <title>Binary Drum Machine (Zerkalius 23.0)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -56,7 +56,6 @@ VERSION: Pro 20.0 (The Architect's Grid)
         
         .btn-zerkalius { background: #ffcc00; color: #000; font-size: 11px; font-weight: bold; padding: 6px; border: none; border-radius: 3px; cursor: pointer; margin-top: 2px; width: 100%; }
         
-        /* КНОПКИ МОДИФИКАТОРОВ */
         .btn-mod { background: #444; color: #00ff66; border: 1px solid #00ff66; font-size: 10px; font-weight: bold; padding: 4px; border-radius: 3px; cursor: pointer; flex: 1; text-align: center; }
         .btn-mod:hover { background: #00ff66; color: #000; }
         .btn-mod.cyan { color: #00ccff; border-color: #00ccff; } .btn-mod.cyan:hover { background: #00ccff; color: #000; }
@@ -74,6 +73,7 @@ VERSION: Pro 20.0 (The Architect's Grid)
         .control-group { display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid #1a1a1a; padding-bottom: 6px; }
         .control-group-highlight { background: #141414; padding: 6px; border-radius: 3px; border: 1px solid #222; }
         .control-group-gold { background: #1a1a00; padding: 6px; border-radius: 3px; border: 1px solid #ffcc00; }
+        .control-group-green { background: #001a00; padding: 6px; border-radius: 3px; border: 1px solid #00ff66; }
         .control-group:last-of-type { border-bottom: none; }
 
         label { font-size: 11px; display: flex; justify-content: space-between; align-items: center; user-select: none; color: #888; }
@@ -92,7 +92,6 @@ VERSION: Pro 20.0 (The Architect's Grid)
         #screenCanvas { display: block; cursor: grab; } 
         #screenCanvas:active { cursor: grabbing; }
         
-        /* ПЛАВАЮЩИЕ КНОПКИ */
         .float-btn { position: absolute; z-index: 10; border: none; cursor: pointer; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: opacity 0.3s, background 0.2s, box-shadow 0.2s; left: 8px;}
         #toggleMenuBtn { top: 8px; background: #00ff66; color: #000; box-shadow: 0 0 8px rgba(0, 255, 102, 0.5); border-radius: 3px; height: 26px; width: 34px;}
         #toggleSideBtn { top: 40px; background: #00ccff; color: #000; box-shadow: 0 0 8px rgba(0, 204, 255, 0.5); border-radius: 3px; height: 26px; width: 34px;}
@@ -136,7 +135,7 @@ VERSION: Pro 20.0 (The Architect's Grid)
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 22)</h3>
+                <h3>Binary Drum Machine (Pro 23)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
@@ -173,6 +172,10 @@ VERSION: Pro 20.0 (The Architect's Grid)
                     <label class="checkbox-row" style="margin-top: 2px; background: #2a0044; padding: 4px; border-radius: 3px;">
                         <input type="checkbox" id="audioReactCheck" checked>
                         <span style="color:#cc66ff; font-weight:bold;">Визуализатор Звука (Пульсация)</span>
+                    </label>
+                    <label class="checkbox-row" style="margin-top: 2px; background: #00331a; padding: 4px; border-radius: 3px;">
+                        <input type="checkbox" id="autoPilotCheck">
+                        <span style="color:#00ff88; font-weight:bold;">🤖 AI Авто-Пилот (Рандом Сцен)</span>
                     </label>
                     <label class="checkbox-row" style="margin-top: 2px; background: #2a0000; padding: 4px; border-radius: 3px;">
                         <input type="checkbox" id="echoModeCheck">
@@ -232,6 +235,16 @@ VERSION: Pro 20.0 (The Architect's Grid)
                         <option value="leftDiag">Лев. диагональ (↖)</option>
                         <option value="rightDiag">Прав. диагональ (↗)</option>
                         <option value="serpinski" selected>Серпинский (↖↗)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Логическая операция:</label>
+                    <select id="logicalOpSelect">
+                        <option value="original">Оригинал (Без изменений)</option>
+                        <option value="not">Инверсия NOT (0 ⇄ 1)</option>
+                        <option value="xor">Разница XOR (со сдвигом)</option>
+                        <option value="reverse">Зеркало (Реверс строки)</option>
                     </select>
                 </div>
 
@@ -346,7 +359,6 @@ VERSION: Pro 20.0 (The Architect's Grid)
             blood: { act: '#ff0000', actA: 1.0, stat: '#440000', statA: 0.5 }
         };
 
-        // --- НОВЫЕ СЦЕНЫ (VJ EXPANSION) ---
         const PREBUILT_SCENES = {
             "vortex3d": { name: "1. Квантовая Воронка 3D", type: "fractal", rule: "vortex", seed: "1", lines: 100, speed: 900, theme: "synthwave", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: true, spin3d: true },
             "ziggurat": { name: "2. Зиккурат (Воронка)", type: "fractal", rule: "ziggurat", seed: "1", lines: 100, speed: 850, theme: "cyberpunk", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: false, spin3d: false },
@@ -355,7 +367,6 @@ VERSION: Pro 20.0 (The Architect's Grid)
             "alien": { name: "42. Инопланетная вязь (R150)", type: "fractal", rule: "150", seed: "11", lines: 100, speed: 880, theme: "synthwave", dual: false, echo: false, freezeY: true, elka: true, neon: true, frame: true, radar: false },
             "orbital": { name: "99. Идеальный Радар (101)", type: "fractal", rule: "orbital", seed: "1", lines: 50, speed: 880, theme: "matrix", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: true, spin3d: false },
             "diagonal": { name: "100. Изометрия (Паутина)", type: "fractal", rule: "diagonal", seed: "100010001", lines: 50, speed: 950, theme: "blood", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: false, spin3d: false },
-            // НОВЫЕ БЕЗУМНЫЕ ПРЕСЕТЫ:
             "gotha": { name: "💀 666. GOTHA (Dark Techno VJ)", type: "fractal", rule: "90", seed: "1", lines: 120, speed: 920, theme: "blood", dual: true, dualMask: true, echo: true, freezeY: false, spin3d: false, breathing: true, elka: false, neon: true, frame: false, radar: false },
             "hypnosis": { name: "🌀 777. Hypnosis (Туннель)", type: "fractal", rule: "orbital", seed: "1", lines: 60, speed: 890, theme: "cyberpunk", dual: true, dualMask: true, echo: false, freezeY: false, spin3d: true, breathing: true, elka: false, neon: true, frame: false, radar: true },
             "wormhole": { name: "🚀 888. Cyber-Wormhole", type: "fractal", rule: "vortex", seed: "111", lines: 100, speed: 960, theme: "synthwave", dual: true, dualMask: false, echo: true, freezeY: false, spin3d: true, breathing: true, elka: true, neon: true, frame: false, radar: false }
@@ -368,11 +379,14 @@ VERSION: Pro 20.0 (The Architect's Grid)
             isPlaying: false, isPaused: false, rafId: null, lastTickTime: 0,
             algoPointer: 0, alignMode: 'center', globalAngle: 0, breathTime: 0,
             isDragging: false, hasMoved: false, dragStartX: 0, dragStartY: 0, 
-            offsetX: 0, offsetY: 0, startOffsetX: 0, startOffsetY: 0
+            offsetX: 0, offsetY: 0, startOffsetX: 0, startOffsetY: 0,
+            
+            // AI Auto-Pilot State
+            bassHistory: [], framesSinceChange: 0
         };
 
         const AUDIO_VISUALIZER = {
-            audioCtx: null, analyser: null, dataArray: null, isInit: false, audioScale: 1, audioGlow: 0,
+            audioCtx: null, analyser: null, dataArray: null, isInit: false, audioScale: 1, audioGlow: 0, bassLevel: 0,
             init: function(file) {
                 const bgAudio = document.getElementById('bgAudio');
                 if(!this.isInit) {
@@ -386,15 +400,16 @@ VERSION: Pro 20.0 (The Architect's Grid)
                     this.isInit = true;
                 }
                 bgAudio.src = URL.createObjectURL(file);
-                bgAudio.play();
-                document.getElementById('audioBtnText').textContent = "🎵 Играет Трек";
+                // Авто-плей не вызываем, плеер запустит трек
+                document.getElementById('audioBtnText').textContent = "🎵 Готово!";
             },
             update: function() {
                 if(!this.isInit || !document.getElementById('audioReactCheck').checked || document.getElementById('bgAudio').paused) {
-                    this.audioScale = 1; this.audioGlow = 0; return;
+                    this.audioScale = 1; this.audioGlow = 0; this.bassLevel = 0; return;
                 }
                 this.analyser.getByteFrequencyData(this.dataArray);
                 let bass = 0; for(let i=0; i<10; i++) bass += this.dataArray[i]; bass = bass / 10;
+                this.bassLevel = bass;
                 this.audioScale = 1 + (bass / 255) * 0.8;
                 let vol = 0; for(let i=0; i<this.dataArray.length; i++) vol += this.dataArray[i]; vol = vol / this.dataArray.length;
                 this.audioGlow = (vol / 255) * 15; 
@@ -416,7 +431,7 @@ VERSION: Pro 20.0 (The Architect's Grid)
             insertZerosGlobalBtn: document.getElementById('insertZerosGlobalBtn'), insertOnesGlobalBtn: document.getElementById('insertOnesGlobalBtn'),
             fill1010Btn: document.getElementById('fill1010Btn'), 
             implantModeCheck: document.getElementById('implantModeCheck'), echoModeCheck: document.getElementById('echoModeCheck'),
-            audioReactCheck: document.getElementById('audioReactCheck'), 
+            audioReactCheck: document.getElementById('audioReactCheck'), autoPilotCheck: document.getElementById('autoPilotCheck'),
             
             dualCoreCheck: document.getElementById('dualCoreCheck'), dualCoreSpeedInput: document.getElementById('dualCoreSpeedInput'),
             dualMaskCheck: document.getElementById('dualMaskCheck'), zerkaliusAnimCheck: document.getElementById('zerkaliusAnimCheck'),
@@ -449,7 +464,6 @@ VERSION: Pro 20.0 (The Architect's Grid)
                     let opt = document.createElement('option'); opt.value = key; opt.textContent = PREBUILT_SCENES[key].name;
                     UI.sceneSelect.appendChild(opt);
                 }
-                
                 let saved = localStorage.getItem('saved_scenes_v20');
                 if (saved) {
                     try {
@@ -460,21 +474,18 @@ VERSION: Pro 20.0 (The Architect's Grid)
                         }
                     } catch(e) {}
                 }
-
                 UI.sceneSelect.addEventListener('change', (e) => this.loadScene(e.target.value));
                 UI.saveSceneBtn.addEventListener('click', () => this.saveScene());
             },
             
-            loadScene: function(key) {
+            loadScene: function(key, preventPlay = false) {
                 if(!key) return;
-                if(MODULE_STATE.isPlaying) PLAYER.stop();
                 
                 let scene = PREBUILT_SCENES[key];
                 if(key.startsWith("custom_")) scene = MODULE_STATE.customScenes[key.replace("custom_", "")];
                 if(!scene) return;
 
                 UI.speedRange.value = scene.speed || 920; UI.speedVal.textContent = (1001 - UI.speedRange.value) + ' мс';
-                
                 UI.themeSelect.value = scene.theme || 'matrix';
                 const t = THEMES[UI.themeSelect.value];
                 if(t) {
@@ -485,7 +496,6 @@ VERSION: Pro 20.0 (The Architect's Grid)
                 UI.echoModeCheck.checked = !!scene.echo; UI.dualCoreCheck.checked = !!scene.dual; UI.dualMaskCheck.checked = !!scene.dualMask;
                 UI.freezeScrollCheck.checked = !!scene.freezeY; UI.spin3dCheck.checked = !!scene.spin3d;
                 UI.elkaCheck.checked = !!scene.elka; UI.neonGlowCheck.checked = !!scene.neon;
-                
                 if(UI.breathingZoomCheck) UI.breathingZoomCheck.checked = !!scene.breathing;
 
                 MODULE_STATE.isFrameActive = scene.frame !== undefined ? scene.frame : true;
@@ -509,13 +519,19 @@ VERSION: Pro 20.0 (The Architect's Grid)
 
                 UI.statusInfo.textContent = `Сцена загружена: ${scene.name}`;
                 RENDERER.renderFrame();
-                setTimeout(() => PLAYER.start(), 200);
+                if (!preventPlay && !MODULE_STATE.isPlaying) setTimeout(() => PLAYER.start(), 200);
+            },
+
+            loadRandomScene: function() {
+                const keys = Object.keys(PREBUILT_SCENES);
+                const randomKey = keys[Math.floor(Math.random() * keys.length)];
+                this.loadScene(randomKey, true); // Грузим без автозапуска плеера, так как он уже работает
+                UI.sceneSelect.value = randomKey;
             },
 
             saveScene: function() {
                 let name = prompt("Назови эту координату (Сцену):", "Мой шедевр");
                 if(!name) return;
-                
                 let key = Date.now().toString();
                 let newScene = {
                     name: name, type: "current_state", speed: UI.speedRange.value, theme: UI.themeSelect.value,
@@ -523,11 +539,9 @@ VERSION: Pro 20.0 (The Architect's Grid)
                     freezeY: UI.freezeScrollCheck.checked, spin3d: UI.spin3dCheck.checked, breathing: UI.breathingZoomCheck?.checked,
                     elka: UI.elkaCheck.checked, neon: UI.neonGlowCheck.checked, frame: MODULE_STATE.isFrameActive, radar: MODULE_STATE.isRadarActive
                 };
-                
                 MODULE_STATE.customScenes[key] = newScene; localStorage.setItem('saved_scenes_v20', JSON.stringify(MODULE_STATE.customScenes));
                 let opt = document.createElement('option'); opt.value = "custom_" + key; opt.textContent = "★ " + name;
                 UI.sceneSelect.appendChild(opt); UI.sceneSelect.value = "custom_" + key;
-                UI.statusInfo.textContent = `Сцена сохранена: ${name}`;
             }
         };
 
@@ -820,34 +834,6 @@ VERSION: Pro 20.0 (The Architect's Grid)
                     MODULE_STATE.echoHistory = [];
                 }
                 RENDERER.updateTimeline(); RENDERER.renderFrame();
-            },
-
-            exportToExcel: function() {
-                if(MODULE_STATE.lines.length === 0) return alert("Нет данных для экспорта!");
-                let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"></head><body><table border="1" style="font-family:monospace; font-size: 14px; text-align:center; background:#000000;">';
-                const actC = UI.activeColorPicker.value; const statC = UI.staticColorPicker.value; const dMode = UI.deltaModeSelect.value;
-
-                MODULE_STATE.lines.forEach(line => {
-                    html += '<tr>';
-                    for(let i=0; i<line.text.length; i++) {
-                        const char = line.text[i];
-                        if (char === ' ') { html += `<td style="background:#000;"></td>`; continue; }
-                        
-                        let isChanged = false;
-                        if (dMode === 'top') isChanged = line.diffFlags[i];
-                        else if (dMode === 'leftDiag') isChanged = line.diffFlagsLeft[i];
-                        else if (dMode === 'rightDiag') isChanged = line.diffFlagsRight[i];
-                        else if (dMode === 'serpinski') isChanged = line.diffFlagsLeft[i] || line.diffFlagsRight[i];
-
-                        let color = isChanged ? actC : statC;
-                        html += `<td style="color:${color}; padding:2px 6px; font-weight:${isChanged?'bold':'normal'};">${char}</td>`;
-                    }
-                    html += '</tr>';
-                });
-                html += '</table></body></html>';
-
-                const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
-                const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "Zerkalius_Matrix.xls"; link.click(); URL.revokeObjectURL(link.href);
             }
         };
 
@@ -1095,18 +1081,33 @@ VERSION: Pro 20.0 (The Architect's Grid)
             start: function() {
                 MODULE_STATE.isPlaying = true; MODULE_STATE.isPaused = false;
                 UI.playBtn.innerHTML = '⏸'; UI.playBtn.style.background = '#ff3333'; UI.playBtn.style.color = '#fff';
-                MODULE_STATE.lastTickTime = performance.now(); this.loop(performance.now());
+                MODULE_STATE.lastTickTime = performance.now(); 
+                
+                // ВОССТАНОВЛЕНИЕ МУЗЫКИ
+                const bgAudio = document.getElementById('bgAudio');
+                if(AUDIO_VISUALIZER.isInit && bgAudio.paused) bgAudio.play();
+
+                this.loop(performance.now());
             },
             pause: function() {
                 MODULE_STATE.isPlaying = false; MODULE_STATE.isPaused = true;
                 cancelAnimationFrame(MODULE_STATE.rafId);
                 UI.playBtn.innerHTML = '▶'; UI.playBtn.style.background = '#ffcc00'; UI.playBtn.style.color = '#000';
+                
+                // ПАУЗА МУЗЫКИ
+                const bgAudio = document.getElementById('bgAudio');
+                if(AUDIO_VISUALIZER.isInit && !bgAudio.paused) bgAudio.pause();
             },
             stop: function() {
                 MODULE_STATE.isPlaying = false; MODULE_STATE.isPaused = false;
                 cancelAnimationFrame(MODULE_STATE.rafId);
                 MODULE_STATE.currentIndex = 0; MODULE_STATE.dualCoreIndex = 0; MODULE_STATE.algoPointer = 0; MODULE_STATE.globalAngle = 0;
                 UI.playBtn.innerHTML = '▶'; UI.playBtn.style.background = '#00ff66'; UI.playBtn.style.color = '#000';
+                
+                // ОСТАНОВКА И СБРОС МУЗЫКИ В НУЛЬ
+                const bgAudio = document.getElementById('bgAudio');
+                if(AUDIO_VISUALIZER.isInit) { bgAudio.pause(); bgAudio.currentTime = 0; }
+
                 RENDERER.updateTimeline(); RENDERER.renderFrame();
             },
             loop: function(timestamp) {
@@ -1128,6 +1129,18 @@ VERSION: Pro 20.0 (The Architect's Grid)
                 if (delta >= speedMs) {
                     MODULE_STATE.lastTickTime = timestamp - (delta % Math.max(1, speedMs)); 
                     
+                    // --- AI AUTO-PILOT LOGIC ---
+                    if (UI.autoPilotCheck?.checked && AUDIO_VISUALIZER.isInit) {
+                        // Если баса нет (тишина/яма) на протяжении 60 кадров
+                        if (AUDIO_VISUALIZER.bassLevel < 30) MODULE_STATE.framesSinceChange++;
+                        else MODULE_STATE.framesSinceChange = 0; // Сброс если есть бас
+
+                        if (MODULE_STATE.framesSinceChange > 60) {
+                            SCENE_MANAGER.loadRandomScene(); // Рандомная смена сцены!
+                            MODULE_STATE.framesSinceChange = -100; // Кулдаун, чтобы не менял слишком часто
+                        }
+                    }
+
                     if (UI.zerkaliusAnimCheck?.checked && MODULE_STATE.originalLines.length > 0) MODULE_DATA.runAnimatrixGlobal();
 
                     if (UI.echoModeCheck?.checked && MODULE_STATE.originalLines.length > 0) {
@@ -1279,7 +1292,6 @@ VERSION: Pro 20.0 (The Architect's Grid)
                     let text = e.clipboardData.getData('text/plain'); 
                     if (text) { text = text.replace(/\t/g, ' '); MODULE_DATA.processTextData(text, 'Буфер обмена'); e.preventDefault(); } 
                 });
-                
                 if(UI.speedRange) { UI.speedRange.addEventListener('input', (e) => { const val = parseInt(e.target.value, 10); UI.speedVal.textContent = (1001 - val) + ' мс'; }); }
                 if(UI.fontSizeRange) UI.fontSizeRange.addEventListener('input', (e) => { if(UI.fontSizeVal) UI.fontSizeVal.textContent = e.target.value + 'px'; RENDERER.renderFrame(); });
                 if(UI.heightRange) UI.heightRange.addEventListener('input', (e) => { if(UI.heightVal) UI.heightVal.textContent = e.target.value; RENDERER.renderFrame(); });
@@ -1288,7 +1300,7 @@ VERSION: Pro 20.0 (The Architect's Grid)
                 const rerenderEvents = [
                     UI.cylinderCheck, UI.elkaCheck, UI.hideStaticCheck, UI.deltaModeSelect, UI.neonGlowCheck, 
                     UI.findDiagonalsCheck, UI.logicalOpSelect, UI.dualCoreCheck, UI.dualCoreSpeedInput, UI.dualMaskCheck,
-                    UI.activeColorPicker, UI.activeAlphaRange, UI.staticColorPicker, UI.staticAlphaRange, UI.fontSelect, UI.freezeScrollCheck, UI.spin3dCheck, UI.breathingZoomCheck
+                    UI.activeColorPicker, UI.activeAlphaRange, UI.staticColorPicker, UI.staticAlphaRange, UI.fontSelect, UI.freezeScrollCheck, UI.spin3dCheck, UI.breathingZoomCheck, UI.autoPilotCheck
                 ];
                 rerenderEvents.forEach(el => { if(el) { el.addEventListener('change', () => RENDERER.renderFrame()); el.addEventListener('input', () => RENDERER.renderFrame()); }});
                 window.addEventListener('resize', () => RENDERER.renderFrame());
