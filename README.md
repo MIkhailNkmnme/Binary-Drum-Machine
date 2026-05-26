@@ -43,7 +43,7 @@ Zerkalius was built to be easily integrated into live streams (YouTube, Twitch, 
 
 ## 📝 Project Legacy
 
-*   **Concept, Vision & Math:** Designed and directed by **Mikhail (The Architect)**.
+*   **Concept, Vision & Math:** Designed and directed by **Mkhl**.
 *   **Engine & Code Architecture:** Compiled by **AI Assistant** under the Architect's supervision.
 
 *"In Zerkalius, we find order in cryptographic chaos."*
