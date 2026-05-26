@@ -1,3 +1,5 @@
+[🇷🇺 Читать на русском языке](README.ru.md)
+
 # 🛰️ Zerkalius: Genesis (Binary Drum Machine)
 
 > *"We are not just moving strings, we are weaving the fabric of the Matrix."*
@@ -30,14 +32,14 @@ Welcome to **Zerkalius: Genesis** (also known as the **Binary Drum Machine**) �
 
 ## 🖥️ OBS Studio & VJ Streaming Guide
 
-Zerkalius was built to be easily integrated into live streams (YouTube, Twitch, TikTok) and music clips:
+Zerkalius is designed for easy integration into live streams (YouTube, Twitch, TikTok) and music clip creation:
 1. Open [1001100.online](https://1001100.online/).
 2. Load your custom music track (MP3/WAV).
-3. Choose your desired scene from the **Treasure Map (Карта Сокровищ)**.
+3. Choose a preset scene from the **Treasure Map (Карта Сокровищ)** OR upload your own custom `.txt` file filled with `1`s and `0`s to generate entirely unique shapes and patterns.
 4. Enable **AI Auto-Pilot** and **Audio React**.
 5. Press **F11** in your browser to go fullscreen.
 6. **Double-click** the screen to enter **Zen Mode**.
-7. Capture the window in **OBS Studio** and start broadcasting.
+7. Capture the window in **OBS Studio** and start broadcasting or recording.
 
 ---
 
