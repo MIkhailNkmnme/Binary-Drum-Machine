@@ -9,7 +9,7 @@ VERSION: Pro 20.0 (The Architect's Grid)
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 20.0)</title>
+    <title>Binary Drum Machine (Zerkalius 22.0)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -51,12 +51,12 @@ VERSION: Pro 20.0 (The Architect's Grid)
         #stopBtn { flex: 1.2; background: #ff3333; color: #fff; } #stopBtn:hover { background: #cc0000; }
         #prevBtn, #nextBtn { flex: 1; background: #202020; color: #fff; border: 1px solid #333; font-size: 14px; }
 
-        .btn-danger { background: #ff3333; color: #fff; padding: 4px; font-size: 9px; border: none; border-radius: 3px; font-weight: bold; cursor: pointer; width: 100%; }
         .btn-export { background: #00ccff; color: #000; font-size: 11px; font-weight: bold; border: none; border-radius: 3px; padding: 5px; cursor: pointer; width: 100%; text-align: center; }
         .btn-export-excel { background: #217346; color: #fff; font-size: 11px; font-weight: bold; border: none; border-radius: 3px; padding: 5px; cursor: pointer; width: 100%; text-align: center; }
         
         .btn-zerkalius { background: #ffcc00; color: #000; font-size: 11px; font-weight: bold; padding: 6px; border: none; border-radius: 3px; cursor: pointer; margin-top: 2px; width: 100%; }
         
+        /* КНОПКИ МОДИФИКАТОРОВ */
         .btn-mod { background: #444; color: #00ff66; border: 1px solid #00ff66; font-size: 10px; font-weight: bold; padding: 4px; border-radius: 3px; cursor: pointer; flex: 1; text-align: center; }
         .btn-mod:hover { background: #00ff66; color: #000; }
         .btn-mod.cyan { color: #00ccff; border-color: #00ccff; } .btn-mod.cyan:hover { background: #00ccff; color: #000; }
@@ -73,7 +73,6 @@ VERSION: Pro 20.0 (The Architect's Grid)
 
         .control-group { display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid #1a1a1a; padding-bottom: 6px; }
         .control-group-highlight { background: #141414; padding: 6px; border-radius: 3px; border: 1px solid #222; }
-        .control-group-blue { background: #0a1128; padding: 6px; border-radius: 3px; border: 1px solid #1a2a50; }
         .control-group-gold { background: #1a1a00; padding: 6px; border-radius: 3px; border: 1px solid #ffcc00; }
         .control-group:last-of-type { border-bottom: none; }
 
@@ -137,13 +136,13 @@ VERSION: Pro 20.0 (The Architect's Grid)
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 20)</h3>
+                <h3>Binary Drum Machine (Pro 22)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
                 <div class="control-group control-group-gold" style="border-bottom: none; padding-bottom: 2px;">
                     <div class="compact-row">
-                        <select id="sceneSelect" style="font-weight:bold; color:#ffcc00; flex: 2;">
+                        <select id="sceneSelect" style="font-weight:bold; color:#ffcc00; flex: 2; border: 1px solid #ff9900;">
                             <option value="">📍 Карта Сокровищ (Выбрать...)</option>
                         </select>
                         <button id="saveSceneBtn" class="btn-zerkalius" style="background:#ff9900; margin: 0; flex: 1; padding: 3px;">💾 Сохр.</button>
@@ -223,6 +222,7 @@ VERSION: Pro 20.0 (The Architect's Grid)
                     <input type="text" id="algorithmInput" value="1" placeholder="например: 1, 1, 2, -3, 1" style="text-align: center;">
                     <label class="checkbox-row" style="margin-top: 4px; background: #003300; padding: 2px;"><input type="checkbox" id="freezeScrollCheck"><span style="color:#00ff66; font-weight:bold;">Заморозить Y-Скролл (Только X)</span></label>
                     <label class="checkbox-row" style="margin-top: 2px; background: #330033; padding: 2px;"><input type="checkbox" id="spin3dCheck"><span style="color:#cc33ff; font-weight:bold;">3D Вращение (Орбита Радара)</span></label>
+                    <label class="checkbox-row" style="margin-top: 2px; background: #331100; padding: 2px;"><input type="checkbox" id="breathingZoomCheck"><span style="color:#ff9933; font-weight:bold;">🫁 Дыхание (Авто-Масштаб)</span></label>
                 </div>
 
                 <div class="control-group control-group-highlight">
@@ -232,16 +232,6 @@ VERSION: Pro 20.0 (The Architect's Grid)
                         <option value="leftDiag">Лев. диагональ (↖)</option>
                         <option value="rightDiag">Прав. диагональ (↗)</option>
                         <option value="serpinski" selected>Серпинский (↖↗)</option>
-                    </select>
-                </div>
-
-                <div class="control-group">
-                    <label>Логическая операция:</label>
-                    <select id="logicalOpSelect">
-                        <option value="original">Оригинал (Без изменений)</option>
-                        <option value="not">Инверсия NOT (0 ⇄ 1)</option>
-                        <option value="xor">Разница XOR (со сдвигом)</option>
-                        <option value="reverse">Зеркало (Реверс строки)</option>
                     </select>
                 </div>
 
@@ -356,6 +346,7 @@ VERSION: Pro 20.0 (The Architect's Grid)
             blood: { act: '#ff0000', actA: 1.0, stat: '#440000', statA: 0.5 }
         };
 
+        // --- НОВЫЕ СЦЕНЫ (VJ EXPANSION) ---
         const PREBUILT_SCENES = {
             "vortex3d": { name: "1. Квантовая Воронка 3D", type: "fractal", rule: "vortex", seed: "1", lines: 100, speed: 900, theme: "synthwave", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: true, spin3d: true },
             "ziggurat": { name: "2. Зиккурат (Воронка)", type: "fractal", rule: "ziggurat", seed: "1", lines: 100, speed: 850, theme: "cyberpunk", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: false, spin3d: false },
@@ -363,7 +354,11 @@ VERSION: Pro 20.0 (The Architect's Grid)
             "moment23": { name: "23. Момент 23 (Квазидым)", type: "fractal", rule: "90", seed: "1", lines: 150, speed: 850, theme: "cyberpunk", dual: true, dualMask: true, echo: true, freezeY: false, elka: false, neon: true, frame: false, radar: false },
             "alien": { name: "42. Инопланетная вязь (R150)", type: "fractal", rule: "150", seed: "11", lines: 100, speed: 880, theme: "synthwave", dual: false, echo: false, freezeY: true, elka: true, neon: true, frame: true, radar: false },
             "orbital": { name: "99. Идеальный Радар (101)", type: "fractal", rule: "orbital", seed: "1", lines: 50, speed: 880, theme: "matrix", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: true, spin3d: false },
-            "diagonal": { name: "100. Изометрия (Паутина)", type: "fractal", rule: "diagonal", seed: "100010001", lines: 50, speed: 950, theme: "blood", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: false, spin3d: false }
+            "diagonal": { name: "100. Изометрия (Паутина)", type: "fractal", rule: "diagonal", seed: "100010001", lines: 50, speed: 950, theme: "blood", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: false, spin3d: false },
+            // НОВЫЕ БЕЗУМНЫЕ ПРЕСЕТЫ:
+            "gotha": { name: "💀 666. GOTHA (Dark Techno VJ)", type: "fractal", rule: "90", seed: "1", lines: 120, speed: 920, theme: "blood", dual: true, dualMask: true, echo: true, freezeY: false, spin3d: false, breathing: true, elka: false, neon: true, frame: false, radar: false },
+            "hypnosis": { name: "🌀 777. Hypnosis (Туннель)", type: "fractal", rule: "orbital", seed: "1", lines: 60, speed: 890, theme: "cyberpunk", dual: true, dualMask: true, echo: false, freezeY: false, spin3d: true, breathing: true, elka: false, neon: true, frame: false, radar: true },
+            "wormhole": { name: "🚀 888. Cyber-Wormhole", type: "fractal", rule: "vortex", seed: "111", lines: 100, speed: 960, theme: "synthwave", dual: true, dualMask: false, echo: true, freezeY: false, spin3d: true, breathing: true, elka: true, neon: true, frame: false, radar: false }
         };
 
         const MODULE_STATE = {
@@ -371,7 +366,7 @@ VERSION: Pro 20.0 (The Architect's Grid)
             currentIndex: 0, dualCoreIndex: 0, trackedRowIndex: -1,
             isCenterActive: false, isTrackRowActive: false, isReverse: false, isFrameActive: true, isRadarActive: false,
             isPlaying: false, isPaused: false, rafId: null, lastTickTime: 0,
-            algoPointer: 0, alignMode: 'center', globalAngle: 0,
+            algoPointer: 0, alignMode: 'center', globalAngle: 0, breathTime: 0,
             isDragging: false, hasMoved: false, dragStartX: 0, dragStartY: 0, 
             offsetX: 0, offsetY: 0, startOffsetX: 0, startOffsetY: 0
         };
@@ -433,7 +428,8 @@ VERSION: Pro 20.0 (The Architect's Grid)
             cylinderCheck: document.getElementById('cylinderCheck'), elkaCheck: document.getElementById('elkaCheck'), 
             neonGlowCheck: document.getElementById('neonGlowCheck'), hideStaticCheck: document.getElementById('hideStaticCheck'), 
             deltaModeSelect: document.getElementById('deltaModeSelect'), findDiagonalsCheck: document.getElementById('findDiagonalsCheck'), 
-            algorithmInput: document.getElementById('algorithmInput'), freezeScrollCheck: document.getElementById('freezeScrollCheck'), spin3dCheck: document.getElementById('spin3dCheck'),
+            algorithmInput: document.getElementById('algorithmInput'), freezeScrollCheck: document.getElementById('freezeScrollCheck'), 
+            spin3dCheck: document.getElementById('spin3dCheck'), breathingZoomCheck: document.getElementById('breathingZoomCheck'),
             timelineRange: document.getElementById('timelineRange'), timelineVal: document.getElementById('timelineVal'),
             themeSelect: document.getElementById('themeSelect'), statusInfo: document.getElementById('statusInfo'), 
             screenContainer: document.getElementById('screenContainer'), canvas: document.getElementById('screenCanvas'), ctx: document.getElementById('screenCanvas').getContext('2d'),
@@ -490,6 +486,8 @@ VERSION: Pro 20.0 (The Architect's Grid)
                 UI.freezeScrollCheck.checked = !!scene.freezeY; UI.spin3dCheck.checked = !!scene.spin3d;
                 UI.elkaCheck.checked = !!scene.elka; UI.neonGlowCheck.checked = !!scene.neon;
                 
+                if(UI.breathingZoomCheck) UI.breathingZoomCheck.checked = !!scene.breathing;
+
                 MODULE_STATE.isFrameActive = scene.frame !== undefined ? scene.frame : true;
                 if(MODULE_STATE.isFrameActive) UI.toggleFrameBtn.classList.add('active-yellow'); else UI.toggleFrameBtn.classList.remove('active-yellow');
                 
@@ -522,7 +520,8 @@ VERSION: Pro 20.0 (The Architect's Grid)
                 let newScene = {
                     name: name, type: "current_state", speed: UI.speedRange.value, theme: UI.themeSelect.value,
                     echo: UI.echoModeCheck.checked, dual: UI.dualCoreCheck.checked, dualMask: UI.dualMaskCheck.checked,
-                    freezeY: UI.freezeScrollCheck.checked, spin3d: UI.spin3dCheck.checked, elka: UI.elkaCheck.checked, neon: UI.neonGlowCheck.checked, frame: MODULE_STATE.isFrameActive, radar: MODULE_STATE.isRadarActive
+                    freezeY: UI.freezeScrollCheck.checked, spin3d: UI.spin3dCheck.checked, breathing: UI.breathingZoomCheck?.checked,
+                    elka: UI.elkaCheck.checked, neon: UI.neonGlowCheck.checked, frame: MODULE_STATE.isFrameActive, radar: MODULE_STATE.isRadarActive
                 };
                 
                 MODULE_STATE.customScenes[key] = newScene; localStorage.setItem('saved_scenes_v20', JSON.stringify(MODULE_STATE.customScenes));
@@ -627,22 +626,20 @@ VERSION: Pro 20.0 (The Architect's Grid)
                         matrix.push(rowStr.split(''));
                     }
                 } else if (rule === 'diagonal') {
-                    // НОВАЯ: ДИАГОНАЛЬНАЯ СЕТКА С XOR-ПЕРЕСЕЧЕНИЯМИ
                     let w = seed.length + 2 * h; 
                     let numMatrix = Array.from({length: h}, () => Array(w).fill(0)); 
                     let centerStart = Math.floor((w - seed.length) / 2);
                     
                     for(let i=0; i<seed.length; i++) {
                         if(seed[i] === '1') {
-                            for(let y=0; y<h; y++) { let x = centerStart + i + y; if(x < w) numMatrix[y][x]++; } // Луч \
-                            for(let y=0; y<h; y++) { let x = centerStart + i - y; if(x >= 0) numMatrix[y][x]++; } // Луч /
+                            for(let y=0; y<h; y++) { let x = centerStart + i + y; if(x < w) numMatrix[y][x]++; } 
+                            for(let y=0; y<h; y++) { let x = centerStart + i - y; if(x >= 0) numMatrix[y][x]++; } 
                         }
                     }
                     
                     for(let y=0; y<h; y++) {
                         matrix[y] = [];
                         for(let x=0; x<w; x++) {
-                            // Если пересеклись 2 луча (четное число) - разрыв '0'. Если 1 луч - '1'.
                             matrix[y][x] = (numMatrix[y][x] % 2 === 1) ? '1' : '0';
                         }
                     }
@@ -741,7 +738,6 @@ VERSION: Pro 20.0 (The Architect's Grid)
             },
 
             processTextData: function(text, sourceName) {
-                // НЕ УДАЛЯЕМ ПРОБЕЛЫ! Только табы заменяем на пробел, чтобы сохранить структуру пользователя.
                 const raw = text.split('\n').map(l => l.replace(/\t/g, ' ')).filter(l => l.trim().length > 0);
                 const shape = this.normalizeLines(raw);
                 this.implantOrReplace(shape, sourceName);
@@ -896,9 +892,16 @@ VERSION: Pro 20.0 (The Architect's Grid)
                 const useDualCore = UI.dualCoreCheck?.checked || false;
                 const useDualMask = UI.dualMaskCheck?.checked || false;
                 const spin3d = UI.spin3dCheck?.checked || false;
+                const isBreathing = UI.breathingZoomCheck?.checked || false;
                 
                 let baseFontSize = parseInt(UI.fontSizeRange?.value || 24, 10);
-                let fontSize = baseFontSize * AUDIO_VISUALIZER.audioScale;
+                
+                let zoomMod = 1;
+                if (isBreathing) {
+                    zoomMod = 1 + (Math.sin(MODULE_STATE.breathTime) * 0.4); 
+                }
+                
+                let fontSize = baseFontSize * AUDIO_VISUALIZER.audioScale * zoomMod;
                 const selectedFont = UI.fontSelect ? UI.fontSelect.value : 'monospace';
 
                 const actColor = UI.activeColorPicker.value; const actRgb = this.hexToRgb(actColor); const actAlpha = parseFloat(UI.activeAlphaRange.value);
@@ -1115,8 +1118,9 @@ VERSION: Pro 20.0 (The Architect's Grid)
                 const delta = timestamp - MODULE_STATE.lastTickTime;
                 
                 if (delta < speedMs) {
-                    if (AUDIO_VISUALIZER.isInit || UI.spin3dCheck.checked) {
-                        if (UI.spin3dCheck.checked) MODULE_STATE.globalAngle += 0.5; 
+                    if (AUDIO_VISUALIZER.isInit || UI.spin3dCheck?.checked || UI.breathingZoomCheck?.checked) {
+                        MODULE_STATE.breathTime += 0.02; 
+                        if (UI.spin3dCheck?.checked) MODULE_STATE.globalAngle += 0.5; 
                         RENDERER.renderFrame(); 
                     }
                 }
@@ -1195,14 +1199,11 @@ VERSION: Pro 20.0 (The Architect's Grid)
                 if(UI.audioLoader) UI.audioLoader.addEventListener('change', function(e) { const file = e.target.files[0]; if (!file) return; AUDIO_VISUALIZER.init(file); });
                 if(UI.generateVacuumBtn) UI.generateVacuumBtn.addEventListener('click', () => { let implantState = UI.implantModeCheck.checked; UI.implantModeCheck.checked = false; MODULE_DATA.generateVacuum(); UI.implantModeCheck.checked = implantState; });
                 
-                // МГНОВЕННАЯ ОЧИСТКА (БЕЗ ТОРМОЗОВ)
                 if(UI.clearCanvasBtn) UI.clearCanvasBtn.addEventListener('click', () => { 
                     MODULE_STATE.originalLines = []; MODULE_STATE.lines = []; MODULE_STATE.echoHistory = []; MODULE_STATE.currentIndex = 0;
                     if (MODULE_STATE.isPlaying) PLAYER.stop();
-                    UI.dataInput.value = "";
-                    RENDERER.updateTimeline(); RENDERER.renderFrame();
-                    UI.statusInfo.textContent = "Холст мгновенно очищен";
-                    MODULE_DATA.saveToLocalStorage([]);
+                    UI.dataInput.value = ""; RENDERER.updateTimeline(); RENDERER.renderFrame();
+                    UI.statusInfo.textContent = "Холст мгновенно очищен"; MODULE_DATA.saveToLocalStorage([]);
                 });
 
                 if(UI.insertZerosGlobalBtn) UI.insertZerosGlobalBtn.addEventListener('click', () => {
@@ -1271,12 +1272,7 @@ VERSION: Pro 20.0 (The Architect's Grid)
                 if(UI.exportExcelBtn) UI.exportExcelBtn.addEventListener('click', () => MODULE_DATA.exportToExcel());
                 if(UI.exportBtn) UI.exportBtn.addEventListener('click', async () => { if (MODULE_STATE.originalLines.length === 0) return alert("Нет данных!"); const jsonStr = JSON.stringify(MODULE_STATE.originalLines, null, 2); const blob = new Blob([jsonStr], { type: "text/plain;charset=utf-8" }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "Zerkalius_Data.txt"; link.click(); URL.revokeObjectURL(link.href); });
                 
-                // КНОПКУ ОЧИСТКИ ПАМЯТИ СКРЫЛ В КОДЕ, ЕСТЬ МГНОВЕННАЯ НАВЕРХУ
-                if(UI.resetMemoryBtn) UI.resetMemoryBtn.addEventListener('click', () => { localStorage.removeItem('saved_binary_lines_v20'); UI.dataInput.value = ""; MODULE_STATE.originalLines = []; MODULE_STATE.lines = []; MODULE_STATE.echoHistory = []; PLAYER.stop(); RENDERER.updateTimeline(); UI.statusInfo.textContent = "Очищено"; RENDERER.renderFrame(); });
-                
                 if(UI.fileLoader) UI.fileLoader.addEventListener('change', function(e) { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { MODULE_DATA.processTextData(e.target.result, file.name); }; reader.readAsText(file); });
-                
-                // ПРАВИЛЬНАЯ ВСТАВКА ИЗ БЛОКНОТА (БЕЗ УДАЛЕНИЯ ПРОБЕЛОВ)
                 document.addEventListener('paste', function(e) { 
                     const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : ''; 
                     if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') return; 
@@ -1292,7 +1288,7 @@ VERSION: Pro 20.0 (The Architect's Grid)
                 const rerenderEvents = [
                     UI.cylinderCheck, UI.elkaCheck, UI.hideStaticCheck, UI.deltaModeSelect, UI.neonGlowCheck, 
                     UI.findDiagonalsCheck, UI.logicalOpSelect, UI.dualCoreCheck, UI.dualCoreSpeedInput, UI.dualMaskCheck,
-                    UI.activeColorPicker, UI.activeAlphaRange, UI.staticColorPicker, UI.staticAlphaRange, UI.fontSelect, UI.freezeScrollCheck, UI.spin3dCheck
+                    UI.activeColorPicker, UI.activeAlphaRange, UI.staticColorPicker, UI.staticAlphaRange, UI.fontSelect, UI.freezeScrollCheck, UI.spin3dCheck, UI.breathingZoomCheck
                 ];
                 rerenderEvents.forEach(el => { if(el) { el.addEventListener('change', () => RENDERER.renderFrame()); el.addEventListener('input', () => RENDERER.renderFrame()); }});
                 window.addEventListener('resize', () => RENDERER.renderFrame());
