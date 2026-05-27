@@ -1,15 +1,16 @@
+`html
 <!DOCTYPE html>
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 26.0 (The Source Code & Cascade Matrix)
+VERSION: Pro 27.0 (The Hyperdrive Update)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 26.0)</title>
+    <title>Binary Drum Machine (Zerkalius 27.0)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -94,6 +95,7 @@ VERSION: Pro 26.0 (The Source Code & Cascade Matrix)
         #screenCanvas { display: block; cursor: grab; } 
         #screenCanvas:active { cursor: grabbing; }
         
+        /* ПЛАВАЮЩИЕ КНОПКИ */
         .float-btn { position: absolute; z-index: 10; border: none; cursor: pointer; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: opacity 0.3s, background 0.2s, box-shadow 0.2s; left: 8px;}
         #toggleMenuBtn { top: 8px; background: #00ff66; color: #000; box-shadow: 0 0 8px rgba(0, 255, 102, 0.5); border-radius: 3px; height: 26px; width: 34px;}
         #toggleSideBtn { top: 40px; background: #00ccff; color: #000; box-shadow: 0 0 8px rgba(0, 204, 255, 0.5); border-radius: 3px; height: 26px; width: 34px;}
@@ -143,7 +145,7 @@ VERSION: Pro 26.0 (The Source Code & Cascade Matrix)
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 26)</h3>
+                <h3>Binary Drum Machine (Pro 27)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
@@ -264,7 +266,7 @@ VERSION: Pro 26.0 (The Source Code & Cascade Matrix)
                 </div>
 
                 <div class="control-group">
-                    <label class="checkbox-row"><input type="checkbox" id="zerkaliusAnimCheck"><span><b style="color:#ff3333">Аниматрица (Волна Сверху-Вниз)</b></span></label>
+                    <label class="checkbox-row"><input type="checkbox" id="zerkaliusAnimCheck"><span><b style="color:#ff3333">Аниматрица (Сверху-Вниз плавка)</b></span></label>
                     <label class="checkbox-row"><input type="checkbox" id="elkaCheck"><span><b style="color:#00ccff">Круговой сдвиг (Ёлка)</b></span></label>
                     <label class="checkbox-row"><input type="checkbox" id="cylinderCheck"><span>Круговой сдвиг (Цилиндр)</span></label>
                     <label class="checkbox-row"><input type="checkbox" id="findDiagonalsCheck"><span>Искать диагонали макросом</span></label>
@@ -288,6 +290,7 @@ VERSION: Pro 26.0 (The Source Code & Cascade Matrix)
                 <div class="control-group" style="border: none; padding: 0;">
                     <div class="compact-row">
                         <label style="flex:1;">Скорость (1 - 1000мс):</label>
+                        <label style="color:#ff3333; font-weight:bold;">x<input type="number" id="speedMultInput" value="1" min="1" max="100" style="width:35px; margin-left:4px; text-align:center; padding:2px;"></label>
                     </div>
                     <input type="range" id="speedRange" min="1" max="1000" value="920">
                     <div class="compact-row" style="margin-top:2px;">
@@ -376,7 +379,7 @@ VERSION: Pro 26.0 (The Source Code & Cascade Matrix)
             zerkalius: { act: '#dcdcdc', actA: 1.0, stat: '#0066cc', statA: 0.4 },
             synthwave: { act: '#00ffff', actA: 1.0, stat: '#ff00ff', statA: 0.3 },
             blood: { act: '#ff0000', actA: 1.0, stat: '#440000', statA: 0.5 },
-            mutation: { act: '#ffffff', actA: 1.0, stat: '#444444', statA: 0.2 } // Специальная тема для истории
+            mutation: { act: '#ffffff', actA: 1.0, stat: '#444444', statA: 0.2 } 
         };
 
         const MUTATION_COLORS = ['#ff3333', '#ffcc00', '#00ff66', '#00ccff', '#cc33ff'];
@@ -493,7 +496,7 @@ VERSION: Pro 26.0 (The Source Code & Cascade Matrix)
             dualCoreCheck: document.getElementById('dualCoreCheck'), dualCoreSpeedInput: document.getElementById('dualCoreSpeedInput'),
             dualMaskCheck: document.getElementById('dualMaskCheck'), zerkaliusAnimCheck: document.getElementById('zerkaliusAnimCheck'),
             
-            speedRange: document.getElementById('speedRange'), speedVal: document.getElementById('speedVal'), 
+            speedRange: document.getElementById('speedRange'), speedVal: document.getElementById('speedVal'), speedMultInput: document.getElementById('speedMultInput'),
             heightRange: document.getElementById('heightRange'), heightVal: document.getElementById('heightVal'), 
             fontSizeRange: document.getElementById('fontSizeRange'), fontSizeVal: document.getElementById('fontSizeVal'), 
             lineHeightRange: document.getElementById('lineHeightRange'), lineHeightVal: document.getElementById('lineHeightVal'),
@@ -568,8 +571,7 @@ VERSION: Pro 26.0 (The Source Code & Cascade Matrix)
 
                 if(scene.type === 'vacuum') MODULE_DATA.generateVacuum();
                 else if(scene.type === 'source') {
-                    // ГРУЗИМ ИСХОДНЫЙ КОД САМОЙ ПРОГРАММЫ
-                    let codeLines = document.documentElement.innerHTML.split('\n').map(l => l.trim()).filter(l => l.length > 0).slice(0, 150).join('\n');
+                    let codeLines = document.documentElement.innerHTML.split('\n').map(l => l.trim()).filter(l => l.length > 0).slice(0, 250).join('\n');
                     MODULE_DATA.processTextData(codeLines, "Код Матрицы");
                 }
                 else if (scene.type === 'fractal') {
@@ -1067,18 +1069,6 @@ VERSION: Pro 26.0 (The Source Code & Cascade Matrix)
                             if (isCollision) isChanged = true;
 
                             let cRgb = isChanged ? actRgb : statRgb; let cAlpha = isChanged ? actAlpha : statAlpha;
-                            
-                            // ПАЛИТРА МУТАЦИЙ
-                            if (activeTheme === 'mutation') {
-                                let mLevel = lineData.mutFlags ? lineData.mutFlags[charIdx] : 0;
-                                if (mLevel > 0) {
-                                    cRgb = this.hexToRgb(MUTATION_COLORS[(mLevel - 1) % MUTATION_COLORS.length]);
-                                    cAlpha = 1.0; isChanged = true;
-                                } else {
-                                    cRgb = statRgb; cAlpha = statAlpha;
-                                }
-                            }
-
                             if (hideStatic && !isChanged && !isCollision) cAlpha = 0.0;
                             if (cAlpha <= 0.01) continue; 
 
@@ -1090,12 +1080,7 @@ VERSION: Pro 26.0 (The Source Code & Cascade Matrix)
                             let charShadowBlur = (useNeon && isChanged) ? 6 + AUDIO_VISUALIZER.audioGlow : 0;
                             
                             ctx.fillStyle = rgbaStr;
-                            if (charShadowBlur > 0) { 
-                                ctx.shadowBlur = charShadowBlur; 
-                                ctx.shadowColor = (activeTheme === 'mutation' && lineData.mutFlags && lineData.mutFlags[charIdx] > 0) 
-                                    ? MUTATION_COLORS[(lineData.mutFlags[charIdx] - 1) % MUTATION_COLORS.length] 
-                                    : (isChanged?actColor:statColor); 
-                            }
+                            if (charShadowBlur > 0) { ctx.shadowBlur = charShadowBlur; ctx.shadowColor = isChanged?actColor:statColor; }
                             ctx.fillText(finalChar, 0, 0); ctx.restore();
                         }
                     }
@@ -1266,86 +1251,93 @@ VERSION: Pro 26.0 (The Source Code & Cascade Matrix)
                 if (delta >= speedMs) {
                     MODULE_STATE.lastTickTime = timestamp - (delta % Math.max(1, speedMs)); 
                     
-                    if (UI.autoPilotCheck?.checked && AUDIO_VISUALIZER.isInit) {
-                        if (AUDIO_VISUALIZER.bassLevel < 30) MODULE_STATE.framesSinceChange++;
-                        else MODULE_STATE.framesSinceChange = 0; 
-                        if (MODULE_STATE.framesSinceChange > 60) {
-                            SCENE_MANAGER.loadRandomScene(); 
-                            MODULE_STATE.framesSinceChange = -100; 
-                        }
-                    }
+                    // MULTI-STEP HYPERDRIVE
+                    let multStep = parseInt(UI.speedMultInput?.value || 1, 10);
+                    if (multStep < 1) multStep = 1;
 
-                    // ЛОГГЕР ПАТТЕРНОВ
-                    let searchPat = UI.searchInput?.value?.trim();
-                    if (searchPat && MODULE_STATE.originalLines.length > 0) {
-                        let addedToLog = false;
-                        MODULE_STATE.originalLines.forEach(l => {
-                            if (l.text.includes(searchPat) && !MODULE_STATE.foundPatterns.has(l.text)) {
-                                MODULE_STATE.foundPatterns.add(l.text);
-                                UI.dataInput.value += l.text + "\n";
-                                addedToLog = true;
+                    for (let m = 0; m < multStep; m++) {
+                        if (UI.autoPilotCheck?.checked && AUDIO_VISUALIZER.isInit) {
+                            if (AUDIO_VISUALIZER.bassLevel < 30) MODULE_STATE.framesSinceChange++;
+                            else MODULE_STATE.framesSinceChange = 0; 
+                            if (MODULE_STATE.framesSinceChange > 60) {
+                                SCENE_MANAGER.loadRandomScene(); 
+                                MODULE_STATE.framesSinceChange = -100; 
                             }
-                        });
-                        if (addedToLog) {
-                            UI.dataInput.style.display = 'block';
-                            UI.dataInput.scrollTop = UI.dataInput.scrollHeight;
                         }
-                    }
 
-                    if (UI.zerkaliusAnimCheck?.checked && MODULE_STATE.originalLines.length > 0) MODULE_DATA.runAnimatrixGlobal();
-
-                    if (UI.echoModeCheck?.checked && MODULE_STATE.originalLines.length > 0) {
-                        if (!MODULE_STATE.isReverse) {
-                            MODULE_STATE.echoHistory.push(JSON.parse(JSON.stringify(MODULE_STATE.originalLines)));
-                            if(MODULE_STATE.echoHistory.length > 300) MODULE_STATE.echoHistory.shift();
-                            
-                            let lines = MODULE_STATE.originalLines; let newLines = [];
-                            for(let i=0; i<lines.length; i++) {
-                                let prev = (i > 0) ? lines[i-1].text : lines[lines.length-1].text;
-                                let curr = lines[i].text; let res = ""; let len = Math.max(curr.length, prev.length);
-                                for(let k=0; k<len; k++) {
-                                    let c1 = curr[k] || ' '; let c2 = prev[k] || ' ';
-                                    if (c1 === ' ' && c2 === ' ') res += ' ';
-                                    else if (c1 === '1' && c2 === '1') res += '0';
-                                    else if (c1 === '1' || c2 === '1') res += '1';
-                                    else res += '0';
+                        // ЛОГГЕР ПАТТЕРНОВ
+                        let searchPat = UI.searchInput?.value?.trim();
+                        if (searchPat && MODULE_STATE.originalLines.length > 0) {
+                            let addedToLog = false;
+                            MODULE_STATE.originalLines.forEach(l => {
+                                if (l.text.includes(searchPat) && !MODULE_STATE.foundPatterns.has(l.text)) {
+                                    MODULE_STATE.foundPatterns.add(l.text);
+                                    UI.dataInput.value += l.text + "\n";
+                                    addedToLog = true;
                                 }
-                                newLines.push({text: res, color: lines[i].color});
+                            });
+                            if (addedToLog) {
+                                UI.dataInput.style.display = 'block';
+                                UI.dataInput.scrollTop = UI.dataInput.scrollHeight;
                             }
-                            MODULE_STATE.originalLines = newLines; MODULE_DATA.precalculateLines(false);
-                        } else {
-                            if (MODULE_STATE.echoHistory.length > 0) { MODULE_STATE.originalLines = MODULE_STATE.echoHistory.pop(); MODULE_DATA.precalculateLines(false); }
                         }
-                    }
 
-                    if (UI.elkaCheck?.checked && MODULE_STATE.originalLines.length > 0) {
-                        let dir = MODULE_STATE.isReverse ? -1 : 1;
-                        let allChars = MODULE_STATE.originalLines.map(l => l.text).join('');
-                        if (allChars.length > 0) {
-                            if (dir > 0) allChars = allChars.substring(1) + allChars[0]; else allChars = allChars.slice(-1) + allChars.slice(0, -1);
-                            let ptr = 0;
-                            for (let i = 0; i < MODULE_STATE.originalLines.length; i++) {
-                                let len = MODULE_STATE.originalLines[i].text.length;
-                                MODULE_STATE.originalLines[i].text = allChars.substring(ptr, ptr + len); ptr += len;
+                        if (UI.zerkaliusAnimCheck?.checked && MODULE_STATE.originalLines.length > 0) MODULE_DATA.runAnimatrixGlobal();
+
+                        if (UI.echoModeCheck?.checked && MODULE_STATE.originalLines.length > 0) {
+                            if (!MODULE_STATE.isReverse) {
+                                MODULE_STATE.echoHistory.push(JSON.parse(JSON.stringify(MODULE_STATE.originalLines)));
+                                if(MODULE_STATE.echoHistory.length > 300) MODULE_STATE.echoHistory.shift();
+                                
+                                let lines = MODULE_STATE.originalLines; let newLines = [];
+                                for(let i=0; i<lines.length; i++) {
+                                    let prev = (i > 0) ? lines[i-1].text : lines[lines.length-1].text;
+                                    let curr = lines[i].text; let res = ""; let len = Math.max(curr.length, prev.length);
+                                    for(let k=0; k<len; k++) {
+                                        let c1 = curr[k] || ' '; let c2 = prev[k] || ' ';
+                                        if (c1 === ' ' && c2 === ' ') res += ' ';
+                                        else if (c1 === '1' && c2 === '1') res += '0';
+                                        else if (c1 === '1' || c2 === '1') res += '1';
+                                        else res += '0';
+                                    }
+                                    newLines.push({text: res, color: lines[i].color});
+                                }
+                                MODULE_STATE.originalLines = newLines; MODULE_DATA.precalculateLines(false);
+                            } else {
+                                if (MODULE_STATE.echoHistory.length > 0) { MODULE_STATE.originalLines = MODULE_STATE.echoHistory.pop(); MODULE_DATA.precalculateLines(false); }
                             }
-                            MODULE_DATA.precalculateLines(false);
                         }
-                    } 
 
-                    const steps = this.getAlgorithmSteps();
-                    let step = steps[MODULE_STATE.algoPointer % steps.length];
-                    if (MODULE_STATE.isReverse) step = -step;
-                    
-                    if (UI.freezeScrollCheck && UI.freezeScrollCheck.checked) step = 0; 
+                        if (UI.elkaCheck?.checked && MODULE_STATE.originalLines.length > 0) {
+                            let dir = MODULE_STATE.isReverse ? -1 : 1;
+                            let allChars = MODULE_STATE.originalLines.map(l => l.text).join('');
+                            if (allChars.length > 0) {
+                                if (dir > 0) allChars = allChars.substring(1) + allChars[0]; else allChars = allChars.slice(-1) + allChars.slice(0, -1);
+                                let ptr = 0;
+                                for (let i = 0; i < MODULE_STATE.originalLines.length; i++) {
+                                    let len = MODULE_STATE.originalLines[i].text.length;
+                                    MODULE_STATE.originalLines[i].text = allChars.substring(ptr, ptr + len); ptr += len;
+                                }
+                                MODULE_DATA.precalculateLines(false);
+                            }
+                        } 
 
-                    MODULE_STATE.currentIndex = (MODULE_STATE.currentIndex + step + MODULE_STATE.lines.length) % MODULE_STATE.lines.length;
-                    
-                    if (UI.dualCoreCheck?.checked) {
-                        let mult = parseInt(UI.dualCoreSpeedInput.value, 10) || 2;
-                        MODULE_STATE.dualCoreIndex = (MODULE_STATE.dualCoreIndex + (step * mult) + MODULE_STATE.lines.length) % MODULE_STATE.lines.length;
+                        const steps = this.getAlgorithmSteps();
+                        let step = steps[MODULE_STATE.algoPointer % steps.length];
+                        if (MODULE_STATE.isReverse) step = -step;
+                        
+                        if (UI.freezeScrollCheck && UI.freezeScrollCheck.checked) step = 0; 
+
+                        MODULE_STATE.currentIndex = (MODULE_STATE.currentIndex + step + MODULE_STATE.lines.length) % MODULE_STATE.lines.length;
+                        
+                        if (UI.dualCoreCheck?.checked) {
+                            let mult = parseInt(UI.dualCoreSpeedInput.value, 10) || 2;
+                            MODULE_STATE.dualCoreIndex = (MODULE_STATE.dualCoreIndex + (step * mult) + MODULE_STATE.lines.length) % MODULE_STATE.lines.length;
+                        }
+
+                        MODULE_STATE.algoPointer++; 
                     }
-
-                    MODULE_STATE.algoPointer++; RENDERER.renderFrame(); RENDERER.updateTimeline();
+                    RENDERER.renderFrame(); RENDERER.updateTimeline();
                 }
                 MODULE_STATE.rafId = requestAnimationFrame((ts) => this.loop(ts));
             },
@@ -1456,7 +1448,7 @@ VERSION: Pro 26.0 (The Source Code & Cascade Matrix)
                 const rerenderEvents = [
                     UI.cylinderCheck, UI.elkaCheck, UI.hideStaticCheck, UI.deltaModeSelect, UI.neonGlowCheck, 
                     UI.findDiagonalsCheck, UI.logicalOpSelect, UI.dualCoreCheck, UI.dualCoreSpeedInput, UI.dualMaskCheck,
-                    UI.activeColorPicker, UI.activeAlphaRange, UI.staticColorPicker, UI.staticAlphaRange, UI.fontSelect, UI.freezeScrollCheck, UI.spin3dCheck, UI.breathingZoomCheck, UI.autoPilotCheck
+                    UI.activeColorPicker, UI.activeAlphaRange, UI.staticColorPicker, UI.staticAlphaRange, UI.fontSelect, UI.freezeScrollCheck, UI.spin3dCheck, UI.breathingZoomCheck, UI.autoPilotCheck, UI.speedMultInput
                 ];
                 rerenderEvents.forEach(el => { if(el) { el.addEventListener('change', () => RENDERER.renderFrame()); el.addEventListener('input', () => RENDERER.renderFrame()); }});
                 window.addEventListener('resize', () => RENDERER.renderFrame());
