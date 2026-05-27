@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 29.0 (The Static Core & GPU Limits)
+VERSION: Pro 33.0 (The Architect's Fix)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 29.0)</title>
+    <title>Binary Drum Machine (Zerkalius 33.0)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -144,7 +144,7 @@ VERSION: Pro 29.0 (The Static Core & GPU Limits)
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 29)</h3>
+                <h3>Binary Drum Machine (Pro 33)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
@@ -219,7 +219,7 @@ VERSION: Pro 29.0 (The Static Core & GPU Limits)
                     </select>
                     <div class="compact-row">
                         <label>Сид:<input type="text" id="zerkSeedInput" value="1" style="width: 50px; text-align:center;"></label>
-                        <label>Строк:<input type="number" id="zerkCountInput" value="50" style="width: 50px; text-align:center;" max="1000"></label>
+                        <label>Строк:<input type="number" id="zerkCountInput" value="50" style="width: 50px; text-align:center;"></label>
                     </div>
                     <label class="checkbox-row" style="margin-top: 4px;"><input type="checkbox" id="trimZerosCheck" checked><span>Обрезать фон (висеть в пустоте)</span></label>
                     <label class="checkbox-row"><input type="checkbox" id="implantModeCheck" checked><span style="color:#00ccff; font-weight:bold;">Вживить фигуру в центр матрицы</span></label>
@@ -327,7 +327,7 @@ VERSION: Pro 29.0 (The Static Core & GPU Limits)
 
                 <!-- ПАЛИТРА -->
                 <div class="control-group" style="border: none; padding: 0; margin-top: 2px;">
-                    <label class="checkbox-row" style="margin-bottom:4px;"><input type="checkbox" id="rainbowTextCheck"><span style="color:#ff3333; font-weight:bold;">🌈 Радужный Текст (Цвета по ASCII)</span></label>
+                    <label class="checkbox-row" style="margin-bottom:4px;"><input type="checkbox" id="rainbowTextCheck"><span style="color:#ff3333; font-weight:bold;">🌈 Радужный Текст (ASCII)</span></label>
                     <select id="themeSelect" style="padding: 2px;">
                         <option value="matrix">Пресет: Матрица</option>
                         <option value="cyberpunk">Пресет: Киберпанк</option>
@@ -335,6 +335,7 @@ VERSION: Pro 29.0 (The Static Core & GPU Limits)
                         <option value="synthwave">Пресет: Synthwave</option>
                         <option value="blood">Пресет: Blood</option>
                         <option value="mutation" style="background:#440044; color:#ff00ff;">🧬 Пресет: Мутация (История)</option>
+                        <option value="crypto" style="background:#000000; color:#ff3333; font-weight:bold;">🌈 Пресет: Крипто-Хеш (Спектр)</option>
                     </select>
                     <div class="color-palette">
                         <div class="palette-row">
@@ -380,7 +381,8 @@ VERSION: Pro 29.0 (The Static Core & GPU Limits)
             zerkalius: { act: '#dcdcdc', actA: 1.0, stat: '#0066cc', statA: 0.4 },
             synthwave: { act: '#00ffff', actA: 1.0, stat: '#ff00ff', statA: 0.3 },
             blood: { act: '#ff0000', actA: 1.0, stat: '#440000', statA: 0.5 },
-            mutation: { act: '#ffffff', actA: 1.0, stat: '#444444', statA: 0.2 } 
+            mutation: { act: '#ffffff', actA: 1.0, stat: '#444444', statA: 0.2 }, 
+            crypto: { act: '#ff3333', actA: 1.0, stat: '#555555', statA: 0.3 }
         };
 
         const MUTATION_COLORS = ['#ff3333', '#ffcc00', '#00ff66', '#00ccff', '#cc33ff'];
@@ -544,6 +546,7 @@ VERSION: Pro 29.0 (The Static Core & GPU Limits)
             
             loadScene: function(key, preventPlay = false) {
                 if(!key) return;
+                if(MODULE_STATE.isPlaying) PLAYER.stop();
                 
                 let scene = PREBUILT_SCENES[key];
                 if(key.startsWith("custom_")) scene = MODULE_STATE.customScenes[key.replace("custom_", "")];
@@ -998,10 +1001,10 @@ VERSION: Pro 29.0 (The Static Core & GPU Limits)
                 const useCylinder = UI.cylinderCheck?.checked || false;
                 const useDualCore = UI.dualCoreCheck?.checked || false;
                 const useDualMask = UI.dualMaskCheck?.checked || false;
-                const freezeLayer1 = UI.freezeLayer1Check?.checked || false; // НОВАЯ ЛОГИКА
+                const freezeLayer1 = UI.freezeLayer1Check?.checked || false; 
                 const spin3d = UI.spin3dCheck?.checked || false;
                 const isBreathing = UI.breathingZoomCheck?.checked || false;
-                const isRainbow = UI.rainbowTextCheck?.checked || false; // НОВАЯ ЛОГИКА
+                const isRainbow = UI.rainbowTextCheck?.checked || false; 
                 const activeTheme = UI.themeSelect?.value || 'matrix';
                 
                 let baseFontSize = parseInt(UI.fontSizeRange?.value || 24, 10);
