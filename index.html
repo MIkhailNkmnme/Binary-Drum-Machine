@@ -1,4 +1,338 @@
-: Synthwave</option>
+<!DOCTYPE html>
+<!--
+===========================================================================
+PROJECT: Binary Drum Machine (Zerkalius: Genesis)
+VERSION: Pro 29.0 (The Static Core & GPU Limits)
+"We are not just moving strings, we are weaving the fabric of the Matrix."
+===========================================================================
+-->
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Binary Drum Machine (Zerkalius 29.0)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+        @font-face {
+            font-family: 'Roboto Mono Local';
+            src: url('RobotoMono-Regular.ttf') format('truetype'), url('RobotoMono.ttf') format('truetype');
+            font-weight: normal; font-style: normal;
+        }
+
+        body { 
+            background: #050505; color: #00ff66; 
+            font-family: 'Roboto Mono Local', 'Roboto Mono', monospace; 
+            margin: 8px; overflow: hidden; height: calc(100vh - 16px);
+            transition: background 0.3s;
+        }
+
+        .main-layout { display: flex; gap: 12px; height: 100%; align-items: stretch; flex-direction: row; transition: 0.3s; }
+        
+        .controls { 
+            width: 300px; min-width: 300px; display: flex; flex-direction: column; 
+            background: #101010; padding: 6px; border-radius: 4px; border: 1px solid #222; 
+            box-sizing: border-box; height: 100%; transition: 0.3s;
+        }
+
+        .fixed-top { flex-shrink: 0; display: flex; flex-direction: column; gap: 5px; border-bottom: 2px solid #222; padding-bottom: 6px; margin-bottom: 4px; }
+        
+        .scrollable-settings { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px; }
+        .scrollable-settings::-webkit-scrollbar { width: 6px; }
+        .scrollable-settings::-webkit-scrollbar-track { background: #111; }
+        .scrollable-settings::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+        .fixed-player { flex-shrink: 0; background: #141414; border: 1px solid #222; border-radius: 4px; padding: 6px; display: flex; flex-direction: column; gap: 4px; margin-top: 4px; border-top: 2px solid #00ff66; }
+
+        h3 { margin: 0 0 3px 0; color: #ffffff; text-shadow: 0 0 10px rgba(0,255,102,0.3); font-size: 14px; text-align: center; }
+        
+        .player-buttons { display: flex; gap: 4px; width: 100%; }
+        .player-buttons button { font-size: 16px; font-family: inherit; border: none; cursor: pointer; border-radius: 3px; padding: 4px 2px; display:flex; align-items:center; justify-content:center;}
+        #playBtn { flex: 2; background: #00ff66; color: #000; } #playBtn:hover { background: #00cc52; }
+        #stopBtn { flex: 1.2; background: #ff3333; color: #fff; } #stopBtn:hover { background: #cc0000; }
+        #prevBtn, #nextBtn { flex: 1; background: #202020; color: #fff; border: 1px solid #333; font-size: 14px; }
+
+        .btn-export { background: #00ccff; color: #000; font-size: 11px; font-weight: bold; border: none; border-radius: 3px; padding: 5px; cursor: pointer; width: 100%; text-align: center; }
+        .btn-export-excel { background: #217346; color: #fff; font-size: 11px; font-weight: bold; border: none; border-radius: 3px; padding: 5px; cursor: pointer; width: 100%; text-align: center; }
+        
+        .btn-zerkalius { background: #ffcc00; color: #000; font-size: 11px; font-weight: bold; padding: 6px; border: none; border-radius: 3px; cursor: pointer; margin-top: 2px; width: 100%; }
+        
+        .btn-mod { background: #444; color: #00ff66; border: 1px solid #00ff66; font-size: 10px; font-weight: bold; padding: 4px; border-radius: 3px; cursor: pointer; flex: 1; text-align: center; }
+        .btn-mod:hover { background: #00ff66; color: #000; }
+        .btn-mod.cyan { color: #00ccff; border-color: #00ccff; } .btn-mod.cyan:hover { background: #00ccff; color: #000; }
+        .btn-mod.magenta { color: #ff00ff; border-color: #ff00ff; } .btn-mod.magenta:hover { background: #ff00ff; color: #000; }
+
+        .btn-vacuum { background: #00ccff; color: #000; border: none; font-size: 11px; font-weight: bold; padding: 4px; border-radius: 3px; cursor: pointer; width: 100%; margin-top: 2px;}
+        .btn-clear-canvas { background: #330000; color: #ff6666; border: 1px solid #ff6666; font-size: 11px; font-weight: bold; padding: 5px; border-radius: 3px; cursor: pointer; width: 100%; margin-bottom: 4px;}
+        .btn-clear-canvas:hover { background: #ff6666; color: #000; }
+
+        .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; flex: 1; }
+        .btn-file { display: block; text-align: center; background: #252525; color: #fff; border: 1px solid #3c3c3c; padding: 5px; border-radius: 3px; font-weight: bold; cursor: pointer; font-size: 11px; }
+        .btn-audio { background: #9900ff; color: #fff; border: 1px solid #cc66ff; }
+        .btn-mic { background: #ff3366; color: #fff; border: 1px solid #ff6699; padding: 5px; border-radius: 3px; font-weight: bold; cursor: pointer; font-size: 11px; flex: 1; text-align: center;}
+        .btn-mic:hover { background: #ff6699; }
+        .file-input-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
+
+        .control-group { display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid #1a1a1a; padding-bottom: 6px; }
+        .control-group-highlight { background: #141414; padding: 6px; border-radius: 3px; border: 1px solid #222; }
+        .control-group-blue { background: #0a1128; padding: 6px; border-radius: 3px; border: 1px solid #1a2a50; }
+        .control-group-gold { background: #1a1a00; padding: 6px; border-radius: 3px; border: 1px solid #ffcc00; }
+        .control-group:last-of-type { border-bottom: none; }
+
+        label { font-size: 11px; display: flex; justify-content: space-between; align-items: center; user-select: none; color: #888; }
+        .compact-row { display: flex; gap: 4px; justify-content: space-between; align-items: center; }
+        .checkbox-row { display: flex; align-items: center; justify-content: flex-start; gap: 8px; margin-bottom: 2px; cursor: pointer; }
+        .checkbox-row span { color: #aaa; font-weight: normal; font-size: 11px; }
+        .checkbox-row:hover span { color: #fff; }
+
+        input[type="range"] { width: 100%; cursor: pointer; margin-top: 1px; }
+        input[type="text"], input[type="number"] { background: #151515; color: #fff; border: 1px solid #333; padding: 4px; border-radius: 3px; font-family: inherit; font-size: 11px; outline: none; width: 100%; box-sizing: border-box; }
+        input[type="color"] { border: none; width: 28px; height: 16px; padding: 0; background: none; cursor: pointer; }
+        select { background: #222; color: #fff; border: 1px solid #444; padding: 3px; border-radius: 3px; width: 100%; font-family: inherit; font-size: 11px; outline: none; cursor: pointer;}
+        
+        #statusInfo { font-size: 10px; color: #ffcc00; text-align: center; margin-top: 1px; min-height: 11px; }
+        #screenContainer { flex-grow: 1; background: #000000; border: 2px solid #111; border-radius: 5px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        #screenCanvas { display: block; cursor: grab; } 
+        #screenCanvas:active { cursor: grabbing; }
+        
+        /* ПЛАВАЮЩИЕ КНОПКИ */
+        .float-btn { position: absolute; z-index: 10; border: none; cursor: pointer; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: opacity 0.3s, background 0.2s, box-shadow 0.2s; left: 8px;}
+        #toggleMenuBtn { top: 8px; background: #00ff66; color: #000; box-shadow: 0 0 8px rgba(0, 255, 102, 0.5); border-radius: 3px; height: 26px; width: 34px;}
+        #toggleSideBtn { top: 40px; background: #00ccff; color: #000; box-shadow: 0 0 8px rgba(0, 204, 255, 0.5); border-radius: 3px; height: 26px; width: 34px;}
+        
+        #toggleCenterBtn { top: 50%; transform: translateY(-120px); background: #333; color: #fff; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+        #toggleTrackBtn { top: 50%; transform: translateY(-70px); background: #333; color: #fff; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+        #toggleReverseBtn { top: 50%; transform: translateY(-20px); background: #333; color: #fff; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+        #toggleFrameBtn { top: 50%; transform: translateY(30px); background: #ffcc00; color: #000; box-shadow: 0 0 8px rgba(255, 204, 0, 0.5); }
+        #toggleRadarBtn { top: 50%; transform: translateY(80px); background: #cc33ff; color: #fff; box-shadow: 0 0 10px rgba(204, 51, 255, 0.6); border-radius: 8px; }
+
+        .align-btn { right: 8px; left: auto; background: #0a1128; color: #00ccff; border: 1px solid #1a2a50; border-radius: 4px; height: 28px; width: 34px;}
+        #alignLeftBtn { top: 8px; }
+        #alignCenterBtn { top: 40px; background: #00ccff; color: #000; box-shadow: 0 0 8px rgba(0, 204, 255, 0.5); }
+        #alignRightBtn { top: 72px; }
+
+        .color-palette { display: flex; flex-direction: column; gap: 2px; background: #1a1a1a; padding: 4px; border-radius: 3px; margin-top: 2px; }
+        .palette-row { display: flex; gap: 4px; align-items: center; justify-content: space-between; }
+        .palette-row span { font-size: 9px; color: #ccc; width: 45px; }
+        .palette-row input[type="range"] { margin: 0; }
+        
+        textarea { 
+            background: #050505; color: #ffcc00; border: 1px solid #ffcc00; 
+            font-family: inherit; font-size: 10px; width: 100%; height: 60px; 
+            margin-top: 4px; border-radius: 3px; resize: none; display: none; 
+            padding: 4px; box-sizing: border-box; box-shadow: inset 0 0 5px rgba(255,204,0,0.2);
+        }
+
+        body.zen-mode .controls { display: none !important; }
+        body.zen-mode .float-btn { opacity: 0 !important; pointer-events: none; }
+        body.zen-mode .main-layout { gap: 0; }
+        body.zen-mode #screenContainer { border: none; border-radius: 0; }
+        body.zen-mode { margin: 0; height: 100vh; }
+
+        @media (max-width: 950px), (max-height: 500px) and (orientation: landscape) {
+            .main-layout { flex-direction: column-reverse !important; }
+            .controls { width: 100% !important; min-width: 100% !important; height: 45vh !important; }
+            #screenContainer { height: 55vh !important; flex-grow: unset !important; }
+            .scrollable-settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px; }
+            .control-group { border-bottom: none; border-right: 1px solid #222; }
+            #toggleSideBtn { display: none; } 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-layout">
+        <div class="controls" id="leftPanel">
+            
+            <div class="fixed-top">
+                <h3>Binary Drum Machine (Pro 29)</h3>
+                
+                <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
+
+                <div class="control-group control-group-gold" style="border-bottom: none; padding-bottom: 2px;">
+                    <div class="compact-row">
+                        <select id="sceneSelect" style="font-weight:bold; color:#ffcc00; flex: 2; border: 1px solid #ff9900;">
+                            <option value="">📍 Карта Сокровищ (Выбрать...)</option>
+                        </select>
+                        <button id="saveSceneBtn" class="btn-zerkalius" style="background:#ff9900; margin: 0; flex: 1; padding: 3px;">💾 Сохр.</button>
+                    </div>
+                </div>
+
+                <div class="compact-row">
+                    <div class="file-input-wrapper"><span class="btn-file">📂 Текст</span><input type="file" id="fileLoader" accept=".txt"></div>
+                    <div class="file-input-wrapper">
+                        <span class="btn-file btn-audio" id="audioBtnText">🎵 Трек</span>
+                        <input type="file" id="audioLoader" accept="audio/*">
+                    </div>
+                    <button id="micBtn" class="btn-mic" title="Попросит доступ к захвату окна (Выбери вкладку с системным аудио)">🎤 Звук ПК</button>
+                </div>
+                
+                <audio id="bgAudio" loop style="display:none;"></audio>
+
+                <div class="compact-row">
+                    <button id="exportBtn" class="btn-export">💾 Сохр.</button>
+                    <button id="exportExcelBtn" class="btn-export-excel">📊 в Excel</button>
+                    <button id="generateVacuumBtn" class="btn-vacuum" style="margin:0;">Сетка</button>
+                </div>
+                <div id="statusInfo">Двойной клик по холсту — Режим Дзен</div>
+            </div>
+
+            <div class="scrollable-settings">
+                
+                <div class="control-group">
+                    <label class="checkbox-row" style="margin-top: 2px; background: #2a0044; padding: 4px; border-radius: 3px;">
+                        <input type="checkbox" id="audioReactCheck" checked>
+                        <span style="color:#cc66ff; font-weight:bold;">Визуализатор Звука (Пульсация)</span>
+                    </label>
+                    <label class="checkbox-row" style="margin-top: 2px; background: #00331a; padding: 4px; border-radius: 3px;">
+                        <input type="checkbox" id="autoPilotCheck">
+                        <span style="color:#00ff88; font-weight:bold;">🤖 AI Авто-Пилот (Рандом Сцен)</span>
+                    </label>
+                    <label class="checkbox-row" style="margin-top: 2px; background: #2a0000; padding: 4px; border-radius: 3px;">
+                        <input type="checkbox" id="echoModeCheck">
+                        <span style="color:#ff6666; font-weight:bold;">Каскадное Эхо (Шлейф)</span>
+                    </label>
+                    <div class="compact-row" style="margin-top: 4px;">
+                        <button id="insertZerosGlobalBtn" class="btn-mod">Вставить 0</button>
+                        <button id="insertOnesGlobalBtn" class="btn-mod magenta">Вставить 1</button>
+                        <button id="fill1010Btn" class="btn-mod cyan">Заполнить 1010</button>
+                    </div>
+                </div>
+
+                <div class="control-group control-group-blue">
+                    <label style="color:#00ccff; font-weight:bold;">Поиск паттерна (Логгер):</label>
+                    <input type="text" id="searchInput" placeholder="Например: 11011 (Сохранит строку)" style="text-align: center; border-color: #00ccff;">
+                    <textarea id="dataInput" readonly placeholder="Здесь появятся найденные строки..."></textarea>
+                </div>
+
+                <div class="control-group control-group-highlight" style="border-color: #ffcc00;">
+                    <label style="color:#ffcc00; text-align:center;">Генератор Форм</label>
+                    <select id="zerkRuleSelect" style="margin: 4px 0; background: #222;">
+                        <option value="90">Правило 90 (Классика)</option>
+                        <option value="30">Правило 30 (Хаос)</option>
+                        <option value="110">Правило 110 (Правый Сдвиг)</option>
+                        <option value="18">Правило 18 (Серпинский V2)</option>
+                        <option value="150">Правило 150 (Инопланетная вязь)</option>
+                        <option value="vortex" style="color:#00ccff; font-weight:bold;">🌌 Квантовая Воронка (Змейка 3D)</option>
+                        <option value="ziggurat" style="color:#ff9900; font-weight:bold;">🛕 Зиккурат (Полосатая Воронка)</option>
+                        <option value="orbital" style="color:#00ffcc; font-weight:bold; background:#003322;">🎯 Орбитальный Конус 1-0-1</option>
+                        <option value="diagonal" style="color:#ff3333; font-weight:bold; background:#330000;">🕸️ Диагональная Сетка (Изометрия)</option>
+                    </select>
+                    <div class="compact-row">
+                        <label>Сид:<input type="text" id="zerkSeedInput" value="1" style="width: 50px; text-align:center;"></label>
+                        <label>Строк:<input type="number" id="zerkCountInput" value="50" style="width: 50px; text-align:center;" max="1000"></label>
+                    </div>
+                    <label class="checkbox-row" style="margin-top: 4px;"><input type="checkbox" id="trimZerosCheck" checked><span>Обрезать фон (висеть в пустоте)</span></label>
+                    <label class="checkbox-row"><input type="checkbox" id="implantModeCheck" checked><span style="color:#00ccff; font-weight:bold;">Вживить фигуру в центр матрицы</span></label>
+                    <button id="zerkaliusBtn" class="btn-zerkalius">Создать Фигуру</button>
+                </div>
+
+                <div class="control-group control-group-highlight" style="border-color: #ff00ff;">
+                    <label style="color:#ff00ff; text-align:center; width: 100%;">Двойное Измерение (Dual Core)</label>
+                    <label class="checkbox-row" style="margin-top:2px;"><input type="checkbox" id="dualCoreCheck"><span>Включить Наложение Слоев</span></label>
+                    <label class="checkbox-row" style="margin-top:2px;"><input type="checkbox" id="dualMaskCheck"><span>Проникающая Маска (XOR линза)</span></label>
+                    <label class="checkbox-row" style="margin-top:2px;"><input type="checkbox" id="freezeLayer1Check"><span style="color:#ffcc00; font-weight:bold;">⚓ Заморозить Слой 1 (Стоит на месте)</span></label>
+                    <div class="compact-row" style="margin-top: 4px;">
+                        <label>Множитель скорости Слой 2:</label>
+                        <input type="number" id="dualCoreSpeedInput" value="2" min="1" max="10" style="width: 40px; text-align:center;">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Алгоритм Y-сдвига:</label>
+                    <input type="text" id="algorithmInput" value="1" placeholder="например: 1, 1, 2, -3, 1" style="text-align: center;">
+                    <label class="checkbox-row" style="margin-top: 4px; background: #003300; padding: 2px;"><input type="checkbox" id="freezeScrollCheck"><span style="color:#00ff66; font-weight:bold;">Заморозить Y-Скролл (Только X)</span></label>
+                    <label class="checkbox-row" style="margin-top: 2px; background: #330033; padding: 2px;"><input type="checkbox" id="spin3dCheck"><span style="color:#cc33ff; font-weight:bold;">3D Вращение (Орбита Радара)</span></label>
+                    <label class="checkbox-row" style="margin-top: 2px; background: #331100; padding: 2px;"><input type="checkbox" id="breathingZoomCheck"><span style="color:#ff9933; font-weight:bold;">🫁 Дыхание (Авто-Масштаб)</span></label>
+                </div>
+
+                <div class="control-group control-group-highlight">
+                    <label class="checkbox-row" style="margin:0;"><input type="checkbox" id="hideStaticCheck"><span><b style="color:#ffcc00">Скрыть статику (Delta)</b></span></label>
+                    <select id="deltaModeSelect" style="margin-top:4px;">
+                        <option value="top">Вертикаль (▲)</option>
+                        <option value="leftDiag">Лев. диагональ (↖)</option>
+                        <option value="rightDiag">Прав. диагональ (↗)</option>
+                        <option value="serpinski" selected>Серпинский (↖↗)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Логическая операция:</label>
+                    <select id="logicalOpSelect">
+                        <option value="original">Оригинал (Без изменений)</option>
+                        <option value="not">Инверсия NOT (0 ⇄ 1)</option>
+                        <option value="xor">Разница XOR (со сдвигом)</option>
+                        <option value="reverse">Зеркало (Реверс строки)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label class="checkbox-row"><input type="checkbox" id="zerkaliusAnimCheck"><span><b style="color:#ff3333">Аниматрица (Волна Сверху-Вниз)</b></span></label>
+                    <label class="checkbox-row"><input type="checkbox" id="elkaCheck"><span><b style="color:#00ccff">Круговой сдвиг (Ёлка)</b></span></label>
+                    <label class="checkbox-row"><input type="checkbox" id="cylinderCheck"><span>Круговой сдвиг (Цилиндр)</span></label>
+                    <label class="checkbox-row"><input type="checkbox" id="findDiagonalsCheck"><span>Искать диагонали макросом</span></label>
+                    <label class="checkbox-row"><input type="checkbox" id="neonGlowCheck"><span>Свечение (Neon)</span></label>
+                </div>
+            </div>
+
+            <div class="fixed-player">
+                <div class="player-buttons">
+                    <button id="prevBtn" title="Шаг назад">◀</button>
+                    <button id="playBtn" title="Старт / Пауза">▶</button>
+                    <button id="stopBtn" title="Стоп и сброс">■</button>
+                    <button id="nextBtn" title="Шаг вперед">▶▶</button>
+                </div>
+                
+                <div class="control-group" style="border: none; padding: 0;">
+                    <label>Кадр: <span id="timelineVal">0 / 0</span></label>
+                    <input type="range" id="timelineRange" class="timeline-slider" min="0" max="0" value="0">
+                </div>
+
+                <div class="control-group" style="border: none; padding: 0;">
+                    <div class="compact-row">
+                        <label style="flex:1;">Скорость (1 - 1000мс):</label>
+                        <label style="color:#ff3333; font-weight:bold;">x<input type="number" id="speedMultInput" value="1" min="1" max="100" style="width:35px; margin-left:4px; text-align:center; padding:2px;"></label>
+                    </div>
+                    <input type="range" id="speedRange" min="1" max="1000" value="920">
+                    <div class="compact-row" style="margin-top:2px;">
+                        <span style="font-size:10px; color:#555;">🐌</span>
+                        <span id="speedVal" style="font-size:10px; color:#00ff66;">80 мс</span>
+                        <span style="font-size:10px; color:#555;">🚀</span>
+                    </div>
+                </div>
+
+                <div class="control-group" style="border: none; padding: 0;">
+                    <div class="compact-row">
+                        <label>Масштаб: <span id="fontSizeVal">24px</span></label>
+                        <label>Экран: <span id="heightVal">15</span></label>
+                    </div>
+                    <div class="compact-row">
+                        <input type="range" id="fontSizeRange" min="1" max="100" value="24" style="flex:1;">
+                        <input type="range" id="heightRange" min="1" max="1024" value="15" style="flex:1;">
+                    </div>
+                    
+                    <div class="compact-row" style="margin-top: 4px;">
+                        <label>Интервал: <span id="lineHeightVal">1.2</span></label>
+                        <input type="range" id="lineHeightRange" min="0.5" max="3.0" step="0.1" value="1.2" style="flex:1; margin-left: 8px;">
+                    </div>
+                    
+                    <div style="margin-top: 4px;">
+                        <select id="fontSelect">
+                            <option value="monospace">Шрифт: Моноширинный (Космос)</option>
+                            <option value="'Courier New', Courier, monospace">Шрифт: Courier New (Матрица)</option>
+                            <option value="'Impact', sans-serif">Шрифт: Impact (Монолит)</option>
+                            <option value="'Comic Sans MS', cursive">Шрифт: Comic Sans (Хаос)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- ПАЛИТРА -->
+                <div class="control-group" style="border: none; padding: 0; margin-top: 2px;">
+                    <label class="checkbox-row" style="margin-bottom:4px;"><input type="checkbox" id="rainbowTextCheck"><span style="color:#ff3333; font-weight:bold;">🌈 Радужный Текст (Цвета по ASCII)</span></label>
+                    <select id="themeSelect" style="padding: 2px;">
+                        <option value="matrix">Пресет: Матрица</option>
+                        <option value="cyberpunk">Пресет: Киберпанк</option>
+                        <option value="zerkalius">Пресет: Зеркалиус</option>
+                        <option value="synthwave">Пресет: Synthwave</option>
                         <option value="blood">Пресет: Blood</option>
                         <option value="mutation" style="background:#440044; color:#ff00ff;">🧬 Пресет: Мутация (История)</option>
                     </select>
