@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 25.0 (System Audio & Pattern Logger)
+VERSION: Pro 26.0 (The Source Code & Cascade Matrix)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 25.0)</title>
+    <title>Binary Drum Machine (Zerkalius 26.0)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -74,9 +74,8 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
 
         .control-group { display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid #1a1a1a; padding-bottom: 6px; }
         .control-group-highlight { background: #141414; padding: 6px; border-radius: 3px; border: 1px solid #222; }
-        .control-group-gold { background: #1a1a00; padding: 6px; border-radius: 3px; border: 1px solid #ffcc00; }
-        .control-group-green { background: #001a00; padding: 6px; border-radius: 3px; border: 1px solid #00ff66; }
         .control-group-blue { background: #0a1128; padding: 6px; border-radius: 3px; border: 1px solid #1a2a50; }
+        .control-group-gold { background: #1a1a00; padding: 6px; border-radius: 3px; border: 1px solid #ffcc00; }
         .control-group:last-of-type { border-bottom: none; }
 
         label { font-size: 11px; display: flex; justify-content: space-between; align-items: center; user-select: none; color: #888; }
@@ -95,7 +94,6 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
         #screenCanvas { display: block; cursor: grab; } 
         #screenCanvas:active { cursor: grabbing; }
         
-        /* ПЛАВАЮЩИЕ КНОПКИ */
         .float-btn { position: absolute; z-index: 10; border: none; cursor: pointer; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: opacity 0.3s, background 0.2s, box-shadow 0.2s; left: 8px;}
         #toggleMenuBtn { top: 8px; background: #00ff66; color: #000; box-shadow: 0 0 8px rgba(0, 255, 102, 0.5); border-radius: 3px; height: 26px; width: 34px;}
         #toggleSideBtn { top: 40px; background: #00ccff; color: #000; box-shadow: 0 0 8px rgba(0, 204, 255, 0.5); border-radius: 3px; height: 26px; width: 34px;}
@@ -116,7 +114,6 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
         .palette-row span { font-size: 9px; color: #ccc; width: 45px; }
         .palette-row input[type="range"] { margin: 0; }
         
-        /* ЛОГГЕР ПАТТЕРНОВ */
         textarea { 
             background: #050505; color: #ffcc00; border: 1px solid #ffcc00; 
             font-family: inherit; font-size: 10px; width: 100%; height: 60px; 
@@ -146,7 +143,7 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 25)</h3>
+                <h3>Binary Drum Machine (Pro 26)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
@@ -200,11 +197,9 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                     </div>
                 </div>
 
-                <!-- ПОИСК И ЛОГГЕР -->
                 <div class="control-group control-group-blue">
                     <label style="color:#00ccff; font-weight:bold;">Поиск паттерна (Логгер):</label>
                     <input type="text" id="searchInput" placeholder="Например: 11011 (Сохранит строку)" style="text-align: center; border-color: #00ccff;">
-                    <!-- Сюда будут падать найденные строки -->
                     <textarea id="dataInput" readonly placeholder="Здесь появятся найденные строки..."></textarea>
                 </div>
 
@@ -269,7 +264,7 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                 </div>
 
                 <div class="control-group">
-                    <label class="checkbox-row"><input type="checkbox" id="zerkaliusAnimCheck"><span><b style="color:#ff3333">Аниматрица (Волна Мутаций)</b></span></label>
+                    <label class="checkbox-row"><input type="checkbox" id="zerkaliusAnimCheck"><span><b style="color:#ff3333">Аниматрица (Волна Сверху-Вниз)</b></span></label>
                     <label class="checkbox-row"><input type="checkbox" id="elkaCheck"><span><b style="color:#00ccff">Круговой сдвиг (Ёлка)</b></span></label>
                     <label class="checkbox-row"><input type="checkbox" id="cylinderCheck"><span>Круговой сдвиг (Цилиндр)</span></label>
                     <label class="checkbox-row"><input type="checkbox" id="findDiagonalsCheck"><span>Искать диагонали макросом</span></label>
@@ -335,6 +330,7 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                         <option value="zerkalius">Пресет: Зеркалиус</option>
                         <option value="synthwave">Пресет: Synthwave</option>
                         <option value="blood">Пресет: Blood</option>
+                        <option value="mutation" style="background:#440044; color:#ff00ff;">🧬 Пресет: Мутация (История)</option>
                     </select>
                     <div class="color-palette">
                         <div class="palette-row">
@@ -379,10 +375,14 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
             cyberpunk: { act: '#ffcc00', actA: 1.0, stat: '#0033aa', statA: 0.3 },
             zerkalius: { act: '#dcdcdc', actA: 1.0, stat: '#0066cc', statA: 0.4 },
             synthwave: { act: '#00ffff', actA: 1.0, stat: '#ff00ff', statA: 0.3 },
-            blood: { act: '#ff0000', actA: 1.0, stat: '#440000', statA: 0.5 }
+            blood: { act: '#ff0000', actA: 1.0, stat: '#440000', statA: 0.5 },
+            mutation: { act: '#ffffff', actA: 1.0, stat: '#444444', statA: 0.2 } // Специальная тема для истории
         };
 
+        const MUTATION_COLORS = ['#ff3333', '#ffcc00', '#00ff66', '#00ccff', '#cc33ff'];
+
         const PREBUILT_SCENES = {
+            "sourcecode": { name: "0. Код Матрицы (Исходник)", type: "source", speed: 950, theme: "matrix", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: false, spin3d: false },
             "vortex3d": { name: "1. Квантовая Воронка 3D", type: "fractal", rule: "vortex", seed: "1", lines: 100, speed: 900, theme: "synthwave", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: true, spin3d: true },
             "ziggurat": { name: "2. Зиккурат (Воронка)", type: "fractal", rule: "ziggurat", seed: "1", lines: 100, speed: 850, theme: "cyberpunk", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: false, spin3d: false },
             "clones": { name: "7. Атака клонов (R110)", type: "fractal", rule: "110", seed: "1", lines: 100, speed: 900, theme: "blood", dual: false, echo: true, freezeY: false, elka: false, neon: false, frame: false, radar: false },
@@ -404,7 +404,8 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
             isDragging: false, hasMoved: false, dragStartX: 0, dragStartY: 0, 
             offsetX: 0, offsetY: 0, startOffsetX: 0, startOffsetY: 0,
             bassHistory: [], framesSinceChange: 0,
-            foundPatterns: new Set() // Для логгера паттернов
+            foundPatterns: new Set(),
+            mutationTracker: [], animatrixRow: 0
         };
 
         const AUDIO_VISUALIZER = {
@@ -422,16 +423,17 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                 this.initCore();
                 const bgAudio = document.getElementById('bgAudio');
                 bgAudio.src = URL.createObjectURL(file);
+                
                 if(this.source) this.source.disconnect();
                 this.source = this.audioCtx.createMediaElementSource(bgAudio);
                 this.source.connect(this.analyser);
                 this.source.connect(this.audioCtx.destination); 
+                
                 document.getElementById('audioBtnText').textContent = "🎵 Файл Готов";
             },
             initMic: async function() {
                 this.initCore();
                 try {
-                    // Используем getDisplayMedia для захвата СИСТЕМНОГО ЗВУКА или микрофона
                     const stream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: true });
                     const audioTracks = stream.getAudioTracks();
                     if (audioTracks.length === 0) {
@@ -456,6 +458,7 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                 if(!this.isInit || !document.getElementById('audioReactCheck').checked) {
                     this.audioScale = 1; this.audioGlow = 0; this.bassLevel = 0; return;
                 }
+                
                 const bgAudio = document.getElementById('bgAudio');
                 if (bgAudio.src && bgAudio.paused && !this.source?.mediaStream) {
                     this.audioScale = 1; this.audioGlow = 0; this.bassLevel = 0; return;
@@ -564,6 +567,11 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                 }
 
                 if(scene.type === 'vacuum') MODULE_DATA.generateVacuum();
+                else if(scene.type === 'source') {
+                    // ГРУЗИМ ИСХОДНЫЙ КОД САМОЙ ПРОГРАММЫ
+                    let codeLines = document.documentElement.innerHTML.split('\n').map(l => l.trim()).filter(l => l.length > 0).slice(0, 150).join('\n');
+                    MODULE_DATA.processTextData(codeLines, "Код Матрицы");
+                }
                 else if (scene.type === 'fractal') {
                     UI.zerkRuleSelect.value = scene.rule || '90';
                     UI.zerkSeedInput.value = scene.seed || '1';
@@ -572,7 +580,7 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                     MODULE_DATA.generateSierpinski(); UI.implantModeCheck.checked = implantState;
                 }
 
-                UI.statusInfo.textContent = `Сцена: ${scene.name}`;
+                UI.statusInfo.textContent = `Сцена загружена: ${scene.name}`;
                 RENDERER.renderFrame();
                 if (!preventPlay && !MODULE_STATE.isPlaying) setTimeout(() => PLAYER.start(), 200);
             },
@@ -597,6 +605,7 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                 MODULE_STATE.customScenes[key] = newScene; localStorage.setItem('saved_scenes_v20', JSON.stringify(MODULE_STATE.customScenes));
                 let opt = document.createElement('option'); opt.value = "custom_" + key; opt.textContent = "★ " + name;
                 UI.sceneSelect.appendChild(opt); UI.sceneSelect.value = "custom_" + key;
+                UI.statusInfo.textContent = `Сцена сохранена: ${name}`;
             }
         };
 
@@ -818,31 +827,31 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                 let H = lines.length;
                 if (H < 2) return;
                 
-                let cursorRow = MODULE_STATE.currentIndex;
-                
-                for(let i=1; i <= cursorRow; i++) {
-                    let upRow = cursorRow - i;
-                    let lowRow = cursorRow + i;
-                    if(upRow < 0 || lowRow >= H) break;
-                    
-                    let upStr = lines[upRow].text;
-                    let lowStr = lines[lowRow].text;
-                    if(!upStr || !lowStr) continue;
-                    
-                    let resStr = "";
-                    let len = Math.max(upStr.length, lowStr.length);
-                    for(let k=0; k<len; k++) {
-                        let cUp = upStr[k] || ' ';
-                        let cLow = lowStr[k] || ' ';
-                        
-                        let cNew = cLow;
-                        if (cUp === '1' && cLow === '1') cNew = '0';
-                        else if (cUp === '1' && (cLow === '0' || cLow === ' ')) cNew = '1';
-                        
-                        resStr += cNew;
-                    }
-                    lines[lowRow].text = resStr;
+                if (MODULE_STATE.animatrixRow === undefined || MODULE_STATE.animatrixRow >= H - 1) {
+                    MODULE_STATE.animatrixRow = 0;
                 }
+                
+                let row1 = MODULE_STATE.animatrixRow;
+                let row2 = row1 + 1;
+                
+                let str1 = lines[row1].text;
+                let str2 = lines[row2].text;
+                
+                let resStr = "";
+                let len = Math.max(str1.length, str2.length);
+                for(let k=0; k<len; k++) {
+                    let c1 = str1[k] || ' ';
+                    let c2 = str2[k] || ' ';
+                    
+                    let cNew = c2;
+                    if (c1 === '1' && c2 === '1') cNew = '0';
+                    else if (c1 === '1' && (c2 === '0' || c2 === ' ')) cNew = '1';
+                    
+                    resStr += cNew;
+                }
+                lines[row2].text = resStr;
+                MODULE_STATE.animatrixRow++;
+                
                 this.precalculateLines(false);
             },
 
@@ -866,16 +875,25 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                         }).join('');
                     } else if (op === 'reverse') text = text.split('').reverse().join('');
                     
-                    const diffFlags = []; const diffFlagsLeft = []; const diffFlagsRight = [];
+                    const diffFlags = []; const diffFlagsLeft = []; const diffFlagsRight = []; const mutFlags = [];
                     const prevText = i > 0 ? processed[i - 1].text : "";
                     
+                    if (isFirstLoad) MODULE_STATE.mutationTracker[i] = [];
+                    if (MODULE_STATE.mutationTracker[i] === undefined) MODULE_STATE.mutationTracker[i] = [];
+
                     for (let charIdx = 0; charIdx < text.length; charIdx++) {
                         const char = text[charIdx];
-                        diffFlags.push(char !== (prevText ? prevText[charIdx] : undefined));
+                        let isDiff = char !== (prevText ? prevText[charIdx] : undefined);
+                        diffFlags.push(isDiff);
                         diffFlagsLeft.push(char !== (prevText ? prevText[charIdx - 1] : undefined));
                         diffFlagsRight.push(char !== (prevText ? prevText[charIdx + 1] : undefined));
+                        
+                        if (isDiff && !isFirstLoad) {
+                            MODULE_STATE.mutationTracker[i][charIdx] = (MODULE_STATE.mutationTracker[i][charIdx] || 0) + 1;
+                        }
+                        mutFlags.push(MODULE_STATE.mutationTracker[i][charIdx] || 0);
                     }
-                    processed.push({ text: text, color: line.color, diffFlags: diffFlags, diffFlagsLeft: diffFlagsLeft, diffFlagsRight: diffFlagsRight });
+                    processed.push({ text: text, color: line.color, diffFlags: diffFlags, diffFlagsLeft: diffFlagsLeft, diffFlagsRight: diffFlagsRight, mutFlags: mutFlags });
                 }
                 MODULE_STATE.lines = processed;
                 
@@ -890,6 +908,7 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                     MODULE_STATE.foundPatterns.clear();
                     UI.dataInput.value = "";
                     UI.dataInput.style.display = 'none';
+                    MODULE_STATE.animatrixRow = 0;
                 }
                 RENDERER.updateTimeline(); RENDERER.renderFrame();
             },
@@ -965,9 +984,9 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                 const useDualMask = UI.dualMaskCheck?.checked || false;
                 const spin3d = UI.spin3dCheck?.checked || false;
                 const isBreathing = UI.breathingZoomCheck?.checked || false;
+                const activeTheme = UI.themeSelect?.value || 'matrix';
                 
                 let baseFontSize = parseInt(UI.fontSizeRange?.value || 24, 10);
-                
                 let zoomMod = 1;
                 if (isBreathing) {
                     zoomMod = 1 + (Math.sin(MODULE_STATE.breathTime) * 0.4); 
@@ -1048,6 +1067,18 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                             if (isCollision) isChanged = true;
 
                             let cRgb = isChanged ? actRgb : statRgb; let cAlpha = isChanged ? actAlpha : statAlpha;
+                            
+                            // ПАЛИТРА МУТАЦИЙ
+                            if (activeTheme === 'mutation') {
+                                let mLevel = lineData.mutFlags ? lineData.mutFlags[charIdx] : 0;
+                                if (mLevel > 0) {
+                                    cRgb = this.hexToRgb(MUTATION_COLORS[(mLevel - 1) % MUTATION_COLORS.length]);
+                                    cAlpha = 1.0; isChanged = true;
+                                } else {
+                                    cRgb = statRgb; cAlpha = statAlpha;
+                                }
+                            }
+
                             if (hideStatic && !isChanged && !isCollision) cAlpha = 0.0;
                             if (cAlpha <= 0.01) continue; 
 
@@ -1059,7 +1090,12 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                             let charShadowBlur = (useNeon && isChanged) ? 6 + AUDIO_VISUALIZER.audioGlow : 0;
                             
                             ctx.fillStyle = rgbaStr;
-                            if (charShadowBlur > 0) { ctx.shadowBlur = charShadowBlur; ctx.shadowColor = isChanged?actColor:statColor; }
+                            if (charShadowBlur > 0) { 
+                                ctx.shadowBlur = charShadowBlur; 
+                                ctx.shadowColor = (activeTheme === 'mutation' && lineData.mutFlags && lineData.mutFlags[charIdx] > 0) 
+                                    ? MUTATION_COLORS[(lineData.mutFlags[charIdx] - 1) % MUTATION_COLORS.length] 
+                                    : (isChanged?actColor:statColor); 
+                            }
                             ctx.fillText(finalChar, 0, 0); ctx.restore();
                         }
                     }
@@ -1148,6 +1184,17 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                         
                         let cRgb = isChanged ? actRgb : statRgb; let cAlpha = isChanged ? actAlpha : statAlpha;
                         
+                        // ПАЛИТРА МУТАЦИЙ
+                        if (activeTheme === 'mutation') {
+                            let mLevel = lineData.mutFlags ? lineData.mutFlags[actualIdx] : 0;
+                            if (mLevel > 0) {
+                                cRgb = this.hexToRgb(MUTATION_COLORS[(mLevel - 1) % MUTATION_COLORS.length]);
+                                cAlpha = 1.0; isChanged = true;
+                            } else {
+                                cRgb = statRgb; cAlpha = statAlpha;
+                            }
+                        }
+
                         if (hideStatic && !isChanged && !isCollision) cAlpha = 0.0;
                         if (cAlpha <= 0.01) continue; 
 
@@ -1157,7 +1204,12 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                         
                         if (lastFillStyle !== rgbaStr) { ctx.fillStyle = rgbaStr; lastFillStyle = rgbaStr; }
                         if (lastShadowBlur !== charShadowBlur) { ctx.shadowBlur = charShadowBlur; lastShadowBlur = charShadowBlur; }
-                        if (charShadowBlur > 0) { let hexC = isChanged?actColor:statColor; if(lastShadowColor !== hexC) { ctx.shadowColor = hexC; lastShadowColor = hexC; } }
+                        if (charShadowBlur > 0) { 
+                            let hexC = (activeTheme === 'mutation' && lineData.mutFlags && lineData.mutFlags[actualIdx] > 0) 
+                                ? MUTATION_COLORS[(lineData.mutFlags[actualIdx] - 1) % MUTATION_COLORS.length] 
+                                : (isChanged?actColor:statColor); 
+                            if(lastShadowColor !== hexC) { ctx.shadowColor = hexC; lastShadowColor = hexC; } 
+                        }
                         
                         ctx.fillText(finalChar, x, y);
                     }
@@ -1223,7 +1275,7 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                         }
                     }
 
-                    // ЛОГГЕР ПАТТЕРНОВ (ПОИСК)
+                    // ЛОГГЕР ПАТТЕРНОВ
                     let searchPat = UI.searchInput?.value?.trim();
                     if (searchPat && MODULE_STATE.originalLines.length > 0) {
                         let addedToLog = false;
@@ -1309,7 +1361,6 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                 SCENE_MANAGER.init();
 
                 if(UI.audioLoader) UI.audioLoader.addEventListener('change', function(e) { const file = e.target.files[0]; if (!file) return; AUDIO_VISUALIZER.initFile(file); });
-                
                 if(UI.micBtn) UI.micBtn.addEventListener('click', () => AUDIO_VISUALIZER.initMic());
 
                 if(UI.generateVacuumBtn) UI.generateVacuumBtn.addEventListener('click', () => { let implantState = UI.implantModeCheck.checked; UI.implantModeCheck.checked = false; MODULE_DATA.generateVacuum(); UI.implantModeCheck.checked = implantState; });
@@ -1393,7 +1444,7 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
                     const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : ''; 
                     if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') return; 
                     let text = e.clipboardData.getData('text/plain'); 
-                    if (text) { text = text.replace(/\t/g, ' '); MODULE_DATA.processTextData(text, 'Буфер обмена'); e.preventDefault(); } 
+                    if (text) { text = text.replace(/\t/g, ' '); MODULE_DATA.processTextData(text, 'Буфер обмена'); e.preventDefault(); if(!MODULE_STATE.isPlaying) RENDERER.renderFrame(); } 
                 });
                 
                 if(UI.speedRange) { UI.speedRange.addEventListener('input', (e) => { const val = parseInt(e.target.value, 10); UI.speedVal.textContent = (1001 - val) + ' мс'; }); }
@@ -1415,7 +1466,9 @@ VERSION: Pro 25.0 (System Audio & Pattern Logger)
         window.onload = function() { 
             EVENTS.init(); 
             const spVal = parseInt(UI.speedRange.value, 10); UI.speedVal.textContent = (1001 - spVal) + ' мс';
-            MODULE_DATA.loadFromLocalStorage(); 
+            if(!MODULE_DATA.loadFromLocalStorage()) {
+                SCENE_MANAGER.loadScene("sourcecode", true); 
+            }
         };
     </script>
 </body>
