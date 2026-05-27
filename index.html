@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
+VERSION: Pro 24.0 (Live Audio & Formatting)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 23.0)</title>
+    <title>Binary Drum Machine (Zerkalius 24.0)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -68,6 +68,8 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
         .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; flex: 1; }
         .btn-file { display: block; text-align: center; background: #252525; color: #fff; border: 1px solid #3c3c3c; padding: 5px; border-radius: 3px; font-weight: bold; cursor: pointer; font-size: 11px; }
         .btn-audio { background: #9900ff; color: #fff; border: 1px solid #cc66ff; }
+        .btn-mic { background: #ff3366; color: #fff; border: 1px solid #ff6699; padding: 5px; border-radius: 3px; font-weight: bold; cursor: pointer; font-size: 11px; flex: 1; text-align: center;}
+        .btn-mic:hover { background: #ff6699; }
         .file-input-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
 
         .control-group { display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid #1a1a1a; padding-bottom: 6px; }
@@ -135,7 +137,7 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 23)</h3>
+                <h3>Binary Drum Machine (Pro 24)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
@@ -149,11 +151,12 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
                 </div>
 
                 <div class="compact-row">
-                    <div class="file-input-wrapper"><span class="btn-file">📂 Открыть Текст</span><input type="file" id="fileLoader" accept=".txt"></div>
+                    <div class="file-input-wrapper"><span class="btn-file">📂 Текст</span><input type="file" id="fileLoader" accept=".txt"></div>
                     <div class="file-input-wrapper">
                         <span class="btn-file btn-audio" id="audioBtnText">🎵 Трек</span>
                         <input type="file" id="audioLoader" accept="audio/*">
                     </div>
+                    <button id="micBtn" class="btn-mic" title="Захват звука системы (Стерео микшер) или голоса">🎤 Live</button>
                 </div>
                 
                 <audio id="bgAudio" loop style="display:none;"></audio>
@@ -292,6 +295,11 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
                         <input type="range" id="heightRange" min="1" max="1024" value="15" style="flex:1;">
                     </div>
                     
+                    <div class="compact-row" style="margin-top: 4px;">
+                        <label>Интервал: <span id="lineHeightVal">1.2</span></label>
+                        <input type="range" id="lineHeightRange" min="0.5" max="3.0" step="0.1" value="1.2" style="flex:1; margin-left: 8px;">
+                    </div>
+                    
                     <div style="margin-top: 4px;">
                         <select id="fontSelect">
                             <option value="monospace">Шрифт: Моноширинный (Космос)</option>
@@ -367,7 +375,7 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
             "alien": { name: "42. Инопланетная вязь (R150)", type: "fractal", rule: "150", seed: "11", lines: 100, speed: 880, theme: "synthwave", dual: false, echo: false, freezeY: true, elka: true, neon: true, frame: true, radar: false },
             "orbital": { name: "99. Идеальный Радар (101)", type: "fractal", rule: "orbital", seed: "1", lines: 50, speed: 880, theme: "matrix", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: true, spin3d: false },
             "diagonal": { name: "100. Изометрия (Паутина)", type: "fractal", rule: "diagonal", seed: "100010001", lines: 50, speed: 950, theme: "blood", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: false, spin3d: false },
-            "gotha": { name: "💀 666. GOTHA (Dark Techno VJ)", type: "fractal", rule: "90", seed: "1", lines: 120, speed: 920, theme: "blood", dual: true, dualMask: true, echo: true, freezeY: false, spin3d: false, breathing: true, elka: false, neon: true, frame: false, radar: false },
+            "gotha": { name: "💀 666. GOTHA (Dark Techno)", type: "fractal", rule: "90", seed: "1", lines: 120, speed: 920, theme: "blood", dual: true, dualMask: true, echo: true, freezeY: false, spin3d: false, breathing: true, elka: false, neon: true, frame: false, radar: false },
             "hypnosis": { name: "🌀 777. Hypnosis (Туннель)", type: "fractal", rule: "orbital", seed: "1", lines: 60, speed: 890, theme: "cyberpunk", dual: true, dualMask: true, echo: false, freezeY: false, spin3d: true, breathing: true, elka: false, neon: true, frame: false, radar: true },
             "wormhole": { name: "🚀 888. Cyber-Wormhole", type: "fractal", rule: "vortex", seed: "111", lines: 100, speed: 960, theme: "synthwave", dual: true, dualMask: false, echo: true, freezeY: false, spin3d: true, breathing: true, elka: true, neon: true, frame: false, radar: false }
         };
@@ -380,33 +388,58 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
             algoPointer: 0, alignMode: 'center', globalAngle: 0, breathTime: 0,
             isDragging: false, hasMoved: false, dragStartX: 0, dragStartY: 0, 
             offsetX: 0, offsetY: 0, startOffsetX: 0, startOffsetY: 0,
-            
-            // AI Auto-Pilot State
             bassHistory: [], framesSinceChange: 0
         };
 
         const AUDIO_VISUALIZER = {
-            audioCtx: null, analyser: null, dataArray: null, isInit: false, audioScale: 1, audioGlow: 0, bassLevel: 0,
-            init: function(file) {
-                const bgAudio = document.getElementById('bgAudio');
+            audioCtx: null, analyser: null, dataArray: null, isInit: false, audioScale: 1, audioGlow: 0, bassLevel: 0, source: null,
+            initCore: function() {
                 if(!this.isInit) {
                     this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                     this.analyser = this.audioCtx.createAnalyser();
                     this.analyser.fftSize = 256;
-                    const source = this.audioCtx.createMediaElementSource(bgAudio);
-                    source.connect(this.analyser);
-                    this.analyser.connect(this.audioCtx.destination);
                     this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
                     this.isInit = true;
                 }
+            },
+            initFile: function(file) {
+                this.initCore();
+                const bgAudio = document.getElementById('bgAudio');
                 bgAudio.src = URL.createObjectURL(file);
-                // Авто-плей не вызываем, плеер запустит трек
-                document.getElementById('audioBtnText').textContent = "🎵 Готово!";
+                
+                if(this.source) this.source.disconnect();
+                this.source = this.audioCtx.createMediaElementSource(bgAudio);
+                this.source.connect(this.analyser);
+                this.source.connect(this.audioCtx.destination); 
+                
+                document.getElementById('audioBtnText').textContent = "🎵 Файл Готов";
+            },
+            initMic: async function() {
+                this.initCore();
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    if(this.source) this.source.disconnect();
+                    this.source = this.audioCtx.createMediaStreamSource(stream);
+                    this.source.connect(this.analyser);
+                    
+                    document.getElementById('bgAudio').pause();
+                    document.getElementById('audioBtnText').textContent = "🎵 Трек";
+                    document.getElementById('micBtn').textContent = "🎤 Активен";
+                } catch (err) {
+                    alert("Ошибка доступа к аудио (проверь разрешения браузера): " + err);
+                }
             },
             update: function() {
-                if(!this.isInit || !document.getElementById('audioReactCheck').checked || document.getElementById('bgAudio').paused) {
+                if(!this.isInit || !document.getElementById('audioReactCheck').checked) {
                     this.audioScale = 1; this.audioGlow = 0; this.bassLevel = 0; return;
                 }
+                
+                const bgAudio = document.getElementById('bgAudio');
+                // Если слушаем файл, но он на паузе - не реагируем. Если микрофон (нет src) - реагируем всегда.
+                if (bgAudio.src && bgAudio.paused) {
+                    this.audioScale = 1; this.audioGlow = 0; this.bassLevel = 0; return;
+                }
+
                 this.analyser.getByteFrequencyData(this.dataArray);
                 let bass = 0; for(let i=0; i<10; i++) bass += this.dataArray[i]; bass = bass / 10;
                 this.bassLevel = bass;
@@ -420,7 +453,7 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
             playBtn: document.getElementById('playBtn'), stopBtn: document.getElementById('stopBtn'), 
             prevBtn: document.getElementById('prevBtn'), nextBtn: document.getElementById('nextBtn'),
             dataInput: document.getElementById('dataInput'), fileLoader: document.getElementById('fileLoader'),
-            audioLoader: document.getElementById('audioLoader'), 
+            audioLoader: document.getElementById('audioLoader'), micBtn: document.getElementById('micBtn'),
             exportBtn: document.getElementById('exportBtn'), exportExcelBtn: document.getElementById('exportExcelBtn'),
             resetMemoryBtn: document.getElementById('resetMemoryBtn'), generateVacuumBtn: document.getElementById('generateVacuumBtn'),
             sceneSelect: document.getElementById('sceneSelect'), saveSceneBtn: document.getElementById('saveSceneBtn'),
@@ -439,6 +472,7 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
             speedRange: document.getElementById('speedRange'), speedVal: document.getElementById('speedVal'), 
             heightRange: document.getElementById('heightRange'), heightVal: document.getElementById('heightVal'), 
             fontSizeRange: document.getElementById('fontSizeRange'), fontSizeVal: document.getElementById('fontSizeVal'), 
+            lineHeightRange: document.getElementById('lineHeightRange'), lineHeightVal: document.getElementById('lineHeightVal'),
             fontSelect: document.getElementById('fontSelect'), 
             cylinderCheck: document.getElementById('cylinderCheck'), elkaCheck: document.getElementById('elkaCheck'), 
             neonGlowCheck: document.getElementById('neonGlowCheck'), hideStaticCheck: document.getElementById('hideStaticCheck'), 
@@ -517,7 +551,7 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
                     MODULE_DATA.generateSierpinski(); UI.implantModeCheck.checked = implantState;
                 }
 
-                UI.statusInfo.textContent = `Сцена загружена: ${scene.name}`;
+                UI.statusInfo.textContent = `Сцена: ${scene.name}`;
                 RENDERER.renderFrame();
                 if (!preventPlay && !MODULE_STATE.isPlaying) setTimeout(() => PLAYER.start(), 200);
             },
@@ -525,7 +559,7 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
             loadRandomScene: function() {
                 const keys = Object.keys(PREBUILT_SCENES);
                 const randomKey = keys[Math.floor(Math.random() * keys.length)];
-                this.loadScene(randomKey, true); // Грузим без автозапуска плеера, так как он уже работает
+                this.loadScene(randomKey, true); 
                 UI.sceneSelect.value = randomKey;
             },
 
@@ -598,9 +632,9 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
                     return { text: '', color: '' };
                 });
             },
-            saveToLocalStorage: function(data) { try { localStorage.setItem('saved_binary_lines_v20', JSON.stringify(data)); } catch (e) {} },
+            saveToLocalStorage: function(data) { try { localStorage.setItem('saved_binary_lines_v24', JSON.stringify(data)); } catch (e) {} },
             loadFromLocalStorage: function() {
-                const saved = localStorage.getItem('saved_binary_lines_v20');
+                const saved = localStorage.getItem('saved_binary_lines_v24');
                 if (saved) {
                     try {
                         const parsed = JSON.parse(saved);
@@ -834,6 +868,34 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
                     MODULE_STATE.echoHistory = [];
                 }
                 RENDERER.updateTimeline(); RENDERER.renderFrame();
+            },
+
+            exportToExcel: function() {
+                if(MODULE_STATE.lines.length === 0) return alert("Нет данных для экспорта!");
+                let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"></head><body><table border="1" style="font-family:monospace; font-size: 14px; text-align:center; background:#000000;">';
+                const actC = UI.activeColorPicker.value; const statC = UI.staticColorPicker.value; const dMode = UI.deltaModeSelect.value;
+
+                MODULE_STATE.lines.forEach(line => {
+                    html += '<tr>';
+                    for(let i=0; i<line.text.length; i++) {
+                        const char = line.text[i];
+                        if (char === ' ') { html += `<td style="background:#000;"></td>`; continue; }
+                        
+                        let isChanged = false;
+                        if (dMode === 'top') isChanged = line.diffFlags[i];
+                        else if (dMode === 'leftDiag') isChanged = line.diffFlagsLeft[i];
+                        else if (dMode === 'rightDiag') isChanged = line.diffFlagsRight[i];
+                        else if (dMode === 'serpinski') isChanged = line.diffFlagsLeft[i] || line.diffFlagsRight[i];
+
+                        let color = isChanged ? actC : statC;
+                        html += `<td style="color:${color}; padding:2px 6px; font-weight:${isChanged?'bold':'normal'};">${char}</td>`;
+                    }
+                    html += '</tr>';
+                });
+                html += '</table></body></html>';
+
+                const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+                const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "Zerkalius_Matrix.xls"; link.click(); URL.revokeObjectURL(link.href);
             }
         };
 
@@ -881,7 +943,6 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
                 const isBreathing = UI.breathingZoomCheck?.checked || false;
                 
                 let baseFontSize = parseInt(UI.fontSizeRange?.value || 24, 10);
-                
                 let zoomMod = 1;
                 if (isBreathing) {
                     zoomMod = 1 + (Math.sin(MODULE_STATE.breathTime) * 0.4); 
@@ -916,7 +977,10 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
                 
                 ctx.font = `normal ${fontSize}px ${selectedFont}`;
                 const charWidth = ctx.measureText('0').width;
-                let lineSpacing = fontSize * 1.2;
+                
+                // ИНТЕРВАЛ СТРОК (LINE HEIGHT)
+                let lh = parseFloat(UI.lineHeightRange?.value || 1.2);
+                let lineSpacing = fontSize * lh;
                 
                 const startY = (height - (visibleHeight - 1) * lineSpacing) / 2 + MODULE_STATE.offsetY;
                 let boldMask = findDiagonals ? MODULE_ALGORITHMS.findDiagonals(visibleLines.map(v=>v.data), visibleHeight) : [];
@@ -935,7 +999,7 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
                         if (text.length === 0 && dualText.length === 0) continue;
 
                         let renderLen = Math.max(text.length, dualText.length);
-                        let r = (i + 1) * fontSize * 1.5; 
+                        let r = (i + 1) * fontSize * lh * 1.25; // Радиус орбиты зависит от интервала строк
                         let angleStep = (Math.PI * 2) / renderLen;
 
                         for (let charIdx = 0; charIdx < renderLen; charIdx++) {
@@ -1083,9 +1147,8 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
                 UI.playBtn.innerHTML = '⏸'; UI.playBtn.style.background = '#ff3333'; UI.playBtn.style.color = '#fff';
                 MODULE_STATE.lastTickTime = performance.now(); 
                 
-                // ВОССТАНОВЛЕНИЕ МУЗЫКИ
                 const bgAudio = document.getElementById('bgAudio');
-                if(AUDIO_VISUALIZER.isInit && bgAudio.paused) bgAudio.play();
+                if(AUDIO_VISUALIZER.isInit && bgAudio.src && bgAudio.paused) bgAudio.play();
 
                 this.loop(performance.now());
             },
@@ -1094,9 +1157,8 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
                 cancelAnimationFrame(MODULE_STATE.rafId);
                 UI.playBtn.innerHTML = '▶'; UI.playBtn.style.background = '#ffcc00'; UI.playBtn.style.color = '#000';
                 
-                // ПАУЗА МУЗЫКИ
                 const bgAudio = document.getElementById('bgAudio');
-                if(AUDIO_VISUALIZER.isInit && !bgAudio.paused) bgAudio.pause();
+                if(AUDIO_VISUALIZER.isInit && bgAudio.src && !bgAudio.paused) bgAudio.pause();
             },
             stop: function() {
                 MODULE_STATE.isPlaying = false; MODULE_STATE.isPaused = false;
@@ -1104,9 +1166,8 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
                 MODULE_STATE.currentIndex = 0; MODULE_STATE.dualCoreIndex = 0; MODULE_STATE.algoPointer = 0; MODULE_STATE.globalAngle = 0;
                 UI.playBtn.innerHTML = '▶'; UI.playBtn.style.background = '#00ff66'; UI.playBtn.style.color = '#000';
                 
-                // ОСТАНОВКА И СБРОС МУЗЫКИ В НУЛЬ
                 const bgAudio = document.getElementById('bgAudio');
-                if(AUDIO_VISUALIZER.isInit) { bgAudio.pause(); bgAudio.currentTime = 0; }
+                if(AUDIO_VISUALIZER.isInit && bgAudio.src) { bgAudio.pause(); bgAudio.currentTime = 0; }
 
                 RENDERER.updateTimeline(); RENDERER.renderFrame();
             },
@@ -1129,15 +1190,12 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
                 if (delta >= speedMs) {
                     MODULE_STATE.lastTickTime = timestamp - (delta % Math.max(1, speedMs)); 
                     
-                    // --- AI AUTO-PILOT LOGIC ---
                     if (UI.autoPilotCheck?.checked && AUDIO_VISUALIZER.isInit) {
-                        // Если баса нет (тишина/яма) на протяжении 60 кадров
                         if (AUDIO_VISUALIZER.bassLevel < 30) MODULE_STATE.framesSinceChange++;
-                        else MODULE_STATE.framesSinceChange = 0; // Сброс если есть бас
-
+                        else MODULE_STATE.framesSinceChange = 0; 
                         if (MODULE_STATE.framesSinceChange > 60) {
-                            SCENE_MANAGER.loadRandomScene(); // Рандомная смена сцены!
-                            MODULE_STATE.framesSinceChange = -100; // Кулдаун, чтобы не менял слишком часто
+                            SCENE_MANAGER.loadRandomScene(); 
+                            MODULE_STATE.framesSinceChange = -100; 
                         }
                     }
 
@@ -1209,7 +1267,9 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
             init: function() {
                 SCENE_MANAGER.init();
 
-                if(UI.audioLoader) UI.audioLoader.addEventListener('change', function(e) { const file = e.target.files[0]; if (!file) return; AUDIO_VISUALIZER.init(file); });
+                if(UI.audioLoader) UI.audioLoader.addEventListener('change', function(e) { const file = e.target.files[0]; if (!file) return; AUDIO_VISUALIZER.initFile(file); });
+                if(UI.micBtn) UI.micBtn.addEventListener('click', () => AUDIO_VISUALIZER.initMic());
+
                 if(UI.generateVacuumBtn) UI.generateVacuumBtn.addEventListener('click', () => { let implantState = UI.implantModeCheck.checked; UI.implantModeCheck.checked = false; MODULE_DATA.generateVacuum(); UI.implantModeCheck.checked = implantState; });
                 
                 if(UI.clearCanvasBtn) UI.clearCanvasBtn.addEventListener('click', () => { 
@@ -1292,9 +1352,11 @@ VERSION: Pro 23.0 (Audio Sync & AI Auto-Pilot)
                     let text = e.clipboardData.getData('text/plain'); 
                     if (text) { text = text.replace(/\t/g, ' '); MODULE_DATA.processTextData(text, 'Буфер обмена'); e.preventDefault(); } 
                 });
+                
                 if(UI.speedRange) { UI.speedRange.addEventListener('input', (e) => { const val = parseInt(e.target.value, 10); UI.speedVal.textContent = (1001 - val) + ' мс'; }); }
                 if(UI.fontSizeRange) UI.fontSizeRange.addEventListener('input', (e) => { if(UI.fontSizeVal) UI.fontSizeVal.textContent = e.target.value + 'px'; RENDERER.renderFrame(); });
                 if(UI.heightRange) UI.heightRange.addEventListener('input', (e) => { if(UI.heightVal) UI.heightVal.textContent = e.target.value; RENDERER.renderFrame(); });
+                if(UI.lineHeightRange) UI.lineHeightRange.addEventListener('input', (e) => { if(UI.lineHeightVal) UI.lineHeightVal.textContent = e.target.value; RENDERER.renderFrame(); });
                 if(UI.zerkaliusBtn) UI.zerkaliusBtn.addEventListener('click', () => MODULE_DATA.generateSierpinski());
                 
                 const rerenderEvents = [
