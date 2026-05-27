@@ -43,3 +43,4 @@ Zerkalius is designed for easy integration into live streams (YouTube, Twitch, T
 7. Capture the window in **OBS Studio** and start broadcasting or recording.
 
 --
+The Binarius is alive. Good luck, Architect
