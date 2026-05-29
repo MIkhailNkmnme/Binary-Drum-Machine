@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 33.3 (The Debugger Edition)
+VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 33.3)</title>
+    <title>Zerkalius 38.0 (CPU Lab)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -102,6 +102,7 @@ VERSION: Pro 33.3 (The Debugger Edition)
         #screenCanvas { display: block; cursor: grab; } 
         #screenCanvas:active { cursor: grabbing; }
         
+        /* ПЛАВАЮЩИЕ КНОПКИ */
         .float-btn { position: absolute; z-index: 10; border: none; cursor: pointer; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: opacity 0.3s, background 0.2s, box-shadow 0.2s; left: 8px;}
         #toggleMenuBtn { top: 8px; background: #00ff66; color: #000; box-shadow: 0 0 8px rgba(0, 255, 102, 0.5); border-radius: 3px; height: 26px; width: 34px;}
         #toggleFloatPanelBtn { top: 40px; background: #0088ff; color: #fff; box-shadow: 0 0 8px rgba(0, 136, 255, 0.5); border-radius: 3px; height: 26px; width: 34px;}
@@ -124,10 +125,10 @@ VERSION: Pro 33.3 (The Debugger Edition)
         .palette-row input[type="range"] { margin: 0; }
         
         textarea { 
-            background: #050505; color: #00ff66; border: 1px solid #00ccff; 
-            font-family: inherit; font-size: 10px; width: 100%; height: 80px; 
-            margin-top: 4px; border-radius: 3px; resize: none; display: block; 
-            padding: 4px; box-sizing: border-box; box-shadow: inset 0 0 5px rgba(0,204,255,0.2);
+            background: #050505; color: #ffcc00; border: 1px solid #ffcc00; 
+            font-family: inherit; font-size: 10px; width: 100%; height: 60px; 
+            margin-top: 4px; border-radius: 3px; resize: none; display: none; 
+            padding: 4px; box-sizing: border-box; box-shadow: inset 0 0 5px rgba(255,204,0,0.2);
         }
 
         #hotkeyIndicator {
@@ -160,7 +161,7 @@ VERSION: Pro 33.3 (The Debugger Edition)
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 33.3)</h3>
+                <h3>CPU Lab (Pro 38.0)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
@@ -174,12 +175,12 @@ VERSION: Pro 33.3 (The Debugger Edition)
                 </div>
 
                 <div class="compact-row">
-                    <div class="file-input-wrapper"><span class="btn-file">📂 Текст</span><input type="file" id="fileLoader" accept=".txt"></div>
+                    <div class="file-input-wrapper"><span class="btn-file">📂 Открыть Текст</span><input type="file" id="fileLoader" accept=".txt"></div>
                     <div class="file-input-wrapper">
                         <span class="btn-file btn-audio" id="audioBtnText">🎵 Трек</span>
                         <input type="file" id="audioLoader" accept="audio/*">
                     </div>
-                    <button id="micBtn" class="btn-mic" title="Попросит доступ к захвату окна (Выбери вкладку с системным аудио)">🎤 Звук ПК</button>
+                    <button id="micBtn" class="btn-mic" title="Захват системного аудио">🎤 Звук ПК</button>
                 </div>
                 
                 <audio id="bgAudio" loop style="display:none;"></audio>
@@ -189,18 +190,11 @@ VERSION: Pro 33.3 (The Debugger Edition)
                     <button id="exportExcelBtn" class="btn-export-excel">📊 в Excel</button>
                     <button id="generateVacuumBtn" class="btn-vacuum" style="margin:0;">Сетка</button>
                 </div>
-                <div id="statusInfo">Терминал готов к диагностике...</div>
+                <div id="statusInfo">Двойной клик по холсту — Режим Дзен</div>
             </div>
 
             <div class="scrollable-settings">
                 
-                <!-- ОКНО ДИАГНОСТИКИ (ТЕРМИНАЛ) -->
-                <div class="control-group control-group-blue" style="border-color: #00ccff;">
-                    <label style="color:#00ccff; font-weight:bold; justify-content:center;">СИСТЕМНЫЙ ЛОГ (ШПИОН):</label>
-                    <textarea id="dataInput" readonly placeholder="Здесь будут логи загрузки текстов и ошибки..."></textarea>
-                    <input type="text" id="searchInput" placeholder="Поиск паттерна (Например: 11011)" style="text-align: center; border-color: #00ccff; margin-top:4px;">
-                </div>
-
                 <div class="control-group">
                     <label class="checkbox-row" style="margin-top: 2px; background: #2a0044; padding: 4px; border-radius: 3px;">
                         <input type="checkbox" id="audioReactCheck" checked>
@@ -219,6 +213,12 @@ VERSION: Pro 33.3 (The Debugger Edition)
                         <button id="insertOnesGlobalBtn" class="btn-mod magenta">Вставить 1</button>
                         <button id="fill1010Btn" class="btn-mod cyan">Заполнить 1010</button>
                     </div>
+                </div>
+
+                <div class="control-group control-group-blue">
+                    <label style="color:#00ccff; font-weight:bold;">Поиск паттерна (Логгер):</label>
+                    <input type="text" id="searchInput" placeholder="Например: 11011 (Сохранит строку)" style="text-align: center; border-color: #00ccff;">
+                    <textarea id="dataInput" readonly placeholder="Здесь появятся найденные строки..."></textarea>
                 </div>
 
                 <div class="control-group control-group-highlight" style="border-color: #ffcc00;">
@@ -287,7 +287,7 @@ VERSION: Pro 33.3 (The Debugger Edition)
                     <label class="checkbox-row"><input type="checkbox" id="elkaCheck"><span><b style="color:#00ccff">Круговой сдвиг (Ёлка)</b></span></label>
                     <label class="checkbox-row"><input type="checkbox" id="cylinderCheck"><span>Круговой сдвиг (Цилиндр)</span></label>
                     <label class="checkbox-row"><input type="checkbox" id="findDiagonalsCheck"><span>Искать диагонали макросом</span></label>
-                    <label class="checkbox-row"><input type="checkbox" id="neonGlowCheck"><span>Свечение (Neon)</span></label>
+                    <label class="checkbox-row"><input type="checkbox" id="neonGlowCheck" checked><span>Свечение (Neon)</span></label>
                 </div>
             </div>
 
@@ -491,17 +491,6 @@ VERSION: Pro 33.3 (The Debugger Edition)
                 this.audioGlow = (vol / 255) * 15; 
             }
         };
-
-        // --- ГЛОБАЛЬНЫЙ ЛОГГЕР-ДИАГНОСТ ---
-        function DEBUG_LOG(msg) {
-            console.log(msg);
-            const term = document.getElementById('dataInput');
-            if (term) {
-                term.style.display = 'block';
-                term.value += ">> " + msg + "\n";
-                term.scrollTop = term.scrollHeight;
-            }
-        }
 
         const UI = {
             playBtn: document.getElementById('playBtn'), stopBtn: document.getElementById('stopBtn'), 
@@ -814,82 +803,60 @@ VERSION: Pro 33.3 (The Debugger Edition)
             },
 
             implantOrReplace: function(shape, sourceName) {
-                try {
-                    DEBUG_LOG("Начат процесс implantOrReplace: " + sourceName);
-                    let symStatus = MODULE_ALGORITHMS.checkSymmetry(shape);
+                let symStatus = MODULE_ALGORITHMS.checkSymmetry(shape);
 
-                    if (UI.implantModeCheck.checked && MODULE_STATE.originalLines.length > 0) {
-                        DEBUG_LOG("Вживление в существующую матрицу...");
-                        let bgH = MODULE_STATE.originalLines.length;
-                        let bgW = MODULE_STATE.originalLines[0]?.text.length || 0;
-                        let shH = shape.length;
-                        let shW = Math.max(...shape.map(l => l.text.length));
-                        
-                        let startY = Math.floor((bgH - shH) / 2);
-                        let startX = Math.floor((bgW - shW) / 2);
-                        
-                        for(let i=0; i<shH; i++) {
-                            if(startY+i >= 0 && startY+i < bgH) {
-                                let bgStr = MODULE_STATE.originalLines[startY+i].text;
-                                let shStr = shape[i].text.padEnd(shW, ' ');
-                                
-                                let newStrArr = bgStr.split('');
-                                for(let k=0; k<shStr.length; k++) {
-                                    let targetX = startX + k;
-                                    if(targetX >= 0 && targetX < bgStr.length && shStr[k] !== ' ') {
-                                        newStrArr[targetX] = shStr[k];
-                                    }
-                                }
-                                MODULE_STATE.originalLines[startY+i].text = newStrArr.join('');
-                            }
-                        }
-                        UI.statusInfo.textContent = `Вживлено: ${sourceName} | ${symStatus}`;
-                    } else {
-                        DEBUG_LOG("Генерация чистой фигуры (Замена)...");
-                        MODULE_STATE.originalLines = shape;
-                        UI.statusInfo.textContent = `Генерация: ${sourceName} | ${symStatus}`;
-                    }
+                if (UI.implantModeCheck.checked && MODULE_STATE.originalLines.length > 0) {
+                    let bgH = MODULE_STATE.originalLines.length;
+                    let bgW = MODULE_STATE.originalLines[0]?.text.length || 0;
+                    let shH = shape.length;
+                    let shW = Math.max(...shape.map(l => l.text.length));
                     
-                    this.saveToLocalStorage(MODULE_STATE.originalLines);
-                    this.precalculateLines(true);
-                    DEBUG_LOG("Успех: Фигура отрисована.");
-                } catch(e) {
-                    DEBUG_LOG("ОШИБКА В implantOrReplace: " + e.message);
+                    let startY = Math.floor((bgH - shH) / 2);
+                    let startX = Math.floor((bgW - shW) / 2);
+                    
+                    for(let i=0; i<shH; i++) {
+                        if(startY+i >= 0 && startY+i < bgH) {
+                            let bgStr = MODULE_STATE.originalLines[startY+i].text;
+                            let shStr = shape[i].text.padEnd(shW, ' ');
+                            
+                            let newStrArr = bgStr.split('');
+                            for(let k=0; k<shStr.length; k++) {
+                                let targetX = startX + k;
+                                if(targetX >= 0 && targetX < bgStr.length && shStr[k] !== ' ') {
+                                    newStrArr[targetX] = shStr[k];
+                                }
+                            }
+                            MODULE_STATE.originalLines[startY+i].text = newStrArr.join('');
+                        }
+                    }
+                    UI.statusInfo.textContent = `Вживлено: ${sourceName} | ${symStatus}`;
+                } else {
+                    MODULE_STATE.originalLines = shape;
+                    UI.statusInfo.textContent = `Генерация: ${sourceName} | ${symStatus}`;
                 }
+                
+                this.saveToLocalStorage(MODULE_STATE.originalLines);
+                this.precalculateLines(true);
             },
 
             processTextData: function(text, sourceName) {
-                try {
-                    DEBUG_LOG("Старт processTextData: " + sourceName);
-                    
-                    // БЕЗОПАСНАЯ ОЧИСТКА: Убираем только \r, а табы меняем на пробелы
-                    const raw = text.split('\n').map(l => l.replace(/\t/g, ' ').replace(/\r/g, '')).filter(l => l.trim().length > 0);
-                    DEBUG_LOG("Найдено строк с текстом: " + raw.length);
-                    
-                    if (raw.length === 0) {
-                        DEBUG_LOG("ОШИБКА: Файл пуст или содержит только пробелы.");
-                        return;
+                // ПРАВИЛЬНЫЙ ФИКС ВСТАВКИ: Сохраняем все строки, отступы и заменяем табы на пробелы
+                const raw = text.split('\n').map(l => l.replace(/\t/g, '    ')).filter(l => l.replace(/\r/g, '').length > 0);
+                const shape = this.normalizeLines(raw);
+                
+                // Если режим вживления включен, но матрица пуста - создаем невидимый холст под размер текста
+                if (UI.implantModeCheck.checked && MODULE_STATE.originalLines.length === 0) {
+                    let h = shape.length;
+                    let w = Math.max(...shape.map(l => l.text.length));
+                    let matrix = [];
+                    for(let i=0; i<h; i++) {
+                        matrix.push({text: ' '.repeat(w), color: ''});
                     }
-
-                    const shape = this.normalizeLines(raw);
-                    
-                    // ЕСЛИ ХОЛСТ ПУСТОЙ, НО СТОИТ ГАЛОЧКА "ВЖИВИТЬ" -> АВТО-РАСШИРЕНИЕ ХОЛСТА
-                    if (UI.implantModeCheck.checked && MODULE_STATE.originalLines.length === 0) {
-                        DEBUG_LOG("Холст пуст, создаем новую сетку под размер текста...");
-                        let h = shape.length;
-                        let w = Math.max(...shape.map(l => l.text.length));
-                        let matrix = [];
-                        for(let i=0; i<h; i++) {
-                            matrix.push({text: ' '.repeat(w), color: ''});
-                        }
-                        MODULE_STATE.originalLines = matrix;
-                    }
-
-                    this.implantOrReplace(shape, sourceName);
-                    MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0;
-                } catch(e) {
-                    DEBUG_LOG("ОШИБКА В processTextData: " + e.message);
+                    MODULE_STATE.originalLines = matrix;
                 }
+
+                this.implantOrReplace(shape, sourceName);
+                MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0;
             },
 
             runAnimatrixGlobal: function() {
@@ -928,71 +895,61 @@ VERSION: Pro 33.3 (The Debugger Edition)
             },
 
             precalculateLines: function(isFirstLoad = false) {
-                try {
-                    DEBUG_LOG("Старт precalculateLines...");
-                    const op = UI.logicalOpSelect?.value || 'original';
-                    const raw = MODULE_STATE.originalLines;
-                    if (raw.length === 0) { 
-                        DEBUG_LOG("Матрица пуста, очищаем экран.");
-                        MODULE_STATE.lines = []; 
-                        return; 
-                    }
+                const op = UI.logicalOpSelect?.value || 'original';
+                const raw = MODULE_STATE.originalLines;
+                if (raw.length === 0) { MODULE_STATE.lines = []; return; }
+                
+                const processed = [];
+                for (let i = 0; raw.length !== i; i++) {
+                    const line = raw[i];
+                    let text = line.text;
                     
-                    const processed = [];
-                    for (let i = 0; raw.length !== i; i++) {
-                        const line = raw[i];
-                        let text = line.text;
-                        
-                        if (op === 'not') text = text.split('').map(char => (char === '0' ? '1' : (char === '1' ? '0' : (char === ' ' ? ' ' : char)))).join('');
-                        else if (op === 'xor' && i > 0) {
-                            const prevText = raw[i - 1].text;
-                            text = text.split('').map((char, charIdx) => {
-                                const prevChar = prevText[charIdx];
-                                if ((char === '0' || char === '1') && (prevChar === '0' || prevChar === '1')) return char === prevChar ? '0' : '1';
-                                return char;
-                            }).join('');
-                        } else if (op === 'reverse') text = text.split('').reverse().join('');
-                        
-                        const diffFlags = []; const diffFlagsLeft = []; const diffFlagsRight = []; const mutFlags = [];
-                        const prevText = i > 0 ? processed[i - 1].text : "";
-                        
-                        if (isFirstLoad) MODULE_STATE.mutationTracker[i] = [];
-                        if (MODULE_STATE.mutationTracker[i] === undefined) MODULE_STATE.mutationTracker[i] = [];
+                    if (op === 'not') text = text.split('').map(char => (char === '0' ? '1' : (char === '1' ? '0' : (char === ' ' ? ' ' : char)))).join('');
+                    else if (op === 'xor' && i > 0) {
+                        const prevText = raw[i - 1].text;
+                        text = text.split('').map((char, charIdx) => {
+                            const prevChar = prevText[charIdx];
+                            if ((char === '0' || char === '1') && (prevChar === '0' || prevChar === '1')) return char === prevChar ? '0' : '1';
+                            return char;
+                        }).join('');
+                    } else if (op === 'reverse') text = text.split('').reverse().join('');
+                    
+                    const diffFlags = []; const diffFlagsLeft = []; const diffFlagsRight = []; const mutFlags = [];
+                    const prevText = i > 0 ? processed[i - 1].text : "";
+                    
+                    if (isFirstLoad) MODULE_STATE.mutationTracker[i] = [];
+                    if (MODULE_STATE.mutationTracker[i] === undefined) MODULE_STATE.mutationTracker[i] = [];
 
-                        for (let charIdx = 0; charIdx < text.length; charIdx++) {
-                            const char = text[charIdx];
-                            let isDiff = char !== (prevText ? prevText[charIdx] : undefined);
-                            diffFlags.push(isDiff);
-                            diffFlagsLeft.push(char !== (prevText ? prevText[charIdx - 1] : undefined));
-                            diffFlagsRight.push(char !== (prevText ? prevText[charIdx + 1] : undefined));
-                            
-                            if (isDiff && !isFirstLoad) {
-                                MODULE_STATE.mutationTracker[i][charIdx] = (MODULE_STATE.mutationTracker[i][charIdx] || 0) + 1;
-                            }
-                            mutFlags.push(MODULE_STATE.mutationTracker[i][charIdx] || 0);
+                    for (let charIdx = 0; charIdx < text.length; charIdx++) {
+                        const char = text[charIdx];
+                        let isDiff = char !== (prevText ? prevText[charIdx] : undefined);
+                        diffFlags.push(isDiff);
+                        diffFlagsLeft.push(char !== (prevText ? prevText[charIdx - 1] : undefined));
+                        diffFlagsRight.push(char !== (prevText ? prevText[charIdx + 1] : undefined));
+                        
+                        if (isDiff && !isFirstLoad) {
+                            MODULE_STATE.mutationTracker[i][charIdx] = (MODULE_STATE.mutationTracker[i][charIdx] || 0) + 1;
                         }
-                        processed.push({ text: text, color: line.color, diffFlags: diffFlags, diffFlagsLeft: diffFlagsLeft, diffFlagsRight: diffFlagsRight, mutFlags: mutFlags });
+                        mutFlags.push(MODULE_STATE.mutationTracker[i][charIdx] || 0);
                     }
-                    MODULE_STATE.lines = processed;
-                    DEBUG_LOG("Матрица успешно рассчитана (" + MODULE_STATE.lines.length + " строк)");
-                    
-                    if (isFirstLoad) {
-                        const linesCount = MODULE_STATE.lines.length;
-                        if (linesCount > 0) {
-                            const optimalHeight = Math.min(linesCount, 1024);
-                            if(UI.heightRange) { UI.heightRange.max = Math.max(45, optimalHeight); UI.heightRange.value = optimalHeight; }
-                            if(UI.heightVal) UI.heightVal.textContent = optimalHeight;
-                        }
-                        MODULE_STATE.echoHistory = [];
-                        MODULE_STATE.foundPatterns.clear();
-                        UI.dataInput.value = "";
-                        UI.dataInput.style.display = 'none';
-                        MODULE_STATE.animatrixRow = 0;
-                    }
-                    RENDERER.updateTimeline(); RENDERER.renderFrame();
-                } catch(e) {
-                    DEBUG_LOG("ОШИБКА В precalculateLines: " + e.message);
+                    processed.push({ text: text, color: line.color, diffFlags: diffFlags, diffFlagsLeft: diffFlagsLeft, diffFlagsRight: diffFlagsRight, mutFlags: mutFlags });
                 }
+                MODULE_STATE.lines = processed;
+                
+                if (isFirstLoad) {
+                    const linesCount = MODULE_STATE.lines.length;
+                    if (linesCount > 0) {
+                        const optimalHeight = Math.min(linesCount, 1024);
+                        if(UI.heightRange) { UI.heightRange.max = Math.max(45, optimalHeight); UI.heightRange.value = optimalHeight; }
+                        if(UI.heightVal) UI.heightVal.textContent = optimalHeight;
+                    }
+                    MODULE_STATE.echoHistory = [];
+                    MODULE_STATE.foundPatterns.clear();
+                    UI.dataInput.value = "";
+                    UI.dataInput.style.display = 'none';
+                    MODULE_STATE.animatrixRow = 0;
+                }
+                RENDERER.updateTimeline(); RENDERER.renderFrame();
             },
 
             exportToExcel: function() {
@@ -1190,12 +1147,7 @@ VERSION: Pro 33.3 (The Debugger Edition)
                             if (11 > fontSize) charShadowBlur = 0; 
                             
                             ctx.fillStyle = rgbaStr;
-                            if (charShadowBlur > 0) { 
-                                ctx.shadowBlur = charShadowBlur; 
-                                ctx.shadowColor = (activeTheme === 'mutation' && lineData.mutFlags && lineData.mutFlags[charIdx] > 0) 
-                                    ? MUTATION_COLORS[(lineData.mutFlags[charIdx] - 1) % MUTATION_COLORS.length] 
-                                    : (isRainbow && isExactMatch ? '#ff3333' : (isChanged?actColor:statColor)); 
-                            }
+                            if (charShadowBlur > 0) { ctx.shadowBlur = charShadowBlur; ctx.shadowColor = isChanged?actColor:statColor; }
                             ctx.fillText(finalChar, 0, 0); ctx.restore();
                         }
                     }
@@ -1392,10 +1344,14 @@ VERSION: Pro 33.3 (The Debugger Edition)
                             MODULE_STATE.originalLines.forEach(l => {
                                 if (l.text.includes(searchPat) && !MODULE_STATE.foundPatterns.has(l.text)) {
                                     MODULE_STATE.foundPatterns.add(l.text);
-                                    DEBUG_LOG("Найдено совпадение: " + l.text);
+                                    UI.dataInput.value += l.text + "\n";
                                     addedToLog = true;
                                 }
                             });
+                            if (addedToLog) {
+                                UI.dataInput.style.display = 'block';
+                                UI.dataInput.scrollTop = UI.dataInput.scrollHeight;
+                            }
                         }
 
                         if (UI.zerkaliusAnimCheck?.checked && MODULE_STATE.originalLines.length > 0) MODULE_DATA.runAnimatrixGlobal();
@@ -1469,19 +1425,16 @@ VERSION: Pro 33.3 (The Debugger Edition)
                 SCENE_MANAGER.init();
 
                 if(UI.audioLoader) UI.audioLoader.addEventListener('change', function(e) { const file = e.target.files[0]; if (!file) return; AUDIO_VISUALIZER.initFile(file); });
-                
                 if(UI.micBtn) UI.micBtn.addEventListener('click', () => AUDIO_VISUALIZER.initMic());
 
                 if(UI.generateVacuumBtn) UI.generateVacuumBtn.addEventListener('click', () => { let implantState = UI.implantModeCheck.checked; UI.implantModeCheck.checked = false; MODULE_DATA.generateVacuum(); UI.implantModeCheck.checked = implantState; });
                 
                 if(UI.clearCanvasBtn) UI.clearCanvasBtn.addEventListener('click', () => { 
-                    DEBUG_LOG("Вызвано: Очистка холста...");
                     MODULE_STATE.originalLines = []; MODULE_STATE.lines = []; MODULE_STATE.echoHistory = []; MODULE_STATE.currentIndex = 0;
                     if (MODULE_STATE.isPlaying) PLAYER.stop();
                     UI.dataInput.value = ""; UI.dataInput.style.display = 'none'; MODULE_STATE.foundPatterns.clear();
                     RENDERER.updateTimeline(); RENDERER.renderFrame();
                     UI.statusInfo.textContent = "Холст мгновенно очищен"; MODULE_DATA.saveToLocalStorage([]);
-                    DEBUG_LOG("Холст очищен и готов к приему текста.");
                 });
 
                 if(UI.insertZerosGlobalBtn) UI.insertZerosGlobalBtn.addEventListener('click', () => {
@@ -1673,8 +1626,7 @@ VERSION: Pro 33.3 (The Debugger Edition)
                 
                 if(UI.fileLoader) UI.fileLoader.addEventListener('change', function(e) { 
                     const file = e.target.files[0]; if (!file) return; 
-                    // Сбрасываем значение input, чтобы можно было загрузить тот же файл еще раз
-                    e.target.value = '';
+                    e.target.value = ''; // Reset
                     const reader = new FileReader(); 
                     reader.onload = function(e) { MODULE_DATA.processTextData(e.target.result, file.name); }; 
                     reader.readAsText(file); 
@@ -1685,7 +1637,7 @@ VERSION: Pro 33.3 (The Debugger Edition)
                     if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') return; 
                     let text = e.clipboardData.getData('text/plain'); 
                     if (text) { 
-                        text = text.replace(/\t/g, ' '); 
+                        text = text.replace(/\t/g, '    '); 
                         MODULE_DATA.processTextData(text, 'Буфер обмена'); 
                         e.preventDefault(); 
                         if(!MODULE_STATE.isPlaying) RENDERER.renderFrame(); 
@@ -1712,9 +1664,7 @@ VERSION: Pro 33.3 (The Debugger Edition)
             EVENTS.init(); 
             const spVal = parseInt(UI.speedRange.value, 10); UI.speedVal.textContent = (1001 - spVal) + ' мс';
             if(!MODULE_DATA.loadFromLocalStorage()) {
-                // Если пустая локалка, грузим код по умолчанию
-                let codeLines = document.documentElement.innerHTML.split('\n').map(l => l.trim()).filter(l => l.length > 0).slice(0, 350).join('\n');
-                MODULE_DATA.processTextData(codeLines, "Код Матрицы");
+                SCENE_MANAGER.loadScene("sourcecode", true); 
             }
         };
     </script>
