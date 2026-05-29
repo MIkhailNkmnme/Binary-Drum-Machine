@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
+VERSION: Pro 33.0 (The Architect's Fix)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 40.0)</title>
+    <title>Binary Drum Machine (Zerkalius 33.0)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -26,21 +26,13 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
             transition: background 0.3s;
         }
 
-        .main-layout { display: flex; gap: 12px; height: 100%; align-items: stretch; flex-direction: row; transition: 0.3s; position: relative; }
+        .main-layout { display: flex; gap: 12px; height: 100%; align-items: stretch; flex-direction: row; transition: 0.3s; }
         
         .controls { 
             width: 300px; min-width: 300px; display: flex; flex-direction: column; 
-            background: rgba(16, 16, 16, 0.95); padding: 6px; border-radius: 4px; border: 1px solid #222; 
-            box-sizing: border-box; height: 100%; transition: 0.3s; z-index: 100;
+            background: #101010; padding: 6px; border-radius: 4px; border: 1px solid #222; 
+            box-sizing: border-box; height: 100%; transition: 0.3s;
         }
-
-        .controls.floating {
-            position: absolute; top: 10px; left: 50px; height: 90vh;
-            box-shadow: 0 0 20px rgba(0,255,102,0.2); border: 1px solid #00ff66;
-            cursor: grab;
-        }
-        .controls.floating:active { cursor: grabbing; }
-        .controls.floating .scrollable-settings, .controls.floating .fixed-player { cursor: default; }
 
         .fixed-top { flex-shrink: 0; display: flex; flex-direction: column; gap: 5px; border-bottom: 2px solid #222; padding-bottom: 6px; margin-bottom: 4px; }
         
@@ -97,7 +89,7 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
         input[type="color"] { border: none; width: 28px; height: 16px; padding: 0; background: none; cursor: pointer; }
         select { background: #222; color: #fff; border: 1px solid #444; padding: 3px; border-radius: 3px; width: 100%; font-family: inherit; font-size: 11px; outline: none; cursor: pointer;}
         
-        #statusInfo { font-size: 10px; color: #ffcc00; text-align: center; margin-top: 1px; min-height: 11px; font-weight:bold; }
+        #statusInfo { font-size: 10px; color: #ffcc00; text-align: center; margin-top: 1px; min-height: 11px; }
         #screenContainer { flex-grow: 1; background: #000000; border: 2px solid #111; border-radius: 5px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
         #screenCanvas { display: block; cursor: grab; } 
         #screenCanvas:active { cursor: grabbing; }
@@ -105,8 +97,7 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
         /* ПЛАВАЮЩИЕ КНОПКИ */
         .float-btn { position: absolute; z-index: 10; border: none; cursor: pointer; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: opacity 0.3s, background 0.2s, box-shadow 0.2s; left: 8px;}
         #toggleMenuBtn { top: 8px; background: #00ff66; color: #000; box-shadow: 0 0 8px rgba(0, 255, 102, 0.5); border-radius: 3px; height: 26px; width: 34px;}
-        #toggleFloatPanelBtn { top: 40px; background: #0088ff; color: #fff; box-shadow: 0 0 8px rgba(0, 136, 255, 0.5); border-radius: 3px; height: 26px; width: 34px;}
-        #toggleSideBtn { top: 72px; background: #00ccff; color: #000; box-shadow: 0 0 8px rgba(0, 204, 255, 0.5); border-radius: 3px; height: 26px; width: 34px;}
+        #toggleSideBtn { top: 40px; background: #00ccff; color: #000; box-shadow: 0 0 8px rgba(0, 204, 255, 0.5); border-radius: 3px; height: 26px; width: 34px;}
         
         #toggleCenterBtn { top: 50%; transform: translateY(-120px); background: #333; color: #fff; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
         #toggleTrackBtn { top: 50%; transform: translateY(-70px); background: #333; color: #fff; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
@@ -125,18 +116,10 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
         .palette-row input[type="range"] { margin: 0; }
         
         textarea { 
-            background: #050505; color: #00ff66; border: 1px solid #00ccff; 
-            font-family: inherit; font-size: 10px; width: 100%; height: 80px; 
+            background: #050505; color: #ffcc00; border: 1px solid #ffcc00; 
+            font-family: inherit; font-size: 10px; width: 100%; height: 60px; 
             margin-top: 4px; border-radius: 3px; resize: none; display: none; 
-            padding: 4px; box-sizing: border-box; box-shadow: inset 0 0 5px rgba(0,204,255,0.2);
-        }
-
-        #hotkeyIndicator {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0, 255, 102, 0.2); border: 2px solid #00ff66;
-            color: #00ff66; font-size: 32px; font-weight: bold; padding: 10px 30px;
-            border-radius: 10px; text-shadow: 0 0 10px #00ff66;
-            opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000;
+            padding: 4px; box-sizing: border-box; box-shadow: inset 0 0 5px rgba(255,204,0,0.2);
         }
 
         body.zen-mode .controls { display: none !important; }
@@ -161,14 +144,14 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 40)</h3>
+                <h3>Binary Drum Machine (Pro 33)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
                 <div class="control-group control-group-gold" style="border-bottom: none; padding-bottom: 2px;">
                     <div class="compact-row">
                         <select id="sceneSelect" style="font-weight:bold; color:#ffcc00; flex: 2; border: 1px solid #ff9900;">
-                            <option value="">📍 Карта Сокровищ (Сцены)</option>
+                            <option value="">📍 Карта Сокровищ (Выбрать...)</option>
                         </select>
                         <button id="saveSceneBtn" class="btn-zerkalius" style="background:#ff9900; margin: 0; flex: 1; padding: 3px;">💾 Сохр.</button>
                     </div>
@@ -218,7 +201,7 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                 <div class="control-group control-group-blue">
                     <label style="color:#00ccff; font-weight:bold;">Поиск паттерна (Логгер):</label>
                     <input type="text" id="searchInput" placeholder="Например: 11011 (Сохранит строку)" style="text-align: center; border-color: #00ccff;">
-                    <textarea id="dataInput" readonly placeholder="Системный Терминал..."></textarea>
+                    <textarea id="dataInput" readonly placeholder="Здесь появятся найденные строки..."></textarea>
                 </div>
 
                 <div class="control-group control-group-highlight" style="border-color: #ffcc00;">
@@ -293,10 +276,10 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
 
             <div class="fixed-player">
                 <div class="player-buttons">
-                    <button id="prevBtn" title="Шаг назад (Left)">◀</button>
-                    <button id="playBtn" title="Старт / Пауза (Space)">▶</button>
+                    <button id="prevBtn" title="Шаг назад">◀</button>
+                    <button id="playBtn" title="Старт / Пауза">▶</button>
                     <button id="stopBtn" title="Стоп и сброс">■</button>
-                    <button id="nextBtn" title="Шаг вперед (Right)">▶▶</button>
+                    <button id="nextBtn" title="Шаг вперед">▶▶</button>
                 </div>
                 
                 <div class="control-group" style="border: none; padding: 0;">
@@ -306,16 +289,21 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
 
                 <div class="control-group" style="border: none; padding: 0;">
                     <div class="compact-row">
-                        <label style="flex:1;" title="Hotkeys: W / S">Скорость (1 - 1000мс):</label>
-                        <label style="color:#ff3333; font-weight:bold;" title="Hotkeys: A / D">Turbo x<input type="number" id="speedMultInput" value="1" min="1" max="100" style="width:35px; margin-left:4px; text-align:center; padding:2px;"></label>
+                        <label style="flex:1;">Скорость (1 - 1000мс):</label>
+                        <label style="color:#ff3333; font-weight:bold;">x<input type="number" id="speedMultInput" value="1" min="1" max="100" style="width:35px; margin-left:4px; text-align:center; padding:2px;"></label>
                     </div>
                     <input type="range" id="speedRange" min="1" max="1000" value="920">
+                    <div class="compact-row" style="margin-top:2px;">
+                        <span style="font-size:10px; color:#555;">🐌</span>
+                        <span id="speedVal" style="font-size:10px; color:#00ff66;">80 мс</span>
+                        <span style="font-size:10px; color:#555;">🚀</span>
+                    </div>
                 </div>
 
                 <div class="control-group" style="border: none; padding: 0;">
                     <div class="compact-row">
-                        <label title="Hotkeys: + / -">Масштаб: <span id="fontSizeVal">24px</span></label>
-                        <label title="Hotkeys: PageUp / PageDown">Экран: <span id="heightVal">15</span></label>
+                        <label>Масштаб: <span id="fontSizeVal">24px</span></label>
+                        <label>Экран: <span id="heightVal">15</span></label>
                     </div>
                     <div class="compact-row">
                         <input type="range" id="fontSizeRange" min="1" max="100" value="24" style="flex:1;">
@@ -332,7 +320,6 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                             <option value="monospace">Шрифт: Моноширинный (Космос)</option>
                             <option value="'Courier New', Courier, monospace">Шрифт: Courier New (Матрица)</option>
                             <option value="'Impact', sans-serif">Шрифт: Impact (Монолит)</option>
-                            <option value="'Consolas', monospace" selected>Шрифт: Consolas (Хакер)</option>
                             <option value="'Comic Sans MS', cursive">Шрифт: Comic Sans (Хаос)</option>
                         </select>
                     </div>
@@ -349,7 +336,6 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                         <option value="blood">Пресет: Blood</option>
                         <option value="mutation" style="background:#440044; color:#ff00ff;">🧬 Пресет: Мутация (История)</option>
                         <option value="crypto" style="background:#000000; color:#ff3333; font-weight:bold;">🌈 Пресет: Крипто-Хеш (Спектр)</option>
-                        <option value="syntax" style="background:#002244; color:#00ffcc; font-weight:bold;">🖥️ Пресет: Синтаксис (IDE Colors)</option>
                     </select>
                     <div class="color-palette">
                         <div class="palette-row">
@@ -369,7 +355,6 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
 
         <div id="screenContainer">
             <button id="toggleMenuBtn" class="float-btn" title="Скрыть/Показать панель">⚙</button>
-            <button id="toggleFloatPanelBtn" class="float-btn" title="Открепить/Прикрепить Панель">🗗</button>
             <button id="toggleSideBtn" class="float-btn" title="Переместить панель (Влево/Вправо)">⇄</button>
             
             <button id="toggleCenterBtn" class="float-btn" title="Центрировать активную рамку">🎯</button>
@@ -382,8 +367,6 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
             <button id="alignCenterBtn" class="float-btn align-btn" title="По центру">&gt;|&lt;</button>
             <button id="alignRightBtn" class="float-btn align-btn" title="Выровнять вправо">&gt;|</button>
             
-            <div id="hotkeyIndicator"></div>
-            
             <canvas id="screenCanvas"></canvas>
         </div>
     </div>
@@ -392,29 +375,6 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
         console.log("%c Binary Drum Machine (Zerkalius) ", "background: #222; color: #00ff66; font-size: 20px; font-weight: bold; border-radius: 5px; padding: 5px;");
         console.log("%c Concept, Vision & Ideas: The Architect (User) \n Code & Logic: AI", "color: #00ccff; font-size: 14px; font-weight: bold;");
 
-        function hexToRgb(hex) {
-            let r = 0, g = 0, b = 0;
-            if (hex.length === 7) { r = parseInt(hex.slice(1, 3), 16); g = parseInt(hex.slice(3, 5), 16); b = parseInt(hex.slice(5, 7), 16); }
-            return `${r}, ${g}, ${b}`;
-        }
-
-        function hslToRgb(h, s, l) {
-            let c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c/2, r=0, g=0, b=0;
-            if (0 <= h && h < 60) {r=c; g=x; b=0;} else if (60 <= h && h < 120) {r=x; g=c; b=0;} else if (120 <= h && h < 180) {r=0; g=c; b=x;}
-            else if (180 <= h && h < 240) {r=0; g=x; b=c;} else if (240 <= h && h < 300) {r=x; g=0; b=c;} else if (300 <= h && h < 360) {r=c; g=0; b=x;}
-            return `${Math.round((r+m)*255)}, ${Math.round((g+m)*255)}, ${Math.round((b+m)*255)}`;
-        }
-
-        function DEBUG_LOG(msg) {
-            console.log(msg);
-            const term = document.getElementById('dataInput');
-            if (term) {
-                term.style.display = 'block';
-                term.value += ">> " + msg + "\n";
-                term.scrollTop = term.scrollHeight;
-            }
-        }
-
         const THEMES = {
             matrix: { act: '#ffffff', actA: 1.0, stat: '#00ff66', statA: 0.3 },
             cyberpunk: { act: '#ffcc00', actA: 1.0, stat: '#0033aa', statA: 0.3 },
@@ -422,21 +382,13 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
             synthwave: { act: '#00ffff', actA: 1.0, stat: '#ff00ff', statA: 0.3 },
             blood: { act: '#ff0000', actA: 1.0, stat: '#440000', statA: 0.5 },
             mutation: { act: '#ffffff', actA: 1.0, stat: '#444444', statA: 0.2 }, 
-            crypto: { act: '#ff3333', actA: 1.0, stat: '#555555', statA: 0.3 },
-            syntax: { act: '#ffffff', actA: 1.0, stat: '#555555', statA: 0.3 } // Тема для IDE раскраски
+            crypto: { act: '#ff3333', actA: 1.0, stat: '#555555', statA: 0.3 }
         };
 
         const MUTATION_COLORS = ['#ff3333', '#ffcc00', '#00ff66', '#00ccff', '#cc33ff'];
 
-        // СЛОВАРЬ СИНТАКСИСА
-        const SYNTAX_COLORS = {
-            'function': '#569cd6', 'const': '#569cd6', 'let': '#569cd6', 'var': '#569cd6', 'if': '#c586c0', 'else': '#c586c0', 'for': '#c586c0', 'return': '#c586c0',
-            'div': '#569cd6', 'span': '#569cd6', 'class': '#9cdcfe', 'id': '#9cdcfe', 'style': '#9cdcfe',
-            'color': '#9cdcfe', 'background': '#9cdcfe', 'margin': '#9cdcfe', 'padding': '#9cdcfe'
-        };
-
         const PREBUILT_SCENES = {
-            "sourcecode": { name: "0. Код Матрицы (Исходник)", type: "source", speed: 950, theme: "syntax", dual: false, echo: false, freezeY: false, elka: false, neon: false, frame: false, radar: false, spin3d: false, rainbow: false },
+            "sourcecode": { name: "0. Код Матрицы (Исходник)", type: "source", speed: 950, theme: "matrix", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: false, spin3d: false, rainbow: false },
             "vortex3d": { name: "1. Квантовая Воронка 3D", type: "fractal", rule: "vortex", seed: "1", lines: 100, speed: 900, theme: "synthwave", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: true, spin3d: true, rainbow: false },
             "ziggurat": { name: "2. Зиккурат (Воронка)", type: "fractal", rule: "ziggurat", seed: "1", lines: 100, speed: 850, theme: "cyberpunk", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: false, spin3d: false, rainbow: false },
             "clones": { name: "7. Атака клонов (R110)", type: "fractal", rule: "110", seed: "1", lines: 100, speed: 900, theme: "blood", dual: false, echo: true, freezeY: false, elka: false, neon: false, frame: false, radar: false, rainbow: false },
@@ -458,8 +410,8 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
             isDragging: false, hasMoved: false, dragStartX: 0, dragStartY: 0, 
             offsetX: 0, offsetY: 0, startOffsetX: 0, startOffsetY: 0,
             bassHistory: [], framesSinceChange: 0,
-            foundPatterns: new Set(), mutationTracker: [], animatrixRow: 0,
-            isPanelFloating: false, panelX: 50, panelY: 10, isDraggingPanel: false, panelDragStartX: 0, panelDragStartY: 0
+            foundPatterns: new Set(),
+            mutationTracker: [], animatrixRow: 0
         };
 
         const AUDIO_VISUALIZER = {
@@ -477,10 +429,12 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                 this.initCore();
                 const bgAudio = document.getElementById('bgAudio');
                 bgAudio.src = URL.createObjectURL(file);
+                
                 if(this.source) this.source.disconnect();
                 this.source = this.audioCtx.createMediaElementSource(bgAudio);
                 this.source.connect(this.analyser);
                 this.source.connect(this.audioCtx.destination); 
+                
                 document.getElementById('audioBtnText').textContent = "🎵 Файл Готов";
             },
             initMic: async function() {
@@ -497,20 +451,25 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                     if(this.source) this.source.disconnect();
                     this.source = this.audioCtx.createMediaStreamSource(audioStream);
                     this.source.connect(this.analyser);
+                    
                     document.getElementById('bgAudio').pause();
                     document.getElementById('audioBtnText').textContent = "🎵 ПК Звук";
                     document.getElementById('micBtn').textContent = "🔊 Идет Захват";
                     document.getElementById('statusInfo').textContent = "Системный звук подключен!";
-                } catch (err) {}
+                } catch (err) {
+                    alert("Отмена или ошибка захвата звука: " + err);
+                }
             },
             update: function() {
                 if(!this.isInit || !document.getElementById('audioReactCheck').checked) {
                     this.audioScale = 1; this.audioGlow = 0; this.bassLevel = 0; return;
                 }
+                
                 const bgAudio = document.getElementById('bgAudio');
                 if (bgAudio.src && bgAudio.paused && !this.source?.mediaStream) {
                     this.audioScale = 1; this.audioGlow = 0; this.bassLevel = 0; return;
                 }
+
                 this.analyser.getByteFrequencyData(this.dataArray);
                 let bass = 0; for(let i=0; i<10; i++) bass += this.dataArray[i]; bass = bass / 10;
                 this.bassLevel = bass;
@@ -561,9 +520,8 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
             
             toggleMenuBtn: document.getElementById('toggleMenuBtn'), toggleSideBtn: document.getElementById('toggleSideBtn'), 
             toggleCenterBtn: document.getElementById('toggleCenterBtn'), toggleTrackBtn: document.getElementById('toggleTrackBtn'), 
-            toggleReverseBtn: document.getElementById('toggleReverseBtn'), toggleFrameBtn: document.getElementById('toggleFrameBtn'), toggleRadarBtn: document.getElementById('toggleRadarBtn'), toggleFloatPanelBtn: document.getElementById('toggleFloatPanelBtn'),
-            alignLeftBtn: document.getElementById('alignLeftBtn'), alignCenterBtn: document.getElementById('alignCenterBtn'), alignRightBtn: document.getElementById('alignRightBtn'),
-            hotkeyInd: document.getElementById('hotkeyIndicator')
+            toggleReverseBtn: document.getElementById('toggleReverseBtn'), toggleFrameBtn: document.getElementById('toggleFrameBtn'), toggleRadarBtn: document.getElementById('toggleRadarBtn'),
+            alignLeftBtn: document.getElementById('alignLeftBtn'), alignCenterBtn: document.getElementById('alignCenterBtn'), alignRightBtn: document.getElementById('alignRightBtn')
         };
 
         const SCENE_MANAGER = {
@@ -628,10 +586,8 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                     UI.zerkRuleSelect.value = scene.rule || '90';
                     UI.zerkSeedInput.value = scene.seed || '1';
                     UI.zerkCountInput.value = scene.lines || 100;
-                    
-                    // АВТО-ОЧИСТКА ПЕРЕД ФРАКТАЛОМ
-                    MODULE_STATE.originalLines = [];
-                    MODULE_DATA.generateSierpinski(); 
+                    let implantState = UI.implantModeCheck.checked; UI.implantModeCheck.checked = false; 
+                    MODULE_DATA.generateSierpinski(); UI.implantModeCheck.checked = implantState;
                 }
 
                 UI.statusInfo.textContent = `Сцена загружена: ${scene.name}`;
@@ -712,14 +668,14 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
             normalizeLines: function(rawLines) {
                 if (!Array.isArray(rawLines)) return [];
                 return rawLines.map((item, index) => {
-                    if (typeof item === 'string') return { text: item, color: '', baseColor: null };
-                    else if (item && typeof item === 'object') return { text: item.text || '', color: item.color || '', baseColor: item.baseColor || null };
-                    return { text: '', color: '', baseColor: null };
+                    if (typeof item === 'string') return { text: item, color: '' };
+                    else if (item && typeof item === 'object') return { text: item.text || '', color: item.color || '' };
+                    return { text: '', color: '' };
                 });
             },
-            saveToLocalStorage: function(data) { try { localStorage.setItem('saved_binary_lines_v38', JSON.stringify(data)); } catch (e) {} },
+            saveToLocalStorage: function(data) { try { localStorage.setItem('saved_binary_lines_v24', JSON.stringify(data)); } catch (e) {} },
             loadFromLocalStorage: function() {
-                const saved = localStorage.getItem('saved_binary_lines_v38');
+                const saved = localStorage.getItem('saved_binary_lines_v24');
                 if (saved) {
                     try {
                         const parsed = JSON.parse(saved);
@@ -751,10 +707,6 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                 let rule = UI.zerkRuleSelect.value;
                 let matrix = [];
                 
-                // РАСШИРЯЕМ МАТРИЦУ ДЛЯ КРУПНЫХ ФИГУР
-                let w = seed.length + 2 * h + 50; 
-                let centerStart = Math.floor((w - seed.length) / 2);
-
                 if (rule === 'orbital') {
                     for(let y=0; y<h; y++) {
                         let len = 2 + y * 4; 
@@ -763,7 +715,9 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                         matrix.push(rowStr.split(''));
                     }
                 } else if (rule === 'diagonal') {
+                    let w = seed.length + 2 * h; 
                     let numMatrix = Array.from({length: h}, () => Array(w).fill(0)); 
+                    let centerStart = Math.floor((w - seed.length) / 2);
                     
                     for(let i=0; i<seed.length; i++) {
                         if(seed[i] === '1') {
@@ -779,7 +733,9 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                         }
                     }
                 } else {
+                    let w = seed.length + 2 * h; 
                     matrix = Array.from({length: h}, () => Array(w).fill('0')); 
+                    let centerStart = Math.floor((w - seed.length) / 2);
                     
                     if (rule === 'vortex') {
                         for (let y = 0; y < h; y++) {
@@ -830,9 +786,6 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
 
                 let shape = matrix.map(row => { return { text: row.join(''), color: ''}; });
                 let names = { 'ziggurat': 'Зиккурат', 'vortex': 'Воронка 3D', 'orbital': 'Орбитальный Конус', 'diagonal': 'Диагональная Сетка' };
-                
-                // АВТО-ОЧИСТКА ПЕРЕД ГЕНЕРАЦИЕЙ ФОРМЫ (ЕСЛИ НЕ СТОИТ "ВЖИВИТЬ")
-                if (!UI.implantModeCheck.checked) MODULE_STATE.originalLines = [];
                 this.implantOrReplace(shape, names[rule] || `Фрактал (R${rule})`);
             },
 
@@ -852,19 +805,15 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                         if(startY+i >= 0 && startY+i < bgH) {
                             let bgStr = MODULE_STATE.originalLines[startY+i].text;
                             let shStr = shape[i].text.padEnd(shW, ' ');
-                            let bgColors = MODULE_STATE.originalLines[startY+i].baseColor || [];
-                            let newColors = [...bgColors];
                             
                             let newStrArr = bgStr.split('');
                             for(let k=0; k<shStr.length; k++) {
                                 let targetX = startX + k;
                                 if(targetX >= 0 && targetX < bgStr.length && shStr[k] !== ' ') {
                                     newStrArr[targetX] = shStr[k];
-                                    newColors[targetX] = shape[i].baseColor ? shape[i].baseColor[k] : null; // Переносим цвет синтаксиса
                                 }
                             }
                             MODULE_STATE.originalLines[startY+i].text = newStrArr.join('');
-                            MODULE_STATE.originalLines[startY+i].baseColor = newColors;
                         }
                     }
                     UI.statusInfo.textContent = `Вживлено: ${sourceName} | ${symStatus}`;
@@ -878,33 +827,8 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
             },
 
             processTextData: function(text, sourceName) {
-                // ЕДИНЫЙ СТАНДАРТ ПУСТОТЫ: Сохраняем все строки, табы заменяем на 4 пробела
-                const raw = text.split('\n').map(l => l.replace(/\t/g, '    ').replace(/\r/g, '')).filter(l => l.length > 0);
-                
-                // СКАНЕР СИНТАКСИСА (IDE Colors)
-                let shape = raw.map(lineText => {
-                    let baseColorArray = new Array(lineText.length).fill(null);
-                    
-                    for (let word in SYNTAX_COLORS) {
-                        let regex = new RegExp(word, 'g');
-                        let match;
-                        while ((match = regex.exec(lineText)) !== null) {
-                            for (let i = 0; i < word.length; i++) {
-                                baseColorArray[match.index + i] = SYNTAX_COLORS[word];
-                            }
-                        }
-                    }
-                    return { text: lineText, color: '', baseColor: baseColorArray };
-                });
-
-                if (UI.implantModeCheck.checked && MODULE_STATE.originalLines.length === 0) {
-                    let h = shape.length;
-                    let w = Math.max(...shape.map(l => l.text.length));
-                    let matrix = [];
-                    for(let i=0; i<h; i++) matrix.push({text: ' '.repeat(w), color: '', baseColor: []});
-                    MODULE_STATE.originalLines = matrix;
-                }
-
+                const raw = text.split('\n').map(l => l.replace(/\t/g, ' ')).filter(l => l.trim().length > 0);
+                const shape = this.normalizeLines(raw);
                 this.implantOrReplace(shape, sourceName);
                 MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0;
             },
@@ -923,29 +847,22 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                 
                 let str1 = lines[row1].text;
                 let str2 = lines[row2].text;
-                let colors1 = lines[row1].baseColor || [];
-                let colors2 = lines[row2].baseColor || [];
                 
                 let resStr = "";
-                let resColors = [];
                 let len = Math.max(str1.length, str2.length);
                 for(let k=0; k<len; k++) {
                     let c1 = str1[k] || ' ';
                     let c2 = str2[k] || ' ';
                     
                     let cNew = c2;
-                    let colorNew = colors2[k];
-
-                    if (c1 === c2 && c1 !== ' ') { cNew = ' '; colorNew = null; }
-                    else if (c1 !== ' ' && c2 === ' ') { cNew = c1; colorNew = colors1[k]; }
-                    else if (c2 !== ' ' && c1 === ' ') { cNew = c2; colorNew = colors2[k]; }
-                    else if (c1 !== ' ' && c2 !== ' ') { cNew = c1; colorNew = colors1[k]; }
+                    if (c1 === c2 && c1 !== ' ') cNew = ' ';
+                    else if (c1 !== ' ' && c2 === ' ') cNew = c1;
+                    else if (c2 !== ' ' && c1 === ' ') cNew = c2;
+                    else if (c1 !== ' ' && c2 !== ' ') cNew = c1; 
                     
                     resStr += cNew;
-                    resColors.push(colorNew);
                 }
                 lines[row2].text = resStr;
-                lines[row2].baseColor = resColors;
                 MODULE_STATE.animatrixRow++;
                 
                 this.precalculateLines(false);
@@ -960,7 +877,6 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                 for (let i = 0; raw.length !== i; i++) {
                     const line = raw[i];
                     let text = line.text;
-                    let baseColor = line.baseColor || [];
                     
                     if (op === 'not') text = text.split('').map(char => (char === '0' ? '1' : (char === '1' ? '0' : (char === ' ' ? ' ' : char)))).join('');
                     else if (op === 'xor' && i > 0) {
@@ -970,10 +886,7 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                             if ((char === '0' || char === '1') && (prevChar === '0' || prevChar === '1')) return char === prevChar ? '0' : '1';
                             return char;
                         }).join('');
-                    } else if (op === 'reverse') {
-                        text = text.split('').reverse().join('');
-                        baseColor = [...baseColor].reverse();
-                    }
+                    } else if (op === 'reverse') text = text.split('').reverse().join('');
                     
                     const diffFlags = []; const diffFlagsLeft = []; const diffFlagsRight = []; const mutFlags = [];
                     const prevText = i > 0 ? processed[i - 1].text : "";
@@ -993,7 +906,7 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                         }
                         mutFlags.push(MODULE_STATE.mutationTracker[i][charIdx] || 0);
                     }
-                    processed.push({ text: text, color: line.color, baseColor: baseColor, diffFlags: diffFlags, diffFlagsLeft: diffFlagsLeft, diffFlagsRight: diffFlagsRight, mutFlags: mutFlags });
+                    processed.push({ text: text, color: line.color, diffFlags: diffFlags, diffFlagsLeft: diffFlagsLeft, diffFlagsRight: diffFlagsRight, mutFlags: mutFlags });
                 }
                 MODULE_STATE.lines = processed;
                 
@@ -1006,17 +919,9 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                     }
                     MODULE_STATE.echoHistory = [];
                     MODULE_STATE.foundPatterns.clear();
-                    if(UI.dataInput) { UI.dataInput.value = ""; UI.dataInput.style.display = 'none'; }
+                    UI.dataInput.value = "";
+                    UI.dataInput.style.display = 'none';
                     MODULE_STATE.animatrixRow = 0;
-                    
-                    // ЦЕНТРОВКА БЛОКА В 2D (Чтоб всегда был по центру при старте)
-                    let lh = parseFloat(UI.lineHeightRange?.value || 1.2);
-                    let baseFontSize = parseInt(UI.fontSizeRange?.value || 24, 10);
-                    let lineSpacing = baseFontSize * lh;
-                    let totalHeight = linesCount * lineSpacing;
-                    let startY = (UI.canvas.height - totalHeight) / 2;
-                    let idealOffset = (UI.canvas.height / 2) - startY - (lineSpacing * (linesCount/2));
-                    MODULE_STATE.offsetY = idealOffset;
                 }
                 RENDERER.updateTimeline(); RENDERER.renderFrame();
             },
@@ -1039,9 +944,6 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                         else if (dMode === 'serpinski') isChanged = line.diffFlagsLeft[i] || line.diffFlagsRight[i];
 
                         let color = isChanged ? actC : statC;
-                        // Синтаксис/Мутации для Excel
-                        if (line.baseColor && line.baseColor[i]) color = line.baseColor[i];
-                        
                         html += `<td style="color:${color}; padding:2px 6px; font-weight:${isChanged?'bold':'normal'};">${char}</td>`;
                     }
                     html += '</tr>';
@@ -1054,6 +956,12 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
         };
 
         const RENDERER = {
+            hslToRgb: function(h, s, l) {
+                let c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c/2, r=0, g=0, b=0;
+                if (0 <= h && h < 60) {r=c; g=x; b=0;} else if (60 <= h && h < 120) {r=x; g=c; b=0;} else if (120 <= h && h < 180) {r=0; g=c; b=x;}
+                else if (180 <= h && h < 240) {r=0; g=x; b=c;} else if (240 <= h && h < 300) {r=x; g=0; b=c;} else if (300 <= h && h < 360) {r=c; g=0; b=x;}
+                return `${Math.round((r+m)*255)}, ${Math.round((g+m)*255)}, ${Math.round((b+m)*255)}`;
+            },
             resizeCanvas: function() {
                 const rect = UI.screenContainer.getBoundingClientRect();
                 if (UI.canvas.width !== rect.width || UI.canvas.height !== rect.height) { UI.canvas.width = rect.width; UI.canvas.height = rect.height; }
@@ -1066,6 +974,11 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                     if(UI.timelineRange) { UI.timelineRange.max = 0; UI.timelineRange.value = 0; }
                     if(UI.timelineVal) UI.timelineVal.textContent = "0 / 0";
                 }
+            },
+            hexToRgb: function(hex) {
+                let r = 0, g = 0, b = 0;
+                if (hex.length === 7) { r = parseInt(hex.slice(1, 3), 16); g = parseInt(hex.slice(3, 5), 16); b = parseInt(hex.slice(5, 7), 16); }
+                return `${r}, ${g}, ${b}`;
             },
             renderFrame: function() {
                 AUDIO_VISUALIZER.update();
@@ -1103,8 +1016,8 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                 let fontSize = baseFontSize * AUDIO_VISUALIZER.audioScale * zoomMod;
                 const selectedFont = UI.fontSelect ? UI.fontSelect.value : 'monospace';
 
-                const actColor = UI.activeColorPicker.value; const actRgb = hexToRgb(actColor); const actAlpha = parseFloat(UI.activeAlphaRange.value);
-                const statColor = UI.staticColorPicker.value; const statRgb = hexToRgb(statColor); const statAlpha = parseFloat(UI.staticAlphaRange.value);
+                const actColor = UI.activeColorPicker.value; const actRgb = this.hexToRgb(actColor); const actAlpha = parseFloat(UI.activeAlphaRange.value);
+                const statColor = UI.staticColorPicker.value; const statRgb = this.hexToRgb(statColor); const statAlpha = parseFloat(UI.staticAlphaRange.value);
 
                 ctx.textBaseline = 'middle'; ctx.textAlign = 'center'; 
                 let activeLinesSource = MODULE_STATE.lines;
@@ -1139,10 +1052,7 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                 let lh = parseFloat(UI.lineHeightRange?.value || 1.2);
                 let lineSpacing = fontSize * lh;
                 
-                // ВАЖНО: Центровка работает только в 2D режиме (В 3D Радаре мы всегда в центре холста)
-                let startY = (height - (visibleHeight - 1) * lineSpacing) / 2 + MODULE_STATE.offsetY;
-                if(MODULE_STATE.isRadarActive) startY = (height - (visibleHeight - 1) * lineSpacing) / 2;
-
+                const startY = (height - (visibleHeight - 1) * lineSpacing) / 2 + MODULE_STATE.offsetY;
                 let boldMask = findDiagonals ? MODULE_ALGORITHMS.findDiagonals(visibleLines.map(v=>v.data), visibleHeight) : [];
                 const margin = 50; const alignMode = MODULE_STATE.alignMode;
 
@@ -1196,14 +1106,12 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                                     cRgb = '255, 51, 51'; cAlpha = 1.0; charShadowBlur = 10;
                                 } else if (finalChar !== ' ' && finalChar !== '0' && finalChar !== '1') {
                                     let hue = (finalChar.charCodeAt(0) * 47) % 360;
-                                    cRgb = hslToRgb(hue, 1, isChanged || isCollision ? 0.6 : 0.4);
+                                    cRgb = this.hslToRgb(hue, 1, isChanged || isCollision ? 0.6 : 0.4);
                                     cAlpha = 1.0;
                                 }
-                            } else if (activeTheme === 'syntax' && lineData.baseColor && lineData.baseColor[charIdx]) {
-                                cRgb = hexToRgb(lineData.baseColor[charIdx]); cAlpha = 1.0;
                             } else if (activeTheme === 'mutation') {
                                 let mLevel = lineData.mutFlags ? lineData.mutFlags[charIdx] : 0;
-                                if (mLevel > 0) { cRgb = hexToRgb(MUTATION_COLORS[(mLevel - 1) % MUTATION_COLORS.length]); cAlpha = 1.0; isChanged = true; } 
+                                if (mLevel > 0) { cRgb = this.hexToRgb(MUTATION_COLORS[(mLevel - 1) % MUTATION_COLORS.length]); cAlpha = 1.0; isChanged = true; } 
                                 else { cRgb = statRgb; cAlpha = statAlpha; }
                             }
 
@@ -1322,14 +1230,12 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                                 cRgb = '255, 51, 51'; cAlpha = 1.0; charShadowBlur = 10;
                             } else if (finalChar !== ' ' && finalChar !== '0' && finalChar !== '1') {
                                 let hue = (finalChar.charCodeAt(0) * 47) % 360;
-                                cRgb = hslToRgb(hue, 1, isChanged || isCollision ? 0.6 : 0.4);
+                                cRgb = this.hslToRgb(hue, 1, isChanged || isCollision ? 0.6 : 0.4);
                                 cAlpha = 1.0;
                             }
-                        } else if (activeTheme === 'syntax' && lineData.baseColor && lineData.baseColor[actualIdx]) {
-                            cRgb = hexToRgb(lineData.baseColor[actualIdx]); cAlpha = 1.0;
                         } else if (activeTheme === 'mutation') {
                             let mLevel = lineData.mutFlags ? lineData.mutFlags[actualIdx] : 0;
-                            if (mLevel > 0) { cRgb = hexToRgb(MUTATION_COLORS[(mLevel - 1) % MUTATION_COLORS.length]); cAlpha = 1.0; isChanged = true; } 
+                            if (mLevel > 0) { cRgb = this.hexToRgb(MUTATION_COLORS[(mLevel - 1) % MUTATION_COLORS.length]); cAlpha = 1.0; isChanged = true; } 
                             else { cRgb = statRgb; cAlpha = statAlpha; }
                         }
 
@@ -1422,10 +1328,14 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                             MODULE_STATE.originalLines.forEach(l => {
                                 if (l.text.includes(searchPat) && !MODULE_STATE.foundPatterns.has(l.text)) {
                                     MODULE_STATE.foundPatterns.add(l.text);
-                                    DEBUG_LOG("Найдено: " + l.text);
+                                    UI.dataInput.value += l.text + "\n";
                                     addedToLog = true;
                                 }
                             });
+                            if (addedToLog) {
+                                UI.dataInput.style.display = 'block';
+                                UI.dataInput.scrollTop = UI.dataInput.scrollHeight;
+                            }
                         }
 
                         if (UI.zerkaliusAnimCheck?.checked && MODULE_STATE.originalLines.length > 0) MODULE_DATA.runAnimatrixGlobal();
@@ -1446,7 +1356,7 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                                         else if (c2 !== ' ' && c1 === ' ') res += c2;
                                         else res += c1;
                                     }
-                                    newLines.push({text: res, color: lines[i].color, baseColor: lines[i].baseColor});
+                                    newLines.push({text: res, color: lines[i].color});
                                 }
                                 MODULE_STATE.originalLines = newLines; MODULE_DATA.precalculateLines(false);
                             } else {
@@ -1504,11 +1414,9 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                 if(UI.generateVacuumBtn) UI.generateVacuumBtn.addEventListener('click', () => { let implantState = UI.implantModeCheck.checked; UI.implantModeCheck.checked = false; MODULE_DATA.generateVacuum(); UI.implantModeCheck.checked = implantState; });
                 
                 if(UI.clearCanvasBtn) UI.clearCanvasBtn.addEventListener('click', () => { 
-                    DEBUG_LOG("Очистка холста...");
                     MODULE_STATE.originalLines = []; MODULE_STATE.lines = []; MODULE_STATE.echoHistory = []; MODULE_STATE.currentIndex = 0;
                     if (MODULE_STATE.isPlaying) PLAYER.stop();
-                    if(UI.dataInput) { UI.dataInput.value = ""; UI.dataInput.style.display = 'none'; }
-                    MODULE_STATE.foundPatterns.clear();
+                    UI.dataInput.value = ""; UI.dataInput.style.display = 'none'; MODULE_STATE.foundPatterns.clear();
                     RENDERER.updateTimeline(); RENDERER.renderFrame();
                     UI.statusInfo.textContent = "Холст мгновенно очищен"; MODULE_DATA.saveToLocalStorage([]);
                 });
@@ -1547,144 +1455,20 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                 UI.alignLeftBtn.addEventListener('click', function() { setAlign('left', this); }); UI.alignCenterBtn.addEventListener('click', function() { setAlign('center', this); }); UI.alignRightBtn.addEventListener('click', function() { setAlign('right', this); });
 
                 if(UI.canvas) {
-                    UI.canvas.addEventListener('dblclick', function(e) { 
-                        e.preventDefault(); 
-                        document.body.classList.toggle('zen-mode');
-                        MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0; 
-                        setTimeout(() => RENDERER.renderFrame(), 50); 
-                    });
-                    UI.canvas.addEventListener('mousedown', function(e) {
-                        MODULE_STATE.isDragging = true; MODULE_STATE.hasMoved = false;
-                        MODULE_STATE.dragStartX = e.clientX; MODULE_STATE.dragStartY = e.clientY; 
-                        MODULE_STATE.startOffsetX = MODULE_STATE.offsetX; MODULE_STATE.startOffsetY = MODULE_STATE.offsetY;
-                    });
-                    UI.canvas.addEventListener('mousemove', function(e) {
-                        if (MODULE_STATE.isDragging) {
-                            const dx = e.clientX - MODULE_STATE.dragStartX; const dy = e.clientY - MODULE_STATE.dragStartY;
-                            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) MODULE_STATE.hasMoved = true;
-                            MODULE_STATE.offsetX = MODULE_STATE.startOffsetX + dx; MODULE_STATE.offsetY = MODULE_STATE.startOffsetY + dy;
-                            RENDERER.renderFrame(); 
-                        }
-                    });
+                    UI.canvas.addEventListener('dblclick', function(e) { e.preventDefault(); document.body.classList.toggle('zen-mode'); MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0; setTimeout(() => RENDERER.renderFrame(), 50); });
+                    UI.canvas.addEventListener('mousedown', function(e) { MODULE_STATE.isDragging = true; MODULE_STATE.hasMoved = false; MODULE_STATE.dragStartX = e.clientX; MODULE_STATE.dragStartY = e.clientY; MODULE_STATE.startOffsetX = MODULE_STATE.offsetX; MODULE_STATE.startOffsetY = MODULE_STATE.offsetY; });
+                    UI.canvas.addEventListener('mousemove', function(e) { if (MODULE_STATE.isDragging) { const dx = e.clientX - MODULE_STATE.dragStartX; const dy = e.clientY - MODULE_STATE.dragStartY; if (Math.abs(dx) > 3 || Math.abs(dy) > 3) MODULE_STATE.hasMoved = true; MODULE_STATE.offsetX = MODULE_STATE.startOffsetX + dx; MODULE_STATE.offsetY = MODULE_STATE.startOffsetY + dy; RENDERER.renderFrame(); } });
                     window.addEventListener('mouseup', function(e) { MODULE_STATE.isDragging = false; });
                     UI.canvas.addEventListener('click', function(e) { if (!MODULE_STATE.hasMoved && MODULE_STATE.lines.length > 0) { if (MODULE_STATE.isPlaying) PLAYER.pause(); else PLAYER.start(); }});
-                    UI.canvas.addEventListener('wheel', function(e) {
-                        if (MODULE_STATE.lines.length === 0) return; e.preventDefault(); 
-                        if(UI.fontSizeRange) {
-                            let size = parseInt(UI.fontSizeRange.value, 10);
-                            if (0 > e.deltaY) size = Math.min(100, size + 1); else size = Math.max(1, size - 1);  
-                            UI.fontSizeRange.value = size; UI.fontSizeVal.textContent = size + "px";
-                        }
-                        RENDERER.renderFrame();
-                    });
+                    UI.canvas.addEventListener('wheel', function(e) { if (MODULE_STATE.lines.length === 0) return; e.preventDefault(); if(UI.fontSizeRange) { let size = parseInt(UI.fontSizeRange.value, 10); if (0 > e.deltaY) size = Math.min(100, size + 1); else size = Math.max(1, size - 1);  UI.fontSizeRange.value = size; if(UI.fontSizeVal) UI.fontSizeVal.textContent = size + "px"; } RENDERER.renderFrame(); });
                 }
-
-                // HOTKEYS
-                const showHotkeyInd = (text) => {
-                    UI.hotkeyInd.textContent = text;
-                    UI.hotkeyInd.style.opacity = 1;
-                    clearTimeout(MODULE_STATE.hotkeyTimeout);
-                    MODULE_STATE.hotkeyTimeout = setTimeout(() => UI.hotkeyInd.style.opacity = 0, 800);
-                };
-
-                document.addEventListener('keydown', function(e) {
-                    const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
-                    if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') return;
-                    if (MODULE_STATE.lines.length === 0) return;
-
-                    if (e.code === 'Space') {
-                        e.preventDefault();
-                        if (MODULE_STATE.isPlaying) PLAYER.pause(); else PLAYER.start();
-                        showHotkeyInd(MODULE_STATE.isPlaying ? '▶ PLAY' : '⏸ PAUSE');
-                    }
-                    if (e.code === 'ArrowRight') {
-                        if (MODULE_STATE.isPlaying) PLAYER.pause();
-                        let multStep = parseInt(UI.speedMultInput?.value || 1, 10);
-                        MODULE_STATE.currentIndex = (MODULE_STATE.currentIndex + multStep) % MODULE_STATE.lines.length; 
-                        RENDERER.renderFrame(); RENDERER.updateTimeline();
-                        showHotkeyInd('Кадр +');
-                    }
-                    if (e.code === 'ArrowLeft') {
-                        if (MODULE_STATE.isPlaying) PLAYER.pause();
-                        let multStep = parseInt(UI.speedMultInput?.value || 1, 10);
-                        MODULE_STATE.currentIndex = (MODULE_STATE.currentIndex - multStep + MODULE_STATE.lines.length) % MODULE_STATE.lines.length; 
-                        RENDERER.renderFrame(); RENDERER.updateTimeline();
-                        showHotkeyInd('Кадр -');
-                    }
-                    if (e.key === 'w' || e.key === 'W' || e.key === 'ц' || e.key === 'Ц') {
-                        let v = parseInt(UI.speedRange.value, 10); v = Math.min(1000, v + 10); UI.speedRange.value = v; UI.speedVal.textContent = (1001 - v) + ' мс';
-                        showHotkeyInd(`Скорость: ${1001-v} мс`);
-                    }
-                    if (e.key === 's' || e.key === 'S' || e.key === 'ы' || e.key === 'Ы') {
-                        let v = parseInt(UI.speedRange.value, 10); v = Math.max(1, v - 10); UI.speedRange.value = v; UI.speedVal.textContent = (1001 - v) + ' мс';
-                        showHotkeyInd(`Скорость: ${1001-v} мс`);
-                    }
-                    if (e.key === '=' || e.key === '+') {
-                        let s = parseInt(UI.fontSizeRange.value, 10); s = Math.min(100, s + 1); UI.fontSizeRange.value = s; UI.fontSizeVal.textContent = s + "px"; RENDERER.renderFrame();
-                        showHotkeyInd(`Масштаб: ${s}px`);
-                    }
-                    if (e.key === '-' || e.key === '_') {
-                        let s = parseInt(UI.fontSizeRange.value, 10); s = Math.max(1, s - 1); UI.fontSizeRange.value = s; UI.fontSizeVal.textContent = s + "px"; RENDERER.renderFrame();
-                        showHotkeyInd(`Масштаб: ${s}px`);
-                    }
-                    if (e.key === 'd' || e.key === 'D' || e.key === 'в' || e.key === 'В') {
-                        let m = parseInt(UI.speedMultInput.value, 10); m = Math.min(100, m + 1); UI.speedMultInput.value = m;
-                        showHotkeyInd(`Турбо: x${m}`);
-                    }
-                    if (e.key === 'a' || e.key === 'A' || e.key === 'ф' || e.key === 'Ф') {
-                        let m = parseInt(UI.speedMultInput.value, 10); m = Math.max(1, m - 1); UI.speedMultInput.value = m;
-                        showHotkeyInd(`Турбо: x${m}`);
-                    }
-                    if (e.code === 'PageUp') {
-                        let h = parseInt(UI.heightRange.value, 10); h = Math.min(1024, h + 5); UI.heightRange.value = h; UI.heightVal.textContent = h; RENDERER.renderFrame();
-                        showHotkeyInd(`Экран: ${h} строк`);
-                    }
-                    if (e.code === 'PageDown') {
-                        let h = parseInt(UI.heightRange.value, 10); h = Math.max(1, h - 5); UI.heightRange.value = h; UI.heightVal.textContent = h; RENDERER.renderFrame();
-                        showHotkeyInd(`Экран: ${h} строк`);
-                    }
-                    if (e.key === 'c' || e.key === 'C' || e.key === 'с' || e.key === 'С') {
-                        UI.clearCanvasBtn.click(); showHotkeyInd('🧽 Очищено');
-                    }
-                });
-
-                const panel = document.getElementById('leftPanel');
-                let startX, startY, startLeft, startTop;
-
-                UI.toggleFloatPanelBtn.addEventListener('click', function() {
-                    MODULE_STATE.isPanelFloating = !MODULE_STATE.isPanelFloating;
-                    if(MODULE_STATE.isPanelFloating) {
-                        panel.classList.add('floating'); this.style.background = '#00ff66'; this.style.color = '#000';
-                        panel.style.left = '50px'; panel.style.top = '10px';
-                    } else {
-                        panel.classList.remove('floating'); this.style.background = '#0088ff'; this.style.color = '#fff';
-                        panel.style.left = ''; panel.style.top = ''; panel.style.transform = '';
-                    }
-                    RENDERER.renderFrame();
-                });
-
-                panel.addEventListener('mousedown', function(e) {
-                    if(!MODULE_STATE.isPanelFloating) return;
-                    if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON' || e.target.closest('.scrollable-settings') || e.target.closest('.fixed-player')) return;
-                    MODULE_STATE.isDraggingPanel = true;
-                    startX = e.clientX; startY = e.clientY;
-                    startLeft = panel.offsetLeft; startTop = panel.offsetTop;
-                });
-                window.addEventListener('mousemove', function(e) {
-                    if(MODULE_STATE.isDraggingPanel) {
-                        panel.style.left = (startLeft + e.clientX - startX) + 'px';
-                        panel.style.top = (startTop + e.clientY - startY) + 'px';
-                    }
-                });
-                window.addEventListener('mouseup', function() { MODULE_STATE.isDraggingPanel = false; });
 
                 if(UI.themeSelect) { UI.themeSelect.addEventListener('change', function() { const t = THEMES[this.value]; if(t) { UI.activeColorPicker.value = t.act; UI.activeAlphaRange.value = t.actA; UI.staticColorPicker.value = t.stat; UI.staticAlphaRange.value = t.statA; RENDERER.renderFrame(); } }); }
                 if(UI.toggleMenuBtn) { UI.toggleMenuBtn.addEventListener('click', function() { const panel = document.querySelector('.controls'); if (panel.style.display === 'none') { panel.style.display = 'flex'; this.style.background = '#00ff66'; } else { panel.style.display = 'none'; this.style.background = '#222'; } RENDERER.renderFrame(); }); }
                 if(UI.toggleSideBtn) {
                     let currentLayout = 'left';
                     UI.toggleSideBtn.addEventListener('click', function() {
-                        if(MODULE_STATE.isPanelFloating) return;
-                        const container = document.querySelector('.main-layout'); const btns = [UI.toggleMenuBtn, UI.toggleSideBtn, UI.toggleCenterBtn, UI.toggleTrackBtn, UI.toggleReverseBtn, UI.toggleFrameBtn, UI.toggleRadarBtn, UI.toggleFloatPanelBtn]; const alignBtns = [UI.alignLeftBtn, UI.alignCenterBtn, UI.alignRightBtn];
+                        const container = document.querySelector('.main-layout'); const btns = [UI.toggleMenuBtn, UI.toggleSideBtn, UI.toggleCenterBtn, UI.toggleTrackBtn, UI.toggleReverseBtn, UI.toggleFrameBtn, UI.toggleRadarBtn]; const alignBtns = [UI.alignLeftBtn, UI.alignCenterBtn, UI.alignRightBtn];
                         if (currentLayout === 'left') { container.style.flexDirection = 'row-reverse'; currentLayout = 'right'; btns.forEach(b => { if(b) { b.style.left = 'auto'; b.style.right = '8px'; }}); alignBtns.forEach(b => { if(b) { b.style.right = 'auto'; b.style.left = '8px'; }}); } 
                         else { container.style.flexDirection = 'row'; currentLayout = 'left'; btns.forEach(b => { if(b) { b.style.right = 'auto'; b.style.left = '8px'; }}); alignBtns.forEach(b => { if(b) { b.style.left = 'auto'; b.style.right = '8px'; }}); } RENDERER.renderFrame();
                     });
@@ -1703,24 +1487,12 @@ VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
                 if(UI.exportExcelBtn) UI.exportExcelBtn.addEventListener('click', () => MODULE_DATA.exportToExcel());
                 if(UI.exportBtn) UI.exportBtn.addEventListener('click', async () => { if (MODULE_STATE.originalLines.length === 0) return alert("Нет данных!"); const jsonStr = JSON.stringify(MODULE_STATE.originalLines, null, 2); const blob = new Blob([jsonStr], { type: "text/plain;charset=utf-8" }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "Zerkalius_Data.txt"; link.click(); URL.revokeObjectURL(link.href); });
                 
-                if(UI.fileLoader) UI.fileLoader.addEventListener('change', function(e) { 
-                    const file = e.target.files[0]; if (!file) return; 
-                    e.target.value = ''; 
-                    const reader = new FileReader(); 
-                    reader.onload = function(e) { MODULE_DATA.processTextData(e.target.result, file.name); }; 
-                    reader.readAsText(file); 
-                });
-                
+                if(UI.fileLoader) UI.fileLoader.addEventListener('change', function(e) { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { MODULE_DATA.processTextData(e.target.result, file.name); }; reader.readAsText(file); });
                 document.addEventListener('paste', function(e) { 
                     const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : ''; 
                     if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') return; 
                     let text = e.clipboardData.getData('text/plain'); 
-                    if (text) { 
-                        text = text.replace(/\t/g, '    ').replace(/\r/g, ''); 
-                        MODULE_DATA.processTextData(text, 'Буфер обмена'); 
-                        e.preventDefault(); 
-                        if(!MODULE_STATE.isPlaying) RENDERER.renderFrame(); 
-                    } 
+                    if (text) { text = text.replace(/\t/g, ' '); MODULE_DATA.processTextData(text, 'Буфер обмена'); e.preventDefault(); if(!MODULE_STATE.isPlaying) RENDERER.renderFrame(); } 
                 });
                 
                 if(UI.speedRange) { UI.speedRange.addEventListener('input', (e) => { const val = parseInt(e.target.value, 10); UI.speedVal.textContent = (1001 - val) + ' мс'; }); }
