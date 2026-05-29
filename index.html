@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 39.2 (Console Ergonomics)
+VERSION: Pro 40.0 (Syntax Highlighting & Hardcore Stable)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 39.2)</title>
+    <title>Binary Drum Machine (Zerkalius 40.0)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -161,14 +161,14 @@ VERSION: Pro 39.2 (Console Ergonomics)
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 39.2)</h3>
+                <h3>Binary Drum Machine (Pro 40)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
                 <div class="control-group control-group-gold" style="border-bottom: none; padding-bottom: 2px;">
                     <div class="compact-row">
                         <select id="sceneSelect" style="font-weight:bold; color:#ffcc00; flex: 2; border: 1px solid #ff9900;">
-                            <option value="">📍 Карта Сокровищ (Выбрать...)</option>
+                            <option value="">📍 Карта Сокровищ (Сцены)</option>
                         </select>
                         <button id="saveSceneBtn" class="btn-zerkalius" style="background:#ff9900; margin: 0; flex: 1; padding: 3px;">💾 Сохр.</button>
                     </div>
@@ -239,7 +239,7 @@ VERSION: Pro 39.2 (Console Ergonomics)
                         <label>Строк:<input type="number" id="zerkCountInput" value="50" style="width: 50px; text-align:center;"></label>
                     </div>
                     <label class="checkbox-row" style="margin-top: 4px;"><input type="checkbox" id="trimZerosCheck" checked><span>Обрезать фон (висеть в пустоте)</span></label>
-                    <label class="checkbox-row"><input type="checkbox" id="implantModeCheck"><span style="color:#00ccff; font-weight:bold;">Вживить фигуру в центр матрицы</span></label>
+                    <label class="checkbox-row"><input type="checkbox" id="implantModeCheck" checked><span style="color:#00ccff; font-weight:bold;">Вживить фигуру в центр матрицы</span></label>
                     <button id="zerkaliusBtn" class="btn-zerkalius">Создать Фигуру</button>
                 </div>
 
@@ -293,10 +293,10 @@ VERSION: Pro 39.2 (Console Ergonomics)
 
             <div class="fixed-player">
                 <div class="player-buttons">
-                    <button id="prevBtn" title="Шаг назад (Вверх)">▲</button>
+                    <button id="prevBtn" title="Шаг назад (Left)">◀</button>
                     <button id="playBtn" title="Старт / Пауза (Space)">▶</button>
                     <button id="stopBtn" title="Стоп и сброс">■</button>
-                    <button id="nextBtn" title="Шаг вперед (Вниз)">▼</button>
+                    <button id="nextBtn" title="Шаг вперед (Right)">▶▶</button>
                 </div>
                 
                 <div class="control-group" style="border: none; padding: 0;">
@@ -307,7 +307,7 @@ VERSION: Pro 39.2 (Console Ergonomics)
                 <div class="control-group" style="border: none; padding: 0;">
                     <div class="compact-row">
                         <label style="flex:1;" title="Hotkeys: W / S">Скорость (1 - 1000мс):</label>
-                        <label style="color:#ff3333; font-weight:bold;" title="Hotkeys: Влево / Вправо">Turbo x<input type="number" id="speedMultInput" value="1" min="1" max="100" style="width:35px; margin-left:4px; text-align:center; padding:2px;"></label>
+                        <label style="color:#ff3333; font-weight:bold;" title="Hotkeys: A / D">Turbo x<input type="number" id="speedMultInput" value="1" min="1" max="100" style="width:35px; margin-left:4px; text-align:center; padding:2px;"></label>
                     </div>
                     <input type="range" id="speedRange" min="1" max="1000" value="920">
                 </div>
@@ -349,6 +349,7 @@ VERSION: Pro 39.2 (Console Ergonomics)
                         <option value="blood">Пресет: Blood</option>
                         <option value="mutation" style="background:#440044; color:#ff00ff;">🧬 Пресет: Мутация (История)</option>
                         <option value="crypto" style="background:#000000; color:#ff3333; font-weight:bold;">🌈 Пресет: Крипто-Хеш (Спектр)</option>
+                        <option value="syntax" style="background:#002244; color:#00ffcc; font-weight:bold;">🖥️ Пресет: Синтаксис (IDE Colors)</option>
                     </select>
                     <div class="color-palette">
                         <div class="palette-row">
@@ -421,13 +422,21 @@ VERSION: Pro 39.2 (Console Ergonomics)
             synthwave: { act: '#00ffff', actA: 1.0, stat: '#ff00ff', statA: 0.3 },
             blood: { act: '#ff0000', actA: 1.0, stat: '#440000', statA: 0.5 },
             mutation: { act: '#ffffff', actA: 1.0, stat: '#444444', statA: 0.2 }, 
-            crypto: { act: '#ff3333', actA: 1.0, stat: '#555555', statA: 0.3 }
+            crypto: { act: '#ff3333', actA: 1.0, stat: '#555555', statA: 0.3 },
+            syntax: { act: '#ffffff', actA: 1.0, stat: '#555555', statA: 0.3 } // Тема для IDE раскраски
         };
 
         const MUTATION_COLORS = ['#ff3333', '#ffcc00', '#00ff66', '#00ccff', '#cc33ff'];
 
+        // СЛОВАРЬ СИНТАКСИСА
+        const SYNTAX_COLORS = {
+            'function': '#569cd6', 'const': '#569cd6', 'let': '#569cd6', 'var': '#569cd6', 'if': '#c586c0', 'else': '#c586c0', 'for': '#c586c0', 'return': '#c586c0',
+            'div': '#569cd6', 'span': '#569cd6', 'class': '#9cdcfe', 'id': '#9cdcfe', 'style': '#9cdcfe',
+            'color': '#9cdcfe', 'background': '#9cdcfe', 'margin': '#9cdcfe', 'padding': '#9cdcfe'
+        };
+
         const PREBUILT_SCENES = {
-            "sourcecode": { name: "0. Код Матрицы (Исходник)", type: "source", speed: 950, theme: "matrix", dual: false, echo: false, freezeY: false, elka: false, neon: false, frame: false, radar: false, spin3d: false, rainbow: false },
+            "sourcecode": { name: "0. Код Матрицы (Исходник)", type: "source", speed: 950, theme: "syntax", dual: false, echo: false, freezeY: false, elka: false, neon: false, frame: false, radar: false, spin3d: false, rainbow: false },
             "vortex3d": { name: "1. Квантовая Воронка 3D", type: "fractal", rule: "vortex", seed: "1", lines: 100, speed: 900, theme: "synthwave", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: true, spin3d: true, rainbow: false },
             "ziggurat": { name: "2. Зиккурат (Воронка)", type: "fractal", rule: "ziggurat", seed: "1", lines: 100, speed: 850, theme: "cyberpunk", dual: false, echo: false, freezeY: false, elka: false, neon: true, frame: false, radar: false, spin3d: false, rainbow: false },
             "clones": { name: "7. Атака клонов (R110)", type: "fractal", rule: "110", seed: "1", lines: 100, speed: 900, theme: "blood", dual: false, echo: true, freezeY: false, elka: false, neon: false, frame: false, radar: false, rainbow: false },
@@ -579,6 +588,7 @@ VERSION: Pro 39.2 (Console Ergonomics)
             
             loadScene: function(key, preventPlay = false) {
                 if(!key) return;
+                if(MODULE_STATE.isPlaying) PLAYER.stop();
                 
                 let scene = PREBUILT_SCENES[key];
                 if(key.startsWith("custom_")) scene = MODULE_STATE.customScenes[key.replace("custom_", "")];
@@ -618,7 +628,9 @@ VERSION: Pro 39.2 (Console Ergonomics)
                     UI.zerkRuleSelect.value = scene.rule || '90';
                     UI.zerkSeedInput.value = scene.seed || '1';
                     UI.zerkCountInput.value = scene.lines || 100;
-                    UI.implantModeCheck.checked = false; // Авто-очистка для фракталов
+                    
+                    // АВТО-ОЧИСТКА ПЕРЕД ФРАКТАЛОМ
+                    MODULE_STATE.originalLines = [];
                     MODULE_DATA.generateSierpinski(); 
                 }
 
@@ -700,14 +712,14 @@ VERSION: Pro 39.2 (Console Ergonomics)
             normalizeLines: function(rawLines) {
                 if (!Array.isArray(rawLines)) return [];
                 return rawLines.map((item, index) => {
-                    if (typeof item === 'string') return { text: item, color: '' };
-                    else if (item && typeof item === 'object') return { text: item.text || '', color: item.color || '' };
-                    return { text: '', color: '' };
+                    if (typeof item === 'string') return { text: item, color: '', baseColor: null };
+                    else if (item && typeof item === 'object') return { text: item.text || '', color: item.color || '', baseColor: item.baseColor || null };
+                    return { text: '', color: '', baseColor: null };
                 });
             },
-            saveToLocalStorage: function(data) { try { localStorage.setItem('saved_binary_lines_v24', JSON.stringify(data)); } catch (e) {} },
+            saveToLocalStorage: function(data) { try { localStorage.setItem('saved_binary_lines_v38', JSON.stringify(data)); } catch (e) {} },
             loadFromLocalStorage: function() {
-                const saved = localStorage.getItem('saved_binary_lines_v24');
+                const saved = localStorage.getItem('saved_binary_lines_v38');
                 if (saved) {
                     try {
                         const parsed = JSON.parse(saved);
@@ -739,6 +751,10 @@ VERSION: Pro 39.2 (Console Ergonomics)
                 let rule = UI.zerkRuleSelect.value;
                 let matrix = [];
                 
+                // РАСШИРЯЕМ МАТРИЦУ ДЛЯ КРУПНЫХ ФИГУР
+                let w = seed.length + 2 * h + 50; 
+                let centerStart = Math.floor((w - seed.length) / 2);
+
                 if (rule === 'orbital') {
                     for(let y=0; y<h; y++) {
                         let len = 2 + y * 4; 
@@ -747,9 +763,7 @@ VERSION: Pro 39.2 (Console Ergonomics)
                         matrix.push(rowStr.split(''));
                     }
                 } else if (rule === 'diagonal') {
-                    let w = seed.length + 2 * h; 
                     let numMatrix = Array.from({length: h}, () => Array(w).fill(0)); 
-                    let centerStart = Math.floor((w - seed.length) / 2);
                     
                     for(let i=0; i<seed.length; i++) {
                         if(seed[i] === '1') {
@@ -765,9 +779,7 @@ VERSION: Pro 39.2 (Console Ergonomics)
                         }
                     }
                 } else {
-                    let w = seed.length + 2 * h; 
                     matrix = Array.from({length: h}, () => Array(w).fill('0')); 
-                    let centerStart = Math.floor((w - seed.length) / 2);
                     
                     if (rule === 'vortex') {
                         for (let y = 0; y < h; y++) {
@@ -819,85 +831,82 @@ VERSION: Pro 39.2 (Console Ergonomics)
                 let shape = matrix.map(row => { return { text: row.join(''), color: ''}; });
                 let names = { 'ziggurat': 'Зиккурат', 'vortex': 'Воронка 3D', 'orbital': 'Орбитальный Конус', 'diagonal': 'Диагональная Сетка' };
                 
+                // АВТО-ОЧИСТКА ПЕРЕД ГЕНЕРАЦИЕЙ ФОРМЫ (ЕСЛИ НЕ СТОИТ "ВЖИВИТЬ")
                 if (!UI.implantModeCheck.checked) MODULE_STATE.originalLines = [];
                 this.implantOrReplace(shape, names[rule] || `Фрактал (R${rule})`);
             },
 
             implantOrReplace: function(shape, sourceName) {
-                try {
-                    DEBUG_LOG("Начат процесс вживления: " + sourceName);
-                    let symStatus = MODULE_ALGORITHMS.checkSymmetry(shape);
+                let symStatus = MODULE_ALGORITHMS.checkSymmetry(shape);
 
-                    if (UI.implantModeCheck.checked && MODULE_STATE.originalLines.length > 0) {
-                        DEBUG_LOG("Вживление в существующую матрицу...");
-                        let bgH = MODULE_STATE.originalLines.length;
-                        let bgW = MODULE_STATE.originalLines[0]?.text.length || 0;
-                        let shH = shape.length;
-                        let shW = Math.max(...shape.map(l => l.text.length));
-                        
-                        let startY = Math.floor((bgH - shH) / 2);
-                        let startX = Math.floor((bgW - shW) / 2);
-                        
-                        for(let i=0; i<shH; i++) {
-                            if(startY+i >= 0 && startY+i < bgH) {
-                                let bgStr = MODULE_STATE.originalLines[startY+i].text;
-                                let shStr = shape[i].text.padEnd(shW, ' ');
-                                
-                                let newStrArr = bgStr.split('');
-                                for(let k=0; k<shStr.length; k++) {
-                                    let targetX = startX + k;
-                                    if(targetX >= 0 && targetX < bgStr.length && shStr[k] !== ' ') {
-                                        newStrArr[targetX] = shStr[k];
-                                    }
-                                }
-                                MODULE_STATE.originalLines[startY+i].text = newStrArr.join('');
-                            }
-                        }
-                        UI.statusInfo.textContent = `Вживлено: ${sourceName} | ${symStatus}`;
-                    } else {
-                        DEBUG_LOG("Генерация чистой фигуры (Замена)...");
-                        MODULE_STATE.originalLines = shape;
-                        UI.statusInfo.textContent = `Генерация: ${sourceName} | ${symStatus}`;
-                    }
+                if (UI.implantModeCheck.checked && MODULE_STATE.originalLines.length > 0) {
+                    let bgH = MODULE_STATE.originalLines.length;
+                    let bgW = MODULE_STATE.originalLines[0]?.text.length || 0;
+                    let shH = shape.length;
+                    let shW = Math.max(...shape.map(l => l.text.length));
                     
-                    this.saveToLocalStorage(MODULE_STATE.originalLines);
-                    this.precalculateLines(true);
-                    DEBUG_LOG("Успех: Фигура отрисована.");
-                } catch(e) {
-                    DEBUG_LOG("ОШИБКА В implantOrReplace: " + e.message);
+                    let startY = Math.floor((bgH - shH) / 2);
+                    let startX = Math.floor((bgW - shW) / 2);
+                    
+                    for(let i=0; i<shH; i++) {
+                        if(startY+i >= 0 && startY+i < bgH) {
+                            let bgStr = MODULE_STATE.originalLines[startY+i].text;
+                            let shStr = shape[i].text.padEnd(shW, ' ');
+                            let bgColors = MODULE_STATE.originalLines[startY+i].baseColor || [];
+                            let newColors = [...bgColors];
+                            
+                            let newStrArr = bgStr.split('');
+                            for(let k=0; k<shStr.length; k++) {
+                                let targetX = startX + k;
+                                if(targetX >= 0 && targetX < bgStr.length && shStr[k] !== ' ') {
+                                    newStrArr[targetX] = shStr[k];
+                                    newColors[targetX] = shape[i].baseColor ? shape[i].baseColor[k] : null; // Переносим цвет синтаксиса
+                                }
+                            }
+                            MODULE_STATE.originalLines[startY+i].text = newStrArr.join('');
+                            MODULE_STATE.originalLines[startY+i].baseColor = newColors;
+                        }
+                    }
+                    UI.statusInfo.textContent = `Вживлено: ${sourceName} | ${symStatus}`;
+                } else {
+                    MODULE_STATE.originalLines = shape;
+                    UI.statusInfo.textContent = `Генерация: ${sourceName} | ${symStatus}`;
                 }
+                
+                this.saveToLocalStorage(MODULE_STATE.originalLines);
+                this.precalculateLines(true);
             },
 
             processTextData: function(text, sourceName) {
-                try {
-                    DEBUG_LOG("Старт загрузки текста: " + sourceName);
+                // ЕДИНЫЙ СТАНДАРТ ПУСТОТЫ: Сохраняем все строки, табы заменяем на 4 пробела
+                const raw = text.split('\n').map(l => l.replace(/\t/g, '    ').replace(/\r/g, '')).filter(l => l.length > 0);
+                
+                // СКАНЕР СИНТАКСИСА (IDE Colors)
+                let shape = raw.map(lineText => {
+                    let baseColorArray = new Array(lineText.length).fill(null);
                     
-                    const raw = text.split('\n').map(l => l.replace(/\t/g, '    ').replace(/\r/g, '')).filter(l => l.trim().length > 0);
-                    DEBUG_LOG("Прочитано строк: " + raw.length);
-                    
-                    if (raw.length === 0) {
-                        DEBUG_LOG("ОШИБКА: Файл пуст или содержит только пробелы.");
-                        return;
-                    }
-
-                    const shape = this.normalizeLines(raw);
-                    
-                    if (UI.implantModeCheck.checked && MODULE_STATE.originalLines.length === 0) {
-                        DEBUG_LOG("Холст пуст, создаем новую сетку под размер текста...");
-                        let h = shape.length;
-                        let w = Math.max(...shape.map(l => l.text.length));
-                        let matrix = [];
-                        for(let i=0; i<h; i++) {
-                            matrix.push({text: ' '.repeat(w), color: ''});
+                    for (let word in SYNTAX_COLORS) {
+                        let regex = new RegExp(word, 'g');
+                        let match;
+                        while ((match = regex.exec(lineText)) !== null) {
+                            for (let i = 0; i < word.length; i++) {
+                                baseColorArray[match.index + i] = SYNTAX_COLORS[word];
+                            }
                         }
-                        MODULE_STATE.originalLines = matrix;
                     }
+                    return { text: lineText, color: '', baseColor: baseColorArray };
+                });
 
-                    this.implantOrReplace(shape, sourceName);
-                    MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0;
-                } catch(e) {
-                    DEBUG_LOG("ОШИБКА В processTextData: " + e.message);
+                if (UI.implantModeCheck.checked && MODULE_STATE.originalLines.length === 0) {
+                    let h = shape.length;
+                    let w = Math.max(...shape.map(l => l.text.length));
+                    let matrix = [];
+                    for(let i=0; i<h; i++) matrix.push({text: ' '.repeat(w), color: '', baseColor: []});
+                    MODULE_STATE.originalLines = matrix;
                 }
+
+                this.implantOrReplace(shape, sourceName);
+                MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0;
             },
 
             runAnimatrixGlobal: function() {
@@ -914,101 +923,102 @@ VERSION: Pro 39.2 (Console Ergonomics)
                 
                 let str1 = lines[row1].text;
                 let str2 = lines[row2].text;
+                let colors1 = lines[row1].baseColor || [];
+                let colors2 = lines[row2].baseColor || [];
                 
                 let resStr = "";
+                let resColors = [];
                 let len = Math.max(str1.length, str2.length);
                 for(let k=0; k<len; k++) {
                     let c1 = str1[k] || ' ';
                     let c2 = str2[k] || ' ';
                     
                     let cNew = c2;
-                    if (c1 === c2 && c1 !== ' ') cNew = ' ';
-                    else if (c1 !== ' ' && c2 === ' ') cNew = c1;
-                    else if (c2 !== ' ' && c1 === ' ') cNew = c2;
-                    else if (c1 !== ' ' && c2 !== ' ') cNew = c1; 
+                    let colorNew = colors2[k];
+
+                    if (c1 === c2 && c1 !== ' ') { cNew = ' '; colorNew = null; }
+                    else if (c1 !== ' ' && c2 === ' ') { cNew = c1; colorNew = colors1[k]; }
+                    else if (c2 !== ' ' && c1 === ' ') { cNew = c2; colorNew = colors2[k]; }
+                    else if (c1 !== ' ' && c2 !== ' ') { cNew = c1; colorNew = colors1[k]; }
                     
                     resStr += cNew;
+                    resColors.push(colorNew);
                 }
                 lines[row2].text = resStr;
+                lines[row2].baseColor = resColors;
                 MODULE_STATE.animatrixRow++;
                 
                 this.precalculateLines(false);
             },
 
             precalculateLines: function(isFirstLoad = false) {
-                try {
-                    DEBUG_LOG("Запуск математики (precalculateLines)...");
-                    const op = UI.logicalOpSelect?.value || 'original';
-                    const raw = MODULE_STATE.originalLines;
-                    if (raw.length === 0) { 
-                        DEBUG_LOG("Матрица пуста, очищаем экран.");
-                        MODULE_STATE.lines = []; 
-                        return; 
+                const op = UI.logicalOpSelect?.value || 'original';
+                const raw = MODULE_STATE.originalLines;
+                if (raw.length === 0) { MODULE_STATE.lines = []; return; }
+                
+                const processed = [];
+                for (let i = 0; raw.length !== i; i++) {
+                    const line = raw[i];
+                    let text = line.text;
+                    let baseColor = line.baseColor || [];
+                    
+                    if (op === 'not') text = text.split('').map(char => (char === '0' ? '1' : (char === '1' ? '0' : (char === ' ' ? ' ' : char)))).join('');
+                    else if (op === 'xor' && i > 0) {
+                        const prevText = raw[i - 1].text;
+                        text = text.split('').map((char, charIdx) => {
+                            const prevChar = prevText[charIdx];
+                            if ((char === '0' || char === '1') && (prevChar === '0' || prevChar === '1')) return char === prevChar ? '0' : '1';
+                            return char;
+                        }).join('');
+                    } else if (op === 'reverse') {
+                        text = text.split('').reverse().join('');
+                        baseColor = [...baseColor].reverse();
                     }
                     
-                    const processed = [];
-                    for (let i = 0; raw.length !== i; i++) {
-                        const line = raw[i];
-                        let text = line.text;
-                        
-                        if (op === 'not') text = text.split('').map(char => (char === '0' ? '1' : (char === '1' ? '0' : (char === ' ' ? ' ' : char)))).join('');
-                        else if (op === 'xor' && i > 0) {
-                            const prevText = raw[i - 1].text;
-                            text = text.split('').map((char, charIdx) => {
-                                const prevChar = prevText[charIdx];
-                                if ((char === '0' || char === '1') && (prevChar === '0' || prevChar === '1')) return char === prevChar ? '0' : '1';
-                                return char;
-                            }).join('');
-                        } else if (op === 'reverse') text = text.split('').reverse().join('');
-                        
-                        const diffFlags = []; const diffFlagsLeft = []; const diffFlagsRight = []; const mutFlags = [];
-                        const prevText = i > 0 ? processed[i - 1].text : "";
-                        
-                        if (isFirstLoad) MODULE_STATE.mutationTracker[i] = [];
-                        if (MODULE_STATE.mutationTracker[i] === undefined) MODULE_STATE.mutationTracker[i] = [];
+                    const diffFlags = []; const diffFlagsLeft = []; const diffFlagsRight = []; const mutFlags = [];
+                    const prevText = i > 0 ? processed[i - 1].text : "";
+                    
+                    if (isFirstLoad) MODULE_STATE.mutationTracker[i] = [];
+                    if (MODULE_STATE.mutationTracker[i] === undefined) MODULE_STATE.mutationTracker[i] = [];
 
-                        for (let charIdx = 0; charIdx < text.length; charIdx++) {
-                            const char = text[charIdx];
-                            let isDiff = char !== (prevText ? prevText[charIdx] : undefined);
-                            diffFlags.push(isDiff);
-                            diffFlagsLeft.push(char !== (prevText ? prevText[charIdx - 1] : undefined));
-                            diffFlagsRight.push(char !== (prevText ? prevText[charIdx + 1] : undefined));
-                            
-                            if (isDiff && !isFirstLoad) {
-                                MODULE_STATE.mutationTracker[i][charIdx] = (MODULE_STATE.mutationTracker[i][charIdx] || 0) + 1;
-                            }
-                            mutFlags.push(MODULE_STATE.mutationTracker[i][charIdx] || 0);
-                        }
-                        processed.push({ text: text, color: line.color, diffFlags: diffFlags, diffFlagsLeft: diffFlagsLeft, diffFlagsRight: diffFlagsRight, mutFlags: mutFlags });
-                    }
-                    MODULE_STATE.lines = processed;
-                    DEBUG_LOG("Математика завершена. Строк: " + MODULE_STATE.lines.length);
-                    
-                    if (isFirstLoad) {
-                        const linesCount = MODULE_STATE.lines.length;
-                        if (linesCount > 0) {
-                            const optimalHeight = Math.min(linesCount, 1024);
-                            if(UI.heightRange) { UI.heightRange.max = Math.max(45, optimalHeight); UI.heightRange.value = optimalHeight; }
-                            if(UI.heightVal) UI.heightVal.textContent = optimalHeight;
-                        }
-                        MODULE_STATE.echoHistory = [];
-                        MODULE_STATE.foundPatterns.clear();
-                        if(UI.dataInput) { UI.dataInput.value = ""; UI.dataInput.style.display = 'none'; }
-                        MODULE_STATE.animatrixRow = 0;
+                    for (let charIdx = 0; charIdx < text.length; charIdx++) {
+                        const char = text[charIdx];
+                        let isDiff = char !== (prevText ? prevText[charIdx] : undefined);
+                        diffFlags.push(isDiff);
+                        diffFlagsLeft.push(char !== (prevText ? prevText[charIdx - 1] : undefined));
+                        diffFlagsRight.push(char !== (prevText ? prevText[charIdx + 1] : undefined));
                         
-                        // ЦЕНТРОВКА КОДА
-                        let lh = parseFloat(UI.lineHeightRange?.value || 1.2);
-                        let baseFontSize = parseInt(UI.fontSizeRange?.value || 24, 10);
-                        let lineSpacing = baseFontSize * lh;
-                        let totalHeight = linesCount * lineSpacing;
-                        let startY = (UI.canvas.height - totalHeight) / 2;
-                        let idealOffset = (UI.canvas.height / 2) - startY - (lineSpacing * (linesCount/2));
-                        MODULE_STATE.offsetY = idealOffset;
+                        if (isDiff && !isFirstLoad) {
+                            MODULE_STATE.mutationTracker[i][charIdx] = (MODULE_STATE.mutationTracker[i][charIdx] || 0) + 1;
+                        }
+                        mutFlags.push(MODULE_STATE.mutationTracker[i][charIdx] || 0);
                     }
-                    RENDERER.updateTimeline(); RENDERER.renderFrame();
-                } catch(e) {
-                    DEBUG_LOG("ОШИБКА В precalculateLines: " + e.message);
+                    processed.push({ text: text, color: line.color, baseColor: baseColor, diffFlags: diffFlags, diffFlagsLeft: diffFlagsLeft, diffFlagsRight: diffFlagsRight, mutFlags: mutFlags });
                 }
+                MODULE_STATE.lines = processed;
+                
+                if (isFirstLoad) {
+                    const linesCount = MODULE_STATE.lines.length;
+                    if (linesCount > 0) {
+                        const optimalHeight = Math.min(linesCount, 1024);
+                        if(UI.heightRange) { UI.heightRange.max = Math.max(45, optimalHeight); UI.heightRange.value = optimalHeight; }
+                        if(UI.heightVal) UI.heightVal.textContent = optimalHeight;
+                    }
+                    MODULE_STATE.echoHistory = [];
+                    MODULE_STATE.foundPatterns.clear();
+                    if(UI.dataInput) { UI.dataInput.value = ""; UI.dataInput.style.display = 'none'; }
+                    MODULE_STATE.animatrixRow = 0;
+                    
+                    // ЦЕНТРОВКА БЛОКА В 2D (Чтоб всегда был по центру при старте)
+                    let lh = parseFloat(UI.lineHeightRange?.value || 1.2);
+                    let baseFontSize = parseInt(UI.fontSizeRange?.value || 24, 10);
+                    let lineSpacing = baseFontSize * lh;
+                    let totalHeight = linesCount * lineSpacing;
+                    let startY = (UI.canvas.height - totalHeight) / 2;
+                    let idealOffset = (UI.canvas.height / 2) - startY - (lineSpacing * (linesCount/2));
+                    MODULE_STATE.offsetY = idealOffset;
+                }
+                RENDERER.updateTimeline(); RENDERER.renderFrame();
             },
 
             exportToExcel: function() {
@@ -1029,6 +1039,9 @@ VERSION: Pro 39.2 (Console Ergonomics)
                         else if (dMode === 'serpinski') isChanged = line.diffFlagsLeft[i] || line.diffFlagsRight[i];
 
                         let color = isChanged ? actC : statC;
+                        // Синтаксис/Мутации для Excel
+                        if (line.baseColor && line.baseColor[i]) color = line.baseColor[i];
+                        
                         html += `<td style="color:${color}; padding:2px 6px; font-weight:${isChanged?'bold':'normal'};">${char}</td>`;
                     }
                     html += '</tr>';
@@ -1126,7 +1139,10 @@ VERSION: Pro 39.2 (Console Ergonomics)
                 let lh = parseFloat(UI.lineHeightRange?.value || 1.2);
                 let lineSpacing = fontSize * lh;
                 
-                const startY = (height - (visibleHeight - 1) * lineSpacing) / 2 + MODULE_STATE.offsetY;
+                // ВАЖНО: Центровка работает только в 2D режиме (В 3D Радаре мы всегда в центре холста)
+                let startY = (height - (visibleHeight - 1) * lineSpacing) / 2 + MODULE_STATE.offsetY;
+                if(MODULE_STATE.isRadarActive) startY = (height - (visibleHeight - 1) * lineSpacing) / 2;
+
                 let boldMask = findDiagonals ? MODULE_ALGORITHMS.findDiagonals(visibleLines.map(v=>v.data), visibleHeight) : [];
                 const margin = 50; const alignMode = MODULE_STATE.alignMode;
 
@@ -1183,6 +1199,8 @@ VERSION: Pro 39.2 (Console Ergonomics)
                                     cRgb = hslToRgb(hue, 1, isChanged || isCollision ? 0.6 : 0.4);
                                     cAlpha = 1.0;
                                 }
+                            } else if (activeTheme === 'syntax' && lineData.baseColor && lineData.baseColor[charIdx]) {
+                                cRgb = hexToRgb(lineData.baseColor[charIdx]); cAlpha = 1.0;
                             } else if (activeTheme === 'mutation') {
                                 let mLevel = lineData.mutFlags ? lineData.mutFlags[charIdx] : 0;
                                 if (mLevel > 0) { cRgb = hexToRgb(MUTATION_COLORS[(mLevel - 1) % MUTATION_COLORS.length]); cAlpha = 1.0; isChanged = true; } 
@@ -1246,8 +1264,6 @@ VERSION: Pro 39.2 (Console Ergonomics)
                     
                     let renderLen = Math.max(text.length, dualText.length);
                     const totalLineWidth = renderLen * charWidth;
-                    
-                    // ЦЕНТРОВКА ДЛЯ ПЛОСКОГО РЕЖИМА
                     let textStartX = (width - totalLineWidth) / 2 + MODULE_STATE.offsetX;
                     if (alignMode === 'left') textStartX = margin + MODULE_STATE.offsetX;
                     else if (alignMode === 'right') textStartX = width - margin - totalLineWidth + MODULE_STATE.offsetX;
@@ -1309,6 +1325,8 @@ VERSION: Pro 39.2 (Console Ergonomics)
                                 cRgb = hslToRgb(hue, 1, isChanged || isCollision ? 0.6 : 0.4);
                                 cAlpha = 1.0;
                             }
+                        } else if (activeTheme === 'syntax' && lineData.baseColor && lineData.baseColor[actualIdx]) {
+                            cRgb = hexToRgb(lineData.baseColor[actualIdx]); cAlpha = 1.0;
                         } else if (activeTheme === 'mutation') {
                             let mLevel = lineData.mutFlags ? lineData.mutFlags[actualIdx] : 0;
                             if (mLevel > 0) { cRgb = hexToRgb(MUTATION_COLORS[(mLevel - 1) % MUTATION_COLORS.length]); cAlpha = 1.0; isChanged = true; } 
@@ -1428,7 +1446,7 @@ VERSION: Pro 39.2 (Console Ergonomics)
                                         else if (c2 !== ' ' && c1 === ' ') res += c2;
                                         else res += c1;
                                     }
-                                    newLines.push({text: res, color: lines[i].color});
+                                    newLines.push({text: res, color: lines[i].color, baseColor: lines[i].baseColor});
                                 }
                                 MODULE_STATE.originalLines = newLines; MODULE_DATA.precalculateLines(false);
                             } else {
@@ -1481,7 +1499,6 @@ VERSION: Pro 39.2 (Console Ergonomics)
                 SCENE_MANAGER.init();
 
                 if(UI.audioLoader) UI.audioLoader.addEventListener('change', function(e) { const file = e.target.files[0]; if (!file) return; AUDIO_VISUALIZER.initFile(file); });
-                
                 if(UI.micBtn) UI.micBtn.addEventListener('click', () => AUDIO_VISUALIZER.initMic());
 
                 if(UI.generateVacuumBtn) UI.generateVacuumBtn.addEventListener('click', () => { let implantState = UI.implantModeCheck.checked; UI.implantModeCheck.checked = false; MODULE_DATA.generateVacuum(); UI.implantModeCheck.checked = implantState; });
@@ -1582,13 +1599,17 @@ VERSION: Pro 39.2 (Console Ergonomics)
                     }
                     if (e.code === 'ArrowRight') {
                         if (MODULE_STATE.isPlaying) PLAYER.pause();
-                        MODULE_STATE.currentIndex = (MODULE_STATE.currentIndex + 1) % MODULE_STATE.lines.length; RENDERER.renderFrame(); RENDERER.updateTimeline();
-                        showHotkeyInd('Кадр +1');
+                        let multStep = parseInt(UI.speedMultInput?.value || 1, 10);
+                        MODULE_STATE.currentIndex = (MODULE_STATE.currentIndex + multStep) % MODULE_STATE.lines.length; 
+                        RENDERER.renderFrame(); RENDERER.updateTimeline();
+                        showHotkeyInd('Кадр +');
                     }
                     if (e.code === 'ArrowLeft') {
                         if (MODULE_STATE.isPlaying) PLAYER.pause();
-                        MODULE_STATE.currentIndex = (MODULE_STATE.currentIndex - 1 + MODULE_STATE.lines.length) % MODULE_STATE.lines.length; RENDERER.renderFrame(); RENDERER.updateTimeline();
-                        showHotkeyInd('Кадр -1');
+                        let multStep = parseInt(UI.speedMultInput?.value || 1, 10);
+                        MODULE_STATE.currentIndex = (MODULE_STATE.currentIndex - multStep + MODULE_STATE.lines.length) % MODULE_STATE.lines.length; 
+                        RENDERER.renderFrame(); RENDERER.updateTimeline();
+                        showHotkeyInd('Кадр -');
                     }
                     if (e.key === 'w' || e.key === 'W' || e.key === 'ц' || e.key === 'Ц') {
                         let v = parseInt(UI.speedRange.value, 10); v = Math.min(1000, v + 10); UI.speedRange.value = v; UI.speedVal.textContent = (1001 - v) + ' мс';
@@ -1695,7 +1716,6 @@ VERSION: Pro 39.2 (Console Ergonomics)
                     if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') return; 
                     let text = e.clipboardData.getData('text/plain'); 
                     if (text) { 
-                        // СОХРАНЯЕМ ВСЕ ОТСТУПЫ, ТАБЫ МЕНЯЕМ НА 4 ПРОБЕЛА, УБИРАЕМ ВОЗВРАТ КАРЕТКИ
                         text = text.replace(/\t/g, '    ').replace(/\r/g, ''); 
                         MODULE_DATA.processTextData(text, 'Буфер обмена'); 
                         e.preventDefault(); 
