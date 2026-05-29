@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<!--
+===========================================================================
+PROJECT: Binary Drum Machine (Zerkalius: Genesis)
+VERSION: Pro 34.0 (Pure Binary GPU Core)
+"We are not just moving strings, we are weaving the fabric of the Matrix."
+===========================================================================
+-->
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Binary Drum Machine (GPU Core 34.0)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+        body { 
+            background: #000; color: #00ff66; 
+            font-family: 'Roboto Mono', monospace; 
+            margin: 8px; overflow: hidden; height: calc(100vh - 16px);
+            transition: background 0.3s;
+        }
+
+        .main-layout { display: flex; gap: 12px; height: 100%; align-items: stretch; flex-direction: row; transition: 0.3s; }
+        
+        .controls { 
+            width: 300px; min-width: 300px; display: flex; flex-direction: column; 
+            background: #0a0a0a; padding: 6px; border-radius: 4px; border: 1px solid #330033; 
+            box-sizing: border-box; height: 100%; transition: 0.3s; z-index: 100;
+        }
+
+        .fixed-top { flex-shrink: 0; display: flex; flex-direction: column; gap: 5px; border-bottom: 2px solid #330033; padding-bottom: 6px; margin-bottom: 4px; }
+        
+        .scrollable-settings { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px; }
+        .scrollable-settings::-webkit-scrollbar { width: 6px; }
+        .scrollable-settings::-webkit-scrollbar-thumb { background: #440044; border-radius: 3px; }
+
+        .fixed-player { flex-shrink: 0; background: #140014; border: 1px solid #330033; border-radius: 4px; padding: 6px; display: flex; flex-direction: column; gap: 4px; margin-top: 4px; border-top: 2px solid #cc00ff; }
+
+        h3 { margin: 0 0 3px 0; color: #cc00ff; text-shadow: 0 0 10px rgba(204,0,255,0.5); font-size: 14px; text-align: center; }
+        
+        .player-buttons { display: flex; gap: 4px; width: 100%; }
+        .player-buttons button { font-size: 16px; font-family: inherit; border: none; cursor: pointer; border-radius: 3px; padding: 4px 2px; display:flex; align-items:center; justify-content:center;}
+        #playBtn { flex: 2; background: #cc00ff; color: #fff; font-weight:bold; } #playBtn:hover { background: #e600ff; }
+        #stopBtn { flex: 1.2; background: #ff3333; color: #fff; } #stopBtn:hover { background: #cc0000; }
+        #prevBtn, #nextBtn { flex: 1; background: #200020; color: #fff; border: 1px solid #440044; font-size: 14px; }
+
+        .btn-zerkalius { background: #ffcc00; color: #000; font-size: 11px; font-weight: bold; padding: 6px; border: none; border-radius: 3px; cursor: pointer; margin-top: 2px; width: 100%; }
+        .btn-mod { background: #444; color: #00ff66; border: 1px solid #00ff66; font-size: 10px; font-weight: bold; padding: 4px; border-radius: 3px; cursor: pointer; flex: 1; text-align: center; }
+        .btn-mod:hover { background: #00ff66; color: #000; }
+        .btn-mod.magenta { color: #ff00ff; border-color: #ff00ff; } .btn-mod.magenta:hover { background: #ff00ff; color: #000; }
+        .btn-vacuum { background: #00ccff; color: #000; border: none; font-size: 11px; font-weight: bold; padding: 4px; border-radius: 3px; cursor: pointer; width: 100%; margin-top: 2px;}
+        .btn-clear-canvas { background: #330000; color: #ff6666; border: 1px solid #ff6666; font-size: 11px; font-weight: bold; padding: 5px; border-radius: 3px; cursor: pointer; width: 100%; margin-bottom: 4px;}
+        .btn-clear-canvas:hover { background: #ff6666; color: #000; }
+
+        .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; flex: 1; }
+        .btn-file { display: block; text-align: center; background: #252525; color: #fff; border: 1px solid #3c3c3c; padding: 5px; border-radius: 3px; font-weight: bold; cursor: pointer; font-size: 11px; }
+        .btn-audio { background: #9900ff; color: #fff; border: 1px solid #cc66ff; }
+        .btn-mic { background: #ff3366; color: #fff; border: 1px solid #ff6699; padding: 5px; border-radius: 3px; font-weight: bold; cursor: pointer; font-size: 11px; flex: 1; text-align: center;}
+        .btn-mic:hover { background: #ff6699; }
+        .file-input-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
+
+        .control-group { display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid #220022; padding-bottom: 6px; }
+        .control-group-highlight { background: #1a001a; padding: 6px; border-radius: 3px; border: 1px solid #440044; }
+        .control-group-gold { background: #1a1a00; padding: 6px; border-radius: 3px; border: 1px solid #ffcc00; }
+        .control-group:last-of-type { border-bottom: none; }
+
+        label { font-size: 11px; display: flex; justify-content: space-between; align-items: center; user-select: none; color: #aaa; }
+        .compact-row { display: flex; gap: 4px; justify-content: space-between; align-items: center; }
+        .checkbox-row { display: flex; align-items: center; justify-content: flex-start; gap: 8px; margin-bottom: 2px; cursor: pointer; }
+        .checkbox-row span { color: #ccc; font-weight: normal; font-size: 11px; }
+        .checkbox-row:hover span { color: #fff; }
+
+        input[type="range"] { width: 100%; cursor: pointer; margin-top: 1px; }
+        input[type="text"], input[type="number"], select { background: #151515; color: #fff; border: 1px solid #440044; padding: 4px; border-radius: 3px; font-family: inherit; font-size: 11px; width: 100%; box-sizing: border-box; }
+        input[type="color"] { border: none; width: 28px; height: 16px; padding: 0; background: none; cursor: pointer; }
+        select { background: #1a001a; color: #cc00ff; border: 1px solid #440044; font-weight:bold; cursor: pointer;}
+        
+        #statusInfo { font-size: 10px; color: #00ccff; text-align: center; margin-top: 1px; min-height: 11px; font-weight:bold; }
+        #screenContainer { flex-grow: 1; background: #000; border: 2px solid #220022; border-radius: 5px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+        canvas:active { cursor: grabbing; }
+        
+        .float-btn { position: absolute; z-index: 10; border: none; cursor: pointer; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: opacity 0.3s; left: 8px;}
+        #toggleMenuBtn { top: 8px; background: #cc00ff; color: #fff; box-shadow: 0 0 8px rgba(204, 0, 255, 0.5); border-radius: 3px; height: 26px; width: 34px;}
+        #toggleRadarBtn { top: 50px; background: #00ffcc; color: #000; box-shadow: 0 0 10px rgba(0, 255, 204, 0.6); border-radius: 8px; }
+        .float-btn.active-yellow { background: #ffcc00 !important; color: #000 !important; box-shadow: 0 0 10px rgba(255,204,0,0.8) !important; }
+        
+        .color-palette { display: flex; flex-direction: column; gap: 2px; background: #1a1a1a; padding: 4px; border-radius: 3px; margin-top: 2px; }
+        .palette-row { display: flex; gap: 4px; align-items: center; justify-content: space-between; }
+        .palette-row span { font-size: 9px; color: #ccc; width: 45px; }
+        
+        body.zen-mode .controls { display: none !important; }
+        body.zen-mode .float-btn { opacity: 0 !important; pointer-events: none; }
+        body.zen-mode #screenContainer { border: none; border-radius: 0; }
+        body.zen-mode { margin: 0; height: 100vh; }
+        
+        #fpsCounter { position: absolute; top: 10px; right: 10px; color: #cc00ff; font-size: 12px; z-index: 50; background: rgba(0,0,0,0.5); padding: 2px 5px; border-radius: 3px; pointer-events: none; font-weight:bold;}
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="controls" id="leftPanel">
+            
+            <div class="fixed-top">
+                <h3>GPU Core (Pure Binary V34)</h3>
+                <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Сбросить GPU</button>
+                <div class="control-group-gold" style="padding-bottom: 2px;">
+                    <div class="compact-row">
+                        <select id="sceneSelect" style="font-weight:bold; color:#ffcc00; flex: 2;"><option value="">📍 Сцены GPU</option></select>
+                        <button id="saveSceneBtn" class="btn-zerkalius" style="background:#ff9900; margin: 0; flex: 1; padding: 3px;">💾 Сохр</button>
+                    </div>
+                </div>
+                <div class="compact-row" style="margin-top: 4px;">
+                    <div class="file-input-wrapper"><span class="btn-file btn-audio" id="audioBtnText">🎵 Трек</span><input type="file" id="audioLoader" accept="audio/*"></div>
+                    <button id="micBtn" class="btn-mic">🎤 Звук ПК</button>
+                </div>
+                <audio id="bgAudio" loop style="display:none;"></audio>
+                <div id="statusInfo">Только 0 и 1 | Двойной клик - Дзен</div>
+            </div>
+
+            <div class="scrollable-settings">
+                <div class="control-group">
+                    <label class="checkbox-row" style="background: #2a0044; padding: 4px; border-radius: 3px;"><input type="checkbox" id="audioReactCheck" checked><span style="color:#cc66ff; font-weight:bold;">Аудио-Реактивность</span></label>
+                    <label class="checkbox-row" style="background: #00331a; padding: 4px; border-radius: 3px;"><input type="checkbox" id="autoPilotCheck"><span style="color:#00ff88; font-weight:bold;">🤖 AI Авто-Пилот</span></label>
+                    <label class="checkbox-row" style="background: #2a0000; padding: 4px; border-radius: 3px;"><input type="checkbox" id="echoModeCheck"><span style="color:#ff6666; font-weight:bold;">Каскадное Эхо (GPU)</span></label>
+                </div>
+
+                <div class="control-group control-group-highlight" style="border-color: #00ccff;">
+                    <label style="color:#00ccff; text-align:center; font-weight:bold;">Генератор 1/0</label>
+                    <select id="zerkRuleSelect" style="margin: 4px 0;">
+                        <option value="90">Правило 90 (Классика)</option>
+                        <option value="30">Правило 30 (Хаос)</option>
+                        <option value="110">Правило 110</option>
+                        <option value="150">Правило 150 (Вязь)</option>
+                        <option value="vortex" style="color:#00ccff;">🌌 Воронка 3D</option>
+                        <option value="ziggurat" style="color:#ff9900;">🛕 Зиккурат</option>
+                        <option value="orbital" style="color:#00ffcc;">🎯 Орбита (1-0-1)</option>
+                        <option value="diagonal" style="color:#ff3333;">🕸️ Изометрия</option>
+                    </select>
+                    <div class="compact-row">
+                        <label>Сид:<input type="text" id="zerkSeedInput" value="1" style="width: 50px; text-align:center;"></label>
+                        <!-- ДЕФОЛТ ТЕПЕРЬ 250 СТРОК ДЛЯ GPU -->
+                        <label>Строк:<input type="number" id="zerkCountInput" value="250" style="width: 50px; text-align:center;"></label>
+                    </div>
+                    <label class="checkbox-row" style="margin-top: 4px;"><input type="checkbox" id="trimZerosCheck" checked><span>Обрезать фон</span></label>
+                    <button id="zerkaliusBtn" class="btn-zerkalius" style="background:#00ccff;">Создать Фигуру</button>
+                    <button id="generateVacuumBtn" class="btn-vacuum" style="background:#330033; color:#cc00ff;">Генерировать 101 Сетку</button>
+                </div>
+
+                <div class="control-group control-group-highlight" style="border-color: #ff00ff;">
+                    <label style="color:#ff00ff; text-align:center; width: 100%;">Dual Core (Наложение)</label>
+                    <label class="checkbox-row"><input type="checkbox" id="dualCoreCheck"><span>Включить Наложение</span></label>
+                    <label class="checkbox-row"><input type="checkbox" id="dualMaskCheck"><span>Проникающая Маска (XOR)</span></label>
+                    <label class="checkbox-row"><input type="checkbox" id="freezeLayer1Check"><span style="color:#ffcc00; font-weight:bold;">⚓ Заморозить Слой 1</span></label>
+                    <div class="compact-row" style="margin-top:2px;">
+                        <label>Множитель Слой 2:</label>
+                        <input type="number" id="dualCoreSpeedInput" value="2" min="1" max="10" style="width: 40px; text-align:center;">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Алгоритм Y-сдвига:</label>
+                    <input type="text" id="algorithmInput" value="1" style="text-align: center;">
+                    <label class="checkbox-row" style="background: #003300; padding: 2px;"><input type="checkbox" id="freezeScrollCheck"><span style="color:#00ff66; font-weight:bold;">Заморозить Y-Скролл</span></label>
+                    <label class="checkbox-row" style="background: #330033; padding: 2px;"><input type="checkbox" id="spin3dCheck"><span style="color:#cc33ff; font-weight:bold;">3D Вращение (Орбита)</span></label>
+                    <label class="checkbox-row" style="background: #331100; padding: 2px;"><input type="checkbox" id="breathingZoomCheck"><span style="color:#ff9933; font-weight:bold;">🫁 Дыхание (Зум)</span></label>
+                </div>
+
+                <div class="control-group">
+                    <label class="checkbox-row"><input type="checkbox" id="zerkaliusAnimCheck"><span><b style="color:#ff3333">Аниматрица (Сверху-Вниз)</b></span></label>
+                    <label class="checkbox-row"><input type="checkbox" id="elkaCheck"><span><b style="color:#00ccff">Круговой сдвиг (Ёлка X)</b></span></label>
+                    <label class="checkbox-row"><input type="checkbox" id="hideStaticCheck"><span><b style="color:#ffcc00">Скрыть статику</b></span></label>
+                </div>
+            </div>
+
+            <div class="fixed-player">
+                <div class="player-buttons">
+                    <button id="playBtn">▶ ПУСК GPU</button>
+                    <button id="stopBtn">■</button>
+                </div>
+                
+                <div class="control-group" style="border: none; padding: 0;">
+                    <div class="compact-row">
+                        <label style="flex:1;">Скорость:</label>
+                        <label style="color:#cc00ff; font-weight:bold;">Turbo x<input type="number" id="speedMultInput" value="1" min="1" max="100" style="width:35px; text-align:center; padding:2px;"></label>
+                    </div>
+                    <input type="range" id="speedRange" min="1" max="1000" value="950">
+                    <div class="compact-row"><span style="font-size:10px; color:#555;">🐌</span><span id="speedVal" style="font-size:10px; color:#cc00ff;">50 мс</span><span style="font-size:10px; color:#555;">🚀</span></div>
+                </div>
+
+                <div class="control-group" style="border: none; padding: 0;">
+                    <div class="compact-row">
+                        <label>Шрифт:</label>
+                        <input type="range" id="fontSizeRange" min="2" max="100" value="12" style="flex:1; margin-left: 8px;">
+                    </div>
+                    <div class="compact-row" style="margin-top:4px;">
+                        <label>Интервал:</label>
+                        <input type="range" id="lineHeightRange" min="0.5" max="3.0" step="0.1" value="1.2" style="flex:1; margin-left: 8px;">
+                    </div>
+                </div>
+
+                <div class="control-group" style="border: none; padding: 0; margin-top: 2px;">
+                    <select id="themeSelect" style="padding: 2px;">
+                        <option value="synthwave">Пресет: Synthwave</option>
+                        <option value="cyberpunk">Пресет: Киберпанк</option>
+                        <option value="matrix">Пресет: Матрица</option>
+                        <option value="blood">Пресет: Blood</option>
+                    </select>
+                    <div class="color-palette">
+                        <div class="palette-row"><span>Актив:</span><input type="color" id="activeColorPicker" value="#00ffff"></div>
+                        <div class="palette-row"><span>Фон:</span><input type="color" id="staticColorPicker" value="#ff00ff"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="screenContainer">
+            <div id="fpsCounter">FPS: 0 | GPU</div>
+            <button id="toggleMenuBtn" class="float-btn" title="Меню">⚙</button>
+            <button id="toggleRadarBtn" class="float-btn" title="Топологический Радар">🛰️</button>
+            <canvas id="glcanvas"></canvas>
+        </div>
+    </div>
+
+    <!-- ==================== ШЕЙДЕРЫ WEBGL ==================== -->
+    <script id="v-shader" type="x-shader/x-vertex">
+        attribute vec2 a_position; varying vec2 v_uv;
+        void main() { v_uv = a_position * 0.5 + 0.5; v_uv.y = 1.0 - v_uv.y; gl_Position = vec4(a_position, 0.0, 1.0); }
+    </script>
+
+    <script id="f-shader" type="x-shader/x-fragment">
+        precision mediump float;
+        varying vec2 v_uv;
+        
+        uniform sampler2D u_fontMap;    // 0 и 1
+        uniform sampler2D u_dataMap;    // Данные матрицы (Только 1, 0 и пустота)
+        
+        uniform vec2 u_resolution;      
+        uniform vec2 u_gridSize;        
+        uniform vec2 u_offset;          
+        uniform vec2 u_layerOffset;     
+        
+        uniform vec3 u_colorAct;        
+        uniform vec3 u_colorStat;       
+        uniform float u_hideStatic;     
+        uniform float u_glowIntensity;  
+        
+        uniform float u_isRadar;        
+        uniform float u_angleOffset;    
+        uniform float u_dualCore;
+        uniform float u_dualMask;
+
+        #define PI 3.14159265359
+
+        vec4 getCellInfo(vec2 cellPos, sampler2D tex, vec2 grid) {
+            vec2 uv = vec2(cellPos.x / grid.x, mod(cellPos.y, grid.y) / grid.y);
+            if (uv.x < 0.0 || uv.x >= 1.0 || uv.y < 0.0 || uv.y >= 1.0) return vec4(0.0);
+            return texture2D(tex, uv);
+        }
+
+        void main() {
+            vec2 pos = v_uv; vec2 cell; vec2 uvWithinCell;
+            float rAngle = 0.0; float radius = 0.0;
+
+            if (u_isRadar > 0.5) {
+                vec2 center = vec2(0.5) - (u_offset.x / u_resolution); 
+                vec2 delta = pos - center; delta.x *= u_resolution.x / u_resolution.y; 
+                radius = length(delta) * 2.0; 
+                rAngle = atan(delta.y, delta.x); 
+                
+                float rowIdx = radius * u_gridSize.y; 
+                float colIdx = (((rAngle + u_angleOffset) / (2.0 * PI)) + 0.5) * u_gridSize.x;
+                
+                cell = floor(vec2(colIdx, rowIdx));
+                cell.y += u_offset.y; 
+                uvWithinCell = fract(vec2(colIdx, rowIdx));
+                if (radius < 0.05) { gl_FragColor = vec4(0.0); return; }
+            } else {
+                vec2 panOffset = u_offset.x / u_resolution; 
+                pos.x -= panOffset.x;
+                cell = floor(pos * u_gridSize);
+                cell.y += u_offset.y; 
+                uvWithinCell = fract(pos * u_gridSize);
+            }
+
+            vec4 data1 = getCellInfo(cell, u_dataMap, u_gridSize);
+            
+            vec4 data2 = vec4(0.0);
+            if(u_dualCore > 0.5) {
+                vec2 cell2 = cell;
+                if(u_isRadar > 0.5) {
+                    float colIdx2 = (((rAngle - u_angleOffset*1.5) / (2.0 * PI)) + 0.5) * u_gridSize.x;
+                    cell2 = floor(vec2(colIdx2, radius * u_gridSize.y));
+                }
+                cell2.y += u_layerOffset.y - u_offset.y; 
+                data2 = getCellInfo(cell2, u_dataMap, u_gridSize);
+            }
+
+            // R: 0.0='0', 1.0='1', 0.5=' '
+            float c1 = data1.r; float c2 = data2.r;
+            float isAct = data1.g;
+            float isCollision = 0.0;
+            float finalChar = c1;
+
+            if(u_dualCore > 0.5) {
+                bool has1 = (c1 > 0.9 || c1 < 0.1) && abs(c1 - 0.5) > 0.1;
+                bool has2 = (c2 > 0.9 || c2 < 0.1) && abs(c2 - 0.5) > 0.1;
+
+                if(has1 && has2) {
+                    isCollision = 1.0; isAct = 1.0;
+                    if(u_dualMask > 0.5 && abs(c1 - c2) < 0.1) finalChar = 0.5; // Пустота (XOR)
+                    else finalChar = c1;
+                } else if(has2) {
+                    finalChar = c2;
+                }
+            }
+
+            if(abs(finalChar - 0.5) < 0.1) { gl_FragColor = vec4(0.0); return; } // Пустота
+
+            if (u_hideStatic > 0.5 && isAct < 0.5 && isCollision < 0.5) { gl_FragColor = vec4(0.0); return; }
+
+            vec3 finalColor = mix(u_colorStat, u_colorAct, isAct);
+            
+            float charIndex = step(0.5, finalChar); // 0.0 or 1.0
+            vec2 fontUV = uvWithinCell;
+            fontUV.x = (fontUV.x * 0.5) + (charIndex * 0.5);
+            vec4 texColor = texture2D(u_fontMap, fontUV);
+
+            vec3 renderColor = texColor.rgb * finalColor;
+            if (isAct > 0.5 || isCollision > 0.5) { renderColor *= (1.0 + u_glowIntensity * 2.0); }
+
+            gl_FragColor = vec4(renderColor, texColor.r * (isAct > 0.5 || isCollision > 0.5 ? 1.0 : 0.6));
+        }
+    </script>
+
+    <!-- ==================== JS ЛОГИКА GPU ==================== -->
+    <script>
+        const UI = {
+            canvas: document.getElementById('glcanvas'), fps: document.getElementById('fpsCounter'),
+            playBtn: document.getElementById('playBtn'), stopBtn: document.getElementById('stopBtn'),
+            audioLoader: document.getElementById('audioLoader'), micBtn: document.getElementById('micBtn'),
+            audioReactCheck: document.getElementById('audioReactCheck'), autoPilotCheck: document.getElementById('autoPilotCheck'),
+            zerkRuleSelect: document.getElementById('zerkRuleSelect'), zerkSeedInput: document.getElementById('zerkSeedInput'),
+            zerkCountInput: document.getElementById('zerkCountInput'), trimZerosCheck: document.getElementById('trimZerosCheck'),
+            implantModeCheck: document.getElementById('implantModeCheck'), zerkaliusBtn: document.getElementById('zerkaliusBtn'),
+            speedRange: document.getElementById('speedRange'), speedVal: document.getElementById('speedVal'), speedMultInput: document.getElementById('speedMultInput'),
+            fontSizeRange: document.getElementById('fontSizeRange'), lineHeightRange: document.getElementById('lineHeightRange'),
+            algorithmInput: document.getElementById('algorithmInput'), spin3dCheck: document.getElementById('spin3dCheck'),
+            breathingZoomCheck: document.getElementById('breathingZoomCheck'), hideStaticCheck: document.getElementById('hideStaticCheck'),
+            activeColorPicker: document.getElementById('activeColorPicker'), staticColorPicker: document.getElementById('staticColorPicker'),
+            toggleRadarBtn: document.getElementById('toggleRadarBtn'), clearCanvasBtn: document.getElementById('clearCanvasBtn'),
+            generateVacuumBtn: document.getElementById('generateVacuumBtn'), dualCoreCheck: document.getElementById('dualCoreCheck'),
+            dualMaskCheck: document.getElementById('dualMaskCheck'), freezeLayer1Check: document.getElementById('freezeLayer1Check'),
+            dualCoreSpeedInput: document.getElementById('dualCoreSpeedInput'), themeSelect: document.getElementById('themeSelect'),
+            sceneSelect: document.getElementById('sceneSelect'), echoModeCheck: document.getElementById('echoModeCheck'),
+            zerkaliusAnimCheck: document.getElementById('zerkaliusAnimCheck'), elkaCheck: document.getElementById('elkaCheck'),
+            freezeScrollCheck: document.getElementById('freezeScrollCheck')
+        };
+
+        const THEMES = {
+            synthwave: { act: '#00ffff', stat: '#ff00ff' }, cyberpunk: { act: '#ffcc00', stat: '#0033aa' },
+            matrix: { act: '#ffffff', stat: '#00ff66' }, blood: { act: '#ff0000', stat: '#440000' }
+        };
+
+        const PREBUILT_SCENES = {
+            "vortex3d": { name: "1. Квантовая Воронка GPU", rule: "vortex", speed: 900, theme: "synthwave", dual: true, dualMask: true, spin3d: true, radar: true, breath: true },
+            "ziggurat": { name: "2. Зиккурат GPU", rule: "ziggurat", speed: 850, theme: "cyberpunk", dual: false, spin3d: false, radar: false },
+            "orbital": { name: "3. Орбита Идеал", rule: "orbital", speed: 880, theme: "matrix", dual: true, dualMask: true, spin3d: true, radar: true },
+            "diagonal": { name: "4. Изометрия GPU", rule: "diagonal", speed: 950, theme: "blood", dual: false, spin3d: false, radar: false }
+        };
+
+        const gl = UI.canvas.getContext('webgl');
+        if (!gl) alert("WebGL не поддерживается!");
+
+        const STATE = {
+            lines: [], COLS: 150, ROWS: 250, isPlaying: false, offsetMatY: 0, layer2Y: 0, globalAngle: 0, breathTime: 0,
+            algoPointer: 0, lastTickTime: 0, isRadar: false, isDragging: false, dragStartX: 0, offsetX: 0, startOffsetX: 0,
+            audioScale: 1.0, audioGlow: 0.0, bassLevel: 0, framesSinceChange: 0, animatrixRow: 0, echoHistory: []
+        };
+
+        let pixelData = null; // Буфер для текстуры
+
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type); gl.shaderSource(shader, source); gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) return null; return shader;
+        }
+
+        const program = gl.createProgram();
+        gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, document.getElementById('v-shader').text));
+        gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, document.getElementById('f-shader').text));
+        gl.linkProgram(program); gl.useProgram(program);
+
+        const vertices = new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]);
+        const buffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buffer); gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        const aPosition = gl.getAttribLocation(program, "a_position"); gl.enableVertexAttribArray(aPosition); gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
+
+        // Шрифт 0 и 1
+        const fontTex = gl.createTexture();
+        const tmpC = document.createElement('canvas'); tmpC.width=128; tmpC.height=64; const tmpCtx = tmpC.getContext('2d');
+        tmpCtx.fillStyle='#000'; tmpCtx.fillRect(0,0,128,64); tmpCtx.fillStyle='#fff'; tmpCtx.font='bold 50px monospace'; tmpCtx.textAlign='center'; tmpCtx.textBaseline='middle';
+        tmpCtx.fillText('0',32,32); tmpCtx.fillText('1',96,32);
+        gl.bindTexture(gl.TEXTURE_2D, fontTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tmpC);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+        const dataTex = gl.createTexture();
+        function updateDataTexture() {
+            if(!pixelData || pixelData.length !== STATE.COLS * STATE.ROWS * 4) pixelData = new Uint8Array(STATE.COLS * STATE.ROWS * 4);
+            for(let y=0; y<STATE.ROWS; y++) {
+                let row = STATE.lines[y] || [];
+                for(let x=0; x<STATE.COLS; x++) {
+                    let cell = row[x] || {c:' ', a:0};
+                    let idx = (y * STATE.COLS + x) * 4;
+                    if(cell.c === ' ') { pixelData[idx]=128; } // 0.5
+                    else { pixelData[idx] = cell.c === '1' ? 255 : 0; }
+                    pixelData[idx+1] = cell.a ? 255 : 0;
+                    pixelData[idx+3] = 255;
+                }
+            }
+            gl.bindTexture(gl.TEXTURE_2D, dataTex);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, STATE.COLS, STATE.ROWS, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixelData);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        }
+
+        const unilocs = {
+            res: gl.getUniformLocation(program, "u_resolution"), grid: gl.getUniformLocation(program, "u_gridSize"),
+            offset: gl.getUniformLocation(program, "u_offset"), layerOff: gl.getUniformLocation(program, "u_layerOffset"),
+            cAct: gl.getUniformLocation(program, "u_colorAct"), cStat: gl.getUniformLocation(program, "u_colorStat"), 
+            glow: gl.getUniformLocation(program, "u_glowIntensity"), radar: gl.getUniformLocation(program, "u_isRadar"),
+            angle: gl.getUniformLocation(program, "u_angleOffset"), dualC: gl.getUniformLocation(program, "u_dualCore"),
+            dualM: gl.getUniformLocation(program, "u_dualMask"), hide: gl.getUniformLocation(program, "u_hideStatic"),
+            fontM: gl.getUniformLocation(program, "u_fontMap"), dataM: gl.getUniformLocation(program, "u_dataMap")
+        };
+
+        function hex2vec(hex) { return [parseInt(hex.slice(1,3),16)/255, parseInt(hex.slice(3,5),16)/255, parseInt(hex.slice(5,7),16)/255]; }
+
+        function createEmptyMatrix(w, h) { let m=[]; for(let y=0;y<h;y++){ let r=[]; for(let x=0;x<w;x++) r.push({c:' ',a:0}); m.push(r); } return m; }
+
+        function precalcAct(m) {
+            for(let y=1; y<STATE.ROWS; y++) for(let x=0; x<STATE.COLS; x++) {
+                if(m[y][x].c !== ' ' && m[y][x].c !== m[y-1][x].c) m[y][x].a = 1;
+            } return m;
+        }
+
+        function generateMatrix() {
+            let seed = UI.zerkSeedInput.value.trim() || "1";
+            let h = parseInt(UI.zerkCountInput.value, 10) || 250;
+            let rule = UI.zerkRuleSelect.value;
+            let w = seed.length + 2*h; STATE.COLS = w; STATE.ROWS = h;
+            let m = createEmptyMatrix(w, h); let cx = Math.floor(w/2 - seed.length/2);
+
+            if(rule === 'orbital') {
+                for(let y=0; y<h; y++) { let len=2+y*4; for(let i=0; i<len; i++) m[y][i].c = (i%2===0)?'1':'0'; }
+            } else if (rule === 'diagonal') {
+                let nMat = Array.from({length: h}, () => Array(w).fill(0));
+                for(let i=0; i<seed.length; i++) { if(seed[i] === '1') { for(let y=0; y<h; y++) { let x=cx+i+y; if(x<w) nMat[y][x]++; } for(let y=0; y<h; y++) { let x=cx+i-y; if(x>=0) nMat[y][x]++; } } }
+                for(let y=0; y<h; y++) for(let x=0; x<w; x++) m[y][x].c = (nMat[y][x]%2===1)?'1':'0';
+            } else if (rule === 'ziggurat') {
+                for(let y=0; y<h; y++) { for(let x=cx-y; x<=cx+y+seed.length-1; x++) { m[y][x].c = ((x-(cx-y))%3===0 || ((cx+y+seed.length-1)-x)%3===0) ? '1' : '0'; } }
+            } else if (rule === 'vortex') {
+                for(let y=0; y<h; y++) { for(let x=cx-y; x<=cx+y+seed.length-1; x++) m[y][x].c = (Math.abs(x-cx+y)%3===0) ? '0' : '1'; }
+            } else {
+                let rBin = parseInt(rule,10).toString(2).padStart(8,'0');
+                for(let i=0; i<seed.length; i++) m[0][cx+i].c = seed[i];
+                for(let y=1; y<h; y++) { for(let x=1; x<w-1; x++) {
+                    let l=m[y-1][x-1].c==='1'?1:0, c=m[y-1][x].c==='1'?1:0, r=m[y-1][x+1].c==='1'?1:0;
+                    m[y][x].c = rBin[7-((l<<2)|(c<<1)|r)] === '1' ? '1' : '0';
+                }}
+            }
+
+            if (UI.trimZerosCheck.checked && rule !== 'ziggurat' && rule !== 'orbital') {
+                for(let y=0; y<h; y++) {
+                    let f=-1, l=-1; for(let x=0; x<w; x++) { if(m[y][x].c === '1') { if(f===-1) f=x; l=x; } }
+                    for(let x=0; x<w; x++) if(x<f || x>l) m[y][x].c = ' ';
+                }
+            }
+            STATE.lines = precalcAct(m); STATE.echoHistory = []; STATE.animatrixRow = 0; updateDataTexture();
+        }
+
+        // --- AUDIO ---
+        const AUDIO = {
+            ctx: null, analyser: null, data: null, init: false, source: null,
+            setupFile: function(file) {
+                if(!this.init) { this.ctx=new(window.AudioContext||window.webkitAudioContext)(); this.analyser=this.ctx.createAnalyser(); this.data=new Uint8Array(this.analyser.frequencyBinCount); this.init=true;}
+                const bgAudio = document.getElementById('bgAudio'); bgAudio.src = URL.createObjectURL(file);
+                if(this.source) this.source.disconnect(); this.source = this.ctx.createMediaElementSource(bgAudio); this.source.connect(this.analyser); this.source.connect(this.ctx.destination); 
+            },
+            setupMic: async function() {
+                if(!this.init) { this.ctx=new(window.AudioContext||window.webkitAudioContext)(); this.analyser=this.ctx.createAnalyser(); this.data=new Uint8Array(this.analyser.frequencyBinCount); this.init=true;}
+                try {
+                    const stream = await navigator.mediaDevices.getDisplayMedia({audio:true, video:true});
+                    if(this.source) this.source.disconnect(); this.source = this.ctx.createMediaStreamSource(new MediaStream([stream.getAudioTracks()[0]])); this.source.connect(this.analyser);
+                    document.getElementById('bgAudio').pause(); UI.micBtn.textContent="🔊 Live";
+                } catch(e) {}
+            },
+            update: function() {
+                if(!this.init || !UI.audioReactCheck.checked || (document.getElementById('bgAudio').src && document.getElementById('bgAudio').paused && !this.source?.mediaStream)) {
+                    STATE.audioScale=1; STATE.audioGlow=0; STATE.bassLevel=0; return;
+                }
+                this.analyser.getByteFrequencyData(this.data);
+                let b=0; for(let i=0;i<10;i++) b+=this.data[i]; b/=10; STATE.bassLevel=b; STATE.audioScale = 1 + (b/255)*0.8;
+                let v=0; for(let i=0;i<this.data.length;i++) v+=this.data[i]; v/=this.data.length; STATE.audioGlow = (v/255)*15;
+            }
+        };
+
+        // --- ДВИЖОК РЕНДЕРА (GPU LOOP) ---
+        let lastFPS = performance.now(); let frames = 0;
+        function renderLoop(time) {
+            frames++; if(time - lastFPS >= 1000) { UI.fps.textContent=`FPS: ${frames} | GPU Engine`; frames=0; lastFPS=time; }
+            
+            let spd = parseInt(UI.speedRange.value, 10); let speedMs = 1001 - spd; let delta = time - STATE.lastTickTime;
+
+            if(delta < speedMs && (AUDIO.init || UI.spin3dCheck.checked || UI.breathingZoomCheck.checked)) {
+                AUDIO.update();
+                if(UI.spin3dCheck.checked) STATE.globalAngle += 0.01;
+                if(UI.breathingZoomCheck.checked) STATE.breathTime += 0.02;
+            }
+
+            if (delta >= speedMs && STATE.isPlaying) {
+                STATE.lastTickTime = time - (delta % Math.max(1, speedMs));
+                let mult = parseInt(UI.speedMultInput.value, 10) || 1;
+                
+                if(UI.autoPilotCheck.checked && AUDIO.init) {
+                    if(STATE.bassLevel < 30) STATE.framesSinceChange++; else STATE.framesSinceChange=0;
+                    if(STATE.framesSinceChange > 60) { 
+                        let keys = Object.keys(PREBUILT_SCENES); let rk = keys[Math.floor(Math.random() * keys.length)];
+                        loadScene(rk); STATE.framesSinceChange = -100; 
+                    }
+                }
+
+                if(UI.zerkaliusAnimCheck.checked && STATE.lines.length > 0) {
+                    if(STATE.animatrixRow >= STATE.ROWS - 1) STATE.animatrixRow = 0;
+                    let r1 = STATE.animatrixRow; let r2 = r1 + 1;
+                    for(let x=0; x<STATE.COLS; x++) {
+                        let c1 = STATE.lines[r1][x].c, c2 = STATE.lines[r2][x].c;
+                        if(c1 !== ' ') { STATE.lines[r2][x].c = (c1===c2) ? ' ' : c1; STATE.lines[r2][x].a = 1; }
+                    }
+                    STATE.animatrixRow++;
+                }
+
+                if(UI.echoModeCheck.checked && !STATE.isReverse) {
+                    let snap = STATE.lines.map(row => row.map(cell => ({...cell}))); STATE.echoHistory.push(snap);
+                    if(STATE.echoHistory.length > 300) STATE.echoHistory.shift();
+                    for(let y=1; y<STATE.ROWS; y++) {
+                        for(let x=0; x<STATE.COLS; x++) {
+                            let c1 = STATE.lines[y-1][x].c, c2 = STATE.lines[y][x].c;
+                            if(c1 !== ' ') { STATE.lines[y][x].c = (c1===c2) ? ' ' : c1; STATE.lines[y][x].a = 1; }
+                        }
+                    }
+                } else if (UI.echoModeCheck.checked && STATE.isReverse && STATE.echoHistory.length > 0) {
+                    STATE.lines = STATE.echoHistory.pop();
+                }
+
+                if (UI.elkaCheck.checked) {
+                    let dir = STATE.isReverse ? -1 : 1; let allChars = STATE.lines.map(l => l.map(c=>c.c).join('')).join('');
+                    if (allChars.length > 0) {
+                        if (dir > 0) allChars = allChars.substring(1) + allChars[0]; else allChars = allChars.slice(-1) + allChars.slice(0, -1);
+                        let ptr = 0;
+                        for (let y = 0; y < STATE.ROWS; y++) {
+                            let len = STATE.lines[y].length;
+                            let newStr = allChars.substring(ptr, ptr + len);
+                            for(let x=0; x<len; x++) STATE.lines[y][x].c = newStr[x];
+                            ptr += len;
+                        }
+                    }
+                } 
+
+                let alg = parseInt(UI.algorithmInput.value, 10) || 1; if(UI.freezeScrollCheck.checked) alg = 0;
+                let step = STATE.isReverse ? -alg : alg;
+                
+                STATE.offsetMatY -= (step / STATE.ROWS) * mult;
+                if(UI.dualCoreCheck.checked) {
+                    let dSpd = parseInt(UI.dualCoreSpeedInput.value,10)||2;
+                    if(!UI.freezeLayer1Check.checked) STATE.layer2Y -= (step * dSpd / STATE.ROWS) * mult;
+                    else STATE.layer2Y -= (step / STATE.ROWS) * mult;
+                }
+
+                updateDataTexture();
+            }
+
+            let zoom = 1.0; if(UI.breathingZoomCheck.checked) zoom = 1 + Math.sin(STATE.breathTime)*0.4;
+            let fSize = parseInt(UI.fontSizeRange.value,10); let lh = parseFloat(UI.lineHeightRange.value);
+            
+            // Динамический расчет сетки для Canvas
+            let canvasCols = (UI.canvas.width / fSize) / (STATE.audioScale * zoom);
+            let canvasRows = (UI.canvas.height / (fSize * lh)) / (STATE.audioScale * zoom);
+
+            gl.viewport(0, 0, UI.canvas.width, UI.canvas.height);
+            gl.uniform2f(unilocs.res, UI.canvas.width, UI.canvas.height);
+            gl.uniform2f(unilocs.grid, Math.max(STATE.COLS, canvasCols), Math.max(STATE.ROWS, canvasRows));
+            
+            let layer1Y = UI.freezeLayer1Check.checked ? 0 : STATE.offsetMatY;
+            gl.uniform2f(unilocs.offset, STATE.offsetX, layer1Y);
+            gl.uniform2f(unilocs.layerOff, 0, STATE.layer2Y);
+            
+            gl.uniform3fv(unilocs.cAct, hex2vec(UI.activeColorPicker.value));
+            gl.uniform3fv(unilocs.cStat, hex2vec(UI.staticColorPicker.value));
+            gl.uniform1f(unilocs.hide, UI.hideStaticCheck.checked ? 1.0 : 0.0);
+            gl.uniform1f(unilocs.glow, STATE.audioGlow);
+            gl.uniform1f(unilocs.radar, STATE.isRadar ? 1.0 : 0.0);
+            gl.uniform1f(unilocs.angle, STATE.globalAngle);
+            gl.uniform1f(unilocs.dualC, UI.dualCoreCheck.checked ? 1.0 : 0.0);
+            gl.uniform1f(unilocs.dualM, UI.dualMaskCheck.checked ? 1.0 : 0.0);
+
+            gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, fontTex); gl.uniform1i(unilocs.fontM, 0);
+            gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, dataTex); gl.uniform1i(unilocs.dataM, 1);
+
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+            requestAnimationFrame(renderLoop);
+        }
+
+        function loadScene(key) {
+            let s = PREBUILT_SCENES[key]; if(!s) return;
+            UI.speedRange.value = s.speed || 920; UI.speedVal.textContent = (1001 - s.speed) + ' мс';
+            UI.themeSelect.value = s.theme; let t = THEMES[s.theme];
+            if(t) { UI.activeColorPicker.value = t.act; UI.staticColorPicker.value = t.stat; }
+            UI.dualCoreCheck.checked = !!s.dual; UI.dualMaskCheck.checked = !!s.dualMask;
+            UI.spin3dCheck.checked = !!s.spin3d; UI.breathingZoomCheck.checked = !!s.breath;
+            STATE.isRadar = !!s.radar; if(STATE.isRadar) UI.toggleRadarBtn.classList.add('active-yellow'); else UI.toggleRadarBtn.classList.remove('active-yellow');
+            UI.zerkRuleSelect.value = s.rule; generateMatrix();
+        }
+
+        // --- СОБЫТИЯ ---
+        for(let key in PREBUILT_SCENES) { let o=document.createElement('option'); o.value=key; o.textContent=PREBUILT_SCENES[key].name; document.getElementById('sceneSelect').appendChild(o); }
+        document.getElementById('sceneSelect').addEventListener('change', (e) => loadScene(e.target.value));
+
+        window.addEventListener('resize', () => { UI.canvas.width = UI.canvas.parentElement.clientWidth; UI.canvas.height = UI.canvas.parentElement.clientHeight; });
+        UI.zerkaliusBtn.addEventListener('click', generateMatrix);
+        UI.playBtn.addEventListener('click', () => { STATE.isPlaying = !STATE.isPlaying; UI.playBtn.innerHTML = STATE.isPlaying ? '⏸ ПАУЗА' : '▶ ПУСК GPU'; if(AUDIO.init && document.getElementById('bgAudio').src) STATE.isPlaying ? document.getElementById('bgAudio').play() : document.getElementById('bgAudio').pause(); });
+        UI.stopBtn.addEventListener('click', () => { STATE.isPlaying=false; UI.playBtn.innerHTML='▶ ПУСК GPU'; STATE.offsetMatY=0; STATE.layer2Y=0; STATE.globalAngle=0; if(AUDIO.init) { document.getElementById('bgAudio').pause(); document.getElementById('bgAudio').currentTime=0;} });
+        UI.toggleRadarBtn.addEventListener('click', () => { STATE.isRadar = !STATE.isRadar; UI.toggleRadarBtn.classList.toggle('active-yellow'); });
+        UI.clearCanvasBtn.addEventListener('click', () => { STATE.lines = createEmptyMatrix(STATE.COLS, STATE.ROWS); updateDataTexture(); });
+        UI.generateVacuumBtn.addEventListener('click', () => { STATE.COLS=150; STATE.ROWS=250; let m=[]; for(let y=0;y<250;y++){let r=[]; for(let x=0;x<150;x++) r.push({c:(y%2===x%2)?'1':'0',a:0}); m.push(r);} STATE.lines=m; updateDataTexture(); });
+        UI.audioLoader.addEventListener('change', (e) => AUDIO.setupFile(e.target.files[0])); UI.micBtn.addEventListener('click', () => AUDIO.setupMic());
+        
+        UI.canvas.addEventListener('mousedown', (e) => { STATE.isDragging=true; STATE.dragStartX=e.clientX; STATE.startOffsetX=STATE.offsetX; });
+        UI.canvas.addEventListener('mousemove', (e) => { if(STATE.isDragging) STATE.offsetX = STATE.startOffsetX + (e.clientX - STATE.dragStartX); });
+        window.addEventListener('mouseup', () => STATE.isDragging=false);
+        UI.canvas.addEventListener('dblclick', () => document.body.classList.toggle('zen-mode'));
+        UI.themeSelect.addEventListener('change', function() { const t = THEMES[this.value]; if(t) { UI.activeColorPicker.value = t.act; UI.staticColorPicker.value = t.stat; }});
+        UI.speedRange.addEventListener('input', (e) => UI.speedVal.textContent = (1001 - e.target.value) + ' мс');
+
+        window.onload = () => { 
+            window.dispatchEvent(new Event('resize')); 
+            generateMatrix(); // Автостарт
+            requestAnimationFrame(renderLoop);
+        };
+    </script>
+</body>
+</html>
