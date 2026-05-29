@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
+VERSION: Pro 39.0 (The Bulletproof Core)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius 38.0 (CPU Lab)</title>
+    <title>Binary Drum Machine (Zerkalius 39.0)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -97,7 +97,7 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
         input[type="color"] { border: none; width: 28px; height: 16px; padding: 0; background: none; cursor: pointer; }
         select { background: #222; color: #fff; border: 1px solid #444; padding: 3px; border-radius: 3px; width: 100%; font-family: inherit; font-size: 11px; outline: none; cursor: pointer;}
         
-        #statusInfo { font-size: 10px; color: #ffcc00; text-align: center; margin-top: 1px; min-height: 11px; }
+        #statusInfo { font-size: 10px; color: #ffcc00; text-align: center; margin-top: 1px; min-height: 11px; font-weight:bold; }
         #screenContainer { flex-grow: 1; background: #000000; border: 2px solid #111; border-radius: 5px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
         #screenCanvas { display: block; cursor: grab; } 
         #screenCanvas:active { cursor: grabbing; }
@@ -125,10 +125,10 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
         .palette-row input[type="range"] { margin: 0; }
         
         textarea { 
-            background: #050505; color: #ffcc00; border: 1px solid #ffcc00; 
-            font-family: inherit; font-size: 10px; width: 100%; height: 60px; 
+            background: #050505; color: #00ff66; border: 1px solid #00ccff; 
+            font-family: inherit; font-size: 10px; width: 100%; height: 80px; 
             margin-top: 4px; border-radius: 3px; resize: none; display: none; 
-            padding: 4px; box-sizing: border-box; box-shadow: inset 0 0 5px rgba(255,204,0,0.2);
+            padding: 4px; box-sizing: border-box; box-shadow: inset 0 0 5px rgba(0,204,255,0.2);
         }
 
         #hotkeyIndicator {
@@ -161,7 +161,7 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>CPU Lab (Pro 38.0)</h3>
+                <h3>Binary Drum Machine (Pro 39)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
@@ -175,12 +175,12 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
                 </div>
 
                 <div class="compact-row">
-                    <div class="file-input-wrapper"><span class="btn-file">📂 Открыть Текст</span><input type="file" id="fileLoader" accept=".txt"></div>
+                    <div class="file-input-wrapper"><span class="btn-file">📂 Текст</span><input type="file" id="fileLoader" accept=".txt"></div>
                     <div class="file-input-wrapper">
                         <span class="btn-file btn-audio" id="audioBtnText">🎵 Трек</span>
                         <input type="file" id="audioLoader" accept="audio/*">
                     </div>
-                    <button id="micBtn" class="btn-mic" title="Захват системного аудио">🎤 Звук ПК</button>
+                    <button id="micBtn" class="btn-mic" title="Попросит доступ к захвату окна (Выбери вкладку с системным аудио)">🎤 Звук ПК</button>
                 </div>
                 
                 <audio id="bgAudio" loop style="display:none;"></audio>
@@ -218,7 +218,7 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
                 <div class="control-group control-group-blue">
                     <label style="color:#00ccff; font-weight:bold;">Поиск паттерна (Логгер):</label>
                     <input type="text" id="searchInput" placeholder="Например: 11011 (Сохранит строку)" style="text-align: center; border-color: #00ccff;">
-                    <textarea id="dataInput" readonly placeholder="Здесь появятся найденные строки..."></textarea>
+                    <textarea id="dataInput" readonly placeholder="Системный Терминал..."></textarea>
                 </div>
 
                 <div class="control-group control-group-highlight" style="border-color: #ffcc00;">
@@ -394,6 +394,30 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
     <script>
         console.log("%c Binary Drum Machine (Zerkalius) ", "background: #222; color: #00ff66; font-size: 20px; font-weight: bold; border-radius: 5px; padding: 5px;");
         console.log("%c Concept, Vision & Ideas: The Architect (User) \n Code & Logic: AI", "color: #00ccff; font-size: 14px; font-weight: bold;");
+
+        // --- ГЛОБАЛЬНЫЕ ФУНКЦИИ ЦВЕТА (ЗАЩИТА ОТ КОНТЕКСТА) ---
+        function hexToRgb(hex) {
+            let r = 0, g = 0, b = 0;
+            if (hex.length === 7) { r = parseInt(hex.slice(1, 3), 16); g = parseInt(hex.slice(3, 5), 16); b = parseInt(hex.slice(5, 7), 16); }
+            return `${r}, ${g}, ${b}`;
+        }
+
+        function hslToRgb(h, s, l) {
+            let c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c/2, r=0, g=0, b=0;
+            if (0 <= h && h < 60) {r=c; g=x; b=0;} else if (60 <= h && h < 120) {r=x; g=c; b=0;} else if (120 <= h && h < 180) {r=0; g=c; b=x;}
+            else if (180 <= h && h < 240) {r=0; g=x; b=c;} else if (240 <= h && h < 300) {r=x; g=0; b=c;} else if (300 <= h && h < 360) {r=c; g=0; b=x;}
+            return `${Math.round((r+m)*255)}, ${Math.round((g+m)*255)}, ${Math.round((b+m)*255)}`;
+        }
+
+        function DEBUG_LOG(msg) {
+            console.log(msg);
+            const term = document.getElementById('dataInput');
+            if (term) {
+                term.style.display = 'block';
+                term.value += ">> " + msg + "\n";
+                term.scrollTop = term.scrollHeight;
+            }
+        }
 
         const THEMES = {
             matrix: { act: '#ffffff', actA: 1.0, stat: '#00ff66', statA: 0.3 },
@@ -590,12 +614,12 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
                     UI.toggleRadarBtn.classList.remove('active-yellow'); UI.toggleRadarBtn.style.background = '#cc33ff';
                 }
 
-                if(scene.type === 'vacuum') MODULE_DATA.generateVacuum();
-                else if(scene.type === 'source') {
+                if(scene.type === 'vacuum') {
+                    MODULE_DATA.generateVacuum();
+                } else if(scene.type === 'source') {
                     let codeLines = document.documentElement.innerHTML.split('\n').map(l => l.trim()).filter(l => l.length > 0).slice(0, 350).join('\n');
                     MODULE_DATA.processTextData(codeLines, "Код Матрицы");
-                }
-                else if (scene.type === 'fractal') {
+                } else if (scene.type === 'fractal') {
                     UI.zerkRuleSelect.value = scene.rule || '90';
                     UI.zerkSeedInput.value = scene.seed || '1';
                     UI.zerkCountInput.value = scene.lines || 100;
@@ -686,9 +710,9 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
                     return { text: '', color: '' };
                 });
             },
-            saveToLocalStorage: function(data) { try { localStorage.setItem('saved_binary_lines_v24', JSON.stringify(data)); } catch (e) {} },
+            saveToLocalStorage: function(data) { try { localStorage.setItem('saved_binary_lines_v33', JSON.stringify(data)); } catch (e) {} },
             loadFromLocalStorage: function() {
-                const saved = localStorage.getItem('saved_binary_lines_v24');
+                const saved = localStorage.getItem('saved_binary_lines_v33');
                 if (saved) {
                     try {
                         const parsed = JSON.parse(saved);
@@ -799,64 +823,76 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
 
                 let shape = matrix.map(row => { return { text: row.join(''), color: ''}; });
                 let names = { 'ziggurat': 'Зиккурат', 'vortex': 'Воронка 3D', 'orbital': 'Орбитальный Конус', 'diagonal': 'Диагональная Сетка' };
+                MODULE_STATE.originalLines = [];
                 this.implantOrReplace(shape, names[rule] || `Фрактал (R${rule})`);
             },
 
             implantOrReplace: function(shape, sourceName) {
-                let symStatus = MODULE_ALGORITHMS.checkSymmetry(shape);
+                try {
+                    DEBUG_LOG("Начат процесс вживления: " + sourceName);
+                    let symStatus = MODULE_ALGORITHMS.checkSymmetry(shape);
 
-                if (UI.implantModeCheck.checked && MODULE_STATE.originalLines.length > 0) {
-                    let bgH = MODULE_STATE.originalLines.length;
-                    let bgW = MODULE_STATE.originalLines[0]?.text.length || 0;
-                    let shH = shape.length;
-                    let shW = Math.max(...shape.map(l => l.text.length));
-                    
-                    let startY = Math.floor((bgH - shH) / 2);
-                    let startX = Math.floor((bgW - shW) / 2);
-                    
-                    for(let i=0; i<shH; i++) {
-                        if(startY+i >= 0 && startY+i < bgH) {
-                            let bgStr = MODULE_STATE.originalLines[startY+i].text;
-                            let shStr = shape[i].text.padEnd(shW, ' ');
-                            
-                            let newStrArr = bgStr.split('');
-                            for(let k=0; k<shStr.length; k++) {
-                                let targetX = startX + k;
-                                if(targetX >= 0 && targetX < bgStr.length && shStr[k] !== ' ') {
-                                    newStrArr[targetX] = shStr[k];
+                    if (UI.implantModeCheck.checked && MODULE_STATE.originalLines.length > 0) {
+                        let bgH = MODULE_STATE.originalLines.length;
+                        let bgW = MODULE_STATE.originalLines[0]?.text.length || 0;
+                        let shH = shape.length;
+                        let shW = Math.max(...shape.map(l => l.text.length));
+                        
+                        let startY = Math.floor((bgH - shH) / 2);
+                        let startX = Math.floor((bgW - shW) / 2);
+                        
+                        for(let i=0; i<shH; i++) {
+                            if(startY+i >= 0 && startY+i < bgH) {
+                                let bgStr = MODULE_STATE.originalLines[startY+i].text;
+                                let shStr = shape[i].text.padEnd(shW, ' ');
+                                
+                                let newStrArr = bgStr.split('');
+                                for(let k=0; k<shStr.length; k++) {
+                                    let targetX = startX + k;
+                                    if(targetX >= 0 && targetX < bgStr.length && shStr[k] !== ' ') {
+                                        newStrArr[targetX] = shStr[k];
+                                    }
                                 }
+                                MODULE_STATE.originalLines[startY+i].text = newStrArr.join('');
                             }
-                            MODULE_STATE.originalLines[startY+i].text = newStrArr.join('');
                         }
+                        UI.statusInfo.textContent = `Вживлено: ${sourceName} | ${symStatus}`;
+                    } else {
+                        MODULE_STATE.originalLines = shape;
+                        UI.statusInfo.textContent = `Генерация: ${sourceName} | ${symStatus}`;
                     }
-                    UI.statusInfo.textContent = `Вживлено: ${sourceName} | ${symStatus}`;
-                } else {
-                    MODULE_STATE.originalLines = shape;
-                    UI.statusInfo.textContent = `Генерация: ${sourceName} | ${symStatus}`;
+                    
+                    this.saveToLocalStorage(MODULE_STATE.originalLines);
+                    this.precalculateLines(true);
+                } catch(e) {
+                    DEBUG_LOG("ОШИБКА В implantOrReplace: " + e.message);
                 }
-                
-                this.saveToLocalStorage(MODULE_STATE.originalLines);
-                this.precalculateLines(true);
             },
 
             processTextData: function(text, sourceName) {
-                // ПРАВИЛЬНЫЙ ФИКС ВСТАВКИ: Сохраняем все строки, отступы и заменяем табы на пробелы
-                const raw = text.split('\n').map(l => l.replace(/\t/g, '    ')).filter(l => l.replace(/\r/g, '').length > 0);
-                const shape = this.normalizeLines(raw);
-                
-                // Если режим вживления включен, но матрица пуста - создаем невидимый холст под размер текста
-                if (UI.implantModeCheck.checked && MODULE_STATE.originalLines.length === 0) {
-                    let h = shape.length;
-                    let w = Math.max(...shape.map(l => l.text.length));
-                    let matrix = [];
-                    for(let i=0; i<h; i++) {
-                        matrix.push({text: ' '.repeat(w), color: ''});
-                    }
-                    MODULE_STATE.originalLines = matrix;
-                }
+                try {
+                    DEBUG_LOG("Старт загрузки текста: " + sourceName);
+                    const raw = text.split('\n').map(l => l.replace(/\t/g, '    ').replace(/\r/g, '')).filter(l => l.trim().length > 0);
+                    DEBUG_LOG("Прочитано строк: " + raw.length);
+                    
+                    if (raw.length === 0) { DEBUG_LOG("Файл пуст или только пробелы."); return; }
 
-                this.implantOrReplace(shape, sourceName);
-                MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0;
+                    const shape = this.normalizeLines(raw);
+                    
+                    if (UI.implantModeCheck.checked && MODULE_STATE.originalLines.length === 0) {
+                        DEBUG_LOG("Матрица пуста. Создаем холст под размер текста...");
+                        let h = shape.length;
+                        let w = Math.max(...shape.map(l => l.text.length));
+                        let matrix = [];
+                        for(let i=0; i<h; i++) matrix.push({text: ' '.repeat(w), color: ''});
+                        MODULE_STATE.originalLines = matrix;
+                    }
+
+                    this.implantOrReplace(shape, sourceName);
+                    MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0;
+                } catch(e) {
+                    DEBUG_LOG("ОШИБКА В processTextData: " + e.message);
+                }
             },
 
             runAnimatrixGlobal: function() {
@@ -895,61 +931,66 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
             },
 
             precalculateLines: function(isFirstLoad = false) {
-                const op = UI.logicalOpSelect?.value || 'original';
-                const raw = MODULE_STATE.originalLines;
-                if (raw.length === 0) { MODULE_STATE.lines = []; return; }
-                
-                const processed = [];
-                for (let i = 0; raw.length !== i; i++) {
-                    const line = raw[i];
-                    let text = line.text;
+                try {
+                    DEBUG_LOG("Запуск математики (precalculateLines)...");
+                    const op = UI.logicalOpSelect?.value || 'original';
+                    const raw = MODULE_STATE.originalLines;
+                    if (raw.length === 0) { MODULE_STATE.lines = []; return; }
                     
-                    if (op === 'not') text = text.split('').map(char => (char === '0' ? '1' : (char === '1' ? '0' : (char === ' ' ? ' ' : char)))).join('');
-                    else if (op === 'xor' && i > 0) {
-                        const prevText = raw[i - 1].text;
-                        text = text.split('').map((char, charIdx) => {
-                            const prevChar = prevText[charIdx];
-                            if ((char === '0' || char === '1') && (prevChar === '0' || prevChar === '1')) return char === prevChar ? '0' : '1';
-                            return char;
-                        }).join('');
-                    } else if (op === 'reverse') text = text.split('').reverse().join('');
-                    
-                    const diffFlags = []; const diffFlagsLeft = []; const diffFlagsRight = []; const mutFlags = [];
-                    const prevText = i > 0 ? processed[i - 1].text : "";
-                    
-                    if (isFirstLoad) MODULE_STATE.mutationTracker[i] = [];
-                    if (MODULE_STATE.mutationTracker[i] === undefined) MODULE_STATE.mutationTracker[i] = [];
-
-                    for (let charIdx = 0; charIdx < text.length; charIdx++) {
-                        const char = text[charIdx];
-                        let isDiff = char !== (prevText ? prevText[charIdx] : undefined);
-                        diffFlags.push(isDiff);
-                        diffFlagsLeft.push(char !== (prevText ? prevText[charIdx - 1] : undefined));
-                        diffFlagsRight.push(char !== (prevText ? prevText[charIdx + 1] : undefined));
+                    const processed = [];
+                    for (let i = 0; raw.length !== i; i++) {
+                        const line = raw[i];
+                        let text = line.text;
                         
-                        if (isDiff && !isFirstLoad) {
-                            MODULE_STATE.mutationTracker[i][charIdx] = (MODULE_STATE.mutationTracker[i][charIdx] || 0) + 1;
+                        if (op === 'not') text = text.split('').map(char => (char === '0' ? '1' : (char === '1' ? '0' : (char === ' ' ? ' ' : char)))).join('');
+                        else if (op === 'xor' && i > 0) {
+                            const prevText = raw[i - 1].text;
+                            text = text.split('').map((char, charIdx) => {
+                                const prevChar = prevText[charIdx];
+                                if ((char === '0' || char === '1') && (prevChar === '0' || prevChar === '1')) return char === prevChar ? '0' : '1';
+                                return char;
+                            }).join('');
+                        } else if (op === 'reverse') text = text.split('').reverse().join('');
+                        
+                        const diffFlags = []; const diffFlagsLeft = []; const diffFlagsRight = []; const mutFlags = [];
+                        const prevText = i > 0 ? processed[i - 1].text : "";
+                        
+                        if (isFirstLoad) MODULE_STATE.mutationTracker[i] = [];
+                        if (MODULE_STATE.mutationTracker[i] === undefined) MODULE_STATE.mutationTracker[i] = [];
+
+                        for (let charIdx = 0; charIdx < text.length; charIdx++) {
+                            const char = text[charIdx];
+                            let isDiff = char !== (prevText ? prevText[charIdx] : undefined);
+                            diffFlags.push(isDiff);
+                            diffFlagsLeft.push(char !== (prevText ? prevText[charIdx - 1] : undefined));
+                            diffFlagsRight.push(char !== (prevText ? prevText[charIdx + 1] : undefined));
+                            
+                            if (isDiff && !isFirstLoad) {
+                                MODULE_STATE.mutationTracker[i][charIdx] = (MODULE_STATE.mutationTracker[i][charIdx] || 0) + 1;
+                            }
+                            mutFlags.push(MODULE_STATE.mutationTracker[i][charIdx] || 0);
                         }
-                        mutFlags.push(MODULE_STATE.mutationTracker[i][charIdx] || 0);
+                        processed.push({ text: text, color: line.color, diffFlags: diffFlags, diffFlagsLeft: diffFlagsLeft, diffFlagsRight: diffFlagsRight, mutFlags: mutFlags });
                     }
-                    processed.push({ text: text, color: line.color, diffFlags: diffFlags, diffFlagsLeft: diffFlagsLeft, diffFlagsRight: diffFlagsRight, mutFlags: mutFlags });
-                }
-                MODULE_STATE.lines = processed;
-                
-                if (isFirstLoad) {
-                    const linesCount = MODULE_STATE.lines.length;
-                    if (linesCount > 0) {
-                        const optimalHeight = Math.min(linesCount, 1024);
-                        if(UI.heightRange) { UI.heightRange.max = Math.max(45, optimalHeight); UI.heightRange.value = optimalHeight; }
-                        if(UI.heightVal) UI.heightVal.textContent = optimalHeight;
+                    MODULE_STATE.lines = processed;
+                    
+                    if (isFirstLoad) {
+                        const linesCount = MODULE_STATE.lines.length;
+                        if (linesCount > 0) {
+                            const optimalHeight = Math.min(linesCount, 1024);
+                            if(UI.heightRange) { UI.heightRange.max = Math.max(45, optimalHeight); UI.heightRange.value = optimalHeight; }
+                            if(UI.heightVal) UI.heightVal.textContent = optimalHeight;
+                        }
+                        MODULE_STATE.echoHistory = [];
+                        MODULE_STATE.foundPatterns.clear();
+                        if(UI.dataInput) { UI.dataInput.value = ""; UI.dataInput.style.display = 'none'; }
+                        MODULE_STATE.animatrixRow = 0;
                     }
-                    MODULE_STATE.echoHistory = [];
-                    MODULE_STATE.foundPatterns.clear();
-                    UI.dataInput.value = "";
-                    UI.dataInput.style.display = 'none';
-                    MODULE_STATE.animatrixRow = 0;
+                    RENDERER.updateTimeline(); RENDERER.renderFrame();
+                    DEBUG_LOG("Математика завершена. Строк: " + MODULE_STATE.lines.length);
+                } catch(e) {
+                    DEBUG_LOG("ОШИБКА В precalculateLines: " + e.message);
                 }
-                RENDERER.updateTimeline(); RENDERER.renderFrame();
             },
 
             exportToExcel: function() {
@@ -982,12 +1023,6 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
         };
 
         const RENDERER = {
-            hslToRgb: function(h, s, l) {
-                let c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c/2, r=0, g=0, b=0;
-                if (0 <= h && h < 60) {r=c; g=x; b=0;} else if (60 <= h && h < 120) {r=x; g=c; b=0;} else if (120 <= h && h < 180) {r=0; g=c; b=x;}
-                else if (180 <= h && h < 240) {r=0; g=x; b=c;} else if (240 <= h && h < 300) {r=x; g=0; b=c;} else if (300 <= h && h < 360) {r=c; g=0; b=x;}
-                return `${Math.round((r+m)*255)}, ${Math.round((g+m)*255)}, ${Math.round((b+m)*255)}`;
-            },
             resizeCanvas: function() {
                 const rect = UI.screenContainer.getBoundingClientRect();
                 if (UI.canvas.width !== rect.width || UI.canvas.height !== rect.height) { UI.canvas.width = rect.width; UI.canvas.height = rect.height; }
@@ -1037,8 +1072,8 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
                 let fontSize = baseFontSize * AUDIO_VISUALIZER.audioScale * zoomMod;
                 const selectedFont = UI.fontSelect ? UI.fontSelect.value : 'monospace';
 
-                const actColor = UI.activeColorPicker.value; const actRgb = this.hexToRgb(actColor); const actAlpha = parseFloat(UI.activeAlphaRange.value);
-                const statColor = UI.staticColorPicker.value; const statRgb = this.hexToRgb(statColor); const statAlpha = parseFloat(UI.staticAlphaRange.value);
+                const actColor = UI.activeColorPicker.value; const actRgb = hexToRgb(actColor); const actAlpha = parseFloat(UI.activeAlphaRange.value);
+                const statColor = UI.staticColorPicker.value; const statRgb = hexToRgb(statColor); const statAlpha = parseFloat(UI.staticAlphaRange.value);
 
                 ctx.textBaseline = 'middle'; ctx.textAlign = 'center'; 
                 let activeLinesSource = MODULE_STATE.lines;
@@ -1127,12 +1162,12 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
                                     cRgb = '255, 51, 51'; cAlpha = 1.0; charShadowBlur = 10;
                                 } else if (finalChar !== ' ' && finalChar !== '0' && finalChar !== '1') {
                                     let hue = (finalChar.charCodeAt(0) * 47) % 360;
-                                    cRgb = this.hslToRgb(hue, 1, isChanged || isCollision ? 0.6 : 0.4);
+                                    cRgb = hslToRgb(hue, 1, isChanged || isCollision ? 0.6 : 0.4);
                                     cAlpha = 1.0;
                                 }
                             } else if (activeTheme === 'mutation') {
                                 let mLevel = lineData.mutFlags ? lineData.mutFlags[charIdx] : 0;
-                                if (mLevel > 0) { cRgb = this.hexToRgb(MUTATION_COLORS[(mLevel - 1) % MUTATION_COLORS.length]); cAlpha = 1.0; isChanged = true; } 
+                                if (mLevel > 0) { cRgb = hexToRgb(MUTATION_COLORS[(mLevel - 1) % MUTATION_COLORS.length]); cAlpha = 1.0; isChanged = true; } 
                                 else { cRgb = statRgb; cAlpha = statAlpha; }
                             }
 
@@ -1147,7 +1182,12 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
                             if (11 > fontSize) charShadowBlur = 0; 
                             
                             ctx.fillStyle = rgbaStr;
-                            if (charShadowBlur > 0) { ctx.shadowBlur = charShadowBlur; ctx.shadowColor = isChanged?actColor:statColor; }
+                            if (charShadowBlur > 0) { 
+                                ctx.shadowBlur = charShadowBlur; 
+                                ctx.shadowColor = (activeTheme === 'mutation' && lineData.mutFlags && lineData.mutFlags[charIdx] > 0) 
+                                    ? MUTATION_COLORS[(lineData.mutFlags[charIdx] - 1) % MUTATION_COLORS.length] 
+                                    : (isRainbow && isExactMatch ? '#ff3333' : (isChanged?actColor:statColor)); 
+                            }
                             ctx.fillText(finalChar, 0, 0); ctx.restore();
                         }
                     }
@@ -1246,12 +1286,12 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
                                 cRgb = '255, 51, 51'; cAlpha = 1.0; charShadowBlur = 10;
                             } else if (finalChar !== ' ' && finalChar !== '0' && finalChar !== '1') {
                                 let hue = (finalChar.charCodeAt(0) * 47) % 360;
-                                cRgb = this.hslToRgb(hue, 1, isChanged || isCollision ? 0.6 : 0.4);
+                                cRgb = hslToRgb(hue, 1, isChanged || isCollision ? 0.6 : 0.4);
                                 cAlpha = 1.0;
                             }
                         } else if (activeTheme === 'mutation') {
                             let mLevel = lineData.mutFlags ? lineData.mutFlags[actualIdx] : 0;
-                            if (mLevel > 0) { cRgb = this.hexToRgb(MUTATION_COLORS[(mLevel - 1) % MUTATION_COLORS.length]); cAlpha = 1.0; isChanged = true; } 
+                            if (mLevel > 0) { cRgb = hexToRgb(MUTATION_COLORS[(mLevel - 1) % MUTATION_COLORS.length]); cAlpha = 1.0; isChanged = true; } 
                             else { cRgb = statRgb; cAlpha = statAlpha; }
                         }
 
@@ -1344,14 +1384,10 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
                             MODULE_STATE.originalLines.forEach(l => {
                                 if (l.text.includes(searchPat) && !MODULE_STATE.foundPatterns.has(l.text)) {
                                     MODULE_STATE.foundPatterns.add(l.text);
-                                    UI.dataInput.value += l.text + "\n";
+                                    DEBUG_LOG("Найдено: " + l.text);
                                     addedToLog = true;
                                 }
                             });
-                            if (addedToLog) {
-                                UI.dataInput.style.display = 'block';
-                                UI.dataInput.scrollTop = UI.dataInput.scrollHeight;
-                            }
                         }
 
                         if (UI.zerkaliusAnimCheck?.checked && MODULE_STATE.originalLines.length > 0) MODULE_DATA.runAnimatrixGlobal();
@@ -1425,14 +1461,17 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
                 SCENE_MANAGER.init();
 
                 if(UI.audioLoader) UI.audioLoader.addEventListener('change', function(e) { const file = e.target.files[0]; if (!file) return; AUDIO_VISUALIZER.initFile(file); });
+                
                 if(UI.micBtn) UI.micBtn.addEventListener('click', () => AUDIO_VISUALIZER.initMic());
 
                 if(UI.generateVacuumBtn) UI.generateVacuumBtn.addEventListener('click', () => { let implantState = UI.implantModeCheck.checked; UI.implantModeCheck.checked = false; MODULE_DATA.generateVacuum(); UI.implantModeCheck.checked = implantState; });
                 
                 if(UI.clearCanvasBtn) UI.clearCanvasBtn.addEventListener('click', () => { 
+                    DEBUG_LOG("Очистка холста...");
                     MODULE_STATE.originalLines = []; MODULE_STATE.lines = []; MODULE_STATE.echoHistory = []; MODULE_STATE.currentIndex = 0;
                     if (MODULE_STATE.isPlaying) PLAYER.stop();
-                    UI.dataInput.value = ""; UI.dataInput.style.display = 'none'; MODULE_STATE.foundPatterns.clear();
+                    if(UI.dataInput) { UI.dataInput.value = ""; UI.dataInput.style.display = 'none'; }
+                    MODULE_STATE.foundPatterns.clear();
                     RENDERER.updateTimeline(); RENDERER.renderFrame();
                     UI.statusInfo.textContent = "Холст мгновенно очищен"; MODULE_DATA.saveToLocalStorage([]);
                 });
@@ -1503,7 +1542,6 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
                     });
                 }
 
-                // HOTKEYS
                 const showHotkeyInd = (text) => {
                     UI.hotkeyInd.textContent = text;
                     UI.hotkeyInd.style.opacity = 1;
@@ -1568,7 +1606,6 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
                     }
                 });
 
-                // ПЛАВАЮЩАЯ ПАНЕЛЬ
                 const panel = document.getElementById('leftPanel');
                 let startX, startY, startLeft, startTop;
 
@@ -1626,7 +1663,7 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
                 
                 if(UI.fileLoader) UI.fileLoader.addEventListener('change', function(e) { 
                     const file = e.target.files[0]; if (!file) return; 
-                    e.target.value = ''; // Reset
+                    e.target.value = ''; 
                     const reader = new FileReader(); 
                     reader.onload = function(e) { MODULE_DATA.processTextData(e.target.result, file.name); }; 
                     reader.readAsText(file); 
@@ -1637,7 +1674,7 @@ VERSION: Pro 38.0 (The CPU Laboratory - Text Fix)
                     if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') return; 
                     let text = e.clipboardData.getData('text/plain'); 
                     if (text) { 
-                        text = text.replace(/\t/g, '    '); 
+                        text = text.replace(/\t/g, '    ').replace(/\r/g, ''); 
                         MODULE_DATA.processTextData(text, 'Буфер обмена'); 
                         e.preventDefault(); 
                         if(!MODULE_STATE.isPlaying) RENDERER.renderFrame(); 
