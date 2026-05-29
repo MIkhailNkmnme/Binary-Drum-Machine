@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 33.2 (Text Injection Fix)
+VERSION: Pro 33.3 (The Debugger Edition)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 33.2)</title>
+    <title>Binary Drum Machine (Zerkalius 33.3)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -102,7 +102,6 @@ VERSION: Pro 33.2 (Text Injection Fix)
         #screenCanvas { display: block; cursor: grab; } 
         #screenCanvas:active { cursor: grabbing; }
         
-        /* ПЛАВАЮЩИЕ КНОПКИ */
         .float-btn { position: absolute; z-index: 10; border: none; cursor: pointer; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: opacity 0.3s, background 0.2s, box-shadow 0.2s; left: 8px;}
         #toggleMenuBtn { top: 8px; background: #00ff66; color: #000; box-shadow: 0 0 8px rgba(0, 255, 102, 0.5); border-radius: 3px; height: 26px; width: 34px;}
         #toggleFloatPanelBtn { top: 40px; background: #0088ff; color: #fff; box-shadow: 0 0 8px rgba(0, 136, 255, 0.5); border-radius: 3px; height: 26px; width: 34px;}
@@ -125,10 +124,10 @@ VERSION: Pro 33.2 (Text Injection Fix)
         .palette-row input[type="range"] { margin: 0; }
         
         textarea { 
-            background: #050505; color: #ffcc00; border: 1px solid #ffcc00; 
-            font-family: inherit; font-size: 10px; width: 100%; height: 60px; 
-            margin-top: 4px; border-radius: 3px; resize: none; display: none; 
-            padding: 4px; box-sizing: border-box; box-shadow: inset 0 0 5px rgba(255,204,0,0.2);
+            background: #050505; color: #00ff66; border: 1px solid #00ccff; 
+            font-family: inherit; font-size: 10px; width: 100%; height: 80px; 
+            margin-top: 4px; border-radius: 3px; resize: none; display: block; 
+            padding: 4px; box-sizing: border-box; box-shadow: inset 0 0 5px rgba(0,204,255,0.2);
         }
 
         #hotkeyIndicator {
@@ -161,7 +160,7 @@ VERSION: Pro 33.2 (Text Injection Fix)
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 33.2)</h3>
+                <h3>Binary Drum Machine (Pro 33.3)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
@@ -190,11 +189,18 @@ VERSION: Pro 33.2 (Text Injection Fix)
                     <button id="exportExcelBtn" class="btn-export-excel">📊 в Excel</button>
                     <button id="generateVacuumBtn" class="btn-vacuum" style="margin:0;">Сетка</button>
                 </div>
-                <div id="statusInfo">Двойной клик по холсту — Режим Дзен</div>
+                <div id="statusInfo">Терминал готов к диагностике...</div>
             </div>
 
             <div class="scrollable-settings">
                 
+                <!-- ОКНО ДИАГНОСТИКИ (ТЕРМИНАЛ) -->
+                <div class="control-group control-group-blue" style="border-color: #00ccff;">
+                    <label style="color:#00ccff; font-weight:bold; justify-content:center;">СИСТЕМНЫЙ ЛОГ (ШПИОН):</label>
+                    <textarea id="dataInput" readonly placeholder="Здесь будут логи загрузки текстов и ошибки..."></textarea>
+                    <input type="text" id="searchInput" placeholder="Поиск паттерна (Например: 11011)" style="text-align: center; border-color: #00ccff; margin-top:4px;">
+                </div>
+
                 <div class="control-group">
                     <label class="checkbox-row" style="margin-top: 2px; background: #2a0044; padding: 4px; border-radius: 3px;">
                         <input type="checkbox" id="audioReactCheck" checked>
@@ -213,12 +219,6 @@ VERSION: Pro 33.2 (Text Injection Fix)
                         <button id="insertOnesGlobalBtn" class="btn-mod magenta">Вставить 1</button>
                         <button id="fill1010Btn" class="btn-mod cyan">Заполнить 1010</button>
                     </div>
-                </div>
-
-                <div class="control-group control-group-blue">
-                    <label style="color:#00ccff; font-weight:bold;">Поиск паттерна (Логгер):</label>
-                    <input type="text" id="searchInput" placeholder="Например: 11011 (Сохранит строку)" style="text-align: center; border-color: #00ccff;">
-                    <textarea id="dataInput" readonly placeholder="Здесь появятся найденные строки..."></textarea>
                 </div>
 
                 <div class="control-group control-group-highlight" style="border-color: #ffcc00;">
@@ -492,6 +492,17 @@ VERSION: Pro 33.2 (Text Injection Fix)
             }
         };
 
+        // --- ГЛОБАЛЬНЫЙ ЛОГГЕР-ДИАГНОСТ ---
+        function DEBUG_LOG(msg) {
+            console.log(msg);
+            const term = document.getElementById('dataInput');
+            if (term) {
+                term.style.display = 'block';
+                term.value += ">> " + msg + "\n";
+                term.scrollTop = term.scrollHeight;
+            }
+        }
+
         const UI = {
             playBtn: document.getElementById('playBtn'), stopBtn: document.getElementById('stopBtn'), 
             prevBtn: document.getElementById('prevBtn'), nextBtn: document.getElementById('nextBtn'),
@@ -686,9 +697,9 @@ VERSION: Pro 33.2 (Text Injection Fix)
                     return { text: '', color: '' };
                 });
             },
-            saveToLocalStorage: function(data) { try { localStorage.setItem('saved_binary_lines_v33', JSON.stringify(data)); } catch (e) {} },
+            saveToLocalStorage: function(data) { try { localStorage.setItem('saved_binary_lines_v24', JSON.stringify(data)); } catch (e) {} },
             loadFromLocalStorage: function() {
-                const saved = localStorage.getItem('saved_binary_lines_v33');
+                const saved = localStorage.getItem('saved_binary_lines_v24');
                 if (saved) {
                     try {
                         const parsed = JSON.parse(saved);
@@ -720,10 +731,6 @@ VERSION: Pro 33.2 (Text Injection Fix)
                 let rule = UI.zerkRuleSelect.value;
                 let matrix = [];
                 
-                // РАСШИРЯЕМ МАТРИЦУ ДЛЯ КРУПНЫХ ФИГУР (Чтобы не обрезало края)
-                let w = seed.length + 2 * h + 50; 
-                let centerStart = Math.floor((w - seed.length) / 2);
-
                 if (rule === 'orbital') {
                     for(let y=0; y<h; y++) {
                         let len = 2 + y * 4; 
@@ -732,7 +739,9 @@ VERSION: Pro 33.2 (Text Injection Fix)
                         matrix.push(rowStr.split(''));
                     }
                 } else if (rule === 'diagonal') {
+                    let w = seed.length + 2 * h; 
                     let numMatrix = Array.from({length: h}, () => Array(w).fill(0)); 
+                    let centerStart = Math.floor((w - seed.length) / 2);
                     
                     for(let i=0; i<seed.length; i++) {
                         if(seed[i] === '1') {
@@ -748,7 +757,9 @@ VERSION: Pro 33.2 (Text Injection Fix)
                         }
                     }
                 } else {
+                    let w = seed.length + 2 * h; 
                     matrix = Array.from({length: h}, () => Array(w).fill('0')); 
+                    let centerStart = Math.floor((w - seed.length) / 2);
                     
                     if (rule === 'vortex') {
                         for (let y = 0; y < h; y++) {
@@ -799,66 +810,86 @@ VERSION: Pro 33.2 (Text Injection Fix)
 
                 let shape = matrix.map(row => { return { text: row.join(''), color: ''}; });
                 let names = { 'ziggurat': 'Зиккурат', 'vortex': 'Воронка 3D', 'orbital': 'Орбитальный Конус', 'diagonal': 'Диагональная Сетка' };
-                
-                // ЭКСТРЕННЫЙ ФИКС: Очищаем кэш строк перед генерацией, чтобы новая фигура не врезалась в старый размер
-                MODULE_STATE.originalLines = [];
                 this.implantOrReplace(shape, names[rule] || `Фрактал (R${rule})`);
             },
 
             implantOrReplace: function(shape, sourceName) {
-                let symStatus = MODULE_ALGORITHMS.checkSymmetry(shape);
+                try {
+                    DEBUG_LOG("Начат процесс implantOrReplace: " + sourceName);
+                    let symStatus = MODULE_ALGORITHMS.checkSymmetry(shape);
 
-                if (UI.implantModeCheck.checked && MODULE_STATE.originalLines.length > 0) {
-                    let bgH = MODULE_STATE.originalLines.length;
-                    let bgW = MODULE_STATE.originalLines[0]?.text.length || 0;
-                    let shH = shape.length;
-                    let shW = Math.max(...shape.map(l => l.text.length));
-                    
-                    let startY = Math.floor((bgH - shH) / 2);
-                    let startX = Math.floor((bgW - shW) / 2);
-                    
-                    for(let i=0; i<shH; i++) {
-                        if(startY+i >= 0 && startY+i < bgH) {
-                            let bgStr = MODULE_STATE.originalLines[startY+i].text;
-                            let shStr = shape[i].text.padEnd(shW, ' ');
-                            
-                            let newStrArr = bgStr.split('');
-                            for(let k=0; k<shStr.length; k++) {
-                                let targetX = startX + k;
-                                if(targetX >= 0 && targetX < bgStr.length && shStr[k] !== ' ') {
-                                    newStrArr[targetX] = shStr[k];
+                    if (UI.implantModeCheck.checked && MODULE_STATE.originalLines.length > 0) {
+                        DEBUG_LOG("Вживление в существующую матрицу...");
+                        let bgH = MODULE_STATE.originalLines.length;
+                        let bgW = MODULE_STATE.originalLines[0]?.text.length || 0;
+                        let shH = shape.length;
+                        let shW = Math.max(...shape.map(l => l.text.length));
+                        
+                        let startY = Math.floor((bgH - shH) / 2);
+                        let startX = Math.floor((bgW - shW) / 2);
+                        
+                        for(let i=0; i<shH; i++) {
+                            if(startY+i >= 0 && startY+i < bgH) {
+                                let bgStr = MODULE_STATE.originalLines[startY+i].text;
+                                let shStr = shape[i].text.padEnd(shW, ' ');
+                                
+                                let newStrArr = bgStr.split('');
+                                for(let k=0; k<shStr.length; k++) {
+                                    let targetX = startX + k;
+                                    if(targetX >= 0 && targetX < bgStr.length && shStr[k] !== ' ') {
+                                        newStrArr[targetX] = shStr[k];
+                                    }
                                 }
+                                MODULE_STATE.originalLines[startY+i].text = newStrArr.join('');
                             }
-                            MODULE_STATE.originalLines[startY+i].text = newStrArr.join('');
                         }
+                        UI.statusInfo.textContent = `Вживлено: ${sourceName} | ${symStatus}`;
+                    } else {
+                        DEBUG_LOG("Генерация чистой фигуры (Замена)...");
+                        MODULE_STATE.originalLines = shape;
+                        UI.statusInfo.textContent = `Генерация: ${sourceName} | ${symStatus}`;
                     }
-                    UI.statusInfo.textContent = `Вживлено: ${sourceName} | ${symStatus}`;
-                } else {
-                    MODULE_STATE.originalLines = shape;
-                    UI.statusInfo.textContent = `Генерация: ${sourceName} | ${symStatus}`;
+                    
+                    this.saveToLocalStorage(MODULE_STATE.originalLines);
+                    this.precalculateLines(true);
+                    DEBUG_LOG("Успех: Фигура отрисована.");
+                } catch(e) {
+                    DEBUG_LOG("ОШИБКА В implantOrReplace: " + e.message);
                 }
-                
-                this.saveToLocalStorage(MODULE_STATE.originalLines);
-                this.precalculateLines(true);
             },
 
             processTextData: function(text, sourceName) {
-                const raw = text.split('\n').map(l => l.replace(/\t/g, ' ')).filter(l => l.trim().length > 0);
-                const shape = this.normalizeLines(raw);
-                
-                // ЭКСТРЕННЫЙ ФИКС: Если мы вживляем текст, но холст пустой (после очистки), мы расширяем холст до размера текста!
-                if (UI.implantModeCheck.checked && MODULE_STATE.originalLines.length === 0) {
-                    let h = shape.length;
-                    let w = Math.max(...shape.map(l => l.text.length));
-                    let matrix = [];
-                    for(let i=0; i<h; i++) {
-                        matrix.push({text: ' '.repeat(w), color: ''});
+                try {
+                    DEBUG_LOG("Старт processTextData: " + sourceName);
+                    
+                    // БЕЗОПАСНАЯ ОЧИСТКА: Убираем только \r, а табы меняем на пробелы
+                    const raw = text.split('\n').map(l => l.replace(/\t/g, ' ').replace(/\r/g, '')).filter(l => l.trim().length > 0);
+                    DEBUG_LOG("Найдено строк с текстом: " + raw.length);
+                    
+                    if (raw.length === 0) {
+                        DEBUG_LOG("ОШИБКА: Файл пуст или содержит только пробелы.");
+                        return;
                     }
-                    MODULE_STATE.originalLines = matrix;
-                }
 
-                this.implantOrReplace(shape, sourceName);
-                MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0;
+                    const shape = this.normalizeLines(raw);
+                    
+                    // ЕСЛИ ХОЛСТ ПУСТОЙ, НО СТОИТ ГАЛОЧКА "ВЖИВИТЬ" -> АВТО-РАСШИРЕНИЕ ХОЛСТА
+                    if (UI.implantModeCheck.checked && MODULE_STATE.originalLines.length === 0) {
+                        DEBUG_LOG("Холст пуст, создаем новую сетку под размер текста...");
+                        let h = shape.length;
+                        let w = Math.max(...shape.map(l => l.text.length));
+                        let matrix = [];
+                        for(let i=0; i<h; i++) {
+                            matrix.push({text: ' '.repeat(w), color: ''});
+                        }
+                        MODULE_STATE.originalLines = matrix;
+                    }
+
+                    this.implantOrReplace(shape, sourceName);
+                    MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0;
+                } catch(e) {
+                    DEBUG_LOG("ОШИБКА В processTextData: " + e.message);
+                }
             },
 
             runAnimatrixGlobal: function() {
@@ -897,61 +928,71 @@ VERSION: Pro 33.2 (Text Injection Fix)
             },
 
             precalculateLines: function(isFirstLoad = false) {
-                const op = UI.logicalOpSelect?.value || 'original';
-                const raw = MODULE_STATE.originalLines;
-                if (raw.length === 0) { MODULE_STATE.lines = []; return; }
-                
-                const processed = [];
-                for (let i = 0; raw.length !== i; i++) {
-                    const line = raw[i];
-                    let text = line.text;
+                try {
+                    DEBUG_LOG("Старт precalculateLines...");
+                    const op = UI.logicalOpSelect?.value || 'original';
+                    const raw = MODULE_STATE.originalLines;
+                    if (raw.length === 0) { 
+                        DEBUG_LOG("Матрица пуста, очищаем экран.");
+                        MODULE_STATE.lines = []; 
+                        return; 
+                    }
                     
-                    if (op === 'not') text = text.split('').map(char => (char === '0' ? '1' : (char === '1' ? '0' : (char === ' ' ? ' ' : char)))).join('');
-                    else if (op === 'xor' && i > 0) {
-                        const prevText = raw[i - 1].text;
-                        text = text.split('').map((char, charIdx) => {
-                            const prevChar = prevText[charIdx];
-                            if ((char === '0' || char === '1') && (prevChar === '0' || prevChar === '1')) return char === prevChar ? '0' : '1';
-                            return char;
-                        }).join('');
-                    } else if (op === 'reverse') text = text.split('').reverse().join('');
-                    
-                    const diffFlags = []; const diffFlagsLeft = []; const diffFlagsRight = []; const mutFlags = [];
-                    const prevText = i > 0 ? processed[i - 1].text : "";
-                    
-                    if (isFirstLoad) MODULE_STATE.mutationTracker[i] = [];
-                    if (MODULE_STATE.mutationTracker[i] === undefined) MODULE_STATE.mutationTracker[i] = [];
-
-                    for (let charIdx = 0; charIdx < text.length; charIdx++) {
-                        const char = text[charIdx];
-                        let isDiff = char !== (prevText ? prevText[charIdx] : undefined);
-                        diffFlags.push(isDiff);
-                        diffFlagsLeft.push(char !== (prevText ? prevText[charIdx - 1] : undefined));
-                        diffFlagsRight.push(char !== (prevText ? prevText[charIdx + 1] : undefined));
+                    const processed = [];
+                    for (let i = 0; raw.length !== i; i++) {
+                        const line = raw[i];
+                        let text = line.text;
                         
-                        if (isDiff && !isFirstLoad) {
-                            MODULE_STATE.mutationTracker[i][charIdx] = (MODULE_STATE.mutationTracker[i][charIdx] || 0) + 1;
+                        if (op === 'not') text = text.split('').map(char => (char === '0' ? '1' : (char === '1' ? '0' : (char === ' ' ? ' ' : char)))).join('');
+                        else if (op === 'xor' && i > 0) {
+                            const prevText = raw[i - 1].text;
+                            text = text.split('').map((char, charIdx) => {
+                                const prevChar = prevText[charIdx];
+                                if ((char === '0' || char === '1') && (prevChar === '0' || prevChar === '1')) return char === prevChar ? '0' : '1';
+                                return char;
+                            }).join('');
+                        } else if (op === 'reverse') text = text.split('').reverse().join('');
+                        
+                        const diffFlags = []; const diffFlagsLeft = []; const diffFlagsRight = []; const mutFlags = [];
+                        const prevText = i > 0 ? processed[i - 1].text : "";
+                        
+                        if (isFirstLoad) MODULE_STATE.mutationTracker[i] = [];
+                        if (MODULE_STATE.mutationTracker[i] === undefined) MODULE_STATE.mutationTracker[i] = [];
+
+                        for (let charIdx = 0; charIdx < text.length; charIdx++) {
+                            const char = text[charIdx];
+                            let isDiff = char !== (prevText ? prevText[charIdx] : undefined);
+                            diffFlags.push(isDiff);
+                            diffFlagsLeft.push(char !== (prevText ? prevText[charIdx - 1] : undefined));
+                            diffFlagsRight.push(char !== (prevText ? prevText[charIdx + 1] : undefined));
+                            
+                            if (isDiff && !isFirstLoad) {
+                                MODULE_STATE.mutationTracker[i][charIdx] = (MODULE_STATE.mutationTracker[i][charIdx] || 0) + 1;
+                            }
+                            mutFlags.push(MODULE_STATE.mutationTracker[i][charIdx] || 0);
                         }
-                        mutFlags.push(MODULE_STATE.mutationTracker[i][charIdx] || 0);
+                        processed.push({ text: text, color: line.color, diffFlags: diffFlags, diffFlagsLeft: diffFlagsLeft, diffFlagsRight: diffFlagsRight, mutFlags: mutFlags });
                     }
-                    processed.push({ text: text, color: line.color, diffFlags: diffFlags, diffFlagsLeft: diffFlagsLeft, diffFlagsRight: diffFlagsRight, mutFlags: mutFlags });
-                }
-                MODULE_STATE.lines = processed;
-                
-                if (isFirstLoad) {
-                    const linesCount = MODULE_STATE.lines.length;
-                    if (linesCount > 0) {
-                        const optimalHeight = Math.min(linesCount, 1024);
-                        if(UI.heightRange) { UI.heightRange.max = Math.max(45, optimalHeight); UI.heightRange.value = optimalHeight; }
-                        if(UI.heightVal) UI.heightVal.textContent = optimalHeight;
+                    MODULE_STATE.lines = processed;
+                    DEBUG_LOG("Матрица успешно рассчитана (" + MODULE_STATE.lines.length + " строк)");
+                    
+                    if (isFirstLoad) {
+                        const linesCount = MODULE_STATE.lines.length;
+                        if (linesCount > 0) {
+                            const optimalHeight = Math.min(linesCount, 1024);
+                            if(UI.heightRange) { UI.heightRange.max = Math.max(45, optimalHeight); UI.heightRange.value = optimalHeight; }
+                            if(UI.heightVal) UI.heightVal.textContent = optimalHeight;
+                        }
+                        MODULE_STATE.echoHistory = [];
+                        MODULE_STATE.foundPatterns.clear();
+                        UI.dataInput.value = "";
+                        UI.dataInput.style.display = 'none';
+                        MODULE_STATE.animatrixRow = 0;
                     }
-                    MODULE_STATE.echoHistory = [];
-                    MODULE_STATE.foundPatterns.clear();
-                    UI.dataInput.value = "";
-                    UI.dataInput.style.display = 'none';
-                    MODULE_STATE.animatrixRow = 0;
+                    RENDERER.updateTimeline(); RENDERER.renderFrame();
+                } catch(e) {
+                    DEBUG_LOG("ОШИБКА В precalculateLines: " + e.message);
                 }
-                RENDERER.updateTimeline(); RENDERER.renderFrame();
             },
 
             exportToExcel: function() {
@@ -1149,7 +1190,12 @@ VERSION: Pro 33.2 (Text Injection Fix)
                             if (11 > fontSize) charShadowBlur = 0; 
                             
                             ctx.fillStyle = rgbaStr;
-                            if (charShadowBlur > 0) { ctx.shadowBlur = charShadowBlur; ctx.shadowColor = isChanged?actColor:statColor; }
+                            if (charShadowBlur > 0) { 
+                                ctx.shadowBlur = charShadowBlur; 
+                                ctx.shadowColor = (activeTheme === 'mutation' && lineData.mutFlags && lineData.mutFlags[charIdx] > 0) 
+                                    ? MUTATION_COLORS[(lineData.mutFlags[charIdx] - 1) % MUTATION_COLORS.length] 
+                                    : (isRainbow && isExactMatch ? '#ff3333' : (isChanged?actColor:statColor)); 
+                            }
                             ctx.fillText(finalChar, 0, 0); ctx.restore();
                         }
                     }
@@ -1346,14 +1392,10 @@ VERSION: Pro 33.2 (Text Injection Fix)
                             MODULE_STATE.originalLines.forEach(l => {
                                 if (l.text.includes(searchPat) && !MODULE_STATE.foundPatterns.has(l.text)) {
                                     MODULE_STATE.foundPatterns.add(l.text);
-                                    UI.dataInput.value += l.text + "\n";
+                                    DEBUG_LOG("Найдено совпадение: " + l.text);
                                     addedToLog = true;
                                 }
                             });
-                            if (addedToLog) {
-                                UI.dataInput.style.display = 'block';
-                                UI.dataInput.scrollTop = UI.dataInput.scrollHeight;
-                            }
                         }
 
                         if (UI.zerkaliusAnimCheck?.checked && MODULE_STATE.originalLines.length > 0) MODULE_DATA.runAnimatrixGlobal();
@@ -1433,11 +1475,13 @@ VERSION: Pro 33.2 (Text Injection Fix)
                 if(UI.generateVacuumBtn) UI.generateVacuumBtn.addEventListener('click', () => { let implantState = UI.implantModeCheck.checked; UI.implantModeCheck.checked = false; MODULE_DATA.generateVacuum(); UI.implantModeCheck.checked = implantState; });
                 
                 if(UI.clearCanvasBtn) UI.clearCanvasBtn.addEventListener('click', () => { 
+                    DEBUG_LOG("Вызвано: Очистка холста...");
                     MODULE_STATE.originalLines = []; MODULE_STATE.lines = []; MODULE_STATE.echoHistory = []; MODULE_STATE.currentIndex = 0;
                     if (MODULE_STATE.isPlaying) PLAYER.stop();
                     UI.dataInput.value = ""; UI.dataInput.style.display = 'none'; MODULE_STATE.foundPatterns.clear();
                     RENDERER.updateTimeline(); RENDERER.renderFrame();
                     UI.statusInfo.textContent = "Холст мгновенно очищен"; MODULE_DATA.saveToLocalStorage([]);
+                    DEBUG_LOG("Холст очищен и готов к приему текста.");
                 });
 
                 if(UI.insertZerosGlobalBtn) UI.insertZerosGlobalBtn.addEventListener('click', () => {
@@ -1571,7 +1615,7 @@ VERSION: Pro 33.2 (Text Injection Fix)
                     }
                 });
 
-                // ПЛАВАЮЩАЯ ПАНЕЛЬ (DRAG & DROP)
+                // ПЛАВАЮЩАЯ ПАНЕЛЬ
                 const panel = document.getElementById('leftPanel');
                 let startX, startY, startLeft, startTop;
 
@@ -1627,12 +1671,25 @@ VERSION: Pro 33.2 (Text Injection Fix)
                 if(UI.exportExcelBtn) UI.exportExcelBtn.addEventListener('click', () => MODULE_DATA.exportToExcel());
                 if(UI.exportBtn) UI.exportBtn.addEventListener('click', async () => { if (MODULE_STATE.originalLines.length === 0) return alert("Нет данных!"); const jsonStr = JSON.stringify(MODULE_STATE.originalLines, null, 2); const blob = new Blob([jsonStr], { type: "text/plain;charset=utf-8" }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "Zerkalius_Data.txt"; link.click(); URL.revokeObjectURL(link.href); });
                 
-                if(UI.fileLoader) UI.fileLoader.addEventListener('change', function(e) { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { MODULE_DATA.processTextData(e.target.result, file.name); }; reader.readAsText(file); });
+                if(UI.fileLoader) UI.fileLoader.addEventListener('change', function(e) { 
+                    const file = e.target.files[0]; if (!file) return; 
+                    // Сбрасываем значение input, чтобы можно было загрузить тот же файл еще раз
+                    e.target.value = '';
+                    const reader = new FileReader(); 
+                    reader.onload = function(e) { MODULE_DATA.processTextData(e.target.result, file.name); }; 
+                    reader.readAsText(file); 
+                });
+                
                 document.addEventListener('paste', function(e) { 
                     const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : ''; 
                     if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') return; 
                     let text = e.clipboardData.getData('text/plain'); 
-                    if (text) { text = text.replace(/\t/g, ' '); MODULE_DATA.processTextData(text, 'Буфер обмена'); e.preventDefault(); if(!MODULE_STATE.isPlaying) RENDERER.renderFrame(); } 
+                    if (text) { 
+                        text = text.replace(/\t/g, ' '); 
+                        MODULE_DATA.processTextData(text, 'Буфер обмена'); 
+                        e.preventDefault(); 
+                        if(!MODULE_STATE.isPlaying) RENDERER.renderFrame(); 
+                    } 
                 });
                 
                 if(UI.speedRange) { UI.speedRange.addEventListener('input', (e) => { const val = parseInt(e.target.value, 10); UI.speedVal.textContent = (1001 - val) + ' мс'; }); }
@@ -1655,7 +1712,9 @@ VERSION: Pro 33.2 (Text Injection Fix)
             EVENTS.init(); 
             const spVal = parseInt(UI.speedRange.value, 10); UI.speedVal.textContent = (1001 - spVal) + ' мс';
             if(!MODULE_DATA.loadFromLocalStorage()) {
-                SCENE_MANAGER.loadScene("sourcecode", true); 
+                // Если пустая локалка, грузим код по умолчанию
+                let codeLines = document.documentElement.innerHTML.split('\n').map(l => l.trim()).filter(l => l.length > 0).slice(0, 350).join('\n');
+                MODULE_DATA.processTextData(codeLines, "Код Матрицы");
             }
         };
     </script>
