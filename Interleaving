@@ -1,3 +1,4 @@
+--- START OF FILE text/html ---
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -57,6 +58,9 @@
         .btn-danger { color: #ff3333; border-color: #ff3333; }
         .btn-danger:hover { background: #ff3333; color: #fff; }
 
+        .bank-btn { flex: 1; margin: 0; font-size: 10px; border: 1px solid #444; background: #222; color: #aaa; border-radius: 3px; cursor: pointer; padding: 3px 0; }
+        .bank-btn.active { background: #00ff66; color: #000; font-weight: bold; border-color: #00ff66; }
+
         /* ХОЛСТ */
         #screenContainer { 
             position: absolute; left: 0; top: 0;
@@ -105,9 +109,9 @@
 
         /* ЛОГ НАЙДЕННЫХ ПАТТЕРНОВ */
         .patterns-log-container {
-            position: absolute; top: 10px; right: 120px; z-index: 90;
+            position: absolute; top: 10px; left: 330px; z-index: 90;
             background: rgba(10, 10, 10, 0.85); border: 1px solid #444;
-            border-radius: 4px; padding: 8px; width: 220px; max-height: 350px;
+            border-radius: 4px; padding: 8px; width: 280px; max-height: 350px;
             overflow-y: auto; transition: transform 0.3s ease, opacity 0.3s ease;
             box-shadow: 0 0 15px rgba(0,0,0,0.5);
         }
@@ -124,12 +128,13 @@
         /* РЕЖИМ ДЗЕН */
         body.zen-mode .controls { transform: translateX(-320px); }
         body.zen-mode .floating-toolbar { transform: translateX(150px); opacity: 0; pointer-events: none;}
-        body.zen-mode .patterns-log-container { transform: translateX(350px); opacity: 0; pointer-events: none;}
+        body.zen-mode .patterns-log-container { transform: translateX(-350px); opacity: 0; pointer-events: none;}
     </style>
 </head>
 <body>
 
-    <!-- ГЛОБАЛЬНЫЙ ПЕРЕХВАТ ОШИБОК ДЛЯ ВЫВОДА В ХОЛСТ -->
+    <input type="checkbox" id="radarCheck" style="display:none;">
+
     <script>
         window.onerror = function(message, source, lineno, colno, error) {
             const canvas = document.getElementById('screenCanvas');
@@ -141,15 +146,9 @@
                 ctx.font = '13px monospace';
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'top';
-                ctx.fillText("⚠️ КРИТИЧЕСКАЯ ОШИБКА ДВИЖКА (ВЫВЕДЕНО НА ХОЛСТ):", 20, 20);
+                ctx.fillText("⚠️ КРИТИЧЕСКАЯ ОШИБКА ДВИЖКА:", 20, 20);
                 ctx.fillText(message, 20, 45);
                 ctx.fillText("Файл: " + source + " | Строка: " + lineno + ":" + colno, 20, 65);
-                if (error && error.stack) {
-                    let lines = error.stack.split('\n');
-                    for (let i = 0; i < Math.min(lines.length, 12); i++) {
-                        ctx.fillText(lines[i], 20, 95 + i * 18);
-                    }
-                }
             }
             return false;
         };
@@ -161,14 +160,26 @@
             <button id="clearCanvasBtn" class="btn-action btn-danger" style="margin-bottom: 2px;">🧹 Очистить холст (Del)</button>
         </div>
 
-        <!-- РЕЗЕРВНАЯ КОПИЯ -->
         <div class="control-group">
-            <span class="lbl" style="color:#00ff66; font-weight:bold;">Zerkalius: Interleaving Genesis</span>
+            <span class="lbl" style="color:#00ff66; font-weight:bold;">Zerkalius: Genesis (v0.06 Geometric)</span>
             <div style="display:flex; gap:4px; margin-top:3px;">
                 <button id="exportCodeBtn" class="btn-action" style="flex:1;">Экспорт</button>
                 <button id="importCodeBtn" class="btn-action" style="flex:1;">Импорт</button>
             </div>
             <textarea id="snapshotCodeBox" placeholder="Код снимка для импорта/экспорта" style="margin-top:3px; height: 35px; font-size:9px;"></textarea>
+        </div>
+
+        <div class="control-group">
+            <div class="row-between" style="margin-bottom: 2px;">
+                <span class="lbl" style="color:#00ff66; font-weight:bold;">Наборы строк (Слоты):</span>
+            </div>
+            <div style="display: flex; gap: 4px; margin-bottom: 4px;">
+                <button id="bankBtn0" class="bank-btn active" onclick="switchBank(0)">Слот 1</button>
+                <button id="bankBtn1" class="bank-btn" onclick="switchBank(1)">Слот 2</button>
+                <button id="bankBtn2" class="bank-btn" onclick="switchBank(2)">Слот 3</button>
+            </div>
+            <textarea id="linesInput" placeholder="Введите символы: 1/0, \ /, ( ), [ ], < >" style="height: 60px; color:#ffcc00; margin-top:2px;"></textarea>
+            <button id="applyLinesBtn" class="btn-action" style="margin-top:2px;">Применить текущий слот</button>
         </div>
 
         <div class="control-group">
@@ -263,7 +274,7 @@
                 </div>
             </div>
 
-            <textarea id="patternInput" placeholder="Например: 11001" style="height:55px;"></textarea>
+            <textarea id="patternInput" placeholder="Например: \//\\" style="height:55px;"></textarea>
             
             <label style="display:flex; align-items:center; margin-bottom: 2px;">
                 <input type="checkbox" id="highlightCheck" checked> 
@@ -318,6 +329,21 @@
                 <input type="range" id="turboSlider" min="1" max="1111" value="1" style="flex: 1;"> 
             </div>
 
+            <div style="background: #111; padding: 4px; border-radius: 3px; margin-bottom: 5px;">
+                <div class="row-between" style="margin-bottom: 3px;">
+                    <label style="display:flex; align-items:center;">
+                        <input type="checkbox" id="loopCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">A-B Повтор</span>
+                    </label>
+                    <label style="display:flex; align-items:center;">
+                        <input type="checkbox" id="pingPongCheck"> <span class="lbl" style="color:#ffcc00; font-weight:bold;">Пинг-Понг</span>
+                    </label>
+                </div>
+                <div style="display:flex; gap:2px; align-items:center; justify-content: space-between;">
+                    <span class="lbl">A:</span><input type="number" id="loopStart" value="0" title="Старт кадра" style="width: 50px;">
+                    <span class="lbl">B:</span><input type="number" id="loopEnd" value="100" title="Конец кадра" style="width: 50px;">
+                </div>
+            </div>
+
             <div class="player-buttons">
                 <button id="prevBtn" title="Шаг назад">◀</button>
                 <button id="playBtn" title="Старт / Пауза (Space)">▶ (Space)</button>
@@ -335,13 +361,11 @@
     </div>
 
     <div id="screenContainer">
-        <!-- ВЕРТИКАЛЬНЫЙ ПЛАВАЮЩИЙ ИНСТРУМЕНТАРИЙ -->
         <div class="floating-toolbar">
             <button class="float-pill-btn" id="floatingCenterBtn" title="Клик: 100% высота. Двойной клик: 30% высота.">⌖ X</button>
             <button class="float-circle-btn" id="floatingRadarBtn" title="Топологический Радар">🛰️</button>
         </div>
 
-        <!-- ПЛАВАЮЩИЙ ЛОГ НАЙДЕННЫХ ПАТТЕРНОВ -->
         <div class="patterns-log-container">
             <div class="patterns-log-title" style="display:flex; justify-content:space-between; align-items:center;">
                 <span>Найденные паттерны</span>
@@ -358,7 +382,6 @@
     </div>
 
     <script>
-        // ВСПОМОГАТЕЛЬНЫЕ КРАШ-ПРОФ ХЕЛПЕРЫ В САМОМ НАЧАЛЕ ФАЙЛА (ГЛОБАЛЬНАЯ ОБЛАСТЬ)
         const hexToRgba = (hex, alpha) => {
             if (!hex || hex.length < 7) return `rgba(0, 0, 0, ${alpha})`;
             let r = parseInt(hex.slice(1, 3), 16);
@@ -394,6 +417,7 @@
             lastTick: 0,
             rafId: null,
             foundPatterns: new Set(),
+            foundPatternsMetadata: new Map(), 
             flashes: new Map(), 
             interleavingLog: [], 
             
@@ -402,10 +426,13 @@
             isDragging: false,
             dragStartX: 0,
             dragStartY: 0,
-            hasMoved: false
+            hasMoved: false,
+
+            // Слоты
+            banks: ["", "", ""],
+            activeBankIndex: 0
         };
 
-        // ЛЕНИВЫЕ КРАШ-ПРОФ ГЕТТЕРЫ
         const UI = {
             get canvas() { return document.getElementById('screenCanvas'); },
             get ctx() { return this.canvas ? this.canvas.getContext('2d') : null; },
@@ -422,6 +449,32 @@
             zerkalius: { c1: '#dcdcdc', c0: '#0066cc', bg: '#050a15' },
             crypto: { c1: '#ff3333', c0: '#555555', bg: '#000000' },
             bw: { c1: '#ffffff', c0: '#555555', bg: '#000000' }
+        };
+
+        // Хелперы для определения типа символа (Тип 1 = Активный, Тип 0 = Пассивный)
+        const isType1 = (c) => ['1', '\\', ')', ']', '>', '+'].includes(c);
+        const isType0 = (c) => ['0', '/', '(', '[', '<', '-'].includes(c);
+
+        window.switchBank = function(idx) {
+            STATE.banks[STATE.activeBankIndex] = document.getElementById('linesInput').value;
+            STATE.activeBankIndex = idx;
+            let newText = STATE.banks[idx] || "";
+            document.getElementById('linesInput').value = newText;
+
+            for (let i = 0; i <= 2; i++) {
+                let btn = document.getElementById('bankBtn' + i);
+                if (btn) {
+                    if (i === idx) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                }
+            }
+
+            if (newText.trim().length > 0) {
+                loadText(newText);
+            } else {
+                document.getElementById('clearCanvasBtn').click();
+            }
+            showNotification(`СЛОТ ${idx + 1} АКТИВИРОВАН`);
         };
 
         function resetPositionWithHeightScale(scaleFactor) {
@@ -469,8 +522,70 @@
             }
         });
 
+        function importSnapshotObject(snapshot) {
+            const setElVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+            setElVal('nFactor', snapshot.nFactor || 2);
+            const nFactorVal = document.getElementById('nFactorVal');
+            if (nFactorVal) nFactorVal.textContent = snapshot.nFactor || 2;
+
+            setElVal('presetSelect', snapshot.preset || 'matrix');
+            setElVal('speedSlider', snapshot.speed || 950);
+            setElVal('turboSlider', snapshot.turbo || 1);
+            setElVal('fontSlider', snapshot.size || 16);
+
+            const setElChk = (id, val) => { const el = document.getElementById(id); if(el) el.checked = !!val; };
+            setElChk('radarCheck', snapshot.radar);
+            
+            setElChk('loopCheck', snapshot.loop);
+            setElChk('pingPongCheck', snapshot.pingPong);
+            if (snapshot.loopStart !== undefined) setElVal('loopStart', snapshot.loopStart);
+            if (snapshot.loopEnd !== undefined) setElVal('loopEnd', snapshot.loopEnd);
+
+            if (snapshot.banks && Array.isArray(snapshot.banks)) {
+                STATE.banks = snapshot.banks;
+                STATE.activeBankIndex = snapshot.activeBankIndex || 0;
+                switchBank(STATE.activeBankIndex); 
+            } else if (snapshot.rows && snapshot.rows.length > 0) {
+                loadText(snapshot.rows.join('\n'));
+            }
+
+            const radarBtn = document.getElementById('floatingRadarBtn');
+            if (radarBtn) {
+                if (snapshot.radar) radarBtn.classList.add('active');
+                else radarBtn.classList.remove('active');
+            }
+
+            setElChk('elkaCheck', snapshot.elka);
+            setElChk('cylinderCheck', snapshot.cylinder);
+
+            STATE.globalStep = snapshot.step || 0;
+            STATE.foundPatterns = new Set(snapshot.patterns || []);
+            STATE.foundPatternsMetadata.clear();
+            if (snapshot.patternsMetadata) {
+                STATE.foundPatternsMetadata = new Map(Object.entries(snapshot.patternsMetadata));
+            }
+            
+            if(snapshot.active && STATE.lines.length > 0) {
+                STATE.lines.forEach((l, idx) => {
+                    l.isActive = snapshot.active.includes(idx);
+                });
+            }
+
+            let p = PRESETS[snapshot.preset || 'matrix']; 
+            if (p) {
+                setElVal('color1', p.c1);
+                setElVal('color0', p.c0);
+                setElVal('bgColor', p.bg);
+            }
+
+            updateFoundBox();
+            enforceLoop();
+            updateLogic();
+        }
+
         function loadText(text) {
-            const raw = text.split('\n').map(l => l.trim().replace(/\./g, '')).filter(l => l.length > 0);
+            // ФИЛЬТР: УДАЛЯЕМ ТОЛЬКО ПРОБЕЛЫ (\s+), оставляем слэши и скобки
+            const raw = text.split(/\r?\n|\r/).map(l => l.trim().replace(/\s+/g, '')).filter(l => l.length > 0);
             const nFact = parseInt(safeValue('nFactor', 2));
             
             STATE.maxCycle = 1;
@@ -488,19 +603,34 @@
             STATE.offsetX = 0;
             STATE.offsetY = 0;
             STATE.foundPatterns.clear();
+            STATE.foundPatternsMetadata.clear();
             STATE.flashes.clear();
             STATE.interleavingLog = ["Инициализация базовой строки..."];
             updateFoundBox();
             
+            const linesInput = document.getElementById('linesInput');
+            if (linesInput) linesInput.value = raw.join('\n');
+            STATE.banks[STATE.activeBankIndex] = raw.join('\n');
+
             const stepSlider = document.getElementById('stepSlider');
             if (stepSlider) {
                 stepSlider.max = isFinite(STATE.maxCycle) && STATE.maxCycle < 100000 ? STATE.maxCycle : 100000;
             }
+            enforceLoop();
             updateLogic();
         }
 
+        safeBind('applyLinesBtn', 'click', () => {
+            const rawText = safeValue('linesInput', '');
+            if (rawText.trim().length > 0) {
+                loadText(rawText);
+                showNotification("СТРОКИ ОБНОВЛЕНЫ");
+            }
+        });
+
+        // Серпинский по-прежнему генерирует 1 и 0
         safeBind('sierpBtn', 'click', () => {
-            let seed = safeValue('sierpSeed', '1').trim() || "1";
+            let seed = safeValue('sierpSeed', '1').trim().replace(/\s+/g, '') || "1";
             let rows = parseInt(safeValue('sierpRows', 64)) || 64;
             
             let lines = [seed];
@@ -522,15 +652,28 @@
         function updateFoundBox() {
             let arr = Array.from(STATE.foundPatterns);
             arr.sort((a, b) => a.length - b.length);
+            
+            let formattedLines = arr.map(pat => {
+                let meta = STATE.foundPatternsMetadata.get(pat);
+                if (meta) {
+                    if (meta.type === 'interleaving') {
+                        return `${pat} (Интл: ${meta.source1}+${meta.source2} ➔ Стр ${meta.target})`;
+                    } else if (meta.rows && meta.rows.length > 0) {
+                        return `${pat} (Стр: ${meta.rows.join(', ')})`;
+                    }
+                }
+                return pat;
+            });
+
             const foundLog = document.getElementById('foundPatternsLog');
-            if (foundLog) foundLog.textContent = arr.join('\n');
+            if (foundLog) foundLog.textContent = formattedLines.join('\n');
             const detailsLog = document.getElementById('interleavingLogDetails');
             if (detailsLog) detailsLog.textContent = STATE.interleavingLog.join('\n');
         }
 
         function calculateState(triggerSearch) {
             let newlyFound = false;
-            let rawPatterns = safeValue('patternInput', '').split('\n').map(p => p.trim()).filter(p => p.length > 0);
+            let rawPatterns = safeValue('patternInput', '').split('\n').map(p => p.trim().replace(/\s+/g, '')).filter(p => p.length > 0);
             let applyFilter = safeChecked('filterCheck', false);
             let showHighlights = safeChecked('highlightCheck', true);
             let vbaActivation = safeChecked('activateOnPatternCheck', true);
@@ -538,28 +681,17 @@
             let useCylinder = safeChecked('cylinderCheck', false);
             let useInterleaving = safeChecked('interleavingCheck', true);
 
-            let globalCleanText = "";
-            let globalMap = [];
-
-            // 1. Активация строк строго по индексу
-            if (vbaActivation && STATE.foundPatterns.size > 0) {
-                let rawPatternsLines = safeValue('patternInput', '').split('\n').map(p => p.trim());
-                rawPatternsLines.forEach((pat, idx) => {
-                    if (pat && idx < STATE.lines.length) {
-                        if (STATE.foundPatterns.has(pat)) {
-                            STATE.lines[idx].isActive = true;
-                        }
-                    }
+            if (vbaActivation) {
+                STATE.lines.forEach((line, idx) => {
+                    line.isActive = (idx === 0 || idx === 1);
                 });
-                if (STATE.lines.length > 0) {
-                    STATE.lines[0].isActive = true; 
-                    if (STATE.lines.length > 1) STATE.lines[1].isActive = true;
-                }
-            } else if (!vbaActivation) {
+            } else {
                 STATE.lines.forEach(l => l.isActive = true);
             }
 
-            // Накапливаем буфер для движения "Ёлка"
+            let globalCleanText = "";
+            let globalMap = [];
+
             let elkaBuffer = "";
             if (useElka) {
                 elkaBuffer = STATE.lines.map(line => line.orig).join('');
@@ -575,7 +707,6 @@
 
             let elkaPtr = 0;
 
-            // 2. Расчет сдвигов
             for (let i = 0; i < STATE.lines.length; i++) {
                 let line = STATE.lines[i];
                 if (line.L === 0) continue;
@@ -605,6 +736,13 @@
                     gridSize = line.cN * line.L;
                 }
 
+                // Определение "родных" символов строки для корректного XOR-слияния
+                let char1 = '1', char0 = '0';
+                if (lineOrig.includes('\\') || lineOrig.includes('/')) { char1 = '\\'; char0 = '/'; }
+                else if (lineOrig.includes(')') || lineOrig.includes('(')) { char1 = ')'; char0 = '('; }
+                else if (lineOrig.includes(']') || lineOrig.includes('[')) { char1 = ']'; char0 = '['; }
+                else if (lineOrig.includes('>') || lineOrig.includes('<')) { char1 = '>'; char0 = '<'; }
+
                 for (let p = 1; p <= gridSize; p++) {
                     let d_active = (p >= 1 + s_display && p <= line.L + s_display);
                     let t_active = (p >= line.L + 1 && p <= line.cN * line.L);
@@ -624,11 +762,16 @@
                     }
 
                     if (d_active && t_active) {
-                        res += (parseInt(d_char) ^ parseInt(t_char)).toString();
+                        // XOR логика работает для любых символов
+                        let d_val = isType1(d_char) ? 1 : 0;
+                        let t_val = isType1(t_char) ? 1 : 0;
+                        res += (d_val ^ t_val) ? char1 : char0;
                     } else if (d_active) {
                         res += d_char;
                     } else if (t_active) {
                         res += t_char;
+                    } else {
+                        res += " "; 
                     }
                 }
                 
@@ -637,27 +780,54 @@
 
                 if (!applyFilter || line.isActive) {
                     for (let c = 0; c < res.length; c++) {
-                        globalCleanText += res[c];
-                        globalMap.push({ r: i, c: c });
+                        if (/\S/.test(res[c])) { // Любой НЕ пробел
+                            globalCleanText += res[c];
+                            globalMap.push({ r: i, c: c });
+                        }
                     }
                 }
             }
 
-            // 3. Поиск паттернов
-            if (triggerSearch && globalCleanText.length > 0) {
-                let textToSearch = globalCleanText + globalCleanText;
-                rawPatterns.forEach(pat => {
-                    if (!STATE.foundPatterns.has(pat)) {
-                        let pos = textToSearch.indexOf(pat);
-                        if (pos !== -1 && pos < globalCleanText.length) {
-                            STATE.foundPatterns.add(pat);
+            if (globalCleanText.length > 0) {
+                let cleanStream = globalCleanText.replace(/\s+/g, '');
+                let cleanMap = globalMap.filter((val, idx) => /\S/.test(globalCleanText[idx]));
+
+                let textToSearch = cleanStream + cleanStream;
+                rawPatterns.forEach((pat, patIdx) => {
+                    let searchPat = pat.replace(/\s+/g, '');
+                    if (!searchPat) return;
+
+                    let pos = textToSearch.indexOf(searchPat);
+                    if (pos !== -1 && pos < cleanStream.length) {
+                        let isNew = !STATE.foundPatterns.has(searchPat);
+                        let hasMeta = STATE.foundPatternsMetadata.has(searchPat);
+                        
+                        if (isNew) {
+                            STATE.foundPatterns.add(searchPat);
                             newlyFound = true;
+                        }
+
+                        if (vbaActivation && patIdx < STATE.lines.length) {
+                            STATE.lines[patIdx].isActive = true;
+                        }
+
+                        if (isNew || !hasMeta) {
+                            let involvedRows = new Set();
+                            for (let k = 0; k < searchPat.length; k++) {
+                                let loc = cleanMap[(pos + k) % cleanStream.length];
+                                if (loc) {
+                                    involvedRows.add(loc.r + 1); 
+                                }
+                            }
+                            STATE.foundPatternsMetadata.set(searchPat, {
+                                type: 'global',
+                                rows: Array.from(involvedRows).sort((a,b)=>a-b)
+                            });
                         }
                     }
                 });
             }
 
-            // 4. ОРГАНИЧЕСКИЙ ПОИСК ЧЕРЕЗ ИНТЕРЛИВИНГ
             if (useInterleaving && vbaActivation && STATE.lines.length > 1) {
                 let lastActiveIdx = -1;
                 for (let i = 0; i < STATE.lines.length; i++) {
@@ -667,8 +837,8 @@
                 }
 
                 if (lastActiveIdx >= 1) {
-                    let strAbove = STATE.lines[lastActiveIdx - 1].display;
-                    let strCurrent = STATE.lines[lastActiveIdx].display;
+                    let strAbove = STATE.lines[lastActiveIdx - 1].display.replace(/\s+/g, '');
+                    let strCurrent = STATE.lines[lastActiveIdx].display.replace(/\s+/g, '');
 
                     let interleaved = "";
                     let maxL = Math.max(strAbove.length, strCurrent.length);
@@ -679,36 +849,57 @@
 
                     let nextIdx = lastActiveIdx + 1;
                     if (nextIdx < STATE.lines.length) {
-                        let nextPattern = STATE.lines[nextIdx].orig.replace(/\./g, '');
-                        let ilSearchText = interleaved + interleaved;
+                        let nextPattern = STATE.lines[nextIdx].orig.replace(/\s+/g, '');
+                        
+                        if (nextPattern.length > 0) {
+                            let ilSearchText = interleaved + interleaved;
+                            let pos = ilSearchText.indexOf(nextPattern);
+                            
+                            if (pos !== -1 && pos < interleaved.length) {
+                                STATE.lines[nextIdx].isActive = true;
+                                if (!STATE.foundPatterns.has(nextPattern)) {
+                                    STATE.foundPatterns.add(nextPattern);
+                                    newlyFound = true;
+                                }
 
-                        let pos = ilSearchText.indexOf(nextPattern);
-                        if (pos !== -1 && pos < interleaved.length) {
-                            STATE.lines[nextIdx].isActive = true;
-                            STATE.foundPatterns.add(nextPattern);
-                            newlyFound = true;
+                                STATE.foundPatternsMetadata.set(nextPattern, {
+                                    type: 'interleaving',
+                                    source1: lastActiveIdx, 
+                                    source2: lastActiveIdx + 1, 
+                                    target: nextIdx + 1
+                                });
 
-                            STATE.interleavingLog.push(`Синтез строки ${nextIdx} [${nextPattern}] из пары ${lastActiveIdx-1} & ${lastActiveIdx}`);
+                                STATE.interleavingLog.push(`Синтез строки ${nextIdx} [${nextPattern}] из пары ${lastActiveIdx-1} & ${lastActiveIdx}`);
 
-                            for (let k = 0; k < nextPattern.length; k++) {
-                                STATE.flashes.set(nextIdx + "_" + k, Date.now() + 1500);
+                                for (let k = 0; k < nextPattern.length; k++) {
+                                    STATE.flashes.set(nextIdx + "_" + k, Date.now() + 1500);
+                                }
                             }
                         }
                     }
                 }
             }
 
-            // 5. МАСКИРОВАНИЕ ПОДСВЕТКИ (ТОЛЬКО НА АКТИВНЫХ)
             if (showHighlights && globalCleanText.length > 0) {
-                let textToSearch = globalCleanText + globalCleanText;
+                let cleanStream = globalCleanText.replace(/\s+/g, '');
+                let cleanMap = globalMap.filter((val, idx) => /\S/.test(globalCleanText[idx]));
+
+                let textToSearch = cleanStream + cleanStream;
                 rawPatterns.forEach(pat => {
-                    let pos = textToSearch.indexOf(pat);
+                    let searchPat = pat.replace(/\s+/g, '');
+                    if (!searchPat) return;
+
+                    let pos = textToSearch.indexOf(searchPat);
                     if (pos !== -1) { 
-                        if (pos < globalCleanText.length) {
-                            for (let k = 0; k < pat.length; k++) {
-                                let loc = globalMap[(pos + k) % globalCleanText.length];
+                        if (pos < cleanStream.length) {
+                            for (let k = 0; k < searchPat.length; k++) {
+                                let loc = cleanMap[(pos + k) % cleanStream.length];
                                 if (loc && STATE.lines[loc.r].isActive) { 
-                                    STATE.lines[loc.r].highlightMask[loc.c] = true;
+                                    let globalIdx = globalMap.findIndex((g, i) => g.r === loc.r && g.c === loc.c && /\S/.test(globalCleanText[i]));
+                                    if (globalIdx !== -1) {
+                                        let gridLoc = globalMap[globalIdx];
+                                        STATE.lines[gridLoc.r].highlightMask[gridLoc.c] = true;
+                                    }
                                 }
                             }
                         }
@@ -717,6 +908,35 @@
             }
 
             return newlyFound;
+        }
+
+        function enforceLoop() {
+            if (safeChecked('loopCheck', false)) {
+                let lStart = parseInt(safeValue('loopStart', 0)) || 0;
+                let lEnd = parseInt(safeValue('loopEnd', 100)) || 100;
+                let isPingPong = safeChecked('pingPongCheck', false);
+                
+                if (lStart > lEnd) { let t = lStart; lStart = lEnd; lEnd = t; }
+
+                if (isPingPong) {
+                    if (STATE.globalStep >= lEnd) {
+                        STATE.globalStep = lEnd;
+                        if (!STATE.isReverse) {
+                            const revBtn = document.getElementById('reverseBtn');
+                            if(revBtn) revBtn.click();
+                        }
+                    } else if (STATE.globalStep <= lStart) {
+                        STATE.globalStep = lStart;
+                        if (STATE.isReverse) {
+                            const revBtn = document.getElementById('reverseBtn');
+                            if(revBtn) revBtn.click();
+                        }
+                    }
+                } else {
+                    if (STATE.globalStep > lEnd) STATE.globalStep = lStart;
+                    if (STATE.globalStep < lStart) STATE.globalStep = lEnd;
+                }
+            }
         }
 
         function updateLogic() {
@@ -753,26 +973,27 @@
             ctx.fillStyle = bgColor;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // --- ЖИВАЯ ОТЛАДОЧНАЯ ПАНЕЛЬ С СИСТЕМНЫМИ ЛОГАМИ ---
-            ctx.save();
-            ctx.fillStyle = 'rgba(10, 10, 10, 0.45)';
-            ctx.fillRect(20, 20, 280, 105);
-            ctx.strokeStyle = '#00ff66';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(20, 20, 280, 105);
-            
-            ctx.fillStyle = '#00ff66';
-            ctx.font = '10px Roboto Mono, monospace';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-            ctx.fillText("📡 ZERKALIUS DIAGNOSTIC TERMINAL:", 30, 28);
-            ctx.fillStyle = '#888';
-            ctx.fillText("Кадр (Шаг): " + STATE.globalStep, 30, 45);
-            ctx.fillText("Активных строк: " + STATE.lines.filter(l => l.isActive).length + " из " + STATE.lines.length, 30, 60);
-            ctx.fillText("Направление: " + (STATE.isReverse ? "РЕВЕРС (Назад)" : "ВПЕРЕД"), 30, 75);
-            ctx.fillStyle = '#ffcc00';
-            ctx.fillText("Лог: " + (STATE.interleavingLog[STATE.interleavingLog.length - 1] || "Ожидание..."), 30, 95);
-            ctx.restore();
+            if (!document.body.classList.contains('zen-mode')) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(10, 10, 10, 0.45)';
+                ctx.fillRect(canvas.width - 300, canvas.height - 125, 280, 105);
+                ctx.strokeStyle = '#00ff66';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(canvas.width - 300, canvas.height - 125, 280, 105);
+                
+                ctx.fillStyle = '#00ff66';
+                ctx.font = '10px Roboto Mono, monospace';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText("📡 ZERKALIUS DIAGNOSTIC TERMINAL:", canvas.width - 290, canvas.height - 117);
+                ctx.fillStyle = '#888';
+                ctx.fillText("Кадр (Шаг): " + STATE.globalStep, canvas.width - 290, canvas.height - 100);
+                ctx.fillText("Активных строк: " + STATE.lines.filter(l => l.isActive).length + " из " + STATE.lines.length, canvas.width - 290, canvas.height - 85);
+                ctx.fillText("Направление: " + (STATE.isReverse ? "РЕВЕРС (Назад)" : "ВПЕРЕД"), canvas.width - 290, canvas.height - 70);
+                ctx.fillStyle = '#ffcc00';
+                ctx.fillText("Лог: " + (STATE.interleavingLog[STATE.interleavingLog.length - 1] || "Ожидание..."), canvas.width - 290, canvas.height - 50);
+                ctx.restore();
+            }
 
             if (STATE.lines.length === 0) return;
 
@@ -821,21 +1042,19 @@
             let showHighlights = safeChecked('highlightCheck', true);
 
             let maxActiveLen = 0;
-            let activeLinesRendered = 0;
-            let activeStartY = -1;
 
             if (useRadar) {
-                // --- ТОПОЛОГИЧЕСКИЙ РАДАР ---
                 let centerX = canvas.width / 2 + STATE.offsetX;
                 let centerY = canvas.height / 2 + STATE.offsetY;
+                let maxRadius = Math.min(canvas.width, canvas.height) / 2 - 40;
 
                 for (let i = 0; i < renderCount; i++) {
                     let actualIndex = startIndex + i;
                     let lineData = STATE.lines[actualIndex];
                     let text = lineData.display;
-                    if (!text) continue;
+                    if (!text || text.length === 0) continue; 
 
-                    let r = (i + 1) * lineHeight; 
+                    let r = ((i + 1) / renderCount) * maxRadius; 
                     let angleStep = (Math.PI * 2) / text.length;
 
                     ctx.globalAlpha = (!lineData.isActive && applyFilter) ? 0.25 : 1.0;
@@ -849,15 +1068,17 @@
                         let flashEnd = STATE.flashes.get(actualIndex + "_" + c);
                         let isFlashing = flashEnd && Date.now() < flashEnd;
 
+                        let isChar1 = isType1(char);
+
                         if (isFlashing) {
                             ctx.fillStyle = '#ffcc00'; 
                             ctx.shadowBlur = 10;
                             ctx.shadowColor = '#ffcc00';
                         } else {
-                            ctx.fillStyle = isHl ? hlColor : (char === '1' ? c1 : c0);
-                            if (useNeon && (char === '1' || isHl)) {
+                            ctx.fillStyle = isHl ? hlColor : (isChar1 ? c1 : c0);
+                            if (useNeon && (isChar1 || isHl)) {
                                 ctx.shadowBlur = 8;
-                                ctx.shadowColor = isHl ? hlColor : (char === '1' ? (dirColors ? safeValue('color1_fwd', '#ffffff') : safeValue('color1', '#ffffff')) : (dirColors ? safeValue('color0_fwd', '#00ff66') : safeValue('color0', '#00ff66')));
+                                ctx.shadowColor = isHl ? hlColor : (isChar1 ? (dirColors ? safeValue('color1_fwd', '#ffffff') : safeValue('color1', '#ffffff')) : (dirColors ? safeValue('color0_fwd', '#00ff66') : safeValue('color0', '#00ff66')));
                             } else {
                                 ctx.shadowBlur = 0;
                             }
@@ -877,10 +1098,13 @@
                 }
                 ctx.shadowBlur = 0; 
             } else {
-                // --- КЛАССИЧЕСКИЙ ЦЕНТРИРОВАННЫЙ ВИД ---
                 let totalHeight = renderCount * lineHeight;
                 let startY = ((canvas.height - totalHeight) / 2) + STATE.offsetY;
                 let baseX = (canvas.width / 2) + STATE.offsetX;
+
+                // Для быстрой отрисовки без неона нужны регулярки
+                let regex1 = /[1\\)\]>+]/g;
+                let regex0 = /[0/(\[<-]/g;
 
                 for (let i = 0; i < renderCount; i++) {
                     let actualIndex = startIndex + i;
@@ -891,8 +1115,6 @@
                     let y = startY + (i * lineHeight) + (lineHeight / 2);
 
                     if (lineData.isActive) {
-                        activeLinesRendered++;
-                        if (activeStartY === -1) activeStartY = y - lineHeight / 2;
                         if (text.length > maxActiveLen) maxActiveLen = text.length;
                     }
 
@@ -909,9 +1131,9 @@
                     if (!useNeon && !showHighlights && !hasAnyFlash) {
                         ctx.textAlign = 'center';
                         ctx.fillStyle = c0;
-                        ctx.fillText(text.replace(/1/g, ' '), baseX, y);
+                        ctx.fillText(text.replace(regex1, ' '), baseX, y);
                         ctx.fillStyle = c1;
-                        ctx.fillText(text.replace(/0/g, ' '), baseX, y);
+                        ctx.fillText(text.replace(regex0, ' '), baseX, y);
                     } else {
                         ctx.textAlign = 'left';
                         let fullWidth = text.length * charWidth;
@@ -922,19 +1144,20 @@
                             if (char === ' ') continue;
 
                             let isHl = showHighlights && lineData.isActive && lineData.highlightMask[c];
-                            
                             let flashEnd = STATE.flashes.get(actualIndex + "_" + c);
                             let isFlashing = flashEnd && Date.now() < flashEnd;
+                            
+                            let isChar1 = isType1(char);
 
                             if (isFlashing) {
                                 ctx.fillStyle = '#ffcc00';
                                 ctx.shadowBlur = 10;
                                 ctx.shadowColor = '#ffcc00';
                             } else {
-                                ctx.fillStyle = isHl ? hlColor : (char === '1' ? c1 : c0);
-                                if (useNeon && (char === '1' || isHl)) {
+                                ctx.fillStyle = isHl ? hlColor : (isChar1 ? c1 : c0);
+                                if (useNeon && (isChar1 || isHl)) {
                                     ctx.shadowBlur = 8;
-                                    ctx.shadowColor = isHl ? hlColor : (char === '1' ? (dirColors ? safeValue('color1_fwd', '#ffffff') : safeValue('color1', '#ffffff')) : (dirColors ? safeValue('color0_fwd', '#00ff66') : safeValue('color0', '#00ff66')));
+                                    ctx.shadowColor = isHl ? hlColor : (isChar1 ? (dirColors ? safeValue('color1_fwd', '#ffffff') : safeValue('color1', '#ffffff')) : (dirColors ? safeValue('color0_fwd', '#00ff66') : safeValue('color0', '#00ff66')));
                                 } else {
                                     ctx.shadowBlur = 0;
                                 }
@@ -946,12 +1169,11 @@
                 }
                 ctx.shadowBlur = 0; 
 
-                // --- РАСШИРЯЮЩАЯСЯ РАМКА ---
-                if (showFrame && maxActiveLen > 0 && activeLinesRendered > 0) {
+                if (showFrame && maxActiveLen > 0) {
                     let boxWidth = maxActiveLen * charWidth + 24; 
-                    let boxHeight = activeLinesRendered * lineHeight + 12;
+                    let boxHeight = canvas.height * 0.5; 
                     let bx = baseX - boxWidth / 2;
-                    let by = activeStartY - 6;
+                    let by = (canvas.height - boxHeight) / 2; 
 
                     ctx.save();
                     ctx.strokeStyle = frameColor; 
@@ -965,8 +1187,8 @@
             }
         }
 
-        // --- ИМПОРТ / ЭКСПОРТ СОСТОЯНИЯ ---
         safeBind('exportCodeBtn', 'click', () => {
+            STATE.banks[STATE.activeBankIndex] = safeValue('linesInput', '');
             let activeLinesIndices = [];
             STATE.lines.forEach((l, idx) => { if(l.isActive) activeLinesIndices.push(idx); });
 
@@ -975,6 +1197,7 @@
                 rows: STATE.lines.map(l => l.orig),
                 active: activeLinesIndices,
                 patterns: Array.from(STATE.foundPatterns),
+                patternsMetadata: Object.fromEntries(STATE.foundPatternsMetadata),
                 nFactor: parseInt(safeValue('nFactor', 2)),
                 preset: safeValue('presetSelect', 'matrix'),
                 speed: parseInt(safeValue('speedSlider', 950)),
@@ -982,7 +1205,13 @@
                 size: parseInt(safeValue('fontSlider', 16)),
                 radar: safeChecked('radarCheck', false),
                 elka: safeChecked('elkaCheck', false),
-                cylinder: safeChecked('cylinderCheck', false)
+                cylinder: safeChecked('cylinderCheck', false),
+                loop: safeChecked('loopCheck', false),
+                pingPong: safeChecked('pingPongCheck', false),
+                loopStart: parseInt(safeValue('loopStart', 0)),
+                loopEnd: parseInt(safeValue('loopEnd', 100)),
+                banks: STATE.banks,
+                activeBankIndex: STATE.activeBankIndex
             };
 
             let code = btoa(encodeURIComponent(JSON.stringify(snapshot)));
@@ -996,51 +1225,13 @@
             if(!code) return alert("Пожалуйста, вставьте код в текстовое поле!");
             try {
                 let snapshot = JSON.parse(decodeURIComponent(atob(code)));
-                
-                const setElVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
-                setElVal('nFactor', snapshot.nFactor || 2);
-                const nFactorVal = document.getElementById('nFactorVal');
-                if (nFactorVal) nFactorVal.textContent = snapshot.nFactor || 2;
-
-                setElVal('presetSelect', snapshot.preset || 'matrix');
-                setElVal('speedSlider', snapshot.speed || 950);
-                setElVal('turboSlider', snapshot.turbo || 1);
-                setElVal('fontSlider', snapshot.size || 16);
-
-                const setElChk = (id, val) => { const el = document.getElementById(id); if(el) el.checked = !!val; };
-                setElChk('radarCheck', snapshot.radar);
-                setElChk('elkaCheck', snapshot.elka);
-                setElChk('cylinderCheck', snapshot.cylinder);
-
-                if(snapshot.rows && snapshot.rows.length > 0) {
-                    loadText(snapshot.rows.join('\n'));
-                }
-
-                STATE.globalStep = snapshot.step || 0;
-                STATE.foundPatterns = new Set(snapshot.patterns || []);
-                
-                if(snapshot.active) {
-                    STATE.lines.forEach((l, idx) => {
-                        l.isActive = snapshot.active.includes(idx);
-                    });
-                }
-
-                let p = PRESETS[snapshot.preset || 'matrix']; 
-                if (p) {
-                    setElVal('color1', p.c1);
-                    setElVal('color0', p.c0);
-                    setElVal('bgColor', p.bg);
-                }
-
-                updateFoundBox();
-                updateLogic();
+                importSnapshotObject(snapshot);
                 showNotification("СОСТОЯНИЕ ИМПОРТИРОВАНО");
             } catch(e) {
                 alert("Ошибка декодирования снимка! Убедитесь, что код верный.");
             }
         });
 
-        // --- ИГРОВОЙ ЦИКЛ ---
         function loop(timestamp) {
             if (!STATE.isPlaying) return;
 
@@ -1052,6 +1243,7 @@
             if (delta >= speedMs || speedMs <= 1) {
                 STATE.lastTick = timestamp - (speedMs > 1 ? delta % speedMs : 0);
                 STATE.globalStep += (STATE.isReverse ? -turbo : turbo);
+                enforceLoop(); 
                 updateLogic();
             }
 
@@ -1082,11 +1274,10 @@
             STATE.notifTimeout = setTimeout(() => ind.style.opacity = 0, 1000);
         }
 
-        // --- ИНИЦИАЛИЗАЦИЯ И СВЯЗЫВАНИЕ UI ---
         safeBind('playBtn', 'click', () => { togglePlay(); showNotification(STATE.isPlaying ? "PLAY" : "PAUSE"); });
         
         safeBind('stopBtn', 'click', () => { 
-            STATE.isPlaying = false; STATE.globalStep = 0; STATE.foundPatterns.clear(); STATE.flashes.clear();
+            STATE.isPlaying = false; STATE.globalStep = 0; STATE.foundPatterns.clear(); STATE.foundPatternsMetadata.clear(); STATE.flashes.clear();
             cancelAnimationFrame(STATE.rafId); UI.playBtn.innerHTML = '▶ Play'; UI.playBtn.style.background = '#00ff66'; 
             
             STATE.lines.forEach((line, idx) => {
@@ -1097,7 +1288,7 @@
         });
         
         safeBind('clearMemoryBtn', 'click', () => { 
-            STATE.foundPatterns.clear(); STATE.flashes.clear();
+            STATE.foundPatterns.clear(); STATE.foundPatternsMetadata.clear(); STATE.flashes.clear();
             STATE.lines.forEach((line, idx) => {
                 line.isActive = (idx === 0 || idx === 1);
             });
@@ -1108,19 +1299,25 @@
             STATE.lines = [];
             STATE.globalStep = 0;
             STATE.foundPatterns.clear();
+            STATE.foundPatternsMetadata.clear();
             STATE.flashes.clear();
             STATE.interleavingLog = [];
             cancelAnimationFrame(STATE.rafId);
             UI.playBtn.innerHTML = '▶ Play';
             UI.playBtn.style.background = '#00ff66';
             STATE.isPlaying = false;
+            
+            const linesInput = document.getElementById('linesInput');
+            if (linesInput) linesInput.value = "";
+            STATE.banks[STATE.activeBankIndex] = "";
+
             updateFoundBox();
             render();
             showNotification("ХОЛСТ ОЧИЩЕН");
         });
         
-        safeBind('prevBtn', 'click', () => { STATE.globalStep--; updateLogic(); });
-        safeBind('nextBtn', 'click', () => { STATE.globalStep++; updateLogic(); });
+        safeBind('prevBtn', 'click', () => { STATE.globalStep--; enforceLoop(); updateLogic(); });
+        safeBind('nextBtn', 'click', () => { STATE.globalStep++; enforceLoop(); updateLogic(); });
         
         safeBind('reverseBtn', 'click', function() { 
             STATE.isReverse = !STATE.isReverse; 
@@ -1175,10 +1372,14 @@
             updateLogic();
         });
 
-        // ПУЛ СЛУШАТЕЛЕЙ СДВИГОВ И ИЗМЕНЕНИЙ ПОЛЗУНКОВ
+        safeBind('loopCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПОВТОР A-B ВКЛЮЧЕН" : "ПОВТОР ОТКЛЮЧЕН"); });
+        safeBind('pingPongCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПИНГ-ПОНГ ВКЛЮЧЕН" : "ПИНГ-ПОНГ ОТКЛЮЧЕН"); });
+        safeBind('loopStart', 'input', function() { enforceLoop(); updateLogic(); });
+        safeBind('loopEnd', 'input', function() { enforceLoop(); updateLogic(); });
+
         safeBind('turboSlider', 'input', function() { document.getElementById('turboVal').textContent = this.value; });
         safeBind('fontSlider', 'input', function() { document.getElementById('fontVal').textContent = this.value + 'px'; render(); });
-        safeBind('screenSlider', 'input', function() { document.getElementById('screenVal').textContent = this.value; render(); });
+        safeBind('screenSlider', 'input', function() { document.getElementById('screenVal').textContent = this.value; });
         safeBind('lhSlider', 'input', function() { document.getElementById('lhVal').textContent = this.value; });
         safeBind('nFactor', 'input', function() { document.getElementById('nFactorVal').textContent = this.value; render(); });
         
@@ -1215,7 +1416,6 @@
             }
         });
 
-        // --- УПРАВЛЕНИЕ МЫШЬЮ И ПЕРЕТАСКИВАНИЕ ---
         window.addEventListener('load', () => {
             const canvas = UI.canvas;
             if (!canvas) return;
@@ -1240,7 +1440,6 @@
                 STATE.isDragging = false;
             });
 
-            // Кастомный единственный таймер клика
             let clickTimeout = null;
             canvas.addEventListener('click', e => {
                 if (STATE.hasMoved) return;
@@ -1268,26 +1467,47 @@
             });
         });
 
-        // Вставка Ctrl+V
         document.addEventListener('paste', e => {
             let activeTag = (document.activeElement && document.activeElement.tagName) ? document.activeElement.tagName.toLowerCase() : '';
             if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') return; 
-            let text = e.clipboardData.getData('text/plain');
-            if (text) { loadText(text); showNotification("ТЕКСТ ВСТАВЛЕН"); }
+            
+            let text = e.clipboardData.getData('text/plain').trim();
+            if (text) {
+                let isSnapshot = false;
+                let decoded = "";
+                try {
+                    decoded = decodeURIComponent(atob(text));
+                    if (decoded.startsWith('{') || decoded.startsWith('{"')) {
+                        isSnapshot = true;
+                    }
+                } catch(err) {}
+
+                if (isSnapshot) {
+                    try {
+                        let snapshot = JSON.parse(decoded);
+                        importSnapshotObject(snapshot);
+                        showNotification("СНИМОК РАЗВЕРНУТ ИЗ БУФЕРА!");
+                    } catch(err) {
+                        console.error("Ошибка авто-импорта снимка:", err);
+                    }
+                } else {
+                    loadText(text); 
+                    showNotification("ТЕКСТ ВСТАВЛЕН");
+                }
+            }
         });
 
         document.addEventListener('keydown', e => {
             if (document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT') return;
             let turbo = parseInt(safeValue('turboSlider', 1)) || 1;
-            if (e.code === 'ArrowRight') { e.preventDefault(); STATE.globalStep += turbo; updateLogic(); }
-            if (e.code === 'ArrowLeft') { e.preventDefault(); STATE.globalStep -= turbo; updateLogic(); }
-            if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+            if (e.code === 'ArrowRight') { e.preventDefault(); STATE.globalStep += turbo; enforceLoop(); updateLogic(); }
+            if (e.code === 'ArrowLeft') { e.preventDefault(); STATE.globalStep -= turbo; enforceLoop(); updateLogic(); }
+            if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); togglePlay(); }
             if (e.code === 'Delete') { e.preventDefault(); document.getElementById('clearCanvasBtn').click(); }
         });
 
         window.addEventListener('resize', render);
 
-        // ПОЛНОСТЬЮ ПАССИВНЫЙ СТАРТ
         window.onload = function() {
             try {
                 let savedPatterns = localStorage.getItem('saved_patterns_content');
