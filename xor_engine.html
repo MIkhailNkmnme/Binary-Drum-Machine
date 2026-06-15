@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>XOR Engine: Zerkalius Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+        body { 
+            background: #050505; color: #00ff66; 
+            font-family: 'Consolas', monospace; 
+            margin: 0; overflow: hidden; height: 100vh;
+            position: relative;
+        }
+
+        /* ПАНЕЛЬ УПРАВЛЕНИЯ (Абсолютное наложение поверх холста) */
+        .controls { 
+            position: absolute; left: 0; top: 0;
+            width: 320px; height: 100vh; z-index: 100;
+            background: rgba(17, 17, 17, 0.95); 
+            border-right: 2px solid #00ff66; 
+            box-sizing: border-box;
+            overflow-y: auto; transition: transform 0.3s ease;
+        }
+        .controls::-webkit-scrollbar { width: 5px; }
+        .controls::-webkit-scrollbar-thumb { background: #333; }
+
+        .control-group { background: #1a1a1a; padding: 6px 10px; border-bottom: 1px solid #222; }
+        
+        .player-buttons { display: flex; gap: 4px; margin-bottom: 5px; }
+        .player-buttons button { font-size: 13px; border: none; cursor: pointer; border-radius: 3px; padding: 6px 4px; font-weight: bold; }
+        #prevBtn, #nextBtn { flex: 1; background: #222; color: #fff; }
+        #playBtn { flex: 3; background: #00ff66; color: #000; }
+        #stopBtn { flex: 2; background: #ff3333; color: #fff; }
+
+        .row-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+        label, .lbl { font-size: 11px; color: #aaa; font-family: sans-serif; cursor: pointer;}
+        .val { color: #fff; font-family: monospace; font-size: 11px; }
+
+        input[type="range"] { width: 100%; cursor: pointer; margin-bottom: 5px; height: 12px; }
+        input[type="number"], input[type="text"] { background: #000; color: #fff; border: 1px solid #444; padding: 3px; border-radius: 2px; width: 45px; text-align: center; font-size: 11px;}
+        select { background: #222; color: #fff; border: 1px solid #444; padding: 2px; border-radius: 3px; width: 100%; font-size: 11px; margin-bottom: 5px; }
+        input[type="checkbox"] { cursor: pointer; margin: 0 4px 0 0; }
+
+        .color-row { display: flex; align-items: center; justify-content: space-between; gap: 5px; margin-bottom: 2px; }
+        input[type="color"] { border: none; width: 20px; height: 15px; padding: 0; background: none; cursor: pointer; }
+
+        textarea { 
+            background: #000; color: #00ccff; border: 1px solid #444; 
+            font-family: inherit; font-size: 11px; width: 100%; height: 40px; 
+            border-radius: 3px; resize: none; padding: 4px; box-sizing: border-box;
+            margin-bottom: 2px;
+        }
+
+        .btn-action { background: #333; color: #ffcc00; border: 1px solid #ffcc00; padding: 4px; border-radius: 3px; cursor: pointer; width: 100%; margin-bottom: 2px; font-size: 10px; font-weight: bold;}
+        .btn-action:hover { background: #ffcc00; color: #000; }
+        .btn-danger { color: #ff3333; border-color: #ff3333; }
+        .btn-danger:hover { background: #ff3333; color: #fff; }
+
+        /* ХОЛСТ (На весь экран) */
+        #screenContainer { 
+            position: absolute; left: 0; top: 0;
+            width: 100vw; height: 100vh; 
+            background: #050505; overflow: hidden; 
+            display: flex; align-items: center; justify-content: center; 
+            z-index: 10;
+        }
+        canvas { display: block; cursor: pointer; }
+
+        #hotkeyIndicator {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8); border: 1px solid #00ff66;
+            color: #00ff66; font-size: 16px; font-weight: bold; padding: 6px 15px;
+            border-radius: 5px; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+            z-index: 120;
+        }
+
+        .reset-pos-btn {
+            position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); 
+            color: #fff; border: 1px solid #444; padding: 6px 12px; border-radius: 4px; 
+            cursor: pointer; font-family: monospace; font-size: 12px; z-index: 100;
+            display: flex; align-items: center; gap: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .reset-pos-btn:hover { background: #333; border-color: #00ff66; }
+
+        /* ЛОГ НАЙДЕННЫХ ПАТТЕРНОВ */
+        .patterns-log-container {
+            position: absolute; top: 10px; left: 330px; z-index: 90;
+            background: rgba(10, 10, 10, 0.85); border: 1px solid #444;
+            border-radius: 4px; padding: 8px; width: 180px; max-height: 250px;
+            overflow-y: auto; transition: transform 0.3s ease, opacity 0.3s ease;
+            pointer-events: none; box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+        .patterns-log-title {
+            font-size: 10px; color: #888; margin-bottom: 5px;
+            font-family: sans-serif; font-weight: bold; text-transform: uppercase;
+        }
+        .patterns-log-box {
+            font-family: 'Consolas', monospace; font-size: 11px;
+            color: #888; white-space: pre-wrap; word-break: break-all;
+        }
+
+        /* РЕЖИМ ДЗЕН */
+        body.zen-mode .controls {
+            transform: translateX(-320px);
+        }
+        body.zen-mode .patterns-log-container {
+            transform: translateX(-330px);
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+
+        <div class="control-group">
+            <button id="clearCanvasBtn" class="btn-action btn-danger" style="margin-bottom: 2px;">🧹 Очистить холст (Сброс)</button>
+        </div>
+
+        <div class="control-group">
+            <div class="row-between" style="margin-bottom: 5px;">
+                <span class="lbl" style="color:#00ff66; font-weight:bold;">Генератор Серпинского:</span>
+            </div>
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <input type="text" id="sierpSeed" value="1" title="Сид" style="flex:1;">
+                <input type="number" id="sierpRows" value="64" title="Строки" style="flex:1;">
+                <button id="sierpBtn" class="btn-action" style="flex:2; margin:0; color:#00ff66; border-color:#00ff66;">Сгенерировать</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="row-between">
+                <span class="lbl">Масштаб: <span class="val" id="fontVal">16px</span></span>
+                <span class="lbl">Экран: <span class="val" id="screenVal">64</span></span>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <input type="range" id="fontSlider" min="5" max="100" value="16">
+                <input type="range" id="screenSlider" min="1" max="200" value="64">
+            </div>
+
+            <div class="row-between">
+                <span class="lbl">Интервал: <span class="val" id="lhVal">1.0</span></span>
+                <label style="display:flex; align-items:center;">
+                    <input type="checkbox" id="boldCheck"> <span class="lbl">Жирный шрифт</span>
+                </label>
+            </div>
+            <input type="range" id="lhSlider" min="0.5" max="3.0" step="0.1" value="1.0">
+        </div>
+
+        <div class="control-group">
+            <select id="fontSelect">
+                <option value="'Consolas', monospace">Шрифт: Consolas</option>
+                <option value="'Roboto Mono', monospace">Шрифт: Roboto Mono</option>
+                <option value="monospace">Шрифт: Моноширинный</option>
+                <option value="'Courier New', Courier, monospace">Шрифт: Courier New</option>
+            </select>
+
+            <select id="presetSelect">
+                <option value="matrix">Пресет: Матрица (Excel)</option>
+                <option value="cyber">Пресет: Киберпанк</option>
+                <option value="blood">Пресет: Кровавый</option>
+                <option value="synthwave">Пресет: Synthwave (Неон)</option>
+                <option value="zerkalius">Пресет: Zerkalius</option>
+                <option value="crypto">Пресет: Спектральный</option>
+                <option value="bw">Пресет: Монохром (ЧБ)</option>
+            </select>
+
+            <div class="color-row">
+                <span class="lbl" style="width:40px;">Текст1:</span> <input type="color" id="color1" value="#ffffff"> <input type="range" id="alpha1" min="0.1" max="1" step="0.1" value="1" style="width:60px;">
+                <span class="lbl" style="width:40px;">Текст0:</span> <input type="color" id="color0" value="#00ff66"> <input type="range" id="alpha0" min="0.1" max="1" step="0.1" value="0.5" style="width:60px;">
+            </div>
+            <div class="color-row">
+                <span class="lbl" style="width:40px;">Фон:</span> <input type="color" id="bgColor" value="#050505">
+                <span class="lbl" style="width:45px;">Подсвет:</span> <input type="color" id="hlColorInput" value="#ff3333">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <span class="lbl" style="color:#00ccff;">Поиск Паттернов:</span>
+            <textarea id="patternInput" placeholder="Например: 11001"></textarea>
+            
+            <label style="display:flex; align-items:center; margin-bottom: 2px;">
+                <input type="checkbox" id="highlightCheck" checked> 
+                <span class="lbl">Подсвечивать паттерны цветом</span>
+            </label>
+            
+            <label style="display:flex; align-items:center; margin-bottom: 4px;">
+                <input type="checkbox" id="activateOnPatternCheck" checked> 
+                <span class="lbl" style="color:#ffcc00;">Запуск по активации (как в VBA)</span>
+            </label>
+
+            <label style="display:flex; align-items:flex-start; margin-top:2px; margin-bottom:2px;">
+                <input type="checkbox" id="filterCheck"> 
+                <span class="lbl" style="color:#00ff66; font-weight:bold;">Заморозить неактивные</span>
+            </label>
+            <button id="clearMemoryBtn" class="btn-action btn-danger" style="margin-top:2px;">Очистить память паттернов</button>
+        </div>
+
+        <div class="control-group">
+            <span class="lbl" style="color:#cc33ff; font-weight:bold;">Модификаторы движения:</span>
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="radarCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">🛰️ Топологический радар</span>
+            </label>
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="neonCheck"> <span class="lbl" style="color:#00ff66; font-weight:bold;">✨ Свечение (Neon)</span>
+            </label>
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="cylinderCheck"> <span class="lbl">Круговой сдвиг (Цилиндр)</span>
+            </label>
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="elkaCheck"> <span class="lbl" style="color:#ff3333;">Круговой сдвиг (Ёлка)</span>
+            </label>
+        </div>
+
+        <div class="control-group">
+            <div class="row-between">
+                <span class="lbl">Множитель длины (N):</span>
+                <input type="number" id="nFactor" value="2" min="0">
+            </div>
+            <button id="reverseBtn" class="btn-action" style="margin-top:5px;">🔃 Направление: Вперед</button>
+        </div>
+
+        <div class="control-group">
+            <span class="lbl" style="color:#00ff66;">Резервная копия состояния:</span>
+            <div style="display:flex; gap:4px; margin-top:3px;">
+                <button id="exportCodeBtn" class="btn-action" style="flex:1;">Экспорт</button>
+                <button id="importCodeBtn" class="btn-action" style="flex:1;">Импорт</button>
+            </div>
+            <textarea id="snapshotCodeBox" placeholder="Код снимка для импорта/экспорта" style="margin-top:3px; height: 35px; font-size:9px;"></textarea>
+        </div>
+
+        <div class="control-group" style="margin-top: auto; border-top: 2px solid #00ff66; padding-bottom: 5px;">
+            <div class="row-between">
+                <span class="lbl">Скорость:</span>
+                <span class="lbl" style="color:#ff3333; font-weight:bold;">Turbo x <span class="val" id="turboVal">1</span></span>
+            </div>
+            <div style="display:flex; gap:10px; margin-bottom: 5px;">
+                <input type="range" id="speedSlider" min="1" max="1000" value="950" style="flex: 2;">
+                <input type="range" id="turboSlider" min="1" max="1000" value="1" style="flex: 1;">
+            </div>
+
+            <div class="player-buttons">
+                <button id="prevBtn" title="Шаг назад">◀</button>
+                <button id="playBtn" title="Старт / Пауза (Space)">▶ (Space)</button>
+                <button id="stopBtn" title="Сбросить на 0">■ Stop</button>
+                <button id="nextBtn" title="Шаг вперед">▶▶</button>
+            </div>
+            
+            <div class="row-between">
+                <span class="lbl">Кадр (Глобальный Шаг):</span>
+                <span class="val" id="stepVal">0 / 0</span>
+            </div>
+            <input type="range" id="stepSlider" min="0" max="0" value="0" style="pointer-events: none; margin-bottom: 0;">
+        </div>
+        
+        <div style="font-size: 10px; color:#666; text-align:center; padding: 2px 0;">Клик = Play/Pause | Колесо = Масштаб<br>Drag = Перемещение | Ctrl+V = Вставить</div>
+    </div>
+
+    <div id="screenContainer">
+        <!-- ПЛАВАЮЩИЙ ЛОГ НАЙДЕННЫХ ПАТТЕРНОВ -->
+        <div class="patterns-log-container">
+            <div class="patterns-log-title">Найденные паттерны</div>
+            <div class="patterns-log-box" id="foundPatternsLog"></div>
+        </div>
+
+        <button class="reset-pos-btn" onclick="resetPosition()" title="Выровнять и подогнать масштаб под высоту экрана">⌖ В центр</button>
+        <div id="hotkeyIndicator"></div>
+        <canvas id="screenCanvas"></canvas>
+    </div>
+
+    <script>
+        const STATE = {
+            lines: [],          
+            globalStep: 0,
+            maxCycle: 1,
+            isPlaying: false,
+            isReverse: false,
+            lastTick: 0,
+            rafId: null,
+            foundPatterns: new Set(),
+            
+            offsetX: 0,
+            offsetY: 0,
+            isDragging: false,
+            dragStartX: 0,
+            dragStartY: 0,
+            hasMoved: false
+        };
+
+        const UI = {
+            canvas: document.getElementById('screenCanvas'),
+            ctx: document.getElementById('screenCanvas').getContext('2d'),
+            container: document.getElementById('screenContainer'),
+            hotkeyInd: document.getElementById('hotkeyIndicator'),
+            playBtn: document.getElementById('playBtn')
+        };
+
+        const PRESETS = {
+            matrix: { c1: '#ffffff', c0: '#00ff66', bg: '#050505' },
+            cyber: { c1: '#ffcc00', c0: '#00ccff', bg: '#0a0a1a' },
+            blood: { c1: '#ffffff', c0: '#ff0000', bg: '#1a0000' },
+            synthwave: { c1: '#00ffff', c0: '#ff00ff', bg: '#0f0515' },
+            zerkalius: { c1: '#dcdcdc', c0: '#0066cc', bg: '#050a15' },
+            crypto: { c1: '#ff3333', c0: '#555555', bg: '#000000' },
+            bw: { c1: '#ffffff', c0: '#555555', bg: '#000000' }
+        };
+
+        function resetPosition() {
+            STATE.offsetX = 0;
+            STATE.offsetY = 0;
+            if (STATE.lines.length > 0) {
+                let canvasHeight = UI.canvas.height || UI.container.clientHeight;
+                let lh = parseFloat(document.getElementById('lhSlider').value) || 1.0;
+                let screenRows = parseInt(document.getElementById('screenSlider').value);
+                let activeRowCount = Math.min(STATE.lines.length, screenRows);
+                
+                if (activeRowCount > 0) {
+                    let optimalSize = Math.floor((canvasHeight - 60) / (activeRowCount * lh));
+                    optimalSize = Math.max(5, Math.min(100, optimalSize));
+                    
+                    document.getElementById('fontSlider').value = optimalSize;
+                    document.getElementById('fontVal').textContent = optimalSize + 'px';
+                }
+            }
+            render();
+            showNotification("ЦЕНТР И АВТОМАСШТАБ");
+        }
+
+        function GCD(a, b) { while (b !== 0) { let temp = b; b = a % b; a = temp; } return a; }
+        function LCM(a, b) { return (a === 0 || b === 0) ? 0 : (a / GCD(a, b)) * b; }
+
+        function loadText(text) {
+            const raw = text.split('\n').map(l => l.trim().replace(/\./g, '')).filter(l => l.length > 0);
+            const nFact = parseInt(document.getElementById('nFactor').value);
+            
+            STATE.maxCycle = 1;
+            STATE.lines = raw.map((orig, index) => {
+                let L = orig.length;
+                let cN = (nFact === 0) ? L : nFact;
+                let cycle = cN * L + 1;
+                if (L > 0) STATE.maxCycle = LCM(STATE.maxCycle, cycle);
+                
+                let initiallyActive = (index === 0); 
+                return { orig, L, cN, cycle, display: orig, isActive: initiallyActive, highlightMask: [] };
+            });
+            
+            STATE.globalStep = 0;
+            STATE.offsetX = 0;
+            STATE.offsetY = 0;
+            STATE.foundPatterns.clear();
+            updateFoundBox();
+            
+            document.getElementById('stepSlider').max = isFinite(STATE.maxCycle) && STATE.maxCycle < 100000 ? STATE.maxCycle : 100000;
+            updateLogic();
+        }
+
+        document.getElementById('sierpBtn').onclick = () => {
+            let seed = document.getElementById('sierpSeed').value.trim() || "1";
+            let rows = parseInt(document.getElementById('sierpRows').value) || 64;
+            
+            let lines = [seed];
+            for (let i = 1; i < rows; i++) {
+                let prev = lines[i-1];
+                let nextStr = "";
+                let padded = "0" + prev + "0"; 
+                for(let j=0; j < padded.length - 1; j++) {
+                    let a = padded[j] === '1' ? 1 : 0;
+                    let b = padded[j+1] === '1' ? 1 : 0;
+                    nextStr += (a ^ b).toString(); 
+                }
+                lines.push(nextStr);
+            }
+            loadText(lines.join('\n'));
+            showNotification("СЕРПИНСКИЙ ГОТОВ");
+        };
+
+        function updateFoundBox() {
+            let arr = Array.from(STATE.foundPatterns);
+            arr.sort((a, b) => a.length - b.length);
+            document.getElementById('foundPatternsLog').textContent = arr.join('\n');
+        }
+
+        function calculateState(triggerSearch) {
+            let newlyFound = false;
+            let rawPatterns = document.getElementById('patternInput').value.split('\n').map(p => p.trim()).filter(p => p.length > 0);
+            let applyFilter = document.getElementById('filterCheck').checked;
+            let showHighlights = document.getElementById('highlightCheck').checked;
+            let vbaActivation = document.getElementById('activateOnPatternCheck').checked;
+            let useElka = document.getElementById('elkaCheck').checked;
+            let useCylinder = document.getElementById('cylinderCheck').checked;
+
+            let globalCleanText = "";
+            let globalMap = [];
+
+            // 1. АКТИВАЦИЯ СТРОК СТРОГО ПО ИНДЕКСУ
+            if (vbaActivation && STATE.foundPatterns.size > 0) {
+                let rawPatternsLines = document.getElementById('patternInput').value.split('\n').map(p => p.trim());
+                rawPatternsLines.forEach((pat, idx) => {
+                    if (pat && idx < STATE.lines.length) {
+                        if (STATE.foundPatterns.has(pat)) {
+                            STATE.lines[idx].isActive = true;
+                        }
+                    }
+                });
+                if (STATE.lines.length > 0) {
+                    STATE.lines[0].isActive = true; 
+                }
+            }
+
+            // Накапливаем буфер для движения "Ёлка"
+            let elkaBuffer = "";
+            if (useElka) {
+                elkaBuffer = STATE.lines.map(line => line.orig).join('');
+                if (elkaBuffer.length > 0) {
+                    let shift = Math.abs(STATE.globalStep) % elkaBuffer.length;
+                    if (STATE.isReverse) {
+                        elkaBuffer = elkaBuffer.slice(shift) + elkaBuffer.slice(0, shift);
+                    } else {
+                        elkaBuffer = elkaBuffer.slice(-shift) + elkaBuffer.slice(0, -shift);
+                    }
+                }
+            }
+
+            let elkaPtr = 0;
+
+            // 2. Расчет сдвигов
+            for (let i = 0; i < STATE.lines.length; i++) {
+                let line = STATE.lines[i];
+                if (line.L === 0) continue;
+
+                let lineOrig = line.orig;
+                if (useElka && elkaBuffer.length > 0) {
+                    lineOrig = elkaBuffer.substring(elkaPtr, elkaPtr + line.L);
+                    elkaPtr += line.L;
+                }
+
+                let currentStepValue = (vbaActivation && !line.isActive) ? 0 : Math.abs(STATE.globalStep);
+
+                let s_display = currentStepValue % line.cycle;
+                if (STATE.isReverse && line.isActive) {
+                    s_display = line.cycle - s_display;
+                    if (s_display === line.cycle) s_display = 0;
+                }
+
+                let cylShift = 0;
+                if (useCylinder) {
+                    cylShift = currentStepValue % line.L;
+                }
+
+                let res = "";
+                let gridSize = line.L + s_display;
+                if (line.cN * line.L > gridSize) {
+                    gridSize = line.cN * line.L;
+                }
+
+                for (let p = 1; p <= gridSize; p++) {
+                    let d_active = (p >= 1 + s_display && p <= line.L + s_display);
+                    let t_active = (p >= line.L + 1 && p <= line.cN * line.L);
+
+                    let d_char = "";
+                    if (d_active) {
+                        let idx = p - s_display - 1;
+                        if (useCylinder) idx = (idx + cylShift) % line.L;
+                        d_char = lineOrig[idx];
+                    }
+
+                    let t_char = "";
+                    if (t_active) {
+                        let t_idx = ((p - line.L - 1) % line.L);
+                        if (useCylinder) t_idx = (t_idx + cylShift) % line.L;
+                        t_char = lineOrig[t_idx];
+                    }
+
+                    if (d_active && t_active) {
+                        res += (parseInt(d_char) ^ parseInt(t_char)).toString();
+                    } else if (d_active) {
+                        res += d_char;
+                    } else if (t_active) {
+                        res += t_char;
+                    }
+                }
+                
+                line.display = res;
+                line.highlightMask = new Array(res.length).fill(false);
+
+                if (!applyFilter || line.isActive) {
+                    for (let c = 0; c < res.length; c++) {
+                        globalCleanText += res[c];
+                        globalMap.push({ r: i, c: c });
+                    }
+                }
+            }
+
+            // 3. СКВОЗНОЙ И КРУГОВОЙ ПОИСК ПАТТЕРНОВ
+            if (triggerSearch && globalCleanText.length > 0) {
+                let textToSearch = globalCleanText + globalCleanText;
+                rawPatterns.forEach(pat => {
+                    if (!STATE.foundPatterns.has(pat)) {
+                        let pos = textToSearch.indexOf(pat);
+                        if (pos !== -1 && pos < globalCleanText.length) {
+                            STATE.foundPatterns.add(pat);
+                            newlyFound = true;
+                        }
+                    }
+                });
+            }
+
+            // 4. ОРГАНИЧЕСКИЙ ПОИСК ЧЕРЕЗ ИНТЕРЛИВИНГ (ЗИППЕР-СТРОКУ)
+            if (vbaActivation && STATE.lines.length > 1) {
+                // Находим номер последней активной строки
+                let lastActiveIdx = -1;
+                for (let i = 0; i < STATE.lines.length; i++) {
+                    if (STATE.lines[i].isActive) {
+                        lastActiveIdx = i;
+                    }
+                }
+
+                if (lastActiveIdx >= 1) {
+                    let strAbove = STATE.lines[lastActiveIdx - 1].display;
+                    let strCurrent = STATE.lines[lastActiveIdx].display;
+
+                    // Генерация сплетенной интерливинговой строки
+                    let interleaved = "";
+                    let maxL = Math.max(strAbove.length, strCurrent.length);
+                    for (let j = 0; j < maxL; j++) {
+                        if (j < strAbove.length) interleaved += strAbove[j];
+                        if (j < strCurrent.length) interleaved += strCurrent[j];
+                    }
+
+                    // Паттерн, который мы ищем для разблокировки следующей строки
+                    let nextIdx = lastActiveIdx + 1;
+                    if (nextIdx < STATE.lines.length) {
+                        let nextPattern = STATE.lines[nextIdx].orig.replace(/\./g, '');
+                        let ilSearchText = interleaved + interleaved; // кольцевой поиск в интерливинге
+
+                        let pos = ilSearchText.indexOf(nextPattern);
+                        if (pos !== -1 && pos < interleaved.length) {
+                            // Паттерн найден! Пробуждаем следующую строку
+                            STATE.lines[nextIdx].isActive = true;
+                            STATE.foundPatterns.add(nextPattern);
+                            newlyFound = true;
+                        }
+                    }
+                }
+            }
+
+            // 5. ОПТИМИЗИРОВАННОЕ МАСКИРОВАНИЕ ПОДСВЕТКИ (ТОЛЬКО НА АКТИВНЫХ СТРОКАХ, ПО ОДНОМУ ВХОЖДЕНИЮ)
+            if (showHighlights && globalCleanText.length > 0) {
+                let textToSearch = globalCleanText + globalCleanText;
+                rawPatterns.forEach(pat => {
+                    let pos = textToSearch.indexOf(pat);
+                    if (pos !== -1) { // Берется только первое вхождение паттерна
+                        if (pos < globalCleanText.length) {
+                            for (let k = 0; k < pat.length; k++) {
+                                let loc = globalMap[(pos + k) % globalCleanText.length];
+                                if (loc && STATE.lines[loc.r].isActive) { // Подсветка только на активных строках
+                                    STATE.lines[loc.r].highlightMask[loc.c] = true;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            return newlyFound;
+        }
+
+        function updateLogic() {
+            let newlyFound = calculateState(true);
+            
+            if (newlyFound) {
+                calculateState(false); 
+                updateFoundBox();
+                showNotification("🎯 НАЙДЕН НОВЫЙ ПАТТЕРН!");
+            }
+
+            document.getElementById('stepVal').textContent = `${Math.abs(STATE.globalStep)} / ${isFinite(STATE.maxCycle) ? STATE.maxCycle : '∞'}`;
+            document.getElementById('stepSlider').value = Math.abs(STATE.globalStep) % document.getElementById('stepSlider').max;
+            
+            render();
+        }
+
+        function hexToRgba(hex, alpha) {
+            let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r},${g},${b},${alpha})`;
+        }
+
+        function render() {
+            UI.canvas.width = UI.container.clientWidth;
+            UI.canvas.height = UI.container.clientHeight;
+            const ctx = UI.ctx;
+            
+            const bgColor = document.getElementById('bgColor').value;
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, UI.canvas.width, UI.canvas.height);
+
+            if (STATE.lines.length === 0) return;
+
+            let fontSize = parseInt(document.getElementById('fontSlider').value);
+            let lh = parseFloat(document.getElementById('lhSlider').value);
+            let screenRows = parseInt(document.getElementById('screenSlider').value);
+            let fontName = document.getElementById('fontSelect').value;
+            let isBold = document.getElementById('boldCheck').checked;
+            let useRadar = document.getElementById('radarCheck').checked;
+            let useNeon = document.getElementById('neonCheck').checked;
+
+            ctx.font = `${isBold ? 'bold' : 'normal'} ${fontSize}px ${fontName}`;
+            ctx.textBaseline = 'middle';
+            
+            let charWidth = ctx.measureText('0').width;
+            let lineHeight = fontSize * lh;
+            
+            let startIndex = 0;
+            let renderCount = STATE.lines.length;
+            
+            if (renderCount > screenRows) {
+                startIndex = Math.max(0, STATE.lines.length - screenRows); 
+                renderCount = screenRows;
+            }
+
+            const c1 = hexToRgba(document.getElementById('color1').value, document.getElementById('alpha1').value);
+            const c0 = hexToRgba(document.getElementById('color0').value, document.getElementById('alpha0').value);
+            const hlColor = document.getElementById('hlColorInput').value; 
+
+            let applyFilter = document.getElementById('filterCheck').checked;
+            let showHighlights = document.getElementById('highlightCheck').checked;
+
+            let maxActiveLen = 0;
+            let activeLinesRendered = 0;
+            let activeStartY = -1;
+
+            if (useRadar) {
+                // --- ТОПОЛОГИЧЕСКИЙ РАДАР ---
+                let centerX = UI.canvas.width / 2 + STATE.offsetX;
+                let centerY = UI.canvas.height / 2 + STATE.offsetY;
+
+                for (let i = 0; i < renderCount; i++) {
+                    let actualIndex = startIndex + i;
+                    let lineData = STATE.lines[actualIndex];
+                    let text = lineData.display;
+                    if (!text) continue;
+
+                    let r = (i + 1) * lineHeight; 
+                    let angleStep = (Math.PI * 2) / text.length;
+
+                    ctx.globalAlpha = (!lineData.isActive && applyFilter) ? 0.25 : 1.0;
+
+                    for (let c = 0; c < text.length; c++) {
+                        let char = text[c];
+                        if (char === ' ') continue;
+
+                        let isHl = showHighlights && lineData.isActive && lineData.highlightMask[c];
+                        ctx.fillStyle = isHl ? hlColor : (char === '1' ? c1 : c0);
+
+                        if (useNeon && (char === '1' || isHl)) {
+                            ctx.shadowBlur = 8;
+                            ctx.shadowColor = isHl ? hlColor : document.getElementById('color1').value;
+                        } else {
+                            ctx.shadowBlur = 0;
+                        }
+
+                        let angle = c * angleStep - (Math.PI / 2);
+                        let cx = centerX + Math.cos(angle) * r;
+                        let cy = centerY + Math.sin(angle) * r;
+
+                        ctx.save();
+                        ctx.translate(cx, cy);
+                        ctx.rotate(angle + Math.PI / 2);
+                        ctx.textAlign = 'center';
+                        ctx.fillText(char, 0, 0);
+                        ctx.restore();
+                    }
+                }
+                ctx.shadowBlur = 0; 
+            } else {
+                // --- КЛАССИЧЕСКИЙ ЦЕНТРИРОВАННЫЙ ВИД ---
+                let totalHeight = renderCount * lineHeight;
+                let startY = ((UI.canvas.height - totalHeight) / 2) + STATE.offsetY;
+                let baseX = (UI.canvas.width / 2) + STATE.offsetX;
+
+                for (let i = 0; i < renderCount; i++) {
+                    let actualIndex = startIndex + i;
+                    let lineData = STATE.lines[actualIndex];
+                    let text = lineData.display;
+                    if (!text) continue;
+
+                    let y = startY + (i * lineHeight) + (lineHeight / 2);
+
+                    if (lineData.isActive) {
+                        activeLinesRendered++;
+                        if (activeStartY === -1) activeStartY = y - lineHeight / 2;
+                        if (text.length > maxActiveLen) maxActiveLen = text.length;
+                    }
+
+                    ctx.globalAlpha = (!lineData.isActive && applyFilter) ? 0.25 : 1.0;
+
+                    if (!useNeon && !showHighlights) {
+                        ctx.textAlign = 'center';
+                        ctx.fillStyle = c0;
+                        ctx.fillText(text.replace(/1/g, ' '), baseX, y);
+                        ctx.fillStyle = c1;
+                        ctx.fillText(text.replace(/0/g, ' '), baseX, y);
+                    } else {
+                        ctx.textAlign = 'left';
+                        let fullWidth = text.length * charWidth;
+                        let currentX = baseX - (fullWidth / 2);
+
+                        for (let c = 0; c < text.length; c++) {
+                            let char = text[c];
+                            if (char === ' ') continue;
+
+                            let isHl = showHighlights && lineData.isActive && lineData.highlightMask[c];
+                            ctx.fillStyle = isHl ? hlColor : (char === '1' ? c1 : c0);
+
+                            if (useNeon && (char === '1' || isHl)) {
+                                ctx.shadowBlur = 8;
+                                ctx.shadowColor = isHl ? hlColor : document.getElementById('color1').value;
+                            } else {
+                                ctx.shadowBlur = 0;
+                            }
+
+                            ctx.fillText(char, currentX + (c * charWidth), y);
+                        }
+                    }
+                }
+                ctx.shadowBlur = 0; 
+
+                // --- ДИНАМИЧЕСКИ РАСШИРЯЮЩАЯСЯ РАМКА ДЛЯ АКТИВНОЙ ЗОНЫ ---
+                if (maxActiveLen > 0 && activeLinesRendered > 0) {
+                    let boxWidth = maxActiveLen * charWidth + 24; 
+                    let boxHeight = activeLinesRendered * lineHeight + 12;
+                    let bx = baseX - boxWidth / 2;
+                    let by = activeStartY - 6;
+
+                    ctx.save();
+                    ctx.strokeStyle = hlColor; 
+                    ctx.lineWidth = 1.5;
+                    ctx.globalAlpha = 0.55;
+                    ctx.shadowBlur = 6;
+                    ctx.shadowColor = hlColor;
+                    ctx.strokeRect(bx, by, boxWidth, boxHeight);
+                    ctx.restore();
+                }
+            }
+        }
+
+        // --- ИМПОРТ / ЭКСПОРТ СОСТОЯНИЯ ---
+        document.getElementById('exportCodeBtn').onclick = () => {
+            let activeLinesIndices = [];
+            STATE.lines.forEach((l, idx) => { if(l.isActive) activeLinesIndices.push(idx); });
+
+            let snapshot = {
+                step: STATE.globalStep,
+                rows: STATE.lines.map(l => l.orig),
+                active: activeLinesIndices,
+                patterns: Array.from(STATE.foundPatterns),
+                nFactor: parseInt(document.getElementById('nFactor').value),
+                preset: document.getElementById('presetSelect').value,
+                speed: parseInt(document.getElementById('speedSlider').value),
+                turbo: parseInt(document.getElementById('turboSlider').value),
+                size: parseInt(document.getElementById('fontSlider').value),
+                radar: document.getElementById('radarCheck').checked,
+                elka: document.getElementById('elkaCheck').checked,
+                cylinder: document.getElementById('cylinderCheck').checked
+            };
+
+            let code = btoa(encodeURIComponent(JSON.stringify(snapshot)));
+            document.getElementById('snapshotCodeBox').value = code;
+            showNotification("КОД СКОПИРОВАН");
+        };
+
+        document.getElementById('importCodeBtn').onclick = () => {
+            let code = document.getElementById('snapshotCodeBox').value.trim();
+            if(!code) return alert("Пожалуйста, вставьте код в текстовое поле!");
+            try {
+                let snapshot = JSON.parse(decodeURIComponent(atob(code)));
+                
+                document.getElementById('nFactor').value = snapshot.nFactor || 2;
+                document.getElementById('presetSelect').value = snapshot.preset || 'matrix';
+                document.getElementById('speedSlider').value = snapshot.speed || 950;
+                document.getElementById('turboSlider').value = snapshot.turbo || 1;
+                document.getElementById('fontSlider').value = snapshot.size || 16;
+                document.getElementById('radarCheck').checked = !!snapshot.radar;
+                document.getElementById('elkaCheck').checked = !!snapshot.elka;
+                document.getElementById('cylinderCheck').checked = !!snapshot.cylinder;
+
+                if(snapshot.rows && snapshot.rows.length > 0) {
+                    loadText(snapshot.rows.join('\n'));
+                }
+
+                STATE.globalStep = snapshot.step || 0;
+                STATE.foundPatterns = new Set(snapshot.patterns || []);
+                
+                if(snapshot.active) {
+                    STATE.lines.forEach((l, idx) => {
+                        l.isActive = snapshot.active.includes(idx);
+                    });
+                }
+
+                let p = PRESETS[snapshot.preset || 'matrix']; 
+                document.getElementById('color1').value = p.c1;
+                document.getElementById('color0').value = p.c0;
+                document.getElementById('bgColor').value = p.bg;
+
+                updateFoundBox();
+                updateLogic();
+                showNotification("СОСТОЯНИЕ ИМПОРТИРОВАНО");
+            } catch(e) {
+                alert("Ошибка декодирования снимка! Убедитесь, что код верный.");
+            }
+        };
+
+        // --- ИГРОВОЙ ЦИКЛ ---
+        function loop(timestamp) {
+            if (!STATE.isPlaying) return;
+
+            let speedMs = 1001 - parseInt(document.getElementById('speedSlider').value); 
+            let turbo = parseInt(document.getElementById('turboSlider').value) || 1; 
+
+            let delta = timestamp - STATE.lastTick;
+
+            if (delta >= speedMs || speedMs <= 1) {
+                STATE.lastTick = timestamp - (speedMs > 1 ? delta % speedMs : 0);
+                STATE.globalStep += (STATE.isReverse ? -turbo : turbo);
+                updateLogic();
+            }
+
+            STATE.rafId = requestAnimationFrame(loop);
+        }
+
+        function togglePlay() {
+            STATE.isPlaying = !STATE.isPlaying;
+            if (STATE.isPlaying) {
+                UI.playBtn.innerHTML = '⏸ Pause';
+                UI.playBtn.style.background = '#ff3333';
+                STATE.lastTick = performance.now();
+                loop(performance.now());
+            } else {
+                UI.playBtn.innerHTML = '▶ Play';
+                UI.playBtn.style.background = '#00ff66';
+                cancelAnimationFrame(STATE.rafId);
+                updateLogic(); 
+            }
+        }
+
+        function showNotification(text) {
+            UI.hotkeyInd.textContent = text;
+            UI.hotkeyInd.style.opacity = 1;
+            clearTimeout(STATE.notifTimeout);
+            STATE.notifTimeout = setTimeout(() => UI.hotkeyInd.style.opacity = 0, 1000);
+        }
+
+        // --- СОБЫТИЯ UI ---
+        document.getElementById('playBtn').onclick = () => { togglePlay(); showNotification(STATE.isPlaying ? "PLAY" : "PAUSE"); };
+        
+        document.getElementById('stopBtn').onclick = () => { 
+            STATE.isPlaying = false; STATE.globalStep = 0; STATE.foundPatterns.clear(); 
+            cancelAnimationFrame(STATE.rafId); UI.playBtn.innerHTML = '▶ Play'; UI.playBtn.style.background = '#00ff66'; 
+            
+            STATE.lines.forEach((line, idx) => {
+                line.isActive = (idx === 0);
+            });
+
+            updateFoundBox(); updateLogic(); showNotification("СБРОС"); 
+        };
+        
+        document.getElementById('clearMemoryBtn').onclick = () => { 
+            STATE.foundPatterns.clear(); 
+            STATE.lines.forEach((line, idx) => {
+                line.isActive = (idx === 0);
+            });
+            updateFoundBox(); updateLogic(); showNotification("ПАМЯТЬ ОЧИЩЕНА"); 
+        };
+
+        // КНОПКА ПОЛНОЙ ОЧИСТКИ ХОЛСТА (СБРОС ВСЕГО)
+        document.getElementById('clearCanvasBtn').onclick = () => {
+            STATE.lines = [];
+            STATE.globalStep = 0;
+            STATE.foundPatterns.clear();
+            cancelAnimationFrame(STATE.rafId);
+            UI.playBtn.innerHTML = '▶ Play';
+            UI.playBtn.style.background = '#00ff66';
+            STATE.isPlaying = false;
+            updateFoundBox();
+            render();
+            showNotification("ХОЛСТ ОЧИЩЕН");
+        };
+        
+        document.getElementById('prevBtn').onclick = () => { STATE.globalStep--; updateLogic(); };
+        document.getElementById('nextBtn').onclick = () => { STATE.globalStep++; updateLogic(); };
+        
+        document.getElementById('reverseBtn').onclick = function() { 
+            STATE.isReverse = !STATE.isReverse; 
+            this.innerHTML = STATE.isReverse ? '🔃 Направление: Назад' : '🔃 Направление: Вперед';
+            this.style.color = STATE.isReverse ? '#ff3333' : '#ffcc00';
+            this.style.borderColor = STATE.isReverse ? '#ff3333' : '#ffcc00';
+            showNotification(STATE.isReverse ? "РЕВЕРС" : "ВПЕРЕД");
+        };
+
+        document.getElementById('turboSlider').oninput = function() { document.getElementById('turboVal').textContent = this.value; };
+        document.getElementById('fontSlider').oninput = function() { document.getElementById('fontVal').textContent = this.value + 'px'; render(); };
+        document.getElementById('screenSlider').oninput = function() { document.getElementById('screenVal').textContent = this.value; render(); };
+        document.getElementById('lhSlider').oninput = function() { document.getElementById('lhVal').textContent = this.value; render(); };
+        document.getElementById('presetSelect').onchange = function() { 
+            let p = PRESETS[this.value]; 
+            document.getElementById('color1').value = p.c1; 
+            document.getElementById('color0').value = p.c0; 
+            document.getElementById('bgColor').value = p.bg; 
+            render();
+        };
+
+        ['color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'fontSelect', 'patternInput', 'nFactor', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck'].forEach(id => {
+            document.getElementById(id).addEventListener('input', () => { if(id==='patternInput') updateLogic(); else render(); });
+            document.getElementById(id).addEventListener('change', () => { updateLogic(); });
+        });
+
+        // --- УПРАВЛЕНИЕ МЫШЬЮ, КАСТОМНЫЙ ДВОЙНОЙ КЛИК И ПЕРЕТАСКИВАНИЕ ---
+        UI.canvas.addEventListener('mousedown', e => {
+            STATE.isDragging = true;
+            STATE.hasMoved = false; 
+            STATE.dragStartX = e.clientX - STATE.offsetX;
+            STATE.dragStartY = e.clientY - STATE.offsetY;
+        });
+
+        window.addEventListener('mousemove', e => {
+            if (STATE.isDragging) {
+                STATE.offsetX = e.clientX - STATE.dragStartX;
+                STATE.offsetY = e.clientY - STATE.dragStartY;
+                STATE.hasMoved = true; 
+                if (!STATE.isPlaying) render();
+            }
+        });
+
+        window.addEventListener('mouseup', e => {
+            STATE.isDragging = false;
+        });
+
+        // Кастомный таймер клика: исключает случайные двойные паузы и ложные срабатывания Дзен мода
+        let clickTimeout = null;
+        UI.canvas.addEventListener('click', e => {
+            if (STATE.hasMoved) return;
+            if (clickTimeout) {
+                clearTimeout(clickTimeout);
+                clickTimeout = null;
+                // Зафиксирован четкий двойной клик — переход в Дзен-режим
+                document.body.classList.toggle('zen-mode');
+                render();
+            } else {
+                clickTimeout = setTimeout(() => {
+                    clickTimeout = null;
+                    togglePlay();
+                }, 220); // 220мс — идеальный интервал для человеческого пальца
+            }
+        });
+
+        UI.canvas.addEventListener('wheel', e => {
+            e.preventDefault();
+            let fontSl = document.getElementById('fontSlider');
+            let size = parseInt(fontSl.value) + (e.deltaY > 0 ? -2 : 2);
+            size = Math.max(5, Math.min(100, size));
+            fontSl.value = size;
+            document.getElementById('fontVal').textContent = size + 'px';
+            render();
+        });
+
+        document.addEventListener('paste', e => {
+            if (document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT') return;
+            let text = e.clipboardData.getData('text/plain');
+            if (text) { loadText(text); showNotification("ТЕКСТ ВСТАВЛЕН"); }
+        });
+
+        document.addEventListener('keydown', e => {
+            if (document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT') return;
+            let turbo = parseInt(document.getElementById('turboSlider').value) || 1;
+            if (e.code === 'ArrowRight') { e.preventDefault(); STATE.globalStep += turbo; updateLogic(); }
+            if (e.code === 'ArrowLeft') { e.preventDefault(); STATE.globalStep -= turbo; updateLogic(); }
+            if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+        });
+
+        window.addEventListener('resize', render);
+        render(); 
+    </script>
+</body>
+</html>
