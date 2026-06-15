@@ -1,4 +1,5 @@
 [🇷🇺 Читать на русском языке](README.ru.md)
+<img width="778" height="632" alt="изображение" src="https://github.com/user-attachments/assets/f0a23912-7787-4591-b7ae-43fcd25be930" />
 
 # 🛰️ Zerkalius: Genesis (Binary Drum Machine)
 
