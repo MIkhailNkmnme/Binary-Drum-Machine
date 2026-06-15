@@ -160,7 +160,7 @@
         </div>
 
         <div class="control-group">
-            <span class="lbl" style="color:#00ff66; font-weight:bold;">Zerkalius: Genesis (v0.06 Geometric)</span>
+            <span class="lbl" style="color:#00ff66; font-weight:bold;">Zerkalius: Genesis (v0.07 Gears)</span>
             <div style="display:flex; gap:4px; margin-top:3px;">
                 <button id="exportCodeBtn" class="btn-action" style="flex:1;">Экспорт</button>
                 <button id="importCodeBtn" class="btn-action" style="flex:1;">Импорт</button>
@@ -178,6 +178,15 @@
                 <button id="bankBtn2" class="bank-btn" onclick="switchBank(2)">Слот 3</button>
             </div>
             <textarea id="linesInput" placeholder="Введите символы: 1/0, \ /, ( ), [ ], < >" style="height: 60px; color:#ffcc00; margin-top:2px;"></textarea>
+            
+            <!-- ПАНЕЛЬ ЗАМЕНЫ СИМВОЛОВ -->
+            <div style="display: flex; align-items: center; justify-content: space-between; background: #111; padding: 4px; border-radius: 3px; margin-top: 4px; margin-bottom: 4px;">
+                <input type="text" id="repA1" value="1" style="width: 25px;"> ➔ <input type="text" id="repB1" value="\" style="width: 25px; color:#00ff66;">
+                <span style="color:#444;">|</span>
+                <input type="text" id="repA2" value="0" style="width: 25px;"> ➔ <input type="text" id="repB2" value="/" style="width: 25px; color:#00ff66;">
+                <button id="toggleReplaceBtn" class="btn-action" style="width: 30px; margin: 0; padding: 2px 0;">🔄</button>
+            </div>
+
             <button id="applyLinesBtn" class="btn-action" style="margin-top:2px;">Применить текущий слот</button>
         </div>
 
@@ -299,8 +308,17 @@
 
         <div class="control-group">
             <span class="lbl" style="color:#cc33ff; font-weight:bold;">Модификаторы движения:</span>
+            
+            <!-- НОВЫЕ ПЕРЕКЛЮЧАТЕЛИ ВСТРЕЧНОГО ДВИЖЕНИЯ И РАЗРЯДКИ -->
             <label style="display:flex; align-items:center; margin-top:3px;">
-                <input type="checkbox" id="neonCheck"> <span class="lbl" style="color:#00ff66; font-weight:bold;">✨ Свечение (Neon)</span>
+                <input type="checkbox" id="meetCenterCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">↔️ Встречное движение (Обе в центр)</span>
+            </label>
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="spacedCheck"> <span class="lbl" style="color:#ffcc00; font-weight:bold;">⚙️ Разрядка (Шестеренки)</span>
+            </label>
+
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="neonCheck"> <span class="lbl">✨ Свечение (Neon)</span>
             </label>
             <label style="display:flex; align-items:center; margin-top:3px;">
                 <input type="checkbox" id="cylinderCheck"> <span class="lbl">Круговой сдвиг (Цилиндр)</span>
@@ -429,7 +447,10 @@
 
             // Слоты
             banks: ["", "", ""],
-            activeBankIndex: 0
+            activeBankIndex: 0,
+            
+            // Состояние замены
+            isReplaced: false
         };
 
         const UI = {
@@ -450,9 +471,44 @@
             bw: { c1: '#ffffff', c0: '#555555', bg: '#000000' }
         };
 
-        // Хелперы для определения типа символа (Тип 1 = Активный, Тип 0 = Пассивный)
+        // Хелперы типов
         const isType1 = (c) => ['1', '\\', ')', ']', '>', '+'].includes(c);
         const isType0 = (c) => ['0', '/', '(', '[', '<', '-'].includes(c);
+
+        // ЛОГИКА ЗАМЕНЫ СИМВОЛОВ
+        safeBind('toggleReplaceBtn', 'click', function() {
+            let ta = document.getElementById('linesInput');
+            let val = ta.value;
+            let a1 = safeValue('repA1'), b1 = safeValue('repB1');
+            let a2 = safeValue('repA2'), b2 = safeValue('repB2');
+            
+            if(!a1 || !b1 || !a2 || !b2) return;
+
+            let esc = (s) => s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+
+            if (!STATE.isReplaced) {
+                val = val.replace(new RegExp(esc(a1), 'g'), '%%T1%%');
+                val = val.replace(new RegExp(esc(a2), 'g'), '%%T2%%');
+                val = val.replace(/%%T1%%/g, b1);
+                val = val.replace(/%%T2%%/g, b2);
+                STATE.isReplaced = true;
+                this.style.background = '#00ff66';
+                this.style.color = '#000';
+            } else {
+                val = val.replace(new RegExp(esc(b1), 'g'), '%%T1%%');
+                val = val.replace(new RegExp(esc(b2), 'g'), '%%T2%%');
+                val = val.replace(/%%T1%%/g, a1);
+                val = val.replace(/%%T2%%/g, a2);
+                STATE.isReplaced = false;
+                this.style.background = '#333';
+                this.style.color = '#ffcc00';
+            }
+            
+            ta.value = val;
+            STATE.banks[STATE.activeBankIndex] = val;
+            document.getElementById('applyLinesBtn').click();
+            showNotification(STATE.isReplaced ? "СИМВОЛЫ ЗАМЕНЕНЫ" : "ЗАМЕНА ОТМЕНЕНА");
+        });
 
         window.switchBank = function(idx) {
             STATE.banks[STATE.activeBankIndex] = document.getElementById('linesInput').value;
@@ -534,9 +590,11 @@
 
             const setElChk = (id, val) => { const el = document.getElementById(id); if(el) el.checked = !!val; };
             setElChk('radarCheck', snapshot.radar);
-            
             setElChk('loopCheck', snapshot.loop);
             setElChk('pingPongCheck', snapshot.pingPong);
+            setElChk('meetCenterCheck', snapshot.meetCenter);
+            setElChk('spacedCheck', snapshot.spaced);
+
             if (snapshot.loopStart !== undefined) setElVal('loopStart', snapshot.loopStart);
             if (snapshot.loopEnd !== undefined) setElVal('loopEnd', snapshot.loopEnd);
 
@@ -583,7 +641,6 @@
         }
 
         function loadText(text) {
-            // ФИЛЬТР: УДАЛЯЕМ ТОЛЬКО ПРОБЕЛЫ (\s+), оставляем слэши и скобки
             const raw = text.split(/\r?\n|\r/).map(l => l.trim().replace(/\s+/g, '')).filter(l => l.length > 0);
             const nFact = parseInt(safeValue('nFactor', 2));
             
@@ -627,7 +684,6 @@
             }
         });
 
-        // Серпинский по-прежнему генерирует 1 и 0
         safeBind('sierpBtn', 'click', () => {
             let seed = safeValue('sierpSeed', '1').trim().replace(/\s+/g, '') || "1";
             let rows = parseInt(safeValue('sierpRows', 64)) || 64;
@@ -679,6 +735,8 @@
             let useElka = safeChecked('elkaCheck', false);
             let useCylinder = safeChecked('cylinderCheck', false);
             let useInterleaving = safeChecked('interleavingCheck', true);
+            let meetCenter = safeChecked('meetCenterCheck', false);
+            let useSpacing = safeChecked('spacedCheck', false);
 
             if (vbaActivation) {
                 STATE.lines.forEach((line, idx) => {
@@ -718,8 +776,14 @@
 
                 let currentStepValue = (vbaActivation && !line.isActive) ? 0 : Math.abs(STATE.globalStep);
 
+                // ЛОГИКА ВСТРЕЧНОГО ДВИЖЕНИЯ
+                let isReversedRow = STATE.isReverse;
+                if (meetCenter && (i % 2 !== 0)) {
+                    isReversedRow = !isReversedRow;
+                }
+
                 let s_display = currentStepValue % line.cycle;
-                if (STATE.isReverse && line.isActive) {
+                if (isReversedRow && line.isActive) {
                     s_display = line.cycle - s_display;
                     if (s_display === line.cycle) s_display = 0;
                 }
@@ -735,12 +799,13 @@
                     gridSize = line.cN * line.L;
                 }
 
-                // Определение "родных" символов строки для корректного XOR-слияния
                 let char1 = '1', char0 = '0';
                 if (lineOrig.includes('\\') || lineOrig.includes('/')) { char1 = '\\'; char0 = '/'; }
                 else if (lineOrig.includes(')') || lineOrig.includes('(')) { char1 = ')'; char0 = '('; }
                 else if (lineOrig.includes(']') || lineOrig.includes('[')) { char1 = ']'; char0 = '['; }
                 else if (lineOrig.includes('>') || lineOrig.includes('<')) { char1 = '>'; char0 = '<'; }
+
+                let rawMask = [];
 
                 for (let p = 1; p <= gridSize; p++) {
                     let d_active = (p >= 1 + s_display && p <= line.L + s_display);
@@ -761,7 +826,6 @@
                     }
 
                     if (d_active && t_active) {
-                        // XOR логика работает для любых символов
                         let d_val = isType1(d_char) ? 1 : 0;
                         let t_val = isType1(t_char) ? 1 : 0;
                         res += (d_val ^ t_val) ? char1 : char0;
@@ -772,14 +836,33 @@
                     } else {
                         res += " "; 
                     }
+                    rawMask.push(false);
+                }
+
+                // ЛОГИКА РАЗРЯДКИ (ШЕСТЕРЕНКИ)
+                if (useSpacing) {
+                    let spacedRes = "";
+                    let spacedMask = [];
+                    // Сдвигаем нечетные строки на 1 пробел, чтобы они входили как зубья
+                    if (i % 2 !== 0) {
+                        spacedRes += " ";
+                        spacedMask.push(false);
+                    }
+                    for(let c=0; c<res.length; c++) {
+                        spacedRes += res[c] + " "; // Добавляем пробел после символа
+                        spacedMask.push(rawMask[c]);
+                        spacedMask.push(false);
+                    }
+                    res = spacedRes;
+                    rawMask = spacedMask;
                 }
                 
                 line.display = res;
-                line.highlightMask = new Array(res.length).fill(false);
+                line.highlightMask = rawMask;
 
                 if (!applyFilter || line.isActive) {
                     for (let c = 0; c < res.length; c++) {
-                        if (/\S/.test(res[c])) { // Любой НЕ пробел
+                        if (/\S/.test(res[c])) { 
                             globalCleanText += res[c];
                             globalMap.push({ r: i, c: c });
                         }
@@ -1063,7 +1146,6 @@
                         if (char === ' ') continue;
 
                         let isHl = showHighlights && lineData.isActive && lineData.highlightMask[c];
-                        
                         let flashEnd = STATE.flashes.get(actualIndex + "_" + c);
                         let isFlashing = flashEnd && Date.now() < flashEnd;
 
@@ -1101,10 +1183,6 @@
                 let startY = ((canvas.height - totalHeight) / 2) + STATE.offsetY;
                 let baseX = (canvas.width / 2) + STATE.offsetX;
 
-                // Для быстрой отрисовки без неона нужны регулярки
-                let regex1 = /[1\\)\]>+]/g;
-                let regex0 = /[0/(\[<-]/g;
-
                 for (let i = 0; i < renderCount; i++) {
                     let actualIndex = startIndex + i;
                     let lineData = STATE.lines[actualIndex];
@@ -1119,51 +1197,35 @@
 
                     ctx.globalAlpha = (!lineData.isActive && applyFilter) ? 0.25 : 1.0;
 
-                    let hasAnyFlash = false;
+                    ctx.textAlign = 'left';
+                    let fullWidth = text.length * charWidth;
+                    let currentX = baseX - (fullWidth / 2);
+
                     for (let c = 0; c < text.length; c++) {
-                        if (STATE.flashes.has(actualIndex + "_" + c) && Date.now() < STATE.flashes.get(actualIndex + "_" + c)) {
-                            hasAnyFlash = true;
-                            break;
-                        }
-                    }
+                        let char = text[c];
+                        if (char === ' ') continue;
 
-                    if (!useNeon && !showHighlights && !hasAnyFlash) {
-                        ctx.textAlign = 'center';
-                        ctx.fillStyle = c0;
-                        ctx.fillText(text.replace(regex1, ' '), baseX, y);
-                        ctx.fillStyle = c1;
-                        ctx.fillText(text.replace(regex0, ' '), baseX, y);
-                    } else {
-                        ctx.textAlign = 'left';
-                        let fullWidth = text.length * charWidth;
-                        let currentX = baseX - (fullWidth / 2);
+                        let isHl = showHighlights && lineData.isActive && lineData.highlightMask[c];
+                        let flashEnd = STATE.flashes.get(actualIndex + "_" + c);
+                        let isFlashing = flashEnd && Date.now() < flashEnd;
+                        
+                        let isChar1 = isType1(char);
 
-                        for (let c = 0; c < text.length; c++) {
-                            let char = text[c];
-                            if (char === ' ') continue;
-
-                            let isHl = showHighlights && lineData.isActive && lineData.highlightMask[c];
-                            let flashEnd = STATE.flashes.get(actualIndex + "_" + c);
-                            let isFlashing = flashEnd && Date.now() < flashEnd;
-                            
-                            let isChar1 = isType1(char);
-
-                            if (isFlashing) {
-                                ctx.fillStyle = '#ffcc00';
-                                ctx.shadowBlur = 10;
-                                ctx.shadowColor = '#ffcc00';
+                        if (isFlashing) {
+                            ctx.fillStyle = '#ffcc00';
+                            ctx.shadowBlur = 10;
+                            ctx.shadowColor = '#ffcc00';
+                        } else {
+                            ctx.fillStyle = isHl ? hlColor : (isChar1 ? c1 : c0);
+                            if (useNeon && (isChar1 || isHl)) {
+                                ctx.shadowBlur = 8;
+                                ctx.shadowColor = isHl ? hlColor : (isChar1 ? (dirColors ? safeValue('color1_fwd', '#ffffff') : safeValue('color1', '#ffffff')) : (dirColors ? safeValue('color0_fwd', '#00ff66') : safeValue('color0', '#00ff66')));
                             } else {
-                                ctx.fillStyle = isHl ? hlColor : (isChar1 ? c1 : c0);
-                                if (useNeon && (isChar1 || isHl)) {
-                                    ctx.shadowBlur = 8;
-                                    ctx.shadowColor = isHl ? hlColor : (isChar1 ? (dirColors ? safeValue('color1_fwd', '#ffffff') : safeValue('color1', '#ffffff')) : (dirColors ? safeValue('color0_fwd', '#00ff66') : safeValue('color0', '#00ff66')));
-                                } else {
-                                    ctx.shadowBlur = 0;
-                                }
+                                ctx.shadowBlur = 0;
                             }
-
-                            ctx.fillText(char, currentX + (c * charWidth), y);
                         }
+
+                        ctx.fillText(char, currentX + (c * charWidth), y);
                     }
                 }
                 ctx.shadowBlur = 0; 
@@ -1207,6 +1269,8 @@
                 cylinder: safeChecked('cylinderCheck', false),
                 loop: safeChecked('loopCheck', false),
                 pingPong: safeChecked('pingPongCheck', false),
+                meetCenter: safeChecked('meetCenterCheck', false),
+                spaced: safeChecked('spacedCheck', false),
                 loopStart: parseInt(safeValue('loopStart', 0)),
                 loopEnd: parseInt(safeValue('loopEnd', 100)),
                 banks: STATE.banks,
@@ -1373,6 +1437,9 @@
 
         safeBind('loopCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПОВТОР A-B ВКЛЮЧЕН" : "ПОВТОР ОТКЛЮЧЕН"); });
         safeBind('pingPongCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПИНГ-ПОНГ ВКЛЮЧЕН" : "ПИНГ-ПОНГ ОТКЛЮЧЕН"); });
+        safeBind('meetCenterCheck', 'change', function() { updateLogic(); });
+        safeBind('spacedCheck', 'change', function() { updateLogic(); });
+        
         safeBind('loopStart', 'input', function() { enforceLoop(); updateLogic(); });
         safeBind('loopEnd', 'input', function() { enforceLoop(); updateLogic(); });
 
