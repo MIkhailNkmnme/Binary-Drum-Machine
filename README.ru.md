@@ -7,6 +7,7 @@
 
 ### 🔗 [🚀 Запустить Zerkalius в реальном времени на 1001100.online](https://1001100.online/)
 <img width="614" height="494" alt="изображение" src="https://github.com/user-attachments/assets/3c74ae81-f057-4e8d-8143-b7aeadbd4a7b" />
+<img width="312" height="400" alt="изображение" src="https://github.com/user-attachments/assets/2eab5875-e138-4f91-99b6-3b897cbb9979" />
 
 ---
 
