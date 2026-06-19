@@ -38,9 +38,8 @@
         .controls::-webkit-scrollbar { width: 5px; }
         .controls::-webkit-scrollbar-thumb { background: #333; }
 
-        /* ПРАВАЯ НИЖНЯЯ ПАНЕЛЬ (ПЛЕЕР И КАМЕРА) */
         .player-panel {
-            position: absolute; left: 330px; bottom: 10px; /* БЫЛО right: 10px */
+            position: absolute; left: 330px; bottom: 10px; 
             width: 300px; z-index: 100;
             background: rgba(17, 17, 17, 0.95); 
             border: 1px solid #00ff66; border-radius: 5px;
@@ -167,7 +166,7 @@
 
         /* ИНТЕРАКТИВНЫЙ ДИАГНОСТИЧЕСКИЙ ТЕРМИНАЛ */
         #diagTerminal {
-            position: absolute; bottom: 10px; right: 5px; z-index: 80; /* БЫЛО left: 330px */
+            position: absolute; bottom: 10px; left: 650px; z-index: 80; 
             background: rgba(10, 10, 10, 0.8); border: 1px solid #00ff66;
             padding: 10px; border-radius: 4px; cursor: pointer;
             transition: opacity 0.3s ease, height 0.3s ease;
@@ -189,7 +188,7 @@
 <body>
 
     <input type="checkbox" id="radarCheck" style="display:none;">
-    <div id="mainTitle">Zerkalius: Genesis (v0.18 Dashboard)</div>
+    <div id="mainTitle">Zerkalius: Genesis (v0.19 Solid Core)</div>
 
     <script src="banks_data.js"></script>
     <script>
@@ -198,15 +197,34 @@
             if (canvas) {
                 const ctx = canvas.getContext('2d');
                 if(!ctx) return false;
+                
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                
                 ctx.fillStyle = '#050505';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = '#ff3333';
-                ctx.font = '13px monospace';
+                ctx.font = '14px Consolas, monospace';
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'top';
-                ctx.fillText("⚠️ КРИТИЧЕСКАЯ ОШИБКА ДВИЖКА:", 20, 20);
-                ctx.fillText(message, 20, 45);
-                ctx.fillText("Файл: " + source + " | Строка: " + lineno + ":" + colno, 20, 65);
+                
+                ctx.fillText("⚠️ КРИТИЧЕСКАЯ ОШИБКА ДВИЖКА:", 350, 70);
+                ctx.fillStyle = '#ffcc00';
+                ctx.fillText(message, 350, 90);
+                
+                ctx.fillStyle = '#00ccff';
+                ctx.fillText(`Строка: ${lineno} | Колонка: ${colno}`, 350, 130);
+                
+                ctx.fillStyle = '#888';
+                let shortSource = source ? source.substring(source.lastIndexOf('/') + 1) : "Неизвестно";
+                ctx.fillText(`Файл: ${shortSource}`, 350, 150);
+
+                if (error && error.stack) {
+                    let stackLines = error.stack.split('\n');
+                    for (let i = 0; i < Math.min(stackLines.length, 15); i++) {
+                        ctx.fillText(stackLines[i], 350, 170 + (i * 20));
+                    }
+                }
             }
             return false;
         };
@@ -219,13 +237,9 @@
 			<div style="display:flex; gap:4px;">
 					<button id="exportCodeBtn" class="btn-action" style="flex:1;">Экспорт</button>
 					<button id="importCodeBtn" class="btn-action" style="flex:1;">Импорт</button>
-					
-					 <!-- Скрытый инпут для файлов (мы нажмем на него из JS) -->
 					<input type="file" id="importFileLoader" accept=".txt" style="display:none;">
-					
 					<button id="photoBtn" class="btn-action" style="flex:1; background:#00ccff; color:#000; border-color:#00ccff;">📸 ФОТО</button>
 			</div>
-			
             <textarea id="snapshotCodeBox" placeholder="Код снимка" style="margin-top:3px; height: 35px; font-size:9px;"></textarea>
         </div>
 
@@ -252,6 +266,10 @@
             <div class="row-between" style="margin-bottom: 5px;">
                 <span class="lbl" style="color:#00ff66; font-weight:bold;">Генератор Серпинского:</span>
             </div>
+            <select id="sierpRule" style="margin-bottom: 5px; background: #222; color: #fff; border: 1px solid #444; padding: 2px; border-radius: 3px; width: 100%; font-size: 11px;">
+                <option value="shift">Форма: Сдвиг (Кирпичная кладка)</option>
+                <option value="center">Форма: Центр (Симметричная пирамида)</option>
+            </select>
             <div style="display:flex; gap:5px; margin-bottom:5px;">
                 <input type="text" id="sierpSeed" value="1" title="Сид" style="flex:1;">
                 <input type="number" id="sierpRows" value="64" title="Строки" style="flex:1;">
@@ -298,6 +316,13 @@
             </div>
             <input type="range" id="nFactor" min="1" max="11" value="2">
 
+<div style="margin-top: 3px; margin-bottom: 3px;">
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack" selected>💠 Режим: Идеальный Центр</option>
+                </select>
+            </div>
             <label style="display:flex; align-items:center; margin-top:3px;">
                 <input type="checkbox" id="phaseShiftCheck" checked> <span class="lbl" style="color:#00ccff; font-weight:bold;">Фазовый сдвиг (+1 к циклу)</span>
             </label>
@@ -350,6 +375,9 @@
             </div>
 
             <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="conglomerateCheck"> <span class="lbl" style="color:#ff00ff; font-weight:bold;">🧩 Конгломераты (≥ 3)</span>
+            </label>
+            <label style="display:flex; align-items:center; margin-top:3px;">
                 <input type="checkbox" id="neonCheck"> <span class="lbl">✨ Свечение (Neon)</span>
             </label>
             <label style="display:flex; align-items:center; margin-top:3px;">
@@ -389,7 +417,6 @@
                     </div>
                 </div>
 
-                <!-- A-B ПОВТОР -->
                 <div style="background: #222; padding: 4px; border-radius: 3px; margin-top: 4px;">
                     <div class="row-between" style="margin-bottom: 3px;">
                         <label style="display:flex; align-items:center;">
@@ -404,7 +431,6 @@
                         <span class="lbl">B:</span><input type="number" id="loopEnd" value="100" style="width: 45px;">
                     </div>
                 </div>
-
             </div>
         </div>
 
@@ -494,7 +520,6 @@
                 <label style="display:flex; align-items:center;">
                     <input type="checkbox" id="highlightCheck" checked> <span class="lbl">Подсветка паттернов</span>
                 </label>
-                <!-- ЦВЕТ НАЙДЕННЫХ ПАТТЕРНОВ -->
                 <input type="color" id="foundPatternColor" value="#bfff00" style="width:15px; height:15px; padding:0; border:none; cursor:pointer;" title="Цвет найденных паттернов">
             </div>
 
@@ -509,9 +534,10 @@
                 <div class="highlight-textarea-backdrop" id="patternBackdrop"></div>
                 <textarea class="pattern-input" id="patternInput" placeholder="Паттерны (Двойной клик = Вставка)"></textarea>
             </div>
+            
+            <div id="interleavingLogDetails" style="display:none;"></div>
         </div>
 
-        <!-- ИНТЕРАКТИВНЫЙ ДИАГНОСТИЧЕСКИЙ ТЕРМИНАЛ -->
         <div id="diagTerminal">
             <div style="color:#00ff66; font-size:10px; font-weight:bold; margin-bottom:4px; font-family: 'Roboto Mono', monospace;">📡 ZERKALIUS DIAGNOSTIC TERMINAL:</div>
             <div style="color:#888; font-size:11px; font-family: monospace; line-height:1.4;" id="diagStats">
@@ -523,12 +549,15 @@
             </div>
         </div>
 
+        <!-- Кнопка возврата в ХАБ -->
+        <a href="index.html" style="position: absolute; bottom: 10px; left: 10px; padding: 8px 12px; background: rgba(17,17,17,0.9); color: #00ff66; text-decoration: none; border: 1px solid #00ff66; border-radius: 4px; font-size: 12px; z-index: 200; font-family: monospace; font-weight: bold; box-shadow: 0 0 10px rgba(0,255,102,0.3);">⬅ В Хаб</a>
+
         <div id="hotkeyIndicator"></div>
         <canvas id="screenCanvas"></canvas>
     </div>
 
     <script>
-const hexToRgba = (hex, alpha) => {
+        const hexToRgba = (hex, alpha) => {
             if (!hex || hex.length < 7) return `rgba(0, 0, 0, ${alpha})`;
             let r = parseInt(hex.slice(1, 3), 16);
             let g = parseInt(hex.slice(3, 5), 16);
@@ -579,7 +608,7 @@ const hexToRgba = (hex, alpha) => {
             let startY = ((canvas.height - totalHeight) / 2) + STATE.offsetY + STATE.autoOffsetY;
             let baseX = (canvas.width / 2) + STATE.offsetX + STATE.autoOffsetX;
             
-            let startIndex = STATE.lines.length > screenRows ? STATE.lines.length - screenRows : 0;
+            let startIndex = 0;
             
             return { charWidth, lineHeight, renderCount, totalHeight, startY, baseX, startIndex };
         }
@@ -745,7 +774,7 @@ const hexToRgba = (hex, alpha) => {
             showNotification(`СЛОТ ${idx + 1} АКТИВИРОВАН`);
         };
 
-        function resetPositionWithHeightScale(scaleFactor) {
+        function resetPositionWithHeightScale(scaleFactor, targetActiveOnly = false) {
             let m = getGridMetrics();
             if (!m) return;
             
@@ -755,17 +784,39 @@ const hexToRgba = (hex, alpha) => {
             STATE.autoOffsetY = 0;
 
             if (STATE.lines.length > 0) {
-                let padding = scaleFactor === 1.0 ? 60 : 20;
-                let optimalSize = Math.floor((UI.canvas.height * scaleFactor - padding) / (m.renderCount * parseFloat(safeValue('lhSlider', 1.0))));
-                optimalSize = Math.max(5, Math.min(100, optimalSize));
-                
-                const fontSlider = document.getElementById('fontSlider');
-                if (fontSlider) fontSlider.value = optimalSize;
-                const fontVal = document.getElementById('fontVal');
-                if (fontVal) fontVal.textContent = optimalSize + 'px';
+                let lh = parseFloat(safeValue('lhSlider', 1.0));
+                let linesToFit = 0;
+
+                if (targetActiveOnly) {
+                    let first = -1, last = -1;
+                    for (let i = 0; i < STATE.lines.length; i++) {
+                        if (STATE.lines[i].isActive) {
+                            if (first === -1) first = i;
+                            last = i;
+                        }
+                    }
+                    if (first !== -1) {
+                        linesToFit = (last - first + 1);
+                    } else {
+                        linesToFit = Math.min(STATE.lines.length, parseInt(safeValue('screenSlider', 64)));
+                    }
+                } else {
+                    linesToFit = Math.min(STATE.lines.length, parseInt(safeValue('screenSlider', 64)));
+                }
+
+                if (linesToFit > 0) {
+                    let padding = 20;
+                    let optimalSize = Math.floor((UI.canvas.height * scaleFactor - padding) / (linesToFit * lh));
+                    optimalSize = Math.max(5, Math.min(100, optimalSize));
+                    
+                    const fontSlider = document.getElementById('fontSlider');
+                    if (fontSlider) fontSlider.value = optimalSize;
+                    const fontVal = document.getElementById('fontVal');
+                    if (fontVal) fontVal.textContent = optimalSize + 'px';
+                }
             }
             render();
-            showNotification(scaleFactor === 1.0 ? "ЦЕНТР И АВТОМАСШТАБ (100%)" : "ЦЕНТР И МАСШТАБ (30%)");
+            showNotification(targetActiveOnly ? "ЦЕНТР: АКТИВНЫЙ БЛОК (60%)" : "ЦЕНТР И АВТОМАСШТАБ (100%)");
         }
 
         let centerClickTimeout = null;
@@ -773,11 +824,11 @@ const hexToRgba = (hex, alpha) => {
             if (centerClickTimeout) {
                 clearTimeout(centerClickTimeout);
                 centerClickTimeout = null;
-                resetPositionWithHeightScale(0.3); 
+                resetPositionWithHeightScale(0.6, true); 
             } else {
                 centerClickTimeout = setTimeout(() => {
                     centerClickTimeout = null;
-                    resetPositionWithHeightScale(1.0); 
+                    resetPositionWithHeightScale(1.0, false); 
                 }, 220);
             }
         });
@@ -810,6 +861,7 @@ const hexToRgba = (hex, alpha) => {
             setElChk('oscYCheck', snapshot.oscYCheck);
             setElChk('redFirstOneCheck', snapshot.redFirstOneCheck !== undefined ? snapshot.redFirstOneCheck : true);
             setElChk('sequentialSearchCheck', snapshot.sequentialSearch !== undefined ? snapshot.sequentialSearch : true);
+            if (snapshot.symMode) setElVal('symModeSelect', snapshot.symMode);
             
             if (snapshot.tracerColor) setElVal('tracerColor', snapshot.tracerColor);
             if (snapshot.foundPatternColor) {
@@ -822,6 +874,9 @@ const hexToRgba = (hex, alpha) => {
             setElChk('hideChangedCheck', snapshot.hideChanged !== undefined ? snapshot.hideChanged : false);
             setElChk('hideUnchangedCheck', snapshot.hideUnchanged !== undefined ? snapshot.hideUnchanged : false);
             setElChk('fillXCheck', snapshot.fillX !== undefined ? snapshot.fillX : false);
+            setElChk('conglomerateCheck', snapshot.conglomerate !== undefined ? snapshot.conglomerate : false);
+
+            if (snapshot.sierpRule) setElVal('sierpRule', snapshot.sierpRule);
 
             if (snapshot.manualFrame) STATE.manualFrame = snapshot.manualFrame;
 
@@ -933,8 +988,8 @@ const hexToRgba = (hex, alpha) => {
             STATE.lastFindMethod = "Ожидание...";
             STATE.currentTargetPatternIdx = 1; 
             
-            const linesInput = document.getElementById('linesInput');
-            if (linesInput) linesInput.value = raw.join('\n');
+            let linesInp = document.getElementById('linesInput');
+            if (linesInp) linesInp.value = raw.join('\n');
             STATE.banks[STATE.activeBankIndex].lines = raw.join('\n');
 
             const stepSlider = document.getElementById('stepSlider');
@@ -967,21 +1022,33 @@ const hexToRgba = (hex, alpha) => {
         safeBind('sierpBtn', 'click', () => {
             let seed = safeValue('sierpSeed', '1').trim().replace(/\s+/g, '') || "1";
             let rows = parseInt(safeValue('sierpRows', 64)) || 64;
+            let rule = safeValue('sierpRule', 'shift');
             
-            let lines = [seed];
+            let genLines = [seed];
             for (let i = 1; i < rows; i++) {
-                let prev = lines[i-1];
+                let prev = genLines[i-1];
                 let nextStr = "";
-                let padded = "0" + prev + "0"; 
-                for(let j=0; j < padded.length - 1; j++) {
-                    let a = padded[j] === '1' ? 1 : 0;
-                    let b = padded[j+1] === '1' ? 1 : 0;
-                    nextStr += (a ^ b).toString(); 
+                
+                if (rule === "shift") {
+                    let padded = "0" + prev + "0"; 
+                    for(let j=0; j < padded.length - 1; j++) {
+                        let a = padded[j] === '1' ? 1 : 0;
+                        let b = padded[j+1] === '1' ? 1 : 0;
+                        nextStr += (a ^ b).toString(); 
+                    }
+                } else if (rule === "center") {
+                    let padded = "00" + prev + "00"; 
+                    for(let j=0; j < padded.length - 2; j++) {
+                        let left = padded[j] === '1' ? 1 : 0;
+                        let right = padded[j+2] === '1' ? 1 : 0;
+                        nextStr += (left ^ right).toString(); 
+                    }
                 }
-                lines.push(nextStr);
+                
+                genLines.push(nextStr);
             }
-            loadText(lines.join('\n'));
-            showNotification("СЕРПИНСКИЙ ГОТОВ");
+            loadText(genLines.join('\n'));
+            showNotification(rule === "shift" ? "ГЕНЕРАТОР: СДВИГ" : "ГЕНЕРАТОР: ЦЕНТР");
         });
 
         function updatePatternBackdrop() {
@@ -1488,6 +1555,28 @@ const hexToRgba = (hex, alpha) => {
             ctx.fillStyle = bgColor;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+            if (!document.body.classList.contains('zen-mode')) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(10, 10, 10, 0.45)';
+                ctx.fillRect(canvas.width - 300, canvas.height - 125, 280, 105);
+                ctx.strokeStyle = '#00ff66';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(canvas.width - 300, canvas.height - 125, 280, 105);
+                
+                ctx.fillStyle = '#00ff66';
+                ctx.font = '10px Roboto Mono, monospace';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText("📡 ZERKALIUS DIAGNOSTIC TERMINAL:", canvas.width - 290, canvas.height - 117);
+                ctx.fillStyle = '#888';
+                ctx.fillText("Кадр (Шаг): " + STATE.globalStep, canvas.width - 290, canvas.height - 100);
+                ctx.fillText("Активных строк: " + STATE.lines.filter(l => l.isActive).length + " из " + STATE.lines.length, canvas.width - 290, canvas.height - 85);
+                ctx.fillText("Направление: " + (STATE.isReverse ? "РЕВЕРС (Назад)" : "ВПЕРЕД"), canvas.width - 290, canvas.height - 70);
+                ctx.fillStyle = '#ffcc00';
+                ctx.fillText("Цель Каскада: Строка " + (STATE.currentTargetPatternIdx + 1), canvas.width - 290, canvas.height - 50);
+                ctx.restore();
+            }
+
             if (STATE.lines.length === 0) return;
 
             let useRadar = safeChecked('radarCheck', false);
@@ -1497,7 +1586,7 @@ const hexToRgba = (hex, alpha) => {
             let isDrum = safeChecked('drumModeCheck', false);
             let drumRad = parseInt(safeValue('drumRadius', 5));
             let useFillX = safeChecked('fillXCheck', false);
-
+            let symMode = safeValue('symModeSelect', 'centerTrack');
             let m = getGridMetrics();
             if (!m) return;
 
@@ -1512,6 +1601,54 @@ const hexToRgba = (hex, alpha) => {
 
             let applyFilter = safeChecked('filterCheck', false);
             let showHighlights = safeChecked('highlightCheck', true);
+
+            let maxActiveLen = 0;
+            let firstActiveIdx = -1;
+            let lastActiveIdx = -1;
+
+            let useConglomerates = safeChecked('conglomerateCheck', false);
+            let conglomColors = new Map();
+            if (useConglomerates && m) {
+                let visited = new Set();
+                let blobId = 0;
+                const getType = (rIdx, cIdx) => {
+                    let lData = STATE.lines[rIdx];
+                    if (!lData || !lData.display || cIdx >= lData.display.length || cIdx < 0 || lData.fillerMask[cIdx]) return null;
+                    let char = lData.display[cIdx];
+                    if (char === ' ') return null;
+                    return isType1(char) ? 1 : (isType0(char) ? 0 : null);
+                };
+                for (let i = 0; i < m.renderCount; i++) {
+                    let rIdx = m.startIndex + i;
+                    let line = STATE.lines[rIdx];
+                    if (!line || !line.display) continue;
+                    for (let c = 0; c < line.display.length; c++) {
+                        let type = getType(rIdx, c);
+                        if (type === null || visited.has(rIdx + "_" + c)) continue;
+                        let queue = [[rIdx, c]];
+                        let currentBlob = [];
+                        visited.add(rIdx + "_" + c);
+                        while (queue.length > 0) {
+                            let [cr, cc] = queue.shift();
+                            currentBlob.push([cr, cc]);
+                            [[cr-1, cc], [cr+1, cc], [cr, cc-1], [cr, cc+1]].forEach(([nr, nc]) => {
+                                if (nr >= m.startIndex && nr < m.startIndex + m.renderCount) {
+                                    let nKey = nr + "_" + nc;
+                                    if (!visited.has(nKey) && getType(nr, nc) === type) {
+                                        visited.add(nKey);
+                                        queue.push([nr, nc]);
+                                    }
+                                }
+                            });
+                        }
+                        if (currentBlob.length >= 3) {
+                            blobId++;
+                            let color = `hsl(${(blobId * 137.5) % 360}, 90%, 65%)`;
+                            currentBlob.forEach(([br, bc]) => conglomColors.set(br + "_" + bc, color));
+                        }
+                    }
+                }
+            }
 
             if (useRadar) {
                 let centerX = canvas.width / 2 + STATE.offsetX + STATE.autoOffsetX;
@@ -1560,12 +1697,17 @@ const hexToRgba = (hex, alpha) => {
 
                         let isChar1 = isType1(char);
 
-                        if (isRed) {
+                        let cBlobColor = useConglomerates ? conglomColors.get(actualIndex + "_" + c) : null;
+                        if (cBlobColor) {
+                            ctx.fillStyle = cBlobColor;
+                            ctx.shadowBlur = useNeon ? 8 : 0;
+                            ctx.shadowColor = cBlobColor;
+                        } else if (isRed) {
                             ctx.fillStyle = trColor;
                             ctx.shadowBlur = useNeon ? 8 : 0;
                             ctx.shadowColor = trColor;
                         } else if (isFlashing) {
-                            ctx.fillStyle = hlColor; 
+                            ctx.fillStyle = hlColor;
                             ctx.shadowBlur = 10;
                             ctx.shadowColor = hlColor;
                         } else {
@@ -1606,10 +1748,51 @@ const hexToRgba = (hex, alpha) => {
 
                     let y = startY + (i * m.lineHeight) + (m.lineHeight / 2);
 
+                    if (lineData.isActive) {
+                        if (firstActiveIdx === -1) firstActiveIdx = i;
+                        lastActiveIdx = i;
+                        if (text.length > maxActiveLen) maxActiveLen = text.length;
+                    }
+
                     ctx.globalAlpha = (!lineData.isActive && applyFilter) ? 0.25 : 1.0;
                     ctx.textAlign = 'center';
-                    let fullWidth = text.length * m.charWidth;
-                    let currentX = baseX - (fullWidth / 2);
+                    
+let symMode = safeValue('symModeSelect', 'centerTrack');
+                    let currentX = 0;
+                    let isMatrixAxis = false;
+                    let liveCenterOffset = 0; // Смещение для умного центра
+
+                    if (symMode === "centerTrack") {
+                        isMatrixAxis = true;
+
+                        // ИЩЕМ "ЖИВОЙ" ЦЕНТР СТРОКИ (игнорируя точки и пробелы по краям)
+                        let firstCharIdx = -1;
+                        let lastCharIdx = -1;
+
+                        for (let k = 0; k < text.length; k++) {
+                            // Если это не пустой филлер и не крестик рентгена
+                            if (!lineData.fillerMask[k] && text[k] !== ' ' && text[k] !== 'x' && text[k] !== '.') {
+                                if (firstCharIdx === -1) firstCharIdx = k;
+                                lastCharIdx = k;
+                            }
+                        }
+
+                        // Если в строке есть живые символы, вычисляем их центр
+                        if (firstCharIdx !== -1) {
+                            let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
+                            // Насколько этот живой центр смещен относительно математического центра массива?
+                            let mathCenterIndex = (text.length - 1) / 2.0;
+                            liveCenterOffset = (mathCenterIndex - liveCenterIndex) * m.charWidth;
+                        }
+
+                    } else if (symMode === "centerBase") {
+                        let baseWidth = lineData.L * m.charWidth;
+                        if (safeChecked('spacedCheck', false)) baseWidth *= 2;
+                        currentX = baseX - (baseWidth / 2);
+                    } else {
+                        let fullWidth = text.length * m.charWidth;
+                        currentX = baseX - (fullWidth / 2);
+                    }
 
                     for (let c = 0; c < text.length; c++) {
                         let char = text[c];
@@ -1623,14 +1806,22 @@ const hexToRgba = (hex, alpha) => {
                             if (Math.abs(c - centerCol) > drumRad) isDimmed = true;
                         }
 
-                        let cellX = currentX + (c * m.charWidth) + (m.charWidth / 2);
+                        let cellX = 0;
+                        if (isMatrixAxis) {
+                            // РАСЧЕТ ИДЕАЛЬНОГО ЦЕНТРА: 
+                            // Центрируем массив, а затем сдвигаем его так, 
+                            // чтобы "живые" символы оказались строго на оси экрана
+                            let centerIndex = (text.length - 1) / 2.0; 
+                            cellX = baseX + ((c - centerIndex) * m.charWidth) + liveCenterOffset;
+                        } else {
+                            cellX = currentX + (c * m.charWidth) + (m.charWidth / 2);
+                        }
 
                         if (isDrum) {
                             ctx.strokeStyle = isDimmed ? '#222' : '#444';
                             ctx.lineWidth = 1;
                             ctx.strokeRect(cellX - m.charWidth/2, y - m.lineHeight/2, m.charWidth, m.lineHeight);
                         }
-
                         let isFiller = lineData.fillerMask[c];
                         if (isFiller && (char === 'x' || char === '.')) {
                             ctx.fillStyle = '#444444';
@@ -1646,7 +1837,12 @@ const hexToRgba = (hex, alpha) => {
                         
                         let isChar1 = isType1(char);
 
-                        if (isRed) {
+                        let cBlobColor = useConglomerates ? conglomColors.get(actualIndex + "_" + c) : null;
+                        if (cBlobColor) {
+                            ctx.fillStyle = cBlobColor;
+                            ctx.shadowBlur = useNeon ? 8 : 0;
+                            ctx.shadowColor = cBlobColor;
+                        } else if (isRed) {
                             ctx.fillStyle = trColor;
                             ctx.shadowBlur = useNeon ? 8 : 0;
                             ctx.shadowColor = trColor;
@@ -1671,8 +1867,7 @@ const hexToRgba = (hex, alpha) => {
                 }
                 ctx.shadowBlur = 0; 
 
-                // ИНТЕРАКТИВНАЯ РАМКА
-                if (showFrame) {
+                if (showFrame && firstActiveIdx !== -1) {
                     ctx.save();
                     ctx.strokeStyle = frameColor; 
                     ctx.lineWidth = 1.5;
@@ -1680,15 +1875,12 @@ const hexToRgba = (hex, alpha) => {
                     ctx.shadowBlur = 8;
                     ctx.shadowColor = frameColor;
                     
-                    let fx = m.baseX + STATE.manualFrame.x;
-                    let fy = m.startY + STATE.manualFrame.y;
-                    ctx.strokeRect(fx, fy, STATE.manualFrame.w, STATE.manualFrame.h);
-                    
-                    ctx.fillStyle = frameColor;
-                    ctx.fillRect(fx + STATE.manualFrame.w - 4, fy + STATE.manualFrame.h - 4, 8, 8); 
-                    ctx.fillRect(fx + STATE.manualFrame.w - 4, fy + STATE.manualFrame.h/2 - 4, 8, 8); 
-                    ctx.fillRect(fx + STATE.manualFrame.w/2 - 4, fy + STATE.manualFrame.h - 4, 8, 8); 
-                    
+                    let autoW = maxActiveLen * m.charWidth + 24; 
+                    let autoH = ((lastActiveIdx - firstActiveIdx) + 1) * m.lineHeight; 
+                    let autoX = baseX - autoW / 2;
+                    let autoY = startY + (firstActiveIdx * m.lineHeight); 
+
+                    ctx.strokeRect(autoX, autoY, autoW, autoH);
                     ctx.restore();
                 }
             }
@@ -1734,11 +1926,13 @@ const hexToRgba = (hex, alpha) => {
                 fillX: safeChecked('fillXCheck', false),
                 hideChanged: safeChecked('hideChangedCheck', false),
                 hideUnchanged: safeChecked('hideUnchangedCheck', false),
+                conglomerate: safeChecked('conglomerateCheck', false),
                 deltaN: parseInt(safeValue('deltaNInput', 1)),
                 redFirstOneCheck: safeChecked('redFirstOneCheck', true),
                 tracerColor: safeValue('tracerColor', '#ff3333'),
                 foundPatternColor: safeValue('foundPatternColor', '#bfff00'),
                 sequentialSearch: safeChecked('sequentialSearchCheck', true),
+                symCenter: safeChecked('symModeSelect', true),
                 oscXCheck: safeChecked('oscXCheck', false),
                 oscYCheck: safeChecked('oscYCheck', false),
                 oscXLeft: parseInt(safeValue('oscXLeft', 50)),
@@ -1751,7 +1945,8 @@ const hexToRgba = (hex, alpha) => {
                 loopEnd: parseInt(safeValue('loopEnd', 100)),
                 banks: STATE.banks,
                 activeBankIndex: STATE.activeBankIndex,
-                manualFrame: STATE.manualFrame
+                manualFrame: STATE.manualFrame,
+                sierpRule: safeValue('sierpRule', 'shift')
             };
 
             let code = btoa(encodeURIComponent(JSON.stringify(snapshot)));
@@ -1760,7 +1955,6 @@ const hexToRgba = (hex, alpha) => {
             showNotification("КОД СКОПИРОВАН");
         });
 
-        // ОБРАБОТЧИК КНОПКИ ИМПОРТА (УМНЫЙ ВЫБОР ИЛИ ОКНО ФАЙЛА)
         safeBind('importCodeBtn', 'click', () => {
             let codeBox = document.getElementById('snapshotCodeBox');
             if (!codeBox) return;
@@ -2057,6 +2251,7 @@ const hexToRgba = (hex, alpha) => {
         safeBind('redFirstOneCheck', 'change', function() { updateLogic(); });
         safeBind('tracerColor', 'input', function() { render(); });
         safeBind('sequentialSearchCheck', 'change', function() { updatePatternBackdrop(); updateLogic(); });
+        safeBind('symModeSelect', 'change', function() { render(); });;
         
         safeBind('loopStart', 'input', function() { enforceLoop(); updateLogic(); });
         safeBind('loopEnd', 'input', function() { enforceLoop(); updateLogic(); });
@@ -2094,8 +2289,8 @@ const hexToRgba = (hex, alpha) => {
 
         safeBind('turboSlider', 'input', function() { document.getElementById('turboVal').textContent = this.value; });
         safeBind('fontSlider', 'input', function() { document.getElementById('fontVal').textContent = this.value + 'px'; render(); });
-        safeBind('screenSlider', 'input', function() { document.getElementById('screenVal').textContent = this.value; });
-        safeBind('lhSlider', 'input', function() { document.getElementById('lhVal').textContent = this.value; });
+        safeBind('screenSlider', 'input', function() { document.getElementById('screenVal').textContent = this.value; render(); });
+        safeBind('lhSlider', 'input', function() { document.getElementById('lhVal').textContent = this.value; render(); });
         
         safeBind('presetSelect', 'change', function() { 
             let p = PRESETS[this.value]; 
@@ -2107,7 +2302,7 @@ const hexToRgba = (hex, alpha) => {
             }
         });
 
-        ['color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck'].forEach(id => {
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'conglomerateCheck'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('input', () => { render(); });
@@ -2115,6 +2310,7 @@ const hexToRgba = (hex, alpha) => {
             }
         });
 
+        // ЛОГИКА МЫШИ ДЛЯ РАМКИ И ПАНОРАМЫ
         window.addEventListener('load', () => {
             const canvas = UI.canvas;
             if (!canvas) return;
@@ -2264,40 +2460,44 @@ const hexToRgba = (hex, alpha) => {
             });
         });
 
-        // ФОТО И КОД (СКАЧИВАНИЕ ФАЙЛОВ)
-        safeBind('photoBtn', 'click', () => {
-            if (STATE.isPlaying) {
-                document.getElementById('playBtn').click();
+        document.addEventListener('dblclick', e => {
+            if (e.target.id === 'screenCanvas' && STATE.lines.length === 0) {
+                try {
+                    navigator.clipboard.readText().then(text => {
+                        if (text) { loadText(text); showNotification("ТЕКСТ ВСТАВЛЕН НА ХОЛСТ"); }
+                    }).catch(err => alert("Браузер заблокировал вставку. Нажмите Ctrl+V"));
+                } catch(err) {}
             }
+        });
 
-            let timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        document.addEventListener('paste', e => {
+            let activeTag = (document.activeElement && document.activeElement.tagName) ? document.activeElement.tagName.toLowerCase() : '';
+            if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') return; 
             
-            const canvas = document.getElementById('screenCanvas');
-            const imgData = canvas.toDataURL("image/png");
-            
-            const imgLink = document.createElement('a');
-            imgLink.download = `Zerkalius_Shot_${timestamp}.png`;
-            imgLink.href = imgData;
-            imgLink.click();
+            let text = e.clipboardData.getData('text/plain').trim();
+            if (text) {
+                let isSnapshot = false;
+                let decoded = "";
+                try {
+                    decoded = decodeURIComponent(atob(text));
+                    if (decoded.startsWith('{') || decoded.startsWith('{"')) {
+                        isSnapshot = true;
+                    }
+                } catch(err) {}
 
-            document.getElementById('exportCodeBtn').click();
-            let code = document.getElementById('snapshotCodeBox').value;
-
-            let textContent = `ZERKALIUS GENESIS SNAPSHOT
-Дата: ${new Date().toLocaleString()}
-Кадр (Шаг): ${STATE.globalStep}
-
-===== КОД ДЛЯ ИМПОРТА (Копировать всё ниже) =====
-${code}
-=================================================`;
-
-            const blob = new Blob([textContent], { type: "text/plain" });
-            const txtLink = document.createElement('a');
-            txtLink.download = `Zerkalius_Code_${timestamp}.txt`;
-            txtLink.href = URL.createObjectURL(blob);
-            txtLink.click();
-
-            showNotification("📸 ФОТО И КОД СОХРАНЕНЫ В 'ЗАГРУЗКИ'");
+                if (isSnapshot) {
+                    try {
+                        let snapshot = JSON.parse(decoded);
+                        importSnapshotObject(snapshot);
+                        showNotification("СНИМОК РАЗВЕРНУТ ИЗ БУФЕРА!");
+                    } catch(err) {
+                        console.error("Ошибка авто-импорта снимка:", err);
+                    }
+                } else {
+                    loadText(text); 
+                    showNotification("ТЕКСТ ВСТАВЛЕН");
+                }
+            }
         });
 
         document.addEventListener('keydown', e => {
@@ -2333,26 +2533,33 @@ ${code}
         });
 
         window.onload = function() {
-            let base1 = ZERKALIUS_PRESETS.base1;
-            let pat1  = ZERKALIUS_PRESETS.pat1;
-            let base2 = ZERKALIUS_PRESETS.base2;
-            let pat2  = ZERKALIUS_PRESETS.pat2;
-            let base3 = ZERKALIUS_PRESETS.base3;
-            let pat3  = ZERKALIUS_PRESETS.pat3;
+            let b1 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base1 : `1\n11\n111`;
+            let p1 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.pat1  : `1\n11\n111`;
+            let b2 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base2 : `\\\n\\\\`;
+            let p2 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.pat2  : `\\\n\\\\`;
+            let b3 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base3 : `<\n<<`;
+            let p3 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.pat3  : `<\n<<`;
 
-            STATE.banks[0] = { lines: base1, patterns: pat1 };
-            STATE.banks[1] = { lines: base2, patterns: pat2 };
-            STATE.banks[2] = { lines: base3, patterns: pat3 };
+            STATE.banks[0] = { lines: b1.trim(), patterns: p1.trim() };
+            STATE.banks[1] = { lines: b2.trim(), patterns: p2.trim() };
+            STATE.banks[2] = { lines: b3.trim(), patterns: p3.trim() };
 
-            let linesInputEl = document.getElementById('linesInput');
-            let patternInputEl = document.getElementById('patternInput');
-            if (linesInputEl) linesInputEl.value = base1;
-            if (patternInputEl) patternInputEl.value = pat1;
+            let my_linesInp = document.getElementById('linesInput');
+            let my_patInp = document.getElementById('patternInput');
+
+            if (my_linesInp) {
+                my_linesInp.value = STATE.banks[0].lines;
+            }
+            if (my_patInp) {
+                my_patInp.value = STATE.banks[0].patterns;
+            }
 
             try {
                 let savedPatterns = localStorage.getItem('saved_patterns_content');
                 if (savedPatterns) {
-                    if (patternInputEl) patternInputEl.value = savedPatterns;
+                    if (my_patInp) {
+                        my_patInp.value = savedPatterns;
+                    }
                     STATE.banks[0].patterns = savedPatterns;
                 }
             } catch(e) { console.warn("localStorage is not available."); }
