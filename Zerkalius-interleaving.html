@@ -377,6 +377,9 @@
             <label style="display:flex; align-items:center; margin-top:3px;">
                 <input type="checkbox" id="conglomerateCheck"> <span class="lbl" style="color:#ff00ff; font-weight:bold;">🧩 Конгломераты (≥ 3)</span>
             </label>
+            <label style="display:flex; align-items:center; margin-top:3px; padding-left:15px;">
+                <input type="checkbox" id="stableConglomCheck" checked> <span class="lbl" style="color:#cc66ff;">Фиксация цветов (Без мерцания)</span>
+            </label>
             <label style="display:flex; align-items:center; margin-top:3px;">
                 <input type="checkbox" id="neonCheck"> <span class="lbl">✨ Свечение (Neon)</span>
             </label>
@@ -508,7 +511,9 @@
                 </div>
                 <button id="clearMemoryBtn" class="btn-action btn-danger" style="flex:1; margin:0;">Сброс памяти</button>
             </div>
-
+<label style="display:flex; align-items:center; margin-bottom: 2px;">
+                <input type="checkbox" id="autoCascadeCheck" checked> <span class="lbl" style="color:#ff9933;">Авто-Каскад (1 цикл = +1 строка)</span>
+            </label>
             <label style="display:flex; align-items:center; margin-bottom: 2px;">
                 <input type="checkbox" id="activateOnPatternCheck" checked> <span class="lbl" style="color:#ffcc00;">Разморозка строк по паттерну</span>
             </label>
@@ -874,6 +879,7 @@
             setElChk('hideChangedCheck', snapshot.hideChanged !== undefined ? snapshot.hideChanged : false);
             setElChk('hideUnchangedCheck', snapshot.hideUnchanged !== undefined ? snapshot.hideUnchanged : false);
             setElChk('fillXCheck', snapshot.fillX !== undefined ? snapshot.fillX : false);
+            setElChk('autoCascadeCheck', snapshot.autoCascade !== undefined ? snapshot.autoCascade : true);
             setElChk('conglomerateCheck', snapshot.conglomerate !== undefined ? snapshot.conglomerate : false);
 
             if (snapshot.sierpRule) setElVal('sierpRule', snapshot.sierpRule);
@@ -956,7 +962,30 @@
 
             updateLogic();
         }
-
+function updateAllCycles() {
+            let useDrum = safeChecked('drumModeCheck', false);
+            let dRad = parseInt(safeValue('drumRadius', 5));
+            let nFact = getNFactor();
+            let phase = safeChecked('phaseShiftCheck', true) ? 1 : 0;
+            
+            STATE.maxCycle = 1;
+            STATE.lines.forEach(l => {
+                if (l.L > 0) {
+                    if (useDrum) {
+                        // В режиме барабана цикл зависит от диаметра барабана, чтобы пролететь его насквозь
+                        l.cycle = (dRad * 2 + 1) + phase;
+                    } else {
+                        let cN = (nFact === 0) ? l.L : nFact;
+                        l.cN = cN;
+                        l.cycle = cN * l.L + phase;
+                    }
+                    if (l.cycle <= 0) l.cycle = 1;
+                    STATE.maxCycle = LCM(STATE.maxCycle, l.cycle);
+                }
+            });
+            const stepSlider = document.getElementById('stepSlider');
+            if (stepSlider) stepSlider.max = isFinite(STATE.maxCycle) && STATE.maxCycle < 100000 ? STATE.maxCycle : 100000;
+        }
         function loadText(text) {
             const raw = text.split(/\r?\n|\r/).map(l => l.trim().replace(/\s+/g, '')).filter(l => l.length > 0);
             const nFact = getNFactor();
@@ -984,7 +1013,8 @@
             
             STATE.foundPatterns.clear();
             STATE.foundPatternsMetadata.clear();
-            STATE.flashes.clear();
+            STATE.lastBlobs = [];
+STATE.nextBlobColorId = 1;
             STATE.lastFindMethod = "Ожидание...";
             STATE.currentTargetPatternIdx = 1; 
             
@@ -1128,46 +1158,53 @@
             let rawR = [];
             let rawF = [];
 
-            for (let p = 1; p <= gridSize; p++) {
-                let d_active = (p >= 1 + s_display && p <= line.L + s_display);
-                let t_active = (p >= line.L + 1 && p <= line.cN * line.L);
+if (useDrum) {
+                let drumRad = parseInt(safeValue('drumRadius', 5));
+                let W = drumRad * 2 + 1; // Ширина барабана
+                let t_start = drumRad - Math.floor(line.L / 2); // Статичная часть строго в центре
+                let d_start = s_display; // Движущаяся часть идет от 0 до конца барабана
 
-                let d_char = "", d_idx = -1;
-                if (d_active) {
-                    d_idx = p - s_display - 1;
-                    if (useCylinder) d_idx = (d_idx + cylShift) % line.L;
-                    d_char = lineOrig[d_idx];
+                for (let p = 0; p < W; p++) {
+                    let d_active = (p >= d_start && p < d_start + line.L);
+                    let t_active = (p >= t_start && p < t_start + line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - d_start; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = p - t_start; if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else { resStr += useFillX ? "." : " "; isFiller = true; }
+                    
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
                 }
+            } else {
+                for (let p = 1; p <= gridSize; p++) {
+                    let d_active = (p >= 1 + s_display && p <= line.L + s_display);
+                    let t_active = (p >= line.L + 1 && p <= line.cN * line.L);
 
-                let t_char = "", t_idx = -1;
-                if (t_active) {
-                    t_idx = ((p - line.L - 1) % line.L);
-                    if (useCylinder) t_idx = (t_idx + cylShift) % line.L;
-                    t_char = lineOrig[t_idx];
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - s_display - 1; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = ((p - line.L - 1) % line.L); if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else { resStr += useFillX ? "." : " "; isFiller = true; }
+
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
                 }
-
-                let isRedChar = false;
-                let isFiller = false;
-
-                if (d_active && t_active) {
-                    let d_val = isType1(d_char) ? 1 : 0;
-                    let t_val = isType1(t_char) ? 1 : 0;
-                    resStr += (d_val ^ t_val) ? char1 : char0;
-                    if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
-                } else if (d_active) {
-                    resStr += d_char;
-                    if (d_idx === line.firstOneIdx) isRedChar = true;
-                } else if (t_active) {
-                    resStr += t_char;
-                    if (t_idx === line.firstOneIdx) isRedChar = true;
-                } else {
-                    resStr += useFillX ? "." : " "; 
-                    isFiller = true;
-                }
-                
-                rawM.push(false);
-                rawR.push(isRedChar);
-                rawF.push(isFiller);
             }
 
             if (useSpacing) {
@@ -1186,12 +1223,6 @@
                 resStr = spacedRes; rawM = spacedM; rawR = spacedR; rawF = spacedF;
             }
 
-            if (useDrum) {
-                while (resStr.length < globalMaxGrid) {
-                    resStr += useFillX ? "." : " ";
-                    rawM.push(false); rawR.push(false); rawF.push(true);
-                }
-            }
             
             return { res: resStr, rawMask: rawM, rawRedMask: rawR, rawFillerMask: rawF };
         }
@@ -1218,7 +1249,9 @@
             let hideChanged = safeChecked('hideChangedCheck', false);
             let hideUnchanged = safeChecked('hideUnchangedCheck', false);
 
-            if (!vbaActivation) {
+let autoCascadeActive = safeChecked('autoCascadeCheck', true);
+            // Размораживаем все строки сразу ТОЛЬКО ЕСЛИ обе галочки выключены
+            if (!vbaActivation && !autoCascadeActive) {
                 STATE.lines.forEach(l => l.isActive = true);
             }
 
@@ -1499,7 +1532,32 @@
             }
         }
 
-        function updateLogic() {
+function updateLogic() {
+            if (safeChecked('autoCascadeCheck', true)) {
+                let keepChecking = true;
+                while (keepChecking) {
+                    let lastActiveIdx = -1;
+                    for (let i = 0; i < STATE.lines.length; i++) {
+                        if (STATE.lines[i].isActive) lastActiveIdx = i;
+                    }
+                    if (lastActiveIdx >= 0 && lastActiveIdx < STATE.lines.length - 1) {
+                        let line = STATE.lines[lastActiveIdx];
+                        // Если последняя активная строка завершила свой цикл:
+                        if (Math.abs(line.localStep) >= line.cycle && line.cycle > 0) {
+                            let nextIdx = lastActiveIdx + 1;
+                            STATE.lines[nextIdx].isActive = true;
+                            // Если из-за Турбо мы проскочили ровный цикл, передаем остаток шагов следующей строке (идеальная синхронизация)
+                            let remainder = Math.abs(line.localStep) - line.cycle;
+                            STATE.lines[nextIdx].localStep = STATE.isReverse ? -remainder : remainder;
+                        } else {
+                            keepChecking = false; // Цикл не завершен, ждем дальше
+                        }
+                    } else {
+                        keepChecking = false;
+                    }
+                }
+            }
+
             let newlyFound = calculateState(true);
             
             if (newlyFound) {
@@ -1606,11 +1664,15 @@
             let firstActiveIdx = -1;
             let lastActiveIdx = -1;
 
-            let useConglomerates = safeChecked('conglomerateCheck', false);
+let useConglomerates = safeChecked('conglomerateCheck', false);
             let conglomColors = new Map();
+
             if (useConglomerates && m) {
                 let visited = new Set();
-                let blobId = 0;
+                let useStableColors = safeChecked('stableConglomCheck', true);
+                if (!STATE.lastBlobs) STATE.lastBlobs = [];
+                if (!STATE.nextBlobColorId) STATE.nextBlobColorId = 1;
+                let currentFrameBlobs = [];
                 const getType = (rIdx, cIdx) => {
                     let lData = STATE.lines[rIdx];
                     if (!lData || !lData.display || cIdx >= lData.display.length || cIdx < 0 || lData.fillerMask[cIdx]) return null;
@@ -1641,27 +1703,60 @@
                                 }
                             });
                         }
+// Если элементов 3 или больше - назначаем уникальный цвет и трекаем его
                         if (currentBlob.length >= 3) {
-                            blobId++;
-                            let color = `hsl(${(blobId * 137.5) % 360}, 90%, 65%)`;
+                            let cellStrings = currentBlob.map(b => b[0] + "_" + b[1]);
+                            let assignedId = null;
+
+                            // Ищем пересечение с пятнами из прошлого кадра
+                            if (useStableColors) {
+                                let maxOverlap = 0;
+                                for (let prev of STATE.lastBlobs) {
+                                    let overlap = cellStrings.filter(c => prev.cells.has(c)).length;
+                                    if (overlap > maxOverlap) {
+                                        maxOverlap = overlap;
+                                        assignedId = prev.id; // Наследуем ID старого пятна
+                                    }
+                                }
+                            }
+
+// Если это абсолютно новое пятно, даем ему новый ID
+                            if (assignedId === null) {
+                                assignedId = STATE.nextBlobColorId++;
+                            }
+
+                            // Разделяем 1цы и 0ли: 1цы яркие неоновые, 0ли темные приглушенные
+                            let lightness = (type === 1) ? "70%" : "35%";
+                            let saturation = (type === 1) ? "100%" : "70%";
+                            let color = `hsl(${(assignedId * 137.5) % 360}, ${saturation}, ${lightness})`;
+                            
                             currentBlob.forEach(([br, bc]) => conglomColors.set(br + "_" + bc, color));
+                            
+                            // Сохраняем это пятно для следующего кадра
+                            currentFrameBlobs.push({ id: assignedId, cells: new Set(cellStrings) });
                         }
                     }
+                }
+                
+                // Обновляем память для следующего кадра
+                if (useStableColors) {
+                    STATE.lastBlobs = currentFrameBlobs;
+                } else {
+                    STATE.lastBlobs = [];
                 }
             }
 
             if (useRadar) {
                 let centerX = canvas.width / 2 + STATE.offsetX + STATE.autoOffsetX;
                 let centerY = canvas.height / 2 + STATE.offsetY + STATE.autoOffsetY;
-                let maxRadius = Math.min(canvas.width, canvas.height) / 2 - 40;
-
-                for (let i = 0; i < m.renderCount; i++) {
+for (let i = 0; i < m.renderCount; i++) {
                     let actualIndex = m.startIndex + i;
                     let lineData = STATE.lines[actualIndex];
                     let text = lineData.display;
                     if (!text || text.length === 0) continue; 
 
-                    let r = ((i + 1) / m.renderCount) * maxRadius; 
+                    // Расстояние между кольцами теперь зависит от масштаба (высоты строки)
+                    let r = (i + 2) * m.lineHeight;
                     let angleStep = (Math.PI * 2) / text.length;
 
                     ctx.globalAlpha = (!lineData.isActive && applyFilter) ? 0.25 : 1.0;
@@ -1760,38 +1855,41 @@
 let symMode = safeValue('symModeSelect', 'centerTrack');
                     let currentX = 0;
                     let isMatrixAxis = false;
-                    let liveCenterOffset = 0; // Смещение для умного центра
+                    let liveCenterOffset = 0;
+                    let drumCenterCol = Math.floor(text.length / 2); // Центр барабана по умолчанию
 
-                    if (symMode === "centerTrack") {
-                        isMatrixAxis = true;
+                    // ИЩЕМ "ЖИВОЙ" ЦЕНТР СТРОКИ (игнорируя филлеры и точки)
+                    let firstCharIdx = -1;
+                    let lastCharIdx = -1;
 
-                        // ИЩЕМ "ЖИВОЙ" ЦЕНТР СТРОКИ (игнорируя точки и пробелы по краям)
-                        let firstCharIdx = -1;
-                        let lastCharIdx = -1;
-
-                        for (let k = 0; k < text.length; k++) {
-                            // Если это не пустой филлер и не крестик рентгена
-                            if (!lineData.fillerMask[k] && text[k] !== ' ' && text[k] !== 'x' && text[k] !== '.') {
-                                if (firstCharIdx === -1) firstCharIdx = k;
-                                lastCharIdx = k;
-                            }
+                    for (let k = 0; k < text.length; k++) {
+                        if (!lineData.fillerMask[k] && text[k] !== ' ' && text[k] !== 'x' && text[k] !== '.') {
+                            if (firstCharIdx === -1) firstCharIdx = k;
+                            lastCharIdx = k;
                         }
+                    }
 
-                        // Если в строке есть живые символы, вычисляем их центр
+if (symMode === "centerTrack") {
+                        isMatrixAxis = true;
                         if (firstCharIdx !== -1) {
                             let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
-                            // Насколько этот живой центр смещен относительно математического центра массива?
                             let mathCenterIndex = (text.length - 1) / 2.0;
-                            liveCenterOffset = (mathCenterIndex - liveCenterIndex) * m.charWidth;
+                            // Снаппинг (прилипание) к сетке: текст сдвигается ровно по клеткам
+                            liveCenterOffset = Math.round(mathCenterIndex - liveCenterIndex) * m.charWidth;
+                            drumCenterCol = Math.round(mathCenterIndex); // Радиус барабана статичен по центру
                         }
-
                     } else if (symMode === "centerBase") {
                         let baseWidth = lineData.L * m.charWidth;
-                        if (safeChecked('spacedCheck', false)) baseWidth *= 2;
+                        let isSpaced = safeChecked('spacedCheck', false);
+                        if (isSpaced) baseWidth *= 2;
                         currentX = baseX - (baseWidth / 2);
+                        drumCenterCol = Math.floor((lineData.L * (isSpaced ? 2 : 1)) / 2); // Барабан по ширине базы
                     } else {
                         let fullWidth = text.length * m.charWidth;
                         currentX = baseX - (fullWidth / 2);
+                        if (firstCharIdx !== -1) {
+                            drumCenterCol = Math.round((firstCharIdx + lastCharIdx) / 2.0); // Для классики тоже берем живой центр
+                        }
                     }
 
                     for (let c = 0; c < text.length; c++) {
@@ -1800,27 +1898,28 @@ let symMode = safeValue('symModeSelect', 'centerTrack');
                             if (isDrum) char = '.'; else continue;
                         }
 
-                        let isDimmed = false;
+let isDimmed = false;
                         if (isDrum && drumRad > 0) {
-                            let centerCol = Math.floor(text.length / 2);
-                            if (Math.abs(c - centerCol) > drumRad) isDimmed = true;
+                            if (Math.abs(c - drumCenterCol) > drumRad) isDimmed = true;
                         }
 
-                        let cellX = 0;
+let cellX = 0;
+                        let staticGridX = 0; // Математическая сетка, не зависящая от сдвига текста
+                        
                         if (isMatrixAxis) {
-                            // РАСЧЕТ ИДЕАЛЬНОГО ЦЕНТРА: 
-                            // Центрируем массив, а затем сдвигаем его так, 
-                            // чтобы "живые" символы оказались строго на оси экрана
                             let centerIndex = (text.length - 1) / 2.0; 
-                            cellX = baseX + ((c - centerIndex) * m.charWidth) + liveCenterOffset;
+                            staticGridX = baseX + ((c - centerIndex) * m.charWidth);
+                            cellX = staticGridX + liveCenterOffset; // Текст сдвигается
                         } else {
                             cellX = currentX + (c * m.charWidth) + (m.charWidth / 2);
+                            staticGridX = cellX;
                         }
 
                         if (isDrum) {
                             ctx.strokeStyle = isDimmed ? '#222' : '#444';
                             ctx.lineWidth = 1;
-                            ctx.strokeRect(cellX - m.charWidth/2, y - m.lineHeight/2, m.charWidth, m.lineHeight);
+                            // Рисуем рамки по статичным координатам — теперь это ИДЕАЛЬНЫЙ ПРЯМОУГОЛЬНИК
+                            ctx.strokeRect(staticGridX - m.charWidth/2, y - m.lineHeight/2, m.charWidth, m.lineHeight);
                         }
                         let isFiller = lineData.fillerMask[c];
                         if (isFiller && (char === 'x' || char === '.')) {
@@ -1924,6 +2023,7 @@ let symMode = safeValue('symModeSelect', 'centerTrack');
                 drumMode: safeChecked('drumModeCheck', false),
                 drumRadius: parseInt(safeValue('drumRadius', 5)),
                 fillX: safeChecked('fillXCheck', false),
+                autoCascade: safeChecked('autoCascadeCheck', true),
                 hideChanged: safeChecked('hideChangedCheck', false),
                 hideUnchanged: safeChecked('hideUnchangedCheck', false),
                 conglomerate: safeChecked('conglomerateCheck', false),
@@ -2121,7 +2221,8 @@ let symMode = safeValue('symModeSelect', 'centerTrack');
             STATE.autoOffsetX = 0; STATE.autoOffsetY = 0;
             STATE.foundPatterns.clear();
             STATE.foundPatternsMetadata.clear();
-            STATE.flashes.clear();
+STATE.lastBlobs = [];
+STATE.nextBlobColorId = 1;
             STATE.interleavingLog = [];
             STATE.currentTargetPatternIdx = 1;
             STATE.lastFindMethod = "Ожидание...";
@@ -2221,24 +2322,17 @@ let symMode = safeValue('symModeSelect', 'centerTrack');
             reader.readAsText(file);
         });
 
-        safeBind('phaseShiftCheck', 'change', function() {
-            let phase = this.checked ? 1 : 0;
-            STATE.maxCycle = 1;
-            STATE.lines.forEach(l => {
-                if (l.L > 0) {
-                    l.cycle = l.cN * l.L + phase;
-                    if(l.cycle <= 0) l.cycle = 1;
-                    STATE.maxCycle = LCM(STATE.maxCycle, l.cycle);
-                }
-            });
-            const stepSlider = document.getElementById('stepSlider');
-            if (stepSlider) stepSlider.max = isFinite(STATE.maxCycle) && STATE.maxCycle < 100000 ? STATE.maxCycle : 100000;
-            updateLogic();
-        });
+safeBind('phaseShiftCheck', 'change', function() { updateAllCycles(); updateLogic(); });
 
         safeBind('rowPendulumCheck', 'change', function() { updateLogic(); });
-        safeBind('drumModeCheck', 'change', function() { updateLogic(); });
-        safeBind('drumRadius', 'input', function() { document.getElementById('drumRadiusVal').textContent = this.value; render(); });
+safeBind('drumModeCheck', 'change', function() { updateAllCycles(); updateLogic(); });
+        
+        safeBind('drumRadius', 'input', function() { 
+            document.getElementById('drumRadiusVal').textContent = this.value; 
+            updateAllCycles(); 
+            updateLogic(); 
+            render(); 
+        });
 
         safeBind('loopCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПОВТОР A-B ВКЛЮЧЕН" : "ПОВТОР ОТКЛЮЧЕН"); });
         safeBind('pingPongCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПИНГ-ПОНГ ВКЛЮЧЕН" : "ПИНГ-ПОНГ ОТКЛЮЧЕН"); });
@@ -2256,24 +2350,10 @@ let symMode = safeValue('symModeSelect', 'centerTrack');
         safeBind('loopStart', 'input', function() { enforceLoop(); updateLogic(); });
         safeBind('loopEnd', 'input', function() { enforceLoop(); updateLogic(); });
 
-        safeBind('nFactor', 'input', function() { 
+safeBind('nFactor', 'input', function() { 
             let v = parseInt(this.value); 
             document.getElementById('nFactorVal').textContent = (v === 11) ? "0 (∞)" : v; 
-            
-            let phase = safeChecked('phaseShiftCheck', true) ? 1 : 0;
-            STATE.maxCycle = 1;
-            STATE.lines.forEach(l => {
-                if (l.L > 0) {
-                    let cN = (v === 11) ? l.L : v;
-                    l.cN = cN;
-                    l.cycle = cN * l.L + phase;
-                    if(l.cycle <= 0) l.cycle = 1;
-                    STATE.maxCycle = LCM(STATE.maxCycle, l.cycle);
-                }
-            });
-            const stepSlider = document.getElementById('stepSlider');
-            if (stepSlider) stepSlider.max = isFinite(STATE.maxCycle) && STATE.maxCycle < 100000 ? STATE.maxCycle : 100000;
-            
+            updateAllCycles(); 
             updateLogic(); 
         });
 
@@ -2302,7 +2382,7 @@ let symMode = safeValue('symModeSelect', 'centerTrack');
             }
         });
 
-        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'conglomerateCheck'].forEach(id => {
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('input', () => { render(); });
