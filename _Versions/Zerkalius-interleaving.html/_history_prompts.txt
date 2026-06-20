@@ -1,0 +1,1467 @@
+﻿
+============================================================
+⏱ Версия: v_001 | Дата: 19-06-2026_20-01-55 | Файл: Zerkalius-interleaving.html
+------------------------------------------------------------
+CRITICAL RULE: Do NOT explore the workspace. Do NOT use `list_files` or read any other files. Only read and edit `Zerkalius-interleaving.html`. 
+Follow the exact SEARCH and REPLACE blocks below to update default UI states.
+
+1. UPDATE PATTERN ACTIVATION DEFAULT. FIND:
+            <label style="display:flex; align-items:center; margin-bottom: 2px;">
+                <input type="checkbox" id="activateOnPatternCheck" checked> <span class="lbl" style="color:#ffcc00;">Разморозка строк по паттерну</span>
+            </label>
+REPLACE WITH:
+            <label style="display:flex; align-items:center; margin-bottom: 2px;">
+                <input type="checkbox" id="activateOnPatternCheck"> <span class="lbl" style="color:#ffcc00;">Разморозка строк по паттерну</span>
+            </label>
+
+2. UPDATE INTERLEAVING DEFAULT. FIND:
+            <label style="display:flex; align-items:center; margin-bottom: 2px;">
+                <input type="checkbox" id="interleavingCheck" checked> <span class="lbl" style="color:#00ff88;">Органический интерливинг</span>
+            </label>
+REPLACE WITH:
+            <label style="display:flex; align-items:center; margin-bottom: 2px;">
+                <input type="checkbox" id="interleavingCheck"> <span class="lbl" style="color:#00ff88;">Органический интерливинг</span>
+            </label>
+
+3. UPDATE PHASE SHIFT DEFAULT. FIND:
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="phaseShiftCheck" checked> <span class="lbl" style="color:#00ccff; font-weight:bold;">Фазовый сдвиг (+1 к циклу)</span>
+            </label>
+REPLACE WITH:
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="phaseShiftCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">Фазовый сдвиг (+1 к циклу)</span>
+            </label>
+
+4. UPDATE GENERATOR ROWS DEFAULT. FIND:
+                <input type="number" id="sierpRows" value="64" title="Строки" style="flex:1;">
+REPLACE WITH:
+                <input type="number" id="sierpRows" value="128" title="Строки" style="flex:1;">
+
+============================================================
+⏱ Версия: v_002 | Дата: 19-06-2026_21-33-30 | Файл: Zerkalius-interleaving.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file `Zerkalius-interleaving.html`.
+
+1. ДОБАВЛЕНИЕ РЕЖИМА В МЕНЮ. FIND:
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack" selected>💠 Режим: Идеальный Центр</option>
+                </select>
+REPLACE WITH:
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack" selected>💠 Режим: Идеальный Центр</option>
+                    <option value="centerTrack2">💠 Режим: Идеальный Центр 2 (Плавный)</option>
+                </select>
+
+2. ЛОГИКА ПЛАВНОГО СДВИГА. FIND:
+                    if (symMode === "centerTrack") {
+                        isMatrixAxis = true;
+                        if (firstCharIdx !== -1) {
+                            let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
+                            let mathCenterIndex = (text.length - 1) / 2.0;
+                            // Снаппинг (прилипание) к сетке: текст сдвигается ровно по клеткам
+                            liveCenterOffset = Math.round(mathCenterIndex - liveCenterIndex) * m.charWidth;
+                            drumCenterCol = Math.round(mathCenterIndex); // Радиус барабана статичен по центру
+                        }
+                    } else if (symMode === "centerBase") {
+REPLACE WITH:
+                    if (symMode === "centerTrack") {
+                        isMatrixAxis = true;
+                        if (firstCharIdx !== -1) {
+                            let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
+                            let mathCenterIndex = (text.length - 1) / 2.0;
+                            // Снаппинг (прилипание) к сетке: текст сдвигается ровно по клеткам
+                            liveCenterOffset = Math.round(mathCenterIndex - liveCenterIndex) * m.charWidth;
+                            drumCenterCol = Math.round(mathCenterIndex); // Радиус барабана статичен по центру
+                        }
+                    } else if (symMode === "centerTrack2") {
+                        isMatrixAxis = true;
+                        if (firstCharIdx !== -1) {
+                            let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
+                            let mathCenterIndex = (text.length - 1) / 2.0;
+                            // Плавный сдвиг на половину ячейки без прилипания к сетке
+                            liveCenterOffset = (mathCenterIndex - liveCenterIndex) * m.charWidth;
+                            drumCenterCol = Math.round(mathCenterIndex);
+                        }
+                    } else if (symMode === "centerBase") {
+
+============================================================
+⏱ Версия: v_003 | Дата: 19-06-2026_21-38-05 | Файл: Zerkalius-interleaving.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file `Zerkalius-interleaving.html`.
+
+1. UI MENU UPDATE. FIND:
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack" selected>💠 Режим: Идеальный Центр</option>
+                </select>
+REPLACE WITH:
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack" selected>💠 Режим: Идеальный Центр</option>
+                    <option value="centerTrack2">💠 Режим: Идеальный Центр 2 (Плавный)</option>
+                </select>
+
+2. HALF STEP ALIGNMENT LOGIC. FIND:
+                    if (symMode === "centerTrack") {
+                        isMatrixAxis = true;
+                        if (firstCharIdx !== -1) {
+                            let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
+                            let mathCenterIndex = (text.length - 1) / 2.0;
+                            // Снаппинг (прилипание) к сетке: текст сдвигается ровно по клеткам
+                            liveCenterOffset = Math.round(mathCenterIndex - liveCenterIndex) * m.charWidth;
+                            drumCenterCol = Math.round(mathCenterIndex); // Радиус барабана статичен по центру
+                        }
+                    } else if (symMode === "centerBase") {
+REPLACE WITH:
+                    if (symMode === "centerTrack") {
+                        isMatrixAxis = true;
+                        if (firstCharIdx !== -1) {
+                            let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
+                            let mathCenterIndex = (text.length - 1) / 2.0;
+                            // Снаппинг (прилипание) к сетке: текст сдвигается ровно по клеткам
+                            liveCenterOffset = Math.round(mathCenterIndex - liveCenterIndex) * m.charWidth;
+                            drumCenterCol = Math.round(mathCenterIndex); // Радиус барабана статичен по центру
+                        }
+                    } else if (symMode === "centerTrack2") {
+                        isMatrixAxis = true;
+                        if (firstCharIdx !== -1) {
+                            let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
+                            let mathCenterIndex = (text.length - 1) / 2.0;
+                            // Плавный сдвиг (центрирование без прилипания к сетке)
+                            liveCenterOffset = (mathCenterIndex - liveCenterIndex) * m.charWidth;
+                            drumCenterCol = Math.round(mathCenterIndex);
+                        }
+                    } else if (symMode === "centerBase") {
+
+============================================================
+⏱ Версия: v_004 | Дата: 19-06-2026_21-52-06 | Файл: Zerkalius-interleaving.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file `Zerkalius-interleaving.html`.
+
+1. ДОБАВЛЕНИЕ РЕЖИМА В МЕНЮ. FIND:
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack" selected>💠 Режим: Идеальный Центр</option>
+                </select>
+REPLACE WITH:
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack" selected>💠 Режим: Идеальный Центр</option>
+                    <option value="centerTrack2">💠 Режим: Идеальный Центр 2 (Плавный)</option>
+                </select>
+
+2. ЛОГИКА СДВИГА БЕЗ ОКРУГЛЕНИЯ. FIND:
+if (symMode === "centerTrack") {
+                        isMatrixAxis = true;
+                        if (firstCharIdx !== -1) {
+                            let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
+                            let mathCenterIndex = (text.length - 1) / 2.0;
+                            // Снаппинг (прилипание) к сетке: текст сдвигается ровно по клеткам
+                            liveCenterOffset = Math.round(mathCenterIndex - liveCenterIndex) * m.charWidth;
+                            drumCenterCol = Math.round(mathCenterIndex); // Радиус барабана статичен по центру
+                        }
+                    } else if (symMode === "centerBase") {
+REPLACE WITH:
+if (symMode === "centerTrack") {
+                        isMatrixAxis = true;
+                        if (firstCharIdx !== -1) {
+                            let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
+                            let mathCenterIndex = (text.length - 1) / 2.0;
+                            // Снаппинг (прилипание) к сетке: текст сдвигается ровно по клеткам
+                            liveCenterOffset = Math.round(mathCenterIndex - liveCenterIndex) * m.charWidth;
+                            drumCenterCol = Math.round(mathCenterIndex); // ...
+                        }
+                    } else if (symMode === "centerTrack2") {
+                        isMatrixAxis = true;
+                        if (firstCharIdx !== -1) {
+                            let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
+                            let mathCenterIndex = (text.length - 1) / 2.0;
+                            // Плавный сдвиг на пол-ячейки за шаг (разница между мат. центром массива и живым центром)
+                            liveCenterOffset = (mathCenterIndex - liveCenterIndex) * m.charWidth;
+                            drumCenterCol = Math.round(mathCenterIndex);
+                        }
+                    } else if (symMode === "centerBase") {
+
+============================================================
+⏱ Версия: v_005 | Дата: 19-06-2026_22-12-15 | Файл: Zerkalius-interleaving.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file `Zerkalius-interleaving.html`.
+
+1. ДОБАВЛЕНИЕ СТРОКИ МЕНЮ ПОД УНИКАЛЬНЫЙ ОРИЕНТИР. FIND:
+                    <option value="centerTrack" selected>💠 Режим: Идеальный Центр</option>
+REPLACE WITH:
+                    <option value="centerTrack" selected>💠 Режим: Центр</option>
+                    <option value="centerTrack2">💠 Режим: Идеальный Центр</option>
+
+============================================================
+⏱ Версия: v_006 | Дата: 19-06-2026_22-27-31 | Файл: Zerkalius-interleaving.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file `Zerkalius-interleaving.html`.
+
+1. ДОБАВЛЕНИЕ ОПЦИИ ИНВЕРСИИ В ВЫПАДАЮЩИЙ СПИСОК РЕЖИМОВ.
+FIND:
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack" selected>💠 Режим: Центр</option>
+                    <option value="centerTrack2">💠 Режим: Идеальный Центр</option>
+                </select>
+REPLACE WITH:
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack" selected>💠 Режим: Центр</option>
+                    <option value="centerTrack2">💠 Режим: Идеальный Центр</option>
+                    <option value="invertShift">💠 Режим: Инверсия Сдвига</option>
+                </select>
+
+2. ИНТЕГРАЦИЯ ЛОГИКИ ИНВЕРСИИ СИМВОЛОВ В СТАНДАРТНЫЙ ЦИКЛ СДВИГА.
+FIND:
+            } else {
+                for (let p = 1; p <= gridSize; p++) {
+                    let d_active = (p >= 1 + s_display && p <= line.L + s_display);
+                    let t_active = (p >= line.L + 1 && p <= line.cN * line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - s_display - 1; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = ((p - line.L - 1) % line.L); if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+REPLACE WITH:
+            } else {
+                for (let p = 1; p <= gridSize; p++) {
+                    let d_active = (p >= 1 + s_display && p <= line.L + s_display);
+                    let t_active = (p >= line.L + 1 && p <= line.cN * line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - s_display - 1; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let symMode = safeValue('symModeSelect', 'centerTrack');
+                    if (symMode === 'invertShift' && d_active && d_char !== "") {
+                        if (isType1(d_char)) d_char = char0;
+                        else if (isType0(d_char)) d_char = char1;
+                    }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = ((p - line.L - 1) % line.L); if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+
+3. ИНТЕГРАЦИЯ ЛОГИКИ ИНВЕРСИИ СИМВОЛОВ В ЦИКЛ РЕЖИМА БАРАБАНА (DRUM MODE).
+FIND:
+            for (let p = 0; p < W; p++) {
+                let d_active = (p >= d_start && p < d_start + line.L);
+                let t_active = (p >= t_start && p < t_start + line.L);
+
+                let d_char = "", d_idx = -1;
+                if (d_active) { d_idx = p - d_start; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                let t_char = "", t_idx = -1;
+                if (t_active) { t_idx = p - t_start; if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                let isRedChar = false, isFiller = false;
+REPLACE WITH:
+            for (let p = 0; p < W; p++) {
+                let d_active = (p >= d_start && p < d_start + line.L);
+                let t_active = (p >= t_start && p < t_start + line.L);
+
+                let d_char = "", d_idx = -1;
+                if (d_active) { d_idx = p - d_start; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                let symMode = safeValue('symModeSelect', 'centerTrack');
+                if (symMode === 'invertShift' && d_active && d_char !== "") {
+                    if (isType1(d_char)) d_char = char0;
+                    else if (isType0(d_char)) d_char = char1;
+                }
+                let t_char = "", t_idx = -1;
+                if (t_active) { t_idx = p - t_start; if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                let isRedChar = false, isFiller = false;
+
+============================================================
+⏱ Версия: v_007 | Дата: 19-06-2026_22-38-10 | Файл: Zerkalius-interleaving.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving.html.
+
+УДАЛЕНИЕ РЕЖИМА ИНВЕРСИИ СДВИГА ИЗ СПИСКА. FIND:
+<div style="margin-top: 3px; margin-bottom: 3px;">
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack" selected>💠 Режим: Центр</option>
+                    <option value="centerTrack2">💠 Режим: Идеальный Центр</option>
+                    <option value="invertShift">💠 Режим: Инверсия Сдвига</option>
+                </select>
+            </div>
+REPLACE WITH:
+<div style="margin-top: 3px; margin-bottom: 3px;">
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack" selected>💠 Режим: Центр</option>
+                    <option value="centerTrack2">💠 Режим: Идеальный Центр</option>
+                </select>
+            </div>
+
+ДОБАВЛЕНИЕ ФЛАЖКА ШЛЕЙФА В ИНТЕРФЕЙС. FIND:
+<label style="display:flex; align-items:center; margin-top:3px;">
+<input type="checkbox" id="fillXCheck"> <span class="lbl" style="color:#aaa; font-weight:bold;">Заполнять пустоты 'x' (Рентген)</span>
+</label>
+
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="spacedCheck"> <span class="lbl" style="color:#bfff00; font-weight:bold;">⚙️ Разрядка (Шестеренки)</span>
+            </label>
+REPLACE WITH:
+<label style="display:flex; align-items:center; margin-top:3px;">
+<input type="checkbox" id="fillXCheck"> <span class="lbl" style="color:#aaa; font-weight:bold;">Заполнять пустоты 'x' (Рентген)</span>
+</label>
+
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="trailCheck"> <span class="lbl" style="color:#00ff66; font-weight:bold;">👣 Оставлять след (Шлейф)</span>
+            </label>
+
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="spacedCheck"> <span class="lbl" style="color:#bfff00; font-weight:bold;">⚙️ Разрядка (Шестеренки)</span>
+            </label>
+
+ОБНОВЛЕНИЕ РАСЧЕТА СДВИГА И РЕАЛИЗАЦИЯ ШЛЕЙФА. FIND:
+            let resStr = "";
+            let rawM = [];
+            let rawR = [];
+            let rawF = [];
+
+if (useDrum) {
+                let drumRad = parseInt(safeValue('drumRadius', 5));
+                let W = drumRad * 2 + 1; // Ширина барабана
+                let t_start = drumRad - Math.floor(line.L / 2); // Статичная часть строго в центре
+                let d_start = s_display; // Движущаяся часть идет от 0 до конца барабана
+
+                for (let p = 0; p < W; p++) {
+                    let d_active = (p >= d_start && p < d_start + line.L);
+                    let t_active = (p >= t_start && p < t_start + line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - d_start; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = p - t_start; if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else { resStr += useFillX ? "." : " "; isFiller = true; }
+                    
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            } else {
+                for (let p = 1; p <= gridSize; p++) {
+                    let d_active = (p >= 1 + s_display && p <= line.L + s_display);
+                    let t_active = (p >= line.L + 1 && p <= line.cN * line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - s_display - 1; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let symMode = safeValue('symModeSelect', 'centerTrack');
+                    if (symMode === 'invertShift' && d_active && d_char !== "") {
+                        if (isType1(d_char)) d_char = char0;
+                        else if (isType0(d_char)) d_char = char1;
+                    }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = ((p - line.L - 1) % line.L); if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else { resStr += useFillX ? "." : " "; isFiller = true; }
+
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            }
+REPLACE WITH:
+            let resStr = "";
+            let rawM = [];
+            let rawR = [];
+            let rawF = [];
+
+            let leftEdgeIdx = useCylinder ? (cylShift % line.L) : 0;
+            let leftEdgeChar = lineOrig[leftEdgeIdx] || char1;
+            let leftTrail = isType1(leftEdgeChar) ? char0 : (isType0(leftEdgeChar) ? char1 : leftEdgeChar);
+
+            let rightEdgeIdx = useCylinder ? ((line.L - 1 + cylShift) % line.L) : (line.L - 1);
+            let rightEdgeChar = lineOrig[rightEdgeIdx] || char1;
+            let rightTrail = isType1(rightEdgeChar) ? char0 : (isType0(rightEdgeChar) ? char1 : rightEdgeChar);
+
+            let useTrail = safeChecked('trailCheck', false);
+
+            if (useDrum) {
+                let drumRad = parseInt(safeValue('drumRadius', 5));
+                let W = drumRad * 2 + 1; // Ширина барабана
+                let t_start = drumRad - Math.floor(line.L / 2); // Статичная часть строго в центре
+                let d_start = s_display; // Движущаяся часть идет от 0 до конца барабана
+
+                for (let p = 0; p < W; p++) {
+                    let d_active = (p >= d_start && p < d_start + line.L);
+                    let t_active = (p >= t_start && p < t_start + line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - d_start; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = p - t_start; if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else {
+                        if (useTrail) {
+                            resStr += (p < d_start) ? leftTrail : rightTrail;
+                        } else {
+                            resStr += useFillX ? "." : " "; isFiller = true;
+                        }
+                    }
+                    
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            } else {
+                for (let p = 1; p <= gridSize; p++) {
+                    let d_active = (p >= 1 + s_display && p <= line.L + s_display);
+                    let t_active = (p >= line.L + 1 && p <= line.cN * line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - s_display - 1; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = ((p - line.L - 1) % line.L); if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else {
+                        if (useTrail) {
+                            resStr += (p < 1 + s_display) ? leftTrail : rightTrail;
+                        } else {
+                            resStr += useFillX ? "." : " "; isFiller = true;
+                        }
+                    }
+
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            }
+
+ИМПОРТ СОСТОЯНИЯ ДЛЯ НОВОЙ ОПЦИИ. FIND:
+            setElChk('hideChangedCheck', snapshot.hideChanged !== undefined ? snapshot.hideChanged : false);
+            setElChk('hideUnchangedCheck', snapshot.hideUnchanged !== undefined ? snapshot.hideUnchanged : false);
+            setElChk('fillXCheck', snapshot.fillX !== undefined ? snapshot.fillX : false);
+            setElChk('autoCascadeCheck', snapshot.autoCascade !== undefined ? snapshot.autoCascade : true);
+            setElChk('conglomerateCheck', snapshot.conglomerate !== undefined ? snapshot.conglomerate : false);
+REPLACE WITH:
+            setElChk('hideChangedCheck', snapshot.hideChanged !== undefined ? snapshot.hideChanged : false);
+            setElChk('hideUnchangedCheck', snapshot.hideUnchanged !== undefined ? snapshot.hideUnchanged : false);
+            setElChk('fillXCheck', snapshot.fillX !== undefined ? snapshot.fillX : false);
+            setElChk('trailCheck', snapshot.trail !== undefined ? snapshot.trail : false);
+            setElChk('autoCascadeCheck', snapshot.autoCascade !== undefined ? snapshot.autoCascade : true);
+            setElChk('conglomerateCheck', snapshot.conglomerate !== undefined ? snapshot.conglomerate : false);
+
+ЭКСПОРТ СОСТОЯНИЯ ДЛЯ НОВОЙ ОПЦИИ. FIND:
+                spaced: safeChecked('spacedCheck', false),
+                phaseShift: safeChecked('phaseShiftCheck', true),
+                drumMode: safeChecked('drumModeCheck', false),
+                drumRadius: parseInt(safeValue('drumRadius', 5)),
+                fillX: safeChecked('fillXCheck', false),
+                autoCascade: safeChecked('autoCascadeCheck', true),
+REPLACE WITH:
+                spaced: safeChecked('spacedCheck', false),
+                phaseShift: safeChecked('phaseShiftCheck', true),
+                drumMode: safeChecked('drumModeCheck', false),
+                drumRadius: parseInt(safeValue('drumRadius', 5)),
+                fillX: safeChecked('fillXCheck', false),
+                trail: safeChecked('trailCheck', false),
+                autoCascade: safeChecked('autoCascadeCheck', true),
+
+ПРИВЯЗКА СОБЫТИЯ ИЗМЕНЕНИЯ ЧЕКБОКСА ШЛЕЙФА. FIND:
+        safeBind('loopCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПОВТОР A-B ВКЛЮЧЕН" : "ПОВТОР ОТКЛЮЧЕН"); });
+        safeBind('pingPongCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПИНГ-ПОНГ ВКЛЮЧЕН" : "ПИНГ-ПОНГ ОТКЛЮЧЕН"); });
+        safeBind('meetCenterCheck', 'change', function() { updateLogic(); });
+        safeBind('spacedCheck', 'change', function() { updateLogic(); });
+        
+        safeBind('hideChangedCheck', 'change', function() { updateLogic(); });
+REPLACE WITH:
+        safeBind('loopCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПОВТОР A-B ВКЛЮЧЕН" : "ПОВТОР ОТКЛЮЧЕН"); });
+        safeBind('pingPongCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПИНГ-ПОНГ ВКЛЮЧЕН" : "ПИНГ-ПОНГ ОТКЛЮЧЕН"); });
+        safeBind('meetCenterCheck', 'change', function() { updateLogic(); });
+        safeBind('spacedCheck', 'change', function() { updateLogic(); });
+        safeBind('trailCheck', 'change', function() { updateLogic(); });
+        
+        safeBind('hideChangedCheck', 'change', function() { updateLogic(); });
+
+ОБЩЕЕ СЛУШАНИЕ СОБЫТИЙ ДЛЯ ЧЕКБОКСА ШЛЕЙФА. FIND:
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => { render(); });
+                el.addEventListener('change', () => { updateLogic(); });
+            }
+        });
+REPLACE WITH:
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'trailCheck', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => { render(); });
+                el.addEventListener('change', () => { updateLogic(); });
+            }
+        });
+
+============================================================
+⏱ Версия: v_008 | Дата: 19-06-2026_23-03-04 | Файл: Zerkalius-interleaving.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving.html.
+
+FIND:
+<div style="margin-top: 3px; margin-bottom: 3px;">
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack" selected>💠 Режим: Центр</option>
+                    <option value="centerTrack2">💠 Режим: Идеальный Центр</option>
+                    <option value="invertShift">💠 Режим: Инверсия Сдвига</option>
+                </select>
+            </div>
+REPLACE WITH:
+<div style="margin-top: 3px; margin-bottom: 3px;">
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack" selected>💠 Режим: Центр</option>
+                    <option value="centerTrack2">💠 Режим: Идеальный Центр</option>
+                </select>
+            </div>
+
+FIND:
+<label style="display:flex; align-items:center; margin-top:3px;">
+<input type="checkbox" id="fillXCheck"> <span class="lbl" style="color:#aaa; font-weight:bold;">Заполнять пустоты 'x' (Рентген)</span>
+</label>
+
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="spacedCheck"> <span class="lbl" style="color:#bfff00; font-weight:bold;">⚙️ Разрядка (Шестеренки)</span>
+            </label>
+REPLACE WITH:
+<label style="display:flex; align-items:center; margin-top:3px;">
+<input type="checkbox" id="fillXCheck"> <span class="lbl" style="color:#aaa; font-weight:bold;">Заполнять пустоты 'x' (Рентген)</span>
+</label>
+
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="trailCheck"> <span class="lbl" style="color:#00ff66; font-weight:bold;">👣 Оставлять след (Шлейф)</span>
+            </label>
+
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="spacedCheck"> <span class="lbl" style="color:#bfff00; font-weight:bold;">⚙️ Разрядка (Шестеренки)</span>
+            </label>
+
+FIND:
+            let resStr = "";
+            let rawM = [];
+            let rawR = [];
+            let rawF = [];
+
+if (useDrum) {
+                let drumRad = parseInt(safeValue('drumRadius', 5));
+                let W = drumRad * 2 + 1; // Ширина барабана
+                let t_start = drumRad - Math.floor(line.L / 2); // Статичная часть строго в центре
+                let d_start = s_display; // Движущаяся часть идет от 0 до конца барабана
+
+                for (let p = 0; p < W; p++) {
+                    let d_active = (p >= d_start && p < d_start + line.L);
+                    let t_active = (p >= t_start && p < t_start + line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - d_start; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = p - t_start; if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else { resStr += useFillX ? "." : " "; isFiller = true; }
+                    
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            } else {
+                for (let p = 1; p <= gridSize; p++) {
+                    let d_active = (p >= 1 + s_display && p <= line.L + s_display);
+                    let t_active = (p >= line.L + 1 && p <= line.cN * line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - s_display - 1; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let symMode = safeValue('symModeSelect', 'centerTrack');
+                    if (symMode === 'invertShift' && d_active && d_char !== "") {
+                        if (isType1(d_char)) d_char = char0;
+                        else if (isType0(d_char)) d_char = char1;
+                    }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = ((p - line.L - 1) % line.L); if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else { resStr += useFillX ? "." : " "; isFiller = true; }
+
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            }
+REPLACE WITH:
+            let resStr = "";
+            let rawM = [];
+            let rawR = [];
+            let rawF = [];
+
+            let leftEdgeIdx = useCylinder ? (cylShift % line.L) : 0;
+            let leftEdgeChar = lineOrig[leftEdgeIdx] || char1;
+            let leftTrail = isType1(leftEdgeChar) ? char0 : (isType0(leftEdgeChar) ? char1 : leftEdgeChar);
+
+            let rightEdgeIdx = useCylinder ? ((line.L - 1 + cylShift) % line.L) : (line.L - 1);
+            let rightEdgeChar = lineOrig[rightEdgeIdx] || char1;
+            let rightTrail = isType1(rightEdgeChar) ? char0 : (isType0(rightEdgeChar) ? char1 : rightEdgeChar);
+
+            let useTrail = safeChecked('trailCheck', false);
+
+            if (useDrum) {
+                let drumRad = parseInt(safeValue('drumRadius', 5));
+                let W = drumRad * 2 + 1; // Ширина барабана
+                let t_start = drumRad - Math.floor(line.L / 2); // Статичная часть строго в центре
+                let d_start = s_display; // Движущаяся часть идет от 0 до конца барабана
+
+                for (let p = 0; p < W; p++) {
+                    let d_active = (p >= d_start && p < d_start + line.L);
+                    let t_active = (p >= t_start && p < t_start + line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - d_start; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = p - t_start; if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else {
+                        if (useTrail) {
+                            resStr += (p < d_start) ? leftTrail : rightTrail;
+                        } else {
+                            resStr += useFillX ? "." : " "; isFiller = true;
+                        }
+                    }
+                    
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            } else {
+                for (let p = 1; p <= gridSize; p++) {
+                    let d_active = (p >= 1 + s_display && p <= line.L + s_display);
+                    let t_active = (p >= line.L + 1 && p <= line.cN * line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - s_display - 1; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = ((p - line.L - 1) % line.L); if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else {
+                        if (useTrail) {
+                            resStr += (p < 1 + s_display) ? leftTrail : rightTrail;
+                        } else {
+                            resStr += useFillX ? "." : " "; isFiller = true;
+                        }
+                    }
+
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            }
+
+FIND:
+            setElChk('hideChangedCheck', snapshot.hideChanged !== undefined ? snapshot.hideChanged : false);
+            setElChk('hideUnchangedCheck', snapshot.hideUnchanged !== undefined ? snapshot.hideUnchanged : false);
+            setElChk('fillXCheck', snapshot.fillX !== undefined ? snapshot.fillX : false);
+            setElChk('autoCascadeCheck', snapshot.autoCascade !== undefined ? snapshot.autoCascade : true);
+            setElChk('conglomerateCheck', snapshot.conglomerate !== undefined ? snapshot.conglomerate : false);
+REPLACE WITH:
+            setElChk('hideChangedCheck', snapshot.hideChanged !== undefined ? snapshot.hideChanged : false);
+            setElChk('hideUnchangedCheck', snapshot.hideUnchanged !== undefined ? snapshot.hideUnchanged : false);
+            setElChk('fillXCheck', snapshot.fillX !== undefined ? snapshot.fillX : false);
+            setElChk('trailCheck', snapshot.trail !== undefined ? snapshot.trail : false);
+            setElChk('autoCascadeCheck', snapshot.autoCascade !== undefined ? snapshot.autoCascade : true);
+            setElChk('conglomerateCheck', snapshot.conglomerate !== undefined ? snapshot.conglomerate : false);
+
+FIND:
+                spaced: safeChecked('spacedCheck', false),
+                phaseShift: safeChecked('phaseShiftCheck', true),
+                drumMode: safeChecked('drumModeCheck', false),
+                drumRadius: parseInt(safeValue('drumRadius', 5)),
+                fillX: safeChecked('fillXCheck', false),
+                autoCascade: safeChecked('autoCascadeCheck', true),
+REPLACE WITH:
+                spaced: safeChecked('spacedCheck', false),
+                phaseShift: safeChecked('phaseShiftCheck', true),
+                drumMode: safeChecked('drumModeCheck', false),
+                drumRadius: parseInt(safeValue('drumRadius', 5)),
+                fillX: safeChecked('fillXCheck', false),
+                trail: safeChecked('trailCheck', false),
+                autoCascade: safeChecked('autoCascadeCheck', true),
+
+FIND:
+        safeBind('loopCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПОВТОР A-B ВКЛЮЧЕН" : "ПОВТОР ОТКЛЮЧЕН"); });
+        safeBind('pingPongCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПИНГ-ПОНГ ВКЛЮЧЕН" : "ПИНГ-ПОНГ ОТКЛЮЧЕН"); });
+        safeBind('meetCenterCheck', 'change', function() { updateLogic(); });
+        safeBind('spacedCheck', 'change', function() { updateLogic(); });
+        
+        safeBind('hideChangedCheck', 'change', function() { updateLogic(); });
+REPLACE WITH:
+        safeBind('loopCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПОВТОР A-B ВКЛЮЧЕН" : "ПОВТОР ОТКЛЮЧЕН"); });
+        safeBind('pingPongCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПИНГ-ПОНГ ВКЛЮЧЕН" : "ПИНГ-ПОНГ ОТКЛЮЧЕН"); });
+        safeBind('meetCenterCheck', 'change', function() { updateLogic(); });
+        safeBind('spacedCheck', 'change', function() { updateLogic(); });
+        safeBind('trailCheck', 'change', function() { updateLogic(); });
+        
+        safeBind('hideChangedCheck', 'change', function() { updateLogic(); });
+
+FIND:
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => { render(); });
+                el.addEventListener('change', () => { updateLogic(); });
+            }
+        });
+REPLACE WITH:
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'trailCheck', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => { render(); });
+                el.addEventListener('change', () => { updateLogic(); });
+            }
+        });
+
+============================================================
+⏱ Версия: v_009 | Дата: 19-06-2026_23-04-59 | Файл: Zerkalius-interleaving.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving.html.
+
+FIND:
+<div style="margin-top: 3px; margin-bottom: 3px;">
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack" selected>💠 Режим: Центр</option>
+                    <option value="centerTrack2">💠 Режим: Идеальный Центр</option>
+                    <option value="invertShift">💠 Режим: Инверсия Сдвига</option>
+                </select>
+            </div>
+REPLACE WITH:
+<div style="margin-top: 3px; margin-bottom: 3px;">
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack" selected>💠 Режим: Центр</option>
+                    <option value="centerTrack2">💠 Режим: Идеальный Центр</option>
+                </select>
+            </div>
+
+FIND:
+<label style="display:flex; align-items:center; margin-top:3px;">
+<input type="checkbox" id="fillXCheck"> <span class="lbl" style="color:#aaa; font-weight:bold;">Заполнять пустоты 'x' (Рентген)</span>
+</label>
+
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="spacedCheck"> <span class="lbl" style="color:#bfff00; font-weight:bold;">⚙️ Разрядка (Шестеренки)</span>
+            </label>
+REPLACE WITH:
+<label style="display:flex; align-items:center; margin-top:3px;">
+<input type="checkbox" id="fillXCheck"> <span class="lbl" style="color:#aaa; font-weight:bold;">Заполнять пустоты 'x' (Рентген)</span>
+</label>
+
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="trailCheck"> <span class="lbl" style="color:#00ff66; font-weight:bold;">👣 Оставлять след (Шлейф)</span>
+            </label>
+
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="spacedCheck"> <span class="lbl" style="color:#bfff00; font-weight:bold;">⚙️ Разрядка (Шестеренки)</span>
+            </label>
+
+FIND:
+            let resStr = "";
+            let rawM = [];
+            let rawR = [];
+            let rawF = [];
+
+if (useDrum) {
+                let drumRad = parseInt(safeValue('drumRadius', 5));
+                let W = drumRad * 2 + 1; // Ширина барабана
+                let t_start = drumRad - Math.floor(line.L / 2); // Статичная часть строго в центре
+                let d_start = s_display; // Движущаяся часть идет от 0 до конца барабана
+
+                for (let p = 0; p < W; p++) {
+                    let d_active = (p >= d_start && p < d_start + line.L);
+                    let t_active = (p >= t_start && p < t_start + line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - d_start; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = p - t_start; if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else { resStr += useFillX ? "." : " "; isFiller = true; }
+                    
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            } else {
+                for (let p = 1; p <= gridSize; p++) {
+                    let d_active = (p >= 1 + s_display && p <= line.L + s_display);
+                    let t_active = (p >= line.L + 1 && p <= line.cN * line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - s_display - 1; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let symMode = safeValue('symModeSelect', 'centerTrack');
+                    if (symMode === 'invertShift' && d_active && d_char !== "") {
+                        if (isType1(d_char)) d_char = char0;
+                        else if (isType0(d_char)) d_char = char1;
+                    }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = ((p - line.L - 1) % line.L); if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else { resStr += useFillX ? "." : " "; isFiller = true; }
+
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            }
+REPLACE WITH:
+            let resStr = "";
+            let rawM = [];
+            let rawR = [];
+            let rawF = [];
+
+            let leftEdgeIdx = useCylinder ? (cylShift % line.L) : 0;
+            let leftEdgeChar = lineOrig[leftEdgeIdx] || char1;
+            let leftTrail = isType1(leftEdgeChar) ? char0 : (isType0(leftEdgeChar) ? char1 : leftEdgeChar);
+
+            let rightEdgeIdx = useCylinder ? ((line.L - 1 + cylShift) % line.L) : (line.L - 1);
+            let rightEdgeChar = lineOrig[rightEdgeIdx] || char1;
+            let rightTrail = isType1(rightEdgeChar) ? char0 : (isType0(rightEdgeChar) ? char1 : rightEdgeChar);
+
+            let useTrail = safeChecked('trailCheck', false);
+
+            if (useDrum) {
+                let drumRad = parseInt(safeValue('drumRadius', 5));
+                let W = drumRad * 2 + 1; // Ширина барабана
+                let t_start = drumRad - Math.floor(line.L / 2); // Статичная часть строго в центре
+                let d_start = s_display; // Движущаяся часть идет от 0 до конца барабана
+
+                for (let p = 0; p < W; p++) {
+                    let d_active = (p >= d_start && p < d_start + line.L);
+                    let t_active = (p >= t_start && p < t_start + line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - d_start; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = p - t_start; if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else {
+                        if (useTrail) {
+                            resStr += (p < d_start) ? leftTrail : rightTrail;
+                        } else {
+                            resStr += useFillX ? "." : " "; isFiller = true;
+                        }
+                    }
+                    
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            } else {
+                for (let p = 1; p <= gridSize; p++) {
+                    let d_active = (p >= 1 + s_display && p <= line.L + s_display);
+                    let t_active = (p >= line.L + 1 && p <= line.cN * line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - s_display - 1; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = ((p - line.L - 1) % line.L); if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else {
+                        if (useTrail) {
+                            resStr += (p < 1 + s_display) ? leftTrail : rightTrail;
+                        } else {
+                            resStr += useFillX ? "." : " "; isFiller = true;
+                        }
+                    }
+
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            }
+
+FIND:
+            setElChk('hideChangedCheck', snapshot.hideChanged !== undefined ? snapshot.hideChanged : false);
+            setElChk('hideUnchangedCheck', snapshot.hideUnchanged !== undefined ? snapshot.hideUnchanged : false);
+            setElChk('fillXCheck', snapshot.fillX !== undefined ? snapshot.fillX : false);
+            setElChk('autoCascadeCheck', snapshot.autoCascade !== undefined ? snapshot.autoCascade : true);
+            setElChk('conglomerateCheck', snapshot.conglomerate !== undefined ? snapshot.conglomerate : false);
+REPLACE WITH:
+            setElChk('hideChangedCheck', snapshot.hideChanged !== undefined ? snapshot.hideChanged : false);
+            setElChk('hideUnchangedCheck', snapshot.hideUnchanged !== undefined ? snapshot.hideUnchanged : false);
+            setElChk('fillXCheck', snapshot.fillX !== undefined ? snapshot.fillX : false);
+            setElChk('trailCheck', snapshot.trail !== undefined ? snapshot.trail : false);
+            setElChk('autoCascadeCheck', snapshot.autoCascade !== undefined ? snapshot.autoCascade : true);
+            setElChk('conglomerateCheck', snapshot.conglomerate !== undefined ? snapshot.conglomerate : false);
+
+FIND:
+                spaced: safeChecked('spacedCheck', false),
+                phaseShift: safeChecked('phaseShiftCheck', true),
+                drumMode: safeChecked('drumModeCheck', false),
+                drumRadius: parseInt(safeValue('drumRadius', 5)),
+                fillX: safeChecked('fillXCheck', false),
+                autoCascade: safeChecked('autoCascadeCheck', true),
+REPLACE WITH:
+                spaced: safeChecked('spacedCheck', false),
+                phaseShift: safeChecked('phaseShiftCheck', true),
+                drumMode: safeChecked('drumModeCheck', false),
+                drumRadius: parseInt(safeValue('drumRadius', 5)),
+                fillX: safeChecked('fillXCheck', false),
+                trail: safeChecked('trailCheck', false),
+                autoCascade: safeChecked('autoCascadeCheck', true),
+
+FIND:
+        safeBind('loopCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПОВТОР A-B ВКЛЮЧЕН" : "ПОВТОР ОТКЛЮЧЕН"); });
+        safeBind('pingPongCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПИНГ-ПОНГ ВКЛЮЧЕН" : "ПИНГ-ПОНГ ОТКЛЮЧЕН"); });
+        safeBind('meetCenterCheck', 'change', function() { updateLogic(); });
+        safeBind('spacedCheck', 'change', function() { updateLogic(); });
+        
+        safeBind('hideChangedCheck', 'change', function() { updateLogic(); });
+REPLACE WITH:
+        safeBind('loopCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПОВТОР A-B ВКЛЮЧЕН" : "ПОВТОР ОТКЛЮЧЕН"); });
+        safeBind('pingPongCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПИНГ-ПОНГ ВКЛЮЧЕН" : "ПИНГ-ПОНГ ОТКЛЮЧЕН"); });
+        safeBind('meetCenterCheck', 'change', function() { updateLogic(); });
+        safeBind('spacedCheck', 'change', function() { updateLogic(); });
+        safeBind('trailCheck', 'change', function() { updateLogic(); });
+        
+        safeBind('hideChangedCheck', 'change', function() { updateLogic(); });
+
+FIND:
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => { render(); });
+                el.addEventListener('change', () => { updateLogic(); });
+            }
+        });
+REPLACE WITH:
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'trailCheck', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => { render(); });
+                el.addEventListener('change', () => { updateLogic(); });
+            }
+        });
+
+============================================================
+⏱ Версия: v_001 | Дата: 19-06-2026_23-24-17 | Файл: Zerkalius-interleaving.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving.html.
+
+FIND:
+<div style="margin-top: 3px; margin-bottom: 3px;">
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack" selected>💠 Режим: Центр</option>
+                    <option value="centerTrack2">💠 Режим: Идеальный Центр</option>
+                    <option value="invertShift">💠 Режим: Инверсия Сдвига</option>
+                </select>
+            </div>
+REPLACE WITH:
+<div style="margin-top: 3px; margin-bottom: 3px;">
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack" selected>💠 Режим: Центр</option>
+                    <option value="centerTrack2">💠 Режим: Идеальный Центр</option>
+                </select>
+            </div>
+
+FIND:
+			<label style="display:flex; align-items:center; margin-top:3px;">
+				<input type="checkbox" id="fillXCheck"> <span class="lbl" style="color:#aaa; font-weight:bold;">Заполнять пустоты 'x' (Рентген)</span>
+			</label>
+			
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="spacedCheck"> <span class="lbl" style="color:#bfff00; font-weight:bold;">⚙️ Разрядка (Шестеренки)</span>
+            </label>
+REPLACE WITH:
+			<label style="display:flex; align-items:center; margin-top:3px;">
+				<input type="checkbox" id="fillXCheck"> <span class="lbl" style="color:#aaa; font-weight:bold;">Заполнять пустоты 'x' (Рентген)</span>
+			</label>
+			
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="trailCheck"> <span class="lbl" style="color:#00ff66; font-weight:bold;">👣 Оставлять след (Шлейф)</span>
+            </label>
+
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="spacedCheck"> <span class="lbl" style="color:#bfff00; font-weight:bold;">⚙️ Разрядка (Шестеренки)</span>
+            </label>
+
+FIND:
+            let resStr = "";
+            let rawM = [];
+            let rawR = [];
+            let rawF = [];
+
+if (useDrum) {
+                let drumRad = parseInt(safeValue('drumRadius', 5));
+                let W = drumRad * 2 + 1; // Ширина барабана
+                let t_start = drumRad - Math.floor(line.L / 2); // Статичная часть строго в центре
+                let d_start = s_display; // Движущаяся часть идет от 0 до конца барабана
+
+                for (let p = 0; p < W; p++) {
+                    let d_active = (p >= d_start && p < d_start + line.L);
+                    let t_active = (p >= t_start && p < t_start + line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - d_start; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = p - t_start; if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else { resStr += useFillX ? "." : " "; isFiller = true; }
+                    
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            } else {
+                for (let p = 1; p <= gridSize; p++) {
+                    let d_active = (p >= 1 + s_display && p <= line.L + s_display);
+                    let t_active = (p >= line.L + 1 && p <= line.cN * line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - s_display - 1; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let symMode = safeValue('symModeSelect', 'centerTrack');
+                    if (symMode === 'invertShift' && d_active && d_char !== "") {
+                        if (isType1(d_char)) d_char = char0;
+                        else if (isType0(d_char)) d_char = char1;
+                    }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = ((p - line.L - 1) % line.L); if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else { resStr += useFillX ? "." : " "; isFiller = true; }
+
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            }
+REPLACE WITH:
+            let resStr = "";
+            let rawM = [];
+            let rawR = [];
+            let rawF = [];
+
+            let leftEdgeIdx = useCylinder ? (cylShift % line.L) : 0;
+            let leftEdgeChar = lineOrig[leftEdgeIdx] || char1;
+            let leftTrail = isType1(leftEdgeChar) ? char0 : (isType0(leftEdgeChar) ? char1 : leftEdgeChar);
+
+            let rightEdgeIdx = useCylinder ? ((line.L - 1 + cylShift) % line.L) : (line.L - 1);
+            let rightEdgeChar = lineOrig[rightEdgeIdx] || char1;
+            let rightTrail = isType1(rightEdgeChar) ? char0 : (isType0(rightEdgeChar) ? char1 : rightEdgeChar);
+
+            let useTrail = safeChecked('trailCheck', false);
+
+            if (useDrum) {
+                let drumRad = parseInt(safeValue('drumRadius', 5));
+                let W = drumRad * 2 + 1; // Ширина барабана
+                let t_start = drumRad - Math.floor(line.L / 2); // Статичная часть строго в центре
+                let d_start = s_display; // Движущаяся часть идет от 0 до конца барабана
+
+                for (let p = 0; p < W; p++) {
+                    let d_active = (p >= d_start && p < d_start + line.L);
+                    let t_active = (p >= t_start && p < t_start + line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - d_start; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = p - t_start; if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else {
+                        if (useTrail) {
+                            resStr += (p < d_start) ? leftTrail : rightTrail;
+                        } else {
+                            resStr += useFillX ? "." : " "; isFiller = true;
+                        }
+                    }
+                    
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            } else {
+                for (let p = 1; p <= gridSize; p++) {
+                    let d_active = (p >= 1 + s_display && p <= line.L + s_display);
+                    let t_active = (p >= line.L + 1 && p <= line.cN * line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - s_display - 1; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = ((p - line.L - 1) % line.L); if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else {
+                        if (useTrail) {
+                            resStr += (p < 1 + s_display) ? leftTrail : rightTrail;
+                        } else {
+                            resStr += useFillX ? "." : " "; isFiller = true;
+                        }
+                    }
+
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            }
+
+FIND:
+            setElChk('hideChangedCheck', snapshot.hideChanged !== undefined ? snapshot.hideChanged : false);
+            setElChk('hideUnchangedCheck', snapshot.hideUnchanged !== undefined ? snapshot.hideUnchanged : false);
+            setElChk('fillXCheck', snapshot.fillX !== undefined ? snapshot.fillX : false);
+            setElChk('autoCascadeCheck', snapshot.autoCascade !== undefined ? snapshot.autoCascade : true);
+            setElChk('conglomerateCheck', snapshot.conglomerate !== undefined ? snapshot.conglomerate : false);
+REPLACE WITH:
+            setElChk('hideChangedCheck', snapshot.hideChanged !== undefined ? snapshot.hideChanged : false);
+            setElChk('hideUnchangedCheck', snapshot.hideUnchanged !== undefined ? snapshot.hideUnchanged : false);
+            setElChk('fillXCheck', snapshot.fillX !== undefined ? snapshot.fillX : false);
+            setElChk('trailCheck', snapshot.trail !== undefined ? snapshot.trail : false);
+            setElChk('autoCascadeCheck', snapshot.autoCascade !== undefined ? snapshot.autoCascade : true);
+            setElChk('conglomerateCheck', snapshot.conglomerate !== undefined ? snapshot.conglomerate : false);
+
+FIND:
+                spaced: safeChecked('spacedCheck', false),
+                phaseShift: safeChecked('phaseShiftCheck', true),
+                drumMode: safeChecked('drumModeCheck', false),
+                drumRadius: parseInt(safeValue('drumRadius', 5)),
+                fillX: safeChecked('fillXCheck', false),
+                autoCascade: safeChecked('autoCascadeCheck', true),
+REPLACE WITH:
+                spaced: safeChecked('spacedCheck', false),
+                phaseShift: safeChecked('phaseShiftCheck', true),
+                drumMode: safeChecked('drumModeCheck', false),
+                drumRadius: parseInt(safeValue('drumRadius', 5)),
+                fillX: safeChecked('fillXCheck', false),
+                trail: safeChecked('trailCheck', false),
+                autoCascade: safeChecked('autoCascadeCheck', true),
+
+FIND:
+        safeBind('loopCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПОВТОР A-B ВКЛЮЧЕН" : "ПОВТОР ОТКЛЮЧЕН"); });
+        safeBind('pingPongCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПИНГ-ПОНГ ВКЛЮЧЕН" : "ПИНГ-ПОНГ ОТКЛЮЧЕН"); });
+        safeBind('meetCenterCheck', 'change', function() { updateLogic(); });
+        safeBind('spacedCheck', 'change', function() { updateLogic(); });
+        
+        safeBind('hideChangedCheck', 'change', function() { updateLogic(); });
+REPLACE WITH:
+        safeBind('loopCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПОВТОР A-B ВКЛЮЧЕН" : "ПОВТОР ОТКЛЮЧЕН"); });
+        safeBind('pingPongCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПИНГ-ПОНГ ВКЛЮЧЕН" : "ПИНГ-ПОНГ ОТКЛЮЧЕН"); });
+        safeBind('meetCenterCheck', 'change', function() { updateLogic(); });
+        safeBind('spacedCheck', 'change', function() { updateLogic(); });
+        safeBind('trailCheck', 'change', function() { updateLogic(); });
+        
+        safeBind('hideChangedCheck', 'change', function() { updateLogic(); });
+
+FIND:
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => { render(); });
+                el.addEventListener('change', () => { updateLogic(); });
+            }
+        });
+REPLACE WITH:
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'trailCheck', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => { render(); });
+                el.addEventListener('change', () => { updateLogic(); });
+            }
+        });
+
+============================================================
+⏱ Версия: v_002 | Дата: 19-06-2026_23-36-30 | Файл: Zerkalius-interleaving.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving.html.
+
+FIND:
+        <div class="control-group">
+            <div class="row-between" style="margin-bottom: 5px;">
+                <span class="lbl" style="color:#00ff66; font-weight:bold;">Генератор Серпинского:</span>
+            </div>
+            <select id="sierpRule" style="margin-bottom: 5px; background: #222; color: #fff; border: 1px solid #444; padding: 2px; border-radius: 3px; width: 100%; font-size: 11px;">
+                <option value="shift">Форма: Сдвиг (Кирпичная кладка)</option>
+                <option value="center">Форма: Центр (Симметричная пирамида)</option>
+            </select>
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <input type="text" id="sierpSeed" value="1" title="Сид" style="flex:1;">
+                <input type="number" id="sierpRows" value="128" title="Строки" style="flex:1;">
+                <button id="sierpBtn" class="btn-action" style="flex:2; margin:0; color:#00ff66; border-color:#00ff66;">Сгенерировать</button>
+            </div>
+        </div>
+REPLACE WITH:
+        <div class="control-group">
+            <div class="row-between" style="margin-bottom: 5px;">
+                <span id="sierpHeader" class="lbl" style="color:#00ff66; font-weight:bold;">Генератор Серпинского:</span>
+            </div>
+            <select id="sierpRule" style="margin-bottom: 5px; background: #222; color: #fff; border: 1px solid #444; padding: 2px; border-radius: 3px; width: 100%; font-size: 11px;">
+                <option value="shift">Форма: Сдвиг (Кирпичная кладка)</option>
+                <option value="center">Форма: Центр (Симметричная пирамида)</option>
+                <option value="xorora">Форма: XorRora Маятник</option>
+            </select>
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <input type="text" id="sierpSeed" value="1" title="Сид" style="flex:1;">
+                <input type="number" id="sierpRows" value="128" title="Строки" style="flex:1;">
+                <button id="sierpBtn" class="btn-action" style="flex:2; margin:0; color:#00ff66; border-color:#00ff66;">Сгенерировать</button>
+            </div>
+        </div>
+
+FIND:
+        safeBind('loopStart', 'input', function() { enforceLoop(); updateLogic(); });
+        safeBind('loopEnd', 'input', function() { enforceLoop(); updateLogic(); });
+REPLACE WITH:
+        safeBind('loopStart', 'input', function() { enforceLoop(); updateLogic(); });
+        safeBind('loopEnd', 'input', function() { enforceLoop(); updateLogic(); });
+
+        safeBind('sierpRule', 'change', function() {
+            let rule = this.value;
+            let seedInput = document.getElementById('sierpSeed');
+            let rowsInput = document.getElementById('sierpRows');
+            let headerSpan = document.getElementById('sierpHeader');
+            if (seedInput && rowsInput && headerSpan) {
+                if (rule === 'xorora') {
+                    headerSpan.textContent = "Маятник XorRora:";
+                    headerSpan.style.color = "#ffcc00";
+                    seedInput.title = "Шаги маятника (STEPS)";
+                    seedInput.placeholder = "Шаги";
+                    if (seedInput.value === '1') seedInput.value = '64';
+                    rowsInput.title = "Высота построения (ROWS)";
+                    rowsInput.placeholder = "Высота";
+                } else {
+                    headerSpan.textContent = "Генератор Серпинского:";
+                    headerSpan.style.color = "#00ff66";
+                    seedInput.title = "Сид";
+                    seedInput.placeholder = "";
+                    if (seedInput.value === '64') seedInput.value = '1';
+                    rowsInput.title = "Строки";
+                    rowsInput.placeholder = "";
+                }
+            }
+        });
+
+FIND:
+        safeBind('sierpBtn', 'click', () => {
+            let seed = safeValue('sierpSeed', '1').trim().replace(/\s+/g, '') || "1";
+            let rows = parseInt(safeValue('sierpRows', 64)) || 64;
+            let rule = safeValue('sierpRule', 'shift');
+            
+            let genLines = [seed];
+            for (let i = 1; i < rows; i++) {
+                let prev = genLines[i-1];
+                let nextStr = "";
+                
+                if (rule === "shift") {
+                    let padded = "0" + prev + "0"; 
+                    for(let j=0; j < padded.length - 1; j++) {
+                        let a = padded[j] === '1' ? 1 : 0;
+                        let b = padded[j+1] === '1' ? 1 : 0;
+                        nextStr += (a ^ b).toString(); 
+                    }
+                } else if (rule === "center") {
+                    let padded = "00" + prev + "00"; 
+                    for(let j=0; j < padded.length - 2; j++) {
+                        let left = padded[j] === '1' ? 1 : 0;
+                        let right = padded[j+2] === '1' ? 1 : 0;
+                        nextStr += (left ^ right).toString(); 
+                    }
+                }
+                
+                genLines.push(nextStr);
+            }
+            loadText(genLines.join('\n'));
+            showNotification(rule === "shift" ? "ГЕНЕРАТОР: СДВИГ" : "ГЕНЕРАТОР: ЦЕНТР");
+        });
+REPLACE WITH:
+        safeBind('sierpBtn', 'click', () => {
+            let seed = safeValue('sierpSeed', '1').trim().replace(/\s+/g, '') || "1";
+            let rows = parseInt(safeValue('sierpRows', 64)) || 64;
+            let rule = safeValue('sierpRule', 'shift');
+            
+            let genLines = [];
+            
+            if (rule === "xorora") {
+                let steps = parseInt(seed) || 32;
+                let width = (steps * 2) + (rows * 2) + 100;
+                let center = Math.floor(width / 2);
+                
+                let grid = [];
+                for (let r = 0; r < rows; r++) {
+                    grid.push(new Uint8Array(width));
+                }
+                
+                function core_builder_inplace(start_col) {
+                    if (grid[0][start_col] === 0) {
+                        grid[0][start_col] = 1;
+                    }
+                    for (let r = 1; r < rows; r++) {
+                        let step = r + 1;
+                        for (let c = start_col - step + 1; c < start_col + step; c += 2) {
+                            if (c >= 0 && c < width) {
+                                let val_left = (c - 1 >= 0) ? grid[r - 1][c - 1] : 0;
+                                let val_right = (c + 1 < width) ? grid[r - 1][c + 1] : 0;
+                                let applied_bit = val_left ^ val_right;
+                                if (applied_bit === 1) {
+                                    grid[r][c] ^= 1;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                core_builder_inplace(center);
+                for (let s = 0; s < steps; s++) {
+                    let dist = Math.floor(s / 2) + 1;
+                    let offset = (s % 2 === 0) ? -dist : dist;
+                    core_builder_inplace(center + offset);
+                }
+                
+                let c_start = width;
+                let c_end = -1;
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < width; c++) {
+                        if (grid[r][c] === 1) {
+                            if (c < c_start) c_start = c;
+                            if (c > c_end) c_end = c;
+                        }
+                    }
+                }
+                
+                if (c_end >= c_start) {
+                    for (let r = 0; r < rows; r++) {
+                        let rowStr = "";
+                        for (let c = c_start; c <= c_end; c++) {
+                            rowStr += grid[r][c].toString();
+                        }
+                        genLines.push(rowStr);
+                    }
+                } else {
+                    for (let r = 0; r < rows; r++) {
+                        genLines.push("0");
+                    }
+                }
+                
+                loadText(genLines.join('\n'));
+                showNotification("ГЕНЕРАТОР: XORORA МАЯТНИК");
+                
+            } else {
+                genLines.push(seed);
+                for (let i = 1; i < rows; i++) {
+                    let prev = genLines[i-1];
+                    let nextStr = "";
+                    
+                    if (rule === "shift") {
+                        let padded = "0" + prev + "0"; 
+                        for(let j=0; j < padded.length - 1; j++) {
+                            let a = padded[j] === '1' ? 1 : 0;
+                            let b = padded[j+1] === '1' ? 1 : 0;
+                            nextStr += (a ^ b).toString(); 
+                        }
+                    } else if (rule === "center") {
+                        let padded = "00" + prev + "00"; 
+                        for(let j=0; j < padded.length - 2; j++) {
+                            let left = padded[j] === '1' ? 1 : 0;
+                            let right = padded[j+2] === '1' ? 1 : 0;
+                            nextStr += (left ^ right).toString(); 
+                        }
+                    }
+                    
+                    genLines.push(nextStr);
+                }
+                loadText(genLines.join('\n'));
+                showNotification(rule === "shift" ? "ГЕНЕРАТОР: СДВИГ" : "ГЕНЕРАТОР: ЦЕНТР");
+            }
+        });

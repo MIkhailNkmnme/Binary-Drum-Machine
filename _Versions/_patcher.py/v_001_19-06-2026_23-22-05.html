@@ -1,0 +1,167 @@
+import os
+import re
+import shutil
+from datetime import datetime
+import sys
+
+PROMPT_FILE = "ai_studio_code.txt" # твой файл с промптом
+VERSIONS_DIR = "_Versions"          # возвращаем утерянную переменную каталога версий
+
+def find_target_filename(prompt_text):
+    # Жесткий поиск: ищем слова "edit file" или "файл", за которыми идет имя с расширением .html, .py, .js и т.д.
+    match = re.search(r'(?:edit file|file|файл)[:\s]+[`\'"]?([a-zA-Z0-9_-]+\.(?:html|js|css|py|txt))[`\'"]?', prompt_text, re.IGNORECASE)
+    if match:
+        return match.group(1)
+    return None
+
+def get_prompt_content():
+    content = ""
+    # Пытаемся прочитать из файла
+    if os.path.exists(PROMPT_FILE):
+        try:
+            with open(PROMPT_FILE, 'r', encoding='utf-8') as f:
+                content = f.read().replace('\r\n', '\n').strip()
+        except UnicodeDecodeError:
+            try:
+                with open(PROMPT_FILE, 'r', encoding='windows-1251') as f:
+                    content = f.read().replace('\r\n', '\n').strip()
+            except:
+                pass
+    
+    # Если файла нет или он пуст - просим ввести в консоль
+    if not content:
+        print(f"📄 Рабочий файл '{PROMPT_FILE}' пуст.")
+        print("👇 Вставьте текст промпта прямо сюда (в окно консоли).")
+        print("⚠️ Для завершения просто нажмите Enter ДВА РАЗА подряд.")
+        print("-" * 60)
+        
+        lines = []
+        empty_count = 0
+        while True:
+            try:
+                # Используем sys.stdin.readline для безопасного захвата байтов
+                line = sys.stdin.readline()
+                if not line: break
+                line = line.strip('\r\n')
+                
+                if line == "":
+                    empty_count += 1
+                    if empty_count >= 2:
+                        if lines and lines[-1].strip() == "":
+                            lines.pop()
+                        break
+                else:
+                    empty_count = 0
+                lines.append(line)
+            except EOFError:
+                break
+        
+        content = "\n".join(lines)
+        print("-" * 60)
+        
+    return content
+
+def save_version_and_history(target_file, prompt_content):
+    # Создаем главную папку версий
+    if not os.path.exists(VERSIONS_DIR):
+        os.makedirs(VERSIONS_DIR)
+        
+    # Создаем подпапку для конкретного файла
+    file_dir = os.path.join(VERSIONS_DIR, target_file)
+    if not os.path.exists(file_dir):
+        os.makedirs(file_dir)
+        
+    # Считаем количество уже существующих версий для нумерации
+    existing_files = [f for f in os.listdir(file_dir) if f.startswith('v_') and f.endswith('.html')]
+    version_num = len(existing_files) + 1
+    
+    timestamp = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
+    
+    # 1. Сохраняем копию HTML (Бэкап)
+    backup_name = f"v_{version_num:03d}_{timestamp}.html"
+    backup_path = os.path.join(file_dir, backup_name)
+    shutil.copy(target_file, backup_path)
+    print(f"💾 Версия файла сохранена: {backup_path}")
+    
+    # Создаем дубликат в корневой папке с расширением .bak для быстрого восстановления
+    quick_backup_path = target_file + ".bak"
+    shutil.copy(target_file, quick_backup_path)
+    print(f"🔄 Быстрый бэкап создан: {quick_backup_path}")
+    
+    # 2. Сохраняем промпт в историю внутри этой же подпапки
+    history_file = os.path.join(file_dir, "_history_prompts.txt")
+    
+    # Записываем с utf-8-sig (BOM) чтобы Windows блокнот 100% правильно читал русский язык!
+    with open(history_file, 'a', encoding='utf-8-sig') as f:
+        f.write(f"\n{'='*60}\n")
+        f.write(f"⏱ Версия: v_{version_num:03d} | Дата: {timestamp} | Файл: {target_file}\n")
+        f.write(f"{'-'*60}\n")
+        f.write(prompt_content.strip() + "\n")
+    print(f"📜 Промпт добавлен в лог: {history_file}")
+
+def apply_patch():
+    print("Запуск авто-патчера Zerkalius...\n")
+    
+    prompt_content = get_prompt_content()
+    
+    if not prompt_content or not prompt_content.strip():
+        print("❌ Ошибка: Вы ввели пустой текст. Отмена операции.")
+        return
+
+    target_file = find_target_filename(prompt_content)
+    
+    if not target_file:
+        print("❌ Ошибка: Не удалось найти имя файла для патчинга.")
+        return
+
+    print(f"🎯 Обнаружен целевой файл: {target_file}")
+
+    if not os.path.exists(target_file):
+        print(f"❌ Ошибка: Файл '{target_file}' не найден в этой папке!")
+        return
+
+    try:
+        with open(target_file, 'r', encoding='utf-8') as f:
+            html_content = f.read().replace('\r\n', '\n')
+    except:
+        with open(target_file, 'r', encoding='windows-1251') as f:
+            html_content = f.read().replace('\r\n', '\n')
+
+    # Вызываем новую функцию сохранения версий и истории
+    save_version_and_history(target_file, prompt_content)
+
+    pattern = re.compile(r'FIND:\n(.*?)\nREPLACE WITH:\n(.*?)(?=\n+(?:[^\n]*?)FIND:|\Z)', re.DOTALL)
+    matches = pattern.findall(prompt_content)
+
+    if not matches:
+        print("⚠️ Не найдено ни одного блока FIND/REPLACE.")
+        return
+
+    success_count = 0
+    for i, (find_text, replace_text) in enumerate(matches, 1):
+        find_text = find_text.strip('\n')
+        replace_text = replace_text.strip('\n')
+
+        if find_text in html_content:
+            html_content = html_content.replace(find_text, replace_text)
+            print(f"✅ Шаг {i}: Блок успешно заменен.")
+            success_count += 1
+        else:
+            print(f"❌ Шаг {i}: Блок НЕ НАЙДЕН в файле {target_file}!")
+            print(f"   --- Искали (первые 80 символов): ---")
+            print(f"   {find_text[:80]}...")
+            print(f"   ------------------------------------")
+
+    with open(target_file, 'w', encoding='utf-8') as f:
+        f.write(html_content)
+
+    print(f"\n🚀 Готово! Успешно применено {success_count} из {len(matches)} патчей.")
+
+if __name__ == "__main__":
+    try:
+        apply_patch()
+    except Exception as e:
+        print(f"\n❌ Критическая ошибка выполнения: {e}")
+    finally:
+        print("\n" + "="*60)
+        input("Нажмите ENTER для закрытия окна...")

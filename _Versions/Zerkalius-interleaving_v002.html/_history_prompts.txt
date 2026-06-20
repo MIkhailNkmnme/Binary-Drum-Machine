@@ -1,0 +1,1443 @@
+﻿
+============================================================
+⏱ Версия: v_001 | Дата: 19-06-2026_23-42-13 | Файл: Zerkalius-interleaving_v002.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving_v002.html.
+
+FIND:
+        <div class="control-group">
+            <div class="row-between" style="margin-bottom: 5px;">
+                <span class="lbl" style="color:#00ff66; font-weight:bold;">Генератор Серпинского:</span>
+            </div>
+            <select id="sierpRule" style="margin-bottom: 5px; background: #222; color: #fff; border: 1px solid #444; padding: 2px; border-radius: 3px; width: 100%; font-size: 11px;">
+                <option value="shift">Форма: Сдвиг (Кирпичная кладка)</option>
+                <option value="center">Форма: Центр (Симметричная пирамида)</option>
+            </select>
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <input type="text" id="sierpSeed" value="1" title="Сид" style="flex:1;">
+                <input type="number" id="sierpRows" value="128" title="Строки" style="flex:1;">
+                <button id="sierpBtn" class="btn-action" style="flex:2; margin:0; color:#00ff66; border-color:#00ff66;">Сгенерировать</button>
+            </div>
+        </div>
+REPLACE WITH:
+        <div class="control-group">
+            <div class="row-between" style="margin-bottom: 5px;">
+                <span class="lbl" id="sierpTitle" style="color:#00ff66; font-weight:bold;">Генератор Серпинского:</span>
+            </div>
+            <select id="sierpRule" style="margin-bottom: 5px; background: #222; color: #fff; border: 1px solid #444; padding: 2px; border-radius: 3px; width: 100%; font-size: 11px;">
+                <option value="shift">Форма: Сдвиг (Кирпичная кладка)</option>
+                <option value="center">Форма: Центр (Симметричная пирамида)</option>
+                <option value="xorora">Форма: XorRora Маятник</option>
+            </select>
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <input type="text" id="sierpSeed" value="1" title="Сид" placeholder="Сид" style="flex:1;">
+                <input type="number" id="sierpRows" value="128" title="Строки" placeholder="Строки" style="flex:1;">
+                <button id="sierpBtn" class="btn-action" style="flex:2; margin:0; color:#00ff66; border-color:#00ff66;">Сгенерировать</button>
+            </div>
+        </div>
+
+FIND:
+<label style="display:flex; align-items:center; margin-top:3px;">
+<input type="checkbox" id="fillXCheck"> <span class="lbl" style="color:#aaa; font-weight:bold;">Заполнять пустоты 'x' (Рентген)</span>
+</label>
+
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="trailCheck"> <span class="lbl" style="color:#00ff66; font-weight:bold;">👣 Оставлять след (Шлейф)</span>
+            </label>
+
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="spacedCheck"> <span class="lbl" style="color:#bfff00; font-weight:bold;">⚙️ Разрядка (Шестеренки)</span>
+            </label>
+REPLACE WITH:
+<label style="display:flex; align-items:center; margin-top:3px;">
+<input type="checkbox" id="fillXCheck"> <span class="lbl" style="color:#aaa; font-weight:bold;">Заполнять пустоты 'x' (Рентген)</span>
+</label>
+
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="spacedCheck"> <span class="lbl" style="color:#bfff00; font-weight:bold;">⚙️ Разрядка (Шестеренки)</span>
+            </label>
+
+FIND:
+        function computeLineData(stepValue, elkaBuf, ptr, line, i, useElka, meetCenter, usePendulum, useCylinder, useSpacing, useDrum, globalMaxGrid, useFillX) {
+            let lineOrig = line.orig;
+            if (useElka && elkaBuf.length > 0) {
+                lineOrig = elkaBuf.substring(ptr, ptr + line.L);
+            }
+
+            let isReversedRow = STATE.isReverse;
+            if (meetCenter && (i % 2 !== 0)) {
+                isReversedRow = !isReversedRow;
+            }
+
+            let max_shift = line.cycle - 1;
+            let s_display = 0;
+            if (max_shift > 0) {
+                if (usePendulum) {
+                    let pend_cycle = max_shift * 2;
+                    let stp = stepValue % pend_cycle;
+                    s_display = (stp <= max_shift) ? stp : pend_cycle - stp;
+                } else {
+                    s_display = stepValue % line.cycle;
+                }
+            }
+
+            if (isReversedRow && line.isActive) {
+                s_display = max_shift - s_display;
+                if (s_display < 0) s_display = 0;
+            }
+
+            let cylShift = useCylinder ? (stepValue % line.L) : 0;
+            let gridSize = line.L + s_display;
+            if (line.cN * line.L > gridSize) gridSize = line.cN * line.L;
+
+            let char1 = '1', char0 = '0';
+            if (lineOrig.includes('\\') || lineOrig.includes('/')) { char1 = '\\'; char0 = '/'; }
+            else if (lineOrig.includes(')') || lineOrig.includes('(')) { char1 = ')'; char0 = '('; }
+            else if (lineOrig.includes(']') || lineOrig.includes('[')) { char1 = ']'; char0 = '['; }
+            else if (lineOrig.includes('>') || lineOrig.includes('<')) { char1 = '>'; char0 = '<'; }
+
+            let resStr = "";
+            let rawM = [];
+            let rawR = [];
+            let rawF = [];
+
+            let leftEdgeIdx = useCylinder ? (cylShift % line.L) : 0;
+            let leftEdgeChar = lineOrig[leftEdgeIdx] || char1;
+            let leftTrail = isType1(leftEdgeChar) ? char0 : (isType0(leftEdgeChar) ? char1 : leftEdgeChar);
+
+            let rightEdgeIdx = useCylinder ? ((line.L - 1 + cylShift) % line.L) : (line.L - 1);
+            let rightEdgeChar = lineOrig[rightEdgeIdx] || char1;
+            let rightTrail = isType1(rightEdgeChar) ? char0 : (isType0(rightEdgeChar) ? char1 : rightEdgeChar);
+
+            let useTrail = safeChecked('trailCheck', false);
+
+            if (useDrum) {
+                let drumRad = parseInt(safeValue('drumRadius', 5));
+                let W = drumRad * 2 + 1; // Ширина барабана
+                let t_start = drumRad - Math.floor(line.L / 2); // Статичная часть строго в центре
+                let d_start = s_display; // Движущаяся часть идет от 0 до конца барабана
+
+                for (let p = 0; p < W; p++) {
+                    let d_active = (p >= d_start && p < d_start + line.L);
+                    let t_active = (p >= t_start && p < t_start + line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - d_start; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = p - t_start; if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else {
+                        if (useTrail) {
+                            resStr += (p < d_start) ? leftTrail : rightTrail;
+                        } else {
+                            resStr += useFillX ? "." : " "; isFiller = true;
+                        }
+                    }
+                    
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            } else {
+                for (let p = 1; p <= gridSize; p++) {
+                    let d_active = (p >= 1 + s_display && p <= line.L + s_display);
+                    let t_active = (p >= line.L + 1 && p <= line.cN * line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - s_display - 1; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = ((p - line.L - 1) % line.L); if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else {
+                        if (useTrail) {
+                            resStr += (p < 1 + s_display) ? leftTrail : rightTrail;
+                        } else {
+                            resStr += useFillX ? "." : " "; isFiller = true;
+                        }
+                    }
+
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            }
+REPLACE WITH:
+        function computeLineData(stepValue, elkaBuf, ptr, line, i, useElka, meetCenter, usePendulum, useCylinder, useSpacing, useDrum, globalMaxGrid, useFillX) {
+            let lineOrig = line.orig;
+            if (useElka && elkaBuf.length > 0) {
+                lineOrig = elkaBuf.substring(ptr, ptr + line.L);
+            }
+
+            let isReversedRow = STATE.isReverse;
+            if (meetCenter && (i % 2 !== 0)) {
+                isReversedRow = !isReversedRow;
+            }
+
+            let max_shift = line.cycle - 1;
+            let s_display = 0;
+            if (max_shift > 0) {
+                if (usePendulum) {
+                    let pend_cycle = max_shift * 2;
+                    let stp = stepValue % pend_cycle;
+                    s_display = (stp <= max_shift) ? stp : pend_cycle - stp;
+                } else {
+                    s_display = stepValue % line.cycle;
+                }
+            }
+
+            if (isReversedRow && line.isActive) {
+                s_display = max_shift - s_display;
+                if (s_display < 0) s_display = 0;
+            }
+
+            let cylShift = useCylinder ? (stepValue % line.L) : 0;
+            let gridSize = line.L + s_display;
+            if (line.cN * line.L > gridSize) gridSize = line.cN * line.L;
+
+            let char1 = '1', char0 = '0';
+            if (lineOrig.includes('\\') || lineOrig.includes('/')) { char1 = '\\'; char0 = '/'; }
+            else if (lineOrig.includes(')') || lineOrig.includes('(')) { char1 = ')'; char0 = '('; }
+            else if (lineOrig.includes(']') || lineOrig.includes('[')) { char1 = ']'; char0 = '['; }
+            else if (lineOrig.includes('>') || lineOrig.includes('<')) { char1 = '>'; char0 = '<'; }
+
+            let resStr = "";
+            let rawM = [];
+            let rawR = [];
+            let rawF = [];
+
+            if (useDrum) {
+                let drumRad = parseInt(safeValue('drumRadius', 5));
+                let W = drumRad * 2 + 1; // Ширина барабана
+                let t_start = drumRad - Math.floor(line.L / 2); // Статичная часть строго в центре
+                let d_start = s_display; // Движущаяся часть идет от 0 до конца барабана
+
+                for (let p = 0; p < W; p++) {
+                    let d_active = (p >= d_start && p < d_start + line.L);
+                    let t_active = (p >= t_start && p < t_start + line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - d_start; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = p - t_start; if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else { resStr += useFillX ? "." : " "; isFiller = true; }
+                    
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            } else {
+                for (let p = 1; p <= gridSize; p++) {
+                    let d_active = (p >= 1 + s_display && p <= line.L + s_display);
+                    let t_active = (p >= line.L + 1 && p <= line.cN * line.L);
+
+                    let d_char = "", d_idx = -1;
+                    if (d_active) { d_idx = p - s_display - 1; if (useCylinder) d_idx = (d_idx + cylShift) % line.L; d_char = lineOrig[d_idx]; }
+                    let t_char = "", t_idx = -1;
+                    if (t_active) { t_idx = ((p - line.L - 1) % line.L); if (useCylinder) t_idx = (t_idx + cylShift) % line.L; t_char = lineOrig[t_idx]; }
+
+                    let isRedChar = false, isFiller = false;
+                    if (d_active && t_active) {
+                        let d_val = isType1(d_char) ? 1 : 0; let t_val = isType1(t_char) ? 1 : 0;
+                        resStr += (d_val ^ t_val) ? char1 : char0;
+                        if (d_idx === line.firstOneIdx || t_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (d_active) { resStr += d_char; if (d_idx === line.firstOneIdx) isRedChar = true;
+                    } else if (t_active) { resStr += t_char; if (t_idx === line.firstOneIdx) isRedChar = true;
+                    } else { resStr += useFillX ? "." : " "; isFiller = true; }
+
+                    rawM.push(false); rawR.push(isRedChar); rawF.push(isFiller);
+                }
+            }
+
+FIND:
+        safeBind('sierpBtn', 'click', () => {
+            let seed = safeValue('sierpSeed', '1').trim().replace(/\s+/g, '') || "1";
+            let rows = parseInt(safeValue('sierpRows', 64)) || 64;
+            let rule = safeValue('sierpRule', 'shift');
+            
+            let genLines = [seed];
+            for (let i = 1; i < rows; i++) {
+                let prev = genLines[i-1];
+                let nextStr = "";
+                
+                if (rule === "shift") {
+                    let padded = "0" + prev + "0"; 
+                    for(let j=0; j < padded.length - 1; j++) {
+                        let a = padded[j] === '1' ? 1 : 0;
+                        let b = padded[j+1] === '1' ? 1 : 0;
+                        nextStr += (a ^ b).toString(); 
+                    }
+                } else if (rule === "center") {
+                    let padded = "00" + prev + "00"; 
+                    for(let j=0; j < padded.length - 2; j++) {
+                        let left = padded[j] === '1' ? 1 : 0;
+                        let right = padded[j+2] === '1' ? 1 : 0;
+                        nextStr += (left ^ right).toString(); 
+                    }
+                }
+                
+                genLines.push(nextStr);
+            }
+            loadText(genLines.join('\n'));
+            showNotification(rule === "shift" ? "ГЕНЕРАТОР: СДВИГ" : "ГЕНЕРАТОР: ЦЕНТР");
+        });
+REPLACE WITH:
+        safeBind('sierpBtn', 'click', () => {
+            let seed = safeValue('sierpSeed', '1').trim().replace(/\s+/g, '') || "1";
+            let rows = parseInt(safeValue('sierpRows', 64)) || 64;
+            let rule = safeValue('sierpRule', 'shift');
+            
+            if (rule === "xorora") {
+                let steps = parseInt(seed) || 32;
+                let width = (steps * 2) + (rows * 2) + 100;
+                let center = Math.floor(width / 2);
+                
+                let grid = [];
+                for (let r = 0; r < rows; r++) {
+                    grid.push(new Uint8Array(width));
+                }
+                
+                function core_builder_inplace(start_col) {
+                    if (grid[0][start_col] === 0) {
+                        grid[0][start_col] = 1;
+                    }
+                    for (let r = 1; r < rows; r++) {
+                        let step = r + 1;
+                        for (let c = start_col - step + 1; c < start_col + step; c += 2) {
+                            if (c >= 0 && c < width) {
+                                let val_left = (c - 1 >= 0) ? grid[r - 1][c - 1] : 0;
+                                let val_right = (c + 1 < width) ? grid[r - 1][c + 1] : 0;
+                                grid[r][c] ^= (val_left ^ val_right);
+                            }
+                        }
+                    }
+                }
+                
+                core_builder_inplace(center);
+                for (let s = 0; s < steps; s++) {
+                    let dist = Math.floor(s / 2) + 1;
+                    let offset = (s % 2 === 0) ? -dist : dist;
+                    core_builder_inplace(center + offset);
+                }
+                
+                let c_start = width;
+                let c_end = -1;
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < width; c++) {
+                        if (grid[r][c] === 1) {
+                            if (c < c_start) c_start = c;
+                            if (c > c_end) c_end = c;
+                        }
+                    }
+                }
+                
+                let genLines = [];
+                if (c_end >= c_start) {
+                    for (let r = 0; r < rows; r++) {
+                        let rowStr = "";
+                        for (let c = c_start; c <= c_end; c++) {
+                            rowStr += grid[r][c].toString();
+                        }
+                        genLines.push(rowStr);
+                    }
+                } else {
+                    genLines = ["1"];
+                }
+                
+                loadText(genLines.join('\n'));
+                showNotification("ГЕНЕРАТОР: XORORA МАЯТНИК");
+                return;
+            }
+
+            let genLines = [seed];
+            for (let i = 1; i < rows; i++) {
+                let prev = genLines[i-1];
+                let nextStr = "";
+                
+                if (rule === "shift") {
+                    let padded = "0" + prev + "0"; 
+                    for(let j=0; j < padded.length - 1; j++) {
+                        let a = padded[j] === '1' ? 1 : 0;
+                        let b = padded[j+1] === '1' ? 1 : 0;
+                        nextStr += (a ^ b).toString(); 
+                    }
+                } else if (rule === "center") {
+                    let padded = "00" + prev + "00"; 
+                    for(let j=0; j < padded.length - 2; j++) {
+                        let left = padded[j] === '1' ? 1 : 0;
+                        let right = padded[j+2] === '1' ? 1 : 0;
+                        nextStr += (left ^ right).toString(); 
+                    }
+                }
+                
+                genLines.push(nextStr);
+            }
+            loadText(genLines.join('\n'));
+            showNotification(rule === "shift" ? "ГЕНЕРАТОР: СДВИГ" : "ГЕНЕРАТОР: ЦЕНТР");
+        });
+
+FIND:
+            setElChk('hideUnchangedCheck', snapshot.hideUnchanged !== undefined ? snapshot.hideUnchanged : false);
+            setElChk('fillXCheck', snapshot.fillX !== undefined ? snapshot.fillX : false);
+            setElChk('trailCheck', snapshot.trail !== undefined ? snapshot.trail : false);
+            setElChk('autoCascadeCheck', snapshot.autoCascade !== undefined ? snapshot.autoCascade : true);
+            setElChk('conglomerateCheck', snapshot.conglomerate !== undefined ? snapshot.conglomerate : false);
+REPLACE WITH:
+            setElChk('hideUnchangedCheck', snapshot.hideUnchanged !== undefined ? snapshot.hideUnchanged : false);
+            setElChk('fillXCheck', snapshot.fillX !== undefined ? snapshot.fillX : false);
+            setElChk('autoCascadeCheck', snapshot.autoCascade !== undefined ? snapshot.autoCascade : true);
+            setElChk('conglomerateCheck', snapshot.conglomerate !== undefined ? snapshot.conglomerate : false);
+
+FIND:
+                drumRadius: parseInt(safeValue('drumRadius', 5)),
+                fillX: safeChecked('fillXCheck', false),
+                trail: safeChecked('trailCheck', false),
+                autoCascade: safeChecked('autoCascadeCheck', true),
+                hideChanged: safeChecked('hideChangedCheck', false),
+REPLACE WITH:
+                drumRadius: parseInt(safeValue('drumRadius', 5)),
+                fillX: safeChecked('fillXCheck', false),
+                autoCascade: safeChecked('autoCascadeCheck', true),
+                hideChanged: safeChecked('hideChangedCheck', false),
+
+FIND:
+        safeBind('meetCenterCheck', 'change', function() { updateLogic(); });
+        safeBind('spacedCheck', 'change', function() { updateLogic(); });
+        safeBind('trailCheck', 'change', function() { updateLogic(); });
+        
+        safeBind('hideChangedCheck', 'change', function() { updateLogic(); });
+REPLACE WITH:
+        safeBind('meetCenterCheck', 'change', function() { updateLogic(); });
+        safeBind('spacedCheck', 'change', function() { updateLogic(); });
+        
+        safeBind('hideChangedCheck', 'change', function() { updateLogic(); });
+
+FIND:
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'trailCheck', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => { render(); });
+                el.addEventListener('change', () => { updateLogic(); });
+            }
+        });
+REPLACE WITH:
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => { render(); });
+                el.addEventListener('change', () => { updateLogic(); });
+            }
+        });
+
+FIND:
+        safeBind('loopStart', 'input', function() { enforceLoop(); updateLogic(); });
+        safeBind('loopEnd', 'input', function() { enforceLoop(); updateLogic(); });
+
+        safeBind('turboSlider', 'input', function() { document.getElementById('turboVal').textContent = this.value; });
+REPLACE WITH:
+        safeBind('loopStart', 'input', function() { enforceLoop(); updateLogic(); });
+        safeBind('loopEnd', 'input', function() { enforceLoop(); updateLogic(); });
+
+        safeBind('sierpRule', 'change', function() {
+            let rule = this.value;
+            let seedEl = document.getElementById('sierpSeed');
+            let rowsEl = document.getElementById('sierpRows');
+            let titleEl = document.getElementById('sierpTitle');
+            if (seedEl && rowsEl) {
+                if (rule === 'xorora') {
+                    if (titleEl) titleEl.textContent = "Фрактальный маятник:";
+                    seedEl.placeholder = "Шаги";
+                    seedEl.title = "Шаги маятника";
+                    if (seedEl.value === "1") seedEl.value = "64";
+                    rowsEl.title = "Высота (Строк)";
+                    rowsEl.placeholder = "Строк";
+                } else {
+                    if (titleEl) titleEl.textContent = "Генератор Серпинского:";
+                    seedEl.placeholder = "Сид";
+                    seedEl.title = "Сид";
+                    if (seedEl.value === "64") seedEl.value = "1";
+                    rowsEl.title = "Строки";
+                    rowsEl.placeholder = "Строки";
+                }
+            }
+        });
+
+        safeBind('turboSlider', 'input', function() { document.getElementById('turboVal').textContent = this.value; });
+
+============================================================
+⏱ Версия: v_002 | Дата: 19-06-2026_23-45-14 | Файл: Zerkalius-interleaving_v002.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving_v002.html.
+
+FIND:
+        <div class="control-group">
+            <div class="row-between" style="margin-bottom: 5px;">
+                <span class="lbl" id="sierpTitle" style="color:#00ff66; font-weight:bold;">Генератор Серпинского:</span>
+            </div>
+            <select id="sierpRule" style="margin-bottom: 5px; background: #222; color: #fff; border: 1px solid #444; padding: 2px; border-radius: 3px; width: 100%; font-size: 11px;">
+                <option value="shift">Форма: Сдвиг (Кирпичная кладка)</option>
+                <option value="center">Форма: Центр (Симметричная пирамида)</option>
+                <option value="xorora">Форма: XorRora Маятник</option>
+            </select>
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <input type="text" id="sierpSeed" value="1" title="Сид" placeholder="Сид" style="flex:1;">
+                <input type="number" id="sierpRows" value="128" title="Строки" placeholder="Строки" style="flex:1;">
+                <button id="sierpBtn" class="btn-action" style="flex:2; margin:0; color:#00ff66; border-color:#00ff66;">Сгенерировать</button>
+            </div>
+        </div>
+REPLACE WITH:
+        <div class="control-group">
+            <div class="row-between" style="margin-bottom: 5px;">
+                <span class="lbl" id="sierpTitle" style="color:#00ff66; font-weight:bold;">Генератор Серпинского:</span>
+            </div>
+            <select id="sierpRule" style="margin-bottom: 5px; background: #222; color: #fff; border: 1px solid #444; padding: 2px; border-radius: 3px; width: 100%; font-size: 11px;">
+                <option value="shift">Форма: Сдвиг (Кирпичная кладка)</option>
+                <option value="center">Форма: Центр (Симметричная пирамида)</option>
+                <option value="xorora">Форма: XorRora Маятник</option>
+            </select>
+            <div style="display:flex; gap:5px; margin-bottom: 1px;">
+                <span class="lbl" id="sierpSeedLbl" style="flex:1; text-align:center; font-size:9px; color:#888;">Сид</span>
+                <span class="lbl" id="sierpRowsLbl" style="flex:1; text-align:center; font-size:9px; color:#888;">Строки</span>
+                <span style="flex:2;"></span>
+            </div>
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <input type="text" id="sierpSeed" value="1" title="Сид" style="flex:1;">
+                <input type="number" id="sierpRows" value="128" title="Строки" style="flex:1;">
+                <button id="sierpBtn" class="btn-action" style="flex:2; margin:0; color:#00ff66; border-color:#00ff66;">Сгенерировать</button>
+            </div>
+        </div>
+
+FIND:
+        safeBind('sierpRule', 'change', function() {
+            let rule = this.value;
+            let seedEl = document.getElementById('sierpSeed');
+            let rowsEl = document.getElementById('sierpRows');
+            let titleEl = document.getElementById('sierpTitle');
+            if (seedEl && rowsEl) {
+                if (rule === 'xorora') {
+                    if (titleEl) titleEl.textContent = "Фрактальный маятник:";
+                    seedEl.placeholder = "Шаги";
+                    seedEl.title = "Шаги маятника";
+                    if (seedEl.value === "1") seedEl.value = "64";
+                    rowsEl.title = "Высота (Строк)";
+                    rowsEl.placeholder = "Строк";
+                } else {
+                    if (titleEl) titleEl.textContent = "Генератор Серпинского:";
+                    seedEl.placeholder = "Сид";
+                    seedEl.title = "Сид";
+                    if (seedEl.value === "64") seedEl.value = "1";
+                    rowsEl.title = "Строки";
+                    rowsEl.placeholder = "Строки";
+                }
+            }
+        });
+REPLACE WITH:
+        safeBind('sierpRule', 'change', function() {
+            let rule = this.value;
+            let seedEl = document.getElementById('sierpSeed');
+            let rowsEl = document.getElementById('sierpRows');
+            let titleEl = document.getElementById('sierpTitle');
+            let seedLbl = document.getElementById('sierpSeedLbl');
+            let rowsLbl = document.getElementById('sierpRowsLbl');
+            if (seedEl && rowsEl) {
+                if (rule === 'xorora') {
+                    if (titleEl) titleEl.textContent = "Фрактальный маятник:";
+                    if (seedLbl) seedLbl.textContent = "Шаги";
+                    if (rowsLbl) rowsLbl.textContent = "Строк";
+                    seedEl.title = "Шаги маятника";
+                    if (seedEl.value === "1") seedEl.value = "64";
+                    rowsEl.title = "Высота (Строк)";
+                } else {
+                    if (titleEl) titleEl.textContent = "Генератор Серпинского:";
+                    if (seedLbl) seedLbl.textContent = "Сид";
+                    if (rowsLbl) rowsLbl.textContent = "Строки";
+                    seedEl.title = "Сид";
+                    if (seedEl.value === "64") seedEl.value = "1";
+                    rowsEl.title = "Строки";
+                }
+            }
+        });
+
+============================================================
+⏱ Версия: v_003 | Дата: 19-06-2026_23-46-00 | Файл: Zerkalius-interleaving_v002.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving_v002.html.
+
+FIND:
+        safeBind('loopStart', 'input', function() { enforceLoop(); updateLogic(); });
+        safeBind('loopEnd', 'input', function() { enforceLoop(); updateLogic(); });
+
+        safeBind('nFactor', 'input', function() { 
+            let v = parseInt(this.value); 
+REPLACE WITH:
+        safeBind('loopStart', 'input', function() { enforceLoop(); updateLogic(); });
+        safeBind('loopEnd', 'input', function() { enforceLoop(); updateLogic(); });
+
+        safeBind('sierpRule', 'change', function() {
+            let rule = this.value;
+            let seedEl = document.getElementById('sierpSeed');
+            let rowsEl = document.getElementById('sierpRows');
+            let titleEl = document.getElementById('sierpTitle');
+            let seedLbl = document.getElementById('sierpSeedLbl');
+            let rowsLbl = document.getElementById('sierpRowsLbl');
+            if (seedEl && rowsEl) {
+                if (rule === 'xorora') {
+                    if (titleEl) titleEl.textContent = "Фрактальный маятник:";
+                    if (seedLbl) seedLbl.textContent = "Шаги";
+                    if (rowsLbl) rowsLbl.textContent = "Строк";
+                    seedEl.title = "Шаги маятника";
+                    if (seedEl.value === "1") seedEl.value = "64";
+                    rowsEl.title = "Высота (Строк)";
+                } else {
+                    if (titleEl) titleEl.textContent = "Генератор Серпинского:";
+                    if (seedLbl) seedLbl.textContent = "Сид";
+                    if (rowsLbl) rowsLbl.textContent = "Строки";
+                    seedEl.title = "Сид";
+                    if (seedEl.value === "64") seedEl.value = "1";
+                    rowsEl.title = "Строки";
+                }
+            }
+        });
+
+        safeBind('nFactor', 'input', function() { 
+            let v = parseInt(this.value);
+
+============================================================
+⏱ Версия: v_004 | Дата: 19-06-2026_23-49-28 | Файл: Zerkalius-interleaving_v002.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving_v002.html.
+
+FIND:
+<div style="margin-top: 3px; margin-bottom: 3px;">
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack" selected>💠 Режим: Центр</option>
+                    <option value="centerTrack2">💠 Режим: Идеальный Центр</option>
+                </select>
+            </div>
+REPLACE WITH:
+<div style="margin-top: 3px; margin-bottom: 3px;">
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack">💠 Режим: Центр</option>
+                    <option value="centerTrack2" selected>💠 Режим: Идеальный Центр</option>
+                </select>
+            </div>
+
+============================================================
+⏱ Версия: v_005 | Дата: 20-06-2026_00-07-24 | Файл: Zerkalius-interleaving_v002.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving.html.
+
+FIND:
+            <div class="row-between">
+                <span class="lbl">Интервал: <span class="val" id="lhVal">1.0</span></span>
+                <label style="display:flex; align-items:center;">
+                    <input type="checkbox" id="boldCheck"> <span class="lbl">Жирный шрифт</span>
+                </label>
+            </div>
+            <input type="range" id="lhSlider" min="0.5" max="3.0" step="0.1" value="1.0">
+REPLACE WITH:
+            <div class="row-between">
+                <span class="lbl">Интервал Y: <span class="val" id="lhVal">1.0</span></span>
+                <span class="lbl">Интервал X: <span class="val" id="cwVal">1.0</span></span>
+            </div>
+            <div style="display:flex; gap:10px; margin-bottom: 5px;">
+                <input type="range" id="lhSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="flex:1;">
+                <input type="range" id="cwSlider" min="0.1" max="2.5" step="0.05" value="1.0" style="flex:1;">
+            </div>
+            <div class="row-between">
+                <label style="display:flex; align-items:center;">
+                    <input type="checkbox" id="boldCheck"> <span class="lbl">Жирный шрифт</span>
+                </label>
+            </div>
+
+FIND:
+function getGridMetrics() {
+            const canvas = document.getElementById('screenCanvas');
+            const ctx = canvas ? canvas.getContext('2d') : null;
+            if (!canvas || !ctx || canvas.width === 0) return null;
+
+            let fontSize = parseInt(safeValue('fontSlider', 16));
+            let lh = parseFloat(safeValue('lhSlider', 1.0));
+            let screenRows = parseInt(safeValue('screenSlider', 64));
+            
+            ctx.font = `${safeChecked('boldCheck', false) ? 'bold' : 'normal'} ${fontSize}px ${safeValue('fontSelect', 'monospace')}`;
+            let charWidth = ctx.measureText('0').width;
+            let lineHeight = fontSize * lh;
+REPLACE WITH:
+function getGridMetrics() {
+            const canvas = document.getElementById('screenCanvas');
+            const ctx = canvas ? canvas.getContext('2d') : null;
+            if (!canvas || !ctx || canvas.width === 0) return null;
+
+            let fontSize = parseInt(safeValue('fontSlider', 16));
+            let lh = parseFloat(safeValue('lhSlider', 1.0));
+            let cw = parseFloat(safeValue('cwSlider', 1.0));
+            let screenRows = parseInt(safeValue('screenSlider', 64));
+            
+            ctx.font = `${safeChecked('boldCheck', false) ? 'bold' : 'normal'} ${fontSize}px ${safeValue('fontSelect', 'monospace')}`;
+            let charWidth = ctx.measureText('0').width * cw;
+            let lineHeight = fontSize * lh;
+
+FIND:
+            setElChk('hideChangedCheck', snapshot.hideChanged !== undefined ? snapshot.hideChanged : false);
+            setElChk('hideUnchangedCheck', snapshot.hideUnchanged !== undefined ? snapshot.hideUnchanged : false);
+            setElChk('fillXCheck', snapshot.fillX !== undefined ? snapshot.fillX : false);
+            setElChk('autoCascadeCheck', snapshot.autoCascade !== undefined ? snapshot.autoCascade : true);
+REPLACE WITH:
+            setElChk('hideChangedCheck', snapshot.hideChanged !== undefined ? snapshot.hideChanged : false);
+            setElChk('hideUnchangedCheck', snapshot.hideUnchanged !== undefined ? snapshot.hideUnchanged : false);
+            setElChk('fillXCheck', snapshot.fillX !== undefined ? snapshot.fillX : false);
+            if (snapshot.cw !== undefined) setElVal('cwSlider', snapshot.cw);
+            setElChk('autoCascadeCheck', snapshot.autoCascade !== undefined ? snapshot.autoCascade : true);
+
+FIND:
+                banks: STATE.banks,
+                activeBankIndex: STATE.activeBankIndex,
+                manualFrame: STATE.manualFrame,
+                sierpRule: safeValue('sierpRule', 'shift')
+            };
+REPLACE WITH:
+                banks: STATE.banks,
+                activeBankIndex: STATE.activeBankIndex,
+                manualFrame: STATE.manualFrame,
+                sierpRule: safeValue('sierpRule', 'shift'),
+                cw: parseFloat(safeValue('cwSlider', 1.0))
+            };
+
+FIND:
+        safeBind('turboSlider', 'input', function() { document.getElementById('turboVal').textContent = this.value; });
+        safeBind('fontSlider', 'input', function() { document.getElementById('fontVal').textContent = this.value + 'px'; render(); });
+        safeBind('screenSlider', 'input', function() { document.getElementById('screenVal').textContent = this.value; render(); });
+        safeBind('lhSlider', 'input', function() { document.getElementById('lhVal').textContent = this.value; render(); });
+REPLACE WITH:
+        safeBind('turboSlider', 'input', function() { document.getElementById('turboVal').textContent = this.value; });
+        safeBind('fontSlider', 'input', function() { document.getElementById('fontVal').textContent = this.value + 'px'; render(); });
+        safeBind('screenSlider', 'input', function() { document.getElementById('screenVal').textContent = this.value; render(); });
+        safeBind('lhSlider', 'input', function() { document.getElementById('lhVal').textContent = this.value; render(); });
+        safeBind('cwSlider', 'input', function() { document.getElementById('cwVal').textContent = this.value; render(); });
+
+FIND:
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck'].forEach(id => {
+REPLACE WITH:
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'cwSlider', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck'].forEach(id => {
+
+FIND:
+            loadText(STATE.banks[0].lines);
+            
+            resizeCanvas();
+            render();
+        };
+REPLACE WITH:
+            loadText(STATE.banks[0].lines);
+            
+            const sierpRuleEl = document.getElementById('sierpRule');
+            if (sierpRuleEl) sierpRuleEl.dispatchEvent(new Event('change'));
+
+            resizeCanvas();
+            render();
+        };
+
+============================================================
+⏱ Версия: v_006 | Дата: 20-06-2026_00-20-28 | Файл: Zerkalius-interleaving_v002.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving_v002.html.
+
+FIND:
+            <div class="row-between">
+                <span class="lbl">Интервал: <span class="val" id="lhVal">1.0</span></span>
+                <label style="display:flex; align-items:center;">
+                    <input type="checkbox" id="boldCheck"> <span class="lbl">Жирный шрифт</span>
+                </label>
+            </div>
+            <input type="range" id="lhSlider" min="0.5" max="3.0" step="0.1" value="1.0">
+REPLACE WITH:
+            <div class="row-between">
+                <span class="lbl">Интервал Y: <span class="val" id="lhVal">1.0</span></span>
+                <span class="lbl">Интервал X: <span class="val" id="cwVal">1.0</span></span>
+            </div>
+            <div style="display:flex; gap:10px; margin-bottom: 5px;">
+                <input type="range" id="lhSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="flex:1;">
+                <input type="range" id="cwSlider" min="0.1" max="2.5" step="0.05" value="1.0" style="flex:1;">
+            </div>
+            <div class="row-between">
+                <label style="display:flex; align-items:center;">
+                    <input type="checkbox" id="boldCheck"> <span class="lbl">Жирный шрифт</span>
+                </label>
+            </div>
+
+FIND:
+function getGridMetrics() {
+            const canvas = document.getElementById('screenCanvas');
+            const ctx = canvas ? canvas.getContext('2d') : null;
+            if (!canvas || !ctx || canvas.width === 0) return null;
+
+            let fontSize = parseInt(safeValue('fontSlider', 16));
+            let lh = parseFloat(safeValue('lhSlider', 1.0));
+            let screenRows = parseInt(safeValue('screenSlider', 64));
+            
+            ctx.font = `${safeChecked('boldCheck', false) ? 'bold' : 'normal'} ${fontSize}px ${safeValue('fontSelect', 'monospace')}`;
+            let charWidth = ctx.measureText('0').width;
+            let lineHeight = fontSize * lh;
+REPLACE WITH:
+function getGridMetrics() {
+            const canvas = document.getElementById('screenCanvas');
+            const ctx = canvas ? canvas.getContext('2d') : null;
+            if (!canvas || !ctx || canvas.width === 0) return null;
+
+            let fontSize = parseInt(safeValue('fontSlider', 16));
+            let lh = parseFloat(safeValue('lhSlider', 1.0));
+            let cw = parseFloat(safeValue('cwSlider', 1.0));
+            let screenRows = parseInt(safeValue('screenSlider', 64));
+            
+            ctx.font = `${safeChecked('boldCheck', false) ? 'bold' : 'normal'} ${fontSize}px ${safeValue('fontSelect', 'monospace')}`;
+            let charWidth = ctx.measureText('0').width * cw;
+            let lineHeight = fontSize * lh;
+
+FIND:
+            setElChk('hideChangedCheck', snapshot.hideChanged !== undefined ? snapshot.hideChanged : false);
+            setElChk('hideUnchangedCheck', snapshot.hideUnchanged !== undefined ? snapshot.hideUnchanged : false);
+            setElChk('fillXCheck', snapshot.fillX !== undefined ? snapshot.fillX : false);
+            setElChk('autoCascadeCheck', snapshot.autoCascade !== undefined ? snapshot.autoCascade : true);
+REPLACE WITH:
+            setElChk('hideChangedCheck', snapshot.hideChanged !== undefined ? snapshot.hideChanged : false);
+            setElChk('hideUnchangedCheck', snapshot.hideUnchanged !== undefined ? snapshot.hideUnchanged : false);
+            setElChk('fillXCheck', snapshot.fillX !== undefined ? snapshot.fillX : false);
+            if (snapshot.cw !== undefined) setElVal('cwSlider', snapshot.cw);
+            setElChk('autoCascadeCheck', snapshot.autoCascade !== undefined ? snapshot.autoCascade : true);
+
+FIND:
+                banks: STATE.banks,
+                activeBankIndex: STATE.activeBankIndex,
+                manualFrame: STATE.manualFrame,
+                sierpRule: safeValue('sierpRule', 'shift')
+            };
+REPLACE WITH:
+                banks: STATE.banks,
+                activeBankIndex: STATE.activeBankIndex,
+                manualFrame: STATE.manualFrame,
+                sierpRule: safeValue('sierpRule', 'shift'),
+                cw: parseFloat(safeValue('cwSlider', 1.0))
+            };
+
+FIND:
+        safeBind('turboSlider', 'input', function() { document.getElementById('turboVal').textContent = this.value; });
+        safeBind('fontSlider', 'input', function() { document.getElementById('fontVal').textContent = this.value + 'px'; render(); });
+        safeBind('screenSlider', 'input', function() { document.getElementById('screenVal').textContent = this.value; render(); });
+        safeBind('lhSlider', 'input', function() { document.getElementById('lhVal').textContent = this.value; render(); });
+REPLACE WITH:
+        safeBind('turboSlider', 'input', function() { document.getElementById('turboVal').textContent = this.value; });
+        safeBind('fontSlider', 'input', function() { document.getElementById('fontVal').textContent = this.value + 'px'; render(); });
+        safeBind('screenSlider', 'input', function() { document.getElementById('screenVal').textContent = this.value; render(); });
+        safeBind('lhSlider', 'input', function() { document.getElementById('lhVal').textContent = this.value; render(); });
+        safeBind('cwSlider', 'input', function() { document.getElementById('cwVal').textContent = this.value; render(); });
+
+FIND:
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck'].forEach(id => {
+REPLACE WITH:
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'cwSlider', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck'].forEach(id => {
+
+FIND:
+            loadText(STATE.banks[0].lines);
+            
+            resizeCanvas();
+            render();
+        };
+REPLACE WITH:
+            loadText(STATE.banks[0].lines);
+            
+            const sierpRuleEl = document.getElementById('sierpRule');
+            if (sierpRuleEl) sierpRuleEl.dispatchEvent(new Event('change'));
+
+            resizeCanvas();
+            render();
+        };
+
+============================================================
+⏱ Версия: v_007 | Дата: 20-06-2026_13-48-51 | Файл: Zerkalius-interleaving_v002.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving_v002.html.
+
+FIND:
+        window.onload = function() {
+            let b1 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base1 : `1\n11\n111`;
+            let p1 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.pat1  : `1\n11\n111`;
+            let b2 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base2 : `\\\n\\\\`;
+REPLACE WITH:
+        window.onload = function() {
+            safeBind('sierpRule', 'change', function() {
+                let rule = this.value;
+                let seedEl = document.getElementById('sierpSeed');
+                let rowsEl = document.getElementById('sierpRows');
+                let titleEl = document.getElementById('sierpTitle');
+                let seedLbl = document.getElementById('sierpSeedLbl');
+                let rowsLbl = document.getElementById('sierpRowsLbl');
+                if (seedEl && rowsEl) {
+                    if (rule === 'xorora') {
+                        if (titleEl) titleEl.textContent = "Фрактальный маятник:";
+                        if (seedLbl) seedLbl.textContent = "Шаги";
+                        if (rowsLbl) rowsLbl.textContent = "Строк";
+                        seedEl.title = "Шаги маятника";
+                        if (seedEl.value === "1") seedEl.value = "64";
+                        rowsEl.title = "Высота (Строк)";
+                    } else {
+                        if (titleEl) titleEl.textContent = "Генератор Серпинского:";
+                        if (seedLbl) seedLbl.textContent = "Сид";
+                        if (rowsLbl) rowsLbl.textContent = "Строки";
+                        seedEl.title = "Сид";
+                        if (seedEl.value === "64") seedEl.value = "1";
+                        rowsEl.title = "Строки";
+                    }
+                }
+            });
+
+            const sierpRuleEl = document.getElementById('sierpRule');
+            if (sierpRuleEl) sierpRuleEl.dispatchEvent(new Event('change'));
+
+            let b1 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base1 : `1\n11\n111`;
+            let p1 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.pat1  : `1\n11\n111`;
+            let b2 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base2 : `\\\n\\\\`;
+
+============================================================
+⏱ Версия: v_008 | Дата: 20-06-2026_13-53-22 | Файл: Zerkalius-interleaving_v002.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving_v002.html.
+
+FIND:
+        window.onload = function() {
+            let b1 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base1 : `1\n11\n111`;
+            let p1 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.pat1  : `1\n11\n111`;
+            let b2 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base2 : `\\\n\\\\`;
+REPLACE WITH:
+        window.onload = function() {
+            safeBind('sierpRule', 'change', function() {
+                let rule = this.value;
+                let seedEl = document.getElementById('sierpSeed');
+                let rowsEl = document.getElementById('sierpRows');
+                let titleEl = document.getElementById('sierpTitle');
+                let seedLbl = document.getElementById('sierpSeedLbl');
+                let rowsLbl = document.getElementById('sierpRowsLbl');
+                if (seedEl && rowsEl) {
+                    if (rule === 'xorora') {
+                        if (titleEl) titleEl.textContent = "Фрактальный маятник:";
+                        if (seedLbl) seedLbl.textContent = "Шаги";
+                        if (rowsLbl) rowsLbl.textContent = "Строк";
+                        seedEl.title = "Шаги маятника";
+                        if (seedEl.value === "1") seedEl.value = "64";
+                        rowsEl.title = "Высота (Строк)";
+                    } else {
+                        if (titleEl) titleEl.textContent = "Генератор Серпинского:";
+                        if (seedLbl) seedLbl.textContent = "Сид";
+                        if (rowsLbl) rowsLbl.textContent = "Строки";
+                        seedEl.title = "Сид";
+                        if (seedEl.value === "64") seedEl.value = "1";
+                        rowsEl.title = "Строки";
+                    }
+                }
+            });
+
+            const sierpRuleEl = document.getElementById('sierpRule');
+            if (sierpRuleEl) sierpRuleEl.dispatchEvent(new Event('change'));
+
+            let b1 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base1 : `1\n11\n111`;
+            let p1 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.pat1  : `1\n11\n111`;
+            let b2 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base2 : `\\\n\\\\`;
+
+============================================================
+⏱ Версия: v_009 | Дата: 20-06-2026_13-53-31 | Файл: Zerkalius-interleaving_v002.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving_v002.html.
+
+FIND:
+            loadText(STATE.banks[0].lines);
+            
+            const sierpRuleEl = document.getElementById('sierpRule');
+            if (sierpRuleEl) sierpRuleEl.dispatchEvent(new Event('change'));
+
+            resizeCanvas();
+            render();
+        };
+REPLACE WITH:
+            loadText(STATE.banks[0].lines);
+            
+            resizeCanvas();
+            render();
+        };
+
+============================================================
+⏱ Версия: v_010 | Дата: 20-06-2026_13-59-59 | Файл: Zerkalius-interleaving_v002.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving_v002.html.
+
+FIND:
+        const GCD = (a, b) => { while (b !== 0) { let temp = b; b = a % b; a = temp; } return a; };
+        const LCM = (a, b) => { return (a === 0 || b === 0) ? 0 : (a / GCD(a, b)) * b; };
+        const mod = (n, m) => ((n % m) + m) % m; 
+REPLACE WITH:
+        const GCD = (a, b) => { 
+            if (!isFinite(a) || isNaN(a) || !isFinite(b) || isNaN(b)) return 1;
+            while (b !== 0) { 
+                let temp = b; 
+                b = a % b; 
+                if (isNaN(b)) return 1; 
+                a = temp; 
+            } 
+            return a; 
+        };
+        const LCM = (a, b) => { 
+            if (!isFinite(a) || isNaN(a) || !isFinite(b) || isNaN(b)) return Infinity;
+            return (a === 0 || b === 0) ? 0 : (a / GCD(a, b)) * b; 
+        };
+        const mod = (n, m) => ((n % m) + m) % m;
+
+============================================================
+⏱ Версия: v_011 | Дата: 20-06-2026_14-07-21 | Файл: Zerkalius-interleaving_v002.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving_v002.html.
+
+FIND:
+            let scrVal = Math.min(STATE.lines.length, 200);
+            const scrSlider = document.getElementById('screenSlider');
+            if (scrSlider) {
+                scrSlider.value = scrVal;
+                let scrValEl = document.getElementById('screenVal');
+                if (scrValEl) scrValEl.textContent = scrVal;
+            }
+
+            enforceLoop();
+            calculateState(false);
+            updatePatternBackdrop();
+            render();
+        }
+REPLACE WITH:
+            const scrSlider = document.getElementById('screenSlider');
+            if (scrSlider) {
+                scrSlider.max = Math.max(200, STATE.lines.length);
+                scrSlider.value = STATE.lines.length;
+                let scrValEl = document.getElementById('screenVal');
+                if (scrValEl) scrValEl.textContent = STATE.lines.length;
+            }
+
+            enforceLoop();
+            calculateState(false);
+            updatePatternBackdrop();
+            resetPositionWithHeightScale(1.0, false);
+        }
+
+============================================================
+⏱ Версия: v_012 | Дата: 20-06-2026_14-14-27 | Файл: Zerkalius-interleaving_v002.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving_v002.html.
+
+FIND:
+        <div class="player-panel">
+            
+            <div class="player-group">
+                <div class="row-between">
+                    <span class="lbl">Масштаб: <span class="val" id="fontVal">16px</span></span>
+                    <span class="lbl">Экран: <span class="val" id="screenVal">64</span></span>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <input type="range" id="fontSlider" min="5" max="100" value="16">
+                    <input type="range" id="screenSlider" min="1" max="200" value="64">
+                </div>
+
+                <div class="row-between">
+                    <span class="lbl">Интервал Y: <span class="val" id="lhVal">1.0</span></span>
+                    <span class="lbl">Интервал X: <span class="val" id="cwVal">1.0</span></span>
+                </div>
+                <div style="display:flex; gap:10px; margin-bottom: 5px;">
+                    <input type="range" id="lhSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="flex:1;">
+                    <input type="range" id="cwSlider" min="0.1" max="2.5" step="0.05" value="1.0" style="flex:1;">
+                </div>
+                <div class="row-between">
+                    <label style="display:flex; align-items:center;">
+                        <input type="checkbox" id="boldCheck"> <span class="lbl">Жирный шрифт</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="player-group">
+                <div class="row-between">
+                    <button id="reverseBtn" class="btn-action" style="margin:0; width: 48%;">🔃 Вперед</button>
+                    <button id="clearCanvasBtn" class="btn-action btn-danger" style="margin:0; width: 48%;">🧹 Очистить</button>
+                </div>
+            </div>
+REPLACE WITH:
+        <div class="player-panel">
+            
+            <div class="player-group">
+                <div class="row-between">
+                    <span class="lbl">Масштаб: <span class="val" id="fontVal">16px</span></span>
+                    <span class="lbl">Экран: <span class="val" id="screenVal">64</span></span>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <input type="range" id="fontSlider" min="5" max="100" value="16">
+                    <input type="range" id="screenSlider" min="1" max="200" value="64">
+                </div>
+
+                <div class="row-between">
+                    <span class="lbl">Интервал Y: <span class="val" id="lhVal">1.0</span></span>
+                    <span class="lbl">Интервал X: <span class="val" id="cwVal">1.0</span></span>
+                </div>
+                <div style="display:flex; gap:10px; margin-bottom: 5px;">
+                    <input type="range" id="lhSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="flex:1;">
+                    <input type="range" id="cwSlider" min="0.1" max="2.5" step="0.05" value="1.0" style="flex:1;">
+                </div>
+                <div class="row-between">
+                    <label style="display:flex; align-items:center;">
+                        <input type="checkbox" id="boldCheck"> <span class="lbl">Жирный шрифт</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="player-group">
+                <div class="row-between" style="margin-bottom: 4px;">
+                    <button id="playerModeBtn" class="btn-action" style="margin:0; width: 100%; color:#00ccff; border-color:#00ccff;">🎬 Функция: Симуляция (XOR)</button>
+                </div>
+                <div class="row-between">
+                    <button id="reverseBtn" class="btn-action" style="margin:0; width: 48%;">🔃 Вперед</button>
+                    <button id="clearCanvasBtn" class="btn-action btn-danger" style="margin:0; width: 48%;">🧹 Очистить</button>
+                </div>
+            </div>
+
+FIND:
+        const STATE = {
+            lines: [],          
+            globalStep: 0,
+            maxCycle: 1,
+            isPlaying: false,
+            isReverse: false,
+            lastTick: 0,
+            rafId: null,
+            foundPatterns: new Set(),
+            foundPatternsMetadata: new Map(), 
+            flashes: new Map(), 
+            
+            lastFindMethod: "Ожидание...", 
+            
+            offsetX: 0,
+            offsetY: 0,
+REPLACE WITH:
+        const STATE = {
+            lines: [],          
+            globalStep: 0,
+            maxCycle: 1,
+            isPlaying: false,
+            isReverse: false,
+            lastTick: 0,
+            rafId: null,
+            foundPatterns: new Set(),
+            foundPatternsMetadata: new Map(), 
+            flashes: new Map(), 
+            
+            lastFindMethod: "Ожидание...", 
+            
+            playerMode: "simulate", 
+            rowScrollOffset: 0, 
+
+            offsetX: 0,
+            offsetY: 0,
+
+FIND:
+            let renderCount = Math.min(STATE.lines.length, screenRows);
+            let totalHeight = renderCount * lineHeight;
+            
+            let startY = ((canvas.height - totalHeight) / 2) + STATE.offsetY + STATE.autoOffsetY;
+            let baseX = (canvas.width / 2) + STATE.offsetX + STATE.autoOffsetX;
+            
+            let startIndex = 0;
+            
+            return { charWidth, lineHeight, renderCount, totalHeight, startY, baseX, startIndex };
+REPLACE WITH:
+            let startIndex = STATE.rowScrollOffset || 0;
+            if (startIndex < 0) startIndex = 0;
+            if (startIndex >= STATE.lines.length) startIndex = Math.max(0, STATE.lines.length - 1);
+
+            let renderCount = Math.min(STATE.lines.length - startIndex, screenRows);
+            let totalHeight = renderCount * lineHeight;
+            
+            let startY = ((canvas.height - totalHeight) / 2) + STATE.offsetY + STATE.autoOffsetY;
+            let baseX = (canvas.width / 2) + STATE.offsetX + STATE.autoOffsetX;
+            
+            return { charWidth, lineHeight, renderCount, totalHeight, startY, baseX, startIndex };
+
+FIND:
+            if (delta >= speedMs || speedMs <= 1) {
+                STATE.lastTick = timestamp - (speedMs > 1 ? delta % speedMs : 0);
+                
+                let stepDelta = STATE.isReverse ? -turbo : turbo;
+                STATE.globalStep += stepDelta;
+                
+                STATE.lines.forEach(l => {
+                    if (l.isActive) l.localStep += stepDelta;
+                });
+
+                if (safeChecked('oscXCheck')) {
+REPLACE WITH:
+            if (delta >= speedMs || speedMs <= 1) {
+                STATE.lastTick = timestamp - (speedMs > 1 ? delta % speedMs : 0);
+                
+                let stepDelta = STATE.isReverse ? -turbo : turbo;
+                
+                if (STATE.playerMode === "scroll") {
+                    STATE.rowScrollOffset += stepDelta;
+                    if (STATE.rowScrollOffset < 0) STATE.rowScrollOffset = 0;
+                    if (STATE.rowScrollOffset >= STATE.lines.length) {
+                        STATE.rowScrollOffset = Math.max(0, STATE.lines.length - 1);
+                    }
+                } else {
+                    STATE.globalStep += stepDelta;
+                    STATE.lines.forEach(l => {
+                        if (l.isActive) l.localStep += stepDelta;
+                    });
+                }
+
+                if (safeChecked('oscXCheck')) {
+
+FIND:
+        safeBind('stopBtn', 'click', () => { 
+            STATE.isPlaying = false; STATE.globalStep = 0; STATE.foundPatterns.clear(); STATE.foundPatternsMetadata.clear(); STATE.flashes.clear();
+            STATE.autoOffsetX = 0; STATE.autoOffsetY = 0;
+            cancelAnimationFrame(STATE.rafId); UI.playBtn.innerHTML = '▶ Play'; UI.playBtn.style.background = '#00ff66'; 
+            STATE.currentTargetPatternIdx = 1;
+            STATE.lastFindMethod = "Ожидание...";
+            
+            STATE.lines.forEach((line, idx) => {
+                line.localStep = 0;
+                line.isActive = (idx === 0);
+            });
+
+            updatePatternBackdrop(); updateLogic(); showNotification("СБРОС"); 
+        });
+        
+        safeBind('clearMemoryBtn', 'click', () => { 
+REPLACE WITH:
+        safeBind('stopBtn', 'click', () => { 
+            STATE.isPlaying = false; STATE.globalStep = 0; STATE.foundPatterns.clear(); STATE.foundPatternsMetadata.clear(); STATE.flashes.clear();
+            STATE.autoOffsetX = 0; STATE.autoOffsetY = 0;
+            STATE.rowScrollOffset = 0;
+            cancelAnimationFrame(STATE.rafId); UI.playBtn.innerHTML = '▶ Play'; UI.playBtn.style.background = '#00ff66'; 
+            STATE.currentTargetPatternIdx = 1;
+            STATE.lastFindMethod = "Ожидание...";
+            
+            STATE.lines.forEach((line, idx) => {
+                line.localStep = 0;
+                line.isActive = (idx === 0);
+            });
+
+            updatePatternBackdrop(); updateLogic(); showNotification("СБРОС"); 
+        });
+        
+        safeBind('clearMemoryBtn', 'click', () => { 
+
+FIND:
+        safeBind('clearCanvasBtn', 'click', () => {
+            STATE.lines = [];
+            STATE.globalStep = 0;
+            STATE.autoOffsetX = 0; STATE.autoOffsetY = 0;
+            STATE.foundPatterns.clear();
+            STATE.foundPatternsMetadata.clear();
+STATE.lastBlobs = [];
+STATE.nextBlobColorId = 1;
+            STATE.interleavingLog = [];
+            STATE.currentTargetPatternIdx = 1;
+            STATE.lastFindMethod = "Ожидание...";
+            cancelAnimationFrame(STATE.rafId);
+            UI.playBtn.innerHTML = '▶ Play';
+            UI.playBtn.style.background = '#00ff66';
+            STATE.isPlaying = false;
+            
+            updatePatternBackdrop();
+            render();
+            showNotification("ХОЛСТ ОЧИЩЕН");
+        });
+        
+        safeBind('prevBtn', 'click', () => { 
+            let turbo = parseInt(safeValue('turboSlider', 1)) || 1;
+            STATE.globalStep -= turbo; 
+            STATE.lines.forEach(l => { if (l.isActive) l.localStep -= turbo; });
+            enforceLoop(); updateLogic(); 
+        });
+        safeBind('nextBtn', 'click', () => { 
+            let turbo = parseInt(safeValue('turboSlider', 1)) || 1;
+            STATE.globalStep += turbo; 
+            STATE.lines.forEach(l => { if (l.isActive) l.localStep += turbo; });
+            enforceLoop(); updateLogic(); 
+        });
+REPLACE WITH:
+        safeBind('clearCanvasBtn', 'click', () => {
+            STATE.lines = [];
+            STATE.globalStep = 0;
+            STATE.rowScrollOffset = 0;
+            STATE.autoOffsetX = 0; STATE.autoOffsetY = 0;
+            STATE.foundPatterns.clear();
+            STATE.foundPatternsMetadata.clear();
+STATE.lastBlobs = [];
+STATE.nextBlobColorId = 1;
+            STATE.interleavingLog = [];
+            STATE.currentTargetPatternIdx = 1;
+            STATE.lastFindMethod = "Ожидание...";
+            cancelAnimationFrame(STATE.rafId);
+            UI.playBtn.innerHTML = '▶ Play';
+            UI.playBtn.style.background = '#00ff66';
+            STATE.isPlaying = false;
+            
+            updatePatternBackdrop();
+            render();
+            showNotification("ХОЛСТ ОЧИЩЕН");
+        });
+
+        safeBind('playerModeBtn', 'click', function() {
+            if (STATE.playerMode === "simulate") {
+                STATE.playerMode = "scroll";
+                this.textContent = "🎬 Функция: Скроллинг (Строки)";
+                this.style.color = "#ffcc00";
+                this.style.borderColor = "#ffcc00";
+                showNotification("РЕЖИМ: СКРОЛЛИНГ СТРОК");
+            } else {
+                STATE.playerMode = "simulate";
+                this.textContent = "🎬 Функция: Симуляция (XOR)";
+                this.style.color = "#00ccff";
+                this.style.borderColor = "#00ccff";
+                showNotification("РЕЖИМ: СИМУЛЯЦИЯ ШАГОВ");
+            }
+            render();
+        });
+        
+        safeBind('prevBtn', 'click', () => { 
+            let turbo = parseInt(safeValue('turboSlider', 1)) || 1;
+            if (STATE.playerMode === "scroll") {
+                STATE.rowScrollOffset -= turbo;
+                if (STATE.rowScrollOffset < 0) STATE.rowScrollOffset = 0;
+            } else {
+                STATE.globalStep -= turbo; 
+                STATE.lines.forEach(l => { if (l.isActive) l.localStep -= turbo; });
+                enforceLoop();
+            }
+            updateLogic(); 
+        });
+        safeBind('nextBtn', 'click', () => { 
+            let turbo = parseInt(safeValue('turboSlider', 1)) || 1;
+            if (STATE.playerMode === "scroll") {
+                STATE.rowScrollOffset += turbo;
+                if (STATE.rowScrollOffset >= STATE.lines.length) {
+                    STATE.rowScrollOffset = Math.max(0, STATE.lines.length - 1);
+                }
+            } else {
+                STATE.globalStep += turbo; 
+                STATE.lines.forEach(l => { if (l.isActive) l.localStep += turbo; });
+                enforceLoop();
+            }
+            updateLogic(); 
+        });
+
+============================================================
+⏱ Версия: v_013 | Дата: 20-06-2026_14-15-21 | Файл: Zerkalius-interleaving_v002.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving_v002.html.
+
+FIND:
+            <div class="player-group">
+                <div class="row-between">
+                    <button id="reverseBtn" class="btn-action" style="margin:0; width: 48%;">🔃 Вперед</button>
+                    <button id="clearCanvasBtn" class="btn-action btn-danger" style="margin:0; width: 48%;">🧹 Очистить</button>
+                </div>
+            </div>
+REPLACE WITH:
+            <div class="player-group">
+                <div class="row-between" style="margin-bottom: 4px;">
+                    <button id="playerModeBtn" class="btn-action" style="margin:0; width: 100%; color:#00ccff; border-color:#00ccff;">🎬 Функция: Симуляция (XOR)</button>
+                </div>
+                <div class="row-between">
+                    <button id="reverseBtn" class="btn-action" style="margin:0; width: 48%;">🔃 Вперед</button>
+                    <button id="clearCanvasBtn" class="btn-action btn-danger" style="margin:0; width: 48%;">🧹 Очистить</button>
+                </div>
+            </div>
+
+============================================================
+⏱ Версия: v_014 | Дата: 20-06-2026_14-16-39 | Файл: Zerkalius-interleaving_v002.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving_v002.html.
+
+FIND:
+            <div class="player-group">
+                <div class="row-between">
+                    <button id="reverseBtn" class="btn-action" style="margin:0; width: 48%;">🔃 Вперед</button>
+                    <button id="clearCanvasBtn" class="btn-action btn-danger" style="margin:0; width: 48%;">🧹 Очистить</button>
+                </div>
+            </div>
+REPLACE WITH:
+            <div class="player-group">
+                <div class="row-between" style="margin-bottom: 4px;">
+                    <button id="playerModeBtn" class="btn-action" style="margin:0; width: 100%; color:#00ccff; border-color:#00ccff;">🎬 Функция: Симуляция (XOR)</button>
+                </div>
+                <div class="row-between">
+                    <button id="reverseBtn" class="btn-action" style="margin:0; width: 48%;">🔃 Вперед</button>
+                    <button id="clearCanvasBtn" class="btn-action btn-danger" style="margin:0; width: 48%;">🧹 Очистить</button>
+                </div>
+            </div>
+
+============================================================
+⏱ Версия: v_015 | Дата: 20-06-2026_14-17-33 | Файл: Zerkalius-interleaving_v002.html
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-interleaving_v002.html.
+
+FIND:
+            const sierpRuleEl = document.getElementById('sierpRule');
+            if (sierpRuleEl) sierpRuleEl.dispatchEvent(new Event('change'));
+
+            let b1 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base1 : `1\n11\n111`;
+REPLACE WITH:
+            const sierpRuleEl = document.getElementById('sierpRule');
+            if (sierpRuleEl) sierpRuleEl.dispatchEvent(new Event('change'));
+
+            // Динамическое создание и встраивание кнопки переключения функции плеера
+            const revBtn = document.getElementById('reverseBtn');
+            if (revBtn) {
+                const parentGroup = revBtn.closest('.player-group');
+                if (parentGroup) {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'row-between';
+                    rowDiv.style.marginBottom = '4px';
+                    rowDiv.innerHTML = `<button id="playerModeBtn" class="btn-action" style="margin:0; width: 100%; color:#00ccff; border-color:#00ccff;">🎬 Функция: Симуляция (XOR)</button>`;
+                    parentGroup.insertBefore(rowDiv, parentGroup.firstElementChild);
+                    
+                    safeBind('playerModeBtn', 'click', function() {
+                        if (STATE.playerMode === "simulate") {
+                            STATE.playerMode = "scroll";
+                            this.textContent = "🎬 Функция: Скроллинг (Строки)";
+                            this.style.color = "#ffcc00";
+                            this.style.borderColor = "#ffcc00";
+                            showNotification("РЕЖИМ: СКРОЛЛИНГ СТРОК");
+                        } else {
+                            STATE.playerMode = "simulate";
+                            this.textContent = "🎬 Функция: Симуляция (XOR)";
+                            this.style.color = "#00ccff";
+                            this.style.borderColor = "#00ccff";
+                            showNotification("РЕЖИМ: СИМУЛЯЦИЯ ШАГОВ");
+                        }
+                        render();
+                    });
+                }
+            }
+
+            let b1 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base1 : `1\n11\n111`;

@@ -1,0 +1,102 @@
+﻿
+============================================================
+⏱ Версия: v_001 | Дата: 19-06-2026_23-22-05 | Файл: _patcher.py
+------------------------------------------------------------
+CRITICAL RULE: Edit file _patcher.py.
+
+FIND:
+def apply_patch():
+    print("Запуск авто-патчера Zerkalius...\n")
+    
+    prompt_content = get_prompt_content()
+    
+    if not prompt_content or not prompt_content.strip():
+        print("❌ Ошибка: Вы ввели пустой текст. Отмена операции.")
+        return
+
+    target_file = find_target_filename(prompt_content)
+REPLACE WITH:
+def apply_patch():
+    print("Запуск авто-патчера Zerkalius...\n")
+    
+    prompt_content = get_prompt_content()
+    
+    if not prompt_content or not prompt_content.strip():
+        print("🔄 Обнаружен пустой ввод. Попытка восстановления из предыдущего бэкапа...")
+        bak_files = [f for f in os.listdir('.') if f.endswith('.bak')]
+        if bak_files:
+            bak_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+            latest_bak = bak_files[0]
+            original_file = latest_bak[:-4]
+            try:
+                shutil.copy(latest_bak, original_file)
+                print(f"\n✅ Успешно восстановлен исходный файл: '{original_file}' из бэкапа '{latest_bak}'!")
+            except Exception as e:
+                print(f"❌ Ошибка при восстановлении бэкапа: {e}")
+        else:
+            print("❌ Ошибка: Ввод пуст, и файлы бэкапа (*.bak) в этой папке не найдены.")
+        return
+
+    target_file = find_target_filename(prompt_content)
+
+2. FIND:
+def save_version_and_history(target_file, prompt_content):
+    # Создаем главную папку версий
+    if not os.path.exists(VERSIONS_DIR):
+        os.makedirs(VERSIONS_DIR)
+        
+    # Создаем подпапку для конкретного файла
+    file_dir = os.path.join(VERSIONS_DIR, target_file)
+    if not os.path.exists(file_dir):
+        os.makedirs(file_dir)
+        
+    # Считаем количество уже существующих версий для нумерации
+    existing_files = [f for f in os.listdir(file_dir) if f.startswith('v_') and f.endswith('.html')]
+    version_num = len(existing_files) + 1
+    
+    timestamp = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
+    
+    # 1. Сохраняем копию HTML (Бэкап)
+    backup_name = f"v_{version_num:03d}_{timestamp}.html"
+    backup_path = os.path.join(file_dir, backup_name)
+    shutil.copy(target_file, backup_path)
+    print(f"💾 Версия файла сохранена: {backup_path}")
+    
+    # 2. Сохраняем промпт в историю внутри этой же подпапки
+    history_file = os.path.join(file_dir, "_history_prompts.txt")
+REPLACE WITH:
+def save_version_and_history(target_file, prompt_content):
+    # Создаем главную папку версий
+    if not os.path.exists(VERSIONS_DIR):
+        os.makedirs(VERSIONS_DIR)
+        
+    # Создаем подпапку для конкретного файла
+    file_dir = os.path.join(VERSIONS_DIR, target_file)
+    if not os.path.exists(file_dir):
+        os.makedirs(file_dir)
+        
+    # Считаем количество уже существующих версий для нумерации
+    base, ext = os.path.splitext(target_file)
+    existing_files = [f for f in os.listdir(file_dir) if f.startswith(base + '_v') and f.endswith(ext)]
+    version_num = len(existing_files) + 1
+    
+    timestamp = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
+    
+    # 1. Сохраняем копию HTML (Бэкап)
+    backup_name = f"{base}_v{version_num:03d}{ext}"
+    backup_path = os.path.join(file_dir, backup_name)
+    shutil.copy(target_file, backup_path)
+    print(f"💾 Версия файла сохранена: {backup_path}")
+    
+    # Создаем дубликат в корневой папке с расширением .bak для быстрого восстановления
+    quick_backup_path = target_file + ".bak"
+    shutil.copy(target_file, quick_backup_path)
+    print(f"🔄 Быстрый бэкап создан: {quick_backup_path}")
+    
+    # 2. Сохраняем промпт в историю внутри этой же подпапки
+    history_file = os.path.join(file_dir, "_history_prompts.txt")
+
+3. FIND:
+    pattern = re.compile(r'FIND:\n(.*?)\nREPLACE WITH:\n(.*?)(?=\n\d+\. |\Z)', re.DOTALL)
+REPLACE WITH:
+    pattern = re.compile(r'FIND:\n(.*?)\nREPLACE WITH:\n(.*?)(?=\n+(?:[^\n]*?)FIND:|\Z)', re.DOTALL)
