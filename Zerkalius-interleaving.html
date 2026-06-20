@@ -264,15 +264,21 @@
 
         <div class="control-group">
             <div class="row-between" style="margin-bottom: 5px;">
-                <span class="lbl" style="color:#00ff66; font-weight:bold;">Генератор Серпинского:</span>
+                <span class="lbl" id="sierpTitle" style="color:#00ff66; font-weight:bold;">Генератор Серпинского:</span>
             </div>
             <select id="sierpRule" style="margin-bottom: 5px; background: #222; color: #fff; border: 1px solid #444; padding: 2px; border-radius: 3px; width: 100%; font-size: 11px;">
                 <option value="shift">Форма: Сдвиг (Кирпичная кладка)</option>
                 <option value="center">Форма: Центр (Симметричная пирамида)</option>
+                <option value="xorora">Форма: XorRora Маятник</option>
             </select>
+            <div style="display:flex; gap:5px; margin-bottom: 1px;">
+                <span class="lbl" id="sierpSeedLbl" style="flex:1; text-align:center; font-size:9px; color:#888;">Сид</span>
+                <span class="lbl" id="sierpRowsLbl" style="flex:1; text-align:center; font-size:9px; color:#888;">Строки</span>
+                <span style="flex:2;"></span>
+            </div>
             <div style="display:flex; gap:5px; margin-bottom:5px;">
                 <input type="text" id="sierpSeed" value="1" title="Сид" style="flex:1;">
-                <input type="number" id="sierpRows" value="64" title="Строки" style="flex:1;">
+                <input type="number" id="sierpRows" value="128" title="Строки" style="flex:1;">
                 <button id="sierpBtn" class="btn-action" style="flex:2; margin:0; color:#00ff66; border-color:#00ff66;">Сгенерировать</button>
             </div>
         </div>
@@ -320,11 +326,12 @@
                 <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
                     <option value="classic">💠 Режим: Классика (Лесенка)</option>
                     <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
-                    <option value="centerTrack" selected>💠 Режим: Идеальный Центр</option>
+                    <option value="centerTrack">💠 Режим: Центр</option>
+                    <option value="centerTrack2" selected>💠 Режим: Идеальный Центр</option>
                 </select>
             </div>
             <label style="display:flex; align-items:center; margin-top:3px;">
-                <input type="checkbox" id="phaseShiftCheck" checked> <span class="lbl" style="color:#00ccff; font-weight:bold;">Фазовый сдвиг (+1 к циклу)</span>
+                <input type="checkbox" id="phaseShiftCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">Фазовый сдвиг (+1 к циклу)</span>
             </label>
             <label style="display:flex; align-items:center; margin-top:3px;">
                 <input type="checkbox" id="rowPendulumCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">🔁 Маятник внутри строки (A-B-A)</span>
@@ -337,6 +344,10 @@
 				<input type="checkbox" id="fillXCheck"> <span class="lbl" style="color:#aaa; font-weight:bold;">Заполнять пустоты 'x' (Рентген)</span>
 			</label>
 			
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="trailCheck"> <span class="lbl" style="color:#00ff66; font-weight:bold;">👣 Оставлять след (Шлейф)</span>
+            </label>
+
             <label style="display:flex; align-items:center; margin-top:3px;">
                 <input type="checkbox" id="spacedCheck"> <span class="lbl" style="color:#bfff00; font-weight:bold;">⚙️ Разрядка (Шестеренки)</span>
             </label>
@@ -453,12 +464,18 @@
             </div>
 
             <div class="row-between">
-                <span class="lbl">Интервал: <span class="val" id="lhVal">1.0</span></span>
+                <span class="lbl">Интервал Y: <span class="val" id="lhVal">1.0</span></span>
+                <span class="lbl">Интервал X: <span class="val" id="cwVal">1.0</span></span>
+            </div>
+            <div style="display:flex; gap:10px; margin-bottom: 5px;">
+                <input type="range" id="lhSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="flex:1;">
+                <input type="range" id="cwSlider" min="0.1" max="2.5" step="0.05" value="1.0" style="flex:1;">
+            </div>
+            <div class="row-between">
                 <label style="display:flex; align-items:center;">
                     <input type="checkbox" id="boldCheck"> <span class="lbl">Жирный шрифт</span>
                 </label>
             </div>
-            <input type="range" id="lhSlider" min="0.5" max="3.0" step="0.1" value="1.0">
         </div>
 
         <div class="player-group">
@@ -515,7 +532,7 @@
                 <input type="checkbox" id="autoCascadeCheck" checked> <span class="lbl" style="color:#ff9933;">Авто-Каскад (1 цикл = +1 строка)</span>
             </label>
             <label style="display:flex; align-items:center; margin-bottom: 2px;">
-                <input type="checkbox" id="activateOnPatternCheck" checked> <span class="lbl" style="color:#ffcc00;">Разморозка строк по паттерну</span>
+                <input type="checkbox" id="activateOnPatternCheck"> <span class="lbl" style="color:#ffcc00;">Разморозка строк по паттерну</span>
             </label>
             <label style="display:flex; align-items:center; margin-bottom: 2px; padding-left: 15px;">
                 <input type="checkbox" id="sequentialSearchCheck" checked> <span class="lbl" style="color:#00ccff;">Искать строго по очереди (каскад)</span>
@@ -529,7 +546,7 @@
             </div>
 
             <label style="display:flex; align-items:center; margin-bottom: 2px;">
-                <input type="checkbox" id="interleavingCheck" checked> <span class="lbl" style="color:#00ff88;">Органический интерливинг</span>
+                <input type="checkbox" id="interleavingCheck"> <span class="lbl" style="color:#00ff88;">Органический интерливинг</span>
             </label>
             <label style="display:flex; align-items:flex-start; margin-bottom:4px;">
                 <input type="checkbox" id="filterCheck"> <span class="lbl" style="color:#00ff66;">Скрывать замороженные строки</span>
@@ -585,9 +602,21 @@
             if (el) el.addEventListener(event, handler);
         };
 
-        const GCD = (a, b) => { while (b !== 0) { let temp = b; b = a % b; a = temp; } return a; };
-        const LCM = (a, b) => { return (a === 0 || b === 0) ? 0 : (a / GCD(a, b)) * b; };
-        const mod = (n, m) => ((n % m) + m) % m; 
+        const GCD = (a, b) => { 
+            if (!isFinite(a) || isNaN(a) || !isFinite(b) || isNaN(b)) return 1;
+            while (b !== 0) { 
+                let temp = b; 
+                b = a % b; 
+                if (isNaN(b)) return 1; 
+                a = temp; 
+            } 
+            return a; 
+        };
+        const LCM = (a, b) => { 
+            if (!isFinite(a) || isNaN(a) || !isFinite(b) || isNaN(b)) return Infinity;
+            return (a === 0 || b === 0) ? 0 : (a / GCD(a, b)) * b; 
+        };
+        const mod = (n, m) => ((n % m) + m) % m;
 
         const getNFactor = () => {
             let v = parseInt(safeValue('nFactor', 2));
@@ -601,19 +630,22 @@
 
             let fontSize = parseInt(safeValue('fontSlider', 16));
             let lh = parseFloat(safeValue('lhSlider', 1.0));
+            let cw = parseFloat(safeValue('cwSlider', 1.0));
             let screenRows = parseInt(safeValue('screenSlider', 64));
             
             ctx.font = `${safeChecked('boldCheck', false) ? 'bold' : 'normal'} ${fontSize}px ${safeValue('fontSelect', 'monospace')}`;
-            let charWidth = ctx.measureText('0').width;
+            let charWidth = ctx.measureText('0').width * cw;
             let lineHeight = fontSize * lh;
             
-            let renderCount = Math.min(STATE.lines.length, screenRows);
+            let startIndex = STATE.rowScrollOffset || 0;
+            if (startIndex < 0) startIndex = 0;
+            if (startIndex >= STATE.lines.length) startIndex = Math.max(0, STATE.lines.length - 1);
+
+            let renderCount = Math.min(STATE.lines.length - startIndex, screenRows);
             let totalHeight = renderCount * lineHeight;
             
             let startY = ((canvas.height - totalHeight) / 2) + STATE.offsetY + STATE.autoOffsetY;
             let baseX = (canvas.width / 2) + STATE.offsetX + STATE.autoOffsetX;
-            
-            let startIndex = 0;
             
             return { charWidth, lineHeight, renderCount, totalHeight, startY, baseX, startIndex };
         }
@@ -632,6 +664,9 @@
             
             lastFindMethod: "Ожидание...", 
             
+            playerMode: "simulate", 
+            rowScrollOffset: 0, 
+
             offsetX: 0,
             offsetY: 0,
             autoOffsetX: 0,
@@ -879,6 +914,7 @@
             setElChk('hideChangedCheck', snapshot.hideChanged !== undefined ? snapshot.hideChanged : false);
             setElChk('hideUnchangedCheck', snapshot.hideUnchanged !== undefined ? snapshot.hideUnchanged : false);
             setElChk('fillXCheck', snapshot.fillX !== undefined ? snapshot.fillX : false);
+            if (snapshot.cw !== undefined) setElVal('cwSlider', snapshot.cw);
             setElChk('autoCascadeCheck', snapshot.autoCascade !== undefined ? snapshot.autoCascade : true);
             setElChk('conglomerateCheck', snapshot.conglomerate !== undefined ? snapshot.conglomerate : false);
 
@@ -1027,18 +1063,18 @@ STATE.nextBlobColorId = 1;
                 stepSlider.max = isFinite(STATE.maxCycle) && STATE.maxCycle < 100000 ? STATE.maxCycle : 100000;
             }
             
-            let scrVal = Math.min(STATE.lines.length, 200);
             const scrSlider = document.getElementById('screenSlider');
             if (scrSlider) {
-                scrSlider.value = scrVal;
+                scrSlider.max = Math.max(200, STATE.lines.length);
+                scrSlider.value = STATE.lines.length;
                 let scrValEl = document.getElementById('screenVal');
-                if (scrValEl) scrValEl.textContent = scrVal;
+                if (scrValEl) scrValEl.textContent = STATE.lines.length;
             }
 
             enforceLoop();
             calculateState(false);
             updatePatternBackdrop();
-            render();
+            resetPositionWithHeightScale(1.0, false);
         }
 
         safeBind('applyLinesBtn', 'click', () => {
@@ -1054,6 +1090,68 @@ STATE.nextBlobColorId = 1;
             let rows = parseInt(safeValue('sierpRows', 64)) || 64;
             let rule = safeValue('sierpRule', 'shift');
             
+            if (rule === "xorora") {
+                let steps = parseInt(seed) || 32;
+                let width = (steps * 2) + (rows * 2) + 100;
+                let center = Math.floor(width / 2);
+                
+                let grid = [];
+                for (let r = 0; r < rows; r++) {
+                    grid.push(new Uint8Array(width));
+                }
+                
+                function core_builder_inplace(start_col) {
+                    if (grid[0][start_col] === 0) {
+                        grid[0][start_col] = 1;
+                    }
+                    for (let r = 1; r < rows; r++) {
+                        let step = r + 1;
+                        for (let c = start_col - step + 1; c < start_col + step; c += 2) {
+                            if (c >= 0 && c < width) {
+                                let val_left = (c - 1 >= 0) ? grid[r - 1][c - 1] : 0;
+                                let val_right = (c + 1 < width) ? grid[r - 1][c + 1] : 0;
+                                grid[r][c] ^= (val_left ^ val_right);
+                            }
+                        }
+                    }
+                }
+                
+                core_builder_inplace(center);
+                for (let s = 0; s < steps; s++) {
+                    let dist = Math.floor(s / 2) + 1;
+                    let offset = (s % 2 === 0) ? -dist : dist;
+                    core_builder_inplace(center + offset);
+                }
+                
+                let c_start = width;
+                let c_end = -1;
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < width; c++) {
+                        if (grid[r][c] === 1) {
+                            if (c < c_start) c_start = c;
+                            if (c > c_end) c_end = c;
+                        }
+                    }
+                }
+                
+                let genLines = [];
+                if (c_end >= c_start) {
+                    for (let r = 0; r < rows; r++) {
+                        let rowStr = "";
+                        for (let c = c_start; c <= c_end; c++) {
+                            rowStr += grid[r][c].toString();
+                        }
+                        genLines.push(rowStr);
+                    }
+                } else {
+                    genLines = ["1"];
+                }
+                
+                loadText(genLines.join('\n'));
+                showNotification("ГЕНЕРАТОР: XORORA МАЯТНИК");
+                return;
+            }
+
             let genLines = [seed];
             for (let i = 1; i < rows; i++) {
                 let prev = genLines[i-1];
@@ -1158,7 +1256,7 @@ STATE.nextBlobColorId = 1;
             let rawR = [];
             let rawF = [];
 
-if (useDrum) {
+            if (useDrum) {
                 let drumRad = parseInt(safeValue('drumRadius', 5));
                 let W = drumRad * 2 + 1; // Ширина барабана
                 let t_start = drumRad - Math.floor(line.L / 2); // Статичная часть строго в центре
@@ -1876,7 +1974,16 @@ if (symMode === "centerTrack") {
                             let mathCenterIndex = (text.length - 1) / 2.0;
                             // Снаппинг (прилипание) к сетке: текст сдвигается ровно по клеткам
                             liveCenterOffset = Math.round(mathCenterIndex - liveCenterIndex) * m.charWidth;
-                            drumCenterCol = Math.round(mathCenterIndex); // Радиус барабана статичен по центру
+                            drumCenterCol = Math.round(mathCenterIndex); // ...
+                        }
+                    } else if (symMode === "centerTrack2") {
+                        isMatrixAxis = true;
+                        if (firstCharIdx !== -1) {
+                            let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
+                            let mathCenterIndex = (text.length - 1) / 2.0;
+                            // Плавный сдвиг на пол-ячейки за шаг (разница между мат. центром массива и живым центром)
+                            liveCenterOffset = (mathCenterIndex - liveCenterIndex) * m.charWidth;
+                            drumCenterCol = Math.round(mathCenterIndex);
                         }
                     } else if (symMode === "centerBase") {
                         let baseWidth = lineData.L * m.charWidth;
@@ -2046,7 +2153,8 @@ let cellX = 0;
                 banks: STATE.banks,
                 activeBankIndex: STATE.activeBankIndex,
                 manualFrame: STATE.manualFrame,
-                sierpRule: safeValue('sierpRule', 'shift')
+                sierpRule: safeValue('sierpRule', 'shift'),
+                cw: parseFloat(safeValue('cwSlider', 1.0))
             };
 
             let code = btoa(encodeURIComponent(JSON.stringify(snapshot)));
@@ -2132,11 +2240,19 @@ let cellX = 0;
                 STATE.lastTick = timestamp - (speedMs > 1 ? delta % speedMs : 0);
                 
                 let stepDelta = STATE.isReverse ? -turbo : turbo;
-                STATE.globalStep += stepDelta;
                 
-                STATE.lines.forEach(l => {
-                    if (l.isActive) l.localStep += stepDelta;
-                });
+                if (STATE.playerMode === "scroll") {
+                    STATE.rowScrollOffset += stepDelta;
+                    if (STATE.rowScrollOffset < 0) STATE.rowScrollOffset = 0;
+                    if (STATE.rowScrollOffset >= STATE.lines.length) {
+                        STATE.rowScrollOffset = Math.max(0, STATE.lines.length - 1);
+                    }
+                } else {
+                    STATE.globalStep += stepDelta;
+                    STATE.lines.forEach(l => {
+                        if (l.isActive) l.localStep += stepDelta;
+                    });
+                }
 
                 if (safeChecked('oscXCheck')) {
                     let lBound = parseInt(safeValue('oscXLeft', 50));
@@ -2192,6 +2308,7 @@ let cellX = 0;
         safeBind('stopBtn', 'click', () => { 
             STATE.isPlaying = false; STATE.globalStep = 0; STATE.foundPatterns.clear(); STATE.foundPatternsMetadata.clear(); STATE.flashes.clear();
             STATE.autoOffsetX = 0; STATE.autoOffsetY = 0;
+            STATE.rowScrollOffset = 0;
             cancelAnimationFrame(STATE.rafId); UI.playBtn.innerHTML = '▶ Play'; UI.playBtn.style.background = '#00ff66'; 
             STATE.currentTargetPatternIdx = 1;
             STATE.lastFindMethod = "Ожидание...";
@@ -2218,6 +2335,7 @@ let cellX = 0;
         safeBind('clearCanvasBtn', 'click', () => {
             STATE.lines = [];
             STATE.globalStep = 0;
+            STATE.rowScrollOffset = 0;
             STATE.autoOffsetX = 0; STATE.autoOffsetY = 0;
             STATE.foundPatterns.clear();
             STATE.foundPatternsMetadata.clear();
@@ -2235,18 +2353,49 @@ STATE.nextBlobColorId = 1;
             render();
             showNotification("ХОЛСТ ОЧИЩЕН");
         });
+
+        safeBind('playerModeBtn', 'click', function() {
+            if (STATE.playerMode === "simulate") {
+                STATE.playerMode = "scroll";
+                this.textContent = "🎬 Функция: Скроллинг (Строки)";
+                this.style.color = "#ffcc00";
+                this.style.borderColor = "#ffcc00";
+                showNotification("РЕЖИМ: СКРОЛЛИНГ СТРОК");
+            } else {
+                STATE.playerMode = "simulate";
+                this.textContent = "🎬 Функция: Симуляция (XOR)";
+                this.style.color = "#00ccff";
+                this.style.borderColor = "#00ccff";
+                showNotification("РЕЖИМ: СИМУЛЯЦИЯ ШАГОВ");
+            }
+            render();
+        });
         
         safeBind('prevBtn', 'click', () => { 
             let turbo = parseInt(safeValue('turboSlider', 1)) || 1;
-            STATE.globalStep -= turbo; 
-            STATE.lines.forEach(l => { if (l.isActive) l.localStep -= turbo; });
-            enforceLoop(); updateLogic(); 
+            if (STATE.playerMode === "scroll") {
+                STATE.rowScrollOffset -= turbo;
+                if (STATE.rowScrollOffset < 0) STATE.rowScrollOffset = 0;
+            } else {
+                STATE.globalStep -= turbo; 
+                STATE.lines.forEach(l => { if (l.isActive) l.localStep -= turbo; });
+                enforceLoop();
+            }
+            updateLogic(); 
         });
         safeBind('nextBtn', 'click', () => { 
             let turbo = parseInt(safeValue('turboSlider', 1)) || 1;
-            STATE.globalStep += turbo; 
-            STATE.lines.forEach(l => { if (l.isActive) l.localStep += turbo; });
-            enforceLoop(); updateLogic(); 
+            if (STATE.playerMode === "scroll") {
+                STATE.rowScrollOffset += turbo;
+                if (STATE.rowScrollOffset >= STATE.lines.length) {
+                    STATE.rowScrollOffset = Math.max(0, STATE.lines.length - 1);
+                }
+            } else {
+                STATE.globalStep += turbo; 
+                STATE.lines.forEach(l => { if (l.isActive) l.localStep += turbo; });
+                enforceLoop();
+            }
+            updateLogic(); 
         });
         
         safeBind('reverseBtn', 'click', function() { 
@@ -2371,6 +2520,8 @@ safeBind('nFactor', 'input', function() {
         safeBind('fontSlider', 'input', function() { document.getElementById('fontVal').textContent = this.value + 'px'; render(); });
         safeBind('screenSlider', 'input', function() { document.getElementById('screenVal').textContent = this.value; render(); });
         safeBind('lhSlider', 'input', function() { document.getElementById('lhVal').textContent = this.value; render(); });
+        safeBind('cwSlider', 'input', function() { document.getElementById('cwVal').textContent = this.value; render(); });
+        safeBind('cwSlider', 'input', function() { document.getElementById('cwVal').textContent = this.value; render(); });
         
         safeBind('presetSelect', 'change', function() { 
             let p = PRESETS[this.value]; 
@@ -2382,7 +2533,7 @@ safeBind('nFactor', 'input', function() {
             }
         });
 
-        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck'].forEach(id => {
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'cwSlider', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('input', () => { render(); });
@@ -2613,6 +2764,65 @@ safeBind('nFactor', 'input', function() {
         });
 
         window.onload = function() {
+            safeBind('sierpRule', 'change', function() {
+                let rule = this.value;
+                let seedEl = document.getElementById('sierpSeed');
+                let rowsEl = document.getElementById('sierpRows');
+                let titleEl = document.getElementById('sierpTitle');
+                let seedLbl = document.getElementById('sierpSeedLbl');
+                let rowsLbl = document.getElementById('sierpRowsLbl');
+                if (seedEl && rowsEl) {
+                    if (rule === 'xorora') {
+                        if (titleEl) titleEl.textContent = "Фрактальный маятник:";
+                        if (seedLbl) seedLbl.textContent = "Шаги";
+                        if (rowsLbl) rowsLbl.textContent = "Строк";
+                        seedEl.title = "Шаги маятника";
+                        if (seedEl.value === "1") seedEl.value = "64";
+                        rowsEl.title = "Высота (Строк)";
+                    } else {
+                        if (titleEl) titleEl.textContent = "Генератор Серпинского:";
+                        if (seedLbl) seedLbl.textContent = "Сид";
+                        if (rowsLbl) rowsLbl.textContent = "Строки";
+                        seedEl.title = "Сид";
+                        if (seedEl.value === "64") seedEl.value = "1";
+                        rowsEl.title = "Строки";
+                    }
+                }
+            });
+
+            const sierpRuleEl = document.getElementById('sierpRule');
+            if (sierpRuleEl) sierpRuleEl.dispatchEvent(new Event('change'));
+
+            // Динамическое создание и встраивание кнопки переключения функции плеера
+            const revBtn = document.getElementById('reverseBtn');
+            if (revBtn) {
+                const parentGroup = revBtn.closest('.player-group');
+                if (parentGroup) {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'row-between';
+                    rowDiv.style.marginBottom = '4px';
+                    rowDiv.innerHTML = `<button id="playerModeBtn" class="btn-action" style="margin:0; width: 100%; color:#00ccff; border-color:#00ccff;">🎬 Функция: Симуляция (XOR)</button>`;
+                    parentGroup.insertBefore(rowDiv, parentGroup.firstElementChild);
+                    
+                    safeBind('playerModeBtn', 'click', function() {
+                        if (STATE.playerMode === "simulate") {
+                            STATE.playerMode = "scroll";
+                            this.textContent = "🎬 Функция: Скроллинг (Строки)";
+                            this.style.color = "#ffcc00";
+                            this.style.borderColor = "#ffcc00";
+                            showNotification("РЕЖИМ: СКРОЛЛИНГ СТРОК");
+                        } else {
+                            STATE.playerMode = "simulate";
+                            this.textContent = "🎬 Функция: Симуляция (XOR)";
+                            this.style.color = "#00ccff";
+                            this.style.borderColor = "#00ccff";
+                            showNotification("РЕЖИМ: СИМУЛЯЦИЯ ШАГОВ");
+                        }
+                        render();
+                    });
+                }
+            }
+
             let b1 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base1 : `1\n11\n111`;
             let p1 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.pat1  : `1\n11\n111`;
             let b2 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base2 : `\\\n\\\\`;
