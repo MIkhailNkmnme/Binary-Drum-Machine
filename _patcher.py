@@ -42,23 +42,29 @@ def resolve_versioned_filename(target_file):
 
 def get_prompt_content():
     content = ""
-    # Пытаемся прочитать из файла
+    # Пытаемся прочитать из файла с автоопределением кодировки (UTF-8, UTF-16, Windows-1251)
     if os.path.exists(PROMPT_FILE):
-        try:
-            with open(PROMPT_FILE, 'r', encoding='utf-8') as f:
-                content = f.read().replace('\r\n', '\n').strip()
-        except UnicodeDecodeError:
+        for enc in ['utf-8-sig', 'utf-16', 'windows-1251']:
             try:
-                with open(PROMPT_FILE, 'r', encoding='windows-1251') as f:
-                    content = f.read().replace('\r\n', '\n').strip()
-            except:
-                pass
+                with open(PROMPT_FILE, 'r', encoding=enc) as f:
+                    test_content = f.read().replace('\r\n', '\n')
+                    # Если при чтении UTF-16 как UTF-8/ANSI возникли нулевые байты - кодировка неверна
+                    if '\x00' in test_content:
+                        continue
+                    content = test_content
+                    break
+            except Exception:
+                continue
+    
+    # Очищаем от возможных невидимых символов BOM и пробелов по краям
+    content = content.replace('\ufeff', '').strip()
     
     # Если файла нет или он пуст - просим ввести в консоль
     if not content:
-        print(f"📄 Рабочий файл '{PROMPT_FILE}' пуст.")
+        print(f"📄 Рабочий файл '{PROMPT_FILE}' пуст или отсутствует.")
         print("👇 Вставьте текст промпта прямо сюда (в окно консоли).")
-        print("⚠️ Для завершения просто нажмите Enter ДВА РАЗА подряд.")
+        print("ℹ️ Чтобы восстановить файл из бэкапа, просто введите букву 'b'.")
+        print("⚠️ Для завершения ввода промпта нажмите Enter ДВА РАЗА подряд.")
         print("-" * 60)
         
         lines = []
@@ -82,7 +88,7 @@ def get_prompt_content():
             except EOFError:
                 break
         
-        content = "\n".join(lines)
+        content = "\n".join(lines).replace('\ufeff', '').strip()
         print("-" * 60)
         
     return content
@@ -127,78 +133,153 @@ def save_version_and_history(target_file, prompt_content):
     print(f"📜 Промпт добавлен в лог: {history_file}")
 
 def apply_patch():
-    print("Запуск авто-патчера Zerkalius...\n")
+    last_target_file = None  # Переменная для запоминания файла между шагами
     
-    prompt_content = get_prompt_content()
-    
-    if not prompt_content or not prompt_content.strip():
-        print("🔄 Обнаружен пустой ввод. Попытка восстановления бэкапа...")
-        bak_files = [f for f in os.listdir('.') if f.endswith('.bak')]
-        if bak_files:
-            bak_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-            latest_bak = bak_files[0]
-            original_file = latest_bak[:-4]
+    while True:
+        print("Запуск авто-патчера Zerkalius...\n")
+        prompt_content = get_prompt_content()
+        
+        # 1. Проверяем команду принудительного восстановления бэкапа (ввод 'b' или 'B')
+        if prompt_content.strip().lower() == "b":
+            print("🔄 Запрошено восстановление исходного файла из бэкапа...")
+            bak_files = [f for f in os.listdir('.') if f.endswith('.bak')]
+            if bak_files:
+                bak_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+                latest_bak = bak_files[0]
+                original_file = latest_bak[:-4]
+                try:
+                    shutil.copy(latest_bak, original_file)
+                    print(f"\n✅ Успешно восстановлен исходный файл: '{original_file}' из бэкапа '{latest_bak}'!")
+                except Exception as e:
+                    print(f"❌ Ошибка при восстановлении бэкапа: {e}")
+            else:
+                print("❌ Ошибка: файлы бэкапа (*.bak) в этой папке не найдены.")
+            
+            # Очищаем файл промпта после выполнения команды восстановления
+            if os.path.exists(PROMPT_FILE):
+                try:
+                    with open(PROMPT_FILE, 'w', encoding='utf-8') as f:
+                        f.write("")
+                except:
+                    pass
+                    
+            choice = input("\nПродолжить работу? (Нажмите Enter для продолжения, 'q' для выхода): ")
+            if choice.strip().lower() in ('q', 'exit', 'quit'):
+                break
+            print("\n" + "="*60 + "\n")
+            continue
+            
+        # 2. Если ввод пустой (и это не команда восстановления)
+        if not prompt_content or not prompt_content.strip():
+            print("⚠️ Обнаружен пустой ввод. Никаких действий не выполнено.")
+            choice = input("\nПродолжить работу? (Нажмите Enter для продолжения, 'q' для выхода): ")
+            if choice.strip().lower() in ('q', 'exit', 'quit'):
+                break
+            print("\n" + "="*60 + "\n")
+            continue
+
+        target_file = find_target_filename(prompt_content)
+        
+        # Если имя файла не найдено в текущем промпте, пытаемся использовать предыдущее
+        if not target_file:
+            if last_target_file:
+                print(f"ℹ️ Имя файла не указано в промпте. Автоматически используем предыдущий файл: '{last_target_file}'")
+                target_file = last_target_file
+            else:
+                print("❌ Ошибка: Не удалось найти имя файла для патчинга.")
+                print(f"   ℹ️ Диагностика: прочитано символов: {len(prompt_content)}")
+                if len(prompt_content) > 0:
+                    print("   --- Начало прочитанного текста (первые 150 символов): ---")
+                    preview = prompt_content[:150].replace('\n', ' [NEWLINE] ')
+                    print(f"   {preview}")
+                    print("   --------------------------------------------------------")
+                
+                choice = input("\nПопробовать снова? (Нажмите Enter для продолжения, 'q' для выхода): ")
+                if choice.strip().lower() in ('q', 'exit', 'quit'):
+                    break
+                print("\n" + "="*60 + "\n")
+                continue
+        else:
+            # Запоминаем найденное имя файла на случай, если в следующем промпте его не будет
+            last_target_file = target_file
+
+        # Пытаемся автоматически найти самую свежую версию файла, если точного совпадения нет
+        target_file = resolve_versioned_filename(target_file)
+        
+        # Обновляем сохраненное имя на случай, если была выбрана более новая версия (_v002 и т.д.)
+        last_target_file = target_file
+
+        print(f"🎯 Обнаружен целевой файл: {target_file}")
+
+        if not os.path.exists(target_file):
+            print(f"❌ Ошибка: Файл '{target_file}' не найден в этой папке!")
+            choice = input("\nПопробовать снова? (Нажмите Enter для продолжения, 'q' для выхода): ")
+            if choice.strip().lower() in ('q', 'exit', 'quit'):
+                break
+            print("\n" + "="*60 + "\n")
+            continue
+
+        try:
+            with open(target_file, 'r', encoding='utf-8') as f:
+                html_content = f.read().replace('\r\n', '\n')
+        except:
             try:
-                shutil.copy(latest_bak, original_file)
-                print(f"\n✅ Успешно восстановлен исходный файл: '{original_file}' из бэкапа '{latest_bak}'!")
+                with open(target_file, 'r', encoding='windows-1251') as f:
+                    html_content = f.read().replace('\r\n', '\n')
             except Exception as e:
-                print(f"❌ Ошибка при восстановлении бэкапа: {e}")
+                print(f"❌ Ошибка чтения целевого файла: {e}")
+                choice = input("\nПопробовать снова? (Нажмите Enter для продолжения, 'q' для выхода): ")
+                if choice.strip().lower() in ('q', 'exit', 'quit'):
+                    break
+                print("\n" + "="*60 + "\n")
+                continue
+
+        # Вызываем функцию сохранения версий и истории
+        save_version_and_history(target_file, prompt_content)
+
+        # Улучшенное регулярное выражение для поддержки как нумерованных, так и обычных FIND:
+        pattern = re.compile(r'FIND:\s*\n(.*?)\nREPLACE WITH:\s*\n(.*?)(?=\n+(?:\s*?)FIND:|\Z)', re.DOTALL)
+        matches = pattern.findall(prompt_content)
+
+        if not matches:
+            print("⚠️ Не найдено ни одного блока FIND/REPLACE.")
         else:
-            print("❌ Ошибка: Ввод пуст, и файлы бэкапа (*.bak) в этой папке не найдены.")
-        return
+            success_count = 0
+            for i, (find_text, replace_text) in enumerate(matches, 1):
+                find_text = find_text.strip('\n')
+                replace_text = replace_text.strip('\n')
 
-    target_file = find_target_filename(prompt_content)
-    
-    if not target_file:
-        print("❌ Ошибка: Не удалось найти имя файла для патчинга.")
-        return
+                if find_text in html_content:
+                    html_content = html_content.replace(find_text, replace_text)
+                    print(f"✅ Шаг {i}: Блок успешно заменен.")
+                    success_count += 1
+                else:
+                    print(f"❌ Шаг {i}: Блок НЕ НАЙДЕН в файле {target_file}!")
+                    print(f"   --- Искали (первые 80 символов): ---")
+                    print(f"   {find_text[:80]}...")
+                    print(f"   ------------------------------------")
 
-    # Пытаемся автоматически найти самую свежую версию файла, если точного совпадения нет
-    target_file = resolve_versioned_filename(target_file)
+            try:
+                with open(target_file, 'w', encoding='utf-8') as f:
+                    f.write(html_content)
+                print(f"\n🚀 Готово! Успешно применено {success_count} из {len(matches)} патчей.")
+            except Exception as e:
+                print(f"❌ Ошибка при записи изменений в файл: {e}")
 
-    print(f"🎯 Обнаружен целевой файл: {target_file}")
+        # Очищаем файл промпта после успешного применения, чтобы избежать зацикливания
+        if os.path.exists(PROMPT_FILE):
+            try:
+                with open(PROMPT_FILE, 'w', encoding='utf-8') as f:
+                    f.write("")
+                print(f"🧹 Файл промпта '{PROMPT_FILE}' очищен для следующего патча.")
+            except Exception as e:
+                print(f"⚠️ Не удалось очистить файл промпта: {e}")
 
-    if not os.path.exists(target_file):
-        print(f"❌ Ошибка: Файл '{target_file}' не найден в этой папке!")
-        return
-
-    try:
-        with open(target_file, 'r', encoding='utf-8') as f:
-            html_content = f.read().replace('\r\n', '\n')
-    except:
-        with open(target_file, 'r', encoding='windows-1251') as f:
-            html_content = f.read().replace('\r\n', '\n')
-
-    # Вызываем функцию сохранения версий и истории
-    save_version_and_history(target_file, prompt_content)
-
-    # Улучшенное регулярное выражение для поддержки как нумерованных, так и обычных FIND:
-    pattern = re.compile(r'FIND:\n(.*?)\nREPLACE WITH:\n(.*?)(?=\n+(?:[^\n]*?)FIND:|\Z)', re.DOTALL)
-    matches = pattern.findall(prompt_content)
-
-    if not matches:
-        print("⚠️ Не найдено ни одного блока FIND/REPLACE.")
-        return
-
-    success_count = 0
-    for i, (find_text, replace_text) in enumerate(matches, 1):
-        find_text = find_text.strip('\n')
-        replace_text = replace_text.strip('\n')
-
-        if find_text in html_content:
-            html_content = html_content.replace(find_text, replace_text)
-            print(f"✅ Шаг {i}: Блок успешно заменен.")
-            success_count += 1
-        else:
-            print(f"❌ Шаг {i}: Блок НЕ НАЙДЕН в файле {target_file}!")
-            print(f"   --- Искали (первые 80 символов): ---")
-            print(f"   {find_text[:80]}...")
-            print(f"   ------------------------------------")
-
-    with open(target_file, 'w', encoding='utf-8') as f:
-        f.write(html_content)
-
-    print(f"\n🚀 Готово! Успешно применено {success_count} из {len(matches)} патчей.")
+        print("\n" + "="*60)
+        choice = input("📥 Ожидание следующего патча. Подготовьте файл промпта и нажмите Enter (или 'q' для выхода): ")
+        if choice.strip().lower() in ('q', 'exit', 'quit'):
+            break
+        print("\n" + "="*60 + "\n")
 
 if __name__ == "__main__":
     try:

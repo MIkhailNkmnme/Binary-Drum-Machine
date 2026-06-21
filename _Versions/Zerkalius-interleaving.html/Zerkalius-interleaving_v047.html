@@ -46,16 +46,7 @@
             box-sizing: border-box; padding: 10px;
             transition: transform 0.3s ease, opacity 0.3s ease;
             box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
-            resize: both; overflow: auto;
         }
-        .player-panel::-webkit-resizer, .patterns-log-container::-webkit-resizer, #diagTerminal::-webkit-resizer {
-            background: transparent; border-bottom: 2px solid #00ff66; border-right: 2px solid #00ff66;
-        }
-
-        details.control-group summary { cursor: pointer; outline: none; user-select: none; font-size: 11px; color: #00ff66; font-family: sans-serif; }
-        details.control-group summary::-webkit-details-marker { display: none; }
-        details.control-group summary::after { content: ' ▲'; float: right; color: #00ff66; }
-        details.control-group:not([open]) summary::after { content: ' ▼'; }
 
         .control-group { background: #1a1a1a; padding: 6px 10px; border-bottom: 1px solid #222; }
         .player-group { background: transparent; padding: 4px 0; border-bottom: 1px solid #333; }
@@ -85,12 +76,6 @@
             border-radius: 3px; resize: none; padding: 4px; box-sizing: border-box;
             margin-bottom: 2px;
         }
-        
-        textarea::-webkit-scrollbar { width: 6px; }
-        textarea::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-        textarea::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
-        textarea::-webkit-scrollbar-thumb:hover { background: #00ff66; }
-        textarea::-webkit-resizer { background: transparent; border-bottom: 2px solid #00ff66; border-right: 2px solid #00ff66; }
 
         .highlight-textarea-container {
             position: relative; width: 100%; min-height: 80px; display: flex; flex-direction: column; margin-bottom: 2px;
@@ -110,9 +95,6 @@
             padding: 4px; box-sizing: border-box; font-family: inherit; font-size: 11px;
             caret-color: #00ccff; resize: vertical;
         }
-        
-        textarea.pattern-input::-webkit-scrollbar-thumb:hover { background: #00ccff; }
-        textarea.pattern-input::-webkit-resizer { background: transparent; border-bottom: 2px solid #00ccff; border-right: 2px solid #00ccff; }
 
         .btn-action { background: #333; color: #bfff00; border: 1px solid #bfff00; padding: 4px; border-radius: 3px; cursor: pointer; width: 100%; margin-bottom: 2px; font-size: 10px; font-weight: bold;}
         .btn-action:hover { background: #bfff00; color: #000; }
@@ -121,6 +103,11 @@
 
         .bank-btn { flex: 1; margin: 0; font-size: 10px; border: 1px solid #444; background: #222; color: #aaa; border-radius: 3px; cursor: pointer; padding: 3px 0; }
         .bank-btn.active { background: #00ff66; color: #000; font-weight: bold; border-color: #00ff66; }
+
+        .accordion-header { cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 2px 0;}
+        .accordion-header:hover .lbl { color: #fff; }
+        .accordion-content { display: block; overflow: hidden; transition: max-height 0.2s ease-out; max-height: 200px; }
+        .accordion-content.collapsed { max-height: 0; }
 
         /* ХОЛСТ */
         #screenContainer { 
@@ -172,11 +159,12 @@
             position: absolute; top: 5px; right: 5px; z-index: 90;
             background: rgba(17, 17, 17, 0.95); border: 1px solid #00ccff;
             border-radius: 4px; padding: 5px; width: 300px; max-height: calc(100vh - 10px);
-            overflow: auto; display: flex; flex-direction: column; gap: 5px;
+            overflow-y: auto; display: flex; flex-direction: column; gap: 5px;
             box-shadow: 0 0 20px rgba(0, 204, 255, 0.2);
             transition: transform 0.2s ease, opacity 0.2s ease;
-            resize: both;
         }
+        .patterns-log-container::-webkit-scrollbar { width: 4px; }
+        .patterns-log-container::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
 
         /* ИНТЕРАКТИВНЫЙ ДИАГНОСТИЧЕСКИЙ ТЕРМИНАЛ */
         #diagTerminal {
@@ -185,24 +173,18 @@
             padding: 8px; border-radius: 4px; cursor: pointer;
             transition: opacity 0.3s ease, height 0.3s ease;
             box-shadow: 0 0 10px rgba(0,255,102,0.1);
-            overflow: auto; width: 100%; box-sizing: border-box;
-            resize: both;
+            overflow: hidden; width: 100%; box-sizing: border-box;
         }
         #diagTerminal:hover { background: rgba(20, 20, 20, 0.9); }
         #diagTerminal.minimized { height: 18px !important; padding-bottom: 0;}
-        #diagTerminal.minimized #diagStats, #diagTerminal.minimized #diagMethod, #diagTerminal.minimized #balanceLog { display: none; }
-        
-        #balanceLog::-webkit-scrollbar { width: 6px; }
-        #balanceLog::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-        #balanceLog::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
-        #balanceLog::-webkit-scrollbar-thumb:hover { background: #00ff66; }
-        #balanceLog::-webkit-resizer { background: transparent; border-bottom: 2px solid #00ff66; border-right: 2px solid #00ff66; }
+        #diagTerminal.minimized #diagStats, #diagTerminal.minimized #diagMethod { display: none; }
 
         body.zen-mode .controls { transform: translateX(-320px); }
         body.zen-mode .player-panel { transform: translateY(300px); opacity: 0; pointer-events: none;}
         body.zen-mode .floating-toolbar { transform: translateY(-100px); opacity: 0; pointer-events: none;}
         body.zen-mode .patterns-log-container { transform: translateX(350px); opacity: 0; pointer-events: none;}
         body.zen-mode #diagTerminal { opacity: 0; pointer-events: none; }
+        body.zen-mode #mainTitle { opacity: 0; transition: opacity 0.3s; }
     </style>
 </head>
 <body>
@@ -251,30 +233,26 @@
     </script>
 
     <!-- ЛЕВАЯ ПАНЕЛЬ -->
-    <div class="controls" onclick="event.stopPropagation();">
+    <div class="controls">
 
-        <details class="control-group" open>
-            <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">💾 СИСТЕМНЫЕ ФУНКЦИИ</summary>
-            <div style="display:flex; gap:4px; margin-top: 4px;">
-                <button id="exportCodeBtn" class="btn-action" style="flex:1;">Экспорт</button>
-                <button id="importCodeBtn" class="btn-action" style="flex:1;">Импорт</button>
-                <input type="file" id="importFileLoader" accept=".txt,.png" style="display:none;">
-                <button id="photoBtn" class="btn-action" style="flex:1; background:#00ccff; color:#000; border-color:#00ccff;">📸 ФОТО</button>
-            </div>
+        <div class="control-group">
+			<div style="display:flex; gap:4px;">
+					<button id="exportCodeBtn" class="btn-action" style="flex:1;">Экспорт</button>
+					<button id="importCodeBtn" class="btn-action" style="flex:1;">Импорт</button>
+					<input type="file" id="importFileLoader" accept=".txt" style="display:none;">
+					<button id="photoBtn" class="btn-action" style="flex:1; background:#00ccff; color:#000; border-color:#00ccff;">📸 ФОТО</button>
+			</div>
             <textarea id="snapshotCodeBox" placeholder="Код снимка" style="margin-top:3px; height: 35px; font-size:9px;"></textarea>
-        </details>
+        </div>
 
-        <details class="control-group" open>
-            <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">📝 НАБОРЫ СТРОК (СЛОТЫ)</summary>
-            <div style="display: flex; gap: 4px; margin-bottom: 4px; margin-top: 4px;">
+        <div class="control-group">
+            <div class="row-between" style="margin-bottom: 2px;">
+                <span class="lbl" style="color:#00ff66; font-weight:bold;">Наборы строк (Слоты: 2-клик):</span>
+            </div>
+            <div style="display: flex; gap: 4px; margin-bottom: 4px;">
                 <button id="bankBtn0" class="bank-btn active" ondblclick="switchBank(0)">Слот 1</button>
                 <button id="bankBtn1" class="bank-btn" ondblclick="switchBank(1)">Слот 2</button>
                 <button id="bankBtn2" class="bank-btn" ondblclick="switchBank(2)">Слот 3</button>
-            </div>
-            <div style="display: flex; gap: 4px; margin-bottom: 2px;">
-                <button id="alignLeftBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; border-color:#888; color:#fff;" title="Выровнять всё по левому краю (добавить точки)">⬅️ Лев</button>
-                <button id="alignCenterBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; border-color:#888; color:#fff;" title="Выровнять всё по центру (добавить точки)">⏺ Центр</button>
-                <button id="alignRightBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; border-color:#888; color:#fff;" title="Выровнять всё по правому краю (добавить точки)">Прав ➡️</button>
             </div>
             <textarea id="linesInput" placeholder="Введите символы (Двойной клик = Вставка)" style="height: 60px; color:#bfff00; margin-top:2px;"></textarea>
             
@@ -284,11 +262,13 @@
                 <input type="text" id="repA2" value="0" style="width: 25px;"> ➔ <input type="text" id="repB2" value="/" style="width: 25px; color:#00ff66;">
                 <button id="toggleReplaceBtn" class="btn-action" style="width: 30px; margin: 0; padding: 2px 0;">🔄</button>
             </div>
-        </details>
+        </div>
 
-        <details class="control-group">
-            <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">📐 ГЕНЕРАТОР СЕРПИНСКОГО</summary>
-            <select id="sierpRule" style="margin-bottom: 5px; margin-top: 4px; background: #222; color: #fff; border: 1px solid #444; padding: 2px; border-radius: 3px; width: 100%; font-size: 11px;">
+        <div class="control-group">
+            <div class="row-between" style="margin-bottom: 5px;">
+                <span class="lbl" id="sierpTitle" style="color:#00ff66; font-weight:bold;">Генератор Серпинского:</span>
+            </div>
+            <select id="sierpRule" style="margin-bottom: 5px; background: #222; color: #fff; border: 1px solid #444; padding: 2px; border-radius: 3px; width: 100%; font-size: 11px;">
                 <option value="shift">Форма: Сдвиг (Кирпичная кладка)</option>
                 <option value="center">Форма: Центр (Симметричная пирамида)</option>
                 <option value="xorora">Форма: XorRora Маятник</option>
@@ -303,11 +283,10 @@
                 <input type="number" id="sierpRows" value="128" title="Строки" style="flex:1;">
                 <button id="sierpBtn" class="btn-action" style="flex:2; margin:0; color:#00ff66; border-color:#00ff66;">Сгенерировать</button>
             </div>
-        </details>
+        </div>
 
-        <details class="control-group">
-            <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">🎨 ОФОРМЛЕНИЕ И ЦВЕТА</summary>
-            <select id="fontSelect" style="margin-top: 4px;">
+        <div class="control-group">
+            <select id="fontSelect">
                 <option value="'Consolas', monospace">Шрифт: Consolas</option>
                 <option value="'Roboto Mono', monospace">Шрифт: Roboto Mono</option>
                 <option value="monospace">Шрифт: Моноширинный</option>
@@ -335,16 +314,17 @@
                 </span>
                 <input type="color" id="frameColorInput" value="#00ff66">
             </div>
-        </details>
+        </div>
 
-        <details class="control-group" open>
-            <summary style="font-weight:bold; color:#cc33ff; margin-bottom: 4px;">⚙️ МОДИФИКАТОРЫ ДВИЖЕНИЯ</summary>
-            <div style="margin-top: 4px; margin-bottom: 2px;" class="row-between">
+        <div class="control-group">
+            <span class="lbl" style="color:#cc33ff; font-weight:bold;">Модификаторы движения:</span>
+            
+            <div class="row-between" style="margin-top:4px; margin-bottom:2px;">
                 <span class="lbl">Множитель длины (N): <span class="val" id="nFactorVal">2</span></span>
             </div>
             <input type="range" id="nFactor" min="1" max="11" value="2">
 
-            <div style="margin-top: 3px; margin-bottom: 3px;">
+<div style="margin-top: 3px; margin-bottom: 3px;">
                 <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
                     <option value="classic">💠 Режим: Классика (Лесенка)</option>
                     <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
@@ -361,15 +341,11 @@
             <label style="display:flex; align-items:center; margin-top:3px;">
                 <input type="checkbox" id="meetCenterCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">↔️ Встречное движение</span>
             </label>
-            
-            <label style="display:flex; align-items:center; margin-top:3px;">
-                <input type="checkbox" id="fillXCheck"> <span class="lbl" style="color:#aaa; font-weight:bold;">Заполнять пустоты 'x' (Рентген)</span>
-            </label>
-            
-            <label style="display:flex; align-items:center; margin-top:3px;">
-                <input type="checkbox" id="trailCheck"> <span class="lbl" style="color:#00ff66; font-weight:bold;">👣 Оставлять след (Шлейф)</span>
-            </label>
-
+			
+			<label style="display:flex; align-items:center; margin-top:3px;">
+				<input type="checkbox" id="fillXCheck"> <span class="lbl" style="color:#aaa; font-weight:bold;">Заполнять пустоты 'x' (Рентген)</span>
+			</label>
+			
             <label style="display:flex; align-items:center; margin-top:3px;">
                 <input type="checkbox" id="spacedCheck"> <span class="lbl" style="color:#bfff00; font-weight:bold;">⚙️ Разрядка (Шестеренки)</span>
             </label>
@@ -434,67 +410,69 @@
             <label style="display:flex; align-items:center; margin-top:3px;">
                 <input type="checkbox" id="mirrorCheck"> <span class="lbl" style="color:#cc33ff; font-weight:bold;">↕️ Вертикальное зеркало</span>
             </label>
-            <div style="background: #111; padding: 4px; border-radius: 3px; margin-top: 3px; border-left: 2px solid #00ccff; display: flex; align-items: center; justify-content: space-between;">
-                <span class="lbl" style="color:#00ccff;">Шаг поворота Радара:</span>
-                <input type="number" id="radarRotateSnapInput" value="1" min="1" max="100" style="width: 40px; height: 18px;">
-            </div>
             <label style="display:flex; align-items:center; margin-top:3px;">
                 <input type="checkbox" id="balanceCheck" checked> <span class="lbl" style="color:#ffcc00; font-weight:bold;">⚖️ Детектор баланса (0 = 1)</span>
             </label>
-        </details>
+        </div>
 
-        <details class="control-group" style="margin-bottom: auto; border-bottom: none;">
-            <summary style="font-weight:bold; color:#ff00ff; margin-bottom: 4px;">🚀 АВТО-СДВИГ ХОЛСТА (XY)</summary>
-            <div style="background: #111; padding: 4px; border-radius: 3px; margin-top: 3px; margin-bottom: 3px;">
-                <label style="display:flex; align-items:center; margin-bottom:2px;">
-                    <input type="checkbox" id="oscXCheck"> <span class="lbl" style="color:#fff;">Сдвиг X (Пинг-Понг)</span>
-                </label>
-                <div style="display:flex; gap:2px; align-items:center;">
-                    <span class="lbl">Лев:</span><input type="number" id="oscXLeft" value="50">
-                    <span class="lbl">Прав:</span><input type="number" id="oscXRight" value="50">
-                    <span class="lbl">Шаг:</span><input type="number" id="oscXStep" value="1">
-                </div>
+        <div class="control-group" style="margin-bottom: auto; border-bottom: none;">
+            <div class="accordion-header" id="oscAccordionBtn">
+                <span class="lbl" style="color:#ff00ff; font-weight:bold;">Авто-Сдвиг Холста (XY)</span>
+                <span class="val" id="oscAccordionIcon" style="color:#ff00ff;">▼</span>
             </div>
-
-            <div style="background: #111; padding: 4px; border-radius: 3px;">
-                <label style="display:flex; align-items:center; margin-bottom:2px;">
-                    <input type="checkbox" id="oscYCheck"> <span class="lbl" style="color:#fff;">Сдвиг Y (Пинг-Понг)</span>
-                </label>
-                <div style="display:flex; gap:2px; align-items:center;">
-                    <span class="lbl">Верх:</span><input type="number" id="oscYUp" value="50">
-                    <span class="lbl">Низ:</span><input type="number" id="oscYDown" value="50">
-                    <span class="lbl">Шаг:</span><input type="number" id="oscYStep" value="1">
-                </div>
-            </div>
-
-            <div style="background: #222; padding: 4px; border-radius: 3px; margin-top: 4px;">
-                <div class="row-between" style="margin-bottom: 3px;">
-                    <label style="display:flex; align-items:center;">
-                        <input type="checkbox" id="loopCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">A-B Повтор</span>
+            
+            <div class="accordion-content collapsed" id="oscAccordionContent">
+                <div style="background: #111; padding: 4px; border-radius: 3px; margin-top: 3px; margin-bottom: 3px;">
+                    <label style="display:flex; align-items:center; margin-bottom:2px;">
+                        <input type="checkbox" id="oscXCheck"> <span class="lbl" style="color:#fff;">Сдвиг X (Пинг-Понг)</span>
                     </label>
-                    <label style="display:flex; align-items:center;">
-                        <input type="checkbox" id="pingPongCheck"> <span class="lbl" style="color:#bfff00; font-weight:bold;">Пинг-Понг</span>
-                    </label>
+                    <div style="display:flex; gap:2px; align-items:center;">
+                        <span class="lbl">Лев:</span><input type="number" id="oscXLeft" value="50">
+                        <span class="lbl">Прав:</span><input type="number" id="oscXRight" value="50">
+                        <span class="lbl">Шаг:</span><input type="number" id="oscXStep" value="1">
+                    </div>
                 </div>
-                <div style="display:flex; gap:2px; align-items:center; justify-content: space-between;">
-                    <span class="lbl">A:</span><input type="number" id="loopStart" value="0" style="width: 45px;">
-                    <span class="lbl">B:</span><input type="number" id="loopEnd" value="100" style="width: 45px;">
+
+                <div style="background: #111; padding: 4px; border-radius: 3px;">
+                    <label style="display:flex; align-items:center; margin-bottom:2px;">
+                        <input type="checkbox" id="oscYCheck"> <span class="lbl" style="color:#fff;">Сдвиг Y (Пинг-Понг)</span>
+                    </label>
+                    <div style="display:flex; gap:2px; align-items:center;">
+                        <span class="lbl">Верх:</span><input type="number" id="oscYUp" value="50">
+                        <span class="lbl">Низ:</span><input type="number" id="oscYDown" value="50">
+                        <span class="lbl">Шаг:</span><input type="number" id="oscYStep" value="1">
+                    </div>
+                </div>
+
+                <div style="background: #222; padding: 4px; border-radius: 3px; margin-top: 4px;">
+                    <div class="row-between" style="margin-bottom: 3px;">
+                        <label style="display:flex; align-items:center;">
+                            <input type="checkbox" id="loopCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">A-B Повтор</span>
+                        </label>
+                        <label style="display:flex; align-items:center;">
+                            <input type="checkbox" id="pingPongCheck"> <span class="lbl" style="color:#bfff00; font-weight:bold;">Пинг-Понг</span>
+                        </label>
+                    </div>
+                    <div style="display:flex; gap:2px; align-items:center; justify-content: space-between;">
+                        <span class="lbl">A:</span><input type="number" id="loopStart" value="0" style="width: 45px;">
+                        <span class="lbl">B:</span><input type="number" id="loopEnd" value="100" style="width: 45px;">
+                    </div>
                 </div>
             </div>
-        </details>
+        </div>
 
     </div>
 
     <!-- ПРАВАЯ НИЖНЯЯ ПАНЕЛЬ (ПЛЕЕР) -->
-    <div class="player-panel" onclick="event.stopPropagation();">
-        <div class="player-panel-title" style="display:flex; justify-content:space-between; align-items:center; cursor:move; font-size:10px; color:#00ff66; font-weight:bold; margin-bottom:4px; border-bottom:1px solid #333; padding-bottom:2px; user-select:none;"><span>🎛️ ПУЛЬТ УПРАВЛЕНИЯ</span></div>
+    <div class="player-panel">
+        
         <div class="player-group">
             <div class="row-between">
                 <span class="lbl">Масштаб: <span class="val" id="fontVal">16px</span></span>
                 <span class="lbl">Экран: <span class="val" id="screenVal">64</span></span>
             </div>
             <div style="display:flex; gap:10px;">
-                <input type="range" id="fontSlider" min="1" max="100" value="16">
+                <input type="range" id="fontSlider" min="5" max="100" value="16">
                 <input type="range" id="screenSlider" min="1" max="200" value="64">
             </div>
 
@@ -546,8 +524,7 @@
             </div>
             
             <input type="range" id="stepSlider" min="0" max="0" value="0" style="margin-bottom: 2px; margin-top: 5px;">
-            <div style="display: flex; justify-content: center; align-items: center; gap: 8px;">
-                <button id="lcsToggleBtn" class="float-circle-btn" style="width: 22px; height: 22px; font-size: 11px; margin: 0; min-width: 22px; box-shadow: none;" title="Интерливинг: Искать наибольшее совпадение с нижней строкой">🧬</button>
+            <div style="text-align: center;">
                 <span class="lbl">Кадр: <span class="val" id="stepVal">0 / 0</span></span>
             </div>
         </div>
@@ -560,8 +537,8 @@
             <button class="float-circle-btn" id="floatingRadarBtn" title="Топологический Радар">🛰️</button>
         </div>
 
-        <div class="patterns-log-container" onclick="event.stopPropagation();">
-            <div class="patterns-log-title" style="display:flex; justify-content:space-between; align-items:center; cursor:move; user-select:none; border-bottom:1px solid #333; padding-bottom:2px; margin-bottom:4px;">
+        <div class="patterns-log-container">
+            <div class="patterns-log-title" style="display:flex; justify-content:space-between; align-items:center;">
                 <span>🧠 Терминал Активации</span>
             </div>
             
@@ -573,25 +550,13 @@
                 <button id="clearMemoryBtn" class="btn-action btn-danger" style="flex:1; margin:0;">Сброс памяти</button>
             </div>
 <label style="display:flex; align-items:center; margin-bottom: 2px;">
-                <input type="checkbox" id="autoCascadeCheck" checked> <span class="lbl" style="color:#ff9933;">Авто-Каскад (1 cycle = +1 строка)</span>
+                <input type="checkbox" id="autoCascadeCheck" checked> <span class="lbl" style="color:#ff9933;">Авто-Каскад (1 цикл = +1 строка)</span>
             </label>
             <label style="display:flex; align-items:center; margin-bottom: 2px; padding-left: 15px;">
                 <input type="checkbox" id="cascadeOnBalanceCheck"> <span class="lbl" style="color:#ff9933;">Переход только после равенства (0 = 1)</span>
             </label>
-            <label style="display:flex; align-items:center; margin-bottom: 2px; padding-left: 15px;">
-                <input type="checkbox" id="pauseOnBalanceCheck" checked> <span class="lbl" style="color:#ff9933;">⏸ Пауза при равенстве (0 = 1)</span>
-            </label>
-            <label style="display:flex; align-items:center; margin-bottom: 2px; padding-left: 15px;">
-                <input type="checkbox" id="keepPhaseOnCascadeCheck"> <span class="lbl" style="color:#ffcc00;">Не сбрасывать фазу (сохранять рисунок)</span>
-            </label>
             <label style="display:flex; align-items:center; margin-bottom: 2px;">
                 <input type="checkbox" id="activateOnPatternCheck"> <span class="lbl" style="color:#ffcc00;">Разморозка строк по паттерну</span>
-            </label>
-            <label style="display:flex; align-items:center; margin-bottom: 2px; padding-left: 15px;">
-                <input type="checkbox" id="ignoreFirstPatternCharCheck" checked> <span class="lbl" style="color:#ffcc00;">Не считывать 1-й символ</span>
-            </label>
-            <label style="display:flex; align-items:center; margin-bottom: 2px; padding-left: 15px;">
-                <input type="checkbox" id="ignoreLastPatternCharCheck"> <span class="lbl" style="color:#ffcc00;">Не считывать Последний символ</span>
             </label>
             <label style="display:flex; align-items:center; margin-bottom: 2px; padding-left: 15px;">
                 <input type="checkbox" id="sequentialSearchCheck" checked> <span class="lbl" style="color:#00ccff;">Искать строго по очереди (каскад)</span>
@@ -604,8 +569,7 @@
                 <label style="display:flex; align-items:center;">
                     <input type="checkbox" id="highlightCheck" checked> <span class="lbl">Подсветка паттернов</span>
                 </label>
-                <input type="color" id="foundPatternColor" value="#bfff00" style="width:15px; height:15px; padding:0; border:none; cursor:pointer;" title="Цвет найденных активных паттернов">
-                <input type="color" id="inactivePatternColorInput" value="#ffff00" style="width:15px; height:15px; padding:0; border:none; cursor:pointer; margin-left: 4px;" title="Цвет потенциальных (неактивных) паттернов">
+                <input type="color" id="foundPatternColor" value="#bfff00" style="width:15px; height:15px; padding:0; border:none; cursor:pointer;" title="Цвет найденных паттернов">
             </div>
 
             <label style="display:flex; align-items:center; margin-bottom: 2px;">
@@ -622,8 +586,8 @@
             
             <div id="interleavingLogDetails" style="display:none;"></div>
 
-            <div id="diagTerminal" onclick="event.stopPropagation();">
-                <div class="diag-terminal-title" style="color:#00ff66; font-size:10px; font-weight:bold; margin-bottom:4px; font-family: 'Roboto Mono', monospace; cursor:move; user-select:none; border-bottom:1px solid #333; padding-bottom:2px;" onclick="this.parentNode.classList.toggle('minimized'); event.stopPropagation();">📡 ZERKALIUS DIAGNOSTIC TERMINAL</div>
+            <div id="diagTerminal">
+                <div style="color:#00ff66; font-size:10px; font-weight:bold; margin-bottom:4px; font-family: 'Roboto Mono', monospace;">📡 ZERKALIUS DIAGNOSTIC TERMINAL:</div>
                 <div style="color:#888; font-size:11px; font-family: monospace; line-height:1.4;" id="diagStats">
                     Активных строк: 0 из 0<br>
                     Цель Каскада: Строка 2<br>
@@ -631,7 +595,6 @@
                 <div style="color:#ffcc00; font-size:11px; font-family: monospace; margin-top:4px;" id="diagMethod">
                     Метод находки: Ожидание...
                 </div>
-                <div id="balanceLog" style="color:#aaa; font-size:10px; font-family: monospace; margin-top:6px; height: 80px; min-height: 40px; resize: vertical; overflow-y: auto; border-top: 1px solid #333; padding-top: 4px; cursor: default;" onclick="event.stopPropagation();"></div>
             </div>
         </div>
 
@@ -716,100 +679,6 @@
             return { charWidth, lineHeight, renderCount, totalHeight, startY, baseX, startIndex };
         }
 
-        function calculateCurrentBalance() {
-            let m = getGridMetrics();
-            if (!m) return { total0: 0, total1: 0, isEq: false };
-
-            let useMirror = safeChecked('mirrorCheck', false);
-            let showFrame = safeChecked('frameCheck', false);
-            let useRadar = safeChecked('radarCheck', false);
-            let useSelectedRingsAsFrame = useRadar && STATE.selectedRings && STATE.selectedRings.size > 0;
-            let useFrameLimit = showFrame && STATE.manualFrame && STATE.manualFrame.isInitialized;
-
-            let rowStart = useFrameLimit ? Math.max(0, Math.floor(STATE.manualFrame.y / m.lineHeight)) : 0;
-            let rowEnd = useFrameLimit ? Math.min(STATE.lines.length - 1, Math.ceil((STATE.manualFrame.y + STATE.manualFrame.h) / m.lineHeight) - 1) : STATE.lines.length - 1;
-
-            let drawX = useFrameLimit ? (m.baseX + STATE.manualFrame.x) : 0;
-            let drawW = useFrameLimit ? STATE.manualFrame.w : 0;
-
-            let total0 = 0, total1 = 0;
-
-            for (let idx = 0; idx < STATE.lines.length; idx++) {
-                let isRowInFrame = false;
-                if (useSelectedRingsAsFrame) {
-                    let renderIdx = (idx - m.startIndex + STATE.lines.length) % STATE.lines.length;
-                    isRowInFrame = STATE.selectedRings.has(renderIdx);
-                } else if (useFrameLimit) {
-                    isRowInFrame = (idx >= rowStart && idx <= rowEnd);
-                } else {
-                    isRowInFrame = true;
-                }
-
-                if (!isRowInFrame) continue;
-                let actualIdx = useFrameLimit ? ((m.startIndex + idx) % STATE.lines.length) : idx;
-                let lData = STATE.lines[actualIdx];
-                if (lData && lData.isActive) {
-                    let multiplier = (useMirror && idx > 0) ? 2 : 1;
-                    
-                    let symMode = safeValue('symModeSelect', 'centerTrack');
-                    let currentX = 0;
-                    let isMatrixAxis = false;
-                    let liveCenterOffset = 0;
-
-                    let firstCharIdx = -1;
-                    let lastCharIdx = -1;
-                    for (let k = 0; k < lData.display.length; k++) {
-                        if (!lData.fillerMask[k] && lData.display[k] !== ' ' && lData.display[k] !== 'x' && lData.display[k] !== '.') {
-                            if (firstCharIdx === -1) firstCharIdx = k;
-                            lastCharIdx = k;
-                        }
-                    }
-
-                    if (symMode === "centerTrack" || symMode === "centerTrack2") {
-                        isMatrixAxis = true;
-                        if (firstCharIdx !== -1) {
-                            let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
-                            let mathCenterIndex = (lData.display.length - 1) / 2.0;
-                            liveCenterOffset = (mathCenterIndex - liveCenterIndex) * m.charWidth;
-                        }
-                    } else if (symMode === "centerBase") {
-                        let baseWidth = lData.L * m.charWidth;
-                        let isSpaced = safeChecked('spacedCheck', false);
-                        if (isSpaced) baseWidth *= 2;
-                        currentX = m.baseX - (baseWidth / 2);
-                    } else {
-                        let fullWidth = lData.display.length * m.charWidth;
-                        currentX = m.baseX - (fullWidth / 2);
-                    }
-
-                    for (let c = 0; c < lData.display.length; c++) {
-                        if (!lData.fillerMask[c] && /\S/.test(lData.display[c])) {
-                            let cellX = 0;
-                            if (isMatrixAxis) {
-                                let centerIndex = (lData.display.length - 1) / 2.0;
-                                cellX = m.baseX + ((c - centerIndex) * m.charWidth) + liveCenterOffset;
-                            } else {
-                                cellX = currentX + (c * m.charWidth) + (m.charWidth / 2);
-                            }
-
-                            if (!useFrameLimit || (cellX >= drawX && cellX <= drawX + drawW)) {
-                                if (isType1(lData.display[c])) total1 += multiplier;
-                                else if (isType0(lData.display[c])) total0 += multiplier;
-                            }
-                        }
-                    }
-                }
-            }
-
-            return {
-                total0: total0,
-                total1: total1,
-                isEq: (total0 === total1) && (total0 > 0),
-                isAll0: (total0 > 0 && total1 === 0),
-                isAll1: (total1 > 0 && total0 === 0)
-            };
-        }
-
         const STATE = {
             lines: [],          
             globalStep: 0,
@@ -830,7 +699,6 @@
             selectedRings: new Set(), 
             wasBalancedLastFrame: false, 
             linesModifiedSinceLastInit: true, 
-            flashEndTime: 0, 
 
             offsetX: 0,
             offsetY: 0,
@@ -852,11 +720,6 @@
             frameStartH: 0,
             frameStartX: 0,
             frameStartY: 0,
-            isDraggingRing: false,
-            draggedRingIndex: -1,
-            lastMouseAngle: 0,
-            accumulatedAngleDelta: 0,
-            dragStartLocalStep: 0,
 
             banks: [
                 {lines: "", patterns: ""}, 
@@ -866,9 +729,7 @@
             activeBankIndex: 0,
             isReplaced: false,
             
-            currentTargetPatternIdx: 0,
-            pendingCascade: false,
-            interleaveLCSToggle: false
+            currentTargetPatternIdx: 0 
         };
 
         const UI = {
@@ -890,6 +751,20 @@
 
         const isType1 = (c) => ['1', '\\', ')', ']', '>', '+'].includes(c);
         const isType0 = (c) => ['0', '/', '(', '[', '<', '-'].includes(c);
+
+        safeBind('oscAccordionBtn', 'click', function() {
+            let content = document.getElementById('oscAccordionContent');
+            let icon = document.getElementById('oscAccordionIcon');
+            if (content && icon) {
+                if (content.classList.contains('collapsed')) {
+                    content.classList.remove('collapsed');
+                    icon.textContent = '▴';
+                } else {
+                    content.classList.add('collapsed');
+                    icon.textContent = '▼';
+                }
+            }
+        });
 
         safeBind('diagTerminal', 'click', function() {
             this.classList.toggle('minimized');
@@ -1077,12 +952,6 @@
             setElChk('mirrorCheck', snapshot.mirror !== undefined ? snapshot.mirror : false);
             setElChk('balanceCheck', snapshot.balance !== undefined ? snapshot.balance : false);
             setElChk('cascadeOnBalanceCheck', snapshot.cascadeOnBalance !== undefined ? snapshot.cascadeOnBalance : false);
-            setElChk('pauseOnBalanceCheck', snapshot.pauseOnBalance !== undefined ? snapshot.pauseOnBalance : true);
-            setElChk('keepPhaseOnCascadeCheck', snapshot.keepPhaseOnCascade !== undefined ? snapshot.keepPhaseOnCascade : false);
-            setElChk('ignoreFirstPatternCharCheck', snapshot.ignoreFirstPatternChar !== undefined ? snapshot.ignoreFirstPatternChar : true);
-            setElChk('ignoreLastPatternCharCheck', snapshot.ignoreLastPatternChar !== undefined ? snapshot.ignoreLastPatternChar : false);
-            setElVal('inactivePatternColorInput', snapshot.inactivePatternColor || '#ffff00');
-            setElVal('radarRotateSnapInput', snapshot.radarRotateSnap !== undefined ? snapshot.radarRotateSnap : 1);
             if (snapshot.gridColor) setElVal('gridColorInput', snapshot.gridColor);
             if (snapshot.gridAlpha) setElVal('gridAlpha', snapshot.gridAlpha);
             if (snapshot.cw !== undefined) setElVal('cwSlider', snapshot.cw);
@@ -1090,13 +959,6 @@
             setElChk('conglomerateCheck', snapshot.conglomerate !== undefined ? snapshot.conglomerate : false);
 
             if (snapshot.sierpRule) setElVal('sierpRule', snapshot.sierpRule);
-
-            STATE.interleaveLCSToggle = snapshot.lcsToggle || false;
-            let lcsBtn = document.getElementById('lcsToggleBtn');
-            if (lcsBtn) {
-                if (STATE.interleaveLCSToggle) lcsBtn.classList.add('active');
-                else lcsBtn.classList.remove('active');
-            }
 
             if (snapshot.manualFrame) STATE.manualFrame = snapshot.manualFrame;
 
@@ -1207,6 +1069,7 @@ function updateAllCycles() {
             
             STATE.maxCycle = 1;
             STATE.linesModifiedSinceLastInit = true;
+            if (STATE.manualFrame) STATE.manualFrame.isInitialized = false;
             STATE.lines = raw.map((orig, index) => {
                 let L = orig.length;
                 let cN = (nFact === 0) ? L : nFact;
@@ -1232,19 +1095,6 @@ function updateAllCycles() {
 STATE.nextBlobColorId = 1;
             STATE.lastFindMethod = "Ожидание...";
             STATE.currentTargetPatternIdx = 1; 
-            STATE.wasBalancedLastFrame = false;
-            STATE.lastSpecialType = "none";
-            STATE.lastLoggedRowsCount = 0;
-            STATE.balanceHistory = [];
-            var logEl = document.getElementById('balanceLog');
-            if (logEl) logEl.innerHTML = "";
-            var ilLog = document.getElementById('interleavingLogDetails');
-            if (ilLog) ilLog.style.display = 'none';
-            if (STATE.manualFrame) {
-                STATE.manualFrame.isInitialized = false;
-                STATE.manualFrame.rowStart = 0;
-                STATE.manualFrame.rowSpan = 1;
-            }
             
             let linesInp = document.getElementById('linesInput');
             if (linesInp) linesInp.value = raw.join('\n');
@@ -1268,39 +1118,6 @@ STATE.nextBlobColorId = 1;
             updatePatternBackdrop();
             resetPositionWithHeightScale(1.0, false);
         }
-
-        function alignText(mode) {
-            let lines = safeValue('linesInput', '').split('\n').map(l => l.trim().replace(/\s+/g, ''));
-            if (lines.length === 0) return;
-            lines = lines.map(l => l.replace(/\./g, '')); // очищаем от старых точек
-            let maxL = Math.max(...lines.map(l => l.length));
-
-            for(let i=0; i<lines.length; i++) {
-                let l = lines[i];
-                if (l.length < maxL) {
-                    let diff = maxL - l.length;
-                    if (mode === 'left') {
-                        lines[i] = l + '.'.repeat(diff);
-                    } else if (mode === 'right') {
-                        lines[i] = '.'.repeat(diff) + l;
-                    } else if (mode === 'center') {
-                        let leftP = Math.floor(diff / 2);
-                        let rightP = diff - leftP;
-                        lines[i] = '.'.repeat(leftP) + l + '.'.repeat(rightP);
-                    }
-                }
-            }
-            let newText = lines.join('\n');
-            let linesInp = document.getElementById('linesInput');
-            if(linesInp) linesInp.value = newText;
-            STATE.banks[STATE.activeBankIndex].lines = newText;
-            loadText(newText);
-            showNotification("СТРОКИ ВЫРОВНЕНЫ (" + mode.toUpperCase() + ")");
-        }
-
-        safeBind('alignLeftBtn', 'click', () => alignText('left'));
-        safeBind('alignCenterBtn', 'click', () => alignText('center'));
-        safeBind('alignRightBtn', 'click', () => alignText('right'));
 
         safeBind('applyLinesBtn', 'click', () => {
             const rawText = safeValue('linesInput', '');
@@ -1414,13 +1231,7 @@ STATE.nextBlobColorId = 1;
                 let cleanLine = line.trim().replace(/\s+/g, '');
                 if (cleanLine.length > 0) {
                     if (STATE.foundPatterns.has(cleanLine)) {
-                        let meta = STATE.foundPatternsMetadata.get(cleanLine);
-                        let metaStr = "";
-                        if (meta) {
-                            let locStr = meta.type === 'global' ? 'Сквозной' : (meta.type === 'vertical' ? 'Верт.' : (meta.type === 'interleaving' ? 'Инт.' : `Стр ${meta.rows ? meta.rows.join(',') : ''}`));
-                            metaStr = `<span style="color:#555555; font-size:9px; font-weight:normal; float:right; pointer-events:none; user-select:none; font-family:monospace;">(Шаг ${meta.step !== undefined ? meta.step : '?'}, ${locStr})</span>`;
-                        }
-                        html += `<span class="found">${line}${metaStr}</span>\n`;
+                        html += `<span class="found">${line}</span>\n`;
                     } else if (isSequential && idx === STATE.currentTargetPatternIdx) {
                         html += `<span class="target">${line}</span>\n`;
                     } else {
@@ -1467,7 +1278,7 @@ STATE.nextBlobColorId = 1;
                 }
             }
 
-            if (isReversedRow) {
+            if (isReversedRow && line.isActive) {
                 s_display = max_shift - s_display;
                 if (s_display < 0) s_display = 0;
             }
@@ -1577,14 +1388,6 @@ STATE.nextBlobColorId = 1;
             let deltaN = parseInt(safeValue('deltaNInput', 1));
             let hideChanged = safeChecked('hideChangedCheck', false);
             let hideUnchanged = safeChecked('hideUnchangedCheck', false);
-            let ignoreFirst = safeChecked('ignoreFirstPatternCharCheck', true);
-            let ignoreLast = safeChecked('ignoreLastPatternCharCheck', false);
-            const getSearchPat = p => {
-                let res = p;
-                if (ignoreFirst && res.length > 0) res = res.substring(1);
-                if (ignoreLast && res.length > 0) res = res.substring(0, res.length - 1);
-                return res;
-            };
 
 let autoCascadeActive = safeChecked('autoCascadeCheck', true);
             // Размораживаем все строки сразу ТОЛЬКО ЕСЛИ обе галочки выключены
@@ -1636,8 +1439,6 @@ let autoCascadeActive = safeChecked('autoCascadeCheck', true);
             for (let i = 0; i < STATE.lines.length; i++) {
                 let line = STATE.lines[i];
                 if (line.L === 0) continue;
-                line.highlightMask = [];
-                line.inactiveHighlightMask = [];
 
                 let currentData = computeLineData(Math.abs(line.localStep), elkaBuffer, elkaPtr, line, i, useElka, meetCenter, usePendulum, useCylinder, useSpacing, useDrum, globalMaxGrid, useFillX);
 
@@ -1678,68 +1479,6 @@ let autoCascadeActive = safeChecked('autoCascadeCheck', true);
             }
 
             let useGlobalSearch = safeChecked('globalSearchCheck', false);
-            let useVerticalSearch = safeChecked('verticalSearchCheck', false);
-            
-            if (triggerSearch && useVerticalSearch) {
-                let sortedPatterns = [...validPatterns].sort((a, b) => b.length - a.length);
-                let maxCols = 0;
-                STATE.lines.forEach(l => {
-                    if (l.isActive && l.display.length > maxCols) maxCols = l.display.length;
-                });
-
-                for (let c = 0; c < maxCols; c++) {
-                    let colClean = "";
-                    let rowMap = [];
-                    for (let r = 0; r < STATE.lines.length; r++) {
-                        let line = STATE.lines[r];
-                        if (!line.isActive || line.L === 0) continue;
-                        let char = line.display[c];
-                        if (char && !line.fillerMask[c] && /\S/.test(char)) {
-                            colClean += char;
-                            rowMap.push(r);
-                        } else {
-                            colClean += " ";
-                            rowMap.push(-1);
-                        }
-                    }
-                    
-                    if (colClean.trim().length === 0) continue;
-                    
-                    for (let pIdx = 0; pIdx < sortedPatterns.length; pIdx++) {
-                        let searchPatOrig = sortedPatterns[pIdx];
-                        let searchPat = getSearchPat(searchPatOrig);
-                        if (searchPat.length === 0) continue;
-                        let pos = colClean.indexOf(searchPat);
-                        if (pos !== -1) {
-                            let targetRowIdx = validPatterns.indexOf(searchPatOrig);
-                            let isTargetActive = (targetRowIdx !== -1 && STATE.lines[targetRowIdx]) ? STATE.lines[targetRowIdx].isActive : false;
-                            
-                            let isNew = !STATE.foundPatterns.has(searchPatOrig);
-                            if (isNew) {
-                                STATE.foundPatterns.add(searchPatOrig);
-                                newlyFound = true;
-                                STATE.lastFindMethod = `Вертикально (Столбец ${c})`;
-                                
-                                if (vbaActivation) {
-                                    let origIdx = validPatterns.indexOf(searchPatOrig);
-                                    if (origIdx !== -1 && origIdx < STATE.lines.length) {
-                                        STATE.lines[origIdx].isActive = true;
-                                        STATE.lines[origIdx].localStep = 0;
-                                    }
-                                }
-                                
-                                STATE.foundPatternsMetadata.set(searchPatOrig, {
-                                    type: 'vertical',
-                                    cols: [c],
-                                    step: Math.abs(STATE.globalStep)
-                                });
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-            
             if (triggerSearch && useGlobalSearch && globalCleanText.length > 0) {
                 let cleanStream = globalCleanText.replace(/\s+/g, '');
                 let cleanMap = globalMap.filter((val, idx) => /\S/.test(globalCleanText[idx]));
@@ -1748,13 +1487,12 @@ let autoCascadeActive = safeChecked('autoCascadeCheck', true);
                 
                 if (isSequential) {
                     if (STATE.currentTargetPatternIdx < validPatterns.length) {
-                        let targetPatOrig = validPatterns[STATE.currentTargetPatternIdx];
-                        let targetPat = getSearchPat(targetPatOrig);
-                        let pos = targetPat.length > 0 ? textToSearch.indexOf(targetPat) : -1;
+                        let targetPat = validPatterns[STATE.currentTargetPatternIdx];
+                        let pos = textToSearch.indexOf(targetPat);
                         
                         if (pos !== -1 && pos < cleanStream.length) {
-                            if (!STATE.foundPatterns.has(targetPatOrig)) {
-                                STATE.foundPatterns.add(targetPatOrig);
+                            if (!STATE.foundPatterns.has(targetPat)) {
+                                STATE.foundPatterns.add(targetPat);
                                 newlyFound = true;
                                 STATE.lastFindMethod = "Сквозной XOR";
                                 
@@ -1768,10 +1506,9 @@ let autoCascadeActive = safeChecked('autoCascadeCheck', true);
                                     let loc = cleanMap[(pos + k) % cleanStream.length];
                                     if (loc) { involvedRows.add(loc.r + 1); }
                                 }
-                                STATE.foundPatternsMetadata.set(targetPatOrig, {
+                                STATE.foundPatternsMetadata.set(targetPat, {
                                     type: 'global',
-                                    rows: Array.from(involvedRows).sort((a,b)=>a-b),
-                                    step: Math.abs(STATE.globalStep)
+                                    rows: Array.from(involvedRows).sort((a,b)=>a-b)
                                 });
 
                                 STATE.currentTargetPatternIdx++;
@@ -1779,15 +1516,14 @@ let autoCascadeActive = safeChecked('autoCascadeCheck', true);
                         }
                     }
                 } else {
-                    validPatterns.forEach((searchPatOrig, patIdx) => {
-                        let searchPat = getSearchPat(searchPatOrig);
-                        let pos = searchPat.length > 0 ? textToSearch.indexOf(searchPat) : -1;
+                    validPatterns.forEach((searchPat, patIdx) => {
+                        let pos = textToSearch.indexOf(searchPat);
                         if (pos !== -1 && pos < globalCleanText.length) {
-                            let isNew = !STATE.foundPatterns.has(searchPatOrig);
-                            let hasMeta = STATE.foundPatternsMetadata.has(searchPatOrig);
+                            let isNew = !STATE.foundPatterns.has(searchPat);
+                            let hasMeta = STATE.foundPatternsMetadata.has(searchPat);
                             
                             if (isNew) {
-                                STATE.foundPatterns.add(searchPatOrig);
+                                STATE.foundPatterns.add(searchPat);
                                 newlyFound = true;
                                 STATE.lastFindMethod = "Сквозной XOR";
                                 
@@ -1805,10 +1541,9 @@ let autoCascadeActive = safeChecked('autoCascadeCheck', true);
                                         involvedRows.add(loc.r + 1); 
                                     }
                                 }
-                                STATE.foundPatternsMetadata.set(searchPatOrig, {
+                                STATE.foundPatternsMetadata.set(searchPat, {
                                     type: 'global',
-                                    rows: Array.from(involvedRows).sort((a,b)=>a-b),
-                                    step: Math.abs(STATE.globalStep)
+                                    rows: Array.from(involvedRows).sort((a,b)=>a-b)
                                 });
                             }
                         }
@@ -1816,7 +1551,7 @@ let autoCascadeActive = safeChecked('autoCascadeCheck', true);
                 }
             }
 
-            if (triggerSearch && !useGlobalSearch && !useVerticalSearch) {
+            if (triggerSearch && !useGlobalSearch) {
                 let sortedPatterns = [...validPatterns].sort((a, b) => b.length - a.length);
 
                 for (let i = 0; i < STATE.lines.length; i++) {
@@ -1834,12 +1569,11 @@ let autoCascadeActive = safeChecked('autoCascadeCheck', true);
 
                     if (isSequential) {
                         if (STATE.currentTargetPatternIdx < validPatterns.length) {
-                            let targetPatOrig = validPatterns[STATE.currentTargetPatternIdx];
-                            let targetPat = getSearchPat(targetPatOrig);
-                            let pos = targetPat.length > 0 ? lineClean.indexOf(targetPat) : -1;
+                            let targetPat = validPatterns[STATE.currentTargetPatternIdx];
+                            let pos = lineClean.indexOf(targetPat);
                             if (pos !== -1) {
-                                if (!STATE.foundPatterns.has(targetPatOrig)) {
-                                    STATE.foundPatterns.add(targetPatOrig);
+                                if (!STATE.foundPatterns.has(targetPat)) {
+                                    STATE.foundPatterns.add(targetPat);
                                     newlyFound = true;
                                     STATE.lastFindMethod = `Локально (Строка ${i + 1})`;
                                     
@@ -1848,10 +1582,9 @@ let autoCascadeActive = safeChecked('autoCascadeCheck', true);
                                         STATE.lines[STATE.currentTargetPatternIdx].localStep = 0;
                                     }
                                     
-                                    STATE.foundPatternsMetadata.set(targetPatOrig, {
+                                    STATE.foundPatternsMetadata.set(targetPat, {
                                         type: 'local',
-                                        rows: [i + 1],
-                                        step: Math.abs(STATE.globalStep)
+                                        rows: [i + 1]
                                     });
                                     
                                     STATE.currentTargetPatternIdx++;
@@ -1860,28 +1593,26 @@ let autoCascadeActive = safeChecked('autoCascadeCheck', true);
                         }
                     } else {
                         for (let pIdx = 0; pIdx < sortedPatterns.length; pIdx++) {
-                            let searchPatOrig = sortedPatterns[pIdx];
-                            let searchPat = getSearchPat(searchPatOrig);
-                            let pos = searchPat.length > 0 ? lineClean.indexOf(searchPat) : -1;
+                            let searchPat = sortedPatterns[pIdx];
+                            let pos = lineClean.indexOf(searchPat);
                             if (pos !== -1) {
-                                let isNew = !STATE.foundPatterns.has(searchPatOrig);
+                                let isNew = !STATE.foundPatterns.has(searchPat);
                                 if (isNew) {
-                                    STATE.foundPatterns.add(searchPatOrig);
+                                    STATE.foundPatterns.add(searchPat);
                                     newlyFound = true;
                                     STATE.lastFindMethod = `Локально (Строка ${i + 1})`;
                                     
                                     if (vbaActivation) {
-                                        let origIdx = validPatterns.indexOf(searchPatOrig);
+                                        let origIdx = validPatterns.indexOf(searchPat);
                                         if (origIdx !== -1 && origIdx < STATE.lines.length) {
                                             STATE.lines[origIdx].isActive = true;
                                             STATE.lines[origIdx].localStep = 0;
                                         }
                                     }
                                     
-                                    STATE.foundPatternsMetadata.set(searchPatOrig, {
+                                    STATE.foundPatternsMetadata.set(searchPat, {
                                         type: 'local',
-                                        rows: [i + 1],
-                                        step: Math.abs(STATE.globalStep)
+                                        rows: [i + 1]
                                     });
                                 }
                                 break;
@@ -1912,22 +1643,21 @@ let autoCascadeActive = safeChecked('autoCascadeCheck', true);
                             if (j < strCurrent.length) interleaved += strCurrent[j];
                         }
 
-                        let nextPatternOrig = STATE.lines[nextIdx].orig.replace(/\s+/g, '');
-                        let nextPattern = getSearchPat(nextPatternOrig);
+                        let nextPattern = STATE.lines[nextIdx].orig.replace(/\s+/g, '');
                         
                         if (nextPattern.length > 0) {
                             let ilSearchText = interleaved + interleaved;
                             let pos = ilSearchText.indexOf(nextPattern);
                             
                             if (pos !== -1 && pos < interleaved.length) {
-                                let isNew = !STATE.foundPatterns.has(nextPatternOrig);
+                                let isNew = !STATE.foundPatterns.has(nextPattern);
                                 
                                 if (isNew) {
                                     if (!STATE.lines[nextIdx].isActive) {
                                         STATE.lines[nextIdx].isActive = true;
                                         STATE.lines[nextIdx].localStep = 0;
                                     }
-                                    STATE.foundPatterns.add(nextPatternOrig);
+                                    STATE.foundPatterns.add(nextPattern);
                                     newlyFound = true;
                                     STATE.lastFindMethod = `Интерливинг (Строки ${lastActiveIdx} & ${lastActiveIdx + 1})`;
                                     
@@ -1936,12 +1666,11 @@ let autoCascadeActive = safeChecked('autoCascadeCheck', true);
                                     }
                                 }
 
-                                STATE.foundPatternsMetadata.set(nextPatternOrig, {
+                                STATE.foundPatternsMetadata.set(nextPattern, {
                                     type: 'interleaving',
                                     source1: lastActiveIdx, 
                                     source2: lastActiveIdx + 1, 
-                                    target: nextIdx + 1,
-                                    step: Math.abs(STATE.globalStep)
+                                    target: nextIdx + 1
                                 });
 
                                 for (let k = 0; k < nextPattern.length; k++) {
@@ -1954,66 +1683,15 @@ let autoCascadeActive = safeChecked('autoCascadeCheck', true);
             }
 
             if (showHighlights && globalCleanText.length > 0) {
-                if (useVerticalSearch) {
-                    let sortedPatterns = [...validPatterns].sort((a, b) => b.length - a.length);
-                    let maxCols = 0;
-                    STATE.lines.forEach(l => {
-                        if (l.isActive && l.display.length > maxCols) maxCols = l.display.length;
-                    });
-
-                    for (let c = 0; c < maxCols; c++) {
-                        let colClean = "";
-                        let rowMap = [];
-                        for (let r = 0; r < STATE.lines.length; r++) {
-                            let line = STATE.lines[r];
-                            if (!line.isActive || line.L === 0) continue;
-                            let char = line.display[c];
-                            if (char && !line.fillerMask[c] && /\S/.test(char)) {
-                                colClean += char;
-                                rowMap.push(r);
-                            } else {
-                                colClean += " ";
-                                rowMap.push(-1);
-                            }
-                        }
-                        
-                        for (let pIdx = 0; pIdx < sortedPatterns.length; pIdx++) {
-                            let patOrig = sortedPatterns[pIdx];
-                            let pat = getSearchPat(patOrig);
-                            if(pat.length === 0) continue;
-                            let pos = colClean.indexOf(pat);
-                            if (pos !== -1) {
-                                let targetRowIdx = validPatterns.indexOf(patOrig);
-                                let isTargetActive = (targetRowIdx !== -1 && STATE.lines[targetRowIdx]) ? STATE.lines[targetRowIdx].isActive : false;
-                                
-                                for (let k = 0; k < pat.length; k++) {
-                                    let actualRow = rowMap[pos + k];
-                                    if (actualRow !== -1) {
-                                        if (isTargetActive) {
-                                            STATE.lines[actualRow].highlightMask[c] = true;
-                                        } else {
-                                            STATE.lines[actualRow].inactiveHighlightMask[c] = true;
-                                        }
-                                    }
-                                }
-                                break;
-                            }
-                        }
-                    }
-                } else if (useGlobalSearch) {
+                if (useGlobalSearch) {
                     let cleanStream = globalCleanText.replace(/\s+/g, '');
                     let cleanMap = globalMap.filter((val, idx) => /\S/.test(globalCleanText[idx]));
 
                     let textToSearch = cleanStream + cleanStream;
 
-                    validPatterns.forEach(patOrig => {
-                        let pat = getSearchPat(patOrig);
-                        if(pat.length === 0) return;
+                    validPatterns.forEach(pat => {
                         let pos = textToSearch.indexOf(pat);
                         if (pos !== -1) { 
-                            let targetRowIdx = validPatterns.indexOf(patOrig);
-                            let isTargetActive = (targetRowIdx !== -1 && STATE.lines[targetRowIdx]) ? STATE.lines[targetRowIdx].isActive : false;
-
                             if (pos < cleanStream.length) {
                                 for (let k = 0; k < pat.length; k++) {
                                     let loc = cleanMap[(pos + k) % cleanStream.length];
@@ -2021,11 +1699,7 @@ let autoCascadeActive = safeChecked('autoCascadeCheck', true);
                                         let globalIdx = globalMap.findIndex((g, i) => g.r === loc.r && g.c === loc.c && /\S/.test(globalCleanText[i]));
                                         if (globalIdx !== -1) {
                                             let gridLoc = globalMap[globalIdx];
-                                            if (isTargetActive) {
-                                                STATE.lines[gridLoc.r].highlightMask[gridLoc.c] = true;
-                                            } else {
-                                                STATE.lines[gridLoc.r].inactiveHighlightMask[gridLoc.c] = true;
-                                            }
+                                            STATE.lines[gridLoc.r].highlightMask[gridLoc.c] = true;
                                         }
                                     }
                                 }
@@ -2051,101 +1725,17 @@ let autoCascadeActive = safeChecked('autoCascadeCheck', true);
                         if (lineClean.length === 0) continue;
                         
                         for (let pIdx = 0; pIdx < sortedPatterns.length; pIdx++) {
-                            let patOrig = sortedPatterns[pIdx];
-                            let pat = getSearchPat(patOrig);
-                            if(pat.length === 0) continue;
+                            let pat = sortedPatterns[pIdx];
                             let pos = lineClean.indexOf(pat);
                             if (pos !== -1) {
-                                let targetRowIdx = validPatterns.indexOf(patOrig);
-                                let isTargetActive = (targetRowIdx !== -1 && STATE.lines[targetRowIdx]) ? STATE.lines[targetRowIdx].isActive : false;
-
                                 for (let k = 0; k < pat.length; k++) {
                                     let realCol = colMap[pos + k];
                                     if (realCol !== undefined) {
-                                        if (isTargetActive) {
-                                            line.highlightMask[realCol] = true;
-                                        } else {
-                                            line.inactiveHighlightMask[realCol] = true;
-                                        }
+                                        line.highlightMask[realCol] = true;
                                     }
                                 }
                                 break;
                             }
-                        }
-                    }
-                }
-            }
-
-
-            STATE.lines.forEach(l => l.lcsRedMask = []);
-
-            if (STATE.interleaveLCSToggle) {
-                let lastActiveIdx = -1;
-                for (let i = 0; i < STATE.lines.length; i++) {
-                    if (STATE.lines[i].isActive) lastActiveIdx = i;
-                }
-
-                if (lastActiveIdx > 0 && lastActiveIdx < STATE.lines.length - 1) {
-                    let strAbove = getCleanLine(STATE.lines[lastActiveIdx - 1]);
-                    let strCurrent = getCleanLine(STATE.lines[lastActiveIdx]);
-
-                    let interleaved = "";
-                    let maxL = Math.max(strAbove.length, strCurrent.length);
-                    for (let j = 0; j < maxL; j++) {
-                        if (j < strAbove.length) interleaved += strAbove[j];
-                        if (j < strCurrent.length) interleaved += strCurrent[j];
-                    }
-
-                    let nextIdx = lastActiveIdx + 1;
-                    let targetLine = STATE.lines[nextIdx];
-                    let targetClean = getCleanLine(targetLine);
-
-                    if (targetClean.length > 0 && interleaved.length > 0) {
-                        let longestMatch = "";
-                        let bestStartInNext = -1;
-
-                        for (let i = 0; i < interleaved.length; i++) {
-                            for (let j = i + longestMatch.length + 1; j <= interleaved.length; j++) {
-                                let sub = interleaved.substring(i, j);
-                                let pos = targetClean.indexOf(sub);
-                                if (pos !== -1) {
-                                    longestMatch = sub;
-                                    bestStartInNext = pos;
-                                } else {
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (longestMatch.length > 0) {
-                            let colMap = [];
-                            for (let c = 0; c < targetLine.display.length; c++) {
-                                if (!targetLine.fillerMask[c] && /\S/.test(targetLine.display[c])) {
-                                    colMap.push(c);
-                                }
-                            }
-
-                            for (let k = 0; k < longestMatch.length; k++) {
-                                let actualCol = colMap[bestStartInNext + k];
-                                if (actualCol !== undefined) {
-                                    targetLine.lcsRedMask[actualCol] = true;
-                                }
-                            }
-                        }
-
-                        let logDiv = document.getElementById('interleavingLogDetails');
-                        if (logDiv && STATE.interleaveLCSToggle) {
-                            logDiv.style.display = 'block';
-                            let lcsHtml = longestMatch ? `<span style="color:#ff3333; font-weight:bold; background:rgba(255,51,51,0.2); padding:0 2px; border-radius:2px;">${longestMatch}</span>` : "Нет";
-                            logDiv.innerHTML = `
-                                <div style="background:#111; border-left:2px solid #ff3333; padding:4px; font-size:10px; border-radius:3px; word-wrap:break-word; margin-bottom:4px; font-family:monospace; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
-                                    <div style="color:#ffcc00; margin-bottom:2px; font-weight:bold;">🧬 ЧЕРНОВИК ИНТЕРЛИВИНГА:</div>
-                                    <div style="color:#aaa;">[Стр ${lastActiveIdx}]:   <span style="color:#fff;">${strAbove}</span></div>
-                                    <div style="color:#aaa;">[Стр ${lastActiveIdx+1}]: <span style="color:#fff;">${strCurrent}</span></div>
-                                    <div style="color:#bfff00; margin-top:2px;">[A+B]:     <span style="color:#fff;">${interleaved}</span></div>
-                                    <div style="color:#ff3333; margin-top:2px;">[Поиск в Стр ${lastActiveIdx+2}]: ${lcsHtml}</div>
-                                </div>
-                            `;
                         }
                     }
                 }
@@ -2189,109 +1779,86 @@ let autoCascadeActive = safeChecked('autoCascadeCheck', true);
             }
         }
 
-function processPendingCascade() {
-            if (!STATE.pendingCascade) return;
-            let lastActiveIdx = -1;
-            for (let i = 0; i < STATE.lines.length; i++) {
-                if (STATE.lines[i].isActive) lastActiveIdx = i;
-            }
-            if (lastActiveIdx >= 0 && lastActiveIdx < STATE.lines.length - 1) {
-                let nextIdx = lastActiveIdx + 1;
-                STATE.lines[nextIdx].isActive = true;
-                
-                // Синхронизируем движение: сбрасываем шаги всех активных строк (если не включено сохранение фазы)
-                let keepPhase = safeChecked('keepPhaseOnCascadeCheck', false);
-                STATE.lines.forEach((l, i) => {
-                    if (l.isActive) {
-                        if (!keepPhase || i === nextIdx) {
-                            l.localStep = 0;
-                        }
-                    }
-                });
-
-                // Расширяем рамку вниз
-                if (safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized) {
-                    let m = getGridMetrics();
-                    if (m) {
-                        let reqH = (nextIdx + 1) * m.lineHeight - STATE.manualFrame.y;
-                        if (reqH > STATE.manualFrame.h) {
-                            STATE.manualFrame.h = reqH;
-                            STATE.manualFrame.rowSpan = Math.max(1, Math.ceil(reqH / m.lineHeight));
-                        }
-                    }
-                }
-            }
-            STATE.pendingCascade = false;
-        }
-
 function updateLogic() {
-// 1. Сначала синхронизируем активность строк по рамке (если она включена)
+            // Активируем (размораживаем) все строки, физически попавшие внутрь ручной рамки по вертикали
             if (safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized) {
                 let m = getGridMetrics();
                 if (m) {
-                    let rowStart = Math.max(0, Math.floor(STATE.manualFrame.y / m.lineHeight));
-                    let rowEnd = Math.min(STATE.lines.length - 1, Math.ceil((STATE.manualFrame.y + STATE.manualFrame.h) / m.lineHeight) - 1);
+                    let rowStart = Math.max(0, Math.round(STATE.manualFrame.y / m.lineHeight));
+                    let rowEnd = Math.min(STATE.lines.length - 1, Math.round((STATE.manualFrame.y + STATE.manualFrame.h) / m.lineHeight) - 1);
                     
                     for (let i = 0; i < STATE.lines.length; i++) {
-                        let shouldBeActive = (i >= rowStart && i <= rowEnd);
-                        if (shouldBeActive) {
+                        if (i >= rowStart && i <= rowEnd) {
                             if (!STATE.lines[i].isActive) {
                                 STATE.lines[i].isActive = true;
-                            }
-                        } else {
-                            if (STATE.lines[i].isActive) {
-                                STATE.lines[i].isActive = false;
+                                STATE.lines[i].localStep = 0;
                             }
                         }
                     }
                 }
             }
 
-            // 2. Рассчитываем символьное состояние на основе уже обновленного списка строк
-            calculateState(false);
-
-            // 3. Авто-Каскад переходов
-            if (safeChecked('autoCascadeCheck', true) && !STATE.frameAction) {
-                let lastActiveIdx = -1;
-                for (let i = 0; i < STATE.lines.length; i++) {
-                    if (STATE.lines[i].isActive) lastActiveIdx = i;
-                }
-                if (lastActiveIdx >= 0 && lastActiveIdx < STATE.lines.length - 1) {
-                    let line = STATE.lines[lastActiveIdx];
-                    
-                    let triggerCascade = false;
-                    let cycleCompleted = (Math.abs(line.localStep) >= line.cycle && line.cycle > 0);
-                    let useBalanceTrigger = safeChecked('cascadeOnBalanceCheck', false);
-                    
-                    if (useBalanceTrigger) {
-                        let bal = calculateCurrentBalance();
-                        triggerCascade = bal.isEq || bal.isAll0 || bal.isAll1;
-                    } else {
-                        triggerCascade = cycleCompleted;
+            if (safeChecked('autoCascadeCheck', true)) {
+                let keepChecking = true;
+                while (keepChecking) {
+                    let lastActiveIdx = -1;
+                    for (let i = 0; i < STATE.lines.length; i++) {
+                        if (STATE.lines[i].isActive) lastActiveIdx = i;
                     }
+                    if (lastActiveIdx >= 0 && lastActiveIdx < STATE.lines.length - 1) {
+                        let line = STATE.lines[lastActiveIdx];
+                        
+                        let allowCascade = true;
+                        if (safeChecked('cascadeOnBalanceCheck', false)) {
+                            let firstActiveIdx = -1;
+                            for (let i = 0; i < STATE.lines.length; i++) {
+                                if (STATE.lines[i].isActive) {
+                                    firstActiveIdx = i;
+                                    break;
+                                }
+                            }
+                            if (firstActiveIdx !== -1) {
+                                let total0 = 0, total1 = 0;
+                                for (let idx = firstActiveIdx; idx <= lastActiveIdx; idx++) {
+                                    let lData = STATE.lines[idx];
+                                    if (lData && lData.isActive) {
+                                        for (let c = 0; c < lData.display.length; c++) {
+                                            if (!lData.fillerMask[c] && /\S/.test(lData.display[c])) {
+                                                if (isType1(lData.display[c])) total1++;
+                                                else if (isType0(lData.display[c])) total0++;
+                                            }
+                                        }
+                                    }
+                                }
+                                allowCascade = (total0 === total1) && (total0 > 0);
+                            } else {
+                                allowCascade = false;
+                            }
+                        }
 
-                    if (triggerCascade) {
-                        if (useBalanceTrigger) {
-                            // Для равенства: откладываем включение новой строки на следующий шаг!
-                            STATE.pendingCascade = true;
-                        } else {
-                            // Для обычного каскада по циклам: включаем как обычно сразу
+                        // Если последняя активная строка завершила свой цикл и переход разрешен:
+                        if (Math.abs(line.localStep) >= line.cycle && line.cycle > 0 && allowCascade) {
                             let nextIdx = lastActiveIdx + 1;
                             STATE.lines[nextIdx].isActive = true;
-                            STATE.lines[nextIdx].localStep = 0;
-                            
-                            // Расширяем рамку вниз
+                            // Если из-за Турбо мы проскочили ровный цикл, передаем остаток шагов следующей строке (идеальная синхронизация)
+                            let remainder = Math.abs(line.localStep) - line.cycle;
+                            STATE.lines[nextIdx].localStep = STATE.isReverse ? -remainder : remainder;
+
+                            // Расширяем рамку вниз вслед за размороженной по равенству строкой
                             if (safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized) {
                                 let m = getGridMetrics();
                                 if (m) {
                                     let reqH = (nextIdx + 1) * m.lineHeight - STATE.manualFrame.y;
                                     if (reqH > STATE.manualFrame.h) {
                                         STATE.manualFrame.h = reqH;
-                                        STATE.manualFrame.rowSpan = Math.max(1, Math.ceil(reqH / m.lineHeight));
                                     }
                                 }
                             }
+                        } else {
+                            keepChecking = false; // Цикл не завершен, или ждем баланса
                         }
+                    } else {
+                        keepChecking = false;
                     }
                 }
             }
@@ -2326,19 +1893,30 @@ function updateLogic() {
                 let balanceText = "";
                 
                 if (safeChecked('balanceCheck', false) && activeLinesCount > 0) {
-                    let bal = calculateCurrentBalance();
-                    let isEq = bal.isEq;
-                    let isAll0 = bal.isAll0;
-                    let isAll1 = bal.isAll1;
-                    
-                    let eqColor = '#00ccff';
-                    let eqShadow = '';
-                    let eqSign = "";
-                    if (isEq) { eqColor = '#ffffff'; eqShadow = 'text-shadow: 0 0 10px #ffffff;'; eqSign = " ⚖️ РАВЕНСТВО!"; }
-                    else if (isAll0) { eqColor = '#00ffff'; eqShadow = 'text-shadow: 0 0 10px #00ffff;'; eqSign = " 🟦 АБС. НОЛЬ!"; }
-                    else if (isAll1) { eqColor = '#ff00ff'; eqShadow = 'text-shadow: 0 0 10px #ff00ff;'; eqSign = " 🟪 АБС. ЕДИН!"; }
-
-                    balanceText = `<br><span style="color:${eqColor}; font-size:13px; font-weight:bold; ${eqShadow}">Баланс (0 / 1): ${bal.total0} / ${bal.total1}${eqSign}</span>`;
+                    let firstActiveIdx = -1;
+                    let lastActiveIdx = -1;
+                    for (let i = 0; i < STATE.lines.length; i++) {
+                        if (STATE.lines[i].isActive) {
+                            if (firstActiveIdx === -1) firstActiveIdx = i;
+                            lastActiveIdx = i;
+                        }
+                    }
+                    if (firstActiveIdx !== -1) {
+                        let total0 = 0, total1 = 0;
+                        for (let idx = firstActiveIdx; idx <= lastActiveIdx; idx++) {
+                            let line = STATE.lines[idx];
+                            if (line && line.isActive) {
+                                for (let c = 0; c < line.display.length; c++) {
+                                    if (!line.fillerMask[c] && /\S/.test(line.display[c])) {
+                                        if (isType1(line.display[c])) total1++;
+                                        else if (isType0(line.display[c])) total0++;
+                                    }
+                                }
+                            }
+                        }
+                        let eqSign = (total0 === total1 && total0 > 0) ? " ⚖️ РАВЕНСТВО!" : "";
+                        balanceText = `<br>Баланс (0 / 1): ${total0} / ${total1}${eqSign}`;
+                    }
                 }
 
                 statsEl.innerHTML = `Активных строк: ${activeLinesCount} из ${STATE.lines.length}${balanceText}<br>
@@ -2561,20 +2139,14 @@ for (let i = 0; i < m.renderCount; i++) {
                         }
 
                         let isHl = showHighlights && lineData.isActive && lineData.highlightMask[c];
-                        let isInactiveHl = showHighlights && !lineData.isActive && lineData.inactiveHighlightMask && lineData.inactiveHighlightMask[c];
                         let flashEnd = STATE.flashes.get(actualIndex + "_" + c);
                         let isFlashing = flashEnd && Date.now() < flashEnd;
                         let isRed = trackRedOne && lineData.redMask[c];
-                        let isLcsRed = lineData.lcsRedMask && lineData.lcsRedMask[c];
 
                         let isChar1 = isType1(char);
 
                         let cBlobColor = useConglomerates ? conglomColors.get(actualIndex + "_" + c) : null;
-                        if (isInactiveHl) {
-                            ctx.fillStyle = safeValue('inactivePatternColorInput', '#ffff00');
-                            ctx.shadowBlur = useNeon ? 12 : 0;
-                            ctx.shadowColor = ctx.fillStyle;
-                        } else if (cBlobColor) {
+                        if (cBlobColor) {
                             ctx.fillStyle = cBlobColor;
                             ctx.shadowBlur = useNeon ? 8 : 0;
                             ctx.shadowColor = cBlobColor;
@@ -2625,9 +2197,6 @@ for (let i = 0; i < m.renderCount; i++) {
                         }
 
                         ctx.save();
-                        if (isInactiveHl) {
-                            ctx.globalAlpha = 1.0;
-                        }
                         if (isRingSelected) {
                             ctx.shadowBlur = 15;
                             ctx.shadowColor = hlColor;
@@ -2636,8 +2205,6 @@ for (let i = 0; i < m.renderCount; i++) {
                             ctx.shadowBlur = 10;
                             ctx.shadowColor = safeValue('color0', '#00ff66');
                             ctx.font = `bold ${parseInt(safeValue('fontSlider', 16))}px ${safeValue('fontSelect', 'monospace')}`;
-                        } else if (isInactiveHl) {
-                            ctx.font = `bold ${parseInt(safeValue('fontSlider', 16)) + 3}px ${safeValue('fontSelect', 'monospace')}`;
                         }
                         ctx.translate(cx, cy);
                         ctx.rotate(angle + Math.PI / 2);
@@ -2717,7 +2284,7 @@ if (symMode === "centerTrack") {
                         let baseWidth = lineData.L * m.charWidth;
                         let isSpaced = safeChecked('spacedCheck', false);
                         if (isSpaced) baseWidth *= 2;
-                        currentX = m.baseX - (baseWidth / 2);
+                        currentX = baseX - (baseWidth / 2);
                         drumCenterCol = Math.floor((lineData.L * (isSpaced ? 2 : 1)) / 2); // Барабан по ширине базы
                     } else {
                         let fullWidth = text.length * m.charWidth;
@@ -2766,44 +2333,14 @@ let cellX = 0;
                         }
 
                         let isHl = showHighlights && lineData.isActive && lineData.highlightMask[c];
-                        let isInactiveHl = showHighlights && !lineData.isActive && lineData.inactiveHighlightMask && lineData.inactiveHighlightMask[c];
-                        let isLcsRed = lineData.lcsRedMask && lineData.lcsRedMask[c];
-                        let isRed = trackRedOne && lineData.redMask[c];
                         let flashEnd = STATE.flashes.get(actualIndex + "_" + c);
                         let isFlashing = flashEnd && Date.now() < flashEnd;
+                        let isRed = trackRedOne && lineData.redMask[c];
                         
                         let isChar1 = isType1(char);
 
-                        if (isInactiveHl) {
-                            ctx.font = `bold ${parseInt(safeValue('fontSlider', 16)) + 3}px ${safeValue('fontSelect', 'monospace')}`;
-                            ctx.globalAlpha = 1.0;
-                        } else {
-                            ctx.font = `${safeChecked('boldCheck', false) ? 'bold' : 'normal'} ${parseInt(safeValue('fontSlider', 16))}px ${safeValue('fontSelect', 'monospace')}`;
-                            ctx.globalAlpha = (!lineData.isActive && applyFilter) ? 0.25 : 1.0;
-                        }
-
-                        let frameX = baseX + STATE.manualFrame.x;
-                        let frameW = STATE.manualFrame.w;
-                        let inFrameRow = (i >= STATE.manualFrame.rowStart && i < STATE.manualFrame.rowStart + STATE.manualFrame.rowSpan);
-                        let inFrameX = (cellX >= frameX && cellX <= frameX + frameW);
-                        let isInsideFrame = showFrame && inFrameRow && inFrameX;
-
                         let cBlobColor = useConglomerates ? conglomColors.get(actualIndex + "_" + c) : null;
-                        
-                        if (isInactiveHl) {
-                            ctx.fillStyle = safeValue('inactivePatternColorInput', '#ffff00');
-                            ctx.shadowBlur = useNeon ? 12 : 0;
-                            ctx.shadowColor = ctx.fillStyle;
-                        } else if (STATE.wasBalancedLastFrame && isInsideFrame && char !== '.' && char !== 'x') {
-                            let fCol = STATE.flashColor || '#ffffff';
-                            ctx.fillStyle = fCol;
-                            ctx.shadowBlur = 15;
-                            ctx.shadowColor = fCol;
-                        } else if (isLcsRed) {
-                            ctx.fillStyle = '#ff0000';
-                            ctx.shadowBlur = 15;
-                            ctx.shadowColor = '#ff0000';
-                        } else if (cBlobColor) {
+                        if (cBlobColor) {
                             ctx.fillStyle = cBlobColor;
                             ctx.shadowBlur = useNeon ? 8 : 0;
                             ctx.shadowColor = cBlobColor;
@@ -2841,92 +2378,89 @@ ctx.fillText(char, cellX, y);
                     let autoX = baseX - autoW / 2;
                     let autoY = startY + (firstActiveIdx * m.lineHeight); 
 
-                    if (!STATE.manualFrame.isInitialized) {
+                    if (!STATE.manualFrame.isInitialized || STATE.linesModifiedSinceLastInit) {
                         STATE.manualFrame.x = autoX - baseX;
                         STATE.manualFrame.y = autoY - startY;
                         STATE.manualFrame.w = autoW;
                         STATE.manualFrame.h = autoH;
-                        
-                        STATE.manualFrame.rowStart = Math.round(STATE.manualFrame.y / m.lineHeight);
-                        STATE.manualFrame.rowSpan = Math.max(1, Math.round(STATE.manualFrame.h / m.lineHeight));
-                        
                         STATE.manualFrame.isInitialized = true;
-                    }
-                    
-                    if (STATE.linesModifiedSinceLastInit) {
-                        if (STATE.manualFrame.rowStart !== undefined && STATE.manualFrame.rowSpan !== undefined) {
-                            STATE.manualFrame.rowStart = Math.min(STATE.manualFrame.rowStart, STATE.lines.length - 1);
-                            STATE.manualFrame.rowSpan = Math.min(STATE.manualFrame.rowSpan, STATE.lines.length - STATE.manualFrame.rowStart);
-                            if (STATE.manualFrame.rowSpan < 1) STATE.manualFrame.rowSpan = 1;
-
-                            STATE.manualFrame.y = STATE.manualFrame.rowStart * m.lineHeight;
-                            STATE.manualFrame.h = STATE.manualFrame.rowSpan * m.lineHeight;
-                        } else {
-                            STATE.manualFrame.x = autoX - baseX;
-                            STATE.manualFrame.y = autoY - startY;
-                            STATE.manualFrame.w = autoW;
-                            STATE.manualFrame.h = autoH;
-                            STATE.manualFrame.rowStart = Math.floor(STATE.manualFrame.y / m.lineHeight);
-                            STATE.manualFrame.rowSpan = Math.max(1, Math.ceil(STATE.manualFrame.h / m.lineHeight));
-                        }
                         STATE.linesModifiedSinceLastInit = false;
                     }
-
-                    // Динамически пересчитываем пиксельные координаты рамы под текущий масштаб строк
-                    STATE.manualFrame.y = STATE.manualFrame.rowStart * m.lineHeight;
-                    STATE.manualFrame.h = STATE.manualFrame.rowSpan * m.lineHeight;
-
-                    let rowStart = Math.max(0, Math.floor(STATE.manualFrame.y / m.lineHeight));
-                    let rowEnd = Math.min(STATE.lines.length - 1, Math.ceil((STATE.manualFrame.y + STATE.manualFrame.h) / m.lineHeight) - 1);
-
-// Автоматически вычисляем ширину рамы по самой длинной строке, попавшей в неё
-                let maxLenInFrame = 0;
-                for (let idx = rowStart; idx <= rowEnd; idx++) {
-                    let actualIdx = (m.startIndex + idx) % STATE.lines.length;
-                    let line = STATE.lines[actualIdx];
-                    if (line && line.display && line.display.length > maxLenInFrame) {
-                        maxLenInFrame = line.display.length;
-                    }
-                }
-                if (maxLenInFrame === 0) maxLenInFrame = maxActiveLen || 1;
-
-                    let autoW_frame = maxLenInFrame * m.charWidth + 24;
-                    STATE.manualFrame.w = autoW_frame;
-                    STATE.manualFrame.x = -autoW_frame / 2;
 
                     let drawX = baseX + STATE.manualFrame.x;
                     let drawY = startY + STATE.manualFrame.y;
                     let drawW = STATE.manualFrame.w;
                     let drawH = STATE.manualFrame.h;
 
-                    let useBalance = safeChecked('balanceCheck', false);
-                    let useMirror = safeChecked('mirrorCheck', false);
-                    let isBalanced = false;
-                    let isAll0 = false;
-                    let isAll1 = false;
                     let total0 = 0;
                     let total1 = 0;
+                    let useBalance = safeChecked('balanceCheck', false);
                     
                     if (useBalance) {
-                        let bal = calculateCurrentBalance();
-                        total0 = bal.total0;
-                        total1 = bal.total1;
-                        isBalanced = bal.isEq;
-                        isAll0 = bal.isAll0;
-                        isAll1 = bal.isAll1;
+                        let rowStart = Math.max(0, Math.round(STATE.manualFrame.y / m.lineHeight));
+                        let rowEnd = Math.min(STATE.lines.length - 1, Math.round((STATE.manualFrame.y + STATE.manualFrame.h) / m.lineHeight) - 1);
+
+                        for (let idx = rowStart; idx <= rowEnd; idx++) {
+                            let line = STATE.lines[idx];
+                            if (line && line.isActive) {
+                                let symMode = safeValue('symModeSelect', 'centerTrack');
+                                let currentX = 0;
+                                let isMatrixAxis = false;
+                                let liveCenterOffset = 0;
+
+                                let firstCharIdx = -1;
+                                let lastCharIdx = -1;
+                                for (let k = 0; k < line.display.length; k++) {
+                                    if (!line.fillerMask[k] && line.display[k] !== ' ' && line.display[k] !== 'x' && line.display[k] !== '.') {
+                                        if (firstCharIdx === -1) firstCharIdx = k;
+                                        lastCharIdx = k;
+                                    }
+                                }
+
+                                if (symMode === "centerTrack" || symMode === "centerTrack2") {
+                                    isMatrixAxis = true;
+                                    if (firstCharIdx !== -1) {
+                                        let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
+                                        let mathCenterIndex = (line.display.length - 1) / 2.0;
+                                        liveCenterOffset = (mathCenterIndex - liveCenterIndex) * m.charWidth;
+                                    }
+                                } else if (symMode === "centerBase") {
+                                    let baseWidth = line.L * m.charWidth;
+                                    let isSpaced = safeChecked('spacedCheck', false);
+                                    if (isSpaced) baseWidth *= 2;
+                                    currentX = baseX - (baseWidth / 2);
+                                } else {
+                                    let fullWidth = line.display.length * m.charWidth;
+                                    currentX = baseX - (fullWidth / 2);
+                                }
+
+                                for (let c = 0; c < line.display.length; c++) {
+                                    if (!line.fillerMask[c] && /\S/.test(line.display[c])) {
+                                        let cellX = 0;
+                                        if (isMatrixAxis) {
+                                            let centerIndex = (line.display.length - 1) / 2.0;
+                                            cellX = baseX + ((c - centerIndex) * m.charWidth) + liveCenterOffset;
+                                        } else {
+                                            cellX = currentX + (c * m.charWidth) + (m.charWidth / 2);
+                                        }
+
+                                        if (cellX >= drawX && cellX <= drawX + drawW) {
+                                            if (isType1(line.display[c])) total1++;
+                                            else if (isType0(line.display[c])) total0++;
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
 
-                    let isSpecialTrigger = isBalanced || isAll0 || isAll1;
-                    let specColor = frameColor;
-                    if (isBalanced) specColor = '#ffffff';
-                    else if (isAll0) specColor = '#00ffff';
-                    else if (isAll1) specColor = '#ff00ff';
+                    let isBalanced = useBalance && (total0 === total1) && (total0 > 0);
 
-                    ctx.strokeStyle = isSpecialTrigger ? specColor : frameColor; 
-                    ctx.lineWidth = isSpecialTrigger ? 3.0 : 1.5;
+                    ctx.strokeStyle = isBalanced ? '#ffffff' : frameColor; 
+                    ctx.lineWidth = isBalanced ? 3.0 : 1.5;
                     ctx.globalAlpha = 0.8;
-                    ctx.shadowBlur = isSpecialTrigger ? 25 : 8;
-                    ctx.shadowColor = isSpecialTrigger ? specColor : frameColor;
+                    ctx.shadowBlur = isBalanced ? 25 : 8;
+                    ctx.shadowColor = isBalanced ? '#ffffff' : frameColor;
 
                     if (useMirror) {
                         let centerY_frame = startY + (m.renderCount - 1) * m.lineHeight + (m.lineHeight / 2);
@@ -2939,72 +2473,11 @@ ctx.fillText(char, cellX, y);
                     }
                     ctx.restore();
 
-                    let currentSpecialType = isBalanced ? "balance" : (isAll0 ? "all0" : (isAll1 ? "all1" : "none"));
-                    let activeRowsCount = STATE.lines.filter(l => l.isActive).length;
-                    
-                    let isNewTrigger = false;
-                    if (isSpecialTrigger) {
-                        if (!STATE.wasBalancedLastFrame || STATE.lastSpecialType !== currentSpecialType || STATE.lastLoggedRowsCount !== activeRowsCount) {
-                            isNewTrigger = true;
-                        }
-                    }
-
-                    if (isNewTrigger) {
-                        let notifText = "";
-                        let logTag = "";
-                        if (isBalanced) { notifText = `⚖️ ДОСТИГНУТ БАЛАНС: ${total0} [0] = ${total1} [1]!`; logTag = "БАЛАНС"; }
-                        else if (isAll0) { notifText = `🟦 АБСОЛЮТНЫЙ НОЛЬ: ${total0} [0] !`; logTag = "АБС.НОЛЬ"; }
-                        else if (isAll1) { notifText = `🟪 АБСОЛЮТНАЯ ЕДИНИЦА: ${total1} [1] !`; logTag = "АБС.ЕДИН"; }
-
-                        showNotification(notifText);
+                    if (isBalanced && !STATE.wasBalancedLastFrame) {
+                        showNotification(`⚖️ ДОСТИГНУТ БАЛАНС: ${total0} [0] = ${total1} [1]!`);
                         STATE.wasBalancedLastFrame = true;
-                        STATE.lastSpecialType = currentSpecialType;
-                        STATE.lastLoggedRowsCount = activeRowsCount;
-                        
-                        if (!STATE.balanceHistory) STATE.balanceHistory = [];
-                        STATE.balanceHistory.unshift(`[Шаг ${Math.abs(STATE.globalStep)}] Строк: ${activeRowsCount} | <span style="color:${specColor}">[${logTag}]</span> 0=${total0}, 1=${total1}`);
-                        if (STATE.balanceHistory.length > 50) STATE.balanceHistory.pop();
-                        
-                        var logEl = document.getElementById('balanceLog');
-                        if (logEl) {
-                            logEl.innerHTML = "<span style='color:#ffcc00; font-weight:bold;'>История равенств:</span><br>" + STATE.balanceHistory.join('<br>');
-                        }
-
-                        // Запускаем плавную вспышку на 600мс
-                        STATE.flashEndTime = Date.now() + 600;
-                        STATE.flashColor = specColor;
-                        triggerFlashAnimation();
-
-                        // Авто-пауза при балансе (если включен флажок)
-                        if (STATE.isPlaying && safeChecked('pauseOnBalanceCheck', false)) {
-                            togglePlay();
-                        }
-                    } else if (!isSpecialTrigger) {
+                    } else if (!isBalanced) {
                         STATE.wasBalancedLastFrame = false;
-                        STATE.lastSpecialType = "none";
-                    }
-
-                    // Отрисовка затухающей неоновой вспышки внутри рамки
-                    let now = Date.now();
-                    if (STATE.flashEndTime && now < STATE.flashEndTime && !useRadar) {
-                        ctx.save();
-                        let timeLeft = STATE.flashEndTime - now;
-                        let progress = timeLeft / 600; // от 1.0 до 0.0
-                        
-                        let fCol = STATE.flashColor || hlColor;
-                        ctx.fillStyle = hexToRgba(fCol, progress * 0.35); // пиковая прозрачность 35%
-                        ctx.globalAlpha = 1.0;
-                        
-                        if (useMirror) {
-                            let centerY_frame = startY + (m.renderCount - 1) * m.lineHeight + (m.lineHeight / 2);
-                            let frameHalfHeight = STATE.manualFrame.y + drawH;
-                            let drawY_mirror = centerY_frame - frameHalfHeight;
-                            let drawH_mirror = frameHalfHeight * 2;
-                            ctx.fillRect(drawX, drawY_mirror, drawW, drawH_mirror);
-                        } else {
-                            ctx.fillRect(drawX, drawY, drawW, drawH);
-                        }
-                        ctx.restore();
                     }
                 }
             }
@@ -3100,12 +2573,6 @@ ctx.fillText(char, cellX, y);
                 mirror: safeChecked('mirrorCheck', false),
                 balance: safeChecked('balanceCheck', false),
                 cascadeOnBalance: safeChecked('cascadeOnBalanceCheck', false),
-                pauseOnBalance: safeChecked('pauseOnBalanceCheck', false),
-                keepPhaseOnCascade: safeChecked('keepPhaseOnCascadeCheck', false),
-                ignoreFirstPatternChar: safeChecked('ignoreFirstPatternCharCheck', true),
-                ignoreLastPatternChar: safeChecked('ignoreLastPatternCharCheck', false),
-                inactivePatternColor: safeValue('inactivePatternColorInput', '#ffff00'),
-                radarRotateSnap: parseInt(safeValue('radarRotateSnapInput', 1)),
                 gridColor: safeValue('gridColorInput', '#00ff66'),
                 gridAlpha: parseFloat(safeValue('gridAlpha', 0.2)),
                 autoCascade: safeChecked('autoCascadeCheck', true),
@@ -3132,142 +2599,14 @@ ctx.fillText(char, cellX, y);
                 activeBankIndex: STATE.activeBankIndex,
                 manualFrame: STATE.manualFrame,
                 sierpRule: safeValue('sierpRule', 'shift'),
-                cw: parseFloat(safeValue('cwSlider', 1.0)),
-                lcsToggle: STATE.interleaveLCSToggle
+                cw: parseFloat(safeValue('cwSlider', 1.0))
             };
 
             let code = btoa(encodeURIComponent(JSON.stringify(snapshot)));
             const codeBox = document.getElementById('snapshotCodeBox');
-            if (codeBox) {
-                codeBox.value = code;
-                codeBox.select();
-            }
-            
-            try { navigator.clipboard.writeText(code); } catch(e) {}
-            
-            let d = new Date();
-            let dateStr = d.toLocaleDateString('ru-RU') + ', ' + d.toLocaleTimeString('ru-RU');
-            let fileContent = `ZERKALIUS GENESIS SNAPSHOT\nДата: ${dateStr}\nКадр (Шаг): ${STATE.globalStep}\n\n===== КОД ДЛЯ ИМПОРТА (Копировать всё ниже) =====\n${code}`;
-            
-            const blob = new Blob([fileContent], { type: 'text/plain' });
-            const link = document.createElement('a');
-            link.download = `Zerkalius_Save_${d.toISOString().replace(/[:.]/g, '-')}.txt`;
-            link.href = URL.createObjectURL(blob);
-            link.click();
-            URL.revokeObjectURL(link.href);
-            
-            showNotification("КОД СКОПИРОВАН И СОХРАНЕН В ФАЙЛ!");
+            if (codeBox) codeBox.value = code;
+            showNotification("КОД СКОПИРОВАН");
         });
-
-        safeBind('photoBtn', 'click', () => {
-            const canvas = document.getElementById('screenCanvas');
-            if(!canvas) return;
-            
-            let activeLinesIndices = [];
-            let localSteps = [];
-            STATE.lines.forEach((l, idx) => { 
-                if(l.isActive) activeLinesIndices.push(idx); 
-                localSteps.push(l.localStep);
-            });
-            let snapshot = {
-                step: STATE.globalStep, rows: STATE.lines.map(l => l.orig), active: activeLinesIndices,
-                localSteps: localSteps, patterns: Array.from(STATE.foundPatterns),
-                patternsMetadata: Object.fromEntries(STATE.foundPatternsMetadata),
-                currentTargetPatternIdx: STATE.currentTargetPatternIdx, lastFindMethod: STATE.lastFindMethod,
-                nFactor: getNFactor(), preset: safeValue('presetSelect', 'matrix'),
-                speed: parseInt(safeValue('speedSlider', 950)), turbo: parseInt(safeValue('turboSlider', 1)),
-                size: parseInt(safeValue('fontSlider', 16)), radar: safeChecked('radarCheck', false),
-                elka: safeChecked('elkaCheck', false), cylinder: safeChecked('cylinderCheck', false),
-                loop: safeChecked('loopCheck', false), pingPong: safeChecked('pingPongCheck', false),
-                meetCenter: safeChecked('meetCenterCheck', false), spaced: safeChecked('spacedCheck', false),
-                phaseShift: safeChecked('phaseShiftCheck', true), drumMode: safeChecked('drumModeCheck', false),
-                drumRadius: parseInt(safeValue('drumRadius', 5)), fillX: safeChecked('fillXCheck', false),
-                globalSearch: safeChecked('globalSearchCheck', false), verticalSearch: safeChecked('verticalSearchCheck', false),
-                funnel: safeChecked('funnelCheck', false), mirror: safeChecked('mirrorCheck', false),
-                balance: safeChecked('balanceCheck', false), cascadeOnBalance: safeChecked('cascadeOnBalanceCheck', false),
-                pauseOnBalance: safeChecked('pauseOnBalanceCheck', false), keepPhaseOnCascade: safeChecked('keepPhaseOnCascadeCheck', false),
-                ignoreFirstPatternChar: safeChecked('ignoreFirstPatternCharCheck', true), ignoreLastPatternChar: safeChecked('ignoreLastPatternCharCheck', false),
-                gridColor: safeValue('gridColorInput', '#00ff66'), gridAlpha: parseFloat(safeValue('gridAlpha', 0.2)),
-                autoCascade: safeChecked('autoCascadeCheck', true), hideChanged: safeChecked('hideChangedCheck', false),
-                hideUnchanged: safeChecked('hideUnchangedCheck', false), conglomerate: safeChecked('conglomerateCheck', false),
-                deltaN: parseInt(safeValue('deltaNInput', 1)), redFirstOneCheck: safeChecked('redFirstOneCheck', true),
-                tracerColor: safeValue('tracerColor', '#ff3333'), foundPatternColor: safeValue('foundPatternColor', '#bfff00'),
-                sequentialSearch: safeChecked('sequentialSearchCheck', true), symCenter: safeChecked('symModeSelect', true),
-                oscXCheck: safeChecked('oscXCheck', false), oscYCheck: safeChecked('oscYCheck', false),
-                oscXLeft: parseInt(safeValue('oscXLeft', 50)), oscXRight: parseInt(safeValue('oscXRight', 50)),
-                oscXStep: parseInt(safeValue('oscXStep', 1)), oscYUp: parseInt(safeValue('oscYUp', 50)),
-                oscYDown: parseInt(safeValue('oscYDown', 50)), oscYStep: parseInt(safeValue('oscYStep', 1)),
-                loopStart: parseInt(safeValue('loopStart', 0)), loopEnd: parseInt(safeValue('loopEnd', 100)),
-                banks: STATE.banks, activeBankIndex: STATE.activeBankIndex,
-                manualFrame: STATE.manualFrame, sierpRule: safeValue('sierpRule', 'shift'),
-                cw: parseFloat(safeValue('cwSlider', 1.0)), lcsToggle: STATE.interleaveLCSToggle
-            };
-            let code = btoa(encodeURIComponent(JSON.stringify(snapshot)));
-            
-            canvas.toBlob(function(blob) {
-                const codeBlob = new Blob(["|||ZERK_STATE|||" + code], {type: 'text/plain'});
-                const combinedBlob = new Blob([blob, codeBlob], {type: 'image/png'});
-                const link = document.createElement('a');
-                link.download = `Zerkalius_Shot_${Date.now()}.png`;
-                link.href = URL.createObjectURL(combinedBlob);
-                link.click();
-                URL.revokeObjectURL(link.href);
-                showNotification("📸 ФОТО СОХРАНЕНО!");
-            }, 'image/png');
-        });
-
-        // Глобальный динамический обработчик выбора файла для Импорта
-        const initFileImportListener = () => {
-            const fileLoader = document.getElementById('importFileLoader');
-            if (!fileLoader) return;
-            
-            // Сбрасываем старые обработчики клонированием ноды
-            const newLoader = fileLoader.cloneNode(true);
-            fileLoader.parentNode.replaceChild(newLoader, fileLoader);
-            
-            newLoader.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    let content = e.target.result;
-                    let codeStr = "";
-                    
-                    if (content.includes("|||ZERK_STATE|||")) {
-                        codeStr = content.split("|||ZERK_STATE|||").pop().trim();
-                    } else {
-                        let lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-                        let maxLen = 0;
-                        lines.forEach(l => {
-                            if (l.startsWith("eyJ") && l.length > maxLen) {
-                                codeStr = l;
-                                maxLen = l.length;
-                            }
-                        });
-                        if (codeStr === "") {
-                            lines.forEach(l => {
-                                if (!l.includes("====") && l.length > maxLen) {
-                                    codeStr = l;
-                                    maxLen = l.length;
-                                }
-                            });
-                        }
-                    }
-                    
-                    try {
-                        if (!codeStr) throw new Error("Код не найден");
-                        let snapshot = JSON.parse(decodeURIComponent(atob(codeStr)));
-                        document.getElementById('snapshotCodeBox').value = codeStr;
-                        importSnapshotObject(snapshot);
-                        showNotification("СНИМОК УСПЕШНО ИМПОРТИРОВАН!");
-                    } catch(err) {
-                        alert("Ошибка чтения файла! Убедитесь, что это правильный .txt снимок или .png фото Зеркалиуса.");
-                    }
-                    e.target.value = ''; 
-                };
-                reader.readAsText(file);
-            });
-        };
 
         safeBind('importCodeBtn', 'click', () => {
             let codeBox = document.getElementById('snapshotCodeBox');
@@ -3283,9 +2622,54 @@ ctx.fillText(char, cellX, y);
                     alert("Ошибка декодирования снимка! Убедитесь, что код верный.");
                 }
             } else {
-                initFileImportListener(); // инициализируем слушатель событий прямо перед кликом
                 let fileLoader = document.getElementById('importFileLoader');
-                if (fileLoader) fileLoader.click();
+                if (!fileLoader) {
+                    fileLoader = document.createElement('input');
+                    fileLoader.type = 'file';
+                    fileLoader.accept = '.txt';
+                    fileLoader.style.display = 'none';
+                    document.body.appendChild(fileLoader);
+                    
+                    fileLoader.addEventListener('change', function(e) {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            let content = e.target.result;
+                            let lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                            
+                            let codeStr = "";
+                            let maxLen = 0;
+                            lines.forEach(l => {
+                                if (l.startsWith("eyJ") && l.length > maxLen) {
+                                    codeStr = l;
+                                    maxLen = l.length;
+                                }
+                            });
+                            if (codeStr === "") {
+                                lines.forEach(l => {
+                                    if (!l.includes("====") && l.length > maxLen) {
+                                        codeStr = l;
+                                        maxLen = l.length;
+                                    }
+                                });
+                            }
+                            
+                            try {
+                                if (!codeStr) throw new Error("Код не найден");
+                                let snapshot = JSON.parse(decodeURIComponent(atob(codeStr)));
+                                document.getElementById('snapshotCodeBox').value = codeStr;
+                                importSnapshotObject(snapshot);
+                                showNotification("СНИМОК ЗАГРУЖЕН ИЗ ФАЙЛА!");
+                            } catch(err) {
+                                alert("Ошибка чтения файла! Убедитесь, что это правильный .txt снимок Зеркалиуса.");
+                            }
+                            e.target.value = ''; 
+                        };
+                        reader.readAsText(file);
+                    });
+                }
+                fileLoader.click();
             }
         });
 
@@ -3302,8 +2686,6 @@ ctx.fillText(char, cellX, y);
                 
                 let stepDelta = STATE.isReverse ? -turbo : turbo;
                 
-                processPendingCascade();
-
                 if (STATE.playerMode === "scroll") {
                     if (STATE.lines.length > 0) {
                         STATE.rowScrollOffset = mod(STATE.rowScrollOffset + stepDelta, STATE.lines.length);
@@ -3376,29 +2758,12 @@ ctx.fillText(char, cellX, y);
             cancelAnimationFrame(STATE.rafId); UI.playBtn.innerHTML = '▶ Play'; UI.playBtn.style.background = '#00ff66'; 
             STATE.currentTargetPatternIdx = 1;
             STATE.lastFindMethod = "Ожидание...";
-            STATE.pendingCascade = false;
-            STATE.wasBalancedLastFrame = false;
-            STATE.lastSpecialType = "none";
-            STATE.lastLoggedRowsCount = 0;
-            STATE.balanceHistory = [];
-            var logEl = document.getElementById('balanceLog');
-            if (logEl) logEl.innerHTML = "";
-            var ilLog = document.getElementById('interleavingLogDetails');
-            if (ilLog) ilLog.style.display = 'none';
             
             STATE.lines.forEach((line, idx) => {
                 line.localStep = 0;
                 line.isActive = (idx === 0);
             });
-            STATE.linesModifiedSinceLastInit = true;
-            if (STATE.manualFrame) {
-                STATE.manualFrame.isInitialized = true;
-                STATE.manualFrame.rowStart = 0;
-                STATE.manualFrame.rowSpan = 1;
-                STATE.manualFrame.y = 0;
-                let m = getGridMetrics();
-                if(m) STATE.manualFrame.h = m.lineHeight;
-            }
+
             updatePatternBackdrop(); updateLogic(); showNotification("СБРОС"); 
         });
         
@@ -3406,28 +2771,10 @@ ctx.fillText(char, cellX, y);
             STATE.foundPatterns.clear(); STATE.foundPatternsMetadata.clear(); STATE.flashes.clear();
             STATE.currentTargetPatternIdx = 1;
             STATE.lastFindMethod = "Ожидание...";
-            STATE.pendingCascade = false;
-            STATE.wasBalancedLastFrame = false;
-            STATE.lastSpecialType = "none";
-            STATE.lastLoggedRowsCount = 0;
-            STATE.balanceHistory = [];
-            var logEl = document.getElementById('balanceLog');
-            if (logEl) logEl.innerHTML = "";
-            var ilLog = document.getElementById('interleavingLogDetails');
-            if (ilLog) ilLog.style.display = 'none';
             STATE.lines.forEach((line, idx) => {
                 line.localStep = 0;
                 line.isActive = (idx === 0);
             });
-            STATE.linesModifiedSinceLastInit = true;
-            if (STATE.manualFrame) {
-                STATE.manualFrame.isInitialized = true;
-                STATE.manualFrame.rowStart = 0;
-                STATE.manualFrame.rowSpan = 1;
-                STATE.manualFrame.y = 0;
-                let m = getGridMetrics();
-                if(m) STATE.manualFrame.h = m.lineHeight;
-            }
             updatePatternBackdrop(); updateLogic(); showNotification("ПАМЯТЬ СБРОШЕНА"); 
         });
 
@@ -3444,28 +2791,10 @@ STATE.nextBlobColorId = 1;
             STATE.interleavingLog = [];
             STATE.currentTargetPatternIdx = 1;
             STATE.lastFindMethod = "Ожидание...";
-            STATE.wasBalancedLastFrame = false;
-            STATE.lastSpecialType = "none";
-            STATE.lastLoggedRowsCount = 0;
-            STATE.balanceHistory = [];
-            var logEl = document.getElementById('balanceLog');
-            if (logEl) logEl.innerHTML = "";
-            var ilLog = document.getElementById('interleavingLogDetails');
-            if (ilLog) ilLog.style.display = 'none';
-            var ilLog = document.getElementById('interleavingLogDetails');
-            if (ilLog) ilLog.style.display = 'none';
             cancelAnimationFrame(STATE.rafId);
             UI.playBtn.innerHTML = '▶ Play';
             UI.playBtn.style.background = '#00ff66';
             STATE.isPlaying = false;
-            if (STATE.manualFrame) {
-                STATE.manualFrame.isInitialized = true;
-                STATE.manualFrame.rowStart = 0;
-                STATE.manualFrame.rowSpan = 1;
-                STATE.manualFrame.y = 0;
-                let m = getGridMetrics();
-                if(m) STATE.manualFrame.h = m.lineHeight;
-            }
             
             updatePatternBackdrop();
             render();
@@ -3480,7 +2809,7 @@ STATE.nextBlobColorId = 1;
                 this.style.borderColor = "#ffcc00";
                 showNotification("РЕЖИМ: СКРОЛЛИНГ СТРОК");
             } else {
-                STATE.playerMode === "simulate";
+                STATE.playerMode = "simulate";
                 this.textContent = "🎬 Функция: Симуляция (XOR)";
                 this.style.color = "#00ccff";
                 this.style.borderColor = "#00ccff";
@@ -3491,7 +2820,6 @@ STATE.nextBlobColorId = 1;
         
         safeBind('prevBtn', 'click', () => { 
             let turbo = parseInt(safeValue('turboSlider', 1)) || 1;
-            processPendingCascade();
             if (STATE.playerMode === "scroll") {
                 if (STATE.lines.length > 0) {
                     STATE.rowScrollOffset = mod(STATE.rowScrollOffset - turbo, STATE.lines.length);
@@ -3507,7 +2835,6 @@ STATE.nextBlobColorId = 1;
         });
         safeBind('nextBtn', 'click', () => { 
             let turbo = parseInt(safeValue('turboSlider', 1)) || 1;
-            processPendingCascade();
             if (STATE.playerMode === "scroll") {
                 if (STATE.lines.length > 0) {
                     STATE.rowScrollOffset = mod(STATE.rowScrollOffset + turbo, STATE.lines.length);
@@ -3537,19 +2864,6 @@ STATE.nextBlobColorId = 1;
                 if (chk.checked) this.classList.add('active'); else this.classList.remove('active');
             }
             render();
-        });
-
-        safeBind('lcsToggleBtn', 'click', function() {
-            STATE.interleaveLCSToggle = !STATE.interleaveLCSToggle;
-            if (STATE.interleaveLCSToggle) {
-                this.classList.add('active');
-            } else {
-                this.classList.remove('active');
-                let logDiv = document.getElementById('interleavingLogDetails');
-                if (logDiv) logDiv.style.display = 'none';
-            }
-            updateLogic();
-            showNotification(STATE.interleaveLCSToggle ? "🧬 LCS-ИНТЕРЛИВИНГ ВКЛ" : "🧬 LCS-ИНТЕРЛИВИНГ ВЫКЛ");
         });
 
         const patternInputEl = document.getElementById('patternInput');
@@ -3608,10 +2922,10 @@ STATE.nextBlobColorId = 1;
             reader.readAsText(file);
         });
 
-        safeBind('phaseShiftCheck', 'change', function() { updateAllCycles(); updateLogic(); });
+safeBind('phaseShiftCheck', 'change', function() { updateAllCycles(); updateLogic(); });
 
         safeBind('rowPendulumCheck', 'change', function() { updateLogic(); });
-        safeBind('drumModeCheck', 'change', function() { updateAllCycles(); updateLogic(); });
+safeBind('drumModeCheck', 'change', function() { updateAllCycles(); updateLogic(); });
         
         safeBind('drumRadius', 'input', function() { 
             document.getElementById('drumRadiusVal').textContent = this.value; 
@@ -3637,7 +2951,7 @@ STATE.nextBlobColorId = 1;
         safeBind('loopStart', 'input', function() { enforceLoop(); updateLogic(); });
         safeBind('loopEnd', 'input', function() { enforceLoop(); updateLogic(); });
 
-        safeBind('nFactor', 'input', function() { 
+safeBind('nFactor', 'input', function() { 
             let v = parseInt(this.value); 
             document.getElementById('nFactorVal').textContent = (v === 11) ? "0 (∞)" : v; 
             updateAllCycles(); 
@@ -3645,7 +2959,6 @@ STATE.nextBlobColorId = 1;
         });
 
         safeBind('stepSlider', 'input', function() {
-            processPendingCascade();
             let newVal = parseInt(this.value);
             let currentMod = mod(STATE.globalStep, parseInt(this.max) || 1);
             let diff = newVal - currentMod;
@@ -3696,6 +3009,7 @@ STATE.nextBlobColorId = 1;
         safeBind('screenSlider', 'input', function() { document.getElementById('screenVal').textContent = this.value; render(); });
         safeBind('lhSlider', 'input', function() { document.getElementById('lhVal').textContent = this.value; render(); });
         safeBind('cwSlider', 'input', function() { document.getElementById('cwVal').textContent = this.value; render(); });
+        safeBind('cwSlider', 'input', function() { document.getElementById('cwVal').textContent = this.value; render(); });
         
         safeBind('presetSelect', 'change', function() { 
             let p = PRESETS[this.value]; 
@@ -3707,7 +3021,7 @@ STATE.nextBlobColorId = 1;
             }
         });
 
-        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'gridColorInput', 'gridAlpha', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'ignoreFirstPatternCharCheck', 'ignoreLastPatternCharCheck', 'inactivePatternColorInput', 'radarRotateSnapInput', 'interleavingCheck', 'boldCheck', 'radarCheck', 'funnelCheck', 'mirrorCheck', 'balanceCheck', 'cascadeOnBalanceCheck', 'pauseOnBalanceCheck', 'keepPhaseOnCascadeCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'cwSlider', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck', 'verticalSearchCheck'].forEach(id => {
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'gridColorInput', 'gridAlpha', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'interleavingCheck', 'boldCheck', 'radarCheck', 'funnelCheck', 'mirrorCheck', 'balanceCheck', 'cascadeOnBalanceCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'cwSlider', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('input', () => { render(); });
@@ -3725,30 +3039,22 @@ STATE.nextBlobColorId = 1;
                 let m = getGridMetrics();
                 if (!m) return;
                 
-                let useMirror = safeChecked('mirrorCheck', false);
                 let fx = m.baseX + STATE.manualFrame.x;
-                let fy, fw, fh;
-                
-                if (useMirror) {
-                    let centerY_frame = m.startY + (m.renderCount - 1) * m.lineHeight + (m.lineHeight / 2);
-                    let frameHalfHeight = STATE.manualFrame.y + STATE.manualFrame.h;
-                    fy = centerY_frame - frameHalfHeight;
-                    fw = STATE.manualFrame.w;
-                    fh = frameHalfHeight * 2;
-                } else {
-                    fy = m.startY + STATE.manualFrame.y;
-                    fw = STATE.manualFrame.w;
-                    fh = STATE.manualFrame.h;
-                }
+                let fy = m.startY + STATE.manualFrame.y;
+                let fw = STATE.manualFrame.w;
+                let fh = STATE.manualFrame.h;
                 
                 let mx = e.clientX;
                 let my = e.clientY;
 
                 if (showFrame) {
+                    let onR = Math.abs(mx - (fx + fw)) < 10 && my > fy - 10 && my < fy + fh + 10;
                     let onB = Math.abs(my - (fy + fh)) < 10 && mx > fx - 10 && mx < fx + fw + 10;
                     let inside = mx > fx && mx < fx + fw && my > fy && my < fy + fh;
 
-                    if (onB) { STATE.frameAction = 'resize-b'; }
+                    if (onR && onB) { STATE.frameAction = 'resize-br'; }
+                    else if (onR) { STATE.frameAction = 'resize-r'; }
+                    else if (onB) { STATE.frameAction = 'resize-b'; }
                     else if (inside) { STATE.frameAction = 'drag'; }
                     
                     if (STATE.frameAction) {
@@ -3760,25 +3066,6 @@ STATE.nextBlobColorId = 1;
                         STATE.frameStartY = STATE.manualFrame.y;
                         return; 
                     }
-                }
-
-                let useRadar = safeChecked('radarCheck', false);
-                if (useRadar && STATE.hoveredRingIndex !== -1) {
-                    STATE.isDraggingRing = true;
-                    STATE.draggedRingIndex = STATE.hoveredRingIndex;
-                    
-                    let rect = canvas.getBoundingClientRect();
-                    let lx = mx - rect.left;
-                    let ly = my - rect.top;
-                    let centerX = canvas.width / 2 + STATE.offsetX + STATE.autoOffsetX;
-                    let centerY = canvas.height / 2 + STATE.offsetY + STATE.autoOffsetY;
-                    
-                    STATE.lastMouseAngle = Math.atan2(ly - centerY, lx - centerX);
-                    STATE.accumulatedAngleDelta = 0;
-                    
-                    let actualIdx = (m.startIndex + STATE.draggedRingIndex) % STATE.lines.length;
-                    STATE.dragStartLocalStep = STATE.lines[actualIdx].localStep;
-                    return; // Блокируем панорамирование
                 }
 
                 STATE.isDraggingPan = true;
@@ -3797,26 +3084,18 @@ STATE.nextBlobColorId = 1;
                 if (showFrame && !STATE.frameAction && !STATE.isDraggingPan) {
                     let m = getGridMetrics();
                     if (m) {
-                        let useMirror = safeChecked('mirrorCheck', false);
                         let fx = m.baseX + STATE.manualFrame.x;
-                        let fy, fw, fh;
+                        let fy = m.startY + STATE.manualFrame.y;
+                        let fw = STATE.manualFrame.w;
+                        let fh = STATE.manualFrame.h;
                         
-                        if (useMirror) {
-                            let centerY_frame = m.startY + (m.renderCount - 1) * m.lineHeight + (m.lineHeight / 2);
-                            let frameHalfHeight = STATE.manualFrame.y + STATE.manualFrame.h;
-                            fy = centerY_frame - frameHalfHeight;
-                            fw = STATE.manualFrame.w;
-                            fh = frameHalfHeight * 2;
-                        } else {
-                            fy = m.startY + STATE.manualFrame.y;
-                            fw = STATE.manualFrame.w;
-                            fh = STATE.manualFrame.h;
-                        }
-                        
+                        let onR = Math.abs(mx - (fx + fw)) < 10 && my > fy - 10 && my < fy + fh + 10;
                         let onB = Math.abs(my - (fy + fh)) < 10 && mx > fx - 10 && mx < fx + fw + 10;
                         let inside = mx > fx && mx < fx + fw && my > fy && my < fy + fh;
 
-                        if (onB) canvas.style.cursor = 's-resize';
+                        if (onR && onB) canvas.style.cursor = 'nwse-resize';
+                        else if (onR) canvas.style.cursor = 'e-resize';
+                        else if (onB) canvas.style.cursor = 's-resize';
                         else if (inside) canvas.style.cursor = 'move';
                         else canvas.style.cursor = 'default';
                     }
@@ -3857,77 +3136,25 @@ STATE.nextBlobColorId = 1;
                     let dx = mx - STATE.frameStartMX;
                     let dy = my - STATE.frameStartMY;
                     let m = getGridMetrics();
-                    let useMirror = safeChecked('mirrorCheck', false);
 
                     if (STATE.frameAction === 'drag') {
                         STATE.manualFrame.x = STATE.frameStartX + dx;
-                        if (useMirror) {
-                            let centerY_frame = m.startY + (m.renderCount - 1) * m.lineHeight + (m.lineHeight / 2);
-                            let rawY = Math.abs(my - centerY_frame) - STATE.manualFrame.h / 2;
-                            STATE.manualFrame.y = Math.max(0, Math.round(rawY / m.lineHeight) * m.lineHeight);
-                        } else {
-                            let rawY = STATE.frameStartY + dy;
-                            STATE.manualFrame.y = Math.round(rawY / m.lineHeight) * m.lineHeight;
-                        }
+                        let rawY = STATE.frameStartY + dy;
+                        STATE.manualFrame.y = Math.round(rawY / m.lineHeight) * m.lineHeight;
                     } 
                     else if (STATE.frameAction === 'resize-r') {
                         STATE.manualFrame.w = Math.max(10, STATE.frameStartW + dx);
                     }
                     else if (STATE.frameAction === 'resize-b') {
-                        if (useMirror) {
-                            let centerY_frame = m.startY + (m.renderCount - 1) * m.lineHeight + (m.lineHeight / 2);
-                            let rawHalfH = Math.abs(my - centerY_frame) - STATE.manualFrame.y;
-                            STATE.manualFrame.h = Math.max(m.lineHeight, Math.round(rawHalfH / m.lineHeight) * m.lineHeight);
-                        } else {
-                            let rawH = STATE.frameStartH + dy;
-                            STATE.manualFrame.h = Math.max(m.lineHeight, Math.round(rawH / m.lineHeight) * m.lineHeight);
-                        }
+                        let rawH = STATE.frameStartH + dy;
+                        STATE.manualFrame.h = Math.max(m.lineHeight, Math.round(rawH / m.lineHeight) * m.lineHeight);
                     }
                     else if (STATE.frameAction === 'resize-br') {
                         STATE.manualFrame.w = Math.max(10, STATE.frameStartW + dx);
-                        if (useMirror) {
-                            let centerY_frame = m.startY + (m.renderCount - 1) * m.lineHeight + (m.lineHeight / 2);
-                            let rawHalfH = Math.abs(my - centerY_frame) - STATE.manualFrame.y;
-                            STATE.manualFrame.h = Math.max(m.lineHeight, Math.round(rawHalfH / m.lineHeight) * m.lineHeight);
-                        } else {
-                            let rawH = STATE.frameStartH + dy;
-                            STATE.manualFrame.h = Math.max(m.lineHeight, Math.round(rawH / m.lineHeight) * m.lineHeight);
-                        }
+                        let rawH = STATE.frameStartH + dy;
+                        STATE.manualFrame.h = Math.max(m.lineHeight, Math.round(rawH / m.lineHeight) * m.lineHeight);
                     }
-                    
-                    // Обновляем сеточные индексы строк после любого ручного изменения рамы
-                    STATE.manualFrame.rowStart = Math.floor(STATE.manualFrame.y / m.lineHeight);
-                    STATE.manualFrame.rowSpan = Math.max(1, Math.ceil(STATE.manualFrame.h / m.lineHeight));
-                    
                     updateLogic();
-                } else if (STATE.isDraggingRing) {
-                    let m = getGridMetrics();
-                    if (m) {
-                        let rect = canvas.getBoundingClientRect();
-                        let lx = mx - rect.left;
-                        let ly = my - rect.top;
-                        let centerX = canvas.width / 2 + STATE.offsetX + STATE.autoOffsetX;
-                        let centerY = canvas.height / 2 + STATE.offsetY + STATE.autoOffsetY;
-                        
-                        let currentAngle = Math.atan2(ly - centerY, lx - centerX);
-                        let diff = currentAngle - STATE.lastMouseAngle;
-                        diff = Math.atan2(Math.sin(diff), Math.cos(diff)); // нормализация в [-PI, PI]
-                        
-                        STATE.accumulatedAngleDelta += diff;
-                        STATE.lastMouseAngle = currentAngle;
-                        
-                        let actualIdx = (m.startIndex + STATE.draggedRingIndex) % STATE.lines.length;
-                        let line = STATE.lines[actualIdx];
-                        let text = line.display;
-                        let angleStep = (Math.PI * 2) / text.length;
-                        
-                        let cellsShifted = Math.round(STATE.accumulatedAngleDelta / angleStep);
-                        let S = parseInt(safeValue('radarRotateSnapInput', 1)) || 1;
-                        cellsShifted = Math.round(cellsShifted / S) * S;
-                        
-                        line.localStep = STATE.dragStartLocalStep + cellsShifted;
-                        updateLogic();
-                    }
                 } else if (STATE.isDraggingPan) {
                     STATE.offsetX = mx - STATE.dragStartX;
                     STATE.offsetY = my - STATE.dragStartY;
@@ -3941,45 +3168,20 @@ STATE.nextBlobColorId = 1;
 
             window.addEventListener('mouseup', e => {
                 STATE.isDraggingPan = false;
-                STATE.isDraggingRing = false;
-                STATE.draggedRingIndex = -1;
                 STATE.frameAction = null;
             });
 
             let clickTimeout = null;
             canvas.addEventListener('click', e => {
-                let useRadar = safeChecked('radarCheck', false);
-                let m = getGridMetrics();
-                
-                if (useRadar && STATE.hoveredRingIndex !== -1 && m) {
-                    if (STATE.hasMoved) return; // игнорируем если тащили камеру
-                    
+                // КЛИК ПО КОЛЬЦУ РАДАРА (МУЛЬТИВЫДЕЛЕНИЕ) - ВЫПОЛНЯЕТСЯ СРАЗУ, МИМО ЛЮБЫХ СДВИГОВ КАМЕРЫ
+                if (safeChecked('radarCheck', false) && STATE.hoveredRingIndex !== -1) {
                     let ringIdx = STATE.hoveredRingIndex;
-                    let isCtrl = e.ctrlKey || e.shiftKey;
-                    
-                    if (isCtrl) {
-                        // КЛИК С CTRL/SHIFT: ВЫДЕЛЕНИЕ
-                        if (STATE.selectedRings.has(ringIdx)) {
-                            STATE.selectedRings.delete(ringIdx);
-                            showNotification(`КОЛЬЦО ${ringIdx + 1} ВЫДЕЛЕНИЕ СНЯТО`);
-                        } else {
-                            STATE.selectedRings.add(ringIdx);
-                            showNotification(`КОЛЬЦО ${ringIdx + 1} ВЫДЕЛЕНО`);
-                        }
+                    if (STATE.selectedRings.has(ringIdx)) {
+                        STATE.selectedRings.delete(ringIdx);
+                        showNotification(`КОЛЬЦО ${ringIdx + 1} ВЫДЕЛЕНИЕ СНЯТО`);
                     } else {
-                        // ОБЫЧНЫЙ КЛИК: ПОВОРОТ
-                        let rect = canvas.getBoundingClientRect();
-                        let clickX = e.clientX - rect.left;
-                        let centerX = canvas.width / 2 + STATE.offsetX + STATE.autoOffsetX;
-                        
-                        let actualIdx = (m.startIndex + ringIdx) % STATE.lines.length;
-                        let line = STATE.lines[actualIdx];
-                        let S = parseInt(safeValue('radarRotateSnapInput', 1)) || 1;
-                        
-                        let shiftDir = (clickX >= centerX) ? S : -S;
-                        line.localStep += shiftDir;
-                        showNotification(`КОЛЬЦО ${ringIdx + 1} СДВИГ: ${shiftDir > 0 ? '+' : ''}${shiftDir}`);
-                        updateLogic();
+                        STATE.selectedRings.add(ringIdx);
+                        showNotification(`КОЛЬЦО ${ringIdx + 1} ВЫДЕЛЕНО`);
                     }
                     render();
                     return;
@@ -4018,48 +3220,11 @@ STATE.nextBlobColorId = 1;
                 e.preventDefault();
                 let fontSl = document.getElementById('fontSlider');
                 let size = parseInt(fontSl.value) + (e.deltaY > 0 ? -2 : 2);
-                size = Math.max(1, Math.min(100, size));
+                size = Math.max(5, Math.min(100, size));
                 fontSl.value = size;
                 document.getElementById('fontVal').textContent = size + 'px';
                 render();
             });
-            
-            // Драг-н-дроп для плавающих панелей
-            const setupDraggable = (selector, fallbackTitle) => {
-                let panel = document.querySelector(selector);
-                if (!panel) return;
-                
-                let header = panel.querySelector('.patterns-log-title, .diag-terminal-title, .player-panel-title');
-                if (!header) {
-                    header = document.createElement('div');
-                    header.className = 'player-panel-title';
-                    header.innerHTML = `<span>${fallbackTitle}</span>`;
-                    header.style.cssText = "display:flex; justify-content:space-between; align-items:center; cursor:move; font-size:10px; color:#00ff66; font-weight:bold; margin-bottom:4px; border-bottom:1px solid #333; padding-bottom:2px; user-select:none;";
-                    panel.insertBefore(header, panel.firstChild);
-                } else {
-                    header.style.cursor = 'move';
-                }
-
-                let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-                header.onmousedown = (e) => {
-                    if (e.button !== 0 || ['INPUT','BUTTON','SELECT','TEXTAREA'].includes(e.target.tagName)) return;
-                    e.preventDefault();
-                    pos3 = e.clientX; pos4 = e.clientY;
-                    document.onmouseup = () => { document.onmouseup = null; document.onmousemove = null; };
-                    document.onmousemove = (e) => {
-                        e.preventDefault();
-                        pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
-                        pos3 = e.clientX; pos4 = e.clientY;
-                        panel.style.top = (panel.offsetTop - pos2) + "px";
-                        panel.style.left = (panel.offsetLeft - pos1) + "px";
-                        panel.style.bottom = 'auto'; panel.style.right = 'auto';
-                    };
-                };
-            };
-
-            setupDraggable('.player-panel', '🎛️ ПУЛЬТ УПРАВЛЕНИЯ');
-            setupDraggable('.patterns-log-container', '🧠 ТЕРМИНАЛ АКТИВАЦИИ');
-            setupDraggable('#diagTerminal', '📡 ДИАГНОСТИКА');
         });
 
         document.addEventListener('dblclick', e => {
@@ -4118,27 +3283,20 @@ STATE.nextBlobColorId = 1;
 
             if (e.code === 'ArrowRight') { 
                 e.preventDefault(); 
-                processPendingCascade();
                 STATE.globalStep += turbo; 
                 STATE.lines.forEach(l => { if (l.isActive) l.localStep += turbo; });
                 enforceLoop(); updateLogic(); 
             }
             if (e.code === 'ArrowLeft') { 
                 e.preventDefault(); 
-                processPendingCascade();
                 STATE.globalStep -= turbo; 
                 STATE.lines.forEach(l => { if (l.isActive) l.localStep -= turbo; });
                 enforceLoop(); updateLogic(); 
             }
-            if (e.code === 'Space') { 
-                e.preventDefault(); 
-                if (document.activeElement && document.activeElement.tagName === 'BUTTON') document.activeElement.blur();
-                togglePlay(); 
-            }
+            if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
             
             if (e.code === 'Enter') { 
                 e.preventDefault(); 
-                if (document.activeElement && document.activeElement.tagName === 'BUTTON') document.activeElement.blur();
                 togglePlay(); 
             }
             if (e.code === 'Delete') { e.preventDefault(); document.getElementById('clearCanvasBtn').click(); }
@@ -4148,13 +3306,6 @@ STATE.nextBlobColorId = 1;
             resizeCanvas();
             render();
         });
-
-        function triggerFlashAnimation() {
-            if (Date.now() < STATE.flashEndTime) {
-                render();
-                requestAnimationFrame(triggerFlashAnimation);
-            }
-        }
 
         window.onload = function() {
             safeBind('sierpRule', 'change', function() {
