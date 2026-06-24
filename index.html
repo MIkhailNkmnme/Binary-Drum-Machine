@@ -1,24 +1,117 @@
+ <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>Zerkalius Control Hub</title>
     <style>
-        body { background: #050505; color: #00ff66; font-family: 'Consolas', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
-        .menu-btn { 
-            display: block; width: 300px; padding: 15px; margin: 10px; 
-            text-align: center; border: 1px solid #00ff66; color: #00ff66; 
-            text-decoration: none; font-size: 18px; border-radius: 5px; transition: 0.3s;
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+        
+        body { 
+            background: #050505; 
+            color: #00ff66; 
+            font-family: 'Consolas', 'Roboto Mono', monospace; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0;
+            overflow: hidden;
         }
-        .menu-btn:hover { background: #00ff66; color: #000; }
-        h1 { margin-bottom: 50px; text-transform: uppercase; letter-spacing: 5px; }
+        
+        h1 { 
+            margin-bottom: 40px; 
+            text-transform: uppercase; 
+            letter-spacing: 6px; 
+            font-size: 28px;
+            text-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
+        }
+        
+        .menu-btn { 
+            display: block; 
+            text-align: center; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            transition: all 0.25s ease;
+            box-sizing: border-box;
+        }
+
+        /* Стиль главного флагманского движка */
+        .menu-btn.main-engine {
+            width: 320px; 
+            padding: 18px; 
+            font-size: 20px; 
+            font-weight: bold;
+            border: 2px solid #00ff66; 
+            color: #00ff66; 
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.35);
+            animation: pulse-glow 2s infinite alternate;
+        }
+        .menu-btn.main-engine:hover { 
+            background: #00ff66; 
+            color: #000; 
+            box-shadow: 0 0 25px #00ff66;
+            transform: scale(1.02);
+        }
+        
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 12px rgba(0, 255, 102, 0.25); }
+            100% { box-shadow: 0 0 26px rgba(0, 255, 102, 0.65); }
+        }
+
+        /* Секция черновиков */
+        .drafts-section {
+            margin-top: 45px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-top: 1px dashed rgba(0, 255, 102, 0.15);
+            padding-top: 25px;
+            width: 350px;
+        }
+        
+        .drafts-title {
+            font-size: 11px;
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            user-select: none;
+        }
+
+        .menu-btn.draft-btn {
+            width: 260px; 
+            padding: 10px; 
+            margin: 6px;
+            font-size: 14px; 
+            border: 1px solid #222; 
+            color: #555; 
+            opacity: 0.6;
+        }
+        .menu-btn.draft-btn:hover { 
+            border-color: #00ff66; 
+            color: #00ff66; 
+            opacity: 1.0;
+            background: rgba(0, 255, 102, 0.04);
+            transform: translateY(-1px);
+        }
     </style>
 </head>
 <body>
     <h1>Zerkalius Hub</h1>
-    <a href="Zerkalius-genezis.html" class="menu-btn">Zerkalius Genezis</a>
-    <a href="Zerkalius-gpu.html" class="menu-btn">GPU Driver</a>
-    <a href="Zerkalius-xor-engine.html" class="menu-btn">XOR Engine</a>
-    <a href="Zerkalius-interleaving.html" class="menu-btn">Interleaving</a>
+    
+    <!-- Флагман -->
+    <a href="Zerkalius-genezis.html" class="menu-btn main-engine">Zerkalius</a>
+    
+    <!-- Лаборатория (Черновики) -->
+    <div class="drafts-section">
+        <div class="drafts-title">🔬 Лаборатория (Черновики)</div>
+        <a href="Zerkalius-gpu.html" class="menu-btn draft-btn">GPU Driver-test</a>
+        <a href="Zerkalius-xor-engine.html" class="menu-btn draft-btn">XOR Engine-test</a>
+        <a href="Zerkalius-0.html" class="menu-btn draft-btn">Genezis Code 0</a>
+    </div>
 </body>
 </html>
+ <!-- === МАРКЕР: CSS СТИЛИ КОНЕЦ === -->
