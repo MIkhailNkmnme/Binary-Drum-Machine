@@ -191,7 +191,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 <body>
 
     <input type="checkbox" id="radarCheck" style="display:none;">
-    <div id="mainTitle">Zerkalius: Genesis (v0.63 Golden Master)</div>
+    <div id="mainTitle">Zerkalius: Genesis (v0.65 Golden Master)</div>
     <script src="banks_data.js"></script>
     <script>
         window.onerror = function(message, source, lineno, colno, error) {
@@ -865,14 +865,14 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             let totalRows = STATE.lines.length;
 
             let total0 = 0, total1 = 0;
+            let rowStats = {};
 
             for (let idx = 0; idx < totalRows; idx++) {
+                let screenIdx = (idx - m.startIndex + totalRows) % totalRows;
                 let isRowInFrame = false;
                 if (useSelectedRingsAsFrame) {
-                    let renderIdx = (idx - m.startIndex + totalRows) % totalRows;
-                    isRowInFrame = STATE.selectedRings.has(renderIdx);
+                    isRowInFrame = STATE.selectedRings.has(screenIdx);
                 } else if (useFrameLimit) {
-                    let screenIdx = (idx - m.startIndex + totalRows) % totalRows;
                     isRowInFrame = (screenIdx >= STATE.manualFrame.rowStart && screenIdx < STATE.manualFrame.rowStart + STATE.manualFrame.rowSpan);
                 } else {
                     isRowInFrame = true;
@@ -951,8 +951,16 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                             }
 
                             if (!useFrameLimit || isInside) {
-                                if (isType1(lData.display[c])) total1 += multiplier;
-                                else if (isType0(lData.display[c])) total0 += multiplier;
+                                if (isType1(lData.display[c])) {
+                                    total1 += multiplier;
+                                    if (!rowStats[screenIdx]) rowStats[screenIdx] = {c0:0, c1:0};
+                                    rowStats[screenIdx].c1 += multiplier;
+                                }
+                                else if (isType0(lData.display[c])) {
+                                    total0 += multiplier;
+                                    if (!rowStats[screenIdx]) rowStats[screenIdx] = {c0:0, c1:0};
+                                    rowStats[screenIdx].c0 += multiplier;
+                                }
                             }
                         }
                     }
@@ -964,7 +972,8 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 total1: total1,
                 isEq: (total0 === total1) && (total0 > 0),
                 isAll0: (total0 > 0 && total1 === 0),
-                isAll1: (total1 > 0 && total0 === 0)
+                isAll1: (total1 > 0 && total0 === 0),
+                rowStats: rowStats
             };
         }
 <!-- === МАРКЕР: ЛОГИКА РАМКИ КОНЕЦ === -->
@@ -3016,7 +3025,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 canvas.height = h;
             }
         }
-    <!-- === МАРКЕР: ЛОГИКА РАМКИ КОНЕЦ === -->
 
     <!-- === МАРКЕР: ИВЕНТЫ И УПРАВЛЕНИЕ НАЧАЛО === -->
         safeBind('exportBanksDataBtn', 'click', () => {
@@ -4308,34 +4316,60 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     ctx.closePath();
                     ctx.stroke();
 
-                    // Постоянные крупные счетчики 1 и 0 по бокам рамки (0 скрывается)
+                    // Постоянные крупные счетчики 1 и 0 по бокам рамки
                     let bal = calculateCurrentBalance();
-                    let opacity = 0.8;
+                    let opacity = bal.isEq ? 0.9 : 0.25; // Убавляем яркость если нет равенства
                     let now = Date.now();
                     if (STATE.flashEndTime && now < STATE.flashEndTime) {
                         opacity = 1.0;
                     }
                     ctx.save();
                     ctx.globalAlpha = opacity;
-                    ctx.font = `bold 28px ${safeValue('fontSelect', 'monospace')}`;
                     ctx.textBaseline = 'middle';
 
-                    // Единицы (Текст 1) слева от рамки
+                    // Главные (общие) счетчики
+                    ctx.font = `bold 28px ${safeValue('fontSelect', 'monospace')}`;
                     if (bal.total1 > 0) {
                         ctx.fillStyle = hexToRgba(safeValue('color1', '#ffffff'), 1.0);
                         ctx.shadowColor = ctx.fillStyle;
-                        ctx.shadowBlur = 15;
+                        ctx.shadowBlur = bal.isEq ? 15 : 2;
                         ctx.textAlign = 'right';
-                        ctx.fillText(bal.total1.toString(), drawX - 25, drawY + drawH / 2);
+                        ctx.fillText(bal.total1.toString(), drawX - 35, drawY + drawH / 2);
                     }
-
-                    // Нули (Текст 0) справа от рамки
                     if (bal.total0 > 0) {
                         ctx.fillStyle = hexToRgba(safeValue('color0', '#00ff66'), 1.0);
                         ctx.shadowColor = ctx.fillStyle;
-                        ctx.shadowBlur = 15;
+                        ctx.shadowBlur = bal.isEq ? 15 : 2;
                         ctx.textAlign = 'left';
-                        ctx.fillText(bal.total0.toString(), drawX + drawW + 25, drawY + drawH / 2);
+                        ctx.fillText(bal.total0.toString(), drawX + drawW + 35, drawY + drawH / 2);
+                    }
+
+                    // Построчные счетчики внутри рамки по бокам
+                    if (bal.rowStats) {
+                        ctx.font = `bold 11px ${safeValue('fontSelect', 'monospace')}`;
+                        for (let k = 0; k < fRowSpan; k++) {
+                            let sIdx = STATE.manualFrame.rowStart + k;
+                            let stat = bal.rowStats[sIdx];
+                            if (stat) {
+                                let yRow = drawY + (k + 0.5) * m.lineHeight;
+                                // 1s слева
+                                if (stat.c1 > 0) {
+                                    ctx.fillStyle = hexToRgba(safeValue('color1', '#ffffff'), 1.0);
+                                    ctx.shadowColor = ctx.fillStyle;
+                                    ctx.shadowBlur = bal.isEq ? 8 : 0;
+                                    ctx.textAlign = 'right';
+                                    ctx.fillText(stat.c1.toString(), drawX - 8, yRow);
+                                }
+                                // 0s справа
+                                if (stat.c0 > 0) {
+                                    ctx.fillStyle = hexToRgba(safeValue('color0', '#00ff66'), 1.0);
+                                    ctx.shadowColor = ctx.fillStyle;
+                                    ctx.shadowBlur = bal.isEq ? 8 : 0;
+                                    ctx.textAlign = 'left';
+                                    ctx.fillText(stat.c0.toString(), drawX + drawW + 8, yRow);
+                                }
+                            }
+                        }
                     }
                     ctx.restore();
 
