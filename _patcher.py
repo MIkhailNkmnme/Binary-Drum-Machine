@@ -104,7 +104,7 @@ def get_manual_prompt_input():
     text = get_clipboard_text()
     if text:
         content = text.replace('\r\n', '\n').strip()
-        if content.lower() == "b" or "replace with:" in content.lower() or "replace_block:" in content.lower():
+        if content.lower() == "b" or "replace with:" in content.lower() or ("replace" + "_block:") in content.lower():
             _original_print("✅ Код успешно получен из буфера!")
             return content
     _original_print("❌ В буфере обмена не обнаружен промпт для патчера.")
@@ -165,18 +165,47 @@ def save_version_and_history(target_file, prompt_content):
     file_dir = os.path.join(VERSIONS_DIR, target_file)
     if not os.path.exists(file_dir): os.makedirs(file_dir)
     base, ext = os.path.splitext(target_file)
-    existing_files = [f for f in os.listdir(file_dir) if f.startswith(base + '_v') and f.endswith(ext)]
-    version_num = len(existing_files) + 1
     
-    backup_name = f"{base}_v{version_num:03d}{ext}"
+    version_str = ""
+    try:
+        content = ""
+        for enc in ['utf-8', 'windows-1251']:
+            try:
+                with open(target_file, 'r', encoding=enc) as f:
+                    content = f.read()
+                    break
+            except Exception:
+                continue
+        
+        # Динамически ищем версию проекта в файле (например, v0.67 Golden Master)
+        match = re.search(r'Zerkalius:\s*Genesis\s*\(v(\d+\.\d+|\d+)\s*Golden\s*Master\)', content, re.IGNORECASE)
+        if match:
+            raw_ver = match.group(1) # Например, "0.67"
+            # Очищаем от точек, превращая "0.67" -> "067"
+            cleaned_ver = "".join(c for c in raw_ver if c.isdigit())
+            if len(cleaned_ver) == 2:
+                version_str = f"0{cleaned_ver}"
+            elif len(cleaned_ver) >= 3:
+                version_str = cleaned_ver
+            else:
+                version_str = cleaned_ver.zfill(3)
+    except Exception:
+        pass
+
+    if not version_str:
+        existing_files = [f for f in os.listdir(file_dir) if f.startswith(base + '_v') and f.endswith(ext)]
+        version_num = len(existing_files) + 1
+        version_str = f"{version_num:03d}"
+    
+    backup_name = f"{base}_v{version_str}{ext}"
     backup_path = os.path.join(file_dir, backup_name)
     shutil.copy(target_file, backup_path)
     shutil.copy(target_file, target_file + ".bak")
     
     history_file = os.path.join(file_dir, "_history_prompts.txt")
     with open(history_file, 'a', encoding='utf-8-sig') as f:
-        f.write(f"\n{'='*60}\n⏱ Версия: v_{version_num:03d} | Дата: {datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}\n{'-'*60}\n{prompt_content.strip()}\n")
-    print(f"💾 Версия v{version_num:03d} сохранена.")
+        f.write(f"\n{'='*60}\n⏱ Версия: v_{version_str} | Дата: {datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}\n{'-'*60}\n{prompt_content.strip()}\n")
+    print(f"💾 Версия v{version_str} сохранена.")
 
 def clean_md_blocks(text):
     """Умная очистка блоков кода от маркдауна."""
@@ -265,7 +294,7 @@ def apply_patch():
             with open(target_file, 'r', encoding='windows-1251') as f: html_content = f.read().replace('\r\n', '\n')
 
         # Предварительное сканирование на конфликтные дубликаты перед записью бэкапа
-        block_pattern = re.compile(r'REPLACE_BLOCK:\s*(.*?)\n(.*?)\nEND_BLOCK:\s*(.*?)(?=\n(?:REPLACE_BLOCK|FIND)|\Z)', re.DOTALL)
+        block_pattern = re.compile(r'REPLACE' + r'_BLOCK:\s*(.*?)\n(.*?)\nEND' + r'_BLOCK:\s*(.*?)(?=\n(?:REPLACE' + r'_BLOCK|FIND)|\Z)', re.DOTALL)
         pattern = re.compile(r'FIND:\s*\n(.*?)\nREPLACE WITH:\s*\n(.*?)(?=\n+(?:\s*?)FIND:|\Z)', re.DOTALL)
         
         has_duplicate_issues = False
@@ -379,9 +408,9 @@ def apply_patch():
                     post_warnings.append(f"Дубликат маркера ({count} шт.): {m_name}")
             
             # Проверка 2: артефакты от ИИ, влезшие в итоговый файл
-            if "REPLACE_BLOCK:" in html_content:
+            if ("REPLACE" + "_BLOCK:") in html_content:
                 post_warnings.append("Артефакт ИИ: найдено слово 'REPLACE_BLOCK:' в итоговом файле!")
-            if "END_BLOCK:" in html_content:
+            if ("END" + "_BLOCK:") in html_content:
                 post_warnings.append("Артефакт ИИ: найдено слово 'END_BLOCK:' в итоговом файле!")
 
             # Запись файла в любом случае
