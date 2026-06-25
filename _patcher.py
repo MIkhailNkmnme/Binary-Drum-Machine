@@ -5,6 +5,7 @@ from datetime import datetime
 import sys
 import time
 import builtins
+from collections import Counter
 
 try:
     import msvcrt
@@ -56,14 +57,27 @@ def bring_to_foreground():
                 ctypes.windll.user32.SetForegroundWindow(hwnd)
         except Exception: pass
 
-def check_manual_input_trigger():
+def read_keyboard_command():
     if msvcrt and sys.platform == 'win32':
         try:
             if msvcrt.kbhit():
-                while msvcrt.kbhit(): msvcrt.getch()
-                return True
+                char = msvcrt.getch()
+                if char in [b'\x00', b'\xe0']:
+                    if msvcrt.kbhit(): msvcrt.getch()
+                    return "trigger"
+                
+                decoded_char = ""
+                for enc in ['utf-8', 'cp866', 'cp1251']:
+                    try:
+                        decoded_char = char.decode(enc).lower()
+                        break
+                    except Exception: pass
+                
+                if decoded_char in ['b', 'и', 'б']:
+                    return "restore"
+                return "trigger"
         except Exception: pass
-    return False
+    return None
 
 def get_clipboard_text():
     try:
@@ -72,8 +86,17 @@ def get_clipboard_text():
         root.withdraw()
         text = root.clipboard_get()
         root.destroy()
-        return text
+        if text: return text
     except Exception: pass
+
+    if sys.platform == 'win32':
+        try:
+            import subprocess
+            proc = subprocess.Popen(['powershell', '-NoProfile', '-Command', 'Get-Clipboard'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, creationflags=0x08000000)
+            out, err = proc.communicate(timeout=2)
+            if proc.returncode == 0 and out:
+                return out.strip('\r\n')
+        except Exception: pass
     return None
 
 def get_manual_prompt_input():
@@ -81,7 +104,7 @@ def get_manual_prompt_input():
     text = get_clipboard_text()
     if text:
         content = text.replace('\r\n', '\n').strip()
-        if "replace with:" in content.lower() or "replace_block:" in content.lower():
+        if content.lower() == "b" or "replace with:" in content.lower() or "replace_block:" in content.lower():
             _original_print("✅ Код успешно получен из буфера!")
             return content
     _original_print("❌ В буфере обмена не обнаружен промпт для патчера.")
@@ -155,23 +178,37 @@ def save_version_and_history(target_file, prompt_content):
         f.write(f"\n{'='*60}\n⏱ Версия: v_{version_num:03d} | Дата: {datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}\n{'-'*60}\n{prompt_content.strip()}\n")
     print(f"💾 Версия v{version_num:03d} сохранена.")
 
+def clean_md_blocks(text):
+    """Умная очистка блоков кода от маркдауна."""
+    lines = text.strip('\n').split('\n')
+    if lines and lines[0].strip().startswith('```'):
+        lines.pop(0)
+    if lines and lines[-1].strip().startswith('```'):
+        lines.pop(-1)
+    return '\n'.join(lines).strip('\n')
+
 def apply_patch():
     global accumulate_log, iteration_log
     last_target_file = None
     waiting_msg_shown = False
     
-    _original_print("🚀 Запуск SUPER-патчера Zerkalius (v4 Escape Fix)...")
+    _original_print("🚀 Запуск SUPER-патчера Zerkalius (v6 Post-Check Protection)...")
     _original_print("👉 Нажмите любую клавишу для вставки промпта из буфера.\n")
     
     while True:
         prompt_file = None
         prompt_content = None
         
-        if check_manual_input_trigger():
+        kb_cmd = read_keyboard_command()
+        if kb_cmd:
             waiting_msg_shown = False
-            prompt_content = get_manual_prompt_input()
-            if not prompt_content: continue
-            prompt_file = "MANUAL_INPUT"
+            if kb_cmd == "restore":
+                prompt_content = "b"
+                prompt_file = "KEYBOARD_CMD"
+            else:
+                prompt_content = get_manual_prompt_input()
+                if not prompt_content: continue
+                prompt_file = "MANUAL_INPUT"
             
         if not prompt_content:
             prompt_file, prompt_content = find_and_read_prompt()
@@ -199,14 +236,16 @@ def apply_patch():
                 print(f"✅ Восстановлен бэкап '{bak_files[0]}'")
             else:
                 print("❌ Бэкап не найден.")
-            if prompt_file != "MANUAL_INPUT": move_prompt_file_to_trash(prompt_file)
+            if prompt_file not in ["MANUAL_INPUT", "KEYBOARD_CMD"]:
+                move_prompt_file_to_trash(prompt_file)
             accumulate_log = False
             continue
 
         target_file = find_target_filename(prompt_content) or last_target_file
         if not target_file:
             print("❌ Файл не указан.")
-            if prompt_file != "MANUAL_INPUT": move_prompt_file_to_trash(prompt_file)
+            if prompt_file not in ["MANUAL_INPUT", "KEYBOARD_CMD"]:
+                move_prompt_file_to_trash(prompt_file)
             accumulate_log = False
             continue
             
@@ -215,7 +254,8 @@ def apply_patch():
 
         if not os.path.exists(target_file):
             print(f"❌ Файл '{target_file}' не найден!")
-            if prompt_file != "MANUAL_INPUT": move_prompt_file_to_trash(prompt_file)
+            if prompt_file not in ["MANUAL_INPUT", "KEYBOARD_CMD"]:
+                move_prompt_file_to_trash(prompt_file)
             accumulate_log = False
             continue
 
@@ -224,12 +264,37 @@ def apply_patch():
         except:
             with open(target_file, 'r', encoding='windows-1251') as f: html_content = f.read().replace('\r\n', '\n')
 
+        # Предварительное сканирование на конфликтные дубликаты перед записью бэкапа
+        block_pattern = re.compile(r'REPLACE_BLOCK:\s*(.*?)\n(.*?)\nEND_BLOCK:\s*(.*?)(?=\n(?:REPLACE_BLOCK|FIND)|\Z)', re.DOTALL)
+        pattern = re.compile(r'FIND:\s*\n(.*?)\nREPLACE WITH:\s*\n(.*?)(?=\n+(?:\s*?)FIND:|\Z)', re.DOTALL)
+        
+        has_duplicate_issues = False
+
+        for start_m, new_code, end_m in block_pattern.findall(prompt_content):
+            start_m_clean = start_m.strip()
+            count = html_content.count(start_m_clean)
+            if count > 1:
+                print(f"⚠️ ПРЕ-ПРОВЕРКА: Маркер '{start_m_clean}' встречается в файле {count} раз(а)!")
+                has_duplicate_issues = True
+
+        for i, (find_text, replace_text) in enumerate(pattern.findall(prompt_content), 1):
+            find_clean = clean_md_blocks(find_text)
+            count = html_content.count(find_clean)
+            if count > 1:
+                print(f"⚠️ ПРЕ-ПРОВЕРКА: Блок FIND {i} совпадает в коде в {count} разных местах!")
+                has_duplicate_issues = True
+
+        if has_duplicate_issues:
+            print("🛑 ПРИОСТАНОВКА: В целевом файле найдены конфликты разметки!")
+            print("👉 Пожалуйста, очистите дубликаты вручную или восстановите рабочую версию, введя 'b'.")
+            if prompt_file != "MANUAL_INPUT": move_prompt_file_to_trash(prompt_file)
+            accumulate_log = False
+            continue
+
         save_version_and_history(target_file, prompt_content)
 
         # 1. ОБРАБОТКА БЛОКОВ ПО МАРКЕРАМ
-        block_pattern = re.compile(r'REPLACE_BLOCK:\s*(.*?)\n(.*?)\nEND_BLOCK:\s*(.*?)(?=\n(?:REPLACE_BLOCK|FIND)|\Z)', re.DOTALL)
         block_matches = block_pattern.findall(prompt_content)
-        
         success_count = 0
         
         for i, (start_m, new_code, end_m) in enumerate(block_matches, 1):
@@ -238,15 +303,18 @@ def apply_patch():
             regex = re.compile(rf'({start_esc}).*?({end_esc})', re.DOTALL)
             
             if regex.search(html_content):
-                def clean_md(text):
-                    t = text.strip('\n')
-                    if t.startswith('```'): t = t.split('\n', 1)[-1]
-                    if t.endswith('```'): t = t.rsplit('\n', 1)[0]
-                    return t.strip('\n')
+                cleaned_code = clean_md_blocks(new_code)
+                code_lines = cleaned_code.split('\n')
                 
-                cleaned_code = clean_md(new_code)
-                # ФИКС: Передаем функцию в re.sub, чтобы \S и \d в JS коде не воспринимались как ошибки Python Escape!
-                html_content = regex.sub(lambda m: f"{m.group(1)}\n{cleaned_code}\n{m.group(2)}", html_content)
+                start_m_clean = start_m.strip()
+                end_m_clean = end_m.strip()
+                while code_lines and (start_m_clean in code_lines[0] or 'REPLACE_BLOCK' in code_lines[0]):
+                    code_lines.pop(0)
+                while code_lines and (end_m_clean in code_lines[-1] or 'END_BLOCK' in code_lines[-1]):
+                    code_lines.pop(-1)
+                    
+                cleaned_code = '\n'.join(code_lines)
+                html_content = regex.sub(lambda m: f"{m.group(1)}\n{cleaned_code}\n{m.group(2)}", html_content, count=1)
                 print(f"✅ Успешно заменен целый БЛОК: '{start_m.strip()}' -> '{end_m.strip()}'.")
                 success_count += 1
             else:
@@ -254,18 +322,10 @@ def apply_patch():
                 has_errors = True
 
         # 2. ОБРАБОТКА ОБЫЧНЫХ FIND/REPLACE
-        pattern = re.compile(r'FIND:\s*\n(.*?)\nREPLACE WITH:\s*\n(.*?)(?=\n+(?:\s*?)FIND:|\Z)', re.DOTALL)
         matches = pattern.findall(prompt_content)
-
         for i, (find_text, replace_text) in enumerate(matches, 1):
-            def clean_md(text):
-                t = text.strip('\n')
-                if t.startswith('```'): t = t.split('\n', 1)[-1]
-                if t.endswith('```'): t = t.rsplit('\n', 1)[0]
-                return t.strip('\n')
-
-            find_text = clean_md(find_text)
-            replace_text = clean_md(replace_text)
+            find_text = clean_md_blocks(find_text)
+            replace_text = clean_md_blocks(replace_text)
 
             if find_text in html_content:
                 html_content = html_content.replace(find_text, replace_text, 1)
@@ -308,8 +368,35 @@ def apply_patch():
             has_errors = True
 
         if success_count > 0:
+            # --- 🛡️ ПОСТ-ПРОВЕРКА НА ДУБЛИКАТЫ (POST-CHECK) ---
+            post_warnings = []
+            
+            # Проверка 1: дубликаты маркеров (считаем все маркеры вида <!-- === МАРКЕР: ... === -->)
+            all_markers = re.findall(r'<!-- === МАРКЕР:.*?=== -->', html_content)
+            marker_counts = Counter(all_markers)
+            for m_name, count in marker_counts.items():
+                if count > 1:
+                    post_warnings.append(f"Дубликат маркера ({count} шт.): {m_name}")
+            
+            # Проверка 2: артефакты от ИИ, влезшие в итоговый файл
+            if "REPLACE_BLOCK:" in html_content:
+                post_warnings.append("Артефакт ИИ: найдено слово 'REPLACE_BLOCK:' в итоговом файле!")
+            if "END_BLOCK:" in html_content:
+                post_warnings.append("Артефакт ИИ: найдено слово 'END_BLOCK:' в итоговом файле!")
+
+            # Запись файла в любом случае
             with open(target_file, 'w', encoding='utf-8') as f: f.write(html_content)
             print(f"\n🚀 Применено {success_count} патчей.")
+
+            # Обработка результатов пост-проверки
+            if post_warnings:
+                print("\n" + "!"*60)
+                print("⚠️ ВНИМАНИЕ! ПОСЛЕ ПАТЧИНГА ОБНАРУЖЕНЫ АНОМАЛИИ В КОДЕ:")
+                for w in post_warnings:
+                    print(f"  - {w}")
+                print("👉 Нажмите клавишу 'b' ПРЯМО СЕЙЧАС для отката (rollback) к предыдущей версии!")
+                print("!"*60)
+                has_errors = True # Принудительно вызываем копирование лога в буфер
 
         if prompt_file != "MANUAL_INPUT": move_prompt_file_to_trash(prompt_file)
         

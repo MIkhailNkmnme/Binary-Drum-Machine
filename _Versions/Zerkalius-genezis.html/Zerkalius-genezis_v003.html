@@ -1,10 +1,4 @@
 <!DOCTYPE html>
-<!--
-===========================================================================
-PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-"We are not just moving strings, we are weaving the fabric of the Matrix."
-===========================================================================
--->
 <html lang="ru">
 <head>
     <!-- === МАРКЕР: HEAD И НАСТРОЙКИ НАЧАЛО === -->
@@ -28,12 +22,10 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         }
 
         #mainTitle {
-            position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
-            color: rgba(0, 255, 102, 0.85); font-size: 15px; font-weight: bold;
-            pointer-events: none; z-index: 130; text-transform: uppercase;
-            letter-spacing: 4px;
-            text-shadow: 0 0 10px rgba(0, 255, 102, 0.6);
-            font-family: 'Roboto Mono', monospace;
+            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+            color: rgba(255, 213, 0, 0.8); font-size: 18px; font-weight: bold;
+            pointer-events: none; z-index: 1; text-transform: uppercase; letter-spacing: 4px;
+            text-shadow: 0 0 10px rgba(255, 213, 0, 0.5);
         }
 
         .controls { 
@@ -138,7 +130,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             color: #00ff66; font-size: 16px; font-weight: bold; padding: 6px 15px; border-radius: 5px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 120;
         }
 
-        .floating-toolbar { position: absolute; left: 330px; top: 50%; transform: translateY(-50%); z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center; transition: transform 0.3s ease, opacity 0.3s ease; }
+        .floating-toolbar { position: absolute; left: 330px; top: 10px; z-index: 100; display: flex; gap: 6px; align-items: flex-start; transition: transform 0.3s ease, opacity 0.3s ease; }
         .float-pill-btn {
             background: rgba(10, 10, 10, 0.85); border: 1px solid #444; color: #fff; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-family: monospace; font-size: 12px;
             display: flex; align-items: center; gap: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5); transition: background 0.2s, border-color 0.2s;
@@ -191,7 +183,8 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 <body>
 
     <input type="checkbox" id="radarCheck" style="display:none;">
-    <div id="mainTitle">Zerkalius: Genesis (v0.63 Golden Master)</div>
+    <div id="mainTitle">Zerkalius: Genesis (v0.20 Golden Master)</div>
+
     <script src="banks_data.js"></script>
     <script>
         window.onerror = function(message, source, lineno, colno, error) {
@@ -243,8 +236,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 
         <details class="control-group" open>
             <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">📝 НАБОРЫ СТРОК (СЛОТЫ)</summary>
-            <button id="exportBanksDataBtn" class="btn-action" style="margin-top:4px; margin-bottom:4px; border-color:#00ff66; color:#00ff66; font-size:9.5px; height:22px;" title="Экспортировать все 3 слота вместе с их паттернами в файл banks_data.js">💾 Экспорт в banks_data.js</button>
-            <div style="display: flex; gap: 4px; margin-bottom: 4px;">
+            <div style="display: flex; gap: 4px; margin-bottom: 4px; margin-top: 4px;">
                 <button id="bankBtn0" class="bank-btn active" ondblclick="switchBank(0)">Слот 1</button>
                 <button id="bankBtn1" class="bank-btn" ondblclick="switchBank(1)">Слот 2</button>
                 <button id="bankBtn2" class="bank-btn" ondblclick="switchBank(2)">Слот 3</button>
@@ -314,9 +306,9 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         <details class="control-group" open>
             <summary style="font-weight:bold; color:#cc33ff; margin-bottom: 4px;">⚙️ МОДИФИКАТОРЫ ДВИЖЕНИЯ</summary>
             <div style="margin-top: 4px; margin-bottom: 2px;" class="row-between">
-                <span class="lbl">Множитель длины (N): <span class="val" id="nFactorVal">1</span></span>
+                <span class="lbl">Множитель длины (N): <span class="val" id="nFactorVal">2</span></span>
             </div>
-            <input type="range" id="nFactor" min="1" max="11" value="1">
+            <input type="range" id="nFactor" min="1" max="11" value="2">
 
             <div style="margin-top: 3px; margin-bottom: 3px;">
                 <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
@@ -385,7 +377,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 <input type="checkbox" id="conglomerateCheck"> <span class="lbl" style="color:#ff00ff; font-weight:bold;">🧩 Конгломераты (≥ 3)</span>
             </label>
             <label style="display:flex; align-items:center; margin-top:3px; padding-left:15px;">
-                <input type="checkbox" id="stableConglomCheck"> <span class="lbl" style="color:#cc66ff;">Фиксация цветов (Без мерцания)</span>
+                <input type="checkbox" id="stableConglomCheck" checked> <span class="lbl" style="color:#cc66ff;">Фиксация цветов (Без мерцания)</span>
             </label>
             <label style="display:flex; align-items:center; margin-top:3px;">
                 <input type="checkbox" id="neonCheck"> <span class="lbl">✨ Свечение (Neon)</span>
@@ -513,26 +505,20 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         </div>
 
         <div class="player-group">
-            <div style="display:flex; flex-direction:column; gap:4px; margin-bottom: 5px;">
-                <!-- Скорость -->
-                <div class="row-between">
-                    <span class="lbl">Скорость:</span>
-                    <span class="val" id="speedVal" style="color:#00ccff;">950</span>
+            <div class="row-between">
+                <span class="lbl">Скорость:</span>
+                <span class="lbl" style="color:#ff3333; font-weight:bold;">Turbo x <span class="val" id="turboVal">1</span></span>
+            </div>
+            <div style="display:flex; gap:10px; margin-bottom: 5px; align-items:center;">
+                <div style="display:flex; align-items:center; gap:2px; flex: 2;">
+                    <button id="speedDecBtn" class="bank-btn" style="width:16px; height:16px; padding:0; line-height:14px; font-weight:bold; color:#00ccff;">◀</button>
+                    <input type="range" id="speedSlider" min="1" max="1000" value="950" style="flex: 1; margin:0; height:12px;">
+                    <button id="speedIncBtn" class="bank-btn" style="width:16px; height:16px; padding:0; line-height:14px; font-weight:bold; color:#00ccff;">▶</button>
                 </div>
-                <div style="display:flex; align-items:center; gap:3px; margin-bottom:2px;">
-                    <button id="speedDecBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-weight:bold; color:#00ccff; border-color:#00ccff;">◀</button>
-                    <input type="range" id="speedSlider" min="1" max="1000" value="950" style="margin:0; height:12px; flex:1;">
-                    <button id="speedIncBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-weight:bold; color:#00ccff; border-color:#00ccff;">▶</button>
-                </div>
-                <!-- Турбо -->
-                <div class="row-between" style="margin-top:2px;">
-                    <span class="lbl">Множитель (Turbo):</span>
-                    <span class="lbl" style="color:#ff3333; font-weight:bold;">Turbo x <span class="val" id="turboVal">1</span></span>
-                </div>
-                <div style="display:flex; align-items:center; gap:3px;">
-                    <button id="turboDecBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-weight:bold; color:#ff9900; border-color:#ff9900;">◀</button>
-                    <input type="range" id="turboSlider" min="1" max="1111" value="1" style="margin:0; height:12px; flex:1; accent-color:#ff3333;">
-                    <button id="turboIncBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-weight:bold; color:#ff9900; border-color:#ff9900;">▶</button>
+                <div style="display:flex; align-items:center; gap:2px; flex: 1;">
+                    <button id="turboDecBtn" class="bank-btn" style="width:16px; height:16px; padding:0; line-height:14px; font-weight:bold; color:#00ccff;">◀</button>
+                    <input type="range" id="turboSlider" min="1" max="1111" value="1" style="flex: 1; margin:0; height:12px;">
+                    <button id="turboIncBtn" class="bank-btn" style="width:16px; height:16px; padding:0; line-height:14px; font-weight:bold; color:#00ccff;">▶</button>
                 </div>
             </div>
 
@@ -561,10 +547,9 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
     <!-- === МАРКЕР: ХОЛСТ И ТУЛБАР НАЧАЛО === -->
     <div id="screenContainer">
         <div class="floating-toolbar">
-            <a href="index.html" class="float-circle-btn" style="text-decoration:none; font-weight:bold; color:#00ff66; border-color:#00ff66;" title="Вернуться в Хаб">⬅</a>
-            <button class="float-circle-btn" id="floatingCenterBtn" title="Клик: 100% высота. Двойной клик: 30% высота.">⌖</button>
+            <a href="index.html" class="float-pill-btn" style="text-decoration:none; font-weight:bold; color:#00ff66;" title="Вернуться в Хаб">⬅ В Хаб</a>
+            <button class="float-pill-btn" id="floatingCenterBtn" title="Клик: 100% высота. Двойной клик: 30% высота.">⌖ X</button>
             <button class="float-circle-btn" id="floatingRadarBtn" title="Топологический Радар">🛰️</button>
-            <button class="float-circle-btn" id="floatingFrameBtn" title="Включить/Выключить Рамку">🔲</button>
         </div>
         <!-- === МАРКЕР: ХОЛСТ И ТУЛБАР КОНЕЦ === -->
 
@@ -868,18 +853,19 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 
             for (let idx = 0; idx < totalRows; idx++) {
                 let isRowInFrame = false;
+                let offset = 0;
                 if (useSelectedRingsAsFrame) {
                     let renderIdx = (idx - m.startIndex + totalRows) % totalRows;
                     isRowInFrame = STATE.selectedRings.has(renderIdx);
                 } else if (useFrameLimit) {
-                    let screenIdx = (idx - m.startIndex + totalRows) % totalRows;
-                    isRowInFrame = (screenIdx >= STATE.manualFrame.rowStart && screenIdx < STATE.manualFrame.rowStart + STATE.manualFrame.rowSpan);
+                    offset = (idx - STATE.manualFrame.rowStart + totalRows) % totalRows;
+                    isRowInFrame = (offset < STATE.manualFrame.rowSpan);
                 } else {
                     isRowInFrame = true;
                 }
 
                 if (!isRowInFrame) continue;
-                let actualIdx = idx;
+                let actualIdx = useFrameLimit ? ((m.startIndex + idx) % totalRows) : idx;
                 let lData = STATE.lines[actualIdx];
                 if (lData) {
                     let multiplier = (useFrameLimit) ? 1 : ((useMirror && idx > 0) ? 2 : 1);
@@ -928,24 +914,24 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                             let isInside = false;
                             if (useFrameLimit) {
                                 let fType = safeValue('frameTypeSelect', 'rect');
-                                                            if (fType === 'rhomb' || fType === 'sq_rhomb') {
-                                let centerY_offset = (STATE.manualFrame.rowSpan - 1) / 2.0;
-                                let rowRadius = (STATE.manualFrame.rowSpan - 1) / 2.0 || 0.5;
-                                let centerX_frame = drawX + drawW / 2.0;
-                                let columnRadius = drawW / 2.0 || 1.0;
-                                
-                                if (fType === 'rhomb') {
-                                    let vDist = Math.abs(screenIdx - centerY_offset) / rowRadius;
-                                    let hDist = Math.abs(cellX - centerX_frame) / columnRadius;
-                                    isInside = (vDist + hDist <= 1.05);
+                                if (fType === 'rhomb' || fType === 'sq_rhomb') {
+                                    let centerY_offset = (STATE.manualFrame.rowSpan - 1) / 2.0;
+                                    let rowRadius = (STATE.manualFrame.rowSpan - 1) / 2.0 || 0.5;
+                                    let centerX_frame = drawX + drawW / 2.0;
+                                    let columnRadius = drawW / 2.0 || 1.0;
+                                    
+                                    if (fType === 'rhomb') {
+                                        let vDist = Math.abs(offset - centerY_offset) / rowRadius;
+                                        let hDist = Math.abs(cellX - centerX_frame) / columnRadius;
+                                        isInside = (vDist + hDist <= 1.05);
+                                    } else {
+                                        let mathCenterY = Math.round(centerY_offset);
+                                        let vDist_rows = Math.abs(offset - mathCenterY);
+                                        let radius_rows = Math.round(rowRadius);
+                                        let col_dist = Math.round(Math.abs(cellX - centerX_frame) / m.charWidth);
+                                        isInside = (vDist_rows + col_dist <= radius_rows);
+                                    }
                                 } else {
-                                    let mathCenterY = Math.round(centerY_offset);
-                                    let vDist_rows = Math.abs(screenIdx - mathCenterY);
-                                    let radius_rows = Math.round(rowRadius);
-                                    let col_dist = Math.round(Math.abs(cellX - centerX_frame) / m.charWidth);
-                                    isInside = (vDist_rows + col_dist <= radius_rows);
-                                }
-                            } else {
                                     isInside = (cellX >= drawX && cellX <= drawX + drawW);
                                 }
                             }
@@ -1165,8 +1151,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             if (snapshot.cw !== undefined) setElVal('cwSlider', snapshot.cw);
             setElChk('autoCascadeCheck', snapshot.autoCascade !== undefined ? snapshot.autoCascade : true);
             setElChk('conglomerateCheck', snapshot.conglomerate !== undefined ? snapshot.conglomerate : false);
-            setElChk('scannerAutoInvertCheck', snapshot.scannerAutoInvert !== undefined ? snapshot.scannerAutoInvert : false);
-            setElChk('scannerHalfInvertCheck', snapshot.scannerHalfInvert !== undefined ? snapshot.scannerHalfInvert : false);
 
             if (snapshot.sierpRule) setElVal('sierpRule', snapshot.sierpRule);
 
@@ -1287,13 +1271,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             const nFact = getNFactor();
             let phase = safeChecked('phaseShiftCheck', true) ? 1 : 0;
             
-            let clearBtn = document.getElementById('clearCanvasBtn');
-            if (clearBtn && !STATE.canRestoreClearedLines) {
-                clearBtn.innerHTML = '🧹 Очистить';
-                clearBtn.style.color = '#ff3333';
-                clearBtn.style.borderColor = '#ff3333';
-            }
-
             STATE.maxCycle = 1;
             STATE.linesModifiedSinceLastInit = true;
             STATE.lines = raw.map((orig, index) => {
@@ -1401,7 +1378,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             let showFrame = safeChecked('frameCheck', false);
             let useRadar = safeChecked('radarCheck', false);
             let useFrameLimit = showFrame && STATE.manualFrame && STATE.manualFrame.isInitialized;
-            let useHalfInvert = safeChecked('scannerHalfInvertCheck', false);
             
             if (!useFrameLimit) {
                 showNotification("ОШИБКА: РАМКА НЕ ВКЛЮЧЕНА");
@@ -1511,10 +1487,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     }
 
                     if (isInside) {
-                        // Ограничение инверсии только левой половиной рамки
-                        if (useHalfInvert && cellX > (drawX + drawW / 2)) {
-                            continue;
-                        }
                         let origIdx = -1;
                         
                         if (isSpaced) {
@@ -1603,7 +1575,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 
         safeBind('sierpBtn', 'click', () => {
             let seed = safeValue('sierpSeed', '1').trim().replace(/\s+/g, '') || "1";
-            let rows = parseInt(safeValue('sierpRows', 128)) || 128;
+            let rows = parseInt(safeValue('sierpRows', 64)) || 64;
             let rule = safeValue('sierpRule', 'shift');
             
             if (rule === "xorora") {
@@ -1663,18 +1635,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     genLines = ["1"];
                 }
                 
-                // Символьный маппинг в зависимости от активного слота
-                let char1 = "1", char0 = "0";
-                if (STATE.activeBankIndex === 1) { char1 = "\\"; char0 = "/"; }
-                else if (STATE.activeBankIndex === 2) { char1 = "<"; char0 = ">"; }
-
-                let mappedLines = genLines.map(line => {
-                    let res = "";
-                    for(let k=0; k<line.length; k++) { res += line[k] === "1" ? char1 : char0; }
-                    return res;
-                });
-                
-                loadText(mappedLines.join('\n'));
+                loadText(genLines.join('\n'));
                 showNotification("ГЕНЕРАТОР: XORORA МАЯТНИК");
                 return;
             }
@@ -1702,19 +1663,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 
                 genLines.push(nextStr);
             }
-
-            // Символьный маппинг в зависимости от активного слота
-            let char1 = "1", char0 = "0";
-            if (STATE.activeBankIndex === 1) { char1 = "\\"; char0 = "/"; }
-            else if (STATE.activeBankIndex === 2) { char1 = "<"; char0 = ">"; }
-
-            let mappedLines = genLines.map(line => {
-                let res = "";
-                for(let k=0; k<line.length; k++) { res += line[k] === "1" ? char1 : char0; }
-                return res;
-            });
-
-            loadText(mappedLines.join('\n'));
+            loadText(genLines.join('\n'));
             showNotification(rule === "shift" ? "ГЕНЕРАТОР: СДВИГ" : "ГЕНЕРАТОР: ЦЕНТР");
         });
 
@@ -2129,28 +2078,28 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                                         }
                                     });
 
-                                        if (vbaActivation) {
-                                            if (isSequential) {
-                                                if (pOf === STATE.currentTargetPatternIdx) {
-                                                    STATE.lines[pOf].isActive = true;
-                                                    expandFrameToRow(pOf);
-                                                    if (!STATE.foundPatterns.has(patOrig)) {
-                                                        STATE.foundPatterns.add(patOrig);
-                                                        newlyFound = true;
-                                                        STATE.lastFindMethod = `Вертикально Снизу-Вверх (Колонка ${col + 1}, Стр ${STATE.lines[pOf] ? STATE.lines[pOf].origIndex + 1 : '?'})`;
-                                                        STATE.currentTargetPatternIdx++;
-                                                    }
-                                                }
-                                            } else {
+                                    if (vbaActivation) {
+                                        if (isSequential) {
+                                            if (pOf === STATE.currentTargetPatternIdx) {
                                                 STATE.lines[pOf].isActive = true;
                                                 expandFrameToRow(pOf);
                                                 if (!STATE.foundPatterns.has(patOrig)) {
                                                     STATE.foundPatterns.add(patOrig);
                                                     newlyFound = true;
-                                                    STATE.lastFindMethod = `Вертикально Снизу-Вверх (Колонка ${col + 1}, Стр ${STATE.lines[pOf] ? STATE.lines[pOf].origIndex + 1 : '?'})`;
+                                                    STATE.lastFindMethod = `Вертикально Снизу-Вверх (Колонка ${col + 1}, Стр ${STATE.lines[col].origIndex + 1})`;
+                                                    STATE.currentTargetPatternIdx++;
                                                 }
                                             }
+                                        } else {
+                                            STATE.lines[pOf].isActive = true;
+                                            expandFrameToRow(pOf);
+                                            if (!STATE.foundPatterns.has(patOrig)) {
+                                                STATE.foundPatterns.add(patOrig);
+                                                newlyFound = true;
+                                                STATE.lastFindMethod = `Вертикально Снизу-Вверх (Колонка ${col + 1}, Стр ${STATE.lines[col].origIndex + 1})`;
+                                            }
                                         }
+                                    }
                                 }
                             }
                         }
@@ -2245,14 +2194,13 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                                     }
                                 }
                                 
-                                    STATE.foundPatternsMetadata.set(searchPatOrig, {
-                                        type: 'vertical',
-                                        cols: [c],
-                                        step: Math.abs(STATE.globalStep)
-                                    });
-                                    let origLineNum = STATE.lines[targetRowIdx] ? STATE.lines[targetRowIdx].origIndex + 1 : (targetRowIdx + 1);
-                                    STATE.lastFindMethod = `Вертикально в Столбце ${c + 1} (Строка ${origLineNum})`;
-                                }
+                                STATE.foundPatternsMetadata.set(searchPatOrig, {
+                                    type: 'vertical',
+                                    cols: [c],
+                                    step: Math.abs(STATE.globalStep)
+                                });
+                                STATE.lastFindMethod = `Вертикально в Столбце ${c + 1} (Строка ${targetRowIdx + 1})`;
+                            }
                             break;
                         }
                     }
@@ -2816,44 +2764,22 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         STATE.pendingCascade = false;
     }
 
-        function updateLogic() {
-            // Синхронизация активных состояний плавающих круглых кнопок с чекбоксами на лету
-            let fBtn = document.getElementById('floatingFrameBtn');
-            if (fBtn) fBtn.classList.toggle('active', safeChecked('frameCheck', false));
-            let rBtn = document.getElementById('floatingRadarBtn');
-            if (rBtn) rBtn.classList.toggle('active', safeChecked('radarCheck', false) || safeChecked('funnelCheck', false));
-
-            // Динамическое переключение стрелок плеера в зависимости от режима движения
-            let prevBtnEl = document.getElementById('prevBtn');
-            let nextBtnEl = document.getElementById('nextBtn');
-            if (prevBtnEl && nextBtnEl) {
-                if (STATE.playerMode === "scroll") {
-                    prevBtnEl.textContent = '▲';
-                    nextBtnEl.textContent = '▼';
-                } else {
-                    prevBtnEl.textContent = '◀';
-                    nextBtnEl.textContent = '▶';
-                }
-            }
-
-            if (safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized) {
+    function updateLogic() {
+        if (safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized) {
             let m = getGridMetrics();
             if (m) {
-                // При авто-скроллинге строк рамка не отключает логические строки, давая им свободно течь сквозь себя
-                if (STATE.playerMode !== "scroll") {
-                    let rowStart = Math.max(0, Math.floor(STATE.manualFrame.y / m.lineHeight));
-                    let rowEnd = Math.min(STATE.lines.length - 1, Math.ceil((STATE.manualFrame.y + STATE.manualFrame.h) / m.lineHeight) - 1);
-                    
-                    for (let i = 0; i < STATE.lines.length; i++) {
-                        let shouldBeActive = (i >= rowStart && i <= rowEnd);
-                        if (shouldBeActive) {
-                            if (!STATE.lines[i].isActive) {
-                                STATE.lines[i].isActive = true;
-                            }
-                        } else {
-                            if (STATE.lines[i].isActive) {
-                                STATE.lines[i].isActive = false;
-                            }
+                let rowStart = Math.max(0, Math.floor(STATE.manualFrame.y / m.lineHeight));
+                let rowEnd = Math.min(STATE.lines.length - 1, Math.ceil((STATE.manualFrame.y + STATE.manualFrame.h) / m.lineHeight) - 1);
+                
+                for (let i = 0; i < STATE.lines.length; i++) {
+                    let shouldBeActive = (i >= rowStart && i <= rowEnd);
+                    if (shouldBeActive) {
+                        if (!STATE.lines[i].isActive) {
+                            STATE.lines[i].isActive = true;
+                        }
+                    } else {
+                        if (STATE.lines[i].isActive) {
+                            STATE.lines[i].isActive = false;
                         }
                     }
                 }
@@ -3018,628 +2944,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         }
     <!-- === МАРКЕР: ЛОГИКА РАМКИ КОНЕЦ === -->
 
-    <!-- === МАРКЕР: ИВЕНТЫ И УПРАВЛЕНИЕ НАЧАЛО === -->
-        safeBind('exportBanksDataBtn', 'click', () => {
-            let linesInp = document.getElementById('linesInput');
-            let patInp = document.getElementById('patternInput');
-            if(linesInp) STATE.banks[STATE.activeBankIndex].lines = linesInp.value;
-            if(patInp) STATE.banks[STATE.activeBankIndex].patterns = patInp.value;
-
-            let fileContent = `// Файл конфигурации пресетов Zerkalius\nconst ZERKALIUS_PRESETS = {\n`;
-            for (let i = 0; i < 3; i++) {
-                let linesText = (STATE.banks[i] && STATE.banks[i].lines) ? STATE.banks[i].lines.trim() : "";
-                let patText = (STATE.banks[i] && STATE.banks[i].patterns) ? STATE.banks[i].patterns.trim() : "";
-                
-                // Экранируем системные обратные кавычки во избежание синтаксических ошибок
-                let escapedLines = linesText.replace(/`/g, '\\`');
-                let escapedPatterns = patText.replace(/`/g, '\\`');
-                
-                fileContent += `    base${i+1}: \`\\n${escapedLines}\\n\`,\n`;
-                fileContent += `    pat${i+1}: \`\\n${escapedPatterns}\\n\`${i === 2 ? '' : ','}\n`;
-            }
-            fileContent += `};\n`;
-
-            const blob = new Blob([fileContent], { type: 'application/javascript' });
-            const link = document.createElement('a');
-            link.download = `banks_data.js`;
-            link.href = URL.createObjectURL(blob);
-            link.click();
-            URL.revokeObjectURL(link.href);
-            showNotification("banks_data.js УСПЕШНО СОХРАНЕН!");
-        });
-
-        safeBind('exportCodeBtn', 'click', () => {
-            let linesInp = document.getElementById('linesInput');
-            let patInp = document.getElementById('patternInput');
-            if(linesInp) STATE.banks[STATE.activeBankIndex].lines = linesInp.value;
-            if(patInp) STATE.banks[STATE.activeBankIndex].patterns = patInp.value;
-            
-            let activeLinesIndices = [];
-            let localSteps = [];
-            STATE.lines.forEach((l, idx) => { 
-                if(l.isActive) activeLinesIndices.push(idx); 
-                localSteps.push(l.localStep);
-            });
-
-            let snapshot = {
-                step: STATE.globalStep, rows: STATE.lines.map(l => l.orig), active: activeLinesIndices,
-                localSteps: localSteps, patterns: Array.from(STATE.foundPatterns),
-                patternsMetadata: Object.fromEntries(STATE.foundPatternsMetadata),
-                currentTargetPatternIdx: STATE.currentTargetPatternIdx, lastFindMethod: STATE.lastFindMethod,
-                nFactor: getNFactor(), preset: safeValue('presetSelect', 'matrix'),
-                speed: parseInt(safeValue('speedSlider', 950)), turbo: parseInt(safeValue('turboSlider', 1)),
-                size: parseInt(safeValue('fontSlider', 16)), radar: safeChecked('radarCheck', false),
-                elka: safeChecked('elkaCheck', false), cylinder: safeChecked('cylinderCheck', false),
-                loop: safeChecked('loopCheck', false), pingPong: safeChecked('pingPongCheck', false),
-                meetCenter: safeChecked('meetCenterCheck', false), spaced: safeChecked('spacedCheck', false),
-                phaseShift: safeChecked('phaseShiftCheck', true), drumMode: safeChecked('drumModeCheck', false),
-                drumRadius: parseInt(safeValue('drumRadius', 5)), fillX: safeChecked('fillXCheck', false),
-                globalSearch: safeChecked('globalSearchCheck', false), verticalSearch: safeChecked('verticalSearchCheck', false),
-                funnel: safeChecked('funnelCheck', false), mirror: safeChecked('mirrorCheck', false),
-                balance: safeChecked('balanceCheck', false), cascadeOnBalance: safeChecked('cascadeOnBalanceCheck', false),
-                pauseOnBalance: safeChecked('pauseOnBalanceCheck', false), keepPhaseOnCascade: safeChecked('keepPhaseOnCascadeCheck', false),
-                ignoreFirstPatternChar: safeChecked('ignoreFirstPatternCharCheck', true), ignoreLastPatternChar: safeChecked('ignoreLastPatternCharCheck', false),
-                gridColor: safeValue('gridColorInput', '#00ff66'), gridAlpha: parseFloat(safeValue('gridAlpha', 0.2)),
-                autoCascade: safeChecked('autoCascadeCheck', true), hideChanged: safeChecked('hideChangedCheck', false),
-                hideUnchanged: safeChecked('hideUnchangedCheck', false), conglomerate: safeChecked('conglomerateCheck', false),
-                scannerAutoInvert: safeChecked('scannerAutoInvertCheck', false), scannerHalfInvert: safeChecked('scannerHalfInvertCheck', false),
-                deltaN: parseInt(safeValue('deltaNInput', 1)), redFirstOneCheck: safeChecked('redFirstOneCheck', true),
-                tracerColor: safeValue('tracerColor', '#ff3333'), foundPatternColor: safeValue('foundPatternColor', '#bfff00'),
-                sequentialSearch: safeChecked('sequentialSearchCheck', true), symCenter: safeChecked('symModeSelect', true),
-                oscXCheck: safeChecked('oscXCheck', false), oscYCheck: safeChecked('oscYCheck', false),
-                oscXLeft: parseInt(safeValue('oscXLeft', 50)), oscXRight: parseInt(safeValue('oscXRight', 50)),
-                oscXStep: parseInt(safeValue('oscXStep', 1)), oscYUp: parseInt(safeValue('oscYUp', 50)),
-                oscYDown: parseInt(safeValue('oscYDown', 50)), oscYStep: parseInt(safeValue('oscYStep', 1)),
-                loopStart: parseInt(safeValue('loopStart', 0)), loopEnd: parseInt(safeValue('loopEnd', 100)),
-                banks: STATE.banks, activeBankIndex: STATE.activeBankIndex,
-                manualFrame: STATE.manualFrame, sierpRule: safeValue('sierpRule', 'shift'),
-                cw: parseFloat(safeValue('cwSlider', 1.0)), lcsToggle: STATE.interleaveLCSToggle,
-                scannerAutoInvert: safeChecked('scannerAutoInvertCheck', false),
-                scannerHalfInvert: safeChecked('scannerHalfInvertCheck', false)
-            };
-
-            let code = btoa(encodeURIComponent(JSON.stringify(snapshot)));
-            const codeBox = document.getElementById('snapshotCodeBox');
-            if (codeBox) { codeBox.value = code; codeBox.select(); }
-            
-            try { navigator.clipboard.writeText(code); } catch(e) {}
-            
-            let d = new Date();
-            let dateStr = d.toLocaleDateString('ru-RU') + ', ' + d.toLocaleTimeString('ru-RU');
-            let fileContent = `ZERKALIUS GENESIS SNAPSHOT\nДата: ${dateStr}\nКадр (Шаг): ${STATE.globalStep}\n\n===== КОД ДЛЯ ИМПОРТА (Копировать всё ниже) =====\n${code}`;
-            
-            const blob = new Blob([fileContent], { type: 'text/plain' });
-            const link = document.createElement('a');
-            link.download = `Zerkalius_Save_${d.toISOString().replace(/[:.]/g, '-')}.txt`;
-            link.href = URL.createObjectURL(blob);
-            link.click();
-            URL.revokeObjectURL(link.href);
-
-            let xmlWorkbook = `<?xml version="1.0" encoding="utf-8"?>
-            <?mso-application progid="Excel.Sheet"?>
-            <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
-             xmlns:o="urn:schemas-microsoft-com:office:office"
-             xmlns:x="urn:schemas-microsoft-com:office:excel"
-             xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
-             xmlns:html="http://www.w3.org/TR/REC-html40">
-             <Styles>
-              <Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Borders/><Font ss:FontName="Segoe UI" ss:Size="10" ss:Color="#000000"/><Interior/><NumberFormat/><Protection/></Style>
-              <Style ss:ID="Header"><Font ss:FontName="Segoe UI" ss:Bold="1" ss:Color="#00FF66" ss:Size="10"/><Interior ss:Color="#111111" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
-              <Style ss:ID="DisplayCell"><Font ss:FontName="Consolas" ss:Color="#00CCFF" ss:Bold="1" ss:Size="10"/><Interior ss:Color="#050505" ss:Pattern="Solid"/><Alignment ss:Horizontal="Left" ss:Vertical="Center"/></Style>
-              <Style ss:ID="OrigCell"><Font ss:FontName="Consolas" ss:Color="#BFFF00" ss:Size="10"/><Alignment ss:Horizontal="Left" ss:Vertical="Center"/></Style>
-              <Style ss:ID="ActiveYes"><Interior ss:Color="#E2F9E9" ss:Pattern="Solid"/><Font ss:FontName="Segoe UI" ss:Color="#00AA44" ss:Bold="1"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
-              <Style ss:ID="ActiveNo"><Interior ss:Color="#FCE8E6" ss:Pattern="Solid"/><Font ss:FontName="Segoe UI" ss:Color="#CC0000" ss:Size="10"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
-              <Style ss:ID="NumCell"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/></Style>
-              <Style ss:ID="C_Empty"><Font ss:FontName="Consolas" ss:Size="8" ss:Color="#050505"/><Interior ss:Color="#050505" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
-              <Style ss:ID="C_Filler"><Font ss:FontName="Consolas" ss:Size="8" ss:Color="#333333"/><Interior ss:Color="#050505" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
-              <Style ss:ID="C_Type1"><Font ss:FontName="Consolas" ss:Bold="1" ss:Size="8" ss:Color="#FFFFFF"/><Interior ss:Color="#111111" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
-              <Style ss:ID="C_Type0"><Font ss:FontName="Consolas" ss:Size="8" ss:Color="#00FF66"/><Interior ss:Color="#111111" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
-              <Style ss:ID="C_Hl"><Font ss:FontName="Consolas" ss:Bold="1" ss:Size="8" ss:Color="#000000"/><Interior ss:Color="#BFFF00" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
-              <Style ss:ID="C_VertHl"><Font ss:FontName="Consolas" ss:Bold="1" ss:Size="8" ss:Color="#000000"/><Interior ss:Color="#00CCFF" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
-              <Style ss:ID="C_Red"><Font ss:FontName="Consolas" ss:Bold="1" ss:Size="8" ss:Color="#FFFFFF"/><Interior ss:Color="#FF3333" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
-              <Style ss:ID="BW_Empty"><Font ss:FontName="Consolas" ss:Size="8" ss:Color="#000000"/><Interior ss:Color="#000000" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
-              <Style ss:ID="BW_Type1"><Font ss:FontName="Consolas" ss:Bold="1" ss:Size="8" ss:Color="#FFFFFF"/><Interior ss:Color="#000000" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
-              <Style ss:ID="BW_Type0"><Font ss:FontName="Consolas" ss:Size="8" ss:Color="#555555"/><Interior ss:Color="#000000" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
-              <Style ss:ID="BW_Hl"><Font ss:FontName="Consolas" ss:Bold="1" ss:Size="8" ss:Color="#000000"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
-             </Styles>
-             <Worksheet ss:Name="Сводка">
-              <Table><Column ss:Width="100"/><Column ss:Width="200"/><Column ss:Width="80"/><Column ss:Width="100"/><Column ss:Width="80"/><Column ss:Width="250"/><Column ss:Width="100"/><Column ss:Width="80"/>
-               <Row ss:Height="22">
-                <Cell ss:StyleID="Header"><Data ss:Type="String">Индекс строки</Data></Cell>
-                <Cell ss:StyleID="Header"><Data ss:Type="String">Оригинальный текст</Data></Cell>
-                <Cell ss:StyleID="Header"><Data ss:Type="String">Длина (L)</Data></Cell>
-                <Cell ss:StyleID="Header"><Data ss:Type="String">Множитель (cN)</Data></Cell>
-                <Cell ss:StyleID="Header"><Data ss:Type="String">Цикл</Data></Cell>
-                <Cell ss:StyleID="Header"><Data ss:Type="String">Текущий вид (Display)</Data></Cell>
-                <Cell ss:StyleID="Header"><Data ss:Type="String">Сдвиг (localStep)</Data></Cell>
-                <Cell ss:StyleID="Header"><Data ss:Type="String">Активна</Data></Cell>
-               </Row>`;
-
-            STATE.lines.forEach((line, idx) => {
-                let activeStyle = line.isActive ? "ActiveYes" : "ActiveNo";
-                let activeText = line.isActive ? "ДА" : "НЕТ";
-                xmlWorkbook += `<Row ss:Height="18"><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${idx + 1}</Data></Cell><Cell ss:StyleID="OrigCell"><Data ss:Type="String">${line.orig}</Data></Cell><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${line.L}</Data></Cell><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${line.cN}</Data></Cell><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${line.cycle}</Data></Cell><Cell ss:StyleID="DisplayCell"><Data ss:Type="String">${line.display}</Data></Cell><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${line.localStep}</Data></Cell><Cell ss:StyleID="${activeStyle}"><Data ss:Type="String">${activeText}</Data></Cell></Row>`;
-            });
-
-            xmlWorkbook += `</Table></Worksheet>`;
-
-            let maxCols = 0;
-            STATE.lines.forEach(line => { if (line.display.length > maxCols) maxCols = line.display.length; });
-
-            xmlWorkbook += `<Worksheet ss:Name="Цветной холст"><Table>`;
-            for (let c = 0; c < maxCols; c++) xmlWorkbook += `<Column ss:Width="20"/>`;
-
-            STATE.lines.forEach((line) => {
-                xmlWorkbook += `<Row ss:Height="18">`;
-                for (let c = 0; c < line.display.length; c++) {
-                    let char = line.display[c] || ' ';
-                    let style = "C_Empty";
-
-                    if (line.fillerMask && line.fillerMask[c]) {
-                        style = "C_Filler";
-                    } else if (char !== ' ' && char !== '') {
-                        let isHl = line.highlightMask && line.highlightMask[c];
-                        let isRed = line.redMask && line.redMask[c];
-                        let isVertHl = line.verticalHighlightMask && line.verticalHighlightMask[c];
-
-                        if (isRed) style = "C_Red";
-                        else if (isVertHl) style = "C_VertHl";
-                        else if (isHl) style = "C_Hl";
-                        else if (isType1(char)) style = "C_Type1";
-                        else if (isType0(char)) style = "C_Type0";
-                    }
-                    let safeChar = char.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                    xmlWorkbook += `<Cell ss:StyleID="${style}"><Data ss:Type="String">${safeChar}</Data></Cell>`;
-                }
-                xmlWorkbook += `</Row>`;
-            });
-            xmlWorkbook += `</Table></Worksheet>`;
-
-            xmlWorkbook += `<Worksheet ss:Name="ЧБ холст"><Table>`;
-            for (let c = 0; c < maxCols; c++) xmlWorkbook += `<Column ss:Width="20"/>`;
-
-            STATE.lines.forEach((line) => {
-                xmlWorkbook += `<Row ss:Height="18">`;
-                for (let c = 0; c < line.display.length; c++) {
-                    let char = line.display[c] || ' ';
-                    let style = "BW_Empty";
-
-                    if (line.fillerMask && line.fillerMask[c]) {
-                        style = "BW_Empty";
-                    } else if (char !== ' ' && char !== '') {
-                        let isHl = line.highlightMask && line.highlightMask[c];
-                        if (isHl) style = "BW_Hl";
-                        else if (isType1(char)) style = "BW_Type1";
-                        else if (isType0(char)) style = "BW_Type0";
-                    }
-                    let safeChar = char.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                    xmlWorkbook += `<Cell ss:StyleID="${style}"><Data ss:Type="String">${safeChar}</Data></Cell>`;
-                }
-                xmlWorkbook += `</Row>`;
-            });
-            xmlWorkbook += `</Table></Worksheet></Workbook>`;
-
-            const xlsBlob = new Blob([xmlWorkbook], { type: 'text/xml' });
-            const xlsLink = document.createElement('a');
-            xlsLink.download = `Zerkalius_Save_${d.toISOString().replace(/[:.]/g, '-')}.xml`;
-            xlsLink.href = URL.createObjectURL(xlsBlob);
-            xlsLink.click();
-            URL.revokeObjectURL(xlsLink.href);
-        });
-
-        safeBind('photoBtn', 'click', () => {
-            const canvas = document.getElementById('screenCanvas');
-            if(!canvas) return;
-            
-            let activeLinesIndices = [];
-            let localSteps = [];
-            STATE.lines.forEach((l, idx) => { 
-                if(l.isActive) activeLinesIndices.push(idx); 
-                localSteps.push(l.localStep);
-            });
-            let snapshot = {
-                step: STATE.globalStep, rows: STATE.lines.map(l => l.orig), active: activeLinesIndices,
-                localSteps: localSteps, patterns: Array.from(STATE.foundPatterns),
-                patternsMetadata: Object.fromEntries(STATE.foundPatternsMetadata),
-                currentTargetPatternIdx: STATE.currentTargetPatternIdx, lastFindMethod: STATE.lastFindMethod,
-                nFactor: getNFactor(), preset: safeValue('presetSelect', 'matrix'),
-                speed: parseInt(safeValue('speedSlider', 950)), turbo: parseInt(safeValue('turboSlider', 1)),
-                size: parseInt(safeValue('fontSlider', 16)), radar: safeChecked('radarCheck', false),
-                elka: safeChecked('elkaCheck', false), cylinder: safeChecked('cylinderCheck', false),
-                loop: safeChecked('loopCheck', false), pingPong: safeChecked('pingPongCheck', false),
-                meetCenter: safeChecked('meetCenterCheck', false), spaced: safeChecked('spacedCheck', false),
-                phaseShift: safeChecked('phaseShiftCheck', true), drumMode: safeChecked('drumModeCheck', false),
-                drumRadius: parseInt(safeValue('drumRadius', 5)), fillX: safeChecked('fillXCheck', false),
-                globalSearch: safeChecked('globalSearchCheck', false), verticalSearch: safeChecked('verticalSearchCheck', false),
-                funnel: safeChecked('funnelCheck', false), mirror: safeChecked('mirrorCheck', false),
-                balance: safeChecked('balanceCheck', false), cascadeOnBalance: safeChecked('cascadeOnBalanceCheck', false),
-                pauseOnBalance: safeChecked('pauseOnBalanceCheck', false), keepPhaseOnCascade: safeChecked('keepPhaseOnCascadeCheck', false),
-                ignoreFirstPatternChar: safeChecked('ignoreFirstPatternCharCheck', true), ignoreLastPatternChar: safeChecked('ignoreLastPatternCharCheck', false),
-                gridColor: safeValue('gridColorInput', '#00ff66'), gridAlpha: parseFloat(safeValue('gridAlpha', 0.2)),
-                autoCascade: safeChecked('autoCascadeCheck', true), hideChanged: safeChecked('hideChangedCheck', false),
-                hideUnchanged: safeChecked('hideUnchangedCheck', false), conglomerate: safeChecked('conglomerateCheck', false),
-                deltaN: parseInt(safeValue('deltaNInput', 1)), redFirstOneCheck: safeChecked('redFirstOneCheck', true),
-                tracerColor: safeValue('tracerColor', '#ff3333'), foundPatternColor: safeValue('foundPatternColor', '#bfff00'),
-                sequentialSearch: safeChecked('sequentialSearchCheck', true), symCenter: safeChecked('symModeSelect', true),
-                oscXCheck: safeChecked('oscXCheck', false), oscYCheck: safeChecked('oscYCheck', false),
-                oscXLeft: parseInt(safeValue('oscXLeft', 50)), oscXRight: parseInt(safeValue('oscXRight', 50)),
-                oscXStep: parseInt(safeValue('oscXStep', 1)), oscYUp: parseInt(safeValue('oscYUp', 50)),
-                oscYDown: parseInt(safeValue('oscYDown', 50)), oscYStep: parseInt(safeValue('oscYStep', 1)),
-                loopStart: parseInt(safeValue('loopStart', 0)), loopEnd: parseInt(safeValue('loopEnd', 100)),
-                banks: STATE.banks, activeBankIndex: STATE.activeBankIndex,
-                manualFrame: STATE.manualFrame, sierpRule: safeValue('sierpRule', 'shift'),
-                cw: parseFloat(safeValue('cwSlider', 1.0)), lcsToggle: STATE.interleaveLCSToggle
-            };
-            let code = btoa(encodeURIComponent(JSON.stringify(snapshot)));
-            
-            canvas.toBlob(function(blob) {
-                const codeBlob = new Blob(["|||ZERK_STATE|||" + code], {type: 'text/plain'});
-                const combinedBlob = new Blob([blob, codeBlob], {type: 'image/png'});
-                const link = document.createElement('a');
-                link.download = `Zerkalius_Shot_${Date.now()}.png`;
-                link.href = URL.createObjectURL(combinedBlob);
-                link.click();
-                URL.revokeObjectURL(link.href);
-                showNotification("📸 ФОТО СОХРАНЕНО!");
-            }, 'image/png');
-        });
-
-        const initFileImportListener = () => {
-            const fileLoader = document.getElementById('importFileLoader');
-            if (!fileLoader) return;
-            
-            const newLoader = fileLoader.cloneNode(true);
-            fileLoader.parentNode.replaceChild(newLoader, fileLoader);
-            
-            newLoader.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    let content = e.target.result;
-                    let codeStr = "";
-                    
-                    if (content.includes("|||ZERK_STATE|||")) {
-                        codeStr = content.split("|||ZERK_STATE|||").pop().trim();
-                    } else {
-                        let lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-                        let maxLen = 0;
-                        lines.forEach(l => {
-                            if (l.startsWith("eyJ") && l.length > maxLen) {
-                                codeStr = l;
-                                maxLen = l.length;
-                            }
-                        });
-                        if (codeStr === "") {
-                            lines.forEach(l => {
-                                if (!l.includes("====") && l.length > maxLen) {
-                                    codeStr = l;
-                                    maxLen = l.length;
-                                }
-                            });
-                        }
-                    }
-                    
-                    try {
-                        if (!codeStr) throw new Error("Код не найден");
-                        let snapshot = JSON.parse(decodeURIComponent(atob(codeStr)));
-                        document.getElementById('snapshotCodeBox').value = codeStr;
-                        importSnapshotObject(snapshot);
-                        showNotification("СНИМОК УСПЕШНО ИМПОРТИРОВАН!");
-                    } catch(err) {
-                        alert("Ошибка чтения файла! Убедитесь, что это правильный .txt снимок или .png фото Зеркалиуса.");
-                    }
-                    e.target.value = ''; 
-                };
-                reader.readAsText(file);
-            });
-        };
-
-        safeBind('importCodeBtn', 'click', () => {
-            let codeBox = document.getElementById('snapshotCodeBox');
-            if (!codeBox) return;
-            let code = codeBox.value.trim();
-
-            if (code.length > 0) {
-                try {
-                    let snapshot = JSON.parse(decodeURIComponent(atob(code)));
-                    importSnapshotObject(snapshot);
-                    showNotification("СОСТОЯНИЕ ИМПОРТИРОВАНО ИЗ ТЕКСТА!");
-                } catch(e) {
-                    alert("Ошибка декодирования снимка! Убедитесь, что код верный.");
-                }
-            } else {
-                initFileImportListener(); 
-                let fileLoader = document.getElementById('importFileLoader');
-                if (fileLoader) fileLoader.click();
-            }
-        });
-
-        function stepFrameScanner() {
-            let m = getGridMetrics();
-            if (!m || !STATE.manualFrame || !STATE.manualFrame.isInitialized) return;
-
-            let dir = STATE.frameScanner.direction;
-            let totalRows = STATE.lines.length;
-            let oldStart = STATE.manualFrame.rowStart;
-            let nextStart = (oldStart + dir + totalRows) % totalRows;
-
-            if ((dir === 1 && nextStart < oldStart && oldStart === totalRows - 1) || 
-                (dir === -1 && nextStart > oldStart && oldStart === 0)) {
-                STATE.manualFrame.rowSpan = Math.min(totalRows, STATE.manualFrame.rowSpan + 1);
-                STATE.manualFrame.h = STATE.manualFrame.rowSpan * m.lineHeight;
-                showNotification(`РАМКА УВЕЛИЧЕНА: ${STATE.manualFrame.rowSpan} СТР.`);
-            }
-
-            STATE.manualFrame.rowStart = nextStart;
-            STATE.manualFrame.y = nextStart * m.lineHeight;
-
-            calculateState(false);
-
-            let bal = calculateCurrentBalance();
-            if (bal.isEq) {
-                let rSpan = STATE.manualFrame.rowSpan || 1;
-                let totalRows = STATE.lines.length;
-                let actualStartIdx = (m.startIndex + nextStart) % totalRows;
-                let actualEndIdx = (m.startIndex + nextStart + rSpan - 1) % totalRows;
-                let startLineNum = STATE.lines[actualStartIdx] ? STATE.lines[actualStartIdx].origIndex + 1 : (nextStart + 1);
-                let endLineNum = STATE.lines[actualEndIdx] ? STATE.lines[actualEndIdx].origIndex + 1 : (actualEndIdx + 1);
-                let rangeStr = (rSpan > 1) ? `Стр ${startLineNum}-${endLineNum}` : `Стр ${startLineNum}`;
-                let logText = `[Шаг ${Math.abs(STATE.globalStep)}] ${rangeStr} ⚖️ БАЛАНС в рамке!`;
-                
-                if (safeChecked('scannerAutoInvertCheck', false)) {
-                    logText += " ➔ АВТО-ИНВЕРТИРОВАНО!";
-                    invertFrameContents();
-                }
-
-                if (!STATE.balanceHistory) STATE.balanceHistory = [];
-                STATE.balanceHistory.unshift(`<span style="color:#00ff66; font-weight:bold;">${logText}</span>`);
-                if (STATE.balanceHistory.length > 50) STATE.balanceHistory.pop();
-                
-                let logEl = document.getElementById('balanceLog');
-                if (logEl) {
-                    logEl.innerHTML = "<span style='color:#ffcc00; font-weight:bold;'>История равенств:</span><br>" + STATE.balanceHistory.join('<br>');
-                }
-            }
-        }
-
-        function loop(timestamp) {
-            if (!STATE.isPlaying) return;
-
-            let speedMs = 1001 - parseInt(safeValue('speedSlider', 950)); 
-            let S = parseInt(safeValue('scrollStepInput', 1)) || 1;
-            let turbo = (parseInt(safeValue('turboSlider', 1)) || 1) * S; 
-
-            let delta = timestamp - STATE.lastTick;
-
-            if (delta >= speedMs || speedMs <= 1) {
-                STATE.lastTick = timestamp - (speedMs > 1 ? delta % speedMs : 0);
-                
-                let stepDelta = STATE.isReverse ? -turbo : turbo;
-                
-                processPendingCascade();
-
-                if (STATE.playerMode === "scroll") {
-                    if (STATE.lines.length > 0) {
-                        STATE.rowScrollOffset = mod(STATE.rowScrollOffset + stepDelta, STATE.lines.length);
-                    } else {
-                        STATE.rowScrollOffset = 0;
-                    }
-                } else {
-                    STATE.globalStep += stepDelta;
-                    STATE.lines.forEach(l => {
-                        if (l.isActive) l.localStep += stepDelta;
-                    });
-                }
-
-                if (safeChecked('frameScannerActiveCheck', false) && STATE.isScannerPlaying) {
-                    stepFrameScanner();
-                }
-
-                if (safeChecked('oscXCheck')) {
-                    let lBound = parseInt(safeValue('oscXLeft', 50));
-                    let rBound = parseInt(safeValue('oscXRight', 50));
-                    let stp = parseInt(safeValue('oscXStep', 1));
-                    STATE.autoOffsetX += (stp * STATE.oscXDir);
-                    if (STATE.autoOffsetX >= rBound) { STATE.autoOffsetX = rBound; STATE.oscXDir = -1; }
-                    if (STATE.autoOffsetX <= -lBound) { STATE.autoOffsetX = -lBound; STATE.oscXDir = 1; }
-                }
-
-                if (safeChecked('oscYCheck')) {
-                    let uBound = parseInt(safeValue('oscYUp', 50));
-                    let dBound = parseInt(safeValue('oscYDown', 50));
-                    let stp = parseInt(safeValue('oscYStep', 1));
-                    STATE.autoOffsetY += (stp * STATE.oscYDir);
-                    if (STATE.autoOffsetY >= dBound) { STATE.autoOffsetY = dBound; STATE.oscYDir = -1; }
-                    if (STATE.autoOffsetY <= -uBound) { STATE.autoOffsetY = -uBound; STATE.oscYDir = 1; }
-                }
-
-                enforceLoop(); 
-                updateLogic();
-            }
-
-            STATE.rafId = requestAnimationFrame(loop);
-        }
-
-        function togglePlay() {
-            STATE.isPlaying = !STATE.isPlaying;
-            if (STATE.isPlaying) {
-                UI.playBtn.innerHTML = '⏸ Пауза';
-                UI.playBtn.style.background = '#ff3333';
-                STATE.lastTick = performance.now();
-                loop(performance.now());
-            } else {
-                UI.playBtn.innerHTML = '▶ Пуск';
-                UI.playBtn.style.background = '#00ff66';
-                cancelAnimationFrame(STATE.rafId);
-                updateLogic(); 
-            }
-        }
-
-        safeBind('playBtn', 'click', () => { togglePlay(); showNotification(STATE.isPlaying ? "ПУСК" : "ПАУЗА"); });
-        
-        safeBind('stopBtn', 'click', () => { 
-            STATE.isPlaying = false; STATE.globalStep = 0; STATE.foundPatterns.clear(); STATE.foundPatternsMetadata.clear(); STATE.flashes.clear();
-            STATE.autoOffsetX = 0; STATE.autoOffsetY = 0;
-            STATE.rowScrollOffset = 0;
-            STATE.selectedRings.clear();
-            cancelAnimationFrame(STATE.rafId); UI.playBtn.innerHTML = '▶ Пуск'; UI.playBtn.style.background = '#00ff66';
-            STATE.currentTargetPatternIdx = 1;
-            STATE.lastFindMethod = "Ожидание...";
-            STATE.pendingCascade = false;
-            STATE.wasBalancedLastFrame = false;
-            STATE.lastSpecialType = "none";
-            STATE.lastLoggedRowsCount = 0;
-            STATE.balanceHistory = [];
-            var logEl = document.getElementById('balanceLog');
-            if (logEl) logEl.innerHTML = "";
-            var ilLog = document.getElementById('interleavingLogDetails');
-            if (ilLog) ilLog.style.display = 'none';
-            
-            STATE.lines.forEach((line, idx) => {
-                line.localStep = 0;
-                line.isManuallyShifted = false;
-                line.isActive = (idx === 0);
-            });
-            STATE.linesModifiedSinceLastInit = false;
-            if (STATE.manualFrame) {
-                STATE.manualFrame.isInitialized = true;
-                STATE.manualFrame.rowStart = 0;
-                STATE.manualFrame.rowSpan = 1;
-                STATE.manualFrame.y = 0;
-                let m = getGridMetrics();
-                if(m) STATE.manualFrame.h = m.lineHeight;
-            }
-            updatePatternBackdrop(); updateLogic(); showNotification("СБРОС"); 
-        });
-        
-        safeBind('clearMemoryBtn', 'click', () => { 
-            STATE.foundPatterns.clear(); STATE.foundPatternsMetadata.clear(); STATE.flashes.clear();
-            STATE.currentTargetPatternIdx = 1;
-            let pInp = document.getElementById('patternInput');
-            if (pInp) { pInp.value = ''; STATE.banks[STATE.activeBankIndex].patterns = ''; }
-            STATE.lastFindMethod = "Ожидание...";
-            STATE.pendingCascade = false;
-            STATE.wasBalancedLastFrame = false;
-            STATE.lastSpecialType = "none";
-            STATE.lastLoggedRowsCount = 0;
-            STATE.balanceHistory = [];
-            if (STATE.loggedPatterns) STATE.loggedPatterns.clear();
-            if (STATE.patternLogHistory) STATE.patternLogHistory = [];
-            var logEl = document.getElementById('balanceLog');
-            if (logEl) logEl.innerHTML = "";
-            var pLogEl = document.getElementById('patternLogDetails');
-            if (pLogEl) pLogEl.style.display = 'none';
-            var ilLog = document.getElementById('interleavingLogDetails');
-            if (ilLog) ilLog.style.display = 'none';
-            STATE.lines.forEach((line, idx) => {
-                line.localStep = 0;
-                line.isManuallyShifted = false;
-                line.isActive = (idx === 0);
-            });
-            STATE.linesModifiedSinceLastInit = false;
-            if (STATE.manualFrame) {
-                STATE.manualFrame.isInitialized = true;
-                STATE.manualFrame.rowStart = 0;
-                STATE.manualFrame.rowSpan = 1;
-                STATE.manualFrame.y = 0;
-                let m = getGridMetrics();
-                if(m) STATE.manualFrame.h = m.lineHeight;
-            }
-            updatePatternBackdrop(); updateLogic(); showNotification("ПАМЯТЬ СБРОШЕНА"); 
-        });
-
-        safeBind('clearCanvasBtn', 'click', function() {
-            let linesInp = document.getElementById('linesInput');
-            
-            if (STATE.canRestoreClearedLines && STATE.lastClearedLines !== undefined) {
-                // ВЕТКА UNDO (ВЕРНУТЬ)
-                if (linesInp) linesInp.value = STATE.lastClearedLines;
-                STATE.banks[STATE.activeBankIndex].lines = STATE.lastClearedLines;
-                loadText(STATE.lastClearedLines);
-                
-                STATE.canRestoreClearedLines = false;
-                this.innerHTML = '🧹 Очистить';
-                this.style.color = '#ff3333';
-                this.style.borderColor = '#ff3333';
-                showNotification("СТРОКИ ВОССТАНОВЛЕНЫ!");
-                return;
-            }
-
-            // ВЕТКА CLEAR (ОЧИСТИТЬ С СОХРАНЕНИЕМ БЭКАПА)
-            let currentText = linesInp ? linesInp.value : "";
-            if (currentText.trim().length > 0) {
-                STATE.lastClearedLines = currentText;
-                STATE.canRestoreClearedLines = true;
-                this.innerHTML = '⏪ Вернуть';
-                this.style.color = '#ffcc00';
-                this.style.borderColor = '#ffcc00';
-            }
-
-            if (STATE.balanceHighlightedRows) STATE.balanceHighlightedRows.clear();
-            if (STATE.scannerFoundBalances) STATE.scannerFoundBalances = [];
-            if (linesInp) linesInp.value = '';
-            STATE.banks[STATE.activeBankIndex].lines = '';
-            STATE.lines = [];
-            STATE.globalStep = 0;
-            STATE.rowScrollOffset = 0;
-            STATE.selectedRings.clear();
-            STATE.autoOffsetX = 0; STATE.autoOffsetY = 0;
-            STATE.foundPatterns.clear();
-            STATE.foundPatternsMetadata.clear();
-            STATE.lastBlobs = [];
-            STATE.nextBlobColorId = 1;
-            STATE.interleavingLog = [];
-            STATE.currentTargetPatternIdx = 1;
-            STATE.lastFindMethod = "Ожидание...";
-            STATE.wasBalancedLastFrame = false;
-            STATE.lastSpecialType = "none";
-            STATE.lastLoggedRowsCount = 0;
-            STATE.balanceHistory = [];
-            if (STATE.patternLogHistory) STATE.patternLogHistory = [];
-            var logEl = document.getElementById('balanceLog');
-            if (logEl) logEl.innerHTML = "";
-            var pLogEl = document.getElementById('patternLogDetails');
-            if (pLogEl) pLogEl.style.display = 'none';
-            var ilLog = document.getElementById('interleavingLogDetails');
-            if (ilLog) ilLog.style.display = 'none';
-            cancelAnimationFrame(STATE.rafId);
-            UI.playBtn.innerHTML = '▶ Play';
-            UI.playBtn.style.background = '#00ff66';
-            STATE.isPlaying = false;
-            if (STATE.manualFrame) {
-                STATE.manualFrame.isInitialized = true;
-                STATE.manualFrame.rowStart = 0;
-                STATE.manualFrame.rowSpan = 1;
-                STATE.manualFrame.y = 0;
-                let m = getGridMetrics();
-                if(m) STATE.manualFrame.h = m.lineHeight;
-            }
-            
-            updatePatternBackdrop();
-            render();
-            showNotification("ХОЛСТ ОЧИЩЕН");
-        });
-
-                    safeBind('playerModeBtn', 'click', function() {
-                        if (STATE.playerMode === "simulate") {
-                            STATE.playerMode = "scroll";
-                            this.textContent = "🎬 Функция: Скроллинг (С наездом)";
-                            this.style.color = "#ffcc00";
-                            this.style.borderColor = "#ffcc00";
-                            showNotification("РЕЖИМ: МАГНИТНЫЙ СКРОЛЛИНГ СТРОК");
-                        } else {
-                            STATE.playerMode = "simulate";
-                            this.textContent = "🎬 Функция: Симуляция (XOR)";
-                            this.style.color = "#00ccff";
-                            this.style.borderColor = "#00ccff";
-                            showNotification("РЕЖИМ: СИМУЛЯЦИЯ ШАГОВ");
-                        }
-                        updateLogic();
-                        render();
-                    });
-
-<!-- === МАРКЕР: РЕНДЕР НАЧАЛО === -->
+    <!-- === МАРКЕР: РЕНДЕР НАЧАЛО === -->
         function render() {
             const canvas = UI.canvas;
             const container = UI.container;
@@ -3647,10 +2952,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             if (!canvas || !container || !ctx) return;
 
             let isVerticalHl, isInactiveVerticalHl;
-
-            // Принудительно сбрасываем прозрачность во избежание фантомного шлейфа от скрытия строк
-            ctx.globalAlpha = 1.0;
-            STATE.titleIsOverlapped = false; // Сброс детектора наезда символов на заголовок
 
             const bgColor = safeValue('bgColor', '#050505');
             let useTrail = safeChecked('trailCheck', false);
@@ -3909,13 +3210,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                         let cx = centerX + Math.cos(angle) * r;
                         let cy = centerY + Math.sin(angle) * r;
 
-                        // Детектор наезда символов на область заголовка в режиме Радара
-                        if (!lineData.fillerMask[c] && char !== ' ' && char !== '.') {
-                            if (cx >= canvas.width / 2 - 240 && cx <= canvas.width / 2 + 240 && cy >= 0 && cy <= 45) {
-                                STATE.titleIsOverlapped = true;
-                            }
-                        }
-
                         if (useFunnel) {
                             ctx.save();
                             ctx.globalAlpha = someSelected ? (isRingSelected ? 1.0 : 0.1) : 1.0;
@@ -4088,18 +3382,35 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                                 staticGridX = cellX;
                             }
 
-                            // Детектор наезда символов на область заголовка в режиме Строк
-                            if (!lineData.fillerMask[c] && char !== ' ' && char !== '.') {
-                                if (cellX >= canvas.width / 2 - 240 && cellX <= canvas.width / 2 + 240 && y >= 0 && y <= 45) {
-                                    STATE.titleIsOverlapped = true;
-                                }
-                            }
-
                             let frameX = baseX + STATE.manualFrame.x;
                             let frameW = STATE.manualFrame.w;
-                            let offset = (actualIndex - m.startIndex + totalRows) % totalRows;
-                            let inFrameRow = (offset >= STATE.manualFrame.rowStart && offset < STATE.manualFrame.rowStart + STATE.manualFrame.rowSpan);
-                            let isInsideFrame = showFrame && inFrameRow && (cellX >= frameX && cellX <= frameX + frameW);
+                            let offset = (actualIndex - STATE.manualFrame.rowStart + totalRows) % totalRows;
+                            let inFrameRow = (offset < STATE.manualFrame.rowSpan);
+                            
+                            let fType = safeValue('frameTypeSelect', 'rect');
+                            let isInsideFrame = false;
+                            if (showFrame && inFrameRow) {
+                                if (fType === 'rhomb' || fType === 'sq_rhomb') {
+                                    let centerY_offset = (STATE.manualFrame.rowSpan - 1) / 2.0;
+                                    let rowRadius = (STATE.manualFrame.rowSpan - 1) / 2.0 || 0.5;
+                                    let centerX_frame = frameX + frameW / 2.0;
+                                    let columnRadius = frameW / 2.0 || 1.0;
+                                    
+                                    if (fType === 'rhomb') {
+                                        let vDist = Math.abs(offset - centerY_offset) / rowRadius;
+                                        let hDist = Math.abs(cellX - centerX_frame) / columnRadius;
+                                        isInsideFrame = (vDist + hDist <= 1.05);
+                                    } else {
+                                        let mathCenterY = Math.round(centerY_offset);
+                                        let vDist_rows = Math.abs(offset - mathCenterY);
+                                        let radius_rows = Math.round(rowRadius);
+                                        let col_dist = Math.round(Math.abs(cellX - centerX_frame) / m.charWidth);
+                                        isInsideFrame = (vDist_rows + col_dist <= radius_rows);
+                                    }
+                                } else {
+                                    isInsideFrame = (cellX >= frameX && cellX <= frameX + frameW);
+                                }
+                            }
 
                             if (isDrum) {
                                 ctx.strokeStyle = isDimmed ? '#222' : '#444';
@@ -4243,8 +3554,9 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 
                     let maxLenInFrame = 0;
                     for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
-                        let idx = (m.startIndex + STATE.manualFrame.rowStart + k) % totalRows;
-                        let line = STATE.lines[idx];
+                        let idx = (STATE.manualFrame.rowStart + k) % totalRows;
+                        let actualIdx = (m.startIndex + idx) % totalRows;
+                        let line = STATE.lines[actualIdx];
                         if (line && line.display && line.display.length > maxLenInFrame) {
                             maxLenInFrame = line.display.length;
                         }
@@ -4255,8 +3567,9 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     STATE.manualFrame.w = autoW_frame;
                     STATE.manualFrame.x = -autoW_frame / 2;
 
+                    let screenRowStart = (STATE.manualFrame.rowStart - m.startIndex + totalRows) % totalRows;
                     let drawX = baseX + STATE.manualFrame.x;
-                    let drawY = startY + STATE.manualFrame.rowStart * m.lineHeight;
+                    let drawY = startY + screenRowStart * m.lineHeight;
                     let drawW = STATE.manualFrame.w;
                     let drawH = STATE.manualFrame.h;
 
@@ -4288,58 +3601,35 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     let rad_rows = Math.round(fRowSpan / 2.0);
                     let h_rad_px = rad_rows * m.charWidth;
 
-                    ctx.beginPath();
-                    let cy = drawY + drawH / 2;
-                    let ctop = drawY;
-                    let cbot = drawY + drawH;
-                    if (fType === 'rhomb') {
-                        ctx.moveTo(cx_frame, ctop);
-                        ctx.lineTo(drawX + drawW, cy);
-                        ctx.lineTo(cx_frame, cbot);
-                        ctx.lineTo(drawX, cy);
-                    } else if (fType === 'sq_rhomb') {
-                        ctx.moveTo(cx_frame, ctop);
-                        ctx.lineTo(cx_frame + h_rad_px, cy);
-                        ctx.lineTo(cx_frame, cbot);
-                        ctx.lineTo(cx_frame - h_rad_px, cy);
-                    } else {
-                        ctx.rect(drawX, drawY, drawW, drawH);
-                    }
-                    ctx.closePath();
+                    let drawFramePaths = (ctx_obj, yOff) => {
+                        ctx_obj.beginPath();
+                        let cy = drawY + yOff + drawH / 2;
+                        let ctop = drawY + yOff;
+                        let cbot = drawY + yOff + drawH;
+                        if (fType === 'rhomb') {
+                            ctx_obj.moveTo(cx_frame, ctop);
+                            ctx_obj.lineTo(drawX + drawW, cy);
+                            ctx_obj.lineTo(cx_frame, cbot);
+                            ctx_obj.lineTo(drawX, cy);
+                        } else if (fType === 'sq_rhomb') {
+                            ctx_obj.moveTo(cx_frame, ctop);
+                            ctx_obj.lineTo(cx_frame + h_rad_px, cy);
+                            ctx_obj.lineTo(cx_frame, cbot);
+                            ctx_obj.lineTo(cx_frame - h_rad_px, cy);
+                        } else {
+                            ctx_obj.rect(drawX, drawY + yOff, drawW, drawH);
+                        }
+                        ctx_obj.closePath();
+                    };
+
+                    drawFramePaths(ctx, 0);
                     ctx.stroke();
 
-                    // Постоянные крупные счетчики 1 и 0 по бокам рамки (0 скрывается)
-                    let bal = calculateCurrentBalance();
-                    let opacity = 0.8;
-                    let now = Date.now();
-                    if (STATE.flashEndTime && now < STATE.flashEndTime) {
-                        opacity = 1.0;
+                    let isWrapped = (screenRowStart + fRowSpan > totalRows);
+                    if (isWrapped) {
+                        drawFramePaths(ctx, -totalRows * m.lineHeight);
+                        ctx.stroke();
                     }
-                    ctx.save();
-                    ctx.globalAlpha = opacity;
-                    ctx.font = `bold 28px ${safeValue('fontSelect', 'monospace')}`;
-                    ctx.textBaseline = 'middle';
-
-                    // Единицы (Текст 1) слева от рамки
-                    if (bal.total1 > 0) {
-                        ctx.fillStyle = hexToRgba(safeValue('color1', '#ffffff'), 1.0);
-                        ctx.shadowColor = ctx.fillStyle;
-                        ctx.shadowBlur = 15;
-                        ctx.textAlign = 'right';
-                        ctx.fillText(bal.total1.toString(), drawX - 25, drawY + drawH / 2);
-                    }
-
-                    // Нули (Текст 0) справа от рамки
-                    if (bal.total0 > 0) {
-                        ctx.fillStyle = hexToRgba(safeValue('color0', '#00ff66'), 1.0);
-                        ctx.shadowColor = ctx.fillStyle;
-                        ctx.shadowBlur = 15;
-                        ctx.textAlign = 'left';
-                        ctx.fillText(bal.total0.toString(), drawX + drawW + 25, drawY + drawH / 2);
-                    }
-                    ctx.restore();
-
-                    let isWrapped = false; // Статичная рамка никогда не перекручивается на экране
 
                     let currentSpecialType = isBalanced ? "balance" : (isAll0 ? "all0" : (isAll1 ? "all1" : "none"));
                     let activeRowsCount = STATE.lines.filter(l => l.isActive).length;
@@ -4389,41 +3679,27 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                         STATE.lastSpecialType = "none";
                     }
 
-                    // Отрисовка затухающей неоновой вспышки внутри рамки
+                    let now = Date.now();
                     if (STATE.flashEndTime && now < STATE.flashEndTime && !useRadar) {
-                        ctx.save();
                         let timeLeft = STATE.flashEndTime - now;
-                        let progress = timeLeft / 600; // от 1.0 до 0.0
+                        let progress = timeLeft / 600; 
                         
                         let fCol = STATE.flashColor || hlColor;
-                        ctx.fillStyle = hexToRgba(fCol, progress * 0.35); // пиковая прозрачность 35%
+                        ctx.fillStyle = hexToRgba(fCol, progress * 0.35); 
                         ctx.globalAlpha = 1.0;
                         
-                        // Заполнение вспышки по форме рамки
-                        ctx.beginPath();
-                        let cy = drawY + drawH / 2;
-                        let ctop = drawY;
-                        let cbot = drawY + drawH;
-                        if (fType === 'rhomb') {
-                            ctx.moveTo(cx_frame, ctop);
-                            ctx.lineTo(drawX + drawW, cy);
-                            ctx.lineTo(cx_frame, cbot);
-                            ctx.lineTo(drawX, cy);
-                        } else if (fType === 'sq_rhomb') {
-                            ctx.moveTo(cx_frame, ctop);
-                            ctx.lineTo(cx_frame + h_rad_px, cy);
-                            ctx.lineTo(cx_frame, cbot);
-                            ctx.lineTo(cx_frame - h_rad_px, cy);
-                        } else {
-                            ctx.rect(drawX, drawY, drawW, drawH);
+                        drawFramePaths(ctx, 0);
+                        ctx.fill(); 
+
+                        if (isWrapped) {
+                            drawFramePaths(ctx, -totalRows * m.lineHeight);
+                            ctx.fill();
                         }
-                        ctx.closePath();
-                        ctx.fill();
 
                         if (useMirror) {
                             ctx.save();
                             let centerY_frame = startY + (m.renderCount - 1) * m.lineHeight + (m.lineHeight / 2);
-                            let frameHalfHeight = STATE.manualFrame.rowStart * m.lineHeight + drawH;
+                            let frameHalfHeight = screenRowStart * m.lineHeight + drawH;
                             let drawY_mirror = centerY_frame - frameHalfHeight;
                             
                             let drawMirrorPaths = (ctx_obj, yOff) => {
@@ -4449,65 +3725,15 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                             
                             drawMirrorPaths(ctx, 0);
                             ctx.fill();
+                            if (isWrapped) {
+                                drawMirrorPaths(ctx, totalRows * m.lineHeight);
+                                ctx.fill();
+                            }
                             ctx.restore();
                         }
-                        ctx.restore();
                     }
                     ctx.restore();
                 }
-            }
-
-            // Отрисовка каскада скобок-балансов по бокам пирамиды
-            if (STATE.scannerFoundBalances && STATE.scannerFoundBalances.length > 0 && !useRadar) {
-                ctx.save();
-                ctx.lineWidth = 1.5;
-                ctx.textBaseline = 'middle';
-
-                let maxLen = 0;
-                STATE.lines.forEach(l => { if (l.isActive && l.display.length > maxLen) maxLen = l.display.length; });
-                let halfW = (maxLen * m.charWidth) / 2 + 15;
-
-                STATE.scannerFoundBalances.forEach((bal, bIdx) => {
-                    let startScreenRow = (bal.start - m.startIndex + totalRows) % totalRows;
-                    let endScreenRow = (bal.start + bal.span - 1 - m.startIndex + totalRows) % totalRows;
-
-                    if (startScreenRow < m.renderCount && endScreenRow < m.renderCount) {
-                        let yTop = startY + startScreenRow * m.lineHeight + 2;
-                        let yBottom = startY + endScreenRow * m.lineHeight + m.lineHeight - 2;
-
-                        let offsetX = halfW + (bIdx * 7); 
-                        let xLeft = baseX - offsetX;
-                        let xRight = baseX + offsetX;
-
-                        let color = `hsla(${(bal.span * 65) % 360}, 100%, 65%, 0.8)`;
-                        ctx.strokeStyle = color;
-                        ctx.fillStyle = color;
-                        ctx.shadowColor = color;
-                        ctx.shadowBlur = 4;
-
-                        // Рисуем левую скобку
-                        ctx.beginPath();
-                        ctx.moveTo(xLeft + 4, yTop);
-                        ctx.lineTo(xLeft, yTop);
-                        ctx.lineTo(xLeft, yBottom);
-                        ctx.lineTo(xLeft + 4, yBottom);
-                        ctx.stroke();
-
-                        // Рисуем правую скобку
-                        ctx.beginPath();
-                        ctx.moveTo(xRight - 4, yTop);
-                        ctx.lineTo(xRight, yTop);
-                        ctx.lineTo(xRight, yBottom);
-                        ctx.lineTo(xRight - 4, yBottom);
-                        ctx.stroke();
-
-                        // Маркер высоты (количества строк)
-                        ctx.font = 'bold 9px Consolas, monospace';
-                        ctx.textAlign = 'right';
-                        ctx.fillText(bal.span.toString(), xLeft - 6, yTop + (yBottom - yTop) / 2);
-                    }
-                });
-                ctx.restore();
             }
 
             let selectedArray = Array.from(STATE.selectedRings);
@@ -4551,26 +3777,460 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     ctx.restore();
                 }
             }
-
-            // Управление прозрачностью главного заголовка при наезде символов
-            const titleEl = document.getElementById('mainTitle');
-            if (titleEl) {
-                titleEl.style.opacity = STATE.titleIsOverlapped ? "0.15" : "1.0";
-                titleEl.style.transition = "opacity 0.25s ease";
-            }
         }
 <!-- === МАРКЕР: РЕНДЕР КОНЕЦ === -->
-        
-        safeBind('prevBtn', 'click', () => { 
-            let S = parseInt(safeValue('scrollStepInput', 1)) || 1;
-            let turbo = (parseInt(safeValue('turboSlider', 1)) || 1) * S;
-            processPendingCascade();
+
+    <!-- === МАРКЕР: ИВЕНТЫ И УПРАВЛЕНИЕ НАЧАЛО === -->
+        safeBind('exportCodeBtn', 'click', () => {
+            let linesInp = document.getElementById('linesInput');
+            let patInp = document.getElementById('patternInput');
+            if(linesInp) STATE.banks[STATE.activeBankIndex].lines = linesInp.value;
+            if(patInp) STATE.banks[STATE.activeBankIndex].patterns = patInp.value;
+            
+            let activeLinesIndices = [];
+            let localSteps = [];
+            STATE.lines.forEach((l, idx) => { 
+                if(l.isActive) activeLinesIndices.push(idx); 
+                localSteps.push(l.localStep);
+            });
+
+            let snapshot = {
+                step: STATE.globalStep, rows: STATE.lines.map(l => l.orig), active: activeLinesIndices,
+                localSteps: localSteps, patterns: Array.from(STATE.foundPatterns),
+                patternsMetadata: Object.fromEntries(STATE.foundPatternsMetadata),
+                currentTargetPatternIdx: STATE.currentTargetPatternIdx, lastFindMethod: STATE.lastFindMethod,
+                nFactor: getNFactor(), preset: safeValue('presetSelect', 'matrix'),
+                speed: parseInt(safeValue('speedSlider', 950)), turbo: parseInt(safeValue('turboSlider', 1)),
+                size: parseInt(safeValue('fontSlider', 16)), radar: safeChecked('radarCheck', false),
+                elka: safeChecked('elkaCheck', false), cylinder: safeChecked('cylinderCheck', false),
+                loop: safeChecked('loopCheck', false), pingPong: safeChecked('pingPongCheck', false),
+                meetCenter: safeChecked('meetCenterCheck', false), spaced: safeChecked('spacedCheck', false),
+                phaseShift: safeChecked('phaseShiftCheck', true), drumMode: safeChecked('drumModeCheck', false),
+                drumRadius: parseInt(safeValue('drumRadius', 5)), fillX: safeChecked('fillXCheck', false),
+                globalSearch: safeChecked('globalSearchCheck', false), verticalSearch: safeChecked('verticalSearchCheck', false),
+                funnel: safeChecked('funnelCheck', false), mirror: safeChecked('mirrorCheck', false),
+                balance: safeChecked('balanceCheck', false), cascadeOnBalance: safeChecked('cascadeOnBalanceCheck', false),
+                pauseOnBalance: safeChecked('pauseOnBalanceCheck', false), keepPhaseOnCascade: safeChecked('keepPhaseOnCascadeCheck', false),
+                ignoreFirstPatternChar: safeChecked('ignoreFirstPatternCharCheck', true), ignoreLastPatternChar: safeChecked('ignoreLastPatternCharCheck', false),
+                gridColor: safeValue('gridColorInput', '#00ff66'), gridAlpha: parseFloat(safeValue('gridAlpha', 0.2)),
+                autoCascade: safeChecked('autoCascadeCheck', true), hideChanged: safeChecked('hideChangedCheck', false),
+                hideUnchanged: safeChecked('hideUnchangedCheck', false), conglomerate: safeChecked('conglomerateCheck', false),
+                deltaN: parseInt(safeValue('deltaNInput', 1)), redFirstOneCheck: safeChecked('redFirstOneCheck', true),
+                tracerColor: safeValue('tracerColor', '#ff3333'), foundPatternColor: safeValue('foundPatternColor', '#bfff00'),
+                sequentialSearch: safeChecked('sequentialSearchCheck', true), symCenter: safeChecked('symModeSelect', true),
+                oscXCheck: safeChecked('oscXCheck', false), oscYCheck: safeChecked('oscYCheck', false),
+                oscXLeft: parseInt(safeValue('oscXLeft', 50)), oscXRight: parseInt(safeValue('oscXRight', 50)),
+                oscXStep: parseInt(safeValue('oscXStep', 1)), oscYUp: parseInt(safeValue('oscYUp', 50)),
+                oscYDown: parseInt(safeValue('oscYDown', 50)), oscYStep: parseInt(safeValue('oscYStep', 1)),
+                loopStart: parseInt(safeValue('loopStart', 0)), loopEnd: parseInt(safeValue('loopEnd', 100)),
+                banks: STATE.banks, activeBankIndex: STATE.activeBankIndex,
+                manualFrame: STATE.manualFrame, sierpRule: safeValue('sierpRule', 'shift'),
+                cw: parseFloat(safeValue('cwSlider', 1.0)), lcsToggle: STATE.interleaveLCSToggle
+            };
+
+            let code = btoa(encodeURIComponent(JSON.stringify(snapshot)));
+            const codeBox = document.getElementById('snapshotCodeBox');
+            if (codeBox) { codeBox.value = code; codeBox.select(); }
+            
+            try { navigator.clipboard.writeText(code); } catch(e) {}
+            
+            let d = new Date();
+            let dateStr = d.toLocaleDateString('ru-RU') + ', ' + d.toLocaleTimeString('ru-RU');
+            let fileContent = `ZERKALIUS GENESIS SNAPSHOT\nДата: ${dateStr}\nКадр (Шаг): ${STATE.globalStep}\n\n===== КОД ДЛЯ ИМПОРТА (Копировать всё ниже) =====\n${code}`;
+            
+            const blob = new Blob([fileContent], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.download = `Zerkalius_Save_${d.toISOString().replace(/[:.]/g, '-')}.txt`;
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+        });
+
+        safeBind('photoBtn', 'click', () => {
+            const canvas = document.getElementById('screenCanvas');
+            if(!canvas) return;
+            
+            let activeLinesIndices = [];
+            let localSteps = [];
+            STATE.lines.forEach((l, idx) => { 
+                if(l.isActive) activeLinesIndices.push(idx); 
+                localSteps.push(l.localStep);
+            });
+            let snapshot = {
+                step: STATE.globalStep, rows: STATE.lines.map(l => l.orig), active: activeLinesIndices,
+                localSteps: localSteps, patterns: Array.from(STATE.foundPatterns),
+                patternsMetadata: Object.fromEntries(STATE.foundPatternsMetadata),
+                currentTargetPatternIdx: STATE.currentTargetPatternIdx, lastFindMethod: STATE.lastFindMethod,
+                nFactor: getNFactor(), preset: safeValue('presetSelect', 'matrix'),
+                speed: parseInt(safeValue('speedSlider', 950)), turbo: parseInt(safeValue('turboSlider', 1)),
+                size: parseInt(safeValue('fontSlider', 16)), radar: safeChecked('radarCheck', false),
+                elka: safeChecked('elkaCheck', false), cylinder: safeChecked('cylinderCheck', false),
+                loop: safeChecked('loopCheck', false), pingPong: safeChecked('pingPongCheck', false),
+                meetCenter: safeChecked('meetCenterCheck', false), spaced: safeChecked('spacedCheck', false),
+                phaseShift: safeChecked('phaseShiftCheck', true), drumMode: safeChecked('drumModeCheck', false),
+                drumRadius: parseInt(safeValue('drumRadius', 5)), fillX: safeChecked('fillXCheck', false),
+                globalSearch: safeChecked('globalSearchCheck', false), verticalSearch: safeChecked('verticalSearchCheck', false),
+                funnel: safeChecked('funnelCheck', false), mirror: safeChecked('mirrorCheck', false),
+                balance: safeChecked('balanceCheck', false), cascadeOnBalance: safeChecked('cascadeOnBalanceCheck', false),
+                pauseOnBalance: safeChecked('pauseOnBalanceCheck', false), keepPhaseOnCascade: safeChecked('keepPhaseOnCascadeCheck', false),
+                ignoreFirstPatternChar: safeChecked('ignoreFirstPatternCharCheck', true), ignoreLastPatternChar: safeChecked('ignoreLastPatternCharCheck', false),
+                gridColor: safeValue('gridColorInput', '#00ff66'), gridAlpha: parseFloat(safeValue('gridAlpha', 0.2)),
+                autoCascade: safeChecked('autoCascadeCheck', true), hideChanged: safeChecked('hideChangedCheck', false),
+                hideUnchanged: safeChecked('hideUnchangedCheck', false), conglomerate: safeChecked('conglomerateCheck', false),
+                deltaN: parseInt(safeValue('deltaNInput', 1)), redFirstOneCheck: safeChecked('redFirstOneCheck', true),
+                tracerColor: safeValue('tracerColor', '#ff3333'), foundPatternColor: safeValue('foundPatternColor', '#bfff00'),
+                sequentialSearch: safeChecked('sequentialSearchCheck', true), symCenter: safeChecked('symModeSelect', true),
+                oscXCheck: safeChecked('oscXCheck', false), oscYCheck: safeChecked('oscYCheck', false),
+                oscXLeft: parseInt(safeValue('oscXLeft', 50)), oscXRight: parseInt(safeValue('oscXRight', 50)),
+                oscXStep: parseInt(safeValue('oscXStep', 1)), oscYUp: parseInt(safeValue('oscYUp', 50)),
+                oscYDown: parseInt(safeValue('oscYDown', 50)), oscYStep: parseInt(safeValue('oscYStep', 1)),
+                loopStart: parseInt(safeValue('loopStart', 0)), loopEnd: parseInt(safeValue('loopEnd', 100)),
+                banks: STATE.banks, activeBankIndex: STATE.activeBankIndex,
+                manualFrame: STATE.manualFrame, sierpRule: safeValue('sierpRule', 'shift'),
+                cw: parseFloat(safeValue('cwSlider', 1.0)), lcsToggle: STATE.interleaveLCSToggle
+            };
+            let code = btoa(encodeURIComponent(JSON.stringify(snapshot)));
+            
+            canvas.toBlob(function(blob) {
+                const codeBlob = new Blob(["|||ZERK_STATE|||" + code], {type: 'text/plain'});
+                const combinedBlob = new Blob([blob, codeBlob], {type: 'image/png'});
+                const link = document.createElement('a');
+                link.download = `Zerkalius_Shot_${Date.now()}.png`;
+                link.href = URL.createObjectURL(combinedBlob);
+                link.click();
+                URL.revokeObjectURL(link.href);
+                showNotification("📸 ФОТО СОХРАНЕНО!");
+            }, 'image/png');
+        });
+
+        const initFileImportListener = () => {
+            const fileLoader = document.getElementById('importFileLoader');
+            if (!fileLoader) return;
+            
+            const newLoader = fileLoader.cloneNode(true);
+            fileLoader.parentNode.replaceChild(newLoader, fileLoader);
+            
+            newLoader.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    let content = e.target.result;
+                    let codeStr = "";
+                    
+                    if (content.includes("|||ZERK_STATE|||")) {
+                        codeStr = content.split("|||ZERK_STATE|||").pop().trim();
+                    } else {
+                        let lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                        let maxLen = 0;
+                        lines.forEach(l => {
+                            if (l.startsWith("eyJ") && l.length > maxLen) {
+                                codeStr = l;
+                                maxLen = l.length;
+                            }
+                        });
+                        if (codeStr === "") {
+                            lines.forEach(l => {
+                                if (!l.includes("====") && l.length > maxLen) {
+                                    codeStr = l;
+                                    maxLen = l.length;
+                                }
+                            });
+                        }
+                    }
+                    
+                    try {
+                        if (!codeStr) throw new Error("Код не найден");
+                        let snapshot = JSON.parse(decodeURIComponent(atob(codeStr)));
+                        document.getElementById('snapshotCodeBox').value = codeStr;
+                        importSnapshotObject(snapshot);
+                        showNotification("СНИМОК УСПЕШНО ИМПОРТИРОВАН!");
+                    } catch(err) {
+                        alert("Ошибка чтения файла! Убедитесь, что это правильный .txt снимок или .png фото Зеркалиуса.");
+                    }
+                    e.target.value = ''; 
+                };
+                reader.readAsText(file);
+            });
+        };
+
+        safeBind('importCodeBtn', 'click', () => {
+            let codeBox = document.getElementById('snapshotCodeBox');
+            if (!codeBox) return;
+            let code = codeBox.value.trim();
+
+            if (code.length > 0) {
+                try {
+                    let snapshot = JSON.parse(decodeURIComponent(atob(code)));
+                    importSnapshotObject(snapshot);
+                    showNotification("СОСТОЯНИЕ ИМПОРТИРОВАНО ИЗ ТЕКСТА!");
+                } catch(e) {
+                    alert("Ошибка декодирования снимка! Убедитесь, что код верный.");
+                }
+            } else {
+                initFileImportListener(); 
+                let fileLoader = document.getElementById('importFileLoader');
+                if (fileLoader) fileLoader.click();
+            }
+        });
+
+        function stepFrameScanner() {
+            let m = getGridMetrics();
+            if (!m || !STATE.manualFrame || !STATE.manualFrame.isInitialized) return;
+
+            let dir = STATE.frameScanner.direction;
+            let totalRows = STATE.lines.length;
+            let oldStart = STATE.manualFrame.rowStart;
+            let nextStart = (oldStart + dir + totalRows) % totalRows;
+
+            if ((dir === 1 && nextStart < oldStart && oldStart === totalRows - 1) || 
+                (dir === -1 && nextStart > oldStart && oldStart === 0)) {
+                STATE.manualFrame.rowSpan = Math.min(totalRows, STATE.manualFrame.rowSpan + 1);
+                STATE.manualFrame.h = STATE.manualFrame.rowSpan * m.lineHeight;
+                showNotification(`РАМКА УВЕЛИЧЕНА: ${STATE.manualFrame.rowSpan} СТР.`);
+            }
+
+            STATE.manualFrame.rowStart = nextStart;
+            STATE.manualFrame.y = nextStart * m.lineHeight;
+
+            calculateState(false);
+
+            let bal = calculateCurrentBalance();
+            if (bal.isEq) {
+                let rSpan = STATE.manualFrame.rowSpan;
+                let totalRows = STATE.lines.length;
+                let endStart = (nextStart + rSpan - 1) % totalRows;
+                let startLineNum = STATE.lines[nextStart].origIndex + 1;
+                let endLineNum = STATE.lines[endStart].origIndex + 1;
+                let rangeStr = (rSpan > 1) ? `Стр ${startLineNum}-${endLineNum}` : `Стр ${startLineNum}`;
+                let logText = `[Шаг ${Math.abs(STATE.globalStep)}] ${rangeStr} ⚖️ БАЛАНС в рамке!`;
+                
+                if (safeChecked('scannerAutoInvertCheck', false)) {
+                    logText += " ➔ АВТО-ИНВЕРТИРОВАНО!";
+                    invertFrameContents();
+                }
+
+                if (!STATE.balanceHistory) STATE.balanceHistory = [];
+                STATE.balanceHistory.unshift(`<span style="color:#00ff66; font-weight:bold;">${logText}</span>`);
+                if (STATE.balanceHistory.length > 50) STATE.balanceHistory.pop();
+                
+                let logEl = document.getElementById('balanceLog');
+                if (logEl) {
+                    logEl.innerHTML = "<span style='color:#ffcc00; font-weight:bold;'>История равенств:</span><br>" + STATE.balanceHistory.join('<br>');
+                }
+            }
+        }
+
+        function loop(timestamp) {
+            if (!STATE.isPlaying) return;
+
+            let speedMs = 1001 - parseInt(safeValue('speedSlider', 950)); 
+            let turbo = parseInt(safeValue('turboSlider', 1)) || 1; 
+
+            let delta = timestamp - STATE.lastTick;
+
+            if (delta >= speedMs || speedMs <= 1) {
+                STATE.lastTick = timestamp - (speedMs > 1 ? delta % speedMs : 0);
+                
+                let stepDelta = STATE.isReverse ? -turbo : turbo;
+                
+                processPendingCascade();
+
                 if (STATE.playerMode === "scroll") {
                     if (STATE.lines.length > 0) {
-                        STATE.rowScrollOffset = mod(STATE.rowScrollOffset + turbo, STATE.lines.length);
+                        STATE.rowScrollOffset = mod(STATE.rowScrollOffset + stepDelta, STATE.lines.length);
                     } else {
                         STATE.rowScrollOffset = 0;
                     }
+                } else {
+                    STATE.globalStep += stepDelta;
+                    STATE.lines.forEach(l => {
+                        if (l.isActive) l.localStep += stepDelta;
+                    });
+                }
+
+                if (safeChecked('frameScannerActiveCheck', false) && STATE.isScannerPlaying) {
+                    stepFrameScanner();
+                }
+
+                if (safeChecked('oscXCheck')) {
+                    let lBound = parseInt(safeValue('oscXLeft', 50));
+                    let rBound = parseInt(safeValue('oscXRight', 50));
+                    let stp = parseInt(safeValue('oscXStep', 1));
+                    STATE.autoOffsetX += (stp * STATE.oscXDir);
+                    if (STATE.autoOffsetX >= rBound) { STATE.autoOffsetX = rBound; STATE.oscXDir = -1; }
+                    if (STATE.autoOffsetX <= -lBound) { STATE.autoOffsetX = -lBound; STATE.oscXDir = 1; }
+                }
+
+                if (safeChecked('oscYCheck')) {
+                    let uBound = parseInt(safeValue('oscYUp', 50));
+                    let dBound = parseInt(safeValue('oscYDown', 50));
+                    let stp = parseInt(safeValue('oscYStep', 1));
+                    STATE.autoOffsetY += (stp * STATE.oscYDir);
+                    if (STATE.autoOffsetY >= dBound) { STATE.autoOffsetY = dBound; STATE.oscYDir = -1; }
+                    if (STATE.autoOffsetY <= -uBound) { STATE.autoOffsetY = -uBound; STATE.oscYDir = 1; }
+                }
+
+                enforceLoop(); 
+                updateLogic();
+            }
+
+            STATE.rafId = requestAnimationFrame(loop);
+        }
+
+        function togglePlay() {
+            STATE.isPlaying = !STATE.isPlaying;
+            if (STATE.isPlaying) {
+                UI.playBtn.innerHTML = '⏸ Пауза';
+                UI.playBtn.style.background = '#ff3333';
+                STATE.lastTick = performance.now();
+                loop(performance.now());
+            } else {
+                UI.playBtn.innerHTML = '▶ Пуск';
+                UI.playBtn.style.background = '#00ff66';
+                cancelAnimationFrame(STATE.rafId);
+                updateLogic(); 
+            }
+        }
+
+        safeBind('playBtn', 'click', () => { togglePlay(); showNotification(STATE.isPlaying ? "ПУСК" : "ПАУЗА"); });
+        
+        safeBind('stopBtn', 'click', () => { 
+            STATE.isPlaying = false; STATE.globalStep = 0; STATE.foundPatterns.clear(); STATE.foundPatternsMetadata.clear(); STATE.flashes.clear();
+            STATE.autoOffsetX = 0; STATE.autoOffsetY = 0;
+            STATE.rowScrollOffset = 0;
+            STATE.selectedRings.clear();
+            cancelAnimationFrame(STATE.rafId); UI.playBtn.innerHTML = '▶ Пуск'; UI.playBtn.style.background = '#00ff66';
+            STATE.currentTargetPatternIdx = 1;
+            STATE.lastFindMethod = "Ожидание...";
+            STATE.pendingCascade = false;
+            STATE.wasBalancedLastFrame = false;
+            STATE.lastSpecialType = "none";
+            STATE.lastLoggedRowsCount = 0;
+            STATE.balanceHistory = [];
+            var logEl = document.getElementById('balanceLog');
+            if (logEl) logEl.innerHTML = "";
+            var ilLog = document.getElementById('interleavingLogDetails');
+            if (ilLog) ilLog.style.display = 'none';
+            
+            STATE.lines.forEach((line, idx) => {
+                line.localStep = 0;
+                line.isActive = (idx === 0);
+            });
+            STATE.linesModifiedSinceLastInit = false;
+            if (STATE.manualFrame) {
+                STATE.manualFrame.isInitialized = true;
+                STATE.manualFrame.rowStart = 0;
+                STATE.manualFrame.rowSpan = 1;
+                STATE.manualFrame.y = 0;
+                let m = getGridMetrics();
+                if(m) STATE.manualFrame.h = m.lineHeight;
+            }
+            updatePatternBackdrop(); updateLogic(); showNotification("СБРОС"); 
+        });
+        
+        safeBind('clearMemoryBtn', 'click', () => { 
+            STATE.foundPatterns.clear(); STATE.foundPatternsMetadata.clear(); STATE.flashes.clear();
+            STATE.currentTargetPatternIdx = 1;
+            STATE.lastFindMethod = "Ожидание...";
+            STATE.pendingCascade = false;
+            STATE.wasBalancedLastFrame = false;
+            STATE.lastSpecialType = "none";
+            STATE.lastLoggedRowsCount = 0;
+            STATE.balanceHistory = [];
+            if (STATE.loggedPatterns) STATE.loggedPatterns.clear();
+            if (STATE.patternLogHistory) STATE.patternLogHistory = [];
+            var logEl = document.getElementById('balanceLog');
+            if (logEl) logEl.innerHTML = "";
+            var pLogEl = document.getElementById('patternLogDetails');
+            if (pLogEl) pLogEl.style.display = 'none';
+            var ilLog = document.getElementById('interleavingLogDetails');
+            if (ilLog) ilLog.style.display = 'none';
+            STATE.lines.forEach((line, idx) => {
+                line.localStep = 0;
+                line.isActive = (idx === 0);
+            });
+            STATE.linesModifiedSinceLastInit = false;
+            if (STATE.manualFrame) {
+                STATE.manualFrame.isInitialized = true;
+                STATE.manualFrame.rowStart = 0;
+                STATE.manualFrame.rowSpan = 1;
+                STATE.manualFrame.y = 0;
+                let m = getGridMetrics();
+                if(m) STATE.manualFrame.h = m.lineHeight;
+            }
+            updatePatternBackdrop(); updateLogic(); showNotification("ПАМЯТЬ СБРОШЕНА"); 
+        });
+
+        safeBind('clearCanvasBtn', 'click', () => {
+            if (STATE.balanceHighlightedRows) STATE.balanceHighlightedRows.clear();
+            STATE.lines = [];
+            STATE.globalStep = 0;
+            STATE.rowScrollOffset = 0;
+            STATE.selectedRings.clear();
+            STATE.autoOffsetX = 0; STATE.autoOffsetY = 0;
+            STATE.foundPatterns.clear();
+            STATE.foundPatternsMetadata.clear();
+            STATE.lastBlobs = [];
+            STATE.nextBlobColorId = 1;
+            STATE.interleavingLog = [];
+            STATE.currentTargetPatternIdx = 1;
+            STATE.lastFindMethod = "Ожидание...";
+            STATE.wasBalancedLastFrame = false;
+            STATE.lastSpecialType = "none";
+            STATE.lastLoggedRowsCount = 0;
+            STATE.balanceHistory = [];
+            if (STATE.patternLogHistory) STATE.patternLogHistory = [];
+            var logEl = document.getElementById('balanceLog');
+            if (logEl) logEl.innerHTML = "";
+            var pLogEl = document.getElementById('patternLogDetails');
+            if (pLogEl) pLogEl.style.display = 'none';
+            var ilLog = document.getElementById('interleavingLogDetails');
+            if (ilLog) ilLog.style.display = 'none';
+            cancelAnimationFrame(STATE.rafId);
+            UI.playBtn.innerHTML = '▶ Play';
+            UI.playBtn.style.background = '#00ff66';
+            STATE.isPlaying = false;
+            if (STATE.manualFrame) {
+                STATE.manualFrame.isInitialized = true;
+                STATE.manualFrame.rowStart = 0;
+                STATE.manualFrame.rowSpan = 1;
+                STATE.manualFrame.y = 0;
+                let m = getGridMetrics();
+                if(m) STATE.manualFrame.h = m.lineHeight;
+            }
+            
+            updatePatternBackdrop();
+            render();
+            showNotification("ХОЛСТ ОЧИЩЕН");
+        });
+
+        safeBind('playerModeBtn', 'click', function() {
+            if (STATE.playerMode === "simulate") {
+                STATE.playerMode = "scroll";
+                this.textContent = "🎬 Функция: Скроллинг (Строки)";
+                this.style.color = "#ffcc00";
+                this.style.borderColor = "#ffcc00";
+                showNotification("РЕЖИМ: СКРОЛЛИНГ СТРОК");
+            } else {
+                STATE.playerMode === "simulate";
+                this.textContent = "🎬 Функция: Симуляция (XOR)";
+                this.style.color = "#00ccff";
+                this.style.borderColor = "#00ccff";
+                showNotification("РЕЖИМ: СИМУЛЯЦИЯ ШАГОВ");
+            }
+            render();
+        });
+        
+        safeBind('prevBtn', 'click', () => { 
+            let turbo = parseInt(safeValue('turboSlider', 1)) || 1;
+            processPendingCascade();
+            if (STATE.playerMode === "scroll") {
+                if (STATE.lines.length > 0) {
+                    STATE.rowScrollOffset = mod(STATE.rowScrollOffset - turbo, STATE.lines.length);
+                } else {
+                    STATE.rowScrollOffset = 0;
+                }
             } else {
                 STATE.globalStep -= turbo; 
                 STATE.lines.forEach(l => { if (l.isActive) l.localStep -= turbo; });
@@ -4579,17 +4239,16 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             updateLogic(); 
         });
         safeBind('nextBtn', 'click', () => { 
-            let S = parseInt(safeValue('scrollStepInput', 1)) || 1;
-            let turbo = (parseInt(safeValue('turboSlider', 1)) || 1) * S;
+            let turbo = parseInt(safeValue('turboSlider', 1)) || 1;
             processPendingCascade();
-                if (STATE.playerMode === "scroll") {
-                    if (STATE.lines.length > 0) {
-                        STATE.rowScrollOffset = mod(STATE.rowScrollOffset - turbo, STATE.lines.length);
-                    } else {
-                        STATE.rowScrollOffset = 0;
-                    }
+            if (STATE.playerMode === "scroll") {
+                if (STATE.lines.length > 0) {
+                    STATE.rowScrollOffset = mod(STATE.rowScrollOffset + turbo, STATE.lines.length);
+                } else {
+                    STATE.rowScrollOffset = 0;
+                }
             } else {
-                STATE.globalStep += turbo;
+                STATE.globalStep += turbo; 
                 STATE.lines.forEach(l => { if (l.isActive) l.localStep += turbo; });
                 enforceLoop();
             }
@@ -4598,37 +4257,19 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         
         safeBind('reverseBtn', 'click', function() { 
             STATE.isReverse = !STATE.isReverse; 
-            this.innerHTML = STATE.isReverse ? '🔃 Назад' : '🔃 Вперед';
+            this.innerHTML = STATE.isReverse ? '🔃 Направление: Назад' : '🔃 Направление: Вперед';
             this.style.color = STATE.isReverse ? '#ff3333' : '#ffcc00';
             this.style.borderColor = STATE.isReverse ? '#ff3333' : '#ffcc00';
             showNotification(STATE.isReverse ? "РЕВЕРС" : "ВПЕРЕД");
         });
 
         safeBind('floatingRadarBtn', 'click', function() {
-            let r = document.getElementById('radarCheck');
-            let f = document.getElementById('funnelCheck');
-            if (r && f) {
-                if (!r.checked && !f.checked) {
-                    r.checked = true; f.checked = false;
-                    showNotification("ТОПОЛОГИЧЕСКИЙ РАДАР");
-                } else if (r.checked && !f.checked) {
-                    r.checked = true; f.checked = true;
-                    showNotification("РЕЖИМ ВОРОНКИ (СЕТКА) ВКЛ");
-                } else {
-                    r.checked = false; f.checked = false;
-                    showNotification("РАДАР ОТКЛЮЧЕН");
-                }
-                updateLogic();
+            let chk = document.getElementById('radarCheck');
+            if (chk) {
+                chk.checked = !chk.checked;
+                if (chk.checked) this.classList.add('active'); else this.classList.remove('active');
             }
-        });
-
-        safeBind('floatingFrameBtn', 'click', function() {
-            let f = document.getElementById('frameCheck');
-            if (f) {
-                f.checked = !f.checked;
-                this.classList.toggle('active', f.checked);
-                updateLogic();
-            }
+            render();
         });
 
         safeBind('lcsToggleBtn', 'click', function() {
@@ -4723,7 +4364,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         safeBind('redFirstOneCheck', 'change', function() { updateLogic(); });
         safeBind('tracerColor', 'input', function() { render(); });
         safeBind('sequentialSearchCheck', 'change', function() { updatePatternBackdrop(); updateLogic(); });
-        safeBind('symModeSelect', 'change', function() { render(); });
+        safeBind('symModeSelect', 'change', function() { render(); });;
         
         safeBind('loopStart', 'input', function() { enforceLoop(); updateLogic(); });
         safeBind('loopEnd', 'input', function() { enforceLoop(); updateLogic(); });
@@ -4798,7 +4439,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             }
         });
 
-        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'gridColorInput', 'gridAlpha', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'ignoreFirstPatternCharCheck', 'ignoreLastPatternCharCheck', 'inactivePatternColorInput', 'radarRotateSnapInput', 'interleavingCheck', 'boldCheck', 'radarCheck', 'funnelCheck', 'mirrorCheck', 'balanceCheck', 'cascadeOnBalanceCheck', 'pauseOnBalanceCheck', 'keepPhaseOnCascadeCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'cwSlider', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck', 'verticalSearchCheck', 'waveAnalysisCheck', 'hideBlinkingCheck', 'waveHistoryInput', 'frameTypeSelect', 'frameScannerActiveCheck', 'scannerAutoInvertCheck', 'scannerHalfInvertCheck'].forEach(id => {
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'gridColorInput', 'gridAlpha', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'ignoreFirstPatternCharCheck', 'ignoreLastPatternCharCheck', 'inactivePatternColorInput', 'radarRotateSnapInput', 'interleavingCheck', 'boldCheck', 'radarCheck', 'funnelCheck', 'mirrorCheck', 'balanceCheck', 'cascadeOnBalanceCheck', 'pauseOnBalanceCheck', 'keepPhaseOnCascadeCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'cwSlider', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck', 'verticalSearchCheck', 'waveAnalysisCheck', 'hideBlinkingCheck', 'waveHistoryInput', 'frameTypeSelect', 'frameScannerActiveCheck', 'scannerAutoInvertCheck'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('input', () => { render(); });
@@ -4869,7 +4510,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 if (useRadar && STATE.hoveredRingIndex !== -1) {
                     STATE.isDraggingRing = true;
                     STATE.draggedRingIndex = STATE.hoveredRingIndex;
-                    STATE.lastCellsShifted = 0;
                     
                     let rect = canvas.getBoundingClientRect();
                     let lx = mx - rect.left;
@@ -5004,22 +4644,8 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                         let S = parseInt(safeValue('radarRotateSnapInput', 1)) || 1;
                         cellsShifted = Math.round(cellsShifted / S) * S;
                         
-                        let delta = cellsShifted - (STATE.lastCellsShifted || 0);
-                        STATE.lastCellsShifted = cellsShifted;
-
-                        if (delta !== 0) {
-                            if (STATE.selectedRings.has(STATE.draggedRingIndex)) {
-                                STATE.selectedRings.forEach(idx => {
-                                    let actIdx = (m.startIndex + idx) % STATE.lines.length;
-                                    STATE.lines[actIdx].localStep += delta;
-                                    STATE.lines[actIdx].isManuallyShifted = true;
-                                });
-                            } else {
-                                STATE.lines[actualIdx].localStep += delta;
-                                STATE.lines[actualIdx].isManuallyShifted = true;
-                            }
-                            updateLogic();
-                        }
+                        line.localStep = STATE.dragStartLocalStep + cellsShifted;
+                        updateLogic();
                     }
                 } else if (STATE.isDraggingPan) {
                     STATE.offsetX = mx - STATE.dragStartX;
@@ -5077,22 +4703,13 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                         let clickX = e.clientX - rect.left;
                         let centerX = canvas.width / 2 + STATE.offsetX + STATE.autoOffsetX;
                         
+                        let actualIdx = (m.startIndex + ringIdx) % STATE.lines.length;
+                        let line = STATE.lines[actualIdx];
                         let S = parseInt(safeValue('radarRotateSnapInput', 1)) || 1;
+                        
                         let shiftDir = (clickX >= centerX) ? S : -S;
-
-                        if (STATE.selectedRings.has(ringIdx)) {
-                            STATE.selectedRings.forEach(idx => {
-                                let actIdx = (m.startIndex + idx) % STATE.lines.length;
-                                STATE.lines[actIdx].localStep += shiftDir;
-                                STATE.lines[actIdx].isManuallyShifted = true;
-                            });
-                            showNotification(`ВЫДЕЛЕННЫЕ КОЛЬЦА СДВИГ: ${shiftDir > 0 ? '+' : ''}${shiftDir}`);
-                        } else {
-                            let actualIdx = (m.startIndex + ringIdx) % STATE.lines.length;
-                            STATE.lines[actualIdx].localStep += shiftDir;
-                            STATE.lines[actualIdx].isManuallyShifted = true;
-                            showNotification(`КОЛЬЦО ${ringIdx + 1} СДВИГ: ${shiftDir > 0 ? '+' : ''}${shiftDir}`);
-                        }
+                        line.localStep += shiftDir;
+                        showNotification(`КОЛЬЦО ${ringIdx + 1} СДВИГ: ${shiftDir > 0 ? '+' : ''}${shiftDir}`);
                         updateLogic();
                     }
                     render();
@@ -5216,8 +4833,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 showNotification(document.body.classList.contains('zen-mode') ? "РЕЖИМ ДЗЕН" : "СТАНДАРТНЫЙ РЕЖИМ");
             }
             if (document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT') return;
-            let S = parseInt(safeValue('scrollStepInput', 1)) || 1;
-            let turbo = (parseInt(safeValue('turboSlider', 1)) || 1) * S;
+            let turbo = parseInt(safeValue('turboSlider', 1)) || 1;
             
             if (e.code === 'Escape') {
                 if (STATE.selectedRings.size > 0) {
@@ -5232,23 +4848,15 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             if (e.code === 'ArrowRight') { 
                 e.preventDefault(); 
                 processPendingCascade();
-                if (STATE.playerMode === "scroll") {
-                    if (STATE.lines.length > 0) STATE.rowScrollOffset = mod(STATE.rowScrollOffset - turbo, STATE.lines.length);
-                } else {
-                    STATE.globalStep += turbo; 
-                    STATE.lines.forEach(l => { if (l.isActive) l.localStep += turbo; });
-                }
+                STATE.globalStep += turbo; 
+                STATE.lines.forEach(l => { if (l.isActive) l.localStep += turbo; });
                 enforceLoop(); updateLogic(); 
             }
             if (e.code === 'ArrowLeft') { 
                 e.preventDefault(); 
                 processPendingCascade();
-                if (STATE.playerMode === "scroll") {
-                    if (STATE.lines.length > 0) STATE.rowScrollOffset = mod(STATE.rowScrollOffset + turbo, STATE.lines.length);
-                } else {
-                    STATE.globalStep -= turbo; 
-                    STATE.lines.forEach(l => { if (l.isActive) l.localStep -= turbo; });
-                }
+                STATE.globalStep -= turbo; 
+                STATE.lines.forEach(l => { if (l.isActive) l.localStep -= turbo; });
                 enforceLoop(); updateLogic(); 
             }
             if (e.code === 'ArrowDown') {
@@ -5305,8 +4913,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             safeBind('instantScanBtn', 'click', () => {
                 if (!STATE.balanceHighlightedRows) STATE.balanceHighlightedRows = new Set();
                 STATE.balanceHighlightedRows.clear();
-                if (!STATE.scannerFoundBalances) STATE.scannerFoundBalances = [];
-                STATE.scannerFoundBalances = [];
                 
                 let maxSpan = parseInt(safeValue('instantScanMaxSpan', 4)) || 4;
                 let foundLogs = [];
@@ -5332,14 +4938,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                             let endRow = (start + span - 1) % totalRows;
                             let rangeStr = (span > 1) ? `Стр ${start + 1}-${endRow + 1}` : `Стр ${start + 1}`;
                             foundLogs.push(`<span style="color:#00ffff;">[${span} стр]</span> ${rangeStr}: <b style="color:#fff;">${total0} = ${total1}</b>`);
-                            
-                            STATE.scannerFoundBalances.push({
-                                start: start,
-                                span: span,
-                                total0: total0,
-                                total1: total1
-                            });
-
                             for(let k = 0; k < span; k++) STATE.balanceHighlightedRows.add((start + k) % totalRows);
                         }
                     }
@@ -5359,7 +4957,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 
             safeBind('clearScanBtn', 'click', () => {
                 if (STATE.balanceHighlightedRows) STATE.balanceHighlightedRows.clear();
-                if (STATE.scannerFoundBalances) STATE.scannerFoundBalances = [];
                 render();
                 showNotification("ПОДСВЕТКА СБРОШЕНА");
             });
@@ -5416,21 +5013,20 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                         el.dispatchEvent(new Event('change'));
                     }
                 };
-            setChk('autoCascadeCheck', true);
-            setChk('cascadeOnBalanceCheck', false);
-            setChk('pauseOnBalanceCheck', true);
-            setChk('keepPhaseOnCascadeCheck', false);
-            setChk('activateOnPatternCheck', true);
-            setChk('ignoreFirstPatternCharCheck', true);
-            setChk('ignoreLastPatternCharCheck', false);
-            setChk('sequentialSearchCheck', true);
-            setChk('globalSearchCheck', false);
-            setChk('verticalSearchCheck', false);
-            setChk('highlightCheck', true);
-            setChk('interleavingCheck', false);
-            setChk('filterCheck', false);
-            setChk('stableConglomCheck', false);
-            updateLogic();
+                setChk('autoCascadeCheck', true);
+                setChk('cascadeOnBalanceCheck', false);
+                setChk('pauseOnBalanceCheck', true);
+                setChk('keepPhaseOnCascadeCheck', false);
+                setChk('activateOnPatternCheck', true);
+                setChk('ignoreFirstPatternCharCheck', true);
+                setChk('ignoreLastPatternCharCheck', false);
+                setChk('sequentialSearchCheck', true);
+                setChk('globalSearchCheck', false);
+                setChk('verticalSearchCheck', false);
+                setChk('highlightCheck', true);
+                setChk('interleavingCheck', false);
+                setChk('filterCheck', false);
+                updateLogic();
                 showNotification("НАСТРОЙКИ ТЕРМИНАЛА СБРОШЕНЫ");
             });
 
@@ -5463,29 +5059,45 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             const sierpRuleEl = document.getElementById('sierpRule');
             if (sierpRuleEl) sierpRuleEl.dispatchEvent(new Event('change'));
 
-            let b1 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base1 : ``;
-            let p1 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.pat1  : ``;
-            let b2 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base2 : ``;
-            let p2 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.pat2  : ``;
-            let b3 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base3 : ``;
-            let p3 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.pat3  : ``;
+            const revBtn = document.getElementById('reverseBtn');
+            if (revBtn) {
+                const parentGroup = revBtn.closest('.player-group');
+                if (parentGroup) {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'row-between';
+                    rowDiv.style.marginBottom = '4px';
+                    rowDiv.innerHTML = `<button id="playerModeBtn" class="btn-action" style="margin:0; width: 100%; color:#00ccff; border-color:#00ccff;">🎬 Функция: Симуляция (XOR)</button>`;
+                    parentGroup.insertBefore(rowDiv, parentGroup.firstElementChild);
+                    
+                    safeBind('playerModeBtn', 'click', function() {
+                        if (STATE.playerMode === "simulate") {
+                            STATE.playerMode = "scroll";
+                            this.textContent = "🎬 Функция: Скроллинг (Строки)";
+                            this.style.color = "#ffcc00";
+                            this.style.borderColor = "#ffcc00";
+                            showNotification("РЕЖИМ: СКРОЛЛИНГ СТРОК");
+                        } else {
+                            STATE.playerMode = "simulate";
+                            this.textContent = "🎬 Функция: Симуляция (XOR)";
+                            this.style.color = "#00ccff";
+                            this.style.borderColor = "#00ccff";
+                            showNotification("РЕЖИМ: СИМУЛЯЦИЯ ШАГОВ");
+                        }
+                        render();
+                    });
+                }
+            }
+
+            let b1 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base1 : `1\n11\n111`;
+            let p1 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.pat1  : `1\n11\n111`;
+            let b2 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base2 : `\\\n\\\\`;
+            let p2 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.pat2  : `\\\n\\\\`;
+            let b3 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base3 : `<\n<<`;
+            let p3 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.pat3  : `<\n<<`;
 
             STATE.banks[0] = { lines: b1.trim(), patterns: p1.trim() };
             STATE.banks[1] = { lines: b2.trim(), patterns: p2.trim() };
             STATE.banks[2] = { lines: b3.trim(), patterns: p3.trim() };
-
-            // Синхронизация активных состояний плавающих круглых кнопок с чекбоксами при загрузке
-            let fBtn = document.getElementById('floatingFrameBtn');
-            if (fBtn) fBtn.classList.toggle('active', safeChecked('frameCheck', false));
-            let rBtn = document.getElementById('floatingRadarBtn');
-            if (rBtn) rBtn.classList.toggle('active', safeChecked('radarCheck', false));
-
-            let speedSl = document.getElementById('speedSlider');
-            let speedVal = document.getElementById('speedVal');
-            if (speedSl && speedVal) {
-                speedVal.textContent = speedSl.value;
-                speedSl.addEventListener('input', () => { speedVal.textContent = speedSl.value; });
-            }
 
             let my_linesInp = document.getElementById('linesInput');
             let my_patInp = document.getElementById('patternInput');
@@ -5507,45 +5119,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 }
             } catch(e) {}
             
-            let startText = STATE.banks[0].lines || "";
-            if (startText.trim().length === 0) {
-                let sierpSeed = document.getElementById('sierpSeed');
-                let sierpRows = document.getElementById('sierpRows');
-                let sierpRule = document.getElementById('sierpRule');
-                if (sierpSeed) sierpSeed.value = "1";
-                if (sierpRows) sierpRows.value = "128";
-                if (sierpRule) sierpRule.value = "shift";
-                let genBtn = document.getElementById('sierpBtn');
-                if (genBtn) genBtn.click();
-            } else {
-                loadText(startText);
-            }
-            
-			// Авто-перезагрузка страницы при патчинге (Stand-alone Hot Reload с анти-фриз защитой)
-			setInterval(() => {
-				let now = Date.now();
-				let idleTime = now - (STATE.lastActiveTime || 0);
-				if (idleTime >= 1500) {
-					fetch(window.location.href, { cache: 'no-store' })
-						.then(res => res.text())
-						.then(text => {
-							let match = text.match(/<div id="mainTitle">Zerkalius: Genesis \((v\d+\.\d+\s+Golden Master)\)<\/div>/);
-							if (match) {
-								let newVersion = match[1];
-								// Динамически получаем текущую версию из заголовка на странице:
-								let currentTitle = document.getElementById('mainTitle').innerText;
-								let currentVersionMatch = currentTitle.match(/\((v\d+\.\d+\s+Golden Master)\)/);
-								let currentVersion = currentVersionMatch ? currentVersionMatch[1] : "unknown";
-								
-								if (newVersion !== currentVersion) {
-									showNotification("ПАТЧ ОБНАРУЖЕН! ПЕРЕЗАГРУЗКА...");
-									setTimeout(() => { window.location.reload(); }, 300);
-								}
-							}
-						})
-						.catch(() => {});
-				}
-			}, 1500);
+            loadText(STATE.banks[0].lines);
             
             resizeCanvas();
             render();
@@ -5553,4 +5127,4 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
     </script>
 </body>
 </html>
-<!-- === МАРКЕР: ИВЕНТЫ И УПРАВЛЕНИЕ КОНЕЦ === -->
+    <!-- === МАРКЕР: ИВЕНТЫ И УПРАВЛЕНИЕ КОНЕЦ === -->
