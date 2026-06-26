@@ -407,15 +407,20 @@ def apply_patch():
                 if count > 1:
                     post_warnings.append(f"Дубликат маркера ({count} шт.): {m_name}")
             
-            # Проверка 2: артефакты от ИИ, влезшие в итоговый файл
-            if ("REPLACE" + "_BLOCK:") in html_content:
-                post_warnings.append("Артефакт ИИ: найдено слово 'REPLACE_BLOCK:' в итоговом файле!")
-            if ("END" + "_BLOCK:") in html_content:
-                post_warnings.append("Артефакт ИИ: найдено слово 'END_BLOCK:' в итоговом файле!")
+                # Проверка 2: артефакты от ИИ, влезшие в итоговый файл
+                if ("REPLACE" + "_BLOCK:") in html_content:
+                    post_warnings.append("Артефакт ИИ: найдено слово '" + "REPLACE" + "_BLOCK:' в итоговом файле!")
+                if ("END" + "_BLOCK:") in html_content:
+                    post_warnings.append("Артефакт ИИ: найдено слово '" + "END" + "_BLOCK:' в итоговом файле!")
 
             # Запись файла в любом случае
             with open(target_file, 'w', encoding='utf-8') as f: f.write(html_content)
-            print(f"\n🚀 Применено {success_count} патчей.")
+            
+            total_expected = len(block_matches) + len(matches)
+            if success_count == total_expected:
+                print(f"\n🔥 СУПЕР! Применено {success_count} патчей из {total_expected} — ВСЕ ПАТЧИ ВНЕДРЕНЫ!!!!!! 🏁🏁")
+            else:
+                print(f"\n⚠️ ВНИМАНИЕ: Применено только {success_count} из {total_expected} патчей! (Часть шагов пропущена)")
 
             # Обработка результатов пост-проверки
             if post_warnings:
