@@ -51,8 +51,9 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             position: absolute; left: 330px; bottom: 10px; width: 250px; z-index: 100;
             background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(0, 255, 102, 0.3); border-radius: 5px; box-sizing: border-box; padding: 4px;
-            transition: left 0.3s ease, transform 0.3s ease, opacity 0.3s ease, width 0.2s ease, height 0.2s ease;
+            transition: left 0.3s ease, right 0.3s ease, top 0.3s ease, bottom 0.3s ease, width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
             box-shadow: 0 0 15px rgba(0, 255, 102, 0.15);
+            min-width: 220px; min-height: 100px;
         }
 
         .patterns-log-container::-webkit-resizer, #diagTerminal::-webkit-resizer {
@@ -62,11 +63,51 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             background: transparent; border-bottom: 2px solid #ffd500; border-right: 2px solid #ffd500;
         }
 
-        .player-panel.minimized, .patterns-log-container.minimized, #diagTerminal.minimized, #frameControlPanel.minimized {
-            width: 34px !important; min-width: 34px !important; overflow: hidden !important; resize: none !important;
+        .player-panel.minimized {
+            left: 5px !important;
+            width: 34px !important;
+            min-width: 34px !important;
+            overflow: hidden !important;
+            resize: none !important;
         }
-        #frameControlPanel.minimized { height: 380px !important; }
-        .player-panel.minimized .panel-content, .patterns-log-container.minimized .panel-content, #diagTerminal.minimized .panel-content, #frameControlPanel.minimized .panel-content {
+
+        .patterns-log-container.minimized {
+            left: auto !important;
+            right: 5px !important;
+            width: 34px !important;
+            min-width: 34px !important;
+            overflow: hidden !important;
+            resize: none !important;
+        }
+
+        #frameControlPanel.minimized {
+            left: auto !important;
+            right: 44px !important; /* Умное смещение влево на ширину вкладки */
+            width: 34px !important;
+            min-width: 34px !important;
+            overflow: hidden !important;
+            resize: none !important;
+        }
+
+        #interleavePanel.minimized {
+            left: auto !important;
+            right: 83px !important; /* Умное смещение влево на две вкладки */
+            width: 34px !important;
+            min-width: 34px !important;
+            overflow: hidden !important;
+            resize: none !important;
+        }
+
+        #diagTerminal.minimized {
+            left: auto !important;
+            right: 5px !important; /* Нижний правый угол свободен */
+            width: 34px !important;
+            min-width: 34px !important;
+            overflow: hidden !important;
+            resize: none !important;
+        }
+
+        .player-panel.minimized .panel-content, .patterns-log-container.minimized .panel-content, #diagTerminal.minimized .panel-content, #frameControlPanel.minimized .panel-content, #interleavePanel.minimized .panel-content {
             display: none !important;
         }
         
@@ -154,24 +195,47 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         .patterns-log-container {
             position: absolute; top: 5px; right: 5px; z-index: 90; background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(0, 204, 255, 0.3); border-radius: 4px; padding: 5px; width: 300px; max-height: calc(100vh - 10px);
-            overflow: auto; display: flex; flex-direction: column; gap: 5px; box-shadow: 0 0 20px rgba(0, 204, 255, 0.15); transition: transform 0.2s ease, opacity 0.2s ease, width 0.2s ease, height 0.2s ease; resize: both;
+            overflow: hidden; display: flex; flex-direction: column; gap: 5px; box-shadow: 0 0 20px rgba(0, 204, 255, 0.15); 
+            transition: left 0.3s ease, right 0.3s ease, top 0.3s ease, bottom 0.3s ease, width 0.3s ease, height 0.3s ease, opacity 0.3s ease; 
+            resize: both;
+            min-width: 250px; min-height: 150px;
         }
 
         #diagTerminal {
             position: absolute; bottom: 5px; right: 5px; z-index: 80; background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 255, 102, 0.3); border-radius: 4px; cursor: default; transition: opacity 0.3s ease, width 0.2s ease, height 0.2s ease;
-            box-shadow: 0 0 15px rgba(0, 255, 102, 0.15); overflow: auto; width: 300px; height: 140px; box-sizing: border-box; resize: both;
+            border: 1px solid rgba(0, 255, 102, 0.3); border-radius: 4px; cursor: default; 
+            transition: left 0.3s ease, right 0.3s ease, top 0.3s ease, bottom 0.3s ease, width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.15); overflow: hidden; width: 300px; height: 140px; box-sizing: border-box; resize: both;
+            min-width: 180px; min-height: 80px;
         }
         #diagTerminal:hover { background: rgba(20, 20, 20, 0.9); }
 
         #frameControlPanel {
             position: absolute; top: 5px; right: 315px; z-index: 85; background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 213, 0, 0.3); border-radius: 4px; cursor: default; transition: opacity 0.3s ease, width 0.2s ease, height 0.2s ease;
-            box-shadow: 0 0 15px rgba(255, 213, 0, 0.15); width: 270px; height: 380px; box-sizing: border-box; resize: both; overflow: auto;
+            border: 1px solid rgba(255, 213, 0, 0.3); border-radius: 4px; cursor: default; 
+            transition: left 0.3s ease, right 0.3s ease, top 0.3s ease, bottom 0.3s ease, width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
+            box-shadow: 0 0 15px rgba(255, 213, 0, 0.15); width: 270px; height: 380px; box-sizing: border-box; resize: both; overflow: hidden;
+            min-width: 240px; min-height: 200px;
         }
         #frameControlPanel:hover { background: rgba(20, 20, 20, 0.9); }
         #frameControlPanel details.control-group { background: rgba(20, 20, 20, 0.4); border-bottom: 1px solid rgba(255, 213, 0, 0.1); padding: 4px 6px; }
         #frameControlPanel details.control-group summary { color: #ffd500; font-weight: bold; font-size: 10px; }
+
+        #interleavePanel {
+            position: absolute; top: 5px; left: 630px; z-index: 95; background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(204, 51, 255, 0.3); border-radius: 4px; padding: 5px; width: 300px; height: 350px;
+            overflow: hidden; display: flex; flex-direction: row; align-items: stretch; box-shadow: 0 0 20px rgba(204, 51, 255, 0.15); 
+            transition: left 0.3s ease, right 0.3s ease, top 0.3s ease, bottom 0.3s ease, width 0.3s ease, height 0.3s ease, opacity 0.3s ease; 
+            resize: both;
+            min-width: 240px; min-height: 200px;
+        }
+        #interleavePanel:hover { background: rgba(20, 20, 20, 0.9); }
+        #interleavePanel details.control-group { background: rgba(20, 20, 20, 0.4); border-bottom: 1px solid rgba(204, 51, 255, 0.1); padding: 4px 6px; }
+        #interleavePanel details.control-group summary { color: #cc33ff; font-weight: bold; font-size: 10px; }
+        #interleavePanel::-webkit-resizer { background: transparent; border-bottom: 2px solid #cc33ff; border-right: 2px solid #cc33ff; }
+        #interleavePanel.minimized { width: 34px !important; min-width: 34px !important; overflow: hidden !important; resize: none !important; }
+        #interleavePanel.minimized .panel-content { display: none !important; }
+        body.zen-mode #interleavePanel { opacity: 0; pointer-events: none; }
         
         #balanceLog::-webkit-scrollbar { width: 6px; }
         #balanceLog::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
@@ -189,13 +253,14 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         .controls.minimized ~ #screenContainer .floating-toolbar { left: 44px; }
         .controls.minimized ~ .player-panel { left: 44px; }
         .dragging { transition: none !important; }
+        #turboSlider { accent-color: #ff3333; }
     </style>
 <!-- === МАРКЕР: CSS СТИЛИ КОНЕЦ === -->
 </head>
 <body>
 
     <input type="checkbox" id="radarCheck" style="display:none;">
-    <div id="mainTitle">Zerkalius: Genesis (v0.118 Golden Master)</div>
+    <div id="mainTitle">Zerkalius: Genesis (v0.141 Golden Master)</div>
     <script src="banks_data.js"></script>
     <script>
         window.onerror = function(message, source, lineno, colno, error) {
@@ -313,6 +378,9 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             <div class="color-row">
                 <span class="lbl" style="width:40px;">Фон:</span> <input type="color" id="bgColor" value="#050505">
             </div>
+            <label style="display:flex; align-items:center; margin-top:4px;">
+                <input type="checkbox" id="showRowNumbersCheck" checked> <span class="lbl">Показывать номера строк</span>
+            </label>
         </details>
 
         <details class="control-group" open>
@@ -549,7 +617,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 </div>
                 <div style="display:flex; align-items:center; gap:3px;">
                     <button id="turboDecBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-weight:bold; color:#ff9900; border-color:#ff9900;">◀</button>
-                    <input type="range" id="turboSlider" min="1" max="1111" value="1" style="margin:0; height:12px; flex:1; accent-color:#ff3333;">
+                    <input type="range" id="turboSlider" min="1" max="1111" value="1" style="margin:0; height:12px; flex:1;">
                     <button id="turboIncBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-weight:bold; color:#ff9900; border-color:#ff9900;">▶</button>
                 </div>
             </div>
@@ -568,7 +636,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 </div>
                 
                 <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 5px;">
-                    <button id="lcsToggleBtn" class="float-circle-btn" style="width: 22px; height: 22px; font-size: 11px; margin: 0; min-width: 22px; box-shadow: none;" title="Интерливинг: Искать наибольшее совпадение с нижней строкой">🧬</button>
                     <span class="lbl">Кадр: <span class="val" id="stepVal">0 / 0</span></span>
                 </div>
             </div>
@@ -640,9 +707,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 <input type="color" id="inactivePatternColorInput" value="#ffff00" style="width:15px; height:15px; padding:0; border:none; cursor:pointer; margin-left: 4px;" title="Цвет потенциальных (неактивных) паттернов">
             </div>
 
-            <label style="display:flex; align-items:center; margin-bottom: 2px;">
-                <input type="checkbox" id="interleavingCheck"> <span class="lbl" style="color:#00ff88;">Органический интерливинг</span>
-            </label>
             <label style="display:flex; align-items:flex-start; margin-bottom:4px;">
                 <input type="checkbox" id="filterCheck"> <span class="lbl" style="color:#00ff66;">Скрывать замороженные строки</span>
             </label>
@@ -652,12 +716,40 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 <textarea class="pattern-input" id="patternInput" placeholder="Паттерны (Двойной клик = Вставка)"></textarea>
             </div>
             
-            <div id="interleavingLogDetails" style="display:none;"></div>
             <div id="patternLogDetails" style="margin-top:4px; font-size:10px; font-family:monospace; color:#aaa; overflow-y:auto; max-height:150px; background:rgba(0,0,0,0.5); border-radius:3px; display:none;"></div>
         </div></div>
 <!-- === МАРКЕР: ТЕРМИНАЛ АКТИВАЦИИ КОНЕЦ === -->
 
         <!-- === МАРКЕР: ДИАГНОСТИКА И РАМКА НАЧАЛО === -->
+        <div id="interleavePanel" onclick="event.stopPropagation();" style="display:flex; flex-direction:row; align-items:stretch;">
+            <div class="interleave-panel-title vertical-title" style="writing-mode:vertical-lr; text-orientation:mixed; transform:rotate(180deg); display:flex; align-items:center; justify-content:center; background:#111; color:#cc33ff; font-size:10px; font-weight:bold; padding:8px 4px; cursor:move; user-select:none; border-right:1px solid #333; box-sizing:border-box; min-width:24px; text-align:center;" ondblclick="this.parentNode.classList.toggle('minimized'); event.stopPropagation();" title="Двойной клик: Свернуть/Развернуть">🧬 СИНТЕЗ ДНК И LCS</div>
+            <div class="panel-content" style="flex:1; padding-left:8px; display:flex; flex-direction:column; overflow:auto; gap:3px;">
+                <details class="control-group" open style="border-radius:3px;">
+                    <summary style="font-weight:bold; color:#cc33ff;">🧬 НАСТРОЙКИ СВЯЗИ</summary>
+                    <label style="display:flex; align-items:center; margin-top:4px; margin-bottom:2px;">
+                        <input type="checkbox" id="interleaveAnalysisCheck" checked> <span class="lbl" style="color:#ff3333; font-weight:bold;">🧬 Анализ пересечений (LCS)</span>
+                    </label>
+                    <label style="display:flex; align-items:center; margin-bottom:4px;">
+                        <input type="checkbox" id="interleavingCheck"> <span class="lbl" style="color:#00ff88; font-weight:bold;">Использовать как триггер Каскада</span>
+                    </label>
+                    <button id="forceInterleaveBtn" class="btn-action" style="background:rgba(204,51,255,0.15); color:#cc33ff; border-color:#cc33ff; margin-bottom:4px; font-size:9px;">🧬 Синтезировать сплетение (Записать вниз)</button>
+                    <label style="display:flex; align-items:center; margin-bottom:2px; margin-top:2px;">
+                        <input type="checkbox" id="ignoreFirstInterleaveCharCheck"> <span class="lbl" style="color:#ffcc00; font-size:10px;">Пропуск 1-го символа при сплетении</span>
+                    </label>
+                    <label style="display:flex; align-items:center; margin-bottom:4px;">
+                        <input type="checkbox" id="ignoreFirstTargetCharCheck"> <span class="lbl" style="color:#ffcc00; font-size:10px;">Пропуск 1-го символа кандидата</span>
+                    </label>
+                </details>
+                
+                <details class="control-group" open style="border-radius:3px; flex:1; display:flex; flex-direction:column; min-height:120px; overflow:hidden;">
+                    <summary style="font-weight:bold; color:#cc33ff;">🧬 ЛОГ ИНТЕРЛИВИНГА</summary>
+                    <div id="interleavingLogDetails" style="display:block; overflow-y:auto; flex:1; font-family:monospace; font-size:9px; color:#aaa; margin-top:4px;">
+                        Ожидание активации строки...
+                    </div>
+                </details>
+            </div>
+        </div>
+
         <div id="diagTerminal" onclick="event.stopPropagation();" style="display:flex; flex-direction:row; align-items:stretch;">
             <div class="diag-terminal-title vertical-title" style="writing-mode:vertical-lr; text-orientation:mixed; transform:rotate(180deg); display:flex; align-items:center; justify-content:center; background:#111; color:#00ff66; font-size:10px; font-weight:bold; padding:8px 4px; cursor:move; user-select:none; border-right:1px solid #333; box-sizing:border-box; min-width:24px; text-align:center;" ondblclick="this.parentNode.classList.toggle('minimized'); event.stopPropagation();">📡 ДИАГНОСТИКА</div>
             <div class="panel-content" style="flex:1; padding-left:8px; display:flex; flex-direction:column; overflow:auto;">
@@ -1267,6 +1359,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             
             setElChk('oscXCheck', snapshot.oscXCheck);
             setElChk('oscYCheck', snapshot.oscYCheck);
+            setElChk('showRowNumbersCheck', snapshot.showRowNumbers !== undefined ? snapshot.showRowNumbers : true);
             setElChk('redFirstOneCheck', snapshot.redFirstOneCheck !== undefined ? snapshot.redFirstOneCheck : true);
             setElChk('sequentialSearchCheck', snapshot.sequentialSearch !== undefined ? snapshot.sequentialSearch : true);
             if (snapshot.symMode) setElVal('symModeSelect', snapshot.symMode);
@@ -1303,12 +1396,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 
             if (snapshot.sierpRule) setElVal('sierpRule', snapshot.sierpRule);
 
-            STATE.interleaveLCSToggle = snapshot.lcsToggle || false;
-            let lcsBtn = document.getElementById('lcsToggleBtn');
-            if (lcsBtn) {
-                if (STATE.interleaveLCSToggle) lcsBtn.classList.add('active');
-                else lcsBtn.classList.remove('active');
-            }
+            setElChk('interleaveAnalysisCheck', snapshot.interleaveAnalysis !== undefined ? snapshot.interleaveAnalysis : (snapshot.lcsToggle || false));
 
             if (snapshot.manualFrame) STATE.manualFrame = snapshot.manualFrame;
 
@@ -1708,6 +1796,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 }
                 
                 lData.orig = origChars.join('');
+                lData.template = lData.orig; // Сохраняем инверсию в постоянный шаблон, чтобы шаг 0 не сбрасывал изменения
                 lData.firstOneIdx = lData.orig.search(/[1\\)\]>+]/);
             }
             
@@ -2864,19 +2953,43 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             }
         }
 
-        if (triggerSearch && useInterleaving && vbaActivation && STATE.lines.length > 1) {
-            let lastActiveIdx = -1;
-            for (let i = 0; i < STATE.lines.length; i++) {
-                if (STATE.lines[i].isActive) {
-                    lastActiveIdx = i;
+        let useInterleavingCascade = safeChecked('interleavingCheck', false);
+        if (triggerSearch && useInterleavingCascade && STATE.lines.length > 1) {
+            let targetIndices = [];
+            let useFrame = safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized;
+            let m = getGridMetrics();
+
+            if (useFrame && m) {
+                let totalRows = STATE.lines.length;
+                for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
+                    let idx = (m.startIndex + STATE.manualFrame.rowStart + k) % totalRows;
+                    targetIndices.push(idx);
+                }
+            } else {
+                for (let i = 0; i < STATE.lines.length; i++) {
+                    if (STATE.lines[i].isActive) targetIndices.push(i);
                 }
             }
 
-            if (lastActiveIdx >= 0) {
-                let nextIdx = lastActiveIdx + 1;
+            if (targetIndices.length >= 1) {
+                let lastActiveIdx = targetIndices[targetIndices.length - 1];
+                let nextIdx = useFrame && m ? (m.startIndex + STATE.manualFrame.rowStart + STATE.manualFrame.rowSpan) % STATE.lines.length : lastActiveIdx + 1;
+                
                 if (nextIdx < STATE.lines.length) {
-                    let strAbove = lastActiveIdx > 0 ? getCleanLine(STATE.lines[lastActiveIdx - 1]) : "";
                     let strCurrent = getCleanLine(STATE.lines[lastActiveIdx]);
+                    let strAbove = "";
+                    if (targetIndices.length > 1) {
+                        let penActiveIdx = targetIndices[targetIndices.length - 2];
+                        strAbove = getCleanLine(STATE.lines[penActiveIdx]);
+                    } else {
+                        strAbove = strCurrent;
+                    }
+
+                    let skipFirstInter = safeChecked('ignoreFirstInterleaveCharCheck', false);
+                    if (skipFirstInter) {
+                        if (strAbove.length > 0) strAbove = strAbove.substring(1);
+                        if (strCurrent.length > 0) strCurrent = strCurrent.substring(1);
+                    }
 
                     let interleaved = "";
                     let maxL = Math.max(strAbove.length, strCurrent.length);
@@ -2903,7 +3016,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                                 }
                                 STATE.foundPatterns.add(nextPatternOrig);
                                 newlyFound = true;
-                                STATE.lastFindMethod = `Интерливинг (Строки ${STATE.lines[lastActiveIdx - 1].origIndex + 1} & ${STATE.lines[lastActiveIdx].origIndex + 1})`;
+                                STATE.lastFindMethod = `Интерливинг (Строки ${targetIndices.length > 1 ? STATE.lines[targetIndices[targetIndices.length - 2]].origIndex + 1 : 'Дубль'} & ${STATE.lines[lastActiveIdx].origIndex + 1})`;
                                 
                                 if (isSequential && STATE.currentTargetPatternIdx <= nextIdx) {
                                     STATE.currentTargetPatternIdx = nextIdx + 1;
@@ -2912,7 +3025,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 
                             STATE.foundPatternsMetadata.set(nextPatternOrig, {
                                 type: 'interleaving',
-                                source1: STATE.lines[lastActiveIdx - 1].origIndex + 1, 
+                                source1: targetIndices.length > 1 ? STATE.lines[targetIndices[targetIndices.length - 2]].origIndex + 1 : 'Дубль', 
                                 source2: STATE.lines[lastActiveIdx].origIndex + 1, 
                                 target: STATE.lines[nextIdx].origIndex + 1,
                                 step: Math.abs(STATE.globalStep)
@@ -3099,77 +3212,183 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         }
 
 
-        STATE.lines.forEach(l => l.lcsRedMask = []);
+        STATE.lines.forEach(l => { l.lcsRedMask = []; l.lcsPurpleMask = []; });
 
-        if (STATE.interleaveLCSToggle) {
-            let lastActiveIdx = -1;
-            for (let i = 0; i < STATE.lines.length; i++) {
-                if (STATE.lines[i].isActive) lastActiveIdx = i;
+        if (safeChecked('interleaveAnalysisCheck', true)) {
+            let targetIndices = [];
+            let useFrame = safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized;
+            let m = getGridMetrics();
+
+            if (useFrame && m) {
+                let totalRows = STATE.lines.length;
+                for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
+                    let idx = (m.startIndex + STATE.manualFrame.rowStart + k) % totalRows;
+                    targetIndices.push(idx);
+                }
+            } else {
+                for (let i = 0; i < STATE.lines.length; i++) {
+                    if (STATE.lines[i].isActive) targetIndices.push(i);
+                }
             }
 
-            if (lastActiveIdx > 0 && lastActiveIdx < STATE.lines.length - 1) {
-                let strAbove = getCleanLine(STATE.lines[lastActiveIdx - 1]);
-                let strCurrent = getCleanLine(STATE.lines[lastActiveIdx]);
+            let logDiv = document.getElementById('interleavingLogDetails');
+            if (logDiv) {
+                logDiv.style.display = 'block';
+                let htmlContent = "";
 
-                let interleaved = "";
-                let maxL = Math.max(strAbove.length, strCurrent.length);
-                for (let j = 0; j < maxL; j++) {
-                    if (j < strAbove.length) interleaved += strAbove[j];
-                    if (j < strCurrent.length) interleaved += strCurrent[j];
-                }
+                if (targetIndices.length >= 1) {
+                    let lastActiveIdx = targetIndices[targetIndices.length - 1];
+                    let strCurrent = getCleanLine(STATE.lines[lastActiveIdx]);
+                    
+                    let strAbove = "";
+                    let labelAbove = "";
+                    if (targetIndices.length > 1) {
+                        let penActiveIdx = targetIndices[targetIndices.length - 2];
+                        strAbove = getCleanLine(STATE.lines[penActiveIdx]);
+                        labelAbove = `Стр ${STATE.lines[penActiveIdx].origIndex + 1}`;
+                    } else {
+                        // Только 1 строка в рамке/активна - дублируем ее саму на себя вверх!
+                        strAbove = strCurrent;
+                        labelAbove = `Стр ${STATE.lines[lastActiveIdx].origIndex + 1} (Дубль)`;
+                    }
 
-                let nextIdx = lastActiveIdx + 1;
-                let targetLine = STATE.lines[nextIdx];
-                let targetClean = getCleanLine(targetLine);
+                    let skipFirstInter = safeChecked('ignoreFirstInterleaveCharCheck', false);
+                    if (skipFirstInter) {
+                        if (strAbove.length > 0) strAbove = strAbove.substring(1);
+                        if (strCurrent.length > 0) strCurrent = strCurrent.substring(1);
+                    }
 
-                if (targetClean.length > 0 && interleaved.length > 0) {
-                    let longestMatch = "";
-                    let bestStartInNext = -1;
+                    let interleaved = "";
+                    let maxL = Math.max(strAbove.length, strCurrent.length);
+                    for (let j = 0; j < maxL; j++) {
+                        if (j < strAbove.length) interleaved += strAbove[j];
+                        if (j < strCurrent.length) interleaved += strCurrent[j];
+                    }
 
-                    for (let i = 0; i < interleaved.length; i++) {
-                        for (let j = i + longestMatch.length + 1; j <= interleaved.length; j++) {
-                            let sub = interleaved.substring(i, j);
-                            let pos = targetClean.indexOf(sub);
-                            if (pos !== -1) {
-                                longestMatch = sub;
-                                bestStartInNext = pos;
+                    // Кандидат под рамкой/под активной областью
+                    let nextIdx = useFrame && m ? (m.startIndex + STATE.manualFrame.rowStart + STATE.manualFrame.rowSpan) % STATE.lines.length : lastActiveIdx + 1;
+                    let hasNextLine = nextIdx < STATE.lines.length;
+                    let targetLabel = hasNextLine ? `Стр ${nextIdx + 1}` : "Нет";
+                    let lcsHtml = "<span style='color:#777;'>Нет совпадений</span>";
+                    let match1 = null;
+                    let match2 = null;
+
+                    if (!hasNextLine) {
+                        lcsHtml = "<span style='color:#777;'>Конец холста (нет следующей строки)</span>";
+                    } else if (interleaved.length > 0) {
+                        let targetLine = STATE.lines[nextIdx];
+                        let targetClean = getCleanLine(targetLine);
+
+                        let skipFirstTarget = safeChecked('ignoreFirstTargetCharCheck', false);
+                        let searchClean = targetClean;
+                        let targetOffset = 0;
+                        if (skipFirstTarget && targetClean.length > 0) {
+                            searchClean = targetClean.substring(1);
+                            targetOffset = 1;
+                        }
+
+                        if (searchClean.length > 0) {
+                            function findLCS(s1, s2) {
+                                let maxLen = 0, bestS1 = -1, bestS2 = -1, bestMatch = "";
+                                for (let i = 0; i < s1.length; i++) {
+                                    for (let j = 0; j < s2.length; j++) {
+                                        let len = 0;
+                                        while (i + len < s1.length && j + len < s2.length && s1[i + len] === s2[j + len] && s1[i + len] !== '\x00') {
+                                            len++;
+                                        }
+                                        if (len > maxLen) {
+                                            maxLen = len;
+                                            bestS1 = i;
+                                            bestS2 = j;
+                                            bestMatch = s1.substring(i, i + len);
+                                        }
+                                    }
+                                }
+                                return { match: bestMatch, p1: bestS1, p2: bestS2, len: maxLen };
+                            }
+
+                            match1 = findLCS(interleaved, searchClean);
+                            if (match1.len > 0) {
+                                let colMap = [];
+                                for (let c = 0; c < targetLine.display.length; c++) {
+                                    if (!targetLine.fillerMask[c] && /\S/.test(targetLine.display[c])) colMap.push(c);
+                                }
+
+                                for (let k = 0; k < match1.len; k++) {
+                                    let actualCol = colMap[match1.p2 + k + targetOffset];
+                                    if (actualCol !== undefined) targetLine.lcsRedMask[actualCol] = true;
+                                }
+
+                                let s1Arr = interleaved.split('');
+                                let s2Arr = searchClean.split('');
+                                for (let k = 0; k < match1.len; k++) {
+                                    s1Arr[match1.p1 + k] = '\x00';
+                                    s2Arr[match1.p2 + k] = '\x00';
+                                }
+
+                                match2 = findLCS(s1Arr.join(''), s2Arr.join(''));
+                                if (match2.len > 0) {
+                                    for (let k = 0; k < match2.len; k++) {
+                                        let actualCol = colMap[match2.p2 + k + targetOffset];
+                                        if (actualCol !== undefined) targetLine.lcsPurpleMask[actualCol] = true;
+                                    }
+                                }
+
+                                lcsHtml = `<span style="color:#ff3333; font-weight:bold; background:rgba(255,51,51,0.2); padding:0 2px; border-radius:2px;">[1] ${match1.match}</span>`;
+                                if (match2.len > 0) {
+                                    lcsHtml += ` &nbsp; <span style="color:#cc33ff; font-weight:bold; background:rgba(204,51,255,0.2); padding:0 2px; border-radius:2px;">[2] ${match2.match}</span>`;
+                                }
+                            }
+                        } else {
+                            lcsHtml = "<span style='color:#777;'>Следующая строка пуста</span>";
+                        }
+                    } else {
+                        lcsHtml = "<span style='color:#777;'>Нет данных для анализа</span>";
+                    }
+
+                    let formattedInterleaved = "";
+                    if (interleaved.length > 0) {
+                        let charStyles = new Array(interleaved.length).fill(null);
+                        if (match1 && match1.len > 0) {
+                            for (let k = 0; k < match1.len; k++) {
+                                let idx = match1.p1 + k;
+                                if (idx >= 0 && idx < charStyles.length) charStyles[idx] = 'red';
+                            }
+                        }
+                        if (match2 && match2.len > 0) {
+                            for (let k = 0; k < match2.len; k++) {
+                                let idx = match2.p1 + k;
+                                if (idx >= 0 && idx < charStyles.length) charStyles[idx] = 'purple';
+                            }
+                        }
+                        for (let c = 0; c < interleaved.length; c++) {
+                            let char = interleaved[c];
+                            if (charStyles[c] === 'red') {
+                                formattedInterleaved += `<span style="color:#ff3333; font-weight:bold; background:rgba(255,51,51,0.2); border-radius:2px; padding:0 1px;">${char}</span>`;
+                            } else if (charStyles[c] === 'purple') {
+                                formattedInterleaved += `<span style="color:#cc33ff; font-weight:bold; background:rgba(204,51,255,0.2); border-radius:2px; padding:0 1px;">${char}</span>`;
                             } else {
-                                break;
+                                formattedInterleaved += char;
                             }
                         }
+                    } else {
+                        formattedInterleaved = "—";
                     }
 
-                    if (longestMatch.length > 0) {
-                        let colMap = [];
-                        for (let c = 0; c < targetLine.display.length; c++) {
-                            if (!targetLine.fillerMask[c] && /\S/.test(targetLine.display[c])) {
-                                colMap.push(c);
-                            }
-                        }
-
-                        for (let k = 0; k < longestMatch.length; k++) {
-                            let actualCol = colMap[bestStartInNext + k];
-                            if (actualCol !== undefined) {
-                                targetLine.lcsRedMask[actualCol] = true;
-                            }
-                        }
-                    }
-
-				let logDiv = document.getElementById('interleavingLogDetails');
-                    if (logDiv && STATE.interleaveLCSToggle) {
-                        logDiv.style.display = 'block';
-                        let lcsHtml = longestMatch ? `<span style="color:#ff3333; font-weight:bold; background:rgba(255,51,51,0.2); padding:0 2px; border-radius:2px;">${longestMatch}</span>` : "Нет";
-                        logDiv.innerHTML = `
-                            <div style="background:#111; border-left:2px solid #ff3333; padding:4px; font-size:10px; border-radius:3px; word-wrap:break-word; margin-bottom:4px; font-family:monospace; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
-                                <div style="color:#ffcc00; margin-bottom:2px; font-weight:bold;">🧬 ЧЕРНОВИК ИНТЕРЛИВИНГА:</div>
-                                <div style="color:#aaa;">[Стр ${STATE.lines[lastActiveIdx - 1].origIndex + 1}]:   <span style="color:#fff;">${strAbove}</span></div>
-                                <div style="color:#aaa;">[Стр ${STATE.lines[lastActiveIdx].origIndex + 1}]: <span style="color:#fff;">${strCurrent}</span></div>
-                                <div style="color:#bfff00; margin-top:2px;">[A+B]:     <span style="color:#fff;">${interleaved}</span></div>
-                                <div style="color:#ff3333; margin-top:2px;">[Поиск в Стр ${targetLine.origIndex + 1}]: ${lcsHtml}</div>
-                            </div>
-                        `;
-                    }
+                    htmlContent = `
+                        <div style="background:#111; border-left:2px solid #cc33ff; padding:4px; font-size:10px; border-radius:3px; word-wrap:break-word; margin-bottom:4px; font-family:monospace; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+                            <div style="color:#ffcc00; margin-bottom:2px; font-weight:bold;">🧬 ЧЕРНОВИК ИНТЕРЛИВИНГА:</div>
+                            <div style="color:#aaa;">[${labelAbove}]:   <span style="color:#fff;">${strAbove || "—"}</span></div>
+                            <div style="color:#aaa;">[Стр ${STATE.lines[lastActiveIdx].origIndex + 1}]: <span style="color:#fff;">${strCurrent || "—"}</span></div>
+                            <div style="color:#bfff00; margin-top:2px;">[A+B]:     <span style="color:#fff;">${formattedInterleaved}</span></div>
+                            <div style="color:#cc33ff; margin-top:2px;">[Найдено в ${targetLabel}]: <br>${lcsHtml}</div>
+                        </div>
+                    `;
+                } else {
+                    htmlContent = `<span style="color:#777;">Нет активных строк</span>`;
                 }
+
+                logDiv.innerHTML = htmlContent;
             }
         }
 
@@ -3339,7 +3558,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             for (let i = 0; i < STATE.lines.length; i++) {
                 if (STATE.lines[i].isActive) lastActiveIdx = i;
             }
-            if (lastActiveIdx >= 0 && lastActiveIdx < STATE.lines.length - 1) {
+            if (lastActiveIdx >= 0) {
                 let line = STATE.lines[lastActiveIdx];
                 
                 let triggerCascade = false;
@@ -3533,11 +3752,10 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 loopStart: parseInt(safeValue('loopStart', 0)), loopEnd: parseInt(safeValue('loopEnd', 100)),
                 banks: STATE.banks, activeBankIndex: STATE.activeBankIndex,
                 manualFrame: STATE.manualFrame, sierpRule: safeValue('sierpRule', 'shift'),
-                cw: parseFloat(safeValue('cwSlider', 1.0)), lcsToggle: STATE.interleaveLCSToggle,
+                                cw: parseFloat(safeValue('cwSlider', 1.0)), interleaveAnalysis: safeChecked('interleaveAnalysisCheck', false),
                 scannerAutoInvert: safeChecked('scannerAutoInvertCheck', false),
-                scannerHalfInvert: safeChecked('scannerHalfInvertCheck', false)
+                scannerHalfInvert: safeChecked('scannerHalfInvertCheck', false), showRowNumbers: safeChecked('showRowNumbersCheck', true)
             };
-
             let code = btoa(encodeURIComponent(JSON.stringify(snapshot)));
             const codeBox = document.getElementById('snapshotCodeBox');
             if (codeBox) { codeBox.value = code; codeBox.select(); }
@@ -3708,7 +3926,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 loopStart: parseInt(safeValue('loopStart', 0)), loopEnd: parseInt(safeValue('loopEnd', 100)),
                 banks: STATE.banks, activeBankIndex: STATE.activeBankIndex,
                 manualFrame: STATE.manualFrame, sierpRule: safeValue('sierpRule', 'shift'),
-                cw: parseFloat(safeValue('cwSlider', 1.0)), lcsToggle: STATE.interleaveLCSToggle
+                cw: parseFloat(safeValue('cwSlider', 1.0)), interleaveAnalysis: safeChecked('interleaveAnalysisCheck', false), showRowNumbers: safeChecked('showRowNumbersCheck', true)
             };
             let code = btoa(encodeURIComponent(JSON.stringify(snapshot)));
             
@@ -4146,9 +4364,8 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 
             let isVerticalHl, isInactiveVerticalHl;
 
-            // Принудительно сбрасываем прозрачность во избежание фантомного шлейфа от скрытия строк
             ctx.globalAlpha = 1.0;
-            STATE.titleIsOverlapped = false; // Сброс детектора наезда символов на заголовок
+            STATE.titleIsOverlapped = false;
 
             const bgColor = safeValue('bgColor', '#050505');
             let useTrail = safeChecked('trailCheck', false);
@@ -4168,6 +4385,9 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             let m = getGridMetrics();
             if (!m) return;
 
+            let baseX = m.baseX;
+            let startY = m.startY;
+
             ctx.font = `${safeChecked('boldCheck', false) ? 'bold' : 'normal'} ${parseInt(safeValue('fontSlider', 16))}px ${safeValue('fontSelect', 'monospace')}`;
             ctx.textBaseline = 'middle';
 
@@ -4180,9 +4400,9 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             let applyFilter = safeChecked('filterCheck', false);
             let showHighlights = safeChecked('highlightCheck', true);
 
-            let maxActiveLen = 0;
-            let firstActiveIdx = -1;
-            let lastActiveIdx = -1;
+            // Находим границы активного блока для рендера
+            let lastActiveIdx_global = -1;
+            STATE.lines.forEach((l, i) => { if(l.isActive) lastActiveIdx_global = i; });
 
             let useConglomerates = safeChecked('conglomerateCheck', false);
             let conglomColors = new Map();
@@ -4251,45 +4471,29 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     }
                 }
                 
-                if (useStableColors) {
-                    STATE.lastBlobs = currentFrameBlobs;
-                } else {
-                    STATE.lastBlobs = [];
-                }
+                if (useStableColors) STATE.lastBlobs = currentFrameBlobs;
+                else STATE.lastBlobs = [];
             }
 
-            if (useRadar) {
-                let centerX = canvas.width / 2 + STATE.offsetX + STATE.autoOffsetX;
-                let centerY = canvas.height / 2 + STATE.offsetY + STATE.autoOffsetY;
+            let centerX = canvas.width / 2 + STATE.offsetX + STATE.autoOffsetX;
+            let centerY = canvas.height / 2 + STATE.offsetY + STATE.autoOffsetY;
 
+            if (useRadar) {
                 let useFunnel = safeChecked('funnelCheck', false);
                 let someSelected = (STATE.selectedRings && STATE.selectedRings.size > 0);
 
                 if (useFunnel) {
                     ctx.save();
-                    ctx.globalAlpha = 1.0; 
                     for (let i = 0; i < m.renderCount; i++) {
                         let r = (i + 2) * m.lineHeight;
                         ctx.beginPath();
                         ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
-                        
                         let isHovered = (STATE.hoveredRingIndex === i);
                         let isSelected = STATE.selectedRings && STATE.selectedRings.has(i);
                         
-                        if (isSelected) {
-                            ctx.strokeStyle = hlColor;
-                            ctx.lineWidth = 2.0;
-                            ctx.globalAlpha = 1.0;
-                        } else if (isHovered) {
-                            ctx.strokeStyle = hexToRgba(safeValue('gridColorInput', '#00ff66'), 0.9);
-                            ctx.lineWidth = 1.5;
-                            ctx.globalAlpha = 1.0;
-                        } else {
-                            ctx.strokeStyle = hexToRgba(safeValue('gridColorInput', '#00ff66'), safeValue('gridAlpha', 0.4));
-                            ctx.lineWidth = 1.0;
-                            ctx.globalAlpha = someSelected ? 0.1 : 1.0;
-                        }
-                        
+                        if (isSelected) { ctx.strokeStyle = hlColor; ctx.lineWidth = 2.0; }
+                        else if (isHovered) { ctx.strokeStyle = hexToRgba(safeValue('gridColorInput', '#00ff66'), 0.9); ctx.lineWidth = 1.5; }
+                        else { ctx.strokeStyle = hexToRgba(safeValue('gridColorInput', '#00ff66'), safeValue('gridAlpha', 0.4)); ctx.lineWidth = 1.0; ctx.globalAlpha = someSelected ? 0.1 : 1.0; }
                         ctx.stroke();
                     }
                     ctx.restore();
@@ -4307,30 +4511,22 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     let isRingHovered = (STATE.hoveredRingIndex === i);
                     let isRingSelected = STATE.selectedRings && STATE.selectedRings.has(i);
 
-                    if (someSelected) {
-                        ctx.globalAlpha = isRingSelected ? 1.0 : 0.15;
-                    } else {
-                        ctx.globalAlpha = (!lineData.isActive && applyFilter) ? 0.25 : 1.0;
+                    let isCandidateRow = (actualIndex === lastActiveIdx_global + 1);
+
+                    if (someSelected) ctx.globalAlpha = isRingSelected ? 1.0 : 0.15;
+                    else {
+                        if (isCandidateRow) ctx.globalAlpha = 1.0;
+                        else ctx.globalAlpha = (!lineData.isActive && applyFilter) ? 0.25 : 1.0;
                     }
 
                     for (let c = 0; c < text.length; c++) {
                         let char = text[c];
-                        if (char === ' ') {
-                            if (isDrum) char = '.'; else continue;
-                        }
-
-                        let isDimmed = false;
-                        if (isDrum && drumRad > 0) {
-                            let centerCol = Math.floor(text.length / 2);
-                            if (Math.abs(c - centerCol) > drumRad) isDimmed = true;
-                        }
+                        if (char === ' ') { if (isDrum) char = '.'; else continue; }
 
                         let isBlinkingDimmed = false;
                         if (STATE.waveAnalysis.isActive && safeChecked('hideBlinkingCheck', false)) {
                             let cellKey = actualIndex + "_" + c;
-                            if (!STATE.waveAnalysis.staticCells.has(cellKey)) {
-                                isBlinkingDimmed = true;
-                            }
+                            if (!STATE.waveAnalysis.staticCells.has(cellKey)) isBlinkingDimmed = true;
                         }
 
                         if (isBlinkingDimmed) ctx.globalAlpha = 0.05;
@@ -4338,12 +4534,10 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                         let isFiller = lineData.fillerMask[c];
                         if (isFiller && (char === 'x' || char === '.')) {
                             ctx.fillStyle = '#444444';
-                            ctx.shadowBlur = 0;
                             let angle = c * angleStep - (Math.PI / 2);
                             let cx = centerX + Math.cos(angle) * r;
                             let cy = centerY + Math.sin(angle) * r;
-                            ctx.save(); ctx.translate(cx, cy); ctx.rotate(angle + Math.PI / 2);
-                            ctx.textAlign = 'center'; ctx.fillText(char, 0, 0); ctx.restore();
+                            ctx.save(); ctx.translate(cx, cy); ctx.rotate(angle + Math.PI / 2); ctx.textAlign = 'center'; ctx.fillText(char, 0, 0); ctx.restore();
                             continue;
                         }
 
@@ -4354,118 +4548,40 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                         let isFlashing = flashEnd && Date.now() < flashEnd;
                         let isRed = trackRedOne && lineData.redMask[c];
                         let isLcsRed = lineData.lcsRedMask && lineData.lcsRedMask[c];
+                        let isLcsPurple = lineData.lcsPurpleMask && lineData.lcsPurpleMask[c];
                         isVerticalHl = showHighlights && lineData.isActive && lineData.verticalHighlightMask && lineData.verticalHighlightMask[c];
                         isInactiveVerticalHl = showHighlights && !lineData.isActive && lineData.inactiveVerticalHighlightMask && lineData.inactiveVerticalHighlightMask[c];
 
                         let isChar1 = isType1(char);
                         let cBlobColor = useConglomerates ? conglomColors.get(actualIndex + "_" + c) : null;
                         
-                        if (isInactiveHl || isInactiveVerticalHl) {
-                            ctx.fillStyle = isInactiveVerticalHl ? '#00ccff' : safeValue('inactivePatternColorInput', '#ffff00');
-                            ctx.shadowBlur = useNeon ? 12 : 0;
-                            ctx.shadowColor = ctx.fillStyle;
-                        } else if (cBlobColor) {
-                            ctx.fillStyle = cBlobColor;
-                            ctx.shadowBlur = useNeon ? 8 : 0;
-                            ctx.shadowColor = cBlobColor;
-                        } else if (isRed) {
-                            ctx.fillStyle = trColor;
-                            ctx.shadowBlur = useNeon ? 8 : 0;
-                            ctx.shadowColor = trColor;
-                        } else if (isFlashing) {
-                            ctx.fillStyle = hlColor;
-                            ctx.shadowBlur = 10;
-                            ctx.shadowColor = hlColor;
-                        } else if (isVerticalHl) {
-                            ctx.fillStyle = '#00ccff';
-                            ctx.shadowBlur = useNeon ? 8 : 0;
-                            ctx.shadowColor = '#00ccff';
-                        } else {
+                        ctx.save();
+                        if (isLcsRed) { ctx.fillStyle = '#ff0000'; ctx.shadowBlur = 15; ctx.shadowColor = '#ff0000'; ctx.globalAlpha = 1.0; }
+                        else if (isLcsPurple) { ctx.fillStyle = '#cc33ff'; ctx.shadowBlur = 15; ctx.shadowColor = '#cc33ff'; ctx.globalAlpha = 1.0; }
+                        else if (isInactiveHl || isInactiveVerticalHl) { ctx.fillStyle = isInactiveVerticalHl ? '#00ccff' : safeValue('inactivePatternColorInput', '#ffff00'); ctx.shadowBlur = useNeon ? 12 : 0; ctx.shadowColor = ctx.fillStyle; }
+                        else if (cBlobColor) { ctx.fillStyle = cBlobColor; ctx.shadowBlur = useNeon ? 8 : 0; ctx.shadowColor = cBlobColor; }
+                        else if (isRed) { ctx.fillStyle = trColor; ctx.shadowBlur = useNeon ? 8 : 0; ctx.shadowColor = trColor; }
+                        else if (isFlashing) { ctx.fillStyle = hlColor; ctx.shadowBlur = 10; ctx.shadowColor = hlColor; }
+                        else if (isVerticalHl) { ctx.fillStyle = '#00ccff'; ctx.shadowBlur = useNeon ? 8 : 0; ctx.shadowColor = '#00ccff'; }
+                        else {
                             if (char === '.') ctx.fillStyle = '#555';
                             else ctx.fillStyle = isHl ? hlColor : (isChar1 ? c1 : c0);
-                            
-                            if (useNeon && (isChar1 || isHl || isVerticalHl) && char !== '.') {
-                                ctx.shadowBlur = 8;
-                                ctx.shadowColor = isVerticalHl ? '#00ccff' : (isHl ? hlColor : (isChar1 ? safeValue('color1', '#ffffff') : safeValue('color0', '#00ff66')));
-                            } else {
-                                ctx.shadowBlur = 0;
-                            }
+                            if (useNeon && (isChar1 || isHl || isVerticalHl) && char !== '.') { ctx.shadowBlur = 8; ctx.shadowColor = isVerticalHl ? '#00ccff' : (isHl ? hlColor : (isChar1 ? safeValue('color1', '#ffffff') : safeValue('color0', '#00ff66'))); }
                         }
 
                         let angle = c * angleStep - (Math.PI / 2);
-
-                        if (lineData.underlinedMask && lineData.underlinedMask[c] && char !== ' ' && char !== '.') {
-                            ctx.save();
-                            ctx.strokeStyle = ctx.fillStyle;
-                            ctx.lineWidth = 1;
-                            ctx.beginPath();
-                            let r_under = r + 6;
-                            ctx.arc(centerX, centerY, r_under, angle - angleStep / 2 + 0.05, angle + angleStep / 2 - 0.05);
-                            ctx.stroke();
-                            ctx.restore();
-                        }
                         let cx = centerX + Math.cos(angle) * r;
                         let cy = centerY + Math.sin(angle) * r;
 
-                        // Детектор наезда символов на область заголовка в режиме Радара
-                        if (!lineData.fillerMask[c] && char !== ' ' && char !== '.') {
-                            if (cx >= canvas.width / 2 - 240 && cx <= canvas.width / 2 + 240 && cy >= 0 && cy <= 45) {
-                                STATE.titleIsOverlapped = true;
-                            }
-                        }
+                        if (isRingSelected) { ctx.shadowBlur = 15; ctx.shadowColor = hlColor; ctx.font = `bold ${parseInt(safeValue('fontSlider', 16))}px ${safeValue('fontSelect', 'monospace')}`; }
+                        else if (isRingHovered) { ctx.shadowBlur = 10; ctx.shadowColor = safeValue('color0', '#00ff66'); ctx.font = `bold ${parseInt(safeValue('fontSlider', 16))}px ${safeValue('fontSelect', 'monospace')}`; }
 
-                        if (useFunnel) {
-                            ctx.save();
-                            ctx.globalAlpha = someSelected ? (isRingSelected ? 1.0 : 0.1) : 1.0;
-                            let r_inner = (i + 1) * m.lineHeight;
-                            ctx.beginPath();
-                            ctx.moveTo(centerX + Math.cos(angle) * r_inner, centerY + Math.sin(angle) * r_inner);
-                            ctx.lineTo(cx, cy);
-                            
-                            if (isRingSelected) {
-                                ctx.strokeStyle = hlColor;
-                                ctx.lineWidth = 2.0;
-                            } else if (isRingHovered) {
-                                ctx.strokeStyle = hexToRgba(safeValue('gridColorInput', '#00ff66'), 0.9);
-                                ctx.lineWidth = 1.5;
-                            } else {
-                                ctx.strokeStyle = hexToRgba(safeValue('gridColorInput', '#00ff66'), safeValue('gridAlpha', 0.4));
-                                ctx.lineWidth = 1.0;
-                            }
-                            ctx.stroke();
-                            ctx.restore();
-                        }
-
-                        ctx.save();
-                        if (isInactiveHl) {
-                            ctx.globalAlpha = 1.0;
-                        }
-                        if (isRingSelected) {
-                            ctx.shadowBlur = 15;
-                            ctx.shadowColor = hlColor;
-                            ctx.font = `bold ${parseInt(safeValue('fontSlider', 16))}px ${safeValue('fontSelect', 'monospace')}`;
-                        } else if (isRingHovered) {
-                            ctx.shadowBlur = 10;
-                            ctx.shadowColor = safeValue('color0', '#00ff66');
-                            ctx.font = `bold ${parseInt(safeValue('fontSlider', 16))}px ${safeValue('fontSelect', 'monospace')}`;
-                        } else if (isInactiveHl) {
-                            ctx.font = `bold ${parseInt(safeValue('fontSlider', 16)) + 3}px ${safeValue('fontSelect', 'monospace')}`;
-                        }
-                        ctx.translate(cx, cy);
-                        ctx.rotate(angle + Math.PI / 2);
-                        ctx.textAlign = 'center';
-                        ctx.fillText(char, 0, 0);
-                        ctx.restore();
+                        ctx.translate(cx, cy); ctx.rotate(angle + Math.PI / 2); ctx.textAlign = 'center'; ctx.fillText(char, 0, 0); ctx.restore();
                     }
                 }
-                ctx.shadowBlur = 0; 
             } else {
                 let useMirror = safeChecked('mirrorCheck', false);
-                let totalHeight = m.totalHeight;
-                let startY = m.startY;
-                let baseX = m.baseX;
                 let totalRows = STATE.lines.length;
-
                 let centerY = startY + (useMirror ? (m.renderCount - 1) * m.lineHeight : 0) + (m.lineHeight / 2);
 
                 for (let i = 0; i < m.renderCount; i++) {
@@ -4476,629 +4592,86 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 
                     let yDown = centerY + (i * m.lineHeight);
                     let yUp = centerY - (i * m.lineHeight);
-
                     let yPositions = [yDown];
-                    if (useMirror && i > 0) {
-                        yPositions.push(yUp);
-                    }
+                    if (useMirror && i > 0) yPositions.push(yUp);
 
-                    if (lineData.isActive) {
-                        if (firstActiveIdx === -1) firstActiveIdx = i;
-                        lastActiveIdx = i;
-                        if (text.length > maxActiveLen) maxActiveLen = text.length;
-                    }
-
-                    if (!useRadar) {
-                        let bgColored = false;
-                        if (STATE.balanceHighlightedRows && STATE.balanceHighlightedRows.has(actualIndex)) {
-                            ctx.save();
-                            ctx.fillStyle = "rgba(0, 255, 255, 0.2)";
-                            yPositions.forEach(y => ctx.fillRect(0, y - m.lineHeight / 2, canvas.width, m.lineHeight));
-                            ctx.restore();
-                            bgColored = true;
-                        }
-                        if (!bgColored && lineData.isLocallyBalanced) {
-                            ctx.save();
-                            ctx.fillStyle = "rgba(255, 213, 0, 0.04)";
-                            yPositions.forEach(y => ctx.fillRect(0, y - m.lineHeight / 2, canvas.width, m.lineHeight));
-                            ctx.restore();
-                        }
-                    }
-
-                    ctx.globalAlpha = (!lineData.isActive && applyFilter) ? 0.25 : 1.0;
-                    ctx.textAlign = 'center';
-                    
-                    let symMode = safeValue('symModeSelect', 'centerTrack');
-                    let currentX = 0;
-                    let isMatrixAxis = false;
-                    let liveCenterOffset = 0;
-                    let drumCenterCol = Math.floor(text.length / 2); 
-
-                    let firstCharIdx = -1;
-                    let lastCharIdx = -1;
-
-                    for (let k = 0; k < text.length; k++) {
-                        if (!lineData.fillerMask[k] && text[k] !== ' ' && text[k] !== 'x' && text[k] !== '.') {
-                            if (firstCharIdx === -1) firstCharIdx = k;
-                            lastCharIdx = k;
-                        }
-                    }
-
-                    if (symMode === "centerTrack") {
-                        isMatrixAxis = true;
-                        if (firstCharIdx !== -1) {
-                            let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
-                            let mathCenterIndex = (text.length - 1) / 2.0;
-                            liveCenterOffset = Math.round(mathCenterIndex - liveCenterIndex) * m.charWidth;
-                            drumCenterCol = Math.round(mathCenterIndex); 
-                        }
-                    } else if (symMode === "centerTrack2") {
-                        isMatrixAxis = true;
-                        if (firstCharIdx !== -1) {
-                            let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
-                            let mathCenterIndex = (text.length - 1) / 2.0;
-                            liveCenterOffset = (mathCenterIndex - liveCenterIndex) * m.charWidth;
-                            drumCenterCol = Math.round(mathCenterIndex);
-                        }
-                    } else if (symMode === "centerBase") {
-                        let baseWidth = lineData.L * m.charWidth;
-                        let isSpaced = safeChecked('spacedCheck', false);
-                        if (isSpaced) baseWidth *= 2;
-                        currentX = m.baseX - (baseWidth / 2);
-                        drumCenterCol = Math.floor((lineData.L * (isSpaced ? 2 : 1)) / 2); 
-                    } else {
-                        let fullWidth = text.length * m.charWidth;
-                        currentX = baseX - (fullWidth / 2);
-                        if (firstCharIdx !== -1) {
-                            drumCenterCol = Math.round((firstCharIdx + lastCharIdx) / 2.0);
-                        }
-                    }
+                    let isCandidateRow = (actualIndex === lastActiveIdx_global + 1);
+                    ctx.globalAlpha = isCandidateRow ? 1.0 : ((!lineData.isActive && applyFilter) ? 0.25 : 1.0);
 
                     yPositions.forEach(y => {
+                        let symMode = safeValue('symModeSelect', 'centerTrack');
+                        let currentX = 0; let isMatrixAxis = false; let liveCenterOffset = 0;
+                        let firstCharIdx = -1; let lastCharIdx = -1;
+                        for (let k = 0; k < text.length; k++) { if (!lineData.fillerMask[k] && text[k] !== ' ' && text[k] !== 'x' && text[k] !== '.') { if (firstCharIdx === -1) firstCharIdx = k; lastCharIdx = k; } }
+
+                        if (symMode === "centerTrack" || symMode === "centerTrack2") {
+                            isMatrixAxis = true;
+                            if (firstCharIdx !== -1) {
+                                let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
+                                let mathCenterIndex = (text.length - 1) / 2.0;
+                                liveCenterOffset = (mathCenterIndex - liveCenterIndex) * m.charWidth;
+                            }
+                        } else if (symMode === "centerBase") {
+                            currentX = m.baseX - ((lineData.L * (safeChecked('spacedCheck', false) ? 2 : 1)) * m.charWidth / 2);
+                        } else {
+                            currentX = baseX - (text.length * m.charWidth / 2);
+                        }
+
                         for (let c = 0; c < text.length; c++) {
                             let char = text[c];
-                            if (char === ' ') {
-                                if (isDrum) char = '.'; else continue;
-                            }
-
-                            let isDimmed = false;
-                            if (isDrum && drumRad > 0) {
-                                if (Math.abs(c - drumCenterCol) > drumRad) isDimmed = true;
-                            }
-
-                            let isBlinkingDimmed = false;
-                            if (STATE.waveAnalysis.isActive && safeChecked('hideBlinkingCheck', false)) {
-                                let cellKey = actualIndex + "_" + c;
-                                if (!STATE.waveAnalysis.staticCells.has(cellKey)) {
-                                    isBlinkingDimmed = true;
-                                }
-                            }
-
-                            let cellX = 0;
-                            let staticGridX = 0;
+                            if (char === ' ') { if (isDrum) char = '.'; else continue; }
+                            let cellX = isMatrixAxis ? (baseX + ((c - (text.length - 1) / 2.0) * m.charWidth) + liveCenterOffset) : (currentX + (c * m.charWidth) + (m.charWidth / 2));
                             
-                            if (isMatrixAxis) {
-                                let centerIndex = (text.length - 1) / 2.0; 
-                                staticGridX = baseX + ((c - centerIndex) * m.charWidth);
-                                cellX = staticGridX + liveCenterOffset;
-                            } else {
-                                cellX = currentX + (c * m.charWidth) + (m.charWidth / 2);
-                                staticGridX = cellX;
-                            }
-
-                            // Детектор наезда символов на область заголовка в режиме Строк
-                            if (!lineData.fillerMask[c] && char !== ' ' && char !== '.') {
-                                if (cellX >= canvas.width / 2 - 240 && cellX <= canvas.width / 2 + 240 && y >= 0 && y <= 45) {
-                                    STATE.titleIsOverlapped = true;
-                                }
-                            }
-
-                            let frameX = baseX + STATE.manualFrame.x;
-                            let frameW = STATE.manualFrame.w;
-                            let offset = (actualIndex - m.startIndex + totalRows) % totalRows;
-                            let inFrameRow = (offset >= STATE.manualFrame.rowStart && offset < STATE.manualFrame.rowStart + STATE.manualFrame.rowSpan);
-                            let isInsideFrame = showFrame && inFrameRow && (cellX >= frameX && cellX <= frameX + frameW);
-
-                            if (isDrum) {
-                                ctx.strokeStyle = isDimmed ? '#222' : '#444';
-                                ctx.lineWidth = 1;
-                                ctx.strokeRect(staticGridX - m.charWidth/2, y - m.lineHeight/2, m.charWidth, m.lineHeight);
-                            }
-                            
-                            let isFiller = lineData.fillerMask[c];
-                            if (isFiller && (char === 'x' || char === '.')) {
-                                ctx.fillStyle = '#444444';
-                                ctx.shadowBlur = 0;
-                                ctx.fillText(char, cellX, y);
-                                continue;
-                            }
-
                             let isHl = showHighlights && lineData.isActive && lineData.highlightMask[c];
                             let isInactiveHl = showHighlights && !lineData.isActive && lineData.inactiveHighlightMask && lineData.inactiveHighlightMask[c];
                             let isLcsRed = lineData.lcsRedMask && lineData.lcsRedMask[c];
+                            let isLcsPurple = lineData.lcsPurpleMask && lineData.lcsPurpleMask[c];
                             let isRed = trackRedOne && lineData.redMask[c];
-                            let flashEnd = STATE.flashes.get(actualIndex + "_" + c);
-                            let isFlashing = flashEnd && Date.now() < flashEnd;
-                            
-                            let isChar1 = isType1(char);
+                            let isFlashing = STATE.flashes.get(actualIndex + "_" + c) && Date.now() < STATE.flashes.get(actualIndex + "_" + c);
 
-                            let isCollisionGreen = lineData.collisionGreenMask && lineData.collisionGreenMask[c] === true;
-
-                            if (isCollisionGreen) {
-                                ctx.fillStyle = '#33ff33';
-                                ctx.shadowBlur = useNeon ? 20 : 10;
-                                ctx.shadowColor = '#33ff33';
-                            } else if (isInactiveHl) {
-                                ctx.font = `bold ${parseInt(safeValue('fontSlider', 16)) + 3}px ${safeValue('fontSelect', 'monospace')}`;
-                                ctx.globalAlpha = 1.0;
-                            } else {
-                                ctx.font = `${safeChecked('boldCheck', false) ? 'bold' : 'normal'} ${parseInt(safeValue('fontSlider', 16))}px ${safeValue('fontSelect', 'monospace')}`;
-                                ctx.globalAlpha = (!lineData.isActive && applyFilter) ? 0.25 : 1.0;
-                            }
-
-                            if (isBlinkingDimmed) ctx.globalAlpha = 0.05;
-
-                            let cBlobColor = useConglomerates ? conglomColors.get(actualIndex + "_" + c) : null;
-                            
-                            if (isInactiveHl || isInactiveVerticalHl) {
-                                ctx.fillStyle = isInactiveVerticalHl ? '#00ccff' : safeValue('inactivePatternColorInput', '#ffff00');
-                                ctx.shadowBlur = useNeon ? 12 : 0;
-                                ctx.shadowColor = ctx.fillStyle;
-                            } else if (isLcsRed) {
-                                ctx.fillStyle = '#ff0000';
-                                ctx.shadowBlur = 15;
-                                ctx.shadowColor = '#ff0000';
-                            } else if (cBlobColor) {
-                                ctx.fillStyle = cBlobColor;
-                                ctx.shadowBlur = useNeon ? 8 : 0;
-                                ctx.shadowColor = cBlobColor;
-                            } else if (isRed) {
-                                ctx.fillStyle = trColor;
-                                ctx.shadowBlur = useNeon ? 8 : 0;
-                                ctx.shadowColor = trColor;
-                            } else if (isFlashing) {
-                                ctx.fillStyle = hlColor;
-                                ctx.shadowBlur = 10;
-                                ctx.shadowColor = hlColor;
-                            } else if (isVerticalHl) {
-                                ctx.fillStyle = '#00ccff';
-                                ctx.shadowBlur = useNeon ? 8 : 0;
-                                ctx.shadowColor = '#00ccff';
-                            } else {
+                            ctx.save();
+                            if (isLcsRed) { ctx.fillStyle = '#ff0000'; ctx.shadowBlur = 15; ctx.shadowColor = '#ff0000'; ctx.globalAlpha = 1.0; }
+                            else if (isLcsPurple) { ctx.fillStyle = '#cc33ff'; ctx.shadowBlur = 15; ctx.shadowColor = '#cc33ff'; ctx.globalAlpha = 1.0; }
+                            else if (isInactiveHl) { ctx.fillStyle = safeValue('inactivePatternColorInput', '#ffff00'); ctx.globalAlpha = 1.0; }
+                            else {
                                 if (char === '.') ctx.fillStyle = '#555';
-                                else ctx.fillStyle = isHl ? hlColor : (isChar1 ? c1 : c0);
-
-                                if (useNeon && (isChar1 || isHl || isVerticalHl) && char !== '.') {
-                                    ctx.shadowBlur = 8;
-                                    ctx.shadowColor = isVerticalHl ? '#00ccff' : (isHl ? hlColor : (isChar1 ? safeValue('color1', '#ffffff') : safeValue('color0', '#00ff66')));
-                                } else {
-                                    ctx.shadowBlur = 0;
-                                }
+                                else ctx.fillStyle = isHl ? hlColor : (isType1(char) ? c1 : c0);
                             }
-
-                            if (STATE.wasBalancedLastFrame && isInsideFrame && char !== '.' && char !== 'x') {
-                                ctx.shadowBlur = 20;
-                                ctx.shadowColor = ctx.fillStyle;
-                            }
-
-                            if (showFrame && isInsideFrame) {
-                                ctx.save();
-                                let bgAlpha = STATE.wasBalancedLastFrame ? 0.2 : 0.08;
-                                ctx.fillStyle = hexToRgba(frameColor, bgAlpha);
-                                ctx.fillRect(cellX - m.charWidth / 2, y - m.lineHeight / 2, m.charWidth, m.lineHeight);
-                                ctx.restore();
-                            }
-
-                            ctx.fillText(char, cellX, y);
-
-                            if (lineData.underlinedMask && lineData.underlinedMask[c] && char !== ' ' && char !== '.') {
-                                ctx.save();
-                                ctx.strokeStyle = ctx.fillStyle;
-                                ctx.lineWidth = 1;
-                                ctx.beginPath();
-                                ctx.moveTo(cellX - m.charWidth / 2 + 1, y + m.lineHeight / 2 - 2);
-                                ctx.lineTo(cellX + m.charWidth / 2 - 1, y + m.lineHeight / 2 - 2);
-                                ctx.stroke();
-                                ctx.restore();
-                            }
+                            ctx.textAlign = 'center'; ctx.fillText(char, cellX, y); ctx.restore();
                         }
                     });
                 }
-                ctx.shadowBlur = 0;
-
-                if (showFrame && firstActiveIdx !== -1) {
-                    ctx.save();
-
-                    let autoW = maxActiveLen * m.charWidth + 24; 
-                    let autoH = ((lastActiveIdx - firstActiveIdx) + 1) * m.lineHeight; 
-                    let autoX = baseX - autoW / 2;
-                    let autoY = startY + (firstActiveIdx * m.lineHeight); 
-
-                    if (!STATE.manualFrame.isInitialized) {
-                        STATE.manualFrame.x = autoX - baseX;
-                        STATE.manualFrame.y = autoY - startY;
-                        STATE.manualFrame.w = autoW;
-                        STATE.manualFrame.h = autoH;
-                        STATE.manualFrame.rowStart = Math.round(STATE.manualFrame.y / m.lineHeight);
-                        STATE.manualFrame.rowSpan = Math.max(1, Math.round(STATE.manualFrame.h / m.lineHeight));
-                        STATE.manualFrame.isInitialized = true;
-                    }
-                    
-                    if (STATE.linesModifiedSinceLastInit) {
-                        if (STATE.manualFrame.rowStart !== undefined && STATE.manualFrame.rowSpan !== undefined) {
-                            STATE.manualFrame.rowStart = Math.min(STATE.manualFrame.rowStart, STATE.lines.length - 1);
-                            STATE.manualFrame.rowSpan = Math.min(STATE.manualFrame.rowSpan, STATE.lines.length - STATE.manualFrame.rowStart);
-                            if (STATE.manualFrame.rowSpan < 1) STATE.manualFrame.rowSpan = 1;
-                            STATE.manualFrame.y = STATE.manualFrame.rowStart * m.lineHeight;
-                            STATE.manualFrame.h = STATE.manualFrame.rowSpan * m.lineHeight;
-                        } else {
-                            STATE.manualFrame.x = autoX - baseX;
-                            STATE.manualFrame.y = autoY - startY;
-                            STATE.manualFrame.w = autoW;
-                            STATE.manualFrame.h = autoH;
-                            STATE.manualFrame.rowStart = Math.floor(STATE.manualFrame.y / m.lineHeight);
-                            STATE.manualFrame.rowSpan = Math.max(1, Math.ceil(STATE.manualFrame.h / m.lineHeight));
-                        }
-                        STATE.linesModifiedSinceLastInit = false;
-                    }
-
-                    STATE.manualFrame.y = STATE.manualFrame.rowStart * m.lineHeight;
-                    STATE.manualFrame.h = STATE.manualFrame.rowSpan * m.lineHeight;
-
-                    let maxLenInFrame = 0;
-                    for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
-                        let idx = (m.startIndex + STATE.manualFrame.rowStart + k) % totalRows;
-                        let line = STATE.lines[idx];
-                        if (line && line.display && line.display.length > maxLenInFrame) {
-                            maxLenInFrame = line.display.length;
-                        }
-                    }
-                    if (maxLenInFrame === 0) maxLenInFrame = maxActiveLen || 1;
-
-                    let autoW_frame = maxLenInFrame * m.charWidth + 24;
-                    STATE.manualFrame.w = autoW_frame;
-                    STATE.manualFrame.x = -autoW_frame / 2;
-
-                    let drawX = baseX + STATE.manualFrame.x;
-                    let drawY = startY + STATE.manualFrame.rowStart * m.lineHeight;
-                    let drawW = STATE.manualFrame.w;
-                    let drawH = STATE.manualFrame.h;
-
-                    let useBalance = safeChecked('balanceCheck', false);
-                    let isBalanced = false, isAll0 = false, isAll1 = false;
-                    let total0 = 0, total1 = 0;
-                    
-                    if (useBalance) {
-                        let bal = calculateCurrentBalance();
-                        total0 = bal.total0; total1 = bal.total1;
-                        isBalanced = bal.isEq; isAll0 = bal.isAll0; isAll1 = bal.isAll1;
-                    }
-
-                    let isSpecialTrigger = isBalanced || isAll0 || isAll1;
-                    let specColor = frameColor;
-                    if (isBalanced) specColor = '#ffffff';
-                    else if (isAll0) specColor = '#00ffff';
-                    else if (isAll1) specColor = '#ff00ff';
-
-                    ctx.strokeStyle = isSpecialTrigger ? specColor : frameColor; 
-                    ctx.lineWidth = isSpecialTrigger ? 3.0 : 1.5;
-                    ctx.globalAlpha = 0.8;
-                    ctx.shadowBlur = isSpecialTrigger ? 25 : 8;
-                    ctx.shadowColor = isSpecialTrigger ? specColor : frameColor;
-                    
-                    let fType = safeValue('frameTypeSelect', 'rect');
-                    let fRowSpan = STATE.manualFrame.rowSpan;
-                    let cx_frame = drawX + drawW / 2;
-                    let rad_rows = Math.round(fRowSpan / 2.0);
-                    let h_rad_px = rad_rows * m.charWidth;
-
-                    ctx.beginPath();
-                    let cy = drawY + drawH / 2;
-                    let ctop = drawY;
-                    let cbot = drawY + drawH;
-                    if (fType === 'rhomb') {
-                        ctx.moveTo(cx_frame, ctop);
-                        ctx.lineTo(drawX + drawW, cy);
-                        ctx.lineTo(cx_frame, cbot);
-                        ctx.lineTo(drawX, cy);
-                    } else if (fType === 'sq_rhomb') {
-                        ctx.moveTo(cx_frame, ctop);
-                        ctx.lineTo(cx_frame + h_rad_px, cy);
-                        ctx.lineTo(cx_frame, cbot);
-                        ctx.lineTo(cx_frame - h_rad_px, cy);
-                    } else {
-                        ctx.rect(drawX, drawY, drawW, drawH);
-                    }
-                    ctx.closePath();
-                    ctx.stroke();
-
-                    // Постоянные крупные счетчики 1 и 0 по бокам рамки
-                    let bal = calculateCurrentBalance();
-                    let opacity = bal.isEq ? 0.9 : 0.25; // Убавляем яркость если нет равенства
-                    let now = Date.now();
-                    if (STATE.flashEndTime && now < STATE.flashEndTime) {
-                        opacity = 1.0;
-                    }
-                    ctx.save();
-                    ctx.globalAlpha = opacity;
-                    ctx.textBaseline = 'middle';
-
-                    // Главные (общие) счетчики
-                    ctx.font = `bold 28px ${safeValue('fontSelect', 'monospace')}`;
-                    if (bal.total1 > 0) {
-                        ctx.fillStyle = hexToRgba(safeValue('color1', '#ffffff'), 1.0);
-                        ctx.shadowColor = ctx.fillStyle;
-                        ctx.shadowBlur = bal.isEq ? 15 : 2;
-                        ctx.textAlign = 'right';
-                        ctx.fillText(bal.total1.toString(), drawX - 35, drawY + drawH / 2);
-                    }
-                    if (bal.total0 > 0) {
-                        ctx.fillStyle = hexToRgba(safeValue('color0', '#00ff66'), 1.0);
-                        ctx.shadowColor = ctx.fillStyle;
-                        ctx.shadowBlur = bal.isEq ? 15 : 2;
-                        ctx.textAlign = 'left';
-                        ctx.fillText(bal.total0.toString(), drawX + drawW + 35, drawY + drawH / 2);
-                    }
-
-                    // Построчные счетчики внутри рамки по бокам
-                    if (bal.rowStats) {
-                        ctx.font = `bold 11px ${safeValue('fontSelect', 'monospace')}`;
-                        for (let k = 0; k < fRowSpan; k++) {
-                            let sIdx = STATE.manualFrame.rowStart + k;
-                            let stat = bal.rowStats[sIdx];
-                            if (stat) {
-                                let yRow = drawY + (k + 0.5) * m.lineHeight;
-                                // 1s слева
-                                if (stat.c1 > 0) {
-                                    ctx.fillStyle = hexToRgba(safeValue('color1', '#ffffff'), 1.0);
-                                    ctx.shadowColor = ctx.fillStyle;
-                                    ctx.shadowBlur = bal.isEq ? 8 : 0;
-                                    ctx.textAlign = 'right';
-                                    ctx.fillText(stat.c1.toString(), drawX - 8, yRow);
-                                }
-                                // 0s справа
-                                if (stat.c0 > 0) {
-                                    ctx.fillStyle = hexToRgba(safeValue('color0', '#00ff66'), 1.0);
-                                    ctx.shadowColor = ctx.fillStyle;
-                                    ctx.shadowBlur = bal.isEq ? 8 : 0;
-                                    ctx.textAlign = 'left';
-                                    ctx.fillText(stat.c0.toString(), drawX + drawW + 8, yRow);
-                                }
-                            }
-                        }
-                    }
-                    ctx.restore();
-
-                    let isWrapped = false; // Статичная рамка никогда не перекручивается на экране
-
-                    let currentSpecialType = isBalanced ? "balance" : (isAll0 ? "all0" : (isAll1 ? "all1" : "none"));
-                    let activeRowsCount = STATE.lines.filter(l => l.isActive).length;
-                    
-                    let isNewTrigger = false;
-                    if (isSpecialTrigger) {
-                        if (!STATE.wasBalancedLastFrame || STATE.lastSpecialType !== currentSpecialType || STATE.lastLoggedRowsCount !== activeRowsCount) {
-                            isNewTrigger = true;
-                        }
-                    }
-
-                    if (isNewTrigger) {
-                        let notifText = ""; let logTag = "";
-                        if (isBalanced) { notifText = `⚖️ ДОСТИГНУТ БАЛАНС: ${total0} [0] = ${total1} [1]!`; logTag = "БАЛАНС"; }
-                        else if (isAll0) { notifText = `🟦 АБСОЛЮТНЫЙ НОЛЬ: ${total0} [0] !`; logTag = "АБС.НОЛЬ"; }
-                        else if (isAll1) { notifText = `🟪 АБСОЛЮТНАЯ ЕДИНИЦА: ${total1} [1] !`; logTag = "АБС.ЕДИН"; }
-
-                        showNotification(notifText);
-                        STATE.wasBalancedLastFrame = true;
-                        STATE.lastSpecialType = currentSpecialType;
-                        STATE.lastLoggedRowsCount = activeRowsCount;
-                        
-                        if (!STATE.balanceHistory) STATE.balanceHistory = [];
-                        STATE.balanceHistory.unshift(`[Шаг ${Math.abs(STATE.globalStep)}] Строк: ${activeRowsCount} | <span style="color:${specColor}">[${logTag}]</span> 0=${total0}, 1=${total1}`);
-                        if (STATE.balanceHistory.length > 50) STATE.balanceHistory.pop();
-                        
-                        var logEl = document.getElementById('balanceLog');
-                        if (logEl) logEl.innerHTML = "<span style='color:#ffcc00; font-weight:bold;'>История равенств:</span><br>" + STATE.balanceHistory.join('<br>');
-
-                        STATE.flashEndTime = Date.now() + 600;
-                        STATE.flashColor = specColor;
-                        triggerFlashAnimation();
-
-                        if (STATE.playerMode === 'scroll' && safeChecked('scannerAutoInvertCheck', false)) {
-                            invertFrameContents();
-                            showNotification("СКРОЛЛ: АВТО-ИНВЕРСИЯ ПРИ БАЛАНСЕ");
-                        }
-
-                        if (STATE.isPlaying && safeChecked('pauseOnBalanceCheck', false)) {
-                            togglePlay();
-                        }
-                        if (STATE.isScannerPlaying && safeChecked('pauseOnBalanceCheck', false)) {
-                            document.getElementById('scannerPlayBtn').click();
-                        }
-                    } else if (!isSpecialTrigger) {
-                        STATE.wasBalancedLastFrame = false;
-                        STATE.lastSpecialType = "none";
-                    }
-
-                    // Отрисовка затухающей неоновой вспышки внутри рамки
-                    if (STATE.flashEndTime && now < STATE.flashEndTime && !useRadar) {
-                        ctx.save();
-                        let timeLeft = STATE.flashEndTime - now;
-                        let progress = timeLeft / 600; // от 1.0 до 0.0
-                        
-                        let fCol = STATE.flashColor || hlColor;
-                        ctx.fillStyle = hexToRgba(fCol, progress * 0.35); // пиковая прозрачность 35%
-                        ctx.globalAlpha = 1.0;
-                        
-                        // Заполнение вспышки по форме рамки
-                        ctx.beginPath();
-                        let cy = drawY + drawH / 2;
-                        let ctop = drawY;
-                        let cbot = drawY + drawH;
-                        if (fType === 'rhomb') {
-                            ctx.moveTo(cx_frame, ctop);
-                            ctx.lineTo(drawX + drawW, cy);
-                            ctx.lineTo(cx_frame, cbot);
-                            ctx.lineTo(drawX, cy);
-                        } else if (fType === 'sq_rhomb') {
-                            ctx.moveTo(cx_frame, ctop);
-                            ctx.lineTo(cx_frame + h_rad_px, cy);
-                            ctx.lineTo(cx_frame, cbot);
-                            ctx.lineTo(cx_frame - h_rad_px, cy);
-                        } else {
-                            ctx.rect(drawX, drawY, drawW, drawH);
-                        }
-                        ctx.closePath();
-                        ctx.fill();
-
-                        if (useMirror) {
-                            ctx.save();
-                            let centerY_frame = startY + (m.renderCount - 1) * m.lineHeight + (m.lineHeight / 2);
-                            let frameHalfHeight = STATE.manualFrame.rowStart * m.lineHeight + drawH;
-                            let drawY_mirror = centerY_frame - frameHalfHeight;
-                            
-                            let drawMirrorPaths = (ctx_obj, yOff) => {
-                                ctx_obj.beginPath();
-                                let cy = drawY_mirror + yOff + drawH / 2;
-                                let ctop = drawY_mirror + yOff;
-                                let cbot = drawY_mirror + yOff + drawH;
-                                if (fType === 'rhomb') {
-                                    ctx_obj.moveTo(cx_frame, ctop);
-                                    ctx_obj.lineTo(drawX + drawW, cy);
-                                    ctx_obj.lineTo(cx_frame, cbot);
-                                    ctx_obj.lineTo(drawX, cy);
-                                } else if (fType === 'sq_rhomb') {
-                                    ctx_obj.moveTo(cx_frame, ctop);
-                                    ctx_obj.lineTo(cx_frame + h_rad_px, cy);
-                                    ctx_obj.lineTo(cx_frame, cbot);
-                                    ctx_obj.lineTo(cx_frame - h_rad_px, cy);
-                                } else {
-                                    ctx_obj.rect(drawX, drawY_mirror + yOff, drawW, drawH);
-                                }
-                                ctx_obj.closePath();
-                            };
-                            
-                            drawMirrorPaths(ctx, 0);
-                            ctx.fill();
-                            ctx.restore();
-                        }
-                        ctx.restore();
-                    }
-                    ctx.restore();
-                }
             }
 
-            // Отрисовка каскада скобок-балансов по бокам пирамиды
-            if (STATE.scannerFoundBalances && STATE.scannerFoundBalances.length > 0 && !useRadar) {
+            // Рендер рамки
+            if (showFrame && !useRadar) {
                 ctx.save();
-                ctx.lineWidth = 1.5;
-                ctx.textBaseline = 'middle';
-
-                let totalRows = STATE.lines.length;
-                let startY = m.startY;
-                let baseX = m.baseX;
-
-                STATE.scannerFoundBalances.forEach((bal, bIdx) => {
-                    let startScreenRow = (bal.start - m.startIndex + totalRows) % totalRows;
-                    let endScreenRow = (bal.start + bal.span - 1 - m.startIndex + totalRows) % totalRows;
-
-                    if (startScreenRow < m.renderCount && endScreenRow < m.renderCount) {
-                        let yTop = startY + startScreenRow * m.lineHeight + 2;
-                        let yBottom = startY + endScreenRow * m.lineHeight + m.lineHeight - 2;
-
-                        // Находим максимальную ширину только тех строк, которые входят в данный баланс
-                        let localMaxLen = 0;
-                        for (let k = 0; k < bal.span; k++) {
-                            let idx = (bal.start + k) % totalRows;
-                            let lData = STATE.lines[idx];
-                            if (lData && lData.display && lData.display.length > localMaxLen) {
-                                localMaxLen = lData.display.length;
-                            }
-                        }
-                        if (localMaxLen === 0) localMaxLen = 1;
-
-                        let localHalfW = (localMaxLen * m.charWidth) / 2 + 15;
-                        let offsetX = localHalfW + (bIdx * 7); 
-                        let xLeft = baseX - offsetX;
-                        let xRight = baseX + offsetX;
-
-                        let color = `hsla(${(bal.span * 65) % 360}, 100%, 65%, 0.8)`;
-                        ctx.strokeStyle = color;
-                        ctx.fillStyle = color;
-                        ctx.shadowColor = color;
-                        ctx.shadowBlur = 4;
-
-                        // Рисуем левую скобку
-                        ctx.beginPath();
-                        ctx.moveTo(xLeft + 4, yTop);
-                        ctx.lineTo(xLeft, yTop);
-                        ctx.lineTo(xLeft, yBottom);
-                        ctx.lineTo(xLeft + 4, yBottom);
-                        ctx.stroke();
-
-                        // Рисуем правую скобку
-                        ctx.beginPath();
-                        ctx.moveTo(xRight - 4, yTop);
-                        ctx.lineTo(xRight, yTop);
-                        ctx.lineTo(xRight, yBottom);
-                        ctx.lineTo(xRight - 4, yBottom);
-                        ctx.stroke();
-
-                        // Маркер высоты (количества строк)
-                        ctx.font = 'bold 9px Consolas, monospace';
-                        ctx.textAlign = 'right';
-                        ctx.fillText(bal.span.toString(), xLeft - 6, yTop + (yBottom - yTop) / 2);
-                    }
-                });
+                let drawX = baseX + STATE.manualFrame.x;
+                let drawY = startY + STATE.manualFrame.rowStart * m.lineHeight;
+                let drawW = STATE.manualFrame.w;
+                let drawH = STATE.manualFrame.h;
+                ctx.strokeStyle = frameColor; ctx.lineWidth = 1.5; ctx.strokeRect(drawX, drawY, drawW, drawH);
                 ctx.restore();
             }
 
+            renderFloatingTooltips(ctx, canvas, m);
+        }
+
+        function renderFloatingTooltips(ctx, canvas, m) {
             let selectedArray = Array.from(STATE.selectedRings);
             let latestSelected = selectedArray.length > 0 ? selectedArray[selectedArray.length - 1] : -1;
             let inspectIdx = (STATE.hoveredRingIndex !== -1) ? STATE.hoveredRingIndex : latestSelected;
-            
-            if (inspectIdx !== -1 && useRadar && m) {
+            if (inspectIdx !== -1 && safeChecked('radarCheck', false) && m) {
                 let actualIdx = (m.startIndex + inspectIdx) % STATE.lines.length;
                 let lineData = STATE.lines[actualIdx];
                 if (lineData) {
                     let cleanStr = getCleanLine(lineData);
-                    let isInspectSelected = STATE.selectedRings.has(inspectIdx);
-                    
-                    ctx.save();
-                    ctx.globalAlpha = 1.0;
-                    ctx.font = 'bold 16px Roboto Mono, monospace';
-                    let textW = ctx.measureText(cleanStr).width;
-                    let panelW = Math.max(160, textW + 30);
-                    let panelH = 34;
-                    let panelX = (canvas.width - panelW) / 2;
-                    let panelY = canvas.height - 50;
-
-                    ctx.fillStyle = 'rgba(10, 10, 10, 0.85)';
-                    ctx.strokeStyle = isInspectSelected ? hlColor : safeValue('color0', '#00ff66');
-                    ctx.lineWidth = 1;
-                    ctx.shadowBlur = 10;
-                    ctx.shadowColor = ctx.strokeStyle;
-                    ctx.fillRect(panelX, panelY, panelW, panelH);
-                    ctx.strokeRect(panelX, panelY, panelW, panelH);
-                    
-                    ctx.shadowBlur = 0;
-                    ctx.fillStyle = isInspectSelected ? hlColor : '#ffffff';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(cleanStr, canvas.width / 2, panelY + panelH / 2 + 1);
-                    
-                    ctx.fillStyle = isInspectSelected ? hlColor : safeValue('color0', '#00ff66');
-                    ctx.font = 'bold 10px Roboto Mono, monospace';
-                    ctx.fillText(`СТРОКА ${lineData.origIndex + 1} (${cleanStr.length} СИМВ.)`, canvas.width / 2, panelY - 8);
-                    
-                    ctx.restore();
+                    ctx.save(); ctx.font = 'bold 16px Roboto Mono, monospace';
+                    let panelW = Math.max(160, ctx.measureText(cleanStr).width + 30);
+                    let panelH = 34; let panelX = (canvas.width - panelW) / 2; let panelY = canvas.height - 50;
+                    ctx.fillStyle = 'rgba(10, 10, 10, 0.85)'; ctx.strokeStyle = safeValue('color0', '#00ff66'); ctx.strokeRect(panelX, panelY, panelW, panelH); ctx.fillRect(panelX, panelY, panelW, panelH);
+                    ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.fillText(cleanStr, canvas.width / 2, panelY + panelH / 2 + 1); ctx.restore();
                 }
-            }
-
-            // Управление прозрачностью главного заголовка при наезде символов
-            const titleEl = document.getElementById('mainTitle');
-            if (titleEl) {
-                titleEl.style.opacity = STATE.titleIsOverlapped ? "0.15" : "1.0";
-                titleEl.style.transition = "opacity 0.25s ease";
             }
         }
 <!-- === МАРКЕР: РЕНДЕР КОНЕЦ === -->
@@ -5173,17 +4746,128 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             }
         });
 
-        safeBind('lcsToggleBtn', 'click', function() {
-            STATE.interleaveLCSToggle = !STATE.interleaveLCSToggle;
-            if (STATE.interleaveLCSToggle) {
-                this.classList.add('active');
-            } else {
-                this.classList.remove('active');
-                let logDiv = document.getElementById('interleavingLogDetails');
-                if (logDiv) logDiv.style.display = 'none';
-            }
+        safeBind('interleaveAnalysisCheck', 'change', function() {
+            let logDiv = document.getElementById('interleavingLogDetails');
+            if (logDiv && !this.checked) logDiv.innerHTML = '<span style="color:#555;">Анализ отключен.</span>';
             updateLogic();
-            showNotification(STATE.interleaveLCSToggle ? "🧬 LCS-ИНТЕРЛИВИНГ ВКЛ" : "🧬 LCS-ИНТЕРЛИВИНГ ВЫКЛ");
+        });
+        safeBind('interleavingCheck', 'change', function() { updateLogic(); });
+        
+        safeBind('forceInterleaveBtn', 'click', function() {
+            let targetIndices = [];
+            let useFrame = safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized;
+            let m = getGridMetrics();
+
+            if (useFrame && m) {
+                let totalRows = STATE.lines.length;
+                for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
+                    let idx = (m.startIndex + STATE.manualFrame.rowStart + k) % totalRows;
+                    targetIndices.push(idx);
+                }
+            } else {
+                for (let i = 0; i < STATE.lines.length; i++) {
+                    if (STATE.lines[i].isActive) targetIndices.push(i);
+                }
+            }
+
+            if (targetIndices.length >= 1) {
+                let lastActiveIdx = targetIndices[targetIndices.length - 1];
+                let strCurrent = getCleanLine(STATE.lines[lastActiveIdx]);
+                let strAbove = "";
+                if (targetIndices.length > 1) {
+                    let penActiveIdx = targetIndices[targetIndices.length - 2];
+                    strAbove = getCleanLine(STATE.lines[penActiveIdx]);
+                } else {
+                    strAbove = strCurrent;
+                }
+
+                let skipFirstInter = safeChecked('ignoreFirstInterleaveCharCheck', false);
+                if (skipFirstInter) {
+                    if (strAbove.length > 0) strAbove = strAbove.substring(1);
+                    if (strCurrent.length > 0) strCurrent = strCurrent.substring(1);
+                }
+
+                let interleaved = "";
+                let maxL = Math.max(strAbove.length, strCurrent.length);
+                for (let j = 0; j < maxL; j++) {
+                    if (j < strAbove.length) interleaved += strAbove[j];
+                    if (j < strCurrent.length) interleaved += strCurrent[j];
+                }
+                
+                if (interleaved.length > 0) {
+                    let nextIdx = useFrame && m ? (m.startIndex + STATE.manualFrame.rowStart + STATE.manualFrame.rowSpan) % STATE.lines.length : lastActiveIdx + 1;
+                    
+                    if (nextIdx >= STATE.lines.length) {
+                        let L = interleaved.length;
+                        let nFact = getNFactor();
+                        let cN = (nFact === 0) ? L : nFact;
+                        let phase = safeChecked('phaseShiftCheck', true) ? 1 : 0;
+                        let cycle = cN * L + phase;
+                        if (cycle <= 0) cycle = 1;
+
+                        let newLine = {
+                            orig: interleaved,
+                            template: interleaved,
+                            L: L,
+                            cN: cN,
+                            cycle: cycle,
+                            display: interleaved,
+                            isActive: true,
+                            localStep: 0,
+                            origIndex: STATE.lines.length,
+                            highlightMask: [],
+                            verticalHighlightMask: [],
+                            inactiveVerticalHighlightMask: [],
+                            redMask: [],
+                            fillerMask: [],
+                            firstOneIdx: interleaved.search(/[1\\)\]>+]/),
+                            invertMask: new Array(L).fill(false),
+                            underlinedMask: []
+                        };
+                        STATE.lines.push(newLine);
+                    } else {
+                        STATE.lines[nextIdx].orig = interleaved;
+                        STATE.lines[nextIdx].template = interleaved;
+                        STATE.lines[nextIdx].display = interleaved;
+                        STATE.lines[nextIdx].L = interleaved.length;
+                        STATE.lines[nextIdx].firstOneIdx = interleaved.search(/[1\\)\]>+]/);
+                        STATE.lines[nextIdx].isActive = true;
+                        STATE.lines[nextIdx].localStep = 0;
+                    }
+
+                    let newLinesText = STATE.lines.map(l => l.orig).join('\n');
+                    let linesInp = document.getElementById('linesInput');
+                    if (linesInp) linesInp.value = newLinesText;
+                    STATE.banks[STATE.activeBankIndex].lines = newLinesText;
+
+                    const scrSlider = document.getElementById('screenSlider');
+                    if (scrSlider) {
+                        if (STATE.lines.length > parseInt(scrSlider.max)) {
+                            scrSlider.max = STATE.lines.length;
+                        }
+                        if (parseInt(scrSlider.value) < STATE.lines.length) {
+                            scrSlider.value = STATE.lines.length;
+                            let scrValEl = document.getElementById('screenVal');
+                            if (scrValEl) scrValEl.textContent = STATE.lines.length;
+                        }
+                    }
+                    
+                    if (safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized) {
+                        let reqH = (nextIdx + 1) * m.lineHeight - STATE.manualFrame.y;
+                        if (reqH > STATE.manualFrame.h) {
+                            STATE.manualFrame.h = reqH;
+                            STATE.manualFrame.rowSpan = Math.max(1, Math.ceil(reqH / m.lineHeight));
+                        }
+                    }
+                    
+                    updateAllCycles();
+                    updateLogic();
+                    render();
+                    showNotification(`🧬 СИНТЕЗИРОВАНО СПЛЕТЕНИЕ НА СТР ${nextIdx + 1}`);
+                }
+            } else {
+                showNotification("НЕТ АКТИВНЫХ СТРОК ДЛЯ ИНТЕРЛИВИНГА");
+            }
         });
 
         const patternInputEl = document.getElementById('patternInput');
@@ -5340,7 +5024,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             }
         });
 
-        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'hlColorInput', 'frameColorInput', 'gridColorInput', 'gridAlpha', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'ignoreFirstPatternCharCheck', 'ignoreLastPatternCharCheck', 'inactivePatternColorInput', 'radarRotateSnapInput', 'interleavingCheck', 'boldCheck', 'radarCheck', 'funnelCheck', 'mirrorCheck', 'balanceCheck', 'cascadeOnBalanceCheck', 'pauseOnBalanceCheck', 'keepPhaseOnCascadeCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'cwSlider', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck', 'verticalSearchCheck', 'waveAnalysisCheck', 'hideBlinkingCheck', 'waveHistoryInput', 'frameTypeSelect', 'frameScannerActiveCheck', 'scannerAutoInvertCheck', 'scannerHalfInvertCheck', 'naezdCheck', 'naezdModeSelect', 'naezdSaveCheck', 'substeppingCheck'].forEach(id => {
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'showRowNumbersCheck', 'hlColorInput', 'frameColorInput', 'gridColorInput', 'gridAlpha', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'ignoreFirstPatternCharCheck', 'ignoreLastPatternCharCheck', 'inactivePatternColorInput', 'radarRotateSnapInput', 'interleavingCheck', 'interleaveAnalysisCheck', 'ignoreFirstInterleaveCharCheck', 'ignoreFirstTargetCharCheck', 'boldCheck', 'radarCheck', 'funnelCheck', 'mirrorCheck', 'balanceCheck', 'cascadeOnBalanceCheck', 'pauseOnBalanceCheck', 'keepPhaseOnCascadeCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'cwSlider', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck', 'verticalSearchCheck', 'waveAnalysisCheck', 'hideBlinkingCheck', 'waveHistoryInput', 'frameTypeSelect', 'frameScannerActiveCheck', 'scannerAutoInvertCheck', 'scannerHalfInvertCheck', 'naezdCheck', 'naezdModeSelect', 'naezdSaveCheck', 'substeppingCheck'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('input', () => { render(); });
@@ -5669,7 +5353,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 let panel = document.querySelector(selector);
                 if (!panel) return;
                 
-                let header = panel.querySelector('.patterns-log-title, .diag-terminal-title, .player-panel-title, .frame-control-title');
+                let header = panel.querySelector('.patterns-log-title, .diag-terminal-title, .player-panel-title, .frame-control-title, .interleave-panel-title');
                 if (!header) {
                     header = document.createElement('div');
                     header.className = 'player-panel-title';
@@ -5714,6 +5398,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             setupDraggable('.patterns-log-container', '🧠 ТЕРМИНАЛ АКТИВАЦИИ');
             setupDraggable('#diagTerminal', '📡 ДИАГНОСТИКА');
             setupDraggable('#frameControlPanel', '🔲 УПРАВЛЕНИЕ РАМКОЙ');
+            setupDraggable('#interleavePanel', '🧬 СИНТЕЗ ДНК И LCS');
         });
 
         document.addEventListener('dblclick', e => {
@@ -5975,6 +5660,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             setChk('globalSearchCheck', false);
             setChk('verticalSearchCheck', false);
             setChk('highlightCheck', true);
+            setChk('interleaveAnalysisCheck', true);
             setChk('interleavingCheck', false);
             setChk('filterCheck', false);
             setChk('stableConglomCheck', false);
