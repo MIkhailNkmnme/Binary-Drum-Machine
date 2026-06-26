@@ -195,7 +195,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 <body>
 
     <input type="checkbox" id="radarCheck" style="display:none;">
-    <div id="mainTitle">Zerkalius: Genesis (v0.116 Golden Master)</div>
+    <div id="mainTitle">Zerkalius: Genesis (v0.118 Golden Master)</div>
     <script src="banks_data.js"></script>
     <script>
         window.onerror = function(message, source, lineno, colno, error) {
@@ -268,7 +268,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             </div>
         </details>
 
-        <details class="control-group">
+        <details class="control-group" open>
             <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">📐 ГЕНЕРАТОР СЕРПИНСКОГО</summary>
             <select id="sierpRule" style="margin-bottom: 5px; margin-top: 4px; background: #222; color: #fff; border: 1px solid #444; padding: 2px; border-radius: 3px; width: 100%; font-size: 11px;">
                 <option value="shift">Форма: Сдвиг (Кирпичная кладка)</option>
@@ -626,7 +626,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 <input type="checkbox" id="globalSearchCheck"> <span class="lbl" style="color:#00ff88; font-weight:bold;">🔍 Сквозной поиск паттернов</span>
             </label>
             <label style="display:flex; align-items:center; margin-bottom: 2px; padding-left: 15px;">
-                <input type="checkbox" id="verticalSearchCheck" checked> <span class="lbl" style="color:#00ccff; font-weight:bold;">📐 Вертикальный поиск паттернов</span>
+                <input type="checkbox" id="verticalSearchCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">📐 Вертикальный поиск паттернов</span>
             </label>
             <label style="display:flex; align-items:center; margin-bottom: 2px; padding-left: 15px;">
                 <input type="checkbox" id="substeppingCheck"> <span class="lbl" style="color:#ffd500; font-weight:bold;">⚡ Суб-шаговый поиск (Turbo)</span>
@@ -1465,9 +1465,10 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             var ilLog = document.getElementById('interleavingLogDetails');
             if (ilLog) ilLog.style.display = 'none';
             if (STATE.manualFrame) {
-                STATE.manualFrame.isInitialized = false;
+                STATE.manualFrame.isInitialized = true;
                 STATE.manualFrame.rowStart = 0;
                 STATE.manualFrame.rowSpan = 1;
+                STATE.manualFrame.y = 0;
             }
             
             let linesInp = document.getElementById('linesInput');
@@ -3253,13 +3254,16 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             // Динамическое переключение стрелок плеера в зависимости от режима движения
             let prevBtnEl = document.getElementById('prevBtn');
             let nextBtnEl = document.getElementById('nextBtn');
+            let pmBtn = document.getElementById('playerModeBtn');
             if (prevBtnEl && nextBtnEl) {
                 if (STATE.playerMode === "scroll") {
                     prevBtnEl.textContent = '▲';
                     nextBtnEl.textContent = '▼';
+                    if (pmBtn) pmBtn.textContent = safeChecked('naezdCheck', false) ? "🎬 Функция: Скроллинг (С наездом)" : "🎬 Функция: Скроллинг";
                 } else {
                     prevBtnEl.textContent = '◀';
                     nextBtnEl.textContent = '▶';
+                    if (pmBtn) pmBtn.textContent = "🎬 Функция: Симуляция (XOR)";
                 }
             }
 
@@ -5969,7 +5973,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             setChk('ignoreLastPatternCharCheck', false);
             setChk('sequentialSearchCheck', true);
             setChk('globalSearchCheck', false);
-            setChk('verticalSearchCheck', true);
+            setChk('verticalSearchCheck', false);
             setChk('highlightCheck', true);
             setChk('interleavingCheck', false);
             setChk('filterCheck', false);
