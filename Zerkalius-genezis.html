@@ -784,6 +784,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                         <input type="checkbox" id="balanceCheck" checked> <span class="lbl" style="color:#ffcc00; font-weight:bold;">⚖️ Детектор баланса</span>
                     </label>
                     <button id="invertFrameBtn" class="btn-action" style="margin:0; font-size:9px; padding:3px; border-color:#ffd500; color:#ffd500; background:none;" title="Инвертировать символы внутри рамки (0 ↔ 1, \ ↔ /)">🔄 Инвертировать в рамке</button>
+                    <button id="invertFrameExceptFirstBtn" class="btn-action" style="margin:2px 0 0 0; font-size:9px; padding:3px; border-color:#ffd500; color:#ffd500; background:none;" title="Инвертировать символы внутри рамки, пропуская первый символ каждой строки">🔄 Инвертировать кроме 1-го</button>
                 </details>
                 
                 <details class="control-group" open style="border-radius:3px;">
@@ -1615,7 +1616,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         safeBind('alignCenterBtn', 'click', () => alignText('center'));
         safeBind('alignRightBtn', 'click', () => alignText('right'));
 
-        function invertFrameContents() {
+        function invertFrameContents(exceptFirst = false) {
             let m = getGridMetrics();
             if (!m) return;
             
@@ -1773,6 +1774,10 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                                 origIdx = (origIdx + cylShift) % lData.L;
                             }
                             
+                            if (exceptFirst && origIdx === 0) {
+                                continue;
+                            }
+                            
                             if (origIdx >= 0 && origIdx < origChars.length) {
                                 let char = origChars[origIdx];
                                 if (char === '1') origChars[origIdx] = '0';
@@ -1814,7 +1819,8 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             }
         }
 
-        safeBind('invertFrameBtn', 'click', invertFrameContents);
+        safeBind('invertFrameBtn', 'click', () => invertFrameContents(false));
+        safeBind('invertFrameExceptFirstBtn', 'click', () => invertFrameContents(true));
 
         safeBind('applyLinesBtn', 'click', () => {
             const rawText = safeValue('linesInput', '');
@@ -1972,6 +1978,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         }
 
         const getCleanLine = (lData) => {
+            if (!lData || !lData.display) return "";
             let s = "";
             for(let c=0; c<lData.display.length; c++){
                 if (!lData.fillerMask[c] && /\S/.test(lData.display[c])) {
@@ -3245,11 +3252,11 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     if (targetIndices.length > 1) {
                         let penActiveIdx = targetIndices[targetIndices.length - 2];
                         strAbove = getCleanLine(STATE.lines[penActiveIdx]);
-                        labelAbove = `Стр ${STATE.lines[penActiveIdx].origIndex + 1}`;
+                        labelAbove = `Стр ${STATE.lines[penActiveIdx] ? STATE.lines[penActiveIdx].origIndex + 1 : "?"}`;
                     } else {
                         // Только 1 строка в рамке/активна - дублируем ее саму на себя вверх!
                         strAbove = strCurrent;
-                        labelAbove = `Стр ${STATE.lines[lastActiveIdx].origIndex + 1} (Дубль)`;
+                        labelAbove = `Стр ${STATE.lines[lastActiveIdx] ? STATE.lines[lastActiveIdx].origIndex + 1 : "?"} (Дубль)`;
                     }
 
                     let skipFirstInter = safeChecked('ignoreFirstInterleaveCharCheck', false);
@@ -3261,8 +3268,8 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     let interleaved = "";
                     let maxL = Math.max(strAbove.length, strCurrent.length);
                     for (let j = 0; j < maxL; j++) {
-                        if (j < strAbove.length) interleaved += strAbove[j];
                         if (j < strCurrent.length) interleaved += strCurrent[j];
+                        if (j < strAbove.length) interleaved += strAbove[j];
                     }
 
                     // Кандидат под рамкой/под активной областью
@@ -3277,7 +3284,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                         lcsHtml = "<span style='color:#777;'>Конец холста (нет следующей строки)</span>";
                     } else if (interleaved.length > 0) {
                         let targetLine = STATE.lines[nextIdx];
-                        let targetClean = getCleanLine(targetLine);
+                        let targetClean = targetLine ? getCleanLine(targetLine) : "";
 
                         let skipFirstTarget = safeChecked('ignoreFirstTargetCharCheck', false);
                         let searchClean = targetClean;
@@ -3287,7 +3294,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                             targetOffset = 1;
                         }
 
-                        if (searchClean.length > 0) {
+                        if (targetLine && searchClean.length > 0) {
                             function findLCS(s1, s2) {
                                 let maxLen = 0, bestS1 = -1, bestS2 = -1, bestMatch = "";
                                 for (let i = 0; i < s1.length; i++) {
@@ -3375,11 +3382,12 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                         formattedInterleaved = "—";
                     }
 
+                    let currentLineNum = STATE.lines[lastActiveIdx] ? STATE.lines[lastActiveIdx].origIndex + 1 : "?";
                     htmlContent = `
                         <div style="background:#111; border-left:2px solid #cc33ff; padding:4px; font-size:10px; border-radius:3px; word-wrap:break-word; margin-bottom:4px; font-family:monospace; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
                             <div style="color:#ffcc00; margin-bottom:2px; font-weight:bold;">🧬 ЧЕРНОВИК ИНТЕРЛИВИНГА:</div>
                             <div style="color:#aaa;">[${labelAbove}]:   <span style="color:#fff;">${strAbove || "—"}</span></div>
-                            <div style="color:#aaa;">[Стр ${STATE.lines[lastActiveIdx].origIndex + 1}]: <span style="color:#fff;">${strCurrent || "—"}</span></div>
+                            <div style="color:#aaa;">[Стр ${currentLineNum}]: <span style="color:#fff;">${strCurrent || "—"}</span></div>
                             <div style="color:#bfff00; margin-top:2px;">[A+B]:     <span style="color:#fff;">${formattedInterleaved}</span></div>
                             <div style="color:#cc33ff; margin-top:2px;">[Найдено в ${targetLabel}]: <br>${lcsHtml}</div>
                         </div>
@@ -4643,14 +4651,287 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 }
             }
 
-            // Рендер рамки
-            if (showFrame && !useRadar) {
+            // Отрисовка каскада скобок-балансов по бокам пирамиды
+            if (STATE.scannerFoundBalances && STATE.scannerFoundBalances.length > 0 && !useRadar) {
                 ctx.save();
+                ctx.lineWidth = 1.5;
+                ctx.textBaseline = 'middle';
+
+                let totalRows = STATE.lines.length;
+
+                STATE.scannerFoundBalances.forEach((bal, bIdx) => {
+                    let startScreenRow = (bal.start - m.startIndex + totalRows) % totalRows;
+                    let endScreenRow = (bal.start + bal.span - 1 - m.startIndex + totalRows) % totalRows;
+
+                    if (startScreenRow < m.renderCount && endScreenRow < m.renderCount) {
+                        let yTop = startY + startScreenRow * m.lineHeight + 2;
+                        let yBottom = startY + endScreenRow * m.lineHeight + m.lineHeight - 2;
+
+                        // Находим максимальную ширину только тех строк, которые входят в данный баланс
+                        let localMaxLen = 0;
+                        for (let k = 0; k < bal.span; k++) {
+                            let idx = (bal.start + k) % totalRows;
+                            let lData = STATE.lines[idx];
+                            if (lData && lData.display && lData.display.length > localMaxLen) {
+                                localMaxLen = lData.display.length;
+                            }
+                        }
+                        if (localMaxLen === 0) localMaxLen = 1;
+
+                        let localHalfW = (localMaxLen * m.charWidth) / 2 + 15;
+                        let offsetX = localHalfW + (bIdx * 7); 
+                        let xLeft = baseX - offsetX;
+                        let xRight = baseX + offsetX;
+
+                        let color = `hsla(${(bal.span * 65) % 360}, 100%, 65%, 0.8)`;
+                        ctx.strokeStyle = color;
+                        ctx.fillStyle = color;
+                        ctx.shadowColor = color;
+                        ctx.shadowBlur = 4;
+
+                        // Рисуем левую скобку
+                        ctx.beginPath();
+                        ctx.moveTo(xLeft + 4, yTop);
+                        ctx.lineTo(xLeft, yTop);
+                        ctx.lineTo(xLeft, yBottom);
+                        ctx.lineTo(xLeft + 4, yBottom);
+                        ctx.stroke();
+
+                        // Рисуем правую скобку
+                        ctx.beginPath();
+                        ctx.moveTo(xRight - 4, yTop);
+                        ctx.lineTo(xRight, yTop);
+                        ctx.lineTo(xRight, yBottom);
+                        ctx.lineTo(xRight - 4, yBottom);
+                        ctx.stroke();
+
+                        // Маркер баланса (1 слева, 0 справа)
+                        ctx.font = 'bold 11px Consolas, monospace';
+                        let midY = yTop + (yBottom - yTop) / 2;
+                        
+                        // 1 слева (Цвет текста 1)
+                        ctx.fillStyle = hexToRgba(safeValue('color1', '#ffffff'), 1.0);
+                        ctx.shadowColor = ctx.fillStyle;
+                        ctx.textAlign = 'right';
+                        ctx.fillText(`${bal.total1}`, xLeft - 6, midY);
+
+                        // 0 справа (Цвет текста 0)
+                        ctx.fillStyle = hexToRgba(safeValue('color0', '#00ff66'), 1.0);
+                        ctx.shadowColor = ctx.fillStyle;
+                        ctx.textAlign = 'left';
+                        ctx.fillText(`${bal.total0}`, xRight + 6, midY);
+                    }
+                });
+                ctx.restore();
+            }
+
+            // Рендер рамки, её неона и крупных боковых счётчиков
+            if (showFrame && !useRadar && lastActiveIdx_global !== -1) {
+                ctx.save();
+
+                let maxLenInFrame = 0;
+                let totalRows = STATE.lines.length;
+                for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
+                    let idx = (m.startIndex + STATE.manualFrame.rowStart + k) % totalRows;
+                    let line = STATE.lines[idx];
+                    if (line && line.display && line.display.length > maxLenInFrame) {
+                        maxLenInFrame = line.display.length;
+                    }
+                }
+                if (maxLenInFrame === 0) maxLenInFrame = 1;
+
+                let minW = maxLenInFrame * m.charWidth + 24;
+                if (STATE.manualFrame.w < minW) {
+                    STATE.manualFrame.w = minW;
+                }
+
+                // Принудительно центрируем рамку по горизонтальной оси пирамиды
+                STATE.manualFrame.x = -STATE.manualFrame.w / 2;
+
                 let drawX = baseX + STATE.manualFrame.x;
                 let drawY = startY + STATE.manualFrame.rowStart * m.lineHeight;
                 let drawW = STATE.manualFrame.w;
                 let drawH = STATE.manualFrame.h;
-                ctx.strokeStyle = frameColor; ctx.lineWidth = 1.5; ctx.strokeRect(drawX, drawY, drawW, drawH);
+
+                let useBalance = safeChecked('balanceCheck', false);
+                let isBalanced = false, isAll0 = false, isAll1 = false;
+                let total0 = 0, total1 = 0;
+                
+                if (useBalance) {
+                    let bal = calculateCurrentBalance();
+                    total0 = bal.total0; total1 = bal.total1;
+                    isBalanced = bal.isEq; isAll0 = bal.isAll0; isAll1 = bal.isAll1;
+                }
+
+                let isSpecialTrigger = isBalanced || isAll0 || isAll1;
+                let specColor = frameColor;
+                if (isBalanced) specColor = '#ffffff';
+                else if (isAll0) specColor = '#00ffff';
+                else if (isAll1) specColor = '#ff00ff';
+
+                ctx.strokeStyle = isSpecialTrigger ? specColor : frameColor; 
+                ctx.lineWidth = isSpecialTrigger ? 3.0 : 1.5;
+                ctx.globalAlpha = 0.8;
+                ctx.shadowBlur = isSpecialTrigger ? 25 : 8;
+                ctx.shadowColor = isSpecialTrigger ? specColor : frameColor;
+                
+                let fType = safeValue('frameTypeSelect', 'rect');
+                let fRowSpan = STATE.manualFrame.rowSpan;
+                let cx_frame = drawX + drawW / 2;
+                let rad_rows = Math.round(fRowSpan / 2.0);
+                let h_rad_px = rad_rows * m.charWidth;
+
+                ctx.beginPath();
+                let cy = drawY + drawH / 2;
+                let ctop = drawY;
+                let cbot = drawY + drawH;
+                if (fType === 'rhomb') {
+                    ctx.moveTo(cx_frame, ctop);
+                    ctx.lineTo(drawX + drawW, cy);
+                    ctx.lineTo(cx_frame, cbot);
+                    ctx.lineTo(drawX, cy);
+                } else if (fType === 'sq_rhomb') {
+                    ctx.moveTo(cx_frame, ctop);
+                    ctx.lineTo(cx_frame + h_rad_px, cy);
+                    ctx.lineTo(cx_frame, cbot);
+                    ctx.lineTo(cx_frame - h_rad_px, cy);
+                } else {
+                    ctx.rect(drawX, drawY, drawW, drawH);
+                }
+                ctx.closePath();
+                ctx.stroke();
+
+                // Постоянные крупные счетчики 1 и 0 по бокам рамки
+                let bal = calculateCurrentBalance();
+                let opacity = bal.isEq ? 0.9 : 0.25; 
+                let now = Date.now();
+                if (STATE.flashEndTime && now < STATE.flashEndTime) {
+                    opacity = 1.0;
+                }
+                ctx.save();
+                ctx.globalAlpha = opacity;
+                ctx.textBaseline = 'middle';
+
+                // Главные (общие) счетчики
+                ctx.font = `bold 28px ${safeValue('fontSelect', 'monospace')}`;
+                
+                ctx.fillStyle = hexToRgba(safeValue('color1', '#ffffff'), 1.0);
+                ctx.shadowColor = ctx.fillStyle;
+                ctx.shadowBlur = bal.isEq ? 15 : 2;
+                ctx.textAlign = 'right';
+                ctx.fillText(bal.total1.toString(), drawX - 35, drawY + drawH / 2);
+
+                ctx.fillStyle = hexToRgba(safeValue('color0', '#00ff66'), 1.0);
+                ctx.shadowColor = ctx.fillStyle;
+                ctx.shadowBlur = bal.isEq ? 15 : 2;
+                ctx.textAlign = 'left';
+                ctx.fillText(bal.total0.toString(), drawX + drawW + 35, drawY + drawH / 2);
+
+                // Построчные счетчики внутри рамки по бокам
+                if (bal.rowStats) {
+                    ctx.font = `bold 11px ${safeValue('fontSelect', 'monospace')}`;
+                    for (let k = 0; k < fRowSpan; k++) {
+                        let sIdx = STATE.manualFrame.rowStart + k;
+                        let stat = bal.rowStats[sIdx];
+                        if (stat) {
+                            let yRow = drawY + (k + 0.5) * m.lineHeight;
+                            // 1s слева
+                            ctx.fillStyle = hexToRgba(safeValue('color1', '#ffffff'), 1.0);
+                            ctx.shadowColor = ctx.fillStyle;
+                            ctx.shadowBlur = bal.isEq ? 8 : 0;
+                            ctx.textAlign = 'right';
+                            ctx.fillText((stat.c1 || 0).toString(), drawX - 8, yRow);
+                            
+                            // 0s справа
+                            ctx.fillStyle = hexToRgba(safeValue('color0', '#00ff66'), 1.0);
+                            ctx.shadowColor = ctx.fillStyle;
+                            ctx.shadowBlur = bal.isEq ? 8 : 0;
+                            ctx.textAlign = 'left';
+                            ctx.fillText((stat.c0 || 0).toString(), drawX + drawW + 8, yRow);
+                        }
+                    }
+                }
+                ctx.restore();
+
+                let currentSpecialType = isBalanced ? "balance" : (isAll0 ? "all0" : (isAll1 ? "all1" : "none"));
+                let activeRowsCount = STATE.lines.filter(l => l.isActive).length;
+                
+                let isNewTrigger = false;
+                if (isSpecialTrigger) {
+                    if (!STATE.wasBalancedLastFrame || STATE.lastSpecialType !== currentSpecialType || STATE.lastLoggedRowsCount !== activeRowsCount) {
+                        isNewTrigger = true;
+                    }
+                }
+
+                if (isNewTrigger) {
+                    let notifText = ""; let logTag = "";
+                    if (isBalanced) { notifText = `⚖️ ДОСТИГНУТ БАЛАНС: ${total0} [0] = ${total1} [1]!`; logTag = "БАЛАНС"; }
+                    else if (isAll0) { notifText = `🟦 АБСОЛЮТНЫЙ НОЛЬ: ${total0} [0] !`; logTag = "АБС.НОЛЬ"; }
+                    else if (isAll1) { notifText = `🟪 АБСОЛЮТНАЯ ЕДИНИЦА: ${total1} [1] !`; logTag = "АБС.ЕДИН"; }
+
+                    showNotification(notifText);
+                    STATE.wasBalancedLastFrame = true;
+                    STATE.lastSpecialType = currentSpecialType;
+                    STATE.lastLoggedRowsCount = activeRowsCount;
+                    
+                    if (!STATE.balanceHistory) STATE.balanceHistory = [];
+                    STATE.balanceHistory.unshift(`[Шаг ${Math.abs(STATE.globalStep)}] Строк: ${activeRowsCount} | <span style="color:${specColor}">[${logTag}]</span> 0=${total0}, 1=${total1}`);
+                    if (STATE.balanceHistory.length > 50) STATE.balanceHistory.pop();
+                    
+                    var logEl = document.getElementById('balanceLog');
+                    if (logEl) logEl.innerHTML = "<span style='color:#ffcc00; font-weight:bold;'>История равенств:</span><br>" + STATE.balanceHistory.join('<br>');
+
+                    STATE.flashEndTime = Date.now() + 600;
+                    STATE.flashColor = specColor;
+                    triggerFlashAnimation();
+
+                    if (STATE.playerMode === 'scroll' && safeChecked('scannerAutoInvertCheck', false)) {
+                        invertFrameContents();
+                        showNotification("СКРОЛЛ: АВТО-ИНВЕРСИЯ ПРИ БАЛАНСЕ");
+                    }
+
+                    if (STATE.isPlaying && safeChecked('pauseOnBalanceCheck', false)) {
+                        togglePlay();
+                    }
+                    if (STATE.isScannerPlaying && safeChecked('pauseOnBalanceCheck', false)) {
+                        document.getElementById('scannerPlayBtn').click();
+                    }
+                } else if (!isSpecialTrigger) {
+                    STATE.wasBalancedLastFrame = false;
+                    STATE.lastSpecialType = "none";
+                }
+
+                // Отрисовка затухающей неоновой вспышки внутри рамки
+                if (STATE.flashEndTime && now < STATE.flashEndTime && !useRadar) {
+                    ctx.save();
+                    let timeLeft = STATE.flashEndTime - now;
+                    let progress = timeLeft / 600; 
+                    
+                    let fCol = STATE.flashColor || hlColor;
+                    ctx.fillStyle = hexToRgba(fCol, progress * 0.35); 
+                    ctx.globalAlpha = 1.0;
+                    
+                    ctx.beginPath();
+                    let cy = drawY + drawH / 2;
+                    let ctop = drawY;
+                    let cbot = drawY + drawH;
+                    if (fType === 'rhomb') {
+                        ctx.moveTo(cx_frame, ctop);
+                        ctx.lineTo(drawX + drawW, cy);
+                        ctx.lineTo(cx_frame, cbot);
+                        ctx.lineTo(drawX, cy);
+                    } else if (fType === 'sq_rhomb') {
+                        ctx.moveTo(cx_frame, ctop);
+                        ctx.lineTo(cx_frame + h_rad_px, cy);
+                        ctx.lineTo(cx_frame, cbot);
+                        ctx.lineTo(cx_frame - h_rad_px, cy);
+                    } else {
+                        ctx.rect(drawX, drawY, drawW, drawH);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                }
                 ctx.restore();
             }
 
@@ -5756,32 +6037,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             } else {
                 loadText(startText);
             }
-            
-			// Авто-перезагрузка страницы при патчинге (Stand-alone Hot Reload с анти-фриз защитой)
-			setInterval(() => {
-				let now = Date.now();
-				let idleTime = now - (STATE.lastActiveTime || 0);
-				if (idleTime >= 1500) {
-					fetch(window.location.href, { cache: 'no-store' })
-						.then(res => res.text())
-						.then(text => {
-							let match = text.match(/<div id="mainTitle">Zerkalius: Genesis \((v\d+\.\d+\s+Golden Master)\)<\/div>/);
-							if (match) {
-								let newVersion = match[1];
-								// Динамически получаем текущую версию из заголовка на странице:
-								let currentTitle = document.getElementById('mainTitle').innerText;
-								let currentVersionMatch = currentTitle.match(/\((v\d+\.\d+\s+Golden Master)\)/);
-								let currentVersion = currentVersionMatch ? currentVersionMatch[1] : "unknown";
-								
-								if (newVersion !== currentVersion) {
-									showNotification("ПАТЧ ОБНАРУЖЕН! ПЕРЕЗАГРУЗКА...");
-									setTimeout(() => { window.location.reload(); }, 300);
-								}
-							}
-						})
-						.catch(() => {});
-				}
-			}, 1500);
             
             resizeCanvas();
             render();
