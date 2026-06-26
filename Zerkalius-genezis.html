@@ -48,12 +48,12 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         .controls.minimized { transform: translateX(-286px) !important; }
 
         .player-panel {
-            position: absolute; left: 330px; bottom: 10px; width: 250px; z-index: 100;
+            position: absolute; left: 330px; bottom: 10px; width: 300px; z-index: 100; /* Увеличена ширина пульта по умолчанию */
             background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(0, 255, 102, 0.3); border-radius: 5px; box-sizing: border-box; padding: 4px;
             transition: left 0.3s ease, right 0.3s ease, top 0.3s ease, bottom 0.3s ease, width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
             box-shadow: 0 0 15px rgba(0, 255, 102, 0.15);
-            min-width: 220px; min-height: 100px;
+            min-width: 250px; min-height: 100px;
         }
 
         .patterns-log-container::-webkit-resizer, #diagTerminal::-webkit-resizer {
@@ -222,7 +222,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         #frameControlPanel details.control-group summary { color: #ffd500; font-weight: bold; font-size: 10px; }
 
         #interleavePanel {
-            position: absolute; top: 5px; left: 630px; z-index: 95; background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            position: absolute; bottom: 150px; right: 5px; z-index: 95; background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(204, 51, 255, 0.3); border-radius: 4px; padding: 5px; width: 300px; height: 350px;
             overflow: hidden; display: flex; flex-direction: row; align-items: stretch; box-shadow: 0 0 20px rgba(204, 51, 255, 0.15); 
             transition: left 0.3s ease, right 0.3s ease, top 0.3s ease, bottom 0.3s ease, width 0.3s ease, height 0.3s ease, opacity 0.3s ease; 
@@ -476,12 +476,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             <label style="display:flex; align-items:center; margin-top:3px;">
                 <input type="checkbox" id="neonCheck"> <span class="lbl">✨ Свечение (Neon)</span>
             </label>
-            <label style="display:flex; align-items:center; margin-top:3px;">
-                <input type="checkbox" id="cylinderCheck"> <span class="lbl">Круговой сдвиг (Цилиндр)</span>
-            </label>
-            <label style="display:flex; align-items:center; margin-top:3px;">
-                <input type="checkbox" id="elkaCheck"> <span class="lbl" style="color:#ff3333;">Круговой сдвиг (Ёлка)</span>
-            </label>
             <div style="display:flex; align-items:center; justify-content:space-between; margin-top:3px; width:100%;">
                 <label style="display:flex; align-items:center; margin:0;">
                     <input type="checkbox" id="funnelCheck"> <span class="lbl" style="color:#00ffcc; font-weight:bold;">🕸️ Режим Воронка (Сетка)</span>
@@ -637,6 +631,25 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 
                 <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 5px;">
                     <span class="lbl">Кадр: <span class="val" id="stepVal">0 / 0</span></span>
+                </div>
+            </div>
+
+            <div class="player-group" style="padding-top:5px; border-top:1px solid #333; margin-top:5px;">
+                <!-- Сдвиг-цилиндр -->
+                <div style="display:flex; align-items:center; gap:2px; margin-bottom:4px; width:100%;">
+                    <button id="manualCylinderShiftLeftBtn" class="bank-btn" style="width:20px; height:18px; padding:0; border-color:#00ccff; color:#00ccff; font-weight:bold;" title="Вручную сдвинуть влево все строки в рамке циклически на 1 символ">◀</button>
+                    <label style="display:flex; align-items:center; margin:0; flex:1; justify-content:center;">
+                        <input type="checkbox" id="cylinderCheck"> <span class="lbl" style="font-size:10px;">Сдвиг-цилиндр</span>
+                    </label>
+                    <button id="manualCylinderShiftRightBtn" class="bank-btn" style="width:20px; height:18px; padding:0; border-color:#00ccff; color:#00ccff; font-weight:bold;" title="Вручную сдвинуть вправо все строки в рамке циклически на 1 символ">▶</button>
+                </div>
+                <!-- Сдвиг-спираль -->
+                <div style="display:flex; align-items:center; gap:2px; width:100%;">
+                    <button id="manualElkaShiftLeftBtn" class="bank-btn" style="width:20px; height:18px; padding:0; border-color:#ff3333; color:#ff3333; font-weight:bold;" title="Вручную сдвинуть влево весь блок в рамке циклически по спирали на 1 символ">◀</button>
+                    <label style="display:flex; align-items:center; margin:0; flex:1; justify-content:center;">
+                        <input type="checkbox" id="elkaCheck"> <span class="lbl" style="color:#ff3333; font-size:10px;">Сдвиг-спираль</span>
+                    </label>
+                    <button id="manualElkaShiftRightBtn" class="bank-btn" style="width:20px; height:18px; padding:0; border-color:#ff3333; color:#ff3333; font-weight:bold;" title="Вручную сдвинуть вправо весь блок в рамке циклически по спирали на 1 символ">▶</button>
                 </div>
             </div>
         </div>
@@ -1554,10 +1567,12 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             var ilLog = document.getElementById('interleavingLogDetails');
             if (ilLog) ilLog.style.display = 'none';
             if (STATE.manualFrame) {
-                STATE.manualFrame.isInitialized = true;
+                STATE.manualFrame.isInitialized = false; // Сбрасываем флаг для принудительной инициализации в render
                 STATE.manualFrame.rowStart = 0;
-                STATE.manualFrame.rowSpan = 1;
+                STATE.manualFrame.rowSpan = 1; // Рамка изначально охватывает только 1 строку
                 STATE.manualFrame.y = 0;
+                STATE.manualFrame.h = undefined;
+                STATE.manualFrame.w = undefined;
             }
             
             let linesInp = document.getElementById('linesInput');
@@ -1616,13 +1631,147 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         safeBind('alignCenterBtn', 'click', () => alignText('center'));
         safeBind('alignRightBtn', 'click', () => alignText('right'));
 
+        function manualCylinderShift(dir = 1) {
+            let m = getGridMetrics();
+            if (!m) return;
+            
+            let useFrame = safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized;
+            if (!useFrame) {
+                showNotification("ОШИБКА: РАМКА НЕ ВКЛЮЧЕНА");
+                return;
+            }
+
+            let totalRows = STATE.lines.length;
+            let rowStart = STATE.manualFrame.rowStart;
+            let rowSpan = STATE.manualFrame.rowSpan;
+
+            let shiftedCount = 0;
+            for (let k = 0; k < rowSpan; k++) {
+                let idx = (rowStart + k) % totalRows;
+                let actualIdx = (m.startIndex + idx) % totalRows;
+                let lData = STATE.lines[actualIdx];
+                if (!lData || lData.L <= 1) continue;
+
+                let origChars = lData.orig.split('');
+                if (dir === 1) {
+                    let lastChar = origChars.pop();
+                    origChars.unshift(lastChar);
+                } else {
+                    let firstChar = origChars.shift();
+                    origChars.push(firstChar);
+                }
+                lData.orig = origChars.join('');
+                lData.template = lData.orig;
+
+                if (lData.invertMask && lData.invertMask.length > 0) {
+                    if (dir === 1) {
+                        let lastInvert = lData.invertMask.pop();
+                        lData.invertMask.unshift(lastInvert);
+                    } else {
+                        let firstInvert = lData.invertMask.shift();
+                        lData.invertMask.push(firstInvert);
+                    }
+                }
+
+                lData.firstOneIdx = lData.orig.search(/[1\\)\]>+]/);
+                shiftedCount++;
+            }
+
+            if (shiftedCount > 0) {
+                let newLinesText = STATE.lines.map(l => l.orig).join('\n');
+                let linesInp = document.getElementById('linesInput');
+                if (linesInp) linesInp.value = newLinesText;
+                STATE.banks[STATE.activeBankIndex].lines = newLinesText;
+
+                calculateState(false);
+                render();
+                showNotification(`СДВИГ: Сдвинуто ${shiftedCount} строк в рамке`);
+            }
+        }
+
+        function manualElkaShift(dir = 1) {
+            let m = getGridMetrics();
+            if (!m) return;
+            
+            let useFrame = safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized;
+            if (!useFrame) {
+                showNotification("ОШИБКА: РАМКА НЕ ВКЛЮЧЕНА");
+                return;
+            }
+
+            let totalRows = STATE.lines.length;
+            let rowStart = STATE.manualFrame.rowStart;
+            let rowSpan = STATE.manualFrame.rowSpan;
+
+            let targetLines = [];
+            for (let k = 0; k < rowSpan; k++) {
+                let idx = (rowStart + k) % totalRows;
+                let actualIdx = (m.startIndex + idx) % totalRows;
+                let lData = STATE.lines[actualIdx];
+                if (lData) targetLines.push(lData);
+            }
+
+            if (targetLines.length === 0) return;
+
+            let bufferChars = [];
+            let bufferInverts = [];
+            let rowLengths = [];
+
+            targetLines.forEach(lData => {
+                rowLengths.push(lData.orig.length);
+                let origChars = lData.orig.split('');
+                bufferChars = bufferChars.concat(origChars);
+                
+                let inverts = lData.invertMask || new Array(lData.orig.length).fill(false);
+                bufferInverts = bufferInverts.concat(inverts);
+            });
+
+            if (bufferChars.length <= 1) return;
+
+            if (dir === 1) {
+                let lastChar = bufferChars.pop();
+                bufferChars.unshift(lastChar);
+
+                let lastInvert = bufferInverts.pop();
+                bufferInverts.unshift(lastInvert);
+            } else {
+                let firstChar = bufferChars.shift();
+                bufferChars.push(firstChar);
+
+                let firstInvert = bufferInverts.shift();
+                bufferInverts.push(firstInvert);
+            }
+
+            let ptr = 0;
+            targetLines.forEach((lData, idx) => {
+                let len = rowLengths[idx];
+                let slicedChars = bufferChars.slice(ptr, ptr + len);
+                let slicedInverts = bufferInverts.slice(ptr, ptr + len);
+
+                lData.orig = slicedChars.join('');
+                lData.template = lData.orig;
+                lData.invertMask = slicedInverts;
+                lData.firstOneIdx = lData.orig.search(/[1\\)\]>+]/);
+
+                ptr += len;
+            });
+
+            let newLinesText = STATE.lines.map(l => l.orig).join('\n');
+            let linesInp = document.getElementById('linesInput');
+            if (linesInp) linesInp.value = newLinesText;
+            STATE.banks[STATE.activeBankIndex].lines = newLinesText;
+
+            calculateState(false);
+            render();
+            showNotification(`СПИРАЛЬ: Циклический сдвиг Ёлки в рамке`);
+        }
+
         function invertFrameContents(exceptFirst = false) {
             let m = getGridMetrics();
             if (!m) return;
             
             let useMirror = safeChecked('mirrorCheck', false);
             let showFrame = safeChecked('frameCheck', false);
-            let useRadar = safeChecked('radarCheck', false);
             let useFrameLimit = showFrame && STATE.manualFrame && STATE.manualFrame.isInitialized;
             let useHalfInvert = safeChecked('scannerHalfInvertCheck', false);
             
@@ -1632,13 +1781,15 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             }
 
             let drawX = m.baseX + STATE.manualFrame.x;
-            let drawW = STATE.manualFrame.w;
+            let drawW = STATE.manualFrame.w; // Исправлена опечатка (было m.manualFrame.w)
 
-            let invertedCount = 0;
             let totalRows = STATE.lines.length;
             let rowStart = STATE.manualFrame.rowStart;
             let rowSpan = STATE.manualFrame.rowSpan;
             let rowEnd = rowStart + rowSpan - 1;
+
+            // 1. Первый проход: сканируем рамку на наличие подчеркнутых (инвертированных) символов
+            let hasAnyUnderlined = false;
 
             for (let k = 0; k < rowSpan; k++) {
                 let idx = (rowStart + k) % totalRows;
@@ -1647,7 +1798,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 if (!lData) continue;
                 
                 let origChars = lData.orig.split('');
-                
                 let symMode = safeValue('symModeSelect', 'centerTrack');
                 let currentX = 0;
                 let isMatrixAxis = false;
@@ -1655,10 +1805,10 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 
                 let firstCharIdx = -1;
                 let lastCharIdx = -1;
-                for (let k = 0; k < lData.display.length; k++) {
-                    if (!lData.fillerMask[k] && lData.display[k] !== ' ' && lData.display[k] !== 'x' && lData.display[k] !== '.') {
-                        if (firstCharIdx === -1) firstCharIdx = k;
-                        lastCharIdx = k;
+                for (let j = 0; j < lData.display.length; j++) {
+                    if (!lData.fillerMask[j] && lData.display[j] !== ' ' && lData.display[j] !== 'x' && lData.display[j] !== '.') {
+                        if (firstCharIdx === -1) firstCharIdx = j;
+                        lastCharIdx = j;
                     }
                 }
 
@@ -1734,12 +1884,8 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     }
 
                     if (isInside) {
-                        // Ограничение инверсии только левой половиной рамки
-                        if (useHalfInvert && cellX > (drawX + drawW / 2)) {
-                            continue;
-                        }
+                        if (useHalfInvert && cellX > (drawX + drawW / 2)) continue;
                         let origIdx = -1;
-                        
                         if (isSpaced) {
                             let actualC = c;
                             if (idx % 2 !== 0) actualC = c - 1;
@@ -1747,25 +1893,19 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                                 let rawCol = actualC / 2;
                                 let p = rawCol + 1;
                                 let d_active = (p >= 1 + s_display && p <= lData.L + s_display);
-                                if (d_active) {
-                                    origIdx = p - s_display - 1;
-                                } else {
+                                if (d_active) origIdx = p - s_display - 1;
+                                else {
                                     let t_active = (p >= lData.L + 1 && p <= lData.cN * lData.L);
-                                    if (t_active) {
-                                        origIdx = ((p - lData.L - 1) % lData.L);
-                                    }
+                                    if (t_active) origIdx = ((p - lData.L - 1) % lData.L);
                                 }
                             }
                         } else {
                             let p = c + 1;
                             let d_active = (p >= 1 + s_display && p <= lData.L + s_display);
-                            if (d_active) {
-                                origIdx = p - s_display - 1;
-                            } else {
+                            if (d_active) origIdx = p - s_display - 1;
+                            else {
                                 let t_active = (p >= lData.L + 1 && p <= lData.cN * lData.L);
-                                if (t_active) {
-                                    origIdx = ((p - lData.L - 1) % lData.L);
-                                }
+                                if (t_active) origIdx = ((p - lData.L - 1) % lData.L);
                             }
                         }
 
@@ -1773,12 +1913,154 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                             if (safeChecked('cylinderCheck', false)) {
                                 origIdx = (origIdx + cylShift) % lData.L;
                             }
-                            
-                            if (exceptFirst && origIdx === 0) {
-                                continue;
-                            }
-                            
+                            if (exceptFirst && origIdx === 0) continue;
+
                             if (origIdx >= 0 && origIdx < origChars.length) {
+                                if (lData.invertMask && lData.invertMask[origIdx] === true) {
+                                    hasAnyUnderlined = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. Второй проход: выполняем инверсию
+            let invertedCount = 0;
+
+            for (let k = 0; k < rowSpan; k++) {
+                let idx = (rowStart + k) % totalRows;
+                let actualIdx = (m.startIndex + idx) % totalRows;
+                let lData = STATE.lines[actualIdx];
+                if (!lData) continue;
+                
+                let origChars = lData.orig.split('');
+                let symMode = safeValue('symModeSelect', 'centerTrack');
+                let currentX = 0;
+                let isMatrixAxis = false;
+                let liveCenterOffset = 0;
+
+                let firstCharIdx = -1;
+                let lastCharIdx = -1;
+                for (let j = 0; j < lData.display.length; j++) {
+                    if (!lData.fillerMask[j] && lData.display[j] !== ' ' && lData.display[j] !== 'x' && lData.display[j] !== '.') {
+                        if (firstCharIdx === -1) firstCharIdx = j;
+                        lastCharIdx = j;
+                    }
+                }
+
+                if (symMode === "centerTrack" || symMode === "centerTrack2") {
+                    isMatrixAxis = true;
+                    if (firstCharIdx !== -1) {
+                        let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
+                        let mathCenterIndex = (lData.display.length - 1) / 2.0;
+                        liveCenterOffset = (mathCenterIndex - liveCenterIndex) * m.charWidth;
+                    }
+                } else if (symMode === "centerBase") {
+                    let baseWidth = lData.L * m.charWidth;
+                    let isSpaced = safeChecked('spacedCheck', false);
+                    if (isSpaced) baseWidth *= 2;
+                    currentX = m.baseX - (baseWidth / 2);
+                } else {
+                    let fullWidth = lData.display.length * m.charWidth;
+                    currentX = m.baseX - (fullWidth / 2);
+                }
+
+                let s_display = 0;
+                let max_shift = lData.cycle - 1;
+                if (max_shift > 0) {
+                    if (safeChecked('rowPendulumCheck', false)) {
+                        let pend_cycle = max_shift * 2;
+                        let stp = Math.abs(lData.localStep) % pend_cycle;
+                        s_display = (stp <= max_shift) ? stp : pend_cycle - stp;
+                    } else {
+                        s_display = Math.abs(lData.localStep) % lData.cycle;
+                    }
+                }
+                let isReversedRow = STATE.isReverse;
+                if (safeChecked('meetCenterCheck', false) && (idx % 2 !== 0)) {
+                    isReversedRow = !isReversedRow;
+                }
+                if (isReversedRow) {
+                    s_display = max_shift - s_display;
+                    if (s_display < 0) s_display = 0;
+                }
+
+                let cylShift = safeChecked('cylinderCheck', false) ? (Math.abs(lData.localStep) % lData.L) : 0;
+                let isSpaced = safeChecked('spacedCheck', false);
+
+                for (let c = 0; c < lData.display.length; c++) {
+                    if (lData.fillerMask[c]) continue;
+                    
+                    let cellX = 0;
+                    if (isMatrixAxis) {
+                        let centerIndex = (lData.display.length - 1) / 2.0;
+                        cellX = m.baseX + ((c - centerIndex) * m.charWidth) + liveCenterOffset;
+                    } else {
+                        cellX = currentX + (c * m.charWidth) + (m.charWidth / 2);
+                    }
+
+                    let isInside = false;
+                    let fType = safeValue('frameTypeSelect', 'rect');
+                    if (fType === 'rhomb') {
+                        let centerY_row = (rowStart + rowEnd) / 2.0;
+                        let rowRadius = (rowEnd - rowStart) / 2.0 || 0.5;
+                        let centerX_frame = m.baseX + STATE.manualFrame.x + STATE.manualFrame.w / 2.0;
+                        let columnRadius = STATE.manualFrame.w / 2.0 || 1.0;
+                        let vDist = Math.abs(idx - centerY_row) / rowRadius;
+                        let hDist = Math.abs(cellX - centerX_frame) / columnRadius;
+                        isInside = (vDist + hDist <= 1.05);
+                    } else if (fType === 'sq_rhomb') {
+                        let centerY_row = Math.round((rowStart + rowEnd) / 2.0);
+                        let vDist_rows = Math.abs(idx - centerY_row);
+                        let radius_rows = Math.round((rowEnd - rowStart) / 2.0);
+                        let col_dist = Math.round(Math.abs(cellX - (m.baseX + STATE.manualFrame.x + STATE.manualFrame.w / 2.0)) / m.charWidth);
+                        isInside = (vDist_rows + col_dist <= radius_rows);
+                    } else {
+                        isInside = (cellX >= drawX && cellX <= drawX + drawW);
+                    }
+
+                    if (isInside) {
+                        if (useHalfInvert && cellX > (drawX + drawW / 2)) continue;
+                        let origIdx = -1;
+                        if (isSpaced) {
+                            let actualC = c;
+                            if (idx % 2 !== 0) actualC = c - 1;
+                            if (actualC % 2 === 0) {
+                                let rawCol = actualC / 2;
+                                let p = rawCol + 1;
+                                let d_active = (p >= 1 + s_display && p <= lData.L + s_display);
+                                if (d_active) origIdx = p - s_display - 1;
+                                else {
+                                    let t_active = (p >= lData.L + 1 && p <= lData.cN * lData.L);
+                                    if (t_active) origIdx = ((p - lData.L - 1) % lData.L);
+                                }
+                            }
+                        } else {
+                            let p = c + 1;
+                            let d_active = (p >= 1 + s_display && p <= lData.L + s_display);
+                            if (d_active) origIdx = p - s_display - 1;
+                            else {
+                                let t_active = (p >= lData.L + 1 && p <= lData.cN * lData.L);
+                                if (t_active) origIdx = ((p - lData.L - 1) % lData.L);
+                            }
+                        }
+
+                        if (origIdx !== -1) {
+                            if (safeChecked('cylinderCheck', false)) {
+                                origIdx = (origIdx + cylShift) % lData.L;
+                            }
+                            if (exceptFirst && origIdx === 0) continue;
+
+                            if (origIdx >= 0 && origIdx < origChars.length) {
+                                let isUnderlined = lData.invertMask && lData.invertMask[origIdx] === true;
+                                
+                                // Если есть подчеркнутые, инвертируем только их.
+                                // Если подчеркнутых нет, инвертируем всё.
+                                if (hasAnyUnderlined && !isUnderlined) {
+                                    continue; 
+                                }
+
                                 let char = origChars[origIdx];
                                 if (char === '1') origChars[origIdx] = '0';
                                 else if (char === '0') origChars[origIdx] = '1';
@@ -1801,7 +2083,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 }
                 
                 lData.orig = origChars.join('');
-                lData.template = lData.orig; // Сохраняем инверсию в постоянный шаблон, чтобы шаг 0 не сбрасывал изменения
+                lData.template = lData.orig; 
                 lData.firstOneIdx = lData.orig.search(/[1\\)\]>+]/);
             }
             
@@ -1821,6 +2103,10 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 
         safeBind('invertFrameBtn', 'click', () => invertFrameContents(false));
         safeBind('invertFrameExceptFirstBtn', 'click', () => invertFrameContents(true));
+        safeBind('manualCylinderShiftLeftBtn', 'click', () => manualCylinderShift(-1));
+        safeBind('manualCylinderShiftRightBtn', 'click', () => manualCylinderShift(1));
+        safeBind('manualElkaShiftLeftBtn', 'click', () => manualElkaShift(-1));
+        safeBind('manualElkaShiftRightBtn', 'click', () => manualElkaShift(1));
 
         safeBind('applyLinesBtn', 'click', () => {
             const rawText = safeValue('linesInput', '');
@@ -3937,6 +4223,178 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 cw: parseFloat(safeValue('cwSlider', 1.0)), interleaveAnalysis: safeChecked('interleaveAnalysisCheck', false), showRowNumbers: safeChecked('showRowNumbersCheck', true)
             };
             let code = btoa(encodeURIComponent(JSON.stringify(snapshot)));
+            const codeBox = document.getElementById('snapshotCodeBox');
+            if (codeBox) { codeBox.value = code; codeBox.select(); }
+            
+            try { navigator.clipboard.writeText(code); } catch(e) {}
+            
+            let d = new Date();
+            let dateStr = d.toLocaleDateString('ru-RU') + ', ' + d.toLocaleTimeString('ru-RU');
+            let fileContent = `ZERKALIUS GENESIS SNAPSHOT\nДата: ${dateStr}\nКадр (Шаг): ${STATE.globalStep}\n\n===== КОД ДЛЯ ИМПОРТА (Копировать всё ниже) =====\n${code}`;
+            
+            const blob = new Blob([fileContent], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.download = `Zerkalius_Save_${d.toISOString().replace(/[:.]/g, '-')}.txt`;
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+
+            let xmlWorkbook = `<?xml version="1.0" encoding="utf-8"?>
+            <?mso-application progid="Excel.Sheet"?>
+            <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+             xmlns:o="urn:schemas-microsoft-com:office:office"
+             xmlns:x="urn:schemas-microsoft-com:office:excel"
+             xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+             xmlns:html="http://www.w3.org/TR/REC-html40">
+             <Styles>
+              <Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Borders/><Font ss:FontName="Segoe UI" ss:Size="10" ss:Color="#000000"/><Interior/><NumberFormat/><Protection/></Style>
+              <Style ss:ID="Header"><Font ss:FontName="Segoe UI" ss:Bold="1" ss:Color="#00FF66" ss:Size="10"/><Interior ss:Color="#111111" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="DisplayCell"><Font ss:FontName="Consolas" ss:Color="#00CCFF" ss:Bold="1" ss:Size="10"/><Interior ss:Color="#050505" ss:Pattern="Solid"/><Alignment ss:Horizontal="Left" ss:Vertical="Center"/></Style>
+              <Style ss:ID="OrigCell"><Font ss:FontName="Consolas" ss:Color="#BFFF00" ss:Size="10"/><Alignment ss:Horizontal="Left" ss:Vertical="Center"/></Style>
+              <Style ss:ID="ActiveYes"><Interior ss:Color="#E2F9E9" ss:Pattern="Solid"/><Font ss:FontName="Segoe UI" ss:Color="#00AA44" ss:Bold="1"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="ActiveNo"><Interior ss:Color="#FCE8E6" ss:Pattern="Solid"/><Font ss:FontName="Segoe UI" ss:Color="#CC0000" ss:Size="10"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="NumCell"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/></Style>
+              <Style ss:ID="C_Empty"><Font ss:FontName="Consolas" ss:Size="8" ss:Color="#050505"/><Interior ss:Color="#050505" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="C_Filler"><Font ss:FontName="Consolas" ss:Size="8" ss:Color="#333333"/><Interior ss:Color="#050505" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="C_Type1"><Font ss:FontName="Consolas" ss:Bold="1" ss:Size="8" ss:Color="#FFFFFF"/><Interior ss:Color="#111111" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="C_Type0"><Font ss:FontName="Consolas" ss:Size="8" ss:Color="#00FF66"/><Interior ss:Color="#111111" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="C_Hl"><Font ss:FontName="Consolas" ss:Bold="1" ss:Size="8" ss:Color="#000000"/><Interior ss:Color="#BFFF00" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="C_VertHl"><Font ss:FontName="Consolas" ss:Bold="1" ss:Size="8" ss:Color="#000000"/><Interior ss:Color="#00CCFF" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="C_Red"><Font ss:FontName="Consolas" ss:Bold="1" ss:Size="8" ss:Color="#FFFFFF"/><Interior ss:Color="#FF3333" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="BW_Empty"><Font ss:FontName="Consolas" ss:Size="8" ss:Color="#000000"/><Interior ss:Color="#000000" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="BW_Type1"><Font ss:FontName="Consolas" ss:Bold="1" ss:Size="8" ss:Color="#FFFFFF"/><Interior ss:Color="#000000" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="BW_Type0"><Font ss:FontName="Consolas" ss:Size="8" ss:Color="#555555"/><Interior ss:Color="#000000" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="BW_Hl"><Font ss:FontName="Consolas" ss:Bold="1" ss:Size="8" ss:Color="#000000"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+             </Styles>
+             <Worksheet ss:Name="Сводка">
+              <Table><Column ss:Width="100"/><Column ss:Width="200"/><Column ss:Width="80"/><Column ss:Width="100"/><Column ss:Width="80"/><Column ss:Width="250"/><Column ss:Width="100"/><Column ss:Width="80"/>
+               <Row ss:Height="22">
+                <Cell ss:StyleID="Header"><Data ss:Type="String">Индекс строки</Data></Cell>
+                <Cell ss:StyleID="Header"><Data ss:Type="String">Оригинальный текст</Data></Cell>
+                <Cell ss:StyleID="Header"><Data ss:Type="String">Длина (L)</Data></Cell>
+                <Cell ss:StyleID="Header"><Data ss:Type="String">Множитель (cN)</Data></Cell>
+                <Cell ss:StyleID="Header"><Data ss:Type="String">Цикл</Data></Cell>
+                <Cell ss:StyleID="Header"><Data ss:Type="String">Текущий вид (Display)</Data></Cell>
+                <Cell ss:StyleID="Header"><Data ss:Type="String">Сдвиг (localStep)</Data></Cell>
+                <Cell ss:StyleID="Header"><Data ss:Type="String">Активна</Data></Cell>
+               </Row>`;
+
+            STATE.lines.forEach((line, idx) => {
+                let activeStyle = line.isActive ? "ActiveYes" : "ActiveNo";
+                let activeText = line.isActive ? "ДА" : "НЕТ";
+                xmlWorkbook += `<Row ss:Height="18"><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${idx + 1}</Data></Cell><Cell ss:StyleID="OrigCell"><Data ss:Type="String">${line.orig}</Data></Cell><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${line.L}</Data></Cell><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${line.cN}</Data></Cell><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${line.cycle}</Data></Cell><Cell ss:StyleID="DisplayCell"><Data ss:Type="String">${line.display}</Data></Cell><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${line.localStep}</Data></Cell><Cell ss:StyleID="${activeStyle}"><Data ss:Type="String">${activeText}</Data></Cell></Row>`;
+            });
+
+            xmlWorkbook += `</Table></Worksheet>`;
+
+            let maxCols = 0;
+            STATE.lines.forEach(line => { if (line.display.length > maxCols) maxCols = line.display.length; });
+
+            xmlWorkbook += `<Worksheet ss:Name="Цветной холст"><Table>`;
+            for (let c = 0; c < maxCols; c++) xmlWorkbook += `<Column ss:Width="20"/>`;
+
+            STATE.lines.forEach((line) => {
+                xmlWorkbook += `<Row ss:Height="18">`;
+                for (let c = 0; c < line.display.length; c++) {
+                    let char = line.display[c] || ' ';
+                    let style = "C_Empty";
+
+                    if (line.fillerMask && line.fillerMask[c]) {
+                        style = "C_Filler";
+                    } else if (char !== ' ' && char !== '') {
+                        let isHl = line.highlightMask && line.highlightMask[c];
+                        let isRed = line.redMask && line.redMask[c];
+                        let isVertHl = line.verticalHighlightMask && line.verticalHighlightMask[c];
+
+                        if (isRed) style = "C_Red";
+                        else if (isVertHl) style = "C_VertHl";
+                        else if (isHl) style = "C_Hl";
+                        else if (isType1(char)) style = "C_Type1";
+                        else if (isType0(char)) style = "C_Type0";
+                    }
+                    let safeChar = char.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    xmlWorkbook += `<Cell ss:StyleID="${style}"><Data ss:Type="String">${safeChar}</Data></Cell>`;
+                }
+                xmlWorkbook += `</Row>`;
+            });
+            xmlWorkbook += `</Table></Worksheet>`;
+
+            xmlWorkbook += `<Worksheet ss:Name="ЧБ холст"><Table>`;
+            for (let c = 0; c < maxCols; c++) xmlWorkbook += `<Column ss:Width="20"/>`;
+
+            STATE.lines.forEach((line) => {
+                xmlWorkbook += `<Row ss:Height="18">`;
+                for (let c = 0; c < line.display.length; c++) {
+                    let char = line.display[c] || ' ';
+                    let style = "BW_Empty";
+
+                    if (line.fillerMask && line.fillerMask[c]) {
+                        style = "BW_Empty";
+                    } else if (char !== ' ' && char !== '') {
+                        let isHl = line.highlightMask && line.highlightMask[c];
+                        if (isHl) style = "BW_Hl";
+                        else if (isType1(char)) style = "BW_Type1";
+                        else if (isType0(char)) style = "BW_Type0";
+                    }
+                    let safeChar = char.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    xmlWorkbook += `<Cell ss:StyleID="${style}"><Data ss:Type="String">${safeChar}</Data></Cell>`;
+                }
+                xmlWorkbook += `</Row>`;
+            });
+            xmlWorkbook += `</Table></Worksheet></Workbook>`;
+
+            const xlsBlob = new Blob([xmlWorkbook], { type: 'text/xml' });
+            const xlsLink = document.createElement('a');
+            xlsLink.download = `Zerkalius_Save_${d.toISOString().replace(/[:.]/g, '-')}.xml`;
+            xlsLink.href = URL.createObjectURL(xlsBlob);
+            xlsLink.click();
+            URL.revokeObjectURL(xlsLink.href);
+        });
+
+        safeBind('photoBtn', 'click', () => {
+            const canvas = document.getElementById('screenCanvas');
+            if(!canvas) return;
+            
+            let activeLinesIndices = [];
+            let localSteps = [];
+            STATE.lines.forEach((l, idx) => { 
+                if(l.isActive) activeLinesIndices.push(idx); 
+                localSteps.push(l.localStep);
+            });
+            let snapshot = {
+                step: STATE.globalStep, rows: STATE.lines.map(l => l.orig), active: activeLinesIndices,
+                localSteps: localSteps, patterns: Array.from(STATE.foundPatterns),
+                patternsMetadata: Object.fromEntries(STATE.foundPatternsMetadata),
+                currentTargetPatternIdx: STATE.currentTargetPatternIdx, lastFindMethod: STATE.lastFindMethod,
+                nFactor: getNFactor(), preset: safeValue('presetSelect', 'matrix'),
+                speed: parseInt(safeValue('speedSlider', 950)), turbo: parseInt(safeValue('turboSlider', 1)),
+                size: parseInt(safeValue('fontSlider', 16)), radar: safeChecked('radarCheck', false),
+                elka: safeChecked('elkaCheck', false), cylinder: safeChecked('cylinderCheck', false),
+                loop: safeChecked('loopCheck', false), pingPong: safeChecked('pingPongCheck', false),
+                meetCenter: safeChecked('meetCenterCheck', false), spaced: safeChecked('spacedCheck', false),
+                phaseShift: safeChecked('phaseShiftCheck', true), drumMode: safeChecked('drumModeCheck', false),
+                drumRadius: parseInt(safeValue('drumRadius', 5)), fillX: safeChecked('fillXCheck', false),
+                globalSearch: safeChecked('globalSearchCheck', false), verticalSearch: safeChecked('verticalSearchCheck', false),
+                funnel: safeChecked('funnelCheck', false), mirror: safeChecked('mirrorCheck', false),
+                balance: safeChecked('balanceCheck', false), cascadeOnBalance: safeChecked('cascadeOnBalanceCheck', false),
+                pauseOnBalance: safeChecked('pauseOnBalanceCheck', false), keepPhaseOnCascade: safeChecked('keepPhaseOnCascadeCheck', false),
+                ignoreFirstPatternChar: safeChecked('ignoreFirstPatternCharCheck', true), ignoreLastPatternChar: safeChecked('ignoreLastPatternCharCheck', false),
+                gridColor: safeValue('gridColorInput', '#00ff66'), gridAlpha: parseFloat(safeValue('gridAlpha', 0.2)),
+                autoCascade: safeChecked('autoCascadeCheck', true), hideChanged: safeChecked('hideChangedCheck', false),
+                hideUnchanged: safeChecked('hideUnchangedCheck', false), conglomerate: safeChecked('conglomerateCheck', false),
+                deltaN: parseInt(safeValue('deltaNInput', 1)), redFirstOneCheck: safeChecked('redFirstOneCheck', true),
+                tracerColor: safeValue('tracerColor', '#ff3333'), foundPatternColor: safeValue('foundPatternColor', '#bfff00'),
+                sequentialSearch: safeChecked('sequentialSearchCheck', true), symCenter: safeChecked('symModeSelect', true),
+                oscXCheck: safeChecked('oscXCheck', false), oscYCheck: safeChecked('oscYCheck', false),
+                oscXLeft: parseInt(safeValue('oscXLeft', 50)), oscXRight: parseInt(safeValue('oscXRight', 50)),
+                oscXStep: parseInt(safeValue('oscXStep', 1)), oscYUp: parseInt(safeValue('oscYUp', 50)),
+                oscYDown: parseInt(safeValue('oscYDown', 50)), oscYStep: parseInt(safeValue('oscYStep', 1)),
+                loopStart: parseInt(safeValue('loopStart', 0)), loopEnd: parseInt(safeValue('loopEnd', 100)),
+                banks: STATE.banks, activeBankIndex: STATE.activeBankIndex,
+                manualFrame: STATE.manualFrame, sierpRule: safeValue('sierpRule', 'shift'),
+                cw: parseFloat(safeValue('cwSlider', 1.0)), interleaveAnalysis: safeChecked('interleaveAnalysisCheck', false), showRowNumbers: safeChecked('showRowNumbersCheck', true)
+            };
+            let code = btoa(encodeURIComponent(JSON.stringify(snapshot)));
             
             canvas.toBlob(function(blob) {
                 const codeBlob = new Blob(["|||ZERK_STATE|||" + code], {type: 'text/plain'});
@@ -4227,12 +4685,12 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             });
             STATE.linesModifiedSinceLastInit = false;
             if (STATE.manualFrame) {
-                STATE.manualFrame.isInitialized = true;
+                STATE.manualFrame.isInitialized = false;
                 STATE.manualFrame.rowStart = 0;
                 STATE.manualFrame.rowSpan = 1;
                 STATE.manualFrame.y = 0;
-                let m = getGridMetrics();
-                if(m) STATE.manualFrame.h = m.lineHeight;
+                STATE.manualFrame.h = undefined;
+                STATE.manualFrame.w = undefined;
             }
             updatePatternBackdrop(); updateLogic(); showNotification("СБРОС"); 
         });
@@ -4263,12 +4721,12 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             });
             STATE.linesModifiedSinceLastInit = false;
             if (STATE.manualFrame) {
-                STATE.manualFrame.isInitialized = true;
+                STATE.manualFrame.isInitialized = false;
                 STATE.manualFrame.rowStart = 0;
                 STATE.manualFrame.rowSpan = 1;
                 STATE.manualFrame.y = 0;
-                let m = getGridMetrics();
-                if(m) STATE.manualFrame.h = m.lineHeight;
+                STATE.manualFrame.h = undefined;
+                STATE.manualFrame.w = undefined;
             }
             updatePatternBackdrop(); updateLogic(); showNotification("ПАМЯТЬ СБРОШЕНА"); 
         });
@@ -4606,6 +5064,23 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     let isCandidateRow = (actualIndex === lastActiveIdx_global + 1);
                     ctx.globalAlpha = isCandidateRow ? 1.0 : ((!lineData.isActive && applyFilter) ? 0.25 : 1.0);
 
+                    // Отрисовка номеров строк с левого края холста
+                    if (safeChecked('showRowNumbersCheck', true)) {
+                        ctx.save();
+                        ctx.font = '11px Consolas, monospace';
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillStyle = lineData.isActive ? '#00ff66' : '#888888'; // Гораздо более яркие и читаемые цвета
+                        
+                        let isMin = document.querySelector('.controls').classList.contains('minimized') || document.body.classList.contains('zen-mode');
+                        let edgeX = isMin ? 15 : 335;
+                        
+                        yPositions.forEach(y => {
+                            ctx.fillText(lineData.origIndex + 1, edgeX, y);
+                        });
+                        ctx.restore();
+                    }
+
                     yPositions.forEach(y => {
                         let symMode = safeValue('symModeSelect', 'centerTrack');
                         let currentX = 0; let isMatrixAxis = false; let liveCenterOffset = 0;
@@ -4645,7 +5120,22 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                                 if (char === '.') ctx.fillStyle = '#555';
                                 else ctx.fillStyle = isHl ? hlColor : (isType1(char) ? c1 : c0);
                             }
-                            ctx.textAlign = 'center'; ctx.fillText(char, cellX, y); ctx.restore();
+                            ctx.textAlign = 'center'; ctx.fillText(char, cellX, y);
+                            
+                            if (lineData.underlinedMask && lineData.underlinedMask[c] && char !== ' ' && char !== '.') {
+                                ctx.save();
+                                ctx.strokeStyle = ctx.fillStyle;
+                                ctx.lineWidth = 2; // Более плотная линия
+                                ctx.beginPath();
+                                let fs = parseInt(safeValue('fontSlider', 16));
+                                let underlineY = y + fs / 2 - 1; // Идеальная привязка к символу
+                                ctx.moveTo(cellX - m.charWidth / 2 + 1, underlineY);
+                                ctx.lineTo(cellX + m.charWidth / 2 - 1, underlineY);
+                                ctx.stroke();
+                                ctx.restore();
+                            }
+                            
+                            ctx.restore();
                         }
                     });
                 }
@@ -4728,6 +5218,19 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             // Рендер рамки, её неона и крупных боковых счётчиков
             if (showFrame && !useRadar && lastActiveIdx_global !== -1) {
                 ctx.save();
+
+                // Авто-инициализация размеров рамки по первой строке (1 строка), чтобы сдвиги работали сразу
+                if (STATE.manualFrame.h === undefined || STATE.manualFrame.w === undefined || !STATE.manualFrame.isInitialized) {
+                    STATE.manualFrame.rowStart = 0;
+                    STATE.manualFrame.rowSpan = 1; // Рамка изначально охватывает ровно 1 строку
+                    STATE.manualFrame.y = 0;
+                    STATE.manualFrame.h = m.lineHeight;
+                    
+                    let firstRowLen = (STATE.lines[0] && STATE.lines[0].display) ? STATE.lines[0].display.length : 1;
+                    STATE.manualFrame.w = firstRowLen * m.charWidth + 24;
+                    STATE.manualFrame.x = -STATE.manualFrame.w / 2;
+                    STATE.manualFrame.isInitialized = true;
+                }
 
                 let maxLenInFrame = 0;
                 let totalRows = STATE.lines.length;
