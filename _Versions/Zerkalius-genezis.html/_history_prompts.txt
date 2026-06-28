@@ -1,0 +1,931 @@
+﻿
+============================================================
+⏱ Версия: v_0141 | Дата: 27-06-2026_03-04-49
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-genezis.html.
+
+REPLACE_BLOCK: <!-- === МАРКЕР 05: ЗАГОЛОВОК НАЧАЛО === -->
+<div id="mainTitle">Zerkalius: Genesis (v0.162 Golden Master)</div>
+END_BLOCK: <!-- === МАРКЕР 06: ЗАГОЛОВОК КОНЕЦ === -->
+
+REPLACE_BLOCK: <!-- === МАРКЕР 07: ЛЕВАЯ ПАНЕЛЬ === -->
+    <div class="controls" onclick="event.stopPropagation();">
+        <div class="controls-content">
+
+        <details class="control-group" open>
+            <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">💾 СИСТЕМНЫЕ ФУНКЦИИ</summary>
+            <div style="display:flex; gap:4px; margin-top: 4px;">
+                    <button id="exportCodeBtn" class="btn-action" style="flex:1;">Экспорт</button>
+                    <button id="importCodeBtn" class="btn-action" style="flex:1;">Импорт</button>
+                    <input type="file" id="importFileLoader" accept=".txt,.png,.js" style="display:none;">
+                <button id="photoBtn" class="btn-action" style="flex:1; background:#00ccff; color:#000; border-color:#00ccff;">📸 ФОТО</button>
+            </div>
+            <textarea id="snapshotCodeBox" placeholder="Код снимка" style="margin-top:3px; height: 35px; font-size:9px;"></textarea>
+        </details>
+
+        <details class="control-group" open>
+            <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">📝 НАБОРЫ СТРОК (СЛОТЫ)</summary>
+            <button id="exportBanksDataBtn" class="btn-action" style="margin-top:4px; margin-bottom:4px; border-color:#00ff66; color:#00ff66; font-size:9.5px; height:22px;" title="Экспортировать все 3 слота вместе с их паттернами в файл banks_data.js">💾 Экспорт в banks_data.js</button>
+            <div style="display: flex; gap: 4px; margin-bottom: 4px;">
+                <button id="bankBtn0" class="bank-btn active" onclick="switchBank(0, false)" ondblclick="restoreOriginalBank(0)" title="Клик: Просмотр. Двойной клик: Сброс к исходнику">Слот 1</button>
+                <button id="bankBtn1" class="bank-btn" onclick="switchBank(1, false)" ondblclick="restoreOriginalBank(1)" title="Клик: Просмотр. Двойной клик: Сброс к исходнику">Слот 2</button>
+                <button id="bankBtn2" class="bank-btn" onclick="switchBank(2, false)" ondblclick="restoreOriginalBank(2)" title="Клик: Просмотр. Двойной клик: Сброс к исходнику">Слот 3</button>
+                <button id="applyLinesBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; font-weight:bold; background:#00ccff; color:#000; border-color:#00ccff;" title="Загрузить текущий текст из слота на холст">На холст</button>
+            </div>
+            <div style="display: flex; gap: 4px; margin-bottom: 2px;">
+                <button id="alignLeftBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; border-color:#888; color:#fff;" title="Выровнять всё по левому краю (добавить точки)">⬅️ Лев</button>
+                <button id="alignCenterBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; border-color:#888; color:#fff;" title="Выровнять всё по центру (добавить точки)">⏺ Центр</button>
+                <button id="alignRightBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; border-color:#888; color:#fff;" title="Выровнять всё по правому краю (добавить точки)">Прав ➡️</button>
+            </div>
+            <textarea id="linesInput" placeholder="Введите символы (Двойной клик = Вставка)" style="height: 60px; color:#bfff00; margin-top:2px;"></textarea>
+            
+            <div style="display: flex; align-items: center; justify-content: space-between; background: #111; padding: 4px; border-radius: 3px; margin-top: 4px;">
+                <input type="text" id="repA1" value="1" style="width: 25px;"> ➔ <input type="text" id="repB1" value="\" style="width: 25px; color:#00ff66;">
+                <span style="color:#444;">|</span>
+                <input type="text" id="repA2" value="0" style="width: 25px;"> ➔ <input type="text" id="repB2" value="/" style="width: 25px; color:#00ff66;">
+                <button id="toggleReplaceBtn" class="btn-action" style="width: 30px; margin: 0; padding: 2px 0;">🔄</button>
+            </div>
+        </details>
+
+        <details class="control-group" open>
+            <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">📐 ГЕНЕРАТОР СЕРПИНСКОГО</summary>
+            <select id="sierpRule" style="margin-bottom: 5px; margin-top: 4px; background: #222; color: #fff; border: 1px solid #444; padding: 2px; border-radius: 3px; width: 100%; font-size: 11px;">
+                <option value="shift">Форма: Сдвиг (Кирпичная кладка)</option>
+                <option value="center">Форма: Центр (Симметричная пирамида)</option>
+                <option value="xorora">Форма: XorRora Маятник</option>
+            </select>
+            <div style="display:flex; gap:5px; margin-bottom: 1px;">
+                <span class="lbl" id="sierpSeedLbl" style="flex:1; text-align:center; font-size:9px; color:#888;">Сид</span>
+                <span class="lbl" id="sierpRowsLbl" style="flex:1; text-align:center; font-size:9px; color:#888;">Строки</span>
+                <span style="flex:2;"></span>
+            </div>
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <input type="text" id="sierpSeed" value="1" title="Сид" style="flex:1;">
+                <input type="number" id="sierpRows" value="128" title="Строки" style="flex:1;">
+                <button id="sierpBtn" class="btn-action" style="flex:2; margin:0; color:#00ff66; border-color:#00ff66;">Сгенерировать</button>
+            </div>
+        </details>
+
+        <details class="control-group">
+            <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">🎨 ОФОРМЛЕНИЕ И ЦВЕТА</summary>
+            <select id="fontSelect" style="margin-top: 4px;">
+                <option value="'Consolas', monospace">Шрифт: Consolas</option>
+                <option value="'Roboto Mono', monospace">Шрифт: Roboto Mono</option>
+                <option value="monospace">Шрифт: Моноширинный</option>
+                <option value="'Courier New', Courier, monospace">Шрифт: Courier New</option>
+            </select>
+
+            <select id="presetSelect" style="margin-bottom: 5px;">
+                <option value="matrix">Пресет: Матрица</option>
+                <option value="cyber">Пресет: Киберпанк</option>
+                <option value="blood">Пресет: Кровавый</option>
+                <option value="synthwave">Пресет: Synthwave</option>
+                <option value="zerkalius">Пресет: Zerkalius</option>
+                <option value="bw">Пресет: ЧБ</option>
+            </select>
+
+            <div class="color-row">
+                <span class="lbl" style="width:40px;">Текст1:</span> <input type="color" id="color1" value="#ffffff"> <input type="range" id="alpha1" min="0.1" max="1" step="0.1" value="1" style="width:60px;">
+                <span class="lbl" style="width:40px;">Текст0:</span> <input type="color" id="color0" value="#00ff66"> <input type="range" id="alpha0" min="0.1" max="1" step="0.1" value="0.5" style="width:60px;">
+            </div>
+
+            <div class="color-row">
+                <span class="lbl" style="width:40px;">Фон:</span> <input type="color" id="bgColor" value="#050505">
+            </div>
+            <label style="display:flex; align-items:center; margin-top:4px;">
+                <input type="checkbox" id="showRowNumbersCheck" checked> <span class="lbl">Показывать номера строк</span>
+            </label>
+        </details>
+
+        <details class="control-group" open>
+            <summary style="font-weight:bold; color:#cc33ff; margin-bottom: 4px;">⚙️ МОДИФИКАТОРЫ ДВИЖЕНИЯ</summary>
+            <div style="margin-top: 4px; margin-bottom: 2px;" class="row-between">
+                <span class="lbl">Множитель длины (N): <span class="val" id="nFactorVal">1</span></span>
+            </div>
+            <input type="range" id="nFactor" min="1" max="11" value="1">
+
+            <div style="margin-top: 3px; margin-bottom: 3px;">
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack">💠 Режим: Центр</option>
+                    <option value="centerTrack2" selected>💠 Режим: Идеальный Центр</option>
+                </select>
+            </div>
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="phaseShiftCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">Фазовый сдвиг (+1 к циклу)</span>
+            </label>
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="rowPendulumCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">🔁 Маятник внутри строки (A-B-A)</span>
+            </label>
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="meetCenterCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">↔️ Встречное движение</span>
+            </label>
+            
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="fillXCheck"> <span class="lbl" style="color:#aaa; font-weight:bold;">Заполнять пустоты 'x' (Рентген)</span>
+            </label>
+            
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="trailCheck"> <span class="lbl" style="color:#00ff66; font-weight:bold;">👣 Оставлять след (Шлейф)</span>
+            </label>
+
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="spacedCheck"> <span class="lbl" style="color:#bfff00; font-weight:bold;">⚙️ Разрядка (Шестеренки)</span>
+            </label>
+
+            <!-- БЛОК СЛИЯНИЯ СТРОК (НАЕЗД) -->
+            <div style="background: #111; padding: 4px; border-radius: 3px; margin-top: 3.5px; border-left: 2px solid #ff3333;">
+                <label style="display:flex; align-items:center; margin-bottom: 2px;">
+                    <input type="checkbox" id="naezdCheck"> <span class="lbl" style="color:#ff3333; font-weight:bold;">🛸 Наезд (Слияние строк)</span>
+                </label>
+                <select id="naezdModeSelect" style="background:#000; color:#fff; border:1px solid #444; font-size:10px; width:100%; margin-top:2px;">
+                    <option value="widen" selected>Вариант 1: Раздвигать строку</option>
+                    <option value="skip">Вариант 2: Пропуск на след. строку</option>
+                </select>
+                <label style="display:flex; align-items:center; margin-top:3.5px;">
+                    <input type="checkbox" id="naezdSaveCheck"> <span class="lbl" style="color:#00ff66; font-weight:bold;">💾 Накапливать изменения (Сохранять)</span>
+                </label>
+            </div>
+
+            <div style="background: #111; padding: 4px; border-radius: 3px; margin-top: 3px; border-left: 2px solid #bfff00;">
+                <label style="display:flex; align-items:center;">
+                    <input type="checkbox" id="drumModeCheck"> <span class="lbl" style="color:#fff; font-weight:bold;">🥁 Режим Барабан (Сетка)</span>
+                </label>
+                <div style="display:flex; gap:2px; align-items:center; margin-top: 2px;">
+                    <span class="lbl">Радиус:</span>
+                    <input type="range" id="drumRadius" min="0" max="50" value="5" style="flex:1;">
+                    <span class="val" id="drumRadiusVal" style="width:20px;">5</span>
+                </div>
+            </div>
+
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:3px;">
+                <label style="display:flex; align-items:center;">
+                    <input type="checkbox" id="redFirstOneCheck" checked> <span class="lbl" style="color:#ff3333; font-weight:bold;">🎯 Трассер 1-го символа</span>
+                </label>
+                <input type="color" id="tracerColor" value="#ff3333" style="width:15px; height:15px; padding:0; border:none; cursor:pointer;">
+            </div>
+
+            <!-- ДЕЛЬТА РЕНТГЕН -->
+            <div style="background: #111; padding: 4px; border-radius: 3px; margin-top: 3px; border-left: 2px solid #00ccff;">
+                <div style="display:flex; gap:2px; align-items:center; margin-bottom: 2px;">
+                    <span class="lbl" style="color:#00ccff; font-weight:bold;">Анализ Дельты:</span>
+                    <span class="lbl" style="margin-left:auto;">Кадр -</span>
+                    <input type="number" id="deltaNInput" value="1" style="width: 35px; height: 16px;">
+                </div>
+                <label style="display:flex; align-items:center; margin-bottom:2px;">
+                    <input type="checkbox" id="hideChangedCheck"> <span class="lbl" style="color:#ff3333;">Скрыть меняющиеся символы</span>
+                </label>
+                <label style="display:flex; align-items:center;">
+                    <input type="checkbox" id="hideUnchangedCheck"> <span class="lbl" style="color:#aaa;">Скрыть НЕменяющиеся символы</span>
+                </label>
+            </div>
+
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="conglomerateCheck"> <span class="lbl" style="color:#ff00ff; font-weight:bold;">🧩 Конгломераты (≥ 3)</span>
+            </label>
+            <label style="display:flex; align-items:center; margin-top:3px; padding-left:15px;">
+                <input type="checkbox" id="stableConglomCheck"> <span class="lbl" style="color:#cc66ff;">Фиксация цветов (Без мерцания)</span>
+            </label>
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="neonCheck"> <span class="lbl">✨ Свечение (Neon)</span>
+            </label>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:3px; width:100%;">
+                <label style="display:flex; align-items:center; margin:0;">
+                    <input type="checkbox" id="funnelCheck"> <span class="lbl" style="color:#00ffcc; font-weight:bold;">🕸️ Режим Воронка (Сетка)</span>
+                </label>
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <input type="color" id="gridColorInput" value="#00ff66" style="width:15px; height:15px; padding:0; border:none; cursor:pointer;" title="Цвет сетки">
+                    <input type="range" id="gridAlpha" min="0.1" max="1.0" step="0.1" value="0.4" style="width:50px; margin:0;" title="Прозрачность сетки">
+                </div>
+            </div>
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="mirrorCheck"> <span class="lbl" style="color:#cc33ff; font-weight:bold;">↕️ Вертикальное зеркало</span>
+            </label>
+            <div style="background: #111; padding: 4px; border-radius: 3px; margin-top: 3px; border-left: 2px solid #00ccff; display: flex; align-items: center; justify-content: space-between;">
+                <span class="lbl" style="color:#00ccff;">Шаг поворота Радара:</span>
+                <input type="number" id="radarRotateSnapInput" value="1" min="1" max="100" style="width: 40px; height: 18px;">
+            </div>
+            <div style="background: #111; padding: 4px; border-radius: 3px; margin-top: 3.5px; border-left: 2px solid #00ffcc;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2px;">
+                    <label style="display:flex; align-items:center; margin:0;">
+                        <input type="checkbox" id="waveAnalysisCheck"> <span class="lbl" style="color:#00ffcc; font-weight:bold;">🔊 Стоячая волна (Анализ)</span>
+                    </label>
+                    <div style="display:flex; align-items:center; gap:2px;">
+                        <span class="lbl" style="font-size:9px;">Такт:</span>
+                        <input type="number" id="waveHistoryInput" value="32" min="2" max="500" style="width:30px; height:15px; font-size:9px; padding:1px; text-align:center; background:#000; color:#fff; border:1px solid #444; border-radius:2px;">
+                    </div>
+                </div>
+                <label style="display:flex; align-items:center; padding-left:15px;">
+                    <input type="checkbox" id="hideBlinkingCheck"> <span class="lbl" style="color:#aaa;">Скрыть мигающие символы</span>
+                </label>
+            </div>
+        </details>
+
+        <details class="control-group" style="margin-bottom: auto; border-bottom: none;">
+            <summary style="font-weight:bold; color:#ff00ff; margin-bottom: 4px;">🚀 АВТО-СДВИГ ХОЛСТА (XY)</summary>
+            <div style="background: #111; padding: 4px; border-radius: 3px; margin-top: 3px; margin-bottom: 3px;">
+                <label style="display:flex; align-items:center; margin-bottom:2px;">
+                    <input type="checkbox" id="oscXCheck"> <span class="lbl" style="color:#fff;">Сдвиг X (Пинг-Понг)</span>
+                </label>
+                <div style="display:flex; gap:2px; align-items:center;">
+                    <span class="lbl">Лев:</span><input type="number" id="oscXLeft" value="50">
+                    <span class="lbl">Прав:</span><input type="number" id="oscXRight" value="50">
+                    <span class="lbl">Шаг:</span><input type="number" id="oscXStep" value="1">
+                </div>
+            </div>
+
+            <div style="background: #111; padding: 4px; border-radius: 3px;">
+                <label style="display:flex; align-items:center; margin-bottom:2px;">
+                    <input type="checkbox" id="oscYCheck"> <span class="lbl" style="color:#fff;">Сдвиг Y (Пинг-Понг)</span>
+                </label>
+                <div style="display:flex; gap:2px; align-items:center;">
+                    <span class="lbl">Верх:</span><input type="number" id="oscYUp" value="50">
+                    <span class="lbl">Низ:</span><input type="number" id="oscYDown" value="50">
+                    <span class="lbl">Шаг:</span><input type="number" id="oscYStep" value="1">
+                </div>
+            </div>
+
+            <div style="background: #222; padding: 4px; border-radius: 3px; margin-top: 4px;">
+                <div class="row-between" style="margin-bottom: 3px;">
+                    <label style="display:flex; align-items:center;">
+                        <input type="checkbox" id="loopCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">A-B Повтор</span>
+                    </label>
+                    <label style="display:flex; align-items:center;">
+                        <input type="checkbox" id="pingPongCheck"> <span class="lbl" style="color:#bfff00; font-weight:bold;">Пинг-Понг</span>
+                    </label>
+                </div>
+                <div style="display:flex; gap:2px; align-items:center; justify-content: space-between;">
+                    <span class="lbl">A:</span><input type="number" id="loopStart" value="0" style="width: 45px;">
+                    <span class="lbl">B:</span><input type="number" id="loopEnd" value="100" style="width: 45px;">
+                </div>
+            </div>
+        </details>
+        </div>
+    <div class="controls-title vertical-title" ondblclick="this.parentNode.classList.toggle('minimized'); event.stopPropagation();" style="writing-mode:vertical-lr; text-orientation:mixed; transform:rotate(180deg); display:flex; align-items:center; justify-content:center; background:#111; color:#00ff66; font-size:10px; font-weight:bold; padding:8px 4px; cursor:pointer; user-select:none; border-left:1px solid #333; box-sizing:border-box; min-width:34px; text-align:center;" title="Двойной клик: Свернуть/Развернуть">🛠️ СИСТЕМНАЯ ПАНЕЛЬ</div>
+</div>
+END_BLOCK: <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
+
+REPLACE_BLOCK: <!-- === МАРКЕР 38: ЭКСПОРТ И ИМПОРТ КОДА === -->
+        safeBind('exportCodeBtn', 'click', () => {
+            let snapshot = window.createSnapshotObject ? window.createSnapshotObject() : {};
+            let code = btoa(encodeURIComponent(JSON.stringify(snapshot)));
+            const codeBox = document.getElementById('snapshotCodeBox');
+            if (codeBox) { codeBox.value = code; codeBox.select(); }
+            
+            try { navigator.clipboard.writeText(code); } catch(e) {}
+            
+            let d = new Date();
+            let dateStr = d.toLocaleDateString('ru-RU') + ', ' + d.toLocaleTimeString('ru-RU');
+            let fileContent = `ZERKALIUS GENESIS SNAPSHOT\nДата: ${dateStr}\nКадр (Шаг): ${STATE.globalStep}\n\n===== КОД ДЛЯ ИМПОРТА (Копировать всё ниже) =====\n${code}`;
+            
+            const blob = new Blob([fileContent], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.download = `Zerkalius_Save_${d.toISOString().replace(/[:.]/g, '-')}.txt`;
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+
+            let xmlWorkbook = `<?xml version="1.0" encoding="utf-8"?>
+            <?mso-application progid="Excel.Sheet"?>
+            <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+             xmlns:o="urn:schemas-microsoft-com:office:office"
+             xmlns:x="urn:schemas-microsoft-com:office:excel"
+             xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+             xmlns:html="http://www.w3.org/TR/REC-html40">
+             <Styles>
+              <Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Borders/><Font ss:FontName="Segoe UI" ss:Size="10" ss:Color="#000000"/><Interior/><NumberFormat/><Protection/></Style>
+              <Style ss:ID="Header"><Font ss:FontName="Segoe UI" ss:Bold="1" ss:Color="#00FF66" ss:Size="10"/><Interior ss:Color="#111111" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="DisplayCell"><Font ss:FontName="Consolas" ss:Color="#00CCFF" ss:Bold="1" ss:Size="10"/><Interior ss:Color="#050505" ss:Pattern="Solid"/><Alignment ss:Horizontal="Left" ss:Vertical="Center"/></Style>
+              <Style ss:ID="OrigCell"><Font ss:FontName="Consolas" ss:Color="#BFFF00" ss:Size="10"/><Alignment ss:Horizontal="Left" ss:Vertical="Center"/></Style>
+              <Style ss:ID="ActiveYes"><Interior ss:Color="#E2F9E9" ss:Pattern="Solid"/><Font ss:FontName="Segoe UI" ss:Color="#00AA44" ss:Bold="1"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="ActiveNo"><Interior ss:Color="#FCE8E6" ss:Pattern="Solid"/><Font ss:FontName="Segoe UI" ss:Color="#CC0000" ss:Size="10"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="NumCell"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/></Style>
+              <Style ss:ID="C_Empty"><Font ss:FontName="Consolas" ss:Size="8" ss:Color="#050505"/><Interior ss:Color="#050505" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="C_Filler"><Font ss:FontName="Consolas" ss:Size="8" ss:Color="#333333"/><Interior ss:Color="#050505" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="C_Type1"><Font ss:FontName="Consolas" ss:Bold="1" ss:Size="8" ss:Color="#FFFFFF"/><Interior ss:Color="#111111" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="C_Type0"><Font ss:FontName="Consolas" ss:Size="8" ss:Color="#00FF66"/><Interior ss:Color="#111111" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="C_Hl"><Font ss:FontName="Consolas" ss:Bold="1" ss:Size="8" ss:Color="#000000"/><Interior ss:Color="#BFFF00" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="C_VertHl"><Font ss:FontName="Consolas" ss:Bold="1" ss:Size="8" ss:Color="#000000"/><Interior ss:Color="#00CCFF" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="C_Red"><Font ss:FontName="Consolas" ss:Bold="1" ss:Size="8" ss:Color="#FFFFFF"/><Interior ss:Color="#FF3333" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="BW_Empty"><Font ss:FontName="Consolas" ss:Size="8" ss:Color="#000000"/><Interior ss:Color="#000000" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="BW_Type1"><Font ss:FontName="Consolas" ss:Bold="1" ss:Size="8" ss:Color="#FFFFFF"/><Interior ss:Color="#000000" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="BW_Type0"><Font ss:FontName="Consolas" ss:Size="8" ss:Color="#555555"/><Interior ss:Color="#000000" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="BW_Hl"><Font ss:FontName="Consolas" ss:Bold="1" ss:Size="8" ss:Color="#000000"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+             </Styles>
+             <Worksheet ss:Name="Сводка">
+              <Table><Column ss:Width="100"/><Column ss:Width="200"/><Column ss:Width="80"/><Column ss:Width="100"/><Column ss:Width="80"/><Column ss:Width="250"/><Column ss:Width="100"/><Column ss:Width="80"/>
+               <Row ss:Height="22">
+                <Cell ss:StyleID="Header"><Data ss:Type="String">Индекс строки</Data></Cell>
+                <Cell ss:StyleID="Header"><Data ss:Type="String">Оригинальный текст</Data></Cell>
+                <Cell ss:StyleID="Header"><Data ss:Type="String">Длина (L)</Data></Cell>
+                <Cell ss:StyleID="Header"><Data ss:Type="String">Множитель (cN)</Data></Cell>
+                <Cell ss:StyleID="Header"><Data ss:Type="String">Цикл</Data></Cell>
+                <Cell ss:StyleID="Header"><Data ss:Type="String">Текущий вид (Display)</Data></Cell>
+                <Cell ss:StyleID="Header"><Data ss:Type="String">Сдвиг (localStep)</Data></Cell>
+                <Cell ss:StyleID="Header"><Data ss:Type="String">Активна</Data></Cell>
+               </Row>`;
+
+            STATE.lines.forEach((line, idx) => {
+                let activeStyle = line.isActive ? "ActiveYes" : "ActiveNo";
+                let activeText = line.isActive ? "ДА" : "НЕТ";
+                xmlWorkbook += `<Row ss:Height="18"><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${idx + 1}</Data></Cell><Cell ss:StyleID="OrigCell"><Data ss:Type="String">${line.orig}</Data></Cell><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${line.L}</Data></Cell><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${line.cN}</Data></Cell><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${line.cycle}</Data></Cell><Cell ss:StyleID="DisplayCell"><Data ss:Type="String">${line.display}</Data></Cell><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${line.localStep}</Data></Cell><Cell ss:StyleID="${activeStyle}"><Data ss:Type="String">${activeText}</Data></Cell></Row>`;
+            });
+
+            xmlWorkbook += `</Table></Worksheet>`;
+
+            let maxCols = 0;
+            STATE.lines.forEach(line => { if (line.display.length > maxCols) maxCols = line.display.length; });
+
+            xmlWorkbook += `<Worksheet ss:Name="Цветной холст"><Table>`;
+            for (let c = 0; c < maxCols; c++) xmlWorkbook += `<Column ss:Width="20"/>`;
+
+            STATE.lines.forEach((line) => {
+                xmlWorkbook += `<Row ss:Height="18">`;
+                for (let c = 0; c < line.display.length; c++) {
+                    let char = line.display[c] || ' ';
+                    let style = "C_Empty";
+
+                    if (line.fillerMask && line.fillerMask[c]) {
+                        style = "C_Filler";
+                    } else if (char !== ' ' && char !== '') {
+                        let isHl = line.highlightMask && line.highlightMask[c];
+                        let isRed = line.redMask && line.redMask[c];
+                        let isVertHl = line.verticalHighlightMask && line.verticalHighlightMask[c];
+
+                        if (isRed) style = "C_Red";
+                        else if (isVertHl) style = "C_VertHl";
+                        else if (isHl) style = "C_Hl";
+                        else if (isType1(char)) style = "C_Type1";
+                        else if (isType0(char)) style = "C_Type0";
+                    }
+                    let safeChar = char.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    xmlWorkbook += `<Cell ss:StyleID="${style}"><Data ss:Type="String">${safeChar}</Data></Cell>`;
+                }
+                xmlWorkbook += `</Row>`;
+            });
+            xmlWorkbook += `</Table></Worksheet>`;
+
+            xmlWorkbook += `<Worksheet ss:Name="ЧБ холст"><Table>`;
+            for (let c = 0; c < maxCols; c++) xmlWorkbook += `<Column ss:Width="20"/>`;
+
+            STATE.lines.forEach((line) => {
+                xmlWorkbook += `<Row ss:Height="18">`;
+                for (let c = 0; c < line.display.length; c++) {
+                    let char = line.display[c] || ' ';
+                    let style = "BW_Empty";
+
+                    if (line.fillerMask && line.fillerMask[c]) {
+                        style = "BW_Empty";
+                    } else if (char !== ' ' && char !== '') {
+                        let isHl = line.highlightMask && line.highlightMask[c];
+                        if (isHl) style = "BW_Hl";
+                        else if (isType1(char)) style = "BW_Type1";
+                        else if (isType0(char)) style = "BW_Type0";
+                    }
+                    let safeChar = char.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    xmlWorkbook += `<Cell ss:StyleID="${style}"><Data ss:Type="String">${safeChar}</Data></Cell>`;
+                }
+                xmlWorkbook += `</Row>`;
+            });
+            xmlWorkbook += `</Table></Worksheet></Workbook>`;
+
+            const xlsBlob = new Blob([xmlWorkbook], { type: 'text/xml' });
+            const xlsLink = document.createElement('a');
+            xlsLink.download = `Zerkalius_Save_${d.toISOString().replace(/[:.]/g, '-')}.xml`;
+            xlsLink.href = URL.createObjectURL(xlsBlob);
+            xlsLink.click();
+            URL.revokeObjectURL(xlsLink.href);
+        });
+
+        safeBind('photoBtn', 'click', () => {
+            const canvas = document.getElementById('screenCanvas');
+            if(!canvas) return;
+            
+            let snapshot = window.createSnapshotObject ? window.createSnapshotObject() : {};
+            let code = btoa(encodeURIComponent(JSON.stringify(snapshot)));
+            
+            canvas.toBlob(function(blob) {
+                const codeBlob = new Blob(["|||ZERK_STATE|||" + code], {type: 'text/plain'});
+                const combinedBlob = new Blob([blob, codeBlob], {type: 'image/png'});
+                const link = document.createElement('a');
+                link.download = `Zerkalius_Shot_${Date.now()}.png`;
+                link.href = URL.createObjectURL(combinedBlob);
+                link.click();
+                URL.revokeObjectURL(link.href);
+                showNotification("📸 ФОТО СОХРАНЕНО!");
+            }, 'image/png');
+        });
+
+        const initFileImportListener = () => {
+            const fileLoader = document.getElementById('importFileLoader');
+            if (!fileLoader) return;
+            
+            const newLoader = fileLoader.cloneNode(true);
+            fileLoader.parentNode.replaceChild(newLoader, fileLoader);
+            
+            newLoader.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    let content = e.target.result;
+                    let codeStr = "";
+                    
+                    if (file.name.endsWith('.js')) {
+                        let match = content.match(/settings:\s*(\{[\s\S]*?\}),\n/);
+                        if (match) {
+                            content = match[1];
+                        }
+                    }
+
+                    if (content.includes("|||ZERK_STATE|||")) {
+                        codeStr = content.split("|||ZERK_STATE|||").pop().trim();
+                    } else {
+                        let lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                        let maxLen = 0;
+                        lines.forEach(l => {
+                            if (l.startsWith("eyJ") && l.length > maxLen) {
+                                codeStr = l;
+                                maxLen = l.length;
+                            }
+                        });
+                        if (codeStr === "") {
+                            lines.forEach(l => {
+                                if (!l.includes("====") && l.length > maxLen) {
+                                    codeStr = l;
+                                    maxLen = l.length;
+                                }
+                            });
+                        }
+                    }
+                    
+                    try {
+                        if (!codeStr) throw new Error("Код не найден");
+                        let snapshot = JSON.parse(decodeURIComponent(atob(codeStr)));
+                        document.getElementById('snapshotCodeBox').value = codeStr;
+                        importSnapshotObject(snapshot);
+                        showNotification("СНИМОК УСПЕШНО ИМПОРТИРОВАН!");
+                    } catch(err) {
+                        alert("Ошибка чтения файла! Убедитесь, что это правильный .txt снимок или .png фото Зеркалиуса.");
+                    }
+                    e.target.value = ''; 
+                };
+                reader.readAsText(file);
+            });
+        };
+
+        safeBind('importCodeBtn', 'click', () => {
+            let codeBox = document.getElementById('snapshotCodeBox');
+            if (!codeBox) return;
+            let code = codeBox.value.trim();
+
+            if (code.length > 0) {
+                try {
+                    let snapshot = JSON.parse(decodeURIComponent(atob(code)));
+                    importSnapshotObject(snapshot);
+                    showNotification("СОСТОЯНИЕ ИМПОРТИРОВАНО ИЗ ТЕКСТА!");
+                } catch(e) {
+                    alert("Ошибка декодирования снимка! Убедитесь, что код верный.");
+                }
+            } else {
+                initFileImportListener(); 
+                let fileLoader = document.getElementById('importFileLoader');
+                if (fileLoader) fileLoader.click();
+            }
+        });
+END_BLOCK: <!-- === МАРКЕР 39: ТАКТОВЫЙ ЦИКЛ СИМУЛЯЦИИ === -->
+
+REPLACE_BLOCK: <!-- === МАРКЕР 47: РЕНДЕР ГРАНИЦ И РАМКИ === -->
+            if (showFrame && !useRadar && lastActiveIdx_global !== -1) {
+                ctx.save();
+                let maxVis = 0;
+                for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
+                    let idx = (m.startIndex + STATE.manualFrame.rowStart + k) % STATE.lines.length;
+                    let lData = STATE.lines[idx];
+                    if (lData && lData.display) {
+                        let vis = 0;
+                        for(let c=0; c < lData.display.length; c++) {
+                            if(!lData.fillerMask[c] && /\S/.test(lData.display[c]) && lData.display[c] !== '.' && lData.display[c] !== 'x') vis++;
+                        }
+                        if (vis > maxVis) maxVis = vis;
+                    }
+                }
+                STATE.manualFrame.colSpan = (maxVis || 1) + 2;
+                STATE.manualFrame.colStart = -Math.round(STATE.manualFrame.colSpan / 2);
+
+                let drawX = m.baseX + STATE.manualFrame.colStart * m.charWidth;
+                let drawY = m.startY + STATE.manualFrame.rowStart * m.lineHeight;
+                let drawW = STATE.manualFrame.colSpan * m.charWidth;
+                let drawH = STATE.manualFrame.rowSpan * m.lineHeight;
+
+                let bal = calculateCurrentBalance();
+                let isSpecial = bal.isEq || bal.isAll0 || bal.isAll1;
+                let drawColor = bal.isEq ? '#ffffff' : (bal.isAll0 ? '#00ffff' : (bal.isAll1 ? '#ff00ff' : frameColor));
+
+                ctx.strokeStyle = drawColor;
+                let isHovered = STATE.hoveredFrameEdge || STATE.frameAction;
+                ctx.lineWidth = isHovered ? 3.0 : 1.5;
+                ctx.shadowBlur = isHovered ? 20 : (isSpecial ? 25 : 8);
+                ctx.shadowColor = ctx.strokeStyle;
+                ctx.strokeRect(drawX, drawY, drawW, drawH);
+                
+                if (isHovered) {
+                    ctx.save(); ctx.lineWidth = 15; ctx.globalAlpha = 0.15; ctx.strokeRect(drawX, drawY, drawW, drawH); ctx.restore();
+                }
+
+                ctx.save();
+                ctx.globalAlpha = bal.isEq ? 1.0 : 0.4;
+                ctx.font = "bold 28px monospace";
+                ctx.fillStyle = hexToRgba(safeValue('color1', '#ffffff'), 1.0);
+                ctx.textAlign = "right"; ctx.fillText(bal.total1.toString(), drawX - 35, drawY + drawH / 2);
+                ctx.fillStyle = hexToRgba(safeValue('color0', '#00ff66'), 1.0);
+                ctx.textAlign = "left"; ctx.fillText(bal.total0.toString(), drawX + drawW + 35, drawY + drawH / 2);
+                ctx.restore();
+
+                if (isSpecial && !STATE.wasBalancedLastFrame) {
+                    STATE.flashEndTime = Date.now() + 600; STATE.flashColor = drawColor;
+                    triggerFlashAnimation(); STATE.wasBalancedLastFrame = true;
+                } else if (!isSpecial) STATE.wasBalancedLastFrame = false;
+
+                if (STATE.flashEndTime && Date.now() < STATE.flashEndTime) {
+                    ctx.save(); let progress = (STATE.flashEndTime - Date.now()) / 600;
+                    ctx.fillStyle = hexToRgba(STATE.flashColor, progress * 0.3);
+                    ctx.fillRect(drawX, drawY, drawW, drawH); ctx.restore();
+                }
+                ctx.restore();
+            }
+        }
+END_BLOCK: <!-- === МАРКЕР 48: ИВЕНТЫ И ИНИЦИАЛИЗАЦИЯ === -->
+
+REPLACE_BLOCK: <!-- === МАРКЕР 50: ОБРАБОТЧИКИ ТАЧА И МЫШИ === -->
+            canvas.addEventListener('mousedown', e => {
+                if (e.button === 1) { e.preventDefault(); document.body.classList.toggle('zen-mode'); render(); return; }
+                let m = getGridMetrics(); if (!m) return;
+                let mx = e.clientX, my = e.clientY;
+                let showFrame = safeChecked('frameCheck', false);
+END_BLOCK: <!-- === МАРКЕР 51: ЛОГИКА ДРАГ-Н-ДРОП ХОЛСТА === -->
+
+REPLACE_BLOCK: <!-- === МАРКЕР 51: ЛОГИКА ДРАГ-Н-ДРОП ХОЛСТА === -->
+                if (showFrame && STATE.manualFrame && STATE.manualFrame.isInitialized) {
+                    let colStart = STATE.manualFrame.colStart !== undefined ? STATE.manualFrame.colStart : -20;
+                    let colSpan = STATE.manualFrame.colSpan !== undefined ? STATE.manualFrame.colSpan : 40;
+                    
+                    let fx = m.baseX + colStart * m.charWidth;
+                    let fy = m.startY + STATE.manualFrame.rowStart * m.lineHeight;
+                    let fw = colSpan * m.charWidth;
+                    let fh = STATE.manualFrame.rowSpan * m.lineHeight;
+
+                    let grabZone = 15;
+                    let onB = Math.abs(my - (fy + fh)) < grabZone && mx >= fx - grabZone && mx <= fx + fw + grabZone;
+                    let onT = Math.abs(my - fy) < grabZone && mx >= fx - grabZone && mx <= fx + fw + grabZone;
+                    let onL = Math.abs(mx - fx) < grabZone && my >= fy - grabZone && my <= fy + fh + grabZone;
+                    let onR = Math.abs(mx - (fx + fw)) < grabZone && my >= fy - grabZone && my <= fy + fh + grabZone;
+
+                    if (onB) { STATE.frameAction = 'resize-b'; }
+                    else if (onT) { STATE.frameAction = 'resize-t'; }
+                    else if (onL || onR) { STATE.frameAction = 'drag'; }
+                    
+                    if (STATE.frameAction) {
+                        STATE.frameStartMX = mx;
+                        STATE.frameStartMY = my;
+                        STATE.frameStartW = colSpan;
+                        STATE.frameStartH = STATE.manualFrame.rowSpan;
+                        STATE.frameStartX = colStart;
+                        STATE.frameStartY = STATE.manualFrame.rowStart;
+                        return; 
+                    }
+                }
+
+                let useRadar = safeChecked('radarCheck', false);
+                if (useRadar && STATE.hoveredRingIndex !== -1) {
+                    STATE.isDraggingRing = true;
+                    STATE.draggedRingIndex = STATE.hoveredRingIndex;
+                    STATE.lastCellsShifted = 0;
+                    
+                    let rect = canvas.getBoundingClientRect();
+                    let lx = mx - rect.left;
+                    let ly = my - rect.top;
+                    let centerX = canvas.width / 2 + STATE.offsetX + STATE.autoOffsetX;
+                    let centerY = canvas.height / 2 + STATE.offsetY + STATE.autoOffsetY;
+                    
+                    STATE.lastMouseAngle = Math.atan2(ly - centerY, lx - centerX);
+                    STATE.accumulatedAngleDelta = 0;
+                    
+                    let actualIdx = (m.startIndex + STATE.draggedRingIndex) % STATE.lines.length;
+                    STATE.dragStartLocalStep = STATE.lines[actualIdx].localStep;
+                    return; 
+                }
+
+                STATE.isDraggingPan = true;
+                STATE.hasMoved = false; 
+                STATE.dragStartX = mx - STATE.offsetX;
+                STATE.dragStartY = my - STATE.offsetY;
+                STATE.clickStartX = mx;
+                STATE.clickStartY = my;
+            });
+
+            window.addEventListener('mousemove', e => {
+END_BLOCK: <!-- === МАРКЕР 52: ЛОГИКА СКРОЛЛА (ЗУМ) === -->
+
+============================================================
+⏱ Версия: v_0141 | Дата: 27-06-2026_03-08-03
+------------------------------------------------------------
+CRITICAL RULE: Edit file Zerkalius-genezis.html.
+
+REPLACE_BLOCK: <!-- === МАРКЕР 05: ЗАГОЛОВОК НАЧАЛО === -->
+<div id="mainTitle">Zerkalius: Genesis (v0.162 Golden Master)</div>
+END_BLOCK: <!-- === МАРКЕР 06: ЗАГОЛОВОК КОНЕЦ === -->
+
+REPLACE_BLOCK: <!-- === МАРКЕР 07: ЛЕВАЯ ПАНЕЛЬ === -->
+    <div class="controls" onclick="event.stopPropagation();">
+        <div class="controls-content">
+
+        <details class="control-group" open>
+            <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">💾 СИСТЕМНЫЕ ФУНКЦИИ</summary>
+            <div style="display:flex; gap:4px; margin-top: 4px;">
+                    <button id="exportCodeBtn" class="btn-action" style="flex:1;">Экспорт</button>
+                    <button id="importCodeBtn" class="btn-action" style="flex:1;">Импорт</button>
+                    <input type="file" id="importFileLoader" accept=".txt,.png,.js" style="display:none;">
+                <button id="photoBtn" class="btn-action" style="flex:1; background:#00ccff; color:#000; border-color:#00ccff;">📸 ФОТО</button>
+            </div>
+            <textarea id="snapshotCodeBox" placeholder="Код снимка" style="margin-top:3px; height: 35px; font-size:9px;"></textarea>
+        </details>
+
+        <details class="control-group" open>
+            <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">📝 НАБОРЫ СТРОК (СЛОТЫ)</summary>
+            <button id="exportBanksDataBtn" class="btn-action" style="margin-top:4px; margin-bottom:4px; border-color:#00ff66; color:#00ff66; font-size:9.5px; height:22px;" title="Экспортировать все 3 слота вместе с их паттернами в файл banks_data.js">💾 Экспорт в banks_data.js</button>
+            <div style="display: flex; gap: 4px; margin-bottom: 4px;">
+                <button id="bankBtn0" class="bank-btn active" onclick="switchBank(0, false)" ondblclick="restoreOriginalBank(0)" title="Клик: Просмотр. Двойной клик: Сброс к исходнику">Слот 1</button>
+                <button id="bankBtn1" class="bank-btn" onclick="switchBank(1, false)" ondblclick="restoreOriginalBank(1)" title="Клик: Просмотр. Двойной клик: Сброс к исходнику">Слот 2</button>
+                <button id="bankBtn2" class="bank-btn" onclick="switchBank(2, false)" ondblclick="restoreOriginalBank(2)" title="Клик: Просмотр. Двойной клик: Сброс к исходнику">Слот 3</button>
+                <button id="applyLinesBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; font-weight:bold; background:#00ccff; color:#000; border-color:#00ccff;" title="Загрузить текущий текст из слота на холст">На холст</button>
+            </div>
+            <div style="display: flex; gap: 4px; margin-bottom: 2px;">
+                <button id="alignLeftBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; border-color:#888; color:#fff;" title="Выровнять всё по левому краю (добавить точки)">⬅️ Лев</button>
+                <button id="alignCenterBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; border-color:#888; color:#fff;" title="Выровнять всё по центру (добавить точки)">⏺ Центр</button>
+                <button id="alignRightBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; border-color:#888; color:#fff;" title="Выровнять всё по правому краю (добавить точки)">Прав ➡️</button>
+            </div>
+            <textarea id="linesInput" placeholder="Введите символы (Двойной клик = Вставка)" style="height: 60px; color:#bfff00; margin-top:2px;"></textarea>
+            
+            <div style="display: flex; align-items: center; justify-content: space-between; background: #111; padding: 4px; border-radius: 3px; margin-top: 4px;">
+                <input type="text" id="repA1" value="1" style="width: 25px;"> ➔ <input type="text" id="repB1" value="\" style="width: 25px; color:#00ff66;">
+                <span style="color:#444;">|</span>
+                <input type="text" id="repA2" value="0" style="width: 25px;"> ➔ <input type="text" id="repB2" value="/" style="width: 25px; color:#00ff66;">
+                <button id="toggleReplaceBtn" class="btn-action" style="width: 30px; margin: 0; padding: 2px 0;">🔄</button>
+            </div>
+        </details>
+
+        <details class="control-group" open>
+            <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">📐 ГЕНЕРАТОР СЕРПИНСКОГО</summary>
+            <select id="sierpRule" style="margin-bottom: 5px; margin-top: 4px; background: #222; color: #fff; border: 1px solid #444; padding: 2px; border-radius: 3px; width: 100%; font-size: 11px;">
+                <option value="shift">Форма: Сдвиг (Кирпичная кладка)</option>
+                <option value="center">Форма: Центр (Симметричная пирамида)</option>
+                <option value="xorora">Форма: XorRora Маятник</option>
+            </select>
+            <div style="display:flex; gap:5px; margin-bottom: 1px;">
+                <span class="lbl" id="sierpSeedLbl" style="flex:1; text-align:center; font-size:9px; color:#888;">Сид</span>
+                <span class="lbl" id="sierpRowsLbl" style="flex:1; text-align:center; font-size:9px; color:#888;">Строки</span>
+                <span style="flex:2;"></span>
+            </div>
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <input type="text" id="sierpSeed" value="1" title="Сид" style="flex:1;">
+                <input type="number" id="sierpRows" value="128" title="Строки" style="flex:1;">
+                <button id="sierpBtn" class="btn-action" style="flex:2; margin:0; color:#00ff66; border-color:#00ff66;">Сгенерировать</button>
+            </div>
+        </details>
+
+        <details class="control-group">
+            <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">🎨 ОФОРМЛЕНИЕ И ЦВЕТА</summary>
+            <select id="fontSelect" style="margin-top: 4px;">
+                <option value="'Consolas', monospace">Шрифт: Consolas</option>
+                <option value="'Roboto Mono', monospace">Шрифт: Roboto Mono</option>
+                <option value="monospace">Шрифт: Моноширинный</option>
+                <option value="'Courier New', Courier, monospace">Шрифт: Courier New</option>
+            </select>
+
+            <select id="presetSelect" style="margin-bottom: 5px;">
+                <option value="matrix">Пресет: Матрица</option>
+                <option value="cyber">Пресет: Киберпанк</option>
+                <option value="blood">Пресет: Кровавый</option>
+                <option value="synthwave">Пресет: Synthwave</option>
+                <option value="zerkalius">Пресет: Zerkalius</option>
+                <option value="bw">Пресет: ЧБ</option>
+            </select>
+
+            <div class="color-row">
+                <span class="lbl" style="width:40px;">Текст1:</span> <input type="color" id="color1" value="#ffffff"> <input type="range" id="alpha1" min="0.1" max="1" step="0.1" value="1" style="width:60px;">
+                <span class="lbl" style="width:40px;">Текст0:</span> <input type="color" id="color0" value="#00ff66"> <input type="range" id="alpha0" min="0.1" max="1" step="0.1" value="0.5" style="width:60px;">
+            </div>
+
+            <div class="color-row">
+                <span class="lbl" style="width:40px;">Фон:</span> <input type="color" id="bgColor" value="#050505">
+            </div>
+            <label style="display:flex; align-items:center; margin-top:4px;">
+                <input type="checkbox" id="showRowNumbersCheck" checked> <span class="lbl">Показывать номера строк</span>
+            </label>
+        </details>
+
+        <details class="control-group" open>
+            <summary style="font-weight:bold; color:#cc33ff; margin-bottom: 4px;">⚙️ МОДИФИКАТОРЫ ДВИЖЕНИЯ</summary>
+            <div style="margin-top: 4px; margin-bottom: 2px;" class="row-between">
+                <span class="lbl">Множитель длины (N): <span class="val" id="nFactorVal">1</span></span>
+            </div>
+            <input type="range" id="nFactor" min="1" max="11" value="1">
+
+            <div style="margin-top: 3px; margin-bottom: 3px;">
+                <select id="symModeSelect" style="background: #111; color: #ffcc00; border: 1px solid #ffcc00; font-weight: bold; width: 100%;">
+                    <option value="classic">💠 Режим: Классика (Лесенка)</option>
+                    <option value="centerBase">💠 Режим: Центр по Базе (Наклон)</option>
+                    <option value="centerTrack">💠 Режим: Центр</option>
+                    <option value="centerTrack2" selected>💠 Режим: Идеальный Центр</option>
+                </select>
+            </div>
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="phaseShiftCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">Фазовый сдвиг (+1 к циклу)</span>
+            </label>
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="rowPendulumCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">🔁 Маятник внутри строки (A-B-A)</span>
+            </label>
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="meetCenterCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">↔️ Встречное движение</span>
+            </label>
+            
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="fillXCheck"> <span class="lbl" style="color:#aaa; font-weight:bold;">Заполнять пустоты 'x' (Рентген)</span>
+            </label>
+            
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="trailCheck"> <span class="lbl" style="color:#00ff66; font-weight:bold;">👣 Оставлять след (Шлейф)</span>
+            </label>
+
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="spacedCheck"> <span class="lbl" style="color:#bfff00; font-weight:bold;">⚙️ Разрядка (Шестеренки)</span>
+            </label>
+
+            <!-- БЛОК СЛИЯНИЯ СТРОК (НАЕЗД) -->
+            <div style="background: #111; padding: 4px; border-radius: 3px; margin-top: 3.5px; border-left: 2px solid #ff3333;">
+                <label style="display:flex; align-items:center; margin-bottom: 2px;">
+                    <input type="checkbox" id="naezdCheck"> <span class="lbl" style="color:#ff3333; font-weight:bold;">🛸 Наезд (Слияние строк)</span>
+                </label>
+                <select id="naezdModeSelect" style="background:#000; color:#fff; border:1px solid #444; font-size:10px; width:100%; margin-top:2px;">
+                    <option value="widen" selected>Вариант 1: Раздвигать строку</option>
+                    <option value="skip">Вариант 2: Пропуск на след. строку</option>
+                </select>
+                <label style="display:flex; align-items:center; margin-top:3.5px;">
+                    <input type="checkbox" id="naezdSaveCheck"> <span class="lbl" style="color:#00ff66; font-weight:bold;">💾 Накапливать изменения (Сохранять)</span>
+                </label>
+            </div>
+
+            <div style="background: #111; padding: 4px; border-radius: 3px; margin-top: 3px; border-left: 2px solid #bfff00;">
+                <label style="display:flex; align-items:center;">
+                    <input type="checkbox" id="drumModeCheck"> <span class="lbl" style="color:#fff; font-weight:bold;">🥁 Режим Барабан (Сетка)</span>
+                </label>
+                <div style="display:flex; gap:2px; align-items:center; margin-top: 2px;">
+                    <span class="lbl">Радиус:</span>
+                    <input type="range" id="drumRadius" min="0" max="50" value="5" style="flex:1;">
+                    <span class="val" id="drumRadiusVal" style="width:20px;">5</span>
+                </div>
+            </div>
+
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:3px;">
+                <label style="display:flex; align-items:center;">
+                    <input type="checkbox" id="redFirstOneCheck" checked> <span class="lbl" style="color:#ff3333; font-weight:bold;">🎯 Трассер 1-го символа</span>
+                </label>
+                <input type="color" id="tracerColor" value="#ff3333" style="width:15px; height:15px; padding:0; border:none; cursor:pointer;">
+            </div>
+
+            <!-- ДЕЛЬТА РЕНТГЕН -->
+            <div style="background: #111; padding: 4px; border-radius: 3px; margin-top: 3px; border-left: 2px solid #00ccff;">
+                <div style="display:flex; gap:2px; align-items:center; margin-bottom: 2px;">
+                    <span class="lbl" style="color:#00ccff; font-weight:bold;">Анализ Дельты:</span>
+                    <span class="lbl" style="margin-left:auto;">Кадр -</span>
+                    <input type="number" id="deltaNInput" value="1" style="width: 35px; height: 16px;">
+                </div>
+                <label style="display:flex; align-items:center; margin-bottom:2px;">
+                    <input type="checkbox" id="hideChangedCheck"> <span class="lbl" style="color:#ff3333;">Скрыть меняющиеся символы</span>
+                </label>
+                <label style="display:flex; align-items:center;">
+                    <input type="checkbox" id="hideUnchangedCheck"> <span class="lbl" style="color:#aaa;">Скрыть НЕменяющиеся символы</span>
+                </label>
+            </div>
+
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="conglomerateCheck"> <span class="lbl" style="color:#ff00ff; font-weight:bold;">🧩 Конгломераты (≥ 3)</span>
+            </label>
+            <label style="display:flex; align-items:center; margin-top:3px; padding-left:15px;">
+                <input type="checkbox" id="stableConglomCheck"> <span class="lbl" style="color:#cc66ff;">Фиксация цветов (Без мерцания)</span>
+            </label>
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="neonCheck"> <span class="lbl">✨ Свечение (Neon)</span>
+            </label>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:3px; width:100%;">
+                <label style="display:flex; align-items:center; margin:0;">
+                    <input type="checkbox" id="funnelCheck"> <span class="lbl" style="color:#00ffcc; font-weight:bold;">🕸️ Режим Воронка (Сетка)</span>
+                </label>
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <input type="color" id="gridColorInput" value="#00ff66" style="width:15px; height:15px; padding:0; border:none; cursor:pointer;" title="Цвет сетки">
+                    <input type="range" id="gridAlpha" min="0.1" max="1.0" step="0.1" value="0.4" style="width:50px; margin:0;" title="Прозрачность сетки">
+                </div>
+            </div>
+            <label style="display:flex; align-items:center; margin-top:3px;">
+                <input type="checkbox" id="mirrorCheck"> <span class="lbl" style="color:#cc33ff; font-weight:bold;">↕️ Вертикальное зеркало</span>
+            </label>
+            <div style="background: #111; padding: 4px; border-radius: 3px; margin-top: 3px; border-left: 2px solid #00ccff; display: flex; align-items: center; justify-content: space-between;">
+                <span class="lbl" style="color:#00ccff;">Шаг поворота Радара:</span>
+                <input type="number" id="radarRotateSnapInput" value="1" min="1" max="100" style="width: 40px; height: 18px;">
+            </div>
+            <div style="background: #111; padding: 4px; border-radius: 3px; margin-top: 3.5px; border-left: 2px solid #00ffcc;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2px;">
+                    <label style="display:flex; align-items:center; margin:0;">
+                        <input type="checkbox" id="waveAnalysisCheck"> <span class="lbl" style="color:#00ffcc; font-weight:bold;">🔊 Стоячая волна (Анализ)</span>
+                    </label>
+                    <div style="display:flex; align-items:center; gap:2px;">
+                        <span class="lbl" style="font-size:9px;">Такт:</span>
+                        <input type="number" id="waveHistoryInput" value="32" min="2" max="500" style="width:30px; height:15px; font-size:9px; padding:1px; text-align:center; background:#000; color:#fff; border:1px solid #444; border-radius:2px;">
+                    </div>
+                </div>
+                <label style="display:flex; align-items:center; padding-left:15px;">
+                    <input type="checkbox" id="hideBlinkingCheck"> <span class="lbl" style="color:#aaa;">Скрыть мигающие символы</span>
+                </label>
+            </div>
+        </details>
+
+        <details class="control-group" style="margin-bottom: auto; border-bottom: none;">
+            <summary style="font-weight:bold; color:#ff00ff; margin-bottom: 4px;">🚀 АВТО-СДВИГ ХОЛСТА (XY)</summary>
+            <div style="background: #111; padding: 4px; border-radius: 3px; margin-top: 3px; margin-bottom: 3px;">
+                <label style="display:flex; align-items:center; margin-bottom:2px;">
+                    <input type="checkbox" id="oscXCheck"> <span class="lbl" style="color:#fff;">Сдвиг X (Пинг-Понг)</span>
+                </label>
+                <div style="display:flex; gap:2px; align-items:center;">
+                    <span class="lbl">Лев:</span><input type="number" id="oscXLeft" value="50">
+                    <span class="lbl">Прав:</span><input type="number" id="oscXRight" value="50">
+                    <span class="lbl">Шаг:</span><input type="number" id="oscXStep" value="1">
+                </div>
+            </div>
+
+            <div style="background: #111; padding: 4px; border-radius: 3px;">
+                <label style="display:flex; align-items:center; margin-bottom:2px;">
+                    <input type="checkbox" id="oscYCheck"> <span class="lbl" style="color:#fff;">Сдвиг Y (Пинг-Понг)</span>
+                </label>
+                <div style="display:flex; gap:2px; align-items:center;">
+                    <span class="lbl">Верх:</span><input type="number" id="oscYUp" value="50">
+                    <span class="lbl">Низ:</span><input type="number" id="oscYDown" value="50">
+                    <span class="lbl">Шаг:</span><input type="number" id="oscYStep" value="1">
+                </div>
+            </div>
+
+            <div style="background: #222; padding: 4px; border-radius: 3px; margin-top: 4px;">
+                <div class="row-between" style="margin-bottom: 3px;">
+                    <label style="display:flex; align-items:center;">
+                        <input type="checkbox" id="loopCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">A-B Повтор</span>
+                    </label>
+                    <label style="display:flex; align-items:center;">
+                        <input type="checkbox" id="pingPongCheck"> <span class="lbl" style="color:#bfff00; font-weight:bold;">Пинг-Понг</span>
+                    </label>
+                </div>
+                <div style="display:flex; gap:2px; align-items:center; justify-content: space-between;">
+                    <span class="lbl">A:</span><input type="number" id="loopStart" value="0" style="width: 45px;">
+                    <span class="lbl">B:</span><input type="number" id="loopEnd" value="100" style="width: 45px;">
+                </div>
+            </div>
+        </details>
+        </div>
+    <div class="controls-title vertical-title" ondblclick="this.parentNode.classList.toggle('minimized'); event.stopPropagation();" style="writing-mode:vertical-lr; text-orientation:mixed; transform:rotate(180deg); display:flex; align-items:center; justify-content:center; background:#111; color:#00ff66; font-size:10px; font-weight:bold; padding:8px 4px; cursor:pointer; user-select:none; border-left:1px solid #333; box-sizing:border-box; min-width:34px; text-align:center;" title="Двойной клик: Свернуть/Развернуть">🛠️ СИСТЕМНАЯ ПАНЕЛЬ</div>
+</div>
+END_BLOCK: <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
+
+REPLACE_BLOCK: <!-- === МАРКЕР 38: ЭКСПОРТ И ИМПОРТ КОДА === -->
+        safeBind('exportCodeBtn', 'click', () => {
+            let snapshot = window.createSnapshotObject ? window.createSnapshotObject() : {};
+            let code = btoa(encodeURIComponent(JSON.stringify(snapshot)));
+            const codeBox = document.getElementById('snapshotCodeBox');
+            if (codeBox) { codeBox.value = code; codeBox.select(); }
+            
+            try { navigator.clipboard.writeText(code); } catch(e) {}
+            
+            let d = new Date();
+            let dateStr = d.toLocaleDateString('ru-RU') + ', ' + d.toLocaleTimeString('ru-RU');
+            let fileContent = `ZERKALIUS GENESIS SNAPSHOT\nДата: ${dateStr}\nКадр (Шаг): ${STATE.globalStep}\n\n===== КОД ДЛЯ ИМПОРТА (Копировать всё ниже) =====\n${code}`;
+            
+            const blob = new Blob([fileContent], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.download = `Zerkalius_Save_${d.toISOString().replace(/[:.]/g, '-')}.txt`;
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+
+            let xmlWorkbook = `<?xml version="1.0" encoding="utf-8"?>
+            <?mso-application progid="Excel.Sheet"?>
+            <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+             xmlns:o="urn:schemas-microsoft-com:office:office"
+             xmlns:x="urn:schemas-microsoft-com:office:excel"
+             xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+             xmlns:html="http://www.w3.org/TR/REC-html40">
+             <Styles>
+              <Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Borders/><Font ss:FontName="Segoe UI" ss:Size="10" ss:Color="#000000"/><Interior/><NumberFormat/><Protection/></Style>
+              <Style ss:ID="Header"><Font ss:FontName="Segoe UI" ss:Bold="1" ss:Color="#00FF66" ss:Size="10"/><Interior ss:Color="#111111" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="DisplayCell"><Font ss:FontName="Consolas" ss:Color="#00CCFF" ss:Bold="1" ss:Size="10"/><Interior ss:Color="#050505" ss:Pattern="Solid"/><Alignment ss:Horizontal="Left" ss:Vertical="Center"/></Style>
+              <Style ss:ID="OrigCell"><Font ss:FontName="Consolas" ss:Color="#BFFF00" ss:Size="10"/><Alignment ss:Horizontal="Left" ss:Vertical="Center"/></Style>
+              <Style ss:ID="ActiveYes"><Interior ss:Color="#E2F9E9" ss:Pattern="Solid"/><Font ss:FontName="Segoe UI" ss:Color="#00AA44" ss:Bold="1"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+              <Style ss:ID="ActiveNo"><Interior ss:Color="#FCE8E6" ss:Pattern="Solid"/><Font ss:FontName="Segoe UI" ss:Color="#CC0000" ss:Size="10"/><Alignment ss:Ho

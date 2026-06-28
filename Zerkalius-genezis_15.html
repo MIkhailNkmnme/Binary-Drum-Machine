@@ -271,7 +271,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         #interleavePanel.minimized { width: 34px !important; min-width: 34px !important; overflow: hidden !important; resize: none !important; }
         #interleavePanel.minimized .panel-content { display: none !important; }
         body.zen-mode #interleavePanel { opacity: 0; pointer-events: none; }
-        body.zen-mode #mainTitle { opacity: 0; pointer-events: none; }
         
         #balanceLog::-webkit-scrollbar { width: 6px; }
         #balanceLog::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
@@ -286,7 +285,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         body.zen-mode #diagTerminal { opacity: 0; pointer-events: none; }
         body.zen-mode #frameControlPanel { opacity: 0; pointer-events: none; }
 
-        .controls.minimized ~ .floating-toolbar { left: 44px; }
+        .controls.minimized ~ #screenContainer .floating-toolbar { left: 44px; }
         .controls.minimized ~ .player-panel { left: 44px; }
         .dragging { transition: none !important; }
         #turboSlider { accent-color: #ff3333; }
@@ -716,14 +715,14 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         </div>
     </div>
 <!-- === МАРКЕР 09: ХОЛСТ И ТУЛБАР === -->
-    <div class="floating-toolbar">
-        <a href="index.html" class="float-circle-btn" style="text-decoration:none; font-weight:bold; color:#00ff66; border-color:#00ff66;" title="Вернуться в Хаб">⬅</a>
-        <button class="float-circle-btn" id="floatingCenterBtn" title="Клик: 100% высота. Двойной клик: 30% высота.">⌖</button>
-        <button class="float-circle-btn" id="floatingRadarBtn" title="Топологический Радар">🛰️</button>
-        <button class="float-circle-btn" id="floatingFrameBtn" title="Включить/Выключить Рамку">🔲</button>
-        <button class="float-circle-btn" id="floatingRotateViewBtn" style="color:#ffd500; border-color:#ffd500;" title="Временно повернуть весь вид на 90° (как монитор повернуть) — повторное нажатие вернёт обратно. Данные не меняются, только картинка">⟲</button>
-    </div>
     <div id="screenContainer">
+        <div class="floating-toolbar">
+            <a href="index.html" class="float-circle-btn" style="text-decoration:none; font-weight:bold; color:#00ff66; border-color:#00ff66;" title="Вернуться в Хаб">⬅</a>
+            <button class="float-circle-btn" id="floatingCenterBtn" title="Клик: 100% высота. Двойной клик: 30% высота.">⌖</button>
+            <button class="float-circle-btn" id="floatingRadarBtn" title="Топологический Радар">🛰️</button>
+            <button class="float-circle-btn" id="floatingFrameBtn" title="Включить/Выключить Рамку">🔲</button>
+            <button class="float-circle-btn" id="floatingRotateViewBtn" style="color:#ffd500; border-color:#ffd500;" title="Временно повернуть весь вид на 90° (как монитор повернуть) — повторное нажатие вернёт обратно. Данные не меняются, только картинка">⟲</button>
+        </div>
 
 <!-- === МАРКЕР 10: ТЕРМИНАЛ АКТИВАЦИИ === -->
         <div class="patterns-log-container" onclick="event.stopPropagation();" style="display:flex; flex-direction:row; align-items:stretch;">
@@ -1855,9 +1854,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                             if (STATE.manualFrame.rowSpan < 1) STATE.manualFrame.rowSpan = 1;
                             let gm = getGridMetrics();
                             if (gm) STATE.manualFrame.h = STATE.manualFrame.rowSpan * gm.lineHeight;
-                            // Если рамку никто не двигал руками — пересчитаем центрирование под новый текст
-                            // (один раз, при следующей перерисовке). Если двигали — оставляем как поставили.
-                            if (!STATE.manualFrame.manualWidth) STATE.manualFrame.needsRecenter = true;
                         }
                     }
                 } else {
@@ -6310,7 +6306,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 ctx.save();
 
                 // Авто-инициализация размеров рамки в символах (с привязкой к сетке)
-                let isFreshFrame = (STATE.manualFrame.colSpan === undefined || !STATE.manualFrame.isInitialized || STATE.manualFrame.needsRecenter);
                 if (STATE.manualFrame.colSpan === undefined || !STATE.manualFrame.isInitialized) {
                     STATE.manualFrame.rowStart = 0;
                     STATE.manualFrame.rowSpan = 1; 
@@ -6318,28 +6313,24 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     STATE.manualFrame.manualWidth = false;
                 }
 
-                // Авто-подбор ширины/положения — при самом первом появлении рамки, А ТАКЖЕ при загрузке
-                // принципиально нового текста (needsRecenter, см. loadText). Не пересчитывается каждый
-                // кадр анимации, иначе на строках с сильно разной длиной рамка "прыгает" туда-сюда.
-                if (isFreshFrame) {
-                    let maxLenInFrame = 0;
-                    let totalRows = STATE.lines.length;
-                    for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
-                        let idx = (m.startIndex + STATE.manualFrame.rowStart + k) % totalRows;
-                        let line = STATE.lines[idx];
-                        if (line && line.display && line.display.length > maxLenInFrame) {
-                            maxLenInFrame = line.display.length;
-                        }
+                let maxLenInFrame = 0;
+                let totalRows = STATE.lines.length;
+                for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
+                    let idx = (m.startIndex + STATE.manualFrame.rowStart + k) % totalRows;
+                    let line = STATE.lines[idx];
+                    if (line && line.display && line.display.length > maxLenInFrame) {
+                        maxLenInFrame = line.display.length;
                     }
-                    if (maxLenInFrame === 0) maxLenInFrame = 1;
-
-                    STATE.manualFrame.colSpan = maxLenInFrame + 2;
-                    STATE.manualFrame.colStart = -Math.round(STATE.manualFrame.colSpan / 2);
-                    STATE.manualFrame.manualWidth = false;
-                    STATE.manualFrame.needsRecenter = false;
                 }
-                if (STATE.manualFrame.colSpan === undefined) STATE.manualFrame.colSpan = 40;
-                if (STATE.manualFrame.colStart === undefined) STATE.manualFrame.colStart = -Math.round(STATE.manualFrame.colSpan / 2);
+                if (maxLenInFrame === 0) maxLenInFrame = 1;
+
+                let autoColSpan = maxLenInFrame + 2;
+                if (!STATE.manualFrame.manualWidth) {
+                    STATE.manualFrame.colSpan = autoColSpan;
+                }
+
+                // Центрируем рамку по горизонтали в символах ВСЕГДА
+                STATE.manualFrame.colStart = -Math.round(STATE.manualFrame.colSpan / 2);
 
                 let drawX = baseX + STATE.manualFrame.colStart * m.charWidth;
                 let drawY = startY + STATE.manualFrame.rowStart * m.lineHeight;
