@@ -4,6 +4,9 @@
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
+ВЕРСИЯ ФАЙЛА (правь вручную при каждом сохранении, чтобы не путать копии между компьютерами):
+LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 тулбара слева (Undo/Redo, Центр/Радар/Поворот, Вставить), счётчик кадра у правой панели, Зеркало ←/→ приклеивает к строке.
+===========================================================================
 -->
 <html lang="ru">
 <head>
@@ -260,17 +263,24 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         }
         #rightPanel .right-panel-tab {
             flex: 1; writing-mode: vertical-rl; text-orientation: mixed;
-            background: #111 !important;
-            border-left: 1px solid currentColor !important; border-bottom: 1px solid #333 !important;
-            opacity: 0.45;
-            transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+            border-left: none !important; border-bottom: 1px solid #333 !important;
+            border-right: 1px solid var(--right-panel-accent-color, transparent) !important;
+            transition: background 0.2s, border-color 0.2s;
         }
+        #rightPanel .right-panel-tab[data-tab="terminal"] { background: #0d1a1c !important; }
+        #rightPanel .right-panel-tab[data-tab="dna"] { background: #1a0d1c !important; }
         #rightPanel .right-panel-tab:last-child { border-bottom: none !important; }
         #rightPanel .right-panel-tab.active {
             background: transparent !important;
-            opacity: 1;
-            border-left-color: currentColor !important;
+            border-left: 1px solid currentColor !important;
+            border-right: none !important;
             text-shadow: 0 0 8px currentColor;
+        }
+        #rightPanel .right-panel-tab.active:first-child {
+            border-bottom: 1px solid currentColor !important;
+        }
+        #rightPanel .right-panel-tab.active:not(:first-child) {
+            border-top: 1px solid currentColor !important;
         }
         #rightPanel .right-panel-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
         #rightPanel .right-panel-body > .panel-content { flex: 1; overflow-y: auto; min-width: 0; }
@@ -6813,6 +6823,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             if (!panel || !color) return;
             let bg = 'linear-gradient(' + hexToRgba(color, 0.22) + ', ' + hexToRgba(color, 0.22) + '), rgba(10, 10, 10, 0.75)';
             panel.style.setProperty('--right-panel-accent-bg', bg);
+            panel.style.setProperty('--right-panel-accent-color', color);
         }
 
         // Переключает вкладку правой панели и гарантирует, что сама панель видна (не свёрнута/не затемнена).
@@ -8673,20 +8684,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 if (rBtn) rBtn.classList.toggle('active', safeChecked('radarCheck', false));
                 if (autoSnapshot && typeof showNotification === 'function') showNotification("⚡ АВТОСОХРАНЕНИЕ ВОССТАНОВЛЕНО");
             }
-            
-            // Пульт теперь закреплён сверху — при свежей загрузке страницы отодвигаем первую строку
-            // контента вниз, чтобы она не оказалась под пультом (~100px зазор под его нижним краем).
-            let playerPanelEl = document.querySelector('.player-panel');
-            if (STATE.offsetY === 0 && playerPanelEl) {
-                let panelBottom = playerPanelEl.getBoundingClientRect().bottom;
-                let canvas = document.getElementById('screenCanvas');
-                let canvasTop = canvas ? canvas.getBoundingClientRect().top : 0;
-                let neededTop = (panelBottom - canvasTop) + 100;
-                let m = getGridMetrics();
-                if (m && neededTop > m.startY) {
-                    STATE.offsetY += (neededTop - m.startY);
-                }
-            }
 
             positionFloatingToolbar();
             positionFloatingToolbarRight();
@@ -8694,6 +8691,26 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 
             // Вызываем рендер (размеры холста уже правильные)
             render();
+
+            // Пульт закреплён сверху — отодвигаем первую строку контента вниз, чтобы она не оказалась
+            // под пультом (~100px зазор под его нижним краем). Считаем через setTimeout, чтобы браузер
+            // успел осесть с раскладкой/отрисовкой (синхронные getBoundingClientRect в самом onload
+            // иногда возвращали неактуальные размеры пульта, из-за чего строка пряталась под ним).
+            setTimeout(() => {
+                let playerPanelEl = document.querySelector('.player-panel');
+                let buttonsBarEl = document.getElementById('playerButtonsBar');
+                let panelBottom = playerPanelEl ? playerPanelEl.getBoundingClientRect().bottom : null;
+                let barBottom = buttonsBarEl ? buttonsBarEl.getBoundingClientRect().bottom : null;
+                let combinedBottom = Math.max(panelBottom || 0, barBottom || 0);
+                let canvas = document.getElementById('screenCanvas');
+                let canvasTop = canvas ? canvas.getBoundingClientRect().top : 0;
+                let neededTop = (combinedBottom - canvasTop) + 100;
+                let m = getGridMetrics();
+                if (playerPanelEl && m && neededTop > m.startY) {
+                    STATE.offsetY += (neededTop - m.startY);
+                    render();
+                }
+            }, 0);
         };
     </script>
 	
