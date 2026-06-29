@@ -9,6 +9,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 <head>
 <!-- === МАРКЕР 01: HEAD И НАСТРОЙКИ НАЧАЛО === -->
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Zerkalius: Interleaving Genesis</title>
 <!-- === МАРКЕР 02: HEAD И НАСТРОЙКИ КОНЕЦ === -->
 
@@ -1944,11 +1945,21 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             }
 
             let originalText = safeValue('linesInput', '');
+            let originalLineCount = originalText.split('\n').length;
             let newText = originalText + '\n' + newLines.join('\n');
             let linesInp = document.getElementById('linesInput');
             if (linesInp) linesInp.value = newText;
             STATE.banks[STATE.activeBankIndex].lines = newText;
             loadText(newText);
+
+            let flashUntil = Date.now() + 4000;
+            for (let row = 0; row < newLines.length; row++) {
+                let rowIdx = originalLineCount + row;
+                for (let k = 0; k < newLines[row].length; k++) {
+                    STATE.flashes.set(rowIdx + "_" + k, flashUntil);
+                }
+            }
+
             showNotification("ЗЕРКАЛО-ТРАНСПОНИРОВАНИЕ ДОБАВЛЕНО (" + (direction === 'left' ? '←' : '→') + ")");
         }
         safeBind('mirrorTransposeLeftBtn', 'click', () => mirrorTranspose('left'));
