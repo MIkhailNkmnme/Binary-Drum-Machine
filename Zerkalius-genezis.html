@@ -50,17 +50,22 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         }
         ::-webkit-scrollbar-button { display: none; }
 
-        /* Текст кнопок и пульта не выделяется при клике/драге; паттерн-слот (textarea.pattern-input) — исключение, там нужно выделять текст. */
-        button, .player-panel { user-select: none; }
-        textarea.pattern-input { user-select: text; }
+        /* Текст в меню/панелях не выделяется при клике/драге; реальные поля ввода текста — исключение. */
+        button, .player-panel, .controls, #rightPanel { user-select: none; }
+        .controls input[type="text"], .controls input[type="number"], .controls textarea,
+        #rightPanel input[type="text"], #rightPanel input[type="number"], #rightPanel textarea {
+            user-select: text;
+        }
 
         .controls-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
         .controls-content::-webkit-scrollbar { width: 5px; }
         .controls-content::-webkit-scrollbar-thumb { background: #333; }
         .controls.minimized { transform: translateX(-286px) !important; }
 
+        .player-panel { cursor: move; }
+        .player-panel input, .player-panel button, .player-panel select, .player-panel textarea, .player-panel label, .player-panel a { cursor: pointer; }
         .player-panel {
-            position: absolute; left: 50%; top: 0; width: 700px; transform: translateX(-50%); z-index: 100;
+            position: absolute; left: 50%; top: 0; width: 820px; transform: translateX(-50%); z-index: 100;
             background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(0, 255, 102, 0.3); border-radius: 5px; box-sizing: border-box; padding: 4px;
             transition: left 0.3s ease, right 0.3s ease, top 0.3s ease, bottom 0.3s ease, width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
@@ -74,6 +79,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             min-height: 0 !important;
             overflow: hidden !important;
             resize: none !important;
+            border: none !important; box-shadow: none !important; opacity: 0 !important; pointer-events: none !important;
         }
         .player-panel.minimized .player-columns-row {
             display: none !important;
@@ -101,18 +107,19 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         .player-group { background: transparent; padding: 4px 0; border-bottom: 1px solid #333; }
         .player-group:last-child { border-bottom: none; }
         
-        .player-buttons { display: flex; gap: 4px; align-items: center; }
+        .player-buttons { display: flex; gap: 6px; align-items: center; }
         .player-buttons button { font-size: 13px; border: none; cursor: pointer; border-radius: 999px; padding: 6px 4px; font-weight: bold; }
         #playerButtonsBar {
-            width: auto; box-sizing: border-box; padding: 5px 8px; opacity: 1; transition: opacity 0.3s ease;
+            width: auto; box-sizing: border-box; padding: 8px 32px 6px; opacity: 1; transition: opacity 0.3s ease;
             background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 255, 102, 0.3); border-radius: 999px;
+            border: 1px solid rgba(0, 255, 102, 0.3); border-radius: 999px; cursor: move; gap: 4px;
         }
         #playerButtonsBar.dimmed { opacity: 0.15 !important; }
         #playerButtonsBar.dimmed:hover { opacity: 1 !important; }
-        #prevBtn, #nextBtn { flex: 0 0 30px; width: 30px; height: 30px; padding: 0; border-radius: 50%; background: #222; color: #fff; display: flex; align-items: center; justify-content: center; }
-        #stopBtn { flex: 0 0 34px; width: 34px; height: 34px; padding: 0; border-radius: 50%; background: #ff3333; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 15px; }
-        #playBtn { flex: 0 0 68px; background: #00ff66; color: #000; font-size: 10px; padding: 6px 2px; white-space: nowrap; overflow: hidden; }
+        #prevBtn, #nextBtn { flex: 0 0 45px; width: 45px; height: 45px; padding: 0; border-radius: 50%; background: #222; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        #stopBtn { flex: 0 0 51px; width: 51px; height: 51px; padding: 0; border-radius: 50%; background: #ff3333; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 26px; transition: opacity 0.2s ease; }
+        #stopBtn.inactive { opacity: 0.35; }
+        #playBtn { flex: 0 0 102px; background: #00ff66; color: #000; font-size: 15px; padding: 9px 3px; white-space: nowrap; overflow: hidden; }
 
         .row-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
         label, .lbl { font-size: 11px; color: #aaa; font-family: sans-serif; cursor: pointer;}
@@ -213,6 +220,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             border: 1px solid rgba(0, 255, 102, 0.25); border-radius: 20px; padding: 10px 7px; box-shadow: 0 0 15px rgba(0, 255, 102, 0.1);
             cursor: move;
         }
+        .floating-toolbar-undoredo, .floating-toolbar-paste { top: 0; transform: none; }
         .floating-toolbar-right {
             position: fixed; right: 10px; top: 50%; transform: translateY(-50%); z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center;
             transition: right 0.3s ease, top 0.3s ease, opacity 0.3s ease;
@@ -343,7 +351,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
     </script>
 
 <!-- === МАРКЕР 07: ЛЕВАЯ ПАНЕЛЬ === -->
-    <div class="controls" onclick="event.stopPropagation();">
+    <div class="controls" onclick="event.stopPropagation();" title="Левая панель настроек.">
         <div class="controls-content">
 
         <details class="control-group" open>
@@ -380,8 +388,14 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             </div>
             <div style="display: flex; gap: 4px; margin-bottom: 2px;">
                 <button id="mirrorTransposeLeftBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; border-color:#cc33ff; color:#cc33ff;" title="Транспонировать: 1-я строка = первые символы каждой строки, считая с ПРАВОГО края (зеркально)">🪞 Зеркало ←</button>
+                <label style="display:flex; align-items:center; flex-shrink:0; gap:2px;" title="↕️ Вертикальное зеркало">
+                    <input type="checkbox" id="mirrorCheck"> <span class="lbl" style="color:#cc33ff; font-weight:bold; font-size:14px;">↕️</span>
+                </label>
                 <button id="mirrorTransposeRightBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; border-color:#cc33ff; color:#cc33ff;" title="Транспонировать: 1-я строка = первые символы каждой строки, считая с ЛЕВОГО края">Зеркало → 🪞</button>
             </div>
+            <label style="display:flex; align-items:center; margin-bottom:2px;" title="Если включено — старое поведение: результат транспонирования добавляется НОВЫМИ строками внизу. Если выключено (по умолчанию) — результат приклеивается к каждой исходной строке на её же месте, строки становятся длиннее">
+                <input type="checkbox" id="appendBelowMirrorCheck"> <span class="lbl" style="color:#cc33ff; font-size:10px;">Зеркало: добавлять строки внизу (вместо приклеивания)</span>
+            </label>
             <textarea id="linesInput" placeholder="Введите символы (Двойной клик = Вставка)" style="height: 60px; color:#bfff00; margin-top:2px;"></textarea>
             
             <div style="display: flex; align-items: center; justify-content: space-between; background: #111; padding: 4px; border-radius: 3px; margin-top: 4px;">
@@ -551,9 +565,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     <input type="range" id="gridAlpha" min="0.1" max="1.0" step="0.1" value="0.4" style="width:50px; margin:0;" title="Прозрачность сетки">
                 </div>
             </div>
-            <label style="display:flex; align-items:center; margin-top:3px;">
-                <input type="checkbox" id="mirrorCheck"> <span class="lbl" style="color:#cc33ff; font-weight:bold;">↕️ Вертикальное зеркало</span>
-            </label>
             <div style="background: #111; padding: 4px; border-radius: 3px; margin-top: 3px; border-left: 2px solid #00ccff; display: flex; align-items: center; justify-content: space-between;">
                 <span class="lbl" style="color:#00ccff;">Шаг поворота Радара:</span>
                 <input type="number" id="radarRotateSnapInput" value="1" min="1" max="100" style="width: 40px; height: 18px;">
@@ -624,24 +635,20 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
 
-            <div class="player-col" style="flex:1; min-width:160px; display:flex; flex-direction:column;">
+            <div class="player-col" style="flex:1.2; min-width:200px; display:flex; flex-direction:column;">
                 <div class="player-group">
-                    <div class="row-between">
-                        <span class="lbl">Масштаб: <span class="val" id="fontVal">16px</span></span>
-                        <span class="lbl">Экран: <span class="val" id="screenVal">64</span></span>
-                    </div>
-                    <div style="display:flex; gap:10px;">
-                        <input type="range" id="fontSlider" min="1" max="100" value="16">
-                        <input type="range" id="screenSlider" min="1" max="200" value="64">
+                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:4px;">
+                        <span class="lbl" style="flex-shrink:0; white-space:nowrap;">Масштаб:<span class="val" id="fontVal">16px</span></span>
+                        <input type="range" id="fontSlider" min="1" max="100" value="16" style="flex:1; min-width:0;">
+                        <span class="lbl" style="flex-shrink:0; white-space:nowrap;">Экран:<span class="val" id="screenVal">64</span></span>
+                        <input type="range" id="screenSlider" min="1" max="200" value="64" style="flex:1; min-width:0;">
                     </div>
 
-                    <div class="row-between">
-                        <span class="lbl">Интервал Y: <span class="val" id="lhVal">1.0</span></span>
-                        <span class="lbl">Интервал X: <span class="val" id="cwVal">1.0</span></span>
-                    </div>
-                    <div style="display:flex; gap:10px; margin-bottom: 5px;">
-                        <input type="range" id="lhSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="flex:1;">
-                        <input type="range" id="cwSlider" min="0.1" max="2.5" step="0.05" value="1.0" style="flex:1;">
+                    <div style="display:flex; gap:8px; align-items:center; margin-bottom: 5px;">
+                        <span class="lbl" style="flex-shrink:0; white-space:nowrap;">Инт.Y:<span class="val" id="lhVal">1.0</span></span>
+                        <input type="range" id="lhSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="flex:1; min-width:0;">
+                        <span class="lbl" style="flex-shrink:0; white-space:nowrap;">Инт.X:<span class="val" id="cwVal">1.0</span></span>
+                        <input type="range" id="cwSlider" min="0.1" max="2.5" step="0.05" value="1.0" style="flex:1; min-width:0;">
                     </div>
                     <div style="display:flex; align-items:center; gap:3px; margin-bottom:5px; min-width:0; max-width:100%; overflow:hidden;">
                         <button id="rightTriangle90Btn" class="btn-action" style="margin:0; padding:2px 3px; width:auto; flex-shrink:0; font-size:8px; color:#ffd500; border-color:#ffd500;" title="Подгоняет интервал X так, чтобы ячейка символа стала квадратной (ширина = высоте строки) при текущем интервале Y. Любая 'лестница' (например 1,11,111...) на холсте получит ровно 45° диагональ и 90° угол. Содержимое холста не меняется — только геометрия символа">📐90°</button>
@@ -666,44 +673,40 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 
             </div>
 
-            <div class="player-col" style="flex:1; min-width:160px; display:flex; flex-direction:column; border-left:1px solid #333; border-right:1px solid #333; padding:0 10px;">
+            <div class="player-col" style="flex:1.3; min-width:200px; display:flex; flex-direction:column; border-left:1px solid #333; border-right:1px solid #333; padding:0 10px;">
                 <div class="player-group" style="margin-top:auto;">
+                    <label style="display:flex; align-items:center; gap:4px; margin-bottom:5px; justify-content:center;" title="Если включено — кнопки Пуск/Стоп/◀▶ тоже затемняются при затемнении панели наехавшими строками (как в дзен-режиме). Если выключено — остаются видимыми всегда, кроме дзен-режима">
+                        <input type="checkbox" id="hideControlsOnDimCheck"> <span class="lbl" style="font-size:9px;">Затемнять Пуск/Стоп при затемнении</span>
+                    </label>
                     <div style="display:flex; flex-direction:column; gap:4px; margin-top:5px;">
                         <!-- Скорость -->
-                        <div class="row-between">
-                            <span class="lbl">Скорость:</span>
-                            <span class="val" id="speedVal" style="color:#00ccff;">950</span>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:3px; margin-bottom:2px;">
-                            <button id="speedDecBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-weight:bold; color:#00ccff; border-color:#00ccff;">◀</button>
-                            <input type="range" id="speedSlider" min="1" max="1000" value="950" style="margin:0; height:12px; flex:1;">
-                            <button id="speedIncBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-weight:bold; color:#00ccff; border-color:#00ccff;">▶</button>
+                        <div style="display:flex; align-items:center; gap:4px;">
+                            <span class="lbl" style="flex-shrink:0;">Скор:</span>
+                            <button id="speedDecBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-weight:bold; color:#00ccff; border-color:#00ccff; flex-shrink:0;">◀</button>
+                            <input type="range" id="speedSlider" min="1" max="1000" value="950" style="margin:0; height:12px; flex:1; min-width:0;">
+                            <button id="speedIncBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-weight:bold; color:#00ccff; border-color:#00ccff; flex-shrink:0;">▶</button>
+                            <span class="val" id="speedVal" style="color:#00ccff; flex-shrink:0; width:28px; text-align:right;">950</span>
                         </div>
                         <!-- Турбо -->
-                        <div class="row-between" style="margin-top:2px;">
-                            <span class="lbl">Множитель (Turbo):</span>
-                            <span class="lbl" style="color:#ff3333; font-weight:bold;">Turbo x <span class="val" id="turboVal">1</span></span>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:3px;">
-                            <button id="turboDecBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-weight:bold; color:#ff9900; border-color:#ff9900;">◀</button>
-                            <input type="range" id="turboSlider" min="1" max="1111" value="1" style="margin:0; height:12px; flex:1;">
-                            <button id="turboIncBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-weight:bold; color:#ff9900; border-color:#ff9900;">▶</button>
+                        <div style="display:flex; align-items:center; gap:4px;">
+                            <span class="lbl" style="flex-shrink:0;" title="Множитель (Turbo)">Turbo:</span>
+                            <button id="turboDecBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-weight:bold; color:#ff9900; border-color:#ff9900; flex-shrink:0;">◀</button>
+                            <input type="range" id="turboSlider" min="1" max="1111" value="1" style="margin:0; height:12px; flex:1; min-width:0;">
+                            <button id="turboIncBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-weight:bold; color:#ff9900; border-color:#ff9900; flex-shrink:0;">▶</button>
+                            <span class="lbl" style="color:#ff3333; font-weight:bold; flex-shrink:0; width:28px; text-align:right;">x<span class="val" id="turboVal">1</span></span>
                         </div>
                     </div>
 
                     <div style="display: flex; gap: 4px; align-items: center; margin-top: 5px;">
-                        <span class="lbl" style="width: 30px;">Шаг(S):</span>
-                        <input type="number" id="scrollStepInput" value="1" min="1" style="width: 35px; height: 16px; font-size: 10px;">
-                        <input type="range" id="stepSlider" min="0" max="0" value="0" style="flex: 1; margin: 0;">
+                        <span class="lbl" style="width: 30px; flex-shrink:0;">Шаг(S):</span>
+                        <input type="number" id="scrollStepInput" value="1" min="1" style="width: 35px; height: 16px; font-size: 10px; flex-shrink:0;">
+                        <input type="range" id="stepSlider" min="0" max="0" value="0" style="flex: 1; margin: 0; min-width:0;">
                     </div>
 
                     <div class="row-between" style="margin-top:5px;">
                         <button id="playerModeBtn" class="btn-action" style="margin:0; width: 100%; color:#00ccff; border-color:#00ccff; font-size:10px;" title="Скроллинг (⬍) — холст движется вверх/вниз. Симуляция XOR (⬌) — горизонтальные правила сдвигаются влево/вправо">⬌ Функция: Симуляция (XOR)</button>
                     </div>
 
-                    <label style="display:flex; align-items:center; gap:4px; margin-top:5px; justify-content:center;" title="Если включено — кнопки Пуск/Стоп/◀▶ тоже гаснут при затемнении панели наехавшими строками (как в дзен-режиме). Если выключено — остаются видимыми всегда, кроме дзен-режима">
-                        <input type="checkbox" id="hideControlsOnDimCheck"> <span class="lbl" style="font-size:9px;">Гасить Пуск/Стоп при затемнении</span>
-                    </label>
                 </div>
             </div>
 
@@ -751,27 +754,36 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         </div>
         </div>
     </div>
-    <div class="player-buttons" id="playerButtonsBar" style="position:fixed; justify-content:center; z-index:101;" onclick="event.stopPropagation();">
-        <button id="prevBtn" title="Шаг назад" style="color:#fff;">◀</button>
-        <button id="playBtn" title="Старт / Пауза (Space)">▶ Пуск</button>
-        <button id="stopBtn" title="Сбросить на 0">■</button>
-        <button id="nextBtn" title="Шаг вперед" style="color:#fff;">▶</button>
+    <div id="playerButtonsBar" style="position:fixed; z-index:101; display:flex; flex-direction:column; align-items:center;" title="Двойной клик по пустому месту (между кнопками): развернуть весь Пульт. Перетаскивание: переместить Пульт." onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { document.querySelector('.player-panel').classList.remove('minimized'); setTimeout(positionPlayerButtonsBar, 320); event.stopPropagation(); }">
+        <div class="player-buttons" style="justify-content:center;">
+            <button id="prevBtn" title="Шаг назад" style="color:#fff;">◀</button>
+            <button id="playBtn" title="Старт / Пауза (Space)">▶ Пуск</button>
+            <button id="stopBtn" class="inactive" title="Сбросить на 0">■</button>
+            <button id="nextBtn" title="Шаг вперед" style="color:#fff;">▶</button>
+        </div>
     </div>
-    <div id="frameCounterDisplay" style="position:fixed; color:#777; font-size:10px; font-family:monospace; z-index:101; pointer-events:none;">Кадр: <span class="val" id="stepVal">0 / 0</span></div>
+    <div id="frameCounterDisplay" style="position:fixed; color:#444; font-size:10px; font-family:monospace; pointer-events:none; text-align:right; z-index:101;">Кадр: <span class="val" id="stepVal" style="color:#888;">0 / 0</span></div>
 <!-- === МАРКЕР 09: ХОЛСТ И ТУЛБАР === -->
     <a href="index.html" class="float-circle-btn floating-back-btn" style="text-decoration:none; font-weight:bold; color:#00ff66; border-color:#00ff66;" title="Вернуться в Хаб">⬅</a>
-    <div class="floating-toolbar">
+    <div class="floating-toolbar floating-toolbar-undoredo" title="Отменить / Повторить.">
+        <button class="float-circle-btn" id="floatingUndoBtn" title="Отменить (Ctrl+Z)">↶</button>
+        <button class="float-circle-btn" id="floatingRedoBtn" title="Повторить (Ctrl+Y)">↷</button>
+    </div>
+    <div class="floating-toolbar" title="Тулбар быстрых функций. Перетаскивание: переместить.">
         <button class="float-circle-btn" id="floatingCenterBtn" title="Клик: 100% высота. Двойной клик: 30% высота.">⌖</button>
         <button class="float-circle-btn" id="floatingRadarBtn" title="Топологический Радар">🛰️</button>
         <button class="float-circle-btn" id="floatingRotateViewBtn" style="color:#ffd500; border-color:#ffd500;" title="Временно повернуть весь вид на 90° (как монитор повернуть) — повторное нажатие вернёт обратно. Данные не меняются, только картинка">⟲</button>
     </div>
-    <div class="floating-toolbar-right">
+    <div class="floating-toolbar floating-toolbar-paste" title="Вставить из буфера обмена прямо на холст.">
+        <button class="float-circle-btn" id="floatingPasteBtn" style="color:#bfff00; border-color:#bfff00;" title="Вставить из буфера обмена прямо на холст">📋</button>
+    </div>
+    <div class="floating-toolbar-right" title="Тулбар быстрых функций (прилеплен к правой панели).">
         <button class="float-circle-btn" id="floatingFrameBtn" title="Включить/Выключить Рамку">🔲</button>
         <button class="float-circle-btn" id="floatingInterleaveBtn" style="color:#cc33ff; border-color:#cc33ff;" title="Анализ пересечений (LCS)">🧬</button>
     </div>
     <div id="mainTitle">Zerkalius: Genesis (v0.195 Ultra-Save)</div>
 <!-- === МАРКЕР 10: ТЕРМИНАЛ АКТИВАЦИИ === -->
-    <div id="rightPanel" onclick="event.stopPropagation();" ondblclick="if (event.target.closest('.right-panel-tab') || !event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); event.stopPropagation(); }">
+    <div id="rightPanel" title="Правая панель. Перетаскивание за вкладки слева: переместить. Двойной клик: свернуть/развернуть." onclick="event.stopPropagation();" ondblclick="if (event.target.closest('.right-panel-tab') || !event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); event.stopPropagation(); }">
         <div class="right-panel-row">
             <div id="rightPanelLeftResizer" style="position:absolute; left:0; top:0; bottom:0; width:7px; cursor:ew-resize; z-index:5;" title="Тащить — расширить панель влево"></div>
             <div class="right-panel-title" title="Двойной клик: Свернуть/Развернуть">
@@ -1216,7 +1228,8 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             selectionMode: 'add',
             wasBalancedLastFrame: false, 
             undoStack: [],
-            linesModifiedSinceLastInit: true, 
+            redoStack: [],
+            linesModifiedSinceLastInit: true,
             flashEndTime: 0, 
             offsetX: 0, offsetY: 0, autoOffsetX: 0, oscXDir: 1, autoOffsetY: 0, oscYDir: 1,
             isDraggingPan: false, dragStartX: 0, dragStartY: 0, hasMoved: false,
@@ -1267,7 +1280,50 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             if (STATE.undoStack.length === 0 || STATE.undoStack[STATE.undoStack.length - 1] !== currentText) {
                 STATE.undoStack.push(currentText);
                 if (STATE.undoStack.length > 50) STATE.undoStack.shift();
+                STATE.redoStack = []; // новое действие обрывает цепочку повтора
             }
+        };
+
+        window.performUndo = function() {
+            if (STATE.undoStack && STATE.undoStack.length > 0) {
+                if (!STATE.redoStack) STATE.redoStack = [];
+                let currentText = STATE.lines.map(l => l.orig).join('\n');
+                STATE.redoStack.push(currentText);
+                let prevText = STATE.undoStack.pop();
+                loadText(prevText, true);
+                render();
+                showNotification("⏪ ОТМЕНА (CTRL+Z)");
+            } else {
+                showNotification("ОТМЕНЯТЬ НЕЧЕГО");
+            }
+        };
+
+        window.performRedo = function() {
+            if (STATE.redoStack && STATE.redoStack.length > 0) {
+                if (!STATE.undoStack) STATE.undoStack = [];
+                let currentText = STATE.lines.map(l => l.orig).join('\n');
+                STATE.undoStack.push(currentText);
+                let nextText = STATE.redoStack.pop();
+                loadText(nextText, true);
+                render();
+                showNotification("⏩ ПОВТОР (CTRL+Y)");
+            } else {
+                showNotification("ПОВТОРЯТЬ НЕЧЕГО");
+            }
+        };
+
+        window.pasteClipboardToCanvas = function() {
+            if (!navigator.clipboard || !navigator.clipboard.readText) {
+                showNotification("ВСТАВКА НЕДОСТУПНА (НЕТ ДОСТУПА К БУФЕРУ)");
+                return;
+            }
+            navigator.clipboard.readText().then(text => {
+                if (!text) { showNotification("БУФЕР ОБМЕНА ПУСТ"); return; }
+                if (window.saveUndoState) saveUndoState();
+                loadText(text);
+                render();
+                showNotification("📋 ВСТАВЛЕНО ИЗ БУФЕРА");
+            }).catch(() => showNotification("ВСТАВКА НЕ УДАЛАСЬ (НЕТ РАЗРЕШЕНИЯ)"));
         };
 
         // Подгоняет ширину рамки под самую длинную строку среди тех, что сейчас входят в рамку
@@ -1545,10 +1601,9 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         window.switchBank = function(idx, applyToCanvas = false) {
             let linesInp = document.getElementById('linesInput');
             let patInp = document.getElementById('patternInput');
-            
-            if(linesInp) STATE.banks[STATE.activeBankIndex].lines = linesInp.value;
-            if(patInp) STATE.banks[STATE.activeBankIndex].patterns = patInp.value;
-            
+
+            // ВАЖНО: слот НЕ перезаписывается текущими изменениями при переключении —
+            // несохранённые правки на холсте/в поле теряются, если не нажата кнопка "💾 Сохранить".
             STATE.activeBankIndex = idx;
             
             let newLines = STATE.banks[idx].lines || "";
@@ -1587,6 +1642,16 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             let m = getGridMetrics();
             if (!m) return;
 
+            // Учитываем Пульт (закреплён сверху) — строки не должны прятаться под ним,
+            // поэтому считаем доступную высоту и точку отсчёта от его нижнего края, а не от верха холста.
+            let clearance = 0;
+            let playerPanelEl = document.querySelector('.player-panel');
+            if (playerPanelEl) {
+                let panelRect = playerPanelEl.getBoundingClientRect();
+                let canvasRect = UI.canvas.getBoundingClientRect();
+                clearance = Math.max(0, (panelRect.bottom - canvasRect.top) + 20);
+            }
+
             // Жестко обнуляем все смещения, чтобы вернуть улетевшие строки
             STATE.offsetX = 0;
             STATE.offsetY = 0;
@@ -1620,14 +1685,15 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 
                 if (linesToFit > 0) {
                     let padding = 40;
-                    let optimalSize = Math.floor((UI.canvas.height * scaleFactor - padding) / (linesToFit * lh));
+                    let availableHeight = Math.max(50, UI.canvas.height * scaleFactor - clearance - padding);
+                    let optimalSize = Math.floor(availableHeight / (linesToFit * lh));
                     optimalSize = Math.max(2, Math.min(100, optimalSize)); // От 2 до 100 px
-                    
+
                     const fontSlider = document.getElementById('fontSlider');
                     if (fontSlider) fontSlider.value = optimalSize;
                     const fontVal = document.getElementById('fontVal');
                     if (fontVal) fontVal.textContent = optimalSize + 'px';
-                    
+
                     const screenSlider = document.getElementById('screenSlider');
                     if (screenSlider && !targetActiveOnly) {
                         screenSlider.value = STATE.lines.length;
@@ -1636,6 +1702,16 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     }
                 }
             }
+
+            // Сдвигаем верхнюю границу блока строк ниже Пульта (вместо центрирования по всему холсту).
+            if (clearance > 0) {
+                let m2 = getGridMetrics();
+                if (m2) {
+                    let centeredStartY = m2.startY; // при offsetY=0
+                    STATE.offsetY = clearance - centeredStartY;
+                }
+            }
+
             render();
             showNotification(targetActiveOnly ? "ЦЕНТР: АКТИВНЫЙ БЛОК" : "ЦЕНТР: ВСЕ СТРОКИ (100%)");
         }
@@ -2006,9 +2082,11 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         safeBind('alignRightBtn', 'click', () => alignText('right'));
 
         // Зеркало-транспонирование: 1-я строка результата = первые символы каждой исходной строки,
-        // 2-я строка = вторые символы каждой и т.д. Если строки разной длины — получается треугольник.
+        // 2-я строка = вторые символы каждой и т.д. Если строки разной длины — недостающие места — точки-filler.
         // 'right' — отсчёт символов с левого края строк (как обычно читаем).
         // 'left'  — отсчёт с правого края строк (зеркальное направление).
+        // По умолчанию результат ПРИКЛЕИВАЕТСЯ к каждой исходной строке на её же месте (строка становится длиннее).
+        // Если включена галка "appendBelowMirrorCheck" — старое поведение: результат добавляется новыми строками внизу.
         function mirrorTranspose(direction) {
             if (window.saveUndoState) saveUndoState();
             let lines = safeValue('linesInput', '').split('\n').map(l => l.trim().replace(/\s+/g, ''));
@@ -2028,22 +2106,38 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             }
 
             let originalText = safeValue('linesInput', '');
-            let originalLineCount = originalText.split('\n').length;
-            let newText = originalText + '\n' + newLines.join('\n');
+            let originalLines = originalText.split('\n');
+            let appendBelow = safeChecked('appendBelowMirrorCheck', false);
             let linesInp = document.getElementById('linesInput');
+            let flashUntil = Date.now() + 4000;
+            let newText;
+
+            if (appendBelow) {
+                let originalLineCount = originalLines.length;
+                newText = originalText + '\n' + newLines.join('\n');
+                for (let row = 0; row < newLines.length; row++) {
+                    let rowIdx = originalLineCount + row;
+                    for (let k = 0; k < newLines[row].length; k++) {
+                        STATE.flashes.set(rowIdx + "_" + k, flashUntil);
+                    }
+                }
+            } else {
+                // Каждая исходная строка приклеивает к себе свою же строку результата (col[row]).
+                let mergedLines = originalLines.map((orig, idx) => orig + (newLines[idx] !== undefined ? newLines[idx] : ''));
+                newText = mergedLines.join('\n');
+                for (let row = 0; row < mergedLines.length; row++) {
+                    let origLen = originalLines[row].length;
+                    for (let k = origLen; k < mergedLines[row].length; k++) {
+                        STATE.flashes.set(row + "_" + k, flashUntil);
+                    }
+                }
+            }
+
             if (linesInp) linesInp.value = newText;
             STATE.banks[STATE.activeBankIndex].lines = newText;
             loadText(newText);
 
-            let flashUntil = Date.now() + 4000;
-            for (let row = 0; row < newLines.length; row++) {
-                let rowIdx = originalLineCount + row;
-                for (let k = 0; k < newLines[row].length; k++) {
-                    STATE.flashes.set(rowIdx + "_" + k, flashUntil);
-                }
-            }
-
-            showNotification("ЗЕРКАЛО-ТРАНСПОНИРОВАНИЕ ДОБАВЛЕНО (" + (direction === 'left' ? '←' : '→') + ")");
+            showNotification((appendBelow ? "ЗЕРКАЛО-ТРАНСПОНИРОВАНИЕ ДОБАВЛЕНО (" : "ЗЕРКАЛО-ТРАНСПОНИРОВАНИЕ ПРИКЛЕЕНО (") + (direction === 'left' ? '←' : '→') + ")");
         }
         safeBind('mirrorTransposeLeftBtn', 'click', () => mirrorTranspose('left'));
         safeBind('mirrorTransposeRightBtn', 'click', () => mirrorTranspose('right'));
@@ -4914,7 +5008,9 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 
         const stepVal = document.getElementById('stepVal');
         if (stepVal) {
-            stepVal.textContent = `${Math.abs(STATE.globalStep)} / ${isFinite(STATE.maxCycle) ? STATE.maxCycle : '∞'}`;
+            const CYCLE_DISPLAY_CAP = 10000000000;
+            let cycleStr = !isFinite(STATE.maxCycle) ? '∞' : (STATE.maxCycle > CYCLE_DISPLAY_CAP ? '> ' + CYCLE_DISPLAY_CAP : STATE.maxCycle);
+            stepVal.textContent = `${Math.abs(STATE.globalStep)} / ${cycleStr}`;
         }
         const stepSlider = document.getElementById('stepSlider');
         if (stepSlider && stepSlider.max > 0) {
@@ -5627,14 +5723,17 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 
         function togglePlay() {
             STATE.isPlaying = !STATE.isPlaying;
+            let stopBtnEl = document.getElementById('stopBtn');
             if (STATE.isPlaying) {
                 UI.playBtn.innerHTML = '⏸ Пауза';
-                UI.playBtn.style.background = '#ff3333';
+                UI.playBtn.style.background = '#ffcc00';
+                if (stopBtnEl) stopBtnEl.classList.remove('inactive');
                 STATE.lastTick = performance.now();
                 loop(performance.now());
             } else {
                 UI.playBtn.innerHTML = '▶ Пуск';
                 UI.playBtn.style.background = '#00ff66';
+                if (stopBtnEl) stopBtnEl.classList.add('inactive');
                 cancelAnimationFrame(STATE.rafId);
                 updateLogic();
                 window.saveAutosaveSnapshot && window.saveAutosaveSnapshot();
@@ -5651,6 +5750,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             if (STATE.selectedRings) STATE.selectedRings.clear();
             if (STATE.selectedRows) STATE.selectedRows.clear();
             cancelAnimationFrame(STATE.rafId); UI.playBtn.innerHTML = '▶ Пуск'; UI.playBtn.style.background = '#00ff66';
+            document.getElementById('stopBtn').classList.add('inactive');
             STATE.currentTargetPatternIdx = 1;
             STATE.lastFindMethod = "Ожидание...";
             STATE.pendingCascade = false;            STATE.wasBalancedLastFrame = false;
@@ -6228,6 +6328,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                                 span.style.width = '100%';
                                 span.style.top = (y - 6) + 'px';
                                 span.style.fontSize = '9px';
+                                span.style.fontFamily = safeValue('fontSelect', 'monospace');
                                 span.style.textAlign = 'center';
                                 if (isRowSelected) {
                                     span.style.color = '#ff66ff';
@@ -6235,6 +6336,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                                     span.style.textShadow = '0 0 6px #ff00ff, 0 0 10px #ff00ff';
                                 } else {
                                     span.style.color = lineData.isActive ? '#3a4a42' : '#33333a';
+                                    span.style.fontWeight = safeChecked('boldCheck', false) ? 'bold' : 'normal';
                                 }
                                 minNumContainer.appendChild(span);
                             });
@@ -6696,12 +6798,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             bar.style.left = (rect.left + rect.width / 2) + 'px';
             bar.style.transform = 'translateX(-50%)';
             bar.style.top = (rect.bottom + 6) + 'px';
-
-            let counter = document.getElementById('frameCounterDisplay');
-            if (counter) {
-                counter.style.right = (window.innerWidth - rect.right) + 'px';
-                counter.style.top = (rect.bottom + 4) + 'px';
-            }
         }
         positionPlayerButtonsBar();
         if (typeof ResizeObserver !== 'undefined') {
@@ -6738,15 +6834,25 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             }
         }
 
-        // Вертикальный тулбар (⌖🛰️⟲) и кнопка ⬅ прилеплены к правому краю левой панели .controls.
+        // Вертикальный тулбар (⌖🛰️⟲), тулбар отмены (↶↷, выше), тулбар вставки (📋, ниже)
+        // и кнопка ⬅ прилеплены к правому краю левой панели .controls.
         function positionFloatingToolbar() {
-            let toolbar = document.querySelector('.floating-toolbar');
+            let toolbar = document.querySelector('.floating-toolbar:not(.floating-toolbar-undoredo):not(.floating-toolbar-paste)');
+            let undoToolbar = document.querySelector('.floating-toolbar-undoredo');
+            let pasteToolbar = document.querySelector('.floating-toolbar-paste');
             let backBtn = document.querySelector('.floating-back-btn');
             let controlsPanel = document.querySelector('.controls');
             if (!controlsPanel) return;
             let rect = controlsPanel.getBoundingClientRect();
             if (toolbar) toolbar.style.left = (rect.right + 10) + 'px';
             if (backBtn) backBtn.style.left = (rect.right + 10) + 'px';
+            if (undoToolbar) undoToolbar.style.left = (rect.right + 10) + 'px';
+            if (pasteToolbar) pasteToolbar.style.left = (rect.right + 10) + 'px';
+            if (toolbar) {
+                let toolbarRect = toolbar.getBoundingClientRect();
+                if (undoToolbar) undoToolbar.style.top = (toolbarRect.top - undoToolbar.getBoundingClientRect().height - 10) + 'px';
+                if (pasteToolbar) pasteToolbar.style.top = (toolbarRect.bottom + 10) + 'px';
+            }
         }
         positionFloatingToolbar();
         if (typeof ResizeObserver !== 'undefined') {
@@ -6757,13 +6863,19 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             if (e.propertyName === 'transform') positionFloatingToolbar();
         });
 
-        // Правый вертикальный тулбар (🔲 Рамка) прилеплен к левому краю #rightPanel.
+        // Правый вертикальный тулбар (🔲 Рамка) и счётчик кадра прилеплены к левому краю #rightPanel, у нижнего края экрана.
         function positionFloatingToolbarRight() {
             let toolbar = document.querySelector('.floating-toolbar-right');
             let rightPanel = document.getElementById('rightPanel');
-            if (!toolbar || !rightPanel) return;
+            if (!rightPanel) return;
             let rect = rightPanel.getBoundingClientRect();
-            toolbar.style.right = (window.innerWidth - rect.left + 10) + 'px';
+            if (toolbar) toolbar.style.right = (window.innerWidth - rect.left + 10) + 'px';
+
+            let counter = document.getElementById('frameCounterDisplay');
+            if (counter) {
+                counter.style.right = (window.innerWidth - rect.left + 10) + 'px';
+                counter.style.bottom = '10px';
+            }
         }
         positionFloatingToolbarRight();
         if (typeof ResizeObserver !== 'undefined') {
@@ -6967,6 +7079,10 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             this.classList.toggle('active', STATE.viewRotation !== 0);
             showNotification(STATE.viewRotation === 0 ? "⟲ ВИД ВОЗВРАЩЁН" : `⟲ ВИД ПОВЁРНУТ НА ${STATE.viewRotation}°`);
         });
+
+        safeBind('floatingUndoBtn', 'click', () => performUndo());
+        safeBind('floatingRedoBtn', 'click', () => performRedo());
+        safeBind('floatingPasteBtn', 'click', () => pasteClipboardToCanvas());
 
         // Клик по любой панели снимает затемнение со всех панелей (вернулись смотреть на интерфейс, не на строки).
         ['.controls', '.player-panel', '#rightPanel'].forEach(sel => {
@@ -8184,16 +8300,13 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 }
             }
             
-            if (e.code === 'KeyZ' && (e.ctrlKey || e.metaKey)) {
+            if (e.code === 'KeyZ' && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
                 e.preventDefault();
-                if (STATE.undoStack && STATE.undoStack.length > 0) {
-                    let prevText = STATE.undoStack.pop();
-                    loadText(prevText, true);
-                    render();
-                    showNotification("⏪ ОТМЕНА (CTRL+Z)");
-                } else {
-                    showNotification("ОТМЕНЯТЬ НЕЧЕГО");
-                }
+                performUndo();
+            }
+            if ((e.code === 'KeyY' && (e.ctrlKey || e.metaKey)) || (e.code === 'KeyZ' && (e.ctrlKey || e.metaKey) && e.shiftKey)) {
+                e.preventDefault();
+                performRedo();
             }
 
             if (e.code === 'KeyQ') { e.preventDefault(); document.getElementById('exportCodeBtn').click(); }
