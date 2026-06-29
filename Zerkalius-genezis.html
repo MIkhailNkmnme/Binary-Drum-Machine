@@ -30,14 +30,16 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         }
 
         #mainTitle {
-            position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
-            color: rgba(0, 255, 102, 0.85); font-size: 15px; font-weight: bold;
-            pointer-events: none; z-index: 130; text-transform: uppercase;
-            letter-spacing: 4px;
+            position: fixed; left: 50%; bottom: 10px; transform: translateX(-50%);
+            z-index: 99; box-sizing: border-box; max-width: 90vw;
+            background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 255, 102, 0.3); border-radius: 999px;
+            color: rgba(0, 255, 102, 0.85); font-size: 12px; font-weight: bold;
+            pointer-events: none; text-transform: uppercase;
+            letter-spacing: 3px; text-align: center;
             text-shadow: 0 0 10px rgba(0, 255, 102, 0.6);
             font-family: 'Roboto Mono', monospace;
-            background: rgba(5, 5, 5, 0.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-            padding: 5px 18px; border-radius: 6px; white-space: nowrap;
+            padding: 4px 16px; white-space: nowrap; overflow: hidden;
         }
 
         .controls { 
@@ -58,7 +60,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         .controls.minimized { transform: translateX(-286px) !important; }
 
         .player-panel {
-            position: absolute; left: 50%; bottom: 10px; width: 700px; transform: translateX(-50%); z-index: 100;
+            position: absolute; left: 50%; top: 0; width: 700px; transform: translateX(-50%); z-index: 100;
             background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(0, 255, 102, 0.3); border-radius: 5px; box-sizing: border-box; padding: 4px;
             transition: left 0.3s ease, right 0.3s ease, top 0.3s ease, bottom 0.3s ease, width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
@@ -69,20 +71,21 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         #rightPanel::-webkit-resizer { background: transparent; }
 
         .player-panel.minimized {
-            width: 34px !important;
-            min-width: 34px !important;
+            min-height: 0 !important;
             overflow: hidden !important;
             resize: none !important;
+        }
+        .player-panel.minimized .player-columns-row {
+            display: none !important;
         }
 
         #rightPanel.minimized {
-            height: 34px !important;
-            min-height: 34px !important;
+            transform: translateX(calc(100% - 30px));
             overflow: hidden !important;
             resize: none !important;
         }
 
-        .player-panel.minimized .panel-content, #rightPanel.minimized .panel-content {
+        #rightPanel.minimized .panel-content {
             display: none !important;
         }
         
@@ -98,11 +101,18 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         .player-group { background: transparent; padding: 4px 0; border-bottom: 1px solid #333; }
         .player-group:last-child { border-bottom: none; }
         
-        .player-buttons { display: flex; gap: 4px; margin-bottom: 5px; margin-top: 5px;}
-        .player-buttons button { font-size: 13px; border: none; cursor: pointer; border-radius: 3px; padding: 6px 4px; font-weight: bold; }
-        #prevBtn, #nextBtn { flex: 1; background: #222; color: #fff; }
-        #playBtn { flex: 3; background: #00ff66; color: #000; }
-        #stopBtn { flex: 2; background: #ff3333; color: #fff; }
+        .player-buttons { display: flex; gap: 4px; align-items: center; }
+        .player-buttons button { font-size: 13px; border: none; cursor: pointer; border-radius: 999px; padding: 6px 4px; font-weight: bold; }
+        #playerButtonsBar {
+            width: auto; box-sizing: border-box; padding: 5px 8px; opacity: 1; transition: opacity 0.3s ease;
+            background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 255, 102, 0.3); border-radius: 999px;
+        }
+        #playerButtonsBar.dimmed { opacity: 0.15 !important; }
+        #playerButtonsBar.dimmed:hover { opacity: 1 !important; }
+        #prevBtn, #nextBtn { flex: 0 0 30px; width: 30px; height: 30px; padding: 0; border-radius: 50%; background: #222; color: #fff; display: flex; align-items: center; justify-content: center; }
+        #stopBtn { flex: 0 0 34px; width: 34px; height: 34px; padding: 0; border-radius: 50%; background: #ff3333; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+        #playBtn { flex: 0 0 68px; background: #00ff66; color: #000; font-size: 10px; padding: 6px 2px; white-space: nowrap; overflow: hidden; }
 
         .row-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
         label, .lbl { font-size: 11px; color: #aaa; font-family: sans-serif; cursor: pointer;}
@@ -130,10 +140,11 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         .highlight-textarea-backdrop {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 4px; box-sizing: border-box; font-family: inherit; font-size: 11px;
             color: transparent; white-space: pre-wrap; word-wrap: break-word; pointer-events: none; z-index: 1; border: 1px solid transparent; overflow: hidden;
+            text-align: right;
         }
-        .highlight-textarea-backdrop span.found { color: var(--found-color); font-weight: bold; background: var(--found-bg); border-radius: 2px;}
-        .highlight-textarea-backdrop span.target { color: #ff00ff; font-weight: bold; background: rgba(255, 0, 255, 0.2); border-radius: 2px; text-decoration: underline;}
-        textarea.pattern-input { width: 100%; height: 100%; flex: 1; background: transparent; color: #00ccff; z-index: 2; margin: 0; padding: 4px; box-sizing: border-box; font-family: inherit; font-size: 11px; caret-color: #00ccff; resize: none; }
+        .highlight-textarea-backdrop span.found { color: transparent; background: var(--found-bg); border-radius: 2px;}
+        .highlight-textarea-backdrop span.target { color: transparent; background: rgba(255, 0, 255, 0.2); border-radius: 2px; text-decoration: underline;}
+        textarea.pattern-input { width: 100%; height: 100%; flex: 1; background: transparent; color: #00ccff; z-index: 2; margin: 0; padding: 4px; box-sizing: border-box; font-family: inherit; font-size: 11px; caret-color: #00ccff; resize: none; text-align: right; }
         textarea.pattern-input::-webkit-scrollbar-thumb:hover { background: #00ccff; }
         textarea.pattern-input::-webkit-resizer { background: transparent; border-bottom: 2px solid #00ccff; border-right: 2px solid #00ccff; }
 
@@ -190,13 +201,25 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             color: #00ff66; font-size: 16px; font-weight: bold; padding: 6px 15px; border-radius: 5px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 120;
         }
 
+        .floating-back-btn {
+            position: fixed; left: 10px; top: 10px; z-index: 100;
+            transition: left 0.3s ease, top 0.3s ease, opacity 0.3s ease;
+        }
+        body.zen-mode .floating-back-btn { transform: translateY(-100px); opacity: 0; pointer-events: none; }
         .floating-toolbar {
-            position: absolute; left: 330px; top: 50%; transform: translateY(-50%); z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center;
-            transition: left 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+            position: fixed; left: 10px; top: 50%; transform: translateY(-50%); z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center;
+            transition: left 0.3s ease, top 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
             background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(0, 255, 102, 0.25); border-radius: 20px; padding: 10px 7px; box-shadow: 0 0 15px rgba(0, 255, 102, 0.1);
             cursor: move;
         }
+        .floating-toolbar-right {
+            position: fixed; right: 10px; top: 50%; transform: translateY(-50%); z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center;
+            transition: right 0.3s ease, top 0.3s ease, opacity 0.3s ease;
+            background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 204, 255, 0.25); border-radius: 20px; padding: 10px 7px; box-shadow: 0 0 15px rgba(0, 204, 255, 0.1);
+        }
+        body.zen-mode .floating-toolbar-right { transform: translateY(-100px); opacity: 0; pointer-events: none; }
         .float-pill-btn {
             background: rgba(10, 10, 10, 0.85); border: 1px solid #444; color: #fff; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-family: monospace; font-size: 12px;
             display: flex; align-items: center; gap: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5); transition: background 0.2s, border-color 0.2s;
@@ -210,18 +233,39 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         .float-circle-btn.active { background: #00ccff; color: #000; border-color: #00ccff; box-shadow: 0 0 10px rgba(0, 204, 255, 0.5); }
 		
         #rightPanel {
-            position: absolute; top: 5px; right: 5px; z-index: 90; background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 204, 255, 0.3); border-radius: 4px; width: 300px; height: calc(100vh - 10px);
+            position: absolute; top: 0; right: 0; z-index: 90; background: var(--right-panel-accent-bg, rgba(10, 10, 10, 0.75)); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border-left: 1px solid rgba(0, 204, 255, 0.3); width: 300px; height: 100vh;
             overflow: hidden; box-shadow: 0 0 20px rgba(0, 204, 255, 0.15);
-            transition: left 0.3s ease, right 0.3s ease, top 0.3s ease, bottom 0.3s ease, width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
-            resize: both; box-sizing: border-box;
-            min-width: 250px; min-height: 150px;
+            transition: left 0.3s ease, right 0.3s ease, top 0.3s ease, bottom 0.3s ease, width 0.3s ease, height 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+            resize: horizontal; box-sizing: border-box;
+            min-width: 250px;
+            display: flex; flex-direction: column; align-items: stretch;
         }
-        #rightPanel:hover { background: rgba(20, 20, 20, 0.9); }
-        #rightPanel .panel-content { padding: 6px 8px; }
+        #rightPanel .right-panel-row { flex: 1; display: flex; flex-direction: row; align-items: stretch; min-height: 0; }
+        #rightPanel .panel-content { padding: 6px 8px; scrollbar-width: none; }
+        #rightPanel .panel-content::-webkit-scrollbar { display: none; }
         #rightPanel details.control-group { background: rgba(20, 20, 20, 0.4); border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding: 4px 6px; }
         #rightPanel details.control-group summary { font-weight: bold; font-size: 10px; }
-        .right-panel-tab.active { background: rgba(255,255,255,0.06) !important; }
+        #rightPanel .right-panel-title {
+            display: flex; flex-direction: column; flex-shrink: 0; width: 30px; height: 100%;
+            background: transparent; cursor: move; user-select: none; box-sizing: border-box;
+        }
+        #rightPanel .right-panel-tab {
+            flex: 1; writing-mode: vertical-rl; text-orientation: mixed;
+            background: #111 !important;
+            border-left: 1px solid currentColor !important; border-bottom: 1px solid #333 !important;
+            opacity: 0.45;
+            transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+        }
+        #rightPanel .right-panel-tab:last-child { border-bottom: none !important; }
+        #rightPanel .right-panel-tab.active {
+            background: transparent !important;
+            opacity: 1;
+            border-left-color: currentColor !important;
+            text-shadow: 0 0 8px currentColor;
+        }
+        #rightPanel .right-panel-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+        #rightPanel .right-panel-body > .panel-content { flex: 1; overflow-y: auto; min-width: 0; }
         body.zen-mode #mainTitle { opacity: 0; pointer-events: none; }
         
         #balanceLog::-webkit-scrollbar { width: 6px; }
@@ -239,8 +283,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
            backdrop-filter отключается, чтобы строки холста под панелью были чёткими, а не размытыми — визуально холст "поднимается" над панелью. */
         body:not(.zen-mode) .controls.auto-row-overlap,
         body:not(.zen-mode) .player-panel.auto-row-overlap,
-        body:not(.zen-mode) #rightPanel.auto-row-overlap,
-        body:not(.zen-mode) #mainTitle.auto-row-overlap {
+        body:not(.zen-mode) #rightPanel.auto-row-overlap {
             opacity: 0.15; transition: opacity 0.3s ease;
             backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
         }
@@ -250,10 +293,10 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             opacity: 1;
         }
         body.zen-mode .player-panel { transform: translateY(300px); opacity: 0; pointer-events: none;}
+        body.zen-mode #playerButtonsBar { transform: translateY(300px); opacity: 0 !important; pointer-events: none;}
         body.zen-mode .floating-toolbar { transform: translateY(-100px); opacity: 0; pointer-events: none;}
         body.zen-mode #rightPanel { transform: translateX(350px); opacity: 0; pointer-events: none;}
 
-        .controls.minimized ~ .floating-toolbar { left: 70px; }
         .dragging { transition: none !important; }
         #turboSlider { accent-color: #ff3333; }
     </style>
@@ -262,7 +305,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 <body>
     <input type="checkbox" id="radarCheck" style="display:none;">
 <!-- === МАРКЕР 05: ЗАГОЛОВОК НАЧАЛО === -->
-<div id="mainTitle">Zerkalius: Genesis (v0.195 Ultra-Save)</div>
 <div id="rotateViewBadge">⟲ ВИД ПОВЁРНУТ НА 90°</div>
 <!-- === МАРКЕР 06: ЗАГОЛОВОК КОНЕЦ === -->
 <script src="banks_data.js"></script>
@@ -577,8 +619,9 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 </div>
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
-    <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) this.classList.toggle('minimized');" style="display:flex; flex-direction:row; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div class="panel-content" style="flex:1; display:flex; flex-direction:row; gap:10px; padding:8px; overflow:auto;">
+    <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:row; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
+        <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:8px; overflow:auto;">
+        <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
 
             <div class="player-col" style="flex:1; min-width:160px; display:flex; flex-direction:column;">
                 <div class="player-group">
@@ -599,15 +642,15 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                         <input type="range" id="lhSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="flex:1;">
                         <input type="range" id="cwSlider" min="0.1" max="2.5" step="0.05" value="1.0" style="flex:1;">
                     </div>
-                    <button id="rightTriangle90Btn" class="btn-action" style="margin:0 0 5px 0; color:#ffd500; border-color:#ffd500;" title="Подгоняет интервал X так, чтобы ячейка символа стала квадратной (ширина = высоте строки) при текущем интервале Y. Любая 'лестница' (например 1,11,111...) на холсте получит ровно 45° диагональ и 90° угол. Содержимое холста не меняется — только геометрия символа">📐 Квадратная ячейка (угол 90°)</button>
-                    <div class="row-between">
-                        <label style="display:flex; align-items:center;">
-                            <input type="checkbox" id="boldCheck"> <span class="lbl">Жирный шрифт</span>
+                    <div style="display:flex; align-items:center; gap:3px; margin-bottom:5px; min-width:0; max-width:100%; overflow:hidden;">
+                        <button id="rightTriangle90Btn" class="btn-action" style="margin:0; padding:2px 3px; width:auto; flex-shrink:0; font-size:8px; color:#ffd500; border-color:#ffd500;" title="Подгоняет интервал X так, чтобы ячейка символа стала квадратной (ширина = высоте строки) при текущем интервале Y. Любая 'лестница' (например 1,11,111...) на холсте получит ровно 45° диагональ и 90° угол. Содержимое холста не меняется — только геометрия символа">📐90°</button>
+                        <label style="display:flex; align-items:center; flex-shrink:0; gap:2px;" title="Жирный шрифт">
+                            <input type="checkbox" id="boldCheck"> <span class="lbl" style="font-size:8px;">Жирн.</span>
                         </label>
-                        <div style="display:flex; align-items:center; gap:4px; flex:1; margin-left:10px;">
-                            <span class="lbl" style="font-size:9px;">Символ:</span>
-                            <input type="range" id="charSizeSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="margin:0; flex:1; height:10px;">
-                            <span class="val" id="charSizeVal" style="width:20px; font-size:9px; text-align:right;">1.0</span>
+                        <div style="display:flex; align-items:center; gap:3px; flex:1; min-width:0;" title="Символ">
+                            <span class="lbl" style="font-size:8px; flex-shrink:0;">Симв:</span>
+                            <input type="range" id="charSizeSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="margin:0; flex:1; min-width:0; width:auto; height:10px;">
+                            <span class="val" id="charSizeVal" style="width:18px; flex-shrink:0; font-size:8px; text-align:right;">1.0</span>
                         </div>
                     </div>
                 </div>
@@ -627,13 +670,6 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 
             <div class="player-col" style="flex:1; min-width:160px; display:flex; flex-direction:column; border-left:1px solid #333; border-right:1px solid #333; padding:0 10px;">
                 <div class="player-group" style="margin-top:auto;">
-                    <div class="player-buttons">
-                        <button id="prevBtn" title="Шаг назад" style="color:#fff;">◀</button>
-                        <button id="playBtn" title="Старт / Пауза (Space)">▶ Пуск</button>
-                        <button id="stopBtn" title="Сбросить на 0">■ Стоп</button>
-                        <button id="nextBtn" title="Шаг вперед" style="color:#fff;">▶</button>
-                    </div>
-
                     <div style="display:flex; flex-direction:column; gap:4px; margin-top:5px;">
                         <!-- Скорость -->
                         <div class="row-between">
@@ -666,12 +702,15 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 5px;">
                         <span class="lbl">Кадр: <span class="val" id="stepVal">0 / 0</span></span>
                     </div>
+
+                    <label style="display:flex; align-items:center; gap:4px; margin-top:5px; justify-content:center;" title="Если включено — кнопки Пуск/Стоп/◀▶ тоже гаснут при затемнении панели наехавшими строками (как в дзен-режиме). Если выключено — остаются видимыми всегда, кроме дзен-режима">
+                        <input type="checkbox" id="hideControlsOnDimCheck"> <span class="lbl" style="font-size:9px;">Гасить Пуск/Стоп при затемнении</span>
+                    </label>
                 </div>
             </div>
 
             <div class="player-col" style="flex:1; min-width:160px; display:flex; flex-direction:column;">
                 <div class="player-group">
-                    <div style="font-size:9px; color:#ffd500; font-weight:bold; margin-bottom:3px;">🔲 ДЕЙСТВИЯ РАМКИ</div>
                     <div class="row-between" style="margin-bottom:2px;">
                         <button id="invertFrameBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#ffd500; color:#ffd500; background:none;" title="Инвертировать символы внутри рамки (0 ↔ 1, \ ↔ /)">🔄 Инверт. в рамке</button>
                         <button id="invertFrameExceptFirstBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#ffd500; color:#ffd500; background:none;" title="Инвертировать символы внутри рамки, пропуская первый символ каждой строки">🔄 Инверт. кроме 1-го</button>
@@ -712,22 +751,35 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             </div>
 
         </div>
+        </div>
+    </div>
+    <div class="player-buttons" id="playerButtonsBar" style="position:fixed; justify-content:center; z-index:101;" onclick="event.stopPropagation();">
+        <button id="prevBtn" title="Шаг назад" style="color:#fff;">◀</button>
+        <button id="playBtn" title="Старт / Пауза (Space)">▶ Пуск</button>
+        <button id="stopBtn" title="Сбросить на 0">■</button>
+        <button id="nextBtn" title="Шаг вперед" style="color:#fff;">▶</button>
     </div>
 <!-- === МАРКЕР 09: ХОЛСТ И ТУЛБАР === -->
+    <a href="index.html" class="float-circle-btn floating-back-btn" style="text-decoration:none; font-weight:bold; color:#00ff66; border-color:#00ff66;" title="Вернуться в Хаб">⬅</a>
     <div class="floating-toolbar">
-        <button class="float-circle-btn" id="floatingControlsToggleBtn" onclick="document.querySelector('.controls').classList.toggle('minimized');" title="Свернуть/Развернуть левую панель">🛠️</button>
-        <a href="index.html" class="float-circle-btn" style="text-decoration:none; font-weight:bold; color:#00ff66; border-color:#00ff66;" title="Вернуться в Хаб">⬅</a>
         <button class="float-circle-btn" id="floatingCenterBtn" title="Клик: 100% высота. Двойной клик: 30% высота.">⌖</button>
         <button class="float-circle-btn" id="floatingRadarBtn" title="Топологический Радар">🛰️</button>
-        <button class="float-circle-btn" id="floatingFrameBtn" title="Включить/Выключить Рамку">🔲</button>
         <button class="float-circle-btn" id="floatingRotateViewBtn" style="color:#ffd500; border-color:#ffd500;" title="Временно повернуть весь вид на 90° (как монитор повернуть) — повторное нажатие вернёт обратно. Данные не меняются, только картинка">⟲</button>
     </div>
+    <div class="floating-toolbar-right">
+        <button class="float-circle-btn" id="floatingFrameBtn" title="Включить/Выключить Рамку">🔲</button>
+        <button class="float-circle-btn" id="floatingInterleaveBtn" style="color:#cc33ff; border-color:#cc33ff;" title="Анализ пересечений (LCS)">🧬</button>
+    </div>
+    <div id="mainTitle">Zerkalius: Genesis (v0.195 Ultra-Save)</div>
 <!-- === МАРКЕР 10: ТЕРМИНАЛ АКТИВАЦИИ === -->
-    <div id="rightPanel" onclick="event.stopPropagation();" style="display:flex; flex-direction:column; align-items:stretch;">
-            <div class="right-panel-title" ondblclick="this.parentNode.classList.toggle('minimized'); event.stopPropagation();" style="display:flex; background:#111; cursor:move; user-select:none; border-bottom:1px solid #333; box-sizing:border-box; min-height:24px;" title="Двойной клик: Свернуть/Развернуть">
-                <button class="right-panel-tab active" data-tab="terminal" style="flex:1; background:none; border:none; border-bottom:2px solid #00ccff; color:#00ccff; font-size:14px; padding:5px 0; cursor:pointer;" title="Терминал активации">🧠</button>
-                <button class="right-panel-tab" data-tab="dna" style="flex:1; background:none; border:none; border-bottom:2px solid transparent; color:#cc33ff; font-size:14px; padding:5px 0; cursor:pointer;" title="Синтез ДНК и LCS + Рамка">🧬🔲</button>
+    <div id="rightPanel" onclick="event.stopPropagation();" ondblclick="if (event.target.closest('.right-panel-tab') || !event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); event.stopPropagation(); }">
+        <div class="right-panel-row">
+            <div id="rightPanelLeftResizer" style="position:absolute; left:0; top:0; bottom:0; width:7px; cursor:ew-resize; z-index:5;" title="Тащить — расширить панель влево"></div>
+            <div class="right-panel-title" title="Двойной клик: Свернуть/Развернуть">
+                <button class="right-panel-tab active" data-tab="terminal" style="background:none; border:none; color:#00ccff; font-size:14px; padding:8px 0; cursor:pointer;" title="Терминал активации">🧠</button>
+                <button class="right-panel-tab" data-tab="dna" style="background:none; border:none; color:#cc33ff; font-size:14px; padding:8px 0; cursor:pointer;" title="Синтез ДНК и LCS + Рамка">🧬🔲</button>
             </div>
+            <div class="right-panel-body">
             <div class="panel-content" data-tab-content="terminal" style="flex:1; padding:6px 8px; display:flex; flex-direction:column; overflow:auto;">
                 <div style="display:flex; gap:4px; margin-bottom:4px;">
                 <div style="position:relative; overflow:hidden; flex:1;">
@@ -803,10 +855,10 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 
 <!-- === МАРКЕР 11: ДЕКЛАРАЦИИ И РАМКА === -->
             <div class="panel-content" data-tab-content="dna" style="display:none; flex:1; padding:6px 8px; flex-direction:column; overflow:auto; gap:3px;">
-                <details class="control-group" open style="border-radius:3px;">
+                <details class="control-group" open style="border-radius:3px; background:rgba(204,51,255,0.06); border:1px solid rgba(204,51,255,0.25);">
                     <summary style="font-weight:bold; color:#cc33ff;">🧬 НАСТРОЙКИ СВЯЗИ</summary>
                     <label style="display:flex; align-items:center; margin-top:4px; margin-bottom:2px;">
-                        <input type="checkbox" id="interleaveAnalysisCheck" checked> <span class="lbl" style="color:#ff3333; font-weight:bold;">🧬 Анализ пересечений (LCS)</span>
+                        <input type="checkbox" id="interleaveAnalysisCheck"> <span class="lbl" style="color:#ff3333; font-weight:bold;">🧬 Анализ пересечений (LCS)</span>
                     </label>
                     <label style="display:flex; align-items:center; margin-bottom:2px;">
                         <input type="checkbox" id="accumulateInterleaveCheck"> <span class="lbl" style="color:#00ccff; font-weight:bold;">⛓️ Накопительный каскад (Цепной)</span>
@@ -849,7 +901,10 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     </div>
                     <button id="forceInterleaveBtn" class="btn-action" style="background:rgba(204,51,255,0.15); color:#cc33ff; border-color:#cc33ff; margin-bottom:4px; font-size:9px;">🧬 Синтезировать сплетение (Записать вниз)</button>
                     <button id="weaveWithTemplateBtn" class="btn-action" style="background:rgba(255,213,0,0.12); color:#ffd500; border-color:#ffd500; margin-bottom:4px; font-size:9px;" title="Каждую строку рамки сплетает с её ИЗНАЧАЛЬНЫМ (template) вариантом — то есть игнорирует всё, что успел натворить каскад, и берёт чистый исходник. Результат заменяет содержимое каждой строки рамки">🧬 Сплести всю рамку с шаблоном (без каскада)</button>
-                    <button id="calcAllInterleavesBtn" class="btn-action" style="background:rgba(0,204,255,0.15); color:#00ccff; border-color:#00ccff; margin-bottom:4px; font-size:9px; font-weight:bold;" title="Рассчитать и подсветить LCS-пересечения для всех строк внутри рамки">🧬 LCS ВО ВСЕЙ РАМКЕ</button>
+                    <div style="display:flex; gap:3px; margin-bottom:4px;">
+                        <button id="calcAllInterleavesBtn" class="btn-action" style="flex:1; margin:0; background:rgba(0,204,255,0.15); color:#00ccff; border-color:#00ccff; font-size:9px; font-weight:bold;" title="Рассчитать и подсветить LCS-пересечения для всех строк внутри рамки (по очищенным строкам)">🧬 LCS ВО ВСЕЙ РАМКЕ</button>
+                        <button id="calcAllInterleavesRawBtn" class="btn-action" style="flex:1; margin:0; background:rgba(0,204,255,0.15); color:#00ccff; border-color:#00ccff; font-size:9px; font-weight:bold;" title="Записывает RAW A+B (неочищенные строки, с точками/филлерами) напрямую в строки рамки, заменяя их содержимое — каждая строка (со 2-й) становится сплетением двух предыдущих">🧬 LCS RAW (A+B) → ЗАПИСАТЬ</button>
+                    </div>
                     <label style="display:flex; align-items:center; margin-bottom:2px; margin-top:2px;">
                         <input type="checkbox" id="ignoreFirstInterleaveCharCheck"> <span class="lbl" style="color:#ffcc00; font-size:10px;">Пропуск 1-го символа при сплетении</span>
                     </label>
@@ -858,14 +913,14 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     </label>
                 </details>
                 
-                <details class="control-group" open style="border-radius:3px; flex:1; display:flex; flex-direction:column; min-height:120px; overflow:hidden;">
+                <details class="control-group" open style="border-radius:3px; flex:1; display:flex; flex-direction:column; min-height:120px; overflow:hidden; background:rgba(204,51,255,0.06); border:1px solid rgba(204,51,255,0.25);">
                     <summary style="font-weight:bold; color:#cc33ff;">🧬 ЛОГ ИНТЕРЛИВИНГА</summary>
                     <div id="interleavingLogDetails" style="display:block; overflow-y:auto; flex:1; font-family:monospace; font-size:9px; color:#aaa; margin-top:4px;">
                         Ожидание активации строки...
                     </div>
                 </details>
 
-                <details class="control-group" open style="border-radius:3px;">
+                <details class="control-group" open style="border-radius:3px; background:rgba(255,213,0,0.07); border:1px solid rgba(255,213,0,0.3); margin-top:4px;">
                     <summary style="font-weight:bold; color:#ffd500;">🔲 НАСТРОЙКИ РАМКИ</summary>
                     <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; margin-top:3px; margin-bottom:3px;">
                         <label style="display:flex; align-items:center; margin:0;">
@@ -925,6 +980,8 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     <div id="balanceLog" style="color:#aaa; font-size:10px; font-family: monospace; height:60px; resize: none; overflow-y: auto; cursor: default;" onclick="event.stopPropagation();"></div>
                 </details>
             </div>
+            </div>
+        </div>
     </div>
 
     <div id="screenContainer">
@@ -1213,6 +1270,29 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 if (STATE.undoStack.length > 50) STATE.undoStack.shift();
             }
         };
+
+        // Подгоняет ширину рамки под самую длинную строку среди тех, что сейчас входят в рамку
+        // (вызывается при росте рамки по высоте). Не трогает ширину, если её выставили руками
+        // (manualWidth) или выключена галочка "⌖ По умолчанию за центром".
+        function fitFrameWidthToRows() {
+            if (!STATE.manualFrame || !STATE.manualFrame.isInitialized) return;
+            if (!safeChecked('frameCenterLockCheck', true)) return;
+            let totalRows = STATE.lines.length;
+            if (!totalRows) return;
+            let maxLenInFrame = 0;
+            for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
+                let idx = (STATE.manualFrame.rowStart + k) % totalRows;
+                let line = STATE.lines[idx];
+                if (line && line.display && line.display.length > maxLenInFrame) {
+                    maxLenInFrame = line.display.length;
+                }
+            }
+            if (maxLenInFrame === 0) return;
+            let newSpan = maxLenInFrame + 2;
+            STATE.manualFrame.colSpan = newSpan;
+            STATE.manualFrame.colStart = -newSpan / 2;
+            STATE.manualFrame.manualWidth = false;
+        }
 
         function getGridMetrics() {
             const canvas = document.getElementById('screenCanvas');
@@ -1806,9 +1886,13 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             STATE.autoOffsetX = 0;
             STATE.autoOffsetY = 0;
             STATE.rowScrollOffset = keepState ? savedRS : 0;
-            
+
             STATE.foundPatterns.clear();
             STATE.foundPatternsMetadata.clear();
+            // Выделение строк/колец привязано к индексам конкретного текста — при загрузке нового
+            // текста старые индексы теряют смысл и могут случайно совпасть с другой строкой.
+            if (STATE.selectedRows) STATE.selectedRows.clear();
+            if (STATE.selectedRings) STATE.selectedRings.clear();
             STATE.lastBlobs = [];
             STATE.nextBlobColorId = 1;
             STATE.lastFindMethod = "Ожидание...";
@@ -2989,13 +3073,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 let cleanLine = line.trim().replace(/\s+/g, '');
                 if (cleanLine.length > 0) {
                     if (STATE.foundPatterns.has(cleanLine)) {
-                        let meta = STATE.foundPatternsMetadata.get(cleanLine);
-                        let metaStr = "";
-                        if (meta) {
-                            let locStr = meta.type === 'global' ? 'Сквозной' : (meta.type === 'vertical' ? 'Верт.' : (meta.type === 'interleaving' ? 'Инт.' : `Стр ${meta.rows ? meta.rows.join(',') : ''}`));
-                            metaStr = `<span style="position:absolute; right:6px; color:#555555; font-size:9px; font-weight:normal; pointer-events:none; user-select:none;">[${locStr} | Шаг ${meta.step !== undefined ? meta.step : '?'}]</span>`;
-                        }
-                        html += `<span class="found" style="display:inline-block; width:100%; position:relative;">${line}${metaStr}</span>\n`;
+                        html += `<span class="found">${line}</span>\n`;
                     } else if (isSequential && idx === STATE.currentTargetPatternIdx) {
                         html += `<span class="target">${line}</span>\n`;
                     } else {
@@ -4667,6 +4745,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     if (reqH > STATE.manualFrame.h) {
                         STATE.manualFrame.h = reqH;
                         STATE.manualFrame.rowSpan = Math.max(1, Math.ceil(reqH / m.lineHeight));
+                        fitFrameWidthToRows();
                     }
                 }
             }
@@ -4680,6 +4759,8 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             if (fBtn) fBtn.classList.toggle('active', safeChecked('frameCheck', false));
             let rBtn = document.getElementById('floatingRadarBtn');
             if (rBtn) rBtn.classList.toggle('active', safeChecked('radarCheck', false) || safeChecked('funnelCheck', false));
+            let iBtn = document.getElementById('floatingInterleaveBtn');
+            if (iBtn) iBtn.classList.toggle('active', safeChecked('interleaveAnalysisCheck', false));
 
             // Динамическое переключение стрелок плеера в зависимости от режима движения
             let prevBtnEl = document.getElementById('prevBtn');
@@ -4807,6 +4888,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                                     if (reqH > STATE.manualFrame.h) {
                                         STATE.manualFrame.h = reqH;
                                         STATE.manualFrame.rowSpan = Math.max(1, Math.ceil(reqH / m.lineHeight));
+                                        fitFrameWidthToRows();
                                     }
                                 }
                             }
@@ -5387,6 +5469,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 (dir === -1 && nextStart > oldStart && oldStart === 0)) {
                 STATE.manualFrame.rowSpan = Math.min(totalRows, STATE.manualFrame.rowSpan + 1);
                 STATE.manualFrame.h = STATE.manualFrame.rowSpan * m.lineHeight;
+                fitFrameWidthToRows();
                 showNotification(`РАМКА УВЕЛИЧЕНА: ${STATE.manualFrame.rowSpan} СТР.`);
             }
 
@@ -5936,7 +6019,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     if (someSelected) ctx.globalAlpha = isRingSelected ? 1.0 : 0.15;
                     else {
                         if (isCandidateRow) ctx.globalAlpha = 1.0;
-                        else ctx.globalAlpha = (!lineData.isActive && applyFilter) ? 0.25 : 1.0;
+                        else ctx.globalAlpha = (!lineData.isActive && applyFilter) ? 0 : 1.0;
                     }
 
                     for (let c = 0; c < text.length; c++) {
@@ -6129,12 +6212,15 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     if (useMirror && i > 0) yPositions.push(yUp);
 
                     let isCandidateRow = (actualIndex === lastActiveIdx_global + 1);
-                    ctx.globalAlpha = isCandidateRow ? 1.0 : ((!lineData.isActive && applyFilter) ? 0.25 : 1.0);
+                    ctx.globalAlpha = isCandidateRow ? 1.0 : ((!lineData.isActive && applyFilter) ? 0 : 1.0);
 
                     // Номера строк всегда выводим в узкую полосу левой панели (#minimizedRowNumbers, HTML — открыта она или свёрнута).
                     // Только в дзен-режиме панель целиком уходит за экран, поэтому там по-старому рисуем на холсте.
                     if (safeChecked('showRowNumbersCheck', true)) {
                         if (!isZenForNumbers && minNumContainer) {
+                            let isRowSelected = (STATE.selectedRows && STATE.selectedRows.has(actualIndex)) ||
+                                (STATE.interleaveHighlightedRows && STATE.interleaveHighlightedRows.has(actualIndex)) ||
+                                STATE.interleaveTargetRow === actualIndex;
                             yPositions.forEach(y => {
                                 let span = document.createElement('div');
                                 span.textContent = lineData.origIndex + 1;
@@ -6144,7 +6230,13 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                                 span.style.top = (y - 6) + 'px';
                                 span.style.fontSize = '9px';
                                 span.style.textAlign = 'center';
-                                span.style.color = lineData.isActive ? '#3a4a42' : '#33333a';
+                                if (isRowSelected) {
+                                    span.style.color = '#ff66ff';
+                                    span.style.fontWeight = 'bold';
+                                    span.style.textShadow = '0 0 6px #ff00ff, 0 0 10px #ff00ff';
+                                } else {
+                                    span.style.color = lineData.isActive ? '#3a4a42' : '#33333a';
+                                }
                                 minNumContainer.appendChild(span);
                             });
                         } else {
@@ -6370,9 +6462,13 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     if (maxLenInFrame === 0) maxLenInFrame = 1;
 
                     STATE.manualFrame.colSpan = maxLenInFrame + 2;
-                    STATE.manualFrame.colStart = -Math.round(STATE.manualFrame.colSpan / 2);
+                    STATE.manualFrame.colStart = -STATE.manualFrame.colSpan / 2;
                     STATE.manualFrame.manualWidth = false;
                     STATE.manualFrame.needsRecenter = false;
+                } else {
+                    // Не "свежая" рамка — всё равно держим ширину синхронной с самой длинной строкой,
+                    // которая сейчас в рамке (растёт и сужается сама), пока ширину не выставили руками.
+                    fitFrameWidthToRows();
                 }
                 if (STATE.manualFrame.colSpan === undefined) STATE.manualFrame.colSpan = 40;
                 if (STATE.manualFrame.colStart === undefined) STATE.manualFrame.colStart = -Math.round(STATE.manualFrame.colSpan / 2);
@@ -6587,8 +6683,91 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         }
 
 <!-- === МАРКЕР 50б: АВТО-СКРЫТИЕ ПАНЕЛЕЙ ПРИ НАЕЗДЕ СТРОК === -->
-        const AUTO_HIDE_PANEL_SELECTORS = ['.controls', '.player-panel', '#rightPanel', '#mainTitle'];
+        const AUTO_HIDE_PANEL_SELECTORS = ['.controls', '.player-panel', '#rightPanel'];
         let panelsForceVisibleUntil = 0;
+
+        // Кнопки Пуск/Стоп/◀▶ вынесены из .player-panel в DOM (см. #playerButtonsBar), чтобы
+        // затемнение панели (opacity на .player-panel.auto-row-overlap) не гасило их по умолчанию —
+        // позиция синхронизируется вручную с нижним краем пульта.
+        function positionPlayerButtonsBar() {
+            let bar = document.getElementById('playerButtonsBar');
+            let panel = document.querySelector('.player-panel');
+            if (!bar || !panel) return;
+            let rect = panel.getBoundingClientRect();
+            bar.style.left = (rect.left + rect.width / 2) + 'px';
+            bar.style.transform = 'translateX(-50%)';
+            bar.style.top = (rect.bottom + 6) + 'px';
+        }
+        positionPlayerButtonsBar();
+        if (typeof ResizeObserver !== 'undefined') {
+            let playerPanelForBar = document.querySelector('.player-panel');
+            if (playerPanelForBar) new ResizeObserver(positionPlayerButtonsBar).observe(playerPanelForBar);
+        }
+
+        // Переключение вкладок объединённой правой панели (цвет фона по активной вкладке).
+        const RIGHT_PANEL_TAB_COLORS = { terminal: '#00ccff', dna: '#cc33ff' };
+        function applyRightPanelAccentColor(tab) {
+            let panel = document.querySelector('#rightPanel');
+            let color = RIGHT_PANEL_TAB_COLORS[tab];
+            if (!panel || !color) return;
+            let bg = 'linear-gradient(' + hexToRgba(color, 0.22) + ', ' + hexToRgba(color, 0.22) + '), rgba(10, 10, 10, 0.75)';
+            panel.style.setProperty('--right-panel-accent-bg', bg);
+        }
+
+        // Переключает вкладку правой панели и гарантирует, что сама панель видна (не свёрнута/не затемнена).
+        function openRightPanelTab(tab) {
+            let btn = document.querySelector('.right-panel-tab[data-tab="' + tab + '"]');
+            if (!btn) return;
+            document.querySelectorAll('.right-panel-tab').forEach(b => {
+                b.classList.toggle('active', b === btn);
+                b.style.borderBottomColor = (b === btn) ? b.style.color : 'transparent';
+            });
+            document.querySelectorAll('#rightPanel [data-tab-content]').forEach(c => {
+                c.style.display = (c.dataset.tabContent === tab) ? 'flex' : 'none';
+            });
+            applyRightPanelAccentColor(tab);
+            let panel = document.getElementById('rightPanel');
+            if (panel) {
+                panel.classList.remove('minimized', 'auto-row-overlap');
+                panelsForceVisibleUntil = Date.now() + 1200;
+            }
+        }
+
+        // Вертикальный тулбар (⌖🛰️⟲) и кнопка ⬅ прилеплены к правому краю левой панели .controls.
+        function positionFloatingToolbar() {
+            let toolbar = document.querySelector('.floating-toolbar');
+            let backBtn = document.querySelector('.floating-back-btn');
+            let controlsPanel = document.querySelector('.controls');
+            if (!controlsPanel) return;
+            let rect = controlsPanel.getBoundingClientRect();
+            if (toolbar) toolbar.style.left = (rect.right + 10) + 'px';
+            if (backBtn) backBtn.style.left = (rect.right + 10) + 'px';
+        }
+        positionFloatingToolbar();
+        if (typeof ResizeObserver !== 'undefined') {
+            let controlsPanelForToolbar = document.querySelector('.controls');
+            if (controlsPanelForToolbar) new ResizeObserver(positionFloatingToolbar).observe(controlsPanelForToolbar);
+        }
+        document.querySelector('.controls').addEventListener('transitionend', e => {
+            if (e.propertyName === 'transform') positionFloatingToolbar();
+        });
+
+        // Правый вертикальный тулбар (🔲 Рамка) прилеплен к левому краю #rightPanel.
+        function positionFloatingToolbarRight() {
+            let toolbar = document.querySelector('.floating-toolbar-right');
+            let rightPanel = document.getElementById('rightPanel');
+            if (!toolbar || !rightPanel) return;
+            let rect = rightPanel.getBoundingClientRect();
+            toolbar.style.right = (window.innerWidth - rect.left + 10) + 'px';
+        }
+        positionFloatingToolbarRight();
+        if (typeof ResizeObserver !== 'undefined') {
+            let rightPanelForToolbar = document.getElementById('rightPanel');
+            if (rightPanelForToolbar) new ResizeObserver(positionFloatingToolbarRight).observe(rightPanelForToolbar);
+        }
+        document.getElementById('rightPanel').addEventListener('transitionend', e => {
+            if (e.propertyName === 'transform') positionFloatingToolbarRight();
+        });
 
         // Первый клик по затемнённой (наехавшей) панели только проявляет все панели и "съедается" —
         // реальный клик по кнопке/чекбоксу сработает лишь на второй раз, когда панель уже видна.
@@ -6605,6 +6784,8 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 const el = document.querySelector(sel);
                 if (el) el.classList.remove('auto-row-overlap');
             });
+            let bar = document.getElementById('playerButtonsBar');
+            if (bar) bar.classList.remove('dimmed');
             panelsForceVisibleUntil = Date.now() + 1200;
         }, true);
         // Проверка наезда вызывается только по клику на холст (см. canvas.addEventListener('mousedown', ...)),
@@ -6665,6 +6846,10 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     }
                 }
                 el.classList.toggle('auto-row-overlap', overlap);
+                if (sel === '.player-panel') {
+                    let bar = document.getElementById('playerButtonsBar');
+                    if (bar) bar.classList.toggle('dimmed', overlap && safeChecked('hideControlsOnDimCheck', false));
+                }
             });
         }
 
@@ -6756,6 +6941,17 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 this.classList.toggle('active', f.checked);
                 updateLogic();
             }
+            openRightPanelTab('dna');
+        });
+
+        safeBind('floatingInterleaveBtn', 'click', function() {
+            let c = document.getElementById('interleaveAnalysisCheck');
+            openRightPanelTab('dna');
+            if (c) {
+                c.checked = !c.checked;
+                this.classList.toggle('active', c.checked);
+                c.dispatchEvent(new Event('change'));
+            }
         });
 
         safeBind('floatingRotateViewBtn', 'click', function() {
@@ -6786,6 +6982,12 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         });
         safeBind('interleavingCheck', 'change', function() { updateLogic(); });
 
+        safeBind('hideControlsOnDimCheck', 'change', function() {
+            let panel = document.querySelector('.player-panel');
+            let bar = document.getElementById('playerButtonsBar');
+            if (bar) bar.classList.toggle('dimmed', this.checked && panel && panel.classList.contains('auto-row-overlap'));
+        });
+
         safeBind('calcAllInterleavesBtn', 'click', function() {
             STATE.calcAllInterleaves = !STATE.calcAllInterleaves;
             this.classList.toggle('active', STATE.calcAllInterleaves);
@@ -6799,6 +7001,83 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 showNotification("🧬 LCS ВО ВСЕЙ РАМКЕ ОТКЛ");
             }
             updateLogic();
+        });
+
+        safeBind('calcAllInterleavesRawBtn', 'click', function() {
+            if (window.saveUndoState) saveUndoState();
+
+            let useFrame = safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized;
+            let m = getGridMetrics();
+            let targetIndices = [];
+
+            if (useFrame && m) {
+                let totalRows = STATE.lines.length;
+                for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
+                    let idx = (m.startIndex + STATE.manualFrame.rowStart + k) % totalRows;
+                    targetIndices.push(idx);
+                }
+            } else {
+                for (let i = 0; i < STATE.lines.length; i++) {
+                    if (STATE.lines[i].isActive) targetIndices.push(i);
+                }
+            }
+
+            if (targetIndices.length < 2) {
+                showNotification("ОШИБКА: НУЖНО МИНИМУМ 2 СТРОКИ В РАМКЕ");
+                return;
+            }
+
+            // Записывает RAW A+B (неочищенные строки, с точками/филлерами) напрямую в строки рамки,
+            // заменяя их содержимое — каждая строка (со 2-й) становится сплетением двух предыдущих.
+            // По умолчанию (галка "⛓️ Накопительный каскад" выключена) — снимок исходного содержимого
+            // ДО записи, каждая строка считается от обычной (нетронутой) версии предыдущих строк.
+            // Если галку включить — каждая следующая строка считается от уже записанного raw-результата (каскадом).
+            let useCascade = safeChecked('accumulateInterleaveCheck', false);
+            let originalDisplays = targetIndices.map(idx => STATE.lines[idx] ? STATE.lines[idx].display : "");
+
+            let skipFirstInter = safeChecked('ignoreFirstInterleaveCharCheck', false);
+            let wovenCount = 0;
+
+            for (let k = 1; k < targetIndices.length; k++) {
+                let idxCurrent = targetIndices[k];
+                let idxAbove1 = targetIndices[k - 1];
+                let idxAbove2 = (k >= 2) ? targetIndices[k - 2] : idxAbove1;
+
+                let strAbove = useCascade ? (STATE.lines[idxAbove2] ? STATE.lines[idxAbove2].display : "") : ((k >= 2) ? originalDisplays[k - 2] : originalDisplays[k - 1]);
+                let strCurrent = useCascade ? (STATE.lines[idxAbove1] ? STATE.lines[idxAbove1].display : "") : originalDisplays[k - 1];
+
+                if (skipFirstInter) {
+                    if (strAbove.length > 0) strAbove = strAbove.substring(1);
+                    if (strCurrent.length > 0) strCurrent = strCurrent.substring(1);
+                }
+
+                let interleaved = "";
+                let maxL = Math.max(strAbove.length, strCurrent.length);
+                for (let j = 0; j < maxL; j++) {
+                    if (j < strCurrent.length) interleaved += strCurrent[j];
+                    if (j < strAbove.length) interleaved += strAbove[j];
+                }
+
+                if (interleaved.length > 0) {
+                    let targetLine = STATE.lines[idxCurrent];
+                    targetLine.orig = interleaved;
+                    targetLine.display = interleaved;
+                    targetLine.template = interleaved;
+                    targetLine.L = interleaved.length;
+                    targetLine.firstOneIdx = interleaved.search(/[1\\)\]>+]/);
+                    wovenCount++;
+                }
+            }
+
+            let newLinesText = STATE.lines.map(l => l.orig).join('\n');
+            let linesInp = document.getElementById('linesInput');
+            if (linesInp) linesInp.value = newLinesText;
+            STATE.banks[STATE.activeBankIndex].lines = newLinesText;
+
+            updateAllCycles();
+            updateLogic();
+            render();
+            showNotification(`🧬 LCS RAW: ЗАПИСАНО ${wovenCount} СТРОК`);
         });
 
         safeBind('forceInterleaveBtn', 'click', function() {
@@ -6886,9 +7165,10 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                         if (reqH > STATE.manualFrame.h) {
                             STATE.manualFrame.h = reqH;
                             STATE.manualFrame.rowSpan = Math.max(1, Math.ceil(reqH / m.lineHeight));
+                            fitFrameWidthToRows();
                         }
                     }
-                    
+
                     updateAllCycles();
                     updateLogic();
                     render();
@@ -7181,6 +7461,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 if (!m) return;
 
                 checkPanelOverlaps();
+                STATE.hasMoved = false;
 
                 if (e.ctrlKey && !safeChecked('radarCheck', false)) {
                     STATE.isDraggingRowSelection = true;
@@ -7244,12 +7525,13 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     let onL_drag = inY && mx > fx + RESIZE_EDGE_PX && mx <= fx + dragBandX;
                     let onR_drag = inY && mx < fx + fw - RESIZE_EDGE_PX && mx >= fx + fw - dragBandX;
                     let onMoveArea = !isResize && (onT_drag || onB_drag || onL_drag || onR_drag);
+                    let centerLocked = safeChecked('frameCenterLockCheck', true);
 
                     if (isResize) {
                         if (onB_res) STATE.frameAction = 'resize-b';
                         else if (onT_res) STATE.frameAction = 'resize-t';
-                        else if (onL_res) { STATE.frameAction = 'resize-h'; STATE.frameResizeSide = 'L'; }
-                        else if (onR_res) { STATE.frameAction = 'resize-h'; STATE.frameResizeSide = 'R'; }
+                        else if (onL_res && !centerLocked) { STATE.frameAction = 'resize-h'; STATE.frameResizeSide = 'L'; }
+                        else if (onR_res && !centerLocked) { STATE.frameAction = 'resize-h'; STATE.frameResizeSide = 'R'; }
                     } else if (onMoveArea || (e.shiftKey && inX && inY)) {
                         STATE.frameAction = 'drag';
                     }
@@ -7408,10 +7690,12 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     if (STATE.frameAction === 'drag') {
                         let targetRow = Math.max(-40, STATE.frameStartY + dy_rows);
                         STATE.manualFrame.rowStart = targetRow;
-                        let dx_cols = Math.round((mx - STATE.frameStartMX) / m.charWidth);
-                        STATE.manualFrame.colStart = STATE.frameStartColStart + dx_cols;
-                        STATE.manualFrame.manualWidth = true;
-                    } 
+                        if (!safeChecked('frameCenterLockCheck', true)) {
+                            let dx_cols = Math.round((mx - STATE.frameStartMX) / m.charWidth);
+                            STATE.manualFrame.colStart = STATE.frameStartColStart + dx_cols;
+                            STATE.manualFrame.manualWidth = true;
+                        }
+                    }
                     else if (STATE.frameAction === 'resize-t') {
                         let targetRow = Math.max(-40, STATE.frameStartY + dy_rows);
                         let maxTargetRow = STATE.frameStartY + STATE.frameStartH - 1;
@@ -7526,7 +7810,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     }
                 }
 
-                if (isClickOnEdge && m) {
+                if (isClickOnEdge && m && !safeChecked('frameCenterLockCheck', true)) {
                     // Двойной клик по левому/правому краю — раздвинуть рамку в обе стороны по самой длинной
                     // строке внутри неё, не теряя текущий центр.
                     if (window.saveUndoState) saveUndoState();
@@ -7613,11 +7897,18 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             canvas.addEventListener('wheel', e => {
                 e.preventDefault();
                 let fontSl = document.getElementById('fontSlider');
-                let size = parseInt(fontSl.value) + (e.deltaY > 0 ? -2 : 2);
+                let oldSize = parseInt(fontSl.value);
+                let size = oldSize + (e.deltaY > 0 ? -2 : 2);
                 size = Math.max(2, Math.min(100, size));
                 fontSl.value = size;
                 document.getElementById('fontVal').textContent = size + 'px';
-                
+
+                // Ручное смещение (пан) масштабируется вместе с контентом: при уменьшении масштаба
+                // строки стягиваются ближе к реальному центру экрана, при увеличении — пропорционально отъезжают.
+                let ratio = size / oldSize;
+                STATE.offsetX *= ratio;
+                STATE.offsetY *= ratio;
+
                 // Исправлено: Убрали баг с NaN, который сбивал масштаб и прятал строки
                 if (!e.shiftKey) {
                     let useRadar = safeChecked('radarCheck', false);
@@ -7650,6 +7941,12 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                         let size = Math.round(pinchStartSize * scaleFactor);
                         size = Math.max(2, Math.min(100, size));
                         let fontSl = document.getElementById('fontSlider');
+                        let oldSize = parseInt(fontSl.value);
+                        if (oldSize > 0) {
+                            let ratio = size / oldSize;
+                            STATE.offsetX *= ratio;
+                            STATE.offsetY *= ratio;
+                        }
                         fontSl.value = size;
                         document.getElementById('fontVal').textContent = size + 'px';
                         render();
@@ -7707,13 +8004,12 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 return startDrag;
             };
 
-            // Пульт без отдельной плашки-заголовка: тащится за любую пустую область панели, кроме кнопок/слайдеров/инпутов.
+            // Пульт без отдельной плашки-заголовка: тащится за любую пустую область панели (или за бар Пуск/Стоп,
+            // когда панель свёрнута и сама почти не видна), кроме кнопок/слайдеров/инпутов.
             (() => {
                 let panel = document.querySelector('.player-panel');
                 if (!panel) return;
-                let content = panel.querySelector('.panel-content');
-                if (!content) return;
-                content.addEventListener('mousedown', (e) => {
+                const startPanelDrag = (e) => {
                     if (e.button !== 0) return;
                     if (e.target.closest('input, button, select, textarea, label, a')) return;
                     let currentLeft = panel.offsetLeft;
@@ -7728,6 +8024,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                         panel.classList.remove('dragging');
                         document.onmouseup = null;
                         document.onmousemove = null;
+                        positionPlayerButtonsBar();
                     };
                     document.onmousemove = (e2) => {
                         e2.preventDefault();
@@ -7735,24 +8032,68 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                         px = e2.clientX; py = e2.clientY;
                         panel.style.top = (panel.offsetTop - dy) + "px";
                         panel.style.left = (panel.offsetLeft - dx) + "px";
+                        positionPlayerButtonsBar();
                     };
-                });
+                };
+                let content = panel.querySelector('.panel-content');
+                if (content) content.addEventListener('mousedown', startPanelDrag);
+                let bar = document.getElementById('playerButtonsBar');
+                if (bar) bar.addEventListener('mousedown', startPanelDrag);
             })();
             setupDraggable('#rightPanel', '🧠 ПАНЕЛЬ');
 
+            // Тяга за левый край правой панели — расширяет её влево (правый край неподвижен).
+            (() => {
+                let panel = document.querySelector('#rightPanel');
+                let handle = document.getElementById('rightPanelLeftResizer');
+                if (!panel || !handle) return;
+                handle.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    let startX = e.clientX;
+                    let startWidth = panel.getBoundingClientRect().width;
+                    let minWidth = parseInt(getComputedStyle(panel).minWidth) || 250;
+                    document.onmousemove = (e2) => {
+                        let dx = startX - e2.clientX;
+                        panel.style.width = Math.max(minWidth, startWidth + dx) + "px";
+                    };
+                    document.onmouseup = () => {
+                        document.onmousemove = null;
+                        document.onmouseup = null;
+                    };
+                });
+            })();
+
+            // Заголовок в подвале правой панели — уменьшаем шрифт, если строка не влезает по ширине.
+            (() => {
+                let title = document.getElementById('mainTitle');
+                let panel = document.querySelector('#rightPanel');
+                if (!title || !panel) return;
+                const MAIN_TITLE_BASE_SIZE = 15;
+                function fitMainTitleFont() {
+                    title.style.fontSize = MAIN_TITLE_BASE_SIZE + 'px';
+                    let size = MAIN_TITLE_BASE_SIZE;
+                    while (title.scrollWidth > title.clientWidth && size > 6) {
+                        size -= 1;
+                        title.style.fontSize = size + 'px';
+                    }
+                }
+                fitMainTitleFont();
+                if (window.ResizeObserver) {
+                    new ResizeObserver(fitMainTitleFont).observe(panel);
+                } else {
+                    window.addEventListener('resize', fitMainTitleFont);
+                }
+            })();
+
             // Переключение вкладок объединённой правой панели.
             document.querySelectorAll('.right-panel-tab').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    let tab = btn.dataset.tab;
-                    document.querySelectorAll('.right-panel-tab').forEach(b => {
-                        b.classList.toggle('active', b === btn);
-                        b.style.borderBottomColor = (b === btn) ? b.style.color : 'transparent';
-                    });
-                    document.querySelectorAll('#rightPanel > [data-tab-content]').forEach(c => {
-                        c.style.display = (c.dataset.tabContent === tab) ? 'flex' : 'none';
-                    });
-                });
+                btn.addEventListener('click', () => openRightPanelTab(btn.dataset.tab));
             });
+            {
+                let activeTab = document.querySelector('.right-panel-tab.active');
+                if (activeTab) applyRightPanelAccentColor(activeTab.dataset.tab);
+            }
 
             // Плавающий тулбар (⬅⌖🛰️🔲⟲) — тащится целиком за весь свой фон, а не по кнопке.
             (() => {
@@ -7796,6 +8137,20 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             let turbo = (parseInt(safeValue('turboSlider', 1)) || 1) * S;
             
             if (e.code === 'Escape') {
+                // Escape всегда проявляет панели, наехавшие строки затемнили (auto-row-overlap),
+                // независимо от того, что ещё он делает ниже (снятие выделения/рамка).
+                let panelsWereHidden = false;
+                AUTO_HIDE_PANEL_SELECTORS.forEach(sel => {
+                    const el = document.querySelector(sel);
+                    if (el && el.classList.contains('auto-row-overlap')) {
+                        el.classList.remove('auto-row-overlap');
+                        panelsWereHidden = true;
+                    }
+                });
+                if (panelsWereHidden) panelsForceVisibleUntil = Date.now() + 1200;
+                let bar = document.getElementById('playerButtonsBar');
+                if (bar) bar.classList.remove('dimmed');
+
                 let cleared = false;
                 if (STATE.selectedRings && STATE.selectedRings.size > 0) {
                     STATE.selectedRings.clear();
@@ -7819,6 +8174,8 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     STATE.manualFrame.manualWidth = false;
                     render();
                     showNotification("⌖ РАМКА ВОЗВРАЩЕНА ПО ЦЕНТРУ");
+                } else if (panelsWereHidden) {
+                    showNotification("ПАНЕЛИ ПРОЯВЛЕНЫ");
                 }
             }
             
@@ -7865,6 +8222,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                     if (m) {
                         STATE.manualFrame.rowSpan = Math.min(STATE.lines.length - STATE.manualFrame.rowStart, STATE.manualFrame.rowSpan + 1);
                         STATE.manualFrame.h = STATE.manualFrame.rowSpan * m.lineHeight;
+                        fitFrameWidthToRows();
                         updateLogic();
                         showNotification(`РАМКА: +1 СТРОКА (ВНИЗ)`);
                     }
@@ -7922,6 +8280,8 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
         window.addEventListener('resize', () => {
             resizeCanvas();
             render();
+            positionPlayerButtonsBar();
+            positionFloatingToolbarRight();
         });
 
         function triggerFlashAnimation() {
@@ -8086,7 +8446,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
             setChk('globalSearchCheck', false);
             setChk('verticalSearchCheck', false);
             setChk('highlightCheck', true);
-            setChk('interleaveAnalysisCheck', true);
+            setChk('interleaveAnalysisCheck', false);
             setChk('interleavingCheck', false);
             setChk('filterCheck', false);
             setChk('stableConglomCheck', false);
@@ -8196,6 +8556,24 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 if (autoSnapshot && typeof showNotification === 'function') showNotification("⚡ АВТОСОХРАНЕНИЕ ВОССТАНОВЛЕНО");
             }
             
+            // Пульт теперь закреплён сверху — при свежей загрузке страницы отодвигаем первую строку
+            // контента вниз, чтобы она не оказалась под пультом (~100px зазор под его нижним краем).
+            let playerPanelEl = document.querySelector('.player-panel');
+            if (STATE.offsetY === 0 && playerPanelEl) {
+                let panelBottom = playerPanelEl.getBoundingClientRect().bottom;
+                let canvas = document.getElementById('screenCanvas');
+                let canvasTop = canvas ? canvas.getBoundingClientRect().top : 0;
+                let neededTop = (panelBottom - canvasTop) + 100;
+                let m = getGridMetrics();
+                if (m && neededTop > m.startY) {
+                    STATE.offsetY += (neededTop - m.startY);
+                }
+            }
+
+            positionFloatingToolbar();
+            positionFloatingToolbarRight();
+            positionPlayerButtonsBar();
+
             // Вызываем рендер (размеры холста уже правильные)
             render();
         };
