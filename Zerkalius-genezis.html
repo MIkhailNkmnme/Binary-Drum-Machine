@@ -7628,7 +7628,38 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
                 }
                 render();
             });
-            
+
+            // Пинч-зум двумя пальцами на мобильных — мобильный аналог колёсика мыши для масштаба.
+            (() => {
+                let pinchStartDist = 0, pinchStartSize = 0;
+                function touchDist(t1, t2) {
+                    return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+                }
+                canvas.addEventListener('touchstart', e => {
+                    if (e.touches.length === 2) {
+                        e.preventDefault();
+                        pinchStartDist = touchDist(e.touches[0], e.touches[1]);
+                        pinchStartSize = parseInt(safeValue('fontSlider', 16));
+                    }
+                }, { passive: false });
+                canvas.addEventListener('touchmove', e => {
+                    if (e.touches.length === 2 && pinchStartDist > 0) {
+                        e.preventDefault();
+                        let dist = touchDist(e.touches[0], e.touches[1]);
+                        let scaleFactor = dist / pinchStartDist;
+                        let size = Math.round(pinchStartSize * scaleFactor);
+                        size = Math.max(2, Math.min(100, size));
+                        let fontSl = document.getElementById('fontSlider');
+                        fontSl.value = size;
+                        document.getElementById('fontVal').textContent = size + 'px';
+                        render();
+                    }
+                }, { passive: false });
+                canvas.addEventListener('touchend', e => {
+                    if (e.touches.length < 2) pinchStartDist = 0;
+                });
+            })();
+
             const setupDraggable = (selector, fallbackTitle) => {
                 let panel = document.querySelector(selector);
                 if (!panel) return;
