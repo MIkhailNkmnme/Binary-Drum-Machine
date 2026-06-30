@@ -390,6 +390,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 🛟 Автосохранение страницы
             </label>
 <!-- SLOT TABS -->
+            <div id="loadedSourceLabel" style="font-size:9px; color:#00ccff; text-align:center; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="Что сейчас загружено">📂 Загружено: исходные (banks_data.js)</div>
             <div style="display:flex; gap:2px; margin-bottom:0;">
                 <button id="bankBtn0" class="slot-tab active" onclick="toggleSlotPanel(0)" title="Клик: открыть/закрыть. Двойной клик: Сброс к исходнику" ondblclick="restoreOriginalBank(0)">Слот 1</button>
                 <button id="bankBtn1" class="slot-tab" onclick="toggleSlotPanel(1)" title="Клик: открыть/закрыть. Двойной клик: Сброс к исходнику" ondblclick="restoreOriginalBank(1)">Слот 2</button>
@@ -1610,6 +1611,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             STATE.banks[idx].lines = b.trim();
             STATE.banks[idx].patterns = p.trim();
             switchBank(idx, true);
+            if (window.setLoadedSource) setLoadedSource(`слот ${idx + 1} — исходные (banks_data.js)`);
             showNotification(`СЛОТ ${idx + 1} ВОССТАНОВЛЕН ИЗ ИСХОДНИКА`);
         };
 
@@ -1711,6 +1713,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 let c0 = (bank.char0 !== undefined && bank.char0 !== "") ? bank.char0 : "0";
                 visArea.value = lines.split('').map(ch => ch === '1' ? c1 : ch === '0' ? c0 : ch).join('');
             }
+        };
+
+        window.setLoadedSource = function(name) {
+            let lbl = document.getElementById('loadedSourceLabel');
+            if (lbl) lbl.textContent = '📂 Загружено: ' + name;
         };
 
         window.cycleSlotView = function() {
@@ -5620,6 +5627,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                     STATE.activeBankIndex = 0;
                                     switchBank(0, true);
                                     if (window.updateSlotPanel) updateSlotPanel();
+                                    if (window.setLoadedSource) setLoadedSource(file.name);
                                     showNotification("СЛОТЫ ИМПОРТИРОВАНЫ ИЗ banks_data.js!");
                                 } else {
                                     alert("Не удалось найти данные слотов в этом .js файле.");
@@ -5658,6 +5666,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let snapshot = JSON.parse(decodeURIComponent(atob(codeStr)));
                         document.getElementById('snapshotCodeBox').value = codeStr;
                         importSnapshotObject(snapshot);
+                        if (window.setLoadedSource) setLoadedSource(file.name);
                         showNotification("СНИМОК УСПЕШНО ИМПОРТИРОВАН!");
                     } catch(err) {
                         alert("Ошибка чтения файла! Убедитесь, что это правильный .txt снимок или .png фото Зеркалиуса.");
