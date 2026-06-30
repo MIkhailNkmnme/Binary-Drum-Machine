@@ -563,6 +563,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             <label style="display:flex; align-items:center; margin-top:3px; padding-left:15px;">
                 <input type="checkbox" id="stableConglomCheck"> <span class="lbl" style="color:#cc66ff;">Фиксация цветов (Без мерцания)</span>
             </label>
+            <label style="display:flex; align-items:center; margin-top:3px; padding-left:15px;">
+                <input type="checkbox" id="symConglomCheck"> <span class="lbl" style="color:#ff99ff;">Симметрия от оси</span>
+            </label>
             <label style="display:flex; align-items:center; margin-top:3px;">
                 <input type="checkbox" id="neonCheck"> <span class="lbl">✨ Свечение (Neon)</span>
             </label>
@@ -5928,6 +5931,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (useConglomerates && m) {
                 let visited = new Set();
                 let useStableColors = safeChecked('stableConglomCheck', true);
+                let useSymColors = safeChecked('symConglomCheck', false);
                 if (!STATE.lastBlobs) STATE.lastBlobs = [];
                 if (!STATE.nextBlobColorId) STATE.nextBlobColorId = 1;
                 let currentFrameBlobs = [];
@@ -5981,7 +5985,18 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
                             let lightness = (type === 1) ? "70%" : "35%";
                             let saturation = (type === 1) ? "100%" : "70%";
-                            let color = `hsl(${(assignedId * 137.5) % 360}, ${saturation}, ${lightness})`;
+                            let colorKey;
+                            if (useSymColors) {
+                                let sumCol = currentBlob.reduce((s, [, c]) => s + c, 0);
+                                let centroidCol = sumCol / currentBlob.length;
+                                let centroidRow = currentBlob[Math.floor(currentBlob.length / 2)][0];
+                                let rowLen = (STATE.lines[centroidRow] && STATE.lines[centroidRow].display) ? STATE.lines[centroidRow].display.length : 1;
+                                let distFromAxis = Math.round(Math.abs(centroidCol - rowLen / 2));
+                                colorKey = distFromAxis;
+                            } else {
+                                colorKey = assignedId;
+                            }
+                            let color = `hsl(${(colorKey * 137.5) % 360}, ${saturation}, ${lightness})`;
                             
                             currentBlob.forEach(([br, bc]) => conglomColors.set(br + "_" + bc, color));
                             currentFrameBlobs.push({ id: assignedId, cells: new Set(cellStrings) });
