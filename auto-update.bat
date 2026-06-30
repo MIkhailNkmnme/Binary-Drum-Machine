@@ -16,8 +16,9 @@ echo ============================================
 echo.
 
 REM Первая загрузка + запуск браузера
-call :download
-start chrome "%FILE%"
+curl -s -L "%BASE%/%FILE%" -o "%FILE%"
+curl -s -L "%BASE%/banks_data.js" -o "banks_data.js"
+start chrome "file:///%cd:\=/%/%FILE%"
 
 :loop
 timeout /t 5 /nobreak >nul
