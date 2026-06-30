@@ -2161,13 +2161,12 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 if (l.length < maxL) {
                     let diff = maxL - l.length;
                     if (mode === 'left') {
-                        lines[i] = l + '.'.repeat(diff);
+                        lines[i] = l; // короткие строки просто остаются как есть
                     } else if (mode === 'right') {
-                        lines[i] = '.'.repeat(diff) + l;
+                        lines[i] = ' '.repeat(diff) + l;
                     } else if (mode === 'center') {
                         let leftP = Math.floor(diff / 2);
-                        let rightP = diff - leftP;
-                        lines[i] = '.'.repeat(leftP) + l + '.'.repeat(rightP);
+                        lines[i] = ' '.repeat(leftP) + l;
                     }
                 }
             }
