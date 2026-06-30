@@ -1946,8 +1946,15 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 } else {
                     STATE.banks = snapshot.banks;
                 }
+                // Нормализация: всегда 4 слота, недостающие char1/char0 — по умолчанию
+                const slotDefaults = [{char1:"1",char0:"0"},{char1:"\\",char0:"/"},{char1:"<",char0:">"},{char1:")",char0:"("}];
+                for (let i = 0; i < 4; i++) {
+                    if (!STATE.banks[i]) STATE.banks[i] = { lines: "", patterns: "" };
+                    if (STATE.banks[i].char1 === undefined) STATE.banks[i].char1 = slotDefaults[i].char1;
+                    if (STATE.banks[i].char0 === undefined) STATE.banks[i].char0 = slotDefaults[i].char0;
+                }
                 STATE.activeBankIndex = snapshot.activeBankIndex || 0;
-                switchBank(STATE.activeBankIndex, false); 
+                switchBank(STATE.activeBankIndex, false);
             }
             
             if (snapshot.rows && snapshot.rows.length > 0) {
@@ -5234,17 +5241,18 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             let snapshot = window.createSnapshotObject ? window.createSnapshotObject() : {};
 
             let fileContent = `// Файл конфигурации пресетов Zerkalius\nconst ZERKALIUS_PRESETS = {\n`;
+            // settings — ПОЛНЫЙ снимок: настройки, панели, рамка, выделенные строки, все 4 слота
             fileContent += `    settings: ${JSON.stringify(snapshot)},\n`;
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < 4; i++) {
                 let linesText = (STATE.banks[i] && STATE.banks[i].lines) ? STATE.banks[i].lines.trim() : "";
                 let patText = (STATE.banks[i] && STATE.banks[i].patterns) ? STATE.banks[i].patterns.trim() : "";
-                
+
                 // Экранируем системные обратные кавычки во избежание синтаксических ошибок
                 let escapedLines = linesText.replace(/`/g, '\\`');
                 let escapedPatterns = patText.replace(/`/g, '\\`');
-                
+
                 fileContent += `    base${i+1}: \`\\n${escapedLines}\\n\`,\n`;
-                fileContent += `    pat${i+1}: \`\\n${escapedPatterns}\\n\`${i === 2 ? '' : ','}\n`;
+                fileContent += `    pat${i+1}: \`\\n${escapedPatterns}\\n\`${i === 3 ? '' : ','}\n`;
             }
             fileContent += `};\n`;
 
