@@ -1619,6 +1619,12 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
             STATE.activeBankIndex = idx;
 
+            // Защита: если слот не существует (старый снимок) — создать пустой
+            if (!STATE.banks[idx]) {
+                const defaults = [{char1:"1",char0:"0"},{char1:"\\",char0:"/"},{char1:"<",char0:">"},{char1:")",char0:"("}];
+                STATE.banks[idx] = { lines: "", patterns: "", char1: (defaults[idx]||defaults[0]).char1, char0: (defaults[idx]||defaults[0]).char0 };
+            }
+
             let newLines = STATE.banks[idx].lines || "";
             let newPatterns = STATE.banks[idx].patterns || "";
 
