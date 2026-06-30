@@ -68,7 +68,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         .player-panel { cursor: move; }
         .player-panel input, .player-panel button, .player-panel select, .player-panel textarea, .player-panel label, .player-panel a { cursor: pointer; }
         .player-panel {
-            position: absolute; left: 50%; top: 0; width: 820px; transform: translateX(-50%); z-index: 100;
+            position: absolute; left: 50%; top: 0; width: 920px; transform: translateX(-50%); z-index: 100;
             background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(0, 255, 102, 0.3); border-radius: 5px; box-sizing: border-box; padding: 4px;
             transition: left 0.3s ease, right 0.3s ease, top 0.3s ease, bottom 0.3s ease, width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
@@ -641,130 +641,114 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 </div>
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
-    <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:row; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:8px; overflow:auto;">
+    <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.195 Ultra-Save</div>
+        <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
+        <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
 
-            <div class="player-col" style="flex:1.2; min-width:200px; display:flex; flex-direction:column;">
-                <div class="player-group">
-                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:4px;">
-                        <span class="lbl" style="flex-shrink:0; white-space:nowrap;">Масштаб:<span class="val" id="fontVal">16px</span></span>
-                        <input type="range" id="fontSlider" min="1" max="100" value="16" style="flex:1; min-width:0;">
-                        <span class="lbl" style="flex-shrink:0; white-space:nowrap;">Экран:<span class="val" id="screenVal">64</span></span>
-                        <input type="range" id="screenSlider" min="1" max="200" value="64" style="flex:1; min-width:0;">
-                    </div>
-
-                    <div style="display:flex; gap:8px; align-items:center; margin-bottom: 5px;">
-                        <span class="lbl" style="flex-shrink:0; white-space:nowrap;">Инт.Y:<span class="val" id="lhVal">1.0</span></span>
-                        <input type="range" id="lhSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="flex:1; min-width:0;">
-                        <span class="lbl" style="flex-shrink:0; white-space:nowrap;">Инт.X:<span class="val" id="cwVal">1.0</span></span>
-                        <input type="range" id="cwSlider" min="0.1" max="2.5" step="0.05" value="1.0" style="flex:1; min-width:0;">
-                    </div>
-                    <div style="display:flex; align-items:center; gap:3px; margin-bottom:5px; min-width:0; max-width:100%; overflow:hidden;">
-                        <button id="rightTriangle90Btn" class="btn-action" style="margin:0; padding:2px 3px; width:auto; flex-shrink:0; font-size:8px; color:#ffd500; border-color:#ffd500;" title="Подгоняет интервал X так, чтобы ячейка символа стала квадратной (ширина = высоте строки) при текущем интервале Y. Любая 'лестница' (например 1,11,111...) на холсте получит ровно 45° диагональ и 90° угол. Содержимое холста не меняется — только геометрия символа">📐90°</button>
-                        <label style="display:flex; align-items:center; flex-shrink:0; gap:2px;" title="Жирный шрифт">
-                            <input type="checkbox" id="boldCheck"> <span class="lbl" style="font-size:8px;">Жирн.</span>
-                        </label>
-                        <div style="display:flex; align-items:center; gap:3px; flex:1; min-width:0;" title="Символ">
-                            <span class="lbl" style="font-size:8px; flex-shrink:0;">Симв:</span>
-                            <input type="range" id="charSizeSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="margin:0; flex:1; min-width:0; width:auto; height:10px;">
-                            <span class="val" id="charSizeVal" style="width:18px; flex-shrink:0; font-size:8px; text-align:right;">1.0</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="player-group">
-                    <div class="row-between">
-                        <button id="reverseBtn" class="btn-action" style="margin:0; width: 31%; font-size:9px;">🔃 Вперед</button>
-                        <button id="clearCanvasBtn" class="btn-action btn-danger" style="margin:0; width: 31%; font-size:9px;">🧹 Очистить</button>
-                        <button id="resetPlayerSlidersBtn" class="btn-action" style="margin:0; width: 31%; font-size:9px; border-color:#ff9900; color:#ff9900;" title="Сбросить масштаб, экран и интервалы по умолчанию">🔄 Сброс</button>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="player-col" style="flex:1.3; min-width:200px; display:flex; flex-direction:column; border-left:1px solid #333; border-right:1px solid #333; padding:0 10px;">
-                <div class="player-group" style="margin-top:auto;">
-                    <label style="display:flex; align-items:center; gap:4px; margin-bottom:5px; justify-content:center;" title="Если включено — кнопки Пуск/Стоп/◀▶ тоже затемняются при затемнении панели наехавшими строками (как в дзен-режиме). Если выключено — остаются видимыми всегда, кроме дзен-режима">
-                        <input type="checkbox" id="hideControlsOnDimCheck"> <span class="lbl" style="font-size:9px;">Затемнять Пуск/Стоп при затемнении</span>
+            <div class="player-col" style="flex:1.2; min-width:200px; display:flex; flex-direction:column; justify-content:center; gap:3px;">
+                <div style="display:flex; align-items:center; gap:3px; min-width:0; max-width:100%; overflow:hidden;">
+                    <button id="rightTriangle90Btn" class="btn-action" style="margin:0; padding:2px 3px; width:auto; flex-shrink:0; font-size:8px; color:#ffd500; border-color:#ffd500;" title="Подгоняет интервал X так, чтобы ячейка символа стала квадратной (ширина = высоте строки) при текущем интервале Y. Любая 'лестница' (например 1,11,111...) на холсте получит ровно 45° диагональ и 90° угол. Содержимое холста не меняется — только геометрия символа">📐90°</button>
+                    <label style="display:flex; align-items:center; flex-shrink:0; gap:2px;" title="Жирный шрифт">
+                        <input type="checkbox" id="boldCheck"> <span class="lbl" style="font-size:8px;">Жирн.</span>
                     </label>
-                    <div style="display:flex; flex-direction:column; gap:4px; margin-top:5px;">
-                        <!-- Скорость -->
-                        <div style="display:flex; align-items:center; gap:4px;">
-                            <span class="lbl" style="flex-shrink:0;">Скор:</span>
-                            <button id="speedDecBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-weight:bold; color:#00ccff; border-color:#00ccff; flex-shrink:0;">◀</button>
-                            <input type="range" id="speedSlider" min="1" max="1000" value="950" style="margin:0; height:12px; flex:1; min-width:0;">
-                            <button id="speedIncBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-weight:bold; color:#00ccff; border-color:#00ccff; flex-shrink:0;">▶</button>
-                            <span class="val" id="speedVal" style="color:#00ccff; flex-shrink:0; width:28px; text-align:right;">950</span>
-                        </div>
-                        <!-- Турбо -->
-                        <div style="display:flex; align-items:center; gap:4px;">
-                            <span class="lbl" style="flex-shrink:0;" title="Множитель (Turbo)">Turbo:</span>
-                            <button id="turboDecBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-weight:bold; color:#ff9900; border-color:#ff9900; flex-shrink:0;">◀</button>
-                            <input type="range" id="turboSlider" min="1" max="1111" value="1" style="margin:0; height:12px; flex:1; min-width:0;">
-                            <button id="turboIncBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-weight:bold; color:#ff9900; border-color:#ff9900; flex-shrink:0;">▶</button>
-                            <span class="lbl" style="color:#ff3333; font-weight:bold; flex-shrink:0; width:28px; text-align:right;">x<span class="val" id="turboVal">1</span></span>
-                        </div>
+                    <div style="display:flex; align-items:center; gap:3px; flex:1; min-width:0;" title="Символ">
+                        <span class="lbl" style="font-size:8px; flex-shrink:0;">Симв:</span>
+                        <input type="range" id="charSizeSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="margin:0; flex:1; min-width:0; width:auto; height:10px;">
+                        <span class="val" id="charSizeVal" style="width:18px; flex-shrink:0; font-size:8px; text-align:right;">1.0</span>
                     </div>
+                </div>
 
-                    <div style="display: flex; gap: 4px; align-items: center; margin-top: 5px;">
-                        <span class="lbl" style="width: 30px; flex-shrink:0;">Шаг(S):</span>
-                        <input type="number" id="scrollStepInput" value="1" min="1" style="width: 35px; height: 16px; font-size: 10px; flex-shrink:0;">
-                        <input type="range" id="stepSlider" min="0" max="0" value="0" style="flex: 1; margin: 0; min-width:0;">
-                    </div>
+                <div class="row-between">
+                    <button id="reverseBtn" class="btn-action" style="margin:0; width: 31%; font-size:9px;">🔃 Вперед</button>
+                    <button id="clearCanvasBtn" class="btn-action btn-danger" style="margin:0; width: 31%; font-size:9px;">🧹 Очистить</button>
+                    <button id="resetPlayerSlidersBtn" class="btn-action" style="margin:0; width: 31%; font-size:9px; border-color:#ff9900; color:#ff9900;" title="Сбросить масштаб, экран и интервалы по умолчанию">🔄 Сброс</button>
+                </div>
 
-                    <div class="row-between" style="margin-top:5px;">
-                        <button id="playerModeBtn" class="btn-action" style="margin:0; width: 100%; color:#00ccff; border-color:#00ccff; font-size:10px;" title="Скроллинг (⬍) — холст движется вверх/вниз. Симуляция XOR (⬌) — горизонтальные правила сдвигаются влево/вправо">⬌ Функция: Симуляция (XOR)</button>
-                    </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <span class="lbl" style="flex-shrink:0; white-space:nowrap;">Масштаб:<span class="val" id="fontVal">16px</span></span>
+                    <input type="range" id="fontSlider" min="1" max="100" value="16" style="flex:1; min-width:0;">
+                    <span class="lbl" style="flex-shrink:0; white-space:nowrap;">Экран:<span class="val" id="screenVal">64</span></span>
+                    <input type="range" id="screenSlider" min="1" max="200" value="64" style="flex:1; min-width:0;">
+                </div>
 
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <span class="lbl" style="flex-shrink:0; white-space:nowrap;">Инт.Y:<span class="val" id="lhVal">1.0</span></span>
+                    <input type="range" id="lhSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="flex:1; min-width:0;">
+                    <span class="lbl" style="flex-shrink:0; white-space:nowrap;">Инт.X:<span class="val" id="cwVal">1.0</span></span>
+                    <input type="range" id="cwSlider" min="0.1" max="2.5" step="0.05" value="1.0" style="flex:1; min-width:0;">
                 </div>
             </div>
 
-            <div class="player-col" style="flex:1; min-width:160px; display:flex; flex-direction:column;">
-                <div class="player-group">
-                    <div class="row-between" style="margin-bottom:2px;">
-                        <button id="invertFrameBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#ffd500; color:#ffd500; background:none;" title="Инвертировать символы внутри рамки (0 ↔ 1, \ ↔ /)">🔄 Инверт. в рамке</button>
-                        <button id="invertFrameExceptFirstBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#ffd500; color:#ffd500; background:none;" title="Инвертировать символы внутри рамки, пропуская первый символ каждой строки">🔄 Инверт. кроме 1-го</button>
-                    </div>
-                    <div class="row-between" style="margin-bottom:2px;">
-                        <button id="buildUpwardsBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#ff00ff; color:#ff00ff; background:none; font-weight:bold;" title="Скопировать блок в рамке, перевернуть и безусловно вставить сверху">🏗️ ВВЕРХ</button>
-                        <button id="buildRightwardsBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#00ffcc; color:#00ffcc; background:none; font-weight:bold;" title="Транспонировать и пристроить блок в рамке вправо (завершить в прямоугольник)">🏗️ ВПРАВО</button>
-                    </div>
-                    <div style="display:flex; gap:4px; align-items:center;">
-                        <button id="padCharLeftBtn" class="btn-action" style="margin:0; flex:1; font-size:9px; padding:3px; border-color:#00ffff; color:#00ffff; background:none;" title="Добавить символ (или удалить, если минус) слева">⬅️ СЛЕВА</button>
-                        <select id="padCharSelect" style="width:35px; margin:0; height:18px; font-size:10px; padding:0; background:#000; color:#00ffff; border:1px solid #00ffff; border-radius:2px; text-align:center; cursor:pointer; outline:none;" title="0 и 1 добавляют, минус (-) удаляет">
-                            <option value="0">0</option>
-                            <option value="1">1</option>
-                            <option value="-">-</option>
-                        </select>
-                        <button id="padCharRightBtn" class="btn-action" style="margin:0; flex:1; font-size:9px; padding:3px; border-color:#00ffff; color:#00ffff; background:none;" title="Добавить символ (или удалить, если минус) справа">СПРАВА ➡️</button>
-                    </div>
+            <div class="player-col" style="flex:1.3; min-width:200px; display:flex; flex-direction:column; justify-content:center; gap:3px; border-left:1px solid #333; border-right:1px solid #333; padding:0 10px;">
+                <label style="display:flex; align-items:center; gap:4px; justify-content:center;" title="Если включено — кнопки Пуск/Стоп/◀▶ тоже затемняются при затемнении панели наехавшими строками (как в дзен-режиме). Если выключено — остаются видимыми всегда, кроме дзен-режима">
+                    <input type="checkbox" id="hideControlsOnDimCheck"> <span class="lbl" style="font-size:9px;">Затемнять Пуск/Стоп при затемнении</span>
+                </label>
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <button id="speedDecBtn" class="bank-btn" style="width:46px; height:18px; padding:0 3px; font-weight:bold; color:#00ccff; border-color:#00ccff; flex-shrink:0; font-size:9px;">◀ Скор</button>
+                    <input type="range" id="speedSlider" min="1" max="1000" value="950" style="margin:0; height:12px; flex:1; min-width:0;">
+                    <button id="speedIncBtn" class="bank-btn" style="width:46px; height:18px; padding:0 3px; font-weight:bold; color:#00ccff; border-color:#00ccff; flex-shrink:0; font-size:9px;">Скор ▶</button>
+                    <span class="val" id="speedVal" style="color:#00ccff; flex-shrink:0; width:28px; text-align:right;">950</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <button id="turboDecBtn" class="bank-btn" style="width:46px; height:18px; padding:0 3px; font-weight:bold; color:#ff9900; border-color:#ff9900; flex-shrink:0; font-size:9px;" title="Множитель (Turbo)">◀ Turbo</button>
+                    <input type="range" id="turboSlider" min="1" max="1111" value="1" style="margin:0; height:12px; flex:1; min-width:0;">
+                    <button id="turboIncBtn" class="bank-btn" style="width:46px; height:18px; padding:0 3px; font-weight:bold; color:#ff9900; border-color:#ff9900; flex-shrink:0; font-size:9px;">Turbo ▶</button>
+                    <span class="lbl" style="color:#ff3333; font-weight:bold; flex-shrink:0; width:28px; text-align:right;">x<span class="val" id="turboVal">1</span></span>
                 </div>
 
-                <div class="player-group">
-                    <!-- Сдвиг-цилиндр -->
-                    <div style="display:flex; align-items:center; gap:2px; margin-bottom:4px; width:100%;">
-                        <button id="manualCylinderShiftLeftBtn" class="bank-btn" style="width:20px; height:18px; padding:0; border-color:#00ccff; color:#00ccff; font-weight:bold;" title="Вручную сдвинуть влево все строки в рамке циклически на 1 символ">◀</button>
-                        <label style="display:flex; align-items:center; margin:0; flex:1; justify-content:center;">
-                            <input type="checkbox" id="cylinderCheck"> <span class="lbl" style="font-size:10px;">Сдвиг-цилиндр</span>
-                        </label>
-                        <button id="manualCylinderShiftRightBtn" class="bank-btn" style="width:20px; height:18px; padding:0; border-color:#00ccff; color:#00ccff; font-weight:bold;" title="Вручную сдвинуть вправо все строки в рамке циклически на 1 символ">▶</button>
-                    </div>
-                    <!-- Сдвиг-спираль -->
-                    <div style="display:flex; align-items:center; gap:2px; width:100%;">
-                        <button id="manualElkaShiftLeftBtn" class="bank-btn" style="width:20px; height:18px; padding:0; border-color:#ff3333; color:#ff3333; font-weight:bold;" title="Вручную сдвинуть влево весь блок в рамке циклически по спирали на 1 символ">◀</button>
-                        <label style="display:flex; align-items:center; margin:0; flex:1; justify-content:center;">
-                            <input type="checkbox" id="elkaCheck"> <span class="lbl" style="color:#ff3333; font-size:10px;">Сдвиг-спираль</span>
-                        </label>
-                        <button id="manualElkaShiftRightBtn" class="bank-btn" style="width:20px; height:18px; padding:0; border-color:#ff3333; color:#ff3333; font-weight:bold;" title="Вручную сдвинуть вправо весь блок в рамке циклически по спирали на 1 символ">▶</button>
-                    </div>
+                <div style="display: flex; gap: 4px; align-items: center;">
+                    <span class="lbl" style="width: 38px; flex-shrink:0;">Шаг(S):</span>
+                    <input type="number" id="scrollStepInput" value="1" min="1" style="width: 35px; height: 16px; font-size: 10px; flex-shrink:0;">
+                    <input type="range" id="stepSlider" min="0" max="0" value="0" style="flex: 1; margin: 0; min-width:0;">
+                </div>
+
+                <div class="row-between">
+                    <button id="playerModeBtn" class="btn-action" style="margin:0; width: 100%; color:#00ccff; border-color:#00ccff; font-size:10px;" title="Скроллинг (⬍) — холст движется вверх/вниз. Симуляция XOR (⬌) — горизонтальные правила сдвигаются влево/вправо">⬌ Функция: Симуляция (XOR)</button>
                 </div>
             </div>
 
+            <div class="player-col" style="flex:1; min-width:160px; display:flex; flex-direction:column; justify-content:center; gap:3px;">
+                <div class="row-between">
+                    <button id="invertFrameBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#ffd500; color:#ffd500; background:none;" title="Инвертировать символы внутри рамки (0 ↔ 1, \ ↔ /)">🔄 Инверт. в рамке</button>
+                    <button id="invertFrameExceptFirstBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#ffd500; color:#ffd500; background:none;" title="Инвертировать символы внутри рамки, пропуская первый символ каждой строки">🔄 Инверт. кроме 1-го</button>
+                </div>
+                <div class="row-between">
+                    <button id="buildUpwardsBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#ff00ff; color:#ff00ff; background:none; font-weight:bold;" title="Скопировать блок в рамке, перевернуть и безусловно вставить сверху">🏗️ ВВЕРХ</button>
+                    <button id="buildRightwardsBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#00ffcc; color:#00ffcc; background:none; font-weight:bold;" title="Транспонировать и пристроить блок в рамке вправо (завершить в прямоугольник)">🏗️ ВПРАВО</button>
+                </div>
+                <div style="display:flex; gap:4px; align-items:center;">
+                    <button id="padCharLeftBtn" class="btn-action" style="margin:0; flex:1; font-size:9px; padding:3px; border-color:#00ffff; color:#00ffff; background:none;" title="Добавить символ (или удалить, если минус) слева">⬅️ СЛЕВА</button>
+                    <select id="padCharSelect" style="width:35px; margin:0; height:18px; font-size:10px; padding:0; background:#000; color:#00ffff; border:1px solid #00ffff; border-radius:2px; text-align:center; cursor:pointer; outline:none;" title="0 и 1 добавляют, минус (-) удаляет">
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="-">-</option>
+                    </select>
+                    <button id="padCharRightBtn" class="btn-action" style="margin:0; flex:1; font-size:9px; padding:3px; border-color:#00ffff; color:#00ffff; background:none;" title="Добавить символ (или удалить, если минус) справа">СПРАВА ➡️</button>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:2px; width:100%;">
+                    <button id="manualCylinderShiftLeftBtn" class="bank-btn" style="width:52px; height:18px; padding:0 3px; border-color:#00ccff; color:#00ccff; font-weight:bold; font-size:9px;" title="Вручную сдвинуть влево все строки в рамке циклически на 1 символ">◀ Цилин.</button>
+                    <label style="display:flex; align-items:center; margin:0; flex:1; justify-content:center;">
+                        <input type="checkbox" id="cylinderCheck">
+                    </label>
+                    <button id="manualCylinderShiftRightBtn" class="bank-btn" style="width:52px; height:18px; padding:0 3px; border-color:#00ccff; color:#00ccff; font-weight:bold; font-size:9px;" title="Вручную сдвинуть вправо все строки в рамке циклически на 1 символ">Цилин. ▶</button>
+                </div>
+                <div style="display:flex; align-items:center; gap:2px; width:100%;">
+                    <button id="manualElkaShiftLeftBtn" class="bank-btn" style="width:52px; height:18px; padding:0 3px; border-color:#ff3333; color:#ff3333; font-weight:bold; font-size:9px;" title="Вручную сдвинуть влево весь блок в рамке циклически по спирали на 1 символ">◀ Спир.</button>
+                    <label style="display:flex; align-items:center; margin:0; flex:1; justify-content:center;">
+                        <input type="checkbox" id="elkaCheck">
+                    </label>
+                    <button id="manualElkaShiftRightBtn" class="bank-btn" style="width:52px; height:18px; padding:0 3px; border-color:#ff3333; color:#ff3333; font-weight:bold; font-size:9px;" title="Вручную сдвинуть вправо весь блок в рамке циклически по спирали на 1 символ">Спир. ▶</button>
+                </div>
+            </div>
+
+        </div>
         </div>
         </div>
     </div>
-    <div id="playerButtonsBar" style="position:fixed; z-index:101; display:flex; flex-direction:column; align-items:center;" title="Двойной клик по пустому месту (между кнопками): развернуть весь Пульт. Перетаскивание: переместить Пульт." onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { document.querySelector('.player-panel').classList.remove('minimized'); setTimeout(positionPlayerButtonsBar, 320); event.stopPropagation(); }">
+    <div id="playerButtonsBar" style="position:fixed; z-index:101; display:flex; flex-direction:column; align-items:center;" title="Двойной клик по пустому месту (между кнопками): развернуть весь Пульт. Перетаскивание: переместить Пульт." onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { document.querySelector('.player-panel').classList.toggle('minimized'); setTimeout(positionPlayerButtonsBar, 320); event.stopPropagation(); }">
         <div class="player-buttons" style="justify-content:center;">
             <button id="prevBtn" title="Шаг назад" style="color:#fff;">◀</button>
             <button id="playBtn" title="Старт / Пауза (Space)">▶ Пуск</button>
@@ -791,7 +775,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         <button class="float-circle-btn" id="floatingFrameBtn" title="Включить/Выключить Рамку">🔲</button>
         <button class="float-circle-btn" id="floatingInterleaveBtn" style="color:#cc33ff; border-color:#cc33ff;" title="Анализ пересечений (LCS)">🧬</button>
     </div>
-    <div id="mainTitle">Zerkalius: Genesis (v0.195 Ultra-Save)</div>
 <!-- === МАРКЕР 10: ТЕРМИНАЛ АКТИВАЦИИ === -->
     <div id="rightPanel" title="Правая панель. Перетаскивание за вкладки слева: переместить. Двойной клик: свернуть/развернуть." onclick="event.stopPropagation();" ondblclick="if (event.target.closest('.right-panel-tab') || !event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); event.stopPropagation(); }">
         <div class="right-panel-row">
@@ -1344,16 +1327,17 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (!safeChecked('frameCenterLockCheck', true)) return;
             let totalRows = STATE.lines.length;
             if (!totalRows) return;
-            let maxLenInFrame = 0;
+            let m = getGridMetrics();
+            let startIdx = m ? m.startIndex : 0;
+            let maxLen = 0;
             for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
-                let idx = (STATE.manualFrame.rowStart + k) % totalRows;
-                let line = STATE.lines[idx];
-                if (line && line.display && line.display.length > maxLenInFrame) {
-                    maxLenInFrame = line.display.length;
-                }
+                let idx = (startIdx + STATE.manualFrame.rowStart + k) % totalRows;
+                let l = STATE.lines[idx];
+                let len = (l && l.orig) ? l.orig.length : 0;
+                if (len > maxLen) maxLen = len;
             }
-            if (maxLenInFrame === 0) return;
-            let newSpan = maxLenInFrame + 2;
+            if (maxLen === 0) return;
+            let newSpan = maxLen + 2;
             STATE.manualFrame.colSpan = newSpan;
             STATE.manualFrame.colStart = -newSpan / 2;
             STATE.manualFrame.manualWidth = false;
@@ -1415,24 +1399,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
             let colStart = (useFrameLimit && STATE.manualFrame.colStart !== undefined) ? STATE.manualFrame.colStart : -20;
             let colSpan = (useFrameLimit && STATE.manualFrame.colSpan !== undefined) ? STATE.manualFrame.colSpan : 40;
-
-            if (useFrameLimit) {
-                let maxLenInFrame = 0;
-                for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
-                    let idx = (m.startIndex + STATE.manualFrame.rowStart + k) % totalRows;
-                    let line = STATE.lines[idx];
-                    if (line && line.display && line.display.length > maxLenInFrame) {
-                        maxLenInFrame = line.display.length;
-                    }
-                }
-                if (maxLenInFrame > 0) {
-                    let minColSpan = maxLenInFrame + 2;
-                    if (colSpan < minColSpan) {
-                        colSpan = minColSpan;
-                    }
-                }
-                colStart = -Math.round(colSpan / 2);
-            }
 
             let drawX = m.baseX + colStart * m.charWidth;
             let drawW = colSpan * m.charWidth;
@@ -1972,8 +1938,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             STATE.autoOffsetY = 0;
             STATE.rowScrollOffset = keepState ? savedRS : 0;
 
-            STATE.foundPatterns.clear();
-            STATE.foundPatternsMetadata.clear();
             // Выделение строк/колец привязано к индексам конкретного текста — при загрузке нового
             // текста старые индексы теряют смысл и могут случайно совпасть с другой строкой.
             if (STATE.selectedRows) STATE.selectedRows.clear();
@@ -3085,6 +3049,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 });
                 
                 loadText(mappedLines.join('\n'));
+                resetPositionWithHeightScale(1.0, false, true);
                 showNotification("ГЕНЕРАТОР: XORORA МАЯТНИК");
                 return;
             }
@@ -3125,6 +3090,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             });
 
             loadText(mappedLines.join('\n'));
+            resetPositionWithHeightScale(1.0, false, true);
             showNotification(rule === "shift" ? "ГЕНЕРАТОР: СДВИГ" : "ГЕНЕРАТОР: ЦЕНТР");
         });
 
@@ -3134,6 +3100,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             let genLines = [];
             for (let i = 1; i <= n; i++) genLines.push('1'.repeat(i));
             loadText(genLines.join('\n'));
+            resetPositionWithHeightScale(1.0, false, true);
             showNotification(`▲ ТРЕУГОЛЬНИК ИЗ 1 (${n} СТРОК)`);
         });
 
@@ -3979,7 +3946,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                 let patOrig = validPatterns[pOf];
                                 let pat = getSearchPat(patOrig);
                                 if (pat.length > 0 && str.startsWith(pat)) {
-                                    let allAbove = path.slice(0, pat.length).every(cell => cell.r < pOf);
+                                    let allAbove = path.slice(0, pat.length).every(cell => pOf === 0 || cell.r < pOf);
                                 if (allAbove) {
                                     path.slice(0, pat.length).forEach(cell => {
                                         let isTargetActive = (pOf !== -1 && STATE.lines[pOf]) ? STATE.lines[pOf].isActive : false;
@@ -4095,7 +4062,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let allAbove = true;
                         for (let k = 0; k < searchPat.length; k++) {
                             let actualRow = rowMap[pos + k];
-                            if (actualRow === -1 || actualRow >= targetRowIdx) {
+                            if (actualRow === -1 || (targetRowIdx > 0 && actualRow >= targetRowIdx)) {
                                 allAbove = false;
                                 break;
                             }
@@ -4153,7 +4120,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let loc = cleanMap[(pos + k) % cleanStream.length];
                         if (loc) {
                             involvedRows.add(STATE.lines[loc.r].origIndex + 1);
-                            if (loc.r >= targetRowIdx) {
+                            if (targetRowIdx > 0 && loc.r >= targetRowIdx) {
                                 allAbove = false;
                             }
                         }
@@ -4193,7 +4160,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let loc = cleanMap[(pos + k) % globalCleanText.length];
                         if (loc) {
                             involvedRows.add(STATE.lines[loc.r].origIndex + 1);
-                            if (loc.r >= targetRowIdx) {
+                            if (targetRowIdx > 0 && loc.r >= targetRowIdx) {
                                 allAbove = false;
                             }
                         }
@@ -4436,7 +4403,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                             let allAbove = true;
                             for (let k = 0; k < pat.length; k++) {
                                 let actualRow = rowMap[pos + k];
-                                if (actualRow === -1 || actualRow >= targetRowIdx) {
+                                if (actualRow === -1 || (targetRowIdx > 0 && actualRow >= targetRowIdx)) {
                                     allAbove = false;
                                     break;
                                 }
@@ -4477,7 +4444,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         if (pos < cleanStream.length) {
                             for (let k = 0; k < pat.length; k++) {
                                 let loc = cleanMap[(pos + k) % cleanStream.length];
-                                if (loc && loc.r >= targetRowIdx) {
+                                if (loc && targetRowIdx > 0 && loc.r >= targetRowIdx) {
                                     allAbove = false;
                                     break;
                                 }
@@ -5079,8 +5046,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         window.createSnapshotObject = function() {
             let linesInp = document.getElementById('linesInput');
             let patInp = document.getElementById('patternInput');
-            if(linesInp) STATE.banks[STATE.activeBankIndex].lines = linesInp.value;
-            if(patInp) STATE.banks[STATE.activeBankIndex].patterns = patInp.value;
+            if(linesInp && linesInp.value.trim().length > 0) STATE.banks[STATE.activeBankIndex].lines = linesInp.value;
+            if(patInp && patInp.value.trim().length > 0) STATE.banks[STATE.activeBankIndex].patterns = patInp.value;
             
             let activeLinesIndices = [];
             let localSteps = [];
@@ -5753,8 +5720,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 <!-- === МАРКЕР 48: СЛУШАТЕЛИ КНОПОК ПЛЕЕРА === -->
         safeBind('playBtn', 'click', () => { togglePlay(); showNotification(STATE.isPlaying ? "ПУСК" : "ПАУЗА"); });
         
-        safeBind('stopBtn', 'click', () => { 
-            STATE.isPlaying = false; STATE.globalStep = 0; STATE.foundPatterns.clear(); STATE.foundPatternsMetadata.clear(); STATE.flashes.clear();
+        safeBind('stopBtn', 'click', () => {
+            STATE.isPlaying = false; STATE.globalStep = 0; STATE.flashes.clear();
             STATE.autoOffsetX = 0; STATE.autoOffsetY = 0;
             STATE.rowScrollOffset = 0;
             if (STATE.selectedRings) STATE.selectedRings.clear();
@@ -5790,40 +5757,26 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             window.saveAutosaveSnapshot && window.saveAutosaveSnapshot();
         });
         
-        safeBind('clearMemoryBtn', 'click', () => { 
-            STATE.foundPatterns.clear(); STATE.foundPatternsMetadata.clear(); STATE.flashes.clear();
-            STATE.currentTargetPatternIdx = 1;
-            let pInp = document.getElementById('patternInput');
-            if (pInp) { pInp.value = ''; STATE.banks[STATE.activeBankIndex].patterns = ''; }
-            STATE.lastFindMethod = "Ожидание...";
-            STATE.pendingCascade = false;
-            STATE.wasBalancedLastFrame = false;
-            STATE.lastSpecialType = "none";
-            STATE.lastLoggedRowsCount = 0;
-            STATE.balanceHistory = [];
-            if (STATE.loggedPatterns) STATE.loggedPatterns.clear();
-            if (STATE.patternLogHistory) STATE.patternLogHistory = [];
-            var logEl = document.getElementById('balanceLog');
-            if (logEl) logEl.innerHTML = "";
-            var pLogEl = document.getElementById('patternLogDetails');
-            if (pLogEl) pLogEl.style.display = 'none';
-            var ilLog = document.getElementById('interleavingLogDetails');
-            if (ilLog) ilLog.style.display = 'none';
-            STATE.lines.forEach((line, idx) => {
-                line.localStep = 0;
-                line.isManuallyShifted = false;
-                line.isActive = (idx === 0);
-            });
-            STATE.linesModifiedSinceLastInit = false;
-            if (STATE.manualFrame) {
-                STATE.manualFrame.isInitialized = false;
-                STATE.manualFrame.rowStart = 0;
-                STATE.manualFrame.rowSpan = 1;
-                STATE.manualFrame.y = 0;
-                STATE.manualFrame.h = undefined;
-                STATE.manualFrame.w = undefined;
-            }
-            updatePatternBackdrop(); updateLogic(); showNotification("ПАМЯТЬ СБРОШЕНА"); 
+        safeBind('clearMemoryBtn', 'click', () => {
+            const setChk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
+            setChk('autoCascadeCheck', false);
+            setChk('cascadeOnBalanceCheck', false);
+            setChk('pauseOnBalanceCheck', false);
+            setChk('keepPhaseOnCascadeCheck', true);
+            setChk('activateOnPatternCheck', false);
+            setChk('ignoreFirstPatternCharCheck', false);
+            setChk('ignoreLastPatternCharCheck', false);
+            setChk('sequentialSearchCheck', true);
+            setChk('globalSearchCheck', false);
+            setChk('verticalSearchCheck', false);
+            setChk('highlightCheck', true);
+            setChk('interleaveAnalysisCheck', false);
+            setChk('interleavingCheck', false);
+            setChk('filterCheck', false);
+            setChk('stableConglomCheck', false);
+            setChk('substeppingCheck', false);
+            setChk('naezdCheck', false);
+            render(); showNotification("ЧЕКБОКСЫ СБРОШЕНЫ");
         });
 
         safeBind('clearCanvasBtn', 'click', function() {
@@ -5862,8 +5815,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (STATE.selectedRings) STATE.selectedRings.clear();
             if (STATE.selectedRows) STATE.selectedRows.clear();
             STATE.autoOffsetX = 0; STATE.autoOffsetY = 0;
-            STATE.foundPatterns.clear();
-            STATE.foundPatternsMetadata.clear();
             STATE.lastBlobs = [];
             STATE.nextBlobColorId = 1;
             STATE.interleavingLog = [];
@@ -6478,6 +6429,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let xRight = baseX + offsetX;
 
                         let color = `hsla(${(bal.span * 65) % 360}, 100%, 65%, 0.8)`;
+                        let colorFill = `hsla(${(bal.span * 65) % 360}, 100%, 65%, 0.09)`;
+                        ctx.fillStyle = colorFill;
+                        ctx.fillRect(xLeft, yTop, xRight - xLeft, yBottom - yTop);
                         ctx.strokeStyle = color;
                         ctx.fillStyle = color;
                         ctx.shadowColor = color;
@@ -7126,6 +7080,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (STATE.calcAllInterleaves) {
                 this.style.background = '#00ccff';
                 this.style.color = '#000';
+                const iaChk = document.getElementById('interleaveAnalysisCheck');
+                if (iaChk && !iaChk.checked) {
+                    iaChk.checked = true;
+                    iaChk.dispatchEvent(new Event('change'));
+                }
                 showNotification("🧬 LCS ВО ВСЕЙ РАМКЕ ВКЛ");
             } else {
                 this.style.background = 'rgba(0,204,255,0.15)';
@@ -7659,7 +7618,14 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     let onMoveArea = !isResize && (onT_drag || onB_drag || onL_drag || onR_drag);
                     let centerLocked = safeChecked('frameCenterLockCheck', true);
 
-                    if (isResize) {
+                    let onTL_corner = onT_res && onL_res;
+                    let onTR_corner = onT_res && onR_res;
+                    let onBL_corner = onB_res && onL_res;
+                    let onBR_corner = onB_res && onR_res;
+                    if (onTL_corner || onTR_corner || onBL_corner || onBR_corner) {
+                        STATE.frameAction = 'resize-corner';
+                        STATE.frameCorner = onTL_corner ? 'TL' : onTR_corner ? 'TR' : onBL_corner ? 'BL' : 'BR';
+                    } else if (isResize) {
                         if (onB_res) STATE.frameAction = 'resize-b';
                         else if (onT_res) STATE.frameAction = 'resize-t';
                         else if (onL_res && !centerLocked) { STATE.frameAction = 'resize-h'; STATE.frameResizeSide = 'L'; }
@@ -7855,6 +7821,36 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                             let newSpan = Math.max(2, newRightCol - leftCol);
                             STATE.manualFrame.colStart = leftCol;
                             STATE.manualFrame.colSpan = newSpan;
+                        }
+                        STATE.manualFrame.manualWidth = true;
+                    }
+                    else if (STATE.frameAction === 'resize-corner') {
+                        let corner = STATE.frameCorner;
+                        let isBottom = corner === 'BL' || corner === 'BR';
+                        let isRight = corner === 'TR' || corner === 'BR';
+                        let newRowSpan, newRowStart;
+                        if (isBottom) {
+                            newRowSpan = Math.max(1, STATE.frameStartH + dy_rows);
+                            newRowStart = STATE.frameStartY;
+                        } else {
+                            let targetRow = Math.max(-40, STATE.frameStartY + dy_rows);
+                            let maxTargetRow = STATE.frameStartY + STATE.frameStartH - 1;
+                            if (targetRow > maxTargetRow) targetRow = maxTargetRow;
+                            newRowSpan = Math.max(1, STATE.frameStartH - (targetRow - STATE.frameStartY));
+                            newRowStart = targetRow;
+                        }
+                        STATE.manualFrame.rowSpan = newRowSpan;
+                        STATE.manualFrame.rowStart = newRowStart;
+                        // Квадрат: ширина в пикселях = высота в пикселях
+                        let pixelH = newRowSpan * m.lineHeight;
+                        let newColSpan = Math.max(2, Math.round(pixelH / m.charWidth));
+                        if (isRight) {
+                            STATE.manualFrame.colStart = STATE.frameStartColStart;
+                            STATE.manualFrame.colSpan = newColSpan;
+                        } else {
+                            let rightCol = STATE.frameStartColStart + STATE.frameStartW;
+                            STATE.manualFrame.colStart = rightCol - newColSpan;
+                            STATE.manualFrame.colSpan = newColSpan;
                         }
                         STATE.manualFrame.manualWidth = true;
                     }
@@ -8375,13 +8371,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 togglePlay(); 
             }
             
-            if (e.code === 'Enter') { 
-                e.preventDefault(); 
+            if (e.code === 'Enter') {
+                e.preventDefault();
                 if (document.activeElement && document.activeElement.tagName === 'BUTTON') document.activeElement.blur();
                 document.getElementById('stopBtn').click();
             }
-            if (e.code === 'Delete') { 
-                e.preventDefault(); 
+            if (e.code === 'Delete') {
+                e.preventDefault();
                 if (STATE.selectedRows && STATE.selectedRows.size > 0) {
                     if (window.saveUndoState) saveUndoState();
                     let toDelete = Array.from(STATE.selectedRows).sort((a,b) => b - a);
@@ -8389,7 +8385,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         if (idx >= 0 && idx < STATE.lines.length) STATE.lines.splice(idx, 1);
                     });
                     STATE.selectedRows.clear();
-                    
+
                     let newLinesText = STATE.lines.map(l => l.orig).join('\n');
                     let linesInp = document.getElementById('linesInput');
                     if (linesInp) linesInp.value = newLinesText;
@@ -8401,7 +8397,40 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     render();
                     showNotification(`🗑️ УДАЛЕНО СТРОК: ${toDelete.length}`);
                 } else {
-                    document.getElementById('clearCanvasBtn').click(); 
+                    let useFrame = safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized;
+                    let m = getGridMetrics();
+                    if (useFrame && m && STATE.lines.length > 0) {
+                        let totalRows = STATE.lines.length;
+                        let frameHasContent = false;
+                        for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
+                            let idx = (m.startIndex + STATE.manualFrame.rowStart + k) % totalRows;
+                            if (STATE.lines[idx] && STATE.lines[idx].orig && STATE.lines[idx].orig.trim().length > 0) {
+                                frameHasContent = true; break;
+                            }
+                        }
+                        if (frameHasContent) {
+                            if (window.saveUndoState) saveUndoState();
+                            for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
+                                let idx = (m.startIndex + STATE.manualFrame.rowStart + k) % totalRows;
+                                if (STATE.lines[idx]) {
+                                    STATE.lines[idx].orig = '';
+                                    STATE.lines[idx].template = '';
+                                    STATE.lines[idx].display = '';
+                                    STATE.lines[idx].L = 0;
+                                }
+                            }
+                            let newText = STATE.lines.map(l => l.orig).join('\n');
+                            let linesInp = document.getElementById('linesInput');
+                            if (linesInp) linesInp.value = newText;
+                            STATE.banks[STATE.activeBankIndex].lines = newText;
+                            render();
+                            showNotification("🧹 РАМКА ОЧИЩЕНА");
+                        } else {
+                            document.getElementById('clearCanvasBtn').click();
+                        }
+                    } else {
+                        document.getElementById('clearCanvasBtn').click();
+                    }
                 }
             }
         });
@@ -8552,6 +8581,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     bold.checked = false;
                     bold.dispatchEvent(new Event('change'));
                 }
+                fitFrameWidthToRows();
                 render();
                 showNotification("НАСТРОЙКИ ПЛЕЕРА СБРОШЕНЫ");
             });
@@ -8704,7 +8734,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 let combinedBottom = Math.max(panelBottom || 0, barBottom || 0);
                 let canvas = document.getElementById('screenCanvas');
                 let canvasTop = canvas ? canvas.getBoundingClientRect().top : 0;
-                let neededTop = (combinedBottom - canvasTop) + 100;
+                let neededTop = (combinedBottom - canvasTop) + 50;
                 let m = getGridMetrics();
                 if (playerPanelEl && m && neededTop > m.startY) {
                     STATE.offsetY += (neededTop - m.startY);
