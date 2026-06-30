@@ -179,6 +179,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         .bank-btn:hover { border-color: #888; color: #ddd; }
         .bank-btn.active { background: #00ff66; color: #000; font-weight: bold; border-color: #00ff66; box-shadow: 0 0 10px currentColor; text-shadow: none; }
 
+        .slot-tab { flex:1; margin:0; font-size:10px; border:1px solid #444; background:linear-gradient(180deg,#2a2a2a,#1c1c1c); color:#aaa; border-radius:3px 3px 0 0; cursor:pointer; padding:4px 0; letter-spacing:0.3px; transition:background 0.15s,color 0.15s,border-color 0.15s; }
+        .slot-tab:hover { border-color:#888; color:#ddd; }
+        .slot-tab.active { background:#00ff66; color:#000; font-weight:bold; border-color:#00ff66; box-shadow:0 0 8px #00ff66; text-shadow:none; }
+        .slot-preview { width:100%; height:72px; background:#050505; font-family:'Roboto Mono',monospace; font-size:9px; border:1px solid #2a2a2a; resize:none; padding:3px; box-sizing:border-box; overflow-y:auto; line-height:1.4; }
+
         #screenContainer { position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; background: #050505; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 10; }
 
         body.rotated-view #screenContainer {
@@ -384,13 +389,41 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 <input type="checkbox" id="autosaveEnabledCheck" checked style="margin:0;">
                 🛟 Автосохранение страницы
             </label>
-<div style="display: flex; gap: 4px; margin-bottom: 4px;">
-                <button id="bankBtn0" class="bank-btn active" onclick="switchBank(0, false)" ondblclick="restoreOriginalBank(0)" title="Клик: Просмотр. Двойной клик: Сброс к исходнику">Слот 1</button>
-                <button id="bankBtn1" class="bank-btn" onclick="switchBank(1, false)" ondblclick="restoreOriginalBank(1)" title="Клик: Просмотр. Двойной клик: Сброс к исходнику">Слот 2</button>
-                <button id="bankBtn2" class="bank-btn" onclick="switchBank(2, false)" ondblclick="restoreOriginalBank(2)" title="Клик: Просмотр. Двойной клик: Сброс к исходнику">Слот 3</button>
-                <button id="applyLinesBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; font-weight:bold; background:#00ccff; color:#000; border-color:#00ccff;" title="Загрузить текущий текст из слота на холст">На холст</button>
+<!-- SLOT TABS -->
+            <div style="display:flex; gap:2px; margin-bottom:0;">
+                <button id="bankBtn0" class="slot-tab active" onclick="toggleSlotPanel(0)" title="Клик: открыть/закрыть. Двойной клик: Сброс к исходнику" ondblclick="restoreOriginalBank(0)">Слот 1</button>
+                <button id="bankBtn1" class="slot-tab" onclick="toggleSlotPanel(1)" title="Клик: открыть/закрыть. Двойной клик: Сброс к исходнику" ondblclick="restoreOriginalBank(1)">Слот 2</button>
+                <button id="bankBtn2" class="slot-tab" onclick="toggleSlotPanel(2)" title="Клик: открыть/закрыть. Двойной клик: Сброс к исходнику" ondblclick="restoreOriginalBank(2)">Слот 3</button>
+                <button id="bankBtn3" class="slot-tab" onclick="toggleSlotPanel(3)" title="Клик: открыть/закрыть. Двойной клик: Сброс к исходнику" ondblclick="restoreOriginalBank(3)">Слот 4</button>
             </div>
-            <button id="saveToSlotBtn" class="btn-action" style="margin:0 0 4px 0; font-size:10px; font-weight:bold; color:#bfff00; border-color:#bfff00;" title="Записать ТЕКУЩИЙ вид холста (включая всё, что наделала симуляция) в активный слот как новый шаблон. Слоты больше НЕ меняются автоматически — только этой кнопкой">💾 Сохранить текущий вид в слот</button>
+            <!-- SLOT PANEL (expandable) -->
+            <div id="activeSlotPanel" style="display:block; border:1px solid #2a2a2a; border-top:none; border-radius:0 0 3px 3px; background:#0c0c0c; padding:4px; margin-bottom:4px;">
+                <div style="display:flex; gap:3px; margin-bottom:3px;">
+                    <span id="slotPanelLabel" style="color:#00ff66; font-size:9px; font-weight:bold; line-height:20px; white-space:nowrap;">СЛОТ 1</span>
+                    <button id="applyLinesBtn" class="btn-action" style="flex:1; margin:0; font-size:9px; height:20px; background:#00ccff; color:#000; border-color:#00ccff;" title="Загрузить текст слота на холст">На холст</button>
+                    <button id="saveToSlotBtn" class="btn-action" style="flex:1; margin:0; font-size:9px; height:20px; color:#bfff00; border-color:#bfff00;" title="Сохранить текущий вид холста в этот слот">💾 В слот</button>
+                </div>
+                <div style="display:flex; gap:2px; margin-bottom:3px;">
+                    <div style="flex:1; min-width:0;">
+                        <div style="color:#888; font-size:8px; text-align:center; margin-bottom:1px;">исходная</div>
+                        <textarea id="slotPreviewSrc" class="slot-preview" readonly style="color:#bfff00;"></textarea>
+                    </div>
+                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 1px;">
+                        <button id="slotViewAllBtn" onclick="cycleSlotView()" class="bank-btn" style="width:26px; height:36px; font-size:8px; padding:0; line-height:1.1;" title="Переключить: Оба / Только исходная / Только визуал">ВСЕ</button>
+                    </div>
+                    <div style="flex:1; min-width:0;">
+                        <div style="color:#00ccff; font-size:8px; text-align:center; margin-bottom:1px;">визуал</div>
+                        <textarea id="slotPreviewVis" class="slot-preview" readonly style="color:#00ccff;"></textarea>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:3px; font-size:9px;">
+                    <span style="color:#888;">1→</span>
+                    <input id="slotChar1Active" type="text" maxlength="4" style="width:30px; background:#111; color:#bfff00; border:1px solid #333; font-size:9px; text-align:center; padding:1px; border-radius:2px;" oninput="updateSlotVisualFromInput()">
+                    <span style="color:#888;">0→</span>
+                    <input id="slotChar0Active" type="text" maxlength="4" style="width:30px; background:#111; color:#00ccff; border:1px solid #333; font-size:9px; text-align:center; padding:1px; border-radius:2px;" oninput="updateSlotVisualFromInput()">
+                    <button onclick="saveSlotCharsAndRefresh()" class="bank-btn" style="flex:1; height:18px; font-size:8px;" title="Применить символы и обновить визуал">↺ Применить</button>
+                </div>
+            </div>
             <div style="display: flex; gap: 4px; margin-bottom: 2px;">
                 <button id="alignLeftBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; border-color:#888; color:#fff;" title="Выровнять всё по левому краю (добавить точки)">⬅️ Лев</button>
                 <button id="alignCenterBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; border-color:#888; color:#fff;" title="Выровнять всё по центру (добавить точки)">⏺ Центр</button>
@@ -1230,8 +1263,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             frameAction: null, frameStartMX: 0, frameStartMY: 0, frameStartW: 0, frameStartH: 0,
             frameStartX: 0, frameStartY: 0, isDraggingRing: false, draggedRingIndex: -1,
             lastMouseAngle: 0, accumulatedAngleDelta: 0, dragStartLocalStep: 0,
-            banks: [{lines: "", patterns: ""}, {lines: "", patterns: ""}, {lines: "", patterns: ""}],
-            activeBankIndex: 0, isReplaced: false, currentTargetPatternIdx: 0, pendingCascade: false,
+            banks: [
+                {lines: "", patterns: "", char1: "1",  char0: "0"},
+                {lines: "", patterns: "", char1: "\\", char0: "/"},
+                {lines: "", patterns: "", char1: "<",  char0: ">"},
+                {lines: "", patterns: "", char1: ")",  char0: "("}
+            ],
+            activeBankIndex: 0, slotPanelOpen: true, slotViewMode: 0, isReplaced: false, currentTargetPatternIdx: 0, pendingCascade: false,
             interleaveLCSToggle: false, calcAllInterleaves: false, waveAnalysis: { isActive: false, history: [], maxHistory: 32, staticCells: new Map() },
             frameScanner: { direction: 1 }
         };
@@ -1564,9 +1602,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (window.saveUndoState) saveUndoState();
             let b = "", p = "";
             if (typeof ZERKALIUS_PRESETS !== 'undefined') {
-                if (idx === 0) { b = ZERKALIUS_PRESETS.base1 || ""; p = ZERKALIUS_PRESETS.pat1 || ""; }
-                else if (idx === 1) { b = ZERKALIUS_PRESETS.base2 || ""; p = ZERKALIUS_PRESETS.pat2 || ""; }
-                else if (idx === 2) { b = ZERKALIUS_PRESETS.base3 || ""; p = ZERKALIUS_PRESETS.pat3 || ""; }
+                const keys = ['base1','base2','base3','base4'];
+                const pkeys = ['pat1','pat2','pat3','pat4'];
+                b = ZERKALIUS_PRESETS[keys[idx]] || "";
+                p = ZERKALIUS_PRESETS[pkeys[idx]] || "";
             }
             STATE.banks[idx].lines = b.trim();
             STATE.banks[idx].patterns = p.trim();
@@ -1578,23 +1617,23 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             let linesInp = document.getElementById('linesInput');
             let patInp = document.getElementById('patternInput');
 
-            // ВАЖНО: слот НЕ перезаписывается текущими изменениями при переключении —
-            // несохранённые правки на холсте/в поле теряются, если не нажата кнопка "💾 Сохранить".
             STATE.activeBankIndex = idx;
-            
+
             let newLines = STATE.banks[idx].lines || "";
             let newPatterns = STATE.banks[idx].patterns || "";
-            
+
             if(linesInp) linesInp.value = newLines;
             if(patInp) patInp.value = newPatterns;
 
-            for (let i = 0; i <= 2; i++) {
+            for (let i = 0; i <= 3; i++) {
                 let btn = document.getElementById('bankBtn' + i);
                 if (btn) {
                     if (i === idx) btn.classList.add('active');
                     else btn.classList.remove('active');
                 }
             }
+
+            updateSlotPanel();
 
             if (applyToCanvas) {
                 if (window.saveUndoState) saveUndoState();
@@ -1604,14 +1643,97 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     let clearBtn = document.getElementById('clearCanvasBtn');
                     if(clearBtn) clearBtn.click();
                 }
-                STATE.currentTargetPatternIdx = 1; 
+                STATE.currentTargetPatternIdx = 1;
                 STATE.lastFindMethod = "Ожидание...";
                 updatePatternBackdrop();
                 showNotification(`СЛОТ ${idx + 1} ЗАГРУЖЕН НА ХОЛСТ`);
             } else {
                 updatePatternBackdrop();
-                showNotification(`СЛОТ ${idx + 1} ОТКРЫТ (ПРОСМОТР)`);
+                showNotification(`СЛОТ ${idx + 1} ОТКРЫТ`);
             }
+        };
+
+        window.toggleSlotPanel = function(idx) {
+            if (STATE.activeBankIndex === idx && STATE.slotPanelOpen) {
+                STATE.slotPanelOpen = false;
+                let panel = document.getElementById('activeSlotPanel');
+                if (panel) panel.style.display = 'none';
+            } else {
+                STATE.slotPanelOpen = true;
+                let panel = document.getElementById('activeSlotPanel');
+                if (panel) panel.style.display = 'block';
+                switchBank(idx, false);
+            }
+        };
+
+        window.updateSlotPanel = function() {
+            let idx = STATE.activeBankIndex;
+            let bank = STATE.banks[idx] || {};
+            let label = document.getElementById('slotPanelLabel');
+            if (label) label.textContent = `СЛОТ ${idx + 1}`;
+
+            let c1inp = document.getElementById('slotChar1Active');
+            let c0inp = document.getElementById('slotChar0Active');
+            if (c1inp) c1inp.value = bank.char1 !== undefined ? bank.char1 : "1";
+            if (c0inp) c0inp.value = bank.char0 !== undefined ? bank.char0 : "0";
+
+            let srcArea = document.getElementById('slotPreviewSrc');
+            let visArea = document.getElementById('slotPreviewVis');
+            let lines = bank.lines || "";
+
+            let mode = STATE.slotViewMode || 0;
+            let srcCol = document.getElementById('slotPreviewSrc') ? document.getElementById('slotPreviewSrc').parentElement : null;
+            let visCol = document.getElementById('slotPreviewVis') ? document.getElementById('slotPreviewVis').parentElement : null;
+            let allBtn = document.getElementById('slotViewAllBtn');
+
+            if (srcCol && visCol) {
+                if (mode === 0) {
+                    srcCol.style.display = ''; visCol.style.display = '';
+                    if (allBtn) allBtn.textContent = 'ВСЕ';
+                } else if (mode === 1) {
+                    srcCol.style.display = ''; visCol.style.display = 'none';
+                    if (allBtn) allBtn.textContent = 'ИСХ';
+                } else {
+                    srcCol.style.display = 'none'; visCol.style.display = '';
+                    if (allBtn) allBtn.textContent = 'ВИЗ';
+                }
+            }
+
+            if (srcArea) srcArea.value = lines;
+            if (visArea) {
+                let c1 = (bank.char1 !== undefined && bank.char1 !== "") ? bank.char1 : "1";
+                let c0 = (bank.char0 !== undefined && bank.char0 !== "") ? bank.char0 : "0";
+                visArea.value = lines.split('').map(ch => ch === '1' ? c1 : ch === '0' ? c0 : ch).join('');
+            }
+        };
+
+        window.cycleSlotView = function() {
+            STATE.slotViewMode = ((STATE.slotViewMode || 0) + 1) % 3;
+            updateSlotPanel();
+        };
+
+        window.updateSlotVisualFromInput = function() {
+            let idx = STATE.activeBankIndex;
+            let c1inp = document.getElementById('slotChar1Active');
+            let c0inp = document.getElementById('slotChar0Active');
+            let visArea = document.getElementById('slotPreviewVis');
+            if (!visArea) return;
+            let lines = (STATE.banks[idx] && STATE.banks[idx].lines) || "";
+            let c1 = (c1inp && c1inp.value !== "") ? c1inp.value : "1";
+            let c0 = (c0inp && c0inp.value !== "") ? c0inp.value : "0";
+            visArea.value = lines.split('').map(ch => ch === '1' ? c1 : ch === '0' ? c0 : ch).join('');
+        };
+
+        window.saveSlotCharsAndRefresh = function() {
+            let idx = STATE.activeBankIndex;
+            let c1inp = document.getElementById('slotChar1Active');
+            let c0inp = document.getElementById('slotChar0Active');
+            if (STATE.banks[idx]) {
+                if (c1inp) STATE.banks[idx].char1 = c1inp.value;
+                if (c0inp) STATE.banks[idx].char0 = c0inp.value;
+            }
+            updateSlotPanel();
+            showNotification(`СЛОТ ${idx + 1}: символы сохранены`);
         };
 
         function resetPositionWithHeightScale(scaleFactor, targetActiveOnly = false, adjustScale = true) {
@@ -2969,6 +3091,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             let linesInp = document.getElementById('linesInput');
             if (linesInp) linesInp.value = newLinesText;
             STATE.banks[STATE.activeBankIndex].lines = newLinesText;
+            if (window.updateSlotPanel) updateSlotPanel();
             showNotification(`💾 ТЕКУЩИЙ ВИД СОХРАНЁН В СЛОТ ${STATE.activeBankIndex + 1}`);
         });
 <!-- === МАРКЕР 28: ГЕНЕРАТОР СЕРПИНСКОГО === -->
@@ -8662,9 +8785,12 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 let b3 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base3 : ``;
                 let p3 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.pat3  : ``;
 
-                STATE.banks[0] = { lines: b1.trim(), patterns: p1.trim() };
-                STATE.banks[1] = { lines: b2.trim(), patterns: p2.trim() };
-                STATE.banks[2] = { lines: b3.trim(), patterns: p3.trim() };
+                let b4 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base4 : ``;
+                let p4 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.pat4  : ``;
+                STATE.banks[0] = { lines: b1.trim(), patterns: p1.trim(), char1: "1",  char0: "0" };
+                STATE.banks[1] = { lines: b2.trim(), patterns: p2.trim(), char1: "\\", char0: "/" };
+                STATE.banks[2] = { lines: b3.trim(), patterns: p3.trim(), char1: "<",  char0: ">" };
+                STATE.banks[3] = { lines: b4 ? b4.trim() : "", patterns: p4 ? p4.trim() : "", char1: ")", char0: "(" };
             }
 
             // Синхронизация активных состояний плавающих круглых кнопок с чекбоксами при загрузке
@@ -8741,6 +8867,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     render();
                 }
             }, 0);
+
+            // Инициализируем панель слотов
+            if (window.updateSlotPanel) updateSlotPanel();
         };
     </script>
 	
