@@ -32,19 +32,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             margin: 0; overflow: hidden; height: 100vh; position: relative;
         }
 
-        #mainTitle {
-            position: fixed; left: 50%; bottom: 10px; transform: translateX(-50%);
-            z-index: 99; box-sizing: border-box; max-width: 90vw;
-            background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 255, 102, 0.3); border-radius: 999px;
-            color: rgba(0, 255, 102, 0.85); font-size: 12px; font-weight: bold;
-            pointer-events: none; text-transform: uppercase;
-            letter-spacing: 3px; text-align: center;
-            text-shadow: 0 0 10px rgba(0, 255, 102, 0.6);
-            font-family: 'Roboto Mono', monospace;
-            padding: 4px 16px; white-space: nowrap; overflow: hidden;
-        }
-
         .controls { 
             position: absolute; left: 0; top: 0; width: 320px; height: 100vh; z-index: 100;
             background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -289,7 +276,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         }
         #rightPanel .right-panel-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
         #rightPanel .right-panel-body > .panel-content { flex: 1; overflow-y: auto; min-width: 0; }
-        body.zen-mode #mainTitle { opacity: 0; pointer-events: none; }
         
         #balanceLog::-webkit-scrollbar { width: 6px; }
         #balanceLog::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
@@ -676,7 +662,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.206 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.207 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -977,24 +963,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     <label style="display:flex; align-items:center; margin-bottom:3px;" title="Если включено — рамка автоматически центрируется по горизонтали при каждой новой загрузке текста. Если выключено — рамка остаётся там, где её поставили руками, даже после Зеркала/генератора">
                         <input type="checkbox" id="frameCenterLockCheck" checked> <span class="lbl" style="color:#00ccff; font-weight:bold;">⌖ По умолчанию за центром</span>
                     </label>
-                </details>
-                
-                <details class="control-group" open style="border-radius:3px;">
-                    <summary style="font-weight:bold; color:#ffcc00;">🤖 СКАНЕР БАЛАНСА</summary>
-                    
-                    <div style="background: rgba(0, 255, 255, 0.05); padding: 3px; border-radius: 3px; margin-bottom: 3px; border-left: 2px solid #00ffff;">
-                        <span class="lbl" style="color:#00ffff; font-weight:bold;">Мгновенный поиск (1-N строк):</span>
-                        <div style="display:flex; gap:2px; align-items:center; margin-top:2px;">
-                            <span class="lbl">Макс. строк:</span>
-                            <input type="number" id="instantScanMaxSpan" value="4" style="width:30px; height:15px; font-size:9px;">
-                        </div>
-                        <div style="display:flex; gap:4px; margin-top:3px;">
-                            <button id="instantScanBtn" class="btn-action" style="flex:2; margin:0; padding:2px; font-size:9px; border-color:#00ffff; color:#00ffff;">🔍 Искать всё</button>
-                            <button id="clearScanBtn" class="btn-action btn-danger" style="flex:1; margin:0; padding:2px; font-size:9px;">🧹 Сброс</button>
-                        </div>
-                    </div>
 
-                    <div style="background: rgba(255, 204, 0, 0.05); padding: 3px; border-radius: 3px; border-left: 2px solid #ffcc00;">
+                    <div style="background: rgba(255, 204, 0, 0.05); padding: 3px; border-radius: 3px; border-left: 2px solid #ffcc00; margin-top:3px;">
                         <label style="display:flex; align-items:center; margin-bottom:2px;">
                             <input type="checkbox" id="frameScannerActiveCheck"> <span class="lbl" style="color:#ffcc00; font-weight:bold;">🤖 Авто-шаг рамки</span>
                         </label>
@@ -1009,6 +979,22 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         <label style="display:flex; align-items:center; margin-top:2px;">
                             <input type="checkbox" id="scannerAutoBuildUpCheck"> <span class="lbl" style="color:#ff00ff; font-size:9px; font-weight:bold;">🏗️ Авто-достройка вверх (Отражение при 0=1)</span>
                         </label>
+                    </div>
+                </details>
+
+                <details class="control-group" open style="border-radius:3px;">
+                    <summary style="font-weight:bold; color:#ffcc00;">🤖 СКАНЕР БАЛАНСА</summary>
+
+                    <div style="background: rgba(0, 255, 255, 0.05); padding: 3px; border-radius: 3px; margin-bottom: 3px; border-left: 2px solid #00ffff;">
+                        <span class="lbl" style="color:#00ffff; font-weight:bold;">Мгновенный поиск (1-N строк):</span>
+                        <div style="display:flex; gap:2px; align-items:center; margin-top:2px;">
+                            <span class="lbl">Макс. строк:</span>
+                            <input type="number" id="instantScanMaxSpan" value="4" style="width:30px; height:15px; font-size:9px;">
+                        </div>
+                        <div style="display:flex; gap:4px; margin-top:3px;">
+                            <button id="instantScanBtn" class="btn-action" style="flex:2; margin:0; padding:2px; font-size:9px; border-color:#00ffff; color:#00ffff;">🔍 Искать всё</button>
+                            <button id="clearScanBtn" class="btn-action btn-danger" style="flex:1; margin:0; padding:2px; font-size:9px;">🧹 Сброс</button>
+                        </div>
                     </div>
                 </details>
 
@@ -8377,28 +8363,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 });
             })();
 
-            // Заголовок в подвале правой панели — уменьшаем шрифт, если строка не влезает по ширине.
-            (() => {
-                let title = document.getElementById('mainTitle');
-                let panel = document.querySelector('#rightPanel');
-                if (!title || !panel) return;
-                const MAIN_TITLE_BASE_SIZE = 15;
-                function fitMainTitleFont() {
-                    title.style.fontSize = MAIN_TITLE_BASE_SIZE + 'px';
-                    let size = MAIN_TITLE_BASE_SIZE;
-                    while (title.scrollWidth > title.clientWidth && size > 6) {
-                        size -= 1;
-                        title.style.fontSize = size + 'px';
-                    }
-                }
-                fitMainTitleFont();
-                if (window.ResizeObserver) {
-                    new ResizeObserver(fitMainTitleFont).observe(panel);
-                } else {
-                    window.addEventListener('resize', fitMainTitleFont);
-                }
-            })();
-
             // Переключение вкладок объединённой правой панели.
             document.querySelectorAll('.right-panel-tab').forEach(btn => {
                 btn.addEventListener('click', () => openRightPanelTab(btn.dataset.tab));
@@ -8744,6 +8708,22 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 const btn = document.getElementById('scannerDirBtn');
                 if (btn) btn.textContent = STATE.frameScanner.direction > 0 ? "⬇️ Вниз" : "⬆️ Вверх";
                 showNotification(`СКАНЕР: НАПРАВЛЕНИЕ ${dirText}`);
+            });
+
+            // Авто-инверсия/авто-достройка работают с рамкой — если рамка визуально выключена,
+            // операция всё равно выполнялась бы "вслепую". Включаем "Рамка" автоматически,
+            // чтобы пользователь видел, где именно происходит действие.
+            safeBind('scannerAutoInvertCheck', 'change', function() {
+                if (this.checked) {
+                    const frameChk = document.getElementById('frameCheck');
+                    if (frameChk && !frameChk.checked) { frameChk.checked = true; render(); }
+                }
+            });
+            safeBind('scannerAutoBuildUpCheck', 'change', function() {
+                if (this.checked) {
+                    const frameChk = document.getElementById('frameCheck');
+                    if (frameChk && !frameChk.checked) { frameChk.checked = true; render(); }
+                }
             });
 
             safeBind('resetPlayerSlidersBtn', 'click', () => {
