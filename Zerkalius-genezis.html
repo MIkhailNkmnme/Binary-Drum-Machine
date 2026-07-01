@@ -2401,11 +2401,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (!m) return;
             
             let useSelectedRows = STATE.selectedRows && STATE.selectedRows.size > 0;
-            let showFrame = safeChecked('frameCheck', false);
-            let useFrameLimit = showFrame && STATE.manualFrame && STATE.manualFrame.isInitialized;
-            
+            let useFrameLimit = STATE.manualFrame && STATE.manualFrame.isInitialized;
+
             if (!useFrameLimit && !useSelectedRows) {
-                showNotification("ОШИБКА: РАМКА НЕ ВКЛЮЧЕНА И НЕТ ВЫДЕЛЕННЫХ СТРОК");
+                showNotification("ОШИБКА: РАМКА НЕ ИНИЦИАЛИЗИРОВАНА И НЕТ ВЫДЕЛЕННЫХ СТРОК");
                 return;
             }
 
