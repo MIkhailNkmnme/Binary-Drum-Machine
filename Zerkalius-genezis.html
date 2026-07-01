@@ -387,20 +387,26 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             <div id="activeSlotPanel" style="display:block; border:1px solid #2a2a2a; border-top:none; border-radius:0 0 3px 3px; background:#0c0c0c; padding:4px; margin-bottom:4px;">
                 <div style="display:flex; gap:3px; margin-bottom:3px;">
                     <span id="slotPanelLabel" style="color:#00ff66; font-size:9px; font-weight:bold; line-height:20px; white-space:nowrap;">СЛОТ 1</span>
-                    <button id="applyLinesBtn" class="btn-action" style="flex:1; margin:0; font-size:9px; height:20px; background:#00ccff; color:#000; border-color:#00ccff;" title="Загрузить на холст то поле, что сейчас выбрано (исходная/визуал)">На холст</button>
-                    <button id="saveToSlotBtn" class="btn-action" style="flex:1; margin:0; font-size:9px; height:20px; color:#bfff00; border-color:#bfff00;" title="Сохранить текущий вид холста в этот слот">💾 В слот</button>
                 </div>
                 <div style="display:flex; gap:2px; margin-bottom:3px;">
                     <div style="flex:1; min-width:0;">
                         <div style="color:#888; font-size:8px; text-align:center; margin-bottom:1px;">исходная</div>
-                        <textarea id="slotPreviewSrc" class="slot-preview" readonly style="color:#bfff00;"></textarea>
+                        <textarea id="slotPreviewSrc" class="slot-preview" oninput="updateSlotVisualFromInput()" style="color:#bfff00;"></textarea>
+                        <div style="display:flex; gap:2px; margin-top:2px;">
+                            <button id="slotSrcSendBtn" class="btn-action" style="flex:1; margin:0; padding:1px; font-size:8px; background:#00ccff; color:#000; border-color:#00ccff;" title="Отправить исходную (1/0) на холст">➡️ Холст</button>
+                            <button id="slotSrcGetBtn" class="btn-action" style="flex:1; margin:0; padding:1px; font-size:8px; color:#bfff00; border-color:#bfff00;" title="Получить текущий холст в исходную и сохранить как исходник слота">⬅️ Слот</button>
+                        </div>
                     </div>
                     <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 1px;">
                         <button id="slotViewAllBtn" onclick="cycleSlotView()" class="bank-btn" style="width:26px; height:36px; font-size:8px; padding:0; line-height:1.1;" title="Переключить: Оба / Только исходная / Только визуал">ВСЕ</button>
                     </div>
                     <div style="flex:1; min-width:0;">
                         <div style="color:#00ccff; font-size:8px; text-align:center; margin-bottom:1px;">визуал</div>
-                        <textarea id="slotPreviewVis" class="slot-preview" readonly style="color:#00ccff;"></textarea>
+                        <textarea id="slotPreviewVis" class="slot-preview" style="color:#00ccff;"></textarea>
+                        <div style="display:flex; gap:2px; margin-top:2px;">
+                            <button id="slotVisSendBtn" class="btn-action" style="flex:1; margin:0; padding:1px; font-size:8px; background:#00ccff; color:#000; border-color:#00ccff;" title="Отправить визуал как есть на холст (исходная не меняется)">➡️ Холст</button>
+                            <button id="slotVisGetBtn" class="btn-action" style="flex:1; margin:0; padding:1px; font-size:8px; color:#bfff00; border-color:#bfff00;" title="Получить текущий холст в визуал (исходная не меняется)">⬅️ Слот</button>
+                        </div>
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:3px; font-size:9px;">
@@ -408,7 +414,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     <input id="slotChar1Active" type="text" maxlength="4" style="width:30px; background:#111; color:#bfff00; border:1px solid #333; font-size:9px; text-align:center; padding:1px; border-radius:2px;" oninput="updateSlotVisualFromInput()">
                     <span style="color:#888;">0→</span>
                     <input id="slotChar0Active" type="text" maxlength="4" style="width:30px; background:#111; color:#00ccff; border:1px solid #333; font-size:9px; text-align:center; padding:1px; border-radius:2px;" oninput="updateSlotVisualFromInput()">
-                    <button onclick="saveSlotCharsAndRefresh()" class="bank-btn" style="flex:1; height:18px; font-size:8px;" title="Применить символы и обновить визуал">↺ Применить</button>
                 </div>
             </div>
             <div style="display: flex; gap: 4px; margin-bottom: 2px;">
@@ -662,7 +667,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.209 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.210 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -1633,7 +1638,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 if (window.saveUndoState) saveUndoState();
                 if (newLines.trim().length > 0) {
                     let useOrig = (STATE.slotViewMode === 1);
-                    loadText(useOrig ? newLines : mapBankVisualChars(newLines, STATE.banks[idx]));
+                    loadText(useOrig ? newLines : mapBankVisualChars(newLines, STATE.banks[idx]), false, !useOrig);
                 } else {
                     let clearBtn = document.getElementById('clearCanvasBtn');
                     if(clearBtn) clearBtn.click();
@@ -1720,28 +1725,60 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             updateSlotPanel();
         };
 
+        // Визуал пересчитывается на лету из ЖИВОГО текста поля "исходная" (а не из сохранённого
+        // bank.lines), чтобы правки прямо в поле сразу отражались в превью без отдельной кнопки
+        // "Применить". Символы 1→/0→ сохраняются в банк сразу по вводу.
         window.updateSlotVisualFromInput = function() {
             let idx = STATE.activeBankIndex;
             let c1inp = document.getElementById('slotChar1Active');
             let c0inp = document.getElementById('slotChar0Active');
+            let srcArea = document.getElementById('slotPreviewSrc');
             let visArea = document.getElementById('slotPreviewVis');
             if (!visArea) return;
-            let lines = (STATE.banks[idx] && STATE.banks[idx].lines) || "";
+            let lines = srcArea ? srcArea.value : ((STATE.banks[idx] && STATE.banks[idx].lines) || "");
             let c1 = (c1inp && c1inp.value !== "") ? c1inp.value : "1";
             let c0 = (c0inp && c0inp.value !== "") ? c0inp.value : "0";
-            visArea.value = lines.split('').map(ch => ch === '1' ? c1 : ch === '0' ? c0 : ch).join('');
-        };
-
-        window.saveSlotCharsAndRefresh = function() {
-            let idx = STATE.activeBankIndex;
-            let c1inp = document.getElementById('slotChar1Active');
-            let c0inp = document.getElementById('slotChar0Active');
             if (STATE.banks[idx]) {
                 if (c1inp) STATE.banks[idx].char1 = c1inp.value;
                 if (c0inp) STATE.banks[idx].char0 = c0inp.value;
             }
+            visArea.value = lines.split('').map(ch => ch === '1' ? c1 : ch === '0' ? c0 : ch).join('');
+        };
+
+        // Исходная -> холст: грузим 1/0 как есть, это и есть источник (bank.lines синхронизируется).
+        window.slotSrcSendToCanvas = function() {
+            let srcArea = document.getElementById('slotPreviewSrc');
+            if (!srcArea || srcArea.value.trim().length === 0) return;
+            if (window.saveUndoState) saveUndoState();
+            loadText(srcArea.value);
+            showNotification("ИСХОДНАЯ ЗАГРУЖЕНА НА ХОЛСТ");
+        };
+
+        // Холст -> исходная: текущее состояние холста как есть становится новым исходником слота.
+        window.slotSrcGetFromCanvas = function() {
+            let idx = STATE.activeBankIndex;
+            let newLinesText = STATE.lines.map(l => l.orig).join('\n');
+            STATE.banks[idx].lines = newLinesText;
             updateSlotPanel();
-            showNotification(`СЛОТ ${idx + 1}: символы сохранены`);
+            showNotification(`💾 ХОЛСТ СОХРАНЁН КАК ИСХОДНИК СЛОТА ${idx + 1}`);
+        };
+
+        // Визуал -> холст: грузим ТЕКСТ ИЗ ПОЛЯ ВИЗУАЛ как есть, без какого-либо маппинга.
+        // bank.lines (исходная) НЕ трогаем — holst просто показывает то, что написано в этом поле.
+        window.slotVisSendToCanvas = function() {
+            let visArea = document.getElementById('slotPreviewVis');
+            if (!visArea || visArea.value.trim().length === 0) return;
+            if (window.saveUndoState) saveUndoState();
+            loadText(visArea.value, false, true);
+            showNotification("ВИЗУАЛ ЗАГРУЖЕН НА ХОЛСТ (исходная не изменена)");
+        };
+
+        // Холст -> визуал: просто копируем текущий вид холста в поле визуал, исходную не трогаем.
+        window.slotVisGetFromCanvas = function() {
+            let visArea = document.getElementById('slotPreviewVis');
+            if (!visArea) return;
+            visArea.value = STATE.lines.map(l => l.orig).join('\n');
+            showNotification("ХОЛСТ СКОПИРОВАН В ВИЗУАЛ (исходная не изменена)");
         };
 
         function resetPositionWithHeightScale(scaleFactor, targetActiveOnly = false, adjustScale = true) {
@@ -2037,7 +2074,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (stepSlider) stepSlider.max = isFinite(STATE.maxCycle) && STATE.maxCycle < 100000 ? STATE.maxCycle : 100000;
         }
 
-        function loadText(text, keepState = false) {
+        function loadText(text, keepState = false, skipBankSync = false) {
             let savedStep = STATE.globalStep, savedOffX = STATE.offsetX, savedOffY = STATE.offsetY, savedRS = STATE.rowScrollOffset;
             let savedFrame = STATE.manualFrame ? JSON.parse(JSON.stringify(STATE.manualFrame)) : null;
             let savedActive = STATE.lines.map(l => l.isActive);
@@ -2130,9 +2167,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 }
             }
             
-            let linesInp = document.getElementById('linesInput');
-            if (linesInp) linesInp.value = raw.join('\n');
-            STATE.banks[STATE.activeBankIndex].lines = raw.join('\n');
+            if (!skipBankSync) {
+                let linesInp = document.getElementById('linesInput');
+                if (linesInp) linesInp.value = raw.join('\n');
+                STATE.banks[STATE.activeBankIndex].lines = raw.join('\n');
+            }
 
             const stepSlider = document.getElementById('stepSlider');
             if (stepSlider) {
@@ -3088,26 +3127,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         safeBind('manualElkaShiftLeftBtn', 'click', () => manualElkaShift(-1));
         safeBind('manualElkaShiftRightBtn', 'click', () => manualElkaShift(1));
 
-        safeBind('applyLinesBtn', 'click', () => {
-            const rawText = safeValue('linesInput', '');
-            if (rawText.trim().length > 0) {
-                let useOrig = (STATE.slotViewMode === 1);
-                loadText(useOrig ? rawText : mapBankVisualChars(rawText, STATE.banks[STATE.activeBankIndex]));
-                showNotification(useOrig ? "ОРИГИНАЛ (1/0) ЗАГРУЖЕН НА ХОЛСТ" : "СТРОКИ ОБНОВЛЕНЫ");
-            }
-        });
-
-        safeBind('saveToSlotBtn', 'click', () => {
-            // Явное ручное сохранение: берём ТЕКУЩЕЕ состояние холста (как оно есть прямо сейчас,
-            // с учётом всего, что сделала симуляция/каскады) и фиксируем его как новый шаблон активного слота.
-            // Автоматически (на шагах симуляции) слоты больше не трогаются — только тут, по кнопке.
-            let newLinesText = STATE.lines.map(l => l.orig).join('\n');
-            let linesInp = document.getElementById('linesInput');
-            if (linesInp) linesInp.value = newLinesText;
-            STATE.banks[STATE.activeBankIndex].lines = newLinesText;
-            if (window.updateSlotPanel) updateSlotPanel();
-            showNotification(`💾 ТЕКУЩИЙ ВИД СОХРАНЁН В СЛОТ ${STATE.activeBankIndex + 1}`);
-        });
+        safeBind('slotSrcSendBtn', 'click', () => slotSrcSendToCanvas());
+        safeBind('slotSrcGetBtn', 'click', () => slotSrcGetFromCanvas());
+        safeBind('slotVisSendBtn', 'click', () => slotVisSendToCanvas());
+        safeBind('slotVisGetBtn', 'click', () => slotVisGetFromCanvas());
 <!-- === МАРКЕР 28: ГЕНЕРАТОР СЕРПИНСКОГО === -->
 <!-- === МАРКЕР 28: ГЕНЕРАТОР СЕРПИНСКОГО === -->
         safeBind('sierpBtn', 'click', () => {
