@@ -38,7 +38,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(0, 255, 102, 0.3); border-radius: 999px;
             color: rgba(0, 255, 102, 0.85); font-size: 12px; font-weight: bold;
-            pointer-events: none; text-transform: uppercase;
+            pointer-events: auto; cursor: move; text-transform: uppercase;
             letter-spacing: 3px; text-align: center;
             text-shadow: 0 0 10px rgba(0, 255, 102, 0.6);
             font-family: 'Roboto Mono', monospace;
@@ -8184,6 +8184,34 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 if (bar) bar.addEventListener('mousedown', startPanelDrag);
             })();
             setupDraggable('#rightPanel', '🧠 ПАНЕЛЬ');
+
+            // Заголовок mainTitle позиционируется через left:50%+transform, поэтому тащим его через top/left в px напрямую.
+            (() => {
+                let title = document.getElementById('mainTitle');
+                if (!title) return;
+                const startTitleDrag = (e) => {
+                    if (e.button !== 0) return;
+                    e.preventDefault();
+                    let rect = title.getBoundingClientRect();
+                    title.style.left = rect.left + "px";
+                    title.style.top = rect.top + "px";
+                    title.style.bottom = 'auto';
+                    title.style.transform = 'none';
+                    let px = e.clientX, py = e.clientY;
+                    document.onmouseup = () => {
+                        document.onmouseup = null;
+                        document.onmousemove = null;
+                    };
+                    document.onmousemove = (e2) => {
+                        e2.preventDefault();
+                        let dx = px - e2.clientX, dy = py - e2.clientY;
+                        px = e2.clientX; py = e2.clientY;
+                        title.style.top = (title.offsetTop - dy) + "px";
+                        title.style.left = (title.offsetLeft - dx) + "px";
+                    };
+                };
+                title.addEventListener('mousedown', startTitleDrag);
+            })();
 
             // Тяга за левый край правой панели — расширяет её влево (правый край неподвижен).
             (() => {
