@@ -667,7 +667,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.215 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.216 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -1643,7 +1643,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     let clearBtn = document.getElementById('clearCanvasBtn');
                     if(clearBtn) clearBtn.click();
                 }
-                STATE.currentTargetPatternIdx = 1;
+                STATE.currentTargetPatternIdx = 0;
                 STATE.lastFindMethod = "Ожидание...";
                 updatePatternBackdrop();
                 showNotification(`СЛОТ ${idx + 1} ЗАГРУЖЕН НА ХОЛСТ`);
@@ -2020,7 +2020,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 STATE.lines.forEach((l, idx) => { l.localStep = snapshot.localSteps[idx]; });
             }
 
-            STATE.currentTargetPatternIdx = snapshot.currentTargetPatternIdx || 1;
+            STATE.currentTargetPatternIdx = (snapshot.currentTargetPatternIdx !== undefined) ? snapshot.currentTargetPatternIdx : 0;
             STATE.lastFindMethod = snapshot.lastFindMethod || "Ожидание...";
 
             let p = PRESETS[snapshot.preset || 'matrix']; 
@@ -2119,7 +2119,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             STATE.lastBlobs = [];
             STATE.nextBlobColorId = 1;
             STATE.lastFindMethod = "Ожидание...";
-            STATE.currentTargetPatternIdx = 1; 
+            STATE.currentTargetPatternIdx = 0; 
             STATE.wasBalancedLastFrame = false;
             STATE.lastSpecialType = "none";
             STATE.lastLoggedRowsCount = 0;
@@ -5926,7 +5926,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (STATE.selectedRows) STATE.selectedRows.clear();
             cancelAnimationFrame(STATE.rafId); UI.playBtn.innerHTML = '▶ Пуск'; UI.playBtn.style.background = '#00ff66';
             document.getElementById('stopBtn').classList.add('inactive');
-            STATE.currentTargetPatternIdx = 1;
+            STATE.currentTargetPatternIdx = 0;
             STATE.lastFindMethod = "Ожидание...";
             STATE.pendingCascade = false;            STATE.wasBalancedLastFrame = false;
             STATE.lastSpecialType = "none";
@@ -6016,7 +6016,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             STATE.lastBlobs = [];
             STATE.nextBlobColorId = 1;
             STATE.interleavingLog = [];
-            STATE.currentTargetPatternIdx = 1;
+            STATE.currentTargetPatternIdx = 0;
             STATE.lastFindMethod = "Ожидание...";
             STATE.wasBalancedLastFrame = false;
             STATE.lastSpecialType = "none";
