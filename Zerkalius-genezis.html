@@ -393,8 +393,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         <div style="color:#888; font-size:8px; text-align:center; margin-bottom:1px;">исходная</div>
                         <textarea id="slotPreviewSrc" class="slot-preview" oninput="updateSlotVisualFromInput()" style="color:#bfff00;"></textarea>
                         <div style="display:flex; gap:2px; margin-top:2px;">
-                            <button id="slotSrcGetBtn" class="btn-action" style="flex:1.618; margin:0; padding:1px; font-size:8px; color:#bfff00; border-color:#bfff00;" title="Получить текущий холст в исходную и сохранить как исходник слота">⬅️ Слот</button>
-                            <button id="slotSrcSendBtn" class="btn-action" style="flex:1; margin:0; padding:1px; font-size:8px; background:#00ccff; color:#000; border-color:#00ccff;" title="Отправить исходную (1/0) на холст">➡️ Холст</button>
+                            <button id="slotSrcGetBtn" class="btn-action" style="flex:1; margin:0; padding:1px; font-size:8px; color:#bfff00; border:2px solid #ff3333;" title="Получить текущий холст в исходную и сохранить как исходник слота">Слот</button>
+                            <button id="slotSrcSendBtn" class="btn-action" style="flex:1; margin:0; padding:1px; font-size:8px; background:#00ccff; color:#000; border-color:#00ccff;" title="Отправить исходную (1/0) на холст">Холст</button>
                         </div>
                     </div>
                     <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 1px;">
@@ -667,7 +667,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.213 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.214 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
