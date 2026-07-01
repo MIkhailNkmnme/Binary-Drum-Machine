@@ -393,8 +393,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         <div style="color:#888; font-size:8px; text-align:center; margin-bottom:1px;">исходная</div>
                         <textarea id="slotPreviewSrc" class="slot-preview" oninput="updateSlotVisualFromInput()" style="color:#bfff00;"></textarea>
                         <div style="display:flex; gap:2px; margin-top:2px;">
+                            <button id="slotSrcGetBtn" class="btn-action" style="flex:1.618; margin:0; padding:1px; font-size:8px; color:#bfff00; border-color:#bfff00;" title="Получить текущий холст в исходную и сохранить как исходник слота">⬅️ Слот</button>
                             <button id="slotSrcSendBtn" class="btn-action" style="flex:1; margin:0; padding:1px; font-size:8px; background:#00ccff; color:#000; border-color:#00ccff;" title="Отправить исходную (1/0) на холст">➡️ Холст</button>
-                            <button id="slotSrcGetBtn" class="btn-action" style="flex:1; margin:0; padding:1px; font-size:8px; color:#bfff00; border-color:#bfff00;" title="Получить текущий холст в исходную и сохранить как исходник слота">⬅️ Слот</button>
                         </div>
                     </div>
                     <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 1px;">
@@ -404,8 +404,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         <div style="color:#00ccff; font-size:8px; text-align:center; margin-bottom:1px;">визуал</div>
                         <textarea id="slotPreviewVis" class="slot-preview" style="color:#00ccff;"></textarea>
                         <div style="display:flex; gap:2px; margin-top:2px;">
+                            <button id="slotVisGetBtn" class="btn-action" style="flex:1.618; margin:0; padding:1px; font-size:8px; color:#bfff00; border-color:#bfff00;" title="Получить текущий холст в визуал (исходная не меняется)">⬅️ Слот</button>
                             <button id="slotVisSendBtn" class="btn-action" style="flex:1; margin:0; padding:1px; font-size:8px; background:#00ccff; color:#000; border-color:#00ccff;" title="Отправить визуал как есть на холст (исходная не меняется)">➡️ Холст</button>
-                            <button id="slotVisGetBtn" class="btn-action" style="flex:1; margin:0; padding:1px; font-size:8px; color:#bfff00; border-color:#bfff00;" title="Получить текущий холст в визуал (исходная не меняется)">⬅️ Слот</button>
                         </div>
                     </div>
                 </div>
@@ -667,7 +667,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.210 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.211 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -6389,64 +6389,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 let useMirror = safeChecked('mirrorCheck', false);
                 let totalRows = STATE.lines.length;
                 let centerY = startY + (useMirror ? (m.renderCount - 1) * m.lineHeight : 0) + (m.lineHeight / 2);
-
-                // Отрисовка двух боковых вертикальных зеркал (левое и правое), доходящих ровно до горизонта
-                if (useMirror) {
-                    ctx.save();
-                    let maxLineLen = 0;
-                    for (let i = 0; i < m.renderCount; i++) {
-                        let actualIndex = (m.startIndex + i) % totalRows;
-                        let lineData = STATE.lines[actualIndex];
-                        if (lineData && lineData.display && lineData.display.length > maxLineLen) {
-                            maxLineLen = lineData.display.length;
-                        }
-                    }
-                    let pyramidWidth = maxLineLen * m.charWidth;
-                    let padding = 20;
-                    let xLeft = baseX - pyramidWidth / 2 - padding;
-                    let xRight = baseX + pyramidWidth / 2 + padding;
-                    let yTop = centerY - m.renderCount * m.lineHeight;
-                    let yBottom = centerY + m.renderCount * m.lineHeight;
-
-                    ctx.strokeStyle = '#cc33ff';
-                    ctx.lineWidth = 2;
-                    ctx.globalAlpha = 0.5;
-                    ctx.shadowBlur = safeChecked('neonCheck', false) ? 8 : 0;
-                    ctx.shadowColor = '#cc33ff';
-
-                    // Левое боковое зеркало
-                    ctx.beginPath();
-                    ctx.moveTo(xLeft, yTop);
-                    ctx.lineTo(xLeft, centerY);
-                    ctx.stroke();
-
-                    ctx.beginPath();
-                    ctx.moveTo(xLeft, yBottom);
-                    ctx.lineTo(xLeft, centerY);
-                    ctx.stroke();
-
-                    // Правое боковое зеркало
-                    ctx.beginPath();
-                    ctx.moveTo(xRight, yTop);
-                    ctx.lineTo(xRight, centerY);
-                    ctx.stroke();
-
-                    ctx.beginPath();
-                    ctx.moveTo(xRight, yBottom);
-                    ctx.lineTo(xRight, centerY);
-                    ctx.stroke();
-
-                    // Декоративные засечки на оси горизонта
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    ctx.moveTo(xLeft - 6, centerY);
-                    ctx.lineTo(xLeft + 6, centerY);
-                    ctx.moveTo(xRight - 6, centerY);
-                    ctx.lineTo(xRight + 6, centerY);
-                    ctx.stroke();
-
-                    ctx.restore();
-                }
 
                 let minNumContainer = document.getElementById('minimizedRowNumbers');
                 let isZenForNumbers = document.body.classList.contains('zen-mode');
