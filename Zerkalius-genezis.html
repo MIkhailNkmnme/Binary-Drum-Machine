@@ -401,7 +401,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             <div id="activeSlotPanel" style="display:block; border:1px solid #2a2a2a; border-top:none; border-radius:0 0 3px 3px; background:#0c0c0c; padding:4px; margin-bottom:4px;">
                 <div style="display:flex; gap:3px; margin-bottom:3px;">
                     <span id="slotPanelLabel" style="color:#00ff66; font-size:9px; font-weight:bold; line-height:20px; white-space:nowrap;">СЛОТ 1</span>
-                    <button id="applyLinesBtn" class="btn-action" style="flex:1; margin:0; font-size:9px; height:20px; background:#00ccff; color:#000; border-color:#00ccff;" title="Загрузить текст слота на холст">На холст</button>
+                    <button id="applyLinesBtn" class="btn-action" style="flex:1; margin:0; font-size:9px; height:20px; background:#00ccff; color:#000; border-color:#00ccff;" title="Загрузить текст слота на холст (символами: \ / < > и т.д.)">На холст</button>
+                    <button id="applyOrigBtn" class="btn-action" style="flex:1; margin:0; font-size:9px; height:20px; color:#bfff00; border-color:#bfff00;" title="Загрузить текст слота на холст БЕЗ замены символов (как есть: 1/0)">Ориг. на холст</button>
                     <button id="saveToSlotBtn" class="btn-action" style="flex:1; margin:0; font-size:9px; height:20px; color:#bfff00; border-color:#bfff00;" title="Сохранить текущий вид холста в этот слот">💾 В слот</button>
                 </div>
                 <div style="display:flex; gap:2px; margin-bottom:3px;">
@@ -676,7 +677,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.203 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.204 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -3106,6 +3107,14 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (rawText.trim().length > 0) {
                 loadText(mapBankVisualChars(rawText, STATE.banks[STATE.activeBankIndex]));
                 showNotification("СТРОКИ ОБНОВЛЕНЫ");
+            }
+        });
+
+        safeBind('applyOrigBtn', 'click', () => {
+            const rawText = safeValue('linesInput', '');
+            if (rawText.trim().length > 0) {
+                loadText(rawText);
+                showNotification("ОРИГИНАЛ (1/0) ЗАГРУЖЕН НА ХОЛСТ");
             }
         });
 
