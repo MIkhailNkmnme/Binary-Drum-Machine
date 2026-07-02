@@ -667,7 +667,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.222 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.223 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -4384,22 +4384,26 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 <!-- === МАРКЕР 37: ПОДСВЕТКА И ПОИСК ПАТТЕРНОВ === -->
         if (triggerSearch && !useGlobalSearch && !useVerticalSearch) {
             let sortedPatterns = [...validPatterns].sort((a, b) => b.length - a.length);
+            // За один проход (один вызов calculateState) размораживаем не больше ОДНОЙ строки,
+            // даже если несколько следующих паттернов уже видны прямо сейчас в других строках —
+            // цикл идёт по всем i, и без этого флага мог продвинуть индекс несколько раз подряд.
+            let sequentialUnlockedThisPass = false;
 
             for (let i = 0; i < STATE.lines.length; i++) {
                 let line = STATE.lines[i];
                 if (vbaActivation && !line.isActive) continue;
                 if (!line.isActive || line.L === 0) continue;
-                
+
                 let lineClean = "";
                 for (let c = 0; c < line.display.length; c++) {
                     if (!line.fillerMask[c] && /\S/.test(line.display[c])) {
                         lineClean += line.display[c];
                     }
                 }
-                
+
                 if (lineClean.length === 0) continue;
 
-                if (isSequential) {
+                if (isSequential && !sequentialUnlockedThisPass) {
                     if (STATE.currentTargetPatternIdx < validPatterns.length) {
                         let targetPatOrig = validPatterns[STATE.currentTargetPatternIdx];
                         let targetPat = getSearchPat(targetPatOrig);
@@ -4413,18 +4417,19 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                 STATE.foundPatterns.add(targetPatOrig);
                                 newlyFound = true;
                                 STATE.lastFindMethod = `Локально в Строке ${line.origIndex + 1} (Колонка ${pos + 1})`;
-                                
+
                                 STATE.foundPatternsMetadata.set(targetPatOrig, {
                                     type: 'local',
                                     rows: [line.origIndex + 1],
                                     step: Math.abs(STATE.globalStep)
                                 });
-                                
+
                                 STATE.currentTargetPatternIdx++;
+                                sequentialUnlockedThisPass = true;
                             }
                         }
                     }
-                } else {
+                } else if (!isSequential) {
                     for (let pIdx = 0; pIdx < sortedPatterns.length; pIdx++) {
                         let searchPatOrig = sortedPatterns[pIdx];
                         let searchPat = getSearchPat(searchPatOrig);
