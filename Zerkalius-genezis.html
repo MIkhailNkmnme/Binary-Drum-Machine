@@ -667,7 +667,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.223 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.224 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -8916,7 +8916,46 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (window.updateSlotPanel) updateSlotPanel();
         };
     </script>
-	
+
+<!-- === МАРКЕР 63: АВТО-ПЕРЕЗАГРУЗКА ПРИ ОБНОВЛЕНИИ НА GITHUB === -->
+    <script>
+        (() => {
+            const REMOTE_URL = "https://raw.githubusercontent.com/MIkhailNkmnme/Binary-Drum-Machine/claude/unclear-request-9ad84a/Zerkalius-genezis.html";
+            const CHECK_INTERVAL_MS = 8000;
+
+            function getVersion(html) {
+                let m = html.match(/v(\d+\.\d+)\s*Ultra-Save/);
+                return m ? parseFloat(m[1]) : null;
+            }
+
+            function showUpdateBanner(onReload) {
+                let bar = document.createElement('div');
+                bar.textContent = "🔄 Доступна новая версия! Перезагрузка через 3 сек...";
+                bar.style.cssText = "position:fixed; top:0; left:0; width:100%; z-index:99999; background:#00ff66; color:#000; font-weight:bold; text-align:center; padding:8px; font-family:monospace; cursor:pointer; box-shadow:0 2px 10px rgba(0,0,0,0.5);";
+                bar.onclick = onReload;
+                document.body.appendChild(bar);
+            }
+
+            const localVersion = getVersion(document.body.innerHTML);
+
+            function checkForUpdate() {
+                fetch(REMOTE_URL, { cache: "no-store" })
+                    .then(r => r.text())
+                    .then(text => {
+                        let remoteVersion = getVersion(text);
+                        if (remoteVersion !== null && localVersion !== null && remoteVersion > localVersion) {
+                            clearInterval(timer);
+                            showUpdateBanner(() => location.reload());
+                            setTimeout(() => location.reload(), 3000);
+                        }
+                    })
+                    .catch(() => {});
+            }
+
+            let timer = setInterval(checkForUpdate, CHECK_INTERVAL_MS);
+        })();
+    </script>
+
 <!-- === МАРКЕР 62: КОНЕЦ === -->
 <!-- === МАРКЕР 62: КОНЕЦ === -->
 </body>
