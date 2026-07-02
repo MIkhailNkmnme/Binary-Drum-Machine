@@ -23,26 +23,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
         :root {
             --found-color: #bfff00;
-            --found-bg: rgba(191, 255, 0, 0.2);
+            --found-bg: rgba(191, 255, 0, 0.4);
         }
 
         body { 
             background: #050505; color: #00ff66; 
             font-family: 'Consolas', monospace; 
             margin: 0; overflow: hidden; height: 100vh; position: relative;
-        }
-
-        #mainTitle {
-            position: fixed; left: 50%; bottom: 10px; transform: translateX(-50%);
-            z-index: 99; box-sizing: border-box; max-width: 90vw;
-            background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 255, 102, 0.3); border-radius: 999px;
-            color: rgba(0, 255, 102, 0.85); font-size: 12px; font-weight: bold;
-            pointer-events: auto; cursor: move; text-transform: uppercase;
-            letter-spacing: 3px; text-align: center;
-            text-shadow: 0 0 10px rgba(0, 255, 102, 0.6);
-            font-family: 'Roboto Mono', monospace;
-            padding: 4px 16px; white-space: nowrap; overflow: hidden;
         }
 
         .controls { 
@@ -119,6 +106,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         }
         #playerButtonsBar.dimmed { opacity: 0.15 !important; }
         #playerButtonsBar.dimmed:hover { opacity: 1 !important; }
+        .floating-toolbar.dimmed, .floating-toolbar-right.dimmed { opacity: 0.15 !important; }
+        .floating-toolbar.dimmed:hover, .floating-toolbar-right.dimmed:hover { opacity: 1 !important; }
         #prevBtn, #nextBtn { flex: 0 0 45px; width: 45px; height: 45px; padding: 0; border-radius: 50%; background: #222; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; }
         #stopBtn { flex: 0 0 51px; width: 51px; height: 51px; padding: 0; border-radius: 50%; background: #ff3333; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 26px; transition: opacity 0.2s ease; }
         #stopBtn.inactive { opacity: 0.35; }
@@ -152,8 +141,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             color: transparent; white-space: pre-wrap; word-wrap: break-word; pointer-events: none; z-index: 1; border: 1px solid transparent; overflow: hidden;
             text-align: right;
         }
-        .highlight-textarea-backdrop span.found { color: transparent; background: var(--found-bg); border-radius: 2px;}
-        .highlight-textarea-backdrop span.target { color: transparent; background: rgba(255, 0, 255, 0.2); border-radius: 2px; text-decoration: underline;}
+        .highlight-textarea-backdrop span.found { display: block; width: 100%; box-sizing: border-box; color: transparent; background: var(--found-bg); border-radius: 2px; }
+        .highlight-textarea-backdrop span.target { display: block; width: 100%; box-sizing: border-box; color: transparent; background: rgba(255, 0, 255, 0.35); border-radius: 2px; }
         textarea.pattern-input { width: 100%; height: 100%; flex: 1; background: transparent; color: #00ccff; z-index: 2; margin: 0; padding: 4px; box-sizing: border-box; font-family: inherit; font-size: 11px; caret-color: #00ccff; resize: none; text-align: right; }
         textarea.pattern-input::-webkit-scrollbar-thumb:hover { background: #00ccff; }
         textarea.pattern-input::-webkit-resizer { background: transparent; border-bottom: 2px solid #00ccff; border-right: 2px solid #00ccff; }
@@ -178,6 +167,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         }
         .bank-btn:hover { border-color: #888; color: #ddd; }
         .bank-btn.active { background: #00ff66; color: #000; font-weight: bold; border-color: #00ff66; box-shadow: 0 0 10px currentColor; text-shadow: none; }
+
+        .slot-tab { flex:1; margin:0; font-size:10px; border:1px solid #444; background:linear-gradient(180deg,#2a2a2a,#1c1c1c); color:#aaa; border-radius:3px 3px 0 0; cursor:pointer; padding:4px 0; letter-spacing:0.3px; transition:background 0.15s,color 0.15s,border-color 0.15s; }
+        .slot-tab:hover { border-color:#888; color:#ddd; }
+        .slot-tab.active { background:#00ff66; color:#000; font-weight:bold; border-color:#00ff66; box-shadow:0 0 8px #00ff66; text-shadow:none; }
+        .slot-preview { width:100%; height:72px; background:#050505; font-family:'Roboto Mono',monospace; font-size:9px; border:1px solid #2a2a2a; resize:none; padding:3px; box-sizing:border-box; overflow-y:auto; line-height:1.4; }
 
         #screenContainer { position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; background: #050505; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 10; }
 
@@ -207,7 +201,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         .highlight-textarea-backdrop span.vertical-found { color: #00ccff; font-weight: bold; background: rgba(0, 204, 255, 0.2); border-radius: 2px;}
 
         #hotkeyIndicator {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); border: 1px solid #00ff66;
+            position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); border: 1px solid #00ff66;
             color: #00ff66; font-size: 16px; font-weight: bold; padding: 6px 15px; border-radius: 5px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 120;
         }
 
@@ -284,7 +278,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         }
         #rightPanel .right-panel-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
         #rightPanel .right-panel-body > .panel-content { flex: 1; overflow-y: auto; min-width: 0; }
-        body.zen-mode #mainTitle { opacity: 0; pointer-events: none; }
         
         #balanceLog::-webkit-scrollbar { width: 6px; }
         #balanceLog::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
@@ -384,13 +377,47 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 <input type="checkbox" id="autosaveEnabledCheck" checked style="margin:0;">
                 🛟 Автосохранение страницы
             </label>
-<div style="display: flex; gap: 4px; margin-bottom: 4px;">
-                <button id="bankBtn0" class="bank-btn active" onclick="switchBank(0, false)" ondblclick="restoreOriginalBank(0)" title="Клик: Просмотр. Двойной клик: Сброс к исходнику">Слот 1</button>
-                <button id="bankBtn1" class="bank-btn" onclick="switchBank(1, false)" ondblclick="restoreOriginalBank(1)" title="Клик: Просмотр. Двойной клик: Сброс к исходнику">Слот 2</button>
-                <button id="bankBtn2" class="bank-btn" onclick="switchBank(2, false)" ondblclick="restoreOriginalBank(2)" title="Клик: Просмотр. Двойной клик: Сброс к исходнику">Слот 3</button>
-                <button id="applyLinesBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; font-weight:bold; background:#00ccff; color:#000; border-color:#00ccff;" title="Загрузить текущий текст из слота на холст">На холст</button>
+<!-- SLOT TABS -->
+            <div id="loadedSourceLabel" style="font-size:9px; color:#00ccff; text-align:center; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="Что сейчас загружено">📂 Загружено: исходные (banks_data.js)</div>
+            <div style="display:flex; gap:2px; margin-bottom:0;">
+                <button id="bankBtn0" class="slot-tab active" onclick="toggleSlotPanel(0)" title="Клик: открыть/закрыть. Двойной клик: Сброс к исходнику" ondblclick="restoreOriginalBank(0)">Слот 1</button>
+                <button id="bankBtn1" class="slot-tab" onclick="toggleSlotPanel(1)" title="Клик: открыть/закрыть. Двойной клик: Сброс к исходнику" ondblclick="restoreOriginalBank(1)">Слот 2</button>
+                <button id="bankBtn2" class="slot-tab" onclick="toggleSlotPanel(2)" title="Клик: открыть/закрыть. Двойной клик: Сброс к исходнику" ondblclick="restoreOriginalBank(2)">Слот 3</button>
+                <button id="bankBtn3" class="slot-tab" onclick="toggleSlotPanel(3)" title="Клик: открыть/закрыть. Двойной клик: Сброс к исходнику" ondblclick="restoreOriginalBank(3)">Слот 4</button>
             </div>
-            <button id="saveToSlotBtn" class="btn-action" style="margin:0 0 4px 0; font-size:10px; font-weight:bold; color:#bfff00; border-color:#bfff00;" title="Записать ТЕКУЩИЙ вид холста (включая всё, что наделала симуляция) в активный слот как новый шаблон. Слоты больше НЕ меняются автоматически — только этой кнопкой">💾 Сохранить текущий вид в слот</button>
+            <!-- SLOT PANEL (expandable) -->
+            <div id="activeSlotPanel" style="display:block; border:1px solid #2a2a2a; border-top:none; border-radius:0 0 3px 3px; background:#0c0c0c; padding:4px; margin-bottom:4px;">
+                <div style="display:flex; gap:3px; margin-bottom:3px;">
+                    <span id="slotPanelLabel" style="color:#00ff66; font-size:9px; font-weight:bold; line-height:20px; white-space:nowrap;">СЛОТ 1</span>
+                </div>
+                <div style="display:flex; gap:2px; margin-bottom:3px;">
+                    <div style="flex:1; min-width:0;">
+                        <div style="color:#888; font-size:8px; text-align:center; margin-bottom:1px;">исходная</div>
+                        <textarea id="slotPreviewSrc" class="slot-preview" oninput="updateSlotVisualFromInput()" style="color:#bfff00;"></textarea>
+                        <div style="display:flex; gap:2px; margin-top:2px;">
+                            <button id="slotSrcGetBtn" class="btn-action" style="flex:1; margin:0; padding:1px; font-size:8px; color:#bfff00; border:2px solid #ff3333;" title="Получить текущий холст в исходную и сохранить как исходник слота">Слот</button>
+                            <button id="slotSrcSendBtn" class="btn-action" style="flex:1; margin:0; padding:1px; font-size:8px; background:#00ccff; color:#000; border-color:#00ccff;" title="Отправить исходную (1/0) на холст">Холст</button>
+                        </div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 1px;">
+                        <button id="slotViewAllBtn" onclick="cycleSlotView()" class="bank-btn" style="width:26px; height:36px; font-size:8px; padding:0; line-height:1.1;" title="Переключить: Оба / Только исходная / Только визуал">ВСЕ</button>
+                    </div>
+                    <div style="flex:1; min-width:0;">
+                        <div style="color:#00ccff; font-size:8px; text-align:center; margin-bottom:1px;">визуал</div>
+                        <textarea id="slotPreviewVis" class="slot-preview" style="color:#00ccff;"></textarea>
+                        <div style="display:flex; gap:2px; margin-top:2px;">
+                            <button id="slotVisGetBtn" class="btn-action" style="flex:1; margin:0; padding:1px; font-size:8px; color:#bfff00; border:2px solid #ff3333;" title="Получить текущий холст в визуал (исходная не меняется)">Слот</button>
+                            <button id="slotVisSendBtn" class="btn-action" style="flex:1; margin:0; padding:1px; font-size:8px; background:#00ccff; color:#000; border-color:#00ccff;" title="Отправить визуал как есть на холст (исходная не меняется)">Холст</button>
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:3px; font-size:9px;">
+                    <span style="color:#888;">1→</span>
+                    <input id="slotChar1Active" type="text" maxlength="4" style="width:30px; background:#111; color:#bfff00; border:1px solid #333; font-size:9px; text-align:center; padding:1px; border-radius:2px;" oninput="updateSlotVisualFromInput()">
+                    <span style="color:#888;">0→</span>
+                    <input id="slotChar0Active" type="text" maxlength="4" style="width:30px; background:#111; color:#00ccff; border:1px solid #333; font-size:9px; text-align:center; padding:1px; border-radius:2px;" oninput="updateSlotVisualFromInput()">
+                </div>
+            </div>
             <div style="display: flex; gap: 4px; margin-bottom: 2px;">
                 <button id="alignLeftBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; border-color:#888; color:#fff;" title="Выровнять всё по левому краю (добавить точки)">⬅️ Лев</button>
                 <button id="alignCenterBtn" class="btn-action" style="flex:1; margin:0; font-size:10px; border-color:#888; color:#fff;" title="Выровнять всё по центру (добавить точки)">⏺ Центр</button>
@@ -563,9 +590,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             <label style="display:flex; align-items:center; margin-top:3px; padding-left:15px;">
                 <input type="checkbox" id="stableConglomCheck"> <span class="lbl" style="color:#cc66ff;">Фиксация цветов (Без мерцания)</span>
             </label>
-            <label style="display:flex; align-items:center; margin-top:3px; padding-left:15px;">
-                <input type="checkbox" id="symConglomCheck"> <span class="lbl" style="color:#ff99ff;">Симметрия от оси</span>
-            </label>
             <label style="display:flex; align-items:center; margin-top:3px;">
                 <input type="checkbox" id="neonCheck"> <span class="lbl">✨ Свечение (Neon)</span>
             </label>
@@ -645,7 +669,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.195 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.245 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -686,7 +710,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
             <div class="player-col" style="flex:1.3; min-width:200px; display:flex; flex-direction:column; justify-content:center; gap:3px; border-left:1px solid #333; border-right:1px solid #333; padding:0 10px;">
                 <label style="display:flex; align-items:center; gap:4px; justify-content:center;" title="Если включено — кнопки Пуск/Стоп/◀▶ тоже затемняются при затемнении панели наехавшими строками (как в дзен-режиме). Если выключено — остаются видимыми всегда, кроме дзен-режима">
-                    <input type="checkbox" id="hideControlsOnDimCheck"> <span class="lbl" style="font-size:9px;">Затемнять Пуск/Стоп при затемнении</span>
+                    <input type="checkbox" id="hideControlsOnDimCheck"> <span class="lbl" style="font-size:9px;">Затемнять Пуск/Стоп</span>
                 </label>
                 <div style="display:flex; align-items:center; gap:4px;">
                     <button id="speedDecBtn" class="bank-btn" style="width:46px; height:18px; padding:0 3px; font-weight:bold; color:#00ccff; border-color:#00ccff; flex-shrink:0; font-size:9px;">◀ Скор</button>
@@ -714,7 +738,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
             <div class="player-col" style="flex:1; min-width:160px; display:flex; flex-direction:column; justify-content:center; gap:3px;">
                 <div class="row-between">
-                    <button id="invertFrameBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#ffd500; color:#ffd500; background:none;" title="Инвертировать символы внутри рамки (0 ↔ 1, \ ↔ /)">🔄 Инверт. в рамке</button>
+                    <button id="invertFrameBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#ffd500; color:#ffd500; background:none;" title="Инвертировать символы внутри рамки (0 ↔ 1, \ ↔ /)">🔄 Инверт.</button>
                     <button id="invertFrameExceptFirstBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#ffd500; color:#ffd500; background:none;" title="Инвертировать символы внутри рамки, пропуская первый символ каждой строки">🔄 Инверт. кроме 1-го</button>
                 </div>
                 <div class="row-between">
@@ -946,24 +970,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     <label style="display:flex; align-items:center; margin-bottom:3px;" title="Если включено — рамка автоматически центрируется по горизонтали при каждой новой загрузке текста. Если выключено — рамка остаётся там, где её поставили руками, даже после Зеркала/генератора">
                         <input type="checkbox" id="frameCenterLockCheck" checked> <span class="lbl" style="color:#00ccff; font-weight:bold;">⌖ По умолчанию за центром</span>
                     </label>
-                </details>
-                
-                <details class="control-group" open style="border-radius:3px;">
-                    <summary style="font-weight:bold; color:#ffcc00;">🤖 СКАНЕР БАЛАНСА</summary>
-                    
-                    <div style="background: rgba(0, 255, 255, 0.05); padding: 3px; border-radius: 3px; margin-bottom: 3px; border-left: 2px solid #00ffff;">
-                        <span class="lbl" style="color:#00ffff; font-weight:bold;">Мгновенный поиск (1-N строк):</span>
-                        <div style="display:flex; gap:2px; align-items:center; margin-top:2px;">
-                            <span class="lbl">Макс. строк:</span>
-                            <input type="number" id="instantScanMaxSpan" value="4" style="width:30px; height:15px; font-size:9px;">
-                        </div>
-                        <div style="display:flex; gap:4px; margin-top:3px;">
-                            <button id="instantScanBtn" class="btn-action" style="flex:2; margin:0; padding:2px; font-size:9px; border-color:#00ffff; color:#00ffff;">🔍 Искать всё</button>
-                            <button id="clearScanBtn" class="btn-action btn-danger" style="flex:1; margin:0; padding:2px; font-size:9px;">🧹 Сброс</button>
-                        </div>
-                    </div>
 
-                    <div style="background: rgba(255, 204, 0, 0.05); padding: 3px; border-radius: 3px; border-left: 2px solid #ffcc00;">
+                    <div style="background: rgba(255, 204, 0, 0.05); padding: 3px; border-radius: 3px; border-left: 2px solid #ffcc00; margin-top:3px;">
                         <label style="display:flex; align-items:center; margin-bottom:2px;">
                             <input type="checkbox" id="frameScannerActiveCheck"> <span class="lbl" style="color:#ffcc00; font-weight:bold;">🤖 Авто-шаг рамки</span>
                         </label>
@@ -978,6 +986,22 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         <label style="display:flex; align-items:center; margin-top:2px;">
                             <input type="checkbox" id="scannerAutoBuildUpCheck"> <span class="lbl" style="color:#ff00ff; font-size:9px; font-weight:bold;">🏗️ Авто-достройка вверх (Отражение при 0=1)</span>
                         </label>
+                    </div>
+                </details>
+
+                <details class="control-group" open style="border-radius:3px;">
+                    <summary style="font-weight:bold; color:#ffcc00;">🤖 СКАНЕР БАЛАНСА</summary>
+
+                    <div style="background: rgba(0, 255, 255, 0.05); padding: 3px; border-radius: 3px; margin-bottom: 3px; border-left: 2px solid #00ffff;">
+                        <span class="lbl" style="color:#00ffff; font-weight:bold;">Мгновенный поиск (1-N строк):</span>
+                        <div style="display:flex; gap:2px; align-items:center; margin-top:2px;">
+                            <span class="lbl">Макс. строк:</span>
+                            <input type="number" id="instantScanMaxSpan" value="4" style="width:30px; height:15px; font-size:9px;">
+                        </div>
+                        <div style="display:flex; gap:4px; margin-top:3px;">
+                            <button id="instantScanBtn" class="btn-action" style="flex:2; margin:0; padding:2px; font-size:9px; border-color:#00ffff; color:#00ffff;">🔍 Искать всё</button>
+                            <button id="clearScanBtn" class="btn-action btn-danger" style="flex:1; margin:0; padding:2px; font-size:9px;">🧹 Сброс</button>
+                        </div>
                     </div>
                 </details>
 
@@ -1233,8 +1257,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             frameAction: null, frameStartMX: 0, frameStartMY: 0, frameStartW: 0, frameStartH: 0,
             frameStartX: 0, frameStartY: 0, isDraggingRing: false, draggedRingIndex: -1,
             lastMouseAngle: 0, accumulatedAngleDelta: 0, dragStartLocalStep: 0,
-            banks: [{lines: "", patterns: ""}, {lines: "", patterns: ""}, {lines: "", patterns: ""}],
-            activeBankIndex: 0, isReplaced: false, currentTargetPatternIdx: 0, pendingCascade: false,
+            banks: [
+                {lines: "", patterns: "", char1: "1",  char0: "0"},
+                {lines: "", patterns: "", char1: "\\", char0: "/"},
+                {lines: "", patterns: "", char1: "<",  char0: ">"},
+                {lines: "", patterns: "", char1: ")",  char0: "("}
+            ],
+            activeBankIndex: 0, slotPanelOpen: true, slotViewMode: 0, isReplaced: false, currentTargetPatternIdx: 0, pendingCascade: false,
             interleaveLCSToggle: false, calcAllInterleaves: false, waveAnalysis: { isActive: false, history: [], maxHistory: 32, staticCells: new Map() },
             frameScanner: { direction: 1 }
         };
@@ -1358,7 +1387,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             
             ctx.font = `${safeChecked('boldCheck', false) ? 'bold' : 'normal'} ${fontSize}px ${safeValue('fontSelect', 'monospace')}`;
             let charWidth = ctx.measureText('0').width * cw;
-            let lineHeight = fontSize * lh;
+            let lineHeight = Math.round(fontSize * lh);
             
             let startIndex = STATE.rowScrollOffset || 0;
             if (startIndex < 0) startIndex = 0;
@@ -1524,7 +1553,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         safeBind('foundPatternColor', 'input', function() {
             let hex = this.value;
             document.documentElement.style.setProperty('--found-color', hex);
-            document.documentElement.style.setProperty('--found-bg', hexToRgba(hex, 0.2));
+            document.documentElement.style.setProperty('--found-bg', hexToRgba(hex, 0.4));
             render();
         });
 
@@ -1567,13 +1596,15 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (window.saveUndoState) saveUndoState();
             let b = "", p = "";
             if (typeof ZERKALIUS_PRESETS !== 'undefined') {
-                if (idx === 0) { b = ZERKALIUS_PRESETS.base1 || ""; p = ZERKALIUS_PRESETS.pat1 || ""; }
-                else if (idx === 1) { b = ZERKALIUS_PRESETS.base2 || ""; p = ZERKALIUS_PRESETS.pat2 || ""; }
-                else if (idx === 2) { b = ZERKALIUS_PRESETS.base3 || ""; p = ZERKALIUS_PRESETS.pat3 || ""; }
+                const keys = ['base1','base2','base3','base4'];
+                const pkeys = ['pat1','pat2','pat3','pat4'];
+                b = ZERKALIUS_PRESETS[keys[idx]] || "";
+                p = ZERKALIUS_PRESETS[pkeys[idx]] || "";
             }
             STATE.banks[idx].lines = b.trim();
             STATE.banks[idx].patterns = p.trim();
             switchBank(idx, true);
+            if (window.setLoadedSource) setLoadedSource(`слот ${idx + 1} — исходные (banks_data.js)`);
             showNotification(`СЛОТ ${idx + 1} ВОССТАНОВЛЕН ИЗ ИСХОДНИКА`);
         };
 
@@ -1581,17 +1612,21 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             let linesInp = document.getElementById('linesInput');
             let patInp = document.getElementById('patternInput');
 
-            // ВАЖНО: слот НЕ перезаписывается текущими изменениями при переключении —
-            // несохранённые правки на холсте/в поле теряются, если не нажата кнопка "💾 Сохранить".
             STATE.activeBankIndex = idx;
-            
+
+            // Защита: если слот не существует (старый снимок) — создать пустой
+            if (!STATE.banks[idx]) {
+                const defaults = [{char1:"1",char0:"0"},{char1:"\\",char0:"/"},{char1:"<",char0:">"},{char1:")",char0:"("}];
+                STATE.banks[idx] = { lines: "", patterns: "", char1: (defaults[idx]||defaults[0]).char1, char0: (defaults[idx]||defaults[0]).char0 };
+            }
+
             let newLines = STATE.banks[idx].lines || "";
             let newPatterns = STATE.banks[idx].patterns || "";
-            
+
             if(linesInp) linesInp.value = newLines;
             if(patInp) patInp.value = newPatterns;
 
-            for (let i = 0; i <= 2; i++) {
+            for (let i = 0; i <= 3; i++) {
                 let btn = document.getElementById('bankBtn' + i);
                 if (btn) {
                     if (i === idx) btn.classList.add('active');
@@ -1599,36 +1634,170 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 }
             }
 
+            updateSlotPanel();
+
             if (applyToCanvas) {
                 if (window.saveUndoState) saveUndoState();
                 if (newLines.trim().length > 0) {
-                    loadText(newLines);
+                    let useOrig = (STATE.slotViewMode === 1);
+                    loadText(useOrig ? newLines : mapBankVisualChars(newLines, STATE.banks[idx]), false, !useOrig);
                 } else {
                     let clearBtn = document.getElementById('clearCanvasBtn');
                     if(clearBtn) clearBtn.click();
                 }
-                STATE.currentTargetPatternIdx = 1; 
+                STATE.currentTargetPatternIdx = 0;
                 STATE.lastFindMethod = "Ожидание...";
                 updatePatternBackdrop();
                 showNotification(`СЛОТ ${idx + 1} ЗАГРУЖЕН НА ХОЛСТ`);
             } else {
                 updatePatternBackdrop();
-                showNotification(`СЛОТ ${idx + 1} ОТКРЫТ (ПРОСМОТР)`);
+                showNotification(`СЛОТ ${idx + 1} ОТКРЫТ`);
             }
+        };
+
+        window.toggleSlotPanel = function(idx) {
+            if (STATE.activeBankIndex === idx && STATE.slotPanelOpen) {
+                STATE.slotPanelOpen = false;
+                let panel = document.getElementById('activeSlotPanel');
+                if (panel) panel.style.display = 'none';
+            } else {
+                STATE.slotPanelOpen = true;
+                let panel = document.getElementById('activeSlotPanel');
+                if (panel) panel.style.display = 'block';
+                switchBank(idx, false);
+            }
+        };
+
+        window.mapBankVisualChars = function(lines, bank) {
+            if (!bank) return lines;
+            let c1 = (bank.char1 !== undefined && bank.char1 !== "") ? bank.char1 : "1";
+            let c0 = (bank.char0 !== undefined && bank.char0 !== "") ? bank.char0 : "0";
+            if (c1 === "1" && c0 === "0") return lines;
+            return lines.split('').map(ch => ch === '1' ? c1 : ch === '0' ? c0 : ch).join('');
+        };
+
+        window.updateSlotPanel = function() {
+            let idx = STATE.activeBankIndex;
+            let bank = STATE.banks[idx] || {};
+            let label = document.getElementById('slotPanelLabel');
+            if (label) label.textContent = `СЛОТ ${idx + 1}`;
+
+            let c1inp = document.getElementById('slotChar1Active');
+            let c0inp = document.getElementById('slotChar0Active');
+            if (c1inp) c1inp.value = bank.char1 !== undefined ? bank.char1 : "1";
+            if (c0inp) c0inp.value = bank.char0 !== undefined ? bank.char0 : "0";
+
+            let srcArea = document.getElementById('slotPreviewSrc');
+            let visArea = document.getElementById('slotPreviewVis');
+            let lines = bank.lines || "";
+
+            let mode = STATE.slotViewMode || 0;
+            let srcCol = document.getElementById('slotPreviewSrc') ? document.getElementById('slotPreviewSrc').parentElement : null;
+            let visCol = document.getElementById('slotPreviewVis') ? document.getElementById('slotPreviewVis').parentElement : null;
+            let allBtn = document.getElementById('slotViewAllBtn');
+
+            if (srcCol && visCol) {
+                if (mode === 0) {
+                    srcCol.style.display = ''; visCol.style.display = '';
+                    if (allBtn) allBtn.textContent = 'ВСЕ';
+                } else if (mode === 1) {
+                    srcCol.style.display = ''; visCol.style.display = 'none';
+                    if (allBtn) allBtn.textContent = 'ИСХ';
+                } else {
+                    srcCol.style.display = 'none'; visCol.style.display = '';
+                    if (allBtn) allBtn.textContent = 'ВИЗ';
+                }
+            }
+
+            if (srcArea) srcArea.value = lines;
+            if (visArea) {
+                let c1 = (bank.char1 !== undefined && bank.char1 !== "") ? bank.char1 : "1";
+                let c0 = (bank.char0 !== undefined && bank.char0 !== "") ? bank.char0 : "0";
+                visArea.value = lines.split('').map(ch => ch === '1' ? c1 : ch === '0' ? c0 : ch).join('');
+            }
+        };
+
+        window.setLoadedSource = function(name) {
+            let lbl = document.getElementById('loadedSourceLabel');
+            if (lbl) lbl.textContent = '📂 Загружено: ' + name;
+        };
+
+        window.cycleSlotView = function() {
+            STATE.slotViewMode = ((STATE.slotViewMode || 0) + 1) % 3;
+            updateSlotPanel();
+        };
+
+        // Визуал пересчитывается на лету из ЖИВОГО текста поля "исходная" (а не из сохранённого
+        // bank.lines), чтобы правки прямо в поле сразу отражались в превью без отдельной кнопки
+        // "Применить". Символы 1→/0→ сохраняются в банк сразу по вводу.
+        window.updateSlotVisualFromInput = function() {
+            let idx = STATE.activeBankIndex;
+            let c1inp = document.getElementById('slotChar1Active');
+            let c0inp = document.getElementById('slotChar0Active');
+            let srcArea = document.getElementById('slotPreviewSrc');
+            let visArea = document.getElementById('slotPreviewVis');
+            if (!visArea) return;
+            let lines = srcArea ? srcArea.value : ((STATE.banks[idx] && STATE.banks[idx].lines) || "");
+            let c1 = (c1inp && c1inp.value !== "") ? c1inp.value : "1";
+            let c0 = (c0inp && c0inp.value !== "") ? c0inp.value : "0";
+            if (STATE.banks[idx]) {
+                if (c1inp) STATE.banks[idx].char1 = c1inp.value;
+                if (c0inp) STATE.banks[idx].char0 = c0inp.value;
+            }
+            visArea.value = lines.split('').map(ch => ch === '1' ? c1 : ch === '0' ? c0 : ch).join('');
+        };
+
+        // Исходная -> холст: грузим 1/0 как есть, это и есть источник (bank.lines синхронизируется).
+        window.slotSrcSendToCanvas = function() {
+            let srcArea = document.getElementById('slotPreviewSrc');
+            if (!srcArea || srcArea.value.trim().length === 0) return;
+            if (window.saveUndoState) saveUndoState();
+            loadText(srcArea.value);
+            showNotification("ИСХОДНАЯ ЗАГРУЖЕНА НА ХОЛСТ");
+        };
+
+        // Холст -> исходная: текущее состояние холста как есть становится новым исходником слота.
+        window.slotSrcGetFromCanvas = function() {
+            let idx = STATE.activeBankIndex;
+            let newLinesText = STATE.lines.map(l => l.orig).join('\n');
+            STATE.banks[idx].lines = newLinesText;
+            updateSlotPanel();
+            showNotification(`💾 ХОЛСТ СОХРАНЁН КАК ИСХОДНИК СЛОТА ${idx + 1}`);
+        };
+
+        // Визуал -> холст: грузим ТЕКСТ ИЗ ПОЛЯ ВИЗУАЛ как есть, без какого-либо маппинга.
+        // bank.lines (исходная) НЕ трогаем — holst просто показывает то, что написано в этом поле.
+        window.slotVisSendToCanvas = function() {
+            let visArea = document.getElementById('slotPreviewVis');
+            if (!visArea || visArea.value.trim().length === 0) return;
+            if (window.saveUndoState) saveUndoState();
+            loadText(visArea.value, false, true);
+            showNotification("ВИЗУАЛ ЗАГРУЖЕН НА ХОЛСТ (исходная не изменена)");
+        };
+
+        // Холст -> визуал: просто копируем текущий вид холста в поле визуал, исходную не трогаем.
+        window.slotVisGetFromCanvas = function() {
+            let visArea = document.getElementById('slotPreviewVis');
+            if (!visArea) return;
+            visArea.value = STATE.lines.map(l => l.orig).join('\n');
+            showNotification("ХОЛСТ СКОПИРОВАН В ВИЗУАЛ (исходная не изменена)");
         };
 
         function resetPositionWithHeightScale(scaleFactor, targetActiveOnly = false, adjustScale = true) {
             let m = getGridMetrics();
             if (!m) return;
 
-            // Учитываем Пульт (закреплён сверху) — строки не должны прятаться под ним,
-            // поэтому считаем доступную высоту и точку отсчёта от его нижнего края, а не от верха холста.
+            // Учитываем Пульт И мини-панель кнопок (playerButtonsBar, показывается когда пульт свёрнут) —
+            // строки не должны прятаться ни под одним из них, поэтому берём нижний край того, что ниже.
             let clearance = 0;
             let playerPanelEl = document.querySelector('.player-panel');
-            if (playerPanelEl) {
-                let panelRect = playerPanelEl.getBoundingClientRect();
+            let buttonsBarEl = document.getElementById('playerButtonsBar');
+            if (playerPanelEl || buttonsBarEl) {
+                let panelBottom = playerPanelEl ? playerPanelEl.getBoundingClientRect().bottom : 0;
+                let barBottom = buttonsBarEl ? buttonsBarEl.getBoundingClientRect().bottom : 0;
+                let combinedBottom = Math.max(panelBottom, barBottom);
                 let canvasRect = UI.canvas.getBoundingClientRect();
-                clearance = Math.max(0, (panelRect.bottom - canvasRect.top) + 20);
+                clearance = Math.max(0, (combinedBottom - canvasRect.top) + 6);
             }
 
             // Жестко обнуляем все смещения, чтобы вернуть улетевшие строки
@@ -1666,7 +1835,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     let padding = 40;
                     let availableHeight = Math.max(50, UI.canvas.height * scaleFactor - clearance - padding);
                     let optimalSize = Math.floor(availableHeight / (linesToFit * lh));
-                    optimalSize = Math.max(2, Math.min(100, optimalSize)); // От 2 до 100 px
+                    optimalSize = Math.max(1, Math.min(100, optimalSize)); // От 1 до 100 px
 
                     const fontSlider = document.getElementById('fontSlider');
                     if (fontSlider) fontSlider.value = optimalSize;
@@ -1693,6 +1862,32 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
             render();
             showNotification(targetActiveOnly ? "ЦЕНТР: АКТИВНЫЙ БЛОК" : "ЦЕНТР: ВСЕ СТРОКИ (100%)");
+
+            // Синхронный getBoundingClientRect() пульта/мини-пульта сразу после смены шрифта/экрана
+            // иногда возвращает ещё не устаканенный layout (мини-пульт сам "доезжает" до своей
+            // позиции через несколько кадров — см. positionPlayerButtonsBar). Одной перепроверки
+            // мало — повторяем несколько раз в течение ~0.5 сек, пока оба элемента точно не осядут.
+            const recheckClearance = () => {
+                let playerPanelEl2 = document.querySelector('.player-panel');
+                let buttonsBarEl2 = document.getElementById('playerButtonsBar');
+                if (!playerPanelEl2 && !buttonsBarEl2) return;
+                let panelBottom2 = playerPanelEl2 ? playerPanelEl2.getBoundingClientRect().bottom : 0;
+                let barBottom2 = buttonsBarEl2 ? buttonsBarEl2.getBoundingClientRect().bottom : 0;
+                let combinedBottom2 = Math.max(panelBottom2, barBottom2);
+                let canvasRect2 = UI.canvas.getBoundingClientRect();
+                let clearance2 = Math.max(0, (combinedBottom2 - canvasRect2.top) + 6);
+                let m3 = getGridMetrics();
+                if (!m3) return;
+                let centeredStartY2 = m3.startY - STATE.offsetY;
+                let neededOffsetY = clearance2 - centeredStartY2;
+                if (Math.abs(neededOffsetY - STATE.offsetY) > 1) {
+                    STATE.offsetY = neededOffsetY;
+                    render();
+                }
+            };
+            for (let i = 1; i <= 10; i++) {
+                setTimeout(recheckClearance, i * 50);
+            }
         }
 
         let centerClickTimeout = null;
@@ -1752,7 +1947,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (snapshot.foundPatternColor) {
                 setElVal('foundPatternColor', snapshot.foundPatternColor);
                 document.documentElement.style.setProperty('--found-color', snapshot.foundPatternColor);
-                document.documentElement.style.setProperty('--found-bg', hexToRgba(snapshot.foundPatternColor, 0.2));
+                document.documentElement.style.setProperty('--found-bg', hexToRgba(snapshot.foundPatternColor, 0.4));
             }
 
             if (snapshot.deltaN !== undefined) setElVal('deltaNInput', snapshot.deltaN);
@@ -1789,6 +1984,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 setElChk('scannerAutoBuildUpCheck', snapshot.scannerAutoBuildUp !== undefined ? snapshot.scannerAutoBuildUp : false);
 
             if (snapshot.sierpRule) setElVal('sierpRule', snapshot.sierpRule);
+            if (snapshot.sierpSeed !== undefined) setElVal('sierpSeed', snapshot.sierpSeed);
+            if (snapshot.sierpRows !== undefined) setElVal('sierpRows', snapshot.sierpRows);
 
             setElChk('interleaveAnalysisCheck', snapshot.interleaveAnalysis !== undefined ? snapshot.interleaveAnalysis : (snapshot.lcsToggle || false));
 
@@ -1808,14 +2005,45 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (snapshot.loopStart !== undefined) setElVal('loopStart', snapshot.loopStart);
             if (snapshot.loopEnd !== undefined) setElVal('loopEnd', snapshot.loopEnd);
 
+            setElChk('verticalSearchCheck', snapshot.verticalSearch !== undefined ? snapshot.verticalSearch : false);
+            setElChk('frameCheck', snapshot.frame !== undefined ? snapshot.frame : true);
+            setElChk('frameCenterLockCheck', snapshot.frameCenterLock !== undefined ? snapshot.frameCenterLock : true);
+            setElChk('activateOnPatternCheck', snapshot.activateOnPattern !== undefined ? snapshot.activateOnPattern : true);
+            setElChk('highlightCheck', snapshot.highlight !== undefined ? snapshot.highlight : true);
+            setElChk('neonCheck', snapshot.neon !== undefined ? snapshot.neon : false);
+            setElChk('boldCheck', snapshot.bold !== undefined ? snapshot.bold : false);
+            setElChk('trailCheck', snapshot.trail !== undefined ? snapshot.trail : false);
+            setElChk('filterCheck', snapshot.filter !== undefined ? snapshot.filter : false);
+            setElChk('interleavingCheck', snapshot.interleaving !== undefined ? snapshot.interleaving : true);
+            setElChk('substeppingCheck', snapshot.substepping !== undefined ? snapshot.substepping : false);
+            setElChk('frameScannerActiveCheck', snapshot.frameScannerActive !== undefined ? snapshot.frameScannerActive : false);
+            setElChk('stableConglomCheck', snapshot.stableConglom !== undefined ? snapshot.stableConglom : true);
+            setElChk('naezdCheck', snapshot.naezd !== undefined ? snapshot.naezd : false);
+            setElChk('naezdSaveCheck', snapshot.naezdSave !== undefined ? snapshot.naezdSave : false);
+            setElChk('hideBlinkingCheck', snapshot.hideBlinking !== undefined ? snapshot.hideBlinking : false);
+            setElChk('hideControlsOnDimCheck', snapshot.hideControlsOnDim !== undefined ? snapshot.hideControlsOnDim : false);
+            setElChk('waveAnalysisCheck', snapshot.waveAnalysis !== undefined ? snapshot.waveAnalysis : false);
+            setElChk('ignoreFirstInterleaveCharCheck', snapshot.ignoreFirstInterleaveChar !== undefined ? snapshot.ignoreFirstInterleaveChar : false);
+            setElChk('ignoreFirstTargetCharCheck', snapshot.ignoreFirstTargetChar !== undefined ? snapshot.ignoreFirstTargetChar : false);
+            setElChk('interleaveSwapOrderCheck', snapshot.interleaveSwapOrder !== undefined ? snapshot.interleaveSwapOrder : false);
+            setElChk('accumulateInterleaveCheck', snapshot.accumulateInterleave !== undefined ? snapshot.accumulateInterleave : false);
+            setElChk('autoShiftInterleaveTopCheck', snapshot.autoShiftInterleaveTop !== undefined ? snapshot.autoShiftInterleaveTop : false);
+
             if (snapshot.banks && Array.isArray(snapshot.banks)) {
                 if (typeof snapshot.banks[0] === 'string') {
                     STATE.banks = snapshot.banks.map(b => ({lines: b, patterns: ""}));
                 } else {
                     STATE.banks = snapshot.banks;
                 }
+                // Нормализация: всегда 4 слота, недостающие char1/char0 — по умолчанию
+                const slotDefaults = [{char1:"1",char0:"0"},{char1:"\\",char0:"/"},{char1:"<",char0:">"},{char1:")",char0:"("}];
+                for (let i = 0; i < 4; i++) {
+                    if (!STATE.banks[i]) STATE.banks[i] = { lines: "", patterns: "" };
+                    if (STATE.banks[i].char1 === undefined) STATE.banks[i].char1 = slotDefaults[i].char1;
+                    if (STATE.banks[i].char0 === undefined) STATE.banks[i].char0 = slotDefaults[i].char0;
+                }
                 STATE.activeBankIndex = snapshot.activeBankIndex || 0;
-                switchBank(STATE.activeBankIndex, false); 
+                switchBank(STATE.activeBankIndex, false);
             }
             
             if (snapshot.rows && snapshot.rows.length > 0) {
@@ -1849,7 +2077,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 STATE.lines.forEach((l, idx) => { l.localStep = snapshot.localSteps[idx]; });
             }
 
-            STATE.currentTargetPatternIdx = snapshot.currentTargetPatternIdx || 1;
+            STATE.currentTargetPatternIdx = (snapshot.currentTargetPatternIdx !== undefined) ? snapshot.currentTargetPatternIdx : 0;
             STATE.lastFindMethod = snapshot.lastFindMethod || "Ожидание...";
 
             let p = PRESETS[snapshot.preset || 'matrix']; 
@@ -1903,7 +2131,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (stepSlider) stepSlider.max = isFinite(STATE.maxCycle) && STATE.maxCycle < 100000 ? STATE.maxCycle : 100000;
         }
 
-        function loadText(text, keepState = false) {
+        function loadText(text, keepState = false, skipBankSync = false, adjustScale = false) {
             let savedStep = STATE.globalStep, savedOffX = STATE.offsetX, savedOffY = STATE.offsetY, savedRS = STATE.rowScrollOffset;
             let savedFrame = STATE.manualFrame ? JSON.parse(JSON.stringify(STATE.manualFrame)) : null;
             let savedActive = STATE.lines.map(l => l.isActive);
@@ -1948,7 +2176,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             STATE.lastBlobs = [];
             STATE.nextBlobColorId = 1;
             STATE.lastFindMethod = "Ожидание...";
-            STATE.currentTargetPatternIdx = 1; 
+            STATE.currentTargetPatternIdx = 0; 
             STATE.wasBalancedLastFrame = false;
             STATE.lastSpecialType = "none";
             STATE.lastLoggedRowsCount = 0;
@@ -1996,9 +2224,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 }
             }
             
-            let linesInp = document.getElementById('linesInput');
-            if (linesInp) linesInp.value = raw.join('\n');
-            STATE.banks[STATE.activeBankIndex].lines = raw.join('\n');
+            if (!skipBankSync) {
+                let linesInp = document.getElementById('linesInput');
+                if (linesInp) linesInp.value = raw.join('\n');
+                STATE.banks[STATE.activeBankIndex].lines = raw.join('\n');
+            }
 
             const stepSlider = document.getElementById('stepSlider');
             if (stepSlider) {
@@ -2019,7 +2249,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             enforceLoop();
             calculateState(true);
             updatePatternBackdrop();
-            if (!keepState) resetPositionWithHeightScale(1.0, false, false);
+            if (!keepState) resetPositionWithHeightScale(1.0, false, adjustScale);
         }
     </script>
 
@@ -2036,13 +2266,12 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 if (l.length < maxL) {
                     let diff = maxL - l.length;
                     if (mode === 'left') {
-                        lines[i] = l + '.'.repeat(diff);
+                        lines[i] = l; // короткие строки просто остаются как есть
                     } else if (mode === 'right') {
-                        lines[i] = '.'.repeat(diff) + l;
+                        lines[i] = ' '.repeat(diff) + l;
                     } else if (mode === 'center') {
                         let leftP = Math.floor(diff / 2);
-                        let rightP = diff - leftP;
-                        lines[i] = '.'.repeat(leftP) + l + '.'.repeat(rightP);
+                        lines[i] = ' '.repeat(leftP) + l;
                     }
                 }
             }
@@ -2100,7 +2329,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 }
             } else {
                 // Каждая исходная строка приклеивает к себе свою же строку результата (col[row]).
-                let mergedLines = originalLines.map((orig, idx) => orig + (newLines[idx] !== undefined ? newLines[idx] : ''));
+                // Ведущие точки-заполнители результата (когда строка короче текущей колонки) убираем,
+                // чтобы зеркало примыкало вплотную к правому краю оригинала без разрыва.
+                let mergedLines = originalLines.map((orig, idx) => {
+                    let mirrorPart = (newLines[idx] !== undefined) ? newLines[idx] : '';
+                    mirrorPart = mirrorPart.replace(/^\.+/, '');
+                    return orig + mirrorPart;
+                });
                 newText = mergedLines.join('\n');
                 for (let row = 0; row < mergedLines.length; row++) {
                     let origLen = originalLines[row].length;
@@ -2263,11 +2498,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (!m) return;
             
             let useSelectedRows = STATE.selectedRows && STATE.selectedRows.size > 0;
-            let showFrame = safeChecked('frameCheck', false);
-            let useFrameLimit = showFrame && STATE.manualFrame && STATE.manualFrame.isInitialized;
-            
+            let useFrameLimit = STATE.manualFrame && STATE.manualFrame.isInitialized;
+
             if (!useFrameLimit && !useSelectedRows) {
-                showNotification("ОШИБКА: РАМКА НЕ ВКЛЮЧЕНА И НЕТ ВЫДЕЛЕННЫХ СТРОК");
+                showNotification("ОШИБКА: РАМКА НЕ ИНИЦИАЛИЗИРОВАНА И НЕТ ВЫДЕЛЕННЫХ СТРОК");
                 return;
             }
 
@@ -2956,24 +3190,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         safeBind('manualElkaShiftLeftBtn', 'click', () => manualElkaShift(-1));
         safeBind('manualElkaShiftRightBtn', 'click', () => manualElkaShift(1));
 
-        safeBind('applyLinesBtn', 'click', () => {
-            const rawText = safeValue('linesInput', '');
-            if (rawText.trim().length > 0) {
-                loadText(rawText);
-                showNotification("СТРОКИ ОБНОВЛЕНЫ");
-            }
-        });
-
-        safeBind('saveToSlotBtn', 'click', () => {
-            // Явное ручное сохранение: берём ТЕКУЩЕЕ состояние холста (как оно есть прямо сейчас,
-            // с учётом всего, что сделала симуляция/каскады) и фиксируем его как новый шаблон активного слота.
-            // Автоматически (на шагах симуляции) слоты больше не трогаются — только тут, по кнопке.
-            let newLinesText = STATE.lines.map(l => l.orig).join('\n');
-            let linesInp = document.getElementById('linesInput');
-            if (linesInp) linesInp.value = newLinesText;
-            STATE.banks[STATE.activeBankIndex].lines = newLinesText;
-            showNotification(`💾 ТЕКУЩИЙ ВИД СОХРАНЁН В СЛОТ ${STATE.activeBankIndex + 1}`);
-        });
+        safeBind('slotSrcSendBtn', 'click', () => slotSrcSendToCanvas());
+        safeBind('slotSrcGetBtn', 'click', () => slotSrcGetFromCanvas());
+        safeBind('slotVisSendBtn', 'click', () => slotVisSendToCanvas());
+        safeBind('slotVisGetBtn', 'click', () => slotVisGetFromCanvas());
 <!-- === МАРКЕР 28: ГЕНЕРАТОР СЕРПИНСКОГО === -->
 <!-- === МАРКЕР 28: ГЕНЕРАТОР СЕРПИНСКОГО === -->
         safeBind('sierpBtn', 'click', () => {
@@ -3051,8 +3271,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     return res;
                 });
                 
-                loadText(mappedLines.join('\n'));
-                resetPositionWithHeightScale(1.0, false, true);
+                loadText(mappedLines.join('\n'), false, false, true);
                 showNotification("ГЕНЕРАТОР: XORORA МАЯТНИК");
                 return;
             }
@@ -3092,8 +3311,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 return res;
             });
 
-            loadText(mappedLines.join('\n'));
-            resetPositionWithHeightScale(1.0, false, true);
+            loadText(mappedLines.join('\n'), false, false, true);
             showNotification(rule === "shift" ? "ГЕНЕРАТОР: СДВИГ" : "ГЕНЕРАТОР: ЦЕНТР");
         });
 
@@ -3102,8 +3320,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             let n = parseInt(safeValue('sierpRows', 128)) || 128;
             let genLines = [];
             for (let i = 1; i <= n; i++) genLines.push('1'.repeat(i));
-            loadText(genLines.join('\n'));
-            resetPositionWithHeightScale(1.0, false, true);
+            loadText(genLines.join('\n'), false, false, true);
             showNotification(`▲ ТРЕУГОЛЬНИК ИЗ 1 (${n} СТРОК)`);
         });
 
@@ -3476,15 +3693,37 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             };
 
             if (triggerSearch && vbaActivation) {
-                let changedAny = true;
-                while (changedAny) {
-                    changedAny = false;
+                // Только ОДНА строка размораживается за вызов, даже если следующие паттерны уже
+                // видны/выполнены прямо сейчас — они дождутся своей очереди на следующих кадрах.
+                let changedAny = false;
+                {
                     if (isSequential) {
                         if (STATE.currentTargetPatternIdx < validPatterns.length) {
                             let targetPatOrig = validPatterns[STATE.currentTargetPatternIdx];
                             let targetPat = getSearchPat(targetPatOrig);
                             if (targetPatOrig.length > 0 && targetPat.length === 0) {
-                                if (!STATE.foundPatterns.has(targetPatOrig)) {
+                                if (STATE.currentTargetPatternIdx === 0) {
+                                    // Исключение: у первой строки нет строк выше неё, поэтому паттерн
+                                    // ищем В НЕЙ САМОЙ (полный текст паттерна, без обрезки первого символа),
+                                    // а не считаем найденным автоматически без проверки содержимого.
+                                    let selfLine = STATE.lines[0];
+                                    if (selfLine && selfLine.display && !STATE.foundPatterns.has(targetPatOrig)) {
+                                        let selfClean = "";
+                                        for (let c = 0; c < selfLine.display.length; c++) {
+                                            if (!selfLine.fillerMask[c] && /\S/.test(selfLine.display[c])) selfClean += selfLine.display[c];
+                                        }
+                                        if (selfClean.indexOf(targetPatOrig) !== -1) {
+                                            STATE.foundPatterns.add(targetPatOrig);
+                                            newlyFound = true;
+                                            STATE.lastFindMethod = "Локально в Строке 1 (сама в себе)";
+                                            STATE.foundPatternsMetadata.set(targetPatOrig, {
+                                                type: 'local', rows: [1], step: Math.abs(STATE.globalStep)
+                                            });
+                                            STATE.currentTargetPatternIdx++;
+                                            changedAny = true;
+                                        }
+                                    }
+                                } else if (!STATE.foundPatterns.has(targetPatOrig)) {
                                     STATE.foundPatterns.add(targetPatOrig);
                                     newlyFound = true;
                                     STATE.lastFindMethod = "Авто-активация (Пустой паттерн)";
@@ -4202,22 +4441,26 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 <!-- === МАРКЕР 37: ПОДСВЕТКА И ПОИСК ПАТТЕРНОВ === -->
         if (triggerSearch && !useGlobalSearch && !useVerticalSearch) {
             let sortedPatterns = [...validPatterns].sort((a, b) => b.length - a.length);
+            // За один проход (один вызов calculateState) размораживаем не больше ОДНОЙ строки,
+            // даже если несколько следующих паттернов уже видны прямо сейчас в других строках —
+            // цикл идёт по всем i, и без этого флага мог продвинуть индекс несколько раз подряд.
+            let sequentialUnlockedThisPass = false;
 
             for (let i = 0; i < STATE.lines.length; i++) {
                 let line = STATE.lines[i];
                 if (vbaActivation && !line.isActive) continue;
                 if (!line.isActive || line.L === 0) continue;
-                
+
                 let lineClean = "";
                 for (let c = 0; c < line.display.length; c++) {
                     if (!line.fillerMask[c] && /\S/.test(line.display[c])) {
                         lineClean += line.display[c];
                     }
                 }
-                
+
                 if (lineClean.length === 0) continue;
 
-                if (isSequential) {
+                if (isSequential && !sequentialUnlockedThisPass) {
                     if (STATE.currentTargetPatternIdx < validPatterns.length) {
                         let targetPatOrig = validPatterns[STATE.currentTargetPatternIdx];
                         let targetPat = getSearchPat(targetPatOrig);
@@ -4231,18 +4474,19 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                 STATE.foundPatterns.add(targetPatOrig);
                                 newlyFound = true;
                                 STATE.lastFindMethod = `Локально в Строке ${line.origIndex + 1} (Колонка ${pos + 1})`;
-                                
+
                                 STATE.foundPatternsMetadata.set(targetPatOrig, {
                                     type: 'local',
                                     rows: [line.origIndex + 1],
                                     step: Math.abs(STATE.globalStep)
                                 });
-                                
+
                                 STATE.currentTargetPatternIdx++;
+                                sequentialUnlockedThisPass = true;
                             }
                         }
                     }
-                } else {
+                } else if (!isSequential) {
                     for (let pIdx = 0; pIdx < sortedPatterns.length; pIdx++) {
                         let searchPatOrig = sortedPatterns[pIdx];
                         let searchPat = getSearchPat(searchPatOrig);
@@ -5092,29 +5336,111 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 loopStart: parseInt(safeValue('loopStart', 0)), loopEnd: parseInt(safeValue('loopEnd', 100)),
                 banks: STATE.banks, activeBankIndex: STATE.activeBankIndex,
                 manualFrame: STATE.manualFrame, sierpRule: safeValue('sierpRule', 'shift'),
+                sierpSeed: safeValue('sierpSeed', '1'), sierpRows: parseInt(safeValue('sierpRows', 128)),
                 cw: parseFloat(safeValue('cwSlider', 1.0)), lh: parseFloat(safeValue('lhSlider', 1.0)),
                 panels: window.getPanelStates ? window.getPanelStates() : null,
-                interleaveAnalysis: safeChecked('interleaveAnalysisCheck', false), showRowNumbers: safeChecked('showRowNumbersCheck', true)
+                interleaveAnalysis: safeChecked('interleaveAnalysisCheck', false), showRowNumbers: safeChecked('showRowNumbersCheck', true),
+                frame: safeChecked('frameCheck', true), frameCenterLock: safeChecked('frameCenterLockCheck', true),
+                activateOnPattern: safeChecked('activateOnPatternCheck', true), highlight: safeChecked('highlightCheck', true),
+                neon: safeChecked('neonCheck', false), bold: safeChecked('boldCheck', false), trail: safeChecked('trailCheck', false),
+                filter: safeChecked('filterCheck', false), interleaving: safeChecked('interleavingCheck', true),
+                substepping: safeChecked('substeppingCheck', false), frameScannerActive: safeChecked('frameScannerActiveCheck', false),
+                stableConglom: safeChecked('stableConglomCheck', true), naezd: safeChecked('naezdCheck', false),
+                naezdSave: safeChecked('naezdSaveCheck', false), hideBlinking: safeChecked('hideBlinkingCheck', false),
+                hideControlsOnDim: safeChecked('hideControlsOnDimCheck', false), waveAnalysis: safeChecked('waveAnalysisCheck', false),
+                ignoreFirstInterleaveChar: safeChecked('ignoreFirstInterleaveCharCheck', false),
+                ignoreFirstTargetChar: safeChecked('ignoreFirstTargetCharCheck', false),
+                interleaveSwapOrder: safeChecked('interleaveSwapOrderCheck', false),
+                accumulateInterleave: safeChecked('accumulateInterleaveCheck', false),
+                autoShiftInterleaveTop: safeChecked('autoShiftInterleaveTopCheck', false)
             };
         };
 
-        safeBind('exportBanksDataBtn', 'click', () => {
+        // File System Access API: если браузер поддерживает (Chrome/Edge), пишем ПРЯМО в выбранный
+        // файл, без папки "Загрузки". Хендл сохраняем в IndexedDB, чтобы пережить F5/перезагрузку —
+        // при следующем визите спросится только разрешение (маленький попап), а не выбор файла заново.
+        let banksDataFileHandle = null;
+
+        function idbGet(key) {
+            return new Promise((resolve) => {
+                let req = indexedDB.open('zerkalius_fs_handles', 1);
+                req.onupgradeneeded = () => req.result.createObjectStore('handles');
+                req.onsuccess = () => {
+                    let tx = req.result.transaction('handles', 'readonly');
+                    let getReq = tx.objectStore('handles').get(key);
+                    getReq.onsuccess = () => resolve(getReq.result || null);
+                    getReq.onerror = () => resolve(null);
+                };
+                req.onerror = () => resolve(null);
+            });
+        }
+        function idbSet(key, value) {
+            return new Promise((resolve) => {
+                let req = indexedDB.open('zerkalius_fs_handles', 1);
+                req.onupgradeneeded = () => req.result.createObjectStore('handles');
+                req.onsuccess = () => {
+                    let tx = req.result.transaction('handles', 'readwrite');
+                    tx.objectStore('handles').put(value, key);
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = () => resolve();
+                };
+                req.onerror = () => resolve();
+            });
+        }
+
+        (async () => {
+            if (!window.showSaveFilePicker) return;
+            let saved = await idbGet('banksDataFileHandle');
+            if (saved) banksDataFileHandle = saved;
+        })();
+
+        safeBind('exportBanksDataBtn', 'click', async () => {
             let snapshot = window.createSnapshotObject ? window.createSnapshotObject() : {};
 
             let fileContent = `// Файл конфигурации пресетов Zerkalius\nconst ZERKALIUS_PRESETS = {\n`;
+            // settings — ПОЛНЫЙ снимок: настройки, панели, рамка, выделенные строки, все 4 слота
             fileContent += `    settings: ${JSON.stringify(snapshot)},\n`;
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < 4; i++) {
                 let linesText = (STATE.banks[i] && STATE.banks[i].lines) ? STATE.banks[i].lines.trim() : "";
                 let patText = (STATE.banks[i] && STATE.banks[i].patterns) ? STATE.banks[i].patterns.trim() : "";
-                
+
                 // Экранируем системные обратные кавычки во избежание синтаксических ошибок
                 let escapedLines = linesText.replace(/`/g, '\\`');
                 let escapedPatterns = patText.replace(/`/g, '\\`');
-                
+
                 fileContent += `    base${i+1}: \`\\n${escapedLines}\\n\`,\n`;
-                fileContent += `    pat${i+1}: \`\\n${escapedPatterns}\\n\`${i === 2 ? '' : ','}\n`;
+                fileContent += `    pat${i+1}: \`\\n${escapedPatterns}\\n\`${i === 3 ? '' : ','}\n`;
             }
             fileContent += `};\n`;
+
+            if (window.showSaveFilePicker) {
+                try {
+                    if (!banksDataFileHandle) {
+                        banksDataFileHandle = await window.showSaveFilePicker({
+                            suggestedName: 'banks_data.js',
+                            types: [{ description: 'JavaScript', accept: { 'application/javascript': ['.js'] } }]
+                        });
+                        await idbSet('banksDataFileHandle', banksDataFileHandle);
+                    } else {
+                        // Хендл восстановлен из IndexedDB после перезагрузки — разрешение на запись
+                        // нужно подтвердить заново (обычно маленький попап, не выбор файла).
+                        let perm = await banksDataFileHandle.queryPermission({ mode: 'readwrite' });
+                        if (perm !== 'granted') {
+                            perm = await banksDataFileHandle.requestPermission({ mode: 'readwrite' });
+                            if (perm !== 'granted') throw new Error('permission-denied');
+                        }
+                    }
+                    const writable = await banksDataFileHandle.createWritable();
+                    await writable.write(fileContent);
+                    await writable.close();
+                    showNotification("banks_data.js ЗАПИСАН НАПРЯМУЮ В ФАЙЛ!");
+                    return;
+                } catch (e) {
+                    if (e.name === 'AbortError') { showNotification("ЭКСПОРТ ОТМЕНЁН"); return; }
+                    banksDataFileHandle = null;
+                    // Если API не сработало по другой причине — падаем в обычную загрузку ниже.
+                }
+            }
 
             const blob = new Blob([fileContent], { type: 'application/javascript' });
             const link = document.createElement('a');
@@ -5122,7 +5448,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             link.href = URL.createObjectURL(blob);
             link.click();
             URL.revokeObjectURL(link.href);
-            showNotification("banks_data.js УСПЕШНО СОХРАНЕН!");
+            showNotification("banks_data.js СОХРАНЁН В ЗАГРУЗКИ (обнови файл рядом с HTML вручную)");
         });
 
 <!-- === МАРКЕР 42: ЭКСПОРТ И ИМПОРТ КОДА === -->
@@ -5467,11 +5793,44 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 reader.onload = function(e) {
                     let content = e.target.result;
                     let codeStr = "";
-                    
+
                     if (file.name.endsWith('.js')) {
-                        let match = content.match(/settings:\s*(\{[\s\S]*?\}),\n/);
-                        if (match) {
-                            content = match[1];
+                        // Полный снимок (settings:{...}) — формат экспорта "Экспорт в banks_data.js" с настройками
+                        let settingsMatch = content.match(/settings:\s*(\{[\s\S]*?\}),\n/);
+                        if (settingsMatch) {
+                            content = settingsMatch[1];
+                        } else {
+                            // Простой banks_data.js: только base1..4/pat1..4 — парсим как слоты
+                            try {
+                                let presets = {};
+                                const keys = ['base1','base2','base3','base4','pat1','pat2','pat3','pat4'];
+                                keys.forEach(k => {
+                                    let re = new RegExp(k + ':\\s*`([\\s\\S]*?)`', 'm');
+                                    let m = content.match(re);
+                                    if (m) presets[k] = m[1];
+                                });
+                                let banks = [];
+                                for (let i = 0; i < 4; i++) {
+                                    let b = (presets['base' + (i+1)] || '').trim();
+                                    let p = (presets['pat' + (i+1)] || '').trim();
+                                    let prevChars = (STATE.banks[i] || {});
+                                    banks.push({ lines: b, patterns: p, char1: prevChars.char1, char0: prevChars.char0 });
+                                }
+                                if (banks.some(b => b.lines.length > 0)) {
+                                    STATE.banks = banks;
+                                    STATE.activeBankIndex = 0;
+                                    switchBank(0, true);
+                                    if (window.updateSlotPanel) updateSlotPanel();
+                                    if (window.setLoadedSource) setLoadedSource(file.name);
+                                    showNotification("СЛОТЫ ИМПОРТИРОВАНЫ ИЗ banks_data.js!");
+                                } else {
+                                    alert("Не удалось найти данные слотов в этом .js файле.");
+                                }
+                            } catch(err) {
+                                alert("Ошибка чтения banks_data.js!");
+                            }
+                            e.target.value = '';
+                            return;
                         }
                     }
 
@@ -5501,6 +5860,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let snapshot = JSON.parse(decodeURIComponent(atob(codeStr)));
                         document.getElementById('snapshotCodeBox').value = codeStr;
                         importSnapshotObject(snapshot);
+                        if (window.setLoadedSource) setLoadedSource(file.name);
                         showNotification("СНИМОК УСПЕШНО ИМПОРТИРОВАН!");
                     } catch(err) {
                         alert("Ошибка чтения файла! Убедитесь, что это правильный .txt снимок или .png фото Зеркалиуса.");
@@ -5731,7 +6091,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (STATE.selectedRows) STATE.selectedRows.clear();
             cancelAnimationFrame(STATE.rafId); UI.playBtn.innerHTML = '▶ Пуск'; UI.playBtn.style.background = '#00ff66';
             document.getElementById('stopBtn').classList.add('inactive');
-            STATE.currentTargetPatternIdx = 1;
+            STATE.currentTargetPatternIdx = 0;
+            STATE.foundPatterns.clear();
+            STATE.foundPatternsMetadata.clear();
             STATE.lastFindMethod = "Ожидание...";
             STATE.pendingCascade = false;            STATE.wasBalancedLastFrame = false;
             STATE.lastSpecialType = "none";
@@ -5821,7 +6183,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             STATE.lastBlobs = [];
             STATE.nextBlobColorId = 1;
             STATE.interleavingLog = [];
-            STATE.currentTargetPatternIdx = 1;
+            STATE.currentTargetPatternIdx = 0;
             STATE.lastFindMethod = "Ожидание...";
             STATE.wasBalancedLastFrame = false;
             STATE.lastSpecialType = "none";
@@ -5931,7 +6293,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (useConglomerates && m) {
                 let visited = new Set();
                 let useStableColors = safeChecked('stableConglomCheck', true);
-                let useSymColors = safeChecked('symConglomCheck', false);
                 if (!STATE.lastBlobs) STATE.lastBlobs = [];
                 if (!STATE.nextBlobColorId) STATE.nextBlobColorId = 1;
                 let currentFrameBlobs = [];
@@ -5985,18 +6346,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
                             let lightness = (type === 1) ? "70%" : "35%";
                             let saturation = (type === 1) ? "100%" : "70%";
-                            let colorKey;
-                            if (useSymColors) {
-                                let sumCol = currentBlob.reduce((s, [, c]) => s + c, 0);
-                                let centroidCol = sumCol / currentBlob.length;
-                                let centroidRow = currentBlob[Math.floor(currentBlob.length / 2)][0];
-                                let rowLen = (STATE.lines[centroidRow] && STATE.lines[centroidRow].display) ? STATE.lines[centroidRow].display.length : 1;
-                                let distFromAxis = Math.round(Math.abs(centroidCol - rowLen / 2));
-                                colorKey = distFromAxis;
-                            } else {
-                                colorKey = assignedId;
-                            }
-                            let color = `hsl(${(colorKey * 137.5) % 360}, ${saturation}, ${lightness})`;
+                            let color = `hsl(${(assignedId * 137.5) % 360}, ${saturation}, ${lightness})`;
                             
                             currentBlob.forEach(([br, bc]) => conglomColors.set(br + "_" + bc, color));
                             currentFrameBlobs.push({ id: assignedId, cells: new Set(cellStrings) });
@@ -6212,64 +6562,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 let useMirror = safeChecked('mirrorCheck', false);
                 let totalRows = STATE.lines.length;
                 let centerY = startY + (useMirror ? (m.renderCount - 1) * m.lineHeight : 0) + (m.lineHeight / 2);
-
-                // Отрисовка двух боковых вертикальных зеркал (левое и правое), доходящих ровно до горизонта
-                if (useMirror) {
-                    ctx.save();
-                    let maxLineLen = 0;
-                    for (let i = 0; i < m.renderCount; i++) {
-                        let actualIndex = (m.startIndex + i) % totalRows;
-                        let lineData = STATE.lines[actualIndex];
-                        if (lineData && lineData.display && lineData.display.length > maxLineLen) {
-                            maxLineLen = lineData.display.length;
-                        }
-                    }
-                    let pyramidWidth = maxLineLen * m.charWidth;
-                    let padding = 20;
-                    let xLeft = baseX - pyramidWidth / 2 - padding;
-                    let xRight = baseX + pyramidWidth / 2 + padding;
-                    let yTop = centerY - m.renderCount * m.lineHeight;
-                    let yBottom = centerY + m.renderCount * m.lineHeight;
-
-                    ctx.strokeStyle = '#cc33ff';
-                    ctx.lineWidth = 2;
-                    ctx.globalAlpha = 0.5;
-                    ctx.shadowBlur = safeChecked('neonCheck', false) ? 8 : 0;
-                    ctx.shadowColor = '#cc33ff';
-
-                    // Левое боковое зеркало
-                    ctx.beginPath();
-                    ctx.moveTo(xLeft, yTop);
-                    ctx.lineTo(xLeft, centerY);
-                    ctx.stroke();
-
-                    ctx.beginPath();
-                    ctx.moveTo(xLeft, yBottom);
-                    ctx.lineTo(xLeft, centerY);
-                    ctx.stroke();
-
-                    // Правое боковое зеркало
-                    ctx.beginPath();
-                    ctx.moveTo(xRight, yTop);
-                    ctx.lineTo(xRight, centerY);
-                    ctx.stroke();
-
-                    ctx.beginPath();
-                    ctx.moveTo(xRight, yBottom);
-                    ctx.lineTo(xRight, centerY);
-                    ctx.stroke();
-
-                    // Декоративные засечки на оси горизонта
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    ctx.moveTo(xLeft - 6, centerY);
-                    ctx.lineTo(xLeft + 6, centerY);
-                    ctx.moveTo(xRight - 6, centerY);
-                    ctx.lineTo(xRight + 6, centerY);
-                    ctx.stroke();
-
-                    ctx.restore();
-                }
 
                 let minNumContainer = document.getElementById('minimizedRowNumbers');
                 let isZenForNumbers = document.body.classList.contains('zen-mode');
@@ -6704,10 +6996,12 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     STATE.flashColor = specColor;
                     triggerFlashAnimation();
 
-                    if (STATE.playerMode === 'scroll') {
+                    // Только истинный баланс (0=1). При АБС.НОЛЬ/АБС.ЕДИНИЦА инверсия одного символа
+                    // переключала бы all0<->all1 туда-обратно бесконечно (зависание вкладки).
+                    if (isBalanced) {
                         if (safeChecked('scannerAutoInvertCheck', false)) {
                             invertFrameContents();
-                            showNotification("СКРОЛЛ: АВТО-ИНВЕРСИЯ ПРИ БАЛАНСЕ");
+                            showNotification("АВТО-ИНВЕРСИЯ ПРИ БАЛАНСЕ");
                         }
                         if (safeChecked('scannerAutoBuildUpCheck', false)) {
                             if (window.buildFrameUpwards) window.buildFrameUpwards();
@@ -6779,6 +7073,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             bar.style.top = (rect.bottom + 6) + 'px';
         }
         positionPlayerButtonsBar();
+        // ResizeObserver ловит только изменение РАЗМЕРА пульта, а не позиции — при самой первой
+        // загрузке страницы позиция могла ещё не устаканиться (шрифты/layout), из-за чего
+        // мини-панель садилась впритык без отступа. Одного кадра оказалось мало — перепроверяем
+        // несколько раз в течение примерно полусекунды, пока раскладка точно не осядет.
+        for (let i = 1; i <= 10; i++) {
+            setTimeout(positionPlayerButtonsBar, i * 50);
+        }
         if (typeof ResizeObserver !== 'undefined') {
             let playerPanelForBar = document.querySelector('.player-panel');
             if (playerPanelForBar) new ResizeObserver(positionPlayerButtonsBar).observe(playerPanelForBar);
@@ -6947,6 +7248,31 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     let bar = document.getElementById('playerButtonsBar');
                     if (bar) bar.classList.toggle('dimmed', overlap && safeChecked('hideControlsOnDimCheck', false));
                 }
+            });
+
+            // Плавающие тулбары (быстрые функции слева/справа) тоже подчиняются той же галке
+            // "Затемнять Пуск/Стоп" — раньше они всегда оставались видимыми поверх строк.
+            let useHideOnDim = safeChecked('hideControlsOnDimCheck', false);
+            document.querySelectorAll('.floating-toolbar, .floating-toolbar-right').forEach(el => {
+                if (!el || el.offsetParent === null) return;
+                const rect = el.getBoundingClientRect();
+                let x = Math.max(0, Math.floor(rect.left));
+                let y = Math.max(0, Math.floor(rect.top));
+                let w = Math.min(canvas.width, Math.ceil(rect.right)) - x;
+                let h = Math.min(canvas.height, Math.ceil(rect.bottom)) - y;
+                if (w <= 0 || h <= 0) { el.classList.remove('dimmed'); return; }
+
+                let data;
+                try { data = ctx.getImageData(x, y, w, h).data; } catch (e) { return; }
+
+                let overlap = false;
+                for (let i = 0; i < data.length; i += SAMPLE_STRIDE) {
+                    if (matchesChar(data[i], data[i + 1], data[i + 2])) {
+                        overlap = true;
+                        break;
+                    }
+                }
+                el.classList.toggle('dimmed', overlap && useHideOnDim);
             });
         }
 
@@ -8182,36 +8508,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 if (content) content.addEventListener('mousedown', startPanelDrag);
                 let bar = document.getElementById('playerButtonsBar');
                 if (bar) bar.addEventListener('mousedown', startPanelDrag);
+                let titleBar = panel.querySelector(':scope > div[style*="cursor:move"]');
+                if (titleBar) titleBar.addEventListener('mousedown', startPanelDrag);
             })();
             setupDraggable('#rightPanel', '🧠 ПАНЕЛЬ');
-
-            // Заголовок mainTitle позиционируется через left:50%+transform, поэтому тащим его через top/left в px напрямую.
-            (() => {
-                let title = document.getElementById('mainTitle');
-                if (!title) return;
-                const startTitleDrag = (e) => {
-                    if (e.button !== 0) return;
-                    e.preventDefault();
-                    let rect = title.getBoundingClientRect();
-                    title.style.left = rect.left + "px";
-                    title.style.top = rect.top + "px";
-                    title.style.bottom = 'auto';
-                    title.style.transform = 'none';
-                    let px = e.clientX, py = e.clientY;
-                    document.onmouseup = () => {
-                        document.onmouseup = null;
-                        document.onmousemove = null;
-                    };
-                    document.onmousemove = (e2) => {
-                        e2.preventDefault();
-                        let dx = px - e2.clientX, dy = py - e2.clientY;
-                        px = e2.clientX; py = e2.clientY;
-                        title.style.top = (title.offsetTop - dy) + "px";
-                        title.style.left = (title.offsetLeft - dx) + "px";
-                    };
-                };
-                title.addEventListener('mousedown', startTitleDrag);
-            })();
 
             // Тяга за левый край правой панели — расширяет её влево (правый край неподвижен).
             (() => {
@@ -8233,28 +8533,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         document.onmouseup = null;
                     };
                 });
-            })();
-
-            // Заголовок в подвале правой панели — уменьшаем шрифт, если строка не влезает по ширине.
-            (() => {
-                let title = document.getElementById('mainTitle');
-                let panel = document.querySelector('#rightPanel');
-                if (!title || !panel) return;
-                const MAIN_TITLE_BASE_SIZE = 15;
-                function fitMainTitleFont() {
-                    title.style.fontSize = MAIN_TITLE_BASE_SIZE + 'px';
-                    let size = MAIN_TITLE_BASE_SIZE;
-                    while (title.scrollWidth > title.clientWidth && size > 6) {
-                        size -= 1;
-                        title.style.fontSize = size + 'px';
-                    }
-                }
-                fitMainTitleFont();
-                if (window.ResizeObserver) {
-                    new ResizeObserver(fitMainTitleFont).observe(panel);
-                } else {
-                    window.addEventListener('resize', fitMainTitleFont);
-                }
             })();
 
             // Переключение вкладок объединённой правой панели.
@@ -8297,12 +8575,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         });
 <!-- === МАРКЕР 60: ГОРЯЧИЕ КЛАВИШИ КЛАВИАТУРЫ === -->
         document.addEventListener('keydown', e => {
-            if (e.key === 'Shift' && !e.ctrlKey && !e.altKey) {
-                e.preventDefault();
-                document.body.classList.toggle('zen-mode');
-                render();
-                showNotification(document.body.classList.contains('zen-mode') ? "РЕЖИМ ДЗЕН" : "СТАНДАРТНЫЙ РЕЖИМ");
-            }
             if (document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT') return;
             let S = parseInt(safeValue('scrollStepInput', 1)) || 1;
             let turbo = (parseInt(safeValue('turboSlider', 1)) || 1) * S;
@@ -8604,6 +8876,22 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 showNotification(`СКАНЕР: НАПРАВЛЕНИЕ ${dirText}`);
             });
 
+            // Авто-инверсия/авто-достройка работают с рамкой — если рамка визуально выключена,
+            // операция всё равно выполнялась бы "вслепую". Включаем "Рамка" автоматически,
+            // чтобы пользователь видел, где именно происходит действие.
+            safeBind('scannerAutoInvertCheck', 'change', function() {
+                if (this.checked) {
+                    const frameChk = document.getElementById('frameCheck');
+                    if (frameChk && !frameChk.checked) { frameChk.checked = true; render(); }
+                }
+            });
+            safeBind('scannerAutoBuildUpCheck', 'change', function() {
+                if (this.checked) {
+                    const frameChk = document.getElementById('frameCheck');
+                    if (frameChk && !frameChk.checked) { frameChk.checked = true; render(); }
+                }
+            });
+
             safeBind('resetPlayerSlidersBtn', 'click', () => {
                 const setVal = (id, val) => {
                     const el = document.getElementById(id);
@@ -8705,9 +8993,12 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 let b3 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base3 : ``;
                 let p3 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.pat3  : ``;
 
-                STATE.banks[0] = { lines: b1.trim(), patterns: p1.trim() };
-                STATE.banks[1] = { lines: b2.trim(), patterns: p2.trim() };
-                STATE.banks[2] = { lines: b3.trim(), patterns: p3.trim() };
+                let b4 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.base4 : ``;
+                let p4 = typeof ZERKALIUS_PRESETS !== 'undefined' ? ZERKALIUS_PRESETS.pat4  : ``;
+                STATE.banks[0] = { lines: b1.trim(), patterns: p1.trim(), char1: "1",  char0: "0" };
+                STATE.banks[1] = { lines: b2.trim(), patterns: p2.trim(), char1: "\\", char0: "/" };
+                STATE.banks[2] = { lines: b3.trim(), patterns: p3.trim(), char1: "<",  char0: ">" };
+                STATE.banks[3] = { lines: b4 ? b4.trim() : "", patterns: p4 ? p4.trim() : "", char1: ")", char0: "(" };
             }
 
             // Синхронизация активных состояний плавающих круглых кнопок с чекбоксами при загрузке
@@ -8752,10 +9043,16 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     loadText(startText);
                 }
             } else {
-                importSnapshotObject(autoSnapshot || ZERKALIUS_PRESETS.settings);
+                // banks_data.js в папке рядом с HTML — это ОСОЗНАННЫЙ экспорт (кнопка "Экспорт в banks_data.js"),
+                // он приоритетнее автосохранения браузера (которое просто подстраховка на случай краша вкладки).
+                let hasFileSettings = typeof ZERKALIUS_PRESETS !== 'undefined' && !!ZERKALIUS_PRESETS.settings;
+                let usedSnapshot = hasFileSettings ? ZERKALIUS_PRESETS.settings : autoSnapshot;
+                importSnapshotObject(usedSnapshot);
                 if (fBtn) fBtn.classList.toggle('active', safeChecked('frameCheck', false));
                 if (rBtn) rBtn.classList.toggle('active', safeChecked('radarCheck', false));
-                if (autoSnapshot && typeof showNotification === 'function') showNotification("⚡ АВТОСОХРАНЕНИЕ ВОССТАНОВЛЕНО");
+                if (typeof showNotification === 'function') {
+                    showNotification(hasFileSettings ? "📂 ЗАГРУЖЕНО ИЗ banks_data.js" : "⚡ АВТОСОХРАНЕНИЕ ВОССТАНОВЛЕНО");
+                }
             }
 
             positionFloatingToolbar();
@@ -8777,16 +9074,69 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 let combinedBottom = Math.max(panelBottom || 0, barBottom || 0);
                 let canvas = document.getElementById('screenCanvas');
                 let canvasTop = canvas ? canvas.getBoundingClientRect().top : 0;
-                let neededTop = (combinedBottom - canvasTop) + 50;
+                let neededTop = (combinedBottom - canvasTop) + 6;
                 let m = getGridMetrics();
                 if (playerPanelEl && m && neededTop > m.startY) {
                     STATE.offsetY += (neededTop - m.startY);
                     render();
                 }
             }, 0);
+
+            // Инициализируем панель слотов
+            if (window.updateSlotPanel) updateSlotPanel();
         };
     </script>
-	
+
+<!-- === МАРКЕР 63: АВТО-ПЕРЕЗАГРУЗКА ПРИ ОБНОВЛЕНИИ НА GITHUB === -->
+    <script>
+        (() => {
+            const REMOTE_URL = "https://raw.githubusercontent.com/MIkhailNkmnme/Binary-Drum-Machine/claude/unclear-request-9ad84a/Zerkalius-genezis.html";
+            const CHECK_INTERVAL_MS = 4000;
+
+            function getVersion(html) {
+                let m = html.match(/v(\d+\.\d+)\s*Ultra-Save/);
+                return m ? parseFloat(m[1]) : null;
+            }
+
+            const localVersion = getVersion(document.body.innerHTML);
+            const ATTEMPT_TIME_KEY = 'zerkalius_last_reload_attempt_time';
+            const RETRY_COOLDOWN_MS = 10000;
+
+            console.log("[Zerkalius auto-update] локальная версия:", localVersion);
+
+            function checkForUpdate() {
+                // raw.githubusercontent.com кэширует ответы на своём CDN (Fastly) на несколько минут —
+                // {cache:"no-store"} влияет только на кэш БРАУЗЕРА, не на кэш самого CDN. Добавляем
+                // случайный параметр в URL, чтобы каждый раз бить в новый, некэшированный ответ.
+                fetch(REMOTE_URL + "?_=" + Date.now(), { cache: "no-store" })
+                    .then(r => {
+                        if (!r.ok) throw new Error("HTTP " + r.status);
+                        return r.text();
+                    })
+                    .then(text => {
+                        let remoteVersion = getVersion(text);
+                        console.log("[Zerkalius auto-update] проверка: локальная =", localVersion, ", удалённая =", remoteVersion);
+                        if (remoteVersion === null || localVersion === null) return;
+                        if (remoteVersion <= localVersion) return;
+                        // GitHub может обновляться быстрее, чем локальный файл на диске (батник качает
+                        // раз в 5 сек). Если перезагрузиться СРАЗУ — локальный файл ещё может быть старым,
+                        // и перезагрузка ничего не даст. Поэтому не блокируем повтор навсегда для этой
+                        // версии, а просто не пробуем чаще, чем раз в RETRY_COOLDOWN_MS — так попытки
+                        // продолжатся, пока локальный файл реально не догонит удалённый.
+                        let lastAttemptTime = parseInt(sessionStorage.getItem(ATTEMPT_TIME_KEY) || "0", 10);
+                        if (Date.now() - lastAttemptTime < RETRY_COOLDOWN_MS) return;
+                        sessionStorage.setItem(ATTEMPT_TIME_KEY, String(Date.now()));
+                        console.log("[Zerkalius auto-update] найдена новая версия, перезагружаю...");
+                        location.reload();
+                    })
+                    .catch(err => console.error("[Zerkalius auto-update] ОШИБКА проверки обновления:", err));
+            }
+
+            checkForUpdate();
+            let timer = setInterval(checkForUpdate, CHECK_INTERVAL_MS);
+        })();
+    </script>
+
 <!-- === МАРКЕР 62: КОНЕЦ === -->
 <!-- === МАРКЕР 62: КОНЕЦ === -->
 </body>
