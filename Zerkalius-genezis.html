@@ -667,7 +667,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.237 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.238 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -1785,14 +1785,17 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             let m = getGridMetrics();
             if (!m) return;
 
-            // Учитываем Пульт (закреплён сверху) — строки не должны прятаться под ним,
-            // поэтому считаем доступную высоту и точку отсчёта от его нижнего края, а не от верха холста.
+            // Учитываем Пульт И мини-панель кнопок (playerButtonsBar, показывается когда пульт свёрнут) —
+            // строки не должны прятаться ни под одним из них, поэтому берём нижний край того, что ниже.
             let clearance = 0;
             let playerPanelEl = document.querySelector('.player-panel');
-            if (playerPanelEl) {
-                let panelRect = playerPanelEl.getBoundingClientRect();
+            let buttonsBarEl = document.getElementById('playerButtonsBar');
+            if (playerPanelEl || buttonsBarEl) {
+                let panelBottom = playerPanelEl ? playerPanelEl.getBoundingClientRect().bottom : 0;
+                let barBottom = buttonsBarEl ? buttonsBarEl.getBoundingClientRect().bottom : 0;
+                let combinedBottom = Math.max(panelBottom, barBottom);
                 let canvasRect = UI.canvas.getBoundingClientRect();
-                clearance = Math.max(0, (panelRect.bottom - canvasRect.top) + 6);
+                clearance = Math.max(0, (combinedBottom - canvasRect.top) + 6);
             }
 
             // Жестко обнуляем все смещения, чтобы вернуть улетевшие строки
@@ -1865,10 +1868,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             // поправляем зазор ещё раз через кадр, когда layout точно готов.
             requestAnimationFrame(() => {
                 let playerPanelEl2 = document.querySelector('.player-panel');
-                if (!playerPanelEl2) return;
-                let panelRect2 = playerPanelEl2.getBoundingClientRect();
+                let buttonsBarEl2 = document.getElementById('playerButtonsBar');
+                if (!playerPanelEl2 && !buttonsBarEl2) return;
+                let panelBottom2 = playerPanelEl2 ? playerPanelEl2.getBoundingClientRect().bottom : 0;
+                let barBottom2 = buttonsBarEl2 ? buttonsBarEl2.getBoundingClientRect().bottom : 0;
+                let combinedBottom2 = Math.max(panelBottom2, barBottom2);
                 let canvasRect2 = UI.canvas.getBoundingClientRect();
-                let clearance2 = Math.max(0, (panelRect2.bottom - canvasRect2.top) + 6);
+                let clearance2 = Math.max(0, (combinedBottom2 - canvasRect2.top) + 6);
                 let m3 = getGridMetrics();
                 if (!m3) return;
                 let centeredStartY2 = m3.startY - STATE.offsetY;
