@@ -667,7 +667,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.226 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.227 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -5285,7 +5285,45 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             };
         };
 
-        safeBind('exportBanksDataBtn', 'click', () => {
+        // File System Access API: если браузер поддерживает (Chrome/Edge), пишем ПРЯМО в выбранный
+        // файл, без папки "Загрузки". Хендл сохраняем в IndexedDB, чтобы пережить F5/перезагрузку —
+        // при следующем визите спросится только разрешение (маленький попап), а не выбор файла заново.
+        let banksDataFileHandle = null;
+
+        function idbGet(key) {
+            return new Promise((resolve) => {
+                let req = indexedDB.open('zerkalius_fs_handles', 1);
+                req.onupgradeneeded = () => req.result.createObjectStore('handles');
+                req.onsuccess = () => {
+                    let tx = req.result.transaction('handles', 'readonly');
+                    let getReq = tx.objectStore('handles').get(key);
+                    getReq.onsuccess = () => resolve(getReq.result || null);
+                    getReq.onerror = () => resolve(null);
+                };
+                req.onerror = () => resolve(null);
+            });
+        }
+        function idbSet(key, value) {
+            return new Promise((resolve) => {
+                let req = indexedDB.open('zerkalius_fs_handles', 1);
+                req.onupgradeneeded = () => req.result.createObjectStore('handles');
+                req.onsuccess = () => {
+                    let tx = req.result.transaction('handles', 'readwrite');
+                    tx.objectStore('handles').put(value, key);
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = () => resolve();
+                };
+                req.onerror = () => resolve();
+            });
+        }
+
+        (async () => {
+            if (!window.showSaveFilePicker) return;
+            let saved = await idbGet('banksDataFileHandle');
+            if (saved) banksDataFileHandle = saved;
+        })();
+
+        safeBind('exportBanksDataBtn', 'click', async () => {
             let snapshot = window.createSnapshotObject ? window.createSnapshotObject() : {};
 
             let fileContent = `// Файл конфигурации пресетов Zerkalius\nconst ZERKALIUS_PRESETS = {\n`;
@@ -5304,13 +5342,42 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
             fileContent += `};\n`;
 
+            if (window.showSaveFilePicker) {
+                try {
+                    if (!banksDataFileHandle) {
+                        banksDataFileHandle = await window.showSaveFilePicker({
+                            suggestedName: 'banks_data.js',
+                            types: [{ description: 'JavaScript', accept: { 'application/javascript': ['.js'] } }]
+                        });
+                        await idbSet('banksDataFileHandle', banksDataFileHandle);
+                    } else {
+                        // Хендл восстановлен из IndexedDB после перезагрузки — разрешение на запись
+                        // нужно подтвердить заново (обычно маленький попап, не выбор файла).
+                        let perm = await banksDataFileHandle.queryPermission({ mode: 'readwrite' });
+                        if (perm !== 'granted') {
+                            perm = await banksDataFileHandle.requestPermission({ mode: 'readwrite' });
+                            if (perm !== 'granted') throw new Error('permission-denied');
+                        }
+                    }
+                    const writable = await banksDataFileHandle.createWritable();
+                    await writable.write(fileContent);
+                    await writable.close();
+                    showNotification("banks_data.js ЗАПИСАН НАПРЯМУЮ В ФАЙЛ!");
+                    return;
+                } catch (e) {
+                    if (e.name === 'AbortError') { showNotification("ЭКСПОРТ ОТМЕНЁН"); return; }
+                    banksDataFileHandle = null;
+                    // Если API не сработало по другой причине — падаем в обычную загрузку ниже.
+                }
+            }
+
             const blob = new Blob([fileContent], { type: 'application/javascript' });
             const link = document.createElement('a');
             link.download = `banks_data.js`;
             link.href = URL.createObjectURL(blob);
             link.click();
             URL.revokeObjectURL(link.href);
-            showNotification("banks_data.js УСПЕШНО СОХРАНЕН!");
+            showNotification("banks_data.js СОХРАНЁН В ЗАГРУЗКИ (обнови файл рядом с HTML вручную)");
         });
 
 <!-- === МАРКЕР 42: ЭКСПОРТ И ИМПОРТ КОДА === -->
