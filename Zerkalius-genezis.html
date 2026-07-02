@@ -667,7 +667,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.232 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.233 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -8996,7 +8996,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
 
             const localVersion = getVersion(document.body.innerHTML);
-            const ATTEMPT_KEY = 'zerkalius_last_reload_attempt';
+            const ATTEMPT_TIME_KEY = 'zerkalius_last_reload_attempt_time';
+            const RETRY_COOLDOWN_MS = 10000;
 
             console.log("[Zerkalius auto-update] локальная версия:", localVersion);
 
@@ -9012,12 +9013,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         if (remoteVersion === null || localVersion === null) return;
                         if (remoteVersion <= localVersion) return;
                         // GitHub может обновляться быстрее, чем локальный файл на диске (батник качает
-                        // раз в 5 сек) — без этой защиты страница видела бы "версия новее" и
-                        // перезагружалась бы бесконечно, пока локальный файл не догонит удалённый.
-                        // Пробуем перезагрузку только один раз на каждую новую увиденную версию.
-                        let lastAttempted = sessionStorage.getItem(ATTEMPT_KEY);
-                        if (String(remoteVersion) === lastAttempted) return;
-                        sessionStorage.setItem(ATTEMPT_KEY, String(remoteVersion));
+                        // раз в 5 сек). Если перезагрузиться СРАЗУ — локальный файл ещё может быть старым,
+                        // и перезагрузка ничего не даст. Поэтому не блокируем повтор навсегда для этой
+                        // версии, а просто не пробуем чаще, чем раз в RETRY_COOLDOWN_MS — так попытки
+                        // продолжатся, пока локальный файл реально не догонит удалённый.
+                        let lastAttemptTime = parseInt(sessionStorage.getItem(ATTEMPT_TIME_KEY) || "0", 10);
+                        if (Date.now() - lastAttemptTime < RETRY_COOLDOWN_MS) return;
+                        sessionStorage.setItem(ATTEMPT_TIME_KEY, String(Date.now()));
                         console.log("[Zerkalius auto-update] найдена новая версия, перезагружаю...");
                         location.reload();
                     })
