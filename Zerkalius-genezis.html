@@ -139,8 +139,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             color: transparent; white-space: pre-wrap; word-wrap: break-word; pointer-events: none; z-index: 1; border: 1px solid transparent; overflow: hidden;
             text-align: right;
         }
-        .highlight-textarea-backdrop span.found { color: transparent; background: var(--found-bg); border: 1px solid var(--found-color, #bfff00); border-radius: 2px; box-shadow: 0 0 4px var(--found-color, #bfff00);}
-        .highlight-textarea-backdrop span.target { color: transparent; background: rgba(255, 0, 255, 0.35); border: 1px solid #ff00ff; border-radius: 2px; text-decoration: underline;}
+        .highlight-textarea-backdrop span.found { display: block; width: 100%; box-sizing: border-box; color: transparent; background: var(--found-bg); border: 1px solid var(--found-color, #bfff00); border-radius: 2px; box-shadow: 0 0 4px var(--found-color, #bfff00);}
+        .highlight-textarea-backdrop span.target { display: block; width: 100%; box-sizing: border-box; color: transparent; background: rgba(255, 0, 255, 0.35); border: 1px solid #ff00ff; border-radius: 2px; text-decoration: underline;}
         textarea.pattern-input { width: 100%; height: 100%; flex: 1; background: transparent; color: #00ccff; z-index: 2; margin: 0; padding: 4px; box-sizing: border-box; font-family: inherit; font-size: 11px; caret-color: #00ccff; resize: none; text-align: right; }
         textarea.pattern-input::-webkit-scrollbar-thumb:hover { background: #00ccff; }
         textarea.pattern-input::-webkit-resizer { background: transparent; border-bottom: 2px solid #00ccff; border-right: 2px solid #00ccff; }
@@ -667,7 +667,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.217 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.218 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -5930,6 +5930,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             cancelAnimationFrame(STATE.rafId); UI.playBtn.innerHTML = '▶ Пуск'; UI.playBtn.style.background = '#00ff66';
             document.getElementById('stopBtn').classList.add('inactive');
             STATE.currentTargetPatternIdx = 0;
+            STATE.foundPatterns.clear();
+            STATE.foundPatternsMetadata.clear();
             STATE.lastFindMethod = "Ожидание...";
             STATE.pendingCascade = false;            STATE.wasBalancedLastFrame = false;
             STATE.lastSpecialType = "none";
