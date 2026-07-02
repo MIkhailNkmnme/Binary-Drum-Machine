@@ -667,7 +667,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.238 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.239 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -1998,6 +1998,30 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
             if (snapshot.loopStart !== undefined) setElVal('loopStart', snapshot.loopStart);
             if (snapshot.loopEnd !== undefined) setElVal('loopEnd', snapshot.loopEnd);
+
+            setElChk('verticalSearchCheck', snapshot.verticalSearch !== undefined ? snapshot.verticalSearch : false);
+            setElChk('frameCheck', snapshot.frame !== undefined ? snapshot.frame : true);
+            setElChk('frameCenterLockCheck', snapshot.frameCenterLock !== undefined ? snapshot.frameCenterLock : true);
+            setElChk('activateOnPatternCheck', snapshot.activateOnPattern !== undefined ? snapshot.activateOnPattern : true);
+            setElChk('highlightCheck', snapshot.highlight !== undefined ? snapshot.highlight : true);
+            setElChk('neonCheck', snapshot.neon !== undefined ? snapshot.neon : false);
+            setElChk('boldCheck', snapshot.bold !== undefined ? snapshot.bold : false);
+            setElChk('trailCheck', snapshot.trail !== undefined ? snapshot.trail : false);
+            setElChk('filterCheck', snapshot.filter !== undefined ? snapshot.filter : false);
+            setElChk('interleavingCheck', snapshot.interleaving !== undefined ? snapshot.interleaving : true);
+            setElChk('substeppingCheck', snapshot.substepping !== undefined ? snapshot.substepping : false);
+            setElChk('frameScannerActiveCheck', snapshot.frameScannerActive !== undefined ? snapshot.frameScannerActive : false);
+            setElChk('stableConglomCheck', snapshot.stableConglom !== undefined ? snapshot.stableConglom : true);
+            setElChk('naezdCheck', snapshot.naezd !== undefined ? snapshot.naezd : false);
+            setElChk('naezdSaveCheck', snapshot.naezdSave !== undefined ? snapshot.naezdSave : false);
+            setElChk('hideBlinkingCheck', snapshot.hideBlinking !== undefined ? snapshot.hideBlinking : false);
+            setElChk('hideControlsOnDimCheck', snapshot.hideControlsOnDim !== undefined ? snapshot.hideControlsOnDim : false);
+            setElChk('waveAnalysisCheck', snapshot.waveAnalysis !== undefined ? snapshot.waveAnalysis : false);
+            setElChk('ignoreFirstInterleaveCharCheck', snapshot.ignoreFirstInterleaveChar !== undefined ? snapshot.ignoreFirstInterleaveChar : false);
+            setElChk('ignoreFirstTargetCharCheck', snapshot.ignoreFirstTargetChar !== undefined ? snapshot.ignoreFirstTargetChar : false);
+            setElChk('interleaveSwapOrderCheck', snapshot.interleaveSwapOrder !== undefined ? snapshot.interleaveSwapOrder : false);
+            setElChk('accumulateInterleaveCheck', snapshot.accumulateInterleave !== undefined ? snapshot.accumulateInterleave : false);
+            setElChk('autoShiftInterleaveTopCheck', snapshot.autoShiftInterleaveTop !== undefined ? snapshot.autoShiftInterleaveTop : false);
 
             if (snapshot.banks && Array.isArray(snapshot.banks)) {
                 if (typeof snapshot.banks[0] === 'string') {
@@ -5308,7 +5332,20 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 manualFrame: STATE.manualFrame, sierpRule: safeValue('sierpRule', 'shift'),
                 cw: parseFloat(safeValue('cwSlider', 1.0)), lh: parseFloat(safeValue('lhSlider', 1.0)),
                 panels: window.getPanelStates ? window.getPanelStates() : null,
-                interleaveAnalysis: safeChecked('interleaveAnalysisCheck', false), showRowNumbers: safeChecked('showRowNumbersCheck', true)
+                interleaveAnalysis: safeChecked('interleaveAnalysisCheck', false), showRowNumbers: safeChecked('showRowNumbersCheck', true),
+                frame: safeChecked('frameCheck', true), frameCenterLock: safeChecked('frameCenterLockCheck', true),
+                activateOnPattern: safeChecked('activateOnPatternCheck', true), highlight: safeChecked('highlightCheck', true),
+                neon: safeChecked('neonCheck', false), bold: safeChecked('boldCheck', false), trail: safeChecked('trailCheck', false),
+                filter: safeChecked('filterCheck', false), interleaving: safeChecked('interleavingCheck', true),
+                substepping: safeChecked('substeppingCheck', false), frameScannerActive: safeChecked('frameScannerActiveCheck', false),
+                stableConglom: safeChecked('stableConglomCheck', true), naezd: safeChecked('naezdCheck', false),
+                naezdSave: safeChecked('naezdSaveCheck', false), hideBlinking: safeChecked('hideBlinkingCheck', false),
+                hideControlsOnDim: safeChecked('hideControlsOnDimCheck', false), waveAnalysis: safeChecked('waveAnalysisCheck', false),
+                ignoreFirstInterleaveChar: safeChecked('ignoreFirstInterleaveCharCheck', false),
+                ignoreFirstTargetChar: safeChecked('ignoreFirstTargetCharCheck', false),
+                interleaveSwapOrder: safeChecked('interleaveSwapOrderCheck', false),
+                accumulateInterleave: safeChecked('accumulateInterleaveCheck', false),
+                autoShiftInterleaveTop: safeChecked('autoShiftInterleaveTopCheck', false)
             };
         };
 
