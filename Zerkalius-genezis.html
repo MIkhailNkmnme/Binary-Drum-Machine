@@ -404,8 +404,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         <div style="color:#00ccff; font-size:8px; text-align:center; margin-bottom:1px;">визуал</div>
                         <textarea id="slotPreviewVis" class="slot-preview" style="color:#00ccff;"></textarea>
                         <div style="display:flex; gap:2px; margin-top:2px;">
-                            <button id="slotVisGetBtn" class="btn-action" style="flex:1.618; margin:0; padding:1px; font-size:8px; color:#bfff00; border-color:#bfff00;" title="Получить текущий холст в визуал (исходная не меняется)">⬅️ Слот</button>
-                            <button id="slotVisSendBtn" class="btn-action" style="flex:1; margin:0; padding:1px; font-size:8px; background:#00ccff; color:#000; border-color:#00ccff;" title="Отправить визуал как есть на холст (исходная не меняется)">➡️ Холст</button>
+                            <button id="slotVisGetBtn" class="btn-action" style="flex:1; margin:0; padding:1px; font-size:8px; color:#bfff00; border:2px solid #ff3333;" title="Получить текущий холст в визуал (исходная не меняется)">Слот</button>
+                            <button id="slotVisSendBtn" class="btn-action" style="flex:1; margin:0; padding:1px; font-size:8px; background:#00ccff; color:#000; border-color:#00ccff;" title="Отправить визуал как есть на холст (исходная не меняется)">Холст</button>
                         </div>
                     </div>
                 </div>
@@ -667,7 +667,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.240 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.241 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -7068,8 +7068,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         positionPlayerButtonsBar();
         // ResizeObserver ловит только изменение РАЗМЕРА пульта, а не позиции — при самой первой
         // загрузке страницы позиция могла ещё не устаканиться (шрифты/layout), из-за чего
-        // мини-панель садилась впритык без отступа. Перепроверяем ещё раз через кадр.
-        requestAnimationFrame(positionPlayerButtonsBar);
+        // мини-панель садилась впритык без отступа. Одного кадра оказалось мало — перепроверяем
+        // несколько раз в течение примерно полусекунды, пока раскладка точно не осядет.
+        for (let i = 1; i <= 10; i++) {
+            setTimeout(positionPlayerButtonsBar, i * 50);
+        }
         if (typeof ResizeObserver !== 'undefined') {
             let playerPanelForBar = document.querySelector('.player-panel');
             if (playerPanelForBar) new ResizeObserver(positionPlayerButtonsBar).observe(playerPanelForBar);
