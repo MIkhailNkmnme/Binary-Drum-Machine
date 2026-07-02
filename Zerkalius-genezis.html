@@ -667,7 +667,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.220 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.221 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -3644,7 +3644,28 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                             let targetPatOrig = validPatterns[STATE.currentTargetPatternIdx];
                             let targetPat = getSearchPat(targetPatOrig);
                             if (targetPatOrig.length > 0 && targetPat.length === 0) {
-                                if (!STATE.foundPatterns.has(targetPatOrig)) {
+                                if (STATE.currentTargetPatternIdx === 0) {
+                                    // Исключение: у первой строки нет строк выше неё, поэтому паттерн
+                                    // ищем В НЕЙ САМОЙ (полный текст паттерна, без обрезки первого символа),
+                                    // а не считаем найденным автоматически без проверки содержимого.
+                                    let selfLine = STATE.lines[0];
+                                    if (selfLine && selfLine.display && !STATE.foundPatterns.has(targetPatOrig)) {
+                                        let selfClean = "";
+                                        for (let c = 0; c < selfLine.display.length; c++) {
+                                            if (!selfLine.fillerMask[c] && /\S/.test(selfLine.display[c])) selfClean += selfLine.display[c];
+                                        }
+                                        if (selfClean.indexOf(targetPatOrig) !== -1) {
+                                            STATE.foundPatterns.add(targetPatOrig);
+                                            newlyFound = true;
+                                            STATE.lastFindMethod = "Локально в Строке 1 (сама в себе)";
+                                            STATE.foundPatternsMetadata.set(targetPatOrig, {
+                                                type: 'local', rows: [1], step: Math.abs(STATE.globalStep)
+                                            });
+                                            STATE.currentTargetPatternIdx++;
+                                            changedAny = true;
+                                        }
+                                    }
+                                } else if (!STATE.foundPatterns.has(targetPatOrig)) {
                                     STATE.foundPatterns.add(targetPatOrig);
                                     newlyFound = true;
                                     STATE.lastFindMethod = "Авто-активация (Пустой паттерн)";
