@@ -667,7 +667,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.230 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.231 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -8998,11 +8998,17 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             const localVersion = getVersion(document.body.innerHTML);
             const ATTEMPT_KEY = 'zerkalius_last_reload_attempt';
 
+            console.log("[Zerkalius auto-update] локальная версия:", localVersion);
+
             function checkForUpdate() {
                 fetch(REMOTE_URL, { cache: "no-store" })
-                    .then(r => r.text())
+                    .then(r => {
+                        if (!r.ok) throw new Error("HTTP " + r.status);
+                        return r.text();
+                    })
                     .then(text => {
                         let remoteVersion = getVersion(text);
+                        console.log("[Zerkalius auto-update] проверка: локальная =", localVersion, ", удалённая =", remoteVersion);
                         if (remoteVersion === null || localVersion === null) return;
                         if (remoteVersion <= localVersion) return;
                         // GitHub может обновляться быстрее, чем локальный файл на диске (батник качает
@@ -9012,9 +9018,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let lastAttempted = sessionStorage.getItem(ATTEMPT_KEY);
                         if (String(remoteVersion) === lastAttempted) return;
                         sessionStorage.setItem(ATTEMPT_KEY, String(remoteVersion));
+                        console.log("[Zerkalius auto-update] найдена новая версия, перезагружаю...");
                         location.reload();
                     })
-                    .catch(() => {});
+                    .catch(err => console.error("[Zerkalius auto-update] ОШИБКА проверки обновления:", err));
             }
 
             checkForUpdate();
