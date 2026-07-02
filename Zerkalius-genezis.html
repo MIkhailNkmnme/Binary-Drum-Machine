@@ -667,7 +667,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.241 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.242 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -1861,12 +1861,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             render();
             showNotification(targetActiveOnly ? "ЦЕНТР: АКТИВНЫЙ БЛОК" : "ЦЕНТР: ВСЕ СТРОКИ (100%)");
 
-            // Синхронный getBoundingClientRect() пульта сразу после смены шрифта/экрана иногда
-            // возвращает ещё не устаканенный layout (браузер не успел пересчитать раскладку) —
-            // из-за этого при генерации "на лету" (без перезагрузки страницы) строка иногда
-            // оказывалась не там, где надо, хотя после F5 всё было верно. Перепроверяем и
-            // поправляем зазор ещё раз через кадр, когда layout точно готов.
-            requestAnimationFrame(() => {
+            // Синхронный getBoundingClientRect() пульта/мини-пульта сразу после смены шрифта/экрана
+            // иногда возвращает ещё не устаканенный layout (мини-пульт сам "доезжает" до своей
+            // позиции через несколько кадров — см. positionPlayerButtonsBar). Одной перепроверки
+            // мало — повторяем несколько раз в течение ~0.5 сек, пока оба элемента точно не осядут.
+            const recheckClearance = () => {
                 let playerPanelEl2 = document.querySelector('.player-panel');
                 let buttonsBarEl2 = document.getElementById('playerButtonsBar');
                 if (!playerPanelEl2 && !buttonsBarEl2) return;
@@ -1883,7 +1882,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     STATE.offsetY = neededOffsetY;
                     render();
                 }
-            });
+            };
+            for (let i = 1; i <= 10; i++) {
+                setTimeout(recheckClearance, i * 50);
+            }
         }
 
         let centerClickTimeout = null;
@@ -5330,6 +5332,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 loopStart: parseInt(safeValue('loopStart', 0)), loopEnd: parseInt(safeValue('loopEnd', 100)),
                 banks: STATE.banks, activeBankIndex: STATE.activeBankIndex,
                 manualFrame: STATE.manualFrame, sierpRule: safeValue('sierpRule', 'shift'),
+                sierpSeed: safeValue('sierpSeed', '1'), sierpRows: parseInt(safeValue('sierpRows', 128)),
                 cw: parseFloat(safeValue('cwSlider', 1.0)), lh: parseFloat(safeValue('lhSlider', 1.0)),
                 panels: window.getPanelStates ? window.getPanelStates() : null,
                 interleaveAnalysis: safeChecked('interleaveAnalysisCheck', false), showRowNumbers: safeChecked('showRowNumbersCheck', true),
