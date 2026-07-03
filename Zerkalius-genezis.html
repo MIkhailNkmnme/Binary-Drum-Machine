@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-==========================================================================
+===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
@@ -115,7 +115,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
         .row-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
         label, .lbl { font-size: 11px; color: #aaa; font-family: sans-serif; cursor: pointer;}
-        .val { color: #fff; font-family: monospace; font-size: 11px; }
+        .val { color: #fff; font-family: monospace; font-size: 11px; display: inline-block; min-width: 5ch; text-align: left; }
 
         input[type="range"] { width: 100%; cursor: pointer; margin-bottom: 5px; height: 12px; }
         input[type="number"], input[type="text"] { background: #000; color: #fff; border: 1px solid #444; padding: 3px; border-radius: 2px; width: 45px; text-align: center; font-size: 11px;}
@@ -138,11 +138,26 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         .highlight-textarea-container { position: relative; width: 100%; flex: 1; min-height: 120px; display: flex; flex-direction: column; margin-bottom: 2px; }
         .highlight-textarea-backdrop {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 4px; box-sizing: border-box; font-family: inherit; font-size: 11px;
-            color: transparent; white-space: pre-wrap; word-wrap: break-word; pointer-events: none; z-index: 1; border: 1px solid transparent; overflow: hidden;
+            color: transparent; white-space: pre; word-wrap: break-word; pointer-events: none; z-index: 1; border: 1px solid transparent; overflow: hidden;
             text-align: right;
         }
-        .highlight-textarea-backdrop span.found { display: block; width: 100%; box-sizing: border-box; color: transparent; background: var(--found-bg); border-radius: 2px; }
-        .highlight-textarea-backdrop span.target { display: block; width: 100%; box-sizing: border-box; color: transparent; background: rgba(255, 0, 255, 0.35); border-radius: 2px; }
+        .highlight-textarea-backdrop span.found { display: block; width: 100%; box-sizing: border-box; color: transparent; background: var(--found-bg); border-radius: 2px; position: relative; }
+.highlight-textarea-backdrop span.target {
+    display: block;
+    width: 100%;
+    min-height: 1.1em; /* Гарантирует высоту строки даже если там пусто */
+    color: transparent;
+    border-radius: 2px;
+    position: relative;
+}
+        /* Обычная строка паттернов (не найдена, не текущая цель) — обёртка нужна только чтобы
+           пристроить номер строки (span.pat-line-num) и, если нужно, границу рамки. */
+        .highlight-textarea-backdrop span.plain-line { display: block; width: 100%; box-sizing: border-box; min-height: 1.1em; color: transparent; position: relative; }
+        /* Верхняя/нижняя граница рамки на холсте (frameTopIdx/frameBottomIdx в updatePatternBackdrop) */
+        .highlight-textarea-backdrop span.frame-top-line { border-top: 2px solid #ffd500; }
+        .highlight-textarea-backdrop span.frame-bottom-line { border-bottom: 2px solid #ffd500; }
+        /* Номер строки паттерна = номер строки холста, которую этот паттерн должен разморозить */
+        .highlight-textarea-backdrop span.pat-line-num { position: absolute; left: 2px; top: 0; font-size: 8px; color: #666; }
         textarea.pattern-input { width: 100%; height: 100%; flex: 1; background: transparent; color: #00ccff; z-index: 2; margin: 0; padding: 4px; box-sizing: border-box; font-family: inherit; font-size: 11px; caret-color: #00ccff; resize: none; text-align: right; }
         textarea.pattern-input::-webkit-scrollbar-thumb:hover { background: #00ccff; }
         textarea.pattern-input::-webkit-resizer { background: transparent; border-bottom: 2px solid #00ccff; border-right: 2px solid #00ccff; }
@@ -237,6 +252,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         .float-circle-btn:hover { background: #222; border-color: #00ccff; }
         .float-circle-btn.active { background: #00ccff; color: #000; border-color: #00ccff; box-shadow: 0 0 10px rgba(0, 204, 255, 0.5); }
 		
+/* === МАРКЕР 04: CSS ПЛАВАЮЩИЕ ТУЛБАРЫ И ПРАВАЯ ПАНЕЛЬ === */
         #rightPanel {
             position: absolute; top: 0; right: 0; z-index: 90; background: var(--right-panel-accent-bg, rgba(10, 10, 10, 0.75)); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border-left: 1px solid rgba(0, 204, 255, 0.3); width: 300px; height: 100vh;
@@ -312,13 +328,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         .dragging { transition: none !important; }
         #turboSlider { accent-color: #ff3333; }
     </style>
-<!-- === МАРКЕР 04: CSS СТИЛИ КОНЕЦ === -->
+<!-- === МАРКЕР 05: CSS СТИЛИ КОНЕЦ === -->
 </head>
 <body>
     <input type="checkbox" id="radarCheck" style="display:none;">
-<!-- === МАРКЕР 05: ЗАГОЛОВОК НАЧАЛО === -->
+<!-- === МАРКЕР 06: ЗАГОЛОВОК НАЧАЛО === -->
 <div id="rotateViewBadge">⟲ ВИД ПОВЁРНУТ НА 90°</div>
-<!-- === МАРКЕР 06: ЗАГОЛОВОК КОНЕЦ === -->
+<!-- === МАРКЕР 07: ЗАГОЛОВОК КОНЕЦ === -->
 <script src="banks_data.js"></script>
     <script>
         window.onerror = function(message, source, lineno, colno, error) {
@@ -353,7 +369,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         };
     </script>
 
-<!-- === МАРКЕР 07: ЛЕВАЯ ПАНЕЛЬ === -->
+<!-- === МАРКЕР 08: ЛЕВАЯ ПАНЕЛЬ === -->
     <div class="controls" onclick="event.stopPropagation();" title="Левая панель настроек.">
         <div class="controls-content">
 
@@ -460,7 +476,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 <input type="number" id="sierpRows" value="128" title="Строки" style="flex:1;">
                 <button id="sierpBtn" class="btn-action" style="flex:2; margin:0; color:#00ff66; border-color:#00ff66;">Сгенерировать</button>
             </div>
-            <button id="buildTriangleBtn" class="btn-action" style="margin:0; color:#ffd500; border-color:#ffd500;" title="Строит треугольник: 1, 11, 111, 1111... до N строк (N берётся из поля 'Строки' выше)">▲ Треугольник из 1 (1,11,111...)</button>
+            <button id="buildTriangleBtn" class="btn-action" style="margin:0; color:#ffd500; border-color:#ffd500;" title="Строит пирамиду из сида (поле 'Сид' выше): строка1 = сид, строка2 = сид+сид, строка3 = сид+сид+сид, и т.д. до N строк (N — поле 'Строки')">▲ Пирамида из сида (сид+сид=след.стр.)</button>
         </details>
 
         <details class="control-group">
@@ -501,6 +517,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         </details>
 
         <details class="control-group" open>
+<!-- === МАРКЕР 09: ЛЕВАЯ ПАНЕЛЬ: МОДИФИКАТОРЫ ДВИЖЕНИЯ === -->
             <summary style="font-weight:bold; color:#cc33ff; margin-bottom: 4px;">⚙️ МОДИФИКАТОРЫ ДВИЖЕНИЯ</summary>
             <div style="margin-top: 4px; margin-bottom: 2px;" class="row-between">
                 <span class="lbl">Множитель длины (N): <span class="val" id="nFactorVal">1</span></span>
@@ -667,9 +684,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
     </div>
 </div>
 
-<!-- === МАРКЕР 08: ПАНЕЛЬ ПЛЕЕРА === -->
+<!-- === МАРКЕР 10: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.245 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.293 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -742,9 +759,14 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     <button id="invertFrameExceptFirstBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#ffd500; color:#ffd500; background:none;" title="Инвертировать символы внутри рамки, пропуская первый символ каждой строки">🔄 Инверт. кроме 1-го</button>
                 </div>
                 <div class="row-between">
+                    <button id="reverseFrameBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#ff9900; color:#ff9900; background:none;" title="Зеркалить символы слева-направо внутри каждой строки рамки (без инверсии 0/1)">🔃 Реверс (по рамке)</button>
+                    <button id="deltaColorModeBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#888; color:#888; background:none;" title="Цикл (Δ, кадр -N): 1) показать только НЕменяющиеся (красные), меняющиеся скрыть; 2) наоборот — показать только меняющиеся (чёрные); 3) показать все, раскрашено; 4) выключено — обычные цвета">↩️ Цвета (Δ выкл.)</button>
+                </div>
+                <div class="row-between">
                     <button id="buildUpwardsBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#ff00ff; color:#ff00ff; background:none; font-weight:bold;" title="Скопировать блок в рамке, перевернуть и безусловно вставить сверху">🏗️ ВВЕРХ</button>
                     <button id="buildRightwardsBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#00ffcc; color:#00ffcc; background:none; font-weight:bold;" title="Транспонировать и пристроить блок в рамке вправо (завершить в прямоугольник)">🏗️ ВПРАВО</button>
                 </div>
+                <button id="buildUpwardsUntilBalancedBtn" class="btn-action" style="margin:0; margin-top:2px; font-size:9px; padding:3px; border-color:#ffd500; color:#ffd500; background:none; font-weight:bold;" title="Один клик = один шаг. Если 0≠1 в рамке — достраивает зеркальную строку сверху (рамка растёт на 1 вверх). Если 0=1 (баланс) — ничего не строит, просто расширяет рамку на 1 строку вниз. Жать вручную, глядя на результат">⚖️🏗️ ШАГ БАЛАНСА (1 СТРОКА)</button>
                 <div style="display:flex; gap:4px; align-items:center;">
                     <button id="padCharLeftBtn" class="btn-action" style="margin:0; flex:1; font-size:9px; padding:3px; border-color:#00ffff; color:#00ffff; background:none;" title="Добавить символ (или удалить, если минус) слева">⬅️ СЛЕВА</button>
                     <select id="padCharSelect" style="width:35px; margin:0; height:18px; font-size:10px; padding:0; background:#000; color:#00ffff; border:1px solid #00ffff; border-radius:2px; text-align:center; cursor:pointer; outline:none;" title="0 и 1 добавляют, минус (-) удаляет">
@@ -757,18 +779,27 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
                 <div style="display:flex; align-items:center; gap:2px; width:100%;">
                     <button id="manualCylinderShiftLeftBtn" class="bank-btn" style="width:52px; height:18px; padding:0 3px; border-color:#00ccff; color:#00ccff; font-weight:bold; font-size:9px;" title="Вручную сдвинуть влево все строки в рамке циклически на 1 символ">◀ Цилин.</button>
-                    <label style="display:flex; align-items:center; margin:0; flex:1; justify-content:center;">
-                        <input type="checkbox" id="cylinderCheck">
-                    </label>
+                    <div style="display:flex; align-items:center; gap:2px; flex:1; justify-content:center;">
+                        <label style="display:flex; align-items:center; margin:0;" title="Непрерывный Цилиндр в симуляции (см. МОДИФИКАТОРЫ ДВИЖЕНИЯ)">
+                            <input type="checkbox" id="cylinderCheck">
+                        </label>
+                        <button id="cylinderAutoBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-size:10px; border-color:#00ccff; color:#00ccff;" title="Непрерывный ручной сдвиг Цилиндром (как Пуск) в направлении последней нажатой стрелки — нажать ещё раз, чтобы остановить">🔁</button>
+                    </div>
                     <button id="manualCylinderShiftRightBtn" class="bank-btn" style="width:52px; height:18px; padding:0 3px; border-color:#00ccff; color:#00ccff; font-weight:bold; font-size:9px;" title="Вручную сдвинуть вправо все строки в рамке циклически на 1 символ">Цилин. ▶</button>
                 </div>
                 <div style="display:flex; align-items:center; gap:2px; width:100%;">
                     <button id="manualElkaShiftLeftBtn" class="bank-btn" style="width:52px; height:18px; padding:0 3px; border-color:#ff3333; color:#ff3333; font-weight:bold; font-size:9px;" title="Вручную сдвинуть влево весь блок в рамке циклически по спирали на 1 символ">◀ Спир.</button>
-                    <label style="display:flex; align-items:center; margin:0; flex:1; justify-content:center;">
-                        <input type="checkbox" id="elkaCheck">
-                    </label>
+                    <div style="display:flex; align-items:center; gap:2px; flex:1; justify-content:center;">
+                        <label style="display:flex; align-items:center; margin:0;" title="Непрерывная Ёлка в симуляции (см. МОДИФИКАТОРЫ ДВИЖЕНИЯ)">
+                            <input type="checkbox" id="elkaCheck">
+                        </label>
+                        <button id="elkaAutoBtn" class="bank-btn" style="width:20px; height:18px; padding:0; font-size:10px; border-color:#ff3333; color:#ff3333;" title="Непрерывный ручной сдвиг Спиралью (как Пуск) в направлении последней нажатой стрелки — нажать ещё раз, чтобы остановить">🔁</button>
+                    </div>
                     <button id="manualElkaShiftRightBtn" class="bank-btn" style="width:52px; height:18px; padding:0 3px; border-color:#ff3333; color:#ff3333; font-weight:bold; font-size:9px;" title="Вручную сдвинуть вправо весь блок в рамке циклически по спирали на 1 символ">Спир. ▶</button>
                 </div>
+                <label style="display:flex; align-items:center; margin-top:2px;" title="После ручного сдвига Цилиндром или Спиралью сразу запускать поиск паттернов (как на обычном шаге симуляции), а не только пересчитывать вид">
+                    <input type="checkbox" id="searchOnManualShiftCheck"> <span class="lbl" style="font-size:8px; color:#00ccff;">🔍 Искать паттерны при сдвиге</span>
+                </label>
             </div>
 
         </div>
@@ -784,7 +815,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         </div>
     </div>
     <div id="frameCounterDisplay" style="position:fixed; color:#444; font-size:10px; font-family:monospace; pointer-events:none; text-align:right; z-index:101;">Кадр: <span class="val" id="stepVal" style="color:#888;">0 / 0</span></div>
-<!-- === МАРКЕР 09: ХОЛСТ И ТУЛБАР === -->
+<!-- === МАРКЕР 11: ХОЛСТ И ТУЛБАР === -->
     <a href="index.html" class="float-circle-btn floating-back-btn" style="text-decoration:none; font-weight:bold; color:#00ff66; border-color:#00ff66;" title="Вернуться в Хаб">⬅</a>
     <div class="floating-toolbar floating-toolbar-undoredo" title="Отменить / Повторить.">
         <button class="float-circle-btn" id="floatingUndoBtn" title="Отменить (Ctrl+Z)">↶</button>
@@ -802,7 +833,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         <button class="float-circle-btn" id="floatingFrameBtn" title="Включить/Выключить Рамку">🔲</button>
         <button class="float-circle-btn" id="floatingInterleaveBtn" style="color:#cc33ff; border-color:#cc33ff;" title="Анализ пересечений (LCS)">🧬</button>
     </div>
-<!-- === МАРКЕР 10: ТЕРМИНАЛ АКТИВАЦИИ === -->
+<!-- === МАРКЕР 12: ТЕРМИНАЛ АКТИВАЦИИ === -->
     <div id="rightPanel" title="Правая панель. Перетаскивание за вкладки слева: переместить. Двойной клик: свернуть/развернуть." onclick="event.stopPropagation();" ondblclick="if (event.target.closest('.right-panel-tab') || !event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); event.stopPropagation(); }">
         <div class="right-panel-row">
             <div id="rightPanelLeftResizer" style="position:absolute; left:0; top:0; bottom:0; width:7px; cursor:ew-resize; z-index:5;" title="Тащить — расширить панель влево"></div>
@@ -884,7 +915,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             </div>
             </div>
 
-<!-- === МАРКЕР 11: ДЕКЛАРАЦИИ И РАМКА === -->
+<!-- === МАРКЕР 13: ДЕКЛАРАЦИИ И РАМКА === -->
             <div class="panel-content" data-tab-content="dna" style="display:none; flex:1; padding:6px 8px; flex-direction:column; overflow:auto; gap:3px;">
                 <details class="control-group" open style="border-radius:3px; background:rgba(204,51,255,0.06); border:1px solid rgba(204,51,255,0.25);">
                     <summary style="font-weight:bold; color:#cc33ff;">🧬 НАСТРОЙКИ СВЯЗИ</summary>
@@ -1019,9 +1050,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         <div id="hotkeyIndicator"></div>
         <canvas id="screenCanvas"></canvas>
     </div>
-<!-- === МАРКЕР 12: БАЗОВЫЕ УТИЛИТЫ === -->
-<!-- === МАРКЕР 12: БАЗОВЫЕ УТИЛИТЫ === -->
+<!-- === МАРКЕР 14: БАЗОВЫЕ УТИЛИТЫ === -->
     <script>
+        // Конвертирует HEX-цвет (#rrggbb) в строку rgba() с заданной прозрачностью
         const hexToRgba = (hex, alpha) => {
             if (!hex || hex.length < 7) return `rgba(0, 0, 0, ${alpha})`;
             let r = parseInt(hex.slice(1, 3), 16);
@@ -1030,21 +1061,25 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             return `rgba(${r},${g},${b},${alpha})`;
         };
 
+        // Безопасно читает .checked чекбокса по id; возвращает fallback, если элемента нет
         const safeChecked = (id, fallback = false) => {
             const el = document.getElementById(id);
             return el ? el.checked : fallback;
         };
 
+        // Безопасно читает .value поля по id; возвращает fallback, если элемента нет
         const safeValue = (id, fallback = "") => {
             const el = document.getElementById(id);
             return el ? el.value : fallback;
         };
 
+        // Безопасно навешивает обработчик события на элемент по id (не падает, если элемента нет)
         const safeBind = (id, event, handler) => {
             const el = document.getElementById(id);
             if (el) el.addEventListener(event, handler);
         };
 
+        // Собирает позиции/размеры/свёрнутость плавающих панелей — для сохранения в снимок состояния
         window.getPanelStates = function() {
             let panels = ['.controls', '.player-panel', '#rightPanel'];
             let states = {};
@@ -1065,6 +1100,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             return states;
         };
 
+        // Восстанавливает позиции/размеры/свёрнутость панелей из объекта, сохранённого getPanelStates()
         window.restorePanelStates = function(states) {
             if (!states) return;
             Object.entries(states).forEach(([selector, state]) => {
@@ -1095,11 +1131,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             } catch(e) { /* тихо игнорируем (например, переполнение localStorage) */ }
         };
 
+        // Удаляет снимок автосохранения из localStorage
         window.clearAutosaveSnapshot = function() {
             try { localStorage.removeItem('zerkalius_autosave_v1'); } catch(e) {}
         };
 
-        const GCD = (a, b) => { 
+        // Наибольший общий делитель (с защитой от NaN/Infinity)
+        const GCD = (a, b) => {
             if (!isFinite(a) || isNaN(a) || !isFinite(b) || isNaN(b)) return 1;
             while (b !== 0) { 
                 let temp = b; b = a % b; 
@@ -1108,17 +1146,21 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             } 
             return a; 
         };
-        const LCM = (a, b) => { 
+        // Наименьшее общее кратное (через GCD); используется для расчёта общего цикла симуляции
+        const LCM = (a, b) => {
             if (!isFinite(a) || isNaN(a) || !isFinite(b) || isNaN(b)) return Infinity;
             return (a === 0 || b === 0) ? 0 : (a / GCD(a, b)) * b; 
         };
         const mod = (n, m) => ((n % m) + m) % m;
 
+        // Читает множитель длины строки (N) со слайдера; спецзначение 11 трактуется как "0 (∞)"
         const getNFactor = () => {
             let v = parseInt(safeValue('nFactor', 2));
             return v === 11 ? 0 : v;
         };
 
+        // XOR-сливает строку srcIdx в destIdx ("наезд"): либо раздвигает строку (widen),
+        // либо переносит слияние на следующую строку (skip), если места не хватает
         function performNaezdCollision(srcIdx, destIdx) {
             let srcLine = STATE.lines[srcIdx];
             let destLine = STATE.lines[destIdx];
@@ -1238,7 +1280,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             foundPatternsMetadata: new Map(), 
             flashes: new Map(), 
             lastFindMethod: "Ожидание...", 
-            playerMode: "simulate", 
+            playerMode: "simulate",
+            deltaColorMode: 3,
             rowScrollOffset: 0, 
             hoveredRingIndex: -1, 
             selectedRings: new Set(), 
@@ -1253,7 +1296,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             flashEndTime: 0, 
             offsetX: 0, offsetY: 0, autoOffsetX: 0, oscXDir: 1, autoOffsetY: 0, oscYDir: 1,
             isDraggingPan: false, dragStartX: 0, dragStartY: 0, hasMoved: false,
-            manualFrame: { x: -150, y: -50, w: 300, h: 100 },
+            manualFrame: { x: -150, y: -50, w: 300, h: 100, userLocked: false },
             frameAction: null, frameStartMX: 0, frameStartMY: 0, frameStartW: 0, frameStartH: 0,
             frameStartX: 0, frameStartY: 0, isDraggingRing: false, draggedRingIndex: -1,
             lastMouseAngle: 0, accumulatedAngleDelta: 0, dragStartLocalStep: 0,
@@ -1287,8 +1330,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         const isType1 = (c) => ['1', '\\', ')', ']', '>', '+'].includes(c);
         const isType0 = (c) => ['0', '/', '(', '[', '<', '-'].includes(c);
     </script>
-<!-- === МАРКЕР 13: ФУНКЦИИ СДВИГОВ И СЛОТОВ === -->
+<!-- === МАРКЕР 15: ФУНКЦИИ СДВИГОВ И СЛОТОВ === -->
     <script>
+        // Показывает всплывающее текстовое уведомление на холсте на 1 секунду
         function showNotification(text) {
             const ind = UI.hotkeyInd;
             if (!ind) return;
@@ -1354,6 +1398,25 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         // Подгоняет ширину рамки под самую длинную строку среди тех, что сейчас входят в рамку
         // (вызывается при росте рамки по высоте). Не трогает ширину, если её выставили руками
         // (manualWidth) или выключена галочка "⌖ По умолчанию за центром".
+        // Реальная видимая ширина строки в символах — от первого до последнего символа,
+        // который движок рендера в render() и правда рисует (пробелы там пропускаются,
+        // если не включён режим "барабана"). Считать по l.display.length нельзя: там же
+        // сидят невидимые пробелы-заполнители для выравнивания колонок, из-за них рамка
+        // получается шире самой широкой видимой строки.
+        function getVisibleLineSpan(l) {
+            if (!l || !l.display) return 0;
+            let text = l.display;
+            let isDrum = safeChecked('drumModeCheck', false);
+            let first = -1, last = -1;
+            for (let k = 0; k < text.length; k++) {
+                if (text[k] === ' ' && !isDrum) continue;
+                if (first === -1) first = k;
+                last = k;
+            }
+            return first === -1 ? 0 : (last - first + 1);
+        }
+
+        // Подгоняет ширину рамки под самую длинную из строк, попавших в неё сейчас
         function fitFrameWidthToRows() {
             if (!STATE.manualFrame || !STATE.manualFrame.isInitialized) return;
             if (!safeChecked('frameCenterLockCheck', true)) return;
@@ -1365,7 +1428,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
                 let idx = (startIdx + STATE.manualFrame.rowStart + k) % totalRows;
                 let l = STATE.lines[idx];
-                let len = (l && l.orig) ? l.orig.length : 0;
+                let len = getVisibleLineSpan(l);
                 if (len > maxLen) maxLen = len;
             }
             if (maxLen === 0) return;
@@ -1375,6 +1438,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             STATE.manualFrame.manualWidth = false;
         }
 
+        // Считает геометрию сетки рендера: размер шрифта/шаг строки/колонки, стартовый индекс
+        // прокрутки и базовые координаты холста — на основе текущих значений слайдеров
         function getGridMetrics() {
             const canvas = document.getElementById('screenCanvas');
             const ctx = canvas ? canvas.getContext('2d') : null;
@@ -1403,12 +1468,14 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             
             return { charWidth, lineHeight, renderCount, totalHeight, startY, baseX, startIndex };
         }
-<!-- === МАРКЕР 14: БАЗОВЫЕ ФУНКЦИИ КОНЕЦ === -->
+<!-- === МАРКЕР 16: БАЗОВЫЕ ФУНКЦИИ КОНЕЦ === -->
 
     </script>
 
-<!-- === МАРКЕР 15: ЛОГИКА РАМКИ И БАЛАНСА === -->
+<!-- === МАРКЕР 17: ЛОГИКА РАМКИ И БАЛАНСА === -->
     <script>
+        // Считает баланс символов 0/1 внутри рамки (или на всём экране) и возвращает
+        // суммарные счётчики плюс разбивку по строкам (rowStats)
         function calculateCurrentBalance() {
             let m = getGridMetrics();
             if (!m) return { total0: 0, total1: 0, isEq: false };
@@ -1423,7 +1490,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
             if (useFrameLimit && STATE.manualFrame.colSpan === undefined) {
                 STATE.manualFrame.rowStart = 0;
-                STATE.manualFrame.rowSpan = 1; 
+                STATE.manualFrame.rowSpan = 1;
+                STATE.manualFrame.rowGrowTarget = 0;
                 let firstRowLen = (STATE.lines[0] && STATE.lines[0].display) ? STATE.lines[0].display.length : 1;
                 STATE.manualFrame.colSpan = firstRowLen + 2;
                 STATE.manualFrame.colStart = -Math.round(STATE.manualFrame.colSpan / 2);
@@ -1547,9 +1615,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 rowStats: rowStats
             };
         }
-<!-- === МАРКЕР 16: ЛОГИКА РАМКИ КОНЕЦ === -->
+<!-- === МАРКЕР 18: ЛОГИКА РАМКИ КОНЕЦ === -->
 
-<!-- === МАРКЕР 17: СИСТЕМНЫЕ КНОПКИ НАЧАЛО === -->
+<!-- === МАРКЕР 19: СИСТЕМНЫЕ КНОПКИ НАЧАЛО === -->
         safeBind('foundPatternColor', 'input', function() {
             let hex = this.value;
             document.documentElement.style.setProperty('--found-color', hex);
@@ -1591,7 +1659,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             showNotification(STATE.isReplaced ? "СИМВОЛЫ ЗАМЕНЕНЫ" : "ЗАМЕНА ОТМЕНЕНА");
         });
 
-<!-- === МАРКЕР 18: ЛОГИКА СЛОТОВ И БАНКОВ === -->
+<!-- === МАРКЕР 20: ЛОГИКА СЛОТОВ И БАНКОВ === -->
         window.restoreOriginalBank = function(idx) {
             if (window.saveUndoState) saveUndoState();
             let b = "", p = "";
@@ -1783,6 +1851,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             showNotification("ХОЛСТ СКОПИРОВАН В ВИЗУАЛ (исходная не изменена)");
         };
 
+<!-- === МАРКЕР 21: ЦЕНТРИРОВАНИЕ И МАСШТАБ ХОЛСТА === -->
+        // Центрирует холст и подбирает масштаб шрифта так, чтобы все строки (или только активный
+        // блок, если targetActiveOnly) помещались по высоте с учётом высоты пульта
         function resetPositionWithHeightScale(scaleFactor, targetActiveOnly = false, adjustScale = true) {
             let m = getGridMetrics();
             if (!m) return;
@@ -1797,7 +1868,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 let barBottom = buttonsBarEl ? buttonsBarEl.getBoundingClientRect().bottom : 0;
                 let combinedBottom = Math.max(panelBottom, barBottom);
                 let canvasRect = UI.canvas.getBoundingClientRect();
-                clearance = Math.max(0, (combinedBottom - canvasRect.top) + 6);
+                clearance = Math.max(0, (combinedBottom - canvasRect.top) + 18);
             }
 
             // Жестко обнуляем все смещения, чтобы вернуть улетевшие строки
@@ -1875,7 +1946,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 let barBottom2 = buttonsBarEl2 ? buttonsBarEl2.getBoundingClientRect().bottom : 0;
                 let combinedBottom2 = Math.max(panelBottom2, barBottom2);
                 let canvasRect2 = UI.canvas.getBoundingClientRect();
-                let clearance2 = Math.max(0, (combinedBottom2 - canvasRect2.top) + 6);
+                let clearance2 = Math.max(0, (combinedBottom2 - canvasRect2.top) + 18);
                 let m3 = getGridMetrics();
                 if (!m3) return;
                 let centeredStartY2 = m3.startY - STATE.offsetY;
@@ -1903,7 +1974,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 }, 220);
             }
         });
-<!-- === МАРКЕР 19: ИМПОРТ НАЧАЛО === -->
+<!-- === МАРКЕР 22: ИМПОРТ НАЧАЛО === -->
+        // Восстанавливает все UI-настройки/чекбоксы/слайдеры и STATE из объекта снимка (импорт состояния)
         function importSnapshotObject(snapshot) {
             const setElVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
             const setElChk = (id, val) => { const el = document.getElementById(id); if(el) el.checked = !!val; };
@@ -2009,6 +2081,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             setElChk('frameCheck', snapshot.frame !== undefined ? snapshot.frame : true);
             setElChk('frameCenterLockCheck', snapshot.frameCenterLock !== undefined ? snapshot.frameCenterLock : true);
             setElChk('activateOnPatternCheck', snapshot.activateOnPattern !== undefined ? snapshot.activateOnPattern : true);
+            // Авто-каскад и разморозка по паттерну взаимоисключающие (см. safeBind ниже) — если старый
+            // снапшот/дефолты выставили оба разом, гасим авто-каскад в пользу поиска по паттерну.
+            if (safeChecked('autoCascadeCheck', false) && safeChecked('activateOnPatternCheck', false)) {
+                setElChk('autoCascadeCheck', false);
+            }
             setElChk('highlightCheck', snapshot.highlight !== undefined ? snapshot.highlight : true);
             setElChk('neonCheck', snapshot.neon !== undefined ? snapshot.neon : false);
             setElChk('boldCheck', snapshot.bold !== undefined ? snapshot.bold : false);
@@ -2028,6 +2105,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             setElChk('interleaveSwapOrderCheck', snapshot.interleaveSwapOrder !== undefined ? snapshot.interleaveSwapOrder : false);
             setElChk('accumulateInterleaveCheck', snapshot.accumulateInterleave !== undefined ? snapshot.accumulateInterleave : false);
             setElChk('autoShiftInterleaveTopCheck', snapshot.autoShiftInterleaveTop !== undefined ? snapshot.autoShiftInterleaveTop : false);
+            setElChk('searchOnManualShiftCheck', snapshot.searchOnManualShift !== undefined ? snapshot.searchOnManualShift : false);
 
             if (snapshot.banks && Array.isArray(snapshot.banks)) {
                 if (typeof snapshot.banks[0] === 'string') {
@@ -2104,9 +2182,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
             updateLogic();
         }
-<!-- === МАРКЕР 20: ИМПОРТ КОНЕЦ === -->
+<!-- === МАРКЕР 23: ИМПОРТ КОНЕЦ === -->
 
-<!-- === МАРКЕР 21: МАТЕМАТИКА НАЧАЛО === -->
+<!-- === МАРКЕР 24: МАТЕМАТИКА НАЧАЛО === -->
+        // Пересчитывает cycle (длину полного оборота) и общий STATE.maxCycle для всех строк —
+        // вызывается при смене N, режима барабана или фазового сдвига
         function updateAllCycles() {
             let useDrum = safeChecked('drumModeCheck', false);
             let dRad = parseInt(safeValue('drumRadius', 5));
@@ -2131,6 +2211,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (stepSlider) stepSlider.max = isFinite(STATE.maxCycle) && STATE.maxCycle < 100000 ? STATE.maxCycle : 100000;
         }
 
+        // Разбирает многострочный текст в STATE.lines (новые объекты строк с циклами/масками),
+        // опционально сохраняя текущий шаг/смещения/активность строк (keepState)
         function loadText(text, keepState = false, skipBankSync = false, adjustScale = false) {
             let savedStep = STATE.globalStep, savedOffX = STATE.offsetX, savedOffY = STATE.offsetY, savedRS = STATE.rowScrollOffset;
             let savedFrame = STATE.manualFrame ? JSON.parse(JSON.stringify(STATE.manualFrame)) : null;
@@ -2158,8 +2240,12 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 
                 let firstOneIdx = orig.search(/[1\\)\]>+]/);
 
-                let initiallyActive = (index === 0); 
-                return { orig, template: orig, L, cN, cycle, display: orig, isActive: initiallyActive, localStep: 0, origIndex: index, highlightMask: [], verticalHighlightMask: [], inactiveVerticalHighlightMask: [], redMask: [], fillerMask: [], firstOneIdx: firstOneIdx, invertMask: new Array(L).fill(false), underlinedMask: [] };
+                let initiallyActive = (index === 0);
+                // originalSeed — неприкосновенный снимок строки на момент загрузки. В отличие от
+                // template (который перезаписывают Цилиндр/Спираль/Инверсия/Наезд при каждом применении,
+                // делая его "текущим", а не исходным), originalSeed никто, кроме loadText(), не трогает —
+                // именно к нему возвращает Стоп ("положение 0").
+                return { orig, template: orig, originalSeed: orig, L, cN, cycle, display: orig, isActive: initiallyActive, localStep: 0, origIndex: index, highlightMask: [], verticalHighlightMask: [], inactiveVerticalHighlightMask: [], redMask: [], fillerMask: [], firstOneIdx: firstOneIdx, invertMask: new Array(L).fill(false), underlinedMask: [] };
             });
             
             STATE.globalStep = keepState ? savedStep : 0;
@@ -2198,12 +2284,15 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                             STATE.manualFrame.isInitialized = false;
                             STATE.manualFrame.rowStart = 0;
                             STATE.manualFrame.rowSpan = 1;
+                            STATE.manualFrame.rowGrowTarget = 0;
+                            STATE.manualFrame.userLocked = false;
                         } else {
                             if (STATE.manualFrame.rowStart >= totalRows) STATE.manualFrame.rowStart = totalRows - 1;
                             if (STATE.manualFrame.rowStart < 0) STATE.manualFrame.rowStart = 0;
                             let maxSpan = totalRows - STATE.manualFrame.rowStart;
                             if (STATE.manualFrame.rowSpan > maxSpan) STATE.manualFrame.rowSpan = Math.max(1, maxSpan);
                             if (STATE.manualFrame.rowSpan < 1) STATE.manualFrame.rowSpan = 1;
+                            if (STATE.manualFrame.rowGrowTarget > STATE.manualFrame.rowSpan) STATE.manualFrame.rowGrowTarget = STATE.manualFrame.rowSpan;
                             let gm = getGridMetrics();
                             if (gm) STATE.manualFrame.h = STATE.manualFrame.rowSpan * gm.lineHeight;
                             // Центрирование по умолчанию срабатывает при каждой новой загрузке текста,
@@ -2218,12 +2307,14 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     STATE.manualFrame.isInitialized = false;
                     STATE.manualFrame.rowStart = 0;
                     STATE.manualFrame.rowSpan = 1;
+                    STATE.manualFrame.rowGrowTarget = 0;
                     STATE.manualFrame.y = 0;
                     STATE.manualFrame.h = undefined;
                     STATE.manualFrame.w = undefined;
+                    STATE.manualFrame.userLocked = false;
                 }
             }
-            
+
             if (!skipBankSync) {
                 let linesInp = document.getElementById('linesInput');
                 if (linesInp) linesInp.value = raw.join('\n');
@@ -2253,8 +2344,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         }
     </script>
 
-<!-- === МАРКЕР 22: СИМУЛЯЦИЯ И АКТИВАЦИЯ СТРОК === -->
+<!-- === МАРКЕР 25: СИМУЛЯЦИЯ И АКТИВАЦИЯ СТРОК === -->
     <script>
+        // Выравнивает все строки поля ввода по левому/правому краю или по центру (добавляя пробелы)
         function alignText(mode) {
             let lines = safeValue('linesInput', '').split('\n').map(l => l.trim().replace(/\s+/g, ''));
             if (lines.length === 0) return;
@@ -2354,7 +2446,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         safeBind('mirrorTransposeLeftBtn', 'click', () => mirrorTranspose('left'));
         safeBind('mirrorTransposeRightBtn', 'click', () => mirrorTranspose('right'));
 
-<!-- === МАРКЕР 23: ИНВЕРСИЯ И СДВИГ СИМВОЛОВ === -->
+<!-- === МАРКЕР 26: ИНВЕРСИЯ И СДВИГ СИМВОЛОВ === -->
+        // Циклически сдвигает символы каждой строки внутри рамки на 1 позицию влево/вправо
         function manualCylinderShift(dir = 1) {
             let m = getGridMetrics();
             if (!m) return;
@@ -2408,12 +2501,24 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 if (linesInp) linesInp.value = newLinesText;
                 STATE.banks[STATE.activeBankIndex].lines = newLinesText;
 
-                calculateState(false);
-                render();
                 showNotification(`СДВИГ: Сдвинуто ${shiftedCount} строк в рамке`);
+                // Поиск после сдвига запускается либо по отдельной галке "Искать паттерны при сдвиге",
+                // либо автоматически, если включена "Разморозка строк по паттерну" — тогда найденный
+                // паттерн размораживает следующую строку и растит рамку (expandFrameToRow), как и везде.
+                if (safeChecked('searchOnManualShiftCheck', false) || safeChecked('activateOnPatternCheck', false)) {
+                    // updateLogic() сам вызовет calculateState(true) — поиск паттернов (с учётом очереди
+                    // "строго по порядку" и уже найденных STATE.foundPatterns) и render(); если что-то
+                    // нашлось, покажет своё уведомление поверх "СДВИГ: ..." — это ожидаемо и ок.
+                    updateLogic();
+                } else {
+                    calculateState(false);
+                    render();
+                }
             }
         }
 
+        // Циклически сдвигает весь блок строк внутри рамки на 1 символ по спирали ("Ёлка"),
+        // как единую непрерывную ленту символов, а не каждую строку по отдельности
         function manualElkaShift(dir = 1) {
             let m = getGridMetrics();
             if (!m) return;
@@ -2487,12 +2592,69 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (linesInp) linesInp.value = newLinesText;
             STATE.banks[STATE.activeBankIndex].lines = newLinesText;
 
-            calculateState(false);
-            render();
             showNotification(`СПИРАЛЬ: Циклический сдвиг Ёлки в рамке`);
+            if (safeChecked('searchOnManualShiftCheck', false) || safeChecked('activateOnPatternCheck', false)) {
+                updateLogic();
+            } else {
+                calculateState(false);
+                render();
+            }
         }
 
-<!-- === МАРКЕР 24: ЛОГИКА ИНВЕРСИИ РАМКИ === -->
+        // Зеркалит символы слева-направо внутри каждой строки рамки (порядок символов
+        // разворачивается), без инверсии значений 0↔1 — это отдельная операция от Инверта.
+        function reverseFrameContents() {
+            let m = getGridMetrics();
+            if (!m) return;
+
+            let useFrame = safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized;
+            if (!useFrame) {
+                showNotification("ОШИБКА: РАМКА НЕ ВКЛЮЧЕНА");
+                return;
+            }
+
+            let totalRows = STATE.lines.length;
+            let rowStart = STATE.manualFrame.rowStart;
+            let rowSpan = STATE.manualFrame.rowSpan;
+
+            if (window.saveUndoState) saveUndoState();
+            let reversedCount = 0;
+            for (let k = 0; k < rowSpan; k++) {
+                let idx = (rowStart + k) % totalRows;
+                let actualIdx = (m.startIndex + idx) % totalRows;
+                let lData = STATE.lines[actualIdx];
+                if (!lData || lData.L <= 1) continue;
+
+                lData.orig = lData.orig.split('').reverse().join('');
+                lData.template = lData.orig;
+
+                if (lData.invertMask && lData.invertMask.length > 0) {
+                    lData.invertMask = lData.invertMask.slice().reverse();
+                }
+
+                lData.firstOneIdx = lData.orig.search(/[1\\)\]>+]/);
+                reversedCount++;
+            }
+
+            if (reversedCount > 0) {
+                let newLinesText = STATE.lines.map(l => l.orig).join('\n');
+                let linesInp = document.getElementById('linesInput');
+                if (linesInp) linesInp.value = newLinesText;
+                STATE.banks[STATE.activeBankIndex].lines = newLinesText;
+
+                showNotification(`🔃 РЕВЕРС: ${reversedCount} строк зеркально развёрнуты в рамке`);
+                if (safeChecked('searchOnManualShiftCheck', false) || safeChecked('activateOnPatternCheck', false)) {
+                    updateLogic();
+                } else {
+                    calculateState(false);
+                    render();
+                }
+            }
+        }
+
+<!-- === МАРКЕР 27: ЛОГИКА ИНВЕРСИИ РАМКИ === -->
+        // Инвертирует символы (0↔1, \↔/, и т.д.) внутри рамки или выделенных строк;
+        // exceptFirst пропускает первый символ каждой строки
         function invertFrameContents(exceptFirst = false) {
             let m = getGridMetrics();
             if (!m) return;
@@ -2607,6 +2769,12 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     let cylShift = safeChecked('cylinderCheck', false) ? (Math.abs(lData.localStep) % lData.L) : 0;
                     let isSpaced = safeChecked('spacedCheck', false);
 
+                    // При множителе длины (N) больше 1 один и тот же исходный символ рисуется на экране
+                    // несколько раз (прямая копия + дубликаты). Раньше проход по экранным колонкам "c"
+                    // натыкался на один и тот же origIdx несколько раз и переключал его туда-обратно —
+                    // в сумме инверсия не давала видимого эффекта. Теперь сперва собираем МНОЖЕСТВО
+                    // уникальных origIdx внутри рамки для строки, и дальше работаем с каждым только один раз.
+                    let matchedOrigIndices1 = new Set();
                     for (let c = 0; c < lData.display.length; c++) {
                         if (lData.fillerMask[c]) continue;
                         let cellX = isMatrixAxis ? (m.baseX + ((c - (lData.display.length - 1) / 2.0) * m.charWidth) + liveCenterOffset) : (currentX + (c * m.charWidth) + (m.charWidth / 2));
@@ -2662,16 +2830,19 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                 }
                                 if (exceptFirst && origIdx === 0) continue;
                                 if (origIdx >= 0 && origIdx < origChars.length) {
-                                    if (lData.invertMask && lData.invertMask[origIdx] === true) {
-                                        hasAnyUnderlined = true;
-                                    }
+                                    matchedOrigIndices1.add(origIdx);
                                 }
                             }
                         }
                     }
+                    matchedOrigIndices1.forEach(origIdx => {
+                        if (lData.invertMask && lData.invertMask[origIdx] === true) {
+                            hasAnyUnderlined = true;
+                        }
+                    });
                 }
 
-<!-- === МАРКЕР 25: ИНВЕРСИЯ ВТОРОЙ ПРОХОД === -->
+<!-- === МАРКЕР 28: ИНВЕРСИЯ ВТОРОЙ ПРОХОД === -->
                 for (let k = 0; k < rowSpan; k++) {
                     let targetIdx = m.startIndex + rowStart + k;
                     if (targetIdx < 0 || targetIdx >= STATE.lines.length) continue;
@@ -2731,6 +2902,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     let cylShift = safeChecked('cylinderCheck', false) ? (Math.abs(lData.localStep) % lData.L) : 0;
                     let isSpaced = safeChecked('spacedCheck', false);
 
+                    // Та же дедупликация, что и в первом проходе выше — иначе при N>1 один и тот же
+                    // origIdx (несколько экранных вхождений одного исходного символа) переключался бы
+                    // туда-обратно и инверсия визуально не давала эффекта.
+                    let matchedOrigIndices2 = new Set();
                     for (let c = 0; c < lData.display.length; c++) {
                         if (lData.fillerMask[c]) continue;
                         let cellX = isMatrixAxis ? (m.baseX + ((c - (lData.display.length - 1) / 2.0) * m.charWidth) + liveCenterOffset) : (currentX + (c * m.charWidth) + (m.charWidth / 2));
@@ -2786,31 +2961,32 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                 }
                                 if (exceptFirst && origIdx === 0) continue;
                                 if (origIdx >= 0 && origIdx < origChars.length) {
-                                    let isUnderlined = lData.invertMask && lData.invertMask[origIdx] === true;
-                                    if (hasAnyUnderlined && !isUnderlined) {
-                                        continue;
-                                    }
-                                    let char = origChars[origIdx];
-                                    if (char === '1') origChars[origIdx] = '0';
-                                    else if (char === '0') origChars[origIdx] = '1';
-                                    else if (char === '\\') origChars[origIdx] = '/';
-                                    else if (char === '/') origChars[origIdx] = '\\';
-                                    else if (char === ')') origChars[origIdx] = '(';
-                                    else if (char === '(') origChars[origIdx] = ')';
-                                    else if (char === ']') origChars[origIdx] = '[';
-                                    else if (char === '[') origChars[origIdx] = ']';
-                                    else if (char === '>') origChars[origIdx] = '<';
-                                    else if (char === '<') origChars[origIdx] = '>';
-                                    else if (char === '+') origChars[origIdx] = '-';
-                                    else if (char === '-') origChars[origIdx] = '+';
-                                    
-                                    if (!lData.invertMask) lData.invertMask = new Array(lData.L).fill(false);
-                                    lData.invertMask[origIdx] = !lData.invertMask[origIdx];
-                                    invertedCount++;
+                                    matchedOrigIndices2.add(origIdx);
                                 }
                             }
                         }
                     }
+                    matchedOrigIndices2.forEach(origIdx => {
+                        let isUnderlined = lData.invertMask && lData.invertMask[origIdx] === true;
+                        if (hasAnyUnderlined && !isUnderlined) return;
+                        let char = origChars[origIdx];
+                        if (char === '1') origChars[origIdx] = '0';
+                        else if (char === '0') origChars[origIdx] = '1';
+                        else if (char === '\\') origChars[origIdx] = '/';
+                        else if (char === '/') origChars[origIdx] = '\\';
+                        else if (char === ')') origChars[origIdx] = '(';
+                        else if (char === '(') origChars[origIdx] = ')';
+                        else if (char === ']') origChars[origIdx] = '[';
+                        else if (char === '[') origChars[origIdx] = ']';
+                        else if (char === '>') origChars[origIdx] = '<';
+                        else if (char === '<') origChars[origIdx] = '>';
+                        else if (char === '+') origChars[origIdx] = '-';
+                        else if (char === '-') origChars[origIdx] = '+';
+
+                        if (!lData.invertMask) lData.invertMask = new Array(lData.L).fill(false);
+                        lData.invertMask[origIdx] = !lData.invertMask[origIdx];
+                        invertedCount++;
+                    });
                     lData.orig = origChars.join('');
                     lData.template = lData.orig;
                     lData.firstOneIdx = lData.orig.search(/[1\\)\]>+]/);
@@ -2832,7 +3008,29 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
         safeBind('invertFrameBtn', 'click', () => invertFrameContents(false));
         safeBind('invertFrameExceptFirstBtn', 'click', () => invertFrameContents(true));
-<!-- === МАРКЕР 26: ЛОГИКА КНОПОК ПАДДИНГА === -->
+        safeBind('reverseFrameBtn', 'click', () => reverseFrameContents());
+        safeBind('deltaColorModeBtn', 'click', function() {
+            STATE.deltaColorMode = ((STATE.deltaColorMode === undefined ? 3 : STATE.deltaColorMode) + 1) % 4;
+            if (STATE.deltaColorMode === 0) {
+                this.textContent = "🔴 Красные (Δ)";
+                this.style.color = "#ff3333"; this.style.borderColor = "#ff3333";
+                showNotification("Δ: ПОКАЗАНЫ ТОЛЬКО НЕМЕНЯЮЩИЕСЯ (КРАСНЫЕ)");
+            } else if (STATE.deltaColorMode === 1) {
+                this.textContent = "⚫ Чёрные (Δ)";
+                this.style.color = "#aaaaaa"; this.style.borderColor = "#aaaaaa";
+                showNotification("Δ: ПОКАЗАНЫ ТОЛЬКО МЕНЯЮЩИЕСЯ (ЧЁРНЫЕ)");
+            } else if (STATE.deltaColorMode === 2) {
+                this.textContent = "🎨 Все (Δ)";
+                this.style.color = "#ffaa00"; this.style.borderColor = "#ffaa00";
+                showNotification("Δ: ПОКАЗАНЫ ВСЕ (РАСКРАШЕНО)");
+            } else {
+                this.textContent = "↩️ Цвета (Δ выкл.)";
+                this.style.color = "#888"; this.style.borderColor = "#888";
+                showNotification("Δ: ВЫКЛЮЧЕНО — ОБЫЧНЫЕ ЦВЕТА");
+            }
+            updateLogic();
+        });
+<!-- === МАРКЕР 29: ЛОГИКА КНОПОК ПАДДИНГА === -->
         safeBind('padCharLeftBtn', 'click', () => {
             let m = getGridMetrics();
             let useSelectedRows = STATE.selectedRows && STATE.selectedRows.size > 0;
@@ -2998,10 +3196,12 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (isDelete) showNotification(`УДАЛЕН СИМВОЛ СПРАВА (${paddedCount} СТРОК)`);
             else showNotification(`ДОБАВЛЕН +${char} СПРАВА (${paddedCount} СТРОК)`);
         });
-<!-- === МАРКЕР 27: ЛОГИКА ДОСТРОЙКИ ВВЕРХ === -->
+<!-- === МАРКЕР 30: ЛОГИКА ДОСТРОЙКИ ВВЕРХ === -->
         safeBind('buildUpwardsBtn', 'click', () => { if (window.buildFrameUpwards) window.buildFrameUpwards(); });
         safeBind('buildRightwardsBtn', 'click', () => { if (window.buildFrameRightwards) window.buildFrameRightwards(); });
 
+        // Транспонирует блок строк в рамке и достраивает результат вправо от каждой строки
+        // (диагональное "достраивание" по правилу: строка i получает первые символы всех строк ниже неё)
         window.buildFrameRightwards = function() {
             let m = getGridMetrics();
             let useSelectedRows = STATE.selectedRows && STATE.selectedRows.size > 0;
@@ -3066,6 +3266,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             showNotification(`🏗️ ДОСТРОЕНО ВПРАВО: ${rowSpan} СТРОК`);
         };
 
+        // Копирует блок строк в рамке, переворачивает и инвертирует (кроме первого символа)
+        // и вставляет результат сверху над рамкой (зеркальное "достраивание вверх")
         window.buildFrameUpwards = function() {
             let m = getGridMetrics();
             let useSelectedRows = STATE.selectedRows && STATE.selectedRows.size > 0;
@@ -3162,9 +3364,12 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
             STATE.lines.splice(insertIdx, 0, ...newLinesObjs);
             STATE.lines.forEach((l, i) => l.origIndex = i);
-            
+
+            // Рамка растёт вверх, включая только что достроенный блок (а не просто "проезжает" мимо
+            // него) — rowStart НЕ сдвигаем: новые строки встали ровно на прежнюю позицию "верха"
+            // рамки, а старое содержимое сдвинулось ниже внутри увеличенного rowSpan.
             if (!useSelectedRows) {
-                STATE.manualFrame.rowStart += rowSpan;
+                STATE.manualFrame.rowSpan += rowSpan;
             }
 
             let newLinesText = STATE.lines.map(l => l.orig).join('\n');
@@ -3185,17 +3390,167 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             render();
             showNotification(`🏗️ ДОСТРОЕНО ВВЕРХ: ${rowSpan} СТРОК`);
         };
-        safeBind('manualCylinderShiftLeftBtn', 'click', () => manualCylinderShift(-1));
-        safeBind('manualCylinderShiftRightBtn', 'click', () => manualCylinderShift(1));
-        safeBind('manualElkaShiftLeftBtn', 'click', () => manualElkaShift(-1));
-        safeBind('manualElkaShiftRightBtn', 'click', () => manualElkaShift(1));
+
+        // Ручной пошаговый режим — один клик = один шаг, дальше решает сам пользователь, глядя
+        // на результат. На каждом клике сначала проверяем баланс ТЕКУЩЕЙ рамки:
+        // — если баланса НЕТ: строим зеркальное отражение (переворот + инверсия кроме 1-го символа)
+        //   ТЕКУЩЕЙ верхней строки рамки, вставляем сверху, рамка растёт на 1 строку ВВЕРХ;
+        // — если баланс ЕСТЬ: ничего не строим, просто расширяем рамку на 1 строку ВНИЗ (захватывая
+        //   уже существующую там строку холста, без генерации нового контента).
+        window.stepFrameBalance = function() {
+            let m = getGridMetrics();
+            if (!m || !STATE.manualFrame || !STATE.manualFrame.isInitialized) {
+                showNotification("ОШИБКА: РАМКА НЕ ИНИЦИАЛИЗИРОВАНА");
+                return;
+            }
+
+            if (window.saveUndoState) saveUndoState();
+
+            let bal = calculateCurrentBalance();
+
+            if (bal.isEq) {
+                let totalRows = STATE.lines.length;
+                let maxSpan = totalRows - STATE.manualFrame.rowStart;
+                if (STATE.manualFrame.rowSpan < maxSpan) {
+                    STATE.manualFrame.rowSpan += 1;
+                    fitFrameWidthToRows();
+                    calculateState(false);
+                    render();
+                    showNotification("⚖️ БАЛАНС — РАМКА РАСШИРЕНА НА 1 СТРОКУ ВНИЗ");
+                } else {
+                    showNotification("⚖️ БАЛАНС — НИЖЕ БОЛЬШЕ НЕТ СТРОК");
+                }
+                return;
+            }
+
+            let insertIdx = m.startIndex + STATE.manualFrame.rowStart;
+            let topOrig = (insertIdx >= 0 && insertIdx < STATE.lines.length) ? STATE.lines[insertIdx].orig : "";
+
+            let arr = topOrig.split('');
+            if (arr.length > 0) {
+                let firstChar = arr[0];
+                for (let i = 1; i < arr.length; i++) {
+                    let c = arr[i];
+                    if (c === '1') arr[i] = '0';
+                    else if (c === '0') arr[i] = '1';
+                    else if (c === '\\') arr[i] = '/';
+                    else if (c === '/') arr[i] = '\\';
+                    else if (c === '(') arr[i] = ')';
+                    else if (c === ')') arr[i] = '(';
+                    else if (c === '[') arr[i] = ']';
+                    else if (c === ']') arr[i] = '[';
+                    else if (c === '<') arr[i] = '>';
+                    else if (c === '>') arr[i] = '<';
+                    else if (c === '+') arr[i] = '-';
+                    else if (c === '-') arr[i] = '+';
+                }
+                arr[0] = firstChar;
+            }
+            let newStr = arr.reverse().join('');
+
+            let nFact = getNFactor();
+            let phase = safeChecked('phaseShiftCheck', true) ? 1 : 0;
+            let L = newStr.length;
+            let cN = (nFact === 0) ? L : nFact;
+            let cycle = cN * L + phase;
+            if (cycle <= 0) cycle = 1;
+            let newLineObj = {
+                orig: newStr, template: newStr, L: L, cN: cN, cycle: cycle, display: newStr,
+                isActive: true, localStep: 0, origIndex: 0, highlightMask: [],
+                verticalHighlightMask: [], inactiveVerticalHighlightMask: [],
+                redMask: [], fillerMask: [], firstOneIdx: newStr.search(/[1\\)\]>+]/),
+                invertMask: new Array(L).fill(false), underlinedMask: []
+            };
+
+            if (insertIdx < 0) {
+                STATE.lines.unshift({
+                    orig: "", template: "", L: 0, cN: 1, cycle: 1, display: "",
+                    isActive: true, localStep: 0, origIndex: 0, highlightMask: [],
+                    verticalHighlightMask: [], inactiveVerticalHighlightMask: [],
+                    redMask: [], fillerMask: [], firstOneIdx: -1, invertMask: [], underlinedMask: []
+                });
+                STATE.manualFrame.rowStart += 1;
+                insertIdx = 0;
+            }
+
+            STATE.lines.splice(insertIdx, 0, newLineObj);
+            STATE.lines.forEach((l, i) => l.origIndex = i);
+
+            // Рамка растёт вверх на 1 строку — включает только что достроенное (rowStart не трогаем,
+            // новая строка встала ровно на прежнюю позицию "верха" рамки).
+            STATE.manualFrame.rowSpan += 1;
+
+            let newLinesText = STATE.lines.map(l => l.orig).join('\n');
+            let linesInp = document.getElementById('linesInput');
+            if (linesInp) linesInp.value = newLinesText;
+            STATE.banks[STATE.activeBankIndex].lines = newLinesText;
+
+            const scrSlider = document.getElementById('screenSlider');
+            if (scrSlider) {
+                if (STATE.lines.length > parseInt(scrSlider.max)) scrSlider.max = STATE.lines.length;
+                scrSlider.value = STATE.lines.length;
+                let scrValEl = document.getElementById('screenVal');
+                if (scrValEl) scrValEl.textContent = STATE.lines.length;
+            }
+
+            updateAllCycles();
+            calculateState(false);
+            render();
+
+            let newBal = calculateCurrentBalance();
+            showNotification(newBal.isEq ? "🏗️ +1 СТРОКА ВВЕРХ — ТЕПЕРЬ БАЛАНС!" : "🏗️ +1 СТРОКА ВВЕРХ — БАЛАНСА ЕЩЁ НЕТ");
+        };
+        safeBind('buildUpwardsUntilBalancedBtn', 'click', () => { if (window.stepFrameBalance) window.stepFrameBalance(); });
+
+        // Направление автоповтора (кнопки 🔁) запоминается по последней нажатой стрелке ◀/▶.
+        STATE.cylinderAutoDir = 1;
+        STATE.elkaAutoDir = 1;
+        STATE.cylinderAutoInterval = null;
+        STATE.elkaAutoInterval = null;
+
+        safeBind('manualCylinderShiftLeftBtn', 'click', () => { STATE.cylinderAutoDir = -1; manualCylinderShift(-1); });
+        safeBind('manualCylinderShiftRightBtn', 'click', () => { STATE.cylinderAutoDir = 1; manualCylinderShift(1); });
+        safeBind('manualElkaShiftLeftBtn', 'click', () => { STATE.elkaAutoDir = -1; manualElkaShift(-1); });
+        safeBind('manualElkaShiftRightBtn', 'click', () => { STATE.elkaAutoDir = 1; manualElkaShift(1); });
+
+        // Непрерывный ручной сдвиг Цилиндром/Спиралью — "Пуск" для кнопок ◀/▶ выше: тикает с той же
+        // скоростью, что и обычная симуляция (speedSlider), пока не нажать кнопку повторно.
+        safeBind('cylinderAutoBtn', 'click', function() {
+            if (STATE.cylinderAutoInterval) {
+                clearInterval(STATE.cylinderAutoInterval);
+                STATE.cylinderAutoInterval = null;
+                this.style.background = '';
+                this.style.color = '#00ccff';
+                showNotification("АВТО-ЦИЛИНДР ОСТАНОВЛЕН");
+            } else {
+                this.style.background = '#00ccff';
+                this.style.color = '#000';
+                showNotification("АВТО-ЦИЛИНДР ЗАПУЩЕН");
+                let speedMs = Math.max(16, 1001 - parseInt(safeValue('speedSlider', 950)));
+                STATE.cylinderAutoInterval = setInterval(() => manualCylinderShift(STATE.cylinderAutoDir), speedMs);
+            }
+        });
+        safeBind('elkaAutoBtn', 'click', function() {
+            if (STATE.elkaAutoInterval) {
+                clearInterval(STATE.elkaAutoInterval);
+                STATE.elkaAutoInterval = null;
+                this.style.background = '';
+                this.style.color = '#ff3333';
+                showNotification("АВТО-СПИРАЛЬ ОСТАНОВЛЕНА");
+            } else {
+                this.style.background = '#ff3333';
+                this.style.color = '#fff';
+                showNotification("АВТО-СПИРАЛЬ ЗАПУЩЕНА");
+                let speedMs = Math.max(16, 1001 - parseInt(safeValue('speedSlider', 950)));
+                STATE.elkaAutoInterval = setInterval(() => manualElkaShift(STATE.elkaAutoDir), speedMs);
+            }
+        });
 
         safeBind('slotSrcSendBtn', 'click', () => slotSrcSendToCanvas());
         safeBind('slotSrcGetBtn', 'click', () => slotSrcGetFromCanvas());
         safeBind('slotVisSendBtn', 'click', () => slotVisSendToCanvas());
         safeBind('slotVisGetBtn', 'click', () => slotVisGetFromCanvas());
-<!-- === МАРКЕР 28: ГЕНЕРАТОР СЕРПИНСКОГО === -->
-<!-- === МАРКЕР 28: ГЕНЕРАТОР СЕРПИНСКОГО === -->
+<!-- === МАРКЕР 31: ГЕНЕРАТОР СЕРПИНСКОГО === -->
         safeBind('sierpBtn', 'click', () => {
             let seed = safeValue('sierpSeed', '1').trim().replace(/\s+/g, '') || "1";
             let rows = parseInt(safeValue('sierpRows', 128)) || 128;
@@ -3213,6 +3568,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     grid.push(new Uint8Array(width));
                 }
                 
+                // Строит одну "ветвь" XorRora-маятника (клеточный автомат XOR от соседей) от заданной колонки
                 function core_builder_inplace(start_col) {
                     if (grid[0][start_col] === 0) {
                         grid[0][start_col] = 1;
@@ -3317,11 +3673,16 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
         safeBind('buildTriangleBtn', 'click', () => {
             if (window.saveUndoState) saveUndoState();
+            let seed = safeValue('sierpSeed', '1').trim().replace(/\s+/g, '') || "1";
             let n = parseInt(safeValue('sierpRows', 128)) || 128;
             let genLines = [];
-            for (let i = 1; i <= n; i++) genLines.push('1'.repeat(i));
+            let current = "";
+            for (let i = 1; i <= n; i++) {
+                current += seed;
+                genLines.push(current);
+            }
             loadText(genLines.join('\n'), false, false, true);
-            showNotification(`▲ ТРЕУГОЛЬНИК ИЗ 1 (${n} СТРОК)`);
+            showNotification(`▲ ПИРАМИДА ИЗ СИДА "${seed}" (${n} СТРОК)`);
         });
 
         safeBind('rightTriangle90Btn', 'click', () => {
@@ -3353,30 +3714,72 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             showNotification("ПРЯМОЙ ТРЕУГОЛЬНИК: ЯЧЕЙКА ВЫРОВНЕНА В КВАДРАТ (90°)");
         });
 
-        function updatePatternBackdrop() {
-            let text = safeValue('patternInput', '');
-            let lines = text.split('\n');
-            let isSequential = safeChecked('sequentialSearchCheck', true);
-            let html = "";
-            
-            lines.forEach((line, idx) => {
-                let cleanLine = line.trim().replace(/\s+/g, '');
-                if (cleanLine.length > 0) {
-                    if (STATE.foundPatterns.has(cleanLine)) {
-                        html += `<span class="found">${line}</span>\n`;
-                    } else if (isSequential && idx === STATE.currentTargetPatternIdx) {
-                        html += `<span class="target">${line}</span>\n`;
-                    } else {
-                        html += line + "\n";
-                    }
-                } else {
-                    html += "\n";
-                }
-            });
-            const backdrop = document.getElementById('patternBackdrop');
-            if (backdrop) backdrop.innerHTML = html;
-        }
+<!-- === МАРКЕР 32: ПОДЛОЖКА ПАТТЕРНОВ И ИСТОЧНИК ИНТЕРЛИВИНГА === -->
+			// Перерисовывает HTML-подложку под полем паттернов: подсвечивает найденные (found)
+			// и текущую целевую (target) строки паттернов позади прозрачного textarea
+			function updatePatternBackdrop() {
+			    let text = safeValue('patternInput', '');
+			    let lines = text.split('\n');
+			    let isSequential = safeChecked('sequentialSearchCheck', true);
+			    let html = "";
 
+			    // Верхняя/нижняя граница рамки (в тех же индексах, что и очередь паттернов: строка i
+			    // паттернов отвечает за строку STATE.lines[i]), чтобы подсветить их прямо в списке паттернов.
+			    let frameTopIdx = -1, frameBottomIdx = -1;
+			    if (safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized && STATE.lines.length > 0) {
+			        let fm = getGridMetrics();
+			        if (fm) {
+			            let totalRows = STATE.lines.length;
+			            frameTopIdx = mod(fm.startIndex + STATE.manualFrame.rowStart, totalRows);
+			            frameBottomIdx = mod(fm.startIndex + STATE.manualFrame.rowStart + STATE.manualFrame.rowSpan - 1, totalRows);
+			        }
+			    }
+
+			    // Вводим счетчик только для непустых строк, чтобы он совпадал с логикой поиска
+			    let validLineCounter = 0;
+
+			    lines.forEach((line) => {
+			        let cleanLine = line.trim().replace(/\s+/g, '');
+
+			        if (cleanLine.length > 0) {
+				let frameCls = "";
+				if (validLineCounter === frameTopIdx) frameCls += " frame-top-line";
+				if (validLineCounter === frameBottomIdx) frameCls += " frame-bottom-line";
+				// Номер строки холста, которую этот паттерн должен разморозить (1-based, как везде в UI)
+				let numSpan = `<span class="pat-line-num">${validLineCounter + 1}</span>`;
+
+				// Исправленная логика формирования подложки
+				if (STATE.foundPatterns.has(cleanLine)) {
+				    // Если строка пустая, добавляем пробел, чтобы блок отрисовался
+				    html += `<span class="found${frameCls}">${numSpan}${line || ' '}</span>`;
+				}
+				else if (isSequential && validLineCounter === STATE.currentTargetPatternIdx) {
+				    html += `<span class="target${frameCls}">${numSpan}${line || ' '}</span>`;
+				}
+				else {
+				    html += `<span class="plain-line${frameCls}">${numSpan}${line || ' '}</span>`;
+				}
+
+			            // Увеличиваем счетчик только для заполненных строк
+			            validLineCounter++;
+			        }
+			        else {
+			            // Для пустых строк просто перенос, счетчик не трогаем
+			            html += "\n";
+			        }
+			    });
+
+			    const backdrop = document.getElementById('patternBackdrop');
+			    if (backdrop) {
+			        backdrop.innerHTML = html;
+			        const input = document.getElementById('patternInput');
+			        if (input) {
+			            backdrop.scrollTop = input.scrollTop;
+			        }
+			    }
+			}
+
+        // Возвращает "чистый" видимый текст строки: без пробелов-заполнителей и filler-маски
         const getCleanLine = (lData) => {
             if (!lData || !lData.display) return "";
             let s = "";
@@ -3386,6 +3789,31 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 }
             }
             return s;
+        };
+
+        // Вертикальный поиск сравнивал символы по сырому индексу в строке (display[c]), но на экране
+        // строки разной длины центрируются каждая по-своему (см. render()), поэтому одинаковый индекс c
+        // у двух строк разной длины почти никогда не означает одну и ту же экранную колонку. Эта функция
+        // возвращает "базу" строки — то же самое смещение центрирования, что использует render(), но в
+        // единицах "пол-символа" (умножено на 2, чтобы избежать дробных индексов): виртуальная колонка
+        // символа c считается как (2*c - base). У двух строк один и тот же результат означает, что их
+        // символы стоят в одном столбце на экране.
+        const getLineHalfColBase = (lData, symMode, useSpacing) => {
+            if (symMode === "centerTrack" || symMode === "centerTrack2") {
+                let firstCharIdx = -1, lastCharIdx = -1;
+                for (let k = 0; k < lData.display.length; k++) {
+                    if (!lData.fillerMask[k] && lData.display[k] !== ' ' && lData.display[k] !== 'x' && lData.display[k] !== '.') {
+                        if (firstCharIdx === -1) firstCharIdx = k;
+                        lastCharIdx = k;
+                    }
+                }
+                return firstCharIdx === -1 ? 0 : (firstCharIdx + lastCharIdx);
+            } else if (symMode === "centerBase") {
+                let mult = useSpacing ? 2 : 1;
+                return lData.L * mult - 1;
+            } else {
+                return lData.display.length - 1;
+            }
         };
 
         // === ЕДИНАЯ ТОЧКА ВЫБОРА ИСТОЧНИКА ИНТЕРЛИВИНГА ===
@@ -3509,7 +3937,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             return { interleaved, strCurrent, strAbove, nextIdx, labelCurrent, labelAbove, highlightSet, isDuplicate, idxLower, idxUpper };
         };
 
-<!-- === МАРКЕР 29: СИНТАКСИС ЛОКАЛЬНЫХ ШАГОВ === -->
+<!-- === МАРКЕР 33: СИНТАКСИС ЛОКАЛЬНЫХ ШАГОВ === -->
+        // Считает отображаемую строку (display) для одного кадра симуляции: применяет сдвиг фазы,
+        // маятник/цилиндр/разрядку/режим барабана и возвращает результат вместе с масками
+        // (highlight/red/filler/underlined) для последующей отрисовки
         function computeLineData(stepValue, elkaBuf, ptr, line, i, useElka, meetCenter, usePendulum, useCylinder, useSpacing, useDrum, globalMaxGrid, useFillX) {
             let lineOrig = line.orig;
             if (useElka && elkaBuf.length > 0) {
@@ -3641,10 +4072,14 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             return { res: resStr, rawMask: rawM, rawRedMask: rawR, rawFillerMask: rawF, rawUnderlinedMask: rawU, rawPRedMask: rawPRed, rawPPurpleMask: rawPPurple };
         }
 
+<!-- === МАРКЕР 34: ГЛАВНЫЙ РАСЧЁТ КАДРА (CALCULATESTATE) === -->
+        // Главный расчётный проход движка: для каждого кадра пересчитывает display всех строк
+        // (через computeLineData), ищет паттерны (локально/вертикально/сквозь/интерливингом)
+        // и продвигает очередь разморозки строк. triggerSearch включает поиск новых паттернов
         function calculateState(triggerSearch) {
             let newlyFound = false;
             let rawPatterns = safeValue('patternInput', '').split('\n').map(p => p.trim().replace(/\s+/g, ''));
-            let validPatterns = rawPatterns;
+            let validPatterns = rawPatterns.filter(p => p.length > 0);
             
             let applyFilter = safeChecked('filterCheck', false);
             let showHighlights = safeChecked('highlightCheck', true);
@@ -3659,6 +4094,27 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             let useDrum = safeChecked('drumModeCheck', false);
             let useFillX = safeChecked('fillXCheck', false);
 
+            // Единый предохранитель на весь вызов calculateState(): в строгом режиме очереди
+            // разные блоки поиска (пустой-паттерн, traceUp, вертикальный, сквозной, локальный,
+            // интерливинг) идут друг за другом по коду и КАЖДЫЙ проверяет один и тот же
+            // STATE.currentTargetPatternIdx — если один блок его продвинул, следующий блок в этом
+            // же вызове видит уже новую цель и может найти её тоже, в том же кадре. Раньше это
+            // давало "пачку" находок за один клик/тик. Флаг гарантирует: не больше одной новой
+            // находки за вызов, независимо от того, сколько блоков её потенциально видят.
+            let sequentialFoundThisCall = false;
+
+            // Если включена рамка (и режим "строго по очереди") — ищем паттерн только для строки,
+            // которая находится НИЖЕ нижней границы рамки. То, что уже внутри рамки или выше неё,
+            // повторно не пересматриваем: рамка растёт вниз строго по одной новой строке за находку.
+            // Рост уже принятой находки (МАРКЕР "рост рамки на 1 строку" ниже) этим не блокируется —
+            // используем отдельный флаг searchAllowed, а не переопределяем сам triggerSearch.
+            let searchAllowed = triggerSearch;
+            if (searchAllowed && isSequential && safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized) {
+                let targetIdx = STATE.currentTargetPatternIdx;
+                let isBelowFrame = (targetIdx - STATE.manualFrame.rowStart + 1) > STATE.manualFrame.rowSpan;
+                if (!isBelowFrame) searchAllowed = false;
+            }
+
             STATE.lines.forEach(l => {
                 l.verticalHighlightMask = [];
                 l.inactiveVerticalHighlightMask = [];
@@ -3667,6 +4123,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             let deltaN = parseInt(safeValue('deltaNInput', 1));
             let hideChanged = safeChecked('hideChangedCheck', false);
             let hideUnchanged = safeChecked('hideUnchangedCheck', false);
+            // 4-позиционная кнопка deltaColorModeBtn (не галка): 0 = показать только неменяющиеся
+            // (красные), меняющиеся скрыть; 1 = наоборот — только меняющиеся (чёрные); 2 = показать
+            // все, раскрашено; 3 = выключено (обычные цвета, без раскраски и скрытия).
+            let deltaColorMode = STATE.deltaColorMode !== undefined ? STATE.deltaColorMode : 3;
             let ignoreFirst = safeChecked('ignoreFirstPatternCharCheck', true);
             let ignoreLast = safeChecked('ignoreLastPatternCharCheck', false);
             const getSearchPat = p => {
@@ -3676,28 +4136,29 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 return res;
             };
 
+            // Поиск за один тик может найти сразу несколько паттернов подряд (это правильно —
+            // так ничего не пропускается), но рамка не должна прыгать сразу на весь найденный
+            // диапазон. Поэтому здесь только запоминаем, докуда рамке НАДО дорасти — а сам рост
+            // на 1 строку за тик применяется один раз в конце calculateState() (см. ниже).
             const expandFrameToRow = (rowIdx) => {
-                if (safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized) {
-                    let m = getGridMetrics();
-                    if (m) {
-                        let currentStart = STATE.manualFrame.rowStart;
-                        if (rowIdx >= currentStart) {
-                            let newSpan = (rowIdx - currentStart) + 1;
-                            if (newSpan > STATE.manualFrame.rowSpan) {
-                                STATE.manualFrame.rowSpan = newSpan;
-                                STATE.manualFrame.h = newSpan * m.lineHeight;
-                            }
+                if (safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized && !STATE.manualFrame.userLocked) {
+                    let currentStart = STATE.manualFrame.rowStart;
+                    if (rowIdx >= currentStart) {
+                        let neededSpan = (rowIdx - currentStart) + 1;
+                        if (neededSpan > (STATE.manualFrame.rowGrowTarget || STATE.manualFrame.rowSpan)) {
+                            STATE.manualFrame.rowGrowTarget = neededSpan;
                         }
                     }
                 }
             };
 
-            if (triggerSearch && vbaActivation) {
+            if (searchAllowed && vbaActivation) {
                 // Только ОДНА строка размораживается за вызов, даже если следующие паттерны уже
                 // видны/выполнены прямо сейчас — они дождутся своей очереди на следующих кадрах.
                 let changedAny = false;
                 {
                     if (isSequential) {
+                      if (!sequentialFoundThisCall) {
                         if (STATE.currentTargetPatternIdx < validPatterns.length) {
                             let targetPatOrig = validPatterns[STATE.currentTargetPatternIdx];
                             let targetPat = getSearchPat(targetPatOrig);
@@ -3713,18 +4174,20 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                             if (!selfLine.fillerMask[c] && /\S/.test(selfLine.display[c])) selfClean += selfLine.display[c];
                                         }
                                         if (selfClean.indexOf(targetPatOrig) !== -1) {
-                                            STATE.foundPatterns.add(targetPatOrig);
+                                            STATE.foundPatterns.add(targetPatOrig.trim().replace(/\s+/g, ''));
                                             newlyFound = true;
                                             STATE.lastFindMethod = "Локально в Строке 1 (сама в себе)";
                                             STATE.foundPatternsMetadata.set(targetPatOrig, {
-                                                type: 'local', rows: [1], step: Math.abs(STATE.globalStep)
+                                                type: 'local', rows: [1], step: Math.abs(STATE.globalStep),
+                                                method: STATE.lastFindMethod
                                             });
                                             STATE.currentTargetPatternIdx++;
                                             changedAny = true;
+                                            sequentialFoundThisCall = true;
                                         }
                                     }
                                 } else if (!STATE.foundPatterns.has(targetPatOrig)) {
-                                    STATE.foundPatterns.add(targetPatOrig);
+                                    STATE.foundPatterns.add(targetPatOrig.trim().replace(/\s+/g, ''));
                                     newlyFound = true;
                                     STATE.lastFindMethod = "Авто-активация (Пустой паттерн)";
                                     if (STATE.currentTargetPatternIdx < STATE.lines.length) {
@@ -3733,14 +4196,16 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                         expandFrameToRow(STATE.currentTargetPatternIdx);
                                     }
                                     STATE.foundPatternsMetadata.set(targetPatOrig, {
-                                        type: 'auto',
-                                        step: Math.abs(STATE.globalStep)
+                                        type: 'auto', rows: [STATE.currentTargetPatternIdx + 1], step: Math.abs(STATE.globalStep),
+                                        method: `Авто-активация (пустой паттерн), строка ${STATE.currentTargetPatternIdx + 1}`
                                     });
                                     STATE.currentTargetPatternIdx++;
                                     changedAny = true;
+                                    sequentialFoundThisCall = true;
                                 }
                             }
                         }
+                      }
                     } else {
                         validPatterns.forEach((patOrig, idx) => {
                             let pat = getSearchPat(patOrig);
@@ -3755,8 +4220,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                         expandFrameToRow(idx);
                                     }
 									STATE.foundPatternsMetadata.set(patOrig, {
-                                    type: 'auto',
-                                    step: Math.abs(STATE.globalStep)
+                                    type: 'auto', rows: [idx + 1], step: Math.abs(STATE.globalStep),
+                                    method: `Авто-активация (пустой паттерн), строка ${idx + 1}`
                                 });
                                 changedAny = true;
                             }
@@ -3795,7 +4260,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     elkaBuffer = elkaBuffer.slice(-shift) + elkaBuffer.slice(0, -shift);
                 }
             }
-            if (hideChanged || hideUnchanged) {
+            if (hideChanged || hideUnchanged || deltaColorMode !== 3) {
                 pastElkaBuffer = STATE.lines.map(line => line.orig).join('');
                 if (pastElkaBuffer.length > 0) {
                     let stepDelta = STATE.isReverse ? -1 : 1;
@@ -3858,7 +4323,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         }
 
         if (!isNaezdActive) {
-<!-- === МАРКЕР 30: ОДНОПРОХОДНЫЙ СКОРОСТНОЙ ЦИКЛ === -->  
+<!-- === МАРКЕР 35: ОДНОПРОХОДНЫЙ СКОРОСТНОЙ ЦИКЛ === -->
 			// (Стандартная легкая и быстрая логика)
             for (let i = 0; i < STATE.lines.length; i++) {
                 let line = STATE.lines[i];
@@ -3868,16 +4333,20 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
                 let currentData = computeLineData(Math.abs(line.localStep), elkaBuffer, elkaPtr, line, i, useElka, meetCenter, usePendulum, useCylinder, useSpacing, useDrum, globalMaxGrid, useFillX);
 
-                if (hideChanged || hideUnchanged) {
-                    let pastLocalStep = Math.abs(line.localStep - deltaN); 
+                let deltaChangeMask = [];
+                if (hideChanged || hideUnchanged || deltaColorMode !== 3) {
+                    let pastLocalStep = Math.abs(line.localStep - deltaN);
                     let pastData = computeLineData(pastLocalStep, pastElkaBuffer, elkaPtr, line, i, useElka, meetCenter, usePendulum, useCylinder, useSpacing, useDrum, globalMaxGrid, useFillX);
-                    
+
                     let finalRes = "";
                     for(let c=0; c < currentData.res.length; c++) {
                         let char = currentData.res[c];
                         if (c < pastData.res.length && !currentData.rawFillerMask[c] && /\S/.test(char)) {
                             let isChanged = char !== pastData.res[c];
-                            if ((hideChanged && isChanged) || (hideUnchanged && !isChanged)) {
+                            if (deltaColorMode !== 3) deltaChangeMask[c] = isChanged;
+                            let hideThis = (hideChanged && isChanged) || (hideUnchanged && !isChanged) ||
+                                (deltaColorMode === 0 && isChanged) || (deltaColorMode === 1 && !isChanged);
+                            if (hideThis) {
                                 char = "x";
                                 currentData.rawFillerMask[c] = true;
                             }
@@ -3886,6 +4355,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     }
                     currentData.res = finalRes;
                 }
+                line.deltaChangeMask = deltaChangeMask;
 
                 line.display = currentData.res;
                 line.highlightMask = currentData.rawMask;
@@ -3916,7 +4386,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 elkaPtr += line.L;
             }
         } else {
-<!-- === МАРКЕР 31: ТРЕХПРОХОДНЫЙ ЦИКЛ НАЕЗДА === -->
+<!-- === МАРКЕР 36: ТРЕХПРОХОДНЫЙ ЦИКЛ НАЕЗДА === -->
             // 1. ПЕРВЫЙ ПРОХОД: Чистый расчет дисплеев оригинальной неподвижной пирамиды
             for (let i = 0; i < STATE.lines.length; i++) {
                 let line = STATE.lines[i];
@@ -3927,16 +4397,20 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 let stepToUse = isNaezdActive ? 0 : Math.abs(line.localStep);
                 let currentData = computeLineData(stepToUse, elkaBuffer, elkaPtr, line, i, useElka, meetCenter, usePendulum, useCylinder, useSpacing, useDrum, globalMaxGrid, useFillX);
 
-                if (hideChanged || hideUnchanged) {
-                    let pastLocalStep = Math.abs(line.localStep - deltaN); 
+                let deltaChangeMask = [];
+                if (hideChanged || hideUnchanged || deltaColorMode !== 3) {
+                    let pastLocalStep = Math.abs(line.localStep - deltaN);
                     let pastData = computeLineData(pastLocalStep, pastElkaBuffer, elkaPtr, line, i, useElka, meetCenter, usePendulum, useCylinder, useSpacing, useDrum, globalMaxGrid, useFillX);
-                    
+
                     let finalRes = "";
                     for(let c=0; c < currentData.res.length; c++) {
                         let char = currentData.res[c];
                         if (c < pastData.res.length && !currentData.rawFillerMask[c] && /\S/.test(char)) {
                             let isChanged = char !== pastData.res[c];
-                            if ((hideChanged && isChanged) || (hideUnchanged && !isChanged)) {
+                            if (deltaColorMode !== 3) deltaChangeMask[c] = isChanged;
+                            let hideThis = (hideChanged && isChanged) || (hideUnchanged && !isChanged) ||
+                                (deltaColorMode === 0 && isChanged) || (deltaColorMode === 1 && !isChanged);
+                            if (hideThis) {
                                 char = "x";
                                 currentData.rawFillerMask[c] = true;
                             }
@@ -3945,6 +4419,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     }
                     currentData.res = finalRes;
                 }
+                line.deltaChangeMask = deltaChangeMask;
 
                 line.display = currentData.res;
                 line.highlightMask = currentData.rawMask;
@@ -3958,7 +4433,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 elkaPtr += line.L;
             }
 
-<!-- === МАРКЕР 32: ВТОРОЙ ПРОХОД === -->
+<!-- === МАРКЕР 37: ВТОРОЙ ПРОХОД === -->
             let tempDisplays = STATE.lines.map(l => l.display);
             let mergedDisplays = [...tempDisplays];
             let mergedGreenMasks = STATE.lines.map(() => []);
@@ -4040,7 +4515,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         }
                     }
 
-<!-- === МАРКЕР 33: СЛИЯНИЕ === --> 
+<!-- === МАРКЕР 38: СЛИЯНИЕ === -->
                     let targetS2 = mergedDisplays[finalTargetIdx];
                     if (targetS2) {
                         let diffLen = targetS2.length - s1.length;
@@ -4125,7 +4600,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
         }
 
-<!-- === МАРКЕР 34: ТРЕТИЙ ПРОХОД НАЧАЛО === -->
+<!-- === МАРКЕР 39: ТРЕТИЙ ПРОХОД НАЧАЛО === -->
         for (let i = 0; i < STATE.lines.length; i++) {
             let line = STATE.lines[i];
             if (line.L === 0) continue;
@@ -4148,7 +4623,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 }
             }
         }
-<!-- === МАРКЕР 35: ТРЕТИЙ ПРОХОД КОНЕЦ === -->
+<!-- === МАРКЕР 40: ТРЕТИЙ ПРОХОД КОНЕЦ === -->
 
         let useGlobalSearch = safeChecked('globalSearchCheck', false);
         let useVerticalSearch = safeChecked('verticalSearchCheck', false);
@@ -4160,11 +4635,27 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
             globalCleanText = "";
             globalMap = [];
+            // Сквозной поиск при включённой рамке читает текст ТОЛЬКО из строк внутри рамки —
+            // не по всем активным строкам холста (как раньше). Совпадает с тем же правилом
+            // "искать только строки ниже рамки" из searchAllowed выше.
+            let useFrameForGlobal = useGlobalSearch && safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized;
+            let globalFrameRowSet = null;
+            if (useFrameForGlobal) {
+                let gm = getGridMetrics();
+                if (gm) {
+                    globalFrameRowSet = new Set();
+                    let totalRows = STATE.lines.length;
+                    for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
+                        globalFrameRowSet.add(mod(gm.startIndex + STATE.manualFrame.rowStart + k, totalRows));
+                    }
+                }
+            }
             for (let i = 0; i < STATE.lines.length; i++) {
                 let line = STATE.lines[i];
                 if (line.isActive && line.L > 0) {
+                    if (globalFrameRowSet && !globalFrameRowSet.has(i)) continue;
                     for (let c = 0; c < line.display.length; c++) {
-                        if (!line.fillerMask[c] && /\S/.test(line.display[c])) { 
+                        if (!line.fillerMask[c] && /\S/.test(line.display[c])) {
                             globalCleanText += line.display[c];
                             globalMap.push({ r: i, c: c });
                         }
@@ -4172,7 +4663,14 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 }
             }
 
-            if (triggerSearch) {
+            if (searchAllowed && useVerticalSearch) {
+                // ВАЖНО: раньше тут стоял "return;" при уже найденном паттерне за этот тик — но это
+                // return из ВСЕЙ calculateState(), а не просто пропуск вертикального блока! Он обрывал
+                // выполнение до блока применения роста рамки (МАРКЕР ниже) и до подсветки/лога — из-за
+                // этого при включённом вертикальном поиске новая строка активировалась на миг и тут же
+                // гасла обратно на следующем тике (рамка не успевала вырасти). Защита "не искать повторно
+                // за один тик" и так уже есть через patternIndicesToCheck ниже (пустой массив = no-op),
+                // отдельный return был не нужен и только вредил.
                 let activeRows = [];
                 for (let rIdx = 0; rIdx < STATE.lines.length; rIdx++) {
                     if (STATE.lines[rIdx].isActive && STATE.lines[rIdx].L > 0) {
@@ -4181,10 +4679,21 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 }
                 if (activeRows.length > 0) {
                     activeRows.reverse();
+                    // Работаем в визуальных полу-колонках (getLineHalfColBase), а не в сырых индексах
+                    // строки — иначе на центрированной пирамиде из строк разной длины "col" у соседних
+                    // строк указывал бы на разные экранные позиции и поиск почти всегда промахивался мимо.
+                    let vSymMode = safeValue('symModeSelect', 'centerTrack');
 
-                    let traceUp = (activeIdx, col, str, path) => {
+                    let traceUp = (activeIdx, hc, str, path) => {
                         if (str.length > 0) {
-                            for (let pOf = 0; pOf < validPatterns.length; pOf++) {
+                            // В строгом режиме очереди подсвечиваем (и тем более регистрируем как найденный)
+                            // ТОЛЬКО текущий целевой паттерн — иначе холст подсвечивал бы совпадения для
+                            // паттернов, до которых очередь ещё не дошла, создавая впечатление "нашёл, но не
+                            // засчитал" (подсветка есть, а в логе/таблице паттернов записи нет).
+                            let patternIndicesToCheck = isSequential
+                                ? ((!sequentialFoundThisCall && STATE.currentTargetPatternIdx < validPatterns.length) ? [STATE.currentTargetPatternIdx] : [])
+                                : validPatterns.map((_, idx) => idx);
+                            for (let pOf of patternIndicesToCheck) {
                                 let patOrig = validPatterns[pOf];
                                 let pat = getSearchPat(patOrig);
                                 if (pat.length > 0 && str.startsWith(pat)) {
@@ -4201,14 +4710,15 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
                                         if (vbaActivation) {
                                             if (isSequential) {
-                                                if (pOf === STATE.currentTargetPatternIdx) {
+                                                if (pOf === STATE.currentTargetPatternIdx && !sequentialFoundThisCall) {
                                                     STATE.lines[pOf].isActive = true;
                                                     expandFrameToRow(pOf);
                                                     if (!STATE.foundPatterns.has(patOrig)) {
                                                         STATE.foundPatterns.add(patOrig);
                                                         newlyFound = true;
-                                                        STATE.lastFindMethod = `Вертикально Снизу-Вверх (Колонка ${col + 1}, Стр ${STATE.lines[pOf] ? STATE.lines[pOf].origIndex + 1 : '?'})`;
+                                                        STATE.lastFindMethod = `Вертикально Снизу-Вверх (Стр ${STATE.lines[pOf] ? STATE.lines[pOf].origIndex + 1 : '?'})`;
                                                         STATE.currentTargetPatternIdx++;
+                                                        sequentialFoundThisCall = true;
                                                     }
                                                 }
                                             } else {
@@ -4217,7 +4727,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                                 if (!STATE.foundPatterns.has(patOrig)) {
                                                     STATE.foundPatterns.add(patOrig);
                                                     newlyFound = true;
-                                                    STATE.lastFindMethod = `Вертикально Снизу-Вверх (Колонка ${col + 1}, Стр ${STATE.lines[pOf] ? STATE.lines[pOf].origIndex + 1 : '?'})`;
+                                                    STATE.lastFindMethod = `Вертикально Снизу-Вверх (Стр ${STATE.lines[pOf] ? STATE.lines[pOf].origIndex + 1 : '?'})`;
                                                 }
                                             }
                                         }
@@ -4230,28 +4740,37 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
                         let r = activeRows[activeIdx];
                         let line = STATE.lines[r];
+                        let base = getLineHalfColBase(line, vSymMode, useSpacing);
 
-                        let colsToCheck = [col];
+                        let hcsToCheck = [hc];
                         if (useSpacing) {
-                            let foundCol = -1;
-                            for (let offset of [-1, 0, 1]) {
-                                let nc = col + offset;
+                            // При разрядке допускаем сдвиг на 1 видимый символ в любую сторону —
+                            // это ±2 полу-колонки, т.к. каждый символ занимает 2 единицы halfCol.
+                            let foundHc = null;
+                            for (let offset of [-2, 0, 2]) {
+                                let testHc = hc + offset;
+                                let cRaw = testHc + base;
+                                if (cRaw % 2 !== 0) continue;
+                                let nc = cRaw / 2;
                                 if (nc >= 0 && nc < line.display.length) {
                                     let char = line.display[nc];
                                     if (!line.fillerMask[nc] && char && /\S/.test(char) && char !== '.' && char !== 'x') {
-                                        foundCol = nc;
+                                        foundHc = testHc;
                                         break;
                                     }
                                 }
                             }
-                            colsToCheck = foundCol !== -1 ? [foundCol] : [];
+                            hcsToCheck = foundHc !== null ? [foundHc] : [];
                         }
 
-                        colsToCheck.forEach(nextCol => {
+                        hcsToCheck.forEach(nextHc => {
+                            let cRaw = nextHc + base;
+                            if (cRaw % 2 !== 0) return;
+                            let nextCol = cRaw / 2;
                             if (nextCol >= 0 && nextCol < line.display.length) {
                                 let char = line.display[nextCol];
                                 if (!line.fillerMask[nextCol] && char && /\S/.test(char)) {
-                                    traceUp(activeIdx + 1, nextCol, str + char, path.concat([{ r: r, c: nextCol }]));
+                                    traceUp(activeIdx + 1, nextHc, str + char, path.concat([{ r: r, c: nextCol }]));
                                 }
                             }
                         });
@@ -4259,30 +4778,51 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
                     let bottomRow = activeRows[0];
                     let bottomLine = STATE.lines[bottomRow];
+                    let bottomBase = getLineHalfColBase(bottomLine, vSymMode, useSpacing);
                     for (let c = 0; c < bottomLine.display.length; c++) {
                         if (!bottomLine.fillerMask[c] && /\S/.test(bottomLine.display[c])) {
-                            traceUp(0, c, "", []);
+                            traceUp(0, 2 * c - bottomBase, "", []);
                         }
                     }
                 }
             }
 
-<!-- === МАРКЕР 36: АНАЛИЗ СТОЯЧИХ ВОЛН === -->
-        if (triggerSearch && useVerticalSearch) {
-            let sortedPatterns = [...validPatterns].sort((a, b) => b.length - a.length);
-            let maxCols = 0;
+<!-- === МАРКЕР 41: АНАЛИЗ СТОЯЧИХ ВОЛН === -->
+        if (searchAllowed && useVerticalSearch) {
+            // В строгом режиме ищем ТОЛЬКО текущий целевой паттерн — иначе (как раньше) этот метод
+            // перебирал все паттерны без учёта очереди и мог найти/разморозить, например, паттерн
+            // строки 3 раньше строк 1-2, что и выглядело как "поиск через один"/"всегда на шаге 3".
+            let sortedPatterns = isSequential
+                ? ((!sequentialFoundThisCall && STATE.currentTargetPatternIdx < validPatterns.length) ? [validPatterns[STATE.currentTargetPatternIdx]] : [])
+                : [...validPatterns].sort((a, b) => b.length - a.length);
+
+            // Столбцы ищем в визуальных полу-колонках (getLineHalfColBase), а не по сырому индексу
+            // символа в строке — иначе на центрированной пирамиде из строк разной длины одинаковый
+            // индекс c у разных строк почти никогда не попадает в один и тот же экранный столбец.
+            let vSymMode = safeValue('symModeSelect', 'centerTrack');
+            let minHalfCol = Infinity, maxHalfCol = -Infinity;
             STATE.lines.forEach(l => {
-                if (l.isActive && l.display.length > maxCols) maxCols = l.display.length;
+                if (!l.isActive || l.L === 0) return;
+                let base = getLineHalfColBase(l, vSymMode, useSpacing);
+                for (let c = 0; c < l.display.length; c++) {
+                    if (l.fillerMask[c] || !/\S/.test(l.display[c])) continue;
+                    let hc = 2 * c - base;
+                    if (hc < minHalfCol) minHalfCol = hc;
+                    if (hc > maxHalfCol) maxHalfCol = hc;
+                }
             });
 
-            for (let c = 0; c < maxCols; c++) {
+            for (let hc = minHalfCol; hc <= maxHalfCol; hc++) {
                 let colClean = "";
                 let rowMap = [];
                 for (let r = 0; r < STATE.lines.length; r++) {
                     let line = STATE.lines[r];
                     if (!line.isActive || line.L === 0) continue;
-                    let char = line.display[c];
-                    if (char && !line.fillerMask[c] && /\S/.test(char)) {
+                    let base = getLineHalfColBase(line, vSymMode, useSpacing);
+                    let cRaw = hc + base;
+                    let c = cRaw / 2;
+                    let char = (cRaw % 2 === 0 && c >= 0 && c < line.display.length) ? line.display[c] : undefined;
+                    if (char !== undefined && !line.fillerMask[c] && /\S/.test(char)) {
                         colClean += char;
                         rowMap.push(r);
                     } else {
@@ -4290,9 +4830,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         rowMap.push(-1);
                     }
                 }
-                
+
                 if (colClean.trim().length === 0) continue;
-                
+
                 for (let pIdx = 0; pIdx < sortedPatterns.length; pIdx++) {
                     let searchPatOrig = sortedPatterns[pIdx];
                     let searchPat = getSearchPat(searchPatOrig);
@@ -4300,7 +4840,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     let pos = colClean.indexOf(searchPat);
                     if (pos !== -1) {
                         let targetRowIdx = validPatterns.indexOf(searchPatOrig);
-                        
+
                         let allAbove = true;
                         for (let k = 0; k < searchPat.length; k++) {
                             let actualRow = rowMap[pos + k];
@@ -4316,8 +4856,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                             if (isNew) {
                                 STATE.foundPatterns.add(searchPatOrig);
                                 newlyFound = true;
-                                STATE.lastFindMethod = `Вертикально (Столбец ${c})`;
-                                
+                                STATE.lastFindMethod = `Вертикально (Столбец)`;
+
                                 if (vbaActivation) {
                                     let origIdx = validPatterns.indexOf(searchPatOrig);
                                     if (origIdx !== -1 && origIdx < STATE.lines.length) {
@@ -4326,14 +4866,19 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                         expandFrameToRow(origIdx);
                                     }
                                 }
-                                
+                                if (isSequential && targetRowIdx === STATE.currentTargetPatternIdx) {
+                                    STATE.currentTargetPatternIdx++;
+                                    sequentialFoundThisCall = true;
+                                }
+
+                                    let origLineNum = STATE.lines[targetRowIdx] ? STATE.lines[targetRowIdx].origIndex + 1 : (targetRowIdx + 1);
+                                    STATE.lastFindMethod = `Вертикально по центрированному столбцу (Строка ${origLineNum})`;
                                     STATE.foundPatternsMetadata.set(searchPatOrig, {
                                         type: 'vertical',
-                                        cols: [c],
-                                        step: Math.abs(STATE.globalStep)
+                                        cols: [hc], rows: [origLineNum],
+                                        step: Math.abs(STATE.globalStep),
+                                        method: STATE.lastFindMethod
                                     });
-                                    let origLineNum = STATE.lines[targetRowIdx] ? STATE.lines[targetRowIdx].origIndex + 1 : (targetRowIdx + 1);
-                                    STATE.lastFindMethod = `Вертикально в Столбце ${c + 1} (Строка ${origLineNum})`;
                                 }
                             break;
                         }
@@ -4342,18 +4887,21 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
         }
         
-        if (triggerSearch && useGlobalSearch && globalCleanText.length > 0) {
+        if (searchAllowed && useGlobalSearch && globalCleanText.length > 0) {
+            // (См. комментарий у МАРКЕРА вертикального поиска выше: раньше тут был "return;" из ВСЕЙ
+            // calculateState() — обрывал рост рамки/подсветку/лог для остатка тика. Внутренняя проверка
+            // "!sequentialFoundThisCall" чуть ниже уже защищает от повторной находки, отдельный return не нужен.)
             let cleanStream = globalCleanText.replace(/\s+/g, '');
             let cleanMap = globalMap.filter((val, idx) => /\S/.test(globalCleanText[idx]));
 
             let textToSearch = cleanStream + cleanStream;
             
             if (isSequential) {
-                if (STATE.currentTargetPatternIdx < validPatterns.length) {
+                if (!sequentialFoundThisCall && STATE.currentTargetPatternIdx < validPatterns.length) {
                     let targetPatOrig = validPatterns[STATE.currentTargetPatternIdx];
                     let targetPat = getSearchPat(targetPatOrig);
                     let pos = targetPat.length > 0 ? textToSearch.indexOf(targetPat) : -1;
-                    
+
                     if (pos !== -1 && pos < cleanStream.length) {
                         let targetRowIdx = STATE.currentTargetPatternIdx;
                         let allAbove = true;
@@ -4369,7 +4917,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     }
 
                         if (allAbove && !STATE.foundPatterns.has(targetPatOrig)) {
-                            STATE.foundPatterns.add(targetPatOrig);
+                            STATE.foundPatterns.add(targetPatOrig.trim().replace(/\s+/g, ''));
                             newlyFound = true;
                             STATE.lastFindMethod = "Сквозной XOR";
                             
@@ -4379,14 +4927,16 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                 expandFrameToRow(STATE.currentTargetPatternIdx);
                             }
                             
+                            STATE.lastFindMethod = `Сквозной XOR на Строках [${Array.from(involvedRows).sort((a,b)=>a-b).join(', ')}]`;
                             STATE.foundPatternsMetadata.set(targetPatOrig, {
                                 type: 'global',
                                 rows: Array.from(involvedRows).sort((a,b)=>a-b),
-                                step: Math.abs(STATE.globalStep)
+                                step: Math.abs(STATE.globalStep),
+                                method: STATE.lastFindMethod
                             });
 
-                            STATE.lastFindMethod = `Сквозной XOR на Строках [${Array.from(involvedRows).sort((a,b)=>a-b).join(', ')}]`;
                             STATE.currentTargetPatternIdx++;
+                            sequentialFoundThisCall = true;
                         }
                     }
                 }
@@ -4424,32 +4974,41 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                 }
                             }
                             
+                            STATE.lastFindMethod = `Сквозной XOR на Строках [${Array.from(involvedRows).sort((a,b)=>a-b).join(', ')}]`;
                             if (isNew || !hasMeta) {
                                 STATE.foundPatternsMetadata.set(searchPatOrig, {
                                     type: 'global',
                                     rows: Array.from(involvedRows).sort((a,b)=>a-b),
-                                    step: Math.abs(STATE.globalStep)
+                                    step: Math.abs(STATE.globalStep),
+                                    method: STATE.lastFindMethod
                                 });
                             }
-                            STATE.lastFindMethod = `Сквозной XOR на Строках [${Array.from(involvedRows).sort((a,b)=>a-b).join(', ')}]`;
                         }
                     }
                 });
             }
         }
 
-<!-- === МАРКЕР 37: ПОДСВЕТКА И ПОИСК ПАТТЕРНОВ === -->
-        if (triggerSearch && !useGlobalSearch && !useVerticalSearch) {
+<!-- === МАРКЕР 42: ПОДСВЕТКА И ПОИСК ПАТТЕРНОВ === -->
+        // Вертикальный поиск ДОПОЛНЯЕТ обычный построчный, а не заменяет его — иначе строки,
+        // которые находятся простым горизонтальным совпадением внутри одной строки, вообще
+        // никогда не размораживались бы, пока включена галка "Вертикальный поиск".
+        if (searchAllowed && !useGlobalSearch) {
             let sortedPatterns = [...validPatterns].sort((a, b) => b.length - a.length);
             // За один проход (один вызов calculateState) размораживаем не больше ОДНОЙ строки,
             // даже если несколько следующих паттернов уже видны прямо сейчас в других строках —
             // цикл идёт по всем i, и без этого флага мог продвинуть индекс несколько раз подряд.
-            let sequentialUnlockedThisPass = false;
+            // Стартуем от общего sequentialFoundThisCall — если паттерн уже найден раньше этим же
+            // вызовом (другим блоком поиска), этот блок не должен искать ещё один поверх него.
+            let sequentialUnlockedThisPass = sequentialFoundThisCall;
 
             for (let i = 0; i < STATE.lines.length; i++) {
                 let line = STATE.lines[i];
+                // Если "Разморозка строк по паттерну" выключена (vbaActivation=false) — ищем по ВСЕМ
+                // строкам, а не только по активным (иначе без этой галки поиск вообще ничего не найдёт
+                // за пределами уже активного блока). С галкой — как раньше, только среди активных.
                 if (vbaActivation && !line.isActive) continue;
-                if (!line.isActive || line.L === 0) continue;
+                if (line.L === 0) continue;
 
                 let lineClean = "";
                 for (let c = 0; c < line.display.length; c++) {
@@ -4465,24 +5024,28 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let targetPatOrig = validPatterns[STATE.currentTargetPatternIdx];
                         let targetPat = getSearchPat(targetPatOrig);
                         let pos = targetPat.length > 0 ? lineClean.indexOf(targetPat) : -1;
-                        if (pos !== -1 && i < STATE.currentTargetPatternIdx) {
+// Добавляем исключение: либо индекс меньше (классика), либо оба равны нулю (старт)
+							if (pos !== -1 && (i < STATE.currentTargetPatternIdx || (i === 0 && STATE.currentTargetPatternIdx === 0))) {
                             if (vbaActivation && STATE.currentTargetPatternIdx < STATE.lines.length) {
                                 STATE.lines[STATE.currentTargetPatternIdx].isActive = true;
                                 expandFrameToRow(STATE.currentTargetPatternIdx);
                             }
                             if (!STATE.foundPatterns.has(targetPatOrig)) {
-                                STATE.foundPatterns.add(targetPatOrig);
+                                STATE.foundPatterns.add(targetPatOrig.trim().replace(/\s+/g, ''));
                                 newlyFound = true;
                                 STATE.lastFindMethod = `Локально в Строке ${line.origIndex + 1} (Колонка ${pos + 1})`;
 
                                 STATE.foundPatternsMetadata.set(targetPatOrig, {
                                     type: 'local',
-                                    rows: [line.origIndex + 1],
-                                    step: Math.abs(STATE.globalStep)
+                                    rows: [line.origIndex + 1], cols: [pos],
+                                    step: Math.abs(STATE.globalStep),
+                                    method: STATE.lastFindMethod
                                 });
 
                                 STATE.currentTargetPatternIdx++;
                                 sequentialUnlockedThisPass = true;
+                                sequentialFoundThisCall = true;
+               					break; // Выходим из цикла FOR, чтобы не искать следующий паттерн в этом же тике
                             }
                         }
                     }
@@ -4509,12 +5072,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                     }
                                 }
                                 
+                                STATE.lastFindMethod = `Локально в Строке ${line.origIndex + 1} (Колонка ${pos + 1})`;
                                 STATE.foundPatternsMetadata.set(searchPatOrig, {
                                     type: 'local',
-                                    rows: [line.origIndex + 1],
-                                    step: Math.abs(STATE.globalStep)
+                                    rows: [line.origIndex + 1], cols: [pos],
+                                    step: Math.abs(STATE.globalStep),
+                                    method: STATE.lastFindMethod
                                 });
-                                STATE.lastFindMethod = `Локально в Строке ${line.origIndex + 1} (Колонка ${pos + 1})`;
                             }
                             break;
                         }
@@ -4524,8 +5088,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
         }
 
-        let useInterleavingCascade = safeChecked('interleavingCheck', false);
-        if (triggerSearch && useInterleavingCascade && STATE.lines.length > 1) {
+<!-- === МАРКЕР 43: ПОИСК: СКВОЗНОЙ И ИНТЕРЛИВИНГ-ТРИГГЕР === -->
+        let useInterleavingCascade = safeChecked('interleaveAnalysisCheck', false) && safeChecked('interleavingCheck', false);
+        if (searchAllowed && useInterleavingCascade && STATE.lines.length > 1) {
+            // (См. тот же комментарий выше — внутренний sequentialOk ниже уже защищает от повторной
+            // находки за тик, отдельный return из всей calculateState() тут был лишним и вредным.)
             let targetIndices = [];
             let useFrame = safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized;
             let m = getGridMetrics();
@@ -4559,8 +5126,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         
                         if (pos !== -1 && pos < interleaved.length) {
                             let isNew = !STATE.foundPatterns.has(nextPatternOrig);
-                            
-                            if (isNew) {
+                            // В строгом режиме этот блок не должен опережать очередь: находка допустима,
+                            // только если nextIdx и есть текущая цель, и в этом вызове ещё ничего не нашли.
+                            let sequentialOk = !isSequential || (!sequentialFoundThisCall && nextIdx === STATE.currentTargetPatternIdx);
+
+                            if (isNew && sequentialOk) {
                                 if (!STATE.lines[nextIdx].isActive) {
                                     STATE.lines[nextIdx].isActive = true;
                                     STATE.lines[nextIdx].localStep = 0;
@@ -4569,10 +5139,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                 STATE.foundPatterns.add(nextPatternOrig);
                                 newlyFound = true;
                                 STATE.lastFindMethod = `Интерливинг (${r.labelAbove || 'Дубль'} & ${r.labelCurrent})`;
-                                
-                                if (isSequential && STATE.currentTargetPatternIdx <= nextIdx) {
-                                    STATE.currentTargetPatternIdx = nextIdx + 1;
-                                }
+
+								if (isSequential && nextIdx === STATE.currentTargetPatternIdx) {
+								    STATE.currentTargetPatternIdx++; // Теперь только +1, без прыжков
+								    sequentialFoundThisCall = true;
+								}
                             }
 
                             STATE.foundPatternsMetadata.set(nextPatternOrig, {
@@ -4580,7 +5151,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                 source1: r.labelAbove || 'Дубль',
                                 source2: r.labelCurrent,
                                 target: STATE.lines[nextIdx].origIndex + 1,
-                                step: Math.abs(STATE.globalStep)
+                                rows: [STATE.lines[nextIdx].origIndex + 1],
+                                step: Math.abs(STATE.globalStep),
+                                method: `Интерливинг (${r.labelAbove || 'Дубль'} & ${r.labelCurrent}) → строка ${STATE.lines[nextIdx].origIndex + 1}`
                             });
 
                             for (let k = 0; k < nextPattern.length; k++) {
@@ -4593,7 +5166,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         }
 
             if (STATE.foundPatterns.size > beforeCount) {
-                searchChanged = true;
+                // В строгом режиме очереди не даём этому while перебрать сразу несколько паттернов
+                // за один вызов calculateState() — иначе только что найденный паттерн 2 тут же
+                // открывает паттерн 3 в том же тике, и оба зажигаются одновременно, что выглядит
+                // как нарушение очереди. Один вызов — не больше одной новой находки.
+                searchChanged = !isSequential;
                 var logEl = document.getElementById('balanceLog');
                 if (logEl) {
                     logEl.innerHTML = "<span style='color:#00ff66; font-weight:bold;'>Журнал событий терминала:</span><br>" + STATE.balanceHistory.join('<br>');
@@ -4602,9 +5179,14 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 STATE.patternLogHistory = [];
                 STATE.foundPatterns.forEach(pat => {
                     let meta = STATE.foundPatternsMetadata.get(pat);
-                    let mStr = meta ? `Шаг ${meta.step}` : `Шаг ${Math.abs(STATE.globalStep)}`;
+                    // Показываем не только шаг, но и где/как паттерн был найден (metadata.method) —
+                    // строится напрямую в момент находки в каждой из веток поиска (локально/вертикально/
+                    // сквозь/интерливинг/авто), см. calculateState().
+                    let stepStr = `Шаг ${meta ? meta.step : Math.abs(STATE.globalStep)}`;
+                    let methodStr = meta && meta.method ? meta.method : "Метод не определён";
+                    let safeMethod = methodStr.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
                     let safePat = pat.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                    STATE.patternLogHistory.unshift(`<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding:3px 4px; box-sizing:border-box;"><span style="color:#bfff00; font-weight:bold; white-space:pre;">${safePat}</span><span style="color:#00ccff; text-align:right; font-size:9px;">[${mStr}]</span></div>`);
+                    STATE.patternLogHistory.unshift(`<div style="border-bottom:1px solid #222; padding:3px 4px; box-sizing:border-box;"><div style="display:flex; justify-content:space-between; align-items:center;"><span style="color:#bfff00; font-weight:bold; white-space:pre;">${safePat}</span><span style="color:#00ccff; text-align:right; font-size:9px;">[${stepStr}]</span></div><div style="color:#888; font-size:9px; margin-top:1px;">${safeMethod}</div></div>`);
                 });
                 let pLogEl = document.getElementById('patternLogDetails');
                 if (pLogEl) {
@@ -4614,66 +5196,18 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
         }
 
+        // Догоняем рамку максимум на 1 строку за тик поиска, пока она не дорастёт до цели,
+        // записанной в expandFrameToRow() — так пользователь видит, как рамка идёт строка за
+        // строкой, даже если сам поиск нашёл несколько паттернов сразу.
+        if (triggerSearch && STATE.manualFrame && !STATE.manualFrame.userLocked && STATE.manualFrame.rowGrowTarget > STATE.manualFrame.rowSpan) {
+            let growM = getGridMetrics();
+            STATE.manualFrame.rowSpan += 1;
+            if (growM) STATE.manualFrame.h = STATE.manualFrame.rowSpan * growM.lineHeight;
+            fitFrameWidthToRows();
+        }
+
         if (showHighlights && globalCleanText.length > 0) {
-            if (useVerticalSearch) {
-                let sortedPatterns = [...validPatterns].sort((a, b) => b.length - a.length);
-                let maxCols = 0;
-                STATE.lines.forEach(l => {
-                    if (l.isActive && l.display.length > maxCols) maxCols = l.display.length;
-                });
-
-                for (let c = 0; c < maxCols; c++) {
-                    let colClean = "";
-                    let rowMap = [];
-                    for (let r = 0; r < STATE.lines.length; r++) {
-                        let line = STATE.lines[r];
-                        if (vbaActivation && !line.isActive) continue;
-                        if (!line.isActive || line.L === 0) continue;
-                        let char = line.display[c];
-                        if (char && !line.fillerMask[c] && /\S/.test(char)) {
-                            colClean += char;
-                            rowMap.push(r);
-                        } else {
-                            colClean += " ";
-                            rowMap.push(-1);
-                        }
-                    }
-                    
-                    for (let pIdx = 0; pIdx < sortedPatterns.length; pIdx++) {
-                        let patOrig = sortedPatterns[pIdx];
-                        let pat = getSearchPat(patOrig);
-                        if(pat.length === 0) continue;
-                        let pos = colClean.indexOf(pat);
-                        if (pos !== -1) {
-                            let targetRowIdx = validPatterns.indexOf(patOrig);
-                            
-                            let allAbove = true;
-                            for (let k = 0; k < pat.length; k++) {
-                                let actualRow = rowMap[pos + k];
-                                if (actualRow === -1 || (targetRowIdx > 0 && actualRow >= targetRowIdx)) {
-                                    allAbove = false;
-                                    break;
-                                }
-                            }
-
-                            if (allAbove) {
-                                let isTargetActive = (targetRowIdx !== -1 && STATE.lines[targetRowIdx]) ? STATE.lines[targetRowIdx].isActive : false;
-                                for (let k = 0; k < pat.length; k++) {
-                                    let actualRow = rowMap[pos + k];
-                                    if (actualRow !== -1) {
-                                        if (isTargetActive) {
-                                            STATE.lines[actualRow].highlightMask[c] = true;
-                                        } else {
-                                            STATE.lines[actualRow].inactiveHighlightMask[c] = true;
-                                        }
-                                    }
-                                }
-                                break;
-                            }
-                        }
-                    }
-                }
-            } else if (useGlobalSearch) {
+            if (useGlobalSearch) {
                 let cleanStream = globalCleanText.replace(/\s+/g, '');
                 let cleanMap = globalMap.filter((val, idx) => /\S/.test(globalCleanText[idx]));
 
@@ -4683,7 +5217,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     let pat = getSearchPat(patOrig);
                     if(pat.length === 0) return;
                     let pos = textToSearch.indexOf(pat);
-                    if (pos !== -1) { 
+                    if (pos !== -1) {
                         let targetRowIdx = validPatterns.indexOf(patOrig);
                         let isTargetActive = (targetRowIdx !== -1 && STATE.lines[targetRowIdx]) ? STATE.lines[targetRowIdx].isActive : false;
 
@@ -4700,7 +5234,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                             if (allAbove) {
                                 for (let k = 0; k < pat.length; k++) {
                                     let loc = cleanMap[(pos + k) % cleanStream.length];
-                                    if (loc && STATE.lines[loc.r].isActive) { 
+                                    if (loc && STATE.lines[loc.r].isActive) {
                                         let globalIdx = globalMap.findIndex((g, i) => g.r === loc.r && g.c === loc.c && /\S/.test(globalCleanText[i]));
                                         if (globalIdx !== -1) {
                                             let gridLoc = globalMap[globalIdx];
@@ -4717,13 +5251,95 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     }
                 });
             } else {
+                // Вертикальная подсветка ДОПОЛНЯЕТ обычную построчную ниже (а не исключает её) — см. тот
+                // же принцип у поиска выше (МАРКЕР 42): иначе паттерн, найденный простым горизонтальным
+                // совпадением внутри строки, никогда бы не подсвечивался, пока включён вертикальный поиск.
+                if (useVerticalSearch) {
+                    let sortedPatterns = [...validPatterns].sort((a, b) => b.length - a.length);
+                    // Та же логика визуальных полу-колонок, что и в самом поиске выше (getLineHalfColBase) —
+                    // подсветка должна строиться по тем же столбцам, что реально участвовали в находке.
+                    let vSymMode = safeValue('symModeSelect', 'centerTrack');
+                    let minHalfCol = Infinity, maxHalfCol = -Infinity;
+                    STATE.lines.forEach(l => {
+                        if (!l.isActive || l.L === 0) return;
+                        let base = getLineHalfColBase(l, vSymMode, useSpacing);
+                        for (let c = 0; c < l.display.length; c++) {
+                            if (l.fillerMask[c] || !/\S/.test(l.display[c])) continue;
+                            let hc = 2 * c - base;
+                            if (hc < minHalfCol) minHalfCol = hc;
+                            if (hc > maxHalfCol) maxHalfCol = hc;
+                        }
+                    });
+
+                    for (let hc = minHalfCol; hc <= maxHalfCol; hc++) {
+                        let colClean = "";
+                        let rowMap = [];
+                        let colMap = [];
+                        for (let r = 0; r < STATE.lines.length; r++) {
+                            let line = STATE.lines[r];
+                            if (vbaActivation && !line.isActive) continue;
+                            if (!line.isActive || line.L === 0) continue;
+                            let base = getLineHalfColBase(line, vSymMode, useSpacing);
+                            let cRaw = hc + base;
+                            let c = cRaw / 2;
+                            let char = (cRaw % 2 === 0 && c >= 0 && c < line.display.length) ? line.display[c] : undefined;
+                            if (char !== undefined && !line.fillerMask[c] && /\S/.test(char)) {
+                                colClean += char;
+                                rowMap.push(r);
+                                colMap.push(c);
+                            } else {
+                                colClean += " ";
+                                rowMap.push(-1);
+                                colMap.push(-1);
+                            }
+                        }
+
+                        for (let pIdx = 0; pIdx < sortedPatterns.length; pIdx++) {
+                            let patOrig = sortedPatterns[pIdx];
+                            let pat = getSearchPat(patOrig);
+                            if(pat.length === 0) continue;
+                            let pos = colClean.indexOf(pat);
+                            if (pos !== -1) {
+                                let targetRowIdx = validPatterns.indexOf(patOrig);
+
+                                let allAbove = true;
+                                for (let k = 0; k < pat.length; k++) {
+                                    let actualRow = rowMap[pos + k];
+                                    if (actualRow === -1 || (targetRowIdx > 0 && actualRow >= targetRowIdx)) {
+                                        allAbove = false;
+                                        break;
+                                    }
+                                }
+
+                                if (allAbove) {
+                                    let isTargetActive = (targetRowIdx !== -1 && STATE.lines[targetRowIdx]) ? STATE.lines[targetRowIdx].isActive : false;
+                                    for (let k = 0; k < pat.length; k++) {
+                                        let actualRow = rowMap[pos + k];
+                                        let actualCol = colMap[pos + k];
+                                        if (actualRow !== -1) {
+                                            if (isTargetActive) {
+                                                STATE.lines[actualRow].highlightMask[actualCol] = true;
+                                            } else {
+                                                STATE.lines[actualRow].inactiveHighlightMask[actualCol] = true;
+                                            }
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
                 let sortedPatterns = [...validPatterns].sort((a, b) => b.length - a.length);
 
                 for (let i = 0; i < STATE.lines.length; i++) {
                     let line = STATE.lines[i];
+                    // Тот же режим, что и в блоке поиска выше: без "Разморозки по паттерну" подсветка
+                    // строится по всем строкам, а не только по активным.
                     if (vbaActivation && !line.isActive) continue;
-                    if (!line.isActive || line.L === 0) continue;
-                    
+                    if (line.L === 0) continue;
+
                     let lineClean = "";
                     let colMap = [];
                     for (let c = 0; c < line.display.length; c++) {
@@ -4732,9 +5348,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                             colMap.push(c);
                         }
                     }
-                    
+
                     if (lineClean.length === 0) continue;
-                    
+
                     for (let pIdx = 0; pIdx < sortedPatterns.length; pIdx++) {
                         let patOrig = sortedPatterns[pIdx];
                         let pat = getSearchPat(patOrig);
@@ -4766,7 +5382,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
         STATE.lines.forEach(l => { l.lcsRedMask = []; l.lcsPurpleMask = []; });
 
-<!-- === МАРКЕР 38: СВЯЗЬ И АНАЛИЗ ИНТЕРЛИВИНГА === -->
+<!-- === МАРКЕР 44: СВЯЗЬ И АНАЛИЗ ИНТЕРЛИВИНГА === -->
         if (safeChecked('interleaveAnalysisCheck', true)) {
             let targetIndices = [];
             let useFrame = safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized;
@@ -4784,6 +5400,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 }
             }
 
+            // Ищет самую длинную общую непрерывную подстроку (LCS) между s1 и s2 методом полного перебора
             function findLCS(s1, s2) {
                 let maxLen = 0, bestS1 = -1, bestS2 = -1, bestMatch = "";
                 for (let i = 0; i < s1.length; i++) {
@@ -4871,6 +5488,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 }
             }
 
+<!-- === МАРКЕР 45: СИНТЕЗ ЛОГА ИНТЕРЛИВИНГА === -->
             let logDiv = document.getElementById('interleavingLogDetails');
             if (logDiv) {
                 logDiv.style.display = 'block';
@@ -5001,6 +5619,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         return newlyFound;
     }
 
+    // Держит STATE.globalStep внутри диапазона A-B (галка "A-B Повтор"): либо отражает шаг
+    // назад при достижении границы (Пинг-Понг), либо телепортирует на противоположный край
     function enforceLoop() {
         if (safeChecked('loopCheck', false)) {
             let lStart = parseInt(safeValue('loopStart', 0)) || 0;
@@ -5036,6 +5656,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         }
     }
 
+    // Выполняет отложенный каскад: размораживает следующую строку после последней активной
+    // (используется, когда триггер каскада — баланс, а не завершение цикла)
     function processPendingCascade() {
         if (!STATE.pendingCascade) return;
         let lastActiveIdx = -1;
@@ -5055,13 +5677,18 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 }
             });
 
-            if (safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized) {
+            if (safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized && !STATE.manualFrame.userLocked) {
                 let m = getGridMetrics();
                 if (m) {
-                    let reqH = (nextIdx + 1) * m.lineHeight - STATE.manualFrame.y;
-                    if (reqH > STATE.manualFrame.h) {
-                        STATE.manualFrame.h = reqH;
-                        STATE.manualFrame.rowSpan = Math.max(1, Math.ceil(reqH / m.lineHeight));
+                    // Считаем нужную высоту в СТРОКАХ (rowSpan), а не в пикселях через .y/.h — эти поля
+                    // не всегда синхронизированы с rowStart/rowSpan (например, у свежесозданной рамки
+                    // остаются дефолты y=-50/h=100), из-за чего рост рамки по старой пиксельной формуле
+                    // мог тихо не сработать и только что активированная строка тут же гасла обратно.
+                    let neededSpan = (nextIdx - STATE.manualFrame.rowStart) + 1;
+                    if (neededSpan > STATE.manualFrame.rowSpan) {
+                        STATE.manualFrame.rowSpan = neededSpan;
+                        STATE.manualFrame.h = STATE.manualFrame.rowSpan * m.lineHeight;
+                        STATE.manualFrame.y = STATE.manualFrame.rowStart * m.lineHeight;
                         fitFrameWidthToRows();
                     }
                 }
@@ -5069,7 +5696,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         }
         STATE.pendingCascade = false;
     }
-<!-- === МАРКЕР 39: ЛОГИКА ТАКТОВ И КАСКАДОВ === -->
+<!-- === МАРКЕР 46: ЛОГИКА ТАКТОВ И КАСКАДОВ === -->
+        // Вызывается на каждый тик: синхронизирует активность строк с рамкой, запускает
+        // calculateState (расчёт + поиск паттернов), авто-каскад, анализ стоячей волны
+        // и обновляет всю диагностику/статистику в UI, затем рендерит кадр
         function updateLogic() {
             // Синхронизация активных состояний плавающих круглых кнопок с чекбоксами на лету
             let fBtn = document.getElementById('floatingFrameBtn');
@@ -5100,14 +5730,18 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (m) {
                 // При авто-скроллинге строк рамка не отключает логические строки, давая им свободно течь сквозь себя
                 if (STATE.playerMode !== "scroll") {
-                    let rowStart = Math.floor(STATE.manualFrame.y / m.lineHeight);
-                    let rowEnd = Math.min(STATE.lines.length - 1, Math.ceil((STATE.manualFrame.y + STATE.manualFrame.h) / m.lineHeight) - 1);
-                    
+                    // Активация строк считается по индексам (rowStart/rowSpan), а не по пикселям —
+                    // иначе смена lineHeight при зуме колёсиком отключает строки, реально попадающие в рамку.
+                    let rStart = STATE.manualFrame.rowStart;
+                    let rSpan = STATE.manualFrame.rowSpan;
+
                     for (let i = 0; i < STATE.lines.length; i++) {
-                        let shouldBeActive = (i >= rowStart && i <= rowEnd);
+                        let screenIdx = (i - m.startIndex + STATE.lines.length) % STATE.lines.length;
+                        let shouldBeActive = (screenIdx >= rStart && screenIdx < rStart + rSpan);
                         if (shouldBeActive) {
                             if (!STATE.lines[i].isActive) {
                                 STATE.lines[i].isActive = true;
+                                STATE.lines[i].localStep = 0;
                             }
                         } else {
                             if (STATE.lines[i].isActive) {
@@ -5161,7 +5795,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             STATE.waveAnalysis.history = [];
             STATE.waveAnalysis.staticCells.clear();
         }
-<!-- === МАРКЕР 40: АВТОМАТИЗАЦИЯ КАСКАДОВ === -->
+<!-- === МАРКЕР 47: АВТОМАТИЗАЦИЯ КАСКАДОВ === -->
         if (safeChecked('autoCascadeCheck', true) && !STATE.frameAction) {
             let lastActiveIdx = -1;
             for (let i = 0; i < STATE.lines.length; i++) {
@@ -5198,13 +5832,15 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                             STATE.lines[nextIdx].isActive = true;
                             STATE.lines[nextIdx].localStep = 0;
                             
-                            if (safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized) {
+                            if (safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized && !STATE.manualFrame.userLocked) {
                                 let m = getGridMetrics();
                                 if (m) {
-                                    let reqH = (nextIdx + 1) * m.lineHeight - STATE.manualFrame.y;
-                                    if (reqH > STATE.manualFrame.h) {
-                                        STATE.manualFrame.h = reqH;
-                                        STATE.manualFrame.rowSpan = Math.max(1, Math.ceil(reqH / m.lineHeight));
+                                    // Считаем по строкам (rowSpan), а не по .y/.h — см. комментарий в processPendingCascade().
+                                    let neededSpan = (nextIdx - STATE.manualFrame.rowStart) + 1;
+                                    if (neededSpan > STATE.manualFrame.rowSpan) {
+                                        STATE.manualFrame.rowSpan = neededSpan;
+                                        STATE.manualFrame.h = STATE.manualFrame.rowSpan * m.lineHeight;
+                                        STATE.manualFrame.y = STATE.manualFrame.rowStart * m.lineHeight;
                                         fitFrameWidthToRows();
                                     }
                                 }
@@ -5216,12 +5852,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         }
 
         let newlyFound = calculateState(true);
-        
+
         if (newlyFound) {
-            calculateState(false); 
-            updatePatternBackdrop();
+            calculateState(false);
             showNotification("🎯 НАЙДЕН НОВЫЙ ПАТТЕРН!");
-            
+
             let methodEl = document.getElementById('diagMethod');
             if (methodEl) {
                 methodEl.textContent = "Метод находки: " + STATE.lastFindMethod;
@@ -5229,6 +5864,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 setTimeout(() => { methodEl.style.color = "#888"; }, 2000);
             }
         }
+        // Вызываем на каждый тик (не только при находке) — иначе разметка границ рамки
+        // в поле "Паттерны" (frame-top-line/frame-bottom-line) не обновлялась бы вживую
+        // при перетаскивании/росте рамки без нахождения нового паттерна.
+        updatePatternBackdrop();
 
         const stepVal = document.getElementById('stepVal');
         if (stepVal) {
@@ -5277,6 +5916,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         render();
     }
 
+        // Подгоняет реальные пиксельные размеры <canvas> под размер его контейнера
         function resizeCanvas() {
             const canvas = UI.canvas;
             const container = UI.container;
@@ -5289,7 +5929,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
         }
 
-<!-- === МАРКЕР 41: ИВЕНТЫ И УПРАВЛЕНИЕ НАЧАЛО === -->
+<!-- === МАРКЕР 48: ИВЕНТЫ И УПРАВЛЕНИЕ НАЧАЛО === -->
+        // Собирает полный снимок состояния (все настройки/чекбоксы/строки/паттерны/панели/рамку)
+        // в один plain-объект — основа для экспорта кода, фото и автосохранения
         window.createSnapshotObject = function() {
             let linesInp = document.getElementById('linesInput');
             let patInp = document.getElementById('patternInput');
@@ -5352,15 +5994,19 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 ignoreFirstTargetChar: safeChecked('ignoreFirstTargetCharCheck', false),
                 interleaveSwapOrder: safeChecked('interleaveSwapOrderCheck', false),
                 accumulateInterleave: safeChecked('accumulateInterleaveCheck', false),
-                autoShiftInterleaveTop: safeChecked('autoShiftInterleaveTopCheck', false)
+                autoShiftInterleaveTop: safeChecked('autoShiftInterleaveTopCheck', false),
+                searchOnManualShift: safeChecked('searchOnManualShiftCheck', false)
             };
         };
 
         // File System Access API: если браузер поддерживает (Chrome/Edge), пишем ПРЯМО в выбранный
-        // файл, без папки "Загрузки". Хендл сохраняем в IndexedDB, чтобы пережить F5/перезагрузку —
-        // при следующем визите спросится только разрешение (маленький попап), а не выбор файла заново.
+        // файл, без папки "Загрузки". Хендл НЕ кэшируем для прямой записи — диалог "Сохранить как"
+        // должен появляться при каждом экспорте. Но папку, где сохранили в прошлый раз, запоминаем
+        // (в IndexedDB) и подсказываем её через startIn, чтобы диалог сразу открывался там, а не в
+        // "Документах".
         let banksDataFileHandle = null;
 
+        // Читает значение по ключу из IndexedDB-хранилища zerkalius_fs_handles (напр. хендл папки экспорта)
         function idbGet(key) {
             return new Promise((resolve) => {
                 let req = indexedDB.open('zerkalius_fs_handles', 1);
@@ -5374,6 +6020,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 req.onerror = () => resolve(null);
             });
         }
+        // Записывает значение по ключу в IndexedDB-хранилище zerkalius_fs_handles
         function idbSet(key, value) {
             return new Promise((resolve) => {
                 let req = indexedDB.open('zerkalius_fs_handles', 1);
@@ -5387,12 +6034,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 req.onerror = () => resolve();
             });
         }
-
-        (async () => {
-            if (!window.showSaveFilePicker) return;
-            let saved = await idbGet('banksDataFileHandle');
-            if (saved) banksDataFileHandle = saved;
-        })();
 
         safeBind('exportBanksDataBtn', 'click', async () => {
             let snapshot = window.createSnapshotObject ? window.createSnapshotObject() : {};
@@ -5415,21 +6056,14 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
             if (window.showSaveFilePicker) {
                 try {
-                    if (!banksDataFileHandle) {
-                        banksDataFileHandle = await window.showSaveFilePicker({
-                            suggestedName: 'banks_data.js',
-                            types: [{ description: 'JavaScript', accept: { 'application/javascript': ['.js'] } }]
-                        });
-                        await idbSet('banksDataFileHandle', banksDataFileHandle);
-                    } else {
-                        // Хендл восстановлен из IndexedDB после перезагрузки — разрешение на запись
-                        // нужно подтвердить заново (обычно маленький попап, не выбор файла).
-                        let perm = await banksDataFileHandle.queryPermission({ mode: 'readwrite' });
-                        if (perm !== 'granted') {
-                            perm = await banksDataFileHandle.requestPermission({ mode: 'readwrite' });
-                            if (perm !== 'granted') throw new Error('permission-denied');
-                        }
-                    }
+                    let startInHint = await idbGet('banksDataStartInDir');
+                    let pickerOpts = {
+                        suggestedName: 'banks_data.js',
+                        types: [{ description: 'JavaScript', accept: { 'application/javascript': ['.js'] } }]
+                    };
+                    if (startInHint) pickerOpts.startIn = startInHint;
+                    banksDataFileHandle = await window.showSaveFilePicker(pickerOpts);
+                    await idbSet('banksDataStartInDir', banksDataFileHandle);
                     const writable = await banksDataFileHandle.createWritable();
                     await writable.write(fileContent);
                     await writable.close();
@@ -5451,7 +6085,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             showNotification("banks_data.js СОХРАНЁН В ЗАГРУЗКИ (обнови файл рядом с HTML вручную)");
         });
 
-<!-- === МАРКЕР 42: ЭКСПОРТ И ИМПОРТ КОДА === -->
+<!-- === МАРКЕР 49: ЭКСПОРТ И ИМПОРТ КОДА === -->
         safeBind('exportCodeBtn', 'click', () => {
             let snapshot = window.createSnapshotObject ? window.createSnapshotObject() : {};
             let code = btoa(encodeURIComponent(JSON.stringify(snapshot)));
@@ -5517,7 +6151,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 xmlWorkbook += `<Row ss:Height="18"><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${idx + 1}</Data></Cell><Cell ss:StyleID="OrigCell"><Data ss:Type="String">${line.orig}</Data></Cell><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${line.L}</Data></Cell><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${line.cN}</Data></Cell><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${line.cycle}</Data></Cell><Cell ss:StyleID="DisplayCell"><Data ss:Type="String">${line.display}</Data></Cell><Cell ss:StyleID="NumCell"><Data ss:Type="Number">${line.localStep}</Data></Cell><Cell ss:StyleID="${activeStyle}"><Data ss:Type="String">${activeText}</Data></Cell></Row>`;
             });
 			
-<!-- === МАРКЕР 43: ЭКСПОРТ И ИМПОРТ КОДА ПРОДОЛЖЕНИЕ=== -->
+<!-- === МАРКЕР 50: ЭКСПОРТ И ИМПОРТ КОДА ПРОДОЛЖЕНИЕ === -->
 
             xmlWorkbook += `</Table></Worksheet>`;
 
@@ -5645,7 +6279,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             link.click();
             URL.revokeObjectURL(link.href);
 			
-<!-- === МАРКЕР 44: ЭКСПОРТ И ИМПОРТ СЛЕДУБЩЕЕ ПРОДОЛЖЕНИЕ === -->  
+<!-- === МАРКЕР 51: ЭКСПОРТ И ИМПОРТ СЛЕДУЮЩЕЕ ПРОДОЛЖЕНИЕ === -->
 
             let xmlWorkbook = `<?xml version="1.0" encoding="utf-8"?>
             <?mso-application progid="Excel.Sheet"?>
@@ -5730,7 +6364,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             xmlWorkbook += `<Worksheet ss:Name="ЧБ холст"><Table>`;
             for (let c = 0; c < maxCols; c++) xmlWorkbook += `<Column ss:Width="20"/>`;
 			
-<!-- === МАРКЕР 45: ЭКСПОРТ И ИМПОРТ КОДА ЗАВЕРШЕНИЕ === -->
+<!-- === МАРКЕР 52: ЭКСПОРТ И ИМПОРТ КОДА ЗАВЕРШЕНИЕ === -->
             STATE.lines.forEach((line) => {
                 xmlWorkbook += `<Row ss:Height="18">`;
                 for (let c = 0; c < line.display.length; c++) {
@@ -5779,6 +6413,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }, 'image/png');
         });
 
+        // Навешивает обработчик на скрытый <input type="file"> импорта: разбирает .txt/.png снимки
+        // и .js файлы слотов (banks_data.js), затем применяет их через importSnapshotObject
         const initFileImportListener = () => {
             const fileLoader = document.getElementById('importFileLoader');
             if (!fileLoader) return;
@@ -5890,7 +6526,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 if (fileLoader) fileLoader.click();
             }
         });
-<!-- === МАРКЕР 46: ТАКТОВЫЙ ЦИКЛ СИМУЛЯЦИИ === -->
+<!-- === МАРКЕР 53: ТАКТОВЫЙ ЦИКЛ СИМУЛЯЦИИ === -->
+        // Продвигает рамку на 1 строку в текущем направлении сканера, растёт при полном обороте
+        // и проверяет баланс 0/1 в новой позиции (с опциональной авто-инверсией/авто-достройкой)
         function stepFrameScanner() {
             let m = getGridMetrics();
             if (!m || !STATE.manualFrame || !STATE.manualFrame.isInitialized) return;
@@ -5944,7 +6582,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
         }
 
-<!-- === МАРКЕР 47: ГЛАВНЫЙ ТАКТ СИМУЛЯЦИИ === -->
+<!-- === МАРКЕР 54: ГЛАВНЫЙ ТАКТ СИМУЛЯЦИИ === -->
+        // Главный игровой цикл (requestAnimationFrame): по интервалу speedSlider продвигает шаг
+        // симуляции/скроллинга (с учётом Turbo и суб-шагового поиска) и планирует следующий кадр
         function loop(timestamp) {
             if (!STATE.isPlaying) return;
             let speedMs = 1001 - parseInt(safeValue('speedSlider', 950)); 
@@ -6061,6 +6701,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             STATE.rafId = requestAnimationFrame(loop);
         }
 
+        // Переключает Пуск/Пауза: запускает или останавливает игровой цикл loop() и обновляет кнопку
         function togglePlay() {
             STATE.isPlaying = !STATE.isPlaying;
             let stopBtnEl = document.getElementById('stopBtn');
@@ -6080,46 +6721,115 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
         }
 
-<!-- === МАРКЕР 48: СЛУШАТЕЛИ КНОПОК ПЛЕЕРА === -->
+<!-- === МАРКЕР 55: СЛУШАТЕЛИ КНОПОК ПЛЕЕРА === -->
         safeBind('playBtn', 'click', () => { togglePlay(); showNotification(STATE.isPlaying ? "ПУСК" : "ПАУЗА"); });
         
-        safeBind('stopBtn', 'click', () => {
-            STATE.isPlaying = false; STATE.globalStep = 0; STATE.flashes.clear();
-            STATE.autoOffsetX = 0; STATE.autoOffsetY = 0;
+safeBind('stopBtn', 'click', () => {
+            STATE.isPlaying = false;
+            STATE.globalStep = 0;
+            STATE.flashes.clear();
+            if (STATE.cylinderAutoInterval) {
+                clearInterval(STATE.cylinderAutoInterval);
+                STATE.cylinderAutoInterval = null;
+                let cBtn = document.getElementById('cylinderAutoBtn');
+                if (cBtn) { cBtn.style.background = ''; cBtn.style.color = '#00ccff'; }
+            }
+            if (STATE.elkaAutoInterval) {
+                clearInterval(STATE.elkaAutoInterval);
+                STATE.elkaAutoInterval = null;
+                let eBtn = document.getElementById('elkaAutoBtn');
+                if (eBtn) { eBtn.style.background = ''; eBtn.style.color = '#ff3333'; }
+            }
+            STATE.autoOffsetX = 0; 
+            STATE.autoOffsetY = 0;
             STATE.rowScrollOffset = 0;
+            
             if (STATE.selectedRings) STATE.selectedRings.clear();
             if (STATE.selectedRows) STATE.selectedRows.clear();
-            cancelAnimationFrame(STATE.rafId); UI.playBtn.innerHTML = '▶ Пуск'; UI.playBtn.style.background = '#00ff66';
+            
+            cancelAnimationFrame(STATE.rafId); 
+            UI.playBtn.innerHTML = '▶ Пуск'; 
+            UI.playBtn.style.background = '#00ff66';
             document.getElementById('stopBtn').classList.add('inactive');
+            
+            // 1. СБРОС ПАТТЕРНОВ И ЛОГОВ
             STATE.currentTargetPatternIdx = 0;
             STATE.foundPatterns.clear();
             STATE.foundPatternsMetadata.clear();
             STATE.lastFindMethod = "Ожидание...";
-            STATE.pendingCascade = false;            STATE.wasBalancedLastFrame = false;
-            STATE.lastSpecialType = "none";
-            STATE.lastLoggedRowsCount = 0;
+            if (STATE.patternLogHistory) STATE.patternLogHistory = [];
+            
+            let pLogEl = document.getElementById('patternLogDetails');
+            if (pLogEl) {
+                pLogEl.style.display = 'none';
+                pLogEl.innerHTML = '';
+            }
+
+            // 2. ВОЗВРАТ СТРОК К ИСХОДНОМУ ВИДУ (положение "0"): каждая строка откатывается к своему
+            // originalSeed — снимку на момент загрузки. Слот (STATE.banks[...].lines) для этого не
+            // годится: Цилиндр/Спираль/Инверсия/Наезд сами перезаписывают слот при каждом применении,
+            // так что к моменту Стопа он уже равен ИЗМЕНЁННОМУ виду, а не исходному — копировать было
+            // бы нечего. originalSeed же выставляется только в loadText() и руками не трогается.
+            STATE.lines.forEach((line, idx) => {
+                if (line.originalSeed !== undefined && line.orig !== line.originalSeed) {
+                    line.orig = line.originalSeed;
+                    line.template = line.originalSeed;
+                    line.L = line.orig.length;
+                    line.firstOneIdx = line.orig.search(/[1\\)\]>+]/);
+                    line.invertMask = new Array(line.L).fill(false);
+                }
+                line.localStep = 0;
+                line.isManuallyShifted = false;
+                line.isActive = (idx === 0); // Только первая строка активна
+                line.highlightMask = [];
+                line.verticalHighlightMask = [];
+                line.lcsRedMask = [];
+                line.lcsPurpleMask = [];
+            });
+            // Пересинхронизируем текстовое поле и слот с восстановленным содержимым.
+            let restoredText = STATE.lines.map(l => l.orig).join('\n');
+            let linesInpReset = document.getElementById('linesInput');
+            if (linesInpReset) linesInpReset.value = restoredText;
+            if (STATE.banks[STATE.activeBankIndex]) STATE.banks[STATE.activeBankIndex].lines = restoredText;
+
+            // 3. ФИКС ПАУЗЫ: Предварительный расчет, чтобы движок "увидел" состояние шага 0
+            // Мы вызываем расчет БЕЗ триггера поиска (false), чтобы обновить STATE.lines[0].display
+            calculateState(false); 
+            
+            // Проверяем баланс на шаге 0 и записываем его как "уже виденный"
+            let bal = calculateCurrentBalance();
+            STATE.wasBalancedLastFrame = (bal.isEq || bal.isAll0 || bal.isAll1);
+            if (bal.isEq) STATE.lastSpecialType = "balance";
+            else if (bal.isAll0) STATE.lastSpecialType = "all0";
+            else if (bal.isAll1) STATE.lastSpecialType = "all1";
+            else STATE.lastSpecialType = "none";
+            
+            STATE.lastLoggedRowsCount = STATE.lines.filter(l => l.isActive).length;
+            STATE.pendingCascade = false;            
             STATE.balanceHistory = [];
+            
             var logEl = document.getElementById('balanceLog');
             if (logEl) logEl.innerHTML = "";
             var ilLog = document.getElementById('interleavingLogDetails');
             if (ilLog) ilLog.style.display = 'none';
             
-            STATE.lines.forEach((line, idx) => {
-                line.localStep = 0;
-                line.isManuallyShifted = false;
-                line.isActive = (idx === 0);
-            });
             STATE.linesModifiedSinceLastInit = false;
+            
             if (STATE.manualFrame) {
                 STATE.manualFrame.isInitialized = false;
                 STATE.manualFrame.rowStart = 0;
                 STATE.manualFrame.rowSpan = 1;
+                STATE.manualFrame.rowGrowTarget = 0;
                 STATE.manualFrame.y = 0;
-                STATE.manualFrame.h = undefined;
-                STATE.manualFrame.w = undefined;
+                STATE.manualFrame.userLocked = false;
             }
-            updatePatternBackdrop(); updateLogic(); showNotification("СБРОС"); 
-            window.saveAutosaveSnapshot && window.saveAutosaveSnapshot();
+
+            // ОБНОВЛЯЕМ ВИЗУАЛ
+            updatePatternBackdrop(); 
+            render(); 
+            
+            showNotification("СБРОС");
+            if (window.saveAutosaveSnapshot) window.saveAutosaveSnapshot();
         });
         
         safeBind('clearMemoryBtn', 'click', () => {
@@ -6204,11 +6914,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 STATE.manualFrame.isInitialized = true;
                 STATE.manualFrame.rowStart = 0;
                 STATE.manualFrame.rowSpan = 1;
+                STATE.manualFrame.rowGrowTarget = 0;
                 STATE.manualFrame.y = 0;
+                STATE.manualFrame.userLocked = false;
                 let m = getGridMetrics();
                 if(m) STATE.manualFrame.h = m.lineHeight;
             }
-            
+
             updatePatternBackdrop();
             render();
             showNotification("ХОЛСТ ОЧИЩЕН");
@@ -6232,10 +6944,12 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             render();
         });
     </script>
-<!-- === МАРКЕР 49: ВЫЧИСЛЕНИЯ И СОСТОЯНИЕ КОНЕЦ === -->
+<!-- === МАРКЕР 56: ВЫЧИСЛЕНИЯ И СОСТОЯНИЕ КОНЕЦ === -->
 
-<!-- === МАРКЕР 50: РЕНДЕР ХОЛСТА === -->
+<!-- === МАРКЕР 57: РЕНДЕР ХОЛСТА === -->
     <script>
+        // Полная перерисовка холста за один кадр: фон, все строки (радар/пирамида), подсветки,
+        // конгломераты, рамка с её счётчиками/анимацией и вспомогательные тултипы
         function render() {
             const canvas = UI.canvas;
             const container = UI.container;
@@ -6296,6 +7010,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 if (!STATE.lastBlobs) STATE.lastBlobs = [];
                 if (!STATE.nextBlobColorId) STATE.nextBlobColorId = 1;
                 let currentFrameBlobs = [];
+                // Возвращает тип символа ячейки (1/0) для заливки конгломератов или null, если ячейка пуста
                 const getType = (rIdx, cIdx) => {
                     let lData = STATE.lines[rIdx];
                     if (!lData || !lData.display || cIdx >= lData.display.length || cIdx < 0 || lData.fillerMask[cIdx]) return null;
@@ -6382,6 +7097,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     ctx.restore();
                 }
 
+<!-- === МАРКЕР 58: РАДАР: ЛУЧИ И БАЛАНС ВЫДЕЛЕННЫХ КОЛЕЦ === -->
                 // ОТРИСОВКА ЛУЧЕЙ И ОРБИТ ВЫДЕЛЕННЫХ КОЛЕЦ
                 if (someSelected) {
                     ctx.save();
@@ -6484,17 +7200,22 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let cBlobColor = useConglomerates ? conglomColors.get(actualIndex + "_" + c) : null;
                         
                         ctx.save();
+                        // Подсветка найденных паттернов (isHl) имеет приоритет над трассером, конгломератами
+                        // и вспышкой — если "Подсветка паттернов" включена, цвет паттерна должен быть виден
+                        // поверх остальной раскраски символа.
                         if (isLcsRed) { ctx.fillStyle = '#ff0000'; ctx.shadowBlur = 15; ctx.shadowColor = '#ff0000'; ctx.globalAlpha = 1.0; }
                         else if (isLcsPurple) { ctx.fillStyle = '#cc33ff'; ctx.shadowBlur = 15; ctx.shadowColor = '#cc33ff'; ctx.globalAlpha = 1.0; }
                         else if (isInactiveHl || isInactiveVerticalHl) { ctx.fillStyle = isInactiveVerticalHl ? '#00ccff' : safeValue('inactivePatternColorInput', '#ffff00'); ctx.shadowBlur = useNeon ? 12 : 0; ctx.shadowColor = ctx.fillStyle; }
+                        else if (isHl) { ctx.fillStyle = hlColor; ctx.shadowBlur = useNeon ? 8 : 0; ctx.shadowColor = hlColor; }
                         else if (cBlobColor) { ctx.fillStyle = cBlobColor; ctx.shadowBlur = useNeon ? 8 : 0; ctx.shadowColor = cBlobColor; }
                         else if (isRed) { ctx.fillStyle = trColor; ctx.shadowBlur = useNeon ? 8 : 0; ctx.shadowColor = trColor; }
                         else if (isFlashing) { ctx.fillStyle = hlColor; ctx.shadowBlur = 10; ctx.shadowColor = hlColor; }
                         else if (isVerticalHl) { ctx.fillStyle = '#00ccff'; ctx.shadowBlur = useNeon ? 8 : 0; ctx.shadowColor = '#00ccff'; }
+                        else if (lineData.deltaChangeMask && lineData.deltaChangeMask[c] !== undefined) { ctx.fillStyle = lineData.deltaChangeMask[c] ? '#000000' : '#ff0000'; }
                         else {
                             if (char === '.') ctx.fillStyle = '#555';
-                            else ctx.fillStyle = isHl ? hlColor : (isChar1 ? c1 : c0);
-                            if (useNeon && (isChar1 || isHl || isVerticalHl) && char !== '.') { ctx.shadowBlur = 8; ctx.shadowColor = isVerticalHl ? '#00ccff' : (isHl ? hlColor : (isChar1 ? safeValue('color1', '#ffffff') : safeValue('color0', '#00ff66'))); }
+                            else ctx.fillStyle = isChar1 ? c1 : c0;
+                            if (useNeon && (isChar1 || isVerticalHl) && char !== '.') { ctx.shadowBlur = 8; ctx.shadowColor = isVerticalHl ? '#00ccff' : (isChar1 ? safeValue('color1', '#ffffff') : safeValue('color0', '#00ff66')); }
                         }
 
                         let angle = c * angleStep - (Math.PI / 2);
@@ -6556,8 +7277,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     
                     ctx.restore();
                 }
-<!-- === МАРКЕР 51: РЕНДЕР ПАТРИЧНОЙ МАТРИЦЫ === -->
-<!-- === МАРКЕР 52: ОТРИСОВКА ПИРАМИДЫ === -->
+<!-- === МАРКЕР 59: ОТРИСОВКА ПИРАМИДЫ (НЕ-РАДАР РЕЖИМ) === -->
             } else {
                 let useMirror = safeChecked('mirrorCheck', false);
                 let totalRows = STATE.lines.length;
@@ -6588,6 +7308,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                             let isRowSelected = (STATE.selectedRows && STATE.selectedRows.has(actualIndex)) ||
                                 (STATE.interleaveHighlightedRows && STATE.interleaveHighlightedRows.has(actualIndex)) ||
                                 STATE.interleaveTargetRow === actualIndex;
+                            // Строка внутри текущей рамки — номер красим цветом рамки, чтобы её границы
+                            // было видно и в узкой колонке номеров, не только на самом холсте.
+                            let isInFrame = showFrame && STATE.manualFrame && STATE.manualFrame.isInitialized &&
+                                i >= STATE.manualFrame.rowStart && i < STATE.manualFrame.rowStart + STATE.manualFrame.rowSpan;
                             yPositions.forEach(y => {
                                 let span = document.createElement('div');
                                 span.textContent = lineData.origIndex + 1;
@@ -6602,6 +7326,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                     span.style.color = '#ff66ff';
                                     span.style.fontWeight = 'bold';
                                     span.style.textShadow = '0 0 6px #ff00ff, 0 0 10px #ff00ff';
+                                } else if (isInFrame) {
+                                    span.style.color = frameColor;
+                                    span.style.fontWeight = 'bold';
+                                    span.style.textShadow = `0 0 6px ${frameColor}`;
                                 } else {
                                     span.style.color = lineData.isActive ? '#3a4a42' : '#33333a';
                                     span.style.fontWeight = safeChecked('boldCheck', false) ? 'bold' : 'normal';
@@ -6673,14 +7401,19 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                             let cBlobColor = useConglomerates ? conglomColors.get(actualIndex + "_" + c) : null;
 
                             ctx.save();
+                            // Подсветка найденных паттернов (isHl) имеет приоритет над трассером, конгломератами
+                            // и вспышкой — если "Подсветка паттернов" включена, цвет паттерна должен быть виден
+                            // поверх остальной раскраски символа.
                             if (isLcsRed) { ctx.fillStyle = '#ff0000'; ctx.shadowBlur = 15; ctx.shadowColor = '#ff0000'; ctx.globalAlpha = 1.0; }
                             else if (isLcsPurple) { ctx.fillStyle = '#cc33ff'; ctx.shadowBlur = 15; ctx.shadowColor = '#cc33ff'; ctx.globalAlpha = 1.0; }
                             else if (isInactiveHl) { ctx.fillStyle = safeValue('inactivePatternColorInput', '#ffff00'); ctx.globalAlpha = 1.0; }
+                            else if (isHl) { ctx.fillStyle = hlColor; if (useNeon && char !== '.') { ctx.shadowBlur = 8; ctx.shadowColor = hlColor; } }
                             else if (isRed) { ctx.fillStyle = trColor; if (useNeon && char !== '.') { ctx.shadowBlur = 8; ctx.shadowColor = trColor; } }
                             else if (cBlobColor) { ctx.fillStyle = cBlobColor; if (useNeon && char !== '.') { ctx.shadowBlur = 8; ctx.shadowColor = cBlobColor; } }
+                            else if (lineData.deltaChangeMask && lineData.deltaChangeMask[c] !== undefined) { ctx.fillStyle = lineData.deltaChangeMask[c] ? '#000000' : '#ff0000'; }
                             else {
                                 if (char === '.') ctx.fillStyle = '#555';
-                                else ctx.fillStyle = isHl ? hlColor : (isType1(char) ? c1 : c0);
+                                else ctx.fillStyle = isType1(char) ? c1 : c0;
                             }
                             ctx.textAlign = 'center'; ctx.fillText(char, cellX, y);
                             
@@ -6702,7 +7435,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     });
                 }
             }
-<!-- === МАРКЕР 53: ОТРИСОВКА СЕТКИ И РАМКИ === -->
+<!-- === МАРКЕР 60: ОТРИСОВКА СЕТКИ И РАМКИ === -->
             // Отрисовка каскада скобок-балансов по бокам пирамиды
             if (STATE.scannerFoundBalances && STATE.scannerFoundBalances.length > 0 && !useRadar) {
                 ctx.save();
@@ -6780,7 +7513,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 ctx.restore();
             }
 
-<!-- === МАРКЕР 54: РЕНДЕР ГРАНИЦ И РАМКИ === -->
+<!-- === МАРКЕР 61: РЕНДЕР ГРАНИЦ И РАМКИ === -->
             // Рендер рамки, её неона и крупных боковых счётчиков
             if (showFrame && !useRadar && lastActiveIdx_global !== -1) {
                 if (STATE.manualFrame.rowStart < 0) {
@@ -6813,9 +7546,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 let isFreshFrame = (STATE.manualFrame.colSpan === undefined || !STATE.manualFrame.isInitialized || STATE.manualFrame.needsRecenter);
                 if (STATE.manualFrame.colSpan === undefined || !STATE.manualFrame.isInitialized) {
                     STATE.manualFrame.rowStart = 0;
-                    STATE.manualFrame.rowSpan = 1; 
+                    STATE.manualFrame.rowSpan = 1;
+                    STATE.manualFrame.rowGrowTarget = 0;
                     STATE.manualFrame.isInitialized = true;
                     STATE.manualFrame.manualWidth = false;
+                    STATE.manualFrame.userLocked = false;
                 }
 
                 // Авто-подбор ширины/положения — при самом первом появлении рамки, А ТАКЖЕ при загрузке
@@ -6827,9 +7562,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
                         let idx = (m.startIndex + STATE.manualFrame.rowStart + k) % totalRows;
                         let line = STATE.lines[idx];
-                        if (line && line.display && line.display.length > maxLenInFrame) {
-                            maxLenInFrame = line.display.length;
-                        }
+                        let visLen = getVisibleLineSpan(line);
+                        if (visLen > maxLenInFrame) maxLenInFrame = visLen;
                     }
                     if (maxLenInFrame === 0) maxLenInFrame = 1;
 
@@ -7056,7 +7790,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             renderFloatingTooltips(ctx, canvas, m);
         }
 
-<!-- === МАРКЕР 50б: АВТО-СКРЫТИЕ ПАНЕЛЕЙ ПРИ НАЕЗДЕ СТРОК === -->
+<!-- === МАРКЕР 62: АВТО-СКРЫТИЕ ПАНЕЛЕЙ ПРИ НАЕЗДЕ СТРОК === -->
         const AUTO_HIDE_PANEL_SELECTORS = ['.controls', '.player-panel', '#rightPanel'];
         let panelsForceVisibleUntil = 0;
 
@@ -7202,6 +7936,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
             // Считаем "наездом" только сами символы строк (их реальный, с учётом альфа-блендинга, цвет),
             // а не любые непустые пиксели — иначе выделение/подсветка/рамка тоже триггерили бы скрытие панелей.
+            // Смешивает hex-цвет с фоном по альфа-каналу — даёт реальный видимый RGB для сравнения с пикселем
             const blend = (hex, alpha) => {
                 let r = parseInt(hex.slice(1, 3), 16) || 0;
                 let g = parseInt(hex.slice(3, 5), 16) || 0;
@@ -7276,6 +8011,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             });
         }
 
+        // Рисует всплывающую подсказку с текстом строки под наведённым/выделенным кольцом радара
         function renderFloatingTooltips(ctx, canvas, m) {
             let selectedArray = Array.from(STATE.selectedRings);
             let latestSelected = selectedArray.length > 0 ? selectedArray[selectedArray.length - 1] : -1;
@@ -7294,7 +8030,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
         }
     </script>
-<!-- === МАРКЕР 55: ИВЕНТЫ И ИНИЦИАЛИЗАЦИЯ === -->
+<!-- === МАРКЕР 63: ИВЕНТЫ И ИНИЦИАЛИЗАЦИЯ === -->
     <script>
         safeBind('prevBtn', 'click', () => { 
             let S = parseInt(safeValue('scrollStepInput', 1)) || 1;
@@ -7435,6 +8171,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             updateLogic();
         });
 
+<!-- === МАРКЕР 64: КНОПКИ ИНТЕРЛИВИНГА (RAW/ШАБЛОН) === -->
         safeBind('calcAllInterleavesRawBtn', 'click', function() {
             if (window.saveUndoState) saveUndoState();
 
@@ -7592,11 +8329,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         }
                     }
                     
-                    if (safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized) {
-                        let reqH = (nextIdx + 1) * m.lineHeight - STATE.manualFrame.y;
-                        if (reqH > STATE.manualFrame.h) {
-                            STATE.manualFrame.h = reqH;
-                            STATE.manualFrame.rowSpan = Math.max(1, Math.ceil(reqH / m.lineHeight));
+                    if (safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized && !STATE.manualFrame.userLocked) {
+                        // Считаем по строкам (rowSpan), а не по .y/.h — см. комментарий в processPendingCascade().
+                        let neededSpan = (nextIdx - STATE.manualFrame.rowStart) + 1;
+                        if (neededSpan > STATE.manualFrame.rowSpan) {
+                            STATE.manualFrame.rowSpan = neededSpan;
+                            STATE.manualFrame.h = STATE.manualFrame.rowSpan * m.lineHeight;
+                            STATE.manualFrame.y = STATE.manualFrame.rowStart * m.lineHeight;
                             fitFrameWidthToRows();
                         }
                     }
@@ -7684,6 +8423,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             showNotification(`🧬 СПЛЕТЕНО С ШАБЛОНОМ: ${wovenCount} СТРОК (БЕЗ КАСКАДА)`);
         });
 
+        // Пустая строка в паттернах (просто Enter без текста) вешает очередь строгого поиска
+        // намертво — пустой паттерн нельзя ни найти, ни пропустить. Поэтому пустые строки
+        // просто не допускаются в поле: чистим их при потере фокуса и везде, где текст
+        // подставляется программно (вставка, загрузка файла/банка).
+<!-- === МАРКЕР 65: СЛУШАТЕЛИ ПОЛЯ ПАТТЕРНОВ И ЧЕКБОКСОВ === -->
+        const stripEmptyPatternLines = (text) => text.split('\n').filter(l => l.trim().length > 0).join('\n');
+
         const patternInputEl = document.getElementById('patternInput');
         if (patternInputEl) {
             patternInputEl.addEventListener('input', function() {
@@ -7693,6 +8439,19 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 } catch(err) {}
                 updatePatternBackdrop();
                 updateLogic();
+            });
+
+            patternInputEl.addEventListener('blur', function() {
+                let cleaned = stripEmptyPatternLines(this.value);
+                if (cleaned !== this.value) {
+                    this.value = cleaned;
+                    STATE.banks[STATE.activeBankIndex].patterns = cleaned;
+                    try {
+                        localStorage.setItem('saved_patterns_content', cleaned);
+                    } catch(err) {}
+                    updatePatternBackdrop();
+                    updateLogic();
+                }
             });
 
             patternInputEl.addEventListener('scroll', function() {
@@ -7708,10 +8467,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 try {
                     navigator.clipboard.readText().then(text => {
                         if (text) {
+                            let cleanedText = stripEmptyPatternLines(text);
                             this.value = "";
                             setTimeout(() => {
-                                this.value = text;
-                                STATE.banks[STATE.activeBankIndex].patterns = text;
+                                this.value = cleanedText;
+                                STATE.banks[STATE.activeBankIndex].patterns = cleanedText;
                                 updatePatternBackdrop();
                                 updateLogic();
                                 showNotification("ПАТТЕРНЫ ВСТАВЛЕНЫ"); 
@@ -7727,7 +8487,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
-                let content = e.target.result;
+                let content = stripEmptyPatternLines(e.target.result);
                 document.getElementById('patternInput').value = content;
                 STATE.banks[STATE.activeBankIndex].patterns = content;
                 try {
@@ -7758,6 +8518,24 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         
         safeBind('hideChangedCheck', 'change', function() { updateLogic(); });
         safeBind('hideUnchangedCheck', 'change', function() { updateLogic(); });
+
+        // Авто-каскад (по циклу) и разморозка по паттерну обе размораживают строки —
+        // если включить их одновременно, они конфликтуют (строка может размораживаться
+        // по таймеру ДО того, как для неё найден паттерн). Поэтому они взаимоисключающие.
+        safeBind('autoCascadeCheck', 'change', function() {
+            if (this.checked) {
+                let other = document.getElementById('activateOnPatternCheck');
+                if (other && other.checked) { other.checked = false; showNotification("РАЗМОРОЗКА ПО ПАТТЕРНУ ВЫКЛЮЧЕНА (конфликт с авто-каскадом)"); }
+            }
+            updateLogic();
+        });
+        safeBind('activateOnPatternCheck', 'change', function() {
+            if (this.checked) {
+                let other = document.getElementById('autoCascadeCheck');
+                if (other && other.checked) { other.checked = false; showNotification("АВТО-КАСКАД ВЫКЛЮЧЕН (конфликт с разморозкой по паттерну)"); }
+            }
+            updateLogic();
+        });
         safeBind('deltaNInput', 'input', function() { updateLogic(); });
         safeBind('globalSearchCheck', 'change', function() { updatePatternBackdrop(); updateLogic(); });
         safeBind('redFirstOneCheck', 'change', function() { updateLogic(); });
@@ -7837,8 +8615,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 render();
             }
         });
-<!-- === МАРКЕР 56: ИНТЕРАКТИВНЫЕ СЛАЙДЕРЫ === -->
-        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'showRowNumbersCheck', 'hlColorInput', 'frameColorInput', 'gridColorInput', 'gridAlpha', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'ignoreFirstPatternCharCheck', 'ignoreLastPatternCharCheck', 'inactivePatternColorInput', 'radarRotateSnapInput', 'interleavingCheck', 'interleaveAnalysisCheck', 'ignoreFirstInterleaveCharCheck', 'ignoreFirstTargetCharCheck', 'boldCheck', 'radarCheck', 'funnelCheck', 'mirrorCheck', 'balanceCheck', 'cascadeOnBalanceCheck', 'pauseOnBalanceCheck', 'keepPhaseOnCascadeCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'fillXCheck', 'cwSlider', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck', 'verticalSearchCheck', 'waveAnalysisCheck', 'hideBlinkingCheck', 'waveHistoryInput', 'frameTypeSelect', 'frameScannerActiveCheck', 'scannerAutoInvertCheck', 'scannerHalfInvertCheck', 'scannerAutoBuildUpCheck', 'naezdCheck', 'naezdModeSelect', 'naezdSaveCheck', 'substeppingCheck', 'accumulateInterleaveCheck', 'interleaveCapInput', 'charSizeSlider'].forEach(id => {
+<!-- === МАРКЕР 66: ИНТЕРАКТИВНЫЕ СЛАЙДЕРЫ === -->
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'showRowNumbersCheck', 'hlColorInput', 'frameColorInput', 'gridColorInput', 'gridAlpha', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'ignoreFirstPatternCharCheck', 'ignoreLastPatternCharCheck', 'inactivePatternColorInput', 'radarRotateSnapInput', 'interleavingCheck', 'interleaveAnalysisCheck', 'ignoreFirstInterleaveCharCheck', 'ignoreFirstTargetCharCheck', 'boldCheck', 'radarCheck', 'funnelCheck', 'mirrorCheck', 'balanceCheck', 'cascadeOnBalanceCheck', 'pauseOnBalanceCheck', 'keepPhaseOnCascadeCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'frameCenterLockCheck', 'fillXCheck', 'cwSlider', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck', 'verticalSearchCheck', 'waveAnalysisCheck', 'hideBlinkingCheck', 'waveHistoryInput', 'frameTypeSelect', 'frameScannerActiveCheck', 'scannerAutoInvertCheck', 'scannerHalfInvertCheck', 'scannerAutoBuildUpCheck', 'naezdCheck', 'naezdModeSelect', 'naezdSaveCheck', 'substeppingCheck', 'accumulateInterleaveCheck', 'interleaveCapInput', 'charSizeSlider'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('input', () => { render(); });
@@ -7880,7 +8658,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             window.addEventListener('mousedown', e => {
                 if (e.button === 1) e.preventDefault();
             }, { passive: false });
-<!-- === МАРКЕР 57: ОБРАБОТЧИКИ ТАЧА И МЫШИ === -->
+<!-- === МАРКЕР 67: ОБРАБОТЧИКИ ТАЧА И МЫШИ === -->
             canvas.addEventListener('mousedown', e => {
                 if (e.button === 1) {
                     e.preventDefault();
@@ -7925,7 +8703,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 let mx = e.clientX;
                 let my = e.clientY;
 
-<!-- === МАРКЕР 58: ЛОГИКА ДРАГ-Н-ДРОП ХОЛСТА === -->
+<!-- === МАРКЕР 68: ЛОГИКА ДРАГ-Н-ДРОП ХОЛСТА === -->
                 if (showFrame) {
                     let colSpan = STATE.manualFrame.colSpan !== undefined ? STATE.manualFrame.colSpan : 40;
                     let colStart = STATE.manualFrame.colStart !== undefined ? STATE.manualFrame.colStart : -Math.round(colSpan / 2);
@@ -7976,13 +8754,16 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     }
                     
                     if (STATE.frameAction) {
+                        // Ручной драг/ресайз рамки — с этого момента авторост по найденным паттернам
+                        // блокируется (см. expandFrameToRow), пока рамка не будет создана заново.
+                        STATE.manualFrame.userLocked = true;
                         STATE.frameStartMX = mx;
                         STATE.frameStartMY = my;
                         STATE.frameStartW = colSpan;
                         STATE.frameStartH = STATE.manualFrame.rowSpan;
                         STATE.frameStartY = STATE.manualFrame.rowStart;
                         STATE.frameStartColStart = colStart;
-                        return; 
+                        return;
                     }
                 }
 
@@ -8014,6 +8795,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 STATE.clickStartY = my;
             });
 
+<!-- === МАРКЕР 69: ЛОГИКА ПЕРЕМЕЩЕНИЯ КУРСОРА (MOUSEMOVE) === -->
             window.addEventListener('mousemove', e => {
                 let mx = e.clientX;
                 let my = e.clientY;
@@ -8122,6 +8904,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     }
                 }
 
+<!-- === МАРКЕР 70: ПЕРЕМЕЩЕНИЕ: РАМКА И РАДАР-КОЛЬЦА === -->
                 if (STATE.frameAction) {
                     let m = getGridMetrics();
                     let dy_rows = Math.round((my - STATE.frameStartMY) / m.lineHeight);
@@ -8144,9 +8927,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let actualDelta = targetRow - STATE.frameStartY;
                         STATE.manualFrame.rowSpan = Math.max(1, STATE.frameStartH - actualDelta);
                         STATE.manualFrame.rowStart = targetRow;
+                        fitFrameWidthToRows();
                     }
                     else if (STATE.frameAction === 'resize-b') {
                         STATE.manualFrame.rowSpan = Math.max(1, STATE.frameStartH + dy_rows);
+                        fitFrameWidthToRows();
                     }
                     else if (STATE.frameAction === 'resize-h') {
                         // Тащим один край — противоположный остаётся на месте (а не симметрично от центра).
@@ -8362,7 +9147,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     render();
                 }
             });
-<!-- === МАРКЕР 59: ЛОГИКА СКРОЛЛА (ЗУМ) === -->
+<!-- === МАРКЕР 71: ЛОГИКА СКРОЛЛА (ЗУМ) === -->
             canvas.addEventListener('wheel', e => {
                 e.preventDefault();
                 let fontSl = document.getElementById('fontSlider');
@@ -8378,6 +9163,16 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 STATE.offsetX *= ratio;
                 STATE.offsetY *= ratio;
 
+                // Синхронизация пиксельной высоты/позиции рамки с lineHeight после зума,
+                // чтобы визуальный прямоугольник не "съёживался" относительно захваченных строк.
+                if (STATE.manualFrame && STATE.manualFrame.isInitialized) {
+                    let wheelM = getGridMetrics();
+                    if (wheelM) {
+                        STATE.manualFrame.h = STATE.manualFrame.rowSpan * wheelM.lineHeight;
+                        STATE.manualFrame.y = STATE.manualFrame.rowStart * wheelM.lineHeight;
+                    }
+                }
+
                 // Исправлено: Убрали баг с NaN, который сбивал масштаб и прятал строки
                 if (!e.shiftKey) {
                     let useRadar = safeChecked('radarCheck', false);
@@ -8392,6 +9187,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             // Пинч-зум двумя пальцами на мобильных — мобильный аналог колёсика мыши для масштаба.
             (() => {
                 let pinchStartDist = 0, pinchStartSize = 0;
+                // Расстояние между двумя точками касания (для пинч-зума)
                 function touchDist(t1, t2) {
                     return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
                 }
@@ -8426,6 +9222,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 });
             })();
 
+            // Делает панель по CSS-селектору перетаскиваемой за её заголовок (создаёт заголовок,
+            // если его нет) — используется для правой панели
             const setupDraggable = (selector, fallbackTitle) => {
                 let panel = document.querySelector(selector);
                 if (!panel) return;
@@ -8573,7 +9371,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 });
             })();
         });
-<!-- === МАРКЕР 60: ГОРЯЧИЕ КЛАВИШИ КЛАВИАТУРЫ === -->
+<!-- === МАРКЕР 72: ГОРЯЧИЕ КЛАВИШИ КЛАВИАТУРЫ === -->
         document.addEventListener('keydown', e => {
             if (document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT') return;
             let S = parseInt(safeValue('scrollStepInput', 1)) || 1;
@@ -8675,6 +9473,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     if (m) {
                         STATE.manualFrame.rowSpan = Math.max(1, STATE.manualFrame.rowSpan - 1);
                         STATE.manualFrame.h = STATE.manualFrame.rowSpan * m.lineHeight;
+                        fitFrameWidthToRows();
                         updateLogic();
                         showNotification(`РАМКА: -1 СТРОКА (ВВЕРХ)`);
                     }
@@ -8757,6 +9556,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             positionFloatingToolbarRight();
         });
 
+        // Перерисовывает кадры, пока не истечёт STATE.flashEndTime — анимация затухающей вспышки рамки
         function triggerFlashAnimation() {
             if (Date.now() < STATE.flashEndTime) {
                 render();
@@ -8764,7 +9564,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
         }
 		
-<!-- === МАРКЕР 61: ВИНЛОАД === -->
+<!-- === МАРКЕР 73: ВИНЛОАД === -->
         window.onload = function() {
             // КРИТИЧЕСКИЙ ФИКС: Сначала задаем размеры холста на весь экран, 
             // чтобы функция подгонки масштаба не сжала шрифты до микроскопических 2px.
@@ -8975,6 +9775,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             const sierpRuleEl = document.getElementById('sierpRule');
             if (sierpRuleEl) sierpRuleEl.dispatchEvent(new Event('change'));
 
+<!-- === МАРКЕР 74: ИНИЦИАЛИЗАЦИЯ БАНКОВ И ВОССТАНОВЛЕНИЕ СОСТОЯНИЯ === -->
             let autoSnapshot = null;
             try {
                 if (localStorage.getItem('zerkalius_autosave_enabled') !== '0') {
@@ -9048,6 +9849,38 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 let hasFileSettings = typeof ZERKALIUS_PRESETS !== 'undefined' && !!ZERKALIUS_PRESETS.settings;
                 let usedSnapshot = hasFileSettings ? ZERKALIUS_PRESETS.settings : autoSnapshot;
                 importSnapshotObject(usedSnapshot);
+
+                // При обновлении страницы (F5) рамка всегда должна возвращаться на первую строку,
+                // а не оставаться там, где её оставили в прошлой сессии.
+                if (STATE.manualFrame) {
+                    STATE.manualFrame.rowStart = 0;
+                    STATE.manualFrame.rowSpan = 1;
+                    STATE.manualFrame.rowGrowTarget = 0;
+                    STATE.manualFrame.y = 0;
+                    STATE.manualFrame.userLocked = false;
+                    let frameM = getGridMetrics();
+                    if (frameM) STATE.manualFrame.h = frameM.lineHeight;
+                }
+
+                // Найденные паттерны тоже не переживают F5 — вместе с ними сбрасываем и то, что от них
+                // зависит: очередь поиска и разморозку строк (иначе строки остались бы разморожены без
+                // паттерна, который это оправдывал).
+                STATE.foundPatterns.clear();
+                STATE.foundPatternsMetadata.clear();
+                STATE.currentTargetPatternIdx = 0;
+                STATE.lastFindMethod = "Ожидание...";
+                STATE.lines.forEach((line, idx) => {
+                    line.isActive = (idx === 0);
+                    line.localStep = 0;
+                });
+                // importSnapshotObject() уже отрисовала панель паттернов по старым (восстановленным)
+                // данным — перерисовываем её заново, теперь уже по очищенному состоянию.
+                updatePatternBackdrop();
+
+                // Подбираем масштаб под ВСЕ строки, чтобы после F5 они заполняли экран по высоте
+                // без пустоты снизу (та же функция, что и подгонка при генерации нового текста).
+                resetPositionWithHeightScale(1.0, false, true);
+
                 if (fBtn) fBtn.classList.toggle('active', safeChecked('frameCheck', false));
                 if (rBtn) rBtn.classList.toggle('active', safeChecked('radarCheck', false));
                 if (typeof showNotification === 'function') {
@@ -9074,7 +9907,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 let combinedBottom = Math.max(panelBottom || 0, barBottom || 0);
                 let canvas = document.getElementById('screenCanvas');
                 let canvasTop = canvas ? canvas.getBoundingClientRect().top : 0;
-                let neededTop = (combinedBottom - canvasTop) + 6;
+                let neededTop = (combinedBottom - canvasTop) + 18;
                 let m = getGridMetrics();
                 if (playerPanelEl && m && neededTop > m.startY) {
                     STATE.offsetY += (neededTop - m.startY);
@@ -9087,57 +9920,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         };
     </script>
 
-<!-- === МАРКЕР 63: АВТО-ПЕРЕЗАГРУЗКА ПРИ ОБНОВЛЕНИИ НА GITHUB === -->
-    <script>
-        (() => {
-            const REMOTE_URL = "https://raw.githubusercontent.com/MIkhailNkmnme/Binary-Drum-Machine/claude/unclear-request-9ad84a/Zerkalius-genezis.html";
-            const CHECK_INTERVAL_MS = 4000;
-
-            function getVersion(html) {
-                let m = html.match(/v(\d+\.\d+)\s*Ultra-Save/);
-                return m ? parseFloat(m[1]) : null;
-            }
-
-            const localVersion = getVersion(document.body.innerHTML);
-            const ATTEMPT_TIME_KEY = 'zerkalius_last_reload_attempt_time';
-            const RETRY_COOLDOWN_MS = 10000;
-
-            console.log("[Zerkalius auto-update] локальная версия:", localVersion);
-
-            function checkForUpdate() {
-                // raw.githubusercontent.com кэширует ответы на своём CDN (Fastly) на несколько минут —
-                // {cache:"no-store"} влияет только на кэш БРАУЗЕРА, не на кэш самого CDN. Добавляем
-                // случайный параметр в URL, чтобы каждый раз бить в новый, некэшированный ответ.
-                fetch(REMOTE_URL + "?_=" + Date.now(), { cache: "no-store" })
-                    .then(r => {
-                        if (!r.ok) throw new Error("HTTP " + r.status);
-                        return r.text();
-                    })
-                    .then(text => {
-                        let remoteVersion = getVersion(text);
-                        console.log("[Zerkalius auto-update] проверка: локальная =", localVersion, ", удалённая =", remoteVersion);
-                        if (remoteVersion === null || localVersion === null) return;
-                        if (remoteVersion <= localVersion) return;
-                        // GitHub может обновляться быстрее, чем локальный файл на диске (батник качает
-                        // раз в 5 сек). Если перезагрузиться СРАЗУ — локальный файл ещё может быть старым,
-                        // и перезагрузка ничего не даст. Поэтому не блокируем повтор навсегда для этой
-                        // версии, а просто не пробуем чаще, чем раз в RETRY_COOLDOWN_MS — так попытки
-                        // продолжатся, пока локальный файл реально не догонит удалённый.
-                        let lastAttemptTime = parseInt(sessionStorage.getItem(ATTEMPT_TIME_KEY) || "0", 10);
-                        if (Date.now() - lastAttemptTime < RETRY_COOLDOWN_MS) return;
-                        sessionStorage.setItem(ATTEMPT_TIME_KEY, String(Date.now()));
-                        console.log("[Zerkalius auto-update] найдена новая версия, перезагружаю...");
-                        location.reload();
-                    })
-                    .catch(err => console.error("[Zerkalius auto-update] ОШИБКА проверки обновления:", err));
-            }
-
-            checkForUpdate();
-            let timer = setInterval(checkForUpdate, CHECK_INTERVAL_MS);
-        })();
-    </script>
-
-<!-- === МАРКЕР 62: КОНЕЦ === -->
-<!-- === МАРКЕР 62: КОНЕЦ === -->
+<!-- === МАРКЕР 75: КОНЕЦ === -->
 </body>
 </html>
