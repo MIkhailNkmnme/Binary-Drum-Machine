@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<!--
+===========================================================================
+GRID MODULE — отдельный скелет "живой/редактируемой сетки" для Zerkalius.
+
+Зачем отдельный файл: та же фича, встроенная прямо в Zerkalius-genezis.html
+(див-сетка, где на каждый символ — свой <div>, плюс до 60 строк/столбцов
+"запаса" для панорамирования), пересоздавала тысячи DOM-узлов каждый кадр
+анимации — это и есть причина тормозов при переключении в сетку и обратно
+на слоты.
+
+Здесь сетка рисуется на <canvas> (как и основной холст в Zerkalius) —
+рисуется только то, что видно в вьюпорте (viewport culling), DOM-узлов
+для ячеек вообще нет. Открывается прямо в браузере отдельно от основного
+файла — можно допиливать/тестировать без риска задеть рабочий движок.
+
+Как это будет собираться назад в основной файл: смотри блок
+"ТОЧКИ ИНТЕГРАЦИИ" внизу скрипта — GRID.setLiveSource(fn) и GRID.setColors(...)
+это ровно те два места, куда потом подключится живой STATE.lines и
+цвета/пресеты из основного файла, без переписывания всего остального.
+===========================================================================
+-->
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grid Module — скелет</title>
+<style>
+    body { margin: 0; overflow: hidden; background: #050505; font-family: 'Consolas', monospace; }
+    /* Шапка + строка формул — один перетаскиваемый блок (как остальные панели в основном
+       файле), а не прибитая к краю окна полоса. Растяни браузер на 2 монитора — холст (0..100%
+       окна) займёт оба, а этот блок можно утащить целиком на "чистый" монитор. */
+    #gridControlsPanel {
+        position: fixed; top: 0; left: 0; z-index: 10; width: 100vw;
+        background: rgba(10,10,10,0.9); border: 1px solid #333; border-radius: 0 0 5px 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    }
+    #gridControlsPanel.floating { width: auto; border-radius: 5px; }
+    #gridHeader {
+        height: 30px; cursor: move; user-select: none;
+        display: flex; align-items: center; gap: 6px; padding: 0 8px; box-sizing: border-box;
+        border-bottom: 1px solid #333; color: #ff6464; font-size: 11px; font-weight: bold;
+    }
+    #gridHeader button, #gridHeader input[type=color] { cursor: pointer; }
+    #gridHeader button { background: #222; border: 1px solid #444; color: #ff6464; border-radius: 3px; padding: 2px 6px; font-size: 11px; }
+    #gridHeader button:hover { background: #333; }
+    #gridHeader input[type=color] { width: 16px; height: 16px; padding: 0; border: none; }
+    /* Строка формул, как в Excel: адрес выбранной ячейки + её текущее значение. */
+    #gridFormulaBar {
+        height: 22px; display: flex; align-items: center; gap: 8px; padding: 0 8px; box-sizing: border-box; font-size: 11px;
+    }
+    #gridFormulaAddr { color: #ffd500; font-weight: bold; min-width: 60px; }
+    #gridFormulaValue { color: #ccc; font-family: 'Roboto Mono', monospace; white-space: pre; }
+    #gridCanvas { position: fixed; top: 0; left: 0; right: 0; bottom: 0; cursor: grab; }
+    #gridCanvas.panning { cursor: grabbing; }
+</style>
+</head>
+<body>
+
+<div id="gridControlsPanel">
+    <div id="gridHeader" title="Перетащить — можно унести на второй монитор">
+        <span id="gridStatusLabel">📊 Кадр: 0</span>
+        <button id="modeBtn">🔴 Живой</button>
+        <button id="digitsModeBtn" title="Показ 1/0: диагонали ⇄ цифры">╲ Диагонали</button>
+        <input type="color" id="bgColorInput" title="Фон выделенных ячеек" value="#1a1a1a">
+        <input type="color" id="textColorInput" title="Цвет текста выделенных ячеек" value="#ff6464">
+        <span style="margin-left:auto; opacity:0.6;">Колесо — зум, ЛКМ протянуть — диапазон, ПКМ / Ctrl+ЛКМ — пан (без сброса выделения), Ctrl+C/X/V — копировать/вырезать/вставить, Delete — очистить</span>
+    </div>
+    <div id="gridFormulaBar">
+        <span id="gridFormulaAddr">R1:C1</span>
+        <span id="gridFormulaValue">(пусто)</span>
+    </div>
+</div>
+<canvas id="gridCanvas"></canvas>
+
+<script>
+"use strict";
+
+// ===========================================================================
+// STATE — модель данных сетки. Полностью независима от рендера/интерактива.
+// ===========================================================================
+const GRID = {
+    // Режим: 'live' — данные берутся из внешнего источника (см. setLiveSource),
+    // 'edit' — из собственного независимого буфера cells (Excel-подобный режим).
+    mode: 'live',
+
+    // Редактируемый буфер: Map("r_c" -> {ch, bg, color}). Растёт сам при вставке/покраске.
+    cells: new Map(),
+    editRows: 20,
+    editCols: 20,
+
+    // Внешний источник для 'live'-режима: функция () => string[] (по одной строке символов
+    // на элемент массива). Пока не подключён — см. ТОЧКИ ИНТЕГРАЦИИ внизу файла.
+    liveSource: null,
+    frameLabel: () => '',
+
+    // Цвета — по умолчанию нейтральные; в основном файле переопределяются через setColors().
+    colors: { c1: '#ffffff', c0: '#00ff66', bg: '#050505', line: 'rgba(0,255,102,0.4)' },
+
+    // Камера: масштаб (px на ячейку) и смещение (в пикселях) панорамирования.
+    cellSize: 24,
+    panX: 0, panY: 0,
+
+    // Выделение — диапазон ячеек, как в Excel: selR/selC — угол, откуда начали тянуть
+    // (якорь), selR2/selC2 — другой угол (текущий конец протягивания). Для одиночного клика
+    // оба угла совпадают. Вставка всегда идёт от верхнего левого угла диапазона.
+    selR: 0, selC: 0,
+    selR2: 0, selC2: 0,
+
+    // Как показывать '1'/'0': диагональю (как на основном холсте) или просто цифрой.
+    showDigits: false,
+};
+
+function selBounds() {
+    return {
+        r0: Math.min(GRID.selR, GRID.selR2), r1: Math.max(GRID.selR, GRID.selR2),
+        c0: Math.min(GRID.selC, GRID.selC2), c1: Math.max(GRID.selC, GRID.selC2),
+    };
+}
+
+// ===========================================================================
+// DATA ACCESS — единая точка чтения ячейки независимо от режима (live/edit).
+// Раньше (в основном файле) live- и edit-рендер были двумя почти одинаковыми
+// копипастами функции — здесь это одна точка, чтобы не разъезжались.
+// ===========================================================================
+function getCell(r, c) {
+    if (GRID.mode === 'edit') {
+        return GRID.cells.get(r + '_' + c) || null;
+    }
+    // live: liveSource() должен вернуть массив строк текущего кадра; символ '1'/'0' — те же
+    // спец-стили (диагонали), что и в edit-режиме, остальные символы — просто текст.
+    if (!GRID.liveSource) return null;
+    const rows = GRID.liveSource();
+    if (r < 0 || r >= rows.length) return null;
+    const row = rows[r] || '';
+    if (c < 0 || c >= row.length) return null;
+    const ch = row[c];
+    if (ch === ' ' || ch === '') return null;
+    return { ch, bg: '', color: '' };
+}
+
+function dataRowCount() {
+    if (GRID.mode === 'edit') return GRID.editRows;
+    return GRID.liveSource ? GRID.liveSource().length : 0;
+}
+function dataColCount() {
+    if (GRID.mode === 'edit') return GRID.editCols;
+    if (!GRID.liveSource) return 0;
+    const rows = GRID.liveSource();
+    return rows.reduce((m, row) => Math.max(m, row.length), 0);
+}
+
+function setEditCell(r, c, ch, bg, color) {
+    if (r < 0 || c < 0) return;
+    GRID.cells.set(r + '_' + c, { ch, bg: bg || '', color: color || '' });
+    if (r + 1 > GRID.editRows) GRID.editRows = r + 1;
+    if (c + 1 > GRID.editCols) GRID.editCols = c + 1;
+}
+
+// ===========================================================================
+// RENDER — canvas, только видимый вьюпорт (viewport culling). Никаких DOM-узлов
+// на ячейку — в этом весь смысл переписывания: тысячи div'ов больше не нужны.
+// ===========================================================================
+const ROWHEAD_W = 28, COLHEAD_H = 16;
+const canvas = document.getElementById('gridCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    render();
+}
+window.addEventListener('resize', resizeCanvas);
+
+function render() {
+    const W = canvas.width, H = canvas.height;
+    const cs = GRID.cellSize;
+    ctx.fillStyle = GRID.colors.bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Видимый диапазон строк/столбцов данных — считаем от panX/panY, рисуем только его.
+    const firstCol = Math.floor((GRID.panX) / cs);
+    const firstRow = Math.floor((GRID.panY) / cs);
+    const visibleCols = Math.ceil((W - ROWHEAD_W) / cs) + 2;
+    const visibleRows = Math.ceil((H - COLHEAD_H) / cs) + 2;
+
+    ctx.font = `${Math.max(8, cs * 0.6)}px 'Roboto Mono', monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    const sel = selBounds();
+
+    for (let ri = 0; ri < visibleRows; ri++) {
+        const r = firstRow + ri;
+        const y = COLHEAD_H + Math.round(r * cs - GRID.panY);
+        for (let ci = 0; ci < visibleCols; ci++) {
+            const c = firstCol + ci;
+            const x = ROWHEAD_W + Math.round(c * cs - GRID.panX);
+
+            const data = getCell(r, c);
+            ctx.strokeStyle = GRID.colors.line;
+            ctx.lineWidth = 0.5;
+            ctx.strokeRect(x + 0.25, y + 0.25, cs - 0.5, cs - 0.5);
+
+            if (data) {
+                if (data.bg) { ctx.fillStyle = data.bg; ctx.fillRect(x, y, cs, cs); }
+                if ((data.ch === '1' || data.ch === '0') && !GRID.showDigits) {
+                    ctx.strokeStyle = data.ch === '1' ? GRID.colors.c1 : GRID.colors.c0;
+                    ctx.lineWidth = 0.5;
+                    ctx.beginPath();
+                    if (data.ch === '1') { ctx.moveTo(x + 2, y + 2); ctx.lineTo(x + cs - 2, y + cs - 2); }
+                    else { ctx.moveTo(x + 2, y + cs - 2); ctx.lineTo(x + cs - 2, y + 2); }
+                    ctx.stroke();
+                } else {
+                    ctx.fillStyle = data.color || (data.ch === '1' ? GRID.colors.c1 : data.ch === '0' ? GRID.colors.c0 : GRID.colors.c1);
+                    ctx.fillText(data.ch, x + cs / 2, y + cs / 2 + 1);
+                }
+            }
+
+            const inSel = r >= sel.r0 && r <= sel.r1 && c >= sel.c0 && c <= sel.c1;
+            if (inSel) {
+                ctx.fillStyle = 'rgba(255, 213, 0, 0.12)';
+                ctx.fillRect(x, y, cs, cs);
+            }
+            const isAnchor = r === GRID.selR && c === GRID.selC;
+            if (isAnchor) {
+                ctx.strokeStyle = '#ffd500'; ctx.lineWidth = 1.5;
+                ctx.strokeRect(x + 1, y + 1, cs - 2, cs - 2);
+            }
+        }
+    }
+
+    // Внешний контур всего диапазона (поверх заливки отдельных ячеек) — виднее, когда
+    // выделено больше одной ячейки.
+    if (sel.r0 !== sel.r1 || sel.c0 !== sel.c1) {
+        const rx = ROWHEAD_W + Math.round(sel.c0 * cs - GRID.panX);
+        const ry = COLHEAD_H + Math.round(sel.r0 * cs - GRID.panY);
+        const rw = (sel.c1 - sel.c0 + 1) * cs;
+        const rh = (sel.r1 - sel.r0 + 1) * cs;
+        ctx.strokeStyle = '#ffd500'; ctx.lineWidth = 2;
+        ctx.strokeRect(rx + 1, ry + 1, rw - 2, rh - 2);
+    }
+
+    // Шапка (закреплена поверх прокрутки — рисуется поверх данных последней).
+    ctx.fillStyle = 'rgba(10,10,10,0.95)';
+    ctx.fillRect(0, 0, W, COLHEAD_H);
+    ctx.fillRect(0, 0, ROWHEAD_W, H);
+    ctx.fillStyle = '#888';
+    for (let ci = 0; ci < visibleCols; ci++) {
+        const c = firstCol + ci;
+        const x = ROWHEAD_W + Math.round(c * cs - GRID.panX);
+        ctx.strokeStyle = GRID.colors.line; ctx.lineWidth = 0.5;
+        ctx.strokeRect(x + 0.25, 0.25, cs - 0.5, COLHEAD_H - 0.5);
+        ctx.fillText(c + 1, x + cs / 2, COLHEAD_H / 2 + 1);
+    }
+    for (let ri = 0; ri < visibleRows; ri++) {
+        const r = firstRow + ri;
+        const y = COLHEAD_H + Math.round(r * cs - GRID.panY);
+        ctx.strokeStyle = GRID.colors.line; ctx.lineWidth = 0.5;
+        ctx.strokeRect(0.25, y + 0.25, ROWHEAD_W - 0.5, cs - 0.5);
+        ctx.fillText(r + 1, ROWHEAD_W / 2, y + cs / 2 + 1);
+    }
+    ctx.fillStyle = '#111'; ctx.fillRect(0, 0, ROWHEAD_W, COLHEAD_H);
+
+    document.getElementById('gridStatusLabel').textContent =
+        (GRID.mode === 'edit' ? '✏️ ' : '📊 ') + GRID.frameLabel();
+
+    // Строка формул (как в Excel): адрес (одной ячейки или всего диапазона) + значение
+    // активной (якорной) ячейки.
+    const selData = getCell(GRID.selR, GRID.selC);
+    const addr = (sel.r0 === sel.r1 && sel.c0 === sel.c1)
+        ? `R${GRID.selR + 1}:C${GRID.selC + 1}`
+        : `R${sel.r0 + 1}:C${sel.c0 + 1} — R${sel.r1 + 1}:C${sel.c1 + 1}`;
+    document.getElementById('gridFormulaAddr').textContent = addr;
+    document.getElementById('gridFormulaValue').textContent = selData ? selData.ch : '(пусто)';
+}
+
+// ===========================================================================
+// INTERACTION — зум колесом; ЛКМ протягивание = выделение диапазона (как в Excel);
+// ПКМ протягивание = панорама (раз левая кнопка теперь занята выделением).
+// ===========================================================================
+let isPanning = false, panStartX = 0, panStartY = 0, panOrigX = 0, panOrigY = 0;
+let isSelecting = false;
+
+function screenToCell(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left - ROWHEAD_W + GRID.panX;
+    const y = clientY - rect.top - COLHEAD_H + GRID.panY;
+    return { c: Math.floor(x / GRID.cellSize), r: Math.floor(y / GRID.cellSize) };
+}
+
+// Шапка+строка формул перетаскиваются как один блок (двойной монитор: холст растянут на оба
+// окна автоматически, а этот блок можно перенести на "чистый" монитор).
+(function initControlsPanelDrag() {
+    const panel = document.getElementById('gridControlsPanel');
+    const header = document.getElementById('gridHeader');
+    if (!panel || !header) return;
+    let dragging = false, px = 0, py = 0;
+    header.addEventListener('mousedown', e => {
+        if (e.button !== 0 || e.target.closest('input, button, select, textarea, label, a')) return;
+        dragging = true;
+        const rect = panel.getBoundingClientRect();
+        panel.style.left = rect.left + 'px';
+        panel.style.top = rect.top + 'px';
+        panel.classList.add('floating');
+        px = e.clientX; py = e.clientY;
+        e.preventDefault();
+    });
+    window.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        panel.style.left = (panel.offsetLeft - (px - e.clientX)) + 'px';
+        panel.style.top = (panel.offsetTop - (py - e.clientY)) + 'px';
+        px = e.clientX; py = e.clientY;
+    });
+    window.addEventListener('mouseup', () => { dragging = false; });
+})();
+
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.1 : (1 / 1.1);
+    const old = GRID.cellSize;
+    GRID.cellSize = Math.max(3, Math.min(80, GRID.cellSize * factor));
+    // Зумим относительно позиции курсора, а не левого верхнего угла — привычнее.
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left - ROWHEAD_W, my = e.clientY - rect.top - COLHEAD_H;
+    GRID.panX = (GRID.panX + mx) * (GRID.cellSize / old) - mx;
+    GRID.panY = (GRID.panY + my) * (GRID.cellSize / old) - my;
+    render();
+}, { passive: false });
+
+canvas.addEventListener('mousedown', e => {
+    // ПКМ — пан. ЛКМ+Ctrl — тоже пан, но выделение при этом не трогаем (просто двигаем вид).
+    if (e.button === 2 || (e.button === 0 && e.ctrlKey)) {
+        isPanning = true;
+        panStartX = e.clientX; panStartY = e.clientY;
+        panOrigX = GRID.panX; panOrigY = GRID.panY;
+        canvas.classList.add('panning');
+        return;
+    }
+    if (e.button !== 0) return;
+    isSelecting = true;
+    const { r, c } = screenToCell(e.clientX, e.clientY);
+    if (r >= 0 && c >= 0) { GRID.selR = r; GRID.selC = c; GRID.selR2 = r; GRID.selC2 = c; render(); }
+});
+window.addEventListener('mousemove', e => {
+    if (isPanning) {
+        GRID.panX = panOrigX - (e.clientX - panStartX);
+        GRID.panY = panOrigY - (e.clientY - panStartY);
+        render();
+        return;
+    }
+    if (isSelecting) {
+        const { r, c } = screenToCell(e.clientX, e.clientY);
+        GRID.selR2 = Math.max(0, r); GRID.selC2 = Math.max(0, c);
+        render();
+    }
+});
+window.addEventListener('mouseup', e => {
+    if (isPanning) { isPanning = false; canvas.classList.remove('panning'); }
+    isSelecting = false;
+});
+
+// ===========================================================================
+// EDIT MODE — переключение, вставка (текст / HTML-таблица из Excel), покраска.
+// ===========================================================================
+function enterEditMode() {
+    if (GRID.mode === 'edit') return;
+    // Снимок текущего живого кадра, чтобы переключение не стирало то, что видно.
+    const rows = GRID.liveSource ? GRID.liveSource() : [];
+    GRID.cells = new Map();
+    let maxR = 0, maxC = 0;
+    rows.forEach((row, r) => {
+        for (let c = 0; c < row.length; c++) {
+            if (row[c] === ' ' || row[c] === '') continue;
+            GRID.cells.set(r + '_' + c, { ch: row[c], bg: '', color: '' });
+            maxR = Math.max(maxR, r + 1); maxC = Math.max(maxC, c + 1);
+        }
+    });
+    GRID.editRows = Math.max(maxR, 20);
+    GRID.editCols = Math.max(maxC, 20);
+    GRID.mode = 'edit';
+    document.getElementById('modeBtn').textContent = '✏️ Редакт.';
+}
+
+document.getElementById('modeBtn').addEventListener('click', () => {
+    if (GRID.mode === 'edit') {
+        GRID.mode = 'live';
+        document.getElementById('modeBtn').textContent = '🔴 Живой';
+    } else {
+        enterEditMode();
+    }
+    render();
+});
+
+document.getElementById('digitsModeBtn').addEventListener('click', () => {
+    GRID.showDigits = !GRID.showDigits;
+    document.getElementById('digitsModeBtn').textContent = GRID.showDigits ? '10 Цифры' : '╲ Диагонали';
+    render();
+});
+
+function pasteText(text) {
+    if (!text) return;
+    const rows = text.replace(/\r/g, '').split('\n');
+    while (rows.length && rows[rows.length - 1] === '') rows.pop();
+
+    // Строки с табами — явные Excel-столбцы, режем по ним как есть, без центрирования.
+    // Строки без табов — режем посимвольно; если строк несколько, центрируем их друг
+    // относительно друга (как холст центрирует пирамиду). Целочисленное центрирование само
+    // даёт сдвиг в 1 клетку между строками разной чётности длины — ровно та "пустота в 1 ячейку".
+    const perCharRows = rows.map(r => r.includes('\t') ? null : r.split(''));
+    const maxLen = perCharRows.reduce((m, cells) => cells ? Math.max(m, cells.length) : m, 0);
+    const anchor = selBounds(); // вставка — всегда от верхнего левого угла текущего выделения
+
+    rows.forEach((rowStr, rOff) => {
+        const perChar = perCharRows[rOff];
+        const cells = perChar || rowStr.split('\t');
+        const offset = (perChar && rows.length > 1) ? Math.floor((maxLen - cells.length) / 2) : 0;
+        cells.forEach((val, cOff) => {
+            if (val === '') return;
+            setEditCell(anchor.r0 + rOff, anchor.c0 + offset + cOff, val, null, null);
+        });
+    });
+}
+function pasteHtml(html) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const table = doc.querySelector('table');
+    if (!table) { pasteText(doc.body ? doc.body.textContent : ''); return; }
+
+    // Собираем строки как массив ячеек {text, bg, color} — текст ячейки Excel может быть
+    // многосимвольным (если в одну ячейку Excel вписали несколько символов), но у нас всё равно
+    // 1 символ = 1 ячейка сетки, поэтому режем посимвольно и здесь, просто каждый символ
+    // наследует фон/цвет своей исходной Excel-ячейки.
+    const rows = [];
+    table.querySelectorAll('tr').forEach(tr => {
+        const cells = [];
+        tr.querySelectorAll('td,th').forEach(td => {
+            cells.push({ text: td.textContent || '', bg: td.style.backgroundColor || '', color: td.style.color || '' });
+        });
+        rows.push(cells);
+    });
+
+    // Центрируем строки друг относительно друга так же, как в pasteText — длина строки
+    // считается как сумма длин всех её ячеек после посимвольного разбиения.
+    const rowCharLens = rows.map(cellsArr => cellsArr.reduce((s, cell) => s + cell.text.length, 0));
+    const maxLen = rowCharLens.reduce((m, l) => Math.max(m, l), 0);
+    const anchor = selBounds();
+
+    rows.forEach((cellsArr, rOff) => {
+        const offset = rows.length > 1 ? Math.floor((maxLen - rowCharLens[rOff]) / 2) : 0;
+        let col = anchor.c0 + offset;
+        cellsArr.forEach(cell => {
+            for (const ch of cell.text) {
+                setEditCell(anchor.r0 + rOff, col, ch, cell.bg, cell.color);
+                col++;
+            }
+        });
+    });
+}
+document.addEventListener('paste', e => {
+    e.preventDefault();
+    if (GRID.mode !== 'edit') enterEditMode();
+    const html = e.clipboardData.getData('text/html');
+    if (html && /<table/i.test(html)) pasteHtml(html);
+    else pasteText(e.clipboardData.getData('text/plain'));
+    render();
+});
+
+// Красит ВЕСЬ выделенный диапазон (не только одну ячейку) — красит только уже существующие
+// (непустые) ячейки, чтобы не плодить пустые цветные клетки там, где нет данных.
+function applySelectedColor(kind, hex) {
+    if (GRID.mode !== 'edit') enterEditMode();
+    const sel = selBounds();
+    for (let r = sel.r0; r <= sel.r1; r++) {
+        for (let c = sel.c0; c <= sel.c1; c++) {
+            const key = r + '_' + c;
+            const data = GRID.cells.get(key);
+            if (!data) continue; // покраска пустой ячейки без символа не имеет смысла
+            data[kind] = hex;
+            GRID.cells.set(key, data);
+        }
+    }
+    render();
+}
+document.getElementById('bgColorInput').addEventListener('change', e => applySelectedColor('bg', e.target.value));
+document.getElementById('textColorInput').addEventListener('change', e => applySelectedColor('color', e.target.value));
+
+// Delete — очищает содержимое выделенного диапазона. Ctrl+C/X — копируют диапазон в
+// системный буфер как TSV (символ-в-ячейку, строки \n, столбцы \t) — годится и для вставки
+// обратно сюда, и в настоящий Excel. Ctrl+X дополнительно очищает диапазон после копирования.
+function clearSelection() {
+    const sel = selBounds();
+    for (let r = sel.r0; r <= sel.r1; r++) {
+        for (let c = sel.c0; c <= sel.c1; c++) GRID.cells.delete(r + '_' + c);
+    }
+    render();
+}
+function copySelectionToClipboard() {
+    const sel = selBounds();
+    let lines = [];
+    for (let r = sel.r0; r <= sel.r1; r++) {
+        let cols = [];
+        for (let c = sel.c0; c <= sel.c1; c++) {
+            const data = GRID.cells.get(r + '_' + c);
+            cols.push(data ? data.ch : '');
+        }
+        lines.push(cols.join('\t'));
+    }
+    const text = lines.join('\n');
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(() => {});
+}
+document.addEventListener('keydown', e => {
+    const tag = (document.activeElement.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea') return; // не мешаем вводу в цветовые пикеры и т.п.
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (GRID.mode !== 'edit') enterEditMode();
+        clearSelection();
+    } else if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) {
+        copySelectionToClipboard();
+    } else if (e.ctrlKey && (e.key === 'x' || e.key === 'X')) {
+        if (GRID.mode !== 'edit') enterEditMode();
+        copySelectionToClipboard();
+        clearSelection();
+    }
+});
+
+// ===========================================================================
+// ТОЧКИ ИНТЕГРАЦИИ С ОСНОВНЫМ ФАЙЛОМ (Zerkalius-genezis.html) — сюда подключать
+// постепенно, когда версия там снова станет стабильной:
+//
+// 1) GRID.setLiveSource(() => STATE.lines.map(l => l.display || ""))
+//    + GRID.frameLabel = () => `Кадр: ${STATE.globalStep || 0}`
+//    Вызывать render() из главного render() основного файла, как раньше —
+//    но ТОЛЬКО когда сетка открыта, и без DOM-ячеек тормозить уже не должно.
+//
+// 2) GRID.setColors({ c1: safeValue('color1',...), c0: safeValue('color0',...),
+//    bg: safeValue('bgColor',...), line: hexToRgba(safeValue('gridColorInput',...), ...) })
+//    вызывать при смене пресета/цвета — так же, как было в основном файле.
+//
+// 3) Открытие/закрытие поверх холста — обернуть этот canvas + header в свой
+//    контейнер с тем же z-index/position, что #screenContainer, и toggle
+//    класса active — та же схема, что уже была отработана в основном файле.
+// ===========================================================================
+GRID.setLiveSource = function(fn) { GRID.liveSource = fn; };
+GRID.setColors = function(c) { Object.assign(GRID.colors, c); };
+
+// --- ВРЕМЕННЫЕ ТЕСТОВЫЕ ДАННЫЕ (убрать при интеграции — см. пункт 1 выше) ---
+// Пирамида из 1/0, чтобы было на чём проверять зум/пан/выделение/вставку без
+// основного файла.
+(function demoData() {
+    const rows = [];
+    for (let r = 0; r < 60; r++) {
+        let s = '';
+        for (let c = 0; c <= r; c++) s += (c % 2 === 0) ? '1' : '0';
+        rows.push(s);
+    }
+    GRID.setLiveSource(() => rows);
+    GRID.frameLabel = () => 'ДЕМО (авто-пирамида)';
+})();
+
+resizeCanvas();
+</script>
+</body>
+</html>

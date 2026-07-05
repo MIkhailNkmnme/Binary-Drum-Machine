@@ -14,6 +14,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Zerkalius: Interleaving Genesis</title>
+    <!-- WebGL-рендер "чистого движения" (см. галка "⚡ WebGL-рендер") — только для этого режима, остальной движок на Canvas2D не тронут -->
+    <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
 <!-- === МАРКЕР 02: HEAD И НАСТРОЙКИ КОНЕЦ === -->
 
 <!-- === МАРКЕР 03: CSS СТИЛИ НАЧАЛО === -->
@@ -205,6 +207,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         .slot-preview { width:100%; height:72px; background:#050505; font-family:'Roboto Mono',monospace; font-size:9px; border:1px solid #2a2a2a; resize:none; padding:3px; box-sizing:border-box; overflow-y:auto; line-height:1.4; }
 
         #screenContainer { position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; background: #050505; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 10; }
+        #webglCanvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: none; }
 
         body.rotated-view #screenContainer {
             outline: 3px solid #ffd500;
@@ -500,6 +503,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
         <details class="control-group">
             <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">🎨 ОФОРМЛЕНИЕ И ЦВЕТА</summary>
+            <label style="display:flex; align-items:center; margin-bottom:4px; background:#111; padding:3px; border-radius:3px; border-left:2px solid #ffd500;" title="Ускоренный рендер пирамиды через WebGL для больших строк. Пока включена: НЕТ рамки, подсветки паттернов, трассера, конгломератов, подчёркиваний, номеров строк и радара — только сама анимация движения (с учётом Зеркала). Выключите галку, чтобы вернуть обычный режим со всеми функциями">
+                <input type="checkbox" id="webglRenderCheck"> <span class="lbl" style="color:#ffd500; font-weight:bold;">⚡ WebGL-рендер (только движение, без рамки/паттернов)</span>
+            </label>
             <select id="fontSelect" style="margin-top: 4px;">
                 <option value="'Consolas', monospace">Шрифт: Consolas</option>
                 <option value="'Roboto Mono', monospace">Шрифт: Roboto Mono</option>
@@ -533,6 +539,19 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             <label style="display:flex; align-items:center; margin-top:4px;">
                 <input type="checkbox" id="showRowNumbersCheck" checked> <span class="lbl">Показывать номера строк</span>
             </label>
+
+            <div style="background: #111; padding: 4px; border-radius: 3px; margin-top: 4px;" title="Чисто визуальная цветная линия под каждой N-й строкой (по её номеру, не по позиции на экране — при скролле остаётся закреплённой за той же строкой). На поиск/паттерны/логику не влияет.">
+                <label style="display:flex; align-items:center; justify-content:space-between;">
+                    <span style="display:flex; align-items:center;">
+                        <input type="checkbox" id="rowBottomBorderCheck"> <span class="lbl" style="font-weight:bold;">Ниж. границы строк</span>
+                    </span>
+                    <input type="color" id="rowBottomBorderColorInput" value="#ff9900">
+                </label>
+                <div style="display:flex; align-items:center; gap:4px; margin-top:3px;">
+                    <span class="lbl">Через сколько строк:</span>
+                    <input type="number" id="rowBottomBorderStepInput" value="1" min="1" max="20" style="width:35px;">
+                </div>
+            </div>
         </details>
 
         <details class="control-group" open>
@@ -708,7 +727,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 10: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.322 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.328 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -1091,6 +1110,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
     <div id="screenContainer">
         <div id="hotkeyIndicator"></div>
         <canvas id="screenCanvas"></canvas>
+        <canvas id="webglCanvas"></canvas>
     </div>
 <!-- === МАРКЕР 14: БАЗОВЫЕ УТИЛИТЫ === -->
     <script>
@@ -7386,6 +7406,114 @@ safeBind('stopBtn', 'click', () => {
 
 <!-- === МАРКЕР 57: РЕНДЕР ХОЛСТА === -->
     <script>
+        // === WebGL-РЕНДЕР "ЧИСТОГО ДВИЖЕНИЯ" (галка webglRenderCheck) ===
+        // Отдельный, полностью самостоятельный путь отрисовки только обычной пирамиды (не радар),
+        // без рамки/паттернов/подсветок/номеров строк — только сама анимация (с учётом Зеркала).
+        // Не трогает и не заменяет основной render() ниже — используется вместо него только пока
+        // включена галка. Используем PIXI.BitmapText/BitmapFont — штатный механизм PixiJS для
+        // множества повторяющихся глифов из маленького набора символов (общий атлас на цвет,
+        // без ручной генерации текстур на canvas на каждый символ).
+        let webglState = null;
+
+        function ensureWebglApp() {
+            if (webglState) return webglState;
+            if (typeof PIXI === 'undefined') return null;
+            const canvasEl = document.getElementById('webglCanvas');
+            if (!canvasEl) return null;
+            const app = new PIXI.Application({ view: canvasEl, backgroundAlpha: 0, antialias: true });
+            app.ticker.stop(); // рендерим вручную из renderPyramidWebGL(), не по своему таймеру
+            const container = new PIXI.Container();
+            app.stage.addChild(container);
+            webglState = { app, container, textPool: [], fontsByColor: new Map() };
+            return webglState;
+        }
+
+        const WEBGL_BITMAP_FONT_SIZE = 48; // разрешение шрифта-атласа; дальше масштабируется через fontSize у BitmapText
+        const WEBGL_CHARS = [['0', '9'], '.', 'x', '\\', '/', '(', ')', '[', ']', '<', '>', '+', '-', ' '];
+
+        function ensureWebglFont(ws, color) {
+            let fontName = ws.fontsByColor.get(color);
+            if (fontName) return fontName;
+            fontName = 'zk_' + color.replace('#', '');
+            PIXI.BitmapFont.from(fontName, {
+                fontFamily: 'Consolas, monospace', fontSize: WEBGL_BITMAP_FONT_SIZE, fill: color
+            }, { chars: WEBGL_CHARS });
+            ws.fontsByColor.set(color, fontName);
+            return fontName;
+        }
+
+        function renderPyramidWebGL(m) {
+            const ws = ensureWebglApp();
+            if (!ws) return;
+
+            const containerEl = document.getElementById('screenContainer');
+            const w = containerEl ? containerEl.clientWidth : window.innerWidth;
+            const h = containerEl ? containerEl.clientHeight : window.innerHeight;
+            ws.app.renderer.resize(w, h);
+
+            let useMirror = safeChecked('mirrorCheck', false);
+            let totalRows = STATE.lines.length;
+            let centerY = m.startY + (useMirror ? (m.renderCount - 1) * m.lineHeight : 0) + (m.lineHeight / 2);
+            let c1 = safeValue('color1', '#ffffff');
+            let c0 = safeValue('color0', '#00ff66');
+            let fillerColor = '#555555';
+            let renderFontSize = parseInt(safeValue('fontSlider', 16)) * parseFloat(safeValue('charSizeSlider', 1.0));
+
+            let font1 = ensureWebglFont(ws, c1);
+            let font0 = ensureWebglFont(ws, c0);
+            let fontFiller = ensureWebglFont(ws, fillerColor);
+            // Масштаб через .scale, а не через .fontSize у уже созданного BitmapText — .scale
+            // гарантированно работает на любом объекте PixiJS, в отличие от live-смены fontSize.
+            let scaleRatio = renderFontSize / WEBGL_BITMAP_FONT_SIZE;
+
+            let idx = 0;
+            const getTextObj = (fontName) => {
+                let t = ws.textPool[idx];
+                if (!t) {
+                    t = new PIXI.BitmapText('', { fontName: fontName, fontSize: WEBGL_BITMAP_FONT_SIZE });
+                    t.anchor.set(0.5);
+                    ws.container.addChild(t);
+                    ws.textPool[idx] = t;
+                }
+                t.visible = true;
+                idx++;
+                return t;
+            };
+
+            for (let i = 0; i < m.renderCount; i++) {
+                let actualIndex = (m.startIndex + i) % totalRows;
+                let lineData = STATE.lines[actualIndex];
+                let text = lineData.display;
+                if (!text) continue;
+
+                let yDown = centerY + (i * m.lineHeight);
+                let yUp = centerY - (i * m.lineHeight);
+                let yPositions = [yDown];
+                if (useMirror && i > 0) yPositions.push(yUp);
+
+                yPositions.forEach(y => {
+                    let currentX = m.baseX - (text.length * m.charWidth / 2);
+                    for (let c = 0; c < text.length; c++) {
+                        let char = text[c];
+                        if (char === ' ') continue;
+                        let cellX = currentX + (c * m.charWidth) + (m.charWidth / 2);
+                        let fontName = (char === '.') ? fontFiller : (isType1(char) ? font1 : font0);
+                        let t = getTextObj(fontName);
+                        if (t.fontName !== fontName) t.fontName = fontName;
+                        if (t.text !== char) t.text = char;
+                        t.scale.set(scaleRatio);
+                        t.x = cellX; t.y = y;
+                    }
+                });
+            }
+
+            for (let k = idx; k < ws.textPool.length; k++) {
+                if (ws.textPool[k]) ws.textPool[k].visible = false;
+            }
+
+            ws.app.render();
+        }
+
         // Полная перерисовка холста за один кадр: фон, все строки (радар/пирамида), подсветки,
         // конгломераты, рамка с её счётчиками/анимацией и вспомогательные тултипы
         function render() {
@@ -7416,6 +7544,27 @@ safeBind('stopBtn', 'click', () => {
             let symMode = safeValue('symModeSelect', 'centerTrack');
             let m = getGridMetrics();
             if (!m) return;
+
+            // Чисто визуальные цветные нижние границы строк (по номеру строки, не по позиции на
+            // экране, поэтому "закреплены" за строкой при скролле) — см. блок в "Оформление и цвета".
+            let showRowBottomBorder = safeChecked('rowBottomBorderCheck', false);
+            let rowBottomBorderColor = safeValue('rowBottomBorderColorInput', '#ff9900');
+            let rowBottomBorderStep = Math.max(1, parseInt(safeValue('rowBottomBorderStepInput', 1)) || 1);
+
+            // "Чистое движение" на WebGL: отдельный лёгкий путь без рамки/паттернов/радара —
+            // см. renderPyramidWebGL(). Радар WebGL не поддерживает (см. план) — в радар-режиме
+            // всегда используем обычный Canvas2D-рендер ниже, даже если галка включена.
+            const webglCanvasEl = document.getElementById('webglCanvas');
+            const screenCanvasEl = document.getElementById('screenCanvas');
+            if (safeChecked('webglRenderCheck', false) && !useRadar) {
+                if (webglCanvasEl) webglCanvasEl.style.display = 'block';
+                if (screenCanvasEl) screenCanvasEl.style.display = 'none';
+                renderPyramidWebGL(m);
+                return;
+            } else {
+                if (webglCanvasEl) webglCanvasEl.style.display = 'none';
+                if (screenCanvasEl) screenCanvasEl.style.display = '';
+            }
 
             let baseX = m.baseX;
             let startY = m.startY;
@@ -7737,6 +7886,22 @@ safeBind('stopBtn', 'click', () => {
                     let yUp = centerY - (i * m.lineHeight);
                     let yPositions = [yDown];
                     if (useMirror && i > 0) yPositions.push(yUp);
+
+                    // Нижняя граница строки — привязана к origIndex (номеру строки), а не к текущей
+                    // позиции на экране, поэтому не "плывёт" при скролле/каскаде.
+                    if (showRowBottomBorder && lineData.origIndex >= 0 && lineData.origIndex % rowBottomBorderStep === 0) {
+                        ctx.save();
+                        ctx.strokeStyle = rowBottomBorderColor;
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        yPositions.forEach(y => {
+                            let by = y + m.lineHeight / 2;
+                            ctx.moveTo(0, by);
+                            ctx.lineTo(canvas.width, by);
+                        });
+                        ctx.stroke();
+                        ctx.restore();
+                    }
 
                     let isCandidateRow = (actualIndex === lastActiveIdx_global + 1);
                     ctx.globalAlpha = isCandidateRow ? 1.0 : ((!lineData.isActive && applyFilter) ? 0 : 1.0);
@@ -8361,6 +8526,20 @@ safeBind('stopBtn', 'click', () => {
             if (bar) bar.classList.remove('dimmed');
             panelsForceVisibleUntil = Date.now() + 1200;
         }, true);
+
+        // Вставка (Ctrl+V) поверх холста/панелей (не в текстовое поле) сразу грузит текст на
+        // холст и заменяет им текущий слот — loadText() по умолчанию (skipBankSync=false)
+        // и так пишет в STATE.banks[STATE.activeBankIndex].lines, больше ничего не нужно.
+        document.addEventListener('paste', e => {
+            let tag = (e.target.tagName || '').toLowerCase();
+            if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+            let text = (e.clipboardData || window.clipboardData).getData('text/plain');
+            if (!text || !text.trim()) return;
+            e.preventDefault();
+            if (window.saveUndoState) saveUndoState();
+            loadText(text);
+            showNotification(`ВСТАВЛЕНО НА ХОЛСТ И В СЛОТ ${STATE.activeBankIndex + 1}`);
+        });
         // Проверка наезда вызывается только по клику на холст (см. canvas.addEventListener('mousedown', ...)),
         // а не постоянно в фоне — getImageData дорогой синхронный readback с GPU.
         function checkPanelOverlaps() {
@@ -8969,6 +9148,13 @@ safeBind('stopBtn', 'click', () => {
         safeBind('pingPongCheck', 'change', function() { enforceLoop(); updateLogic(); showNotification(this.checked ? "ПИНГ-ПОНГ ВКЛЮЧЕН" : "ПИНГ-ПОНГ ОТКЛЮЧЕН"); });
         safeBind('meetCenterCheck', 'change', function() { updateLogic(); });
         safeBind('splitCenterCheck', 'change', function() { updateLogic(); });
+
+        safeBind('webglRenderCheck', 'change', function() {
+            // Видимость холстов пересчитывается в самом render() (учитывает и радар) — здесь
+            // только уведомление и перерисовка.
+            showNotification(this.checked ? "⚡ WebGL-РЕНДЕР ВКЛЮЧЁН (только движение, без рамки/паттернов/радара)" : "⚡ WebGL-РЕНДЕР ВЫКЛЮЧЕН — ОБЫЧНЫЙ РЕЖИМ");
+            render();
+        });
         safeBind('spacedCheck', 'change', function() { updateLogic(); });
         
         safeBind('hideChangedCheck', 'change', function() { updateLogic(); });
@@ -9071,7 +9257,7 @@ safeBind('stopBtn', 'click', () => {
             }
         });
 <!-- === МАРКЕР 66: ИНТЕРАКТИВНЫЕ СЛАЙДЕРЫ === -->
-        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'showRowNumbersCheck', 'hlColorInput', 'frameColorInput', 'gridColorInput', 'gridAlpha', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'ignoreFirstPatternCharCheck', 'ignoreLastPatternCharCheck', 'inactivePatternColorInput', 'radarRotateSnapInput', 'interleavingCheck', 'interleaveAnalysisCheck', 'ignoreFirstInterleaveCharCheck', 'ignoreFirstTargetCharCheck', 'boldCheck', 'radarCheck', 'funnelCheck', 'mirrorCheck', 'balanceCheck', 'cascadeOnBalanceCheck', 'pauseOnBalanceCheck', 'keepPhaseOnCascadeCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'frameCenterLockCheck', 'fillXCheck', 'cwSlider', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck', 'verticalSearchCheck', 'waveAnalysisCheck', 'hideBlinkingCheck', 'waveHistoryInput', 'frameTypeSelect', 'frameScannerActiveCheck', 'scannerAutoInvertCheck', 'scannerHalfInvertCheck', 'scannerAutoBuildUpCheck', 'naezdCheck', 'naezdModeSelect', 'naezdSaveCheck', 'substeppingCheck', 'accumulateInterleaveCheck', 'interleaveCapInput', 'charSizeSlider'].forEach(id => {
+        ['symModeSelect', 'color1', 'alpha1', 'color0', 'alpha0', 'bgColor', 'showRowNumbersCheck', 'hlColorInput', 'frameColorInput', 'gridColorInput', 'gridAlpha', 'fontSelect', 'highlightCheck', 'filterCheck', 'activateOnPatternCheck', 'ignoreFirstPatternCharCheck', 'ignoreLastPatternCharCheck', 'inactivePatternColorInput', 'radarRotateSnapInput', 'interleavingCheck', 'interleaveAnalysisCheck', 'ignoreFirstInterleaveCharCheck', 'ignoreFirstTargetCharCheck', 'boldCheck', 'radarCheck', 'funnelCheck', 'mirrorCheck', 'balanceCheck', 'cascadeOnBalanceCheck', 'pauseOnBalanceCheck', 'keepPhaseOnCascadeCheck', 'neonCheck', 'cylinderCheck', 'elkaCheck', 'frameCheck', 'frameCenterLockCheck', 'fillXCheck', 'cwSlider', 'conglomerateCheck', 'autoCascadeCheck', 'stableConglomCheck', 'verticalSearchCheck', 'waveAnalysisCheck', 'hideBlinkingCheck', 'waveHistoryInput', 'frameTypeSelect', 'frameScannerActiveCheck', 'scannerAutoInvertCheck', 'scannerHalfInvertCheck', 'scannerAutoBuildUpCheck', 'naezdCheck', 'naezdModeSelect', 'naezdSaveCheck', 'substeppingCheck', 'accumulateInterleaveCheck', 'interleaveCapInput', 'charSizeSlider', 'rowBottomBorderCheck', 'rowBottomBorderColorInput', 'rowBottomBorderStepInput'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('input', () => { render(); });
@@ -9683,7 +9869,7 @@ safeBind('stopBtn', 'click', () => {
                 let panel = document.querySelector(selector);
                 if (!panel) return;
                 
-                let header = panel.querySelector('.patterns-log-title, .diag-terminal-title, .player-panel-title, .frame-control-title, .interleave-panel-title, .right-panel-title');
+                let header = panel.querySelector('.patterns-log-title, .diag-terminal-title, .player-panel-title, .frame-control-title, .interleave-panel-title, .right-panel-title, .controls-title');
                 if (!header) {
                     header = document.createElement('div');
                     header.className = 'player-panel-title';
@@ -9766,6 +9952,7 @@ safeBind('stopBtn', 'click', () => {
             })();
             setupDraggable('#rightPanel', '🧠 ПАНЕЛЬ');
             setupDraggable('#frameBuildPanel', '🏗️ Построение и поиск в рамке');
+            setupDraggable('.controls', '⚙️ ПАНЕЛЬ');
 
             // Тяга за левый край правой панели — расширяет её влево (правый край неподвижен).
             (() => {
