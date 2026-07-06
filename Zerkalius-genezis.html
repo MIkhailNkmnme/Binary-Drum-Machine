@@ -502,6 +502,19 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         </details>
 
         <details class="control-group">
+            <summary style="font-weight:bold; color:#00ccff; margin-bottom: 4px;">🧬 СИД-НАЛОЖЕНИЕ (по строкам паттернов)</summary>
+            <textarea id="seedOverlayInput" title="Сид(ы) через запятую или с новой строки. Если сидов несколько — раздаются строкам паттернов по кругу (строка N получает сид[N % кол-во сидов])" placeholder="Сид(ы), напр. 10, 101" style="width:100%; height:36px; background:#222; color:#fff; border:1px solid #444; border-radius:3px; font-size:11px; padding:3px; resize:vertical; box-sizing:border-box; margin-bottom:5px;">1</textarea>
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <button id="seedOverlayStepBtn" class="btn-action" style="flex:1; margin:0;" title="Один шаг = одна копия сида, XOR-наложенная на итог каждой строки-паттерна (с отскоком от края)">Шаг</button>
+                <button id="seedOverlayUndoBtn" class="btn-action" style="flex:1; margin:0;" title="Отменить последний шаг у всех строк">Шаг назад</button>
+                <button id="seedOverlayResetBtn" class="btn-action" style="flex:1; margin:0;" title="Сбросить шаги и результат, перечитать поле сида(ов)">Сброс</button>
+            </div>
+            <button id="seedOverlayPlayBtn" class="btn-action" style="margin:0; width:100%; color:#00ccff; border-color:#00ccff;" title="Автоматически повторять 'Шаг' по таймеру (скорость — общий ползунок скорости)">▶ Автоплей</button>
+            <button id="seedOverlayMultiXorBtn" class="btn-action" style="margin:5px 0 0; width:100%; color:#ff3399; border-color:#ff3399;" title="За 1 шаг: на каждую строку холста накладывается (XOR) не только её собственный сид, но и сиды ВСЕХ строк выше неё (каждый — отдельным независимым проходом от начала строки). Результат пишется прямо в содержимое строк холста, и запускается обычный поиск паттернов">🔀 MultiXor (1 шаг, в холст)</button>
+            <div id="seedOverlayResults" style="margin-top:6px; max-height:180px; overflow-y:auto; background:#111; border-radius:3px; padding:4px; font-family:'Roboto Mono',monospace; font-size:11px; line-height:1.5;"></div>
+        </details>
+
+        <details class="control-group">
             <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">🎨 ОФОРМЛЕНИЕ И ЦВЕТА</summary>
             <label style="display:flex; align-items:center; margin-bottom:4px; background:#111; padding:3px; border-radius:3px; border-left:2px solid #ffd500;" title="Ускоренный рендер пирамиды через WebGL для больших строк. Пока включена: НЕТ рамки, подсветки паттернов, трассера, конгломератов, подчёркиваний, номеров строк и радара — только сама анимация движения (с учётом Зеркала). Выключите галку, чтобы вернуть обычный режим со всеми функциями">
                 <input type="checkbox" id="webglRenderCheck"> <span class="lbl" style="color:#ffd500; font-weight:bold;">⚡ WebGL-рендер (только движение, без рамки/паттернов)</span>
@@ -727,7 +740,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 10: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.328 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.338 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -3926,6 +3939,316 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 }, speedMs);
             }
         });
+
+<!-- === МАРКЕР: СИД-НАЛОЖЕНИЕ (независимая фича, не трогает playerMode/autoCascade/поиск паттернов) === -->
+        // Сид(ы) из поля seedOverlayInput: через запятую или перенос строки. Если сидов
+        // несколько — раздаются строкам-паттернам по кругу (строка N -> сид[N % кол-во]).
+        function seedOverlayGetSeeds() {
+            let raw = safeValue('seedOverlayInput', '1');
+            let seeds = raw.split(/[\s,]+/).map(s => s.trim()).filter(s => /^[01]+$/.test(s));
+            if (seeds.length === 0) seeds = ['1'];
+            return seeds;
+        }
+
+        // Строит состояние с нуля из ТЕКУЩИХ строк-паттернов (STATE.lines с origIndex >= 0)
+        // и текущего поля сида(ов). Своё, полностью отдельное состояние — существующие поля
+        // STATE.lines не трогаются, поэтому loadText() и вся остальная логика не задеты.
+        // Число строк и длина каждой берутся с ТЕКУЩЕГО слота холста (STATE.lines), если он
+        // загружен. Если холст пуст (STATE.lines.length === 0) — свой дефолт: 512 строк, длина
+        // строки N = N (1..512), рисуются отдельно (см. renderSeedOverlayStandalone).
+        const SEED_OVERLAY_DEFAULT_ROWS = 512;
+
+        // Если на холсте есть реальные строки — они здесь ОБНУЛЯЮТСЯ (все символы → "0"),
+        // количество строк и длина каждой сохраняются, и сид дальше XOR-ится уже в эту матрицу
+        // нулей (пишется прямо в line.orig/template — это и есть строка, а не что-то поверх неё).
+        // Если холст пуст — работаем в отдельном автономном режиме (свои 512 строк, см. ниже).
+        function seedOverlayBuildRows() {
+            let seeds = seedOverlayGetSeeds();
+            let rows = [];
+            let validLines = STATE.lines.filter(l => l.origIndex >= 0);
+
+            if (validLines.length > 0) {
+                validLines.forEach((line, i) => {
+                    let tLen = line.L || (line.orig ? line.orig.length : 0);
+                    if (tLen <= 0) return;
+                    let seed = seeds[i % seeds.length];
+                    let zeros = '0'.repeat(tLen);
+                    line.orig = zeros;
+                    line.template = zeros;
+                    line.firstOneIdx = -1;
+                    line.invertMask = new Array(tLen).fill(false);
+                    rows.push({
+                        patternNum: line.origIndex + 1,
+                        tLen: tLen,
+                        seed: seed,
+                        step: 0,
+                        resultBits: new Array(tLen).fill(0),
+                        resultColors: new Array(tLen).fill('#666'),
+                        lineRef: line
+                    });
+                });
+                STATE.seedOverlayStandalone = false;
+                seedOverlaySyncLinesText();
+            } else {
+                for (let i = 0; i < SEED_OVERLAY_DEFAULT_ROWS; i++) {
+                    let tLen = i + 1;
+                    let seed = seeds[i % seeds.length];
+                    rows.push({
+                        patternNum: i + 1,
+                        tLen: tLen,
+                        seed: seed,
+                        step: 0,
+                        resultBits: new Array(tLen).fill(0),
+                        resultColors: new Array(tLen).fill('#666'),
+                        lineRef: null
+                    });
+                }
+                STATE.seedOverlayStandalone = true;
+            }
+            STATE.seedOverlayRows = rows;
+        }
+
+        // Синхронизирует текстовое поле linesInput и активный банк с текущим line.orig всех
+        // строк — нужно каждый раз, когда сид-наложение правит их напрямую.
+        function seedOverlaySyncLinesText() {
+            let newLinesText = STATE.lines.map(l => l.orig).join('\n');
+            let linesInp = document.getElementById('linesInput');
+            if (linesInp) linesInp.value = newLinesText;
+            if (STATE.banks && STATE.banks[STATE.activeBankIndex]) STATE.banks[STATE.activeBankIndex].lines = newLinesText;
+        }
+
+        // Пишет текущий resultBits строки её реальной строке холста (если она привязана —
+        // lineRef), чтобы обычный рендер и поиск паттернов видели актуальное содержимое.
+        function seedOverlaySyncLine(row) {
+            if (!row.lineRef) return;
+            let newStr = row.resultBits.join('');
+            row.lineRef.orig = newStr;
+            row.lineRef.template = newStr;
+            row.lineRef.firstOneIdx = newStr.search(/[1\\)\]>+]/);
+            row.lineRef.invertMask = new Array(row.tLen).fill(false);
+        }
+
+        // После того как resultBits всех строк обновлены: если это реальный холст — синхронизирует
+        // текстовое поле/банк и запускает настоящий поиск паттернов движка; если автономный режим —
+        // просто перерисовывает (там и рисовать больше нечего, кроме собственной раскладки).
+        function seedOverlaySyncCanvasAfterChange() {
+            if (STATE.seedOverlayStandalone) {
+                if (!STATE.isPlaying) render();
+                return;
+            }
+            seedOverlaySyncLinesText();
+            calculateState(true);
+            render();
+        }
+
+        // Рисует сид-наложение прямо на холсте своими силами, когда STATE.lines пуст (нет
+        // загруженного слота) и render() выходит рано, не доходя до основной отрисовки паттернов.
+        function renderSeedOverlayStandalone() {
+            if (!STATE.seedOverlayStandalone || !STATE.seedOverlayRows || !STATE.seedOverlayRows.length) return;
+            let canvasEl = document.getElementById('screenCanvas');
+            let ctx2 = canvasEl ? canvasEl.getContext('2d') : null;
+            if (!ctx2) return;
+
+            let fontSize = 11;
+            let lineHeight = fontSize + 4;
+            let charWidth = fontSize * 0.7;
+
+            ctx2.save();
+            ctx2.font = fontSize + 'px Consolas, monospace';
+            ctx2.textAlign = 'left';
+            ctx2.textBaseline = 'middle';
+
+            let y = lineHeight;
+            for (let idx = 0; idx < STATE.seedOverlayRows.length; idx++) {
+                if (y > canvasEl.height) break;
+                let row = STATE.seedOverlayRows[idx];
+                ctx2.fillStyle = '#888';
+                ctx2.fillText('#' + row.patternNum + ' [' + row.seed + ']', 6, y);
+                let x = 90;
+                for (let c = 0; c < row.tLen; c++) {
+                    if (x > canvasEl.width) break;
+                    ctx2.fillStyle = row.resultColors[c];
+                    ctx2.fillText(String(row.resultBits[c]), x, y);
+                    x += charWidth;
+                }
+                y += lineHeight;
+            }
+            ctx2.restore();
+        }
+
+        // Один шаг = одна копия сида (длиной Len(seed)), кладётся подряд после копий с
+        // предыдущих шагов; когда дорожка (tLen) заканчивается — отражается назад и идёт в
+        // обратную сторону (отскок от стенки с повторным касанием крайней клетки), бесконечно.
+        // Копия без отскоков — синяя (текущая), после 1-го отскока — красная, после 2-го —
+        // снова синяя. Всё, что легло раньше (на прошлых шагах), "остывает" до чёрного.
+        function seedOverlayApplyStep(row) {
+            let seedLen = row.seed.length;
+            let tLen = row.tLen;
+            let baseOffset = row.step * seedLen;
+            let period = 2 * tLen;
+            let legStart = Math.floor(baseOffset / tLen);
+
+            for (let i = 0; i < tLen; i++) row.resultColors[i] = '#666';
+
+            for (let j = 0; j < seedLen; j++) {
+                let t = baseOffset + j;
+                let m = t % period;
+                let pos = (m < tLen) ? m : (period - 1 - m);
+                let crossings = Math.floor(t / tLen) - legStart;
+                let bit = parseInt(row.seed[j], 10) || 0;
+
+                row.resultBits[pos] = row.resultBits[pos] ^ bit;
+
+                let color;
+                if (crossings === 0) color = '#3399ff';
+                else if (crossings % 2 === 1) color = '#ff4444';
+                else color = '#3399ff';
+                row.resultColors[pos] = color;
+            }
+            row.step++;
+        }
+
+        // Один независимый проход сида (всегда от начала дорожки, шаг=0) — XOR-ится в bitsArray.
+        // Используется MultiXor: несколько таких проходов (разных сидов) накладываются друг на
+        // друга в один и тот же массив, вместо накопления по шагам как в seedOverlayApplyStep.
+        function seedOverlaySinglePass(seed, tLen, bitsArray) {
+            let seedLen = seed.length;
+            let period = 2 * tLen;
+            for (let j = 0; j < seedLen; j++) {
+                let m = j % period;
+                let pos = (m < tLen) ? m : (period - 1 - m);
+                let bit = parseInt(seed[j], 10) || 0;
+                bitsArray[pos] = bitsArray[pos] ^ bit;
+            }
+        }
+
+        // MultiXor (простая версия, 1 шаг): для каждой строки холста накладывает (XOR) в ОДИН
+        // проход не только её собственный сид, но и сиды ВСЕХ строк выше неё — каждый сид как
+        // отдельный независимый проход от начала дорожки. Результат пишется прямо в содержимое
+        // строк холста (line.orig/template), после чего запускается настоящий поиск паттернов
+        // движка (calculateState(true)), чтобы найденные паттерны подсветились как обычно.
+        function seedOverlayMultiXorOnce() {
+            let validLines = STATE.lines.filter(l => l.origIndex >= 0);
+            if (validLines.length === 0) {
+                showNotification("MULTIXOR: НА ХОЛСТЕ НЕТ СТРОК (ЗАГРУЗИ СЛОТ)");
+                return;
+            }
+            let seeds = seedOverlayGetSeeds();
+
+            validLines.forEach((line, i) => {
+                let tLen = line.L || (line.orig ? line.orig.length : 0);
+                if (tLen <= 0) return;
+                let bits = new Array(tLen).fill(0);
+                for (let j = 0; j <= i; j++) {
+                    seedOverlaySinglePass(seeds[j % seeds.length], tLen, bits);
+                }
+                let newStr = bits.join('');
+                line.orig = newStr;
+                line.template = newStr;
+                line.L = newStr.length;
+                line.firstOneIdx = line.orig.search(/[1\\)\]>+]/);
+                line.invertMask = new Array(line.L).fill(false);
+            });
+
+            seedOverlaySyncLinesText();
+            calculateState(true);
+            render();
+            showNotification("MULTIXOR: ПРИМЕНЁН (1 ШАГ) — ИДЁТ ПОИСК ПАТТЕРНОВ");
+        }
+
+        function seedOverlayRender() {
+            let container = document.getElementById('seedOverlayResults');
+            if (!container) return;
+            if (!STATE.seedOverlayRows || STATE.seedOverlayRows.length === 0) {
+                container.innerHTML = '<span style="color:#666;">Нет строк-паттернов</span>';
+                return;
+            }
+            let html = '';
+            STATE.seedOverlayRows.forEach(row => {
+                html += '<div style="white-space:nowrap;"><span style="color:#888;">#' + row.patternNum + ' [' + row.seed + '] шаг ' + row.step + ': </span>';
+                for (let i = 0; i < row.tLen; i++) {
+                    html += '<span style="color:' + row.resultColors[i] + '; font-weight:bold;">' + row.resultBits[i] + '</span>';
+                }
+                html += '</div>';
+            });
+            container.innerHTML = html;
+        }
+
+        function seedOverlayNeedsRebuild() {
+            if (!STATE.seedOverlayRows) return true;
+            let validCount = STATE.lines.filter(l => l.origIndex >= 0).length;
+            if (validCount > 0) {
+                // Слот загружен — должны быть привязаны к его строкам, не в отдельном режиме
+                return STATE.seedOverlayStandalone || STATE.seedOverlayRows.length !== validCount;
+            }
+            // Холст пуст — должны быть в отдельном режиме с дефолтным числом строк
+            return !STATE.seedOverlayStandalone || STATE.seedOverlayRows.length !== SEED_OVERLAY_DEFAULT_ROWS;
+        }
+
+        function seedOverlayStepAll() {
+            if (seedOverlayNeedsRebuild()) seedOverlayBuildRows();
+            STATE.seedOverlayRows.forEach(row => { seedOverlayApplyStep(row); seedOverlaySyncLine(row); });
+            seedOverlayRender();
+            seedOverlaySyncCanvasAfterChange();
+        }
+
+        function seedOverlayUndoAll() {
+            if (!STATE.seedOverlayRows || STATE.seedOverlayRows.length === 0) return;
+            STATE.seedOverlayRows.forEach(row => {
+                let newStep = row.step - 1;
+                if (newStep < 0) return;
+                row.step = 0;
+                row.resultBits = new Array(row.tLen).fill(0);
+                row.resultColors = new Array(row.tLen).fill('#666');
+                for (let s = 0; s < newStep; s++) seedOverlayApplyStep(row);
+                seedOverlaySyncLine(row);
+            });
+            seedOverlayRender();
+            seedOverlaySyncCanvasAfterChange();
+        }
+
+        function seedOverlayResetAll() {
+            // Точечная очистка (только коллекции найденных + подсветка, без позиций строк) не
+            // держится — поиск паттернов тут же находит их заново, раз сами строки не сдвинуты.
+            // По факту в этом движке паттерны реально снимает только "Стоп" — поэтому просто
+            // дёргаем ту же кнопку и переиспользуем её проверенную логику целиком.
+            let stopBtnEl = document.getElementById('stopBtn');
+            if (stopBtnEl) stopBtnEl.click();
+
+            seedOverlayBuildRows(); // заново обнуляет реальные строки (если они есть) и пересобирает
+            seedOverlayRender();
+            seedOverlaySyncCanvasAfterChange();
+        }
+
+        function seedOverlayStopAutoplay() {
+            if (STATE.seedOverlayInterval) {
+                clearInterval(STATE.seedOverlayInterval);
+                STATE.seedOverlayInterval = null;
+                let btn = document.getElementById('seedOverlayPlayBtn');
+                if (btn) { btn.style.background = ''; btn.style.color = '#00ccff'; }
+            }
+        }
+
+        safeBind('seedOverlayStepBtn', 'click', function() { seedOverlayStepAll(); });
+        safeBind('seedOverlayUndoBtn', 'click', function() { seedOverlayUndoAll(); });
+        safeBind('seedOverlayResetBtn', 'click', function() {
+            seedOverlayResetAll();
+            showNotification("СИД-НАЛОЖЕНИЕ: СБРОШЕНО");
+        });
+        safeBind('seedOverlayPlayBtn', 'click', function() {
+            if (STATE.seedOverlayInterval) {
+                seedOverlayStopAutoplay();
+                showNotification("СИД-НАЛОЖЕНИЕ: АВТОПЛЕЙ ОСТАНОВЛЕН");
+            } else {
+                this.style.background = '#00ccff';
+                this.style.color = '#000';
+                showNotification("СИД-НАЛОЖЕНИЕ: АВТОПЛЕЙ ЗАПУЩЕН");
+                let speedMs = Math.max(16, 1001 - parseInt(safeValue('speedSlider', 950)));
+                STATE.seedOverlayInterval = setInterval(() => { seedOverlayStepAll(); }, speedMs);
+            }
+        });
+
+        safeBind('seedOverlayMultiXorBtn', 'click', function() { seedOverlayMultiXorOnce(); });
 
         safeBind('slotSrcSendBtn', 'click', () => slotSrcSendToCanvas());
         safeBind('slotSrcGetBtn', 'click', () => slotSrcGetFromCanvas());
@@ -7198,7 +7521,8 @@ safeBind('stopBtn', 'click', () => {
                 let eBtn = document.getElementById('elkaAutoBtn');
                 if (eBtn) { eBtn.style.background = ''; eBtn.style.color = '#ff3333'; }
             }
-            STATE.autoOffsetX = 0; 
+            if (typeof seedOverlayStopAutoplay === 'function') seedOverlayStopAutoplay();
+            STATE.autoOffsetX = 0;
             STATE.autoOffsetY = 0;
             STATE.rowScrollOffset = 0;
             
@@ -7445,11 +7769,25 @@ safeBind('stopBtn', 'click', () => {
         function renderPyramidWebGL(m) {
             const ws = ensureWebglApp();
             if (!ws) return;
+            try {
+                renderPyramidWebGLInner(ws, m);
+            } catch (e) {
+                console.error('[WebGL-рендер] ошибка:', e);
+                if (!ws.errorShown) {
+                    ws.errorShown = true;
+                    showNotification("⚠️ WebGL-РЕНДЕР: ОШИБКА (см. консоль F12) — " + e.message);
+                }
+            }
+        }
 
+        function renderPyramidWebGLInner(ws, m) {
             const containerEl = document.getElementById('screenContainer');
             const w = containerEl ? containerEl.clientWidth : window.innerWidth;
             const h = containerEl ? containerEl.clientHeight : window.innerHeight;
-            ws.app.renderer.resize(w, h);
+            if (ws.lastW !== w || ws.lastH !== h) {
+                ws.app.renderer.resize(w, h);
+                ws.lastW = w; ws.lastH = h;
+            }
 
             let useMirror = safeChecked('mirrorCheck', false);
             let totalRows = STATE.lines.length;
@@ -7532,7 +7870,7 @@ safeBind('stopBtn', 'click', () => {
             ctx.fillStyle = useTrail ? hexToRgba(bgColor, 0.2) : bgColor;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            if (STATE.lines.length === 0) return;
+            if (STATE.lines.length === 0) { renderSeedOverlayStandalone(); return; }
 
             let useRadar = safeChecked('radarCheck', false);
             let useNeon = safeChecked('neonCheck', false);
@@ -8000,7 +8338,7 @@ safeBind('stopBtn', 'click', () => {
                             let char = text[c];
                             if (char === ' ') { if (isDrum) char = '.'; else continue; }
                             let cellX = isMatrixAxis ? (baseX + ((c - (text.length - 1) / 2.0) * m.charWidth) + liveCenterOffset) : (currentX + (c * m.charWidth) + (m.charWidth / 2));
-                            
+
                             let isHl = showHighlights && lineData.isActive && lineData.highlightMask[c];
                             let isInactiveHl = showHighlights && !lineData.isActive && lineData.inactiveHighlightMask && lineData.inactiveHighlightMask[c];
                             let isLcsRed = (lineData.lcsRedMask && lineData.lcsRedMask[c]) || (lineData.renderPRedMask && lineData.renderPRedMask[c]);

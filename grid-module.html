@@ -24,8 +24,9 @@ GRID MODULE — отдельный скелет "живой/редактируе
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Grid Module — скелет</title>
+<title>Grid Module — v8</title>
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Share+Tech+Mono&family=VT323&family=Major+Mono+Display&family=Anton&family=Orbitron&family=Press+Start+2P&display=swap');
     body { margin: 0; overflow: hidden; background: #050505; font-family: 'Consolas', monospace; }
     /* Шапка + строка формул — один перетаскиваемый блок (как остальные панели в основном
        файле), а не прибитая к краю окна полоса. Растяни браузер на 2 монитора — холст (0..100%
@@ -61,7 +62,34 @@ GRID MODULE — отдельный скелет "живой/редактируе
     <div id="gridHeader" title="Перетащить — можно унести на второй монитор">
         <span id="gridStatusLabel">📊 Кадр: 0</span>
         <button id="modeBtn">🔴 Живой</button>
-        <button id="digitsModeBtn" title="Показ 1/0: диагонали ⇄ цифры">╲ Диагонали</button>
+        <button id="digitsModeBtn" title="Показ 1/0: диагонали ⇄ цифры ⇄ произвольные символы (задаются справа)">╲ Диагонали</button>
+        <span class="lbl" style="opacity:0.7;">Симв. '1'</span>
+        <input type="text" id="symbol1Input" value="&lt;" title="Символ, которым показывается '1' в режиме 'Символы'" style="width:28px; background:#222; color:#fff; border:1px solid #444; border-radius:3px; font-size:11px; padding:2px 3px; text-align:center;">
+        <span class="lbl" style="opacity:0.7;">Симв. '0'</span>
+        <input type="text" id="symbol0Input" value="&gt;" title="Символ, которым показывается '0' в режиме 'Символы'" style="width:28px; background:#222; color:#fff; border:1px solid #444; border-radius:3px; font-size:11px; padding:2px 3px; text-align:center;">
+        <select id="presetSelect" title="Цветовой пресет сетки (фон + цвета 1/0)">
+            <optgroup label="Тёмные">
+                <option value="matrix">Матрица</option>
+                <option value="cyber">Киберпанк</option>
+                <option value="blood">Кровавый</option>
+                <option value="synthwave">Synthwave</option>
+                <option value="zerkalius">Zerkalius</option>
+                <option value="bw">ЧБ</option>
+                <option value="acid">Кислота</option>
+                <option value="electro">Электро</option>
+                <option value="amber">Янтарь</option>
+            </optgroup>
+            <optgroup label="Светлые">
+                <option value="excel">Excel</option>
+                <option value="paper">Бумага</option>
+                <option value="ice">Лёд</option>
+            </optgroup>
+            <optgroup label="Яркие">
+                <option value="candy">Конфета</option>
+                <option value="tropical">Тропики</option>
+                <option value="neon">Неон</option>
+            </optgroup>
+        </select>
         <input type="color" id="bgColorInput" title="Фон выделенных ячеек" value="#1a1a1a">
         <input type="color" id="textColorInput" title="Цвет текста выделенных ячеек" value="#ff6464">
         <span style="margin-left:auto; opacity:0.6;">Колесо — зум, ЛКМ протянуть — диапазон, ПКМ / Ctrl+ЛКМ — пан (без сброса выделения), Ctrl+C/X/V — копировать/вырезать/вставить, Delete — очистить</span>
@@ -70,11 +98,84 @@ GRID MODULE — отдельный скелет "живой/редактируе
         <span id="gridFormulaAddr">R1:C1</span>
         <span id="gridFormulaValue">(пусто)</span>
     </div>
+    <div id="seedOverlayBar" style="display:flex; align-items:center; gap:6px; padding:4px 8px; box-sizing:border-box; font-size:11px; border-top:1px solid #333;">
+        <span style="color:#ff3399; font-weight:bold;">🧬 Сид-наложение:</span>
+        <input type="text" id="seedOverlayInput" value="1" title="Сид(ы) через запятую или пробел. Несколько — раздаются строкам по кругу" style="width:110px; background:#222; color:#fff; border:1px solid #444; border-radius:3px; font-size:11px; padding:2px 4px;">
+        <button id="seedOverlayStepBtn" title="Один шаг = одна копия сида, XOR-наложенная на каждую строку (с отскоком от края)">Шаг</button>
+        <button id="seedOverlayUndoBtn" title="Отменить последний шаг у всех строк">Шаг назад</button>
+        <button id="seedOverlayResetBtn" title="Обнулить все строки (сохраняя их число и длину) и перечитать поле сида(ов)">Сброс</button>
+        <button id="seedOverlayPlayBtn" style="color:#00ccff; border-color:#00ccff;" title="Автоматически повторять 'Шаг' по таймеру">▶ Автоплей</button>
+        <select id="seedOverlayAlignSelect" title="Выравнивание строк относительно самой длинной — промежуток заполняется пустыми (не нулевыми) ячейками">
+            <option value="left">⯇ По левому краю</option>
+            <option value="right">По правому краю ⯈</option>
+            <option value="center">По центру ⯇⯈</option>
+        </select>
+        <label style="display:flex; align-items:center; gap:3px; cursor:pointer;" title="Каждый бит расширяется в пару [бит, противобит] перед выравниванием — длина всегда чётная, поэтому центрирование получается ровным без сдвига на 1 ячейку от чётности/нечётности">
+            <input type="checkbox" id="seedOverlayAntiBitCheck"> <span>Анти-бит справа (×2, ровный центр)</span>
+        </label>
+    </div>
+    <div id="gridStyleBar" style="display:flex; align-items:center; gap:6px; padding:4px 8px; box-sizing:border-box; font-size:11px; border-top:1px solid #333;">
+        <span style="color:#00ccff; font-weight:bold;">🎨 Оформление:</span>
+        <span class="lbl" style="opacity:0.7;">Линии</span>
+        <input type="color" id="gridLineColorInput" title="Цвет линий сетки" value="#888888">
+        <span class="lbl" style="opacity:0.7;">'1'</span>
+        <input type="color" id="diagColor1Input" title="Цвет символа/диагонали '1'" value="#ffffff">
+        <span class="lbl" style="opacity:0.7;">'0'</span>
+        <input type="color" id="diagColor0Input" title="Цвет символа/диагонали '0'" value="#00ff66">
+        <span class="lbl" style="opacity:0.7;">Фон</span>
+        <input type="color" id="gridBgColorInput" title="Фон всей сетки" value="#050505">
+        <span class="lbl" style="opacity:0.7;">Толщина диаг.</span>
+        <input type="range" id="diagThicknessSlider" min="0.5" max="6" step="0.5" value="0.5" style="width:70px;" title="Толщина линий диагоналей 1/0">
+        <span class="lbl" style="opacity:0.7;">Шрифт</span>
+        <input type="range" id="fontSizeSlider" min="6" max="40" step="1" value="14" style="width:70px;" title="Размер шрифта (px). По умолчанию считается от масштаба ячейки — сдвиг ползунка переключает на фиксированный размер">
+        <select id="gridFontSelect" title="Гарнитура шрифта">
+            <option value="'Consolas', monospace">Consolas</option>
+            <option value="'Roboto Mono', monospace">Roboto Mono</option>
+            <option value="monospace">Моноширинный</option>
+            <option value="'Courier New', Courier, monospace">Courier New</option>
+            <option value="'Share Tech Mono', monospace">Share Tech Mono</option>
+            <option value="'VT323', monospace">VT323 (CRT-терминал)</option>
+            <option value="'Major Mono Display', monospace">Major Mono Display</option>
+            <option value="Impact, 'Anton', sans-serif">Impact</option>
+            <option value="'Anton', Impact, sans-serif">Anton (запасной Impact)</option>
+            <option value="'Orbitron', monospace">Orbitron (футуристичный)</option>
+            <option value="'Press Start 2P', monospace">Press Start 2P (пиксельный)</option>
+        </select>
+        <button id="saveSettingsBtn" title="Скачать файл со всеми текущими настройками оформления (цвета, толщина, размер шрифта, гарнитура, масштаб, выравнивание, анти-бит)">💾 Сохранить настройки</button>
+        <button id="loadSettingsBtn" title="Загрузить настройки оформления из ранее сохранённого файла">📂 Загрузить настройки</button>
+        <input type="file" id="loadSettingsFile" accept=".json" style="display:none;">
+    </div>
 </div>
 <canvas id="gridCanvas"></canvas>
 
 <script>
 "use strict";
+
+// ===========================================================================
+// ЦВЕТОВЫЕ ПРЕСЕТЫ — тёмные повторяют PRESETS из Zerkalius-genezis.html (для
+// единообразия), светлые и яркие — новые, под разный фон. line (границы сетки)
+// пресетами намеренно не трогается — остаётся нейтральным независимо от темы
+// (см. GRID.colors.line ниже).
+// ===========================================================================
+const GRID_PRESETS = {
+    matrix:    { c1: '#ffffff', c0: '#00ff66', bg: '#050505' },
+    cyber:     { c1: '#ffcc00', c0: '#00ccff', bg: '#0a0a1a' },
+    blood:     { c1: '#ffffff', c0: '#ff0000', bg: '#1a0000' },
+    synthwave: { c1: '#00ffff', c0: '#ff00ff', bg: '#0f0515' },
+    zerkalius: { c1: '#dcdcdc', c0: '#00ccff', bg: '#050a15' },
+    bw:        { c1: '#ffffff', c0: '#555555', bg: '#000000' },
+    acid:      { c1: '#f2ffb8', c0: '#bfff00', bg: '#0c1404' },
+    electro:   { c1: '#00e5ff', c0: '#ff6a00', bg: '#020a0d' },
+    amber:     { c1: '#ffd27a', c0: '#ff9900', bg: '#120900' },
+    // Светлые
+    excel:     { c1: '#1a1a1a', c0: '#217346', bg: '#ffffff' },
+    paper:     { c1: '#2b2b2b', c0: '#8a5a2b', bg: '#f0ede4' },
+    ice:       { c1: '#123a5e', c0: '#0891b2', bg: '#eef6ff' },
+    // Яркие
+    candy:     { c1: '#ff2e88', c0: '#00c2ff', bg: '#fff5fb' },
+    tropical:  { c1: '#ff6a00', c0: '#00b86b', bg: '#fffbea' },
+    neon:      { c1: '#39ff14', c0: '#ff00ff', bg: '#000000' },
+};
 
 // ===========================================================================
 // STATE — модель данных сетки. Полностью независима от рендера/интерактива.
@@ -95,7 +196,12 @@ const GRID = {
     frameLabel: () => '',
 
     // Цвета — по умолчанию нейтральные; в основном файле переопределяются через setColors().
-    colors: { c1: '#ffffff', c0: '#00ff66', bg: '#050505', line: 'rgba(0,255,102,0.4)' },
+    // line (границы ячеек сетки) намеренно НЕ завязан на c0/c1 (цвета диагоналей 1/0) — иначе
+    // линии сетки сливаются по оттенку с содержимым, как было раньше (оба зелёные). Нейтральный
+    // серый — граница видна отдельно от диагоналей независимо от того, какие c0/c1 выбраны.
+    // line — сплошной hex (не rgba): пикер <input type=color> не умеет в прозрачность,
+    // а раз цвет теперь редактируемый, проще держать формат единым.
+    colors: { c1: '#ffffff', c0: '#00ff66', bg: '#050505', line: '#888888' },
 
     // Камера: масштаб (px на ячейку) и смещение (в пикселях) панорамирования.
     cellSize: 24,
@@ -107,8 +213,22 @@ const GRID = {
     selR: 0, selC: 0,
     selR2: 0, selC2: 0,
 
-    // Как показывать '1'/'0': диагональю (как на основном холсте) или просто цифрой.
-    showDigits: false,
+    // Как показывать '1'/'0': 'diagonal' (диагональной чертой, как на основном холсте),
+    // 'digits' (сырыми цифрами 1/0) или 'symbols' (произвольными символами symbol1/symbol0,
+    // по умолчанию "<"/">" — не обязательно однобуквенными).
+    symbolMode: 'diagonal',
+    symbol1: '<',
+    symbol0: '>',
+
+    // Толщина линий диагоналей 1/0 (px), размер шрифта (px, null = авто от cellSize) и гарнитура.
+    diagLineWidth: 0.5,
+    fontSize: null,
+    fontFamily: "'Roboto Mono', monospace",
+
+    // Выравнивание строк сид-наложения относительно самой длинной строки: 'left' (по
+    // умолчанию, как раньше), 'right', 'center' — промежуток заполняется пустыми ячейками
+    // (см. seedOverlayBuildRows/seedOverlayApplyStep).
+    seedOverlayAlign: 'left',
 };
 
 function selBounds() {
@@ -174,7 +294,11 @@ window.addEventListener('resize', resizeCanvas);
 
 function render() {
     const W = canvas.width, H = canvas.height;
-    const cs = GRID.cellSize;
+    // Округляем масштаб ДО целого пикселя только для самого рендера (GRID.cellSize остаётся
+    // дробным — зум по колесу считается от него точно). При дробном cs соседние ячейки
+    // округляют свои x/y по-разному ("дрейф"), из-за чего границы сетки и диагонали то
+    // удваиваются, то расходятся дырами — с целым cs дрейфа нет вообще, все стыки ровные.
+    const cs = Math.max(1, Math.round(GRID.cellSize));
     ctx.fillStyle = GRID.colors.bg;
     ctx.fillRect(0, 0, W, H);
 
@@ -184,11 +308,33 @@ function render() {
     const visibleCols = Math.ceil((W - ROWHEAD_W) / cs) + 2;
     const visibleRows = Math.ceil((H - COLHEAD_H) / cs) + 2;
 
-    ctx.font = `${Math.max(8, cs * 0.6)}px 'Roboto Mono', monospace`;
+    ctx.font = `${GRID.fontSize || Math.max(8, cs * 0.6)}px ${GRID.fontFamily}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
     const sel = selBounds();
+
+    // Линии сетки — ОДНИМ проходом, не per-cell strokeRect. per-cell вариант рисовал общую
+    // границу между двумя соседними ячейками ДВАЖДЫ (с их собственных, независимо округлённых
+    // x/y) — при нецелом масштабе (зум) округление "плывёт" по-разному для соседних ячеек,
+    // из-за чего одни границы удваивались/утолщались, а другие пропадали (см. скриншот).
+    // Здесь каждая вертикаль/горизонталь считается и рисуется РОВНО ОДИН раз.
+    ctx.strokeStyle = GRID.colors.line;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    for (let ci = 0; ci <= visibleCols; ci++) {
+        const c = firstCol + ci;
+        const x = ROWHEAD_W + Math.round(c * cs - GRID.panX) + 0.25;
+        ctx.moveTo(x, COLHEAD_H);
+        ctx.lineTo(x, H);
+    }
+    for (let ri = 0; ri <= visibleRows; ri++) {
+        const r = firstRow + ri;
+        const y = COLHEAD_H + Math.round(r * cs - GRID.panY) + 0.25;
+        ctx.moveTo(ROWHEAD_W, y);
+        ctx.lineTo(W, y);
+    }
+    ctx.stroke();
 
     for (let ri = 0; ri < visibleRows; ri++) {
         const r = firstRow + ri;
@@ -198,22 +344,29 @@ function render() {
             const x = ROWHEAD_W + Math.round(c * cs - GRID.panX);
 
             const data = getCell(r, c);
-            ctx.strokeStyle = GRID.colors.line;
-            ctx.lineWidth = 0.5;
-            ctx.strokeRect(x + 0.25, y + 0.25, cs - 0.5, cs - 0.5);
 
             if (data) {
                 if (data.bg) { ctx.fillStyle = data.bg; ctx.fillRect(x, y, cs, cs); }
-                if ((data.ch === '1' || data.ch === '0') && !GRID.showDigits) {
+                if ((data.ch === '1' || data.ch === '0') && GRID.symbolMode === 'diagonal') {
+                    // Без отступа от края ячейки (раньше было x+2..x+cs-2) — диагонали соседних
+                    // ячеек должны смыкаться ровно в углу, одной непрерывной зигзаг-линией, а не
+                    // рваться на отдельные "бусины" с зазором.
                     ctx.strokeStyle = data.ch === '1' ? GRID.colors.c1 : GRID.colors.c0;
-                    ctx.lineWidth = 0.5;
+                    ctx.lineWidth = GRID.diagLineWidth;
                     ctx.beginPath();
-                    if (data.ch === '1') { ctx.moveTo(x + 2, y + 2); ctx.lineTo(x + cs - 2, y + cs - 2); }
-                    else { ctx.moveTo(x + 2, y + cs - 2); ctx.lineTo(x + cs - 2, y + 2); }
+                    if (data.ch === '1') { ctx.moveTo(x, y); ctx.lineTo(x + cs, y + cs); }
+                    else { ctx.moveTo(x, y + cs); ctx.lineTo(x + cs, y); }
                     ctx.stroke();
                 } else {
                     ctx.fillStyle = data.color || (data.ch === '1' ? GRID.colors.c1 : data.ch === '0' ? GRID.colors.c0 : GRID.colors.c1);
-                    ctx.fillText(data.ch, x + cs / 2, y + cs / 2 + 1);
+                    // В режиме "символы" 1/0 показываются как GRID.symbol1/symbol0 (по умолчанию
+                    // "<"/">"), а не как сырые цифры; остальные символы (текст) — как есть.
+                    let displayCh = data.ch;
+                    if (GRID.symbolMode === 'symbols') {
+                        if (data.ch === '1') displayCh = GRID.symbol1;
+                        else if (data.ch === '0') displayCh = GRID.symbol0;
+                    }
+                    ctx.fillText(displayCh, x + cs / 2, y + cs / 2 + 1);
                 }
             }
 
@@ -394,10 +547,335 @@ document.getElementById('modeBtn').addEventListener('click', () => {
     render();
 });
 
+const SYMBOL_MODE_LABELS = { diagonal: '╲ Диагонали', digits: '10 Цифры', symbols: '<> Символы' };
+const SYMBOL_MODE_CYCLE = ['diagonal', 'digits', 'symbols'];
 document.getElementById('digitsModeBtn').addEventListener('click', () => {
-    GRID.showDigits = !GRID.showDigits;
-    document.getElementById('digitsModeBtn').textContent = GRID.showDigits ? '10 Цифры' : '╲ Диагонали';
+    let idx = SYMBOL_MODE_CYCLE.indexOf(GRID.symbolMode);
+    GRID.symbolMode = SYMBOL_MODE_CYCLE[(idx + 1) % SYMBOL_MODE_CYCLE.length];
+    document.getElementById('digitsModeBtn').textContent = SYMBOL_MODE_LABELS[GRID.symbolMode];
     render();
+});
+document.getElementById('symbol1Input').addEventListener('input', function() {
+    GRID.symbol1 = this.value || '<';
+    render();
+});
+document.getElementById('symbol0Input').addEventListener('input', function() {
+    GRID.symbol0 = this.value || '>';
+    render();
+});
+
+document.getElementById('presetSelect').addEventListener('change', function() {
+    let p = GRID_PRESETS[this.value];
+    if (p) {
+        GRID.setColors({ c1: p.c1, c0: p.c0, bg: p.bg });
+        syncStyleInputsFromGrid();
+        render();
+    }
+});
+
+// Держит цветовые пикеры/ползунки в синхроне с текущим GRID.colors/diagLineWidth/fontSize —
+// нужно после выбора пресета (пресет не трогает line, поэтому его пикер не переписываем).
+function syncStyleInputsFromGrid() {
+    document.getElementById('gridLineColorInput').value = GRID.colors.line;
+    document.getElementById('diagColor1Input').value = GRID.colors.c1;
+    document.getElementById('diagColor0Input').value = GRID.colors.c0;
+    document.getElementById('gridBgColorInput').value = GRID.colors.bg;
+    document.getElementById('diagThicknessSlider').value = GRID.diagLineWidth;
+    if (GRID.fontSize) document.getElementById('fontSizeSlider').value = GRID.fontSize;
+    document.getElementById('gridFontSelect').value = GRID.fontFamily;
+    document.getElementById('seedOverlayAlignSelect').value = GRID.seedOverlayAlign;
+}
+syncStyleInputsFromGrid();
+
+document.getElementById('gridLineColorInput').addEventListener('input', function() {
+    GRID.colors.line = this.value;
+    render();
+});
+document.getElementById('diagColor1Input').addEventListener('input', function() {
+    GRID.colors.c1 = this.value;
+    render();
+});
+document.getElementById('diagColor0Input').addEventListener('input', function() {
+    GRID.colors.c0 = this.value;
+    render();
+});
+document.getElementById('gridBgColorInput').addEventListener('input', function() {
+    GRID.colors.bg = this.value;
+    render();
+});
+document.getElementById('diagThicknessSlider').addEventListener('input', function() {
+    GRID.diagLineWidth = parseFloat(this.value) || 0.5;
+    render();
+});
+document.getElementById('fontSizeSlider').addEventListener('input', function() {
+    GRID.fontSize = parseInt(this.value, 10) || null;
+    render();
+});
+document.getElementById('gridFontSelect').addEventListener('change', function() {
+    GRID.fontFamily = this.value;
+    render();
+});
+document.getElementById('seedOverlayAlignSelect').addEventListener('change', function() {
+    GRID.seedOverlayAlign = this.value;
+    if (typeof seedOverlayWriteAllRows === 'function') { seedOverlayWriteAllRows(); render(); }
+});
+document.getElementById('seedOverlayAntiBitCheck').addEventListener('change', function() {
+    if (typeof seedOverlayWriteAllRows === 'function') { seedOverlayWriteAllRows(); render(); }
+});
+
+// ===========================================================================
+// СОХРАНЕНИЕ/ЗАГРУЗКА НАСТРОЕК ОФОРМЛЕНИЯ — как в Zerkalius-genezis.html
+// (там снапшот сохраняется целиком в файл), только здесь только настройки
+// оформления (цвета, толщина, шрифт/гарнитура, масштаб, выравнивание, анти-бит),
+// без содержимого ячеек — оно всё равно приходит из STATE.lines/демо-данных.
+// ===========================================================================
+function collectGridSettings() {
+    return {
+        colors: Object.assign({}, GRID.colors),
+        diagLineWidth: GRID.diagLineWidth,
+        fontSize: GRID.fontSize,
+        fontFamily: GRID.fontFamily,
+        cellSize: GRID.cellSize,
+        panX: GRID.panX,
+        panY: GRID.panY,
+        symbolMode: GRID.symbolMode,
+        symbol1: GRID.symbol1,
+        symbol0: GRID.symbol0,
+        seedOverlayAlign: GRID.seedOverlayAlign,
+        seedOverlayAntiBit: document.getElementById('seedOverlayAntiBitCheck').checked,
+    };
+}
+
+function applyGridSettings(s) {
+    if (!s) return;
+    if (s.colors) Object.assign(GRID.colors, s.colors);
+    if (typeof s.diagLineWidth === 'number') GRID.diagLineWidth = s.diagLineWidth;
+    if (s.fontSize !== undefined) GRID.fontSize = s.fontSize;
+    if (s.fontFamily) GRID.fontFamily = s.fontFamily;
+    if (typeof s.cellSize === 'number') GRID.cellSize = s.cellSize;
+    if (typeof s.panX === 'number') GRID.panX = s.panX;
+    if (typeof s.panY === 'number') GRID.panY = s.panY;
+    if (s.symbolMode) GRID.symbolMode = s.symbolMode;
+    if (s.symbol1 !== undefined) GRID.symbol1 = s.symbol1;
+    if (s.symbol0 !== undefined) GRID.symbol0 = s.symbol0;
+    if (s.seedOverlayAlign) GRID.seedOverlayAlign = s.seedOverlayAlign;
+    if (typeof s.seedOverlayAntiBit === 'boolean') document.getElementById('seedOverlayAntiBitCheck').checked = s.seedOverlayAntiBit;
+
+    syncStyleInputsFromGrid();
+    document.getElementById('digitsModeBtn').textContent = SYMBOL_MODE_LABELS[GRID.symbolMode] || '╲ Диагонали';
+    document.getElementById('symbol1Input').value = GRID.symbol1;
+    document.getElementById('symbol0Input').value = GRID.symbol0;
+    if (typeof seedOverlayWriteAllRows === 'function') seedOverlayWriteAllRows();
+    render();
+}
+
+document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+    let json = JSON.stringify(collectGridSettings(), null, 2);
+    let blob = new Blob([json], { type: 'application/json' });
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = 'grid-settings.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+});
+
+document.getElementById('loadSettingsBtn').addEventListener('click', () => {
+    document.getElementById('loadSettingsFile').click();
+});
+document.getElementById('loadSettingsFile').addEventListener('change', function(e) {
+    let file = e.target.files[0];
+    if (!file) return;
+    let reader = new FileReader();
+    reader.onload = function(ev) {
+        try {
+            applyGridSettings(JSON.parse(ev.target.result));
+        } catch (err) {
+            alert('Не удалось прочитать файл настроек: ' + err.message);
+        }
+    };
+    reader.readAsText(file);
+    this.value = ''; // сброс, чтобы можно было выбрать тот же файл повторно
+});
+
+// ===========================================================================
+// СИД-НАЛОЖЕНИЕ — тот же алгоритм и логика, что в Zerkalius-genezis.html:
+// если в сетке уже есть строки (живые или редактируемые) — они обнуляются
+// (все символы -> "0", число строк и длина каждой сохраняются), и сид дальше
+// XOR-ится прямо в эту матрицу нулей (через setEditCell — переключает сетку
+// в edit-режим). Если сетка пуста — свои 512 строк, длина строки N = N.
+// Один шаг = одна копия сида, с отскоком от края строки (бесконечный зигзаг).
+// ===========================================================================
+const SEED_OVERLAY_DEFAULT_ROWS = 512;
+
+function seedOverlayGetSeeds() {
+    let raw = document.getElementById('seedOverlayInput').value || '1';
+    let seeds = raw.split(/[\s,]+/).map(s => s.trim()).filter(s => /^[01]+$/.test(s));
+    if (seeds.length === 0) seeds = ['1'];
+    return seeds;
+}
+
+// Длина строки r — позиция последней непустой ячейки + 1 (строки в сетке могут быть
+// разной длины, как строки-паттерны в основном файле).
+function seedOverlayRowLength(r) {
+    let maxC = -1;
+    let bound = Math.max(dataColCount(), 1);
+    for (let c = 0; c < bound; c++) {
+        if (getCell(r, c)) maxC = c;
+    }
+    return maxC + 1;
+}
+
+function seedOverlayHasContent() {
+    let rowCount = dataRowCount();
+    for (let r = 0; r < rowCount; r++) {
+        if (seedOverlayRowLength(r) > 0) return true;
+    }
+    return false;
+}
+
+function seedOverlayBuildRows() {
+    let seeds = seedOverlayGetSeeds();
+    let rows = [];
+
+    if (seedOverlayHasContent()) {
+        if (GRID.mode !== 'edit') enterEditMode();
+        let rowCount = dataRowCount();
+        for (let r = 0; r < rowCount; r++) {
+            let tLen = seedOverlayRowLength(r);
+            if (tLen <= 0) continue;
+            let seed = seeds[rows.length % seeds.length];
+            rows.push({ row: r, tLen: tLen, seed: seed, step: 0, resultBits: new Array(tLen).fill(0) });
+        }
+        GRID.seedOverlayStandalone = false;
+    } else {
+        if (GRID.mode !== 'edit') {
+            GRID.mode = 'edit';
+            document.getElementById('modeBtn').textContent = '✏️ Редакт.';
+        }
+        for (let i = 0; i < SEED_OVERLAY_DEFAULT_ROWS; i++) {
+            let tLen = i + 1;
+            let seed = seeds[i % seeds.length];
+            rows.push({ row: i, tLen: tLen, seed: seed, step: 0, resultBits: new Array(tLen).fill(0) });
+        }
+        GRID.seedOverlayStandalone = true;
+    }
+    GRID.seedOverlayRows = rows;
+    seedOverlayWriteAllRows();
+}
+
+// Только считает bit-XOR этой копии сида в row.resultBits — запись в сетку теперь ОТДЕЛЬНО
+// (seedOverlayWriteAllRows), потому что выравнивание "по правому краю"/"по центру" нужно
+// считать относительно самой ДЛИННОЙ строки среди ВСЕХ строк разом, а не одной этой.
+function seedOverlayApplyStep(row) {
+    let seedLen = row.seed.length;
+    let tLen = row.tLen;
+    let baseOffset = row.step * seedLen;
+    let period = 2 * tLen;
+    for (let j = 0; j < seedLen; j++) {
+        let t = baseOffset + j;
+        let m = t % period;
+        let pos = (m < tLen) ? m : (period - 1 - m);
+        let bit = parseInt(row.seed[j], 10) || 0;
+        row.resultBits[pos] = row.resultBits[pos] ^ bit;
+    }
+    row.step++;
+}
+
+// Если включена галка "Анти-бит справа": каждый бит расширяется в пару [бит, противобит] —
+// длина становится вдвое больше и ВСЕГДА чётная, поэтому центрирование относительно самой
+// длинной строки получается точным (без паразитного сдвига на 1 ячейку от чётности длины).
+function seedOverlayEffectiveBits(row) {
+    let antiBitEl = document.getElementById('seedOverlayAntiBitCheck');
+    if (!antiBitEl || !antiBitEl.checked) return row.resultBits;
+    let out = [];
+    for (let i = 0; i < row.resultBits.length; i++) {
+        let b = row.resultBits[i];
+        out.push(b, b ^ 1);
+    }
+    return out;
+}
+
+// Пишет ВСЕ строки сид-наложения в сетку разом, с учётом выравнивания (лево/право/центр)
+// относительно самой длинной (эффективной, после анти-бита) строки. Промежутки между краем
+// строки и краем самой длинной — настоящие ПУСТЫЕ ячейки (delete), а не нули.
+function seedOverlayWriteAllRows() {
+    if (!GRID.seedOverlayRows || GRID.seedOverlayRows.length === 0) return;
+    let effArrays = GRID.seedOverlayRows.map(r => seedOverlayEffectiveBits(r));
+    let maxEffLen = effArrays.reduce((m, a) => Math.max(m, a.length), 0);
+    let align = GRID.seedOverlayAlign;
+
+    GRID.seedOverlayRows.forEach((row, idx) => {
+        let bits = effArrays[idx];
+        let effLen = bits.length;
+        let startCol = 0;
+        if (align === 'right') startCol = maxEffLen - effLen;
+        else if (align === 'center') startCol = Math.floor((maxEffLen - effLen) / 2);
+
+        for (let c = 0; c < maxEffLen; c++) GRID.cells.delete(row.row + '_' + c);
+        for (let c = 0; c < effLen; c++) setEditCell(row.row, startCol + c, String(bits[c]), null, null);
+    });
+}
+
+function seedOverlayNeedsRebuild() {
+    // Полагаемся только на флаг режима и количество строк, а НЕ на seedOverlayHasContent() —
+    // после первой сборки автономного режима клетки уже заполнены нулями/битами, так что
+    // "есть содержимое" станет true и в этом режиме тоже, и решение "какой режим" стало бы
+    // неоднозначным на каждом следующем шаге.
+    if (!GRID.seedOverlayRows) return true;
+    if (GRID.seedOverlayStandalone) {
+        return GRID.seedOverlayRows.length !== SEED_OVERLAY_DEFAULT_ROWS;
+    }
+    return GRID.seedOverlayRows.length !== dataRowCount();
+}
+
+function seedOverlayStepAll() {
+    if (seedOverlayNeedsRebuild()) seedOverlayBuildRows();
+    GRID.seedOverlayRows.forEach(row => seedOverlayApplyStep(row));
+    seedOverlayWriteAllRows();
+    render();
+}
+
+function seedOverlayUndoAll() {
+    if (!GRID.seedOverlayRows || GRID.seedOverlayRows.length === 0) return;
+    GRID.seedOverlayRows.forEach(row => {
+        let newStep = row.step - 1;
+        if (newStep < 0) return;
+        row.step = 0;
+        row.resultBits = new Array(row.tLen).fill(0);
+        for (let s = 0; s < newStep; s++) seedOverlayApplyStep(row);
+    });
+    seedOverlayWriteAllRows();
+    render();
+}
+
+function seedOverlayResetAll() {
+    seedOverlayBuildRows(); // уже сам вызывает seedOverlayWriteAllRows() внутри
+    render();
+}
+
+function seedOverlayStopAutoplay() {
+    if (GRID.seedOverlayInterval) {
+        clearInterval(GRID.seedOverlayInterval);
+        GRID.seedOverlayInterval = null;
+        let btn = document.getElementById('seedOverlayPlayBtn');
+        if (btn) { btn.style.background = ''; btn.style.color = '#00ccff'; }
+    }
+}
+
+document.getElementById('seedOverlayStepBtn').addEventListener('click', () => seedOverlayStepAll());
+document.getElementById('seedOverlayUndoBtn').addEventListener('click', () => seedOverlayUndoAll());
+document.getElementById('seedOverlayResetBtn').addEventListener('click', () => seedOverlayResetAll());
+document.getElementById('seedOverlayPlayBtn').addEventListener('click', function() {
+    if (GRID.seedOverlayInterval) {
+        seedOverlayStopAutoplay();
+    } else {
+        this.style.background = '#00ccff';
+        this.style.color = '#000';
+        GRID.seedOverlayInterval = setInterval(() => seedOverlayStepAll(), 400);
+    }
 });
 
 function pasteText(text) {
