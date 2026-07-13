@@ -160,6 +160,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             text-align: right;
         }
         .highlight-textarea-backdrop span.found { display: block; width: 100%; box-sizing: border-box; color: transparent; background: var(--found-bg); border-radius: 2px; position: relative; }
+        /* Находки каскада не в прямом виде: инверсия (0<->1) — розовым, реверс (задом наперёд) — бирюзовым */
+        .highlight-textarea-backdrop span.found-inv { display: block; width: 100%; box-sizing: border-box; color: transparent; background: rgba(255,102,255,0.35); border-radius: 2px; position: relative; }
+        .highlight-textarea-backdrop span.found-rev { display: block; width: 100%; box-sizing: border-box; color: transparent; background: rgba(102,255,204,0.35); border-radius: 2px; position: relative; }
 .highlight-textarea-backdrop span.target {
     display: block;
     width: 100%;
@@ -191,6 +194,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         .btn-action:active { transform: scale(0.96); }
         .btn-danger { color: #ff3333; border-color: #ff3333; }
         .btn-danger:hover { background: #ff3333; color: #fff; }
+
+        /* Кнопки сид-наложения (MultiXor / Сид → / Всё разом / Накопление →) — свой цвет вместо
+           дефолтного лаймового из .btn-action:hover, чтобы при наведении/клике не "терялся" цвет. */
+        #seedOverlayMultiXorBtn:hover { background: #ff3399; color: #000; text-shadow: none; }
+        #seedOverlayCycleSeedBtn:hover, #seedOverlayAllAtOnceBtn:hover, #seedOverlayAccumBtn:hover {
+            background: #ffaa00; color: #000; text-shadow: none;
+        }
 
         .bank-btn {
             flex: 1; margin: 0; font-size: 10px; border: 1px solid #444;
@@ -509,8 +519,25 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 <button id="seedOverlayUndoBtn" class="btn-action" style="flex:1; margin:0;" title="Отменить последний шаг у всех строк">Шаг назад</button>
                 <button id="seedOverlayResetBtn" class="btn-action" style="flex:1; margin:0;" title="Сбросить шаги и результат, перечитать поле сида(ов)">Сброс</button>
             </div>
+            <label style="display:flex; align-items:center; margin-bottom:5px;" title="Все строки холста сшиваются в ОДНУ общую дорожку (длина = сумма длин всех строк, конец строки N переходит в начало строки N+1). Каждый сид из списка — свой независимый ходок: на каждом шаге кладёт очередную копию дальше по общей дорожке, отскакивая от её краёв (туда-сюда по всему накоплению, а не внутри одной строки). Действует на Шаг/Автоплей И на Каскад-шаг/Автопрогон каскада. В каскаде нижний край дорожки — ПЕРВАЯ ещё не запертая строка (не дальше): дорожка = запертые строки сверху + текущая рабочая, и растёт вниз по мере запирания">
+                <input type="checkbox" id="seedOverlayCumulativeCheck"> <span class="lbl" style="color:#00ccff;">Накопительная длина (все строки = одна дорожка)</span>
+            </label>
             <button id="seedOverlayPlayBtn" class="btn-action" style="margin:0; width:100%; color:#00ccff; border-color:#00ccff;" title="Автоматически повторять 'Шаг' по таймеру (скорость — общий ползунок скорости)">▶ Автоплей</button>
             <button id="seedOverlayMultiXorBtn" class="btn-action" style="margin:5px 0 0; width:100%; color:#ff3399; border-color:#ff3399;" title="За 1 шаг: на каждую строку холста накладывается (XOR) не только её собственный сид, но и сиды ВСЕХ строк выше неё (каждый — отдельным независимым проходом от начала строки). Результат пишется прямо в содержимое строк холста, и запускается обычный поиск паттернов">🔀 MultiXor (1 шаг, в холст)</button>
+            <div style="display:flex; gap:5px; margin:5px 0 0;">
+                <button id="seedOverlayCycleSeedBtn" class="btn-action" style="flex:1; margin:0; color:#ffaa00; border-color:#ffaa00;" title="Каждый клик — на ВСЕ строки холста накладывается ОДИН сид из списка (по кругу): клик1 = сид №1, клик2 = сид №2, и т.д., затем снова с №1">Сид →</button>
+                <button id="seedOverlayAllAtOnceBtn" class="btn-action" style="flex:1; margin:0; color:#ffaa00; border-color:#ffaa00;" title="На все строки холста разом накладываются (XOR) ВСЕ сиды из списка сразу. Также сбрасывает счётчики кнопок 'Сид →' и 'Накопление →' на начало">Всё разом</button>
+                <button id="seedOverlayAccumBtn" class="btn-action" style="flex:1; margin:0; color:#ffaa00; border-color:#ffaa00;" title="Каждый клик — на ВСЕ строки холста накладывается (XOR) накопление сидов с начала списка: клик1 = сид №1, клик2 = сид №1+№2, клик3 = №1+№2+№3, и т.д., по кругу">Накопление →</button>
+            </div>
+            <div style="border-top:1px dashed #444; margin-top:6px; padding-top:5px;">
+                <div style="font-weight:bold; color:#ff8800; font-size:11px; margin-bottom:4px;">⛓ КАСКАД (порт из Excel)</div>
+                <div style="color:#888; font-size:10px; margin-bottom:5px;">Эталоны — из поля «Паттерны» (по кругу на строки). Сид с самого начала есть только у строки №1 (= паттерн №1); остальные строки получают свой паттерн в сид, лишь когда он у них найден (строка заперлась 🔒).</div>
+                <div style="display:flex; gap:5px; margin-bottom:5px;">
+                    <button id="cascadeStepBtn" class="btn-action" style="flex:1; margin:0; color:#ff8800; border-color:#ff8800;" title="Один раунд каскада: сид строки — свой стрим с бюджетом раунд×длина_сида бит, свой сид ложится первым (обход снизу вверх). Строка запирается, когда её итог СОДЕРЖИТ её паттерн как подстроку — тогда паттерн становится её сидом, а остаток стрима улетает в следующую незапертую строку (запертая берёт плату за проход = стоимость своего закрытия в битах)">Каскад-шаг</button>
+                    <button id="cascadeUndoBtn" class="btn-action" style="flex:1; margin:0; color:#ff8800; border-color:#ff8800;" title="Раунд назад (полным пересчётом). Строки, запертые позже нового раунда, отпираются и считаются заново">Назад</button>
+                </div>
+                <button id="cascadeAutoBtn" class="btn-action" style="margin:0; width:100%; color:#ff8800; border-color:#ff8800;" title="Крутит раунды по таймеру (скорость — общий ползунок скорости), пока все строки с эталоном не запрутся, не обнаружится цикл состояний (дальше только повторы) или не будет достигнут предел раундов. Повторный клик — остановить">▶ Автопрогон каскада</button>
+            </div>
             <div id="seedOverlayResults" style="margin-top:6px; max-height:180px; overflow-y:auto; background:#111; border-radius:3px; padding:4px; font-family:'Roboto Mono',monospace; font-size:11px; line-height:1.5;"></div>
         </details>
 
@@ -740,7 +767,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 10: ПАНЕЛЬ ПЛЕЕРА === -->
     <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.338 Ultra-Save</div>
+        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.359 Ultra-Save</div>
         <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
         <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
         <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
@@ -3712,8 +3739,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         };
         safeBind('buildUpwardsUntilBalancedBtn', 'click', () => { if (window.stepFrameBalance) window.stepFrameBalance(); });
 
-        // Строка сразу под рамкой (без 1-го и последнего символа) — ad-hoc паттерн, который ищем
-        // ВНУТРИ рамки. Раньше одна кнопка проверяла локально+сквозной+интерливинг сразу — тормозило.
+        // Строка сразу под рамкой — ad-hoc паттерн, который ищем ВНУТРИ рамки. Ищется ПОЛНОЕ
+        // совпадение нижней строки; при галке "Пропуск 1-го символа кандидата" — без 1-го символа. Раньше одна кнопка проверяла локально+сквозной+интерливинг сразу — тормозило.
         // Теперь два ЛЁГКИХ отдельных метода (каждый — только своя проверка), плюс переиспользуем
         // computeInterleaveSource (тот же движок, что у "Синтезировать сплетение"), а не пишем заново.
         function getBelowRowTarget() {
@@ -3726,8 +3753,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (belowIdx >= totalRows) return null;
             let belowLine = STATE.lines[belowIdx];
             let belowClean = getCleanLine(belowLine);
-            if (belowClean.length <= 2) return null;
-            let pat = belowClean.slice(1, -1); // без 1-го и последнего символа
+            let pat = safeChecked('ignoreFirstTargetCharCheck', false) ? belowClean.substring(1) : belowClean;
+            if (pat.length === 0) return null;
             let frameIndices = [];
             for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
                 frameIndices.push((frameTopIdx + k) % totalRows);
@@ -3951,61 +3978,57 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         }
 
         // Строит состояние с нуля из ТЕКУЩИХ строк-паттернов (STATE.lines с origIndex >= 0)
-        // и текущего поля сида(ов). Своё, полностью отдельное состояние — существующие поля
-        // STATE.lines не трогаются, поэтому loadText() и вся остальная логика не задеты.
-        // Число строк и длина каждой берутся с ТЕКУЩЕГО слота холста (STATE.lines), если он
-        // загружен. Если холст пуст (STATE.lines.length === 0) — свой дефолт: 512 строк, длина
-        // строки N = N (1..512), рисуются отдельно (см. renderSeedOverlayStandalone).
-        const SEED_OVERLAY_DEFAULT_ROWS = 512;
+        // и текущего поля сида(ов). Число строк и длина каждой берутся с ТЕКУЩЕГО слота холста
+        // (STATE.lines), если он загружен. Если холст пуст (STATE.lines.length === 0) — сначала
+        // грузится синтетический слот-пирамида (128 строк, длина строки N = N, 1..128) через
+        // loadText(), как настоящий бы загрузил пользователь — дальше всё рисуется обычным
+        // render() со всеми его настройками (шрифт, цвета, неон, радар и т.д.), а не отдельным
+        // рисованием мимо холста. 512 строк (макс. длина строки 512 символов) вешали поиск
+        // паттернов (calculateState) — 128 достаточно и не подвисает.
+        const SEED_OVERLAY_DEFAULT_ROWS = 128;
 
-        // Если на холсте есть реальные строки — они здесь ОБНУЛЯЮТСЯ (все символы → "0"),
-        // количество строк и длина каждой сохраняются, и сид дальше XOR-ится уже в эту матрицу
-        // нулей (пишется прямо в line.orig/template — это и есть строка, а не что-то поверх неё).
-        // Если холст пуст — работаем в отдельном автономном режиме (свои 512 строк, см. ниже).
+        // Строки холста здесь ОБНУЛЯЮТСЯ (все символы → "0"), количество строк и длина каждой
+        // сохраняются, и сид дальше XOR-ится уже в эту матрицу нулей (пишется прямо в
+        // line.orig/template — это и есть строка, а не что-то поверх неё).
         function seedOverlayBuildRows() {
             let seeds = seedOverlayGetSeeds();
-            let rows = [];
             let validLines = STATE.lines.filter(l => l.origIndex >= 0);
 
-            if (validLines.length > 0) {
-                validLines.forEach((line, i) => {
-                    let tLen = line.L || (line.orig ? line.orig.length : 0);
-                    if (tLen <= 0) return;
-                    let seed = seeds[i % seeds.length];
-                    let zeros = '0'.repeat(tLen);
-                    line.orig = zeros;
-                    line.template = zeros;
-                    line.firstOneIdx = -1;
-                    line.invertMask = new Array(tLen).fill(false);
-                    rows.push({
-                        patternNum: line.origIndex + 1,
-                        tLen: tLen,
-                        seed: seed,
-                        step: 0,
-                        resultBits: new Array(tLen).fill(0),
-                        resultColors: new Array(tLen).fill('#666'),
-                        lineRef: line
-                    });
-                });
-                STATE.seedOverlayStandalone = false;
-                seedOverlaySyncLinesText();
-            } else {
-                for (let i = 0; i < SEED_OVERLAY_DEFAULT_ROWS; i++) {
-                    let tLen = i + 1;
-                    let seed = seeds[i % seeds.length];
-                    rows.push({
-                        patternNum: i + 1,
-                        tLen: tLen,
-                        seed: seed,
-                        step: 0,
-                        resultBits: new Array(tLen).fill(0),
-                        resultColors: new Array(tLen).fill('#666'),
-                        lineRef: null
-                    });
-                }
-                STATE.seedOverlayStandalone = true;
+            if (validLines.length === 0) {
+                let syntheticText = [];
+                for (let i = 0; i < SEED_OVERLAY_DEFAULT_ROWS; i++) syntheticText.push('0'.repeat(i + 1));
+                loadText(syntheticText.join('\n'));
+                validLines = STATE.lines.filter(l => l.origIndex >= 0);
             }
+
+            let rows = [];
+            validLines.forEach((line, i) => {
+                let tLen = line.L || (line.orig ? line.orig.length : 0);
+                if (tLen <= 0) return;
+                let seed = seeds[i % seeds.length];
+                let zeros = '0'.repeat(tLen);
+                line.orig = zeros;
+                line.template = zeros;
+                line.firstOneIdx = -1;
+                line.invertMask = new Array(tLen).fill(false);
+                rows.push({
+                    patternNum: line.origIndex + 1,
+                    tLen: tLen,
+                    seed: seed,
+                    seedIdx: i % seeds.length,
+                    step: 0,
+                    resultBits: new Array(tLen).fill(0),
+                    resultColors: new Array(tLen).fill('#666'),
+                    lineRef: line
+                });
+            });
+            seedOverlaySyncLinesText();
             STATE.seedOverlayRows = rows;
+            STATE.seedOverlayGlobalStep = 0; // общий счётчик накопительного режима
+            // Каскад пишет в те же строки холста своим счётчиком — после пересборки
+            // сид-наложения его раунд/замки́ больше не соответствуют холсту, снимаем
+            // (как в Excel, где режимы молча сбрасывают чужие счётчики перед стартом).
+            cascadeClearState();
         }
 
         // Синхронизирует текстовое поле linesInput и активный банк с текущим line.orig всех
@@ -4028,52 +4051,16 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             row.lineRef.invertMask = new Array(row.tLen).fill(false);
         }
 
-        // После того как resultBits всех строк обновлены: если это реальный холст — синхронизирует
-        // текстовое поле/банк и запускает настоящий поиск паттернов движка; если автономный режим —
-        // просто перерисовывает (там и рисовать больше нечего, кроме собственной раскладки).
+        // После того как resultBits всех строк обновлены: синхронизирует текстовое поле/банк
+        // и прогоняет ОБЩИЙ тик движка updateLogic() — тот же самый, что и обычный Пуск на
+        // каждый кадр: calculateState(false) (обновить display) → каскадная активация строк →
+        // calculateState(true) (поиск паттернов) → уведомление о находке → подложка паттернов/
+        // статистика → render(). Раньше сид-наложение звало только часть этого (calculateState+
+        // render напрямую) — из-за этого каскадная активация следующей строки и уведомление о
+        // находке появлялись только после того, как пользователь нажимал обычный "Пуск".
         function seedOverlaySyncCanvasAfterChange() {
-            if (STATE.seedOverlayStandalone) {
-                if (!STATE.isPlaying) render();
-                return;
-            }
             seedOverlaySyncLinesText();
-            calculateState(true);
-            render();
-        }
-
-        // Рисует сид-наложение прямо на холсте своими силами, когда STATE.lines пуст (нет
-        // загруженного слота) и render() выходит рано, не доходя до основной отрисовки паттернов.
-        function renderSeedOverlayStandalone() {
-            if (!STATE.seedOverlayStandalone || !STATE.seedOverlayRows || !STATE.seedOverlayRows.length) return;
-            let canvasEl = document.getElementById('screenCanvas');
-            let ctx2 = canvasEl ? canvasEl.getContext('2d') : null;
-            if (!ctx2) return;
-
-            let fontSize = 11;
-            let lineHeight = fontSize + 4;
-            let charWidth = fontSize * 0.7;
-
-            ctx2.save();
-            ctx2.font = fontSize + 'px Consolas, monospace';
-            ctx2.textAlign = 'left';
-            ctx2.textBaseline = 'middle';
-
-            let y = lineHeight;
-            for (let idx = 0; idx < STATE.seedOverlayRows.length; idx++) {
-                if (y > canvasEl.height) break;
-                let row = STATE.seedOverlayRows[idx];
-                ctx2.fillStyle = '#888';
-                ctx2.fillText('#' + row.patternNum + ' [' + row.seed + ']', 6, y);
-                let x = 90;
-                for (let c = 0; c < row.tLen; c++) {
-                    if (x > canvasEl.width) break;
-                    ctx2.fillStyle = row.resultColors[c];
-                    ctx2.fillText(String(row.resultBits[c]), x, y);
-                    x += charWidth;
-                }
-                y += lineHeight;
-            }
-            ctx2.restore();
+            updateLogic();
         }
 
         // Один шаг = одна копия сида (длиной Len(seed)), кладётся подряд после копий с
@@ -4081,10 +4068,17 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         // обратную сторону (отскок от стенки с повторным касанием крайней клетки), бесконечно.
         // Копия без отскоков — синяя (текущая), после 1-го отскока — красная, после 2-го —
         // снова синяя. Всё, что легло раньше (на прошлых шагах), "остывает" до чёрного.
+        // Если собственный сид строки сейчас показан как маска видимости — он уже лежит на
+        // дорожке с позиции 0 и считается «нулевой копией»: шаги продолжают движение после
+        // неё, а не кладутся поверх (иначе XOR гасил бы её в ноль на первом же шаге).
+        function seedOverlayRowMaskSteps(row) {
+            return (STATE.seedOverlayVisibleSeeds && STATE.seedOverlayVisibleSeeds.has(row.seedIdx)) ? 1 : 0;
+        }
+
         function seedOverlayApplyStep(row) {
             let seedLen = row.seed.length;
             let tLen = row.tLen;
-            let baseOffset = row.step * seedLen;
+            let baseOffset = (row.step + seedOverlayRowMaskSteps(row)) * seedLen;
             let period = 2 * tLen;
             let legStart = Math.floor(baseOffset / tLen);
 
@@ -4106,6 +4100,70 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 row.resultColors[pos] = color;
             }
             row.step++;
+        }
+
+        // Накопительный режим (чекбокс "Накопительная длина"): все строки холста сшиты в ОДНУ
+        // общую дорожку (конец строки N переходит в начало строки N+1), её длина = сумма длин
+        // всех строк. Каждый сид из списка — независимый ходок: на шаге k кладёт свою k-ю копию
+        // с офсета k*len(сида), с тем же отскоком, что и в построчном режиме, но края — у всей
+        // накопленной дорожки. Счётчик шагов общий (STATE.seedOverlayGlobalStep), не построчный
+        // (row.step в этом режиме не двигается).
+        function seedOverlayCumulativeOn() {
+            let el = document.getElementById('seedOverlayCumulativeCheck');
+            return !!(el && el.checked);
+        }
+
+        function seedOverlayCumulativeApplyStep() {
+            let rows = STATE.seedOverlayRows;
+            let offsets = [], total = 0;
+            rows.forEach(r => { offsets.push(total); total += r.tLen; });
+            if (total <= 0) return;
+            let seeds = seedOverlayGetSeeds();
+            rows.forEach(r => { for (let i = 0; i < r.tLen; i++) r.resultColors[i] = '#666'; });
+            let step = STATE.seedOverlayGlobalStep || 0;
+            let period = 2 * total;
+            seeds.forEach(seed => {
+                let seedLen = seed.length;
+                let baseOffset = step * seedLen;
+                let legStart = Math.floor(baseOffset / total);
+                for (let j = 0; j < seedLen; j++) {
+                    let t = baseOffset + j;
+                    let m = t % period;
+                    let pos = (m < total) ? m : (period - 1 - m);
+                    let crossings = Math.floor(t / total) - legStart;
+                    let bit = parseInt(seed[j], 10) || 0;
+                    // pos -> (строка, колонка): бинарный поиск по офсетам начал строк
+                    let lo = 0, hi = rows.length - 1;
+                    while (lo < hi) { let mid = (lo + hi + 1) >> 1; if (offsets[mid] <= pos) lo = mid; else hi = mid - 1; }
+                    let row = rows[lo], col = pos - offsets[lo];
+                    row.resultBits[col] = row.resultBits[col] ^ bit;
+                    row.resultColors[col] = (crossings % 2 === 1) ? '#ff4444' : '#3399ff';
+                }
+            });
+            STATE.seedOverlayGlobalStep = step + 1;
+        }
+
+        // Полное переигрывание с нуля: маски видимых сидов + построчные шаги + накопительные
+        // (общедорожечные) шаги. XOR коммутативен, поэтому порядок переигрывания не важен —
+        // корректно, даже если пользователь мешал оба режима в одном прогоне.
+        function seedOverlayReplayAll() {
+            let seeds = seedOverlayGetSeeds();
+            STATE.seedOverlayRows.forEach(row => {
+                row.resultBits = new Array(row.tLen).fill(0);
+                row.resultColors = new Array(row.tLen).fill('#666');
+                if (STATE.seedOverlayVisibleSeeds) {
+                    STATE.seedOverlayVisibleSeeds.forEach(idx => {
+                        if (idx < seeds.length) seedOverlaySinglePass(seeds[idx], row.tLen, row.resultBits);
+                    });
+                }
+                let n = row.step;
+                row.step = 0;
+                for (let s = 0; s < n; s++) seedOverlayApplyStep(row);
+            });
+            let g = STATE.seedOverlayGlobalStep || 0;
+            STATE.seedOverlayGlobalStep = 0;
+            for (let s = 0; s < g; s++) seedOverlayCumulativeApplyStep();
+            STATE.seedOverlayRows.forEach(row => seedOverlaySyncLine(row));
         }
 
         // Один независимый проход сида (всегда от начала дорожки, шаг=0) — XOR-ится в bitsArray.
@@ -4151,9 +4209,129 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             });
 
             seedOverlaySyncLinesText();
-            calculateState(true);
-            render();
+            updateLogic();
+            seedOverlaySetMultiXorState(!STATE.seedOverlayMultiXorOn);
             showNotification("MULTIXOR: ПРИМЕНЁН (1 ШАГ) — ИДЁТ ПОИСК ПАТТЕРНОВ");
+        }
+
+        // Переключает (XOR, обратимо) вклад ОДНОГО сида по всем строкам-паттернам холста, НЕ
+        // трогая то, что там уже лежит от "Шаг"/других сидов — сиды здесь просто маски: показать
+        // сид = XOR-нуть его в резерв row.resultBits (тот же массив, что использует "Шаг"), скрыть
+        // сид = XOR-нуть его же ещё раз (XOR сам себе обратен — снимает ровно этот вклад).
+        function seedOverlayToggleSeedMask(seedIdx) {
+            let validLines = STATE.lines.filter(l => l.origIndex >= 0);
+            if (validLines.length === 0) return false;
+            if (seedOverlayNeedsRebuild()) seedOverlayBuildRows();
+            let seeds = seedOverlayGetSeeds();
+            if (seedIdx >= seeds.length) return false;
+            let seed = seeds[seedIdx];
+            STATE.seedOverlayRows.forEach(row => {
+                seedOverlaySinglePass(seed, row.tLen, row.resultBits);
+                seedOverlaySyncLine(row);
+            });
+            return true;
+        }
+
+        // Приводит видимость сида к нужному состоянию (если она уже такая — ничего не делает,
+        // чтобы повторные вызовы не переключали её туда-обратно). STATE.seedOverlayVisibleSeeds —
+        // набор индексов сидов, которые сейчас показаны (наложены на холст).
+        function seedOverlaySetSeedVisible(seedIdx, wantVisible) {
+            if (!STATE.seedOverlayVisibleSeeds) STATE.seedOverlayVisibleSeeds = new Set();
+            let isVisible = STATE.seedOverlayVisibleSeeds.has(seedIdx);
+            if (isVisible === wantVisible) return;
+            if (!seedOverlayToggleSeedMask(seedIdx)) return;
+            if (wantVisible) STATE.seedOverlayVisibleSeeds.add(seedIdx);
+            else STATE.seedOverlayVisibleSeeds.delete(seedIdx);
+        }
+
+        // "Сид →" / "Всё разом" / "Накопление →" взаимоисключают друг друга — горит статично
+        // всегда ровно одна (по умолчанию — "Всё разом"). Не полагается на CSS :hover (который не
+        // срабатывает ни при программных кликах автоплея/таймера, ни на тач-устройствах).
+        const SEED_OVERLAY_GROUP_BTN_IDS = { cycle: 'seedOverlayCycleSeedBtn', allAtOnce: 'seedOverlayAllAtOnceBtn', accum: 'seedOverlayAccumBtn' };
+
+        function seedOverlaySelectGroupMode(mode) {
+            STATE.seedOverlayActiveMode = mode;
+            Object.entries(SEED_OVERLAY_GROUP_BTN_IDS).forEach(([m, id]) => {
+                let btn = document.getElementById(id);
+                if (!btn) return;
+                if (m === mode) { btn.style.background = '#ffaa00'; btn.style.color = '#000'; btn.style.textShadow = 'none'; }
+                else { btn.style.background = ''; btn.style.color = ''; btn.style.textShadow = ''; }
+            });
+        }
+
+        // MultiXor — независимый переключатель вкл/выкл (не входит в группу выше), цвет меняется
+        // по кругу при каждом клике: горит, пока не нажмут ещё раз (или пока не нажмут "Сброс").
+        function seedOverlaySetMultiXorState(on) {
+            STATE.seedOverlayMultiXorOn = on;
+            let btn = document.getElementById('seedOverlayMultiXorBtn');
+            if (!btn) return;
+            if (on) { btn.style.background = '#ff3399'; btn.style.color = '#000'; btn.style.textShadow = 'none'; }
+            else { btn.style.background = ''; btn.style.color = ''; btn.style.textShadow = ''; }
+        }
+
+        // Момент. вспышка для "Шаг" / "Шаг назад" / "Сброс" — загорается на короткое время и сама
+        // гаснет (это разовые действия, а не переключатели режима, как кнопки группы выше).
+        function seedOverlayFlashBtn(id, bgColor) {
+            let btn = document.getElementById(id);
+            if (!btn) return;
+            clearTimeout(btn._seedOverlayFlashTimer);
+            btn.style.background = bgColor;
+            btn.style.color = '#000';
+            btn.style.textShadow = 'none';
+            btn._seedOverlayFlashTimer = setTimeout(() => {
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.style.textShadow = '';
+            }, 200);
+        }
+
+        // "Сид →": соло-режим по кругу — показывает ОДИН сид зараз (остальные скрываются), не
+        // трогая то, что на холсте положили другие действия ("Шаг" и т.д.) — сиды тут просто маски.
+        function seedOverlayCycleSingleSeed() {
+            let validLines = STATE.lines.filter(l => l.origIndex >= 0);
+            if (validLines.length === 0) { showNotification("СИД →: НА ХОЛСТЕ НЕТ СТРОК (ЗАГРУЗИ СЛОТ)"); return; }
+            let seeds = seedOverlayGetSeeds();
+            let idx = (STATE.seedOverlaySoloIdx === undefined ? -1 : STATE.seedOverlaySoloIdx) + 1;
+            if (idx >= seeds.length) idx = 0;
+            for (let i = 0; i < seeds.length; i++) seedOverlaySetSeedVisible(i, i === idx);
+            STATE.seedOverlaySoloIdx = idx;
+            STATE.seedOverlayAccumCount = 0;
+            seedOverlayRender();
+            seedOverlaySyncCanvasAfterChange();
+            seedOverlaySelectGroupMode('cycle');
+            showNotification("СИД →: №" + (idx + 1) + "/" + seeds.length + " [" + seeds[idx] + "]");
+        }
+
+        // "Всё разом": показывает ВСЕ сиды одновременно (включает те, что были скрыты).
+        function seedOverlayAllAtOnce() {
+            let validLines = STATE.lines.filter(l => l.origIndex >= 0);
+            if (validLines.length === 0) { showNotification("ВСЁ РАЗОМ: НА ХОЛСТЕ НЕТ СТРОК (ЗАГРУЗИ СЛОТ)"); return; }
+            let seeds = seedOverlayGetSeeds();
+            for (let i = 0; i < seeds.length; i++) seedOverlaySetSeedVisible(i, true);
+            STATE.seedOverlaySoloIdx = undefined;
+            STATE.seedOverlayAccumCount = 0;
+            seedOverlayRender();
+            seedOverlaySyncCanvasAfterChange();
+            seedOverlaySelectGroupMode('allAtOnce');
+            showNotification("ВСЁ РАЗОМ: показаны все сиды (" + seeds.length + ")");
+        }
+
+        // "Накопление →": каждый клик показывает на один сид больше (предыдущие остаются
+        // видимыми). Клик 1 = сид №1, клик 2 = №1+№2, и т.д.; после последнего — снова с №1
+        // (остальные скрываются).
+        function seedOverlayCycleAccumulate() {
+            let validLines = STATE.lines.filter(l => l.origIndex >= 0);
+            if (validLines.length === 0) { showNotification("НАКОПЛЕНИЕ →: НА ХОЛСТЕ НЕТ СТРОК (ЗАГРУЗИ СЛОТ)"); return; }
+            let seeds = seedOverlayGetSeeds();
+            let count = (STATE.seedOverlayAccumCount || 0) + 1;
+            if (count > seeds.length) count = 1;
+            for (let i = 0; i < seeds.length; i++) seedOverlaySetSeedVisible(i, i < count);
+            STATE.seedOverlayAccumCount = count;
+            STATE.seedOverlaySoloIdx = undefined;
+            seedOverlayRender();
+            seedOverlaySyncCanvasAfterChange();
+            seedOverlaySelectGroupMode('accum');
+            showNotification("НАКОПЛЕНИЕ →: сиды 1-" + count + "/" + seeds.length);
         }
 
         function seedOverlayRender() {
@@ -4164,6 +4342,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 return;
             }
             let html = '';
+            if (seedOverlayCumulativeOn() || (STATE.seedOverlayGlobalStep || 0) > 0) {
+                let total = STATE.seedOverlayRows.reduce((a, r) => a + r.tLen, 0);
+                html += '<div style="color:#00ccff;">⛓ общая дорожка ' + total + ' бит · общий шаг ' + (STATE.seedOverlayGlobalStep || 0) + '</div>';
+            }
             STATE.seedOverlayRows.forEach(row => {
                 html += '<div style="white-space:nowrap;"><span style="color:#888;">#' + row.patternNum + ' [' + row.seed + '] шаг ' + row.step + ': </span>';
                 for (let i = 0; i < row.tLen; i++) {
@@ -4177,34 +4359,36 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         function seedOverlayNeedsRebuild() {
             if (!STATE.seedOverlayRows) return true;
             let validCount = STATE.lines.filter(l => l.origIndex >= 0).length;
-            if (validCount > 0) {
-                // Слот загружен — должны быть привязаны к его строкам, не в отдельном режиме
-                return STATE.seedOverlayStandalone || STATE.seedOverlayRows.length !== validCount;
-            }
-            // Холст пуст — должны быть в отдельном режиме с дефолтным числом строк
-            return !STATE.seedOverlayStandalone || STATE.seedOverlayRows.length !== SEED_OVERLAY_DEFAULT_ROWS;
+            return STATE.seedOverlayRows.length !== validCount;
         }
 
         function seedOverlayStepAll() {
             if (seedOverlayNeedsRebuild()) seedOverlayBuildRows();
-            STATE.seedOverlayRows.forEach(row => { seedOverlayApplyStep(row); seedOverlaySyncLine(row); });
+            if (seedOverlayCumulativeOn()) {
+                seedOverlayCumulativeApplyStep();
+                STATE.seedOverlayRows.forEach(row => seedOverlaySyncLine(row));
+            } else {
+                STATE.seedOverlayRows.forEach(row => { seedOverlayApplyStep(row); seedOverlaySyncLine(row); });
+            }
             seedOverlayRender();
             seedOverlaySyncCanvasAfterChange();
+            seedOverlayFlashBtn('seedOverlayStepBtn', '#bfff00');
         }
 
+        // "Шаг назад" откатывает шаг ТЕКУЩЕГО режима (по чекбоксу): накопительный — общий
+        // счётчик, построчный — счётчики строк. Дальше полное переигрывание с нуля.
         function seedOverlayUndoAll() {
             if (!STATE.seedOverlayRows || STATE.seedOverlayRows.length === 0) return;
-            STATE.seedOverlayRows.forEach(row => {
-                let newStep = row.step - 1;
-                if (newStep < 0) return;
-                row.step = 0;
-                row.resultBits = new Array(row.tLen).fill(0);
-                row.resultColors = new Array(row.tLen).fill('#666');
-                for (let s = 0; s < newStep; s++) seedOverlayApplyStep(row);
-                seedOverlaySyncLine(row);
-            });
+            if (seedOverlayCumulativeOn()) {
+                if ((STATE.seedOverlayGlobalStep || 0) <= 0) return;
+                STATE.seedOverlayGlobalStep--;
+            } else {
+                STATE.seedOverlayRows.forEach(row => { if (row.step > 0) row.step--; });
+            }
+            seedOverlayReplayAll();
             seedOverlayRender();
             seedOverlaySyncCanvasAfterChange();
+            seedOverlayFlashBtn('seedOverlayUndoBtn', '#bfff00');
         }
 
         function seedOverlayResetAll() {
@@ -4216,8 +4400,20 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (stopBtnEl) stopBtnEl.click();
 
             seedOverlayBuildRows(); // заново обнуляет реальные строки (если они есть) и пересобирает
+
+            // Сбрасываем маски видимости сидов и возвращаем дефолт "Всё разом" не только как
+            // подсветку кнопки, но и как реальное состояние холста (все сиды снова показаны).
+            STATE.seedOverlayVisibleSeeds = new Set();
+            STATE.seedOverlaySoloIdx = undefined;
+            STATE.seedOverlayAccumCount = 0;
+            let seeds = seedOverlayGetSeeds();
+            for (let i = 0; i < seeds.length; i++) seedOverlaySetSeedVisible(i, true);
+
             seedOverlayRender();
             seedOverlaySyncCanvasAfterChange();
+            seedOverlayFlashBtn('seedOverlayResetBtn', '#bfff00');
+            seedOverlaySelectGroupMode('allAtOnce');
+            seedOverlaySetMultiXorState(false);
         }
 
         function seedOverlayStopAutoplay() {
@@ -4225,10 +4421,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 clearInterval(STATE.seedOverlayInterval);
                 STATE.seedOverlayInterval = null;
                 let btn = document.getElementById('seedOverlayPlayBtn');
-                if (btn) { btn.style.background = ''; btn.style.color = '#00ccff'; }
+                if (btn) { btn.style.background = ''; btn.style.color = '#00ccff'; btn.innerHTML = '▶ Автоплей'; }
             }
         }
 
+        safeBind('seedOverlayCumulativeCheck', 'change', function() { seedOverlayRender(); });
         safeBind('seedOverlayStepBtn', 'click', function() { seedOverlayStepAll(); });
         safeBind('seedOverlayUndoBtn', 'click', function() { seedOverlayUndoAll(); });
         safeBind('seedOverlayResetBtn', 'click', function() {
@@ -4242,6 +4439,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             } else {
                 this.style.background = '#00ccff';
                 this.style.color = '#000';
+                this.innerHTML = '⏸ Пауза Автоплей';
                 showNotification("СИД-НАЛОЖЕНИЕ: АВТОПЛЕЙ ЗАПУЩЕН");
                 let speedMs = Math.max(16, 1001 - parseInt(safeValue('speedSlider', 950)));
                 STATE.seedOverlayInterval = setInterval(() => { seedOverlayStepAll(); }, speedMs);
@@ -4249,6 +4447,449 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         });
 
         safeBind('seedOverlayMultiXorBtn', 'click', function() { seedOverlayMultiXorOnce(); });
+        safeBind('seedOverlayCycleSeedBtn', 'click', function() { seedOverlayCycleSingleSeed(); });
+        safeBind('seedOverlayAllAtOnceBtn', 'click', function() { seedOverlayAllAtOnce(); });
+        safeBind('seedOverlayAccumBtn', 'click', function() { seedOverlayCycleAccumulate(); });
+        seedOverlaySelectGroupMode('allAtOnce'); // по умолчанию горит "Всё разом"
+
+<!-- === МАРКЕР: КАСКАД-СИДЫ (порт CascadeXorStep/SimulateCascadeRound из archive/ProcessBits.bas) === -->
+        // Упрощения относительно Excel: порядок стримов всегда «свой сид первым»
+        // (обход снизу вверх, ALL1=TRUE), без нечёткого 1-го символа (ALL2), без
+        // ограничения дальности (ALL5) и без детализации по плечам.
+        // Эталоны — прямо из основного поля «Паттерны» (patternInput), по кругу
+        // на строки холста. Своих сидов у каскада нет: паттерн НЕ берётся в сид,
+        // пока строка его не нашла (не заперлась — тогда эталон становится её
+        // сидом, см. cascadeRunRound); исключение — САМЫЙ ПЕРВЫЙ паттерн, он
+        // ставится в сид строки №1 с самого начала, как запал всего каскада.
+        const CASCADE_MAX_ROUNDS = 5000;
+        const CASCADE_CYCLE_WINDOW = 500;
+
+        function cascadeGetEtalons() {
+            return safeValue('patternInput', '').split(/[\s,]+/)
+                .map(s => s.trim()).filter(s => /^[01]+$/.test(s));
+        }
+
+        // Аналог seedOverlayBuildRows: обнуляет строки холста (грузит синтетическую
+        // пирамиду, если холст пуст) и собирает состояние каскада с нуля. Раунд —
+        // общий на все строки. Состояние сид-наложения при этом снимается: оба
+        // режима пишут в одни и те же строки холста своими счётчиками.
+        function cascadeBuildRows() {
+            cascadeStopAutoRun();
+            let etalons = cascadeGetEtalons();
+            let validLines = STATE.lines.filter(l => l.origIndex >= 0);
+            if (validLines.length === 0) {
+                let syntheticText = [];
+                for (let i = 0; i < SEED_OVERLAY_DEFAULT_ROWS; i++) syntheticText.push('0'.repeat(i + 1));
+                loadText(syntheticText.join('\n'));
+                validLines = STATE.lines.filter(l => l.origIndex >= 0);
+            }
+            let rows = [];
+            validLines.forEach((line, i) => {
+                let tLen = line.L || (line.orig ? line.orig.length : 0);
+                if (tLen <= 0) return;
+                let zeros = '0'.repeat(tLen);
+                line.orig = zeros;
+                line.template = zeros;
+                line.firstOneIdx = -1;
+                line.invertMask = new Array(tLen).fill(false);
+                // Кроме прямого вида эталона строка запирается и на его инверсии
+                // (0<->1) и реверсе (задом наперёд). Совпадающие с прямым видом
+                // варианты (палиндромы и т.п.) обнуляются, чтобы не дублировать
+                // проверку и не перевирать вид находки (порядок: прямой→инв→рев).
+                let et = etalons.length ? etalons[i % etalons.length] : '';
+                let etInv = et ? et.split('').map(ch => ch === '0' ? '1' : '0').join('') : '';
+                let etRev = et ? et.split('').reverse().join('') : '';
+                if (etInv === et) etInv = '';
+                if (etRev === et || etRev === etInv) etRev = '';
+                rows.push({
+                    patternNum: line.origIndex + 1,
+                    tLen: tLen,
+                    // Сид с самого начала — только у первой строки (первый паттерн,
+                    // запал); остальные получат свой эталон в сид после запирания.
+                    seed: (rows.length === 0 && etalons.length) ? etalons[0] : '',
+                    etalon: et,
+                    etalonInv: etInv,
+                    etalonRev: etRev,
+                    lockKind: '',   // чем заперлась: 'direct' | 'inv' | 'rev'
+                    lockRound: 0,   // раунд, на котором строка заперлась навсегда (0 = открыта)
+                    lockCost: 0,    // сколько бит стоило её закрытие = плата за проход для других стримов
+                    closed: false,  // рабочий флаг внутри одного пересчёта раунда
+                    bits: new Array(tLen).fill(0),
+                    colors: new Array(tLen).fill('#666'),
+                    lineRef: line
+                });
+            });
+            STATE.cascadeRows = rows;
+            STATE.cascadeRound = 0;
+            STATE.cascadeAltFound = new Map(); // паттерн -> 'direct'|'inv'|'rev' (для подложки поля паттернов)
+            STATE.seedOverlayRows = null;
+            STATE.seedOverlayVisibleSeeds = new Set();
+            seedOverlaySyncLinesText();
+        }
+
+        function cascadeNeedsRebuild() {
+            if (!STATE.cascadeRows) return true;
+            let validCount = STATE.lines.filter(l => l.origIndex >= 0).length;
+            return STATE.cascadeRows.length !== validCount;
+        }
+
+        function cascadeClearState() {
+            cascadeStopAutoRun();
+            STATE.cascadeRows = null;
+            STATE.cascadeRound = 0;
+            if (STATE.cascadeAltFound && STATE.cascadeAltFound.size > 0) {
+                STATE.cascadeAltFound.clear();
+                updatePatternBackdrop(); // снять каскадные подсветки в поле паттернов
+            }
+        }
+
+        // Чистый расчёт ОДНОГО раунда (порт SimulateCascadeRound): каждый стрим j
+        // переигрывается с нуля на бюджет newRound × длина_сида бит. closed/bits/
+        // colors незапертых строк вызывающий код обнуляет перед вызовом, запертые
+        // несут замороженное содержимое. newCloseCost[i] > 0 после вызова = строка
+        // закрылась именно в этом раунде, с такой-то стоимостью в битах.
+        function cascadeSimulateRound(rows, newRound, newCloseCost) {
+            let n = rows.length;
+            for (let j = n - 1; j >= 0; j--) { // снизу вверх — свой сид каждой строки ложится первым
+                let seed = rows[j].seed;
+                let seedLen = seed.length;
+                if (seedLen === 0 || rows[j].tLen <= 0) continue;
+                let totalBits = newRound * seedLen;
+                let cur = j, col = 0, phase = 0; // phase: 0 = вперёд/синий, 1 = назад/красный
+                let bitIdx = 0, seedPos = 0, rowLocalBits = 0;
+                while (bitIdx < totalBits && cur < n) {
+                    let row = rows[cur];
+                    if (row.closed) {
+                        // Проход мимо запертой строки не бесплатный — стоит ровно
+                        // столько бит, сколько потребовалось на её закрытие (иначе
+                        // весь растущий бюджет раунда целиком проваливался бы в
+                        // следующую строку, а не приростом по копии сида за раунд).
+                        bitIdx += row.lockCost + newCloseCost[cur];
+                        cur++;
+                        rowLocalBits = 0;
+                        // Вход в новую строку — с той стороны, куда шли: вперёд
+                        // (синим) — с колонки 0, назад (красным) — с последней.
+                        if (cur < n) col = (phase === 0) ? 0 : rows[cur].tLen - 1;
+                        continue;
+                    }
+                    let bit = (seed.charAt(seedPos % seedLen) === '1') ? 1 : 0;
+                    row.bits[col] = row.bits[col] ^ bit;
+                    row.colors[col] = (phase === 0) ? '#3399ff' : '#ff4444';
+                    bitIdx++; seedPos++; rowLocalBits++;
+                    if (phase === 0) {
+                        if (col === row.tLen - 1) phase = 1; else col++;
+                    } else {
+                        if (col === 0) phase = 0; else col--;
+                    }
+                    if (row.etalon !== '') {
+                        let itog = row.bits.join('');
+                        let kind = '';
+                        if (itog.indexOf(row.etalon) >= 0) kind = 'direct';
+                        else if (row.etalonInv !== '' && itog.indexOf(row.etalonInv) >= 0) kind = 'inv';
+                        else if (row.etalonRev !== '' && itog.indexOf(row.etalonRev) >= 0) kind = 'rev';
+                        if (kind !== '') {
+                            row.closed = true;
+                            row.lockKind = kind;
+                            newCloseCost[cur] = rowLocalBits;
+                            cur++;
+                            rowLocalBits = 0;
+                            if (cur < n) col = (phase === 0) ? 0 : rows[cur].tLen - 1;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Накопительный вариант cascadeSimulateRound (галка "Накопительная длина"):
+        // стрим не отскакивает от краёв СВОЕЙ строки, а идёт по общей дорожке из
+        // накопленных строк (конец строки N переходит в начало строки N+1).
+        // Нижний край дорожки — ПЕРВАЯ (сверху) ещё не запертая строка, НЕ дальше:
+        // дорожка = все запертые строки сверху + текущая рабочая, и растёт вниз
+        // только по мере запирания (заперлась рабочая — край сдвинулся до следующей
+        // незапертой). Верхний край — самый первый бит холста. Запертые строки
+        // проскакиваются с той же платой за проход, в обоих направлениях; закрытие
+        // строки, как и в построчном варианте, перекидывает остаток стрима вниз.
+        function cascadeSimulateRoundCumulative(rows, newRound, newCloseCost) {
+            let n = rows.length;
+            function cascadeFrontier() { // индекс первой незапертой строки = нижний край дорожки
+                for (let i = 0; i < n; i++) if (!rows[i].closed) return i;
+                return n - 1;
+            }
+            for (let j = n - 1; j >= 0; j--) { // снизу вверх — свой сид каждой строки ложится первым
+                let seed = rows[j].seed;
+                let seedLen = seed.length;
+                if (seedLen === 0 || rows[j].tLen <= 0) continue;
+                let totalBits = newRound * seedLen;
+                let cur = j, col = 0, phase = 0; // phase: 0 = вперёд-вниз/синий, 1 = назад-вверх/красный
+                let bitIdx = 0, seedPos = 0, rowLocalBits = 0;
+                let lim = cascadeFrontier();
+                while (bitIdx < totalBits) {
+                    let row = rows[cur];
+                    if (row.closed) {
+                        bitIdx += row.lockCost + newCloseCost[cur];
+                        rowLocalBits = 0;
+                        if (phase === 0) {
+                            if (cur >= lim) { phase = 1; if (cur > 0) { cur--; col = rows[cur].tLen - 1; } }
+                            else { cur++; col = 0; }
+                        } else {
+                            if (cur === 0) { phase = 0; col = 0; }
+                            else { cur--; col = rows[cur].tLen - 1; }
+                        }
+                        continue;
+                    }
+                    let bit = (seed.charAt(seedPos % seedLen) === '1') ? 1 : 0;
+                    row.bits[col] = row.bits[col] ^ bit;
+                    row.colors[col] = (phase === 0) ? '#3399ff' : '#ff4444';
+                    bitIdx++; seedPos++; rowLocalBits++;
+                    // Проверка закрытия — до движения, пока cur указывает на записанную строку
+                    let closedNow = false;
+                    if (row.etalon !== '') {
+                        let itog = row.bits.join('');
+                        let kind = '';
+                        if (itog.indexOf(row.etalon) >= 0) kind = 'direct';
+                        else if (row.etalonInv !== '' && itog.indexOf(row.etalonInv) >= 0) kind = 'inv';
+                        else if (row.etalonRev !== '' && itog.indexOf(row.etalonRev) >= 0) kind = 'rev';
+                        if (kind !== '') {
+                            row.closed = true;
+                            row.lockKind = kind;
+                            newCloseCost[cur] = rowLocalBits;
+                            rowLocalBits = 0;
+                            closedNow = true;
+                            lim = cascadeFrontier(); // рабочая заперлась — край дорожки сдвинулся вниз
+                            if (cur < n - 1) { cur++; col = (phase === 0) ? 0 : rows[cur].tLen - 1; }
+                            else { phase = 1; col = row.tLen - 1; } // низ холста: разворот (плата за проход возьмётся следующим касанием)
+                        }
+                    }
+                    if (!closedNow) {
+                        // Движение по дорожке: между строками без отскока, разворот —
+                        // на первом бите холста и на конце ПЕРВОЙ незапертой строки.
+                        if (phase === 0) {
+                            if (col === row.tLen - 1) {
+                                if (cur >= lim) phase = 1;
+                                else { cur++; col = 0; rowLocalBits = 0; }
+                            } else col++;
+                        } else {
+                            if (col === 0) {
+                                if (cur === 0) phase = 0;
+                                else { cur--; col = rows[cur].tLen - 1; rowLocalBits = 0; }
+                            } else col--;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Полный пересчёт раунда newRound (порт RunCascadeRound): строки, запертые
+        // на раунде <= newRound, заморожены и не трогаются; запертые ПОЗЖЕ (откат
+        // «Назад» раньше их раунда) — отпираются и считаются заново. Закрывшиеся
+        // именно сейчас получают метку, а если своего сида не было — эталон
+        // становится их сидом и со следующего раунда сам продолжает каскад вниз.
+        function cascadeRunRound(newRound) {
+            let rows = STATE.cascadeRows;
+            rows.forEach(row => {
+                if (row.lockRound > newRound) {
+                    // Откат раньше раунда запирания — снимаем и метку в подложке
+                    // поля паттернов (если тот же паттерн заперт другой строкой,
+                    // она вернёт метку при своём будущем запирании заново).
+                    row.lockRound = 0;
+                    row.lockCost = 0;
+                    if (row.lockKind !== '' && STATE.cascadeAltFound) STATE.cascadeAltFound.delete(row.etalon);
+                    row.lockKind = '';
+                }
+                row.closed = (row.lockRound > 0);
+                if (!row.closed) {
+                    row.bits.fill(0);
+                    row.colors.fill('#666');
+                }
+            });
+            let newCloseCost = new Array(rows.length).fill(0);
+            // Галка "Накопительная длина" переключает и каскад: стрим ходит по общей
+            // дорожке всех строк. Каждый раунд пересчитывается с нуля, поэтому галку
+            // одинаково видят "Каскад-шаг", "Назад" и "Автопрогон каскада".
+            if (seedOverlayCumulativeOn()) cascadeSimulateRoundCumulative(rows, newRound, newCloseCost);
+            else cascadeSimulateRound(rows, newRound, newCloseCost);
+            rows.forEach((row, i) => {
+                if (newCloseCost[i] > 0) {
+                    row.lockRound = newRound;
+                    row.lockCost = newCloseCost[i];
+                    if (row.seed === '') row.seed = row.etalon;
+                    // Пометить паттерн найденным в подложке поля «Паттерны»
+                    // (прямой вид — зелёным, инверсия/реверс — своими цветами).
+                    if (!STATE.cascadeAltFound) STATE.cascadeAltFound = new Map();
+                    if (!STATE.cascadeAltFound.has(row.etalon)) STATE.cascadeAltFound.set(row.etalon, row.lockKind);
+                }
+            });
+        }
+
+        function cascadeRender() {
+            let container = document.getElementById('seedOverlayResults');
+            if (!container) return;
+            if (!STATE.cascadeRows || STATE.cascadeRows.length === 0) {
+                container.innerHTML = '<span style="color:#666;">Нет строк-паттернов</span>';
+                return;
+            }
+            let html = '';
+            STATE.cascadeRows.forEach(row => {
+                // Вид находки: прямой — жёлтый замок, инверсия — розовый с "инв",
+                // реверс — бирюзовый с "рев" (те же цвета, что подсветка в поле паттернов).
+                let mark = '';
+                if (row.lockRound > 0) {
+                    let lockColor = (row.lockKind === 'inv') ? '#ff66ff' : (row.lockKind === 'rev') ? '#66ffcc' : '#ffd500';
+                    let kindTxt = (row.lockKind === 'inv') ? '·инв' : (row.lockKind === 'rev') ? '·рев' : '';
+                    mark = ' <span style="color:' + lockColor + ';">🔒' + row.lockRound + kindTxt + '</span>';
+                }
+                html += '<div style="white-space:nowrap;"><span style="color:#888;">#' + row.patternNum +
+                    ' [' + (row.seed || '−') + (row.etalon ? '→' + row.etalon : '') + '] раунд ' + (STATE.cascadeRound || 0) + mark + ': </span>';
+                for (let i = 0; i < row.tLen; i++) {
+                    html += '<span style="color:' + row.colors[i] + '; font-weight:bold;">' + row.bits[i] + '</span>';
+                }
+                html += '</div>';
+            });
+            container.innerHTML = html;
+            updatePatternBackdrop(); // отразить свежие замки́/откаты в подложке поля «Паттерны»
+        }
+
+        function cascadeSyncCanvas() {
+            STATE.cascadeRows.forEach(row => {
+                if (!row.lineRef) return;
+                let newStr = row.bits.join('');
+                row.lineRef.orig = newStr;
+                row.lineRef.template = newStr;
+                row.lineRef.firstOneIdx = newStr.search(/[1\\)\]>+]/);
+                row.lineRef.invertMask = new Array(row.tLen).fill(false);
+            });
+            seedOverlaySyncCanvasAfterChange();
+        }
+
+        function cascadeStepAll() {
+            cascadeStopAutoRun();
+            if (cascadeNeedsRebuild()) cascadeBuildRows();
+            if (!STATE.cascadeRows.some(r => r.etalon !== '')) {
+                showNotification("КАСКАД: В ПОЛЕ «ПАТТЕРНЫ» НЕТ ДВОИЧНЫХ ПАТТЕРНОВ");
+                return;
+            }
+            STATE.cascadeRound = (STATE.cascadeRound || 0) + 1;
+            cascadeRunRound(STATE.cascadeRound);
+            cascadeRender();
+            cascadeSyncCanvas();
+            seedOverlayFlashBtn('cascadeStepBtn', '#ff8800');
+        }
+
+        function cascadeUndoAll() {
+            cascadeStopAutoRun();
+            if (!STATE.cascadeRows || !STATE.cascadeRound) return;
+            STATE.cascadeRound--;
+            cascadeRunRound(STATE.cascadeRound);
+            cascadeRender();
+            cascadeSyncCanvas();
+            seedOverlayFlashBtn('cascadeUndoBtn', '#ff8800');
+        }
+
+        // Во время автопрогона поиск паттернов идёт каждый раунд, причём не только
+        // обычный (его делает updateLogic внутри cascadeSyncCanvas), но и СКВОЗНОЙ:
+        // движок ищет либо локально, либо сквозняком — по галке "Сквозной поиск
+        // паттернов" (globalSearchCheck). Если галка у пользователя не стоит, на
+        // один дополнительный проход движка она включается принудительно и сразу
+        // возвращается обратно; если стоит — сквозной уже был в основном проходе.
+        function cascadeRunSearchWithGlobal() {
+            let gsc = document.getElementById('globalSearchCheck');
+            if (!gsc || gsc.checked) return;
+            gsc.checked = true;
+            try { updateLogic(); } finally { gsc.checked = false; }
+        }
+
+        // Хэш состояния всех НЕзапертых строк — для детекции цикла автопрогоном.
+        // В Excel хранятся сами слепки состояний; тут — числовые хэши (память:
+        // ложный цикл потребовал бы CASCADE_CYCLE_WINDOW коллизий подряд, что
+        // практически исключено).
+        function cascadeStateHash(rows) {
+            let h = 5381;
+            for (let i = 0; i < rows.length; i++) {
+                if (rows[i].lockRound > 0) continue;
+                let bits = rows[i].bits;
+                for (let c = 0; c < bits.length; c++) h = (Math.imul(h, 33) ^ (bits[c] + 1)) >>> 0;
+                h = (Math.imul(h, 33) ^ 127) >>> 0; // разделитель строк
+            }
+            return h;
+        }
+
+        function cascadeStopAutoRun() {
+            if (STATE.cascadeAutoTimer) {
+                clearInterval(STATE.cascadeAutoTimer);
+                STATE.cascadeAutoTimer = null;
+                let btn = document.getElementById('cascadeAutoBtn');
+                if (btn) { btn.style.background = ''; btn.style.color = '#ff8800'; btn.innerHTML = '▶ Автопрогон каскада'; }
+            }
+        }
+
+        // Автопрогон (аналог ALL3 в Excel, но по таймеру вместо DoEvents-цикла):
+        // раунд за раундом, пока все строки с эталоном не запрутся, не обнаружится
+        // цикл (окно из CASCADE_CYCLE_WINDOW подряд идущих состояний целиком
+        // совпало с таким же окном из прошлого — дальше только повторы), не будет
+        // достигнут предел CASCADE_MAX_ROUNDS, или повторный клик не остановит.
+        function cascadeAutoRunToggle() {
+            if (STATE.cascadeAutoTimer) {
+                cascadeStopAutoRun();
+                showNotification("КАСКАД: АВТОПРОГОН ОСТАНОВЛЕН (раунд " + STATE.cascadeRound + ")");
+                return;
+            }
+            if (cascadeNeedsRebuild()) cascadeBuildRows();
+            if (!STATE.cascadeRows.some(r => r.etalon !== '')) {
+                showNotification("КАСКАД: В ПОЛЕ «ПАТТЕРНЫ» НЕТ ДВОИЧНЫХ ПАТТЕРНОВ");
+                return;
+            }
+            let btn = document.getElementById('cascadeAutoBtn');
+            if (btn) { btn.style.background = '#ff8800'; btn.style.color = '#000'; btn.innerHTML = '⏸ Стоп автопрогон'; }
+            showNotification("КАСКАД: АВТОПРОГОН ЗАПУЩЕН");
+
+            let hashes = [];               // hashes[iter] — хэш состояния после раунда №iter этого прогона
+            let firstSeenAt = new Map();   // хэш -> первый iter, где он встретился
+            let iter = 0;
+            let speedMs = Math.max(16, 1001 - parseInt(safeValue('speedSlider', 950)));
+
+            STATE.cascadeAutoTimer = setInterval(() => {
+                iter++;
+                STATE.cascadeRound = (STATE.cascadeRound || 0) + 1;
+                cascadeRunRound(STATE.cascadeRound);
+                cascadeRender();
+                cascadeSyncCanvas();
+                cascadeRunSearchWithGlobal();
+
+                let rows = STATE.cascadeRows;
+                let allLocked = rows.every(r => r.etalon === '' || r.lockRound > 0);
+                let cycleFound = false;
+                if (!allLocked) {
+                    let h = cascadeStateHash(rows);
+                    hashes[iter] = h;
+                    if (firstSeenAt.has(h)) {
+                        let priorIdx = firstSeenAt.get(h);
+                        if (iter >= CASCADE_CYCLE_WINDOW && priorIdx >= CASCADE_CYCLE_WINDOW) {
+                            cycleFound = true;
+                            for (let w = 0; w < CASCADE_CYCLE_WINDOW; w++) {
+                                if (hashes[iter - w] !== hashes[priorIdx - w]) { cycleFound = false; break; }
+                            }
+                        }
+                    } else {
+                        firstSeenAt.set(h, iter);
+                    }
+                }
+
+                if (allLocked) {
+                    cascadeStopAutoRun();
+                    showNotification("КАСКАД: ВСЕ СТРОКИ ЗАПЕРТЫ (раунд " + STATE.cascadeRound + ")");
+                } else if (cycleFound) {
+                    cascadeStopAutoRun();
+                    showNotification("КАСКАД: ЦИКЛ — ДАЛЬШЕ ТОЛЬКО ПОВТОРЫ (раунд " + STATE.cascadeRound + ")");
+                } else if (iter >= CASCADE_MAX_ROUNDS) {
+                    cascadeStopAutoRun();
+                    showNotification("КАСКАД: ПРЕДЕЛ " + CASCADE_MAX_ROUNDS + " РАУНДОВ, НЕ ВСЕ ЗАПЕРЛИСЬ");
+                }
+            }, speedMs);
+        }
+
+        safeBind('cascadeStepBtn', 'click', function() { cascadeStepAll(); });
+        safeBind('cascadeUndoBtn', 'click', function() { cascadeUndoAll(); });
+        safeBind('cascadeAutoBtn', 'click', function() { cascadeAutoRunToggle(); });
 
         safeBind('slotSrcSendBtn', 'click', () => slotSrcSendToCanvas());
         safeBind('slotSrcGetBtn', 'click', () => slotSrcGetFromCanvas());
@@ -4467,6 +5108,15 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 				if (STATE.foundPatterns.has(cleanLine)) {
 				    // Если строка пустая, добавляем пробел, чтобы блок отрисовался
 				    html += `<span class="found${frameCls}">${numSpan}${line || ' '}</span>`;
+				}
+				// Находки КАСКАДА (запертые строки): прямой вид — той же зелёной
+				// подсветкой, что обычные находки; инверсия/реверс — своими цветами
+				// (span.found-inv / span.found-rev). Движковый STATE.foundPatterns
+				// не трогаем — у него своя жизнь (метаданные, сброс по "Стоп").
+				else if (STATE.cascadeAltFound && STATE.cascadeAltFound.has(cleanLine)) {
+				    let cKind = STATE.cascadeAltFound.get(cleanLine); // 'direct' | 'inv' | 'rev'
+				    let cCls = (cKind === 'direct') ? 'found' : 'found-' + cKind;
+				    html += `<span class="${cCls}${frameCls}">${numSpan}${line || ' '}</span>`;
 				}
 				else if (isSequential && validLineCounter === STATE.currentTargetPatternIdx) {
 				    html += `<span class="target${frameCls}">${numSpan}${line || ' '}</span>`;
@@ -7870,7 +8520,7 @@ safeBind('stopBtn', 'click', () => {
             ctx.fillStyle = useTrail ? hexToRgba(bgColor, 0.2) : bgColor;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            if (STATE.lines.length === 0) { renderSeedOverlayStandalone(); return; }
+            if (STATE.lines.length === 0) return;
 
             let useRadar = safeChecked('radarCheck', false);
             let useNeon = safeChecked('neonCheck', false);
