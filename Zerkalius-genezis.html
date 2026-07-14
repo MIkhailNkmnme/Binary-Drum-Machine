@@ -12,7 +12,20 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 <head>
 <!-- === МАРКЕР 01: HEAD И НАСТРОЙКИ НАЧАЛО === -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+        /* Мобильный режим: на сенсорных устройствах открываем страницу в "десктопной" ширине
+           (весь интерфейс уменьшается целиком — панели не перекрывают экран) и разрешаем pinch-zoom.
+           На десктопе viewport остаётся обычным и ни на что не влияет. */
+        (function () {
+            var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+            if (coarse || ('ontouchstart' in window && navigator.maxTouchPoints > 0)) {
+                var v = document.querySelector('meta[name="viewport"]');
+                if (v) v.content = 'width=1200, user-scalable=yes';
+                document.documentElement.classList.add('touch-device');
+            }
+        })();
+    </script>
     <title>Zerkalius: Interleaving Genesis</title>
     <!-- WebGL-рендер "чистого движения" (см. галка "⚡ WebGL-рендер") — только для этого режима, остальной движок на Canvas2D не тронут -->
     <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
@@ -28,11 +41,27 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             --found-bg: rgba(191, 255, 0, 0.4);
         }
 
-        body { 
-            background: #050505; color: #00ff66; 
-            font-family: 'Consolas', monospace; 
+        body {
+            background: #050505; color: #00ff66;
+            font-family: 'Consolas', monospace;
             margin: 0; overflow: hidden; height: 100vh; position: relative;
         }
+
+        /* Тач-курсор: на сенсорных устройствах видимое кольцо-перекрестие следует за пальцем,
+           чтобы было понятно, куда именно попадает нажатие. На десктопе не создаётся вовсе. */
+        #touchCursor {
+            position: fixed; left: 0; top: 0; width: 36px; height: 36px;
+            margin: -18px 0 0 -18px; pointer-events: none; z-index: 100000;
+            border: 1px solid rgba(0, 255, 102, 0.9); border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 255, 102, 0.5), inset 0 0 6px rgba(0, 255, 102, 0.25);
+            opacity: 0; transition: opacity 0.35s;
+        }
+        #touchCursor::before, #touchCursor::after {
+            content: ''; position: absolute; background: rgba(0, 255, 102, 0.9);
+        }
+        #touchCursor::before { left: 50%; top: 9px; bottom: 9px; width: 1px; margin-left: -0.5px; }
+        #touchCursor::after { top: 50%; left: 9px; right: 9px; height: 1px; margin-top: -0.5px; }
+        #touchCursor.visible { opacity: 1; transition: opacity 0.05s; }
 
         .controls { 
             position: absolute; left: 0; top: 0; width: 320px; height: 100vh; z-index: 100;
@@ -56,18 +85,21 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
         .player-panel { cursor: move; }
         .player-panel input, .player-panel button, .player-panel select, .player-panel textarea, .player-panel label, .player-panel a { cursor: pointer; }
+        /* Все три верхние панели (пульт, мини-пульт, рамка) — одинаковая ширина 306px,
+           по умолчанию на одном уровне сверху (см. positionPlayerButtonsBar и alignFrameBuildPanelDefault).
+           Каждая двигается и сворачивается отдельно; расположение запоминается (localStorage). */
         .player-panel {
-            position: absolute; left: 50%; top: 0; width: 920px; transform: translateX(-50%); z-index: 100;
+            position: absolute; left: 50%; top: 0; width: 306px; transform: translateX(-50%); z-index: 100;
             background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(0, 255, 102, 0.3); border-radius: 5px; box-sizing: border-box; padding: 4px;
             transition: left 0.3s ease, right 0.3s ease, top 0.3s ease, bottom 0.3s ease, width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
             box-shadow: 0 0 15px rgba(0, 255, 102, 0.15);
-            min-width: 500px; min-height: 100px;
+            min-width: 260px; min-height: 100px;
         }
 
         /* Отдельное перетаскиваемое окно "Построение и поиск в рамке" — вынесено из пульта (player-panel) */
         .frame-build-panel {
-            position: absolute; right: 320px; bottom: 20px; width: 250px; z-index: 100;
+            position: absolute; right: 20px; top: 0; width: 306px; z-index: 100;
             background: rgba(10, 10, 10, 0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(0, 204, 255, 0.4); border-radius: 5px; box-sizing: border-box; padding: 5px;
             box-shadow: 0 0 15px rgba(0, 204, 255, 0.2);
@@ -83,11 +115,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
         #rightPanel::-webkit-resizer { background: transparent; }
 
+        /* Свёрнутый пульт — полоска с заголовком (раньше растворялся целиком и его можно было
+           вернуть только через мини-пульт; теперь каждая панель сворачивается сама по себе). */
         .player-panel.minimized {
             min-height: 0 !important;
             overflow: hidden !important;
             resize: none !important;
-            border: none !important; box-shadow: none !important; opacity: 0 !important; pointer-events: none !important;
+            border-color: rgba(0, 255, 102, 0.15) !important; box-shadow: none !important;
         }
         .player-panel.minimized .player-columns-row {
             display: none !important;
@@ -118,10 +152,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         .player-buttons { display: flex; gap: 6px; align-items: center; }
         .player-buttons button { font-size: 13px; border: none; cursor: pointer; border-radius: 999px; padding: 6px 4px; font-weight: bold; }
         #playerButtonsBar {
-            width: auto; box-sizing: border-box; padding: 8px 32px 6px; opacity: 1; transition: opacity 0.3s ease;
+            width: 306px; box-sizing: border-box; padding: 4px 10px 8px; opacity: 1; transition: opacity 0.3s ease;
             background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 255, 102, 0.3); border-radius: 999px; cursor: move; gap: 4px;
+            border: 1px solid rgba(0, 255, 102, 0.3); border-radius: 5px; cursor: move; gap: 4px;
         }
+        /* Свёрнутый мини-пульт — остаётся только полоска-заголовок "Зеркалиус" */
+        #playerButtonsBar.minimized > *:not(.mini-title) { display: none !important; }
+        #playerButtonsBar.minimized { padding-bottom: 4px; }
         #playerButtonsBar.dimmed { opacity: 0.15 !important; }
         #playerButtonsBar.dimmed:hover { opacity: 1 !important; }
         .floating-toolbar.dimmed, .floating-toolbar-right.dimmed, .floating-back-btn.dimmed { opacity: 0.15 !important; }
@@ -217,7 +254,37 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         .slot-preview { width:100%; height:72px; background:#050505; font-family:'Roboto Mono',monospace; font-size:9px; border:1px solid #2a2a2a; resize:none; padding:3px; box-sizing:border-box; overflow-y:auto; line-height:1.4; }
 
         #screenContainer { position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; background: #050505; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 10; }
-        #webglCanvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: none; }
+        /* pointer-events:none — все обработчики мыши/колеса/тача висят на #screenCanvas,
+           который в WebGL-режиме остаётся видимым под этим холстом (на нём только фон). */
+        #webglCanvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: none; pointer-events: none; }
+
+        /* Крестовина плеера (D-pad): ◀ ▶ — симуляция, ▲ ▼ — скроллинг, центр ■ — стоп.
+           Горящая стрелка — жёлтая и показывает ⏸ (клик по ней = пауза). */
+        .dpad-btn { width: 36px; height: 32px; background: #111; color: #00ccff; border: 1px solid #2a3a44; border-radius: 4px; font-size: 14px; line-height: 1; cursor: pointer; padding: 0; }
+        .dpad-btn:hover { border-color: #00ccff; }
+        .dpad-btn.active { background: #ffcc00; color: #000; border-color: #ffcc00; font-weight: bold; }
+        #dpadStopBtn:hover { border-color: #ff3333; }
+
+        /* Компактный монохром для панелей-менюшек (галка uiCompactCheck в "Оформлении").
+           Трогает ТОЛЬКО панели настроек (.control-group и правую панель): холст, плеер,
+           крестовину и плавающие кнопки не касается. !important — чтобы перебить inline-цвета
+           на кнопках/подписях; фон кнопок не переопределяем, чтобы жёлтые/активные состояния
+           оставались видны. Откат — просто снять галку. */
+        body.ui-compact .control-group { padding: 2px 4px; margin-bottom: 3px; }
+        body.ui-compact .control-group summary { color: #a8c0cc !important; font-size: 10px !important; }
+        body.ui-compact .control-group .lbl,
+        body.ui-compact .control-group label span,
+        body.ui-compact #rightPanel .lbl,
+        body.ui-compact #rightPanel label span { color: #a8c0cc !important; font-size: 9px !important; font-weight: normal !important; }
+        body.ui-compact .control-group label { margin: 1px 0 !important; }
+        body.ui-compact .control-group button,
+        body.ui-compact #rightPanel button { color: #a8c0cc !important; border-color: #33434c !important; font-size: 9px !important; padding: 2px 3px !important; }
+        body.ui-compact .control-group select,
+        body.ui-compact .control-group input[type="number"],
+        body.ui-compact .control-group input[type="text"],
+        body.ui-compact #rightPanel select,
+        body.ui-compact #rightPanel input[type="number"],
+        body.ui-compact #rightPanel input[type="text"] { color: #a8c0cc !important; border-color: #33434c !important; background: #0d1418 !important; font-size: 9px !important; }
 
         body.rotated-view #screenContainer {
             outline: 3px solid #ffd500;
@@ -542,7 +609,23 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         </details>
 
         <details class="control-group">
+            <summary style="font-weight:bold; color:#cc66ff; margin-bottom: 4px;">🎵 АУДИО (ВИЗУАЛИЗАТОР)</summary>
+            <div style="display:flex; gap:4px;">
+                <button id="audioBtnText" class="btn-action" style="flex:1; margin:0; border-color:#cc66ff; color:#cc66ff;" title="Загрузить аудио-трек (играет по кругу, стартует и встаёт на паузу вместе с Пуском, Стоп перематывает в начало)">🎵 Трек</button>
+                <button id="micBtn" class="btn-action" style="flex:1; margin:0; border-color:#cc66ff; color:#cc66ff;" title="Захват системного звука: браузер попросит выбрать окно/вкладку — поставь галочку 'Предоставить доступ к аудио системы'">🎤 Звук ПК</button>
+            </div>
+            <input type="file" id="audioLoader" accept="audio/*" style="display:none">
+            <label style="display:flex; align-items:center; margin-top:4px;" title="Пульсация размера символов от баса и добавка к неоновому свечению от громкости (работает и в WebGL-рендере)">
+                <input type="checkbox" id="audioReactCheck" checked> <span class="lbl" style="color:#cc66ff; font-weight:bold;">Визуализатор звука (пульсация от баса)</span>
+            </label>
+            <audio id="bgAudio" loop style="display:none;"></audio>
+        </details>
+
+        <details class="control-group">
             <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">🎨 ОФОРМЛЕНИЕ И ЦВЕТА</summary>
+            <label style="display:flex; align-items:center; margin-bottom:4px; background:#111; padding:3px; border-radius:3px;" title="Компактный монохром: панели настроек ужимаются (мельче шрифт, меньше отступов) и перекрашиваются в один спокойный сине-серый цвет вместо разноцветья. Холст, плеер и плавающие кнопки не трогает. Откат — просто снять галку. Запоминается между сессиями">
+                <input type="checkbox" id="uiCompactCheck"> <span class="lbl" style="color:#a8c0cc; font-weight:bold;">🎛 Компактный монохром (панели)</span>
+            </label>
             <label style="display:flex; align-items:center; margin-bottom:4px; background:#111; padding:3px; border-radius:3px; border-left:2px solid #ffd500;" title="Ускоренный рендер пирамиды через WebGL для больших строк. Пока включена: НЕТ рамки, подсветки паттернов, трассера, конгломератов, подчёркиваний, номеров строк и радара — только сама анимация движения (с учётом Зеркала). Выключите галку, чтобы вернуть обычный режим со всеми функциями">
                 <input type="checkbox" id="webglRenderCheck"> <span class="lbl" style="color:#ffd500; font-weight:bold;">⚡ WebGL-рендер (только движение, без рамки/паттернов)</span>
             </label>
@@ -766,76 +849,14 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 </div>
 
 <!-- === МАРКЕР 10: ПАНЕЛЬ ПЛЕЕРА === -->
-    <div class="player-panel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); positionPlayerButtonsBar(); setTimeout(positionPlayerButtonsBar, 320); }" style="display:flex; flex-direction:column; align-items:stretch;" title="Пульт управления. Двойной клик по пустому месту: Свернуть/Развернуть">
-        <div style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:13px; font-weight:bold; letter-spacing:3px; color:rgba(0,204,255,0.7); padding:5px 0 2px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.1);">Zerkalius: Genesis &nbsp;·&nbsp; v0.359 Ultra-Save</div>
-        <div style="display:flex; flex-direction:row; align-items:stretch; flex:1;">
-        <div class="panel-content" style="flex:1; display:flex; flex-direction:column; padding:5px 8px; overflow:auto;">
-        <div class="player-columns-row" style="display:flex; flex-direction:row; gap:10px; flex:1;">
-
-            <div class="player-col" style="flex:1.2; min-width:200px; display:flex; flex-direction:column; justify-content:center; gap:3px;">
-                <div style="display:flex; align-items:center; gap:3px; min-width:0; max-width:100%; overflow:hidden;">
-                    <button id="rightTriangle90Btn" class="btn-action" style="margin:0; padding:2px 3px; width:auto; flex-shrink:0; font-size:8px; color:#ffd500; border-color:#ffd500;" title="Подгоняет интервал X так, чтобы ячейка символа стала квадратной (ширина = высоте строки) при текущем интервале Y. Любая 'лестница' (например 1,11,111...) на холсте получит ровно 45° диагональ и 90° угол. Содержимое холста не меняется — только геометрия символа">📐90°</button>
-                    <label style="display:flex; align-items:center; flex-shrink:0; gap:2px;" title="Жирный шрифт">
-                        <input type="checkbox" id="boldCheck"> <span class="lbl" style="font-size:8px;">Жирн.</span>
-                    </label>
-                    <div style="display:flex; align-items:center; gap:3px; flex:1; min-width:0;" title="Символ">
-                        <span class="lbl" style="font-size:8px; flex-shrink:0;">Симв:</span>
-                        <input type="range" id="charSizeSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="margin:0; flex:1; min-width:0; width:auto; height:10px;">
-                        <span class="val" id="charSizeVal" style="width:18px; flex-shrink:0; font-size:8px; text-align:right;">1.0</span>
-                    </div>
-                </div>
-
-                <div class="row-between">
-                    <button id="reverseBtn" class="btn-action" style="margin:0; width: 31%; font-size:9px;">🔃 Вперед</button>
-                    <button id="clearCanvasBtn" class="btn-action btn-danger" style="margin:0; width: 31%; font-size:9px;">🧹 Очистить</button>
-                    <button id="resetPlayerSlidersBtn" class="btn-action" style="margin:0; width: 31%; font-size:9px; border-color:#ff9900; color:#ff9900;" title="Сбросить масштаб, экран и интервалы по умолчанию">🔄 Сброс</button>
-                </div>
-
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <span class="lbl" style="flex-shrink:0; white-space:nowrap;">Масштаб:<span class="val" id="fontVal">16px</span></span>
-                    <input type="range" id="fontSlider" min="1" max="100" value="16" style="flex:1; min-width:0;">
-                    <span class="lbl" style="flex-shrink:0; white-space:nowrap;">Экран:<span class="val" id="screenVal">64</span></span>
-                    <input type="range" id="screenSlider" min="1" max="200" value="64" style="flex:1; min-width:0;">
-                </div>
-
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <span class="lbl" style="flex-shrink:0; white-space:nowrap;">Инт.Y:<span class="val" id="lhVal">1.0</span></span>
-                    <input type="range" id="lhSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="flex:1; min-width:0;">
-                    <span class="lbl" style="flex-shrink:0; white-space:nowrap;">Инт.X:<span class="val" id="cwVal">1.0</span></span>
-                    <input type="range" id="cwSlider" min="0.1" max="2.5" step="0.05" value="1.0" style="flex:1; min-width:0;">
-                </div>
-            </div>
-
-            <div class="player-col" style="flex:1.3; min-width:200px; display:flex; flex-direction:column; justify-content:center; gap:3px; border-left:1px solid #333; border-right:1px solid #333; padding:0 10px;">
-                <label style="display:flex; align-items:center; gap:4px; justify-content:center;" title="Если включено — кнопки Пуск/Стоп/◀▶ тоже затемняются при затемнении панели наехавшими строками (как в дзен-режиме). Если выключено — остаются видимыми всегда, кроме дзен-режима">
-                    <input type="checkbox" id="hideControlsOnDimCheck"> <span class="lbl" style="font-size:9px;">Затемнять Пуск/Стоп</span>
-                </label>
-                <div style="display:flex; align-items:center; gap:4px;">
-                    <button id="speedDecBtn" class="bank-btn" style="width:46px; height:18px; padding:0 3px; font-weight:bold; color:#00ccff; border-color:#00ccff; flex-shrink:0; font-size:9px;">◀ Скор</button>
-                    <input type="range" id="speedSlider" min="1" max="1000" value="950" style="margin:0; height:12px; flex:1; min-width:0;">
-                    <button id="speedIncBtn" class="bank-btn" style="width:46px; height:18px; padding:0 3px; font-weight:bold; color:#00ccff; border-color:#00ccff; flex-shrink:0; font-size:9px;">Скор ▶</button>
-                    <span class="val" id="speedVal" style="color:#00ccff; flex-shrink:0; width:28px; text-align:right;">950</span>
-                </div>
-                <div style="display:flex; align-items:center; gap:4px;">
-                    <button id="turboDecBtn" class="bank-btn" style="width:46px; height:18px; padding:0 3px; font-weight:bold; color:#ff9900; border-color:#ff9900; flex-shrink:0; font-size:9px;" title="Множитель (Turbo)">◀ Turbo</button>
-                    <input type="range" id="turboSlider" min="1" max="1111" value="1" style="margin:0; height:12px; flex:1; min-width:0;">
-                    <button id="turboIncBtn" class="bank-btn" style="width:46px; height:18px; padding:0 3px; font-weight:bold; color:#ff9900; border-color:#ff9900; flex-shrink:0; font-size:9px;">Turbo ▶</button>
-                    <span class="lbl" style="color:#ff3333; font-weight:bold; flex-shrink:0; width:28px; text-align:right;">x<span class="val" id="turboVal">1</span></span>
-                </div>
-
-                <div style="display: flex; gap: 4px; align-items: center;">
-                    <span class="lbl" style="width: 38px; flex-shrink:0;">Шаг(S):</span>
-                    <input type="number" id="scrollStepInput" value="1" min="1" style="width: 35px; height: 16px; font-size: 10px; flex-shrink:0;">
-                    <input type="range" id="stepSlider" min="0" max="0" value="0" style="flex: 1; margin: 0; min-width:0;">
-                </div>
-
-                <div class="row-between">
-                    <button id="playerModeBtn" class="btn-action" style="margin:0; width: 100%; color:#00ccff; border-color:#00ccff; font-size:10px;" title="Скроллинг (⬍) — холст движется вверх/вниз. Симуляция XOR (⬌) — горизонтальные правила сдвигаются влево/вправо">⬌ Функция: Симуляция (XOR)</button>
-                </div>
-            </div>
-
-        </div>
-        </div>
+    <!-- Пульт слит в мини-пульт (#playerButtonsBar), осталось 2 панели. Каркас .player-panel
+         оставлен в DOM скрытым: на него и скрытые кнопки завязан JS (пинг-понг кликает Реверс,
+         updateLogic пишет в Функцию, zen-режим/авто-скрытие перебирают селекторы панелей). -->
+    <div class="player-panel" style="display:none;">
+        <div class="panel-content"></div>
+        <div style="display:none;">
+            <button id="reverseBtn" class="btn-action">🔃 Вперед</button>
+            <button id="playerModeBtn" class="btn-action">⬌ Функция: Симуляция (XOR)</button>
         </div>
     </div>
     <div class="frame-build-panel" id="frameBuildPanel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); event.stopPropagation(); }" title="Двойной клик по пустому месту: свернуть/развернуть">
@@ -905,15 +926,70 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             </label>
         </div>
     </div>
-    <div id="playerButtonsBar" style="position:fixed; z-index:101; display:flex; flex-direction:column; align-items:center;" title="Двойной клик по пустому месту (между кнопками): развернуть весь Пульт. Перетаскивание: переместить Пульт." onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { document.querySelector('.player-panel').classList.toggle('minimized'); setTimeout(positionPlayerButtonsBar, 320); event.stopPropagation(); }">
-        <div class="player-buttons" style="justify-content:center;">
+    <div id="playerButtonsBar" style="position:fixed; z-index:101; display:flex; flex-direction:column; align-items:center;" title="Мини-пульт. Двойной клик по пустому месту: свернуть/развернуть. Перетаскивание: переместить (положение запоминается)." onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); if (window.savePanelLayout) savePanelLayout(); event.stopPropagation(); }">
+        <div class="mini-title" style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:11px; font-weight:bold; letter-spacing:2px; color:rgba(0,204,255,0.75); padding:1px 0 3px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.12); margin-bottom:4px;">Зеркалиус · v0.378 Ultra-Save</div>
+        <div style="display:flex; align-items:stretch; gap:6px; width:100%; margin-bottom:4px;">
+            <div style="display:flex; flex-direction:column; justify-content:center; gap:4px; flex:1; min-width:0;">
+                <button id="clearCanvasBtn" class="btn-action btn-danger" style="margin:0; width:100%; font-size:9px;">🧹 Очистить</button>
+                <label style="display:flex; align-items:center; gap:2px; justify-content:center;" title="Если включено — кнопки плеера тоже затемняются при затемнении панели наехавшими строками (как в дзен-режиме). Если выключено — остаются видимыми всегда, кроме дзен-режима">
+                    <input type="checkbox" id="hideControlsOnDimCheck"> <span class="lbl" style="font-size:8px;">Затемн.</span>
+                </label>
+                <button id="resetPlayerSlidersBtn" class="btn-action" style="margin:0; width:100%; font-size:9px; border-color:#ff9900; color:#ff9900;" title="Сбросить масштаб, экран и интервалы по умолчанию">🔄 Сброс</button>
+            </div>
+            <div id="dpadGrid" style="display:grid; grid-template-columns:repeat(3, 36px); grid-auto-rows:32px; gap:3px; justify-content:center; flex-shrink:0;" title="Крестовина: ◀ ▶ — симуляция XOR назад/вперёд, ▲ ▼ — скроллинг строк, центр ■ — стоп (сброс на 0). Горящая жёлтым стрелка показывает ⏸ — клик по ней ставит паузу; клик по другой стрелке на ходу — смена режима/направления без остановки.">
+                <span></span><button id="dpadUpBtn" class="dpad-btn" title="Скроллинг строк — вверх">▲</button><span></span>
+                <button id="dpadLeftBtn" class="dpad-btn" title="Симуляция XOR — назад (реверс)">◀</button>
+                <button id="dpadStopBtn" class="dpad-btn" style="color:#ff3333;" title="Стоп: остановить и сбросить на кадр 0">■</button>
+                <button id="dpadRightBtn" class="dpad-btn" title="Симуляция XOR — вперёд">▶</button>
+                <span></span><button id="dpadDownBtn" class="dpad-btn" title="Скроллинг строк — вниз">▼</button><span></span>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:2px; flex-shrink:0; width:52px;">
+                <button id="rightTriangle90Btn" class="btn-action" style="margin:0; padding:2px 3px; width:100%; font-size:8px; color:#ffd500; border-color:#ffd500;" title="Подгоняет интервал X так, чтобы ячейка символа стала квадратной (ширина = высоте строки) при текущем интервале Y. Любая 'лестница' (например 1,11,111...) на холсте получит ровно 45° диагональ и 90° угол. Содержимое холста не меняется — только геометрия символа">📐90°</button>
+                <span class="lbl" style="font-size:8px;">Инт.Y:<span class="val" id="lhVal">1.0</span></span>
+                <input type="range" id="lhSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="writing-mode: vertical-lr; direction: rtl; width:16px; height:52px; margin:0;">
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:4px; width:100%;" title="Скорость — интервал между шагами (значение показывается внизу экрана, над счётчиком кадров)">
+            <button id="speedDecBtn" class="bank-btn" style="flex:0 0 20px; width:20px; height:20px; padding:0; color:#00ccff; border-color:#00ccff; font-size:11px;">−</button>
+            <input type="range" id="speedSlider" min="1" max="1000" value="950" style="margin:0; height:14px; flex:1; min-width:0;">
+            <button id="speedIncBtn" class="bank-btn" style="flex:0 0 20px; width:20px; height:20px; padding:0; color:#00ccff; border-color:#00ccff; font-size:11px;">+</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:4px; width:100%;" title="Turbo — множитель шагов за тик (значение показывается внизу экрана, над счётчиком кадров)">
+            <button id="turboDecBtn" class="bank-btn" style="flex:0 0 20px; width:20px; height:20px; padding:0; color:#ff9900; border-color:#ff9900; font-size:11px;">−</button>
+            <input type="range" id="turboSlider" min="1" max="1111" value="1" style="margin:0; height:14px; flex:1; min-width:0;">
+            <button id="turboIncBtn" class="bank-btn" style="flex:0 0 20px; width:20px; height:20px; padding:0; color:#ff9900; border-color:#ff9900; font-size:11px;">+</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:4px; width:100%;">
+            <label style="display:flex; align-items:center; flex-shrink:0; gap:2px;" title="Жирный шрифт">
+                <input type="checkbox" id="boldCheck"> <span class="lbl" style="font-size:8px;">Жирн.</span>
+            </label>
+            <span class="lbl" style="font-size:8px; flex-shrink:0;">Симв:</span>
+            <input type="range" id="charSizeSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="margin:0; flex:1; min-width:0; height:10px;">
+            <span class="val" id="charSizeVal" style="width:18px; flex-shrink:0; font-size:8px; text-align:right;">1.0</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:4px; width:100%;">
+            <span class="lbl" style="flex-shrink:0; white-space:nowrap; font-size:8px;">Масштаб:<span class="val" id="fontVal">16px</span></span>
+            <input type="range" id="fontSlider" min="1" max="100" value="16" style="flex:1; min-width:0; height:10px;">
+            <span class="lbl" style="flex-shrink:0; font-size:8px;">Шаг(S):</span>
+            <input type="number" id="scrollStepInput" value="1" min="1" style="width: 30px; height: 15px; font-size: 10px; flex-shrink:0;">
+            <input type="range" id="stepSlider" min="0" max="0" value="0" style="width:46px; flex-shrink:0; margin:0; height:10px;">
+        </div>
+        <div style="display:flex; align-items:center; gap:4px; width:100%;">
+            <span class="lbl" style="flex-shrink:0; white-space:nowrap; font-size:8px;">Инт.X:<span class="val" id="cwVal">1.0</span></span>
+            <input type="range" id="cwSlider" min="0.1" max="2.5" step="0.05" value="1.0" style="flex:1; min-width:0; height:10px;">
+            <span class="lbl" style="flex-shrink:0; white-space:nowrap; font-size:8px;">Экран:<span class="val" id="screenVal">64</span></span>
+            <input type="range" id="screenSlider" min="1" max="200" value="64" style="flex:1; min-width:0; height:10px;">
+        </div>
+        <!-- Legacy-кнопки скрыты, но живут в DOM: на playBtn/stopBtn завязан JS (togglePlay,
+             стоп-логика), крестовина дёргает их программно. Управление — только крестовиной. -->
+        <div class="player-buttons" style="display:none;">
             <button id="prevBtn" title="Шаг назад" style="color:#fff;">◀</button>
             <button id="playBtn" title="Старт / Пауза (Space)">▶ Пуск</button>
             <button id="stopBtn" class="inactive" title="Сбросить на 0">■</button>
             <button id="nextBtn" title="Шаг вперед" style="color:#fff;">▶</button>
         </div>
     </div>
-    <div id="frameCounterDisplay" style="position:fixed; color:#444; font-size:10px; font-family:monospace; pointer-events:none; text-align:right; z-index:101;">Кадр: <span class="val" id="stepVal" style="color:#888;">0 / 0</span></div>
+    <div id="frameCounterDisplay" style="position:fixed; color:#444; font-size:10px; font-family:monospace; pointer-events:none; text-align:right; z-index:101;"><div>Скор: <span class="val" id="speedVal" style="color:#00ccff;">950</span> · Turbo x<span class="val" id="turboVal" style="color:#ff9900;">1</span></div><div>Кадр: <span class="val" id="stepVal" style="color:#888;">0 / 0</span></div></div>
 <!-- === МАРКЕР 11: ХОЛСТ И ТУЛБАР === -->
     <a href="index.html" class="float-circle-btn floating-back-btn" style="text-decoration:none; font-weight:bold; color:#00ff66; border-color:#00ff66;" title="Вернуться в Хаб">⬅</a>
     <div class="floating-toolbar floating-toolbar-undoredo" title="Отменить / Повторить.">
@@ -924,6 +1000,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         <button class="float-circle-btn" id="floatingCenterBtn" title="Клик: 100% высота. Двойной клик: 30% высота.">⌖</button>
         <button class="float-circle-btn" id="floatingRadarBtn" title="Топологический Радар">🛰️</button>
         <button class="float-circle-btn" id="floatingRotateViewBtn" style="color:#ffd500; border-color:#ffd500;" title="Временно повернуть весь вид на 90° (как монитор повернуть) — повторное нажатие вернёт обратно. Данные не меняются, только картинка">⟲</button>
+        <button class="float-circle-btn" id="floatingRotateDataBtn" style="color:#ff9900; border-color:#ff9900;" title="НАСТОЯЩИЙ поворот сетки на 90° по часовой: столбцы становятся строками, данные реально меняются (поиск паттернов работает по новым строкам). 4 нажатия = исходник. Undo работает">⟳</button>
+        <button class="float-circle-btn" id="floatingWebglBtn" style="color:#ffd500; border-color:#ffd500;" title="⚡ WebGL-рендер: ускоренная отрисовка (только движение — без рамки, подсветки паттернов, конгломератов и номеров строк). Та же галка, что в 'Оформление и цвета'">⚡</button>
     </div>
     <div class="floating-toolbar floating-toolbar-paste" title="Вставить из буфера обмена прямо на холст.">
         <button class="float-circle-btn" id="floatingPasteBtn" style="color:#bfff00; border-color:#bfff00;" title="Вставить из буфера обмена прямо на холст">📋</button>
@@ -975,6 +1053,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             </label>
             <label style="display:flex; align-items:center; margin-bottom: 2px; padding-left: 15px;">
                 <input type="checkbox" id="sequentialSearchCheck" checked> <span class="lbl" style="color:#00ccff;">Искать строго по очереди (каскад)</span>
+            </label>
+            <label style="display:flex; align-items:center; margin-bottom: 2px; padding-left: 15px;" title="Обычно паттерн строки N засчитывается, только если найден в строках ВЫШЕ N-й (каскад собирает его из верхних строк), поэтому строка, равная своему паттерну, находкой не считается. С этой галкой совпадение в САМОЙ строке N тоже засчитывается — например, когда строки построены прямо из паттернов">
+                <input type="checkbox" id="selfRowMatchCheck"> <span class="lbl" style="color:#00ccff;">Паттерн засчитывается и в своей строке</span>
             </label>
             <label style="display:flex; align-items:center; margin-bottom: 2px; padding-left: 15px;">
                 <input type="checkbox" id="globalSearchCheck"> <span class="lbl" style="color:#00ff88; font-weight:bold;">🔍 Сквозной поиск паттернов</span>
@@ -2449,11 +2530,16 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 <!-- === МАРКЕР 25: СИМУЛЯЦИЯ И АКТИВАЦИЯ СТРОК === -->
     <script>
-        // Выравнивает все строки поля ввода по левому/правому краю или по центру (добавляя пробелы)
+        // Выравнивает все строки поля ввода по левому/правому краю или по центру.
+        // Заполнитель — точки ('.'): loadText() вырезает все пробелы (\s+), поэтому выравнивание
+        // пробелами молча пропадало. Точки же занимают клетку сетки, но не считаются символом
+        // (filler в отрисовке) — как пустая ячейка в Excel: символы остаются в своих столбцах.
+        // Все строки добиваются точками до одинаковой длины (прямоугольная сетка).
         function alignText(mode) {
+            if (window.saveUndoState) saveUndoState();
             let lines = safeValue('linesInput', '').split('\n').map(l => l.trim().replace(/\s+/g, ''));
             if (lines.length === 0) return;
-            lines = lines.map(l => l.replace(/\./g, '')); 
+            lines = lines.map(l => l.replace(/\./g, ''));
             let maxL = Math.max(...lines.map(l => l.length));
 
             for(let i=0; i<lines.length; i++) {
@@ -2461,12 +2547,12 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 if (l.length < maxL) {
                     let diff = maxL - l.length;
                     if (mode === 'left') {
-                        lines[i] = l; // короткие строки просто остаются как есть
+                        lines[i] = l + '.'.repeat(diff);
                     } else if (mode === 'right') {
-                        lines[i] = ' '.repeat(diff) + l;
+                        lines[i] = '.'.repeat(diff) + l;
                     } else if (mode === 'center') {
                         let leftP = Math.floor(diff / 2);
-                        lines[i] = ' '.repeat(leftP) + l;
+                        lines[i] = '.'.repeat(leftP) + l + '.'.repeat(diff - leftP);
                     }
                 }
             }
@@ -5502,6 +5588,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             let usePendulum = safeChecked('rowPendulumCheck', false);
             let useDrum = safeChecked('drumModeCheck', false);
             let useFillX = safeChecked('fillXCheck', false);
+            // "Паттерн засчитывается и в своей строке": обычное правило каскада — совпадение
+            // для паттерна N должно целиком лежать в строках ВЫШЕ N-й; с галкой строка N
+            // (например, построенная прямо из паттерна) тоже считается допустимым местом находки.
+            let allowSelfRow = safeChecked('selfRowMatchCheck', false);
 
             // Единый предохранитель на весь вызов calculateState(): в строгом режиме очереди
             // разные блоки поиска (пустой-паттерн, traceUp, вертикальный, сквозной, локальный,
@@ -6106,7 +6196,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                 let patOrig = validPatterns[pOf];
                                 let pat = getSearchPat(patOrig);
                                 if (pat.length > 0 && str.startsWith(pat)) {
-                                    let allAbove = path.slice(0, pat.length).every(cell => pOf === 0 || cell.r < pOf);
+                                    let allAbove = path.slice(0, pat.length).every(cell => pOf === 0 || cell.r < pOf + (allowSelfRow ? 1 : 0));
                                 if (allAbove) {
                                     path.slice(0, pat.length).forEach(cell => {
                                         let isTargetActive = (pOf !== -1 && STATE.lines[pOf]) ? STATE.lines[pOf].isActive : false;
@@ -6253,7 +6343,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let allAbove = true;
                         for (let k = 0; k < searchPat.length; k++) {
                             let actualRow = rowMap[pos + k];
-                            if (actualRow === -1 || (targetRowIdx > 0 && actualRow >= targetRowIdx)) {
+                            if (actualRow === -1 || (targetRowIdx > 0 && actualRow >= targetRowIdx + (allowSelfRow ? 1 : 0))) {
                                 allAbove = false;
                                 break;
                             }
@@ -6319,7 +6409,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let loc = cleanMap[(pos + k) % cleanStream.length];
                         if (loc) {
                             involvedRows.add(STATE.lines[loc.r].origIndex + 1);
-                            if (targetRowIdx > 0 && loc.r >= targetRowIdx) {
+                            if (targetRowIdx > 0 && loc.r >= targetRowIdx + (allowSelfRow ? 1 : 0)) {
                                 allAbove = false;
                             }
                         }
@@ -6361,7 +6451,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let loc = cleanMap[(pos + k) % globalCleanText.length];
                         if (loc) {
                             involvedRows.add(STATE.lines[loc.r].origIndex + 1);
-                            if (targetRowIdx > 0 && loc.r >= targetRowIdx) {
+                            if (targetRowIdx > 0 && loc.r >= targetRowIdx + (allowSelfRow ? 1 : 0)) {
                                 allAbove = false;
                             }
                         }
@@ -6416,7 +6506,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 // Если "Разморозка строк по паттерну" выключена (vbaActivation=false) — ищем по ВСЕМ
                 // строкам, а не только по активным (иначе без этой галки поиск вообще ничего не найдёт
                 // за пределами уже активного блока). С галкой — как раньше, только среди активных.
-                if (vbaActivation && !line.isActive) continue;
+                // Исключение при "в своей строке": замороженной строке даём шанс совпасть со СВОИМ
+                // паттерном (в строгой очереди это строка-цель), иначе её содержимое никто не читает.
+                let scannedInactive = vbaActivation && !line.isActive;
+                if (scannedInactive) {
+                    let selfCandidate = allowSelfRow && (isSequential ? i === STATE.currentTargetPatternIdx : i < validPatterns.length);
+                    if (!selfCandidate) continue;
+                }
                 if (line.L === 0) continue;
 
                 let lineClean = "";
@@ -6433,8 +6529,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let targetPatOrig = validPatterns[STATE.currentTargetPatternIdx];
                         let targetPat = getSearchPat(targetPatOrig);
                         let pos = targetPat.length > 0 ? lineClean.indexOf(targetPat) : -1;
-// Добавляем исключение: либо индекс меньше (классика), либо оба равны нулю (старт)
-							if (pos !== -1 && (i < STATE.currentTargetPatternIdx || (i === 0 && STATE.currentTargetPatternIdx === 0))) {
+// Добавляем исключение: либо индекс меньше (классика), либо оба равны нулю (старт),
+// либо включена галка "в своей строке" и совпадение лежит ровно в строке-цели
+							if (pos !== -1 && (i < STATE.currentTargetPatternIdx || (i === 0 && STATE.currentTargetPatternIdx === 0) || (allowSelfRow && i === STATE.currentTargetPatternIdx))) {
                             if (vbaActivation && STATE.currentTargetPatternIdx < STATE.lines.length) {
                                 STATE.lines[STATE.currentTargetPatternIdx].isActive = true;
                                 expandFrameToRow(STATE.currentTargetPatternIdx);
@@ -6465,7 +6562,12 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let pos = searchPat.length > 0 ? lineClean.indexOf(searchPat) : -1;
                         if (pos !== -1) {
                             let targetRowIdx = validPatterns.indexOf(searchPatOrig);
-                            if (i < targetRowIdx) {
+                            // Замороженная строка (scannedInactive) может совпасть ТОЛЬКО со своим
+                            // паттерном — иначе её скрытое содержимое размораживало бы чужие строки.
+                            let rowOk = scannedInactive
+                                ? (allowSelfRow && i === targetRowIdx)
+                                : (i < targetRowIdx || (allowSelfRow && i === targetRowIdx));
+                            if (rowOk) {
                                 let isNew = !STATE.foundPatterns.has(searchPatOrig);
                             if (isNew) {
                                 STATE.foundPatterns.add(searchPatOrig);
@@ -8133,6 +8235,88 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         }
 
         // Переключает Пуск/Пауза: запускает или останавливает игровой цикл loop() и обновляет кнопку
+        // === АУДИО-ВИЗУАЛИЗАТОР (перенос из Zerkalius-code) ===
+        // Трек-файл (🎵 Трек) или захват системного звука (🎤 Звук ПК) через Web Audio API.
+        // update() каждый кадр считает бас (первые 10 бинов) и общую громкость:
+        // audioScale — множитель размера символов (пульсация), audioGlow — добавка к неону,
+        // bassLevel — сырой уровень баса (заготовка для будущих реакций на музыку).
+        const AUDIO_VISUALIZER = {
+            audioCtx: null, analyser: null, dataArray: null, isInit: false, audioScale: 1, audioGlow: 0, bassLevel: 0, source: null,
+            initCore: function() {
+                if (!this.isInit) {
+                    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    this.analyser = this.audioCtx.createAnalyser();
+                    this.analyser.fftSize = 256;
+                    this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+                    this.isInit = true;
+                }
+            },
+            initFile: function(file) {
+                this.initCore();
+                const bgAudio = document.getElementById('bgAudio');
+                bgAudio.src = URL.createObjectURL(file);
+                if (this.source) this.source.disconnect();
+                this.source = this.audioCtx.createMediaElementSource(bgAudio);
+                this.source.connect(this.analyser);
+                this.source.connect(this.audioCtx.destination);
+                let btn = document.getElementById('audioBtnText');
+                if (btn) btn.textContent = "🎵 Файл Готов";
+                showNotification("ТРЕК ЗАГРУЖЕН — СТАРТУЕТ С ПУСКОМ");
+            },
+            initMic: async function() {
+                this.initCore();
+                try {
+                    const stream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: true });
+                    const audioTracks = stream.getAudioTracks();
+                    if (audioTracks.length === 0) {
+                        alert("Вы не выбрали трансляцию звука! При выборе окна поставьте галочку 'Предоставить доступ к аудио системы'.");
+                        stream.getTracks().forEach(t => t.stop());
+                        return;
+                    }
+                    const audioStream = new MediaStream([audioTracks[0]]);
+                    if (this.source) this.source.disconnect();
+                    this.source = this.audioCtx.createMediaStreamSource(audioStream);
+                    this.source.connect(this.analyser);
+                    document.getElementById('bgAudio').pause();
+                    let btn = document.getElementById('micBtn');
+                    if (btn) btn.textContent = "🔊 Идет Захват";
+                    showNotification("СИСТЕМНЫЙ ЗВУК ПОДКЛЮЧЁН");
+                } catch (err) {
+                    alert("Отмена или ошибка захвата звука: " + err);
+                }
+            },
+            update: function() {
+                if (!this.isInit || !safeChecked('audioReactCheck', true)) {
+                    this.audioScale = 1; this.audioGlow = 0; this.bassLevel = 0; return;
+                }
+                const bgAudio = document.getElementById('bgAudio');
+                if (bgAudio && bgAudio.src && bgAudio.paused && !(this.source && this.source.mediaStream)) {
+                    this.audioScale = 1; this.audioGlow = 0; this.bassLevel = 0; return;
+                }
+                this.analyser.getByteFrequencyData(this.dataArray);
+                let bass = 0; for (let i = 0; i < 10; i++) bass += this.dataArray[i]; bass = bass / 10;
+                this.bassLevel = bass;
+                this.audioScale = 1 + (bass / 255) * 0.8;
+                let vol = 0; for (let i = 0; i < this.dataArray.length; i++) vol += this.dataArray[i]; vol = vol / this.dataArray.length;
+                this.audioGlow = (vol / 255) * 15;
+            }
+        };
+
+        safeBind('audioBtnText', 'click', () => { let inp = document.getElementById('audioLoader'); if (inp) inp.click(); });
+        safeBind('audioLoader', 'change', function(e) { const file = e.target.files[0]; if (file) AUDIO_VISUALIZER.initFile(file); });
+        safeBind('micBtn', 'click', () => AUDIO_VISUALIZER.initMic());
+
+        // Пока симуляция на паузе, а звук играет (трек или захват ПК) — лёгкий цикл перерисовки,
+        // чтобы пульсация жила и без Пуска. Во время Пуска перерисовку делает основной loop().
+        (function audioPulseLoop() {
+            requestAnimationFrame(audioPulseLoop);
+            if (!AUDIO_VISUALIZER.isInit || STATE.isPlaying || !safeChecked('audioReactCheck', true)) return;
+            const bgAudio = document.getElementById('bgAudio');
+            let fileActive = bgAudio && bgAudio.src && !bgAudio.paused;
+            let streamActive = AUDIO_VISUALIZER.source && AUDIO_VISUALIZER.source.mediaStream;
+            if (fileActive || streamActive) render();
+        })();
+
         function togglePlay() {
             STATE.isPlaying = !STATE.isPlaying;
             let stopBtnEl = document.getElementById('stopBtn');
@@ -8150,7 +8334,87 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 updateLogic();
                 window.saveAutosaveSnapshot && window.saveAutosaveSnapshot();
             }
+            // Загруженный аудио-трек стартует/встаёт на паузу вместе с симуляцией.
+            const bgAudioEl = document.getElementById('bgAudio');
+            if (AUDIO_VISUALIZER.isInit && bgAudioEl && bgAudioEl.src) {
+                if (STATE.isPlaying) {
+                    if (AUDIO_VISUALIZER.audioCtx && AUDIO_VISUALIZER.audioCtx.state === 'suspended') AUDIO_VISUALIZER.audioCtx.resume();
+                    if (bgAudioEl.paused) bgAudioEl.play();
+                } else if (!bgAudioEl.paused) bgAudioEl.pause();
+            }
+            syncDpad();
         }
+
+        // === КРЕСТОВИНА (D-pad): каждая стрелка сама включает свой режим и направление ===
+        // ◀/▶ — симуляция XOR (реверс/вперёд), ▲/▼ — скроллинг строк (вверх/вниз), центр — пауза.
+        // Повторный клик по горящей стрелке — пауза; клик по другой стрелке на ходу — смена
+        // режима/направления без остановки. Кнопки "Функция" и "Реверс" в панели синхронизируются.
+        function setPlayerModeAndDir(mode, reverse) {
+            if (STATE.playerMode !== mode) {
+                STATE.playerMode = mode;
+                let pmBtn = document.getElementById('playerModeBtn');
+                if (pmBtn) { // текст доводит updateLogic(), здесь — только цвет
+                    pmBtn.style.color = (mode === 'scroll') ? '#ffcc00' : '#00ccff';
+                    pmBtn.style.borderColor = pmBtn.style.color;
+                }
+            }
+            if (STATE.isReverse !== reverse) {
+                STATE.isReverse = reverse;
+                let rBtn = document.getElementById('reverseBtn');
+                if (rBtn) {
+                    rBtn.innerHTML = reverse ? '🔃 Назад' : '🔃 Вперед';
+                    rBtn.style.color = reverse ? '#ff3333' : '#ffcc00';
+                    rBtn.style.borderColor = rBtn.style.color;
+                }
+            }
+        }
+        function syncDpad() {
+            // Горящая стрелка — жёлтая и показывает ⏸ (клик по ней ставит паузу), остальные — свои стрелки.
+            const map = { dpadRightBtn: ['simulate', false, '▶'], dpadLeftBtn: ['simulate', true, '◀'], dpadUpBtn: ['scroll', false, '▲'], dpadDownBtn: ['scroll', true, '▼'] };
+            for (const id in map) {
+                let b = document.getElementById(id);
+                if (!b) continue;
+                let on = STATE.isPlaying && STATE.playerMode === map[id][0] && STATE.isReverse === map[id][1];
+                b.classList.toggle('active', on);
+                let glyph = on ? '⏸' : map[id][2];
+                if (b.textContent !== glyph) b.textContent = glyph;
+            }
+        }
+        function dpadGo(mode, reverse) {
+            if (STATE.isPlaying && STATE.playerMode === mode && STATE.isReverse === reverse) {
+                togglePlay(); // повторный клик по горящей стрелке = пауза
+                showNotification("ПАУЗА");
+            } else {
+                setPlayerModeAndDir(mode, reverse);
+                if (!STATE.isPlaying) togglePlay(); else updateLogic();
+                showNotification(mode === 'scroll' ? (reverse ? "СКРОЛЛИНГ ▼" : "СКРОЛЛИНГ ▲") : (reverse ? "СИМУЛЯЦИЯ ◀ (РЕВЕРС)" : "СИМУЛЯЦИЯ ▶"));
+            }
+            syncDpad();
+        }
+        safeBind('dpadRightBtn', 'click', () => dpadGo('simulate', false));
+        safeBind('dpadLeftBtn', 'click', () => dpadGo('simulate', true));
+        safeBind('dpadUpBtn', 'click', () => dpadGo('scroll', false));
+        safeBind('dpadDownBtn', 'click', () => dpadGo('scroll', true));
+        // ■ в центре крестовины — программный клик по скрытой legacy-кнопке Стоп (вся стоп-логика там)
+        safeBind('dpadStopBtn', 'click', () => { let s = document.getElementById('stopBtn'); if (s) s.click(); showNotification("СТОП"); });
+
+        // === КОМПАКТНЫЙ МОНОХРОМ ПАНЕЛЕЙ (галка uiCompactCheck) ===
+        // Просто вешает/снимает класс ui-compact на body (вся тема — в CSS), состояние
+        // запоминается в localStorage и восстанавливается при загрузке.
+        safeBind('uiCompactCheck', 'change', function() {
+            document.body.classList.toggle('ui-compact', this.checked);
+            try { localStorage.setItem('ui_compact', this.checked ? '1' : '0'); } catch (e) {}
+            showNotification(this.checked ? "🎛 КОМПАКТНЫЙ МОНОХРОМ ВКЛЮЧЁН" : "ОБЫЧНОЕ ОФОРМЛЕНИЕ ПАНЕЛЕЙ");
+        });
+        (function restoreUiCompact() {
+            try {
+                if (localStorage.getItem('ui_compact') === '1') {
+                    let c = document.getElementById('uiCompactCheck');
+                    if (c) c.checked = true;
+                    document.body.classList.add('ui-compact');
+                }
+            } catch (e) {}
+        })();
 
 <!-- === МАРКЕР 55: СЛУШАТЕЛИ КНОПОК ПЛЕЕРА === -->
         safeBind('playBtn', 'click', () => { togglePlay(); showNotification(STATE.isPlaying ? "ПУСК" : "ПАУЗА"); });
@@ -8159,6 +8423,9 @@ safeBind('stopBtn', 'click', () => {
             STATE.isPlaying = false;
             STATE.globalStep = 0;
             STATE.flashes.clear();
+            // Стоп останавливает и трек, с перемоткой в начало.
+            const bgAudioEl = document.getElementById('bgAudio');
+            if (AUDIO_VISUALIZER.isInit && bgAudioEl && bgAudioEl.src) { bgAudioEl.pause(); bgAudioEl.currentTime = 0; }
             if (STATE.cylinderAutoInterval) {
                 clearInterval(STATE.cylinderAutoInterval);
                 STATE.cylinderAutoInterval = null;
@@ -8179,10 +8446,11 @@ safeBind('stopBtn', 'click', () => {
             if (STATE.selectedRings) STATE.selectedRings.clear();
             if (STATE.selectedRows) STATE.selectedRows.clear();
             
-            cancelAnimationFrame(STATE.rafId); 
-            UI.playBtn.innerHTML = '▶ Пуск'; 
+            cancelAnimationFrame(STATE.rafId);
+            UI.playBtn.innerHTML = '▶ Пуск';
             UI.playBtn.style.background = '#00ff66';
             document.getElementById('stopBtn').classList.add('inactive');
+            syncDpad();
             
             // 1. СБРОС ПАТТЕРНОВ И ЛОГОВ
             STATE.currentTargetPatternIdx = 0;
@@ -8374,6 +8642,7 @@ safeBind('stopBtn', 'click', () => {
             }
             updateLogic();
             render();
+            if (typeof syncDpad === 'function') syncDpad();
         });
     </script>
 <!-- === МАРКЕР 56: ВЫЧИСЛЕНИЯ И СОСТОЯНИЕ КОНЕЦ === -->
@@ -8381,8 +8650,13 @@ safeBind('stopBtn', 'click', () => {
 <!-- === МАРКЕР 57: РЕНДЕР ХОЛСТА === -->
     <script>
         // === WebGL-РЕНДЕР "ЧИСТОГО ДВИЖЕНИЯ" (галка webglRenderCheck) ===
-        // Отдельный, полностью самостоятельный путь отрисовки только обычной пирамиды (не радар),
+        // Отдельный, полностью самостоятельный путь отрисовки пирамиды И радара,
         // без рамки/паттернов/подсветок/номеров строк — только сама анимация (с учётом Зеркала).
+        // Радар: renderRadarWebGL() — кольца символов + окружности воронки; лучи, выделение
+        // колец и баланс в центре остаются только в Canvas2D-рендере.
+        // Повторяет у Canvas2D-пирамиды: режимы симметрии (Центр/Идеальный Центр/Центр по Базе),
+        // красный трассер первой 1 (redFirstOneCheck), фильтр неактивных строк (filterCheck,
+        // строка-кандидат видна), барабанный режим (пробел → точка) и цвет точек-заполнителей.
         // Не трогает и не заменяет основной render() ниже — используется вместо него только пока
         // включена галка. Используем PIXI.BitmapText/BitmapFont — штатный механизм PixiJS для
         // множества повторяющихся глифов из маленького набора символов (общий атлас на цвет,
@@ -8402,19 +8676,102 @@ safeBind('stopBtn', 'click', () => {
             return webglState;
         }
 
-        const WEBGL_BITMAP_FONT_SIZE = 48; // разрешение шрифта-атласа; дальше масштабируется через fontSize у BitmapText
-        const WEBGL_CHARS = [['0', '9'], '.', 'x', '\\', '/', '(', ')', '[', ']', '<', '>', '+', '-', ' '];
+        // Прячет всё нарисованное на WebGL-сцене (символы и окружности воронки) и перерисовывает
+        // пустой кадр. Нужна на ранних выходах из render() (очистка холста, нет метрик):
+        // они срабатывают ДО WebGL-развилки, и без этого на webglCanvas висел бы последний кадр.
+        function clearWebglStage() {
+            if (!webglState) return;
+            for (let k = 0; k < webglState.textPool.length; k++) {
+                if (webglState.textPool[k]) webglState.textPool[k].visible = false;
+            }
+            if (webglState.gridGfx) webglState.gridGfx.clear();
+            webglState.app.render();
+        }
 
-        function ensureWebglFont(ws, color) {
-            let fontName = ws.fontsByColor.get(color);
-            if (fontName) return fontName;
-            fontName = 'zk_' + color.replace('#', '');
+        const WEBGL_BITMAP_FONT_SIZE = 48; // разрешение шрифта-атласа; дальше масштабируется через fontSize у BitmapText
+        // Набор символов атласа: цифры, латиница, кириллица (с ё/Ё) и пунктуация — буквы
+        // раньше отсутствовали, и WebGL их просто не рисовал. Символ вне набора не отрисуется.
+        const WEBGL_CHARS = [
+            ['0', '9'], ['a', 'z'], ['A', 'Z'], ['а', 'я'], ['А', 'Я'], 'ёЁ',
+            '.', '\\', '/', '(', ')', '[', ']', '<', '>', '+', '-', ' ',
+            '*', '=', '#', '_', '|', '!', '?', ',', ':', ';', '~', '^', '%', '&', '@', '{', '}', '$', '"', "'", '`'
+        ];
+
+        // Лесенка размеров атласов: любой размер ползунка (6..100+) рисуется ближайшей
+        // ступенью с дотяжкой через scale — разница до ~25% глазом не заметна, зато атласов
+        // считанные штуки и их можно все заготовить заранее (см. prewarmWebglFonts).
+        const WEBGL_ATLAS_SIZES = [8, 12, 16, 24, 32, 48, 64, 96];
+        function webglAtlasSizeFor(base) {
+            let best = WEBGL_ATLAS_SIZES[0];
+            for (const s of WEBGL_ATLAS_SIZES) { if (Math.abs(s - base) < Math.abs(best - base)) best = s; }
+            return best;
+        }
+
+        function ensureWebglFont(ws, color, forcedSize) {
+            // Атлас кэшируется по комбинации цвет+шрифт+жирность+размер: шрифт и жирность
+            // берутся из настроек (как в Canvas2D-рендере), при их смене строится новый атлас.
+            // Размер атласа — ближайшая ступень лесенки к ФАКТИЧЕСКОМУ размеру шрифта (с учётом
+            // devicePixelRatio), а не фиксированные 48px: сильное уменьшение атласа при
+            // отрисовке (48 → ~16px, без мипмапов) съедало толщину штрихов, и символы
+            // выглядели блёкло-темнее, чем в Canvas2D. Геометрия от размера атласа не зависит
+            // (fontSize у BitmapText нормализует), меняется только чёткость текстуры.
+            let family = safeValue('fontSelect', 'monospace');
+            let weight = safeChecked('boldCheck', false) ? 'bold' : 'normal';
+            let base = parseInt(safeValue('fontSlider', 16)) * parseFloat(safeValue('charSizeSlider', 1.0));
+            let atlasSize = forcedSize || webglAtlasSizeFor(base);
+            let res = window.devicePixelRatio || 1;
+            let styleKey = color + '|' + family + '|' + weight;
+            let key = styleKey + '|' + atlasSize + '|' + res;
+            if (!ws.fontVariant) ws.fontVariant = new Map(); // последний атлас каждого стиля (независимо от размера)
+            let fontName = ws.fontsByColor.get(key);
+            if (fontName) { ws.fontVariant.set(styleKey, fontName); return fontName; }
+
+            // Троттлинг построек: постройка атласа (все глифы на canvas + загрузка текстуры в
+            // GPU) дорогая. Обычно все ступени лесенки уже заготовлены в фоне (см.
+            // prewarmWebglFonts), но если нужной ещё нет (сменили цвет/шрифт и сразу зумят) —
+            // пока пачка построек "свежая" (<300мс), рисуем последним атласом этого стиля
+            // (scale компенсирует), а точный достроится по отложенной перерисовке.
+            let now = performance.now();
+            let sinceBuild = now - (ws.lastAtlasBuildTime || -1e9);
+            let fallback = ws.fontVariant.get(styleKey);
+            if (!forcedSize && fallback && sinceBuild > 50 && sinceBuild < 300) {
+                if (!ws.fontRebuildTimer) ws.fontRebuildTimer = setTimeout(() => { ws.fontRebuildTimer = null; render(); }, 320);
+                return fallback;
+            }
+            if (sinceBuild > 50) ws.lastAtlasBuildTime = now; // новая пачка (первые ~50мс строят все цвета кадра разом)
+
+            ws.fontSeq = (ws.fontSeq || 0) + 1;
+            fontName = 'zk_' + ws.fontSeq + '_' + color.replace('#', '');
+            // Размер страницы текстуры — по размеру глифов, чтобы лесенка атласов не жгла видеопамять зря.
+            let page = atlasSize <= 16 ? 256 : (atlasSize <= 32 ? 512 : 1024);
             PIXI.BitmapFont.from(fontName, {
-                fontFamily: 'Consolas, monospace', fontSize: WEBGL_BITMAP_FONT_SIZE, fill: color
-            }, { chars: WEBGL_CHARS });
-            ws.fontsByColor.set(color, fontName);
+                fontFamily: family, fontWeight: weight, fontSize: atlasSize, fill: color
+            }, { chars: WEBGL_CHARS, resolution: res, textureWidth: page, textureHeight: page });
+            ws.fontsByColor.set(key, fontName);
+            ws.fontVariant.set(styleKey, fontName);
             return fontName;
         }
+
+        // Фоновая заготовка шпаргалок: неспешно (по одной за тик) строим атласы ВСЕХ ступеней
+        // лесенки для текущих цветов. После этого зум вообще не строит атласы на лету —
+        // только выбирает ближайшую готовую ступень. Лесенка вместо всех ~100 значений
+        // ползунка: растяжение до ~25% глазом не видно, а 100×4 цвета = гигабайты видеопамяти.
+        function prewarmWebglFonts() {
+            const ws = ensureWebglApp();
+            if (!ws) return;
+            let colors = [safeValue('color1', '#ffffff'), safeValue('color0', '#00ff66'),
+                          safeValue('tracerColor', '#ff3333'), '#555555', '#444444'];
+            let jobs = [];
+            for (const s of WEBGL_ATLAS_SIZES) for (const c of colors) jobs.push([s, c]);
+            let i = 0;
+            (function step() {
+                if (i >= jobs.length) return;
+                ensureWebglFont(ws, jobs[i][1], jobs[i][0]);
+                i++;
+                setTimeout(step, 60);
+            })();
+        }
+        setTimeout(() => { if (safeChecked('webglRenderCheck', false)) prewarmWebglFonts(); }, 2000);
 
         function renderPyramidWebGL(m) {
             const ws = ensureWebglApp();
@@ -8444,12 +8801,30 @@ safeBind('stopBtn', 'click', () => {
             let centerY = m.startY + (useMirror ? (m.renderCount - 1) * m.lineHeight : 0) + (m.lineHeight / 2);
             let c1 = safeValue('color1', '#ffffff');
             let c0 = safeValue('color0', '#00ff66');
+            // Прозрачность символов как в Canvas2D (там c1/c0 — hexToRgba с alpha1/alpha0,
+            // из-за чего нули заметно тусклее) — иначе цвета в WebGL выглядят иначе.
+            let alpha1 = parseFloat(safeValue('alpha1', 1.0));
+            let alpha0 = parseFloat(safeValue('alpha0', 0.5));
             let fillerColor = '#555555';
-            let renderFontSize = parseInt(safeValue('fontSlider', 16)) * parseFloat(safeValue('charSizeSlider', 1.0));
+            let trColor = safeValue('tracerColor', '#ff3333');
+            let trackRedOne = safeChecked('redFirstOneCheck', true);
+            let applyFilter = safeChecked('filterCheck', false);
+            let isDrum = safeChecked('drumModeCheck', false);
+            let symMode = safeValue('symModeSelect', 'centerTrack');
+            let spaced = safeChecked('spacedCheck', false);
+            let renderFontSize = parseInt(safeValue('fontSlider', 16)) * parseFloat(safeValue('charSizeSlider', 1.0)) * AUDIO_VISUALIZER.audioScale; // пульсация от баса
 
             let font1 = ensureWebglFont(ws, c1);
             let font0 = ensureWebglFont(ws, c0);
             let fontFiller = ensureWebglFont(ws, fillerColor);
+            let fontRed = ensureWebglFont(ws, trColor);
+
+            if (ws.gridGfx) ws.gridGfx.clear(); // окружности воронки рисует только радар-режим
+
+            // Граница активного блока — для строки-кандидата (следующей за последней активной),
+            // которую фильтр не прячет, как и в Canvas2D-рендере.
+            let lastActiveIdx = -1;
+            STATE.lines.forEach((l, li) => { if (l.isActive) lastActiveIdx = li; });
             // Масштаб через .scale, а не через .fontSize у уже созданного BitmapText — .scale
             // гарантированно работает на любом объекте PixiJS, в отличие от live-смены fontSize.
             let scaleRatio = renderFontSize / WEBGL_BITMAP_FONT_SIZE;
@@ -8474,25 +8849,173 @@ safeBind('stopBtn', 'click', () => {
                 let text = lineData.display;
                 if (!text) continue;
 
+                // Фильтр неактивных строк (галка filterCheck) — как в Canvas2D:
+                // неактивные прячем, строку-кандидата оставляем видимой.
+                let isCandidateRow = (actualIndex === lastActiveIdx + 1);
+                if (applyFilter && !lineData.isActive && !isCandidateRow) continue;
+
                 let yDown = centerY + (i * m.lineHeight);
                 let yUp = centerY - (i * m.lineHeight);
                 let yPositions = [yDown];
                 if (useMirror && i > 0) yPositions.push(yUp);
 
+                // Позиция строки по режиму симметрии — та же логика, что в Canvas2D-пирамиде.
+                let currentX = 0, isMatrixAxis = false, liveCenterOffset = 0;
+                if (symMode === 'centerTrack' || symMode === 'centerTrack2') {
+                    isMatrixAxis = true;
+                    let firstCharIdx = -1, lastCharIdx = -1;
+                    for (let k = 0; k < text.length; k++) {
+                        if (!lineData.fillerMask[k] && text[k] !== ' ' && text[k] !== 'x' && text[k] !== '.') { if (firstCharIdx === -1) firstCharIdx = k; lastCharIdx = k; }
+                    }
+                    if (firstCharIdx !== -1) {
+                        let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
+                        let mathCenterIndex = (text.length - 1) / 2.0;
+                        liveCenterOffset = (mathCenterIndex - liveCenterIndex) * m.charWidth;
+                    }
+                } else if (symMode === 'centerBase') {
+                    currentX = m.baseX - ((lineData.L * (spaced ? 2 : 1)) * m.charWidth / 2);
+                } else {
+                    currentX = m.baseX - (text.length * m.charWidth / 2);
+                }
+
                 yPositions.forEach(y => {
-                    let currentX = m.baseX - (text.length * m.charWidth / 2);
                     for (let c = 0; c < text.length; c++) {
                         let char = text[c];
-                        if (char === ' ') continue;
-                        let cellX = currentX + (c * m.charWidth) + (m.charWidth / 2);
-                        let fontName = (char === '.') ? fontFiller : (isType1(char) ? font1 : font0);
+                        if (char === ' ') { if (isDrum) char = '.'; else continue; }
+                        let cellX = isMatrixAxis
+                            ? (m.baseX + ((c - (text.length - 1) / 2.0) * m.charWidth) + liveCenterOffset)
+                            : (currentX + (c * m.charWidth) + (m.charWidth / 2));
+
+                        let isRed = trackRedOne && lineData.redMask && lineData.redMask[c];
+                        let isChar1 = isType1(char);
+                        let fontName = isRed ? fontRed : ((char === '.') ? fontFiller : (isChar1 ? font1 : font0));
                         let t = getTextObj(fontName);
                         if (t.fontName !== fontName) t.fontName = fontName;
                         if (t.text !== char) t.text = char;
+                        t.alpha = (isRed || char === '.') ? 1.0 : (isChar1 ? alpha1 : alpha0);
                         t.scale.set(scaleRatio);
+                        t.rotation = 0; // пул текстов общий с радаром — там глифы повёрнуты
                         t.x = cellX; t.y = y;
                     }
                 });
+            }
+
+            for (let k = idx; k < ws.textPool.length; k++) {
+                if (ws.textPool[k]) ws.textPool[k].visible = false;
+            }
+
+            ws.app.render();
+        }
+
+        function renderRadarWebGL(m) {
+            const ws = ensureWebglApp();
+            if (!ws) return;
+            try {
+                renderRadarWebGLInner(ws, m);
+            } catch (e) {
+                console.error('[WebGL-рендер радар] ошибка:', e);
+                if (!ws.errorShown) {
+                    ws.errorShown = true;
+                    showNotification("⚠️ WebGL-РЕНДЕР (РАДАР): ОШИБКА (см. консоль F12) — " + e.message);
+                }
+            }
+        }
+
+        // Радар на WebGL: кольца символов (глиф повёрнут по касательной, как в Canvas2D) и
+        // окружности воронки через PIXI.Graphics. Красный трассер/фильтр/барабан — как в пирамиде.
+        function renderRadarWebGLInner(ws, m) {
+            const containerEl = document.getElementById('screenContainer');
+            const w = containerEl ? containerEl.clientWidth : window.innerWidth;
+            const h = containerEl ? containerEl.clientHeight : window.innerHeight;
+            if (ws.lastW !== w || ws.lastH !== h) {
+                ws.app.renderer.resize(w, h);
+                ws.lastW = w; ws.lastH = h;
+            }
+
+            let totalRows = STATE.lines.length;
+            let centerX = w / 2 + STATE.offsetX + STATE.autoOffsetX;
+            let centerY = h / 2 + STATE.offsetY + STATE.autoOffsetY;
+            let c1 = safeValue('color1', '#ffffff');
+            let c0 = safeValue('color0', '#00ff66');
+            // Прозрачность символов как в Canvas2D (hexToRgba с alpha1/alpha0).
+            let alpha1 = parseFloat(safeValue('alpha1', 1.0));
+            let alpha0 = parseFloat(safeValue('alpha0', 0.5));
+            let trColor = safeValue('tracerColor', '#ff3333');
+            let trackRedOne = safeChecked('redFirstOneCheck', true);
+            let applyFilter = safeChecked('filterCheck', false);
+            let isDrum = safeChecked('drumModeCheck', false);
+            let renderFontSize = parseInt(safeValue('fontSlider', 16)) * parseFloat(safeValue('charSizeSlider', 1.0)) * AUDIO_VISUALIZER.audioScale; // пульсация от баса
+
+            let font1 = ensureWebglFont(ws, c1);
+            let font0 = ensureWebglFont(ws, c0);
+            let fontFiller = ensureWebglFont(ws, '#444444');
+            let fontRed = ensureWebglFont(ws, trColor);
+            let scaleRatio = renderFontSize / WEBGL_BITMAP_FONT_SIZE;
+
+            let lastActiveIdx = -1;
+            STATE.lines.forEach((l, li) => { if (l.isActive) lastActiveIdx = li; });
+
+            // Воронка: концентрические окружности колец, слоем под текстом.
+            if (!ws.gridGfx) {
+                ws.gridGfx = new PIXI.Graphics();
+                ws.container.addChildAt(ws.gridGfx, 0);
+            }
+            ws.gridGfx.clear();
+            if (safeChecked('funnelCheck', false)) {
+                let gridColorNum = parseInt(safeValue('gridColorInput', '#00ff66').replace('#', ''), 16);
+                let gridAlphaVal = parseFloat(safeValue('gridAlpha', 0.4));
+                ws.gridGfx.lineStyle(1, gridColorNum, gridAlphaVal);
+                for (let i = 0; i < m.renderCount; i++) {
+                    ws.gridGfx.drawCircle(centerX, centerY, (i + 2) * m.lineHeight);
+                }
+            }
+
+            let idx = 0;
+            const getTextObj = (fontName) => {
+                let t = ws.textPool[idx];
+                if (!t) {
+                    t = new PIXI.BitmapText('', { fontName: fontName, fontSize: WEBGL_BITMAP_FONT_SIZE });
+                    t.anchor.set(0.5);
+                    ws.container.addChild(t);
+                    ws.textPool[idx] = t;
+                }
+                t.visible = true;
+                idx++;
+                return t;
+            };
+
+            for (let i = 0; i < m.renderCount; i++) {
+                let actualIndex = (m.startIndex + i) % totalRows;
+                let lineData = STATE.lines[actualIndex];
+                let text = lineData.display;
+                if (!text || text.length === 0) continue;
+
+                let isCandidateRow = (actualIndex === lastActiveIdx + 1);
+                if (applyFilter && !lineData.isActive && !isCandidateRow) continue;
+
+                let r = (i + 2) * m.lineHeight;
+                let angleStep = (Math.PI * 2) / text.length;
+
+                for (let c = 0; c < text.length; c++) {
+                    let char = text[c];
+                    if (char === ' ') { if (isDrum) char = '.'; else continue; }
+
+                    // Как в Canvas2D-радаре: заполнители — серым (и они важнее трассера).
+                    let isFiller = (lineData.fillerMask && lineData.fillerMask[c]) || char === '.';
+                    let isRed = trackRedOne && lineData.redMask && lineData.redMask[c];
+                    let isChar1 = isType1(char);
+                    let fontName = isFiller ? fontFiller : (isRed ? fontRed : (isChar1 ? font1 : font0));
+
+                    let angle = c * angleStep - (Math.PI / 2);
+                    let t = getTextObj(fontName);
+                    if (t.fontName !== fontName) t.fontName = fontName;
+                    if (t.text !== char) t.text = char;
+                    t.alpha = (isFiller || isRed) ? 1.0 : (isChar1 ? alpha1 : alpha0);
+                    t.scale.set(scaleRatio);
+                    t.rotation = angle + Math.PI / 2;
+                    t.x = centerX + Math.cos(angle) * r;
+                    t.y = centerY + Math.sin(angle) * r;
+                }
             }
 
             for (let k = idx; k < ws.textPool.length; k++) {
@@ -8510,6 +9033,8 @@ safeBind('stopBtn', 'click', () => {
             const ctx = UI.ctx;
             if (!canvas || !container || !ctx) return;
 
+            AUDIO_VISUALIZER.update(); // уровни баса/громкости для пульсации (см. МАРКЕР 55)
+
             let isVerticalHl, isInactiveVerticalHl;
 
             ctx.globalAlpha = 1.0;
@@ -8520,7 +9045,7 @@ safeBind('stopBtn', 'click', () => {
             ctx.fillStyle = useTrail ? hexToRgba(bgColor, 0.2) : bgColor;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            if (STATE.lines.length === 0) return;
+            if (STATE.lines.length === 0) { clearWebglStage(); return; }
 
             let useRadar = safeChecked('radarCheck', false);
             let useNeon = safeChecked('neonCheck', false);
@@ -8531,7 +9056,7 @@ safeBind('stopBtn', 'click', () => {
             let useFillX = safeChecked('fillXCheck', false);
             let symMode = safeValue('symModeSelect', 'centerTrack');
             let m = getGridMetrics();
-            if (!m) return;
+            if (!m) { clearWebglStage(); return; }
 
             // Чисто визуальные цветные нижние границы строк (по номеру строки, не по позиции на
             // экране, поэтому "закреплены" за строкой при скролле) — см. блок в "Оформление и цвета".
@@ -8539,15 +9064,18 @@ safeBind('stopBtn', 'click', () => {
             let rowBottomBorderColor = safeValue('rowBottomBorderColorInput', '#ff9900');
             let rowBottomBorderStep = Math.max(1, parseInt(safeValue('rowBottomBorderStepInput', 1)) || 1);
 
-            // "Чистое движение" на WebGL: отдельный лёгкий путь без рамки/паттернов/радара —
-            // см. renderPyramidWebGL(). Радар WebGL не поддерживает (см. план) — в радар-режиме
-            // всегда используем обычный Canvas2D-рендер ниже, даже если галка включена.
+            // "Чистое движение" на WebGL: отдельный лёгкий путь без рамки/паттернов/подсветок —
+            // см. renderPyramidWebGL() / renderRadarWebGL(). Радар на WebGL рисует кольца символов
+            // и окружности воронки; лучи/выделение колец/баланс — только в Canvas2D-рендере.
             const webglCanvasEl = document.getElementById('webglCanvas');
             const screenCanvasEl = document.getElementById('screenCanvas');
-            if (safeChecked('webglRenderCheck', false) && !useRadar) {
+            if (safeChecked('webglRenderCheck', false)) {
+                // screenCanvas НЕ прячем: на нём остаётся только фон (заливка выше по коду),
+                // но именно на нём висят все обработчики мыши/колеса/тача — перетаскивание,
+                // зум и клики работают, а webglCanvas лежит сверху с pointer-events:none.
                 if (webglCanvasEl) webglCanvasEl.style.display = 'block';
-                if (screenCanvasEl) screenCanvasEl.style.display = 'none';
-                renderPyramidWebGL(m);
+                if (screenCanvasEl) screenCanvasEl.style.display = '';
+                if (useRadar) renderRadarWebGL(m); else renderPyramidWebGL(m);
                 return;
             } else {
                 if (webglCanvasEl) webglCanvasEl.style.display = 'none';
@@ -8561,7 +9089,9 @@ safeBind('stopBtn', 'click', () => {
             let charScale = parseFloat(safeValue('charSizeSlider', 1.0));
             let fontWeight = safeChecked('boldCheck', false) ? 'bold' : 'normal';
             let fontSelectVal = safeValue('fontSelect', 'monospace');
-            ctx.font = `${fontWeight} ${baseFontSize * charScale}px ${fontSelectVal}`;
+            // audioScale — пульсация от баса (глифы растут в своих клетках, сетка не плывёт:
+            // метрики getGridMetrics() посчитаны без этого множителя).
+            ctx.font = `${fontWeight} ${baseFontSize * charScale * AUDIO_VISUALIZER.audioScale}px ${fontSelectVal}`;
             ctx.textBaseline = 'middle';
 
             let c1 = hexToRgba(safeValue('color1', '#ffffff'), safeValue('alpha1', 1.0));
@@ -8792,7 +9322,7 @@ safeBind('stopBtn', 'click', () => {
                         else {
                             if (char === '.') ctx.fillStyle = '#555';
                             else ctx.fillStyle = isChar1 ? c1 : c0;
-                            if (useNeon && (isChar1 || isVerticalHl) && char !== '.') { ctx.shadowBlur = 8; ctx.shadowColor = isVerticalHl ? '#00ccff' : (isChar1 ? rawColor1 : rawColor0); }
+                            if (useNeon && (isChar1 || isVerticalHl) && char !== '.') { ctx.shadowBlur = 8 + AUDIO_VISUALIZER.audioGlow; ctx.shadowColor = isVerticalHl ? '#00ccff' : (isChar1 ? rawColor1 : rawColor0); }
                         }
 
                         let angle = c * angleStep - (Math.PI / 2);
@@ -9391,16 +9921,74 @@ safeBind('stopBtn', 'click', () => {
         // Кнопки Пуск/Стоп/◀▶ вынесены из .player-panel в DOM (см. #playerButtonsBar), чтобы
         // затемнение панели (opacity на .player-panel.auto-row-overlap) не гасило их по умолчанию —
         // позиция синхронизируется вручную с нижним краем пульта.
-        function positionPlayerButtonsBar() {
-            let bar = document.getElementById('playerButtonsBar');
-            let panel = document.querySelector('.player-panel');
-            if (!bar || !panel) return;
-            let rect = panel.getBoundingClientRect();
-            bar.style.left = (rect.left + rect.width / 2) + 'px';
-            bar.style.transform = 'translateX(-50%)';
-            bar.style.top = (rect.bottom + 6) + 'px';
+        // === ЗАПОМИНАНИЕ РАСКЛАДКИ ТРЁХ ПАНЕЛЕЙ (пульт, мини-пульт, рамка) ===
+        // Позиция + свёрнутость каждой панели сохраняются в localStorage при каждом отпускании
+        // мыши и восстанавливаются при загрузке (страница не может сама писать в banks_data.js —
+        // это файл на диске, браузеру запрещено; localStorage — тот же механизм, что у банков).
+        function savePanelLayout() {
+            try {
+                let data = {};
+                [['pp', '.player-panel'], ['mb', '#playerButtonsBar'], ['fb', '#frameBuildPanel']].forEach(([k, sel]) => {
+                    let el = document.querySelector(sel);
+                    if (!el) return;
+                    let r = el.getBoundingClientRect();
+                    data[k] = { l: Math.round(r.left), t: Math.round(r.top), m: el.classList.contains('minimized') };
+                });
+                localStorage.setItem('panel_layout', JSON.stringify(data));
+            } catch (e) {}
         }
-        positionPlayerButtonsBar();
+        window.savePanelLayout = savePanelLayout;
+        function restorePanelLayout() {
+            let data = null;
+            try { data = JSON.parse(localStorage.getItem('panel_layout') || 'null'); } catch (e) {}
+            if (!data) return false;
+            [['pp', '.player-panel'], ['mb', '#playerButtonsBar'], ['fb', '#frameBuildPanel']].forEach(([k, sel]) => {
+                let el = document.querySelector(sel);
+                let d = data[k];
+                if (!el || !d) return;
+                el.style.left = Math.max(0, Math.min(window.innerWidth - 80, d.l)) + 'px';
+                el.style.top = Math.max(0, Math.min(window.innerHeight - 40, d.t)) + 'px';
+                el.style.right = 'auto';
+                el.style.bottom = 'auto';
+                el.style.transform = 'none';
+                el.classList.toggle('minimized', !!d.m);
+            });
+            window.__miniBarUserMoved = true; // мини-пульт больше не приклеен к пульту
+            window.__panelLayoutRestored = true;
+            return true;
+        }
+        // Сохраняем после любого отпускания мыши (конец перетаскивания/сворачивания) — дёшево.
+        document.addEventListener('mouseup', () => setTimeout(savePanelLayout, 80));
+
+        function positionPlayerButtonsBar() {
+            // Пульт слит в мини-пульт: по умолчанию мини-пульт стоит слева от центра экрана
+            // сверху — но только пока пользователь не утащил его сам и нет сохранённой раскладки.
+            if (window.__miniBarUserMoved) return;
+            let bar = document.getElementById('playerButtonsBar');
+            if (!bar) return;
+            let barW = bar.getBoundingClientRect().width || 306;
+            bar.style.transform = 'none';
+            bar.style.left = Math.max(4, Math.round(window.innerWidth / 2 - barW - 5)) + 'px';
+            bar.style.top = '0px';
+        }
+
+        // Панель "Построение и поиск в рамке" по умолчанию — справа от центра, на том же уровне.
+        // Выставляется только при загрузке (несколько повторов, пока layout оседает).
+        function alignFrameBuildPanelDefault() {
+            if (window.__panelLayoutRestored) return;
+            let fp = document.getElementById('frameBuildPanel');
+            if (!fp) return;
+            fp.style.left = Math.min(window.innerWidth - 220, Math.round(window.innerWidth / 2 + 5)) + 'px';
+            fp.style.top = '0px';
+            fp.style.right = 'auto';
+            fp.style.bottom = 'auto';
+        }
+
+        if (!restorePanelLayout()) {
+            positionPlayerButtonsBar();
+            alignFrameBuildPanelDefault();
+            for (let i = 1; i <= 6; i++) setTimeout(alignFrameBuildPanelDefault, i * 100);
+        }
         // ResizeObserver ловит только изменение РАЗМЕРА пульта, а не позиции — при самой первой
         // загрузке страницы позиция могла ещё не устаканиться (шрифты/layout), из-за чего
         // мини-панель садилась впритык без отступа. Одного кадра оказалось мало — перепроверяем
@@ -9657,12 +10245,13 @@ safeBind('stopBtn', 'click', () => {
             updateLogic(); 
         });
         
-        safeBind('reverseBtn', 'click', function() { 
-            STATE.isReverse = !STATE.isReverse; 
+        safeBind('reverseBtn', 'click', function() {
+            STATE.isReverse = !STATE.isReverse;
             this.innerHTML = STATE.isReverse ? '🔃 Назад' : '🔃 Вперед';
             this.style.color = STATE.isReverse ? '#ff3333' : '#ffcc00';
             this.style.borderColor = STATE.isReverse ? '#ff3333' : '#ffcc00';
             showNotification(STATE.isReverse ? "РЕВЕРС" : "ВПЕРЕД");
+            if (typeof syncDpad === 'function') syncDpad(); // пинг-понг кликает эту кнопку программно
         });
 
         safeBind('floatingRadarBtn', 'click', function() {
@@ -9742,6 +10331,33 @@ safeBind('stopBtn', 'click', () => {
             this.classList.toggle('active', STATE.viewRotation !== 0);
             showNotification(STATE.viewRotation === 0 ? "⟲ ВИД ВОЗВРАЩЁН" : `⟲ ВИД ПОВЁРНУТ НА ${STATE.viewRotation}°`);
         });
+
+        // Настоящий поворот данных на 90° по часовой (в отличие от ⟲, который крутит только
+        // картинку CSS-ом): столбцы становятся строками, W×H меняются местами, результат
+        // проходит через loadText() как обычный новый текст — поиск паттернов, радар, циклы
+        // работают по новым строкам без оговорок. Строки разной длины добиваются нулями
+        // справа до прямоугольника (иначе столбцы не собрать); после первого поворота сетка
+        // уже прямоугольная, и дальнейшие повороты без потерь: 4 нажатия = исходник.
+        function rotateGridData() {
+            if (!STATE.lines || STATE.lines.length === 0) {
+                showNotification("ОШИБКА: НЕТ СТРОК ДЛЯ ПОВОРОТА");
+                return;
+            }
+            if (window.saveUndoState) saveUndoState();
+            let rows = STATE.lines.map(l => l.orig);
+            let H = rows.length;
+            let W = Math.max(...rows.map(r => r.length));
+            rows = rows.map(r => r.padEnd(W, '0'));
+            let rotated = [];
+            for (let x = 0; x < W; x++) {
+                let s = '';
+                for (let y = H - 1; y >= 0; y--) s += rows[y][x];
+                rotated.push(s);
+            }
+            loadText(rotated.join('\n'), false, false, true);
+            showNotification(`⟳ СЕТКА ПОВЁРНУТА НА 90°: БЫЛО ${H} СТРОК × ${W}, СТАЛО ${W} × ${H}`);
+        }
+        safeBind('floatingRotateDataBtn', 'click', rotateGridData);
 
         safeBind('floatingUndoBtn', 'click', () => performUndo());
         safeBind('floatingRedoBtn', 'click', () => performRedo());
@@ -10137,12 +10753,30 @@ safeBind('stopBtn', 'click', () => {
         safeBind('meetCenterCheck', 'change', function() { updateLogic(); });
         safeBind('splitCenterCheck', 'change', function() { updateLogic(); });
 
+        // Подсветка плавающей кнопки ⚡ по состоянию галки WebGL-рендера.
+        function syncFloatingWebglBtn() {
+            let btn = document.getElementById('floatingWebglBtn');
+            if (!btn) return;
+            let on = safeChecked('webglRenderCheck', false);
+            btn.style.background = on ? '#ffd500' : '';
+            btn.style.color = on ? '#000' : '#ffd500';
+        }
         safeBind('webglRenderCheck', 'change', function() {
             // Видимость холстов пересчитывается в самом render() (учитывает и радар) — здесь
-            // только уведомление и перерисовка.
-            showNotification(this.checked ? "⚡ WebGL-РЕНДЕР ВКЛЮЧЁН (только движение, без рамки/паттернов/радара)" : "⚡ WebGL-РЕНДЕР ВЫКЛЮЧЕН — ОБЫЧНЫЙ РЕЖИМ");
+            // только уведомление, синхронизация кнопки ⚡ и перерисовка.
+            showNotification(this.checked ? "⚡ WebGL-РЕНДЕР ВКЛЮЧЁН (только движение, без рамки/паттернов)" : "⚡ WebGL-РЕНДЕР ВЫКЛЮЧЕН — ОБЫЧНЫЙ РЕЖИМ");
+            syncFloatingWebglBtn();
             render();
+            if (this.checked) prewarmWebglFonts(); // заготовить лесенку атласов в фоне
         });
+        // Плавающая кнопка ⚡ — тумблер той же галки (дёргаем change, чтобы сработала вся её логика).
+        safeBind('floatingWebglBtn', 'click', () => {
+            let chk = document.getElementById('webglRenderCheck');
+            if (!chk) return;
+            chk.checked = !chk.checked;
+            chk.dispatchEvent(new Event('change'));
+        });
+        syncFloatingWebglBtn();
         safeBind('spacedCheck', 'change', function() { updateLogic(); });
         
         safeBind('hideChangedCheck', 'change', function() { updateLogic(); });
@@ -10170,6 +10804,7 @@ safeBind('stopBtn', 'click', () => {
         safeBind('redFirstOneCheck', 'change', function() { updateLogic(); });
         safeBind('tracerColor', 'input', function() { render(); });
         safeBind('sequentialSearchCheck', 'change', function() { updatePatternBackdrop(); updateLogic(); });
+        safeBind('selfRowMatchCheck', 'change', function() { showNotification(this.checked ? "ПАТТЕРН ЗАСЧИТЫВАЕТСЯ И В СВОЕЙ СТРОКЕ" : "ПАТТЕРН — ТОЛЬКО ИЗ СТРОК ВЫШЕ (КАСКАД)"); calculateState(true); updateLogic(); });
         safeBind('symModeSelect', 'change', function() { render(); });
         
         safeBind('loopStart', 'input', function() { enforceLoop(); updateLogic(); });
@@ -10933,10 +11568,34 @@ safeBind('stopBtn', 'click', () => {
                 };
                 let content = panel.querySelector('.panel-content');
                 if (content) content.addEventListener('mousedown', startPanelDrag);
-                let bar = document.getElementById('playerButtonsBar');
-                if (bar) bar.addEventListener('mousedown', startPanelDrag);
                 let titleBar = panel.querySelector(':scope > div[style*="cursor:move"]');
                 if (titleBar) titleBar.addEventListener('mousedown', startPanelDrag);
+
+                // Мини-пульт таскается сам по себе (раньше тянул за собой пульт). После первого
+                // перетаскивания отвязывается от пульта (positionPlayerButtonsBar его не трогает),
+                // позиция сохраняется через общий savePanelLayout по mouseup.
+                let bar = document.getElementById('playerButtonsBar');
+                if (bar) bar.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0) return;
+                    if (e.target.closest('input, button, select, textarea, label, a')) return;
+                    window.__miniBarUserMoved = true;
+                    let rect = bar.getBoundingClientRect();
+                    bar.style.transform = 'none';
+                    bar.style.left = rect.left + 'px';
+                    bar.style.top = rect.top + 'px';
+                    let px = e.clientX, py = e.clientY;
+                    document.onmouseup = () => {
+                        document.onmouseup = null;
+                        document.onmousemove = null;
+                    };
+                    document.onmousemove = (e2) => {
+                        e2.preventDefault();
+                        let dx = px - e2.clientX, dy = py - e2.clientY;
+                        px = e2.clientX; py = e2.clientY;
+                        bar.style.top = (bar.offsetTop - dy) + 'px';
+                        bar.style.left = (bar.offsetLeft - dx) + 'px';
+                    };
+                });
             })();
             setupDraggable('#rightPanel', '🧠 ПАНЕЛЬ');
             setupDraggable('#frameBuildPanel', '🏗️ Построение и поиск в рамке');
@@ -11550,6 +12209,37 @@ safeBind('stopBtn', 'click', () => {
             // Инициализируем панель слотов
             if (window.updateSlotPanel) updateSlotPanel();
         };
+    </script>
+
+    <script>
+        /* Тач-курсор для мобильных: кольцо-перекрестие следует за пальцем во время касания
+           и плавно гаснет после отпускания. Работает только на сенсорных устройствах
+           (класс touch-device ставится скриптом в <head>), на десктопе элемент не создаётся. */
+        (function () {
+            if (!document.documentElement.classList.contains('touch-device')) return;
+            var cur = document.createElement('div');
+            cur.id = 'touchCursor';
+            document.body.appendChild(cur);
+            var hideTimer = null;
+            function moveTo(t) {
+                cur.style.left = t.clientX + 'px';
+                cur.style.top = t.clientY + 'px';
+            }
+            function show(e) {
+                if (!e.touches || !e.touches.length) return;
+                moveTo(e.touches[0]);
+                cur.classList.add('visible');
+                if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+            }
+            function hide() {
+                if (hideTimer) clearTimeout(hideTimer);
+                hideTimer = setTimeout(function () { cur.classList.remove('visible'); }, 350);
+            }
+            document.addEventListener('touchstart', show, { passive: true, capture: true });
+            document.addEventListener('touchmove', show, { passive: true, capture: true });
+            document.addEventListener('touchend', hide, { passive: true, capture: true });
+            document.addEventListener('touchcancel', hide, { passive: true, capture: true });
+        })();
     </script>
 
 <!-- === МАРКЕР 75: КОНЕЦ === -->
