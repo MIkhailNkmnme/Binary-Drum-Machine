@@ -47,21 +47,45 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             margin: 0; overflow: hidden; height: 100vh; position: relative;
         }
 
-        /* Тач-курсор: на сенсорных устройствах видимое кольцо-перекрестие следует за пальцем,
-           чтобы было понятно, куда именно попадает нажатие. На десктопе не создаётся вовсе. */
+        /* Тач-курсор: на сенсорных устройствах видимое кольцо-перекрестие. Два режима
+           (переключаются кнопкой 🖱 внизу справа): простой индикатор под пальцем ИЛИ
+           виртуальная мышь как в RDP-клиентах — палец двигает курсор с любого места экрана,
+           тап = клик в точке курсора, двойной тап с удержанием = перетаскивание.
+           На десктопе ничего из этого не создаётся. */
         #touchCursor {
-            position: fixed; left: 0; top: 0; width: 36px; height: 36px;
-            margin: -18px 0 0 -18px; pointer-events: none; z-index: 100000;
-            border: 1px solid rgba(0, 255, 102, 0.9); border-radius: 50%;
+            position: fixed; left: 0; top: 0; width: 44px; height: 44px;
+            margin: -22px 0 0 -22px; pointer-events: none; z-index: 100000;
+            border: 2px solid rgba(0, 255, 102, 0.9); border-radius: 50%;
             box-shadow: 0 0 10px rgba(0, 255, 102, 0.5), inset 0 0 6px rgba(0, 255, 102, 0.25);
             opacity: 0; transition: opacity 0.35s;
         }
         #touchCursor::before, #touchCursor::after {
             content: ''; position: absolute; background: rgba(0, 255, 102, 0.9);
         }
-        #touchCursor::before { left: 50%; top: 9px; bottom: 9px; width: 1px; margin-left: -0.5px; }
-        #touchCursor::after { top: 50%; left: 9px; right: 9px; height: 1px; margin-top: -0.5px; }
+        #touchCursor::before { left: 50%; top: 10px; bottom: 10px; width: 2px; margin-left: -1px; }
+        #touchCursor::after { top: 50%; left: 10px; right: 10px; height: 2px; margin-top: -1px; }
         #touchCursor.visible { opacity: 1; transition: opacity 0.05s; }
+        #touchCursor.pressed {
+            border-color: #ffcc00; box-shadow: 0 0 14px rgba(255, 204, 0, 0.7);
+        }
+        #touchCursor.pressed::before, #touchCursor.pressed::after { background: #ffcc00; }
+        /* Обычный режим (виртуальная мышь выключена) — маленькая точка под пальцем, без прицела. */
+        #touchCursor.simple { width: 26px; height: 26px; margin: -13px 0 0 -13px; border-width: 1px; }
+        #touchCursor.simple::before, #touchCursor.simple::after { display: none; }
+
+        /* Кнопка включения/выключения виртуальной мыши (только на тач-устройствах). */
+        #vmouseToggle {
+            position: fixed; right: 14px; bottom: 14px; z-index: 100001;
+            width: 84px; height: 84px; border-radius: 50%; font-size: 40px; line-height: 1;
+            background: rgba(10, 10, 10, 0.8); color: #00ff66;
+            border: 2px solid rgba(0, 255, 102, 0.5);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+            touch-action: manipulation;
+        }
+        #vmouseToggle.on {
+            background: rgba(0, 255, 102, 0.25);
+            box-shadow: 0 0 16px rgba(0, 255, 102, 0.7);
+        }
 
         .controls { 
             position: absolute; left: 0; top: 0; width: 320px; height: 100vh; z-index: 100;
@@ -927,7 +951,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         </div>
     </div>
     <div id="playerButtonsBar" style="position:fixed; z-index:101; display:flex; flex-direction:column; align-items:center;" title="Мини-пульт. Двойной клик по пустому месту: свернуть/развернуть. Перетаскивание: переместить (положение запоминается)." onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); if (window.savePanelLayout) savePanelLayout(); event.stopPropagation(); }">
-        <div class="mini-title" style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:11px; font-weight:bold; letter-spacing:2px; color:rgba(0,204,255,0.75); padding:1px 0 3px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.12); margin-bottom:4px;">Зеркалиус · v0.378 Ultra-Save</div>
+        <div class="mini-title" style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:11px; font-weight:bold; letter-spacing:2px; color:rgba(0,204,255,0.75); padding:1px 0 3px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.12); margin-bottom:4px;">Зеркалиус · v0.379 Ultra-Save</div>
         <div style="display:flex; align-items:stretch; gap:6px; width:100%; margin-bottom:4px;">
             <div style="display:flex; flex-direction:column; justify-content:center; gap:4px; flex:1; min-width:0;">
                 <button id="clearCanvasBtn" class="btn-action btn-danger" style="margin:0; width:100%; font-size:9px;">🧹 Очистить</button>
@@ -12212,33 +12236,161 @@ safeBind('stopBtn', 'click', () => {
     </script>
 
     <script>
-        /* Тач-курсор для мобильных: кольцо-перекрестие следует за пальцем во время касания
-           и плавно гаснет после отпускания. Работает только на сенсорных устройствах
-           (класс touch-device ставится скриптом в <head>), на десктопе элемент не создаётся. */
+        /* Тач-управление для мобильных (только на сенсорных устройствах, класс touch-device
+           ставится скриптом в <head>; на десктопе ничего из этого не создаётся).
+
+           Два режима, переключаются кнопкой 🖱 в правом нижнем углу:
+           - ВЫКЛ (по умолчанию): маленькая точка-индикатор просто показывает, где палец
+             касается экрана. Никакие события не перехватываются — обычная прокрутка панелей,
+             слайдеры, кнопки работают как есть.
+           - ВКЛ (виртуальная мышь, как тачпад в RDP-клиентах): курсор — отдельная точка на
+             экране, палец может касаться в любом другом месте. Движение пальца двигает курсор
+             ОТНОСИТЕЛЬНО (как тачпад, не "телепортирует" курсор под палец). Короткий тап —
+             клик в точке курсора. Тап с удержанием на месте — "зажимает" левую кнопку мыши
+             (для перетаскивания панелей/рамки/холста), отпускание пальца отпускает кнопку.
+           Внутри всё построено на синтетических MouseEvent (mousedown/mousemove/mouseup/click)
+           с элементом-целью через elementFromPoint — весь остальной код завязан на мышь
+           (drag панелей, пан холста, клики по сетке), так что переиспользуется без изменений. */
         (function () {
             if (!document.documentElement.classList.contains('touch-device')) return;
+
             var cur = document.createElement('div');
             cur.id = 'touchCursor';
             document.body.appendChild(cur);
-            var hideTimer = null;
-            function moveTo(t) {
-                cur.style.left = t.clientX + 'px';
-                cur.style.top = t.clientY + 'px';
+
+            var toggle = document.createElement('button');
+            toggle.id = 'vmouseToggle';
+            toggle.type = 'button';
+            toggle.textContent = '🖱';
+            toggle.title = 'Виртуальная мышь (тачпад): палец двигает курсор отдельно от нажатия';
+            document.body.appendChild(toggle);
+
+            var vmouseOn = localStorage.getItem('vmouseOn') === '1';
+            var cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+            var isDown = false, moved = false, activeTouchId = null;
+            var lastTX = 0, lastTY = 0, startTX = 0, startTY = 0;
+            var holdTimer = null;
+            var simpleHideTimer = null;
+            var MOVE_THRESHOLD = 10;  // px — сдвиг пальца больше этого считается "уже не тап"
+            var HOLD_MS = 380;        // удержание пальца на месте столько мс — "зажать кнопку"
+
+            function clampCursor() {
+                cx = Math.max(0, Math.min(window.innerWidth, cx));
+                cy = Math.max(0, Math.min(window.innerHeight, cy));
             }
-            function show(e) {
-                if (!e.touches || !e.touches.length) return;
-                moveTo(e.touches[0]);
+            function placeCursor() {
+                cur.style.left = cx + 'px';
+                cur.style.top = cy + 'px';
+            }
+            function fireMouse(type, x, y) {
+                var target = document.elementFromPoint(x, y) || document.body;
+                var ev = new MouseEvent(type, {
+                    bubbles: true, cancelable: true, view: window,
+                    clientX: x, clientY: y, button: 0, buttons: isDown ? 1 : 0
+                });
+                target.dispatchEvent(ev);
+            }
+            function endHold() {
+                if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+            }
+            function setToggleVisual() {
+                toggle.classList.toggle('on', vmouseOn);
+                cur.classList.toggle('simple', !vmouseOn);
+            }
+            toggle.addEventListener('click', function () {
+                vmouseOn = !vmouseOn;
+                localStorage.setItem('vmouseOn', vmouseOn ? '1' : '0');
+                if (vmouseOn) {
+                    cx = window.innerWidth / 2; cy = window.innerHeight / 2;
+                    clampCursor(); placeCursor();
+                }
+                setToggleVisual();
+            });
+            setToggleVisual();
+
+            // Режим ВКЛ (виртуальная мышь) — один палец = тачпад, второй игнорируем.
+            document.addEventListener('touchstart', function (e) {
+                if (!vmouseOn) return;
+                if (e.target === toggle || toggle.contains(e.target)) return;
+                if (activeTouchId !== null) return;
+                var t = e.changedTouches[0];
+                activeTouchId = t.identifier;
+                lastTX = t.clientX; lastTY = t.clientY;
+                startTX = t.clientX; startTY = t.clientY;
+                moved = false;
                 cur.classList.add('visible');
-                if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+                e.preventDefault();
+
+                endHold();
+                holdTimer = setTimeout(function () {
+                    if (moved) return;
+                    isDown = true;
+                    cur.classList.add('pressed');
+                    fireMouse('mousedown', cx, cy);
+                }, HOLD_MS);
+            }, { passive: false, capture: true });
+
+            document.addEventListener('touchmove', function (e) {
+                if (!vmouseOn || activeTouchId === null) return;
+                var t = null;
+                for (var i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === activeTouchId) { t = e.changedTouches[i]; break; }
+                }
+                if (!t) return;
+                e.preventDefault();
+                var dx = t.clientX - lastTX, dy = t.clientY - lastTY;
+                lastTX = t.clientX; lastTY = t.clientY;
+                if (!moved && Math.hypot(t.clientX - startTX, t.clientY - startTY) > MOVE_THRESHOLD) {
+                    moved = true;
+                    endHold();
+                }
+                cx += dx; cy += dy;
+                clampCursor(); placeCursor();
+                fireMouse('mousemove', cx, cy);
+            }, { passive: false, capture: true });
+
+            function onTouchEnd(e) {
+                if (!vmouseOn || activeTouchId === null) return;
+                var ended = false;
+                for (var i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === activeTouchId) { ended = true; break; }
+                }
+                if (!ended) return;
+                e.preventDefault();
+                endHold();
+                if (isDown) {
+                    fireMouse('mouseup', cx, cy);
+                    cur.classList.remove('pressed');
+                    isDown = false;
+                } else if (!moved) {
+                    fireMouse('mousedown', cx, cy);
+                    fireMouse('mouseup', cx, cy);
+                    fireMouse('click', cx, cy);
+                }
+                activeTouchId = null;
+                moved = false;
             }
-            function hide() {
-                if (hideTimer) clearTimeout(hideTimer);
-                hideTimer = setTimeout(function () { cur.classList.remove('visible'); }, 350);
+            document.addEventListener('touchend', onTouchEnd, { passive: false, capture: true });
+            document.addEventListener('touchcancel', onTouchEnd, { passive: false, capture: true });
+            window.addEventListener('resize', clampCursor);
+
+            // Режим ВЫКЛ (по умолчанию) — просто показываем точку под пальцем, ничего не перехватываем.
+            function simpleShow(e) {
+                if (vmouseOn || !e.touches || !e.touches.length) return;
+                cur.style.left = e.touches[0].clientX + 'px';
+                cur.style.top = e.touches[0].clientY + 'px';
+                cur.classList.add('visible');
+                if (simpleHideTimer) { clearTimeout(simpleHideTimer); simpleHideTimer = null; }
             }
-            document.addEventListener('touchstart', show, { passive: true, capture: true });
-            document.addEventListener('touchmove', show, { passive: true, capture: true });
-            document.addEventListener('touchend', hide, { passive: true, capture: true });
-            document.addEventListener('touchcancel', hide, { passive: true, capture: true });
+            function simpleHide() {
+                if (vmouseOn) return;
+                if (simpleHideTimer) clearTimeout(simpleHideTimer);
+                simpleHideTimer = setTimeout(function () { cur.classList.remove('visible'); }, 350);
+            }
+            document.addEventListener('touchstart', simpleShow, { passive: true, capture: true });
+            document.addEventListener('touchmove', simpleShow, { passive: true, capture: true });
+            document.addEventListener('touchend', simpleHide, { passive: true, capture: true });
+            document.addEventListener('touchcancel', simpleHide, { passive: true, capture: true });
         })();
     </script>
 
