@@ -161,6 +161,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             display: none !important;
         }
         
+        /* Переключатель языка интерфейса — две кнопки в заголовке мини-пульта (Зеркалиус/Zerkalius) */
+        .lang-btn { all: unset; cursor: pointer; color: inherit; opacity: 0.55; }
+        .lang-btn:hover { opacity: 0.85; text-shadow: 0 0 6px currentColor; }
+        .lang-btn.lang-active { opacity: 1; color: #00ff66; text-shadow: 0 0 6px #00ff66; }
+
         .vertical-title { transition: background 0.2s, box-shadow 0.2s; letter-spacing: 0.6px; text-shadow: 0 0 5px currentColor; }
         .vertical-title:hover { background: #222 !important; box-shadow: inset 0 0 10px currentColor; }
 
@@ -951,7 +956,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         </div>
     </div>
     <div id="playerButtonsBar" style="position:fixed; z-index:101; display:flex; flex-direction:column; align-items:center;" title="Мини-пульт. Двойной клик по пустому месту: свернуть/развернуть. Перетаскивание: переместить (положение запоминается)." onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); if (window.savePanelLayout) savePanelLayout(); event.stopPropagation(); }">
-        <div class="mini-title" style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:11px; font-weight:bold; letter-spacing:2px; color:rgba(0,204,255,0.75); padding:1px 0 3px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.12); margin-bottom:4px;">Зеркалиус · v0.379 Ultra-Save</div>
+        <div class="mini-title" style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:11px; font-weight:bold; letter-spacing:2px; color:rgba(0,204,255,0.75); padding:1px 0 3px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.12); margin-bottom:4px;"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.394 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
         <div style="display:flex; align-items:stretch; gap:6px; width:100%; margin-bottom:4px;">
             <div style="display:flex; flex-direction:column; justify-content:center; gap:4px; flex:1; min-width:0;">
                 <button id="clearCanvasBtn" class="btn-action btn-danger" style="margin:0; width:100%; font-size:9px;">🧹 Очистить</button>
@@ -960,7 +965,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 </label>
                 <button id="resetPlayerSlidersBtn" class="btn-action" style="margin:0; width:100%; font-size:9px; border-color:#ff9900; color:#ff9900;" title="Сбросить масштаб, экран и интервалы по умолчанию">🔄 Сброс</button>
             </div>
-            <div id="dpadGrid" style="display:grid; grid-template-columns:repeat(3, 36px); grid-auto-rows:32px; gap:3px; justify-content:center; flex-shrink:0;" title="Крестовина: ◀ ▶ — симуляция XOR назад/вперёд, ▲ ▼ — скроллинг строк, центр ■ — стоп (сброс на 0). Горящая жёлтым стрелка показывает ⏸ — клик по ней ставит паузу; клик по другой стрелке на ходу — смена режима/направления без остановки.">
+            <div id="dpadGrid" style="display:grid; grid-template-columns:repeat(3, 36px); grid-auto-rows:32px; gap:3px; justify-content:center; flex-shrink:0;" title="Крестовина: ◀ ▶ — симуляция XOR назад/вперёд, ▲ ▼ — скроллинг строк, центр ■ — стоп (сброс на 0). НА ПАУЗЕ: клик по стрелке — ОДИН шаг, удержание (~полсекунды) — непрерывный Пуск. НА ХОДУ: горящая жёлтым стрелка показывает ⏸ — клик по ней ставит паузу; клик по другой стрелке — смена режима/направления без остановки.">
                 <span></span><button id="dpadUpBtn" class="dpad-btn" title="Скроллинг строк — вверх">▲</button><span></span>
                 <button id="dpadLeftBtn" class="dpad-btn" title="Симуляция XOR — назад (реверс)">◀</button>
                 <button id="dpadStopBtn" class="dpad-btn" style="color:#ff3333;" title="Стоп: остановить и сбросить на кадр 0">■</button>
@@ -1198,6 +1203,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                             <option value="rect" selected>Прямоуг.</option>
                             <option value="rhomb">Ромб</option>
                             <option value="sq_rhomb">Симв. Ромб</option>
+                            <option value="tri_down">Тр-к ▼</option>
+                            <option value="tri_up">Тр-к ▲</option>
                         </select>
                         <input type="color" id="frameColorInput" value="#ffd500" style="margin:0; width:18px; height:15px; border:none; background:none; cursor:pointer;">
                     </div>
@@ -1474,6 +1481,17 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         const RESIZE_ZONE_MIN_PX = 20;
         const RESIZE_ZONE_PCT = 0.10;
 
+        // Треугольник (tri_down/tri_up) занимает по вертикали только половину прямоугольника рамки
+        // (см. isInSmoothFrameShape) — вершина в одном краю бокса, а видимое "основание" ровно по
+        // центральной линии, вторая половина бокса пустая. Хватать/тащить нужно за то, что реально
+        // видно (основание по центру), а не за пустой край бокса — иначе клик по центру мимо ловится.
+        function getFrameEffectiveVEdges(fType, fy, fh) {
+            let cy = fy + fh / 2;
+            if (fType === 'tri_down') return { top: cy, bot: fy + fh };
+            if (fType === 'tri_up') return { top: fy, bot: cy };
+            return { top: fy, bot: fy + fh };
+        }
+
         const STATE = {
             lines: [],          
             globalStep: 0,
@@ -1627,6 +1645,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         function fitFrameWidthToRows() {
             if (!STATE.manualFrame || !STATE.manualFrame.isInitialized) return;
             if (!safeChecked('frameCenterLockCheck', true)) return;
+            if (STATE.manualFrame.manualWidth) return;
             let totalRows = STATE.lines.length;
             if (!totalRows) return;
             let m = getGridMetrics();
@@ -1657,8 +1676,17 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             let cw = parseFloat(safeValue('cwSlider', 1.0));
             let screenRows = parseInt(safeValue('screenSlider', 64));
             
-            ctx.font = `${safeChecked('boldCheck', false) ? 'bold' : 'normal'} ${fontSize}px ${safeValue('fontSelect', 'monospace')}`;
-            let charWidth = ctx.measureText('0').width * cw;
+            // measureText — самая дорогая часть этой функции, а дёргается она по 5-8 раз за тик;
+            // ширину '0' кэшируем по строке шрифта (размер×жирность×гарнитура — вариантов немного).
+            let fontStr = `${safeChecked('boldCheck', false) ? 'bold' : 'normal'} ${fontSize}px ${safeValue('fontSelect', 'monospace')}`;
+            ctx.font = fontStr;
+            if (!getGridMetrics._mtCache) getGridMetrics._mtCache = new Map();
+            let baseCharW = getGridMetrics._mtCache.get(fontStr);
+            if (baseCharW === undefined) {
+                baseCharW = ctx.measureText('0').width;
+                getGridMetrics._mtCache.set(fontStr, baseCharW);
+            }
+            let charWidth = baseCharW * cw;
             let lineHeight = Math.round(fontSize * lh);
             
             let startIndex = STATE.rowScrollOffset || 0;
@@ -1675,12 +1703,43 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             
             return { charWidth, lineHeight, renderCount, totalHeight, startY, baseX, startIndex };
         }
+        // Веб-шрифты могут догрузиться после первых замеров — сбрасываем кэш ширины символа,
+        // чтобы метрики пересчитались уже по настоящему шрифту, а не по фолбэку.
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(() => { if (getGridMetrics._mtCache) getGridMetrics._mtCache.clear(); });
+        }
 <!-- === МАРКЕР 16: БАЗОВЫЕ ФУНКЦИИ КОНЕЦ === -->
 
     </script>
 
 <!-- === МАРКЕР 17: ЛОГИКА РАМКИ И БАЛАНСА === -->
     <script>
+        // Гладкая (не сеточная) проверка "символ внутри ромба/треугольника рамки" — общая формула
+        // для fType 'rhomb'/'tri_down'/'tri_up'. rowRel — отклонение строки от центра рамки (в строках,
+        // может быть дробным), rowRadius/columnRadius — полуразмеры рамки по строкам/пикселям.
+        // tri_down/tri_up — та же формула ромба (|vDist|+|hDist|<=1), но взята только нижняя или
+        // верхняя половина от центральной линии (треугольник = полуромб, отсюда и общая формула).
+        // charWidth нужен для допуска в половину символа (см. ниже) — необязательный параметр,
+        // старые вызовы без него получают чуть менее надёжный (но рабочий) допуск в 1 CSS-пиксель.
+        function isInSmoothFrameShape(fType, rowRel, rowRadius, cellX, centerX_frame, columnRadius, charWidth) {
+            // vDist/hDist — непрерывное расстояние до центра рамки в долях полуразмера (0 в центре,
+            // 1 на краю). Допуск +0.5 символа по столбцам — правило растеризации "ближайший центр
+            // ячейки": гарантирует, что наконечник ромба/треугольника всегда захватывает хотя бы
+            // один символ независимо от чётности ширины/высоты рамки. Раньше тут был фиксированный
+            // допуск 0.05 в долях радиуса — при чётной ширине рамки расстояние до ближайшего символа
+            // на вершине попадало ровно на границу допуска, и плавающая точка иногда её отсекала.
+            let vDist = Math.abs(rowRel) / (rowRadius || 0.5);
+            if (vDist > 1.0001) return false;
+            let cw = charWidth || 1;
+            let colsHalfWidth = (columnRadius || 1.0) / cw;
+            let hDistCells = Math.abs(cellX - centerX_frame) / cw;
+            let allowedCells = (1 - vDist) * colsHalfWidth;
+            let inside = hDistCells <= allowedCells + 0.5001;
+            if (fType === 'tri_down') return inside && (rowRel >= 0);
+            if (fType === 'tri_up') return inside && (rowRel <= 0);
+            return inside;
+        }
+
         // Считает баланс символов 0/1 внутри рамки (или на всём экране) и возвращает
         // суммарные счётчики плюс разбивку по строкам (rowStats)
         function calculateCurrentBalance() {
@@ -1774,22 +1833,21 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                             let isInside = false;
                             if (useFrameLimit) {
                                 let fType = safeValue('frameTypeSelect', 'rect');
-                                if (fType === 'rhomb' || fType === 'sq_rhomb') {
+                                if (fType === 'rhomb' || fType === 'sq_rhomb' || fType === 'tri_down' || fType === 'tri_up') {
                                     let centerY_offset = (STATE.manualFrame.rowSpan - 1) / 2.0;
                                     let rowRadius = (STATE.manualFrame.rowSpan - 1) / 2.0 || 0.5;
                                     let centerX_frame = drawX + drawW / 2.0;
                                     let columnRadius = drawW / 2.0 || 1.0;
-                                    
-                                    if (fType === 'rhomb') {
-                                        let vDist = Math.abs(screenIdx - STATE.manualFrame.rowStart - centerY_offset) / rowRadius;
-                                        let hDist = Math.abs(cellX - centerX_frame) / columnRadius;
-                                        isInside = (vDist + hDist <= 1.05);
-                                    } else {
+
+                                    if (fType === 'sq_rhomb') {
                                         let mathCenterY = Math.round(centerY_offset);
                                         let vDist_rows = Math.abs(screenIdx - STATE.manualFrame.rowStart - mathCenterY);
                                         let radius_rows = Math.round(rowRadius);
                                         let col_dist = Math.round(Math.abs(cellX - centerX_frame) / m.charWidth);
                                         isInside = (vDist_rows + col_dist <= radius_rows);
+                                    } else {
+                                        let rowRel = screenIdx - STATE.manualFrame.rowStart - centerY_offset;
+                                        isInside = isInSmoothFrameShape(fType, rowRel, rowRadius, cellX, centerX_frame, columnRadius, m.charWidth);
                                     }
                                 } else {
                                     isInside = (cellX >= drawX && cellX <= drawX + drawW);
@@ -2186,6 +2244,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         function importSnapshotObject(snapshot) {
             const setElVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
             const setElChk = (id, val) => { const el = document.getElementById(id); if(el) el.checked = !!val; };
+
+            if (window.applyLanguage) applyLanguage(snapshot.uiLang || 'ru');
 
             let nf = snapshot.nFactor || 2;
             if (nf === 0) nf = 11;
@@ -3061,14 +3121,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let cellX = isMatrixAxis ? (m.baseX + ((c - (lData.display.length - 1) / 2.0) * m.charWidth) + liveCenterOffset) : (currentX + (c * m.charWidth) + (m.charWidth / 2));
                         let isInside = false;
                         let fType = safeValue('frameTypeSelect', 'rect');
-                        if (fType === 'rhomb') {
+                        if (fType === 'rhomb' || fType === 'tri_down' || fType === 'tri_up') {
                             let centerY_row = (rowStart + rowEnd) / 2.0;
                             let rowRadius = (rowEnd - rowStart) / 2.0 || 0.5;
                             let centerX_frame = m.baseX + STATE.manualFrame.x + STATE.manualFrame.w / 2.0;
                             let columnRadius = STATE.manualFrame.w / 2.0 || 1.0;
-                            let vDist = Math.abs(targetIdx - centerY_row) / rowRadius;
-                            let hDist = Math.abs(cellX - centerX_frame) / columnRadius;
-                            isInside = (vDist + hDist <= 1.05);
+                            let rowRel = targetIdx - centerY_row;
+                            isInside = isInSmoothFrameShape(fType, rowRel, rowRadius, cellX, centerX_frame, columnRadius, m.charWidth);
                         } else if (fType === 'sq_rhomb') {
                             let centerY_row = Math.round((rowStart + rowEnd) / 2.0);
                             let vDist_rows = Math.abs(targetIdx - centerY_row);
@@ -3192,14 +3251,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let cellX = isMatrixAxis ? (m.baseX + ((c - (lData.display.length - 1) / 2.0) * m.charWidth) + liveCenterOffset) : (currentX + (c * m.charWidth) + (m.charWidth / 2));
                         let isInside = false;
                         let fType = safeValue('frameTypeSelect', 'rect');
-                        if (fType === 'rhomb') {
+                        if (fType === 'rhomb' || fType === 'tri_down' || fType === 'tri_up') {
                             let centerY_row = (rowStart + rowEnd) / 2.0;
                             let rowRadius = (rowEnd - rowStart) / 2.0 || 0.5;
                             let centerX_frame = m.baseX + STATE.manualFrame.x + STATE.manualFrame.w / 2.0;
                             let columnRadius = STATE.manualFrame.w / 2.0 || 1.0;
-                            let vDist = Math.abs(targetIdx - centerY_row) / rowRadius;
-                            let hDist = Math.abs(cellX - centerX_frame) / columnRadius;
-                            isInside = (vDist + hDist <= 1.05);
+                            let rowRel = targetIdx - centerY_row;
+                            isInside = isInSmoothFrameShape(fType, rowRel, rowRadius, cellX, centerX_frame, columnRadius, m.charWidth);
                         } else if (fType === 'sq_rhomb') {
                             let centerY_row = Math.round((rowStart + rowEnd) / 2.0);
                             let vDist_rows = Math.abs(targetIdx - centerY_row);
@@ -5246,7 +5304,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
 			    const backdrop = document.getElementById('patternBackdrop');
 			    if (backdrop) {
-			        backdrop.innerHTML = html;
+			        // Пересобираем DOM подложки только при реальном изменении разметки —
+			        // updatePatternBackdrop() дёргается каждый тик (ради живой рамки), и безусловный
+			        // innerHTML с тем же содержимым был лишней DOM-работой на каждый кадр.
+			        if (backdrop._lastHtml !== html) {
+			            backdrop._lastHtml = html;
+			            backdrop.innerHTML = html;
+			        }
 			        const input = document.getElementById('patternInput');
 			        if (input) {
 			            backdrop.scrollTop = input.scrollTop;
@@ -5265,6 +5329,121 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
             return s;
         };
+
+        // Экранная X-координата каждого символа lData.display для текущего режима центрирования —
+        // тот же расчёт, что использует render() для позиционирования глифов. Нужен, чтобы проверить,
+        // попадает ли конкретный символ строки внутрь рамки по геометрии (см. getFrameClippedLine).
+        function computeRowCellXs(lData, m, symMode, useSpacing) {
+            let currentX = 0, isMatrixAxis = false, liveCenterOffset = 0;
+            let firstCharIdx = -1, lastCharIdx = -1;
+            for (let k = 0; k < lData.display.length; k++) {
+                if (!lData.fillerMask[k] && lData.display[k] !== ' ' && lData.display[k] !== 'x' && lData.display[k] !== '.') {
+                    if (firstCharIdx === -1) firstCharIdx = k;
+                    lastCharIdx = k;
+                }
+            }
+            if (symMode === "centerTrack" || symMode === "centerTrack2") {
+                isMatrixAxis = true;
+                if (firstCharIdx !== -1) {
+                    let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
+                    let mathCenterIndex = (lData.display.length - 1) / 2.0;
+                    liveCenterOffset = (mathCenterIndex - liveCenterIndex) * m.charWidth;
+                }
+            } else if (symMode === "centerBase") {
+                let baseWidth = lData.L * m.charWidth;
+                if (useSpacing) baseWidth *= 2;
+                currentX = m.baseX - (baseWidth / 2);
+            } else {
+                let fullWidth = lData.display.length * m.charWidth;
+                currentX = m.baseX - (fullWidth / 2);
+            }
+            let xs = new Array(lData.display.length);
+            for (let c = 0; c < lData.display.length; c++) {
+                xs[c] = isMatrixAxis
+                    ? (m.baseX + ((c - (lData.display.length - 1) / 2.0) * m.charWidth) + liveCenterOffset)
+                    : (currentX + (c * m.charWidth) + (m.charWidth / 2));
+            }
+            return xs;
+        }
+
+        // Как computeRowCellXs, но без выделения полного массива на строку — возвращает только X
+        // первого и последнего ВИДИМОГО символа (формула X линейна по c с charWidth>0, так что
+        // граничные индексы и дают крайние точки, остальные считать не нужно). Края ищем с обеих
+        // сторон навстречу друг другу с ранним выходом — для строк, где филлеры только по краям
+        // (обычный случай), это near-O(1) вместо полного прохода. Нужно в горячем пути (счётчики
+        // баланса рисуются на каждом кадре симуляции) — полный computeRowCellXs на длинных строках
+        // заметно тормозил.
+        function getRowVisibleXExtent(lData, m, symMode, useSpacing) {
+            let n = lData.display.length;
+            const isVisible = (k) => !lData.fillerMask[k] && lData.display[k] !== ' ' && lData.display[k] !== 'x' && lData.display[k] !== '.';
+            let firstCharIdx = -1;
+            for (let k = 0; k < n; k++) { if (isVisible(k)) { firstCharIdx = k; break; } }
+            if (firstCharIdx === -1) return null;
+            let lastCharIdx = firstCharIdx;
+            for (let k = n - 1; k >= firstCharIdx; k--) { if (isVisible(k)) { lastCharIdx = k; break; } }
+
+            let currentX = 0, isMatrixAxis = false, liveCenterOffset = 0;
+            if (symMode === "centerTrack" || symMode === "centerTrack2") {
+                isMatrixAxis = true;
+                let liveCenterIndex = (firstCharIdx + lastCharIdx) / 2.0;
+                let mathCenterIndex = (n - 1) / 2.0;
+                liveCenterOffset = (mathCenterIndex - liveCenterIndex) * m.charWidth;
+            } else if (symMode === "centerBase") {
+                let baseWidth = lData.L * m.charWidth;
+                if (useSpacing) baseWidth *= 2;
+                currentX = m.baseX - (baseWidth / 2);
+            } else {
+                let fullWidth = n * m.charWidth;
+                currentX = m.baseX - (fullWidth / 2);
+            }
+            let xAt = (c) => isMatrixAxis
+                ? (m.baseX + ((c - (n - 1) / 2.0) * m.charWidth) + liveCenterOffset)
+                : (currentX + (c * m.charWidth) + (m.charWidth / 2));
+            return { minX: xAt(firstCharIdx), maxX: xAt(lastCharIdx) };
+        }
+
+        // Как getCleanLine, но обрезает символы по геометрии текущей рамки (форма + ширина): строка
+        // может быть шире рамки, и часть символов вне неё (особенно у ромба/треугольников, но и
+        // просто за краем прямоугольной рамки) не должна попадать в интерливинг/каскад-триггер.
+        // screenRow — позиция строки на экране относительно верха рендера (то же "i", с которым
+        // сравнивается STATE.manualFrame.rowStart везде в render()).
+        function getFrameClippedLine(lData, screenRow, m) {
+            if (!lData || !lData.display) return "";
+            if (!STATE.manualFrame || !STATE.manualFrame.isInitialized || STATE.manualFrame.colSpan === undefined) return getCleanLine(lData);
+
+            let symMode = safeValue('symModeSelect', 'centerTrack');
+            let useSpacing = safeChecked('spacedCheck', false);
+            let xs = computeRowCellXs(lData, m, symMode, useSpacing);
+
+            let fType = safeValue('frameTypeSelect', 'rect');
+            let colStart = STATE.manualFrame.colStart !== undefined ? STATE.manualFrame.colStart : -Math.round((STATE.manualFrame.colSpan || 40) / 2);
+            let colSpan = STATE.manualFrame.colSpan !== undefined ? STATE.manualFrame.colSpan : 40;
+            let drawX = m.baseX + colStart * m.charWidth;
+            let drawW = colSpan * m.charWidth;
+            let centerX_frame = drawX + drawW / 2.0;
+            let columnRadius = drawW / 2.0 || 1.0;
+            let rowRadius = (STATE.manualFrame.rowSpan - 1) / 2.0 || 0.5;
+            let rowRel = screenRow - STATE.manualFrame.rowStart - rowRadius;
+
+            let s = "";
+            for (let c = 0; c < lData.display.length; c++) {
+                if (lData.fillerMask[c] || !/\S/.test(lData.display[c])) continue;
+                let inside;
+                if (fType === 'sq_rhomb') {
+                    let mathCenterY = Math.round(rowRadius);
+                    let vDist_rows = Math.abs(screenRow - STATE.manualFrame.rowStart - mathCenterY);
+                    let radius_rows = Math.round(rowRadius);
+                    let col_dist = Math.round(Math.abs(xs[c] - centerX_frame) / m.charWidth);
+                    inside = (vDist_rows + col_dist <= radius_rows);
+                } else if (fType === 'rhomb' || fType === 'tri_down' || fType === 'tri_up') {
+                    inside = isInSmoothFrameShape(fType, rowRel, rowRadius, xs[c], centerX_frame, columnRadius, m.charWidth);
+                } else {
+                    inside = (xs[c] >= drawX && xs[c] <= drawX + drawW);
+                }
+                if (inside) s += lData.display[c];
+            }
+            return s;
+        }
 
         // Вертикальный поиск сравнивал символы по сырому индексу в строке (display[c]), но на экране
         // строки разной длины центрируются каждая по-своему (см. render()), поэтому одинаковый индекс c
@@ -5296,6 +5475,17 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         // Режимы: Коса (змейка по всей рамке), Верхняя/Нижняя граница (2 строки), Периметр (верх+низ+бока), запасной — последние 2 активные.
         window.computeInterleaveSource = function(targetIndices, useFrame, m) {
             let lastActiveIdx = targetIndices.length > 0 ? targetIndices[targetIndices.length - 1] : -1;
+            let totalRowsForClip = STATE.lines.length;
+            // Пока рамка активна — читаем строку, обрезанную по её геометрии (форма+ширина), а не
+            // целиком: символы вне рамки (особенно у ромба/треугольников) не должны участвовать
+            // в сплетении/триггере каскада. Без рамки — обычная чистая строка, без изменений.
+            let readLine = (idx) => {
+                if (useFrame && m && STATE.manualFrame && STATE.manualFrame.isInitialized) {
+                    let screenRow = mod(idx - m.startIndex, totalRowsForClip);
+                    return getFrameClippedLine(STATE.lines[idx], screenRow, m);
+                }
+                return getCleanLine(STATE.lines[idx]);
+            };
 
             let useSnake = safeChecked('interleaveSrcSnake', false);
             let useTopBorder = safeChecked('interleaveSrcTopBorder', false);
@@ -5313,8 +5503,24 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
             let frameTopIdx = -1, frameBotIdx = -1;
             if (useFrame && m) {
-                frameTopIdx = (m.startIndex + STATE.manualFrame.rowStart) % STATE.lines.length;
-                frameBotIdx = (m.startIndex + STATE.manualFrame.rowStart + STATE.manualFrame.rowSpan - 1) % STATE.lines.length;
+                let fTypeIL = safeValue('frameTypeSelect', 'rect');
+                let rowStartIL = STATE.manualFrame.rowStart;
+                let rowSpanIL = STATE.manualFrame.rowSpan;
+                // Треугольник занимает только половину прямоугольника рамки по строкам (см.
+                // isInSmoothFrameShape) — верхняя/нижняя граница, коса и периметр должны опираться
+                // на реальные строки треугольника, а не на весь бокс, иначе "верхняя"/"нижняя
+                // граница" для полурамки может указывать на пустую строку вне фигуры.
+                let contentRowStart = rowStartIL;
+                let contentRowSpan = rowSpanIL;
+                if (fTypeIL === 'tri_down') {
+                    let cut = Math.floor(rowSpanIL / 2);
+                    contentRowStart = rowStartIL + cut;
+                    contentRowSpan = rowSpanIL - cut;
+                } else if (fTypeIL === 'tri_up') {
+                    contentRowSpan = Math.ceil(rowSpanIL / 2);
+                }
+                frameTopIdx = (m.startIndex + contentRowStart) % STATE.lines.length;
+                frameBotIdx = (m.startIndex + contentRowStart + Math.max(1, contentRowSpan) - 1) % STATE.lines.length;
             }
 
             if (useFrame && m && useSnake) {
@@ -5324,7 +5530,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 let step = 0;
                 for (let idx = frameBotIdx; idx >= frameTopIdx; idx--) {
                     let goRight = (step % 2 === 0) !== swapOrder;
-                    let rowStr = getCleanLine(STATE.lines[idx]);
+                    let rowStr = readLine(idx);
                     if (!goRight) rowStr = rowStr.split('').reverse().join('');
                     braid += rowStr;
                     highlightSet.add(idx);
@@ -5339,8 +5545,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 let topFirst = swapOrder ? topA : topB, topSecond = swapOrder ? topB : topA;
                 let botFirst = swapOrder ? botB : botA, botSecond = swapOrder ? botA : botB;
 
-                let topPart = getCleanLine(STATE.lines[topFirst]) + getCleanLine(STATE.lines[topSecond]);
-                let botPart = getCleanLine(STATE.lines[botFirst]) + getCleanLine(STATE.lines[botSecond]);
+                let topPart = readLine(topFirst) + readLine(topSecond);
+                let botPart = readLine(botFirst) + readLine(botSecond);
                 let sidesPart = "";
 
                 let midStart = Math.min(topA, topB) + ((topB !== topA) ? 1 : 0);
@@ -5348,7 +5554,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 for (let idx = Math.min(topA, topB); idx <= Math.max(botA, botB); idx++) {
                     highlightSet.add(idx);
                     if (idx >= midStart && idx <= midEnd) {
-                        let rowStr = getCleanLine(STATE.lines[idx]);
+                        let rowStr = readLine(idx);
                         let left2 = rowStr.substring(0, 2);
                         let right2 = rowStr.length > 2 ? rowStr.substring(rowStr.length - 2) : "";
                         sidesPart += swapOrder ? (right2 + left2) : (left2 + right2);
@@ -5369,8 +5575,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 isDuplicate = (idxUpper === idxLower);
                 let idxFirst = swapOrder ? idxUpper : idxLower;
                 let idxSecond = swapOrder ? idxLower : idxUpper;
-                strCurrent = getCleanLine(STATE.lines[idxFirst]);
-                strAbove = getCleanLine(STATE.lines[idxSecond]);
+                strCurrent = readLine(idxFirst);
+                strAbove = readLine(idxSecond);
                 labelCurrent = `Стр ${STATE.lines[idxFirst] ? STATE.lines[idxFirst].origIndex + 1 : "?"}`;
                 labelAbove = isDuplicate ? `${labelCurrent} (Дубль)` : `Стр ${STATE.lines[idxSecond] ? STATE.lines[idxSecond].origIndex + 1 : "?"}`;
                 // Подсветку считаем НАПРЯМУЮ от границ рамки, не через своп порядка чередования —
@@ -5379,8 +5585,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             } else {
                 let idxFirst = swapOrder ? idxUpper : idxLower;
                 let idxSecond = swapOrder ? idxLower : idxUpper;
-                strCurrent = getCleanLine(STATE.lines[idxFirst]);
-                strAbove = getCleanLine(STATE.lines[idxSecond]);
+                strCurrent = readLine(idxFirst);
+                strAbove = readLine(idxSecond);
                 labelCurrent = `Стр ${STATE.lines[idxFirst] ? STATE.lines[idxFirst].origIndex + 1 : "?"}`;
                 labelAbove = isDuplicate ? `${labelCurrent} (Дубль)` : `Стр ${STATE.lines[idxSecond] ? STATE.lines[idxSecond].origIndex + 1 : "?"}`;
                 highlightSet.add(idxFirst); highlightSet.add(idxSecond);
@@ -5425,6 +5631,22 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             let isReversedRow = STATE.isReverse;
             if (meetCenter && (i % 2 !== 0)) {
                 isReversedRow = !isReversedRow;
+            }
+
+            // Пер-тиковый кэш (включается только внутри updateLogic — STATE.cldCacheOn):
+            // updateLogic считает кадр дважды (лёгкий displaysOnly-вызов + полный calculateState(true)),
+            // и при неизменных входах второй проход берёт готовый результат первого. Кэш живёт ровно
+            // один тик (stamp), при дельта-режимах отключается (они мутируют res/fillerMask результата),
+            // прямые вызовы calculateState из UI-обработчиков кэш не используют вовсе.
+            let cldKey = null;
+            if (STATE.cldCacheOn) {
+                cldKey = stepValue + '|' + (isReversedRow ? 1 : 0) + (usePendulum ? 1 : 0) + (useCylinder ? 1 : 0) +
+                    (useSpacing ? (i % 2 ? 2 : 1) : 0) + (useFillX ? 1 : 0) + (useSplitCenter ? 1 : 0) +
+                    '|' + (useDrum ? safeValue('drumRadius', 5) + '_' + globalMaxGrid : '') +
+                    '|' + line.cN + '|' + line.cycle + '|' + line.firstOneIdx + '|' + lineOrig;
+                if (line._cldStamp === STATE.cldStamp && line._cldCache && line._cldCache[cldKey]) {
+                    return line._cldCache[cldKey];
+                }
             }
 
             let max_shift = line.cycle - 1;
@@ -5587,14 +5809,22 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 resStr = spacedRes; rawM = spacedM; rawR = spacedR; rawF = spacedF; rawU = spacedU; rawPRed = spacedPR; rawPPurple = spacedPP;
             }
 
-            return { res: resStr, rawMask: rawM, rawRedMask: rawR, rawFillerMask: rawF, rawUnderlinedMask: rawU, rawPRedMask: rawPRed, rawPPurpleMask: rawPPurple };
+            let cldResult = { res: resStr, rawMask: rawM, rawRedMask: rawR, rawFillerMask: rawF, rawUnderlinedMask: rawU, rawPRedMask: rawPRed, rawPPurpleMask: rawPPurple };
+            if (cldKey !== null) {
+                if (line._cldStamp !== STATE.cldStamp) { line._cldStamp = STATE.cldStamp; line._cldCache = {}; }
+                line._cldCache[cldKey] = cldResult;
+            }
+            return cldResult;
         }
 
 <!-- === МАРКЕР 34: ГЛАВНЫЙ РАСЧЁТ КАДРА (CALCULATESTATE) === -->
         // Главный расчётный проход движка: для каждого кадра пересчитывает display всех строк
         // (через computeLineData), ищет паттерны (локально/вертикально/сквозь/интерливингом)
         // и продвигает очередь разморозки строк. triggerSearch включает поиск новых паттернов
-        function calculateState(triggerSearch) {
+        // displaysOnly=true — лёгкий режим для первого вызова из updateLogic(): пересчитать только
+        // display/маски/балансы строк (нужны каскаду и анализу волн) и выйти до поиска/подсветки/
+        // интерливинга — всё это сделает второй, полный вызов calculateState(true) в том же тике.
+        function calculateState(triggerSearch, displaysOnly) {
             let newlyFound = false;
             let rawPatterns = safeValue('patternInput', '').split('\n').map(p => p.trim().replace(/\s+/g, ''));
             let validPatterns = rawPatterns.filter(p => p.length > 0);
@@ -5650,6 +5880,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             // (красные), меняющиеся скрыть; 1 = наоборот — только меняющиеся (чёрные); 2 = показать
             // все, раскрашено; 3 = выключено (обычные цвета, без раскраски и скрытия).
             let deltaColorMode = STATE.deltaColorMode !== undefined ? STATE.deltaColorMode : 3;
+            // Дельта-режимы мутируют res/rawFillerMask результата computeLineData после вызова —
+            // кэшировать такой результат нельзя, отключаем пер-тиковый кэш до конца тика.
+            if (hideChanged || hideUnchanged || deltaColorMode !== 3) STATE.cldCacheOn = false;
             let ignoreFirst = safeChecked('ignoreFirstPatternCharCheck', true);
             let ignoreLast = safeChecked('ignoreLastPatternCharCheck', false);
             const getSearchPat = p => {
@@ -5804,10 +6037,16 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         let N = STATE.lines.length;
         let naezdShift = 0;
         let stepInCycle = 0;
+        let naezdHoldFrame = false; // холостой кадр наезда: без клона, но пирамида остаётся чистой (фаза 0)
         if (isNaezdActive && N > 0) {
             stepInCycle = mod(STATE.globalStep, N);
             if (stepInCycle === 0) {
-                isNaezdActive = false; // Пропускаем холостой кадр полного наложения
+                // Полное наложение: клон лёг бы сам на себя (XOR = нули), поэтому слияние пропускаем.
+                // Но показываем НЕ сырую симуляцию с накопившимся localStep (раньше на этом кадре
+                // пирамида на 1 тик "рвалась" — фазовые сдвиги/раскол давали дыры в строках),
+                // а ту же чистую пирамиду фазы 0, что и на соседних кадрах наезда.
+                isNaezdActive = false;
+                naezdHoldFrame = true;
             } else {
                 naezdShift = N - stepInCycle;
                 if (STATE.isReverse) {
@@ -5854,11 +6093,14 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 line.highlightMask = [];
                 line.inactiveHighlightMask = [];
 
-                let currentData = computeLineData(Math.abs(line.localStep), elkaBuffer, elkaPtr, line, i, useElka, meetCenter, usePendulum, useCylinder, useSpacing, useDrum, globalMaxGrid, useFillX, useSplitCenter);
+                // На холостом кадре наезда (naezdHoldFrame) рисуем фазу 0, как в первом проходе
+                // наезда — иначе на кратном N шаге на 1 тик проступала сырая симуляция с localStep.
+                let stdStep = naezdHoldFrame ? 0 : Math.abs(line.localStep);
+                let currentData = computeLineData(stdStep, elkaBuffer, elkaPtr, line, i, useElka, meetCenter, usePendulum, useCylinder, useSpacing, useDrum, globalMaxGrid, useFillX, useSplitCenter);
 
                 let deltaChangeMask = [];
                 if (hideChanged || hideUnchanged || deltaColorMode !== 3) {
-                    let pastLocalStep = Math.abs(line.localStep - deltaN);
+                    let pastLocalStep = naezdHoldFrame ? 0 : Math.abs(line.localStep - deltaN);
                     let pastData = computeLineData(pastLocalStep, pastElkaBuffer, elkaPtr, line, i, useElka, meetCenter, usePendulum, useCylinder, useSpacing, useDrum, globalMaxGrid, useFillX, useSplitCenter);
 
                     let finalRes = "";
@@ -5889,23 +6131,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 line.renderPPurpleMask = currentData.rawPPurpleMask;
                 line.collisionGreenMask = [];
 
-                let count0 = 0, count1 = 0;
-                for (let c = 0; c < line.display.length; c++) {
-                    if (!line.fillerMask[c] && /\S/.test(line.display[c])) {
-                        if (isType1(line.display[c])) count1++;
-                        else if (isType0(line.display[c])) count0++;
-                    }
-                }
-                line.isLocallyBalanced = (count0 === count1) && (count0 > 0);
-
-                if (line.isActive) {
-                    for (let c = 0; c < line.display.length; c++) {
-                        if (!line.fillerMask[c] && /\S/.test(line.display[c])) { 
-                            globalCleanText += line.display[c];
-                            globalMap.push({ r: i, c: c });
-                        }
-                    }
-                }
+                // Баланс (isLocallyBalanced) и сквозной текст здесь НЕ считаем: баланс всё равно
+                // пересчитывается третьим проходом (МАРКЕР 39) для обоих путей, а сквозной текст
+                // заново собирается while-циклом поиска — старые сборки тут были чистым дублем.
                 elkaPtr += line.L;
             }
         } else {
@@ -6137,16 +6365,14 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
             line.isLocallyBalanced = (count0 === count1) && (count0 > 0);
 
-            if (line.isActive) {
-                for (let c = 0; c < line.display.length; c++) {
-                    if (!line.fillerMask[c] && /\S/.test(line.display[c])) { 
-                        globalCleanText += line.display[c];
-                        globalMap.push({ r: i, c: c });
-                    }
-                }
-            }
+            // Сквозной текст здесь не собираем — while-цикл поиска ниже всё равно обнуляет
+            // globalCleanText/globalMap и строит их заново (та сборка и есть рабочая).
         }
 <!-- === МАРКЕР 40: ТРЕТИЙ ПРОХОД КОНЕЦ === -->
+
+        // Лёгкий режим: display/маски/балансы готовы — поиск, подсветку и интерливинг
+        // сделает полный вызов calculateState(true) далее в этом же тике updateLogic().
+        if (displaysOnly) return newlyFound;
 
         let useGlobalSearch = safeChecked('globalSearchCheck', false);
         let useVerticalSearch = safeChecked('verticalSearchCheck', false);
@@ -6220,7 +6446,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                 let patOrig = validPatterns[pOf];
                                 let pat = getSearchPat(patOrig);
                                 if (pat.length > 0 && str.startsWith(pat)) {
-                                    let allAbove = path.slice(0, pat.length).every(cell => pOf === 0 || cell.r < pOf + (allowSelfRow ? 1 : 0));
+                                    // Нестрогий режим: путь может проходить по любым строкам;
+                                    // "только строки выше своей" — только в строгой очереди.
+                                    let allAbove = !isSequential || path.slice(0, pat.length).every(cell => pOf === 0 || cell.r < pOf + (allowSelfRow ? 1 : 0));
                                 if (allAbove) {
                                     path.slice(0, pat.length).forEach(cell => {
                                         let isTargetActive = (pOf !== -1 && STATE.lines[pOf]) ? STATE.lines[pOf].isActive : false;
@@ -6367,7 +6595,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let allAbove = true;
                         for (let k = 0; k < searchPat.length; k++) {
                             let actualRow = rowMap[pos + k];
-                            if (actualRow === -1 || (targetRowIdx > 0 && actualRow >= targetRowIdx + (allowSelfRow ? 1 : 0))) {
+                            // actualRow === -1 (разрыв столбца) — проверка валидности, действует всегда;
+                            // "только строки выше своей" — только в строгой очереди.
+                            if (actualRow === -1 || (isSequential && targetRowIdx > 0 && actualRow >= targetRowIdx + (allowSelfRow ? 1 : 0))) {
                                 allAbove = false;
                                 break;
                             }
@@ -6469,15 +6699,14 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     let pos = searchPat.length > 0 ? textToSearch.indexOf(searchPat) : -1;
                     if (pos !== -1 && pos < globalCleanText.length) {
                         let targetRowIdx = patIdx;
+                        // Нестрогий режим (эта ветка — только он): совпадение засчитывается,
+                        // в каких бы строках оно ни лежало; involvedRows оставляем для метаданных.
                         let allAbove = true;
                         let involvedRows = new Set();
                     for (let k = 0; k < searchPat.length; k++) {
                         let loc = cleanMap[(pos + k) % globalCleanText.length];
                         if (loc) {
                             involvedRows.add(STATE.lines[loc.r].origIndex + 1);
-                            if (targetRowIdx > 0 && loc.r >= targetRowIdx + (allowSelfRow ? 1 : 0)) {
-                                allAbove = false;
-                            }
                         }
                     }
 
@@ -6529,12 +6758,14 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 let line = STATE.lines[i];
                 // Если "Разморозка строк по паттерну" выключена (vbaActivation=false) — ищем по ВСЕМ
                 // строкам, а не только по активным (иначе без этой галки поиск вообще ничего не найдёт
-                // за пределами уже активного блока). С галкой — как раньше, только среди активных.
-                // Исключение при "в своей строке": замороженной строке даём шанс совпасть со СВОИМ
-                // паттерном (в строгой очереди это строка-цель), иначе её содержимое никто не читает.
+                // за пределами уже активного блока).
+                // НЕСТРОГИЙ режим (галка "строго по очереди" снята): сканируем все строки, включая
+                // замороженные — их содержимое видно на холсте, значит и совпадение в них считается.
+                // В СТРОГОЙ очереди замороженная строка сканируется только как кандидат на свой
+                // паттерн при галке "в своей строке" (иначе её содержимое никто не читает).
                 let scannedInactive = vbaActivation && !line.isActive;
-                if (scannedInactive) {
-                    let selfCandidate = allowSelfRow && (isSequential ? i === STATE.currentTargetPatternIdx : i < validPatterns.length);
+                if (scannedInactive && isSequential) {
+                    let selfCandidate = allowSelfRow && i === STATE.currentTargetPatternIdx;
                     if (!selfCandidate) continue;
                 }
                 if (line.L === 0) continue;
@@ -6580,44 +6811,41 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         }
                     }
                 } else if (!isSequential) {
+                    // Раньше после ПЕРВОГО совпавшего паттерна (перебор идёт от длинных к коротким)
+                    // стоял break — даже если тот паттерн был уже найден раньше. Из-за этого строка,
+                    // в которой виден уже найденный длинный паттерн, никогда не отдавала более
+                    // короткие (например 10101 не находился, пока в тех же строках совпадал уже
+                    // зелёный 110001). Теперь уже найденные пропускаем, а строку проверяем по всем
+                    // паттернам до конца — за один проход может найтись несколько новых.
                     for (let pIdx = 0; pIdx < sortedPatterns.length; pIdx++) {
                         let searchPatOrig = sortedPatterns[pIdx];
+                        if (STATE.foundPatterns.has(searchPatOrig)) continue;
                         let searchPat = getSearchPat(searchPatOrig);
                         let pos = searchPat.length > 0 ? lineClean.indexOf(searchPat) : -1;
                         if (pos !== -1) {
                             let targetRowIdx = validPatterns.indexOf(searchPatOrig);
-                            // Замороженная строка (scannedInactive) может совпасть ТОЛЬКО со своим
-                            // паттерном — иначе её скрытое содержимое размораживало бы чужие строки.
-                            let rowOk = scannedInactive
-                                ? (allowSelfRow && i === targetRowIdx)
-                                : (i < targetRowIdx || (allowSelfRow && i === targetRowIdx));
-                            if (rowOk) {
-                                let isNew = !STATE.foundPatterns.has(searchPatOrig);
-                            if (isNew) {
-                                STATE.foundPatterns.add(searchPatOrig);
-                                newlyFound = true;
-                                STATE.lastFindMethod = `Локально (Строка ${line.origIndex + 1})`;
-                                
-                                if (vbaActivation) {
-                                    let origIdx = validPatterns.indexOf(searchPatOrig);
-                                    if (origIdx !== -1 && origIdx < STATE.lines.length) {
-                                        STATE.lines[origIdx].isActive = true;
-                                        STATE.lines[origIdx].localStep = 0;
-                                        expandFrameToRow(origIdx);
-                                    }
+                            // Нестрогий режим: совпадение засчитывается в ЛЮБОЙ строке — выше, ниже
+                            // и в своей собственной (галка "в своей строке" тут не нужна). Правило
+                            // "только строки выше своей" действует лишь в строгой очереди каскада.
+                            STATE.foundPatterns.add(searchPatOrig);
+                            newlyFound = true;
+
+                            if (vbaActivation) {
+                                if (targetRowIdx !== -1 && targetRowIdx < STATE.lines.length) {
+                                    STATE.lines[targetRowIdx].isActive = true;
+                                    STATE.lines[targetRowIdx].localStep = 0;
+                                    expandFrameToRow(targetRowIdx);
                                 }
-                                
-                                STATE.lastFindMethod = `Локально в Строке ${line.origIndex + 1} (Колонка ${pos + 1})`;
-                                STATE.foundPatternsMetadata.set(searchPatOrig, {
-                                    type: 'local',
-                                    rows: [line.origIndex + 1], cols: [pos],
-                                    step: Math.abs(STATE.globalStep),
-                                    method: STATE.lastFindMethod
-                                });
                             }
-                            break;
+
+                            STATE.lastFindMethod = `Локально в Строке ${line.origIndex + 1} (Колонка ${pos + 1})`;
+                            STATE.foundPatternsMetadata.set(searchPatOrig, {
+                                type: 'local',
+                                rows: [line.origIndex + 1], cols: [pos],
+                                step: Math.abs(STATE.globalStep),
+                                method: STATE.lastFindMethod
+                            });
                         }
-                    }
                     }
                 }
             }
@@ -6758,9 +6986,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
                         let allAbove = true;
                         if (pos < cleanStream.length) {
+                            // Правило "только строки выше своей" — только в строгой очереди;
+                            // в нестрогом режиме подсвечиваем совпадение где бы оно ни лежало.
                             for (let k = 0; k < pat.length; k++) {
                                 let loc = cleanMap[(pos + k) % cleanStream.length];
-                                if (loc && targetRowIdx > 0 && loc.r >= targetRowIdx) {
+                                if (loc && isSequential && targetRowIdx > 0 && loc.r >= targetRowIdx) {
                                     allAbove = false;
                                     break;
                                 }
@@ -6769,15 +6999,14 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                             if (allAbove) {
                                 for (let k = 0; k < pat.length; k++) {
                                     let loc = cleanMap[(pos + k) % cleanStream.length];
+                                    // cleanMap — фильтр globalMap с ТЕМИ ЖЕ объектами {r,c}, так что loc и есть
+                                    // искомая ячейка; старый findIndex по всему globalMap находил его же,
+                                    // только за O(N) на каждый символ совпадения.
                                     if (loc && STATE.lines[loc.r].isActive) {
-                                        let globalIdx = globalMap.findIndex((g, i) => g.r === loc.r && g.c === loc.c && /\S/.test(globalCleanText[i]));
-                                        if (globalIdx !== -1) {
-                                            let gridLoc = globalMap[globalIdx];
-                                            if (isTargetActive) {
-                                                STATE.lines[gridLoc.r].highlightMask[gridLoc.c] = true;
-                                            } else {
-                                                STATE.lines[gridLoc.r].inactiveHighlightMask[gridLoc.c] = true;
-                                            }
+                                        if (isTargetActive) {
+                                            STATE.lines[loc.r].highlightMask[loc.c] = true;
+                                        } else {
+                                            STATE.lines[loc.r].inactiveHighlightMask[loc.c] = true;
                                         }
                                     }
                                 }
@@ -6840,7 +7069,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                 let allAbove = true;
                                 for (let k = 0; k < pat.length; k++) {
                                     let actualRow = rowMap[pos + k];
-                                    if (actualRow === -1 || (targetRowIdx > 0 && actualRow >= targetRowIdx)) {
+                                    // Разрыв столбца (-1) — проверка валидности всегда;
+                                    // "только строки выше своей" — только в строгой очереди.
+                                    if (actualRow === -1 || (isSequential && targetRowIdx > 0 && actualRow >= targetRowIdx)) {
                                         allAbove = false;
                                         break;
                                     }
@@ -6871,8 +7102,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 for (let i = 0; i < STATE.lines.length; i++) {
                     let line = STATE.lines[i];
                     // Тот же режим, что и в блоке поиска выше: без "Разморозки по паттерну" подсветка
-                    // строится по всем строкам, а не только по активным.
-                    if (vbaActivation && !line.isActive) continue;
+                    // строится по всем строкам, а не только по активным; в нестрогом режиме —
+                    // тоже по всем (включая замороженные), как и сам поиск.
+                    if (isSequential && vbaActivation && !line.isActive) continue;
                     if (line.L === 0) continue;
 
                     let lineClean = "";
@@ -6886,6 +7118,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
                     if (lineClean.length === 0) continue;
 
+                    // Без break после первого совпадения — та же правка, что в блоке поиска выше:
+                    // иначе более короткий паттерн (например 10101) не подсвечивался в строке,
+                    // где одновременно совпадает более длинный.
                     for (let pIdx = 0; pIdx < sortedPatterns.length; pIdx++) {
                         let patOrig = sortedPatterns[pIdx];
                         let pat = getSearchPat(patOrig);
@@ -6893,7 +7128,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                         let pos = lineClean.indexOf(pat);
                         if (pos !== -1) {
                             let targetRowIdx = validPatterns.indexOf(patOrig);
-                            if (i < targetRowIdx) {
+                            // Нестрогий режим: подсвечиваем совпадение в любой строке (как и поиск);
+                            // ограничение "только строки выше своей" — только в строгой очереди.
+                            if (!isSequential || i < targetRowIdx) {
                                 let isTargetActive = (targetRowIdx !== -1 && STATE.lines[targetRowIdx]) ? STATE.lines[targetRowIdx].isActive : false;
 
                                 for (let k = 0; k < pat.length; k++) {
@@ -6906,7 +7143,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                         }
                                     }
                                 }
-                                break;
                             }
                         }
                     }
@@ -7026,7 +7262,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 <!-- === МАРКЕР 45: СИНТЕЗ ЛОГА ИНТЕРЛИВИНГА === -->
             let logDiv = document.getElementById('interleavingLogDetails');
             if (logDiv) {
-                logDiv.style.display = 'block';
+                if (logDiv.style.display !== 'block') logDiv.style.display = 'block';
                 let htmlContent = "";
 
                 if (targetIndices.length >= 1) {
@@ -7144,7 +7380,12 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     STATE.interleaveTargetRow = -1;
                 }
 
-                logDiv.innerHTML = htmlContent;
+                // innerHTML — только при реальном изменении: пересборка DOM-подложки лога на
+                // каждый тик (даже с тем же содержимым) заметно грузила рендер при Пуске.
+                if (logDiv._lastHtml !== htmlContent) {
+                    logDiv._lastHtml = htmlContent;
+                    logDiv.innerHTML = htmlContent;
+                }
             }
         } else {
             STATE.interleaveHighlightedRows = new Set();
@@ -7236,6 +7477,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         // calculateState (расчёт + поиск паттернов), авто-каскад, анализ стоячей волны
         // и обновляет всю диагностику/статистику в UI, затем рендерит кадр
         function updateLogic() {
+            // Новый тик: свежая метка пер-тикового кэша computeLineData и разрешение его использовать
+            // (двойной расчёт кадра внутри этого вызова — лёгкий + полный — переиспользует строки).
+            STATE.cldStamp = (STATE.cldStamp || 0) + 1;
+            STATE.cldCacheOn = true;
             let frameCheck = safeChecked('frameCheck', false);
             let radarCheck = safeChecked('radarCheck', false);
             let funnelCheck = safeChecked('funnelCheck', false);
@@ -7258,10 +7503,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (iBtn) iBtn.classList.toggle('active', interleaveAnalysisCheck);
             let wmBtn = document.getElementById('floatingWeaveModeBtn');
             if (wmBtn) {
-                if (interleaveSrcTopBorder) { wmBtn.textContent = '⬆️'; wmBtn.title = 'Сплетать: Верхняя граница (2 строки внутри)'; }
-                else if (interleaveSrcBottomBorder) { wmBtn.textContent = '⬇️'; wmBtn.title = 'Сплетать: Нижняя граница (2 строки внутри)'; }
-                else if (interleaveSrcPerimeter) { wmBtn.textContent = '⬜'; wmBtn.title = 'Сплетать: Периметр рамки (верх+низ+бока)'; }
-                else { wmBtn.textContent = '🐍'; wmBtn.title = 'Сплетать: Коса по рамке (низ→верх, змейкой)'; }
+                let wmIcon, wmTitle;
+                if (interleaveSrcTopBorder) { wmIcon = '⬆️'; wmTitle = 'Сплетать: Верхняя граница (2 строки внутри)'; }
+                else if (interleaveSrcBottomBorder) { wmIcon = '⬇️'; wmTitle = 'Сплетать: Нижняя граница (2 строки внутри)'; }
+                else if (interleaveSrcPerimeter) { wmIcon = '⬜'; wmTitle = 'Сплетать: Периметр рамки (верх+низ+бока)'; }
+                else { wmIcon = '🐍'; wmTitle = 'Сплетать: Коса по рамке (низ→верх, змейкой)'; }
+                // Пишем в DOM только при смене режима — updateLogic() дёргается каждый тик
+                if (wmBtn.textContent !== wmIcon) { wmBtn.textContent = wmIcon; wmBtn.title = wmTitle; }
             }
             let soBtn = document.getElementById('floatingSwapOrderBtn');
             if (soBtn) soBtn.classList.toggle('active', interleaveSwapOrderCheck);
@@ -7271,15 +7519,18 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             let nextBtnEl = document.getElementById('nextBtn');
             let pmBtn = document.getElementById('playerModeBtn');
             if (prevBtnEl && nextBtnEl) {
+                let pIcon, nIcon, pmText;
                 if (STATE.playerMode === "scroll") {
-                    prevBtnEl.textContent = '▲';
-                    nextBtnEl.textContent = '▼';
-                    if (pmBtn) pmBtn.textContent = naezdCheck ? "⬍ Функция: Скроллинг (С наездом)" : "⬍ Функция: Скроллинг";
+                    pIcon = '▲'; nIcon = '▼';
+                    pmText = naezdCheck ? "⬍ Функция: Скроллинг (С наездом)" : "⬍ Функция: Скроллинг";
                 } else {
-                    prevBtnEl.textContent = '◀';
-                    nextBtnEl.textContent = '▶';
-                    if (pmBtn) pmBtn.textContent = "⬌ Функция: Симуляция (XOR)";
+                    pIcon = '◀'; nIcon = '▶';
+                    pmText = "⬌ Функция: Симуляция (XOR)";
                 }
+                // Пишем в DOM только при смене режима — updateLogic() дёргается каждый тик
+                if (prevBtnEl.textContent !== pIcon) prevBtnEl.textContent = pIcon;
+                if (nextBtnEl.textContent !== nIcon) nextBtnEl.textContent = nIcon;
+                if (pmBtn && pmBtn.textContent !== pmText) pmBtn.textContent = pmText;
             }
 
             if (frameCheck && STATE.manualFrame && STATE.manualFrame.isInitialized) {
@@ -7310,7 +7561,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
         }
 
-        calculateState(false);
+        // Лёгкий проход: только display/маски/балансы (нужны анализу волн и каскаду ниже);
+        // поиск/подсветку/интерливинг сделает полный calculateState(true) дальше — раньше
+        // здесь был полный вызов, и вся тяжёлая часть кадра выполнялась дважды за тик.
+        calculateState(false, true);
 
         if (waveAnalysisCheck) {
             STATE.waveAnalysis.isActive = true;
@@ -7366,6 +7620,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     triggerCascade = cycleCompleted;
                 }
                 if (triggerCascade) {
+                    // Каскад меняет строки (наезд/активация) между лёгким и полным вызовами
+                    // calculateState — сбрасываем пер-тиковый кэш, чтобы полный вызов пересчитал заново.
+                    STATE.cldStamp++;
                     if (naezdCheck) {
                         let targetIdx = lastActiveIdx;
                         let targetSel = safeValue('naezdTargetSelect', 'last');
@@ -7400,6 +7657,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         }
 
         let newlyFound = calculateState(true);
+        // Дальше в этом тике computeLineData не вызывается — гасим кэш, чтобы прямые вызовы
+        // calculateState из UI-обработчиков (вне updateLogic) всегда считали свежие данные.
+        STATE.cldCacheOn = false;
         if (newlyFound) {
             showNotification("🎯 НАЙДЕН НОВЫЙ ПАТТЕРН!");
             let methodEl = document.getElementById('diagMethod');
@@ -7575,7 +7835,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 interleaveSwapOrder: safeChecked('interleaveSwapOrderCheck', false),
                 accumulateInterleave: safeChecked('accumulateInterleaveCheck', false),
                 autoShiftInterleaveTop: safeChecked('autoShiftInterleaveTopCheck', false),
-                searchOnManualShift: safeChecked('searchOnManualShiftCheck', false)
+                searchOnManualShift: safeChecked('searchOnManualShiftCheck', false),
+                uiLang: window.getUiLang ? window.getUiLang() : 'ru'
             };
         };
 
@@ -8415,10 +8676,63 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
             syncDpad();
         }
-        safeBind('dpadRightBtn', 'click', () => dpadGo('simulate', false));
-        safeBind('dpadLeftBtn', 'click', () => dpadGo('simulate', true));
-        safeBind('dpadUpBtn', 'click', () => dpadGo('scroll', false));
-        safeBind('dpadDownBtn', 'click', () => dpadGo('scroll', true));
+
+        // Один шаг с крестовины (на паузе): та же математика, что у legacy-кнопок ◀/▶ плеера
+        // (prevBtn/nextBtn), но режим и направление берутся из самой стрелки.
+        function dpadStep(mode, reverse) {
+            setPlayerModeAndDir(mode, reverse);
+            let S = parseInt(safeValue('scrollStepInput', 1)) || 1;
+            let turbo = (parseInt(safeValue('turboSlider', 1)) || 1) * S;
+            let delta = reverse ? -turbo : turbo;
+            processPendingCascade();
+            if (mode === 'scroll') {
+                if (STATE.lines.length > 0) {
+                    STATE.rowScrollOffset = mod(STATE.rowScrollOffset + delta, STATE.lines.length);
+                } else {
+                    STATE.rowScrollOffset = 0;
+                }
+            } else {
+                STATE.globalStep += delta;
+                STATE.lines.forEach(l => { if (l.isActive) l.localStep += delta; });
+                enforceLoop();
+            }
+            updateLogic();
+            syncDpad();
+            showNotification(mode === 'scroll' ? (reverse ? "ШАГ: СКРОЛЛ ▼" : "ШАГ: СКРОЛЛ ▲") : (reverse ? "ШАГ ◀" : "ШАГ ▶"));
+        }
+
+        // Стрелки крестовины: НА ПАУЗЕ клик = один шаг, удержание (~0.45с) = непрерывный Пуск.
+        // НА ХОДУ поведение прежнее: клик по горящей стрелке — пауза, по другой — смена
+        // режима/направления без остановки.
+        function bindDpadArrow(id, mode, reverse) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            let holdTimer = null, holdFired = false;
+            const cancelHold = () => { if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; } };
+            el.addEventListener('pointerdown', (e) => {
+                if (e.button !== undefined && e.button !== 0) return;
+                holdFired = false;
+                if (!STATE.isPlaying) {
+                    holdTimer = setTimeout(() => {
+                        holdTimer = null;
+                        holdFired = true;
+                        dpadGo(mode, reverse); // удержание на паузе = Пуск
+                    }, 450);
+                }
+            });
+            el.addEventListener('pointerup', cancelHold);
+            el.addEventListener('pointerleave', cancelHold);
+            el.addEventListener('click', () => {
+                if (holdFired) { holdFired = false; return; } // Пуск уже стартовал удержанием
+                cancelHold();
+                if (STATE.isPlaying) dpadGo(mode, reverse);
+                else dpadStep(mode, reverse);
+            });
+        }
+        bindDpadArrow('dpadRightBtn', 'simulate', false);
+        bindDpadArrow('dpadLeftBtn', 'simulate', true);
+        bindDpadArrow('dpadUpBtn', 'scroll', false);
+        bindDpadArrow('dpadDownBtn', 'scroll', true);
         // ■ в центре крестовины — программный клик по скрытой legacy-кнопке Стоп (вся стоп-логика там)
         safeBind('dpadStopBtn', 'click', () => { let s = document.getElementById('stopBtn'); if (s) s.click(); showNotification("СТОП"); });
 
@@ -9051,6 +9365,16 @@ safeBind('stopBtn', 'click', () => {
 
         // Полная перерисовка холста за один кадр: фон, все строки (радар/пирамида), подсветки,
         // конгломераты, рамка с её счётчиками/анимацией и вспомогательные тултипы
+        // Планирует ОДИН render() на ближайший кадр анимации. Для обработчиков mousemove/wheel:
+        // игровые мыши шлют события по 500-1000 Гц, и полный кадр на каждое событие — лишняя
+        // работа; копим изменения и рисуем не чаще частоты кадров.
+        let renderQueued = false;
+        function requestRender() {
+            if (renderQueued) return;
+            renderQueued = true;
+            requestAnimationFrame(() => { renderQueued = false; render(); });
+        }
+
         function render() {
             const canvas = UI.canvas;
             const container = UI.container;
@@ -9058,6 +9382,15 @@ safeBind('stopBtn', 'click', () => {
             if (!canvas || !container || !ctx) return;
 
             AUDIO_VISUALIZER.update(); // уровни баса/громкости для пульсации (см. МАРКЕР 55)
+
+            // Один Date.now() на кадр + чистка просроченных вспышек: раньше Map вспышек только
+            // рос (чистился лишь по "Стоп"), а посимвольные циклы дважды искали в нём ключ и
+            // звали Date.now() на КАЖДЫЙ символ каждого кадра.
+            const renderNow = Date.now();
+            if (STATE.flashes.size > 0) {
+                for (const [fk, ft] of STATE.flashes) { if (renderNow >= ft) STATE.flashes.delete(fk); }
+            }
+            const hasFlashes = STATE.flashes.size > 0;
 
             let isVerticalHl, isInactiveVerticalHl;
 
@@ -9130,6 +9463,8 @@ safeBind('stopBtn', 'click', () => {
             let inactivePatternColor = safeValue('inactivePatternColorInput', '#ffff00');
             let rawColor1 = safeValue('color1', '#ffffff');
             let rawColor0 = safeValue('color0', '#00ff66');
+            let frameTypeHl = safeValue('frameTypeSelect', 'rect');
+            let frameCellFill = hexToRgba(frameColor, 0.16);
 
             let applyFilter = safeChecked('filterCheck', false);
             let showHighlights = safeChecked('highlightCheck', true);
@@ -9166,8 +9501,9 @@ safeBind('stopBtn', 'click', () => {
                         let queue = [[rIdx, c]];
                         let currentBlob = [];
                         visited.add(rIdx + "_" + c);
-                        while (queue.length > 0) {
-                            let [cr, cc] = queue.shift();
+                        let qHead = 0; // указатель вместо queue.shift(): shift() сдвигает весь массив на каждый съём
+                        while (qHead < queue.length) {
+                            let [cr, cc] = queue[qHead++];
                             currentBlob.push([cr, cc]);
                             [[cr-1, cc], [cr+1, cc], [cr, cc-1], [cr, cc+1]].forEach(([nr, nc]) => {
                                 let wrappedNr = mod(nr, STATE.lines.length);
@@ -9257,7 +9593,7 @@ safeBind('stopBtn', 'click', () => {
                                 if (char === '.' || char === 'x' || lineData.fillerMask[c]) continue; 
 
                                 let isChar1 = isType1(char);
-                                let rayColor = isChar1 ? safeValue('color1', '#ffffff') : safeValue('color0', '#00ff66');
+                                let rayColor = isChar1 ? rawColor1 : rawColor0; // хойст, не читаем DOM на каждый символ
                                 
                                 let angle = c * angleStep - (Math.PI / 2);
                                 let cx = centerX + Math.cos(angle) * r;
@@ -9319,8 +9655,8 @@ safeBind('stopBtn', 'click', () => {
                         let isHl = showHighlights && lineData.isActive && lineData.highlightMask[c];
                         let isInactiveHl = showHighlights && !lineData.isActive && lineData.inactiveHighlightMask && lineData.inactiveHighlightMask[c];
 
-                        let flashEnd = STATE.flashes.get(actualIndex + "_" + c);
-                        let isFlashing = flashEnd && Date.now() < flashEnd;
+                        // Просроченные вспышки вычищены в начале render() — достаточно has()
+                        let isFlashing = hasFlashes && STATE.flashes.has(actualIndex + "_" + c);
                         let isRed = trackRedOne && lineData.redMask[c];
                         let isLcsRed = (lineData.lcsRedMask && lineData.lcsRedMask[c]) || (lineData.renderPRedMask && lineData.renderPRedMask[c]);
                         let isLcsPurple = (lineData.lcsPurpleMask && lineData.lcsPurpleMask[c]) || (lineData.renderPPurpleMask && lineData.renderPPurpleMask[c]);
@@ -9416,7 +9752,11 @@ safeBind('stopBtn', 'click', () => {
 
                 let minNumContainer = document.getElementById('minimizedRowNumbers');
                 let isZenForNumbers = document.body.classList.contains('zen-mode');
-                if (minNumContainer) minNumContainer.innerHTML = '';
+                // Номера строк копим в HTML-строку и заливаем в контейнер ОДИН раз после цикла,
+                // и только если разметка реально изменилась — раньше тут на каждый кадр удалялись
+                // и создавались заново DOM-узлы всех видимых строк (главный тормоз скроллинга).
+                let rowNumsHtml = '';
+                let showRowNumbers = safeChecked('showRowNumbersCheck', true);
 
                 for (let i = 0; i < m.renderCount; i++) {
                     let actualIndex = (m.startIndex + i) % totalRows;
@@ -9446,47 +9786,36 @@ safeBind('stopBtn', 'click', () => {
                     }
 
                     let isCandidateRow = (actualIndex === lastActiveIdx_global + 1);
-                    ctx.globalAlpha = isCandidateRow ? 1.0 : ((!lineData.isActive && applyFilter) ? 0 : 1.0);
+                    let rowAlpha = isCandidateRow ? 1.0 : ((!lineData.isActive && applyFilter) ? 0 : 1.0);
+                    ctx.globalAlpha = rowAlpha;
 
                     // Номера строк всегда выводим в узкую полосу левой панели (#minimizedRowNumbers, HTML — открыта она или свёрнута).
                     // Только в дзен-режиме панель целиком уходит за экран, поэтому там по-старому рисуем на холсте.
-                    if (safeChecked('showRowNumbersCheck', true)) {
+                    if (showRowNumbers) {
                         if (!isZenForNumbers && minNumContainer) {
-                            let isRowSelected = (STATE.selectedRows && STATE.selectedRows.has(actualIndex)) ||
-                                (STATE.interleaveHighlightedRows && STATE.interleaveHighlightedRows.has(actualIndex)) ||
+                            let isSelectedRow = STATE.selectedRows && STATE.selectedRows.has(actualIndex);
+                            let isInterleaveRow = (STATE.interleaveHighlightedRows && STATE.interleaveHighlightedRows.has(actualIndex)) ||
                                 STATE.interleaveTargetRow === actualIndex;
                             // Строка внутри текущей рамки — номер красим цветом рамки, чтобы её границы
                             // было видно и в узкой колонке номеров, не только на самом холсте.
                             let isInFrame = showFrame && STATE.manualFrame && STATE.manualFrame.isInitialized &&
                                 i >= STATE.manualFrame.rowStart && i < STATE.manualFrame.rowStart + STATE.manualFrame.rowSpan;
+                            let numColor, numWeight, numShadow;
+                            if (isSelectedRow) {
+                                numColor = '#999999'; numWeight = 'bold'; numShadow = 'none';
+                            } else if (isInterleaveRow) {
+                                numColor = '#ff66ff'; numWeight = 'bold'; numShadow = '0 0 6px #ff00ff, 0 0 10px #ff00ff';
+                            } else if (lineData.origIndex < 0) {
+                                // Достроенные строки (-1, -2, ...) — синим, чтобы отличать от обычной нумерации.
+                                numColor = '#00ccff'; numWeight = 'bold'; numShadow = '0 0 4px #00ccff';
+                            } else if (isInFrame) {
+                                numColor = frameColor; numWeight = 'bold'; numShadow = `0 0 6px ${frameColor}`;
+                            } else {
+                                numColor = lineData.isActive ? '#1c2521' : '#19191c'; numWeight = fontWeight; numShadow = 'none';
+                            }
+                            let numText = lineData.origIndex >= 0 ? (lineData.origIndex + 1) : lineData.origIndex;
                             yPositions.forEach(y => {
-                                let span = document.createElement('div');
-                                span.textContent = lineData.origIndex >= 0 ? (lineData.origIndex + 1) : lineData.origIndex;
-                                span.style.position = 'absolute';
-                                span.style.left = '0';
-                                span.style.width = '100%';
-                                span.style.top = (y - 6) + 'px';
-                                span.style.fontSize = '9px';
-                                span.style.fontFamily = safeValue('fontSelect', 'monospace');
-                                span.style.textAlign = 'center';
-                                if (isRowSelected) {
-                                    span.style.color = '#ff66ff';
-                                    span.style.fontWeight = 'bold';
-                                    span.style.textShadow = '0 0 6px #ff00ff, 0 0 10px #ff00ff';
-                                } else if (lineData.origIndex < 0) {
-                                    // Достроенные строки (-1, -2, ...) — синим, чтобы отличать от обычной нумерации.
-                                    span.style.color = '#00ccff';
-                                    span.style.fontWeight = 'bold';
-                                    span.style.textShadow = '0 0 4px #00ccff';
-                                } else if (isInFrame) {
-                                    span.style.color = frameColor;
-                                    span.style.fontWeight = 'bold';
-                                    span.style.textShadow = `0 0 6px ${frameColor}`;
-                                } else {
-                                    span.style.color = lineData.isActive ? '#1c2521' : '#19191c';
-                                    span.style.fontWeight = safeChecked('boldCheck', false) ? 'bold' : 'normal';
-                                }
-                                minNumContainer.appendChild(span);
+                                rowNumsHtml += `<div style="position:absolute;left:0;width:100%;top:${y - 6}px;font-size:9px;font-family:${fontSelectVal};text-align:center;color:${numColor};font-weight:${numWeight};text-shadow:${numShadow}">${numText}</div>`;
                             });
                         } else {
                             ctx.save();
@@ -9504,7 +9833,7 @@ safeBind('stopBtn', 'click', () => {
                     yPositions.forEach(y => {
                         if (STATE.selectedRows && STATE.selectedRows.has(actualIndex)) {
                             ctx.save();
-                            ctx.fillStyle = 'rgba(255, 0, 255, 0.25)';
+                            ctx.fillStyle = 'rgba(190, 190, 190, 0.10)';
                             ctx.fillRect(0, y - m.lineHeight / 2, canvas.width, m.lineHeight);
                             ctx.restore();
                         }
@@ -9538,36 +9867,81 @@ safeBind('stopBtn', 'click', () => {
                             currentX = baseX - (text.length * m.charWidth / 2);
                         }
 
+                        ctx.textAlign = 'center'; // одинаков для всех символов — не переставляем в цикле
                         for (let c = 0; c < text.length; c++) {
                             let char = text[c];
                             if (char === ' ') { if (isDrum) char = '.'; else continue; }
                             let cellX = isMatrixAxis ? (baseX + ((c - (text.length - 1) / 2.0) * m.charWidth) + liveCenterOffset) : (currentX + (c * m.charWidth) + (m.charWidth / 2));
+
+                            // Подсветка фоном символов, которые геометрически попадают внутрь текущей
+                            // рамки (прямоуг./ромб/симв.ромб/треугольники) — иначе для не-прямоугольных
+                            // форм не видно, какие именно символы реально захвачены рамкой.
+                            if (showFrame && STATE.manualFrame && STATE.manualFrame.isInitialized &&
+                                i >= STATE.manualFrame.rowStart && i < STATE.manualFrame.rowStart + STATE.manualFrame.rowSpan) {
+                                let fTypeHl = frameTypeHl; // хойст: не читаем DOM на каждый символ
+                                let fColStart = STATE.manualFrame.colStart !== undefined ? STATE.manualFrame.colStart : -Math.round((STATE.manualFrame.colSpan || 40) / 2);
+                                let fColSpan = STATE.manualFrame.colSpan !== undefined ? STATE.manualFrame.colSpan : 40;
+                                let fDrawX = baseX + fColStart * m.charWidth;
+                                let fDrawW = fColSpan * m.charWidth;
+                                let isInFrameCell = false;
+                                if (fTypeHl === 'rect') {
+                                    isInFrameCell = (cellX >= fDrawX && cellX <= fDrawX + fDrawW);
+                                } else {
+                                    let rowRadius = (STATE.manualFrame.rowSpan - 1) / 2.0 || 0.5;
+                                    let centerX_frame = fDrawX + fDrawW / 2.0;
+                                    let columnRadius = fDrawW / 2.0 || 1.0;
+                                    if (fTypeHl === 'sq_rhomb') {
+                                        let mathCenterY = Math.round(rowRadius);
+                                        let vDist_rows = Math.abs(i - STATE.manualFrame.rowStart - mathCenterY);
+                                        let radius_rows = Math.round(rowRadius);
+                                        let col_dist = Math.round(Math.abs(cellX - centerX_frame) / m.charWidth);
+                                        isInFrameCell = (vDist_rows + col_dist <= radius_rows);
+                                    } else {
+                                        let rowRel = i - STATE.manualFrame.rowStart - rowRadius;
+                                        isInFrameCell = isInSmoothFrameShape(fTypeHl, rowRel, rowRadius, cellX, centerX_frame, columnRadius, m.charWidth);
+                                    }
+                                }
+                                if (isInFrameCell) {
+                                    ctx.save();
+                                    ctx.globalAlpha = rowAlpha; // построчная альфа, независимо от стиля предыдущего символа
+                                    ctx.fillStyle = frameCellFill;
+                                    ctx.fillRect(cellX - m.charWidth / 2, y - m.lineHeight / 2, m.charWidth, m.lineHeight);
+                                    ctx.restore();
+                                }
+                            }
 
                             let isHl = showHighlights && lineData.isActive && lineData.highlightMask[c];
                             let isInactiveHl = showHighlights && !lineData.isActive && lineData.inactiveHighlightMask && lineData.inactiveHighlightMask[c];
                             let isLcsRed = (lineData.lcsRedMask && lineData.lcsRedMask[c]) || (lineData.renderPRedMask && lineData.renderPRedMask[c]);
                             let isLcsPurple = (lineData.lcsPurpleMask && lineData.lcsPurpleMask[c]) || (lineData.renderPPurpleMask && lineData.renderPPurpleMask[c]);
                             let isRed = trackRedOne && lineData.redMask[c];
-                            let isFlashing = STATE.flashes.get(actualIndex + "_" + c) && Date.now() < STATE.flashes.get(actualIndex + "_" + c);
+                            // Просроченные вспышки вычищены в начале render() — достаточно has()
+                            let isFlashing = hasFlashes && STATE.flashes.has(actualIndex + "_" + c);
                             let cBlobColor = useConglomerates ? conglomColors.get(actualIndex + "_" + c) : null;
 
-                            ctx.save();
+                            // Вместо ctx.save()/restore() на каждый символ (сериализация всего
+                            // состояния контекста — заметный расход на больших полях) выставляем
+                            // только реально меняющиеся свойства: fillStyle/alpha/shadow.
                             // Подсветка найденных паттернов (isHl) имеет приоритет над трассером, конгломератами
                             // и вспышкой — если "Подсветка паттернов" включена, цвет паттерна должен быть виден
                             // поверх остальной раскраски символа.
-                            if (isLcsRed) { ctx.fillStyle = '#ff0000'; ctx.shadowBlur = 15; ctx.shadowColor = '#ff0000'; ctx.globalAlpha = 1.0; }
-                            else if (isLcsPurple) { ctx.fillStyle = '#cc33ff'; ctx.shadowBlur = 15; ctx.shadowColor = '#cc33ff'; ctx.globalAlpha = 1.0; }
-                            else if (isInactiveHl) { ctx.fillStyle = inactivePatternColor; ctx.globalAlpha = 1.0; }
-                            else if (isHl) { ctx.fillStyle = hlColor; if (useNeon && char !== '.') { ctx.shadowBlur = 8; ctx.shadowColor = hlColor; } }
-                            else if (isRed) { ctx.fillStyle = trColor; if (useNeon && char !== '.') { ctx.shadowBlur = 8; ctx.shadowColor = trColor; } }
-                            else if (cBlobColor) { ctx.fillStyle = cBlobColor; if (useNeon && char !== '.') { ctx.shadowBlur = 8; ctx.shadowColor = cBlobColor; } }
+                            let chAlpha = rowAlpha, chShadowBlur = 0, chShadowColor = null;
+                            if (isLcsRed) { ctx.fillStyle = '#ff0000'; chShadowBlur = 15; chShadowColor = '#ff0000'; chAlpha = 1.0; }
+                            else if (isLcsPurple) { ctx.fillStyle = '#cc33ff'; chShadowBlur = 15; chShadowColor = '#cc33ff'; chAlpha = 1.0; }
+                            else if (isInactiveHl) { ctx.fillStyle = inactivePatternColor; chAlpha = 1.0; }
+                            else if (isHl) { ctx.fillStyle = hlColor; if (useNeon && char !== '.') { chShadowBlur = 8; chShadowColor = hlColor; } }
+                            else if (isRed) { ctx.fillStyle = trColor; if (useNeon && char !== '.') { chShadowBlur = 8; chShadowColor = trColor; } }
+                            else if (cBlobColor) { ctx.fillStyle = cBlobColor; if (useNeon && char !== '.') { chShadowBlur = 8; chShadowColor = cBlobColor; } }
                             else if (lineData.deltaChangeMask && lineData.deltaChangeMask[c] !== undefined) { ctx.fillStyle = lineData.deltaChangeMask[c] ? '#000000' : '#ff0000'; }
                             else {
                                 if (char === '.') ctx.fillStyle = '#555';
                                 else ctx.fillStyle = isType1(char) ? c1 : c0;
                             }
-                            ctx.textAlign = 'center'; ctx.fillText(char, cellX, y);
-                            
+                            ctx.globalAlpha = chAlpha;
+                            ctx.shadowBlur = chShadowBlur;
+                            if (chShadowColor) ctx.shadowColor = chShadowColor;
+                            ctx.fillText(char, cellX, y);
+
                             if (lineData.underlinedMask && lineData.underlinedMask[c] && char !== ' ' && char !== '.') {
                                 ctx.save();
                                 ctx.strokeStyle = ctx.fillStyle;
@@ -9579,10 +9953,20 @@ safeBind('stopBtn', 'click', () => {
                                 ctx.stroke();
                                 ctx.restore();
                             }
-                            
-                            ctx.restore();
                         }
+                        // Возвращаем контексту построчные значения (как это делал restore() раньше)
+                        ctx.globalAlpha = rowAlpha;
+                        ctx.shadowBlur = 0;
                     });
+                }
+
+                // Заливка номеров строк одним куском и только при реальном изменении разметки
+                if (minNumContainer) {
+                    let finalNumsHtml = isZenForNumbers ? '' : rowNumsHtml;
+                    if (minNumContainer._lastHtml !== finalNumsHtml) {
+                        minNumContainer._lastHtml = finalNumsHtml;
+                        minNumContainer.innerHTML = finalNumsHtml;
+                    }
                 }
             }
 <!-- === МАРКЕР 60: ОТРИСОВКА СЕТКИ И РАМКИ === -->
@@ -9735,14 +10119,14 @@ safeBind('stopBtn', 'click', () => {
                 let drawH = STATE.manualFrame.rowSpan * m.lineHeight;
 
                 let useBalance = safeChecked('balanceCheck', false);
-                let isBalanced = false, isAll0 = false, isAll1 = false;
-                let total0 = 0, total1 = 0;
-                
-                if (useBalance) {
-                    let bal = calculateCurrentBalance();
-                    total0 = bal.total0; total1 = bal.total1;
-                    isBalanced = bal.isEq; isAll0 = bal.isAll0; isAll1 = bal.isAll1;
-                }
+                // Считаем один раз и переиспользуем ниже для счётчиков 0/1 по бокам рамки —
+                // calculateCurrentBalance проходит по всей рамке (дорого на длинных строках),
+                // раньше вызывалась дважды за кадр (здесь и в блоке счётчиков).
+                let bal = calculateCurrentBalance();
+                let isBalanced = useBalance && bal.isEq;
+                let isAll0 = useBalance && bal.isAll0;
+                let isAll1 = useBalance && bal.isAll1;
+                let total0 = bal.total0, total1 = bal.total1;
 
                 let isSpecialTrigger = isBalanced || isAll0 || isAll1;
                 let specColor = frameColor;
@@ -9780,6 +10164,16 @@ safeBind('stopBtn', 'click', () => {
                     ctx.lineTo(cx_frame + h_rad_px, cy);
                     ctx.lineTo(cx_frame, cbot);
                     ctx.lineTo(cx_frame - h_rad_px, cy);
+                } else if (fType === 'tri_down') {
+                    // Полуромб — нижняя половина (основание по центральной линии, вершина внизу).
+                    ctx.moveTo(drawX, cy);
+                    ctx.lineTo(drawX + drawW, cy);
+                    ctx.lineTo(cx_frame, cbot);
+                } else if (fType === 'tri_up') {
+                    // Полуромб — верхняя половина (основание по центральной линии, вершина вверху).
+                    ctx.moveTo(drawX, cy);
+                    ctx.lineTo(cx_frame, ctop);
+                    ctx.lineTo(drawX + drawW, cy);
                 } else {
                     ctx.rect(drawX, drawY, drawW, drawH);
                 }
@@ -9796,9 +10190,8 @@ safeBind('stopBtn', 'click', () => {
                     ctx.restore();
                 }
 
-                // Постоянные крупные счетчики 1 и 0 по бокам рамки
-                let bal = calculateCurrentBalance();
-                let opacity = bal.isEq ? 0.9 : 0.25; 
+                // Постоянные крупные счетчики 1 и 0 по бокам рамки (bal уже посчитан выше)
+                let opacity = bal.isEq ? 0.9 : 0.25;
                 let now = Date.now();
                 if (STATE.flashEndTime && now < STATE.flashEndTime) {
                     opacity = 1.0;
@@ -9807,44 +10200,86 @@ safeBind('stopBtn', 'click', () => {
                 ctx.globalAlpha = opacity;
                 ctx.textBaseline = 'middle';
 
-                // Главные (общие) счетчики
-                ctx.font = `bold 28px ${safeValue('fontSelect', 'monospace')}`;
-                
-                ctx.fillStyle = hexToRgba(safeValue('color1', '#ffffff'), 1.0);
-                ctx.shadowColor = ctx.fillStyle;
-                ctx.shadowBlur = bal.isEq ? 15 : 2;
-                ctx.textAlign = 'right';
-                ctx.fillText(bal.total1.toString(), drawX - 35, drawY + drawH / 2);
+                // Тёмная плашка под числом, чтобы оно не сливалось со строками холста у него за
+                // спиной (рамку часто держат прямо поверх текста) — рисуется без свечения, поверх
+                // неё уже сам текст со своим fillStyle/shadow.
+                const fillTextWithBg = (text, x, y, align) => {
+                    let metrics = ctx.measureText(text);
+                    let w = metrics.width;
+                    let fontPx = parseInt(ctx.font) || 12;
+                    let halfH = fontPx * 0.62;
+                    let pad = 3;
+                    let bx = (align === 'right') ? (x - w - pad) : (x - pad);
+                    let bw = w + pad * 2;
+                    ctx.save();
+                    ctx.shadowBlur = 0;
+                    ctx.globalAlpha = Math.min(1, opacity + 0.35);
+                    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+                    ctx.fillRect(bx, y - halfH, bw, halfH * 2);
+                    ctx.restore();
+                };
 
-                ctx.fillStyle = hexToRgba(safeValue('color0', '#00ff66'), 1.0);
-                ctx.shadowColor = ctx.fillStyle;
-                ctx.shadowBlur = bal.isEq ? 15 : 2;
-                ctx.textAlign = 'left';
-                ctx.fillText(bal.total0.toString(), drawX + drawW + 35, drawY + drawH / 2);
-
-                // Построчные счетчики внутри рамки по бокам
+                // Строки часто шире (или у́же) самой рамки — особенно у ромба/треугольника, где
+                // ширина по строкам вообще не постоянна. Считаем реальный левый/правый край
+                // символов КАЖДОЙ строки рамки (через ту же геометрию, что и рендер глифов),
+                // чтобы счётчики 0/1 всегда стояли снаружи текста, а не поверх него.
+                let symModeBal = safeValue('symModeSelect', 'centerTrack');
+                let useSpacingBal = safeChecked('spacedCheck', false);
+                let rowExtents = [];
+                let overallMinX = drawX, overallMaxX = drawX + drawW;
                 if (bal.rowStats) {
-                    ctx.font = `bold 11px ${safeValue('fontSelect', 'monospace')}`;
                     for (let k = 0; k < fRowSpan; k++) {
                         let sIdx = STATE.manualFrame.rowStart + k;
                         let stat = bal.rowStats[sIdx];
-                        if (stat) {
-                            let yRow = drawY + (k + 0.5) * m.lineHeight;
-                            // 1s слева
-                            ctx.fillStyle = hexToRgba(safeValue('color1', '#ffffff'), 1.0);
-                            ctx.shadowColor = ctx.fillStyle;
-                            ctx.shadowBlur = bal.isEq ? 8 : 0;
-                            ctx.textAlign = 'right';
-                            ctx.fillText((stat.c1 || 0).toString(), drawX - 8, yRow);
-                            
-                            // 0s справа
-                            ctx.fillStyle = hexToRgba(safeValue('color0', '#00ff66'), 1.0);
-                            ctx.shadowColor = ctx.fillStyle;
-                            ctx.shadowBlur = bal.isEq ? 8 : 0;
-                            ctx.textAlign = 'left';
-                            ctx.fillText((stat.c0 || 0).toString(), drawX + drawW + 8, yRow);
-                        }
+                        if (!stat) continue;
+                        let lineIdx = (m.startIndex + sIdx) % STATE.lines.length;
+                        let lineData = STATE.lines[lineIdx];
+                        let ext = getRowVisibleXExtent(lineData, m, symModeBal, useSpacingBal);
+                        let minX = ext ? ext.minX : drawX, maxX = ext ? ext.maxX : drawX + drawW;
+                        let yRow = drawY + (k + 0.5) * m.lineHeight;
+                        rowExtents.push({ yRow, minX, maxX, stat });
+                        if (minX < overallMinX) overallMinX = minX;
+                        if (maxX > overallMaxX) overallMaxX = maxX;
                     }
+                }
+
+                // Главные (общие) счетчики — снаружи самой широкой строки рамки, не от края бокса рамки.
+                ctx.font = `bold 28px ${safeValue('fontSelect', 'monospace')}`;
+
+                ctx.textAlign = 'right';
+                fillTextWithBg(bal.total1.toString(), overallMinX - 35, drawY + drawH / 2, 'right');
+                ctx.fillStyle = hexToRgba(safeValue('color1', '#ffffff'), 1.0);
+                ctx.shadowColor = ctx.fillStyle;
+                ctx.shadowBlur = bal.isEq ? 15 : 2;
+                ctx.fillText(bal.total1.toString(), overallMinX - 35, drawY + drawH / 2);
+
+                ctx.textAlign = 'left';
+                fillTextWithBg(bal.total0.toString(), overallMaxX + 35, drawY + drawH / 2, 'left');
+                ctx.fillStyle = hexToRgba(safeValue('color0', '#00ff66'), 1.0);
+                ctx.shadowColor = ctx.fillStyle;
+                ctx.shadowBlur = bal.isEq ? 15 : 2;
+                ctx.fillText(bal.total0.toString(), overallMaxX + 35, drawY + drawH / 2);
+
+                // Построчные счетчики — каждый снаружи символов именно СВОЕЙ строки.
+                if (rowExtents.length) {
+                    ctx.font = `bold 11px ${safeValue('fontSelect', 'monospace')}`;
+                    rowExtents.forEach(re => {
+                        // 1s слева
+                        ctx.textAlign = 'right';
+                        fillTextWithBg((re.stat.c1 || 0).toString(), re.minX - 8, re.yRow, 'right');
+                        ctx.fillStyle = hexToRgba(safeValue('color1', '#ffffff'), 1.0);
+                        ctx.shadowColor = ctx.fillStyle;
+                        ctx.shadowBlur = bal.isEq ? 8 : 0;
+                        ctx.fillText((re.stat.c1 || 0).toString(), re.minX - 8, re.yRow);
+
+                        // 0s справа
+                        ctx.textAlign = 'left';
+                        fillTextWithBg((re.stat.c0 || 0).toString(), re.maxX + 8, re.yRow, 'left');
+                        ctx.fillStyle = hexToRgba(safeValue('color0', '#00ff66'), 1.0);
+                        ctx.shadowColor = ctx.fillStyle;
+                        ctx.shadowBlur = bal.isEq ? 8 : 0;
+                        ctx.fillText((re.stat.c0 || 0).toString(), re.maxX + 8, re.yRow);
+                    });
                 }
                 ctx.restore();
 
@@ -9927,6 +10362,14 @@ safeBind('stopBtn', 'click', () => {
                         ctx.lineTo(cx_frame + h_rad_px, cy);
                         ctx.lineTo(cx_frame, cbot);
                         ctx.lineTo(cx_frame - h_rad_px, cy);
+                    } else if (fType === 'tri_down') {
+                        ctx.moveTo(drawX, cy);
+                        ctx.lineTo(drawX + drawW, cy);
+                        ctx.lineTo(cx_frame, cbot);
+                    } else if (fType === 'tri_up') {
+                        ctx.moveTo(drawX, cy);
+                        ctx.lineTo(cx_frame, ctop);
+                        ctx.lineTo(drawX + drawW, cy);
                     } else {
                         ctx.rect(drawX, drawY, drawW, drawH);
                     }
@@ -10199,34 +10642,49 @@ safeBind('stopBtn', 'click', () => {
                     }
                 }
                 el.classList.toggle('auto-row-overlap', overlap);
-                if (sel === '.player-panel') {
-                    let bar = document.getElementById('playerButtonsBar');
-                    if (bar) bar.classList.toggle('dimmed', overlap && safeChecked('hideControlsOnDimCheck', false));
-                }
             });
 
-            // Плавающие тулбары (быстрые функции слева/справа/назад) затемняются при наезде строк
-            // ВСЕГДА (не только по галке "Затемнять Пуск/Стоп" — та осталась только для playerButtonsBar).
-            document.querySelectorAll('.floating-toolbar, .floating-toolbar-right, .floating-back-btn').forEach(el => {
-                if (!el || el.offsetParent === null) return;
+            // Общий пиксельный тест "строки наехали на элемент" для fixed-элементов (мини-пульт,
+            // плавающие тулбары): их видимость проверяем по размеру rect, НЕ по offsetParent —
+            // у position:fixed элементов offsetParent === null в Chrome, и старая проверка
+            // молча выключала затемнение навсегда.
+            const overlapsRows = (el) => {
                 const rect = el.getBoundingClientRect();
+                if (rect.width <= 0 || rect.height <= 0) return null; // скрыт — состояние не трогаем
                 let x = Math.max(0, Math.floor(rect.left));
                 let y = Math.max(0, Math.floor(rect.top));
                 let w = Math.min(canvas.width, Math.ceil(rect.right)) - x;
                 let h = Math.min(canvas.height, Math.ceil(rect.bottom)) - y;
-                if (w <= 0 || h <= 0) { el.classList.remove('dimmed'); return; }
-
+                if (w <= 0 || h <= 0) return false;
                 let data;
-                try { data = ctx.getImageData(x, y, w, h).data; } catch (e) { return; }
-
-                let overlap = false;
+                try { data = ctx.getImageData(x, y, w, h).data; } catch (e) { return null; }
                 for (let i = 0; i < data.length; i += SAMPLE_STRIDE) {
-                    if (matchesChar(data[i], data[i + 1], data[i + 2])) {
-                        overlap = true;
-                        break;
-                    }
+                    if (matchesChar(data[i], data[i + 1], data[i + 2])) return true;
                 }
-                el.classList.toggle('dimmed', overlap);
+                return false;
+            };
+
+            // Мини-пульт (#playerButtonsBar), галка "Затемн.": затемняется по наезду строк на
+            // САМ мини-пульт. Раньше затемнение было привязано к наезду на .player-panel, но
+            // пульт слит в мини-пульт, а каркас .player-panel скрыт навсегда (display:none) —
+            // ветка не выполнялась ни разу, и галка не работала вовсе.
+            let dimBar = document.getElementById('playerButtonsBar');
+            if (dimBar) {
+                if (!safeChecked('hideControlsOnDimCheck', false)) {
+                    dimBar.classList.remove('dimmed');
+                } else {
+                    let barOverlap = overlapsRows(dimBar);
+                    if (barOverlap !== null) dimBar.classList.toggle('dimmed', barOverlap);
+                }
+            }
+
+            // Плавающие тулбары (быстрые функции слева/справа/назад) затемняются при наезде строк
+            // ВСЕГДА (не только по галке "Затемнять Пуск/Стоп" — та осталась только для playerButtonsBar).
+            // Проверка через overlapsRows: старый guard "offsetParent === null" у position:fixed
+            // тулбаров в Chrome срабатывал всегда, и этот блок был мёртвым.
+            document.querySelectorAll('.floating-toolbar, .floating-toolbar-right, .floating-back-btn').forEach(el => {
+                let tbOverlap = overlapsRows(el);
+                if (tbOverlap !== null) el.classList.toggle('dimmed', tbOverlap);
             });
         }
 
@@ -10407,9 +10865,15 @@ safeBind('stopBtn', 'click', () => {
         safeBind('interleavingCheck', 'change', function() { updateLogic(); });
 
         safeBind('hideControlsOnDimCheck', 'change', function() {
-            let panel = document.querySelector('.player-panel');
-            let bar = document.getElementById('playerButtonsBar');
-            if (bar) bar.classList.toggle('dimmed', this.checked && panel && panel.classList.contains('auto-row-overlap'));
+            // Снята — сразу проявляем мини-пульт; поставлена — сразу проверяем наезд строк на него
+            // (checkPanelOverlaps теперь сам затемняет #playerButtonsBar по этой галке).
+            // Старый код смотрел на .player-panel — скрытый каркас, класс наезда там не появлялся никогда.
+            if (!this.checked) {
+                let bar = document.getElementById('playerButtonsBar');
+                if (bar) bar.classList.remove('dimmed');
+            } else {
+                checkPanelOverlaps();
+            }
         });
 
         safeBind('calcAllInterleavesBtn', 'click', function() {
@@ -11000,16 +11464,21 @@ safeBind('stopBtn', 'click', () => {
                     let fx = m.baseX + colStart * m.charWidth;
                     let fy = m.startY + STATE.manualFrame.rowStart * m.lineHeight;
                     let fh = STATE.manualFrame.rowSpan * m.lineHeight;
+                    let fType = safeValue('frameTypeSelect', 'rect');
+                    let vEdges = getFrameEffectiveVEdges(fType, fy, fh);
+                    let vTop = vEdges.top, vBot = vEdges.bot;
 
                     // Три зоны от каждого края рамки наружу-внутрь:
                     // 1) тонкая кромка RESIZE_EDGE_PX на самой границе — ресайз (растягивание);
                     // 2) полоса max(RESIZE_ZONE_MIN_PX, RESIZE_ZONE_PCT * внутр. размер) сразу за ней — драг самой рамки;
                     // 3) центр рамки — зона не занята фреймом, клик проваливается в обычный пан холста (рамка едет с ним, т.к. её координаты считаются от STATE.offsetX/offsetY).
+                    // Верх/низ считаются от vTop/vBot (не от fy/fy+fh напрямую) — у треугольника видимый
+                    // край (основание) стоит на центральной линии бокса, а не на его крае.
                     let dragBandX = Math.max(RESIZE_ZONE_MIN_PX, fw * RESIZE_ZONE_PCT);
-                    let dragBandY = Math.max(RESIZE_ZONE_MIN_PX, fh * RESIZE_ZONE_PCT);
+                    let dragBandY = Math.max(RESIZE_ZONE_MIN_PX, (vBot - vTop) * RESIZE_ZONE_PCT);
 
-                    let onT_res = Math.abs(my - fy) <= RESIZE_EDGE_PX && mx >= fx - RESIZE_EDGE_PX && mx <= fx + fw + RESIZE_EDGE_PX;
-                    let onB_res = Math.abs(my - (fy + fh)) <= RESIZE_EDGE_PX && mx >= fx - RESIZE_EDGE_PX && mx <= fx + fw + RESIZE_EDGE_PX;
+                    let onT_res = Math.abs(my - vTop) <= RESIZE_EDGE_PX && mx >= fx - RESIZE_EDGE_PX && mx <= fx + fw + RESIZE_EDGE_PX;
+                    let onB_res = Math.abs(my - vBot) <= RESIZE_EDGE_PX && mx >= fx - RESIZE_EDGE_PX && mx <= fx + fw + RESIZE_EDGE_PX;
                     let onL_res = Math.abs(mx - fx) <= RESIZE_EDGE_PX && my >= fy - RESIZE_EDGE_PX && my <= fy + fh + RESIZE_EDGE_PX;
                     let onR_res = Math.abs(mx - (fx + fw)) <= RESIZE_EDGE_PX && my >= fy - RESIZE_EDGE_PX && my <= fy + fh + RESIZE_EDGE_PX;
 
@@ -11018,8 +11487,8 @@ safeBind('stopBtn', 'click', () => {
                     let inX = mx >= fx && mx <= fx + fw;
                     let inY = my >= fy && my <= fy + fh;
 
-                    let onT_drag = inX && my > fy + RESIZE_EDGE_PX && my <= fy + dragBandY;
-                    let onB_drag = inX && my < fy + fh - RESIZE_EDGE_PX && my >= fy + fh - dragBandY;
+                    let onT_drag = inX && my > vTop + RESIZE_EDGE_PX && my <= vTop + dragBandY;
+                    let onB_drag = inX && my < vBot - RESIZE_EDGE_PX && my >= vBot - dragBandY;
                     let onL_drag = inY && mx > fx + RESIZE_EDGE_PX && mx <= fx + dragBandX;
                     let onR_drag = inY && mx < fx + fw - RESIZE_EDGE_PX && mx >= fx + fw - dragBandX;
                     let onMoveArea = !isResize && (onT_drag || onB_drag || onL_drag || onR_drag);
@@ -11035,8 +11504,13 @@ safeBind('stopBtn', 'click', () => {
                     } else if (isResize) {
                         if (onB_res) STATE.frameAction = 'resize-b';
                         else if (onT_res) STATE.frameAction = 'resize-t';
-                        else if (onL_res && !centerLocked) { STATE.frameAction = 'resize-h'; STATE.frameResizeSide = 'L'; }
-                        else if (onR_res && !centerLocked) { STATE.frameAction = 'resize-h'; STATE.frameResizeSide = 'R'; }
+                        else if (onL_res || onR_res) {
+                            // При включённой центровке рамка растёт/сжимается симметрично в обе
+                            // стороны от центра, за какой бы бок ни потянули; без центровки —
+                            // тащим один край, противоположный остаётся на месте (как раньше).
+                            if (centerLocked) { STATE.frameAction = 'resize-w-sym'; }
+                            else { STATE.frameAction = 'resize-h'; STATE.frameResizeSide = onL_res ? 'L' : 'R'; }
+                        }
                     } else if (onMoveArea || (e.shiftKey && inX && inY)) {
                         STATE.frameAction = 'drag';
                     }
@@ -11104,7 +11578,7 @@ safeBind('stopBtn', 'click', () => {
                             } else {
                                 if (STATE.selectedRows) STATE.selectedRows.delete(actualIdx);
                             }
-                            if (!STATE.isPlaying) render();
+                            if (!STATE.isPlaying) requestRender();
                         }
                     }
                     return;
@@ -11122,12 +11596,15 @@ safeBind('stopBtn', 'click', () => {
                         let fx = m.baseX + colStart * m.charWidth;
                         let fy = m.startY + STATE.manualFrame.rowStart * m.lineHeight;
                         let fh = STATE.manualFrame.rowSpan * m.lineHeight;
-                        
-                        let dragBandX = Math.max(RESIZE_ZONE_MIN_PX, fw * RESIZE_ZONE_PCT);
-                        let dragBandY = Math.max(RESIZE_ZONE_MIN_PX, fh * RESIZE_ZONE_PCT);
+                        let fType = safeValue('frameTypeSelect', 'rect');
+                        let vEdges = getFrameEffectiveVEdges(fType, fy, fh);
+                        let vTop = vEdges.top, vBot = vEdges.bot;
 
-                        let onT_res = Math.abs(my - fy) <= RESIZE_EDGE_PX && mx >= fx - RESIZE_EDGE_PX && mx <= fx + fw + RESIZE_EDGE_PX;
-                        let onB_res = Math.abs(my - (fy + fh)) <= RESIZE_EDGE_PX && mx >= fx - RESIZE_EDGE_PX && mx <= fx + fw + RESIZE_EDGE_PX;
+                        let dragBandX = Math.max(RESIZE_ZONE_MIN_PX, fw * RESIZE_ZONE_PCT);
+                        let dragBandY = Math.max(RESIZE_ZONE_MIN_PX, (vBot - vTop) * RESIZE_ZONE_PCT);
+
+                        let onT_res = Math.abs(my - vTop) <= RESIZE_EDGE_PX && mx >= fx - RESIZE_EDGE_PX && mx <= fx + fw + RESIZE_EDGE_PX;
+                        let onB_res = Math.abs(my - vBot) <= RESIZE_EDGE_PX && mx >= fx - RESIZE_EDGE_PX && mx <= fx + fw + RESIZE_EDGE_PX;
                         let onL_res = Math.abs(mx - fx) <= RESIZE_EDGE_PX && my >= fy - RESIZE_EDGE_PX && my <= fy + fh + RESIZE_EDGE_PX;
                         let onR_res = Math.abs(mx - (fx + fw)) <= RESIZE_EDGE_PX && my >= fy - RESIZE_EDGE_PX && my <= fy + fh + RESIZE_EDGE_PX;
 
@@ -11136,8 +11613,8 @@ safeBind('stopBtn', 'click', () => {
                         let inX = mx >= fx && mx <= fx + fw;
                         let inY = my >= fy && my <= fy + fh;
 
-                        let onT_drag = inX && my > fy + RESIZE_EDGE_PX && my <= fy + dragBandY;
-                        let onB_drag = inX && my < fy + fh - RESIZE_EDGE_PX && my >= fy + fh - dragBandY;
+                        let onT_drag = inX && my > vTop + RESIZE_EDGE_PX && my <= vTop + dragBandY;
+                        let onB_drag = inX && my < vBot - RESIZE_EDGE_PX && my >= vBot - dragBandY;
                         let onL_drag = inY && mx > fx + RESIZE_EDGE_PX && mx <= fx + dragBandX;
                         let onR_drag = inY && mx < fx + fw - RESIZE_EDGE_PX && mx >= fx + fw - dragBandX;
                         let onMoveArea = !isResize && (onT_drag || onB_drag || onL_drag || onR_drag);
@@ -11155,7 +11632,7 @@ safeBind('stopBtn', 'click', () => {
                         
                         if (STATE.hoveredFrameEdge !== STATE.lastHoveredFrameEdge) {
                             STATE.lastHoveredFrameEdge = STATE.hoveredFrameEdge;
-                            if (!STATE.isPlaying) render();
+                            if (!STATE.isPlaying) requestRender();
                         }
                     }
                 } else if (!showFrame) {
@@ -11180,13 +11657,13 @@ safeBind('stopBtn', 'click', () => {
                         if (hoveredRingIndex >= 0 && hoveredRingIndex < m.renderCount && Math.abs(dist - (hoveredRingIndex + 2) * m.lineHeight) < m.lineHeight * 0.4) {
                             if (STATE.hoveredRingIndex !== hoveredRingIndex) {
                                 STATE.hoveredRingIndex = hoveredRingIndex;
-                                render();
+                                requestRender();
                             }
                             canvas.style.cursor = 'pointer';
                         } else {
                             if (STATE.hoveredRingIndex !== -1) {
                                 STATE.hoveredRingIndex = -1;
-                                render();
+                                requestRender();
                             }
                         }
                     }
@@ -11236,6 +11713,17 @@ safeBind('stopBtn', 'click', () => {
                             STATE.manualFrame.colStart = leftCol;
                             STATE.manualFrame.colSpan = newSpan;
                         }
+                        STATE.manualFrame.manualWidth = true;
+                    }
+                    else if (STATE.frameAction === 'resize-w-sym') {
+                        // Центр рамки закреплён (галка "⌖ По умолчанию за центром") — тянем любой
+                        // бок, рамка растёт/сжимается симметрично сразу в обе стороны от центра.
+                        let centerCol = STATE.frameStartColStart + STATE.frameStartW / 2;
+                        let mouseCol = (mx - m.baseX) / m.charWidth;
+                        let halfSpan = Math.abs(mouseCol - centerCol);
+                        let newSpan = Math.max(2, Math.round(halfSpan * 2));
+                        STATE.manualFrame.colStart = Math.round(centerCol - newSpan / 2);
+                        STATE.manualFrame.colSpan = newSpan;
                         STATE.manualFrame.manualWidth = true;
                     }
                     else if (STATE.frameAction === 'resize-corner') {
@@ -11315,8 +11803,8 @@ safeBind('stopBtn', 'click', () => {
                     STATE.offsetX = mx - STATE.dragStartX;
                     STATE.offsetY = my - STATE.dragStartY;
                     let dragDist = Math.hypot(mx - STATE.clickStartX, my - STATE.clickStartY);
-                    if (dragDist > 4) STATE.hasMoved = true; 
-                    if (!STATE.isPlaying) render();
+                    if (dragDist > 4) STATE.hasMoved = true;
+                    if (!STATE.isPlaying) requestRender();
                 }
             });
 
@@ -11469,7 +11957,7 @@ safeBind('stopBtn', 'click', () => {
                         STATE.offsetY = 0;
                     }
                 }
-                render();
+                requestRender();
             });
 
             // Пинч-зум двумя пальцами на мобильных — мобильный аналог колёсика мыши для масштаба.
@@ -11502,7 +11990,7 @@ safeBind('stopBtn', 'click', () => {
                         }
                         fontSl.value = size;
                         document.getElementById('fontVal').textContent = size + 'px';
-                        render();
+                        requestRender();
                     }
                 }, { passive: false });
                 canvas.addEventListener('touchend', e => {
@@ -12240,9 +12728,13 @@ safeBind('stopBtn', 'click', () => {
            ставится скриптом в <head>; на десктопе ничего из этого не создаётся).
 
            Два режима, переключаются кнопкой 🖱 в правом нижнем углу:
-           - ВЫКЛ (по умолчанию): маленькая точка-индикатор просто показывает, где палец
-             касается экрана. Никакие события не перехватываются — обычная прокрутка панелей,
-             слайдеры, кнопки работают как есть.
+           - ВЫКЛ (по умолчанию): прямое управление тачем — палец работает как мышь один-в-один
+             под самим пальцем (не тачпад), точно как на десктопе. Перехватываются только холст
+             и явные "ручки" (везде, где CSS и так ставит cursor:move/grab/*-resize — те же места,
+             что двигаются мышью); кнопки/слайдеры/прокрутка панелей не перехватываются, там
+             работает обычный тач. Короткий тап = клик, тап с перетаскиванием = зажатая и
+             двигающаяся мышь (пан холста, драг панелей/рамки/ресайз), два быстрых тапа подряд
+             в одном месте = двойной клик (на холсте — пуск/пауза, как мышью).
            - ВКЛ (виртуальная мышь, как тачпад в RDP-клиентах): курсор — отдельная точка на
              экране, палец может касаться в любом другом месте. Движение пальца двигает курсор
              ОТНОСИТЕЛЬНО (как тачпад, не "телепортирует" курсор под палец). Короткий тап —
@@ -12374,7 +12866,7 @@ safeBind('stopBtn', 'click', () => {
             document.addEventListener('touchcancel', onTouchEnd, { passive: false, capture: true });
             window.addEventListener('resize', clampCursor);
 
-            // Режим ВЫКЛ (по умолчанию) — просто показываем точку под пальцем, ничего не перехватываем.
+            // Режим ВЫКЛ (по умолчанию) — точка-индикатор под пальцем (косметика, не мешает).
             function simpleShow(e) {
                 if (vmouseOn || !e.touches || !e.touches.length) return;
                 cur.style.left = e.touches[0].clientX + 'px';
@@ -12391,6 +12883,513 @@ safeBind('stopBtn', 'click', () => {
             document.addEventListener('touchmove', simpleShow, { passive: true, capture: true });
             document.addEventListener('touchend', simpleHide, { passive: true, capture: true });
             document.addEventListener('touchcancel', simpleHide, { passive: true, capture: true });
+
+            // Режим ВЫКЛ (по умолчанию) — прямая эмуляция мыши тачем: палец = мышь один-в-один
+            // в точке касания (не тачпад). Перехватываем только холст (всегда — там и пан, и
+            // клик/двойной клик по сетке, и драг рамки/колец) и элементы, у которых CSS уже
+            // проставляет cursor:move/grab/*-resize — это ровно те же "ручки", что двигаются
+            // мышью на десктопе (заголовки панелей, ресайзер правой панели и т.п.); кнопки,
+            // слайдеры, чекбоксы, текст — у них cursor:pointer/text, их не трогаем, там работает
+            // обычный тач/скролл. Второй быстрый тап рядом с первым — синтетический dblclick
+            // (после уже отработавшего click второго тапа — как настоящий двойной клик мышью).
+            var canvasEl = document.getElementById('screenCanvas');
+            var dActiveTouchId = null, dTarget = null, dStartTX = 0, dStartTY = 0, dMoved = false;
+            var dLastTX = 0, dLastTY = 0;
+            var dLastTapTime = 0, dLastTapX = 0, dLastTapY = 0;
+            var DTAP_MOVE_THRESHOLD = 10;
+            var DBLTAP_MS = 350, DBLTAP_PX = 30;
+
+            function needsMouseEmu(el) {
+                if (!el || !(el instanceof Element)) return false;
+                if (canvasEl && (el === canvasEl || (el.closest && el.closest('canvas')))) return true;
+                var cur2 = getComputedStyle(el).cursor;
+                return cur2 === 'move' || cur2 === 'grab' || cur2 === 'grabbing' || /resize$/.test(cur2);
+            }
+            function dFireMouse(type, x, y, el) {
+                var ev = new MouseEvent(type, {
+                    bubbles: true, cancelable: true, view: window,
+                    clientX: x, clientY: y, button: 0, buttons: (dActiveTouchId !== null) ? 1 : 0
+                });
+                (el || document.body).dispatchEvent(ev);
+            }
+
+            document.addEventListener('touchstart', function (e) {
+                if (vmouseOn) return;
+                if (e.target === toggle || toggle.contains(e.target)) return;
+                if (e.touches.length > 1) {
+                    // Подключился второй палец (начинается пинч-зум холста) — если уже вели
+                    // одиночный тач-драг первым пальцем, аккуратно закрываем его синтетическим
+                    // mouseup, чтобы пан и зум не работали одновременно внахлёст.
+                    if (dActiveTouchId !== null) {
+                        dFireMouse('mouseup', dLastTX, dLastTY, dTarget);
+                        dActiveTouchId = null; dTarget = null; dMoved = false;
+                    }
+                    return;
+                }
+                if (dActiveTouchId !== null) return;
+                var t = e.changedTouches[0];
+                if (!needsMouseEmu(e.target)) return;
+                dActiveTouchId = t.identifier;
+                dTarget = e.target;
+                dStartTX = t.clientX; dStartTY = t.clientY;
+                dLastTX = t.clientX; dLastTY = t.clientY;
+                dMoved = false;
+                e.preventDefault();
+                dFireMouse('mousedown', t.clientX, t.clientY, dTarget);
+            }, { passive: false, capture: true });
+
+            document.addEventListener('touchmove', function (e) {
+                if (vmouseOn || dActiveTouchId === null) return;
+                var t = null;
+                for (var i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === dActiveTouchId) { t = e.changedTouches[i]; break; }
+                }
+                if (!t) return;
+                e.preventDefault();
+                dLastTX = t.clientX; dLastTY = t.clientY;
+                if (!dMoved && Math.hypot(t.clientX - dStartTX, t.clientY - dStartTY) > DTAP_MOVE_THRESHOLD) dMoved = true;
+                dFireMouse('mousemove', t.clientX, t.clientY, dTarget);
+            }, { passive: false, capture: true });
+
+            function dTouchEnd(e) {
+                if (vmouseOn || dActiveTouchId === null) return;
+                var t = null;
+                for (var i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === dActiveTouchId) { t = e.changedTouches[i]; break; }
+                }
+                if (!t) return;
+                e.preventDefault();
+                var ex = t.clientX, ey = t.clientY, target = dTarget;
+                dActiveTouchId = null;
+                dFireMouse('mouseup', ex, ey, target);
+                if (!dMoved) {
+                    dFireMouse('click', ex, ey, target);
+                    var now = Date.now();
+                    var isDoubleTap = (now - dLastTapTime < DBLTAP_MS) && Math.hypot(ex - dLastTapX, ey - dLastTapY) < DBLTAP_PX;
+                    if (isDoubleTap) {
+                        dFireMouse('dblclick', ex, ey, target);
+                        dLastTapTime = 0;
+                    } else {
+                        dLastTapTime = now; dLastTapX = ex; dLastTapY = ey;
+                    }
+                }
+                dTarget = null; dMoved = false;
+            }
+            document.addEventListener('touchend', dTouchEnd, { passive: false, capture: true });
+            document.addEventListener('touchcancel', dTouchEnd, { passive: false, capture: true });
+        })();
+    </script>
+
+
+<!-- === МАРКЕР 76: ПЕРЕКЛЮЧЕНИЕ ЯЗЫКА ИНТЕРФЕЙСА (RU/EN) === -->
+    <script>
+        // Словарь перевода статического UI (подписи/кнопки/тултипы прямо в HTML-разметке).
+        // Динамические уведомления/логи (генерируются в JS во время работы) в словарь намеренно
+        // не включены — по выбору пользователя переводится только статическая часть интерфейса.
+        const RU_EN_DICT = {
+    '0 и 1 добавляют, минус (-) удаляет': '0 and 1 add, minus (-) removes',
+    'A-B Повтор': 'A-B Repeat',
+    'Turbo — множитель шагов за тик (значение показывается внизу экрана, над счётчиком кадров)': 'Turbo — step multiplier per tick (value shown at the bottom of the screen, above the frame counter)',
+    'Авто-Каскад (1 cycle = +1 строка)': 'Auto-Cascade (1 cycle = +1 row)',
+    'Автоматически повторять \'Шаг\' по таймеру (скорость — общий ползунок скорости)': 'Automatically repeat \'Step\' on a timer (speed — the shared speed slider)',
+    'Активных строк: 0 из 0': 'Active rows: 0 of 0',
+    'Анализ Дельты:': 'Delta Analysis:',
+    'Анализ пересечений (LCS)': 'Intersection Analysis (LCS)',
+    'ВСЕ': 'ALL',
+    'Вариант 1: Раздвигать строку': 'Option 1: Expand the row',
+    'Вариант 2: Пропуск на след. строку': 'Option 2: Skip to next row',
+    'Введите символы (Двойной клик = Вставка)': 'Enter characters (Double-click = Insert)',
+    'Вернуться в Хаб': 'Return to Hub',
+    'Верх:': 'Top:',
+    'Визуализатор звука (пульсация от баса)': 'Sound visualizer (pulse from bass)',
+    'Включить/Выключить Рамку': 'Toggle Frame',
+    'Влево': 'Left',
+    'Вправо': 'Right',
+    'Временно повернуть весь вид на 90° (как монитор повернуть) — повторное нажатие вернёт обратно. Данные не меняются, только картинка': 'Temporarily rotate the whole view by 90° (like rotating a monitor) — press again to revert. Data doesn\'t change, only the picture',
+    'Вручную сдвинуть влево весь блок в рамке циклически по спирали на 1 символ': 'Manually shift the whole block in the frame left cyclically by spiral, 1 character',
+    'Вручную сдвинуть влево все строки в рамке циклически на 1 символ': 'Manually shift all rows in the frame left cyclically by 1 character',
+    'Вручную сдвинуть вправо весь блок в рамке циклически по спирали на 1 символ': 'Manually shift the whole block in the frame right cyclically by spiral, 1 character',
+    'Вручную сдвинуть вправо все строки в рамке циклически на 1 символ': 'Manually shift all rows in the frame right cyclically by 1 character',
+    'Все строки холста сшиваются в ОДНУ общую дорожку (длина = сумма длин всех строк, конец строки N переходит в начало строки N+1). Каждый сид из списка — свой независимый ходок: на каждом шаге кладёт очередную копию дальше по общей дорожке, отскакивая от её краёв (туда-сюда по всему накоплению, а не внутри одной строки). Действует на Шаг/Автоплей И на Каскад-шаг/Автопрогон каскада. В каскаде нижний край дорожки — ПЕРВАЯ ещё не запертая строка (не дальше): дорожка = запертые строки сверху + текущая рабочая, и растёт вниз по мере запирания': 'All canvas rows are stitched into ONE shared track (length = sum of all row lengths, the end of row N flows into the start of row N+1). Each seed from the list is its own independent walker: on each step it lays another copy further along the shared track, bouncing off its edges (back and forth across the whole accumulation, not within a single row). Applies to Step/Autoplay AND to Cascade-step/Cascade autorun. In the cascade, the bottom edge of the track is the FIRST row not yet locked (no further): the track = locked rows on top + the current working row, and it grows downward as rows lock',
+    'Вставить из буфера обмена прямо на холст': 'Paste from clipboard directly onto the canvas',
+    'Вставить из буфера обмена прямо на холст.': 'Paste from clipboard directly onto the canvas.',
+    'Вставляет между каждым символом строки его инверсию (11→1010); вставленные символы подсвечиваются красным': 'Inserts the inversion of each row character between characters (11→1010); inserted characters are highlighted in red',
+    'Всё разом': 'All at once',
+    'Выровнять всё по левому краю (добавить точки)': 'Align everything to the left edge (add dots)',
+    'Выровнять всё по правому краю (добавить точки)': 'Align everything to the right edge (add dots)',
+    'Выровнять всё по центру (добавить точки)': 'Align everything to the center (add dots)',
+    'Двойной клик по пустому месту: свернуть/развернуть': 'Double-click empty space: collapse/expand',
+    'Двойной клик: Свернуть/Развернуть': 'Double-click: Collapse/Expand',
+    'Добавить символ (или удалить, если минус) слева': 'Add a character (or remove, if minus) on the left',
+    'Добавить символ (или удалить, если минус) справа': 'Add a character (or remove, if minus) on the right',
+    'Если включено — кнопки плеера тоже затемняются при затемнении панели наехавшими строками (как в дзен-режиме). Если выключено — остаются видимыми всегда, кроме дзен-режима': 'If enabled — the player buttons also dim when the panel dims from overlapping rows (like in zen mode). If disabled — they stay visible always, except in zen mode',
+    'Если включено — рамка автоматически центрируется по горизонтали при каждой новой загрузке текста. Если выключено — рамка остаётся там, где её поставили руками, даже после Зеркала/генератора': 'If enabled — the frame is automatically centered horizontally on every new text load. If disabled — the frame stays wherever it was placed manually, even after Mirror/generator',
+    'Если включено — старое поведение: результат транспонирования добавляется НОВЫМИ строками внизу. Если выключено (по умолчанию) — результат приклеивается к каждой исходной строке на её же месте, строки становятся длиннее': 'If enabled — old behavior: the transpose result is added as NEW rows at the bottom. If disabled (default) — the result is appended to each source row in place, rows become longer',
+    'Если выключить — сохранённое в браузере состояние будет стёрто, и автоматическое сохранение/восстановление при обновлении страницы перестанет работать': 'If turned off — the state saved in the browser will be erased, and automatic save/restore on page reload will stop working',
+    'Жирн.': 'Bold',
+    'Жирный шрифт': 'Bold font',
+    'За 1 шаг: на каждую строку холста накладывается (XOR) не только её собственный сид, но и сиды ВСЕХ строк выше неё (каждый — отдельным независимым проходом от начала строки). Результат пишется прямо в содержимое строк холста, и запускается обычный поиск паттернов': 'In 1 step: each canvas row is XORed not only with its own seed, but with the seeds of ALL rows above it (each as a separate independent pass from the start of the row). The result is written directly into the canvas rows\' content, and normal pattern search runs',
+    'Загрузить аудио-трек (играет по кругу, стартует и встаёт на паузу вместе с Пуском, Стоп перематывает в начало)': 'Load an audio track (loops, starts/pauses together with Start, Stop rewinds to the beginning)',
+    'Записывает RAW A+B (неочищенные строки, с точками/филлерами) напрямую в строки рамки, заменяя их содержимое — каждая строка (со 2-й) становится сплетением двух предыдущих': 'Writes RAW A+B (unfiltered rows, with dots/fillers) directly into the frame rows, replacing their content — each row (from the 2nd on) becomes an interleaving of the two previous ones',
+    'Заполнять пустоты \'x\' (Рентген)': 'Fill gaps with \'x\' (X-ray)',
+    'Затемн.': 'Dim',
+    'Захват системного звука: браузер попросит выбрать окно/вкладку — поставь галочку \'Предоставить доступ к аудио системы\'': 'Capture system audio: the browser will ask you to pick a window/tab — check \'Share system audio\'',
+    'Зеркалить символы слева-направо внутри каждой строки рамки (без инверсии 0/1)': 'Mirror characters left-to-right within each frame row (without 0/1 inversion)',
+    'Зеркало → 🪞': 'Mirror → 🪞',
+    'Зеркало: добавлять строки внизу (вместо приклеивания)': 'Mirror: add rows at the bottom (instead of appending)',
+    'Импорт': 'Import',
+    'Инвертировать символы внутри рамки (0 ↔ 1, \\ ↔ /)': 'Invert characters inside the frame (0 ↔ 1, \\ ↔ /)',
+    'Инвертировать символы внутри рамки, пропуская первый символ каждой строки': 'Invert characters inside the frame, skipping the first character of each row',
+    'Инт.X:': 'Int.X:',
+    'Инт.Y:': 'Int.Y:',
+    'Искать строго по очереди (каскад)': 'Search strictly in order (cascade)',
+    'Использовать как триггер Каскада': 'Use as Cascade trigger',
+    'Кадр -': 'Frame -',
+    'Кадр:': 'Frame:',
+    'Каждую строку рамки сплетает с её ИЗНАЧАЛЬНЫМ (template) вариантом — то есть игнорирует всё, что успел натворить каскад, и берёт чистый исходник. Результат заменяет содержимое каждой строки рамки': 'Interleaves each frame row with its ORIGINAL (template) version — i.e. ignores everything the cascade has done and takes the clean source. The result replaces the content of each frame row',
+    'Каждый клик — на ВСЕ строки холста накладывается (XOR) накопление сидов с начала списка: клик1 = сид №1, клик2 = сид №1+№2, клик3 = №1+№2+№3, и т.д., по кругу': 'Each click — ALL canvas rows are XORed with an accumulation of seeds from the start of the list: click1 = seed #1, click2 = seed #1+#2, click3 = #1+#2+#3, etc., cycling',
+    'Каждый клик — на ВСЕ строки холста накладывается ОДИН сид из списка (по кругу): клик1 = сид №1, клик2 = сид №2, и т.д., затем снова с №1': 'Each click — ONE seed from the list is XORed onto ALL canvas rows (cycling): click1 = seed #1, click2 = seed #2, etc., then back to #1',
+    'Каскад-шаг': 'Cascade Step',
+    'Клик: 100% высота. Двойной клик: 30% высота.': 'Click: 100% height. Double-click: 30% height.',
+    'Клик: открыть/закрыть. Двойной клик: Сброс к исходнику': 'Click: open/close. Double-click: Reset to source',
+    'Код снимка': 'Snapshot code',
+    'Компактный монохром: панели настроек ужимаются (мельче шрифт, меньше отступов) и перекрашиваются в один спокойный сине-серый цвет вместо разноцветья. Холст, плеер и плавающие кнопки не трогает. Откат — просто снять галку. Запоминается между сессиями': 'Compact monochrome: settings panels shrink (smaller font, less padding) and are recolored into one calm blue-gray instead of many colors. Doesn\'t touch the canvas, player, or floating buttons. To revert — just uncheck the box. Remembered between sessions',
+    'Крестовина: ◀ ▶ — симуляция XOR назад/вперёд, ▲ ▼ — скроллинг строк, центр ■ — стоп (сброс на 0). Горящая жёлтым стрелка показывает ⏸ — клик по ней ставит паузу; клик по другой стрелке на ходу — смена режима/направления без остановки.': 'D-pad: ◀ ▶ — XOR simulation backward/forward, ▲ ▼ — row scrolling, center ■ — stop (reset to 0). A yellow-lit arrow shows ⏸ — clicking it pauses; clicking another arrow while running switches mode/direction without stopping.',
+    'Крутит раунды по таймеру (скорость — общий ползунок скорости), пока все строки с эталоном не запрутся, не обнаружится цикл состояний (дальше только повторы) или не будет достигнут предел раундов. Повторный клик — остановить': 'Runs rounds on a timer (speed — the shared speed slider) until all rows with a reference lock, a state cycle is detected (only repeats from here on), or the round limit is reached. Click again to stop',
+    'Лев:': 'Left:',
+    'Левая панель настроек.': 'Left settings panel.',
+    'Лимит длины цепи:': 'Chain length limit:',
+    'Макс. строк:': 'Max rows:',
+    'Масштаб:': 'Scale:',
+    'Мгновенный поиск (1-N строк):': 'Instant search (1-N rows):',
+    'Меняет порядок чередования символов внутри сплетаемой пары (какая строка идёт первым символом)': 'Changes the alternation order of characters within the interleaved pair (which row goes first)',
+    'Менять порядок пары (нижняя/верхняя) — интерливинг': 'Swap pair order (bottom/top) — interleaving',
+    'Метод находки: Ожидание...': 'Find method: Waiting...',
+    'Мини-пульт. Двойной клик по пустому месту: свернуть/развернуть. Перетаскивание: переместить (положение запоминается).': 'Mini console. Double-click empty space: collapse/expand. Drag: move (position is remembered).',
+    'Множитель длины (N):': 'Length multiplier (N):',
+    'НАСТОЯЩИЙ поворот сетки на 90° по часовой: столбцы становятся строками, данные реально меняются (поиск паттернов работает по новым строкам). 4 нажатия = исходник. Undo работает': 'A REAL 90° clockwise rotation of the grid: columns become rows, the data actually changes (pattern search works on the new rows). 4 presses = back to source. Undo works',
+    'На все строки холста разом накладываются (XOR) ВСЕ сиды из списка сразу. Также сбрасывает счётчики кнопок \'Сид →\' и \'Накопление →\' на начало': 'ALL seeds from the list are XORed onto all canvas rows at once, all together. Also resets the \'Seed →\' and \'Accumulate →\' button counters to the start',
+    'Назад': 'Back',
+    'Накопительная длина (все строки = одна дорожка)': 'Cumulative length (all rows = one track)',
+    'Накопление →': 'Accumulate →',
+    'Не сбрасывать фазу (сохранять рисунок)': 'Don\'t reset phase (keep the pattern)',
+    'Не считывать 1-й символ': 'Don\'t read the 1st character',
+    'Не считывать Последний символ': 'Don\'t read the Last character',
+    'Непрерывная Ёлка в симуляции (см. МОДИФИКАТОРЫ ДВИЖЕНИЯ)': 'Continuous Tree mode in the simulation (see MOTION MODIFIERS)',
+    'Непрерывный Цилиндр в симуляции (см. МОДИФИКАТОРЫ ДВИЖЕНИЯ)': 'Continuous Cylinder in the simulation (see MOTION MODIFIERS)',
+    'Непрерывный ручной сдвиг Спиралью (как Пуск) в направлении последней нажатой стрелки — нажать ещё раз, чтобы остановить': 'Continuous manual Spiral shift (like Start) in the direction of the last pressed arrow — press again to stop',
+    'Непрерывный ручной сдвиг Цилиндром (как Пуск) в направлении последней нажатой стрелки — нажать ещё раз, чтобы остановить': 'Continuous manual Cylinder shift (like Start) in the direction of the last pressed arrow — press again to stop',
+    'Ниж. границы строк': 'Row bottom borders',
+    'Низ:': 'Bottom:',
+    'Обычно паттерн строки N засчитывается, только если найден в строках ВЫШЕ N-й (каскад собирает его из верхних строк), поэтому строка, равная своему паттерну, находкой не считается. С этой галкой совпадение в САМОЙ строке N тоже засчитывается — например, когда строки построены прямо из паттернов': 'Normally row N\'s pattern only counts if found in rows ABOVE row N (the cascade assembles it from the rows above), so a row equal to its own pattern doesn\'t count as a find. With this checked, a match within row N itself also counts — e.g. when rows are built directly from patterns',
+    'Один клик = один шаг. Если 0≠1 в рамке — достраивает зеркальную строку сверху (рамка растёт на 1 вверх). Если 0=1 (баланс) — ничего не строит, просто расширяет рамку на 1 строку вниз. Жать вручную, глядя на результат': 'One click = one step. If 0≠1 in the frame — builds a mirror row on top (the frame grows by 1 upward). If 0=1 (balance) — builds nothing, just expands the frame by 1 row downward. Click manually while watching the result',
+    'Один раунд каскада: сид строки — свой стрим с бюджетом раунд×длина_сида бит, свой сид ложится первым (обход снизу вверх). Строка запирается, когда её итог СОДЕРЖИТ её паттерн как подстроку — тогда паттерн становится её сидом, а остаток стрима улетает в следующую незапертую строку (запертая берёт плату за проход = стоимость своего закрытия в битах)': 'One cascade round: a row\'s seed is its own stream with a budget of round×seed_length bits, its own seed goes first (bottom-up pass). A row locks when its result CONTAINS its pattern as a substring — then the pattern becomes its seed, and the rest of the stream flows to the next unlocked row (a locked row takes a pass-through fee = the cost of its own locking, in bits)',
+    'Один шаг = одна копия сида, XOR-наложенная на итог каждой строки-паттерна (с отскоком от края)': 'One step = one copy of the seed, XORed onto the result of each pattern row (bouncing off the edge)',
+    'Одной кнопкой: ищет нижнюю строку сквозным поиском ИЛИ интерливингом, при находке поглощает её вниз и сразу достраивает зеркальную строку вверх (⚖️ ШАГ БАЛАНСА)': 'One button: searches the bottom row by pass-through search OR interleaving, on a find absorbs it downward and immediately builds a mirror row upward (⚖️ BALANCE STEP)',
+    'Ожидание активации строки...': 'Waiting for row activation...',
+    'Ожидание...': 'Waiting...',
+    'Отменить (Ctrl+Z)': 'Undo (Ctrl+Z)',
+    'Отменить / Повторить.': 'Undo / Redo.',
+    'Отменить последний шаг у всех строк': 'Undo the last step for all rows',
+    'Отправить визуал как есть на холст (исходная не меняется)': 'Send the visual as-is to the canvas (source unchanged)',
+    'Отправить исходную (1/0) на холст': 'Send the source (1/0) to the canvas',
+    'Паттерн засчитывается и в своей строке': 'Pattern also counts in its own row',
+    'Паттерны (Двойной клик = Вставка)': 'Patterns (Double-click = Insert)',
+    'Переключить: Оба / Только исходная / Только визуал': 'Switch: Both / Source only / Visual only',
+    'Переход только после равенства (0 = 1)': 'Advance only after equality (0 = 1)',
+    'Пинг-Понг': 'Ping-Pong',
+    'Повторить (Ctrl+Y)': 'Redo (Ctrl+Y)',
+    'Подгоняет интервал X так, чтобы ячейка символа стала квадратной (ширина = высоте строки) при текущем интервале Y. Любая \'лестница\' (например 1,11,111...) на холсте получит ровно 45° диагональ и 90° угол. Содержимое холста не меняется — только геометрия символа': 'Adjusts the X interval so the character cell becomes square (width = row height) at the current Y interval. Any \'staircase\' (e.g. 1,11,111...) on the canvas will get exactly a 45° diagonal and a 90° angle. Canvas content doesn\'t change — only character geometry',
+    'Подсветка паттернов': 'Pattern highlighting',
+    'Показывать номера строк': 'Show row numbers',
+    'Получить текущий холст в визуал (исходная не меняется)': 'Pull the current canvas into the visual (source unchanged)',
+    'Получить текущий холст в исходную и сохранить как исходник слота': 'Pull the current canvas into the source and save as the slot\'s source',
+    'После ручного сдвига Цилиндром или Спиралью сразу запускать поиск паттернов (как на обычном шаге симуляции), а не только пересчитывать вид': 'After a manual Cylinder or Spiral shift, immediately run pattern search (like on a normal simulation step), not just recompute the view',
+    'Прав ➡️': 'Right ➡️',
+    'Прав:': 'Right:',
+    'Правая панель. Перетаскивание за вкладки слева: переместить. Двойной клик: свернуть/развернуть.': 'Right panel. Drag by the tabs on the left: move. Double-click: collapse/expand.',
+    'Пресет: Synthwave': 'Preset: Synthwave',
+    'Пресет: Zerkalius': 'Preset: Zerkalius',
+    'Пресет: Киберпанк': 'Preset: Cyberpunk',
+    'Пресет: Кислотный': 'Preset: Acid',
+    'Пресет: Кровавый': 'Preset: Blood',
+    'Пресет: Матрица': 'Preset: Matrix',
+    'Пресет: ЧБ': 'Preset: B&W',
+    'Пресет: Электро': 'Preset: Electro',
+    'Пресет: Янтарный терминал': 'Preset: Amber Terminal',
+    'При Авто-Цилиндре, Авто-Спирали ИЛИ обычной XOR-симуляции (Пуск) — только после ПОЛНОГО КРУГА (строка/фаза вернулась в исходное положение) проверяет нижнюю строку сквозным поиском и интерливингом; при находке — поглощает строку вниз, достраивает зеркальную строку вверх (⚖️ ШАГ БАЛАНСА) и ОСТАНАВЛИВАЕТ/ставит на паузу (если не включена галка «Без остановки»)': 'With Auto-Cylinder, Auto-Spiral, OR normal XOR simulation (Start) — only after a FULL CYCLE (the row/phase returned to its start position) checks the bottom row via pass-through search and interleaving; on a find — absorbs the row downward, builds a mirror row upward (⚖️ BALANCE STEP) and STOPS/pauses (unless the «Don\'t stop» box is checked)',
+    'При находке нижней строки не останавливать Авто-Цилиндр/Авто-Спираль и не ставить XOR-симуляцию на паузу — просто поглощать строку за строкой и продолжать': 'On finding the bottom row, don\'t stop Auto-Cylinder/Auto-Spiral and don\'t pause the XOR simulation — just absorb row after row and continue',
+    'Прозрачность сетки': 'Grid opacity',
+    'Пропуск 1-го символа кандидата': 'Skip candidate\'s 1st character',
+    'Пропуск 1-го символа при сплетении': 'Skip 1st character when interleaving',
+    'Прямоуг.': 'Rect.',
+    'Пульсация размера символов от баса и добавка к неоновому свечению от громкости (работает и в WebGL-рендере)': 'Character size pulses with the bass, plus extra neon glow from volume (also works in WebGL rendering)',
+    'Радиус:': 'Radius:',
+    'Разморозка строк по паттерну': 'Unfreeze rows by pattern',
+    'Рамка': 'Frame',
+    'Рассчитать и подсветить LCS-пересечения для всех строк внутри рамки (по очищенным строкам)': 'Compute and highlight LCS intersections for all rows inside the frame (on cleaned rows)',
+    'Раунд назад (полным пересчётом). Строки, запертые позже нового раунда, отпираются и считаются заново': 'Round back (full recompute). Rows locked later than the new round are unlocked and recomputed',
+    'Ромб': 'Rhombus',
+    'СЛОТ 1': 'SLOT 1',
+    'СПРАВА ➡️': 'FROM RIGHT ➡️',
+    'Сброс': 'Reset',
+    'Сбросить все опции терминала по умолчанию': 'Reset all terminal options to default',
+    'Сбросить масштаб, экран и интервалы по умолчанию': 'Reset scale, screen and intervals to default',
+    'Сбросить на 0': 'Reset to 0',
+    'Сбросить шаги и результат, перечитать поле сида(ов)': 'Reset steps and result, reread the seed(s) field',
+    'Сгенерировать': 'Generate',
+    'Сдвиг X (Пинг-Понг)': 'Shift X (Ping-Pong)',
+    'Сдвиг Y (Пинг-Понг)': 'Shift Y (Ping-Pong)',
+    'Сид': 'Seed',
+    'Сид →': 'Seed →',
+    'Сид(ы) через запятую или с новой строки. Если сидов несколько — раздаются строкам паттернов по кругу (строка N получает сид[N % кол-во сидов])': 'Seed(s), comma- or newline-separated. If there are several seeds — they\'re distributed to pattern rows cyclically (row N gets seed[N % seed count])',
+    'Сид(ы), напр. 10, 101': 'Seed(s), e.g. 10, 101',
+    'Симв. Ромб': 'Sym. Rhombus',
+    'Симв:': 'Char:',
+    'Симуляция XOR — вперёд': 'XOR simulation — forward',
+    'Симуляция XOR — назад (реверс)': 'XOR simulation — backward (reverse)',
+    'Синтез ДНК и LCS + Рамка': 'DNA Synthesis and LCS + Frame',
+    'Скопировать блок в рамке, перевернуть и безусловно вставить сверху': 'Copy the block in the frame, flip it, and unconditionally paste it above',
+    'Скор:': 'Speed:',
+    'Скорость — интервал между шагами (значение показывается внизу экрана, над счётчиком кадров)': 'Speed — interval between steps (value shown at the bottom of the screen, above the frame counter)',
+    'Скроллинг строк — вверх': 'Row scrolling — up',
+    'Скроллинг строк — вниз': 'Row scrolling — down',
+    'Скрывать замороженные строки': 'Hide frozen rows',
+    'Скрыть НЕменяющиеся символы': 'Hide UNchanging characters',
+    'Скрыть меняющиеся символы': 'Hide changing characters',
+    'Скрыть мигающие символы': 'Hide blinking characters',
+    'Слот': 'Slot',
+    'Слот 1': 'Slot 1',
+    'Слот 2': 'Slot 2',
+    'Слот 3': 'Slot 3',
+    'Слот 4': 'Slot 4',
+    'Спир. ▶': 'Spiral ▶',
+    'Сплетать: Верхняя граница (2 строки внутри)': 'Interleave: Top border (2 rows inside)',
+    'Сплетать: Коса по рамке (низ→верх, змейкой)': 'Interleave: Braid across the frame (bottom→top, snake)',
+    'Сплетать: Нижняя граница (2 строки внутри)': 'Interleave: Bottom border (2 rows inside)',
+    'Сплетать: Периметр рамки (верх+низ+бока)': 'Interleave: Frame perimeter (top+bottom+sides)',
+    'Старт / Пауза (Space)': 'Start / Pause (Space)',
+    'Стоп: остановить и сбросить на кадр 0': 'Stop: stop and reset to frame 0',
+    'Строит пирамиду из сида (поле \'Сид\' выше): строка1 = сид, строка2 = сид+сид, строка3 = сид+сид+сид, и т.д. до N строк (N — поле \'Строки\')': 'Builds a pyramid from the seed (the \'Seed\' field above): row1 = seed, row2 = seed+seed, row3 = seed+seed+seed, etc. up to N rows (N — the \'Rows\' field)',
+    'Строка сразу под рамкой (без 1-го и последнего символа) ищется как паттерн ИНТЕРЛИВИНГОМ (текущий режим сплетения). Если 100% найдено — строка включается в рамку': 'The row right below the frame (without the 1st and last character) is searched as a pattern via INTERLEAVING (the current interleave mode). If 100% found — the row is included in the frame',
+    'Строка сразу под рамкой (без 1-го и последнего символа) ищется как паттерн СКВОЗНЫМ поиском по всей рамке (одна склеенная строка). Если 100% найдено — строка включается в рамку': 'The row right below the frame (without the 1st and last character) is searched as a pattern via PASS-THROUGH search across the whole frame (one joined row). If 100% found — the row is included in the frame',
+    'Строки': 'Rows',
+    'Такт:': 'Beat:',
+    'Тащить — расширить панель влево': 'Drag — expand the panel to the left',
+    'Текст0:': 'Text0:',
+    'Текст1:': 'Text1:',
+    'Терминал активации': 'Activation terminal',
+    'Только при множителе N=1: строка делится по центру на левую и правую половины; левая едет вправо, правая — влево, где перекрываются — XOR': 'Only at multiplier N=1: the row splits at the center into left and right halves; the left moves right, the right moves left, where they overlap — XOR',
+    'Топологический Радар': 'Topological Radar',
+    'Тр-к ▲': 'Tri ▲',
+    'Тр-к ▼': 'Tri ▼',
+    'Транспонировать и пристроить блок в рамке вправо (завершить в прямоугольник)': 'Transpose and attach the block in the frame to the right (complete into a rectangle)',
+    'Транспонировать: 1-я строка = первые символы каждой строки, считая с ЛЕВОГО края': 'Transpose: row 1 = the first characters of each row, counting from the LEFT edge',
+    'Транспонировать: 1-я строка = первые символы каждой строки, считая с ПРАВОГО края (зеркально)': 'Transpose: row 1 = the first characters of each row, counting from the RIGHT edge (mirrored)',
+    'Тулбар быстрых функций (прилеплен к правой панели).': 'Quick functions toolbar (attached to the right panel).',
+    'Тулбар быстрых функций. Перетаскивание: переместить.': 'Quick functions toolbar. Drag: move.',
+    'Ускоренный рендер пирамиды через WebGL для больших строк. Пока включена: НЕТ рамки, подсветки паттернов, трассера, конгломератов, подчёркиваний, номеров строк и радара — только сама анимация движения (с учётом Зеркала). Выключите галку, чтобы вернуть обычный режим со всеми функциями': 'Accelerated pyramid rendering via WebGL for large rows. While enabled: NO frame, pattern highlighting, tracer, conglomerates, underlines, row numbers, or radar — just the motion animation itself (respecting Mirror). Uncheck the box to return to normal mode with all features',
+    'Фазовый сдвиг (+1 к циклу)': 'Phase shift (+1 to cycle)',
+    'Фиксация цветов (Без мерцания)': 'Fix colors (No flicker)',
+    'Фон:': 'Background:',
+    'Форма: XorRora Маятник': 'Shape: XorRora Pendulum',
+    'Форма: Сдвиг (Кирпичная кладка)': 'Shape: Shift (Brickwork)',
+    'Форма: Центр (Симметричная пирамида)': 'Shape: Center (Symmetric pyramid)',
+    'Холст': 'Canvas',
+    'Цвет найденных активных паттернов': 'Color of found active patterns',
+    'Цвет потенциальных (неактивных) паттернов': 'Color of potential (inactive) patterns',
+    'Цвет сетки': 'Grid color',
+    'Цель Каскада: Строка 2': 'Cascade target: Row 2',
+    'Цикл (Δ, кадр -N): 1) показать только НЕменяющиеся (красные), меняющиеся скрыть; 2) наоборот — показать только меняющиеся (чёрные); 3) показать все, раскрашено; 4) выключено — обычные цвета': 'Cycle (Δ, frame -N): 1) show only UNchanging (red), hide changing; 2) opposite — show only changing (black); 3) show all, colored; 4) off — normal colors',
+    'Цилин. ▶': 'Cyl. ▶',
+    'Через сколько строк:': 'Every N rows:',
+    'Чисто визуальная цветная линия под каждой N-й строкой (по её номеру, не по позиции на экране — при скролле остаётся закреплённой за той же строкой). На поиск/паттерны/логику не влияет.': 'A purely visual colored line under every Nth row (by its number, not screen position — stays pinned to the same row while scrolling). Doesn\'t affect search/patterns/logic.',
+    'Что сейчас загружено': 'What\'s currently loaded',
+    'Шаг': 'Step',
+    'Шаг вперед': 'Step forward',
+    'Шаг назад': 'Step back',
+    'Шаг поворота Радара:': 'Radar rotation step:',
+    'Шаг(S):': 'Step(S):',
+    'Шаг:': 'Step:',
+    'Шрифт: Consolas': 'Font: Consolas',
+    'Шрифт: Courier New': 'Font: Courier New',
+    'Шрифт: Major Mono Display': 'Font: Major Mono Display',
+    'Шрифт: Roboto Mono': 'Font: Roboto Mono',
+    'Шрифт: Share Tech Mono': 'Font: Share Tech Mono',
+    'Шрифт: VT323 (CRT-терминал)': 'Font: VT323 (CRT terminal)',
+    'Шрифт: Моноширинный': 'Font: Monospace',
+    'Экран:': 'Screen:',
+    'Экспорт': 'Export',
+    'Экспортировать все 3 слота вместе с их паттернами в файл banks_data.js': 'Export all 3 slots together with their patterns to banks_data.js',
+    'Эталоны — из поля «Паттерны» (по кругу на строки). Сид с самого начала есть только у строки №1 (= паттерн №1); остальные строки получают свой паттерн в сид, лишь когда он у них найден (строка заперлась 🔒).': 'References — from the \'Patterns\' field (cycled across rows). Only row #1 has a seed from the start (= pattern #1); other rows get their pattern as a seed only once it\'s found in them (the row has locked 🔒).',
+    'визуал': 'visual',
+    'исходная': 'source',
+    '↔️ Встречное движение': '↔️ Counter motion',
+    '↕️ Вертикальное зеркало': '↕️ Vertical mirror',
+    '↩️ Цвета (Δ выкл.)': '↩️ Colors (Δ off)',
+    '⌖ По умолчанию за центром': '⌖ Default behind center',
+    '⏸ Пауза при равенстве (0 = 1)': '⏸ Pause on equality (0 = 1)',
+    '⏺ Центр': '⏺ Center',
+    '▲ Пирамида из сида (сид+сид=след.стр.)': '▲ Pyramid from seed (seed+seed=next row)',
+    '▶ Автоплей': '▶ Autoplay',
+    '▶ Автопрогон каскада': '▶ Cascade autorun',
+    '▶ Пуск': '▶ Start',
+    '◀ Спир.': '◀ Spiral',
+    '◀ Цилин.': '◀ Cyl.',
+    '⚖️ Детектор баланса': '⚖️ Balance detector',
+    '⚖️ ЛОГ РАВЕНСТВА': '⚖️ EQUALITY LOG',
+    '⚖️🏗️ ШАГ БАЛАНСА (1 СТРОКА)': '⚖️🏗️ BALANCE STEP (1 ROW)',
+    '⚙️ Авто-сдвиг (Цилиндр)': '⚙️ Auto-shift (Cylinder)',
+    '⚙️ МОДИФИКАТОРЫ ДВИЖЕНИЯ': '⚙️ MOTION MODIFIERS',
+    '⚙️ Разрядка (Шестеренки)': '⚙️ Discharge (Gears)',
+    '⚡ WebGL-рендер (только движение, без рамки/паттернов)': '⚡ WebGL rendering (motion only, no frame/patterns)',
+    '⚡ WebGL-рендер: ускоренная отрисовка (только движение — без рамки, подсветки паттернов, конгломератов и номеров строк). Та же галка, что в \'Оформление и цвета\'': '⚡ WebGL rendering: accelerated drawing (motion only — no frame, pattern highlighting, conglomerates, or row numbers). Same checkbox as in \'Appearance and colors\'',
+    '⚡ Суб-шаговый поиск (Turbo)': '⚡ Sub-step search (Turbo)',
+    '⛓ КАСКАД (порт из Excel)': '⛓ CASCADE (ported from Excel)',
+    '⛓️ Накопительный каскад (Цепной)': '⛓️ Cumulative cascade (Chained)',
+    '✨ Свечение (Neon)': '✨ Glow (Neon)',
+    '➡️ Шаг': '➡️ Step',
+    '⟲ ВИД ПОВЁРНУТ НА 90°': '⟲ VIEW ROTATED 90°',
+    '⬅️ Лев': '⬅️ Left',
+    '⬅️ СЛЕВА': '⬅️ FROM LEFT',
+    '⬇️ Вниз': '⬇️ Down',
+    '⬌ Функция: Симуляция (XOR)': '⬌ Function: Simulation (XOR)',
+    '🎛 Компактный монохром (панели)': '🎛 Compact monochrome (panels)',
+    '🎤 Звук ПК': '🎤 PC Sound',
+    '🎨 ОФОРМЛЕНИЕ И ЦВЕТА': '🎨 APPEARANCE AND COLORS',
+    '🎯 Трассер 1-го символа': '🎯 1st character tracer',
+    '🎵 АУДИО (ВИЗУАЛИЗАТОР)': '🎵 AUDIO (VISUALIZER)',
+    '🎵 Трек': '🎵 Track',
+    '🏗️ Авто-достройка вверх (Отражение при 0=1)': '🏗️ Auto-build upward (Reflect on 0=1)',
+    '🏗️ ВВЕРХ': '🏗️ UP',
+    '🏗️ ВПРАВО': '🏗️ RIGHT',
+    '🏗️ Построение и поиск в рамке': '🏗️ Frame building and search',
+    '👣 Оставлять след (Шлейф)': '👣 Leave a trail',
+    '💠 Режим: Идеальный Центр': '💠 Mode: Perfect Center',
+    '💠 Режим: Классика (Лесенка)': '💠 Mode: Classic (Staircase)',
+    '💠 Режим: Центр': '💠 Mode: Center',
+    '💠 Режим: Центр по Базе (Наклон)': '💠 Mode: Center by Base (Tilt)',
+    '💾 Накапливать изменения (Сохранять)': '💾 Accumulate changes (Save)',
+    '💾 СИСТЕМНЫЕ ФУНКЦИИ': '💾 SYSTEM FUNCTIONS',
+    '💾 Экспорт в banks_data.js': '💾 Export to banks_data.js',
+    '📂 Загружено: исходные (banks_data.js)': '📂 Loaded: source (banks_data.js)',
+    '📐 Вертикальный поиск паттернов': '📐 Vertical pattern search',
+    '📐 ГЕНЕРАТОР СЕРПИНСКОГО': '📐 SIERPINSKI GENERATOR',
+    '📝 НАБОРЫ СТРОК (СЛОТЫ)': '📝 ROW SETS (SLOTS)',
+    '📸 ФОТО': '📸 PHOTO',
+    '🔀 MultiXor (1 шаг, в холст)': '🔀 MultiXor (1 step, to canvas)',
+    '🔁 Без остановки': '🔁 Without stopping',
+    '🔁 Маятник внутри строки (A-B-A)': '🔁 Pendulum within row (A-B-A)',
+    '🔁 Менять порядок пары (нижняя/верхняя)': '🔁 Swap pair order (bottom/top)',
+    '🔃 Вперед': '🔃 Forward',
+    '🔃 Реверс (по рамке)': '🔃 Reverse (by frame)',
+    '🔄 Авто-инверсия при 0=1': '🔄 Auto-invert on 0=1',
+    '🔄 Инверт.': '🔄 Invert',
+    '🔄 Инверт. кроме 1-го': '🔄 Invert except 1st',
+    '🔄 Опции': '🔄 Options',
+    '🔄 Сброс': '🔄 Reset',
+    '🔊 Стоячая волна (Анализ)': '🔊 Standing wave (Analysis)',
+    '🔍 Искать всё': '🔍 Search all',
+    '🔍 Искать нижнюю (авто: Цилиндр/Спираль/XOR)': '🔍 Find bottom (auto: Cylinder/Spiral/XOR)',
+    '🔍 Искать паттерны при сдвиге': '🔍 Search patterns on shift',
+    '🔍 Сквозной поиск паттернов': '🔍 Pass-through pattern search',
+    '🔍⚖️ Нижняя + Баланс (сразу)': '🔍⚖️ Bottom + Balance (at once)',
+    '🔍➡️ Нижняя (сквозно)': '🔍➡️ Bottom (pass-through)',
+    '🔍🧬 Нижняя (интерливинг)': '🔍🧬 Bottom (interleaving)',
+    '🔲 НАСТРОЙКИ РАМКИ': '🔲 FRAME SETTINGS',
+    '🔴 Инверсия между символами (11→1010)': '🔴 Inversion between characters (11→1010)',
+    '🕸️ Режим Воронка (Сетка)': '🕸️ Funnel Mode (Grid)',
+    '🚀 АВТО-СДВИГ ХОЛСТА (XY)': '🚀 AUTO-SHIFT CANVAS (XY)',
+    '🛟 Автосохранение страницы': '🛟 Page autosave',
+    '🛸 Наезд (Слияние строк)': '🛸 Overlap (Row merging)',
+    '🤖 Авто-шаг рамки': '🤖 Auto-step frame',
+    '🤖 СКАНЕР БАЛАНСА': '🤖 BALANCE SCANNER',
+    '🥁 Режим Барабан (Сетка)': '🥁 Drum Mode (Grid)',
+    '🧩 Конгломераты (≥ 3)': '🧩 Conglomerates (≥ 3)',
+    '🧬 LCS RAW (A+B) → ЗАПИСАТЬ': '🧬 LCS RAW (A+B) → WRITE',
+    '🧬 LCS ВО ВСЕЙ РАМКЕ': '🧬 LCS ACROSS WHOLE FRAME',
+    '🧬 Анализ пересечений (LCS)': '🧬 Intersection analysis (LCS)',
+    '🧬 ЛОГ ИНТЕРЛИВИНГА': '🧬 INTERLEAVING LOG',
+    '🧬 НАСТРОЙКИ СВЯЗИ': '🧬 LINK SETTINGS',
+    '🧬 СИД-НАЛОЖЕНИЕ (по строкам паттернов)': '🧬 SEED-OVERLAY (by pattern rows)',
+    '🧬 Синтезировать сплетение (Записать вниз)': '🧬 Synthesize interleaving (Write down)',
+    '🧬 Сплести всю рамку с шаблоном (без каскада)': '🧬 Interleave the whole frame with template (no cascade)',
+    '🧹 Очистить': '🧹 Clear',
+    '🧹 Сброс': '🧹 Reset',
+    '🪞 Зеркало ←': '🪞 Mirror ←',
+    '🪞 Раскол по центру (N=1)': '🪞 Split at center (N=1)',        };
+
+        // Переводчик: один раз (лениво) захватывает оригинальные русские текстовые узлы и
+        // атрибуты title/placeholder, дальше просто переключает их между сохранённым оригиналом
+        // и переводом из RU_EN_DICT. Кнопки переключения — #langBtnRu/#langBtnEn в заголовке
+        // мини-пульта; сам их текст ("Зеркалиус"/"Zerkalius") в словарь не входит и не переводится.
+        (function () {
+            var currentLang = 'ru';
+            var capturedNodes = [];
+            var capturedAttrs = [];
+            var captured = false;
+
+            function captureOnce() {
+                if (captured) return;
+                captured = true;
+                var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+                    acceptNode: function (node) {
+                        var p = node.parentElement;
+                        if (!p) return NodeFilter.FILTER_REJECT;
+                        var tag = p.tagName;
+                        if (tag === 'SCRIPT' || tag === 'STYLE') return NodeFilter.FILTER_REJECT;
+                        if (p.id === 'langBtnRu' || p.id === 'langBtnEn') return NodeFilter.FILTER_REJECT;
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                });
+                var n;
+                while ((n = walker.nextNode())) {
+                    var trimmed = n.nodeValue.trim().replace(/\s+/g, ' ');
+                    if (trimmed && RU_EN_DICT.hasOwnProperty(trimmed)) {
+                        capturedNodes.push({ node: n, orig: n.nodeValue, trimmed: trimmed });
+                    }
+                }
+                document.querySelectorAll('[title],[placeholder]').forEach(function (el) {
+                    ['title', 'placeholder'].forEach(function (attr) {
+                        var v = el.getAttribute(attr);
+                        if (v == null) return;
+                        var trimmed = v.trim().replace(/\s+/g, ' ');
+                        if (trimmed && RU_EN_DICT.hasOwnProperty(trimmed)) {
+                            capturedAttrs.push({ el: el, attr: attr, orig: v, trimmed: trimmed });
+                        }
+                    });
+                });
+            }
+
+            function applyLanguage(lang) {
+                captureOnce();
+                currentLang = (lang === 'en') ? 'en' : 'ru';
+                capturedNodes.forEach(function (c) {
+                    c.node.nodeValue = (currentLang === 'en') ? (RU_EN_DICT[c.trimmed] || c.orig) : c.orig;
+                });
+                capturedAttrs.forEach(function (c) {
+                    c.el.setAttribute(c.attr, (currentLang === 'en') ? (RU_EN_DICT[c.trimmed] || c.orig) : c.orig);
+                });
+                var ruBtn = document.getElementById('langBtnRu'), enBtn = document.getElementById('langBtnEn');
+                if (ruBtn) ruBtn.classList.toggle('lang-active', currentLang === 'ru');
+                if (enBtn) enBtn.classList.toggle('lang-active', currentLang === 'en');
+            }
+
+            window.applyLanguage = applyLanguage;
+            window.getUiLang = function () { return currentLang; };
+
+            var ruBtnEl = document.getElementById('langBtnRu');
+            var enBtnEl = document.getElementById('langBtnEn');
+            if (ruBtnEl) ruBtnEl.addEventListener('click', function () {
+                applyLanguage('ru');
+                if (window.saveAutosaveSnapshot) saveAutosaveSnapshot();
+            });
+            if (enBtnEl) enBtnEl.addEventListener('click', function () {
+                applyLanguage('en');
+                if (window.saveAutosaveSnapshot) saveAutosaveSnapshot();
+            });
+
+            applyLanguage('ru');
         })();
     </script>
 
