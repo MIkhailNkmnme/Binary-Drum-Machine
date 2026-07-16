@@ -956,7 +956,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         </div>
     </div>
     <div id="playerButtonsBar" style="position:fixed; z-index:101; display:flex; flex-direction:column; align-items:center;" title="Мини-пульт. Двойной клик по пустому месту: свернуть/развернуть. Перетаскивание: переместить (положение запоминается)." onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); if (window.savePanelLayout) savePanelLayout(); event.stopPropagation(); }">
-        <div class="mini-title" style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:11px; font-weight:bold; letter-spacing:2px; color:rgba(0,204,255,0.75); padding:1px 0 3px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.12); margin-bottom:4px;"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.394 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
+        <div class="mini-title" style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:11px; font-weight:bold; letter-spacing:2px; color:rgba(0,204,255,0.75); padding:1px 0 3px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.12); margin-bottom:4px;"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.396 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
         <div style="display:flex; align-items:stretch; gap:6px; width:100%; margin-bottom:4px;">
             <div style="display:flex; flex-direction:column; justify-content:center; gap:4px; flex:1; min-width:0;">
                 <button id="clearCanvasBtn" class="btn-action btn-danger" style="margin:0; width:100%; font-size:9px;">🧹 Очистить</button>
@@ -4145,6 +4145,17 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             return seeds;
         }
 
+        // Строки, с которыми работает сид-наложение: если слайдер "Экран" показывает МЕНЬШЕ
+        // строк, чем есть на холсте, наложение считает, что строк ровно столько, сколько видно
+        // (первые N) — остальные не трогаются вообще (ни масками, ни шагами, ни общей дорожкой,
+        // ни MultiXor). Скролл строк тут не учитывается — только количество.
+        function seedOverlayVisibleLines() {
+            let validLines = STATE.lines.filter(l => l.origIndex >= 0);
+            let screenRows = parseInt(safeValue('screenSlider', 64));
+            if (screenRows > 0 && screenRows < validLines.length) validLines = validLines.slice(0, screenRows);
+            return validLines;
+        }
+
         // Строит состояние с нуля из ТЕКУЩИХ строк-паттернов (STATE.lines с origIndex >= 0)
         // и текущего поля сида(ов). Число строк и длина каждой берутся с ТЕКУЩЕГО слота холста
         // (STATE.lines), если он загружен. Если холст пуст (STATE.lines.length === 0) — сначала
@@ -4160,13 +4171,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         // line.orig/template — это и есть строка, а не что-то поверх неё).
         function seedOverlayBuildRows() {
             let seeds = seedOverlayGetSeeds();
-            let validLines = STATE.lines.filter(l => l.origIndex >= 0);
+            let validLines = seedOverlayVisibleLines();
 
             if (validLines.length === 0) {
                 let syntheticText = [];
                 for (let i = 0; i < SEED_OVERLAY_DEFAULT_ROWS; i++) syntheticText.push('0'.repeat(i + 1));
                 loadText(syntheticText.join('\n'));
-                validLines = STATE.lines.filter(l => l.origIndex >= 0);
+                validLines = seedOverlayVisibleLines();
             }
 
             let rows = [];
@@ -4290,9 +4301,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             rows.forEach(r => { for (let i = 0; i < r.tLen; i++) r.resultColors[i] = '#666'; });
             let step = STATE.seedOverlayGlobalStep || 0;
             let period = 2 * total;
-            seeds.forEach(seed => {
+            seeds.forEach((seed, sIdx) => {
                 let seedLen = seed.length;
-                let baseOffset = step * seedLen;
+                // Видимая маска сида — его «нулевая копия» на общей дорожке (лежит с позиции 0):
+                // шаги продолжают движение ПОСЛЕ неё, а не кладутся поверх (иначе XOR гасил бы
+                // её в ноль на первом же шаге) — аналог seedOverlayRowMaskSteps построчного режима.
+                let maskSteps = (STATE.seedOverlayVisibleSeeds && STATE.seedOverlayVisibleSeeds.has(sIdx)) ? 1 : 0;
+                let baseOffset = (step + maskSteps) * seedLen;
                 let legStart = Math.floor(baseOffset / total);
                 for (let j = 0; j < seedLen; j++) {
                     let t = baseOffset + j;
@@ -4319,11 +4334,20 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             STATE.seedOverlayRows.forEach(row => {
                 row.resultBits = new Array(row.tLen).fill(0);
                 row.resultColors = new Array(row.tLen).fill('#666');
-                if (STATE.seedOverlayVisibleSeeds) {
-                    STATE.seedOverlayVisibleSeeds.forEach(idx => {
-                        if (idx < seeds.length) seedOverlaySinglePass(seeds[idx], row.tLen, row.resultBits);
-                    });
-                }
+            });
+            // Маски видимых сидов: раскладка — по ТЕКУЩЕМУ чекбоксу "Накопительная длина"
+            // (одна общая дорожка либо копия в каждую строку), см. seedOverlayToggleSeedMask.
+            if (STATE.seedOverlayVisibleSeeds) {
+                STATE.seedOverlayVisibleSeeds.forEach(idx => {
+                    if (idx >= seeds.length) return;
+                    if (seedOverlayCumulativeOn()) {
+                        seedOverlayCumulativeSinglePass(seeds[idx]);
+                    } else {
+                        STATE.seedOverlayRows.forEach(row => seedOverlaySinglePass(seeds[idx], row.tLen, row.resultBits));
+                    }
+                });
+            }
+            STATE.seedOverlayRows.forEach(row => {
                 let n = row.step;
                 row.step = 0;
                 for (let s = 0; s < n; s++) seedOverlayApplyStep(row);
@@ -4348,13 +4372,34 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
         }
 
+        // То же, что seedOverlaySinglePass, но по ОБЩЕЙ дорожке накопительного режима (все строки
+        // сшиты): сид ложится один раз с позиции 0 — в начало ПЕРВОЙ строки, а если не помещается,
+        // продолжается в следующих (с отскоком от краёв всей дорожки), а НЕ копируется в каждую
+        // строку по отдельности.
+        function seedOverlayCumulativeSinglePass(seed) {
+            let rows = STATE.seedOverlayRows;
+            if (!rows || rows.length === 0) return;
+            let offsets = [], total = 0;
+            rows.forEach(r => { offsets.push(total); total += r.tLen; });
+            if (total <= 0) return;
+            let period = 2 * total;
+            for (let j = 0; j < seed.length; j++) {
+                let m = j % period;
+                let pos = (m < total) ? m : (period - 1 - m);
+                let bit = parseInt(seed[j], 10) || 0;
+                let lo = 0, hi = rows.length - 1;
+                while (lo < hi) { let mid = (lo + hi + 1) >> 1; if (offsets[mid] <= pos) lo = mid; else hi = mid - 1; }
+                rows[lo].resultBits[pos - offsets[lo]] ^= bit;
+            }
+        }
+
         // MultiXor (простая версия, 1 шаг): для каждой строки холста накладывает (XOR) в ОДИН
         // проход не только её собственный сид, но и сиды ВСЕХ строк выше неё — каждый сид как
         // отдельный независимый проход от начала дорожки. Результат пишется прямо в содержимое
         // строк холста (line.orig/template), после чего запускается настоящий поиск паттернов
         // движка (calculateState(true)), чтобы найденные паттерны подсветились как обычно.
         function seedOverlayMultiXorOnce() {
-            let validLines = STATE.lines.filter(l => l.origIndex >= 0);
+            let validLines = seedOverlayVisibleLines();
             if (validLines.length === 0) {
                 showNotification("MULTIXOR: НА ХОЛСТЕ НЕТ СТРОК (ЗАГРУЗИ СЛОТ)");
                 return;
@@ -4387,16 +4432,21 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         // сид = XOR-нуть его в резерв row.resultBits (тот же массив, что использует "Шаг"), скрыть
         // сид = XOR-нуть его же ещё раз (XOR сам себе обратен — снимает ровно этот вклад).
         function seedOverlayToggleSeedMask(seedIdx) {
-            let validLines = STATE.lines.filter(l => l.origIndex >= 0);
+            let validLines = seedOverlayVisibleLines();
             if (validLines.length === 0) return false;
             if (seedOverlayNeedsRebuild()) seedOverlayBuildRows();
             let seeds = seedOverlayGetSeeds();
             if (seedIdx >= seeds.length) return false;
             let seed = seeds[seedIdx];
-            STATE.seedOverlayRows.forEach(row => {
-                seedOverlaySinglePass(seed, row.tLen, row.resultBits);
-                seedOverlaySyncLine(row);
-            });
+            // Раскладка маски зависит от чекбокса "Накопительная длина": накопительный режим
+            // кладёт сид ОДИН раз на общую дорожку (первая строка, дальше по хвостам следующих),
+            // построчный — по копии в каждую строку.
+            if (seedOverlayCumulativeOn()) {
+                seedOverlayCumulativeSinglePass(seed);
+            } else {
+                STATE.seedOverlayRows.forEach(row => seedOverlaySinglePass(seed, row.tLen, row.resultBits));
+            }
+            STATE.seedOverlayRows.forEach(row => seedOverlaySyncLine(row));
             return true;
         }
 
@@ -4456,7 +4506,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         // "Сид →": соло-режим по кругу — показывает ОДИН сид зараз (остальные скрываются), не
         // трогая то, что на холсте положили другие действия ("Шаг" и т.д.) — сиды тут просто маски.
         function seedOverlayCycleSingleSeed() {
-            let validLines = STATE.lines.filter(l => l.origIndex >= 0);
+            let validLines = seedOverlayVisibleLines();
             if (validLines.length === 0) { showNotification("СИД →: НА ХОЛСТЕ НЕТ СТРОК (ЗАГРУЗИ СЛОТ)"); return; }
             let seeds = seedOverlayGetSeeds();
             let idx = (STATE.seedOverlaySoloIdx === undefined ? -1 : STATE.seedOverlaySoloIdx) + 1;
@@ -4472,7 +4522,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
         // "Всё разом": показывает ВСЕ сиды одновременно (включает те, что были скрыты).
         function seedOverlayAllAtOnce() {
-            let validLines = STATE.lines.filter(l => l.origIndex >= 0);
+            let validLines = seedOverlayVisibleLines();
             if (validLines.length === 0) { showNotification("ВСЁ РАЗОМ: НА ХОЛСТЕ НЕТ СТРОК (ЗАГРУЗИ СЛОТ)"); return; }
             let seeds = seedOverlayGetSeeds();
             for (let i = 0; i < seeds.length; i++) seedOverlaySetSeedVisible(i, true);
@@ -4488,7 +4538,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         // видимыми). Клик 1 = сид №1, клик 2 = №1+№2, и т.д.; после последнего — снова с №1
         // (остальные скрываются).
         function seedOverlayCycleAccumulate() {
-            let validLines = STATE.lines.filter(l => l.origIndex >= 0);
+            let validLines = seedOverlayVisibleLines();
             if (validLines.length === 0) { showNotification("НАКОПЛЕНИЕ →: НА ХОЛСТЕ НЕТ СТРОК (ЗАГРУЗИ СЛОТ)"); return; }
             let seeds = seedOverlayGetSeeds();
             let count = (STATE.seedOverlayAccumCount || 0) + 1;
@@ -4526,7 +4576,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
         function seedOverlayNeedsRebuild() {
             if (!STATE.seedOverlayRows) return true;
-            let validCount = STATE.lines.filter(l => l.origIndex >= 0).length;
+            // Сюда же попадает и смена слайдера "Экран": стало видно другое число строк —
+            // состояние пересобирается под новое количество при следующем действии наложения.
+            let validCount = seedOverlayVisibleLines().length;
             return STATE.seedOverlayRows.length !== validCount;
         }
 
@@ -4567,18 +4619,28 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             let stopBtnEl = document.getElementById('stopBtn');
             if (stopBtnEl) stopBtnEl.click();
 
-            seedOverlayBuildRows(); // заново обнуляет реальные строки (если они есть) и пересобирает
+            // Пока пересобираем строки и заново кладём маски сидов, поиск паттернов молчит
+            // (suppressPatternSearch читает calculateState): иначе updateLogic() внутри
+            // seedOverlaySyncCanvasAfterChange тут же находил бы паттерны в только что
+            // показанных сидах — и находки/журнал «воскресали» сразу после Сброса. Найдутся
+            // они заново уже на следующем "Шаге", со своим настоящим номером шага.
+            STATE.suppressPatternSearch = true;
+            try {
+                seedOverlayBuildRows(); // заново обнуляет реальные строки (если они есть) и пересобирает
 
-            // Сбрасываем маски видимости сидов и возвращаем дефолт "Всё разом" не только как
-            // подсветку кнопки, но и как реальное состояние холста (все сиды снова показаны).
-            STATE.seedOverlayVisibleSeeds = new Set();
-            STATE.seedOverlaySoloIdx = undefined;
-            STATE.seedOverlayAccumCount = 0;
-            let seeds = seedOverlayGetSeeds();
-            for (let i = 0; i < seeds.length; i++) seedOverlaySetSeedVisible(i, true);
+                // Сбрасываем маски видимости сидов и возвращаем дефолт "Всё разом" не только как
+                // подсветку кнопки, но и как реальное состояние холста (все сиды снова показаны).
+                STATE.seedOverlayVisibleSeeds = new Set();
+                STATE.seedOverlaySoloIdx = undefined;
+                STATE.seedOverlayAccumCount = 0;
+                let seeds = seedOverlayGetSeeds();
+                for (let i = 0; i < seeds.length; i++) seedOverlaySetSeedVisible(i, true);
 
-            seedOverlayRender();
-            seedOverlaySyncCanvasAfterChange();
+                seedOverlayRender();
+                seedOverlaySyncCanvasAfterChange();
+            } finally {
+                STATE.suppressPatternSearch = false;
+            }
             seedOverlayFlashBtn('seedOverlayResetBtn', '#bfff00');
             seedOverlaySelectGroupMode('allAtOnce');
             seedOverlaySetMultiXorState(false);
@@ -4593,7 +4655,15 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
         }
 
-        safeBind('seedOverlayCumulativeCheck', 'change', function() { seedOverlayRender(); });
+        // Смена галки меняет и раскладку масок видимых сидов (построчно ↔ одна общая дорожка),
+        // поэтому переигрываем состояние с нуля под новый режим, а не просто перерисовываем.
+        safeBind('seedOverlayCumulativeCheck', 'change', function() {
+            if (STATE.seedOverlayRows && STATE.seedOverlayRows.length) {
+                seedOverlayReplayAll();
+                seedOverlaySyncCanvasAfterChange();
+            }
+            seedOverlayRender();
+        });
         safeBind('seedOverlayStepBtn', 'click', function() { seedOverlayStepAll(); });
         safeBind('seedOverlayUndoBtn', 'click', function() { seedOverlayUndoAll(); });
         safeBind('seedOverlayResetBtn', 'click', function() {
@@ -5824,6 +5894,17 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         // displaysOnly=true — лёгкий режим для первого вызова из updateLogic(): пересчитать только
         // display/маски/балансы строк (нужны каскаду и анализу волн) и выйти до поиска/подсветки/
         // интерливинга — всё это сделает второй, полный вызов calculateState(true) в том же тике.
+        // Шаг для журнала находок: обычно это шаг движка (globalStep), но когда строки двигает
+        // сид-наложение (движок стоит на 0, а счётчики наложения уже накручены "Шагом"/автоплеем),
+        // берём шаг наложения — иначе каждая такая находка значилась бы в журнале как "Шаг 0".
+        function patternFindStep() {
+            let engineStep = Math.abs(STATE.globalStep);
+            if (engineStep > 0) return engineStep;
+            let ovStep = STATE.seedOverlayGlobalStep || 0;
+            if (STATE.seedOverlayRows) STATE.seedOverlayRows.forEach(r => { if (r.step > ovStep) ovStep = r.step; });
+            return ovStep;
+        }
+
         function calculateState(triggerSearch, displaysOnly) {
             let newlyFound = false;
             let rawPatterns = safeValue('patternInput', '').split('\n').map(p => p.trim().replace(/\s+/g, ''));
@@ -5861,7 +5942,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             // повторно не пересматриваем: рамка растёт вниз строго по одной новой строке за находку.
             // Рост уже принятой находки (МАРКЕР "рост рамки на 1 строку" ниже) этим не блокируется —
             // используем отдельный флаг searchAllowed, а не переопределяем сам triggerSearch.
-            let searchAllowed = triggerSearch;
+            // suppressPatternSearch — временный предохранитель (ставит seedOverlayResetAll):
+            // пока сид-наложение пересобирает строки и заново кладёт маски сидов, поиск молчит,
+            // иначе только что сброшенные паттерны находились бы заново в тот же тик.
+            let searchAllowed = triggerSearch && !STATE.suppressPatternSearch;
             if (searchAllowed && isSequential && safeChecked('frameCheck', false) && STATE.manualFrame && STATE.manualFrame.isInitialized) {
                 let targetIdx = STATE.currentTargetPatternIdx;
                 let isBelowFrame = (targetIdx - STATE.manualFrame.rowStart + 1) > STATE.manualFrame.rowSpan;
@@ -5934,7 +6018,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                             newlyFound = true;
                                             STATE.lastFindMethod = "Локально в Строке 1 (сама в себе)";
                                             STATE.foundPatternsMetadata.set(targetPatOrig, {
-                                                type: 'local', rows: [1], step: Math.abs(STATE.globalStep),
+                                                type: 'local', rows: [1], step: patternFindStep(),
                                                 method: STATE.lastFindMethod
                                             });
                                             STATE.currentTargetPatternIdx++;
@@ -5952,7 +6036,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                         expandFrameToRow(STATE.currentTargetPatternIdx);
                                     }
                                     STATE.foundPatternsMetadata.set(targetPatOrig, {
-                                        type: 'auto', rows: [STATE.currentTargetPatternIdx + 1], step: Math.abs(STATE.globalStep),
+                                        type: 'auto', rows: [STATE.currentTargetPatternIdx + 1], step: patternFindStep(),
                                         method: `Авто-активация (пустой паттерн), строка ${STATE.currentTargetPatternIdx + 1}`
                                     });
                                     STATE.currentTargetPatternIdx++;
@@ -5976,7 +6060,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                         expandFrameToRow(idx);
                                     }
 									STATE.foundPatternsMetadata.set(patOrig, {
-                                    type: 'auto', rows: [idx + 1], step: Math.abs(STATE.globalStep),
+                                    type: 'auto', rows: [idx + 1], step: patternFindStep(),
                                     method: `Авто-активация (пустой паттерн), строка ${idx + 1}`
                                 });
                                 changedAny = true;
@@ -6629,7 +6713,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                     STATE.foundPatternsMetadata.set(searchPatOrig, {
                                         type: 'vertical',
                                         cols: [hc], rows: [origLineNum],
-                                        step: Math.abs(STATE.globalStep),
+                                        step: patternFindStep(),
                                         method: STATE.lastFindMethod
                                     });
                                 }
@@ -6684,7 +6768,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                             STATE.foundPatternsMetadata.set(targetPatOrig, {
                                 type: 'global',
                                 rows: Array.from(involvedRows).sort((a,b)=>a-b),
-                                step: Math.abs(STATE.globalStep),
+                                step: patternFindStep(),
                                 method: STATE.lastFindMethod
                             });
 
@@ -6731,7 +6815,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                 STATE.foundPatternsMetadata.set(searchPatOrig, {
                                     type: 'global',
                                     rows: Array.from(involvedRows).sort((a,b)=>a-b),
-                                    step: Math.abs(STATE.globalStep),
+                                    step: patternFindStep(),
                                     method: STATE.lastFindMethod
                                 });
                             }
@@ -6799,7 +6883,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                 STATE.foundPatternsMetadata.set(targetPatOrig, {
                                     type: 'local',
                                     rows: [line.origIndex + 1], cols: [pos],
-                                    step: Math.abs(STATE.globalStep),
+                                    step: patternFindStep(),
                                     method: STATE.lastFindMethod
                                 });
 
@@ -6842,7 +6926,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                             STATE.foundPatternsMetadata.set(searchPatOrig, {
                                 type: 'local',
                                 rows: [line.origIndex + 1], cols: [pos],
-                                step: Math.abs(STATE.globalStep),
+                                step: patternFindStep(),
                                 method: STATE.lastFindMethod
                             });
                         }
@@ -6915,7 +6999,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                                 source2: r.labelCurrent,
                                 target: STATE.lines[nextIdx].origIndex + 1,
                                 rows: [STATE.lines[nextIdx].origIndex + 1],
-                                step: Math.abs(STATE.globalStep),
+                                step: patternFindStep(),
                                 method: `Интерливинг (${r.labelAbove || 'Дубль'} & ${r.labelCurrent}) → строка ${STATE.lines[nextIdx].origIndex + 1}`
                             });
 
@@ -6945,7 +7029,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                     // Показываем не только шаг, но и где/как паттерн был найден (metadata.method) —
                     // строится напрямую в момент находки в каждой из веток поиска (локально/вертикально/
                     // сквозь/интерливинг/авто), см. calculateState().
-                    let stepStr = `Шаг ${meta ? meta.step : Math.abs(STATE.globalStep)}`;
+                    let stepStr = `Шаг ${meta ? meta.step : patternFindStep()}`;
                     let methodStr = meta && meta.method ? meta.method : "Метод не определён";
                     let safeMethod = methodStr.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
                     let safePat = pat.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
