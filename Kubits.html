@@ -1,0 +1,2124 @@
+<!-- Версия: 0.36 (Заголовок Кубиты/Kubits цветной, выбор кубиков в режиме лазера, подзаголовок вниз) -->
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Кубиты v0.36</title>
+
+<!-- Подключение шрифта Roboto Mono -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#F6F5F0; --panel:#FFFFFF; --fg:#26251F; --muted:#6E6D66;
+  --border:#DCDAD1; --accent:#1D9E75; --accent-soft:#E1F5EE;
+}
+:root[data-theme="dark"]{
+  --bg:#151D1B; --panel:#1C2724; --fg:#E9F2EE; --muted:#93A69F;
+  --border:#31423C; --accent:#5DCAA5; --accent-soft:#0F2B23;
+}
+*{box-sizing:border-box}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font: 14px/1.6 'Roboto Mono', monospace;
+  transition:background .25s,color .25s;
+  height: 100vh; overflow: hidden;
+}
+.wrap{
+  display: flex; flex-direction: column; 
+  width: 100%; height: 100vh; max-width: none; 
+  padding: 10px 16px 10px; margin: 0; box-sizing: border-box;
+}
+.layout {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 0 0 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 20px;
+}
+.settings-panel {
+  width: 210px; /* компактнее, чем было */
+}
+.editor-panel {
+  width: 300px;
+  padding-bottom: 0; /* info-блок доходит до самого низа */
+}
+/* Разделитель для ресайза панелей перетаскиванием края (без углового маркера) */
+.divider {
+  flex: 0 0 auto;
+  width: 7px;
+  align-self: stretch;
+  cursor: col-resize;
+  border-radius: 4px;
+  background: transparent;
+  transition: background .15s;
+}
+.divider:hover, .divider.dragging { background: var(--border); }
+/* Центральная колонка: холст + панель результатов лазера снизу */
+.center-col {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+/* Кнопки для скрытия панелей */
+.toggle-btn {
+  background: var(--border);
+  border: none;
+  color: var(--fg);
+  cursor: pointer;
+  padding: 5px 10px;
+  font-size: 10px;
+  border-radius: 4px;
+}
+.toggle-btn:hover { background: var(--accent); color: #fff; }
+
+/* Состояние скрытой панели */
+.panel.collapsed {
+  display: none;
+}
+.stage {
+  flex: 1 1 auto; /* Холст занимает всё свободное место в колонке */
+  min-height: 0;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden; min-width: 0;
+}
+/* Панель результатов лазера снизу — растёт вверх (тянуть за верхний край) */
+.laser-panel {
+  flex: 0 0 auto;
+  position: relative;
+  overflow: auto;
+  min-height: 3.4em; /* ~2 строки по умолчанию */
+  max-height: 70%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 12px 8px;
+}
+/* Ручка ресайза по верхнему краю лазер-панели */
+.laser-grip {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 8px;
+  cursor: row-resize;
+  border-radius: 12px 12px 0 0;
+  background: transparent;
+  transition: background .15s;
+}
+.laser-grip:hover, .laser-grip.dragging { background: var(--accent); }
+
+header{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:4px}
+h1{font:700 22px/1.3 'Roboto Mono',monospace; margin:0; letter-spacing:.02em;}
+.ver{font-size:16px; color:var(--accent); font-weight:bold; vertical-align:middle; margin-left:10px}
+h1 .t1{color:var(--accent)}
+h1 .t2{color:#3498DB}
+.sub{font-size:12px; color:var(--muted); margin:0 0 10px}
+
+.editor-wrap {
+  position: relative;
+  flex: 1 1 auto; /* Растянут по высоте до инфо-блока */
+  min-height: 150px;
+  display: flex;
+}
+#src-bg, textarea {
+  font: 12px/1.25 'Roboto Mono', monospace;
+  width: 100%;
+  min-height: 150px;
+  padding: 8px 10px; margin: 0; box-sizing: border-box;
+  border-radius: 5px;
+  white-space: pre; word-wrap: normal;
+  overflow: auto;
+}
+#src-bg {
+  position: absolute; /* Подложка остается абсолютной */
+  top: 0; left: 0; bottom: 0; right: 0; /* Растягивается по родителю */
+  height: 100%;
+  background: var(--panel);
+  color: transparent;
+  border: 1px solid transparent;
+  z-index: 1;
+  pointer-events: none; /* Чтобы не мешала кликам */
+  scrollbar-width: none;
+}
+#src-bg::-webkit-scrollbar { display: none; }
+
+textarea {
+  position: relative;
+  flex: 1 1 auto; /* Заполняет редактор по высоте, ширину задаёт панель */
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  resize: none; /* размер задаётся ресайзом самой панели */
+  z-index: 2;
+  caret-color: var(--fg);
+}
+
+select,button{
+  font:inherit; font-size:12px; height:32px; padding:0 10px;
+  background:var(--panel); color:var(--fg);
+  border:1px solid var(--border); border-radius:8px; cursor:pointer; flex: 0 0 auto;
+}
+button:hover,select:hover{border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+
+button.active-view {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: var(--accent) !important;
+}
+
+/* Группа кнопок выбора режима (вместо выпадающего списка) */
+.btn-group{display:flex; flex-direction:column; gap:4px;}
+.grp-btn{width:100%; text-align:left; height:auto; min-height:0; padding:4px 9px; white-space:normal;}
+.grp-btn.active{background:var(--accent) !important; color:#fff !important; border-color:var(--accent) !important;}
+
+/* Галки в виде кнопок-переключателей */
+label.ck{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); cursor:pointer}
+label.ck:has(input[type=checkbox]){
+  border:1px solid var(--border); border-radius:8px;
+  padding:4px 9px; background:var(--panel); transition:all .15s;
+}
+label.ck:has(input[type=checkbox]:hover), label.ck:has(input[type=checkbox]):hover{border-color:var(--accent)}
+label.ck input[type=checkbox]{display:none}
+label.ck:has(input[type=checkbox]:checked){
+  background:var(--accent-soft); border-color:var(--accent); color:var(--fg);
+}
+.stats{font-size:12px; color:var(--muted)}
+.stats b{color:var(--fg); font-weight:700}
+.note{font-size:12px; color:var(--muted); line-height:1.4}
+.warn{font-size:12px; color:#BA7517; line-height:1.5; display:none}
+#chips{display:flex; flex-wrap:wrap; gap:5px}
+#chips button{min-width:28px; height:26px; padding:0 6px; font-size:12px; border-radius:6px; border-width:1.5px; transition:all .2s; font-weight:700}
+#sliderRow{display:none; flex-direction:column; gap:4px}
+input[type=range]{width:100%; accent-color:var(--accent)}
+.zero-vis{display:flex; flex-direction:column; gap:2px; font-size:11px; color:var(--muted); padding:2px 2px 4px;}
+.zero-vis b{color:var(--fg);}
+
+#skewerRes {
+  display: flex; flex-direction: row; flex-wrap: wrap; gap: 6px 20px;
+  width: 100%;
+  font: 12px 'Roboto Mono', monospace;
+}
+.laser-col { flex:1 1 0; display:flex; flex-direction:column; gap:3px; min-width:130px; }
+.laser-col-h { font-size:11px; color:var(--muted); font-weight:700; letter-spacing:1px; text-transform:uppercase; border-bottom:1px solid var(--border); padding-bottom:2px; margin-bottom:2px; }
+.skew-line { display:flex; align-items:center; gap:6px; font-weight:600; letter-spacing:1px;}
+.skew-dot { width: 10px; height: 10px; border-radius: 50%; display:inline-block; flex-shrink:0; }
+
+canvas{display:block; width:100%; height:100%; cursor:grab; user-select:none; touch-action:none;}
+canvas:active{cursor:grabbing;}
+
+footer{margin-top:10px; font-size:12px; color:var(--muted);}
+@media (prefers-reduced-motion: reduce){ body,#chips button{transition:none} }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1><span data-i18n="title"><span class="t1">Ку</span><span class="t2">биты</span></span><span class="ver">v0.36</span></h1>
+
+  <!-- Сдвиг символов: по центру шапки, между заголовком и кнопками панелей -->
+  <div id="rotWrap" style="display:none; gap:6px; align-items:center;">
+    <span class="sub" style="margin:0; font-weight:700; color:var(--fg);" data-i18n="shiftTxt">Сдвиг:</span>
+    <button id="btnRotCCW" title="⏪">⏪ ↺</button>
+    <button id="btnRotCW" title="↻ ⏩">↻ ⏩</button>
+  </div>
+
+  <div style="display:flex; gap:8px; align-items:center;">
+    <button id="toggleLeft" class="toggle-btn">⬅ Скрыть настройки</button>
+    <button id="toggleRight" class="toggle-btn">Скрыть редактор ➡</button>
+    <select id="theme" aria-label="Тема">
+      <option value="light" data-i18n="themeLight">Светлый фон</option>
+      <option value="dark" data-i18n="themeDark">Тёмный фон</option>
+    </select>
+    <button id="btnLang" style="font-weight:bold; color:var(--accent);">ENG</button>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- ЛЕВАЯ ПАНЕЛЬ: Настройки и инструменты -->
+  <div class="panel settings-panel" id="leftPanel">
+    <!-- Скрытый select — источник значения для JS; управляется кнопками ниже -->
+    <select id="mode" aria-label="Режим" style="display:none">
+      <option value="ring" selected>Круглая воронка</option>
+      <option value="funnel">Плоская воронка</option>
+      <option value="blocks">Этажи из блоков</option>
+      <option value="rhomb">Ромбы</option>
+    </select>
+    <div id="modeGroup" class="btn-group">
+      <button type="button" class="grp-btn active" data-mode="ring" data-i18n="modeRing">Круглая воронка</button>
+      <button type="button" class="grp-btn" data-mode="funnel" data-i18n="modeFunnel">Плоская воронка</button>
+      <button type="button" class="grp-btn" data-mode="blocks" data-i18n="modeBlocks">Этажи из блоков</button>
+      <button type="button" class="grp-btn" data-mode="rhomb" data-i18n="modeRhomb">Ромбы</button>
+    </div>
+
+    <div style="display:flex; gap:6px;">
+      <button id="btnViewIso" class="active-view" style="flex:1;" data-i18n="viewIso">Изометрия</button>
+      <button id="btnViewTop" style="flex:1;" data-i18n="viewTop">Вид сверху</button>
+    </div>
+    <button id="btnExcel" style="display:none; color:var(--accent); font-weight:bold;" data-i18n="btnExcel">📊 Excel</button>
+
+    <label class="ck"><input type="checkbox" id="tint" checked> <span data-i18n="lblTint">Подкрашивать этажи</span></label>
+    <label class="ck"><input type="checkbox" id="guides" checked> <span data-i18n="lblGuides">Направляющие кольца</span></label>
+    <label class="ck"><input type="checkbox" id="loopBits" checked> <span data-i18n="lblLoop">Дополнить строку</span></label>
+    <label class="ck"><input type="checkbox" id="dimPadded"> <span data-i18n="lblDim">Прозрачность дополненных строк</span></label>
+    <label class="ck"><input type="checkbox" id="ghosts" checked> <span data-i18n="lblGhosts">Показывать нули (0)</span></label>
+    <label class="ck"><input type="checkbox" id="ghostsAll"> <span data-i18n="lblGhostsAll">Показывать все пустоты</span></label>
+    <div class="zero-vis">
+      <label for="zeroMain"><span data-i18n="lblZeroMain">Видимость 0 (строки)</span>: <b id="zeroMainLbl">0.40</b></label>
+      <input type="range" id="zeroMain" min="0" max="1" step="0.05" value="0.4">
+      <label for="zeroPad"><span data-i18n="lblZeroPad">Видимость 0 (добор)</span>: <b id="zeroPadLbl">0.25</b></label>
+      <input type="range" id="zeroPad" min="0" max="1" step="0.05" value="0.25">
+    </div>
+    <label class="ck"><input type="checkbox" id="showText" checked> <span data-i18n="lblText">Цифры на фигурах (1/0)</span></label>
+    <hr style="border:0; border-top:1px solid var(--border); margin:4px 0">
+    <label class="ck" style="color:var(--accent)"><input type="checkbox" id="minusMode"> <span data-i18n="lblMinus">Вычитать выделенное</span></label>
+    <label class="ck" style="color:#E74C3C; font-weight:700;"><input type="checkbox" id="skewerMode" checked> <span data-i18n="lblLaser">🎯 Инструмент "Лазер"</span></label>
+
+    <div class="stats" style="margin-top:5px;"><span data-i18n="statFloors">Всего этажей:</span> <b id="stFloors">10</b> · (1): <b id="stCubes">137</b></div>
+    <div id="chips" style="display: flex;"></div>
+    <div id="sliderRow" style="display: none;">
+      <label class="ck" for="floorRange"><span data-i18n="lblFloor">Этаж:</span> <b id="frLabel" style="color:var(--fg)">все</b></label>
+      <input type="range" id="floorRange" min="0" max="10" value="0" step="1">
+    </div>
+    <div class="warn" id="warn" style="display: none;" data-i18n="warnMax">Достигнут потолок кубиков — верхние этажи обрезаны.</div>
+  </div>
+
+  <div class="divider" id="divLeft"></div>
+
+  <!-- ЦЕНТР: Холст + результаты лазера снизу -->
+  <div class="center-col">
+    <div class="stage">
+      <canvas id="cv"></canvas>
+    </div>
+    <div id="skewerWrap" class="laser-panel" style="display:none">
+      <div class="laser-grip" id="divLaser" title="Тянуть вверх"></div>
+      <div class="sub" style="margin:0 0 5px" data-i18n="laserRes">Результаты лазера:</div>
+      <div id="skewerRes"></div>
+    </div>
+  </div>
+
+  <div class="divider" id="divRight"></div>
+
+  <!-- ПРАВАЯ ПАНЕЛЬ: Текстовое поле и инфо об этажах -->
+  <div class="panel editor-panel" id="rightPanel">
+    <div class="editor-wrap">
+      <div id="src-bg" aria-hidden="true"></div>
+      <textarea id="src" spellcheck="false">1
+11
+111
+1000
+10101
+110001
+1001100
+11100000
+111010011
+1000000010</textarea>
+    </div>
+
+    <div class="note" id="info" style="flex:0 0 auto; margin-top:auto; background:var(--bg); padding:8px; border-radius:8px; border:1px solid var(--border)"></div>
+  </div>
+</div>
+<p class="sub" style="margin:8px 0 0" data-i18n="sub">Строки превращаются в фигуры: единица — кубик, ноль — пусто.</p>
+<footer data-i18n="footer">строка = этаж · пустая строка = новый блок · 0 = пустое место · до 256 этажей</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var i18n = {
+  ru: {
+    title: '<span class="t1">Ку</span><span class="t2">биты</span>',
+    titlePlain: "Кубиты",
+    sub: "Строки превращаются в фигуры: единица — кубик, ноль — пусто.",
+    themeLight: "Светлый фон", themeDark: "Тёмный фон",
+    modeRing: "Круглая воронка", modeFunnel: "Плоская воронка", modeBlocks: "Этажи из блоков", modeRhomb: "Ромбы",
+    viewIso: "Изометрия", viewTop: "Вид сверху",
+    lblTint: "Подкрашивать этажи", lblGuides: "Направляющие кольца", lblLoop: "Дополнить строку",
+    lblDim: "Прозрачность дополненных строк", lblGhosts: "Показывать нули (0)", lblGhostsAll: "Показывать все пустоты",
+    lblZeroMain: "Видимость 0 (строки)", lblZeroPad: "Видимость 0 (добор)",
+    lblText: "Цифры на фигурах (1/0)",
+    lblMinus: "Вычитать выделенное", lblLaser: "🎯 Инструмент \"Лазер\"",
+    laserRes: "Результаты лазера:", shiftTxt: "Сдвиг символов:",
+    statFloors: "Всего этажей:", lblFloor: "Этаж:",
+    floorAll: "все", floorMulti: "несколько",
+    info1: "Камера: <b>ЛКМ/Колесо</b>.<br>Сетка излучателей: <b>Инструмент Лазер</b>.<br>Несколько этажей: <b>Ctrl + Клик</b>.",
+    footer: "строка = этаж · пустая строка = новый блок · 0 = пустое место · до 256 этажей",
+    hint: "Кликните точку-излучатель на линии у модели",
+    empty: "пусто", btnExcel: "📊 Excel", warnMax: "Достигнут потолок кубиков — верхние этажи обрезаны."
+  },
+  en: {
+    title: '<span class="t1">Ku</span><span class="t2">bits</span>',
+    titlePlain: "Kubits",
+    sub: "Strings turn into shapes: 1 is a cube, 0 is empty.",
+    themeLight: "Light theme", themeDark: "Dark theme",
+    modeRing: "Round funnel", modeFunnel: "Flat funnel", modeBlocks: "Block floors", modeRhomb: "Rhombuses",
+    viewIso: "Isometry", viewTop: "Top view",
+    lblTint: "Tint floors", lblGuides: "Guide rings", lblLoop: "Fill string",
+    lblDim: "Transparency of padded strings", lblGhosts: "Show zeros (0)", lblGhostsAll: "Show all empty spaces",
+    lblZeroMain: "Zero visibility (rows)", lblZeroPad: "Zero visibility (padding)",
+    lblText: "Numbers on shapes (1/0)",
+    lblMinus: "Subtract selection", lblLaser: "🎯 Laser Tool",
+    laserRes: "Laser results:", shiftTxt: "Shift chars:",
+    statFloors: "Total floors:", lblFloor: "Floor:",
+    floorAll: "all", floorMulti: "multiple",
+    info1: "Camera: <b>LMB/Wheel</b>.<br>Emitter grid: <b>Laser Tool</b>.<br>Select multiple: <b>Ctrl + Click</b>.",
+    footer: "string = floor · empty string = new block · 0 = empty space · up to 256 floors",
+    hint: "Click an emitter point on a line near the model",
+    empty: "empty", btnExcel: "📊 Excel", warnMax: "Cube limit reached — top floors are truncated."
+  }
+};
+var currentLang = 'ru';
+
+var MAXF=256, MAXC=256, CUBE_MAX=300000, HMAX=1600;
+var u=26, v=15, hh=30, DD=36, TS=24;
+var pal=[
+  ["#9FE1CB","#5DCAA5","#1D9E75","#085041"],
+  ["#CECBF6","#AFA9EC","#7F77DD","#3C3489"],
+  ["#F5C4B3","#F0997B","#D85A30","#712B13"],
+  ["#FAC775","#EF9F27","#BA7517","#633806"],
+  ["#B5D4F4","#85B7EB","#378ADD","#0C447C"],
+  ["#F4C0D1","#ED93B1","#D4537E","#72243E"]
+];
+var laserColors = ["#E74C3C", "#3498DB", "#2ECC71", "#9B59B6", "#F1C40F", "#E67E22", "#1ABC9C"];
+
+var $=function(id){return document.getElementById(id);};
+var src=$("src"), srcBg=$("src-bg"), mode=$("mode"), tint=$("tint"), guides=$("guides"), 
+    ghosts=$("ghosts"), ghostsAll=$("ghostsAll"), loopBits=$("loopBits"), dimPadded=$("dimPadded"), showText=$("showText"),
+    minusMode=$("minusMode"), skewerMode=$("skewerMode"), skewerWrap=$("skewerWrap"), skewerRes=$("skewerRes"),
+    btnExcel=$("btnExcel"), rotWrap=$("rotWrap"), btnRotCCW=$("btnRotCCW"), btnRotCW=$("btnRotCW"),
+    theme=$("theme"), btnLang=$("btnLang"), stF=$("stFloors"), stC=$("stCubes"), 
+    chips=$("chips"), sliderRow=$("sliderRow"), fr=$("floorRange"), frLabel=$("frLabel"),
+    info=$("info"), warn=$("warn"), cv=$("cv"), ctx=cv.getContext("2d"), stage=cv.parentNode,
+    btnViewIso=$("btnViewIso"), btnViewTop=$("btnViewTop"),
+    zeroMain=$("zeroMain"), zeroPad=$("zeroPad"), zeroMainLbl=$("zeroMainLbl"), zeroPadLbl=$("zeroPadLbl");
+    
+var D={cells:[], floors:0, rows:[], truncated:false};
+var G=null;
+var sel=new Set();
+var skewers = []; 
+var currentView = "iso";
+
+var panX=0, panY=0, zoom=1;
+var isDragging=false, dragStartX=0, dragStartY=0;
+var clickDragDist=0, dragLastX=0, dragLastY=0;
+var mouseX = 0, mouseY = 0; 
+
+var isSelecting=false, selActive=false;
+var selRadius=0;
+var lastBgHtml=null;
+var drawQueued=false;
+
+function requestDraw(){
+  if(drawQueued) return;
+  drawQueued=true;
+  requestAnimationFrame(function(){ drawQueued=false; draw(); });
+}
+
+function pc(k){ return tint.checked ? pal[k%pal.length] : pal[0]; }
+function rhX(c){ return (c[0] + ((D.half && D.half[c[2]]) || 0)) * DD; }
+function aC(c){ return c[0] + ((D.half && D.half[c[2]]) || 0); }
+function isSelected(k) { return sel.size === 0 || sel.has(k); }
+
+function applyI18n() {
+  var t = i18n[currentLang];
+  document.querySelectorAll("[data-i18n]").forEach(function(el){
+    var key = el.getAttribute("data-i18n");
+    if(t[key]) el.innerHTML = t[key];
+  });
+  document.title = (t.titlePlain || "Kubits") + " v0.36";
+  syncSelUI();
+  draw();
+}
+
+btnLang.addEventListener("click", function(){
+  currentLang = (currentLang === 'ru') ? 'en' : 'ru';
+  btnLang.textContent = (currentLang === 'ru') ? 'ENG' : 'РУС';
+  applyI18n();
+});
+
+btnViewIso.addEventListener("click", function(){
+  currentView = "iso";
+  btnViewIso.classList.add("active-view");
+  btnViewTop.classList.remove("active-view");
+  sel.clear(); skewers=[]; geometry(); autoFit(); draw(); syncSelUI();
+});
+btnViewTop.addEventListener("click", function(){
+  currentView = "top";
+  btnViewTop.classList.add("active-view");
+  btnViewIso.classList.remove("active-view");
+  sel.clear(); skewers=[]; geometry(); autoFit(); draw(); syncSelUI();
+});
+
+var syncScroll = function() {
+    srcBg.scrollTop = src.scrollTop;
+    srcBg.scrollLeft = src.scrollLeft;
+    if (srcBg.style.height !== src.style.height) {
+        srcBg.style.height = src.style.height;
+    }
+};
+src.addEventListener('scroll', syncScroll);
+src.addEventListener('mousemove', syncScroll);
+src.addEventListener('mouseup', syncScroll); 
+
+function parse(){
+  var cells=[], rows=[], floors=0, trunc=false;
+  var halfShifts=[];
+  
+  function push(a, b, k, val, isPadded, absL, cIdx){
+    if(cells.length>=CUBE_MAX){ trunc=true; return false; }
+    cells.push([a, b, k, val, isPadded, absL, cIdx]); return true;
+  }
+  
+  var doLoop = loopBits.checked && mode.value === "ring";
+  
+  var rawLines = src.value.split("\n");
+  var parsedFloors = [];
+  for(var i=0; i<rawLines.length; i++){
+     var trm = rawLines[i].trim();
+     if(trm.length > 0 && parsedFloors.length < MAXF) {
+         parsedFloors.push({ absL: i, txt: trm, off: rawLines[i].indexOf(trm) });
+     }
+  }
+
+  if(mode.value==="ring"){
+    floors=parsedFloors.length; rows=parsedFloors.map(function(f){return f.txt;});
+    var R=floors-1;
+    outer:
+    for(var k=0;k<floors;k++){
+      var ring=[];
+      if(k===0){ ring=[[0,0]]; }
+      else{
+        for(var i=-k;i<=k;i++) for(var j=-k;j<=k;j++){
+          if(Math.abs(Math.sqrt(i*i+j*j)-k)<0.5) ring.push([i,j]);
+        }
+        ring.sort(function(p,q){return Math.atan2(p[1],p[0])-Math.atan2(q[1],q[0]);});
+      }
+      var bits = parsedFloors[k].txt;
+      var absL = parsedFloors[k].absL;
+      var off = parsedFloors[k].off;
+      if (bits.length === 0) continue;
+      
+      for(var t=0;t<ring.length;t++){
+        var val = 0, isPad = false, cIdx = -1;
+        if (doLoop) {
+          val = (bits[t % bits.length] === "1") ? 1 : 0;
+          isPad = (t >= bits.length); 
+          cIdx = off + (t % bits.length);
+        } else {
+          if (t < bits.length) {
+            val = (bits[t] === "1") ? 1 : 0;
+            isPad = false;
+            cIdx = off + t;
+          } else {
+            val = 0;
+            isPad = true; 
+          }
+        }
+        if(!push(ring[t][0]+R, ring[t][1]+R, k, val, isPad, absL, cIdx)) break outer;
+      }
+    }
+  } else if(mode.value==="funnel" || mode.value==="rhomb"){
+    floors=parsedFloors.length; rows=parsedFloors.map(function(f){return f.txt;});
+    var maxLen=0;
+    parsedFloors.forEach(function(f){ var L=Math.min(f.txt.length,MAXC); if(L>maxLen) maxLen=L; });
+    
+    for(var k2=0;k2<floors;k2++){
+      var b2=parsedFloors[k2].txt.slice(0,MAXC);
+      var absL2 = parsedFloors[k2].absL;
+      var off2 = parsedFloors[k2].off;
+      var offset=Math.floor((maxLen-b2.length)/2);
+      halfShifts[k2]=((maxLen-b2.length)%2)*0.5;
+      
+      for(var i2=0;i2<maxLen;i2++){
+        var charPos = i2 - offset;
+        var val2 = 0, isPad2 = false, cIdx2 = -1;
+        if (charPos >= 0 && charPos < b2.length) {
+          val2 = (b2[charPos] === "1") ? 1 : 0;
+          cIdx2 = off2 + charPos;
+        } else {
+          isPad2 = true;
+        }
+        if(!push(i2, 0, k2, val2, isPad2, absL2, cIdx2)){ k2=floors; break; }
+      }
+    }
+  } else {
+    var blocks = src.value.split(/\n\s*\n/).filter(function(b){return b.trim().length;}).slice(0,MAXF);
+    floors=blocks.length;
+    var absLineCounter = 0;
+    var rawL = src.value.split('\n');
+    
+    outer2:
+    for(var k3=0;k3<floors;k3++){
+      var blockLines = blocks[k3].split('\n').filter(function(s){return s.trim().length;});
+      rows.push(blockLines.map(function(s){return s.trim();}).join(" / "));
+      var maxW = 0;
+      blockLines.forEach(function(r) { if (r.trim().length > maxW) maxW = Math.min(r.trim().length, MAXC); });
+      
+      for(var j3=0;j3<blockLines.length;j3++){
+        var trmStr = blockLines[j3].trim().slice(0,MAXC);
+        
+        while(absLineCounter < rawL.length && rawL[absLineCounter].trim() !== blockLines[j3].trim()) {
+            absLineCounter++;
+        }
+        var currentAbsLine = absLineCounter;
+        var currentOff = rawL[currentAbsLine] ? rawL[currentAbsLine].indexOf(trmStr) : 0;
+        
+        for(var i3=0;i3<maxW;i3++){
+          var val3 = 0, isPad3 = false, cIdx3 = -1;
+          if (i3 < trmStr.length) {
+            val3 = (trmStr[i3] === "1") ? 1 : 0;
+            cIdx3 = currentOff + i3;
+          } else {
+            isPad3 = true;
+          }
+          if(!push(i3,j3,k3,val3,isPad3, currentAbsLine, cIdx3)) break outer2;
+        }
+        absLineCounter++;
+      }
+    }
+  }
+  D={cells:cells, floors:floors, rows:rows, truncated:trunc, half:halfShifts};
+}
+
+function geometry(){
+  var m=mode.value;
+  var list=D.cells.slice();
+  var minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+  var kind, gd=[];
+  
+  var showAll = ghostsAll.checked || ghosts.checked; 
+  var updateBounds = function(x, y, pad) {
+      if (x - pad < minX) minX = x - pad;
+      if (x + pad > maxX) maxX = x + pad;
+      if (y - pad < minY) minY = y - pad;
+      if (y + pad > maxY) maxY = y + pad;
+  };
+
+  if(m==="rhomb"){
+    kind="rhomb";
+    list.sort(function(a,b){return a[2]-b[2];});
+    list.forEach(function(c){
+      var x=rhX(c), y=-c[2]*DD/2;
+      if (c[3]===1 || showAll) updateBounds(x, y, DD);
+    });
+  } else if(currentView==="top"){
+    kind="top";
+    list.sort(function(a,b){return a[2]-b[2];});
+    list.forEach(function(c){
+      var x=aC(c)*TS, y=c[1]*TS;
+      if (c[3]===1 || showAll) {
+          if(x<minX)minX=x; if(x+TS>maxX)maxX=x+TS;
+          if(y<minY)minY=y; if(y+TS>maxY)maxY=y+TS;
+      }
+    });
+    if(m==="ring" && guides.checked && D.floors>0){
+      var C=(D.floors-0.5)*TS;
+      var step=Math.max(1, Math.ceil(D.floors/16));
+      for(var k=0;k<D.floors;k++){
+        var r=k*TS;
+        var lab=(k%step===0 || D.floors<=24) ? String(k+1) : null;
+        var lx=C+(k>0?r:TS*0.7)+6;
+        gd.push({k:k, cx:C, cy:C, rx:r, ry:r, lx:lx, ly:C+4, lab:lab});
+        updateBounds(C, C, r + 30);
+      }
+    }
+  } else {
+    kind="iso";
+    list.sort(function(a,b){return (a[0]+a[1]+a[2])-(b[0]+b[1]+b[2]);});
+    list.forEach(function(c){
+      var a=aC(c),b=c[1],k=c[2];
+      var x1=(a-b-1)*u, x2=(a-b+1)*u;
+      var y1=(a+b)*v-(k+1)*hh, y2=(a+b+2)*v-k*hh;
+      if (c[3]===1 || showAll) {
+        if(x1<minX)minX=x1; if(x2>maxX)maxX=x2;
+        if(y1<minY)minY=y1; if(y2>maxY)maxY=y2;
+      }
+    });
+    if(m==="ring" && guides.checked && D.floors>0){
+      var R=D.floors-1, Cw=R+0.5;
+      var step2=Math.max(1, Math.ceil(D.floors/16));
+      for(var k4=0;k4<D.floors;k4++){
+        var cy=2*Cw*v-(k4+1)*hh;
+        var rx=Math.SQRT2*k4*u, ry=Math.SQRT2*k4*v;
+        var lab2=(k4%step2===0 || D.floors<=24) ? String(k4+1) : null;
+        var lx2=(k4>0?rx:u)+8;
+        gd.push({k:k4, cx:0, cy:cy, rx:rx, ry:ry, lx:lx2, ly:cy+4, lab:lab2});
+        updateBounds(0, cy, rx + 40);
+        updateBounds(0, cy, ry + 40);
+      }
+    }
+  }
+  
+  if(minX === 1e9){ minX=0;maxX=100;minY=0;maxY=100; }
+  for(var qi=0; qi<list.length; qi++) list[qi]._i = qi;
+  
+  G={
+      kind:kind, list:list, gd:gd, 
+      minX:minX, minY:minY, maxX:maxX, maxY:maxY,
+      bw:maxX-minX, bh:maxY-minY,
+      cx: (minX+maxX)/2, cy: (minY+maxY)/2
+  };
+}
+
+function autoFit() {
+    var pad = 60;
+    var w = stage.clientWidth;
+    var h = stage.clientHeight;
+    
+    var scaleX = (w - pad * 2) / G.bw;
+    var scaleY = (h - pad * 2) / G.bh;
+    var baseScale = Math.min(scaleX, scaleY);
+    if(baseScale < 0.1) baseScale = 0.1;
+    if(baseScale > 5) baseScale = 5;
+    
+    zoom = baseScale;
+    panX = w / 2;
+    panY = h / 2;
+}
+
+function updateEditorHighlight(hlMap, isMinus, isGold) {
+    var rawLines = src.value.split('\n');
+    var html = "";
+
+    function hexToRgbA(hex, alpha) {
+        var r = parseInt(hex.slice(1, 3), 16);
+        var g = parseInt(hex.slice(3, 5), 16);
+        var b = parseInt(hex.slice(5, 7), 16);
+        return "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
+    }
+
+    for(var i=0; i<rawLines.length; i++) {
+        var line = rawLines[i];
+        if (!hlMap[i]) {
+            html += escapeHtml(line) + "\n";
+            continue;
+        }
+        for(var j=0; j<line.length; j++) {
+            var floorIdx = hlMap[i][j];
+            if (floorIdx !== undefined && floorIdx !== null) {
+                var bgStyle = "";
+                if (isGold) {
+                    bgStyle = "background: rgba(241, 196, 15, 0.45); border-radius: 3px;";
+                } else if (isMinus) {
+                    bgStyle = "background: rgba(231, 76, 60, 0.45); border-radius: 3px;";
+                } else {
+                    var col = pc(floorIdx);
+                    bgStyle = "background: " + hexToRgbA(col[1], 0.45) + "; border-radius: 3px;";
+                }
+                html += '<span style="' + bgStyle + '">' + escapeHtml(line[j]) + '</span>';
+            } else {
+                html += escapeHtml(line[j]);
+            }
+        }
+        html += "\n";
+    }
+    if (html !== lastBgHtml) { srcBg.innerHTML = html; lastBgHtml = html; }
+}
+
+function escapeHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function pointInPoly(pt, vs) {
+    var MathInside = false;
+    for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+        var xi = vs[i][0], yi = vs[i][1];
+        var xj = vs[j][0], yj = vs[j][1];
+        var intersect = ((yi > pt[1]) !== (yj > pt[1])) && (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi);
+        if (intersect) MathInside = !MathInside;
+    }
+    return MathInside;
+}
+
+function getClickedFace(wx, wy) {
+    if (G.kind !== "iso") return null;
+    for (var i = G.list.length - 1; i >= 0; i--) {
+        var c = G.list[i];
+        var isRealGhost = (c[3]===0 && !c[4]);
+        var isAllGhost = (c[3]===0);
+        var forceGhost = (ghosts.checked && isRealGhost) || (ghostsAll.checked && isAllGhost);
+        
+        if (c[3] === 0 && !forceGhost && (!selActive)) continue; 
+
+        var a = aC(c), b = c[1], k = c[2];
+        var xT=(a-b)*u,   yT=(a+b)*v-(k+1)*hh;
+        var xR=(a-b+1)*u, yR=(a+b+1)*v-(k+1)*hh;
+        var xF=(a-b)*u,   yF=(a+b+2)*v-(k+1)*hh;
+        var xL=(a-b-1)*u, yL=(a+b+1)*v-(k+1)*hh;
+        var yRb=yR+hh, yFb=yF+hh, yLb=yL+hh;
+
+        var polyTop = [[xL,yL], [xF,yF], [xR,yR], [xT,yT]];
+        var polyLeft = [[xL,yL], [xF,yF], [xF,yFb], [xL,yLb]];
+        var polyRight = [[xF,yF], [xR,yR], [xR,yRb], [xF,yFb]];
+
+        if (pointInPoly([wx, wy], polyTop)) return {c: c, face: 'top'};
+        if (pointInPoly([wx, wy], polyLeft)) return {c: c, face: 'left'};
+        if (pointInPoly([wx, wy], polyRight)) return {c: c, face: 'right'};
+    }
+    return null;
+}
+
+function getLeftBeamPos(S, d) { return { x: S * u, y: (-S + 2*d) * v }; }
+function getRightBeamPos(S, d) { return { x: S * u, y: (S + 2*d) * v }; }
+function getTopBeamPos(Sv, d) { return { x: d * u, y: Sv * v }; }
+
+function buildLaserNodes() {
+    var minS_L = 1e9, maxS_L = -1e9;
+    var minS_R = 1e9, maxS_R = -1e9;
+    var minSv_T = 1e9, maxSv_T = -1e9;
+    var minTopY = 1e9;
+    
+    var seen = { left: {}, right: {}, top: {} };
+    var lists = { left: [], right: [], top: [] };
+
+    G.list.forEach(function(c) {
+        var a = aC(c), b = c[1], k = c[2];
+        var dL = a - k; 
+        var dR = b - k; 
+        var dT = a - b; 
+        
+        var S = a - b;
+        var Sv = a + b - 2*k;
+        
+        var ty = (a + b + 1) * v - (k + 1) * hh;
+        if (ty < minTopY) minTopY = ty;
+
+        if (S < minS_L) minS_L = S; if (S > maxS_L) maxS_L = S;
+        if (S < minS_R) minS_R = S; if (S > maxS_R) maxS_R = S;
+        if (Sv < minSv_T) minSv_T = Sv; if (Sv > maxSv_T) maxSv_T = Sv;
+
+        if (!seen.left[dL]) { seen.left[dL] = 1; lists.left.push(dL); }
+        if (!seen.right[dR]) { seen.right[dR] = 1; lists.right.push(dR); }
+        if (!seen.top[dT]) { seen.top[dT] = 1; lists.top.push(dT); }
+    });
+
+    var res = { nodes: [], groups: { left: [], right: [], top: [] },
+                startS_L: 0, endS_L: 0, startS_R: 0, endS_R: 0, startSv_T: 0, endSv_T: 0 };
+                
+    if (minS_L === 1e9) return res;
+
+    res.endS_L = maxS_L + 2; 
+    res.endS_R = minS_R - 2; 
+    res.endSv_T = maxSv_T + 4;
+    
+    res.startSv_T = Math.floor((minTopY - hh) / v) - 3; 
+    var offsetB = Math.floor((maxS_L - minS_L)/2) + 7;
+    var offsetA = Math.floor((maxS_R - minS_R)/2) + 7;
+
+    lists.left.sort(function(x, y) { return y - x; }); 
+    lists.right.sort(function(x, y) { return x - y; });
+    lists.top.sort(function(x, y) { return x - y; });
+
+    lists.left.forEach(function(d) {
+        var startS = d - offsetB; 
+        var node = { type: 'left', d: d, pos: getLeftBeamPos(startS, d), startS: startS };
+        res.nodes.push(node); res.groups.left.push(node);
+    });
+
+    lists.right.forEach(function(d) {
+        var startS = offsetA - d;
+        var node = { type: 'right', d: d, pos: getRightBeamPos(startS, d), startS: startS };
+        res.nodes.push(node); res.groups.right.push(node);
+    });
+
+    lists.top.forEach(function(d) {
+        var node = { type: 'top', d: d, pos: getTopBeamPos(res.startSv_T, d) };
+        res.nodes.push(node); res.groups.top.push(node);
+    });
+
+    return res;
+}
+
+function beamCells(type, d) {
+    var bySlot = {};
+    G.list.forEach(function(c) {
+        // Лазер видит всё, если включено Дополнить строку, игнорируя настройку прозрачности
+        if (c[4] && !loopBits.checked) return;
+
+        var a = aC(c), b = c[1], k = c[2];
+        var S = a - b;
+        var Sv = a + b - 2*k;
+        var depth = a + b + k;
+
+        var match = false, slot = 0, inside = [];
+        
+        if (type === 'left' && (a - k) === d) { match = true; slot = S; inside = [S - 0.5, S + 0.5]; }
+        else if (type === 'right' && (b - k) === d) { match = true; slot = S; inside = [S + 0.5, S - 0.5]; }
+        else if (type === 'top' && (a - b) === d) { match = true; slot = Sv; inside = [Sv - 1, Sv + 1]; } 
+
+        if (match) {
+            if (!bySlot[slot] || depth > bySlot[slot].depth) {
+                bySlot[slot] = { c: c, depth: depth, slot: slot, inside: inside };
+            }
+        }
+    });
+
+    var out = Object.keys(bySlot).map(function(k) { return bySlot[k]; });
+    
+    if (type === 'left') out.sort(function(p, q) { return p.slot - q.slot; }); 
+    else if (type === 'right') out.sort(function(p, q) { return q.slot - p.slot; }); 
+    else if (type === 'top') out.sort(function(p, q) { return p.slot - q.slot; }); 
+
+    return out; 
+}
+
+function draw(){
+  if (!G || !G.list) return; // ПРЕДОХРАНИТЕЛЬ: если модель еще не создана, выходим
+  var dpr=Math.min(window.devicePixelRatio||1, 2);
+  var w = stage.clientWidth;
+  var h = stage.clientHeight;
+  if(w === 0 || h === 0) return; // Предотвращение пустого рендера
+
+  if (cv.width !== Math.floor(w * dpr) || cv.height !== Math.floor(h * dpr)) {
+    cv.width = Math.floor(w * dpr);
+    cv.height = Math.floor(h * dpr);
+  }
+
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  
+  var rectX=0, rectY=0, rectW=0, rectH=0;
+  var total1 = 0, total0 = 0;
+  var sel1 = 0, sel0 = 0;
+  var tail1 = 0, tail0 = 0, selTail1 = 0, selTail0 = 0; 
+  var frameElements = new Set();
+  var skeweredElements = new Set(); 
+  
+  var hasSelection = (selActive || isSelecting || sel.size > 0);
+  var isMinus = minusMode.checked;
+
+  if (selActive || isSelecting) {
+    var selPx = selRadius * zoom;
+    rectX = panX - selPx;
+    rectY = panY - selPx;
+    rectW = selPx * 2;
+    rectH = selPx * 2;
+  }
+
+  var laserCtx = null;
+  var activeHoveredNode = null;
+  if (skewerMode.checked && G.kind === "iso") {
+      laserCtx = buildLaserNodes();
+      var minDist = 12;
+      laserCtx.nodes.forEach(function(node) {
+          var sx = (node.pos.x - G.cx) * zoom + panX;
+          var sy = (node.pos.y - G.cy) * zoom + panY;
+          var dist = Math.sqrt((mouseX - sx)*(mouseX - sx) + (mouseY - sy)*(mouseY - sy));
+          if (dist < minDist) {
+              minDist = dist;
+              activeHoveredNode = node;
+          }
+      });
+  }
+
+  var skewerData = [];
+  var cellLaserColor = {}; 
+  if (skewerMode.checked && G.kind === "iso") {
+      skewers.forEach(function(sk) {
+          var hitList = beamCells(sk.type, sk.d);
+          var str = "";
+          hitList.forEach(function(hit) {
+              var c = hit.c;
+              str += c[3];
+              skeweredElements.add(c._i);
+              cellLaserColor[c._i] = sk.color;
+          });
+          var icon = sk.type === 'top' ? "↓" : (sk.type === 'left' ? "↗" : "↖");
+          skewerData.push({ color: sk.color, str: str, icon: icon, hitList: hitList });
+      });
+  }
+
+  for(var i=0; i<G.list.length; i++){
+    var c = G.list[i];
+    var isOne = (c[3] === 1);
+    var isTailCell = (c[4] && dimPadded.checked);
+    // c[6] === -1 — это чисто геометрический добор пустого места (не символ строки),
+    // такие ячейки не должны участвовать в подсчёте 0/1 (иначе при выкл. "Дополнить
+    // строку" кольца добиваются нулями и счётчик нулей раздувается).
+    var isFiller = (c[6] === -1);
+    if (!isFiller) {
+      if (isOne) total1++; else total0++;
+      if (isTailCell) { if (isOne) tail1++; else tail0++; }
+    }
+
+    var inSel = false;
+    if (selActive || isSelecting) {
+      var wx, wy;
+      if(G.kind === "iso") {
+        wx = (aC(c)-c[1])*u; wy = (aC(c)+c[1]+1)*v - (c[2]+1)*hh; 
+      } else if(G.kind === "top") {
+        wx = aC(c)*TS + TS/2; wy = c[1]*TS + TS/2;
+      } else {
+        wx = rhX(c); wy = -c[2]*DD/2;
+      }
+      var sx = (wx - G.cx) * zoom + panX;
+      var sy = (wy - G.cy) * zoom + panY;
+      
+      if (sx >= rectX && sx <= rectX + rectW && sy >= rectY && sy <= rectY + rectH) {
+        inSel = true;
+      }
+    } else if (sel.size > 0) {
+      if (sel.has(c[2])) inSel = true;
+    }
+
+    if (inSel) {
+      if (!isFiller) {
+        if (isOne) sel1++; else sel0++;
+        if (isTailCell) { if (isOne) selTail1++; else selTail0++; }
+      }
+      frameElements.add(i);
+    }
+  }
+
+  var disp1 = 0, disp0 = 0, dispT1 = 0, dispT0 = 0;
+  if (!hasSelection) {
+      disp1 = total1 - tail1;
+      disp0 = total0 - tail0;
+      dispT1 = tail1;
+      dispT0 = tail0;
+  } else {
+      if (isMinus) {
+          disp1 = (total1 - tail1) - (sel1 - selTail1);
+          disp0 = (total0 - tail0) - (sel0 - selTail0);
+          dispT1 = tail1 - selTail1;
+          dispT0 = tail0 - selTail0;
+      } else {
+          disp1 = sel1 - selTail1;
+          disp0 = sel0 - selTail0;
+          dispT1 = selTail1;
+          dispT0 = selTail0;
+      }
+  }
+
+  var highlightEqual = (disp1 === disp0 && disp1 > 0);
+  var textHlMap = {}; 
+
+  ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, 
+                   dpr * (panX - G.cx * zoom), 
+                   dpr * (panY - G.cy * zoom));
+  
+  var strokes = G.list.length<=8000;
+  ctx.lineWidth = 1 / zoom; ctx.lineJoin="round";
+  
+  var drawText = showText.checked;
+  ctx.font = "bold 13px 'Roboto Mono', monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  // Есть ли активные лазеры (тогда кубики вне лучей затемняются)
+  var lasersActive = skewerMode.checked && G.kind === "iso" && skewers.length > 0;
+  // Настраиваемая видимость нулевых кубиков: отдельно строки и добор
+  var zeroMainA = parseFloat(zeroMain.value);
+  var zeroPadA  = parseFloat(zeroPad.value);
+
+  for(var i=0;i<G.list.length;i++){
+    var c=G.list[i]; 
+    var val = c[3];
+    var isPadded = c[4]; 
+    var absL = c[5]; 
+    var cIdx = c[6]; 
+    
+    var isGhost = (val === 0);
+    var inSelection = frameElements.has(i);
+    var isSkewered = skeweredElements.has(i);
+    var hasLaser = cellLaserColor[c._i] !== undefined;
+    var laserCol = cellLaserColor[c._i];
+
+    // Если лазер включен, ячейки под лучом всегда непрозрачные (alpha=1.0)
+    var isDimmedLoop = (dimPadded.checked && isPadded && !isGhost && !isSkewered);
+    
+    var isActiveElement = true;
+    if (hasSelection) {
+        isActiveElement = isMinus ? !inSelection : inSelection;
+    }
+
+    var isRealGhost = (isGhost && !isPadded);
+    var forceVisibleZero = isGhost && ((hasSelection && inSelection) || isSkewered);
+    var shouldShowGhost = (ghostsAll.checked && isGhost) || (ghosts.checked && isRealGhost) || forceVisibleZero;
+    
+    if (isGhost && !shouldShowGhost) continue;
+
+    var col = pc(c[2]);
+    
+    if (isActiveElement && cIdx !== -1 && hasSelection) { 
+        if (!textHlMap[absL]) textHlMap[absL] = {};
+        textHlMap[absL][cIdx] = c[2];
+    }
+
+    if (isSkewered && skewerMode.checked) {
+        ctx.globalAlpha = 1.0;
+    } else if (isActiveElement) {
+        if (isGhost) {
+            var za = (isPadded ? zeroPadA : zeroMainA) * (lasersActive ? 0.35 : 1);
+            ctx.globalAlpha = (ghosts.checked || ghostsAll.checked) ? za : (forceVisibleZero ? Math.max(za, 0.35) : 0.0);
+        }
+        else if (isDimmedLoop) ctx.globalAlpha = 0.12;
+        else ctx.globalAlpha = lasersActive ? 0.16 : 1.0; // затемняем «единичные» кубики вне лучей
+    } else {
+        ctx.globalAlpha = isGhost ? 0.0 : 0.03;
+    }
+
+    if (ctx.globalAlpha <= 0) continue;
+    
+    var doStroke = strokes || isGhost || isDimmedLoop || isSkewered; 
+    var fillColor1 = isGhost ? "rgba(0,0,0,0)" : col[2];
+    var fillColor2 = isGhost ? "rgba(0,0,0,0)" : col[1];
+    var fillColor3 = isGhost ? "rgba(0,0,0,0.05)" : col[0];
+
+    if (isActiveElement && highlightEqual && !isSkewered) {
+      if (!isDimmedLoop) ctx.globalAlpha = 1.0; 
+      var gold = ["#F9E79F", "#F4D03F", "#F1C40F", "#B7950B"];
+      col = gold; 
+      if (!isGhost) {
+        fillColor1 = gold[2]; fillColor2 = gold[1]; fillColor3 = gold[0];
+      } else {
+        fillColor1 = "rgba(241, 196, 15, 0.15)";
+        fillColor2 = "rgba(241, 196, 15, 0.15)";
+        fillColor3 = "rgba(241, 196, 15, 0.25)";
+        doStroke = true;
+      }
+    }
+
+    var a=aC(c),b=c[1],k=c[2];
+    
+    if (G.kind === "iso") {
+      var xT=(a-b)*u,   yT=(a+b)*v-(k+1)*hh;
+      var xR=(a-b+1)*u, yR=(a+b+1)*v-(k+1)*hh;
+      var xF=(a-b)*u,   yF=(a+b+2)*v-(k+1)*hh;
+      var xL=(a-b-1)*u, yL=(a+b+1)*v-(k+1)*hh;
+      var yRb=yR+hh, yFb=yF+hh, yLb=yL+hh;
+      
+      ctx.fillStyle=fillColor1; ctx.beginPath();
+      ctx.moveTo(xL,yL); ctx.lineTo(xF,yF); ctx.lineTo(xF,yFb); ctx.lineTo(xL,yLb);
+      ctx.closePath(); ctx.fill(); 
+      if(doStroke){
+          ctx.strokeStyle = hasLaser ? laserCol : col[3];
+          ctx.lineWidth = hasLaser ? (3.5 / zoom) : (1 / zoom);
+          ctx.stroke();
+      }
+      
+      ctx.fillStyle=fillColor2; ctx.beginPath();
+      ctx.moveTo(xF,yF); ctx.lineTo(xR,yR); ctx.lineTo(xR,yRb); ctx.lineTo(xF,yFb);
+      ctx.closePath(); ctx.fill(); 
+      if(doStroke){
+          ctx.strokeStyle = hasLaser ? laserCol : col[3];
+          ctx.lineWidth = hasLaser ? (3.5 / zoom) : (1 / zoom);
+          ctx.stroke();
+      }
+      
+      ctx.fillStyle=fillColor3; ctx.beginPath();
+      ctx.moveTo(xT,yT); ctx.lineTo(xR,yR); ctx.lineTo(xF,yF); ctx.lineTo(xL,yL);
+      ctx.closePath(); ctx.fill(); 
+      if(doStroke){
+          ctx.strokeStyle = hasLaser ? laserCol : col[3];
+          ctx.lineWidth = hasLaser ? (3.5 / zoom) : (1 / zoom);
+          ctx.stroke();
+      }
+      
+      if (drawText || isSkewered || forceVisibleZero) {
+        ctx.globalAlpha = (isActiveElement || isSkewered || forceVisibleZero) ? (isDimmedLoop && !isSkewered ? 0.4 : 1) : 0.1;
+        ctx.fillStyle = isGhost ? col[3] : (isPadded ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.85)");
+        ctx.fillText(isGhost ? "0" : "1", (a-b)*u, (a+b+1)*v - (k+1)*hh + 1);
+      }
+    } else if (G.kind === "top") {
+      ctx.fillStyle=fillColor3; ctx.strokeStyle=col[3];
+      ctx.beginPath();
+      ctx.rect(aC(c)*TS+0.5, c[1]*TS+0.5, TS-1, TS-1);
+      ctx.fill(); if(doStroke)ctx.stroke();
+      
+      if (drawText || forceVisibleZero) {
+        ctx.globalAlpha = isActiveElement || forceVisibleZero ? (isDimmedLoop ? 0.4 : 1) : 0.1;
+        ctx.fillStyle = isGhost ? col[3] : (isPadded ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.85)");
+        ctx.fillText(isGhost ? "0" : "1", aC(c)*TS + TS/2, c[1]*TS + TS/2 + 1);
+      }
+    } else {
+      var cx=rhX(c), cy2=-c[2]*DD/2, r2=DD/2;
+      ctx.fillStyle=fillColor1; ctx.beginPath();
+      ctx.moveTo(cx,cy2-r2); ctx.lineTo(cx-r2,cy2); ctx.lineTo(cx,cy2+r2);
+      ctx.closePath(); ctx.fill(); if(doStroke){ctx.strokeStyle=col[3];ctx.stroke();}
+      ctx.fillStyle=fillColor2; ctx.beginPath();
+      ctx.moveTo(cx,cy2-r2); ctx.lineTo(cx+r2,cy2); ctx.lineTo(cx,cy2+r2);
+      ctx.closePath(); ctx.fill(); if(doStroke){ctx.strokeStyle=col[3];ctx.stroke();}
+      
+      if (drawText || forceVisibleZero) {
+        ctx.globalAlpha = isActiveElement || forceVisibleZero ? (isDimmedLoop ? 0.4 : 1) : 0.1;
+        ctx.fillStyle = isGhost ? col[3] : (isPadded ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.85)");
+        ctx.fillText(isGhost ? "0" : "1", cx, cy2);
+      }
+    }
+  }
+
+  if (skewerMode.checked && G.kind === "iso" && laserCtx && laserCtx.nodes.length) {
+      var isDark = (document.documentElement.dataset.theme === "dark");
+      ctx.strokeStyle = isDark ? "rgba(147, 166, 159, 0.16)" : "rgba(110, 109, 102, 0.22)";
+      ctx.lineWidth = 1 / zoom;
+
+      ['left', 'right', 'top'].forEach(function(plane) {
+          var group = laserCtx.groups[plane];
+          if (group.length > 1) {
+              var firstN = group[0].pos;
+              var lastN = group[group.length - 1].pos;
+              ctx.beginPath();
+              ctx.moveTo(firstN.x, firstN.y); ctx.lineTo(lastN.x, lastN.y);
+              ctx.stroke();
+          }
+      });
+
+      laserCtx.nodes.forEach(function(node) {
+          var p = node.pos;
+
+          var activeLaser = skewers.find(function(s) {
+              return s.type === node.type && s.d === node.d;
+          });
+
+          var isHovered = activeHoveredNode &&
+                          activeHoveredNode.type === node.type &&
+                          activeHoveredNode.d === node.d;
+
+          ctx.beginPath();
+          if (activeLaser) {
+              ctx.arc(p.x, p.y, (isHovered ? 7.5 : 5.5) / zoom, 0, Math.PI * 2);
+              ctx.fillStyle = activeLaser.color;
+              ctx.globalAlpha = 1.0;
+              ctx.fill();
+              
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, (isHovered ? 12 : 9) / zoom, 0, Math.PI * 2);
+              ctx.strokeStyle = activeLaser.color;
+              ctx.lineWidth = 1.5 / zoom;
+              ctx.globalAlpha = 0.5;
+              ctx.stroke();
+          } else {
+              ctx.arc(p.x, p.y, (isHovered ? 5.5 : 3.5) / zoom, 0, Math.PI * 2);
+              ctx.fillStyle = isHovered ? "rgba(93, 202, 165, 0.9)" : "rgba(147, 166, 159, 0.4)";
+              ctx.globalAlpha = 1.0;
+              ctx.fill();
+          }
+      });
+      ctx.globalAlpha = 1.0;
+  }
+
+  function drawLaserLine(startParam, endParam, step, getPointFn, checkCubeFn, color) {
+      var points = [];
+      if (step > 0) {
+          for (var p = startParam; p <= endParam; p += step) points.push(p);
+      } else {
+          for (var p = startParam; p >= endParam; p += step) points.push(p);
+      }
+
+      var firstCubeHitIndex = -1;
+      for (var j = 0; j < points.length; j++) {
+          if (checkCubeFn(points[j])) {
+              firstCubeHitIndex = j;
+              break;
+          }
+      }
+
+      for (var j = 0; j < points.length - 1; j++) {
+          var p1 = getPointFn(points[j]);
+          var p2 = getPointFn(points[j+1]);
+          var mid = (points[j] + points[j+1]) / 2;
+          var isInside = checkCubeFn(mid);
+
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+
+          if (isInside) {
+              ctx.lineWidth = 1.5 / zoom;
+              ctx.strokeStyle = color;
+              ctx.globalAlpha = 0.22;
+              ctx.setLineDash([4/zoom, 4/zoom]);
+          } else {
+              ctx.lineWidth = 3.5 / zoom;
+              ctx.strokeStyle = color;
+              ctx.globalAlpha = 0.95;
+              ctx.setLineDash([]);
+          }
+          ctx.stroke();
+      }
+      ctx.setLineDash([]);
+
+      if (firstCubeHitIndex !== -1) {
+          var pEntrance = getPointFn(points[firstCubeHitIndex]);
+          
+          ctx.globalAlpha = 1.0;
+          ctx.beginPath();
+          ctx.arc(pEntrance.x, pEntrance.y, 6 / zoom, 0, Math.PI * 2);
+          ctx.fillStyle = color;
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(pEntrance.x, pEntrance.y, 11 / zoom, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+          ctx.fill();
+      }
+  }
+
+  if (skewerMode.checked && G.kind === "iso") {
+      skewerRes.innerHTML = "";
+      skewerWrap.style.display = "block";
+      var laserGroups = { top: [], right: [], left: [] };
+
+      skewers.forEach(function(sk, skIdx) {
+          var sd = skewerData[skIdx];
+          var checkFn = function(val) {
+              if (!sd) return false;
+              for (var i = 0; i < sd.hitList.length; i++) {
+                  var hit = sd.hitList[i];
+                  var min = Math.min(hit.inside[0], hit.inside[1]);
+                  var max = Math.max(hit.inside[0], hit.inside[1]);
+                  if (hit.c[3] === 1 && val >= min && val <= max) return true;
+              }
+              return false;
+          };
+
+          if (sk.type === 'top') {
+              drawLaserLine(laserCtx.startSv_T, laserCtx.endSv_T, 0.5,
+                  function(Sv) { return getTopBeamPos(Sv, sk.d); }, checkFn, sk.color);
+          } else if (sk.type === 'left') {
+              var activeNode = laserCtx.groups.left.find(function(n){return n.d === sk.d});
+              if (activeNode) {
+                  drawLaserLine(activeNode.startS, laserCtx.endS_L, 0.5,
+                      function(S) { return getLeftBeamPos(S, sk.d); }, checkFn, sk.color);
+              }
+          } else if (sk.type === 'right') {
+              var activeNodeR = laserCtx.groups.right.find(function(n){return n.d === sk.d});
+              if (activeNodeR) {
+                  drawLaserLine(activeNodeR.startS, laserCtx.endS_R, -0.5,
+                      function(S) { return getRightBeamPos(S, sk.d); }, checkFn, sk.color);
+              }
+          }
+
+          if (sd) {
+              var line = document.createElement("div");
+              line.className = "skew-line";
+              var dot = document.createElement("span");
+              dot.className = "skew-dot";
+              dot.style.background = sd.color;
+              line.appendChild(dot);
+              var txt = document.createElement("span");
+              txt.textContent = sd.icon + " " + (sd.str.length ? sd.str : i18n[currentLang].empty);
+              line.appendChild(txt);
+              laserGroups[sk.type].push(line);
+          }
+      });
+
+      if (!skewers.length) {
+          var hint = document.createElement("div");
+          hint.className = "sub";
+          hint.style.margin = "0";
+          hint.textContent = i18n[currentLang].hint;
+          skewerRes.appendChild(hint);
+      } else {
+          // Группировка результатов по видам: Верх / Право / Лево
+          var colDefs = [
+              { key: "top",   label: (currentLang === "ru") ? "Верх"  : "Top" },
+              { key: "right", label: (currentLang === "ru") ? "Право" : "Right" },
+              { key: "left",  label: (currentLang === "ru") ? "Лево"  : "Left" }
+          ];
+          colDefs.forEach(function(cd){
+              var col = document.createElement("div");
+              col.className = "laser-col";
+              var h = document.createElement("div");
+              h.className = "laser-col-h";
+              h.textContent = cd.label;
+              col.appendChild(h);
+              if (laserGroups[cd.key].length) {
+                  laserGroups[cd.key].forEach(function(l){ col.appendChild(l); });
+              } else {
+                  var dash = document.createElement("div");
+                  dash.className = "sub";
+                  dash.style.margin = "0";
+                  dash.textContent = "—";
+                  col.appendChild(dash);
+              }
+              skewerRes.appendChild(col);
+          });
+      }
+  } else {
+      skewerWrap.style.display = "none";
+  }
+
+  if (!hasSelection && highlightEqual) {
+      for(var i=0; i<G.list.length; i++) {
+         if (G.list[i][6] !== -1) {
+             if (!textHlMap[G.list[i][5]]) textHlMap[G.list[i][5]] = {};
+             textHlMap[G.list[i][5]][G.list[i][6]] = G.list[i][2]; 
+         }
+      }
+  }
+  updateEditorHighlight(textHlMap, isMinus, highlightEqual);
+
+  ctx.globalAlpha=1;
+  if(G.gd.length){
+    ctx.font="11px 'Roboto Mono',monospace";
+    ctx.textAlign="left";
+    for(var i=0;i<G.gd.length;i++){
+      var g=G.gd[i]; col=pc(g.k);
+      var isSelG = isSelected(g.k);
+      
+      var isRingActive = true;
+      if (hasSelection) {
+          isRingActive = isMinus ? !isSelG : isSelG;
+      }
+
+      ctx.globalAlpha = isRingActive ? 0.7 : 0.05;
+      if(g.rx>0){
+        ctx.strokeStyle=col[2]; ctx.lineWidth=1.5/zoom; ctx.setLineDash([8/zoom,6/zoom]);
+        ctx.beginPath();
+        ctx.ellipse(g.cx, g.cy, g.rx, g.ry, 0, 0, Math.PI*2);
+        ctx.stroke(); ctx.setLineDash([]);
+      }
+      if(g.lab){
+        ctx.globalAlpha = isRingActive ? 1 : 0.1;
+        ctx.fillStyle=col[2];
+        ctx.fillText(g.lab, g.lx, g.ly);
+      }
+    }
+    ctx.globalAlpha=1;
+  }
+  
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); 
+
+  if (selActive || isSelecting) {
+    ctx.lineWidth = 2.5;
+    if (highlightEqual && !isMinus) {
+      ctx.strokeStyle = "#F1C40F"; 
+      ctx.fillStyle = "rgba(241, 196, 15, 0.15)";
+      ctx.setLineDash([]);
+    } else {
+      ctx.strokeStyle = isMinus ? "#E74C3C" : "#F39C12"; 
+      ctx.fillStyle = isMinus ? "rgba(231, 76, 60, 0.1)" : "rgba(243, 156, 18, 0.1)";
+      ctx.setLineDash(isMinus ? [4, 4] : [8, 6]);
+    }
+    
+    ctx.fillRect(rectX, rectY, rectW, rectH);
+    ctx.strokeRect(rectX, rectY, rectW, rectH);
+    ctx.setLineDash([]);
+    
+    ctx.beginPath();
+    ctx.arc(panX, panY, 4, 0, Math.PI*2);
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.fill();
+  }
+
+  var curTheme = document.documentElement.dataset.theme;
+  var balanceTextCol = (curTheme === "dark") ? "#FFFFFF" : "#111111";
+  var balanceGlowCol = (curTheme === "dark") ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)";
+
+  var color1 = highlightEqual ? balanceTextCol : "#F39C12"; 
+  var color0 = highlightEqual ? balanceTextCol : "#E74C3C"; 
+
+  ctx.font = "bold 90px 'Roboto Mono', monospace";
+  ctx.textBaseline = "middle";
+
+  if (highlightEqual) {
+    ctx.shadowBlur = 25;
+    ctx.shadowColor = balanceGlowCol;
+  } else {
+    ctx.shadowBlur = 0;
+  }
+
+  var textOffset = 80;
+  if (selActive || isSelecting) {
+      textOffset = selRadius * zoom + 80;
+  } else {
+      textOffset = (G.bw / 2) * zoom + 80; 
+  }
+  if (textOffset < 150) textOffset = 150; 
+
+  var mainFont = "bold 90px 'Roboto Mono', monospace";
+  var tailFont = "bold 42px 'Roboto Mono', monospace";
+  var showT1 = dimPadded.checked && dispT1 > 0;
+  var showT0 = dimPadded.checked && dispT0 > 0;
+  var tailEqual = showT1 && showT0 && dispT1 === dispT0;
+  ctx.textAlign = "left";
+
+  ctx.fillStyle = color1;
+  ctx.font = mainFont;
+  var m1 = String(disp1);
+  var w1 = ctx.measureText(m1).width;
+  var tw1 = 0;
+  if (showT1) { ctx.font = tailFont; tw1 = ctx.measureText("(" + dispT1 + ")").width; ctx.font = mainFont; }
+  var lx0 = panX - textOffset - w1 - tw1;
+  ctx.fillText(m1, lx0, panY);
+  if (showT1) {
+      ctx.font = tailFont;
+      if (tailEqual) {
+          ctx.fillStyle = balanceTextCol;
+          ctx.shadowBlur = 25;
+          ctx.shadowColor = balanceGlowCol;
+      } else {
+          ctx.globalAlpha = 0.45;
+      }
+      ctx.fillText("(" + dispT1 + ")", lx0 + w1, panY);
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = highlightEqual ? 25 : 0;
+  }
+
+  ctx.fillStyle = color0;
+  ctx.font = mainFont;
+  var m0 = String(disp0);
+  var w0 = ctx.measureText(m0).width;
+  ctx.fillText(m0, panX + textOffset, panY);
+  if (showT0) {
+      ctx.font = tailFont;
+      if (tailEqual) {
+          ctx.fillStyle = balanceTextCol;
+          ctx.shadowBlur = 25;
+          ctx.shadowColor = balanceGlowCol;
+      } else {
+          ctx.globalAlpha = 0.45;
+      }
+      ctx.fillText("(" + dispT0 + ")", panX + textOffset + w0, panY);
+      ctx.globalAlpha = 1;
+  }
+
+  ctx.shadowBlur = 0;
+}
+
+function hitFloor(wx,wy){
+  if(G.kind==="iso"){
+    var hf = getClickedFace(wx, wy);
+    return hf ? hf.c[2] : null;
+  }
+  var L=G.list;
+  for(var i=L.length-1;i>=0;i--){
+    var c=L[i];
+    var isRealGhost = (c[3]===0 && !c[4]);
+    var isAllGhost = (c[3]===0);
+    var forceGhost = (ghosts.checked && isRealGhost) || (ghostsAll.checked && isAllGhost);
+    if(c[3] === 0 && !forceGhost && (!selActive)) continue; 
+    
+    if(G.kind==="top"){
+      if(wx>=aC(c)*TS && wx<=aC(c)*TS+TS && wy>=c[1]*TS && wy<=c[1]*TS+TS) return c[2];
+    } else {
+      var dx=Math.abs(wx-rhX(c)), dy=Math.abs(wy-(-c[2]*DD/2));
+      if(dx/(DD/2)+dy/(DD/2)<=1) return c[2];
+    }
+  }
+  return null;
+}
+
+function buildSelector(){
+  chips.innerHTML="";
+  if(D.floors<=24){
+    sliderRow.style.display="none"; chips.style.display="flex";
+    for(var k=0;k<D.floors;k++){
+      var c=pc(k);
+      var b=document.createElement("button");
+      b.dataset.chip=k; b.textContent=k+1;
+      b.style.borderColor=c[3]; b.style.background=c[0]; b.style.color=c[3];
+      chips.appendChild(b);
+    }
+  } else {
+    chips.style.display="none"; sliderRow.style.display="flex";
+    fr.max=D.floors; fr.value=0; frLabel.textContent = i18n[currentLang].floorAll;
+  }
+}
+
+function rotateSelected(dir) {
+    if(sel.size === 0) return;
+    var rawLines = src.value.split("\n");
+    var linesToShift = new Set();
+    
+    G.list.forEach(function(c) {
+        if (sel.has(c[2]) && c[5] !== -1) {
+            linesToShift.add(c[5]);
+        }
+    });
+
+    var changed = false;
+    linesToShift.forEach(function(absL) {
+        var line = rawLines[absL];
+        var match = line.match(/^(\s*)(.*?)(\s*)$/);
+        if(match) {
+            var pre = match[1], core = match[2], post = match[3];
+            if (core.length > 1) {
+                if (dir === 'CW') {
+                    core = core.slice(-1) + core.slice(0, -1);
+                } else {
+                    core = core.slice(1) + core.slice(0, 1);
+                }
+                rawLines[absL] = pre + core + post;
+                changed = true;
+            }
+        }
+    });
+
+    if (changed) {
+        var selBackup = Array.from(sel); 
+        src.value = rawLines.join("\n");
+        parse();
+        var onesCount = D.cells.filter(function(c){return c[3]===1}).length;
+        stF.textContent=D.floors; stC.textContent=onesCount;
+        warn.style.display=D.truncated?"block":"none";
+        buildSelector();
+        geometry();
+        
+        selBackup.forEach(function(k) { sel.add(k); });
+        draw();
+        syncSelUI();
+    }
+}
+
+function exportExcel() {
+    if(currentView !== "top" && mode.value !== "rhomb") return;
+    
+    var isDark = (document.documentElement.dataset.theme === "dark");
+    var emptyBg = isDark ? "#1C2724" : "#FFFFFF";
+    var inactiveBg = isDark ? "#3A3F3D" : "#D0D0D0";
+    var inactiveFg = isDark ? "#8A8F8D" : "#777777";
+
+    function blend(hex1, hex2, alpha) {
+        var r1 = parseInt(hex1.slice(1, 3), 16);
+        var g1 = parseInt(hex1.slice(3, 5), 16);
+        var b1 = parseInt(hex1.slice(5, 7), 16);
+        var r2 = parseInt(hex2.slice(1, 3), 16);
+        var g2 = parseInt(hex2.slice(3, 5), 16);
+        var b2 = parseInt(hex2.slice(5, 7), 16);
+        var r = Math.round(r1 * alpha + r2 * (1 - alpha));
+        var g = Math.round(g1 * alpha + g2 * (1 - alpha));
+        var b = Math.round(b1 * alpha + b2 * (1 - alpha));
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+    }
+    
+    function getLuma(hex) {
+        var r = parseInt(hex.slice(1, 3), 16);
+        var g = parseInt(hex.slice(3, 5), 16);
+        var b = parseInt(hex.slice(5, 7), 16);
+        return 0.299 * r + 0.587 * g + 0.114 * b;
+    }
+
+    if (mode.value === "rhomb") {
+        var minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+        var exportList = [];
+        
+        G.list.forEach(function(c) {
+            var val = c[3];
+            var isGhost = (val === 0);
+            var isPadded = c[4];
+            var isActive = true;
+            if (sel.size > 0) isActive = minusMode.checked ? !sel.has(c[2]) : sel.has(c[2]);
+            
+            var floor = c[2];
+            var rRow = D.floors - 1 - floor;
+            var excel_x = c[0] * 2 + (floor % 2 === 1 ? 1 : 0);
+            var excel_y = rRow;
+            
+            if (excel_x < minX) minX = excel_x;
+            if (excel_x + 1 > maxX) maxX = excel_x + 1;
+            if (excel_y < minY) minY = excel_y;
+            if (excel_y > maxY) maxY = excel_y;
+            
+            exportList.push({
+                c: c, excel_x: excel_x, excel_y: excel_y, 
+                isActive: isActive, isPadded: isPadded
+            });
+        });
+        
+        if (minX > maxX) { alert("Нет данных"); return; }
+        
+        var matrix = {};
+        for(var y = minY; y <= maxY; y++) {
+            matrix[y] = {};
+            for(var x = minX; x <= maxX; x++) matrix[y][x] = null;
+        }
+        
+        exportList.forEach(function(item) {
+            var c = item.c;
+            var floor = c[2];
+            var col = pc(floor);
+            var bg = col[0], borderCol = col[3], fg;
+            var isDimmed = c[4];
+
+            if (isDimmed) {
+                bg = blend(col[0], emptyBg, 0.15);
+                borderCol = isDark ? "#FFFFFF" : "#777777";
+                fg = blend(col[3], emptyBg, 0.35);
+            } else if (c[3] === 0) {
+                bg = emptyBg; borderCol = isDark ? col[1] : col[3]; fg = borderCol;
+            } else if (!item.isActive) {
+                bg = inactiveBg; borderCol = inactiveFg; fg = inactiveFg;
+            } else {
+                bg = col[0]; borderCol = col[3];
+                fg = getLuma(bg) < 120 ? "#FFFFFF" : "#111111";
+            }
+            
+            var ex = item.excel_x, ey = item.excel_y;
+            var valL = (c[3] === 1) ? 1 : 0;
+            var valR = (c[3] === 1) ? 0 : 1;
+            var isEvenFloor = (floor % 2 === 0);
+            var diagL = isEvenFloor ? 'Slash' : 'Backslash';
+            var diagR = isEvenFloor ? 'Backslash' : 'Slash';
+            
+            matrix[ey][ex]   = { val: valL, bg: bg, fg: fg, borderCol: borderCol, type: 'L', diag: diagL };
+            matrix[ey][ex+1] = { val: valR, bg: bg, fg: fg, borderCol: borderCol, type: 'R', diag: diagR };
+        });
+        
+        var styleMap = {}, styleDefs = "", styleCount = 0;
+        function getRhombStyleId(bg, fg, borderCol, type, diag) {
+            var key = bg + "|" + fg + "|" + borderCol + "|" + type + "|" + diag;
+            if (!styleMap[key]) {
+                styleCount++;
+                var id = "rs" + styleCount;
+                styleMap[key] = id;
+                var diagPos = (diag === 'Slash') ? "DiagonalRight" : "DiagonalLeft";
+                var align = (type === 'L') ? "Right" : "Left";
+                styleDefs += '<Style ss:ID="' + id + '">'
+                    + '<Alignment ss:Horizontal="' + align + '" ss:Vertical="Center"/>'
+                    + '<Borders>'
+                    + '<Border ss:Position="' + diagPos + '" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="' + borderCol + '"/>'
+                    + '</Borders>'
+                    + '<Font ss:Color="' + fg + '" ss:Bold="1" ss:Size="10"/>'
+                    + '<Interior ss:Color="' + bg + '" ss:Pattern="Solid"/>'
+                    + '</Style>';
+            }
+            return styleMap[key];
+        }
+        styleDefs += '<Style ss:ID="empty_cell_style"><Interior ss:Color="' + emptyBg + '" ss:Pattern="Solid"/></Style>';
+        
+        var rowsXml = "";
+        for(var y2 = minY; y2 <= maxY; y2++) {
+            rowsXml += '<Row ss:AutoFitHeight="0" ss:Height="30">';
+            for(var x2 = minX; x2 <= maxX; x2++) {
+                var cell = matrix[y2][x2];
+                if (cell) {
+                    rowsXml += '<Cell ss:StyleID="' + getRhombStyleId(cell.bg, cell.fg, cell.borderCol, cell.type, cell.diag) + '">'
+                        + '<Data ss:Type="Number">' + cell.val + '</Data></Cell>';
+                } else {
+                    rowsXml += '<Cell ss:StyleID="empty_cell_style"/>';
+                }
+            }
+            rowsXml += '</Row>';
+        }
+        
+        var xml = '<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n'
+            + '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'
+            + '<Styles>' + styleDefs + '</Styles>'
+            + '<Worksheet ss:Name="Rhombuses"><Table ss:DefaultColumnWidth="30" ss:DefaultRowHeight="30">' + rowsXml + '</Table></Worksheet></Workbook>';
+        
+        saveBlob(xml, 'rhombuses_grid.xml');
+        return;
+    } else {
+        var minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+        var exportList = [];
+        G.list.forEach(function(c) {
+            var isActive = (sel.size === 0 || (minusMode.checked ? !sel.has(c[2]) : sel.has(c[2])));
+            if (!isActive && c[3] === 0) return;
+            if (c[3] === 0 && !ghostsAll.checked && (!ghosts.checked || c[4])) return;
+            if (c[0] < minX) minX = c[0]; if (c[0] > maxX) maxX = c[0];
+            if (c[1] < minY) minY = c[1]; if (c[1] > maxY) maxY = c[1];
+            exportList.push({c: c, isActive: isActive});
+        });
+        if (minX > maxX) return;
+        var matrix = {};
+        for(var y = minY; y <= maxY; y++) { matrix[y] = {}; for(var x = minX; x <= maxX; x++) matrix[y][x] = null; }
+        exportList.forEach(function(item) {
+            var c = item.c, col = pc(c[2]), bg = col[0], isDim = dimPadded.checked && c[4];
+            var fg;
+            if (c[3] === 0) {
+                bg = emptyBg; var gfg = isDark ? col[1] : col[3];
+                fg = isDim ? blend(gfg, emptyBg, 0.55) : gfg;
+            } else if (!item.isActive) {
+                bg = inactiveBg; fg = inactiveFg;
+            } else {
+                if (isDim) bg = blend(bg, emptyBg, 0.12);
+                var bfg = getLuma(bg) < 120 ? "#FFFFFF" : "#111111";
+                fg = isDim ? blend(bfg, emptyBg, 0.65) : bfg;
+            }
+            matrix[c[1]][c[0]] = { val: c[3], bg: bg, fg: fg };
+        });
+        var bcol = isDark ? "#31423C" : "#DCDAD1", styleMap = {}, styleDefs = "", sc = 0;
+        function getSid(bg, fg) {
+            var k = bg + "|" + fg;
+            if (!styleMap[k]) {
+                sc++; var id = "s" + sc; styleMap[k] = id;
+                styleDefs += '<Style ss:ID="' + id + '"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/>'
+                    + '<Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="' + bcol + '"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="' + bcol + '"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="' + bcol + '"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="' + bcol + '"/></Borders>'
+                    + '<Font ss:Color="' + fg + '" ss:Bold="1"/><Interior ss:Color="' + bg + '" ss:Pattern="Solid"/></Style>';
+            } return styleMap[k];
+        }
+        var rowsXml = "";
+        for(var y2 = minY; y2 <= maxY; y2++) {
+            rowsXml += '<Row ss:AutoFitHeight="0" ss:Height="30">';
+            for(var x2 = minX; x2 <= maxX; x2++) {
+                var cell = matrix[y2][x2];
+                if (cell) rowsXml += '<Cell ss:StyleID="' + getSid(cell.bg, cell.fg) + '"><Data ss:Type="Number">' + cell.val + '</Data></Cell>';
+                else rowsXml += '<Cell ss:StyleID="' + getSid(emptyBg, emptyBg) + '"/>';
+            } rowsXml += '</Row>';
+        }
+        var xml = '<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n'
+            + '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'
+            + '<Styles>' + styleDefs + '</Styles><Worksheet ss:Name="Bits"><Table ss:DefaultColumnWidth="30" ss:DefaultRowHeight="30">' + rowsXml + '</Table></Worksheet></Workbook>';
+        saveBlob(xml, 'bits_grid.xml');
+    }
+}
+
+function saveBlob(xml, name) {
+    var blob = new Blob([xml], {type: 'text/xml'});
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function syncSelUI(){
+  var bs=chips.querySelectorAll("[data-chip]");
+  for(var i=0;i<bs.length;i++){
+    var k = +bs[i].dataset.chip;
+    var isSelC = (sel.size === 0 || sel.has(k));
+    bs[i].style.opacity = isSelC ? "1" : "0.25";
+    bs[i].style.transform = sel.has(k) ? "scale(1.08)" : "scale(1)";
+  }
+  
+  if(sliderRow.style.display!=="none"){
+    if (sel.size === 1) {
+        fr.value = Array.from(sel)[0] + 1;
+        frLabel.textContent = fr.value;
+    } else if (sel.size === 0) {
+        fr.value = 0;
+        frLabel.textContent = i18n[currentLang].floorAll;
+    } else {
+        fr.value = 0;
+        frLabel.textContent = i18n[currentLang].floorMulti;
+    }
+  }
+
+  if (sel.size === 0) {
+      info.innerHTML = i18n[currentLang].info1;
+      rotWrap.style.display = "none";
+  } else {
+      var arr = Array.from(sel).sort(function(a,b){return a-b;});
+      if (arr.length === 1) {
+          var r = D.rows[arr[0]] || "";
+          if (r.length > 55) r = r.slice(0,55) + "…";
+          var flText = (currentLang==='ru') ? "Этаж " : "Floor ";
+          info.innerHTML = flText + (arr[0]+1) + ": " + r;
+      } else {
+          var selText = (currentLang==='ru') ? "Выбраны этажи: <b>" : "Selected floors: <b>";
+          info.innerHTML = selText + arr.map(function(x){return x+1;}).join(", ") + "</b>";
+      }
+      rotWrap.style.display = "flex";
+  }
+  
+  skewerMode.disabled = (mode.value === "rhomb" || currentView === "top");
+  if (skewerMode.disabled) { skewerMode.checked = false; skewers = []; }
+  
+  btnExcel.style.display = (currentView === "top" || mode.value === "rhomb") ? "block" : "none";
+}
+
+function rebuild(){
+  parse();
+  var onesCount = D.cells.filter(function(c){return c[3]===1}).length;
+  stF.textContent=D.floors; stC.textContent=onesCount;
+  warn.style.display=D.truncated?"block":"none";
+  
+  buildSelector();
+  geometry();
+  autoFit();
+  draw();
+  syncSelUI();
+}
+
+// Перестроение с сохранением текущего масштаба/позиции камеры
+function rebuildKeepView(){
+  var z=zoom, px=panX, py=panY;
+  rebuild();
+  zoom=z; panX=px; panY=py;
+  draw();
+}
+
+src.addEventListener("input", rebuild);
+mode.addEventListener("change", function(){
+    var d = (mode.value==="rhomb");
+    btnViewIso.disabled = d;
+    btnViewTop.disabled = d;
+    rebuild();
+});
+
+// Группа кнопок режима управляет скрытым select'ом
+$("modeGroup").addEventListener("click", function(e){
+    var b = e.target.closest(".grp-btn");
+    if (!b || b.dataset.mode === mode.value) return;
+    mode.value = b.dataset.mode;
+    this.querySelectorAll(".grp-btn").forEach(function(x){ x.classList.remove("active"); });
+    b.classList.add("active");
+    mode.dispatchEvent(new Event("change"));
+});
+tint.addEventListener("change", function(){ buildSelector(); draw(); syncSelUI(); });
+guides.addEventListener("change", function(){
+  var z=zoom, px=panX, py=panY;
+  geometry(); zoom=z; panX=px; panY=py; draw();
+});
+
+loopBits.addEventListener("change", function(){
+  if (!this.checked) dimPadded.checked = false;
+  rebuildKeepView();
+});
+
+dimPadded.addEventListener("change", function(){
+  if (this.checked && !loopBits.checked) { loopBits.checked = true; rebuildKeepView(); }
+  draw();
+});
+
+ghosts.addEventListener("change", function(){ geometry(); draw(); });
+ghostsAll.addEventListener("change", function(){ geometry(); draw(); });
+zeroMain.addEventListener("input", function(){ zeroMainLbl.textContent = parseFloat(zeroMain.value).toFixed(2); draw(); });
+zeroPad.addEventListener("input", function(){ zeroPadLbl.textContent = parseFloat(zeroPad.value).toFixed(2); draw(); });
+showText.addEventListener("change", function(){ draw(); });
+minusMode.addEventListener("change", function(){ draw(); }); 
+skewerMode.addEventListener("change", function(){ skewers=[]; draw(); syncSelUI(); }); 
+theme.addEventListener("change", function(){ document.documentElement.dataset.theme=theme.value; draw(); });
+
+btnRotCCW.addEventListener("click", function(){ rotateSelected('CCW'); });
+btnRotCW.addEventListener("click", function(){ rotateSelected('CW'); });
+btnExcel.addEventListener("click", exportExcel);
+
+chips.addEventListener("click", function(e){
+  var b=e.target.closest("[data-chip]");
+  if(b) {
+      var f = +b.dataset.chip;
+      if (e.ctrlKey || e.metaKey) {
+          if (sel.has(f)) sel.delete(f); else sel.add(f);
+      } else {
+          if (sel.size === 1 && sel.has(f)) sel.clear();
+          else { sel.clear(); sel.add(f); }
+      }
+      draw(); syncSelUI();
+  }
+});
+
+fr.addEventListener("input", function(){
+  var vv=+fr.value;
+  sel.clear();
+  if (vv > 0) sel.add(vv - 1);
+  draw(); syncSelUI();
+});
+
+cv.addEventListener("wheel", function(e){
+  if (!G) return; 
+  e.preventDefault();
+  var r = cv.getBoundingClientRect();
+  var mx = e.clientX - r.left, my = e.clientY - r.top;
+  var wx = (mx - panX) / zoom + G.cx, wy = (my - panY) / zoom + G.cy;
+  var zoomSpeed = 0.15;
+  if (e.deltaY < 0) zoom *= (1 + zoomSpeed); else zoom /= (1 + zoomSpeed);
+  if (zoom < 0.05) zoom = 0.05; if (zoom > 50) zoom = 50;
+  panX = mx - (wx - G.cx) * zoom; panY = my - (wy - G.cy) * zoom;
+  requestDraw();
+}, {passive: false});
+
+cv.addEventListener("mousedown", function(e){
+  if (!G) return; 
+  var r = cv.getBoundingClientRect();
+  if (e.button === 2) { 
+    isSelecting = true; selActive = true;
+    var mx = e.clientX - r.left, my = e.clientY - r.top;
+    selRadius = Math.max(Math.abs(mx - panX), Math.abs(my - panY)) / zoom;
+    draw();
+  } else if (e.button === 0 || e.button === 1) { 
+    isDragging = true;
+    dragStartX = e.clientX - panX; dragStartY = e.clientY - panY;
+    clickDragDist = 0; dragLastX = e.clientX; dragLastY = e.clientY;
+  }
+});
+
+window.addEventListener("mousemove", function(e){
+  var r = cv.getBoundingClientRect();
+  mouseX = e.clientX - r.left; mouseY = e.clientY - r.top;
+  if (isSelecting) {
+    var mx = e.clientX - r.left, my = e.clientY - r.top;
+    selRadius = Math.max(Math.abs(mx - panX), Math.abs(my - panY)) / zoom;
+    requestDraw();
+  } else if (isDragging) {
+    panX = e.clientX - dragStartX; panY = e.clientY - dragStartY;
+    clickDragDist += Math.abs(e.clientX - dragLastX) + Math.abs(e.clientY - dragLastY);
+    dragLastX = e.clientX; dragLastY = e.clientY;
+    requestDraw();
+  } else if (skewerMode.checked && G.kind === "iso") requestDraw(); 
+});
+
+window.addEventListener("mouseup", function(e){
+  if (isSelecting) { isSelecting = false; if (selRadius * zoom < 5) { selActive = false; draw(); } }
+  else if (isDragging) isDragging = false;
+});
+
+cv.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+
+cv.addEventListener("click", function(e){
+  if (!G) return; 
+  if (clickDragDist > 5) return; 
+  if (selActive) { selActive = false; selRadius = 0; draw(); syncSelUI(); return; }
+  var r = cv.getBoundingClientRect();
+  var mx = e.clientX - r.left, my = e.clientY - r.top;
+  var wx = (mx - panX) / zoom + G.cx, wy = (my - panY) / zoom + G.cy;
+
+  if (skewerMode.checked && G.kind === "iso") {
+      var lctx = buildLaserNodes(), clickedNode = null, hitRadius = 12;
+      lctx.nodes.forEach(function(node) {
+          var sx = (node.pos.x - G.cx) * zoom + panX, sy = (node.pos.y - G.cy) * zoom + panY;
+          var dist = Math.sqrt((mx - sx)*(mx - sx) + (my - sy)*(my - sy));
+          if (dist < hitRadius) { hitRadius = dist; clickedNode = node; }
+      });
+      if (clickedNode) {
+          var existsIdx = skewers.findIndex(function(s) { return s.type === clickedNode.type && s.d === clickedNode.d; });
+          if (existsIdx >= 0) skewers.splice(existsIdx, 1);
+          else skewers.push({ type: clickedNode.type, d: clickedNode.d, color: laserColors[skewers.length % laserColors.length] });
+          draw(); syncSelUI();
+          return;
+      }
+      // По узлу-излучателю не попали — продолжаем к выбору кубика/этажа ниже
+  }
+
+  var f = hitFloor(wx,wy);
+  if(f===null){ if(sel.size > 0){ sel.clear(); draw(); syncSelUI(); } } 
+  else {
+      if (e.ctrlKey || e.metaKey) { if (sel.has(f)) sel.delete(f); else sel.add(f); }
+      else { if (sel.size === 1 && sel.has(f)) sel.clear(); else { sel.clear(); sel.add(f); } }
+      draw(); syncSelUI();
+  }
+});
+
+// Предохранитель для функций отрисовки
+const safeDraw = () => { if (G) draw(); };
+
+window.addEventListener("resize", function(){
+    if (G) { autoFit(); draw(); }
+});
+
+// Логика скрытия панелей
+var leftPanel = $("leftPanel"), rightPanel = $("rightPanel");
+var btnL = $("toggleLeft"), btnR = $("toggleRight");
+
+btnL.addEventListener("click", function(){
+    var hid = leftPanel.classList.toggle("collapsed");
+    $("divLeft").style.display = hid ? "none" : "";
+    btnL.textContent = hid ? "➡ Показать настройки" : "⬅ Скрыть настройки";
+    // Пересчитываем размер холста после перестройки макета
+    setTimeout(function(){ if (G) { autoFit(); draw(); } }, 10);
+});
+
+btnR.addEventListener("click", function(){
+    var hid = rightPanel.classList.toggle("collapsed");
+    $("divRight").style.display = hid ? "none" : "";
+    btnR.textContent = hid ? "⬅ Показать редактор" : "Скрыть редактор ➡";
+    setTimeout(function(){ if (G) { autoFit(); draw(); } }, 10);
+});
+
+// Ресайз панелей перетаскиванием разделителя (без углового маркера)
+function makeResizer(divEl, panelEl, sign){
+    // sign: +1 — панель растёт вправо (левая), -1 — влево (правая)
+    divEl.addEventListener("mousedown", function(e){
+        e.preventDefault();
+        var startX = e.clientX;
+        var startW = panelEl.getBoundingClientRect().width;
+        var maxW = Math.round(window.innerWidth * 0.45);
+        divEl.classList.add("dragging");
+        document.body.style.cursor = "col-resize";
+        var onMove = function(ev){
+            var w = startW + sign * (ev.clientX - startX);
+            w = Math.max(150, Math.min(maxW, w));
+            panelEl.style.width = w + "px";
+            if (G) { autoFit(); requestDraw(); }
+        };
+        var onUp = function(){
+            window.removeEventListener("mousemove", onMove);
+            window.removeEventListener("mouseup", onUp);
+            divEl.classList.remove("dragging");
+            document.body.style.cursor = "";
+        };
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup", onUp);
+    });
+}
+makeResizer($("divLeft"), leftPanel, 1);
+makeResizer($("divRight"), rightPanel, -1);
+
+// Ресайз лазер-панели за верхний край — растёт вверх (холст сверху сжимается)
+$("divLaser").addEventListener("mousedown", function(e){
+    e.preventDefault();
+    var grip = this;
+    var startY = e.clientY;
+    var startH = skewerWrap.getBoundingClientRect().height;
+    var colH = skewerWrap.parentNode.getBoundingClientRect().height;
+    var maxH = Math.round(colH * 0.7);
+    grip.classList.add("dragging");
+    document.body.style.cursor = "row-resize";
+    var onMove = function(ev){
+        var h = startH - (ev.clientY - startY); // тянем вверх — панель выше
+        h = Math.max(54, Math.min(maxH, h));
+        skewerWrap.style.height = h + "px";
+        if (G) { autoFit(); requestDraw(); }
+    };
+    var onUp = function(){
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+        grip.classList.remove("dragging");
+        document.body.style.cursor = "";
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+});
+
+// Escape: сначала сбрасывает все лазеры; если лазеров нет — центрирует холст
+window.addEventListener("keydown", function(e){
+    if (e.key !== "Escape") return;
+    if (skewers.length > 0) {
+        skewers = [];
+        draw(); syncSelUI();
+    } else if (G) {
+        autoFit(); draw();
+    }
+});
+
+var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+theme.value = prefersDark ? "dark" : "light";
+document.documentElement.dataset.theme = theme.value;
+
+// Сначала собираем данные (создаем G), потом переводим (вызываем draw)
+function fullInit() {
+    rebuild(); 
+    applyI18n(); 
+}
+
+// Запуск при изменении размера (когда холст стал видимым)
+const resizeObs = new ResizeObserver(entries => {
+    for (let entry of entries) {
+        if (entry.contentRect.width > 10 && entry.contentRect.height > 10) {
+            if (!G) fullInit();
+            else safeDraw();
+        }
+    }
+});
+resizeObs.observe(stage);
+
+// Запасной запуск при полной загрузке страницы
+window.addEventListener('load', () => {
+    if (!G) fullInit();
+});
+
+})(); // Конец анонимной функции
+</script>
+</body></html>
