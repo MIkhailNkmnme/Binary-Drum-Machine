@@ -1,15 +1,24 @@
-<!-- Версия: 0.36 (Заголовок Кубиты/Kubits цветной, выбор кубиков в режиме лазера, подзаголовок вниз) -->
+<!-- Версия: 0.81 (Совпадения зеркала: переключение на другую ось сбрасывает предпросмотр предыдущей, не смешиваются) -->
+<!--
+  ПРАВИЛО МАРКЕРОВ (для правок по промптам частями):
+  Файл разбит на секции комментариями вида «=== МАРКЕР NN: НАЗВАНИЕ ===».
+  При добавлении кода следи, чтобы между соседними маркерами было НЕ БОЛЕЕ 300–400 строк.
+  Если секция разрослась — вставь новый маркер с буквенным суффиксом (напр. 08a),
+  чтобы не перенумеровывать весь файл.
+  Оформление: в <script> — /* === МАРКЕР NN: ... === */, в HTML/шапке — <!-* === МАРКЕР NN: ... === *->.
+-->
 <!DOCTYPE html>
 <html lang="ru" data-theme="dark"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Кубиты v0.36</title>
+<title>Кубиты v0.81</title>
 
 <!-- Подключение шрифта Roboto Mono -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 
+<!-- === МАРКЕР 01: HEAD И CSS-СТИЛИ === -->
 <style>
 :root{
   --bg:#F6F5F0; --panel:#FFFFFF; --fg:#26251F; --muted:#6E6D66;
@@ -55,11 +64,11 @@ body{
   padding-bottom: 20px;
 }
 .settings-panel {
-  width: 210px; /* компактнее, чем было */
+  width: 210px;
 }
 .editor-panel {
   width: 300px;
-  padding-bottom: 0; /* info-блок доходит до самого низа */
+  padding-bottom: 0;
 }
 /* Разделитель для ресайза панелей перетаскиванием края (без углового маркера) */
 .divider {
@@ -98,22 +107,37 @@ body{
   display: none;
 }
 .stage {
-  flex: 1 1 auto; /* Холст занимает всё свободное место в колонке */
+  position: relative;
+  flex: 1 1 auto;
   min-height: 0;
   background: var(--panel); border: 1px solid var(--border);
   border-radius: 12px; overflow: hidden; min-width: 0;
 }
+/* Группа кнопок в верхней части холста */
+.canvas-btn-group {
+  position: absolute; top: 12px; right: 12px; z-index: 6;
+  display: flex; gap: 6px;
+}
+.canvas-btn {
+  height: 32px; padding: 0 12px; border-radius: 8px;
+  background: var(--panel); border: 1px solid var(--border);
+  color: var(--accent); font-weight: bold; cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.22);
+  transition: opacity 0.2s;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.canvas-btn:hover { border-color: var(--accent); }
 /* Панель результатов лазера снизу — растёт вверх (тянуть за верхний край) */
 .laser-panel {
   flex: 0 0 auto;
   position: relative;
   overflow: auto;
-  min-height: 3.4em; /* ~2 строки по умолчанию */
+  min-height: 2.8em;
   max-height: 70%;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 12px 12px 8px;
+  padding: 8px 10px 6px;
 }
 /* Ручка ресайза по верхнему краю лазер-панели */
 .laser-grip {
@@ -136,11 +160,11 @@ h1 .t2{color:#3498DB}
 
 .editor-wrap {
   position: relative;
-  flex: 1 1 auto; /* Растянут по высоте до инфо-блока */
+  flex: 1 1 auto;
   min-height: 150px;
   display: flex;
 }
-#src-bg, textarea {
+#src-bg, #src-pad, textarea {
   font: 12px/1.25 'Roboto Mono', monospace;
   width: 100%;
   min-height: 150px;
@@ -150,25 +174,47 @@ h1 .t2{color:#3498DB}
   overflow: auto;
 }
 #src-bg {
-  position: absolute; /* Подложка остается абсолютной */
-  top: 0; left: 0; bottom: 0; right: 0; /* Растягивается по родителю */
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
   height: 100%;
   background: var(--panel);
   color: transparent;
   border: 1px solid transparent;
   z-index: 1;
-  pointer-events: none; /* Чтобы не мешала кликам */
+  pointer-events: none;
   scrollbar-width: none;
 }
 #src-bg::-webkit-scrollbar { display: none; }
 
+/* Верхний слой только для «добора» — прозрачный, клики проходят в textarea,
+   выделяется/копируется лишь серый хвост (.pad-tail) */
+#src-pad {
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  height: 100%;
+  color: transparent;
+  background: transparent;
+  border: 1px solid transparent;
+  z-index: 3;
+  pointer-events: none;
+  scrollbar-width: none;
+}
+#src-pad::-webkit-scrollbar { display: none; }
+#src-pad .pad-tail {
+  color: var(--muted);
+  opacity: 0.55;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 textarea {
   position: relative;
-  flex: 1 1 auto; /* Заполняет редактор по высоте, ширину задаёт панель */
+  flex: 1 1 auto;
   background: transparent;
   color: var(--fg);
   border: 1px solid var(--border);
-  resize: none; /* размер задаётся ресайзом самой панели */
+  resize: none;
   z-index: 2;
   caret-color: var(--fg);
 }
@@ -192,6 +238,19 @@ button.active-view {
 .grp-btn{width:100%; text-align:left; height:auto; min-height:0; padding:4px 9px; white-space:normal;}
 .grp-btn.active{background:var(--accent) !important; color:#fff !important; border-color:var(--accent) !important;}
 
+/* Кнопки выбора выравнивания строк (воронка/ромбы) */
+#alignGroup{ gap:4px; }
+.align-btn{ flex:1; height:28px; font-size:11px; padding:0 4px; white-space:nowrap; }
+.align-btn.active{ background:var(--accent) !important; color:#fff !important; border-color:var(--accent) !important; }
+
+/* Смысловые группы левой панели */
+.grp{ display:flex; flex-direction:column; gap:6px; padding:7px 8px 8px; border-radius:10px; border:1px solid var(--border); border-left-width:3px; background:var(--panel); }
+.grp-h{ font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin:0 0 1px; }
+.grp-shape  { border-left-color:#5DCAA5; } .grp-shape  .grp-h{ color:#5DCAA5; }
+.grp-display{ border-left-color:#5B9BD5; } .grp-display .grp-h{ color:#5B9BD5; }
+.grp-tools  { border-left-color:#E67E22; } .grp-tools  .grp-h{ color:#E67E22; }
+.grp-select { border-left-color:#A569BD; } .grp-select .grp-h{ color:#A569BD; }
+
 /* Галки в виде кнопок-переключателей */
 label.ck{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); cursor:pointer}
 label.ck:has(input[type=checkbox]){
@@ -205,24 +264,31 @@ label.ck:has(input[type=checkbox]:checked){
 }
 .stats{font-size:12px; color:var(--muted)}
 .stats b{color:var(--fg); font-weight:700}
-.note{font-size:12px; color:var(--muted); line-height:1.4}
 .warn{font-size:12px; color:#BA7517; line-height:1.5; display:none}
 #chips{display:flex; flex-wrap:wrap; gap:5px}
 #chips button{min-width:28px; height:26px; padding:0 6px; font-size:12px; border-radius:6px; border-width:1.5px; transition:all .2s; font-weight:700}
 #sliderRow{display:none; flex-direction:column; gap:4px}
 input[type=range]{width:100%; accent-color:var(--accent)}
-.zero-vis{display:flex; flex-direction:column; gap:2px; font-size:11px; color:var(--muted); padding:2px 2px 4px;}
-.zero-vis b{color:var(--fg);}
+.zero-row{display:flex; gap:6px;}
+.zero-col{flex:1; display:flex; flex-direction:column; gap:4px; min-width:0;}
+.zero-col .ck{margin:0;}
 
 #skewerRes {
-  display: flex; flex-direction: row; flex-wrap: wrap; gap: 6px 20px;
+  display: flex; flex-direction: row; flex-wrap: wrap; gap: 2px 16px;
   width: 100%;
   font: 12px 'Roboto Mono', monospace;
 }
-.laser-col { flex:1 1 0; display:flex; flex-direction:column; gap:3px; min-width:130px; }
+.laser-col { flex:1 1 0; display:flex; flex-direction:column; gap:1px; min-width:130px; }
 .laser-col-h { font-size:11px; color:var(--muted); font-weight:700; letter-spacing:1px; text-transform:uppercase; border-bottom:1px solid var(--border); padding-bottom:2px; margin-bottom:2px; }
-.skew-line { display:flex; align-items:center; gap:6px; font-weight:600; letter-spacing:1px;}
-.skew-dot { width: 10px; height: 10px; border-radius: 50%; display:inline-block; flex-shrink:0; }
+
+/* Линия результата лазера (перенос слов добавлен) */
+.skew-line { display:flex; align-items:flex-start; gap:6px; font-weight:600; letter-spacing:1px; line-height:1.2; word-break:break-all; }
+.skew-dot { width: 10px; height: 10px; border-radius: 50%; display:inline-block; flex-shrink:0; margin-top:3px; }
+
+/* Панель переключателей видимости колонок лазера */
+.laser-toggles { display:flex; flex-wrap:wrap; gap:6px; width:100%; margin-bottom:6px; }
+.laser-toggles button { height:22px; padding:0 8px; font-size:11px; border-radius:6px; border:1px solid var(--border); background:var(--panel); color:var(--muted); transition:all 0.15s; }
+.laser-toggles button.active { background:var(--accent); color:#fff; border-color:var(--accent); }
 
 canvas{display:block; width:100%; height:100%; cursor:grab; user-select:none; touch-action:none;}
 canvas:active{cursor:grabbing;}
@@ -231,10 +297,11 @@ footer{margin-top:10px; font-size:12px; color:var(--muted);}
 @media (prefers-reduced-motion: reduce){ body,#chips button{transition:none} }
 </style>
 </head>
+<!-- === МАРКЕР 02: HTML-РАЗМЕТКА (ШАПКА, ПАНЕЛИ, ХОЛСТ, РЕДАКТОР) === -->
 <body>
 <div class="wrap">
 <header>
-  <h1><span data-i18n="title"><span class="t1">Ку</span><span class="t2">биты</span></span><span class="ver">v0.36</span></h1>
+  <h1><span data-i18n="title"><span class="t1">Ку</span><span class="t2">биты</span></span><span class="ver">v0.81</span></h1>
 
   <!-- Сдвиг символов: по центру шапки, между заголовком и кнопками панелей -->
   <div id="rotWrap" style="display:none; gap:6px; align-items:center;">
@@ -246,10 +313,10 @@ footer{margin-top:10px; font-size:12px; color:var(--muted);}
   <div style="display:flex; gap:8px; align-items:center;">
     <button id="toggleLeft" class="toggle-btn">⬅ Скрыть настройки</button>
     <button id="toggleRight" class="toggle-btn">Скрыть редактор ➡</button>
-    <select id="theme" aria-label="Тема">
-      <option value="light" data-i18n="themeLight">Светлый фон</option>
-      <option value="dark" data-i18n="themeDark">Тёмный фон</option>
-    </select>
+    <div style="display:flex; gap:6px;">
+      <button id="btnThemeLight" data-i18n="themeLight">Светлый фон</button>
+      <button id="btnThemeDark" data-i18n="themeDark">Тёмный фон</button>
+    </div>
     <button id="btnLang" style="font-weight:bold; color:var(--accent);">ENG</button>
   </div>
 </header>
@@ -264,43 +331,65 @@ footer{margin-top:10px; font-size:12px; color:var(--muted);}
       <option value="blocks">Этажи из блоков</option>
       <option value="rhomb">Ромбы</option>
     </select>
-    <div id="modeGroup" class="btn-group">
-      <button type="button" class="grp-btn active" data-mode="ring" data-i18n="modeRing">Круглая воронка</button>
-      <button type="button" class="grp-btn" data-mode="funnel" data-i18n="modeFunnel">Плоская воронка</button>
-      <button type="button" class="grp-btn" data-mode="blocks" data-i18n="modeBlocks">Этажи из блоков</button>
-      <button type="button" class="grp-btn" data-mode="rhomb" data-i18n="modeRhomb">Ромбы</button>
+    <!-- ГРУППА: Форма и вид -->
+    <div class="grp grp-shape">
+      <div class="grp-h" data-i18n="grpShape">Форма и вид</div>
+      <div id="modeGroup" class="btn-group">
+        <button type="button" class="grp-btn active" data-mode="ring" data-i18n="modeRing">Круглая воронка</button>
+        <button type="button" class="grp-btn" data-mode="funnel" data-i18n="modeFunnel">Плоская воронка</button>
+        <button type="button" class="grp-btn" data-mode="blocks" data-i18n="modeBlocks">Этажи из блоков</button>
+        <button type="button" class="grp-btn" data-mode="rhomb" data-i18n="modeRhomb">Ромбы</button>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button id="btnViewIso" class="active-view" style="flex:1;" data-i18n="viewIso">Изометрия</button>
+        <button id="btnViewTop" style="flex:1;" data-i18n="viewTop">Сверху</button>
+      </div>
+      <div id="alignGroup" style="display:none;">
+        <button type="button" class="align-btn active" data-align="asis" data-i18n="alignAsis">Как есть</button>
+        <button type="button" class="align-btn" data-align="diag" data-i18n="alignDiag">Полусдвиг</button>
+        <button type="button" class="align-btn" data-align="left" data-i18n="alignLeft">Слева</button>
+      </div>
     </div>
 
-    <div style="display:flex; gap:6px;">
-      <button id="btnViewIso" class="active-view" style="flex:1;" data-i18n="viewIso">Изометрия</button>
-      <button id="btnViewTop" style="flex:1;" data-i18n="viewTop">Вид сверху</button>
+    <!-- ГРУППА: Отображение -->
+    <div class="grp grp-display">
+      <div class="grp-h" data-i18n="grpDisplay">Отображение</div>
+      <label class="ck"><input type="checkbox" id="tint" checked> <span data-i18n="lblTint">Цветность</span></label>
+      <label class="ck"><input type="checkbox" id="guides" checked> <span data-i18n="lblGuides">Кольца</span></label>
+      <label class="ck"><input type="checkbox" id="loopBits" checked> <span data-i18n="lblLoop">Добор</span></label>
+      <label class="ck"><input type="checkbox" id="dimPadded"> <span data-i18n="lblDim">Прозрачный добор</span></label>
+      <div class="zero-row">
+        <div class="zero-col">
+          <label class="ck"><input type="checkbox" id="ghosts" checked> <span data-i18n="lblGhosts">0 в строках</span></label>
+          <input type="range" id="zeroMain" min="0" max="2" step="0.05" value="0.4">
+        </div>
+        <div class="zero-col">
+          <label class="ck"><input type="checkbox" id="ghostsAll"> <span data-i18n="lblGhostsAll">0 в доборе</span></label>
+          <input type="range" id="zeroPad" min="0" max="2" step="0.05" value="0.25">
+        </div>
+      </div>
+      <label class="ck"><input type="checkbox" id="showText" checked> <span data-i18n="lblText">Биты [1][0]</span></label>
+      <label class="ck"><input type="checkbox" id="balanceHl" checked> <span data-i18n="lblBalance">Баланс [1 и 0]</span></label>
     </div>
-    <button id="btnExcel" style="display:none; color:var(--accent); font-weight:bold;" data-i18n="btnExcel">📊 Excel</button>
 
-    <label class="ck"><input type="checkbox" id="tint" checked> <span data-i18n="lblTint">Подкрашивать этажи</span></label>
-    <label class="ck"><input type="checkbox" id="guides" checked> <span data-i18n="lblGuides">Направляющие кольца</span></label>
-    <label class="ck"><input type="checkbox" id="loopBits" checked> <span data-i18n="lblLoop">Дополнить строку</span></label>
-    <label class="ck"><input type="checkbox" id="dimPadded"> <span data-i18n="lblDim">Прозрачность дополненных строк</span></label>
-    <label class="ck"><input type="checkbox" id="ghosts" checked> <span data-i18n="lblGhosts">Показывать нули (0)</span></label>
-    <label class="ck"><input type="checkbox" id="ghostsAll"> <span data-i18n="lblGhostsAll">Показывать все пустоты</span></label>
-    <div class="zero-vis">
-      <label for="zeroMain"><span data-i18n="lblZeroMain">Видимость 0 (строки)</span>: <b id="zeroMainLbl">0.40</b></label>
-      <input type="range" id="zeroMain" min="0" max="1" step="0.05" value="0.4">
-      <label for="zeroPad"><span data-i18n="lblZeroPad">Видимость 0 (добор)</span>: <b id="zeroPadLbl">0.25</b></label>
-      <input type="range" id="zeroPad" min="0" max="1" step="0.05" value="0.25">
+    <!-- ГРУППА: Инструменты -->
+    <div class="grp grp-tools">
+      <div class="grp-h" data-i18n="grpTools">Инструменты</div>
+      <label class="ck" style="color:var(--accent)"><input type="checkbox" id="minusMode"> <span data-i18n="lblMinus">Вычитать выделенное</span></label>
+      <label class="ck" style="color:#E74C3C; font-weight:700;"><input type="checkbox" id="skewerMode" checked> <span data-i18n="lblLaser">🎯 Лазер</span></label>
     </div>
-    <label class="ck"><input type="checkbox" id="showText" checked> <span data-i18n="lblText">Цифры на фигурах (1/0)</span></label>
-    <hr style="border:0; border-top:1px solid var(--border); margin:4px 0">
-    <label class="ck" style="color:var(--accent)"><input type="checkbox" id="minusMode"> <span data-i18n="lblMinus">Вычитать выделенное</span></label>
-    <label class="ck" style="color:#E74C3C; font-weight:700;"><input type="checkbox" id="skewerMode" checked> <span data-i18n="lblLaser">🎯 Инструмент "Лазер"</span></label>
 
-    <div class="stats" style="margin-top:5px;"><span data-i18n="statFloors">Всего этажей:</span> <b id="stFloors">10</b> · (1): <b id="stCubes">137</b></div>
-    <div id="chips" style="display: flex;"></div>
-    <div id="sliderRow" style="display: none;">
-      <label class="ck" for="floorRange"><span data-i18n="lblFloor">Этаж:</span> <b id="frLabel" style="color:var(--fg)">все</b></label>
-      <input type="range" id="floorRange" min="0" max="10" value="0" step="1">
+    <!-- ГРУППА: Этажи -->
+    <div class="grp grp-select">
+      <div class="grp-h" data-i18n="grpFloors">Этажи</div>
+      <div class="stats"><span data-i18n="statFloors">Всего этажей:</span> <b id="stFloors">10</b> · (1): <b id="stCubes">137</b></div>
+      <div id="chips" style="display: flex;"></div>
+      <div id="sliderRow" style="display: none;">
+        <label class="ck" for="floorRange"><span data-i18n="lblFloor">Этаж:</span> <b id="frLabel" style="color:var(--fg)">все</b></label>
+        <input type="range" id="floorRange" min="0" max="10" value="0" step="1">
+      </div>
+      <div class="warn" id="warn" style="display: none;" data-i18n="warnMax">Достигнут потолок кубиков — верхние этажи обрезаны.</div>
     </div>
-    <div class="warn" id="warn" style="display: none;" data-i18n="warnMax">Достигнут потолок кубиков — верхние этажи обрезаны.</div>
   </div>
 
   <div class="divider" id="divLeft"></div>
@@ -309,6 +398,65 @@ footer{margin-top:10px; font-size:12px; color:var(--muted);}
   <div class="center-col">
     <div class="stage">
       <canvas id="cv"></canvas>
+      
+      <!-- Кнопки зеркала в левом верхнем углу холста -->
+      <div class="flip-toolbar" style="position: absolute; top: 12px; left: 12px; z-index: 6; display:flex; gap:6px; align-items:center;">
+        <button id="btnFlip" class="canvas-btn" data-i18n="btnFlip" data-i18n-title="btnFlipTitle" title="Зеркально отразить лево/право">↔ Зеркало</button>
+        <button id="btnFlipV" class="canvas-btn" data-i18n="btnFlipV" data-i18n-title="btnFlipVTitle" title="Зеркально отразить верх/низ">↕ Зеркало</button>
+
+        <button id="btnFlipHl" class="canvas-btn" data-i18n="btnFlipHl" data-i18n-title="btnFlipHlTitle" title="Подсветить кубики, которые останутся такими же и на том же месте после отражения">🔦 Совпадения</button>
+        <input type="color" id="flipHlColor" value="#00E5FF" data-i18n-title="flipHlColorTitle" title="Цвет заливки совпадений" style="width:28px; height:28px; padding:0; border-radius:8px; border:1px solid var(--border); background:var(--panel); cursor:pointer;">
+        
+        <div style="display:flex; border-radius:8px; border:1px solid var(--border); overflow:hidden; background:var(--panel); box-shadow: 0 2px 10px rgba(0,0,0,0.22);">
+          <button id="btnFlipShowAll" class="canvas-btn active-view" style="border:none; border-radius:0; box-shadow:none; padding:0 8px; height:32px;" title="Показать всё">👁 Все</button>
+          <button id="btnFlipShowMatch" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;" title="Только неменяющиеся (чисто совпадения)">=</button>
+          <button id="btnFlipShowDiff" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;" title="Только меняющиеся (чисто различия)">≠</button>
+        </div>
+
+        <div style="display:flex; border-radius:8px; border:1px solid var(--border); overflow:hidden; background:var(--panel); box-shadow: 0 2px 10px rgba(0,0,0,0.22);">
+            <button id="btnFlipAnim" class="canvas-btn" style="border:none; border-radius:0; box-shadow:none; padding:0 8px; height:32px;">▶ Плей</button>
+            <button id="btnFlipReset" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px; color:var(--muted);" title="Остановить и вернуть">⏹ Сброс</button>
+        </div>
+        
+        <input type="range" id="flipAnimSpeed" min="0.3" max="4" step="0.1" value="1" data-i18n-title="flipAnimTitle" title="Скорость авто-зеркала" style="width:70px; accent-color: var(--accent);">
+      </div>
+
+      <!-- Управление поворотом (Сверху / Ромбы) -->
+      <div id="rotateToolbar" style="position: absolute; top: 52px; left: 12px; z-index: 6; display:none; gap:6px; align-items:center;">
+        <div style="display:flex; border-radius:8px; border:1px solid var(--border); overflow:hidden; background:var(--panel); box-shadow: 0 2px 10px rgba(0,0,0,0.22);">
+          <button id="btnRotStep1" class="canvas-btn active-view" style="border:none; border-radius:0; box-shadow:none; padding:0 8px; height:32px;" title="Плавный шаг">1°</button>
+          <button id="btnRotStep30" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;">30°</button>
+          <button id="btnRotStep45" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;">45°</button>
+          <button id="btnRotStep90" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;">90°</button>
+          <button id="btnRotStep120" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;">120°</button>
+          <button id="btnRotStep180" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;">180°</button>
+          <button id="btnRotStepL" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;" title="Шаг по длине большей строки">L</button>
+        </div>
+        <button id="btnRotDirCCW" class="canvas-btn" title="Шаг / Направление против часовой">↺</button>
+        <button id="btnRotDirCW" class="canvas-btn" title="Шаг / Направление по часовой">↻</button>
+        
+        <button id="btnRotHl" class="canvas-btn" title="Подсветить кубики, позиция и значение которых совпадает с оригиналом">🔦 Совпадения</button>
+        <input type="color" id="rotHlColor" value="#FF00FF" title="Цвет заливки совпадений" style="width:28px; height:28px; padding:0; border-radius:8px; border:1px solid var(--border); background:var(--panel); cursor:pointer;">
+        
+        <div style="display:flex; border-radius:8px; border:1px solid var(--border); overflow:hidden; background:var(--panel); box-shadow: 0 2px 10px rgba(0,0,0,0.22);">
+          <button id="btnRotShowAll" class="canvas-btn active-view" style="border:none; border-radius:0; box-shadow:none; padding:0 8px; height:32px;" title="Показать всё">👁 Все</button>
+          <button id="btnRotShowMatch" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;" title="Только неменяющиеся (чисто совпадения)">=</button>
+          <button id="btnRotShowDiff" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;" title="Только меняющиеся (чисто различия)">≠</button>
+        </div>
+
+        <div style="display:flex; border-radius:8px; border:1px solid var(--border); overflow:hidden; background:var(--panel); box-shadow: 0 2px 10px rgba(0,0,0,0.22);">
+            <button id="btnRotAnim" class="canvas-btn" style="border:none; border-radius:0; box-shadow:none; padding:0 8px; height:32px;">▶ Плей</button>
+            <button id="btnRotReset" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px; color:var(--muted);" title="Остановить и сбросить угол">⏹ Сброс</button>
+        </div>
+        
+        <input type="range" id="rotAnimSpeed" min="0.3" max="4" step="0.1" value="1" title="Скорость вращения" style="width:70px; accent-color: var(--accent);">
+      </div>
+
+      <!-- Кнопки выгрузки в правом верхнем углу холста -->
+      <div class="canvas-btn-group">
+        <button id="btnExcel" class="canvas-btn" data-i18n="btnExcel">📊 Excel (Сетка)</button>
+        <button id="btnExcelAlt" class="canvas-btn" data-i18n="btnExcelAlt">📊 Excel (Прямой)</button>
+      </div>
     </div>
     <div id="skewerWrap" class="laser-panel" style="display:none">
       <div class="laser-grip" id="divLaser" title="Тянуть вверх"></div>
@@ -323,6 +471,7 @@ footer{margin-top:10px; font-size:12px; color:var(--muted);}
   <div class="panel editor-panel" id="rightPanel">
     <div class="editor-wrap">
       <div id="src-bg" aria-hidden="true"></div>
+      <div id="src-pad" aria-hidden="true"></div>
       <textarea id="src" spellcheck="false">1
 11
 111
@@ -334,38 +483,53 @@ footer{margin-top:10px; font-size:12px; color:var(--muted);}
 111010011
 1000000010</textarea>
     </div>
-
-    <div class="note" id="info" style="flex:0 0 auto; margin-top:auto; background:var(--bg); padding:8px; border-radius:8px; border:1px solid var(--border)"></div>
+    <button id="btnCopyExpanded" data-i18n="btnCopyExp" style="margin-top:6px; flex:0 0 auto;">⧉ Копировать развёрнутое</button>
   </div>
 </div>
-<p class="sub" style="margin:8px 0 0" data-i18n="sub">Строки превращаются в фигуры: единица — кубик, ноль — пусто.</p>
-<footer data-i18n="footer">строка = этаж · пустая строка = новый блок · 0 = пустое место · до 256 этажей</footer>
+<p class="sub" style="margin:8px 0 0" data-i18n="sub"></p>
+<footer data-i18n="footer"></footer>
 </div>
 
 <script>
 (function(){
 "use strict";
-
+/* === МАРКЕР 03: I18N-СЛОВАРЬ И ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ === */
 var i18n = {
   ru: {
     title: '<span class="t1">Ку</span><span class="t2">биты</span>',
     titlePlain: "Кубиты",
-    sub: "Строки превращаются в фигуры: единица — кубик, ноль — пусто.",
+    sub: "",
     themeLight: "Светлый фон", themeDark: "Тёмный фон",
     modeRing: "Круглая воронка", modeFunnel: "Плоская воронка", modeBlocks: "Этажи из блоков", modeRhomb: "Ромбы",
-    viewIso: "Изометрия", viewTop: "Вид сверху",
-    lblTint: "Подкрашивать этажи", lblGuides: "Направляющие кольца", lblLoop: "Дополнить строку",
-    lblDim: "Прозрачность дополненных строк", lblGhosts: "Показывать нули (0)", lblGhostsAll: "Показывать все пустоты",
-    lblZeroMain: "Видимость 0 (строки)", lblZeroPad: "Видимость 0 (добор)",
-    lblText: "Цифры на фигурах (1/0)",
-    lblMinus: "Вычитать выделенное", lblLaser: "🎯 Инструмент \"Лазер\"",
+    viewIso: "Изометрия", viewTop: "Сверху",
+    alignAsis: "Как есть", alignDiag: "Полусдвиг", alignLeft: "Слева",
+    lblTint: "Цветность", lblGuides: "Кольца", lblLoop: "Добор",
+    lblDim: "Прозрачный добор", lblGhosts: "0 в строках", lblGhostsAll: "0 в доборе",
+    lblText: "Биты [1][0]",
+    lblBalance: "Баланс [1 и 0]",
+    lblMinus: "Вычитать выделенное", lblLaser: "🎯 Лазер",
     laserRes: "Результаты лазера:", shiftTxt: "Сдвиг символов:",
+    grpShape: "Форма и вид", grpDisplay: "Отображение", grpTools: "Инструменты", grpFloors: "Этажи",
     statFloors: "Всего этажей:", lblFloor: "Этаж:",
     floorAll: "все", floorMulti: "несколько",
     info1: "Камера: <b>ЛКМ/Колесо</b>.<br>Сетка излучателей: <b>Инструмент Лазер</b>.<br>Несколько этажей: <b>Ctrl + Клик</b>.",
-    footer: "строка = этаж · пустая строка = новый блок · 0 = пустое место · до 256 этажей",
+    footer: "Строки превращаются в фигуры: единица — кубик, ноль — пусто. Строка = этаж.",
     hint: "Кликните точку-излучатель на линии у модели",
-    empty: "пусто", btnExcel: "📊 Excel", warnMax: "Достигнут потолок кубиков — верхние этажи обрезаны."
+    empty: "пусто", 
+    btnExcel: "📊 Excel (Сетка)", 
+    btnExcelAlt: "📊 Excel (Прямой)", 
+    btnFlip: "↔ Зеркало",
+    btnFlipTitle: "Зеркально отразить лево/право",
+    btnFlipV: "↕ Зеркало",
+    btnFlipVTitle: "Зеркально отразить верх/низ",
+    btnFlipHl: "🔦 Совпадения",
+    btnFlipHlTitle: "Подсветить кубики, которые останутся такими же и на том же месте после отражения",
+    flipHlColorTitle: "Цвет заливки совпадений",
+    btnFlipAnimPlay: "▶ Плей",
+    btnFlipAnimStop: "⏸ Пауза",
+    flipAnimTitle: "Скорость авто-зеркала",
+    btnCopyExp: "⧉ Копировать развёрнутое",
+    warnMax: "Достигнут потолок кубиков — верхние этажи обрезаны."
   },
   en: {
     title: '<span class="t1">Ku</span><span class="t2">bits</span>',
@@ -373,19 +537,35 @@ var i18n = {
     sub: "Strings turn into shapes: 1 is a cube, 0 is empty.",
     themeLight: "Light theme", themeDark: "Dark theme",
     modeRing: "Round funnel", modeFunnel: "Flat funnel", modeBlocks: "Block floors", modeRhomb: "Rhombuses",
-    viewIso: "Isometry", viewTop: "Top view",
-    lblTint: "Tint floors", lblGuides: "Guide rings", lblLoop: "Fill string",
-    lblDim: "Transparency of padded strings", lblGhosts: "Show zeros (0)", lblGhostsAll: "Show all empty spaces",
-    lblZeroMain: "Zero visibility (rows)", lblZeroPad: "Zero visibility (padding)",
-    lblText: "Numbers on shapes (1/0)",
-    lblMinus: "Subtract selection", lblLaser: "🎯 Laser Tool",
+    viewIso: "Isometry", viewTop: "Top",
+    alignAsis: "As is", alignDiag: "Half-shift", alignLeft: "Left",
+    lblTint: "Color", lblGuides: "Rings", lblLoop: "Pad",
+    lblDim: "Pad opacity", lblGhosts: "0 in rows", lblGhostsAll: "0 in pad",
+    lblText: "Bits [1][0]",
+    lblBalance: "Balance [1&0]",
+    lblMinus: "Subtract selection", lblLaser: "🎯 Laser",
     laserRes: "Laser results:", shiftTxt: "Shift chars:",
+    grpShape: "Shape & view", grpDisplay: "Display", grpTools: "Tools", grpFloors: "Floors",
     statFloors: "Total floors:", lblFloor: "Floor:",
     floorAll: "all", floorMulti: "multiple",
     info1: "Camera: <b>LMB/Wheel</b>.<br>Emitter grid: <b>Laser Tool</b>.<br>Select multiple: <b>Ctrl + Click</b>.",
     footer: "string = floor · empty string = new block · 0 = empty space · up to 256 floors",
     hint: "Click an emitter point on a line near the model",
-    empty: "empty", btnExcel: "📊 Excel", warnMax: "Cube limit reached — top floors are truncated."
+    empty: "empty", 
+    btnExcel: "📊 Excel (Grid)", 
+    btnExcelAlt: "📊 Excel (Direct)", 
+    btnFlip: "↔ Mirror",
+    btnFlipTitle: "Mirror left/right",
+    btnFlipV: "↕ Mirror",
+    btnFlipVTitle: "Mirror top/bottom",
+    btnFlipHl: "🔦 Matches",
+    btnFlipHlTitle: "Highlight cubes that stay the same, in the same spot, after mirroring",
+    flipHlColorTitle: "Matches fill color",
+    btnFlipAnimPlay: "▶ Play",
+    btnFlipAnimStop: "⏸ Pause",
+    flipAnimTitle: "Auto-mirror speed",
+    btnCopyExp: "⧉ Copy expanded",
+    warnMax: "Cube limit reached — top floors are truncated."
   }
 };
 var currentLang = 'ru';
@@ -403,42 +583,108 @@ var pal=[
 var laserColors = ["#E74C3C", "#3498DB", "#2ECC71", "#9B59B6", "#F1C40F", "#E67E22", "#1ABC9C"];
 
 var $=function(id){return document.getElementById(id);};
-var src=$("src"), srcBg=$("src-bg"), mode=$("mode"), tint=$("tint"), guides=$("guides"), 
-    ghosts=$("ghosts"), ghostsAll=$("ghostsAll"), loopBits=$("loopBits"), dimPadded=$("dimPadded"), showText=$("showText"),
+var src=$("src"), srcBg=$("src-bg"), srcPad=$("src-pad"), mode=$("mode"), tint=$("tint"), guides=$("guides"),
+    ghosts=$("ghosts"), ghostsAll=$("ghostsAll"), loopBits=$("loopBits"), dimPadded=$("dimPadded"), showText=$("showText"), balanceHl=$("balanceHl"),
     minusMode=$("minusMode"), skewerMode=$("skewerMode"), skewerWrap=$("skewerWrap"), skewerRes=$("skewerRes"),
-    btnExcel=$("btnExcel"), rotWrap=$("rotWrap"), btnRotCCW=$("btnRotCCW"), btnRotCW=$("btnRotCW"),
-    theme=$("theme"), btnLang=$("btnLang"), stF=$("stFloors"), stC=$("stCubes"), 
+    btnExcel=$("btnExcel"), btnExcelAlt=$("btnExcelAlt"), btnFlip=$("btnFlip"), btnFlipV=$("btnFlipV"), btnFlipHl=$("btnFlipHl"), flipHlColor=$("flipHlColor"), btnFlipHide=$("btnFlipHide"), btnFlipAnim=$("btnFlipAnim"), btnFlipReset=$("btnFlipReset"), flipAnimSpeed=$("flipAnimSpeed"), btnCopyExpanded=$("btnCopyExpanded"), rotWrap=$("rotWrap"), btnRotCCW=$("btnRotCCW"), btnRotCW=$("btnRotCW"),
+    rotateToolbar=$("rotateToolbar"), btnRotStep1=$("btnRotStep1"), btnRotStep30=$("btnRotStep30"), btnRotStep45=$("btnRotStep45"), btnRotStep90=$("btnRotStep90"), btnRotStep120=$("btnRotStep120"), btnRotStep180=$("btnRotStep180"), btnRotStepL=$("btnRotStepL"), btnRotDirCCW=$("btnRotDirCCW"), btnRotDirCW=$("btnRotDirCW"), btnRotHl=$("btnRotHl"), rotHlColor=$("rotHlColor"), btnRotAnim=$("btnRotAnim"), btnRotReset=$("btnRotReset"), rotAnimSpeed=$("rotAnimSpeed"),
+    btnThemeLight=$("btnThemeLight"), btnThemeDark=$("btnThemeDark"), btnLang=$("btnLang"), stF=$("stFloors"), stC=$("stCubes"),
     chips=$("chips"), sliderRow=$("sliderRow"), fr=$("floorRange"), frLabel=$("frLabel"),
     info=$("info"), warn=$("warn"), cv=$("cv"), ctx=cv.getContext("2d"), stage=cv.parentNode,
     btnViewIso=$("btnViewIso"), btnViewTop=$("btnViewTop"),
-    zeroMain=$("zeroMain"), zeroPad=$("zeroPad"), zeroMainLbl=$("zeroMainLbl"), zeroPadLbl=$("zeroPadLbl");
+    zeroMain=$("zeroMain"), zeroPad=$("zeroPad");
     
-var D={cells:[], floors:0, rows:[], truncated:false};
+var D={cells:[], floors:0, rows:[], truncated:false, half:[]};
 var G=null;
 var sel=new Set();
-var skewers = []; 
+var skewers = [];
+var laserVis = { top: true, right: true, left: true };
 var currentView = "iso";
+
+// === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ СОСТОЯНИЙ ===
+var flipX = false; // горизонтальное зеркало (лево/право)
+var flipY = false; // вертикальное зеркало (верх/низ) — независимо от flipX, можно включать оба сразу
+var flipMatchX = false; // ось учитывается в «Совпадениях» — включается вместе с flipX,
+var flipMatchY = false; // но НЕ гаснет, когда саму картинку возвращают в обычный вид (предпросмотр)
+var flipHighlight = false;
+var flipShowMode = "all"; // Фильтр зеркала: "all" | "match" | "diff"
+var flipAnimOn = false, flipAnimTimer = null;
+var flipAnimAxis = 'x'; // какую ось крутит «Плей» — ту, что включили последней ('x' или 'y')
+
+var viewRotDeg = 0;
+var rotHighlight = false;
+var rotShowMode = "all"; // Фильтр вращения: "all" | "match" | "diff"
+var rotAnimOn = false, rotAnimTimer = null, rotAnimDir = 1;
+var rotMatchCache = null; // кэш «совпадений» — не зависит от текущего угла, только от шага и данных
+
+var alignMode = "asis"; 
 
 var panX=0, panY=0, zoom=1;
 var isDragging=false, dragStartX=0, dragStartY=0;
 var clickDragDist=0, dragLastX=0, dragLastY=0;
-var mouseX = 0, mouseY = 0; 
+var mouseX = 0, mouseY = 0;
 
 var isSelecting=false, selActive=false;
 var selRadius=0;
 var lastBgHtml=null;
+var lastPadHtml=null;
 var drawQueued=false;
+
+function currentRotRad(){
+  return (G && (G.kind === "top" || G.kind === "rhomb")) ? (viewRotDeg * Math.PI / 180) : 0;
+}
+
+function screenToWorld(mx, my){
+  var fsx = flipX ? -1 : 1, fsy = flipY ? -1 : 1;
+  var dx = mx - panX, dy = my - panY;
+  var rr = currentRotRad();
+  if (rr) {
+    var c = Math.cos(rr), s = Math.sin(rr);
+    var ndx = dx*c + dy*s, ndy = -dx*s + dy*c;
+    dx = ndx; dy = ndy;
+  }
+  return { wx: fsx * dx / zoom + G.cx, wy: fsy * dy / zoom + G.cy };
+}
+
+function worldOffsetToScreen(wx, wy){
+  var fsx = flipX ? -1 : 1, fsy = flipY ? -1 : 1;
+  var dx = fsx * zoom * (wx - G.cx), dy = fsy * zoom * (wy - G.cy);
+  var rr = currentRotRad();
+  if (rr) {
+    var c = Math.cos(rr), s = Math.sin(rr);
+    var ndx = dx*c - dy*s, ndy = dx*s + dy*c;
+    dx = ndx; dy = ndy;
+  }
+  return { dx: dx, dy: dy };
+}
 
 function requestDraw(){
   if(drawQueued) return;
   drawQueued=true;
   requestAnimationFrame(function(){ drawQueued=false; draw(); });
 }
-
+/* === МАРКЕР 03.1: ВОССТАНОВЛЕННЫЕ СИСТЕМНЫЕ ФУНКЦИИ === */
 function pc(k){ return tint.checked ? pal[k%pal.length] : pal[0]; }
 function rhX(c){ return (c[0] + ((D.half && D.half[c[2]]) || 0)) * DD; }
 function aC(c){ return c[0] + ((D.half && D.half[c[2]]) || 0); }
 function isSelected(k) { return sel.size === 0 || sel.has(k); }
+
+function hexA(hex, a){
+  var r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return "rgba("+r+","+g+","+b+","+a+")";
+}
+
+function litColor(hex, t){
+  var r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  r = Math.round(r + (255-r)*t); g = Math.round(g + (255-g)*t); b = Math.round(b + (255-b)*t);
+  return "rgb("+r+","+g+","+b+")";
+}
+
+function darkColor(hex, t){
+  var r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  r = Math.round(r*(1-t)); g = Math.round(g*(1-t)); b = Math.round(b*(1-t));
+  return "rgb("+r+","+g+","+b+")";
+}
 
 function applyI18n() {
   var t = i18n[currentLang];
@@ -446,7 +692,16 @@ function applyI18n() {
     var key = el.getAttribute("data-i18n");
     if(t[key]) el.innerHTML = t[key];
   });
-  document.title = (t.titlePlain || "Kubits") + " v0.36";
+  document.querySelectorAll("[data-i18n-title]").forEach(function(el){
+    var key = el.getAttribute("data-i18n-title");
+    if(t[key]) el.title = t[key];
+  });
+  btnFlipAnim.textContent = flipAnimOn ? t.btnFlipAnimStop : t.btnFlipAnimPlay;
+  btnRotAnim.textContent = rotAnimOn ? t.btnFlipAnimStop : t.btnFlipAnimPlay;
+  
+  // Принудительно устанавливаем правильную версию на вкладке
+  document.title = (t.titlePlain || "Kubits") + " v0.81";
+  
   syncSelUI();
   draw();
 }
@@ -457,12 +712,25 @@ btnLang.addEventListener("click", function(){
   applyI18n();
 });
 
+// Глобальные переменные для шага вращения (нужны здесь, чтобы draw() их видел)
+var currentRotStepType = 1;
+
 btnViewIso.addEventListener("click", function(){
   currentView = "iso";
   btnViewIso.classList.add("active-view");
   btnViewTop.classList.remove("active-view");
+  
+  viewRotDeg = 0;
+  flipX = false;
+  flipY = false;
+  btnFlip.classList.remove("active-view");
+  btnFlipV.classList.remove("active-view");
+  if(typeof stopRotAnim === 'function') stopRotAnim(true);
+  if(typeof stopFlipAnim === 'function') stopFlipAnim(true);
+
   sel.clear(); skewers=[]; geometry(); autoFit(); draw(); syncSelUI();
 });
+
 btnViewTop.addEventListener("click", function(){
   currentView = "top";
   btnViewTop.classList.add("active-view");
@@ -473,17 +741,21 @@ btnViewTop.addEventListener("click", function(){
 var syncScroll = function() {
     srcBg.scrollTop = src.scrollTop;
     srcBg.scrollLeft = src.scrollLeft;
+    srcPad.scrollTop = src.scrollTop;
+    srcPad.scrollLeft = src.scrollLeft;
     if (srcBg.style.height !== src.style.height) {
         srcBg.style.height = src.style.height;
+        srcPad.style.height = src.style.height;
     }
 };
 src.addEventListener('scroll', syncScroll);
 src.addEventListener('mousemove', syncScroll);
 src.addEventListener('mouseup', syncScroll); 
-
+/* === МАРКЕР 04: ПАРСЕР СТРОК → ЯЧЕЙКИ (PARSE) === */
 function parse(){
   var cells=[], rows=[], floors=0, trunc=false;
   var halfShifts=[];
+  var padTails=[];  // серый «добор» (повтор бит) для показа в панели исходных строк — ring + «Дополнить строку»
   
   function push(a, b, k, val, isPadded, absL, cIdx){
     if(cells.length>=CUBE_MAX){ trunc=true; return false; }
@@ -518,12 +790,19 @@ function parse(){
       var absL = parsedFloors[k].absL;
       var off = parsedFloors[k].off;
       if (bits.length === 0) continue;
-      
+
+      // «Добор»: повтор бит до заполнения кольца — запоминаем хвост для серого показа в редакторе
+      if (doLoop && ring.length > bits.length) {
+        var padStr = "";
+        for (var tp = bits.length; tp < ring.length; tp++) padStr += bits[tp % bits.length];
+        padTails[absL] = padStr;
+      }
+
       for(var t=0;t<ring.length;t++){
         var val = 0, isPad = false, cIdx = -1;
         if (doLoop) {
           val = (bits[t % bits.length] === "1") ? 1 : 0;
-          isPad = (t >= bits.length); 
+          isPad = (t >= bits.length);
           cIdx = off + (t % bits.length);
         } else {
           if (t < bits.length) {
@@ -532,7 +811,7 @@ function parse(){
             cIdx = off + t;
           } else {
             val = 0;
-            isPad = true; 
+            isPad = true;
           }
         }
         if(!push(ring[t][0]+R, ring[t][1]+R, k, val, isPad, absL, cIdx)) break outer;
@@ -547,8 +826,13 @@ function parse(){
       var b2=parsedFloors[k2].txt.slice(0,MAXC);
       var absL2 = parsedFloors[k2].absL;
       var off2 = parsedFloors[k2].off;
-      var offset=Math.floor((maxLen-b2.length)/2);
-      halfShifts[k2]=((maxLen-b2.length)%2)*0.5;
+      var base=Math.floor((maxLen-b2.length)/2);
+      var parity=((maxLen-b2.length)%2)*0.5;
+      var offset, hshift;
+      if (alignMode === 'left')      { offset = 0;    hshift = 0; }              // первые биты в один столбец
+      else if (alignMode === 'diag') { offset = base; hshift = parity; }         // непрерывный полусдвиг: чистая диагональ (этаж 0 на линии)
+      else                           { offset = base; hshift = parity + base; }  // 'asis' — как было (прижато вправо)
+      halfShifts[k2]=hshift;
       
       for(var i2=0;i2<maxLen;i2++){
         var charPos = i2 - offset;
@@ -598,21 +882,32 @@ function parse(){
       }
     }
   }
-  D={cells:cells, floors:floors, rows:rows, truncated:trunc, half:halfShifts};
+  D={cells:cells, floors:floors, rows:rows, truncated:trunc, half:halfShifts, padTails:padTails};
 }
 
+/* === МАРКЕР 05: ГЕОМЕТРИЯ СЦЕНЫ И АВТО-ФИТ (GEOMETRY/AUTOFIT) === */
 function geometry(){
   var m=mode.value;
   var list=D.cells.slice();
   var minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+  var gMinX=1e9,gMaxX=-1e9,gMinY=1e9,gMaxY=-1e9;
   var kind, gd=[];
   
-  var showAll = ghostsAll.checked || ghosts.checked; 
-  var updateBounds = function(x, y, pad) {
-      if (x - pad < minX) minX = x - pad;
-      if (x + pad > maxX) maxX = x + pad;
-      if (y - pad < minY) minY = y - pad;
-      if (y + pad > maxY) maxY = y + pad;
+  var showAll = ghostsAll.checked || ghosts.checked;
+  var updateBounds = function(x, y, pad, isVis, isReal) {
+      if (isVis) {
+          if (x - pad < minX) minX = x - pad;
+          if (x + pad > maxX) maxX = x + pad;
+          if (y - pad < minY) minY = y - pad;
+          if (y + pad > maxY) maxY = y + pad;
+      }
+      // gMinX/gMaxX/gMinY/gMaxY задают центр вращения/зеркала — доборные (padding) клетки
+      // funnel/rhomb растягивают этот бокс несимметрично по строкам, поэтому их сюда не пускаем.
+      if (isReal === false) return;
+      if (x - pad < gMinX) gMinX = x - pad;
+      if (x + pad > gMaxX) gMaxX = x + pad;
+      if (y - pad < gMinY) gMinY = y - pad;
+      if (y + pad > gMaxY) gMaxY = y + pad;
   };
 
   if(m==="rhomb"){
@@ -620,17 +915,14 @@ function geometry(){
     list.sort(function(a,b){return a[2]-b[2];});
     list.forEach(function(c){
       var x=rhX(c), y=-c[2]*DD/2;
-      if (c[3]===1 || showAll) updateBounds(x, y, DD);
+      updateBounds(x, y, DD, c[3]===1 || showAll, !c[4]);
     });
   } else if(currentView==="top"){
     kind="top";
     list.sort(function(a,b){return a[2]-b[2];});
     list.forEach(function(c){
       var x=aC(c)*TS, y=c[1]*TS;
-      if (c[3]===1 || showAll) {
-          if(x<minX)minX=x; if(x+TS>maxX)maxX=x+TS;
-          if(y<minY)minY=y; if(y+TS>maxY)maxY=y+TS;
-      }
+      updateBounds(x + TS/2, y + TS/2, TS/2, c[3]===1 || showAll, !c[4]);
     });
     if(m==="ring" && guides.checked && D.floors>0){
       var C=(D.floors-0.5)*TS;
@@ -640,7 +932,7 @@ function geometry(){
         var lab=(k%step===0 || D.floors<=24) ? String(k+1) : null;
         var lx=C+(k>0?r:TS*0.7)+6;
         gd.push({k:k, cx:C, cy:C, rx:r, ry:r, lx:lx, ly:C+4, lab:lab});
-        updateBounds(C, C, r + 30);
+        updateBounds(C, C, r + 30, true);
       }
     }
   } else {
@@ -650,9 +942,14 @@ function geometry(){
       var a=aC(c),b=c[1],k=c[2];
       var x1=(a-b-1)*u, x2=(a-b+1)*u;
       var y1=(a+b)*v-(k+1)*hh, y2=(a+b+2)*v-k*hh;
-      if (c[3]===1 || showAll) {
+      var isVis = c[3]===1 || showAll;
+      if (isVis) {
         if(x1<minX)minX=x1; if(x2>maxX)maxX=x2;
         if(y1<minY)minY=y1; if(y2>maxY)maxY=y2;
+      }
+      if (!c[4]) {
+        if(x1<gMinX)gMinX=x1; if(x2>gMaxX)gMaxX=x2;
+        if(y1<gMinY)gMinY=y1; if(y2>gMaxY)gMaxY=y2;
       }
     });
     if(m==="ring" && guides.checked && D.floors>0){
@@ -664,20 +961,37 @@ function geometry(){
         var lab2=(k4%step2===0 || D.floors<=24) ? String(k4+1) : null;
         var lx2=(k4>0?rx:u)+8;
         gd.push({k:k4, cx:0, cy:cy, rx:rx, ry:ry, lx:lx2, ly:cy+4, lab:lab2});
-        updateBounds(0, cy, rx + 40);
-        updateBounds(0, cy, ry + 40);
+        updateBounds(0, cy, Math.max(rx, ry) + 40, true);
       }
     }
   }
   
   if(minX === 1e9){ minX=0;maxX=100;minY=0;maxY=100; }
+  if(gMinX === 1e9){ gMinX=minX; gMaxX=maxX; gMinY=minY; gMaxY=maxY; }
+
+  var finalCx = (gMinX+gMaxX)/2;
+  var finalCy = (gMinY+gMaxY)/2;
+  
+  if (m === "ring" && kind === "top") {
+      var R_center = D.floors > 0 ? D.floors - 1 : 0;
+      finalCx = R_center * TS + TS/2;
+      finalCy = R_center * TS + TS/2;
+  } else if (m === "ring" && kind === "iso") {
+      finalCx = 0;
+  } else if (kind === "top") {
+      // Центр вращения должен попадать в центр клетки (шаг TS), иначе поворот на 90°/180°
+      // не совпадает с сеткой и ломает подсветку совпадений даже для симметричных фигур.
+      finalCx = Math.round((finalCx - TS/2) / TS) * TS + TS/2;
+      finalCy = Math.round((finalCy - TS/2) / TS) * TS + TS/2;
+  }
+  
   for(var qi=0; qi<list.length; qi++) list[qi]._i = qi;
   
   G={
       kind:kind, list:list, gd:gd, 
       minX:minX, minY:minY, maxX:maxX, maxY:maxY,
       bw:maxX-minX, bh:maxY-minY,
-      cx: (minX+maxX)/2, cy: (minY+maxY)/2
+      cx: finalCx, cy: finalCy
   };
 }
 
@@ -708,8 +1022,12 @@ function updateEditorHighlight(hlMap, isMinus, isGold) {
         return "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
     }
 
+    var padLayer = "";
     for(var i=0; i<rawLines.length; i++) {
         var line = rawLines[i];
+        // Слой «добор»: прозрачный отступ по ширине строки + серый выделяемый хвост
+        var padStr = (D.padTails && D.padTails[i]) ? D.padTails[i] : "";
+        padLayer += escapeHtml(line) + (padStr ? '<span class="pad-tail">' + escapeHtml(padStr) + '</span>' : "") + "\n";
         if (!hlMap[i]) {
             html += escapeHtml(line) + "\n";
             continue;
@@ -734,6 +1052,7 @@ function updateEditorHighlight(hlMap, isMinus, isGold) {
         html += "\n";
     }
     if (html !== lastBgHtml) { srcBg.innerHTML = html; lastBgHtml = html; }
+    if (padLayer !== lastPadHtml) { srcPad.innerHTML = padLayer; lastPadHtml = padLayer; }
 }
 
 function escapeHtml(str) {
@@ -756,10 +1075,10 @@ function getClickedFace(wx, wy) {
     for (var i = G.list.length - 1; i >= 0; i--) {
         var c = G.list[i];
         var isRealGhost = (c[3]===0 && !c[4]);
-        var isAllGhost = (c[3]===0);
-        var forceGhost = (ghosts.checked && isRealGhost) || (ghostsAll.checked && isAllGhost);
-        
-        if (c[3] === 0 && !forceGhost && (!selActive)) continue; 
+        var isPadGhost = (c[3]===0 && c[4]);
+        var forceGhost = (ghosts.checked && isRealGhost) || (ghostsAll.checked && isPadGhost);
+
+        if (c[3] === 0 && !forceGhost && (!selActive)) continue;
 
         var a = aC(c), b = c[1], k = c[2];
         var xT=(a-b)*u,   yT=(a+b)*v-(k+1)*hh;
@@ -778,7 +1097,7 @@ function getClickedFace(wx, wy) {
     }
     return null;
 }
-
+/* === МАРКЕР 06: ЛАЗЕР — УЗЛЫ-ИЗЛУЧАТЕЛИ И ПОПАДАНИЯ ЛУЧА (buildLaserNodes/beamCells) === */
 function getLeftBeamPos(S, d) { return { x: S * u, y: (-S + 2*d) * v }; }
 function getRightBeamPos(S, d) { return { x: S * u, y: (S + 2*d) * v }; }
 function getTopBeamPos(Sv, d) { return { x: d * u, y: Sv * v }; }
@@ -830,20 +1149,20 @@ function buildLaserNodes() {
     lists.right.sort(function(x, y) { return x - y; });
     lists.top.sort(function(x, y) { return x - y; });
 
-    lists.left.forEach(function(d) {
+    lists.left.forEach(function(d, i) {
         var startS = d - offsetB; 
-        var node = { type: 'left', d: d, pos: getLeftBeamPos(startS, d), startS: startS };
+        var node = { type: 'left', d: d, pos: getLeftBeamPos(startS, d), startS: startS, index: i + 1 };
         res.nodes.push(node); res.groups.left.push(node);
     });
 
-    lists.right.forEach(function(d) {
+    lists.right.forEach(function(d, i) {
         var startS = offsetA - d;
-        var node = { type: 'right', d: d, pos: getRightBeamPos(startS, d), startS: startS };
+        var node = { type: 'right', d: d, pos: getRightBeamPos(startS, d), startS: startS, index: i + 1 };
         res.nodes.push(node); res.groups.right.push(node);
     });
 
-    lists.top.forEach(function(d) {
-        var node = { type: 'top', d: d, pos: getTopBeamPos(res.startSv_T, d) };
+    lists.top.forEach(function(d, i) {
+        var node = { type: 'top', d: d, pos: getTopBeamPos(res.startSv_T, d), index: i + 1 };
         res.nodes.push(node); res.groups.top.push(node);
     });
 
@@ -883,12 +1202,13 @@ function beamCells(type, d) {
     return out; 
 }
 
+/* === МАРКЕР 07: DRAW — ОТРИСОВКА КАДРА, НАЧАЛО (счётчики, лазер-контекст) === */
 function draw(){
-  if (!G || !G.list) return; // ПРЕДОХРАНИТЕЛЬ: если модель еще не создана, выходим
+  if (!G || !G.list) return;
   var dpr=Math.min(window.devicePixelRatio||1, 2);
   var w = stage.clientWidth;
   var h = stage.clientHeight;
-  if(w === 0 || h === 0) return; // Предотвращение пустого рендера
+  if(w === 0 || h === 0) return;
 
   if (cv.width !== Math.floor(w * dpr) || cv.height !== Math.floor(h * dpr)) {
     cv.width = Math.floor(w * dpr);
@@ -907,6 +1227,8 @@ function draw(){
   
   var hasSelection = (selActive || isSelecting || sel.size > 0);
   var isMinus = minusMode.checked;
+  var isDark = (document.documentElement.dataset.theme === "dark");
+  var fsx = flipX ? -1 : 1, fsy = flipY ? -1 : 1;
 
   if (selActive || isSelecting) {
     var selPx = selRadius * zoom;
@@ -922,8 +1244,8 @@ function draw(){
       laserCtx = buildLaserNodes();
       var minDist = 12;
       laserCtx.nodes.forEach(function(node) {
-          var sx = (node.pos.x - G.cx) * zoom + panX;
-          var sy = (node.pos.y - G.cy) * zoom + panY;
+          var sx = fsx * (node.pos.x - G.cx) * zoom + panX;
+          var sy = fsy * (node.pos.y - G.cy) * zoom + panY;
           var dist = Math.sqrt((mouseX - sx)*(mouseX - sx) + (mouseY - sy)*(mouseY - sy));
           if (dist < minDist) {
               minDist = dist;
@@ -953,9 +1275,6 @@ function draw(){
     var c = G.list[i];
     var isOne = (c[3] === 1);
     var isTailCell = (c[4] && dimPadded.checked);
-    // c[6] === -1 — это чисто геометрический добор пустого места (не символ строки),
-    // такие ячейки не должны участвовать в подсчёте 0/1 (иначе при выкл. "Дополнить
-    // строку" кольца добиваются нулями и счётчик нулей раздувается).
     var isFiller = (c[6] === -1);
     if (!isFiller) {
       if (isOne) total1++; else total0++;
@@ -972,9 +1291,10 @@ function draw(){
       } else {
         wx = rhX(c); wy = -c[2]*DD/2;
       }
-      var sx = (wx - G.cx) * zoom + panX;
-      var sy = (wy - G.cy) * zoom + panY;
-      
+      var selOff = worldOffsetToScreen(wx, wy);
+      var sx = panX + selOff.dx;
+      var sy = panY + selOff.dy;
+
       if (sx >= rectX && sx <= rectX + rectW && sy >= rectY && sy <= rectY + rectH) {
         inSel = true;
       }
@@ -1012,12 +1332,19 @@ function draw(){
   }
 
   var highlightEqual = (disp1 === disp0 && disp1 > 0);
-  var textHlMap = {}; 
+  var textHlMap = {};
 
-  ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, 
-                   dpr * (panX - G.cx * zoom), 
-                   dpr * (panY - G.cy * zoom));
-  
+  var rotApplies = (G.kind === "top" || G.kind === "rhomb");
+  var rotRad = rotApplies ? (viewRotDeg * Math.PI / 180) : 0;
+  function applyAmbientTransform(){
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.translate(panX, panY);
+    if (rotRad) ctx.rotate(rotRad);
+    ctx.scale(fsx * zoom, fsy * zoom);
+    ctx.translate(-G.cx, -G.cy);
+  }
+  applyAmbientTransform();
+
   var strokes = G.list.length<=8000;
   ctx.lineWidth = 1 / zoom; ctx.lineJoin="round";
   
@@ -1026,12 +1353,106 @@ function draw(){
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  // Есть ли активные лазеры (тогда кубики вне лучей затемняются)
+  var textQueue = [];
+  function queueText(text, x, y){
+    textQueue.push({text:text, x:x, y:y, fillStyle:ctx.fillStyle, alpha:ctx.globalAlpha});
+  }
+
+  var flipMatchSet = null;
+  var rotMatchSet = null;
+
+  if (flipHighlight || rotHighlight) {
+    var fPosMap = {};
+    var fWorldPos = function(fc){
+      var fa=aC(fc), fb=fc[1], fk=fc[2];
+      if (G.kind === "iso") return [(fa-fb)*u, (fa+fb+1)*v-(fk+1)*hh];
+      if (G.kind === "top") return [fa*TS+TS/2, fb*TS+TS/2];
+      return [rhX(fc), -fk*DD/2];
+    };
+    
+    // Строим быструю карту всех оригинальных единичных кубиков
+    for (var fi=0; fi<G.list.length; fi++) {
+      var fc=G.list[fi];
+      if (fc[6]===-1 || fc[3]!==1) continue;
+      var fp=fWorldPos(fc);
+      // Округляем до целых пикселей для быстрой проверки соседства
+      fPosMap[Math.round(fp[0]) + "_" + Math.round(fp[1])] = true;
+    }
+
+    var fuzzyHit = function(rx, ry){
+      var krX = Math.round(rx), krY = Math.round(ry);
+      for(var ox=-2; ox<=2; ox++) {
+          for(var oy=-2; oy<=2; oy++) {
+              if (fPosMap[(krX+ox) + "_" + (krY+oy)]) return true;
+          }
+      }
+      return false;
+    };
+
+    if (flipHighlight) {
+      flipMatchSet = new Set();
+      for (var fi2=0; fi2<G.list.length; fi2++) {
+        var fc2=G.list[fi2];
+        if (fc2[6]===-1 || fc2[3]!==1) continue;
+        var fp2=fWorldPos(fc2);
+
+        // Горизонталь и вертикаль считаются НЕЗАВИСИМО друг от друга (не как один
+        // совместный поворот на 180°) — кубик совпадает, если совпадает хотя бы по одной
+        // из выбранных осей. Ось остаётся выбранной (flipMatchX/Y) даже после того как
+        // саму картинку вернули в обычный вид — это предпросмотр «кто не сдвинется».
+        var matchFoundF = false;
+        if (flipMatchX) matchFoundF = fuzzyHit(2 * G.cx - fp2[0], fp2[1]);
+        if (!matchFoundF && flipMatchY) matchFoundF = fuzzyHit(fp2[0], 2 * G.cy - fp2[1]);
+        if (matchFoundF) flipMatchSet.add(fi2);
+      }
+    }
+
+    if (rotHighlight && rotApplies) {
+      // «Неизменный» = кубик остаётся занятым на КАЖДОМ шаге полного оборота
+      // (90°,180°,270°... для шага 90°), а не только относительно текущего угла —
+      // иначе набор розовых скачет при каждом клике поворота.
+      var stepDeg0 = (typeof getRotStepDeg === "function" ? getRotStepDeg() : 1);
+      var numSteps = Math.max(1, Math.round(360 / stepDeg0));
+
+      if (rotMatchCache && rotMatchCache.G === G && rotMatchCache.step === stepDeg0) {
+        rotMatchSet = rotMatchCache.set;
+      } else {
+        rotMatchSet = new Set();
+        for (var fi3=0; fi3<G.list.length; fi3++) {
+          var fc3=G.list[fi3];
+          if (fc3[6]===-1 || fc3[3]!==1) continue;
+          var fp3=fWorldPos(fc3);
+          var dx0 = fp3[0] - G.cx, dy0 = fp3[1] - G.cy;
+
+          var alwaysMatch = true;
+          for (var m=1; m<numSteps && alwaysMatch; m++) {
+            var testRadM = m * stepDeg0 * Math.PI / 180;
+            var cosM = Math.cos(testRadM), sinM = Math.sin(testRadM);
+            var rx = dx0 * cosM - dy0 * sinM + G.cx;
+            var ry = dx0 * sinM + dy0 * cosM + G.cy;
+
+            var krX = Math.round(rx);
+            var krY = Math.round(ry);
+            var found = false;
+            // Умная проверка: даже если центр съехал из-за float/косинуса, радиус 2 пикселя всё поймает
+            for(var ox2=-2; ox2<=2 && !found; ox2++) {
+                for(var oy2=-2; oy2<=2; oy2++) {
+                    if (fPosMap[(krX+ox2) + "_" + (krY+oy2)]) { found = true; break; }
+                }
+            }
+            if (!found) alwaysMatch = false;
+          }
+          if (alwaysMatch) rotMatchSet.add(fi3);
+        }
+        rotMatchCache = { G: G, step: stepDeg0, set: rotMatchSet };
+      }
+    }
+  }
+
   var lasersActive = skewerMode.checked && G.kind === "iso" && skewers.length > 0;
-  // Настраиваемая видимость нулевых кубиков: отдельно строки и добор
   var zeroMainA = parseFloat(zeroMain.value);
   var zeroPadA  = parseFloat(zeroPad.value);
-
+/* === МАРКЕР 08: DRAW — ОТРИСОВКА ФИГУР (кубы / квадраты / ромбы) === */
   for(var i=0;i<G.list.length;i++){
     var c=G.list[i]; 
     var val = c[3];
@@ -1044,8 +1465,19 @@ function draw(){
     var isSkewered = skeweredElements.has(i);
     var hasLaser = cellLaserColor[c._i] !== undefined;
     var laserCol = cellLaserColor[c._i];
+    
+    var isFlipMatch = flipMatchSet && flipMatchSet.has(i);
+    var isRotMatch = rotMatchSet && rotMatchSet.has(i);
 
-    // Если лазер включен, ячейки под лучом всегда непрозрачные (alpha=1.0)
+    // ФИЛЬТРЫ ВИДИМОСТИ СОВПАДЕНИЙ / РАЗЛИЧИЙ
+    if (val === 1) {
+        if (flipHighlight && flipShowMode === "match" && !isFlipMatch) continue;
+        if (flipHighlight && flipShowMode === "diff" && isFlipMatch) continue;
+        
+        if (rotHighlight && rotShowMode === "match" && !isRotMatch) continue;
+        if (rotHighlight && rotShowMode === "diff" && isRotMatch) continue;
+    }
+
     var isDimmedLoop = (dimPadded.checked && isPadded && !isGhost && !isSkewered);
     
     var isActiveElement = true;
@@ -1054,8 +1486,9 @@ function draw(){
     }
 
     var isRealGhost = (isGhost && !isPadded);
+    var isPadGhost = (isGhost && isPadded);
     var forceVisibleZero = isGhost && ((hasSelection && inSelection) || isSkewered);
-    var shouldShowGhost = (ghostsAll.checked && isGhost) || (ghosts.checked && isRealGhost) || forceVisibleZero;
+    var shouldShowGhost = (ghosts.checked && isRealGhost) || (ghostsAll.checked && isPadGhost) || forceVisibleZero;
     
     if (isGhost && !shouldShowGhost) continue;
 
@@ -1066,25 +1499,26 @@ function draw(){
         textHlMap[absL][cIdx] = c[2];
     }
 
+    var za = (isPadded ? zeroPadA : zeroMainA) * (lasersActive ? 0.35 : 1);
     if (isSkewered && skewerMode.checked) {
         ctx.globalAlpha = 1.0;
     } else if (isActiveElement) {
         if (isGhost) {
-            var za = (isPadded ? zeroPadA : zeroMainA) * (lasersActive ? 0.35 : 1);
-            ctx.globalAlpha = (ghosts.checked || ghostsAll.checked) ? za : (forceVisibleZero ? Math.max(za, 0.35) : 0.0);
+            ctx.globalAlpha = (ghosts.checked || ghostsAll.checked) ? Math.min(za, 1) : (forceVisibleZero ? Math.min(Math.max(za, 0.35), 1) : 0.0);
         }
         else if (isDimmedLoop) ctx.globalAlpha = 0.12;
-        else ctx.globalAlpha = lasersActive ? 0.16 : 1.0; // затемняем «единичные» кубики вне лучей
+        else ctx.globalAlpha = lasersActive ? 0.16 : 1.0;
     } else {
         ctx.globalAlpha = isGhost ? 0.0 : 0.03;
     }
 
     if (ctx.globalAlpha <= 0) continue;
-    
-    var doStroke = strokes || isGhost || isDimmedLoop || isSkewered; 
+
+    var doStroke = strokes || isGhost || isDimmedLoop || isSkewered;
+    var ghostStrokeBoost = isGhost ? Math.max(0, za - 1) : 0;
     var fillColor1 = isGhost ? "rgba(0,0,0,0)" : col[2];
     var fillColor2 = isGhost ? "rgba(0,0,0,0)" : col[1];
-    var fillColor3 = isGhost ? "rgba(0,0,0,0.05)" : col[0];
+    var fillColor3 = isGhost ? "rgba(0,0,0,0)" : col[0];
 
     if (isActiveElement && highlightEqual && !isSkewered) {
       if (!isDimmedLoop) ctx.globalAlpha = 1.0; 
@@ -1100,6 +1534,14 @@ function draw(){
       }
     }
 
+    if (isFlipMatch || isRotMatch) {
+      ctx.globalAlpha = Math.max(ctx.globalAlpha, isDimmedLoop ? 0.4 : 1);
+      var hlColStr = isRotMatch ? rotHlColor.value : flipHlColor.value;
+      col = [col[0], col[1], col[2], darkColor(hlColStr, 0.35)];
+      fillColor1 = hlColStr; fillColor2 = hlColStr; fillColor3 = hlColStr;
+      doStroke = true;
+    }
+
     var a=aC(c),b=c[1],k=c[2];
     
     if (G.kind === "iso") {
@@ -1113,7 +1555,7 @@ function draw(){
       ctx.moveTo(xL,yL); ctx.lineTo(xF,yF); ctx.lineTo(xF,yFb); ctx.lineTo(xL,yLb);
       ctx.closePath(); ctx.fill(); 
       if(doStroke){
-          ctx.strokeStyle = hasLaser ? laserCol : col[3];
+          ctx.strokeStyle = hasLaser ? laserCol : (ghostStrokeBoost > 0 ? litColor(col[3], Math.min(ghostStrokeBoost, 1)) : col[3]);
           ctx.lineWidth = hasLaser ? (3.5 / zoom) : (1 / zoom);
           ctx.stroke();
       }
@@ -1122,7 +1564,7 @@ function draw(){
       ctx.moveTo(xF,yF); ctx.lineTo(xR,yR); ctx.lineTo(xR,yRb); ctx.lineTo(xF,yFb);
       ctx.closePath(); ctx.fill(); 
       if(doStroke){
-          ctx.strokeStyle = hasLaser ? laserCol : col[3];
+          ctx.strokeStyle = hasLaser ? laserCol : (ghostStrokeBoost > 0 ? litColor(col[3], Math.min(ghostStrokeBoost, 1)) : col[3]);
           ctx.lineWidth = hasLaser ? (3.5 / zoom) : (1 / zoom);
           ctx.stroke();
       }
@@ -1131,7 +1573,7 @@ function draw(){
       ctx.moveTo(xT,yT); ctx.lineTo(xR,yR); ctx.lineTo(xF,yF); ctx.lineTo(xL,yL);
       ctx.closePath(); ctx.fill(); 
       if(doStroke){
-          ctx.strokeStyle = hasLaser ? laserCol : col[3];
+          ctx.strokeStyle = hasLaser ? laserCol : (ghostStrokeBoost > 0 ? litColor(col[3], Math.min(ghostStrokeBoost, 1)) : col[3]);
           ctx.lineWidth = hasLaser ? (3.5 / zoom) : (1 / zoom);
           ctx.stroke();
       }
@@ -1139,38 +1581,58 @@ function draw(){
       if (drawText || isSkewered || forceVisibleZero) {
         ctx.globalAlpha = (isActiveElement || isSkewered || forceVisibleZero) ? (isDimmedLoop && !isSkewered ? 0.4 : 1) : 0.1;
         ctx.fillStyle = isGhost ? col[3] : (isPadded ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.85)");
-        ctx.fillText(isGhost ? "0" : "1", (a-b)*u, (a+b+1)*v - (k+1)*hh + 1);
+        queueText(isGhost ? "0" : "1", (a-b)*u, (a+b+1)*v - (k+1)*hh);
       }
     } else if (G.kind === "top") {
-      ctx.fillStyle=fillColor3; ctx.strokeStyle=col[3];
+      ctx.fillStyle=fillColor3; ctx.strokeStyle = ghostStrokeBoost > 0 ? litColor(col[3], Math.min(ghostStrokeBoost, 1)) : col[3];
+      ctx.lineWidth = 1 / zoom;
       ctx.beginPath();
       ctx.rect(aC(c)*TS+0.5, c[1]*TS+0.5, TS-1, TS-1);
       ctx.fill(); if(doStroke)ctx.stroke();
-      
+
       if (drawText || forceVisibleZero) {
         ctx.globalAlpha = isActiveElement || forceVisibleZero ? (isDimmedLoop ? 0.4 : 1) : 0.1;
         ctx.fillStyle = isGhost ? col[3] : (isPadded ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.85)");
-        ctx.fillText(isGhost ? "0" : "1", aC(c)*TS + TS/2, c[1]*TS + TS/2 + 1);
+        queueText(isGhost ? "0" : "1", aC(c)*TS + TS/2, c[1]*TS + TS/2);
       }
     } else {
       var cx=rhX(c), cy2=-c[2]*DD/2, r2=DD/2;
+      var ghostStroke = ghostStrokeBoost > 0 ? litColor(col[3], Math.min(ghostStrokeBoost, 1)) : col[3];
       ctx.fillStyle=fillColor1; ctx.beginPath();
       ctx.moveTo(cx,cy2-r2); ctx.lineTo(cx-r2,cy2); ctx.lineTo(cx,cy2+r2);
-      ctx.closePath(); ctx.fill(); if(doStroke){ctx.strokeStyle=col[3];ctx.stroke();}
+      ctx.closePath(); ctx.fill(); if(doStroke){ctx.strokeStyle=ghostStroke;ctx.lineWidth=1/zoom;ctx.stroke();}
       ctx.fillStyle=fillColor2; ctx.beginPath();
       ctx.moveTo(cx,cy2-r2); ctx.lineTo(cx+r2,cy2); ctx.lineTo(cx,cy2+r2);
-      ctx.closePath(); ctx.fill(); if(doStroke){ctx.strokeStyle=col[3];ctx.stroke();}
-      
+      ctx.closePath(); ctx.fill(); if(doStroke){ctx.strokeStyle=ghostStroke;ctx.lineWidth=1/zoom;ctx.stroke();}
+
       if (drawText || forceVisibleZero) {
         ctx.globalAlpha = isActiveElement || forceVisibleZero ? (isDimmedLoop ? 0.4 : 1) : 0.1;
         ctx.fillStyle = isGhost ? col[3] : (isPadded ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.85)");
-        ctx.fillText(isGhost ? "0" : "1", cx, cy2);
+        queueText(isGhost ? "0" : "1", cx, cy2);
       }
     }
   }
 
+  if (textQueue.length) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.font = "bold " + (13 * zoom) + "px 'Roboto Mono', monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    var rcos = rotRad ? Math.cos(rotRad) : 1, rsin = rotRad ? Math.sin(rotRad) : 0;
+    for (var tqi=0; tqi<textQueue.length; tqi++) {
+      var tq = textQueue[tqi];
+      var dx = fsx * zoom * (tq.x - G.cx), dy = fsy * zoom * (tq.y - G.cy);
+      var sx = panX + (rotRad ? (dx*rcos - dy*rsin) : dx);
+      var sy = panY + (rotRad ? (dx*rsin + dy*rcos) : dy);
+      ctx.globalAlpha = tq.alpha;
+      ctx.fillStyle = tq.fillStyle;
+      ctx.fillText(tq.text, sx, sy + 1);
+    }
+    ctx.globalAlpha = 1;
+    applyAmbientTransform();
+  }
+/* === МАРКЕР 09: DRAW — ЛУЧИ И УЗЛЫ ЛАЗЕРА НА ХОЛСТЕ === */
   if (skewerMode.checked && G.kind === "iso" && laserCtx && laserCtx.nodes.length) {
-      var isDark = (document.documentElement.dataset.theme === "dark");
       ctx.strokeStyle = isDark ? "rgba(147, 166, 159, 0.16)" : "rgba(110, 109, 102, 0.22)";
       ctx.lineWidth = 1 / zoom;
 
@@ -1215,6 +1677,18 @@ function draw(){
               ctx.globalAlpha = 1.0;
               ctx.fill();
           }
+
+          // Отрисовка номера узла
+          var tx = p.x, ty = p.y, off = 13 / zoom;
+          if (node.type === 'top') { ty -= off; }
+          else if (node.type === 'left') { tx -= off; ty -= off * 0.2; }
+          else if (node.type === 'right') { tx += off; ty -= off * 0.2; }
+          
+          ctx.font = "bold " + (10 / zoom) + "px 'Roboto Mono', monospace";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillStyle = activeLaser ? activeLaser.color : (isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)");
+          ctx.fillText(node.index, tx, ty);
       });
       ctx.globalAlpha = 1.0;
   }
@@ -1276,6 +1750,7 @@ function draw(){
       }
   }
 
+  /* === МАРКЕР 10: DRAW — ПАНЕЛЬ РЕЗУЛЬТАТОВ ЛАЗЕРА (DOM: колонки/переключатели) === */
   if (skewerMode.checked && G.kind === "iso") {
       skewerRes.innerHTML = "";
       skewerWrap.style.display = "block";
@@ -1312,18 +1787,41 @@ function draw(){
           }
 
           if (sd) {
+              var activeN = laserCtx.groups[sk.type].find(function(n){return n.d === sk.d});
+              var nIdx = activeN ? activeN.index : "?";
+
               var line = document.createElement("div");
               line.className = "skew-line";
+              
               var dot = document.createElement("span");
               dot.className = "skew-dot";
               dot.style.background = sd.color;
               line.appendChild(dot);
+              
               var txt = document.createElement("span");
-              txt.textContent = sd.icon + " " + (sd.str.length ? sd.str : i18n[currentLang].empty);
+              txt.textContent = sd.icon + " " + nIdx + ": " + (sd.str.length ? sd.str : i18n[currentLang].empty);
               line.appendChild(txt);
-              laserGroups[sk.type].push(line);
+              
+              laserGroups[sk.type].push({ index: nIdx, el: line });
           }
       });
+
+      // Панель переключателей видимости колонок лазера
+      var tb = document.createElement("div");
+      tb.className = "laser-toggles";
+      var colDefs = [
+          { key: "top",   label: (currentLang === "ru") ? "Верх"  : "Top" },
+          { key: "right", label: (currentLang === "ru") ? "Право" : "Right" },
+          { key: "left",  label: (currentLang === "ru") ? "Лево"  : "Left" }
+      ];
+      colDefs.forEach(function(cd){
+          var btn = document.createElement("button");
+          btn.textContent = "👁 " + cd.label;
+          if (laserVis[cd.key]) btn.className = "active";
+          btn.onclick = function(){ laserVis[cd.key] = !laserVis[cd.key]; draw(); };
+          tb.appendChild(btn);
+      });
+      skewerRes.appendChild(tb);
 
       if (!skewers.length) {
           var hint = document.createElement("div");
@@ -1332,21 +1830,25 @@ function draw(){
           hint.textContent = i18n[currentLang].hint;
           skewerRes.appendChild(hint);
       } else {
-          // Группировка результатов по видам: Верх / Право / Лево
-          var colDefs = [
-              { key: "top",   label: (currentLang === "ru") ? "Верх"  : "Top" },
-              { key: "right", label: (currentLang === "ru") ? "Право" : "Right" },
-              { key: "left",  label: (currentLang === "ru") ? "Лево"  : "Left" }
-          ];
+          var colsWrap = document.createElement("div");
+          colsWrap.style.display = "flex";
+          colsWrap.style.gap = "16px";
+          colsWrap.style.width = "100%";
+          skewerRes.appendChild(colsWrap);
+
           colDefs.forEach(function(cd){
+              if (!laserVis[cd.key]) return; // Пропускаем скрытые колонки
               var col = document.createElement("div");
               col.className = "laser-col";
               var h = document.createElement("div");
               h.className = "laser-col-h";
               h.textContent = cd.label;
               col.appendChild(h);
-              if (laserGroups[cd.key].length) {
-                  laserGroups[cd.key].forEach(function(l){ col.appendChild(l); });
+
+              var items = laserGroups[cd.key];
+              if (items.length) {
+                  items.sort(function(a,b){return a.index - b.index;}); // Сортируем по номеру оси
+                  items.forEach(function(it){ col.appendChild(it.el); });
               } else {
                   var dash = document.createElement("div");
                   dash.className = "sub";
@@ -1354,13 +1856,14 @@ function draw(){
                   dash.textContent = "—";
                   col.appendChild(dash);
               }
-              skewerRes.appendChild(col);
+              colsWrap.appendChild(col);
           });
       }
   } else {
       skewerWrap.style.display = "none";
   }
 
+  /* === МАРКЕР 11: DRAW — КОЛЬЦА-НАПРАВЛЯЮЩИЕ, РАМКА ВЫДЕЛЕНИЯ, ЦИФРЫ БАЛАНСА (КОНЕЦ DRAW) === */
   if (!hasSelection && highlightEqual) {
       for(var i=0; i<G.list.length; i++) {
          if (G.list[i][6] !== -1) {
@@ -1424,81 +1927,84 @@ function draw(){
     ctx.fill();
   }
 
-  var curTheme = document.documentElement.dataset.theme;
-  var balanceTextCol = (curTheme === "dark") ? "#FFFFFF" : "#111111";
-  var balanceGlowCol = (curTheme === "dark") ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)";
+  if (balanceHl.checked) {
+    var curTheme = document.documentElement.dataset.theme;
+    var balanceTextCol = (curTheme === "dark") ? "#FFFFFF" : "#111111";
+    var balanceGlowCol = (curTheme === "dark") ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)";
 
-  var color1 = highlightEqual ? balanceTextCol : "#F39C12"; 
-  var color0 = highlightEqual ? balanceTextCol : "#E74C3C"; 
+    var color1 = highlightEqual ? balanceTextCol : "#F39C12";
+    var color0 = highlightEqual ? balanceTextCol : "#E74C3C";
 
-  ctx.font = "bold 90px 'Roboto Mono', monospace";
-  ctx.textBaseline = "middle";
+    ctx.font = "bold 90px 'Roboto Mono', monospace";
+    ctx.textBaseline = "middle";
 
-  if (highlightEqual) {
-    ctx.shadowBlur = 25;
-    ctx.shadowColor = balanceGlowCol;
-  } else {
+    if (highlightEqual) {
+      ctx.shadowBlur = 25;
+      ctx.shadowColor = balanceGlowCol;
+    } else {
+      ctx.shadowBlur = 0;
+    }
+
+    var textOffset = 80;
+    if (selActive || isSelecting) {
+        textOffset = selRadius * zoom + 80;
+    } else {
+        textOffset = (G.bw / 2) * zoom + 80;
+    }
+    if (textOffset < 150) textOffset = 150;
+
+    var mainFont = "bold 90px 'Roboto Mono', monospace";
+    var tailFont = "bold 42px 'Roboto Mono', monospace";
+    var showT1 = dimPadded.checked && dispT1 > 0;
+    var showT0 = dimPadded.checked && dispT0 > 0;
+    var tailEqual = showT1 && showT0 && dispT1 === dispT0;
+    ctx.textAlign = "left";
+
+    ctx.fillStyle = color1;
+    ctx.font = mainFont;
+    var m1 = String(disp1);
+    var w1 = ctx.measureText(m1).width;
+    var tw1 = 0;
+    if (showT1) { ctx.font = tailFont; tw1 = ctx.measureText("(" + dispT1 + ")").width; ctx.font = mainFont; }
+    var lx0 = panX - textOffset - w1 - tw1;
+    ctx.fillText(m1, lx0, panY);
+    if (showT1) {
+        ctx.font = tailFont;
+        if (tailEqual) {
+            ctx.fillStyle = balanceTextCol;
+            ctx.shadowBlur = 25;
+            ctx.shadowColor = balanceGlowCol;
+        } else {
+            ctx.globalAlpha = 0.45;
+        }
+        ctx.fillText("(" + dispT1 + ")", lx0 + w1, panY);
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = highlightEqual ? 25 : 0;
+    }
+
+    ctx.fillStyle = color0;
+    ctx.font = mainFont;
+    var m0 = String(disp0);
+    var w0 = ctx.measureText(m0).width;
+    ctx.fillText(m0, panX + textOffset, panY);
+    if (showT0) {
+        ctx.font = tailFont;
+        if (tailEqual) {
+            ctx.fillStyle = balanceTextCol;
+            ctx.shadowBlur = 25;
+            ctx.shadowColor = balanceGlowCol;
+        } else {
+            ctx.globalAlpha = 0.45;
+        }
+        ctx.fillText("(" + dispT0 + ")", panX + textOffset + w0, panY);
+        ctx.globalAlpha = 1;
+    }
+
     ctx.shadowBlur = 0;
   }
-
-  var textOffset = 80;
-  if (selActive || isSelecting) {
-      textOffset = selRadius * zoom + 80;
-  } else {
-      textOffset = (G.bw / 2) * zoom + 80; 
-  }
-  if (textOffset < 150) textOffset = 150; 
-
-  var mainFont = "bold 90px 'Roboto Mono', monospace";
-  var tailFont = "bold 42px 'Roboto Mono', monospace";
-  var showT1 = dimPadded.checked && dispT1 > 0;
-  var showT0 = dimPadded.checked && dispT0 > 0;
-  var tailEqual = showT1 && showT0 && dispT1 === dispT0;
-  ctx.textAlign = "left";
-
-  ctx.fillStyle = color1;
-  ctx.font = mainFont;
-  var m1 = String(disp1);
-  var w1 = ctx.measureText(m1).width;
-  var tw1 = 0;
-  if (showT1) { ctx.font = tailFont; tw1 = ctx.measureText("(" + dispT1 + ")").width; ctx.font = mainFont; }
-  var lx0 = panX - textOffset - w1 - tw1;
-  ctx.fillText(m1, lx0, panY);
-  if (showT1) {
-      ctx.font = tailFont;
-      if (tailEqual) {
-          ctx.fillStyle = balanceTextCol;
-          ctx.shadowBlur = 25;
-          ctx.shadowColor = balanceGlowCol;
-      } else {
-          ctx.globalAlpha = 0.45;
-      }
-      ctx.fillText("(" + dispT1 + ")", lx0 + w1, panY);
-      ctx.globalAlpha = 1;
-      ctx.shadowBlur = highlightEqual ? 25 : 0;
-  }
-
-  ctx.fillStyle = color0;
-  ctx.font = mainFont;
-  var m0 = String(disp0);
-  var w0 = ctx.measureText(m0).width;
-  ctx.fillText(m0, panX + textOffset, panY);
-  if (showT0) {
-      ctx.font = tailFont;
-      if (tailEqual) {
-          ctx.fillStyle = balanceTextCol;
-          ctx.shadowBlur = 25;
-          ctx.shadowColor = balanceGlowCol;
-      } else {
-          ctx.globalAlpha = 0.45;
-      }
-      ctx.fillText("(" + dispT0 + ")", panX + textOffset + w0, panY);
-      ctx.globalAlpha = 1;
-  }
-
-  ctx.shadowBlur = 0;
 }
 
+/* === МАРКЕР 12: КЛИК ПО ЭТАЖУ, ПОСТРОЕНИЕ СЕЛЕКТОРА, ПОВОРОТ СТРОК === */
 function hitFloor(wx,wy){
   if(G.kind==="iso"){
     var hf = getClickedFace(wx, wy);
@@ -1508,9 +2014,9 @@ function hitFloor(wx,wy){
   for(var i=L.length-1;i>=0;i--){
     var c=L[i];
     var isRealGhost = (c[3]===0 && !c[4]);
-    var isAllGhost = (c[3]===0);
-    var forceGhost = (ghosts.checked && isRealGhost) || (ghostsAll.checked && isAllGhost);
-    if(c[3] === 0 && !forceGhost && (!selActive)) continue; 
+    var isPadGhost = (c[3]===0 && c[4]);
+    var forceGhost = (ghosts.checked && isRealGhost) || (ghostsAll.checked && isPadGhost);
+    if(c[3] === 0 && !forceGhost && (!selActive)) continue;
     
     if(G.kind==="top"){
       if(wx>=aC(c)*TS && wx<=aC(c)*TS+TS && wy>=c[1]*TS && wy<=c[1]*TS+TS) return c[2];
@@ -1556,13 +2062,20 @@ function rotateSelected(dir) {
         var match = line.match(/^(\s*)(.*?)(\s*)$/);
         if(match) {
             var pre = match[1], core = match[2], post = match[3];
-            if (core.length > 1) {
+            // Если кольцо длиннее строки, «Дополнить строку» достраивает хвост повтором.
+            // Когда длина кольца не кратна длине core, хвост обрывается на середине периода —
+            // вращать нужно ПОЛНУЮ (core+хвост) строку, иначе при каждом сдвиге на границе
+            // обрыва будет попадать другой символ и общее число 1/0 будет «плавать», хотя
+            // по факту символы просто едут по кругу и меняться не должны.
+            var padTail = (D.padTails && D.padTails[absL]) || "";
+            var full = core + padTail;
+            if (full.length > 1) {
                 if (dir === 'CW') {
-                    core = core.slice(-1) + core.slice(0, -1);
+                    full = full.slice(-1) + full.slice(0, -1);
                 } else {
-                    core = core.slice(1) + core.slice(0, 1);
+                    full = full.slice(1) + full.slice(0, 1);
                 }
-                rawLines[absL] = pre + core + post;
+                rawLines[absL] = pre + full + post;
                 changed = true;
             }
         }
@@ -1584,8 +2097,15 @@ function rotateSelected(dir) {
     }
 }
 
+/* === МАРКЕР 13: ЭКСПОРТ В EXCEL — ВАРИАНТ «СЕТКА» (с центрированием) === */
 function exportExcel() {
-    if(currentView !== "top" && mode.value !== "rhomb") return;
+    // Вариант 1 (Сетка): Сохраняет визуальное выравнивание и центрирование (как на экране)
+    if(currentView !== "top" && mode.value !== "rhomb") {
+        alert(currentLang === 'ru' 
+            ? "Экспорт в Excel доступен только в режиме 'Вид сверху' или 'Ромбы'!\nПожалуйста, переключитесь на вид сверху, чтобы выгрузить таблицу." 
+            : "Excel export is only available in 'Top view' or 'Rhombuses' mode!\nPlease switch to Top View to download the spreadsheet.");
+        return;
+    }
     
     var isDark = (document.documentElement.dataset.theme === "dark");
     var emptyBg = isDark ? "#1C2724" : "#FFFFFF";
@@ -1625,7 +2145,10 @@ function exportExcel() {
             
             var floor = c[2];
             var rRow = D.floors - 1 - floor;
-            var excel_x = c[0] * 2 + (floor % 2 === 1 ? 1 : 0);
+            
+            // ВЫРАВНИВАНИЕ: используем точный сдвиг d.half, чтобы линии не гуляли вразнобой
+            var halfShift = (D.half && D.half[floor]) !== undefined ? D.half[floor] : 0;
+            var excel_x = Math.round((c[0] + halfShift) * 2);
             var excel_y = rRow;
             
             if (excel_x < minX) minX = excel_x;
@@ -1728,7 +2251,7 @@ function exportExcel() {
         G.list.forEach(function(c) {
             var isActive = (sel.size === 0 || (minusMode.checked ? !sel.has(c[2]) : sel.has(c[2])));
             if (!isActive && c[3] === 0) return;
-            if (c[3] === 0 && !ghostsAll.checked && (!ghosts.checked || c[4])) return;
+            if (c[3] === 0 && !((ghosts.checked && !c[4]) || (ghostsAll.checked && c[4]))) return;
             if (c[0] < minX) minX = c[0]; if (c[0] > maxX) maxX = c[0];
             if (c[1] < minY) minY = c[1]; if (c[1] > maxY) maxY = c[1];
             exportList.push({c: c, isActive: isActive});
@@ -1777,6 +2300,210 @@ function exportExcel() {
     }
 }
 
+/* === МАРКЕР 14: ЭКСПОРТ В EXCEL — ВАРИАНТ «ПРЯМОЙ» (без сдвигов) === */
+function exportExcelAlt() {
+    // Вариант 2 (Прямой): Выгружает плоскую таблицу, где строки выровнены строго по левому краю (без сдвигов)
+    if(currentView !== "top" && mode.value !== "rhomb") {
+        alert(currentLang === 'ru' 
+            ? "Экспорт в Excel доступен только в режиме 'Вид сверху' или 'Ромбы'!\nПожалуйста, переключитесь на вид сверху, чтобы выгрузить таблицу." 
+            : "Excel export is only available in 'Top view' or 'Rhombuses' mode!\nPlease switch to Top View to download the spreadsheet.");
+        return;
+    }
+    
+    var isDark = (document.documentElement.dataset.theme === "dark");
+    var emptyBg = isDark ? "#1C2724" : "#FFFFFF";
+    var inactiveBg = isDark ? "#3A3F3D" : "#D0D0D0";
+    var inactiveFg = isDark ? "#8A8F8D" : "#777777";
+
+    function blend(hex1, hex2, alpha) {
+        var r1 = parseInt(hex1.slice(1, 3), 16);
+        var g1 = parseInt(hex1.slice(3, 5), 16);
+        var b1 = parseInt(hex1.slice(5, 7), 16);
+        var r2 = parseInt(hex2.slice(1, 3), 16);
+        var g2 = parseInt(hex2.slice(3, 5), 16);
+        var b2 = parseInt(hex2.slice(5, 7), 16);
+        var r = Math.round(r1 * alpha + r2 * (1 - alpha));
+        var g = Math.round(g1 * alpha + g2 * (1 - alpha));
+        var b = Math.round(b1 * alpha + b2 * (1 - alpha));
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+    }
+    
+    function getLuma(hex) {
+        var r = parseInt(hex.slice(1, 3), 16);
+        var g = parseInt(hex.slice(3, 5), 16);
+        var b = parseInt(hex.slice(5, 7), 16);
+        return 0.299 * r + 0.587 * g + 0.114 * b;
+    }
+
+    if (mode.value === "rhomb") {
+        var minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+        var exportList = [];
+        
+        G.list.forEach(function(c) {
+            var val = c[3];
+            var isGhost = (val === 0);
+            var isPadded = c[4];
+            var isActive = true;
+            if (sel.size > 0) isActive = minusMode.checked ? !sel.has(c[2]) : sel.has(c[2]);
+            
+            var floor = c[2];
+            var rRow = D.floors - 1 - floor;
+            
+            // ВЫРАВНИВАНИЕ ПРЯМОЕ: игнорируем halfShift, выравниваем все по левому краю (с 0)
+            var excel_x = c[0] * 2;
+            var excel_y = rRow;
+            
+            if (excel_x < minX) minX = excel_x;
+            if (excel_x + 1 > maxX) maxX = excel_x + 1;
+            if (excel_y < minY) minY = excel_y;
+            if (excel_y > maxY) maxY = excel_y;
+            
+            exportList.push({
+                c: c, excel_x: excel_x, excel_y: excel_y, 
+                isActive: isActive, isPadded: isPadded
+            });
+        });
+        
+        if (minX > maxX) { alert("Нет данных"); return; }
+        
+        var matrix = {};
+        for(var y = minY; y <= maxY; y++) {
+            matrix[y] = {};
+            for(var x = minX; x <= maxX; x++) matrix[y][x] = null;
+        }
+        
+        exportList.forEach(function(item) {
+            var c = item.c;
+            var floor = c[2];
+            var col = pc(floor);
+            var bg = col[0], borderCol = col[3], fg;
+            var isDimmed = c[4];
+
+            if (isDimmed) {
+                bg = blend(col[0], emptyBg, 0.15);
+                borderCol = isDark ? "#FFFFFF" : "#777777";
+                fg = blend(col[3], emptyBg, 0.35);
+            } else if (c[3] === 0) {
+                bg = emptyBg; borderCol = isDark ? col[1] : col[3]; fg = borderCol;
+            } else if (!item.isActive) {
+                bg = inactiveBg; borderCol = inactiveFg; fg = inactiveFg;
+            } else {
+                bg = col[0]; borderCol = col[3];
+                fg = getLuma(bg) < 120 ? "#FFFFFF" : "#111111";
+            }
+            
+            var ex = item.excel_x, ey = item.excel_y;
+            var valL = (c[3] === 1) ? 1 : 0;
+            var valR = (c[3] === 1) ? 0 : 1;
+            var isEvenFloor = (floor % 2 === 0);
+            var diagL = isEvenFloor ? 'Slash' : 'Backslash';
+            var diagR = isEvenFloor ? 'Backslash' : 'Slash';
+            
+            matrix[ey][ex]   = { val: valL, bg: bg, fg: fg, borderCol: borderCol, type: 'L', diag: diagL };
+            matrix[ey][ex+1] = { val: valR, bg: bg, fg: fg, borderCol: borderCol, type: 'R', diag: diagR };
+        });
+        
+        var styleMap = {}, styleDefs = "", styleCount = 0;
+        function getRhombStyleId(bg, fg, borderCol, type, diag) {
+            var key = bg + "|" + fg + "|" + borderCol + "|" + type + "|" + diag;
+            if (!styleMap[key]) {
+                styleCount++;
+                var id = "rs" + styleCount;
+                styleMap[key] = id;
+                var diagPos = (diag === 'Slash') ? "DiagonalRight" : "DiagonalLeft";
+                var align = (type === 'L') ? "Right" : "Left";
+                styleDefs += '<Style ss:ID="' + id + '">'
+                    + '<Alignment ss:Horizontal="' + align + '" ss:Vertical="Center"/>'
+                    + '<Borders>'
+                    + '<Border ss:Position="' + diagPos + '" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="' + borderCol + '"/>'
+                    + '</Borders>'
+                    + '<Font ss:Color="' + fg + '" ss:Bold="1" ss:Size="10"/>'
+                    + '<Interior ss:Color="' + bg + '" ss:Pattern="Solid"/>'
+                    + '</Style>';
+            }
+            return styleMap[key];
+        }
+        styleDefs += '<Style ss:ID="empty_cell_style"><Interior ss:Color="' + emptyBg + '" ss:Pattern="Solid"/></Style>';
+        
+        var rowsXml = "";
+        for(var y2 = minY; y2 <= maxY; y2++) {
+            rowsXml += '<Row ss:AutoFitHeight="0" ss:Height="30">';
+            for(var x2 = minX; x2 <= maxX; x2++) {
+                var cell = matrix[y2][x2];
+                if (cell) {
+                    rowsXml += '<Cell ss:StyleID="' + getRhombStyleId(cell.bg, cell.fg, cell.borderCol, cell.type, cell.diag) + '">'
+                        + '<Data ss:Type="Number">' + cell.val + '</Data></Cell>';
+                } else {
+                    rowsXml += '<Cell ss:StyleID="empty_cell_style"/>';
+                }
+            }
+            rowsXml += '</Row>';
+        }
+        
+        var xml = '<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n'
+            + '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'
+            + '<Styles>' + styleDefs + '</Styles>'
+            + '<Worksheet ss:Name="Rhombuses"><Table ss:DefaultColumnWidth="30" ss:DefaultRowHeight="30">' + rowsXml + '</Table></Worksheet></Workbook>';
+        
+        saveBlob(xml, 'rhombuses_grid_direct.xml');
+        return;
+    } else {
+        // Прямой вариант выгрузки без смещения для других режимов
+        var minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+        var exportList = [];
+        G.list.forEach(function(c) {
+            var isActive = (sel.size === 0 || (minusMode.checked ? !sel.has(c[2]) : sel.has(c[2])));
+            if (!isActive && c[3] === 0) return;
+            if (c[3] === 0 && !((ghosts.checked && !c[4]) || (ghostsAll.checked && c[4]))) return;
+            if (c[0] < minX) minX = c[0]; if (c[0] > maxX) maxX = c[0];
+            if (c[1] < minY) minY = c[1]; if (c[1] > maxY) maxY = c[1];
+            exportList.push({c: c, isActive: isActive});
+        });
+        if (minX > maxX) return;
+        var matrix = {};
+        for(var y = minY; y <= maxY; y++) { matrix[y] = {}; for(var x = minX; x <= maxX; x++) matrix[y][x] = null; }
+        exportList.forEach(function(item) {
+            var c = item.c, col = pc(c[2]), bg = col[0], isDim = dimPadded.checked && c[4];
+            var fg;
+            if (c[3] === 0) {
+                bg = emptyBg; var gfg = isDark ? col[1] : col[3];
+                fg = isDim ? blend(gfg, emptyBg, 0.55) : gfg;
+            } else if (!item.isActive) {
+                bg = inactiveBg; fg = inactiveFg;
+            } else {
+                if (isDim) bg = blend(bg, emptyBg, 0.12);
+                var bfg = getLuma(bg) < 120 ? "#FFFFFF" : "#111111";
+                fg = isDim ? blend(bfg, emptyBg, 0.65) : bfg;
+            }
+            matrix[c[1]][c[0]] = { val: c[3], bg: bg, fg: fg };
+        });
+        var bcol = isDark ? "#31423C" : "#DCDAD1", styleMap = {}, styleDefs = "", sc = 0;
+        function getSid(bg, fg) {
+            var k = bg + "|" + fg;
+            if (!styleMap[k]) {
+                sc++; var id = "s" + sc; styleMap[k] = id;
+                styleDefs += '<Style ss:ID="' + id + '"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/>'
+                    + '<Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="' + bcol + '"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="' + bcol + '"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="' + bcol + '"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="' + bcol + '"/></Borders>'
+                    + '<Font ss:Color="' + fg + '" ss:Bold="1"/><Interior ss:Color="' + bg + '" ss:Pattern="Solid"/></Style>';
+            } return styleMap[k];
+        }
+        var rowsXml = "";
+        for(var y2 = minY; y2 <= maxY; y2++) {
+            rowsXml += '<Row ss:AutoFitHeight="0" ss:Height="30">';
+            for(var x2 = minX; x2 <= maxX; x2++) {
+                var cell = matrix[y2][x2];
+                if (cell) rowsXml += '<Cell ss:StyleID="' + getSid(cell.bg, cell.fg) + '"><Data ss:Type="Number">' + cell.val + '</Data></Cell>';
+                else rowsXml += '<Cell ss:StyleID="' + getSid(emptyBg, emptyBg) + '"/>';
+            } rowsXml += '</Row>';
+        }
+        var xml = '<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n'
+            + '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'
+            + '<Styles>' + styleDefs + '</Styles><Worksheet ss:Name="Bits"><Table ss:DefaultColumnWidth="30" ss:DefaultRowHeight="30">' + rowsXml + '</Table></Worksheet></Workbook>';
+        saveBlob(xml, 'bits_grid_direct.xml');
+    }
+}
+
+/* === МАРКЕР 15: SAVEBLOB, SYNCSELUI, REBUILD И СЛУШАТЕЛИ НАСТРОЕК === */
 function saveBlob(xml, name) {
     var blob = new Blob([xml], {type: 'text/xml'});
     var url = URL.createObjectURL(blob), a = document.createElement('a');
@@ -1807,7 +2534,7 @@ function syncSelUI(){
   }
 
   if (sel.size === 0) {
-      info.innerHTML = i18n[currentLang].info1;
+      if (info) info.innerHTML = i18n[currentLang].info1;
       rotWrap.style.display = "none";
   } else {
       var arr = Array.from(sel).sort(function(a,b){return a-b;});
@@ -1815,10 +2542,10 @@ function syncSelUI(){
           var r = D.rows[arr[0]] || "";
           if (r.length > 55) r = r.slice(0,55) + "…";
           var flText = (currentLang==='ru') ? "Этаж " : "Floor ";
-          info.innerHTML = flText + (arr[0]+1) + ": " + r;
+          if (info) info.innerHTML = flText + (arr[0]+1) + ": " + r;
       } else {
           var selText = (currentLang==='ru') ? "Выбраны этажи: <b>" : "Selected floors: <b>";
-          info.innerHTML = selText + arr.map(function(x){return x+1;}).join(", ") + "</b>";
+          if (info) info.innerHTML = selText + arr.map(function(x){return x+1;}).join(", ") + "</b>";
       }
       rotWrap.style.display = "flex";
   }
@@ -1826,7 +2553,19 @@ function syncSelUI(){
   skewerMode.disabled = (mode.value === "rhomb" || currentView === "top");
   if (skewerMode.disabled) { skewerMode.checked = false; skewers = []; }
   
-  btnExcel.style.display = (currentView === "top" || mode.value === "rhomb") ? "block" : "none";
+  // Выбор выравнивания — только для центрируемых раскладок (воронка/ромбы)
+  $("alignGroup").style.display = (mode.value === "funnel" || mode.value === "rhomb") ? "flex" : "none";
+
+  // Кнопки Excel визуально затеняются, если режим не плоский
+  var isFlatMode = (currentView === "top" || mode.value === "rhomb");
+  btnExcel.style.opacity = isFlatMode ? "1" : "0.6";
+  btnExcel.title = isFlatMode ? "" : ((currentLang === 'ru') ? "Переключитесь на Вид сверху" : "Switch to Top view");
+  btnExcelAlt.style.opacity = isFlatMode ? "1" : "0.6";
+  btnExcelAlt.title = isFlatMode ? "" : ((currentLang === 'ru') ? "Переключитесь на Вид сверху" : "Switch to Top view");
+
+  // Управление вращением доступно только в плоских режимах
+  rotateToolbar.style.display = isFlatMode ? "flex" : "none";
+  if (!isFlatMode) stopRotAnim();
 }
 
 function rebuild(){
@@ -1855,6 +2594,19 @@ mode.addEventListener("change", function(){
     var d = (mode.value==="rhomb");
     btnViewIso.disabled = d;
     btnViewTop.disabled = d;
+    if (d && currentView !== "top") {
+      currentView = "top";
+      btnViewTop.classList.add("active-view");
+      btnViewIso.classList.remove("active-view");
+      sel.clear(); skewers=[];
+    }
+    if (d && alignMode !== "diag") {
+      alignMode = "diag";
+      var ag = $("alignGroup");
+      ag.querySelectorAll(".align-btn").forEach(function(x){ x.classList.remove("active"); });
+      var diagBtn = ag.querySelector('[data-align="diag"]');
+      if (diagBtn) diagBtn.classList.add("active");
+    }
     rebuild();
 });
 
@@ -1867,7 +2619,18 @@ $("modeGroup").addEventListener("click", function(e){
     b.classList.add("active");
     mode.dispatchEvent(new Event("change"));
 });
+
+// Выбор выравнивания строк (воронка/ромбы)
+$("alignGroup").addEventListener("click", function(e){
+    var b = e.target.closest(".align-btn");
+    if (!b || b.dataset.align === alignMode) return;
+    alignMode = b.dataset.align;
+    this.querySelectorAll(".align-btn").forEach(function(x){ x.classList.remove("active"); });
+    b.classList.add("active");
+    rebuildKeepView();
+});
 tint.addEventListener("change", function(){ buildSelector(); draw(); syncSelUI(); });
+balanceHl.addEventListener("change", function(){ draw(); syncSelUI(); });
 guides.addEventListener("change", function(){
   var z=zoom, px=panX, py=panY;
   geometry(); zoom=z; panX=px; panY=py; draw();
@@ -1885,16 +2648,280 @@ dimPadded.addEventListener("change", function(){
 
 ghosts.addEventListener("change", function(){ geometry(); draw(); });
 ghostsAll.addEventListener("change", function(){ geometry(); draw(); });
-zeroMain.addEventListener("input", function(){ zeroMainLbl.textContent = parseFloat(zeroMain.value).toFixed(2); draw(); });
-zeroPad.addEventListener("input", function(){ zeroPadLbl.textContent = parseFloat(zeroPad.value).toFixed(2); draw(); });
+zeroMain.addEventListener("input", function(){ draw(); });
+zeroPad.addEventListener("input", function(){ draw(); });
 showText.addEventListener("change", function(){ draw(); });
 minusMode.addEventListener("change", function(){ draw(); }); 
-skewerMode.addEventListener("change", function(){ skewers=[]; draw(); syncSelUI(); }); 
-theme.addEventListener("change", function(){ document.documentElement.dataset.theme=theme.value; draw(); });
+
+// Обратите внимание: очищаем выбранные лучи при выключении/включении инструмента
+skewerMode.addEventListener("change", function(){ skewers=[]; draw(); syncSelUI(); });
+
+function setTheme(v){
+  document.documentElement.dataset.theme = v;
+  btnThemeDark.classList.toggle("active-view", v === "dark");
+  btnThemeLight.classList.toggle("active-view", v === "light");
+  draw();
+}
+btnThemeLight.addEventListener("click", function(){ setTheme("light"); });
+btnThemeDark.addEventListener("click", function(){ setTheme("dark"); });
 
 btnRotCCW.addEventListener("click", function(){ rotateSelected('CCW'); });
 btnRotCW.addEventListener("click", function(){ rotateSelected('CW'); });
 btnExcel.addEventListener("click", exportExcel);
+btnExcelAlt.addEventListener("click", exportExcelAlt);
+
+/* === МАРКЕР 15.1: УПРАВЛЕНИЕ ВРАЩЕНИЕМ === */
+// Кнопка «Зеркало» (лево/право): чисто визуальное горизонтальное отражение модели (исходный текст не трогаем)
+btnFlip.addEventListener("click", function(){
+    stopFlipAnim(false);
+    flipX = !flipX;
+    btnFlip.classList.toggle("active-view", flipX);
+    // Плей крутит ту ось, которую включили последней; переключение на эту ось сбрасывает
+    // «липкий» предпросмотр совпадений другой оси, чтобы они не мешались друг с другом.
+    if (flipX) { flipAnimAxis = 'x'; flipMatchX = true; flipMatchY = false; }
+    draw();
+});
+
+// Кнопка «Зеркало» (верх/низ): независима от горизонтальной, можно включать обе сразу
+btnFlipV.addEventListener("click", function(){
+    stopFlipAnim(false);
+    flipY = !flipY;
+    btnFlipV.classList.toggle("active-view", flipY);
+    if (flipY) { flipAnimAxis = 'y'; flipMatchY = true; flipMatchX = false; }
+    draw();
+});
+
+// Кнопка «Совпадения» (Зеркало)
+btnFlipHl.addEventListener("click", function(){
+    flipHighlight = !flipHighlight;
+    btnFlipHl.classList.toggle("active-view", flipHighlight);
+    if (flipHighlight) {
+        setFlipShowMode("match"); // совпадения включили — сразу прячем меняющиеся, как и у вращения
+    } else {
+        draw();
+    }
+});
+flipHlColor.addEventListener("input", function(){ if (flipHighlight) draw(); });
+
+// Кнопки фильтра совпадений (Зеркало)
+function setFlipShowMode(m) {
+    flipShowMode = m;
+    if($("btnFlipShowAll")) $("btnFlipShowAll").classList.toggle("active-view", m === "all");
+    if($("btnFlipShowMatch")) $("btnFlipShowMatch").classList.toggle("active-view", m === "match");
+    if($("btnFlipShowDiff")) $("btnFlipShowDiff").classList.toggle("active-view", m === "diff");
+    if (m !== "all" && !flipHighlight) {
+        flipHighlight = true;
+        $("btnFlipHl").classList.add("active-view");
+    }
+    draw();
+}
+if($("btnFlipShowAll")) $("btnFlipShowAll").addEventListener("click", function(){ setFlipShowMode("all"); });
+if($("btnFlipShowMatch")) $("btnFlipShowMatch").addEventListener("click", function(){ setFlipShowMode("match"); });
+if($("btnFlipShowDiff")) $("btnFlipShowDiff").addEventListener("click", function(){ setFlipShowMode("diff"); });
+
+// Кнопка «Анимация» (Плей/Пауза) и Сброс (Зеркало)
+function stopFlipAnim(reset){
+    if (flipAnimTimer) { clearInterval(flipAnimTimer); flipAnimTimer = null; }
+    flipAnimOn = false;
+    btnFlipAnim.classList.remove("active-view");
+    btnFlipAnim.textContent = i18n[currentLang].btnFlipAnimPlay;
+    if (reset) {
+        flipX = false;
+        flipY = false;
+        flipMatchX = false;
+        flipMatchY = false;
+        flipAnimAxis = 'x';
+        btnFlip.classList.remove("active-view");
+        btnFlipV.classList.remove("active-view");
+        draw();
+    }
+}
+
+function startFlipAnim(){
+    flipAnimOn = true;
+    btnFlipAnim.classList.add("active-view");
+    btnFlipAnim.textContent = i18n[currentLang].btnFlipAnimStop;
+    var periodMs = parseFloat(flipAnimSpeed.value) * 1000;
+    if (flipAnimTimer) clearInterval(flipAnimTimer);
+    flipAnimTimer = setInterval(function(){
+        if (flipAnimAxis === 'y') {
+            flipY = !flipY;
+            btnFlipV.classList.toggle("active-view", flipY);
+        } else {
+            flipX = !flipX;
+            btnFlip.classList.toggle("active-view", flipX);
+        }
+        draw();
+    }, periodMs);
+}
+
+btnFlipAnim.addEventListener("click", function(){
+    if (flipAnimOn) stopFlipAnim(false); else startFlipAnim();
+});
+if($("btnFlipReset")) $("btnFlipReset").addEventListener("click", function(){
+    stopFlipAnim(true);
+});
+
+flipAnimSpeed.addEventListener("input", function(){
+    if (flipAnimOn) startFlipAnim(); // перезапуск таймера с новой скоростью
+});
+
+// Управление поворотом вида (Сверху / Ромбы): выбор шага, ручной сдвиг + зациклённая анимация
+function getRotStepDeg() {
+    if (currentRotStepType === 'L') {
+        var maxL = 1;
+        for (var i = 0; i < D.rows.length; i++) {
+            var len = D.rows[i].trim().length;
+            if (len > maxL) maxL = len;
+        }
+        return 360 / maxL;
+    }
+    return currentRotStepType;
+}
+
+function setRotStep(type) {
+    currentRotStepType = type;
+    btnRotStep1.classList.toggle("active-view", type === 1);
+    btnRotStep30.classList.toggle("active-view", type === 30);
+    btnRotStep45.classList.toggle("active-view", type === 45);
+    btnRotStep90.classList.toggle("active-view", type === 90);
+    btnRotStep120.classList.toggle("active-view", type === 120);
+    btnRotStep180.classList.toggle("active-view", type === 180);
+    btnRotStepL.classList.toggle("active-view", type === 'L');
+    if (rotAnimOn) startRotAnim(); 
+    if (rotHighlight) draw(); // Пересчет совпадений под новый шаг
+}
+
+btnRotStep1.addEventListener("click", function(){ setRotStep(1); });
+btnRotStep30.addEventListener("click", function(){ setRotStep(30); });
+btnRotStep45.addEventListener("click", function(){ setRotStep(45); });
+btnRotStep90.addEventListener("click", function(){ setRotStep(90); });
+btnRotStep120.addEventListener("click", function(){ setRotStep(120); });
+btnRotStep180.addEventListener("click", function(){ setRotStep(180); });
+btnRotStepL.addEventListener("click", function(){ setRotStep('L'); });
+
+function setRotDir(dir, isManualClick){
+    rotAnimDir = dir;
+    btnRotDirCW.classList.toggle("active-view", dir === 1);
+    btnRotDirCCW.classList.toggle("active-view", dir === -1);
+    
+    if (isManualClick) {
+        stopRotAnim(false);
+        var step = getRotStepDeg();
+        viewRotDeg = (viewRotDeg + dir * step + 360) % 360;
+        draw();
+    } else if (rotAnimOn) {
+        startRotAnim();
+    } else if (rotHighlight) {
+        draw(); // Пересчет совпадений под новое направление
+    }
+}
+btnRotDirCW.addEventListener("click", function(){ setRotDir(1, true); });
+btnRotDirCCW.addEventListener("click", function(){ setRotDir(-1, true); });
+setRotDir(1, false);
+
+// Кнопка «Совпадения» (Вращение)
+btnRotHl.addEventListener("click", function(){
+    rotHighlight = !rotHighlight;
+    btnRotHl.classList.toggle("active-view", rotHighlight);
+    if (rotHighlight) {
+        setRotShowMode("match"); // совпадения включили — сразу прячем меняющиеся, оставляем только совпавшие
+    } else {
+        draw();
+    }
+});
+rotHlColor.addEventListener("input", function(){ if (rotHighlight) draw(); });
+
+// Кнопки фильтра совпадений (Вращение)
+function setRotShowMode(m) {
+    rotShowMode = m;
+    if($("btnRotShowAll")) $("btnRotShowAll").classList.toggle("active-view", m === "all");
+    if($("btnRotShowMatch")) $("btnRotShowMatch").classList.toggle("active-view", m === "match");
+    if($("btnRotShowDiff")) $("btnRotShowDiff").classList.toggle("active-view", m === "diff");
+    if (m !== "all" && !rotHighlight) {
+        rotHighlight = true;
+        $("btnRotHl").classList.add("active-view");
+    }
+    draw();
+}
+if($("btnRotShowAll")) $("btnRotShowAll").addEventListener("click", function(){ setRotShowMode("all"); });
+if($("btnRotShowMatch")) $("btnRotShowMatch").addEventListener("click", function(){ setRotShowMode("match"); });
+if($("btnRotShowDiff")) $("btnRotShowDiff").addEventListener("click", function(){ setRotShowMode("diff"); });
+
+function stopRotAnim(reset){
+    if (rotAnimTimer) { clearInterval(rotAnimTimer); rotAnimTimer = null; }
+    rotAnimOn = false;
+    btnRotAnim.classList.remove("active-view");
+    btnRotAnim.textContent = "▶ Плей";
+    if (reset) {
+        viewRotDeg = 0;
+        draw();
+    }
+}
+
+function startRotAnim(){
+    rotAnimOn = true;
+    btnRotAnim.classList.add("active-view");
+    btnRotAnim.textContent = "⏸ Пауза";
+    
+    if (rotAnimTimer) clearInterval(rotAnimTimer);
+    
+    var revSec = parseFloat(rotAnimSpeed.value); 
+    var stepDeg = getRotStepDeg();
+    
+    var stepMs;
+    var animStepDeg;
+    
+    if (currentRotStepType === 1) {
+        stepMs = 30;
+        animStepDeg = 360 / (revSec * 1000 / stepMs);
+    } else {
+        animStepDeg = stepDeg;
+        stepMs = (revSec * 1000) * (stepDeg / 360);
+        if (stepMs < 30) stepMs = 30; 
+    }
+    
+    rotAnimTimer = setInterval(function(){
+        viewRotDeg = (viewRotDeg + rotAnimDir * animStepDeg + 360) % 360;
+        draw();
+    }, stepMs);
+}
+
+btnRotAnim.addEventListener("click", function(){
+    if (rotAnimOn) stopRotAnim(false); else startRotAnim();
+});
+if($("btnRotReset")) $("btnRotReset").addEventListener("click", function(){
+    stopRotAnim(true);
+});
+
+rotAnimSpeed.addEventListener("input", function(){
+    if (rotAnimOn) startRotAnim(); 
+});
+
+// Копирование в буфер
+function copyToClipboard(text){
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(fallbackCopy.bind(null, text));
+    } else { fallbackCopy(text); }
+}
+function fallbackCopy(text){
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.top = "-1000px"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try { document.execCommand("copy"); } catch(e) {}
+    document.body.removeChild(ta);
+}
+
+// «Копировать развёрнутое»
+btnCopyExpanded.addEventListener("click", function(){
+    var lines = src.value.split("\n");
+    var out = lines.map(function(l, i){
+        return l + ((D.padTails && D.padTails[i]) ? D.padTails[i] : "");
+    }).join("\n");
+    copyToClipboard(out);
+    btnCopyExpanded.textContent = (currentLang === 'ru') ? "✓ Скопировано" : "✓ Copied";
+    setTimeout(function(){ btnCopyExpanded.textContent = i18n[currentLang].btnCopyExp; }, 1200);
+});
 
 chips.addEventListener("click", function(e){
   var b=e.target.closest("[data-chip]");
@@ -1916,17 +2943,18 @@ fr.addEventListener("input", function(){
   if (vv > 0) sel.add(vv - 1);
   draw(); syncSelUI();
 });
-
+/* === МАРКЕР 16: СОБЫТИЯ ХОЛСТА (ЗУМ/ПАН/КЛИК), СКРЫТИЕ/РЕСАЙЗ ПАНЕЛЕЙ, ESCAPE, ИНИЦИАЛИЗАЦИЯ === */
 cv.addEventListener("wheel", function(e){
-  if (!G) return; 
+  if (!G) return;
   e.preventDefault();
   var r = cv.getBoundingClientRect();
   var mx = e.clientX - r.left, my = e.clientY - r.top;
-  var wx = (mx - panX) / zoom + G.cx, wy = (my - panY) / zoom + G.cy;
+  var w = screenToWorld(mx, my);
   var zoomSpeed = 0.15;
   if (e.deltaY < 0) zoom *= (1 + zoomSpeed); else zoom /= (1 + zoomSpeed);
   if (zoom < 0.05) zoom = 0.05; if (zoom > 50) zoom = 50;
-  panX = mx - (wx - G.cx) * zoom; panY = my - (wy - G.cy) * zoom;
+  var off = worldOffsetToScreen(w.wx, w.wy);
+  panX = mx - off.dx; panY = my - off.dy;
   requestDraw();
 }, {passive: false});
 
@@ -1973,12 +3001,13 @@ cv.addEventListener("click", function(e){
   if (selActive) { selActive = false; selRadius = 0; draw(); syncSelUI(); return; }
   var r = cv.getBoundingClientRect();
   var mx = e.clientX - r.left, my = e.clientY - r.top;
-  var wx = (mx - panX) / zoom + G.cx, wy = (my - panY) / zoom + G.cy;
+  var wp = screenToWorld(mx, my);
+  var wx = wp.wx, wy = wp.wy;
 
   if (skewerMode.checked && G.kind === "iso") {
       var lctx = buildLaserNodes(), clickedNode = null, hitRadius = 12;
       lctx.nodes.forEach(function(node) {
-          var sx = (node.pos.x - G.cx) * zoom + panX, sy = (node.pos.y - G.cy) * zoom + panY;
+          var sx = (flipX ? -1 : 1) * (node.pos.x - G.cx) * zoom + panX, sy = (flipY ? -1 : 1) * (node.pos.y - G.cy) * zoom + panY;
           var dist = Math.sqrt((mx - sx)*(mx - sx) + (my - sy)*(my - sy));
           if (dist < hitRadius) { hitRadius = dist; clickedNode = node; }
       });
@@ -2094,8 +3123,7 @@ window.addEventListener("keydown", function(e){
 });
 
 var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-theme.value = prefersDark ? "dark" : "light";
-document.documentElement.dataset.theme = theme.value;
+setTheme(prefersDark ? "dark" : "light");
 
 // Сначала собираем данные (создаем G), потом переводим (вызываем draw)
 function fullInit() {
