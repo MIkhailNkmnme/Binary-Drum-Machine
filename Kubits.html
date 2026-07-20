@@ -1,4 +1,4 @@
-<!-- Версия: 0.140 (Номера строк не съезжают: запас прокрутки у колонки под скроллбар textarea) -->
+<!-- Версия: 0.142 (Кнопка «Сброс» над редактором: очистить все строки, повторный клик — вернуть) -->
 <!--
   ПРАВИЛО МАРКЕРОВ (для правок по промптам частями):
   Файл разбит на секции комментариями вида «=== МАРКЕР NN: НАЗВАНИЕ ===».
@@ -11,7 +11,7 @@
 <html lang="ru" data-theme="dark"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Кубиты v0.140</title>
+<title>Кубиты v0.142</title>
 
 <!-- Подключение шрифта Roboto Mono -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -157,9 +157,9 @@ body.square-edit-mode #rotateToolbar {
   display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;
   margin-left: auto; flex: 0 1 auto; pointer-events: auto;
 }
-body.zen-mode #stageToolbars { display: none !important; }
+body.zen-mode #stageToolbars, body.zen-mode #laserTogglesBar { display: none !important; }
 .canvas-btn {
-  height: 32px; padding: 0 12px; border-radius: 8px;
+  height: 26px; padding: 0 7px; border-radius: 7px; font-size: 11px;
   background: var(--panel); border: 1px solid var(--border);
   color: var(--accent); font-weight: bold; cursor: pointer;
   box-shadow: 0 2px 10px rgba(0,0,0,0.22);
@@ -417,7 +417,7 @@ footer{margin-top:10px; font-size:12px; color:var(--muted);}
 <body>
 <div class="wrap">
 <header>
-  <h1><span data-i18n="title"><span class="t1">Ку</span><span class="t2">биты</span></span><span class="ver">v0.140</span></h1>
+  <h1><span data-i18n="title"><span class="t1">Ку</span><span class="t2">биты</span></span><span class="ver">v0.142</span></h1>
 
 </header>
 
@@ -517,6 +517,8 @@ footer{margin-top:10px; font-size:12px; color:var(--muted);}
         <span data-i18n="squaresBadge">🔲 Квадраты: кольца квадратами (Добор: 0 в углах, строка по сторонам); «✋ Правка» — отдельный подрежим перетаскивания кубов</span>
       </div>
 
+      <!-- Переключатели лазеров: внизу холста по центру -->
+      <div id="laserTogglesBar" style="position:absolute; bottom:10px; left:50%; transform:translateX(-50%); z-index:6; display:none; max-width:96%;"></div>
       <div id="snakeBadge" style="position: absolute; bottom: 12px; left: 12px; z-index: 6; display:none; align-items:center; gap:6px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:6px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.22); font-size:12px; color:var(--muted);">
         <span data-i18n="snakeBadge">🐍 Змейка: непрерывная спираль. Каждая строка продолжает предыдущую без разрывов.</span>
       </div>
@@ -535,14 +537,14 @@ footer{margin-top:10px; font-size:12px; color:var(--muted);}
         <button id="btnMatchZero" class="canvas-btn" title="Считать совпадением и пустые (0) клетки, а не только кубики (1)">+0</button>
         
         <div style="display:flex; border-radius:8px; border:1px solid var(--border); overflow:hidden; background:var(--panel); box-shadow: 0 2px 10px rgba(0,0,0,0.22);">
-          <button id="btnFlipShowAll" class="canvas-btn active-view" style="border:none; border-radius:0; box-shadow:none; padding:0 8px; height:32px;" title="Показать всё">👁 Все</button>
-          <button id="btnFlipShowMatch" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;" title="Только неменяющиеся (чисто совпадения)">=</button>
-          <button id="btnFlipShowDiff" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;" title="Только меняющиеся (чисто различия)">≠</button>
+          <button id="btnFlipShowAll" class="canvas-btn active-view" style="border:none; border-radius:0; box-shadow:none; padding:0 7px; height:26px;" title="Показать всё">👁 Все</button>
+          <button id="btnFlipShowMatch" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 7px; height:26px;" title="Только неменяющиеся (чисто совпадения)">=</button>
+          <button id="btnFlipShowDiff" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 7px; height:26px;" title="Только меняющиеся (чисто различия)">≠</button>
         </div>
 
         <div style="display:flex; border-radius:8px; border:1px solid var(--border); overflow:hidden; background:var(--panel); box-shadow: 0 2px 10px rgba(0,0,0,0.22);">
-            <button id="btnFlipAnim" class="canvas-btn" style="border:none; border-radius:0; box-shadow:none; padding:0 8px; height:32px;">▶ Плей</button>
-            <button id="btnFlipReset" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px; color:var(--muted);" title="Остановить и вернуть">⏹ Сброс</button>
+            <button id="btnFlipAnim" class="canvas-btn" style="border:none; border-radius:0; box-shadow:none; padding:0 7px; height:26px;">▶ Плей</button>
+            <button id="btnFlipReset" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 7px; height:26px; color:var(--muted);" title="Остановить и вернуть">⏹ Сброс</button>
         </div>
         
         <input type="range" id="flipAnimSpeed" min="0.1" max="4" step="0.05" value="1" data-i18n-title="flipAnimTitle" title="Скорость авто-зеркала" style="width:70px; accent-color: var(--accent);">
@@ -559,6 +561,8 @@ footer{margin-top:10px; font-size:12px; color:var(--muted);}
       </div>
       </div>
 
+      <!-- ВТОРОЙ (и последний) ряд: повороты, сдвиг, змейка, квадраты — всё в одну строку с переносом -->
+      <div style="display:flex; gap:6px; align-items:flex-start; flex-wrap:wrap; width:100%; pointer-events:none;">
       <!-- Управление поворотом (Сверху / Ромбы) -->
       <!-- Тулбар поворота изометрии: 90°-шаги «покубово» -->
       <div id="isoRotToolbar" style="display:none; gap:6px; align-items:center; flex-wrap:wrap; pointer-events:auto;">
@@ -567,13 +571,13 @@ footer{margin-top:10px; font-size:12px; color:var(--muted);}
       </div>
       <div id="rotateToolbar" style="display:none; gap:6px; align-items:center; flex-wrap:wrap; pointer-events:auto;">
         <div style="display:flex; border-radius:8px; border:1px solid var(--border); overflow:hidden; background:var(--panel); box-shadow: 0 2px 10px rgba(0,0,0,0.22);">
-          <button id="btnRotStep1" class="canvas-btn active-view" style="border:none; border-radius:0; box-shadow:none; padding:0 8px; height:32px;" title="Плавный шаг">1°</button>
-          <button id="btnRotStep30" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;">30°</button>
-          <button id="btnRotStep45" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;">45°</button>
-          <button id="btnRotStep90" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;">90°</button>
-          <button id="btnRotStep120" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;">120°</button>
-          <button id="btnRotStep180" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;">180°</button>
-          <button id="btnRotStepL" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;" title="Шаг по длине большей строки">L</button>
+          <button id="btnRotStep1" class="canvas-btn active-view" style="border:none; border-radius:0; box-shadow:none; padding:0 7px; height:26px;" title="Плавный шаг">1°</button>
+          <button id="btnRotStep30" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 7px; height:26px;">30°</button>
+          <button id="btnRotStep45" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 7px; height:26px;">45°</button>
+          <button id="btnRotStep90" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 7px; height:26px;">90°</button>
+          <button id="btnRotStep120" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 7px; height:26px;">120°</button>
+          <button id="btnRotStep180" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 7px; height:26px;">180°</button>
+          <button id="btnRotStepL" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 7px; height:26px;" title="Шаг по длине большей строки">L</button>
         </div>
         <button id="btnRotDirCCW" class="canvas-btn" title="Шаг / Направление против часовой">↺</button>
         <button id="btnRotDirCW" class="canvas-btn" title="Шаг / Направление по часовой">↻</button>
@@ -585,14 +589,14 @@ footer{margin-top:10px; font-size:12px; color:var(--muted);}
         <button id="btnMatchZero2" class="canvas-btn" title="Считать совпадением и пустые (0) клетки, а не только кубики (1)">+0</button>
         
         <div style="display:flex; border-radius:8px; border:1px solid var(--border); overflow:hidden; background:var(--panel); box-shadow: 0 2px 10px rgba(0,0,0,0.22);">
-          <button id="btnRotShowAll" class="canvas-btn active-view" style="border:none; border-radius:0; box-shadow:none; padding:0 8px; height:32px;" title="Показать всё">👁 Все</button>
-          <button id="btnRotShowMatch" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;" title="Только неменяющиеся (чисто совпадения)">=</button>
-          <button id="btnRotShowDiff" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px;" title="Только меняющиеся (чисто различия)">≠</button>
+          <button id="btnRotShowAll" class="canvas-btn active-view" style="border:none; border-radius:0; box-shadow:none; padding:0 7px; height:26px;" title="Показать всё">👁 Все</button>
+          <button id="btnRotShowMatch" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 7px; height:26px;" title="Только неменяющиеся (чисто совпадения)">=</button>
+          <button id="btnRotShowDiff" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 7px; height:26px;" title="Только меняющиеся (чисто различия)">≠</button>
         </div>
 
         <div style="display:flex; border-radius:8px; border:1px solid var(--border); overflow:hidden; background:var(--panel); box-shadow: 0 2px 10px rgba(0,0,0,0.22);">
-            <button id="btnRotAnim" class="canvas-btn" style="border:none; border-radius:0; box-shadow:none; padding:0 8px; height:32px;">▶ Плей</button>
-            <button id="btnRotReset" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 8px; height:32px; color:var(--muted);" title="Остановить и сбросить угол">⏹ Сброс</button>
+            <button id="btnRotAnim" class="canvas-btn" style="border:none; border-radius:0; box-shadow:none; padding:0 7px; height:26px;">▶ Плей</button>
+            <button id="btnRotReset" class="canvas-btn" style="border:none; border-left:1px solid var(--border); border-radius:0; box-shadow:none; padding:0 7px; height:26px; color:var(--muted);" title="Остановить и сбросить угол">⏹ Сброс</button>
         </div>
         
         <input type="range" id="rotAnimSpeed" min="0.1" max="4" step="0.05" value="1" title="Скорость вращения" style="width:70px; accent-color: var(--accent);">
@@ -600,8 +604,7 @@ footer{margin-top:10px; font-size:12px; color:var(--muted);}
 
       <!-- Сдвиг символов -->
       <div id="rotWrap" style="display:none; gap:6px; align-items:center; flex-wrap:wrap; pointer-events:auto;">
-        <span class="sub" style="margin:0; font-weight:700; color:var(--fg);" data-i18n="shiftTxt">Сдвиг:</span>
-        <button id="btnRotCCW" title="⏪">⏪ ↺</button>
+        <button id="btnRotCCW" title="Сдвиг символов ⏪">⏪ ↺</button>
         <input type="range" id="shiftAnimSpeed" min="0.01" max="1.5" step="0.01" value="0.15" style="width:90px; accent-color: var(--accent);" title="Скорость автосдвига символов">
         <button id="btnRotCW" title="↻ ⏩">↻ ⏩</button>
         <button id="btnShiftAnim" title="Автосдвиг по кругу в последнем выбранном направлении">▶ Плей</button>
@@ -625,6 +628,7 @@ footer{margin-top:10px; font-size:12px; color:var(--muted);}
         <button id="btnSnakeAnim" class="canvas-btn" title="Автошаг: строит все строки и обратно убавляет, по кругу">▶ Плей</button>
         <input type="range" id="snakeAnimSpeed" min="0.05" max="3" step="0.05" value="0.5" style="width:70px; accent-color: var(--accent);" title="Скорость автошага змейки">
       </div>
+      </div><!-- /второй ряд -->
       </div><!-- /stageToolbars -->
     </div>
     <div id="skewerWrap" class="laser-panel" style="display:none">
@@ -638,7 +642,10 @@ footer{margin-top:10px; font-size:12px; color:var(--muted);}
   <!-- ПРАВАЯ ПАНЕЛЬ: Текстовое поле и инфо об этажах -->
   <div class="panel editor-panel" id="rightPanel">
    <div class="grp grp-editor" style="flex:1 1 auto; min-height:0;">
-    <div class="grp-h" data-i18n="grpEditor">Данные (Строки)</div>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <div class="grp-h" data-i18n="grpEditor" style="margin:0;">Данные (Строки)</div>
+      <button id="btnSrcClear" title="Сброс: очистить все строки (повторный клик сразу после — вернуть)" style="height:20px; padding:0 8px; font-size:10px; color:var(--muted);">⏹ Сброс</button>
+    </div>
     <div class="editor-wrap">
       <div id="lineGutter" aria-hidden="false"></div>
       <div id="src-bg" aria-hidden="true"></div>
@@ -657,7 +664,7 @@ footer{margin-top:10px; font-size:12px; color:var(--muted);}
 1000000010</textarea>
     </div>
     <button id="btnCopyExpanded" data-i18n="btnCopyExp" style="margin-top:6px; flex:0 0 auto;">⧉ Копировать развёрнутое</button>
-    <div id="stageTitle" title="Дзен-режим — скрыть всё, кроме кубов (выход — клик колёсиком мыши)" style="margin-top:6px; flex:0 0 auto; text-align:center; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer; user-select:none;">Кубиты <span class="ver">v0.140</span></div>
+    <div id="stageTitle" title="Дзен-режим — скрыть всё, кроме кубов (выход — клик колёсиком мыши)" style="margin-top:6px; flex:0 0 auto; text-align:center; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer; user-select:none;">Кубиты <span class="ver">v0.142</span></div>
    </div>
   </div>
 </div>
@@ -969,7 +976,7 @@ function applyI18n() {
   btnRotAnim.textContent = rotAnimOn ? t.btnFlipAnimStop : t.btnFlipAnimPlay;
   
   // Принудительно устанавливаем правильную версию на вкладке
-  document.title = (t.titlePlain || "Kubits") + " v0.140";
+  document.title = (t.titlePlain || "Kubits") + " v0.142";
   
   syncSelUI();
   draw();
@@ -2854,7 +2861,11 @@ function draw(){
       overlapBtn.onclick = function(){ laserOverlapEnabled = !laserOverlapEnabled; draw(); };
       tb.appendChild(overlapBtn);
 
-      skewerRes.appendChild(tb);
+      // Переключатели — на холст, вниз по центру (не в панель результатов)
+      var ltb = $("laserTogglesBar");
+      ltb.innerHTML = "";
+      ltb.appendChild(tb);
+      ltb.style.display = "block";
 
       if (skewers.length) {
           var colsWrap = document.createElement("div");
@@ -2975,6 +2986,7 @@ function draw(){
       }
   } else {
       skewerWrap.style.display = "none";
+      $("laserTogglesBar").style.display = "none";
   }
 /* === МАРКЕР 11: DRAW — КОЛЬЦА-НАПРАВЛЯЮЩИЕ, РАМКА ВЫДЕЛЕНИЯ, ЦИФРЫ БАЛАНСА (КОНЕЦ DRAW) === */
   if (!hasSelection && highlightEqual) {
@@ -3073,12 +3085,12 @@ function draw(){
       ctx.shadowBlur = 0;
     }
 
-    // Баланс привязан к верхним углам холста (ниже всех тулбаров) и не следует за моделью
-    var bay = 250;
+    // Баланс — в нижних углах холста, мелким шрифтом, чтобы ничего не перекрывать
+    var bay = stage.clientHeight - 70;
     var W = stage.clientWidth;
 
-    var mainFont = "bold 117px 'Roboto Mono', monospace";
-    var tailFont = "bold 55px 'Roboto Mono', monospace";
+    var mainFont = "bold 58px 'Roboto Mono', monospace";
+    var tailFont = "bold 28px 'Roboto Mono', monospace";
     var showT1 = dimPadded.checked && dispT1 > 0;
     var showT0 = dimPadded.checked && dispT0 > 0;
     var tailEqual = showT1 && showT0 && dispT1 === dispT0;
@@ -4256,6 +4268,20 @@ function toggleZenMode(){
     requestAnimationFrame(function(){ autoFit(); draw(); });
 }
 $("stageTitle").addEventListener("click", toggleZenMode); // клик по «Кубиты vX» под редактором
+
+// «⏹ Сброс» над редактором: очищает все строки; клик по пустому редактору — возвращает их
+var srcClearBackup = null;
+$("btnSrcClear").addEventListener("click", function(){
+    if (src.value.trim() === "" && srcClearBackup !== null) {
+        src.value = srcClearBackup;
+        srcClearBackup = null;
+    } else {
+        srcClearBackup = src.value;
+        src.value = "";
+    }
+    lineLimit = -1;
+    rebuild();
+});
 cv.addEventListener("mousedown", function(e){
     if (e.button === 1) { e.preventDefault(); toggleZenMode(); }
 });
@@ -4559,15 +4585,15 @@ function drawSquareTestFrame(){
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     var eqB = (n1 === n0 && n1 > 0);
     var textColB = isDark ? "#FFFFFF" : "#111111";
-    ctx.font = "bold 117px 'Roboto Mono', monospace";
+    ctx.font = "bold 58px 'Roboto Mono', monospace";
     ctx.textBaseline = "middle";
     ctx.textAlign = "left";
     if (eqB) { ctx.shadowBlur = 25; ctx.shadowColor = isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)"; }
     ctx.fillStyle = eqB ? textColB : "#F39C12";
-    ctx.fillText(String(n1), 24, 250);
+    ctx.fillText(String(n1), 24, h - 70);
     ctx.fillStyle = eqB ? textColB : "#E74C3C";
     var m0B = String(n0);
-    ctx.fillText(m0B, w - 24 - ctx.measureText(m0B).width, 250);
+    ctx.fillText(m0B, w - 24 - ctx.measureText(m0B).width, h - 70);
     ctx.shadowBlur = 0;
 }
 
