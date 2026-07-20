@@ -5,7 +5,15 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 ВЕРСИЯ ФАЙЛА (правь вручную при каждом сохранении, чтобы не путать копии между компьютерами):
+LAST EDIT: 2026-07-17 — Добавлено правило расстановки маркеров (см. ниже).
 LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 тулбара слева (Undo/Redo, Центр/Радар/Поворот, Вставить), счётчик кадра у правой панели, Зеркало ←/→ приклеивает к строке.
+===========================================================================
+ПРАВИЛО МАРКЕРОВ (для правок по промптам частями):
+Файл разбит на секции комментариями вида «=== МАРКЕР NN: НАЗВАНИЕ ===».
+При добавлении кода следи, чтобы между соседними маркерами было НЕ БОЛЕЕ 300–400 строк —
+это позволяет править скрипт частями по одному маркеру, не таща весь файл целиком.
+Если секция разрослась — вставь новый маркер с буквенным суффиксом (напр. «МАРКЕР 30a»),
+чтобы не перенумеровывать весь файл.
 ===========================================================================
 -->
 <html lang="ru">
@@ -956,7 +964,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         </div>
     </div>
     <div id="playerButtonsBar" style="position:fixed; z-index:101; display:flex; flex-direction:column; align-items:center;" title="Мини-пульт. Двойной клик по пустому месту: свернуть/развернуть. Перетаскивание: переместить (положение запоминается)." onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); if (window.savePanelLayout) savePanelLayout(); event.stopPropagation(); }">
-        <div class="mini-title" style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:11px; font-weight:bold; letter-spacing:2px; color:rgba(0,204,255,0.75); padding:1px 0 3px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.12); margin-bottom:4px;"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.396 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
+        <div class="mini-title" style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:11px; font-weight:bold; letter-spacing:2px; color:rgba(0,204,255,0.75); padding:1px 0 3px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.12); margin-bottom:4px;"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.402 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
         <div style="display:flex; align-items:stretch; gap:6px; width:100%; margin-bottom:4px;">
             <div style="display:flex; flex-direction:column; justify-content:center; gap:4px; flex:1; min-width:0;">
                 <button id="clearCanvasBtn" class="btn-action btn-danger" style="margin:0; width:100%; font-size:9px;">🧹 Очистить</button>
@@ -9090,7 +9098,10 @@ safeBind('stopBtn', 'click', () => {
             if (typeof PIXI === 'undefined') return null;
             const canvasEl = document.getElementById('webglCanvas');
             if (!canvasEl) return null;
-            const app = new PIXI.Application({ view: canvasEl, backgroundAlpha: 0, antialias: true });
+            // preserveDrawingBuffer: без него WebGL стирает буфер сразу после показа кадра на
+            // экране — extract.pixels() (вызывается позже, асинхронно по клику для проверки
+            // наезда строк на панели) читал бы уже пустой буфер (alpha=0 везде).
+            const app = new PIXI.Application({ view: canvasEl, backgroundAlpha: 0, antialias: true, preserveDrawingBuffer: true });
             app.ticker.stop(); // рендерим вручную из renderPyramidWebGL(), не по своему таймеру
             const container = new PIXI.Container();
             app.stage.addChild(container);
@@ -10705,6 +10716,56 @@ safeBind('stopBtn', 'click', () => {
                 (Math.abs(r - target1.r) <= THRESHOLD && Math.abs(g - target1.g) <= THRESHOLD && Math.abs(b - target1.b) <= THRESHOLD) ||
                 (Math.abs(r - target0.r) <= THRESHOLD && Math.abs(g - target0.g) <= THRESHOLD && Math.abs(b - target0.b) <= THRESHOLD);
 
+            // При включённой галке "WebGL-рендер" символы (в т.ч. кольца радара) рисуются на
+            // webglCanvas поверх screenCanvas, а на screenCanvas остаётся только фон (см. развилку
+            // в render()) — ctx.getImageData(screenCanvas) в этом режиме никогда не находит символ,
+            // и наезд строк на панели/мини-пульт не детектится вовсе. Читаем пиксели с того канваса,
+            // который реально рисует символы в текущем режиме.
+            // extract.pixels(target, frame) в PixiJS 7.4.2 параметр frame фактически игнорирует —
+            // всегда отдаёт буфер ПОЛНОГО канваса, поэтому читаем его целиком один раз за проверку
+            // и сами вырезаем нужный прямоугольник по построчной адресации (шириной канваса).
+            // webglCanvas рисует ТОЛЬКО символы поверх прозрачного фона (без рамки/подсветок — см.
+            // комментарий к WebGL-рендеру выше), и RGB там не смешан с фоном экрана/панели, поэтому
+            // сравнивать с target0/target1 (посчитанными для смешивания с bgColor) бессмысленно —
+            // хватает альфа-канала: любой непрозрачный пиксель — символ.
+            const isWebglMode = safeChecked('webglRenderCheck', false) && webglState && webglState.app;
+            const ALPHA_THRESHOLD = 10;
+            let webglFullData = null, webglFullW = 0, webglFullH = 0;
+            if (isWebglMode) {
+                try {
+                    webglFullData = webglState.app.renderer.extract.pixels();
+                    webglFullW = webglState.app.renderer.width;
+                    webglFullH = webglState.app.renderer.height;
+                } catch (e) {
+                    console.error('[Затемн./наезд строк] extract.pixels() упал — наезд в WebGL-режиме не определить:', e);
+                }
+            }
+
+            // true/false — есть ли в прямоугольнике (x,y,w,h) пиксель символа; null не возвращает
+            // (в отличие от overlapsRows() ниже — там null означает "элемент скрыт, не трогаем").
+            const rectHasChar = (x, y, w, h) => {
+                if (isWebglMode) {
+                    if (!webglFullData) return false;
+                    for (let ry = 0; ry < h; ry += 5) {
+                        let py = y + ry;
+                        if (py < 0 || py >= webglFullH) continue;
+                        let rowBase = py * webglFullW * 4;
+                        for (let rx = 0; rx < w; rx += 5) {
+                            let px = x + rx;
+                            if (px < 0 || px >= webglFullW) continue;
+                            if (webglFullData[rowBase + px * 4 + 3] > ALPHA_THRESHOLD) return true;
+                        }
+                    }
+                    return false;
+                }
+                let data;
+                try { data = ctx.getImageData(x, y, w, h).data; } catch (e) { return false; }
+                for (let i = 0; i < data.length; i += SAMPLE_STRIDE) {
+                    if (matchesChar(data[i], data[i + 1], data[i + 2])) return true;
+                }
+                return false;
+            };
+
             AUTO_HIDE_PANEL_SELECTORS.forEach(sel => {
                 const el = document.querySelector(sel);
                 if (!el || el.offsetParent === null) return;
@@ -10715,17 +10776,7 @@ safeBind('stopBtn', 'click', () => {
                 let h = Math.min(canvas.height, Math.ceil(rect.bottom)) - y;
                 if (w <= 0 || h <= 0) { el.classList.remove('auto-row-overlap'); return; }
 
-                let data;
-                try { data = ctx.getImageData(x, y, w, h).data; } catch (e) { return; }
-
-                let overlap = false;
-                for (let i = 0; i < data.length; i += SAMPLE_STRIDE) {
-                    if (matchesChar(data[i], data[i + 1], data[i + 2])) {
-                        overlap = true;
-                        break;
-                    }
-                }
-                el.classList.toggle('auto-row-overlap', overlap);
+                el.classList.toggle('auto-row-overlap', rectHasChar(x, y, w, h));
             });
 
             // Общий пиксельный тест "строки наехали на элемент" для fixed-элементов (мини-пульт,
@@ -10740,12 +10791,7 @@ safeBind('stopBtn', 'click', () => {
                 let w = Math.min(canvas.width, Math.ceil(rect.right)) - x;
                 let h = Math.min(canvas.height, Math.ceil(rect.bottom)) - y;
                 if (w <= 0 || h <= 0) return false;
-                let data;
-                try { data = ctx.getImageData(x, y, w, h).data; } catch (e) { return null; }
-                for (let i = 0; i < data.length; i += SAMPLE_STRIDE) {
-                    if (matchesChar(data[i], data[i + 1], data[i + 2])) return true;
-                }
-                return false;
+                return rectHasChar(x, y, w, h);
             };
 
             // Мини-пульт (#playerButtonsBar), галка "Затемн.": затемняется по наезду строк на
