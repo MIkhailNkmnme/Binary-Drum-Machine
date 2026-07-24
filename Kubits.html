@@ -1,4 +1,4 @@
-<!-- Версия: 0.200 (Откат отступов узлов в изометрии из v0.200 — в изометрии и так было нормально) -->
+<!-- Версия: 0.220 (Подсветка включённых чекбоксов (Автозахват и все остальные «label.ck») сделана явно видимой: сплошная заливка акцентом + белый жирный текст, вместо еле заметного мягкого оттенка) -->
 <!--
   ПРАВИЛО МАРКЕРОВ (для правок по промптам частями):
   Файл разбит на секции комментариями вида «=== МАРКЕР NN: НАЗВАНИЕ ===».
@@ -11,7 +11,7 @@
 <html lang="ru" data-theme="dark"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Кубиты v0.200</title>
+<title>Кубиты v0.220</title>
 
 <!-- Подключение шрифта Roboto Mono -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -370,6 +370,7 @@ button.active-view {
 .grp-tools  { border-left-color:#E67E22; } .grp-tools  .grp-h{ color:#E67E22; }
 .grp-select { border-left-color:#A569BD; } .grp-select .grp-h{ color:#A569BD; }
 .grp-editor { border-left-color:#5DCAA5; } .grp-editor .grp-h{ color:#5DCAA5; }
+.grp-capture{ border-left-color:#E74C3C; } .grp-capture .grp-h{ color:#E74C3C; }
 
 /* Галки в виде кнопок-переключателей */
 label.ck{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); cursor:pointer}
@@ -380,7 +381,7 @@ label.ck:has(input[type=checkbox]){
 label.ck:has(input[type=checkbox]:hover), label.ck:has(input[type=checkbox]):hover{border-color:var(--accent)}
 label.ck input[type=checkbox]{display:none}
 label.ck:has(input[type=checkbox]:checked){
-  background:var(--accent-soft); border-color:var(--accent); color:var(--fg);
+  background:var(--accent) !important; border-color:var(--accent) !important; color:#fff !important; font-weight:700;
 }
 .stats{font-size:12px; color:var(--muted)}
 .stats b{color:var(--fg); font-weight:700}
@@ -449,7 +450,7 @@ body.pad-mode #cv { touch-action: none; }
 <body>
 <div class="wrap">
 <header>
-  <h1><span data-i18n="title"><span class="t1">Ку</span><span class="t2">биты</span></span><span class="ver">v0.200</span></h1>
+  <h1><span data-i18n="title"><span class="t1">Ку</span><span class="t2">биты</span></span><span class="ver">v0.220</span></h1>
 
 </header>
 
@@ -515,6 +516,28 @@ body.pad-mode #cv { touch-action: none; }
       <label class="ck" style="color:var(--accent)"><input type="checkbox" id="minusMode"> <span data-i18n="lblMinus">Вычитать выделенное</span></label>
       <label class="ck" style="color:#E74C3C; font-weight:700;"><input type="checkbox" id="skewerMode" checked> <span data-i18n="lblLaser">🎯 Лазер</span></label>
       <button id="btnInvert" data-i18n="btnInvert" data-i18n-title="btnInvertTitle" title="Если есть выделение — инвертирует биты в рамке. Иначе, при равном балансе [1=0], инвертирует все биты, участвующие в балансе.">🔄 Инверсия</button>
+    </div>
+
+    <!-- ГРУППА: Этажи (перенесена вниз левой панели; чипы-квадраты убраны — их роль играют цветные номера строк) -->
+    <div class="grp grp-select" style="flex:0 0 auto;">
+      <div class="grp-h" data-i18n="grpFloors">Этажи</div>
+      <div class="stats"><span data-i18n="statFloors">Всего:</span> <b id="stFloors">10</b> · (1): <b id="stCubes">137</b></div>
+      <div id="chips" style="display:none;"></div>
+      <div id="sliderRow" style="display:none; flex-direction:row; align-items:center; gap:6px;">
+        <label class="ck" for="floorRange" style="flex:0 0 auto; margin:0; white-space:nowrap;"><span data-i18n="lblFloor">Этаж:</span> <b id="frLabel" style="color:var(--fg)">все</b></label>
+        <input type="range" id="floorRange" min="0" max="10" value="0" step="1" style="flex:1 1 auto; min-width:40px;">
+      </div>
+      <div class="warn" id="warn" style="display: none;" data-i18n="warnMax">Достигнут потолок кубиков — верхние этажи обрезаны.</div>
+
+      <div style="display:flex; gap:4px;">
+        <button id="btnFloorModeSingle" class="align-btn active" style="flex:1;" data-i18n="floorModeSingle">По одной</button>
+        <button id="btnFloorModeAccum" class="align-btn" style="flex:1;" data-i18n="floorModeAccum">С накоплением</button>
+      </div>
+      <div style="display:flex; gap:6px; align-items:center;">
+        <button id="btnFloorAnim" style="flex:1;">▶ Плей</button>
+        <button id="btnFloorAnimReset" style="color:var(--muted);" title="Остановить и сбросить">⏹ Сброс</button>
+        <input type="range" id="floorAnimSpeed" min="0.05" max="3" step="0.05" value="0.6" style="width:60px; accent-color: var(--accent);" title="Скорость автоплея этажей">
+      </div>
     </div>
 
   </div>
@@ -623,6 +646,16 @@ body.pad-mode #cv { touch-action: none; }
         <button id="btnShiftAnimReset" style="color:var(--muted);" title="Остановить и вернуть исходные строки">⏹ Сброс</button>
       </div>
 
+      <!-- Визуальный сдвиг по кругу: НЕ меняет текст строк, только то, какая клетка кольца
+           какой бит показывает (сам набор 1/0 крутится по кругу на экране). Виден только там,
+           где включён Добор в кольцевых режимах (Круглая воронка/Квадраты) — иначе крутить нечего. -->
+      <div id="visRotWrap" style="display:none; gap:6px; align-items:center; flex-wrap:wrap; pointer-events:auto;">
+        <span style="color:var(--muted); font-size:11px;" data-i18n="visRotLbl">👁 Визуальный сдвиг:</span>
+        <button id="btnVisRotCCW" data-i18n-title="visRotTitle" title="Визуальный сдвиг по кругу (текст строк НЕ меняется) ⏪">⏪ 👁</button>
+        <button id="btnVisRotCW" data-i18n-title="visRotTitle" title="👁 ⏩">👁 ⏩</button>
+        <button id="btnVisRotReset" style="color:var(--muted);" data-i18n-title="visRotResetTitle" title="Сбросить визуальный сдвиг">⏹ Сброс</button>
+      </div>
+
       <!-- Режим «Квадраты»: пошаговый прогон и подрежим правки (видны только в режиме squares) -->
       <div id="squareTestToolbar" style="display:none; gap:6px; align-items:center; flex-wrap:wrap; pointer-events:auto;">
         <button id="btnSquareTestNext" class="canvas-btn"><span data-i18n="btnSquaresNext">▶ Этаж</span> <span id="squareTestNextLabel">1</span></button>
@@ -653,28 +686,11 @@ body.pad-mode #cv { touch-action: none; }
 
   <!-- ПРАВАЯ ПАНЕЛЬ: Текстовое поле и инфо об этажах -->
   <div class="panel editor-panel" id="rightPanel">
-   <!-- ГРУППА: Этажи (перенесена из левой панели; чипы-квадраты убраны — их роль играют цветные номера строк) -->
-   <div class="grp grp-select" style="flex:0 0 auto;">
-      <div class="grp-h" data-i18n="grpFloors">Этажи</div>
-      <div class="stats"><span data-i18n="statFloors">Всего этажей:</span> <b id="stFloors">10</b> · (1): <b id="stCubes">137</b></div>
-      <div id="chips" style="display:none;"></div>
-      <div id="sliderRow" style="display: none;">
-        <label class="ck" for="floorRange"><span data-i18n="lblFloor">Этаж:</span> <b id="frLabel" style="color:var(--fg)">все</b></label>
-        <input type="range" id="floorRange" min="0" max="10" value="0" step="1">
-      </div>
-      <div class="warn" id="warn" style="display: none;" data-i18n="warnMax">Достигнут потолок кубиков — верхние этажи обрезаны.</div>
-
-      <div style="display:flex; gap:4px;">
-        <button id="btnFloorModeSingle" class="align-btn active" style="flex:1;" data-i18n="floorModeSingle">По одной</button>
-        <button id="btnFloorModeAccum" class="align-btn" style="flex:1;" data-i18n="floorModeAccum">С накоплением</button>
-      </div>
-      <div style="display:flex; gap:6px; align-items:center;">
-        <button id="btnFloorAnim" style="flex:1;">▶ Плей</button>
-        <button id="btnFloorAnimReset" style="color:var(--muted);" title="Остановить и сбросить">⏹ Сброс</button>
-        <input type="range" id="floorAnimSpeed" min="0.05" max="3" step="0.05" value="0.6" style="width:60px; accent-color: var(--accent);" title="Скорость автоплея этажей">
-      </div>
+   <!-- ГРУППА: Захват границы — отдельно от «Этажи», своя рамка -->
+   <div class="grp grp-capture" style="flex:0 0 auto;">
+      <div class="grp-h" data-i18n="grpCapture">Захват границы</div>
       <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-        <label class="ck" style="flex:1 1 auto; margin:0; min-width:0;" data-i18n-title="autoCaptureTitle"><input type="checkbox" id="autoCaptureBelow"> <span data-i18n="lblAutoCapture">Автозахват</span></label>
+        <label class="ck" style="flex:1 1 auto; margin:0; min-width:0; color:var(--accent);" data-i18n-title="autoCaptureTitle"><input type="checkbox" id="autoCaptureBelow"> <span data-i18n="lblAutoCapture">Автозахват</span></label>
         <button id="btnCaptureStep" style="flex:0 0 auto; height:22px; padding:0 8px; font-size:10px; color:var(--muted);" data-i18n="btnCaptureStep" data-i18n-title="btnCaptureStepTitle">▶ Шаг</button>
         <button id="btnResetLimit" style="flex:0 0 auto; height:22px; padding:0 8px; font-size:10px; color:var(--muted);" title="Сбросить границу найденных/включённых строк — поставить перед 2-й строкой">⟲ Граница</button>
         <label class="ck" style="flex:1 1 100%; margin:0;" data-i18n-title="skipFirstTitle"><input type="checkbox" id="skipFirstCharCheck" checked> <span data-i18n="skipFirst">Без 1-го символа</span></label>
@@ -706,7 +722,7 @@ body.pad-mode #cv { touch-action: none; }
 1000000010</textarea>
     </div>
     <button id="btnCopyExpanded" data-i18n="btnCopyExp" style="margin-top:6px; flex:0 0 auto;">⧉ Копировать развёрнутое</button>
-    <div id="stageTitle" title="Дзен-режим — скрыть всё, кроме кубов (выход — клик колёсиком мыши)" style="margin-top:6px; flex:0 0 auto; text-align:center; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer; user-select:none;">Кубиты <span class="ver">v0.200</span></div>
+    <div id="stageTitle" title="Дзен-режим — скрыть всё, кроме кубов (выход — клик колёсиком мыши)" style="margin-top:6px; flex:0 0 auto; text-align:center; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer; user-select:none;">Кубиты <span class="ver">v0.220</span></div>
    </div>
   </div>
 </div>
@@ -735,6 +751,9 @@ var i18n = {
     lblTint: "Цветность", lblGuides: "Кольца", lblLoop: "Добор",
     lblLoopInvert: "Добор инверсией",
     lblLoopInvertTitle: "Добор повторяет не сами биты строки, а их инверсию (например «11» → «110000» вместо «111111»).",
+    visRotLbl: "👁 Визуальный сдвиг:",
+    visRotTitle: "Визуальный сдвиг по кругу: крутит, какая клетка кольца какой бит показывает, БЕЗ изменения текста строки (в отличие от «Сдвиг символов»). Действует на выбранные этажи (или на все, если ничего не выбрано). Нужен включённый Добор в «Круглой воронке»/«Квадратах».",
+    visRotResetTitle: "Сбросить визуальный сдвиг у выбранных этажей (или у всех, если ничего не выбрано) обратно к 0.",
     lblDim: "Прозрачный добор", lblGhosts: "0 в строках", lblGhostsAll: "0 в доборе",
     lblText: "Биты [1][0]",
     lblBalance: "Баланс [1 и 0]",
@@ -742,21 +761,21 @@ var i18n = {
     btnInvert: "🔄 Инверсия",
     btnInvertTitle: "Если есть выделение — инвертирует биты в рамке. Иначе, при равном балансе [1=0], инвертирует все биты, участвующие в балансе.",
     laserRes: "Результаты лазера:", shiftTxt: "Сдвиг символов:",
-    grpShape: "Форма и вид", grpDisplay: "Отображение", grpTools: "Инструменты", grpFloors: "Этажи",
+    grpShape: "Форма и вид", grpDisplay: "Отображение", grpTools: "Инструменты", grpFloors: "Этажи", grpCapture: "Захват границы",
     grpEditor: "Данные (Строки)",
-    statFloors: "Всего этажей:", lblFloor: "Этаж:",
+    statFloors: "Всего:", lblFloor: "Этаж:",
     floorAll: "все", floorMulti: "несколько",
     floorModeSingle: "По одной", floorModeAccum: "С накоплением",
     lblAutoCapture: "Автозахват",
-    autoCaptureTitle: "Пока включено — строку сразу под границей автоматически втягиваем внутрь (граница опускается на 1), когда она ПОЛНОСТЬЮ найдена в лазерах (та же подсветка «найдено», что видно в редакторе). Нужен включённый Лазер. Повторяется, пока следующая нижняя тоже находится.",
+    autoCaptureTitle: "Пока включено — строку сразу под границей автоматически втягиваем внутрь (граница опускается на 1), когда она ПОЛНОСТЬЮ найдена (та же подсветка «найдено», что видно в редакторе). Пока активно «По строкам» — ищет в интерливинг-стоге над границей; иначе — в лазерах (нужен включённый Лазер). Повторяется, пока следующая нижняя тоже находится.",
     skipFirst: "Без 1-го символа",
     skipFirstTitle: "При поиске нижней строки (кнопки «По строкам»/«По лазерам») не учитывать её первый символ — искать со 2-го. По умолчанию включено.",
     btnCaptureRows: "▼ По строкам",
-    btnCaptureRowsTitle: "Сквозной поиск по всем участвующим строкам (с добором): строку под границей втягиваем внутрь, пока её биты находятся в склейке всех строк подряд.",
+    btnCaptureRowsTitle: "Интерливинг: все уже включённые строки над границей (с их добором, если включён «Добор») разбиваются на пары скользящим окном (1+2, 2+3, 3+4, ...), каждая пара чередуется побитово, и результаты склеиваются в одну сквозную строку-стог. Обычную строку под границей ищем в этом стоге (все повороты × прямой/инверсия/реверс); если найдена — втягиваем внутрь, и так по кругу.",
     btnCaptureLasers: "▼ По лазерам",
-    btnCaptureLasersTitle: "Сквозной поиск по всем строкам-результатам лазеров: строку под границей втягиваем внутрь, пока её биты находятся в склейке всех лазеров подряд.",
+    btnCaptureLasersTitle: "Сквозной поиск по всем строкам-результатам лазеров: строку под границей втягиваем внутрь, пока её биты находятся в склейке всех лазеров подряд. Если не добавлено ни одного лазера — ищет сразу по всем осям (как если бы лазер стоял на каждой точке).",
     btnCaptureStep: "▶ Шаг",
-    btnCaptureStepTitle: "Одношаговый автозахват: проверить строку под границей (лазер / склейка лазеров / склейка строк данных) и, если найдена, втянуть только её одну — без непрерывного повтора.",
+    btnCaptureStepTitle: "Одношаговый автозахват: проверить строку под границей (пока активно «По строкам» — в интерливинг-стоге над границей; иначе — лазер / склейка лазеров / склейка строк данных) и, если найдена, втянуть только её одну — без непрерывного повтора.",
     btnHlAllBelow: "🔍 Подсветка: везде ниже",
     btnHlAllBelowTitle: "Пока включено — подсветка совпадений (жёлтый/синий/фиолетовый) ищется не только в первой строке под границей, но и во всех строках ниже неё. Ничего не втягивается в рамку — только подсветка в редакторе и панели лазеров.",
     btnZen: "🧘 Дзен", btnZenTitle: "Дзен-режим — скрыть всё, кроме кубов (или клик колёсиком мыши)",
@@ -799,6 +818,9 @@ var i18n = {
     lblTint: "Color", lblGuides: "Rings", lblLoop: "Pad",
     lblLoopInvert: "Pad with inversion",
     lblLoopInvertTitle: "The pad repeats the inversion of the row's bits, not the bits themselves (e.g. \"11\" → \"110000\" instead of \"111111\").",
+    visRotLbl: "👁 Visual shift:",
+    visRotTitle: "Visual shift around the ring: rotates which ring cell shows which bit, WITHOUT changing the row's text (unlike \"Shift chars\"). Applies to selected floors (or all, if none selected). Requires Pad on, in Round funnel/Squares.",
+    visRotResetTitle: "Reset the visual shift on the selected floors (or all, if none selected) back to 0.",
     lblDim: "Pad opacity", lblGhosts: "0 in rows", lblGhostsAll: "0 in pad",
     lblText: "Bits [1][0]",
     lblBalance: "Balance [1&0]",
@@ -806,21 +828,21 @@ var i18n = {
     btnInvert: "🔄 Invert",
     btnInvertTitle: "If there's a selection — inverts the bits inside the frame. Otherwise, when the balance is equal [1=0], inverts all bits participating in the balance.",
     laserRes: "Laser results:", shiftTxt: "Shift chars:",
-    grpShape: "Shape & view", grpDisplay: "Display", grpTools: "Tools", grpFloors: "Floors",
+    grpShape: "Shape & view", grpDisplay: "Display", grpTools: "Tools", grpFloors: "Floors", grpCapture: "Boundary capture",
     grpEditor: "Data (Strings)",
-    statFloors: "Total floors:", lblFloor: "Floor:",
+    statFloors: "Total:", lblFloor: "Floor:",
     floorAll: "all", floorMulti: "multiple",
     floorModeSingle: "One by one", floorModeAccum: "Accumulate",
     lblAutoCapture: "Auto-capture",
-    autoCaptureTitle: "While on — the row right below the boundary is auto-pulled in (boundary moves down by 1) when it is FULLY found in the lasers (the same “found” highlight shown in the editor). Requires Laser on. Repeats while the next row below is also found.",
+    autoCaptureTitle: "While on — the row right below the boundary is auto-pulled in (boundary moves down by 1) when it is FULLY found (the same “found” highlight shown in the editor). While “By rows” is active, it searches the interleaving haystack above the boundary; otherwise the lasers (requires Laser on). Repeats while the next row below is also found.",
     skipFirst: "Skip 1st char",
     skipFirstTitle: "When searching the below-boundary row (buttons “By rows”/“By lasers”), ignore its first character — match from the 2nd. On by default.",
     btnCaptureRows: "▼ By rows",
-    btnCaptureRowsTitle: "Through-search across all participating rows (with padding): pull the row below the boundary in while its bits are found in the concatenation of all rows.",
+    btnCaptureRowsTitle: "Interleaving: all already-included rows above the boundary (with their padding, if \"Pad\" is on) are split into sliding-window pairs (1+2, 2+3, 3+4, ...), each pair is interleaved bit by bit, and the results are concatenated into one through haystack string. The plain row below the boundary is searched in that haystack (all rotations x direct/inverted/reversed); if found, pull it in, and repeat.",
     btnCaptureLasers: "▼ By lasers",
-    btnCaptureLasersTitle: "Through-search across all laser result strings: pull the row below the boundary in while its bits are found in the concatenation of all lasers.",
+    btnCaptureLasersTitle: "Through-search across all laser result strings: pull the row below the boundary in while its bits are found in the concatenation of all lasers. If no laser is placed yet, searches every axis at once (as if a laser stood on every point).",
     btnCaptureStep: "▶ Step",
-    btnCaptureStepTitle: "Single-step capture: check the row below the boundary (laser / laser concatenation / row-data concatenation) and, if found, pull in just that one row — no continuous repeat.",
+    btnCaptureStepTitle: "Single-step capture: check the row below the boundary (while “By rows” is active — the interleaving haystack above the boundary; otherwise laser / laser concatenation / row-data concatenation) and, if found, pull in just that one row — no continuous repeat.",
     btnHlAllBelow: "🔍 Highlight: everywhere below",
     btnHlAllBelowTitle: "While on — match highlighting (yellow/blue/purple) is searched not only in the first row below the boundary, but in every row below it. Nothing gets pulled into the frame — highlighting only, in the editor and the laser panel.",
     btnZen: "🧘 Zen", btnZenTitle: "Zen mode — hide everything except the cubes (or middle-click)",
@@ -884,6 +906,8 @@ var skewers = [];
 var laserVis = { top: true, right: true, left: true, horiz: true, da: true, db: true };
 var laserAssemblyVariant = 'order'; // выбранный вариант сборки лазеров в одну строку поиска
 var highlightAllBelow = false; // подсветка совпадений во всех строках ниже границы, не только в первой (кнопка «🔍 Подсветка: везде ниже»)
+var rowsModeActive = false; // «По строкам» (интерливинг) сейчас активный режим захвата — вместо панели «Сборка лазеров» показываем стог(и) интерливинга
+var ringVisualShift = {}; // absL -> целый сдвиг (по кругу, в позициях кольца) — ТОЛЬКО отображение, src.value не трогается
 // Снимок последнего draw(): какие клетки выделены/участвуют в балансе — для кнопки «Инверсия»
 var lastFrameElements = new Set();
 var lastBalanceElements = new Set();
@@ -1066,7 +1090,7 @@ function applyI18n() {
   btnRotAnim.textContent = rotAnimOn ? t.btnFlipAnimStop : t.btnFlipAnimPlay;
   
   // Принудительно устанавливаем правильную версию на вкладке
-  document.title = (t.titlePlain || "Kubits") + " v0.200";
+  document.title = (t.titlePlain || "Kubits") + " v0.220";
   
   syncSelUI();
   draw();
@@ -1260,13 +1284,17 @@ function parse(){
       var off = parsedFloors[k].off;
       lineFloor[absL] = k;
       if (bits.length === 0) continue;
+      // Визуальный сдвиг по кругу (кнопки «👁 Визуальный сдвиг») — крутит, какая клетка кольца
+      // какой бит показывает, БЕЗ изменения текста строки. posMod, т.к. сдвиг может быть отрицательным.
+      var vshift = ringVisualShift[absL] || 0;
+      var posMod = function(n, m){ return ((n % m) + m) % m; };
 
       // «Добор»: повтор бит до заполнения кольца — запоминаем хвост для серого показа в редакторе
       // (при «Добор инверсией» хвост берёт не сами биты, а их инверсию)
       if (doLoop && ring.length > bits.length) {
         var padStr = "";
         for (var tp = bits.length; tp < ring.length; tp++) {
-          var srcBit = bits[tp % bits.length];
+          var srcBit = bits[posMod(tp + vshift, bits.length)];
           padStr += doInvert ? (srcBit === "1" ? "0" : "1") : srcBit;
         }
         padTails[absL] = padStr;
@@ -1275,11 +1303,12 @@ function parse(){
       for(var t=0;t<ring.length;t++){
         var val = 0, isPad = false, cIdx = -1;
         if (doLoop) {
-          var bit = bits[t % bits.length];
+          var shiftedIdx = posMod(t + vshift, bits.length);
+          var bit = bits[shiftedIdx];
           if (t >= bits.length && doInvert) bit = (bit === "1") ? "0" : "1";
           val = (bit === "1") ? 1 : 0;
           isPad = (t >= bits.length);
-          cIdx = off + (t % bits.length);
+          cIdx = off + shiftedIdx;
         } else {
           if (t < bits.length) {
             val = (bits[t] === "1") ? 1 : 0;
@@ -1320,10 +1349,13 @@ function parse(){
       for(var yq2=sideQ-2;yq2>=1;yq2--) coordsQ.push([0,yq2]);       // лево, снизу вверх
 
       var capQ = coordsQ.length - 4; // клеток под биты (4 угла не считаются)
+      // Визуальный сдвиг по кругу для этого этажа — см. аналогичное в режиме «ring»
+      var vshiftQ = ringVisualShift[absLQ] || 0;
+      var posModQ = function(n, m){ return ((n % m) + m) % m; };
       if (doLoop && capQ > bitsQ.length) {
         var padStrQ = "";
         for (var tpq = bitsQ.length; tpq < capQ; tpq++) {
-          var srcBitQ = bitsQ[tpq % bitsQ.length];
+          var srcBitQ = bitsQ[posModQ(tpq + vshiftQ, bitsQ.length)];
           padStrQ += doInvert ? (srcBitQ === "1" ? "0" : "1") : srcBitQ;
         }
         padTails[absLQ] = padStrQ;
@@ -1337,11 +1369,12 @@ function parse(){
         if(isCornerQ){
           isPadQ=true;
         } else if (doLoop) {
-          var bitQ = bitsQ[tq % bitsQ.length];
+          var shiftedIdxQ = posModQ(tq + vshiftQ, bitsQ.length);
+          var bitQ = bitsQ[shiftedIdxQ];
           if (tq >= bitsQ.length && doInvert) bitQ = (bitQ === "1") ? "0" : "1";
           valQ = (bitQ === "1") ? 1 : 0;
           isPadQ = (tq >= bitsQ.length);
-          cIdxQ = offQ + (tq % bitsQ.length);
+          cIdxQ = offQ + shiftedIdxQ;
           tq++;
         } else {
           if (tq < bitsQ.length) { valQ = (bitsQ[tq]==="1")?1:0; cIdxQ = offQ + tq; }
@@ -2114,14 +2147,19 @@ function buildLaserNodes() {
 // все лазеры этой оси. Позиция получается экстраполяцией от первых двух узлов оси (тот же шаг,
 // но в обратную сторону) — работает одинаково для всех видов (изометрия/сверху/ромбы), без
 // знания конкретных формул позиционирования каждого типа оси.
+// На фигурах, где разные оси сходятся у одного и того же угла (ромбы — треугольная рамка,
+// компактные змейка/квадраты), один шаг экстраполяции может увести петли РАЗНЫХ осей в одну и ту
+// же точку. Поэтому у каждого типа оси — свой множитель шага (по порядку в groups), так что даже
+// сходящиеся у общего угла оси расходятся вдоль своих направлений на разное расстояние.
 function computeAxisToggleAnchors(ctxObj) {
     var out = {};
     if (!ctxObj || !ctxObj.groups) return out;
-    Object.keys(ctxObj.groups).forEach(function(key){
+    Object.keys(ctxObj.groups).forEach(function(key, ki){
         var g = ctxObj.groups[key];
         if (g.length < 2) return; // некуда экстраполировать направление — пропускаем
         var p0 = g[0].pos, p1 = g[1].pos;
-        out[key] = { x: p0.x + (p0.x - p1.x), y: p0.y + (p0.y - p1.y) };
+        var mult = 1 + ki * 0.6;
+        out[key] = { x: p0.x + (p0.x - p1.x) * mult, y: p0.y + (p0.y - p1.y) * mult };
     });
     return out;
 }
@@ -2919,26 +2957,32 @@ function draw(){
       var targetStrings = [];
       if (lineLimit >= 0) {
           var allLines = src.value.split('\n');
+          // «Без 1-го символа» должен так же действовать и здесь — иначе подсветка ищет ПОЛНУЮ
+          // строку (с 1-м битом), а реальный захват (belowRowSearchPat) — уже без него: подсветка
+          // могла загораться на повороте, недостижимом после урезания текста, и захват не срабатывал.
+          var sfChk = $("skipFirstCharCheck");
+          var skipFirstForTargets = sfChk && sfChk.checked;
           for (var tl = lineLimit; tl < allLines.length; tl++) {
               var trm = allLines[tl].trim();
               if (trm.length > 0) {
+                  var baseOffset = allLines[tl].indexOf(trm);
+                  var searchText = trm, extraOffset = 0;
+                  if (skipFirstForTargets && trm.length > 1) { searchText = trm.slice(1); extraOffset = 1; }
                   var inv = "", rev = "";
-                  for(var ch=0; ch<trm.length; ch++) inv += (trm[ch]==='1'?'0':'1');
-                  for(var ch=trm.length-1; ch>=0; ch--) rev += trm[ch];
-                  targetStrings.push({ text: trm, inv: inv, rev: rev, lineIdx: tl, offset: allLines[tl].indexOf(trm) });
+                  for(var ch=0; ch<searchText.length; ch++) inv += (searchText[ch]==='1'?'0':'1');
+                  for(var ch=searchText.length-1; ch>=0; ch--) rev += searchText[ch];
+                  targetStrings.push({ text: searchText, inv: inv, rev: rev, lineIdx: tl, offset: baseOffset + extraOffset });
                   if (!highlightAllBelow) break; // по умолчанию — только первая строка ниже границы
               }
           }
       }
 
+      // Строго: только полное совпадение паттерна целиком — раньше здесь ещё пробовался паттерн
+      // без 1-го символа, из-за чего подсветка загоралась там, где реальный захват (который требует
+      // совпадения целиком) потом не срабатывал.
       function matchVariant(pattern, laserStr) {
           var idx = laserStr.indexOf(pattern);
           if (idx !== -1) return { lIdx: idx, tIdx: 0, len: pattern.length };
-          if (pattern.length > 1) {
-              var short = pattern.slice(1);
-              var idx2 = laserStr.indexOf(short);
-              if (idx2 !== -1) return { lIdx: idx2, tIdx: 1, len: short.length };
-          }
           return null;
       }
 
@@ -3287,7 +3331,7 @@ function draw(){
       ltb.appendChild(tb);
       ltb.style.display = "block";
 
-      { // Сборка лазеров: выбор варианта + что с чем складывается + итоговая склеенная строка
+      { // Сборка лазеров (или, пока активен режим «По строкам», — стог(и) интерливинга вместо неё)
           var asmWrap = document.createElement("div");
           asmWrap.style.cssText = "width:100%; margin-bottom:4px; padding-bottom:3px; border-bottom:1px solid var(--border);";
 
@@ -3296,6 +3340,46 @@ function draw(){
           asmHead.style.cssText = "display:flex; align-items:center; flex-wrap:wrap; gap:5px; border-bottom:none; padding-bottom:0; margin-bottom:2px; text-transform:none; letter-spacing:0;";
           var asmTitle = document.createElement("span");
           asmTitle.style.cssText = "text-transform:uppercase; letter-spacing:.5px;";
+
+          if (rowsModeActive) {
+              asmTitle.textContent = (currentLang === "ru") ? "Интерливинг (сквозной, над границей):" : "Interleaving (through, above boundary):";
+              asmHead.appendChild(asmTitle);
+              asmWrap.appendChild(asmHead);
+
+              var ilHaystacks = aboveRowsInterleavedHaystacks();
+              if (ilHaystacks.length) {
+                  ilHaystacks.forEach(function(h, hi){
+                      var ilLine = document.createElement("div");
+                      ilLine.className = "skew-line";
+                      ilLine.style.cursor = "default";
+                      ilLine.style.flexWrap = "wrap";
+                      if (ilHaystacks.length > 1) {
+                          var ilTag = document.createElement("span");
+                          ilTag.style.cssText = "color:var(--muted); margin-right:5px;";
+                          ilTag.textContent = (hi === 0 ? "А:" : "Б:");
+                          ilLine.appendChild(ilTag);
+                      }
+                      var ilTxt = document.createElement("span");
+                      if (h.length) {
+                          // Ищем в стоге ту же цель (строку(и) под границей), что и везде — заодно
+                          // подсвечивает совпадение и в самом стоге, и (через targetHighlights) в
+                          // редакторе строк, как обычная лазерная подсветка.
+                          ilTxt.innerHTML = formatMatchSegments(findMatches(h, null));
+                      } else {
+                          ilTxt.textContent = i18n[currentLang].empty;
+                      }
+                      ilLine.appendChild(ilTxt);
+                      asmWrap.appendChild(ilLine);
+                  });
+              } else {
+                  var ilDash = document.createElement("div");
+                  ilDash.className = "sub";
+                  ilDash.style.margin = "0";
+                  ilDash.textContent = "—";
+                  asmWrap.appendChild(ilDash);
+              }
+              skewerRes.appendChild(asmWrap);
+          } else {
           asmTitle.textContent = (currentLang === "ru") ? "Сборка:" : "Assembly:";
           asmHead.appendChild(asmTitle);
 
@@ -3359,6 +3443,7 @@ function draw(){
               asmWrap.appendChild(asmDash);
           }
           skewerRes.appendChild(asmWrap);
+          }
       }
 
       { // колонки показываем всегда (даже без лазеров) — в заголовке каждой живёт её «⚡ Все»
@@ -3524,11 +3609,15 @@ function draw(){
          }
       }
   }
-  // Автозахват: та же проверка, что у кнопки «По лазерам» (лазер по отдельности → склейка
-  // лазеров → склейка самих строк данных), а не только попадание в canvas-подсветку лазеров —
-  // иначе строки вроде «1000», найденные лишь как инверсия в данных, не подхватывались.
-  // Отложенно через setTimeout, чтобы не рекурсировать из draw(); монотонный рост lineLimit
-  // гарантирует завершение (строка, ушедшая выше границы, перестаёт быть целью).
+  // Автозахват: та же проверка, что у кнопки «По лазерам»/«По строкам» (см. belowRowMatchDetail),
+  // а не только попадание в canvas-подсветку лазеров — иначе строки вроде «1000», найденные лишь
+  // как инверсия в данных, не подхватывались.
+  // Отложенно через микротаск (не setTimeout!), чтобы не рекурсировать из draw(). Микротаск гарантированно
+  // выполняется РАНЬШЕ следующего тика любого setInterval (Плей этажей, автосдвиг символов и т.п.) —
+  // иначе при быстром автоплее следующий тик успевал стартовать раньше отложенного захвата, тот видел
+  // «pendingBelowCapture» ещё не сброшенным и молча пропускал проверку — автозахват «проскакивал» мимо
+  // совпадения. Монотонный рост lineLimit гарантирует завершение (строка, ушедшая выше границы,
+  // перестаёт быть целью).
   (function(){
       var acb = $("autoCaptureBelow");
       if (!acb || !acb.checked || lineLimit < 0 || pendingBelowCapture) return;
@@ -3538,11 +3627,11 @@ function draw(){
       if (!m) return;
       console.log("[Kubits] Автозахват: строка №" + (lineLimit + 1) + " \"" + row + "\" найдена → " + m.desc + " → втягиваем в рамку");
       pendingBelowCapture = true;
-      setTimeout(function(){
+      Promise.resolve().then(function(){
           pendingBelowCapture = false;
           var acb2 = $("autoCaptureBelow");
           if (acb2 && acb2.checked && lineLimit >= 0 && lineLimit < src.value.split('\n').length) { lineLimit++; rebuild(); }
-      }, 0);
+      });
   })();
 
   updateEditorHighlight(textHlMap, isMinus, highlightEqual, targetHighlights, selectedBeamHlList);
@@ -3769,6 +3858,47 @@ function rotateSelected(dir) {
     }
 }
 
+// Визуальный сдвиг по кругу («👁 Визуальный сдвиг»): в отличие от rotateSelected, НЕ трогает
+// src.value — крутит только то, какая клетка кольца какой бит показывает (ringVisualShift).
+// Работает только там, где реально используется добор по кругу (ring.doLoop) — на выбранных
+// этажах (или на всех, если ничего не выбрано).
+function shiftRingVisual(dir) {
+    var linesToShift = new Set();
+    var shiftAll = (sel.size === 0);
+    G.list.forEach(function(c) {
+        if ((shiftAll || sel.has(c[2])) && c[5] !== -1) linesToShift.add(c[5]);
+    });
+    if (!linesToShift.size) {
+        console.log("[Kubits] Визуальный сдвиг: нет ни одной подходящей строки (пусто на этаже/строке?), ничего не сдвинуто.");
+        return;
+    }
+    var rawLinesForLog = src.value.split("\n");
+    linesToShift.forEach(function(absL) {
+        var cur = ringVisualShift[absL] || 0;
+        ringVisualShift[absL] = cur + (dir === 'CW' ? 1 : -1);
+    });
+    console.log("[Kubits] Визуальный сдвиг (" + dir + "), sel=" + JSON.stringify(Array.from(sel)) + ": " +
+        Array.from(linesToShift).map(function(absL){
+            return "строка №" + (absL + 1) + " \"" + rawLinesForLog[absL].trim() + "\" → сдвиг=" + ringVisualShift[absL];
+        }).join("; "));
+    parse();
+    geometry();
+    draw();
+}
+function resetRingVisualShift() {
+    var shiftAll = (sel.size === 0);
+    if (shiftAll) {
+        ringVisualShift = {};
+    } else {
+        G.list.forEach(function(c) {
+            if (sel.has(c[2]) && c[5] !== -1) delete ringVisualShift[c[5]];
+        });
+    }
+    parse();
+    geometry();
+    draw();
+}
+
 /* === МАРКЕР 12a: ИТОГОВЫЕ СТРОКИ ЛАЗЕРОВ ДЛЯ ВЫГРУЗКИ В EXCEL === */
 // Собирает текущие лазеры в строки {axis, axisLabel, index, str} — тем же способом, что и панель результатов
 function laserResultRowsForExport() {
@@ -3793,6 +3923,36 @@ function laserResultRowsForExport() {
     var order = { top:0, right:1, left:2 };
     rows.sort(function(a,b){ return (order[a.axis]-order[b.axis]) || (a.index-b.index); });
     return rows;
+}
+// Все ВОЗМОЖНЫЕ лазерные строки — по каждой точке каждой оси (не только по уже добавленным
+// пользователем лазерам). Используется, когда лазеров ещё нет ни одного: тогда «По лазерам» ищет
+// совпадение сразу по всем осям, а не только там, где явно стоит лазер.
+function allPossibleLaserRows() {
+    if (!(skewerMode.checked && laserModeOk()) || !G || !G.list) return [];
+    var lctx = buildLaserNodes();
+    var axisLabel = {
+        top:   (currentLang==='ru' ? 'Верх'  : 'Top'),
+        right: (currentLang==='ru' ? 'Право' : 'Right'),
+        left:  (currentLang==='ru' ? 'Лево'  : 'Left'),
+        horiz: (currentLang==='ru' ? 'Гориз' : 'Horiz'),
+        db:    (currentLang==='ru' ? 'Диаг \\' : 'Diag \\'),
+        da:    (currentLang==='ru' ? 'Диаг /'  : 'Diag /')
+    };
+    var rows = [];
+    lctx.nodes.forEach(function(node){
+        var hitList = beamCells(node.type, node.d);
+        var str = "";
+        hitList.forEach(function(hit){ str += hit.c[3]; });
+        rows.push({ axis: node.type, axisLabel: axisLabel[node.type] || node.type, index: node.index, str: str });
+    });
+    var order = { top:0, right:1, left:2 };
+    rows.sort(function(a,b){ return (order[a.axis]-order[b.axis]) || (a.index-b.index); });
+    return rows;
+}
+// Строки для проверок «По лазерам»/автозахвата: если у пользователя стоит хоть один лазер —
+// смотрим только на них (его явный выбор), иначе — сразу по всем возможным осям.
+function laserRowsForCapture() {
+    return skewers.length ? laserResultRowsForExport() : allPossibleLaserRows();
 }
 // Стили для листа «Лазеры» (заголовок + ячейки, всё выровнено по левому краю)
 function laserExcelStyleDefs(isDark) {
@@ -4276,7 +4436,11 @@ function syncSelUI(){
       }
       rotWrap.style.display = "flex";
   }
-  
+
+  // «👁 Визуальный сдвиг» виден только там, где реально есть добор по кругу (иначе крутить нечего)
+  var _visRotWrap = $("visRotWrap");
+  if (_visRotWrap) _visRotWrap.style.display = (loopBits.checked && (mode.value === "ring" || isSquaresMode())) ? "flex" : "none";
+
   skewerMode.disabled = (isSquaresMode() && squareEditMode);
   if (skewerMode.disabled) { skewerMode.checked = false; skewers = []; selectedLaserRows = []; }
   
@@ -4356,10 +4520,11 @@ function belowRowFoundInDetail(haystack){
 }
 // В каком именно лазере найдена нижняя строка (или null) — для лога «какой лазер дал строку».
 // Проверяет строки-результаты каждого лазера отдельно: прямой/инверсия/реверс + повороты.
+// Если у пользователя нет ни одного лазера — проверяет сразу все возможные оси (laserRowsForCapture).
 function belowRowFoundLaser(){
   var pat = belowRowSearchPat();
   if (!pat) return null;
-  var rows = laserResultRowsForExport();
+  var rows = laserRowsForCapture();
   for (var k = 0; k < pat.length; k++){
     var rot = pat.slice(k) + pat.slice(0, k);
     var inv = "", rev = "";
@@ -4389,34 +4554,88 @@ function throughRowsHaystack(){
   }
   return s;
 }
-// Склейка всех строк-результатов лазеров подряд.
+// Склейка всех строк-результатов лазеров подряд (или всех возможных осей, если лазеров ещё нет).
 function throughLasersHaystack(){
-  var rows = laserResultRowsForExport();
+  var rows = laserRowsForCapture();
   var s = "";
   rows.forEach(function(r){ s += r.str; });
   return s;
 }
-// Режим A: пока нижняя строка содержится в сквозной склейке строк — опускаем границу на 1.
+// Побитовое чередование двух строк: b1[0],b2[0],b1[1],b2[1],... (до длины более длинной из двух).
+function interleave(a, b){
+  var maxLen = Math.max(a.length, b.length), out = "";
+  for (var i = 0; i < maxLen; i++){
+    if (i < a.length) out += a[i];
+    if (i < b.length) out += b[i];
+  }
+  return out;
+}
+// «Стог» для интерливинга: ВСЕ уже включённые строки над границей (не под ней!) разбиваются на
+// пары СКОЛЬЗЯЩИМ ОКНОМ — 1+2, 2+3, 3+4, 4+5, ... (каждая соседняя пара, с перекрытием, а не
+// только 1+2 / 3+4 без повтора строк), каждая пара чередуется побитово, и результаты всех пар
+// склеиваются подряд в ОДНУ сквозную строку-стог. Даёт до двух вариантов стога — оба проверяются
+// в autoCaptureBelowThroughRows:
+//   А) в каждой паре сначала чередуем сами биты (b1[0],b2[0],b1[1],b2[1]...), потом отдельно
+//      хвосты добора, и склеиваем результаты;
+//   Б) в каждой паре сначала каждая строка целиком (биты+хвост добора), потом чередуем эти две
+//      целые строки.
+// Если над границей только одна строка — чередовать не с чем, стог — она сама (биты+добор).
+function aboveRowsInterleavedHaystacks(){
+  var lines = src.value.split("\n");
+  var lim = (lineLimit < 0) ? lines.length : Math.min(lineLimit, lines.length);
+  if (lim <= 0) return [];
+  var bitsOf = function(i){ return lines[i].trim().replace(/\s+/g, ""); };
+  var padOf = function(i){ return (D && D.padTails && D.padTails[i]) ? D.padTails[i] : ""; };
+  if (lim === 1) return [bitsOf(0) + padOf(0)];
+  var hA = "", hB = "";
+  for (var i = 0; i + 1 < lim; i++){
+    var b1 = bitsOf(i), b2 = bitsOf(i + 1), p1 = padOf(i), p2 = padOf(i + 1);
+    hA += interleave(b1, b2) + interleave(p1, p2);
+    hB += interleave(b1 + p1, b2 + p2);
+  }
+  return (hA === hB) ? [hA] : [hA, hB];
+}
+// Режим A («По строкам»): обычная строка под границей (без чередования её самой, как раньше)
+// ищется в интерливинг-стоге из двух последних включённых строк над границей — проверяются
+// оба варианта добора (см. aboveRowsInterleavedHaystacks/belowRowMatchDetail). Если найдена —
+// втягиваем внутрь эту ОДНУ строку (граница +1), и так по кругу; на каждом шаге стог
+// пересчитывается заново от новых последних двух строк над (уже сдвинутой) границей.
+// Использует ту же belowRowMatchDetail(), что и «Шаг»/непрерывный автозахват (чекбокс) — поэтому
+// они ведут себя одинаково, пока активно «По строкам» (см. rowsModeActive).
 // Требует уже посчитанный D (добор из D.padTails); на каждом шаге пере-parse() под новой границей.
 function autoCaptureBelowThroughRows(){
   var guard = 0, total = src.value.split("\n").length, changed = false;
   while (guard++ < total){
     var row = belowRowBits();
     if (!row) break;
-    var fd = belowRowFoundInDetail(throughRowsHaystack());
-    if (!fd) break;
-    console.log("[Kubits] Строка №" + (lineLimit + 1) + " \"" + row + "\" найдена → сквозной по строкам, " +
-        fd.kind + (fd.rot ? ", поворот " + fd.rot : "") + ", совпало \"" + fd.pat + "\" → втянута в рамку");
+    var m = belowRowMatchDetail();
+    if (!m) break;
+    console.log("[Kubits] Строка №" + (lineLimit + 1) + " \"" + row + "\" найдена → " + m.desc + " → втянута в рамку");
     lineLimit++;
     changed = true;
     parse(); // обновить D/добор под новой границей
   }
   return changed;
 }
-// Общая проверка «найдена ли строка под границей» на трёх уровнях: конкретный лазер →
-// склейка всех лазеров → склейка самих строк данных. Используется и кнопкой «По лазерам»,
-// и непрерывным автозахватом (чекбокс), и одношаговой кнопкой «Шаг».
+// Общая проверка «найдена ли строка под границей». Используется кнопкой «По лазерам», кнопкой
+// «По строкам», непрерывным автозахватом (чекбокс) и одношаговой кнопкой «Шаг» — все четыре
+// подряд смотрят на ОДИН и тот же текущий режим (rowsModeActive), поэтому ведут себя одинаково.
+// Пока активно «По строкам» — ищем только в интерливинг-стоге (над границей). Иначе — три уровня
+// проверки лазеров: конкретный лазер → склейка всех лазеров → сборка лазеров → сквозная строка данных.
 function belowRowMatchDetail(){
+  if (rowsModeActive) {
+    var rowI = belowRowBits();
+    if (!rowI) return null;
+    var haystacks = aboveRowsInterleavedHaystacks();
+    for (var hi = 0; hi < haystacks.length; hi++){
+      var fdI = belowRowFoundInDetail(haystacks[hi]);
+      if (fdI) {
+        return { desc: "интерливинг строк над границей" + (haystacks.length > 1 ? " (вариант " + (hi + 1) + ")" : "") +
+            ", " + fdI.kind + (fdI.rot ? ", поворот " + fdI.rot : "") + ", совпало \"" + fdI.pat + "\"" };
+      }
+    }
+    return null;
+  }
   var lz = belowRowFoundLaser();
   var fdL = lz ? null : belowRowFoundInDetail(throughLasersHaystack());
   // Сборка лазеров (панель результатов, выбранный пользователем вариант) — то же, что подсвечено
@@ -4471,12 +4690,16 @@ var _btnCapRows = $("btnCaptureRows");
 if (_btnCapLasers) _btnCapLasers.addEventListener("click", function(){
     _btnCapLasers.classList.add("active");
     if (_btnCapRows) _btnCapRows.classList.remove("active");
+    rowsModeActive = false;
     captureBelowThroughLasers();
+    draw();
 });
 if (_btnCapRows) _btnCapRows.addEventListener("click", function(){
     _btnCapRows.classList.add("active");
     if (_btnCapLasers) _btnCapLasers.classList.remove("active");
+    rowsModeActive = true;
     if (autoCaptureBelowThroughRows()) rebuild(); // по строкам+добор, затем обновить вид
+    else draw(); // даже без захвата — переключить панель на интерливинг
 });
 var _btnHlAllBelow = $("btnHlAllBelow");
 if (_btnHlAllBelow) _btnHlAllBelow.addEventListener("click", function(){
@@ -4606,6 +4829,10 @@ btnTheme.addEventListener("click", function(){
 
 btnRotCCW.addEventListener("click", function(){ shiftAnimDir = 'CCW'; rotateSelected('CCW'); });
 btnRotCW.addEventListener("click", function(){ shiftAnimDir = 'CW'; rotateSelected('CW'); });
+var _btnVisRotCCW = $("btnVisRotCCW"), _btnVisRotCW = $("btnVisRotCW"), _btnVisRotReset = $("btnVisRotReset");
+if (_btnVisRotCCW) _btnVisRotCCW.addEventListener("click", function(){ shiftRingVisual('CCW'); });
+if (_btnVisRotCW) _btnVisRotCW.addEventListener("click", function(){ shiftRingVisual('CW'); });
+if (_btnVisRotReset) _btnVisRotReset.addEventListener("click", resetRingVisualShift);
 /* === МАРКЕР 15.15: АВТОПЛЕЙ СДВИГА СИМВОЛОВ === */
 function shiftAnimTick(){
     rotateSelected(shiftAnimDir);
