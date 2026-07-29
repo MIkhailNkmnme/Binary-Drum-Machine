@@ -1,4 +1,4 @@
-﻿<!-- Версия: 0.231 (Добор в Кольце/Квадратах теперь застывает при формировании: правки начала строки, включая «Инверсию», больше не пересчитывают уже показанный добор — см. getFrozenPadStr) -->
+﻿<!-- Версия: 0.273 (Режим «?» (сторона добора): 1) выбор →/← теперь ЗАПОМИНАЕТСЯ — раньше сбрасывался после каждой попытки («спрашивать каждый раз»), теперь спрашивает только пока НИ РАЗУ не выбрано; дальше «▶ Шаг»/«Автозахват» молча используют запомненную сторону, пока не переключишь на другую. 2) Клик по →/← в подсказке теперь сразу переключает панель «Стог» на выбранную сторону (А→/Б→ или А←/Б←) — раньше показывались обе с подсветкой/приглушением, что было не очень понятно; пока сторона ни разу не выбрана — по-прежнему показаны обе для сравнения.) (Пред. 0.272: Новая колонка слева от цветной нумерации этажей в «Данных (Строки)» — глобальный АБСОЛЮТНЫЙ номер строки текстового поля (1,2,3,4...), всегда для каждой строки без исключений (пустой, за границей, не участвующей в модели), некликабельная, серым — просто ориентир «где я в тексте», не зависит от режима/этажей/выбора. #globalLineGutter, синхронизирована по scrollTop с редактором.) (Пред. 0.271: Найдена реальная причина «не подсвечивает строку под границей»: при включённом инструменте «Лазер» лазерный поиск (findMatches по строкам лазеров/сборки/пересечений) и поиск «По строкам» (интерливинг-стог) писали в ОДИН общий targetHighlights — подсветка лазеров (по совсем другим строкам/данным) смешивалась с подсветкой стога и забивала её. Теперь пока активно «По строкам» — лазерный поиск вообще не подсвечивает (ни «Сборка», ни отдельные лазерные колонки, ни «Пересечения»); подсветку даёт только интерливинг-стог. Сами лазерные лучи/строки на холсте и в колонках по-прежнему видны — просто без цветовой подсветки совпадений.) (Пред. 0.270: Откат «фикса» из v0.269: приоритет ближней строки ломал саму суть «Подсветка: везде ниже» — кнопка должна подсвечивать ВСЕ найденные строки, а не только ближайшую к границе. findMatches() вернулась к исходному алгоритму (глобально самый длинный матч + рекурсия по остатку строки слева/справа — так находятся НЕСКОЛЬКО разных строк за один проход). Причина «не цепляет строку прямо под границей» ещё не установлена — версия для дальнейшей диагностики по описанию пользователя.) (Пред. 0.268: 1) Новые дефолты по умолчанию (по образцу присланного скриншота): ползунок «0 в строках» = 1.7 (вместо 0), «▼ По строкам» активен вместо «▼ По лазерам», «🔍 Подсветка: везде ниже» включена. Ряд «Стог» и подсказка «?» теперь и в разметке display:flex по умолчанию (раз «По строкам» — дефолтный режим). 2) Клик по →/← в подсказке «?» больше НЕ запускает захват сам по себе — только запоминает выбор и подсвечивает/приглушает соответствующие строки А→/А←/Б→/Б← в панели «Стог» (можно тыкать туда-сюда без побочных эффектов). Сам захват с этим выбором происходит только по «▶ Шаг» или через включённый чекбокс «Автозахват» — как и раньше решает belowRowMatchDetail().) (Пред. 0.267: Правки к v0.266: 1) «⟲ Граница»/смена режима теперь ставят границу ПОД 2-й строкой (lineLimit=2, участвуют 1-я и 2-я), а не перед ней (было lineLimit=1, участвует только 1-я). 2) Подсказка «Добор в стоге — куда на этот раз?» (режим «?») больше не появляется/исчезает по ходу поиска — она видна постоянно, пока активно «По строкам» (как и сам ряд «Стог: А/Б/→/←/?»), а её кнопки →/← просто становятся disabled (серые, некликабельные), когда отвечать пока не на что — «?» не выбран или нет строки под границей. Добавлен глобальный CSS button:disabled.) (Пред. 0.266: Добавлена третья кнопка «?» в группу «Добор →/←» панели «Захват границы» (только «По строкам»): при активной «?» сторона добора не выбирается заранее — перед КАЖДОЙ попыткой захвата (клик «▶ Шаг», «▼ По строкам», тик непрерывного «Автозахват») в панели всплывает вопрос «Добор в стоге — куда на этот раз?» с двумя кнопками →/←; попытка ждёт ответа (для циклов/анимации это выглядит как обычная пауза «не найдено», они сами продолжат на следующем шаге/тике, как только ответ придёт). Ответ тратится ровно на одну попытку — следующая снова спросит. Панель результатов при этом (пока нет ответа) показывает ОБА варианта стога сразу, для сравнения. Переключение на фиксированную сторону (→ или ←) или выход из «По строкам» отменяет незавершённый вопрос.) (Пред. 0.265: Ряд «Стог: А/Б, Добор →/←» из v0.264 переделан: 1) теперь это ДВЕ пары взаимоисключающих кнопок (как «По строкам»/«По лазерам»), а не 4 независимых чекбокса — всегда активен ровно один вариант в каждой паре (А либо Б, → либо ←), не оба и не ни одного; дефолт — Б и → (как было исходно, до v0.264). 2) Ряд виден, только пока активно «По строкам» (rowsModeActive) — в режиме «По лазерам» он ни на что не влияет и раньше только путал, скрыт через syncIlVariantsUI().) (Пред. 0.264: Панель «Захват границы»: новый ряд из 4 чекбоксов «Стог: А[x] Б[x] Добор →[x] ←[x]» — управляют вариантами интерливинг-стога («По строкам»). Раньше сторона добора (после бит строки, «справа») была жёстко зашита — теперь есть и «слева» (добор перед битами), для А и для Б отдельно, до 4 комбинаций сразу (дедуп одинаковых). Любой из А/Б/→/← можно снять галкой — вариант вообще не считается и не проверяется при поиске (экономит время на длинных стогах). Панель результатов и лог автозахвата показывают тег варианта (А→/А←/Б→/Б←) вместо старых «вариант 1/2».) (Пред. 0.263: Исправлен «гуляющий» центр воронки при «Визуальном сдвиге»: geometry() для режимов Кольцо/Квадраты/Змейка/Пирамида-4 (изометрия) центрировала по bbox только РЕАЛЬНЫХ (не-добор) ячеек, а «Визуальный сдвиг» крутит кольцо целиком, из-за чего на каждом такте менялось, какая физическая позиция сейчас реальная, а какая добор — и центр прыгал вверх-вниз. Теперь центр по Y берётся от bbox ВСЕХ ячеек кольца (реальные+добор), который при сдвиге физически не меняется. 2) Лог «Визуальный сдвиг»/«Сдвиг символов» больше не пишется на КАЖДОМ такте непрерывного «▶ Плея» (раньше копил тысячи одинаковых по сути записей за секунды и тратил на них время): при проигрывании анимации сдвиг молчит, лог остаётся только для одиночного нажатия кнопки сдвига.) (Пред. 0.262: Лог автозахвата («По строкам»/«По лазерам»/«Шаг»/непрерывный автозахват) теперь всегда указывает номер поворота искомого паттерна (нижней строки) из общего числа возможных поворотов её длины — «поворот K из N» — вместо того чтобы молчать про поворот 0 (прямое совпадение без сдвига). Работает во всех четырёх уровнях проверки: интерливинг строк над границей, конкретный лазер, сквозная склейка лазеров, сборка лазеров, сквозная строка данных.) (Пред. 0.261: 1) «⏹ Сброс» над редактором теперь всегда выключает «Автозахват» (иначе он тут же снова затягивал строки под сброшенную границу). 2) «💾 Запомнить» теперь сохраняет в кеш ВМЕСТЕ с текстом положение верхней и нижней границы «Данных»; «⏹ Сброс» (и повторный клик-откат) возвращает их вместе с текстом; старый формат кеша (просто строка, до этой версии) по-прежнему читается — просто без границ. 3) Новый боковой рельс справа в редакторе «Данных» (lineLimitWindowBar, градиент фиолетовый→зелёный): перетаскивание двигает ОБЕ границы (верхнюю и нижнюю) сразу, расстояние между ними сохраняется — «окно» съезжает вверх/вниз целиком; виден, только когда хотя бы одна из границ реально активна; двойной клик — снять обе.) (Пред. 0.260: 1) ВЕРХНЯЯ граница в «Данных» (фиолетовая линия lineLimitTopBar): перетаскивание отсекает верхние строки — они не участвуют в модели, как и строки под нижней границей; двойной клик — снять; не заходит ниже нижней границы (и наоборот); сбрасывается вместе с нижней (смена режима, «⟲ Граница», «⏹ Сброс», Drag&Drop файла). 2) Сдвиги при рамке выделения переделаны на ВИДИМОСТЬ: и «Сдвиг символов», и «Визуальный сдвиг» двигают только видимые строки — без «Вычитать выделенное» это строки в рамке, с «Вычитанием» — строки вне её (раньше рамка всегда «прижимала» строки внутри себя, независимо от «Вычитания»).) (Пред. 0.259: Ползунок «0 в строках» (zeroMain) по умолчанию 0 (нули в строках не видны). Новая инфо-строка в панели «Захват границы»: число различных вариантов циклического сдвига каждой строки над границей (учитывается период — у «1111» вариант один) и общее число комбинаций (произведение); обновляется при правке данных и перетаскивании границы.) (Пред. 0.258: Кеш «Данных» переделан на РУЧНОЙ по жалобе «сбивается»: автозапись при вводе откачена, «Сброс» Сдвиг-Плея вернулся к снапшоту на момент старта (как в 0.255). Новая кнопка «💾 Запомнить» над редактором пишет текущий текст в localStorage; запомненное автоматически подтягивается при F5/открытии любой версии файла (в том же браузере тем же способом) и возвращается кнопкой «⏹ Сброс» над редактором (если кеша нет — сброс к шаблону из кода, как раньше; повторный клик сразу после сброса по-прежнему возвращает ваш текст).) (Пред. 0.255: рамка выделения: ПКМ у ГРАНИЦЫ рамки (±14px по метрике формы) — растяжение от её центра (центр стоит), ПКМ глубже внутри — перемещение (как раньше), ПКМ снаружи — новая рамка. При растяжении в ноль (<5px) рамка снимается, как при рисовании.) (Пред. 0.254: 1) кнопки «Пирамида 3/4» временно скрыты (display:none, режимы рабочие). 2) Рамка выделения на холсте теперь «прижимает» кольца при визуальном сдвиге: строки, хотя бы одна клетка которых в рамке, не крутятся (работает и из Сдвиг-Плея). 3) Исправлена «Инверсия» при рамке: добор-клетки в рамке больше не инвертируются — их cIdx алиасит реальный бит вне рамки, из-за чего инверсия меняла биты за пределами рамки; теперь инвертируются только реальные клетки в рамке.) (Пред. 0.253: две новые формы заливки: «Пирамида 3» (этаж — треугольник, вершина сверху в виде сверху, кольцо 8r клеток без дыр) и «Пирамида 4» (этаж — квадрат, как «Квадраты», но объёмная с изометрией). Переключатели pyraGroup: «Кольцо» (биты по периметру, углы всегда Добор-0) / «Сплошная» (заливка всей площади по рядам) и «Остриё внизу» (первая строка — 1 кубик, как воронка) / «Остриё вверху» (первая строка — основание, последняя — вершина). Поддержаны Добор/Инверс./Динам., визуальный сдвиг, оба вида (изометрия/сверху), якоря центра. Проверено headless-тестом: 5 строк «1» → кольца 69/65 единиц, сплошные 165, обе ориентации.) (Пред. 0.252: изменены дефолты панели «Отображение»: «Кольца» (guides) и «↳ Инверс.» (loopBitsInvert) теперь по умолчанию ВЫКЛЮЧЕНЫ — по образцу присланного скриншота, остальные галки/ползунки этой панели как были включены.) (Пред. 0.251: галка «Без отрисовки при Плее» при включении автоматически ставит все 5 ползунков скоростей Плеев на максимум скорости (прежние значения запоминаются и возвращаются при выключении) — именно на максимуме подавление даёт реальный прирост темпа поиска. Пред. 0.250: закрыт последний обход «Без отрисовки при Плее»: при включённом режиме лазеров любое движение мыши перерисовывало холст (mousemove → requestDraw) — видно как редкие «прокрутки» холста при стоящей границе; теперь hover-redraw пропускается, пока активно подавление. Замер: на макс. скорости ползунка подавление даёт 252 такта поиска/с против 104 без него; на средних скоростях темп одинаков, экономится только CPU. Пред. 0.249: исправлен главный виновник «Без отрисовки при Плее» (найден автотестом Playwright по стеку clearRect): финальный draw() в makePlayer.stop() был БЕЗУСЛОВНЫМ, а stop() дёргается ещё и защитно — syncSelUI → stopRotAnim на КАЖДОМ такте Сдвиг-Плея — т.е. холст рисовался каждый такт в обход подавления. Теперь финальный кадр рисуется только если плеер реально играл (wasOn). Проверено: Сдвиг-Плей с подавлением — 1-2 отрисовки за 3с вместо ~50) -->
 <!--
   ПРАВИЛО МАРКЕРОВ (для правок по промптам частями):
   Файл разбит на секции комментариями вида «=== МАРКЕР NN: НАЗВАНИЕ ===».
@@ -11,7 +11,7 @@
 <html lang="ru" data-theme="dark"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Кубиты v0.231</title>
+<title>Кубиты v0.273</title>
 
 <!-- Подключение шрифта Roboto Mono -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,10 +23,12 @@
 :root{
   --bg:#F6F5F0; --panel:#FFFFFF; --fg:#26251F; --muted:#6E6D66;
   --border:#DCDAD1; --accent:#1D9E75; --accent-soft:#E1F5EE;
+  --accent2:#7C5CFC; /* «Визуальный сдвиг» — отдельный акцент, чтобы не путать с обычным «Добор»/accent */
 }
 :root[data-theme="dark"]{
   --bg:#151D1B; --panel:#1C2724; --fg:#E9F2EE; --muted:#93A69F;
   --border:#31423C; --accent:#5DCAA5; --accent-soft:#0F2B23;
+  --accent2:#9B85FF;
 }
 *{box-sizing:border-box}
 
@@ -214,16 +216,37 @@ h1 .t2{color:#3498DB}
   font: 12px/1.25 'Roboto Mono', monospace;
   width: 100%;
   min-height: 150px;
-  padding: 8px 10px 8px 34px; margin: 0; box-sizing: border-box;
+  padding: 8px 10px 8px 64px; margin: 0; box-sizing: border-box;
   border-radius: 5px;
   white-space: pre; word-wrap: normal;
   overflow: auto;
 }
 
+/* Глобальная нумерация строк — АБСОЛЮТНЫЙ номер строки в textarea, всегда для каждой строки,
+   независимо от границы/этажей/режима. Отдельно и ЛЕВЕЕ цветной нумерации этажей (#lineGutter) —
+   не кликабельна, ничего не выделяет, просто ориентир «где я в тексте». */
+#globalLineGutter {
+  position: absolute;
+  top: 1px; left: 1px; bottom: 1px; width: 28px;
+  overflow: hidden;
+  font: 12px/1.25 'Roboto Mono', monospace;
+  padding: 8px 4px 8px 0;
+  box-sizing: border-box;
+  z-index: 4;
+  pointer-events: none;
+  scrollbar-width: none;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  border-radius: 5px 0 0 5px;
+  color: var(--muted);
+}
+#globalLineGutter::-webkit-scrollbar { display: none; }
+#globalLineGutter .gutter-line { text-align: right; }
+
 /* Нумерация строк (только этажи — то же, что и номера в панели «Этажи»), клик выделяет этаж */
 #lineGutter {
   position: absolute;
-  top: 1px; left: 1px; bottom: 1px; width: 32px;
+  top: 1px; left: 29px; bottom: 1px; width: 32px;
   overflow: hidden;
   font: 12px/1.25 'Roboto Mono', monospace;
   padding: 8px 4px 8px 0;
@@ -234,7 +257,6 @@ h1 .t2{color:#3498DB}
   /* непрозрачный фон: при горизонтальной прокрутке длинные строки не просвечивают под номерами */
   background: var(--panel);
   border-right: 1px solid var(--border);
-  border-radius: 5px 0 0 5px;
 }
 #lineGutter::-webkit-scrollbar { display: none; }
 #lineGutter .gutter-line {
@@ -326,6 +348,54 @@ h1 .t2{color:#3498DB}
   background: var(--accent); border-radius: 4px;
   box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.65);
 }
+/* ВЕРХНЯЯ граница «строки выше не участвуют» — как нижняя, но отсекает сверху; свой акцент
+   (--accent2, фиолетовый), чтобы не путать с нижней. Затемнение — от верха редактора до линии. */
+#lineLimitTopCurtain {
+  position: absolute;
+  left: 1px; right: 1px; top: 1px;
+  background: var(--bg);
+  opacity: 0.62;
+  pointer-events: none;
+  z-index: 3;
+  border-radius: 5px 5px 0 0;
+  display: none;
+}
+#lineLimitTopBar {
+  position: absolute;
+  left: 0; right: 0; height: 8px; margin-top: -4px;
+  background: transparent;
+  opacity: 0.7;
+  cursor: row-resize;
+  z-index: 5;
+}
+#lineLimitTopBar:hover, #lineLimitTopBar.dragging { opacity: 1; }
+#lineLimitTopBar::before {
+  content: "";
+  position: absolute; left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px;
+  background: var(--accent2); border-radius: 1px;
+}
+#lineLimitTopBar::after {
+  content: "";
+  position: absolute; left: 50%; top: 50%; width: 26px; height: 8px;
+  margin-left: -13px; margin-top: -4px;
+  background: var(--accent2); border-radius: 4px;
+  box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.65);
+}
+/* Боковой рельс между верхней и нижней границей: перетаскивание двигает ОБЕ границы разом,
+   расстояние между ними не меняется (окно захвата целиком едет вверх/вниз). Виден только
+   когда хотя бы одна из границ реально активна — иначе двигать вместе ещё нечего. */
+#lineLimitWindowBar {
+  position: absolute;
+  right: 2px; width: 7px;
+  background: linear-gradient(var(--accent2), var(--accent));
+  opacity: 0.5;
+  border-radius: 3px;
+  cursor: grab;
+  z-index: 6;
+  display: none;
+}
+#lineLimitWindowBar:hover { opacity: 0.8; }
+#lineLimitWindowBar.dragging { opacity: 0.95; cursor: grabbing; }
 
 textarea {
   position: relative;
@@ -345,12 +415,30 @@ select,button{
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 button:hover,select:hover{border-color:var(--accent)}
+button:disabled{opacity:0.35; cursor:default; pointer-events:none;}
+button:disabled:hover{border-color:var(--border);}
 :focus-visible{outline:2px solid var(--accent); outline-offset:1px}
 
 button.active-view {
   background: var(--accent) !important;
   color: #fff !important;
   border-color: var(--accent) !important;
+}
+
+/* «Визуальный сдвиг» (👁) — свой акцент (--accent2), чтобы отличаться от «Сдвига символов» */
+#visRotBtns button { border-color: var(--accent2); color: var(--accent2); }
+#visRotBtns button:hover { border-color: var(--accent2); }
+#visRotBtns button.active-view {
+  background: var(--accent2) !important;
+  color: #fff !important;
+  border-color: var(--accent2) !important;
+}
+
+/* «Что именно будет крутить «▶ Плей»» — отдельная пометка (--accent2), не путать с active-view
+   (тот показывает ТЕКУЩЕЕ состояние вкл/выкл, а не то, что будет анимировать Плей) */
+button.play-target {
+  outline: 2px solid var(--accent2);
+  outline-offset: 2px;
 }
 
 /* Группа кнопок выбора режима (вместо выпадающего списка) */
@@ -457,7 +545,7 @@ body.pad-mode #cv { touch-action: none; }
 <body>
 <div class="wrap">
 <header>
-  <h1><span data-i18n="title"><span class="t1">Ку</span><span class="t2">биты</span></span><span class="ver">v0.231</span></h1>
+  <h1><span data-i18n="title"><span class="t1">Ку</span><span class="t2">биты</span></span><span class="ver">v0.273</span></h1>
 
 </header>
 
@@ -472,6 +560,8 @@ body.pad-mode #cv { touch-action: none; }
       <option value="rhomb">Ромбы</option>
       <option value="squares">Квадраты</option>
       <option value="snake">Змейка</option>
+      <option value="pyra3">Пирамида 3</option>
+      <option value="pyra4">Пирамида 4</option>
     </select>
     <!-- ГРУППА: Форма и вид -->
     <div class="grp grp-shape">
@@ -483,6 +573,9 @@ body.pad-mode #cv { touch-action: none; }
         <button type="button" class="grp-btn" data-mode="rhomb" data-i18n="modeRhomb">Ромбы</button>
         <button type="button" class="grp-btn" data-mode="squares" data-i18n="modeSquares">Квадраты</button>
         <button type="button" class="grp-btn" data-mode="snake" data-i18n="modeSnake">Змейка</button>
+        <!-- Пирамиды пока скрыты по просьбе пользователя (v0.258) — режимы рабочие, вернуть = убрать display:none -->
+        <button type="button" class="grp-btn" data-mode="pyra3" data-i18n="modePyra3" style="display:none;">Пирамида 3</button>
+        <button type="button" class="grp-btn" data-mode="pyra4" data-i18n="modePyra4" style="display:none;">Пирамида 4</button>
       </div>
       <div style="display:flex; gap:6px;">
         <button id="btnViewIso" class="active-view" style="flex:1;" data-i18n="viewIso">Изометрия</button>
@@ -493,25 +586,37 @@ body.pad-mode #cv { touch-action: none; }
         <button type="button" class="align-btn" data-align="diag" data-i18n="alignDiag">Полусдвиг</button>
         <button type="button" class="align-btn" data-align="left" data-i18n="alignLeft">Слева</button>
       </div>
+      <!-- Переключатели пирамид (видны только в режимах «Пирамида 3/4»): заливка этажа и ориентация острия -->
+      <div id="pyraGroup" style="display:none; flex-direction:column; gap:4px;">
+        <div style="display:flex; gap:4px;">
+          <button type="button" class="align-btn active" data-pyrafill="ring" data-i18n="pyraFillRing" data-i18n-title="pyraFillRingTitle" title="Этаж — полое кольцо по периметру фигуры, биты идут вдоль сторон (углы — всегда Добор-0, как в «Квадратах»)">Кольцо</button>
+          <button type="button" class="align-btn" data-pyrafill="solid" data-i18n="pyraFillSolid" data-i18n-title="pyraFillSolidTitle" title="Этаж — сплошная заливка всей площади фигуры, биты идут по рядам слева направо">Сплошная</button>
+        </div>
+        <div style="display:flex; gap:4px;">
+          <button type="button" class="align-btn active" data-pyraapex="down" data-i18n="pyraApexDown" data-i18n-title="pyraApexDownTitle" title="Первая строка — 1 кубик внизу, этажи расширяются вверх (как «Круглая воронка»)">Остриё внизу</button>
+          <button type="button" class="align-btn" data-pyraapex="up" data-i18n="pyraApexUp" data-i18n-title="pyraApexUpTitle" title="Первая строка — самое большое основание внизу, последняя — вершина: классическая пирамида остриём вверх">Остриё вверху</button>
+        </div>
+      </div>
     </div>
 
     <!-- ГРУППА: Отображение -->
     <div class="grp grp-display">
       <div class="grp-h" data-i18n="grpDisplay">Отображение</div>
       <label class="ck"><input type="checkbox" id="tint" checked> <span data-i18n="lblTint">Цветность</span></label>
-      <label class="ck"><input type="checkbox" id="guides" checked> <span data-i18n="lblGuides">Кольца</span></label>
+      <label class="ck"><input type="checkbox" id="guides"> <span data-i18n="lblGuides">Кольца</span></label>
       <div class="loop-row">
         <label class="ck loop-main"><input type="checkbox" id="loopBits" checked> <span data-i18n="lblLoop">Добор</span></label>
         <label class="ck loop-sub" data-i18n-title="lblLoopInvertTitle" title="Добор повторяет не сами биты строки, а их инверсию (например «11» → «110000» вместо «111111»)."><input type="checkbox" id="loopBitsInvert"> <span data-i18n="lblLoopInvert">↳ Инверс.</span></label>
-        <label class="ck loop-sub"><input type="checkbox" id="dimPadded"> <span data-i18n="lblDim">↳ Прозрачн.</span></label>
+        <label class="ck loop-sub" data-i18n-title="lblLoopDynamicTitle" title="Добор пересчитывается заново от текущих бит строки при каждой правке (включена по умолчанию, как раньше). Если выключить — добор застывает при формировании и не меняется от последующих правок начала строки."><input type="checkbox" id="loopDynamic" checked> <span data-i18n="lblLoopDynamic">↳ Динам.</span></label>
+        <label class="ck loop-sub"><input type="checkbox" id="dimPadded" checked> <span data-i18n="lblDim">↳ Прозрачн.</span></label>
       </div>
       <div class="zero-row">
         <div class="zero-col">
           <label class="ck"><input type="checkbox" id="ghosts" checked> <span data-i18n="lblGhosts">0 в строках</span></label>
-          <input type="range" id="zeroMain" min="0" max="2" step="0.05" value="0.4">
+          <input type="range" id="zeroMain" min="0" max="2" step="0.05" value="1.7">
         </div>
         <div class="zero-col">
-          <label class="ck"><input type="checkbox" id="ghostsAll"> <span data-i18n="lblGhostsAll">0 в доборе</span></label>
+          <label class="ck"><input type="checkbox" id="ghostsAll" checked> <span data-i18n="lblGhostsAll">0 в доборе</span></label>
           <input type="range" id="zeroPad" min="0" max="2" step="0.05" value="0.25">
         </div>
       </div>
@@ -646,23 +751,21 @@ body.pad-mode #cv { touch-action: none; }
         <input type="range" id="rotAnimSpeed" min="0.1" max="4" step="0.05" value="1" title="Скорость вращения" style="width:70px; accent-color: var(--accent);">
       </div>
 
-      <!-- Сдвиг символов -->
+      <!-- Сдвиг символов (меняет текст строк) + Визуальный сдвиг (НЕ меняет текст, только то,
+           какая клетка кольца какой бит показывает) — один общий ряд: общий ползунок скорости,
+           общие «▶ Плей»/«⏹ Сброс», крутят то направление/вид сдвига, что нажали последним.
+           Кнопки визуального сдвига (👁) видны только там, где есть добор по кругу (Круглая
+           воронка/Квадраты с включённым Добором) — иначе крутить нечего. -->
       <div id="rotWrap" style="display:none; gap:6px; align-items:center; flex-wrap:wrap; pointer-events:auto;">
         <button id="btnRotCCW" title="Сдвиг символов ⏪">⏪ ↺</button>
-        <input type="range" id="shiftAnimSpeed" min="0.01" max="1.5" step="0.01" value="0.15" style="width:90px; accent-color: var(--accent);" title="Скорость автосдвига символов">
         <button id="btnRotCW" title="↻ ⏩">↻ ⏩</button>
-        <button id="btnShiftAnim" title="Автосдвиг по кругу в последнем выбранном направлении">▶ Плей</button>
-        <button id="btnShiftAnimReset" style="color:var(--muted);" title="Остановить и вернуть исходные строки">⏹ Сброс</button>
-      </div>
-
-      <!-- Визуальный сдвиг по кругу: НЕ меняет текст строк, только то, какая клетка кольца
-           какой бит показывает (сам набор 1/0 крутится по кругу на экране). Виден только там,
-           где включён Добор в кольцевых режимах (Круглая воронка/Квадраты) — иначе крутить нечего. -->
-      <div id="visRotWrap" style="display:none; gap:6px; align-items:center; flex-wrap:wrap; pointer-events:auto;">
-        <span style="color:var(--muted); font-size:11px;" data-i18n="visRotLbl">👁 Визуальный сдвиг:</span>
-        <button id="btnVisRotCCW" data-i18n-title="visRotTitle" title="Визуальный сдвиг по кругу (текст строк НЕ меняется) ⏪">⏪ 👁</button>
-        <button id="btnVisRotCW" data-i18n-title="visRotTitle" title="👁 ⏩">👁 ⏩</button>
-        <button id="btnVisRotReset" style="color:var(--muted);" data-i18n-title="visRotResetTitle" title="Сбросить визуальный сдвиг">⏹ Сброс</button>
+        <span id="visRotBtns" style="display:none; gap:6px; align-items:center;">
+          <button id="btnVisRotCCW" data-i18n-title="visRotTitle" title="Визуальный сдвиг по кругу (текст строк НЕ меняется) ⏪">⏪ 👁</button>
+          <button id="btnVisRotCW" data-i18n-title="visRotTitle" title="👁 ⏩">👁 ⏩</button>
+        </span>
+        <input type="range" id="shiftAnimSpeed" min="0.01" max="1.5" step="0.01" value="0.15" style="width:90px; accent-color: var(--accent);" title="Скорость автосдвига/автовращения">
+        <button id="btnShiftAnim" title="Автосдвиг/автовращение по кругу в последнем выбранном направлении">▶ Плей</button>
+        <button id="btnShiftAnimReset" style="color:var(--muted);" title="Остановить и сбросить (вернуть исходные строки и визуальный сдвиг)">⏹ Сброс</button>
       </div>
 
       <!-- Режим «Квадраты»: пошаговый прогон и подрежим правки (видны только в режиме squares) -->
@@ -697,28 +800,54 @@ body.pad-mode #cv { touch-action: none; }
   <div class="panel editor-panel" id="rightPanel">
    <!-- ГРУППА: Захват границы — отдельно от «Этажи», своя рамка -->
    <div class="grp grp-capture" style="flex:0 0 auto;">
-      <div class="grp-h" data-i18n="grpCapture">Захват границы</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+        <div class="grp-h" data-i18n="grpCapture" style="margin:0;">Захват границы</div>
+        <span id="captureProgress" style="font-size:10px; color:var(--muted);"></span>
+      </div>
       <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
         <label class="ck" style="flex:1 1 auto; margin:0; min-width:0; color:var(--accent);" data-i18n-title="autoCaptureTitle"><input type="checkbox" id="autoCaptureBelow"> <span data-i18n="lblAutoCapture">Автозахват</span></label>
         <button id="btnCaptureStep" style="flex:0 0 auto; height:22px; padding:0 8px; font-size:10px; color:var(--muted);" data-i18n="btnCaptureStep" data-i18n-title="btnCaptureStepTitle">▶ Шаг</button>
-        <button id="btnResetLimit" style="flex:0 0 auto; height:22px; padding:0 8px; font-size:10px; color:var(--muted);" title="Сбросить границу найденных/включённых строк — поставить перед 2-й строкой">⟲ Граница</button>
+        <button id="btnResetLimit" style="flex:0 0 auto; height:22px; padding:0 8px; font-size:10px; color:var(--muted);" title="Сбросить границу найденных/включённых строк — поставить под 2-й строкой">⟲ Граница</button>
         <label class="ck" style="flex:1 1 100%; margin:0;" data-i18n-title="skipFirstTitle"><input type="checkbox" id="skipFirstCharCheck" checked> <span data-i18n="skipFirst">Без 1-го символа</span></label>
-        <button id="btnCaptureRows" class="align-btn" style="flex:1 1 0;" data-i18n="btnCaptureRows" data-i18n-title="btnCaptureRowsTitle">▼ По строкам</button>
-        <button id="btnCaptureLasers" class="align-btn active" style="flex:1 1 0;" data-i18n="btnCaptureLasers" data-i18n-title="btnCaptureLasersTitle">▼ По лазерам</button>
-        <button id="btnHlAllBelow" class="align-btn" style="flex:1 1 100%;" data-i18n="btnHlAllBelow" data-i18n-title="btnHlAllBelowTitle">🔍 Подсветка: везде ниже</button>
+        <button id="btnCaptureRows" class="align-btn active" style="flex:1 1 0;" data-i18n="btnCaptureRows" data-i18n-title="btnCaptureRowsTitle">▼ По строкам</button>
+        <button id="btnCaptureLasers" class="align-btn" style="flex:1 1 0;" data-i18n="btnCaptureLasers" data-i18n-title="btnCaptureLasersTitle">▼ По лазерам</button>
+        <button id="btnHlAllBelow" class="align-btn active" style="flex:1 1 100%;" data-i18n="btnHlAllBelow" data-i18n-title="btnHlAllBelowTitle">🔍 Подсветка: везде ниже</button>
+        <div id="ilVariantsRow" style="flex:1 1 100%; display:flex; gap:6px; align-items:center; flex-wrap:wrap; font-size:10px;" title="Только для «По строкам»: какой вариант стога интерливинга участвует в поиске. А — сначала чередуются сами биты, потом отдельно добор; Б — сначала каждая строка целиком (биты+добор), потом чередуются целиком. Добор →/← — приклеивать добор к битам строки СПРАВА (после бит) или СЛЕВА (перед битами) при сборке. «?» — не выбирать сторону заранее: перед КАЖДОЙ попыткой захвата всплывает вопрос, куда лепить добор в этот раз.">
+          <span style="color:var(--muted);" data-i18n="lblIlVariants">Стог:</span>
+          <button type="button" id="btnIlVarA" class="align-btn" style="height:20px; padding:0 9px; font-size:10px;">А</button>
+          <button type="button" id="btnIlVarB" class="align-btn active" style="height:20px; padding:0 9px; font-size:10px;">Б</button>
+          <button type="button" id="btnIlSideRight" class="align-btn active" style="height:20px; padding:0 9px; font-size:10px;" data-i18n="lblIlRight">Добор →</button>
+          <button type="button" id="btnIlSideLeft" class="align-btn" style="height:20px; padding:0 9px; font-size:10px;" data-i18n="lblIlLeft">Добор ←</button>
+          <button type="button" id="btnIlSideAsk" class="align-btn" style="height:20px; padding:0 9px; font-size:10px;" data-i18n-title="btnIlSideAskTitle" title="Спросить, куда лепить добор (кнопки ниже). Выбор запоминается — «Шаг»/«Автозахват» дальше используют его молча, пока не переключишь на другую сторону.">?</button>
+        </div>
+        <div id="ilAskPrompt" style="display:flex; flex:1 1 100%; gap:6px; align-items:center; flex-wrap:wrap; background:var(--accent-soft); padding:4px 6px; border-radius:4px;">
+          <span style="color:var(--accent); font-weight:700;" data-i18n="lblIlAskPrompt">Добор в стоге — куда лепить?</span>
+          <button type="button" id="btnIlAskRight" class="align-btn" style="height:20px; padding:0 10px; font-size:10px;" data-i18n="lblIlRight">Добор →</button>
+          <button type="button" id="btnIlAskLeft" class="align-btn" style="height:20px; padding:0 10px; font-size:10px;" data-i18n="lblIlLeft">Добор ←</button>
+        </div>
+        <label class="ck" style="flex:1 1 100%; margin:0;" title="Поиск «По лазерам» без отрисовки холста на каждом шаге (только в конце) — заметно быстрее на длинных поисках. Проверка полная (все 4 уровня, включая «Сборку лазеров») в любом случае — чекбокс влияет только на перерисовку."><input type="checkbox" id="fastCaptureSearch"> <span>⚡ Быстрый поиск</span></label>
+        <label class="ck" style="flex:1 1 100%; margin:0;" title="Пока играет любая из анимаций «▶ Плей» (Флип/Поворот/Сдвиг/Этажи/Змейка) И включён «Автозахват» — не рисовать холст на каждом такте (сама анимация не будет видна вживую), только проверять автозахват; рисуем, только когда что-то реально захвачено. Проверка при этом всегда полная — ничего не пропускается. При включении все ползунки скоростей Плеев автоматически ставятся на максимум (при выключении возвращаются как были)."><input type="checkbox" id="suppressDrawDuringPlay"> <span>🚫 Без отрисовки при Плее</span></label>
+        <div id="shiftVarsInfo" data-i18n-title="shiftVarsTitle" style="flex:1 1 100%; font-size:10px; color:var(--muted); line-height:1.4;" title="Число РАЗЛИЧНЫХ вариантов циклического сдвига каждой строки над границей (у строки из N бит — N сдвигов, но повторяющийся период уменьшает число различных вариантов) и общее число комбинаций (произведение по всем строкам)."></div>
       </div>
    </div>
    <div class="grp grp-editor" style="flex:1 1 auto; min-height:0;">
     <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
       <div class="grp-h" data-i18n="grpEditor" style="margin:0;">Данные (Строки)</div>
-      <button id="btnSrcClear" title="Сброс: очистить все строки (повторный клик сразу после — вернуть)" style="height:20px; padding:0 8px; font-size:10px; color:var(--muted);">⏹ Сброс</button>
+      <div style="display:flex; align-items:center; gap:4px;">
+        <button id="btnSrcSave" title="Запомнить текущие «Данные» в кеш браузера: они вернутся автоматически при F5 и по кнопке «⏹ Сброс» (в любой версии файла, открытой в этом браузере)" style="height:20px; padding:0 8px; font-size:10px; color:var(--muted);">💾 Запомнить</button>
+        <button id="btnSrcClear" title="Сброс: очистить все строки (повторный клик сразу после — вернуть)" style="height:20px; padding:0 8px; font-size:10px; color:var(--muted);">⏹ Сброс</button>
+      </div>
     </div>
     <div class="editor-wrap">
+      <div id="globalLineGutter" aria-hidden="true"></div>
       <div id="lineGutter" aria-hidden="false"></div>
       <div id="src-bg" aria-hidden="true"></div>
       <div id="src-pad" aria-hidden="true"></div>
       <div id="lineLimitCurtain" aria-hidden="true"></div>
+      <div id="lineLimitTopCurtain" aria-hidden="true"></div>
       <div id="lineLimitBar" title="Перетащите — строки ниже не участвуют, как будто их нет. Двойной клик — снять ограничение."></div>
+      <div id="lineLimitTopBar" title="Верхняя граница: перетащите — строки выше не участвуют, как будто их нет. Двойной клик — снять ограничение."></div>
+      <div id="lineLimitWindowBar" title="Перетащите — подвинуть ОБЕ границы разом, расстояние между ними сохраняется. Двойной клик — снять обе границы."></div>
       <textarea id="src" spellcheck="false">1
 11
 111
@@ -731,7 +860,7 @@ body.pad-mode #cv { touch-action: none; }
 1000000010</textarea>
     </div>
     <button id="btnCopyExpanded" data-i18n="btnCopyExp" style="margin-top:6px; flex:0 0 auto;">⧉ Копировать развёрнутое</button>
-    <div id="stageTitle" title="Дзен-режим — скрыть всё, кроме кубов (выход — клик колёсиком мыши)" style="margin-top:6px; flex:0 0 auto; text-align:center; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer; user-select:none;">Кубиты <span class="ver">v0.231</span></div>
+    <div id="stageTitle" title="Дзен-режим — скрыть всё, кроме кубов (выход — клик колёсиком мыши)" style="margin-top:6px; flex:0 0 auto; text-align:center; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer; user-select:none;">Кубиты <span class="ver">v0.273</span></div>
    </div>
   </div>
 </div>
@@ -748,6 +877,12 @@ var i18n = {
     sub: "",
     themeLight: "Светлый фон", themeDark: "Тёмный фон",
     modeRing: "Круглая воронка", modeFunnel: "Плоская воронка", modeBlocks: "Этажи из блоков", modeRhomb: "Ромбы", modeSquares: "Квадраты", modeSnake: "Змейка",
+    modePyra3: "Пирамида 3", modePyra4: "Пирамида 4",
+    pyraFillRing: "Кольцо", pyraFillSolid: "Сплошная", pyraApexDown: "Остриё внизу", pyraApexUp: "Остриё вверху",
+    pyraFillRingTitle: "Этаж — полое кольцо по периметру фигуры, биты идут вдоль сторон (углы — всегда Добор-0, как в «Квадратах»)",
+    pyraFillSolidTitle: "Этаж — сплошная заливка всей площади фигуры, биты идут по рядам слева направо",
+    pyraApexDownTitle: "Первая строка — 1 кубик внизу, этажи расширяются вверх (как «Круглая воронка»)",
+    pyraApexUpTitle: "Первая строка — самое большое основание внизу, последняя — вершина: классическая пирамида остриём вверх",
     btnSquaresNext: "▶ Этаж", btnSquaresBuildAll: "⏩ Построить всё", btnSquaresReset: "⏹ Сброс",
     btnSnakeNext: "▶ Шаг", btnSnakeBuildAll: "⏩ Построить всё", btnSnakeReset: "⏹ Сброс",
     btnSquaresResetTitle: "Сбросить и начать заново",
@@ -762,9 +897,9 @@ var i18n = {
     lblLoop: "Добор",
     lblLoopInvert: "↳ Инверс.",
     lblLoopInvertTitle: "Добор повторяет не сами биты строки, а их инверсию (например «11» → «110000» вместо «111111»).",
-    visRotLbl: "👁 Визуальный сдвиг:",
+    lblLoopDynamic: "↳ Динам.",
+    lblLoopDynamicTitle: "Добор пересчитывается заново от текущих бит строки при каждой правке (включена по умолчанию, как раньше). Если выключить — добор застывает при формировании и не меняется от последующих правок начала строки.",
     visRotTitle: "Визуальный сдвиг по кругу: крутит, какая клетка кольца какой бит показывает, БЕЗ изменения текста строки (в отличие от «Сдвиг символов»). Действует на выбранные этажи (или на все, если ничего не выбрано). Нужен включённый Добор в «Круглой воронке»/«Квадратах».",
-    visRotResetTitle: "Сбросить визуальный сдвиг у выбранных этажей (или у всех, если ничего не выбрано) обратно к 0.",
     lblDim: "↳ Прозрачн.", lblGhosts: "0 в строках", lblGhostsAll: "0 в доборе",
     lblText: "Биты [1][0]",
     lblBalance: "Баланс [1 и 0]",
@@ -773,6 +908,11 @@ var i18n = {
     btnInvertTitle: "Если выделены и рамка/строка, и лазер(ы) — только их пересечение. Если только рамка/строка(и) — их биты. Если только лазер(ы) — их клетки (все, если выбрано несколько). Иначе — вообще все биты.",
     laserRes: "Результаты лазера:", shiftTxt: "Сдвиг символов:",
     grpShape: "Форма и вид", grpDisplay: "Отображение", grpTools: "Инструменты", grpFloors: "Этажи", grpCapture: "Захват границы",
+    lblShiftVars: "Сдвиги:", lblShiftVarsTotal: "всего:",
+    shiftVarsTitle: "Число РАЗЛИЧНЫХ вариантов циклического сдвига каждой строки над границей (у строки из N бит — N сдвигов, но повторяющийся период уменьшает число различных вариантов) и общее число комбинаций (произведение по всем строкам).",
+    lblIlVariants: "Стог:", lblIlRight: "Добор →", lblIlLeft: "Добор ←",
+    btnIlSideAskTitle: "Спросить, куда лепить добор (кнопки ниже). Выбор запоминается — «Шаг»/«Автозахват» дальше используют его молча, пока не переключишь на другую сторону.",
+    lblIlAskPrompt: "Добор в стоге — куда лепить?",
     grpEditor: "Данные (Строки)",
     statFloors: "Всего:", lblFloor: "Этаж:",
     floorAll: "все", floorMulti: "несколько",
@@ -817,6 +957,12 @@ var i18n = {
     sub: "Strings turn into shapes: 1 is a cube, 0 is empty.",
     themeLight: "Light theme", themeDark: "Dark theme",
     modeRing: "Round funnel", modeFunnel: "Flat funnel", modeBlocks: "Block floors", modeRhomb: "Rhombuses", modeSquares: "Squares", modeSnake: "Snake",
+    modePyra3: "Pyramid 3", modePyra4: "Pyramid 4",
+    pyraFillRing: "Ring", pyraFillSolid: "Solid", pyraApexDown: "Apex down", pyraApexUp: "Apex up",
+    pyraFillRingTitle: "Each floor is a hollow ring along the shape's perimeter; bits run along the sides (corners are always pad-0, like in Squares)",
+    pyraFillSolidTitle: "Each floor fills the whole shape area; bits go row by row, left to right",
+    pyraApexDownTitle: "First line is a single cube at the bottom, floors widen upward (like Round funnel)",
+    pyraApexUpTitle: "First line is the widest base at the bottom, last line is the tip: a classic pyramid pointing up",
     btnSquaresNext: "▶ Floor", btnSquaresBuildAll: "⏩ Build all", btnSquaresReset: "⏹ Reset",
     btnSnakeNext: "▶ Step", btnSnakeBuildAll: "⏩ Build all", btnSnakeReset: "⏹ Reset",
     btnSquaresResetTitle: "Reset and start over",
@@ -831,9 +977,9 @@ var i18n = {
     lblLoop: "Pad",
     lblLoopInvert: "↳ Invert",
     lblLoopInvertTitle: "The pad repeats the inversion of the row's bits, not the bits themselves (e.g. \"11\" → \"110000\" instead of \"111111\").",
-    visRotLbl: "👁 Visual shift:",
+    lblLoopDynamic: "↳ Dynamic",
+    lblLoopDynamicTitle: "The pad recomputes from the row's current bits on every edit (on by default, as before). Turn off to freeze the pad when first formed, so it no longer changes from later edits to the start of the row.",
     visRotTitle: "Visual shift around the ring: rotates which ring cell shows which bit, WITHOUT changing the row's text (unlike \"Shift chars\"). Applies to selected floors (or all, if none selected). Requires Pad on, in Round funnel/Squares.",
-    visRotResetTitle: "Reset the visual shift on the selected floors (or all, if none selected) back to 0.",
     lblDim: "↳ Faded", lblGhosts: "0 in rows", lblGhostsAll: "0 in pad",
     lblText: "Bits [1][0]",
     lblBalance: "Balance [1&0]",
@@ -842,6 +988,11 @@ var i18n = {
     btnInvertTitle: "If both a frame/row selection and laser(s) are active — only their intersection. If only frame/row(s) — their bits. If only laser(s) — their cells (all, if several are selected). Otherwise — inverts absolutely all bits.",
     laserRes: "Laser results:", shiftTxt: "Shift chars:",
     grpShape: "Shape & view", grpDisplay: "Display", grpTools: "Tools", grpFloors: "Floors", grpCapture: "Boundary capture",
+    lblShiftVars: "Shifts:", lblShiftVarsTotal: "total:",
+    shiftVarsTitle: "Number of DISTINCT cyclic-shift variants of each row above the boundary (a row of N bits has N shifts, but a repeating period reduces the number of distinct variants) and the total number of combinations (product over all rows).",
+    lblIlVariants: "Stack:", lblIlRight: "Pad →", lblIlLeft: "Pad ←",
+    btnIlSideAskTitle: "Ask which side to attach the pad to (buttons below). The choice is remembered — Step/Auto-capture then use it silently until you switch sides.",
+    lblIlAskPrompt: "Pad in the stack — which side?",
     grpEditor: "Data (Strings)",
     statFloors: "Total:", lblFloor: "Floor:",
     floorAll: "all", floorMulti: "multiple",
@@ -896,8 +1047,8 @@ var pal=[
 var laserColors = ["#E74C3C", "#3498DB", "#2ECC71", "#9B59B6", "#F1C40F", "#E67E22", "#1ABC9C"];
 
 var $=function(id){return document.getElementById(id);};
-var src=$("src"), srcBg=$("src-bg"), srcPad=$("src-pad"), lineGutter=$("lineGutter"), lineLimitBar=$("lineLimitBar"), lineLimitCurtain=$("lineLimitCurtain"), mode=$("mode"), tint=$("tint"), guides=$("guides"),
-    ghosts=$("ghosts"), ghostsAll=$("ghostsAll"), loopBits=$("loopBits"), loopBitsInvert=$("loopBitsInvert"), dimPadded=$("dimPadded"), showText=$("showText"), balanceHl=$("balanceHl"),
+var src=$("src"), srcBg=$("src-bg"), srcPad=$("src-pad"), lineGutter=$("lineGutter"), globalLineGutter=$("globalLineGutter"), lineLimitBar=$("lineLimitBar"), lineLimitCurtain=$("lineLimitCurtain"), lineLimitTopBar=$("lineLimitTopBar"), lineLimitTopCurtain=$("lineLimitTopCurtain"), lineLimitWindowBar=$("lineLimitWindowBar"), mode=$("mode"), tint=$("tint"), guides=$("guides"),
+    ghosts=$("ghosts"), ghostsAll=$("ghostsAll"), loopBits=$("loopBits"), loopBitsInvert=$("loopBitsInvert"), loopDynamic=$("loopDynamic"), dimPadded=$("dimPadded"), showText=$("showText"), balanceHl=$("balanceHl"),
     minusMode=$("minusMode"), skewerMode=$("skewerMode"), skewerWrap=$("skewerWrap"), skewerRes=$("skewerRes"),
     btnExcel=$("btnExcel"), btnExcelAlt=$("btnExcelAlt"), btnFlip=$("btnFlip"), btnFlipV=$("btnFlipV"), btnFlipHl=$("btnFlipHl"), flipHlColor=$("flipHlColor"), btnFlipXor=$("btnFlipXor"), btnRotXor=$("btnRotXor"), btnFlipXorReset=$("btnFlipXorReset"), btnRotXorReset=$("btnRotXorReset"), btnFlipHide=$("btnFlipHide"), btnFlipAnim=$("btnFlipAnim"), btnFlipReset=$("btnFlipReset"), flipAnimSpeed=$("flipAnimSpeed"), btnCopyExpanded=$("btnCopyExpanded"), rotWrap=$("rotWrap"), btnRotCCW=$("btnRotCCW"), btnRotCW=$("btnRotCW"),
     btnShiftAnim=$("btnShiftAnim"), btnShiftAnimReset=$("btnShiftAnimReset"), shiftAnimSpeed=$("shiftAnimSpeed"),
@@ -918,8 +1069,67 @@ var sel=new Set();
 var skewers = [];
 var laserVis = { top: true, right: true, left: true, horiz: true, da: true, db: true };
 var laserAssemblyVariant = 'order'; // выбранный вариант сборки лазеров в одну строку поиска
-var highlightAllBelow = false; // подсветка совпадений во всех строках ниже границы, не только в первой (кнопка «🔍 Подсветка: везде ниже»)
-var rowsModeActive = false; // «По строкам» (интерливинг) сейчас активный режим захвата — вместо панели «Сборка лазеров» показываем стог(и) интерливинга
+// Сборка лазеров: несколько вариантов того, какие активные лучи склеивать в ОДНУ строку поиска.
+// 'order' — все активные лучи в порядке их добавления в skewers. Остальные варианты — фиксированный
+// порядок осей, группировка ПО ИНДЕКСУ УЗЛА (Лево1+Право1, затем Лево2+Право2 и т.д.); если на
+// какой-то оси луча с этим индексом нет — она просто пропускается, без заглушки. Вынесено в общую
+// функцию (была локальным массивом внутри draw()), чтобы им мог пользоваться и computeAssemblyHaystackFresh.
+function getLaserAssemblyPresets(){
+  return [
+    { key: 'order', label: (currentLang === "ru") ? "По добавлению" : "Added order", axes: null },
+    { key: 'lr',    label: (currentLang === "ru") ? "Лево+Право" : "Left+Right", axes: ['left','right'] },
+    { key: 'lrt',   label: (currentLang === "ru") ? "Лево+Право+Верх" : "Left+Right+Top", axes: ['left','right','top'] },
+    { key: 'all',   label: (currentLang === "ru") ? "Все оси" : "All axes", axes: ['top','right','left','horiz','da','db'] }
+  ];
+}
+// Пересчитывает точки «Сборки лазеров» С НУЛЯ — прямо из skewers + свежих beamCells (та же логика,
+// что draw() использует для подсветки, но без сегментов/подсветки, они тут не нужны). Нужно, чтобы
+// поиск («Сборка лазеров» — один из уровней в belowRowMatchDetail) не зависел от lastAssemblyHaystack,
+// которая иначе обновляется только ВНУТРИ draw() — и была бы недоступна/устаревшей, когда полный
+// draw() не вызывается на каждом такте (см. «Без отрисовки при Плее»).
+function computeAssemblyPointsFresh(){
+  if (!(skewerMode.checked && laserModeOk()) || !G || !G.list || !skewers.length) return [];
+  var preset = getLaserAssemblyPresets().find(function(p){ return p.key === laserAssemblyVariant; }) || getLaserAssemblyPresets()[0];
+  var pts = [];
+  if (!preset.axes) {
+    skewers.forEach(function(sk, skIdx){
+      var hitList = beamCells(sk.type, sk.d);
+      var str = ""; hitList.forEach(function(hit){ str += hit.c[3]; });
+      pts.push({ skIdx: skIdx, str: str });
+    });
+  } else {
+    var lctx = buildLaserNodes();
+    var byIndex = {};
+    preset.axes.forEach(function(axisType){
+      var grp = lctx.groups[axisType] || [];
+      skewers.forEach(function(sk, skIdx){
+        if (sk.type !== axisType) return;
+        var node = grp.find(function(n){ return n.d === sk.d; });
+        if (!node) return;
+        var hitList = beamCells(sk.type, sk.d);
+        var str = ""; hitList.forEach(function(hit){ str += hit.c[3]; });
+        if (!byIndex[node.index]) byIndex[node.index] = {};
+        byIndex[node.index][axisType] = { skIdx: skIdx, str: str };
+      });
+    });
+    Object.keys(byIndex).map(Number).sort(function(a,b){ return a - b; }).forEach(function(nIdx){
+      preset.axes.forEach(function(axisType){
+        var e = byIndex[nIdx][axisType];
+        if (e) pts.push(e);
+      });
+    });
+  }
+  return pts;
+}
+function computeAssemblyHaystackFresh(){
+  return computeAssemblyPointsFresh().map(function(p){ return p.str; }).join('');
+}
+var highlightAllBelow = true; // подсветка совпадений во всех строках ниже границы, не только в первой (кнопка «🔍 Подсветка: везде ниже») — включена по умолчанию
+var rowsModeActive = true; // «По строкам» (интерливинг) сейчас активный режим захвата (по умолчанию) — вместо панели «Сборка лазеров» показываем стог(и) интерливинга
+// «?» (спрашивать сторону добора): ilAskChoice — ответ пользователя на ТЕКУЩУЮ попытку захвата,
+// null пока не ответил. Проверяется/тратится один раз за попытку в belowRowMatchDetail (см. там) —
+// после каждой попытки (нашли или нет) снова становится null, так что следующая попытка спросит заново.
+var ilAskChoice = null;
 var ringVisualShift = {}; // absL -> целый сдвиг (по кругу, в позициях кольца) — ТОЛЬКО отображение, src.value не трогается
 // «Добор» самостоятелен после формирования: absL -> {key, str} — символы добора застывают в момент
 // первого построения (при данной ёмкости кольца/квадрата, сдвиге и режиме «Добор инверсией») и больше
@@ -928,20 +1138,37 @@ var frozenPad = {};
 // Возвращает застывшую строку добора длиной need (капасити - длина реальных бит).
 // bitsGetter(idx) — читает ТЕКУЩИЙ бит строки по индексу; используется только чтобы ДОРОДИТЬ
 // хвост, если добора вдруг стало нужно больше, чем уже заморожено (реальные биты укоротились).
-function getFrozenPadStr(absL, capLen, bitsLen, vshift, doInvert, bitsGetter){
+// «Основа» (реальные биты + добор) всегда считается БЕЗ сдвига — сдвиг применяется отдельно,
+// поворотом индекса чтения по уже готовой основе (см. вызовы в parse(): combinedIdx/combinedIdxQ).
+// Так «Визуальный сдвиг» крутит кольцо целиком как жёсткое тело, а не только зону реальных бит
+// при неподвижной границе добора.
+function getFrozenPadStr(absL, capLen, bitsLen, doInvert, bitsGetter){
   var need = capLen - bitsLen;
   if (need <= 0) return "";
-  var key = capLen + "|" + vshift + "|" + (doInvert ? 1 : 0);
+  var key = capLen + "|" + (doInvert ? 1 : 0);
   var fp = frozenPad[absL];
   if (!fp || fp.key !== key) { fp = { key: key, str: "" }; frozenPad[absL] = fp; }
   if (fp.str.length < need) {
-    var posMod = function(n, m){ return ((n % m) + m) % m; };
     for (var tp = bitsLen + fp.str.length; tp < capLen; tp++) {
-      var srcBit = bitsGetter(posMod(tp + vshift, bitsLen));
+      var srcBit = bitsGetter(tp % bitsLen);
       fp.str += doInvert ? (srcBit === "1" ? "0" : "1") : srcBit;
     }
   }
   return fp.str.slice(0, need);
+}
+// «Добор Динам.» (чекбокс «↳ Динам.», включён по умолчанию): хвост основы считается заново от
+// текущих бит строки при каждом вызове — как и было исходно, до появления заморозки. При
+// выключенном чекбоксе используется getFrozenPadStr (застывает при формировании, см. выше).
+function getPadStr(absL, capLen, bitsLen, doInvert, doDynamic, bitsGetter){
+  if (!doDynamic) return getFrozenPadStr(absL, capLen, bitsLen, doInvert, bitsGetter);
+  var need = capLen - bitsLen;
+  if (need <= 0) return "";
+  var str = "";
+  for (var tp = bitsLen; tp < capLen; tp++) {
+    var srcBit = bitsGetter(tp % bitsLen);
+    str += doInvert ? (srcBit === "1" ? "0" : "1") : srcBit;
+  }
+  return str;
 }
 // Снимок последнего draw(): какие клетки выделены/участвуют в балансе — для кнопки «Инверсия»
 var lastFrameElements = new Set();
@@ -967,6 +1194,7 @@ var currentView = "iso";
 var isoRotSteps = 0; // поворот изометрии «покубово»: 0..3 шага по 90° в плоскости этажей
 var zenMode = false; // Дзен-режим: скрыть все панели, оставить только холст
 var lineLimit = -1; // строки с этим индексом и ниже не участвуют в модели (-1 = ограничения нет)
+var lineLimitTop = 0; // ВЕРХНЯЯ граница: строки с индексом МЕНЬШЕ этого не участвуют (0 = ограничения нет)
 // При сбросе граница ставится максимум на 10-ю строку (если строк больше 10); иначе ограничения нет.
 function defaultLineLimit(){ var total = src.value.split("\n").length; return (total > 10) ? 10 : -1; }
 var lineLimitDragging = false;
@@ -982,6 +1210,7 @@ var floorAnimDir = 1;    // направление роста/убавления
 var shiftAnimOn = false, shiftAnimTimer = null;
 var shiftAnimDir = 'CW'; // направление автосдвига символов — то, что нажали последним вручную
 var shiftAnimOrigSrc = null; // снимок текста для «Сброс»
+var shiftAnimKind = 'text'; // 'text' (Сдвиг символов) | 'visual' (Визуальный сдвиг) — что крутит общий «▶ Плей», по последней нажатой паре кнопок
 
 // === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ СОСТОЯНИЙ ===
 var flipX = false; // горизонтальное зеркало (лево/право)
@@ -1012,6 +1241,9 @@ var rotXorState = null, rotXorIter = 0;
 // squareTestCells — ПЛОСКИЙ список кубов: каждый куб хранит свою МИРОВУЮ позицию x/y
 // (центр построения в 0,0) и в режиме правки двигается независимо от остальных.
 function isSquaresMode(){ return mode.value === "squares"; }
+function isPyraMode(){ return mode.value === "pyra3" || mode.value === "pyra4"; }
+var pyraFill = "ring";  // «Пирамида 3/4»: "ring" — этаж-кольцо по периметру, "solid" — сплошная заливка
+var pyraApex = "down";  // «Пирамида 3/4»: "down" — остриё внизу (как воронка), "up" — остриё вверху
 var SQUARE_TEST_CELL = 20; // мировых px на клетку
 var squareTestCells = []; // [{x, y, val, col}] — мировые координаты
 var squareTestNextRow = 1; // следующий этаж, который добавит кнопка «▶ Этаж»/«⏩ Построить всё»
@@ -1030,7 +1262,8 @@ var mouseX = 0, mouseY = 0;
 var isSelecting=false, selActive=false;
 var selRadius=0;
 var selOffX=0, selOffY=0; // сдвиг центра рамки выделения от panX/panY (в мировых px; на экране умножается на zoom)
-var isMovingSel=false, selMoveStart=null; // перетаскивание готовой рамки ПКМ изнутри неё
+var isMovingSel=false, selMoveStart=null; // перетаскивание готовой рамки ПКМ изнутри неё (за центр)
+var isResizingSel=false; // растяжение готовой рамки ПКМ за её границу (центр стоит на месте)
 
 // Форма рамки выделения по режиму: 0 — квадрат (вид сверху); иначе ромб, значение —
 // отношение вертикальной полудиагонали к горизонтальной. В изометрии диагонали ромба
@@ -1138,10 +1371,12 @@ function applyI18n() {
   });
   btnFlipAnim.textContent = flipAnimOn ? t.btnFlipAnimStop : t.btnFlipAnimPlay;
   btnRotAnim.textContent = rotAnimOn ? t.btnFlipAnimStop : t.btnFlipAnimPlay;
+  btnShiftAnim.textContent = shiftAnimOn ? t.btnFlipAnimStop : t.btnFlipAnimPlay;
   updateGuidesLabel();
+  updateShiftVariantsInfo();
 
   // Принудительно устанавливаем правильную версию на вкладке
-  document.title = (t.titlePlain || "Kubits") + " v0.231";
+  document.title = (t.titlePlain || "Kubits") + " v0.273";
 
   syncSelUI();
   draw();
@@ -1200,6 +1435,24 @@ function updateLineLimitBar(){
     } else {
         lineLimitCurtain.style.display = "none";
     }
+    // Верхняя граница: линия на своей строке, шторка — от верха редактора до линии
+    var topB = Math.max(0, Math.min(lineLimitTop, totalLines));
+    var yT = LINE_LIMIT_PAD_TOP + topB * LINE_LIMIT_LINE_H - src.scrollTop;
+    lineLimitTopBar.style.top = yT + "px";
+    if (lineLimitTop > 0) {
+        lineLimitTopCurtain.style.display = "block";
+        lineLimitTopCurtain.style.height = Math.max(0, yT - 1) + "px";
+    } else {
+        lineLimitTopCurtain.style.display = "none";
+    }
+    // Боковой рельс «двигать обе границы разом» — виден, только если хотя бы одна активна
+    if (lineLimit >= 0 || lineLimitTop > 0) {
+        lineLimitWindowBar.style.display = "block";
+        lineLimitWindowBar.style.top = yT + "px";
+        lineLimitWindowBar.style.height = Math.max(4, y - yT) + "px";
+    } else {
+        lineLimitWindowBar.style.display = "none";
+    }
 }
 
 var syncScroll = function() {
@@ -1208,6 +1461,7 @@ var syncScroll = function() {
     srcPad.scrollTop = src.scrollTop;
     srcPad.scrollLeft = src.scrollLeft;
     lineGutter.scrollTop = src.scrollTop;
+    if (globalLineGutter) globalLineGutter.scrollTop = src.scrollTop;
     if (srcBg.style.height !== src.style.height) {
         srcBg.style.height = src.style.height;
         srcPad.style.height = src.style.height;
@@ -1261,6 +1515,7 @@ lineLimitBar.addEventListener("mousedown", function(e){
         var totalLines = src.value.split("\n").length;
         var newLimit = Math.min(lineFromClientY(ev.clientY), totalLines);
         if (newLimit >= totalLines) newLimit = -1; // утащили вниз до конца — ограничения нет
+        if (newLimit >= 0 && newLimit < lineLimitTop) newLimit = lineLimitTop; // не выше верхней границы
         if (newLimit !== lineLimit) {
             var axesAll = laserAxesAllActive(); // оси со «Все» — сохранить и на новых строках
             lineLimit = newLimit;
@@ -1284,14 +1539,115 @@ lineLimitBar.addEventListener("dblclick", function(){
     rebuild();
     laserReapplyAll(axesAll);
 });
+/* Верхняя граница — те же жесты, что у нижней: перетаскивание (не ниже нижней границы),
+   двойной клик — снять (lineLimitTop = 0). Утащили к самому верху — ограничения нет. */
+lineLimitTopBar.addEventListener("mousedown", function(e){
+    e.preventDefault();
+    lineLimitDragging = true;
+    lineLimitTopBar.classList.add("dragging");
+    var onMove = function(ev){
+        var totalLines = src.value.split("\n").length;
+        var maxTop = (lineLimit < 0) ? totalLines : Math.min(lineLimit, totalLines);
+        var newTop = Math.max(0, Math.min(lineFromClientY(ev.clientY), maxTop));
+        if (newTop !== lineLimitTop) {
+            var axesAll = laserAxesAllActive();
+            lineLimitTop = newTop;
+            rebuild();
+            laserReapplyAll(axesAll);
+        }
+        else { updateLineLimitBar(); }
+    };
+    var onUp = function(){
+        lineLimitDragging = false;
+        lineLimitTopBar.classList.remove("dragging");
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+});
+lineLimitTopBar.addEventListener("dblclick", function(){
+    var axesAll = laserAxesAllActive();
+    lineLimitTop = 0;
+    rebuild();
+    laserReapplyAll(axesAll);
+});
+/* Боковой рельс: тащим ОБЕ границы разом, сохраняя расстояние между ними («окно» едет целиком).
+   Неограниченная нижняя граница (-1) на старте перетаскивания превращается в конкретный номер
+   строки (текущее общее число строк) — иначе «расстояние до бесконечности» сдвигать нечем. */
+lineLimitWindowBar.addEventListener("mousedown", function(e){
+    e.preventDefault();
+    lineLimitDragging = true;
+    lineLimitWindowBar.classList.add("dragging");
+    var totalLines0 = src.value.split("\n").length;
+    var startTop = Math.max(0, lineLimitTop);
+    var startBottom = (lineLimit < 0) ? totalLines0 : Math.min(lineLimit, totalLines0);
+    var gap = startBottom - startTop;
+    var startY = e.clientY;
+    var onMove = function(ev){
+        var totalLines = src.value.split("\n").length;
+        var deltaLines = Math.round((ev.clientY - startY) / LINE_LIMIT_LINE_H);
+        var newTop = Math.max(0, Math.min(startTop + deltaLines, totalLines - gap));
+        var newBottom = newTop + gap;
+        var axesAll = laserAxesAllActive();
+        lineLimitTop = newTop;
+        lineLimit = (newBottom >= totalLines) ? -1 : newBottom;
+        rebuild();
+        laserReapplyAll(axesAll);
+    };
+    var onUp = function(){
+        lineLimitDragging = false;
+        lineLimitWindowBar.classList.remove("dragging");
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+});
+lineLimitWindowBar.addEventListener("dblclick", function(){
+    var axesAll = laserAxesAllActive();
+    lineLimit = -1;
+    lineLimitTop = 0;
+    rebuild();
+    laserReapplyAll(axesAll);
+});
 /* === МАРКЕР 04: ПАРСЕР СТРОК → ЯЧЕЙКИ (PARSE) === */
 // Строки с индексом >= lineLimit подменяются на пустые — парсер их не видит,
 // как будто их нет. Реальный src.value (для редактора/подсветки) не трогаем.
 function effectiveSrcValue(){
-  if (lineLimit < 0) return src.value;
+  if (lineLimit < 0 && lineLimitTop <= 0) return src.value;
   var lines = src.value.split("\n");
-  for (var i=lineLimit; i<lines.length; i++) lines[i] = "";
+  if (lineLimit >= 0) for (var i=lineLimit; i<lines.length; i++) lines[i] = "";
+  for (var j=0; j<lineLimitTop && j<lines.length; j++) lines[j] = ""; // верхняя граница: отсечь строки сверху
   return lines.join("\n");
+}
+
+// === Расчёт вариантов циклических сдвигов для строк над границей (панель «Захват границы») ===
+// У строки из N символов N циклических сдвигов, но если строка периодична (например «1111»
+// или «1010»), РАЗЛИЧНЫХ вариантов меньше — ровно длина наименьшего периода.
+function distinctRotations(s){
+  var n = s.length;
+  for (var p = 1; p < n; p++){
+    if (s.substring(p) + s.substring(0, p) === s) return p;
+  }
+  return n;
+}
+function updateShiftVariantsInfo(){
+  var el = $("shiftVarsInfo");
+  if (!el) return;
+  var t = i18n[currentLang];
+  var lines = effectiveSrcValue().split("\n");
+  var parts = [], total = 1, any = false;
+  for (var i = 0; i < lines.length; i++){
+    var trm = lines[i].trim();
+    if (!trm) continue;
+    var v = distinctRotations(trm);
+    parts.push("№" + (i + 1) + ": " + v);
+    total *= v; any = true;
+  }
+  if (!any){ el.textContent = ""; return; }
+  var totalStr = (total > 1e12) ? total.toExponential(2) : String(total);
+  el.textContent = t.lblShiftVars + " " + parts.join(" · ") + " — " + t.lblShiftVarsTotal + " " + totalStr;
 }
 
 function parse(){
@@ -1305,8 +1661,9 @@ function parse(){
     cells.push([a, b, k, val, isPadded, absL, cIdx]); return true;
   }
 
-  var doLoop = loopBits.checked && (mode.value === "ring" || mode.value === "squares");
+  var doLoop = loopBits.checked && (mode.value === "ring" || mode.value === "squares" || isPyraMode());
   var doInvert = doLoop && loopBitsInvert && loopBitsInvert.checked; // «Добор инверсией»: хвост добора берёт инверсию бит вместо повтора
+  var doDynamic = doLoop && loopDynamic && loopDynamic.checked; // «Добор Динам.»: пересчитывать хвост от текущих бит на каждой правке, а не замораживать
 
   var rawLines = effectiveSrcValue().split("\n");
   var parsedFloors = [];
@@ -1335,30 +1692,34 @@ function parse(){
       var off = parsedFloors[k].off;
       lineFloor[absL] = k;
       if (bits.length === 0) continue;
-      // Визуальный сдвиг по кругу (кнопки «👁 Визуальный сдвиг») — крутит, какая клетка кольца
-      // какой бит показывает, БЕЗ изменения текста строки. posMod, т.к. сдвиг может быть отрицательным.
+      // Визуальный сдвиг по кругу (кнопки «👁 Визуальный сдвиг») — крутит кольцо ЦЕЛИКОМ (реальные
+      // биты + добор вместе, как единое жёсткое кольцо): физическая позиция t читает точку
+      // combinedIdx неподвижной «основы» (см. getPadStr), а не только зону реальных бит при
+      // зафиксированной границе добора. posMod, т.к. сдвиг может быть отрицательным.
       var vshift = ringVisualShift[absL] || 0;
       var posMod = function(n, m){ return ((n % m) + m) % m; };
 
-      // «Добор»: повтор бит до заполнения кольца — запоминаем хвост для серого показа в редакторе.
-      // Хвост застывает при формировании (см. getFrozenPadStr) и не пересчитывается от текущих бит.
+      // «Добор»: повтор бит до заполнения кольца — запоминаем хвост (БЕЗ сдвига) для серого показа
+      // в редакторе. Хвост застывает при формировании (см. getFrozenPadStr) и не пересчитывается
+      // от текущих бит.
       var frozenPadStr = "";
       if (doLoop && ring.length > bits.length) {
-        frozenPadStr = getFrozenPadStr(absL, ring.length, bits.length, vshift, doInvert, function(idx){ return bits[idx]; });
+        frozenPadStr = getPadStr(absL, ring.length, bits.length, doInvert, doDynamic, function(idx){ return bits[idx]; });
         padTails[absL] = frozenPadStr;
       }
 
       for(var t=0;t<ring.length;t++){
         var val = 0, isPad = false, cIdx = -1;
         if (doLoop) {
-          var shiftedIdx = posMod(t + vshift, bits.length);
-          isPad = (t >= bits.length);
+          var combinedIdx = posMod(t + vshift, ring.length);
+          isPad = (combinedIdx >= bits.length);
           if (isPad) {
-            val = (frozenPadStr[t - bits.length] === "1") ? 1 : 0;
+            val = (frozenPadStr[combinedIdx - bits.length] === "1") ? 1 : 0;
+            cIdx = off + (combinedIdx % bits.length); // алиас на реальный бит, который добор повторяет
           } else {
-            val = (bits[shiftedIdx] === "1") ? 1 : 0;
+            val = (bits[combinedIdx] === "1") ? 1 : 0;
+            cIdx = off + combinedIdx;
           }
-          cIdx = off + shiftedIdx;
         } else {
           if (t < bits.length) {
             val = (bits[t] === "1") ? 1 : 0;
@@ -1399,16 +1760,17 @@ function parse(){
       for(var yq2=sideQ-2;yq2>=1;yq2--) coordsQ.push([0,yq2]);       // лево, снизу вверх
 
       var capQ = coordsQ.length - 4; // клеток под биты (4 угла не считаются)
-      // Визуальный сдвиг по кругу для этого этажа — см. аналогичное в режиме «ring»
+      // Визуальный сдвиг для этого этажа — крутит СТОРОНЫ (реальные биты + добор) целиком как
+      // единое жёсткое кольцо, углы (всегда 0) в этом вращении не участвуют. См. аналогичное в «ring».
       var vshiftQ = ringVisualShift[absLQ] || 0;
       var posModQ = function(n, m){ return ((n % m) + m) % m; };
       var frozenPadStrQ = "";
       if (doLoop && capQ > bitsQ.length) {
-        frozenPadStrQ = getFrozenPadStr(absLQ, capQ, bitsQ.length, vshiftQ, doInvert, function(idx){ return bitsQ[idx]; });
+        frozenPadStrQ = getPadStr(absLQ, capQ, bitsQ.length, doInvert, doDynamic, function(idx){ return bitsQ[idx]; });
         padTails[absLQ] = frozenPadStrQ;
       }
 
-      var tq = 0; // позиция бита в строке
+      var tq = 0; // позиция бита в строке (вдоль сторон, без углов)
       for(var iq=0;iq<coordsQ.length;iq++){
         var gxq=coordsQ[iq][0], gyq=coordsQ[iq][1];
         var isCornerQ=(gxq===0||gxq===sideQ-1)&&(gyq===0||gyq===sideQ-1);
@@ -1416,14 +1778,15 @@ function parse(){
         if(isCornerQ){
           isPadQ=true;
         } else if (doLoop) {
-          var shiftedIdxQ = posModQ(tq + vshiftQ, bitsQ.length);
-          isPadQ = (tq >= bitsQ.length);
+          var combinedIdxQ = posModQ(tq + vshiftQ, capQ);
+          isPadQ = (combinedIdxQ >= bitsQ.length);
           if (isPadQ) {
-            valQ = (frozenPadStrQ[tq - bitsQ.length] === "1") ? 1 : 0;
+            valQ = (frozenPadStrQ[combinedIdxQ - bitsQ.length] === "1") ? 1 : 0;
+            cIdxQ = offQ + (combinedIdxQ % bitsQ.length); // алиас на реальный бит, который добор повторяет
           } else {
-            valQ = (bitsQ[shiftedIdxQ] === "1") ? 1 : 0;
+            valQ = (bitsQ[combinedIdxQ] === "1") ? 1 : 0;
+            cIdxQ = offQ + combinedIdxQ;
           }
-          cIdxQ = offQ + shiftedIdxQ;
           tq++;
         } else {
           if (tq < bitsQ.length) { valQ = (bitsQ[tq]==="1")?1:0; cIdxQ = offQ + tq; }
@@ -1431,6 +1794,74 @@ function parse(){
           tq++;
         }
         if(!push(Rq-kq+gxq, Rq-kq+gyq, kq, valQ, isPadQ, absLQ, cIdxQ)) break outerQ;
+      }
+    }
+  } else if(isPyraMode()){
+    // «Пирамида 3/4»: объёмная фигура как «Круглая воронка», но этаж — треугольник (pyra3,
+    // вершина треугольника сверху в виде сверху) или квадрат (pyra4). Переключатели pyraGroup:
+    // pyraFill: "ring" — этаж-кольцо по периметру (углы всегда Добор-0, как в «Квадратах»),
+    //           "solid" — сплошная заливка всей площади этажа (биты по рядам слева направо);
+    // pyraApex: "down" — строка k → фигура размера k (первая строка — 1 кубик, остриё внизу,
+    //           как воронка), "up" — строка k → размер (floors-1-k): первая строка — самое
+    //           большое основание внизу, последняя — вершина (классическая пирамида).
+    // Треугольник размера r: клетки |x| <= y+r, -r <= y <= r (вершина (0,-r), основание 4r+1);
+    // кольцо r = этот треугольник минус треугольник r-1 — ровно периметр, без дыр, 8r клеток
+    // (столько же, сколько у квадратного кольца со стороной 2r+1). Обход по часовой от вершины.
+    floors=parsedFloors.length; rows=parsedFloors.map(function(f){return f.txt;});
+    var RP=floors-1;
+    var triP=(mode.value==="pyra3");
+    outerP:
+    for(var kp=0;kp<floors;kp++){
+      var bitsP=parsedFloors[kp].txt, absLP=parsedFloors[kp].absL, offP=parsedFloors[kp].off;
+      lineFloor[absLP]=kp;
+      if(bitsP.length===0) continue;
+      var rp=(pyraApex==='up')?(RP-kp):kp;
+      var coordsP=[], cornP=[]; // клетки этажа (центр (0,0)) + флаг «угловая» (в solid углов нет)
+      if(pyraFill==='solid'){
+        for(var ys=-rp; ys<=rp; ys++){
+          var wS = triP ? (ys+rp) : rp;
+          for(var xs=-wS; xs<=wS; xs++){ coordsP.push([xs,ys]); cornP.push(false); }
+        }
+      } else if(rp===0){ coordsP.push([0,0]); cornP.push(false); }
+      else if(triP){
+        for(var ye=-rp; ye<=rp; ye++) coordsP.push([ye+rp, ye]);               // правое ребро: вершина → правый низ
+        for(var xe=2*rp-1; xe>=-2*rp; xe--) coordsP.push([xe, rp]);            // основание: справа налево
+        for(var ye2=rp-1; ye2>=-rp+1; ye2--) coordsP.push([-(ye2+rp), ye2]);   // левое ребро: снизу вверх
+        coordsP.forEach(function(c){ cornP.push(c[1]===-rp || (c[1]===rp && Math.abs(c[0])===2*rp)); });
+      } else {
+        for(var xq=-rp; xq<=rp; xq++) coordsP.push([xq,-rp]);                  // верх, слева направо
+        for(var yq=-rp+1; yq<=rp; yq++) coordsP.push([rp,yq]);                 // право, сверху вниз
+        for(var xq2=rp-1; xq2>=-rp; xq2--) coordsP.push([xq2,rp]);             // низ, справа налево
+        for(var yq2=rp-1; yq2>=-rp+1; yq2--) coordsP.push([-rp,yq2]);          // лево, снизу вверх
+        coordsP.forEach(function(c){ cornP.push(Math.abs(c[0])===rp && Math.abs(c[1])===rp); });
+      }
+      var capP=0;
+      for(var cci=0;cci<cornP.length;cci++) if(!cornP[cci]) capP++;
+      // Визуальный сдвиг и Добор — как в «Квадратах»: крутятся/заполняются только не-угловые клетки
+      var vshiftP=ringVisualShift[absLP]||0;
+      var posModP=function(n,m){ return ((n%m)+m)%m; };
+      var frozenPadStrP="";
+      if(doLoop && capP>bitsP.length){
+        frozenPadStrP=getPadStr(absLP, capP, bitsP.length, doInvert, doDynamic, function(idx){ return bitsP[idx]; });
+        padTails[absLP]=frozenPadStrP;
+      }
+      var tp=0;
+      for(var ip=0;ip<coordsP.length;ip++){
+        var valP=0, isPadP=false, cIdxP=-1;
+        if(cornP[ip]){
+          isPadP=true;
+        } else if(doLoop){
+          var combP=posModP(tp+vshiftP, capP);
+          isPadP=(combP>=bitsP.length);
+          if(isPadP){ valP=(frozenPadStrP[combP-bitsP.length]==="1")?1:0; cIdxP=offP+(combP%bitsP.length); }
+          else { valP=(bitsP[combP]==="1")?1:0; cIdxP=offP+combP; }
+          tp++;
+        } else {
+          if(tp<bitsP.length){ valP=(bitsP[tp]==="1")?1:0; cIdxP=offP+tp; }
+          else isPadP=true;
+          tp++;
+        }
+        if(!push(coordsP[ip][0]+(triP?2*RP:RP), coordsP[ip][1]+RP, kp, valP, isPadP, absLP, cIdxP)) break outerP;
       }
     }
   } else if(mode.value==="snake"){
@@ -1629,6 +2060,12 @@ function geometry(){
       });
     }
     list.sort(function(a, b){return (a[0] + a[1] + a[2]) - (b[0] + b[1] + b[2]);});
+    // aMinY/aMaxY: bbox по ВСЕМ ячейкам кольца (реальные + добор вместе), а не только реальным
+    // (!c[4]). Физический набор позиций кольца на каждом этаже не зависит от того, где именно
+    // сейчас реальные биты, а где добор (это определяет только vshift/ringVisualShift) — поэтому
+    // этот bbox неизменен при «Визуальном сдвиге», в отличие от gMinY/gMaxY (только реальные).
+    // Нужен, чтобы центр воронки (finalCy ниже) не «гулял» вверх-вниз на каждом такте сдвига.
+    var aMinY = 1e9, aMaxY = -1e9;
     list.forEach(function(c){
       var a = aC(c), b = c[1], k = c[2];
       var x1 = (a - b - 1) * u, x2 = (a - b + 1) * u;
@@ -1638,6 +2075,7 @@ function geometry(){
         if(x1 < minX) minX = x1; if(x2 > maxX) maxX = x2;
         if(y1 < minY) minY = y1; if(y2 > maxY) maxY = y2;
       }
+      if(y1 < aMinY) aMinY = y1; if(y2 > aMaxY) aMaxY = y2;
       if (!c[4]) {
         if(x1 < gMinX) gMinX = x1; if(x2 > gMaxX) gMaxX = x2;
         if(y1 < gMinY) gMinY = y1; if(y2 > gMaxY) gMaxY = y2;
@@ -1663,16 +2101,25 @@ function geometry(){
   var finalCy = (gMinY + gMaxY) / 2;
 
   // Жесткая привязка центра
-  if ((m === "ring" || m === "squares") && kind === "top") {
+  if ((m === "ring" || m === "squares" || m === "pyra3" || m === "pyra4") && kind === "top") {
     var R_center = D.floors > 0 ? D.floors - 1 : 0;
-    finalCx = R_center * TS + TS / 2;
+    // Пирамида 3: центр этажей в сетке лежит в (2R, R) — треугольник шире по x (основание 4R+1)
+    finalCx = (m === "pyra3" ? 2 * R_center : R_center) * TS + TS / 2;
     finalCy = R_center * TS + TS / 2;
   } else if (m === "snake" && kind === "top") {
     // Центр — первый куб спирали (1-я строка): вокруг него вращение, зеркало, XOR
     finalCx = snakeCenterA * TS + TS / 2;
     finalCy = snakeCenterB * TS + TS / 2;
-  } else if ((m === "ring" || m === "squares" || m === "snake") && kind === "iso") {
+  } else if ((m === "ring" || m === "squares" || m === "snake" || m === "pyra4") && kind === "iso") {
     finalCx = 0;
+    // finalCy — от aMinY/aMaxY (ВСЕ ячейки, не только реальные), а не от gMinY/gMaxY: иначе
+    // «Визуальный сдвиг» (крутит, какая физическая позиция кольца сейчас реальный бит, а какая
+    // добор) двигал бы центр вверх-вниз на каждом такте, хотя сама воронка физически не меняется.
+    if (aMinY !== 1e9) finalCy = (aMinY + aMaxY) / 2;
+  } else if (m === "pyra3" && kind === "iso") {
+    // Центр этажей (2R, R): в изометрии x-координата центра клетки = (a-b)*u = R*u
+    finalCx = (D.floors > 0 ? D.floors - 1 : 0) * u;
+    if (aMinY !== 1e9) finalCy = (aMinY + aMaxY) / 2;
   } else if (kind === "top") {
     finalCx = Math.round((finalCx - TS / 2) / TS) * TS + TS / 2;
     finalCy = Math.round((finalCy - TS / 2) / TS) * TS + TS / 2;
@@ -1799,9 +2246,11 @@ function updateEditorHighlight(hlMap, isMinus, isGold, targetHl, selHlList) {
 }
 
 var lastGutterHtml = null;
+var lastGlobalGutterHtml = null;
 function renderLineGutter(){
     var rawLines = src.value.split('\n');
     var html = "";
+    var globalHtml = "";
     for (var i=0; i<rawLines.length; i++) {
         var k = D.lineFloor ? D.lineFloor[i] : undefined;
         if (k === undefined) {
@@ -1812,11 +2261,16 @@ function renderLineGutter(){
             var gstyle = sel.has(k) ? '' : ' style="color:' + gcol[3] + ';background:' + gcol[0] + '"';
             html += '<div class="gutter-line is-floor' + (sel.has(k) ? ' is-sel' : '') + '" data-line="' + i + '"' + gstyle + '>' + (k + 1) + '</div>';
         }
+        // Глобальный номер строки — ВСЕГДА, для абсолютно каждой строки (пустой, за границей,
+        // не участвующей и т.д.), независимо от того, стала ли она этажом.
+        globalHtml += '<div class="gutter-line">' + (i + 1) + '</div>';
     }
     // Запас снизу: у textarea есть горизонтальный скроллбар, «съедающий» высоту вьюпорта, —
     // без запаса scrollTop колонки клампится раньше и номера съезжают между строк
     html += '<div style="height:40px"></div>';
+    globalHtml += '<div style="height:40px"></div>';
     if (html !== lastGutterHtml) { lineGutter.innerHTML = html; lastGutterHtml = html; }
+    if (globalLineGutter && globalHtml !== lastGlobalGutterHtml) { globalLineGutter.innerHTML = globalHtml; lastGlobalGutterHtml = globalHtml; }
 }
 
 lineGutter.addEventListener("click", function(e){
@@ -2005,7 +2459,7 @@ function buildLaserNodesTop() {
 function beamCellsTop(type, d) {
     var bySlot = {};
     G.list.forEach(function(c) {
-        if (c[4] && !loopBits.checked) return;
+        if (c[4] && (!loopBits.checked || (c[3] === 0 && !ghostsAll.checked))) return;
         var gp = laserGridPosTop(c);
         var x = gp[0], y = gp[1];
         var match = false, slot = 0, inside = [];
@@ -2102,7 +2556,7 @@ function buildLaserNodesRhomb() {
 function beamCellsRhomb(type, d) {
     var h = DD / 2, out = [];
     G.list.forEach(function(c) {
-        if (c[4] && !loopBits.checked) return;
+        if (c[4] && (!loopBits.checked || (c[3] === 0 && !ghostsAll.checked))) return;
         var vp = laserViewPos(rhX(c), -c[2] * DD / 2);
         var x = vp[0], y = vp[1];
         var key = (type === 'top') ? Math.round(x / h) : (type === 'horiz') ? Math.round(y / h) : (type === 'left') ? Math.round((x - y) / h) : Math.round((x + y) / h);
@@ -2240,7 +2694,7 @@ function beamCells(type, d) {
     if (G.kind === "top") return beamCellsTop(type, d);
     var bySlot = {};
     G.list.forEach(function(c) {
-        if (c[4] && !loopBits.checked) return;
+        if (c[4] && (!loopBits.checked || (c[3] === 0 && !ghostsAll.checked))) return;
 
         var a = aC(c), b = c[1], k = c[2];
         var S = a - b;
@@ -2972,12 +3426,12 @@ function draw(){
           ctx.lineTo(p2.x, p2.y);
 
           if (isInside) {
-              ctx.lineWidth = 1 / zoom;
+              ctx.lineWidth = 0.5 / zoom;
               ctx.strokeStyle = color;
               ctx.globalAlpha = 0.22;
               ctx.setLineDash([4/zoom, 4/zoom]);
           } else {
-              ctx.lineWidth = 2 / zoom;
+              ctx.lineWidth = 1 / zoom;
               ctx.strokeStyle = color;
               ctx.globalAlpha = 0.95;
               ctx.setLineDash([]);
@@ -3148,18 +3602,10 @@ function draw(){
           return res;
       }
 
-      // Сборка лазеров: несколько вариантов того, какие активные лучи склеивать в ОДНУ строку
-      // поиска. 'order' — все активные лучи в порядке их добавления в skewers.
-      // Остальные варианты — фиксированный порядок осей, группировка ПО ИНДЕКСУ УЗЛА
-      // (Лево1+Право1, затем Лево2+Право2 и т.д.); если на какой-то оси луча с этим индексом
-      // нет — она просто пропускается, без заглушки. Все группы идут подряд в одну строку —
+      // Сборка лазеров — см. getLaserAssemblyPresets() (общая функция, чтобы её же мог использовать
+      // computeAssemblyPointsFresh для поиска без draw()). Все группы идут подряд в одну строку —
       // и поиск (findMatches), и отображение (разделитель между значениями — только «+»).
-      var LASER_ASSEMBLY_PRESETS = [
-          { key: 'order', label: (currentLang === "ru") ? "По добавлению" : "Added order", axes: null },
-          { key: 'lr',    label: (currentLang === "ru") ? "Лево+Право" : "Left+Right", axes: ['left','right'] },
-          { key: 'lrt',   label: (currentLang === "ru") ? "Лево+Право+Верх" : "Left+Right+Top", axes: ['left','right','top'] },
-          { key: 'all',   label: (currentLang === "ru") ? "Все оси" : "All axes", axes: ['top','right','left','horiz','da','db'] }
-      ];
+      var LASER_ASSEMBLY_PRESETS = getLaserAssemblyPresets();
       var activeAssemblyPreset = LASER_ASSEMBLY_PRESETS.find(function(p){ return p.key === laserAssemblyVariant; }) || LASER_ASSEMBLY_PRESETS[0];
 
       var axisPointSegments = {};
@@ -3198,8 +3644,12 @@ function draw(){
                   return e.kind === 'normal' && pts.some(function(p){ return p.skIdx === e.skIdx; });
               });
 
+              // Пока активно «По строкам» — лазерный поиск (findMatches по строкам лазеров) не
+              // подсвечивает: targetHighlights должен показывать только совпадения интерливинг-
+              // стога (см. ветку rowsModeActive ниже), иначе два разных источника подсветки
+              // смешивались бы в редакторе и путали, какая строка реально найдена для захвата.
               var combinedSegments = [];
-              if (combinedStr.length > 0) {
+              if (combinedStr.length > 0 && !rowsModeActive) {
                   if (combinedSelEntries.length) {
                       combinedSelEntries.forEach(function(e){ combinedSegments = findMatches(combinedStr, e.map); });
                   } else {
@@ -3207,12 +3657,17 @@ function draw(){
                   }
               }
 
-              var pos = 0;
-              pts.forEach(function(p){
-                  var start = pos, end = pos + p.str.length;
-                  pos = end;
-                  axisPointSegments[p.skIdx] = sliceSegments(combinedSegments, start, end);
-              });
+              // Не трогаем axisPointSegments при «По строкам» (оставляем undefined на skIdx) — иначе
+              // sliceSegments([], ...) даёт ПУСТОЙ (но truthy) массив, и `axisPointSegments[skIdx] ||
+              // [{text: sd.str, ...}]` ниже перестаёт срабатывать: текст лазера исчезает вовсе.
+              if (!rowsModeActive) {
+                  var pos = 0;
+                  pts.forEach(function(p){
+                      var start = pos, end = pos + p.str.length;
+                      pos = end;
+                      axisPointSegments[p.skIdx] = sliceSegments(combinedSegments, start, end);
+                  });
+              }
 
               assemblyRows.push({ pts: pts, combinedStr: combinedStr, combinedSegments: combinedSegments });
           }
@@ -3399,13 +3854,17 @@ function draw(){
           asmTitle.style.cssText = "text-transform:uppercase; letter-spacing:.5px;";
 
           if (rowsModeActive) {
+              syncIlAskButtons(); // держим кнопки →/← подсказки «?» в актуальном (не)активном состоянии на каждой отрисовке
               asmTitle.textContent = (currentLang === "ru") ? "Интерливинг (сквозной, над границей):" : "Interleaving (through, above boundary):";
               asmHead.appendChild(asmTitle);
               asmWrap.appendChild(asmHead);
 
+              // При активной «?»: пока сторона ни разу не выбрана — показываются ОБЕ (А→/А←/Б→/Б←,
+              // для сравнения); как только выбрана (клик →/← в подсказке ниже) — aboveRowsInterleavedHaystacks()
+              // сама отдаёт только её вариант(ы), панель переключается напрямую, без доп. затемнения.
               var ilHaystacks = aboveRowsInterleavedHaystacks();
               if (ilHaystacks.length) {
-                  ilHaystacks.forEach(function(h, hi){
+                  ilHaystacks.forEach(function(h){
                       var ilLine = document.createElement("div");
                       ilLine.className = "skew-line";
                       ilLine.style.cursor = "default";
@@ -3413,15 +3872,15 @@ function draw(){
                       if (ilHaystacks.length > 1) {
                           var ilTag = document.createElement("span");
                           ilTag.style.cssText = "color:var(--muted); margin-right:5px;";
-                          ilTag.textContent = (hi === 0 ? "А:" : "Б:");
+                          ilTag.textContent = h.tag + ":";
                           ilLine.appendChild(ilTag);
                       }
                       var ilTxt = document.createElement("span");
-                      if (h.length) {
+                      if (h.str.length) {
                           // Ищем в стоге ту же цель (строку(и) под границей), что и везде — заодно
                           // подсвечивает совпадение и в самом стоге, и (через targetHighlights) в
                           // редакторе строк, как обычная лазерная подсветка.
-                          ilTxt.innerHTML = formatMatchSegments(findMatches(h, null));
+                          ilTxt.innerHTML = formatMatchSegments(findMatches(h.str, null));
                       } else {
                           ilTxt.textContent = i18n[currentLang].empty;
                       }
@@ -3620,7 +4079,9 @@ function draw(){
                       var ovSelEntry = isOvSel ? findSelBeamHl(skIdx, 'overlap') : null;
 
                       var txt = document.createElement("span");
-                      var segments = findMatches(overlapStr, ovSelEntry ? ovSelEntry.map : null);
+                      // Тот же принцип, что и у «Сборки»: при активном «По строкам» лазерный поиск
+                      // не подсвечивает пересечения — не путаем с подсветкой стога.
+                      var segments = rowsModeActive ? [{ text: overlapStr, type: 'none' }] : findMatches(overlapStr, ovSelEntry ? ovSelEntry.map : null);
                       var dispOvStr = formatMatchSegments(segments);
                       txt.innerHTML = '<span class="skew-num">' + primaryName + ':</span>' + dispOvStr + ' <span style="color:var(--muted)">(' + intersectingBeams.join(", ") + ')</span>';
                       line.appendChild(txt);
@@ -3678,6 +4139,13 @@ function draw(){
   (function(){
       var acb = $("autoCaptureBelow");
       if (!acb || !acb.checked || lineLimit < 0 || pendingBelowCapture) return;
+      // Пока «Без отрисовки при Плее» активно и играет любой Плей — эту же проверку уже делает
+      // сам тик Плея напрямую (runAutoCaptureCheckOnce), один раз за такт. Если разрешить ЕЩЁ и
+      // этому встроенному механизму сработать (а он срабатывает на КАЖДОМ реальном draw(), в т.ч.
+      // на том, который вызвал rebuild() после захвата в тике) — получается каскад: один такт
+      // Плея утягивает сразу МНОГО строк одну за другой через микрозадачи, холст рисуется на
+      // каждой — и создаётся впечатление, что автозахват «никогда не останавливается».
+      if (suppressDrawDuringPlayActive()) return;
       var row = belowRowBits();
       if (!row) return;
       var m = belowRowMatchDetail();
@@ -3883,7 +4351,31 @@ function buildSelector(){
   fr.max=D.floors; fr.value=0; frLabel.textContent = i18n[currentLang].floorAll;
 }
 
-function rotateSelected(dir) {
+// Фильтр строк по ВИДИМОСТИ при активной рамке выделения на холсте: без «Вычитать выделенное»
+// видимые клетки — внутри рамки, с «Вычитанием» — снаружи. Строка считается видимой, если у неё
+// есть хотя бы одна видимая клетка. Оба сдвига (символьный и визуальный) двигают только такие
+// строки — то, что реально видно, независимо от способа получения видимости.
+// lastFrameElements заполняется в draw() и остаётся валидным между отрисовками (рамка и сетка
+// не двигаются между тактами), поэтому работает и из Сдвиг-Плея с подавлением отрисовки.
+function visibleLinesUnderFrame(lines, silent){
+    if (!((selActive || isSelecting) && lastFrameElements && lastFrameElements.size)) return lines;
+    var inFrame = new Set(), outFrame = new Set();
+    G.list.forEach(function(c, i){
+        if (!c || c[5] === -1) return;
+        if (lastFrameElements.has(i)) inFrame.add(c[5]); else outFrame.add(c[5]);
+    });
+    var visible = minusMode.checked ? outFrame : inFrame;
+    var res = new Set();
+    lines.forEach(function(absL){ if (visible.has(absL)) res.add(absL); });
+    if (!silent && res.size < lines.size) {
+        var skipped = Array.from(lines).filter(function(l){ return !res.has(l); });
+        console.log("[Kubits] Сдвиг: невидимые строки (" + (minusMode.checked ? "вычтены рамкой" : "вне рамки") +
+            ") не двигаются — " + skipped.map(function(l){ return "№" + (l + 1); }).join(", "));
+    }
+    return res;
+}
+
+function rotateSelected(dir, skipDraw, silent) {
     var rawLines = src.value.split("\n");
     var linesToShift = new Set();
     var shiftAll = (sel.size === 0); // без выделения сдвигаем ВСЕ строки
@@ -3893,6 +4385,7 @@ function rotateSelected(dir) {
             linesToShift.add(c[5]);
         }
     });
+    linesToShift = visibleLinesUnderFrame(linesToShift, silent); // рамка: крутим только видимые строки
 
     var changed = false;
     linesToShift.forEach(function(absL) {
@@ -3925,7 +4418,7 @@ function rotateSelected(dir) {
         geometry();
         
         selBackup.forEach(function(k) { sel.add(k); });
-        draw();
+        if (!skipDraw) draw(); // skipDraw=true — вызывающий (shiftAnimTick) сам решает, рисовать ли холст
         syncSelUI();
     }
 }
@@ -3934,28 +4427,37 @@ function rotateSelected(dir) {
 // src.value — крутит только то, какая клетка кольца какой бит показывает (ringVisualShift).
 // Работает только там, где реально используется добор по кругу (ring.doLoop) — на выбранных
 // этажах (или на всех, если ничего не выбрано).
-function shiftRingVisual(dir) {
+// silent=true (передаёт непрерывный «▶ Плей», см. shiftAnimTick) — без console.log: на каждом
+// такте сдвигаются и находятся ОДНИ И ТЕ ЖЕ строки, лог этого не показывает ничего нового, зато
+// на скорости Плея быстро копит тысячи записей в консоли и тратит время на них зря. Разовый
+// сдвиг по клику кнопки логируется как раньше.
+function shiftRingVisual(dir, skipDraw, silent) {
     var linesToShift = new Set();
     var shiftAll = (sel.size === 0);
     G.list.forEach(function(c) {
         if ((shiftAll || sel.has(c[2])) && c[5] !== -1) linesToShift.add(c[5]);
     });
+    // Рамка выделения на холсте: крутятся только ВИДИМЫЕ строки — без «Вычитания» это строки
+    // в рамке, с «Вычитать выделенное» — строки вне её (см. visibleLinesUnderFrame).
+    linesToShift = visibleLinesUnderFrame(linesToShift, silent);
     if (!linesToShift.size) {
-        console.log("[Kubits] Визуальный сдвиг: нет ни одной подходящей строки (пусто на этаже/строке?), ничего не сдвинуто.");
+        if (!silent) console.log("[Kubits] Визуальный сдвиг: нет ни одной подходящей строки (пусто на этаже/строке?), ничего не сдвинуто.");
         return;
     }
-    var rawLinesForLog = src.value.split("\n");
+    var rawLinesForLog = silent ? null : src.value.split("\n");
     linesToShift.forEach(function(absL) {
         var cur = ringVisualShift[absL] || 0;
         ringVisualShift[absL] = cur + (dir === 'CW' ? 1 : -1);
     });
-    console.log("[Kubits] Визуальный сдвиг (" + dir + "), sel=" + JSON.stringify(Array.from(sel)) + ": " +
-        Array.from(linesToShift).map(function(absL){
-            return "строка №" + (absL + 1) + " \"" + rawLinesForLog[absL].trim() + "\" → сдвиг=" + ringVisualShift[absL];
-        }).join("; "));
+    if (!silent) {
+        console.log("[Kubits] Визуальный сдвиг (" + dir + "), sel=" + JSON.stringify(Array.from(sel)) + ": " +
+            Array.from(linesToShift).map(function(absL){
+                return "строка №" + (absL + 1) + " \"" + rawLinesForLog[absL].trim() + "\" → сдвиг=" + ringVisualShift[absL];
+            }).join("; "));
+    }
     parse();
     geometry();
-    draw();
+    if (!skipDraw) draw(); // skipDraw=true — вызывающий (shiftAnimTick) сам решает, рисовать ли холст
 }
 function resetRingVisualShift() {
     var shiftAll = (sel.size === 0);
@@ -4509,14 +5011,22 @@ function syncSelUI(){
       rotWrap.style.display = "flex";
   }
 
-  // «👁 Визуальный сдвиг» виден только там, где реально есть добор по кругу (иначе крутить нечего)
-  var _visRotWrap = $("visRotWrap");
-  if (_visRotWrap) _visRotWrap.style.display = (loopBits.checked && (mode.value === "ring" || isSquaresMode())) ? "flex" : "none";
+  // Кнопки «👁 Визуальный сдвиг» видны только там, где реально есть добор по кругу (иначе крутить
+  // нечего). Если их скрыли, а общий плеер в этот момент крутил именно визуальный сдвиг — остановить.
+  var _visRotBtns = $("visRotBtns");
+  var _visRotShown = loopBits.checked && (mode.value === "ring" || isSquaresMode() || isPyraMode());
+  if (_visRotBtns) _visRotBtns.style.display = _visRotShown ? "inline-flex" : "none";
+  if (!_visRotShown && shiftAnimKind === 'visual') {
+    if (typeof stopShiftAnim === 'function') stopShiftAnim(false);
+    shiftAnimKind = 'text';
+    if (typeof syncShiftKindUI === 'function') syncShiftKindUI();
+  }
 
   skewerMode.disabled = (isSquaresMode() && squareEditMode);
   if (skewerMode.disabled) { skewerMode.checked = false; skewers = []; selectedLaserRows = []; }
   
   $("alignGroup").style.display = (mode.value === "funnel" || mode.value === "rhomb") ? "flex" : "none";
+  $("pyraGroup").style.display = isPyraMode() ? "flex" : "none";
 
   var isFlatMode = (currentView === "top" || mode.value === "rhomb");
   btnExcel.style.opacity = isFlatMode ? "1" : "0.6";
@@ -4533,6 +5043,7 @@ function rebuild(){
   var _axesAll = (typeof laserAxesAllActive === 'function') ? laserAxesAllActive() : null; // оси со «Все» — чтобы не сбрасывались при пересчёте
   resetXorOverlays(); // данные/режим изменились — накопленное XOR-поле больше не актуально
   parse();
+  updateShiftVariantsInfo();
   // Автозахват нижней строки теперь привязан к лазерной «found»-подсветке (см. в draw() перед
   // updateEditorHighlight): когда строка под границей полностью найдена в лучах, граница едет вниз.
   var onesCount = D.cells.filter(function(c){return c[3]===1}).length;
@@ -4547,6 +5058,41 @@ function rebuild(){
   draw();
   syncSelUI();
   updateLineLimitBar();
+}
+
+/* === Кеш «Данных (Строки)» в localStorage браузера (ручной, кнопкой) === */
+// Автозаписи НЕТ (v0.258 сбивала данные — откачено): кеш пишется только кнопкой «💾 Запомнить»
+// над редактором. Вместе с текстом запоминается и положение верхней/нижней границы «Данных».
+// Запомненное: 1) автоматически подтягивается при загрузке/F5 ЛЮБОЙ версии файла в том же
+// браузере тем же способом (file:// и http://127.0.0.1 — разные хранилища); 2) возвращается
+// кнопкой «⏹ Сброс» над редактором (если кеша нет — сброс к шаблону из кода). Пустой кеш игнорируется.
+var SRC_CACHE_KEY = "kubits_src";
+function saveSrcToCache(){
+  try {
+    localStorage.setItem(SRC_CACHE_KEY, JSON.stringify({ src: src.value, lineLimit: lineLimit, lineLimitTop: lineLimitTop }));
+    return true;
+  } catch(e){ return false; }
+}
+function getSrcCache(){
+  try {
+    var s = localStorage.getItem(SRC_CACHE_KEY);
+    if (!s) return null;
+    var parsed = null;
+    try { parsed = JSON.parse(s); } catch(e){ parsed = null; }
+    if (parsed && typeof parsed === "object" && typeof parsed.src === "string") {
+      return parsed.src.trim() ? parsed : null;
+    }
+    // кеш старого формата (просто текст, до появления границ в кеше) — границы не сохранены
+    return s.trim() ? { src: s, lineLimit: -1, lineLimitTop: 0 } : null;
+  } catch(e){ return null; }
+}
+function restoreSrcFromCache(){
+  var saved = getSrcCache();
+  if (saved !== null) {
+    src.value = saved.src;
+    lineLimit = saved.lineLimit;
+    lineLimitTop = saved.lineLimitTop;
+  }
 }
 
 function rebuildKeepView(){
@@ -4585,7 +5131,7 @@ function belowRowFoundInDetail(haystack){
     for (var i = rot.length - 1; i >= 0; i--) rev += rot[i];
     var vs = [{ s: rot, kind: 'прямой' }, { s: inv, kind: 'инверсия' }, { s: rev, kind: 'реверс' }];
     for (var vi = 0; vi < vs.length; vi++){
-      if (vs[vi].s && haystack.indexOf(vs[vi].s) !== -1) return { kind: vs[vi].kind, pat: vs[vi].s, rot: k };
+      if (vs[vi].s && haystack.indexOf(vs[vi].s) !== -1) return { kind: vs[vi].kind, pat: vs[vi].s, rot: k, total: pat.length };
     }
   }
   return null;
@@ -4606,7 +5152,7 @@ function belowRowFoundLaser(){
     for (var r = 0; r < rows.length; r++){
       for (var vi = 0; vi < vs.length; vi++){
         if (vs[vi].s && rows[r].str.indexOf(vs[vi].s) !== -1){
-          return { axisLabel: rows[r].axisLabel, index: rows[r].index, kind: vs[vi].kind, rot: k, pat: vs[vi].s };
+          return { axisLabel: rows[r].axisLabel, index: rows[r].index, kind: vs[vi].kind, rot: k, pat: vs[vi].s, total: pat.length };
         }
       }
     }
@@ -4645,36 +5191,166 @@ function interleave(a, b){
 // «Стог» для интерливинга: ВСЕ уже включённые строки над границей (не под ней!) разбиваются на
 // пары СКОЛЬЗЯЩИМ ОКНОМ — 1+2, 2+3, 3+4, 4+5, ... (каждая соседняя пара, с перекрытием, а не
 // только 1+2 / 3+4 без повтора строк), каждая пара чередуется побитово, и результаты всех пар
-// склеиваются подряд в ОДНУ сквозную строку-стог. Даёт до двух вариантов стога — оба проверяются
-// в autoCaptureBelowThroughRows:
+// склеиваются подряд в ОДНУ сквозную строку-стог. До 4 вариантов стога — какие именно считать,
+// решают кнопки в панели «Захват границы» (btnIlVarA/btnIlVarB/btnIlSideRight/btnIlSideLeft):
 //   А) в каждой паре сначала чередуем сами биты (b1[0],b2[0],b1[1],b2[1]...), потом отдельно
 //      хвосты добора, и склеиваем результаты;
 //   Б) в каждой паре сначала каждая строка целиком (биты+хвост добора), потом чередуем эти две
-//      целые строки.
-// Если над границей только одна строка — чередовать не с чем, стог — она сама (биты+добор).
-function aboveRowsInterleavedHaystacks(){
+//      целые строки;
+//   → (справа, как раньше по умолчанию) — добор приклеивается ПОСЛЕ бит строки;
+//   ← (слева) — добор приклеивается ПЕРЕД битами строки.
+// Если над границей только одна строка — чередовать не с чем (А/Б неприменимы), стог — она сама,
+// только сторона добора (→/←) имеет смысл. Одинаковые по содержимому варианты дедуплицируются.
+// forceSide ('right'/'left') — используется belowRowMatchDetail() в режиме «?» ПОСЛЕ того, как
+// пользователь ответил на всплывающий вопрос: заставляет посчитать только эту сторону, игнорируя
+// кнопки →/←/? (которые в режиме «?» сами по себе стороны не выбирают). Без forceSide и при
+// активной «?» — считаются ОБЕ стороны сразу, просто для показа в панели (сравнить визуально),
+// поиск при этом не запускается, пока пользователь не ответит (см. belowRowMatchDetail).
+function aboveRowsInterleavedHaystacks(forceSide){
   var lines = src.value.split("\n");
   var lim = (lineLimit < 0) ? lines.length : Math.min(lineLimit, lines.length);
   if (lim <= 0) return [];
   var bitsOf = function(i){ return lines[i].trim().replace(/\s+/g, ""); };
   var padOf = function(i){ return (D && D.padTails && D.padTails[i]) ? D.padTails[i] : ""; };
-  if (lim === 1) return [bitsOf(0) + padOf(0)];
-  var hA = "", hB = "";
-  for (var i = 0; i + 1 < lim; i++){
-    var b1 = bitsOf(i), b2 = bitsOf(i + 1), p1 = padOf(i), p2 = padOf(i + 1);
-    hA += interleave(b1, b2) + interleave(p1, p2);
-    hB += interleave(b1 + p1, b2 + p2);
+
+  var elA = $("btnIlVarA"), elB = $("btnIlVarB");
+  var useA = !elA || elA.classList.contains("active"), useB = !elB || elB.classList.contains("active");
+  var useRight, useLeft;
+  if (forceSide === "right") { useRight = true; useLeft = false; }
+  else if (forceSide === "left") { useRight = false; useLeft = true; }
+  else {
+    var elR = $("btnIlSideRight"), elL = $("btnIlSideLeft"), elAsk = $("btnIlSideAsk");
+    if (elAsk && elAsk.classList.contains("active")) {
+      // «?»: если сторона уже когда-то выбрана (ilAskChoice запомнен) — панель сразу показывает
+      // именно её, как будто нажали → или ← напрямую. Пока НИ РАЗУ не выбрана — показываем ОБЕ
+      // для сравнения (единственный случай, когда тут действительно нечего показать однозначно).
+      if (ilAskChoice === "right") { useRight = true; useLeft = false; }
+      else if (ilAskChoice === "left") { useRight = false; useLeft = true; }
+      else { useRight = true; useLeft = true; }
+    }
+    else { useRight = !elR || elR.classList.contains("active"); useLeft = !elL || elL.classList.contains("active"); }
   }
-  return (hA === hB) ? [hA] : [hA, hB];
+
+  var candidates = [];
+  if (lim === 1) {
+    var bits0 = bitsOf(0), pad0 = padOf(0);
+    if (useRight) candidates.push({ str: bits0 + pad0, tag: "→" });
+    if (useLeft) candidates.push({ str: pad0 + bits0, tag: "←" });
+  } else {
+    var hAr = "", hAl = "", hBr = "", hBl = "";
+    for (var i = 0; i + 1 < lim; i++){
+      var b1 = bitsOf(i), b2 = bitsOf(i + 1), p1 = padOf(i), p2 = padOf(i + 1);
+      if (useA && useRight) hAr += interleave(b1, b2) + interleave(p1, p2);
+      if (useA && useLeft)  hAl += interleave(p1, p2) + interleave(b1, b2);
+      if (useB && useRight) hBr += interleave(b1 + p1, b2 + p2);
+      if (useB && useLeft)  hBl += interleave(p1 + b1, p2 + b2);
+    }
+    if (useA && useRight) candidates.push({ str: hAr, tag: "А→" });
+    if (useA && useLeft)  candidates.push({ str: hAl, tag: "А←" });
+    if (useB && useRight) candidates.push({ str: hBr, tag: "Б→" });
+    if (useB && useLeft)  candidates.push({ str: hBl, tag: "Б←" });
+  }
+  var seen = {}, res = [];
+  candidates.forEach(function(c){
+    if (seen[c.str] !== undefined) return; // дедуп: одинаковые строки (напр. без добора) не дублируем
+    seen[c.str] = true;
+    res.push(c);
+  });
+  return res;
 }
+// Счётчик «попытка N из total» для поисковых циклов автозахвата (см. ниже) — просто текст,
+// без перерисовки холста; total = максимум попыток (сколько строк вообще может быть втянуто).
+function setCaptureProgress(n, total){
+  var el = $("captureProgress");
+  if (el) el.textContent = n > 0 ? ("попытка " + n + " из " + total) : "";
+}
+function clearCaptureProgress(){ setCaptureProgress(0, 0); }
+
+// «Быстрый» пересчёт модели для поисковых циклов: то же, что нужно belowRowMatchDetail/лазерам
+// (parse — новый D/добор под сдвинутой границей, geometry — новые координаты G.list для
+// beamCells), но БЕЗ отрисовки холста и обвязки правой панели (autoFit/buildSelector/syncSelUI/
+// updateLineLimitBar/laserReapplyAll) — они не влияют на сам поиск, только на то, что видно
+// пользователю. Полноценный rebuild() (со всем этим и отрисовкой) делается один раз в конце
+// цикла — см. captureBelowThroughLasers.
+function fastModelRecompute(){
+  resetXorOverlays();
+  parse();
+  geometry();
+}
+
+// «🚫 Без отрисовки при Плее» (чекбокс, по умолчанию ВЫКЛЮЧЕН): пока играет любая из 6 анимаций
+// (Флип/Поворот/Сдвиг/Этажи/Змейка) И включён непрерывный «Автозахват» — не гоняем полный
+// draw() на КАЖДОМ такте (дорого: холст + вся обвязка), а только проверяем автозахват (ВСЕГДА
+// полная проверка, все 4 уровня — см. belowRowMatchDetail/computeAssemblyHaystackFresh, ей draw()
+// для этого не нужен). Рисуем полноценно только когда реально что-то захвачено — тогда видно,
+// что граница сдвинулась. Если чекбокс выключен (по умолчанию) — обычный draw() на каждом такте,
+// как и было всегда; анимация видна вживую.
+// Активно ли сейчас «Без отрисовки при Плее» (чекбокс включён И играет любой из 5 Плеев) — общая
+// проверка для playTickRender/шифт-тика И для встроенного в draw() автозахвата (тот должен
+// промолчать в этом случае, чтобы не дублировать работу тика, см. MARKER 11).
+function suppressDrawDuringPlayActive(){
+  var suppressEl = $("suppressDrawDuringPlay");
+  var acbEl = $("autoCaptureBelow");
+  var anyPlayOn = shiftAnimOn || flipAnimOn || rotAnimOn || floorAnimOn || snakeAnimOn;
+  return !!(suppressEl && suppressEl.checked && acbEl && acbEl.checked && anyPlayOn);
+}
+// При включении галки все 5 ползунков скоростей Плеев автоматически ставятся на максимум
+// скорости (минимальное значение ползунка = самый короткий период) — реальный прирост темпа
+// поиска подавление даёт именно там, где отрисовка была узким местом (замер v0.258: 252
+// такта/с против 104 на максимуме Сдвига). Прежние значения запоминаются и возвращаются при
+// выключении. dispatchEvent("input") — чтобы уже играющий плеер перезапустил таймер с новым
+// периодом (makePlayer слушает "input"), а fastZone-подсветка ползунка обновилась.
+(function(){
+  var supEl = $("suppressDrawDuringPlay");
+  if (!supEl) return;
+  var ids = ["shiftAnimSpeed","flipAnimSpeed","rotAnimSpeed","floorAnimSpeed","snakeAnimSpeed"];
+  var savedSpeeds = null;
+  supEl.addEventListener("change", function(){
+    if (supEl.checked) {
+      savedSpeeds = {};
+      ids.forEach(function(id){
+        var el = $(id); if (!el) return;
+        savedSpeeds[id] = el.value;
+        el.value = el.min;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    } else if (savedSpeeds) {
+      ids.forEach(function(id){
+        var el = $(id); if (!el || !(id in savedSpeeds)) return;
+        el.value = savedSpeeds[id];
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      savedSpeeds = null;
+    }
+  });
+})();
+function runAutoCaptureCheckOnce(){
+  var acb = $("autoCaptureBelow");
+  if (!acb || !acb.checked || lineLimit < 0) return false;
+  var row = belowRowBits();
+  if (!row) return false;
+  var m = belowRowMatchDetail();
+  if (!m) return false;
+  console.log("[Kubits] Автозахват (без отрисовки при Плее): строка №" + (lineLimit + 1) + " \"" + row + "\" найдена → " + m.desc + " → втянута в рамку");
+  lineLimit++;
+  return true;
+}
+function playTickRender(){
+  if (suppressDrawDuringPlayActive()) {
+    if (runAutoCaptureCheckOnce()) rebuild();
+    return;
+  }
+  draw();
+}
+
 // Режим A («По строкам»): обычная строка под границей (без чередования её самой, как раньше)
 // ищется в интерливинг-стоге из двух последних включённых строк над границей — проверяются
 // оба варианта добора (см. aboveRowsInterleavedHaystacks/belowRowMatchDetail). Если найдена —
 // втягиваем внутрь эту ОДНУ строку (граница +1), и так по кругу; на каждом шаге стог
 // пересчитывается заново от новых последних двух строк над (уже сдвинутой) границей.
 // Использует ту же belowRowMatchDetail(), что и «Шаг»/непрерывный автозахват (чекбокс) — поэтому
-// они ведут себя одинаково, пока активно «По строкам» (см. rowsModeActive).
-// Требует уже посчитанный D (добор из D.padTails); на каждом шаге пере-parse() под новой границей.
+// они ведут себя одинаково, пока активно «По строкам» (см. rowsModeActive). Уже не рисует холст
+// на каждом шаге (только parse) — счётчик прогресса добавлен для единообразия с «По лазерам».
 function autoCaptureBelowThroughRows(){
   var guard = 0, total = src.value.split("\n").length, changed = false;
   while (guard++ < total){
@@ -4685,8 +5361,10 @@ function autoCaptureBelowThroughRows(){
     console.log("[Kubits] Строка №" + (lineLimit + 1) + " \"" + row + "\" найдена → " + m.desc + " → втянута в рамку");
     lineLimit++;
     changed = true;
+    setCaptureProgress(guard, total);
     parse(); // обновить D/добор под новой границей
   }
+  clearCaptureProgress();
   return changed;
 }
 // Общая проверка «найдена ли строка под границей». Используется кнопкой «По лазерам», кнопкой
@@ -4694,16 +5372,32 @@ function autoCaptureBelowThroughRows(){
 // подряд смотрят на ОДИН и тот же текущий режим (rowsModeActive), поэтому ведут себя одинаково.
 // Пока активно «По строкам» — ищем только в интерливинг-стоге (над границей). Иначе — три уровня
 // проверки лазеров: конкретный лазер → склейка всех лазеров → сборка лазеров → сквозная строка данных.
+// fast=true (быстрый цикл captureBelowThroughLasers, без draw() на каждом шаге) пропускает уровень
+// «Сборка лазеров» — она берёт lastAssemblyHaystack, который иначе обновляется только внутри
+// draw() и был бы устаревшим/неверным посреди быстрого цикла. lz/fdL/fdR всегда пересчитываются
+// заново из G.list — им draw() не нужен, поэтому они одинаково надёжны и в быстром, и в обычном режиме.
 function belowRowMatchDetail(){
   if (rowsModeActive) {
     var rowI = belowRowBits();
     if (!rowI) return null;
-    var haystacks = aboveRowsInterleavedHaystacks();
+    // «?» (btnIlSideAsk): сторону добора не выбираем заранее — пока пользователь ни разу не
+    // ответил (ilAskChoice === null), подсказка (всегда видна, пока «По строкам») держит →/←
+    // активными и ждёт клика; попытка тем временем считается «не найдено». Как только ответ дан
+    // ХОТЯ БЫ ОДИН РАЗ — он ЗАПОМИНАЕТСЯ (последний нажатый вариант) и используется для ВСЕХ
+    // следующих попыток без повторного вопроса — «▶ Шаг»/«Автозахват» просто берут его молча,
+    // пока пользователь сам не переключит →/← на другую сторону.
+    var askEl = $("btnIlSideAsk");
+    var askMode = !!(askEl && askEl.classList.contains("active"));
+    if (askMode && ilAskChoice === null) {
+      syncIlAskButtons();
+      return null;
+    }
+    var haystacks = aboveRowsInterleavedHaystacks(askMode ? ilAskChoice : undefined);
     for (var hi = 0; hi < haystacks.length; hi++){
-      var fdI = belowRowFoundInDetail(haystacks[hi]);
+      var fdI = belowRowFoundInDetail(haystacks[hi].str);
       if (fdI) {
-        return { desc: "интерливинг строк над границей" + (haystacks.length > 1 ? " (вариант " + (hi + 1) + ")" : "") +
-            ", " + fdI.kind + (fdI.rot ? ", поворот " + fdI.rot : "") + ", совпало \"" + fdI.pat + "\"" };
+        return { desc: "интерливинг строк над границей" + (haystacks.length > 1 ? " (" + haystacks[hi].tag + ")" : "") +
+            ", " + fdI.kind + ", поворот " + fdI.rot + " из " + fdI.total + ", совпало \"" + fdI.pat + "\"" };
       }
     }
     return null;
@@ -4711,31 +5405,41 @@ function belowRowMatchDetail(){
   var lz = belowRowFoundLaser();
   var fdL = lz ? null : belowRowFoundInDetail(throughLasersHaystack());
   // Сборка лазеров (панель результатов, выбранный пользователем вариант) — то же, что подсвечено
-  // ему на холсте/в панели, проверяем ДО сквозной склейки строк данных.
-  var fdA = (lz || fdL) ? null : belowRowFoundInDetail(lastAssemblyHaystack);
+  // ему на холсте/в панели, проверяем ДО сквозной склейки строк данных. Считается ЗАНОВО из G.list
+  // (computeAssemblyHaystackFresh), а не берётся из lastAssemblyHaystack — та обновляется только
+  // внутри draw() и была бы устаревшей, если draw() в этом такте не вызывался (см. «Без отрисовки
+  // при Плее»). Так проверка полная и надёжная всегда, независимо от того, рисуется холст или нет.
+  var fdA = (lz || fdL) ? null : belowRowFoundInDetail(computeAssemblyHaystackFresh());
   var fdR = (lz || fdL || fdA) ? null : belowRowFoundInDetail(throughRowsHaystack());
   if (!lz && !fdL && !fdA && !fdR) return null;
-  var desc = lz ? ("лазер «" + lz.axisLabel + " №" + lz.index + "», " + lz.kind + (lz.rot ? ", поворот " + lz.rot : "") + ", совпало \"" + lz.pat + "\"")
-      : fdL ? ("сквозной по нескольким лазерам, " + fdL.kind + (fdL.rot ? ", поворот " + fdL.rot : "") + ", совпало \"" + fdL.pat + "\"")
-      : fdA ? ("сборка лазеров, " + fdA.kind + (fdA.rot ? ", поворот " + fdA.rot : "") + ", совпало \"" + fdA.pat + "\"")
-      : ("сквозной по строкам данных, " + fdR.kind + (fdR.rot ? ", поворот " + fdR.rot : "") + ", совпало \"" + fdR.pat + "\"");
+  var desc = lz ? ("лазер «" + lz.axisLabel + " №" + lz.index + "», " + lz.kind + ", поворот " + lz.rot + " из " + lz.total + ", совпало \"" + lz.pat + "\"")
+      : fdL ? ("сквозной по нескольким лазерам, " + fdL.kind + ", поворот " + fdL.rot + " из " + fdL.total + ", совпало \"" + fdL.pat + "\"")
+      : fdA ? ("сборка лазеров, " + fdA.kind + ", поворот " + fdA.rot + " из " + fdA.total + ", совпало \"" + fdA.pat + "\"")
+      : ("сквозной по строкам данных, " + fdR.kind + ", поворот " + fdR.rot + " из " + fdR.total + ", совпало \"" + fdR.pat + "\"");
   return { desc: desc };
 }
-// Режим B (кнопка «По лазерам»): непрерывно, пока строка под границей находится (любым из трёх
-// уровней проверки). Лазеры зависят от геометрии — на каждом шаге пересчитываем модель через rebuild().
+// Режим B (кнопка «По лазерам»): непрерывно, пока строка под границей находится (любым из четырёх
+// уровней проверки, ВСЕГДА полностью — см. belowRowMatchDetail/computeAssemblyHaystackFresh).
+// Чекбокс «⚡ Быстрый поиск» влияет ТОЛЬКО на перерисовку, не на корректность поиска: выключен
+// (по умолчанию) — полный rebuild()/draw() на каждом шаге, как раньше; включён — полную
+// перерисовку делаем один раз в конце (см. fastModelRecompute), быстрее на длинных поисках.
 function captureBelowThroughLasers(){
   if (lineLimit < 0) return false;
+  var fastEl = $("fastCaptureSearch");
+  var fast = !!(fastEl && fastEl.checked);
   var guard = 0, total = src.value.split("\n").length, changed = false;
   while (guard++ < total){
     var row = belowRowBits();
     if (!row) break;
-    var m = belowRowMatchDetail();
+    var m = belowRowMatchDetail(); // всегда полная проверка (см. computeAssemblyHaystackFresh) — «fast» теперь влияет только на перерисовку, не на поиск
     if (!m) break;
     console.log("[Kubits] Строка №" + (lineLimit + 1) + " \"" + row + "\" найдена → " + m.desc + " → втянута в рамку");
     lineLimit++;
     changed = true;
-    rebuild();
+    if (fast) { setCaptureProgress(guard, total); fastModelRecompute(); }
+    else rebuild();
   }
+  if (fast) { clearCaptureProgress(); if (changed) rebuild(); }
   return changed;
 }
 // Кнопка «▶ Шаг»: та же проверка, но только ОДИН шаг — без непрерывного повтора.
@@ -4759,10 +5463,34 @@ if (_btnCapStep) _btnCapStep.addEventListener("click", function(){
 });
 var _btnCapLasers = $("btnCaptureLasers");
 var _btnCapRows = $("btnCaptureRows");
+// Ряд «Стог: А/Б, Добор →/←» и подсказка «?» относятся только к интерливингу «По строкам» —
+// видны, только когда этот режим активен (иначе они просто нерелевантны и путают в «По лазерам»).
+function syncIlVariantsUI(){
+    var row = $("ilVariantsRow");
+    if (row) row.style.display = rowsModeActive ? "flex" : "none";
+    var promptRow = $("ilAskPrompt");
+    if (promptRow) promptRow.style.display = rowsModeActive ? "flex" : "none";
+    if (!rowsModeActive) ilAskChoice = null; // уходим из «По строкам» — незавершённый вопрос больше не актуален
+    syncIlAskButtons();
+}
+// Подсказка «?» больше НЕ появляется/исчезает по ходу поиска (это дёргало вёрстку) — она видна
+// постоянно, пока активно «По строкам» (см. syncIlVariantsUI), а кнопки →/← внутри неё просто
+// становятся неактивными (disabled), когда отвечать пока не на что: либо «?» не выбран (сторона
+// уже зафиксирована на → или ←), либо нет строки под границей для захвата.
+function syncIlAskButtons(){
+    var askEl = $("btnIlSideAsk");
+    var askActive = !!(askEl && askEl.classList.contains("active"));
+    var hasRow = rowsModeActive && !!belowRowBits();
+    var enabled = askActive && hasRow;
+    var r = $("btnIlAskRight"), l = $("btnIlAskLeft");
+    if (r) r.disabled = !enabled;
+    if (l) l.disabled = !enabled;
+}
 if (_btnCapLasers) _btnCapLasers.addEventListener("click", function(){
     _btnCapLasers.classList.add("active");
     if (_btnCapRows) _btnCapRows.classList.remove("active");
     rowsModeActive = false;
+    syncIlVariantsUI();
     captureBelowThroughLasers();
     draw();
 });
@@ -4770,6 +5498,7 @@ if (_btnCapRows) _btnCapRows.addEventListener("click", function(){
     _btnCapRows.classList.add("active");
     if (_btnCapLasers) _btnCapLasers.classList.remove("active");
     rowsModeActive = true;
+    syncIlVariantsUI();
     if (autoCaptureBelowThroughRows()) rebuild(); // по строкам+добор, затем обновить вид
     else draw(); // даже без захвата — переключить панель на интерливинг
 });
@@ -4811,6 +5540,10 @@ function invertParticipatingBits(){
     idxSet.forEach(function(i){
         var c = G.list[i];
         if (!c) return;
+        // Рамка на холсте: добор-клетки пропускаем — их cIdx алиасит РЕАЛЬНЫЙ бит, который живёт
+        // в другой клетке (обычно вне рамки), и его инверсия меняла бы картинку за пределами рамки.
+        // Инвертируем только реальные клетки, попавшие в рамку; их серые добор-копии обновятся сами.
+        if (selActive && c[4]) return;
         var li = c[5], ci = c[6];
         if (li === undefined || ci === undefined || ci < 0 || li < 0 || li >= lines.length) return;
         var key = li + "," + ci;
@@ -4833,7 +5566,8 @@ var _btnInvert = $("btnInvert");
 if (_btnInvert) _btnInvert.addEventListener("click", invertParticipatingBits);
 
 mode.addEventListener("change", function(){
-    lineLimit = 1; // сброс найденных/включённых строк: граница — перед 2-й строкой
+    lineLimit = 2; // сброс найденных/включённых строк: граница — под 2-й строкой (1-я и 2-я участвуют)
+    lineLimitTop = 0;
     var d = (mode.value==="rhomb");
     var flatForce = d || isSquaresMode() || mode.value === "snake"; 
     btnViewIso.disabled = flatForce;
@@ -4881,6 +5615,25 @@ $("alignGroup").addEventListener("click", function(e){
     b.classList.add("active");
     rebuildKeepView();
 });
+
+// Переключатели «Пирамиды 3/4»: две независимые пары кнопок в одном контейнере
+// (data-pyrafill: Кольцо/Сплошная, data-pyraapex: Остриё внизу/вверху) — active снимается
+// только внутри своей пары.
+$("pyraGroup").addEventListener("click", function(e){
+    var b = e.target.closest(".align-btn");
+    if (!b) return;
+    if (b.dataset.pyrafill) {
+        if (b.dataset.pyrafill === pyraFill) return;
+        pyraFill = b.dataset.pyrafill;
+        this.querySelectorAll("[data-pyrafill]").forEach(function(x){ x.classList.remove("active"); });
+    } else if (b.dataset.pyraapex) {
+        if (b.dataset.pyraapex === pyraApex) return;
+        pyraApex = b.dataset.pyraapex;
+        this.querySelectorAll("[data-pyraapex]").forEach(function(x){ x.classList.remove("active"); });
+    } else return;
+    b.classList.add("active");
+    rebuildKeepView();
+});
 tint.addEventListener("change", function(){ buildSelector(); draw(); syncSelUI(); });
 balanceHl.addEventListener("change", function(){ draw(); syncSelUI(); });
 guides.addEventListener("change", function(){
@@ -4896,6 +5649,11 @@ if (loopBitsInvert) loopBitsInvert.addEventListener("change", function(){
   if (this.checked && !loopBits.checked) loopBits.checked = true; // инверсия без Добора бессмысленна
   rebuildKeepView();
 });
+if (loopDynamic) loopDynamic.addEventListener("change", function(){
+  if (this.checked && !loopBits.checked) loopBits.checked = true; // динамический добор без Добора бессмысленен
+  frozenPad = {}; // переключение режима — заморозка начинается/останавливается с чистого листа
+  rebuildKeepView();
+});
 
 dimPadded.addEventListener("change", function(){
   if (this.checked && !loopBits.checked) { loopBits.checked = true; rebuildKeepView(); }
@@ -4907,7 +5665,44 @@ ghostsAll.addEventListener("change", function(){ geometry(); draw(); });
 zeroMain.addEventListener("input", function(){ draw(); });
 zeroPad.addEventListener("input", function(){ draw(); });
 showText.addEventListener("change", function(){ draw(); });
-minusMode.addEventListener("change", function(){ draw(); }); 
+minusMode.addEventListener("change", function(){ draw(); });
+// «Стог: А/Б, Добор →/←/?» — взаимоисключающие группы кнопок (как «По строкам»/«По лазерам»):
+// в каждой группе всегда активна ровно одна кнопка, не несколько и не ни одной разом.
+function bindExclusiveGroup(ids, onChange){
+    var els = ids.map(function(id){ return $(id); }).filter(Boolean);
+    if (els.length < 2) return;
+    els.forEach(function(el){
+        el.addEventListener("click", function(){
+            els.forEach(function(other){ other.classList.toggle("active", other === el); });
+            if (onChange) onChange(el.id);
+            draw();
+        });
+    });
+}
+bindExclusiveGroup(["btnIlVarA", "btnIlVarB"]);
+// Переключение стороны сбрасывает незавершённый вопрос «?»: если только что был вопрос, а
+// пользователь вместо ответа переключил на фиксированную сторону — вопрос больше не актуален.
+bindExclusiveGroup(["btnIlSideRight", "btnIlSideLeft", "btnIlSideAsk"], function(){
+    ilAskChoice = null;
+    syncIlAskButtons();
+});
+
+// Клик по →/← в подсказке «?» НЕ запускает захват сам по себе — только запоминает выбор
+// (ilAskChoice) и обновляет отображение (подсветка выбранной стороны в панели «Стог», см. draw()).
+// Тыкать туда-сюда можно сколько угодно, ничего при этом не захватывается. Сам захват с этим
+// выбором произойдёт только через «▶ Шаг» (captureBelowStepOnce) или, если включён чекбокс
+// «Автозахват», сам по себе на ближайшей отрисовке (см. IIFE в draw()) — обе ветки используют тот
+// же belowRowMatchDetail(), который прочитает и потратит ilAskChoice.
+function ilAskAnswer(side){
+    ilAskChoice = side;
+    var r = $("btnIlAskRight"), l = $("btnIlAskLeft");
+    if (r) r.classList.toggle("active", side === "right");
+    if (l) l.classList.toggle("active", side === "left");
+    draw();
+}
+var _btnIlAskRight = $("btnIlAskRight"), _btnIlAskLeft = $("btnIlAskLeft");
+if (_btnIlAskRight) _btnIlAskRight.addEventListener("click", function(){ ilAskAnswer("right"); });
+if (_btnIlAskLeft) _btnIlAskLeft.addEventListener("click", function(){ ilAskAnswer("left"); });
 
 skewerMode.addEventListener("change", function(){ skewers=[]; selectedLaserRows=[]; draw(); syncSelUI(); });
 
@@ -4922,57 +5717,118 @@ btnTheme.addEventListener("click", function(){
   setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
 });
 
-btnRotCCW.addEventListener("click", function(){ shiftAnimDir = 'CCW'; rotateSelected('CCW'); });
-btnRotCW.addEventListener("click", function(){ shiftAnimDir = 'CW'; rotateSelected('CW'); });
-var _btnVisRotCCW = $("btnVisRotCCW"), _btnVisRotCW = $("btnVisRotCW"), _btnVisRotReset = $("btnVisRotReset");
-if (_btnVisRotCCW) _btnVisRotCCW.addEventListener("click", function(){ shiftRingVisual('CCW'); });
-if (_btnVisRotCW) _btnVisRotCW.addEventListener("click", function(){ shiftRingVisual('CW'); });
-if (_btnVisRotReset) _btnVisRotReset.addEventListener("click", resetRingVisualShift);
-/* === МАРКЕР 15.15: АВТОПЛЕЙ СДВИГА СИМВОЛОВ === */
-function shiftAnimTick(){
-    rotateSelected(shiftAnimDir);
-}
-
-function startShiftAnim(){
-    if (shiftAnimOrigSrc === null) shiftAnimOrigSrc = src.value;
-    shiftAnimOn = true;
-    btnShiftAnim.classList.add("active-view");
-    btnShiftAnim.textContent = i18n[currentLang].btnFlipAnimStop;
-    if (shiftAnimTimer) clearInterval(shiftAnimTimer);
-    var periodMs = parseFloat(shiftAnimSpeed.value) * 400; // ускорено ~2.5× (было *1000)
-    shiftAnimTimer = setInterval(shiftAnimTick, periodMs);
-}
-
-function stopShiftAnim(reset){
-    if (shiftAnimTimer) { clearInterval(shiftAnimTimer); shiftAnimTimer = null; }
-    shiftAnimOn = false;
-    btnShiftAnim.classList.remove("active-view");
-    btnShiftAnim.textContent = i18n[currentLang].btnFlipAnimPlay;
-    if (reset && shiftAnimOrigSrc !== null) {
-        var selBackup = Array.from(sel);
-        src.value = shiftAnimOrigSrc;
-        shiftAnimOrigSrc = null;
-        rebuild();
-        sel.clear();
-        selBackup.forEach(function(k){ sel.add(k); });
-        draw(); syncSelUI();
+/* === МАРКЕР 15.15: ОБЩАЯ ОБВЯЗКА «▶ ПЛЕЙ» ДЛЯ ВСЕХ АВТОАНИМАЦИЙ ===
+   Кнопка-подсветка/текст, таймер start/stop, слайдер скорости перезапускает таймер на лету —
+   одна и та же механика для 6 плееров (Сдвиг символов+Визуальный сдвиг, Флип, Поворот, Этажи,
+   Змейка), раньше скопированная в каждый по отдельности. Что крутить на тике и с каким периодом —
+   решает сам плеер (tick/computeTiming), особый «сброс» — тоже свой (onStop). Имена существующих
+   глобальных переменных/функций (rotAnimOn, stopFloorAnim и т.п.) не меняются — на них завязан код
+   в других местах файла; get/set просто читают/пишут те же переменные. */
+function makePlayer(opts){
+    function timing(){
+        if (opts.computeTiming) return opts.computeTiming();
+        var ms = parseFloat(opts.speedEl.value) * (opts.speedScale || 400);
+        if (opts.minPeriodMs) ms = Math.max(opts.minPeriodMs, ms);
+        return { periodMs: ms, tick: opts.tick };
     }
+    function start(){
+        opts.setOn(true);
+        if (opts.btn) { opts.btn.classList.add("active-view"); opts.btn.textContent = i18n[currentLang].btnFlipAnimStop; }
+        if (opts.getTimer()) clearInterval(opts.getTimer());
+        var tm = timing();
+        opts.setTimer(setInterval(tm.tick, tm.periodMs));
+    }
+    function stop(reset){
+        var wasOn = opts.getOn(); // до сброса: рисовать финальный кадр только если плеер РЕАЛЬНО играл
+        if (opts.getTimer()) { clearInterval(opts.getTimer()); opts.setTimer(null); }
+        opts.setOn(false);
+        if (opts.btn) { opts.btn.classList.remove("active-view"); opts.btn.textContent = i18n[currentLang].btnFlipAnimPlay; }
+        if (opts.onStop) opts.onStop(reset);
+        // На случай, если во время Плея холст не рисовался (см. «🚫 Без отрисовки при Плее») —
+        // финальный кадр синхронизируется при остановке. ТОЛЬКО если плеер играл: stop() дёргают
+        // и защитно (syncSelUI → stopRotAnim на каждом такте чужого Плея!) — безусловный draw()
+        // здесь ломал всё подавление, рисуя холст каждый такт (баг v0.244–0.248).
+        if (wasOn) draw();
+    }
+    if (opts.btn) opts.btn.addEventListener("click", function(){ opts.getOn() ? stop(false) : start(); });
+    if (opts.resetBtn) opts.resetBtn.addEventListener("click", function(){ stop(true); });
+    if (opts.speedEl) {
+        opts.speedEl.addEventListener("input", function(){ if (opts.getOn()) start(); });
+        if (opts.fastZone != null) markFastZone(opts.speedEl, opts.fastZone);
+    }
+    return { start: start, stop: stop };
 }
 
-btnShiftAnim.addEventListener("click", function(){
-    if (shiftAnimOn) stopShiftAnim(false); else startShiftAnim();
+/* === МАРКЕР 15.16: СДВИГ СИМВОЛОВ + ВИЗУАЛЬНЫЙ СДВИГ (общий ряд, общий «▶ Плей») ===
+   Две независимые операции (rotateSelected меняет текст, shiftRingVisual — только вид), но
+   делят один ряд UI и один плеер: какую из них крутит «Плей», решает shiftAnimKind — тот, что
+   выставила последняя нажатая пара кнопок направления. */
+var _btnVisRotCCW = $("btnVisRotCCW"), _btnVisRotCW = $("btnVisRotCW");
+// Подсветка «какую пару нажали последней» — то же самое, что будет крутить общий «▶ Плей»
+function syncShiftKindUI(){
+    var isVisual = (shiftAnimKind === 'visual');
+    btnRotCCW.classList.toggle("active-view", !isVisual);
+    btnRotCW.classList.toggle("active-view", !isVisual);
+    if (_btnVisRotCCW) _btnVisRotCCW.classList.toggle("active-view", isVisual);
+    if (_btnVisRotCW) _btnVisRotCW.classList.toggle("active-view", isVisual);
+}
+btnRotCCW.addEventListener("click", function(){ shiftAnimKind = 'text'; shiftAnimDir = 'CCW'; syncShiftKindUI(); rotateSelected('CCW'); });
+btnRotCW.addEventListener("click", function(){ shiftAnimKind = 'text'; shiftAnimDir = 'CW'; syncShiftKindUI(); rotateSelected('CW'); });
+if (_btnVisRotCCW) _btnVisRotCCW.addEventListener("click", function(){ shiftAnimKind = 'visual'; shiftAnimDir = 'CCW'; syncShiftKindUI(); shiftRingVisual('CCW'); });
+if (_btnVisRotCW) _btnVisRotCW.addEventListener("click", function(){ shiftAnimKind = 'visual'; shiftAnimDir = 'CW'; syncShiftKindUI(); shiftRingVisual('CW'); });
+syncShiftKindUI(); // исходная подсветка — по умолчанию shiftAnimKind='text'
+
+function shiftAnimTick(){
+    var suppress = suppressDrawDuringPlayActive();
+    // silent=true всегда (не только при suppress): непрерывный Плей на каждом такте двигает те же
+    // строки — лог только копится тысячами записей без новой информации (см. shiftRingVisual).
+    if (shiftAnimKind === 'visual') shiftRingVisual(shiftAnimDir, suppress, true);
+    else rotateSelected(shiftAnimDir, suppress, true);
+    if (suppress && runAutoCaptureCheckOnce()) rebuild();
+}
+var shiftPlayer = makePlayer({
+    btn: btnShiftAnim, resetBtn: btnShiftAnimReset, speedEl: shiftAnimSpeed, fastZone: 0.05,
+    getOn: function(){ return shiftAnimOn; }, setOn: function(v){ shiftAnimOn = v; },
+    getTimer: function(){ return shiftAnimTimer; }, setTimer: function(v){ shiftAnimTimer = v; },
+    tick: shiftAnimTick,
+    onStop: function(reset){
+        if (!reset) return;
+        if (shiftAnimOrigSrc !== null) {
+            var selBackup = Array.from(sel);
+            src.value = shiftAnimOrigSrc;
+            shiftAnimOrigSrc = null;
+            rebuild();
+            sel.clear();
+            selBackup.forEach(function(k){ sel.add(k); });
+            draw(); syncSelUI();
+        }
+        resetRingVisualShift();
+    }
 });
-btnShiftAnimReset.addEventListener("click", function(){ stopShiftAnim(true); });
-shiftAnimSpeed.addEventListener("input", function(){ if (shiftAnimOn) startShiftAnim(); });
+function startShiftAnim(){
+    if (shiftAnimKind === 'text' && shiftAnimOrigSrc === null) shiftAnimOrigSrc = src.value;
+    shiftPlayer.start();
+}
+function stopShiftAnim(reset){ shiftPlayer.stop(reset); }
+
 btnExcel.addEventListener("click", exportExcel);
 btnExcelAlt.addEventListener("click", exportExcelAlt);
 
 /* === МАРКЕР 15.1: УПРАВЛЕНИЕ ВРАЩЕНИЕМ === */
+// «play-target» (см. CSS) — какую ось крутит «▶ Плей»: обновляется при КАЖДОМ клике, независимо
+// от того, включили ось или выключили (active-view — это отдельно, текущее вкл/выкл состояние).
+function syncFlipAxisUI(){
+    btnFlip.classList.toggle("play-target", flipAnimAxis === 'x');
+    btnFlipV.classList.toggle("play-target", flipAnimAxis === 'y');
+}
+
 btnFlip.addEventListener("click", function(){
     stopFlipAnim(false);
     flipX = !flipX;
     btnFlip.classList.toggle("active-view", flipX);
-    if (flipX) { flipAnimAxis = 'x'; flipMatchX = true; flipMatchY = false; }
+    flipAnimAxis = 'x';
+    if (flipX) { flipMatchX = true; flipMatchY = false; }
+    syncFlipAxisUI();
     draw();
 });
 
@@ -4980,9 +5836,12 @@ btnFlipV.addEventListener("click", function(){
     stopFlipAnim(false);
     flipY = !flipY;
     btnFlipV.classList.toggle("active-view", flipY);
-    if (flipY) { flipAnimAxis = 'y'; flipMatchY = true; flipMatchX = false; }
+    flipAnimAxis = 'y';
+    if (flipY) { flipMatchY = true; flipMatchX = false; }
+    syncFlipAxisUI();
     draw();
 });
+syncFlipAxisUI(); // исходная пометка — по умолчанию flipAnimAxis='x'
 
 btnFlipHl.addEventListener("click", function(){
     flipHighlight = !flipHighlight;
@@ -5109,12 +5968,23 @@ if($("btnFlipShowAll")) $("btnFlipShowAll").addEventListener("click", function()
 if($("btnFlipShowMatch")) $("btnFlipShowMatch").addEventListener("click", function(){ setFlipShowMode("match"); });
 if($("btnFlipShowDiff")) $("btnFlipShowDiff").addEventListener("click", function(){ setFlipShowMode("diff"); });
 
-function stopFlipAnim(reset){
-    if (flipAnimTimer) { clearInterval(flipAnimTimer); flipAnimTimer = null; }
-    flipAnimOn = false;
-    btnFlipAnim.classList.remove("active-view");
-    btnFlipAnim.textContent = i18n[currentLang].btnFlipAnimPlay;
-    if (reset) {
+function flipAnimTick(){
+    if (flipAnimAxis === 'y') {
+        flipY = !flipY;
+        btnFlipV.classList.toggle("active-view", flipY);
+    } else {
+        flipX = !flipX;
+        btnFlip.classList.toggle("active-view", flipX);
+    }
+    playTickRender();
+}
+var flipPlayer = makePlayer({
+    btn: btnFlipAnim, resetBtn: $("btnFlipReset"), speedEl: flipAnimSpeed, fastZone: 0.3,
+    getOn: function(){ return flipAnimOn; }, setOn: function(v){ flipAnimOn = v; },
+    getTimer: function(){ return flipAnimTimer; }, setTimer: function(v){ flipAnimTimer = v; },
+    tick: flipAnimTick,
+    onStop: function(reset){
+        if (!reset) return;
         flipX = false;
         flipY = false;
         flipMatchX = false;
@@ -5122,38 +5992,12 @@ function stopFlipAnim(reset){
         flipAnimAxis = 'x';
         btnFlip.classList.remove("active-view");
         btnFlipV.classList.remove("active-view");
+        syncFlipAxisUI();
         draw();
     }
-}
-
-function startFlipAnim(){
-    flipAnimOn = true;
-    btnFlipAnim.classList.add("active-view");
-    btnFlipAnim.textContent = i18n[currentLang].btnFlipAnimStop;
-    var periodMs = parseFloat(flipAnimSpeed.value) * 400; // ускорено ~2.5× (было *1000)
-    if (flipAnimTimer) clearInterval(flipAnimTimer);
-    flipAnimTimer = setInterval(function(){
-        if (flipAnimAxis === 'y') {
-            flipY = !flipY;
-            btnFlipV.classList.toggle("active-view", flipY);
-        } else {
-            flipX = !flipX;
-            btnFlip.classList.toggle("active-view", flipX);
-        }
-        draw();
-    }, periodMs);
-}
-
-btnFlipAnim.addEventListener("click", function(){
-    if (flipAnimOn) stopFlipAnim(false); else startFlipAnim();
 });
-if($("btnFlipReset")) $("btnFlipReset").addEventListener("click", function(){
-    stopFlipAnim(true);
-});
-
-flipAnimSpeed.addEventListener("input", function(){
-    if (flipAnimOn) startFlipAnim(); 
-});
+function startFlipAnim(){ flipPlayer.start(); }
+function stopFlipAnim(reset){ flipPlayer.stop(reset); }
 
 function getRotStepDeg() {
     if (currentRotStepType === 'L') {
@@ -5234,55 +6078,37 @@ if($("btnRotShowAll")) $("btnRotShowAll").addEventListener("click", function(){ 
 if($("btnRotShowMatch")) $("btnRotShowMatch").addEventListener("click", function(){ setRotShowMode("match"); });
 if($("btnRotShowDiff")) $("btnRotShowDiff").addEventListener("click", function(){ setRotShowMode("diff"); });
 
-function stopRotAnim(reset){
-    if (rotAnimTimer) { clearInterval(rotAnimTimer); rotAnimTimer = null; }
-    rotAnimOn = false;
-    btnRotAnim.classList.remove("active-view");
-    btnRotAnim.textContent = "▶ Плей";
-    if (reset) {
+// У «Поворота» и период, и шаг в градусах зависят от типа шага (currentRotStepType), поэтому
+// свежая пара {период, тик} считается заново при каждом старте — через computeTiming.
+var rotPlayer = makePlayer({
+    btn: btnRotAnim, resetBtn: $("btnRotReset"), speedEl: rotAnimSpeed, fastZone: 0.3,
+    getOn: function(){ return rotAnimOn; }, setOn: function(v){ rotAnimOn = v; },
+    getTimer: function(){ return rotAnimTimer; }, setTimer: function(v){ rotAnimTimer = v; },
+    computeTiming: function(){
+        var revSec = parseFloat(rotAnimSpeed.value) * 0.4; // ускорено ~2.5×
+        var stepDeg = getRotStepDeg();
+        var stepMs, animStepDeg;
+        if (currentRotStepType === 1) {
+            stepMs = 30;
+            animStepDeg = 360 / (revSec * 1000 / stepMs);
+        } else {
+            animStepDeg = stepDeg;
+            stepMs = (revSec * 1000) * (stepDeg / 360);
+            if (stepMs < 30) stepMs = 30;
+        }
+        return { periodMs: stepMs, tick: function(){
+            viewRotDeg = (viewRotDeg + rotAnimDir * animStepDeg + 360) % 360;
+            playTickRender();
+        } };
+    },
+    onStop: function(reset){
+        if (!reset) return;
         viewRotDeg = 0;
         draw();
     }
-}
-
-function startRotAnim(){
-    rotAnimOn = true;
-    btnRotAnim.classList.add("active-view");
-    btnRotAnim.textContent = "⏸ Пауза";
-    
-    if (rotAnimTimer) clearInterval(rotAnimTimer);
-    
-    var revSec = parseFloat(rotAnimSpeed.value) * 0.4; // ускорено ~2.5×
-    var stepDeg = getRotStepDeg();
-    
-    var stepMs;
-    var animStepDeg;
-    
-    if (currentRotStepType === 1) {
-        stepMs = 30;
-        animStepDeg = 360 / (revSec * 1000 / stepMs);
-    } else {
-        animStepDeg = stepDeg;
-        stepMs = (revSec * 1000) * (stepDeg / 360);
-        if (stepMs < 30) stepMs = 30; 
-    }
-    
-    rotAnimTimer = setInterval(function(){
-        viewRotDeg = (viewRotDeg + rotAnimDir * animStepDeg + 360) % 360;
-        draw();
-    }, stepMs);
-}
-
-btnRotAnim.addEventListener("click", function(){
-    if (rotAnimOn) stopRotAnim(false); else startRotAnim();
 });
-if($("btnRotReset")) $("btnRotReset").addEventListener("click", function(){
-    stopRotAnim(true);
-});
-
-rotAnimSpeed.addEventListener("input", function(){
-    if (rotAnimOn) startRotAnim(); 
-});
+function startRotAnim(){ rotPlayer.start(); }
+function stopRotAnim(reset){ rotPlayer.stop(reset); }
 
 function copyToClipboard(text){
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -5351,47 +6177,31 @@ function floorAnimTick(){
         sel.clear();
         for (var fi=0; fi<floorAnimCount; fi++) sel.add(fi);
     }
-    draw(); syncSelUI();
+    playTickRender(); syncSelUI();
 }
 
-function startFloorAnim(){
-    floorAnimOn = true;
-    btnFloorAnim.classList.add("active-view");
-    btnFloorAnim.textContent = i18n[currentLang].btnFlipAnimStop;
-    if (floorAnimTimer) clearInterval(floorAnimTimer);
-    var periodMs = parseFloat(floorAnimSpeed.value) * 400; // ускорено ~2.5× (было *1000)
-    floorAnimTimer = setInterval(floorAnimTick, periodMs);
-}
-
-function stopFloorAnim(reset){
-    if (floorAnimTimer) { clearInterval(floorAnimTimer); floorAnimTimer = null; }
-    floorAnimOn = false;
-    btnFloorAnim.classList.remove("active-view");
-    btnFloorAnim.textContent = i18n[currentLang].btnFlipAnimPlay;
-    if (reset) {
+var floorPlayer = makePlayer({
+    btn: btnFloorAnim, resetBtn: btnFloorAnimReset, speedEl: floorAnimSpeed, fastZone: 0.2,
+    getOn: function(){ return floorAnimOn; }, setOn: function(v){ floorAnimOn = v; },
+    getTimer: function(){ return floorAnimTimer; }, setTimer: function(v){ floorAnimTimer = v; },
+    tick: floorAnimTick,
+    onStop: function(reset){
+        if (!reset) return;
         floorAnimIdx = -1; floorAnimCount = 1; floorAnimDir = 1;
         sel.clear();
         draw(); syncSelUI();
     }
-}
-
-btnFloorAnim.addEventListener("click", function(){
-    if (floorAnimOn) stopFloorAnim(false); else startFloorAnim();
 });
-btnFloorAnimReset.addEventListener("click", function(){ stopFloorAnim(true); });
-floorAnimSpeed.addEventListener("input", function(){ if (floorAnimOn) startFloorAnim(); });
+function startFloorAnim(){ floorPlayer.start(); }
+function stopFloorAnim(reset){ floorPlayer.stop(reset); }
 
-// Расширенная зона повышенной скорости (значения ниже прежнего минимума) — ползунок краснеет
+// Расширенная зона повышенной скорости (значения ниже прежнего минимума) — ползунок краснеет.
+// Для всех 6 плееров подключается автоматически через makePlayer(...fastZone...), см. выше.
 function markFastZone(slider, threshold){
     var upd = function(){ slider.style.accentColor = (parseFloat(slider.value) < threshold) ? "#E74C3C" : ""; };
     slider.addEventListener("input", upd);
     upd();
 }
-markFastZone(shiftAnimSpeed, 0.05);
-markFastZone(flipAnimSpeed, 0.3);
-markFastZone(rotAnimSpeed, 0.3);
-markFastZone(floorAnimSpeed, 0.2);
-markFastZone($("snakeAnimSpeed"), 0.2);
 
 /* === МАРКЕР 15.3: ДЗЕН-РЕЖИМ === */
 function toggleZenMode(){
@@ -5401,34 +6211,62 @@ function toggleZenMode(){
 }
 $("stageTitle").addEventListener("click", toggleZenMode); // клик по «Кубиты vX» под редактором
 
-// «⏹ Сброс» над редактором: умный тумблер (Исходный шаблон из кода <-> Свой текст).
-var INITIAL_SRC_TEMPLATE = "1\n11\n111\n1000\n10101\n110001\n1001100\n11100000\n111010011\n1000000010";
-var srcClearBackup = null;
-$("btnSrcClear").title = "Сброс к исходному шаблону (повторный клик сразу после — вернуть ваш текст)";
-$("btnSrcClear").addEventListener("click", function(){
-    var cur = src.value.trim();
-    var def = INITIAL_SRC_TEMPLATE.trim();
+// «💾 Запомнить» над редактором: сохранить текущие «Данные» в localStorage-кеш вручную.
+// Запомненное подтянется при F5/открытии любой версии файла и вернётся по «⏹ Сброс».
+var _btnSrcSave = $("btnSrcSave");
+if (_btnSrcSave) _btnSrcSave.addEventListener("click", function(){
+    var ok = saveSrcToCache();
+    var b = this;
+    b.textContent = ok ? "✓ В кеше" : "✗ Ошибка";
+    setTimeout(function(){ b.textContent = "💾 Запомнить"; }, 1200);
+});
 
-    if (cur === def && srcClearBackup !== null) {
-        // Повторный клик сразу после сброса — вернуть текст, который был до него
-        src.value = srcClearBackup;
+// «⏹ Сброс» над редактором: умный тумблер — сброс к ЗАПОМНЕННЫМ данным (кеш кнопки
+// «💾 Запомнить»; если кеша нет — к исходному шаблону из кода), повторный клик сразу после —
+// вернуть текст, который был до сброса.
+var INITIAL_SRC_TEMPLATE = "1\n11\n111\n1000\n10101\n110001\n1001100\n11100000\n111010011\n1000000010";
+var srcClearBackup = null; // { src, lineLimit, lineLimitTop } состояние ДО сброса — для отката повторным кликом
+$("btnSrcClear").title = "Сброс к запомненным данным («💾 Запомнить»; если кеша нет — к исходному шаблону). Повторный клик сразу после — вернуть ваш текст. Также выключает «Автозахват».";
+$("btnSrcClear").addEventListener("click", function(){
+    var cached = getSrcCache();
+    var targetSrc = cached ? cached.src : INITIAL_SRC_TEMPLATE;
+    var cur = src.value.trim();
+
+    // Сброс всегда выключает «Автозахват» — иначе он тут же снова затянет строки под границу
+    var acbReset = $("autoCaptureBelow");
+    if (acbReset && acbReset.checked) acbReset.checked = false;
+
+    if (cur === targetSrc.trim() && srcClearBackup !== null) {
+        // Повторный клик сразу после сброса — вернуть текст И границы, которые были до него
+        src.value = srcClearBackup.src;
+        lineLimit = srcClearBackup.lineLimit;
+        lineLimitTop = srcClearBackup.lineLimitTop;
         srcClearBackup = null;
     } else {
-        // Запоминаем текущий текст (даже если он уже совпадает с шаблоном — просто вернёт его же)
-        // и переключаемся на исходный шаблон.
-        srcClearBackup = src.value;
-        src.value = INITIAL_SRC_TEMPLATE;
+        // Запоминаем текущее состояние (текст + границы), переключаемся на запомненные данные
+        // (или шаблон, если кеша нет) вместе с ИХ границами (или дефолтными, если кеша нет).
+        srcClearBackup = { src: src.value, lineLimit: lineLimit, lineLimitTop: lineLimitTop };
+        src.value = targetSrc;
+        if (cached) {
+            lineLimit = (typeof cached.lineLimit === "number") ? cached.lineLimit : defaultLineLimit();
+            lineLimitTop = (typeof cached.lineLimitTop === "number") ? cached.lineLimitTop : 0;
+        } else {
+            lineLimit = defaultLineLimit();
+            lineLimitTop = 0;
+        }
     }
-
-    lineLimit = defaultLineLimit();
     rebuild();
 });
 
 // «⟲ Граница» рядом со «Сбросом»: не трогает текст, просто ставит границу найденных/
 // включённых строк перед 2-й строкой (lineLimit = 1) — то же, что делает смена режима.
+// Заодно выключает непрерывный «Автозахват» — иначе он тут же снова затянет всё обратно.
 var _btnResetLimit = $("btnResetLimit");
 if (_btnResetLimit) _btnResetLimit.addEventListener("click", function(){
-    lineLimit = 1;
+    var _acbReset = $("autoCaptureBelow");
+    if (_acbReset && _acbReset.checked) _acbReset.checked = false;
+    lineLimit = 2; // граница — под 2-й строкой (1-я и 2-я участвуют, остальные нет)
+    lineLimitTop = 0;
     rebuild();
 });
 
@@ -5443,9 +6281,10 @@ window.addEventListener("drop", function(e) {
         var file = e.dataTransfer.files[0];
         var reader = new FileReader();
         reader.onload = function(ev) {
-            srcClearBackup = src.value; // сохраняем текущий текст для возможности отката через "Сброс"
+            srcClearBackup = { src: src.value, lineLimit: lineLimit, lineLimitTop: lineLimitTop }; // для отката через "Сброс"
             src.value = ev.target.result;
             lineLimit = defaultLineLimit();
+            lineLimitTop = 0;
             rebuild();
         };
         reader.readAsText(file);
@@ -5677,32 +6516,28 @@ btnSnakeReset.addEventListener("click", function(){
 
 // Автошаг змейки: строит строки до конца, потом убавляет обратно до первой — и по кругу
 var snakeAnimOn = false, snakeAnimTimer = null, snakeAnimDir = 1;
-function stopSnakeAnim(){
-    snakeAnimOn = false;
-    if (snakeAnimTimer) { clearInterval(snakeAnimTimer); snakeAnimTimer = null; }
-    btnSnakeAnim.textContent = "▶ Плей";
-    btnSnakeAnim.classList.remove("active-view");
+function snakeAnimTick(){
+    var totalValid = src.value.split('\n').filter(function(r){return r.trim();}).length;
+    if (totalValid < 2) return;
+    if (snakeVisibleRows >= totalValid) snakeAnimDir = -1;
+    else if (snakeVisibleRows <= 1) snakeAnimDir = 1;
+    snakeVisibleRows = Math.max(1, Math.min(totalValid, snakeVisibleRows + snakeAnimDir));
+    if (suppressDrawDuringPlayActive()) {
+        fastModelRecompute(); // parse+geometry без draw() — rebuildKeepView тут дороже, чем нужно
+        if (runAutoCaptureCheckOnce()) rebuild(); else syncSnakeUI();
+        return;
+    }
+    rebuildKeepView();
+    syncSnakeUI();
 }
-function startSnakeAnim(){
-    if (snakeAnimTimer) clearInterval(snakeAnimTimer);
-    var periodMs = Math.max(30, parseFloat(snakeAnimSpeed.value) * 400); // ускорено ~2.5× (было *1000)
-    snakeAnimTimer = setInterval(function(){
-        var totalValid = src.value.split('\n').filter(function(r){return r.trim();}).length;
-        if (totalValid < 2) return;
-        if (snakeVisibleRows >= totalValid) snakeAnimDir = -1;
-        else if (snakeVisibleRows <= 1) snakeAnimDir = 1;
-        snakeVisibleRows = Math.max(1, Math.min(totalValid, snakeVisibleRows + snakeAnimDir));
-        rebuildKeepView();
-        syncSnakeUI();
-    }, periodMs);
-    snakeAnimOn = true;
-    btnSnakeAnim.textContent = "■ Стоп";
-    btnSnakeAnim.classList.add("active-view");
-}
-btnSnakeAnim.addEventListener("click", function(){
-    if (snakeAnimOn) stopSnakeAnim(); else startSnakeAnim();
+var snakePlayer = makePlayer({
+    btn: btnSnakeAnim, speedEl: snakeAnimSpeed, fastZone: 0.2, minPeriodMs: 30,
+    getOn: function(){ return snakeAnimOn; }, setOn: function(v){ snakeAnimOn = v; },
+    getTimer: function(){ return snakeAnimTimer; }, setTimer: function(v){ snakeAnimTimer = v; },
+    tick: snakeAnimTick
 });
-snakeAnimSpeed.addEventListener("input", function(){ if (snakeAnimOn) startSnakeAnim(); });
+function startSnakeAnim(){ snakePlayer.start(); }
+function stopSnakeAnim(){ snakePlayer.stop(false); }
 
 function findSquareTestCellAt(wx, wy){
     var cellPx = SQUARE_TEST_CELL;
@@ -5819,11 +6654,21 @@ cv.addEventListener("mousedown", function(e){
     var mx = e.clientX - r.left, my = e.clientY - r.top;
     var scx = panX + selOffX * zoom, scy = panY + selOffY * zoom;
     var selPx = selRadius * zoom;
+    // Готовая рамка: захват у ГРАНИЦЫ (±EDGE_TOL px по метрике рамки) — растяжение от её центра,
+    // захват глубже внутри — перемещение, снаружи — рисование новой рамки (как раньше).
     var insideSel = false;
     if (selActive && selPx > 0) {
-      insideSel = selFrameContains(mx - scx, my - scy, selPx);
+      var edgeNorm = selFrameRadius(mx - scx, my - scy); // «радиус» точки в метрике формы рамки, px
+      var EDGE_TOL = 14;
+      if (Math.abs(edgeNorm - selPx) <= EDGE_TOL) {
+        isResizingSel = true;
+      } else if (edgeNorm < selPx) {
+        insideSel = true;
+      }
     }
-    if (insideSel) {
+    if (isResizingSel) {
+      // центр (selOffX/Y) не трогаем — тянется только полудиагональ
+    } else if (insideSel) {
       isMovingSel = true;
       selMoveStart = { mx: mx, my: my, offX: selOffX, offY: selOffY };
     } else {
@@ -5858,7 +6703,12 @@ window.addEventListener("mousemove", function(e){
   }
   var r = cv.getBoundingClientRect();
   mouseX = e.clientX - r.left; mouseY = e.clientY - r.top;
-  if (isMovingSel && selMoveStart) {
+  if (isResizingSel) {
+    // Растяжение за границу: радиус — расстояние от ЦЕНТРА РАМКИ (с учётом её смещения selOffX/Y)
+    selRadius = selFrameRadius(e.clientX - r.left - (panX + selOffX * zoom),
+                               e.clientY - r.top  - (panY + selOffY * zoom)) / zoom;
+    requestDraw();
+  } else if (isMovingSel && selMoveStart) {
     selOffX = selMoveStart.offX + (e.clientX - r.left - selMoveStart.mx) / zoom;
     selOffY = selMoveStart.offY + (e.clientY - r.top - selMoveStart.my) / zoom;
     requestDraw();
@@ -5871,7 +6721,7 @@ window.addEventListener("mousemove", function(e){
     clickDragDist += Math.abs(e.clientX - dragLastX) + Math.abs(e.clientY - dragLastY);
     dragLastX = e.clientX; dragLastY = e.clientY;
     requestDraw();
-  } else if (skewerMode.checked && laserModeOk()) requestDraw();
+  } else if (skewerMode.checked && laserModeOk() && !suppressDrawDuringPlayActive()) requestDraw();
 });
 
 window.addEventListener("mouseup", function(e){
@@ -5886,6 +6736,7 @@ window.addEventListener("mouseup", function(e){
     }
     squareTestDrag = null; isDragging = false; return;
   }
+  if (isResizingSel) { isResizingSel = false; if (selRadius * zoom < 5) { selActive = false; draw(); } return; }
   if (isMovingSel) { isMovingSel = false; selMoveStart = null; return; }
   if (isSelecting) { isSelecting = false; if (selRadius * zoom < 5) { selActive = false; draw(); } }
   else if (isDragging) isDragging = false;
@@ -6289,8 +7140,9 @@ var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme:
 setTheme(prefersDark ? "dark" : "light");
 
 function fullInit() {
-    rebuild(); 
-    applyI18n(); 
+    restoreSrcFromCache(); // подтянуть сохранённые «Данные» из localStorage (если есть)
+    rebuild();
+    applyI18n();
 }
 
 const resizeObs = new ResizeObserver(entries => {
