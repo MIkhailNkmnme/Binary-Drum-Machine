@@ -86,7 +86,22 @@
      26) В режиме «Квадраты» кнопки «▶ Этаж N», «⏩ Построить всё» и «⏹ Сброс» дублировали группу
      «Этажи» слева (тот же показ по этажам — ползунком и Плеем). Они относятся только к подрежиму
      «✋ Правка» (пошаговая сборка перетаскиваемых кубов), поэтому теперь показываются лишь при
-     включённой «Правке»; в обычных «Квадратах» в тулбаре остаётся одна кнопка «✋ Правка».)
+     включённой «Правке»; в обычных «Квадратах» в тулбаре остаётся одна кнопка «✋ Правка».
+     Сам тулбар «Квадратов» поднят самым верхним блоком левой колонки.
+     27) Оси лазеров дёргались во время анимации поворота. Причина: laserStationaryOK() решает,
+     рисовать оси в неподвижном пространстве или вместе с кубами, по условию «угол кратен 90°».
+     Анимация проходит через 90/180/270 ровно, и на этих кадрах оси на мгновение перескакивали в
+     неподвижное пространство (там они не повёрнуты) и обратно. Теперь, пока играет анимация
+     поворота, оси всегда едут с кубами — переключение возможно только на остановленном виде.
+     28) Кнопка 🖱 (тачпад-курсор) переехала с холста в подвал левой панели, к теме, языку и
+     версии — холст остался чистым сверху.
+     29) «💾» сохраняет теперь ВСЕ настройки, а не только данные: галки, ползунки, числовые поля
+     и списки обеих панелей + режим фигуры, вид, выравнивание строк, «Совмещение» интерливинга,
+     «По строкам/По лазерам», А/Б и сторону добора, палитру, тему и язык (collectUiSettings /
+     applyUiSettings). Галки и ползунки собираются перебором по разметке, а не списком в коде,
+     чтобы новые переключатели попадали в снимок сами. При восстановлении кнопки-переключатели
+     НЕ «кликаются» — у части из них клик тянет побочные действия (например «▼ По строкам» сразу
+     запускает захват), состояние ставится напрямую. Кеш старого формата читается по-прежнему.)
      (Пред. 0.302: 1) выравнивание строк как в таблице. К «Как есть»/«Полусдвиг»
      добавлены «⭰ Слева» (было), «⭤ Центр» и «⭲ Справа» — последние два новые: центр без сдвига
      на полклетки и прижатие к правому краю (offset = maxLen − длина строки). Группа выравнивания
@@ -1255,6 +1270,7 @@ body.pad-mode #padDebug { display: block; }
     <div class="grp grp-meta" style="flex:0 0 auto; flex-direction:row; gap:5px; align-items:center;">
       <button id="btnTheme" class="toggle-btn" style="flex:0 0 auto;" title="Светлый/тёмный фон">🌙</button>
       <button id="btnLang" class="toggle-btn" style="flex:0 0 auto; font-weight:bold; color:var(--accent);">ENG</button>
+      <button id="btnPad" class="toggle-btn pad-only" style="flex:0 0 auto;" title="Тачпад-курсор (как в AnyDesk): палец двигает курсор, тап = клик, двойной тап с удержанием = перетаскивание, два пальца сближением/разведением = зум, короткий тап ДВУМЯ пальцами (без движения) = правый клик.">🖱</button>
       <div id="stageTitle" title="Дзен-режим — скрыть всё, кроме кубов (выход — клик колёсиком мыши)" style="flex:1 1 auto; min-width:0; text-align:right; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer; user-select:none;">Кубиты <span class="ver">v0.303</span></div>
     </div>
 
@@ -1302,12 +1318,6 @@ body.pad-mode #padDebug { display: block; }
       <div id="stageToolbars" style="position:absolute; top:12px; left:12px; right:296px; z-index:6; display:flex; flex-direction:column; gap:6px; align-items:flex-start; pointer-events:none;">
       <!-- Тема и язык переехали вниз левой панели, к номеру версии; здесь остался только
            тачпад-курсор — он нужен именно над холстом. -->
-      <div style="display:flex; gap:6px; align-items:flex-start; width:100%; pointer-events:none;">
-      <div class="canvas-btn-group">
-        <button id="btnPad" class="toggle-btn pad-only" title="Тачпад-курсор (как в AnyDesk): палец двигает курсор, тап = клик, двойной тап с удержанием = перетаскивание, два пальца сближением/разведением = зум, короткий тап ДВУМЯ пальцами (без движения) = правый клик.">🖱</button>
-      </div>
-      </div>
-
       <!-- ВТОРОЙ ряд: повороты, сдвиг, змейка, квадраты — теперь КОЛОНКОЙ, каждый тулбар своей
            рамкой-блоком под предыдущим (поворот сверху), а не встык в одну длинную строку. -->
       <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-start; width:100%; pointer-events:none;">
@@ -3323,6 +3333,10 @@ function laserModeOk(){ return G && (!isSquaresMode() || !squareEditMode); }
 // На «косых» углах (1°/30°/45°/120°/L) лазеры двигаются вместе с кубами, как раньше.
 function laserStationaryOK(){
     if (!G) return false;
+    // Пока играет АНИМАЦИЯ поворота — оси всегда едут вместе с кубами. Иначе на каждом проходе
+    // через кратный 90° угол они на один кадр перескакивали в неподвижное пространство и обратно
+    // (там оси рисуются неповёрнутыми, а тут — повёрнутыми на тот же угол) — это и было «дёрганье».
+    if (rotAnimOn) return false;
     // Плоские виды (сверху/ромбы): оси стоят, пока поворот вида кратен 90° — сетка ложится на
     // сетку. На «косых» углах (1°/30°/45°/120°/L) оси едут вместе с кубами, как и раньше.
     if (G.kind === "top" || G.kind === "rhomb") return (viewRotDeg % 90 === 0);
@@ -6196,11 +6210,105 @@ function rebuild(fitView){
 // браузере тем же способом (file:// и http://127.0.0.1 — разные хранилища); 2) возвращается
 // кнопкой «⏹ Сброс» над редактором (если кеша нет — сброс к шаблону из кода). Пустой кеш игнорируется.
 var SRC_CACHE_KEY = "kubits_src";
+
+/* === Снимок ВСЕХ настроек интерфейса ===
+   Кнопка «💾» теперь запоминает не только данные и паттерны, а всё состояние: галки, ползунки,
+   числовые поля и списки обеих панелей + режим фигуры, вид, выравнивание строк, «Совмещение»
+   интерливинга, «По строкам/По лазерам», А/Б и сторону добора, палитру, тему и язык.
+   Галки/ползунки/списки собираются ПЕРЕБОРОМ по разметке (по id), а не списком в коде — иначе
+   каждый новый переключатель пришлось бы дописывать сюда руками и о нём бы забывали. */
+function collectUiSettings(){
+  var s = { cb:{}, rng:{}, val:{} };
+  document.querySelectorAll(".panel input[type=checkbox][id]").forEach(function(el){ s.cb[el.id] = el.checked; });
+  document.querySelectorAll(".panel input[type=range][id]").forEach(function(el){ s.rng[el.id] = el.value; });
+  document.querySelectorAll(".panel select[id], .panel input[type=number][id]").forEach(function(el){ s.val[el.id] = el.value; });
+  s.mode = mode.value;
+  s.view = currentView;
+  s.align = alignMode;
+  s.ilAlign = ilAlignMode;
+  s.rowsMode = rowsModeActive;
+  s.ilVar = ($("btnIlVarA") && $("btnIlVarA").classList.contains("active")) ? "A" : "B";
+  s.ilSide = ($("btnIlSideLeft") && $("btnIlSideLeft").classList.contains("active")) ? "left"
+           : ($("btnIlSideAsk") && $("btnIlSideAsk").classList.contains("active")) ? "ask" : "right";
+  s.patStrict = patStrictOn();
+  s.theme = document.documentElement.dataset.theme;
+  s.lang = currentLang;
+  return s;
+}
+// Применение снимка. Кнопки-переключатели НЕ «кликаем» — у части из них клик тянет за собой
+// побочные действия (например «▼ По строкам» сразу запускает захват). Вместо этого ставим
+// состояние напрямую: переменная + класс active. Полный rebuild зовёт вызывающий (fullInit).
+function applyUiSettings(s){
+  if (!s || typeof s !== "object") return;
+  var fire = function(el, type){ el.dispatchEvent(new Event(type, { bubbles: true })); };
+  if (s.cb) Object.keys(s.cb).forEach(function(id){
+    var el = $(id);
+    if (el && el.type === "checkbox" && el.checked !== s.cb[id]) { el.checked = s.cb[id]; fire(el, "change"); }
+  });
+  if (s.rng) Object.keys(s.rng).forEach(function(id){
+    var el = $(id);
+    if (el && el.value !== s.rng[id]) { el.value = s.rng[id]; fire(el, "input"); }
+  });
+  if (s.val) Object.keys(s.val).forEach(function(id){
+    var el = $(id);
+    if (el && el.value !== s.val[id]) { el.value = s.val[id]; fire(el, "change"); }
+  });
+  if (s.mode && s.mode !== mode.value) {
+    mode.value = s.mode;
+    document.querySelectorAll("#modeGroup .grp-btn").forEach(function(b){
+      b.classList.toggle("active", b.dataset.mode === s.mode);
+    });
+    fire(mode, "change");
+  }
+  if (s.view) {
+    currentView = s.view;
+    btnViewTop.classList.toggle("active-view", s.view === "top");
+    btnViewIso.classList.toggle("active-view", s.view !== "top");
+  }
+  if (s.align) {
+    alignMode = s.align;
+    document.querySelectorAll("#alignGroup .align-btn").forEach(function(b){
+      b.classList.toggle("active", b.dataset.align === s.align);
+    });
+  }
+  if (s.ilAlign) {
+    ilAlignMode = s.ilAlign;
+    var alignMap = { left: "btnIlAlignL", center: "btnIlAlignC", right: "btnIlAlignR" };
+    Object.keys(alignMap).forEach(function(k){
+      var b = $(alignMap[k]); if (b) b.classList.toggle("active", k === s.ilAlign);
+    });
+  }
+  if (typeof s.rowsMode === "boolean") {
+    rowsModeActive = s.rowsMode;
+    if ($("btnCaptureRows")) $("btnCaptureRows").classList.toggle("active", rowsModeActive);
+    if ($("btnCaptureLasers")) $("btnCaptureLasers").classList.toggle("active", !rowsModeActive);
+    if (typeof syncIlVariantsUI === "function") syncIlVariantsUI();
+  }
+  if (s.ilVar) {
+    if ($("btnIlVarA")) $("btnIlVarA").classList.toggle("active", s.ilVar === "A");
+    if ($("btnIlVarB")) $("btnIlVarB").classList.toggle("active", s.ilVar !== "A");
+  }
+  if (s.ilSide) {
+    if ($("btnIlSideRight")) $("btnIlSideRight").classList.toggle("active", s.ilSide === "right");
+    if ($("btnIlSideLeft"))  $("btnIlSideLeft").classList.toggle("active",  s.ilSide === "left");
+    if ($("btnIlSideAsk"))   $("btnIlSideAsk").classList.toggle("active",   s.ilSide === "ask");
+    if (typeof syncIlAskButtons === "function") syncIlAskButtons();
+  }
+  if (typeof s.patStrict === "boolean" && $("btnPatStrict")) $("btnPatStrict").classList.toggle("active", s.patStrict);
+  if (s.val && s.val.palSel) pal = PAL_SETS[s.val.palSel] || PAL_SETS.std;
+  if (s.theme && s.theme !== document.documentElement.dataset.theme) setTheme(s.theme);
+  if (s.lang && s.lang !== currentLang) { currentLang = s.lang; }
+}
+
 function saveSrcToCache(){
   try {
     var ptaEl = $("patSrc");
-    localStorage.setItem(SRC_CACHE_KEY, JSON.stringify({ src: src.value, lineLimit: lineLimit, lineLimitTop: lineLimitTop,
-      pat: ptaEl ? ptaEl.value : "", patSkip: patSkipFirstOn(), patStrict: patStrictOn() }));
+    localStorage.setItem(SRC_CACHE_KEY, JSON.stringify({
+      src: src.value, lineLimit: lineLimit, lineLimitTop: lineLimitTop,
+      pat: ptaEl ? ptaEl.value : "",
+      patSkip: patSkipFirstOn(), patStrict: patStrictOn(), // оставлены для кеша старых версий
+      ui: collectUiSettings()
+    }));
     return true;
   } catch(e){ return false; }
 }
@@ -6225,10 +6333,12 @@ function restoreSrcFromCache(){
     lineLimitTop = saved.lineLimitTop;
     var ptaEl = $("patSrc");
     if (ptaEl && typeof saved.pat === "string") { ptaEl.value = saved.pat; lastPatBgHtml = null; lastPatGutterHtml = null; }
+    // Кеш старого формата (до «сохранять все настройки») — там были только эти два флага
     var psfEl = $("patSkipFirstCheck");
     if (psfEl && typeof saved.patSkip === "boolean") psfEl.checked = saved.patSkip;
     var pstEl = $("btnPatStrict");
     if (pstEl && typeof saved.patStrict === "boolean") pstEl.classList.toggle("active", saved.patStrict);
+    applyUiSettings(saved.ui); // полный снимок настроек, если он в кеше есть
   }
 }
 
@@ -7567,6 +7677,7 @@ $("stageTitle").addEventListener("click", toggleZenMode); // клик по «К�
 
 // «💾 Запомнить» над редактором: сохранить текущие «Данные» в localStorage-кеш вручную.
 // Запомненное подтянется при F5/открытии любой версии файла и вернётся по «⏹ Сброс».
+$("btnSrcSave").title = "Запомнить в кеш браузера ВСЁ: «Данные» с границами, «Паттерны» и все настройки обеих панелей (режим, вид, выравнивание, окраска, галки, ползунки, тема, язык). Вернётся автоматически при F5 и по кнопке ⏹.";
 var _btnSrcSave = $("btnSrcSave");
 if (_btnSrcSave) _btnSrcSave.addEventListener("click", function(){
     var ok = saveSrcToCache();
