@@ -8,12 +8,12 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius GPU v0.55 (Core + Synth)</title>
+    <title>Zerkalius GPU v0.66 (Core + Synth)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
-        body { background: #050505; color: #00ff66; font-family: 'Roboto Mono', monospace; margin: 8px; overflow: hidden; height: calc(100vh - 16px); transition: background 0.3s; }
-        .main-layout { display: flex; gap: 12px; height: 100%; align-items: stretch; flex-direction: row; position: relative; }
-        .controls { width: 310px; min-width: 310px; display: flex; flex-direction: column; background: rgba(16, 16, 16, 0.95); padding: 6px; border-radius: 4px; border: 1px solid #222; box-sizing: border-box; height: 100%; z-index: 100; transition: left 0.1s, top 0.1s; }
+        body { background: #050505; color: #00ff66; font-family: 'Roboto Mono', monospace; margin: 0; overflow: hidden; height: 100vh; transition: background 0.3s; }
+        .main-layout { display: flex; gap: 0; height: 100%; align-items: stretch; flex-direction: row; position: relative; }
+        .controls { width: 310px; min-width: 310px; display: flex; flex-direction: column; background: rgba(16, 16, 16, 0.95); padding: 6px; border-radius: 0; border: none; border-right: 1px solid #222; box-sizing: border-box; height: 100%; z-index: 100; transition: left 0.1s, top 0.1s; }
         .controls.floating { position: absolute; top: 10px; left: 50px; height: 90vh; box-shadow: 0 0 20px rgba(0,255,102,0.2); border: 1px solid #00ff66; cursor: grab; }
         .controls.floating:active { cursor: grabbing; } .controls.floating .scrollable-settings, .controls.floating .fixed-player { cursor: default; }
         .fixed-top { flex-shrink: 0; display: flex; flex-direction: column; gap: 5px; border-bottom: 2px solid #222; padding-bottom: 6px; margin-bottom: 4px; }
@@ -33,16 +33,16 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         label { font-size: 11px; display: flex; justify-content: space-between; align-items: center; user-select: none; color: #888; } .compact-row { display: flex; gap: 4px; justify-content: space-between; align-items: center; } .checkbox-row { display: flex; align-items: center; justify-content: flex-start; gap: 8px; margin-bottom: 2px; cursor: pointer; } .checkbox-row span { color: #aaa; font-size: 11px; } .checkbox-row:hover span { color: #fff; }
         input[type="range"] { width: 100%; cursor: pointer; margin-top: 1px; } input[type="text"], input[type="number"], textarea { background: #151515; color: #fff; border: 1px solid #333; padding: 4px; border-radius: 3px; font-family: inherit; font-size: 11px; outline: none; width: 100%; box-sizing: border-box; } input[type="color"] { border: none; width: 28px; height: 16px; padding: 0; background: none; cursor: pointer; } select { background: #222; color: #fff; border: 1px solid #444; padding: 3px; border-radius: 3px; width: 100%; font-family: inherit; font-size: 11px; outline: none; cursor: pointer;}
         #statusInfo { font-size: 10px; color: #ffcc00; text-align: center; margin-top: 1px; min-height: 11px; }
-        #screenContainer { flex-grow: 1; background: #000000; border: 2px solid #111; border-radius: 5px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        #screenContainer { flex-grow: 1; background: #000000; border: none; border-radius: 0; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         canvas { display: block; width: 100%; height: 100%; cursor: grab; } canvas:active { cursor: grabbing; }
         .float-btn { position: absolute; z-index: 10; border: none; cursor: pointer; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: opacity 0.3s; left: 8px;}
         #toggleFloatPanelBtn { top: 12px; background: #0088ff; color: #fff; box-shadow: 0 0 8px rgba(0, 136, 255, 0.5); border-radius: 3px; height: 26px; width: 34px;}
-        #toggleRadarBtn { top: 44px; background: #cc33ff; color: #fff; box-shadow: 0 0 10px rgba(204, 51, 255, 0.6); border-radius: 8px; }
+        #toggleRadarBtn { top: 50%; transform: translateY(-50%); background: #cc33ff; color: #fff; box-shadow: 0 0 10px rgba(204, 51, 255, 0.6); border-radius: 8px; }
         .color-palette { display: flex; flex-direction: column; gap: 2px; background: #1a1a1a; padding: 4px; border-radius: 3px; margin-top: 2px; } .palette-row { display: flex; gap: 4px; align-items: center; justify-content: space-between; } .palette-row span { font-size: 9px; color: #ccc; width: 45px; }
         #fpsCounter { position: absolute; top: 10px; right: 10px; color: #cc00ff; font-size: 12px; z-index: 50; background: rgba(0,0,0,0.7); padding: 3px 7px; border-radius: 3px; pointer-events: none; font-weight:bold; border: 1px solid #cc00ff;}
         /* Светлая панель приборов — включается вместе со светлым фоном холста */
         body.light-ui { background: #e8e8e8; color: #222; }
-        body.light-ui .controls { background: rgba(245,245,245,0.97); border-color: #bbb; }
+        body.light-ui .controls { background: rgba(245,245,245,0.97); border-right-color: #bbb; }
         body.light-ui .fixed-top { border-bottom-color: #ccc; }
         body.light-ui .fixed-player { background: #ededed; border-color: #ccc; border-top-color: #0aa; }
         body.light-ui h3 { color: #111; text-shadow: none; }
@@ -55,9 +55,9 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         body.light-ui select, body.light-ui input[type="text"], body.light-ui input[type="number"], body.light-ui textarea { background: #fff; color: #111; border-color: #bbb; }
         body.light-ui .color-palette { background: #e4e4e4; } body.light-ui .palette-row span { color: #444; }
         body.light-ui .btn-file { background: #dcdcdc; color: #111; border-color: #bbb; }
-        body.light-ui #screenContainer { border-color: #bbb; }
         body.light-ui #fpsCounter { background: rgba(255,255,255,0.8); color: #a000c0; }
         body.light-ui .scrollable-settings::-webkit-scrollbar-track { background: #ddd; } body.light-ui .scrollable-settings::-webkit-scrollbar-thumb { background: #aaa; }
+        body.panel-hidden .controls { display: none !important; }
         body.zen-mode .controls { display: none !important; } body.zen-mode .float-btn, body.zen-mode #fpsCounter { opacity: 0 !important; pointer-events: none; } body.zen-mode { margin: 0; height: 100vh; }
         /* Общая тактильность кнопок: подсветка при наведении, вдавливание при нажатии */
         button { transition: filter .15s, box-shadow .15s, transform .05s; }
@@ -85,7 +85,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
     <div class="main-layout">
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3>GPU Core + Synth — v0.55</h3>
+                <h3>GPU Core + Synth — v0.66</h3>
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Сбросить GPU Холст</button>
                 <div class="control-group-gold" style="padding: 4px;">
                     <div class="compact-row">
@@ -148,6 +148,11 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                     <label class="checkbox-row" style="margin-top: 4px;"><input type="checkbox" id="trimZerosCheck" checked><span>Обрезать фон</span></label>
                     <label class="checkbox-row"><input type="checkbox" id="mirrorFoldCheck"><span style="color:#00ffcc;">🔷 Сложить в квадрат (зеркально)</span></label>
                     <label class="checkbox-row"><input type="checkbox" id="keepGridCheck"><span style="color:#ff66ff;">🧱 Не стирать сетку (наложить сверху)</span></label>
+                    <label class="checkbox-row"><input type="checkbox" id="gridSepCheck"><span style="color:#ff66ff;">↕ Сетка едет отдельно</span></label>
+                    <div class="compact-row">
+                        <label>Скорость сетки <span id="gridRateLabel">-100</span>:</label>
+                        <input type="range" id="gridRateRange" min="-300" max="300" value="-100" style="flex:1; margin-left: 8px;">
+                    </div>
                     <button id="zerkaliusBtn" class="btn-zerkalius" style="background:#00ccff;">Создать Фигуру</button>
                     <div class="compact-row" style="margin-top:2px;">
                         <label>Шаг сетки:<input type="number" id="gridStepInput" value="8" min="2" max="100" style="width: 50px; text-align:center;"></label>
@@ -239,6 +244,25 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                     </div>
                     <label class="checkbox-row"><input type="checkbox" id="zoomClampCheck" checked><span style="color:#00ff66;">🔒 Отсечка зума (клетка ≥ 1 пикс.)</span></label>
                     <label class="checkbox-row"><input type="checkbox" id="pixelPerfectCheck" checked><span style="color:#00ff66;">📐 Пиксель-перфект (ровные клетки)</span></label>
+                    <label class="checkbox-row"><input type="checkbox" id="autoZoomCheck"><span style="color:#00ccff;">♾ Автозум (в одну сторону)</span></label>
+                    <select id="autoZoomDirSelect" style="margin-top:2px;">
+                        <option value="in">Зум: внутрь (наезд)</option>
+                        <option value="out">Зум: наружу (отъезд)</option>
+                    </select>
+                    <div class="compact-row">
+                        <label>Скорость зума:</label>
+                        <input type="range" id="autoZoomRate" min="1" max="100" value="25" style="flex:1; margin-left: 8px;">
+                    </div>
+                    <label class="checkbox-row"><input type="checkbox" id="seamlessZoomCheck"><span style="color:#00ccff;">🔁 Бесшовная петля (фрактал)</span></label>
+                    <button id="apexCenterBtn" class="btn-vacuum" style="background:#003344; color:#00ccff;">🎯 Вершину фрактала в центр</button>
+                    <div class="compact-row">
+                        <label>Кратность:<input type="number" id="zoomPeriodInput" value="2" min="1.2" max="64" step="0.1" style="width: 50px; text-align:center;"></label>
+                    </div>
+                    <label class="checkbox-row"><input type="checkbox" id="polarEvenCheck"><span style="color:#00ccff;">⊛ Радар: клетки одного размера</span></label>
+                    <div class="compact-row">
+                        <label>Дыра в центре:</label>
+                        <input type="range" id="centerHoleRange" min="0" max="200" value="50" style="flex:1; margin-left: 8px;">
+                    </div>
                     <select id="radarModeSelect" style="margin-top:2px;">
                         <option value="0">🛰️ Радар: круговой</option>
                         <option value="1">🛰️ Радар: тоннель</option>
@@ -300,7 +324,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
 
         <div id="screenContainer">
             <div id="fpsCounter">FPS: 0 | GPU</div>
-            <button id="toggleFloatPanelBtn" class="float-btn" title="Открепить">🗗</button>
+            <button id="toggleFloatPanelBtn" class="float-btn" title="Скрыть панель">🗗</button>
             <button id="toggleRadarBtn" class="float-btn" title="Топологический Радар">🛰️</button>
             <canvas id="glcanvas"></canvas>
         </div>
@@ -345,6 +369,11 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         uniform vec3 u_bgColor;         // сам цвет фона
         uniform float u_charZoom;       // растяжка символа внутри клетки: >1 — символ вылезает за клетку (обрезается по её границе)
         uniform float u_radarMode;      // тип радарной проекции
+        uniform float u_panY;           // вертикальный сдвиг центра радара, в пикселях
+        uniform float u_hole;           // радиус «дыры» в центре радара
+        uniform float u_gridSep;        // 1 — сетка движется отдельно от фигуры
+        uniform float u_gridOff;        // собственное смещение сетки
+        uniform float u_polarEven;      // радар: клетки одного размера на любом радиусе
 
         #define PI 3.14159265359
 
@@ -359,15 +388,21 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
 
         // Чернила одной клетки: rgb — цвет, a — покрытие пикселя символом (0 — клетка сюда не достаёт).
         // luv — позиция пикселя относительно этой клетки (0..1 внутри неё, за пределами — если тянемся к соседу).
-        vec4 inkAt(vec2 c, vec2 luv, float rAngle, float radius) {
+        // want: 0 — только фигура, 1 — только подложка-сетка, 2 — всё подряд (когда сетка не отделена)
+        vec4 inkAt(vec2 c, vec2 luv, float rAngle, float radius, float want) {
             vec2 cuv = (luv - 0.5) / u_charZoom + 0.5;
             if (cuv.x < 0.0 || cuv.x > 1.0 || cuv.y < 0.0 || cuv.y > 1.0) return vec4(0.0);
+            // Размыкание: за краем матрицы рисуем только подложку-сетку (у неё альфа 0.5), фигуру — нет
             if (u_isRadar < 0.5) {
-                if (u_wrap.x < 0.5 && (c.x < 0.0 || c.x >= u_dataSize.x)) return vec4(0.0);
-                if (u_wrap.y < 0.5 && (c.y < 0.0 || c.y >= u_dataSize.y)) return vec4(0.0);
+                bool outX = (u_wrap.x < 0.5 && (c.x < 0.0 || c.x >= u_dataSize.x));
+                bool outY = (u_wrap.y < 0.5 && (c.y < 0.0 || c.y >= u_dataSize.y));
+                if (outX || outY) { if (getCellInfo(c, u_dataMap, u_dataSize).a > 0.75) return vec4(0.0); }
             }
 
             vec4 data1 = getCellInfo(c, u_dataMap, u_dataSize);
+            // Подложка помечена альфой 0.5 — при раздельном движении каждый проход берёт только своё
+            bool isBack = (data1.a < 0.75);
+            if (want < 1.5) { if ((want > 0.5) != isBack) return vec4(0.0); }
             float isAct = data1.g; float isCollision = 0.0; float finalChar = data1.r;
             if (data1.b > 0.5) isAct = 1.0;
 
@@ -423,13 +458,29 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             return vec4(finalColor, lvl);
         }
 
+        // Один слой целиком: своя клетка плюс соседи, если символ растянут за её границы
+        vec4 inkPass(vec2 c0, vec2 luv, float rAngle, float radius, float want) {
+            vec4 ink = inkAt(c0, luv, rAngle, radius, want);
+            if (u_charZoom > 1.0) {
+                for (int i = 0; i < 25; i++) {
+                    if (i == 12) continue;
+                    vec2 d = vec2(float(i - (i / 5) * 5) - 2.0, float(i / 5) - 2.0);
+                    vec4 s = inkAt(c0 + d, luv - d, rAngle, radius, want);
+                    if (s.a > ink.a) ink = s;
+                }
+            }
+            return ink;
+        }
+
         void main() {
             vec2 pos = v_uv; vec2 cell; vec2 uvWithinCell;
             float rAngle = 0.0; float radius = 0.0;
             vec4 bg = vec4(u_bgLight > 0.5 ? u_bgColor : vec3(0.0), 1.0);   // цвет «пустоты»
 
             if (u_isRadar > 0.5) {
-                vec2 center = vec2(0.5) - (u_offset.x / u_resolution);
+                // Центр радара: по X — общая панорама, по Y — свой сдвиг. Раньше здесь float делился на vec2,
+                // из-за чего одна горизонтальная протяжка уводила центр по диагонали.
+                vec2 center = vec2(0.5 + u_offset.x / u_resolution.x, 0.5 + u_panY / u_resolution.y);
                 vec2 delta = pos - center; delta.x *= u_resolution.x / u_resolution.y;
                 radius = length(delta) * 2.0; rAngle = atan(delta.y, delta.x);
                 // Проекции: 0 — круговой радар, 1 — тоннель (перспектива 1/r), 2 — спираль, 3 — сфера, 4 — веер (сектор)
@@ -440,9 +491,13 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                 else if (u_radarMode < 2.5) rowIdx = radius * u_gridSize.y + ((rAngle / (2.0 * PI)) + 0.5) * u_dataSize.y * 0.15;
                 else if (u_radarMode < 3.5) { if (radius > 1.0) { gl_FragColor = bg; return; } rowIdx = (asin(clamp(radius, 0.0, 1.0)) / (PI * 0.5)) * u_gridSize.y; }
                 else { if (abs(rAngle) > PI * 0.25) { gl_FragColor = bg; return; } ang = rAngle * 4.0; rowIdx = radius * u_gridSize.y; }
-                float colIdx = (((ang + u_angleOffset) / (2.0 * PI)) + 0.5) * u_dataSize.x;
-                cell = floor(vec2(colIdx, rowIdx)); cell.y += u_offset.y; uvWithinCell = fract(vec2(colIdx, rowIdx));
-                if (radius < 0.05) { gl_FragColor = bg; return; }
+                // Обычно на оборот всегда укладывается вся ширина матрицы, поэтому клетка-сектор расширяется
+                // с радиусом и лучи к краю становятся клиньями. В режиме равных клеток число секторов растёт
+                // вместе с радиусом — дуга клетки примерно равна её высоте, и луч всюду толщиной в одну клетку.
+                float perTurn = (u_polarEven > 0.5) ? max(8.0, 2.0 * PI * radius * u_gridSize.y) : u_dataSize.x;
+                float colIdx = (((ang + u_angleOffset) / (2.0 * PI)) + 0.5) * perTurn;
+                cell = floor(vec2(colIdx, rowIdx)); uvWithinCell = fract(vec2(colIdx, rowIdx));
+                if (radius < u_hole) { gl_FragColor = bg; return; }
             } else {
                 float aspect = u_resolution.x / u_resolution.y;
                 vec2 rc = pos - 0.5; rc.x *= aspect;
@@ -450,24 +505,24 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                 rc = vec2(rc.x * ca - rc.y * sa, rc.x * sa + rc.y * ca);
                 rc.x /= aspect; pos = rc + 0.5;
                 vec2 panOffset = u_offset.x / u_resolution; pos.x -= panOffset.x;
-                cell = floor(pos * u_gridSize); cell.x -= floor((u_gridSize.x - u_dataSize.x) * 0.5); cell.y += u_offset.y; uvWithinCell = fract(pos * u_gridSize);
+                cell = floor(pos * u_gridSize); cell.x -= floor((u_gridSize.x - u_dataSize.x) * 0.5); uvWithinCell = fract(pos * u_gridSize);
             }
 
-            vec4 ink = inkAt(cell, uvWithinCell, rAngle, radius);
-            // Растяжка больше 100%: символ вылезает за свою клетку, поэтому пиксель может накрыть и сосед.
-            // Обходим 8 соседей, но каждый отсекается арифметикой до всяких выборок — платим только там, где перекрытие реально есть.
-            if (u_charZoom > 1.0) {
-                for (int i = 0; i < 25; i++) {
-                    if (i == 12) continue;
-                    vec2 d = vec2(float(i - (i / 5) * 5) - 2.0, float(i / 5) - 2.0);
-                    vec4 s = inkAt(cell + d, uvWithinCell - d, rAngle, radius);
-                    if (s.a > ink.a) ink = s;
-                }
+            // Слой фигуры едет со своим смещением, подложка-сетка — со своим, поэтому проходов два.
+            // Когда раздельное движение выключено, проход один и берёт всё сразу — как раньше.
+            vec2 cellFig = cell + vec2(0.0, u_offset.y);
+            if (u_gridSep < 0.5) {
+                vec4 ink = inkPass(cellFig, uvWithinCell, rAngle, radius, 2.0);
+                if (ink.a <= 0.0) { gl_FragColor = bg; return; }
+                gl_FragColor = vec4(mix(bg.rgb, ink.rgb, ink.a), 1.0);   // на чёрном фоне это ровно прежнее «цвет × покрытие»
+                return;
             }
-
-            if (ink.a <= 0.0) { gl_FragColor = bg; return; }
-            vec3 renderColor = mix(bg.rgb, ink.rgb, ink.a);   // на чёрном фоне это ровно прежнее «цвет × покрытие»
-            gl_FragColor = vec4(renderColor, 1.0);
+            vec4 inkG = inkPass(cell + vec2(0.0, u_gridOff), uvWithinCell, rAngle, radius, 1.0);
+            vec4 inkF = inkPass(cellFig, uvWithinCell, rAngle, radius, 0.0);
+            if (inkG.a <= 0.0 && inkF.a <= 0.0) { gl_FragColor = bg; return; }
+            vec3 col = mix(bg.rgb, inkG.rgb, inkG.a);
+            col = mix(col, inkF.rgb, inkF.a);
+            gl_FragColor = vec4(col, 1.0);
         }
     </script>
 
@@ -548,7 +603,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         const gl = UI.canvas.getContext('webgl', { preserveDrawingBuffer: true });
         if (!gl) alert("WebGL не поддерживается!");
 
-        const STATE = { lines: [], COLS: 150, ROWS: 250, isPlaying: false, offsetMatY: 0, layer2Y: 0, globalAngle: 0, breathTime: 0, algoPointer: 0, lastTickTime: 0, isRadar: false, isDragging: false, dragStartX: 0, offsetX: 0, startOffsetX: 0, audioScale: 1.0, audioGlow: 0.0, bassLevel: 0, framesSinceChange: 0, animatrixRow: 0, elkaShift: 0, accElka: 0, accAnim: 0, echoOff: 0, fSize: 12, effScale: 12, isPanelFloating: false, panelX: 50, panelY: 10, isDraggingPanel: false, lightBg: false, dragY: 0, wasPlaying: false };
+        const STATE = { lines: [], COLS: 150, ROWS: 250, isPlaying: false, offsetMatY: 0, layer2Y: 0, globalAngle: 0, breathTime: 0, algoPointer: 0, lastTickTime: 0, isRadar: false, isDragging: false, dragStartX: 0, offsetX: 0, startOffsetX: 0, audioScale: 1.0, audioGlow: 0.0, bassLevel: 0, framesSinceChange: 0, animatrixRow: 0, elkaShift: 0, accElka: 0, accAnim: 0, echoOff: 0, fSize: 12, effScale: 12, isPanelFloating: false, panelX: 50, panelY: 10, isDraggingPanel: false, lightBg: false, dragY: 0, wasPlaying: false, panY: 0, zoomDir: 1, gridOffY: 0 };
         let pixelData = null; 
 
         // ИНИЦИАЛИЗА ШЕЙДЕРОВ И ТЕКСТУР
@@ -583,14 +638,15 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         function updateDataTexture() {
             if(!pixelData || pixelData.length !== STATE.COLS * STATE.ROWS * 4) pixelData = new Uint8Array(STATE.COLS * STATE.ROWS * 4);
             const elkaOn = UI.elkaCheck.checked && STATE.elkaShift !== 0;
-            for(let y=0; y<STATE.ROWS; y++) { let row = STATE.lines[y] || []; let shift = elkaOn ? ((y % 2 === 0 ? STATE.elkaShift : -STATE.elkaShift) % STATE.COLS) : 0; for(let x=0; x<STATE.COLS; x++) { let sx = ((x - shift) % STATE.COLS + STATE.COLS) % STATE.COLS; let cell = row[sx] || {c:' ', a:0}; let idx = (y * STATE.COLS + x) * 4; if(cell.c === ' ') { pixelData[idx]=128; } else { pixelData[idx] = cell.c === '1' ? 255 : 0; } pixelData[idx+1] = cell.a ? 255 : 0; pixelData[idx+2] = (SEARCH.marks.size && SEARCH.marks.has(y * STATE.COLS + sx)) ? 255 : 0; pixelData[idx+3] = 255; } }
+            for(let y=0; y<STATE.ROWS; y++) { let row = STATE.lines[y] || []; let shift = elkaOn ? ((y % 2 === 0 ? STATE.elkaShift : -STATE.elkaShift) % STATE.COLS) : 0; for(let x=0; x<STATE.COLS; x++) { let sx = ((x - shift) % STATE.COLS + STATE.COLS) % STATE.COLS; let cell = row[sx] || {c:' ', a:0}; let idx = (y * STATE.COLS + x) * 4; if(cell.c === ' ') { pixelData[idx]=128; } else { pixelData[idx] = cell.c === '1' ? 255 : 0; } pixelData[idx+1] = cell.a ? 255 : 0; pixelData[idx+2] = (SEARCH.marks.size && SEARCH.marks.has(y * STATE.COLS + sx)) ? 255 : 0; pixelData[idx+3] = cell.g ? 128 : 255; } }
             gl.bindTexture(gl.TEXTURE_2D, dataTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, STATE.COLS, STATE.ROWS, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixelData); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         }
 
-        const unilocs = { res: gl.getUniformLocation(program, "u_resolution"), grid: gl.getUniformLocation(program, "u_gridSize"), offset: gl.getUniformLocation(program, "u_offset"), layerOff: gl.getUniformLocation(program, "u_layerOffset"), cAct: gl.getUniformLocation(program, "u_colorAct"), cStat: gl.getUniformLocation(program, "u_colorStat"), glow: gl.getUniformLocation(program, "u_glowIntensity"), radar: gl.getUniformLocation(program, "u_isRadar"), angle: gl.getUniformLocation(program, "u_angleOffset"), layerCount: gl.getUniformLocation(program, "u_layerCount"), dualM: gl.getUniformLocation(program, "u_dualMask"), hide: gl.getUniformLocation(program, "u_hideStatic"), fontM: gl.getUniformLocation(program, "u_fontMap"), dataM: gl.getUniformLocation(program, "u_dataMap"), dataSize: gl.getUniformLocation(program, "u_dataSize"), rainbow: gl.getUniformLocation(program, "u_rainbow"), rbDir: gl.getUniformLocation(program, "u_rbDir"), fill: gl.getUniformLocation(program, "u_fillMode"), echo: gl.getUniformLocation(program, "u_echo"), echoOff: gl.getUniformLocation(program, "u_echoOff"), wrap: gl.getUniformLocation(program, "u_wrap"), bgLight: gl.getUniformLocation(program, "u_bgLight"), bgColor: gl.getUniformLocation(program, "u_bgColor"), charZoom: gl.getUniformLocation(program, "u_charZoom"), radarMode: gl.getUniformLocation(program, "u_radarMode") };
+        const unilocs = { res: gl.getUniformLocation(program, "u_resolution"), grid: gl.getUniformLocation(program, "u_gridSize"), offset: gl.getUniformLocation(program, "u_offset"), layerOff: gl.getUniformLocation(program, "u_layerOffset"), cAct: gl.getUniformLocation(program, "u_colorAct"), cStat: gl.getUniformLocation(program, "u_colorStat"), glow: gl.getUniformLocation(program, "u_glowIntensity"), radar: gl.getUniformLocation(program, "u_isRadar"), angle: gl.getUniformLocation(program, "u_angleOffset"), layerCount: gl.getUniformLocation(program, "u_layerCount"), dualM: gl.getUniformLocation(program, "u_dualMask"), hide: gl.getUniformLocation(program, "u_hideStatic"), fontM: gl.getUniformLocation(program, "u_fontMap"), dataM: gl.getUniformLocation(program, "u_dataMap"), dataSize: gl.getUniformLocation(program, "u_dataSize"), rainbow: gl.getUniformLocation(program, "u_rainbow"), rbDir: gl.getUniformLocation(program, "u_rbDir"), fill: gl.getUniformLocation(program, "u_fillMode"), echo: gl.getUniformLocation(program, "u_echo"), echoOff: gl.getUniformLocation(program, "u_echoOff"), wrap: gl.getUniformLocation(program, "u_wrap"), bgLight: gl.getUniformLocation(program, "u_bgLight"), bgColor: gl.getUniformLocation(program, "u_bgColor"), charZoom: gl.getUniformLocation(program, "u_charZoom"), radarMode: gl.getUniformLocation(program, "u_radarMode"), panY: gl.getUniformLocation(program, "u_panY"), hole: gl.getUniformLocation(program, "u_hole"), gridSep: gl.getUniformLocation(program, "u_gridSep"), gridOff: gl.getUniformLocation(program, "u_gridOff"), polarEven: gl.getUniformLocation(program, "u_polarEven") };
         function hex2vec(hex) { return [parseInt(hex.slice(1,3),16)/255, parseInt(hex.slice(3,5),16)/255, parseInt(hex.slice(5,7),16)/255]; }
-        function createEmptyMatrix(w, h) { let m=[]; for(let y=0;y<h;y++){ let r=[]; for(let x=0;x<w;x++) r.push({c:' ',a:0}); m.push(r); } return m; }
-        function precalcAct(m) { for(let y=1; y<STATE.ROWS; y++) for(let x=0; x<STATE.COLS; x++) { if(m[y][x].c !== ' ' && m[y][x].c !== m[y-1][x].c) m[y][x].a = 1; } return m; }
+        function createEmptyMatrix(w, h) { let m=[]; for(let y=0;y<h;y++){ let r=[]; for(let x=0;x<w;x++) r.push({c:' ',a:0,g:0}); m.push(r); } return m; }
+        // Размеры берём у самой матрицы, а не из STATE: функция вызывается и для отдельной фигуры до сведения с подложкой
+        function precalcAct(m) { let H = m.length, W = H ? m[0].length : 0; for(let y=1; y<H; y++) for(let x=0; x<W; x++) { if(m[y][x].c !== ' ' && m[y][x].c !== m[y-1][x].c) m[y][x].a = 1; } return m; }
 
         // БИНАРНЫЙ ЗВУКОВОЙ СИНТЕЗАТОР (ЭТАП 1)
         const SYNTH = {
@@ -654,9 +710,13 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         function overlayOnPrev(m, w, h, prev, pw, ph) {
             if(!document.getElementById('keepGridCheck').checked || !prev || !prev.length || !pw || !ph) return { m: m, w: w, h: h };
             let W = Math.max(w, pw), H = Math.max(h, ph); let res = createEmptyMatrix(W, H);
-            for(let y=0; y<H; y++) { let src = prev[y % ph] || []; for(let x=0; x<W; x++) { let c = src[x % pw]; res[y][x].c = c ? c.c : ' '; } }
+            // Подложку переносим как есть, вместе с её пометками активности — заново её не пересчитываем,
+            // иначе ровные линии сетки попадают в «изменившиеся» и красятся активным цветом
+            // Клетки подложки помечаем флагом g: в шейдере они продолжают повторяться даже при размыкании,
+            // поэтому сетка остаётся бесконечной, а фигура поверх неё — единственной
+            for(let y=0; y<H; y++) { let src = prev[y % ph] || []; for(let x=0; x<W; x++) { let c = src[x % pw]; res[y][x].c = c ? c.c : ' '; res[y][x].a = c ? (c.a || 0) : 0; res[y][x].g = 1; } }
             let ox = Math.floor((W - w) / 2), oy = Math.floor((H - h) / 2);
-            for(let y=0; y<h; y++) for(let x=0; x<w; x++) { let c = m[y][x].c; if(c !== ' ') res[y + oy][x + ox].c = c; }
+            for(let y=0; y<h; y++) for(let x=0; x<w; x++) { let cell = m[y][x]; if(cell.c !== ' ') { let t = res[y + oy][x + ox]; t.c = cell.c; t.a = cell.a || 0; t.g = 0; } }
             return { m: res, w: W, h: H };
         }
 
@@ -671,13 +731,13 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             } else { let rBin = parseInt(rule,10).toString(2).padStart(8,'0'); for(let i=0; i<seed.length; i++) m[0][cx+i].c = seed[i]; for(let y=1; y<h; y++) { for(let x=0; x<w; x++) { let l=(x>0 && m[y-1][x-1].c==='1')?1:0, c=m[y-1][x].c==='1'?1:0, r=(x<w-1 && m[y-1][x+1].c==='1')?1:0; m[y][x].c = rBin[7-((l<<2)|(c<<1)|r)] === '1' ? '1' : '0'; }} }
             if (UI.trimZerosCheck.checked && rule !== 'ziggurat' && rule !== 'orbital') { for(let y=0; y<h; y++) { let f=-1, l=-1; for(let x=0; x<w; x++) { if(m[y][x].c === '1') { if(f===-1) f=x; l=x; } } for(let x=0; x<w; x++) if(x<f || x>l) m[y][x].c = ' '; } }
             if(UI.mirrorFoldCheck.checked) { let mir=[]; for(let y=h-1; y>=0; y--){ let r=[]; for(let x=0; x<w; x++) r.push({c:m[y][x].c, a:0}); mir.push(r); } m = m.concat(mir); STATE.ROWS = h*2; h = h*2; }
-            let mg = overlayOnPrev(m, w, h, prevM, prevW, prevH); m = mg.m; STATE.COLS = mg.w; STATE.ROWS = mg.h;
-            STATE.lines = precalcAct(m); STATE.animatrixRow = 0; updateDataTexture(); fitView();
+            let mg = overlayOnPrev(precalcAct(m), w, h, prevM, prevW, prevH); m = mg.m; STATE.COLS = mg.w; STATE.ROWS = mg.h;
+            STATE.lines = m; STATE.animatrixRow = 0; updateDataTexture(); fitView();
         }
 
         // Вписать фигуру в экран и сбросить панораму/скролл
         function fitView() {
-            STATE.offsetX = 0; STATE.offsetMatY = 0; STATE.layer2Y = 0; SEARCH.marks.clear();
+            STATE.offsetX = 0; STATE.offsetMatY = 0; STATE.layer2Y = 0; STATE.panY = 0; SEARCH.marks.clear();
             let fit = Math.min(UI.canvas.width / STATE.COLS, UI.canvas.height / STATE.ROWS);
             STATE.fSize = Math.min(160, Math.max(minScale(), fit));
             UI.fontSizeRange.value = Math.round(STATE.fSize);
@@ -690,8 +750,8 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             let h = lines.length, w = Math.max(...lines.map(l => l.length));
             let m = createEmptyMatrix(w, h);
             for(let y=0; y<h; y++) for(let x=0; x<lines[y].length; x++) { let ch = lines[y][x]; if(ch === '0' || ch === '1') m[y][x].c = ch; }
-            let mg = overlayOnPrev(m, w, h, prevM, prevW, prevH); m = mg.m; STATE.COLS = mg.w; STATE.ROWS = mg.h;
-            STATE.lines = precalcAct(m); STATE.animatrixRow = 0; updateDataTexture(); fitView();
+            let mg = overlayOnPrev(precalcAct(m), w, h, prevM, prevW, prevH); m = mg.m; STATE.COLS = mg.w; STATE.ROWS = mg.h;
+            STATE.lines = m; STATE.animatrixRow = 0; updateDataTexture(); fitView();
             document.getElementById('statusInfo').textContent = 'Загружено: ' + w + '×' + h;
             return true;
         }
@@ -918,6 +978,8 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                 let yr = (parseInt(UI.yShiftRate.value, 10) || 0) / 100;
                 if(UI.elkaCheck.checked) { STATE.accElka += ((parseInt(UI.elkaRate.value, 10) || 0) / 100) * boost; let stX = Math.floor(STATE.accElka); STATE.accElka -= stX; STATE.elkaShift += stX; }
                 STATE.offsetMatY -= (alg / STATE.ROWS) * boost * yr;
+                // Своя скорость сетки: знак задаёт направление, поэтому фигура может ехать в одну сторону, а сетка навстречу
+                if(document.getElementById('gridSepCheck').checked) STATE.gridOffY -= (alg / STATE.ROWS) * boost * ((parseInt(document.getElementById('gridRateRange').value, 10) || 0) / 100);
                 if(UI.dualCoreCheck.checked) { let dSpd = parseInt(UI.dualCoreSpeedInput.value,10)||2; if(!UI.freezeLayer1Check.checked) STATE.layer2Y -= (alg * dSpd / STATE.ROWS) * boost * yr; else STATE.layer2Y -= (alg / STATE.ROWS) * boost * yr; }
                 
                 // Проиграть бинарный аккорд синтезатора!
@@ -927,20 +989,41 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                 updateDataTexture();
             }
 
+            // Автозум. Обычный режим — наезд до упора и разворот. Бесшовный — масштаб растёт и, дойдя до
+            // заданной кратности, откатывается ровно на неё: самоподобный узор при этом совпадает сам с собой,
+            // и стыка не видно. Работает, только если в центре холста стоит точка самоподобия (вершина фрактала).
+            if(document.getElementById('autoZoomCheck').checked) {
+                if(!STATE.autoZoomOn) { STATE.autoZoomOn = true; STATE.zoomBase = STATE.fSize; }
+                let r = ((parseInt(document.getElementById('autoZoomRate').value, 10) || 25) / 100) * 0.012;
+                const inward = document.getElementById('autoZoomDirSelect').value !== 'out';
+                // Кратность петли: с бесшовной галкой это период самоподобия, без неё — просто размах хода
+                let P = Math.min(64, Math.max(1.2, parseFloat(document.getElementById('zoomPeriodInput').value) || 2));
+                if(!document.getElementById('seamlessZoomCheck').checked) P = Math.max(P, 4);
+                // Дальше упора по масштабу уехать всё равно нельзя — иначе петля никогда не замкнётся и зум залипнет
+                let base = Math.max(0.1, STATE.zoomBase);
+                P = inward ? Math.min(P, 400 / base) : Math.min(P, base / 0.1);
+                if(P < 1.05) P = 1.05;
+                let target = STATE.fSize * (inward ? (1 + r) : (1 - r));
+                // Движение всегда в одну сторону: дойдя до края диапазона, масштаб откатывается на кратность
+                if(inward && target >= STATE.zoomBase * P) target /= P;
+                if(!inward && target <= STATE.zoomBase / P) target *= P;
+                applyZoom(Math.min(400, Math.max(0.1, target)));
+            } else STATE.autoZoomOn = false;
             let zoom = 1.0; if(UI.breathingZoomCheck.checked) zoom = 1 + Math.sin(STATE.breathTime)*0.4;
             let spX = (parseInt(UI.spacingXRange.value, 10) || 100) / 100; let spY = (parseInt(UI.spacingYRange.value, 10) || 100) / 100;
             STATE.effScale = STATE.fSize * STATE.audioScale * zoom;
             STATE.effX = STATE.effScale * spX; STATE.effY = STATE.effScale * spY;
             // Пиксель-перфект: клетка в целых пикселях, иначе граница клетки падает то до, то после
             // пиксельной сетки и расстояние между кубиками «гуляет» на глаз
-            if(UI.pixelPerfectCheck.checked) { STATE.effX = Math.max(1, Math.round(STATE.effX)); STATE.effY = Math.max(1, Math.round(STATE.effY)); }
+            // В радаре округление не нужно (там нет ровной пиксельной сетки), а при плавном зуме оно даёт рывки
+            if(UI.pixelPerfectCheck.checked && !STATE.isRadar) { STATE.effX = Math.max(1, Math.round(STATE.effX)); STATE.effY = Math.max(1, Math.round(STATE.effY)); }
             let canvasCols = UI.canvas.width / STATE.effX; let canvasRows = UI.canvas.height / STATE.effY;
 
             gl.useProgram(program); gl.bindBuffer(gl.ARRAY_BUFFER, buffer); gl.enableVertexAttribArray(aPosition); gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
             gl.bindFramebuffer(gl.FRAMEBUFFER, sceneFBO);
             gl.viewport(0, 0, UI.canvas.width, UI.canvas.height); gl.uniform2f(unilocs.res, UI.canvas.width, UI.canvas.height); gl.uniform2f(unilocs.grid, canvasCols, canvasRows); gl.uniform2f(unilocs.dataSize, STATE.COLS, STATE.ROWS);
             let layer1Y = UI.freezeLayer1Check.checked ? STATE.dragY : STATE.offsetMatY; gl.uniform2f(unilocs.offset, UI.pixelPerfectCheck.checked ? Math.round(STATE.offsetX) : STATE.offsetX, layer1Y); gl.uniform2f(unilocs.layerOff, 0, STATE.layer2Y);
-            gl.uniform3fv(unilocs.cAct, hex2vec(UI.activeColorPicker.value)); gl.uniform3fv(unilocs.cStat, hex2vec(UI.staticColorPicker.value)); gl.uniform1f(unilocs.hide, UI.hideStaticCheck.checked ? 1.0 : 0.0); gl.uniform1f(unilocs.glow, STATE.audioGlow); gl.uniform1f(unilocs.radar, STATE.isRadar ? 1.0 : 0.0); gl.uniform1f(unilocs.angle, STATE.globalAngle); gl.uniform1f(unilocs.layerCount, UI.dualCoreCheck.checked ? (parseInt(UI.layersRange.value, 10) || 2) : 1.0); gl.uniform1f(unilocs.dualM, UI.dualMaskCheck.checked ? 1.0 : 0.0); gl.uniform1f(unilocs.echo, UI.echoModeCheck.checked ? 1.0 : 0.0); gl.uniform1f(unilocs.echoOff, STATE.echoOff); gl.uniform1f(unilocs.rainbow, UI.themeSelect.value === 'rainbow' ? 1.0 : 0.0); gl.uniform1f(unilocs.rbDir, parseFloat(document.getElementById('rainbowDirSelect').value) || 0); gl.uniform1f(unilocs.fill, parseFloat(document.getElementById('fillModeSelect').value) || 0); gl.uniform2f(unilocs.wrap, UI.noWrapXCheck.checked ? 0.0 : 1.0, UI.noWrapYCheck.checked ? 0.0 : 1.0); gl.uniform1f(unilocs.bgLight, STATE.lightBg ? 1.0 : 0.0); gl.uniform3fv(unilocs.bgColor, hex2vec(document.getElementById('bgColorPicker').value)); gl.uniform1f(unilocs.charZoom, Math.max(0.1, (parseInt(UI.charZoomRange.value, 10) || 100) / 100)); gl.uniform1f(unilocs.radarMode, parseFloat(document.getElementById('radarModeSelect').value) || 0);
+            gl.uniform3fv(unilocs.cAct, hex2vec(UI.activeColorPicker.value)); gl.uniform3fv(unilocs.cStat, hex2vec(UI.staticColorPicker.value)); gl.uniform1f(unilocs.hide, UI.hideStaticCheck.checked ? 1.0 : 0.0); gl.uniform1f(unilocs.glow, STATE.audioGlow); gl.uniform1f(unilocs.radar, STATE.isRadar ? 1.0 : 0.0); gl.uniform1f(unilocs.angle, STATE.globalAngle); gl.uniform1f(unilocs.layerCount, UI.dualCoreCheck.checked ? (parseInt(UI.layersRange.value, 10) || 2) : 1.0); gl.uniform1f(unilocs.dualM, UI.dualMaskCheck.checked ? 1.0 : 0.0); gl.uniform1f(unilocs.echo, UI.echoModeCheck.checked ? 1.0 : 0.0); gl.uniform1f(unilocs.echoOff, STATE.echoOff); gl.uniform1f(unilocs.rainbow, UI.themeSelect.value === 'rainbow' ? 1.0 : 0.0); gl.uniform1f(unilocs.rbDir, parseFloat(document.getElementById('rainbowDirSelect').value) || 0); gl.uniform1f(unilocs.fill, parseFloat(document.getElementById('fillModeSelect').value) || 0); gl.uniform2f(unilocs.wrap, UI.noWrapXCheck.checked ? 0.0 : 1.0, UI.noWrapYCheck.checked ? 0.0 : 1.0); gl.uniform1f(unilocs.bgLight, STATE.lightBg ? 1.0 : 0.0); gl.uniform3fv(unilocs.bgColor, hex2vec(document.getElementById('bgColorPicker').value)); gl.uniform1f(unilocs.charZoom, Math.max(0.1, (parseInt(UI.charZoomRange.value, 10) || 100) / 100)); gl.uniform1f(unilocs.radarMode, parseFloat(document.getElementById('radarModeSelect').value) || 0); gl.uniform1f(unilocs.panY, STATE.panY); gl.uniform1f(unilocs.hole, (parseInt(document.getElementById('centerHoleRange').value, 10) || 0) / 1000); gl.uniform1f(unilocs.gridSep, document.getElementById('gridSepCheck').checked ? 1.0 : 0.0); gl.uniform1f(unilocs.gridOff, STATE.gridOffY); gl.uniform1f(unilocs.polarEven, document.getElementById('polarEvenCheck').checked ? 1.0 : 0.0);
 
             gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, fontTex); gl.uniform1i(unilocs.fontM, 0); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, dataTex); gl.uniform1i(unilocs.dataM, 1);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -985,6 +1068,15 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             if(s.pixelPerfect !== undefined) UI.pixelPerfectCheck.checked = !!s.pixelPerfect;
             if(s.radarMode !== undefined) document.getElementById('radarModeSelect').value = s.radarMode;
             if(s.keepGrid !== undefined) document.getElementById('keepGridCheck').checked = !!s.keepGrid;
+            if(s.gridSep !== undefined) document.getElementById('gridSepCheck').checked = !!s.gridSep;
+            if(s.gridRate !== undefined) { document.getElementById('gridRateRange').value = s.gridRate; document.getElementById('gridRateLabel').textContent = s.gridRate; }
+            if(s.autoZoom !== undefined) document.getElementById('autoZoomCheck').checked = !!s.autoZoom;
+            if(s.autoZoomRate !== undefined) document.getElementById('autoZoomRate').value = s.autoZoomRate;
+            if(s.autoZoomDir !== undefined) document.getElementById('autoZoomDirSelect').value = s.autoZoomDir;
+            if(s.centerHole !== undefined) document.getElementById('centerHoleRange').value = s.centerHole;
+            if(s.polarEven !== undefined) document.getElementById('polarEvenCheck').checked = !!s.polarEven;
+            if(s.seamlessZoom !== undefined) document.getElementById('seamlessZoomCheck').checked = !!s.seamlessZoom;
+            if(s.zoomPeriod !== undefined) document.getElementById('zoomPeriodInput').value = s.zoomPeriod;
             if(s.fillMode !== undefined) document.getElementById('fillModeSelect').value = s.fillMode;
             if(s.searchSeq !== undefined) document.getElementById('searchSeqCheck').checked = !!s.searchSeq;
             if(s.searchSkip1 !== undefined) document.getElementById('searchSkipFirstCheck').checked = !!s.searchSkip1;
@@ -1016,7 +1108,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                 let kg = document.getElementById('keepGridCheck'); let keep = kg.checked; kg.checked = false; generateMatrix(); kg.checked = keep;
             }
             if(s.pos) {
-                STATE.offsetX = s.pos.x || 0; STATE.offsetMatY = s.pos.y || 0; STATE.dragY = s.pos.dy || 0; STATE.layer2Y = s.pos.l2 || 0;
+                STATE.offsetX = s.pos.x || 0; STATE.offsetMatY = s.pos.y || 0; STATE.dragY = s.pos.dy || 0; STATE.panY = s.pos.pY || 0; STATE.layer2Y = s.pos.l2 || 0;
                 STATE.globalAngle = s.pos.ang || 0; STATE.elkaShift = s.pos.elkaS || 0;
                 if(s.pos.f) { STATE.fSize = s.pos.f; UI.fontSizeRange.value = Math.round(s.pos.f); }
                 updateDataTexture();
@@ -1045,9 +1137,9 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                 layers: UI.layersRange.value, rbDir: document.getElementById('rainbowDirSelect').value,
                 search: document.getElementById('searchInput').value,
                 searchSeq: document.getElementById('searchSeqCheck').checked, searchSkip1: document.getElementById('searchSkipFirstCheck').checked, searchDir: document.getElementById('searchDirSelect').value,
-                noWrapX: UI.noWrapXCheck.checked, noWrapY: UI.noWrapYCheck.checked, lightBg: STATE.lightBg, bgColor: document.getElementById('bgColorPicker').value, gridStep: document.getElementById('gridStepInput').value, charZoom: UI.charZoomRange.value, searchOff: document.getElementById('searchOffCheck').checked, fontFace: document.getElementById('fontFaceSelect').value, pixelPerfect: UI.pixelPerfectCheck.checked, radarMode: document.getElementById('radarModeSelect').value, keepGrid: document.getElementById('keepGridCheck').checked,
+                noWrapX: UI.noWrapXCheck.checked, noWrapY: UI.noWrapYCheck.checked, lightBg: STATE.lightBg, bgColor: document.getElementById('bgColorPicker').value, gridStep: document.getElementById('gridStepInput').value, charZoom: UI.charZoomRange.value, searchOff: document.getElementById('searchOffCheck').checked, fontFace: document.getElementById('fontFaceSelect').value, pixelPerfect: UI.pixelPerfectCheck.checked, radarMode: document.getElementById('radarModeSelect').value, keepGrid: document.getElementById('keepGridCheck').checked, gridSep: document.getElementById('gridSepCheck').checked, gridRate: document.getElementById('gridRateRange').value, autoZoom: document.getElementById('autoZoomCheck').checked, autoZoomRate: document.getElementById('autoZoomRate').value, autoZoomDir: document.getElementById('autoZoomDirSelect').value, centerHole: document.getElementById('centerHoleRange').value, polarEven: document.getElementById('polarEvenCheck').checked, seamlessZoom: document.getElementById('seamlessZoomCheck').checked, zoomPeriod: document.getElementById('zoomPeriodInput').value,
                 snap: STATE.lines.map(r => r.map(c => c.c).join('')).join('\n'),
-                pos: { x: STATE.offsetX, y: STATE.offsetMatY, dy: STATE.dragY, l2: STATE.layer2Y, ang: STATE.globalAngle, f: STATE.fSize, elkaS: STATE.elkaShift }
+                pos: { x: STATE.offsetX, y: STATE.offsetMatY, dy: STATE.dragY, pY: STATE.panY, l2: STATE.layer2Y, ang: STATE.globalAngle, f: STATE.fSize, elkaS: STATE.elkaShift }
             };
         }
 
@@ -1111,7 +1203,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         // СТОП: полный сброс движения + фигура заново вписывается в экран (fitView), иначе после сброса смещений холст казался пустым
         UI.stopBtn.addEventListener('click', () => {
             STATE.isPlaying=false; UI.playBtn.innerHTML='▶ ПУСК GPU';
-            STATE.dragY=0; STATE.globalAngle=0; STATE.elkaShift=0; STATE.algoPointer=0; STATE.echoOff=0; STATE.accAnim=0; STATE.accElka=0; STATE.animatrixRow=0;
+            STATE.dragY=0; STATE.globalAngle=0; STATE.elkaShift=0; STATE.algoPointer=0; STATE.echoOff=0; STATE.accAnim=0; STATE.accElka=0; STATE.animatrixRow=0; STATE.gridOffY=0;
             fitView(); updateDataTexture();
             if(AUDIO.init) { document.getElementById('bgAudio').pause(); document.getElementById('bgAudio').currentTime=0; }
         });
@@ -1144,14 +1236,16 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         UI.micBtn.addEventListener('click', () => AUDIO.setupMic()); UI.audioLoader.addEventListener('change', (e) => AUDIO.setupFile(e.target.files[0]));
         UI.clearCanvasBtn.addEventListener('click', () => { STATE.lines = createEmptyMatrix(STATE.COLS, STATE.ROWS); updateDataTexture(); });
         // Настоящая сетка: линии из 1 каждые N клеток, фон 0. При сдвиге на строку не инвертируется (в отличие от шахматки) — не мигает.
+        // Сетка сразу помечается подложкой: при размыкании она продолжит повторяться, а положенная сверху фигура — нет
         UI.generateVacuumBtn.addEventListener('click', () => {
             let n = Math.max(2, Math.min(100, parseInt(document.getElementById('gridStepInput').value, 10) || 8));
             // размеры округляем до кратных шагу — матрица заворачивается по mod(COLS/ROWS), иначе на стыке линии сбиваются
             STATE.COLS=Math.max(n*2, Math.round(150/n)*n); STATE.ROWS=Math.max(n*2, Math.round(250/n)*n); let m=[];
-            for(let y=0;y<STATE.ROWS;y++){ let r=[]; let rowLine = (y % n === 0); for(let x=0;x<STATE.COLS;x++) r.push({c:(rowLine || x % n === 0)?'1':'0',a:0}); m.push(r); }
+            for(let y=0;y<STATE.ROWS;y++){ let r=[]; let rowLine = (y % n === 0); for(let x=0;x<STATE.COLS;x++) r.push({c:(rowLine || x % n === 0)?'1':'0',a:0,g:1}); m.push(r); }
             STATE.lines=m; updateDataTexture();
         });
         UI.charZoomRange.addEventListener('input', () => { document.getElementById('charZoomLabel').textContent = UI.charZoomRange.value + '%'; });
+        document.getElementById('gridRateRange').addEventListener('input', function() { document.getElementById('gridRateLabel').textContent = this.value; });
 
         // Светлый фон холста
         function applyLightBg() {
@@ -1170,6 +1264,20 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         // Связка размыкания по Y и заморозки слоя: без повтора и без якоря фигура при ПУСКе просто уезжает в пустоту навсегда
         UI.noWrapYCheck.addEventListener('change', (e) => { if(e.target.checked) UI.freezeLayer1Check.checked = true; });
         UI.freezeLayer1Check.addEventListener('change', (e) => { if(!e.target.checked) UI.noWrapYCheck.checked = false; });
+
+        // Вершина фрактала (строка 0, середина матрицы) — ровно в центр холста.
+        // Это точка самоподобия: только относительно неё бесшовная петля зума совпадает сама с собой.
+        document.getElementById('apexCenterBtn').addEventListener('click', () => {
+            const W = UI.canvas.width, H = UI.canvas.height;
+            const effX = STATE.effX || STATE.fSize, effY = STATE.effY || STATE.fSize;
+            const gx = W / effX, gy = H / effY;
+            const C = Math.floor((gx - STATE.COLS) / 2);
+            STATE.offsetX = W / 2 - (STATE.COLS / 2 + C) * effX;
+            const offY = -0.5 * gy;
+            if(UI.freezeLayer1Check.checked) STATE.dragY = offY; else STATE.offsetMatY = offY;
+            STATE.panY = 0;
+            document.getElementById('statusInfo').textContent = '🎯 Вершина в центре — можно включать петлю';
+        });
 
         // Отключение поиска: снимаем золотую подсветку, чтобы холст не остался в найденных метках
         document.getElementById('searchOffCheck').addEventListener('change', (e) => {
@@ -1193,13 +1301,13 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         UI.layersRange.addEventListener('input', () => document.getElementById('layersLabel').textContent = UI.layersRange.value);
         const speedMultRange = document.getElementById('speedMultRange');
         speedMultRange.addEventListener('input', () => { UI.speedMultInput.value = speedMultRange.value; document.getElementById('speedMultLabel').textContent = speedMultRange.value; });
-        // Зум колесиком — точка под курсором остаётся на месте
-        UI.canvas.addEventListener('wheel', (e) => {
-            e.preventDefault();
+        // Смена масштаба с якорем в центре холста: что стоит в середине экрана, там и остаётся.
+        // Используется и колесом, и автозумом, и бесшовной петлёй — иначе они расходятся в расчётах.
+        function applyZoom(newF) {
             const W = UI.canvas.width, H = UI.canvas.height;
-            const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
-            const newF = Math.min(160, Math.max(minScale(), STATE.fSize * factor));
-            if(newF === STATE.fSize) return;
+            if(!W || !H || newF === STATE.fSize) return;
+            // В радаре центр задан своими координатами и панорамой двигать его нельзя — иначе при зуме он уползает
+            if(STATE.isRadar) { STATE.fSize = newF; UI.fontSizeRange.value = Math.round(newF); return; }
             // И старый, и новый размер клетки считаем одной формулой — той же, что в кадре, вместе с
             // округлением пиксель-перфекта. Брать STATE.effX нельзя: при быстрой прокрутке колеса
             // несколько событий приходят до отрисовки, и там лежит устаревший размер — отсюда и уползание.
@@ -1222,10 +1330,23 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             const newOffY = (0.5 * gyo + offY) - 0.5 * gyn;
             if(frozen) STATE.dragY = newOffY; else STATE.offsetMatY = newOffY;
             STATE.fSize = newF; UI.fontSizeRange.value = Math.round(newF);
+        }
+        UI.canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+            applyZoom(Math.min(160, Math.max(minScale(), STATE.fSize * factor)));
         }, { passive: false });
         // Мышь: тянем по X всегда, по Y — либо общий скролл, либо ручной сдвиг замороженного слоя
-        UI.canvas.addEventListener('mousedown', (e) => { e.preventDefault(); if(e.button === 1) { toggleZen(); return; } if(e.button !== 0) return; if(STATE.isPlaying) { STATE.wasPlaying = true; STATE.isPlaying = false; UI.playBtn.innerHTML = '▶ ПУСК GPU'; } STATE.isDragging=true; STATE.dragStartX=e.clientX; STATE.dragStartY=e.clientY; STATE.startOffsetX=STATE.offsetX; STATE.startOffsetMatY = UI.freezeLayer1Check.checked ? STATE.dragY : STATE.offsetMatY; });
-        window.addEventListener('mousemove', (e) => { if(STATE.isDragging) { const dpr = window.devicePixelRatio || 1; STATE.offsetX = STATE.startOffsetX + (e.clientX - STATE.dragStartX) * dpr; let ny = STATE.startOffsetMatY - (e.clientY - STATE.dragStartY) * dpr / (STATE.effY || 1); if(UI.freezeLayer1Check.checked) STATE.dragY = ny; else STATE.offsetMatY = ny; } });
+        UI.canvas.addEventListener('mousedown', (e) => { e.preventDefault(); if(e.button === 1) { toggleZen(); return; } if(e.button !== 0) return; if(STATE.isPlaying) { STATE.wasPlaying = true; STATE.isPlaying = false; UI.playBtn.innerHTML = '▶ ПУСК GPU'; } STATE.isDragging=true; STATE.dragStartX=e.clientX; STATE.dragStartY=e.clientY; STATE.startOffsetX=STATE.offsetX; STATE.startPanY=STATE.panY; STATE.startOffsetMatY = UI.freezeLayer1Check.checked ? STATE.dragY : STATE.offsetMatY; });
+        // В радаре вертикаль двигает центр проекции, а не прокрутку строк — иначе непонятно, что вообще едет
+        window.addEventListener('mousemove', (e) => {
+            if(!STATE.isDragging) return;
+            const dpr = window.devicePixelRatio || 1;
+            STATE.offsetX = STATE.startOffsetX + (e.clientX - STATE.dragStartX) * dpr;
+            if(STATE.isRadar) { STATE.panY = STATE.startPanY + (e.clientY - STATE.dragStartY) * dpr; return; }
+            let ny = STATE.startOffsetMatY - (e.clientY - STATE.dragStartY) * dpr / (STATE.effY || 1);
+            if(UI.freezeLayer1Check.checked) STATE.dragY = ny; else STATE.offsetMatY = ny;
+        });
         // Отпустили мышь: сперва возвращаем движение, снятое на время протяжки, потом — клик без сдвига переключает паузу.
         // Порядок важен: для одиночного клика по идущей сцене это даёт ровно одну паузу, а не две подряд.
         window.addEventListener('mouseup', (e) => {
@@ -1235,10 +1356,10 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         });
         // В Дзене холст не только меняет размер, но и переезжает по экрану (панель уходит, поля пропадают).
         // Меряем прямоугольник холста до и после и гасим сдвиг панорамой — картинка остаётся на том же месте экрана.
-        function toggleZen() {
+        function withStableView(fn) {
             const dpr = window.devicePixelRatio || 1;
             let r0 = UI.canvas.getBoundingClientRect();
-            document.body.classList.toggle('zen-mode');
+            fn();
             window.dispatchEvent(new Event('resize'));
             let r1 = UI.canvas.getBoundingClientRect();
             STATE.offsetX += (r0.left - r1.left) * dpr;
@@ -1247,13 +1368,20 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                 if(UI.freezeLayer1Check.checked) STATE.dragY += dy; else STATE.offsetMatY += dy;
             }
         }
+        function toggleZen() { withStableView(() => document.body.classList.toggle('zen-mode')); }
         UI.canvas.addEventListener('dblclick', toggleZen);
         // Средняя кнопка (колесо) — тоже Дзен; auxclick гасим, чтобы не включалась автопрокрутка браузера
         UI.canvas.addEventListener('auxclick', (e) => { if(e.button === 1) e.preventDefault(); });
         UI.themeSelect.addEventListener('change', function() { const t = THEMES[this.value]; if(t) { UI.activeColorPicker.value = t.act; UI.staticColorPicker.value = t.stat; }});
         
         const panel = document.getElementById('leftPanel'); let startX, startY, startLeft, startTop;
-        UI.toggleFloatPanelBtn.addEventListener('click', function() { STATE.isPanelFloating = !STATE.isPanelFloating; if(STATE.isPanelFloating) { panel.classList.add('floating'); this.style.background = '#00ff66'; this.style.color = '#000'; panel.style.left = '50px'; panel.style.top = '10px'; } else { panel.classList.remove('floating'); this.style.background = '#0088ff'; this.style.color = '#fff'; panel.style.left = ''; panel.style.top = ''; } });
+        // Кнопка просто прячет и возвращает панель; холст при этом остаётся на месте
+        UI.toggleFloatPanelBtn.addEventListener('click', function() {
+            withStableView(() => document.body.classList.toggle('panel-hidden'));
+            let hidden = document.body.classList.contains('panel-hidden');
+            this.style.background = hidden ? '#00ff66' : '#0088ff'; this.style.color = hidden ? '#000' : '#fff';
+            this.title = hidden ? 'Показать панель' : 'Скрыть панель';
+        });
         panel.addEventListener('mousedown', function(e) { if(!STATE.isPanelFloating) return; if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON' || e.target.closest('.scrollable-settings') || e.target.closest('.fixed-player')) return; STATE.isDraggingPanel = true; startX = e.clientX; startY = e.clientY; startLeft = panel.offsetLeft; startTop = panel.offsetTop; }); window.addEventListener('mousemove', function(e) { if(STATE.isDraggingPanel) { panel.style.left = (startLeft + e.clientX - startX) + 'px'; panel.style.top = (startTop + e.clientY - startY) + 'px'; } }); window.addEventListener('mouseup', function() { STATE.isDraggingPanel = false; });
 
         // Кеш: всё состояние целиком в памяти браузера, восстанавливается при открытии
