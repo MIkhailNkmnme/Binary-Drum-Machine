@@ -8,17 +8,93 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius GPU v0.66 (Core + Synth)</title>
+    <title>Zerkalius GPU v0.147 (Core + Synth)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
-        body { background: #050505; color: #00ff66; font-family: 'Roboto Mono', monospace; margin: 0; overflow: hidden; height: 100vh; transition: background 0.3s; }
-        .main-layout { display: flex; gap: 0; height: 100%; align-items: stretch; flex-direction: row; position: relative; }
-        .controls { width: 310px; min-width: 310px; display: flex; flex-direction: column; background: rgba(16, 16, 16, 0.95); padding: 6px; border-radius: 0; border: none; border-right: 1px solid #222; box-sizing: border-box; height: 100%; z-index: 100; transition: left 0.1s, top 0.1s; }
+        body { background: #050505; color: #00ff66; font-family: 'Roboto Mono', monospace; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; transition: background 0.3s; }
+        /* Холст всегда на весь экран; левая/правая панели — плавающие доки поверх картинки,
+           а не колонки, отъедающие место у канваса. Растут по высоте по мере заполнения,
+           упираются в низ экрана — и дальше сами скроллятся. */
+        .main-layout { position: relative; flex: 1; min-height: 0; }
+        /* Верхняя полоса-меню */
+        /* Три колонки: заголовок / вкладки / пусто — крайние равны, поэтому вкладки центрируются
+           по ВСЕЙ полосе, а не по остатку места после заголовка */
+        #menuBar { flex-shrink: 0; height: 34px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; background: #101010; border-bottom: 1px solid #222; padding: 0 4px; position: relative; z-index: 200; user-select: none; }
+        #appTitle { justify-self: start; margin: 0 0 0 6px; font-size: 12px; color: #ffffff; text-shadow: 0 0 8px rgba(0,255,102,0.3); white-space: nowrap; }
+        #menuTabs { display: flex; align-items: center; gap: 4px; position: relative; }
+        .menu-btn { display: flex; align-items: center; gap: 5px; background: none; border: 1px solid #2a2a2a; color: #bbb; font-family: inherit; font-size: 12px; padding: 3px 10px; cursor: pointer; border-radius: 3px; }
+        .menu-btn:hover { background: #1e1e1e; color: #fff; border-color: #444; } .menu-btn.open, .menu-btn.pinned { background: #262626; color: #00ff66; border-color: #00ff66; }
+        .menu-btn.open:hover, .menu-btn.pinned:hover { filter: brightness(1.3); }
+        .menu-pin-inline { display: none; }
+        body.light-ui .menu-btn { border-color: #ccc; }
+        /* «Показать/скрыть все» — не отдельная кнопка, а толстая подчёркивающая линия под всем
+           рядом вкладок; клик по ней переключает разом все панели, цвет линии отражает состояние. */
+        #toggleAllPinsBtn { position: absolute; left: 0; right: 0; bottom: -8px; height: 6px; border: none; border-radius: 3px; background: #333; cursor: pointer; padding: 0; margin: 0; opacity: 0; transition: background 0.2s, opacity 0.2s; }
+        #menuTabs:hover #toggleAllPinsBtn { opacity: 1; }
+        #toggleAllPinsBtn:hover { background: #555; }
+        #toggleAllPinsBtn.all-on { background: #00ff66; box-shadow: 0 0 6px rgba(0,255,102,0.6); }
+        #toggleAllPinsBtn.all-on:hover { filter: brightness(1.3); }
+        body.light-ui #toggleAllPinsBtn { background: #ccc; }
+        body.light-ui #toggleAllPinsBtn:hover { background: #aaa; }
+        body.light-ui #toggleAllPinsBtn.all-on { background: #009944; box-shadow: 0 0 6px rgba(0,153,68,0.4); }
+        body.light-ui #toggleAllPinsBtn.all-on:hover { filter: brightness(1.3); }
+        /* При наведении на полосу обводы уже закреплённых (зелёных) вкладок притухают —
+           подсказка, что клик их выключит. */
+        #toggleAllPinsBtn:hover ~ .menu-btn.pinned { filter: brightness(0.6); transition: filter 0.15s; }
+        body.light-ui .menu-btn-all:hover { background: #b8f5d2; color: #004422; }
+        .menu-pin-inline { margin: 0; cursor: pointer; }
+        .menu-drop { display: none; position: absolute; top: 34px; left: 2px; width: 320px; max-height: 82vh; overflow-y: auto; background: #0e0e0e; border: 1px solid #333; border-top: none; border-radius: 0 0 4px 4px; padding: 4px; box-shadow: 0 6px 18px rgba(0,0,0,0.6); flex-direction: column; gap: 6px; z-index: 300; }
+        .menu-drop.open { display: flex; }
+        .drag-handle { align-self: center; width: 100%; text-align: center; color: #555; font-size: 10px; line-height: 10px; cursor: grab; user-select: none; letter-spacing: 3px; }
+        .drag-handle:hover { color: #00ccff; } .drag-handle:active { cursor: grabbing; }
+        .dragging { opacity: 0.45; outline: 1px dashed #00ccff; }
+        /* Плавающая панель поверх холста — вынута из потока, позиция в пикселях окна */
+        .floating-panel { position: fixed; z-index: 120; width: 290px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); opacity: 1 !important; outline: none !important; user-select: none; }
+        /* .controls и .floating-panel гасят выделение текста целиком (кнопки/лейблы задевает драг заголовка),
+           но в полях ввода оно должно работать как обычно — возвращаем выборочно */
+        .controls input, .controls textarea, .floating-panel input, .floating-panel textarea { user-select: text; }
+        body.light-ui .drag-handle { color: #999; }
+        /* Каждый блок внутри панели — законченная рамка, даже если своего цвета акцента нет */
+        .control-group.panel-block { border: 1px solid #2a2a2a !important; border-radius: 3px; padding: 6px; }
+        body.light-ui .control-group.panel-block { border-color: #ccc !important; }
+        /* Вкладка меню как цельная панель: одна ручка в шапке двигает весь блок разом.
+           Свой паддинг у обёртки не нужен — внутренние блоки (panel-block/fixed-player/
+           control-group-highlight) уже дают себе рамку и отступ, дублировать их не нужно. */
+        .menu-panel { display: flex; flex-direction: column; gap: 6px; border: 1px solid #333; border-radius: 4px; background: #141414; padding: 0 4px 4px; }
+        .panel-head { display: flex; align-items: center; gap: 8px; padding: 6px 2px 4px; border-bottom: 1px solid #333; margin-bottom: 2px; cursor: grab; }
+        .panel-head:active { cursor: grabbing; }
+        .panel-drag { color: #555; font-size: 12px; letter-spacing: 2px; user-select: none; }
+        .panel-head:hover .panel-drag { color: #00ccff; }
+        .panel-title { font-weight: bold; font-size: 12px; color: #ccc; flex: 1; }
+        .panel-close { color: #666; font-size: 13px; line-height: 1; cursor: pointer; padding: 2px 3px; }
+        .panel-close:hover { color: #ff5555; }
+        body.light-ui .menu-panel { border-color: #ccc; background: #f0f0f0; } body.light-ui .panel-head { border-bottom-color: #ccc; }
+        body.light-ui .panel-title { color: #333; } body.light-ui .panel-drag { color: #999; }
+        body.light-ui .panel-close { color: #999; } body.light-ui .panel-close:hover { color: #cc3333; }
+        body.zen-mode #menuBar { display: none !important; }
+        body.light-ui #menuBar { background: #ececec; border-bottom-color: #ccc; }
+        body.light-ui #appTitle { color: #111; text-shadow: none; }
+        body.light-ui .menu-btn { color: #333; } body.light-ui .menu-btn:hover { background: #ddd; color: #000; } body.light-ui .menu-btn.open, body.light-ui .menu-btn.pinned { background: #ddd; color: #007744; }
+        body.light-ui .menu-drop { background: #f8f8f8; border-color: #bbb; }
+        .controls { position: absolute; top: 0; width: 310px; max-height: 100%; overflow-y: auto; display: flex; flex-direction: column; background: transparent; padding: 6px; box-sizing: border-box; z-index: 90; box-shadow: 0 0 16px rgba(0,0,0,0.5); user-select: none; scrollbar-width: thin; scrollbar-color: transparent transparent; scrollbar-gutter: stable; }
+        .controls.dock-empty { background: transparent; box-shadow: none; height: 100%; }
+        /* Пока идёт перетаскивание — обе зоны сразу помечены слабым пунктиром (сюда МОЖНО
+           бросить), а та, что реально под курсором, дополнительно подсвечивается ярче
+           (сюда бросишь СЕЙЧАС). Обе зоны показываются одновременно — и слева, и справа. */
+        .controls.drop-zone-hint { outline: 2px dashed rgba(0,255,102,0.45); outline-offset: -2px; height: 100%; }
+        body.light-ui .controls.drop-zone-hint { outline-color: rgba(0,153,68,0.45); }
+        .controls.drag-target { outline: 2px dashed #00ff66; outline-offset: -2px; background: rgba(0,255,102,0.1); box-shadow: 0 0 20px rgba(0,255,102,0.35); height: 100%; }
+        body.light-ui .controls.drag-target { outline-color: #00aa55; background: rgba(0,170,85,0.12); }
+        .controls:hover { scrollbar-color: #333 transparent; }
+        .controls::-webkit-scrollbar { width: 9px; } .controls::-webkit-scrollbar-track { background: transparent; } .controls::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; }
+        .controls::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+        .controls:hover::-webkit-scrollbar-thumb { background: #333; }
+        #rightPanel { direction: rtl; } #rightPanel > * { direction: ltr; }
+        #leftPanel { left: 0; padding-right: 0; padding-left: 0; }
         .controls.floating { position: absolute; top: 10px; left: 50px; height: 90vh; box-shadow: 0 0 20px rgba(0,255,102,0.2); border: 1px solid #00ff66; cursor: grab; }
         .controls.floating:active { cursor: grabbing; } .controls.floating .scrollable-settings, .controls.floating .fixed-player { cursor: default; }
         .fixed-top { flex-shrink: 0; display: flex; flex-direction: column; gap: 5px; border-bottom: 2px solid #222; padding-bottom: 6px; margin-bottom: 4px; }
-        .scrollable-settings { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px; }
-        .scrollable-settings::-webkit-scrollbar { width: 6px; } .scrollable-settings::-webkit-scrollbar-track { background: #111; } .scrollable-settings::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        .scrollable-settings { display: flex; flex-direction: column; gap: 6px; padding-right: 2px; }
         .fixed-player { flex-shrink: 0; background: #141414; border: 1px solid #222; border-radius: 4px; padding: 6px; display: flex; flex-direction: column; gap: 4px; margin-top: 4px; border-top: 2px solid #00ff66; }
         h3 { margin: 0 0 3px 0; color: #ffffff; text-shadow: 0 0 10px rgba(0,255,102,0.3); font-size: 14px; text-align: center; }
         .player-buttons { display: flex; gap: 4px; width: 100%; } .player-buttons button { font-size: 14px; font-family: inherit; border: none; cursor: pointer; border-radius: 3px; padding: 5px 2px; display:flex; align-items:center; justify-content:center;}
@@ -33,16 +109,27 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         label { font-size: 11px; display: flex; justify-content: space-between; align-items: center; user-select: none; color: #888; } .compact-row { display: flex; gap: 4px; justify-content: space-between; align-items: center; } .checkbox-row { display: flex; align-items: center; justify-content: flex-start; gap: 8px; margin-bottom: 2px; cursor: pointer; } .checkbox-row span { color: #aaa; font-size: 11px; } .checkbox-row:hover span { color: #fff; }
         input[type="range"] { width: 100%; cursor: pointer; margin-top: 1px; } input[type="text"], input[type="number"], textarea { background: #151515; color: #fff; border: 1px solid #333; padding: 4px; border-radius: 3px; font-family: inherit; font-size: 11px; outline: none; width: 100%; box-sizing: border-box; } input[type="color"] { border: none; width: 28px; height: 16px; padding: 0; background: none; cursor: pointer; } select { background: #222; color: #fff; border: 1px solid #444; padding: 3px; border-radius: 3px; width: 100%; font-family: inherit; font-size: 11px; outline: none; cursor: pointer;}
         #statusInfo { font-size: 10px; color: #ffcc00; text-align: center; margin-top: 1px; min-height: 11px; }
-        #screenContainer { flex-grow: 1; background: #000000; border: none; border-radius: 0; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        #rightPanel { right: 0; width: 300px; padding-left: 0; padding-right: 0; }
+        #screenContainer { position: absolute; inset: 0; background: #000000; border: none; border-radius: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         canvas { display: block; width: 100%; height: 100%; cursor: grab; } canvas:active { cursor: grabbing; }
         .float-btn { position: absolute; z-index: 10; border: none; cursor: pointer; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: opacity 0.3s; left: 8px;}
-        #toggleFloatPanelBtn { top: 12px; background: #0088ff; color: #fff; box-shadow: 0 0 8px rgba(0, 136, 255, 0.5); border-radius: 3px; height: 26px; width: 34px;}
-        #toggleRadarBtn { top: 50%; transform: translateY(-50%); background: #cc33ff; color: #fff; box-shadow: 0 0 10px rgba(204, 51, 255, 0.6); border-radius: 8px; }
+        /* Раньше плавала кружком поверх холста (.float-btn); переехала в верхнюю панель вкладок —
+           компактная квадратная иконка вместо круга, размер по высоте #menuBar (34px) */
+        #toggleRadarBtn { border: none; cursor: pointer; border-radius: 4px; width: 26px; height: 24px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; background: #cc33ff; color: #fff; box-shadow: 0 0 8px rgba(204, 51, 255, 0.5); }
+        #toggleRadarBtn:hover { filter: brightness(1.3); }
+        /* Метки выделенных клеток: слой поверх холста, кликов не ловит — их ловит сам холст */
+        #cellMarkers { position: absolute; inset: 0; pointer-events: none; z-index: 8; }
+        .cell-marker { position: absolute; transform: translate(-50%, -50%); box-sizing: border-box; border: 2px solid #00ccff; border-radius: 3px; display: flex; align-items: center; justify-content: center; font: bold 11px monospace; color: #00ccff; background: rgba(0, 40, 60, 0.25); text-shadow: 0 0 4px #000; }
+        .cell-marker.on { border-color: #00ff66; color: #00ff66; background: rgba(0, 255, 102, 0.22); box-shadow: 0 0 10px rgba(0, 255, 102, 0.7); }
+        .cell-marker.empty { border-color: #666; color: #888; background: transparent; }
+        .cell-marker i { position: absolute; top: -11px; left: -2px; font: 9px monospace; font-style: normal; opacity: 0.8; }
+        body.cell-picking canvas { cursor: crosshair; }
         .color-palette { display: flex; flex-direction: column; gap: 2px; background: #1a1a1a; padding: 4px; border-radius: 3px; margin-top: 2px; } .palette-row { display: flex; gap: 4px; align-items: center; justify-content: space-between; } .palette-row span { font-size: 9px; color: #ccc; width: 45px; }
-        #fpsCounter { position: absolute; top: 10px; right: 10px; color: #cc00ff; font-size: 12px; z-index: 50; background: rgba(0,0,0,0.7); padding: 3px 7px; border-radius: 3px; pointer-events: none; font-weight:bold; border: 1px solid #cc00ff;}
+        /* Третья, правая колонка сетки меню — раньше пустовала для симметрии, теперь тут счётчик FPS */
+        #fpsCounter { justify-self: end; margin: 0 6px 0 0; color: #cc00ff; font-size: 11px; background: rgba(255,255,255,0.05); padding: 2px 7px; border-radius: 3px; pointer-events: none; font-weight:bold; border: 1px solid #cc00ff; white-space: nowrap; }
         /* Светлая панель приборов — включается вместе со светлым фоном холста */
         body.light-ui { background: #e8e8e8; color: #222; }
-        body.light-ui .controls { background: rgba(245,245,245,0.97); border-right-color: #bbb; }
+        body.light-ui .controls { background: transparent; }
         body.light-ui .fixed-top { border-bottom-color: #ccc; }
         body.light-ui .fixed-player { background: #ededed; border-color: #ccc; border-top-color: #0aa; }
         body.light-ui h3 { color: #111; text-shadow: none; }
@@ -56,9 +143,9 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         body.light-ui .color-palette { background: #e4e4e4; } body.light-ui .palette-row span { color: #444; }
         body.light-ui .btn-file { background: #dcdcdc; color: #111; border-color: #bbb; }
         body.light-ui #fpsCounter { background: rgba(255,255,255,0.8); color: #a000c0; }
-        body.light-ui .scrollable-settings::-webkit-scrollbar-track { background: #ddd; } body.light-ui .scrollable-settings::-webkit-scrollbar-thumb { background: #aaa; }
-        body.panel-hidden .controls { display: none !important; }
-        body.zen-mode .controls { display: none !important; } body.zen-mode .float-btn, body.zen-mode #fpsCounter { opacity: 0 !important; pointer-events: none; } body.zen-mode { margin: 0; height: 100vh; }
+        body.light-ui .controls:hover::-webkit-scrollbar-track { background: #ddd; } body.light-ui .controls:hover::-webkit-scrollbar-thumb { background: #aaa; }
+        body.light-ui .controls:hover { scrollbar-color: #aaa #ddd; }
+        body.zen-mode .controls { display: none !important; } body.zen-mode .float-btn { opacity: 0 !important; pointer-events: none; } body.zen-mode { margin: 0; height: 100vh; }
         /* Общая тактильность кнопок: подсветка при наведении, вдавливание при нажатии */
         button { transition: filter .15s, box-shadow .15s, transform .05s; }
         button:hover { filter: brightness(1.25); }
@@ -74,42 +161,66 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         .float-btn:hover { filter: brightness(1.35); }
         select:focus, textarea:focus, input[type="text"]:focus, input[type="number"]:focus { border-color: #00ff66; box-shadow: 0 0 6px rgba(0, 255, 102, 0.35); }
         /* Поле поиска: под текстом лежит слой полос — найденные строки подсвечиваются золотом */
-        #searchWrap { position: relative; height: 80px; background: #151515; border: 1px solid #333; border-radius: 3px; overflow: hidden; }
+        #searchWrap { position: relative; height: 80px; min-height: 40px; background: #151515; border: 1px solid #333; border-radius: 3px; overflow: hidden; resize: vertical; }
         #searchHL { position: absolute; left: 0; top: 0; right: 0; bottom: 0; padding: 4px; margin: 0; overflow: hidden; pointer-events: none; }
         #searchHL div { height: 14px; border-radius: 2px; }
-        #searchHL span { display: inline-block; width: 20px; text-align: right; margin-right: 4px; color: #777; font-size: 9px; line-height: 14px; }
-        #searchInput { position: absolute; left: 0; top: 0; width: 100%; height: 100%; padding: 4px 4px 4px 30px; margin: 0; box-sizing: border-box; background: transparent; border: none; outline: none; color: #fff; font-family: inherit; font-size: 10px; line-height: 14px; resize: none; }
+        #searchHL span { display: inline-block; width: 20px; text-align: right; margin-right: 4px; color: #777; font-size: 10px; line-height: 14px; }
+        #searchInput { position: absolute; left: 0; top: 0; width: 100%; height: 100%; padding: 4px 4px 4px 30px; margin: 0; box-sizing: border-box; background: transparent; border: none; outline: none; color: #fff; font-family: inherit; font-size: 10px; line-height: 14px; resize: none; white-space: pre; overflow-x: hidden; }
     </style>
 </head>
 <body>
+    <!-- Верхняя полоса-меню: пункты открывают выпадающие окна, в Дзене полоса скрывается -->
+    <div id="menuBar">
+        <h3 id="appTitle">Zerkalius GPU Core + Synth — v0.147</h3>
+        <div id="menuTabs">
+            <button id="toggleAllPinsBtn" title="Показать/скрыть все панели разом"></button>
+            <button id="toggleRadarBtn" title="Топологический Радар">🛰️</button>
+            <div class="menu-btn" data-menu="menuPlayer"><span>Плеер</span><input type="checkbox" class="menu-pin-inline" id="menuPlayerPin" title="Показывать в панели"></div>
+            <div id="menuPlayer" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuScene"><span>Сцена</span><input type="checkbox" class="menu-pin-inline" id="menuScenePin" title="Показывать в панели"></div>
+            <div id="menuScene" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuAudio"><span>Звук</span><input type="checkbox" class="menu-pin-inline" id="menuAudioPin" title="Показывать в панели"></div>
+            <div id="menuAudio" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuView"><span>Вид</span><input type="checkbox" class="menu-pin-inline" id="menuViewPin" title="Показывать в панели"></div>
+            <div id="menuView" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuRadar"><span>Радар</span><input type="checkbox" class="menu-pin-inline" id="menuRadarPin" title="Показывать в панели"></div>
+            <div id="menuRadar" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuMove"><span>Движение</span><input type="checkbox" class="menu-pin-inline" id="menuMovePin" title="Показывать в панели"></div>
+            <div id="menuMove" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuGen"><span>Генератор</span><input type="checkbox" class="menu-pin-inline" id="menuGenPin" title="Показывать в панели"></div>
+            <div id="menuGen" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuGrid"><span>Сетка</span><input type="checkbox" class="menu-pin-inline" id="menuGridPin" title="Показывать в панели"></div>
+            <div id="menuGrid" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuSearch"><span>Поиск</span><input type="checkbox" class="menu-pin-inline" id="menuSearchPin" title="Показывать в панели"></div>
+            <div id="menuSearch" class="menu-drop"></div>
+        </div>
+        <div id="fpsCounter">FPS: 0 | GPU</div>
+    </div>
     <div class="main-layout">
         <div class="controls" id="leftPanel">
-            <div class="fixed-top">
-                <h3>GPU Core + Synth — v0.66</h3>
-                <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Сбросить GPU Холст</button>
-                <div class="control-group-gold" style="padding: 4px;">
-                    <div class="compact-row">
-                        <select id="sceneSelect" style="font-weight:bold; color:#ffcc00; flex: 2;"><option value="">📍 Пресеты Сцен</option></select>
-                        <button id="saveSceneBtn" class="btn-zerkalius" style="background:#ff9900; margin: 0; flex: 1; padding: 3px;">💾 Сохр</button>
-                    </div>
-                    <div class="compact-row" style="margin-top:2px;">
-                        <button id="exportScenesBtn" class="btn-zerkalius" style="background:#886600; color:#fff; margin:0; flex:1; padding:3px;">⬇ Экспорт</button>
-                        <div class="file-input-wrapper" style="flex:1;"><span class="btn-file" style="background:#664400; color:#ffcc00;">⬆ Импорт</span><input type="file" id="importScenes" accept=".json,application/json"></div>
-                    </div>
-                    <button id="cacheSaveBtn" class="btn-vacuum" style="background:#0077aa; color:#fff; margin-top:3px;">🧠 Запомнить всё (кеш)</button>
-                    <button id="cacheClearBtn" class="btn-vacuum" style="background:#553300; color:#ffaa66; margin-top:3px;">🧹 Заводские настройки</button>
+            <audio id="bgAudio" loop style="display:none;"></audio>
+            <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Сбросить GPU Холст</button>
+            <div class="control-group-gold" id="sceneGroup" style="padding: 4px;">
+                <div class="compact-row">
+                    <select id="sceneSelect" style="font-weight:bold; color:#ffcc00; flex: 2;"><option value="">📍 Пресеты Сцен</option></select>
+                    <button id="saveSceneBtn" class="btn-zerkalius" style="background:#ff9900; margin: 0; flex: 1; padding: 3px;">💾 Сохр</button>
                 </div>
-                <div class="compact-row" style="margin-top: 4px;">
-                    <div class="file-input-wrapper"><span class="btn-file btn-audio" id="audioBtnText">🎵 Трек</span><input type="file" id="audioLoader" accept="audio/*"></div>
-                    <button id="micBtn" class="btn-mic">🎤 Звук ПК</button>
+                <div class="compact-row" style="margin-top:2px;">
+                    <button id="exportScenesBtn" class="btn-zerkalius" style="background:#886600; color:#fff; margin:0; flex:1; padding:3px;">⬇ Экспорт</button>
+                    <div class="file-input-wrapper" style="flex:1;"><span class="btn-file" style="background:#664400; color:#ffcc00;">⬆ Импорт</span><input type="file" id="importScenes" accept=".json,application/json"></div>
                 </div>
-                <audio id="bgAudio" loop style="display:none;"></audio>
-                <div id="statusInfo">Ctrl+V — вставить фигуру | 2×клик — Дзен</div>
+                <button id="cacheSaveBtn" class="btn-vacuum" style="background:#0077aa; color:#fff; margin-top:3px;">🧠 Запомнить всё (кеш)</button>
+                <button id="cacheClearBtn" class="btn-vacuum" style="background:#553300; color:#ffaa66; margin-top:3px;">🧹 Заводские настройки</button>
             </div>
+            <div class="compact-row" id="audioRow" style="margin-top: 4px;">
+                <div class="file-input-wrapper"><span class="btn-file btn-audio" id="audioBtnText">🎵 Трек</span><input type="file" id="audioLoader" accept="audio/*"></div>
+                <button id="micBtn" class="btn-mic">🎤 Звук ПК</button>
+            </div>
+            <div id="statusInfo">Ctrl+V — вставить фигуру | 2×клик — Дзен</div>
 
-            <div class="scrollable-settings">
+            <div class="scrollable-settings" id="leftSlot">
                 <!-- ЗВУКОВОЙ СИНТЕЗАТОР (ЭТАП 1) -->
-                <div class="control-group" style="background: #112211; border: 1px solid #00ff66; padding: 4px; border-radius: 3px;">
+                <div class="control-group" id="synthGroup" style="background: #112211; border: 1px solid #00ff66; padding: 4px; border-radius: 3px;">
                     <label class="checkbox-row"><input type="checkbox" id="binarySynthCheck"><span style="color:#00ff66; font-weight:bold;">🎹 Бинарный Драм-Синтезатор</span></label>
                     <div class="compact-row">
                         <label style="color:#aaa;">Громкость:</label>
@@ -117,19 +228,65 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                     </div>
                 </div>
 
+                <!-- ЗВУК ИЗ ВЫДЕЛЕННЫХ ЯЧЕЕК: клетка = нота, звучит пока в ней ЕДИНИЦА -->
+                <div class="control-group" id="cellSynthGroup" style="background: #101a22; border: 1px solid #00ccff; padding: 4px; border-radius: 3px;">
+                    <label class="checkbox-row"><input type="checkbox" id="cellSelectCheck"><span style="color:#00ccff; font-weight:bold;">🎯 Выделение ячеек (клик по холсту)</span></label>
+                    <label class="checkbox-row"><input type="checkbox" id="cellSynthCheck"><span style="color:#00ccff;">🔊 Звук из выделенных ячеек</span></label>
+                    <div class="compact-row">
+                        <label style="color:#aaa;">Привязка:</label>
+                        <select id="cellAnchorSelect" style="width:150px;">
+                            <option value="column" selected>Столбец (строки бегут сквозь)</option>
+                            <option value="cell">Клетка (значение застывает)</option>
+                            <option value="screen">Точка экрана</option>
+                        </select>
+                    </div>
+                    <div class="compact-row">
+                        <label style="color:#aaa;">Режим:</label>
+                        <select id="cellModeSelect" style="width:150px;">
+                            <option value="hold">Держать ноту, пока 1</option>
+                            <option value="step" selected>Щелчок по шагу, если 1</option>
+                            <option value="edge">Щелчок в момент 0→1</option>
+                        </select>
+                    </div>
+                    <div class="compact-row">
+                        <label style="color:#aaa;">Шаг:</label>
+                        <input type="range" id="cellStepRange" min="0" max="600" step="10" value="120" style="width: 100px;">
+                        <span id="cellStepLabel" style="color:#00ccff; font-size:10px;">120 мс</span>
+                    </div>
+                    <div class="compact-row">
+                        <label style="color:#aaa;">Тембр:</label>
+                        <select id="cellWaveSelect" style="width:80px;">
+                            <option value="sine">Синус</option>
+                            <option value="triangle">Треугольник</option>
+                            <option value="square" selected>Квадрат</option>
+                            <option value="sawtooth">Пила</option>
+                        </select>
+                        <label style="color:#aaa;">Окт:</label>
+                        <input type="number" id="cellOctaveInput" min="-3" max="3" step="1" value="0" style="width:38px;">
+                    </div>
+                    <div class="compact-row">
+                        <label style="color:#aaa;">Громкость:</label>
+                        <input type="range" id="cellVolRange" min="0" max="100" value="50" style="width: 110px;">
+                    </div>
+                    <div class="compact-row">
+                        <button id="cellClearBtn" class="btn-vacuum" style="background:#223344; color:#cfe; flex:1;">✖ Снять выделение</button>
+                    </div>
+                    <div id="cellReadout" style="font: 11px monospace; color:#00ccff; margin-top:3px; word-break:break-all;">нет выделенных ячеек</div>
+                </div>
+
                 <!-- ШЕЙДЕРНЫЕ ЭФФЕКТЫ (ЭТАП 3) -->
-                <div class="control-group" style="background: #221100; border: 1px solid #ff9900; padding: 4px; border-radius: 3px;">
+                <div class="control-group" id="fxGroup" style="background: #221100; border: 1px solid #ff9900; padding: 4px; border-radius: 3px;">
                     <label class="checkbox-row"><input type="checkbox" id="crtEffectCheck"><span style="color:#ff9900; font-weight:bold;">📺 ЭЛТ Экран (CRT FX + Bloom)</span></label>
                 </div>
 
-                <div class="control-group">
+                <div class="control-group panel-block" id="reactGroup">
                     <label class="checkbox-row" style="background: #2a0044; padding: 4px; border-radius: 3px;"><input type="checkbox" id="audioReactCheck"><span style="color:#cc66ff; font-weight:bold;">Аудио-Реактивность</span></label>
                     <label class="checkbox-row" style="background: #00331a; padding: 4px; border-radius: 3px;"><input type="checkbox" id="autoPilotCheck"><span style="color:#00ff88; font-weight:bold;">🤖 AI Авто-Пилот</span></label>
                     <label class="checkbox-row" style="background: #2a0000; padding: 4px; border-radius: 3px;"><input type="checkbox" id="echoModeCheck"><span style="color:#ff6666; font-weight:bold;">Каскадное Эхо (GPU)</span></label>
                     <input type="range" id="echoRate" min="0" max="300" value="100">
                 </div>
 
-                <div class="control-group control-group-highlight" style="border-color: #00ccff;">
+                <div class="control-group control-group-highlight" id="genGroup" style="border-color: #00ccff;">
                     <label style="color:#00ccff; text-align:center; font-weight:bold;">Генератор Фракталов</label>
                     <select id="zerkRuleSelect" style="margin: 4px 0;">
                         <option value="90">Правило 90 (Классика)</option>
@@ -147,24 +304,27 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                     </div>
                     <label class="checkbox-row" style="margin-top: 4px;"><input type="checkbox" id="trimZerosCheck" checked><span>Обрезать фон</span></label>
                     <label class="checkbox-row"><input type="checkbox" id="mirrorFoldCheck"><span style="color:#00ffcc;">🔷 Сложить в квадрат (зеркально)</span></label>
-                    <label class="checkbox-row"><input type="checkbox" id="keepGridCheck"><span style="color:#ff66ff;">🧱 Не стирать сетку (наложить сверху)</span></label>
+                    <button id="zerkaliusBtn" class="btn-zerkalius" style="background:#00ccff;">Создать Фигуру</button>
+                </div>
+
+                <div class="control-group control-group-highlight" id="gridGroup" style="border-color: #cc00ff;">
+                    <label style="color:#cc00ff; text-align:center; font-weight:bold;">Сетка</label>
+                    <label class="checkbox-row"><input type="checkbox" id="gridShowCheck" checked><span style="color:#cc00ff;">👁 Показывать сетку</span></label>
+                    <div class="compact-row">
+                        <label>Шаг сетки:<input type="number" id="gridStepInput" value="8" min="2" max="100" style="width: 50px; text-align:center;"></label>
+                    </div>
+                    <button id="generateVacuumBtn" class="btn-vacuum" style="background:#330033; color:#cc00ff;">Генерировать Сетку</button>
+                    <label class="checkbox-row" style="margin-top:4px;"><input type="checkbox" id="keepGridCheck"><span style="color:#ff66ff;">🧱 Не стирать сетку (наложить сверху)</span></label>
                     <label class="checkbox-row"><input type="checkbox" id="gridSepCheck"><span style="color:#ff66ff;">↕ Сетка едет отдельно</span></label>
                     <div class="compact-row">
                         <label>Скорость сетки <span id="gridRateLabel">-100</span>:</label>
                         <input type="range" id="gridRateRange" min="-300" max="300" value="-100" style="flex:1; margin-left: 8px;">
                     </div>
-                    <button id="zerkaliusBtn" class="btn-zerkalius" style="background:#00ccff;">Создать Фигуру</button>
-                    <div class="compact-row" style="margin-top:2px;">
-                        <label>Шаг сетки:<input type="number" id="gridStepInput" value="8" min="2" max="100" style="width: 50px; text-align:center;"></label>
-                    </div>
-                    <button id="generateVacuumBtn" class="btn-vacuum" style="background:#330033; color:#cc00ff;">Генерировать Сетку</button>
-                    <label class="checkbox-row" style="margin-top:4px;"><input type="checkbox" id="noWrapXCheck" checked><span style="color:#ff9900;">⇆ Разомкнуть по X (без повтора)</span></label>
-                    <label class="checkbox-row"><input type="checkbox" id="noWrapYCheck" checked><span style="color:#ff9900;">⇅ Разомкнуть по Y (без повтора)</span></label>
                 </div>
 
-                <div class="control-group control-group-highlight" style="border-color: #ffd700;">
-                    <label style="color:#ffd700; text-align:center; font-weight:bold;">🔎 Поиск паттернов</label>
+                <div class="control-group control-group-highlight" id="searchGroup" style="border-color: #ffd700;">
                     <label class="checkbox-row"><input type="checkbox" id="searchOffCheck"><span style="color:#ffaa00; font-weight:bold;">⏸ Отключить поиск</span></label>
+                    <label class="checkbox-row"><input type="checkbox" id="searchHighlightCheck" checked><span>💡 Подсвечивать найденное на холсте</span></label>
                     <div id="searchWrap">
                         <div id="searchHL"></div>
                         <textarea id="searchInput" spellcheck="false" placeholder="паттерны, по одному на строку:&#10;1&#10;10&#10;101…"></textarea>
@@ -177,8 +337,8 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                         <option value="v">↓ Только по вертикали</option>
                         <option value="d">↘ Только по диагоналям</option>
                     </select>
-                    <label style="font-size:10px;">Частота поиска: <span id="searchRateLabel">0.4с</span></label>
-                    <input type="range" id="searchRateRange" min="0" max="5000" step="100" value="400">
+                    <label style="font-size:10px;">Частота поиска: <span id="searchRateLabel">каждый кадр</span></label>
+                    <input type="range" id="searchRateRange" min="0" max="5000" step="100" value="0">
                     <div class="compact-row" style="gap:4px; margin-top:2px;">
                         <button id="gotoFoundBtn" class="btn-vacuum" style="background:#443300; color:#ffd700; margin:0; flex:1;">🎯 К находке</button>
                         <button id="resetSearchBtn" class="btn-vacuum" style="background:#332200; color:#ffaa00; margin:0; flex:1;">✖ Сброс</button>
@@ -186,7 +346,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                     <div id="searchStatus" style="font-size:10px; color:#ffd700; text-align:center; min-height:11px;"></div>
                 </div>
 
-                <div class="control-group control-group-highlight" style="border-color: #ff00ff;">
+                <div class="control-group control-group-highlight" id="dualGroup" style="border-color: #ff00ff;">
                     <label style="color:#ff00ff; text-align:center; width: 100%;">Dual Core (Наложение)</label>
                     <label class="checkbox-row"><input type="checkbox" id="dualCoreCheck"><span>Включить Наложение</span></label>
                     <label class="checkbox-row"><input type="checkbox" id="dualMaskCheck"><span>Проникающая Маска (XOR)</span></label>
@@ -201,7 +361,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                     </div>
                 </div>
 
-                <div class="control-group">
+                <div class="control-group panel-block" id="motionGroup">
                     <label>Алгоритм Y-сдвига:</label>
                     <input type="text" id="algorithmInput" value="1" style="text-align: center;">
                     <label>Скорость Y-сдвига:</label>
@@ -211,7 +371,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                     <label class="checkbox-row" style="background: #331100; padding: 2px;"><input type="checkbox" id="breathingZoomCheck"><span style="color:#ff9933; font-weight:bold;">🫁 Дыхание (Зум)</span></label>
                 </div>
 
-                <div class="control-group">
+                <div class="control-group panel-block" id="animGroup">
                     <label class="checkbox-row"><input type="checkbox" id="zerkaliusAnimCheck"><span><b style="color:#ff3333">Аниматрица (Сверху-Вниз)</b></span></label>
                     <input type="range" id="animRate" min="0" max="300" value="100">
                     <label class="checkbox-row"><input type="checkbox" id="elkaCheck"><span><b style="color:#00ccff">Круговой сдвиг (Ёлка X)</b></span></label>
@@ -220,7 +380,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                 </div>
             </div>
 
-            <div class="fixed-player">
+            <div class="fixed-player" id="playerGroup">
                 <div class="player-buttons">
                     <button id="stepBackBtn" class="btn-step" title="Шаг назад">◀</button>
                     <button id="playBtn">▶ ПУСК GPU</button>
@@ -236,14 +396,17 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                     <input type="range" id="speedRange" min="1" max="1000" value="1000">
                     <input type="range" id="speedMultRange" min="1" max="1000" value="383" style="margin-top:2px;">
                 </div>
+            </div>
 
-                <div class="control-group" style="border: none; padding: 0;">
+            <div class="control-group panel-block" id="viewGroup">
                     <div class="compact-row">
                         <label>Масштаб:</label>
                         <input type="range" id="fontSizeRange" min="2" max="100" value="12" style="flex:1; margin-left: 8px;">
                     </div>
                     <label class="checkbox-row"><input type="checkbox" id="zoomClampCheck" checked><span style="color:#00ff66;">🔒 Отсечка зума (клетка ≥ 1 пикс.)</span></label>
                     <label class="checkbox-row"><input type="checkbox" id="pixelPerfectCheck" checked><span style="color:#00ff66;">📐 Пиксель-перфект (ровные клетки)</span></label>
+                    <label class="checkbox-row" style="margin-top:4px;"><input type="checkbox" id="wrapXCheck"><span style="color:#ff9900;">🔁 Кольцевать по X (повтор)</span></label>
+                    <label class="checkbox-row"><input type="checkbox" id="wrapYCheck"><span style="color:#ff9900;">🔁 Кольцевать по Y (повтор)</span></label>
                     <label class="checkbox-row"><input type="checkbox" id="autoZoomCheck"><span style="color:#00ccff;">♾ Автозум (в одну сторону)</span></label>
                     <select id="autoZoomDirSelect" style="margin-top:2px;">
                         <option value="in">Зум: внутрь (наезд)</option>
@@ -258,18 +421,6 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                     <div class="compact-row">
                         <label>Кратность:<input type="number" id="zoomPeriodInput" value="2" min="1.2" max="64" step="0.1" style="width: 50px; text-align:center;"></label>
                     </div>
-                    <label class="checkbox-row"><input type="checkbox" id="polarEvenCheck"><span style="color:#00ccff;">⊛ Радар: клетки одного размера</span></label>
-                    <div class="compact-row">
-                        <label>Дыра в центре:</label>
-                        <input type="range" id="centerHoleRange" min="0" max="200" value="50" style="flex:1; margin-left: 8px;">
-                    </div>
-                    <select id="radarModeSelect" style="margin-top:2px;">
-                        <option value="0">🛰️ Радар: круговой</option>
-                        <option value="1">🛰️ Радар: тоннель</option>
-                        <option value="2">🛰️ Радар: спираль</option>
-                        <option value="3">🛰️ Радар: сфера</option>
-                        <option value="4">🛰️ Радар: веер</option>
-                    </select>
                     <select id="fillModeSelect" style="margin-top:2px;">
                         <option value="0">Вид: Авто (символы → заливка)</option>
                         <option value="1">Вид: Символ на заливке</option>
@@ -292,13 +443,27 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                         <label>Интервал Y:</label>
                         <input type="range" id="spacingYRange" min="20" max="400" value="100" style="flex:1; margin-left: 8px;">
                     </div>
+                </div>
+
+                <div class="control-group panel-block" id="radarGroup">
+                    <select id="radarModeSelect" style="margin-top:2px;">
+                        <option value="0">🛰️ Радар: круговой</option>
+                        <option value="1">🛰️ Радар: тоннель</option>
+                        <option value="2">🛰️ Радар: спираль</option>
+                        <option value="3">🛰️ Радар: сфера</option>
+                        <option value="4">🛰️ Радар: веер</option>
+                    </select>
+                    <div class="compact-row">
+                        <label>Дыра в центре:</label>
+                        <input type="range" id="centerHoleRange" min="0" max="200" value="50" style="flex:1; margin-left: 8px;">
+                    </div>
                     <div class="compact-row">
                         <label>Растяжка <span id="charZoomLabel">100%</span>:</label>
                         <input type="range" id="charZoomRange" min="50" max="400" value="100" style="flex:1; margin-left: 8px;">
                     </div>
                 </div>
 
-                <div class="control-group" style="border: none; padding: 0; margin-top: 2px;">
+                <div class="control-group panel-block" id="paletteGroup">
                     <select id="themeSelect" style="padding: 2px;">
                         <option value="synthwave">Пресет: Synthwave</option>
                         <option value="cyberpunk">Пресет: Киберпанк</option>
@@ -319,14 +484,16 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                     <div class="palette-row" style="margin-top:3px;"><span>Фон холста:</span><input type="color" id="bgColorPicker" value="#ffffff"></div>
                     <button id="lightBgBtn" class="btn-vacuum" style="background:#222; color:#eee; margin-top:3px;">☀ Светлый фон</button>
                 </div>
-            </div>
         </div>
 
         <div id="screenContainer">
-            <div id="fpsCounter">FPS: 0 | GPU</div>
-            <button id="toggleFloatPanelBtn" class="float-btn" title="Скрыть панель">🗗</button>
-            <button id="toggleRadarBtn" class="float-btn" title="Топологический Радар">🛰️</button>
             <canvas id="glcanvas"></canvas>
+            <div id="cellMarkers"></div>
+        </div>
+
+        <!-- Правая панель: сюда переезжают крупные блоки, чтобы левая не прокручивалась -->
+        <div class="controls" id="rightPanel">
+            <div class="scrollable-settings" id="rightSlot"></div>
         </div>
     </div>
 
@@ -373,7 +540,8 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         uniform float u_hole;           // радиус «дыры» в центре радара
         uniform float u_gridSep;        // 1 — сетка движется отдельно от фигуры
         uniform float u_gridOff;        // собственное смещение сетки
-        uniform float u_polarEven;      // радар: клетки одного размера на любом радиусе
+        uniform float u_gridShow;       // 0 — подложку-сетку не рисуем
+        uniform float u_dimOthers;      // 1 — «К находке»: притушить всё, кроме текущей находки
 
         #define PI 3.14159265359
 
@@ -402,6 +570,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             vec4 data1 = getCellInfo(c, u_dataMap, u_dataSize);
             // Подложка помечена альфой 0.5 — при раздельном движении каждый проход берёт только своё
             bool isBack = (data1.a < 0.75);
+            if (isBack && u_gridShow < 0.5) return vec4(0.0);
             if (want < 1.5) { if ((want > 0.5) != isBack) return vec4(0.0); }
             float isAct = data1.g; float isCollision = 0.0; float finalChar = data1.r;
             if (data1.b > 0.5) isAct = 1.0;
@@ -437,7 +606,8 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                 else hue = fract(c.x / u_dataSize.x);                                                // по колонкам
                 finalColor = hsv2rgb(vec3(hue, 1.0, mix(0.55, 1.0, isAct)));
             }
-            if (data1.b > 0.5) finalColor = vec3(1.0, 0.85, 0.2); // найденный паттерн — золото
+            if (data1.b > 0.9) finalColor = vec3(0.3, 0.95, 1.0);      // текущая находка («К находке») — голубым, временно
+            else if (data1.b > 0.5) finalColor = vec3(1.0, 0.85, 0.2); // найденный паттерн — золото
 
             float charIndex = step(0.5, finalChar);
             vec2 fontUV = vec2(clamp(cuv.x, 0.002, 0.998) * 0.5 + charIndex * 0.5, clamp(cuv.y, 0.002, 0.998));
@@ -450,11 +620,14 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             else if (u_fillMode > 0.5) lvl = solidLevel * mix(0.55, 1.0, mix(lvl, 1.0, solidMix));
             else lvl = mix(lvl, solidLevel, solidMix);
 
-            bool hot = (isAct > 0.5 || isCollision > 0.5);
+            bool hot = (isAct > 0.5 || isCollision > 0.5 || data1.b > 0.9);
             // На светлом фоне клетка — чернила, на тёмном — свечение. Решаем по яркости самого фона, а не по факту его включения.
             bool lightBg = (u_bgLight > 0.5 && dot(u_bgColor, vec3(0.299, 0.587, 0.114)) > 0.5);
             if (lightBg) finalColor *= (hot ? 0.55 : 0.8);
             else finalColor *= hot ? (1.3 + u_glowIntensity * 2.0) : 0.9;
+            // «К находке»: пока активно, всё, кроме самой находки, притушено — так её видно
+            // без мигания, просто за счёт контраста с остальным узором.
+            if (u_dimOthers > 0.5 && data1.b <= 0.9) finalColor *= 0.12;
             return vec4(finalColor, lvl);
         }
 
@@ -491,11 +664,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                 else if (u_radarMode < 2.5) rowIdx = radius * u_gridSize.y + ((rAngle / (2.0 * PI)) + 0.5) * u_dataSize.y * 0.15;
                 else if (u_radarMode < 3.5) { if (radius > 1.0) { gl_FragColor = bg; return; } rowIdx = (asin(clamp(radius, 0.0, 1.0)) / (PI * 0.5)) * u_gridSize.y; }
                 else { if (abs(rAngle) > PI * 0.25) { gl_FragColor = bg; return; } ang = rAngle * 4.0; rowIdx = radius * u_gridSize.y; }
-                // Обычно на оборот всегда укладывается вся ширина матрицы, поэтому клетка-сектор расширяется
-                // с радиусом и лучи к краю становятся клиньями. В режиме равных клеток число секторов растёт
-                // вместе с радиусом — дуга клетки примерно равна её высоте, и луч всюду толщиной в одну клетку.
-                float perTurn = (u_polarEven > 0.5) ? max(8.0, 2.0 * PI * radius * u_gridSize.y) : u_dataSize.x;
-                float colIdx = (((ang + u_angleOffset) / (2.0 * PI)) + 0.5) * perTurn;
+                float colIdx = (((ang + u_angleOffset) / (2.0 * PI)) + 0.5) * u_dataSize.x;
                 cell = floor(vec2(colIdx, rowIdx)); uvWithinCell = fract(vec2(colIdx, rowIdx));
                 if (radius < u_hole) { gl_FragColor = bg; return; }
             } else {
@@ -581,16 +750,305 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             themeSelect: document.getElementById('themeSelect'), sceneSelect: document.getElementById('sceneSelect'), saveSceneBtn: document.getElementById('saveSceneBtn'),
             echoModeCheck: document.getElementById('echoModeCheck'), zerkaliusAnimCheck: document.getElementById('zerkaliusAnimCheck'), 
             elkaCheck: document.getElementById('elkaCheck'), freezeScrollCheck: document.getElementById('freezeScrollCheck'),
-            toggleFloatPanelBtn: document.getElementById('toggleFloatPanelBtn'), crtEffectCheck: document.getElementById('crtEffectCheck'),
+            crtEffectCheck: document.getElementById('crtEffectCheck'),
             binarySynthCheck: document.getElementById('binarySynthCheck'), synthVolRange: document.getElementById('synthVolRange'),
+            cellSelectCheck: document.getElementById('cellSelectCheck'), cellSynthCheck: document.getElementById('cellSynthCheck'),
+            cellWaveSelect: document.getElementById('cellWaveSelect'), cellOctaveInput: document.getElementById('cellOctaveInput'),
+            cellVolRange: document.getElementById('cellVolRange'), cellMarkers: document.getElementById('cellMarkers'),
+            cellAnchorSelect: document.getElementById('cellAnchorSelect'), cellModeSelect: document.getElementById('cellModeSelect'),
+            cellStepRange: document.getElementById('cellStepRange'),
             yShiftRate: document.getElementById('yShiftRate'), elkaRate: document.getElementById('elkaRate'),
             animRate: document.getElementById('animRate'), echoRate: document.getElementById('echoRate'),
             spacingXRange: document.getElementById('spacingXRange'), spacingYRange: document.getElementById('spacingYRange'),
             layersRange: document.getElementById('layersRange'), searchRateRange: document.getElementById('searchRateRange'),
             charZoomRange: document.getElementById('charZoomRange'), pixelPerfectCheck: document.getElementById('pixelPerfectCheck'),
             zoomClampCheck: document.getElementById('zoomClampCheck'),
-            noWrapXCheck: document.getElementById('noWrapXCheck'), noWrapYCheck: document.getElementById('noWrapYCheck')
+            wrapXCheck: document.getElementById('wrapXCheck'), wrapYCheck: document.getElementById('wrapYCheck')
         };
+
+        // ===== МЕНЮ И РАСКЛАДКА ПАНЕЛЕЙ =====
+        // Каждая вкладка меню — ЦЕЛЬНАЯ панель со своими блоками внутри в фиксированном порядке;
+        // блоки внутри панели местами не меняются. Галка «Показывать в панели» переносит панель
+        // целиком из выпадающего окна в левую или правую зону; там панель таскается за шапку
+        // целиком, в любое место любой из двух зон, но её содержимое не переставляется.
+        const MENUS = {
+            menuPlayer: { title: 'Плеер',    zone: 'leftSlot',  pin: true,  ids: ['playerGroup'], floatable: true },
+            menuScene:  { title: 'Сцена',    zone: 'leftSlot',  pin: false, ids: ['clearCanvasBtn', 'sceneGroup'], floatable: true },
+            menuAudio:  { title: 'Звук',     zone: 'leftSlot',  pin: false, ids: ['audioRow', 'statusInfo', 'synthGroup', 'cellSynthGroup'], floatable: true },
+            menuView:   { title: 'Вид',      zone: 'rightSlot', pin: true,  ids: ['viewGroup', 'paletteGroup', 'fxGroup'], floatable: true },
+            menuRadar:  { title: 'Радар',    zone: 'rightSlot', pin: false, ids: ['radarGroup'], floatable: true },
+            menuMove:   { title: 'Движение', zone: 'leftSlot',  pin: true,  ids: ['motionGroup', 'animGroup', 'reactGroup', 'dualGroup'], floatable: true },
+            menuGen:    { title: 'Генератор', zone: 'leftSlot', pin: true,  ids: ['genGroup'], floatable: true },
+            menuGrid:   { title: 'Сетка',    zone: 'leftSlot',  pin: true,  ids: ['gridGroup'], floatable: true },
+            menuSearch: { title: 'Поиск',    zone: 'rightSlot', pin: true,  ids: ['searchGroup'], floatable: true }
+        };
+        const LAYOUT_KEY = 'zerk_layout';
+
+        // Один контейнер на вкладку: шапка с названием и ручкой, дальше — все блоки вкладки в исходном порядке.
+        // Все вкладки floatable — любую можно бросить прямо на холст плавающим окном.
+        for(let mid in MENUS) {
+            let m = MENUS[mid];
+            let wrap = document.createElement('div'); wrap.className = 'menu-panel'; wrap.id = 'panelWrap_' + mid;
+            if(m.floatable) wrap.dataset.floatable = '1';
+            let head = document.createElement('div'); head.className = 'panel-head';
+            head.innerHTML = '<span class="panel-drag" title="Перетащить панель' + (m.floatable ? ' — можно и на холст' : '') + '">⋮⋮</span><span class="panel-title">' + m.title + '</span><span class="panel-close" title="Скрыть панель">✕</span>';
+            let closeBtn = head.querySelector('.panel-close');
+            closeBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+            closeBtn.addEventListener('click', (e) => { e.stopPropagation(); hideTab(mid); });
+            wrap.appendChild(head);
+            m.ids.forEach(id => { let el = document.getElementById(id); if(el) wrap.appendChild(el); });
+            m.wrapper = wrap;
+        }
+
+        function saveLayout() {
+            let g = {};
+            ['leftSlot', 'rightSlot'].forEach(z => Array.from(document.getElementById(z).children).forEach((el, i) => { if(el.id) g[el.id] = { z: z, i: i }; }));
+            document.querySelectorAll('body > .floating-panel').forEach(el => { if(el.id) g[el.id] = { z: 'canvas', x: parseInt(el.style.left, 10) || 0, y: parseInt(el.style.top, 10) || 0 }; });
+            let pins = {}; for(let m in MENUS) pins[m] = MENUS[m].pin;
+            try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ pins: pins, groups: g })); } catch(e) {}
+        }
+
+        // Перетаскивание — на mousedown/mousemove/mouseup, а не на нативном HTML5 drag-and-drop:
+        // тот конфликтует с уже существующими window-обработчиками dragover/drop, которые ловят
+        // перетаскивание текстового файла с фигурой на страницу.
+        // Панели с data-floatable можно бросить и на сам холст — тогда они становятся плавающим
+        // окном поверх картинки (position:fixed), а не элементом списка в одной из боковых панелей.
+        let draggedEl = null, dragOffX = 0, dragOffY = 0;
+        function makeDraggable(handle, panel) {
+            handle.addEventListener('mousedown', (e) => {
+                if(e.button !== 0) return; e.preventDefault(); e.stopPropagation();
+                draggedEl = panel; panel.classList.add('dragging');
+                let r = panel.getBoundingClientRect(); dragOffX = e.clientX - r.left; dragOffY = e.clientY - r.top;
+                // Курсор берётся от элемента ПОД указателем, а не от ручки, за которую схватились —
+                // без этого стоило увести мышь с ручки на холст, и хватающая рука сменялась обычной стрелкой
+                document.body.style.cursor = 'grabbing';
+                // Обе зоны-доки помечаем пунктиром сразу, как только начали тащить —
+                // не нужно доводить курсор до зоны, чтобы понять, что туда вообще можно бросить.
+                for(let p in SLOT_OF) document.getElementById(p).classList.add('drop-zone-hint');
+            });
+        }
+        // Доки теперь растут по высоте содержимого (не на весь экран), поэтому у их «зоны попадания»
+        // два режима: широкая полоса по X на всю высоту (удобно бросать обычные панели даже ниже
+        // короткого дока) и точный прямоугольник самого дока (для floatable — иначе не получится
+        // отпустить плеер на пустом холсте под коротким доком, он засосётся в зону докa по X).
+        const SLOT_OF = { leftPanel: 'leftSlot', rightPanel: 'rightSlot' };
+        function pidUnderCursor(x, y, precise) {
+            for(let pid in SLOT_OF) {
+                let r = document.getElementById(pid).getBoundingClientRect();
+                let hit = precise ? (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) : (x >= r.left && x <= r.right);
+                if(hit) return pid;
+            }
+            return null;
+        }
+        // Подсветка дока-«магнита»: пока панель тащат над левой/правой зоной, эта зона
+        // светится рамкой — видно, что при отпускании она туда примагнитится.
+        function highlightDock(pid) {
+            for(let p in SLOT_OF) document.getElementById(p).classList.toggle('drag-target', p === pid);
+        }
+        function placeInZone(zone, y) {
+            let after = Array.from(zone.children).find(ch => { if(ch === draggedEl) return false; let r = ch.getBoundingClientRect(); return y < r.top + r.height / 2; });
+            if(after) { if(after !== draggedEl.nextSibling) zone.insertBefore(draggedEl, after); }
+            else if(zone.lastElementChild !== draggedEl) zone.appendChild(draggedEl);
+        }
+        window.addEventListener('mousemove', (e) => {
+            if(!draggedEl) return;
+            let floatable = draggedEl.dataset.floatable === '1';
+            let pid = pidUnderCursor(e.clientX, e.clientY, floatable);
+            highlightDock(pid);
+            let zone = pid ? document.getElementById(SLOT_OF[pid]) : null;
+            if(floatable && !zone) {
+                if(!draggedEl.classList.contains('floating-panel')) { draggedEl.classList.add('floating-panel'); document.body.appendChild(draggedEl); }
+                draggedEl.style.left = Math.round(e.clientX - dragOffX) + 'px';
+                draggedEl.style.top = Math.round(e.clientY - dragOffY) + 'px';
+                return;
+            }
+            if(draggedEl.classList.contains('floating-panel')) { draggedEl.classList.remove('floating-panel'); draggedEl.style.left = ''; draggedEl.style.top = ''; }
+            if(zone) placeInZone(zone, e.clientY);
+        });
+        window.addEventListener('mouseup', () => {
+            if(!draggedEl) return;
+            let mid = draggedEl.id.replace('panelWrap_', '');
+            let zoneId = draggedEl.classList.contains('floating-panel') ? 'canvas' : (draggedEl.parentElement && draggedEl.parentElement.id);
+            if(MENUS[mid]) {
+                MENUS[mid].zone = zoneId;   // запоминаем, куда перетащили — чтобы снятие/возврат галки не отбрасывал панель на старое место
+                // Перетаскивание незакреплённой вкладки прямо в левую/правую панель закрепляет её —
+                // иначе кнопка вкладки оставалась незакрашенной и не реагировала на клик.
+                if((zoneId === 'leftSlot' || zoneId === 'rightSlot') && !MENUS[mid].pin) {
+                    MENUS[mid].pin = true;
+                    let cb = document.getElementById(mid + 'Pin'); if(cb) cb.checked = true;
+                    let btn = document.querySelector('.menu-btn[data-menu="' + mid + '"]');
+                    if(btn) btn.classList.add('pinned');
+                    closeMenus(); updateDockVisibility(); updateToggleAllPinsBtn();
+                }
+            }
+            draggedEl.classList.remove('dragging'); draggedEl = null; saveLayout();
+            document.body.style.cursor = '';
+            highlightDock(null);
+            for(let p in SLOT_OF) document.getElementById(p).classList.remove('drop-zone-hint');
+        });
+
+        for(let mid in MENUS) makeDraggable(MENUS[mid].wrapper.querySelector('.panel-head'), MENUS[mid].wrapper);
+
+        function applyMenu(mid) {
+            let m = MENUS[mid], drop = document.getElementById(mid);
+            let floating = m.wrapper.classList.contains('floating-panel');
+            if(m.pin) {
+                // zone может быть 'canvas' (панель раньше плавала на холсте) — тогда её не трогаем,
+                // а не пытаемся деться в несуществующий элемент #canvas.
+                if(!floating) (document.getElementById(m.zone) || document.getElementById('leftSlot')).appendChild(m.wrapper);
+            } else {
+                if(floating) { m.wrapper.classList.remove('floating-panel'); m.wrapper.style.left = ''; m.wrapper.style.top = ''; floating = false; }
+                drop.appendChild(m.wrapper);
+            }
+            let btn = document.querySelector('.menu-btn[data-menu="' + mid + '"]');
+            if(btn) btn.classList.toggle('pinned', m.pin || floating);
+            updateDockVisibility();
+        }
+        // Скрыть вкладку — открепить, если она в панели, или снять с холста, если плавает;
+        // используется и крестиком в шапке панели, и кликом по уже видимой кнопке вкладки.
+        function hideTab(mid) {
+            let m = MENUS[mid]; if(!m) return;
+            m.pin = false;
+            let cb = document.getElementById(mid + 'Pin'); if(cb) cb.checked = false;
+            applyMenu(mid); closeMenus(); saveLayout(); updateToggleAllPinsBtn();
+        }
+        // Вкладка видна где-то (закреплена в панели ИЛИ плавает на холсте отдельным окном)
+        function isTabVisible(mid) {
+            let m = MENUS[mid];
+            return !!(m && (m.pin || m.wrapper.classList.contains('floating-panel')));
+        }
+        // Особое поведение «Плеера» — не докуется в лево/право, а плавающим окном на холст,
+        // вниз-влево, сразу под левым доком (чтобы не перекрывать его содержимое).
+        function floatPlayerPanel() {
+            let m = MENUS.menuPlayer; if(!m) return;
+            m.pin = false;
+            let cb = document.getElementById('menuPlayerPin'); if(cb) cb.checked = false;
+            if(!m.wrapper.classList.contains('floating-panel')) { m.wrapper.classList.add('floating-panel'); document.body.appendChild(m.wrapper); }
+            // Ставим плеер ПРАВЕЕ левого дока (чтобы он его не перекрывал) и внизу экрана,
+            // но с отступом от нижней границы окна. Размеры читаем уже после добавления класса
+            // floating-panel — иначе ширина/высота будут от закреплённого состояния.
+            let lp = document.getElementById('leftPanel');
+            let leftRight = lp.querySelector('.menu-panel') ? lp.getBoundingClientRect().right : 0;
+            let pw = m.wrapper.offsetWidth || 300, ph = m.wrapper.offsetHeight || 120;
+            let x = Math.round(leftRight + 12);
+            x = Math.max(8, Math.min(x, window.innerWidth - pw - 8));
+            let y = window.innerHeight - ph - 28;
+            m.wrapper.style.left = x + 'px';
+            m.wrapper.style.top = Math.max(40, Math.min(window.innerHeight - 40, Math.round(y))) + 'px';
+            m.zone = 'canvas';
+            let btnEl = document.querySelector('.menu-btn[data-menu="menuPlayer"]'); if(btnEl) btnEl.classList.add('pinned');
+        }
+        // Пустой док (ни одной закреплённой вкладки) не должен рисовать фон/тень —
+        // иначе на холсте остаётся заметный пустой прямоугольник без единой вкладки внутри.
+        function updateDockVisibility() {
+            ['leftPanel', 'rightPanel'].forEach(pid => {
+                let p = document.getElementById(pid);
+                p.classList.toggle('dock-empty', !p.querySelector('.menu-panel'));
+            });
+        }
+
+        // Галка закрепления — прямо на кнопке вкладки, рядом с названием
+        for(let mid in MENUS) {
+            let cb = document.getElementById(mid + 'Pin'); cb.checked = MENUS[mid].pin;
+            cb.addEventListener('mousedown', (e) => e.stopPropagation());
+            cb.addEventListener('click', (e) => e.stopPropagation());
+            cb.addEventListener('change', () => { MENUS[mid].pin = cb.checked; applyMenu(mid); saveLayout(); updateToggleAllPinsBtn(); });
+        }
+
+        // Линия-подчёркивание под вкладками — закрепляет/скрывает все разом, цвет отражает состояние
+        function updateToggleAllPinsBtn() {
+            let allOn = Object.keys(MENUS).every(mid => isTabVisible(mid));
+            let bar = document.getElementById('toggleAllPinsBtn');
+            bar.classList.toggle('all-on', allOn);
+            bar.title = allOn ? 'Скрыть все панели' : 'Показать все панели';
+        }
+        document.getElementById('toggleAllPinsBtn').addEventListener('click', () => {
+            let turnOn = !Object.keys(MENUS).every(mid => isTabVisible(mid));
+            for(let mid in MENUS) {
+                if(mid === 'menuPlayer') {
+                    if(turnOn) floatPlayerPanel(); else hideTab(mid);
+                    continue;
+                }
+                MENUS[mid].pin = turnOn;
+                let cb = document.getElementById(mid + 'Pin'); if(cb) cb.checked = turnOn;
+                applyMenu(mid);
+            }
+            saveLayout();
+            updateToggleAllPinsBtn();
+        });
+
+        // Восстановление раскладки: сперва закрепления и в какой зоне лежала панель, потом порядок внутри зоны.
+        (function loadLayout() {
+            let raw = null; try { raw = localStorage.getItem(LAYOUT_KEY); } catch(e) {}
+            let L = null; if(raw) { try { L = JSON.parse(raw); } catch(e) {} }
+            if(L && L.pins) for(let m in MENUS) if(L.pins[m] !== undefined) { MENUS[m].pin = !!L.pins[m]; let cb = document.getElementById(m + 'Pin'); if(cb) cb.checked = MENUS[m].pin; }
+            if(L && L.groups) for(let m in MENUS) { let wid = 'panelWrap_' + m; if(MENUS[m].pin && L.groups[wid] && L.groups[wid].z !== 'canvas') MENUS[m].zone = L.groups[wid].z; }
+            for(let m in MENUS) applyMenu(m);
+
+            if(L && L.groups) {
+                let list = Object.keys(L.groups).map(id => ({ id: id, z: L.groups[id].z, i: L.groups[id].i, x: L.groups[id].x, y: L.groups[id].y })).sort((a, b) => (a.i || 0) - (b.i || 0));
+                list.forEach(it => {
+                    let el = document.getElementById(it.id); if(!el) return;
+                    if(it.z === 'canvas' && el.dataset.floatable === '1') {
+                        el.classList.add('floating-panel'); document.body.appendChild(el);
+                        el.style.left = Math.max(0, Math.min(window.innerWidth - 40, it.x || 20)) + 'px';
+                        el.style.top = Math.max(0, Math.min(window.innerHeight - 40, it.y || 20)) + 'px';
+                        return;
+                    }
+                    let z = document.getElementById(it.z);
+                    if(z && el.parentElement === z) z.appendChild(el);
+                });
+            }
+            updateToggleAllPinsBtn();
+        })();
+
+        // Меню: клик по НЕзакреплённой (и не плавающей) вкладке открывает её выпадающим окном
+        // (закрывается кликом мимо или Esc, без закрепления); клик по уже ВИДИМОЙ вкладке — закреплена
+        // ли она в панели или плавает отдельным окном на холсте — прячет её обратно.
+        // Двойной клик — перебрасывает панель между левой и правой панелями (и закрепляет её); он
+        // выставляет АБСОЛЮТНОЕ конечное состояние, а не переключает относительно текущего — поэтому
+        // не важно, что перед ним успевают пройти два обычных click (они могут мигнуть промежуточным
+        // состоянием, но dblclick всегда доводит результат до «закреплена, не на холсте»).
+        document.querySelectorAll('.menu-btn').forEach(btn => {
+            let mid = btn.dataset.menu;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if(e.detail > 1) return; // второй click двойного клика — им займётся dblclick, не дёргаем состояние по пути
+                let m = MENUS[mid];
+                if(m && (m.pin || m.wrapper.classList.contains('floating-panel'))) {
+                    hideTab(mid);
+                    return;
+                }
+                let drop = document.getElementById(mid); let wasOpen = drop.classList.contains('open');
+                document.querySelectorAll('.menu-drop').forEach(d => d.classList.remove('open'));
+                document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('open'));
+                if(!wasOpen) { drop.style.left = Math.min(btn.offsetLeft, Math.max(0, window.innerWidth - 330)) + 'px'; drop.classList.add('open'); btn.classList.add('open'); }
+            });
+            // Двойной клик: у «Плеера» — особое поведение, плавающим окном на холст, вниз и правее
+            // левого дока; у остальных вкладок — как раньше, докует в лево/право
+            // (куда сейчас меньше содержимого).
+            btn.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                let m = MENUS[mid]; if(!m) return;
+                if(mid === 'menuPlayer') {
+                    floatPlayerPanel();
+                    closeMenus(); saveLayout(); updateToggleAllPinsBtn();
+                    return;
+                }
+                if(m.wrapper.classList.contains('floating-panel')) { m.wrapper.classList.remove('floating-panel'); m.wrapper.style.left = ''; m.wrapper.style.top = ''; }
+                let leftH = document.getElementById('leftSlot').scrollHeight, rightH = document.getElementById('rightSlot').scrollHeight;
+                m.zone = (leftH <= rightH) ? 'leftSlot' : 'rightSlot';
+                m.pin = true;
+                let cb = document.getElementById(mid + 'Pin'); if(cb) cb.checked = true;
+                applyMenu(mid); closeMenus(); saveLayout(); updateToggleAllPinsBtn();
+            });
+        });
+        // stopPropagation нужен и на mousedown: он всплывает раньше click, и без этого клик по галке
+        // внутри окна сначала закрывал само окно (display:none), а click по уже скрытому элементу не долетал
+        document.querySelectorAll('.menu-drop').forEach(d => { d.addEventListener('mousedown', (e) => e.stopPropagation()); d.addEventListener('click', (e) => e.stopPropagation()); });
+        function closeMenus() { document.querySelectorAll('.menu-drop').forEach(d => d.classList.remove('open')); document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('open')); }
+        window.addEventListener('mousedown', (e) => { if(!e.target.closest('.menu-drop') && !e.target.closest('.menu-btn')) closeMenus(); });
+        window.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeMenus(); });
 
         const THEMES = { synthwave: { act: '#00ffff', stat: '#ff00ff' }, cyberpunk: { act: '#ffcc00', stat: '#0033aa' }, matrix: { act: '#ffffff', stat: '#00ff66' }, blood: { act: '#ff0000', stat: '#440000' }, fire: { act: '#ffee00', stat: '#cc2200' }, ice: { act: '#ffffff', stat: '#0077ff' }, toxic: { act: '#ccff33', stat: '#117700' }, pink: { act: '#ff66cc', stat: '#77004d' }, gold: { act: '#ffd700', stat: '#7a5200' }, rainbow: { act: '#ffffff', stat: '#888888' } };
         let PREBUILT_SCENES = {
@@ -603,7 +1061,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         const gl = UI.canvas.getContext('webgl', { preserveDrawingBuffer: true });
         if (!gl) alert("WebGL не поддерживается!");
 
-        const STATE = { lines: [], COLS: 150, ROWS: 250, isPlaying: false, offsetMatY: 0, layer2Y: 0, globalAngle: 0, breathTime: 0, algoPointer: 0, lastTickTime: 0, isRadar: false, isDragging: false, dragStartX: 0, offsetX: 0, startOffsetX: 0, audioScale: 1.0, audioGlow: 0.0, bassLevel: 0, framesSinceChange: 0, animatrixRow: 0, elkaShift: 0, accElka: 0, accAnim: 0, echoOff: 0, fSize: 12, effScale: 12, isPanelFloating: false, panelX: 50, panelY: 10, isDraggingPanel: false, lightBg: false, dragY: 0, wasPlaying: false, panY: 0, zoomDir: 1, gridOffY: 0 };
+        const STATE = { lines: [], COLS: 150, ROWS: 250, isPlaying: false, offsetMatY: 0, layer2Y: 0, globalAngle: 0, breathTime: 0, algoPointer: 0, lastTickTime: 0, isRadar: false, isDragging: false, dragStartX: 0, offsetX: 0, startOffsetX: 0, audioScale: 1.0, audioGlow: 0.0, bassLevel: 0, framesSinceChange: 0, animatrixRow: 0, elkaShift: 0, accElka: 0, accAnim: 0, echoOff: 0, fSize: 12, effScale: 12, isPanelFloating: false, panelX: 50, panelY: 10, isDraggingPanel: false, lightBg: false, dragY: 0, wasPlaying: false, panY: 0, zoomDir: 1, gridOffY: 0, searchDim: false };
         let pixelData = null; 
 
         // ИНИЦИАЛИЗА ШЕЙДЕРОВ И ТЕКСТУР
@@ -629,7 +1087,10 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             tmpCtx.fillStyle='#fff'; tmpCtx.font='bold 50px ' + fam; tmpCtx.textAlign='center'; tmpCtx.textBaseline='middle';
             tmpCtx.fillText('0',32,32); tmpCtx.fillText('1',96,32);
             gl.bindTexture(gl.TEXTURE_2D, fontTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tmpC);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            // Мипмапы: без них LINEAR при уменьшении клетки ниже 64px берёт всего 2×2 текселя символа
+            // и тонкие штрихи цифр превращаются в мерцающий шум при зуме — атлас 128×64 уже степень двойки
+            gl.generateMipmap(gl.TEXTURE_2D);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         }
         buildFontAtlas();
         document.getElementById('fontFaceSelect').addEventListener('change', buildFontAtlas);
@@ -638,11 +1099,12 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         function updateDataTexture() {
             if(!pixelData || pixelData.length !== STATE.COLS * STATE.ROWS * 4) pixelData = new Uint8Array(STATE.COLS * STATE.ROWS * 4);
             const elkaOn = UI.elkaCheck.checked && STATE.elkaShift !== 0;
-            for(let y=0; y<STATE.ROWS; y++) { let row = STATE.lines[y] || []; let shift = elkaOn ? ((y % 2 === 0 ? STATE.elkaShift : -STATE.elkaShift) % STATE.COLS) : 0; for(let x=0; x<STATE.COLS; x++) { let sx = ((x - shift) % STATE.COLS + STATE.COLS) % STATE.COLS; let cell = row[sx] || {c:' ', a:0}; let idx = (y * STATE.COLS + x) * 4; if(cell.c === ' ') { pixelData[idx]=128; } else { pixelData[idx] = cell.c === '1' ? 255 : 0; } pixelData[idx+1] = cell.a ? 255 : 0; pixelData[idx+2] = (SEARCH.marks.size && SEARCH.marks.has(y * STATE.COLS + sx)) ? 255 : 0; pixelData[idx+3] = cell.g ? 128 : 255; } }
+            const searchHL = document.getElementById('searchHighlightCheck').checked;
+            for(let y=0; y<STATE.ROWS; y++) { let row = STATE.lines[y] || []; let shift = elkaOn ? ((y % 2 === 0 ? STATE.elkaShift : -STATE.elkaShift) % STATE.COLS) : 0; for(let x=0; x<STATE.COLS; x++) { let sx = ((x - shift) % STATE.COLS + STATE.COLS) % STATE.COLS; let cell = row[sx] || {c:' ', a:0}; let idx = (y * STATE.COLS + x) * 4; if(cell.c === ' ') { pixelData[idx]=128; } else { pixelData[idx] = cell.c === '1' ? 255 : 0; } pixelData[idx+1] = cell.a ? 255 : 0; pixelData[idx+2] = !searchHL ? 0 : (SEARCH.currentMarks.size && SEARCH.currentMarks.has(y * STATE.COLS + sx)) ? 255 : ((SEARCH.marks.size && SEARCH.marks.has(y * STATE.COLS + sx)) ? 160 : 0); pixelData[idx+3] = cell.g ? 128 : 255; } }
             gl.bindTexture(gl.TEXTURE_2D, dataTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, STATE.COLS, STATE.ROWS, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixelData); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         }
 
-        const unilocs = { res: gl.getUniformLocation(program, "u_resolution"), grid: gl.getUniformLocation(program, "u_gridSize"), offset: gl.getUniformLocation(program, "u_offset"), layerOff: gl.getUniformLocation(program, "u_layerOffset"), cAct: gl.getUniformLocation(program, "u_colorAct"), cStat: gl.getUniformLocation(program, "u_colorStat"), glow: gl.getUniformLocation(program, "u_glowIntensity"), radar: gl.getUniformLocation(program, "u_isRadar"), angle: gl.getUniformLocation(program, "u_angleOffset"), layerCount: gl.getUniformLocation(program, "u_layerCount"), dualM: gl.getUniformLocation(program, "u_dualMask"), hide: gl.getUniformLocation(program, "u_hideStatic"), fontM: gl.getUniformLocation(program, "u_fontMap"), dataM: gl.getUniformLocation(program, "u_dataMap"), dataSize: gl.getUniformLocation(program, "u_dataSize"), rainbow: gl.getUniformLocation(program, "u_rainbow"), rbDir: gl.getUniformLocation(program, "u_rbDir"), fill: gl.getUniformLocation(program, "u_fillMode"), echo: gl.getUniformLocation(program, "u_echo"), echoOff: gl.getUniformLocation(program, "u_echoOff"), wrap: gl.getUniformLocation(program, "u_wrap"), bgLight: gl.getUniformLocation(program, "u_bgLight"), bgColor: gl.getUniformLocation(program, "u_bgColor"), charZoom: gl.getUniformLocation(program, "u_charZoom"), radarMode: gl.getUniformLocation(program, "u_radarMode"), panY: gl.getUniformLocation(program, "u_panY"), hole: gl.getUniformLocation(program, "u_hole"), gridSep: gl.getUniformLocation(program, "u_gridSep"), gridOff: gl.getUniformLocation(program, "u_gridOff"), polarEven: gl.getUniformLocation(program, "u_polarEven") };
+        const unilocs = { res: gl.getUniformLocation(program, "u_resolution"), grid: gl.getUniformLocation(program, "u_gridSize"), offset: gl.getUniformLocation(program, "u_offset"), layerOff: gl.getUniformLocation(program, "u_layerOffset"), cAct: gl.getUniformLocation(program, "u_colorAct"), cStat: gl.getUniformLocation(program, "u_colorStat"), glow: gl.getUniformLocation(program, "u_glowIntensity"), radar: gl.getUniformLocation(program, "u_isRadar"), angle: gl.getUniformLocation(program, "u_angleOffset"), layerCount: gl.getUniformLocation(program, "u_layerCount"), dualM: gl.getUniformLocation(program, "u_dualMask"), hide: gl.getUniformLocation(program, "u_hideStatic"), fontM: gl.getUniformLocation(program, "u_fontMap"), dataM: gl.getUniformLocation(program, "u_dataMap"), dataSize: gl.getUniformLocation(program, "u_dataSize"), rainbow: gl.getUniformLocation(program, "u_rainbow"), rbDir: gl.getUniformLocation(program, "u_rbDir"), fill: gl.getUniformLocation(program, "u_fillMode"), echo: gl.getUniformLocation(program, "u_echo"), echoOff: gl.getUniformLocation(program, "u_echoOff"), wrap: gl.getUniformLocation(program, "u_wrap"), bgLight: gl.getUniformLocation(program, "u_bgLight"), bgColor: gl.getUniformLocation(program, "u_bgColor"), charZoom: gl.getUniformLocation(program, "u_charZoom"), radarMode: gl.getUniformLocation(program, "u_radarMode"), panY: gl.getUniformLocation(program, "u_panY"), hole: gl.getUniformLocation(program, "u_hole"), gridSep: gl.getUniformLocation(program, "u_gridSep"), gridOff: gl.getUniformLocation(program, "u_gridOff"), gridShow: gl.getUniformLocation(program, "u_gridShow"), dimOthers: gl.getUniformLocation(program, "u_dimOthers") };
         function hex2vec(hex) { return [parseInt(hex.slice(1,3),16)/255, parseInt(hex.slice(3,5),16)/255, parseInt(hex.slice(5,7),16)/255]; }
         function createEmptyMatrix(w, h) { let m=[]; for(let y=0;y<h;y++){ let r=[]; for(let x=0;x<w;x++) r.push({c:' ',a:0,g:0}); m.push(r); } return m; }
         // Размеры берём у самой матрицы, а не из STATE: функция вызывается и для отдельной фигуры до сведения с подложкой
@@ -703,6 +1165,301 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                 }
             }
         };
+
+        // ===== ЧТЕНИЕ КЛЕТКИ ПРЯМО С ЭКРАНА =====
+        // Картинку рисует шейдер, поэтому «что сейчас в этой точке» нельзя взять из STATE.lines напрямую:
+        // на исходную матрицу сверху ложатся сдвиг по Y, Ёлка, слои с XOR, эхо, размыкание и подложка-сетка.
+        // Здесь тот же путь повторён на CPU для ОДНОЙ точки: экран → клетка → итоговый символ.
+        // Работает независимо от плеера — на паузе возвращает ровно то, что видно на холсте.
+        // Единственное, что не учитывается: растяжка символа за границы клетки (u_charZoom > 100%),
+        // когда сосед может залезть поверх — берём всегда значение своей клетки.
+
+        // Один тексел данных, как его собирает updateDataTexture (включая сдвиг Ёлки).
+        // ch: 1 — единица, 0 — ноль, -1 — пусто (в шейдере это 0.5).
+        function texelAt(cx, cy) {
+            const C = STATE.COLS, R = STATE.ROWS;
+            if(!C || !R || !STATE.lines.length) return null;
+            let x = Math.floor(cx - C * Math.floor(cx / C)), y = Math.floor(cy - R * Math.floor(cy / R));
+            x = Math.min(C - 1, Math.max(0, x)); y = Math.min(R - 1, Math.max(0, y));
+            let shift = (UI.elkaCheck.checked && STATE.elkaShift !== 0) ? ((y % 2 === 0 ? STATE.elkaShift : -STATE.elkaShift) % C) : 0;
+            let sx = ((x - shift) % C + C) % C;
+            let cell = (STATE.lines[y] || [])[sx]; if(!cell) return null;
+            let hl = document.getElementById('searchHighlightCheck').checked &&
+                     (SEARCH.currentMarks.has(y * C + sx) || SEARCH.marks.has(y * C + sx));
+            return { ch: cell.c === ' ' ? -1 : (cell.c === '1' ? 1 : 0), act: cell.a ? 1 : 0, back: cell.g ? 1 : 0, hl: hl ? 1 : 0 };
+        }
+
+        // Итоговый символ клетки — повтор inkAt() из шейдера. want: 0 — только фигура, 1 — только сетка, 2 — всё.
+        function bitAtCell(cx, cy, want, rInfo) {
+            const C = STATE.COLS, R = STATE.ROWS;
+            if(!STATE.isRadar) {
+                let outX = !UI.wrapXCheck.checked && (cx < 0 || cx >= C);
+                let outY = !UI.wrapYCheck.checked && (cy < 0 || cy >= R);
+                if(outX || outY) { let t0 = texelAt(cx, cy); if(!t0 || !t0.back) return null; }
+            }
+            let d = texelAt(cx, cy); if(!d) return null;
+            let isBack = !!d.back;
+            if(isBack && !document.getElementById('gridShowCheck').checked) return null;
+            if(want < 1.5 && ((want > 0.5) !== isBack)) return null;
+            let ch = d.ch, isAct = d.act || d.hl, coll = 0;
+            let layers = UI.dualCoreCheck.checked ? (parseInt(UI.layersRange.value, 10) || 2) : 1;
+            for(let k = 1; k < layers && k < 10; k++) {
+                let kx = cx, ky = cy;
+                if(rInfo) { kx = Math.floor((((rInfo.ang - STATE.globalAngle * 1.5 * k) / (2 * Math.PI)) + 0.5) * C); ky = Math.floor(rInfo.radius * (STATE.gRows || 1)); }
+                ky += STATE.layer2Y * k - STATE.uOffY;
+                let t = texelAt(kx, ky); let ck = t ? t.ch : -1;
+                if(ch >= 0 && ck >= 0) { coll = 1; isAct = 1; if(UI.dualMaskCheck.checked && ch === ck) ch = -1; }
+                else if(ck >= 0) ch = ck;
+            }
+            if(UI.echoModeCheck.checked) {
+                let t = texelAt(cx, cy - STATE.echoOff); let ce = t ? t.ch : -1;
+                if(ch >= 0 && ce >= 0) { if(ch === ce) ch = -1; else isAct = 1; }
+                else if(ce >= 0) { ch = ce; isAct = 1; }
+            }
+            if(ch < 0) return null;
+            if(UI.hideStaticCheck.checked && !isAct && !coll) return null;
+            return ch;
+        }
+
+        // Точка холста (в пикселях холста) → индекс клетки. Повтор main() шейдера, обе ветки: радар и обычная.
+        function cellAtPoint(px, py) {
+            const W = UI.canvas.width, H = UI.canvas.height;
+            const gx = STATE.gCols || 1, gy = STATE.gRows || 1;
+            let pos = { x: px / W, y: py / H };
+            if(STATE.isRadar) {
+                let cxr = 0.5 + STATE.uOffX / W, cyr = 0.5 + STATE.panY / H;
+                let dx = (pos.x - cxr) * (W / H), dy = pos.y - cyr;
+                let radius = Math.sqrt(dx * dx + dy * dy) * 2, rAng = Math.atan2(dy, dx);
+                let mode = parseFloat(document.getElementById('radarModeSelect').value) || 0;
+                let ang = rAng, rowIdx;
+                if(mode < 0.5) rowIdx = radius * gy;
+                else if(mode < 1.5) rowIdx = (1 / Math.max(radius, 0.02)) * gy * 0.08;
+                else if(mode < 2.5) rowIdx = radius * gy + ((rAng / (2 * Math.PI)) + 0.5) * STATE.ROWS * 0.15;
+                else if(mode < 3.5) { if(radius > 1) return null; rowIdx = (Math.asin(Math.min(1, Math.max(0, radius))) / (Math.PI * 0.5)) * gy; }
+                else { if(Math.abs(rAng) > Math.PI * 0.25) return null; ang = rAng * 4; rowIdx = radius * gy; }
+                if(radius < ((parseInt(document.getElementById('centerHoleRange').value, 10) || 0) / 1000)) return null;
+                let colIdx = (((ang + STATE.globalAngle) / (2 * Math.PI)) + 0.5) * STATE.COLS;
+                return { x: Math.floor(colIdx), y: Math.floor(rowIdx), ang: rAng, radius: radius };
+            }
+            let aspect = W / H;
+            let rx = (pos.x - 0.5) * aspect, ry = pos.y - 0.5;
+            let ca = Math.cos(STATE.globalAngle), sa = Math.sin(STATE.globalAngle);
+            let nx = rx * ca - ry * sa, ny = rx * sa + ry * ca;
+            let qx = nx / aspect + 0.5 - STATE.uOffX / W, qy = ny + 0.5;
+            return { x: Math.floor(qx * gx) - Math.floor((gx - STATE.COLS) * 0.5), y: Math.floor(qy * gy), ang: 0, radius: 0 };
+        }
+
+        // Клетка ФИГУРЫ (cy уже с учётом прокрутки) → её значение с наложением подложки-сетки.
+        function bitAtFigCell(cx, cy, rInfo) {
+            if(!document.getElementById('gridSepCheck').checked) return bitAtCell(cx, cy, 2, rInfo);
+            let f = bitAtCell(cx, cy, 0, rInfo);          // фигура рисуется поверх сетки
+            return f !== null ? f : bitAtCell(cx, cy - STATE.uOffY + STATE.gridOffY, 1, rInfo);
+        }
+
+        // Что реально нарисовано в точке холста: 1, 0 или null (пусто).
+        function bitAtScreen(px, py) {
+            let c = cellAtPoint(px, py); if(!c) return null;
+            return bitAtFigCell(c.x, c.y + STATE.uOffY, STATE.isRadar ? c : null);
+        }
+
+        // Обратный ход: клетка экранной сетки → точка холста (центр клетки).
+        // Матрица повторяется по кругу, поэтому одна и та же клетка видна во многих местах —
+        // wrapX/wrapY подтягивают ближайшую копию к центру экрана, иначе метка уезжает за край.
+        function gridCellToScreen(sx, sy, wrapX, wrapY) {
+            const W = UI.canvas.width, H = UI.canvas.height, gx = STATE.gCols || 1, gy = STATE.gRows || 1;
+            if(wrapX && UI.wrapXCheck.checked && STATE.COLS) sx += STATE.COLS * Math.round((gx * 0.5 - sx) / STATE.COLS);
+            if(wrapY && UI.wrapYCheck.checked && STATE.ROWS) sy += STATE.ROWS * Math.round((gy * 0.5 - sy) / STATE.ROWS);
+            let qx = (sx + 0.5) / gx + STATE.uOffX / W, qy = (sy + 0.5) / gy;
+            let aspect = W / H;
+            let rx = (qx - 0.5) * aspect, ry = qy - 0.5;
+            let ca = Math.cos(-STATE.globalAngle), sa = Math.sin(-STATE.globalAngle);
+            let nx = rx * ca - ry * sa, ny = rx * sa + ry * ca;
+            return { x: (nx / aspect + 0.5) * W, y: (ny + 0.5) * H };
+        }
+        // Клетка ФИГУРЫ → холст: метка едет вместе со своей клеткой при любом зуме, панораме и повороте
+        function figCellToScreen(cx, cy) {
+            return gridCellToScreen(cx + Math.floor(((STATE.gCols || 1) - STATE.COLS) * 0.5), cy - STATE.uOffY, true, true);
+        }
+        // Столбец фигуры на своей высоте экрана → холст. По X держимся за узор, по Y стоим на месте.
+        function figColToScreen(cx, sy) {
+            return gridCellToScreen(cx + Math.floor(((STATE.gCols || 1) - STATE.COLS) * 0.5), sy, true, false);
+        }
+
+        // ===== ВЫДЕЛЕННЫЕ ЯЧЕЙКИ КАК ГОЛОСА СИНТЕЗАТОРА =====
+        // У каждой метки три привязки на выбор:
+        //   «столбец»  — запомнен столбец узора (cx) и высота метки на экране (fy). Метка держится
+        //                за свой столбец при зуме и панораме, а СТРОКИ бегут сквозь неё — значение
+        //                мигает 1/0 в такт прокрутке. Это звукосниматель, он и даёт ритм.
+        //   «к клетке» — запомнена конкретная клетка узора (cx/cy), метка едет вместе с ней.
+        //                Значение при этом НЕ меняется от прокрутки — клетка своё значение не теряет;
+        //                мигать оно может только от эха, слоёв, Ёлки и Аниматрицы.
+        //   «к экрану» — запомнена точка холста: узор течёт под ней, но зум сдвигает метку на другую клетку.
+        const CELLSEL = {
+            pts: [],        // {px, py — экранный якорь; cx, cy — клетка фигуры (null в радаре)}
+            marks: [],      // DOM-метки
+            voices: [],     // {osc, gain} для режима «держать»
+            vals: [],
+            flips: [],      // сколько раз значение сменилось за последнюю секунду — видно, что чтение живое
+            flipAcc: [], flipTime: 0, lastPoll: 0,
+            MAX: 16,
+            // В радаре привязаться к клетке нечем (там строка/столбец — это радиус и угол), там всегда экран
+            anchor: function() { return STATE.isRadar ? 'screen' : UI.cellAnchorSelect.value; },
+            toggle: function(px, py) {
+                const dpr = window.devicePixelRatio || 1;
+                let near = Math.max(10 * dpr, Math.min(STATE.effX || 0, STATE.effY || 0) * 0.75);
+                for(let i = 0; i < this.pts.length; i++) {
+                    if(Math.abs(this.pts[i].px - px) <= near && Math.abs(this.pts[i].py - py) <= near) { this.remove(i); return; }
+                }
+                let c = cellAtPoint(px, py);
+                let p = { px: px, py: py, cx: null, cy: null, fy: 0.5 };
+                if(c && !STATE.isRadar) {
+                    p.cx = c.x; p.cy = c.y + STATE.uOffY;      // клетка фигуры: прокрутка уже внутри cy
+                    p.fy = (c.y + 0.5) / (STATE.gRows || 1);   // доля высоты экрана — переживает зум и смену размера окна
+                    let s = figCellToScreen(p.cx, p.cy); p.px = s.x; p.py = s.y;   // метку сажаем ровно на клетку
+                }
+                this.push(p);
+            },
+            push: function(p) {
+                if(this.pts.length >= this.MAX) return;
+                this.pts.push(p); this.vals.push(undefined);   // undefined — «ещё не читали», чтобы метка отрисовалась в первом же кадре
+                this.flips.push(0); this.flipAcc.push(0);
+                let el = document.createElement('div'); el.className = 'cell-marker';
+                el.innerHTML = '<i>' + (this.pts.length) + '</i><span>·</span>';
+                UI.cellMarkers.appendChild(el); this.marks.push(el);
+                this.voices.push(null);
+                this.retune();
+            },
+            restore: function(list) { this.clear(); (list || []).forEach(p => this.push({ px: p.px, py: p.py, cx: (p.cx === undefined ? null : p.cx), cy: (p.cy === undefined ? null : p.cy), fy: (p.fy === undefined ? 0.5 : p.fy) })); },
+            remove: function(i) {
+                this.flips.splice(i, 1); this.flipAcc.splice(i, 1);
+                this.stopVoice(i);
+                this.pts.splice(i, 1); this.vals.splice(i, 1); this.voices.splice(i, 1);
+                this.marks[i].remove(); this.marks.splice(i, 1);
+                for(let k = 0; k < this.marks.length; k++) this.marks[k].querySelector('i').textContent = k + 1;
+                this.retune();
+            },
+            clear: function() {
+                for(let i = 0; i < this.pts.length; i++) this.stopVoice(i);
+                this.pts = []; this.vals = []; this.voices = []; this.flips = []; this.flipAcc = [];
+                this.marks.forEach(m => m.remove()); this.marks = [];
+                this.readout();
+            },
+            freq: function(i) {
+                let oct = parseInt(UI.cellOctaveInput.value, 10) || 0;
+                return SYNTH.scaleNotes[i % SYNTH.scaleNotes.length] * Math.pow(2, oct + Math.floor(i / SYNTH.scaleNotes.length));
+            },
+            level: function() { return ((parseInt(UI.cellVolRange.value, 10) || 0) / 100) * 0.22; },
+            startVoice: function(i) {
+                SYNTH.init(); if(SYNTH.ctx.state === 'suspended') SYNTH.ctx.resume();
+                let osc = SYNTH.ctx.createOscillator(), g = SYNTH.ctx.createGain();
+                osc.type = UI.cellWaveSelect.value || 'square';
+                osc.frequency.setValueAtTime(this.freq(i), SYNTH.ctx.currentTime);
+                g.gain.value = 0; osc.connect(g); g.connect(SYNTH.masterGain); osc.start();
+                this.voices[i] = { osc: osc, gain: g };
+            },
+            stopVoice: function(i) {
+                let v = this.voices[i]; if(!v) return;
+                try { v.gain.gain.cancelScheduledValues(SYNTH.ctx.currentTime); v.gain.gain.setTargetAtTime(0, SYNTH.ctx.currentTime, 0.01); v.osc.stop(SYNTH.ctx.currentTime + 0.1); } catch(e) {}
+                this.voices[i] = null;
+            },
+            // Короткий щипок — им озвучиваются режимы «щелчок». Мерцание 1/0 на такой ноте слышно
+            // как отдельные удары, тогда как ровный сустейн на 60 Гц ухо принимает за один тон.
+            pluck: function(i) {
+                SYNTH.init(); if(SYNTH.ctx.state === 'suspended') SYNTH.ctx.resume();
+                let now = SYNTH.ctx.currentTime;
+                let osc = SYNTH.ctx.createOscillator(), g = SYNTH.ctx.createGain();
+                osc.type = UI.cellWaveSelect.value || 'square';
+                osc.frequency.setValueAtTime(this.freq(i), now);
+                let lv = Math.max(0.0001, this.level());
+                g.gain.setValueAtTime(lv, now); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+                osc.connect(g); g.connect(SYNTH.masterGain); osc.start(now); osc.stop(now + 0.1);
+            },
+            // Тембр/октаву меняем на лету, не перезапуская голоса
+            retune: function() {
+                if(!SYNTH.ctx) return;
+                for(let i = 0; i < this.voices.length; i++) {
+                    let v = this.voices[i]; if(!v) continue;
+                    v.osc.type = UI.cellWaveSelect.value || 'square';
+                    v.osc.frequency.setTargetAtTime(this.freq(i), SYNTH.ctx.currentTime, 0.01);
+                }
+            },
+            readout: function() {
+                let el = document.getElementById('cellReadout'); if(!el) return;
+                if(!this.pts.length) { el.textContent = 'нет выделенных ячеек'; return; }
+                el.textContent = this.vals.map((v, i) => (i + 1) + ':' + ((v === 0 || v === 1) ? v : '·') + '(' + this.flips[i] + '/с)').join('  ');
+            },
+            // Каждый кадр: пересчитываем, где сейчас метка, читаем клетку и подтягиваем звук.
+            // Плеер может стоять — читаем всё равно, значение берётся из текущего состояния сцены.
+            update: function() {
+                if(!this.pts.length) return;
+                const sound = UI.cellSynthCheck.checked;
+                const mode = UI.cellModeSelect.value;                       // hold | step | edge
+                const now = performance.now();
+                const step = parseInt(UI.cellStepRange.value, 10) || 0;
+                const poll = (now - this.lastPoll) >= step;                 // шаг 0 — каждый кадр
+                if(poll) this.lastPoll = now;
+                const anchor = this.anchor();
+                const cRect = UI.canvas.getBoundingClientRect(), pRect = UI.cellMarkers.getBoundingClientRect();
+                const kx = cRect.width / (UI.canvas.width || 1), ky = cRect.height / (UI.canvas.height || 1);
+                let sizeX = STATE.isRadar ? 14 : Math.min(200, Math.max(9, (STATE.effX || 12) * kx));
+                let sizeY = STATE.isRadar ? 14 : Math.min(200, Math.max(9, (STATE.effY || 12) * ky));
+                // Раз в секунду счётчик смен обнуляем: он показывает, что чтение действительно живое
+                let tick = (now - this.flipTime) >= 1000; if(tick) this.flipTime = now;
+                let redraw = false;
+                for(let i = 0; i < this.pts.length; i++) {
+                    let p = this.pts[i], bit;
+                    if(anchor === 'column' && p.cx !== null) {
+                        // Столбец держим за узор, высоту метки — за экран: строки бегут сквозь неё
+                        let sy = Math.floor(p.fy * (STATE.gRows || 1));
+                        let s = figColToScreen(p.cx, sy); p.px = s.x; p.py = s.y;
+                        p.cy = sy + STATE.uOffY;                                       // клетка под меткой прямо сейчас
+                        bit = bitAtFigCell(p.cx, p.cy, null);
+                    } else if(anchor === 'cell' && p.cx !== null) {
+                        let s = figCellToScreen(p.cx, p.cy); p.px = s.x; p.py = s.y;   // метка едет за своей клеткой
+                        bit = bitAtFigCell(p.cx, p.cy, null);
+                    } else bit = bitAtScreen(p.px, p.py);
+
+                    let prev = this.vals[i];
+                    if(bit !== prev) { this.vals[i] = bit; this.flipAcc[i]++; redraw = true; }
+                    if(tick) { this.flips[i] = this.flipAcc[i]; this.flipAcc[i] = 0; redraw = true; }
+
+                    let m = this.marks[i];
+                    m.style.left = (cRect.left - pRect.left + p.px * kx) + 'px';
+                    m.style.top = (cRect.top - pRect.top + p.py * ky) + 'px';
+                    m.style.width = sizeX + 'px'; m.style.height = sizeY + 'px';
+                    m.style.fontSize = Math.max(8, Math.min(16, Math.min(sizeX, sizeY) * 0.7)) + 'px';
+                    if(bit !== prev) {
+                        m.querySelector('span').textContent = bit === null ? '·' : bit;
+                        m.className = 'cell-marker' + (bit === 1 ? ' on' : (bit === null ? ' empty' : ''));
+                    }
+
+                    if(!sound) { if(this.voices[i]) this.stopVoice(i); continue; }
+                    if(mode === 'hold') {
+                        if(!this.voices[i]) this.startVoice(i);
+                        if(poll) this.voices[i].gain.gain.setTargetAtTime(bit === 1 ? this.level() : 0, SYNTH.ctx.currentTime, 0.006);
+                    } else {
+                        if(this.voices[i]) this.stopVoice(i);
+                        // step — щёлкаем по таймеру, пока в клетке единица; edge — только в момент прихода единицы
+                        if(mode === 'step') { if(poll && bit === 1) this.pluck(i); }
+                        else if(bit === 1 && prev !== 1) this.pluck(i);
+                    }
+                }
+                if(redraw) this.readout();
+            }
+        };
+        UI.cellClearBtn = document.getElementById('cellClearBtn');
+        UI.cellClearBtn.addEventListener('click', () => CELLSEL.clear());
+        UI.cellSelectCheck.addEventListener('change', () => document.body.classList.toggle('cell-picking', UI.cellSelectCheck.checked));
+        UI.cellWaveSelect.addEventListener('change', () => CELLSEL.retune());
+        UI.cellOctaveInput.addEventListener('input', () => CELLSEL.retune());
+        UI.cellSynthCheck.addEventListener('change', () => { if(UI.cellSynthCheck.checked) SYNTH.init(); });
+        function cellStepLabel() { let v = parseInt(UI.cellStepRange.value, 10) || 0; document.getElementById('cellStepLabel').textContent = v ? v + ' мс' : 'каждый кадр'; }
+        UI.cellStepRange.addEventListener('input', cellStepLabel); cellStepLabel();
+        // Смена привязки: пересаживаем метки на клетку под ними, чтобы они не прыгнули
+        UI.cellAnchorSelect.addEventListener('change', () => {
+            if(UI.cellAnchorSelect.value === 'screen' || STATE.isRadar) return;
+            CELLSEL.pts.forEach(p => { let c = cellAtPoint(p.px, p.py); if(c) { p.cx = c.x; p.cy = c.y + STATE.uOffY; p.fy = (c.y + 0.5) / (STATE.gRows || 1); } });
+        });
 
         // ГЕНЕРАЦИЯ МАТРИЦЫ
         // «Не стирать сетку»: прежняя матрица становится подложкой и повторяется по кругу под новой фигурой.
@@ -780,7 +1537,40 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
 
         // ПОИСК ПАТТЕРНОВ: префиксы строки поиска (1 бит, 2 бита, ...) ищутся по строкам матрицы;
         // найденный префикс больше не ищется до сброса поля
-        const SEARCH = { prefixes: [], needles: [], found: [], marks: new Set(), lastScan: 0, lineCursor: 0, last: null, lineMap: [] };
+        const SEARCH = { prefixes: [], needles: [], found: [], marks: new Set(), currentMarks: new Set(), currentMarksTimer: null, lastScan: 0, lineCursor: 0, last: null, lineMap: [], history: [], gotoIdx: -1 };
+        // Реальный шаг строки в <textarea> у части браузеров/масштабов экрана на доли пикселя отличается
+        // от заданных в CSS 14px — на длинном списке паттернов это копится, и номера строк слева
+        // (#searchHL) съезжают относительно текста. scrollHeight самого поля для замера не годится:
+        // он не может быть меньше высоты видимой области, поэтому на коротком списке (не переполняющем
+        // поле) даёт совсем не то число. Меряем на отдельном скрытом клоне textarea вне потока документа,
+        // где высота ничем не ограничена и scrollHeight — честная высота содержимого.
+        let searchLineHMeasured = null, searchLineHMeasureTA = null;
+        function getSearchLineHeight() {
+            if(searchLineHMeasured !== null) return searchLineHMeasured;
+            if(!searchLineHMeasureTA) {
+                searchLineHMeasureTA = document.createElement('textarea');
+                // height:2px (не rows) — гарантированно меньше одной строки, поэтому scrollHeight
+                // всегда считается от содержимого, а не от «атрибутной» высоты textarea, которую браузер
+                // может высчитывать по своей внутренней метрике шрифта, а не по нашему line-height.
+                searchLineHMeasureTA.style.cssText = 'position:absolute; visibility:hidden; left:-9999px; top:-9999px; width:250px; height:2px; padding:4px 4px 4px 30px; margin:0; border:none; box-sizing:border-box; font-family:inherit; font-size:10px; line-height:14px; white-space:pre; overflow:hidden;';
+                document.body.appendChild(searchLineHMeasureTA);
+            }
+            // Разница между 1 и 21 строкой, делённая на 20 — усредняет и гасит погрешность округления
+            // до целого пикселя на отдельном замере.
+            searchLineHMeasureTA.value = 'a';
+            let h1 = searchLineHMeasureTA.scrollHeight;
+            searchLineHMeasureTA.value = new Array(21).fill('a').join('\n');
+            let h21 = searchLineHMeasureTA.scrollHeight;
+            let diff = (h21 - h1) / 20;
+            searchLineHMeasured = (diff > 4 && diff < 40) ? diff : 14;
+            return searchLineHMeasured;
+        }
+        // 'Roboto Mono' грузится асинхронно (@import с Google Fonts) — если замер выше произошёл
+        // раньше, чем шрифт догрузился, он навсегда застревает на метриках шрифта-заглушки. Как
+        // только реальный шрифт готов, сбрасываем кэш и перерисовываем номера по новой.
+        if(document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(() => { searchLineHMeasured = null; renderSearchHL(); });
+        }
         function setSearchPattern() {
             let raw = document.getElementById('searchInput').value.replace(/\r/g, '').split('\n');
             let pats = [], map = [];
@@ -792,19 +1582,25 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             // «Без первого символа»: ищем остаток строки — совпадение остатка идёт в зачёт
             let skip1 = document.getElementById('searchSkipFirstCheck').checked;
             SEARCH.needles = pats.map(p => (skip1 && p.length > 1) ? p.slice(1) : p);
-            SEARCH.marks.clear(); SEARCH.lineCursor = 0; SEARCH.last = null;
+            SEARCH.marks.clear(); SEARCH.currentMarks.clear(); if(SEARCH.currentMarksTimer) clearTimeout(SEARCH.currentMarksTimer);
+            SEARCH.lineCursor = 0; SEARCH.last = null; SEARCH.history = []; SEARCH.gotoIdx = -1;
             document.getElementById('searchStatus').textContent = pats.length ? ('Найдено: 0/' + pats.length) : '';
             renderSearchHL(); updateDataTexture();
         }
-        // Слой подсветки под полем: полоса на каждой строке, золотая — если паттерн уже найден
+        // Слой подсветки под полем: полоса на каждой строке, золотая — если паттерн уже найден,
+        // голубая с рамкой — если это та самая находка, к которой сейчас перелетели («К находке»)
         function renderSearchHL() {
             let ta = document.getElementById('searchInput'), hl = document.getElementById('searchHL');
             let raw = ta.value.replace(/\r/g, '').split('\n'); let html = '';
+            let curK = (SEARCH.gotoIdx >= 0 && SEARCH.history[SEARCH.gotoIdx]) ? SEARCH.history[SEARCH.gotoIdx].k : -1;
+            let lineH = getSearchLineHeight();
             for(let i=0; i<raw.length; i++) {
                 let k = SEARCH.lineMap[i];
                 let isPat = (k !== undefined && k >= 0);
                 let done = isPat && SEARCH.found[k];
-                html += '<div style="background:' + (done ? 'rgba(255,215,0,0.28)' : 'transparent') + '"><span' + (done ? ' style="color:#ffd700"' : '') + '>' + (isPat ? (k + 1) : '') + '</span></div>';
+                let isCur = isPat && k === curK;
+                let style = 'height:' + lineH.toFixed(3) + 'px;' + (isCur ? 'background:rgba(0,220,255,0.35);outline:1px solid rgba(0,220,255,0.8);outline-offset:-1px' : 'background:' + (done ? 'rgba(255,215,0,0.28)' : 'transparent'));
+                html += '<div style="' + style + '"><span' + (done ? ' style="color:#ffd700"' : '') + '>' + (isPat ? (k + 1) : '') + '</span></div>';
             }
             hl.innerHTML = html; hl.scrollTop = ta.scrollTop;
         }
@@ -886,6 +1682,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                         for(let j=0; j<needle.length; j++) SEARCH.marks.add((g.y0 + g.dy * (f + j)) * STATE.COLS + (g.x0 + g.dx * (f + j)));
                         let mid = f + (needle.length - 1) / 2;
                         SEARCH.last = { k: k, y: g.y0 + g.dy * f, x: g.x0 + g.dx * f, cy: g.y0 + g.dy * mid, cx: g.x0 + g.dx * mid, sym: g.sym };
+                        SEARCH.history.push(SEARCH.last);
                         dirty = true; active.splice(a, 1);
                     }
                 }
@@ -894,8 +1691,15 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             document.getElementById('searchStatus').textContent = 'Найдено: ' + n + '/' + SEARCH.prefixes.length + (SEARCH.last ? ' · №' + (SEARCH.last.k + 1) + ' ' + SEARCH.last.sym + ' стр.' + SEARCH.last.y : '');
             if(dirty) { updateDataTexture(); renderSearchHL(); }
         }
+        document.getElementById('searchHighlightCheck').addEventListener('change', () => {
+            STATE.isPlaying = false; UI.playBtn.innerHTML = '▶ ПУСК GPU'; // пауза, чтобы разглядеть подсветку на застывшей картинке
+            updateDataTexture();
+        });
         document.getElementById('searchInput').addEventListener('input', setSearchPattern);
         document.getElementById('searchInput').addEventListener('scroll', () => { document.getElementById('searchHL').scrollTop = document.getElementById('searchInput').scrollTop; });
+        // Ручное растягивание #searchWrap (resize: vertical) не шлёт событие scroll на textarea,
+        // а высота видимой области меняется — без ресинка номера строк съезжали относительно текста.
+        new ResizeObserver(() => { document.getElementById('searchHL').scrollTop = document.getElementById('searchInput').scrollTop; }).observe(document.getElementById('searchWrap'));
         // Перетаскивание текстового файла в поле поиска — загрузка списка паттернов
         (function() {
             const wrap = document.getElementById('searchWrap');
@@ -912,18 +1716,36 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         document.getElementById('resetSearchBtn').addEventListener('click', setSearchPattern);
         document.getElementById('searchSkipFirstCheck').addEventListener('change', setSearchPattern);
         document.getElementById('searchDirSelect').addEventListener('change', setSearchPattern);
-        // Перелёт к последней находке: центрируем её и подводим читаемый масштаб
+        // Перелёт по находкам: каждый клик — на одну назад (от самой последней к самой первой), по кругу
         document.getElementById('gotoFoundBtn').addEventListener('click', () => {
-            if(!SEARCH.last) { document.getElementById('searchStatus').textContent = 'Пока ничего не найдено'; return; }
+            if(!SEARCH.history.length) { document.getElementById('searchStatus').textContent = 'Пока ничего не найдено'; return; }
+            SEARCH.gotoIdx = (SEARCH.gotoIdx <= 0) ? SEARCH.history.length - 1 : SEARCH.gotoIdx - 1;
+            let item = SEARCH.history[SEARCH.gotoIdx];
             let spX = (parseInt(UI.spacingXRange.value, 10) || 100) / 100, spY = (parseInt(UI.spacingYRange.value, 10) || 100) / 100;
-            STATE.fSize = Math.max(minScale(), 14); UI.fontSizeRange.value = Math.round(Math.min(100, STATE.fSize));
             let gx = UI.canvas.width / (STATE.fSize * spX), gy = UI.canvas.height / (STATE.fSize * spY);
             let C = Math.floor((gx - STATE.COLS) / 2);
-            let cx = (SEARCH.last.cx !== undefined) ? SEARCH.last.cx : SEARCH.last.x, cy = (SEARCH.last.cy !== undefined) ? SEARCH.last.cy : SEARCH.last.y;
+            let cx = (item.cx !== undefined) ? item.cx : item.x, cy = (item.cy !== undefined) ? item.cy : item.y;
             STATE.offsetX = UI.canvas.width * (0.5 - (cx + 0.5 + C) / gx);
             STATE.offsetMatY = cy - gy / 2;
             STATE.isRadar = false; UI.toggleRadarBtn.style.background = '#cc33ff';
-            document.getElementById('searchStatus').textContent = 'Находка №' + (SEARCH.last.k + 1) + ' ' + (SEARCH.last.sym || '→') + ': строка ' + SEARCH.last.y + ', позиция ' + SEARCH.last.x;
+            document.getElementById('searchStatus').textContent = 'Находка №' + (item.k + 1) + ' ' + (item.sym || '→') + ': строка ' + item.y + ', позиция ' + item.x + ' (' + (SEARCH.gotoIdx + 1) + '/' + SEARCH.history.length + ')';
+
+            // Временно подсветить именно эту находку на холсте (голубым, ярче общего золота) и в самом поле —
+            // прокрутить список к её строке и обвести её.
+            let needle = SEARCH.needles[item.k] || SEARCH.prefixes[item.k] || '';
+            let dy = (item.sym === '↓' || item.sym === '↘' || item.sym === '↙') ? 1 : 0;
+            let dx = (item.sym === '→' || item.sym === '↘') ? 1 : (item.sym === '↙' ? -1 : 0);
+            SEARCH.currentMarks.clear();
+            for(let j=0; j<needle.length; j++) SEARCH.currentMarks.add((item.y + dy * j) * STATE.COLS + (item.x + dx * j));
+            // На время — не мигание, а притушить всё остальное, чтобы находка была видна просто за счёт контраста
+            STATE.searchDim = true;
+            updateDataTexture();
+            if(SEARCH.currentMarksTimer) clearTimeout(SEARCH.currentMarksTimer);
+            SEARCH.currentMarksTimer = setTimeout(() => { STATE.searchDim = false; SEARCH.currentMarks.clear(); updateDataTexture(); }, 2500);
+
+            let ta = document.getElementById('searchInput'), lineI = SEARCH.lineMap.indexOf(item.k);
+            if(lineI >= 0) ta.scrollTop = Math.max(0, lineI * 14 - ta.clientHeight / 2 + 7);
+            renderSearchHL();
         });
         UI.searchRateRange.addEventListener('input', () => { let v = parseInt(UI.searchRateRange.value, 10); document.getElementById('searchRateLabel').textContent = v === 0 ? 'каждый кадр' : (v / 1000) + 'с'; });
 
@@ -939,7 +1761,13 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             frames++; if(time - lastFPS >= 1000) { UI.fps.textContent=`FPS: ${frames} | GPU Engine`; frames=0; lastFPS=time; }
             let spd = parseInt(UI.speedRange.value, 10); let speedMs = 1001 - spd; let delta = time - STATE.lastTickTime;
 
-            AUDIO.update();
+            // СТОП должен останавливать картинку целиком. Раньше AUDIO.update() вызывался безусловно, и на
+            // паузе аудио-пульсация продолжала менять audioScale каждый кадр; пиксель-перфект округляет
+            // effX/effY до целых, поэтому плавное «дыхание» превращалось в щелчки по целым пикселям, и вся
+            // решётка пересобиралась на клетку — линия сетки шириной в одну клетку от этого моргала на
+            // полностью неподвижном узоре. На паузе сбрасываем реакцию в нейтраль (сам вызов это делает
+            // только когда галка снята, поэтому обнуляем явно).
+            if(STATE.isPlaying) AUDIO.update(); else { STATE.audioScale = 1; STATE.audioGlow = 0; STATE.bassLevel = 0; }
             if(STATE.isPlaying) { if(UI.spin3dCheck.checked) STATE.globalAngle += 0.01; if(UI.breathingZoomCheck.checked) STATE.breathTime += 0.02; }
             if(!document.getElementById('searchOffCheck').checked && SEARCH.prefixes.length && SEARCH.found.indexOf(false) !== -1 && time - SEARCH.lastScan >= (parseInt(UI.searchRateRange.value, 10) || 0)) { SEARCH.lastScan = time; scanPatterns(); }
 
@@ -1018,13 +1846,17 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             // В радаре округление не нужно (там нет ровной пиксельной сетки), а при плавном зуме оно даёт рывки
             if(UI.pixelPerfectCheck.checked && !STATE.isRadar) { STATE.effX = Math.max(1, Math.round(STATE.effX)); STATE.effY = Math.max(1, Math.round(STATE.effY)); }
             let canvasCols = UI.canvas.width / STATE.effX; let canvasRows = UI.canvas.height / STATE.effY;
+            // Те же величины, что уходят в шейдер, кладём в STATE — по ним CPU читает клетку под меткой
+            STATE.gCols = canvasCols; STATE.gRows = canvasRows;
+            STATE.uOffX = UI.pixelPerfectCheck.checked ? Math.round(STATE.offsetX) : STATE.offsetX;
+            STATE.uOffY = UI.freezeLayer1Check.checked ? STATE.dragY : STATE.offsetMatY;
+            CELLSEL.update();
 
             gl.useProgram(program); gl.bindBuffer(gl.ARRAY_BUFFER, buffer); gl.enableVertexAttribArray(aPosition); gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
             gl.bindFramebuffer(gl.FRAMEBUFFER, sceneFBO);
             gl.viewport(0, 0, UI.canvas.width, UI.canvas.height); gl.uniform2f(unilocs.res, UI.canvas.width, UI.canvas.height); gl.uniform2f(unilocs.grid, canvasCols, canvasRows); gl.uniform2f(unilocs.dataSize, STATE.COLS, STATE.ROWS);
-            let layer1Y = UI.freezeLayer1Check.checked ? STATE.dragY : STATE.offsetMatY; gl.uniform2f(unilocs.offset, UI.pixelPerfectCheck.checked ? Math.round(STATE.offsetX) : STATE.offsetX, layer1Y); gl.uniform2f(unilocs.layerOff, 0, STATE.layer2Y);
-            gl.uniform3fv(unilocs.cAct, hex2vec(UI.activeColorPicker.value)); gl.uniform3fv(unilocs.cStat, hex2vec(UI.staticColorPicker.value)); gl.uniform1f(unilocs.hide, UI.hideStaticCheck.checked ? 1.0 : 0.0); gl.uniform1f(unilocs.glow, STATE.audioGlow); gl.uniform1f(unilocs.radar, STATE.isRadar ? 1.0 : 0.0); gl.uniform1f(unilocs.angle, STATE.globalAngle); gl.uniform1f(unilocs.layerCount, UI.dualCoreCheck.checked ? (parseInt(UI.layersRange.value, 10) || 2) : 1.0); gl.uniform1f(unilocs.dualM, UI.dualMaskCheck.checked ? 1.0 : 0.0); gl.uniform1f(unilocs.echo, UI.echoModeCheck.checked ? 1.0 : 0.0); gl.uniform1f(unilocs.echoOff, STATE.echoOff); gl.uniform1f(unilocs.rainbow, UI.themeSelect.value === 'rainbow' ? 1.0 : 0.0); gl.uniform1f(unilocs.rbDir, parseFloat(document.getElementById('rainbowDirSelect').value) || 0); gl.uniform1f(unilocs.fill, parseFloat(document.getElementById('fillModeSelect').value) || 0); gl.uniform2f(unilocs.wrap, UI.noWrapXCheck.checked ? 0.0 : 1.0, UI.noWrapYCheck.checked ? 0.0 : 1.0); gl.uniform1f(unilocs.bgLight, STATE.lightBg ? 1.0 : 0.0); gl.uniform3fv(unilocs.bgColor, hex2vec(document.getElementById('bgColorPicker').value)); gl.uniform1f(unilocs.charZoom, Math.max(0.1, (parseInt(UI.charZoomRange.value, 10) || 100) / 100)); gl.uniform1f(unilocs.radarMode, parseFloat(document.getElementById('radarModeSelect').value) || 0); gl.uniform1f(unilocs.panY, STATE.panY); gl.uniform1f(unilocs.hole, (parseInt(document.getElementById('centerHoleRange').value, 10) || 0) / 1000); gl.uniform1f(unilocs.gridSep, document.getElementById('gridSepCheck').checked ? 1.0 : 0.0); gl.uniform1f(unilocs.gridOff, STATE.gridOffY); gl.uniform1f(unilocs.polarEven, document.getElementById('polarEvenCheck').checked ? 1.0 : 0.0);
-
+            let layer1Y = STATE.uOffY; gl.uniform2f(unilocs.offset, STATE.uOffX, layer1Y); gl.uniform2f(unilocs.layerOff, 0, STATE.layer2Y);
+            gl.uniform3fv(unilocs.cAct, hex2vec(UI.activeColorPicker.value)); gl.uniform3fv(unilocs.cStat, hex2vec(UI.staticColorPicker.value)); gl.uniform1f(unilocs.hide, UI.hideStaticCheck.checked ? 1.0 : 0.0); gl.uniform1f(unilocs.glow, STATE.audioGlow); gl.uniform1f(unilocs.radar, STATE.isRadar ? 1.0 : 0.0); gl.uniform1f(unilocs.angle, STATE.globalAngle); gl.uniform1f(unilocs.layerCount, UI.dualCoreCheck.checked ? (parseInt(UI.layersRange.value, 10) || 2) : 1.0); gl.uniform1f(unilocs.dualM, UI.dualMaskCheck.checked ? 1.0 : 0.0); gl.uniform1f(unilocs.echo, UI.echoModeCheck.checked ? 1.0 : 0.0); gl.uniform1f(unilocs.echoOff, STATE.echoOff); gl.uniform1f(unilocs.rainbow, UI.themeSelect.value === 'rainbow' ? 1.0 : 0.0); gl.uniform1f(unilocs.rbDir, parseFloat(document.getElementById('rainbowDirSelect').value) || 0); gl.uniform1f(unilocs.fill, parseFloat(document.getElementById('fillModeSelect').value) || 0); gl.uniform2f(unilocs.wrap, UI.wrapXCheck.checked ? 1.0 : 0.0, UI.wrapYCheck.checked ? 1.0 : 0.0); gl.uniform1f(unilocs.bgLight, STATE.lightBg ? 1.0 : 0.0); gl.uniform3fv(unilocs.bgColor, hex2vec(document.getElementById('bgColorPicker').value)); gl.uniform1f(unilocs.charZoom, Math.max(0.1, (parseInt(UI.charZoomRange.value, 10) || 100) / 100)); gl.uniform1f(unilocs.radarMode, parseFloat(document.getElementById('radarModeSelect').value) || 0); gl.uniform1f(unilocs.panY, STATE.panY); gl.uniform1f(unilocs.hole, (parseInt(document.getElementById('centerHoleRange').value, 10) || 0) / 1000); gl.uniform1f(unilocs.gridSep, document.getElementById('gridSepCheck').checked ? 1.0 : 0.0); gl.uniform1f(unilocs.gridOff, STATE.gridOffY); gl.uniform1f(unilocs.gridShow, document.getElementById('gridShowCheck').checked ? 1.0 : 0.0); gl.uniform1f(unilocs.dimOthers, STATE.searchDim ? 1.0 : 0.0);
             gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, fontTex); gl.uniform1i(unilocs.fontM, 0); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, dataTex); gl.uniform1i(unilocs.dataM, 1);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
 
@@ -1057,8 +1889,10 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             if(s.spY !== undefined) UI.spacingYRange.value = s.spY;
             if(s.searchRate !== undefined) UI.searchRateRange.value = s.searchRate;
             if(s.zoomClamp !== undefined) UI.zoomClampCheck.checked = !!s.zoomClamp;
-            if(s.noWrapX !== undefined) UI.noWrapXCheck.checked = !!s.noWrapX;
-            if(s.noWrapY !== undefined) UI.noWrapYCheck.checked = !!s.noWrapY;
+            // Поле пресета исторически хранит «без повтора» (старый смысл галки); текущая галка
+            // означает обратное — «кольцевать», поэтому при загрузке значение инвертируется
+            if(s.noWrapX !== undefined) UI.wrapXCheck.checked = !s.noWrapX;
+            if(s.noWrapY !== undefined) UI.wrapYCheck.checked = !s.noWrapY;
             if(s.gridStep !== undefined) document.getElementById('gridStepInput').value = s.gridStep;
             if(s.bgColor !== undefined) document.getElementById('bgColorPicker').value = s.bgColor;
             if(s.lightBg !== undefined) { STATE.lightBg = !!s.lightBg; applyLightBg(); }
@@ -1069,13 +1903,12 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             if(s.radarMode !== undefined) document.getElementById('radarModeSelect').value = s.radarMode;
             if(s.keepGrid !== undefined) document.getElementById('keepGridCheck').checked = !!s.keepGrid;
             if(s.gridSep !== undefined) document.getElementById('gridSepCheck').checked = !!s.gridSep;
+            if(s.gridShow !== undefined) document.getElementById('gridShowCheck').checked = !!s.gridShow;
             if(s.gridRate !== undefined) { document.getElementById('gridRateRange').value = s.gridRate; document.getElementById('gridRateLabel').textContent = s.gridRate; }
             if(s.autoZoom !== undefined) document.getElementById('autoZoomCheck').checked = !!s.autoZoom;
             if(s.autoZoomRate !== undefined) document.getElementById('autoZoomRate').value = s.autoZoomRate;
             if(s.autoZoomDir !== undefined) document.getElementById('autoZoomDirSelect').value = s.autoZoomDir;
-            if(s.centerHole !== undefined) document.getElementById('centerHoleRange').value = s.centerHole;
-            if(s.polarEven !== undefined) document.getElementById('polarEvenCheck').checked = !!s.polarEven;
-            if(s.seamlessZoom !== undefined) document.getElementById('seamlessZoomCheck').checked = !!s.seamlessZoom;
+            if(s.centerHole !== undefined) document.getElementById('centerHoleRange').value = s.centerHole;            if(s.seamlessZoom !== undefined) document.getElementById('seamlessZoomCheck').checked = !!s.seamlessZoom;
             if(s.zoomPeriod !== undefined) document.getElementById('zoomPeriodInput').value = s.zoomPeriod;
             if(s.fillMode !== undefined) document.getElementById('fillModeSelect').value = s.fillMode;
             if(s.searchSeq !== undefined) document.getElementById('searchSeqCheck').checked = !!s.searchSeq;
@@ -1089,6 +1922,15 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             if(s.crt !== undefined) UI.crtEffectCheck.checked = !!s.crt;
             if(s.synth !== undefined) UI.binarySynthCheck.checked = !!s.synth;
             if(s.synthVol !== undefined) { UI.synthVolRange.value = s.synthVol; SYNTH.updateVol(); }
+            if(s.cellSel !== undefined) { UI.cellSelectCheck.checked = !!s.cellSel; document.body.classList.toggle('cell-picking', !!s.cellSel); }
+            if(s.cellSynth !== undefined) UI.cellSynthCheck.checked = !!s.cellSynth;
+            if(s.cellWave !== undefined) UI.cellWaveSelect.value = s.cellWave;
+            if(s.cellOct !== undefined) UI.cellOctaveInput.value = s.cellOct;
+            if(s.cellVol !== undefined) UI.cellVolRange.value = s.cellVol;
+            if(s.cellAnchor !== undefined) UI.cellAnchorSelect.value = s.cellAnchor;
+            if(s.cellMode !== undefined) UI.cellModeSelect.value = s.cellMode;
+            if(s.cellStep !== undefined) { UI.cellStepRange.value = s.cellStep; cellStepLabel(); }
+            if(s.cellPts) CELLSEL.restore(s.cellPts);
             if(s.seed !== undefined) UI.zerkSeedInput.value = s.seed;
             if(s.rows !== undefined) UI.zerkCountInput.value = s.rows;
             if(s.trim !== undefined) UI.trimZerosCheck.checked = !!s.trim;
@@ -1134,10 +1976,14 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                 anim: UI.zerkaliusAnimCheck.checked, elka: UI.elkaCheck.checked, hideStat: UI.hideStaticCheck.checked,
                 echo: UI.echoModeCheck.checked, crt: UI.crtEffectCheck.checked,
                 synth: UI.binarySynthCheck.checked, synthVol: UI.synthVolRange.value, radar: STATE.isRadar,
+                cellSel: UI.cellSelectCheck.checked, cellSynth: UI.cellSynthCheck.checked, cellWave: UI.cellWaveSelect.value,
+                cellOct: UI.cellOctaveInput.value, cellVol: UI.cellVolRange.value,
+                cellAnchor: UI.cellAnchorSelect.value, cellMode: UI.cellModeSelect.value, cellStep: UI.cellStepRange.value,
+                cellPts: CELLSEL.pts.map(p => ({ px: p.px, py: p.py, cx: p.cx, cy: p.cy, fy: p.fy })),
                 layers: UI.layersRange.value, rbDir: document.getElementById('rainbowDirSelect').value,
                 search: document.getElementById('searchInput').value,
                 searchSeq: document.getElementById('searchSeqCheck').checked, searchSkip1: document.getElementById('searchSkipFirstCheck').checked, searchDir: document.getElementById('searchDirSelect').value,
-                noWrapX: UI.noWrapXCheck.checked, noWrapY: UI.noWrapYCheck.checked, lightBg: STATE.lightBg, bgColor: document.getElementById('bgColorPicker').value, gridStep: document.getElementById('gridStepInput').value, charZoom: UI.charZoomRange.value, searchOff: document.getElementById('searchOffCheck').checked, fontFace: document.getElementById('fontFaceSelect').value, pixelPerfect: UI.pixelPerfectCheck.checked, radarMode: document.getElementById('radarModeSelect').value, keepGrid: document.getElementById('keepGridCheck').checked, gridSep: document.getElementById('gridSepCheck').checked, gridRate: document.getElementById('gridRateRange').value, autoZoom: document.getElementById('autoZoomCheck').checked, autoZoomRate: document.getElementById('autoZoomRate').value, autoZoomDir: document.getElementById('autoZoomDirSelect').value, centerHole: document.getElementById('centerHoleRange').value, polarEven: document.getElementById('polarEvenCheck').checked, seamlessZoom: document.getElementById('seamlessZoomCheck').checked, zoomPeriod: document.getElementById('zoomPeriodInput').value,
+                noWrapX: !UI.wrapXCheck.checked, noWrapY: !UI.wrapYCheck.checked, lightBg: STATE.lightBg, bgColor: document.getElementById('bgColorPicker').value, gridStep: document.getElementById('gridStepInput').value, charZoom: UI.charZoomRange.value, searchOff: document.getElementById('searchOffCheck').checked, fontFace: document.getElementById('fontFaceSelect').value, pixelPerfect: UI.pixelPerfectCheck.checked, radarMode: document.getElementById('radarModeSelect').value, keepGrid: document.getElementById('keepGridCheck').checked, gridSep: document.getElementById('gridSepCheck').checked, gridRate: document.getElementById('gridRateRange').value, gridShow: document.getElementById('gridShowCheck').checked, autoZoom: document.getElementById('autoZoomCheck').checked, autoZoomRate: document.getElementById('autoZoomRate').value, autoZoomDir: document.getElementById('autoZoomDirSelect').value, centerHole: document.getElementById('centerHoleRange').value, seamlessZoom: document.getElementById('seamlessZoomCheck').checked, zoomPeriod: document.getElementById('zoomPeriodInput').value,
                 snap: STATE.lines.map(r => r.map(c => c.c).join('')).join('\n'),
                 pos: { x: STATE.offsetX, y: STATE.offsetMatY, dy: STATE.dragY, pY: STATE.panY, l2: STATE.layer2Y, ang: STATE.globalAngle, f: STATE.fSize, elkaS: STATE.elkaShift }
             };
@@ -1193,7 +2039,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             if(cOld !== null && UI.canvas.width > 0) { let cNew = Math.floor((UI.canvas.width / effX - STATE.COLS) * 0.5); STATE.offsetX += (cOld - cNew) * effX; }
             setupFBO();
         });
-        UI.zerkaliusBtn.addEventListener('click', generateMatrix); 
+        UI.zerkaliusBtn.addEventListener('click', () => { UI.stopBtn.click(); generateMatrix(); });
         function togglePlay() {
             STATE.isPlaying = !STATE.isPlaying; UI.playBtn.innerHTML = STATE.isPlaying ? '⏸ ПАУЗА' : '▶ ПУСК GPU';
             if(STATE.isPlaying) SYNTH.init();
@@ -1201,10 +2047,14 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         }
         UI.playBtn.addEventListener('click', togglePlay);
         // СТОП: полный сброс движения + фигура заново вписывается в экран (fitView), иначе после сброса смещений холст казался пустым
+        // СТОП сбрасывает движение и панораму (чтобы фигуру не оставило за краем экрана), но зум
+        // трогать не нужно — раньше здесь стоял fitView(), который каждый раз пересчитывал масштаб
+        // «по размеру экрана» и сбивал зум, который выставил вручную
         UI.stopBtn.addEventListener('click', () => {
             STATE.isPlaying=false; UI.playBtn.innerHTML='▶ ПУСК GPU';
             STATE.dragY=0; STATE.globalAngle=0; STATE.elkaShift=0; STATE.algoPointer=0; STATE.echoOff=0; STATE.accAnim=0; STATE.accElka=0; STATE.animatrixRow=0; STATE.gridOffY=0;
-            fitView(); updateDataTexture();
+            STATE.offsetX=0; STATE.offsetMatY=0; STATE.layer2Y=0; STATE.panY=0; SEARCH.marks.clear();
+            updateDataTexture();
             if(AUDIO.init) { document.getElementById('bgAudio').pause(); document.getElementById('bgAudio').currentTime=0; }
         });
         // Покадровый шаг: тот же тик, что и при воспроизведении, но один и по кнопке
@@ -1261,9 +2111,10 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         document.getElementById('bgColorPicker').addEventListener('input', () => { if(!STATE.lightBg) STATE.lightBg = true; applyLightBg(); });
         document.getElementById('lightBgBtn').addEventListener('click', () => { STATE.lightBg = !STATE.lightBg; applyLightBg(); });
 
-        // Связка размыкания по Y и заморозки слоя: без повтора и без якоря фигура при ПУСКе просто уезжает в пустоту навсегда
-        UI.noWrapYCheck.addEventListener('change', (e) => { if(e.target.checked) UI.freezeLayer1Check.checked = true; });
-        UI.freezeLayer1Check.addEventListener('change', (e) => { if(!e.target.checked) UI.noWrapYCheck.checked = false; });
+        // Связка кольцевания по Y и заморозки слоя: без повтора (не кольцуется) и без якоря
+        // фигура при ПУСКе просто уезжает в пустоту навсегда
+        UI.wrapYCheck.addEventListener('change', (e) => { if(!e.target.checked) UI.freezeLayer1Check.checked = true; });
+        UI.freezeLayer1Check.addEventListener('change', (e) => { if(!e.target.checked) UI.wrapYCheck.checked = true; });
 
         // Вершина фрактала (строка 0, середина матрицы) — ровно в центр холста.
         // Это точка самоподобия: только относительно неё бесшовная петля зума совпадает сама с собой.
@@ -1351,7 +2202,13 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         // Порядок важен: для одиночного клика по идущей сцене это даёт ровно одну паузу, а не две подряд.
         window.addEventListener('mouseup', (e) => {
             if(STATE.wasPlaying) { STATE.wasPlaying = false; STATE.isPlaying = true; STATE.lastTickTime = performance.now(); UI.playBtn.innerHTML = '⏸ ПАУЗА'; }
-            if(STATE.isDragging && e.target === UI.canvas && Math.abs(e.clientX - STATE.dragStartX) < 4 && Math.abs(e.clientY - STATE.dragStartY) < 4) togglePlay();
+            // В режиме выделения тот же «чистый клик» ставит/снимает метку ячейки, а не паузу
+            if(STATE.isDragging && e.target === UI.canvas && Math.abs(e.clientX - STATE.dragStartX) < 4 && Math.abs(e.clientY - STATE.dragStartY) < 4) {
+                if(UI.cellSelectCheck.checked) {
+                    const r = UI.canvas.getBoundingClientRect();
+                    CELLSEL.toggle((e.clientX - r.left) * (UI.canvas.width / r.width), (e.clientY - r.top) * (UI.canvas.height / r.height));
+                } else togglePlay();
+            }
             STATE.isDragging=false;
         });
         // В Дзене холст не только меняет размер, но и переезжает по экрану (панель уходит, поля пропадают).
@@ -1375,13 +2232,6 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         UI.themeSelect.addEventListener('change', function() { const t = THEMES[this.value]; if(t) { UI.activeColorPicker.value = t.act; UI.staticColorPicker.value = t.stat; }});
         
         const panel = document.getElementById('leftPanel'); let startX, startY, startLeft, startTop;
-        // Кнопка просто прячет и возвращает панель; холст при этом остаётся на месте
-        UI.toggleFloatPanelBtn.addEventListener('click', function() {
-            withStableView(() => document.body.classList.toggle('panel-hidden'));
-            let hidden = document.body.classList.contains('panel-hidden');
-            this.style.background = hidden ? '#00ff66' : '#0088ff'; this.style.color = hidden ? '#000' : '#fff';
-            this.title = hidden ? 'Показать панель' : 'Скрыть панель';
-        });
         panel.addEventListener('mousedown', function(e) { if(!STATE.isPanelFloating) return; if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON' || e.target.closest('.scrollable-settings') || e.target.closest('.fixed-player')) return; STATE.isDraggingPanel = true; startX = e.clientX; startY = e.clientY; startLeft = panel.offsetLeft; startTop = panel.offsetTop; }); window.addEventListener('mousemove', function(e) { if(STATE.isDraggingPanel) { panel.style.left = (startLeft + e.clientX - startX) + 'px'; panel.style.top = (startTop + e.clientY - startY) + 'px'; } }); window.addEventListener('mouseup', function() { STATE.isDraggingPanel = false; });
 
         // Кеш: всё состояние целиком в памяти браузера, восстанавливается при открытии
@@ -1399,18 +2249,20 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         // Заводские умолчания прямо на живой странице: у каждого элемента берём его исходное значение из разметки.
         // В память ничего не пишем — закрепится это или нет, решает пользователь кнопкой «Запомнить всё».
         document.getElementById('cacheClearBtn').addEventListener('click', () => {
-            document.querySelectorAll('#leftPanel input, #leftPanel select, #leftPanel textarea').forEach(el => {
+            document.querySelectorAll('.controls input, .controls select, .controls textarea, .floating-panel input, .floating-panel select, .floating-panel textarea').forEach(el => {
                 if(el.type === 'file' || el.type === 'button') return;
                 if(el.type === 'checkbox' || el.type === 'radio') el.checked = el.defaultChecked;
                 else if(el.tagName === 'SELECT') { for(let i=0; i<el.options.length; i++) el.options[i].selected = el.options[i].defaultSelected; if(el.selectedIndex < 0) el.selectedIndex = 0; }
                 else el.value = el.defaultValue;
             });
+            CELLSEL.clear(); document.body.classList.remove('cell-picking');
             STATE.lightBg = false; STATE.isRadar = false; UI.toggleRadarBtn.style.background = '#cc33ff';
             STATE.isPlaying = false; UI.playBtn.innerHTML = '▶ ПУСК GPU';
             STATE.dragY = 0; STATE.globalAngle = 0; STATE.elkaShift = 0; STATE.algoPointer = 0; STATE.echoOff = 0; STATE.accAnim = 0; STATE.accElka = 0; STATE.animatrixRow = 0;
             document.getElementById('charZoomLabel').textContent = UI.charZoomRange.value + '%';
             document.getElementById('layersLabel').textContent = UI.layersRange.value;
             document.getElementById('speedMultLabel').textContent = UI.speedMultInput.value;
+            cellStepLabel();
             applyLightBg(); buildFontAtlas(); setSearchPattern(); generateMatrix();
             document.getElementById('statusInfo').textContent = '🧹 Заводские настройки — нажми «Запомнить всё», чтобы закрепить';
         });
