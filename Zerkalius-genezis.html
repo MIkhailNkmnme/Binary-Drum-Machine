@@ -964,7 +964,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         </div>
     </div>
     <div id="playerButtonsBar" style="position:fixed; z-index:101; display:flex; flex-direction:column; align-items:center;" title="Мини-пульт. Двойной клик по пустому месту: свернуть/развернуть. Перетаскивание: переместить (положение запоминается)." onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); if (window.savePanelLayout) savePanelLayout(); event.stopPropagation(); }">
-        <div class="mini-title" style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:11px; font-weight:bold; letter-spacing:2px; color:rgba(0,204,255,0.75); padding:1px 0 3px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.12); margin-bottom:4px;"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.402 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
+        <div class="mini-title" style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:11px; font-weight:bold; letter-spacing:2px; color:rgba(0,204,255,0.75); padding:1px 0 3px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.12); margin-bottom:4px;"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.409 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
         <div style="display:flex; align-items:stretch; gap:6px; width:100%; margin-bottom:4px;">
             <div style="display:flex; flex-direction:column; justify-content:center; gap:4px; flex:1; min-width:0;">
                 <button id="clearCanvasBtn" class="btn-action btn-danger" style="margin:0; width:100%; font-size:9px;">🧹 Очистить</button>
@@ -1649,26 +1649,50 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             return first === -1 ? 0 : (last - first + 1);
         }
 
+        // Охватывающий прямоугольник видимого текста всех строк рамки — в КОЛОНКАХ относительно
+        // центра холста (baseX), плюс по одному символу отступа с боков.
+        // Границы берём у getRowVisibleXExtent: она повторяет ровно ту раскладку, по которой
+        // render() и правда рисует символы. Считать по одной лишь длине видимого куска нельзя —
+        // раскладка зависит от symMode: в centerTrack (режим по умолчанию) видимая часть строки
+        // принудительно ставится по центру через liveCenterOffset, в centerBase отсчёт идёт от
+        // lData.L, и только в третьем режиме — от display.length. Раньше здесь была зашита
+        // формула третьего режима, из-за чего рамка уезжала влево примерно на полширины.
+        // Считается АБСОЛЮТНО, заново от текущего текста — поэтому не накапливает сдвиг ни при
+        // масштабировании, ни при многократных вызовах за кадр.
+        function getFrameVisibleColBox(rowStart, rowSpan) {
+            let totalRows = STATE.lines.length;
+            if (!totalRows || !STATE.manualFrame) return null;
+            let m = getGridMetrics();
+            if (!m || !m.charWidth) return null;
+            let symMode = safeValue('symModeSelect', 'centerTrack');
+            let useSpacing = safeChecked('spacedCheck', false);
+            let rs = (rowStart === undefined) ? STATE.manualFrame.rowStart : rowStart;
+            let rn = (rowSpan === undefined) ? STATE.manualFrame.rowSpan : rowSpan;
+            let minLeft = Infinity, maxRight = -Infinity;
+            for (let k = 0; k < rn; k++) {
+                let l = STATE.lines[mod(m.startIndex + rs + k, totalRows)];
+                if (!l || !l.display) continue;
+                let ext = getRowVisibleXExtent(l, m, symMode, useSpacing);
+                if (!ext) continue;
+                // minX/maxX — центры крайних видимых символов, до краёв добавляем по полсимвола.
+                let left = (ext.minX - m.baseX) / m.charWidth - 0.5;
+                let right = (ext.maxX - m.baseX) / m.charWidth + 0.5;
+                if (left < minLeft) minLeft = left;
+                if (right > maxRight) maxRight = right;
+            }
+            if (minLeft === Infinity) return null;
+            return { colStart: minLeft - 1, colSpan: (maxRight - minLeft) + 2 };
+        }
+
         // Подгоняет ширину рамки под самую длинную из строк, попавших в неё сейчас
         function fitFrameWidthToRows() {
             if (!STATE.manualFrame || !STATE.manualFrame.isInitialized) return;
             if (!safeChecked('frameCenterLockCheck', true)) return;
             if (STATE.manualFrame.manualWidth) return;
-            let totalRows = STATE.lines.length;
-            if (!totalRows) return;
-            let m = getGridMetrics();
-            let startIdx = m ? m.startIndex : 0;
-            let maxLen = 0;
-            for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
-                let idx = (startIdx + STATE.manualFrame.rowStart + k) % totalRows;
-                let l = STATE.lines[idx];
-                let len = getVisibleLineSpan(l);
-                if (len > maxLen) maxLen = len;
-            }
-            if (maxLen === 0) return;
-            let newSpan = maxLen + 2;
-            STATE.manualFrame.colSpan = newSpan;
-            STATE.manualFrame.colStart = -newSpan / 2;
+            let box = getFrameVisibleColBox();
+            if (!box) return;
+            STATE.manualFrame.colStart = box.colStart;
+            STATE.manualFrame.colSpan = box.colSpan;
             STATE.manualFrame.manualWidth = false;
         }
 
@@ -2356,6 +2380,15 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             setElChk('verticalSearchCheck', snapshot.verticalSearch !== undefined ? snapshot.verticalSearch : false);
             setElChk('frameCheck', snapshot.frame !== undefined ? snapshot.frame : true);
             setElChk('frameCenterLockCheck', snapshot.frameCenterLock !== undefined ? snapshot.frameCenterLock : true);
+            // Рамка выше (см. STATE.manualFrame = snapshot.manualFrame) приезжает из снимка целиком —
+            // вместе с manualWidth прошлой сессии. А при manualWidth === true fitFrameWidthToRows()
+            // сразу выходит, и рамка так и висит на старых координатах, пока не нажмёшь Escape.
+            // Поэтому при включённой галочке сбрасываем флаг и просим пересадить рамку на текст —
+            // ровно то же, что делает Escape.
+            if (STATE.manualFrame && safeChecked('frameCenterLockCheck', true)) {
+                STATE.manualFrame.manualWidth = false;
+                STATE.manualFrame.needsRecenter = true;
+            }
             setElChk('activateOnPatternCheck', snapshot.activateOnPattern !== undefined ? snapshot.activateOnPattern : true);
             // Авто-каскад и разморозка по паттерну взаимоисключающие (см. safeBind ниже) — если старый
             // снапшот/дефолты выставили оба разом, гасим авто-каскад в пользу поиска по паттерну.
@@ -10186,18 +10219,16 @@ safeBind('stopBtn', 'click', () => {
                 // принципиально нового текста (needsRecenter, см. loadText). Не пересчитывается каждый
                 // кадр анимации, иначе на строках с сильно разной длиной рамка "прыгает" туда-сюда.
                 if (isFreshFrame) {
-                    let maxLenInFrame = 0;
-                    let totalRows = STATE.lines.length;
-                    for (let k = 0; k < STATE.manualFrame.rowSpan; k++) {
-                        let idx = (m.startIndex + STATE.manualFrame.rowStart + k) % totalRows;
-                        let line = STATE.lines[idx];
-                        let visLen = getVisibleLineSpan(line);
-                        if (visLen > maxLenInFrame) maxLenInFrame = visLen;
+                    // Та же абсолютная геометрия, что и в fitFrameWidthToRows — рамка садится
+                    // ровно на видимый текст своих строк, а не на baseX «вслепую».
+                    let box = getFrameVisibleColBox();
+                    if (box) {
+                        STATE.manualFrame.colStart = box.colStart;
+                        STATE.manualFrame.colSpan = box.colSpan;
+                    } else {
+                        STATE.manualFrame.colSpan = 3;
+                        STATE.manualFrame.colStart = -1.5;
                     }
-                    if (maxLenInFrame === 0) maxLenInFrame = 1;
-
-                    STATE.manualFrame.colSpan = maxLenInFrame + 2;
-                    STATE.manualFrame.colStart = -STATE.manualFrame.colSpan / 2;
                     STATE.manualFrame.manualWidth = false;
                     STATE.manualFrame.needsRecenter = false;
                 } else {
@@ -10206,7 +10237,7 @@ safeBind('stopBtn', 'click', () => {
                     fitFrameWidthToRows();
                 }
                 if (STATE.manualFrame.colSpan === undefined) STATE.manualFrame.colSpan = 40;
-                if (STATE.manualFrame.colStart === undefined) STATE.manualFrame.colStart = -Math.round(STATE.manualFrame.colSpan / 2);
+                if (STATE.manualFrame.colStart === undefined) STATE.manualFrame.colStart = -STATE.manualFrame.colSpan / 2;
 
                 let drawX = baseX + STATE.manualFrame.colStart * m.charWidth;
                 let drawY = startY + STATE.manualFrame.rowStart * m.lineHeight;
@@ -11504,6 +11535,19 @@ safeBind('stopBtn', 'click', () => {
                 el.addEventListener('input', () => { render(); });
                 el.addEventListener('change', () => { updateLogic(); });
             }
+        });
+
+        // Своя реакция на "⌖ По умолчанию за центром": без неё галочка была пустышкой.
+        // Любой ручной драг/ресайз рамки ставит manualWidth = true, а fitFrameWidthToRows()
+        // при этом флаге сразу выходит — то есть после первого же перетаскивания включение
+        // галочки уже ничего не меняло. Здесь снимаем флаг и просим пересадить рамку на текст
+        // (то же самое, что делает Escape).
+        safeBind('frameCenterLockCheck', 'change', function() {
+            if (this.checked && STATE.manualFrame) {
+                STATE.manualFrame.manualWidth = false;
+                STATE.manualFrame.needsRecenter = true;
+            }
+            render();
         });
 
         // Слушатели для радиокнопок режимов интерливинга
