@@ -53,7 +53,40 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             background: #050505; color: #00ff66;
             font-family: 'Consolas', monospace;
             margin: 0; overflow: hidden; height: 100vh; position: relative;
+            display: flex; flex-direction: column;
         }
+        /* Верхняя полоса-меню (вкладки настроек) + область под неё, где живёт холст и все
+           плавающие панели. Три колонки — крайние равны, поэтому вкладки центрируются по ВСЕЙ
+           полосе, а не по остатку места после заголовка. */
+        #menuBar { flex-shrink: 0; height: 34px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; background: #101010; border-bottom: 1px solid #222; padding: 0 4px; position: relative; z-index: 200; user-select: none; }
+        #appTitle { margin: 0 0 0 6px; font-size: 12px; color: #ffffff; text-shadow: 0 0 8px rgba(0,255,102,0.3); white-space: nowrap; }
+        #hubLink { opacity: 0.75; } #hubLink:hover { opacity: 1; }
+        #menuTabs { display: flex; align-items: center; gap: 4px; position: relative; justify-self: center; }
+        .menu-btn { display: flex; align-items: center; gap: 5px; background: none; border: 1px solid #2a2a2a; color: #bbb; font-family: inherit; font-size: 12px; padding: 3px 10px; cursor: pointer; border-radius: 3px; }
+        .menu-btn:hover { background: #1e1e1e; color: #fff; border-color: #444; }
+        .menu-btn.open, .menu-btn.pinned { background: #262626; color: #00ff66; border-color: #00ff66; }
+        .menu-btn.open:hover, .menu-btn.pinned:hover { filter: brightness(1.3); }
+        .menu-pin-inline { display: none; margin: 0; cursor: pointer; }
+        #toggleAllPinsBtn { position: absolute; left: 0; right: 0; bottom: -8px; height: 6px; border: none; border-radius: 3px; background: #333; cursor: pointer; padding: 0; margin: 0; opacity: 0; transition: background 0.2s, opacity 0.2s; }
+        #menuTabs:hover #toggleAllPinsBtn { opacity: 1; }
+        #toggleAllPinsBtn:hover { background: #555; }
+        #toggleAllPinsBtn.all-on { background: #00ff66; box-shadow: 0 0 6px rgba(0,255,102,0.6); }
+        #toggleAllPinsBtn.all-on:hover { filter: brightness(1.3); }
+        #toggleAllPinsBtn:hover ~ .menu-btn.pinned { filter: brightness(0.6); transition: filter 0.15s; }
+        .menu-drop { display: none; position: absolute; top: 34px; left: 2px; width: 320px; max-height: 82vh; overflow-y: auto; background: #0e0e0e; border: 1px solid #333; border-top: none; border-radius: 0 0 4px 4px; padding: 4px; box-shadow: 0 6px 18px rgba(0,0,0,0.6); flex-direction: column; gap: 6px; z-index: 300; }
+        .menu-drop.open { display: flex; }
+        .floating-panel.menu-panel { position: fixed; z-index: 120; width: 290px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); opacity: 1 !important; outline: none !important; }
+        .menu-panel { display: flex; flex-direction: column; gap: 6px; border: 1px solid #333; border-radius: 4px; background: #141414; padding: 0 4px 4px; }
+        .panel-head { display: flex; align-items: center; gap: 8px; padding: 6px 2px 4px; border-bottom: 1px solid #333; margin-bottom: 2px; cursor: grab; touch-action: none; }
+        .panel-head:active { cursor: grabbing; }
+        .panel-drag { color: #555; font-size: 12px; letter-spacing: 2px; user-select: none; }
+        .panel-head:hover .panel-drag { color: #00ccff; }
+        .panel-title { font-weight: bold; font-size: 12px; color: #ccc; flex: 1; }
+        .panel-close { color: #666; font-size: 13px; line-height: 1; cursor: pointer; padding: 2px 3px; }
+        .panel-close:hover { color: #ff5555; }
+        .dragging { opacity: 0.45; outline: 1px dashed #00ccff; transition: none !important; }
+        .scrollable-settings { display: flex; flex-direction: column; gap: 6px; }
+        .main-layout { position: relative; flex: 1; min-height: 0; }
 
         /* Тач-курсор: на сенсорных устройствах видимое кольцо-перекрестие. Два режима
            (переключаются кнопкой 🖱 внизу справа): простой индикатор под пальцем ИЛИ
@@ -95,31 +128,50 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             box-shadow: 0 0 16px rgba(0, 255, 102, 0.7);
         }
 
-        .controls { 
-            position: absolute; left: 0; top: 0; width: 320px; height: 100vh; z-index: 100;
+        .controls {
+            position: absolute; left: 0; top: 0; width: 320px; max-height: 100%; z-index: 100;
             background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border-right: 1px solid rgba(0, 255, 102, 0.3); box-sizing: border-box; transition: transform 0.3s ease;
-            display: flex; flex-direction: row; align-items: stretch; overflow: hidden;
+            border-right: 1px solid rgba(0, 255, 102, 0.3); box-sizing: border-box; padding: 6px;
+            transition: transform 0.3s ease;
+            display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden;
+            scrollbar-width: thin; scrollbar-color: transparent transparent;
         }
+        .controls::-webkit-scrollbar { width: 9px; } .controls::-webkit-scrollbar-track { background: transparent; }
+        .controls::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; }
+        .controls:hover { scrollbar-color: #333 transparent; }
+        .controls:hover::-webkit-scrollbar-thumb { background: #333; }
+        .controls.dock-empty { background: transparent; box-shadow: none; border-color: transparent; }
+        /* Пока идёт перетаскивание вкладки, зона приёма растягивается на всю доступную высоту
+           (не только по факту занятого контентом) — иначе в пустой/короткий док почти невозможно
+           попасть, пунктирная подсветка была бы крошечной. В покое (без драга) высота обратно
+           обтягивает контент — не перехватывает клики по холсту зря. */
+        .controls.drop-zone-hint { outline: 2px dashed rgba(0,255,102,0.45); outline-offset: -2px; bottom: 0; max-height: none; }
+        .controls.drag-target { outline: 2px dashed #00ff66; outline-offset: -2px; background: rgba(0,255,102,0.12); box-shadow: 0 0 20px rgba(0,255,102,0.3); bottom: 0; max-height: none; }
+        #rightPanel.controls { left: auto; right: 0; border-right: none; border-left: 1px solid rgba(0, 204, 255, 0.3); }
+        /* Левая панель сдвинута от самого края экрана — оставляет постоянную узкую полосу для
+           номеров строк (#minimizedRowNumbers), иначе номера рисуются под полупрозрачной панелью
+           и еле видны. */
+        #leftPanel.controls { left: 34px; }
+        #minimizedRowNumbers { position: absolute; left: 0; top: 0; bottom: 0; width: 34px; pointer-events: none; z-index: 95; overflow: hidden; }
+        body.zen-mode #minimizedRowNumbers { opacity: 0; }
         ::-webkit-scrollbar-button { display: none; }
 
         /* Текст в меню/панелях не выделяется при клике/драге; реальные поля ввода текста — исключение. */
         button, .player-panel, .controls, #rightPanel { user-select: none; }
+        .controls input, .controls textarea, .floating-panel input, .floating-panel textarea { user-select: text; }
         .controls input[type="text"], .controls input[type="number"], .controls textarea,
         #rightPanel input[type="text"], #rightPanel input[type="number"], #rightPanel textarea {
             user-select: text;
         }
 
-        .controls-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
-        .controls-content::-webkit-scrollbar { width: 5px; }
-        .controls-content::-webkit-scrollbar-thumb { background: #333; }
+        .controls-content { display: flex; flex-direction: column; gap: 6px; }
         .controls.minimized { transform: translateX(-286px) !important; }
 
         .player-panel { cursor: move; }
         .player-panel input, .player-panel button, .player-panel select, .player-panel textarea, .player-panel label, .player-panel a { cursor: pointer; }
-        /* Все три верхние панели (пульт, мини-пульт, рамка) — одинаковая ширина 306px,
-           по умолчанию на одном уровне сверху (см. positionPlayerButtonsBar и alignFrameBuildPanelDefault).
-           Каждая двигается и сворачивается отдельно; расположение запоминается (localStorage). */
+        /* .player-panel — скрытый каркас (см. МАРКЕР 10), позиция запоминается отдельно
+           (savePanelLayout/restorePanelLayout). Мини-пульт и рамка построения — теперь вкладки
+           menuPlayer/menuFrame общей системы MENUS (см. МАРКЕР 72a). */
         .player-panel {
             position: absolute; left: 50%; top: 0; width: 306px; transform: translateX(-50%); z-index: 100;
             background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -129,23 +181,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             min-width: 260px; min-height: 100px;
         }
 
-        /* Отдельное перетаскиваемое окно "Построение и поиск в рамке" — вынесено из пульта (player-panel) */
-        .frame-build-panel {
-            position: absolute; right: 20px; top: 0; width: 306px; z-index: 100;
-            background: rgba(10, 10, 10, 0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 204, 255, 0.4); border-radius: 5px; box-sizing: border-box; padding: 5px;
-            box-shadow: 0 0 15px rgba(0, 204, 255, 0.2);
-        }
+        /* "Построение и поиск в рамке" — теперь содержимое вкладки menuFrame общей системы MENUS
+           (см. МАРКЕР 72a), своей рамки/фона/позиционирования больше не имеет — их даёт .menu-panel. */
         .frame-build-panel input, .frame-build-panel button, .frame-build-panel select, .frame-build-panel label { cursor: pointer; }
         .frame-build-panel button, .frame-build-panel .lbl, .frame-build-panel select, .frame-build-panel option { font-size: 11px !important; }
         .frame-build-panel .frame-build-content { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
-        .frame-build-panel.minimized {
-            min-height: 0 !important; overflow: hidden !important;
-            border-color: rgba(0, 204, 255, 0.15) !important; box-shadow: none !important;
-        }
-        .frame-build-panel.minimized .frame-build-content { display: none !important; }
-
-        #rightPanel::-webkit-resizer { background: transparent; }
 
         /* Свёрнутый пульт — полоска с заголовком (раньше растворялся целиком и его можно было
            вернуть только через мини-пульт; теперь каждая панель сворачивается сама по себе). */
@@ -159,16 +199,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             display: none !important;
         }
 
-        #rightPanel.minimized {
-            transform: translateX(calc(100% - 30px));
-            overflow: hidden !important;
-            resize: none !important;
-        }
-
-        #rightPanel.minimized .panel-content {
-            display: none !important;
-        }
-        
         /* Переключатель языка интерфейса — две кнопки в заголовке мини-пульта (Зеркалиус/Zerkalius) */
         .lang-btn { all: unset; cursor: pointer; color: inherit; opacity: 0.55; }
         .lang-btn:hover { opacity: 0.85; text-shadow: 0 0 6px currentColor; }
@@ -188,18 +218,15 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         
         .player-buttons { display: flex; gap: 6px; align-items: center; }
         .player-buttons button { font-size: 13px; border: none; cursor: pointer; border-radius: 999px; padding: 6px 4px; font-weight: bold; }
+        /* Мини-пульт — теперь содержимое вкладки menuPlayer общей системы MENUS (см. МАРКЕР 72a),
+           своего фона/рамки/позиционирования больше не имеет — их даёт .menu-panel. */
         #playerButtonsBar {
-            width: 306px; box-sizing: border-box; padding: 4px 10px 8px; opacity: 1; transition: opacity 0.3s ease;
-            background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 255, 102, 0.3); border-radius: 5px; cursor: move; gap: 4px;
+            box-sizing: border-box; padding: 4px 10px 8px; opacity: 1; transition: opacity 0.3s ease; gap: 4px;
         }
-        /* Свёрнутый мини-пульт — остаётся только полоска-заголовок "Зеркалиус" */
-        #playerButtonsBar.minimized > *:not(.mini-title) { display: none !important; }
-        #playerButtonsBar.minimized { padding-bottom: 4px; }
         #playerButtonsBar.dimmed { opacity: 0.15 !important; }
         #playerButtonsBar.dimmed:hover { opacity: 1 !important; }
-        .floating-toolbar.dimmed, .floating-toolbar-right.dimmed, .floating-back-btn.dimmed { opacity: 0.15 !important; }
-        .floating-toolbar.dimmed:hover, .floating-toolbar-right.dimmed:hover, .floating-back-btn.dimmed:hover { opacity: 1 !important; }
+        .floating-toolbar.dimmed, .floating-toolbar-right.dimmed { opacity: 0.15 !important; }
+        .floating-toolbar.dimmed:hover, .floating-toolbar-right.dimmed:hover { opacity: 1 !important; }
         #prevBtn, #nextBtn { flex: 0 0 45px; width: 45px; height: 45px; padding: 0; border-radius: 50%; background: #222; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; }
         #stopBtn { flex: 0 0 51px; width: 51px; height: 51px; padding: 0; border-radius: 50%; background: #ff3333; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 26px; transition: opacity 0.2s ease; }
         #stopBtn.inactive { opacity: 0.35; }
@@ -290,7 +317,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         .slot-tab.active { background:#00ff66; color:#000; font-weight:bold; border-color:#00ff66; box-shadow:0 0 8px #00ff66; text-shadow:none; }
         .slot-preview { width:100%; height:72px; background:#050505; font-family:'Roboto Mono',monospace; font-size:9px; border:1px solid #2a2a2a; resize:none; padding:3px; box-sizing:border-box; overflow-y:auto; line-height:1.4; }
 
-        #screenContainer { position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; background: #050505; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 10; }
+        #screenContainer { position: absolute; inset: 0; background: #050505; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 10; }
         /* pointer-events:none — все обработчики мыши/колеса/тача висят на #screenCanvas,
            который в WebGL-режиме остаётся видимым под этим холстом (на нём только фон). */
         #webglCanvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: none; pointer-events: none; }
@@ -353,11 +380,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             color: #00ff66; font-size: 16px; font-weight: bold; padding: 6px 15px; border-radius: 5px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 120;
         }
 
-        .floating-back-btn {
-            position: fixed; left: 10px; top: 10px; z-index: 100;
-            transition: left 0.3s ease, top 0.3s ease, opacity 0.3s ease;
-        }
-        body.zen-mode .floating-back-btn { transform: translateY(-100px); opacity: 0; pointer-events: none; }
         .floating-toolbar {
             position: fixed; left: 10px; top: 50%; transform: translateY(-50%); z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center;
             transition: left 0.3s ease, top 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
@@ -386,48 +408,12 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         .float-circle-btn.active { background: #00ccff; color: #000; border-color: #00ccff; box-shadow: 0 0 10px rgba(0, 204, 255, 0.5); }
 		
 /* === МАРКЕР 04: CSS ПЛАВАЮЩИЕ ТУЛБАРЫ И ПРАВАЯ ПАНЕЛЬ === */
-        #rightPanel {
-            position: absolute; top: 0; right: 0; z-index: 90; background: var(--right-panel-accent-bg, rgba(10, 10, 10, 0.75)); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border-left: 1px solid rgba(0, 204, 255, 0.3); width: 300px; height: 100vh;
-            overflow: hidden; box-shadow: 0 0 20px rgba(0, 204, 255, 0.15);
-            transition: left 0.3s ease, right 0.3s ease, top 0.3s ease, bottom 0.3s ease, width 0.3s ease, height 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
-            resize: horizontal; box-sizing: border-box;
-            min-width: 250px;
-            display: flex; flex-direction: column; align-items: stretch;
-        }
-        #rightPanel .right-panel-row { flex: 1; display: flex; flex-direction: row; align-items: stretch; min-height: 0; }
-        #rightPanel .panel-content { padding: 6px 8px; scrollbar-width: none; }
-        #rightPanel .panel-content::-webkit-scrollbar { display: none; }
+        /* #rightPanel — теперь тот же плавающий док, что и левая .controls (см. .controls /
+           #rightPanel.controls выше), просто справа. Вкладки Терминал/ДНК заведены в общую
+           систему MENUS вместо собственных right-panel-tab/резайзера. */
         #rightPanel details.control-group { background: rgba(20, 20, 20, 0.4); border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding: 4px 6px; }
         #rightPanel details.control-group summary { font-weight: bold; font-size: 10px; }
-        #rightPanel .right-panel-title {
-            display: flex; flex-direction: column; flex-shrink: 0; width: 30px; height: 100%;
-            background: transparent; cursor: move; user-select: none; box-sizing: border-box;
-        }
-        #rightPanel .right-panel-tab {
-            flex: 1; writing-mode: vertical-rl; text-orientation: mixed;
-            border-left: none !important; border-bottom: 1px solid #333 !important;
-            border-right: 1px solid var(--right-panel-accent-color, transparent) !important;
-            transition: background 0.2s, border-color 0.2s;
-        }
-        #rightPanel .right-panel-tab[data-tab="terminal"] { background: #0d1a1c !important; }
-        #rightPanel .right-panel-tab[data-tab="dna"] { background: #1a0d1c !important; }
-        #rightPanel .right-panel-tab:last-child { border-bottom: none !important; }
-        #rightPanel .right-panel-tab.active {
-            background: transparent !important;
-            border-left: 1px solid currentColor !important;
-            border-right: none !important;
-            text-shadow: 0 0 8px currentColor;
-        }
-        #rightPanel .right-panel-tab.active:first-child {
-            border-bottom: 1px solid currentColor !important;
-        }
-        #rightPanel .right-panel-tab.active:not(:first-child) {
-            border-top: 1px solid currentColor !important;
-        }
-        #rightPanel .right-panel-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
-        #rightPanel .right-panel-body > .panel-content { flex: 1; overflow-y: auto; min-width: 0; }
-        
+
         #balanceLog::-webkit-scrollbar { width: 6px; }
         #balanceLog::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
         #balanceLog::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
@@ -455,11 +441,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             opacity: 1;
         }
         body.zen-mode .player-panel { transform: translateY(300px); opacity: 0; pointer-events: none;}
-        body.zen-mode #playerButtonsBar { transform: translateY(300px); opacity: 0 !important; pointer-events: none;}
         body.zen-mode #frameCounterDisplay { opacity: 0 !important; }
         body.zen-mode .floating-toolbar { transform: translateY(-100px); opacity: 0; pointer-events: none;}
         body.zen-mode #rightPanel { transform: translateX(350px); opacity: 0; pointer-events: none;}
-        body.zen-mode .frame-build-panel { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        /* #playerButtonsBar/.frame-build-panel (вкладки menuPlayer/menuFrame) прячутся вместе с
+           доком, если закреплены (тот сам уезжает через translateX), а если плавают отдельным
+           окном — общим правилом ниже для любой плавающей вкладки MENUS. */
+        body.zen-mode .menu-panel.floating-panel { opacity: 0 !important; pointer-events: none; }
 
         .dragging { transition: none !important; }
         #turboSlider { accent-color: #ff3333; }
@@ -469,6 +457,41 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 <body>
     <input type="checkbox" id="radarCheck" style="display:none;">
 <!-- === МАРКЕР 06: ЗАГОЛОВОК НАЧАЛО === -->
+    <div id="menuBar">
+        <div style="display:flex; align-items:center; gap:6px; justify-self:start;">
+            <div id="appTitle"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.419 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
+            <a id="hubLink" href="index.html" title="К Хабу" style="text-decoration:none; font-size:14px; line-height:1;">🏠</a>
+        </div>
+        <div id="menuTabs">
+            <button id="toggleAllPinsBtn" title="Показать/скрыть все панели разом"></button>
+            <div class="menu-btn" data-menu="menuPlayer"><span>Плеер</span><input type="checkbox" class="menu-pin-inline" id="menuPlayerPin" title="Показывать в панели"></div>
+            <div id="menuPlayer" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuFrame"><span>Рамка</span><input type="checkbox" class="menu-pin-inline" id="menuFramePin" title="Показывать в панели"></div>
+            <div id="menuFrame" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuSystem"><span>Система</span><input type="checkbox" class="menu-pin-inline" id="menuSystemPin" title="Показывать в панели"></div>
+            <div id="menuSystem" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuSlots"><span>Слоты</span><input type="checkbox" class="menu-pin-inline" id="menuSlotsPin" title="Показывать в панели"></div>
+            <div id="menuSlots" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuSierp"><span>Серпинский</span><input type="checkbox" class="menu-pin-inline" id="menuSierpPin" title="Показывать в панели"></div>
+            <div id="menuSierp" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuSeed"><span>Сид</span><input type="checkbox" class="menu-pin-inline" id="menuSeedPin" title="Показывать в панели"></div>
+            <div id="menuSeed" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuAudio"><span>Звук</span><input type="checkbox" class="menu-pin-inline" id="menuAudioPin" title="Показывать в панели"></div>
+            <div id="menuAudio" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuAppearance"><span>Оформление</span><input type="checkbox" class="menu-pin-inline" id="menuAppearancePin" title="Показывать в панели"></div>
+            <div id="menuAppearance" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuMotion"><span>Движение</span><input type="checkbox" class="menu-pin-inline" id="menuMotionPin" title="Показывать в панели"></div>
+            <div id="menuMotion" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuShift"><span>Авто-сдвиг</span><input type="checkbox" class="menu-pin-inline" id="menuShiftPin" title="Показывать в панели"></div>
+            <div id="menuShift" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuTerminal"><span>Терминал</span><input type="checkbox" class="menu-pin-inline" id="menuTerminalPin" title="Показывать в панели"></div>
+            <div id="menuTerminal" class="menu-drop"></div>
+            <div class="menu-btn" data-menu="menuDna"><span>ДНК</span><input type="checkbox" class="menu-pin-inline" id="menuDnaPin" title="Показывать в панели"></div>
+            <div id="menuDna" class="menu-drop"></div>
+        </div>
+        <div></div>
+    </div>
+    <div class="main-layout">
 <div id="rotateViewBadge">⟲ ВИД ПОВЁРНУТ НА 90°</div>
 <!-- === МАРКЕР 07: ЗАГОЛОВОК КОНЕЦ === -->
 <script src="banks_data.js"></script>
@@ -506,10 +529,11 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
     </script>
 
 <!-- === МАРКЕР 08: ЛЕВАЯ ПАНЕЛЬ === -->
-    <div class="controls" onclick="event.stopPropagation();" title="Левая панель настроек.">
-        <div class="controls-content">
+    <div id="minimizedRowNumbers"></div>
+    <div class="controls" id="leftPanel" onclick="event.stopPropagation();" title="Левая панель настроек.">
+        <div class="controls-content" id="leftSlot">
 
-        <details class="control-group" open>
+        <details class="control-group" open id="sysGroup">
             <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">💾 СИСТЕМНЫЕ ФУНКЦИИ</summary>
             <div style="display:flex; gap:4px; margin-top: 4px;">
                     <button id="exportCodeBtn" class="btn-action" style="flex:1;">Экспорт</button>
@@ -520,7 +544,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             <textarea id="snapshotCodeBox" placeholder="Код снимка" style="margin-top:3px; height: 35px; font-size:9px;"></textarea>
         </details>
 
-        <details class="control-group" open>
+        <details class="control-group" open id="slotsGroup">
             <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">📝 НАБОРЫ СТРОК (СЛОТЫ)</summary>
             <div style="display:flex; gap:4px; margin-top:4px; margin-bottom:2px;">
                 <button id="exportBanksDataBtn" class="btn-action" style="flex:1; margin:0; border-color:#00ff66; color:#00ff66; font-size:9.5px; height:22px;" title="Экспортировать все 3 слота вместе с их паттернами в файл banks_data.js">💾 Экспорт в banks_data.js</button>
@@ -595,7 +619,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             </div>
         </details>
 
-        <details class="control-group" open>
+        <details class="control-group" open id="sierpGroup">
             <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">📐 ГЕНЕРАТОР СЕРПИНСКОГО</summary>
             <select id="sierpRule" style="margin-bottom: 5px; margin-top: 4px; background: #222; color: #fff; border: 1px solid #444; padding: 2px; border-radius: 3px; width: 100%; font-size: 11px;">
                 <option value="shift">Форма: Сдвиг (Кирпичная кладка)</option>
@@ -615,7 +639,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             <button id="buildTriangleBtn" class="btn-action" style="margin:0; color:#ffd500; border-color:#ffd500;" title="Строит пирамиду из сида (поле 'Сид' выше): строка1 = сид, строка2 = сид+сид, строка3 = сид+сид+сид, и т.д. до N строк (N — поле 'Строки')">▲ Пирамида из сида (сид+сид=след.стр.)</button>
         </details>
 
-        <details class="control-group">
+        <details class="control-group" id="seedGroup">
             <summary style="font-weight:bold; color:#00ccff; margin-bottom: 4px;">🧬 СИД-НАЛОЖЕНИЕ (по строкам паттернов)</summary>
             <textarea id="seedOverlayInput" title="Сид(ы) через запятую или с новой строки. Если сидов несколько — раздаются строкам паттернов по кругу (строка N получает сид[N % кол-во сидов])" placeholder="Сид(ы), напр. 10, 101" style="width:100%; height:36px; background:#222; color:#fff; border:1px solid #444; border-radius:3px; font-size:11px; padding:3px; resize:vertical; box-sizing:border-box; margin-bottom:5px;">1</textarea>
             <div style="display:flex; gap:5px; margin-bottom:5px;">
@@ -645,7 +669,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             <div id="seedOverlayResults" style="margin-top:6px; max-height:180px; overflow-y:auto; background:#111; border-radius:3px; padding:4px; font-family:'Roboto Mono',monospace; font-size:11px; line-height:1.5;"></div>
         </details>
 
-        <details class="control-group">
+        <details class="control-group" id="audioGroup">
             <summary style="font-weight:bold; color:#cc66ff; margin-bottom: 4px;">🎵 АУДИО (ВИЗУАЛИЗАТОР)</summary>
             <div style="display:flex; gap:4px;">
                 <button id="audioBtnText" class="btn-action" style="flex:1; margin:0; border-color:#cc66ff; color:#cc66ff;" title="Загрузить аудио-трек (играет по кругу, стартует и встаёт на паузу вместе с Пуском, Стоп перематывает в начало)">🎵 Трек</button>
@@ -658,7 +682,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             <audio id="bgAudio" loop style="display:none;"></audio>
         </details>
 
-        <details class="control-group">
+        <details class="control-group" id="appearanceGroup">
             <summary style="font-weight:bold; color:#00ff66; margin-bottom: 4px;">🎨 ОФОРМЛЕНИЕ И ЦВЕТА</summary>
             <label style="display:flex; align-items:center; margin-bottom:4px; background:#111; padding:3px; border-radius:3px;" title="Компактный монохром: панели настроек ужимаются (мельче шрифт, меньше отступов) и перекрашиваются в один спокойный сине-серый цвет вместо разноцветья. Холст, плеер и плавающие кнопки не трогает. Откат — просто снять галку. Запоминается между сессиями">
                 <input type="checkbox" id="uiCompactCheck"> <span class="lbl" style="color:#a8c0cc; font-weight:bold;">🎛 Компактный монохром (панели)</span>
@@ -714,7 +738,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             </div>
         </details>
 
-        <details class="control-group" open>
+        <details class="control-group" open id="motionGroup">
 <!-- === МАРКЕР 09: ЛЕВАЯ ПАНЕЛЬ: МОДИФИКАТОРЫ ДВИЖЕНИЯ === -->
             <summary style="font-weight:bold; color:#cc33ff; margin-bottom: 4px;">⚙️ МОДИФИКАТОРЫ ДВИЖЕНИЯ</summary>
             <div style="margin-top: 4px; margin-bottom: 2px;" class="row-between">
@@ -840,7 +864,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             </div>
         </details>
 
-        <details class="control-group" style="margin-bottom: auto; border-bottom: none;">
+        <details class="control-group" id="shiftGroup" style="margin-bottom: auto; border-bottom: none;">
             <summary style="font-weight:bold; color:#ff00ff; margin-bottom: 4px;">🚀 АВТО-СДВИГ ХОЛСТА (XY)</summary>
             <div style="background: #111; padding: 4px; border-radius: 3px; margin-top: 3px; margin-bottom: 3px;">
                 <label style="display:flex; align-items:center; margin-bottom:2px;">
@@ -880,9 +904,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             </div>
         </details>
         </div>
-    <div class="controls-title" ondblclick="this.parentNode.classList.toggle('minimized'); event.stopPropagation();" style="display:flex; background:#111; cursor:pointer; user-select:none; border-left:1px solid #333; box-sizing:border-box; min-width:34px; position:relative;" title="Двойной клик: Свернуть/Развернуть">
-        <div id="minimizedRowNumbers" style="position:absolute; inset:0; pointer-events:none;"></div>
-    </div>
 </div>
 
 <!-- === МАРКЕР 10: ПАНЕЛЬ ПЛЕЕРА === -->
@@ -896,10 +917,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             <button id="playerModeBtn" class="btn-action">⬌ Функция: Симуляция (XOR)</button>
         </div>
     </div>
-    <div class="frame-build-panel" id="frameBuildPanel" onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); event.stopPropagation(); }" title="Двойной клик по пустому месту: свернуть/развернуть">
-        <div class="frame-control-title" style="display:flex; justify-content:space-between; align-items:center; cursor:move; font-size:11px; color:#00ccff; font-weight:bold; margin-bottom:4px; border-bottom:1px solid #333; padding-bottom:2px; user-select:none;">
-            <span>🏗️ Построение и поиск в рамке</span>
-        </div>
+    <div class="frame-build-panel" id="frameBuildPanel" onclick="event.stopPropagation();">
         <div class="frame-build-content">
             <div class="row-between">
                 <button id="invertFrameBtn" class="btn-action" style="margin:0; width:48%; font-size:9px; padding:3px; border-color:#ffd500; color:#ffd500; background:none;" title="Инвертировать символы внутри рамки (0 ↔ 1, \ ↔ /)">🔄 Инверт.</button>
@@ -963,8 +981,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             </label>
         </div>
     </div>
-    <div id="playerButtonsBar" style="position:fixed; z-index:101; display:flex; flex-direction:column; align-items:center;" title="Мини-пульт. Двойной клик по пустому месту: свернуть/развернуть. Перетаскивание: переместить (положение запоминается)." onclick="event.stopPropagation();" ondblclick="if (!event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); if (window.savePanelLayout) savePanelLayout(); event.stopPropagation(); }">
-        <div class="mini-title" style="width:100%; text-align:center; font-family:'Roboto Mono',monospace; font-size:11px; font-weight:bold; letter-spacing:2px; color:rgba(0,204,255,0.75); padding:1px 0 3px; cursor:move; text-transform:uppercase; border-bottom:1px solid rgba(0,204,255,0.12); margin-bottom:4px;"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.409 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
+    <div id="playerButtonsBar" style="display:flex; flex-direction:column; align-items:center;" onclick="event.stopPropagation();">
         <div style="display:flex; align-items:stretch; gap:6px; width:100%; margin-bottom:4px;">
             <div style="display:flex; flex-direction:column; justify-content:center; gap:4px; flex:1; min-width:0;">
                 <button id="clearCanvasBtn" class="btn-action btn-danger" style="margin:0; width:100%; font-size:9px;">🧹 Очистить</button>
@@ -1028,7 +1045,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
     </div>
     <div id="frameCounterDisplay" style="position:fixed; color:#444; font-size:10px; font-family:monospace; pointer-events:none; text-align:right; z-index:101;"><div>Скор: <span class="val" id="speedVal" style="color:#00ccff;">950</span> · Turbo x<span class="val" id="turboVal" style="color:#ff9900;">1</span></div><div>Кадр: <span class="val" id="stepVal" style="color:#888;">0 / 0</span></div></div>
 <!-- === МАРКЕР 11: ХОЛСТ И ТУЛБАР === -->
-    <a href="index.html" class="float-circle-btn floating-back-btn" style="text-decoration:none; font-weight:bold; color:#00ff66; border-color:#00ff66;" title="Вернуться в Хаб">⬅</a>
+    <!-- Кнопка "⬅ Вернуться в Хаб" переехала в #menuBar (#hubLink, рядом с названием) —
+         тут больше не дублируется. -->
     <div class="floating-toolbar floating-toolbar-undoredo" title="Отменить / Повторить.">
         <button class="float-circle-btn" id="floatingUndoBtn" title="Отменить (Ctrl+Z)">↶</button>
         <button class="float-circle-btn" id="floatingRedoBtn" title="Повторить (Ctrl+Y)">↷</button>
@@ -1050,15 +1068,9 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         <button class="float-circle-btn" id="floatingWeaveModeBtn" style="color:#ffd500; border-color:#ffd500;" title="Сплетать: Коса по рамке (низ→верх, змейкой)">🐍</button>
     </div>
 <!-- === МАРКЕР 12: ТЕРМИНАЛ АКТИВАЦИИ === -->
-    <div id="rightPanel" title="Правая панель. Перетаскивание за вкладки слева: переместить. Двойной клик: свернуть/развернуть." onclick="event.stopPropagation();" ondblclick="if (event.target.closest('.right-panel-tab') || !event.target.closest('input, button, select, textarea, label, a')) { this.classList.toggle('minimized'); event.stopPropagation(); }">
-        <div class="right-panel-row">
-            <div id="rightPanelLeftResizer" style="position:absolute; left:0; top:0; bottom:0; width:7px; cursor:ew-resize; z-index:5;" title="Тащить — расширить панель влево"></div>
-            <div class="right-panel-title" title="Двойной клик: Свернуть/Развернуть">
-                <button class="right-panel-tab active" data-tab="terminal" style="background:none; border:none; color:#00ccff; font-size:14px; padding:8px 0; cursor:pointer;" title="Терминал активации">🧠</button>
-                <button class="right-panel-tab" data-tab="dna" style="background:none; border:none; color:#cc33ff; font-size:14px; padding:8px 0; cursor:pointer;" title="Синтез ДНК и LCS + Рамка">🧬🔲</button>
-            </div>
-            <div class="right-panel-body">
-            <div class="panel-content" data-tab-content="terminal" style="flex:1; padding:6px 8px; display:flex; flex-direction:column; overflow:auto;">
+    <div id="rightPanel" class="controls" onclick="event.stopPropagation();" title="Правая панель настроек.">
+            <div class="right-panel-body scrollable-settings" id="rightSlot">
+            <div class="panel-content" id="terminalGroup" data-tab-content="terminal" style="flex:1; padding:6px 8px; display:flex; flex-direction:column; overflow:auto;">
                 <div style="display:flex; gap:4px; margin-bottom:4px;">
                 <div style="position:relative; overflow:hidden; flex:1;">
                     <button class="btn-action" style="margin:0; font-size:9px;">📂 .txt</button>
@@ -1135,7 +1147,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             </div>
 
 <!-- === МАРКЕР 13: ДЕКЛАРАЦИИ И РАМКА === -->
-            <div class="panel-content" data-tab-content="dna" style="display:none; flex:1; padding:6px 8px; flex-direction:column; overflow:auto; gap:3px;">
+            <div class="panel-content" id="dnaGroup" data-tab-content="dna" style="flex:1; padding:6px 8px; flex-direction:column; overflow:auto; gap:3px;">
                 <details class="control-group" open style="border-radius:3px; background:rgba(204,51,255,0.06); border:1px solid rgba(204,51,255,0.25);">
                     <summary style="font-weight:bold; color:#cc33ff;">🧬 НАСТРОЙКИ СВЯЗИ</summary>
                     <label style="display:flex; align-items:center; margin-top:4px; margin-bottom:2px;">
@@ -1264,13 +1276,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 </details>
             </div>
             </div>
-        </div>
     </div>
 
     <div id="screenContainer">
         <div id="hotkeyIndicator"></div>
         <canvas id="screenCanvas"></canvas>
         <canvas id="webglCanvas"></canvas>
+    </div>
     </div>
 <!-- === МАРКЕР 14: БАЗОВЫЕ УТИЛИТЫ === -->
     <script>
@@ -1303,7 +1315,10 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
         // Собирает позиции/размеры/свёрнутость плавающих панелей — для сохранения в снимок состояния
         window.getPanelStates = function() {
-            let panels = ['.controls', '.player-panel', '#rightPanel'];
+            // .controls/#rightPanel больше не двигаются/не сворачиваются как единое целое
+            // (см. систему вкладок MENUS, МАРКЕР 72a) — их позиция/раскладка теперь живёт в
+            // отдельном localStorage-ключе zerk_genezis_layout, а не в снимке состояния.
+            let panels = ['.player-panel'];
             let states = {};
             panels.forEach(selector => {
                 let el = document.querySelector(selector);
@@ -1668,8 +1683,17 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             let useSpacing = safeChecked('spacedCheck', false);
             let rs = (rowStart === undefined) ? STATE.manualFrame.rowStart : rowStart;
             let rn = (rowSpan === undefined) ? STATE.manualFrame.rowSpan : rowSpan;
+            // Ромб/симв. ромб/треугольники — силуэт максимально широкий ТОЛЬКО на центральной
+            // (для треугольников — базовой, она же центральная линия) строке, к вершине сужается,
+            // поэтому ширину рамки подгоняем под неё одну, а не под самую длинную строку из всех
+            // попавших в рамку — иначе при растяжении вверх/вниз, когда центр/база переходит на
+            // другую строку, рамка не сужается/расширяется вслед за её длиной.
+            let fType = safeValue('frameTypeSelect', 'rect');
+            let isDiamond = (fType === 'rhomb' || fType === 'sq_rhomb' || fType === 'tri_down' || fType === 'tri_up');
+            let kStart = isDiamond ? Math.round((rn - 1) / 2) : 0;
+            let kEnd = isDiamond ? kStart : rn - 1;
             let minLeft = Infinity, maxRight = -Infinity;
-            for (let k = 0; k < rn; k++) {
+            for (let k = kStart; k <= kEnd; k++) {
                 let l = STATE.lines[mod(m.startIndex + rs + k, totalRows)];
                 if (!l || !l.display) continue;
                 let ext = getRowVisibleXExtent(l, m, symMode, useSpacing);
@@ -2232,9 +2256,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             showNotification(targetActiveOnly ? "ЦЕНТР: АКТИВНЫЙ БЛОК" : "ЦЕНТР: ВСЕ СТРОКИ (100%)");
 
             // Синхронный getBoundingClientRect() пульта/мини-пульта сразу после смены шрифта/экрана
-            // иногда возвращает ещё не устаканенный layout (мини-пульт сам "доезжает" до своей
-            // позиции через несколько кадров — см. positionPlayerButtonsBar). Одной перепроверки
-            // мало — повторяем несколько раз в течение ~0.5 сек, пока оба элемента точно не осядут.
+            // иногда возвращает ещё не устаканенный layout. Одной перепроверки мало — повторяем
+            // несколько раз в течение ~0.5 сек, пока оба элемента точно не осядут.
             const recheckClearance = () => {
                 let playerPanelEl2 = document.querySelector('.player-panel');
                 let buttonsBarEl2 = document.getElementById('playerButtonsBar');
@@ -9995,6 +10018,38 @@ safeBind('stopBtn', 'click', () => {
                             currentX = baseX - (text.length * m.charWidth / 2);
                         }
 
+                        // Ромб/симв.ромб — половина ширины подсветки на этой строке (в пикселях от центра
+                        // рамки), один раз на строку, а не на каждый символ. Берётся зеркально с той
+                        // строки, что на таком же расстоянии от центра с ДРУГОЙ стороны — видимый текст
+                        // обрезается по МЕНЬШЕЙ из своей и зеркальной половины, а не гладкой интерполяцией
+                        // от общей ширины рамки: иначе на несимметричных данных (например, растущей
+                        // пирамиде) сторона с более длинными строками "перевешивала" бы зеркальную.
+                        let frameMirrorHalfPx = null;
+                        if (showFrame && (frameTypeHl === 'rhomb' || frameTypeHl === 'sq_rhomb') && STATE.manualFrame && STATE.manualFrame.isInitialized &&
+                            i >= STATE.manualFrame.rowStart && i < STATE.manualFrame.rowStart + STATE.manualFrame.rowSpan) {
+                            let useSpacing = safeChecked('spacedCheck', false);
+                            let fColStartM = STATE.manualFrame.colStart !== undefined ? STATE.manualFrame.colStart : -Math.round((STATE.manualFrame.colSpan || 40) / 2);
+                            let fColSpanM = STATE.manualFrame.colSpan !== undefined ? STATE.manualFrame.colSpan : 40;
+                            let centerXFrameM = baseX + fColStartM * m.charWidth + (fColSpanM * m.charWidth) / 2.0;
+                            let rowRadiusM = (STATE.manualFrame.rowSpan - 1) / 2.0 || 0.5;
+                            let centerRowOffM = Math.round(rowRadiusM);
+                            let rowOffM = i - STATE.manualFrame.rowStart - centerRowOffM;
+                            let mirrorIM = STATE.manualFrame.rowStart + centerRowOffM - rowOffM;
+                            let ownExtM = getRowVisibleXExtent(lineData, m, symMode, useSpacing);
+                            let ownHalfM = ownExtM ? Math.max(Math.abs(ownExtM.minX - centerXFrameM), Math.abs(ownExtM.maxX - centerXFrameM)) + m.charWidth / 2 : 0;
+                            frameMirrorHalfPx = ownHalfM;
+                            if (mirrorIM !== i && mirrorIM >= 0 && mirrorIM < totalRows) {
+                                let mirrorLineM = STATE.lines[mod(m.startIndex + mirrorIM, totalRows)];
+                                if (mirrorLineM && mirrorLineM.display) {
+                                    let mExtM = getRowVisibleXExtent(mirrorLineM, m, symMode, useSpacing);
+                                    if (mExtM) {
+                                        let mHalfM = Math.max(Math.abs(mExtM.minX - centerXFrameM), Math.abs(mExtM.maxX - centerXFrameM)) + m.charWidth / 2;
+                                        frameMirrorHalfPx = Math.min(ownHalfM, mHalfM);
+                                    }
+                                }
+                            }
+                        }
+
                         ctx.textAlign = 'center'; // одинаков для всех символов — не переставляем в цикле
                         for (let c = 0; c < text.length; c++) {
                             let char = text[c];
@@ -10014,20 +10069,15 @@ safeBind('stopBtn', 'click', () => {
                                 let isInFrameCell = false;
                                 if (fTypeHl === 'rect') {
                                     isInFrameCell = (cellX >= fDrawX && cellX <= fDrawX + fDrawW);
+                                } else if (frameMirrorHalfPx !== null) {
+                                    let centerX_frame = fDrawX + fDrawW / 2.0;
+                                    isInFrameCell = Math.abs(cellX - centerX_frame) <= frameMirrorHalfPx;
                                 } else {
                                     let rowRadius = (STATE.manualFrame.rowSpan - 1) / 2.0 || 0.5;
                                     let centerX_frame = fDrawX + fDrawW / 2.0;
                                     let columnRadius = fDrawW / 2.0 || 1.0;
-                                    if (fTypeHl === 'sq_rhomb') {
-                                        let mathCenterY = Math.round(rowRadius);
-                                        let vDist_rows = Math.abs(i - STATE.manualFrame.rowStart - mathCenterY);
-                                        let radius_rows = Math.round(rowRadius);
-                                        let col_dist = Math.round(Math.abs(cellX - centerX_frame) / m.charWidth);
-                                        isInFrameCell = (vDist_rows + col_dist <= radius_rows);
-                                    } else {
-                                        let rowRel = i - STATE.manualFrame.rowStart - rowRadius;
-                                        isInFrameCell = isInSmoothFrameShape(fTypeHl, rowRel, rowRadius, cellX, centerX_frame, columnRadius, m.charWidth);
-                                    }
+                                    let rowRel = i - STATE.manualFrame.rowStart - rowRadius;
+                                    isInFrameCell = isInSmoothFrameShape(fTypeHl, rowRel, rowRadius, cellX, centerX_frame, columnRadius, m.charWidth);
                                 }
                                 if (isInFrameCell) {
                                     ctx.save();
@@ -10188,7 +10238,7 @@ safeBind('stopBtn', 'click', () => {
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'middle';
                     let isMin = document.querySelector('.controls').classList.contains('minimized') || document.body.classList.contains('zen-mode');
-                    let edgeX = isMin ? 42 : 335;
+                    let edgeX = isMin ? 42 : 360;
                     for (let vr = STATE.manualFrame.rowStart; vr < 0; vr++) {
                         let vy = startY + vr * m.lineHeight + m.lineHeight / 2;
                         ctx.beginPath();
@@ -10511,131 +10561,64 @@ safeBind('stopBtn', 'click', () => {
         const AUTO_HIDE_PANEL_SELECTORS = ['.controls', '.player-panel', '#rightPanel', '.frame-build-panel'];
         let panelsForceVisibleUntil = 0;
 
-        // Кнопки Пуск/Стоп/◀▶ вынесены из .player-panel в DOM (см. #playerButtonsBar), чтобы
-        // затемнение панели (opacity на .player-panel.auto-row-overlap) не гасило их по умолчанию —
-        // позиция синхронизируется вручную с нижним краем пульта.
-        // === ЗАПОМИНАНИЕ РАСКЛАДКИ ТРЁХ ПАНЕЛЕЙ (пульт, мини-пульт, рамка) ===
-        // Позиция + свёрнутость каждой панели сохраняются в localStorage при каждом отпускании
-        // мыши и восстанавливаются при загрузке (страница не может сама писать в banks_data.js —
-        // это файл на диске, браузеру запрещено; localStorage — тот же механизм, что у банков).
+        // === ЗАПОМИНАНИЕ ПОЗИЦИИ .player-panel (скрытый каркас, вне системы MENUS) ===
+        // #playerButtonsBar и #frameBuildPanel раньше тоже жили тут, но теперь это вкладки menuPlayer/
+        // menuFrame общей системы MENUS (см. МАРКЕР 72a) — их позиция/видимость хранится в
+        // zerk_genezis_layout вместе с остальными вкладками, отдельная логика им больше не нужна.
         function savePanelLayout() {
             try {
-                let data = {};
-                [['pp', '.player-panel'], ['mb', '#playerButtonsBar'], ['fb', '#frameBuildPanel']].forEach(([k, sel]) => {
-                    let el = document.querySelector(sel);
-                    if (!el) return;
-                    let r = el.getBoundingClientRect();
-                    data[k] = { l: Math.round(r.left), t: Math.round(r.top), m: el.classList.contains('minimized') };
-                });
-                localStorage.setItem('panel_layout', JSON.stringify(data));
+                let el = document.querySelector('.player-panel');
+                if (!el) return;
+                let r = el.getBoundingClientRect();
+                localStorage.setItem('panel_layout', JSON.stringify({ pp: { l: Math.round(r.left), t: Math.round(r.top), m: el.classList.contains('minimized') } }));
             } catch (e) {}
         }
         window.savePanelLayout = savePanelLayout;
         function restorePanelLayout() {
             let data = null;
             try { data = JSON.parse(localStorage.getItem('panel_layout') || 'null'); } catch (e) {}
-            if (!data) return false;
-            [['pp', '.player-panel'], ['mb', '#playerButtonsBar'], ['fb', '#frameBuildPanel']].forEach(([k, sel]) => {
-                let el = document.querySelector(sel);
-                let d = data[k];
-                if (!el || !d) return;
-                el.style.left = Math.max(0, Math.min(window.innerWidth - 80, d.l)) + 'px';
-                el.style.top = Math.max(0, Math.min(window.innerHeight - 40, d.t)) + 'px';
-                el.style.right = 'auto';
-                el.style.bottom = 'auto';
-                el.style.transform = 'none';
-                el.classList.toggle('minimized', !!d.m);
-            });
-            window.__miniBarUserMoved = true; // мини-пульт больше не приклеен к пульту
-            window.__panelLayoutRestored = true;
+            let d = data && data.pp;
+            let el = document.querySelector('.player-panel');
+            if (!el || !d) return false;
+            el.style.left = Math.max(0, Math.min(window.innerWidth - 80, d.l)) + 'px';
+            el.style.top = Math.max(0, Math.min(window.innerHeight - 40, d.t)) + 'px';
+            el.style.right = 'auto';
+            el.style.bottom = 'auto';
+            el.style.transform = 'none';
+            el.classList.toggle('minimized', !!d.m);
             return true;
         }
         // Сохраняем после любого отпускания мыши (конец перетаскивания/сворачивания) — дёшево.
         document.addEventListener('mouseup', () => setTimeout(savePanelLayout, 80));
+        restorePanelLayout();
 
-        function positionPlayerButtonsBar() {
-            // Пульт слит в мини-пульт: по умолчанию мини-пульт стоит слева от центра экрана
-            // сверху — но только пока пользователь не утащил его сам и нет сохранённой раскладки.
-            if (window.__miniBarUserMoved) return;
-            let bar = document.getElementById('playerButtonsBar');
-            if (!bar) return;
-            let barW = bar.getBoundingClientRect().width || 306;
-            bar.style.transform = 'none';
-            bar.style.left = Math.max(4, Math.round(window.innerWidth / 2 - barW - 5)) + 'px';
-            bar.style.top = '0px';
-        }
+        // Гарантирует, что вкладка вкладок-меню (см. МАРКЕР 72a, система MENUS) закреплена и видна —
+        // замена старого openRightPanelTab('dna') из времён, когда Терминал/ДНК были отдельной
+        // самописной панелью вместо двух вкладок общей системы.
+        window.showMenuTab = function(mid) {
+            let m = window.MENUS && window.MENUS[mid];
+            if (!m) return;
+            m.pin = true;
+            let cb = document.getElementById(mid + 'Pin');
+            if (cb) cb.checked = true;
+            window.applyMenu(mid);
+            window.saveMenuLayout();
+            window.updateToggleAllPinsBtn();
+            let dockPanel = document.getElementById(m.zone === 'leftSlot' ? 'leftPanel' : 'rightPanel');
+            if (dockPanel) dockPanel.classList.remove('auto-row-overlap');
+            panelsForceVisibleUntil = Date.now() + 1200;
+        };
 
-        // Панель "Построение и поиск в рамке" по умолчанию — справа от центра, на том же уровне.
-        // Выставляется только при загрузке (несколько повторов, пока layout оседает).
-        function alignFrameBuildPanelDefault() {
-            if (window.__panelLayoutRestored) return;
-            let fp = document.getElementById('frameBuildPanel');
-            if (!fp) return;
-            fp.style.left = Math.min(window.innerWidth - 220, Math.round(window.innerWidth / 2 + 5)) + 'px';
-            fp.style.top = '0px';
-            fp.style.right = 'auto';
-            fp.style.bottom = 'auto';
-        }
-
-        if (!restorePanelLayout()) {
-            positionPlayerButtonsBar();
-            alignFrameBuildPanelDefault();
-            for (let i = 1; i <= 6; i++) setTimeout(alignFrameBuildPanelDefault, i * 100);
-        }
-        // ResizeObserver ловит только изменение РАЗМЕРА пульта, а не позиции — при самой первой
-        // загрузке страницы позиция могла ещё не устаканиться (шрифты/layout), из-за чего
-        // мини-панель садилась впритык без отступа. Одного кадра оказалось мало — перепроверяем
-        // несколько раз в течение примерно полусекунды, пока раскладка точно не осядет.
-        for (let i = 1; i <= 10; i++) {
-            setTimeout(positionPlayerButtonsBar, i * 50);
-        }
-        if (typeof ResizeObserver !== 'undefined') {
-            let playerPanelForBar = document.querySelector('.player-panel');
-            if (playerPanelForBar) new ResizeObserver(positionPlayerButtonsBar).observe(playerPanelForBar);
-        }
-
-        // Переключение вкладок объединённой правой панели (цвет фона по активной вкладке).
-        const RIGHT_PANEL_TAB_COLORS = { terminal: '#00ccff', dna: '#cc33ff' };
-        function applyRightPanelAccentColor(tab) {
-            let panel = document.querySelector('#rightPanel');
-            let color = RIGHT_PANEL_TAB_COLORS[tab];
-            if (!panel || !color) return;
-            let bg = 'linear-gradient(' + hexToRgba(color, 0.22) + ', ' + hexToRgba(color, 0.22) + '), rgba(10, 10, 10, 0.75)';
-            panel.style.setProperty('--right-panel-accent-bg', bg);
-            panel.style.setProperty('--right-panel-accent-color', color);
-        }
-
-        // Переключает вкладку правой панели и гарантирует, что сама панель видна (не свёрнута/не затемнена).
-        function openRightPanelTab(tab) {
-            let btn = document.querySelector('.right-panel-tab[data-tab="' + tab + '"]');
-            if (!btn) return;
-            document.querySelectorAll('.right-panel-tab').forEach(b => {
-                b.classList.toggle('active', b === btn);
-                b.style.borderBottomColor = (b === btn) ? b.style.color : 'transparent';
-            });
-            document.querySelectorAll('#rightPanel [data-tab-content]').forEach(c => {
-                c.style.display = (c.dataset.tabContent === tab) ? 'flex' : 'none';
-            });
-            applyRightPanelAccentColor(tab);
-            let panel = document.getElementById('rightPanel');
-            if (panel) {
-                panel.classList.remove('minimized', 'auto-row-overlap');
-                panelsForceVisibleUntil = Date.now() + 1200;
-            }
-        }
-
-        // Вертикальный тулбар (⌖🛰️⟲), тулбар отмены (↶↷, выше), тулбар вставки (📋, ниже)
-        // и кнопка ⬅ прилеплены к правому краю левой панели .controls.
+        // Вертикальный тулбар (⌖🛰️⟲), тулбар отмены (↶↷, выше) и тулбар вставки (📋, ниже)
+        // прилеплены к правому краю левой панели .controls.
         function positionFloatingToolbar() {
             let toolbar = document.querySelector('.floating-toolbar:not(.floating-toolbar-undoredo):not(.floating-toolbar-paste)');
             let undoToolbar = document.querySelector('.floating-toolbar-undoredo');
             let pasteToolbar = document.querySelector('.floating-toolbar-paste');
-            let backBtn = document.querySelector('.floating-back-btn');
             let controlsPanel = document.querySelector('.controls');
             if (!controlsPanel) return;
             let rect = controlsPanel.getBoundingClientRect();
             if (toolbar) toolbar.style.left = (rect.right + 10) + 'px';
-            if (backBtn) backBtn.style.left = (rect.right + 10) + 'px';
             if (undoToolbar) undoToolbar.style.left = (rect.right + 10) + 'px';
             if (pasteToolbar) pasteToolbar.style.left = (rect.right + 10) + 'px';
             if (toolbar) {
@@ -10843,7 +10826,7 @@ safeBind('stopBtn', 'click', () => {
             // ВСЕГДА (не только по галке "Затемнять Пуск/Стоп" — та осталась только для playerButtonsBar).
             // Проверка через overlapsRows: старый guard "offsetParent === null" у position:fixed
             // тулбаров в Chrome срабатывал всегда, и этот блок был мёртвым.
-            document.querySelectorAll('.floating-toolbar, .floating-toolbar-right, .floating-back-btn').forEach(el => {
+            document.querySelectorAll('.floating-toolbar, .floating-toolbar-right').forEach(el => {
                 let tbOverlap = overlapsRows(el);
                 if (tbOverlap !== null) el.classList.toggle('dimmed', tbOverlap);
             });
@@ -10922,12 +10905,12 @@ safeBind('stopBtn', 'click', () => {
                 this.classList.toggle('active', f.checked);
                 updateLogic();
             }
-            openRightPanelTab('dna');
+            showMenuTab('menuDna');
         });
 
         safeBind('floatingInterleaveBtn', 'click', function() {
             let c = document.getElementById('interleaveAnalysisCheck');
-            openRightPanelTab('dna');
+            showMenuTab('menuDna');
             if (c) {
                 c.checked = !c.checked;
                 this.classList.toggle('active', c.checked);
@@ -11599,12 +11582,19 @@ safeBind('stopBtn', 'click', () => {
                 checkPanelOverlaps();
                 STATE.hasMoved = false;
 
+                // Координаты мыши — переводим в систему координат холста. Холст не всегда начинается
+                // с самого верха окна (сверху может быть #menuBar), поэтому e.clientX/Y напрямую
+                // сюда не годятся — все хит-тесты рамки/выделения строк иначе едут на высоту полосы.
+                let canvasRect = canvas.getBoundingClientRect();
+                let mx = e.clientX - canvasRect.left;
+                let my = e.clientY - canvasRect.top;
+
                 if (e.ctrlKey && !safeChecked('radarCheck', false)) {
                     STATE.isDraggingRowSelection = true;
                     let useMirror = safeChecked('mirrorCheck', false);
                     let centerY = m.startY + (useMirror ? (m.renderCount - 1) * m.lineHeight : 0) + (m.lineHeight / 2);
-                    let screenRow = Math.round((e.clientY - centerY) / m.lineHeight);
-                    if (useMirror) screenRow = Math.round(Math.abs(e.clientY - centerY) / m.lineHeight);
+                    let screenRow = Math.round((my - centerY) / m.lineHeight);
+                    if (useMirror) screenRow = Math.round(Math.abs(my - centerY) / m.lineHeight);
                     
                     if (screenRow >= 0 && screenRow < m.renderCount) {
                         let actualIdx = (m.startIndex + screenRow) % STATE.lines.length;
@@ -11625,9 +11615,6 @@ safeBind('stopBtn', 'click', () => {
                 }
 
                 let showFrame = safeChecked('frameCheck', false);
-                
-                let mx = e.clientX;
-                let my = e.clientY;
 
 <!-- === МАРКЕР 68: ЛОГИКА ДРАГ-Н-ДРОП ХОЛСТА === -->
                 if (showFrame) {
@@ -11709,13 +11696,10 @@ safeBind('stopBtn', 'click', () => {
                     STATE.draggedRingIndex = STATE.hoveredRingIndex;
                     STATE.lastCellsShifted = 0;
                     
-                    let rect = canvas.getBoundingClientRect();
-                    let lx = mx - rect.left;
-                    let ly = my - rect.top;
                     let centerX = canvas.width / 2 + STATE.offsetX + STATE.autoOffsetX;
                     let centerY = canvas.height / 2 + STATE.offsetY + STATE.autoOffsetY;
-                    
-                    STATE.lastMouseAngle = Math.atan2(ly - centerY, lx - centerX);
+
+                    STATE.lastMouseAngle = Math.atan2(my - centerY, mx - centerX);
                     STATE.accumulatedAngleDelta = 0;
                     
                     let actualIdx = (m.startIndex + STATE.draggedRingIndex) % STATE.lines.length;
@@ -11733,8 +11717,9 @@ safeBind('stopBtn', 'click', () => {
 
 <!-- === МАРКЕР 69: ЛОГИКА ПЕРЕМЕЩЕНИЯ КУРСОРА (MOUSEMOVE) === -->
             window.addEventListener('mousemove', e => {
-                let mx = e.clientX;
-                let my = e.clientY;
+                let canvasRect = canvas.getBoundingClientRect();
+                let mx = e.clientX - canvasRect.left;
+                let my = e.clientY - canvasRect.top;
 
                 if (STATE.isDraggingRowSelection) {
                     let m = getGridMetrics();
@@ -11818,14 +11803,10 @@ safeBind('stopBtn', 'click', () => {
                 if (useRadar && !STATE.isDraggingPan && !STATE.frameAction) {
                     let m = getGridMetrics();
                     if (m) {
-                        let rect = canvas.getBoundingClientRect();
-                        let lx = mx - rect.left;
-                        let ly = my - rect.top;
-                        
                         let centerX = canvas.width / 2 + STATE.offsetX + STATE.autoOffsetX;
                         let centerY = canvas.height / 2 + STATE.offsetY + STATE.autoOffsetY;
-                        
-                        let dist = Math.hypot(lx - centerX, ly - centerY);
+
+                        let dist = Math.hypot(mx - centerX, my - centerY);
                         let hoveredRingIndex = Math.round(dist / m.lineHeight) - 2;
                         
                         if (hoveredRingIndex >= 0 && hoveredRingIndex < m.renderCount && Math.abs(dist - (hoveredRingIndex + 2) * m.lineHeight) < m.lineHeight * 0.4) {
@@ -11935,13 +11916,10 @@ safeBind('stopBtn', 'click', () => {
                 } else if (STATE.isDraggingRing) {
                     let m = getGridMetrics();
                     if (m) {
-                        let rect = canvas.getBoundingClientRect();
-                        let lx = mx - rect.left;
-                        let ly = my - rect.top;
                         let centerX = canvas.width / 2 + STATE.offsetX + STATE.autoOffsetX;
                         let centerY = canvas.height / 2 + STATE.offsetY + STATE.autoOffsetY;
-                        
-                        let currentAngle = Math.atan2(ly - centerY, lx - centerX);
+
+                        let currentAngle = Math.atan2(my - centerY, mx - centerX);
                         let diff = currentAngle - STATE.lastMouseAngle;
                         diff = Math.atan2(Math.sin(diff), Math.cos(diff));
                         
@@ -11987,6 +11965,14 @@ safeBind('stopBtn', 'click', () => {
                 STATE.isDraggingRing = false;
                 STATE.isDraggingRowSelection = false;
                 STATE.draggedRingIndex = -1;
+                // Если рамку только что таскали/ресайзили руками, а галочка "⌖ По умолчанию
+                // за центром" включена — не ждём отдельного нажатия Escape, сразу возвращаем
+                // рамку по центру (то же самое, что делает Escape и смена галочки).
+                if (STATE.frameAction && STATE.manualFrame && safeChecked('frameCenterLockCheck', true)) {
+                    STATE.manualFrame.needsRecenter = true;
+                    STATE.manualFrame.manualWidth = false;
+                    render();
+                }
                 STATE.frameAction = null;
             });
 
@@ -11995,6 +11981,10 @@ safeBind('stopBtn', 'click', () => {
                 let isClickOnEdge = false;
                 let m = getGridMetrics();
                 if (safeChecked('frameCheck') && m && STATE.manualFrame && STATE.manualFrame.isInitialized) {
+                    let canvasRect = canvas.getBoundingClientRect();
+                    let mx = e.clientX - canvasRect.left;
+                    let my = e.clientY - canvasRect.top;
+
                     let colSpan = STATE.manualFrame.colSpan !== undefined ? STATE.manualFrame.colSpan : 40;
                     let colStart = STATE.manualFrame.colStart !== undefined ? STATE.manualFrame.colStart : -Math.round(colSpan / 2);
 
@@ -12004,12 +11994,12 @@ safeBind('stopBtn', 'click', () => {
                     let fh = STATE.manualFrame.rowSpan * m.lineHeight;
                     let edge = 6;
 
-                    let onL_res = Math.abs(e.clientX - fx) <= edge && e.clientY >= fy - edge && e.clientY <= fy + fh + edge;
-                    let onR_res = Math.abs(e.clientX - (fx + fw)) <= edge && e.clientY >= fy - edge && e.clientY <= fy + fh + edge;
+                    let onL_res = Math.abs(mx - fx) <= edge && my >= fy - edge && my <= fy + fh + edge;
+                    let onR_res = Math.abs(mx - (fx + fw)) <= edge && my >= fy - edge && my <= fy + fh + edge;
 
                     if (onL_res || onR_res) {
                         isClickOnEdge = true;
-                    } else if (e.clientX >= fx && e.clientX <= fx + fw && e.clientY >= fy && e.clientY <= fy + fh) {
+                    } else if (mx >= fx && mx <= fx + fw && my >= fy && my <= fy + fh) {
                         isClickOnFrame = true;
                     }
                 }
@@ -12178,7 +12168,7 @@ safeBind('stopBtn', 'click', () => {
                 let panel = document.querySelector(selector);
                 if (!panel) return;
                 
-                let header = panel.querySelector('.patterns-log-title, .diag-terminal-title, .player-panel-title, .frame-control-title, .interleave-panel-title, .right-panel-title, .controls-title');
+                let header = panel.querySelector('.patterns-log-title, .diag-terminal-title, .player-panel-title, .interleave-panel-title');
                 if (!header) {
                     header = document.createElement('div');
                     header.className = 'player-panel-title';
@@ -12241,7 +12231,6 @@ safeBind('stopBtn', 'click', () => {
                         panel.classList.remove('dragging');
                         document.onmouseup = null;
                         document.onmousemove = null;
-                        positionPlayerButtonsBar();
                     };
                     document.onmousemove = (e2) => {
                         e2.preventDefault();
@@ -12249,74 +12238,282 @@ safeBind('stopBtn', 'click', () => {
                         px = e2.clientX; py = e2.clientY;
                         panel.style.top = (panel.offsetTop - dy) + "px";
                         panel.style.left = (panel.offsetLeft - dx) + "px";
-                        positionPlayerButtonsBar();
                     };
                 };
                 let content = panel.querySelector('.panel-content');
                 if (content) content.addEventListener('mousedown', startPanelDrag);
                 let titleBar = panel.querySelector(':scope > div[style*="cursor:move"]');
                 if (titleBar) titleBar.addEventListener('mousedown', startPanelDrag);
-
-                // Мини-пульт таскается сам по себе (раньше тянул за собой пульт). После первого
-                // перетаскивания отвязывается от пульта (positionPlayerButtonsBar его не трогает),
-                // позиция сохраняется через общий savePanelLayout по mouseup.
-                let bar = document.getElementById('playerButtonsBar');
-                if (bar) bar.addEventListener('mousedown', (e) => {
-                    if (e.button !== 0) return;
-                    if (e.target.closest('input, button, select, textarea, label, a')) return;
-                    window.__miniBarUserMoved = true;
-                    let rect = bar.getBoundingClientRect();
-                    bar.style.transform = 'none';
-                    bar.style.left = rect.left + 'px';
-                    bar.style.top = rect.top + 'px';
-                    let px = e.clientX, py = e.clientY;
-                    document.onmouseup = () => {
-                        document.onmouseup = null;
-                        document.onmousemove = null;
-                    };
-                    document.onmousemove = (e2) => {
-                        e2.preventDefault();
-                        let dx = px - e2.clientX, dy = py - e2.clientY;
-                        px = e2.clientX; py = e2.clientY;
-                        bar.style.top = (bar.offsetTop - dy) + 'px';
-                        bar.style.left = (bar.offsetLeft - dx) + 'px';
-                    };
-                });
             })();
-            setupDraggable('#rightPanel', '🧠 ПАНЕЛЬ');
-            setupDraggable('#frameBuildPanel', '🏗️ Построение и поиск в рамке');
-            setupDraggable('.controls', '⚙️ ПАНЕЛЬ');
+            // #rightPanel, .controls (#leftPanel), #playerButtonsBar и #frameBuildPanel больше не
+            // двигаются/не ресайзятся/не сворачиваются как отдельные целые панели — все они теперь
+            // вкладки общей системы MENUS (см. МАРКЕР 72a): двигать можно только за .panel-head,
+            // как в Zerkalius-gpu.html.
 
-            // Тяга за левый край правой панели — расширяет её влево (правый край неподвижен).
-            (() => {
-                let panel = document.querySelector('#rightPanel');
-                let handle = document.getElementById('rightPanelLeftResizer');
-                if (!panel || !handle) return;
-                handle.addEventListener('mousedown', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    let startX = e.clientX;
-                    let startWidth = panel.getBoundingClientRect().width;
-                    let minWidth = parseInt(getComputedStyle(panel).minWidth) || 250;
-                    document.onmousemove = (e2) => {
-                        let dx = startX - e2.clientX;
-                        panel.style.width = Math.max(minWidth, startWidth + dx) + "px";
-                    };
-                    document.onmouseup = () => {
-                        document.onmousemove = null;
-                        document.onmouseup = null;
-                    };
-                });
-            })();
+<!-- === МАРКЕР 72a: СИСТЕМА ВКЛАДОК/ДОКОВ (портировано из Zerkalius-gpu.html) === -->
+            // Разбиение содержимого .controls (было 8 <details>) и бывшей #rightPanel (Терминал+ДНК)
+            // на вкладки. Каждая вкладка — либо закреплена в leftPanel/rightPanel (pin:true), либо
+            // сидит вкладкой-дропдауном (pin:false), либо (любая, floatable:true) плавает окном на
+            // холсте — перетащить за .panel-head прямо на холст.
+            const MENUS = {
+                menuPlayer:     { title: 'Плеер',       zone: 'leftSlot',  pin: false, ids: ['playerButtonsBar'], floatable: true },
+                menuFrame:      { title: 'Рамка',       zone: 'rightSlot', pin: false, ids: ['frameBuildPanel'], floatable: true },
+                menuSystem:     { title: 'Система',     zone: 'leftSlot',  pin: true,  ids: ['sysGroup'], floatable: true },
+                menuSlots:      { title: 'Слоты',       zone: 'leftSlot',  pin: true,  ids: ['slotsGroup'], floatable: true },
+                menuSierp:      { title: 'Серпинский',  zone: 'leftSlot',  pin: false, ids: ['sierpGroup'], floatable: true },
+                menuSeed:       { title: 'Сид',         zone: 'leftSlot',  pin: false, ids: ['seedGroup'], floatable: true },
+                menuAudio:      { title: 'Звук',        zone: 'rightSlot', pin: false, ids: ['audioGroup'], floatable: true },
+                menuAppearance: { title: 'Оформление',  zone: 'rightSlot', pin: true,  ids: ['appearanceGroup'], floatable: true },
+                menuMotion:     { title: 'Движение',    zone: 'rightSlot', pin: true,  ids: ['motionGroup'], floatable: true },
+                menuShift:      { title: 'Авто-сдвиг',  zone: 'rightSlot', pin: false, ids: ['shiftGroup'], floatable: true },
+                menuTerminal:   { title: 'Терминал',    zone: 'rightSlot', pin: true,  ids: ['terminalGroup'], floatable: true },
+                menuDna:        { title: 'ДНК',         zone: 'rightSlot', pin: false, ids: ['dnaGroup'], floatable: true }
+            };
+            window.MENUS = MENUS;
+            const MENU_LAYOUT_KEY = 'zerk_genezis_layout';
 
-            // Переключение вкладок объединённой правой панели.
-            document.querySelectorAll('.right-panel-tab').forEach(btn => {
-                btn.addEventListener('click', () => openRightPanelTab(btn.dataset.tab));
-            });
-            {
-                let activeTab = document.querySelector('.right-panel-tab.active');
-                if (activeTab) applyRightPanelAccentColor(activeTab.dataset.tab);
+            // Один контейнер на вкладку: шапка с названием и ручкой, дальше — все блоки вкладки.
+            for (let mid in MENUS) {
+                let m = MENUS[mid];
+                let wrap = document.createElement('div'); wrap.className = 'menu-panel'; wrap.id = 'panelWrap_' + mid;
+                if (m.floatable) wrap.dataset.floatable = '1';
+                let head = document.createElement('div'); head.className = 'panel-head';
+                head.innerHTML = '<span class="panel-drag" title="Перетащить панель' + (m.floatable ? ' — можно и на холст' : '') + '">⋮⋮</span><span class="panel-title">' + m.title + '</span><span class="panel-close" title="Скрыть панель">✕</span>';
+                let closeBtn = head.querySelector('.panel-close');
+                closeBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+                closeBtn.addEventListener('click', (e) => { e.stopPropagation(); hideMenuTab(mid); });
+                wrap.appendChild(head);
+                m.ids.forEach(id => { let el = document.getElementById(id); if (el) wrap.appendChild(el); });
+                m.wrapper = wrap;
             }
+
+            function saveMenuLayout() {
+                let g = {};
+                ['leftSlot', 'rightSlot'].forEach(z => Array.from(document.getElementById(z).children).forEach((el, i) => { if (el.id) g[el.id] = { z: z, i: i }; }));
+                document.querySelectorAll('body > .menu-panel.floating-panel').forEach(el => { if (el.id) g[el.id] = { z: 'canvas', x: parseInt(el.style.left, 10) || 0, y: parseInt(el.style.top, 10) || 0 }; });
+                let pins = {}; for (let m in MENUS) pins[m] = MENUS[m].pin;
+                try { localStorage.setItem(MENU_LAYOUT_KEY, JSON.stringify({ pins: pins, groups: g })); } catch (e) {}
+            }
+            window.saveMenuLayout = saveMenuLayout;
+
+            // Перетаскивание — mousedown/mousemove/mouseup (не нативный HTML5 drag-and-drop —
+            // конфликтует с обработчиками dragover/drop для вставки фигуры файлом).
+            let draggedMenuEl = null, dragMenuOffX = 0, dragMenuOffY = 0;
+            function makeMenuDraggable(handle, panel) {
+                function start(clientX, clientY) {
+                    draggedMenuEl = panel; panel.classList.add('dragging');
+                    let r = panel.getBoundingClientRect(); dragMenuOffX = clientX - r.left; dragMenuOffY = clientY - r.top;
+                    document.body.style.cursor = 'grabbing';
+                    for (let p in MENU_SLOT_OF) document.getElementById(p).classList.add('drop-zone-hint');
+                }
+                handle.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0) return; e.preventDefault(); e.stopPropagation();
+                    start(e.clientX, e.clientY);
+                });
+                handle.addEventListener('touchstart', (e) => {
+                    if (e.touches.length !== 1) return; e.preventDefault(); e.stopPropagation();
+                    start(e.touches[0].clientX, e.touches[0].clientY);
+                }, { passive: false });
+            }
+            const MENU_SLOT_OF = { leftPanel: 'leftSlot', rightPanel: 'rightSlot' };
+            function menuPidUnderCursor(x, y, precise) {
+                for (let pid in MENU_SLOT_OF) {
+                    let r = document.getElementById(pid).getBoundingClientRect();
+                    let hit = precise ? (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) : (x >= r.left && x <= r.right);
+                    if (hit) return pid;
+                }
+                return null;
+            }
+            function highlightMenuDock(pid) {
+                for (let p in MENU_SLOT_OF) document.getElementById(p).classList.toggle('drag-target', p === pid);
+            }
+            function placeMenuInZone(zone, y) {
+                let after = Array.from(zone.children).find(ch => { if (ch === draggedMenuEl) return false; let r = ch.getBoundingClientRect(); return y < r.top + r.height / 2; });
+                if (after) { if (after !== draggedMenuEl.nextSibling) zone.insertBefore(draggedMenuEl, after); }
+                else if (zone.lastElementChild !== draggedMenuEl) zone.appendChild(draggedMenuEl);
+            }
+            function menuDragMove(clientX, clientY) {
+                if (!draggedMenuEl) return;
+                let floatable = draggedMenuEl.dataset.floatable === '1';
+                let pid = menuPidUnderCursor(clientX, clientY, floatable);
+                highlightMenuDock(pid);
+                let zone = pid ? document.getElementById(MENU_SLOT_OF[pid]) : null;
+                if (floatable && !zone) {
+                    if (!draggedMenuEl.classList.contains('floating-panel')) { draggedMenuEl.classList.add('floating-panel'); document.body.appendChild(draggedMenuEl); }
+                    draggedMenuEl.style.left = Math.round(clientX - dragMenuOffX) + 'px';
+                    draggedMenuEl.style.top = Math.round(clientY - dragMenuOffY) + 'px';
+                    return;
+                }
+                if (draggedMenuEl.classList.contains('floating-panel')) { draggedMenuEl.classList.remove('floating-panel'); draggedMenuEl.style.left = ''; draggedMenuEl.style.top = ''; }
+                if (zone) placeMenuInZone(zone, clientY);
+            }
+            function menuDragEnd() {
+                if (!draggedMenuEl) return;
+                let mid = draggedMenuEl.id.replace('panelWrap_', '');
+                let zoneId = draggedMenuEl.classList.contains('floating-panel') ? 'canvas' : (draggedMenuEl.parentElement && draggedMenuEl.parentElement.id);
+                if (MENUS[mid]) {
+                    MENUS[mid].zone = zoneId;
+                    if ((zoneId === 'leftSlot' || zoneId === 'rightSlot') && !MENUS[mid].pin) {
+                        MENUS[mid].pin = true;
+                        let cb = document.getElementById(mid + 'Pin'); if (cb) cb.checked = true;
+                        let btn = document.querySelector('.menu-btn[data-menu="' + mid + '"]');
+                        if (btn) btn.classList.add('pinned');
+                        closeMenus(); updateDockVisibility(); updateToggleAllPinsBtn();
+                    }
+                }
+                draggedMenuEl.classList.remove('dragging'); draggedMenuEl = null; saveMenuLayout();
+                document.body.style.cursor = '';
+                highlightMenuDock(null);
+                for (let p in MENU_SLOT_OF) document.getElementById(p).classList.remove('drop-zone-hint');
+            }
+            window.addEventListener('mousemove', (e) => menuDragMove(e.clientX, e.clientY));
+            window.addEventListener('mouseup', menuDragEnd);
+            window.addEventListener('touchmove', (e) => {
+                if (!draggedMenuEl || !e.touches.length) return;
+                e.preventDefault();
+                menuDragMove(e.touches[0].clientX, e.touches[0].clientY);
+            }, { passive: false });
+            window.addEventListener('touchend', menuDragEnd);
+            window.addEventListener('touchcancel', menuDragEnd);
+
+            for (let mid in MENUS) makeMenuDraggable(MENUS[mid].wrapper.querySelector('.panel-head'), MENUS[mid].wrapper);
+
+            function applyMenu(mid) {
+                let m = MENUS[mid], drop = document.getElementById(mid);
+                let floating = m.wrapper.classList.contains('floating-panel');
+                if (m.pin) {
+                    if (!floating) (document.getElementById(m.zone) || document.getElementById('leftSlot')).appendChild(m.wrapper);
+                } else {
+                    if (floating) { m.wrapper.classList.remove('floating-panel'); m.wrapper.style.left = ''; m.wrapper.style.top = ''; floating = false; }
+                    drop.appendChild(m.wrapper);
+                }
+                let btn = document.querySelector('.menu-btn[data-menu="' + mid + '"]');
+                if (btn) btn.classList.toggle('pinned', m.pin || floating);
+                updateDockVisibility();
+            }
+            window.applyMenu = applyMenu;
+
+            function hideMenuTab(mid) {
+                let m = MENUS[mid]; if (!m) return;
+                m.pin = false;
+                let cb = document.getElementById(mid + 'Pin'); if (cb) cb.checked = false;
+                applyMenu(mid); closeMenus(); saveMenuLayout(); updateToggleAllPinsBtn();
+            }
+
+            function isMenuTabVisible(mid) {
+                let m = MENUS[mid];
+                return !!(m && (m.pin || m.wrapper.classList.contains('floating-panel')));
+            }
+
+            function updateDockVisibility() {
+                ['leftPanel', 'rightPanel'].forEach(pid => {
+                    let p = document.getElementById(pid);
+                    p.classList.toggle('dock-empty', !p.querySelector('.menu-panel'));
+                });
+            }
+
+            for (let mid in MENUS) {
+                let cb = document.getElementById(mid + 'Pin'); cb.checked = MENUS[mid].pin;
+                cb.addEventListener('mousedown', (e) => e.stopPropagation());
+                cb.addEventListener('click', (e) => e.stopPropagation());
+                cb.addEventListener('change', () => { MENUS[mid].pin = cb.checked; applyMenu(mid); saveMenuLayout(); updateToggleAllPinsBtn(); });
+            }
+
+            function updateToggleAllPinsBtn() {
+                let allOn = Object.keys(MENUS).every(mid => isMenuTabVisible(mid));
+                let bar = document.getElementById('toggleAllPinsBtn');
+                bar.classList.toggle('all-on', allOn);
+                bar.title = allOn ? 'Скрыть все панели' : 'Показать все панели';
+            }
+            window.updateToggleAllPinsBtn = updateToggleAllPinsBtn;
+            document.getElementById('toggleAllPinsBtn').addEventListener('click', () => {
+                let turnOn = !Object.keys(MENUS).every(mid => isMenuTabVisible(mid));
+                for (let mid in MENUS) {
+                    MENUS[mid].pin = turnOn;
+                    let cb = document.getElementById(mid + 'Pin'); if (cb) cb.checked = turnOn;
+                    applyMenu(mid);
+                }
+                saveMenuLayout();
+                updateToggleAllPinsBtn();
+            });
+
+            // Восстановление раскладки: сперва закрепления и зона, потом порядок внутри зоны.
+            (function loadMenuLayout() {
+                let raw = null; try { raw = localStorage.getItem(MENU_LAYOUT_KEY); } catch (e) {}
+                let L = null; if (raw) { try { L = JSON.parse(raw); } catch (e) {} }
+                if (L && L.pins) for (let m in MENUS) if (L.pins[m] !== undefined) { MENUS[m].pin = !!L.pins[m]; let cb = document.getElementById(m + 'Pin'); if (cb) cb.checked = MENUS[m].pin; }
+                if (L && L.groups) for (let m in MENUS) { let wid = 'panelWrap_' + m; if (MENUS[m].pin && L.groups[wid] && L.groups[wid].z !== 'canvas') MENUS[m].zone = L.groups[wid].z; }
+                for (let m in MENUS) applyMenu(m);
+
+                if (L && L.groups) {
+                    let list = Object.keys(L.groups).map(id => ({ id: id, z: L.groups[id].z, i: L.groups[id].i, x: L.groups[id].x, y: L.groups[id].y })).sort((a, b) => (a.i || 0) - (b.i || 0));
+                    list.forEach(it => {
+                        let el = document.getElementById(it.id); if (!el) return;
+                        if (it.z === 'canvas' && el.dataset.floatable === '1') {
+                            el.classList.add('floating-panel'); document.body.appendChild(el);
+                            el.style.left = Math.max(0, Math.min(window.innerWidth - 40, it.x || 20)) + 'px';
+                            el.style.top = Math.max(0, Math.min(window.innerHeight - 40, it.y || 20)) + 'px';
+                            return;
+                        }
+                        let z = document.getElementById(it.z);
+                        if (z && el.parentElement === z) z.appendChild(el);
+                    });
+                }
+
+                // Плеер и Рамка построения — без сохранённой раскладки должны быть видны сразу
+                // (Пуск/Стоп не спрятать в закрытую выпадашку), плавающим окном на прежнем месте —
+                // как раньше делали positionPlayerButtonsBar/alignFrameBuildPanelDefault.
+                ['menuPlayer', 'menuFrame'].forEach(mid => {
+                    let m = MENUS[mid];
+                    if (!m || m.pin || m.wrapper.classList.contains('floating-panel')) return;
+                    m.wrapper.classList.add('floating-panel');
+                    document.body.appendChild(m.wrapper);
+                    m.zone = 'canvas';
+                    let w = m.wrapper.offsetWidth || 290;
+                    if (mid === 'menuPlayer') {
+                        m.wrapper.style.left = Math.max(4, Math.round(window.innerWidth / 2 - w - 5)) + 'px';
+                    } else {
+                        m.wrapper.style.left = Math.min(window.innerWidth - w - 8, Math.round(window.innerWidth / 2 + 5)) + 'px';
+                    }
+                    m.wrapper.style.top = '40px';
+                });
+
+                updateToggleAllPinsBtn();
+            })();
+
+            // Клик по незакреплённой (и не плавающей) вкладке открывает её выпадающим окном;
+            // клик по уже видимой вкладке — прячет обратно. Двойной клик — закрепляет в тот из
+            // доков (лево/право), где сейчас меньше содержимого.
+            document.querySelectorAll('.menu-btn').forEach(btn => {
+                let mid = btn.dataset.menu;
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (e.detail > 1) return;
+                    let m = MENUS[mid];
+                    if (m && (m.pin || m.wrapper.classList.contains('floating-panel'))) {
+                        hideMenuTab(mid);
+                        return;
+                    }
+                    let drop = document.getElementById(mid); let wasOpen = drop.classList.contains('open');
+                    document.querySelectorAll('.menu-drop').forEach(d => d.classList.remove('open'));
+                    document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('open'));
+                    if (!wasOpen) { drop.style.left = Math.min(btn.offsetLeft, Math.max(0, window.innerWidth - 330)) + 'px'; drop.classList.add('open'); btn.classList.add('open'); }
+                });
+                btn.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    let m = MENUS[mid]; if (!m) return;
+                    if (m.wrapper.classList.contains('floating-panel')) { m.wrapper.classList.remove('floating-panel'); m.wrapper.style.left = ''; m.wrapper.style.top = ''; }
+                    let leftH = document.getElementById('leftSlot').scrollHeight, rightH = document.getElementById('rightSlot').scrollHeight;
+                    m.zone = (leftH <= rightH) ? 'leftSlot' : 'rightSlot';
+                    m.pin = true;
+                    let cb = document.getElementById(mid + 'Pin'); if (cb) cb.checked = true;
+                    applyMenu(mid); closeMenus(); saveMenuLayout(); updateToggleAllPinsBtn();
+                });
+            });
+            document.querySelectorAll('.menu-drop').forEach(d => { d.addEventListener('mousedown', (e) => e.stopPropagation()); d.addEventListener('click', (e) => e.stopPropagation()); });
+            function closeMenus() { document.querySelectorAll('.menu-drop').forEach(d => d.classList.remove('open')); document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('open')); }
+            window.addEventListener('mousedown', (e) => { if (!e.target.closest('.menu-drop') && !e.target.closest('.menu-btn')) closeMenus(); });
+<!-- === МАРКЕР 72b: КОНЕЦ СИСТЕМЫ ВКЛАДОК/ДОКОВ === -->
 
             // Плавающий тулбар (⬅⌖🛰️🔲⟲) — тащится целиком за весь свой фон, а не по кнопке.
             (() => {
@@ -12367,7 +12564,7 @@ safeBind('stopBtn', 'click', () => {
                 if (panelsWereHidden) panelsForceVisibleUntil = Date.now() + 1200;
                 let bar = document.getElementById('playerButtonsBar');
                 if (bar) bar.classList.remove('dimmed');
-                document.querySelectorAll('.floating-toolbar, .floating-toolbar-right, .floating-back-btn').forEach(el => el.classList.remove('dimmed'));
+                document.querySelectorAll('.floating-toolbar, .floating-toolbar-right').forEach(el => el.classList.remove('dimmed'));
 
                 let cleared = false;
                 if (STATE.selectedRings && STATE.selectedRings.size > 0) {
@@ -12529,7 +12726,6 @@ safeBind('stopBtn', 'click', () => {
         window.addEventListener('resize', () => {
             resizeCanvas();
             render();
-            positionPlayerButtonsBar();
             positionFloatingToolbarRight();
         });
 
@@ -12867,7 +13063,6 @@ safeBind('stopBtn', 'click', () => {
 
             positionFloatingToolbar();
             positionFloatingToolbarRight();
-            positionPlayerButtonsBar();
 
             // Вызываем рендер (размеры холста уже правильные)
             render();
