@@ -4,6 +4,7 @@
 <head>
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
 <title>Zerkalius Fold — v0.178</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
@@ -11,15 +12,20 @@
     --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598;
     --acc:#4da3ff; --red:#ff4444; --purple:#b060ff; --green:#38c172; --gray:#6b7280;
     --side-w:300px;   /* ширина левой панели — тянется мышью за разделитель */
-    --chain-fs:12px;  /* размер шрифта полотна */
-    --chain-lh:1.35;  /* межстрочный интервал */
-    --chain-ls:0px;   /* межсимвольный интервал */
+    --chain-fs:19px;  /* размер шрифта полотна */
+    --chain-lh:0.65;  /* межстрочный интервал — намеренный плотный наезд (см. диагностику
+                          в консоли: сетка строк идеально ровная что при 0.65, что при 1,
+                          слияние "0" — это форма символа при сжатии, а не баг раскладки) */
+    --chain-ls:0px;   /* межсимвольный интервал (-1px давал наезд по горизонтали — соседние
+                          "0" в одной строке визуально слипались; вернули к 0) */
     --pat-w:12em;     /* ширина левой колонки паттернов */
     --pat-w2:12em;    /* ширина правой колонки паттернов */
-    --c1:#ffffff;     /* цвет единиц */
-    --c0:#00ff66;     /* цвет нулей */
-    --cbg:#050505;    /* фон полотна */
-    --dim-op: 0.35;   /* прозрачность будущих строк */
+    --c1:#ff3333;     /* цвет единиц (по умолчанию — пресет "Спектр") */
+    --c0:#555555;     /* цвет нулей */
+    --cbg:#000000;    /* фон полотна */
+    --dim-op: 1;      /* прозрачность будущих строк (100 — ползунок яркости по умолчанию) */
+    --std-btn-h: 24px; /* стандартная высота кнопок в сетках (ops-btn-grid/control-group-player/
+                           preset-grp/search-grid и т.п.) — было 34px, уменьшено на ~30% */
   }
   /* === МАРКЕР 02.1: CSS_BASE === */
   *{box-sizing:border-box}
@@ -29,31 +35,66 @@
   body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.4 system-ui,Segoe UI,sans-serif; display:flex; flex-direction:column}
 
   /* === Верхняя полоса вкладок (перенесена из Zerkalius-gpu.html, цвета — под тему fold) === */
-  #menuBar{flex:0 0 auto;height:34px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+  #menuBar{flex:0 0 auto;height:42px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
            background:var(--panel);border-bottom:1px solid var(--line);padding:0 6px;position:relative;
            z-index:200;user-select:none;font-size:12px}
-  /* min-width:0 + overflow-x:auto — страховка: после переноса сюда выбора столбца/выравнивания
-     и управления цепочками список может не влезать в доступную ширину grid-колонки auto,
-     тогда лишнее уезжает в горизонтальный скролл, а не ломает раскладку/наезжает на счётчик. */
-  #menuTabs{display:flex;align-items:center;gap:4px;position:relative;min-width:0;overflow-x:auto;scrollbar-width:thin}
-  #menuTabs::-webkit-scrollbar{height:4px}
+  /* overflow-x:auto тут был страховкой от переполнения по ширине — но по спеке CSS если
+     overflow-x задан НЕ visible, а overflow-y не задан явно, то и overflow-y тоже перестаёт
+     быть visible (принудительно становится auto) — то есть #menuTabs НЕВИДИМО обрезала и по
+     высоте тоже, а ВСЁ, что должно выпадать/торчать ниже нее (.chain-dd-list, .menu-drop,
+     старая полоска toggleAllPinsBtn) — просто не рисовалось. Функциональность выпадающих
+     списков важнее подстраховки от горизонтального переполнения — убрано. */
+  #menuTabs{display:flex;align-items:center;gap:4px;position:relative;min-width:0}
   .menu-btn{display:flex;align-items:center;gap:5px;background:none;border:1px solid var(--line);color:var(--dim);
             font-family:inherit;font-size:12px;padding:3px 10px;cursor:pointer;border-radius:3px}
   .menu-btn:hover{background:var(--bg);color:var(--fg);border-color:var(--acc)}
   .menu-btn.open,.menu-btn.pinned{background:var(--bg);color:var(--acc);border-color:var(--acc)}
   .menu-btn.open:hover,.menu-btn.pinned:hover{filter:brightness(1.3)}
   .menu-pin-inline{display:none}
-  #toggleAllPinsBtn{position:absolute;left:0;right:0;bottom:-8px;height:6px;border:none;border-radius:3px;
-                     background:var(--line);cursor:pointer;padding:0;margin:0;opacity:0;transition:background .2s,opacity .2s}
-  #menuTabs:hover #toggleAllPinsBtn{opacity:1}
-  #toggleAllPinsBtn:hover{filter:brightness(1.3)}
-  #toggleAllPinsBtn.all-on{background:var(--acc);box-shadow:0 0 6px var(--acc)}
-  #toggleAllPinsBtn.all-on:hover{filter:brightness(1.3)}
-  #toggleAllPinsBtn:hover ~ .menu-btn.pinned{filter:brightness(.6);transition:filter .15s}
-  .menu-drop{display:none;position:absolute;top:34px;left:2px;width:320px;max-height:82vh;overflow-y:auto;
+  /* Была невидимой тонкой полоской под вкладками (position:absolute, bottom:-Npx, видна только
+     при наведении) — #menuTabs имеет overflow-x:auto, а по спеке CSS если ЛЮБАЯ из осей
+     overflow не visible, ДРУГАЯ тоже принудительно становится auto (не может остаться
+     visible) — то есть #menuTabs на самом деле обрезает и по Y тоже, и всё, что торчало
+     за пределы её бокса (в т.ч. эта полоска на bottom:-Npx), просто не рисовалось. Поэтому
+     теперь обычная маленькая кнопка-иконка В ПОТОКЕ (как остальные .menu-btn), а не
+     обрезаемый абсолютный довесок. */
+  #toggleAllPinsBtn{flex:0 0 auto;background:none;border:1px solid var(--line);color:var(--dim);
+                     border-radius:3px;padding:3px 8px;cursor:pointer;font-size:12px}
+  #toggleAllPinsBtn:hover{border-color:var(--acc);color:var(--fg)}
+  #toggleAllPinsBtn.all-on{border-color:var(--acc);color:var(--acc);background:rgba(77,163,255,.15)}
+  .menu-drop{display:none;position:absolute;top:42px;left:2px;width:320px;max-height:82vh;overflow-y:auto;
              background:var(--panel);border:1px solid var(--line);border-top:none;border-radius:0 0 4px 4px;
-             padding:4px;box-shadow:0 6px 18px rgba(0,0,0,.6);flex-direction:column;gap:6px;z-index:300}
+             padding:4px;box-shadow:0 6px 18px rgba(0,0,0,.6);flex-direction:column;gap:6px;z-index:300;
+             scrollbar-width:none} /* Скролл рабочий, полосу не рисуем — см. .controls выше */
+  .menu-drop::-webkit-scrollbar{width:0;height:0;background:transparent}
   .menu-drop.open{display:flex}
+
+  /* Свой выпадающий список вкладок-цепочек (замена <select>) — у каждой строки своя кнопка "✕" */
+  .chain-dd{position:relative;display:inline-block}
+  .chain-dd-toggle{font-size:12px;padding:2px 8px;background:#232735;color:var(--fg);
+    border:1px solid var(--line);border-radius:3px;cursor:pointer;display:flex;align-items:center;
+    gap:4px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .chain-dd-toggle:hover{border-color:var(--acc)}
+  .chain-dd-arrow{color:var(--dim);font-size:10px}
+  .chain-dd-list{display:none;position:absolute;top:100%;left:0;margin-top:2px;min-width:170px;
+    max-height:60vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);
+    border-radius:4px;box-shadow:0 6px 18px rgba(0,0,0,.6);z-index:300;scrollbar-width:none}
+  .chain-dd-list::-webkit-scrollbar{width:0;height:0;background:transparent}
+  .chain-dd-list.open{display:block}
+  .chain-dd-item{display:flex;align-items:center;justify-content:space-between;gap:6px;
+    padding:5px 8px;cursor:pointer;font-size:12px;color:var(--fg)}
+  .chain-dd-item:hover{background:rgba(255,255,255,.06)}
+  .chain-dd-item.act{background:rgba(77,163,255,.18);color:var(--acc);font-weight:600}
+  .chain-dd-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .chain-dd-close{flex:0 0 auto;background:none;border:none;color:var(--dim);cursor:pointer;
+    padding:0 3px;font-size:12px;line-height:1}
+  .chain-dd-close:hover{color:var(--red)}
+  .chain-dd-close:disabled{opacity:.3;cursor:default}
+  /* Мини-кнопки 💾/🧹/↺ в строке вкладки — дублируют глобальные, но для ЛЮБОЙ вкладки в
+     списке, без переключения на неё */
+  .chain-dd-mini{flex:0 0 auto;background:none;border:none;color:var(--dim);cursor:pointer;
+    padding:0 2px;font-size:11px;line-height:1;opacity:.7}
+  .chain-dd-mini:hover{color:var(--acc);opacity:1}
   .menu-panel{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:4px;
               background:var(--panel);padding:0 4px 4px}
   .panel-head{display:flex;align-items:center;gap:8px;padding:6px 2px 4px;border-bottom:1px solid var(--line);
@@ -70,11 +111,25 @@
   .control-group{display:flex;flex-direction:column;gap:4px}
   .control-group-btn{display:flex;flex-wrap:wrap;gap:4px}
 
+  /* Вкладка "Шаги" (opsGroup) — 2 колонки РОВНО (та же причина, что у .control-group-player:
+     flex-wrap пакует то 2, то 3 в ряд в зависимости от длины текста и выглядит рвано), кнопки
+     короче — текст не переносится, режется по ширине. */
+  .ops-btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+  .ops-btn-grid button{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:var(--std-btn-h)}
+
+  /* Назад/Авто/Стоп — одна строка в рамке над кнопками шагов (см. HTML #flowGroup) */
+  .control-group-flow{display:flex;gap:4px;border:1px solid var(--acc);background:rgba(77,163,255,.08);
+    border-radius:3px;padding:4px;margin-bottom:4px}
+  .control-group-flow button{flex:1;min-height:var(--std-btn-h)}
+
   /* «Плеер» правки строк — крупные кнопки транспортного вида (вкладка «Правка строк»).
      Сетка 2 колонки РОВНО (не flex-wrap с процентами — тот пакует то 2, то 3 в ряд
      в зависимости от содержимого и выглядит рвано). */
   .control-group-player{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-  .control-group-player button{font-size:15px;padding:8px 6px;min-height:34px}
+  /* padding был 8px 6px — вместе со шрифтом 15px это давало ~34px, min-height:24px не мог
+     перебить (контент и так выше). Уменьшил паддинг, чтобы кнопки реально сели на стандартные
+     24px, как и остальные группы кнопок (ops-btn-grid/preset-grp/search-grid). */
+  .control-group-player button{font-size:15px;padding:2px 6px;min-height:var(--std-btn-h)}
   .control-group-player .align-grp{grid-column:1 / -1;display:flex}
   .control-group-player .align-grp button{flex:1;font-size:16px;padding:7px 4px;min-height:auto}
 
@@ -97,13 +152,77 @@
   
   /* Группа кнопок выравнивания */
   .align-grp{display:flex;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+  /* 5 кнопок режимов фон-поиска шире одной строки узкой панели — переносим */
+  #bgSearchModeGrp{flex-wrap:wrap}
   .align-grp button{border:none;border-radius:0;border-right:1px solid var(--line);padding:1px 5px}
   .align-grp button:last-child{border-right:none}
+  /* Именно #alignGrp в верхнем меню (⇤↔⇥) — шире и той же высоты, что остальные кнопки шапки
+     (.menu-btn: padding:3px 10px); остальные .align-grp (в панелях — bgSearchModeGrp,
+     spiralDirGrp и т.п.) намеренно компактные, не трогаем. */
+  #alignGrp button{padding:3px 10px}
+  /* ◄/► у "Спирали" (editGroup) сидят в одном ряду с кнопками ▲/▼ Спираль
+     (.control-group-player button, там уже var(--std-btn-h)) — раньше были заметно ниже их.
+     ВАЖНО: .control-group-player .align-grp button (правило чуть выше) даёт padding:7px 4px и
+     font-size:16px — этого одного min-height мало (контент и так выше 24px, min-height не
+     перебивает), нужно было переопределить и padding/font-size тоже, не только высоту. */
+  #spiralDirGrp button{min-height:var(--std-btn-h);padding:1px 5px;font-size:12px}
   .align-grp button.act{background:rgba(77,163,255,0.2);color:var(--acc)}
 
-  label.chk{display:inline-flex;align-items:center;gap:2px;color:var(--dim);cursor:pointer;user-select:none;white-space:nowrap}
+  label.chk{display:inline-flex;align-items:center;gap:2px;color:var(--dim);cursor:pointer;user-select:none;white-space:nowrap;
+             border:1px solid transparent;border-radius:3px;padding:1px 5px;transition:border-color .15s,box-shadow .15s,color .15s}
+  /* Галки-переключатели (не цвет/диапазон) — сама галка спрятана, выделение состояния идёт
+     подсветкой всей плашки белым свечением (тот же приём, что button.mode-act). */
+  label.chk:has(input[type="checkbox"]){border-color:var(--line)}
+  label.chk:has(input[type="checkbox"]):hover{border-color:var(--acc)}
+  label.chk input[type="checkbox"]{position:absolute;width:0;height:0;margin:0;opacity:0;pointer-events:none}
+  label.chk:has(input[type="checkbox"]:checked){
+    border-color:#ffffff;
+    box-shadow:0 0 6px #ffffff, inset 0 0 4px rgba(255,255,255,0.3);
+    color:var(--fg);
+    font-weight:bold;
+  }
   select{background:#232735;color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:1px;font-size:11px}
-  
+
+  /* Вкладка "Вид": ползунок межстрочного интервала (lh) — вертикальный, стоит СБОКУ от
+     остальных (столбик rowCount/fs/ls/dim), а не в общем стеке строк. align-items:stretch (не
+     flex-start) + align-self:stretch у .chk-vertical — вертикальный ползунок растягивается на
+     всю высоту столбца рядом (вровень с первой и последней горизонтальной строкой), а не
+     торчит коротким огрызком где-то посередине. */
+  .view-sliders-row{display:flex;align-items:stretch;gap:10px}
+  .view-sliders-col{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+  /* padding уменьшен (было 6px 4px) — освобождает вертикальному треку больше высоты внутри
+     (само)стретченного label'а. */
+  label.chk.chk-vertical{flex-direction:column;gap:4px;padding:2px 4px;align-self:stretch}
+  /* Значение под вертикальным ползунком — по центру своей узкой колонки (не по правому краю,
+     как у горизонтальных: там общий столбец с соседними значениями, тут его нет), фикс.
+     ширина сохраняется, поэтому при смене числа (0.5 → 1 → 1.35...) сама позиция не "прыгает". */
+  .chk-vertical .view-slider-val{text-align:center}
+  /* flex:1 1 auto одного не хватало — <input type=range> с writing-mode:vertical-lr считает
+     flex-basis:auto по своему intrinsic-размеру (нативный контрол), не по доступному месту,
+     из-за чего внизу оставалась пустая область. flex-basis:0 (третье число) убирает intrinsic
+     размер из уравнения совсем — трек стартует с 0 и flex-grow:1 честно раздувает его на всё
+     оставшееся место рядом с иконкой/значением. */
+  .range-vertical{writing-mode:vertical-lr;width:16px;min-height:0;flex:1 1 0;accent-color:var(--acc)}
+  /* Иконка слева от каждого ползунка — фиксированная ширина, чтобы все ползунки в столбце
+     начинались строго в одном месте (иначе 🔢/A/↔/💡 разной ширины сдвигали каждый трек). */
+  .view-slider-icon{display:inline-block;width:18px;text-align:center;flex:0 0 auto}
+  /* Значение справа от ползунка — тоже фиксированная ширина (одна на все), чтобы цифры
+     стояли по правому краю в один столбец независимо от того, сколько в них знаков. */
+  .view-slider-val{display:inline-block;width:26px;text-align:right;flex:0 0 auto}
+  /* Сами горизонтальные ползунки — растягиваются на всю доступную ширину строки вместо
+     фиксированных 120px (оставлявших много пустого места в широкой панели) */
+  .view-slider-range{flex:1 1 auto;min-width:60px}
+
+  /* Пресеты цветов — сетка кнопок в 2 ряда вместо <select>. Активный пресет — button.mode-act
+     (белое свечение, тот же приём, что и у активного режима выполнения). */
+  .preset-grp{display:grid;grid-template-columns:repeat(4, 1fr);gap:4px}
+  .preset-grp button{font-size:11px;padding:4px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:var(--std-btn-h)}
+
+  /* Вкладка "Поиск" — галки в 2 колонки, той же стандартной высоты (34px), что и остальные
+     группы кнопок в приложении (см. .ops-btn-grid/.control-group-player/.preset-grp) */
+  .search-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+  .search-grid > label.chk{min-height:var(--std-btn-h);box-sizing:border-box}
+
   /* Компактные палитры цветов */
   input[type="color"]{width:14px;height:14px;padding:0;border:1px solid var(--line);border-radius:2px;cursor:pointer;background:transparent}
   
@@ -114,17 +233,37 @@
   .main-layout{position:relative;flex:1 1 0;min-height:0;height:100%}
 
   /* Плавающие доки поверх холста (аналог #leftPanel/#rightPanel из Zerkalius-gpu.html) */
-  .controls{position:absolute;top:6px;width:var(--side-w);max-height:calc(100% - 12px);overflow-y:auto;
-            display:flex;flex-direction:column;background:transparent;padding:6px;box-sizing:border-box;
-            z-index:90;box-shadow:0 0 16px rgba(0,0,0,.5);user-select:none}
+  /* top было 6px (тот же отступ, что у .canvas со всех сторон) — убрали верхний отступ у
+     панелей конкретно (не у канваса), они теперь сразу под верхним меню; max-height поэтому
+     тоже пересчитан (был запас на 6px сверху + 6px снизу, теперь только снизу). */
+  /* padding было 6px по кругу — раз панели теперь и так вплотную к краям (left/right/top:0),
+     этот внутренний отступ давал тот же эффект зазора изнутри. Убрано. */
+  /* top:0 убирали, потом вернули маленький зазор между верхним меню и вкладкой — левый/правый
+     край и внутренний padding остались вплотную (0), только top снова с небольшим отступом. */
+  .controls{position:absolute;top:6px;width:var(--side-w);max-height:calc(100% - 6px);overflow-y:auto;
+            display:flex;flex-direction:column;background:transparent;padding:0;box-sizing:border-box;
+            z-index:90;box-shadow:0 0 16px rgba(0,0,0,.5);user-select:none;
+            scrollbar-width:none} /* Скролл остаётся рабочим (колесо/тач), просто не рисуем полосу */
+  .controls::-webkit-scrollbar{width:0;height:0;background:transparent}
   .controls.dock-empty{background:transparent;box-shadow:none}
-  .controls.drop-zone-hint{outline:2px dashed rgba(77,163,255,.45);outline-offset:-2px}
+  /* Пока док пустой, у него нет содержимого, растягивающего высоту — сама подсветка при
+     перетаскивании (drop-zone-hint/drag-target) была короткой полоской по высоте пустого дока
+     вместо всей доступной зоны сброса. Форсируем полную высоту (та же формула, что и
+     max-height у .controls) именно в этих двух состояниях. */
+  .controls.drop-zone-hint{outline:2px dashed rgba(77,163,255,.45);outline-offset:-2px;height:calc(100% - 12px)}
   .controls.drag-target{outline:2px dashed var(--acc);outline-offset:-2px;background:rgba(77,163,255,.1);
-                         box-shadow:0 0 20px rgba(77,163,255,.35)}
-  #leftPanel{left:6px}
-  #rightPanel{right:6px}
+                         box-shadow:0 0 20px rgba(77,163,255,.35);height:calc(100% - 12px)}
+  /* Было left/right:6px (тот же боковой отступ, что у .canvas) — убрали и его, как раньше
+     верхний (top:0 у .controls), панели теперь вплотную к краям экрана слева/справа тоже. */
+  #leftPanel{left:0}
+  #rightPanel{right:0}
   .scrollable-settings{display:flex;flex-direction:column;gap:6px}
   body.hide-side .controls{display:none}
+  /* Скрыть колонку паттернов по отдельности (левую/правую) — прячет саму колонку (во всех
+     трёх местах, где используется .pat/.pat2: шапка, линейка столбцов, строки) и её ручку
+     изменения ширины; .bits естественно займёт освободившееся место (flex:1). */
+  body.hide-pat-l .pat, body.hide-pat-l .vsplit{display:none}
+  body.hide-pat-r .pat2, body.hide-pat-r .vsplit2{display:none}
   body.dragging{user-select:none;cursor:col-resize}
   .box{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:6px}
   .box h3{margin:0 0 5px;font-size:12px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
@@ -132,9 +271,14 @@
            border-radius:4px;padding:5px;font:12px/1.35 "Roboto Mono",Consolas,monospace;resize:vertical}
 
   /* Полотно цепочки — единственный чистый вертикальный скроллбар */
-  .canvas{position:absolute;inset:6px; background:var(--cbg);border:1px solid var(--line);border-radius:5px;
-          padding:6px 12px 6px 6px; overflow-x:hidden; overflow-y:auto; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;}
-  
+  .canvas{position:absolute;inset:0; background:var(--cbg);border:1px solid var(--line);border-radius:5px;
+          padding:6px 12px 6px 6px; overflow-x:hidden; overflow-y:auto; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+          /* Верхний отступ резервирует место под закреплённый overlay-бар #chainResultBox (см. JS:
+             ResizeObserver держит --result-box-h в актуальном виде), чтобы бар не перекрывал строки */
+          padding-top: calc(6px + var(--result-box-h, 0px));
+          scrollbar-width:none} /* Прокрутка колесом/тачем рабочая, просто не рисуем полосу — тот же приём, что у .controls/.menu-drop/#menuTabs */
+  .canvas::-webkit-scrollbar{width:0;height:0;background:transparent}
+
   /* === МАРКЕР 02.2: CSS_CHAIN_UI === */
   /* Анимация броска файла Drag & Drop прямо на холст */
   .canvas.drop-active {
@@ -146,23 +290,40 @@
 
   /* Убран overflow у .chain, чтобы исключить появление дублирующего скроллбара */
   .chain{font:var(--chain-fs)/var(--chain-lh) "Roboto Mono",Consolas,monospace; letter-spacing:var(--chain-ls);
-         white-space:pre;position:relative; width:100%; max-width:100%; overflow:visible}
+         white-space:pre;position:relative; width:100%; max-width:100%; overflow:visible;
+         user-select:none} /* Иначе клик с микро-сдвигом мыши по строке оставлял текстовое
+         выделение битов, и это ложно блокировало Ctrl+C-копирование выделенных строк (см.
+         keydown-обработчик: он нарочно уступает дорогу настоящему текстовому выделению) */
   
-  /* Шапка колонок табличной части — МАКСИМАЛЬНАЯ КОМПАКТНОСТЬ */
-  .chain-head{display:flex;gap:8px;align-items:center;padding-bottom:3px;margin-bottom:3px;
-              border-bottom:1px solid var(--line);font-size:.85em;color:var(--dim);
+  /* Шапка колонок табличной части — текстовые подписи ("№"/"Паттерн"×2) убраны совсем, сама
+     .chain-head схлопнута в невидимую полоску (height:0, overflow:hidden). Она нужна ТОЛЬКО
+     ради ширины/позиции своих span'ов (.num/.h-pat/.h-bits/.h-pat2) — isOverPatternColumn()
+     (drag&drop) определяет по .h-bits.getBoundingClientRect(), где колонка паттернов, а где
+     строк. При height:0 её содержимое всё равно раскладывается (width не зависит от height),
+     просто визуально ничего не рисует и не занимает места — линейка столбцов (#colHeader)
+     идёt сразу следом без зазора. */
+  .chain-head{display:flex;gap:8px;align-items:center;height:0;padding:0;margin:0;border:none;
+              overflow:hidden;font-size:.85em;color:var(--dim);
               text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;
               background:var(--cbg);z-index:3;user-select:none}
-  
-  .h-pat{text-align:left;padding-left:4px}
+  .chain-head .num, .chain-head .h-bits, .chain-head .h-pat, .chain-head .h-pat2{visibility:hidden}
+
   /* Центрирование заголовка центрального столбика (теперь здесь живут вкладки) */
   .h-bits{font-weight:700;color:var(--fg);padding-left:4px;text-align:center;display:flex;justify-content:center}
-  .h-pat2{text-align:left;padding-left:4px}
 
-  /* Будущие строки изначально затемнены */
-  .ln{display:flex;gap:8px;align-items:center;opacity:var(--dim-op);transition:opacity 0.2s;cursor:pointer}
+  /* Будущие строки изначально затемнены.
+     height задан ЯВНО через --row-h (целое число пикселей, считается и округляется в JS —
+     см. updateRowHeight()), а НЕ через calc(--chain-fs * --chain-lh) напрямую: при дробном
+     произведении (напр. 19*0.65=12.35px) сетка строк остаётся ровной геометрически, но у
+     каждой строки свой дробный остаток накопленной Y-позиции, и хинтинг текста браузером
+     "плавает" от строки к строке — отсюда одинаковые пары символов то сливались, то нет.
+     Целый --row-h убирает дробный остаток совсем. */
+  .ln{display:flex;gap:8px;align-items:center;opacity:var(--dim-op);transition:opacity 0.2s;cursor:pointer;
+      height:var(--row-h, 12px)}
   .ln:hover{background:rgba(255,255,255,0.03)}
-  .num{flex:0 0 3.5em;text-align:right;color:#4b5262;font-size:.85em;white-space:nowrap}
+  .num{flex:0 0 2em;text-align:right;color:#4b5262;font-size:.85em;white-space:nowrap}
+  /* Номер строки, изменённой относительно исходного шаблона (tplRows) — см. render() */
+  .num.changed{color:#ff9900;font-weight:700}
   
   /* Подсветка выделенных кликом / Ctrl+Кликом строк */
   .ln.selected {
@@ -197,7 +358,12 @@
     border-radius:2px; box-shadow:0 0 4px rgba(77,163,255,.6)}
   .pat.bg-search-hit, .pat2.bg-search-hit{background:rgba(255,207,107,.35);color:#ffcf6b !important;
     border-radius:2px; box-shadow:0 0 4px rgba(255,207,107,.6)}
-  
+
+  /* То же жёлтое совпадение, но для конкретных найденных бит внутри окошка результата
+     фон-поиска (#chainText) — показывает, ГДЕ именно паттерн нашёлся в строке результата. */
+  .chain-hit-bits{background:rgba(255,207,107,.35);color:#ffcf6b !important;
+    border-radius:2px; box-shadow:0 0 4px rgba(255,207,107,.6)}
+
   /* Пропущенный 1-й символ паттерна подсвечивается тусклым серым */
   .pat-skip{color:var(--dim); opacity:0.5}
   
@@ -243,19 +409,41 @@
   .hit.rev{color:var(--green)}
   .empty{color:#3a4050}
 
-  /* Заголовок номеров столбцов (режим "🔢 Выбор столбца") — два ряда (десятки/единицы),
-     каждая ячейка ровно 1 символ шириной, чтобы совпадать с сеткой битов построчно. */
+  /* Линейка номеров столбцов — всегда видна над строками (см. renderColHeader), каждая
+     ячейка ровно 1 символ шириной, чтобы совпадать с сеткой битов построчно.
+     ВАЖНО: font-size тут был .85em (унаследовано от старой компактной .chain-head с текстовыми
+     подписями) — при том же числе символов (maxLen) это делало ленту тиков física УЖЕ ленты
+     битов в строках (.ln не уменьшает шрифт), из-за чего при центрировании тики уезжали вправо
+     относительно сетки. Числа подтверждены из консоли: обёртка тиков 417px против обёртки битов
+     497px — ровно отношение ~0.85. Шрифт линейки должен быть 1:1 с .ln, никакого .85em. */
+  /* Прилипает сразу под .chain-head (та занимает 20px, тоже sticky top:0) — линейка больше не
+     уезжает вместе со строками при скролле вниз. */
   #colHeader{display:none}
-  #colHeader.act{display:block}
-  .col-hdr-row{display:flex;gap:8px;align-items:center;font-size:.85em;color:var(--dim);user-select:none}
+  #colHeader.act{display:block;position:sticky;top:0;z-index:2;background:var(--cbg)}
+  .col-hdr-row{display:flex;gap:8px;align-items:center;color:var(--dim);user-select:none}
   .col-hdr-row .bits{display:flex}
   .col-hdr-row .bits > span{white-space:pre}
-  .col-cell{cursor:pointer;color:var(--dim)}
-  .col-cell:hover{color:var(--fg);background:rgba(255,255,255,.08)}
-  .col-cell.sel{color:#000;background:#ffcf6b;font-weight:700;border-radius:2px}
-  .col-cell.col-hover{color:var(--fg);background:rgba(255,255,255,.08)}
+  .col-cell{cursor:pointer;color:#4b5262;overflow:hidden;border-radius:2px;
+    transition:color .12s,background-color .12s,box-shadow .12s}
+  /* Сама палочка "|" — во внутреннем span'е: растягиваем её ТОЛЬКО по X трансформом (не трогая
+     раскладку — box .col-cell остаётся ровно 1 символ шириной, как у 0/1 в строках ниже),
+     чтобы линия была заметно жирнее, но сетка столбцов не "съезжала". overflow:hidden на
+     .col-cell обрезает растянутую палочку по границе её собственной ячейки — иначе жирная
+     линия визуально вылезала в соседний столбец и казалось, что подсветка выделения (.sel/
+     .col-sel-bit ниже, в строках) и сама линия-полоска стоят не друг над другом. */
+  .col-cell-tick{display:inline-block;transform:scaleX(1.6)}
+  .col-cell:hover{color:var(--fg);background:rgba(255,255,255,.10)}
+  /* Тот же жёлтый, что и подсветка выделенной строки/бита (.ln.selected/.col-sel-bit) —
+     единый язык цвета "выделено" по всему приложению, плюс мягкое свечение вместо плоского блока */
+  .col-cell.sel{color:#000;background:#ffcf6b;font-weight:700;box-shadow:0 0 6px rgba(255,207,107,.7)}
+  .col-cell.col-hover{color:var(--fg);background:rgba(255,255,255,.10)}
   .col-sel-bit{background:rgba(255,207,107,.35) !important;border-radius:2px}
   .col-hover-bit{background:rgba(255,255,255,.15) !important;border-radius:2px}
+  /* Крестик сброса — прямо на месте палочки выбранного столбца (col-cell-clear-glyph заменяет
+     col-cell-tick для этой ячейки), не отдельно сбоку. transform:none — иначе scaleX(1.6) от
+     .col-cell-tick растягивал "✕" в кривой овал. */
+  .col-cell-tick.col-cell-clear-glyph{transform:none;color:#ff6666;font-weight:700}
+  .col-cell.sel:hover .col-cell-clear-glyph{color:#fff;text-shadow:0 0 6px #ff6666}
 
   /* Поле для ручного редактирования строк (двойной клик) */
   .edit-row-input {
@@ -274,14 +462,23 @@
   }
 
   /* === МАРКЕР 02.3: CSS_OVERLAYS === */
-/* Окошко сквозной строки результата под таблицей — растягивается мышью без ограничений */
+/* Окошко сквозной строки/результата фон-поиска — закреплённый overlay-бар сразу под верхним
+   меню (см. HTML: вынесено в main-layout, sibling у .canvas). Высота минимальна по умолчанию
+   и растёт сама под содержимое; клик по шапке сворачивает в одну строку заголовка.
+   z-index ВЫШЕ боковых доков (.controls: 90) — иначе закреплённая справа/слева вкладка меню
+   перекрывала бар поверх него; так бар всегда виден целиком во всю ширину, а не обрезается. */
 .chain-result-box {
-  margin-top: 14px;
-  padding: 8px 10px;
-  background: rgba(14, 16, 21, 0.95);
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  z-index: 95;
+  padding: 4px 8px;
+  background: rgba(14, 16, 21, 0.97);
   border: 1px solid var(--line);
   border-radius: 6px;
   white-space: normal;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .45);
 }
 .chain-result-head {
   display: flex;
@@ -292,8 +489,12 @@
   margin-bottom: 5px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  cursor: pointer;
+  user-select: none;
 }
 .chain-result-head b { color: var(--acc); }
+.chain-result-box.collapsed .chain-result-head { margin-bottom: 0; }
+.chain-result-box.collapsed .chain-result-text { display: none; }
 
 /* Визуализатор наложения Горизонтального XOR */
 .horiz-info {
@@ -365,15 +566,43 @@
   white-space: pre-wrap;
   user-select: all;
   background: #050505;
-  padding: 6px 8px;
+  padding: 4px 8px;
   border-radius: 4px;
   border: 1px solid #1a1d26;
-  min-height: 60px;
-  height: 140px;
-  max-height: none;
+  min-height: 18px;
+  height: auto;
+  max-height: 40vh;
   overflow-y: auto;
-  resize: vertical; /* Тянется мышью вниз на любую высоту! */
+  resize: vertical; /* Можно дотянуть мышью выше max-height, если нужно */
 }
+
+/* Строки результата фон-поиска (несколько режимов сразу) — label фиксированной ширины (одна на
+   все строки, см. render()) + сами биты. По умолчанию биты обрезаны в одну линию, чтобы длинные
+   результаты не распирали окошко; клик по строке (см. JS-обработчик на #chainText) разворачивает
+   её целиком построчным переносом. */
+.chain-result-line{display:flex;gap:6px;cursor:pointer;line-height:1.5;padding:1px 3px;border-radius:2px;position:relative}
+/* Явная метка "тут обрезано, кликни" — ставится по факту (JS меряет scrollWidth/clientWidth,
+   см. render()), а не всегда: родной "…" от text-overflow легко потерять среди битов на мелком
+   шрифте, поэтому поверх правого края строки — свой заметный цветной значок */
+.chain-result-line.truncated::after{content:"▸ ещё";position:absolute;right:3px;top:50%;
+  transform:translateY(-50%);background:var(--acc);color:#fff;font-size:10px;font-weight:700;
+  line-height:1.4;padding:0 4px;border-radius:2px;pointer-events:none;
+  box-shadow:0 0 6px rgba(0,0,0,.7), -8px 0 6px -2px var(--panel)}
+/* Чуть разный фон у каждой строки (серо/коричневатые оттенки), чтобы соседние режимы было легче
+   различить взглядом — но нарочно близкие тона, не пестрит */
+.chain-result-line:nth-child(5n+1){background:rgba(120,120,120,.10)}
+.chain-result-line:nth-child(5n+2){background:rgba(140,120,100,.10)}
+.chain-result-line:nth-child(5n+3){background:rgba(110,100,90,.12)}
+.chain-result-line:nth-child(5n+4){background:rgba(130,115,95,.08)}
+.chain-result-line:nth-child(5n+5){background:rgba(100,100,110,.10)}
+.chain-result-line:hover{background:rgba(255,255,255,.08)}
+.chain-result-line-label{flex:0 0 auto;color:var(--dim);white-space:nowrap;user-select:none}
+/* Фикс. ширина под "✅" — ВСЕГДА занимает место, даже пустая (нет находки), чтобы двоеточие и
+   биты у всех строк начинались в одном месте независимо от того, найдено там что-то или нет */
+.chain-result-line-check{flex:0 0 1.3em;text-align:center}
+.chain-result-line-colon{flex:0 0 auto;color:var(--dim)}
+.chain-result-line-bits{flex:1 1 auto;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.chain-result-line.expanded .chain-result-line-bits{white-space:pre-wrap;word-break:break-all;text-overflow:clip}
 
 /* Черновик последнего шага — визуальный лог операции: какие строки взяты, что сделано, что найдено */
 .step-log-box {
@@ -511,22 +740,30 @@
 .step-log-dim { color: #3a4050; }
 
 /* Крупное, яркое плавающее уведомление строго в самом центре поля с данными */
-#msg{position:fixed; top:50%; left:50%; transform:translate(-50%, -50%) scale(0.9);
+/* Раньше по центру экрана — перекрывало линейку столбцов/строки под ней; сдвинуто вниз */
+#msg{position:fixed; bottom:24px; left:50%; transform:translateX(-50%) scale(0.9);
      background:#1e2332; color:#ffe066; border:1.5px solid #ffcc00;
      border-radius:8px; padding:12px 28px; font-size:15px; font-weight:bold; letter-spacing:0.5px;
      box-shadow:0 10px 32px rgba(0,0,0,0.85), 0 0 20px rgba(255, 204, 0, 0.35);
      z-index:1000; pointer-events:none; opacity:0; transition:opacity 0.2s ease, transform 0.2s ease}
-#msg.show{opacity:1; transform:translate(-50%, -50%) scale(1)}
+#msg.show{opacity:1; transform:translateX(-50%) scale(1)}
+
+/* Базовая мобильная поддержка: крупнее тач-цели у кнопок и ползунков (сама раскладка панелей
+   не переверстывается — только это). viewport-тег (см. <head>) отвечает за корректный
+   масштаб/зум страницы на телефоне. */
+@media (pointer: coarse) {
+  button{min-height:34px;padding:6px 10px}
+  input[type="range"]{height:28px}
+  label.chk{padding:5px 6px}
+}
 </style>
 <!-- === МАРКЕР 03: HEADER_UI === -->
 <div id="menuBar">
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;"><h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.178</span></h3></div>
   <div id="menuTabs">
-    <button id="toggleAllPinsBtn" title="Показать/скрыть все панели разом"></button>
+    <button id="toggleAllPinsBtn" title="Показать/скрыть все панели разом">📌</button>
     <div class="menu-btn" data-menu="menuOps"><span>Шаги</span><input type="checkbox" class="menu-pin-inline" id="menuOpsPin" title="Показывать в панели"></div>
     <div id="menuOps" class="menu-drop"></div>
-    <div class="menu-btn" data-menu="menuFlow"><span>Управление</span><input type="checkbox" class="menu-pin-inline" id="menuFlowPin" title="Показывать в панели"></div>
-    <div id="menuFlow" class="menu-drop"></div>
     <div class="menu-btn" data-menu="menuEdit"><span>Правка строк</span><input type="checkbox" class="menu-pin-inline" id="menuEditPin" title="Показывать в панели"></div>
     <div id="menuEdit" class="menu-drop"></div>
     <div class="menu-btn" data-menu="menuSearch"><span>Поиск</span><input type="checkbox" class="menu-pin-inline" id="menuSearchPin" title="Показывать в панели"></div>
@@ -534,43 +771,55 @@
     <div class="menu-btn" data-menu="menuView"><span>Вид</span><input type="checkbox" class="menu-pin-inline" id="menuViewPin" title="Показывать в панели"></div>
     <div id="menuView" class="menu-drop"></div>
 
-    <!-- "Выбор столбца" + выравнивание — вынесены из вкладки "Правка строк" прямо в верхнее
-         меню рядом с вкладками, чтобы быть всегда видимыми без открытия/закрепления панели. -->
+    <!-- Выравнивание — вынесено из вкладки "Правка строк" прямо в верхнее меню рядом с
+         вкладками, чтобы быть всегда видимым без открытия/закрепления панели. Клик по номеру
+         столбца (теперь всегда видимая линейка над строками) сдвигает КАЖДУЮ строку циклически
+         так, чтобы на этом столбце встала 1 — отдельная кнопка-режим больше не нужна. -->
     <span style="width:1px;align-self:stretch;background:var(--line);margin:0 4px;"></span>
-    <button id="bColSelect" style="font-size:12px;padding:3px 8px;white-space:nowrap;" title="Режим выбора столбца: клик по номеру столбца сдвигает КАЖДУЮ строку циклически так, чтобы на этом столбце встала 1 (с минимумом единиц слева от неё). Если выделена 1 строка — работает с ней и строками выше; если выделены 2+ — только между крайними из них">🔢 Выбор столбца</button>
     <div class="align-grp" id="alignGrp">
       <button data-val="left" title="По левому краю">⇤</button>
       <button class="act" data-val="center" title="По центру">↔</button>
       <button data-val="right" title="По правому краю">⇥</button>
     </div>
 
-    <!-- Управление цепочками (вкладками) — вынесено из шапки таблицы строк: вместо ряда
-         пилюль-вкладок теперь компактный выпадающий список + кнопки, тоже в верхнем меню. -->
+    <!-- Скрыть/показать колонки паттернов по отдельности (левую/правую) -->
     <span style="width:1px;align-self:stretch;background:var(--line);margin:0 4px;"></span>
-    <select id="chainSelect" style="font-size:12px;background:#232735;color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:2px 4px;max-width:110px;" title="Переключить вкладку цепочки"></select>
-    <button id="bCloseTab" style="font-size:12px;padding:3px 6px;" title="Закрыть текущую вкладку цепочки">✕</button>
+    <button id="bTogglePatL" style="font-size:12px;padding:3px 8px;" title="Скрыть/показать левую колонку паттернов">◧ Пат.</button>
+    <button id="bTogglePatR" style="font-size:12px;padding:3px 8px;" title="Скрыть/показать правую колонку паттернов">Пат. ◨</button>
+
+    <!-- Управление цепочками (вкладками) — вынесено из шапки таблицы строк в верхнее меню.
+         Раньше был нативный <select> + отдельная кнопка "✕" (закрывала только ТЕКУЩУЮ
+         вкладку) — теперь свой выпадающий список, где у КАЖДОЙ вкладки своя кнопка "✕"
+         (можно закрыть любую, не переключаясь на неё), см. renderTabs()/chainDdListEl ниже. -->
+    <span style="width:1px;align-self:stretch;background:var(--line);margin:0 4px;"></span>
+    <div class="chain-dd" id="chainDd" title="Переключить вкладку цепочки">
+      <button type="button" class="chain-dd-toggle" id="chainDdToggle">Цепочка <span class="chain-dd-arrow">⌄</span></button>
+      <div class="chain-dd-list" id="chainDdList"></div>
+    </div>
     <button id="bAddTab" style="font-size:12px;padding:3px 6px;" title="Создать новую вкладку цепочки">+</button>
     <button id="bSaveChain" style="font-size:12px;padding:3px 6px;" title="Сохранить текущую цепочку и все настройки-кнопки (восстановится при сбросе)">💾</button>
-    <button id="bRestoreChain" style="font-size:12px;padding:3px 6px;display:none;" title="Восстановить сохранённую цепочку и настройки">↩</button>
     <button id="bClearTab" style="font-size:12px;padding:3px 6px;" title="Полностью стереть данные текущей вкладки (строки, паттерны, историю)">🧹</button>
-    <button id="bReset" style="font-size:12px;padding:3px 6px;" title="Сбросить к шаблону (Escape)">🗑</button>
+    <button id="bReset" style="font-size:12px;padding:3px 6px;" title="Сбросить к шаблону (Escape)">↺ Сброс</button>
   </div>
   <span class="counter" style="justify-self:end;">Ш: <b id="stepNo">0</b></span>
 </div>
 
-<div id="opsGroup" class="control-group control-group-btn">
+<div id="opsGroup" class="control-group ops-btn-grid">
   <button id="bStep" title="Один шаг (обычный интерливинг)">▶ Шаг</button>
   <button id="bStep2" title="Шаг по 2 (принудительный интерливинг пары)">▶ Шаг 2</button>
   <button id="bInterleaveSearch" title="Интерливинг пары + поиск совпадения в паттерне 3-й строки">⧬ Интерлив</button>
   <button id="bStepXor" style="color:var(--purple);" title="Накопительный XOR всех строк до текущей">⨁ XOR</button>
   <button id="bStep2Xor" style="color:var(--acc);" title="Принудительный XOR пары строк">⨁ XOR 2</button>
   <button id="bStepHorizXor" style="color:#ff9900;" title="Горизонтальный XOR: символы верхней строки по одному заходят в нижнюю, ксорят её и крутят по кругу до находки">⨁ Гориз.XOR</button>
-  <button id="bStepXorProj" style="color:#ff66cc;" title="Проекция XOR: Вычисляет XOR всех строк ВЫШЕ текущей и полностью перезаписывает им текущую строку.">⏬ Проекция XOR</button>
+  <button id="bStepXorProj" style="color:#ff66cc;" title="Проекция XOR: Вычисляет XOR всех строк ВЫШЕ текущей и полностью перезаписывает им текущую строку.">⏬ Проекц.XOR</button>
   <button id="bXorSelected" style="color:#ff66cc;" title="XOR выделённой строки и всех над ней, показать результат внизу и перейти на нижнюю если совпадает">⨁ XOR выдел</button>
   <button id="bStepScan" style="color:var(--green);" title="Сканировать строки на паттерны без изменения символов">👁 Скан</button>
 </div>
 
-<div id="flowGroup" class="control-group control-group-btn">
+<!-- Назад/Авто/Стоп — перенесено сюда из бывшей вкладки "Управление", теперь наверху вкладки
+     "Шаги" (см. MENUS.menuOps.ids), одной строкой в рамке, чтобы визуально выделяться среди
+     остальных кнопок шагов. -->
+<div id="flowGroup" class="control-group-flow">
   <button id="bUndo" title="Шаг назад / отмена ручной правки (Backspace / Ctrl+Z)">↩ Назад</button>
   <button id="bAuto" title="Автоматический прогон по выбранному режиму (Enter)">🚀 Авто</button>
   <button id="bStop" class="stop" title="Остановить" disabled>⏹ Стоп</button>
@@ -582,8 +831,18 @@
   <button id="bShiftR" title="Круговой сдвиг вправо выбранных строк (► или Ctrl+Клик)">►</button>
   <button id="bInvertSelected" title="Инвертировать биты (0↔1) в выделенных строках">🔁 Инверсия</button>
   <button id="bPadZerosAbove" title="Добавить нули вверх: для выделенных строк (по самой длинной из них) добавить нули выше">0⬆</button>
-  <button id="bDelFirst" title="Удалить первый символ из всех строк цепочки">🗑 1</button>
+  <button id="bDelFirst" title="Удалить первый символ (слева) из выделенных строк (или всех, если ничего не выделено)">🗑 ←1</button>
+  <button id="bDelLast" title="Удалить последний символ (справа) из выделенных строк (или всех, если ничего не выделено)">🗑 1→</button>
+  <button id="bAddRightToggle" title="Добавить бит справа: первый клик добавляет 1; повторный клик подряд по тем же строкам (пока ничего больше не менялось) не добавляет новый бит, а переключает только что добавленный между 1 и 0">1/0→</button>
   <button id="bClearChainRows" title="Очистить все строки цепочки, оставить только 1-ю строку = '1'">🌱 Очистить→1</button>
+
+  <!-- Генератор фрактала Серпинского (Rule 90 / Pascal mod 2, см. generateSierpinski90) — тот же
+       генератор, что используется при первом запуске без данных в кэше, но доступен по кнопке
+       с произвольным числом строк, а не только один раз при пустом кэше. -->
+  <div style="grid-column:1 / -1; display:flex; gap:6px; align-items:center; border:1px solid var(--green); background:rgba(56,193,114,0.08); border-radius:3px; padding:4px;">
+    <button id="bGenSierpinski" style="flex:1;" title="Сгенерировать фрактал Серпинского (Rule 90 / Pascal mod 2) — ЗАМЕНИТ текущую цепочку и паттерны на N строк ниже">🔺 Серпинский</button>
+    <input type="number" id="sierpinskiN" min="2" max="2048" step="1" value="128" style="width:64px" title="Сколько строк генерировать">
+  </div>
 
   <!-- "Спираль": строки (все, либо выделенный диапазон — см. colSelectRowRange) читаются ОДНОЙ
        непрерывной лентой символов сверху вниз и сдвигаются по кругу на 1 символ (символ с
@@ -601,91 +860,126 @@
   </div>
 </div>
 
-<div id="searchGroup" class="control-group">
+<div id="searchGroup" class="control-group search-grid">
   <label class="chk" title="Остановить автоматический прогон (Авто), если найдено совпадение с паттерном"><input type="checkbox" id="cStopOnHit" checked>🛑 Стоп на находке</label>
-  <label class="chk" title="Когда некуда двигаться (нет находок) — не переходить на 1-ю строку, а циклически сдвигать нижнюю строку и повторять операцию"><input type="checkbox" id="cAutoShift">🔀 Внизу сдвиг</label>
+  <label class="chk" title="Когда некуда двигаться (нет находок) — не переходить на 1-ю строку, а циклически сдвигать нижнюю строку и повторять операцию"><input type="checkbox" id="cAutoShift">🔀 Сдвиг снизу</label>
   <label class="chk" title="Разбивать XOR на два отдельных визуальных шага: 1) Дополнение нулями 2) Вычисление XOR"><input type="checkbox" id="cStageXor">2️⃣ 2-этапный XOR</label>
-  <label class="chk" title="При повторном заходе с 1-й строки читать биты инверсно (0↔1)"><input type="checkbox" id="cInvPass">🔄 Инв.заход</label>
-  <label class="chk" title="Подтягивать находки наверх"><input type="checkbox" id="cPull" checked>🧲 Подтяг.</label>
-  <label class="chk" title="Держать изначальный порядок паттернов"><input type="checkbox" id="cOrder" checked>🔒 Пор.</label>
+  <label class="chk" title="При повторном заходе с 1-й строки читать биты инверсно (0↔1)"><input type="checkbox" id="cInvPass">🔄 Инв. заход</label>
+  <label class="chk" title="Подтягивать находки наверх"><input type="checkbox" id="cPull" checked>🧲 Подтянуть</label>
+  <label class="chk" title="Держать изначальный порядок паттернов"><input type="checkbox" id="cOrder" checked>🔒 Порядок</label>
   <label class="chk" title="Искать строго только один следующий паттерн по порядку (не засчитывать другие раньше времени)"><input type="checkbox" id="cNextOnly">🎯 Только 1-й</label>
   <label class="chk" title="Сквозная цепочка по вертикалям"><input type="checkbox" id="cVert">↕ Верт.</label>
-  <label class="chk" title="Дополнять пустые места нулями"><input type="checkbox" id="cPad">0️⃣ Пад.</label>
-  <label class="chk" title="Искать также инверсию и реверс"><input type="checkbox" id="cKinds">⇌ Инв/Рев</label>
-  <label class="chk" title="Первый символ паттерна не проверяется (ищется хвост со второго)"><input type="checkbox" id="cSkip1" checked>⏭ Без 1-го</label>
-  <label class="chk" title="В режиме Интерливинга: делать XOR результата с нижней строкой пары"><input type="checkbox" id="cInterleaveXor">⧬+⨁ Интерл.XOR</label>
+  <div style="grid-column:1 / -1;display:grid;grid-template-columns:repeat(4, 1fr);gap:4px;">
+    <label class="chk" title="Дополнять пустые места нулями"><input type="checkbox" id="cPad">0️⃣ Паддинг</label>
+    <label class="chk" title="Искать также инверсию и реверс"><input type="checkbox" id="cKinds">⇌ Инв/Рев</label>
+    <label class="chk" title="Первый символ паттерна не проверяется (ищется хвост со второго)"><input type="checkbox" id="cSkip1" checked>⏭ Без 1-го</label>
+    <label class="chk" title="В режиме Интерливинга: делать XOR результата с нижней строкой пары"><input type="checkbox" id="cInterleaveXor">⧬+⨁ Интерл.XOR</label>
+  </div>
 
   <!-- Фоновый поиск: выделенная строка ФИКСИРОВАНА (не двигается сама, в отличие от ⧬ Интерлив /
        ⨁ XOR выдел), при ЛЮБОМ изменении строк проверяется, попал ли паттерн строки НИЖЕ
        выделенной в выбранный результат (интерлив / XOR пары / XOR всех выше+выделенной,
        выделенная+над ней). При находке — только подсветка ячейки паттерна, ничего не
        останавливается и не переключается. -->
-  <div id="bgSearchGrp" style="display:flex; flex-direction:column; gap:4px; border:1px solid var(--acc); background:rgba(77,163,255,0.08); border-radius:3px; padding:4px;">
+  <div id="bgSearchGrp" style="grid-column:1 / -1; display:flex; flex-direction:column; gap:4px; border:1px solid var(--acc); background:rgba(77,163,255,0.08); border-radius:3px; padding:4px;">
     <label class="chk" title="Фоновый поиск: при любом изменении строк проверяет, найден ли паттерн строки НИЖЕ выделенной в выбранном результате (см. переключатель ниже). Выделенная строка фиксирована — сама не двигается">
-      <input type="checkbox" id="cBgSearch"> 🔍 Фон-поиск
+      <input type="checkbox" id="cBgSearch" checked> 🔍 Фон-поиск
     </label>
     <div class="align-grp" id="bgSearchModeGrp" title="Какой результат проверять на совпадение с паттерном строки ниже выделенной">
       <button data-val="interleave" class="act" title="Интерливинг выделенной и строки над ней">⧬ Интерлив</button>
-      <button data-val="xor2" title="XOR выделенной и строки над ней">⨁ XOR 2</button>
-      <button data-val="xorAll" title="XOR всех строк над выделенной и самой выделенной">⨁ XOR всех</button>
+      <button data-val="xor2" class="act" title="XOR выделенной и строки над ней">⨁ XOR 2</button>
+      <button data-val="xorAll" class="act" title="XOR всех строк над выделенной и самой выделенной">⨁ XOR всех</button>
+      <button data-val="concatR" class="act" title="Сквозная строка: все строки от 1-й до выделенной (включительно) просто склеены по порядку — новая строка приклеивается СПРАВА">🔗 Сквозная →</button>
+      <button data-val="concatL" class="act" title="Сквозная строка: все строки от 1-й до выделенной (включительно) просто склеены, но новая строка (сверху вниз) приклеивается СЛЕВА — итог идёт от выделенной к 1-й">🔗 Сквозная ←</button>
+      <button data-val="vertR" class="act" title="Вертикальная склейка: строки от 1-й до выделенной читаются по СТОЛБЦАМ (сверху вниз в каждом столбце), столбцы слева направо">↕ Верт. →</button>
+      <button data-val="vertL" class="act" title="Вертикальная склейка: строки от 1-й до выделенной читаются по СТОЛБЦАМ (сверху вниз в каждом столбце), столбцы справа налево">↕ Верт. ←</button>
+      <button data-val="snakeR" class="act" title="Змейка: как вертикальная склейка, но направление чтения строк внутри столбца чередуется (то сверху вниз, то снизу вверх), столбцы слева направо">🐍 Змейка →</button>
+      <button data-val="snakeL" class="act" title="Змейка: как вертикальная склейка, но направление чтения строк внутри столбца чередуется (то сверху вниз, то снизу вверх), столбцы справа налево">🐍 Змейка ←</button>
     </div>
   </div>
 </div>
 
 <div id="viewGroup" class="control-group">
-  <select id="preset" title="Пресеты цветов">
-    <option value="">🎨...</option>
-    <option value="matrix">Матрица</option>
-    <option value="cyber">Киберпанк</option>
-    <option value="blood">Кровавый</option>
-    <option value="synthwave">Synthwave</option>
-    <option value="zerkalius">Zerkalius</option>
-    <option value="crypto">Спектр</option>
-    <option value="bw">Ч/Б</option>
-  </select>
-  <label class="chk" title="Цвет единиц">Цвет единиц <input type="color" id="col1" value="#ffffff"></label>
-  <label class="chk" title="Цвет нулей">Цвет нулей <input type="color" id="col0" value="#00ff66"></label>
-  <label class="chk" title="Фон полотна">Фон полотна <input type="color" id="colBg" value="#050505"></label>
+  <!-- Настройки вида/поиска (цвета, шрифт, галки и т.п.) — ОТДЕЛЬНО от данных цепочек (те
+       сохраняются/сбрасываются в списке цепочек — см. chain-dd-mini). Сброс — на жёстко
+       зашитые значения по умолчанию (как в самом HTML), а не на то, что было сохранено. -->
+  <!-- Каждый подтип кнопок — в своей рамке своего цвета, чтобы визуально не путались друг с
+       другом (тот же приём, что у "Фон-поиск" (синяя) и "Спираль" (красная) в других вкладках):
+       зелёная — сохранение/сброс НАСТРОЕК, фиолетовая — пресеты цветов, оранжевая — сами цвета,
+       синяя — ползунки. -->
+  <div style="display:flex;gap:6px;margin-bottom:4px;border:1px solid var(--green);background:rgba(56,193,114,0.08);border-radius:3px;padding:4px;">
+    <button id="bSaveUiSettings" style="flex:1;" title="Сохранить текущие настройки вида/поиска (цвета, шрифт, галки и т.п.) — данные цепочек не трогает">💾 Сохр. настройки</button>
+    <button id="bResetUiSettings" style="flex:1;" title="Сбросить настройки вида/поиска к значениям по умолчанию — данные цепочек не трогает">↺ Сброс настроек</button>
+  </div>
+  <!-- Пресеты цветов — кнопки в два ряда вместо выпадающего списка; активный пресет подсвечен
+       тем же белым свечением, что и button.mode-act (см. JS ниже: setPresetActive). -->
+  <div class="preset-grp" id="presetGrp" title="Пресеты цветов" style="margin-bottom:4px;border:1px solid var(--purple);background:rgba(176,96,255,0.08);border-radius:3px;padding:4px;">
+    <button data-val="matrix">Матрица</button>
+    <button data-val="cyber">Киберпанк</button>
+    <button data-val="blood">Кровавый</button>
+    <button data-val="synthwave">Synthwave</button>
+    <button data-val="zerkalius">Zerkalius</button>
+    <button data-val="crypto" class="mode-act">Спектр</button>
+    <button data-val="bw">Ч/Б</button>
+    <button data-val="custom" title="Свои цвета: последние вручную выбранные (col1/col0/colBg) — как только меняешь цвет вручную при любом активном пресете, сам пресет не трогается, а изменение уходит сюда и сохраняется в кэше. Пока своих цветов ещё не было — по умолчанию как Ч/Б">Своя</button>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;border:1px solid #ff9900;background:rgba(255,153,0,0.08);border-radius:3px;padding:4px;">
+    <label class="chk" title="Цвет единиц">Цвет 1 <input type="color" id="col1" value="#ff3333"></label>
+    <label class="chk" title="Цвет нулей">Цвет 0 <input type="color" id="col0" value="#555555"></label>
+    <label class="chk" title="Фон полотна">Фон полотна <input type="color" id="colBg" value="#000000"></label>
+  </div>
 
-  <!-- Ограничение количества строк из шаблона -->
-  <label class="chk" title="Показать только первые N строк из шаблона (остальные скрыты)">🔢
-    <input type="range" id="rowCount" min="2" max="100" step="1" value="100" style="width:40px">
-    <span id="rowCountVal" style="display:inline-block;width:18px;text-align:right">100</span>
-  </label>
+  <!-- Ползунки шрифта/интервалов — межстрочный (lh) вертикальный и стоит СБОКУ от остальных
+       (см. .view-sliders-row/.view-sliders-col), а не в общем вертикальном стеке строк. -->
+  <div class="view-sliders-row" style="border:1px solid var(--acc);background:rgba(77,163,255,0.08);border-radius:3px;padding:4px;">
+    <div class="view-sliders-col">
+      <!-- Ограничение количества строк из шаблона -->
+      <label class="chk" title="Показать только первые N строк из шаблона (остальные скрыты)">
+        <span class="view-slider-icon">🔢</span>
+        <input type="range" id="rowCount" min="2" max="100" step="1" value="100" class="view-slider-range">
+        <span id="rowCountVal" class="view-slider-val">100</span>
+      </label>
 
-  <!-- Ручные регуляторы шрифта, межстрочного и межсимвольного интервала -->
-  <label class="chk" title="Размер шрифта">A
-    <input type="range" id="fs" min="6" max="22" step="1" value="12" style="width:40px">
-    <span id="fsVal" style="display:inline-block;width:12px;text-align:right">12</span>
-  </label>
-  <label class="chk" title="Межстрочный интервал (line-height, до 0.5 с наездом)">↕
-    <input type="range" id="lh" min="0.5" max="2.0" step="0.05" value="1.35" style="width:40px">
-    <span id="lhVal" style="display:inline-block;width:22px;text-align:right">1.35</span>
-  </label>
-  <label class="chk" title="Межсимвольный интервал (letter-spacing, до -5px с наездом)">↔
-    <input type="range" id="ls" min="-5" max="10" step="0.5" value="0" style="width:40px">
-    <span id="lsVal" style="display:inline-block;width:18px;text-align:right">0</span>
-  </label>
-  <label class="chk" title="Яркость будущих строк">💡
-    <input type="range" id="dim" min="10" max="100" step="5" value="35" style="width:40px">
-    <span id="dimVal" style="display:inline-block;width:18px;text-align:right">35</span>
-  </label>
+      <!-- Ручные регуляторы шрифта и межсимвольного интервала -->
+      <label class="chk" title="Размер шрифта">
+        <span class="view-slider-icon">A</span>
+        <input type="range" id="fs" min="6" max="22" step="1" value="19" class="view-slider-range">
+        <span id="fsVal" class="view-slider-val">19</span>
+      </label>
+      <label class="chk" title="Межсимвольный интервал (letter-spacing, до -5px с наездом)">
+        <span class="view-slider-icon">↔</span>
+        <input type="range" id="ls" min="-5" max="10" step="0.5" value="0" class="view-slider-range">
+        <span id="lsVal" class="view-slider-val">0</span>
+      </label>
+      <label class="chk" title="Яркость будущих строк">
+        <span class="view-slider-icon">💡</span>
+        <input type="range" id="dim" min="10" max="100" step="5" value="100" class="view-slider-range">
+        <span id="dimVal" class="view-slider-val">100</span>
+      </label>
+    </div>
+    <label class="chk chk-vertical" title="Межстрочный интервал (line-height, до 0.5 с наездом)">
+      <span class="view-slider-icon">↕</span>
+      <input type="range" id="lh" min="0.5" max="2.0" step="0.05" value="0.65" class="range-vertical">
+      <span id="lhVal" class="view-slider-val">0.65</span>
+    </label>
+  </div>
 </div>
 <!-- === МАРКЕР 04: MAIN_UI === -->
 <div class="main-layout">
+  <!-- Окошко сквозной строки/результата фон-поиска — вынесено из .canvas в main-layout, чтобы
+       быть закреплённым overlay-баром сразу под верхним меню независимо от скролла холста
+       (тот же приём, что и плавающие .controls-доки). Клик по заголовку сворачивает в шапку. -->
+  <div class="chain-result-box" id="chainResultBox">
+    <div class="chain-result-head">
+      <span><span id="chainResultLabel">🔗 Сквозная строка результата</span> (<b id="chainLen">0</b> бит):</span>
+      <button id="bCopyChain" title="Скопировать сквозную строку в буфер обмена">📋 Копировать</button>
+    </div>
+    <div class="chain-result-text" id="chainText"></div>
+  </div>
   <div class="controls" id="leftPanel"><div class="scrollable-settings" id="leftSlot"></div></div>
   <div class="canvas" id="screenCanvas">
     <!-- Теги записаны в одну плотную строку, чтобы white-space: pre не создавал фантомных пустых строк -->
-    <div class="chain" id="chain"><div class="chain-head"><span class="num">№</span><span class="pat h-pat">Паттерн</span><span class="bits h-bits"></span><span class="pat2 h-pat2">Паттерн</span></div><div class="vsplit" id="vsplit" title="Тяни, чтобы менять ширину левой колонки паттернов"></div><div class="vsplit2" id="vsplit2" title="Тяни, чтобы менять ширину правой колонки паттернов"></div><div id="colHeader"></div><div id="rows"></div></div>
-
-    <!-- Окошко сквозной строки результата — вынесено за пределы табличной сетки .chain, чтобы исключить наложения и баги скролла -->
-    <div class="chain-result-box" id="chainResultBox">
-      <div class="chain-result-head">
-        <span><span id="chainResultLabel">🔗 Сквозная строка результата</span> (<b id="chainLen">0</b> бит):</span>
-        <button id="bCopyChain" title="Скопировать сквозную строку в буфер обмена">📋 Копировать</button>
-      </div>
-      <div class="chain-result-text" id="chainText"></div>
-    </div>
+    <div class="chain" id="chain"><div class="chain-head"><span class="num">№</span><span class="pat h-pat">Паттерн</span><span class="bits h-bits"></span><span class="num">№</span><span class="pat2 h-pat2">Паттерн</span></div><div class="vsplit" id="vsplit" title="Тяни, чтобы менять ширину левой колонки паттернов"></div><div class="vsplit2" id="vsplit2" title="Тяни, чтобы менять ширину правой колонки паттернов"></div><div id="colHeader"></div><div id="rows"></div></div>
 
     <!-- Черновик последнего шага (Step Log) — тоже вынесен за пределы .chain -->
     <div class="step-log-box" id="stepLogBox">
@@ -778,6 +1072,33 @@ function textMatchesPattern(text, patText){
     || (patRevSkip && text.indexOf(patRevSkip) >= 0);
 }
 
+/* Та же проверка, что textMatchesPattern(), но возвращает {start,end} (включительно) первого
+   найденного варианта вместо true/false — используется для подсветки "где именно нашлось"
+   в окошке результата фон-поиска. */
+function findPatternRange(text, patText){
+  if (!patText) return null;
+  const patFull = patText;
+  const patSkip = (st.skipFirst && patFull.length > 1) ? patFull.slice(1) : patFull;
+  const patRev = st.allKinds ? reverseStr(patFull) : null;
+  const patRevSkip = (st.allKinds && st.skipFirst && patRev && patRev.length > 1) ? patRev.slice(1) : null;
+
+  let idx = text.indexOf(patFull);
+  if (idx >= 0) return { start: idx, end: idx + patFull.length - 1 };
+  if (patSkip !== patFull) {
+    idx = text.indexOf(patSkip);
+    if (idx >= 0) return { start: idx, end: idx + patSkip.length - 1 };
+  }
+  if (patRev) {
+    idx = text.indexOf(patRev);
+    if (idx >= 0) return { start: idx, end: idx + patRev.length - 1 };
+  }
+  if (patRevSkip) {
+    idx = text.indexOf(patRevSkip);
+    if (idx >= 0) return { start: idx, end: idx + patRevSkip.length - 1 };
+  }
+  return null;
+}
+
 /* Получение символов строки с учетом возможного инверсного повторного захода */
 function getRowBits(st, r) {
   const raw = st.rows[r] || "";
@@ -815,6 +1136,72 @@ function xorPair(top, bot, align){
       out += long[i];
     }
   }
+  return out;
+}
+
+/* Сквозная склейка строк 0..stopIdx (включительно) без выравнивания/XOR — просто конкатенация.
+   dir "right": обычный порядок сверху вниз (каждая следующая строка приклеивается справа).
+   dir "left": обратный порядок — от stopIdx вверх до 0 (каждая следующая по счёту строка,
+   идя сверху вниз, приклеивается слева, поэтому итог начинается с выделенной строки). */
+function concatRowsDownTo(st, stopIdx, dir){
+  let out = "";
+  if (dir === "left") {
+    for (let i = stopIdx; i >= 0; i--) out += getRowBits(st, i);
+  } else {
+    for (let i = 0; i <= stopIdx; i++) out += getRowBits(st, i);
+  }
+  return out;
+}
+
+/* Вертикальная склейка строк 0..stopIdx: читаются ПО СТОЛБЦАМ (а не по строкам, как
+   concatRowsDownTo) — для каждого столбца сверху вниз собираются реальные символы тех строк,
+   которые своей (со сдвигом выравнивания) шириной реально достают до этого столбца.
+   dir "right": столбцы слева направо (0..maxLen-1). dir "left": столбцы справа налево. */
+function concatVerticalDownTo(st, stopIdx, dir){
+  let maxLen = 0;
+  for (let i = 0; i <= stopIdx; i++) { const s = getRowBits(st, i); if (s.length > maxLen) maxLen = s.length; }
+  if (!maxLen) return "";
+  const cols = [];
+  for (let c = 0; c < maxLen; c++) cols.push(c);
+  if (dir === "left") cols.reverse();
+
+  let out = "";
+  for (const c of cols) {
+    for (let i = 0; i <= stopIdx; i++) {
+      const s = getRowBits(st, i);
+      if (!s.length) continue;
+      const shift = alignShift(maxLen, s.length, st.align);
+      const localCol = c - shift;
+      if (localCol >= 0 && localCol < s.length) out += s[localCol];
+    }
+  }
+  return out;
+}
+
+/* "Змейка" — та же вертикальная склейка по столбцам, но направление обхода строк ВНУТРИ
+   столбца чередуется через один столбец (то сверху вниз, то снизу вверх), как в змейке/
+   бустрофедоне. dir — та же логика направления столбцов, что у concatVerticalDownTo. */
+function concatSnakeDownTo(st, stopIdx, dir){
+  let maxLen = 0;
+  for (let i = 0; i <= stopIdx; i++) { const s = getRowBits(st, i); if (s.length > maxLen) maxLen = s.length; }
+  if (!maxLen) return "";
+  const cols = [];
+  for (let c = 0; c < maxLen; c++) cols.push(c);
+  if (dir === "left") cols.reverse();
+
+  let out = "";
+  cols.forEach((c, colIdx) => {
+    const rowOrder = [];
+    for (let i = 0; i <= stopIdx; i++) rowOrder.push(i);
+    if (colIdx % 2 === 1) rowOrder.reverse();
+    for (const i of rowOrder) {
+      const s = getRowBits(st, i);
+      if (!s.length) continue;
+      const shift = alignShift(maxLen, s.length, st.align);
+      const localCol = c - shift;
+      if (localCol >= 0 && localCol < s.length) out += s[localCol];
+    }
+  });
   return out;
 }
 
@@ -927,12 +1314,21 @@ const st = {
   lastOp: null,
   xorSelectedMode: false, xorSelectedIdx: -1,
   interleaveMode: false, interleavePairIdx: -1,
-  colSelectMode: false, selectedCol: -1,
+  selectedCol: -1,
   spiralUpDir: "right",
-  bgSearch: false, bgSearchMode: "interleave", bgSearchLastHit: -1,
-  savedChain: null
+  bgSearch: true, bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatL", "vertR", "vertL", "snakeR", "snakeL"], bgSearchLastHit: -1
 };
 const UNDO_DEPTH = 500;
+/* Фон-поиск теперь мульти-select: можно включить сразу несколько режимов проверки одновременно */
+const BG_SEARCH_MODE_LABELS = {
+  interleave: "Интерлив", xor2: "XOR 2", xorAll: "XOR всех",
+  concatR: "Сквозная →", concatL: "Сквозная ←",
+  vertR: "Верт. →", vertL: "Верт. ←",
+  snakeR: "Змейка →", snakeL: "Змейка ←"
+};
+/* Какие строки результата фон-поиска сейчас развёрнуты кликом (см. render() → bgResultHtml).
+   Чисто UI-состояние, не сохраняется в кэш/по вкладкам — сворачивается заново при перезагрузке. */
+const bgResultExpanded = new Set();
 
 function createDefaultTabState(name = "Цепочка 1") {
   return {
@@ -1597,12 +1993,13 @@ function resetAll(){
   const bStopEl = document.getElementById("bStop");
   if (bStopEl) bStopEl.disabled = true;
 
-  // Если есть сохранённая цепочка, восстановить её (вместе с настройками, если были сохранены)
-  if (st.savedChain) {
-    st.rows = st.savedChain.rows.slice();
-    st.pats = st.savedChain.pats.map(p => p ? { ...p } : null);
-    st.used = st.savedChain.used.slice();
-    if (st.savedChain.ui) applyUiSettings(st.savedChain.ui);
+  // Если у ЭТОЙ вкладки есть своя сохранёнка — восстановить данные из неё (настройки вида/
+  // поиска сюда больше не входят, они отдельно — см. DEFAULT_UI_SETTINGS/bResetUiSettings)
+  const savedChain = st.tabs && st.tabs[st.activeTab] ? st.tabs[st.activeTab].savedChain : null;
+  if (savedChain) {
+    st.rows = savedChain.rows.slice();
+    st.pats = savedChain.pats.map(p => p ? { ...p } : null);
+    st.used = savedChain.used.slice();
   } else {
     const rowCountEl = document.getElementById("rowCount");
     const limit = rowCountEl ? +rowCountEl.value : st.tplRows.length;
@@ -1640,35 +2037,49 @@ function bitsHtml(s, highlightRange){
   return h;
 }
 
-/* Список вкладок-цепочек — выпадающий <select> в верхнем меню (см. #chainSelect) вместо ряда
-   пилюль в шапке таблицы. Кнопки Сохран/Восстан/+/Очистить/Закрыть — статические элементы
-   там же, эта функция только обновляет опции select'а и видимость/доступность кнопок. */
+/* Список вкладок-цепочек — свой выпадающий список в верхнем меню (см. #chainDd/#chainDdList),
+   не нативный <select> — нужно было по кнопке "✕" у КАЖДОЙ вкладки отдельно (не только у
+   текущей). Кнопки Сохран/Восстан/+/Очистить — статические элементы там же, эта функция
+   только перерисовывает список и подпись текущей вкладки на кнопке-тоггле. */
 function renderTabs() {
-  const selectEl = document.getElementById("chainSelect");
-  if (!selectEl) return;
+  const toggleEl = document.getElementById("chainDdToggle");
+  const listEl = document.getElementById("chainDdList");
+  if (!toggleEl || !listEl) return;
   if (!st.tabs || st.tabs.length === 0) {
     st.tabs = [createDefaultTabState("Цепочка 1")];
     st.activeTab = 0;
   }
-  selectEl.innerHTML = st.tabs.map((tab, i) =>
-    '<option value="' + i + '"' + (i === st.activeTab ? " selected" : "") + '>' + esc(tab.name) + '</option>'
+
+  const active = st.tabs[st.activeTab];
+  toggleEl.innerHTML = esc(active ? active.name : "Цепочка") + ' <span class="chain-dd-arrow">⌄</span>';
+
+  listEl.innerHTML = st.tabs.map((tab, i) =>
+    '<div class="chain-dd-item' + (i === st.activeTab ? " act" : "") + '" data-idx="' + i + '">' +
+      '<span class="chain-dd-name">' + esc(tab.name) + '</span>' +
+      '<button type="button" class="chain-dd-mini" data-act="save" data-idx="' + i + '" title="Сохранить эту цепочку (без переключения)">💾</button>' +
+      '<button type="button" class="chain-dd-mini" data-act="clear" data-idx="' + i + '" title="Полностью очистить эту цепочку">🧹</button>' +
+      '<button type="button" class="chain-dd-mini" data-act="reset" data-idx="' + i + '" title="Сбросить эту цепочку к сохранению/шаблону">↺</button>' +
+      '<button type="button" class="chain-dd-close" data-idx="' + i + '" title="Закрыть эту вкладку"' +
+        (st.tabs.length <= 1 ? " disabled" : "") + '>✕</button>' +
+    '</div>'
   ).join("");
-  selectEl.value = st.activeTab;
-
-  const bCloseTabEl = document.getElementById("bCloseTab");
-  if (bCloseTabEl) bCloseTabEl.disabled = st.tabs.length <= 1;
-
-  const bRestoreChainEl = document.getElementById("bRestoreChain");
-  if (bRestoreChainEl) bRestoreChainEl.style.display = st.savedChain ? "" : "none";
 }
 
-/* Заголовок номеров столбцов (режим "🔢 Выбор столбца") — два ряда (десятки/единицы),
-   выровненные под сетку битов той же .num/.pat/.bits/.pat2 разметкой, что и обычные строки,
-   чтобы номер столбца N визуально стоял точно над N-м символом каждой строки. */
+/* Линейка номеров столбцов — всегда видна над строками, выровнена под сетку битов той же
+   .num/.pat/.bits/.pat2 разметкой, что и обычные строки, чтобы клик по метке N сдвигал именно
+   N-й символ каждой строки. Прилипает к верху (position:sticky, см. CSS) сразу под .chain-head,
+   так что не уезжает при скролле строк вниз.
+   Снять выделение — клик по метке ВЫБРАННОГО столбца: её палочка "|" заменяется на "✕" прямо
+   на месте (col-cell-clear-glyph) — крестик всегда там же, где сама подсветка, а не отдельно
+   сбоку. Символ метки-линии — ASCII "|", не "│": box-drawing глиф не всегда той же ширины, что
+   цифры 0/1 в моноширинном шрифте, и линии "съезжали" с сеткой битов на длинных строках; "|"
+   гарантированно той же ширины. "Жирность" линии — не шрифтом (не двигает раскладку), а
+   CSS-трансформом (scaleX) в .col-cell-tick, см. CSS (у "✕" трансформ отключён — иначе крестик
+   растягивало в кривой овал). */
 function renderColHeader(maxLen){
   const el = document.getElementById("colHeader");
   if (!el) return;
-  if (!st.colSelectMode || maxLen <= 0) {
+  if (maxLen <= 0) {
     el.classList.remove("act");
     el.innerHTML = "";
     return;
@@ -1676,18 +2087,16 @@ function renderColHeader(maxLen){
   el.classList.add("act");
 
   const alignCls = "al-" + st.align;
-  let tens = "", units = "";
+  let ticks = "";
   for (let c = 0; c < maxLen; c++) {
     const num = c + 1;
-    const t = Math.floor(num / 10) % 10;
-    const u = num % 10;
-    const selCls = st.selectedCol === c ? " sel" : "";
-    tens += '<span class="col-cell' + selCls + '" data-col="' + c + '" title="Столбец ' + num + '">' + (num >= 10 ? t : "&nbsp;") + '</span>';
-    units += '<span class="col-cell' + selCls + '" data-col="' + c + '" title="Столбец ' + num + '">' + u + '</span>';
+    const isSel = st.selectedCol === c;
+    const selCls = isSel ? " sel" : "";
+    const glyph = isSel ? '<span class="col-cell-tick col-cell-clear-glyph">✕</span>' : '<span class="col-cell-tick">|</span>';
+    ticks += '<span class="col-cell' + selCls + '" data-col="' + c + '" title="Столбец ' + num + (isSel ? " (клик снимет выделение)" : "") + '">' + glyph + '</span>';
   }
   el.innerHTML =
-    '<div class="col-hdr-row"><span class="num"></span><span class="pat"></span><span class="bits ' + alignCls + '"><span>' + tens + '</span></span><span class="pat2"></span></div>' +
-    '<div class="col-hdr-row"><span class="num"></span><span class="pat"></span><span class="bits ' + alignCls + '"><span>' + units + '</span></span><span class="pat2"></span></div>';
+    '<div class="col-hdr-row"><span class="num"></span><span class="pat"></span><span class="bits ' + alignCls + '"><span>' + ticks + '</span></span><span class="num"></span><span class="pat2"></span></div>';
 }
 
 /* Границы строк для режима "🔢 Выбор столбца":
@@ -1762,7 +2171,10 @@ function render(){
   if (st.bgSearch) {
     const hitNow = bgMatched ? bgTargetIdx : null;
     if (hitNow !== st.bgSearchLastHit) {
-      if (hitNow != null) say(`🔍 Фон-поиск: паттерн строки ${hitNow + 1} найден!`);
+      if (hitNow != null) {
+        const matchedLabel = bgInfo.results.filter(r => r.matched).map(r => BG_SEARCH_MODE_LABELS[r.mode] || r.mode).join(", ");
+        say(`🔍 Фон-поиск: паттерн строки ${hitNow + 1} найден! (${matchedLabel})`);
+      }
       st.bgSearchLastHit = hitNow;
     }
   }
@@ -1824,8 +2236,6 @@ function render(){
 
     const shift = s.length ? alignShift(maxLen, s.length, st.align) : 0;
     const padRight = s.length ? (maxLen - s.length - shift) : maxLen;
-    
-    let bits = "&nbsp;".repeat(shift);
     const marks = hl.get(i);
 
     // Эта строка — часть въезжающей цепочки (выше целевой строки)?
@@ -1833,7 +2243,21 @@ function render(){
     // Эта строка — сама целевая строка?
     const isHxTargetRow = hxActive && !hxExhausted && i === hxTarget;
 
-    const isColSel = st.colSelectMode && st.selectedCol >= 0 && i >= colSelRange.lo && i <= colSelRange.hi;
+    const isColSel = st.selectedCol >= 0 && i >= colSelRange.lo && i <= colSelRange.hi;
+
+    // Пустой участок строки (до сдвига выравнивания или после конца короткой/пустой строки) —
+    // если выбранный столбец попадает именно сюда (в этой строке для него просто нет бита),
+    // всё равно подсвечиваем один "пустой" символ на его месте, чтобы подсветка столбца шла
+    // сплошной линией по всем строкам диапазона, а не пропускала короткие/пустые строки.
+    const blankRun = (startCol, len) => {
+      if (len <= 0) return "";
+      if (isColSel && st.selectedCol >= startCol && st.selectedCol < startCol + len) {
+        const off = st.selectedCol - startCol;
+        return "&nbsp;".repeat(off) + '<span class="col-sel-bit">&nbsp;</span>' + "&nbsp;".repeat(len - off - 1);
+      }
+      return "&nbsp;".repeat(len);
+    };
+    let bits = blankRun(0, shift);
 
     for (let k = 0; k < s.length; k++) {
       const bit = s[k];
@@ -1849,7 +2273,7 @@ function render(){
       }
       const isColSelBit = isColSel && (shift + k) === st.selectedCol;
 
-      const colAttr = (st.colSelectMode && i >= colSelRange.lo && i <= colSelRange.hi) ? (' data-col="' + (shift + k) + '"') : "";
+      const colAttr = (i >= colSelRange.lo && i <= colSelRange.hi) ? (' data-col="' + (shift + k) + '"') : "";
 
       if (marks && marks.has(k)) {
         bits += '<span class="' + hitCls + '"' + colAttr + '>' + bit + '</span>';
@@ -1867,10 +2291,14 @@ function render(){
     }
     if (isHxChainRow) hxChainOffset += s.length;
 
-    bits += "&nbsp;".repeat(padRight);
+    bits += blankRun(shift + s.length, padRight);
 
-    out.push('<div class="' + cls.join(" ") + '" data-idx="' + i + '"><span class="num">' + (i + 1) + "</span>" +
-             pat + '<span class="bits ' + alignCls + '"><span>' + bits + "</span></span>" + patRight + "</div>");
+    // Строка изменилась относительно исходного шаблона (tplRows) — подсвечиваем номер отдельным
+    // цветом (см. .num.changed в CSS), чтобы было видно, какие строки реально трогали.
+    const numCls = "num" + (s !== (st.tplRows[i] || "") ? " changed" : "");
+    out.push('<div class="' + cls.join(" ") + '" data-idx="' + i + '"><span class="' + numCls + '">' + (i + 1) + "</span>" +
+             pat + '<span class="bits ' + alignCls + '"><span>' + bits + "</span></span>" +
+             '<span class="' + numCls + '">' + (i + 1) + "</span>" + patRight + "</div>");
   }
   document.getElementById("rows").innerHTML = out.join("");
 
@@ -1901,11 +2329,42 @@ function render(){
   // ниже выделенной — вместо обычной сквозной строки, которая с этими режимами не связана и
   // не отражала бы, что именно проверяется на совпадение.
   const chainResultLabelEl = document.getElementById("chainResultLabel");
+  let bgResultHtml = null;
   if (bgInfo) {
-    fullChainText = bgInfo.result;
+    /* Несколько включённых режимов сразу — каждый в своей строке-flex-ряду (label | check |
+       bits), с пометкой найденного. Ширина колонки label — одна на все строки (bgLabelW, в ch,
+       шрифт моноширинный), поэтому биты ВСЕХ строк начинаются строго в одном столбце
+       независимо от того, какие именно режимы сейчас включены.
+       ВАЖНО: галочка "✅" — в ОТДЕЛЬНОМ span'е ФИКСИРОВАННОЙ ширины (.chain-result-line-check),
+       а не приклеена к тексту label — эмодзи в большинстве шрифтов заметно ШИРЕ 1ch, и если
+       её включать в bgLabelW/label-текст, у найденных строк (с ✅) label оказывался шире
+       остальных, и колонка с битами у них уезжала вправо относительно ненайденных строк.
+       Каждая строка по умолчанию обрезана в одну линию (long bit-строки иначе распирают окно)
+       — клик по строке разворачивает её целиком (см. bgResultExpanded + обработчик клика на
+       #chainText). Найденный участок (bgInfo.results[i].range) подсвечивается тем же жёлтым,
+       что и .pat.bg-search-hit в самой таблице — видно НЕ только "нашлось", но и ГДЕ именно. */
+    const bgLabels = bgInfo.results.map(r => BG_SEARCH_MODE_LABELS[r.mode] || r.mode);
+    const bgLabelW = Math.max(...bgLabels.map(l => l.length));
+    fullChainText = bgInfo.results
+      .map((r, i) => bgLabels[i].padEnd(bgLabelW, " ") + (r.matched ? " ✅" : "   ") + ": " + r.result)
+      .join("\n");
+    bgResultHtml = bgInfo.results.map((r, i) => {
+      let bits = "";
+      for (let k = 0; k < r.result.length; k++) {
+        const ch = esc(r.result[k]);
+        bits += (r.range && k >= r.range.start && k <= r.range.end) ? ('<span class="chain-hit-bits">' + ch + '</span>') : ch;
+      }
+      const expanded = bgResultExpanded.has(r.mode) ? " expanded" : "";
+      return '<div class="chain-result-line' + expanded + '" data-mode="' + esc(r.mode) + '" title="Клик — показать целиком / свернуть обратно">' +
+        '<span class="chain-result-line-label" style="min-width:' + bgLabelW + 'ch">' + esc(bgLabels[i]) + '</span>' +
+        '<span class="chain-result-line-check">' + (r.matched ? "✅" : "") + '</span>' +
+        '<span class="chain-result-line-colon">:</span>' +
+        '<span class="chain-result-line-bits">' + bits + '</span>' +
+      '</div>';
+    }).join("");
     if (chainResultLabelEl) {
-      const modeLabel = st.bgSearchMode === "xor2" ? "XOR 2" : st.bgSearchMode === "xorAll" ? "XOR всех" : "Интерлив";
-      chainResultLabelEl.textContent = "🔍 Результат фон-поиска (" + modeLabel + ")";
+      const modeLabels = bgInfo.results.map(r => BG_SEARCH_MODE_LABELS[r.mode] || r.mode).join(" + ");
+      chainResultLabelEl.textContent = "🔍 Результат фон-поиска (" + modeLabels + ")";
     }
   } else if (chainResultLabelEl) {
     chainResultLabelEl.textContent = "🔗 Сквозная строка результата";
@@ -1914,8 +2373,12 @@ function render(){
   const chainLenEl = document.getElementById("chainLen");
   const chainTextEl = document.getElementById("chainText");
   if (chainLenEl && chainTextEl) {
-    chainLenEl.textContent = fullChainText.length;
-    chainTextEl.style.textAlign = st.align;
+    /* В режиме фон-поиска fullChainText — это несколько подписанных строк сразу, а не чистая
+       битовая строка, так что счётчик битов показывает длину результата первого режима */
+    chainLenEl.textContent = bgInfo ? (bgInfo.results[0] ? bgInfo.results[0].result.length : 0) : fullChainText.length;
+    // Строки результата фон-поиска — всегда по левому краю, независимо от кнопок выравнивания
+    // ⇤↔⇥ (те управляют только выравниванием строк/паттернов в самой таблице, не тут)
+    chainTextEl.style.textAlign = bgInfo ? "left" : st.align;
     
     let overlayHtml = "";
     
@@ -1987,6 +2450,14 @@ function render(){
     
     if (!fullChainText && !overlayHtml) {
       chainTextEl.innerHTML = '<span class="empty">пусто</span>';
+    } else if (bgResultHtml != null) {
+      chainTextEl.innerHTML = bgResultHtml;
+      // text-overflow:ellipsis сама рисует "…", но на мелком шрифте среди битов её легко не
+      // заметить — меряем по факту (scrollWidth > clientWidth) и вешаем свою явную метку
+      // (см. .chain-result-line.truncated в CSS) только на реально обрезанные строки.
+      chainTextEl.querySelectorAll(".chain-result-line:not(.expanded) .chain-result-line-bits").forEach(el => {
+        if (el.scrollWidth > el.clientWidth) el.parentElement.classList.add("truncated");
+      });
     } else {
       let html = "";
       for (let k = 0; k < fullChainText.length; k++) {
@@ -2092,9 +2563,21 @@ function readToggles(){
   st.skipFirst = cSkipEl.checked;
 }
 
-/* Функция полной очистки данных текущего активного слота (цепочки) */
+/* Функция полной очистки данных текущего активного слота (цепочки).
+   Если у вкладки ещё НЕТ своей сохранёнки (пользователь ни разу не жал "Сохранить" вручную) —
+   перед стиранием авто-сохраняем состояние КАК ОНО БЫЛО, чтобы "Сброс" потом мог его вернуть.
+   Если сохранёнка уже есть — её не трогаем (не затираем осознанное ручное сохранение). */
 function clearActiveTab() {
   snapshot();
+  if (st.tabs && st.tabs[st.activeTab] && !st.tabs[st.activeTab].savedChain) {
+    st.tabs[st.activeTab].savedChain = {
+      rows: st.rows.slice(),
+      pats: st.pats.map(p => p ? { ...p } : null),
+      used: st.used.slice(),
+      tplRows: st.tplRows.slice(),
+      tplPats: st.tplPats.slice()
+    };
+  }
   st.tplRows = [];
   st.tplPats = [];
   st.rows = [];
@@ -2117,6 +2600,73 @@ function clearActiveTab() {
   render();
   saveCache();
   say("Текущая вкладка полностью очищена!");
+}
+
+/* Сохранить/очистить/сбросить данные ЛЮБОЙ вкладки по индексу, не обязательно активной (кнопки
+   в выпадающем списке цепочек — см. renderTabs()/chainDdListEl). Единственное место, где живёт
+   "сохранёнка" цепочки — st.tabs[idx].savedChain (никакого общего на всё приложение поля
+   больше нет); настройки вида/поиска сюда не входят — они отдельно, см. captureUiSettings/
+   DEFAULT_UI_SETTINGS и кнопки в "Вид".
+   Если idx — активная вкладка, читаем/пишем живые st.rows/st.pats и т.д. (полноценно, с
+   рендером холста); если нет — работаем НАПРЯМУЮ с объектом st.tabs[idx], не переключаясь на
+   неё (без мерцания холста, без временной подмены активной вкладки). */
+function tabSaveChainData(idx) {
+  if (!st.tabs || !st.tabs[idx]) return;
+  const isActive = idx === st.activeTab;
+  const src = isActive ? st : st.tabs[idx];
+  st.tabs[idx].savedChain = {
+    rows: (src.rows || []).slice(),
+    pats: (src.pats || []).map(p => p ? { ...p } : null),
+    used: (src.used || []).slice(),
+    tplRows: (src.tplRows || []).slice(),
+    tplPats: (src.tplPats || []).slice()
+  };
+  renderTabs();
+  saveCache();
+  say(`✓ «${st.tabs[idx].name}» сохранена!`);
+}
+
+function tabClearChainData(idx) {
+  if (!st.tabs || !st.tabs[idx]) return;
+  if (idx === st.activeTab) { clearActiveTab(); return; }
+  const t = st.tabs[idx];
+  if (!confirm(`Полностью очистить «${t.name}»? Строки, паттерны и история будут потеряны.`)) return;
+  // Та же логика авто-сохранения перед очисткой, что и в clearActiveTab() — если своей
+  // сохранёнки у вкладки ещё нет, "Сброс" потом сможет вернуть то, что было.
+  if (!t.savedChain) {
+    t.savedChain = {
+      rows: (t.rows || []).slice(),
+      pats: (t.pats || []).map(p => p ? { ...p } : null),
+      used: (t.used || []).slice(),
+      tplRows: (t.tplRows || []).slice(),
+      tplPats: (t.tplPats || []).slice()
+    };
+  }
+  t.tplRows = []; t.tplPats = []; t.rows = []; t.used = []; t.pats = [];
+  t.step = 0; t.passCount = 0; t.tailBuffer = ""; t.selectedRows = []; t.undo = [];
+  renderTabs();
+  saveCache();
+  say(`✓ «${t.name}» полностью очищена!`);
+}
+
+function tabResetChainData(idx) {
+  if (!st.tabs || !st.tabs[idx]) return;
+  if (idx === st.activeTab) { resetAll(); saveCache(); say("✓ Сброшена текущая вкладка."); return; }
+  const t = st.tabs[idx];
+  if (t.savedChain) {
+    t.rows = t.savedChain.rows.slice();
+    t.pats = t.savedChain.pats.map(p => p ? { ...p } : null);
+    t.used = t.savedChain.used.slice();
+  } else {
+    const limit = (t.tplRows || []).length;
+    t.rows = (t.tplRows || []).slice(0, limit);
+    t.used = t.rows.map(() => false);
+    t.pats = (t.tplPats || []).slice(0, limit).map((text, i) => ({ text, ord: i, found: false, kind: null, step: null }));
+  }
+  t.step = 0; t.selectedRows = [];
+  renderTabs();
+  saveCache();
+  say(`✓ «${t.name}» сброшена.`);
 }
 /* === МАРКЕР 10.1: DRAG AND DROP === */
 /* Вспомогательная функция для определения зоны броска */
@@ -2211,59 +2761,74 @@ if (canvasEl) {
 }
 
 /* === МАРКЕР 10.2: ВКЛАДКИ === */
-/* Управление вкладками-цепочками — статические элементы в верхнем меню (#chainSelect +
-   кнопки), см. renderTabs(). Раньше это была одна делегированная функция на контейнере
-   пилюль-вкладок — теперь у каждого элемента своя прямая привязка. */
-const chainSelectEl = document.getElementById("chainSelect");
-if (chainSelectEl) {
-  chainSelectEl.onchange = () => {
-    const idx = +chainSelectEl.value;
-    if (idx !== st.activeTab) loadTabState(idx);
+/* Управление вкладками-цепочками — свой выпадающий список #chainDd/#chainDdList (см.
+   renderTabs()). Тоггл открывает/закрывает список; клик по строке переключает вкладку; клик по
+   "✕" в строке закрывает ИМЕННО эту вкладку (не обязательно текущую) — если закрывается НЕ
+   активная, живые st.rows/st.pats текущей вкладки не трогаем, просто убираем запись из
+   st.tabs и поправляем индекс активной, если она сдвинулась. Если закрывается активная —
+   тот же путь, что раньше был у bCloseTab (splice + переход на соседнюю), но с
+   loadTabState(idx, true): пропускаем saveActiveTabState(), иначе он попытался бы сохранить
+   ЖИВЫЕ (ещё от закрываемой вкладки) st.rows поверх новой активной, испортив её данные. */
+const chainDdToggleEl = document.getElementById("chainDdToggle");
+const chainDdListEl = document.getElementById("chainDdList");
+if (chainDdToggleEl && chainDdListEl) {
+  chainDdToggleEl.onclick = (e) => {
+    e.stopPropagation();
+    chainDdListEl.classList.toggle("open");
   };
-}
-
-const bCloseTabEl = document.getElementById("bCloseTab");
-if (bCloseTabEl) {
-  bCloseTabEl.onclick = () => {
-    if (st.tabs && st.tabs.length > 1) {
-      st.tabs.splice(st.activeTab, 1);
-      if (st.activeTab >= st.tabs.length) st.activeTab = st.tabs.length - 1;
-      loadTabState(st.activeTab);
+  chainDdListEl.addEventListener("click", e => {
+    const miniBtn = e.target.closest(".chain-dd-mini");
+    if (miniBtn) {
+      e.stopPropagation();
+      const idx = +miniBtn.dataset.idx;
+      const act = miniBtn.dataset.act;
+      if (act === "save") tabSaveChainData(idx);
+      else if (act === "clear") tabClearChainData(idx);
+      else if (act === "reset") tabResetChainData(idx);
+      return;
     }
-  };
+    const closeBtn = e.target.closest(".chain-dd-close");
+    if (closeBtn) {
+      e.stopPropagation();
+      if (!st.tabs || st.tabs.length <= 1) return;
+      const idx = +closeBtn.dataset.idx;
+      const tabName = (st.tabs[idx] && st.tabs[idx].name) || "эту вкладку";
+      if (!confirm(`Закрыть «${tabName}»? Все её строки и история шагов будут потеряны.`)) return;
+
+      if (idx === st.activeTab) {
+        st.tabs.splice(idx, 1);
+        const newActive = Math.min(idx, st.tabs.length - 1);
+        loadTabState(newActive, true);
+      } else {
+        st.tabs.splice(idx, 1);
+        if (idx < st.activeTab) st.activeTab -= 1;
+        renderTabs();
+        saveCache();
+      }
+      return;
+    }
+    const item = e.target.closest(".chain-dd-item");
+    if (!item) return;
+    chainDdListEl.classList.remove("open");
+    const idx = +item.dataset.idx;
+    if (idx !== st.activeTab) loadTabState(idx);
+  });
+  document.addEventListener("click", e => {
+    if (!chainDdListEl.classList.contains("open")) return;
+    if (e.target.closest("#chainDd")) return;
+    chainDdListEl.classList.remove("open");
+  });
 }
 
+/* Глобальная 💾 в шапке — действует на ТЕКУЩУЮ активную вкладку, через ту же tabSaveChainData(),
+   что и мини-кнопки в списке цепочек (единый источник правды — st.tabs[idx].savedChain,
+   настройки вида/поиска сюда больше не входят).
+   Отдельной кнопки "↩ Восстановить" больше нет — "↺ Сброс" (resetAll) и так уже сначала
+   проверяет savedChain активной вкладки и восстанавливает из неё (см. resetAll()), так что
+   "Восстановить" был точным дублем части поведения "Сброса", просто без отката к шаблону. */
 const bSaveChainEl = document.getElementById("bSaveChain");
 if (bSaveChainEl) {
-  bSaveChainEl.onclick = () => {
-    st.savedChain = {
-      rows: st.rows.slice(),
-      pats: st.pats.map(p => p ? { ...p } : null),
-      used: st.used.slice(),
-      tplRows: st.tplRows.slice(),
-      tplPats: st.tplPats.slice(),
-      ui: captureUiSettings()
-    };
-    render(); saveCache();
-    say("✓ Цепочка и настройки сохранены!");
-  };
-}
-
-const bRestoreChainEl = document.getElementById("bRestoreChain");
-if (bRestoreChainEl) {
-  bRestoreChainEl.onclick = () => {
-    if (st.savedChain) {
-      snapshot();
-      st.rows = st.savedChain.rows.slice();
-      st.pats = st.savedChain.pats.map(p => p ? { ...p } : null);
-      st.used = st.savedChain.used.slice();
-      st.tplRows = st.savedChain.tplRows.slice();
-      st.tplPats = st.savedChain.tplPats.slice();
-      if (st.savedChain.ui) applyUiSettings(st.savedChain.ui);
-      render(); saveCache();
-      say("✓ Цепочка и настройки восстановлены!");
-    }
-  };
+  bSaveChainEl.onclick = () => tabSaveChainData(st.activeTab);
 }
 
 const bAddTabEl = document.getElementById("bAddTab");
@@ -2290,36 +2855,97 @@ if (rowCountEl) {
   };
 }
 
+/* Клик по шапке окошка сквозной строки/результата фон-поиска — свернуть/развернуть в одну строку */
+const chainResultHeadEl = document.querySelector("#chainResultBox .chain-result-head");
+if (chainResultHeadEl) {
+  chainResultHeadEl.onclick = (e) => {
+    if (e.target.closest("button")) return;
+    document.getElementById("chainResultBox").classList.toggle("collapsed");
+  };
+}
+
+/* Клик по конкретной строке результата фон-поиска (#chainText .chain-result-line) —
+   разворачивает именно эту строку целиком (снимает обрезку в одну линию) / сворачивает обратно.
+   Не путать с кликом по шапке (chainResultHeadEl выше) — та сворачивает ВСЁ окошко целиком. */
+const chainTextEl2 = document.getElementById("chainText");
+if (chainTextEl2) {
+  chainTextEl2.addEventListener("click", (e) => {
+    const line = e.target.closest(".chain-result-line");
+    if (!line) return;
+    const mode = line.dataset.mode;
+    if (bgResultExpanded.has(mode)) bgResultExpanded.delete(mode);
+    else bgResultExpanded.add(mode);
+    render();
+  });
+}
+
+/* Бар #chainResultBox — закреплённый overlay поверх .canvas, его высота меняется (сворачивание,
+   1-3 строки фон-поиска). Держим --result-box-h в актуальном виде, чтобы .canvas резервировал
+   под него верхний отступ (padding-top: calc(6px + var(--result-box-h))) и строки таблицы не
+   уезжали под бар. */
+const chainResultBoxEl = document.getElementById("chainResultBox");
+if (chainResultBoxEl && window.ResizeObserver) {
+  const syncResultBoxHeight = () => {
+    document.documentElement.style.setProperty("--result-box-h", chainResultBoxEl.offsetHeight + "px");
+  };
+  new ResizeObserver(syncResultBoxHeight).observe(chainResultBoxEl);
+  syncResultBoxHeight();
+}
+
 /* Кнопка копирования сквозной строки результата */
 const bCopyChainEl = document.getElementById("bCopyChain");
 if (bCopyChainEl) {
   bCopyChainEl.onclick = () => {
     const fullChainText = (st.tailText || "") + buildChain(st, st.aIdx, st.bIdx).text;
     if (!fullChainText) { say("Сквозная строка пуста"); return; }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(fullChainText).then(() => {
-        say("Сквозная строка скопирована!");
-      }).catch(() => {
-        copyFallback(fullChainText);
-      });
-    } else {
-      copyFallback(fullChainText);
-    }
+    copyTextToClipboard(fullChainText, "Сквозная строка скопирована!");
   };
 }
 
-function copyFallback(text) {
+/* Общий помощник копирования в буфер — сначала через Clipboard API, при неудаче/отсутствии
+   (напр. страница открыта не по https) — через скрытый textarea + execCommand("copy"). */
+function copyTextToClipboard(text, successMsg) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      say(successMsg);
+    }).catch(() => {
+      copyFallback(text, successMsg);
+    });
+  } else {
+    copyFallback(text, successMsg);
+  }
+}
+function copyFallback(text, successMsg) {
   const ta = document.createElement("textarea");
   ta.value = text;
   document.body.appendChild(ta);
   ta.select();
   try {
     document.execCommand("copy");
-    say("Сквозная строка скопирована!");
+    say(successMsg || "Скопировано!");
   } catch(e) {
     say("Не удалось скопировать");
   }
   document.body.removeChild(ta);
+}
+
+/* Ctrl/Cmd+C — копирует ВЫДЕЛЕННЫЕ (кликом) строки как текст, каждая своя строка, с ведущими
+   пробелами по текущему выравниванию (см. alignShift) — так же, как они стоят в таблице
+   относительно самой длинной строки, чтобы при вставке в моноширинный текст биты остались
+   визуально выровнены друг под другом. Срабатывает только если нет обычного текстового
+   выделения (чтобы не перехватывать копирование текста, который пользователь выделил мышью
+   вручную, например в окошке результата) и есть хотя бы одна выделенная строка. */
+function copySelectedRows(){
+  if (!st.selectedRows || st.selectedRows.size === 0) return;
+  let maxLen = 0;
+  for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
+  const idxs = Array.from(st.selectedRows).sort((a, b) => a - b);
+  const lines = idxs.map(i => {
+    const s = getRowBits(st, i) || "";
+    const shift = s.length ? alignShift(maxLen, s.length, st.align) : 0;
+    return " ".repeat(shift) + s;
+  });
+  copyTextToClipboard(lines.join("\n"), `Скопировано строк: ${idxs.length}`);
 }
 
 /* Переключение режимов работы (выделение рамкой + перемещение кнопки "↩ Назад" слева от активной) */
@@ -2384,11 +3010,17 @@ function doModeStep(modeName){
    Раскладка (что где закреплено/висит) сохраняется в localStorage отдельным ключом
    LAYOUT_KEY — не путать с CACHE_KEY (состояние цепочек). */
 const MENUS = {
-  menuOps:    { title: 'Шаги',         zone: 'leftSlot',  pin: true,  ids: ['opsGroup'],    floatable: true },
-  menuFlow:   { title: 'Управление',   zone: 'leftSlot',  pin: true,  ids: ['flowGroup'],   floatable: true },
-  menuEdit:   { title: 'Правка строк', zone: 'leftSlot',  pin: true,  ids: ['editGroup'],   floatable: true },
-  menuSearch: { title: 'Поиск',        zone: 'rightSlot', pin: true,  ids: ['searchGroup'], floatable: true },
-  menuView:   { title: 'Вид',          zone: 'rightSlot', pin: false, ids: ['viewGroup'],   floatable: true }
+  /* flowGroup (Назад/Авто/Стоп) перенесён сюда же, ПЕРВЫМ в ids — по перечню в ids элементы
+     реально appendChild'ятся в этом порядке (см. цикл ниже), так что flowGroup оказывается
+     над opsGroup. Раньше жил в отдельной вкладке "Управление" (menuFlow) — вкладку убрали.
+     Порядок записей в MENUS (и раскладка по умолчанию для СВЕЖЕЙ сессии, без сохранённого
+     layout) — Шаги+Поиск слева, Вид+Правка строк справа, все 4 закреплены: панели одной зоны
+     appendChild'ятся в том порядке, в котором идут тут (см. цикл for..in MENUS ниже), поэтому
+     порядок пар menuOps/menuSearch и menuView/menuEdit в объекте важен. */
+  menuOps:    { title: 'Шаги',         zone: 'leftSlot',  pin: true, ids: ['flowGroup', 'opsGroup'], floatable: true },
+  menuSearch: { title: 'Поиск',        zone: 'leftSlot',  pin: true, ids: ['searchGroup'], floatable: true },
+  menuView:   { title: 'Вид',          zone: 'rightSlot', pin: true, ids: ['viewGroup'],   floatable: true },
+  menuEdit:   { title: 'Правка строк', zone: 'rightSlot', pin: true, ids: ['editGroup'],   floatable: true }
 };
 const LAYOUT_KEY = 'zerk_fold_layout';
 
@@ -2475,13 +3107,17 @@ function dragEnd() {
       let cb = document.getElementById(mid + 'Pin'); if (cb) cb.checked = true;
       let btn = document.querySelector('.menu-btn[data-menu="' + mid + '"]');
       if (btn) btn.classList.add('pinned');
-      closeMenus(); updateDockVisibility(); updateToggleAllPinsBtn();
+      closeMenus();
     }
   }
   draggedEl.classList.remove('dragging'); draggedEl = null; saveLayout();
   document.body.style.cursor = '';
   highlightDock(null);
   for (let p in SLOT_OF) document.getElementById(p).classList.remove('drop-zone-hint');
+  // Раньше звали только при ПЕРВОМ закреплении (внутри условия выше) — перетаскивание УЖЕ
+  // закреплённой вкладки между левым/правым доком меняло занятость доков, но dock-empty (и,
+  // следовательно, отступы #chainResultBox от них) не пересчитывались. Зовём всегда.
+  updateDockVisibility(); updateToggleAllPinsBtn();
 }
 window.addEventListener('mousemove', e => dragMove(e.clientX, e.clientY));
 window.addEventListener('mouseup', dragEnd);
@@ -2523,6 +3159,24 @@ function updateDockVisibility() {
     let p = document.getElementById(pid);
     p.classList.toggle('dock-empty', !p.querySelector('.menu-panel'));
   });
+  updateResultBoxInset();
+}
+
+/* Бар #chainResultBox раньше просто перекрывал закреплённые слева/справа вкладки меню
+   (высокий z-index). Теперь вместо перекрытия — подвигается: если в доке реально есть
+   закреплённая панель (не dock-empty), бар отступает от него на его ширину (--side-w), а не
+   рисуется поверх её кнопок.
+   +12px было рассчитано на СТАРОЕ положение панелей (left/right:6px от края экрана + 6px
+   зазор до бара). После того как у панелей убрали внешний отступ (left/right:0 — панели
+   вплотную к краю), формула не пересчиталась и зазор стал вдвое больше нужного — теперь
+   просто ширина панели + 6px зазора. */
+function updateResultBoxInset() {
+  const box = document.getElementById('chainResultBox');
+  const leftPanel = document.getElementById('leftPanel');
+  const rightPanel = document.getElementById('rightPanel');
+  if (!box || !leftPanel || !rightPanel) return;
+  box.style.left = leftPanel.classList.contains('dock-empty') ? '6px' : 'calc(var(--side-w) + 6px)';
+  box.style.right = rightPanel.classList.contains('dock-empty') ? '6px' : 'calc(var(--side-w) + 6px)';
 }
 
 for (let mid in MENUS) {
@@ -2788,9 +3442,15 @@ if (cBgSearchEl) {
 const bgSearchModeBtns = document.querySelectorAll("#bgSearchModeGrp button");
 bgSearchModeBtns.forEach(btn => {
   btn.onclick = () => {
-    bgSearchModeBtns.forEach(b => b.classList.remove("act"));
-    btn.classList.add("act");
-    st.bgSearchMode = btn.getAttribute("data-val");
+    const val = btn.getAttribute("data-val");
+    const idx = st.bgSearchModes.indexOf(val);
+    if (idx >= 0) {
+      /* Не даём снять последний включённый режим — иначе фон-поиску нечего будет проверять */
+      if (st.bgSearchModes.length > 1) st.bgSearchModes.splice(idx, 1);
+    } else {
+      st.bgSearchModes.push(val);
+    }
+    btn.classList.toggle("act", st.bgSearchModes.includes(val));
     st.bgSearchLastHit = -1;
     render();
     saveCache();
@@ -2806,7 +3466,8 @@ bgSearchModeBtns.forEach(btn => {
 function computeBgSearchTarget(){
   if (!st.bgSearch) return null;
   if (!st.selectedRows || st.selectedRows.size === 0) return null;
-  const selIdx = Math.min(...st.selectedRows);
+  // Если выделено несколько строк — ориентир самая НИЖНЯЯ (largest index), а не верхняя.
+  const selIdx = Math.max(...st.selectedRows);
   if (selIdx <= 0) return null;
   const targetIdx = selIdx + 1;
   if (targetIdx >= st.rows.length) return null;
@@ -2815,15 +3476,32 @@ function computeBgSearchTarget(){
 
   const rowAbove = st.rows[selIdx - 1] || "";
   const rowSel = st.rows[selIdx] || "";
-  let result;
-  if (st.bgSearchMode === "xor2") {
-    result = xorPair(rowAbove, rowSel, st.align);
-  } else if (st.bgSearchMode === "xorAll") {
-    result = xorRowsDownTo(st.rows, selIdx, st.align, st);
-  } else {
-    result = interleavePair(rowAbove, rowSel, st.align);
-  }
-  return { targetIdx, result, matched: textMatchesPattern(result, pat.text) };
+  const modes = (st.bgSearchModes && st.bgSearchModes.length) ? st.bgSearchModes : ["interleave"];
+  const results = modes.map(mode => {
+    let result;
+    if (mode === "xor2") {
+      result = xorPair(rowAbove, rowSel, st.align);
+    } else if (mode === "xorAll") {
+      result = xorRowsDownTo(st.rows, selIdx, st.align, st);
+    } else if (mode === "concatR") {
+      result = concatRowsDownTo(st, selIdx, "right");
+    } else if (mode === "concatL") {
+      result = concatRowsDownTo(st, selIdx, "left");
+    } else if (mode === "vertR") {
+      result = concatVerticalDownTo(st, selIdx, "right");
+    } else if (mode === "vertL") {
+      result = concatVerticalDownTo(st, selIdx, "left");
+    } else if (mode === "snakeR") {
+      result = concatSnakeDownTo(st, selIdx, "right");
+    } else if (mode === "snakeL") {
+      result = concatSnakeDownTo(st, selIdx, "left");
+    } else {
+      result = interleavePair(rowAbove, rowSel, st.align);
+    }
+    const range = findPatternRange(result, pat.text);
+    return { mode, result, matched: !!range, range };
+  });
+  return { targetIdx, results, matched: results.some(r => r.matched) };
 }
 
 /* === "Спираль": строки в диапазоне (см. colSelectRowRange — весь список, либо от начала до
@@ -3036,22 +3714,49 @@ if (bClearChainRowsEl) {
   };
 }
 
-const bColSelectEl = document.getElementById("bColSelect");
-if (bColSelectEl) {
-  bColSelectEl.onclick = () => {
-    st.colSelectMode = !st.colSelectMode;
-    bColSelectEl.classList.toggle("mode-act", st.colSelectMode);
-    if (!st.colSelectMode) st.selectedCol = -1;
-    render();
-    saveCache();
+/* Генератор фрактала Серпинского по кнопке (тот же generateSierpinski90, что и при пустом
+   кэше при первом запуске) — заменяет ТЕКУЩУЮ цепочку и паттерны на N строк из поля рядом. */
+const bGenSierpinskiEl = document.getElementById("bGenSierpinski");
+const sierpinskiNEl = document.getElementById("sierpinskiN");
+if (bGenSierpinskiEl) {
+  bGenSierpinskiEl.onclick = () => {
+    const n = Math.max(2, Math.min(2048, +(sierpinskiNEl ? sierpinskiNEl.value : 128) || 128));
+    snapshot();
+    const s90 = generateSierpinski90(n);
+    st.tplRows = s90;
+    st.tplPats = s90.slice();
+    st.rows = s90.slice();
+    st.used = st.rows.map(() => false);
+    st.pats = st.tplPats.map((t, i) => ({ text: t, ord: i, found: false, kind: null, step: null }));
+    st.selectedRows = new Set();
+    st.step = 0; st.passCount = 0; st.tailBuffer = "";
+    st.aIdx = 0; st.bIdx = 1; st.goingUp = false; st.hit = null;
+    const rowCountEl = document.getElementById("rowCount");
+    if (rowCountEl) {
+      rowCountEl.max = n;
+      rowCountEl.value = n;
+      const rcVal = document.getElementById("rowCountVal");
+      if (rcVal) rcVal.textContent = n;
+    }
+    render(); saveCache();
+    say(`Сгенерирован фрактал Серпинского: ${n} строк.`);
   };
 }
+
 const colHeaderEl = document.getElementById("colHeader");
 if (colHeaderEl) {
   colHeaderEl.addEventListener("click", e => {
     const cell = e.target.closest(".col-cell");
     if (!cell) return;
-    selectColumn(+cell.dataset.col);
+    const col = +cell.dataset.col;
+    if (col === st.selectedCol) {
+      // Клик по уже выбранному столбцу — тоже снимает выделение
+      st.selectedCol = -1;
+      render();
+      saveCache();
+    } else {
+      selectColumn(col);
+    }
   });
   colHeaderEl.addEventListener("mouseover", e => {
     const cell = e.target.closest(".col-cell");
@@ -3143,6 +3848,84 @@ if (bDelFirstEl) {
 
     render(); saveCache();
     say(`Удалён первый символ из ${deleted} строк.`);
+  };
+}
+
+/* Отслеживает "только что добавленный кликом bAddRightToggle бит", чтобы повторный клик по тем
+   же строкам переключал его 1↔0 вместо добавления нового — см. bAddRightToggle ниже. Любая
+   другая правка этих строк (в т.ч. bDelLast) сбрасывает состояние. */
+let addRightState = null; // {idxs:number[], length:number[], value:'0'|'1'}
+
+/* Удалить последний символ (справа) — прямой аналог bDelFirst, только с другого конца строки. */
+const bDelLastEl = document.getElementById("bDelLast");
+if (bDelLastEl) {
+  bDelLastEl.onclick = () => {
+    snapshot();
+    let deleted = 0;
+
+    if (st.selectedRows && st.selectedRows.size > 0) {
+      for (const idx of st.selectedRows) {
+        if (st.rows[idx] && st.rows[idx].length > 0) {
+          st.rows[idx] = st.rows[idx].slice(0, -1);
+          deleted++;
+        }
+      }
+    } else {
+      for (let i = 0; i < st.rows.length; i++) {
+        if (st.rows[i] && st.rows[i].length > 0) {
+          st.rows[i] = st.rows[i].slice(0, -1);
+          deleted++;
+        }
+      }
+    }
+
+    addRightState = null; // длины строк поменялись — предыдущий "добавленный бит" больше не актуален
+    render(); saveCache();
+    say(`Удалён последний символ из ${deleted} строк.`);
+  };
+}
+
+/* "1/0→" — добавляет бит СПРАВА к выделенным строкам (или всем, если ничего не выделено).
+   Первый клик дописывает '1'. Если следующий клик — снова по тем же самым строкам, и с прошлого
+   клика их длина/последний символ не менялись НИКАК (ни другой кнопкой, ни правкой, ни undo —
+   проверяется по факту, а не флагом "было ли что-то ещё"), то новый бит НЕ добавляется, а тот же
+   самый последний символ переключается 1↔0. Любое постороннее изменение длины/содержимого этих
+   строк само по себе "сбрасывает" продолжение — следующий клик снова допишет новый бит. */
+const bAddRightToggleEl = document.getElementById("bAddRightToggle");
+if (bAddRightToggleEl) {
+  bAddRightToggleEl.onclick = () => {
+    const idxs = (st.selectedRows && st.selectedRows.size > 0)
+      ? Array.from(st.selectedRows).sort((a, b) => a - b)
+      : st.rows.map((_, i) => i);
+    if (idxs.length === 0) { say("Нечего дополнять — нет строк."); return; }
+
+    const canToggle = !!addRightState
+      && addRightState.idxs.length === idxs.length
+      && addRightState.idxs.every((v, i) => v === idxs[i])
+      && idxs.every((idx, i) => st.rows[idx]
+        && st.rows[idx].length === addRightState.length[i]
+        && st.rows[idx][st.rows[idx].length - 1] === addRightState.value);
+
+    snapshot();
+    if (canToggle) {
+      const newVal = addRightState.value === "1" ? "0" : "1";
+      for (const idx of idxs) st.rows[idx] = st.rows[idx].slice(0, -1) + newVal;
+      addRightState.value = newVal;
+      addRightState.length = idxs.map(idx => st.rows[idx].length);
+      say(`Добавленный бит переключён на ${newVal} (${idxs.length} строк).`);
+    } else {
+      for (const idx of idxs) {
+        if (st.rows[idx] == null) continue;
+        st.rows[idx] = st.rows[idx] + "1";
+      }
+      addRightState = {
+        idxs: idxs.slice(),
+        length: idxs.map(idx => st.rows[idx] ? st.rows[idx].length : 0),
+        value: "1"
+      };
+      say(`Добавлена 1 справа (${idxs.length} строк). Повторный клик — переключит на 0.`);
+    }
+    render(); saveCache();
   };
 }
 
@@ -3315,6 +4098,17 @@ document.addEventListener("keydown", e => {
     return;
   }
 
+  // Ctrl+C / Cmd+C — копирует выделенные (кликом) строки текстом, с выравниванием (см.
+  // copySelectedRows). Если ничего не выделено кликом ИЛИ есть обычное текстовое выделение
+  // мышью (например в окошке результата) — не вмешиваемся, пусть браузер копирует как обычно.
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c") {
+    if (st.selectedRows && st.selectedRows.size > 0 && !window.getSelection().toString()) {
+      e.preventDefault();
+      copySelectedRows();
+      return;
+    }
+  }
+
   if (e.key === "Enter") {
     e.preventDefault();
     autoRun();
@@ -3335,8 +4129,8 @@ document.addEventListener("keydown", e => {
     if (st.selectedRows && st.selectedRows.size === 1) {
       startEditRow([...st.selectedRows][0]);
     }
-  } else if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && st.colSelectMode && st.selectedCol >= 0) {
-    // В режиме "🔢 Выбор столбца" ◄► переключают ВЫБРАННЫЙ СТОЛБЕЦ (не крутят символы строк).
+  } else if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && st.selectedCol >= 0) {
+    // Пока выбран столбец, ◄► переключают ВЫБРАННЫЙ СТОЛБЕЦ (не крутят символы строк).
     e.preventDefault();
     let maxLen = 0;
     for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
@@ -3372,16 +4166,52 @@ if (bLoadEl) bLoadEl.onclick = () => { loadTemplate(); saveCache(); };
 
 const bSideEl = document.getElementById("bSide");
 if (bSideEl) bSideEl.onclick = () => { document.body.classList.toggle("hide-side"); saveCache(); };
+
+/* Скрыть/показать колонки паттернов по отдельности — прячет .pat/.pat2 и их ручки
+   изменения ширины (.vsplit/.vsplit2), см. CSS body.hide-pat-l/body.hide-pat-r. */
+const bTogglePatLEl = document.getElementById("bTogglePatL");
+if (bTogglePatLEl) {
+  bTogglePatLEl.onclick = () => {
+    const hidden = document.body.classList.toggle("hide-pat-l");
+    bTogglePatLEl.classList.toggle("mode-act", hidden);
+    saveCache();
+  };
+}
+const bTogglePatREl = document.getElementById("bTogglePatR");
+if (bTogglePatREl) {
+  bTogglePatREl.onclick = () => {
+    const hidden = document.body.classList.toggle("hide-pat-r");
+    bTogglePatREl.classList.toggle("mode-act", hidden);
+    saveCache();
+  };
+}
 /* === МАРКЕР 10.4: ВИЗУАЛЬНЫЕ НАСТРОЙКИ === */
 /* Ползунки шрифта, межстрочного и межсимвольного интервала */
 const fs = document.getElementById("fs");
 const lh = document.getElementById("lh");
 const ls = document.getElementById("ls");
 
+/* Высота строки .ln раньше считалась в CSS как calc(--chain-fs * --chain-lh) — при дробном
+   произведении (напр. 19 * 0.65 = 12.35px) сама СЕТКА строк остаётся идеально ровной
+   (getBoundingClientRect подтверждает), но у каждой строки РАЗНЫЙ дробный остаток накопленной
+   Y-позиции (0, 12.35, 24.7, 37.05...) — при рендере текста браузер подгоняет глифы под
+   пиксельную сетку (хинтинг), и округление дробного остатка "плавает" от строки к строке.
+   Отсюда одинаковые пары символов (напр. "0" над "0") визуально то сливаются, то нет. Считаем
+   произведение здесь в JS и ОКРУГЛЯЕМ до целого пикселя (--row-h) — тогда высота каждой строки
+   буквально одно и то же целое число, без дробного остатка вообще. */
+function updateRowHeight(){
+  const px = Math.round((+fs.value) * (+lh.value));
+  document.documentElement.style.setProperty("--row-h", px + "px");
+}
+/* Сразу при разборе скрипта — на случай самой первой загрузки без кэша вообще (там ветка
+   loadCache() не зовёт applyFont()/applyLh(), полагаясь на CSS :root по умолчанию); без этого
+   --row-h не проставился бы вообще, и .ln откатилась бы на хардкод-заглушку 12px в CSS. */
+updateRowHeight();
 function applyFont(){
   const v = +fs.value;
   document.documentElement.style.setProperty("--chain-fs", v + "px");
   document.getElementById("fsVal").textContent = v;
+  updateRowHeight();
 }
 fs.oninput = () => { applyFont(); saveCache(); };
 
@@ -3389,6 +4219,7 @@ function applyLh(){
   const v = +lh.value;
   document.documentElement.style.setProperty("--chain-lh", v);
   document.getElementById("lhVal").textContent = v;
+  updateRowHeight();
 }
 lh.oninput = () => { applyLh(); saveCache(); };
 
@@ -3421,7 +4252,6 @@ const PRESETS = {
 const col1 = document.getElementById("col1");
 const col0 = document.getElementById("col0");
 const colBg = document.getElementById("colBg");
-const presetSel = document.getElementById("preset");
 
 function applyColors() {
   document.documentElement.style.setProperty("--c1", col1.value);
@@ -3429,20 +4259,55 @@ function applyColors() {
   document.documentElement.style.setProperty("--cbg", colBg.value);
 }
 
-col1.oninput = () => { applyColors(); presetSel.value = ""; saveCache(); };
-col0.oninput = () => { applyColors(); presetSel.value = ""; saveCache(); };
-colBg.oninput = () => { applyColors(); presetSel.value = ""; saveCache(); };
-
-presetSel.onchange = () => {
-  if (presetSel.value && PRESETS[presetSel.value]) {
-    const p = PRESETS[presetSel.value];
-    col1.value = p.c1;
-    col0.value = p.c0;
-    colBg.value = p.bg;
-    applyColors();
+/* Пресеты цветов — раньше <select>, теперь кнопки (см. #presetGrp). currentPreset хранит,
+   какой пресет активен ("" — ручные цвета, ни один пресет не выбран). setPresetActive
+   подсвечивает нужную кнопку (button.mode-act — то же белое свечение, что у активного режима
+   выполнения) и снимает подсветку с остальных. */
+let currentPreset = "crypto"; // По умолчанию — пресет "Спектр" (см. class="mode-act" на кнопке в HTML)
+const presetGrpEl = document.getElementById("presetGrp");
+function setPresetActive(val){
+  currentPreset = val || "";
+  if (presetGrpEl) {
+    presetGrpEl.querySelectorAll("button").forEach(b => {
+      b.classList.toggle("mode-act", b.getAttribute("data-val") === currentPreset);
+    });
   }
+}
+/* "Своя" (custom: true/false) — не фиксированная тройка цветов, как остальные PRESETS, а
+   последние вручную подобранные (см. col1/col0/colBg.oninput ниже): любая ручная правка цвета
+   ПРИ ЛЮБОМ активном пресете не трогает сам пресет, а переносит текущие цвета в "Своя" и
+   переключает подсветку на неё. Пока своих цветов ещё не было (st.customPreset пуст) — клик
+   по "Своя" запускает как отправную точку Ч/Б (см. PRESETS.bw). */
+if (presetGrpEl) {
+  presetGrpEl.querySelectorAll("button").forEach(btn => {
+    btn.onclick = () => {
+      const val = btn.getAttribute("data-val");
+      if (val === "custom") {
+        const c = st.customPreset || PRESETS.bw;
+        col1.value = c.c1; col0.value = c.c0; colBg.value = c.bg || c.cBg;
+        applyColors();
+      } else if (PRESETS[val]) {
+        const p = PRESETS[val];
+        col1.value = p.c1;
+        col0.value = p.c0;
+        colBg.value = p.bg;
+        applyColors();
+      }
+      setPresetActive(val);
+      saveCache();
+    };
+  });
+}
+
+function markCustomColor(){
+  applyColors();
+  st.customPreset = { c1: col1.value, c0: col0.value, bg: colBg.value };
+  setPresetActive("custom");
   saveCache();
-};
+}
+col1.oninput = markCustomColor;
+col0.oninput = markCustomColor;
+colBg.oninput = markCustomColor;
 
 function makeDrag(el, varName, x0fn, min, max){
   el.addEventListener("mousedown", e => {
@@ -3530,11 +4395,14 @@ function captureUiSettings(){
     autoShift: cAutoShiftEl ? cAutoShiftEl.checked : false, stopOnHit: cStopOnHitEl ? cStopOnHitEl.checked : true,
     vert: cVertEl.checked, pad: cPadEl.checked, kinds: cKindsEl.checked, skip1: cSkipEl.checked,
     align: st.align, mode: st.mode || "step1", rowCount: rowCountEl ? rowCountEl.value : 256,
-    bgSearch: cBgSearchEl ? cBgSearchEl.checked : false, bgSearchMode: st.bgSearchMode,
+    bgSearch: cBgSearchEl ? cBgSearchEl.checked : false, bgSearchModes: st.bgSearchModes,
     fs: fs.value, lh: lh.value, ls: ls.value, dim: dimEl.value,
     sideW: cssVar("--side-w"), patW: cssVar("--pat-w"), patW2: cssVar("--pat-w2"),
     hideSide: document.body.classList.contains("hide-side"),
-    c1: col1.value, c0: col0.value, cBg: colBg.value, preset: presetSel.value
+    hidePatL: document.body.classList.contains("hide-pat-l"),
+    hidePatR: document.body.classList.contains("hide-pat-r"),
+    c1: col1.value, c0: col0.value, cBg: colBg.value, preset: currentPreset,
+    customPreset: st.customPreset || null
   };
 }
 
@@ -3564,13 +4432,15 @@ function applyUiSettings(u){
   if (u.mode) setMode(u.mode);
 
   if (u.bgSearch !== undefined && cBgSearchEl) { cBgSearchEl.checked = u.bgSearch; st.bgSearch = u.bgSearch; }
-  if (u.bgSearchMode) {
-    st.bgSearchMode = u.bgSearchMode;
+  if (u.bgSearchModes && u.bgSearchModes.length) {
+    st.bgSearchModes = u.bgSearchModes;
     const bgBtns = document.querySelectorAll("#bgSearchModeGrp button");
-    bgBtns.forEach(b => {
-      if (b.getAttribute("data-val") === u.bgSearchMode) b.classList.add("act");
-      else b.classList.remove("act");
-    });
+    bgBtns.forEach(b => b.classList.toggle("act", st.bgSearchModes.includes(b.getAttribute("data-val"))));
+  } else if (u.bgSearchMode) {
+    /* Старый формат кэша (один режим строкой) — переносим в новый массив-мультиселект */
+    st.bgSearchModes = [u.bgSearchMode];
+    const bgBtns = document.querySelectorAll("#bgSearchModeGrp button");
+    bgBtns.forEach(b => b.classList.toggle("act", st.bgSearchModes.includes(b.getAttribute("data-val"))));
   }
 
   if (u.fs){ fs.value = u.fs; applyFont(); }
@@ -3586,11 +4456,22 @@ function applyUiSettings(u){
     if (u.hideSide) document.body.classList.add("hide-side");
     else document.body.classList.remove("hide-side");
   }
+  if (u.hidePatL !== undefined) {
+    document.body.classList.toggle("hide-pat-l", !!u.hidePatL);
+    const b = document.getElementById("bTogglePatL");
+    if (b) b.classList.toggle("mode-act", !!u.hidePatL);
+  }
+  if (u.hidePatR !== undefined) {
+    document.body.classList.toggle("hide-pat-r", !!u.hidePatR);
+    const b = document.getElementById("bTogglePatR");
+    if (b) b.classList.toggle("mode-act", !!u.hidePatR);
+  }
 
   if (u.c1) col1.value = u.c1;
   if (u.c0) col0.value = u.c0;
   if (u.cBg) colBg.value = u.cBg;
-  if (u.preset !== undefined) presetSel.value = u.preset;
+  if (u.customPreset !== undefined) st.customPreset = u.customPreset;
+  if (u.preset !== undefined) setPresetActive(u.preset);
   applyColors();
 
   if (u.rowCount && rowCountEl) {
@@ -3601,13 +4482,47 @@ function applyUiSettings(u){
   readToggles();
 }
 
+/* Настройки вида/поиска (цвета, шрифт, галки и т.п.) — ОТДЕЛЬНО от данных цепочек, см. кнопки
+   в #viewGroup и tabSaveChainData()/tabResetChainData() (те — только про rows/pats). Сброс
+   всегда ведёт на жёстко зашитые значения по умолчанию (совпадают с исходными checked/value
+   в самом HTML), а не на то, что было сохранено кнопкой "Сохр. настройки". */
+const DEFAULT_UI_SETTINGS = {
+  pull: true, order: true, nextOnly: false, stageXor: false, invPass: false,
+  autoShift: false, stopOnHit: true, vert: false, pad: false, kinds: false, skip1: true,
+  align: "center", mode: "step1", rowCount: "100",
+  bgSearch: true, bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatL", "vertR", "vertL", "snakeR", "snakeL"],
+  fs: "19", lh: "0.65", ls: "0", dim: "100",
+  sideW: "300px", patW: "12em", patW2: "12em",
+  hideSide: false, hidePatL: false, hidePatR: false,
+  c1: "#ff3333", c0: "#555555", cBg: "#000000", preset: "crypto", customPreset: null
+};
+
+const bSaveUiSettingsEl = document.getElementById("bSaveUiSettings");
+if (bSaveUiSettingsEl) {
+  bSaveUiSettingsEl.onclick = () => {
+    st.savedUiSettings = captureUiSettings();
+    saveCache();
+    say("✓ Настройки вида/поиска сохранены!");
+  };
+}
+const bResetUiSettingsEl = document.getElementById("bResetUiSettings");
+if (bResetUiSettingsEl) {
+  bResetUiSettingsEl.onclick = () => {
+    applyUiSettings(DEFAULT_UI_SETTINGS);
+    render();
+    saveCache();
+    say("✓ Настройки вида/поиска сброшены к умолчаниям!");
+  };
+}
+
 function saveCache(){
   try{
     saveActiveTabState(); // Обязательно сохраняем вкладку перед записью в сторадж
     localStorage.setItem(CACHE_KEY, JSON.stringify({
       activeTab: st.activeTab || 0,
       tabs: st.tabs || [],
-      ui: captureUiSettings()
+      ui: captureUiSettings(),
+      savedUiSettings: st.savedUiSettings || null
     }));
   }catch(e){}
 }
@@ -3624,6 +4539,7 @@ function loadCache(){
   if (u.ls === undefined) applyLs();
   if (!u.dim) applyDim();
   if (u.hideSide === undefined) document.body.classList.add("hide-side");
+  st.savedUiSettings = d.savedUiSettings || null;
 
   // Загружаем вкладки Цепочек из кэша
   if (d.tabs && d.tabs.length > 0) {
@@ -3632,8 +4548,8 @@ function loadCache(){
     if (st.activeTab >= st.tabs.length) st.activeTab = 0;
     loadTabState(st.activeTab, true);
   } else {
-    st.tplRows = generateSierpinski90(256);
-    st.tplPats = generateSierpinski90(256);
+    st.tplRows = generateSierpinski90(128);
+    st.tplPats = generateSierpinski90(128);
     st.rows = st.tplRows.slice();
     st.used = st.rows.map(() => false);
     st.pats = st.tplPats.map((t, i) => ({ text: t, ord: i, found: false, kind: null, step: null }));
@@ -3670,9 +4586,17 @@ for (const el of [cPullEl, cOrderEl, cNextOnlyEl, cStageXorEl, cInvPassEl, cAuto
 }
 
 if (!loadCache()){
-  const s90 = generateSierpinski90(256);
+  /* Самая первая загрузка вообще (localStorage ещё пуст) — createDefaultTabState() берёт
+     rows/pats/used ИЗ ЖИВОГО st (st.rows ? ... : []), а не из tplRows/tplPats. Раньше тут
+     заполняли только tplRows/tplPats и сразу звали createDefaultTabState() — st.rows на тот
+     момент был пуст (дефолт из объекта st), поэтому у самой первой вкладки rows оказывались
+     пустыми и холст оставался чёрным до первого loadTabState()/resetAll() с других действий. */
+  const s90 = generateSierpinski90(128);
   st.tplRows = s90;
   st.tplPats = s90.slice();
+  st.rows = st.tplRows.slice();
+  st.used = st.rows.map(() => false);
+  st.pats = st.tplPats.map((t, i) => ({ text: t, ord: i, found: false, kind: null, step: null }));
   st.tabs = [createDefaultTabState("Цепочка 1")];
   st.activeTab = 0;
   loadTabState(0, true);
