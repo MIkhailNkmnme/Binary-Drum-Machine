@@ -4,7 +4,7 @@
 <head>
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
-<title>Zerkalius Fold — v0.080</title>
+<title>Zerkalius Fold — v0.178</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -28,20 +28,56 @@
   html, body { height: 100vh; overflow: hidden; }
   body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.4 system-ui,Segoe UI,sans-serif; display:flex; flex-direction:column}
 
-  /* ШАПКА РАЗДЕЛЕНА НА 2 АККУРАТНЫЕ СТРОКИ БЕЗ НАЛОЖЕНИЙ (УМЕНЬШЕН ОТСТУП) */
-  header{position:relative; flex:0 0 auto; z-index:5;background:var(--panel);border-bottom:1px solid var(--line);
-         padding:3px 6px 18px 6px;display:flex;flex-direction:column;gap:3px;font-size:11px}
-  
-  .hdr-row {
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
-    gap: 4px;
-    width: 100%;
-    overflow-x: auto;
-  }
-  .hdr-row::-webkit-scrollbar { height:0; }
-  
+  /* === Верхняя полоса вкладок (перенесена из Zerkalius-gpu.html, цвета — под тему fold) === */
+  #menuBar{flex:0 0 auto;height:34px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+           background:var(--panel);border-bottom:1px solid var(--line);padding:0 6px;position:relative;
+           z-index:200;user-select:none;font-size:12px}
+  /* min-width:0 + overflow-x:auto — страховка: после переноса сюда выбора столбца/выравнивания
+     и управления цепочками список может не влезать в доступную ширину grid-колонки auto,
+     тогда лишнее уезжает в горизонтальный скролл, а не ломает раскладку/наезжает на счётчик. */
+  #menuTabs{display:flex;align-items:center;gap:4px;position:relative;min-width:0;overflow-x:auto;scrollbar-width:thin}
+  #menuTabs::-webkit-scrollbar{height:4px}
+  .menu-btn{display:flex;align-items:center;gap:5px;background:none;border:1px solid var(--line);color:var(--dim);
+            font-family:inherit;font-size:12px;padding:3px 10px;cursor:pointer;border-radius:3px}
+  .menu-btn:hover{background:var(--bg);color:var(--fg);border-color:var(--acc)}
+  .menu-btn.open,.menu-btn.pinned{background:var(--bg);color:var(--acc);border-color:var(--acc)}
+  .menu-btn.open:hover,.menu-btn.pinned:hover{filter:brightness(1.3)}
+  .menu-pin-inline{display:none}
+  #toggleAllPinsBtn{position:absolute;left:0;right:0;bottom:-8px;height:6px;border:none;border-radius:3px;
+                     background:var(--line);cursor:pointer;padding:0;margin:0;opacity:0;transition:background .2s,opacity .2s}
+  #menuTabs:hover #toggleAllPinsBtn{opacity:1}
+  #toggleAllPinsBtn:hover{filter:brightness(1.3)}
+  #toggleAllPinsBtn.all-on{background:var(--acc);box-shadow:0 0 6px var(--acc)}
+  #toggleAllPinsBtn.all-on:hover{filter:brightness(1.3)}
+  #toggleAllPinsBtn:hover ~ .menu-btn.pinned{filter:brightness(.6);transition:filter .15s}
+  .menu-drop{display:none;position:absolute;top:34px;left:2px;width:320px;max-height:82vh;overflow-y:auto;
+             background:var(--panel);border:1px solid var(--line);border-top:none;border-radius:0 0 4px 4px;
+             padding:4px;box-shadow:0 6px 18px rgba(0,0,0,.6);flex-direction:column;gap:6px;z-index:300}
+  .menu-drop.open{display:flex}
+  .menu-panel{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:4px;
+              background:var(--panel);padding:0 4px 4px}
+  .panel-head{display:flex;align-items:center;gap:8px;padding:6px 2px 4px;border-bottom:1px solid var(--line);
+              margin-bottom:2px;cursor:grab;touch-action:none}
+  .panel-head:active{cursor:grabbing}
+  .panel-drag{color:var(--dim);font-size:12px;letter-spacing:2px;user-select:none}
+  .panel-head:hover .panel-drag{color:var(--acc)}
+  .panel-title{font-weight:bold;font-size:12px;color:var(--fg);flex:1}
+  .panel-close{color:var(--dim);font-size:13px;line-height:1;cursor:pointer;padding:2px 3px}
+  .panel-close:hover{color:var(--red)}
+  .dragging{opacity:.45;outline:1px dashed var(--acc)}
+  .floating-panel{position:fixed;z-index:120;width:290px;box-shadow:0 8px 24px rgba(0,0,0,.6);
+                  opacity:1 !important;outline:none !important;user-select:none}
+  .control-group{display:flex;flex-direction:column;gap:4px}
+  .control-group-btn{display:flex;flex-wrap:wrap;gap:4px}
+
+  /* «Плеер» правки строк — крупные кнопки транспортного вида (вкладка «Правка строк»).
+     Сетка 2 колонки РОВНО (не flex-wrap с процентами — тот пакует то 2, то 3 в ряд
+     в зависимости от содержимого и выглядит рвано). */
+  .control-group-player{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .control-group-player button{font-size:15px;padding:8px 6px;min-height:34px}
+  .control-group-player .align-grp{grid-column:1 / -1;display:flex}
+  .control-group-player .align-grp button{flex:1;font-size:16px;padding:7px 4px;min-height:auto}
+
   button{background:#232735;color:var(--fg);border:1px solid var(--line);border-radius:3px;
          padding:1px 5px;cursor:pointer;font:inherit;display:flex;align-items:center;gap:3px;white-space:nowrap}
   button:hover{border-color:var(--acc)}
@@ -75,14 +111,20 @@
   .counter{margin-left:auto;color:var(--dim);white-space:nowrap}
   .counter b{color:var(--acc);font-size:13px}
 
-  main{flex: 1 1 0; min-height:0; height:100%; display:flex; gap:0; padding:6px; align-items:stretch; overflow:hidden}
-  .side{flex:0 0 var(--side-w);display:flex;flex-direction:column;gap:8px;min-width:0; height:100%; overflow-y:auto}
+  .main-layout{position:relative;flex:1 1 0;min-height:0;height:100%}
 
-  /* Разделитель панели управления */
-  .splitter{flex:0 0 8px;cursor:col-resize;position:relative}
-  .splitter::before{content:"";position:absolute;left:3px;top:0;bottom:0;width:2px;background:var(--line);border-radius:1px}
-  .splitter:hover::before,.splitter.drag::before{background:var(--acc)}
-  body.hide-side .side,body.hide-side .splitter{display:none}
+  /* Плавающие доки поверх холста (аналог #leftPanel/#rightPanel из Zerkalius-gpu.html) */
+  .controls{position:absolute;top:6px;width:var(--side-w);max-height:calc(100% - 12px);overflow-y:auto;
+            display:flex;flex-direction:column;background:transparent;padding:6px;box-sizing:border-box;
+            z-index:90;box-shadow:0 0 16px rgba(0,0,0,.5);user-select:none}
+  .controls.dock-empty{background:transparent;box-shadow:none}
+  .controls.drop-zone-hint{outline:2px dashed rgba(77,163,255,.45);outline-offset:-2px}
+  .controls.drag-target{outline:2px dashed var(--acc);outline-offset:-2px;background:rgba(77,163,255,.1);
+                         box-shadow:0 0 20px rgba(77,163,255,.35)}
+  #leftPanel{left:6px}
+  #rightPanel{right:6px}
+  .scrollable-settings{display:flex;flex-direction:column;gap:6px}
+  body.hide-side .controls{display:none}
   body.dragging{user-select:none;cursor:col-resize}
   .box{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:6px}
   .box h3{margin:0 0 5px;font-size:12px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
@@ -90,7 +132,7 @@
            border-radius:4px;padding:5px;font:12px/1.35 "Roboto Mono",Consolas,monospace;resize:vertical}
 
   /* Полотно цепочки — единственный чистый вертикальный скроллбар */
-  .canvas{flex:1 1 0;min-width:0; height:100%; max-height:none; background:var(--cbg);border:1px solid var(--line);border-radius:5px;
+  .canvas{position:absolute;inset:6px; background:var(--cbg);border:1px solid var(--line);border-radius:5px;
           padding:6px 12px 6px 6px; overflow-x:hidden; overflow-y:auto; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;}
   
   /* === МАРКЕР 02.2: CSS_CHAIN_UI === */
@@ -101,75 +143,6 @@
     background: #0d1322 !important;
   }
   
-  /* Вкладки независимых Цепочек встроены прямо в шапку таблицы для экономии места! */
-  .chain-tabs {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    border: none;
-    user-select: none;
-    overflow-x: auto;
-  }
-  .chain-tabs::-webkit-scrollbar { height: 0; }
-  .chain-tab {
-    background: #141722;
-    color: var(--dim);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    padding: 1px 6px;
-    font-size: 11px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    white-space: nowrap;
-    transition: all 0.15s ease;
-    font-weight: normal;
-    text-transform: none;
-    letter-spacing: normal;
-  }
-  .chain-tab:hover {
-    color: var(--fg);
-    border-color: var(--acc);
-  }
-  .chain-tab.act {
-    background: #232735;
-    color: var(--acc);
-    border-color: var(--acc);
-    font-weight: bold;
-  }
-  .chain-tab .close-tab {
-    font-size: 10px;
-    opacity: 0.5;
-    padding: 0 2px;
-    border-radius: 2px;
-  }
-  .chain-tab .close-tab:hover {
-    opacity: 1;
-    background: rgba(255, 68, 68, 0.3);
-    color: var(--red);
-  }
-  .add-tab-btn {
-    background: transparent;
-    border: 1px dashed var(--line);
-    color: var(--dim);
-    padding: 1px 6px;
-    border-radius: 3px;
-    font-size: 11px;
-    cursor: pointer;
-    white-space: nowrap;
-    font-weight: normal;
-    text-transform: none;
-    letter-spacing: normal;
-  }
-  .add-tab-btn:hover {
-    border-color: var(--acc);
-    color: var(--acc);
-  }
 
   /* Убран overflow у .chain, чтобы исключить появление дублирующего скроллбара */
   .chain{font:var(--chain-fs)/var(--chain-lh) "Roboto Mono",Consolas,monospace; letter-spacing:var(--chain-ls);
@@ -216,6 +189,14 @@
   .pat.found{color:var(--red)}
   .pat.found.inv{color:var(--purple)}
   .pat.found.rev{color:var(--green)}
+
+  /* Фоновый поиск (cBgSearch): подсветка ТОЛЬКО ячейки паттерна, без затрагивания самой строки/
+     битов. bg-search-target — что ищем прямо сейчас (голубым, пока совпадения ещё нет);
+     bg-search-hit — совпадение найдено (жёлтым, поверх target-подсветки). */
+  .pat.bg-search-target, .pat2.bg-search-target{background:rgba(77,163,255,.25);color:var(--acc) !important;
+    border-radius:2px; box-shadow:0 0 4px rgba(77,163,255,.6)}
+  .pat.bg-search-hit, .pat2.bg-search-hit{background:rgba(255,207,107,.35);color:#ffcf6b !important;
+    border-radius:2px; box-shadow:0 0 4px rgba(255,207,107,.6)}
   
   /* Пропущенный 1-й символ паттерна подсвечивается тусклым серым */
   .pat-skip{color:var(--dim); opacity:0.5}
@@ -236,9 +217,9 @@
   .bits{flex:1 1 0px; min-width:0; overflow:hidden}
   
   .ln .bits { display: flex; }
-  .ln .bits.al-center { justify-content: center; }
-  .ln .bits.al-left { justify-content: flex-start; }
-  .ln .bits.al-right { justify-content: flex-end; }
+  .ln .bits.al-center, .col-hdr-row .bits.al-center { justify-content: center; }
+  .ln .bits.al-left, .col-hdr-row .bits.al-left { justify-content: flex-start; }
+  .ln .bits.al-right, .col-hdr-row .bits.al-right { justify-content: flex-end; }
   .ln .bits > span { white-space: pre; }
   
   .b1{color:var(--c1)}
@@ -248,10 +229,9 @@
   .b1.inv { color: var(--purple) !important; font-weight: bold; text-shadow: 0 0 3px var(--purple); }
   .b0.inv { color: #ff66cc !important; font-weight: bold; text-shadow: 0 0 3px #ff66cc; }
 
-  /* Мягкая аккуратная бирюзовая подсветка битов под XOR (без жестких рамок) */
+  /* Мягкая аккуратная бирюзовая подсветка битов под XOR — только цветом, без сдвига символов */
   .xored-bit {
     color: #00e5ff !important;
-    font-weight: bold;
   }
 
   .ln.used, .ln.cur { opacity: 1; }
@@ -262,6 +242,20 @@
   .hit.inv{color:var(--purple)}
   .hit.rev{color:var(--green)}
   .empty{color:#3a4050}
+
+  /* Заголовок номеров столбцов (режим "🔢 Выбор столбца") — два ряда (десятки/единицы),
+     каждая ячейка ровно 1 символ шириной, чтобы совпадать с сеткой битов построчно. */
+  #colHeader{display:none}
+  #colHeader.act{display:block}
+  .col-hdr-row{display:flex;gap:8px;align-items:center;font-size:.85em;color:var(--dim);user-select:none}
+  .col-hdr-row .bits{display:flex}
+  .col-hdr-row .bits > span{white-space:pre}
+  .col-cell{cursor:pointer;color:var(--dim)}
+  .col-cell:hover{color:var(--fg);background:rgba(255,255,255,.08)}
+  .col-cell.sel{color:#000;background:#ffcf6b;font-weight:700;border-radius:2px}
+  .col-cell.col-hover{color:var(--fg);background:rgba(255,255,255,.08)}
+  .col-sel-bit{background:rgba(255,207,107,.35) !important;border-radius:2px}
+  .col-hover-bit{background:rgba(255,255,255,.15) !important;border-radius:2px}
 
   /* Поле для ручного редактирования строк (двойной клик) */
   .edit-row-input {
@@ -319,6 +313,47 @@
   padding: 0 3px;
   border-radius: 2px;
   box-shadow: 0 0 6px #ff9900;
+}
+
+/* Три выровненные друг под другом строки (сквозная / исходная / результат) для Гориз.XOR.
+   Моноширинный шрифт без padding/bold у отдельных символов — иначе столбцы разъезжаются. */
+.horiz-ride-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: "Roboto Mono", Consolas, monospace;
+  font-size: 12px;
+  letter-spacing: var(--chain-ls);
+  white-space: pre;
+}
+.horiz-ride-row + .horiz-ride-row { margin-top: 2px; }
+.horiz-progress {
+  font-size: 10.5px;
+  color: #ff9900;
+  margin-bottom: 4px;
+  font-weight: 600;
+  letter-spacing: .3px;
+}
+.horiz-ride-tag {
+  flex: 0 0 64px;
+  color: var(--dim);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  text-align: right;
+}
+.horiz-ride-text { color: var(--fg); overflow: hidden; }
+/* Строка "Сквозная" показывает ВСЮ цепочку целиком (не обрезана по ширине строки) —
+   ей нужен перенос, иначе она вылезет далеко за пределы панели. */
+.horiz-ride-row.horiz-ride-wrap { align-items: flex-start; }
+.horiz-ride-row.horiz-ride-wrap .horiz-ride-text { white-space: pre-wrap; word-break: break-all; overflow: visible; }
+/* Активная (только что въехавшая) позиция — только цветом, без сдвига символов */
+.horiz-ride-text .horiz-active-bit {
+  background: none;
+  box-shadow: none;
+  padding: 0;
+  font-weight: normal;
+  color: #ff9900 !important;
 }
 
 .chain-result-text {
@@ -484,103 +519,169 @@
 #msg.show{opacity:1; transform:translate(-50%, -50%) scale(1)}
 </style>
 <!-- === МАРКЕР 03: HEADER_UI === -->
-<header>
-  <!-- Верхняя строка шапки: Кнопки действий -->
-  <div class="hdr-row">
-    <button id="bStep" title="Один шаг (обычный интерливинг)">▶ Шаг</button>
-    <button id="bStep2" title="Шаг по 2 (принудительный интерливинг пары)">▶ Шаг 2</button>
-    <button id="bStepXor" style="color:var(--purple);" title="Накопительный XOR всех строк до текущей">⨁ XOR</button>
-    <button id="bStep2Xor" style="color:var(--acc);" title="Принудительный XOR пары строк">⨁ XOR 2</button>
-    <button id="bStepHorizXor" style="color:#ff9900;" title="Горизонтальный XOR: символы верхней строки по одному заходят в нижнюю, ксорят её и крутят по кругу до находки">⨁ Гориз.XOR</button>
-    <button id="bStepXorProj" style="color:#ff66cc;" title="Проекция XOR: Вычисляет XOR всех строк ВЫШЕ текущей и полностью перезаписывает им текущую строку.">⏬ Проекция XOR</button>
-    <button id="bStepScan" style="color:var(--green);" title="Сканировать строки на паттерны без изменения символов">👁 Скан</button>
-    
-    <span class="sep"></span>
-    <button id="bUndo" title="Шаг назад (Delete / Backspace)">↩ Назад</button>
-    <button id="bAuto" title="Автоматический прогон по выбранному режиму (Enter)">🚀 Авто</button>
-    <button id="bStop" class="stop" title="Остановить" disabled>⏹ Стоп</button>
-    <span class="sep"></span>
-    <button id="bReset" title="Сбросить к шаблону (Escape)">🗑 Сброс</button>
-    <span class="sep"></span>
-    
-    <!-- Кнопки ручного кругового сдвига символов выделенных строк -->
-    <button id="bShiftL" title="Круговой сдвиг влево выбранных строк (◄ или Ctrl+Клик)">◄</button>
-    <button id="bShiftR" title="Круговой сдвиг вправо выбранных строк (► или Ctrl+Клик)">►</button>
-    <span class="sep"></span>
+<div id="menuBar">
+  <div style="display:flex;align-items:center;gap:6px;justify-self:start;"><h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.178</span></h3></div>
+  <div id="menuTabs">
+    <button id="toggleAllPinsBtn" title="Показать/скрыть все панели разом"></button>
+    <div class="menu-btn" data-menu="menuOps"><span>Шаги</span><input type="checkbox" class="menu-pin-inline" id="menuOpsPin" title="Показывать в панели"></div>
+    <div id="menuOps" class="menu-drop"></div>
+    <div class="menu-btn" data-menu="menuFlow"><span>Управление</span><input type="checkbox" class="menu-pin-inline" id="menuFlowPin" title="Показывать в панели"></div>
+    <div id="menuFlow" class="menu-drop"></div>
+    <div class="menu-btn" data-menu="menuEdit"><span>Правка строк</span><input type="checkbox" class="menu-pin-inline" id="menuEditPin" title="Показывать в панели"></div>
+    <div id="menuEdit" class="menu-drop"></div>
+    <div class="menu-btn" data-menu="menuSearch"><span>Поиск</span><input type="checkbox" class="menu-pin-inline" id="menuSearchPin" title="Показывать в панели"></div>
+    <div id="menuSearch" class="menu-drop"></div>
+    <div class="menu-btn" data-menu="menuView"><span>Вид</span><input type="checkbox" class="menu-pin-inline" id="menuViewPin" title="Показывать в панели"></div>
+    <div id="menuView" class="menu-drop"></div>
 
-    <!-- Кнопки выравнивания -->
+    <!-- "Выбор столбца" + выравнивание — вынесены из вкладки "Правка строк" прямо в верхнее
+         меню рядом с вкладками, чтобы быть всегда видимыми без открытия/закрепления панели. -->
+    <span style="width:1px;align-self:stretch;background:var(--line);margin:0 4px;"></span>
+    <button id="bColSelect" style="font-size:12px;padding:3px 8px;white-space:nowrap;" title="Режим выбора столбца: клик по номеру столбца сдвигает КАЖДУЮ строку циклически так, чтобы на этом столбце встала 1 (с минимумом единиц слева от неё). Если выделена 1 строка — работает с ней и строками выше; если выделены 2+ — только между крайними из них">🔢 Выбор столбца</button>
     <div class="align-grp" id="alignGrp">
       <button data-val="left" title="По левому краю">⇤</button>
       <button class="act" data-val="center" title="По центру">↔</button>
       <button data-val="right" title="По правому краю">⇥</button>
     </div>
-    <span class="counter">Ш: <b id="stepNo">0</b></span>
-  </div>
 
-  <!-- Нижняя строка шапки: Галочки настроек, ползунки и палитры -->
-  <div class="hdr-row">
-    <label class="chk" title="Остановить автоматический прогон (Авто), если найдено совпадение с паттерном"><input type="checkbox" id="cStopOnHit" checked>🛑 Стоп на находке</label>
-    <label class="chk" title="Когда некуда двигаться (нет находок) — не переходить на 1-ю строку, а циклически сдвигать нижнюю строку и повторять операцию"><input type="checkbox" id="cAutoShift">🔀 Внизу сдвиг</label>
-    <label class="chk" title="Разбивать XOR на два отдельных визуальных шага: 1) Дополнение нулями 2) Вычисление XOR"><input type="checkbox" id="cStageXor">2️⃣ 2-этапный XOR</label>
-    <label class="chk" title="При повторном заходе с 1-й строки читать биты инверсно (0↔1)"><input type="checkbox" id="cInvPass">🔄 Инв.заход</label>
-    <label class="chk" title="Подтягивать находки наверх"><input type="checkbox" id="cPull" checked>🧲 Подтяг.</label>
-    <label class="chk" title="Держать изначальный порядок паттернов"><input type="checkbox" id="cOrder" checked>🔒 Пор.</label>
-    <label class="chk" title="Искать строго только один следующий паттерн по порядку (не засчитывать другие раньше времени)"><input type="checkbox" id="cNextOnly">🎯 Только 1-й</label>
-    <label class="chk" title="Сквозная цепочка по вертикалям"><input type="checkbox" id="cVert">↕ Верт.</label>
-    <label class="chk" title="Дополнять пустые места нулями"><input type="checkbox" id="cPad">0️⃣ Пад.</label>
-    <label class="chk" title="Искать также инверсию и реверс"><input type="checkbox" id="cKinds">⇌ Инв/Рев</label>
-    <label class="chk" title="Первый символ паттерна не проверяется (ищется хвост со второго)"><input type="checkbox" id="cSkip1" checked>⏭ Без 1-го</label>
-    <span class="sep"></span>
-    
-    <select id="preset" title="Пресеты цветов">
-      <option value="">🎨...</option>
-      <option value="matrix">Матрица</option>
-      <option value="cyber">Киберпанк</option>
-      <option value="blood">Кровавый</option>
-      <option value="synthwave">Synthwave</option>
-      <option value="zerkalius">Zerkalius</option>
-      <option value="crypto">Спектр</option>
-      <option value="bw">Ч/Б</option>
-    </select>
-    <label class="chk" title="Цвет единиц"><input type="color" id="col1" value="#ffffff"></label>
-    <label class="chk" title="Цвет нулей"><input type="color" id="col0" value="#00ff66"></label>
-    <label class="chk" title="Фон полотна"><input type="color" id="colBg" value="#050505"></label>
-    <span class="sep"></span>
-    
-    <!-- Ограничение количества строк из шаблона -->
-    <label class="chk" title="Показать только первые N строк из шаблона (остальные скрыты)">🔢
-      <input type="range" id="rowCount" min="2" max="100" step="1" value="100" style="width:40px">
-      <span id="rowCountVal" style="display:inline-block;width:18px;text-align:right">100</span>
-    </label>
-
-    <!-- Ручные регуляторы шрифта, межстрочного и межсимвольного интервала -->
-    <label class="chk" title="Размер шрифта">A
-      <input type="range" id="fs" min="6" max="22" step="1" value="12" style="width:40px">
-      <span id="fsVal" style="display:inline-block;width:12px;text-align:right">12</span>
-    </label>
-    <label class="chk" title="Межстрочный интервал (line-height, до 0.5 с наездом)">↕
-      <input type="range" id="lh" min="0.5" max="2.0" step="0.05" value="1.35" style="width:40px">
-      <span id="lhVal" style="display:inline-block;width:22px;text-align:right">1.35</span>
-    </label>
-    <label class="chk" title="Межсимвольный интервал (letter-spacing, до -5px с наездом)">↔
-      <input type="range" id="ls" min="-5" max="10" step="0.5" value="0" style="width:40px">
-      <span id="lsVal" style="display:inline-block;width:18px;text-align:right">0</span>
-    </label>
-    <label class="chk" title="Яркость будущих строк">💡
-      <input type="range" id="dim" min="10" max="100" step="5" value="35" style="width:40px">
-    </label>
+    <!-- Управление цепочками (вкладками) — вынесено из шапки таблицы строк: вместо ряда
+         пилюль-вкладок теперь компактный выпадающий список + кнопки, тоже в верхнем меню. -->
+    <span style="width:1px;align-self:stretch;background:var(--line);margin:0 4px;"></span>
+    <select id="chainSelect" style="font-size:12px;background:#232735;color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:2px 4px;max-width:110px;" title="Переключить вкладку цепочки"></select>
+    <button id="bCloseTab" style="font-size:12px;padding:3px 6px;" title="Закрыть текущую вкладку цепочки">✕</button>
+    <button id="bAddTab" style="font-size:12px;padding:3px 6px;" title="Создать новую вкладку цепочки">+</button>
+    <button id="bSaveChain" style="font-size:12px;padding:3px 6px;" title="Сохранить текущую цепочку и все настройки-кнопки (восстановится при сбросе)">💾</button>
+    <button id="bRestoreChain" style="font-size:12px;padding:3px 6px;display:none;" title="Восстановить сохранённую цепочку и настройки">↩</button>
+    <button id="bClearTab" style="font-size:12px;padding:3px 6px;" title="Полностью стереть данные текущей вкладки (строки, паттерны, историю)">🧹</button>
+    <button id="bReset" style="font-size:12px;padding:3px 6px;" title="Сбросить к шаблону (Escape)">🗑</button>
   </div>
-</header>
+  <span class="counter" style="justify-self:end;">Ш: <b id="stepNo">0</b></span>
+</div>
+
+<div id="opsGroup" class="control-group control-group-btn">
+  <button id="bStep" title="Один шаг (обычный интерливинг)">▶ Шаг</button>
+  <button id="bStep2" title="Шаг по 2 (принудительный интерливинг пары)">▶ Шаг 2</button>
+  <button id="bInterleaveSearch" title="Интерливинг пары + поиск совпадения в паттерне 3-й строки">⧬ Интерлив</button>
+  <button id="bStepXor" style="color:var(--purple);" title="Накопительный XOR всех строк до текущей">⨁ XOR</button>
+  <button id="bStep2Xor" style="color:var(--acc);" title="Принудительный XOR пары строк">⨁ XOR 2</button>
+  <button id="bStepHorizXor" style="color:#ff9900;" title="Горизонтальный XOR: символы верхней строки по одному заходят в нижнюю, ксорят её и крутят по кругу до находки">⨁ Гориз.XOR</button>
+  <button id="bStepXorProj" style="color:#ff66cc;" title="Проекция XOR: Вычисляет XOR всех строк ВЫШЕ текущей и полностью перезаписывает им текущую строку.">⏬ Проекция XOR</button>
+  <button id="bXorSelected" style="color:#ff66cc;" title="XOR выделённой строки и всех над ней, показать результат внизу и перейти на нижнюю если совпадает">⨁ XOR выдел</button>
+  <button id="bStepScan" style="color:var(--green);" title="Сканировать строки на паттерны без изменения символов">👁 Скан</button>
+</div>
+
+<div id="flowGroup" class="control-group control-group-btn">
+  <button id="bUndo" title="Шаг назад / отмена ручной правки (Backspace / Ctrl+Z)">↩ Назад</button>
+  <button id="bAuto" title="Автоматический прогон по выбранному режиму (Enter)">🚀 Авто</button>
+  <button id="bStop" class="stop" title="Остановить" disabled>⏹ Стоп</button>
+</div>
+
+<div id="editGroup" class="control-group control-group-player">
+  <!-- Кнопки ручного кругового сдвига символов выделенных строк -->
+  <button id="bShiftL" title="Круговой сдвиг влево выбранных строк (◄ или Ctrl+Клик)">◄</button>
+  <button id="bShiftR" title="Круговой сдвиг вправо выбранных строк (► или Ctrl+Клик)">►</button>
+  <button id="bInvertSelected" title="Инвертировать биты (0↔1) в выделенных строках">🔁 Инверсия</button>
+  <button id="bPadZerosAbove" title="Добавить нули вверх: для выделенных строк (по самой длинной из них) добавить нули выше">0⬆</button>
+  <button id="bDelFirst" title="Удалить первый символ из всех строк цепочки">🗑 1</button>
+  <button id="bClearChainRows" title="Очистить все строки цепочки, оставить только 1-ю строку = '1'">🌱 Очистить→1</button>
+
+  <!-- "Спираль": строки (все, либо выделенный диапазон — см. colSelectRowRange) читаются ОДНОЙ
+       непрерывной лентой символов сверху вниз и сдвигаются по кругу на 1 символ (символ с
+       одного конца ленты переходит на другой), затем нарезаются обратно строго по ИСХОДНЫМ
+       длинам строк — та же логика, что manualElkaShift() в Zerkalius-genezis.html. Переключатель
+       ◄/► решает, какая физическая сторона ленты (влево/вправо) считается "вверх" для кнопок
+       ▲/▼ — сама лента лежит горизонтально, а ▲/▼ это просто пользовательские подписи направления. -->
+  <div style="grid-column:1 / -1; display:flex; gap:6px; align-items:center; border:1px solid #ff3333; background:rgba(255,51,51,0.08); border-radius:3px; padding:4px;">
+    <div class="align-grp" id="spiralDirGrp" title="Какая сторона ленты символов считается «вверх» для кнопок ▲/▼ Спираль">
+      <button data-val="left" title="Влево по ленте = вверх">◄</button>
+      <button class="act" data-val="right" title="Вправо по ленте = вверх">►</button>
+    </div>
+    <button id="bSpiralUp" style="flex:1; border-color:#ff3333; color:#ff3333;" title="Спираль вверх: строки (все, либо выделенный диапазон) читаются одной лентой и сдвигаются по кругу на 1 символ в сторону, заданную переключателем ◄/►">▲ Спираль</button>
+    <button id="bSpiralDown" style="flex:1; border-color:#ff3333; color:#ff3333;" title="Спираль вниз: строки (все, либо выделенный диапазон) читаются одной лентой и сдвигаются по кругу на 1 символ в сторону, противоположную переключателю ◄/►">▼ Спираль</button>
+  </div>
+</div>
+
+<div id="searchGroup" class="control-group">
+  <label class="chk" title="Остановить автоматический прогон (Авто), если найдено совпадение с паттерном"><input type="checkbox" id="cStopOnHit" checked>🛑 Стоп на находке</label>
+  <label class="chk" title="Когда некуда двигаться (нет находок) — не переходить на 1-ю строку, а циклически сдвигать нижнюю строку и повторять операцию"><input type="checkbox" id="cAutoShift">🔀 Внизу сдвиг</label>
+  <label class="chk" title="Разбивать XOR на два отдельных визуальных шага: 1) Дополнение нулями 2) Вычисление XOR"><input type="checkbox" id="cStageXor">2️⃣ 2-этапный XOR</label>
+  <label class="chk" title="При повторном заходе с 1-й строки читать биты инверсно (0↔1)"><input type="checkbox" id="cInvPass">🔄 Инв.заход</label>
+  <label class="chk" title="Подтягивать находки наверх"><input type="checkbox" id="cPull" checked>🧲 Подтяг.</label>
+  <label class="chk" title="Держать изначальный порядок паттернов"><input type="checkbox" id="cOrder" checked>🔒 Пор.</label>
+  <label class="chk" title="Искать строго только один следующий паттерн по порядку (не засчитывать другие раньше времени)"><input type="checkbox" id="cNextOnly">🎯 Только 1-й</label>
+  <label class="chk" title="Сквозная цепочка по вертикалям"><input type="checkbox" id="cVert">↕ Верт.</label>
+  <label class="chk" title="Дополнять пустые места нулями"><input type="checkbox" id="cPad">0️⃣ Пад.</label>
+  <label class="chk" title="Искать также инверсию и реверс"><input type="checkbox" id="cKinds">⇌ Инв/Рев</label>
+  <label class="chk" title="Первый символ паттерна не проверяется (ищется хвост со второго)"><input type="checkbox" id="cSkip1" checked>⏭ Без 1-го</label>
+  <label class="chk" title="В режиме Интерливинга: делать XOR результата с нижней строкой пары"><input type="checkbox" id="cInterleaveXor">⧬+⨁ Интерл.XOR</label>
+
+  <!-- Фоновый поиск: выделенная строка ФИКСИРОВАНА (не двигается сама, в отличие от ⧬ Интерлив /
+       ⨁ XOR выдел), при ЛЮБОМ изменении строк проверяется, попал ли паттерн строки НИЖЕ
+       выделенной в выбранный результат (интерлив / XOR пары / XOR всех выше+выделенной,
+       выделенная+над ней). При находке — только подсветка ячейки паттерна, ничего не
+       останавливается и не переключается. -->
+  <div id="bgSearchGrp" style="display:flex; flex-direction:column; gap:4px; border:1px solid var(--acc); background:rgba(77,163,255,0.08); border-radius:3px; padding:4px;">
+    <label class="chk" title="Фоновый поиск: при любом изменении строк проверяет, найден ли паттерн строки НИЖЕ выделенной в выбранном результате (см. переключатель ниже). Выделенная строка фиксирована — сама не двигается">
+      <input type="checkbox" id="cBgSearch"> 🔍 Фон-поиск
+    </label>
+    <div class="align-grp" id="bgSearchModeGrp" title="Какой результат проверять на совпадение с паттерном строки ниже выделенной">
+      <button data-val="interleave" class="act" title="Интерливинг выделенной и строки над ней">⧬ Интерлив</button>
+      <button data-val="xor2" title="XOR выделенной и строки над ней">⨁ XOR 2</button>
+      <button data-val="xorAll" title="XOR всех строк над выделенной и самой выделенной">⨁ XOR всех</button>
+    </div>
+  </div>
+</div>
+
+<div id="viewGroup" class="control-group">
+  <select id="preset" title="Пресеты цветов">
+    <option value="">🎨...</option>
+    <option value="matrix">Матрица</option>
+    <option value="cyber">Киберпанк</option>
+    <option value="blood">Кровавый</option>
+    <option value="synthwave">Synthwave</option>
+    <option value="zerkalius">Zerkalius</option>
+    <option value="crypto">Спектр</option>
+    <option value="bw">Ч/Б</option>
+  </select>
+  <label class="chk" title="Цвет единиц">Цвет единиц <input type="color" id="col1" value="#ffffff"></label>
+  <label class="chk" title="Цвет нулей">Цвет нулей <input type="color" id="col0" value="#00ff66"></label>
+  <label class="chk" title="Фон полотна">Фон полотна <input type="color" id="colBg" value="#050505"></label>
+
+  <!-- Ограничение количества строк из шаблона -->
+  <label class="chk" title="Показать только первые N строк из шаблона (остальные скрыты)">🔢
+    <input type="range" id="rowCount" min="2" max="100" step="1" value="100" style="width:40px">
+    <span id="rowCountVal" style="display:inline-block;width:18px;text-align:right">100</span>
+  </label>
+
+  <!-- Ручные регуляторы шрифта, межстрочного и межсимвольного интервала -->
+  <label class="chk" title="Размер шрифта">A
+    <input type="range" id="fs" min="6" max="22" step="1" value="12" style="width:40px">
+    <span id="fsVal" style="display:inline-block;width:12px;text-align:right">12</span>
+  </label>
+  <label class="chk" title="Межстрочный интервал (line-height, до 0.5 с наездом)">↕
+    <input type="range" id="lh" min="0.5" max="2.0" step="0.05" value="1.35" style="width:40px">
+    <span id="lhVal" style="display:inline-block;width:22px;text-align:right">1.35</span>
+  </label>
+  <label class="chk" title="Межсимвольный интервал (letter-spacing, до -5px с наездом)">↔
+    <input type="range" id="ls" min="-5" max="10" step="0.5" value="0" style="width:40px">
+    <span id="lsVal" style="display:inline-block;width:18px;text-align:right">0</span>
+  </label>
+  <label class="chk" title="Яркость будущих строк">💡
+    <input type="range" id="dim" min="10" max="100" step="5" value="35" style="width:40px">
+    <span id="dimVal" style="display:inline-block;width:18px;text-align:right">35</span>
+  </label>
+</div>
 <!-- === МАРКЕР 04: MAIN_UI === -->
-<main>
-  <div class="canvas">
+<div class="main-layout">
+  <div class="controls" id="leftPanel"><div class="scrollable-settings" id="leftSlot"></div></div>
+  <div class="canvas" id="screenCanvas">
     <!-- Теги записаны в одну плотную строку, чтобы white-space: pre не создавал фантомных пустых строк -->
-    <div class="chain" id="chain"><div class="chain-head"><span class="num">№</span><span class="pat h-pat">Паттерн</span><span class="bits h-bits"><div class="chain-tabs" id="chainTabs"></div></span><span class="pat2 h-pat2">Паттерн</span></div><div class="vsplit" id="vsplit" title="Тяни, чтобы менять ширину левой колонки паттернов"></div><div class="vsplit2" id="vsplit2" title="Тяни, чтобы менять ширину правой колонки паттернов"></div><div id="rows"></div></div>
+    <div class="chain" id="chain"><div class="chain-head"><span class="num">№</span><span class="pat h-pat">Паттерн</span><span class="bits h-bits"></span><span class="pat2 h-pat2">Паттерн</span></div><div class="vsplit" id="vsplit" title="Тяни, чтобы менять ширину левой колонки паттернов"></div><div class="vsplit2" id="vsplit2" title="Тяни, чтобы менять ширину правой колонки паттернов"></div><div id="colHeader"></div><div id="rows"></div></div>
 
     <!-- Окошко сквозной строки результата — вынесено за пределы табличной сетки .chain, чтобы исключить наложения и баги скролла -->
     <div class="chain-result-box" id="chainResultBox">
       <div class="chain-result-head">
-        <span>🔗 Сквозная строка результата (<b id="chainLen">0</b> бит):</span>
+        <span><span id="chainResultLabel">🔗 Сквозная строка результата</span> (<b id="chainLen">0</b> бит):</span>
         <button id="bCopyChain" title="Скопировать сквозную строку в буфер обмена">📋 Копировать</button>
       </div>
       <div class="chain-result-text" id="chainText"></div>
@@ -595,7 +696,8 @@
       <div class="step-log-body" id="stepLogBody"><span class="step-log-empty">шагов ещё не было</span></div>
     </div>
   </div>
-</main>
+  <div class="controls" id="rightPanel"><div class="scrollable-settings" id="rightSlot"></div></div>
+</div>
 
 <script>
 /* === МАРКЕР 05: CORE_FUNCTIONS === */
@@ -605,6 +707,37 @@
 
 function rotateStrRight(s) { if (!s || s.length <= 1) return s; return s.slice(-1) + s.slice(0, -1); }
 function rotateStrLeft(s) { if (!s || s.length <= 1) return s; return s.slice(1) + s[0]; }
+
+/* Циклический сдвиг строки ВПРАВО на d позиций (d нормализуется по модулю длины). */
+function rotateRightBy(s, d) {
+  const L = s.length;
+  if (!L || L === 1) return s;
+  const shift = ((d % L) + L) % L;
+  if (shift === 0) return s;
+  return s.slice(-shift) + s.slice(0, -shift);
+}
+
+/* Для режима "🔢 Выбор столбца": среди ВСЕХ круговых сдвигов строки s, которые ставят '1'
+   на позицию localCol, выбирает тот, при котором СЛЕВА от localCol (в результирующей
+   строке) окажется МИНИМУМ единиц; при равенстве — берётся НАИМЕНЬШИЙ сдвиг. Строка без
+   единиц вообще — возвращает null (сдвигать нечего). */
+function bestColumnShift(s, localCol) {
+  const L = s.length;
+  if (localCol < 0 || localCol >= L) return null;
+  let best = null, bestLeftOnes = Infinity;
+  for (let j = 0; j < L; j++) {
+    if (s[j] !== '1') continue;
+    const d = ((localCol - j) % L + L) % L;
+    const rotated = rotateRightBy(s, d);
+    let leftOnes = 0;
+    for (let k = 0; k < localCol; k++) if (rotated[k] === '1') leftOnes++;
+    if (leftOnes < bestLeftOnes || (leftOnes === bestLeftOnes && d < best)) {
+      bestLeftOnes = leftOnes;
+      best = d;
+    }
+  }
+  return best;
+}
 
 /* Определение максимальной длины паттернов для хвостового буфера стыка */
 function getMaxPatLen(st) {
@@ -627,6 +760,23 @@ function alignShift(maxLen, len, align){
 
 function invertBits(s){ let o = ""; for (const c of s) o += (c === "0" ? "1" : c === "1" ? "0" : c); return o; }
 function reverseStr(s){ return s.split("").reverse().join(""); }
+
+/* Проверка "текст содержит паттерн как подстроку" — целиком / без 1-го символа / реверсом /
+   реверсом без 1-го, СТРОГО с учётом галок st.skipFirst и st.allKinds (как везде в
+   приложении). Используется Гориз.XOR (генерация И скольжение) вместо общего findMatch(),
+   у которого нет понятия "именно СВОЙ паттерн этой строки" — он сканирует ЛЮБЫЕ паттерны
+   вперёд по списку, включая ещё не построенные строки, и потому даёт ложные срабатывания. */
+function textMatchesPattern(text, patText){
+  if (!patText) return false;
+  const patFull = patText;
+  const patSkip = (st.skipFirst && patFull.length > 1) ? patFull.slice(1) : patFull;
+  const patRev = st.allKinds ? reverseStr(patFull) : null;
+  const patRevSkip = (st.allKinds && st.skipFirst && patRev && patRev.length > 1) ? patRev.slice(1) : null;
+  return text.indexOf(patFull) >= 0
+    || (patSkip !== patFull && text.indexOf(patSkip) >= 0)
+    || (patRev && text.indexOf(patRev) >= 0)
+    || (patRevSkip && text.indexOf(patRevSkip) >= 0);
+}
 
 /* Получение символов строки с учетом возможного инверсного повторного захода */
 function getRowBits(st, r) {
@@ -772,8 +922,15 @@ const st = {
   align: "center", vertical: false, padZero: false, allKinds: false,
   pull: true, keepOrder: true, stopOnHit: true,
   undo: [], running: false, msg: "",
-  horizBitIdx: 0, horizXoredLength: 0, lastHorizRow: null,
-  lastOp: null
+  horizBitIdx: 0, horizXoredLength: 0, lastHorizRow: null, horizFoundInPass: false, horizChainLen: 0,
+  horizBigChain: "", horizBigOrig: "", horizBigTargetIdx: -1,
+  lastOp: null,
+  xorSelectedMode: false, xorSelectedIdx: -1,
+  interleaveMode: false, interleavePairIdx: -1,
+  colSelectMode: false, selectedCol: -1,
+  spiralUpDir: "right",
+  bgSearch: false, bgSearchMode: "interleave", bgSearchLastHit: -1,
+  savedChain: null
 };
 const UNDO_DEPTH = 500;
 
@@ -862,12 +1019,19 @@ function snapshot(){
   st.undo.push({
     rows: st.rows.slice(), used: st.used.slice(),
     pats: st.pats.map(p => p ? { ...p } : null),
+    tplRows: st.tplRows.slice(), tplPats: st.tplPats.slice(),
     step: st.step, aIdx: st.aIdx, bIdx: st.bIdx, goingUp: st.goingUp, passCount: st.passCount,
     tailBuffer: st.tailBuffer || "",
     selectedRows: Array.from(st.selectedRows || []),
     horizBitIdx: st.horizBitIdx,
     horizXoredLength: st.horizXoredLength,
-    lastHorizRow: st.lastHorizRow
+    lastHorizRow: st.lastHorizRow,
+    horizFoundInPass: st.horizFoundInPass,
+    horizChainLen: st.horizChainLen,
+    horizBigChain: st.horizBigChain,
+    horizBigOrig: st.horizBigOrig,
+    horizBigTargetIdx: st.horizBigTargetIdx,
+    selectedCol: st.selectedCol
   });
   if (st.undo.length > UNDO_DEPTH) st.undo.shift();
 }
@@ -876,6 +1040,7 @@ function restore(){
   const s = st.undo.pop();
   if (!s) return false;
   st.rows = s.rows; st.used = s.used; st.pats = s.pats;
+  st.tplRows = s.tplRows || st.tplRows; st.tplPats = s.tplPats || st.tplPats;
   st.step = s.step; st.aIdx = s.aIdx; st.bIdx = s.bIdx; st.goingUp = s.goingUp;
   st.passCount = s.passCount || 0;
   st.tailBuffer = s.tailBuffer || "";
@@ -883,6 +1048,12 @@ function restore(){
   st.horizBitIdx = s.horizBitIdx || 0;
   st.horizXoredLength = s.horizXoredLength || 0;
   st.lastHorizRow = s.lastHorizRow || null;
+  st.horizFoundInPass = !!s.horizFoundInPass;
+  st.horizChainLen = s.horizChainLen || 0;
+  st.horizBigChain = s.horizBigChain || "";
+  st.horizBigOrig = s.horizBigOrig || "";
+  st.horizBigTargetIdx = s.horizBigTargetIdx != null ? s.horizBigTargetIdx : -1;
+  st.selectedCol = s.selectedCol != null ? s.selectedCol : -1;
   st.hit = null;
   return true;
 }
@@ -899,9 +1070,69 @@ function canShift(){
   if (p && p.text && p.text.length >= 2 && !p.found) return false;
   return true;
 }
+
+/* Сквозная цепочка для Гориз.XOR — конкатенация ВСЕХ непустых строк СТРОГО ВЫШЕ rowIdx
+   (сама rowIdx не входит — она неподвижная "мишень", по которой скользит цепочка).
+   Не зависит от st.used[] (тот заполняется только по пути автоперехода и ломается,
+   если пара строк выбрана вручную кликом) — всегда полная история сверху.
+   БЕЗ st.tailBuffer: он "плавает" по длине от шага к шагу (обрезается до maxPatLen после
+   каждого doStep), а длина этой цепочки должна быть СТАБИЛЬНОЙ, пока идёт скольжение по
+   одной строке — иначе цель (totalSteps) двигается и проход никогда честно не завершается. */
+function horizChainText(rowIdx){
+  let text = "";
+  for (let i = 0; i < rowIdx; i++){
+    if (st.rows[i] && st.rows[i].length) text += getRowBits(st, i);
+  }
+  return text;
+}
+
+/* Один шаг объединённого поиска для Гориз.XOR: chainText (сквозная — уже найденные строки
+   выше rowIdx, в порядке horizChainText: строка 0 первая, строка rowIdx-1 последняя) —
+   скользит сквозь fullOrigText (chainText + текущее содержимое rowIdx), въезжая СПРАВА
+   РЕВЕРСОМ: ведущий край — это ПОСЛЕДНИЙ символ chainText (то есть конец самой НИЖНЕЙ из
+   строк цепочки, ближайшей к цели), он первым касается правого края цели; хвост цепочки
+   (chainText[0], начало самой ВЕРХНЕЙ строки) подходит только в самом конце прохода. Позиция
+   p результата берёт chain[fullLen+chainLen-1-stepNumber-p]. На каждом шаге результат
+   содержит текущее состояние всей объединённой строки целиком; поиск паттерна строки rowIdx
+   идёт по этому результату целиком, а не только в её собственном окне. */
+function applyHorizBigSlide(chainText, fullOrigText, stepNumber){
+  const fullLen = fullOrigText.length;
+  const chainLen = chainText.length;
+  let out = "";
+  for (let p = 0; p < fullLen; p++){
+    const chainIdx = fullLen + chainLen - 1 - stepNumber - p;
+    const origBit = fullOrigText[p];
+    if (chainIdx >= 0 && chainIdx < chainLen) {
+      const chBit = chainText[chainIdx];
+      if ((origBit === "0" || origBit === "1") && (chBit === "0" || chBit === "1")) {
+        out += (origBit === chBit) ? "0" : "1";
+      } else {
+        out += origBit;
+      }
+    } else {
+      out += origBit;
+    }
+  }
+  return out;
+}
+
+/* Диапазон позиций p ВСЕЙ объединённой строки fullOrigText (chainText + целевая строка,
+   строго в порядке физического стека сверху вниз — chainText[0]=самая верхняя строка,
+   конец fullOrigText=целевая/нижняя строка), сейчас накрытых XOR'ом на шаге stepNumber —
+   та же формула, что и chainIdx в applyHorizBigSlide, только выражена через p. Единая
+   подсветка: сначала растёт ВНУТРИ целевой строки снизу (p ближе к fullLen-1), и только
+   после того как дойдёт до её начала (p=chainLen), продолжает расти ВВЕРХ по строкам
+   цепочки — никогда не подсвечивает верхние строки раньше, чем целевая пройдена целиком. */
+function horizWindowRange(chainLen, fullLen, stepNumber){
+  const start = Math.max(0, fullLen - stepNumber);
+  const end = Math.min(fullLen - 1, fullLen - stepNumber + chainLen - 1);
+  if (end < start) return null;
+  return { start, end };
+}
+
 /* === МАРКЕР 07: СТЕП И ЛОГИКА === */
 /* Черновик последнего шага: фиксирует какие строки взяты, что за операция и что получилось — для визуального Step Log */
-function logStep(opName, rowsUsed, resultText, detail, changes, inputs){
+function logStep(opName, rowsUsed, resultText, detail, changes, inputs, highlightRange){
   st.lastOp = {
     step: st.step,
     opName: opName,
@@ -910,14 +1141,22 @@ function logStep(opName, rowsUsed, resultText, detail, changes, inputs){
     detail: detail || "",
     pattern: null,
     changes: changes || [],
-    inputs: inputs || []
+    inputs: inputs || [],
+    highlightRange: highlightRange || null
   };
 }
 
 function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, isXorProj = false){
   const a = st.aIdx, b = st.bIdx;
-  if (a === b || a < 0 || b >= st.rows.length) return false;
-  if (!st.rows[a].length || !st.rows[b].length) return false;
+  // Гориз.XOR работает с ОДНОЙ строкой (b) — своя цепочка строится из строк строго выше,
+  // 'a' ему не нужен. Общая проверка "a!==b, обе непустые" рассчитана на режимы с парой
+  // строк и ломает самый первый шаг генерации (после "🌱 Очистить→1" a===b===0).
+  if (isHorizXor) {
+    if (b < 0 || b >= st.rows.length || !st.rows[b].length) return false;
+  } else {
+    if (a === b || a < 0 || b >= st.rows.length) return false;
+    if (!st.rows[a].length || !st.rows[b].length) return false;
+  }
 
   const isWrap = (b - a) > 1;
   const target = st.goingUp ? a : b;
@@ -929,7 +1168,9 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
   const rowA = getRowBits(st, a);
   const rowB = getRowBits(st, b);
 
-  const shifted = !isWrap && canShift();
+  // Гориз.XOR никогда не использует автопропуск через "короткие/уже найденные" строки —
+  // у него полностью своя логика перехода между строками (по завершении лапа).
+  const shifted = !isWrap && !isHorizXor && canShift();
 
   // Собираем участвующие строки для визуального отображения в Черновике
   let inputsForLog = [];
@@ -968,42 +1209,73 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
         }
       }
     }
-    // РЕЖИМ ГОРИЗОНТАЛЬНОГО XOR 
+    // РЕЖИМ ГОРИЗОНТАЛЬНОГО XOR — единый объединённый поиск.
+    // Сквозная строка (все УЖЕ найденные строки выше текущей) — это и есть скользящая
+    // цепочка: она въезжает СПРАВА в область текущей строки b (applyHorizBigSlide), проходит
+    // полностью, выезжает. Паттерн строки b ищется по ВСЕЙ сквозной строке результата
+    // целиком на каждом шаге — не только в окне самой строки. Один непрерывный проход
+    // длиной chainLen+fullLen шагов, без "лапов" и повторов. Решение "перейти на след.
+    // строку / остановиться" принимается НИЖЕ, после того как весь проход завершится.
     else if (isHorizXor) {
-      snapshot();
-      
-      // Если перешли на новую строку — сбрасываем счетчик "въехавших" битов
       if (st.lastHorizRow !== b) {
         st.horizXoredLength = 0;
+        st.horizFoundInPass = false;
         st.lastHorizRow = b;
+        st.horizBigChain = horizChainText(b);
+        st.horizBigOrig = st.horizBigChain + rowB;
+        st.horizBigTargetIdx = b;
+        st.horizChainLen = st.horizBigChain.length + st.horizBigOrig.length;
       }
 
-      const chainBefore = buildChain(st, a, b);
-      const chainTextBefore = (st.tailBuffer || "") + chainBefore.text;
-      
-      if (!chainTextBefore.length || !rowB.length) return false;
-      
-      // Входной бит берут ИЗ СКВОЗНОЙ СТРОКИ слева направо
-      const bitIdx = (st.horizBitIdx || 0) % chainTextBefore.length;
-      const bitInput = chainTextBefore[bitIdx];
-      
-      // Входной бит ксорится с уходящим (крайним правым) битом, результат слева
-      const rightBit = rowB[rowB.length - 1];
-      let newLeftBit = bitInput;
-      
-      if ((bitInput === "0" || bitInput === "1") && (rightBit === "0" || rightBit === "1")) {
-        newLeftBit = (bitInput === rightBit) ? "0" : "1";
+      if (!rowB.length) return false;
+
+      // Защита от "залипания": если проход уже был исчерпан раньше (totalSteps достигнут),
+      // а движение всё равно не смогло перейти/сгенерировать/остановиться (return false) —
+      // повторный клик НЕ должен продолжать скользить дальше (шаг 4, 5, 6... без предела).
+      // Раз мы вообще дошли досюда — блок ЛОГИКИ ДВИЖЕНИЯ ниже уже решит, что делать дальше.
+      if (st.horizChainLen > 0 && st.horizXoredLength >= st.horizChainLen) {
+        return false;
       }
-      
-      const beforeHoriz = st.rows[b];
-      st.rows[b] = newLeftBit + rowB.slice(0, -1);
-      
-      // Обновляем трекеры для визуализации
-      st.horizBitIdx = (bitIdx + 1) % chainTextBefore.length;
-      st.horizXoredLength = Math.min(rowB.length, (st.horizXoredLength || 0) + 1);
-      
-      logStep("Гориз.XOR", [a + 1, b + 1], st.rows[b], `Бит цепочки '${bitInput}' ⨁ правый край '${rightBit}' → введён '${newLeftBit}'`, [{ row: b + 1, before: beforeHoriz, after: st.rows[b] }], inputsForLog);
-      if (!st.running) say(`Гориз.XOR: Бит цепочки '${bitInput}' ⨁ правый край '${rightBit}' → въезжает '${newLeftBit}'`);
+
+      const ownPat = findPatByOrd(b);
+
+      // Уже найденная строка "замораживается" (не пересчитывается заново).
+      if (ownPat && ownPat.found) {
+        snapshot();
+        st.horizFoundInPass = true;
+        st.horizChainLen = 1;
+        st.horizXoredLength = 1;
+        logStep("Гориз.XOR", [b + 1], rowB, "Паттерн уже найден — скольжение пропущено", [], inputsForLog);
+        if (!st.running) say(`Гориз.XOR: строка ${b + 1} уже совпала с паттерном — пропускаем скольжение`);
+      } else {
+        snapshot();
+
+        const stepNumber = st.horizXoredLength + 1; // 1-индексированный номер шага поиска
+        const res = applyHorizBigSlide(st.horizBigChain, st.horizBigOrig, stepNumber);
+        const rowLenHere = rowB.length;
+
+        // "Хвост" результата (последние rowLenHere символов) показываем в самой строке —
+        // для наглядности; реальный поиск идёт по ВСЕЙ сквозной строке res целиком.
+        st.rows[b] = res.length >= rowLenHere ? res.slice(-rowLenHere) : res;
+
+        const winRange = horizWindowRange(st.horizBigChain.length, st.horizBigOrig.length, stepNumber);
+        logStep("Гориз.XOR", [b + 1], res, `Шаг поиска ${stepNumber}/${st.horizChainLen}`, [], inputsForLog, winRange);
+        if (!st.running) say(`Гориз.XOR: шаг поиска ${stepNumber}/${st.horizChainLen} → '${res}'`);
+
+        st.horizXoredLength++;
+
+        // Ищем СОБСТВЕННЫЙ паттерн этой строки по ВСЕЙ сквозной строке res целиком —
+        // своя проверка вместо общего findMatch().
+        if (ownPat && ownPat.text && !ownPat.found && textMatchesPattern(res, ownPat.text)) {
+          ownPat.found = true; ownPat.kind = 0; ownPat.step = st.step;
+          if (st.pull) pullFoundUp(st.pats.indexOf(ownPat));
+          st.rows[b] = ownPat.text;
+          st.tplRows[b] = ownPat.text;
+          st.horizFoundInPass = true;
+          if (st.lastOp) st.lastOp.pattern = { text: ownPat.text, kindLabel: "прямой", kind: 0, pos: 0, len: ownPat.text.length };
+          if (!st.running) say(`Гориз.XOR: строка ${b + 1} совпала со своим паттерном на шаге ${stepNumber}/${st.horizChainLen}`);
+        }
+      }
     }
     // ОБЫЧНЫЕ РЕЖИМЫ (Интерливинг / Обычный XOR)
     else if (!isScan) {
@@ -1107,7 +1379,11 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
   const searchChainText = (st.tailBuffer || "") + chain.text;
   const tailLen = (st.tailBuffer || "").length;
 
-  const m = findMatch(st, searchChainText, b);
+  // Общий findMatch() перебирает ЛЮБЫЕ ещё не найденные паттерны вперёд по списку,
+  // включая паттерны строк, которые в Гориз.XOR ещё даже не построены — это давало ложные
+  // срабатывания (паттерн строки 3 помечался найденным раньше, чем строка 3 вообще
+  // появлялась). У Гориз.XOR своя проверка — см. ниже, СТРОГО против паттерна ЭТОЙ строки.
+  const m = isHorizXor ? null : findMatch(st, searchChainText, b);
   st.hit = null;
   if (m){
     const cells = [];
@@ -1125,10 +1401,10 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
     p.found = true; p.kind = m.kind; p.step = st.step; p.skip1 = st.skipFirst;
     if (st.pull) pullFoundUp(m.idx);
     
-    // Если нашли паттерн — сбрасываем индексы входа для Гориз.XOR
+    // Если нашли паттерн в режиме Гориз.XOR — НЕ прерываем проход, просто запоминаем находку.
+    // Переход на следующую строку случится позже, когда вся цепочка пройдёт до конца.
     if (isHorizXor) {
-      st.horizBitIdx = 0;
-      st.horizXoredLength = 0;
+      st.horizFoundInPass = true;
     }
 
     if (st.lastOp) {
@@ -1142,7 +1418,102 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
   }
 
   // ЛОГИКА ДВИЖЕНИЯ И ПЕРЕХОДОВ
-  if (isWrap){
+  // Гориз.XOR проверяется ПЕРВЫМ и безусловно — у него полностью своя, самодостаточная
+  // логика переходов, которая не должна перебиваться общим isWrap (тот срабатывает почти
+  // всегда в этом режиме, т.к. верхняя и нижняя строки обычно не соседние).
+  if (isHorizXor) {
+    // Один непрерывный проход шагов (см. applyHorizBigSlide) — без
+    // "лапов" и повторов. Пока проход не завершён — просто продолжаем скользить дальше,
+    // не прерывая находкой на середине (она уже запомнена в st.horizFoundInPass выше).
+    const totalSteps = st.horizChainLen || 0;
+    if (st.horizXoredLength < totalSteps) {
+      return true;
+    }
+
+    // Сквозная цепочка целиком проскользила через строку (въехала, прошла, выехала) —
+    // теперь решаем: перейти на следующую строку (если было совпадение) или остановиться.
+    // Если весь объединённый поиск исчерпан БЕЗ находки (st.horizFoundInPass===false) —
+    // дальше двигаться некуда: искать было уже негде, ни переход, ни генерация не сработают
+    // (оба ветвления ниже требуют horizFoundInPass), и мы просто провалимся в стоп в конце.
+    const nextRowPeek = nextDataIdx(b + 1);
+    const nextAlreadyFound = nextRowPeek >= 0 && !!(findPatByOrd(nextRowPeek) || {}).found;
+    const canGoOnFound = st.horizFoundInPass || nextAlreadyFound;
+
+    if (canGoOnFound && nextRowPeek >= 0) {
+      const nextRow = nextRowPeek;
+      snapshot();
+      st.used[b] = true;
+      st.aIdx = b;
+      st.bIdx = nextRow;
+      st.horizFoundInPass = false;
+      st.horizXoredLength = 0;
+      st.horizChainLen = 0;
+      // lastHorizRow НЕ трогаем — на следующем клике compute-блок увидит lastHorizRow!==bIdx
+      // и сам пересоберёт сквозную (horizBigChain/horizBigOrig) заново для новой строки; здесь
+      // обновляем их же для показа в оверлее сразу, без ожидания следующего клика.
+      st.horizBigChain = horizChainText(nextRow);
+      st.horizBigOrig = st.horizBigChain + getRowBits(st, nextRow);
+      st.horizBigTargetIdx = nextRow;
+      logStep("Гориз.XOR", [nextRow + 1], getRowBits(st, nextRow), `Переход на строку ${nextRow + 1}`, [], inputsForLog);
+      if (!st.running) say(`Гориз.XOR: строка ${b + 1} пройдена целиком — переход на строку ${nextRow + 1}`);
+      return true;
+    }
+
+    // Строки данных ниже НЕТ, но там уже определён паттерн (без строки) — генерируем
+    // СЛЕДУЮЩУЮ строку, ТОЛЬКО ЕСЛИ у ТЕКУЩЕЙ (b) паттерн уже найден (st.horizFoundInPass,
+    // выставляется и генерацией, и объединённым поиском при совпадении). Если текущая строка
+    // сама не совпала (весь проход исчерпан без находки) — генерировать дальше НЕЛЬЗЯ.
+    if (nextRowPeek < 0 && st.horizFoundInPass) {
+      const genIdx = b + 1;
+      // Используем st.pats.length (не st.rows.length!) — эти массивы не всегда одной
+      // длины (рендер показывает паттерны даже для позиций, где ещё нет данных строки,
+      // через Math.max(rows.length, pats.length)), а мы записываем НАПРЯМУЮ в st.rows[genIdx] —
+      // JS-массив сам расширится, если genIdx окажется за текущим rows.length.
+      const genPat = genIdx < st.pats.length ? findPatByOrd(genIdx) : null;
+      if (genPat && genPat.text && !genPat.found) {
+        const candidate = "1" + getRowBits(st, b);
+        st.used[b] = true;
+        st.rows[genIdx] = candidate;
+        st.tplRows[genIdx] = candidate;
+        st.aIdx = b;
+        st.bIdx = genIdx;
+        st.horizXoredLength = 0;
+        st.horizFoundInPass = false;
+        st.horizChainLen = 0;
+        // lastHorizRow НЕ трогаем (как и при обычном переходе выше) — следующий клик сам
+        // соберёт объединённый поиск (chain=строки выше genIdx + этот кандидат) с нуля; здесь
+        // обновляем их же для показа в оверлее сразу.
+        st.horizBigChain = horizChainText(genIdx);
+        st.horizBigOrig = st.horizBigChain + candidate;
+        st.horizBigTargetIdx = genIdx;
+
+        // Паттерн ищется КАК ПОДСТРОКА, с учётом галок ⏭ Без 1-го / ⇌ Инв.Рев (см. textMatchesPattern).
+        const genMatched = textMatchesPattern(candidate, genPat.text);
+
+        if (genMatched) {
+          genPat.found = true; genPat.kind = 0; genPat.step = st.step;
+          if (st.pull) pullFoundUp(st.pats.indexOf(genPat));
+          if (!st.running) say(`Гориз.XOR: сгенерирована строка ${genIdx + 1} = '1'+пред., паттерн найден в ней`);
+        } else {
+          if (!st.running) say(`Гориз.XOR: сгенерирована строка ${genIdx + 1} = '1'+пред. (не совпала сразу) — ищем объединённым ХОР-ом`);
+        }
+        return true;
+      }
+    }
+
+    if (!st.running) {
+      let diag = "";
+      if (nextRowPeek < 0) {
+        const dbgIdx = b + 1;
+        const dbgPat = dbgIdx < st.pats.length ? findPatByOrd(dbgIdx) : null;
+        diag = !dbgPat ? ` [паттерна №${dbgIdx + 1} нет]`
+             : dbgPat.found ? ` [паттерн №${dbgIdx + 1} уже был найден]`
+             : "";
+      }
+      say(`Гориз.XOR: сквозная цепочка прошла через строку ${b + 1} целиком${nextRowPeek < 0 ? " (последняя строка)" : ""}, совпадений нет — стоп${diag}`);
+    }
+    return false;
+  } else if (isWrap){
     const f = firstDataIdx(), s2 = nextDataIdx(f + 1);
     if (st.goingUp && f >= 0 && s2 >= 0){
       st.aIdx = f; st.bIdx = s2; st.goingUp = false;
@@ -1154,10 +1525,6 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
     }
   } else if (shifted){
     if (st.goingUp){ st.aIdx--; st.bIdx--; } else { st.aIdx++; st.bIdx++; }
-  } else if (isHorizXor) {
-    // В режиме Гориз.XOR мы всегда возвращаем true (кроме конца документа), 
-    // чтобы продолжать сдвигать одну и ту же строку по кругу до находки.
-    return true;
   } else if (!st.autoShift) {
     const f = firstDataIdx(), l = lastDataIdx();
     if (!st.goingUp && f >= 0 && b > f + 1){
@@ -1190,21 +1557,36 @@ function pullFoundUp(idx){
   st.pats.splice(idx, 1);
   st.pats.splice(target, 0, p);
 }
+
+/* pullFoundUp() двигает элементы st.pats по позиции в массиве (для визуального "подтягивания"
+   наверх), поэтому st.pats[i] после этого больше НЕ обязательно принадлежит строке i.
+   Настоящую привязку "паттерн ↔ исходная строка" хранит p.ord — им и нужно искать. */
+function findPatByOrd(ord){
+  if (!st.pats) return null;
+  for (const p of st.pats) if (p && p.ord === ord) return p;
+  return null;
+}
 /* === МАРКЕР 08: LOAD_RESET === */
 function parseLines(s){ return s.split(/\r?\n/).map(x => x.trim()); }
+
+/* Ползунок rowCount ограничивает resetAll() числом активных строк — при любой загрузке нового
+   набора tplRows (текстом, файлом, вставкой) его нужно подтянуть под новую длину, иначе
+   resetAll() обрежет вставленное по СТАРОМУ значению ползунка (например, до 1 строки). */
+function syncRowCountToTpl(){
+  const rowCountEl = document.getElementById("rowCount");
+  if (!rowCountEl) return;
+  const total = Math.max(2, st.tplRows.length);
+  rowCountEl.max = total;
+  if (+rowCountEl.value !== total) {
+    rowCountEl.value = total;
+  }
+  document.getElementById("rowCountVal").textContent = rowCountEl.value;
+}
 
 function loadTemplate(){
   st.tplRows = parseLines(document.getElementById("taRows").value);
   st.tplPats = parseLines(document.getElementById("taPats").value);
-  const rowCountEl = document.getElementById("rowCount");
-  if (rowCountEl) {
-    const total = Math.max(2, st.tplRows.length);
-    rowCountEl.max = total;
-    if (+rowCountEl.value > total || !rowCountEl.value) {
-      rowCountEl.value = total;
-    }
-    document.getElementById("rowCountVal").textContent = rowCountEl.value;
-  }
+  syncRowCountToTpl();
   resetAll();
   say("Шаблон загружен: активных строк " + st.rows.filter(Boolean).length +
       " (из " + st.tplRows.filter(Boolean).length + ").");
@@ -1215,15 +1597,25 @@ function resetAll(){
   const bStopEl = document.getElementById("bStop");
   if (bStopEl) bStopEl.disabled = true;
 
-  const rowCountEl = document.getElementById("rowCount");
-  const limit = rowCountEl ? +rowCountEl.value : st.tplRows.length;
-  
-  st.rows = st.tplRows.slice(0, limit);
-  st.used = st.rows.map(() => false);
-  st.pats = st.tplPats.slice(0, limit).map((t, i) => ({ text: t, ord: i, found: false, kind: null, step: null }));
+  // Если есть сохранённая цепочка, восстановить её (вместе с настройками, если были сохранены)
+  if (st.savedChain) {
+    st.rows = st.savedChain.rows.slice();
+    st.pats = st.savedChain.pats.map(p => p ? { ...p } : null);
+    st.used = st.savedChain.used.slice();
+    if (st.savedChain.ui) applyUiSettings(st.savedChain.ui);
+  } else {
+    const rowCountEl = document.getElementById("rowCount");
+    const limit = rowCountEl ? +rowCountEl.value : st.tplRows.length;
+
+    st.rows = st.tplRows.slice(0, limit);
+    st.used = st.rows.map(() => false);
+    st.pats = st.tplPats.slice(0, limit).map((t, i) => ({ text: t, ord: i, found: false, kind: null, step: null }));
+  }
+
   st.step = 0; st.passCount = 0; st.tailBuffer = "";
   st.hit = null; st.undo = []; st.selectedRows = new Set();
-  st.horizBitIdx = 0; st.horizXoredLength = 0; st.lastHorizRow = null;
+  st.horizBitIdx = 0; st.horizXoredLength = 0; st.lastHorizRow = null; st.horizFoundInPass = false; st.horizChainLen = 0;
+  st.horizBigChain = ""; st.horizBigOrig = ""; st.horizBigTargetIdx = -1;
   st.lastOp = null;
   const f = firstDataIdx(), s2 = nextDataIdx(f + 1);
   st.aIdx = f < 0 ? 0 : f; st.bIdx = s2 < 0 ? 1 : s2; st.goingUp = false;
@@ -1233,32 +1625,120 @@ function resetAll(){
 const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const KIND_CLS = ["", "inv", "rev"];
 
-/* Раскрашивает биты 0/1 в HTML — используется и основной таблицей, и Черновиком последнего шага */
-function bitsHtml(s){
+/* Раскрашивает биты 0/1 в HTML — используется и основной таблицей, и Черновиком последнего шага.
+   highlightRange {start,end} (включительно, по индексу символа) — подсветка "под окном
+   въезжающей цепочки сейчас", как в оверлее Гориз.XOR. */
+function bitsHtml(s, highlightRange){
   let h = "";
-  for (const ch of s) {
-    if (ch === "0" || ch === "1") h += '<span class="b' + ch + '">' + ch + '</span>';
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    const covered = highlightRange && i >= highlightRange.start && i <= highlightRange.end;
+    if (covered && (ch === "0" || ch === "1")) h += '<span class="xored-bit" title="Под въезжающей цепочкой сейчас">' + ch + '</span>';
+    else if (ch === "0" || ch === "1") h += '<span class="b' + ch + '">' + ch + '</span>';
     else h += esc(ch);
   }
   return h;
 }
 
+/* Список вкладок-цепочек — выпадающий <select> в верхнем меню (см. #chainSelect) вместо ряда
+   пилюль в шапке таблицы. Кнопки Сохран/Восстан/+/Очистить/Закрыть — статические элементы
+   там же, эта функция только обновляет опции select'а и видимость/доступность кнопок. */
 function renderTabs() {
-  const container = document.getElementById("chainTabs");
-  if (!container) return;
+  const selectEl = document.getElementById("chainSelect");
+  if (!selectEl) return;
   if (!st.tabs || st.tabs.length === 0) {
     st.tabs = [createDefaultTabState("Цепочка 1")];
     st.activeTab = 0;
   }
-  let html = "";
-  st.tabs.forEach((tab, i) => {
-    const isAct = i === st.activeTab ? " act" : "";
-    const closeBtn = st.tabs.length > 1 ? `<span class="close-tab" data-close="${i}" title="Закрыть вкладку">✕</span>` : "";
-    html += `<div class="chain-tab${isAct}" data-tab="${i}"><span>${esc(tab.name)}</span>${closeBtn}</div>`;
-  });
-  html += `<button class="add-tab-btn" id="bAddTab" title="Создать новую вкладку цепочки">+ Вкладка</button>`;
-  html += `<button class="add-tab-btn" id="bClearTab" title="Полностью стереть данные текущей вкладки (строки, паттерны, историю)">🧹 Очистить</button>`;
-  container.innerHTML = html;
+  selectEl.innerHTML = st.tabs.map((tab, i) =>
+    '<option value="' + i + '"' + (i === st.activeTab ? " selected" : "") + '>' + esc(tab.name) + '</option>'
+  ).join("");
+  selectEl.value = st.activeTab;
+
+  const bCloseTabEl = document.getElementById("bCloseTab");
+  if (bCloseTabEl) bCloseTabEl.disabled = st.tabs.length <= 1;
+
+  const bRestoreChainEl = document.getElementById("bRestoreChain");
+  if (bRestoreChainEl) bRestoreChainEl.style.display = st.savedChain ? "" : "none";
+}
+
+/* Заголовок номеров столбцов (режим "🔢 Выбор столбца") — два ряда (десятки/единицы),
+   выровненные под сетку битов той же .num/.pat/.bits/.pat2 разметкой, что и обычные строки,
+   чтобы номер столбца N визуально стоял точно над N-м символом каждой строки. */
+function renderColHeader(maxLen){
+  const el = document.getElementById("colHeader");
+  if (!el) return;
+  if (!st.colSelectMode || maxLen <= 0) {
+    el.classList.remove("act");
+    el.innerHTML = "";
+    return;
+  }
+  el.classList.add("act");
+
+  const alignCls = "al-" + st.align;
+  let tens = "", units = "";
+  for (let c = 0; c < maxLen; c++) {
+    const num = c + 1;
+    const t = Math.floor(num / 10) % 10;
+    const u = num % 10;
+    const selCls = st.selectedCol === c ? " sel" : "";
+    tens += '<span class="col-cell' + selCls + '" data-col="' + c + '" title="Столбец ' + num + '">' + (num >= 10 ? t : "&nbsp;") + '</span>';
+    units += '<span class="col-cell' + selCls + '" data-col="' + c + '" title="Столбец ' + num + '">' + u + '</span>';
+  }
+  el.innerHTML =
+    '<div class="col-hdr-row"><span class="num"></span><span class="pat"></span><span class="bits ' + alignCls + '"><span>' + tens + '</span></span><span class="pat2"></span></div>' +
+    '<div class="col-hdr-row"><span class="num"></span><span class="pat"></span><span class="bits ' + alignCls + '"><span>' + units + '</span></span><span class="pat2"></span></div>';
+}
+
+/* Границы строк для режима "🔢 Выбор столбца":
+   - без выделения — все строки (как раньше);
+   - выделена ОДНА строка — от начала таблицы до неё включительно (строки выше и она сама);
+   - выделены ДВЕ И БОЛЕЕ строк — только диапазон МЕЖДУ крайними из выделенных (включительно),
+     а не от начала таблицы — верхняя выделенная строка сама становится верхней границей. */
+function colSelectRowRange(){
+  if (!st.selectedRows || st.selectedRows.size === 0) return { lo: 0, hi: Infinity };
+  const arr = Array.from(st.selectedRows);
+  if (arr.length === 1) return { lo: 0, hi: arr[0] };
+  return { lo: Math.min(...arr), hi: Math.max(...arr) };
+}
+
+/* Клик по номеру столбца (режим "🔢 Выбор столбца"): КАЖДУЮ строку, которая своими
+   символами реально достаёт до этого столбца (с учётом выравнивания), циклически сдвигает
+   так, чтобы на этом столбце оказалась '1' — с минимумом единиц слева от неё (bestColumnShift).
+   Строки без единиц или не достающие до столбца — не трогаются. */
+function selectColumn(col){
+  let maxLen = 0;
+  for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
+  if (col < 0 || col >= maxLen) return;
+
+  const range = colSelectRowRange();
+  snapshot();
+  for (let i = range.lo; i < st.rows.length && i <= range.hi; i++) {
+    const rowStr = st.rows[i];
+    if (!rowStr || !rowStr.length) continue;
+    const shift = alignShift(maxLen, rowStr.length, st.align);
+    const localCol = col - shift;
+    if (localCol < 0 || localCol >= rowStr.length) continue;
+    const d = bestColumnShift(rowStr, localCol);
+    if (d == null) continue;
+    st.rows[i] = rotateRightBy(rowStr, d);
+  }
+  st.selectedCol = col;
+  render();
+  saveCache();
+}
+
+/* Наведение на номер столбца (режим "🔢 Выбор столбца"): подсвечивает ВЕСЬ столбец —
+   сам номер (в обоих рядах десятки/единицы) и соответствующий бит в каждой строке ниже,
+   с учётом текущего выравнивания (data-col проставлен в render() по видимой колонке). */
+function highlightColumn(col){
+  clearColumnHighlight();
+  document.querySelectorAll('#colHeader .col-cell[data-col="' + col + '"]').forEach(el => el.classList.add("col-hover"));
+  document.querySelectorAll('#rows [data-col="' + col + '"]').forEach(el => el.classList.add("col-hover-bit"));
+}
+function clearColumnHighlight(){
+  document.querySelectorAll(".col-hover").forEach(el => el.classList.remove("col-hover"));
+  document.querySelectorAll(".col-hover-bit").forEach(el => el.classList.remove("col-hover-bit"));
 }
 
 function render(){
@@ -1267,6 +1747,7 @@ function render(){
 
   let maxLen = 0;
   for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
+  renderColHeader(maxLen);
 
   const hl = new Map();
   if (st.hit) for (const c of st.hit.cells){
@@ -1275,9 +1756,39 @@ function render(){
   }
   const hitCls = st.hit ? ("hit " + KIND_CLS[st.hit.kind]) : "hit";
 
+  const bgInfo = computeBgSearchTarget();
+  const bgTargetIdx = bgInfo ? bgInfo.targetIdx : null;
+  const bgMatched = !!(bgInfo && bgInfo.matched);
+  if (st.bgSearch) {
+    const hitNow = bgMatched ? bgTargetIdx : null;
+    if (hitNow !== st.bgSearchLastHit) {
+      if (hitNow != null) say(`🔍 Фон-поиск: паттерн строки ${hitNow + 1} найден!`);
+      st.bgSearchLastHit = hitNow;
+    }
+  }
+
   const out = [];
   const n = Math.max(st.rows.length, st.pats.length);
   const alignCls = "al-" + st.align;
+
+  // Гориз.XOR: подсветка "синим" (xored-bit) идёт по ВСЕЙ въезжающей цепочке целиком — и по
+  // строкам выше (они и составляют st.horizBigChain), и по самой целевой строке — а не
+  // только по целевой. Глобальный индекс бита строки i (i < hxTarget) внутри
+  // st.horizBigChain = сумма длин строк 0..i-1 (в порядке хorizChainText) + k. Целевая
+  // строка лежит в st.horizBigOrig на позициях [chainLen, chainLen+rowLen).
+  const hxActive = st.mode === "horiz_xor";
+  const hxChainLenAll = hxActive ? (st.horizBigChain || "").length : 0;
+  const hxFullLenAll = hxActive ? (st.horizBigOrig || "").length : 0;
+  const hxTarget = hxActive ? st.horizBigTargetIdx : -1;
+  const hxS = hxActive ? (st.horizXoredLength || 0) : 0;
+  const hxExhausted = hxActive && (st.horizChainLen || 0) > 0 && hxS >= (st.horizChainLen || 0);
+  const hxWin = (hxActive && !hxExhausted) ? horizWindowRange(hxChainLenAll, hxFullLenAll, hxS) : null;
+  let hxChainOffset = 0; // бежит вперёд по мере прохода строк цикла (только для i < hxTarget)
+
+  // Режим "🔢 Выбор столбца": границы строк — см. colSelectRowRange() (1 выделенная строка —
+  // от начала до неё, 2+ — только между крайними); и подсветка колонки, и сам клик по номеру
+  // столбца (см. selectColumn()) это учитывают.
+  const colSelRange = colSelectRowRange();
 
   for (let i = 0; i < n; i++){
     const s = st.rows[i] || "";
@@ -1290,13 +1801,17 @@ function render(){
     let pat = "";
     let patRight = "";
     if (p && p.text){
-      const c = p.found ? ("pat found " + KIND_CLS[p.kind || 0]) : "pat";
-      const c2 = p.found ? ("pat pat2 found " + KIND_CLS[p.kind || 0]) : "pat pat2";
+      const bgHitSuffix = i === bgTargetIdx ? (bgMatched ? " bg-search-hit" : " bg-search-target") : "";
+      const c = (p.found ? ("pat found " + KIND_CLS[p.kind || 0]) : "pat") + bgHitSuffix;
+      const c2 = (p.found ? ("pat pat2 found " + KIND_CLS[p.kind || 0]) : "pat pat2") + bgHitSuffix;
       
       const stepHtml = p.found ? '<span class="st">#' + p.step + "</span>" : "";
       
       let textHtml = esc(p.text);
-      if (p.found && p.skip1 && p.text.length > 1) {
+      // Фоновый поиск сверяется через textMatchesPattern(), который сам учитывает живую
+      // st.skipFirst (а не "замороженный" p.skip1, записанный только при обычной находке) —
+      // подсветка первого символа для target/hit-строки идёт по тому же живому флагу.
+      if ((p.found && p.skip1 && p.text.length > 1) || (i === bgTargetIdx && st.skipFirst && p.text.length > 1)) {
         textHtml = '<span class="pat-skip">' + esc(p.text[0]) + '</span>' + esc(p.text.slice(1));
       }
       
@@ -1312,22 +1827,46 @@ function render(){
     
     let bits = "&nbsp;".repeat(shift);
     const marks = hl.get(i);
-    
-    const isHorizTarget = (st.mode === "horiz_xor" && i === st.bIdx && st.horizXoredLength > 0);
-    
+
+    // Эта строка — часть въезжающей цепочки (выше целевой строки)?
+    const isHxChainRow = hxActive && !hxExhausted && i < hxTarget && s.length > 0;
+    // Эта строка — сама целевая строка?
+    const isHxTargetRow = hxActive && !hxExhausted && i === hxTarget;
+
+    const isColSel = st.colSelectMode && st.selectedCol >= 0 && i >= colSelRange.lo && i <= colSelRange.hi;
+
     for (let k = 0; k < s.length; k++) {
       const bit = s[k];
+      let isXoredBit = false;
+      if (isHxChainRow && hxWin) {
+        // Та же единая шкала p, что и у целевой строки (см. horizWindowRange) — цепочка
+        // подсвечивается только после того, как подсветка "дойдёт" до её позиций снизу вверх.
+        const globalIdx = hxChainOffset + k;
+        isXoredBit = globalIdx >= hxWin.start && globalIdx <= hxWin.end;
+      } else if (isHxTargetRow && hxWin) {
+        const globalIdx = hxChainLenAll + k;
+        isXoredBit = globalIdx >= hxWin.start && globalIdx <= hxWin.end;
+      }
+      const isColSelBit = isColSel && (shift + k) === st.selectedCol;
+
+      const colAttr = (st.colSelectMode && i >= colSelRange.lo && i <= colSelRange.hi) ? (' data-col="' + (shift + k) + '"') : "";
+
       if (marks && marks.has(k)) {
-        bits += '<span class="' + hitCls + '">' + bit + '</span>';
-      } else if (isHorizTarget && k < st.horizXoredLength && (bit === '0' || bit === '1')) {
-        bits += '<span class="xored-bit" style="background:rgba(0,229,255,0.15); padding:0; border-radius:1px">' + bit + '</span>';
+        bits += '<span class="' + hitCls + '"' + colAttr + '>' + bit + '</span>';
+      } else if (isColSelBit && (bit === '0' || bit === '1')) {
+        bits += '<span class="col-sel-bit b' + bit + '"' + colAttr + '>' + bit + '</span>';
+      } else if (isXoredBit && (bit === '0' || bit === '1')) {
+        bits += '<span class="xored-bit"' + colAttr + '>' + bit + '</span>';
       } else if (bit === '0' || bit === '1') {
-        bits += '<span class="b' + bit + '">' + bit + '</span>';
+        bits += '<span class="b' + bit + '"' + colAttr + '>' + bit + '</span>';
+      } else if (colAttr) {
+        bits += '<span' + colAttr + '>' + esc(bit) + '</span>';
       } else {
         bits += esc(bit);
       }
     }
-    
+    if (isHxChainRow) hxChainOffset += s.length;
+
     bits += "&nbsp;".repeat(padRight);
 
     out.push('<div class="' + cls.join(" ") + '" data-idx="' + i + '"><span class="num">' + (i + 1) + "</span>" +
@@ -1335,7 +1874,43 @@ function render(){
   }
   document.getElementById("rows").innerHTML = out.join("");
 
-  const fullChainText = (st.tailBuffer || "") + buildChain(st, st.aIdx, st.bIdx).text;
+  let fullChainText = "";
+  if (st.mode === "step1" || st.mode === "step2") {
+    const aRow = st.rows[st.aIdx] || "";
+    const bRow = st.rows[st.bIdx] || "";
+    fullChainText = (st.tailBuffer || "") + aRow + bRow;
+  } else if (st.mode === "horiz_xor") {
+    // Та же скользящая цепочка (строки строго выше bIdx), что реально используется в doStep.
+    fullChainText = st.horizBigChain || horizChainText(st.bIdx);
+  } else {
+    // Все строки от первой до текущей — но БЕЗ самой текущей (st.bIdx): пока строка ещё
+    // "в переборе" (например, крутится через autoShift в поиске совпадения), она не
+    // зафиксирована и не должна попадать в сквозную. Как только строка "сохраняется"
+    // (bIdx сдвигается дальше, эта строка становится историей) — она естественно попадает
+    // в диапазон на следующем рендере. Не зависит от st.used[] (тот не всегда надёжно
+    // заполнен). Это только для ПОКАЗА — реальный поиск паттернов (buildChain) не трогаем.
+    let simple = "";
+    for (let i = 0; i < st.bIdx; i++) {
+      if (st.rows[i] && st.rows[i].length) simple += getRowBits(st, i);
+    }
+    fullChainText = (st.tailBuffer || "") + simple;
+  }
+
+  // Фоновый поиск (cBgSearch): показываем в этом же окне РЕАЛЬНО вычисленный результат
+  // (интерлив / XOR пары / XOR всех выше+выделенной), который сравнивается с паттерном строки
+  // ниже выделенной — вместо обычной сквозной строки, которая с этими режимами не связана и
+  // не отражала бы, что именно проверяется на совпадение.
+  const chainResultLabelEl = document.getElementById("chainResultLabel");
+  if (bgInfo) {
+    fullChainText = bgInfo.result;
+    if (chainResultLabelEl) {
+      const modeLabel = st.bgSearchMode === "xor2" ? "XOR 2" : st.bgSearchMode === "xorAll" ? "XOR всех" : "Интерлив";
+      chainResultLabelEl.textContent = "🔍 Результат фон-поиска (" + modeLabel + ")";
+    }
+  } else if (chainResultLabelEl) {
+    chainResultLabelEl.textContent = "🔗 Сквозная строка результата";
+  }
+
   const chainLenEl = document.getElementById("chainLen");
   const chainTextEl = document.getElementById("chainText");
   if (chainLenEl && chainTextEl) {
@@ -1345,45 +1920,66 @@ function render(){
     let overlayHtml = "";
     
     if (st.mode === "horiz_xor") {
-      const a = st.aIdx, b = st.bIdx;
-      if (a >= 0 && b >= 0 && st.rows[a] && st.rows[b]) {
-        const strB = getRowBits(st, b);
-        const bitIdx = (st.horizBitIdx || 0) % (fullChainText.length || 1);
-        const xorLen = st.horizXoredLength || 0;
+      const b = st.bIdx;
+      if (b >= 0 && st.rows[b]) {
+        // Сквозная (маленькая, неизменная) = уже найденные строки выше b — она и есть
+        // скользящая цепочка, въезжающая СПРАВА в цель. Цель (большая, неизменная) =
+        // сквозная + текущее содержимое строки b. Результат = applyHorizBigSlide на шаге S,
+        // с подсветкой позиций, сейчас накрытых въезжающей цепочкой.
+        const chain = st.horizBigChain || "";
+        const full = st.horizBigOrig || getRowBits(st, b);
+        const chainLen = chain.length;
+        const fullLen = full.length;
+        const S = st.horizXoredLength || 0; // сколько шагов поиска уже сделано
+        const res = S > 0 ? applyHorizBigSlide(chain, full, S) : full;
 
-        let htmlB = "";
-        for (let j = 0; j < strB.length; j++) {
-          const char = strB[j];
-          if (char === '0' || char === '1') {
-            if (j < xorLen) {
-              htmlB += '<span class="xored-bit" style="background:rgba(0,229,255,0.2); padding:0 1px; border-radius:2px" title="Въехавший бит">' + char + '</span>';
-            } else {
-              htmlB += '<span class="b' + char + '">' + char + '</span>';
-            }
+        // Единая шкала p по всей объединённой строке (chain, затем цель) — подсветка сперва
+        // растёт внутри цели снизу, и только потом переходит на цепочку (см. horizWindowRange).
+        const winRange = horizWindowRange(chainLen, fullLen, S);
+        let chainHtml = "";
+        for (let idx = 0; idx < chainLen; idx++) {
+          const ch = chain[idx];
+          const active = !!winRange && idx >= winRange.start && idx <= winRange.end;
+          if (active && (ch === '0' || ch === '1')) {
+            chainHtml += '<span class="xored-bit" title="Сейчас касается цели">' + ch + '</span>';
+          } else if (ch === '0' || ch === '1') {
+            chainHtml += '<span class="b' + ch + '">' + ch + '</span>';
           } else {
-            htmlB += esc(char);
+            chainHtml += esc(ch);
+          }
+        }
+        if (!chainHtml) chainHtml = '<span class="empty">пусто</span>';
+
+        let origHtml = "";
+        for (let k = 0; k < fullLen; k++) {
+          const ch = full[k];
+          origHtml += (ch === '0' || ch === '1') ? ('<span class="b' + ch + '">' + ch + '</span>') : esc(ch);
+        }
+
+        // Позиции цели, сейчас накрытые въезжающей (справа) цепочкой (тот же winRange, что и выше).
+        let resHtml = "";
+        for (let j = 0; j < fullLen; j++) {
+          const ch = res[j];
+          const covered = !!winRange && j >= winRange.start && j <= winRange.end;
+          if (covered && (ch === '0' || ch === '1')) {
+            resHtml += '<span class="xored-bit" title="Под въезжающей цепочкой сейчас">' + ch + '</span>';
+          } else if (ch === '0' || ch === '1') {
+            resHtml += '<span class="b' + ch + '">' + ch + '</span>';
+          } else {
+            resHtml += esc(ch);
           }
         }
 
-        let chainRiding = "";
-        if (fullChainText.length > 0) {
-          const start = Math.max(0, bitIdx - 12);
-          const end = Math.min(fullChainText.length, bitIdx + 12);
-          if (start > 0) chainRiding += "...";
-          for(let i = start; i < end; i++) {
-            if (i === bitIdx) {
-              chainRiding += `<span class="horiz-active-bit" title="Активный входной бит">${fullChainText[i]}</span>`;
-            } else {
-              chainRiding += `<span class="b${fullChainText[i]}">${fullChainText[i]}</span>`;
-            }
-          }
-          if (end < fullChainText.length) chainRiding += "...";
-        }
+        // Прогресс единого непрерывного прохода (въезд + полное перекрытие + выезд)
+        const totalSteps = st.horizChainLen || (chainLen + fullLen);
+        const progressHtml = '<div class="horiz-progress">🔎 поиск · Шаг ' + Math.min(S, totalSteps) + '/' + totalSteps + '</div>';
 
-        overlayHtml = 
+        overlayHtml =
           '<div class="horiz-info">' +
-            '<div><b>Поток Сквозной (вход):</b> ' + chainRiding + '</div>' +
-            '<div style="margin-top:4px"><b>Строка #' + (b + 1) + ' (въехало ' + xorLen + ' бит):</b> ' + htmlB + '</div>' +
+            progressHtml +
+            '<div class="horiz-ride-row horiz-ride-wrap"><span class="horiz-ride-tag">Сквозная</span><span class="horiz-ride-text">' + chainHtml + '</span></div>' +
+            '<div class="horiz-ride-row horiz-ride-wrap"><span class="horiz-ride-tag">Цель</span><span class="horiz-ride-text">' + origHtml + '</span></div>' +
+            '<div class="horiz-ride-row horiz-ride-wrap"><span class="horiz-ride-tag">Результат</span><span class="horiz-ride-text">' + resHtml + '</span></div>' +
           '</div>' +
           '<div style="border-top: 1px dashed var(--line); margin: 6px 0; padding-top: 4px; color: var(--dim); font-size: 11px;">Сквозной результат:</div>';
       }
@@ -1395,8 +1991,7 @@ function render(){
       let html = "";
       for (let k = 0; k < fullChainText.length; k++) {
         const bit = fullChainText[k];
-        if (bit === '0' || bit === '1') html += '<span class="b' + bit + '">' + bit + '</span>';
-        else html += esc(bit);
+        html += esc(bit);
       }
       chainTextEl.innerHTML = overlayHtml + (html || '<span class="empty">пусто</span>');
     }
@@ -1430,7 +2025,7 @@ function renderStepLogBox(){
   const RESULT_LIMIT = 160;
   const resultRaw = op.result || "";
   const resultShown = resultRaw.length > RESULT_LIMIT ? resultRaw.slice(0, RESULT_LIMIT) : resultRaw;
-  const resultHtml = resultShown.length ? bitsHtml(resultShown) : '<span class="empty">пусто</span>';
+  const resultHtml = resultShown.length ? bitsHtml(resultShown, op.highlightRange) : '<span class="empty">пусто</span>';
   const moreHtml = resultRaw.length > RESULT_LIMIT ? ' <span style="color:var(--dim)">…(+' + (resultRaw.length - RESULT_LIMIT) + ' бит)</span>' : '';
 
   let html = "";
@@ -1575,6 +2170,7 @@ if (canvasEl) {
           say(`Паттерны из файла "${file.name}" загружены в текущую вкладку!`);
         } else {
           st.tplRows = lines;
+          syncRowCountToTpl();
           say(`Строки из файла "${file.name}" загружены в текущую вкладку!`);
         }
         resetAll();
@@ -1583,47 +2179,108 @@ if (canvasEl) {
       reader.readAsText(file, "UTF-8");
     }
   });
+
+  /* Ctrl+V над канвасом — тот же приём, что drag&drop файла выше, но из буфера обмена:
+     целевая зона (строки в центре / паттерны слева-справа) определяется ПОСЛЕДНЕЙ известной
+     позицией мыши над канвасом (у paste-события своих координат нет). Полная замена
+     tplRows/tplPats, как при дропе — не точечная вставка по курсору внутри поля. */
+  let lastCanvasMouseEvt = null;
+  canvasEl.addEventListener("mousemove", e => { lastCanvasMouseEvt = e; });
+  canvasEl.addEventListener("mouseleave", () => { lastCanvasMouseEvt = null; });
+
+  document.addEventListener("paste", e => {
+    const at = document.activeElement;
+    if (at && (at.tagName === "INPUT" || at.tagName === "TEXTAREA" || at.isContentEditable)) return;
+    if (!lastCanvasMouseEvt) return;
+    const text = e.clipboardData && e.clipboardData.getData("text");
+    if (!text) return;
+    e.preventDefault();
+    const isPats = isOverPatternColumn(lastCanvasMouseEvt);
+    const lines = parseLines(text);
+    if (isPats) {
+      st.tplPats = lines;
+      say("Паттерны вставлены из буфера обмена в текущую вкладку!");
+    } else {
+      st.tplRows = lines;
+      syncRowCountToTpl();
+      say("Строки вставлены из буфера обмена в текущую вкладку!");
+    }
+    resetAll();
+    saveCache();
+  });
 }
 
-/* === МАРКЕР 10.2: ВКЛАДКИ И КЛИКИ === */
-/* Клик по панели вкладок Цепочек */
-document.getElementById("chainTabs").onclick = e => {
-  const closeBtn = e.target.closest(".close-tab");
-  if (closeBtn) {
-    e.stopPropagation();
-    const idx = +closeBtn.dataset.close;
+/* === МАРКЕР 10.2: ВКЛАДКИ === */
+/* Управление вкладками-цепочками — статические элементы в верхнем меню (#chainSelect +
+   кнопки), см. renderTabs(). Раньше это была одна делегированная функция на контейнере
+   пилюль-вкладок — теперь у каждого элемента своя прямая привязка. */
+const chainSelectEl = document.getElementById("chainSelect");
+if (chainSelectEl) {
+  chainSelectEl.onchange = () => {
+    const idx = +chainSelectEl.value;
+    if (idx !== st.activeTab) loadTabState(idx);
+  };
+}
+
+const bCloseTabEl = document.getElementById("bCloseTab");
+if (bCloseTabEl) {
+  bCloseTabEl.onclick = () => {
     if (st.tabs && st.tabs.length > 1) {
-      st.tabs.splice(idx, 1);
+      st.tabs.splice(st.activeTab, 1);
       if (st.activeTab >= st.tabs.length) st.activeTab = st.tabs.length - 1;
       loadTabState(st.activeTab);
     }
-    return;
-  }
-  
-  const addBtn = e.target.closest("#bAddTab");
-  if (addBtn) {
+  };
+}
+
+const bSaveChainEl = document.getElementById("bSaveChain");
+if (bSaveChainEl) {
+  bSaveChainEl.onclick = () => {
+    st.savedChain = {
+      rows: st.rows.slice(),
+      pats: st.pats.map(p => p ? { ...p } : null),
+      used: st.used.slice(),
+      tplRows: st.tplRows.slice(),
+      tplPats: st.tplPats.slice(),
+      ui: captureUiSettings()
+    };
+    render(); saveCache();
+    say("✓ Цепочка и настройки сохранены!");
+  };
+}
+
+const bRestoreChainEl = document.getElementById("bRestoreChain");
+if (bRestoreChainEl) {
+  bRestoreChainEl.onclick = () => {
+    if (st.savedChain) {
+      snapshot();
+      st.rows = st.savedChain.rows.slice();
+      st.pats = st.savedChain.pats.map(p => p ? { ...p } : null);
+      st.used = st.savedChain.used.slice();
+      st.tplRows = st.savedChain.tplRows.slice();
+      st.tplPats = st.savedChain.tplPats.slice();
+      if (st.savedChain.ui) applyUiSettings(st.savedChain.ui);
+      render(); saveCache();
+      say("✓ Цепочка и настройки восстановлены!");
+    }
+  };
+}
+
+const bAddTabEl = document.getElementById("bAddTab");
+if (bAddTabEl) {
+  bAddTabEl.onclick = () => {
     saveActiveTabState();
     const newIdx = st.tabs.length;
     const newTab = createDefaultTabState("Цепочка " + (newIdx + 1));
     st.tabs.push(newTab);
     loadTabState(newIdx);
-    return;
-  }
+  };
+}
 
-  const clearBtn = e.target.closest("#bClearTab");
-  if (clearBtn) {
-    clearActiveTab();
-    return;
-  }
-
-  const tabEl = e.target.closest(".chain-tab");
-  if (tabEl) {
-    const idx = +tabEl.dataset.tab;
-    if (idx !== st.activeTab) {
-      loadTabState(idx);
-    }
-  }
-};
+const bClearTabEl = document.getElementById("bClearTab");
+if (bClearTabEl) {
+  bClearTabEl.onclick = () => clearActiveTab();
+}
 
 if (rowCountEl) {
   rowCountEl.oninput = () => {
@@ -1680,6 +2337,12 @@ function getModeParams(mode){
 
 function setMode(modeName){
   st.mode = modeName;
+  // "XOR выдел" и "Интерливинг поиск" — одноразовые оверлей-режимы поверх обычного шага,
+  // их флаги не сбрасываются автоматически по завершении. Если они остались висеть с
+  // прошлого раза, autoRun() проверяет их РАНЬШЕ st.mode и уводит "Авто" в чужую логику
+  // (например, ломая Гориз.XOR). При явном переключении режима — всегда гасим их.
+  st.xorSelectedMode = false;
+  st.interleaveMode = false;
   const modes = {
     "step1":     "bStep",
     "step2":     "bStep2",
@@ -1713,10 +2376,246 @@ function doModeStep(modeName){
   const { pairOnly, forceXor, isScan, isHorizXor, isXorProj } = getModeParams(modeName);
   step(pairOnly, forceXor, isScan, isHorizXor, isXorProj);
 }
+
+/* === МАРКЕР 10.2: СИСТЕМА ВКЛАДОК/ПАНЕЛЕЙ (перенесено из Zerkalius-gpu.html) ===
+   Каждая вкладка — обёртка .menu-panel (panelWrap_<mid>), которая гуляет между тремя
+   местами: закреплённая в доке (#leftSlot/#rightSlot), свёрнутая в выпадающее окно
+   (.menu-drop с тем же id, что и mid) или плавающая на холсте (.floating-panel в body).
+   Раскладка (что где закреплено/висит) сохраняется в localStorage отдельным ключом
+   LAYOUT_KEY — не путать с CACHE_KEY (состояние цепочек). */
+const MENUS = {
+  menuOps:    { title: 'Шаги',         zone: 'leftSlot',  pin: true,  ids: ['opsGroup'],    floatable: true },
+  menuFlow:   { title: 'Управление',   zone: 'leftSlot',  pin: true,  ids: ['flowGroup'],   floatable: true },
+  menuEdit:   { title: 'Правка строк', zone: 'leftSlot',  pin: true,  ids: ['editGroup'],   floatable: true },
+  menuSearch: { title: 'Поиск',        zone: 'rightSlot', pin: true,  ids: ['searchGroup'], floatable: true },
+  menuView:   { title: 'Вид',          zone: 'rightSlot', pin: false, ids: ['viewGroup'],   floatable: true }
+};
+const LAYOUT_KEY = 'zerk_fold_layout';
+
+for (let mid in MENUS) {
+  let m = MENUS[mid];
+  let wrap = document.createElement('div'); wrap.className = 'menu-panel'; wrap.id = 'panelWrap_' + mid;
+  if (m.floatable) wrap.dataset.floatable = '1';
+  let head = document.createElement('div'); head.className = 'panel-head';
+  head.innerHTML = '<span class="panel-drag" title="Перетащить панель' + (m.floatable ? ' — можно и на холст' : '') + '">⋮⋮</span><span class="panel-title">' + m.title + '</span><span class="panel-close" title="Скрыть панель">✕</span>';
+  let closeBtn = head.querySelector('.panel-close');
+  closeBtn.addEventListener('mousedown', e => e.stopPropagation());
+  closeBtn.addEventListener('click', e => { e.stopPropagation(); hideTab(mid); });
+  wrap.appendChild(head);
+  m.ids.forEach(id => { let el = document.getElementById(id); if (el) wrap.appendChild(el); });
+  m.wrapper = wrap;
+}
+
+function saveLayout() {
+  let g = {};
+  ['leftSlot', 'rightSlot'].forEach(z => Array.from(document.getElementById(z).children).forEach((el, i) => { if (el.id) g[el.id] = { z: z, i: i }; }));
+  document.querySelectorAll('body > .floating-panel').forEach(el => { if (el.id) g[el.id] = { z: 'canvas', x: parseInt(el.style.left, 10) || 0, y: parseInt(el.style.top, 10) || 0 }; });
+  let pins = {}; for (let m in MENUS) pins[m] = MENUS[m].pin;
+  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ pins: pins, groups: g })); } catch (e) {}
+}
+
+const SLOT_OF = { leftPanel: 'leftSlot', rightPanel: 'rightSlot' };
+function pidUnderCursor(x, y, precise) {
+  for (let pid in SLOT_OF) {
+    let r = document.getElementById(pid).getBoundingClientRect();
+    let hit = precise ? (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) : (x >= r.left && x <= r.right);
+    if (hit) return pid;
+  }
+  return null;
+}
+function highlightDock(pid) {
+  for (let p in SLOT_OF) document.getElementById(p).classList.toggle('drag-target', p === pid);
+}
+function placeInZone(zone, y) {
+  let after = Array.from(zone.children).find(ch => { if (ch === draggedEl) return false; let r = ch.getBoundingClientRect(); return y < r.top + r.height / 2; });
+  if (after) { if (after !== draggedEl.nextSibling) zone.insertBefore(draggedEl, after); }
+  else if (zone.lastElementChild !== draggedEl) zone.appendChild(draggedEl);
+}
+
+let draggedEl = null, dragOffX = 0, dragOffY = 0;
+function makeDraggable(handle, panel) {
+  function start(clientX, clientY) {
+    draggedEl = panel; panel.classList.add('dragging');
+    let r = panel.getBoundingClientRect(); dragOffX = clientX - r.left; dragOffY = clientY - r.top;
+    document.body.style.cursor = 'grabbing';
+    for (let p in SLOT_OF) document.getElementById(p).classList.add('drop-zone-hint');
+  }
+  handle.addEventListener('mousedown', e => {
+    if (e.button !== 0) return; e.preventDefault(); e.stopPropagation();
+    start(e.clientX, e.clientY);
+  });
+  handle.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return; e.preventDefault(); e.stopPropagation();
+    start(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
+}
+function dragMove(clientX, clientY) {
+  if (!draggedEl) return;
+  let floatable = draggedEl.dataset.floatable === '1';
+  let pid = pidUnderCursor(clientX, clientY, floatable);
+  highlightDock(pid);
+  let zone = pid ? document.getElementById(SLOT_OF[pid]) : null;
+  if (floatable && !zone) {
+    if (!draggedEl.classList.contains('floating-panel')) { draggedEl.classList.add('floating-panel'); document.body.appendChild(draggedEl); }
+    draggedEl.style.left = Math.round(clientX - dragOffX) + 'px';
+    draggedEl.style.top = Math.round(clientY - dragOffY) + 'px';
+    return;
+  }
+  if (draggedEl.classList.contains('floating-panel')) { draggedEl.classList.remove('floating-panel'); draggedEl.style.left = ''; draggedEl.style.top = ''; }
+  if (zone) placeInZone(zone, clientY);
+}
+function dragEnd() {
+  if (!draggedEl) return;
+  let mid = draggedEl.id.replace('panelWrap_', '');
+  let zoneId = draggedEl.classList.contains('floating-panel') ? 'canvas' : (draggedEl.parentElement && draggedEl.parentElement.id);
+  if (MENUS[mid]) {
+    MENUS[mid].zone = zoneId;
+    if ((zoneId === 'leftSlot' || zoneId === 'rightSlot') && !MENUS[mid].pin) {
+      MENUS[mid].pin = true;
+      let cb = document.getElementById(mid + 'Pin'); if (cb) cb.checked = true;
+      let btn = document.querySelector('.menu-btn[data-menu="' + mid + '"]');
+      if (btn) btn.classList.add('pinned');
+      closeMenus(); updateDockVisibility(); updateToggleAllPinsBtn();
+    }
+  }
+  draggedEl.classList.remove('dragging'); draggedEl = null; saveLayout();
+  document.body.style.cursor = '';
+  highlightDock(null);
+  for (let p in SLOT_OF) document.getElementById(p).classList.remove('drop-zone-hint');
+}
+window.addEventListener('mousemove', e => dragMove(e.clientX, e.clientY));
+window.addEventListener('mouseup', dragEnd);
+window.addEventListener('touchmove', e => {
+  if (!draggedEl || !e.touches.length) return;
+  e.preventDefault();
+  dragMove(e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: false });
+window.addEventListener('touchend', dragEnd);
+window.addEventListener('touchcancel', dragEnd);
+
+for (let mid in MENUS) makeDraggable(MENUS[mid].wrapper.querySelector('.panel-head'), MENUS[mid].wrapper);
+
+function applyMenu(mid) {
+  let m = MENUS[mid], drop = document.getElementById(mid);
+  let floating = m.wrapper.classList.contains('floating-panel');
+  if (m.pin) {
+    if (!floating) (document.getElementById(m.zone) || document.getElementById('leftSlot')).appendChild(m.wrapper);
+  } else {
+    if (floating) { m.wrapper.classList.remove('floating-panel'); m.wrapper.style.left = ''; m.wrapper.style.top = ''; floating = false; }
+    drop.appendChild(m.wrapper);
+  }
+  let btn = document.querySelector('.menu-btn[data-menu="' + mid + '"]');
+  if (btn) btn.classList.toggle('pinned', m.pin || floating);
+  updateDockVisibility();
+}
+function hideTab(mid) {
+  let m = MENUS[mid]; if (!m) return;
+  m.pin = false;
+  let cb = document.getElementById(mid + 'Pin'); if (cb) cb.checked = false;
+  applyMenu(mid); closeMenus(); saveLayout(); updateToggleAllPinsBtn();
+}
+function isTabVisible(mid) {
+  let m = MENUS[mid];
+  return !!(m && (m.pin || m.wrapper.classList.contains('floating-panel')));
+}
+function updateDockVisibility() {
+  ['leftPanel', 'rightPanel'].forEach(pid => {
+    let p = document.getElementById(pid);
+    p.classList.toggle('dock-empty', !p.querySelector('.menu-panel'));
+  });
+}
+
+for (let mid in MENUS) {
+  let cb = document.getElementById(mid + 'Pin'); cb.checked = MENUS[mid].pin;
+  cb.addEventListener('mousedown', e => e.stopPropagation());
+  cb.addEventListener('click', e => e.stopPropagation());
+  cb.addEventListener('change', () => { MENUS[mid].pin = cb.checked; applyMenu(mid); saveLayout(); updateToggleAllPinsBtn(); });
+}
+
+function updateToggleAllPinsBtn() {
+  let allOn = Object.keys(MENUS).every(mid => isTabVisible(mid));
+  let bar = document.getElementById('toggleAllPinsBtn');
+  bar.classList.toggle('all-on', allOn);
+  bar.title = allOn ? 'Скрыть все панели' : 'Показать все панели';
+}
+document.getElementById('toggleAllPinsBtn').addEventListener('click', () => {
+  let turnOn = !Object.keys(MENUS).every(mid => isTabVisible(mid));
+  for (let mid in MENUS) {
+    MENUS[mid].pin = turnOn;
+    let cb = document.getElementById(mid + 'Pin'); if (cb) cb.checked = turnOn;
+    applyMenu(mid);
+  }
+  saveLayout();
+  updateToggleAllPinsBtn();
+});
+
+(function loadLayout() {
+  let raw = null; try { raw = localStorage.getItem(LAYOUT_KEY); } catch (e) {}
+  let L = null; if (raw) { try { L = JSON.parse(raw); } catch (e) {} }
+  if (L && L.pins) for (let m in MENUS) if (L.pins[m] !== undefined) { MENUS[m].pin = !!L.pins[m]; let cb = document.getElementById(m + 'Pin'); if (cb) cb.checked = MENUS[m].pin; }
+  if (L && L.groups) for (let m in MENUS) { let wid = 'panelWrap_' + m; if (MENUS[m].pin && L.groups[wid] && L.groups[wid].z !== 'canvas') MENUS[m].zone = L.groups[wid].z; }
+  for (let m in MENUS) applyMenu(m);
+
+  if (L && L.groups) {
+    let list = Object.keys(L.groups).map(id => ({ id: id, z: L.groups[id].z, i: L.groups[id].i, x: L.groups[id].x, y: L.groups[id].y })).sort((a, b) => (a.i || 0) - (b.i || 0));
+    list.forEach(it => {
+      let el = document.getElementById(it.id); if (!el) return;
+      if (it.z === 'canvas' && el.dataset.floatable === '1') {
+        el.classList.add('floating-panel'); document.body.appendChild(el);
+        el.style.left = Math.max(0, Math.min(window.innerWidth - 40, it.x || 20)) + 'px';
+        el.style.top = Math.max(0, Math.min(window.innerHeight - 40, it.y || 20)) + 'px';
+        return;
+      }
+      let z = document.getElementById(it.z);
+      if (z && el.parentElement === z) z.appendChild(el);
+    });
+  }
+  updateToggleAllPinsBtn();
+})();
+
+document.querySelectorAll('.menu-btn').forEach(btn => {
+  let mid = btn.dataset.menu;
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    if (e.detail > 1) return;
+    let m = MENUS[mid];
+    if (m && (m.pin || m.wrapper.classList.contains('floating-panel'))) {
+      hideTab(mid);
+      return;
+    }
+    let drop = document.getElementById(mid); let wasOpen = drop.classList.contains('open');
+    document.querySelectorAll('.menu-drop').forEach(d => d.classList.remove('open'));
+    document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('open'));
+    if (!wasOpen) { drop.style.left = Math.min(btn.offsetLeft, Math.max(0, window.innerWidth - 330)) + 'px'; drop.classList.add('open'); btn.classList.add('open'); }
+  });
+  btn.addEventListener('dblclick', e => {
+    e.stopPropagation();
+    let m = MENUS[mid]; if (!m) return;
+    if (m.wrapper.classList.contains('floating-panel')) { m.wrapper.classList.remove('floating-panel'); m.wrapper.style.left = ''; m.wrapper.style.top = ''; }
+    let leftH = document.getElementById('leftSlot').scrollHeight, rightH = document.getElementById('rightSlot').scrollHeight;
+    m.zone = (leftH <= rightH) ? 'leftSlot' : 'rightSlot';
+    m.pin = true;
+    let cb = document.getElementById(mid + 'Pin'); if (cb) cb.checked = true;
+    applyMenu(mid); closeMenus(); saveLayout(); updateToggleAllPinsBtn();
+  });
+});
+document.querySelectorAll('.menu-drop').forEach(d => { d.addEventListener('mousedown', e => e.stopPropagation()); d.addEventListener('click', e => e.stopPropagation()); });
+function closeMenus() { document.querySelectorAll('.menu-drop').forEach(d => d.classList.remove('open')); document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('open')); }
+window.addEventListener('mousedown', e => { if (!e.target.closest('.menu-drop') && !e.target.closest('.menu-btn')) closeMenus(); });
+
 /* === МАРКЕР 10.3: ЛОГИКА СДВИГА И ХОТКЕИ === */
 document.getElementById("rows").onclick = e => {
   // Игнорируем клики по текстовым полям редактирования
   if (e.target.tagName === "INPUT" || e.target.closest(".edit-row-input")) return;
+  // Протяжка мышью (см. ниже) уже выставила диапазон выделения сама — обычный click,
+  // который браузер шлёт следом за mouseup, не должен схлопывать его обратно к одной строке.
+  if (rowDragMoved) return;
+  // Двойной клик (вход в ручную правку строки, см. dblclick ниже) технически шлёт ДВА click
+  // подряд по той же строке — второй (e.detail===2) иначе попадал в ветку "повторный клик по
+  // уже выделенной строке -> снять выделение" и стирал выделение ДО открытия поля правки, из-за
+  // чего фоновый поиск (завязан на выделенную строку) переставал видеть контекст. Второй и
+  // последующие клики серии игнорируем — выделение трогает только одиночный клик.
+  if (e.detail > 1) return;
 
   const ln = e.target.closest(".ln");
   if (!ln) return;
@@ -1741,16 +2640,46 @@ document.getElementById("rows").onclick = e => {
   saveCache();
 };
 
-/* Двойной клик по строке — режим РУЧНОГО РЕДАКТИРОВАНИЯ */
-document.getElementById("rows").addEventListener("dblclick", e => {
-  // Игнорируем двойной клик, если мы уже кликаем внутри поля ввода
+/* Выделение НЕСКОЛЬКИХ строк протяжкой мыши (зажать и провести по строкам). Обычный клик
+   без движения по-прежнему обрабатывается выше (.onclick) — сюда попадает только реальный
+   драг: mousedown запоминает строку-якорь, mousemove по другим строкам красит диапазон
+   [якорь..курсор] целиком, mouseup фиксирует. Ctrl/Cmd+клик оставлен как раньше — точечное
+   добавление/снятие одной строки без протяжки. */
+let rowDragAnchor = null, rowDragMoved = false;
+document.getElementById("rows").addEventListener("mousedown", e => {
   if (e.target.tagName === "INPUT" || e.target.closest(".edit-row-input")) return;
-
+  if (e.ctrlKey || e.metaKey || e.button !== 0) return;
   const ln = e.target.closest(".ln");
   if (!ln) return;
   const idx = +ln.dataset.idx;
   if (isNaN(idx)) return;
+  rowDragAnchor = idx;
+  rowDragMoved = false;
+});
+document.getElementById("rows").addEventListener("mousemove", e => {
+  if (rowDragAnchor === null || !(e.buttons & 1)) return;
+  const ln = e.target.closest(".ln");
+  if (!ln) return;
+  const idx = +ln.dataset.idx;
+  if (isNaN(idx) || (idx === rowDragAnchor && !rowDragMoved)) return;
+  rowDragMoved = true;
+  const lo = Math.min(rowDragAnchor, idx), hi = Math.max(rowDragAnchor, idx);
+  st.selectedRows = new Set();
+  for (let i = lo; i <= hi; i++) st.selectedRows.add(i);
+  render();
+});
+window.addEventListener("mouseup", () => {
+  if (rowDragAnchor === null) return;
+  if (rowDragMoved) saveCache();
+  rowDragAnchor = null;
+  setTimeout(() => { rowDragMoved = false; }, 0);
+});
 
+/* Режим РУЧНОГО РЕДАКТИРОВАНИЯ строки — вызывается и по двойному клику, и по клавише F2,
+   когда выделена ровно одна строка (см. глобальный обработчик хоткеев ниже). */
+function startEditRow(idx){
+  const ln = document.getElementById("rows").querySelector('.ln[data-idx="' + idx + '"]');
+  if (!ln) return;
   if (ln.querySelector(".edit-row-input")) return;
 
   const bitsContainer = ln.querySelector(".bits");
@@ -1784,7 +2713,7 @@ document.getElementById("rows").addEventListener("dblclick", e => {
     if (isFinished) return;
     isFinished = true;
     if (save && inp.value !== currentText) {
-      snapshot(); // Сохраняем историю для отката (Undo)
+      snapshot(); // Сохраняем историю для отката (Undo / Ctrl+Z)
       st.rows[idx] = inp.value.trim();
     }
     render();
@@ -1793,10 +2722,10 @@ document.getElementById("rows").addEventListener("dblclick", e => {
 
   // Потеря фокуса (клик мимо инпута) -> сохранение
   inp.addEventListener("blur", () => finishEdit(true));
-  
+
   // Перехват Enter и Escape внутри инпута
   inp.addEventListener("keydown", ev => {
-    ev.stopPropagation(); // Не пускаем Enter / Esc в глобальные хоткеи!
+    ev.stopPropagation(); // Не пускаем Enter / Esc / Ctrl+Z в глобальные хоткеи!
     if (ev.key === "Enter") {
       ev.preventDefault();
       finishEdit(true);
@@ -1811,6 +2740,19 @@ document.getElementById("rows").addEventListener("dblclick", e => {
     inp.focus();
     inp.select();
   }, 20);
+}
+
+/* Двойной клик по строке — режим РУЧНОГО РЕДАКТИРОВАНИЯ */
+document.getElementById("rows").addEventListener("dblclick", e => {
+  // Игнорируем двойной клик, если мы уже кликаем внутри поля ввода
+  if (e.target.tagName === "INPUT" || e.target.closest(".edit-row-input")) return;
+
+  const ln = e.target.closest(".ln");
+  if (!ln) return;
+  const idx = +ln.dataset.idx;
+  if (isNaN(idx)) return;
+
+  startEditRow(idx);
 });
 
 const alignBtns = document.querySelectorAll("#alignGrp button");
@@ -1824,6 +2766,118 @@ alignBtns.forEach(btn => {
   };
 });
 
+const spiralDirBtns = document.querySelectorAll("#spiralDirGrp button");
+spiralDirBtns.forEach(btn => {
+  btn.onclick = () => {
+    spiralDirBtns.forEach(b => b.classList.remove("act"));
+    btn.classList.add("act");
+    st.spiralUpDir = btn.getAttribute("data-val");
+    saveCache();
+  };
+});
+
+const cBgSearchEl = document.getElementById("cBgSearch");
+if (cBgSearchEl) {
+  cBgSearchEl.onchange = () => {
+    st.bgSearch = cBgSearchEl.checked;
+    st.bgSearchLastHit = -1;
+    render();
+    saveCache();
+  };
+}
+const bgSearchModeBtns = document.querySelectorAll("#bgSearchModeGrp button");
+bgSearchModeBtns.forEach(btn => {
+  btn.onclick = () => {
+    bgSearchModeBtns.forEach(b => b.classList.remove("act"));
+    btn.classList.add("act");
+    st.bgSearchMode = btn.getAttribute("data-val");
+    st.bgSearchLastHit = -1;
+    render();
+    saveCache();
+  };
+});
+
+/* Фоновый поиск: выделенная строка ФИКСИРОВАНА (не двигается сама, в отличие от doInterleaveStep/
+   doXorSelectedStep) — при каждом render() пересчитывает результат (интерлив / XOR пары / XOR
+   всех выше+выделенной, где пара всегда — строка над выделенной + сама выделенная) и сверяет
+   его с паттерном строки НИЖЕ выделенной. Возвращает { targetIdx, matched } — targetIdx нужен,
+   чтобы подсветить ЧТО ищем, ещё до совпадения; matched — найдено ли оно уже. null — если фон
+   выключен или выделения/цели нет. Ничего не останавливает и не переключает, только подсветка. */
+function computeBgSearchTarget(){
+  if (!st.bgSearch) return null;
+  if (!st.selectedRows || st.selectedRows.size === 0) return null;
+  const selIdx = Math.min(...st.selectedRows);
+  if (selIdx <= 0) return null;
+  const targetIdx = selIdx + 1;
+  if (targetIdx >= st.rows.length) return null;
+  const pat = st.pats[targetIdx];
+  if (!pat || !pat.text) return null;
+
+  const rowAbove = st.rows[selIdx - 1] || "";
+  const rowSel = st.rows[selIdx] || "";
+  let result;
+  if (st.bgSearchMode === "xor2") {
+    result = xorPair(rowAbove, rowSel, st.align);
+  } else if (st.bgSearchMode === "xorAll") {
+    result = xorRowsDownTo(st.rows, selIdx, st.align, st);
+  } else {
+    result = interleavePair(rowAbove, rowSel, st.align);
+  }
+  return { targetIdx, result, matched: textMatchesPattern(result, pat.text) };
+}
+
+/* === "Спираль": строки в диапазоне (см. colSelectRowRange — весь список, либо от начала до
+   выделенной строки, либо между двумя крайними выделенными) читаются ОДНОЙ непрерывной лентой
+   символов сверху вниз, сдвигаются по кругу на 1 символ (перенос с одного конца ленты на
+   другой), затем нарезаются обратно по ИСХОДНЫМ длинам строк — портировано 1:1 из
+   manualElkaShift() в Zerkalius-genezis.html (dir=-1 — влево по ленте: первый символ уходит в
+   конец; dir=1 — вправо: последний символ встаёт в начало). */
+function spiralStep(dir){
+  const n = st.rows.length;
+  if (!n) return;
+  const range = colSelectRowRange();
+  const lo = Math.max(0, range.lo);
+  const hi = Math.min(n - 1, range.hi === Infinity ? n - 1 : range.hi);
+  if (hi < lo) return;
+
+  const rowLengths = [];
+  let buffer = [];
+  for (let i = lo; i <= hi; i++) {
+    const s = st.rows[i] || "";
+    rowLengths.push(s.length);
+    buffer = buffer.concat(s.split(""));
+  }
+  if (buffer.length <= 1) return;
+
+  snapshot();
+  if (dir === 1) {
+    const last = buffer.pop();
+    buffer.unshift(last);
+  } else {
+    const first = buffer.shift();
+    buffer.push(first);
+  }
+
+  let ptr = 0;
+  for (let k = 0; k < rowLengths.length; k++) {
+    const len = rowLengths[k];
+    st.rows[lo + k] = buffer.slice(ptr, ptr + len).join("");
+    ptr += len;
+  }
+  render();
+  saveCache();
+}
+function spiralMove(vDir){
+  // "право" по ленте — это "вверх", если переключатель на "right"; иначе — наоборот.
+  const rightIsUp = st.spiralUpDir === "right";
+  const dir = (vDir === "up") === rightIsUp ? 1 : -1;
+  spiralStep(dir);
+}
+const bSpiralUpEl = document.getElementById("bSpiralUp");
+if (bSpiralUpEl) bSpiralUpEl.onclick = () => spiralMove("up");
+const bSpiralDownEl = document.getElementById("bSpiralDown");
+if (bSpiralDownEl) bSpiralDownEl.onclick = () => spiralMove("down");
+
 function step(pairOnly, forceXor = false, isScan = false, isHorizXor = false, isXorProj = false){
   readToggles();
   if (!doStep(pairOnly, forceXor, isScan, isHorizXor, isXorProj)) say("Шаг не выполнен: двигаться некуда.");
@@ -1836,11 +2890,52 @@ function autoRun(){
   readToggles();
   st.running = true;
   document.getElementById("bStop").disabled = false;
+
+  if (st.xorSelectedMode) {
+    const tick = () => {
+      if (!st.running) return finishAuto();
+
+      const t0 = performance.now();
+      let stepsCount = 0;
+      while (performance.now() - t0 < 12) {
+        if (!doXorSelectedStep()) {
+          return finishAuto(`Режим XOR выдел завершен (выполнено ${stepsCount} сдвигов).`);
+        }
+        stepsCount++;
+      }
+
+      render();
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    return;
+  }
+
+  if (st.interleaveMode) {
+    const tick = () => {
+      if (!st.running) return finishAuto();
+
+      const t0 = performance.now();
+      let stepsCount = 0;
+      while (performance.now() - t0 < 12) {
+        if (!doInterleaveStep()) {
+          return finishAuto(`Режим Интерливинг завершен (выполнено ${stepsCount} шагов).`);
+        }
+        stepsCount++;
+      }
+
+      render();
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    return;
+  }
+
   const { pairOnly, forceXor, isScan, isHorizXor, isXorProj } = getModeParams(st.mode || "step1");
-  
+
   const tick = () => {
     if (!st.running) return finishAuto();
-    
+
     // Оптимизация 4: Time-based батчинг
     const t0 = performance.now();
     let stepsCount = 0;
@@ -1848,15 +2943,16 @@ function autoRun(){
       if (!doStep(pairOnly, forceXor, isScan, isHorizXor, isXorProj)) {
         return finishAuto(`Прогон завершен: двигаться некуда (выполнено ${stepsCount} ш. в посл. кадре).`);
       }
-      
-      // Авто-остановка на находке
-      if (st.stopOnHit && st.hit) {
+
+      // Авто-остановка на находке (не применяется к Гориз.XOR — там находка не прерывает
+      // проход, доходить до конца строки/цепочки решает сам doStep)
+      if (st.stopOnHit && st.hit && !isHorizXor) {
         return finishAuto(`🎯 Найдено совпадение! Авто-прогон остановлен.`);
       }
-      
+
       stepsCount++;
     }
-    
+
     render();
     requestAnimationFrame(tick);
   };
@@ -1881,8 +2977,94 @@ document.getElementById("bStepScan").onclick = () => doModeStep("scan");
 
 document.getElementById("bAuto").onclick  = () => autoRun();
 document.getElementById("bStop").onclick  = () => { st.running = false; };
-document.getElementById("bUndo").onclick  = () => { if (!restore()) say("Откатывать нечего."); render(); saveCache(); };
+document.getElementById("bUndo").onclick  = () => {
+  if (!restore()) say("Откатывать нечего.");
+  render(); saveCache();
+};
 document.getElementById("bReset").onclick = () => { resetAll(); say("Сброшено к шаблону."); saveCache(); };
+
+/* Удаление выделенных (кликом) строк — отдельная операция, НЕ связанная с откатом шага.
+   Вызывается клавишей Delete (см. глобальные хоткеи ниже). Шаблон (tplRows/tplPats — то,
+   что было закинуто дропом изначально) НЕ трогаем: удаление затрагивает только текущую
+   рабочую копию, чтобы "Сброс" всегда мог вернуть исходные строки как они были при первой
+   загрузке, независимо от последующих ручных удалений/сдвигов/правок. */
+function deleteSelectedRows(){
+  if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
+  snapshot();
+  const selected = Array.from(st.selectedRows).sort((a, b) => b - a);
+  for (const idx of selected) {
+    st.rows.splice(idx, 1);
+    st.pats.splice(idx, 1);
+    st.used.splice(idx, 1);
+  }
+  st.selectedRows.clear();
+  render(); saveCache();
+  say(`Удалено ${selected.length} строк(и).`);
+}
+
+/* Очищает содержимое ВСЕХ строк цепочки, оставляя только 1-ю строку = "1" — точка старта
+   для генерации Гориз.XOR (см. isHorizXor в doStep: если ниже нет строки, но паттерн там
+   есть, строка генерируется автоматически). ТЕКСТ паттернов (st.pats[].text/tplPats) не
+   трогаем — они остаются целью, под которую генерация подбирает содержимое. Но флаг
+   "найдено" (p.found) ОБЯЗАТЕЛЬНО сбрасываем — иначе генерация видит паттерны уже
+   отмеченными найденными с прошлого прогона и просто пропускает их (ничего не вставляя). */
+const bClearChainRowsEl = document.getElementById("bClearChainRows");
+if (bClearChainRowsEl) {
+  bClearChainRowsEl.onclick = () => {
+    snapshot();
+    // st.rows может быть КОРОЧЕ st.pats (например, вкладка была создана до загрузки строк,
+    // а паттерны заданы отдельно) — расширяем rows/tplRows до длины паттернов, иначе
+    // цикл ниже по пустому массиву ничего не делает и строка 1 физически не создаётся.
+    const targetLen = Math.max(st.rows.length, st.pats.length, 1);
+    for (let i = 0; i < targetLen; i++) {
+      st.rows[i] = (i === 0) ? "1" : "";
+      st.tplRows[i] = st.rows[i];
+    }
+    st.used = st.rows.map(() => false);
+    for (const p of st.pats) {
+      if (p) { p.found = false; p.kind = null; p.step = null; }
+    }
+    // Восстанавливаем исходный порядок паттернов (до всех "подтягиваний" наверх)
+    st.pats.sort((a, b) => (a ? a.ord : 0) - (b ? b.ord : 0));
+    st.step = 0; st.tailBuffer = ""; st.hit = null;
+    st.horizXoredLength = 0; st.horizChainLen = 0; st.lastHorizRow = null;
+    st.horizFoundInPass = false;
+    st.horizBigChain = ""; st.horizBigOrig = ""; st.horizBigTargetIdx = -1;
+    st.aIdx = 0; st.bIdx = 0;
+    render(); saveCache();
+    say("Цепочка очищена: строка 1 = '1', паттерны разморожены.");
+  };
+}
+
+const bColSelectEl = document.getElementById("bColSelect");
+if (bColSelectEl) {
+  bColSelectEl.onclick = () => {
+    st.colSelectMode = !st.colSelectMode;
+    bColSelectEl.classList.toggle("mode-act", st.colSelectMode);
+    if (!st.colSelectMode) st.selectedCol = -1;
+    render();
+    saveCache();
+  };
+}
+const colHeaderEl = document.getElementById("colHeader");
+if (colHeaderEl) {
+  colHeaderEl.addEventListener("click", e => {
+    const cell = e.target.closest(".col-cell");
+    if (!cell) return;
+    selectColumn(+cell.dataset.col);
+  });
+  colHeaderEl.addEventListener("mouseover", e => {
+    const cell = e.target.closest(".col-cell");
+    if (!cell) return;
+    highlightColumn(+cell.dataset.col);
+  });
+  colHeaderEl.addEventListener("mouseout", e => {
+    const cell = e.target.closest(".col-cell");
+    if (!cell) return;
+    if (e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest(".col-cell")) return;
+    clearColumnHighlight();
+  });
+}
 
 const bShiftLEl = document.getElementById("bShiftL");
 if (bShiftLEl) {
@@ -1903,25 +3085,284 @@ if (bShiftREl) {
   };
 }
 
+const bInvertSelectedEl = document.getElementById("bInvertSelected");
+if (bInvertSelectedEl) {
+  bInvertSelectedEl.onclick = () => {
+    if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
+    snapshot();
+    for (const r of st.selectedRows) if (st.rows[r]) st.rows[r] = invertBits(st.rows[r]);
+    render(); saveCache();
+  };
+}
+
+const bPadZerosAboveEl = document.getElementById("bPadZerosAbove");
+if (bPadZerosAboveEl) {
+  bPadZerosAboveEl.onclick = () => {
+    if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
+    snapshot();
+    // При нескольких выделенных строках цель длины — одна для всех: самая длинная
+    // из выделенных (а не каждая своя), иначе более короткая выделенная строка
+    // ограничивала бы дополнение строк над ней.
+    let len = 0;
+    for (const selIdx of st.selectedRows) if (st.rows[selIdx] && st.rows[selIdx].length > len) len = st.rows[selIdx].length;
+    for (const selIdx of st.selectedRows) {
+      if (!st.rows[selIdx]) continue;
+      for (let i = 0; i < selIdx; i++) {
+        const rowLen = st.rows[i].length;
+        if (rowLen < len) {
+          const shift = alignShift(len, rowLen, st.align);
+          st.rows[i] = "0".repeat(shift) + st.rows[i] + "0".repeat(len - rowLen - shift);
+        }
+      }
+    }
+    render(); saveCache();
+  };
+}
+
+const bDelFirstEl = document.getElementById("bDelFirst");
+if (bDelFirstEl) {
+  bDelFirstEl.onclick = () => {
+    snapshot();
+    let deleted = 0;
+
+    if (st.selectedRows && st.selectedRows.size > 0) {
+      for (const idx of st.selectedRows) {
+        if (st.rows[idx] && st.rows[idx].length > 0) {
+          st.rows[idx] = st.rows[idx].slice(1);
+          deleted++;
+        }
+      }
+    } else {
+      for (let i = 0; i < st.rows.length; i++) {
+        if (st.rows[i] && st.rows[i].length > 0) {
+          st.rows[i] = st.rows[i].slice(1);
+          deleted++;
+        }
+      }
+    }
+
+    render(); saveCache();
+    say(`Удалён первый символ из ${deleted} строк.`);
+  };
+}
+
+const bXorSelectedEl = document.getElementById("bXorSelected");
+if (bXorSelectedEl) {
+  bXorSelectedEl.onclick = () => {
+    if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
+    const selIdx = Math.min(...Array.from(st.selectedRows));
+    if (selIdx < 0 || selIdx + 1 >= st.rows.length) { say("Нет строки ниже."); return; }
+
+    st.xorSelectedMode = true;
+    st.xorSelectedIdx = selIdx;
+    say(`Режим XOR выдел активен. Ищу совпадение...`);
+    doXorSelectedStep();
+  };
+}
+
+const bInterleaveSearchEl = document.getElementById("bInterleaveSearch");
+if (bInterleaveSearchEl) {
+  bInterleaveSearchEl.onclick = () => {
+    if (st.aIdx < 0 || st.bIdx >= st.rows.length || st.aIdx >= st.bIdx) {
+      say("Нельзя делать интерливинг, недостаточно строк.");
+      return;
+    }
+    st.interleaveMode = true;
+    st.interleavePairIdx = st.aIdx;
+    say(`Режим Интерливинг активен. Ищу совпадение...`);
+    doInterleaveStep();
+  };
+}
+
+function doInterleaveStep() {
+  if (!st.interleaveMode || st.interleavePairIdx < 0) return false;
+
+  const aIdx = st.interleavePairIdx;
+  const bIdx = aIdx + 1;
+
+  if (bIdx >= st.rows.length) {
+    st.interleaveMode = false;
+    say("Конец строк.");
+    return false;
+  }
+
+  const rowA = st.rows[aIdx] || "";
+  const rowB = st.rows[bIdx] || "";
+  const intResult = interleavePair(rowA, rowB, st.align);
+
+  let searchResult = intResult;
+  const cInterleaveXor = document.getElementById("cInterleaveXor");
+  const useXor = cInterleaveXor && cInterleaveXor.checked;
+
+  if (useXor) {
+    searchResult = xorPair(intResult, rowB, st.align);
+    say(`Интерливинг (${aIdx+1}-${bIdx+1}) + XOR нижней: ${searchResult}`);
+  } else {
+    say(`Интерливинг (${aIdx+1}-${bIdx+1}): ${searchResult}`);
+  }
+
+  const nextPatIdx = bIdx + 1;
+  const nextPat = st.pats[nextPatIdx];
+
+  if (!nextPat || !nextPat.text) {
+    st.interleaveMode = false;
+    say("Нет паттерна для сравнения.");
+    return false;
+  }
+
+  const patFull = nextPat.text;
+  const patSkip = st.skipFirst && patFull.length > 1 ? patFull.slice(1) : patFull;
+  const patRev = reverseStr(patFull);
+  const patRevSkip = patRev.length > 1 ? patRev.slice(1) : "";
+
+  let matchType = "";
+  if (searchResult.indexOf(patFull) >= 0) {
+    matchType = "паттерн целиком";
+  } else if (patSkip !== patFull && searchResult.indexOf(patSkip) >= 0) {
+    matchType = "паттерн без 1-го";
+  } else if (searchResult.indexOf(patRev) >= 0) {
+    matchType = "реверс целиком";
+  } else if (patRevSkip && searchResult.indexOf(patRevSkip) >= 0) {
+    matchType = "реверс без 1-го";
+  }
+
+  if (matchType) {
+    st.interleaveMode = false;
+    st.selectedRows.clear();
+    st.selectedRows.add(bIdx);
+    st.selectedRows.add(nextPatIdx);
+    st.aIdx = bIdx;
+    st.bIdx = nextPatIdx;
+    render(); saveCache();
+    say(`✓ Совпадение (${matchType})! Выделение на ${bIdx + 1}-${nextPatIdx + 1}`);
+    return false;
+  }
+
+  st.interleavePairIdx = bIdx;
+  return true;
+}
+
+function doXorSelectedStep() {
+  if (!st.xorSelectedMode || st.xorSelectedIdx < 0) return false;
+
+  const selIdx = st.xorSelectedIdx;
+  const xorResult = xorRowsDownTo(st.rows, selIdx, st.align, st);
+
+  const nextPatIdx = selIdx + 1;
+  const nextPat = st.pats[nextPatIdx];
+
+  if (!nextPat || !nextPat.text) {
+    st.xorSelectedMode = false;
+    say("Нет паттерна для сравнения.");
+    return false;
+  }
+
+  const aIdx = 0, bIdx = nextPatIdx - 1;
+  const chain = buildChain(st, aIdx, bIdx);
+  const searchText = chain.text + xorResult;
+
+  if (!searchText.length) {
+    snapshot();
+    st.rows[selIdx + 1] = rotateStrRight(st.rows[selIdx + 1]);
+    render(); saveCache();
+    return true;
+  }
+
+  const patFull = nextPat.text;
+  const patSkip = st.skipFirst && patFull.length > 1 ? patFull.slice(1) : patFull;
+  const patRev = reverseStr(patFull);
+  const patRevSkip = patRev.length > 1 ? patRev.slice(1) : "";
+
+  let matchType = "";
+
+  if (patFull && searchText.indexOf(patFull) >= 0) {
+    matchType = "паттерн целиком";
+  } else if (patSkip !== patFull && searchText.indexOf(patSkip) >= 0) {
+    matchType = "паттерн без 1-го";
+  } else if (patRev && searchText.indexOf(patRev) >= 0) {
+    matchType = "реверс целиком";
+  } else if (patRevSkip && searchText.indexOf(patRevSkip) >= 0) {
+    matchType = "реверс без 1-го";
+  }
+
+  if (matchType) {
+    st.xorSelectedMode = false;
+    st.selectedRows.clear();
+    st.selectedRows.add(selIdx + 1);
+    st.aIdx = selIdx + 1;
+    st.bIdx = Math.min(selIdx + 2, st.rows.length - 1);
+    render(); saveCache();
+    say(`✓ Совпадение (${matchType})! Перейдено на строку ${selIdx + 2}`);
+    return false;
+  }
+
+  snapshot();
+  st.rows[selIdx + 1] = rotateStrRight(st.rows[selIdx + 1]);
+  render(); saveCache();
+  return true;
+}
+
 // ГЛОБАЛЬНЫЕ ХОТКЕИ (срабатывают, только если мы не вводим текст в инпутах)
 document.addEventListener("keydown", e => {
   if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT") return;
+
+  // Ctrl+Z / Cmd+Z — отмена ЛЮБОЙ ручной операции (снапшот берётся тем же
+  // общим механизмом, что и у обычного шага: редактирование строки, сдвиг,
+  // добавление нулей, удаление первого символа и т.д. — все они уже вызывают snapshot()).
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "z") {
+    e.preventDefault();
+    document.getElementById("bUndo").click();
+    return;
+  }
 
   if (e.key === "Enter") {
     e.preventDefault();
     autoRun();
   } else if (e.key === "Escape") {
     e.preventDefault();
+    closeMenus();
     document.getElementById("bReset").click();
-  } else if (e.key === "Delete" || e.key === "Backspace") {
+  } else if (e.key === "Delete") {
+    // Delete — удалить выделенные (кликом) строки. НЕ связано с откатом шага.
+    e.preventDefault();
+    deleteSelectedRows();
+  } else if (e.key === "Backspace") {
     e.preventDefault();
     document.getElementById("bUndo").click();
+  } else if (e.key === "F2") {
+    // Редактирование выделенной строки (если выделена ровно одна)
+    e.preventDefault();
+    if (st.selectedRows && st.selectedRows.size === 1) {
+      startEditRow([...st.selectedRows][0]);
+    }
+  } else if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && st.colSelectMode && st.selectedCol >= 0) {
+    // В режиме "🔢 Выбор столбца" ◄► переключают ВЫБРАННЫЙ СТОЛБЕЦ (не крутят символы строк).
+    e.preventDefault();
+    let maxLen = 0;
+    for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
+    const next = e.key === "ArrowRight" ? Math.min(maxLen - 1, st.selectedCol + 1) : Math.max(0, st.selectedCol - 1);
+    selectColumn(next);
   } else if (e.key === "ArrowLeft") {
     e.preventDefault();
     if (bShiftLEl) bShiftLEl.click();
   } else if (e.key === "ArrowRight") {
     e.preventDefault();
     if (bShiftREl) bShiftREl.click();
+  } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    // Двигает ВЫДЕЛЕНИЕ строки вверх/вниз (не путать с ◄► — те крутят символы внутри строки).
+    e.preventDefault();
+    if (!st.selectedRows) st.selectedRows = new Set();
+    const n = Math.max(st.rows.length, st.pats.length);
+    if (n === 0) return;
+    let cur = st.selectedRows.size === 1 ? [...st.selectedRows][0] : st.bIdx;
+    if (typeof cur !== "number" || cur < 0) cur = 0;
+    const next = e.key === "ArrowDown" ? Math.min(n - 1, cur + 1) : Math.max(0, cur - 1);
+    st.selectedRows.clear();
+    st.selectedRows.add(next);
+    render();
+    saveCache();
+    const rowEl = document.querySelector('.ln[data-idx="' + next + '"]');
+    if (rowEl) rowEl.scrollIntoView({ block: "nearest" });
   }
 });
 
@@ -1962,6 +3403,7 @@ ls.oninput = () => { applyLs(); saveCache(); };
 const dimEl = document.getElementById("dim");
 function applyDim(){
   document.documentElement.style.setProperty("--dim-op", dimEl.value / 100);
+  document.getElementById("dimVal").textContent = dimEl.value;
 }
 dimEl.oninput = () => { applyDim(); saveCache(); };
 
@@ -2079,23 +3521,93 @@ function generateSierpinski90(n) {
   return rows;
 }
 
+/* Снимок всех настроек-кнопок/галочек/ползунков — используется и обычным кэшем в localStorage,
+   и кнопкой "💾 Сохран" (сохранение цепочки), чтобы не дублировать список полей дважды. */
+function captureUiSettings(){
+  return {
+    pull: cPullEl.checked, order: cOrderEl.checked, nextOnly: cNextOnlyEl.checked,
+    stageXor: cStageXorEl ? cStageXorEl.checked : false, invPass: cInvPassEl ? cInvPassEl.checked : false,
+    autoShift: cAutoShiftEl ? cAutoShiftEl.checked : false, stopOnHit: cStopOnHitEl ? cStopOnHitEl.checked : true,
+    vert: cVertEl.checked, pad: cPadEl.checked, kinds: cKindsEl.checked, skip1: cSkipEl.checked,
+    align: st.align, mode: st.mode || "step1", rowCount: rowCountEl ? rowCountEl.value : 256,
+    bgSearch: cBgSearchEl ? cBgSearchEl.checked : false, bgSearchMode: st.bgSearchMode,
+    fs: fs.value, lh: lh.value, ls: ls.value, dim: dimEl.value,
+    sideW: cssVar("--side-w"), patW: cssVar("--pat-w"), patW2: cssVar("--pat-w2"),
+    hideSide: document.body.classList.contains("hide-side"),
+    c1: col1.value, c0: col0.value, cBg: colBg.value, preset: presetSel.value
+  };
+}
+
+function applyUiSettings(u){
+  if (!u) return;
+  if (u.pull      !== undefined) cPullEl.checked      = u.pull;
+  if (u.order     !== undefined) cOrderEl.checked     = u.order;
+  if (u.nextOnly  !== undefined) cNextOnlyEl.checked  = u.nextOnly;
+  if (u.stageXor  !== undefined) cStageXorEl.checked  = u.stageXor;
+  if (u.invPass   !== undefined) cInvPassEl.checked   = u.invPass;
+  if (u.autoShift !== undefined) cAutoShiftEl.checked = u.autoShift;
+  if (u.stopOnHit !== undefined && cStopOnHitEl) cStopOnHitEl.checked = u.stopOnHit;
+  if (u.vert      !== undefined) cVertEl.checked      = u.vert;
+  if (u.pad       !== undefined) cPadEl.checked       = u.pad;
+  if (u.kinds     !== undefined) cKindsEl.checked     = u.kinds;
+  if (u.skip1     !== undefined) cSkipEl.checked      = u.skip1;
+
+  if (u.align) {
+    st.align = u.align;
+    const alignBtns = document.querySelectorAll("#alignGrp button");
+    alignBtns.forEach(b => {
+      if (b.getAttribute("data-val") === u.align) b.classList.add("act");
+      else b.classList.remove("act");
+    });
+  }
+
+  if (u.mode) setMode(u.mode);
+
+  if (u.bgSearch !== undefined && cBgSearchEl) { cBgSearchEl.checked = u.bgSearch; st.bgSearch = u.bgSearch; }
+  if (u.bgSearchMode) {
+    st.bgSearchMode = u.bgSearchMode;
+    const bgBtns = document.querySelectorAll("#bgSearchModeGrp button");
+    bgBtns.forEach(b => {
+      if (b.getAttribute("data-val") === u.bgSearchMode) b.classList.add("act");
+      else b.classList.remove("act");
+    });
+  }
+
+  if (u.fs){ fs.value = u.fs; applyFont(); }
+  if (u.lh){ lh.value = u.lh; applyLh(); }
+  if (u.ls !== undefined){ ls.value = u.ls; applyLs(); }
+  if (u.dim){ dimEl.value = u.dim; applyDim(); }
+
+  if (u.sideW) document.documentElement.style.setProperty("--side-w", u.sideW);
+  if (u.patW)  document.documentElement.style.setProperty("--pat-w", u.patW);
+  if (u.patW2) document.documentElement.style.setProperty("--pat-w2", u.patW2);
+
+  if (u.hideSide !== undefined) {
+    if (u.hideSide) document.body.classList.add("hide-side");
+    else document.body.classList.remove("hide-side");
+  }
+
+  if (u.c1) col1.value = u.c1;
+  if (u.c0) col0.value = u.c0;
+  if (u.cBg) colBg.value = u.cBg;
+  if (u.preset !== undefined) presetSel.value = u.preset;
+  applyColors();
+
+  if (u.rowCount && rowCountEl) {
+    rowCountEl.value = u.rowCount;
+    document.getElementById("rowCountVal").textContent = rowCountEl.value;
+  }
+
+  readToggles();
+}
+
 function saveCache(){
   try{
     saveActiveTabState(); // Обязательно сохраняем вкладку перед записью в сторадж
     localStorage.setItem(CACHE_KEY, JSON.stringify({
       activeTab: st.activeTab || 0,
       tabs: st.tabs || [],
-      ui: {
-        pull: cPullEl.checked, order: cOrderEl.checked, nextOnly: cNextOnlyEl.checked,
-        stageXor: cStageXorEl ? cStageXorEl.checked : false, invPass: cInvPassEl ? cInvPassEl.checked : false,
-        autoShift: cAutoShiftEl ? cAutoShiftEl.checked : false, stopOnHit: cStopOnHitEl ? cStopOnHitEl.checked : true,
-        vert: cVertEl.checked, pad: cPadEl.checked, kinds: cKindsEl.checked, skip1: cSkipEl.checked,
-        align: st.align, mode: st.mode || "step1", rowCount: rowCountEl ? rowCountEl.value : 256,
-        fs: fs.value, lh: lh.value, ls: ls.value, dim: dimEl.value,
-        sideW: cssVar("--side-w"), patW: cssVar("--pat-w"), patW2: cssVar("--pat-w2"),
-        hideSide: document.body.classList.contains("hide-side"),
-        c1: col1.value, c0: col0.value, cBg: colBg.value, preset: presetSel.value
-      }
+      ui: captureUiSettings()
     }));
   }catch(e){}
 }
@@ -2106,50 +3618,12 @@ function loadCache(){
   if (!d) return false;
 
   const u = d.ui || {};
-  if (u.pull      !== undefined) cPullEl.checked      = u.pull;
-  if (u.order     !== undefined) cOrderEl.checked     = u.order;
-  if (u.nextOnly  !== undefined) cNextOnlyEl.checked  = u.nextOnly;
-  if (u.stageXor   !== undefined) cStageXorEl.checked   = u.stageXor;
-  if (u.invPass    !== undefined) cInvPassEl.checked    = u.invPass;
-  if (u.autoShift  !== undefined) cAutoShiftEl.checked  = u.autoShift;
-  if (u.stopOnHit  !== undefined && cStopOnHitEl) cStopOnHitEl.checked = u.stopOnHit;
-  if (u.vert      !== undefined) cVertEl.checked      = u.vert;
-  if (u.pad       !== undefined) cPadEl.checked       = u.pad;
-  if (u.kinds     !== undefined) cKindsEl.checked     = u.kinds;
-  if (u.skip1     !== undefined) cSkipEl.checked      = u.skip1;
-  
-  if (u.align) {
-    st.align = u.align;
-    const alignBtns = document.querySelectorAll("#alignGrp button");
-    alignBtns.forEach(b => {
-      if (b.getAttribute("data-val") === u.align) b.classList.add("act");
-      else b.classList.remove("act");
-    });
-  }
-  
-  if (u.mode) setMode(u.mode); else setMode("step1");
-  
-  if (u.fs){ fs.value = u.fs; applyFont(); }
-  if (u.lh){ lh.value = u.lh; applyLh(); } else applyLh();
-  if (u.ls !== undefined){ ls.value = u.ls; applyLs(); } else applyLs();
-  if (u.dim){ dimEl.value = u.dim; applyDim(); } else applyDim();
-  
-  if (u.sideW) document.documentElement.style.setProperty("--side-w", u.sideW);
-  if (u.patW)  document.documentElement.style.setProperty("--pat-w", u.patW);
-  if (u.patW2) document.documentElement.style.setProperty("--pat-w2", u.patW2);
-  
-  if (u.hideSide !== undefined) {
-    if (u.hideSide) document.body.classList.add("hide-side");
-    else document.body.classList.remove("hide-side");
-  } else {
-    document.body.classList.add("hide-side");
-  }
-  
-  if (u.c1) col1.value = u.c1;
-  if (u.c0) col0.value = u.c0;
-  if (u.cBg) colBg.value = u.cBg;
-  if (u.preset !== undefined) presetSel.value = u.preset;
-  applyColors();
+  applyUiSettings(u);
+  if (!u.mode) setMode("step1");
+  if (!u.lh) applyLh();
+  if (u.ls === undefined) applyLs();
+  if (!u.dim) applyDim();
+  if (u.hideSide === undefined) document.body.classList.add("hide-side");
 
   // Загружаем вкладки Цепочек из кэша
   if (d.tabs && d.tabs.length > 0) {
