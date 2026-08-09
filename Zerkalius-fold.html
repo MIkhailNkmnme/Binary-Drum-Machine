@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.195</title>
+<title>Zerkalius Fold — v0.238</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -18,11 +18,23 @@
                           слияние "0" — это форма символа при сжатии, а не баг раскладки) */
     --chain-ls:0px;   /* межсимвольный интервал (-1px давал наезд по горизонтали — соседние
                           "0" в одной строке визуально слипались; вернули к 0) */
+    --chain-ff:"Roboto Mono", Consolas, monospace; /* шрифт цифр полотна — выбирается через
+                          #chainFontSel (см. "Вид"): на разных системах одно и то же начертание
+                          выглядит то жирным, то тонким (Roboto Mono тут не сама причина — у
+                          пользователя стало не жирнее и после ухода на Consolas, дело в самом
+                          рендере системного шрифта), поэтому вместо жёсткого выбора — набор
+                          готовых вариантов на пробу. */
     --pat-w:12em;     /* ширина левой колонки паттернов */
     --pat-w2:12em;    /* ширина правой колонки паттернов */
     --c1:#ff3333;     /* цвет единиц (по умолчанию — пресет "Спектр") */
     --c0:#555555;     /* цвет нулей */
     --cbg:#000000;    /* фон полотна */
+    /* Фон ВЫДЕЛЕННЫХ строк — отдельно от --cbg, применяется только внутри .ln.selected. */
+    --rowbg-sel:rgba(255,207,107,.15);
+    --c01-hl:#ff9900; /* цвет подсветки "01" (см. #bHighlight01/#col01) — СПЛОШНОЙ, без прозрачности:
+                          и "0", и "1" в найденном пробеге красятся ровно в этот один цвет */
+    --cv1-hl:#00ccff; /* цвет подсветки "1 под 1" (см. #bHighlightVert1/#colVert1) — тоже сплошной */
+    --cd1-hl:#66ff66; /* цвет подсветки "1 по диагонали" (см. #bHighlightDiag1/#colDiag1) — тоже сплошной */
     --dim-op: 1;      /* прозрачность будущих строк (100 — ползунок яркости по умолчанию) */
     --std-btn-h: 24px; /* стандартная высота кнопок в сетках (ops-btn-grid/control-group-player/
                            preset-grp/search-grid и т.п.) — было 34px, уменьшено на ~30% */
@@ -45,6 +57,9 @@
      старая полоска toggleAllPinsBtn) — просто не рисовалось. Функциональность выпадающих
      списков важнее подстраховки от горизонтального переполнения — убрано. */
   #menuTabs{display:flex;align-items:center;gap:4px;position:relative;min-width:0}
+  /* Кнопки показать/скрыть overlay-баров — одинаковой минимальной ширины (по самой длинной
+     подписи), а не "гуляющей" по длине текста, как было бы без min-width */
+  .overlay-toggle-btn{font-size:12px;padding:3px 8px;min-width:60px;text-align:center}
   .menu-btn{display:flex;align-items:center;gap:5px;background:none;border:1px solid var(--line);color:var(--dim);
             font-family:inherit;font-size:12px;padding:3px 10px;cursor:pointer;border-radius:3px}
   .menu-btn:hover{background:var(--bg);color:var(--fg);border-color:var(--acc)}
@@ -134,10 +149,17 @@
   .ops-btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
   .ops-btn-grid button{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:var(--std-btn-h)}
 
-  /* Назад/Авто/Стоп — одна строка в рамке над кнопками шагов (см. HTML #flowGroup) */
-  .control-group-flow{display:flex;gap:4px;border:1px solid var(--acc);background:rgba(77,163,255,.08);
-    border-radius:3px;padding:4px;margin-bottom:4px}
-  .control-group-flow button{flex:1;min-height:var(--std-btn-h)}
+  /* Авто/Стоп + все кнопки-режимы (см. setMode() — то, что реально повторяет "Авто") — одна
+     общая рамка (см. HTML #flowGroup): сверху Авто/Стоп строкой, ниже сетка режимов 2 колонки. */
+  .control-group-flow{display:flex;flex-direction:column;gap:4px;border:1px solid var(--acc);
+    background:rgba(77,163,255,.08);border-radius:3px;padding:4px;margin-bottom:4px}
+  /* Авто/Стоп отделены от сетки режимов ниже пунктиром + своим отступом — иначе в общей рамке
+     не видно, что это разные по смыслу группы (сама рамка теперь общая на обе). */
+  .control-group-flow .flow-top-row{display:flex;gap:4px;padding-bottom:4px;
+    border-bottom:1px dashed rgba(77,163,255,.35)}
+  .control-group-flow .flow-modes-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+  .control-group-flow button{min-height:var(--std-btn-h)}
+  .control-group-flow .flow-top-row button{flex:1}
 
   /* «Плеер» правки строк — крупные кнопки транспортного вида (вкладка «Правка строк»).
      Сетка 2 колонки РОВНО (не flex-wrap с процентами — тот пакует то 2, то 3 в ряд
@@ -177,9 +199,10 @@
      (.menu-btn: padding:3px 10px); остальные .align-grp (в панелях — bgSearchModeGrp,
      spiralDirGrp и т.п.) намеренно компактные, не трогаем. */
   #alignGrp button{padding:3px 10px}
-  /* ◄/► у "Спирали" (editGroup) сидят в одном ряду с кнопками ▲/▼ Спираль
-     (.control-group-player button, там уже var(--std-btn-h)) — раньше были заметно ниже их.
-     ВАЖНО: .control-group-player .align-grp button (правило чуть выше) даёт padding:7px 4px и
+  /* ◄/► переключатель "какая сторона — вверх" для Спирали (spiralDirGrp, editGroup) — кнопки
+     ▲/▼ Спираль САМИ перенесены во вкладку "Шаги" (см. flow-modes-grid), тут остался только сам
+     переключатель направления, но его высоту/паддинг всё равно надо переопределять отдельно:
+     .control-group-player .align-grp button (правило чуть выше) даёт padding:7px 4px и
      font-size:16px — этого одного min-height мало (контент и так выше 24px, min-height не
      перебивает), нужно было переопределить и padding/font-size тоже, не только высоту. */
   #spiralDirGrp button{min-height:var(--std-btn-h);padding:1px 5px;font-size:12px}
@@ -198,6 +221,16 @@
     color:var(--fg);
     font-weight:bold;
   }
+  /* Заголовок + цветной квадратик — тоже в виде кнопки (рамка+фон, как у обычных <button>),
+     а не голый текст с плавающим квадратиком без границ (см. "Цвет 1"/"Цвет 0"/"Фон" и т.п.). */
+  label.chk:has(input[type="color"]){border-color:var(--line);background:#232735}
+  label.chk:has(input[type="color"]):hover{border-color:var(--acc)}
+  /* Пара "кнопка-тумблер + её цвет" (01/1↕1/1⤡1) — визуально ОДНА кнопка с перегородкой
+     внутри, а не два отдельных бордюра рядом (тот же приём, что у .align-grp). */
+  .hl-combo{display:inline-flex;align-items:stretch;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+  .hl-combo:hover{border-color:var(--acc)}
+  .hl-combo button{border:none;border-radius:0;border-right:1px solid var(--line)}
+  .hl-combo input[type="color"]{border:none;border-radius:0;width:18px}
   select{background:#232735;color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:1px;font-size:11px}
 
   /* Вкладка "Вид": ползунок межстрочного интервала (lh) — вертикальный, стоит СБОКУ от
@@ -219,7 +252,7 @@
      из-за чего внизу оставалась пустая область. flex-basis:0 (третье число) убирает intrinsic
      размер из уравнения совсем — трек стартует с 0 и flex-grow:1 честно раздувает его на всё
      оставшееся место рядом с иконкой/значением. */
-  .range-vertical{writing-mode:vertical-lr;width:16px;min-height:0;flex:1 1 0;accent-color:var(--acc)}
+  .range-vertical{writing-mode:vertical-lr;width:16px;min-height:0;flex:1 1 0;accent-color:#ff9900}
   /* Иконка слева от каждого ползунка — фиксированная ширина, чтобы все ползунки в столбце
      начинались строго в одном месте (иначе 🔢/A/↔/💡 разной ширины сдвигали каждый трек). */
   .view-slider-icon{display:inline-block;width:18px;text-align:center;flex:0 0 auto}
@@ -227,8 +260,12 @@
      стояли по правому краю в один столбец независимо от того, сколько в них знаков. */
   .view-slider-val{display:inline-block;width:26px;text-align:right;flex:0 0 auto}
   /* Сами горизонтальные ползунки — растягиваются на всю доступную ширину строки вместо
-     фиксированных 120px (оставлявших много пустого места в широкой панели) */
-  .view-slider-range{flex:1 1 auto;min-width:60px}
+     фиксированных 120px (оставлявших много пустого места в широкой панели). */
+  .view-slider-range{flex:1 1 auto;min-width:60px;accent-color:var(--acc)}
+  /* Оранжевый — только у ползунков МЕЖСИМВОЛЬНОГО/межстрочного интервала (#ls/#lh), они сливались
+     с синей рамкой блока #view-sliders-row сильнее остальных (стоят рядом с бордюром вплотную).
+     Остальные (rowCount/fs/dim) — обычный синий accent-color, как было изначально. */
+  #ls{accent-color:#ff9900}
 
   /* Пресеты цветов — сетка кнопок в 2 ряда вместо <select>. Активный пресет — button.mode-act
      (белое свечение, тот же приём, что и у активного режима выполнения). */
@@ -289,9 +326,10 @@
 
   /* Полотно цепочки — единственный чистый вертикальный скроллбар */
   .canvas{position:absolute;inset:0; background:var(--cbg);border:1px solid var(--line);border-radius:5px;
-          padding:6px 12px 6px 6px; overflow-x:hidden; overflow-y:auto; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-          /* Верхний отступ резервирует место под закреплённый overlay-бар #chainResultBox (см. JS:
-             ResizeObserver держит --result-box-h в актуальном виде), чтобы бар не перекрывал строки */
+          padding:6px 12px 6px 2px; overflow-x:hidden; overflow-y:auto; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+          /* Верхний отступ резервирует место под весь стек закреплённых overlay-баров
+             (#chainResultBox + #stepLogBox, см. JS: МАРКЕР 10.2b OVERLAY_STACK держит
+             --result-box-h суммой их высот), чтобы бары не перекрывали строки */
           padding-top: calc(6px + var(--result-box-h, 0px));
           scrollbar-width:none} /* Прокрутка колесом/тачем рабочая, просто не рисуем полосу — тот же приём, что у .controls/.menu-drop/#menuTabs */
   .canvas::-webkit-scrollbar{width:0;height:0;background:transparent}
@@ -306,9 +344,9 @@
   
 
   /* Убран overflow у .chain, чтобы исключить появление дублирующего скроллбара */
-  .chain{font:var(--chain-fs)/var(--chain-lh) "Roboto Mono",Consolas,monospace; letter-spacing:var(--chain-ls);
+  .chain{font:var(--chain-fs)/var(--chain-lh) var(--chain-ff); letter-spacing:var(--chain-ls);
          white-space:pre;position:relative; width:100%; max-width:100%; overflow:visible;
-         padding-left:6px;
+         padding-left:3px;
          user-select:none} /* Иначе клик с микро-сдвигом мыши по строке оставлял текстовое
          выделение битов, и это ложно блокировало Ctrl+C-копирование выделенных строк (см.
          keydown-обработчик: он нарочно уступает дорогу настоящему текстовому выделению).
@@ -347,11 +385,37 @@
   .num{flex:0 0 2em;text-align:right;color:#4b5262;font-size:.85em;white-space:nowrap}
   /* Номер строки, изменённой относительно исходного шаблона (tplRows) — см. render() */
   .num.changed{color:#ff9900;font-weight:700}
+  /* "⚖ Показать балансы" (см. #bShowBalances в "Виде", formatBalanceTotals() в JS) — итоговая
+     сумма "N-M" (единицы минус нули), без скобок. flex:0 0 auto — не тянется/не сжимается,
+     ширина ровно по содержимому. Цвет каждого числа — свой, инлайн-стилем в render() (белый для
+     "1", серый для "0"), тут только базовый цвет знака "-" между ними. "Пробеги вместо битов"
+     (#bRunsAsBits) — отдельная фича, этот класс не использует (она заменяет содержимое .bits
+     напрямую, см. formatRunsHtml()). */
+  /* padding:0 3px — ВСЕГДА, не только у .row-balance-eq ниже: если бы паддинг появлялся ТОЛЬКО
+     при подсветке "баланс поровну", именно эти строки становились бы на 6px шире остальных и
+     цепочка после метки уезжала вбок только у них (см. запрос пользователя — "где баланс равный
+     съезжает"). Держим паддинг одинаковым всегда, .row-balance-eq снизу меняет только цвет/фон. */
+  .row-balance{flex:0 0 auto;color:#4b5262;font-size:.85em;white-space:pre;padding:0 3px}
+  /* Единиц и нулей в строке ровно поровну — вместо двухцветной раскраски всё целиком одним
+     акцентным цветом + подсветка фоном, чтобы такая "сбалансированная" строка сразу бросалась
+     в глаза (см. запрос пользователя). */
+  .row-balance-eq{color:#ffcf6b !important;background:rgba(255,207,107,.18);border-radius:2px;
+    box-shadow:0 0 6px rgba(255,207,107,.5)}
+  /* Номер у ЛЕВОГО края поля битов (см. render()) сидит сразу после .pat, а у .pat справа уже
+     зарезервировано 28px под номер шага найденного паттерна (.st) — без компенсации отступ
+     слева у этого номера был заметно больше, чем у остальных (не "одинаково", как просили).
+     Тянем его назад в счёт этого резерва, но НЕ дальше границы .vsplit (та стоит ровно на
+     правом крае .pat, без учёта его 28px padding) — иначе номер заезжает НА линию разделителя
+     и накладывается на неё. -20px пересекал границу; -6px оставляет небольшой зазор от неё. */
+  .num-l2{margin-left:-10px}
+  /* Симметрично: номер у ПРАВОГО края поля битов (сосед .pat2, "числа паттернов" в терминах
+     пользователя) — та же компенсация зазора от .vsplit2, что у .num-l2 от .vsplit. */
+  .num-r2{margin-left:-10px}
   
-  /* Подсветка выделенных кликом / Ctrl+Кликом строк */
+  /* Подсветка выделенных кликом / Ctrl+Кликом строк — только фон, настраивается отдельно
+     (см. #rowBgSel/--rowbg-sel), не трогая невыделенные строки и цвета 0/1. */
   .ln.selected {
-    background: rgba(255, 207, 107, 0.15) !important;
-    outline: 1px dashed rgba(255, 207, 107, 0.4);
+    background: var(--rowbg-sel) !important;
     opacity: 1 !important;
   }
   .ln.selected .num {
@@ -360,6 +424,10 @@
   }
 
   /* Выравнивание по ЛЕВОМУ краю для исключения сдвигов + небольшой отступ справа 28px под номер шага */
+  /* ВОЗВРАЩЕНО overflow:hidden+text-overflow:ellipsis (пробовали убрать по аналогии с .bits —
+     сломало раскладку куда сильнее ожидаемого: без обрезки длинный текст паттерна физически
+     наезжает на колонку битов/цепочки, а не просто "чуть вылезает", — визуальная каша. Тут
+     обрезка длинных паттернов многоточием остаётся, в отличие от .bits. */
   .pat{flex:0 0 var(--pat-w);color:var(--dim);font-family:inherit;font-size:inherit;
        overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;
        padding-left:4px;padding-right:28px;position:relative}
@@ -411,40 +479,77 @@
   /* Пропущенный 1-й символ паттерна подсвечивается тусклым серым */
   .pat-skip{color:var(--dim); opacity:0.5}
   
-  /* Левая граница разделителя. Позиция = ширина .num (2em, но .num сам на font-size:.85em,
-     значит фактически 2*.85=1.7em в масштабе .chain) + gap .num→.pat (8px) + ширина .pat
-     (var(--pat-w)) + gap .pat→.bits (8px). Раньше тут стояло "3.5em+8px+...+2px" — устаревшая
-     формула от прежней разметки .num (не совпадала с текущими 2em/.85em), из-за чего граница
-     была сдвинута примерно на 1.8em вправо и залезала на биты цепочки — особенно заметно при
-     выравнивании влево (⇤), где символы начинаются вплотную к границе колонки без запаса. */
-  .vsplit{position:absolute;top:0;bottom:0;left:calc(6px + 1.7em + var(--pat-w) + 16px);
+  /* Левая граница разделителя. Позиция = padding-left у .chain (3px) + ширина .num (2em, но
+     .num сам на font-size:.85em, значит фактически 2*.85=1.7em в масштабе .chain) + gap
+     .num→.pat (8px) + ширина .pat (var(--pat-w)) + gap .pat→.bits (8px). Раньше тут стояло
+     "3.5em+8px+...+2px" — устаревшая формула от прежней разметки .num (не совпадала с текущими
+     2em/.85em), из-за чего граница была сдвинута примерно на 1.8em вправо и залезала на биты
+     цепочки — особенно заметно при выравнивании влево (⇤), где символы начинаются вплотную к
+     границе колонки без запаса. Первое слагаемое (было 6px) синхронизировано с .chain
+     padding-left — если то меняется, это тоже надо поменять. */
+  .vsplit{position:absolute;top:0;bottom:0;left:calc(3px + 1.7em + var(--pat-w) + 16px);
           width:5px;cursor:col-resize;z-index:2}
   .vsplit::before{content:"";position:absolute;left:2px;top:0;bottom:0;width:1px;background:var(--line)}
   .vsplit:hover::before,.vsplit.drag::before{background:var(--acc);width:2px}
 
   /* Правая граница разделителя — та же логика зеркально от правого края (var(--pat-w2) +
      gap .bits→.num (8px) + ширина .num (1.7em) + gap .num→.pat2 (8px)); старая формула
-     учитывала только var(--pat-w2), вообще не отступая под правую колонку номеров. */
-  .vsplit2{position:absolute;top:0;bottom:0;right:calc(var(--pat-w2) + 1.7em + 16px);
+     учитывала только var(--pat-w2), вообще не отступая под правую колонку номеров.
+     "-12px" — двойная компенсация: .num-l2 (слева от .bits) и .num-r2 (справа от .bits, тот
+     же класс зазора от .vsplit2) оба с margin-left:-6px. Отрицательный margin во Flexbox
+     уменьшает занятое элементом место при расчёте оставшегося пространства — от каждого из
+     них .bits (flex:1 1 auto) становится на 6px шире, чем без компенсации; без сдвига
+     .vsplit2 на все 12px суммарно вправо линия разделителя залезала на реальные биты справа
+     (заметно при выравнивании вправо, где символы стоят вплотную к правому краю .bits). */
+  .vsplit2{position:absolute;top:0;bottom:0;right:calc(var(--pat-w2) + 1.7em + 16px - 16px);
            width:5px;cursor:col-resize;z-index:2}
   .vsplit2::before{content:"";position:absolute;left:2px;top:0;bottom:0;width:1px;background:var(--line)}
   .vsplit2:hover::before,.vsplit2.drag::before{background:var(--acc);width:2px}
 
-  /* Центральная колонка сжимается строго за счет урезания текста */
-  .bits{flex:1 1 0px; min-width:0; overflow:hidden}
+  /* overflow снят совсем (была попытка overflow-x:hidden + overflow-y:visible — обрезать только
+     по горизонтали, чтобы при плотном line-height наложенные символы не резались по вертикали —
+     но по спеке CSS если одна ось НЕ visible, а другая ИМЕННО visible, браузер молча подменяет
+     "visible" на "auto", отсюда и вылезли скроллы на строках; та же ловушка, что уже словили на
+     #menuTabs, см. комментарий там же). Раз развести оси нельзя — совсем убрали clipping: ничего
+     не обрезается ни по горизонтали, ни по вертикали. Плата — очень длинные строки визуально
+     вылезают за правый край .bits (наезжая на колонку паттернов), а не аккуратно обрезаются.
+
+     pointer-events:none у .ln .bits (НЕ у .col-hdr-row .bits — та же .bits-разметка используется
+     и линейкой столбцов #colHeader, где клик по .col-cell должен работать как обычно, см. ниже,
+     сначала так и сломали выбор столбца, подмешав правило под общий класс .bits без уточнения) —
+     ВИДИМОСТЬ (наложение символов при плотном line-height) остаётся как есть, но КЛИК больше не
+     должен "цепляться" за визуально наехавший на соседнюю строку текст: .ln-ряды физически не
+     перекрываются (каждый ровно --row-h высотой, стоят впритык), только их СОДЕРЖИМОЕ визуально
+     вылезает друг на друга — а т.к. более поздняя по DOM строка красится ПОВЕРХ вылезающего
+     "хвоста" предыдущей, клик по видимому символу мог попадать в чужую .ln (ту, чей пустой бокс
+     просто физически там расположен). С pointer-events:none клик по .bits проваливается сквозь
+     текст к .ln — тому, что реально соответствует Y-координате клика, без оглядки на то, чей
+     символ там нарисован поверх. Обработчики строк (mousedown/dblclick на #rows) и так ищут
+     ближайший .closest(".ln") — работать продолжают как прежде. */
+  .bits{flex:1 1 0px; min-width:0}
+  .ln .bits{pointer-events:none}
   
   .ln .bits { display: flex; }
   .ln .bits.al-center, .col-hdr-row .bits.al-center { justify-content: center; }
   .ln .bits.al-left, .col-hdr-row .bits.al-left { justify-content: flex-start; }
   .ln .bits.al-right, .col-hdr-row .bits.al-right { justify-content: flex-end; }
+  /* "По полубитам" — тот же расчёт отступа, что у центра (alignShift не различает их), плюс
+     точечный transform:translateX(0.5ch) на нечётной разнице длин (см. render()). */
+  .ln .bits.al-halfcenter, .col-hdr-row .bits.al-halfcenter { justify-content: center; }
   .ln .bits > span { white-space: pre; }
   
   .b1{color:var(--c1)}
   .b0{color:var(--c0)}
-  
-  /* Инверсные биты в сквозной строке подсвечиваются фиолетовым и розовым с легким свечением */
-  .b1.inv { color: var(--purple) !important; font-weight: bold; text-shadow: 0 0 3px var(--purple); }
-  .b0.inv { color: #ff66cc !important; font-weight: bold; text-shadow: 0 0 3px #ff66cc; }
+  /* Жирность символов 0/1 — см. #bBoldBits в "Виде". Особые подсветки (01/1↕1/1⤡1, инверсия)
+     раньше были жирными ВСЕГДА, из-за чего выключенный тумблер выглядел так же жирно, как
+     включённый (см. .hl01/.hlv1/.hld1/.inv ниже — там font-weight без body.bold-bits убран,
+     он теперь тоже подчиняется этому тумблеру, единообразно со всей остальной сеткой). */
+  body.bold-bits .b0, body.bold-bits .b1 { font-weight: bold; }
+
+  /* Инверсные биты в сквозной строке подсвечиваются фиолетовым и розовым с легким свечением;
+     жирность — только вместе с общим тумблером #bBoldBits (см. выше). */
+  .b1.inv { color: var(--purple) !important; text-shadow: 0 0 3px var(--purple); }
+  .b0.inv { color: #ff66cc !important; text-shadow: 0 0 3px #ff66cc; }
 
   /* Мягкая аккуратная бирюзовая подсветка битов под XOR — только цветом, без сдвига символов */
   .xored-bit {
@@ -470,7 +575,11 @@
   /* Прилипает сразу под .chain-head (та занимает 20px, тоже sticky top:0) — линейка больше не
      уезжает вместе со строками при скролле вниз. */
   #colHeader{display:none}
-  #colHeader.act{display:block;position:sticky;top:0;z-index:2;background:var(--cbg)}
+  /* margin-bottom — небольшой отступ от первой строки данных: при плотном line-height (--chain-lh)
+     содержимое первой строки визуально наезжает вверх на линейку столбцов (та же природа
+     наложения, что и у соседних строк друг с другом, см. .ln .bits/pointer-events выше) —
+     отступ отодвигает первую строку вниз, чтобы не сталкивались. */
+  #colHeader.act{display:block;position:sticky;top:0;z-index:2;background:var(--cbg);margin-bottom:4px}
   .col-hdr-row{display:flex;gap:8px;align-items:center;color:var(--dim);user-select:none}
   .col-hdr-row .bits{display:flex}
   .col-hdr-row .bits > span{white-space:pre}
@@ -490,6 +599,19 @@
   .col-cell.col-hover{color:var(--fg);background:rgba(255,255,255,.10)}
   .col-sel-bit{background:rgba(255,207,107,.35) !important;border-radius:2px}
   .col-hover-bit{background:rgba(255,255,255,.15) !important;border-radius:2px}
+  /* Особая подсветка "01" (см. #bHighlight01 в "Виде") — ЗАМЕНЯЕТ обычный цвет 0/1 (.b0/.b1)
+     одним сплошным цветом (без прозрачности — та была почти не видна на тёмном фоне): и "0", и
+     "1" в найденном пробеге красятся одинаково, плюс жирным, чтобы точно бросалось в глаза. */
+  .hl01{color:var(--c01-hl) !important}
+  /* Особая подсветка "1 под 1" (см. #bHighlightVert1 в "Виде") — та же логика оформления, что
+     у .hl01: сплошной цвет + жирный, отдельная переменная/кнопка/цвет. Если позиция подходит
+     под ОБЕ подсветки одновременно (01 и 1-под-1) — 1-под-1 идёт вторым классом в render() и
+     потому визуально побеждает (см. порядок классов в HTML). */
+  .hlv1{color:var(--cv1-hl) !important}
+  /* Особая подсветка "1 по диагонали" (см. #bHighlightDiag1) — та же логика оформления, что у
+     .hl01/.hlv1. Объявлена ПОСЛЕ них — при совпадении сразу нескольких подсветок на одном
+     символе она визуально побеждает (см. порядок классов в render()). */
+  .hld1{color:var(--cd1-hl) !important}
   /* Крестик сброса — прямо на месте палочки выбранного столбца (col-cell-clear-glyph заменяет
      col-cell-tick для этой ячейки), не отдельно сбоку. transform:none — иначе scaleX(1.6) от
      .col-cell-tick растягивал "✕" в кривой овал. */
@@ -518,23 +640,30 @@
    и растёт сама под содержимое; клик по шапке сворачивает в одну строку заголовка.
    z-index ВЫШЕ боковых доков (.controls: 90) — иначе закреплённая справа/слева вкладка меню
    перекрывала бар поверх него; так бар всегда виден целиком во всю ширину, а не обрезается. */
-.chain-result-box {
+/* .overlay-box — общее позиционирование для обоих стековых баров (Результат/Черновик): top
+   выставляется в JS (layoutOverlayBoxes, по текущему overlayOrder), left/right — в JS же
+   (updateResultBoxInset, отступ от закреплённых боковых панелей). Ширина всегда авто (на всю
+   доступную ширину) — двигать можно ТОЛЬКО порядок по вертикали (перетаскиванием за ⋮⋮),
+   не X/Y-позицию и не размер. */
+.overlay-box {
   position: absolute;
-  top: 6px;
   left: 6px;
   right: 6px;
   z-index: 95;
   padding: 4px 8px;
-  background: rgba(14, 16, 21, 0.97);
-  border: 1px solid var(--line);
-  border-radius: 6px;
   white-space: normal;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, .45);
+  transition: top .15s;
 }
-.chain-result-head {
+.overlay-box.drag-target { outline: 2px dashed var(--acc); outline-offset: 2px; }
+.overlay-drag { color: var(--dim); font-size: 12px; letter-spacing: 2px; user-select: none; cursor: grab; flex: 0 0 auto; }
+.overlay-drag:active { cursor: grabbing; }
+.overlay-title { flex: 1 1 auto; min-width: 0; }
+/* Общая шапка обоих баров — одинаковый шрифт/отступ/высота у обоих, независимо от собственных
+   цветов панели (см. .chain-result-head b / .step-log-head b ниже — там только color). */
+.overlay-head {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 6px;
   font-size: 11px;
   color: var(--dim);
   margin-bottom: 5px;
@@ -543,17 +672,28 @@
   cursor: pointer;
   user-select: none;
 }
+.overlay-box.collapsed .overlay-head { margin-bottom: 0; }
+.chain-result-box {
+  background: rgba(14, 16, 21, 0.97);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .45);
+}
 .chain-result-head b { color: var(--acc); }
-.chain-result-box.collapsed .chain-result-head { margin-bottom: 0; }
 .chain-result-box.collapsed .chain-result-text { display: none; }
+/* ✕ — ПОЛНОСТЬЮ скрывает бар (в отличие от клика по шапке, который просто сворачивает в
+   строку-заголовок); вернуть можно только кнопками в верхнем меню (#bToggleResultBox/
+   #bToggleStepLog), см. JS МАРКЕР 10.2b OVERLAY_STACK. */
+.overlay-box.hidden { display: none; }
+.overlay-close { color: var(--dim); font-size: 13px; line-height: 1; padding: 0 2px; cursor: pointer; flex: 0 0 auto; }
+.overlay-close:hover { color: var(--red); }
 
-/* Визуализатор наложения Горизонтального XOR */
+/* Визуализатор наложения Горизонтального XOR — без своей рамки/фона (см. запрос пользователя
+   "в окне всё делать без доп рамок"): просто обёртка для отступа снизу, чтобы "Сквозная"/"Цель"
+   выравнивались с "Результат" (та рендерится отдельно, вне этой обёртки, тем же .horiz-ride-row,
+   без padding — раньше собственный padding .horiz-info сдвигал их относительно "Результат"). */
 .horiz-info {
-  background: rgba(255, 153, 0, 0.1);
-  border: 1px solid rgba(255, 153, 0, 0.3);
-  border-radius: 4px;
-  padding: 6px 8px;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   font-size: 12px;
   line-height: 1.5;
 }
@@ -567,8 +707,10 @@
   box-shadow: 0 0 6px #ff9900;
 }
 
-/* Три выровненные друг под другом строки (сквозная / исходная / результат) для Гориз.XOR.
-   Моноширинный шрифт без padding/bold у отдельных символов — иначе столбцы разъезжаются. */
+/* Три строки (сквозная / цель / результат) для Гориз.XOR, теперь в "Черновике шага".
+   Моноширинный шрифт без padding/bold у отдельных символов — иначе столбцы разъезжаются.
+   По умолчанию — одна строка, обрезанная (как .chain-result-line/.step-log-result); клик
+   разворачивает целиком (.expanded), тот же приём "▸ ещё" при реальной обрезке. */
 .horiz-ride-row {
   display: flex;
   align-items: baseline;
@@ -576,16 +718,15 @@
   font-family: "Roboto Mono", Consolas, monospace;
   font-size: 12px;
   letter-spacing: var(--chain-ls);
-  white-space: pre;
+  cursor: pointer;
+  position: relative;
+  padding-right: 3px;
 }
 .horiz-ride-row + .horiz-ride-row { margin-top: 2px; }
-.horiz-progress {
-  font-size: 10.5px;
-  color: #ff9900;
-  margin-bottom: 4px;
-  font-weight: 600;
-  letter-spacing: .3px;
-}
+.horiz-ride-row.truncated::after{content:"▸ ещё";position:absolute;right:3px;top:50%;
+  transform:translateY(-50%);background:var(--acc);color:#fff;font-size:10px;font-weight:700;
+  line-height:1.4;padding:0 4px;border-radius:2px;pointer-events:none;
+  box-shadow:0 0 6px rgba(0,0,0,.7), -8px 0 6px -2px rgba(255,153,0,.1)}
 .horiz-ride-tag {
   flex: 0 0 64px;
   color: var(--dim);
@@ -594,11 +735,9 @@
   letter-spacing: .5px;
   text-align: right;
 }
-.horiz-ride-text { color: var(--fg); overflow: hidden; }
-/* Строка "Сквозная" показывает ВСЮ цепочку целиком (не обрезана по ширине строки) —
-   ей нужен перенос, иначе она вылезет далеко за пределы панели. */
-.horiz-ride-row.horiz-ride-wrap { align-items: flex-start; }
-.horiz-ride-row.horiz-ride-wrap .horiz-ride-text { white-space: pre-wrap; word-break: break-all; overflow: visible; }
+.horiz-ride-text { color: var(--fg); flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.horiz-ride-row.expanded { align-items: flex-start; }
+.horiz-ride-row.expanded .horiz-ride-text { white-space: pre-wrap; word-break: break-all; overflow: visible; text-overflow: clip; }
 /* Активная (только что въехавшая) позиция — только цветом, без сдвига символов */
 .horiz-ride-text .horiz-active-bit {
   background: none;
@@ -663,75 +802,89 @@
 .chain-result-line-bits{flex:1 1 auto;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .chain-result-line.expanded .chain-result-line-bits{white-space:pre-wrap;word-break:break-all;text-overflow:clip}
 
-/* Черновик последнего шага — визуальный лог операции: какие строки взяты, что сделано, что найдено */
+/* Черновик последнего шага — визуальный лог операции: какие строки взяты, что сделано, что найдено.
+   Позиционирование (top/left/right) — общее для обоих overlay-баров, см. .overlay-box выше. */
 .step-log-box {
-  margin-top: 10px;
-  padding: 8px 10px;
   background: rgba(26, 20, 10, 0.85);
   border: 1px solid rgba(255, 191, 92, 0.28);
   border-radius: 6px;
-  white-space: normal;
-}
-.step-log-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 11px;
-  color: var(--dim);
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .45);
 }
 .step-log-head b { color: #ffcf6b; }
+.step-log-box.collapsed .step-log-body,
+.step-log-box.collapsed .step-log-resize-handle { display: none; }
 .step-log-body {
   font-size: 12px;
-  line-height: 1.6;
+  line-height: 1.4;
   color: var(--fg);
+  /* Высота держится в JS через явный style.height (см. stepLogBodyHeight/applyStepLogBodyHeight
+     в renderStepLogBox) — растёт, если новому содержимому нужно больше места, но НИКОГДА не
+     уменьшается сама только из-за того, что на очередном шаге строк стало меньше; своя ручка
+     снизу (.step-log-resize-handle) даёт подвинуть высоту вручную в любую сторону. Без этого
+     (просто auto-высота) бар то растягивался без предела при большом содержимом ("Подпаттерны
+     сдвига" и т.п.), то сжимался обратно на следующем шаге — оба эффекта мешали.
+     display:flex + justify-content:flex-end — раз высота фиксированная и не сжимается, при
+     МЕНЬШЕМ содержимом (например, строк-источников стало меньше) пустое место остаётся СВЕРХУ,
+     а не снизу: "Итог" всегда у нижнего края блока, на одном и том же месте, а не прыгает вверх
+     вместе с уменьшившимся содержимым. */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
 }
+.step-log-body::-webkit-scrollbar { width: 6px; }
+.step-log-body::-webkit-scrollbar-thumb { background: #2b3040; border-radius: 3px; }
+.step-log-body::-webkit-scrollbar-track { background: transparent; }
+/* flex-shrink:0 — иначе flex (см. .step-log-body выше) может сжимать строки уже своей высоты,
+   когда содержимого больше, чем текущая высота блока, вместо того чтобы честно переполниться
+   и дать сработать overflow-y:auto (скролл). */
+.step-log-body > * { flex-shrink: 0; }
+.step-log-resize-handle {
+  height: 7px;
+  margin: 2px 0 -4px;
+  cursor: ns-resize;
+  border-radius: 3px;
+  position: relative;
+}
+.step-log-resize-handle::before {
+  content: "";
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 28px; height: 3px; border-radius: 2px;
+  background: rgba(255, 191, 92, .25);
+}
+.step-log-resize-handle:hover::before, .step-log-resize-handle.dragging::before { background: rgba(255, 191, 92, .6); }
 .step-log-row {
   display: flex;
   gap: 6px;
   align-items: baseline;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
   flex-wrap: wrap;
 }
 .step-log-label {
   flex: 0 0 auto;
   color: var(--dim);
-  font-size: 10.5px;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: .5px;
-  min-width: 68px;
+  min-width: 60px;
 }
-.step-log-op {
-  color: #ffcf6b;
-  font-weight: 700;
-}
-.step-log-rows-badge {
-  display: inline-block;
-  background: rgba(77, 163, 255, 0.15);
-  color: var(--acc);
-  border: 1px solid rgba(77, 163, 255, 0.35);
-  border-radius: 3px;
-  padding: 0 5px;
-  margin-right: 3px;
-  font-family: "Roboto Mono", Consolas, monospace;
-  font-size: 11px;
-}
+/* "(Строки N-M) Операция" — дописывается в шапку сразу после номера шага, тем же регистром/
+   насыщенностью, что и остальной заголовок (наследует text-transform:uppercase от .overlay-head). */
+.step-log-rows-head { font-weight: normal; margin-left: 4px; }
 
-/* Контейнер для участвующих строк друг под другом */
+/* Контейнер для участвующих строк друг под другом — без рамки/фона (см. "в окне всё делать
+   без доп рамок"), max-height/overflow только чтобы не растягиваться без предела при XOR-всех
+   на много строк. */
 .step-log-inputs-container {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin: 6px 0;
+  gap: 0;
+  margin: 2px 0;
   max-height: 140px;
   overflow-x: auto;
   overflow-y: auto;
-  background: #080a0f;
-  border: 1px solid #1a1d26;
-  border-radius: 4px;
-  padding: 6px;
 }
 .step-log-inputs-container::-webkit-scrollbar { height: 6px; width: 6px; }
 .step-log-inputs-container::-webkit-scrollbar-thumb { background: #2b3040; border-radius: 3px; }
@@ -742,43 +895,67 @@
   gap: 8px;
   font-family: "Roboto Mono", Consolas, monospace;
   font-size: 11.5px;
+  line-height: 1.1;
   white-space: pre;
 }
 .step-log-input-name {
   color: var(--dim);
   font-size: 10px;
-  min-width: 32px;
+  min-width: 36px;
   text-align: right;
   user-select: none;
+  flex: 0 0 auto;
 }
 .step-log-input-text {
   color: var(--fg);
 }
 
+/* Строка результата — тем же рядом-лейблом (.step-log-input-name "Итог"), что и строки-
+   источники выше, чтобы биты у всех начинались в одном столбце (см. запрос "выровни названия
+   строк"). */
+.step-log-result-row { display: flex; align-items: baseline; gap: 8px; margin-top: 0; }
+/* Тёмно-серый фон — единственное исключение из "без доп рамок" (сам "Итог" — отдельно
+   попросили выделить фоном); одна строка по левому краю, тот же интервал (line-height 1.1),
+   что у строк-источников выше; обрезана (text-overflow), клик разворачивает целиком (см. JS:
+   bStepLogResultEl click-обработчик), тот же приём "▸ ещё" при реальной обрезке. */
 .step-log-result {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
   font-family: "Roboto Mono", Consolas, monospace;
   font-size: 12px;
+  line-height: 1.1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, .07);
+  color: var(--fg);
+}
+.step-log-result.expanded {
   word-break: break-all;
   white-space: pre-wrap;
-  background: #050505;
-  border: 1px solid #1a1d26;
-  border-radius: 4px;
-  padding: 4px 6px;
-  color: var(--fg);
-  width: 100%;
+  text-overflow: clip;
 }
-.step-log-pattern {
-  margin-top: 4px;
-  padding: 5px 7px;
-  border-radius: 4px;
-  background: rgba(255, 68, 68, 0.1);
-  border: 1px solid rgba(255, 68, 68, 0.3);
-  color: var(--red);
-  font-size: 12px;
-}
-.step-log-pattern.inv { background: rgba(176, 96, 255, 0.1); border-color: rgba(176, 96, 255, 0.3); color: var(--purple); }
-.step-log-pattern.rev { background: rgba(56, 193, 114, 0.1); border-color: rgba(56, 193, 114, 0.3); color: var(--green); }
+.step-log-result.truncated::after{content:"▸ ещё";position:absolute;right:3px;top:50%;
+  transform:translateY(-50%);background:var(--acc);color:#fff;font-size:10px;font-weight:700;
+  line-height:1.4;padding:0 4px;border-radius:2px;pointer-events:none;
+  box-shadow:0 0 6px rgba(0,0,0,.7), -8px 0 6px -2px rgba(26,20,10,.85)}
 .step-log-empty { color: #3a4050; font-style: italic; }
+/* Своя прокрутка для списка подпаттернов — при многих режимах/поворотах список сам не тянет
+   за собой высоту всего stepLogBody (см. applyStepLogBodyHeight()), а скроллится в себе. */
+.step-log-sub-container { max-height: 160px; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; }
+.step-log-sub-container::-webkit-scrollbar { width: 6px; }
+.step-log-sub-container::-webkit-scrollbar-thumb { background: #2b3040; border-radius: 3px; }
+.step-log-sub-container::-webkit-scrollbar-track { background: transparent; }
+.step-log-sub-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-family: "Roboto Mono", Consolas, monospace; font-size: 11px; margin-bottom: 3px; }
+.step-log-sub-mode { flex: 0 0 auto; color: var(--dim); min-width: 72px; }
+.step-log-sub-mode.found { color: #ffcf6b; font-weight: 700; }
+.step-log-sub-variant { display: inline-block; padding: 0 4px; border-radius: 2px; background: rgba(255,255,255,.05); color: #4b5262; }
+.step-log-sub-variant.found { background: rgba(255,207,107,.2); color: #ffcf6b; font-weight: 700; }
 .step-log-changes { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 2px; }
 .step-log-change-item { display: flex; flex-direction: column; gap: 4px; }
 .step-log-diff { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px 10px; }
@@ -819,7 +996,7 @@
 <!-- === МАРКЕР 03: HEADER_UI === -->
 <div id="menuBar">
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
-    <h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.178</span></h3>
+    <h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.238</span></h3>
   </div>
   <div id="menuTabs">
     <button id="bUndo" style="font-size:12px;padding:3px 8px;" title="Шаг назад / отмена ручной правки (Backspace / Ctrl+Z)">↩ Отменить</button>
@@ -844,12 +1021,21 @@
       <button data-val="left" title="По левому краю">⇤</button>
       <button class="act" data-val="center" title="По центру">↔</button>
       <button data-val="right" title="По правому краю">⇥</button>
+      <button data-val="halfcenter" title="По центру, но с точностью до половины символа — короткая строка встаёт СТРОГО между символами длинной (напр. «1» строго между двумя «1» у «11»), а не вплотную к одной из них">↔½</button>
+      <button data-val="stairs" title="Лесенка: каждая строка сдвинута вправо на (её длина − 1) — «1»/«11»/«111»/«1111» и т.п. выстраиваются диагональной лестницей, а не по общей ширине">⇱</button>
+      <button data-val="halfstairs" title="Лесенка ½: та же лестница, но вдвое положе — сдвиг каждой строки на половину символа за шаг, а не на целый">⇱½</button>
     </div>
 
     <!-- Скрыть/показать колонки паттернов по отдельности (левую/правую) -->
     <span style="width:1px;align-self:stretch;background:var(--line);margin:0 4px;"></span>
     <button id="bTogglePatL" style="font-size:12px;padding:3px 8px;" title="Скрыть/показать левую колонку паттернов">◧ Пат.</button>
     <button id="bTogglePatR" style="font-size:12px;padding:3px 8px;" title="Скрыть/показать правую колонку паттернов">Пат. ◨</button>
+
+    <!-- Вернуть overlay-бары, скрытые крестиком ✕ в их шапке (см. .overlay-close) — сами
+         бары полностью пропадают из вида (display:none), других способов их вернуть нет. -->
+    <span style="width:1px;align-self:stretch;background:var(--line);margin:0 4px;"></span>
+    <button id="bToggleResultBox" class="overlay-toggle-btn" title="Показать/скрыть окно «Результат»">🔗 Рез.</button>
+    <button id="bToggleStepLog" class="overlay-toggle-btn" title="Показать/скрыть окно «Черновик последнего шага»">🧾 Черн.</button>
 
     <!-- Управление цепочками (вкладками) — вынесено из шапки таблицы строк в верхнее меню.
          Раньше был нативный <select> + отдельная кнопка "✕" (закрывала только ТЕКУЩУЮ
@@ -869,40 +1055,64 @@
 </div>
 
 <div id="opsGroup" class="control-group ops-btn-grid">
-  <button id="bStep" title="Один шаг (обычный интерливинг)">▶ Шаг</button>
-  <button id="bStep2" title="Шаг по 2 (принудительный интерливинг пары)">▶ Шаг 2</button>
+  <!-- Только одноразовые действия (не режимы для "Авто" — см. flowGroup ниже): у этих трёх нет
+       подсветки .mode-act, каждый клик — самостоятельное действие, а не выбор "что повторять". -->
   <button id="bInterleaveSearch" title="Интерливинг пары + поиск совпадения в паттерне 3-й строки">⧬ Интерлив</button>
-  <button id="bStepXor" style="color:var(--purple);" title="Накопительный XOR всех строк до текущей">⨁ XOR</button>
-  <button id="bStep2Xor" style="color:var(--acc);" title="Принудительный XOR пары строк">⨁ XOR 2</button>
-  <button id="bStepHorizXor" style="color:#ff9900;" title="Горизонтальный XOR: символы верхней строки по одному заходят в нижнюю, ксорят её и крутят по кругу до находки">⨁ Гориз.XOR</button>
-  <button id="bStepXorProj" style="color:#ff66cc;" title="Проекция XOR: Вычисляет XOR всех строк ВЫШЕ текущей и полностью перезаписывает им текущую строку.">⏬ Проекц.XOR</button>
   <button id="bXorSelected" style="color:#ff66cc;" title="XOR выделённой строки и всех над ней, показать результат внизу и перейти на нижнюю если совпадает">⨁ XOR выдел</button>
-  <button id="bStepScan" style="color:var(--green);" title="Сканировать строки на паттерны без изменения символов">👁 Скан</button>
+  <!-- Тетрис: каждый клик — один ОТДЕЛЬНЫЙ шаг (см. tetrisDrop() в JS): если 1-биты строки НАД
+       выделенной не влезают в её 0-пустоты как есть, клик крутит выделенную строку до
+       подходящего поворота; если НИ ОДИН поворот не подошёл — следующий клик инвертирует (0↔1)
+       строку сверху (само падение ещё не происходит); когда уже влезает — клик выполняет
+       падение (выделенная получает эти 1-биты, строка сверху гасит их в 0, строки никогда не
+       удаляются и не сдвигаются); ещё один клик после этого — только переводит выделение на
+       строку ниже, чтобы продолжать тетрис вниз повторяя клики. -->
+  <button id="bTetris" style="color:#ff9900;" title="Тетрис (каждый клик — один отдельный шаг): крутит выделенную строку до подходящего поворота; если ни один не подошёл — отдельным кликом инвертирует строку сверху; когда влезает — отдельным кликом роняет 1-биты строки сверху в её 0-пустоты; следующим кликом переводит выделение на строку ниже. Строки никогда не удаляются и не сдвигаются">🧱 Тетрис</button>
 </div>
 
-<!-- Назад/Авто/Стоп — перенесено сюда из бывшей вкладки "Управление", теперь наверху вкладки
-     "Шаги" (см. MENUS.menuOps.ids), одной строкой в рамке, чтобы визуально выделяться среди
-     остальных кнопок шагов. -->
+<!-- Назад/Авто/Стоп + все кнопки-РЕЖИМЫ (см. setMode() в JS — подсвечиваются .mode-act, именно
+     их и повторяет "Авто") — в одной рамке, раз они все связаны с "Авто": сверху Авто/Стоп,
+     ниже сетка режимов. Перенесено сюда из бывшей вкладки "Управление" (см. MENUS.menuOps.ids). -->
 <div id="flowGroup" class="control-group-flow">
-  <button id="bAuto" title="Автоматический прогон по выбранному режиму (Enter)">🚀 Авто</button>
-  <button id="bStop" class="stop" title="Остановить" disabled>⏹ Стоп</button>
+  <div class="flow-top-row">
+    <!-- Одна кнопка вместо пары "Авто"/"Стоп" — сама переключает подпись/цвет между "🚀 Авто"
+         (клик — запустить) и "⏹ Стоп" (клик — остановить), см. setAutoBtnState() в JS. -->
+    <button id="bAuto" title="Автоматический прогон по выбранному режиму (Enter) / повторный клик — остановить">🚀 Авто</button>
+  </div>
+  <div class="flow-modes-grid">
+    <button id="bStep" title="Один шаг (обычный интерливинг)">▶ Шаг</button>
+    <button id="bStep2" title="Шаг по 2 (принудительный интерливинг пары)">▶ Шаг 2</button>
+    <button id="bStepXor" style="color:var(--purple);" title="Накопительный XOR всех строк до текущей">⨁ XOR</button>
+    <button id="bStep2Xor" style="color:var(--acc);" title="Принудительный XOR пары строк">⨁ XOR 2</button>
+    <button id="bStepHorizXor" style="color:#ff9900;" title="Горизонтальный XOR: символы верхней строки по одному заходят в нижнюю, ксорят её и крутят по кругу до находки">⨁ Гориз.XOR</button>
+    <button id="bStepXorProj" style="color:#ff66cc;" title="Проекция XOR: Вычисляет XOR всех строк ВЫШЕ текущей и полностью перезаписывает им текущую строку.">⏬ Проекц.XOR</button>
+    <!-- Круговой сдвиг и Спираль — тоже "режимы для Авто" (см. st.lastDirMode/DIR_MODE_BTN
+         в JS), поэтому перенесены сюда же, из "Правки строк". Взаимоисключающая подсветка
+         .mode-act — общая с Шаг/XOR/Гориз.XOR/Скан ниже (см. setLastDirMode()/setMode() в JS).
+         Стоят ПЕРЕД Сканом (не после) — в 2-колоночной сетке каждая пара ◄►/▲▼ должна попасть
+         на свою отдельную строку целиком, а не разбиваться Сканом пополам (см. запрос
+         пользователя — "круги на одной строке и спирали, Скан вниз"). -->
+    <button id="bShiftL" title="Круговой сдвиг влево выбранных строк (◄ или Ctrl+Клик)">◄ Круг</button>
+    <button id="bShiftR" title="Круговой сдвиг вправо выбранных строк (► или Ctrl+Клик)">► Круг</button>
+    <button id="bSpiralUp" style="color:#ff3333;" title="Спираль вверх: строки (все, либо выделенный диапазон) читаются одной лентой и сдвигаются по кругу на 1 символ в сторону, заданную переключателем ◄/► ниже">▲ Спираль</button>
+    <button id="bSpiralDown" style="color:#ff3333;" title="Спираль вниз: строки (все, либо выделенный диапазон) читаются одной лентой и сдвигаются по кругу на 1 символ в сторону, противоположную переключателю ◄/► ниже">▼ Спираль</button>
+    <button id="bStepScan" style="color:var(--green);" title="Сканировать строки на паттерны без изменения символов">👁 Скан</button>
+  </div>
+
+  <!-- ◄/► переключатель "какая сторона ленты — вверх" для ▲/▼ Спираль выше — НАСТРОЙКА, не
+       режим (не участвует в mode-act/DIR_MODE_BTN), поэтому вынесен из сетки режимов отдельным
+       рядом со своей подписью (текстом, а не только тултипом — раньше тут была голая пара кнопок
+       без единого поясняющего слова). Перенесено сюда же из "Правки строк", чтобы все элементы
+       Спирали были в одном месте, а не раскиданы по двум вкладкам. -->
+  <div style="display:flex; gap:6px; align-items:center; border:1px solid #ff3333; background:rgba(255,51,51,0.08); border-radius:3px; padding:4px;">
+    <span style="color:#ff9a9a; font-size:12px; white-space:nowrap;">Верх ленты Спирали:</span>
+    <div class="align-grp" id="spiralDirGrp" title="Какая сторона ленты символов считается «вверх» для кнопок ▲/▼ Спираль">
+      <button data-val="left" title="Влево по ленте = вверх">◄</button>
+      <button class="act" data-val="right" title="Вправо по ленте = вверх">►</button>
+    </div>
+  </div>
 </div>
 
 <div id="editGroup" class="control-group control-group-player">
-  <!-- Кнопки ручного кругового сдвига символов выделенных строк -->
-  <button id="bShiftL" title="Круговой сдвиг влево выбранных строк (◄ или Ctrl+Клик)">◄</button>
-  <button id="bShiftR" title="Круговой сдвиг вправо выбранных строк (► или Ctrl+Клик)">►</button>
-
-  <!-- Авто-круговой сдвиг: повторяет обычный круговой сдвиг (◄/► выше) сам по себе, в цикле,
-       пока не найдёт совпадение через фон-поиск (если "Стоп на находке" включён — тогда
-       останавливается и добавляет строку-находку к выделению) или пока не пройдёт полный
-       оборот (длина самой длинной сдвигаемой строки), если ничего не нашлось. Направление —
-       НЕ своё, а то же самое, что переключатель ◄/► у "Спирали" ниже (st.spiralUpDir), чтобы
-       не плодить третий переключатель направления. -->
-  <div style="grid-column:1 / -1; display:flex; align-items:center; border:1px solid var(--acc); background:rgba(77,163,255,0.08); border-radius:3px; padding:4px;">
-    <button id="bAutoShift" style="flex:1;" title="Авто-круговой сдвиг выделенных строк (или всех, если ничего не выделено) — направление как у переключателя ◄/► в блоке «Спираль» ниже. Останавливается при находке (если включено «Стоп на находке» в «Поиск»/фон-поиск) или после полного оборота">🔄 Авто сдвиг</button>
-  </div>
-
   <button id="bInvertSelected" title="Инвертировать биты (0↔1) в выделенных строках">🔁 Инверсия</button>
   <button id="bPadZerosAbove" title="Добавить нули вверх: для выделенных строк (по самой длинной из них) добавить нули выше">0⬆</button>
   <button id="bDelFirst" title="Удалить первый символ (слева) из выделенных строк (или всех, если ничего не выделено)">🗑 ←1</button>
@@ -918,29 +1128,6 @@
     <input type="number" id="sierpinskiN" min="2" max="2048" step="1" value="128" style="width:64px" title="Сколько строк генерировать">
   </div>
 
-  <!-- "Спираль": строки (все, либо выделенный диапазон — см. colSelectRowRange) читаются ОДНОЙ
-       непрерывной лентой символов сверху вниз и сдвигаются по кругу на 1 символ (символ с
-       одного конца ленты переходит на другой), затем нарезаются обратно строго по ИСХОДНЫМ
-       длинам строк — та же логика, что manualElkaShift() в Zerkalius-genezis.html. Переключатель
-       ◄/► решает, какая физическая сторона ленты (влево/вправо) считается "вверх" для кнопок
-       ▲/▼ — сама лента лежит горизонтально, а ▲/▼ это просто пользовательские подписи направления. -->
-  <div style="grid-column:1 / -1; display:flex; gap:6px; align-items:center; border:1px solid #ff3333; background:rgba(255,51,51,0.08); border-radius:3px; padding:4px;">
-    <div class="align-grp" id="spiralDirGrp" title="Какая сторона ленты символов считается «вверх» для кнопок ▲/▼ Спираль">
-      <button data-val="left" title="Влево по ленте = вверх">◄</button>
-      <button class="act" data-val="right" title="Вправо по ленте = вверх">►</button>
-    </div>
-    <button id="bSpiralUp" style="flex:1; border-color:#ff3333; color:#ff3333;" title="Спираль вверх: строки (все, либо выделенный диапазон) читаются одной лентой и сдвигаются по кругу на 1 символ в сторону, заданную переключателем ◄/►">▲ Спираль</button>
-    <button id="bSpiralDown" style="flex:1; border-color:#ff3333; color:#ff3333;" title="Спираль вниз: строки (все, либо выделенный диапазон) читаются одной лентой и сдвигаются по кругу на 1 символ в сторону, противоположную переключателю ◄/►">▼ Спираль</button>
-  </div>
-
-  <!-- Тетрис, в два клика, если сразу не влезает: 1-й клик — если 1-биты строки НАД выделенной
-       не влезают в её 0-пустоты как есть, только КРУТИТ выделенную строку до подходящего
-       поворота (само падение ещё не происходит); 2-й клик (когда уже влезает — сразу либо
-       после поворота) — падение: выделенная получает эти 1-биты, строка сверху гасит их в 0 и
-       остаётся на месте (строки никогда не удаляются и не сдвигаются, ни в каком случае). -->
-  <div style="grid-column:1 / -1; display:flex; align-items:center; border:1px solid #ff9900; background:rgba(255,153,0,0.08); border-radius:3px; padding:4px;">
-    <button id="bTetris" style="flex:1; border-color:#ff9900; color:#ff9900;" title="Тетрис (в 2 клика, если сразу не влезает): 1-й клик крутит выделенную строку до подходящего поворота, 2-й — роняет 1-биты строки сверху в её 0-пустоты (строка сверху гасит их в 0). Строки никогда не удаляются и не сдвигаются">🧱 Тетрис</button>
-  </div>
 </div>
 
 <div id="searchGroup" class="control-group search-grid">
@@ -975,6 +1162,9 @@
       <button data-val="snakeR" class="act" title="Змейка: как вертикальная склейка, но направление чтения строк внутри столбца чередуется (то сверху вниз, то снизу вверх), столбцы слева направо">🐍 Змейка →</button>
       <button data-val="snakeL" class="act" title="Змейка: как вертикальная склейка, но направление чтения строк внутри столбца чередуется (то сверху вниз, то снизу вверх), столбцы справа налево">🐍 Змейка ←</button>
     </div>
+    <label class="chk" title="Например паттерн 1110, «Без 1-го» даёт 110 — с этой галкой ищем не только 110, но и ВСЕ варианты его циклического сдвига (101, 011). Найдено, если совпал хотя бы один. Полный список подпаттернов и какие из них нашлись — см. «🧾 Черновик последнего шага»">
+      <input type="checkbox" id="cBgSubPatterns"> 🔀 Подпаттерны сдвига
+    </label>
   </div>
   <div style="grid-column:1 / -1;display:grid;grid-template-columns:repeat(2, 1fr);gap:4px;">
     <label class="chk" title="Искать также инверсию и реверс"><input type="checkbox" id="cKinds">⇌ Инв/Рев</label>
@@ -1010,7 +1200,79 @@
   <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;border:1px solid #ff9900;background:rgba(255,153,0,0.08);border-radius:3px;padding:4px;">
     <label class="chk" title="Цвет единиц">Цвет 1 <input type="color" id="col1" value="#ff3333"></label>
     <label class="chk" title="Цвет нулей">Цвет 0 <input type="color" id="col0" value="#555555"></label>
-    <label class="chk" title="Фон полотна">Фон полотна <input type="color" id="colBg" value="#000000"></label>
+    <label class="chk" title="Фон полотна">Фон <input type="color" id="colBg" value="#000000"></label>
+    <!-- Особая подсветка "0 перед 1" (см. compute01HighlightMask()) — по всем строкам красит
+         ВЕСЬ пробег нулей перед единицей целиком, плюс саму эту единицу: "0001" — все 4 символа;
+         "00110001" — "001" и "0001" отдельно (единица на позиции 3, идущая сразу за другой
+         единицей, не красится — перед ней нет ни одного "0"). Кнопка+цвет объединены в одну
+         рамку (.hl-combo), а не два отдельных бордюра рядом. -->
+    <span class="hl-combo">
+      <button id="bHighlight01" title="Особая подсветка: красит весь пробег нулей перед единицей целиком (плюс саму единицу) по всем строкам — напр. «0001» целиком, а не только «01»">01</button>
+      <input type="color" id="col01" value="#ff9900" title="Цвет подсветки «01»">
+    </span>
+    <!-- Особая подсветка "1 под 1" (см. computeVertOnesMask()) — красит "1", если в СОСЕДНЕЙ
+         строке (сверху ИЛИ снизу) в ТОЙ ЖЕ колонке тоже стоит "1" (с учётом текущего
+         выравнивания/сдвига, а не сырого индекса символа в строке). -->
+    <span class="hl-combo">
+      <button id="bHighlightVert1" title="Особая подсветка: красит «1», если в соседней строке (сверху или снизу) в той же колонке тоже «1» — с учётом текущего выравнивания">1↕1</button>
+      <input type="color" id="colVert1" value="#00ccff" title="Цвет подсветки «1 под 1»">
+    </span>
+    <!-- Особая подсветка "1 по диагонали" (см. computeDiagOnesMask()) — красит "1", если в
+         соседней строке (сверху ИЛИ снизу) в СОСЕДНЕЙ колонке (левее ИЛИ правее на 1, а не в
+         той же самой) тоже стоит "1" — с учётом текущего выравнивания/сдвига, работает в любом
+         из режимов ⇤/↔/⇥/↔½. -->
+    <span class="hl-combo">
+      <button id="bHighlightDiag1" title="Особая подсветка: красит «1», если в соседней строке по диагонали (колонкой левее или правее) тоже «1» — с учётом текущего выравнивания, в любом режиме">1⤡1</button>
+      <input type="color" id="colDiag1" value="#66ff66" title="Цвет подсветки «1 по диагонали»">
+    </span>
+    <!-- Жирность символов 0/1 — просто font-weight:bold через body.bold-bits (см. CSS), без
+         отдельного цвета, как у соседних тумблеров подсветки. -->
+    <button id="bBoldBits" title="Жирность символов «0»/«1» — вкл/выкл">Жирность</button>
+  </div>
+
+  <!-- Поиск только по выделенным цветом позициям — влияет на ВСЕ виды поиска (интерлив, XOR,
+       сквозная, конкат, вертикальный, змейкой и т.п.), т.к. они все идут через getRowBits(). -->
+  <div style="display:flex;margin-bottom:4px;border:1px solid var(--acc);background:rgba(77,163,255,0.08);border-radius:3px;padding:4px;">
+    <button id="bSearchOnlyHl" style="flex:1;" title="Поиск (все виды — интерлив/XOR/сквозная/конкат/вертикальный/змейкой и т.п.) считает «1» ТОЛЬКО там, где сейчас реально подсвечено цветом (01 / 1↕1 / 1⤡1), остальные позиции — «0», независимо от исходного бита. Работает только вместе с включённой хотя бы одной из этих подсветок — иначе везде «0»">🔍 Поиск только по выделенным</button>
+  </div>
+
+  <!-- Баланс 0/1 строки (см. render(): computeRowBalance()/formatBalanceTotals()/.row-balance) —
+       только итоговые суммы "N-M" (без пробегов и скобок), сразу перед цепочкой (после num-l2,
+       второго номера строки — того, что вплотную к .bits), паттерн слева (.pat) не трогает.
+       "1" — белым, "0" — серым; если единиц и нулей поровну — одним акцентным цветом с
+       подсветкой (.row-balance-eq). Сами пробеги ("+3-2+1") — отдельная кнопка ниже, вместо
+       битов, а не рядом с ними. -->
+  <div style="display:flex;margin-bottom:4px;border:1px solid var(--acc);background:rgba(77,163,255,0.08);border-radius:3px;padding:4px;">
+    <button id="bShowBalances" style="flex:1;" title="Показать итоговый баланс строки: «N-M» — сумма всех единиц минус сумма всех нулей, «1» белым, «0» серым. Если единиц и нулей поровну — подсвечивается отдельно">⚖ Показать балансы</button>
+  </div>
+
+  <!-- "Пробеги вместо битов" (см. render(): formatRunsHtml()/computeRowBalance()) — САМА строка
+       "0"/"1" заменяется её пробегами со знаком (напр. "111001" -> "+3-2+1"), с тем же сдвигом
+       выравнивания, что и настоящие биты, каждый пробег в цвет "1"/"0". Посимвольные подсветки
+       (01/1↕1/1⤡1, находки, выбор столбца) в этом режиме не действуют. -->
+  <div style="display:flex;margin-bottom:4px;border:1px solid var(--acc);background:rgba(77,163,255,0.08);border-radius:3px;padding:4px;">
+    <button id="bRunsAsBits" style="flex:1;" title="Заменить сами биты 0/1 их пробегами со знаком, напр. «111001» -> «+3-2+1» (то же выравнивание, что у обычных битов). Посимвольные подсветки в этом режиме не действуют">🔀 Пробеги вместо битов</button>
+  </div>
+
+  <!-- Фон ТОЛЬКО для выделенных строк (.ln.selected) — не трогает невыделенные, чисто фон, без
+       отдельного пресета/цветов 0/1 (см. --rowbg-sel в CSS). -->
+  <div style="margin-bottom:4px;border:1px solid #ffcf6b;background:rgba(255,207,107,0.08);border-radius:3px;padding:4px;">
+    <label class="chk" title="Фон выделенной строки">Фон выделенных строк <input type="color" id="rowBgSel" value="#ffcf6b"></label>
+  </div>
+
+  <!-- Шрифт цифр 0/1 на полотне (см. --chain-ff в CSS) — на разных системах одно и то же
+       начертание рендерится то жирным, то тонким, единого правильного выбора нет, поэтому
+       готовый набор шрифтов на пробу вместо жёсткого хардкода одного варианта. -->
+  <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;border:1px solid var(--acc);background:rgba(77,163,255,0.08);border-radius:3px;padding:4px;">
+    <span class="view-slider-icon" title="Шрифт цифр на полотне">🔤</span>
+    <select id="chainFontSel" style="flex:1;" title="Шрифт цифр 0/1 на полотне — если текущий выглядит слишком жирным/тонким, попробуй другой">
+      <option value='&quot;Roboto Mono&quot;, Consolas, monospace'>Roboto Mono</option>
+      <option value='Consolas, monospace'>Consolas</option>
+      <option value='&quot;Courier New&quot;, monospace'>Courier New</option>
+      <option value='&quot;Cascadia Mono&quot;, Consolas, monospace'>Cascadia Mono</option>
+      <option value='&quot;Lucida Console&quot;, Consolas, monospace'>Lucida Console</option>
+      <option value='monospace'>Системный monospace</option>
+    </select>
   </div>
 
   <!-- Ползунки шрифта/интервалов — межстрочный (lh) вертикальный и стоит СБОКУ от остальных
@@ -1041,38 +1303,45 @@
         <span id="dimVal" class="view-slider-val">100</span>
       </label>
     </div>
-    <label class="chk chk-vertical" title="Межстрочный интервал (line-height, до 0.5 с наездом)">
+    <label class="chk chk-vertical" title="Межстрочный интервал (line-height, до 0.2 с наездом)">
       <span class="view-slider-icon">↕</span>
-      <input type="range" id="lh" min="0.5" max="2.0" step="0.05" value="0.65" class="range-vertical">
+      <input type="range" id="lh" min="0.2" max="2.0" step="0.05" value="0.65" class="range-vertical">
       <span id="lhVal" class="view-slider-val">0.65</span>
     </label>
   </div>
 </div>
 <!-- === МАРКЕР 04: MAIN_UI === -->
 <div class="main-layout">
-  <!-- Окошко сквозной строки/результата фон-поиска — вынесено из .canvas в main-layout, чтобы
-       быть закреплённым overlay-баром сразу под верхним меню независимо от скролла холста
-       (тот же приём, что и плавающие .controls-доки). Клик по заголовку сворачивает в шапку. -->
-  <div class="chain-result-box" id="chainResultBox">
-    <div class="chain-result-head">
-      <span><span id="chainResultLabel">🔗 Сквозная строка результата</span> (<b id="chainLen">0</b> бит):</span>
+  <!-- Окошко сквозной строки/результата фон-поиска и Черновик последнего шага — оба закреплённые
+       overlay-бары сразу под верхним меню независимо от скролла холста (тот же приём, что и
+       плавающие .controls-доки), сложены друг под другом. Порядок (какой сверху/снизу) можно
+       менять перетаскиванием за ручку "⋮⋮" в шапке — только вертикальный обмен местами (ширина
+       и положение по X всегда авто на всю доступную ширину, как раньше только у #chainResultBox),
+       см. overlayOrder/layoutOverlayBoxes() в JS (МАРКЕР 10.2b OVERLAY_STACK). Клик по заголовку
+       результата (не по ручке) по-прежнему сворачивает его в шапку. -->
+  <div class="chain-result-box overlay-box" id="chainResultBox">
+    <div class="chain-result-head overlay-head">
+      <span class="overlay-drag" title="Перетащить — поменять местами с «Черновиком»">⋮⋮</span>
+      <span class="overlay-title"><span id="chainResultLabel">🔗 Сквозная строка результата</span> (<b id="chainLen">0</b> бит):</span>
       <button id="bCopyChain" title="Скопировать сквозную строку в буфер обмена">📋 Копировать</button>
+      <span class="overlay-close" id="bHideResultBox" title="Скрыть полностью (вернуть — кнопкой в верхнем меню)">✕</span>
     </div>
     <div class="chain-result-text" id="chainText"></div>
+  </div>
+  <div class="step-log-box overlay-box" id="stepLogBox">
+    <div class="step-log-head overlay-head">
+      <span class="overlay-drag" title="Перетащить — поменять местами с «Результатом»">⋮⋮</span>
+      <span class="overlay-title">🧾 Черновик шага № <b id="stepLogNo">0</b><span id="stepLogRowsHead" class="step-log-rows-head"></span></span>
+      <button id="bClearStepLog" title="Очистить черновик последнего шага">🧹 Очистить</button>
+      <span class="overlay-close" id="bHideStepLog" title="Скрыть полностью (вернуть — кнопкой в верхнем меню)">✕</span>
+    </div>
+    <div class="step-log-body" id="stepLogBody"><span class="step-log-empty">шагов ещё не было</span></div>
+    <div class="step-log-resize-handle" id="stepLogResizeHandle" title="Потянуть — изменить высоту вручную"></div>
   </div>
   <div class="controls" id="leftPanel"><div class="scrollable-settings" id="leftSlot"></div></div>
   <div class="canvas" id="screenCanvas">
     <!-- Теги записаны в одну плотную строку, чтобы white-space: pre не создавал фантомных пустых строк -->
-    <div class="chain" id="chain"><div class="chain-head"><span class="num">№</span><span class="pat h-pat">Паттерн</span><span class="bits h-bits"></span><span class="num">№</span><span class="pat2 h-pat2">Паттерн</span></div><div class="vsplit" id="vsplit" title="Тяни, чтобы менять ширину левой колонки паттернов"></div><div class="vsplit2" id="vsplit2" title="Тяни, чтобы менять ширину правой колонки паттернов"></div><div id="colHeader"></div><div id="rows"></div></div>
-
-    <!-- Черновик последнего шага (Step Log) — тоже вынесен за пределы .chain -->
-    <div class="step-log-box" id="stepLogBox">
-      <div class="step-log-head">
-        <span>🧾 Черновик последнего шага (<b id="stepLogNo">0</b>):</span>
-        <button id="bClearStepLog" title="Очистить черновик последнего шага">🧹 Очистить</button>
-      </div>
-      <div class="step-log-body" id="stepLogBody"><span class="step-log-empty">шагов ещё не было</span></div>
-    </div>
+    <div class="chain" id="chain"><div class="chain-head"><span class="num">№</span><span class="pat h-pat">Паттерн</span><span class="num num-l2">№</span><span class="bits h-bits"></span><span class="num num-r2">№</span><span class="pat2 h-pat2">Паттерн</span></div><div class="vsplit" id="vsplit" title="Тяни, чтобы менять ширину левой колонки паттернов"></div><div class="vsplit2" id="vsplit2" title="Тяни, чтобы менять ширину правой колонки паттернов"></div><div id="colHeader"></div><div id="rows"></div></div>
   </div>
   <div class="controls" id="rightPanel"><div class="scrollable-settings" id="rightSlot"></div></div>
 </div>
@@ -1085,6 +1354,14 @@
 
 function rotateStrRight(s) { if (!s || s.length <= 1) return s; return s.slice(-1) + s.slice(0, -1); }
 function rotateStrLeft(s) { if (!s || s.length <= 1) return s; return s.slice(1) + s[0]; }
+
+/* Все варианты циклического сдвига строки, включая саму строку (индекс 0) — для "Подпаттерны
+   сдвига" фон-поиска: напр. "110" -> ["110","101","011"]. */
+function rotationsOf(s){
+  const out = [];
+  for (let i = 0; i < s.length; i++) out.push(s.slice(i) + s.slice(0, i));
+  return out;
+}
 
 /* Циклический сдвиг строки ВПРАВО на d позиций (d нормализуется по модулю длины). */
 function rotateRightBy(s, d) {
@@ -1133,6 +1410,18 @@ function alignShift(maxLen, len, align){
   const diff = maxLen - len;
   if (align === "left")  return 0;
   if (align === "right") return diff;
+  // "Лесенка" (⇱, см. #alignGrp data-val="stairs") — сдвиг растёт вместе с длиной самой строки
+  // (shift = len-1), а не с разницей до maxLen, как у остальных режимов: "1"/"11"/"111"/"1111"
+  // превращаются в диагональную лестницу вправо, а не выравниваются по общей ширине. Это
+  // НАМЕРЕННО ломает обычный инвариант "shift+len <= maxLen" (у длинных строк общая ширина
+  // становится БОЛЬШЕ maxLen) — места, где от этого мог бы уйти в минус остаток паддинга
+  // (repeat() с отрицательным числом), подстрахованы Math.max(0, …) по месту вызова.
+  if (align === "stairs") return len ? len - 1 : 0;
+  // "Лесенка ½" (⇱½, data-val="halfstairs") — та же "Лесенка", но вдвое положе: целочисленный
+  // сдвиг — половина от обычной "Лесенки" (округление вниз), а недостающие 0.5 символа при
+  // нечётном (len-1) довешиваются transform:translateX(0.5ch) в render() (halfShiftAttr), тем
+  // же приёмом, что и у "halfcenter" относительно обычного "center".
+  if (align === "halfstairs") return len ? (len - 1) >> 1 : 0;
   return diff >> 1;
 }
 
@@ -1151,18 +1440,12 @@ function ringNextLap(text){ return st.ringInvert ? invertBits(text) : text; }
    вперёд по списку, включая ещё не построенные строки, и потому даёт ложные срабатывания. */
 function textMatchesPattern(text, patText){
   if (!patText) return false;
-  const patFull = patText;
-  const patSkip = (st.skipFirst && patFull.length > 1) ? patFull.slice(1) : patFull;
-  const patInv = st.allKinds ? invertBits(patFull) : null;
-  const patInvSkip = (st.allKinds && st.skipFirst && patInv && patInv.length > 1) ? patInv.slice(1) : null;
-  const patRev = st.allKinds ? reverseStr(patFull) : null;
-  const patRevSkip = (st.allKinds && st.skipFirst && patRev && patRev.length > 1) ? patRev.slice(1) : null;
-  return text.indexOf(patFull) >= 0
-    || (patSkip !== patFull && text.indexOf(patSkip) >= 0)
-    || (patInv && text.indexOf(patInv) >= 0)
-    || (patInvSkip && text.indexOf(patInvSkip) >= 0)
-    || (patRev && text.indexOf(patRev) >= 0)
-    || (patRevSkip && text.indexOf(patRevSkip) >= 0);
+  // Порядок как в findMatch(): сначала срез первого символа («Без 1-го»), инверсия/реверс —
+  // от уже урезанной строки, а не наоборот (см. findPatternKinds() выше — тот же фикс).
+  const base = (st.skipFirst && patText.length > 1) ? patText.slice(1) : patText;
+  if (text.indexOf(base) >= 0) return true;
+  if (!st.allKinds) return false;
+  return text.indexOf(invertBits(base)) >= 0 || text.indexOf(reverseStr(base)) >= 0;
 }
 
 /* Та же проверка, что textMatchesPattern(), но вместо true/false (первого найденного варианта)
@@ -1190,32 +1473,73 @@ function findPatternKinds(text, patText){
   const len = text.length;
   if (!patText || !len) return [];
   const ring = len > 1 ? text + ringNextLap(text).slice(0, len - 1) : text;
-  const patFull = patText;
+  // Порядок как в основном движке findMatch() (см. p.s0/s1/s2 там): СНАЧАЛА срезаем первый
+  // символ паттерна («Без 1-го»), и только ПОТОМ считаем инверсию/реверс от уже урезанной
+  // строки — не наоборот. Раньше было наоборот (инверсия/реверс полного паттерна, а срез —
+  // уже после), из-за чего для kind 1..3 подсвечивался кусок, не совпадающий с тем, что
+  // реально ищет обычный поиск (findMatch), и вводило в заблуждение.
+  const skipApplied = st.skipFirst && patText.length > 1;
+  const base = skipApplied ? patText.slice(1) : patText;
   const out = [];
+  // "Подпаттерны сдвига" (st.bgSubPatterns): вместо ОДНОГО варианта на kind проверяем ВСЕ его
+  // циклические сдвиги — найдено, если совпал хоть один. tried[] хранит ПОЛНЫЙ разбор (все
+  // варианты и кто из них совпал) для каждого kind, даже если в итоге ничего не нашлось — это
+  // нужно "Черновику последнего шага" (см. renderStepLogBox), чтобы показать список целиком.
+  const tried = [];
   const tryKind = (kind, full) => {
-    const skip = (st.skipFirst && full.length > 1) ? full.slice(1) : full;
-    let best = null;
-    let idx = ring.indexOf(full);
-    if (idx >= 0 && idx < len) best = { start: idx, len: full.length, skip: false };
-    if (skip !== full) {
-      const idx2 = ring.indexOf(skip);
-      if (idx2 >= 0 && idx2 < len && (!best || idx2 < best.start)) best = { start: idx2, len: skip.length, skip: true };
-    }
-    if (best) out.push({ kind, start: best.start, end: (best.start + best.len - 1) % len, len: best.len, skip: best.skip });
+    const candidates = st.bgSubPatterns ? rotationsOf(full) : [full];
+    const variants = candidates.map(cand => {
+      const idx = ring.indexOf(cand);
+      const found = idx >= 0 && idx < len;
+      return { text: cand, found, start: found ? idx : -1 };
+    });
+    const hit = variants.find(v => v.found);
+    tried.push({ kind, base: full, variants, matched: !!hit });
+    if (hit) out.push({ kind, start: hit.start, end: (hit.start + hit.text.length - 1) % len, len: hit.text.length, skip: skipApplied, sub: hit.text !== full ? hit.text : null });
   };
-  tryKind(0, patFull);
+  tryKind(0, base);
   if (st.allKinds) {
-    const inv = invertBits(patFull);
+    const inv = invertBits(base);
     tryKind(1, inv);
-    tryKind(2, reverseStr(patFull));
+    tryKind(2, reverseStr(base));
     tryKind(3, reverseStr(inv)); // инверсия + реверс одновременно
   }
+  out.tried = tried;
+  return out;
+}
+
+/* "Поиск только по выделенным" (см. #bSearchOnlyHl в "Виде"): строит СВОЮ строку из "0"/"1" для
+   строки r — "1" там, где позиция ПРЯМО СЕЙЧАС подсвечена цветом (объединение ВКЛЮЧЁННЫХ
+   подсветок "1↕1"/"1⤡1"), остальные позиции — "0", НЕЗАВИСИМО от исходного бита в st.rows.
+   У подсветки "01" логика ОБРАТНАЯ: "1" там, где позиция НЕ входит в её пробег ("01" красит и
+   часть нулей тоже — раз она включена, именно эти закрашенные позиции считаются "0", а всё
+   остальное — "1"). Если ни одна подсветка не включена — строка выйдет вся из нулей. Использует
+   те же compute01HighlightMask/computeVertOnesMask/computeDiagOnesMask, что и сам render(). */
+function computeHighlightedOnlyRow(st, r) {
+  const s = st.rows[r] || "";
+  if (!s.length) return s;
+  let mask = null;
+  if (st.highlight01) {
+    const m = compute01HighlightMask(s);
+    mask = new Set();
+    for (let k = 0; k < m.length; k++) if (!m[k]) mask.add(k);
+  }
+  if (st.highlightVert1) {
+    const vm = computeVertOnesMask(st.rows, st.align)[r];
+    if (vm) { if (!mask) mask = new Set(); vm.forEach(k => mask.add(k)); }
+  }
+  if (st.highlightDiag1) {
+    const dm = computeDiagOnesMask(st.rows, st.align)[r];
+    if (dm) { if (!mask) mask = new Set(); dm.forEach(k => mask.add(k)); }
+  }
+  let out = "";
+  for (let k = 0; k < s.length; k++) out += (mask && mask.has(k)) ? "1" : "0";
   return out;
 }
 
 /* Получение символов строки с учетом возможного инверсного повторного захода */
 function getRowBits(st, r) {
-  const raw = st.rows[r] || "";
+  const raw = st.searchOnlyHighlighted ? computeHighlightedOnlyRow(st, r) : (st.rows[r] || "");
   if (st.invPass && (st.passCount % 2 === 1)) {
     return invertBits(raw);
   }
@@ -1430,7 +1754,18 @@ const st = {
   interleaveMode: false, interleavePairIdx: -1,
   selectedCol: -1,
   spiralUpDir: "right",
-  bgSearch: true, bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatL", "vertR", "vertL", "snakeR", "snakeL"], bgSearchLastHit: -1
+  bgSearch: true, bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatL", "vertR", "vertL", "snakeR", "snakeL"], bgSearchLastHit: -1,
+  bgSubPatterns: false,
+  highlight01: false,
+  highlightVert1: false,
+  highlightDiag1: false,
+  searchOnlyHighlighted: false,
+  showBalances: false,
+  runsAsBits: false,
+  // Последняя нажатая из 4 кнопок направления (◄ ► ▲ ▼ Спираль) — "shiftL"/"shiftR"/
+  // "spiralUp"/"spiralDown"/null. См. setLastDirMode()/autoRun(): "Авто" повторяет именно её,
+  // пока не нажат заново другой режим (setMode()) или другая из этих 4 кнопок.
+  lastDirMode: null
 };
 const UNDO_DEPTH = 500;
 /* Фон-поиск теперь мульти-select: можно включить сразу несколько режимов проверки одновременно */
@@ -1443,6 +1778,17 @@ const BG_SEARCH_MODE_LABELS = {
 /* Какие строки результата фон-поиска сейчас развёрнуты кликом (см. render() → bgResultHtml).
    Чисто UI-состояние, не сохраняется в кэш/по вкладкам — сворачивается заново при перезагрузке. */
 const bgResultExpanded = new Set();
+/* Развёрнут ли результат в "Черновике последнего шага" (клик по .step-log-result) — единственный
+   результат в этом окне, поэтому просто bool, а не Set по ключу, как у bgResultExpanded. */
+let stepLogResultExpanded = false;
+/* Развёрнутые кликом строки Гориз.XOR-блока в "Черновике шага" (Сквозная/Цель/Результат) —
+   ключи "chain"/"full"/"res" (см. computeHorizXorInfo()/renderStepLogBox()). */
+const horizRowExpanded = new Set();
+/* Высота тела "Черновика шага" (px) — держится в JS, а не auto/CSS: растёт, если новому
+   содержимому нужно больше места, но НИКОГДА не уменьшается сама по себе на очередном шаге
+   (см. applyStepLogBodyHeight() в renderStepLogBox()); null = ещё не было ни одного рендера.
+   Ручной драг за .step-log-resize-handle (см. ниже) может менять её в любую сторону. */
+let stepLogBodyHeight = null;
 
 function createDefaultTabState(name = "Цепочка 1") {
   return {
@@ -1463,13 +1809,16 @@ function createDefaultTabState(name = "Цепочка 1") {
     lastHorizRow: st.lastHorizRow || null,
     tailBuffer: st.tailBuffer || "",
     selectedRows: Array.from(st.selectedRows || []),
-    undo: st.undo ? st.undo.slice() : []
+    undo: st.undo ? st.undo.slice() : [],
+    // Цвета — свои у каждой цепочки (см. loadTabState/saveActiveTabState): новая вкладка
+    // стартует с тех цветов, что сейчас реально показаны на экране.
+    colors: captureColors()
   };
 }
 
 function saveActiveTabState() {
   if (!st.tabs || !st.tabs[st.activeTab]) return;
-  
+
   // Ультра-безопасное сохранение: даже если массивы пустые, ошибки slice не будет
   st.tabs[st.activeTab] = {
     ...st.tabs[st.activeTab],
@@ -1488,7 +1837,9 @@ function saveActiveTabState() {
     lastHorizRow: st.lastHorizRow || null,
     tailBuffer: st.tailBuffer || "",
     selectedRows: Array.from(st.selectedRows || []),
-    undo: (st.undo || []).slice()
+    undo: (st.undo || []).slice(),
+    // Текущие цвета этой (ещё активной на момент вызова) вкладки — см. loadTabState().
+    colors: captureColors()
   };
 }
 
@@ -1515,7 +1866,39 @@ function loadTabState(index, skipSave = false) {
   st.undo = t.undo ? t.undo.slice() : [];
   st.hit = null;
   st.lastOp = null;
-  
+
+  // Цвета — свои у каждой цепочки: применяем сохранённые у ЭТОЙ вкладки (см. captureColors()/
+  // createDefaultTabState). Если у вкладки их ещё нет (старый кэш до этой фичи) — оставляем
+  // текущие цвета как есть, не сбрасываем на дефолт.
+  if (t.colors && col1 && col0 && colBg) {
+    col1.value = t.colors.c1 || col1.value;
+    col0.value = t.colors.c0 || col0.value;
+    colBg.value = t.colors.cBg || colBg.value;
+    st.customPreset = t.colors.customPreset || null;
+    applyColors();
+    setPresetActive(t.colors.preset || "");
+
+    if (rowBgSel) {
+      rowBgSel.value = t.colors.rowBgSel || rowBgSel.value;
+      applyColorsSel();
+    }
+
+    if (t.colors.c01 && col01El) {
+      col01El.value = t.colors.c01;
+      applyColor01();
+    }
+
+    if (t.colors.cv1 && colVert1El) {
+      colVert1El.value = t.colors.cv1;
+      applyColorVert1();
+    }
+
+    if (t.colors.cd1 && colDiag1El) {
+      colDiag1El.value = t.colors.cd1;
+      applyColorDiag1();
+    }
+  }
+
   const taR = document.getElementById("taRows");
   const taP = document.getElementById("taPats");
   if (taR) taR.value = st.tplRows.join("\n");
@@ -1638,6 +2021,59 @@ function horizWindowRange(chainLen, fullLen, stepNumber){
   const end = Math.min(fullLen - 1, fullLen - stepNumber + chainLen - 1);
   if (end < start) return null;
   return { start, end };
+}
+
+/* Данные для визуализации Гориз.XOR (прогресс + Сквозная/Цель/Результат с подсветкой) — раньше
+   рисовалось поверх сквозной строки результата (#chainText), теперь показывается в "Черновике
+   шага" (см. renderStepLogBox()). null, если сейчас не режим horiz_xor или ещё нет строки b. */
+function computeHorizXorInfo(){
+  if (st.mode !== "horiz_xor") return null;
+  const b = st.bIdx;
+  if (b < 0 || !st.rows[b]) return null;
+
+  // Сквозная (маленькая, неизменная) = уже найденные строки выше b — она и есть скользящая
+  // цепочка, въезжающая СПРАВА в цель. Цель (большая, неизменная) = сквозная + текущее
+  // содержимое строки b. Результат = applyHorizBigSlide на шаге S, с подсветкой позиций,
+  // сейчас накрытых въезжающей цепочкой.
+  const chain = st.horizBigChain || "";
+  const full = st.horizBigOrig || getRowBits(st, b);
+  const chainLen = chain.length;
+  const fullLen = full.length;
+  const S = st.horizXoredLength || 0; // сколько шагов поиска уже сделано
+  const res = S > 0 ? applyHorizBigSlide(chain, full, S) : full;
+
+  // Единая шкала p по всей объединённой строке (chain, затем цель) — подсветка сперва растёт
+  // внутри цели снизу, и только потом переходит на цепочку.
+  const winRange = horizWindowRange(chainLen, fullLen, S);
+  let chainHtml = "";
+  for (let idx = 0; idx < chainLen; idx++) {
+    const ch = chain[idx];
+    const active = !!winRange && idx >= winRange.start && idx <= winRange.end;
+    if (active && (ch === '0' || ch === '1')) chainHtml += '<span class="xored-bit" title="Сейчас касается цели">' + ch + '</span>';
+    else if (ch === '0' || ch === '1') chainHtml += '<span class="b' + ch + '">' + ch + '</span>';
+    else chainHtml += esc(ch);
+  }
+  if (!chainHtml) chainHtml = '<span class="empty">пусто</span>';
+
+  let origHtml = "";
+  for (let k = 0; k < fullLen; k++) {
+    const ch = full[k];
+    origHtml += (ch === '0' || ch === '1') ? ('<span class="b' + ch + '">' + ch + '</span>') : esc(ch);
+  }
+
+  // Позиции цели, сейчас накрытые въезжающей (справа) цепочкой (тот же winRange, что и выше).
+  let resHtml = "";
+  for (let j = 0; j < fullLen; j++) {
+    const ch = res[j];
+    const covered = !!winRange && j >= winRange.start && j <= winRange.end;
+    if (covered && (ch === '0' || ch === '1')) resHtml += '<span class="xored-bit" title="Под въезжающей цепочкой сейчас">' + ch + '</span>';
+    else if (ch === '0' || ch === '1') resHtml += '<span class="b' + ch + '">' + ch + '</span>';
+    else resHtml += esc(ch);
+  }
+
+  // Прогресс единого непрерывного прохода (въезд + полное перекрытие + выезд)
+  const totalSteps = st.horizChainLen || (chainLen + fullLen);
+  return { chainHtml, origHtml, resHtml, step: Math.min(S, totalSteps), totalSteps };
 }
 
 /* === МАРКЕР 07: СТЕП И ЛОГИКА === */
@@ -1793,7 +2229,9 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
         const padToLen = (str, targetLen, align) => {
           if (str.length >= targetLen) return str;
           const shift = alignShift(targetLen, str.length, align);
-          return "0".repeat(shift) + str + "0".repeat(targetLen - str.length - shift);
+          // Math.max(0, …) — у "лесенки" (align==="stairs") shift растёт вместе с длиной строки,
+          // а не с остатком до targetLen, поэтому остаток паддинга справа МОЖЕТ уйти в минус.
+          return "0".repeat(shift) + str + "0".repeat(Math.max(0, targetLen - str.length - shift));
         };
 
         let maxLen = 0;
@@ -1877,7 +2315,7 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
     }
   } else {
     snapshot(); // Фиксируем состояние перед переходом на следующую строку
-    logStep("Переход (строка зафиксирована)", [src + 1], getRowBits(st, src), `Строка №${src + 1} закреплена как использованная, движение продолжается`, [], [{ name: `№${src+1}`, text: getRowBits(st, src) }]);
+    logStep("Переход (фикс строки)", [src + 1], getRowBits(st, src), `Строка №${src + 1} закреплена как использованная, движение продолжается`, [], [{ name: `№${src+1}`, text: getRowBits(st, src) }]);
   }
 
   st.step++;
@@ -1917,10 +2355,13 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
       st.horizFoundInPass = true;
     }
 
+    const kindLabel = m.kind === 1 ? "инверсный" : m.kind === 2 ? "реверс" : "прямой";
     if (st.lastOp) {
-      const kindLabel = m.kind === 1 ? "инверсный" : m.kind === 2 ? "реверс" : "прямой";
       st.lastOp.pattern = { text: p.text, kindLabel, kind: m.kind, pos: m.pos, len: m.len };
     }
+    // Раньше эта находка дублировалась текстом в "Черновике шага" (.step-log-pattern) — теперь
+    // только всплывающим уведомлением снизу экрана (say), сам блок в черновике убран.
+    if (!st.running) say(`🎯 Найден паттерн «${p.text}» (${kindLabel}), позиция ${m.pos}, длина ${m.len}`);
   }
 
   if (searchChainText.length > 0) {
@@ -2102,22 +2543,48 @@ function loadTemplate(){
       " (из " + st.tplRows.filter(Boolean).length + ").");
 }
 
+/* Единственная кнопка #bAuto переключает подпись/цвет вместо пары "Авто"/"Стоп" (см. HTML) —
+   used всеми источниками "Авто"-прогона (autoRun/resetAll/finishAuto), т.к. флаг st.running
+   у них общий. */
+function setAutoBtnState(running){
+  const b = document.getElementById("bAuto");
+  if (!b) return;
+  b.classList.toggle("stop", running);
+  b.textContent = running ? "⏹ Стоп" : "🚀 Авто";
+  b.title = running ? "Остановить" : "Автоматический прогон по выбранному режиму (Enter) / повторный клик — остановить";
+}
+
 function resetAll(){
   st.running = false;
-  const bStopEl = document.getElementById("bStop");
-  if (bStopEl) bStopEl.disabled = true;
+  setAutoBtnState(false);
+
+  // Ползунок rowCount должен резать ОБЕ ветки одинаково — раньше limit считался ТОЛЬКО в ветке
+  // "нет сохранёнки", и для вкладок с 💾-сохранением (обычное дело) двигать ползунок вообще ничего
+  // не давало (resetAll() восстанавливал savedChain целиком, лимит просто не применялся).
+  const rowCountEl = document.getElementById("rowCount");
+  const limit = rowCountEl ? +rowCountEl.value : st.tplRows.length;
 
   // Если у ЭТОЙ вкладки есть своя сохранёнка — восстановить данные из неё (настройки вида/
   // поиска сюда больше не входят, они отдельно — см. DEFAULT_UI_SETTINGS/bResetUiSettings)
   const savedChain = st.tabs && st.tabs[st.activeTab] ? st.tabs[st.activeTab].savedChain : null;
   if (savedChain) {
-    st.rows = savedChain.rows.slice();
-    st.pats = savedChain.pats.map(p => p ? { ...p } : null);
-    st.used = savedChain.used.slice();
+    st.rows = savedChain.rows.slice(0, limit);
+    st.pats = savedChain.pats.slice(0, limit).map(p => p ? { ...p } : null);
+    st.used = savedChain.used.slice(0, limit);
+    // Ползунок подняли ВЫШЕ, чем было строк в самой сохранёнке (rowCount увеличили ПОСЛЕ
+    // 💾-сохранения) — savedChain.rows короче limit, "нарастить" их слайсом неоткуда. Донабираем
+    // недостающий хвост из savedChain.tplRows/tplPats — это ПОЛНЫЙ шаблон, сохранённый рядом
+    // (см. tabSaveChainData()/clearActiveTab()), а не то, что реально было в работе — иначе
+    // ползунок молча ничего не восстанавливал (см. запрос пользователя).
+    if (st.rows.length < limit) {
+      const extraRows = (savedChain.tplRows || []).slice(st.rows.length, limit);
+      const extraPats = (savedChain.tplPats || []).slice(st.rows.length, limit);
+      const baseOrd = st.rows.length;
+      st.rows = st.rows.concat(extraRows);
+      st.used = st.used.concat(extraRows.map(() => false));
+      st.pats = st.pats.concat(extraPats.map((t, i) => ({ text: t, ord: baseOrd + i, found: false, kind: null, step: null })));
+    }
   } else {
-    const rowCountEl = document.getElementById("rowCount");
-    const limit = rowCountEl ? +rowCountEl.value : st.tplRows.length;
-
     st.rows = st.tplRows.slice(0, limit);
     st.used = st.rows.map(() => false);
     st.pats = st.tplPats.slice(0, limit).map((t, i) => ({ text: t, ord: i, found: false, kind: null, step: null }));
@@ -2140,6 +2607,222 @@ const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const KIND_CLS = ["", "inv", "rev", "invrev"];
 const KIND_LABELS_RU = ["прямая", "инверсия", "реверс", "инверсия+реверс"];
 const KIND_LABELS_SHORT = ["пр", "инв", "рев", "инв+рев"];
+
+/* Компактная запись номеров строк для шапки "Черновика шага": подряд идущие номера — диапазоном
+   ("2-3"), остальные через запятую ("2-3, 7"). op.rows бывает и готовой строкой (напр. "1–5" из
+   logStep для диапазонных операций) — тогда просто нормализуем тире и возвращаем как есть. */
+function formatOpRows(rows){
+  if (!rows) return "";
+  if (typeof rows === "string") return rows.replace(/–/g, "-");
+  if (!Array.isArray(rows) || !rows.length) return "";
+  const sorted = [...new Set(rows)].sort((a, b) => a - b);
+  const parts = [];
+  let start = sorted[0], prev = sorted[0];
+  for (let i = 1; i <= sorted.length; i++) {
+    const cur = sorted[i];
+    if (cur === prev + 1) { prev = cur; continue; }
+    parts.push(start === prev ? String(start) : (start + "-" + prev));
+    if (i < sorted.length) { start = cur; prev = cur; }
+  }
+  return parts.join(", ");
+}
+
+/* Особая подсветка "01" (см. #bHighlight01 в "Виде"): для каждого пробега нулей, за которым
+   сразу идёт "1" — красит ВЕСЬ пробег целиком плюс саму эту "1". "1", перед которой нет ни
+   одного "0" (пробег нулей нулевой длины), не красится. Один проход по строке, без вложенных
+   циклов на каждый символ. Примеры: "0001" -> все 4 символа; "00110001" -> "001" и "0001"
+   (символ "1" на позиции 3, после другой "1", не красится). */
+function compute01HighlightMask(s){
+  const n = s.length;
+  const mask = new Array(n).fill(false);
+  let k = 0;
+  while (k < n) {
+    if (s[k] === '0') {
+      let j = k;
+      while (j < n && s[j] === '0') j++;
+      if (j < n && s[j] === '1') {
+        for (let m = k; m <= j; m++) mask[m] = true;
+      }
+      k = j;
+    } else {
+      k++;
+    }
+  }
+  return mask;
+}
+
+/* Общие данные для двух отдельных фич ("⚖ Показать балансы" и "Пробеги вместо битов", см.
+   #bShowBalances/#bRunsAsBits в "Виде"): раскладывает строку на пробеги подряд идущих "1"/"0"
+   со знаком — пробег единиц "+N", пробег нулей "-N", по порядку слева направо (напр. "111001"
+   -> пробеги +3,-2,+1), плюс итоговые суммы всех единиц/нулей строки целиком (НЕ зависящие от
+   порядка пробегов). */
+function computeRowBalance(s){
+  const runs = [];
+  let total1 = 0, total0 = 0;
+  if (!s) return { runs, total1, total0 };
+  let k = 0;
+  while (k < s.length) {
+    const ch = s[k];
+    let j = k;
+    while (j < s.length && s[j] === ch) j++;
+    const runLen = j - k;
+    if (ch === '1') { runs.push({ sign: '+', n: runLen, isOne: true }); total1 += runLen; }
+    else if (ch === '0') { runs.push({ sign: '-', n: runLen, isOne: false }); total0 += runLen; }
+    k = j;
+  }
+  return { runs, total1, total0 };
+}
+
+/* "⚖ Показать балансы" — только итоговые суммы, БЕЗ пробегов и скобок: "N-M", "1" — белым,
+   "0" — серым. w1/w0 — ширина (в цифрах) под каждое число, ОДНА для ВСЕХ строк (макс. среди них,
+   см. вызов в render()) — без паддинга ширина метки "гуляла" от строки к строке (короткие числа
+   короче длинных), и из-за этого сама цепочка правее нее уезжала влево-вправо по X у разных
+   строк вместо ровной колонки (см. запрос пользователя — "выравнивание съехало"). Если единиц
+   и нулей ровно поровну — вместо двух цветов один акцентный цвет с подсветкой (.row-balance-eq
+   в CSS), чтобы такая "сбалансированная" строка сразу бросалась в глаза. */
+function formatBalanceTotals(total1, total0, w1, w0){
+  const t1 = String(total1).padStart(w1 || 0, " ");
+  const t0 = String(total0).padStart(w0 || 0, " ");
+  if (total1 === total0) {
+    return '<span class="row-balance row-balance-eq">' + t1 + "-" + t0 + "</span>";
+  }
+  return '<span class="row-balance"><span style="color:#fff">' + t1 +
+    '</span>-<span style="color:#888">' + t0 + "</span></span>";
+}
+
+/* "Пробеги вместо битов" (#bRunsAsBits) — сама строка "0"/"1" ПОЛНОСТЬЮ заменяется её пробегами
+   (см. computeRowBalance() выше), каждый своим цветом (var(--c1)/var(--c0), как у обычных
+   битов), НАЧИНАЯ с той же позиции (сдвиг alignShift), что и настоящие биты — только визуально,
+   без скобок/итогов (те — отдельно, через "⚖ Показать балансы"). Посимвольные подсветки
+   (01/1↕1/1⤡1, выбор столбца, находки и т.п.) в этом режиме не применяются — пробег это уже не
+   один символ, а условное обозначение целого куска строки. */
+function formatRunsHtml(runs){
+  return runs.map(r => '<span style="color:' + (r.isOne ? "var(--c1)" : "var(--c0)") + '">' + r.sign + r.n + "</span>").join("");
+}
+
+/* Особая подсветка "1 под 1" (см. #bHighlightVert1 в "Виде"): красит колонку только у МАКСИМАЛЬНОГО
+   непрерывного участка из БОЛЕЕ ЧЕМ 2 строк подряд (3+, с учётом выравнивания/сдвига — та же
+   alignShift(), что и в самом рендере), где в ЭТОЙ ЖЕ абсолютной колонке стоит "1", И у которого
+   на ПЕРВОЙ строке участка "1" стоит строго крайним левым символом (локальный индекс 0 в этой
+   строке) — участки, начинающиеся не с начала строки, не подсвечиваются вообще (та же логика
+   старта, что у "1 по диагонали", см. computeDiagOnesMask()). ИСКЛЮЧЕНИЕ — выравнивание ⇤ (влево):
+   там колонка 0 общая для ВСЕХ строк (все начинаются вплотную к левому краю), поэтому она почти
+   всегда тривиально "занята" и неинтересна — вместо неё старт участка проверяется по КРАЙНЕМУ
+   ПРАВОМУ символу первой строки участка (последний индекс её длины), т.к. именно правый край
+   отличается от строки к строке при левом выравнивании. Строка, у которой в этой колонке
+   реально стоит "0", обрывает участок (разрыв). А строка, которая КОРОЧЕ и физически не доходит до
+   этой колонки (например справа выровненная короткая строка) — НЕ разрыв, участок просто на ней
+   естественно заканчивается (см. пример пользователя: 0 / 10 / 001 при выравнивании вправо — "1" в
+   "10" и "1" в "001" по диагонали стоят подряд, а укороченная "0" в 1-й строке эту колонку вообще не
+   занимает). НЕ требует, чтобы участок покрывал буквально ВСЕ строки цепочки — только чтобы сам
+   участок был целым. Считается ОДИН РАЗ на весь render() (не на отдельную строку, как
+   compute01HighlightMask). Возвращает массив по индексу строки — Set<локальный индекс символа
+   ВНУТРИ этой строки> (не абсолютная колонка), какие позиции подсвечивать; null у строк без хитов. */
+function computeVertOnesMask(rows, align){
+  const n = rows.length;
+  const masks = new Array(n).fill(null);
+  if (n < 2) return masks;
+  let maxLen = 0;
+  for (const s of rows) if (s.length > maxLen) maxLen = s.length;
+  const shifts = rows.map(s => s.length ? alignShift(maxLen, s.length, align) : 0);
+  const addHit = (idx, k) => {
+    if (!masks[idx]) masks[idx] = new Set();
+    masks[idx].add(k);
+  };
+  for (let absCol = 0; absCol < maxLen; absCol++) {
+    let runStart = -1;
+    for (let i = 0; i <= n; i++) {
+      let hit = false;
+      if (i < n) {
+        const s = rows[i];
+        const k = absCol - shifts[i];
+        hit = !!(s && s.length && k >= 0 && k < s.length && s[k] === '1');
+      }
+      if (hit) {
+        if (runStart === -1) runStart = i;
+      } else {
+        if (runStart !== -1 && i - runStart > 2) {
+          const k0 = absCol - shifts[runStart];
+          const startsOk = align === 'left'
+            ? (k0 === rows[runStart].length - 1)
+            : (k0 === 0);
+          if (startsOk) {
+            for (let j = runStart; j < i; j++) addHit(j, absCol - shifts[j]);
+          }
+        }
+        runStart = -1;
+      }
+    }
+  }
+  return masks;
+}
+
+/* Особая подсветка "1 по диагонали" (см. #bHighlightDiag1) — та же идея максимального
+   непрерывного участка из 2+ строк, что и computeVertOnesMask(), но колонка сдвигается на ±1 с
+   каждой строкой (проверяются обе диагонали — влево и вправо) вместо постоянной колонки. В отличие
+   от "1 под 1" здесь считаются ТОЛЬКО участки, у которых ОБА конца — краевые: на первой строке
+   участка "1" должна стоять либо самым первым, либо вторым символом строки (локальный индекс 0
+   или 1 — диагональ может "выезжать" и от второго символа, не только от самого края), а
+   заканчиваться участок должен ТОЛЬКО из-за того, что следующая строка физически коротка для
+   продолжения диагонали (не хватает символов при её выравнивании) — если участок обрывается
+   встреченным "0" (строка достаточно длинная, но в этой позиции стоит "0"), такой участок вообще
+   не подсвечивается (а не подсвечивается частично до "0"). ИСКЛЮЧЕНИЕ — выравнивание ⇤ (влево):
+   там левый край (локальный индекс 0) общий у всех строк и тривиален (см. тот же довод у
+   computeVertOnesMask() выше), поэтому старт участка проверяется по ПРАВОМУ краю первой строки
+   (последний или предпоследний её символ), а концом участка считается ТОЛЬКО тот случай, когда
+   последняя строка участка дошла ровно до локального индекса 0 (упёрлась в левый край) — а не
+   любое "не хватило длины". Работает в остальных режимах выравнивания (↔/⇥/↔½) по-старому, т.к.
+   опирается на ту же alignShift(). */
+function computeDiagOnesMask(rows, align){
+  const n = rows.length;
+  const masks = new Array(n).fill(null);
+  if (n < 2) return masks;
+  let maxLen = 0;
+  for (const s of rows) if (s.length > maxLen) maxLen = s.length;
+  const shifts = rows.map(s => s.length ? alignShift(maxLen, s.length, align) : 0);
+  const addHit = (idx, k) => {
+    if (!masks[idx]) masks[idx] = new Set();
+    masks[idx].add(k);
+  };
+  for (const dir of [-1, 1]) {
+    for (let offset = -(n - 1); offset < maxLen + (n - 1); offset++) {
+      let runStart = -1;
+      for (let i = 0; i <= n; i++) {
+        let hit = false;
+        let boundaryStop = true; // строка кончилась (или строк больше нет) — не разрыв; false = встретили именно "0"
+        if (i < n) {
+          const s = rows[i];
+          const absCol = offset + dir * i;
+          const k = absCol - shifts[i];
+          const inBounds = !!(s && s.length && k >= 0 && k < s.length);
+          hit = inBounds && s[k] === '1';
+          if (inBounds && !hit) boundaryStop = false;
+        }
+        if (hit) {
+          if (runStart === -1) runStart = i;
+        } else {
+          if (runStart !== -1 && i - runStart >= 2) {
+            const k0 = (offset + dir * runStart) - shifts[runStart];
+            const lastRow = i - 1;
+            const kEnd = (offset + dir * lastRow) - shifts[lastRow];
+            const startsOk = align === 'left'
+              ? (k0 === rows[runStart].length - 1 || k0 === rows[runStart].length - 2)
+              : (k0 === 0 || k0 === 1);
+            const endsOk = align === 'left' ? (kEnd === 0) : boundaryStop;
+            if (startsOk && endsOk) {
+              for (let j = runStart; j < i; j++) {
+                const absColJ = offset + dir * j;
+                addHit(j, absColJ - shifts[j]);
+              }
+            }
+          }
+          runStart = -1;
+        }
+      }
+    }
+  }
+  return masks;
+}
 
 /* Раскрашивает биты 0/1 в HTML — используется и основной таблицей, и Черновиком последнего шага.
    highlightRange {start,end} (включительно, по индексу символа) — подсветка "под окном
@@ -2214,8 +2897,31 @@ function renderColHeader(maxLen){
     const glyph = isSel ? '<span class="col-cell-tick col-cell-clear-glyph">✕</span>' : '<span class="col-cell-tick">|</span>';
     ticks += '<span class="col-cell' + selCls + '" data-col="' + c + '" title="Столбец ' + num + (isSel ? " (клик снимет выделение)" : "") + '">' + glyph + '</span>';
   }
+  // Дополнительный пустой <span class="num"> перед .bits — держит линейку в той же разметке,
+  // что и строки (см. render(): теперь номер строки есть и у ЛЕВОГО края .bits), иначе тики
+  // снова разъедутся с битами (тот же класс бага, что уже правили раньше в этом файле).
+  // Тот же приём — заглушка под "⚖ Показать балансы" (formatBalanceTotals()/.row-balance в
+  // render()): без неё при включённых балансах линейка съезжает относительно битов (см. запрос
+  // пользователя — "после вставки баланса съехала"). Ширина ДОЛЖНА совпадать с паддингом
+  // formatBalanceTotals() в render() (balW1+"-"+balW0) — иначе, если самое длинное total1 и
+  // самое длинное total0 встречаются в РАЗНЫХ строках, сумма их максимумов будет ШИРЕ, чем длина
+  // любой отдельной строки, и заглушка снова разойдётся с реальными метками (та же природа бага,
+  // что и "выравнивание съехало"). "Пробеги вместо битов" (#bRunsAsBits) заглушки не требует —
+  // та фича заменяет сами биты, а не добавляет колонку.
+  let balanceSpacer = "";
+  if (st.showBalances) {
+    let w1 = 1, w0 = 1;
+    for (const s of st.rows) {
+      if (!s) continue;
+      const rb = computeRowBalance(s);
+      if (String(rb.total1).length > w1) w1 = String(rb.total1).length;
+      if (String(rb.total0).length > w0) w0 = String(rb.total0).length;
+    }
+    balanceSpacer = '<span class="row-balance">' + " ".repeat(w1 + 1 + w0) + "</span>";
+  }
   el.innerHTML =
-    '<div class="col-hdr-row"><span class="num"></span><span class="pat"></span><span class="bits ' + alignCls + '"><span>' + ticks + '</span></span><span class="num"></span><span class="pat2"></span></div>';
+    '<div class="col-hdr-row"><span class="num"></span><span class="pat"></span><span class="num num-l2"></span>' + balanceSpacer +
+    '<span class="bits ' + alignCls + '"><span>' + ticks + '</span></span><span class="num num-r2"></span><span class="pat2"></span></div>';
 }
 
 /* Границы строк для режима "🔢 Выбор столбца":
@@ -2323,6 +3029,31 @@ function render(){
   // столбца (см. selectColumn()) это учитывают.
   const colSelRange = colSelectRowRange();
 
+  // База для подсветки "номер изменился" (.num.changed) — то, к чему реально вернёт "↺ Сброс":
+  // если вкладка уже сохранена (💾), это savedChain.rows, а не исходный шаблон tplRows — иначе
+  // после сохранения новой цепочки как базовой номера продолжали бы висеть "изменены" вечно,
+  // хотя сравнивать их больше не с чем (шаблон-то остался старым).
+  const activeTabObj = st.tabs && st.tabs[st.activeTab];
+  const changedBase = (activeTabObj && activeTabObj.savedChain) ? activeTabObj.savedChain.rows : st.tplRows;
+
+  // Подсветка "1 под 1" (см. #bHighlightVert1) — считается ОДИН РАЗ на весь рендер (сравнивает
+  // соседние строки между собой), не на отдельную строку, как compute01HighlightMask.
+  const vertOnesMask = st.highlightVert1 ? computeVertOnesMask(st.rows, st.align) : null;
+  const diagOnesMask = st.highlightDiag1 ? computeDiagOnesMask(st.rows, st.align) : null;
+
+  // "⚖ Показать балансы" — ширина под каждое число ОДНА для ВСЕХ строк (см. formatBalanceTotals()
+  // выше) — без этого метка "гуляла" по ширине от строки к строке и уводила саму цепочку правее
+  // неё вбок (см. запрос пользователя — "выравнивание съехало").
+  let balW1 = 1, balW0 = 1;
+  if (st.showBalances) {
+    for (const s of st.rows) {
+      if (!s) continue;
+      const rb = computeRowBalance(s);
+      if (String(rb.total1).length > balW1) balW1 = String(rb.total1).length;
+      if (String(rb.total0).length > balW0) balW0 = String(rb.total0).length;
+    }
+  }
+
   for (let i = 0; i < n; i++){
     const s = st.rows[i] || "";
     const p = st.pats[i];
@@ -2330,6 +3061,9 @@ function render(){
     if (st.used[i]) cls.push("used");
     if (i === st.aIdx || i === st.bIdx) cls.push("cur");
     if (st.selectedRows && st.selectedRows.has(i)) cls.push("selected");
+
+    const rowBal = (st.showBalances || st.runsAsBits) ? computeRowBalance(s) : null;
+    const balanceHtml = st.showBalances ? formatBalanceTotals(rowBal.total1, rowBal.total0, balW1, balW0) : "";
 
     let pat = "";
     let patRight = "";
@@ -2359,6 +3093,20 @@ function render(){
     const padRight = s.length ? (maxLen - s.length - shift) : maxLen;
     const marks = hl.get(i);
 
+    // Выравнивание "по полубитам" (см. #alignGrp data-val="halfcenter"/"halfstairs") — чисто
+    // визуальная поправка поверх целочисленного сдвига: alignShift() уже даёт его округлённым
+    // вниз (diff >> 1 у halfcenter, (len-1) >> 1 у halfstairs), но при НЕЧЁТНОМ остатке это на
+    // полсимвола левее истинного положения (напр. "1" против "11" — целочисленный центр ставит
+    // "1" вплотную к первой "1", а не строго между ними). Тут же довешиваем ровно эти
+    // недостающие 0.5ch трансформом — сами данные/расчёты столбцов (alignShift, Тетрис,
+    // фон-поиск, клик по линейке и т.п.) не трогаем и не знают об этом сдвиге, только
+    // визуальный рендер этой строки. У halfcenter "нечётность" — от (maxLen - len), у
+    // halfstairs — от (len - 1), т.к. сам сдвиг считается по-разному.
+    const halfShiftAttr = s.length && (
+      (st.align === "halfcenter" && (maxLen - s.length) % 2 !== 0) ||
+      (st.align === "halfstairs" && (s.length - 1) % 2 !== 0)
+    ) ? ' style="transform:translateX(0.5ch)"' : '';
+
     // Эта строка — часть въезжающей цепочки (выше целевой строки)?
     const isHxChainRow = hxActive && !hxExhausted && i < hxTarget && s.length > 0;
     // Эта строка — сама целевая строка?
@@ -2379,6 +3127,17 @@ function render(){
       return "&nbsp;".repeat(len);
     };
     let bits = blankRun(0, shift);
+    if (st.runsAsBits) {
+      // "Пробеги вместо битов" — см. formatRunsHtml()/computeRowBalance() выше: сама строка
+      // "0"/"1" заменена её пробегами, посимвольные подсветки в этом режиме не считаем (не имеют
+      // смысла — пробег уже не один символ).
+      bits += formatRunsHtml(rowBal.runs);
+    } else {
+    // Особая подсветка "01" (см. #bHighlight01) — считается один раз на строку (не на символ):
+    // красит ВЕСЬ пробег нулей перед единицей целиком (напр. "0001" — все 4 символа), а не
+    // только последний "0" рядом с "1". Единица, перед которой нет ни одного "0" (например,
+    // сразу после другой единицы), не красится.
+    const hl01Mask = st.highlight01 ? compute01HighlightMask(s) : null;
 
     for (let k = 0; k < s.length; k++) {
       const bit = s[k];
@@ -2396,12 +3155,23 @@ function render(){
 
       const colAttr = (i >= colSelRange.lo && i <= colSelRange.hi) ? (' data-col="' + (shift + k) + '"') : "";
 
+      const is01Pair = hl01Mask ? hl01Mask[k] : false;
+      // "1 под 1"/"1 по диагонали" — только для "1" (не для "0"), см. computeVertOnesMask()/
+      // computeDiagOnesMask() выше.
+      const isVert1 = !!(vertOnesMask && vertOnesMask[i] && bit === '1' && vertOnesMask[i].has(k));
+      const isDiag1 = !!(diagOnesMask && diagOnesMask[i] && bit === '1' && diagOnesMask[i].has(k));
+
       if (marks && marks.has(k)) {
         bits += '<span class="' + hitCls + '"' + colAttr + '>' + bit + '</span>';
       } else if (isColSelBit && (bit === '0' || bit === '1')) {
         bits += '<span class="col-sel-bit b' + bit + '"' + colAttr + '>' + bit + '</span>';
       } else if (isXoredBit && (bit === '0' || bit === '1')) {
         bits += '<span class="xored-bit"' + colAttr + '>' + bit + '</span>';
+      } else if (is01Pair || isVert1 || isDiag1) {
+        // Несколько подсветок могут совпасть на одном символе — вешаем все подходящие классы;
+        // порядок объявления в CSS (.hl01 → .hlv1 → .hld1) решает, чей цвет визуально победит.
+        const hlCls = 'b' + bit + (is01Pair ? ' hl01' : '') + (isVert1 ? ' hlv1' : '') + (isDiag1 ? ' hld1' : '');
+        bits += '<span class="' + hlCls + '"' + colAttr + '>' + bit + '</span>';
       } else if (bit === '0' || bit === '1') {
         bits += '<span class="b' + bit + '"' + colAttr + '>' + bit + '</span>';
       } else if (colAttr) {
@@ -2410,16 +3180,23 @@ function render(){
         bits += esc(bit);
       }
     }
+    }
     if (isHxChainRow) hxChainOffset += s.length;
 
     bits += blankRun(shift + s.length, padRight);
 
-    // Строка изменилась относительно исходного шаблона (tplRows) — подсвечиваем номер отдельным
+    // Строка изменилась относительно базы (см. changedBase выше) — подсвечиваем номер отдельным
     // цветом (см. .num.changed в CSS), чтобы было видно, какие строки реально трогали.
-    const numCls = "num" + (s !== (st.tplRows[i] || "") ? " changed" : "");
-    out.push('<div class="' + cls.join(" ") + '" data-idx="' + i + '"><span class="' + numCls + '">' + (i + 1) + "</span>" +
-             pat + '<span class="bits ' + alignCls + '"><span>' + bits + "</span></span>" +
-             '<span class="' + numCls + '">' + (i + 1) + "</span>" + patRight + "</div>");
+    const numCls = "num" + (s !== (changedBase[i] || "") ? " changed" : "");
+    // Номер строки — теперь ещё и вплотную к ЛЕВОМУ краю самого поля битов (не только снаружи
+    // колонки паттерна слева), симметрично уже существовавшему номеру у ПРАВОГО края битов
+    // (см. запрос пользователя — номер должен быть "в поле цепочки", а не только у паттернов).
+    // Нумерация с 0 (не с 1) — см. запрос пользователя: первая строка получает номер "0".
+    out.push('<div class="' + cls.join(" ") + '" data-idx="' + i + '"><span class="' + numCls + '">' + i + "</span>" +
+             pat + '<span class="' + numCls + ' num-l2">' + i + "</span>" +
+             balanceHtml +
+             '<span class="bits ' + alignCls + '"><span' + halfShiftAttr + '>' + bits + "</span></span>" +
+             '<span class="' + numCls + ' num-r2">' + i + "</span>" + patRight + "</div>");
   }
   document.getElementById("rows").innerHTML = out.join("");
 
@@ -2479,10 +3256,10 @@ function render(){
        А вот для ПОКАЗА урезание было лишним и давало на глаз "усечённое" кольцо — 11111 с
        🔁 Инв. кольцо рисовало 111110000 (9 символов) вместо полного 1111100000 (10 символов),
        т.е. последний бит витка визуально терялся, хотя поиск его прекрасно учитывал) — класс
-       .chain-ring-ext, приглушённым
-       шрифтом ТОЛЬКО когда включена 🔁 Инв. кольцо (там показанные символы реально инвертированы
-       относительно оригинала); без неё продолжение — точная копия, показывается обычной
-       яркостью. Индексы находок (kd.start/kd.len) по-прежнему укладываются в это продолжение без
+       .chain-ring-ext (opacity:.5, серым) вешается на ВЕСЬ второй виток ВСЕГДА (не только при
+       включённой 🔁 Инв. кольцо), чтобы визуально отличать повторные/продолженные биты кольца
+       от настоящих бит строки — независимо от того, инвертированы они или это точная копия.
+       Индексы находок (kd.start/kd.len) по-прежнему укладываются в это продолжение без
        остатка (оно шире, чем то, что реально проверял поиск) — подсветка накладывается БЕЗ
        округления по модулю, "заехавшая" в кольцо находка рисуется как единый непрерывный
        подсвеченный кусок, переходящий из реальных бит в продолжение кольца. */
@@ -2511,7 +3288,7 @@ function render(){
         const kd = kindAt[k];
         const cls = [];
         if (kd >= 0) { cls.push("chain-hit-bits"); if (KIND_CLS[kd]) cls.push(KIND_CLS[kd]); if (skipAt[k]) cls.push("skip1"); }
-        if (k >= len && st.ringInvert) cls.push("chain-ring-ext");
+        if (k >= len) cls.push("chain-ring-ext");
         bits += cls.length ? ('<span class="' + cls.join(" ") + '">' + ch + '</span>') : ch;
       }
       const checkHtml = r.kinds.map(kd =>
@@ -2562,75 +3339,10 @@ function render(){
     // ⇤↔⇥ (те управляют только выравниванием строк/паттернов в самой таблице, не тут)
     chainTextEl.style.textAlign = (bgInfo || st.bgSearch) ? "left" : st.align;
     
-    let overlayHtml = "";
-    
-    if (st.mode === "horiz_xor") {
-      const b = st.bIdx;
-      if (b >= 0 && st.rows[b]) {
-        // Сквозная (маленькая, неизменная) = уже найденные строки выше b — она и есть
-        // скользящая цепочка, въезжающая СПРАВА в цель. Цель (большая, неизменная) =
-        // сквозная + текущее содержимое строки b. Результат = applyHorizBigSlide на шаге S,
-        // с подсветкой позиций, сейчас накрытых въезжающей цепочкой.
-        const chain = st.horizBigChain || "";
-        const full = st.horizBigOrig || getRowBits(st, b);
-        const chainLen = chain.length;
-        const fullLen = full.length;
-        const S = st.horizXoredLength || 0; // сколько шагов поиска уже сделано
-        const res = S > 0 ? applyHorizBigSlide(chain, full, S) : full;
-
-        // Единая шкала p по всей объединённой строке (chain, затем цель) — подсветка сперва
-        // растёт внутри цели снизу, и только потом переходит на цепочку (см. horizWindowRange).
-        const winRange = horizWindowRange(chainLen, fullLen, S);
-        let chainHtml = "";
-        for (let idx = 0; idx < chainLen; idx++) {
-          const ch = chain[idx];
-          const active = !!winRange && idx >= winRange.start && idx <= winRange.end;
-          if (active && (ch === '0' || ch === '1')) {
-            chainHtml += '<span class="xored-bit" title="Сейчас касается цели">' + ch + '</span>';
-          } else if (ch === '0' || ch === '1') {
-            chainHtml += '<span class="b' + ch + '">' + ch + '</span>';
-          } else {
-            chainHtml += esc(ch);
-          }
-        }
-        if (!chainHtml) chainHtml = '<span class="empty">пусто</span>';
-
-        let origHtml = "";
-        for (let k = 0; k < fullLen; k++) {
-          const ch = full[k];
-          origHtml += (ch === '0' || ch === '1') ? ('<span class="b' + ch + '">' + ch + '</span>') : esc(ch);
-        }
-
-        // Позиции цели, сейчас накрытые въезжающей (справа) цепочкой (тот же winRange, что и выше).
-        let resHtml = "";
-        for (let j = 0; j < fullLen; j++) {
-          const ch = res[j];
-          const covered = !!winRange && j >= winRange.start && j <= winRange.end;
-          if (covered && (ch === '0' || ch === '1')) {
-            resHtml += '<span class="xored-bit" title="Под въезжающей цепочкой сейчас">' + ch + '</span>';
-          } else if (ch === '0' || ch === '1') {
-            resHtml += '<span class="b' + ch + '">' + ch + '</span>';
-          } else {
-            resHtml += esc(ch);
-          }
-        }
-
-        // Прогресс единого непрерывного прохода (въезд + полное перекрытие + выезд)
-        const totalSteps = st.horizChainLen || (chainLen + fullLen);
-        const progressHtml = '<div class="horiz-progress">🔎 поиск · Шаг ' + Math.min(S, totalSteps) + '/' + totalSteps + '</div>';
-
-        overlayHtml =
-          '<div class="horiz-info">' +
-            progressHtml +
-            '<div class="horiz-ride-row horiz-ride-wrap"><span class="horiz-ride-tag">Сквозная</span><span class="horiz-ride-text">' + chainHtml + '</span></div>' +
-            '<div class="horiz-ride-row horiz-ride-wrap"><span class="horiz-ride-tag">Цель</span><span class="horiz-ride-text">' + origHtml + '</span></div>' +
-            '<div class="horiz-ride-row horiz-ride-wrap"><span class="horiz-ride-tag">Результат</span><span class="horiz-ride-text">' + resHtml + '</span></div>' +
-          '</div>' +
-          '<div style="border-top: 1px dashed var(--line); margin: 6px 0; padding-top: 4px; color: var(--dim); font-size: 11px;">Сквозной результат:</div>';
-      }
-    }
-    
-    if (!fullChainText && !overlayHtml) {
+    // Раньше тут же (поверх сквозной строки) рисовался блок Гориз.XOR (прогресс + Сквозная/
+    // Цель/Результат) — перенесён в "Черновик шага" (см. computeHorizXorInfo()/renderStepLogBox()
+    // ниже), тут в режиме horiz_xor теперь просто обычная сквозная строка, как у любого другого режима.
+    if (!fullChainText) {
       chainTextEl.innerHTML = '<span class="empty">пусто</span>';
     } else if (bgResultHtml != null) {
       chainTextEl.innerHTML = bgResultHtml;
@@ -2646,55 +3358,153 @@ function render(){
         const bit = fullChainText[k];
         html += esc(bit);
       }
-      chainTextEl.innerHTML = overlayHtml + (html || '<span class="empty">пусто</span>');
+      chainTextEl.innerHTML = html || '<span class="empty">пусто</span>';
     }
   }
 
-  renderStepLogBox();
+  renderStepLogBox(bgInfo);
 }
 
-/* Обновляет визуальный блок "Черновик последнего шага": операция, задействованные строки, результат, найденный паттерн */
-function renderStepLogBox(){
+/* Обновляет визуальный блок "Черновик последнего шага": операция, задействованные строки, результат, найденный паттерн.
+   ВТОРАЯ, независимая от st.lastOp секция (см. subHtml ниже) — разбор "Подпаттернов сдвига"
+   (st.bgSubPatterns) для ТЕКУЩЕГО фон-поиска: живая, обновляется каждый render(), даже если
+   реального шага ещё не было — потому что фон-поиск сам по себе не "шаг", а постоянная проверка. */
+function renderStepLogBox(bgInfo){
   const noEl = document.getElementById("stepLogNo");
   const bodyEl = document.getElementById("stepLogBody");
   if (!bodyEl) return;
 
   const op = st.lastOp;
+
+  let subHtml = "";
+  if (st.bgSubPatterns && bgInfo) {
+    const subRowsHtml = bgInfo.results.map(r => {
+      const k0 = (r.tried || []).find(t => t.kind === 0);
+      if (!k0) return "";
+      const modeLabel = BG_SEARCH_MODE_LABELS[r.mode] || r.mode;
+      const variantsHtml = k0.variants.map(v =>
+        '<span class="step-log-sub-variant' + (v.found ? ' found' : '') + '">' + esc(v.text) + (v.found ? ' ✓' : '') + '</span>'
+      ).join(" ");
+      return '<div class="step-log-sub-row"><span class="step-log-sub-mode' + (k0.matched ? ' found' : '') + '">' + esc(modeLabel) + (k0.matched ? ' ✅' : '') + '</span>' + variantsHtml + '</div>';
+    }).join("");
+    // Своя прокрутка (см. .step-log-sub-container) — иначе при многих режимах/поворотах этот
+    // блок один разрастался на пол-экрана и тянул за собой всю высоту stepLogBody (см. также
+    // cap в applyStepLogBodyHeight()).
+    subHtml = '<div class="step-log-row" style="display:block;border-top:1px dashed var(--line);margin-top:6px;padding-top:6px">' +
+      '<span class="step-log-label" style="display:block;margin-bottom:4px">🔀 Подпаттерны сдвига</span>' +
+      '<div class="step-log-sub-container">' + (subRowsHtml || '<span class="empty">нет данных</span>') + '</div>' +
+      '</div>';
+  }
+
+  const rowsHeadEl = document.getElementById("stepLogRowsHead");
+
+  // Гориз.XOR: прогресс + Сквозная/Цель/Результат — раньше рисовалось поверх окна "Результат",
+  // теперь тут; показывается независимо от того, был ли уже реальный шаг (op), т.к. это живое
+  // состояние поиска, не история последнего шага. Сам прогресс ("Поиск · шаг X/Y") — в шапке
+  // окна (rowsHeadEl ниже), а не отдельной строкой в теле — та же логика, что и у "Операции".
+  const horizInfo = computeHorizXorInfo();
+  let horizHtml = "";
+  if (horizInfo) {
+    // "Результат" тут НЕ рендерим — тот же самый текст (op.result === horizInfo.res)
+    // показывается ниже, в общем блоке результата (см. html += ... дальше), раньше дублировался.
+    const rows = [
+      { tag: "chain", label: "Сквозная", html: horizInfo.chainHtml },
+      { tag: "full", label: "Цель", html: horizInfo.origHtml }
+    ];
+    horizHtml = '<div class="horiz-info">' +
+      rows.map(r => {
+        const exp = horizRowExpanded.has(r.tag) ? " expanded" : "";
+        return '<div class="horiz-ride-row' + exp + '" data-tag="' + r.tag + '" title="Клик — показать целиком / свернуть обратно">' +
+          '<span class="horiz-ride-tag">' + r.label + '</span><span class="horiz-ride-text">' + r.html + '</span></div>';
+      }).join("") +
+      '</div>';
+  }
+  const horizHeadExtra = horizInfo ? (' 🔎 Поиск · шаг ' + horizInfo.step + '/' + horizInfo.totalSteps) : "";
+
   if (!op) {
     if (noEl) noEl.textContent = "0";
-    bodyEl.innerHTML = '<span class="step-log-empty">шагов ещё не было</span>';
+    if (rowsHeadEl) rowsHeadEl.innerHTML = horizHeadExtra;
+    bodyEl.innerHTML = horizHtml + '<span class="step-log-empty">шагов ещё не было</span>' + subHtml;
+    markHorizTruncated(bodyEl);
+    applyStepLogBodyHeight(bodyEl);
     return;
   }
 
   if (noEl) noEl.textContent = op.step;
 
-  let rowsHtml = "";
-  if (Array.isArray(op.rows)) {
-    rowsHtml = op.rows.map(r => '<span class="step-log-rows-badge">№' + r + '</span>').join("");
-  } else if (op.rows) {
-    rowsHtml = '<span class="step-log-rows-badge">' + esc(String(op.rows)) + '</span>';
+  // Шапка: № шага (уже в HTML) + "(Строки N-M)" + сама операция + прогресс Гориз.XOR — вместо
+  // отдельных строк в теле (та "Операция" ниже всё же оставлена в теле — "также в заголовке").
+  if (rowsHeadEl) {
+    const rowsStr = formatOpRows(op.rows);
+    let extra = "";
+    if (rowsStr) extra += ' (Строки ' + esc(rowsStr) + ')';
+    if (op.opName) extra += ' ' + esc(op.opName);
+    extra += horizHeadExtra;
+    rowsHeadEl.innerHTML = extra;
   }
 
-  const RESULT_LIMIT = 160;
-  const resultRaw = op.result || "";
-  const resultShown = resultRaw.length > RESULT_LIMIT ? resultRaw.slice(0, RESULT_LIMIT) : resultRaw;
-  const resultHtml = resultShown.length ? bitsHtml(resultShown, op.highlightRange) : '<span class="empty">пусто</span>';
-  const moreHtml = resultRaw.length > RESULT_LIMIT ? ' <span style="color:var(--dim)">…(+' + (resultRaw.length - RESULT_LIMIT) + ' бит)</span>' : '';
-
-  let html = "";
-  html += '<div class="step-log-row"><span class="step-log-label">Операция</span><span class="step-log-op">' + esc(op.opName) + '</span></div>';
-  html += '<div class="step-log-row"><span class="step-log-label">Строки</span>' + (rowsHtml || '<span class="empty">—</span>') + '</div>';
-  if (op.detail) {
-    html += '<div class="step-log-row"><span class="step-log-label">Детали</span><span style="color:var(--dim)">' + esc(op.detail) + '</span></div>';
+  // "Операция" убрана из тела — уже есть в заголовке (rowsHeadEl выше).
+  let html = horizHtml;
+  // Из каких строк получен результат (Шаг/Шаг 2/XOR/Интерлив и т.п.) — op.inputs уже собирался
+  // в logStep() (см. inputsForLog в doStep()), просто не рендерился нигде. В режиме Гориз.XOR
+  // не показываем — там источники это и есть "Сквозная"/"Цель" выше (не дублируем).
+  if (!horizInfo && op.inputs && op.inputs.length) {
+    html += '<div class="step-log-inputs-container">' +
+      op.inputs.map(inp =>
+        '<div class="step-log-input-row"><span class="step-log-input-name">' + esc(inp.name) + '</span><span class="step-log-input-text">' + bitsHtml(inp.text || "") + '</span></div>'
+      ).join("") +
+      '</div>';
   }
-  html += '<div class="step-log-row" style="display:block"><span class="step-log-label" style="display:block;margin-bottom:2px">Результат</span><div class="step-log-result">' + resultHtml + moreHtml + '</div></div>';
-
-  if (op.pattern) {
-    const kindCls = op.pattern.kind === 1 ? "inv" : op.pattern.kind === 2 ? "rev" : "";
-    html += '<div class="step-log-pattern ' + kindCls + '">🎯 Найден паттерн «' + esc(op.pattern.text) + '» (' + op.pattern.kindLabel + '), позиция ' + op.pattern.pos + ', длина ' + op.pattern.len + '</div>';
+  if (horizInfo) {
+    // В режиме Гориз.XOR результат — та же строка horizInfo.resHtml (с той же подсветкой
+    // "под въезжающей цепочкой"), выровненная тем же рядом-тегом, что и Сквозная/Цель выше
+    // (а не отдельным центрированным блоком — раньше это было ДВА одинаковых текста подряд).
+    const exp = horizRowExpanded.has("res") ? " expanded" : "";
+    html += '<div class="horiz-ride-row' + exp + '" data-tag="res" title="Клик — показать целиком / свернуть обратно">' +
+      '<span class="horiz-ride-tag">Результат</span><span class="horiz-ride-text">' + horizInfo.resHtml + '</span></div>';
+  } else {
+    // Результат — с тем же рядом-лейблом ("Итог"), что и строки-источники выше (см.
+    // .step-log-input-name), чтобы биты у всех начинались в одном столбце. Полный текст
+    // (без ручной обрезки RESULT_LIMIT): визуально обрезается CSS (.step-log-result, одна
+    // строка), клик разворачивает целиком — тот же приём, что у .chain-result-line в "Результате".
+    const resultRaw = op.result || "";
+    const resultHtml = resultRaw.length ? bitsHtml(resultRaw, op.highlightRange) : '<span class="empty">пусто</span>';
+    html += '<div class="step-log-result-row">' +
+      '<span class="step-log-input-name">Итог</span>' +
+      '<div class="step-log-result' + (stepLogResultExpanded ? ' expanded' : '') + '" title="Клик — показать целиком / свернуть обратно">' + resultHtml + '</div>' +
+      '</div>';
   }
+  // Находка паттерна (op.pattern) больше не дублируется тут текстом — см. say() в doStep()
+  // (уведомление снизу экрана), сработавший ровно в момент реальной находки.
 
-  bodyEl.innerHTML = html;
+  bodyEl.innerHTML = html + subHtml;
+
+  const resultEl = bodyEl.querySelector(".step-log-result:not(.expanded)");
+  if (resultEl && resultEl.scrollWidth > resultEl.clientWidth) resultEl.classList.add("truncated");
+  markHorizTruncated(bodyEl);
+  applyStepLogBodyHeight(bodyEl);
+}
+
+/* Явная метка "▸ ещё" (см. .horiz-ride-row.truncated в CSS) только на реально обрезанные
+   строки Гориз.XOR-блока — тот же приём, что у .chain-result-line/.step-log-result. */
+function markHorizTruncated(bodyEl){
+  bodyEl.querySelectorAll(".horiz-ride-row:not(.expanded) .horiz-ride-text").forEach(el => {
+    if (el.scrollWidth > el.clientWidth) el.parentElement.classList.add("truncated");
+  });
+}
+
+/* Высота #stepLogBody держится вручную (stepLogBodyHeight), а не auto — растёт, если новому
+   содержимому нужно больше места, но никогда не уменьшается сама по себе (см. объявление
+   stepLogBodyHeight выше). Снимаем inline-height на момент замера, иначе scrollHeight мерил бы
+   старую (уже применённую) высоту, а не то, сколько РЕАЛЬНО нужно новому содержимому.
+   АВТОМАТИЧЕСКИЙ рост ограничен половиной высоты окна — дальше только скролл внутри (и своя
+   прокрутка у длинных вложенных списков вроде .step-log-sub-container); вручную (за ручку
+   .step-log-resize-handle) растянуть можно и больше — тот предел не трогаем. */
+function applyStepLogBodyHeight(bodyEl){
+  bodyEl.style.height = "";
+  const natural = Math.min(bodyEl.scrollHeight, window.innerHeight * 0.5);
+  if (stepLogBodyHeight === null || natural > stepLogBodyHeight) stepLogBodyHeight = natural;
+  bodyEl.style.height = stepLogBodyHeight + "px";
 }
 
 let msgTimer = null;
@@ -2715,7 +3525,65 @@ function say(t){
 
 const bClearStepLogEl = document.getElementById("bClearStepLog");
 if (bClearStepLogEl) {
-  bClearStepLogEl.onclick = () => { st.lastOp = null; render(); saveCache(); };
+  bClearStepLogEl.onclick = () => {
+    st.lastOp = null;
+    // "Подпаттерны сдвига" — живой блок (пересчитывается каждый render() из текущего
+    // выделения/фон-поиска, не из st.lastOp), поэтому просто обнулить lastOp для него
+    // недостаточно — он тут же появился бы заново на этом же клике. Выключаем галку явно.
+    if (st.bgSubPatterns) {
+      st.bgSubPatterns = false;
+      const cBgSubPatternsEl = document.getElementById("cBgSubPatterns");
+      if (cBgSubPatternsEl) cBgSubPatternsEl.checked = false;
+    }
+    render(); saveCache();
+  };
+}
+
+/* Клик по результату в "Черновике последнего шага" — развернуть целиком / свернуть обратно
+   (тот же приём, что у .chain-result-line в окне "Результат"). Строки Гориз.XOR (Сквозная/
+   Цель/Результат) — та же логика, но по отдельности (horizRowExpanded, ключ = data-tag). */
+const stepLogBodyEl = document.getElementById("stepLogBody");
+if (stepLogBodyEl) {
+  stepLogBodyEl.addEventListener("click", (e) => {
+    const horizRow = e.target.closest(".horiz-ride-row");
+    if (horizRow) {
+      const tag = horizRow.dataset.tag;
+      if (horizRowExpanded.has(tag)) horizRowExpanded.delete(tag); else horizRowExpanded.add(tag);
+      render();
+      return;
+    }
+    if (!e.target.closest(".step-log-result")) return;
+    stepLogResultExpanded = !stepLogResultExpanded;
+    render();
+  });
+}
+
+/* Ручной драг высоты "Черновика шага" за .step-log-resize-handle — прямо задаёт
+   stepLogBodyHeight (px), applyStepLogBodyHeight() в следующих render() будет держать именно
+   её (расти может, сжаться сама — нет). */
+const stepLogResizeHandleEl = document.getElementById("stepLogResizeHandle");
+if (stepLogResizeHandleEl) {
+  let dragStartY = 0, dragStartH = 0, dragging = false;
+  stepLogResizeHandleEl.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    dragging = true;
+    dragStartY = e.clientY;
+    dragStartH = stepLogBodyEl.offsetHeight;
+    stepLogResizeHandleEl.classList.add("dragging");
+  });
+  window.addEventListener("mousemove", (e) => {
+    if (!dragging) return;
+    const h = Math.max(24, dragStartH + (e.clientY - dragStartY));
+    stepLogBodyHeight = h;
+    stepLogBodyEl.style.height = h + "px";
+  });
+  window.addEventListener("mouseup", () => {
+    if (!dragging) return;
+    dragging = false;
+    stepLogResizeHandleEl.classList.remove("dragging");
+    saveCache();
+  });
 }
 /* === МАРКЕР 10: СОБЫТИЯ === */
 const cPullEl      = document.getElementById("cPull");
@@ -2805,6 +3673,10 @@ function tabSaveChainData(idx) {
     tplRows: (src.tplRows || []).slice(),
     tplPats: (src.tplPats || []).slice()
   };
+  // Сохранённое состояние стало новой базой для подсветки "номер изменился" (см. changedBase
+  // в render()) — перерисовываем строки сразу, иначе оранжевые номера висят до следующего
+  // не связанного действия.
+  if (isActive) render();
   renderTabs();
   saveCache();
   say(`✓ «${st.tabs[idx].name}» сохранена!`);
@@ -3043,7 +3915,7 @@ if (rowCountEl) {
 const chainResultHeadEl = document.querySelector("#chainResultBox .chain-result-head");
 if (chainResultHeadEl) {
   chainResultHeadEl.onclick = (e) => {
-    if (e.target.closest("button")) return;
+    if (e.target.closest("button") || e.target.closest(".overlay-drag") || e.target.closest(".overlay-close")) return;
     document.getElementById("chainResultBox").classList.toggle("collapsed");
   };
 }
@@ -3063,18 +3935,9 @@ if (chainTextEl2) {
   });
 }
 
-/* Бар #chainResultBox — закреплённый overlay поверх .canvas, его высота меняется (сворачивание,
-   1-3 строки фон-поиска). Держим --result-box-h в актуальном виде, чтобы .canvas резервировал
-   под него верхний отступ (padding-top: calc(6px + var(--result-box-h))) и строки таблицы не
-   уезжали под бар. */
-const chainResultBoxEl = document.getElementById("chainResultBox");
-if (chainResultBoxEl && window.ResizeObserver) {
-  const syncResultBoxHeight = () => {
-    document.documentElement.style.setProperty("--result-box-h", chainResultBoxEl.offsetHeight + "px");
-  };
-  new ResizeObserver(syncResultBoxHeight).observe(chainResultBoxEl);
-  syncResultBoxHeight();
-}
+/* Стек overlay-баров (#chainResultBox/#stepLogBox) — раскладка и драг-обмен местами реализованы
+   ниже, после loadLayout() (см. МАРКЕР 10.2b OVERLAY_STACK), т.к. используют overlayOrder,
+   объявленную рядом с LAYOUT_KEY. */
 
 /* Кнопка копирования сквозной строки результата */
 const bCopyChainEl = document.getElementById("bCopyChain");
@@ -3145,14 +4008,39 @@ function getModeParams(mode){
   }
 }
 
+/* Последняя нажатая из 4 кнопок направления (◄ ► ▲ ▼ Спираль, см. st.lastDirMode) — взаимно
+   исключающая подсветка (.mode-act) среди этих четырёх, И с обычными режимами-кнопками
+   (STEP_MODE_BTN_IDS ниже — Шаг/Шаг2/XOR/XOR2/Гориз.XOR/Проекц.XOR/Скан): "Авто" повторяет
+   только ОДНО из двух семейств одновременно (см. autoRun()), поэтому включение любого из них
+   должно гасить подсветку другого. Явный выбор обычного режима (setMode() ниже) гасит эту, и
+   наоборот — эта гасит подсветку обычных режимов (но не трогает сам st.mode: если потом опять
+   нажать Шаг/XOR/и т.п., они возьмут её как есть). */
+const DIR_MODE_BTN = { shiftL: "bShiftL", shiftR: "bShiftR", spiralUp: "bSpiralUp", spiralDown: "bSpiralDown" };
+const STEP_MODE_BTN_IDS = ["bStep", "bStep2", "bStepXor", "bStep2Xor", "bStepHorizXor", "bStepXorProj", "bStepScan"];
+function setLastDirMode(val){
+  st.lastDirMode = val || null;
+  st.xorSelectedMode = false;
+  st.interleaveMode = false;
+  Object.entries(DIR_MODE_BTN).forEach(([k, id]) => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle("mode-act", k === val);
+  });
+  if (val) STEP_MODE_BTN_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove("mode-act");
+  });
+}
+
 function setMode(modeName){
   st.mode = modeName;
   // "XOR выдел" и "Интерливинг поиск" — одноразовые оверлей-режимы поверх обычного шага,
   // их флаги не сбрасываются автоматически по завершении. Если они остались висеть с
   // прошлого раза, autoRun() проверяет их РАНЬШЕ st.mode и уводит "Авто" в чужую логику
-  // (например, ломая Гориз.XOR). При явном переключении режима — всегда гасим их.
+  // (например, ломая Гориз.XOR). При явном переключении режима — всегда гасим их (и заодно
+  // "последнюю нажатую из 4 кнопок направления" — см. setLastDirMode()).
   st.xorSelectedMode = false;
   st.interleaveMode = false;
+  if (st.lastDirMode) setLastDirMode(null);
   const modes = {
     "step1":     "bStep",
     "step2":     "bStep2",
@@ -3162,9 +4050,9 @@ function setMode(modeName){
     "xor_proj":  "bStepXorProj",
     "scan":      "bStepScan"
   };
-  
+
   const undoBtn = document.getElementById("bUndo");
-  
+
   Object.entries(modes).forEach(([m, id]) => {
     const el = document.getElementById(id);
     if (el) {
@@ -3207,6 +4095,14 @@ const MENUS = {
   menuEdit:   { title: 'Правка строк', zone: 'rightSlot', pin: true, ids: ['editGroup'],   floatable: true }
 };
 const LAYOUT_KEY = 'zerk_fold_layout';
+/* Порядок стековых overlay-баров сверху вниз (см. МАРКЕР 10.2b OVERLAY_STACK ниже) —
+   меняется только перетаскиванием за ручку ⋮⋮ в шапке, персистится вместе с остальной
+   раскладкой (тот же LAYOUT_KEY). */
+let overlayOrder = ['chainResultBox', 'stepLogBox'];
+/* Полностью скрытые крестиком ✕ overlay-бары (в отличие от collapsed — тот просто сворачивает
+   в строку-заголовок, а не убирает бар из вида совсем). Вернуть — только кнопками
+   #bToggleResultBox/#bToggleStepLog в верхнем меню, см. МАРКЕР 10.2b OVERLAY_STACK. */
+let overlayHidden = { chainResultBox: false, stepLogBox: false };
 
 for (let mid in MENUS) {
   let m = MENUS[mid];
@@ -3227,7 +4123,7 @@ function saveLayout() {
   ['leftSlot', 'rightSlot'].forEach(z => Array.from(document.getElementById(z).children).forEach((el, i) => { if (el.id) g[el.id] = { z: z, i: i }; }));
   document.querySelectorAll('body > .floating-panel').forEach(el => { if (el.id) g[el.id] = { z: 'canvas', x: parseInt(el.style.left, 10) || 0, y: parseInt(el.style.top, 10) || 0 }; });
   let pins = {}; for (let m in MENUS) pins[m] = MENUS[m].pin;
-  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ pins: pins, groups: g })); } catch (e) {}
+  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ pins: pins, groups: g, overlayOrder: overlayOrder, overlayHidden: overlayHidden })); } catch (e) {}
 }
 
 const SLOT_OF = { leftPanel: 'leftSlot', rightPanel: 'rightSlot' };
@@ -3355,12 +4251,12 @@ function updateDockVisibility() {
    вплотную к краю), формула не пересчиталась и зазор стал вдвое больше нужного — теперь
    просто ширина панели + 6px зазора. */
 function updateResultBoxInset() {
-  const box = document.getElementById('chainResultBox');
   const leftPanel = document.getElementById('leftPanel');
   const rightPanel = document.getElementById('rightPanel');
-  if (!box || !leftPanel || !rightPanel) return;
-  box.style.left = leftPanel.classList.contains('dock-empty') ? '6px' : 'calc(var(--side-w) + 6px)';
-  box.style.right = rightPanel.classList.contains('dock-empty') ? '6px' : 'calc(var(--side-w) + 6px)';
+  if (!leftPanel || !rightPanel) return;
+  const left = leftPanel.classList.contains('dock-empty') ? '6px' : 'calc(var(--side-w) + 6px)';
+  const right = rightPanel.classList.contains('dock-empty') ? '6px' : 'calc(var(--side-w) + 6px)';
+  document.querySelectorAll('.overlay-box').forEach(box => { box.style.left = left; box.style.right = right; });
 }
 
 for (let mid in MENUS) {
@@ -3390,6 +4286,13 @@ document.getElementById('toggleAllPinsBtn').addEventListener('click', () => {
 (function loadLayout() {
   let raw = null; try { raw = localStorage.getItem(LAYOUT_KEY); } catch (e) {}
   let L = null; if (raw) { try { L = JSON.parse(raw); } catch (e) {} }
+  if (L && Array.isArray(L.overlayOrder) && L.overlayOrder.length === overlayOrder.length
+      && overlayOrder.every(id => L.overlayOrder.includes(id))) {
+    overlayOrder = L.overlayOrder;
+  }
+  if (L && L.overlayHidden) {
+    for (let id in overlayHidden) if (L.overlayHidden[id] !== undefined) overlayHidden[id] = !!L.overlayHidden[id];
+  }
   if (L && L.pins) for (let m in MENUS) if (L.pins[m] !== undefined) { MENUS[m].pin = !!L.pins[m]; let cb = document.getElementById(m + 'Pin'); if (cb) cb.checked = MENUS[m].pin; }
   if (L && L.groups) for (let m in MENUS) { let wid = 'panelWrap_' + m; if (MENUS[m].pin && L.groups[wid] && L.groups[wid].z !== 'canvas') MENUS[m].zone = L.groups[wid].z; }
   for (let m in MENUS) applyMenu(m);
@@ -3410,6 +4313,107 @@ document.getElementById('toggleAllPinsBtn').addEventListener('click', () => {
   }
   updateToggleAllPinsBtn();
 })();
+
+/* === МАРКЕР 10.2b: OVERLAY_STACK === */
+/* Стек overlay-баров #chainResultBox/#stepLogBox: раскладывает их друг под другом по текущему
+   overlayOrder (top в px, вычисляется от суммы высот предыдущих + зазор), держит --result-box-h
+   в актуальном виде (сумма высот обеих + зазор между ними), чтобы .canvas резервировал верхний
+   отступ (padding-top: calc(6px + var(--result-box-h))) и строки таблицы не уезжали под бары. */
+const OVERLAY_GAP = 6;
+function layoutOverlayBoxes(){
+  // Скрытые (✕, overlayHidden) полностью выпадают из стопки — ни места, ни зазора после них.
+  const visible = overlayOrder.filter(id => !overlayHidden[id]);
+  let top = 6, stackH = 0;
+  visible.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.top = top + 'px';
+    const h = el.offsetHeight;
+    top += h + OVERLAY_GAP;
+    stackH += h + (i < visible.length - 1 ? OVERLAY_GAP : 0);
+  });
+  document.documentElement.style.setProperty('--result-box-h', stackH + 'px');
+}
+function setOverlayHidden(id, hidden){
+  overlayHidden[id] = hidden;
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('hidden', hidden);
+  const btnId = id === 'chainResultBox' ? 'bToggleResultBox' : 'bToggleStepLog';
+  const btn = document.getElementById(btnId);
+  if (btn) btn.classList.toggle('mode-act', hidden);
+  layoutOverlayBoxes();
+  saveLayout();
+}
+for (let id in overlayHidden) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('hidden', overlayHidden[id]);
+  const btnId = id === 'chainResultBox' ? 'bToggleResultBox' : 'bToggleStepLog';
+  const btn = document.getElementById(btnId);
+  if (btn) btn.classList.toggle('mode-act', overlayHidden[id]);
+}
+const bHideResultBoxEl = document.getElementById('bHideResultBox');
+if (bHideResultBoxEl) bHideResultBoxEl.addEventListener('click', e => { e.stopPropagation(); setOverlayHidden('chainResultBox', true); });
+const bHideStepLogEl = document.getElementById('bHideStepLog');
+if (bHideStepLogEl) bHideStepLogEl.addEventListener('click', e => { e.stopPropagation(); setOverlayHidden('stepLogBox', true); });
+const bToggleResultBoxEl = document.getElementById('bToggleResultBox');
+if (bToggleResultBoxEl) bToggleResultBoxEl.onclick = () => setOverlayHidden('chainResultBox', !overlayHidden.chainResultBox);
+const bToggleStepLogEl = document.getElementById('bToggleStepLog');
+if (bToggleStepLogEl) bToggleStepLogEl.onclick = () => setOverlayHidden('stepLogBox', !overlayHidden.stepLogBox);
+
+if (window.ResizeObserver) {
+  const ro = new ResizeObserver(() => layoutOverlayBoxes());
+  overlayOrder.forEach(id => { const el = document.getElementById(id); if (el) ro.observe(el); });
+}
+layoutOverlayBoxes();
+
+/* Клик по шапке "Черновика" — свернуть/развернуть в одну строку (та же логика, что у шапки
+   "Результата" выше — chainResultHeadEl), не путать с ✕ (то ПОЛНОСТЬЮ скрывает). */
+const stepLogHeadEl = document.querySelector('#stepLogBox .step-log-head');
+if (stepLogHeadEl) {
+  stepLogHeadEl.onclick = (e) => {
+    if (e.target.closest('button') || e.target.closest('.overlay-drag') || e.target.closest('.overlay-close')) return;
+    document.getElementById('stepLogBox').classList.toggle('collapsed');
+  };
+}
+
+/* Перетаскивание за ⋮⋮ — меняет местами #chainResultBox/#stepLogBox по вертикали (только
+   порядок в overlayOrder, ширина/left/right остаются авто, никакого свободного позиционирования).
+   Порог срабатывания — курсор пересёк вертикальную середину ДРУГОГО бара. */
+let overlayDragId = null, overlayDragMoved = false;
+document.querySelectorAll('.overlay-drag').forEach(handle => {
+  handle.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    e.preventDefault(); e.stopPropagation();
+    overlayDragId = handle.closest('.overlay-box').id;
+    overlayDragMoved = false;
+  });
+});
+window.addEventListener('mousemove', e => {
+  if (!overlayDragId) return;
+  overlayDragMoved = true;
+  const otherId = overlayOrder.find(id => id !== overlayDragId);
+  const otherEl = document.getElementById(otherId);
+  if (!otherEl) return;
+  const r = otherEl.getBoundingClientRect();
+  const overOther = e.clientY >= r.top && e.clientY <= r.bottom;
+  otherEl.classList.toggle('drag-target', overOther);
+});
+window.addEventListener('mouseup', e => {
+  if (!overlayDragId) return;
+  const draggedId = overlayDragId;
+  overlayDragId = null;
+  document.querySelectorAll('.overlay-box.drag-target').forEach(el => el.classList.remove('drag-target'));
+  if (!overlayDragMoved) return;
+  const otherId = overlayOrder.find(id => id !== draggedId);
+  const otherEl = document.getElementById(otherId);
+  if (!otherEl) return;
+  const r = otherEl.getBoundingClientRect();
+  if (e.clientY >= r.top && e.clientY <= r.bottom) {
+    overlayOrder.reverse();
+    layoutOverlayBoxes();
+    saveLayout();
+  }
+});
 
 document.querySelectorAll('.menu-btn').forEach(btn => {
   let mid = btn.dataset.menu;
@@ -3623,6 +4627,15 @@ if (cBgSearchEl) {
     saveCache();
   };
 }
+const cBgSubPatternsEl = document.getElementById("cBgSubPatterns");
+if (cBgSubPatternsEl) {
+  cBgSubPatternsEl.onchange = () => {
+    st.bgSubPatterns = cBgSubPatternsEl.checked;
+    st.bgSearchLastHit = -1;
+    render();
+    saveCache();
+  };
+}
 const bgSearchModeBtns = document.querySelectorAll("#bgSearchModeGrp button");
 bgSearchModeBtns.forEach(btn => {
   btn.onclick = () => {
@@ -3658,8 +4671,8 @@ function computeBgSearchTarget(){
   const pat = st.pats[targetIdx];
   if (!pat || !pat.text) return null;
 
-  const rowAbove = st.rows[selIdx - 1] || "";
-  const rowSel = st.rows[selIdx] || "";
+  const rowAbove = getRowBits(st, selIdx - 1);
+  const rowSel = getRowBits(st, selIdx);
   const modes = (st.bgSearchModes && st.bgSearchModes.length) ? st.bgSearchModes : ["interleave"];
   const results = modes.map(mode => {
     let result;
@@ -3683,7 +4696,7 @@ function computeBgSearchTarget(){
       result = interleavePair(rowAbove, rowSel, st.align);
     }
     const kinds = findPatternKinds(result, pat.text);
-    return { mode, result, matched: kinds.length > 0, kinds };
+    return { mode, result, matched: kinds.length > 0, kinds, tried: kinds.tried };
   });
   return { targetIdx, results, matched: results.some(r => r.matched) };
 }
@@ -3694,13 +4707,17 @@ function computeBgSearchTarget(){
    другой), затем нарезаются обратно по ИСХОДНЫМ длинам строк — портировано 1:1 из
    manualElkaShift() в Zerkalius-genezis.html (dir=-1 — влево по ленте: первый символ уходит в
    конец; dir=1 — вправо: последний символ встаёт в начало). */
-function spiralStep(dir){
+/* silent=true (см. autoRun()/st.lastDirMode) — пропускает свои snapshot()/render()/saveCache(),
+   вызывающий код сам берёт snapshot один раз ДО цикла и render/saveCache раз в кадр, а не на
+   каждый отдельный шаг. Возвращает true/false — сделан ли реально шаг (буфер меньше 2 символов/
+   нет строк — false, стоп). */
+function spiralStep(dir, silent){
   const n = st.rows.length;
-  if (!n) return;
+  if (!n) return false;
   const range = colSelectRowRange();
   const lo = Math.max(0, range.lo);
   const hi = Math.min(n - 1, range.hi === Infinity ? n - 1 : range.hi);
-  if (hi < lo) return;
+  if (hi < lo) return false;
 
   const rowLengths = [];
   let buffer = [];
@@ -3709,9 +4726,9 @@ function spiralStep(dir){
     rowLengths.push(s.length);
     buffer = buffer.concat(s.split(""));
   }
-  if (buffer.length <= 1) return;
+  if (buffer.length <= 1) return false;
 
-  snapshot();
+  if (!silent) snapshot();
   if (dir === 1) {
     const last = buffer.pop();
     buffer.unshift(last);
@@ -3726,19 +4743,19 @@ function spiralStep(dir){
     st.rows[lo + k] = buffer.slice(ptr, ptr + len).join("");
     ptr += len;
   }
-  render();
-  saveCache();
+  if (!silent) { render(); saveCache(); }
+  return true;
 }
-function spiralMove(vDir){
+function spiralMove(vDir, silent){
   // "право" по ленте — это "вверх", если переключатель на "right"; иначе — наоборот.
   const rightIsUp = st.spiralUpDir === "right";
   const dir = (vDir === "up") === rightIsUp ? 1 : -1;
-  spiralStep(dir);
+  return spiralStep(dir, silent);
 }
 const bSpiralUpEl = document.getElementById("bSpiralUp");
-if (bSpiralUpEl) bSpiralUpEl.onclick = () => spiralMove("up");
+if (bSpiralUpEl) bSpiralUpEl.onclick = () => { setLastDirMode("spiralUp"); spiralMove("up"); };
 const bSpiralDownEl = document.getElementById("bSpiralDown");
-if (bSpiralDownEl) bSpiralDownEl.onclick = () => spiralMove("down");
+if (bSpiralDownEl) bSpiralDownEl.onclick = () => { setLastDirMode("spiralDown"); spiralMove("down"); };
 
 function step(pairOnly, forceXor = false, isScan = false, isHorizXor = false, isXorProj = false){
   readToggles();
@@ -3751,7 +4768,71 @@ function step(pairOnly, forceXor = false, isScan = false, isHorizXor = false, is
 function autoRun(){
   readToggles();
   st.running = true;
-  document.getElementById("bStop").disabled = false;
+  setAutoBtnState(true);
+
+  // Последняя нажатая из 4 кнопок направления (◄ ► ▲ ▼ Спираль, см. st.lastDirMode/
+  // setLastDirMode()) — "Авто" повторяет именно её, пока не найдётся стоп-условие (нечего
+  // больше сдвигать, ИЛИ фон-поиск нашёл совпадение при включённом "Стоп на находке") или
+  // пользователь не нажмёт ⏹ Стоп. snapshot() один раз ДО цикла — Undo одним кликом откатывает
+  // весь прогон целиком, а не по шагу.
+  if (st.lastDirMode) {
+    const isShift = st.lastDirMode === "shiftL" || st.lastDirMode === "shiftR";
+    const dirLabel = { shiftL: "◄", shiftR: "►", spiralUp: "▲ Спираль", spiralDown: "▼ Спираль" }[st.lastDirMode];
+    snapshot();
+
+    // Общее число вариантов ДО старта: круговой сдвиг строки длины L возвращает её к исходному
+    // виду ровно через L сдвигов (берём максимум среди сдвигаемых строк); у спирали — через
+    // buffer.length шагов (вся лента диапазона целиком). РАНЬШЕ тут вообще не считалось —
+    // ◄/►/▲/▼ крутились БЕСКОНЕЧНО, пока не нажмёшь Стоп, даже если весь цикл вариантов давно
+    // пройден без находки.
+    let totalTurns = 0;
+    if (isShift) {
+      const idxs0 = (st.selectedRows && st.selectedRows.size > 0) ? Array.from(st.selectedRows) : st.rows.map((_, i) => i);
+      for (const i of idxs0) if (st.rows[i] && st.rows[i].length > totalTurns) totalTurns = st.rows[i].length;
+    } else {
+      const range = colSelectRowRange();
+      const lo = Math.max(0, range.lo);
+      const hi = Math.min(st.rows.length - 1, range.hi === Infinity ? st.rows.length - 1 : range.hi);
+      for (let i = lo; i <= hi; i++) totalTurns += (st.rows[i] || "").length;
+    }
+    let turns = 0;
+
+    const tick = () => {
+      if (!st.running) return finishAuto();
+
+      const t0 = performance.now();
+      let moved = true;
+      let bgHit = null;
+      let cycleDone = false;
+      while (performance.now() - t0 < 12) {
+        if (totalTurns > 0 && turns >= totalTurns) { cycleDone = true; break; }
+        if (isShift) {
+          const idxs = (st.selectedRows && st.selectedRows.size > 0) ? Array.from(st.selectedRows) : st.rows.map((_, i) => i);
+          if (idxs.length === 0 || !idxs.some(i => st.rows[i])) { moved = false; break; }
+          for (const i of idxs) if (st.rows[i]) st.rows[i] = st.lastDirMode === "shiftL" ? rotateStrLeft(st.rows[i]) : rotateStrRight(st.rows[i]);
+        } else {
+          moved = spiralMove(st.lastDirMode === "spiralUp" ? "up" : "down", true);
+          if (!moved) break;
+        }
+        turns++;
+
+        const bgInfo = computeBgSearchTarget();
+        if (st.stopOnHit && bgInfo && bgInfo.matched) { bgHit = bgInfo; break; }
+      }
+
+      say(`Авто (${dirLabel}): вариант ${turns}` + (totalTurns ? ` из ${totalTurns}` : ""));
+      render(); saveCache();
+      if (bgHit) {
+        st.selectedRows.add(bgHit.targetIdx);
+        return finishAuto(`🎯 Авто (${dirLabel}): найдено совпадение на строке ${bgHit.targetIdx + 1}!`);
+      }
+      if (cycleDone) return finishAuto(`Авто (${dirLabel}) остановлен: полный цикл вариантов (${turns} из ${totalTurns}) пройден, совпадений не найдено.`);
+      if (!moved) return finishAuto(`Авто (${dirLabel}) остановлен: больше нечего сдвигать.`);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    return;
+  }
 
   if (st.xorSelectedMode) {
     const tick = () => {
@@ -3823,65 +4904,10 @@ function autoRun(){
 
 function finishAuto(m){
   st.running = false;
-  document.getElementById("bStop").disabled = true;
+  setAutoBtnState(false);
   render();
   saveCache();
   if (m) say(m);
-}
-
-/* Авто-круговой сдвиг: то же самое, что ручные ◄/► (rotateStrLeft/rotateStrRight), но в цикле
-   само по себе, тем же кадровым батчингом, что и autoRun() — до находки через фон-поиск (если
-   включено "Стоп на находке") или до полного оборота (turns >= maxLen у самой длинной из
-   сдвигаемых строк), если совпадений не нашлось. В отличие от ручных ◄/►, если ничего не
-   выделено кликом — крутит ВСЕ строки, а не требует выделения.
-   Направление — НЕ свой переключатель, а st.spiralUpDir (тот же, что у ◄/► в блоке "Спираль"
-   ниже) — так не плодим третий переключатель направления в интерфейсе.
-   При находке (см. computeBgSearchTarget()) — строка-находка (bgInfo.targetIdx) добавляется к
-   текущему выделению, а не заменяет его (её паттерн и был целью поиска — работает, только если
-   было исходное выделение: без него фон-поиск в принципе не считается, см. computeBgSearchTarget). */
-function autoShiftRun(){
-  readToggles();
-  const idxs = (st.selectedRows && st.selectedRows.size > 0)
-    ? Array.from(st.selectedRows)
-    : st.rows.map((_, i) => i);
-  if (idxs.length === 0) { say("Нечего сдвигать — нет строк."); return; }
-
-  const dir = st.spiralUpDir === "right" ? "right" : "left";
-  let maxLen = 0;
-  for (const i of idxs) if (st.rows[i] && st.rows[i].length > maxLen) maxLen = st.rows[i].length;
-  if (maxLen === 0) { say("Нечего сдвигать — пустые строки."); return; }
-
-  st.running = true;
-  document.getElementById("bStop").disabled = false;
-  snapshot();
-  let turns = 0;
-
-  const tick = () => {
-    if (!st.running) return finishAuto();
-
-    const t0 = performance.now();
-    while (performance.now() - t0 < 12) {
-      if (turns >= maxLen) {
-        return finishAuto(`🔄 Авто сдвиг: полный оборот (${turns}) пройден, совпадений не найдено.`);
-      }
-      for (const i of idxs) {
-        if (!st.rows[i]) continue;
-        st.rows[i] = dir === "right" ? rotateStrRight(st.rows[i]) : rotateStrLeft(st.rows[i]);
-      }
-      turns++;
-
-      const bgInfo = computeBgSearchTarget();
-      if (st.stopOnHit && bgInfo && bgInfo.matched) {
-        st.selectedRows.add(bgInfo.targetIdx);
-        render(); saveCache();
-        return finishAuto(`🎯 Авто сдвиг: найдено совпадение на строке ${bgInfo.targetIdx + 1}!`);
-      }
-    }
-
-    render();
-    requestAnimationFrame(tick);
-  };
-  requestAnimationFrame(tick);
 }
 
 document.getElementById("bStep").onclick     = () => doModeStep("step1");
@@ -3892,10 +4918,7 @@ document.getElementById("bStepHorizXor").onclick = () => doModeStep("horiz_xor")
 document.getElementById("bStepXorProj").onclick = () => doModeStep("xor_proj");
 document.getElementById("bStepScan").onclick = () => doModeStep("scan");
 
-document.getElementById("bAuto").onclick  = () => autoRun();
-const bAutoShiftEl = document.getElementById("bAutoShift");
-if (bAutoShiftEl) bAutoShiftEl.onclick = () => autoShiftRun();
-document.getElementById("bStop").onclick  = () => { st.running = false; };
+document.getElementById("bAuto").onclick  = () => { if (st.running) st.running = false; else autoRun(); };
 document.getElementById("bUndo").onclick  = () => {
   if (!restore()) say("Откатывать нечего.");
   render(); saveCache();
@@ -4016,6 +5039,7 @@ const bShiftLEl = document.getElementById("bShiftL");
 if (bShiftLEl) {
   bShiftLEl.onclick = () => {
     if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
+    setLastDirMode("shiftL");
     snapshot();
     for (const r of st.selectedRows) if (st.rows[r]) st.rows[r] = rotateStrLeft(st.rows[r]);
     render(); saveCache();
@@ -4025,6 +5049,7 @@ const bShiftREl = document.getElementById("bShiftR");
 if (bShiftREl) {
   bShiftREl.onclick = () => {
     if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
+    setLastDirMode("shiftR");
     snapshot();
     for (const r of st.selectedRows) if (st.rows[r]) st.rows[r] = rotateStrRight(st.rows[r]);
     render(); saveCache();
@@ -4057,7 +5082,9 @@ if (bPadZerosAboveEl) {
         const rowLen = st.rows[i].length;
         if (rowLen < len) {
           const shift = alignShift(len, rowLen, st.align);
-          st.rows[i] = "0".repeat(shift) + st.rows[i] + "0".repeat(len - rowLen - shift);
+          // Math.max(0, …) — см. комментарий у padToLen() в doStep(): у "лесенки" остаток
+          // паддинга справа может уйти в минус.
+          st.rows[i] = "0".repeat(shift) + st.rows[i] + "0".repeat(Math.max(0, len - rowLen - shift));
         }
       }
     }
@@ -4065,36 +5092,92 @@ if (bPadZerosAboveEl) {
   };
 }
 
-/* Тетрис: 1-биты строки НАД выделенной "падают" в неё — в её 0-пустоты. Работает В ДВА КЛИКА,
-   если строка сразу не влезает:
-   1) Если падающая строка КАК ЕСТЬ не влезает в выделенную (хоть один её 1 приходится на 1
-      выделенной) — клик только КРУТИТ выделенную строку круговым сдвигом (вправо, как и
-      остальные ручные сдвиги ◄/►), перебирая повороты один за другим, пока не найдётся тот,
-      где всё совпадает (либо повороты не кончатся без результата — тогда ничего не меняется).
-      Сам поворот применяется и остаётся — падения на этом клике ЕЩЁ НЕ происходит.
-   2) Если падающая строка УЖЕ влезает как есть (либо сразу, либо после поворота из шага 1 на
-      предыдущем клике) — клик выполняет само падение: выделенная получает 1-биты падающей (в
-      её 0-пустотах), а строка сверху гасит ВСЕ свои биты, что были 1 (и упали), в 0 (какие
-      были 0 — так и остаются), длина не меняется.
-   Строки НИКОГДА не удаляются и не сдвигаются — ни в шаге 1, ни в шаге 2, ни при каком исходе
-   слияния (в т.ч. если выделенная стала целиком из единиц). Функция не хранит отдельного
-   "какой сейчас шаг" состояния — она просто каждый раз проверяет текущий факт "влезает ли
-   падающая в выделенную КАК ЕСТЬ", поэтому шаг 1 (поворот) на СЛЕДУЮЩЕМ клике сам собой
-   приводит ко входу в ветку шага 2 (падение).
+/* Тетрис: 1-биты строки НАД выделенной "падают" в неё — в её 0-пустоты. Каждый клик делает
+   РОВНО ОДНО из следующих действий (все — отдельными кликами, ничего не объединяется):
+   1) Не влезает как есть — КРУТИТ выделенную строку круговым сдвигом (вправо, как и остальные
+      ручные сдвиги ◄/►), перебирая повороты, пока не найдётся подходящий (клик).
+   1б) Ни один поворот не подошёл — ИНВЕРТИРУЕТ (0↔1) падающую строку (строку НАД выделенной,
+      видно в таблице; сама выделенная НЕ инвертируется), и ТОЛЬКО это — без попытки в этом же
+      клике сразу подобрать поворот (клик). Инверсия применяется БЕЗУСЛОВНО, даже если сама по
+      себе ещё не даёт fit — клик никогда не "проваливается в никуда". Поворот выделенной (если
+      после инверсии он всё же нужен) подбирается уже НА СЛЕДУЮЩЕМ клике — тот заново заходит в
+      шаг 1, теперь уже с инвертированной падающей. Если и с инвертированной ни один поворот не
+      подошёл — очередной клик в этом тупике снова инвертирует падающую (переключение туда-
+      обратно), пока пользователь не подберёт совпадение сам (например, покрутив выделенную
+      вручную ◄/► между нажатиями).
+   2) Уже влезает как есть (сразу либо после поворота/инверсии на одном из прошлых кликов) —
+      ПАДЕНИЕ: выделенная получает 1-биты падающей (в её 0-пустотах), строка сверху гасит ВСЕ
+      свои биты, что были 1 (и упали), в 0 (какие были 0 — так и остаются), длина не меняется.
+      Переход выделения на строку ниже — НЕ в этом же клике (клик).
+   3) Строка только что приняла падение (см. tetrisPendingAdvance) — клик ТОЛЬКО переводит
+      выделение на строку НИЖЕ (selIdx+1, если она есть), без изменения битов — чтобы тетрис
+      можно было продолжать вниз по таблице, просто повторяя клики.
+   Строки НИКОГДА не удаляются и не сдвигаются — ни на каком шаге, ни при каком исходе слияния
+   (в т.ч. если выделенная стала целиком из единиц). Кроме tetrisPendingAdvance (нужен именно
+   для разделения шагов 2 и 3) функция не хранит своего состояния — она каждый раз проверяет
+   текущий факт "влезает ли падающая в выделенную КАК ЕСТЬ", поэтому шаг 1/1б на СЛЕДУЮЩЕМ клике
+   сам собой приводит ко входу в шаг 2.
    Падающая строка ДЛИННЕЕ выделенной — сразу не влезает ни при каком повороте (лишним битам
    падающей просто некуда падать) — это отдельная проверка перед циклом поворотов, а не то же
    самое "не нашлось поворота". st.pats и st.used не трогаются вообще — они на строки никак
    не завязаны в этой функции. */
-function bitsFitIntoGaps(falling, floor){
-  if (falling.length > floor.length) return false;
+/* Строки в таблице визуально выровнены (⇤/↔/⇥) относительно ОБЩЕЙ самой длинной строки —
+   короткая строка не начинается с raw-индекса 0 на экране, если align не "left" (см.
+   alignShift()/render()). "1 над 0" на глаз проверяется ИМЕННО по видимым колонкам, а не по
+   сырым индексам символов — поэтому падение должно сравнивать falling[i] не с floor[i], а с
+   floor[i + offset], где offset — разница их собственных визуальных сдвигов относительно той же
+   общей ширины maxLen, что использует render(). При align="left" alignShift всегда 0 для обеих
+   строк, offset тоже 0 — поведение не меняется (полностью совместимо со старым). */
+function tetrisAlignOffset(fallingLen, floorLen){
+  let maxLen = 0;
+  for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
+  return alignShift(maxLen, fallingLen, st.align) - alignShift(maxLen, floorLen, st.align);
+}
+function bitsFitIntoGaps(falling, floor, offset){
+  offset = offset || 0;
   for (let i = 0; i < falling.length; i++){
-    if (falling[i] === "1" && floor[i] === "1") return false;
+    if (falling[i] !== "1") continue;
+    const j = i + offset;
+    // 1-бит падающей визуально приходится мимо выделенной строки (левее/правее её видимого
+    // диапазона) — падать некуда, это тоже "не влезает", а не молча игнорируется.
+    if (j < 0 || j >= floor.length) return false;
+    if (floor[j] === "1") return false;
   }
   return true;
 }
+/* Ищет поворот floor0 (вправо, начиная с "без поворота"), при котором falling помещается в его
+   0-пустоты (с учётом visual offset — см. tetrisAlignOffset). Возвращает {floor, rotations}
+   первого подходящего, либо null, если ни один. */
+function findFitRotation(falling, floor0, offset){
+  if (bitsFitIntoGaps(falling, floor0, offset)) return { floor: floor0, rotations: 0 };
+  let floor = floor0;
+  for (let t = 1; t < floor0.length; t++){
+    floor = rotateStrRight(floor);
+    if (bitsFitIntoGaps(falling, floor, offset)) return { floor, rotations: t };
+  }
+  return null;
+}
+// Строка, в которую только что упало (см. "Шаг 2" ниже) и которая ждёт ОТДЕЛЬНОГО клика,
+// переводящего выделение на строку ниже — само падение больше не делает это в том же клике.
+// -1 = ничего не ждёт. Сбрасывается, как только клик пришёл на ДРУГУЮ строку (проверка по
+// равенству selIdx), так что случайный клик по другой строке не запускает лишний переход.
+let tetrisPendingAdvance = -1;
 function tetrisDrop(){
   if (!st.selectedRows || st.selectedRows.size !== 1) { say("Выделите ровно одну строку — тетрис роняет строку сверху именно в неё."); return; }
   const selIdx = Array.from(st.selectedRows)[0];
+
+  if (tetrisPendingAdvance === selIdx) {
+    // Отдельный шаг: строка уже приняла падение на прошлом клике — этот клик только переводит
+    // выделение на строку ниже, без каких-либо изменений битов.
+    tetrisPendingAdvance = -1;
+    const nextIdx = selIdx + 1;
+    if (nextIdx >= st.rows.length) { say("🧱 Тетрис: это последняя строка — переходить некуда."); return; }
+    st.selectedRows = new Set([nextIdx]);
+    render(); saveCache();
+    say(`🧱 Тетрис: выделение перешло на строку №${nextIdx + 1}.`);
+    return;
+  }
+
   if (selIdx <= 0) { say("Над выделенной строкой ничего нет — падать нечему."); return; }
   const aboveIdx = selIdx - 1;
   const falling = st.rows[aboveIdx] || "";
@@ -4103,32 +5186,48 @@ function tetrisDrop(){
   if (!floor0.length) { say("Выделенная строка пуста — падать некуда."); return; }
   if (falling.length > floor0.length) { say("🧱 Тетрис: строка сверху длиннее выделенной — не влезает ни при одном повороте."); return; }
 
-  if (bitsFitIntoGaps(falling, floor0)) {
-    // Шаг 2: уже влезает как есть (сразу либо после поворота на прошлом клике) — падаем.
+  // Смещение между визуальными колонками falling и floor при текущем выравнивании таблицы
+  // (⇤/↔/⇥) — см. tetrisAlignOffset(). При align="left" всегда 0 (как раньше).
+  const offset = tetrisAlignOffset(falling.length, floor0.length);
+
+  if (bitsFitIntoGaps(falling, floor0, offset)) {
+    // Шаг 2: уже влезает как есть (сразу либо после поворота/инверсии на прошлом клике) — падаем.
+    // Переход выделения на строку ниже — ОТДЕЛЬНЫЙ следующий клик (см. tetrisPendingAdvance
+    // выше), не сразу вместе с падением.
     snapshot();
-    let merged = "";
-    for (let i = 0; i < floor0.length; i++){
-      merged += (i < falling.length && falling[i] === "1") ? "1" : floor0[i];
+    const mergedArr = floor0.split("");
+    for (let i = 0; i < falling.length; i++){
+      if (falling[i] === "1") mergedArr[i + offset] = "1";
     }
-    st.rows[selIdx] = merged;
+    st.rows[selIdx] = mergedArr.join("");
     st.rows[aboveIdx] = "0".repeat(falling.length);
+    tetrisPendingAdvance = selIdx;
     render(); saveCache();
-    say(`🧱 Тетрис: строка №${aboveIdx + 1} упала в выделенную №${selIdx + 1}.`);
+    say(`🧱 Тетрис: строка №${aboveIdx + 1} упала в выделенную №${selIdx + 1} — нажмите ещё раз, чтобы перейти на строку ниже.`);
     return;
   }
 
-  // Шаг 1: не влезает — крутим выделенную строку, пока не найдём подходящий поворот.
-  let floor = floor0, rotations = 0, fitted = false;
-  for (let t = 1; t < floor0.length; t++){
-    floor = rotateStrRight(floor);
-    if (bitsFitIntoGaps(falling, floor)) { fitted = true; rotations = t; break; }
+  // Шаг 1: не влезает как есть — крутим выделенную строку.
+  const rot = findFitRotation(falling, floor0, offset);
+  if (rot) {
+    snapshot();
+    if (rot.rotations > 0) st.rows[selIdx] = rot.floor;
+    render(); saveCache();
+    say(`🧱 Тетрис: выделенная строка повёрнута (сдвиг на ${rot.rotations}) — нажмите ещё раз, чтобы уронить единицы.`);
+    return;
   }
-  if (!fitted) { say("🧱 Тетрис: не нашлось поворота выделенной строки, куда падающая помещается."); return; }
 
+  // Шаг 1б: ни один поворот не подошёл — инвертируем падающую строку (реально, в таблице) как
+  // ОТДЕЛЬНЫЙ шаг, без поворота выделенной в этом же клике (инверсия и сдвиг — не сразу вместе).
+  // Инверсия применяется БЕЗУСЛОВНО, даже если сама по себе ещё не даёт fit — следующий клик
+  // просто зайдёт в обычный шаг 1 заново (уже с инвертированной падающей) и, если нужно,
+  // подберёт поворот отдельным кликом. Повторный клик на тупике (снова нет поворота даже с
+  // инверсией) инвертирует падающую ЕЩЁ РАЗ (переключение туда-обратно) — можно пробовать
+  // вручную, покрутив выделенную ◄/► между нажатиями.
   snapshot();
-  st.rows[selIdx] = floor;
+  st.rows[aboveIdx] = invertBits(falling);
   render(); saveCache();
-  say(`🧱 Тетрис: выделенная строка повёрнута (сдвиг на ${rotations}) — нажмите ещё раз, чтобы уронить единицы.`);
+  say("🧱 Тетрис: строка сверху инвертирована — нажмите ещё раз (подберёт поворот выделенной, если нужен, отдельным кликом).");
 }
 const bTetrisEl = document.getElementById("bTetris");
 if (bTetrisEl) bTetrisEl.onclick = tetrisDrop;
@@ -4278,8 +5377,8 @@ function doInterleaveStep() {
     return false;
   }
 
-  const rowA = st.rows[aIdx] || "";
-  const rowB = st.rows[bIdx] || "";
+  const rowA = getRowBits(st, aIdx);
+  const rowB = getRowBits(st, bIdx);
   const intResult = interleavePair(rowA, rowB, st.align);
 
   let searchResult = intResult;
@@ -4476,6 +5575,17 @@ if (bLoadEl) bLoadEl.onclick = () => { loadTemplate(); saveCache(); };
 const bSideEl = document.getElementById("bSide");
 if (bSideEl) bSideEl.onclick = () => { document.body.classList.toggle("hide-side"); saveCache(); };
 
+/* Жирность символов 0/1 (см. #bBoldBits/body.bold-bits в CSS) — простой тумблер без своего
+   цвета, та же mode-act подсветка кнопки, что у "01"/"1↕1"/"1⤡1". */
+const bBoldBitsEl = document.getElementById("bBoldBits");
+if (bBoldBitsEl) {
+  bBoldBitsEl.onclick = () => {
+    const on = document.body.classList.toggle("bold-bits");
+    bBoldBitsEl.classList.toggle("mode-act", on);
+    saveCache();
+  };
+}
+
 /* Скрыть/показать колонки паттернов по отдельности — прячет .pat/.pat2 и их ручки
    изменения ширины (.vsplit/.vsplit2), см. CSS body.hide-pat-l/body.hide-pat-r. */
 const bTogglePatLEl = document.getElementById("bTogglePatL");
@@ -4539,6 +5649,13 @@ function applyLs(){
 }
 ls.oninput = () => { applyLs(); saveCache(); };
 
+/* Выбор шрифта цифр полотна (см. #chainFontSel/--chain-ff в CSS) */
+const chainFontSelEl = document.getElementById("chainFontSel");
+function applyChainFont(){
+  if (chainFontSelEl) document.documentElement.style.setProperty("--chain-ff", chainFontSelEl.value);
+}
+if (chainFontSelEl) chainFontSelEl.onchange = () => { applyChainFont(); saveCache(); };
+
 /* Ползунок яркости будущих строк */
 const dimEl = document.getElementById("dim");
 function applyDim(){
@@ -4566,6 +5683,137 @@ function applyColors() {
   document.documentElement.style.setProperty("--c1", col1.value);
   document.documentElement.style.setProperty("--c0", col0.value);
   document.documentElement.style.setProperty("--cbg", colBg.value);
+}
+
+/* #RRGGBB -> rgba(...) с заданной прозрачностью — цвет <input type="color"> всегда непрозрачный,
+   а фон выделенной строки (--rowbg-sel) должен оставаться полупрозрачным, иначе перекроет
+   текст строки под собой. */
+function hexToRgba(hex, alpha){
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || "");
+  if (!m) return hex;
+  return "rgba(" + parseInt(m[1], 16) + "," + parseInt(m[2], 16) + "," + parseInt(m[3], 16) + "," + alpha + ")";
+}
+
+/* Фон ТОЛЬКО для выделенных строк (см. #rowBgSel в HTML, .ln.selected фон в CSS) — просто цвет
+   с фиксированной прозрачностью (см. hexToRgba), без пресетов/цветов 0/1. */
+const rowBgSel = document.getElementById("rowBgSel");
+
+function applyColorsSel() {
+  document.documentElement.style.setProperty("--rowbg-sel", hexToRgba(rowBgSel.value, 0.18));
+}
+
+/* Снимок текущих цветов — для сохранения их ОТДЕЛЬНО у каждой цепочки (см. createDefaultTabState/
+   saveActiveTabState/loadTabState ниже). Объявлена function-декларацией (поднимается целиком),
+   поэтому её можно звать из тех функций, хотя они в файле раньше — реально выполнятся они
+   только после того, как col1/currentPreset и т.д. уже объявлены (см. порядок вызова loadCache()). */
+function captureColors(){
+  return {
+    c1: col1 ? col1.value : "#ff3333",
+    c0: col0 ? col0.value : "#555555",
+    cBg: colBg ? colBg.value : "#000000",
+    preset: typeof currentPreset !== "undefined" ? currentPreset : "crypto",
+    customPreset: st.customPreset || null,
+    rowBgSel: rowBgSel ? rowBgSel.value : "#ffcf6b",
+    c01: typeof col01El !== "undefined" && col01El ? col01El.value : "#ff9900",
+    cv1: typeof colVert1El !== "undefined" && colVert1El ? colVert1El.value : "#00ccff",
+    cd1: typeof colDiag1El !== "undefined" && colDiag1El ? colDiag1El.value : "#66ff66"
+  };
+}
+
+const bHighlight01El = document.getElementById("bHighlight01");
+if (bHighlight01El) {
+  bHighlight01El.onclick = () => {
+    st.highlight01 = !st.highlight01;
+    bHighlight01El.classList.toggle("mode-act", st.highlight01);
+    render();
+    saveCache();
+  };
+}
+
+/* Цвет подсветки "01" (см. #bHighlight01/.hl01 в CSS) — свой пикер, БЕЗ прозрачности (сплошной
+   цвет текста для 0 и 1 в найденном пробеге — прозрачный фон был почти не виден). */
+const col01El = document.getElementById("col01");
+function applyColor01(){
+  if (col01El) document.documentElement.style.setProperty("--c01-hl", col01El.value);
+}
+if (col01El) {
+  col01El.oninput = () => { applyColor01(); saveCache(); };
+}
+
+/* "1 под 1" (см. #bHighlightVert1/.hlv1 в CSS) — та же логика вкл/выкл + цвет, что у "01",
+   просто другая функция подсчёта (computeVertOnesMask, сравнивает соседние строки). */
+const bHighlightVert1El = document.getElementById("bHighlightVert1");
+if (bHighlightVert1El) {
+  bHighlightVert1El.onclick = () => {
+    st.highlightVert1 = !st.highlightVert1;
+    bHighlightVert1El.classList.toggle("mode-act", st.highlightVert1);
+    render();
+    saveCache();
+  };
+}
+const colVert1El = document.getElementById("colVert1");
+function applyColorVert1(){
+  if (colVert1El) document.documentElement.style.setProperty("--cv1-hl", colVert1El.value);
+}
+if (colVert1El) {
+  colVert1El.oninput = () => { applyColorVert1(); saveCache(); };
+}
+
+/* "1 по диагонали" (см. #bHighlightDiag1/.hld1 в CSS) — та же логика вкл/выкл + цвет, что у
+   "01"/"1 под 1", просто другая функция подсчёта (computeDiagOnesMask). */
+const bHighlightDiag1El = document.getElementById("bHighlightDiag1");
+if (bHighlightDiag1El) {
+  bHighlightDiag1El.onclick = () => {
+    st.highlightDiag1 = !st.highlightDiag1;
+    bHighlightDiag1El.classList.toggle("mode-act", st.highlightDiag1);
+    render();
+    saveCache();
+  };
+}
+/* "Поиск только по выделенным" (см. #bSearchOnlyHl, computeHighlightedOnlyRow()) — сам эффект
+   применяется в getRowBits() и затрагивает только логику поиска; на подсветку/раскраску экрана
+   не влияет, поэтому тут просто toggle + перерисовка (актуализирует состояние bg-поиска и т.п.,
+   раз данные для поиска изменились). */
+const bSearchOnlyHlEl = document.getElementById("bSearchOnlyHl");
+if (bSearchOnlyHlEl) {
+  bSearchOnlyHlEl.onclick = () => {
+    st.searchOnlyHighlighted = !st.searchOnlyHighlighted;
+    bSearchOnlyHlEl.classList.toggle("mode-act", st.searchOnlyHighlighted);
+    render();
+    saveCache();
+  };
+}
+
+/* "⚖ Показать балансы" (см. #bShowBalances, formatBalanceTotals() в render()) — чисто визуальный
+   тумблер, сам подсчёт целиком внутри render(). */
+const bShowBalancesEl = document.getElementById("bShowBalances");
+if (bShowBalancesEl) {
+  bShowBalancesEl.onclick = () => {
+    st.showBalances = !st.showBalances;
+    bShowBalancesEl.classList.toggle("mode-act", st.showBalances);
+    render();
+    saveCache();
+  };
+}
+
+/* "Пробеги вместо битов" (см. #bRunsAsBits, formatRunsHtml() в render()) — тоже чисто
+   визуальный тумблер. */
+const bRunsAsBitsEl = document.getElementById("bRunsAsBits");
+if (bRunsAsBitsEl) {
+  bRunsAsBitsEl.onclick = () => {
+    st.runsAsBits = !st.runsAsBits;
+    bRunsAsBitsEl.classList.toggle("mode-act", st.runsAsBits);
+    render();
+    saveCache();
+  };
+}
+
+const colDiag1El = document.getElementById("colDiag1");
+function applyColorDiag1(){
+  if (colDiag1El) document.documentElement.style.setProperty("--cd1-hl", colDiag1El.value);
+}
+if (colDiag1El) {
+  colDiag1El.oninput = () => { applyColorDiag1(); saveCache(); };
 }
 
 /* Пресеты цветов — раньше <select>, теперь кнопки (см. #presetGrp). currentPreset хранит,
@@ -4617,6 +5865,9 @@ function markCustomColor(){
 col1.oninput = markCustomColor;
 col0.oninput = markCustomColor;
 colBg.oninput = markCustomColor;
+
+/* Фон выделенных строк — просто цвет, без пресетов (см. #rowBgSel в HTML). */
+rowBgSel.oninput = () => { applyColorsSel(); saveCache(); };
 
 function makeDrag(el, varName, x0fn, min, max){
   el.addEventListener("mousedown", e => {
@@ -4711,13 +5962,26 @@ function captureUiSettings(){
     ringInvert: cRingInvertEl ? cRingInvertEl.checked : false,
     align: st.align, mode: st.mode || "step1", rowCount: rowCountEl ? rowCountEl.value : 256,
     bgSearch: cBgSearchEl ? cBgSearchEl.checked : false, bgSearchModes: st.bgSearchModes,
+    bgSubPatterns: cBgSubPatternsEl ? cBgSubPatternsEl.checked : false,
+    highlight01: !!st.highlight01,
+    highlightVert1: !!st.highlightVert1,
+    highlightDiag1: !!st.highlightDiag1,
+    searchOnlyHighlighted: !!st.searchOnlyHighlighted,
+    showBalances: !!st.showBalances,
+    runsAsBits: !!st.runsAsBits,
     fs: fs.value, lh: lh.value, ls: ls.value, dim: dimEl.value,
+    chainFont: chainFontSelEl ? chainFontSelEl.value : undefined,
     sideW: cssVar("--side-w"), patW: cssVar("--pat-w"), patW2: cssVar("--pat-w2"),
     hideSide: document.body.classList.contains("hide-side"),
     hidePatL: document.body.classList.contains("hide-pat-l"),
     hidePatR: document.body.classList.contains("hide-pat-r"),
     c1: col1.value, c0: col0.value, cBg: colBg.value, preset: currentPreset,
-    customPreset: st.customPreset || null
+    customPreset: st.customPreset || null,
+    boldBits: document.body.classList.contains("bold-bits"),
+    rowBgSel: rowBgSel.value,
+    c01: col01El ? col01El.value : "#ff9900",
+    cv1: colVert1El ? colVert1El.value : "#00ccff",
+    cd1: colDiag1El ? colDiag1El.value : "#66ff66"
   };
 }
 
@@ -4748,6 +6012,37 @@ function applyUiSettings(u){
   if (u.mode) setMode(u.mode);
 
   if (u.bgSearch !== undefined && cBgSearchEl) { cBgSearchEl.checked = u.bgSearch; st.bgSearch = u.bgSearch; }
+  if (u.bgSubPatterns !== undefined && cBgSubPatternsEl) { cBgSubPatternsEl.checked = u.bgSubPatterns; st.bgSubPatterns = u.bgSubPatterns; }
+  if (u.highlight01 !== undefined) {
+    st.highlight01 = !!u.highlight01;
+    const b = document.getElementById("bHighlight01");
+    if (b) b.classList.toggle("mode-act", st.highlight01);
+  }
+  if (u.highlightVert1 !== undefined) {
+    st.highlightVert1 = !!u.highlightVert1;
+    const b = document.getElementById("bHighlightVert1");
+    if (b) b.classList.toggle("mode-act", st.highlightVert1);
+  }
+  if (u.highlightDiag1 !== undefined) {
+    st.highlightDiag1 = !!u.highlightDiag1;
+    const b = document.getElementById("bHighlightDiag1");
+    if (b) b.classList.toggle("mode-act", st.highlightDiag1);
+  }
+  if (u.searchOnlyHighlighted !== undefined) {
+    st.searchOnlyHighlighted = !!u.searchOnlyHighlighted;
+    const b = document.getElementById("bSearchOnlyHl");
+    if (b) b.classList.toggle("mode-act", st.searchOnlyHighlighted);
+  }
+  if (u.showBalances !== undefined) {
+    st.showBalances = !!u.showBalances;
+    const b = document.getElementById("bShowBalances");
+    if (b) b.classList.toggle("mode-act", st.showBalances);
+  }
+  if (u.runsAsBits !== undefined) {
+    st.runsAsBits = !!u.runsAsBits;
+    const b = document.getElementById("bRunsAsBits");
+    if (b) b.classList.toggle("mode-act", st.runsAsBits);
+  }
   if (u.bgSearchModes && u.bgSearchModes.length) {
     st.bgSearchModes = u.bgSearchModes;
     const bgBtns = document.querySelectorAll("#bgSearchModeGrp button");
@@ -4760,6 +6055,7 @@ function applyUiSettings(u){
   }
 
   if (u.fs){ fs.value = u.fs; applyFont(); }
+  if (u.chainFont && chainFontSelEl) { chainFontSelEl.value = u.chainFont; applyChainFont(); }
   if (u.lh){ lh.value = u.lh; applyLh(); }
   if (u.ls !== undefined){ ls.value = u.ls; applyLs(); }
   if (u.dim){ dimEl.value = u.dim; applyDim(); }
@@ -4793,6 +6089,24 @@ function applyUiSettings(u){
   if (u.preset !== undefined) setPresetActive(u.preset);
   applyColors();
 
+  if (u.boldBits !== undefined) {
+    document.body.classList.toggle("bold-bits", !!u.boldBits);
+    const bb = document.getElementById("bBoldBits");
+    if (bb) bb.classList.toggle("mode-act", !!u.boldBits);
+  }
+
+  if (u.rowBgSel) rowBgSel.value = u.rowBgSel;
+  applyColorsSel();
+
+  if (u.c01 && col01El) col01El.value = u.c01;
+  applyColor01();
+
+  if (u.cv1 && colVert1El) colVert1El.value = u.cv1;
+  applyColorVert1();
+
+  if (u.cd1 && colDiag1El) colDiag1El.value = u.cd1;
+  applyColorDiag1();
+
   if (u.rowCount && rowCountEl) {
     rowCountEl.value = u.rowCount;
     document.getElementById("rowCountVal").textContent = rowCountEl.value;
@@ -4810,10 +6124,21 @@ const DEFAULT_UI_SETTINGS = {
   autoShift: false, stopOnHit: true, vert: false, pad: false, kinds: false, skip1: true,
   align: "center", mode: "step1", rowCount: "100",
   bgSearch: true, bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatL", "vertR", "vertL", "snakeR", "snakeL"],
+  bgSubPatterns: false,
+  highlight01: false,
+  highlightVert1: false,
+  highlightDiag1: false,
+  searchOnlyHighlighted: false,
+  showBalances: false,
+  runsAsBits: false,
   fs: "19", lh: "0.65", ls: "0", dim: "100",
+  chainFont: '"Roboto Mono", Consolas, monospace',
   sideW: "300px", patW: "12em", patW2: "12em",
   hideSide: false, hidePatL: false, hidePatR: false,
-  c1: "#ff3333", c0: "#555555", cBg: "#000000", preset: "crypto", customPreset: null
+  c1: "#ff3333", c0: "#555555", cBg: "#000000", preset: "crypto", customPreset: null,
+  boldBits: false,
+  rowBgSel: "#ffcf6b",
+  c01: "#ff9900", cv1: "#00ccff", cd1: "#66ff66"
 };
 
 const bSaveUiSettingsEl = document.getElementById("bSaveUiSettings");
