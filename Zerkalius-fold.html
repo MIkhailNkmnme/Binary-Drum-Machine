@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.178</title>
+<title>Zerkalius Fold — v0.195</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -62,6 +62,23 @@
                      border-radius:3px;padding:3px 8px;cursor:pointer;font-size:12px}
   #toggleAllPinsBtn:hover{border-color:var(--acc);color:var(--fg)}
   #toggleAllPinsBtn.all-on{border-color:var(--acc);color:var(--acc);background:rgba(77,163,255,.15)}
+
+  /* Общая рамка вокруг 📌 + вкладок (Шаги/Правка строк/Поиск/Вид) — раньше у каждой кнопки
+     была своя рамка (двойные линии между соседними), теперь один общий бордюр на группу.
+     У 📌 (первый сегмент) СВОЯ рамка снята — border:none у обеих, вместо неё общий
+     border-right-разделитель между сегментами. При наведении на 📌 подсвечивается ВСЯ
+     группа целиком (не только сама кнопка) — через CSS-комбинатор "общий сосед" (~), т.к.
+     .menu-btn идут в DOM следом за #toggleAllPinsBtn внутри той же #menuTabsGroup. */
+  #menuTabsGroup{display:flex;align-items:center;border:1px solid #22d3ee;border-radius:3px;overflow:hidden}
+  #menuTabsGroup #toggleAllPinsBtn,#menuTabsGroup .menu-btn{border:none;border-right:1px solid var(--line);border-radius:0}
+  #menuTabsGroup #toggleAllPinsBtn:hover ~ .menu-btn{background:var(--bg);color:var(--fg);border-right-color:var(--acc)}
+  /* .menu-btn:hover/.open/.pinned красили ВСЮ рамку кнопки в акцентный — теперь у кнопки
+     рамки нет (border:none выше), остался только правый разделитель, ему и возвращаем
+     акцентный цвет в тех же состояниях, чтобы подсветка/активность вкладки не потерялись. */
+  #menuTabsGroup .menu-btn:hover,#menuTabsGroup .menu-btn.open,#menuTabsGroup .menu-btn.pinned{border-right-color:var(--acc)}
+  /* То же самое для 📌 — глобальные #toggleAllPinsBtn:hover/.all-on красили border-color, но
+     проигрывают по специфичности правилу border:none выше (2 ID против 1 ID+psevdo/класс). */
+  #menuTabsGroup #toggleAllPinsBtn:hover,#menuTabsGroup #toggleAllPinsBtn.all-on{border-right-color:var(--acc)}
   .menu-drop{display:none;position:absolute;top:42px;left:2px;width:320px;max-height:82vh;overflow-y:auto;
              background:var(--panel);border:1px solid var(--line);border-top:none;border-radius:0 0 4px 4px;
              padding:4px;box-shadow:0 6px 18px rgba(0,0,0,.6);flex-direction:column;gap:6px;z-index:300;
@@ -291,9 +308,15 @@
   /* Убран overflow у .chain, чтобы исключить появление дублирующего скроллбара */
   .chain{font:var(--chain-fs)/var(--chain-lh) "Roboto Mono",Consolas,monospace; letter-spacing:var(--chain-ls);
          white-space:pre;position:relative; width:100%; max-width:100%; overflow:visible;
+         padding-left:6px;
          user-select:none} /* Иначе клик с микро-сдвигом мыши по строке оставлял текстовое
          выделение битов, и это ложно блокировало Ctrl+C-копирование выделенных строк (см.
-         keydown-обработчик: он нарочно уступает дорогу настоящему текстовому выделению) */
+         keydown-обработчик: он нарочно уступает дорогу настоящему текстовому выделению).
+         padding-left — небольшой отступ от левого края панели/дока для №/паттерна первой
+         колонки (иначе цифры номеров строк упирались прямо в край). .vsplit (абсолютно
+         позиционирован относительно .chain) сам не сдвигается вместе с padding — этот же
+         отступ явно добавлен и в его формулу left ниже, чтобы граница осталась на месте
+         стыка .pat/.bits. */
   
   /* Шапка колонок табличной части — текстовые подписи ("№"/"Паттерн"×2) убраны совсем, сама
      .chain-head схлопнута в невидимую полоску (height:0, overflow:hidden). Она нужна ТОЛЬКО
@@ -350,6 +373,9 @@
   .pat.found{color:var(--red)}
   .pat.found.inv{color:var(--purple)}
   .pat.found.rev{color:var(--green)}
+  .pat2.found{color:var(--red)}
+  .pat2.found.inv{color:var(--purple)}
+  .pat2.found.rev{color:var(--green)}
 
   /* Фоновый поиск (cBgSearch): подсветка ТОЛЬКО ячейки паттерна, без затрагивания самой строки/
      битов. bg-search-target — что ищем прямо сейчас (голубым, пока совпадения ещё нет);
@@ -360,21 +386,46 @@
     border-radius:2px; box-shadow:0 0 4px rgba(255,207,107,.6)}
 
   /* То же жёлтое совпадение, но для конкретных найденных бит внутри окошка результата
-     фон-поиска (#chainText) — показывает, ГДЕ именно паттерн нашёлся в строке результата. */
+     фон-поиска (#chainText) — показывает, ГДЕ именно паттерн нашёлся в строке результата.
+     .inv/.rev/.invrev — та же версия, но найденная инверсией/реверсом/инверсией+реверсом сразу
+     паттерна (⇌ Инв/Рев), цвета те же, что и везде в приложении для kind 1/2
+     (фиолетовый/зелёный, см. KIND_CLS), плюс свой розовый для 4-й версии. .skip1 — версия
+     нашлась через "⏭ Без 1-го" (без первого символа паттерна) — приглушаем, чтобы было видно,
+     что совпал укороченный вариант, а не паттерн целиком. */
   .chain-hit-bits{background:rgba(255,207,107,.35);color:#ffcf6b !important;
     border-radius:2px; box-shadow:0 0 4px rgba(255,207,107,.6)}
+  .chain-hit-bits.inv{background:rgba(176,96,255,.3);color:var(--purple) !important;
+    border-radius:2px; box-shadow:0 0 4px rgba(176,96,255,.6)}
+  .chain-hit-bits.rev{background:rgba(56,193,114,.3);color:var(--green) !important;
+    border-radius:2px; box-shadow:0 0 4px rgba(56,193,114,.6)}
+  .chain-hit-bits.invrev{background:rgba(255,102,204,.3);color:#ff66cc !important;
+    border-radius:2px; box-shadow:0 0 4px rgba(255,102,204,.6)}
+  .chain-hit-bits.skip1{opacity:.6; box-shadow:none; border-bottom:1px dashed currentColor}
+
+  /* Продолжение кольца (виртуальный "следующий виток", см. ringNextLap/findPatternKinds),
+     дорисованное после реальных бит строки результата — приглушается ТОЛЬКО когда 🔁 Инв. кольцо
+     включена (эти символы реально инвертированы относительно оригинала); совместим с
+     .chain-hit-bits.* — просто гасит яркость поверх обычной/цветной подсветки находки. */
+  .chain-ring-ext{opacity:.5}
 
   /* Пропущенный 1-й символ паттерна подсвечивается тусклым серым */
   .pat-skip{color:var(--dim); opacity:0.5}
   
-  /* Левая граница разделителя */
-  .vsplit{position:absolute;top:0;bottom:0;left:calc(3.5em + 8px + var(--pat-w) + 2px);
+  /* Левая граница разделителя. Позиция = ширина .num (2em, но .num сам на font-size:.85em,
+     значит фактически 2*.85=1.7em в масштабе .chain) + gap .num→.pat (8px) + ширина .pat
+     (var(--pat-w)) + gap .pat→.bits (8px). Раньше тут стояло "3.5em+8px+...+2px" — устаревшая
+     формула от прежней разметки .num (не совпадала с текущими 2em/.85em), из-за чего граница
+     была сдвинута примерно на 1.8em вправо и залезала на биты цепочки — особенно заметно при
+     выравнивании влево (⇤), где символы начинаются вплотную к границе колонки без запаса. */
+  .vsplit{position:absolute;top:0;bottom:0;left:calc(6px + 1.7em + var(--pat-w) + 16px);
           width:5px;cursor:col-resize;z-index:2}
   .vsplit::before{content:"";position:absolute;left:2px;top:0;bottom:0;width:1px;background:var(--line)}
   .vsplit:hover::before,.vsplit.drag::before{background:var(--acc);width:2px}
 
-  /* Правая граница разделителя */
-  .vsplit2{position:absolute;top:0;bottom:0;right:calc(var(--pat-w2) + 2px);
+  /* Правая граница разделителя — та же логика зеркально от правого края (var(--pat-w2) +
+     gap .bits→.num (8px) + ширина .num (1.7em) + gap .num→.pat2 (8px)); старая формула
+     учитывала только var(--pat-w2), вообще не отступая под правую колонку номеров. */
+  .vsplit2{position:absolute;top:0;bottom:0;right:calc(var(--pat-w2) + 1.7em + 16px);
            width:5px;cursor:col-resize;z-index:2}
   .vsplit2::before{content:"";position:absolute;left:2px;top:0;bottom:0;width:1px;background:var(--line)}
   .vsplit2:hover::before,.vsplit2.drag::before{background:var(--acc);width:2px}
@@ -597,9 +648,17 @@
 .chain-result-line:nth-child(5n+5){background:rgba(100,100,110,.10)}
 .chain-result-line:hover{background:rgba(255,255,255,.08)}
 .chain-result-line-label{flex:0 0 auto;color:var(--dim);white-space:nowrap;user-select:none}
-/* Фикс. ширина под "✅" — ВСЕГДА занимает место, даже пустая (нет находки), чтобы двоеточие и
-   биты у всех строк начинались в одном месте независимо от того, найдено там что-то или нет */
-.chain-result-line-check{flex:0 0 1.3em;text-align:center}
+/* Мин. ширина под одну галочку — ВСЕГДА занимает место, даже пустая (нет находки), чтобы
+   двоеточие и биты у всех строк начинались в одном месте независимо от того, найдено там
+   что-то или нет. Если найдено сразу НЕСКОЛЬКО версий паттерна (прямая + инверсия/реверс) —
+   колонка растягивается вправо на свою ширину галочек, не трогая колонку label слева. */
+.chain-result-line-check{flex:0 0 auto;min-width:1.3em;text-align:center;display:inline-flex;
+  justify-content:center;gap:1px}
+.chain-result-line-check-mark{color:#ffcf6b;font-weight:700}
+.chain-result-line-check-mark.inv{color:var(--purple)}
+.chain-result-line-check-mark.rev{color:var(--green)}
+.chain-result-line-check-mark.invrev{color:#ff66cc}
+.chain-result-line-check-mark.skip1{opacity:.55}
 .chain-result-line-colon{flex:0 0 auto;color:var(--dim)}
 .chain-result-line-bits{flex:1 1 auto;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .chain-result-line.expanded .chain-result-line-bits{white-space:pre-wrap;word-break:break-all;text-overflow:clip}
@@ -759,16 +818,21 @@
 </style>
 <!-- === МАРКЕР 03: HEADER_UI === -->
 <div id="menuBar">
-  <div style="display:flex;align-items:center;gap:6px;justify-self:start;"><h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.178</span></h3></div>
+  <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
+    <h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.178</span></h3>
+  </div>
   <div id="menuTabs">
-    <button id="toggleAllPinsBtn" title="Показать/скрыть все панели разом">📌</button>
-    <div class="menu-btn" data-menu="menuOps"><span>Шаги</span><input type="checkbox" class="menu-pin-inline" id="menuOpsPin" title="Показывать в панели"></div>
+    <button id="bUndo" style="font-size:12px;padding:3px 8px;" title="Шаг назад / отмена ручной правки (Backspace / Ctrl+Z)">↩ Отменить</button>
+    <div id="menuTabsGroup">
+      <button id="toggleAllPinsBtn" title="Показать/скрыть все панели разом">📌</button>
+      <div class="menu-btn" data-menu="menuOps"><span>Шаги</span><input type="checkbox" class="menu-pin-inline" id="menuOpsPin" title="Показывать в панели"></div>
+      <div class="menu-btn" data-menu="menuEdit"><span>Правка строк</span><input type="checkbox" class="menu-pin-inline" id="menuEditPin" title="Показывать в панели"></div>
+      <div class="menu-btn" data-menu="menuSearch"><span>Поиск</span><input type="checkbox" class="menu-pin-inline" id="menuSearchPin" title="Показывать в панели"></div>
+      <div class="menu-btn" data-menu="menuView"><span>Вид</span><input type="checkbox" class="menu-pin-inline" id="menuViewPin" title="Показывать в панели"></div>
+    </div>
     <div id="menuOps" class="menu-drop"></div>
-    <div class="menu-btn" data-menu="menuEdit"><span>Правка строк</span><input type="checkbox" class="menu-pin-inline" id="menuEditPin" title="Показывать в панели"></div>
     <div id="menuEdit" class="menu-drop"></div>
-    <div class="menu-btn" data-menu="menuSearch"><span>Поиск</span><input type="checkbox" class="menu-pin-inline" id="menuSearchPin" title="Показывать в панели"></div>
     <div id="menuSearch" class="menu-drop"></div>
-    <div class="menu-btn" data-menu="menuView"><span>Вид</span><input type="checkbox" class="menu-pin-inline" id="menuViewPin" title="Показывать в панели"></div>
     <div id="menuView" class="menu-drop"></div>
 
     <!-- Выравнивание — вынесено из вкладки "Правка строк" прямо в верхнее меню рядом с
@@ -820,7 +884,6 @@
      "Шаги" (см. MENUS.menuOps.ids), одной строкой в рамке, чтобы визуально выделяться среди
      остальных кнопок шагов. -->
 <div id="flowGroup" class="control-group-flow">
-  <button id="bUndo" title="Шаг назад / отмена ручной правки (Backspace / Ctrl+Z)">↩ Назад</button>
   <button id="bAuto" title="Автоматический прогон по выбранному режиму (Enter)">🚀 Авто</button>
   <button id="bStop" class="stop" title="Остановить" disabled>⏹ Стоп</button>
 </div>
@@ -829,6 +892,17 @@
   <!-- Кнопки ручного кругового сдвига символов выделенных строк -->
   <button id="bShiftL" title="Круговой сдвиг влево выбранных строк (◄ или Ctrl+Клик)">◄</button>
   <button id="bShiftR" title="Круговой сдвиг вправо выбранных строк (► или Ctrl+Клик)">►</button>
+
+  <!-- Авто-круговой сдвиг: повторяет обычный круговой сдвиг (◄/► выше) сам по себе, в цикле,
+       пока не найдёт совпадение через фон-поиск (если "Стоп на находке" включён — тогда
+       останавливается и добавляет строку-находку к выделению) или пока не пройдёт полный
+       оборот (длина самой длинной сдвигаемой строки), если ничего не нашлось. Направление —
+       НЕ своё, а то же самое, что переключатель ◄/► у "Спирали" ниже (st.spiralUpDir), чтобы
+       не плодить третий переключатель направления. -->
+  <div style="grid-column:1 / -1; display:flex; align-items:center; border:1px solid var(--acc); background:rgba(77,163,255,0.08); border-radius:3px; padding:4px;">
+    <button id="bAutoShift" style="flex:1;" title="Авто-круговой сдвиг выделенных строк (или всех, если ничего не выделено) — направление как у переключателя ◄/► в блоке «Спираль» ниже. Останавливается при находке (если включено «Стоп на находке» в «Поиск»/фон-поиск) или после полного оборота">🔄 Авто сдвиг</button>
+  </div>
+
   <button id="bInvertSelected" title="Инвертировать биты (0↔1) в выделенных строках">🔁 Инверсия</button>
   <button id="bPadZerosAbove" title="Добавить нули вверх: для выделенных строк (по самой длинной из них) добавить нули выше">0⬆</button>
   <button id="bDelFirst" title="Удалить первый символ (слева) из выделенных строк (или всех, если ничего не выделено)">🗑 ←1</button>
@@ -858,6 +932,15 @@
     <button id="bSpiralUp" style="flex:1; border-color:#ff3333; color:#ff3333;" title="Спираль вверх: строки (все, либо выделенный диапазон) читаются одной лентой и сдвигаются по кругу на 1 символ в сторону, заданную переключателем ◄/►">▲ Спираль</button>
     <button id="bSpiralDown" style="flex:1; border-color:#ff3333; color:#ff3333;" title="Спираль вниз: строки (все, либо выделенный диапазон) читаются одной лентой и сдвигаются по кругу на 1 символ в сторону, противоположную переключателю ◄/►">▼ Спираль</button>
   </div>
+
+  <!-- Тетрис, в два клика, если сразу не влезает: 1-й клик — если 1-биты строки НАД выделенной
+       не влезают в её 0-пустоты как есть, только КРУТИТ выделенную строку до подходящего
+       поворота (само падение ещё не происходит); 2-й клик (когда уже влезает — сразу либо
+       после поворота) — падение: выделенная получает эти 1-биты, строка сверху гасит их в 0 и
+       остаётся на месте (строки никогда не удаляются и не сдвигаются, ни в каком случае). -->
+  <div style="grid-column:1 / -1; display:flex; align-items:center; border:1px solid #ff9900; background:rgba(255,153,0,0.08); border-radius:3px; padding:4px;">
+    <button id="bTetris" style="flex:1; border-color:#ff9900; color:#ff9900;" title="Тетрис (в 2 клика, если сразу не влезает): 1-й клик крутит выделенную строку до подходящего поворота, 2-й — роняет 1-биты строки сверху в её 0-пустоты (строка сверху гасит их в 0). Строки никогда не удаляются и не сдвигаются">🧱 Тетрис</button>
+  </div>
 </div>
 
 <div id="searchGroup" class="control-group search-grid">
@@ -869,12 +952,8 @@
   <label class="chk" title="Держать изначальный порядок паттернов"><input type="checkbox" id="cOrder" checked>🔒 Порядок</label>
   <label class="chk" title="Искать строго только один следующий паттерн по порядку (не засчитывать другие раньше времени)"><input type="checkbox" id="cNextOnly">🎯 Только 1-й</label>
   <label class="chk" title="Сквозная цепочка по вертикалям"><input type="checkbox" id="cVert">↕ Верт.</label>
-  <div style="grid-column:1 / -1;display:grid;grid-template-columns:repeat(4, 1fr);gap:4px;">
-    <label class="chk" title="Дополнять пустые места нулями"><input type="checkbox" id="cPad">0️⃣ Паддинг</label>
-    <label class="chk" title="Искать также инверсию и реверс"><input type="checkbox" id="cKinds">⇌ Инв/Рев</label>
-    <label class="chk" title="Первый символ паттерна не проверяется (ищется хвост со второго)"><input type="checkbox" id="cSkip1" checked>⏭ Без 1-го</label>
-    <label class="chk" title="В режиме Интерливинга: делать XOR результата с нижней строкой пары"><input type="checkbox" id="cInterleaveXor">⧬+⨁ Интерл.XOR</label>
-  </div>
+  <label class="chk" title="Дополнять пустые места нулями"><input type="checkbox" id="cPad">0️⃣ Паддинг</label>
+  <label class="chk" title="В режиме Интерливинга: делать XOR результата с нижней строкой пары"><input type="checkbox" id="cInterleaveXor">⧬+⨁ Интерл.XOR</label>
 
   <!-- Фоновый поиск: выделенная строка ФИКСИРОВАНА (не двигается сама, в отличие от ⧬ Интерлив /
        ⨁ XOR выдел), при ЛЮБОМ изменении строк проверяется, попал ли паттерн строки НИЖЕ
@@ -896,6 +975,11 @@
       <button data-val="snakeR" class="act" title="Змейка: как вертикальная склейка, но направление чтения строк внутри столбца чередуется (то сверху вниз, то снизу вверх), столбцы слева направо">🐍 Змейка →</button>
       <button data-val="snakeL" class="act" title="Змейка: как вертикальная склейка, но направление чтения строк внутри столбца чередуется (то сверху вниз, то снизу вверх), столбцы справа налево">🐍 Змейка ←</button>
     </div>
+  </div>
+  <div style="grid-column:1 / -1;display:grid;grid-template-columns:repeat(2, 1fr);gap:4px;">
+    <label class="chk" title="Искать также инверсию и реверс"><input type="checkbox" id="cKinds">⇌ Инв/Рев</label>
+    <label class="chk" title="Первый символ паттерна не проверяется (ищется хвост со второго)"><input type="checkbox" id="cSkip1" checked>⏭ Без 1-го</label>
+    <label class="chk" title="Кольцевой поиск в результирующей строке (Интерлив/XOR/Сквозная): при переходе на новый виток кольца биты инвертируются (0↔1) — 111 даёт кольцо 111 000 111 000... вместо 111 111 111..., и паттерн ищется уже в нём" style="grid-column:1 / -1"><input type="checkbox" id="cRingInvert">🔁 Инв. кольцо</label>
   </div>
 </div>
 
@@ -1055,6 +1139,11 @@ function alignShift(maxLen, len, align){
 function invertBits(s){ let o = ""; for (const c of s) o += (c === "0" ? "1" : c === "1" ? "0" : c); return o; }
 function reverseStr(s){ return s.split("").reverse().join(""); }
 
+/* Следующий виток кольца для кольцевого поиска (см. findPatternKinds) — по умолчанию точная
+   копия строки (обычное кольцо), а если включена 🔁 Инв. кольцо (st.ringInvert) — инвертированная
+   копия (0↔1), как и просил пользователь: 111 даёт кольцо 111 000 111 000... */
+function ringNextLap(text){ return st.ringInvert ? invertBits(text) : text; }
+
 /* Проверка "текст содержит паттерн как подстроку" — целиком / без 1-го символа / реверсом /
    реверсом без 1-го, СТРОГО с учётом галок st.skipFirst и st.allKinds (как везде в
    приложении). Используется Гориз.XOR (генерация И скольжение) вместо общего findMatch(),
@@ -1064,39 +1153,64 @@ function textMatchesPattern(text, patText){
   if (!patText) return false;
   const patFull = patText;
   const patSkip = (st.skipFirst && patFull.length > 1) ? patFull.slice(1) : patFull;
+  const patInv = st.allKinds ? invertBits(patFull) : null;
+  const patInvSkip = (st.allKinds && st.skipFirst && patInv && patInv.length > 1) ? patInv.slice(1) : null;
   const patRev = st.allKinds ? reverseStr(patFull) : null;
   const patRevSkip = (st.allKinds && st.skipFirst && patRev && patRev.length > 1) ? patRev.slice(1) : null;
   return text.indexOf(patFull) >= 0
     || (patSkip !== patFull && text.indexOf(patSkip) >= 0)
+    || (patInv && text.indexOf(patInv) >= 0)
+    || (patInvSkip && text.indexOf(patInvSkip) >= 0)
     || (patRev && text.indexOf(patRev) >= 0)
     || (patRevSkip && text.indexOf(patRevSkip) >= 0);
 }
 
-/* Та же проверка, что textMatchesPattern(), но возвращает {start,end} (включительно) первого
-   найденного варианта вместо true/false — используется для подсветки "где именно нашлось"
-   в окошке результата фон-поиска. */
-function findPatternRange(text, patText){
-  if (!patText) return null;
+/* Та же проверка, что textMatchesPattern(), но вместо true/false (первого найденного варианта)
+   возвращает МАССИВ {kind,start,end,len,skip} — ПО ОДНОЙ записи на КАЖДУЮ версию паттерна (прямая
+   kind=0, инверсия kind=1, реверс kind=2, инверсия+реверс СРАЗУ kind=3 — четвёртый вариант, не
+   пересекающийся с обычной таблицей паттернов, только для этого окошка результата), которая
+   реально нашлась в тексте. Для каждой версии проверяются ОБА варианта — "как есть" и без 1-го
+   символа (⏭ Без 1-го) — берётся более ранняя позиция, а найденный skip:true/false запоминается
+   отдельно, чтобы в подсветке можно было показать, что сработал именно "без 1-го" вариант.
+   kind 0..2 — те же коды, что и везде в приложении (см. KIND_CLS). Используется для подсветки в
+   окошке результата фон-поиска (см. render() → bgResultHtml), чтобы показать НЕ только
+   "нашлось", но и КАКИЕ ИМЕННО версии (может найтись сразу несколько одновременно).
+   Поиск КОЛЬЦЕВОЙ (как и основной findMatch() выше по файлу) — результирующая строка (Интерлив/
+   XOR/Сквозная и т.д.) считается ЗАМКНУТОЙ САМОЙ НА СЕБЯ, поэтому паттерн, "переезжающий" через
+   конец строки обратно в её начало, тоже засчитывается как найденный. Технически: ищем не в
+   самом text, а в text+продолжение (без последнего символа, чтобы не находить тривиальный
+   повтор всей строки) — совпадение принимается, только если оно НАЧИНАЕТСЯ внутри исходного
+   text (idx<len), а start/end хранятся уже по модулю len (end < start означает, что находка
+   "перешла" через конец строки — см. отрисовку в render(), где диапазон [start..end] обходится
+   циклически). Продолжение по умолчанию — точная копия text (обычное кольцо); если включена
+   🔁 Инв. кольцо (st.ringInvert) — продолжение ИНВЕРТИРОВАНО (0↔1): 111 даёт кольцо
+   111 000 111 000..., а не 111 111 111... — это свойство самих ДАННЫХ строки, поэтому кольцо
+   строится один раз из text/invertBits(text), одинаково для всех kind (0..3). */
+function findPatternKinds(text, patText){
+  const len = text.length;
+  if (!patText || !len) return [];
+  const ring = len > 1 ? text + ringNextLap(text).slice(0, len - 1) : text;
   const patFull = patText;
-  const patSkip = (st.skipFirst && patFull.length > 1) ? patFull.slice(1) : patFull;
-  const patRev = st.allKinds ? reverseStr(patFull) : null;
-  const patRevSkip = (st.allKinds && st.skipFirst && patRev && patRev.length > 1) ? patRev.slice(1) : null;
-
-  let idx = text.indexOf(patFull);
-  if (idx >= 0) return { start: idx, end: idx + patFull.length - 1 };
-  if (patSkip !== patFull) {
-    idx = text.indexOf(patSkip);
-    if (idx >= 0) return { start: idx, end: idx + patSkip.length - 1 };
+  const out = [];
+  const tryKind = (kind, full) => {
+    const skip = (st.skipFirst && full.length > 1) ? full.slice(1) : full;
+    let best = null;
+    let idx = ring.indexOf(full);
+    if (idx >= 0 && idx < len) best = { start: idx, len: full.length, skip: false };
+    if (skip !== full) {
+      const idx2 = ring.indexOf(skip);
+      if (idx2 >= 0 && idx2 < len && (!best || idx2 < best.start)) best = { start: idx2, len: skip.length, skip: true };
+    }
+    if (best) out.push({ kind, start: best.start, end: (best.start + best.len - 1) % len, len: best.len, skip: best.skip });
+  };
+  tryKind(0, patFull);
+  if (st.allKinds) {
+    const inv = invertBits(patFull);
+    tryKind(1, inv);
+    tryKind(2, reverseStr(patFull));
+    tryKind(3, reverseStr(inv)); // инверсия + реверс одновременно
   }
-  if (patRev) {
-    idx = text.indexOf(patRev);
-    if (idx >= 0) return { start: idx, end: idx + patRev.length - 1 };
-  }
-  if (patRevSkip) {
-    idx = text.indexOf(patRevSkip);
-    if (idx >= 0) return { start: idx, end: idx + patRevSkip.length - 1 };
-  }
-  return null;
+  return out;
 }
 
 /* Получение символов строки с учетом возможного инверсного повторного захода */
@@ -1306,7 +1420,7 @@ const st = {
   step: 0, aIdx: 0, bIdx: 1, goingUp: false, passCount: 0, tailBuffer: "",
   hit: null, selectedRows: new Set(),
   activeTab: 0, tabs: [],
-  align: "center", vertical: false, padZero: false, allKinds: false,
+  align: "center", vertical: false, padZero: false, allKinds: false, ringInvert: false,
   pull: true, keepOrder: true, stopOnHit: true,
   undo: [], running: false, msg: "",
   horizBitIdx: 0, horizXoredLength: 0, lastHorizRow: null, horizFoundInPass: false, horizChainLen: 0,
@@ -2010,7 +2124,10 @@ function resetAll(){
   }
 
   st.step = 0; st.passCount = 0; st.tailBuffer = "";
-  st.hit = null; st.undo = []; st.selectedRows = new Set();
+  // Выделение строк (st.selectedRows) НЕ сбрасываем — Сброс возвращает данные к шаблону, но
+  // пользователь может специально держать выделение (например, чтобы сразу опробовать Тетрис/
+  // сдвиги на тех же строках после отката).
+  st.hit = null; st.undo = [];
   st.horizBitIdx = 0; st.horizXoredLength = 0; st.lastHorizRow = null; st.horizFoundInPass = false; st.horizChainLen = 0;
   st.horizBigChain = ""; st.horizBigOrig = ""; st.horizBigTargetIdx = -1;
   st.lastOp = null;
@@ -2020,7 +2137,9 @@ function resetAll(){
 }
 /* === МАРКЕР 09: RENDER === */
 const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
-const KIND_CLS = ["", "inv", "rev"];
+const KIND_CLS = ["", "inv", "rev", "invrev"];
+const KIND_LABELS_RU = ["прямая", "инверсия", "реверс", "инверсия+реверс"];
+const KIND_LABELS_SHORT = ["пр", "инв", "рев", "инв+рев"];
 
 /* Раскрашивает биты 0/1 в HTML — используется и основной таблицей, и Черновиком последнего шага.
    highlightRange {start,end} (включительно, по индексу символа) — подсветка "под окном
@@ -2172,7 +2291,9 @@ function render(){
     const hitNow = bgMatched ? bgTargetIdx : null;
     if (hitNow !== st.bgSearchLastHit) {
       if (hitNow != null) {
-        const matchedLabel = bgInfo.results.filter(r => r.matched).map(r => BG_SEARCH_MODE_LABELS[r.mode] || r.mode).join(", ");
+        const matchedLabel = bgInfo.results.filter(r => r.matched).map(r =>
+          (BG_SEARCH_MODE_LABELS[r.mode] || r.mode) + "[" + r.kinds.map(k => KIND_LABELS_SHORT[k.kind] + (k.skip ? "⏭" : "")).join(",") + "]"
+        ).join(", ");
         say(`🔍 Фон-поиск: паттерн строки ${hitNow + 1} найден! (${matchedLabel})`);
       }
       st.bgSearchLastHit = hitNow;
@@ -2215,7 +2336,7 @@ function render(){
     if (p && p.text){
       const bgHitSuffix = i === bgTargetIdx ? (bgMatched ? " bg-search-hit" : " bg-search-target") : "";
       const c = (p.found ? ("pat found " + KIND_CLS[p.kind || 0]) : "pat") + bgHitSuffix;
-      const c2 = (p.found ? ("pat pat2 found " + KIND_CLS[p.kind || 0]) : "pat pat2") + bgHitSuffix;
+      const c2 = (p.found ? ("pat2 found " + KIND_CLS[p.kind || 0]) : "pat2") + bgHitSuffix;
       
       const stepHtml = p.found ? '<span class="st">#' + p.step + "</span>" : "";
       
@@ -2231,7 +2352,7 @@ function render(){
       patRight = '<span class="' + c2 + '">' + textHtml + stepHtml + '</span>';
     } else {
       pat = '<span class="pat"></span>';
-      patRight = '<span class="pat pat2"></span>';
+      patRight = '<span class="pat2"></span>';
     }
 
     const shift = s.length ? alignShift(maxLen, s.length, st.align) : 0;
@@ -2335,29 +2456,71 @@ function render(){
        bits), с пометкой найденного. Ширина колонки label — одна на все строки (bgLabelW, в ch,
        шрифт моноширинный), поэтому биты ВСЕХ строк начинаются строго в одном столбце
        независимо от того, какие именно режимы сейчас включены.
-       ВАЖНО: галочка "✅" — в ОТДЕЛЬНОМ span'е ФИКСИРОВАННОЙ ширины (.chain-result-line-check),
-       а не приклеена к тексту label — эмодзи в большинстве шрифтов заметно ШИРЕ 1ch, и если
-       её включать в bgLabelW/label-текст, у найденных строк (с ✅) label оказывался шире
-       остальных, и колонка с битами у них уезжала вправо относительно ненайденных строк.
+       ВАЖНО: галочки — в ОТДЕЛЬНОМ span'е (.chain-result-line-check), а не приклеены к тексту
+       label — если их включать в bgLabelW/label-текст, у найденных строк label оказывался
+       шире остальных, и колонка с битами у них уезжала вправо относительно ненайденных строк.
        Каждая строка по умолчанию обрезана в одну линию (long bit-строки иначе распирают окно)
        — клик по строке разворачивает её целиком (см. bgResultExpanded + обработчик клика на
-       #chainText). Найденный участок (bgInfo.results[i].range) подсвечивается тем же жёлтым,
-       что и .pat.bg-search-hit в самой таблице — видно НЕ только "нашлось", но и ГДЕ именно. */
+       #chainText). Найденные участки (bgInfo.results[i].kinds) подсвечиваются по КАЖДОЙ
+       найденной версии паттерна отдельно — прямая тем же жёлтым, что и .pat.bg-search-hit в
+       самой таблице, инверсия фиолетовым, реверс зелёным, инверсия+реверс сразу розовым (те же
+       цвета, что и везде в приложении для kind 0/1/2, см. KIND_CLS, плюс свой для 4-го варианта)
+       — и в галочке-колонке ставится СВОЯ галочка на каждую найденную версию (может быть сразу
+       несколько, если паттерн нашёлся и прямо, и инверсией/реверсом одновременно), тоже в цвет
+       своей версии. Если версия нашлась именно через "⏭ Без 1-го" (без первого символа
+       паттерна) — и подсветка бит, и галочка дополнительно приглушаются (класс .skip1, как
+       .pat-skip у самого паттерна), чтобы было видно, что совпал укороченный вариант.
+       После реальных бит строки дополнительно дорисовывается ПРОДОЛЖЕНИЕ КОЛЬЦА — ПОЛНЫЙ
+       следующий виток ringNextLap(text) (весь, а не text.length-1 символов). В самом поиске
+       (findPatternKinds) кольцо укорочено на 1 символ ЧИСТО ради экономии буфера — паттерн не
+       длиннее строки, поэтому самому дальнему переезду через границу не нужен последний символ
+       второго витка (тот же приём, что и в основном findMatch() выше по файлу, см. его пометку
+       "Оптимизация 1"), на РЕЗУЛЬТАТ поиска это не влияет, полный виток дал бы то же самое.
+       А вот для ПОКАЗА урезание было лишним и давало на глаз "усечённое" кольцо — 11111 с
+       🔁 Инв. кольцо рисовало 111110000 (9 символов) вместо полного 1111100000 (10 символов),
+       т.е. последний бит витка визуально терялся, хотя поиск его прекрасно учитывал) — класс
+       .chain-ring-ext, приглушённым
+       шрифтом ТОЛЬКО когда включена 🔁 Инв. кольцо (там показанные символы реально инвертированы
+       относительно оригинала); без неё продолжение — точная копия, показывается обычной
+       яркостью. Индексы находок (kd.start/kd.len) по-прежнему укладываются в это продолжение без
+       остатка (оно шире, чем то, что реально проверял поиск) — подсветка накладывается БЕЗ
+       округления по модулю, "заехавшая" в кольцо находка рисуется как единый непрерывный
+       подсвеченный кусок, переходящий из реальных бит в продолжение кольца. */
     const bgLabels = bgInfo.results.map(r => BG_SEARCH_MODE_LABELS[r.mode] || r.mode);
     const bgLabelW = Math.max(...bgLabels.map(l => l.length));
+    const kindTag = k => KIND_LABELS_SHORT[k.kind] + (k.skip ? "⏭" : "");
     fullChainText = bgInfo.results
-      .map((r, i) => bgLabels[i].padEnd(bgLabelW, " ") + (r.matched ? " ✅" : "   ") + ": " + r.result)
+      .map((r, i) => bgLabels[i].padEnd(bgLabelW, " ") + (r.matched ? " ✓[" + r.kinds.map(kindTag).join(",") + "]" : "") + ": " + r.result)
       .join("\n");
     bgResultHtml = bgInfo.results.map((r, i) => {
-      let bits = "";
-      for (let k = 0; k < r.result.length; k++) {
-        const ch = esc(r.result[k]);
-        bits += (r.range && k >= r.range.start && k <= r.range.end) ? ('<span class="chain-hit-bits">' + ch + '</span>') : ch;
+      const len = r.result.length;
+      const ringExt = ringNextLap(r.result);
+      const full = r.result + ringExt;
+      // Карта "какой kind (и его skip-флаг) покрывает этот символ" — приоритет у более раннего
+      // kind (прямая версия перекрывает инверсию/реверс, если их диапазоны совпадают по позиции).
+      // Индексы идут БЕЗ модуля — kd.start/kd.len уже посчитаны в раскладке text+ringExt.
+      const kindAt = new Array(full.length).fill(-1);
+      const skipAt = new Array(full.length).fill(false);
+      for (const kd of r.kinds) for (let i = 0; i < kd.len; i++) {
+        const p = kd.start + i;
+        if (p < full.length && kindAt[p] < 0) { kindAt[p] = kd.kind; skipAt[p] = kd.skip; }
       }
+      let bits = "";
+      for (let k = 0; k < full.length; k++) {
+        const ch = esc(full[k]);
+        const kd = kindAt[k];
+        const cls = [];
+        if (kd >= 0) { cls.push("chain-hit-bits"); if (KIND_CLS[kd]) cls.push(KIND_CLS[kd]); if (skipAt[k]) cls.push("skip1"); }
+        if (k >= len && st.ringInvert) cls.push("chain-ring-ext");
+        bits += cls.length ? ('<span class="' + cls.join(" ") + '">' + ch + '</span>') : ch;
+      }
+      const checkHtml = r.kinds.map(kd =>
+        '<span class="chain-result-line-check-mark' + (KIND_CLS[kd.kind] ? " " + KIND_CLS[kd.kind] : "") + (kd.skip ? " skip1" : "") + '" title="Найдено: ' + KIND_LABELS_RU[kd.kind] + (kd.skip ? " (без 1-го символа)" : "") + '">✓</span>'
+      ).join("");
       const expanded = bgResultExpanded.has(r.mode) ? " expanded" : "";
       return '<div class="chain-result-line' + expanded + '" data-mode="' + esc(r.mode) + '" title="Клик — показать целиком / свернуть обратно">' +
         '<span class="chain-result-line-label" style="min-width:' + bgLabelW + 'ch">' + esc(bgLabels[i]) + '</span>' +
-        '<span class="chain-result-line-check">' + (r.matched ? "✅" : "") + '</span>' +
+        '<span class="chain-result-line-check">' + checkHtml + '</span>' +
         '<span class="chain-result-line-colon">:</span>' +
         '<span class="chain-result-line-bits">' + bits + '</span>' +
       '</div>';
@@ -2365,6 +2528,25 @@ function render(){
     if (chainResultLabelEl) {
       const modeLabels = bgInfo.results.map(r => BG_SEARCH_MODE_LABELS[r.mode] || r.mode).join(" + ");
       chainResultLabelEl.textContent = "🔍 Результат фон-поиска (" + modeLabels + ")";
+    }
+  } else if (st.bgSearch) {
+    // Нет валидной цели для фон-поиска (нет выделения, или выделена 1-я/последняя строка) —
+    // всё равно показываем список ВКЛЮЧЁННЫХ режимов (без чек-марок и битов), чтобы окно не
+    // "пустело"/не подменялось сквозной строкой, а всегда отражало текущие настройки поиска.
+    const modes = (st.bgSearchModes && st.bgSearchModes.length) ? st.bgSearchModes : ["interleave"];
+    const bgLabels = modes.map(m => BG_SEARCH_MODE_LABELS[m] || m);
+    const bgLabelW = Math.max(...bgLabels.map(l => l.length));
+    fullChainText = bgLabels.map(l => l.padEnd(bgLabelW, " ") + "   : ").join("\n");
+    bgResultHtml = modes.map((m, i) =>
+      '<div class="chain-result-line" data-mode="' + esc(m) + '">' +
+        '<span class="chain-result-line-label" style="min-width:' + bgLabelW + 'ch">' + esc(bgLabels[i]) + '</span>' +
+        '<span class="chain-result-line-check"></span>' +
+        '<span class="chain-result-line-colon">:</span>' +
+        '<span class="chain-result-line-bits"><span class="empty">нет цели</span></span>' +
+      '</div>'
+    ).join("");
+    if (chainResultLabelEl) {
+      chainResultLabelEl.textContent = "🔍 Результат фон-поиска (" + bgLabels.join(" + ") + ")";
     }
   } else if (chainResultLabelEl) {
     chainResultLabelEl.textContent = "🔗 Сквозная строка результата";
@@ -2375,10 +2557,10 @@ function render(){
   if (chainLenEl && chainTextEl) {
     /* В режиме фон-поиска fullChainText — это несколько подписанных строк сразу, а не чистая
        битовая строка, так что счётчик битов показывает длину результата первого режима */
-    chainLenEl.textContent = bgInfo ? (bgInfo.results[0] ? bgInfo.results[0].result.length : 0) : fullChainText.length;
+    chainLenEl.textContent = bgInfo ? (bgInfo.results[0] ? bgInfo.results[0].result.length : 0) : (st.bgSearch ? 0 : fullChainText.length);
     // Строки результата фон-поиска — всегда по левому краю, независимо от кнопок выравнивания
     // ⇤↔⇥ (те управляют только выравниванием строк/паттернов в самой таблице, не тут)
-    chainTextEl.style.textAlign = bgInfo ? "left" : st.align;
+    chainTextEl.style.textAlign = (bgInfo || st.bgSearch) ? "left" : st.align;
     
     let overlayHtml = "";
     
@@ -2547,6 +2729,7 @@ const cVertEl      = document.getElementById("cVert");
 const cPadEl       = document.getElementById("cPad");
 const cKindsEl     = document.getElementById("cKinds");
 const cSkipEl      = document.getElementById("cSkip1");
+const cRingInvertEl = document.getElementById("cRingInvert");
 const rowCountEl   = document.getElementById("rowCount");
 
 function readToggles(){
@@ -2561,6 +2744,7 @@ function readToggles(){
   st.padZero   = cPadEl.checked;
   st.allKinds  = cKindsEl.checked;
   st.skipFirst = cSkipEl.checked;
+  st.ringInvert = cRingInvertEl ? cRingInvertEl.checked : false;
 }
 
 /* Функция полной очистки данных текущего активного слота (цепочки).
@@ -3498,8 +3682,8 @@ function computeBgSearchTarget(){
     } else {
       result = interleavePair(rowAbove, rowSel, st.align);
     }
-    const range = findPatternRange(result, pat.text);
-    return { mode, result, matched: !!range, range };
+    const kinds = findPatternKinds(result, pat.text);
+    return { mode, result, matched: kinds.length > 0, kinds };
   });
   return { targetIdx, results, matched: results.some(r => r.matched) };
 }
@@ -3645,6 +3829,61 @@ function finishAuto(m){
   if (m) say(m);
 }
 
+/* Авто-круговой сдвиг: то же самое, что ручные ◄/► (rotateStrLeft/rotateStrRight), но в цикле
+   само по себе, тем же кадровым батчингом, что и autoRun() — до находки через фон-поиск (если
+   включено "Стоп на находке") или до полного оборота (turns >= maxLen у самой длинной из
+   сдвигаемых строк), если совпадений не нашлось. В отличие от ручных ◄/►, если ничего не
+   выделено кликом — крутит ВСЕ строки, а не требует выделения.
+   Направление — НЕ свой переключатель, а st.spiralUpDir (тот же, что у ◄/► в блоке "Спираль"
+   ниже) — так не плодим третий переключатель направления в интерфейсе.
+   При находке (см. computeBgSearchTarget()) — строка-находка (bgInfo.targetIdx) добавляется к
+   текущему выделению, а не заменяет его (её паттерн и был целью поиска — работает, только если
+   было исходное выделение: без него фон-поиск в принципе не считается, см. computeBgSearchTarget). */
+function autoShiftRun(){
+  readToggles();
+  const idxs = (st.selectedRows && st.selectedRows.size > 0)
+    ? Array.from(st.selectedRows)
+    : st.rows.map((_, i) => i);
+  if (idxs.length === 0) { say("Нечего сдвигать — нет строк."); return; }
+
+  const dir = st.spiralUpDir === "right" ? "right" : "left";
+  let maxLen = 0;
+  for (const i of idxs) if (st.rows[i] && st.rows[i].length > maxLen) maxLen = st.rows[i].length;
+  if (maxLen === 0) { say("Нечего сдвигать — пустые строки."); return; }
+
+  st.running = true;
+  document.getElementById("bStop").disabled = false;
+  snapshot();
+  let turns = 0;
+
+  const tick = () => {
+    if (!st.running) return finishAuto();
+
+    const t0 = performance.now();
+    while (performance.now() - t0 < 12) {
+      if (turns >= maxLen) {
+        return finishAuto(`🔄 Авто сдвиг: полный оборот (${turns}) пройден, совпадений не найдено.`);
+      }
+      for (const i of idxs) {
+        if (!st.rows[i]) continue;
+        st.rows[i] = dir === "right" ? rotateStrRight(st.rows[i]) : rotateStrLeft(st.rows[i]);
+      }
+      turns++;
+
+      const bgInfo = computeBgSearchTarget();
+      if (st.stopOnHit && bgInfo && bgInfo.matched) {
+        st.selectedRows.add(bgInfo.targetIdx);
+        render(); saveCache();
+        return finishAuto(`🎯 Авто сдвиг: найдено совпадение на строке ${bgInfo.targetIdx + 1}!`);
+      }
+    }
+
+    render();
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
 document.getElementById("bStep").onclick     = () => doModeStep("step1");
 document.getElementById("bStep2").onclick    = () => doModeStep("step2");
 document.getElementById("bStepXor").onclick  = () => doModeStep("xor1");
@@ -3654,6 +3893,8 @@ document.getElementById("bStepXorProj").onclick = () => doModeStep("xor_proj");
 document.getElementById("bStepScan").onclick = () => doModeStep("scan");
 
 document.getElementById("bAuto").onclick  = () => autoRun();
+const bAutoShiftEl = document.getElementById("bAutoShift");
+if (bAutoShiftEl) bAutoShiftEl.onclick = () => autoShiftRun();
 document.getElementById("bStop").onclick  = () => { st.running = false; };
 document.getElementById("bUndo").onclick  = () => {
   if (!restore()) say("Откатывать нечего.");
@@ -3823,6 +4064,74 @@ if (bPadZerosAboveEl) {
     render(); saveCache();
   };
 }
+
+/* Тетрис: 1-биты строки НАД выделенной "падают" в неё — в её 0-пустоты. Работает В ДВА КЛИКА,
+   если строка сразу не влезает:
+   1) Если падающая строка КАК ЕСТЬ не влезает в выделенную (хоть один её 1 приходится на 1
+      выделенной) — клик только КРУТИТ выделенную строку круговым сдвигом (вправо, как и
+      остальные ручные сдвиги ◄/►), перебирая повороты один за другим, пока не найдётся тот,
+      где всё совпадает (либо повороты не кончатся без результата — тогда ничего не меняется).
+      Сам поворот применяется и остаётся — падения на этом клике ЕЩЁ НЕ происходит.
+   2) Если падающая строка УЖЕ влезает как есть (либо сразу, либо после поворота из шага 1 на
+      предыдущем клике) — клик выполняет само падение: выделенная получает 1-биты падающей (в
+      её 0-пустотах), а строка сверху гасит ВСЕ свои биты, что были 1 (и упали), в 0 (какие
+      были 0 — так и остаются), длина не меняется.
+   Строки НИКОГДА не удаляются и не сдвигаются — ни в шаге 1, ни в шаге 2, ни при каком исходе
+   слияния (в т.ч. если выделенная стала целиком из единиц). Функция не хранит отдельного
+   "какой сейчас шаг" состояния — она просто каждый раз проверяет текущий факт "влезает ли
+   падающая в выделенную КАК ЕСТЬ", поэтому шаг 1 (поворот) на СЛЕДУЮЩЕМ клике сам собой
+   приводит ко входу в ветку шага 2 (падение).
+   Падающая строка ДЛИННЕЕ выделенной — сразу не влезает ни при каком повороте (лишним битам
+   падающей просто некуда падать) — это отдельная проверка перед циклом поворотов, а не то же
+   самое "не нашлось поворота". st.pats и st.used не трогаются вообще — они на строки никак
+   не завязаны в этой функции. */
+function bitsFitIntoGaps(falling, floor){
+  if (falling.length > floor.length) return false;
+  for (let i = 0; i < falling.length; i++){
+    if (falling[i] === "1" && floor[i] === "1") return false;
+  }
+  return true;
+}
+function tetrisDrop(){
+  if (!st.selectedRows || st.selectedRows.size !== 1) { say("Выделите ровно одну строку — тетрис роняет строку сверху именно в неё."); return; }
+  const selIdx = Array.from(st.selectedRows)[0];
+  if (selIdx <= 0) { say("Над выделенной строкой ничего нет — падать нечему."); return; }
+  const aboveIdx = selIdx - 1;
+  const falling = st.rows[aboveIdx] || "";
+  const floor0 = st.rows[selIdx] || "";
+  if (!falling.length) { say("Строка сверху пуста — падать нечему."); return; }
+  if (!floor0.length) { say("Выделенная строка пуста — падать некуда."); return; }
+  if (falling.length > floor0.length) { say("🧱 Тетрис: строка сверху длиннее выделенной — не влезает ни при одном повороте."); return; }
+
+  if (bitsFitIntoGaps(falling, floor0)) {
+    // Шаг 2: уже влезает как есть (сразу либо после поворота на прошлом клике) — падаем.
+    snapshot();
+    let merged = "";
+    for (let i = 0; i < floor0.length; i++){
+      merged += (i < falling.length && falling[i] === "1") ? "1" : floor0[i];
+    }
+    st.rows[selIdx] = merged;
+    st.rows[aboveIdx] = "0".repeat(falling.length);
+    render(); saveCache();
+    say(`🧱 Тетрис: строка №${aboveIdx + 1} упала в выделенную №${selIdx + 1}.`);
+    return;
+  }
+
+  // Шаг 1: не влезает — крутим выделенную строку, пока не найдём подходящий поворот.
+  let floor = floor0, rotations = 0, fitted = false;
+  for (let t = 1; t < floor0.length; t++){
+    floor = rotateStrRight(floor);
+    if (bitsFitIntoGaps(falling, floor)) { fitted = true; rotations = t; break; }
+  }
+  if (!fitted) { say("🧱 Тетрис: не нашлось поворота выделенной строки, куда падающая помещается."); return; }
+
+  snapshot();
+  st.rows[selIdx] = floor;
+  render(); saveCache();
+  say(`🧱 Тетрис: выделенная строка повёрнута (сдвиг на ${rotations}) — нажмите ещё раз, чтобы уронить единицы.`);
+}
+const bTetrisEl = document.getElementById("bTetris");
+if (bTetrisEl) bTetrisEl.onclick = tetrisDrop;
 
 const bDelFirstEl = document.getElementById("bDelFirst");
 if (bDelFirstEl) {
@@ -4359,12 +4668,17 @@ function makeDragRight(el, varName, min, max){
   });
 }
 
+/* Минимум 40px, а не 20 — .pat/.pat2 сами резервируют padding-left:4px+padding-right:28px
+   (=32px) под отступ и под бейдж номера шага (.st), это не место под текст паттерна. При
+   старом минимуме 20px место под сам текст уходило в минус (браузер зажимает контент-бокс в 0),
+   и при перетаскивании колонки к минимуму текст паттерна визуально утыкался прямо в границу
+   .vsplit/.vsplit2 — 40px оставляет от него хотя бы ~8px реального места под текст. */
 makeDrag(document.getElementById("vsplit"), "--pat-w", () => {
   const p = document.querySelector(".pat");
   return p ? p.getBoundingClientRect().left : document.getElementById("chain").getBoundingClientRect().left;
-}, 20, 1200);
+}, 40, 1200);
 
-makeDragRight(document.getElementById("vsplit2"), "--pat-w2", 20, 1200);
+makeDragRight(document.getElementById("vsplit2"), "--pat-w2", 40, 1200);
 /* === МАРКЕР 11: CACHE === */
 const CACHE_KEY = "zerk_fold_v1";
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -4394,6 +4708,7 @@ function captureUiSettings(){
     stageXor: cStageXorEl ? cStageXorEl.checked : false, invPass: cInvPassEl ? cInvPassEl.checked : false,
     autoShift: cAutoShiftEl ? cAutoShiftEl.checked : false, stopOnHit: cStopOnHitEl ? cStopOnHitEl.checked : true,
     vert: cVertEl.checked, pad: cPadEl.checked, kinds: cKindsEl.checked, skip1: cSkipEl.checked,
+    ringInvert: cRingInvertEl ? cRingInvertEl.checked : false,
     align: st.align, mode: st.mode || "step1", rowCount: rowCountEl ? rowCountEl.value : 256,
     bgSearch: cBgSearchEl ? cBgSearchEl.checked : false, bgSearchModes: st.bgSearchModes,
     fs: fs.value, lh: lh.value, ls: ls.value, dim: dimEl.value,
@@ -4419,6 +4734,7 @@ function applyUiSettings(u){
   if (u.pad       !== undefined) cPadEl.checked       = u.pad;
   if (u.kinds     !== undefined) cKindsEl.checked     = u.kinds;
   if (u.skip1     !== undefined) cSkipEl.checked      = u.skip1;
+  if (u.ringInvert !== undefined && cRingInvertEl) cRingInvertEl.checked = u.ringInvert;
 
   if (u.align) {
     st.align = u.align;
@@ -4449,8 +4765,11 @@ function applyUiSettings(u){
   if (u.dim){ dimEl.value = u.dim; applyDim(); }
 
   if (u.sideW) document.documentElement.style.setProperty("--side-w", u.sideW);
-  if (u.patW)  document.documentElement.style.setProperty("--pat-w", u.patW);
-  if (u.patW2) document.documentElement.style.setProperty("--pat-w2", u.patW2);
+  // Подстраховка от старых сохранёнок с шириной колонки паттернов ниже нового минимума
+  // перетаскивания (40px, см. makeDrag/makeDragRight ниже) — при таком значении текст
+  // паттерна раньше утыкался в границу .vsplit/.vsplit2 (см. комментарий там).
+  if (u.patW)  document.documentElement.style.setProperty("--pat-w", Math.max(40, parseFloat(u.patW) || 40) + "px");
+  if (u.patW2) document.documentElement.style.setProperty("--pat-w2", Math.max(40, parseFloat(u.patW2) || 40) + "px");
 
   if (u.hideSide !== undefined) {
     if (u.hideSide) document.body.classList.add("hide-side");
@@ -4584,6 +4903,10 @@ if (taPatsEl) taPatsEl.addEventListener("input", saveCache);
 for (const el of [cPullEl, cOrderEl, cNextOnlyEl, cStageXorEl, cInvPassEl, cAutoShiftEl, cStopOnHitEl, cVertEl, cPadEl, cKindsEl, cSkipEl]) {
   if (el) el.addEventListener("change", () => { readToggles(); saveCache(); });
 }
+// cRingInvert влияет только на панель результата фон-поиска (не на данные строк) — как и
+// cBgSearch, ему нужен явный render(), иначе изменение не видно, пока не случится другое
+// действие (правка строки и т.п.), которое само вызовет render().
+if (cRingInvertEl) cRingInvertEl.addEventListener("change", () => { readToggles(); render(); saveCache(); });
 
 if (!loadCache()){
   /* Самая первая загрузка вообще (localStorage ещё пуст) — createDefaultTabState() берёт
