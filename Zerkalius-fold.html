@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.275</title>
+<title>Zerkalius Fold — v0.278</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -556,8 +556,16 @@
     color: #00e5ff !important;
   }
 
+  /* Бит, только что перевёрнутый при переходе границы строки — см. "◄/► Круг Инв" */
+  .bit-inv { background: rgba(255,153,0,.35) !important; color: #ff9900 !important; font-weight: 700; border-radius: 2px; }
+
   .ln.used, .ln.cur { opacity: 1; }
-  
+
+  /* Гориз.XOR активен — строки ниже цели сейчас никак не участвуют в поиске (см. render()) */
+  .ln.horiz-dim { opacity: .12; }
+  /* Разделитель "0 нампад" — тонкая серо-коричневая граница снизу строки (см. rowDividers) */
+  .ln.row-divider { border-bottom: 1px solid #8a7a68; }
+
   .cur .num{color:var(--acc);font-weight:700}
   .cur{background:rgba(120,150,255,.10)}
   .hit{color:var(--red);font-weight:700}
@@ -717,7 +725,7 @@
   gap: 8px;
   font-family: "Roboto Mono", Consolas, monospace;
   font-size: 12px;
-  letter-spacing: var(--chain-ls);
+  letter-spacing: normal;
   cursor: pointer;
   position: relative;
   padding-right: 3px;
@@ -750,7 +758,7 @@
 .chain-result-text {
   font-family: "Roboto Mono", Consolas, monospace;
   font-size: 12px;
-  letter-spacing: var(--chain-ls);
+  letter-spacing: normal;
   color: var(--fg);
   word-break: break-all;
   white-space: pre-wrap;
@@ -787,11 +795,11 @@
 .chain-result-line:nth-child(5n+5){background:rgba(100,100,110,.10)}
 .chain-result-line:hover{background:rgba(255,255,255,.08)}
 .chain-result-line-label{flex:0 0 auto;color:var(--dim);white-space:nowrap;user-select:none}
-/* Мин. ширина под одну галочку — ВСЕГДА занимает место, даже пустая (нет находки), чтобы
-   двоеточие и биты у всех строк начинались в одном месте независимо от того, найдено там
-   что-то или нет. Если найдено сразу НЕСКОЛЬКО версий паттерна (прямая + инверсия/реверс) —
-   колонка растягивается вправо на свою ширину галочек, не трогая колонку label слева. */
-.chain-result-line-check{flex:0 0 auto;min-width:1.3em;text-align:center;display:inline-flex;
+/* ФИКСИРОВАННАЯ ширина (не min-width) под максимум возможных галочек (4 kind'а — см. KIND_CLS) —
+   ВСЕГДА занимает одно и то же место, даже пустая (нет находки) или с 1 галочкой, чтобы
+   двоеточие и биты у ВСЕХ строк начинались в одном месте независимо от того, сколько версий
+   паттерна (прямая/инверсия/реверс/инверсия+реверс) совпало у конкретной строки. */
+.chain-result-line-check{flex:0 0 auto;width:3.4em;text-align:center;display:inline-flex;
   justify-content:center;gap:1px}
 .chain-result-line-check-mark{color:#ffcf6b;font-weight:700}
 .chain-result-line-check-mark.inv{color:var(--purple)}
@@ -801,6 +809,33 @@
 .chain-result-line-colon{flex:0 0 auto;color:var(--dim)}
 .chain-result-line-bits{flex:1 1 auto;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .chain-result-line.expanded .chain-result-line-bits{white-space:pre-wrap;word-break:break-all;text-overflow:clip}
+/* "3+4) 111+10000" — из каких строк (номер+содержимое) считаются режимы фон-поиска ниже, см. render() */
+.chain-result-src-row{padding:1px 3px 3px;color:var(--dim);font-size:11px;opacity:.8;cursor:default}
+/* Лог находок фон-поиска — своя вкладка "Лог находок" (#findLogList, см. bgFindLog/
+   renderFindLogPanel() в JS), последняя находка сверху. Таблица: строка + по столбцу на каждый
+   встретившийся в логе режим, "+" там, где режим реально совпал в этой находке. */
+.find-log-row{display:flex;font-size:11px;border-bottom:1px solid var(--line)}
+.find-log-row:last-child{border-bottom:none}
+.find-log-head{color:var(--dim);font-weight:700;border-bottom:1px solid var(--acc)}
+.find-log-cell{flex:0 0 auto;width:3.2em;padding:2px 3px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.find-log-row-no{width:4.5em;text-align:left;color:var(--dim)}
+.find-log-mode{width:4.2em}
+.find-log-plus{color:var(--acc);font-weight:700}
+
+/* "🧮 Суммы длин" (см. findLengthSumCombos/renderLengthSumsHtml в JS) — каждая строка-комбинация
+   в своём цвете на каждый источник (LSUM_COLORS, циклится), совпавшая с паттерном ниже — рамка. */
+.lsum-block{margin-top:4px;padding-top:4px;border-top:1px solid var(--line)}
+.lsum-title{padding:1px 3px;color:var(--dim);font-size:11px;opacity:.8}
+.lsum-row{display:flex;gap:6px;padding:1px 3px;font-size:11px;align-items:baseline}
+.lsum-row.lsum-matched{background:rgba(255,207,107,.12);border-radius:2px;outline:1px solid var(--acc)}
+.lsum-label{flex:0 0 auto;color:var(--dim);min-width:3.5em}
+.lsum-bits{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--chain-ff, "Roboto Mono", Consolas, monospace)}
+.lsum-c0{color:#4da3ff}
+.lsum-c1{color:#ffcf6b}
+.lsum-c2{color:var(--green)}
+.lsum-c3{color:var(--purple)}
+.lsum-c4{color:#ff66cc}
+.lsum-c5{color:#00e5ff}
 
 /* Черновик последнего шага — визуальный лог операции: какие строки взяты, что сделано, что найдено.
    Позиционирование (top/left/right) — общее для обоих overlay-баров, см. .overlay-box выше. */
@@ -1000,7 +1035,7 @@
 <!-- === МАРКЕР 03: HEADER_UI === -->
 <div id="menuBar">
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
-    <h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.275</span></h3>
+    <h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.278</span></h3>
   </div>
   <div id="menuTabs">
     <button id="bUndo" style="font-size:12px;padding:3px 8px;" title="Шаг назад / отмена ручной правки (Backspace / Ctrl+Z)">↩ Отменить</button>
@@ -1009,12 +1044,14 @@
       <div class="menu-btn" data-menu="menuOps"><span>Шаги</span><input type="checkbox" class="menu-pin-inline" id="menuOpsPin" title="Показывать в панели"></div>
       <div class="menu-btn" data-menu="menuEdit"><span>Правка строк</span><input type="checkbox" class="menu-pin-inline" id="menuEditPin" title="Показывать в панели"></div>
       <div class="menu-btn" data-menu="menuSearch"><span>Поиск</span><input type="checkbox" class="menu-pin-inline" id="menuSearchPin" title="Показывать в панели"></div>
+      <div class="menu-btn" data-menu="menuFindLog"><span>Лог находок</span><input type="checkbox" class="menu-pin-inline" id="menuFindLogPin" title="Показывать в панели"></div>
       <div class="menu-btn" data-menu="menuView"><span>Вид</span><input type="checkbox" class="menu-pin-inline" id="menuViewPin" title="Показывать в панели"></div>
       <div class="menu-btn" data-menu="menuSeq"><span>Сквозная</span><input type="checkbox" class="menu-pin-inline" id="menuSeqPin" title="Показывать в панели"></div>
     </div>
     <div id="menuOps" class="menu-drop"></div>
     <div id="menuEdit" class="menu-drop"></div>
     <div id="menuSearch" class="menu-drop"></div>
+    <div id="menuFindLog" class="menu-drop"></div>
     <div id="menuView" class="menu-drop"></div>
     <div id="menuSeq" class="menu-drop"></div>
 
@@ -1028,8 +1065,8 @@
       <button class="act" data-val="center" title="По центру">↔</button>
       <button data-val="right" title="По правому краю">⇥</button>
       <button data-val="halfcenter" title="По центру, но с точностью до половины символа — короткая строка встаёт СТРОГО между символами длинной (напр. «1» строго между двумя «1» у «11»), а не вплотную к одной из них">↔½</button>
-      <button data-val="stairs" title="Лесенка: каждая строка сдвинута вправо на (её длина − 1) — «1»/«11»/«111»/«1111» и т.п. выстраиваются диагональной лестницей, а не по общей ширине">⇱</button>
-      <button data-val="halfstairs" title="Лесенка ½: та же лестница, но вдвое положе — сдвиг каждой строки на половину символа за шаг, а не на целый">⇱½</button>
+      <button data-val="stairs" title="Лесенка: каждая строка сдвинута вправо на (её длина − 1) — «1»/«11»/«111»/«1111» и т.п. выстраиваются диагональной лестницей, а не по общей ширине">↘</button>
+      <button data-val="halfstairs" title="Лесенка ½: та же лестница, но вдвое положе — сдвиг каждой строки на половину символа за шаг, а не на целый">↘½</button>
     </div>
 
     <!-- Скрыть/показать колонки паттернов по отдельности (левую/правую) -->
@@ -1093,7 +1130,26 @@
     <button id="bStep2" title="Шаг по 2 (принудительный интерливинг пары)">▶ Шаг 2</button>
     <button id="bStepXor" style="color:var(--purple);" title="Накопительный XOR всех строк до текущей">⨁ XOR</button>
     <button id="bStep2Xor" style="color:var(--acc);" title="Принудительный XOR пары строк">⨁ XOR 2</button>
-    <button id="bStepHorizXor" style="color:#ff9900;" title="Горизонтальный XOR: символы верхней строки по одному заходят в нижнюю, ксорят её и крутят по кругу до находки">⨁ Гориз.XOR</button>
+    <!-- ◄/► Гориз.XOR — та же сквозная цепочка (символы строк выше по одному заходят в
+         текущую, ксорят её), но с двух разных краёв: ► въезжает справа (было раньше, теперь
+         реально крутит строку по кругу до находки, а не останавливается после одного прохода
+         — запрос пользователя), ◄ — та же цепочка, просто заходит слева. Общая рамка, один
+         уровень в сетке (grid-column:1/-1) — запрос пользователя "расположи на одном уровне и
+         объедини рамкой", тот же приём, что и у блока Спирали ниже. -->
+    <div style="grid-column:1 / -1; display:flex; flex-direction:column; gap:4px; border:1px solid #ff9900; background:rgba(255,153,0,0.08); border-radius:3px; padding:4px;">
+      <div style="display:flex; gap:6px;">
+        <button id="bStepHorizXorLeft" style="color:#ff9900; flex:1;" title="Горизонтальный XOR (вход слева): та же сквозная цепочка, но заходит в целевую строку с ЛЕВОГО края, крутит строку по кругу до находки">◄ Гориз.XOR</button>
+        <button id="bStepHorizXor" style="color:#ff9900; flex:1;" title="Горизонтальный XOR (вход справа): символы верхней строки по одному заходят в нижнюю, ксорят её и крутят по кругу до находки">► Гориз.XOR</button>
+      </div>
+      <!-- 3 независимых переключателя (2×2×2 = 8 вариантов) — запрос пользователя. Сторона
+           входа (◄/►) выбирается самими кнопками выше, эти три — ЧТО происходит при неудаче
+           полного прохода. -->
+      <div style="display:flex; flex-wrap:wrap; gap:2px 10px; font-size:11px;">
+        <label class="chk" title="После полного прохода без находки — крутить целевую строку по кругу и заходить заново (пока не найдётся или не переберётся весь круг). Выключено — как совсем раньше: один проход, без находки — стоп"><input type="checkbox" id="cHorizRotateOnFail" checked>🔁 Крутить по кругу</label>
+        <label class="chk" title="При каждом повороте (см. «Крутить по кругу») ещё и переключать сторону входа — справа, потом слева, потом снова справа..."><input type="checkbox" id="cHorizAlternateSide">⇄ Менять сторону</label>
+        <label class="chk" title="Развернуть порядок самой цепочки — ведущий край не «строка, ближайшая к цели», а «самая верхняя строка» (и наоборот)"><input type="checkbox" id="cHorizReverseChain">↕ Развернуть цепочку</label>
+      </div>
+    </div>
     <button id="bStepXorProj" style="color:#ff66cc;" title="Проекция XOR: Вычисляет XOR всех строк ВЫШЕ текущей и полностью перезаписывает им текущую строку.">⏬ Проекц.XOR</button>
     <!-- Круговой сдвиг и Спираль — тоже "режимы для Авто" (см. st.lastDirMode/DIR_MODE_BTN
          в JS), поэтому перенесены сюда же, из "Правки строк". Взаимоисключающая подсветка
@@ -1103,6 +1159,10 @@
          "круги на одной строке и спирали, Скан вниз"). -->
     <button id="bShiftL" title="Круговой сдвиг влево выбранных строк (◄ или Ctrl+Клик)">◄ Круг</button>
     <button id="bShiftR" title="Круговой сдвиг вправо выбранных строк (► или Ctrl+Клик)">► Круг</button>
+    <!-- То же самое, но бит, уходящий за границу строки, при каждом переходе инвертируется —
+         запрос пользователя. -->
+    <button id="bShiftLInv" title="Круговой сдвиг влево с инверсией бита при переходе границы строки">◄ Круг Инв</button>
+    <button id="bShiftRInv" title="Круговой сдвиг вправо с инверсией бита при переходе границы строки">► Круг Инв</button>
     <!-- ▲/▼ Спираль + переключатель "какая сторона ленты — вверх" (st.spiralUpDir) — в ОДНОЙ
          рамке (см. запрос пользователя — переключатель влияет только на Спираль, значит и жить
          должен рядом с ней, а не во вкладке "Сквозная", куда его раньше унесли заодно со всем
@@ -1126,6 +1186,7 @@
   <button id="bDelFirst" title="Удалить первый символ (слева) из выделенных строк (или всех, если ничего не выделено)">🗑 ←1</button>
   <button id="bDelLast" title="Удалить последний символ (справа) из выделенных строк (или всех, если ничего не выделено)">🗑 1→</button>
   <button id="bAddRightToggle" title="Добавить бит справа: первый клик добавляет 1; повторный клик подряд по тем же строкам (пока ничего больше не менялось) не добавляет новый бит, а переключает только что добавленный между 1 и 0">1/0→</button>
+  <button id="bToggleRowDivider" title="Разделитель-граница снизу выделенной строки (Numpad0) — «1 по диагонали» считается отдельно по каждой секции между разделителями, как будто других строк нет">— Раздел.</button>
 
   <!-- Генератор фрактала Серпинского (Rule 90 / Pascal mod 2, см. generateSierpinski90) — тот же
        генератор, что используется при первом запуске без данных в кэше, но доступен по кнопке
@@ -1172,6 +1233,7 @@
 
 <div id="searchGroup" class="control-group search-grid">
   <label class="chk" title="Остановить автоматический прогон (Авто), если найдено совпадение с паттерном"><input type="checkbox" id="cStopOnHit" checked>🛑 Стоп на находке</label>
+  <label class="chk" title="Остановить круговой сдвиг (◄/►Круг/Круг Инв) под «Авто», если суммарное число единиц и нулей по всем выделенным строкам стало РОВНО (баланс) — см. «⚖ Показать балансы»"><input type="checkbox" id="cStopOnBalance">🛑 Стоп при балансе</label>
   <label class="chk" title="Когда некуда двигаться (нет находок) — не переходить на 1-ю строку, а циклически сдвигать нижнюю строку и повторять операцию"><input type="checkbox" id="cAutoShift">🔀 Сдвиг снизу</label>
   <label class="chk" title="Разбивать XOR на два отдельных визуальных шага: 1) Дополнение нулями 2) Вычисление XOR"><input type="checkbox" id="cStageXor">2️⃣ 2-этапный XOR</label>
   <label class="chk" title="При повторном заходе с 1-й строки читать биты инверсно (0↔1)"><input type="checkbox" id="cInvPass">🔄 Инв. заход</label>
@@ -1194,7 +1256,7 @@
     <div class="align-grp" id="bgSearchModeGrp" title="Какой результат проверять на совпадение с паттерном строки ниже выделенной">
       <button data-val="interleave" class="act" title="Интерливинг выделенной и строки над ней">⧬ Интерлив</button>
       <button data-val="xor2" class="act" title="XOR выделенной и строки над ней">⨁ XOR 2</button>
-      <button data-val="xorAll" class="act" title="XOR всех строк над выделенной и самой выделенной">⨁ XOR всех</button>
+      <button data-val="xorAll" class="act" title="XOR-Чёт: строки над выделенной и сама выделенная — на обычных выравниваниях просто все разом, на ½-выравниваниях делятся на 2 группы по чётности (см. hasHalfNudge) и результаты чередуются">⨁ XOR-Чёт</button>
       <button data-val="concatR" class="act" title="Сквозная строка: все строки от 1-й до выделенной (включительно) просто склеены по порядку — новая строка приклеивается СПРАВА">🔗 Сквозная →</button>
       <button data-val="concatRInv" class="act" title="То же самое, что 🔗 Сквозная →, но результат целиком инвертирован (0↔1)">🔗 Сквозная → Инв</button>
       <button data-val="concatRRevInv" class="act" title="То же самое, что 🔗 Сквозная →, но результат инвертирован (0↔1) И реверснут (порядок бит наоборот)">🔗 Сквозная → Рев+Инв</button>
@@ -1212,11 +1274,32 @@
     <label class="chk" title="Например паттерн 1110, «Без 1-го» даёт 110 — с этой галкой ищем не только 110, но и ВСЕ варианты его циклического сдвига (101, 011). Найдено, если совпал хотя бы один. Полный список подпаттернов и какие из них нашлись — см. «🧾 Черновик последнего шага»">
       <input type="checkbox" id="cBgSubPatterns"> 🔀 Подпаттерны сдвига
     </label>
+    <label class="chk" title="По умолчанию результат сверяется только с паттерном строки СРАЗУ НИЖЕ выделенной. С этой галкой — со всеми паттернами от неё и до конца списка, находка засчитывается по первой совпавшей строке">
+      <input type="checkbox" id="cBgAllBelow"> 🔽 Все ниже
+    </label>
+    <label class="chk" title="Новый инструмент: по длине выделенной строки перебирает, из КАКИХ комбинаций строк ВЫШЕ (по сумме их длин) можно её собрать (напр. длина 6 = строки 1+6, 2+5, 3+4, 1+2+4...), и показывает биты каждой такой комбинации (склеены в порядке номеров), сверяя с паттерном строки ниже — каждая строка-источник в комбинации подсвечена своим цветом">
+      <input type="checkbox" id="cShowLengthSums"> 🧮 Суммы длин
+    </label>
   </div>
   <div style="grid-column:1 / -1;display:grid;grid-template-columns:repeat(2, 1fr);gap:4px;">
     <label class="chk" title="Искать также инверсию и реверс"><input type="checkbox" id="cKinds">⇌ Инв/Рев</label>
     <label class="chk" title="Первый символ паттерна не проверяется (ищется хвост со второго)"><input type="checkbox" id="cSkip1" checked>⏭ Без 1-го</label>
   </div>
+</div>
+
+<!-- Лог находок фон-поиска — отдельная вкладка (как и остальные, см. MENUS в JS), а не часть
+     панели "Результат фон-поиска" — запрос пользователя. Сам список (#findLogList) заполняет
+     renderFindLogPanel() из bgFindLog (см. МАРКЕР 09: RENDER). -->
+<div id="findLogGroup" class="control-group">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px;">
+    <span style="font-size:12px;color:var(--dim);">Находки фон-поиска (см. вкладку «Поиск»)</span>
+    <button id="bClearFindLog" style="font-size:12px;padding:2px 6px;" title="Очистить лог находок">🧹 Очистить</button>
+  </div>
+  <div id="findLogList"></div>
+  <!-- "🧮 Суммы длин" — перенесено сюда из панели "Результат фон-поиска" (см. вкладку «Поиск» —
+       галка cShowLengthSums по-прежнему её включает/выключает), запрос пользователя. Заполняет
+       renderLengthSumsHtml() внутри renderFindLogPanel(). -->
+  <div id="lengthSumsContainer"></div>
 </div>
 
 <div id="viewGroup" class="control-group">
@@ -1348,6 +1431,7 @@
         <input type="range" id="dim" min="10" max="100" step="5" value="100" class="view-slider-range">
         <span id="dimVal" class="view-slider-val">100</span>
       </label>
+      <button id="rightTriangle90Btn" style="margin:2px 0 0; padding:2px 3px; width:100%; font-size:8px; color:#ffd500; border-color:#ffd500;" title="Подгоняет межсимвольный интервал (ls) так, чтобы ячейка символа стала квадратной (ширина = высоте строки --row-h) при текущих размере шрифта/межстрочном интервале. Любая 'лестница' (например 1,11,111...) в таблице строк получит ровно 45° диагональ и 90° угол. Содержимое строк не меняется — только геометрия символа">📐90°</button>
     </div>
     <label class="chk chk-vertical" title="Межстрочный интервал (line-height, до 0.2 с наездом)">
       <span class="view-slider-icon">↕</span>
@@ -1369,6 +1453,9 @@
     <div class="chain-result-head overlay-head">
       <span class="overlay-drag" title="Перетащить — поменять местами с «Черновиком»">⋮⋮</span>
       <span class="overlay-title"><span id="chainResultLabel">🔗 Сквозная строка результата</span> (<b id="chainLen">0</b> бит):</span>
+      <span class="counter" id="variantCounterWrap" style="display:none;" title="Круговой сдвиг (◄/►Круг/Круг Инв) под «Авто»: текущий вариант из общего числа (НОК длин выделенных строк, ×2 у Круг Инв) и номера строк, которые сейчас крутятся">Вар: <b id="variantNo">0</b>/<b id="variantTotal">0</b> (стр. <b id="variantRows"></b>)</span>
+      <span class="counter row-balance" id="selBalanceWrap" style="display:none;" title="⚖ Суммарный баланс единиц/нулей по ВСЕМ выделенным строкам вместе (виден, пока включено «⚖ Показать балансы») — подсвечивается акцентным, если единиц и нулей поровну">Σ: <b id="selBalance1">0</b>-<b id="selBalance0">0</b></span>
+      <button id="bLockResultHeight" title="Закрепить высоту панели на текущем размере — дальше не растёт/не сжимается сама при смене содержимого (списка режимов/находок), просто скроллится внутри">📌 Закрепить</button>
       <button id="bCopyChain" title="Скопировать сквозную строку в буфер обмена">📋 Копировать</button>
       <span class="overlay-close" id="bHideResultBox" title="Скрыть полностью (вернуть — кнопкой в верхнем меню)">✕</span>
     </div>
@@ -1400,6 +1487,46 @@
 
 function rotateStrRight(s) { if (!s || s.length <= 1) return s; return s.slice(-1) + s.slice(0, -1); }
 function rotateStrLeft(s) { if (!s || s.length <= 1) return s; return s.slice(1) + s[0]; }
+/* НОК/НОД — нужны, чтобы правильно посчитать общий период кругового сдвига НЕСКОЛЬКИХ строк
+   разной длины разом (см. totalTurns в autoRun()). НОК растёт ОЧЕНЬ быстро (напр. НОК(1..70) —
+   астрономическое число, за пределами точности чисел JS, Number.MAX_SAFE_INTEGER ~9×10^15) —
+   LCM_SAFE_CAP защищает от переполнения/потери точности: если общий НОК превысил потолок,
+   lcmSafe() возвращает null — вызывающий код (autoRun()) трактует это как "предел неизвестен",
+   totalTurns=0 (то же самое "без ограничения", что было ДО этой фичи — крутится, пока не нажмут
+   Стоп) — реальный пользы от точного циклического предела в десятки миллионов ходов всё равно
+   нет, никто не будет ждать столько кликов. */
+const LCM_SAFE_CAP = 10000000; // 10 млн ходов — уже практически "бесконечно" для UI
+function gcdInt(a, b) { while (b) { [a, b] = [b, a % b]; } return a; }
+function lcmInt(a, b) { return a / gcdInt(a, b) * b; }
+function lcmSafe(a, b) {
+  const r = lcmInt(a, b);
+  return (r > LCM_SAFE_CAP || !Number.isSafeInteger(r)) ? null : r;
+}
+/* Общий период кругового сдвига НАБОРА строк idxs (НОК их длин, ×2 у Круг Инв) — используется и
+   в autoRun(), и при ручных кликах ◄/►Круг/Круг Инв (см. afterShiftBgCheck ниже), чтобы счётчик
+   "Вар: N/M" в шапке "Результата" был одинаково верным что в "Авто", что при ручных кликах. */
+function computeShiftTotalTurns(idxs, isShiftInv){
+  let total = 0;
+  for (const i of idxs) {
+    const len = st.rows[i] ? st.rows[i].length : 0;
+    if (len === 0) continue;
+    if (total === 0) { total = len; continue; }
+    const next = lcmSafe(total, len);
+    if (next === null) return 0; // НОК слишком большой — "предел неизвестен"
+    total = next;
+  }
+  if (total > 0 && isShiftInv) total *= 2;
+  return total;
+}
+/* То же круговое вращение, но бит, который переходит границу строки (уезжает с одного конца и
+   появляется на другом), при каждом переходе ИНВЕРТИРУЕТСЯ (0↔1) — запрос пользователя.
+   Из-за этого обычный период "L сдвигов = строка вернулась к исходному виду" (L — длина строки)
+   больше не работает: каждый физический бит пересекает границу и переворачивается РОВНО ОДИН
+   РАЗ за L шагов, а значит к исходному значению (не только позиции) он вернётся только через
+   ДВА полных круга — 2×L шагов (см. totalTurns в autoRun() ниже, отдельно посчитан для этих
+   двух режимов). */
+function rotateStrRightInv(s) { if (!s || s.length <= 1) return s; return invertBits(s.slice(-1)) + s.slice(0, -1); }
+function rotateStrLeftInv(s) { if (!s || s.length <= 1) return s; return s.slice(1) + invertBits(s[0]); }
 
 /* Все варианты циклического сдвига строки, включая саму строку (индекс 0) — для "Подпаттерны
    сдвига" фон-поиска: напр. "110" -> ["110","101","011"]. */
@@ -1456,14 +1583,14 @@ function alignShift(maxLen, len, align){
   const diff = maxLen - len;
   if (align === "left")  return 0;
   if (align === "right") return diff;
-  // "Лесенка" (⇱, см. #alignGrp data-val="stairs") — сдвиг растёт вместе с длиной самой строки
+  // "Лесенка" (↘, см. #alignGrp data-val="stairs") — сдвиг растёт вместе с длиной самой строки
   // (shift = len-1), а не с разницей до maxLen, как у остальных режимов: "1"/"11"/"111"/"1111"
   // превращаются в диагональную лестницу вправо, а не выравниваются по общей ширине. Это
   // НАМЕРЕННО ломает обычный инвариант "shift+len <= maxLen" (у длинных строк общая ширина
   // становится БОЛЬШЕ maxLen) — места, где от этого мог бы уйти в минус остаток паддинга
   // (repeat() с отрицательным числом), подстрахованы Math.max(0, …) по месту вызова.
   if (align === "stairs") return len ? len - 1 : 0;
-  // "Лесенка ½" (⇱½, data-val="halfstairs") — та же "Лесенка", но вдвое положе: целочисленный
+  // "Лесенка ½" (↘½, data-val="halfstairs") — та же "Лесенка", но вдвое положе: целочисленный
   // сдвиг — половина от обычной "Лесенки" (округление вниз), а недостающие 0.5 символа при
   // нечётном (len-1) довешиваются transform:translateX(0.5ch) в render() (halfShiftAttr), тем
   // же приёмом, что и у "halfcenter" относительно обычного "center".
@@ -1605,16 +1732,18 @@ function getRowBits(st, r) {
    интерливинг не через 1 бит а через 2 бита потом через 3 и тд"). N=1 даёт РОВНО ТОТ ЖЕ результат,
    что и раньше (побитовый интерлив) — остальные вызовы (обычный "⧬ Интерлив", фон-поиск и т.д.)
    N не передают и не меняются. */
+/* Простое чередование по индексу — читаем обе строки слева направо ОДНОВРЕМЕННО ("шахматкой"):
+   верх[0], низ[0], верх[1], низ[1], ... без всякого сдвига по выравниванию (запрос
+   пользователя: "111"+"1000" → "111010" — верх и низ читаются с одной и той же стартовой
+   позиции 0, никакого смещения). Хвост более длинной строки, у которого нет пары сверху/
+   снизу, ОТБРАСЫВАЕТСЯ целиком, а не дописывается в одиночку — align тут больше не участвует
+   (align по-прежнему используется отдельно, напр. при паддинге перед XOR). */
 function interleavePair(top, bot, align, N){
   N = N || 1;
-  const useTop = top.length >= bot.length;
-  const long = useTop ? top : bot, short = useTop ? bot : top;
-  const shift = alignShift(long.length, short.length, align);
+  const len = Math.min(top.length, bot.length);
   let out = "";
-  for (let i = 0; i < long.length; i += N){
-    out += long.slice(i, i + N);
-    const j = i - shift;
-    if (j + N > 0 && j < short.length) out += short.slice(Math.max(0, j), Math.min(short.length, j + N));
+  for (let i = 0; i < len; i += N){
+    out += top.slice(i, i + N) + bot.slice(i, i + N);
   }
   return out;
 }
@@ -1655,15 +1784,11 @@ function buildHitMap(len, kinds){
    markBlock красит ЦЕЛИКОМ блок посимвольно (каждый символ блока — свой span, как и раньше). */
 function interleavePairMarked(seqStr, rowStr, align, kinds, N){
   N = N || 1;
-  const seqIsLong = seqStr.length >= rowStr.length;
-  const long = seqIsLong ? seqStr : rowStr, short = seqIsLong ? rowStr : seqStr;
-  const shift = alignShift(long.length, short.length, align);
+  // Та же простая логика, что и в interleavePair() выше — без сдвига по выравниванию,
+  // хвост более длинной строки без пары отбрасывается (не рисуется).
+  const len = Math.min(seqStr.length, rowStr.length);
   let outLen = 0;
-  for (let i = 0; i < long.length; i += N){
-    outLen += Math.min(N, long.length - i);
-    const j = i - shift;
-    if (j + N > 0 && j < short.length) outLen += Math.min(short.length, j + N) - Math.max(0, j);
-  }
+  for (let i = 0; i < len; i += N) outLen += Math.min(N, seqStr.length - i) + Math.min(N, rowStr.length - i);
   const hitAt = buildHitMap(outLen, kinds);
   let pos = 0;
   const markBlock = (str, isRow) => {
@@ -1677,10 +1802,8 @@ function interleavePairMarked(seqStr, rowStr, align, kinds, N){
     return out;
   };
   let html = "";
-  for (let i = 0; i < long.length; i += N){
-    html += markBlock(long.slice(i, i + N), !seqIsLong);
-    const j = i - shift;
-    if (j + N > 0 && j < short.length) html += markBlock(short.slice(Math.max(0, j), Math.min(short.length, j + N)), seqIsLong);
+  for (let i = 0; i < len; i += N){
+    html += markBlock(seqStr.slice(i, i + N), false) + markBlock(rowStr.slice(i, i + N), true);
   }
   return html;
 }
@@ -1761,20 +1884,35 @@ function concatSnakeGlueDownTo(st, stopIdx){
 /* Вертикальная склейка строк 0..stopIdx: читаются ПО СТОЛБЦАМ (а не по строкам, как
    concatRowsDownTo) — для каждого столбца сверху вниз собираются реальные символы тех строк,
    которые своей (со сдвигом выравнивания) шириной реально достают до этого столбца.
-   dir "right": столбцы слева направо (0..maxLen-1). dir "left": столбцы справа налево. */
+   dir "right": столбцы слева направо (0..maxLen-1). dir "left": столбцы справа налево.
+   При "½"-выравниваниях часть строк сидит в "целой" сетке колонок, часть — в "полу" (сдвинутой
+   на +0.5ch, см. hasHalfNudge выше — ТА ЖЕ группировка, что и в xorRowsDownTo, по чётности длины/
+   остатка, а НЕ по чётности номера строки). Берём только под-сетку, в которую попадает сама
+   stopIdx-строка — иначе колонки на экране реально не совпадают. */
 function concatVerticalDownTo(st, stopIdx, dir){
+  const isHalfAlign = st.align === "halfcenter" || st.align === "halfstairs";
   let maxLen = 0;
   for (let i = 0; i <= stopIdx; i++) { const s = getRowBits(st, i); if (s.length > maxLen) maxLen = s.length; }
-  if (!maxLen) return "";
+  const wantNudge = isHalfAlign ? hasHalfNudge(getRowBits(st, stopIdx), maxLen, st.align) : null;
+  const keep = (s) => !isHalfAlign || hasHalfNudge(s, maxLen, st.align) === wantNudge;
+
+  let reach = 0;
+  for (let i = 0; i <= stopIdx; i++) {
+    const s = getRowBits(st, i);
+    if (!s.length || !keep(s)) continue;
+    const r = alignShift(maxLen, s.length, st.align) + s.length;
+    if (r > reach) reach = r;
+  }
+  if (!reach) return "";
   const cols = [];
-  for (let c = 0; c < maxLen; c++) cols.push(c);
+  for (let c = 0; c < reach; c++) cols.push(c);
   if (dir === "left") cols.reverse();
 
   let out = "";
   for (const c of cols) {
     for (let i = 0; i <= stopIdx; i++) {
       const s = getRowBits(st, i);
-      if (!s.length) continue;
+      if (!s.length || !keep(s)) continue;
       const shift = alignShift(maxLen, s.length, st.align);
       const localCol = c - shift;
       if (localCol >= 0 && localCol < s.length) out += s[localCol];
@@ -1785,23 +1923,37 @@ function concatVerticalDownTo(st, stopIdx, dir){
 
 /* "Змейка" — та же вертикальная склейка по столбцам, но направление обхода строк ВНУТРИ
    столбца чередуется через один столбец (то сверху вниз, то снизу вверх), как в змейке/
-   бустрофедоне. dir — та же логика направления столбцов, что у concatVerticalDownTo. */
+   бустрофедоне. dir — та же логика направления столбцов, что у concatVerticalDownTo.
+   При "½"-выравниваниях — та же под-сетка по hasHalfNudge, что и у concatVerticalDownTo выше. */
 function concatSnakeDownTo(st, stopIdx, dir){
+  const isHalfAlign = st.align === "halfcenter" || st.align === "halfstairs";
   let maxLen = 0;
   for (let i = 0; i <= stopIdx; i++) { const s = getRowBits(st, i); if (s.length > maxLen) maxLen = s.length; }
-  if (!maxLen) return "";
+  const wantNudge = isHalfAlign ? hasHalfNudge(getRowBits(st, stopIdx), maxLen, st.align) : null;
+  const keep = (s) => !isHalfAlign || hasHalfNudge(s, maxLen, st.align) === wantNudge;
+
+  let reach = 0;
+  for (let i = 0; i <= stopIdx; i++) {
+    const s = getRowBits(st, i);
+    if (!s.length || !keep(s)) continue;
+    const r = alignShift(maxLen, s.length, st.align) + s.length;
+    if (r > reach) reach = r;
+  }
+  if (!reach) return "";
   const cols = [];
-  for (let c = 0; c < maxLen; c++) cols.push(c);
+  for (let c = 0; c < reach; c++) cols.push(c);
   if (dir === "left") cols.reverse();
 
   let out = "";
   cols.forEach((c, colIdx) => {
     const rowOrder = [];
-    for (let i = 0; i <= stopIdx; i++) rowOrder.push(i);
+    for (let i = 0; i <= stopIdx; i++) {
+      const s = getRowBits(st, i);
+      if (s.length && keep(s)) rowOrder.push(i);
+    }
     if (colIdx % 2 === 1) rowOrder.reverse();
     for (const i of rowOrder) {
       const s = getRowBits(st, i);
-      if (!s.length) continue;
       const shift = alignShift(maxLen, s.length, st.align);
       const localCol = c - shift;
       if (localCol >= 0 && localCol < s.length) out += s[localCol];
@@ -1810,23 +1962,69 @@ function concatSnakeDownTo(st, stopIdx, dir){
   return out;
 }
 
-/* Накопительный ХОР */
-function xorRowsDownTo(rows, stopIdx, align, st){
+/* Есть ли у строки s ДОПОЛНИТЕЛЬНЫЙ полусимвольный сдвиг (+0.5ch, см. halfShiftAttr в render()) —
+   ТОЧНО ТО ЖЕ условие, что красит строку в render(): у "Лесенка ½" зависит от ЧЁТНОСТИ ДЛИНЫ
+   самой строки, у "Центр ½" — от чётности остатка (maxLen − длина). Это и есть настоящий признак
+   "в какую из двух под-сеток (целую/полу) строка садится на экране" — НЕ чётность индекса/номера
+   строки (это была ошибка в первой версии этой функции: строки одинаковой длины ВСЕГДА в одной
+   подсетке независимо от порядка, а строки разной длины могут попасть в одну ИЛИ в разные,
+   строго по формуле ниже). */
+function hasHalfNudge(s, maxLen, align){
+  if (!s.length) return false;
+  return align === "halfstairs" ? (s.length - 1) % 2 !== 0 : (maxLen - s.length) % 2 !== 0;
+}
+
+/* ХОР строк 0..stopIdx, отфильтрованных предикатом wantNudge (true/false — см. hasHalfNudge) —
+   null означает "без фильтра, все строки" (обычные выравнивания). Ширина результата — МАКСИМУМ
+   "сдвиг+длина" среди участвующих строк (а не просто длина, как было раньше) — иначе у "Лесенки"
+   биты, уехавшие сдвигом за пределы самой длинной строки, молча терялись (Uint8Array тихо
+   игнорирует запись за границей). */
+function xorRowsFiltered(rows, stopIdx, align, st, wantNudge){
   let maxLen = 0;
   for (let i = 0; i <= stopIdx; i++){
     const s = st ? getRowBits(st, i) : rows[i];
     if (s.length > maxLen) maxLen = s.length;
   }
-  if (!maxLen) return "";
-  const bits = new Uint8Array(maxLen);
+  let reach = 0;
   for (let i = 0; i <= stopIdx; i++){
     const s = st ? getRowBits(st, i) : rows[i];
-    if (!s.length) continue;
+    if (!s.length || (wantNudge !== null && hasHalfNudge(s, maxLen, align) !== wantNudge)) continue;
+    const shift = alignShift(maxLen, s.length, align);
+    if (shift + s.length > reach) reach = shift + s.length;
+  }
+  if (!reach) return "";
+  const bits = new Uint8Array(reach);
+  for (let i = 0; i <= stopIdx; i++){
+    const s = st ? getRowBits(st, i) : rows[i];
+    if (!s.length || (wantNudge !== null && hasHalfNudge(s, maxLen, align) !== wantNudge)) continue;
     const shift = alignShift(maxLen, s.length, align);
     for (let k = 0; k < s.length; k++) if (s[k] === "1") bits[shift + k] ^= 1;
   }
   let out = "";
-  for (let i = 0; i < maxLen; i++) out += bits[i];
+  for (let i = 0; i < reach; i++) out += bits[i];
+  return out;
+}
+
+
+/* Накопительный ХОР. При обычных выравниваниях — как раньше, ХОР всех строк 0..stopIdx разом.
+   При "½"-выравниваниях (Центр ½/Лесенка ½) часть строк сидит на экране в "целой" сетке колонок,
+   часть — в "полу" (сдвинутой на +0.5ch, см. hasHalfNudge) — единая колонка на самом деле не одна,
+   а ДВЕ отдельные, не совпадающие друг с другом. Поэтому обе группы ХОР-ятся ОТДЕЛЬНО каждая сама
+   с собой (xorRowsFiltered), а готовые результаты чередуются побитно ("целая" группа первой,
+   "полу" второй) — и, В ОТЛИЧИЕ от парного "Интерлив" (там непарный хвост отбрасывался), здесь
+   остаток более длинной группы ДОПИСЫВАЕТСЯ в конец, не пропадает — запрос пользователя,
+   проверено на примере "1,1,11,111,1000" → "011010100". */
+function xorRowsDownTo(rows, stopIdx, align, st){
+  const isHalfAlign = align === "halfcenter" || align === "halfstairs";
+  if (!isHalfAlign) return xorRowsFiltered(rows, stopIdx, align, st, null);
+  const groupWhole = xorRowsFiltered(rows, stopIdx, align, st, false);
+  const groupHalf = xorRowsFiltered(rows, stopIdx, align, st, true);
+  const len = Math.max(groupWhole.length, groupHalf.length);
+  let out = "";
+  for (let i = 0; i < len; i++){
+    if (i < groupWhole.length) out += groupWhole[i];
+    if (i < groupHalf.length) out += groupHalf[i];
+  }
   return out;
 }
 
@@ -1910,12 +2108,22 @@ const st = {
   tplRows: [], tplPats: [],
   step: 0, aIdx: 0, bIdx: 1, goingUp: false, passCount: 0, tailBuffer: "",
   hit: null, selectedRows: new Set(),
+  // Разделители-границы (Numpad0/кнопка "— Раздел.") — множество индексов строк, у которых
+  // снизу поставлена тонкая граница; "1 по диагонали" (см. computeDiagOnesMask) при наличии
+  // разделителей считается ОТДЕЛЬНО по каждой секции между ними, как будто других строк нет —
+  // запрос пользователя.
+  rowDividers: new Set(),
+  showLengthSums: false,
   activeTab: 0, tabs: [],
   align: "center", vertical: false, padZero: false, allKinds: false, ringInvert: false,
-  pull: true, keepOrder: true, stopOnHit: true,
+  pull: true, keepOrder: true, stopOnHit: true, stopOnBalance: false,
   undo: [], running: false, msg: "",
-  horizBitIdx: 0, horizXoredLength: 0, lastHorizRow: null, horizFoundInPass: false, horizChainLen: 0,
-  horizBigChain: "", horizBigOrig: "", horizBigTargetIdx: -1,
+  horizBitIdx: 0, horizXoredLength: 0, lastHorizRow: null, lastHorizDir: null, horizFoundInPass: false, horizChainLen: 0,
+  horizBigChain: "", horizBigOrig: "", horizBigTargetIdx: -1, horizRotations: 0, horizNeedRebuild: false,
+  // 3 независимых переключателя "что при неудаче полного прохода" (2×2×2 вариантов) — запрос
+  // пользователя. horizCurrentDir — РЕАЛЬНАЯ сторона входа сейчас (может отличаться от той, что
+  // выбрана кнопкой ◄/►, если включено "Менять сторону" и уже был хотя бы один поворот).
+  horizRotateOnFail: true, horizAlternateSide: false, horizReverseChain: false, horizCurrentDir: "right",
   lastOp: null,
   xorSelectedMode: false, xorSelectedIdx: -1,
   interleaveMode: false, interleavePairIdx: -1,
@@ -1928,6 +2136,7 @@ const st = {
   seqGlueMode: "right", ringReverse: false,
   bgSearch: true, bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatRInv", "concatRRevInv", "concatL", "concatLInv", "concatLRevInv", "concatSnake", "concatSnakeInv", "concatSnakeRevInv", "vertR", "vertL", "snakeR", "snakeL"], bgSearchLastHit: -1,
   bgSubPatterns: false,
+  bgSearchAllBelow: false,
   highlight01: false,
   highlightVert1: false,
   highlightDiag1: false,
@@ -1942,7 +2151,7 @@ const st = {
 const UNDO_DEPTH = 500;
 /* Фон-поиск теперь мульти-select: можно включить сразу несколько режимов проверки одновременно */
 const BG_SEARCH_MODE_LABELS = {
-  interleave: "Интерлив", xor2: "XOR 2", xorAll: "XOR всех",
+  interleave: "Интерлив", xor2: "XOR 2", xorAll: "XOR-Чёт",
   concatR: "Сквозная →", concatRInv: "Сквозная → Инв", concatRRevInv: "Сквозная → Рев+Инв",
   concatL: "Сквозная ←", concatLInv: "Сквозная ← Инв", concatLRevInv: "Сквозная ← Рев+Инв",
   concatSnake: "Сквозная 🐍", concatSnakeInv: "Сквозная 🐍 Инв", concatSnakeRevInv: "Сквозная 🐍 Рев+Инв",
@@ -1952,6 +2161,38 @@ const BG_SEARCH_MODE_LABELS = {
 /* Какие строки результата фон-поиска сейчас развёрнуты кликом (см. render() → bgResultHtml).
    Чисто UI-состояние, не сохраняется в кэш/по вкладкам — сворачивается заново при перезагрузке. */
 const bgResultExpanded = new Set();
+/* Лог находок фон-поиска — запрос пользователя: записывать номер строки и где именно нашлась
+   (какими режимами/kind'ами), а не только мигать транзитным say() на 2.5с. Копится по ходу
+   сессии (не привязан к вкладке/кэшу, чисто дневник происходящего в этом окне браузера),
+   последняя находка — сверху. Капается по длине (BG_FIND_LOG_MAX), чтобы не расти бесконечно. */
+const BG_FIND_LOG_MAX = 200;
+let bgFindLog = [];
+// Что реально сейчас показано в окне "Результат"/"Результат фон-поиска" — обновляется в render()
+// сразу после того, как посчитан fullChainText (см. МАРКЕР ниже), кнопка "📋 Копировать"
+// берёт именно это, а не пересчитывает обычную сквозную строку заново (была старая версия,
+// игнорировавшая режим фон-поиска — копировала не то, что видно на экране).
+let lastChainResultText = "";
+/* Строка(индекс) -> массив bool той же длины, что и сама строка: true — этот ФИЗИЧЕСКИЙ бит
+   сейчас в перевёрнутом состоянии (пересёк границу нечётное число раз с начала отслеживания).
+   Массив вращается СИНХРОННО с самой строкой при ЛЮБОМ из 4 круговых сдвигов (◄/►Круг,
+   ◄/►Круг Инв) — см. rotateInvFlags*() ниже — так подсветка "путешествует" вместе с конкретным
+   битом: он подсвечивается при первом переходе границы (перевернулся) и гаснет при втором
+   (перевернулся обратно), а не гаснет/появляется просто по факту "было последнее движение".
+   Чисто визуально, не сохраняется в кэш. Чистится при уходе в другой режим (setMode). */
+let invFlagsMap = new Map();
+function getInvFlags(rowIdx, len){
+  let arr = invFlagsMap.get(rowIdx);
+  if (!arr || arr.length !== len) { arr = new Array(len).fill(false); invFlagsMap.set(rowIdx, arr); }
+  return arr;
+}
+/* Синхронный сдвиг флагов при обычном (без инверсии) круговом сдвиге строки — сама подсветка
+   не трогается, просто едет вместе с битом на новое место. */
+function rotateInvFlagsLeft(arr){ return arr.length <= 1 ? arr : arr.slice(1).concat([arr[0]]); }
+function rotateInvFlagsRight(arr){ return arr.length <= 1 ? arr : [arr[arr.length - 1]].concat(arr.slice(0, -1)); }
+/* То же самое, но у бита, переходящего границу, флаг ПЕРЕКЛЮЧАЕТСЯ (не сохраняется как есть) —
+   ровно то же место в массиве, что и переворачиваемый символ в rotateStrLeftInv/rotateStrRightInv. */
+function rotateInvFlagsLeftInv(arr){ return arr.length <= 1 ? arr : arr.slice(1).concat([!arr[0]]); }
+function rotateInvFlagsRightInv(arr){ return arr.length <= 1 ? arr : [!arr[arr.length - 1]].concat(arr.slice(0, -1)); }
 /* Развёрнут ли результат в "Черновике последнего шага" (клик по .step-log-result) — единственный
    результат в этом окне, поэтому просто bool, а не Set по ключу, как у bgResultExpanded. */
 let stepLogResultExpanded = false;
@@ -1983,6 +2224,7 @@ function createDefaultTabState(name = "Цепочка 1") {
     lastHorizRow: st.lastHorizRow || null,
     tailBuffer: st.tailBuffer || "",
     selectedRows: Array.from(st.selectedRows || []),
+    rowDividers: Array.from(st.rowDividers || []),
     undo: st.undo ? st.undo.slice() : [],
     // Настройки вида/поиска (все кнопки/галки/ползунки, включая цвета) — свои у каждой цепочки
     // (см. loadTabState/saveActiveTabState): новая вкладка стартует с того, что сейчас реально
@@ -2012,6 +2254,7 @@ function saveActiveTabState() {
     lastHorizRow: st.lastHorizRow || null,
     tailBuffer: st.tailBuffer || "",
     selectedRows: Array.from(st.selectedRows || []),
+    rowDividers: Array.from(st.rowDividers || []),
     undo: (st.undo || []).slice(),
     // Текущие настройки вида/поиска этой (ещё активной на момент вызова) вкладки — см.
     // loadTabState().
@@ -2045,6 +2288,7 @@ function loadTabState(index, skipSave = false) {
     const fd = firstDataIdx();
     if (fd >= 0) st.selectedRows.add(fd);
   }
+  st.rowDividers = new Set(t.rowDividers || []);
   st.undo = t.undo ? t.undo.slice() : [];
   st.hit = null;
   st.lastOp = null;
@@ -2109,7 +2353,8 @@ function snapshot(){
     horizBigChain: st.horizBigChain,
     horizBigOrig: st.horizBigOrig,
     horizBigTargetIdx: st.horizBigTargetIdx,
-    selectedCol: st.selectedCol
+    selectedCol: st.selectedCol,
+    rowDividers: Array.from(st.rowDividers || [])
   });
   if (st.undo.length > UNDO_DEPTH) st.undo.shift();
 }
@@ -2132,6 +2377,7 @@ function restore(){
   st.horizBigOrig = s.horizBigOrig || "";
   st.horizBigTargetIdx = s.horizBigTargetIdx != null ? s.horizBigTargetIdx : -1;
   st.selectedCol = s.selectedCol != null ? s.selectedCol : -1;
+  st.rowDividers = new Set(s.rowDividers || []);
   st.hit = null;
   return true;
 }
@@ -2183,6 +2429,28 @@ function horizChainText(rowIdx){
   return text;
 }
 
+/* То же самое, что horizChainText(rowIdx), но СВОЙ, независимый от st.seqGlueMode переключатель
+   порядка — специально для Гориз.XOR (см. "↕ Развернуть цепочку", cHorizReverseChain): reversed=
+   false — обычный порядок (строка 0 первая, ближайшая к цели последняя, тот же ведущий край, что
+   и раньше); reversed=true — порядок строк переворачивается (ближайшая к цели строка первая,
+   строка 0 последняя) — сам ведущий край (см. applyHorizBigSlide) от этого меняется на
+   противоположный, НЕЗАВИСИМО от того, с какой стороны (◄/►) цепочка входит в цель — отсюда и
+   2×2 комбинаций сторона×разворот. Общий seqGlueMode не трогаем — у него своя область (Интерлив/
+   XOR сквозной), Гориз.XOR со своей настройкой не пересекается. */
+function horizChainTextOrdered(rowIdx, reversed){
+  let text = "";
+  if (reversed) {
+    for (let i = rowIdx - 1; i >= 0; i--){
+      if (st.rows[i] && st.rows[i].length) text += getRowBits(st, i);
+    }
+  } else {
+    for (let i = 0; i < rowIdx; i++){
+      if (st.rows[i] && st.rows[i].length) text += getRowBits(st, i);
+    }
+  }
+  return text;
+}
+
 /* "Якорная" строка для ЖИВОГО предпросмотра сквозной (окно "Результат" вне режима фон-поиска,
    и пустой "Черновик" до первого реального шага) — самая нижняя из выделенных (тот же принцип,
    что и у computeBgSearchTarget: "ориентир — самая нижняя выделенная"), а не st.bIdx (тот
@@ -2197,19 +2465,24 @@ function seqAnchorIdx(){
 
 /* Один шаг объединённого поиска для Гориз.XOR: chainText (сквозная — уже найденные строки
    выше rowIdx, в порядке horizChainText: строка 0 первая, строка rowIdx-1 последняя) —
-   скользит сквозь fullOrigText (chainText + текущее содержимое rowIdx), въезжая СПРАВА
-   РЕВЕРСОМ: ведущий край — это ПОСЛЕДНИЙ символ chainText (то есть конец самой НИЖНЕЙ из
-   строк цепочки, ближайшей к цели), он первым касается правого края цели; хвост цепочки
-   (chainText[0], начало самой ВЕРХНЕЙ строки) подходит только в самом конце прохода. Позиция
-   p результата берёт chain[fullLen+chainLen-1-stepNumber-p]. На каждом шаге результат
-   содержит текущее состояние всей объединённой строки целиком; поиск паттерна строки rowIdx
-   идёт по этому результату целиком, а не только в её собственном окне. */
-function applyHorizBigSlide(chainText, fullOrigText, stepNumber){
+   скользит сквозь fullOrigText (chainText + текущее содержимое rowIdx). Направление dir:
+   "right" (по умолчанию, ► Гориз.XOR) — въезжает СПРАВА РЕВЕРСОМ: ведущий край — это
+   ПОСЛЕДНИЙ символ chainText (конец самой НИЖНЕЙ из строк цепочки, ближайшей к цели), он
+   первым касается правого края цели; хвост цепочки (chainText[0], начало самой ВЕРХНЕЙ
+   строки) подходит только в самом конце прохода. "left" (◄ Гориз.XOR, запрос пользователя) —
+   зеркально: ведущий край — ПЕРВЫЙ символ chainText, первым касается ЛЕВОГО края цели, та же
+   цепочка целиком, просто входит с другой стороны. Позиция p результата берёт (right)
+   chain[fullLen+chainLen-1-stepNumber-p] либо (left) chain[stepNumber-1+chainLen-p]. На
+   каждом шаге результат содержит текущее состояние всей объединённой строки целиком; поиск
+   паттерна строки rowIdx идёт по этому результату целиком, а не только в её собственном окне. */
+function applyHorizBigSlide(chainText, fullOrigText, stepNumber, dir){
   const fullLen = fullOrigText.length;
   const chainLen = chainText.length;
   let out = "";
   for (let p = 0; p < fullLen; p++){
-    const chainIdx = fullLen + chainLen - 1 - stepNumber - p;
+    const chainIdx = dir === "left"
+      ? (stepNumber - 1 + chainLen - p)
+      : (fullLen + chainLen - 1 - stepNumber - p);
     const origBit = fullOrigText[p];
     if (chainIdx >= 0 && chainIdx < chainLen) {
       const chBit = chainText[chainIdx];
@@ -2228,13 +2501,21 @@ function applyHorizBigSlide(chainText, fullOrigText, stepNumber){
 /* Диапазон позиций p ВСЕЙ объединённой строки fullOrigText (chainText + целевая строка,
    строго в порядке физического стека сверху вниз — chainText[0]=самая верхняя строка,
    конец fullOrigText=целевая/нижняя строка), сейчас накрытых XOR'ом на шаге stepNumber —
-   та же формула, что и chainIdx в applyHorizBigSlide, только выражена через p. Единая
-   подсветка: сначала растёт ВНУТРИ целевой строки снизу (p ближе к fullLen-1), и только
-   после того как дойдёт до её начала (p=chainLen), продолжает расти ВВЕРХ по строкам
-   цепочки — никогда не подсвечивает верхние строки раньше, чем целевая пройдена целиком. */
-function horizWindowRange(chainLen, fullLen, stepNumber){
-  const start = Math.max(0, fullLen - stepNumber);
-  const end = Math.min(fullLen - 1, fullLen - stepNumber + chainLen - 1);
+   та же формула, что и chainIdx в applyHorizBigSlide, только выражена через p.
+   dir="right" (по умолчанию): подсветка сначала растёт ВНУТРИ целевой строки снизу (p ближе
+   к fullLen-1), и только после того как дойдёт до её начала (p=chainLen), продолжает расти
+   ВВЕРХ по строкам цепочки — никогда не подсвечивает верхние строки раньше, чем целевая
+   пройдена целиком. dir="left" — зеркально: растёт от p=0 (начало самой верхней строки цепочки)
+   вниз к целевой строке. */
+function horizWindowRange(chainLen, fullLen, stepNumber, dir){
+  let start, end;
+  if (dir === "left") {
+    start = Math.max(0, stepNumber);
+    end = Math.min(fullLen - 1, stepNumber + chainLen - 1);
+  } else {
+    start = Math.max(0, fullLen - stepNumber);
+    end = Math.min(fullLen - 1, fullLen - stepNumber + chainLen - 1);
+  }
   if (end < start) return null;
   return { start, end };
 }
@@ -2264,20 +2545,23 @@ function findHorizPatternHit(text, patText){
    рисовалось поверх сквозной строки результата (#chainText), теперь показывается в "Черновике
    шага" (см. renderStepLogBox()). null, если сейчас не режим horiz_xor или ещё нет строки b. */
 function computeHorizXorInfo(){
-  if (st.mode !== "horiz_xor") return null;
+  if (st.mode !== "horiz_xor" && st.mode !== "horiz_xor_left") return null;
   const b = st.bIdx;
   if (b < 0 || !st.rows[b]) return null;
+  // РЕАЛЬНАЯ текущая сторона входа — не жёстко по режиму кнопки, а st.horizCurrentDir: может
+  // отличаться, если включено "⇄ Менять сторону" и уже был хотя бы один поворот на этой строке.
+  const dir = st.horizCurrentDir || (st.mode === "horiz_xor_left" ? "left" : "right");
 
   // Сквозная (маленькая, неизменная) = уже найденные строки выше b — она и есть скользящая
-  // цепочка, въезжающая СПРАВА в цель. Цель (большая, неизменная) = сквозная + текущее
-  // содержимое строки b. Результат = applyHorizBigSlide на шаге S, с подсветкой позиций,
-  // сейчас накрытых въезжающей цепочкой.
+  // цепочка, въезжающая СПРАВА (или СЛЕВА, см. dir) в цель. Цель (большая, неизменная) =
+  // сквозная + текущее содержимое строки b. Результат = applyHorizBigSlide на шаге S, с
+  // подсветкой позиций, сейчас накрытых въезжающей цепочкой.
   const chain = st.horizBigChain || "";
   const full = st.horizBigOrig || getRowBits(st, b);
   const chainLen = chain.length;
   const fullLen = full.length;
   const S = st.horizXoredLength || 0; // сколько шагов поиска уже сделано
-  const res = S > 0 ? applyHorizBigSlide(chain, full, S) : full;
+  const res = S > 0 ? applyHorizBigSlide(chain, full, S, dir) : full;
 
   // Паттерн СЛЕДУЮЩЕЙ строки (b+1), не своей (см. findPatByOrd/doStep isHorizXor — тот же
   // принцип, что у Интерлив/XOR сквозной) — ИМЕННО с ним сверяется res на каждом шаге
@@ -2292,7 +2576,7 @@ function computeHorizXorInfo(){
 
   // Единая шкала p по всей объединённой строке (chain, затем цель) — подсветка сперва растёт
   // внутри цели снизу, и только потом переходит на цепочку.
-  const winRange = horizWindowRange(chainLen, fullLen, S);
+  const winRange = horizWindowRange(chainLen, fullLen, S, dir);
   let chainHtml = "";
   for (let idx = 0; idx < chainLen; idx++) {
     const ch = chain[idx];
@@ -2326,7 +2610,13 @@ function computeHorizXorInfo(){
 
   // Прогресс единого непрерывного прохода (въезд + полное перекрытие + выезд)
   const totalSteps = st.horizChainLen || (chainLen + fullLen);
-  return { chainHtml, origHtml, resHtml, patHtml, step: Math.min(S, totalSteps), totalSteps };
+  // Текущее состояние 3 переключателей — сторона входа/поворот/разворот цепочки, запрос
+  // пользователя "отображать в результатах" (см. cHorizRotateOnFail/cHorizAlternateSide/
+  // cHorizReverseChain в HTML).
+  const stateLabel = (dir === "left" ? "◄ слева" : "► справа") +
+    (st.horizReverseChain ? ", цепочка развёрнута" : "") +
+    ((st.horizRotations || 0) > 0 ? `, поворот ${st.horizRotations}` : "");
+  return { chainHtml, origHtml, resHtml, patHtml, step: Math.min(S, totalSteps), totalSteps, stateLabel };
 }
 
 /* === МАРКЕР 07: СТЕП И ЛОГИКА === */
@@ -2349,7 +2639,7 @@ function logStep(opName, rowsUsed, resultText, detail, changes, inputs, highligh
   };
 }
 
-function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, isXorProj = false){
+function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, isXorProj = false, horizDir = "right"){
   const a = st.aIdx, b = st.bIdx;
   // Гориз.XOR работает с ОДНОЙ строкой (b) — своя цепочка строится из строк строго выше,
   // 'a' ему не нужен. Общая проверка "a!==b, обе непустые" рассчитана на режимы с парой
@@ -2420,13 +2710,25 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
     // длиной chainLen+fullLen шагов, без "лапов" и повторов. Решение "перейти на след.
     // строку / остановиться" принимается НИЖЕ, после того как весь проход завершится.
     else if (isHorizXor) {
-      if (st.lastHorizRow !== b) {
+      if (st.lastHorizRow !== b || st.lastHorizDir !== horizDir) {
         st.horizXoredLength = 0;
         st.horizFoundInPass = false;
         st.lastHorizRow = b;
-        st.horizBigChain = horizChainText(b);
+        st.lastHorizDir = horizDir;
+        st.horizRotations = 0;
+        st.horizCurrentDir = horizDir; // сброс на сторону, выбранную кнопкой ◄/► — даже если
+                                        // "Менять сторону" на прошлой строке успела её перевернуть
+        st.horizBigChain = horizChainTextOrdered(b, st.horizReverseChain);
         st.horizBigOrig = st.horizBigChain + rowB;
         st.horizBigTargetIdx = b;
+        st.horizChainLen = st.horizBigChain.length + st.horizBigOrig.length;
+      } else if (st.horizNeedRebuild) {
+        // Строка была повёрнута на прошлом клике (полный проход без находки, см. ниже) — тот же
+        // ряд/направление, просто пересобираем цепочку под НОВОЕ содержимое строки, счётчик
+        // поворотов (st.horizRotations) НЕ трогаем.
+        st.horizNeedRebuild = false;
+        st.horizBigChain = horizChainTextOrdered(b, st.horizReverseChain);
+        st.horizBigOrig = st.horizBigChain + rowB;
         st.horizChainLen = st.horizBigChain.length + st.horizBigOrig.length;
       }
 
@@ -2457,15 +2759,15 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
         snapshot();
 
         const stepNumber = st.horizXoredLength + 1; // 1-индексированный номер шага поиска
-        const res = applyHorizBigSlide(st.horizBigChain, st.horizBigOrig, stepNumber);
+        const res = applyHorizBigSlide(st.horizBigChain, st.horizBigOrig, stepNumber, st.horizCurrentDir);
         const rowLenHere = rowB.length;
 
         // "Хвост" результата (последние rowLenHere символов) показываем в самой строке —
         // для наглядности; реальный поиск идёт по ВСЕЙ сквозной строке res целиком.
         st.rows[b] = res.length >= rowLenHere ? res.slice(-rowLenHere) : res;
 
-        const winRange = horizWindowRange(st.horizBigChain.length, st.horizBigOrig.length, stepNumber);
-        logStep("Гориз.XOR", [b + 1], res, `Шаг поиска ${stepNumber}/${st.horizChainLen}`, [], inputsForLog, winRange);
+        const winRange = horizWindowRange(st.horizBigChain.length, st.horizBigOrig.length, stepNumber, st.horizCurrentDir);
+        logStep("Гориз.XOR", [b + 1], res, `Шаг поиска ${stepNumber}/${st.horizChainLen} (${st.horizCurrentDir === "left" ? "◄ слева" : "► справа"}${st.horizReverseChain ? ", цепочка развёрнута" : ""}${st.horizRotations ? `, поворот ${st.horizRotations}` : ""})`, [], inputsForLog, winRange);
         if (!st.running) say(`Гориз.XOR: шаг поиска ${stepNumber}/${st.horizChainLen} → '${res}'`);
 
         st.horizXoredLength++;
@@ -2550,9 +2852,29 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
       if (!isXor || !st.stageXor) snapshot();
 
       let res;
-      if (isXor) res = pairOnly ? xorPair(getRowBits(st, a), getRowBits(st, b), st.align)
-                                : xorRowsDownTo(st.rows, b, st.align, st);
-      else       res = interleavePair(getRowBits(st, a), getRowBits(st, b), st.align);
+      if (isXor) {
+        if (pairOnly) {
+          // При "½"-выравниваниях (Центр ½/Лесенка ½) — ХОР-им НЕ пару a/b как есть, а ВСЕ
+          // строки 0..b из ТОЙ ЖЕ под-сетки колонок, что и сама b (та же логика, что у XOR-Чёт,
+          // только БЕЗ второй группы) — запрос пользователя ("хорить со всеми строками выше
+          // своей чётности, с теми где биты под битами"). Паддинг (padToLen выше) на a/b не
+          // трогаем — он относится к обычному (не-½) случаю ниже.
+          const isHalfAlign = st.align === "halfcenter" || st.align === "halfstairs";
+          if (isHalfAlign) {
+            const rowBHere = getRowBits(st, b);
+            let maxLenXor2 = 0;
+            for (let i = 0; i <= b; i++) { const s = getRowBits(st, i); if (s.length > maxLenXor2) maxLenXor2 = s.length; }
+            const wantNudge = hasHalfNudge(rowBHere, maxLenXor2, st.align);
+            res = xorRowsFiltered(st.rows, b, st.align, st, wantNudge);
+          } else {
+            res = xorPair(getRowBits(st, a), getRowBits(st, b), st.align);
+          }
+        } else {
+          res = xorRowsDownTo(st.rows, b, st.align, st);
+        }
+      } else {
+        res = interleavePair(getRowBits(st, a), getRowBits(st, b), st.align);
+      }
       
       if (!res.length) {
         st.undo.pop();
@@ -2642,11 +2964,36 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
       return true;
     }
 
-    // Сквозная цепочка целиком проскользила через строку (въехала, прошла, выехала) —
-    // теперь решаем: перейти на следующую строку (если было совпадение) или остановиться.
-    // Если весь объединённый поиск исчерпан БЕЗ находки (st.horizFoundInPass===false) —
-    // дальше двигаться некуда: искать было уже негде, ни переход, ни генерация не сработают
-    // (оба ветвления ниже требуют horizFoundInPass), и мы просто провалимся в стоп в конце.
+    // Полный проход завершён БЕЗ находки — крутим ЦЕЛЕВУЮ строку по кругу и заходим заново
+    // (см. подсказку кнопки "...крутят по кругу до находки" — раньше это было не так,
+    // поиск просто останавливался; запрос пользователя — "зациклевать"). Поворачиваем
+    // ИСХОДНУЮ строку (последние rowLen символов st.horizBigOrig — она НЕ трогалась, в отличие
+    // от st.rows[b], куда весь проход писал промежуточный XOR-"хвост"), не текущий XOR-artefact.
+    // Полный круг — rowLen−1 дополнительных поворотов (rowLen состояний всего, включая исходное).
+    if (!st.horizFoundInPass && st.horizRotateOnFail) {
+      const origRowB = st.horizBigOrig.slice(st.horizBigChain.length);
+      if (origRowB.length > 1 && (st.horizRotations || 0) < origRowB.length - 1) {
+        snapshot();
+        st.rows[b] = rotateStrRight(origRowB);
+        st.horizRotations = (st.horizRotations || 0) + 1;
+        // "⇄ Менять сторону" — при каждом повороте переключаем сторону входа (►↔◄), не только
+        // крутим строку — запрос пользователя, ось (б) из "3 независимых переключателей".
+        if (st.horizAlternateSide) st.horizCurrentDir = st.horizCurrentDir === "left" ? "right" : "left";
+        st.horizNeedRebuild = true;
+        st.horizXoredLength = 0;
+        st.horizChainLen = 0;
+        const sideLabel = st.horizCurrentDir === "left" ? "◄ слева" : "► справа";
+        logStep("Гориз.XOR", [b + 1], st.rows[b], `Полный проход без находки — поворот строки (${st.horizRotations}/${origRowB.length - 1}), новый заход (${sideLabel})`, [], inputsForLog);
+        if (!st.running) say(`Гориз.XOR: строка ${b + 1} — проход без находки, поворот (${st.horizRotations}/${origRowB.length - 1}), пробуем снова (${sideLabel})`);
+        return true;
+      }
+    }
+
+    // Сквозная цепочка целиком проскользила через строку (въехала, прошла, выехала), И круг
+    // поворотов исчерпан — теперь решаем: перейти на следующую строку (если было совпадение)
+    // или остановиться. Если весь объединённый поиск исчерпан БЕЗ находки — дальше двигаться
+    // некуда: искать было уже негде, ни переход, ни генерация не сработают (оба ветвления ниже
+    // требуют horizFoundInPass), и мы просто провалимся в стоп в конце.
     const nextRowPeek = nextDataIdx(b + 1);
     const nextAlreadyFound = nextRowPeek >= 0 && !!(findPatByOrd(nextRowPeek) || {}).found;
     const canGoOnFound = st.horizFoundInPass || nextAlreadyFound;
@@ -2660,10 +3007,16 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
       st.horizFoundInPass = false;
       st.horizXoredLength = 0;
       st.horizChainLen = 0;
-      // lastHorizRow НЕ трогаем — на следующем клике compute-блок увидит lastHorizRow!==bIdx
-      // и сам пересоберёт сквозную (horizBigChain/horizBigOrig) заново для новой строки; здесь
-      // обновляем их же для показа в оверлее сразу, без ожидания следующего клика.
-      st.horizBigChain = horizChainText(nextRow);
+      // Баг: тут раньше стоял СТАРЫЙ horizChainText() (игнорирует "↕ Развернуть цепочку") и НЕ
+      // сбрасывались horizRotations/horizCurrentDir — превью в оверлее сразу после перехода на
+      // новую строку показывало неактуальные цепочку/сторону/счётчик поворотов (сбрасывалось
+      // только на СЛЕДУЮЩЕМ клике) — запрос пользователя ("при добавлении новой строки что-то
+      // затупило, не вижу движения"). lastHorizRow по-прежнему НЕ трогаем — следующий клик
+      // всё равно перестроит с нуля через тот же путь (lastHorizRow!==bIdx), тут просто сразу
+      // приводим показ в консистентное состояние, не дожидаясь клика.
+      st.horizRotations = 0;
+      st.horizCurrentDir = horizDir;
+      st.horizBigChain = horizChainTextOrdered(nextRow, st.horizReverseChain);
       st.horizBigOrig = st.horizBigChain + getRowBits(st, nextRow);
       st.horizBigTargetIdx = nextRow;
       logStep("Гориз.XOR", [nextRow + 1], getRowBits(st, nextRow), `Переход на строку ${nextRow + 1}`, [], inputsForLog);
@@ -2692,10 +3045,15 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
         st.horizXoredLength = 0;
         st.horizFoundInPass = false;
         st.horizChainLen = 0;
+        // Тот же фикс, что и у обычного перехода на след. строку выше — старый horizChainText()
+        // + не сброшенные horizRotations/horizCurrentDir давали неактуальное превью сразу после
+        // генерации строки-кандидата.
+        st.horizRotations = 0;
+        st.horizCurrentDir = horizDir;
         // lastHorizRow НЕ трогаем (как и при обычном переходе выше) — следующий клик сам
         // соберёт объединённый поиск (chain=строки выше genIdx + этот кандидат) с нуля; здесь
         // обновляем их же для показа в оверлее сразу.
-        st.horizBigChain = horizChainText(genIdx);
+        st.horizBigChain = horizChainTextOrdered(genIdx, st.horizReverseChain);
         st.horizBigOrig = st.horizBigChain + candidate;
         st.horizBigTargetIdx = genIdx;
 
@@ -2822,9 +3180,33 @@ function setAutoBtnState(running){
   b.title = running ? "Остановить" : "Автоматический прогон по выбранному режиму (Enter) / повторный клик — остановить";
 }
 
+/* Счётчик "Вар: N/M (строки ...)" в шапке — текущий вариант / общее число вариантов кругового
+   сдвига (см. totalTurns в autoRun()) и номера строк, которые реально крутятся — виден только
+   пока актуален (◄/►Круг/Круг Инв, известен НОК). st.shiftVariantTotal: null — не круговой
+   сдвиг (скрыть), 0 — предел неизвестен/НОК слишком большой (см. lcmSafe), число — сам предел. */
+function updateVariantCounter(){
+  const wrap = document.getElementById("variantCounterWrap");
+  if (!wrap) return;
+  if (!st.shiftVariantTotal) { wrap.style.display = "none"; return; }
+  wrap.style.display = "";
+  const noEl = document.getElementById("variantNo");
+  const totalEl = document.getElementById("variantTotal");
+  const rowsEl = document.getElementById("variantRows");
+  if (noEl) noEl.textContent = st.shiftVariantTurns || 0;
+  if (totalEl) totalEl.textContent = st.shiftVariantTotal;
+  if (rowsEl) rowsEl.textContent = (st.shiftVariantRows && st.shiftVariantRows.length) ? st.shiftVariantRows.join(",") : "";
+}
+
 function resetAll(){
   st.running = false;
   setAutoBtnState(false);
+  // Оранжевая подсветка "перевёрнутых" битов (см. .bit-inv/invFlagsMap, "◄/►Круг Инв") и счётчик
+  // "Вар: N/M" — тоже часть текущей сессии кругового сдвига, Сброс должен убирать и их, а не
+  // только сами строки (запрос пользователя — краска битов оставалась после Сброса/Escape).
+  invFlagsMap.clear();
+  st.shiftVariantTotal = null;
+  st.shiftVariantRows = null;
+  st.manualShiftTurns = 0;
 
   // Ползунок rowCount должен резать ОБЕ ветки одинаково — раньше limit считался ТОЛЬКО в ветке
   // "нет сохранёнки", и для вкладок с 💾-сохранением (обычное дело) двигать ползунок вообще ничего
@@ -2863,8 +3245,9 @@ function resetAll(){
   // пользователь может специально держать выделение (например, чтобы сразу опробовать Тетрис/
   // сдвиги на тех же строках после отката).
   st.hit = null; st.undo = [];
-  st.horizBitIdx = 0; st.horizXoredLength = 0; st.lastHorizRow = null; st.horizFoundInPass = false; st.horizChainLen = 0;
-  st.horizBigChain = ""; st.horizBigOrig = ""; st.horizBigTargetIdx = -1;
+  st.horizBitIdx = 0; st.horizXoredLength = 0; st.lastHorizRow = null; st.lastHorizDir = null; st.horizFoundInPass = false; st.horizChainLen = 0;
+  st.horizBigChain = ""; st.horizBigOrig = ""; st.horizBigTargetIdx = -1; st.horizRotations = 0; st.horizNeedRebuild = false;
+  st.horizCurrentDir = "right";
   st.lastOp = null;
   const f = firstDataIdx(), s2 = nextDataIdx(f + 1);
   st.aIdx = f < 0 ? 0 : f; st.bIdx = s2 < 0 ? 1 : s2; st.goingUp = false;
@@ -2877,6 +3260,7 @@ function resetAll(){
   if ((!st.selectedRows || st.selectedRows.size === 0) && f >= 0) {
     st.selectedRows = new Set([f]);
   }
+  updateVariantCounter();
   render();
 }
 /* === МАРКЕР 09: RENDER === */
@@ -2884,6 +3268,7 @@ const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const KIND_CLS = ["", "inv", "rev", "invrev"];
 const KIND_LABELS_RU = ["прямая", "инверсия", "реверс", "инверсия+реверс"];
 const KIND_LABELS_SHORT = ["пр", "инв", "рев", "инв+рев"];
+const ALIGN_LABELS = { left: "По левому краю", center: "По центру", right: "По правому краю", halfcenter: "Центр ½", stairs: "Лесенка", halfstairs: "Лесенка ½" };
 
 /* Компактная запись номеров строк для шапки "Черновика шага": подряд идущие номера — диапазоном
    ("2-3"), остальные через запятую ("2-3, 7"). op.rows бывает и готовой строкой (напр. "1–5" из
@@ -2967,6 +3352,30 @@ function formatBalanceTotals(total1, total0, w1, w0){
     '</span>-<span style="color:#888">' + t0 + "</span></span>";
 }
 
+/* Суммарный баланс единиц/нулей по ВСЕМ выделенным строкам вместе (Σ в шапке "Результата") —
+   запрос пользователя: при выделении нескольких строк видеть общий счёт, не складывая построчные
+   в уме, и подсветку, если единиц и нулей поровну (та же .row-balance-eq, что и у построчного). */
+function computeSelBalance(){
+  let total1 = 0, total0 = 0;
+  if (st.selectedRows) for (const i of st.selectedRows) {
+    const rb = computeRowBalance(st.rows[i] || "");
+    total1 += rb.total1; total0 += rb.total0;
+  }
+  return { total1, total0 };
+}
+function updateSelBalance(){
+  const wrap = document.getElementById("selBalanceWrap");
+  if (!wrap) return;
+  if (!st.showBalances || !st.selectedRows || st.selectedRows.size === 0) { wrap.style.display = "none"; return; }
+  wrap.style.display = "";
+  const { total1, total0 } = computeSelBalance();
+  wrap.classList.toggle("row-balance-eq", total1 === total0);
+  const el1 = document.getElementById("selBalance1");
+  const el0 = document.getElementById("selBalance0");
+  if (el1) el1.textContent = total1;
+  if (el0) el0.textContent = total0;
+}
+
 /* "Пробеги вместо битов" (#bRunsAsBits) — сама строка "0"/"1" ПОЛНОСТЬЮ заменяется её пробегами
    (см. computeRowBalance() выше), каждый своим цветом (var(--c1)/var(--c0), как у обычных
    битов), НАЧИНАЯ с той же позиции (сдвиг alignShift), что и настоящие биты — только визуально,
@@ -3048,48 +3457,61 @@ function computeVertOnesMask(rows, align){
    computeVertOnesMask() выше), поэтому старт участка проверяется по ПРАВОМУ краю первой строки
    (последний или предпоследний её символ), а концом участка считается ТОЛЬКО тот случай, когда
    последняя строка участка дошла ровно до локального индекса 0 (упёрлась в левый край) — а не
-   любое "не хватило длины". Работает в остальных режимах выравнивания (↔/⇥/↔½) по-старому, т.к.
-   опирается на ту же alignShift(). */
+   любое "не хватило длины". На "Центр ½"/"Лесенка ½" — диагональ идёт с шагом ПОЛсимвола за
+   строку, а не целого (см. shift2x/dirStep ниже — учитывает +0.5ch нудж, которого целочисленный
+   alignShift() не знает, запрос пользователя). В остальных режимах — как раньше. */
 function computeDiagOnesMask(rows, align){
   const n = rows.length;
   const masks = new Array(n).fill(null);
   if (n < 2) return masks;
   let maxLen = 0;
   for (const s of rows) if (s.length > maxLen) maxLen = s.length;
+  const isHalfAlign = align === "halfcenter" || align === "halfstairs";
   const shifts = rows.map(s => s.length ? alignShift(maxLen, s.length, align) : 0);
+  // Всё считается в ПОЛУсимвольных единицах (×2) — на "½"-выравниваниях часть строк имеет ещё
+  // +0.5ch визуальный сдвиг (см. hasHalfNudge/halfShiftAttr в render()), которого целочисленный
+  // alignShift() не знает. На этих режимах диагональ идёт с шагом ПОЛсимвола за строку (запрос
+  // пользователя — "диагональ должна идти по сдвигу ½"), т.е. dirStep=1 в ×2-единицах = 0.5
+  // реального столбца; на обычных выравниваниях dirStep=2×0.5=1 целый столбец/строку — то же
+  // самое поведение, что было раньше (rel2x всегда чётный, k=rel2x/2 совпадает со старым k).
+  const shift2x = rows.map((s, i) => s.length ? (2 * shifts[i] + (isHalfAlign && hasHalfNudge(s, maxLen, align) ? 1 : 0)) : 0);
+  const dirStep = isHalfAlign ? 1 : 2;
   const addHit = (idx, k) => {
     if (!masks[idx]) masks[idx] = new Set();
     masks[idx].add(k);
   };
   for (const dir of [-1, 1]) {
-    for (let offset = -(n - 1); offset < maxLen + (n - 1); offset++) {
+    for (let offset2x = -(n - 1) * dirStep; offset2x < 2 * maxLen + (n - 1) * dirStep; offset2x++) {
       let runStart = -1;
       for (let i = 0; i <= n; i++) {
         let hit = false;
-        let boundaryStop = true; // строка кончилась (или строк больше нет) — не разрыв; false = встретили именно "0"
+        let boundaryStop = true; // строка кончилась / бита тут структурно нет (не тот полу-такт) — не разрыв; false = встретили именно "0"
         if (i < n) {
           const s = rows[i];
-          const absCol = offset + dir * i;
-          const k = absCol - shifts[i];
-          const inBounds = !!(s && s.length && k >= 0 && k < s.length);
-          hit = inBounds && s[k] === '1';
-          if (inBounds && !hit) boundaryStop = false;
+          const absCol2x = offset2x + dir * dirStep * i;
+          const rel2x = absCol2x - shift2x[i];
+          if (s && s.length && rel2x % 2 === 0) {
+            const k = rel2x / 2;
+            const inBounds = k >= 0 && k < s.length;
+            hit = inBounds && s[k] === '1';
+            if (inBounds && !hit) boundaryStop = false;
+          }
         }
         if (hit) {
           if (runStart === -1) runStart = i;
         } else {
           if (runStart !== -1 && i - runStart >= 2) {
-            const k0 = (offset + dir * runStart) - shifts[runStart];
+            const k0 = ((offset2x + dir * dirStep * runStart) - shift2x[runStart]) / 2;
             const lastRow = i - 1;
-            const kEnd = (offset + dir * lastRow) - shifts[lastRow];
+            const kEnd = ((offset2x + dir * dirStep * lastRow) - shift2x[lastRow]) / 2;
             const startsOk = align === 'left'
               ? (k0 === rows[runStart].length - 1 || k0 === rows[runStart].length - 2)
               : (k0 === 0 || k0 === 1);
             const endsOk = align === 'left' ? (kEnd === 0) : boundaryStop;
             if (startsOk && endsOk) {
               for (let j = runStart; j < i; j++) {
-                const absColJ = offset + dir * j;
-                addHit(j, absColJ - shifts[j]);
+                const absColJ2x = offset2x + dir * dirStep * j;
+                addHit(j, (absColJ2x - shift2x[j]) / 2);
               }
             }
           }
@@ -3099,6 +3521,30 @@ function computeDiagOnesMask(rows, align){
     }
   }
   return masks;
+}
+
+/* "1 по диагонали" с учётом разделителей (см. rowDividers/toggleRowDivider) — если разделители
+   есть, диагональ считается ОТДЕЛЬНО по каждой секции между ними (как будто других строк не
+   существует): 0 разделителей — как обычно, computeDiagOnesMask() по всей таблице разом; 1 —
+   две секции (верх..разделитель, разделитель+1..низ); несколько — по каждой паре соседних
+   (плюс верхняя и нижняя крайние секции) — запрос пользователя. Разделитель СНИЗУ строки b —
+   b последняя в своей секции, следующая начинается со строки b+1. */
+function computeDiagOnesMaskSectioned(rows, align, dividers){
+  if (!dividers || dividers.size === 0) return computeDiagOnesMask(rows, align);
+  const n = rows.length;
+  const merged = new Array(n).fill(null);
+  const boundaries = Array.from(dividers).filter(i => i >= 0 && i < n - 1).sort((a, b) => a - b);
+  if (!boundaries.length) return computeDiagOnesMask(rows, align);
+  let start = 0;
+  const sections = [];
+  for (const b of boundaries) { sections.push([start, b]); start = b + 1; }
+  sections.push([start, n - 1]);
+  for (const [lo, hi] of sections) {
+    if (hi < lo) continue;
+    const subMask = computeDiagOnesMask(rows.slice(lo, hi + 1), align);
+    for (let i = 0; i < subMask.length; i++) if (subMask[i]) merged[lo + i] = subMask[i];
+  }
+  return merged;
 }
 
 /* Раскрашивает биты 0/1 в HTML — используется и основной таблицей, и Черновиком последнего шага.
@@ -3252,6 +3698,157 @@ function clearColumnHighlight(){
   document.querySelectorAll(".col-hover-bit").forEach(el => el.classList.remove("col-hover-bit"));
 }
 
+/* Лог находок фон-поиска (см. bgFindLog выше) — своя отдельная вкладка "Лог находок" (см. MENUS),
+   а не часть панели "Результат фон-поиска" — запрос пользователя. Пишет прямо в #findLogList,
+   последняя находка сверху. Таблица: строка — номер найденной строки, дальше один СТОЛБЕЦ НА
+   КАЖДЫЙ РЕЖИМ, который хоть раз встретился в логе (не все 16 возможных сразу — не разрастаться
+   вширь без нужды) — "+" (с подсказкой kind'ов) там, где этот режим реально совпал в этой
+   находке, иначе пусто — запрос пользователя "распредели по столбцам, где нашлось ставь +,
+   где нет — ничего не ставь". */
+function renderFindLogPanel(){
+  // "🧮 Суммы длин" — перенесено сюда из панели "Результат фон-поиска" (запрос пользователя),
+  // считается независимо от самого лога находок (не завязано на bgFindLog), поэтому обновляем
+  // его ДО ранних return ниже — иначе при пустом логе блок сумм длин молча пропадал бы тоже.
+  const lsumEl = document.getElementById("lengthSumsContainer");
+  if (lsumEl) {
+    const selIdx = (st.selectedRows && st.selectedRows.size) ? Math.max(...st.selectedRows) : -1;
+    lsumEl.innerHTML = (st.showLengthSums && selIdx > 0) ? renderLengthSumsHtml(st, selIdx) : "";
+  }
+
+  const el = document.getElementById("findLogList");
+  if (!el) return;
+  if (!bgFindLog.length) { el.innerHTML = '<span class="empty">находок пока нет</span>'; return; }
+
+  const modesUsed = [];
+  for (const e of bgFindLog) for (const mode in e.matches) if (!modesUsed.includes(mode)) modesUsed.push(mode);
+
+  const head = '<div class="find-log-row find-log-head">' +
+    '<span class="find-log-cell find-log-row-no"></span>' +
+    modesUsed.map(m => '<span class="find-log-cell find-log-mode" title="' + esc(BG_SEARCH_MODE_LABELS[m] || m) + '">' + esc(BG_SEARCH_MODE_LABELS[m] || m) + '</span>').join("") +
+  '</div>';
+
+  const rows = bgFindLog.map(e => {
+    const cells = modesUsed.map(m => {
+      const kinds = e.matches[m];
+      if (!kinds) return '<span class="find-log-cell"></span>';
+      const tip = kinds.map(k => KIND_LABELS_SHORT[k.kind] + (k.skip ? "⏭" : "")).join(",");
+      return '<span class="find-log-cell find-log-plus" title="' + esc(tip) + '">+</span>';
+    }).join("");
+    return '<div class="find-log-row"><span class="find-log-cell find-log-row-no">Стр. ' + (e.row + 1) + '</span>' + cells + '</div>';
+  }).join("");
+
+  el.innerHTML = head + rows;
+}
+
+/* "🧮 Суммы длин" — новый инструмент фон-поиска: из каких комбинаций строк ВЫШЕ выделенной (по
+   возрастанию номера, без повторов) можно собрать её ДЛИНУ (сумма длин строк комбинации ровно
+   равна длине выделенной), напр. длина 6 = строки "1+6", "2+5", "3+4", "1+2+4"... — запрос
+   пользователя. Перебор подмножеств в худшем случае экспоненциальный — останавливаемся, как
+   только набрали LENGTH_SUM_MAX_SETS штук (для реальных размеров таблицы этого достаточно,
+   искать AБСОЛЮТНО все подмножества незачем — их и так может быть очень много). */
+const LENGTH_SUM_MAX_SETS = 30;
+const LENGTH_SUM_MAX_COMBOS = 60;
+function findLengthSumSubsets(st, selIdx, maxSets){
+  const targetLen = getRowBits(st, selIdx).length;
+  if (!targetLen || selIdx <= 0) return [];
+  const candidates = [];
+  // Строка 0 в комбинации НЕ участвует вообще (запрос пользователя) — начинаем с i=1, не с i=0.
+  // Длины — реальные (getRowBits().length, а не что-то кэшированное/из паттерна).
+  for (let i = 1; i < selIdx; i++) {
+    const l = getRowBits(st, i).length;
+    if (l > 0 && l <= targetLen) candidates.push(i);
+  }
+  const results = [];
+  function dfs(pos, remaining, chosen){
+    if (results.length >= maxSets) return;
+    if (remaining === 0 && chosen.length > 0) { results.push(chosen.slice()); return; }
+    for (let p = pos; p < candidates.length; p++){
+      const idx = candidates[p];
+      const l = getRowBits(st, idx).length;
+      if (l > remaining) continue;
+      chosen.push(idx);
+      dfs(p + 1, remaining - l, chosen);
+      chosen.pop();
+      if (results.length >= maxSets) return;
+    }
+  }
+  dfs(0, targetLen, []);
+  return results;
+}
+/* Перебирает ВСЕ перестановки arr (не только "по возрастанию номера"), вызывая cb(perm) на
+   каждой — cb возвращает false, чтобы остановить перебор раньше. Порядок строк в сумме МЕНЯЕТ
+   итоговую склеенную строку (row1+row3 ≠ row3+row1), а паттерн может совпасть только в одном
+   конкретном порядке — запрос пользователя ("показать все варианты перестановки слагаемых и
+   искать в них"), одного возрастающего порядка недостаточно. */
+function permuteEach(arr, cb){
+  const n = arr.length;
+  const used = new Array(n).fill(false);
+  const perm = [];
+  let stop = false;
+  function go(){
+    if (stop) return;
+    if (perm.length === n) { if (cb(perm.slice()) === false) stop = true; return; }
+    for (let i = 0; i < n; i++){
+      if (used[i]) continue;
+      used[i] = true; perm.push(arr[i]);
+      go();
+      perm.pop(); used[i] = false;
+      if (stop) return;
+    }
+  }
+  go();
+}
+/* Сами КОМБИНАЦИИ для показа — сначала находим подмножества (см. findLengthSumSubsets), потом
+   разворачиваем КАЖДОЕ в ВСЕ его перестановки, пока не наберём maxCombos штук суммарно по всем
+   подмножествам разом (перестановок у одного подмножества размера k может быть k! — на 7+
+   строках в комбинации это уже тысячи, поэтому общий потолок один на всех, а не на каждое
+   подмножество отдельно). */
+function findLengthSumCombos(st, selIdx, maxCombos){
+  const subsets = findLengthSumSubsets(st, selIdx, LENGTH_SUM_MAX_SETS);
+  const results = [];
+  for (const subset of subsets) {
+    if (results.length >= maxCombos) break;
+    permuteEach(subset, (perm) => {
+      results.push(perm);
+      return results.length < maxCombos;
+    });
+  }
+  return results;
+}
+/* Палитра для подсветки "какой кусок из какой строки" в комбинации — циклится, если строк в
+   комбинации больше, чем цветов (запрос пользователя — "отделить символы только цветом", без
+   скобок/разделителей). */
+const LSUM_COLORS = ["lsum-c0", "lsum-c1", "lsum-c2", "lsum-c3", "lsum-c4", "lsum-c5"];
+function renderLengthSumsHtml(st, selIdx){
+  const combos = findLengthSumCombos(st, selIdx, LENGTH_SUM_MAX_COMBOS);
+  if (!combos.length) return "";
+  // Сверяем с тем же паттерном, что и остальной фон-поиск — строки НИЖЕ выделенной (см.
+  // computeBgSearchTarget: targetIdx = selIdx+1).
+  const nextPat = st.pats[selIdx + 1];
+  const patText = nextPat && nextPat.text ? nextPat.text : "";
+  const lines = combos.map(combo => {
+    const label = combo.join("+");
+    let bits = "";
+    let plain = "";
+    combo.forEach((idx, ci) => {
+      const s = getRowBits(st, idx);
+      const cls = LSUM_COLORS[ci % LSUM_COLORS.length];
+      plain += s;
+      for (const ch of s) bits += '<span class="' + cls + '">' + esc(ch) + '</span>';
+    });
+    const matched = patText ? textMatchesPattern(plain, patText) : false;
+    return '<div class="lsum-row' + (matched ? ' lsum-matched' : '') + '" title="Строки ' + esc(label) + (matched ? ' — совпадает с паттерном строки ниже' : '') + '">' +
+      '<span class="lsum-label">' + esc(label) + '</span>' +
+      '<span class="lsum-bits">' + bits + '</span>' +
+    '</div>';
+  }).join("");
+  const cap = combos.length >= LENGTH_SUM_MAX_COMBOS ? (' (показаны первые ' + LENGTH_SUM_MAX_COMBOS + ')') : '';
+  return '<div class="lsum-block">' +
+    '<div class="lsum-title">🧮 Суммы длин — из каких строк выше можно собрать длину выделенной' + cap + ':</div>' +
+    lines +
+  '</div>';
+}
+
 function render(){
   renderTabs(); // <-- ЭТО ТА САМАЯ СТРОКА, КОТОРУЮ Я ЗАБЫЛ В ПРОШЛЫЙ РАЗ!
   document.getElementById("stepNo").textContent = st.step;
@@ -3290,13 +3887,16 @@ function render(){
           (BG_SEARCH_MODE_LABELS[r.mode] || r.mode) + "[" + r.kinds.map(k => KIND_LABELS_SHORT[k.kind] + (k.skip ? "⏭" : "")).join(",") + "]"
         ).join(", ");
         say(`🔍 Фон-поиск: паттерн строки ${hitNow + 1} найден! (${matchedLabel})`);
-        // Находка ЛЮБЫМ из режимов фон-поиска (Сквозная →/←, Интерлив, XOR 2 и т.п.) — сразу
-        // переключаем выделение на найденную строку, а не только уведомляем: следующий render()
-        // пересчитает фон-поиск уже ОТ НЕЁ (computeBgSearchTarget() берёт самую нижнюю выделенную
-        // как якорь), так и продолжается непрерывное продвижение по строкам, независимо от того,
-        // что именно сейчас крутит "Авто" (Круг/Спираль/Шаг) — см. запрос пользователя.
-        st.selectedRows = new Set([hitNow]);
-        saveCache();
+        // Фон-поиск — чисто отображение (подсветка найденной строки), без действий: выделение
+        // строк НЕ переключаем, якорь для computeBgSearchTarget() остаётся тем, что выбрал
+        // пользователь/другой режим — см. запрос пользователя.
+        // Лог находок (см. bgFindLog выше) — не плоская строка-текст, а по режиму отдельно
+        // (mode -> kinds), чтобы таблица в своей вкладке могла разложить их по столбцам —
+        // запрос пользователя "распредели по столбцам, где нашлось ставь +".
+        const matches = {};
+        for (const r of bgInfo.results) if (r.matched) matches[r.mode] = r.kinds;
+        bgFindLog.unshift({ row: hitNow, matches });
+        if (bgFindLog.length > BG_FIND_LOG_MAX) bgFindLog.length = BG_FIND_LOG_MAX;
       }
       st.bgSearchLastHit = hitNow;
     }
@@ -3311,13 +3911,14 @@ function render(){
   // только по целевой. Глобальный индекс бита строки i (i < hxTarget) внутри
   // st.horizBigChain = сумма длин строк 0..i-1 (в порядке хorizChainText) + k. Целевая
   // строка лежит в st.horizBigOrig на позициях [chainLen, chainLen+rowLen).
-  const hxActive = st.mode === "horiz_xor";
+  const hxActive = st.mode === "horiz_xor" || st.mode === "horiz_xor_left";
+  const hxDir = st.horizCurrentDir || (st.mode === "horiz_xor_left" ? "left" : "right");
   const hxChainLenAll = hxActive ? (st.horizBigChain || "").length : 0;
   const hxFullLenAll = hxActive ? (st.horizBigOrig || "").length : 0;
   const hxTarget = hxActive ? st.horizBigTargetIdx : -1;
   const hxS = hxActive ? (st.horizXoredLength || 0) : 0;
   const hxExhausted = hxActive && (st.horizChainLen || 0) > 0 && hxS >= (st.horizChainLen || 0);
-  const hxWin = (hxActive && !hxExhausted) ? horizWindowRange(hxChainLenAll, hxFullLenAll, hxS) : null;
+  const hxWin = (hxActive && !hxExhausted) ? horizWindowRange(hxChainLenAll, hxFullLenAll, hxS, hxDir) : null;
   let hxChainOffset = 0; // бежит вперёд по мере прохода строк цикла (только для i < hxTarget)
 
   // Режим "🔢 Выбор столбца": границы строк — см. colSelectRowRange() (1 выделенная строка —
@@ -3335,7 +3936,7 @@ function render(){
   // Подсветка "1 под 1" (см. #bHighlightVert1) — считается ОДИН РАЗ на весь рендер (сравнивает
   // соседние строки между собой), не на отдельную строку, как compute01HighlightMask.
   const vertOnesMask = st.highlightVert1 ? computeVertOnesMask(st.rows, st.align) : null;
-  const diagOnesMask = st.highlightDiag1 ? computeDiagOnesMask(st.rows, st.align) : null;
+  const diagOnesMask = st.highlightDiag1 ? computeDiagOnesMaskSectioned(st.rows, st.align, st.rowDividers) : null;
 
   // "⚖ Показать балансы" — ширина под каждое число ОДНА для ВСЕХ строк (см. formatBalanceTotals()
   // выше) — без этого метка "гуляла" по ширине от строки к строке и уводила саму цепочку правее
@@ -3348,6 +3949,10 @@ function render(){
       if (String(rb.total1).length > balW1) balW1 = String(rb.total1).length;
       if (String(rb.total0).length > balW0) balW0 = String(rb.total0).length;
     }
+    updateSelBalance();
+  } else {
+    const wrap = document.getElementById("selBalanceWrap");
+    if (wrap) wrap.style.display = "none";
   }
 
   for (let i = 0; i < n; i++){
@@ -3357,6 +3962,10 @@ function render(){
     if (st.used[i]) cls.push("used");
     if (i === st.aIdx || i === st.bIdx) cls.push("cur");
     if (st.selectedRows && st.selectedRows.has(i)) cls.push("selected");
+    // Гориз.XOR активен — строки НИЖЕ цели (не часть цепочки и не сама цель) сейчас никак не
+    // участвуют в поиске — сильно затемняем, чтобы не отвлекали (запрос пользователя).
+    if (hxActive && hxTarget >= 0 && i > hxTarget) cls.push("horiz-dim");
+    if (st.rowDividers && st.rowDividers.has(i)) cls.push("row-divider");
 
     const rowBal = (st.showBalances || st.runsAsBits) ? computeRowBalance(s) : null;
     const balanceHtml = st.showBalances ? formatBalanceTotals(rowBal.total1, rowBal.total0, balW1, balW0) : "";
@@ -3456,9 +4065,15 @@ function render(){
       // computeDiagOnesMask() выше.
       const isVert1 = !!(vertOnesMask && vertOnesMask[i] && bit === '1' && vertOnesMask[i].has(k));
       const isDiag1 = !!(diagOnesMask && diagOnesMask[i] && bit === '1' && diagOnesMask[i].has(k));
+      // Бит, сейчас находящийся в перевёрнутом состоянии (нечётное число переходов границы) —
+      // см. invFlagsMap выше.
+      const invFlagsRow = invFlagsMap.get(i);
+      const isInvBit = !!(invFlagsRow && invFlagsRow.length === s.length && invFlagsRow[k]);
 
       if (marks && marks.has(k)) {
         bits += '<span class="' + hitCls + '"' + colAttr + '>' + bit + '</span>';
+      } else if (isInvBit && (bit === '0' || bit === '1')) {
+        bits += '<span class="b' + bit + ' bit-inv" title="Перевёрнут переходом границы строки"' + colAttr + '>' + bit + '</span>';
       } else if (isColSelBit && (bit === '0' || bit === '1')) {
         bits += '<span class="col-sel-bit b' + bit + '"' + colAttr + '>' + bit + '</span>';
       } else if (isXoredBit && (bit === '0' || bit === '1')) {
@@ -3501,7 +4116,7 @@ function render(){
     const aRow = st.rows[st.aIdx] || "";
     const bRow = st.rows[st.bIdx] || "";
     fullChainText = (st.tailBuffer || "") + aRow + bRow;
-  } else if (st.mode === "horiz_xor") {
+  } else if (st.mode === "horiz_xor" || st.mode === "horiz_xor_left") {
     // Та же скользящая цепочка (строки строго выше bIdx), что реально используется в doStep.
     fullChainText = st.horizBigChain || horizChainText(st.bIdx);
   } else {
@@ -3559,7 +4174,14 @@ function render(){
     const bgLabels = bgInfo.results.map(r => BG_SEARCH_MODE_LABELS[r.mode] || r.mode);
     const bgLabelW = Math.max(...bgLabels.map(l => l.length));
     const kindTag = k => KIND_LABELS_SHORT[k.kind] + (k.skip ? "⏭" : "");
-    fullChainText = bgInfo.results
+    // Из каких именно строк (номер+содержимое) и с каким выравниванием считаются режимы
+    // ниже — сама пара rowAbove/rowSel одна и та же для ВСЕХ режимов (xorAll/concat*/vert*/
+    // snake* тоже отталкиваются от неё же, просто цепляют дополнительные строки выше) —
+    // запрос пользователя: видеть "Строки 3+4 (Лесенка ½): 111+10000" прямо над списком,
+    // а не гадать по вкладке "Строки" и панели выравнивания.
+    const alignLabel = ALIGN_LABELS[st.align] || st.align;
+    const srcLine = "Строки " + bgInfo.aboveIdx + "+" + bgInfo.selIdx + " (" + alignLabel + "): " + bgInfo.rowAbove + "+" + bgInfo.rowSel;
+    fullChainText = srcLine + "\n" + bgInfo.results
       .map((r, i) => bgLabels[i].padEnd(bgLabelW, " ") + (r.matched ? " ✓[" + r.kinds.map(kindTag).join(",") + "]" : "") + ": " + r.result)
       .join("\n");
     bgResultHtml = bgInfo.results.map((r, i) => {
@@ -3595,6 +4217,9 @@ function render(){
         '<span class="chain-result-line-bits">' + bits + '</span>' +
       '</div>';
     }).join("");
+    bgResultHtml = '<div class="chain-result-src-row" title="Из каких строк считается (номер строки над выделенной + номер выделенной), в скобках — текущее выравнивание">' +
+      'Строки ' + bgInfo.aboveIdx + '+' + bgInfo.selIdx + ' (' + esc(alignLabel) + '): ' + esc(bgInfo.rowAbove) + '+' + esc(bgInfo.rowSel) +
+    '</div>' + bgResultHtml;
     if (chainResultLabelEl) {
       const modeLabels = bgInfo.results.map(r => BG_SEARCH_MODE_LABELS[r.mode] || r.mode).join(" + ");
       chainResultLabelEl.textContent = "🔍 Результат фон-поиска (" + modeLabels + ")";
@@ -3621,6 +4246,8 @@ function render(){
   } else if (chainResultLabelEl) {
     chainResultLabelEl.textContent = "🔗 Сквозная строка результата";
   }
+  lastChainResultText = fullChainText;
+  renderFindLogPanel();
 
   const chainLenEl = document.getElementById("chainLen");
   const chainTextEl = document.getElementById("chainText");
@@ -3653,6 +4280,7 @@ function render(){
       }
       chainTextEl.innerHTML = html || '<span class="empty">пусто</span>';
     }
+    applyResultHeightLock();
   }
 
   renderStepLogBox(bgInfo);
@@ -3753,13 +4381,11 @@ function renderStepLogBox(bgInfo){
   if (horizInfo) {
     // "Результат" тут НЕ рендерим — тот же самый текст (op.result === horizInfo.res)
     // показывается ниже, в общем блоке результата (см. html += ... дальше), раньше дублировался.
+    // "Паттерн" — НЕ тут, а САМЫМ ПОСЛЕДНИМ, ПОСЛЕ "Результата" (см. html += ... дальше) —
+    // запрос пользователя ("в результатах Паттерн покажи в самом низу").
     const rows = [
       { tag: "chain", label: "Сквозная", html: horizInfo.chainHtml },
-      { tag: "full", label: "Цель", html: horizInfo.origHtml },
-      // Собственный паттерн строки b — раньше нигде не показывался (см. запрос пользователя —
-      // "непонятно что он ищет"); подсветка совпадения — в "Результате" ниже (см. hitAt в
-      // computeHorizXorInfo()).
-      { tag: "pat", label: "Паттерн", html: horizInfo.patHtml }
+      { tag: "full", label: "Цель", html: horizInfo.origHtml }
     ];
     horizHtml = '<div class="horiz-info">' +
       rows.map(r => {
@@ -3769,7 +4395,7 @@ function renderStepLogBox(bgInfo){
       }).join("") +
       '</div>';
   }
-  const horizHeadExtra = horizInfo ? (' 🔎 Поиск · шаг ' + horizInfo.step + '/' + horizInfo.totalSteps) : "";
+  const horizHeadExtra = horizInfo ? (' 🔎 Поиск · шаг ' + horizInfo.step + '/' + horizInfo.totalSteps + ' · ' + horizInfo.stateLabel) : "";
 
   if (!op) {
     if (noEl) noEl.textContent = "0";
@@ -3831,6 +4457,11 @@ function renderStepLogBox(bgInfo){
     const exp = horizRowExpanded.has("res") ? " expanded" : "";
     html += '<div class="horiz-ride-row' + exp + '" data-tag="res" title="Клик — показать целиком / свернуть обратно">' +
       '<span class="horiz-ride-tag">Результат</span><span class="horiz-ride-text">' + horizInfo.resHtml + '</span></div>';
+    // Собственный паттерн строки b — САМЫМ ПОСЛЕДНИМ, после "Результата" (запрос пользователя).
+    // Подсветка совпадения — уже отрисована выше, в "Результате" (см. hitAt в computeHorizXorInfo()).
+    const expPat = horizRowExpanded.has("pat") ? " expanded" : "";
+    html += '<div class="horiz-ride-row' + expPat + '" data-tag="pat" title="Клик — показать целиком / свернуть обратно">' +
+      '<span class="horiz-ride-tag">Паттерн</span><span class="horiz-ride-text">' + horizInfo.patHtml + '</span></div>';
   } else {
     // Результат — с тем же рядом-лейблом ("Итог"), что и строки-источники выше (см.
     // .step-log-input-name), чтобы биты у всех начинались в одном столбце. Полный текст
@@ -3910,6 +4541,13 @@ if (bClearStepLogEl) {
     render(); saveCache();
   };
 }
+const bClearFindLogEl = document.getElementById("bClearFindLog");
+if (bClearFindLogEl) {
+  bClearFindLogEl.onclick = () => {
+    bgFindLog = [];
+    renderFindLogPanel();
+  };
+}
 
 /* Клик по результату в "Черновике последнего шага" — развернуть целиком / свернуть обратно
    (тот же приём, что у .chain-result-line в окне "Результат"). Строки Гориз.XOR (Сквозная/
@@ -3965,6 +4603,7 @@ const cStageXorEl  = document.getElementById("cStageXor");
 const cInvPassEl   = document.getElementById("cInvPass");
 const cAutoShiftEl = document.getElementById("cAutoShift");
 const cStopOnHitEl = document.getElementById("cStopOnHit");
+const cStopOnBalanceEl = document.getElementById("cStopOnBalance");
 const cVertEl      = document.getElementById("cVert");
 const cPadEl       = document.getElementById("cPad");
 const cKindsEl     = document.getElementById("cKinds");
@@ -3972,6 +4611,9 @@ const cSkipEl      = document.getElementById("cSkip1");
 const cRingInvertEl = document.getElementById("cRingInvert");
 const cRingReverseEl = document.getElementById("cRingReverse");
 const cSeqSelfEl = document.getElementById("cSeqSelf");
+const cHorizRotateOnFailEl = document.getElementById("cHorizRotateOnFail");
+const cHorizAlternateSideEl = document.getElementById("cHorizAlternateSide");
+const cHorizReverseChainEl = document.getElementById("cHorizReverseChain");
 const rowCountEl   = document.getElementById("rowCount");
 
 function readToggles(){
@@ -3982,6 +4624,10 @@ function readToggles(){
   st.invPass   = cInvPassEl ? cInvPassEl.checked : false;
   st.autoShift = cAutoShiftEl ? cAutoShiftEl.checked : false;
   st.stopOnHit = cStopOnHitEl ? cStopOnHitEl.checked : true;
+  st.stopOnBalance = cStopOnBalanceEl ? cStopOnBalanceEl.checked : false;
+  st.horizRotateOnFail = cHorizRotateOnFailEl ? cHorizRotateOnFailEl.checked : true;
+  st.horizAlternateSide = cHorizAlternateSideEl ? cHorizAlternateSideEl.checked : false;
+  st.horizReverseChain = cHorizReverseChainEl ? cHorizReverseChainEl.checked : false;
   st.vertical  = cVertEl.checked;
   st.padZero   = cPadEl.checked;
   st.allKinds  = cKindsEl.checked;
@@ -4334,9 +4980,41 @@ if (chainTextEl2) {
 const bCopyChainEl = document.getElementById("bCopyChain");
 if (bCopyChainEl) {
   bCopyChainEl.onclick = () => {
-    const fullChainText = (st.tailText || "") + buildChain(st, st.aIdx, st.bIdx).text;
-    if (!fullChainText) { say("Сквозная строка пуста"); return; }
-    copyTextToClipboard(fullChainText, "Сквозная строка скопирована!");
+    if (!lastChainResultText) { say("Окно результата пусто"); return; }
+    copyTextToClipboard(lastChainResultText, "Скопировано!");
+  };
+}
+
+/* "📌 Закрепить" — фиксирует ВЫСОТУ панели "Результат" на текущем размере: дальше при смене
+   содержимого (переключили режимы фон-поиска, включили "Суммы длин" и т.п.) панель НЕ растёт и
+   не сжимается сама — просто скроллится внутри (у #chainText и так есть overflow-y:auto) —
+   запрос пользователя. Выключил — снова "height:auto" по месту (как было всегда). ПО УМОЛЧАНИЮ
+   включена, и состояние (последнее нажатие) переживает F5 — персистится как обычная UI-настройка
+   (см. captureUiSettings/applyUiSettings/DEFAULT_UI_SETTINGS) — запрос пользователя ("сейчас
+   при F5 сбрасывает"). resultHeightAppliedOnce — конкретный px ещё не персистится (незачем,
+   он всё равно зависит от текущего содержимого) — при включении (в т.ч. свежей загрузке
+   страницы) высота замеряется заново от РЕАЛЬНОГО контента, см. вызов в конце render(). */
+let resultHeightLocked = true;
+let resultHeightAppliedOnce = false;
+function applyResultHeightLock(){
+  const el = document.getElementById("chainText");
+  const btn = document.getElementById("bLockResultHeight");
+  if (btn) btn.classList.toggle("mode-act", resultHeightLocked);
+  if (!el) return;
+  if (!resultHeightLocked) { el.style.height = ""; resultHeightAppliedOnce = false; return; }
+  if (!resultHeightAppliedOnce) {
+    el.style.height = "";
+    el.style.height = el.offsetHeight + "px";
+    resultHeightAppliedOnce = true;
+  }
+}
+const bLockResultHeightEl = document.getElementById("bLockResultHeight");
+if (bLockResultHeightEl) {
+  bLockResultHeightEl.onclick = () => {
+    resultHeightLocked = !resultHeightLocked;
+    applyResultHeightLock();
+    saveCache();
+    say(resultHeightLocked ? "Высота панели «Результат» закреплена." : "Высота панели «Результат» снова автоматическая.");
   };
 }
 
@@ -4389,13 +5067,14 @@ function copySelectedRows(){
 /* Переключение режимов работы (выделение рамкой + перемещение кнопки "↩ Назад" слева от активной) */
 function getModeParams(mode){
   switch(mode){
-    case "step2":    return { pairOnly: true,  forceXor: false, isScan: false, isHorizXor: false, isXorProj: false };
-    case "xor1":     return { pairOnly: false, forceXor: true,  isScan: false, isHorizXor: false, isXorProj: false };
-    case "xor2":     return { pairOnly: true,  forceXor: true,  isScan: false, isHorizXor: false, isXorProj: false };
-    case "scan":     return { pairOnly: false, forceXor: false, isScan: true,  isHorizXor: false, isXorProj: false };
-    case "horiz_xor":return { pairOnly: false, forceXor: false, isScan: false, isHorizXor: true,  isXorProj: false };
-    case "xor_proj": return { pairOnly: false, forceXor: false, isScan: false, isHorizXor: false, isXorProj: true  };
-    default:         return { pairOnly: false, forceXor: false, isScan: false, isHorizXor: false, isXorProj: false };
+    case "step2":    return { pairOnly: true,  forceXor: false, isScan: false, isHorizXor: false, isXorProj: false, horizDir: "right" };
+    case "xor1":     return { pairOnly: false, forceXor: true,  isScan: false, isHorizXor: false, isXorProj: false, horizDir: "right" };
+    case "xor2":     return { pairOnly: true,  forceXor: true,  isScan: false, isHorizXor: false, isXorProj: false, horizDir: "right" };
+    case "scan":     return { pairOnly: false, forceXor: false, isScan: true,  isHorizXor: false, isXorProj: false, horizDir: "right" };
+    case "horiz_xor":return { pairOnly: false, forceXor: false, isScan: false, isHorizXor: true,  isXorProj: false, horizDir: "right" };
+    case "horiz_xor_left": return { pairOnly: false, forceXor: false, isScan: false, isHorizXor: true, isXorProj: false, horizDir: "left" };
+    case "xor_proj": return { pairOnly: false, forceXor: false, isScan: false, isHorizXor: false, isXorProj: true,  horizDir: "right" };
+    default:         return { pairOnly: false, forceXor: false, isScan: false, isHorizXor: false, isXorProj: false, horizDir: "right" };
   }
 }
 
@@ -4406,8 +5085,8 @@ function getModeParams(mode){
    должно гасить подсветку другого. Явный выбор обычного режима (setMode() ниже) гасит эту, и
    наоборот — эта гасит подсветку обычных режимов (но не трогает сам st.mode: если потом опять
    нажать Шаг/XOR/и т.п., они возьмут её как есть). */
-const DIR_MODE_BTN = { shiftL: "bShiftL", shiftR: "bShiftR", spiralUp: "bSpiralUp", spiralDown: "bSpiralDown" };
-const STEP_MODE_BTN_IDS = ["bStep", "bStep2", "bStepXor", "bStep2Xor", "bStepHorizXor", "bStepXorProj", "bStepScan"];
+const DIR_MODE_BTN = { shiftL: "bShiftL", shiftR: "bShiftR", shiftLInv: "bShiftLInv", shiftRInv: "bShiftRInv", spiralUp: "bSpiralUp", spiralDown: "bSpiralDown" };
+const STEP_MODE_BTN_IDS = ["bStep", "bStep2", "bStepXor", "bStep2Xor", "bStepHorizXor", "bStepHorizXorLeft", "bStepXorProj", "bStepScan"];
 // "⧬ Интерлив сквозной"/"⨁ XOR сквозной" — тоже полноценные "режимы для Авто" (см.
 // st.interleaveSeqMode/st.xorSeqMode), гасятся/гасят наравне с остальными.
 const SEQ_MODE_BTN_IDS = ["bInterleaveSeqSearch", "bXorSeqSearch"];
@@ -4417,6 +5096,9 @@ function setLastDirMode(val){
   st.interleaveMode = false;
   st.interleaveSeqMode = false;
   st.xorSeqMode = false;
+  // invFlagsMap НЕ чистим тут — переключение между самими 4 кнопками (◄/►Круг/Круг Инв) не
+  // должно сбрасывать историю "какой бит уже перевёрнут", только явный уход в другой режим
+  // (setMode() ниже чистит явно).
   Object.entries(DIR_MODE_BTN).forEach(([k, id]) => {
     const el = document.getElementById(id);
     if (el) el.classList.toggle("mode-act", k === val);
@@ -4445,12 +5127,18 @@ function setMode(modeName){
     if (el) el.classList.remove("mode-act");
   });
   if (st.lastDirMode) setLastDirMode(null);
+  invFlagsMap.clear();
+  st.shiftVariantTotal = null;
+  st.shiftVariantRows = null;
+  st.manualShiftTurns = 0;
+  updateVariantCounter();
   const modes = {
     "step1":     "bStep",
     "step2":     "bStep2",
     "xor1":      "bStepXor",
     "xor2":      "bStep2Xor",
     "horiz_xor": "bStepHorizXor",
+    "horiz_xor_left": "bStepHorizXorLeft",
     "xor_proj":  "bStepXorProj",
     "scan":      "bStepScan"
   };
@@ -4475,8 +5163,8 @@ function setMode(modeName){
 
 function doModeStep(modeName){
   setMode(modeName);
-  const { pairOnly, forceXor, isScan, isHorizXor, isXorProj } = getModeParams(modeName);
-  step(pairOnly, forceXor, isScan, isHorizXor, isXorProj);
+  const { pairOnly, forceXor, isScan, isHorizXor, isXorProj, horizDir } = getModeParams(modeName);
+  step(pairOnly, forceXor, isScan, isHorizXor, isXorProj, horizDir);
 }
 
 /* === МАРКЕР 10.2: СИСТЕМА ВКЛАДОК/ПАНЕЛЕЙ (перенесено из Zerkalius-gpu.html) ===
@@ -4495,6 +5183,7 @@ const MENUS = {
      порядок пар menuOps/menuSearch и menuView/menuEdit в объекте важен. */
   menuOps:    { title: 'Шаги',         zone: 'leftSlot',  pin: true, ids: ['flowGroup', 'opsGroup'], floatable: true },
   menuSearch: { title: 'Поиск',        zone: 'leftSlot',  pin: true, ids: ['searchGroup'], floatable: true },
+  menuFindLog:{ title: 'Лог находок',  zone: 'leftSlot',  pin: false, ids: ['findLogGroup'], floatable: true },
   menuView:   { title: 'Вид',          zone: 'rightSlot', pin: true, ids: ['viewGroup'],   floatable: true },
   menuEdit:   { title: 'Правка строк', zone: 'rightSlot', pin: true, ids: ['editGroup'],   floatable: true },
   menuSeq:    { title: 'Сквозная',     zone: 'rightSlot', pin: true, ids: ['seqGroup'],    floatable: true }
@@ -4888,6 +5577,10 @@ document.getElementById("rows").onclick = e => {
   if (isNaN(idx)) return;
 
   resetSeqSearchModes();
+  // Новый клик по строке — новая "сессия" кругового сдвига, счётчик "Вар: N/M" начинается заново.
+  st.manualShiftTurns = 0;
+  st.shiftVariantTotal = null;
+  st.shiftVariantRows = null;
 
   if (!st.selectedRows) st.selectedRows = new Set();
 
@@ -4902,6 +5595,7 @@ document.getElementById("rows").onclick = e => {
       st.selectedRows.add(idx);
     }
   }
+  updateVariantCounter();
   render();
   saveCache();
 };
@@ -5072,6 +5766,23 @@ if (cBgSubPatternsEl) {
     saveCache();
   };
 }
+const cBgAllBelowEl = document.getElementById("cBgAllBelow");
+if (cBgAllBelowEl) {
+  cBgAllBelowEl.onchange = () => {
+    st.bgSearchAllBelow = cBgAllBelowEl.checked;
+    st.bgSearchLastHit = -1;
+    render();
+    saveCache();
+  };
+}
+const cShowLengthSumsEl = document.getElementById("cShowLengthSums");
+if (cShowLengthSumsEl) {
+  cShowLengthSumsEl.onchange = () => {
+    st.showLengthSums = cShowLengthSumsEl.checked;
+    render();
+    saveCache();
+  };
+}
 const bgSearchModeBtns = document.querySelectorAll("#bgSearchModeGrp button");
 bgSearchModeBtns.forEach(btn => {
   btn.onclick = () => {
@@ -5113,7 +5824,21 @@ function computeBgSearchTarget(){
   const results = modes.map(mode => {
     let result;
     if (mode === "xor2") {
-      result = xorPair(rowAbove, rowSel, st.align);
+      // При "½"-выравниваниях (Центр ½/Лесенка ½) соседние строки сдвинуты друг относительно
+      // друга на ПОЛсимвола (transform:translateX(0.5ch), см. halfShiftAttr) — биты соседних
+      // строк физически НЕ стоят друг под другом. XOR 2 поэтому ХОР-ит НЕ строку прямо над
+      // выделенной, а ВСЕ строки 0..selIdx из ТОЙ ЖЕ под-сетки, что и сама выделенная (см.
+      // hasHalfNudge/xorRowsFiltered — та же логика, что у XOR-Чёт, только БЕЗ второй группы) —
+      // запрос пользователя. Для обычных выравниваний — как раньше, просто строка над ней.
+      const isHalfAlign = st.align === "halfcenter" || st.align === "halfstairs";
+      if (isHalfAlign) {
+        let maxLenXor2 = 0;
+        for (let i = 0; i <= selIdx; i++) { const s = getRowBits(st, i); if (s.length > maxLenXor2) maxLenXor2 = s.length; }
+        const wantNudge = hasHalfNudge(rowSel, maxLenXor2, st.align);
+        result = xorRowsFiltered(st.rows, selIdx, st.align, st, wantNudge);
+      } else {
+        result = xorPair(rowAbove, rowSel, st.align);
+      }
     } else if (mode === "xorAll") {
       result = xorRowsDownTo(st.rows, selIdx, st.align, st);
     } else if (mode === "concatR") {
@@ -5148,7 +5873,7 @@ function computeBgSearchTarget(){
     const kinds = findPatternKinds(result, pat.text);
     return { mode, result, matched: kinds.length > 0, kinds, tried: kinds.tried };
   });
-  return { targetIdx, results, matched: results.some(r => r.matched) };
+  return { targetIdx, results, matched: results.some(r => r.matched), aboveIdx: selIdx - 1, selIdx, rowAbove, rowSel };
 }
 
 /* === "Спираль": строки в диапазоне (см. colSelectRowRange — весь список, либо от начала до
@@ -5207,9 +5932,9 @@ if (bSpiralUpEl) bSpiralUpEl.onclick = () => { setLastDirMode("spiralUp"); spira
 const bSpiralDownEl = document.getElementById("bSpiralDown");
 if (bSpiralDownEl) bSpiralDownEl.onclick = () => { setLastDirMode("spiralDown"); spiralMove("down"); };
 
-function step(pairOnly, forceXor = false, isScan = false, isHorizXor = false, isXorProj = false){
+function step(pairOnly, forceXor = false, isScan = false, isHorizXor = false, isXorProj = false, horizDir = "right"){
   readToggles();
-  if (!doStep(pairOnly, forceXor, isScan, isHorizXor, isXorProj)) say("Шаг не выполнен: двигаться некуда.");
+  if (!doStep(pairOnly, forceXor, isScan, isHorizXor, isXorProj, horizDir)) say("Шаг не выполнен: двигаться некуда.");
   else say("");
   render();
   saveCache();
@@ -5226,19 +5951,36 @@ function autoRun(){
   // пользователь не нажмёт ⏹ Стоп. snapshot() один раз ДО цикла — Undo одним кликом откатывает
   // весь прогон целиком, а не по шагу.
   if (st.lastDirMode) {
-    const isShift = st.lastDirMode === "shiftL" || st.lastDirMode === "shiftR";
-    const dirLabel = { shiftL: "◄", shiftR: "►", spiralUp: "▲ Спираль", spiralDown: "▼ Спираль" }[st.lastDirMode];
+    const isShift = st.lastDirMode === "shiftL" || st.lastDirMode === "shiftR" || st.lastDirMode === "shiftLInv" || st.lastDirMode === "shiftRInv";
+    const isShiftInv = st.lastDirMode === "shiftLInv" || st.lastDirMode === "shiftRInv";
+    const dirLabel = { shiftL: "◄", shiftR: "►", shiftLInv: "◄ Инв", shiftRInv: "► Инв", spiralUp: "▲ Спираль", spiralDown: "▼ Спираль" }[st.lastDirMode];
     snapshot();
 
     // Общее число вариантов ДО старта: круговой сдвиг строки длины L возвращает её к исходному
-    // виду ровно через L сдвигов (берём максимум среди сдвигаемых строк); у спирали — через
-    // buffer.length шагов (вся лента диапазона целиком). РАНЬШЕ тут вообще не считалось —
-    // ◄/►/▲/▼ крутились БЕСКОНЕЧНО, пока не нажмёшь Стоп, даже если весь цикл вариантов давно
-    // пройден без находки.
+    // виду ровно через L сдвигов; у спирали — через buffer.length шагов (вся лента диапазона
+    // целиком). РАНЬШЕ тут вообще не считалось — ◄/►/▲/▼ крутились БЕСКОНЕЧНО, пока не нажмёшь
+    // Стоп, даже если весь цикл вариантов давно пройден без находки.
+    // Если выделено НЕСКОЛЬКО строк РАЗНОЙ длины — они крутятся все разом на 1 позицию за ход,
+    // поэтому комбинация "какая строка в каком повороте" целиком повторяется не через max(длин)
+    // (было раньше — занижало счётчик, останавливало раньше времени, теряя реальные варианты),
+    // а через НОК(длин) — общее наименьшее число ходов, кратное длине каждой строки одновременно
+    // (было раньше просто max — тем самым часть комбинаций до НОК просто не перебиралась).
+    // У "Круг Инв" период В ДВА РАЗА длиннее (2×НОК) — см. rotateStrRightInv()/rotateStrLeftInv():
+    // каждый бит переворачивается ровно раз за L шагов, к исходному ЗНАЧЕНИЮ (не только позиции)
+    // он возвращается только после ВТОРОГО полного круга.
     let totalTurns = 0;
+    // Строки, которые реально крутятся — начинаем с ТЕКУЩЕГО выделения (не пересчитываем из
+    // st.selectedRows на каждой итерации, т.к. там ЕЩЁ и найденные строки от фон-поиска — их
+    // подмешиваем сюда же ОТДЕЛЬНО, см. ниже). rotIdxs — Set, а не застывший массив: когда
+    // находка добавляет строку в выделение, она ТУТ ЖЕ добавляется и в rotIdxs — со следующего
+    // же хода крутится вместе с остальными (не с нуля, просто вливается в текущий прогон),
+    // никакого сброса накрутки уже идущих строк при этом не происходит — запрос пользователя
+    // ("иногда не крутит новые — надо крутить вместе с новыми, не сбрасывая предыдущую накрутку").
+    const rotIdxs = isShift
+      ? new Set((st.selectedRows && st.selectedRows.size > 0) ? Array.from(st.selectedRows) : st.rows.map((_, i) => i))
+      : null;
     if (isShift) {
-      const idxs0 = (st.selectedRows && st.selectedRows.size > 0) ? Array.from(st.selectedRows) : st.rows.map((_, i) => i);
-      for (const i of idxs0) if (st.rows[i] && st.rows[i].length > totalTurns) totalTurns = st.rows[i].length;
+      totalTurns = computeShiftTotalTurns(rotIdxs, isShiftInv);
     } else {
       const range = colSelectRowRange();
       const lo = Math.max(0, range.lo);
@@ -5246,6 +5988,16 @@ function autoRun(){
       for (let i = lo; i <= hi; i++) totalTurns += (st.rows[i] || "").length;
     }
     let turns = 0;
+    // Было ли исходно выделено НЕСКОЛЬКО строк — фиксируем ОТДЕЛЬНО от rotIdxs.size (тот растёт
+    // по ходу находок) — используется ниже, чтобы решить, расширять ли выделение находкой.
+    const wasMulti = isShift && rotIdxs.size > 1;
+    st.shiftVariantTotal = isShift ? totalTurns : null;
+    // Номера строк (те же 0-based номера, что и в самой таблице — см. .num), которые реально
+    // крутятся сейчас — запрос пользователя: показывать в счётчике не только N/M, но и КАКИЕ
+    // строки участвуют.
+    st.shiftVariantRows = isShift ? Array.from(rotIdxs) : null;
+    st.shiftVariantTurns = 0;
+    updateVariantCounter();
 
     const tick = () => {
       if (!st.running) return finishAuto();
@@ -5253,13 +6005,19 @@ function autoRun(){
       const t0 = performance.now();
       let moved = true;
       let bgHit = null;
+      let balanceHit = false;
       let cycleDone = false;
       while (performance.now() - t0 < 12) {
         if (totalTurns > 0 && turns >= totalTurns) { cycleDone = true; break; }
         if (isShift) {
-          const idxs = (st.selectedRows && st.selectedRows.size > 0) ? Array.from(st.selectedRows) : st.rows.map((_, i) => i);
-          if (idxs.length === 0 || !idxs.some(i => st.rows[i])) { moved = false; break; }
-          for (const i of idxs) if (st.rows[i]) st.rows[i] = st.lastDirMode === "shiftL" ? rotateStrLeft(st.rows[i]) : rotateStrRight(st.rows[i]);
+          if (rotIdxs.size === 0 || ![...rotIdxs].some(i => st.rows[i])) { moved = false; break; }
+          for (const i of rotIdxs) if (st.rows[i]) {
+            const flags = getInvFlags(i, st.rows[i].length);
+            if (st.lastDirMode === "shiftL") { invFlagsMap.set(i, rotateInvFlagsLeft(flags)); st.rows[i] = rotateStrLeft(st.rows[i]); }
+            else if (st.lastDirMode === "shiftR") { invFlagsMap.set(i, rotateInvFlagsRight(flags)); st.rows[i] = rotateStrRight(st.rows[i]); }
+            else if (st.lastDirMode === "shiftLInv") { invFlagsMap.set(i, rotateInvFlagsLeftInv(flags)); st.rows[i] = rotateStrLeftInv(st.rows[i]); }
+            else { invFlagsMap.set(i, rotateInvFlagsRightInv(flags)); st.rows[i] = rotateStrRightInv(st.rows[i]); }
+          }
         } else {
           moved = spiralMove(st.lastDirMode === "spiralUp" ? "up" : "down", true);
           if (!moved) break;
@@ -5267,14 +6025,42 @@ function autoRun(){
         turns++;
 
         const bgInfo = computeBgSearchTarget();
-        if (st.stopOnHit && bgInfo && bgInfo.matched) { bgHit = bgInfo; break; }
+        if (bgInfo && bgInfo.matched) {
+          // Находка СРАЗУ добавляется к выделению (не заменяет его — запрос пользователя), но
+          // ТОЛЬКО если исходно было выделено НЕСКОЛЬКО строк (wasMulti) — если выделена была
+          // ровно одна, ничего не расширяем на ровном месте. Найденная строка ТУТ ЖЕ добавляется
+          // и в rotIdxs — со СЛЕДУЮЩЕГО хода крутится вместе с остальными как ни в чём не бывало,
+          // накрутка уже идущих строк при этом не сбрасывается (запрос пользователя — раньше
+          // найденные строки вообще никогда не крутились дальше, что выглядело как баг).
+          // Останавливаемся только если включено "Стоп на находке".
+          if (wasMulti) {
+            if (!st.selectedRows) st.selectedRows = new Set();
+            st.selectedRows.add(bgInfo.targetIdx);
+            rotIdxs.add(bgInfo.targetIdx);
+          }
+          if (st.stopOnHit) { bgHit = bgInfo; break; }
+        }
+
+        // "🛑 Стоп при балансе" — суммарно по ВСЕМ выделенным строкам единиц и нулей стало
+        // поровну. У обычного Круга (без Инв) сумма 1/0 внутри строки не меняется вращением
+        // вообще (только порядок бит) — эта остановка реально полезна для Круг Инв, где каждый
+        // ход переворачивает ровно один бит и баланс сдвигается — запрос пользователя.
+        if (isShift && st.stopOnBalance) {
+          const { total1, total0 } = computeSelBalance();
+          if (total1 === total0) { balanceHit = true; break; }
+        }
       }
 
       say(`Авто (${dirLabel}): вариант ${turns}` + (totalTurns ? ` из ${totalTurns}` : ""));
+      st.shiftVariantTurns = turns;
+      if (isShift) st.shiftVariantRows = Array.from(rotIdxs); // могло вырасти находками
+      updateVariantCounter();
       render(); saveCache();
       if (bgHit) {
-        st.selectedRows.add(bgHit.targetIdx);
         return finishAuto(`🎯 Авто (${dirLabel}): найдено совпадение на строке ${bgHit.targetIdx + 1}!`);
+      }
+      if (balanceHit) {
+        return finishAuto(`⚖ Авто (${dirLabel}) остановлен: баланс единиц и нулей по выделенным строкам сравнялся.`);
       }
       if (cycleDone) return finishAuto(`Авто (${dirLabel}) остановлен: полный цикл вариантов (${turns} из ${totalTurns}) пройден, совпадений не найдено.`);
       if (!moved) return finishAuto(`Авто (${dirLabel}) остановлен: больше нечего сдвигать.`);
@@ -5352,7 +6138,7 @@ function autoRun(){
     return;
   }
 
-  const { pairOnly, forceXor, isScan, isHorizXor, isXorProj } = getModeParams(st.mode || "step1");
+  const { pairOnly, forceXor, isScan, isHorizXor, isXorProj, horizDir } = getModeParams(st.mode || "step1");
 
   const tick = () => {
     if (!st.running) return finishAuto();
@@ -5361,7 +6147,7 @@ function autoRun(){
     const t0 = performance.now();
     let stepsCount = 0;
     while (performance.now() - t0 < 12) {
-      if (!doStep(pairOnly, forceXor, isScan, isHorizXor, isXorProj)) {
+      if (!doStep(pairOnly, forceXor, isScan, isHorizXor, isXorProj, horizDir)) {
         return finishAuto(`Прогон завершен: двигаться некуда (выполнено ${stepsCount} ш. в посл. кадре).`);
       }
 
@@ -5392,7 +6178,19 @@ document.getElementById("bStep").onclick     = () => doModeStep("step1");
 document.getElementById("bStep2").onclick    = () => doModeStep("step2");
 document.getElementById("bStepXor").onclick  = () => doModeStep("xor1");
 document.getElementById("bStep2Xor").onclick = () => doModeStep("xor2");
-document.getElementById("bStepHorizXor").onclick = () => doModeStep("horiz_xor");
+// ◄/►Гориз.XOR: если есть выделенная строка — старт СРАЗУ с неё (st.bIdx), а не с того, что
+// осталось от прошлого режима (st.aIdx/bIdx общие на всё приложение, по умолчанию 0/1) —
+// запрос пользователя.
+function startHorizXor(modeName){
+  if (st.selectedRows && st.selectedRows.size > 0) {
+    const idx = Math.max(...st.selectedRows);
+    st.bIdx = idx;
+    st.aIdx = Math.max(0, idx - 1);
+  }
+  doModeStep(modeName);
+}
+document.getElementById("bStepHorizXor").onclick = () => startHorizXor("horiz_xor");
+document.getElementById("bStepHorizXorLeft").onclick = () => startHorizXor("horiz_xor_left");
 document.getElementById("bStepXorProj").onclick = () => doModeStep("xor_proj");
 document.getElementById("bStepScan").onclick = () => doModeStep("scan");
 
@@ -5416,11 +6214,36 @@ function deleteSelectedRows(){
     st.rows.splice(idx, 1);
     st.pats.splice(idx, 1);
     st.used.splice(idx, 1);
+    // Разделители (rowDividers) хранят "сырые" индексы строк — при удалении строки нужно и
+    // снять разделитель с неё (если был), и сдвинуть вниз индексы всех разделителей НИЖЕ неё,
+    // иначе после удаления они окажутся не на тех строках.
+    if (st.rowDividers && st.rowDividers.size) {
+      const shifted = new Set();
+      for (const d of st.rowDividers) {
+        if (d === idx) continue;
+        shifted.add(d > idx ? d - 1 : d);
+      }
+      st.rowDividers = shifted;
+    }
   }
   st.selectedRows.clear();
   render(); saveCache();
   say(`Удалено ${selected.length} строк(и).`);
 }
+
+/* Разделитель-граница снизу выделенной строки (Numpad0 / кнопка) — переключатель (повторный
+   вызов на той же строке снимает). Несколько выделенных строк — переключает у КАЖДОЙ разом. */
+function toggleRowDivider(){
+  if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
+  if (!st.rowDividers) st.rowDividers = new Set();
+  const idxs = Array.from(st.selectedRows);
+  const allSet = idxs.every(i => st.rowDividers.has(i));
+  for (const i of idxs) { if (allSet) st.rowDividers.delete(i); else st.rowDividers.add(i); }
+  render(); saveCache();
+  say(allSet ? "Разделитель снят." : "Разделитель поставлен.");
+}
+const bToggleRowDividerEl = document.getElementById("bToggleRowDivider");
+if (bToggleRowDividerEl) bToggleRowDividerEl.onclick = toggleRowDivider;
 
 /* Генератор фрактала Серпинского по кнопке (тот же generateSierpinski90, что и при пустом
    кэше при первом запуске) — заменяет ТЕКУЩУЮ цепочку и паттерны на N строк из поля рядом. */
@@ -5479,13 +6302,42 @@ if (colHeaderEl) {
   });
 }
 
+// Общий хвост ручных ◄/►Круг/Круг Инв: после сдвига проверяем фон-поиск и, если что-то нашлось
+// И было выделено НЕСКОЛЬКО строк, ДОБАВЛЯЕМ найденную строку к текущему выделению (не заменяя
+// его) — запрос пользователя. Если выделена была ровно ОДНА строка — ничего не добавляем, не
+// "расширяем" выделение на ровном месте. Сама найденная строка при этом уже НЕ крутилась (цикл
+// выше прошёл по r ИЗ ИСХОДНОГО st.selectedRows, до добавления) — её биты не трогаются.
+// Дальше — тот же счётчик "Вар: N/M (стр. ...)", что и в "Авто" (см. autoRun()), только тут
+// накапливается по кликам подряд, а не по тикам — запрос пользователя ("при ручном тоже надо
+// это показывать"). st.manualShiftTurns копится, пока не сменится выделение кликом по строке
+// или режим (см. reset в rows.onclick / setMode()).
+function afterShiftBgCheck(wasMulti, isShiftInv){
+  if (wasMulti) {
+    const bgInfo = computeBgSearchTarget();
+    if (bgInfo && bgInfo.matched) {
+      if (!st.selectedRows) st.selectedRows = new Set();
+      st.selectedRows.add(bgInfo.targetIdx);
+    }
+  }
+  st.manualShiftTurns = (st.manualShiftTurns || 0) + 1;
+  const idxs = st.selectedRows ? Array.from(st.selectedRows) : [];
+  st.shiftVariantTotal = computeShiftTotalTurns(idxs, isShiftInv);
+  st.shiftVariantTurns = st.manualShiftTurns;
+  st.shiftVariantRows = idxs;
+  updateVariantCounter();
+}
 const bShiftLEl = document.getElementById("bShiftL");
 if (bShiftLEl) {
   bShiftLEl.onclick = () => {
     if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
+    const wasMulti = st.selectedRows.size > 1;
     setLastDirMode("shiftL");
     snapshot();
-    for (const r of st.selectedRows) if (st.rows[r]) st.rows[r] = rotateStrLeft(st.rows[r]);
+    for (const r of st.selectedRows) if (st.rows[r]) {
+      invFlagsMap.set(r, rotateInvFlagsLeft(getInvFlags(r, st.rows[r].length)));
+      st.rows[r] = rotateStrLeft(st.rows[r]);
+    }
+    afterShiftBgCheck(wasMulti, false);
     render(); saveCache();
   };
 }
@@ -5493,9 +6345,44 @@ const bShiftREl = document.getElementById("bShiftR");
 if (bShiftREl) {
   bShiftREl.onclick = () => {
     if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
+    const wasMulti = st.selectedRows.size > 1;
     setLastDirMode("shiftR");
     snapshot();
-    for (const r of st.selectedRows) if (st.rows[r]) st.rows[r] = rotateStrRight(st.rows[r]);
+    for (const r of st.selectedRows) if (st.rows[r]) {
+      invFlagsMap.set(r, rotateInvFlagsRight(getInvFlags(r, st.rows[r].length)));
+      st.rows[r] = rotateStrRight(st.rows[r]);
+    }
+    afterShiftBgCheck(wasMulti, false);
+    render(); saveCache();
+  };
+}
+const bShiftLInvEl = document.getElementById("bShiftLInv");
+if (bShiftLInvEl) {
+  bShiftLInvEl.onclick = () => {
+    if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
+    const wasMulti = st.selectedRows.size > 1;
+    setLastDirMode("shiftLInv");
+    snapshot();
+    for (const r of st.selectedRows) if (st.rows[r]) {
+      invFlagsMap.set(r, rotateInvFlagsLeftInv(getInvFlags(r, st.rows[r].length)));
+      st.rows[r] = rotateStrLeftInv(st.rows[r]);
+    }
+    afterShiftBgCheck(wasMulti, true);
+    render(); saveCache();
+  };
+}
+const bShiftRInvEl = document.getElementById("bShiftRInv");
+if (bShiftRInvEl) {
+  bShiftRInvEl.onclick = () => {
+    if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
+    const wasMulti = st.selectedRows.size > 1;
+    setLastDirMode("shiftRInv");
+    snapshot();
+    for (const r of st.selectedRows) if (st.rows[r]) {
+      invFlagsMap.set(r, rotateInvFlagsRightInv(getInvFlags(r, st.rows[r].length)));
+      st.rows[r] = rotateStrRightInv(st.rows[r]);
+    }
+    afterShiftBgCheck(wasMulti, true);
     render(); saveCache();
   };
 }
@@ -5539,17 +6426,10 @@ if (bPadZerosAboveEl) {
 /* Тетрис: 1-биты строки НАД выделенной "падают" в неё — в её 0-пустоты. Каждый клик делает
    РОВНО ОДНО из следующих действий (все — отдельными кликами, ничего не объединяется):
    1) Не влезает как есть — КРУТИТ выделенную строку круговым сдвигом (вправо, как и остальные
-      ручные сдвиги ◄/►), перебирая повороты, пока не найдётся подходящий (клик).
-   1б) Ни один поворот не подошёл — ИНВЕРТИРУЕТ (0↔1) падающую строку (строку НАД выделенной,
-      видно в таблице; сама выделенная НЕ инвертируется), и ТОЛЬКО это — без попытки в этом же
-      клике сразу подобрать поворот (клик). Инверсия применяется БЕЗУСЛОВНО, даже если сама по
-      себе ещё не даёт fit — клик никогда не "проваливается в никуда". Поворот выделенной (если
-      после инверсии он всё же нужен) подбирается уже НА СЛЕДУЮЩЕМ клике — тот заново заходит в
-      шаг 1, теперь уже с инвертированной падающей. Если и с инвертированной ни один поворот не
-      подошёл — очередной клик в этом тупике снова инвертирует падающую (переключение туда-
-      обратно), пока пользователь не подберёт совпадение сам (например, покрутив выделенную
-      вручную ◄/► между нажатиями).
-   2) Уже влезает как есть (сразу либо после поворота/инверсии на одном из прошлых кликов) —
+      ручные сдвиги ◄/►), перебирая повороты, пока не найдётся подходящий (клик). Если НИ ОДИН
+      поворот не подошёл — просто сообщаем об этом и ничего не меняем (раньше тут была
+      автоматическая инверсия падающей строки — убрана по запросу пользователя).
+   2) Уже влезает как есть (сразу либо после поворота на одном из прошлых кликов) —
       ПАДЕНИЕ: выделенная получает 1-биты падающей (в её 0-пустотах), строка сверху гасит ВСЕ
       свои биты, что были 1 (и упали), в 0 (какие были 0 — так и остаются), длина не меняется.
       Переход выделения на строку ниже — НЕ в этом же клике (клик).
@@ -5559,8 +6439,8 @@ if (bPadZerosAboveEl) {
    Строки НИКОГДА не удаляются и не сдвигаются — ни на каком шаге, ни при каком исходе слияния
    (в т.ч. если выделенная стала целиком из единиц). Кроме tetrisPendingAdvance (нужен именно
    для разделения шагов 2 и 3) функция не хранит своего состояния — она каждый раз проверяет
-   текущий факт "влезает ли падающая в выделенную КАК ЕСТЬ", поэтому шаг 1/1б на СЛЕДУЮЩЕМ клике
-   сам собой приводит ко входу в шаг 2.
+   текущий факт "влезает ли падающая в выделенную КАК ЕСТЬ", поэтому шаг 1 на СЛЕДУЮЩЕМ клике
+   (если строку повернули вручную между кликами) сам собой приводит ко входу в шаг 2.
    Падающая строка ДЛИННЕЕ выделенной — сразу не влезает ни при каком повороте (лишним битам
    падающей просто некуда падать) — это отдельная проверка перед циклом поворотов, а не то же
    самое "не нашлось поворота". st.pats и st.used не трогаются вообще — они на строки никак
@@ -5661,17 +6541,9 @@ function tetrisDrop(){
     return;
   }
 
-  // Шаг 1б: ни один поворот не подошёл — инвертируем падающую строку (реально, в таблице) как
-  // ОТДЕЛЬНЫЙ шаг, без поворота выделенной в этом же клике (инверсия и сдвиг — не сразу вместе).
-  // Инверсия применяется БЕЗУСЛОВНО, даже если сама по себе ещё не даёт fit — следующий клик
-  // просто зайдёт в обычный шаг 1 заново (уже с инвертированной падающей) и, если нужно,
-  // подберёт поворот отдельным кликом. Повторный клик на тупике (снова нет поворота даже с
-  // инверсией) инвертирует падающую ЕЩЁ РАЗ (переключение туда-обратно) — можно пробовать
-  // вручную, покрутив выделенную ◄/► между нажатиями.
-  snapshot();
-  st.rows[aboveIdx] = invertBits(falling);
-  render(); saveCache();
-  say("🧱 Тетрис: строка сверху инвертирована — нажмите ещё раз (подберёт поворот выделенной, если нужен, отдельным кликом).");
+  // Ни один поворот не подошёл — раньше тут была автоматическая инверсия падающей строки, убрана
+  // по запросу пользователя. Просто сообщаем, что не влезает, ничего не меняем.
+  say("🧱 Тетрис: ни один поворот выделенной строки не даёт падающей строке влезть в пустоты.");
 }
 const bTetrisEl = document.getElementById("bTetris");
 if (bTetrisEl) bTetrisEl.onclick = tetrisDrop;
@@ -6327,6 +7199,15 @@ document.addEventListener("keydown", e => {
     e.preventDefault();
     closeMenus();
     document.getElementById("bReset").click();
+    // Выделение строк (st.selectedRows) Escape НЕ трогает — то же поведение, что и у клика по
+    // самой кнопке "↺ Сброс" (см. resetAll()) — запрос пользователя (отменяет более раннее
+    // "снимай выделение по Escape").
+    // НАТИВНОЕ выделение текста браузером (протяжка мышью по битам/паттернам, обычный
+    // window.getSelection()) — отдельная штука от st.selectedRows, Escape его по-прежнему чистит.
+    if (window.getSelection) {
+      const sel = window.getSelection();
+      if (sel && sel.removeAllRanges) sel.removeAllRanges();
+    }
   } else if (e.key === "Delete") {
     // Delete — удалить выделенные (кликом) строки. НЕ связано с откатом шага.
     e.preventDefault();
@@ -6353,6 +7234,19 @@ document.addEventListener("keydown", e => {
   } else if (e.key === "ArrowRight") {
     e.preventDefault();
     if (bShiftREl) bShiftREl.click();
+  } else if (e.code === "Numpad4") {
+    // Нумпад 4/6 — те же ◄/►, но с инверсией бита на границе (см. bShiftLInv/bShiftRInv).
+    // e.code (не e.key) — чтобы работало независимо от NumLock (иначе e.key от Numpad4 при
+    // выключенном NumLock совпадает с обычной ArrowLeft и перехватывался бы веткой выше).
+    e.preventDefault();
+    if (bShiftLInvEl) bShiftLInvEl.click();
+  } else if (e.code === "Numpad6") {
+    e.preventDefault();
+    if (bShiftRInvEl) bShiftRInvEl.click();
+  } else if (e.code === "Numpad0") {
+    // Нумпад 0 — переключить разделитель-границу снизу выделенной строки (см. toggleRowDivider).
+    e.preventDefault();
+    toggleRowDivider();
   } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
     // Двигает ВЫДЕЛЕНИЕ строки вверх/вниз (не путать с ◄► — те крутят символы внутри строки).
     e.preventDefault();
@@ -6451,6 +7345,37 @@ function applyLs(){
   document.getElementById("lsVal").textContent = v;
 }
 ls.oninput = () => { applyLs(); saveCache(); };
+
+/* "📐90°" — подбирает межсимвольный интервал (ls) так, чтобы ячейка символа стала КВАДРАТНОЙ
+   (ширина = высоте строки --row-h) при текущих fs/lh — тогда любая "лестница" (1,11,111...)
+   в таблице строк идёт ровно по 45°. Естественную ширину символа (БЕЗ letter-spacing) меряем
+   через canvas.measureText() тем же шрифтом/размером, что и сама таблица (--chain-ff/--chain-fs)
+   — жёстко хардкодить соотношение ширина/высота нельзя, оно своё у каждого из 6 шрифтов
+   (см. #chainFontSel). letter-spacing браузер добавляет ПОСЛЕ каждого символа как есть, поэтому
+   искомый ls = высота_строки − natural_width, округлённый до шага ползунка (0.5). */
+function applySquareCellLs(){
+  const fsPx = +fs.value;
+  const lhVal = +lh.value;
+  const rowH = Math.round(fsPx * lhVal); // та же формула, что и updateRowHeight()/--row-h
+  const ff = getComputedStyle(document.documentElement).getPropertyValue("--chain-ff").trim() || '"Roboto Mono", Consolas, monospace';
+  const measureCanvas = document.createElement("canvas");
+  const ctx = measureCanvas.getContext("2d");
+  ctx.font = fsPx + "px " + ff;
+  const naturalW = ctx.measureText("0").width;
+  let target = Math.round((rowH - naturalW) * 2) / 2; // шаг ползунка ls — 0.5
+  const min = +ls.min, max = +ls.max;
+  const clamped = Math.max(min, Math.min(max, target));
+  ls.value = clamped;
+  applyLs();
+  saveCache();
+  if (clamped !== target) {
+    say(`📐 Квадратная ячейка требует ls=${target}, но ползунок ограничен [${min}; ${max}] — поставлено ближайшее ${clamped}, идеального 90° не будет.`);
+  } else {
+    say(`📐 Ячейка символа теперь квадратная (${rowH}×${rowH}px) — лестница идёт ровно по 45°.`);
+  }
+}
+const rightTriangle90BtnEl = document.getElementById("rightTriangle90Btn");
+if (rightTriangle90BtnEl) rightTriangle90BtnEl.onclick = applySquareCellLs;
 
 /* Выбор шрифта цифр полотна (см. #chainFontSel/--chain-ff в CSS) */
 const chainFontSelEl = document.getElementById("chainFontSel");
@@ -6761,14 +7686,21 @@ function captureUiSettings(){
     pull: cPullEl.checked, order: cOrderEl.checked, nextOnly: cNextOnlyEl.checked,
     stageXor: cStageXorEl ? cStageXorEl.checked : false, invPass: cInvPassEl ? cInvPassEl.checked : false,
     autoShift: cAutoShiftEl ? cAutoShiftEl.checked : false, stopOnHit: cStopOnHitEl ? cStopOnHitEl.checked : true,
+    stopOnBalance: cStopOnBalanceEl ? cStopOnBalanceEl.checked : false,
     vert: cVertEl.checked, pad: cPadEl.checked, kinds: cKindsEl.checked, skip1: cSkipEl.checked,
     ringInvert: cRingInvertEl ? cRingInvertEl.checked : false,
     ringReverse: cRingReverseEl ? cRingReverseEl.checked : false,
     seqSelf: cSeqSelfEl ? cSeqSelfEl.checked : false,
+    horizRotateOnFail: cHorizRotateOnFailEl ? cHorizRotateOnFailEl.checked : true,
+    horizAlternateSide: cHorizAlternateSideEl ? cHorizAlternateSideEl.checked : false,
+    horizReverseChain: cHorizReverseChainEl ? cHorizReverseChainEl.checked : false,
     seqGlueMode: st.seqGlueMode || "right",
     align: st.align, mode: st.mode || "step1", rowCount: rowCountEl ? rowCountEl.value : 256,
     bgSearch: cBgSearchEl ? cBgSearchEl.checked : false, bgSearchModes: st.bgSearchModes,
     bgSubPatterns: cBgSubPatternsEl ? cBgSubPatternsEl.checked : false,
+    bgSearchAllBelow: cBgAllBelowEl ? cBgAllBelowEl.checked : false,
+    showLengthSums: cShowLengthSumsEl ? cShowLengthSumsEl.checked : false,
+    resultHeightLocked: resultHeightLocked,
     highlight01: !!st.highlight01,
     highlightVert1: !!st.highlightVert1,
     highlightDiag1: !!st.highlightDiag1,
@@ -6800,6 +7732,10 @@ function applyUiSettings(u){
   if (u.invPass   !== undefined) cInvPassEl.checked   = u.invPass;
   if (u.autoShift !== undefined) cAutoShiftEl.checked = u.autoShift;
   if (u.stopOnHit !== undefined && cStopOnHitEl) cStopOnHitEl.checked = u.stopOnHit;
+  if (u.stopOnBalance !== undefined && cStopOnBalanceEl) cStopOnBalanceEl.checked = u.stopOnBalance;
+  if (u.horizRotateOnFail !== undefined && cHorizRotateOnFailEl) cHorizRotateOnFailEl.checked = u.horizRotateOnFail;
+  if (u.horizAlternateSide !== undefined && cHorizAlternateSideEl) cHorizAlternateSideEl.checked = u.horizAlternateSide;
+  if (u.horizReverseChain !== undefined && cHorizReverseChainEl) cHorizReverseChainEl.checked = u.horizReverseChain;
   if (u.vert      !== undefined) cVertEl.checked      = u.vert;
   if (u.pad       !== undefined) cPadEl.checked       = u.pad;
   if (u.kinds     !== undefined) cKindsEl.checked     = u.kinds;
@@ -6827,6 +7763,12 @@ function applyUiSettings(u){
 
   if (u.bgSearch !== undefined && cBgSearchEl) { cBgSearchEl.checked = u.bgSearch; st.bgSearch = u.bgSearch; }
   if (u.bgSubPatterns !== undefined && cBgSubPatternsEl) { cBgSubPatternsEl.checked = u.bgSubPatterns; st.bgSubPatterns = u.bgSubPatterns; }
+  if (u.bgSearchAllBelow !== undefined && cBgAllBelowEl) { cBgAllBelowEl.checked = u.bgSearchAllBelow; st.bgSearchAllBelow = u.bgSearchAllBelow; }
+  if (u.showLengthSums !== undefined && cShowLengthSumsEl) { cShowLengthSumsEl.checked = u.showLengthSums; st.showLengthSums = u.showLengthSums; }
+  // applyResultHeightLock() тут НЕ вызываем — #chainText на этот момент ещё пустой/не
+  // отрендерен реальным содержимым, замерять высоту рано; следующий render() (см. его конец)
+  // сам применит актуальное resultHeightLocked с реальным контентом.
+  if (u.resultHeightLocked !== undefined) resultHeightLocked = u.resultHeightLocked;
   if (u.highlight01 !== undefined) {
     st.highlight01 = !!u.highlight01;
     const b = document.getElementById("bHighlight01");
@@ -6935,11 +7877,15 @@ function applyUiSettings(u){
    в самом HTML), а не на то, что было сохранено кнопкой "Сохр. настройки". */
 const DEFAULT_UI_SETTINGS = {
   pull: true, order: true, nextOnly: false, stageXor: false, invPass: false,
-  autoShift: false, stopOnHit: true, vert: false, pad: false, kinds: false, skip1: true,
+  autoShift: false, stopOnHit: true, stopOnBalance: false, vert: false, pad: false, kinds: false, skip1: true,
   ringInvert: false, ringReverse: false, seqSelf: false, seqGlueMode: "right",
+  horizRotateOnFail: true, horizAlternateSide: false, horizReverseChain: false,
   align: "center", mode: "step1", rowCount: "100",
   bgSearch: true, bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatRInv", "concatRRevInv", "concatL", "concatLInv", "concatLRevInv", "concatSnake", "concatSnakeInv", "concatSnakeRevInv", "vertR", "vertL", "snakeR", "snakeL"],
   bgSubPatterns: false,
+  bgSearchAllBelow: false,
+  showLengthSums: false,
+  resultHeightLocked: true,
   highlight01: false,
   highlightVert1: false,
   highlightDiag1: false,
@@ -7040,7 +7986,7 @@ const taPatsEl = document.getElementById("taPats");
 if (taRowsEl) taRowsEl.addEventListener("input", saveCache);
 if (taPatsEl) taPatsEl.addEventListener("input", saveCache);
 
-for (const el of [cPullEl, cOrderEl, cNextOnlyEl, cStageXorEl, cInvPassEl, cAutoShiftEl, cStopOnHitEl, cVertEl, cPadEl, cKindsEl, cSkipEl]) {
+for (const el of [cPullEl, cOrderEl, cNextOnlyEl, cStageXorEl, cInvPassEl, cAutoShiftEl, cStopOnHitEl, cStopOnBalanceEl, cVertEl, cPadEl, cKindsEl, cSkipEl, cHorizRotateOnFailEl, cHorizAlternateSideEl, cHorizReverseChainEl]) {
   if (el) el.addEventListener("change", () => { readToggles(); saveCache(); });
 }
 // cRingInvert влияет только на панель результата фон-поиска (не на данные строк) — как и
