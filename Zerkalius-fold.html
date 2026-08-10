@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.238</title>
+<title>Zerkalius Fold — v0.275</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -199,12 +199,12 @@
      (.menu-btn: padding:3px 10px); остальные .align-grp (в панелях — bgSearchModeGrp,
      spiralDirGrp и т.п.) намеренно компактные, не трогаем. */
   #alignGrp button{padding:3px 10px}
-  /* ◄/► переключатель "какая сторона — вверх" для Спирали (spiralDirGrp, editGroup) — кнопки
-     ▲/▼ Спираль САМИ перенесены во вкладку "Шаги" (см. flow-modes-grid), тут остался только сам
-     переключатель направления, но его высоту/паддинг всё равно надо переопределять отдельно:
-     .control-group-player .align-grp button (правило чуть выше) даёт padding:7px 4px и
-     font-size:16px — этого одного min-height мало (контент и так выше 24px, min-height не
-     перебивает), нужно было переопределить и padding/font-size тоже, не только высоту. */
+  /* ◄/► переключатель "какая сторона — вверх" для Спирали (spiralDirGrp) — сидит В ОДНОЙ рамке
+     с ▲/▼ Спираль во вкладке "Шаги" (flow-modes-grid, см. запрос пользователя — переключатель
+     влияет только на Спираль, значит должен быть рядом с ней). ID-селектор нужен независимо от
+     того, в какой .control-group он окажется — унаследованный .align-grp button местами даёт
+     padding:7px 4px и font-size:16px, этого одного min-height мало (контент и так выше 24px,
+     min-height не перебивает), нужно переопределить и padding/font-size тоже, не только высоту. */
   #spiralDirGrp button{min-height:var(--std-btn-h);padding:1px 5px;font-size:12px}
   .align-grp button.act{background:rgba(77,163,255,0.2);color:var(--acc)}
 
@@ -909,6 +909,10 @@
 .step-log-input-text {
   color: var(--fg);
 }
+/* "⧬ Интерлив сквозной" — в "Итог" ВСЕ символы, взятые ИЗ СТРОКИ (не из сквозной), красятся
+   синим — так видно, куда легли именно её биты среди переплетения. Фон пробовали — оказалось
+   неразборчиво (см. запрос пользователя), заменили на простой цвет текста. */
+.interleave-src-row { color: #4da3ff !important; }
 
 /* Строка результата — тем же рядом-лейблом (.step-log-input-name "Итог"), что и строки-
    источники выше, чтобы биты у всех начинались в одном столбце (см. запрос "выровни названия
@@ -996,7 +1000,7 @@
 <!-- === МАРКЕР 03: HEADER_UI === -->
 <div id="menuBar">
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
-    <h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.238</span></h3>
+    <h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.275</span></h3>
   </div>
   <div id="menuTabs">
     <button id="bUndo" style="font-size:12px;padding:3px 8px;" title="Шаг назад / отмена ручной правки (Backspace / Ctrl+Z)">↩ Отменить</button>
@@ -1006,11 +1010,13 @@
       <div class="menu-btn" data-menu="menuEdit"><span>Правка строк</span><input type="checkbox" class="menu-pin-inline" id="menuEditPin" title="Показывать в панели"></div>
       <div class="menu-btn" data-menu="menuSearch"><span>Поиск</span><input type="checkbox" class="menu-pin-inline" id="menuSearchPin" title="Показывать в панели"></div>
       <div class="menu-btn" data-menu="menuView"><span>Вид</span><input type="checkbox" class="menu-pin-inline" id="menuViewPin" title="Показывать в панели"></div>
+      <div class="menu-btn" data-menu="menuSeq"><span>Сквозная</span><input type="checkbox" class="menu-pin-inline" id="menuSeqPin" title="Показывать в панели"></div>
     </div>
     <div id="menuOps" class="menu-drop"></div>
     <div id="menuEdit" class="menu-drop"></div>
     <div id="menuSearch" class="menu-drop"></div>
     <div id="menuView" class="menu-drop"></div>
+    <div id="menuSeq" class="menu-drop"></div>
 
     <!-- Выравнивание — вынесено из вкладки "Правка строк" прямо в верхнее меню рядом с
          вкладками, чтобы быть всегда видимым без открытия/закрепления панели. Клик по номеру
@@ -1055,8 +1061,12 @@
 </div>
 
 <div id="opsGroup" class="control-group ops-btn-grid">
-  <!-- Только одноразовые действия (не режимы для "Авто" — см. flowGroup ниже): у этих трёх нет
-       подсветки .mode-act, каждый клик — самостоятельное действие, а не выбор "что повторять". -->
+  <!-- Только одноразовые действия (не режимы для "Авто" — см. flowGroup ниже): у этих нет
+       подсветки .mode-act, каждый клик — самостоятельное действие, а не выбор "что повторять".
+       "⧬ Интерлив сквозной"/"⨁ XOR сквозной" — тоже ПОЛНОЦЕННЫЕ режимы для "Авто"
+       (взаимоисключающая .mode-act подсветка с Шаг/XOR/.../Круг/Спираль), но живут во вкладке
+       "Сквозная" (seqGroup), а не тут и не в flowGroup — см. запрос пользователя, все
+       сквозная-режимы теперь в одном месте. -->
   <button id="bInterleaveSearch" title="Интерливинг пары + поиск совпадения в паттерне 3-й строки">⧬ Интерлив</button>
   <button id="bXorSelected" style="color:#ff66cc;" title="XOR выделённой строки и всех над ней, показать результат внизу и перейти на нижнюю если совпадает">⨁ XOR выдел</button>
   <!-- Тетрис: каждый клик — один ОТДЕЛЬНЫЙ шаг (см. tetrisDrop() в JS): если 1-биты строки НАД
@@ -1088,27 +1098,25 @@
     <!-- Круговой сдвиг и Спираль — тоже "режимы для Авто" (см. st.lastDirMode/DIR_MODE_BTN
          в JS), поэтому перенесены сюда же, из "Правки строк". Взаимоисключающая подсветка
          .mode-act — общая с Шаг/XOR/Гориз.XOR/Скан ниже (см. setLastDirMode()/setMode() в JS).
-         Стоят ПЕРЕД Сканом (не после) — в 2-колоночной сетке каждая пара ◄►/▲▼ должна попасть
-         на свою отдельную строку целиком, а не разбиваться Сканом пополам (см. запрос
-         пользователя — "круги на одной строке и спирали, Скан вниз"). -->
+         Стоят ПЕРЕД Сканом (не после) — в 2-колоночной сетке ◄►Круг должна попасть на свою
+         отдельную строку целиком, а не разбиваться Сканом пополам (см. запрос пользователя —
+         "круги на одной строке и спирали, Скан вниз"). -->
     <button id="bShiftL" title="Круговой сдвиг влево выбранных строк (◄ или Ctrl+Клик)">◄ Круг</button>
     <button id="bShiftR" title="Круговой сдвиг вправо выбранных строк (► или Ctrl+Клик)">► Круг</button>
-    <button id="bSpiralUp" style="color:#ff3333;" title="Спираль вверх: строки (все, либо выделенный диапазон) читаются одной лентой и сдвигаются по кругу на 1 символ в сторону, заданную переключателем ◄/► ниже">▲ Спираль</button>
-    <button id="bSpiralDown" style="color:#ff3333;" title="Спираль вниз: строки (все, либо выделенный диапазон) читаются одной лентой и сдвигаются по кругу на 1 символ в сторону, противоположную переключателю ◄/► ниже">▼ Спираль</button>
-    <button id="bStepScan" style="color:var(--green);" title="Сканировать строки на паттерны без изменения символов">👁 Скан</button>
-  </div>
-
-  <!-- ◄/► переключатель "какая сторона ленты — вверх" для ▲/▼ Спираль выше — НАСТРОЙКА, не
-       режим (не участвует в mode-act/DIR_MODE_BTN), поэтому вынесен из сетки режимов отдельным
-       рядом со своей подписью (текстом, а не только тултипом — раньше тут была голая пара кнопок
-       без единого поясняющего слова). Перенесено сюда же из "Правки строк", чтобы все элементы
-       Спирали были в одном месте, а не раскиданы по двум вкладкам. -->
-  <div style="display:flex; gap:6px; align-items:center; border:1px solid #ff3333; background:rgba(255,51,51,0.08); border-radius:3px; padding:4px;">
-    <span style="color:#ff9a9a; font-size:12px; white-space:nowrap;">Верх ленты Спирали:</span>
-    <div class="align-grp" id="spiralDirGrp" title="Какая сторона ленты символов считается «вверх» для кнопок ▲/▼ Спираль">
-      <button data-val="left" title="Влево по ленте = вверх">◄</button>
-      <button class="act" data-val="right" title="Вправо по ленте = вверх">►</button>
+    <!-- ▲/▼ Спираль + переключатель "какая сторона ленты — вверх" (st.spiralUpDir) — в ОДНОЙ
+         рамке (см. запрос пользователя — переключатель влияет только на Спираль, значит и жить
+         должен рядом с ней, а не во вкладке "Сквозная", куда его раньше унесли заодно со всем
+         сквозная-related). grid-column:1/-1 — та же двухколоночная сетка flow-modes-grid, растягиваем
+         рамку на всю ширину, как блок Серпинского в editGroup ниже. -->
+    <div style="grid-column:1 / -1; display:flex; gap:6px; align-items:center; border:1px solid #ff3333; background:rgba(255,51,51,0.08); border-radius:3px; padding:4px;">
+      <button id="bSpiralUp" style="color:#ff3333; flex:1;" title="Спираль вверх: строки (все, либо выделенный диапазон) читаются одной лентой и сдвигаются по кругу на 1 символ в сторону, заданную переключателем ◄/► справа">▲ Спираль</button>
+      <button id="bSpiralDown" style="color:#ff3333; flex:1;" title="Спираль вниз: строки (все, либо выделенный диапазон) читаются одной лентой и сдвигаются по кругу на 1 символ в сторону, противоположную переключателю ◄/► справа">▼ Спираль</button>
+      <div class="align-grp" id="spiralDirGrp" title="Какая сторона ленты считается «вверх» для ▲/▼ Спираль">
+        <button data-val="left" title="Влево по ленте = вверх">◄</button>
+        <button class="act" data-val="right" title="Вправо по ленте = вверх">►</button>
+      </div>
     </div>
+    <button id="bStepScan" style="color:var(--green);" title="Сканировать строки на паттерны без изменения символов">👁 Скан</button>
   </div>
 </div>
 
@@ -1118,7 +1126,6 @@
   <button id="bDelFirst" title="Удалить первый символ (слева) из выделенных строк (или всех, если ничего не выделено)">🗑 ←1</button>
   <button id="bDelLast" title="Удалить последний символ (справа) из выделенных строк (или всех, если ничего не выделено)">🗑 1→</button>
   <button id="bAddRightToggle" title="Добавить бит справа: первый клик добавляет 1; повторный клик подряд по тем же строкам (пока ничего больше не менялось) не добавляет новый бит, а переключает только что добавленный между 1 и 0">1/0→</button>
-  <button id="bClearChainRows" title="Очистить все строки цепочки, оставить только 1-ю строку = '1'">🌱 Очистить→1</button>
 
   <!-- Генератор фрактала Серпинского (Rule 90 / Pascal mod 2, см. generateSierpinski90) — тот же
        генератор, что используется при первом запуске без данных в кэше, но доступен по кнопке
@@ -1128,6 +1135,39 @@
     <input type="number" id="sierpinskiN" min="2" max="2048" step="1" value="128" style="width:64px" title="Сколько строк генерировать">
   </div>
 
+</div>
+
+<!-- "Сквозная" — отдельная вкладка: и сами режимы "Авто" ⧬Интерлив/⨁XOR сквозной, и все
+     настройки horizChainText() (используются ещё "🔗 Сквозная строка результата", Гориз.XOR).
+     Раньше всё это было раскидано: сами кнопки-режимы жили в flowGroup, порядок склейки — на
+     переключателе ◄/► у Спирали, 🔁 Инв. кольцо — во вкладке "Поиск" (см. запрос пользователя —
+     всё сквозная-related в одном месте). НЕ путать с bgSearchModeGrp ниже (concatR/concatL/
+     vertR/... — свои отдельные режимы фон-поиска через concatRowsDownTo()/concatVerticalDownTo(),
+     другая функция, эту вкладку не трогают). -->
+<div id="seqGroup" class="control-group">
+  <!-- Режимы "Авто", работающие по сквозной (круговые повороты через rotationsOf(), см.
+       doInterleaveSeqStep()/doXorSeqStep()) — перенесены сюда из flowGroup (см. запрос
+       пользователя — все сквозная-режимы в одном месте), взаимоисключающая .mode-act подсветка
+       с Шаг/XOR/.../Круг/Спираль сохраняется (см. SEQ_MODE_BTN_IDS/setMode()/setLastDirMode() в
+       JS — она завязана на id кнопок, а не на их место в DOM). -->
+  <div style="display:flex;flex-direction:column;gap:6px;">
+    <button id="bInterleaveSeqSearch" style="color:#22d3ee;" title="Интерлив со сквозной: текущая строка (без изменений) интерливится с КАЖДЫМ круговым поворотом сквозной (всех строк выше и самой выделенной) — ищем совпадение в паттерне следующей строки. Не нашлось ни на одном сдвиге — пробуем БОЛЬШИЙ блок интерлива (сначала обычный побитовый, потом по 2 символа, по 3 и т.д.), строка при этом не меняется. Найдено — сразу идём дальше (сквозная теперь включает и её)">⧬ Интерлив сквозной</button>
+    <button id="bXorSeqSearch" style="color:#22d3ee;" title="XOR со сквозной: текущая строка (без изменений) XOR'ится с КАЖДЫМ круговым поворотом сквозной (всех строк выше и самой выделенной) — ищем совпадение в паттерне следующей строки. Не нашлось ни на одном сдвиге — пробуем строку над ней, с той же сквозной. Найдено — сразу идём дальше (сквозная теперь включает и её), строка не меняется">⨁ XOR сквозной</button>
+    <label class="chk" title="Правая (неподвижная) часть — тоже сама сквозная (не конкретная строка): сквозная 'въезжает' сама в себя навстречу, голова к голове, один символ за шаг (одна копия стоит, другая крутится по кольцу). Действует на ОБА режима выше — Интерлив сквозной и XOR сквозной"><input type="checkbox" id="cSeqSelf">🪞 Сквозная сама с собой</label>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:6px;border:1px solid var(--acc);background:rgba(77,163,255,0.08);border-radius:3px;padding:4px;margin-top:6px;">
+    <span style="color:var(--dim);font-size:11px;">Порядок склейки строк в сквозную</span>
+    <div class="align-grp" id="seqGlueGrp" title="В каком порядке строки выше текущей склеиваются в сквозную (horizChainText())">
+      <button data-val="right" class="act" title="Как обычно: строка 0 первая, дальше по порядку вниз">► Обычная</button>
+      <button data-val="left" title="В обратном порядке строк: ближайшая СНИЗУ к текущей — первая, дальше вверх">◄ Обратная</button>
+      <button data-val="snake" title="Порядок строк обычный (строка 0 первая), но КАЖДАЯ ВТОРАЯ строка читается в обратном порядке БИТ внутри себя — змейкой/бустрофедоном">🐍 Змейка</button>
+    </div>
+  </div>
+  <div style="grid-column:1 / -1;display:flex;flex-direction:column;gap:4px;border:1px solid var(--acc);background:rgba(77,163,255,0.08);border-radius:3px;padding:4px;margin-top:6px;">
+    <label class="chk" title="Кольцевой поиск в результирующей строке (Интерлив/XOR/Сквозная): при переходе на новый виток кольца биты инвертируются (0↔1) — 111 даёт кольцо 111 000 111 000... вместо 111 111 111..., и паттерн ищется уже в нём"><input type="checkbox" id="cRingInvert">🔁 Инв. кольцо</label>
+    <label class="chk" title="То же самое кольцо, но следующий виток ЕЩЁ И реверсируется (порядок бит наоборот) — если включена ЕЩЁ и обычная 🔁 Инв. кольцо, следующий виток получается инвертирован И реверснут одновременно"><input type="checkbox" id="cRingReverse">🔁 Инв. кольцо реверс</label>
+  </div>
 </div>
 
 <div id="searchGroup" class="control-group search-grid">
@@ -1156,7 +1196,14 @@
       <button data-val="xor2" class="act" title="XOR выделенной и строки над ней">⨁ XOR 2</button>
       <button data-val="xorAll" class="act" title="XOR всех строк над выделенной и самой выделенной">⨁ XOR всех</button>
       <button data-val="concatR" class="act" title="Сквозная строка: все строки от 1-й до выделенной (включительно) просто склеены по порядку — новая строка приклеивается СПРАВА">🔗 Сквозная →</button>
+      <button data-val="concatRInv" class="act" title="То же самое, что 🔗 Сквозная →, но результат целиком инвертирован (0↔1)">🔗 Сквозная → Инв</button>
+      <button data-val="concatRRevInv" class="act" title="То же самое, что 🔗 Сквозная →, но результат инвертирован (0↔1) И реверснут (порядок бит наоборот)">🔗 Сквозная → Рев+Инв</button>
       <button data-val="concatL" class="act" title="Сквозная строка: все строки от 1-й до выделенной (включительно) просто склеены, но новая строка (сверху вниз) приклеивается СЛЕВА — итог идёт от выделенной к 1-й">🔗 Сквозная ←</button>
+      <button data-val="concatLInv" class="act" title="То же самое, что 🔗 Сквозная ←, но результат целиком инвертирован (0↔1)">🔗 Сквозная ← Инв</button>
+      <button data-val="concatLRevInv" class="act" title="То же самое, что 🔗 Сквозная ←, но результат инвертирован (0↔1) И реверснут (порядок бит наоборот)">🔗 Сквозная ← Рев+Инв</button>
+      <button data-val="concatSnake" class="act" title="Сквозная строка: все строки от 1-й до выделенной (включительно) склеены по порядку (как 🔗 Сквозная →), но у КАЖДОЙ ВТОРОЙ строки биты реверснуты — та же логика, что у «Змейка» в Порядке склейки сквозной (seqGlueMode)">🔗 Сквозная 🐍</button>
+      <button data-val="concatSnakeInv" class="act" title="То же самое, что 🔗 Сквозная 🐍, но результат целиком инвертирован (0↔1)">🔗 Сквозная 🐍 Инв</button>
+      <button data-val="concatSnakeRevInv" class="act" title="То же самое, что 🔗 Сквозная 🐍, но результат инвертирован (0↔1) И реверснут (порядок бит наоборот)">🔗 Сквозная 🐍 Рев+Инв</button>
       <button data-val="vertR" class="act" title="Вертикальная склейка: строки от 1-й до выделенной читаются по СТОЛБЦАМ (сверху вниз в каждом столбце), столбцы слева направо">↕ Верт. →</button>
       <button data-val="vertL" class="act" title="Вертикальная склейка: строки от 1-й до выделенной читаются по СТОЛБЦАМ (сверху вниз в каждом столбце), столбцы справа налево">↕ Верт. ←</button>
       <button data-val="snakeR" class="act" title="Змейка: как вертикальная склейка, но направление чтения строк внутри столбца чередуется (то сверху вниз, то снизу вверх), столбцы слева направо">🐍 Змейка →</button>
@@ -1169,7 +1216,6 @@
   <div style="grid-column:1 / -1;display:grid;grid-template-columns:repeat(2, 1fr);gap:4px;">
     <label class="chk" title="Искать также инверсию и реверс"><input type="checkbox" id="cKinds">⇌ Инв/Рев</label>
     <label class="chk" title="Первый символ паттерна не проверяется (ищется хвост со второго)"><input type="checkbox" id="cSkip1" checked>⏭ Без 1-го</label>
-    <label class="chk" title="Кольцевой поиск в результирующей строке (Интерлив/XOR/Сквозная): при переходе на новый виток кольца биты инвертируются (0↔1) — 111 даёт кольцо 111 000 111 000... вместо 111 111 111..., и паттерн ищется уже в нём" style="grid-column:1 / -1"><input type="checkbox" id="cRingInvert">🔁 Инв. кольцо</label>
   </div>
 </div>
 
@@ -1429,9 +1475,16 @@ function invertBits(s){ let o = ""; for (const c of s) o += (c === "0" ? "1" : c
 function reverseStr(s){ return s.split("").reverse().join(""); }
 
 /* Следующий виток кольца для кольцевого поиска (см. findPatternKinds) — по умолчанию точная
-   копия строки (обычное кольцо), а если включена 🔁 Инв. кольцо (st.ringInvert) — инвертированная
-   копия (0↔1), как и просил пользователь: 111 даёт кольцо 111 000 111 000... */
-function ringNextLap(text){ return st.ringInvert ? invertBits(text) : text; }
+   копия строки (обычное кольцо), 🔁 Инв. кольцо (st.ringInvert) инвертирует биты (0↔1) витка,
+   🔁 Инв. кольцо реверс (st.ringReverse) вдобавок реверсирует порядок бит витка — оба применяются
+   независимо (можно включить один, другой, оба или ни одного), как и просил пользователь: 111
+   даёт кольцо 111 000 111 000... с инверсией. */
+function ringNextLap(text){
+  let out = text;
+  if (st.ringInvert) out = invertBits(out);
+  if (st.ringReverse) out = reverseStr(out);
+  return out;
+}
 
 /* Проверка "текст содержит паттерн как подстроку" — целиком / без 1-го символа / реверсом /
    реверсом без 1-го, СТРОГО с учётом галок st.skipFirst и st.allKinds (как везде в
@@ -1546,18 +1599,90 @@ function getRowBits(st, r) {
   return raw;
 }
 
-/* Интерливинг пары */
-function interleavePair(top, bot, align){
+/* Интерливинг пары. Необязательный 5-й параметр N (по умолчанию 1) — БЛОЧНЫЙ интерлив: вместо
+   чередования по одному символу берутся блоки по N символов подряд с каждой стороны (см.
+   "Интерлив сквозной" / st.interleaveSeqBlockN — запрос пользователя: "если не наход, то делает
+   интерливинг не через 1 бит а через 2 бита потом через 3 и тд"). N=1 даёт РОВНО ТОТ ЖЕ результат,
+   что и раньше (побитовый интерлив) — остальные вызовы (обычный "⧬ Интерлив", фон-поиск и т.д.)
+   N не передают и не меняются. */
+function interleavePair(top, bot, align, N){
+  N = N || 1;
   const useTop = top.length >= bot.length;
   const long = useTop ? top : bot, short = useTop ? bot : top;
   const shift = alignShift(long.length, short.length, align);
   let out = "";
-  for (let i = 0; i < long.length; i++){
-    out += long[i];
+  for (let i = 0; i < long.length; i += N){
+    out += long.slice(i, i + N);
     const j = i - shift;
-    if (j >= 0 && j < short.length) out += short[j];
+    if (j + N > 0 && j < short.length) out += short.slice(Math.max(0, j), Math.min(short.length, j + N));
   }
   return out;
+}
+
+/* Карта "какой kind (и его skip-флаг) покрывает эту позицию" для подсветки найденного паттерна
+   поверх готового HTML-результата (см. interleavePairMarked/xorPairMarked ниже) — тот же приём,
+   что и у bgResultHtml в render() (kindAt/skipAt), только по модулю len вместо физического
+   продолжения строки: находка, "заехавшая" за конец (kd.end < kd.start), просто подсвечивается
+   ДВУМЯ кусками — в хвосте и в начале ТОГО ЖЕ отображаемого результата, без лишнего "довеска"
+   кольца в самом Итоге (кольцо и так уже показано отдельно, в "Скв×2"). Первый (самый ранний)
+   kind по позиции — приоритетный, как и в bgResultHtml. */
+function buildHitMap(len, kinds){
+  const map = new Array(len).fill(null);
+  if (!kinds || !len) return map;
+  for (const kd of kinds) {
+    for (let i = 0; i < kd.len; i++) {
+      const p = (kd.start + i) % len;
+      if (!map[p]) map[p] = { kind: kd.kind, skip: kd.skip };
+    }
+  }
+  return map;
+}
+
+/* То же самое переплетение, что и interleavePair(seqStr, rowStr, align), но вместо строки
+   возвращает ГОТОВЫЙ HTML: ВСЕ символы (и "0", и "1"), взятые ИЗ СТРОКИ (не из сквозной),
+   красятся синим (.interleave-src-row в CSS) — независимо от значения бита; символы сквозной —
+   обычным цветом по значению бита (.b0/.b1). Используется "⧬ Интерлив сквозной", чтобы было
+   видно, куда легли именно биты строки среди переплетения (см. запрос пользователя — фон
+   пробовали, оказалось неразборчиво; сначала красили только "1" из строки, потом добавили и "0").
+   Необязательный 4-й параметр kinds (результат findPatternKinds(searchResult, patFull)) —
+   ДОПОЛНИТЕЛЬНО подсвечивает сам НАЙДЕННЫЙ паттерн (.chain-hit-bits, см. buildHitMap выше) —
+   иначе по "Итогу" не видно, ГДЕ именно совпадение, только что оно есть (см. запрос
+   пользователя — "не вижу в результирующей нахождения паттерна"). Позиция в HTML считается
+   ЖИВЫМ счётчиком pos (не индексом i) — порядок символов в выводе interleavePair() не 1:1 с i
+   (за каждый i может уйти от 1 до 2×N символов), а kinds.start/end посчитаны по позиции в готовой
+   ПЛОСКОЙ строке searchResult, поэтому индексировать map нужно именно этим счётчиком.
+   Необязательный 6-й параметр N (по умолчанию 1) — та же блочность, что у interleavePair(N) выше,
+   markBlock красит ЦЕЛИКОМ блок посимвольно (каждый символ блока — свой span, как и раньше). */
+function interleavePairMarked(seqStr, rowStr, align, kinds, N){
+  N = N || 1;
+  const seqIsLong = seqStr.length >= rowStr.length;
+  const long = seqIsLong ? seqStr : rowStr, short = seqIsLong ? rowStr : seqStr;
+  const shift = alignShift(long.length, short.length, align);
+  let outLen = 0;
+  for (let i = 0; i < long.length; i += N){
+    outLen += Math.min(N, long.length - i);
+    const j = i - shift;
+    if (j + N > 0 && j < short.length) outLen += Math.min(short.length, j + N) - Math.max(0, j);
+  }
+  const hitAt = buildHitMap(outLen, kinds);
+  let pos = 0;
+  const markBlock = (str, isRow) => {
+    let out = "";
+    for (const ch of str) {
+      const cls = [isRow ? 'interleave-src-row' : ('b' + ch)];
+      const hit = hitAt[pos++];
+      if (hit) { cls.push('chain-hit-bits'); if (KIND_CLS[hit.kind]) cls.push(KIND_CLS[hit.kind]); if (hit.skip) cls.push('skip1'); }
+      out += '<span class="' + cls.join(" ") + '">' + esc(ch) + '</span>';
+    }
+    return out;
+  };
+  let html = "";
+  for (let i = 0; i < long.length; i += N){
+    html += markBlock(long.slice(i, i + N), !seqIsLong);
+    const j = i - shift;
+    if (j + N > 0 && j < short.length) html += markBlock(short.slice(Math.max(0, j), Math.min(short.length, j + N)), seqIsLong);
+  }
+  return html;
 }
 
 /* ХОР пары */
@@ -1577,6 +1702,33 @@ function xorPair(top, bot, align){
   return out;
 }
 
+/* То же самое, что xorPair(seqStr, rowStr, align), но вместо строки возвращает ГОТОВЫЙ HTML:
+   позиции, где в XOR реально участвовал бит СТРОКИ (не только сквозной), красятся синим
+   (.interleave-src-row в CSS, тот же класс, что и у "⧬ Интерлив сквозной" — общий смысл "тут
+   есть вклад строки"), остальное — обычным цветом по значению бита. Используется "⨁ XOR
+   сквозной" (см. запрос пользователя — "также надо чтобы работал Xor", по образцу интерливинга
+   по сквозной). Необязательный 4-й параметр kinds — см. interleavePairMarked() выше, тот же
+   приём подсветки найденного паттерна (.chain-hit-bits). xorPair() (в отличие от interleavePair)
+   выдаёт РОВНО ОДИН символ на каждую i — здесь позиция в HTML совпадает с i один в один, поэтому
+   отдельный счётчик pos не нужен. */
+function xorPairMarked(seqStr, rowStr, align, kinds){
+  const seqIsLong = seqStr.length >= rowStr.length;
+  const long = seqIsLong ? seqStr : rowStr, short = seqIsLong ? rowStr : seqStr;
+  const shift = alignShift(long.length, short.length, align);
+  const hitAt = buildHitMap(long.length, kinds);
+  let html = "";
+  for (let i = 0; i < long.length; i++){
+    const j = i - shift;
+    const overlap = j >= 0 && j < short.length && (long[i] === "0" || long[i] === "1") && (short[j] === "0" || short[j] === "1");
+    const ch = overlap ? ((long[i] === short[j]) ? "0" : "1") : long[i];
+    const cls = [overlap ? 'interleave-src-row' : ('b' + ch)];
+    const hit = hitAt[i];
+    if (hit) { cls.push('chain-hit-bits'); if (KIND_CLS[hit.kind]) cls.push(KIND_CLS[hit.kind]); if (hit.skip) cls.push('skip1'); }
+    html += '<span class="' + cls.join(" ") + '">' + esc(ch) + '</span>';
+  }
+  return html;
+}
+
 /* Сквозная склейка строк 0..stopIdx (включительно) без выравнивания/XOR — просто конкатенация.
    dir "right": обычный порядок сверху вниз (каждая следующая строка приклеивается справа).
    dir "left": обратный порядок — от stopIdx вверх до 0 (каждая следующая по счёту строка,
@@ -1587,6 +1739,21 @@ function concatRowsDownTo(st, stopIdx, dir){
     for (let i = stopIdx; i >= 0; i--) out += getRowBits(st, i);
   } else {
     for (let i = 0; i <= stopIdx; i++) out += getRowBits(st, i);
+  }
+  return out;
+}
+
+/* "Сквозная Змейка" для фон-поиска (см. bgSearchModeGrp "concatSnake") — ПОСТРОЧНАЯ склейка
+   0..stopIdx (включительно), как concatRowsDownTo(dir="right"), но у КАЖДОЙ ВТОРОЙ строки биты
+   реверснуты — та же логика, что у seqGlueMode "snake" в horizChainText() (см. запрос
+   пользователя). НЕ путать с concatSnakeDownTo() выше — там змейка ПО СТОЛБЦАМ (другая
+   механика, отдельный режим "🐍 Змейка →/←"). */
+function concatSnakeGlueDownTo(st, stopIdx){
+  let out = "";
+  for (let i = 0; i <= stopIdx; i++){
+    const s = getRowBits(st, i);
+    if (!s.length) continue;
+    out += (i % 2 === 1) ? reverseStr(s) : s;
   }
   return out;
 }
@@ -1752,9 +1919,14 @@ const st = {
   lastOp: null,
   xorSelectedMode: false, xorSelectedIdx: -1,
   interleaveMode: false, interleavePairIdx: -1,
+  interleaveSeqMode: false, interleaveSeqIdx: -1, interleaveSeqOffset: 0, interleaveSeqTryRow: -1,
+  interleaveSeqBlockN: 1,
+  xorSeqMode: false, xorSeqIdx: -1, xorSeqOffset: 0, xorSeqTryRow: -1,
+  seqSelfMode: false,
   selectedCol: -1,
   spiralUpDir: "right",
-  bgSearch: true, bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatL", "vertR", "vertL", "snakeR", "snakeL"], bgSearchLastHit: -1,
+  seqGlueMode: "right", ringReverse: false,
+  bgSearch: true, bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatRInv", "concatRRevInv", "concatL", "concatLInv", "concatLRevInv", "concatSnake", "concatSnakeInv", "concatSnakeRevInv", "vertR", "vertL", "snakeR", "snakeL"], bgSearchLastHit: -1,
   bgSubPatterns: false,
   highlight01: false,
   highlightVert1: false,
@@ -1771,7 +1943,9 @@ const UNDO_DEPTH = 500;
 /* Фон-поиск теперь мульти-select: можно включить сразу несколько режимов проверки одновременно */
 const BG_SEARCH_MODE_LABELS = {
   interleave: "Интерлив", xor2: "XOR 2", xorAll: "XOR всех",
-  concatR: "Сквозная →", concatL: "Сквозная ←",
+  concatR: "Сквозная →", concatRInv: "Сквозная → Инв", concatRRevInv: "Сквозная → Рев+Инв",
+  concatL: "Сквозная ←", concatLInv: "Сквозная ← Инв", concatLRevInv: "Сквозная ← Рев+Инв",
+  concatSnake: "Сквозная 🐍", concatSnakeInv: "Сквозная 🐍 Инв", concatSnakeRevInv: "Сквозная 🐍 Рев+Инв",
   vertR: "Верт. →", vertL: "Верт. ←",
   snakeR: "Змейка →", snakeL: "Змейка ←"
 };
@@ -1810,9 +1984,10 @@ function createDefaultTabState(name = "Цепочка 1") {
     tailBuffer: st.tailBuffer || "",
     selectedRows: Array.from(st.selectedRows || []),
     undo: st.undo ? st.undo.slice() : [],
-    // Цвета — свои у каждой цепочки (см. loadTabState/saveActiveTabState): новая вкладка
-    // стартует с тех цветов, что сейчас реально показаны на экране.
-    colors: captureColors()
+    // Настройки вида/поиска (все кнопки/галки/ползунки, включая цвета) — свои у каждой цепочки
+    // (см. loadTabState/saveActiveTabState): новая вкладка стартует с того, что сейчас реально
+    // показано на экране.
+    uiSettings: captureUiSettings()
   };
 }
 
@@ -1838,8 +2013,9 @@ function saveActiveTabState() {
     tailBuffer: st.tailBuffer || "",
     selectedRows: Array.from(st.selectedRows || []),
     undo: (st.undo || []).slice(),
-    // Текущие цвета этой (ещё активной на момент вызова) вкладки — см. loadTabState().
-    colors: captureColors()
+    // Текущие настройки вида/поиска этой (ещё активной на момент вызова) вкладки — см.
+    // loadTabState().
+    uiSettings: captureUiSettings()
   };
 }
 
@@ -1863,14 +2039,23 @@ function loadTabState(index, skipSave = false) {
   st.lastHorizRow = t.lastHorizRow || null;
   st.tailBuffer = t.tailBuffer || "";
   st.selectedRows = new Set(t.selectedRows || []);
+  // Та же гарантия "выделение не бывает пустым", что и в resetAll() (см. её комментарий) — тут
+  // отдельно, т.к. переключение вкладки не проходит через resetAll().
+  if (st.selectedRows.size === 0) {
+    const fd = firstDataIdx();
+    if (fd >= 0) st.selectedRows.add(fd);
+  }
   st.undo = t.undo ? t.undo.slice() : [];
   st.hit = null;
   st.lastOp = null;
 
-  // Цвета — свои у каждой цепочки: применяем сохранённые у ЭТОЙ вкладки (см. captureColors()/
-  // createDefaultTabState). Если у вкладки их ещё нет (старый кэш до этой фичи) — оставляем
-  // текущие цвета как есть, не сбрасываем на дефолт.
-  if (t.colors && col1 && col0 && colBg) {
+  // Настройки вида/поиска (все кнопки/галки/ползунки, включая цвета) — свои у каждой цепочки:
+  // применяем сохранённые у ЭТОЙ вкладки (см. captureUiSettings()/applyUiSettings()/
+  // createDefaultTabState). Старый кэш (до этой фичи) хранил только цвета в t.colors — тогда
+  // накладываем хотя бы их поверх текущих настроек, остальное оставляем как было.
+  if (t.uiSettings) {
+    applyUiSettings(t.uiSettings);
+  } else if (t.colors && col1 && col0 && colBg) {
     col1.value = t.colors.c1 || col1.value;
     col0.value = t.colors.c0 || col0.value;
     colBg.value = t.colors.cBg || colBg.value;
@@ -1964,19 +2149,50 @@ function canShift(){
   return true;
 }
 
-/* Сквозная цепочка для Гориз.XOR — конкатенация ВСЕХ непустых строк СТРОГО ВЫШЕ rowIdx
-   (сама rowIdx не входит — она неподвижная "мишень", по которой скользит цепочка).
-   Не зависит от st.used[] (тот заполняется только по пути автоперехода и ломается,
-   если пара строк выбрана вручную кликом) — всегда полная история сверху.
-   БЕЗ st.tailBuffer: он "плавает" по длине от шага к шагу (обрезается до maxPatLen после
-   каждого doStep), а длина этой цепочки должна быть СТАБИЛЬНОЙ, пока идёт скольжение по
-   одной строке — иначе цель (totalSteps) двигается и проход никогда честно не завершается. */
+/* Сквозная цепочка (используется и Гориз.XOR, и "🔗 Сквозная строка результата", и "⧬ Интерлив
+   сквозной") — конкатенация ВСЕХ непустых строк СТРОГО ВЫШЕ rowIdx (сама rowIdx не входит — она
+   неподвижная "мишень"/текущая строка). Не зависит от st.used[] (тот заполняется только по пути
+   автоперехода и ломается, если пара строк выбрана вручную кликом) — всегда полная история
+   сверху. БЕЗ st.tailBuffer: он "плавает" по длине от шага к шагу (обрезается до maxPatLen после
+   каждого doStep), а длина этой цепочки должна быть СТАБИЛЬНОЙ, пока идёт скольжение по одной
+   строке — иначе цель (totalSteps) двигается и проход никогда честно не завершается.
+
+   Порядок склейки строк — st.seqGlueMode (переключатель seqGlueGrp во вкладке "Сквозная"):
+   "right" (по умолчанию) — строка 0 первая, по порядку вниз; "left" — строки клеятся в ОБРАТНОМ
+   порядке (строка, ближайшая СНИЗУ к rowIdx, первая); "snake" — порядок строк обычный (строка 0
+   первая), но КАЖДАЯ ВТОРАЯ строка (индекс 1,3,5...) читается в обратном порядке БИТ внутри себя
+   (змейка/бустрофедон). */
 function horizChainText(rowIdx){
   let text = "";
-  for (let i = 0; i < rowIdx; i++){
-    if (st.rows[i] && st.rows[i].length) text += getRowBits(st, i);
+  if (st.seqGlueMode === "left") {
+    for (let i = rowIdx - 1; i >= 0; i--){
+      if (st.rows[i] && st.rows[i].length) text += getRowBits(st, i);
+    }
+  } else if (st.seqGlueMode === "snake") {
+    for (let i = 0; i < rowIdx; i++){
+      if (st.rows[i] && st.rows[i].length){
+        let bits = getRowBits(st, i);
+        text += (i % 2 === 1) ? reverseStr(bits) : bits;
+      }
+    }
+  } else {
+    for (let i = 0; i < rowIdx; i++){
+      if (st.rows[i] && st.rows[i].length) text += getRowBits(st, i);
+    }
   }
   return text;
+}
+
+/* "Якорная" строка для ЖИВОГО предпросмотра сквозной (окно "Результат" вне режима фон-поиска,
+   и пустой "Черновик" до первого реального шага) — самая нижняя из выделенных (тот же принцип,
+   что и у computeBgSearchTarget: "ориентир — самая нижняя выделенная"), а не st.bIdx (тот
+   двигается только автопоиском/шагами и не следит за обычным ручным кликом по строке, см.
+   запрос пользователя — "пусть сразу при выделении строки отображается"). st.selectedRows
+   теперь никогда не остаётся пустым (см. resetAll()/loadTabState()), поэтому запасной вариант
+   st.bIdx — только на случай самого первого рендера до полной инициализации. */
+function seqAnchorIdx(){
+  if (st.selectedRows && st.selectedRows.size) return Math.max(...st.selectedRows);
+  return st.bIdx;
 }
 
 /* Один шаг объединённого поиска для Гориз.XOR: chainText (сквозная — уже найденные строки
@@ -2023,6 +2239,27 @@ function horizWindowRange(chainLen, fullLen, stepNumber){
   return { start, end };
 }
 
+/* Позиция найденного паттерна ВНУТРИ text — простой indexOf, БЕЗ кольца (Гориз.XOR не
+   циклический, в отличие от findPatternKinds/кругового поиска сквозной): та же логика вариантов,
+   что у textMatchesPattern() (⏭ Без 1-го → ⇌ Инв/Рев), но с позицией — нужна для подсветки (см.
+   findPatternKinds() выше, тот же порядок kind 0/1/2). Возвращает первый найденный вариант или
+   null. */
+function findHorizPatternHit(text, patText){
+  if (!patText) return null;
+  const skipApplied = st.skipFirst && patText.length > 1;
+  const base = skipApplied ? patText.slice(1) : patText;
+  const variants = [{ kind: 0, text: base }];
+  if (st.allKinds) {
+    variants.push({ kind: 1, text: invertBits(base) });
+    variants.push({ kind: 2, text: reverseStr(base) });
+  }
+  for (const v of variants) {
+    const idx = text.indexOf(v.text);
+    if (idx >= 0) return { kind: v.kind, start: idx, len: v.text.length, skip: skipApplied };
+  }
+  return null;
+}
+
 /* Данные для визуализации Гориз.XOR (прогресс + Сквозная/Цель/Результат с подсветкой) — раньше
    рисовалось поверх сквозной строки результата (#chainText), теперь показывается в "Черновике
    шага" (см. renderStepLogBox()). null, если сейчас не режим horiz_xor или ещё нет строки b. */
@@ -2041,6 +2278,17 @@ function computeHorizXorInfo(){
   const fullLen = full.length;
   const S = st.horizXoredLength || 0; // сколько шагов поиска уже сделано
   const res = S > 0 ? applyHorizBigSlide(chain, full, S) : full;
+
+  // Паттерн СЛЕДУЮЩЕЙ строки (b+1), не своей (см. findPatByOrd/doStep isHorizXor — тот же
+  // принцип, что у Интерлив/XOR сквозной) — ИМЕННО с ним сверяется res на каждом шаге
+  // (textMatchesPattern). Показываем его отдельной строкой ("Паттерн") и подсвечиваем в
+  // "Результате", если он там реально нашёлся — раньше пользователь не видел ни то, ЧТО ищется,
+  // ни ГДЕ оно совпало (см. запрос пользователя — "непонятно что он ищет").
+  const targetPat = findPatByOrd(b + 1);
+  const patText = targetPat && targetPat.text ? targetPat.text : "";
+  const patHtml = patText ? bitsHtml(patText) : '<span class="empty">нет паттерна</span>';
+  const hit = patText ? findHorizPatternHit(res, patText) : null;
+  const hitAt = hit ? buildHitMap(fullLen, [hit]) : null;
 
   // Единая шкала p по всей объединённой строке (chain, затем цель) — подсветка сперва растёт
   // внутри цели снизу, и только потом переходит на цепочку.
@@ -2061,24 +2309,29 @@ function computeHorizXorInfo(){
     origHtml += (ch === '0' || ch === '1') ? ('<span class="b' + ch + '">' + ch + '</span>') : esc(ch);
   }
 
-  // Позиции цели, сейчас накрытые въезжающей (справа) цепочкой (тот же winRange, что и выше).
+  // Позиции цели, сейчас накрытые въезжающей (справа) цепочкой (тот же winRange, что и выше) —
+  // И, ПОВЕРХ этого, найденный паттерн (hitAt, chain-hit-bits — тот же класс/цвета kind, что и у
+  // Интерлив/XOR сквозной, см. buildHitMap()).
   let resHtml = "";
   for (let j = 0; j < fullLen; j++) {
     const ch = res[j];
     const covered = !!winRange && j >= winRange.start && j <= winRange.end;
-    if (covered && (ch === '0' || ch === '1')) resHtml += '<span class="xored-bit" title="Под въезжающей цепочкой сейчас">' + ch + '</span>';
-    else if (ch === '0' || ch === '1') resHtml += '<span class="b' + ch + '">' + ch + '</span>';
-    else resHtml += esc(ch);
+    const hitInfo = hitAt ? hitAt[j] : null;
+    if (ch !== '0' && ch !== '1') { resHtml += esc(ch); continue; }
+    const cls = [covered ? 'xored-bit' : ('b' + ch)];
+    if (hitInfo) { cls.push('chain-hit-bits'); if (KIND_CLS[hitInfo.kind]) cls.push(KIND_CLS[hitInfo.kind]); if (hitInfo.skip) cls.push('skip1'); }
+    const title = hitInfo ? 'Совпадение с паттерном' : (covered ? 'Под въезжающей цепочкой сейчас' : '');
+    resHtml += '<span class="' + cls.join(" ") + '"' + (title ? ' title="' + title + '"' : '') + '>' + ch + '</span>';
   }
 
   // Прогресс единого непрерывного прохода (въезд + полное перекрытие + выезд)
   const totalSteps = st.horizChainLen || (chainLen + fullLen);
-  return { chainHtml, origHtml, resHtml, step: Math.min(S, totalSteps), totalSteps };
+  return { chainHtml, origHtml, resHtml, patHtml, step: Math.min(S, totalSteps), totalSteps };
 }
 
 /* === МАРКЕР 07: СТЕП И ЛОГИКА === */
 /* Черновик последнего шага: фиксирует какие строки взяты, что за операция и что получилось — для визуального Step Log */
-function logStep(opName, rowsUsed, resultText, detail, changes, inputs, highlightRange){
+function logStep(opName, rowsUsed, resultText, detail, changes, inputs, highlightRange, resultHtml){
   st.lastOp = {
     step: st.step,
     opName: opName,
@@ -2088,7 +2341,11 @@ function logStep(opName, rowsUsed, resultText, detail, changes, inputs, highligh
     pattern: null,
     changes: changes || [],
     inputs: inputs || [],
-    highlightRange: highlightRange || null
+    highlightRange: highlightRange || null,
+    // resultHtml — необязательный ГОТОВЫЙ HTML для "Итог" вместо обычной раскраски по значению
+    // бита (bitsHtml()): нужен там, где важно показать ЕЩЁ и источник каждого символа (напр.
+    // "⧬ Интерлив сквозной" — какие биты из сквозной, а какие из строки, см. renderStepLogBox()).
+    resultHtml: resultHtml || null
   };
 }
 
@@ -2096,7 +2353,7 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
   const a = st.aIdx, b = st.bIdx;
   // Гориз.XOR работает с ОДНОЙ строкой (b) — своя цепочка строится из строк строго выше,
   // 'a' ему не нужен. Общая проверка "a!==b, обе непустые" рассчитана на режимы с парой
-  // строк и ломает самый первый шаг генерации (после "🌱 Очистить→1" a===b===0).
+  // строк и ломает самый первый шаг генерации (когда строка 1 = "1", a===b===0).
   if (isHorizXor) {
     if (b < 0 || b >= st.rows.length || !st.rows[b].length) return false;
   } else {
@@ -2183,10 +2440,13 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
         return false;
       }
 
-      const ownPat = findPatByOrd(b);
+      // Сверяемся с паттерном СЛЕДУЮЩЕЙ строки (b+1), не своим (см. запрос пользователя — "надо
+      // искать следующей строки паттерн а не текущий"; тот же принцип, что у Интерлив/XOR
+      // сквозной — там тоже цель idx+1, не сама idx).
+      const targetPat = findPatByOrd(b + 1);
 
       // Уже найденная строка "замораживается" (не пересчитывается заново).
-      if (ownPat && ownPat.found) {
+      if (targetPat && targetPat.found) {
         snapshot();
         st.horizFoundInPass = true;
         st.horizChainLen = 1;
@@ -2210,16 +2470,16 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
 
         st.horizXoredLength++;
 
-        // Ищем СОБСТВЕННЫЙ паттерн этой строки по ВСЕЙ сквозной строке res целиком —
-        // своя проверка вместо общего findMatch().
-        if (ownPat && ownPat.text && !ownPat.found && textMatchesPattern(res, ownPat.text)) {
-          ownPat.found = true; ownPat.kind = 0; ownPat.step = st.step;
-          if (st.pull) pullFoundUp(st.pats.indexOf(ownPat));
-          st.rows[b] = ownPat.text;
-          st.tplRows[b] = ownPat.text;
+        // Ищем паттерн СЛЕДУЮЩЕЙ строки по ВСЕЙ сквозной строке res целиком — своя проверка
+        // вместо общего findMatch().
+        if (targetPat && targetPat.text && !targetPat.found && textMatchesPattern(res, targetPat.text)) {
+          targetPat.found = true; targetPat.kind = 0; targetPat.step = st.step;
+          if (st.pull) pullFoundUp(st.pats.indexOf(targetPat));
+          st.rows[b] = targetPat.text;
+          st.tplRows[b] = targetPat.text;
           st.horizFoundInPass = true;
-          if (st.lastOp) st.lastOp.pattern = { text: ownPat.text, kindLabel: "прямой", kind: 0, pos: 0, len: ownPat.text.length };
-          if (!st.running) say(`Гориз.XOR: строка ${b + 1} совпала со своим паттерном на шаге ${stepNumber}/${st.horizChainLen}`);
+          if (st.lastOp) st.lastOp.pattern = { text: targetPat.text, kindLabel: "прямой", kind: 0, pos: 0, len: targetPat.text.length };
+          if (!st.running) say(`Гориз.XOR: строка ${b + 1} совпала с паттерном следующей строки на шаге ${stepNumber}/${st.horizChainLen}`);
         }
       }
     }
@@ -2330,7 +2590,8 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
   // Общий findMatch() перебирает ЛЮБЫЕ ещё не найденные паттерны вперёд по списку,
   // включая паттерны строк, которые в Гориз.XOR ещё даже не построены — это давало ложные
   // срабатывания (паттерн строки 3 помечался найденным раньше, чем строка 3 вообще
-  // появлялась). У Гориз.XOR своя проверка — см. ниже, СТРОГО против паттерна ЭТОЙ строки.
+  // появлялась). У Гориз.XOR своя проверка — см. ниже, СТРОГО против ОДНОГО конкретного
+  // паттерна — СЛЕДУЮЩЕЙ строки (b+1), не общий forward-скан по списку.
   const m = isHorizXor ? null : findMatch(st, searchChainText, b);
   st.hit = null;
   if (m){
@@ -2535,6 +2796,13 @@ function syncRowCountToTpl(){
 }
 
 function loadTemplate(){
+  // Сброс savedChain — если у вкладки уже есть сохранёнка (в т.ч. авто-созданная при 🧹 Очистить,
+  // см. clearActiveTab()), resetAll() ниже ВОССТАНОВИТ ИМЕННО ЕЁ, полностью проигнорировав только
+  // что заданные tplRows/tplPats (см. её код: ветка "if (savedChain)" не смотрит на tplRows
+  // вообще) — новый явно загруженный шаблон должен побеждать старый "снимок для отката", а не
+  // молча перекрываться им (см. запрос пользователя — "нет ничего, или серпинский"). Тот же
+  // сброс нужен и в drag&drop/paste-загрузке файла ниже — тут не дублируем, там свой.
+  if (st.tabs && st.tabs[st.activeTab]) st.tabs[st.activeTab].savedChain = null;
   st.tplRows = parseLines(document.getElementById("taRows").value);
   st.tplPats = parseLines(document.getElementById("taPats").value);
   syncRowCountToTpl();
@@ -2600,6 +2868,15 @@ function resetAll(){
   st.lastOp = null;
   const f = firstDataIdx(), s2 = nextDataIdx(f + 1);
   st.aIdx = f < 0 ? 0 : f; st.bIdx = s2 < 0 ? 1 : s2; st.goingUp = false;
+  // Если выделения нет вообще (не только что сброшенное — просто ПУСТОЕ, напр. самый первый
+  // запуск/загрузка нового шаблона) — выделяем первую строку с данными сами. Многие функции
+  // (Круг/Спираль без выделения крутят ВСЕ строки — молча, без явной ошибки; "⧬ Интерлив
+  // сквозной"/"⨁ XOR сквозной" вообще отказываются стартовать без выделения) ведут себя
+  // неочевидно на пустом выделении — пусть оно по умолчанию никогда не бывает пустым (см. запрос
+  // пользователя — "пусть всегда одна выделена").
+  if ((!st.selectedRows || st.selectedRows.size === 0) && f >= 0) {
+    st.selectedRows = new Set([f]);
+  }
   render();
 }
 /* === МАРКЕР 09: RENDER === */
@@ -2979,6 +3256,18 @@ function render(){
   renderTabs(); // <-- ЭТО ТА САМАЯ СТРОКА, КОТОРУЮ Я ЗАБЫЛ В ПРОШЛЫЙ РАЗ!
   document.getElementById("stepNo").textContent = st.step;
 
+  // Выделение НИКОГДА не должно оставаться пустым (см. запрос пользователя — "когда нет
+  // выделения для Авто что делает?? пусть всегда что-то выбрано"): раньше эта гарантия стояла
+  // только в resetAll()/loadTabState(), но Ctrl+клик по единственной выделенной строке (см. обработчик
+  // "rows".onclick — ветка delete) мог опустошить st.selectedRows и дальше это не чинилось нигде.
+  // render() вызывается почти после ЛЮБОГО изменения состояния, поэтому это самое надёжное общее
+  // место — если строк вообще нет, firstDataIdx() вернёт -1 и мы ничего не трогаем.
+  if (!st.selectedRows) st.selectedRows = new Set();
+  if (st.selectedRows.size === 0) {
+    const fd = firstDataIdx();
+    if (fd >= 0) st.selectedRows.add(fd);
+  }
+
   let maxLen = 0;
   for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
   renderColHeader(maxLen);
@@ -3001,6 +3290,13 @@ function render(){
           (BG_SEARCH_MODE_LABELS[r.mode] || r.mode) + "[" + r.kinds.map(k => KIND_LABELS_SHORT[k.kind] + (k.skip ? "⏭" : "")).join(",") + "]"
         ).join(", ");
         say(`🔍 Фон-поиск: паттерн строки ${hitNow + 1} найден! (${matchedLabel})`);
+        // Находка ЛЮБЫМ из режимов фон-поиска (Сквозная →/←, Интерлив, XOR 2 и т.п.) — сразу
+        // переключаем выделение на найденную строку, а не только уведомляем: следующий render()
+        // пересчитает фон-поиск уже ОТ НЕЁ (computeBgSearchTarget() берёт самую нижнюю выделенную
+        // как якорь), так и продолжается непрерывное продвижение по строкам, независимо от того,
+        // что именно сейчас крутит "Авто" (Круг/Спираль/Шаг) — см. запрос пользователя.
+        st.selectedRows = new Set([hitNow]);
+        saveCache();
       }
       st.bgSearchLastHit = hitNow;
     }
@@ -3209,17 +3505,14 @@ function render(){
     // Та же скользящая цепочка (строки строго выше bIdx), что реально используется в doStep.
     fullChainText = st.horizBigChain || horizChainText(st.bIdx);
   } else {
-    // Все строки от первой до текущей — но БЕЗ самой текущей (st.bIdx): пока строка ещё
-    // "в переборе" (например, крутится через autoShift в поиске совпадения), она не
-    // зафиксирована и не должна попадать в сквозную. Как только строка "сохраняется"
-    // (bIdx сдвигается дальше, эта строка становится историей) — она естественно попадает
-    // в диапазон на следующем рендере. Не зависит от st.used[] (тот не всегда надёжно
-    // заполнен). Это только для ПОКАЗА — реальный поиск паттернов (buildChain) не трогаем.
-    let simple = "";
-    for (let i = 0; i < st.bIdx; i++) {
-      if (st.rows[i] && st.rows[i].length) simple += getRowBits(st, i);
-    }
-    fullChainText = (st.tailBuffer || "") + simple;
+    // Все строки от первой до "якорной" (seqAnchorIdx() — самая нижняя ВЫДЕЛЕННАЯ строка, а не
+    // st.bIdx: та двигается только автопоиском/шагами, а этот блок должен живо реагировать на
+    // ЛЮБОЙ ручной клик по строке — см. запрос пользователя "сквозная в результатах... сразу при
+    // выделении строки отображается"), сама якорная строка НЕ входит. Не зависит от st.used[]
+    // (тот не всегда надёжно заполнен). Это только для ПОКАЗА — реальный поиск паттернов
+    // (buildChain) не трогаем. horizChainText() — та же самая функция, что и у Гориз.XOR/
+    // "⧬ Интерлив сквозной".
+    fullChainText = (st.tailBuffer || "") + horizChainText(seqAnchorIdx());
   }
 
   // Фоновый поиск (cBgSearch): показываем в этом же окне РЕАЛЬНО вычисленный результат
@@ -3369,12 +3662,65 @@ function render(){
    ВТОРАЯ, независимая от st.lastOp секция (см. subHtml ниже) — разбор "Подпаттернов сдвига"
    (st.bgSubPatterns) для ТЕКУЩЕГО фон-поиска: живая, обновляется каждый render(), даже если
    реального шага ещё не было — потому что фон-поиск сам по себе не "шаг", а постоянная проверка. */
+/* "⧬ Интерлив сквозной"/"⨁ XOR сквозной" — их запись в Черновике НЕ статична: сквозная и её
+   "довесок кольца" зависят от st.seqGlueMode/st.ringInvert/st.ringReverse, которые можно переключить уже ПОСЛЕ
+   того, как шаг записан (в отличие от остальных шагов — это не застывшая история, а живой
+   пересчёт по сохранённым idx/tryRow/offset). Раньше HTML строился ОДИН РАЗ в момент самого шага
+   и переключатели на уже показанную запись не влияли (см. запрос пользователя — "не
+   инвертирует.../не меняют ничего в черновике"). */
+function recomputeSeqStepDisplay(info){
+  const { idx, tryRow, offset, mode } = info;
+  // Размер блока интерлива (см. st.interleaveSeqBlockN/doInterleaveSeqStep()) — только у
+  // Интерлив сквозной, XOR сквозной блоков не знает (xorPair игнорирует лишний аргумент).
+  const blockN = mode === 'interleave' ? (info.blockN || 1) : 1;
+  // Та же сквозная (с ВЫДЕЛЕННОЙ строкой idx включительно), что и в doInterleaveSeqStep()/
+  // doXorSeqStep() — живой пересчёт должен показывать ровно то же самое, что реально искалось.
+  const seq = horizChainText(idx) + getRowBits(st, idx);
+  // Живой пересчёт учитывает и ТЕКУЩЕЕ состояние 🪞 "Сквозная сама с собой" (st.seqSelfMode) —
+  // тот же принцип, что у st.ringInvert/st.ringReverse/st.seqGlueMode выше по файлу.
+  const row = st.seqSelfMode ? seq : getRowBits(st, tryRow);
+  // Тот же "довесок кольца" в переборе, что и в doInterleaveSeqStep()/doXorSeqStep() — иначе
+  // живой пересчёт разошёлся бы с реально сохранённым offset при большом offset (> seq.length).
+  const ringSeq = seq + ringNextLap(seq);
+  const rotations = row.length ? rotationsOf(ringSeq) : [];
+  const seqRot = rotations[offset];
+  if (seqRot === undefined) return null;
+  const combine = mode === 'xor' ? xorPair : interleavePair;
+  const combineMarked = mode === 'xor' ? xorPairMarked : interleavePairMarked;
+  const seqExtHtml = bitsHtml(seq) + '<span class="chain-ring-ext">' + bitsHtml(ringNextLap(seq)) + '</span>';
+  const result = combine(seqRot, row, "left", blockN);
+  // Тот же паттерн-цель (строка idx+1), что и в doInterleaveSeqStep()/doXorSeqStep() — нужен
+  // для живой подсветки находки поверх "Итога" (см. interleavePairMarked()/buildHitMap()).
+  const patFull = (st.pats[idx + 1] || {}).text;
+  const kinds = patFull ? findPatternKinds(result, patFull) : [];
+  return {
+    result: result,
+    resultHtml: combineMarked(seqRot, row, "left", kinds, blockN),
+    seqExtHtml: seqExtHtml,
+    row: row,
+    rowLabel: st.seqSelfMode ? "Сквозная" : ("№" + (tryRow + 1))
+  };
+}
+
 function renderStepLogBox(bgInfo){
   const noEl = document.getElementById("stepLogNo");
   const bodyEl = document.getElementById("stepLogBody");
   if (!bodyEl) return;
 
   const op = st.lastOp;
+  // Живой пересчёт "Интерлив сквозной"/"XOR сквозной" — см. recomputeSeqStepDisplay() выше.
+  if (op && op.seqStepInfo) {
+    const live = recomputeSeqStepDisplay(op.seqStepInfo);
+    if (live) {
+      op.result = live.result;
+      op.resultHtml = live.resultHtml;
+      if (op.inputs && op.inputs[0]) op.inputs[0].html = live.seqExtHtml;
+      if (op.inputs && op.inputs[1]) {
+        op.inputs[1].text = " ".repeat(op.seqStepInfo.offset) + live.row;
+        op.inputs[1].name = live.rowLabel;
+      }
+    }
+  }
 
   let subHtml = "";
   if (st.bgSubPatterns && bgInfo) {
@@ -3409,7 +3755,11 @@ function renderStepLogBox(bgInfo){
     // показывается ниже, в общем блоке результата (см. html += ... дальше), раньше дублировался.
     const rows = [
       { tag: "chain", label: "Сквозная", html: horizInfo.chainHtml },
-      { tag: "full", label: "Цель", html: horizInfo.origHtml }
+      { tag: "full", label: "Цель", html: horizInfo.origHtml },
+      // Собственный паттерн строки b — раньше нигде не показывался (см. запрос пользователя —
+      // "непонятно что он ищет"); подсветка совпадения — в "Результате" ниже (см. hitAt в
+      // computeHorizXorInfo()).
+      { tag: "pat", label: "Паттерн", html: horizInfo.patHtml }
     ];
     horizHtml = '<div class="horiz-info">' +
       rows.map(r => {
@@ -3424,7 +3774,24 @@ function renderStepLogBox(bgInfo){
   if (!op) {
     if (noEl) noEl.textContent = "0";
     if (rowsHeadEl) rowsHeadEl.innerHTML = horizHeadExtra;
-    bodyEl.innerHTML = horizHtml + '<span class="step-log-empty">шагов ещё не было</span>' + subHtml;
+    // Живой предпросмотр сквозной для выделенной строки, ДО первого реального шага (см. запрос
+    // пользователя — "в черновике пусть сразу при выделении строки отображается") — не заменяет
+    // "шагов ещё не было", а показывается ПЕРЕД ним, только если есть хоть одна строка выше
+    // якорной (иначе сквозная пуста и показывать нечего).
+    let previewHtml = "";
+    if (!horizInfo) {
+      const anchorIdx = seqAnchorIdx();
+      if (anchorIdx > 0) {
+        const seq = horizChainText(anchorIdx);
+        if (seq) {
+          const seqExtHtml = bitsHtml(seq) + '<span class="chain-ring-ext">' + bitsHtml(ringNextLap(seq)) + '</span>';
+          previewHtml = '<div class="step-log-inputs-container">' +
+            '<div class="step-log-input-row"><span class="step-log-input-name">Скв×2</span><span class="step-log-input-text">' + seqExtHtml + '</span></div>' +
+            '</div>';
+        }
+      }
+    }
+    bodyEl.innerHTML = horizHtml + previewHtml + '<span class="step-log-empty">шагов ещё не было</span>' + subHtml;
     markHorizTruncated(bodyEl);
     applyStepLogBodyHeight(bodyEl);
     return;
@@ -3449,9 +3816,11 @@ function renderStepLogBox(bgInfo){
   // в logStep() (см. inputsForLog в doStep()), просто не рендерился нигде. В режиме Гориз.XOR
   // не показываем — там источники это и есть "Сквозная"/"Цель" выше (не дублируем).
   if (!horizInfo && op.inputs && op.inputs.length) {
+    // inp.html — необязательный ГОТОВЫЙ HTML вместо обычной раскраски bitsHtml() по значению
+    // бита (см. "Скв×2" в doInterleaveSeqStep() — там нужно ещё и приглушить "довесок" кольца).
     html += '<div class="step-log-inputs-container">' +
       op.inputs.map(inp =>
-        '<div class="step-log-input-row"><span class="step-log-input-name">' + esc(inp.name) + '</span><span class="step-log-input-text">' + bitsHtml(inp.text || "") + '</span></div>'
+        '<div class="step-log-input-row"><span class="step-log-input-name">' + esc(inp.name) + '</span><span class="step-log-input-text">' + (inp.html || bitsHtml(inp.text || "")) + '</span></div>'
       ).join("") +
       '</div>';
   }
@@ -3468,7 +3837,10 @@ function renderStepLogBox(bgInfo){
     // (без ручной обрезки RESULT_LIMIT): визуально обрезается CSS (.step-log-result, одна
     // строка), клик разворачивает целиком — тот же приём, что у .chain-result-line в "Результате".
     const resultRaw = op.result || "";
-    const resultHtml = resultRaw.length ? bitsHtml(resultRaw, op.highlightRange) : '<span class="empty">пусто</span>';
+    // op.resultHtml — готовый HTML с раскраской по ИСТОЧНИКУ символа (не только по значению
+    // бита), см. logStep()/doInterleaveSeqStep().
+    const resultHtml = op.resultHtml ? op.resultHtml :
+      (resultRaw.length ? bitsHtml(resultRaw, op.highlightRange) : '<span class="empty">пусто</span>');
     html += '<div class="step-log-result-row">' +
       '<span class="step-log-input-name">Итог</span>' +
       '<div class="step-log-result' + (stepLogResultExpanded ? ' expanded' : '') + '" title="Клик — показать целиком / свернуть обратно">' + resultHtml + '</div>' +
@@ -3598,6 +3970,8 @@ const cPadEl       = document.getElementById("cPad");
 const cKindsEl     = document.getElementById("cKinds");
 const cSkipEl      = document.getElementById("cSkip1");
 const cRingInvertEl = document.getElementById("cRingInvert");
+const cRingReverseEl = document.getElementById("cRingReverse");
+const cSeqSelfEl = document.getElementById("cSeqSelf");
 const rowCountEl   = document.getElementById("rowCount");
 
 function readToggles(){
@@ -3613,6 +3987,8 @@ function readToggles(){
   st.allKinds  = cKindsEl.checked;
   st.skipFirst = cSkipEl.checked;
   st.ringInvert = cRingInvertEl ? cRingInvertEl.checked : false;
+  st.ringReverse = cRingReverseEl ? cRingReverseEl.checked : false;
+  st.seqSelfMode = cSeqSelfEl ? cSeqSelfEl.checked : false;
 }
 
 /* Функция полной очистки данных текущего активного слота (цепочки).
@@ -3727,10 +4103,19 @@ function tabResetChainData(idx) {
 /* === МАРКЕР 10.1: DRAG AND DROP === */
 /* Вспомогательная функция для определения зоны броска */
 function isOverPatternColumn(e) {
+  // На ПУСТОЙ вкладке (после 🧹 Очистить/до первой загрузки) строк ещё нет — ни .pat/.pat2
+  // (они per-row, рендерятся только когда есть данные), ни координатный разбор ниже не работают
+  // осмысленно (нечего визуально делить на "зону паттернов"/"зону строк"). Без этой проверки
+  // дроп на пустой вкладке ВСЕГДА попадал в паттерны (см. запрос пользователя — "не вставляет
+  // строки"), а не туда, куда реально целился курсор — тут просто нечего мерить. Раз ветку
+  // (строки/паттерны) в этот момент всё равно не разглядеть на глаз, по умолчанию считаем
+  // "строки" — это и есть обычный первый шаг работы с пустой вкладкой.
+  if (!st.rows || !st.rows.length) return false;
+
   // Прямое попадание по боковым колонкам или разделителям
   if (e.target.closest('.pat') || e.target.closest('.pat2')) return true;
   if (e.target.closest('.vsplit') || e.target.closest('.vsplit2')) return true;
-  
+
   // Координатный поиск: если мышь левее или правее центральной колонки битсов
   const bitsHead = document.querySelector('.h-bits');
   if (bitsHead) {
@@ -3771,6 +4156,10 @@ if (canvasEl) {
       const reader = new FileReader();
       reader.onload = ev => {
         const lines = parseLines(ev.target.result);
+        // Сброс savedChain — см. комментарий у loadTemplate(), та же ловушка: resetAll() ниже
+        // при наличии сохранёнки (в т.ч. авто-созданной при 🧹 Очистить) восстановил бы её вместо
+        // только что загруженного файла (см. запрос пользователя — "нет ничего, или серпинский").
+        if (st.tabs && st.tabs[st.activeTab]) st.tabs[st.activeTab].savedChain = null;
         if (isPats) {
           st.tplPats = lines;
           say(`Паттерны из файла "${file.name}" загружены в текущую вкладку!`);
@@ -3803,6 +4192,8 @@ if (canvasEl) {
     e.preventDefault();
     const isPats = isOverPatternColumn(lastCanvasMouseEvt);
     const lines = parseLines(text);
+    // Сброс savedChain — та же ловушка, что и у loadTemplate()/drop файла (см. их комментарии).
+    if (st.tabs && st.tabs[st.activeTab]) st.tabs[st.activeTab].savedChain = null;
     if (isPats) {
       st.tplPats = lines;
       say("Паттерны вставлены из буфера обмена в текущую вкладку!");
@@ -4017,18 +4408,25 @@ function getModeParams(mode){
    нажать Шаг/XOR/и т.п., они возьмут её как есть). */
 const DIR_MODE_BTN = { shiftL: "bShiftL", shiftR: "bShiftR", spiralUp: "bSpiralUp", spiralDown: "bSpiralDown" };
 const STEP_MODE_BTN_IDS = ["bStep", "bStep2", "bStepXor", "bStep2Xor", "bStepHorizXor", "bStepXorProj", "bStepScan"];
+// "⧬ Интерлив сквозной"/"⨁ XOR сквозной" — тоже полноценные "режимы для Авто" (см.
+// st.interleaveSeqMode/st.xorSeqMode), гасятся/гасят наравне с остальными.
+const SEQ_MODE_BTN_IDS = ["bInterleaveSeqSearch", "bXorSeqSearch"];
 function setLastDirMode(val){
   st.lastDirMode = val || null;
   st.xorSelectedMode = false;
   st.interleaveMode = false;
+  st.interleaveSeqMode = false;
+  st.xorSeqMode = false;
   Object.entries(DIR_MODE_BTN).forEach(([k, id]) => {
     const el = document.getElementById(id);
     if (el) el.classList.toggle("mode-act", k === val);
   });
-  if (val) STEP_MODE_BTN_IDS.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove("mode-act");
-  });
+  if (val) {
+    STEP_MODE_BTN_IDS.concat(SEQ_MODE_BTN_IDS).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove("mode-act");
+    });
+  }
 }
 
 function setMode(modeName){
@@ -4040,6 +4438,12 @@ function setMode(modeName){
   // "последнюю нажатую из 4 кнопок направления" — см. setLastDirMode()).
   st.xorSelectedMode = false;
   st.interleaveMode = false;
+  st.interleaveSeqMode = false;
+  st.xorSeqMode = false;
+  SEQ_MODE_BTN_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove("mode-act");
+  });
   if (st.lastDirMode) setLastDirMode(null);
   const modes = {
     "step1":     "bStep",
@@ -4092,7 +4496,8 @@ const MENUS = {
   menuOps:    { title: 'Шаги',         zone: 'leftSlot',  pin: true, ids: ['flowGroup', 'opsGroup'], floatable: true },
   menuSearch: { title: 'Поиск',        zone: 'leftSlot',  pin: true, ids: ['searchGroup'], floatable: true },
   menuView:   { title: 'Вид',          zone: 'rightSlot', pin: true, ids: ['viewGroup'],   floatable: true },
-  menuEdit:   { title: 'Правка строк', zone: 'rightSlot', pin: true, ids: ['editGroup'],   floatable: true }
+  menuEdit:   { title: 'Правка строк', zone: 'rightSlot', pin: true, ids: ['editGroup'],   floatable: true },
+  menuSeq:    { title: 'Сквозная',     zone: 'rightSlot', pin: true, ids: ['seqGroup'],    floatable: true }
 };
 const LAYOUT_KEY = 'zerk_fold_layout';
 /* Порядок стековых overlay-баров сверху вниз (см. МАРКЕР 10.2b OVERLAY_STACK ниже) —
@@ -4446,6 +4851,23 @@ function closeMenus() { document.querySelectorAll('.menu-drop').forEach(d => d.c
 window.addEventListener('mousedown', e => { if (!e.target.closest('.menu-drop') && !e.target.closest('.menu-btn')) closeMenus(); });
 
 /* === МАРКЕР 10.3: ЛОГИКА СДВИГА И ХОТКЕИ === */
+/* "⧬ Интерлив сквозной"/"⨁ XOR сквозной" не имели понятного способа "выйти" из поиска руками —
+   нажатие ⏹ Стоп останавливает "Авто", но флаг режима (и подсветка кнопки) сами по себе не
+   гаснут (см. запрос пользователя — "непонятно как сбрасывать при остановке"). Проще всего —
+   считать ЛЮБОЕ ручное переключение выделения строки сигналом "я закончил с этим поиском":
+   вызывается из .onclick/mousedown ниже. Заодно чистим st.lastOp (Черновик последнего шага) —
+   у этих режимов он ЖИВОЙ (см. recomputeSeqStepDisplay()/op.seqStepInfo): пересчитывается на
+   каждый render() по сохранённым idx/tryRow/offset НЕЗАВИСИМО от того, активен ли ещё сам режим,
+   поэтому без явной чистки Черновик (и синяя подсветка бит строки в нём) продолжал бы жить и
+   обновляться даже после остановки (см. запрос пользователя — "не сбрасывает черновик"). */
+function resetSeqSearchModes(){
+  if (st.interleaveSeqMode || st.xorSeqMode || (st.lastOp && st.lastOp.seqStepInfo)) {
+    if (st.interleaveSeqMode) stopInterleaveSeq();
+    if (st.xorSeqMode) stopXorSeq();
+    st.lastOp = null;
+  }
+}
+
 document.getElementById("rows").onclick = e => {
   // Игнорируем клики по текстовым полям редактирования
   if (e.target.tagName === "INPUT" || e.target.closest(".edit-row-input")) return;
@@ -4464,6 +4886,8 @@ document.getElementById("rows").onclick = e => {
 
   const idx = +ln.dataset.idx;
   if (isNaN(idx)) return;
+
+  resetSeqSearchModes();
 
   if (!st.selectedRows) st.selectedRows = new Set();
 
@@ -4504,6 +4928,7 @@ document.getElementById("rows").addEventListener("mousemove", e => {
   if (!ln) return;
   const idx = +ln.dataset.idx;
   if (isNaN(idx) || (idx === rowDragAnchor && !rowDragMoved)) return;
+  if (!rowDragMoved) resetSeqSearchModes();
   rowDragMoved = true;
   const lo = Math.min(rowDragAnchor, idx), hi = Math.max(rowDragAnchor, idx);
   st.selectedRows = new Set();
@@ -4618,6 +5043,17 @@ spiralDirBtns.forEach(btn => {
   };
 });
 
+const seqGlueBtns = document.querySelectorAll("#seqGlueGrp button");
+seqGlueBtns.forEach(btn => {
+  btn.onclick = () => {
+    seqGlueBtns.forEach(b => b.classList.remove("act"));
+    btn.classList.add("act");
+    st.seqGlueMode = btn.getAttribute("data-val");
+    render();
+    saveCache();
+  };
+});
+
 const cBgSearchEl = document.getElementById("cBgSearch");
 if (cBgSearchEl) {
   cBgSearchEl.onchange = () => {
@@ -4682,8 +5118,22 @@ function computeBgSearchTarget(){
       result = xorRowsDownTo(st.rows, selIdx, st.align, st);
     } else if (mode === "concatR") {
       result = concatRowsDownTo(st, selIdx, "right");
+    } else if (mode === "concatRInv") {
+      result = invertBits(concatRowsDownTo(st, selIdx, "right"));
+    } else if (mode === "concatRRevInv") {
+      result = reverseStr(invertBits(concatRowsDownTo(st, selIdx, "right")));
     } else if (mode === "concatL") {
       result = concatRowsDownTo(st, selIdx, "left");
+    } else if (mode === "concatLInv") {
+      result = invertBits(concatRowsDownTo(st, selIdx, "left"));
+    } else if (mode === "concatLRevInv") {
+      result = reverseStr(invertBits(concatRowsDownTo(st, selIdx, "left")));
+    } else if (mode === "concatSnake") {
+      result = concatSnakeGlueDownTo(st, selIdx);
+    } else if (mode === "concatSnakeInv") {
+      result = invertBits(concatSnakeGlueDownTo(st, selIdx));
+    } else if (mode === "concatSnakeRevInv") {
+      result = reverseStr(invertBits(concatSnakeGlueDownTo(st, selIdx)));
     } else if (mode === "vertR") {
       result = concatVerticalDownTo(st, selIdx, "right");
     } else if (mode === "vertL") {
@@ -4874,6 +5324,34 @@ function autoRun(){
     return;
   }
 
+  if (st.interleaveSeqMode) {
+    // Один тик = один ВЫЗОВ doInterleaveSeqStep() = один сдвиг сквозной (не пакет за 12мс, как у
+    // остальных режимов) — см. запрос пользователя: нужно видеть каждый сдвиг в Черновике
+    // последнего шага, а не только финальный результат перебора.
+    const tick = () => {
+      if (!st.running) return finishAuto();
+      if (!doInterleaveSeqStep()) {
+        return finishAuto(`Режим Интерлив сквозной завершен.`);
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    return;
+  }
+
+  if (st.xorSeqMode) {
+    // Та же логика, что и у st.interleaveSeqMode выше — один тик = один сдвиг.
+    const tick = () => {
+      if (!st.running) return finishAuto();
+      if (!doXorSeqStep()) {
+        return finishAuto(`Режим XOR сквозной завершен.`);
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    return;
+  }
+
   const { pairOnly, forceXor, isScan, isHorizXor, isXorProj } = getModeParams(st.mode || "step1");
 
   const tick = () => {
@@ -4942,40 +5420,6 @@ function deleteSelectedRows(){
   st.selectedRows.clear();
   render(); saveCache();
   say(`Удалено ${selected.length} строк(и).`);
-}
-
-/* Очищает содержимое ВСЕХ строк цепочки, оставляя только 1-ю строку = "1" — точка старта
-   для генерации Гориз.XOR (см. isHorizXor в doStep: если ниже нет строки, но паттерн там
-   есть, строка генерируется автоматически). ТЕКСТ паттернов (st.pats[].text/tplPats) не
-   трогаем — они остаются целью, под которую генерация подбирает содержимое. Но флаг
-   "найдено" (p.found) ОБЯЗАТЕЛЬНО сбрасываем — иначе генерация видит паттерны уже
-   отмеченными найденными с прошлого прогона и просто пропускает их (ничего не вставляя). */
-const bClearChainRowsEl = document.getElementById("bClearChainRows");
-if (bClearChainRowsEl) {
-  bClearChainRowsEl.onclick = () => {
-    snapshot();
-    // st.rows может быть КОРОЧЕ st.pats (например, вкладка была создана до загрузки строк,
-    // а паттерны заданы отдельно) — расширяем rows/tplRows до длины паттернов, иначе
-    // цикл ниже по пустому массиву ничего не делает и строка 1 физически не создаётся.
-    const targetLen = Math.max(st.rows.length, st.pats.length, 1);
-    for (let i = 0; i < targetLen; i++) {
-      st.rows[i] = (i === 0) ? "1" : "";
-      st.tplRows[i] = st.rows[i];
-    }
-    st.used = st.rows.map(() => false);
-    for (const p of st.pats) {
-      if (p) { p.found = false; p.kind = null; p.step = null; }
-    }
-    // Восстанавливаем исходный порядок паттернов (до всех "подтягиваний" наверх)
-    st.pats.sort((a, b) => (a ? a.ord : 0) - (b ? b.ord : 0));
-    st.step = 0; st.tailBuffer = ""; st.hit = null;
-    st.horizXoredLength = 0; st.horizChainLen = 0; st.lastHorizRow = null;
-    st.horizFoundInPass = false;
-    st.horizBigChain = ""; st.horizBigOrig = ""; st.horizBigTargetIdx = -1;
-    st.aIdx = 0; st.bIdx = 0;
-    render(); saveCache();
-    say("Цепочка очищена: строка 1 = '1', паттерны разморожены.");
-  };
 }
 
 /* Генератор фрактала Серпинского по кнопке (тот же generateSierpinski90, что и при пустом
@@ -5365,6 +5809,75 @@ if (bInterleaveSearchEl) {
   };
 }
 
+/* "⧬ Интерлив сквозной" — старт с строки, отмеченной выделением (нужна хотя бы одна строка ВЫШЕ
+   для сквозной и одна строка НИЖЕ для паттерна-цели, см. doInterleaveSeqStep()). Если поиск УЖЕ
+   идёт (st.interleaveSeqMode) — повторный клик кнопкой ПРОДОЛЖАЕТ его на один сдвиг дальше, а не
+   перезапускает с offset=0 на той же строке: раньше сброс шёл БЕЗУСЛОВНО на каждый клик, поэтому
+   ручные повторные клики (в отличие от "🚀 Авто", который сам крутит цикл и сюда не заходит)
+   зацикливались на первом же сдвиге (см. запрос пользователя — "не делает сдвиги"). */
+const bInterleaveSeqSearchEl = document.getElementById("bInterleaveSeqSearch");
+if (bInterleaveSeqSearchEl) {
+  bInterleaveSeqSearchEl.onclick = () => {
+    if (st.interleaveSeqMode) { doInterleaveSeqStep(); return; }
+    if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
+    const idx = Math.min(...Array.from(st.selectedRows));
+    if (idx <= 0 || idx + 1 >= st.rows.length) {
+      say("Нужна хотя бы одна строка выше выделенной (для сквозной) и одна ниже (для паттерна).");
+      return;
+    }
+    // Взаимоисключающая подсветка с остальными "режимами Авто" (Шаг/XOR/.../Круг/Спираль/XOR
+    // сквозной) — тот же приём, что и у setLastDirMode()/setMode(): гасим их, раз теперь этот
+    // режим тоже полноценно участвует в mode-act (см. запрос пользователя, кнопка перенесена
+    // в flowGroup).
+    if (st.lastDirMode) setLastDirMode(null);
+    STEP_MODE_BTN_IDS.forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove("mode-act"); });
+    st.xorSelectedMode = false;
+    st.interleaveMode = false;
+    st.xorSeqMode = false;
+    const xorSeqBtn = document.getElementById("bXorSeqSearch");
+    if (xorSeqBtn) xorSeqBtn.classList.remove("mode-act");
+
+    st.interleaveSeqMode = true;
+    st.interleaveSeqIdx = idx;
+    st.interleaveSeqOffset = 0;
+    st.interleaveSeqTryRow = -1;
+    st.interleaveSeqBlockN = 1;
+    bInterleaveSeqSearchEl.classList.add("mode-act");
+    say(`Режим Интерлив сквозной активен. Ищу подходящий поворот...`);
+    doInterleaveSeqStep();
+  };
+}
+
+/* "⨁ XOR сквозной" — то же самое, что "⧬ Интерлив сквозной" выше, только XOR вместо интерливинга
+   (см. doXorSeqStep(), запрос пользователя — "также надо чтобы работал Xor"). */
+const bXorSeqSearchEl = document.getElementById("bXorSeqSearch");
+if (bXorSeqSearchEl) {
+  bXorSeqSearchEl.onclick = () => {
+    if (st.xorSeqMode) { doXorSeqStep(); return; }
+    if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
+    const idx = Math.min(...Array.from(st.selectedRows));
+    if (idx <= 0 || idx + 1 >= st.rows.length) {
+      say("Нужна хотя бы одна строка выше выделенной (для сквозной) и одна ниже (для паттерна).");
+      return;
+    }
+    if (st.lastDirMode) setLastDirMode(null);
+    STEP_MODE_BTN_IDS.forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove("mode-act"); });
+    st.xorSelectedMode = false;
+    st.interleaveMode = false;
+    st.interleaveSeqMode = false;
+    const seqBtn = document.getElementById("bInterleaveSeqSearch");
+    if (seqBtn) seqBtn.classList.remove("mode-act");
+
+    st.xorSeqMode = true;
+    st.xorSeqIdx = idx;
+    st.xorSeqOffset = 0;
+    st.xorSeqTryRow = -1;
+    bXorSeqSearchEl.classList.add("mode-act");
+    say(`Режим XOR сквозной активен. Ищу подходящий поворот...`);
+    doXorSeqStep();
+  };
+}
+
 function doInterleaveStep() {
   if (!st.interleaveMode || st.interleavePairIdx < 0) return false;
 
@@ -5430,6 +5943,296 @@ function doInterleaveStep() {
   }
 
   st.interleavePairIdx = bIdx;
+  return true;
+}
+
+/* "Интерлив сквозной" (см. #bInterleaveSeqSearch): правая часть — САМА строка idx, БЕЗ поворотов
+   (как есть, getRowBits()); крутится не она, а ЛЕВАЯ часть — сквозная (все строки ВЫШЕ idx +
+   САМА строка idx, horizChainText(idx) + getRowBits(st, idx) — см. запрос пользователя: без её
+   собственных бит перебор поворотов не проходил по всей длине кольца): строка "прогоняется" по
+   всей длине сквозной — крутится не сама сквозная, а её "кольцо" (seq + ringNextLap(seq), тот же
+   довесок, что рисуется в Черновике как "Скв×2") — rotationsOf() перебирает повороты ЭТОГО
+   удвоенного кольца, а не просто seq: без довеска перебор проходил только по половине того, что
+   визуально показано кольцом, и при включённой 🔁 Инв.кольцо/реверс пропускал реально другие
+   сдвиги (см. запрос пользователя). Дальше — повторяются. На каждом повороте строка интерливится
+   с НАЧАЛА этого повёрнутого варианта (выравнивание всегда "left" — именно это и даёт "скольжение" строки по
+   всей длине сквозной, а не одно фиксированное положение по st.align). Проверяем каждый сдвиг
+   против паттерна СЛЕДУЮЩЕЙ строки (idx+1), как обычный Интерлив. Строка не меняется — нечего
+   сохранять, просто фиксируем найденный сдвиг и, в отличие от обычного "⧬ Интерлив" (который
+   останавливается на первом же совпадении), сразу продолжаем на следующую строку — та же
+   сквозная теперь включает и её.
+
+   Если у idx не нашлось совпадения НИ НА ОДНОМ сдвиге — не останавливаемся сразу, а пробуем
+   строку НАД ней (idx-1), потом ещё выше и т.д., с той же самой (замороженной) сквозной и тем же
+   паттерном-целью idx+1 (см. tryRow ниже, запрос пользователя). Останавливаемся, только когда
+   НИ ОДНА строка от idx и выше не подошла, или строки кончились.
+
+   ОДИН ВЫЗОВ = ОДИН СДВИГ (см. запрос пользователя — "пока так сделаем чтобы убедиться как
+   работает"): не перебираем все повороты за раз молча, а на каждом отдельном сдвиге логируем
+   сквозную (в её текущем повороте) и саму строку в "Черновик последнего шага" (logStep(), те же
+   inputs, что показывает обычный черновик) — так видно, что реально проверяется на каждом шаге.
+   st.interleaveSeqOffset хранит, на каком сдвиге текущей строки мы сейчас; сбрасывается в 0 при
+   переходе на новую строку. */
+/* Останавливает "Интерлив сквозной" и гасит подсветку её кнопки — единая точка выхода вместо
+   разбросанных "st.interleaveSeqMode = false" по всей doInterleaveSeqStep(), чтобы подсветка
+   .mode-act всегда гасла синхронно с самим флагом (см. запрос пользователя — режим должен вести
+   себя как остальные режимы "Авто", взаимоисключающе). */
+function stopInterleaveSeq(msg){
+  st.interleaveSeqMode = false;
+  const btn = document.getElementById("bInterleaveSeqSearch");
+  if (btn) btn.classList.remove("mode-act");
+  if (msg) say(msg);
+}
+
+function doInterleaveSeqStep() {
+  if (!st.interleaveSeqMode || st.interleaveSeqIdx < 0) return false;
+
+  const idx = st.interleaveSeqIdx;
+  if (idx <= 0 || idx >= st.rows.length) {
+    stopInterleaveSeq("Конец строк.");
+    return false;
+  }
+
+  const nextPatIdx = idx + 1;
+  const nextPat = st.pats[nextPatIdx];
+  if (!nextPat || !nextPat.text) {
+    stopInterleaveSeq("Нет паттерна для сравнения.");
+    return false;
+  }
+
+  // Сквозная и паттерн-цель ЗАМОРОЖЕНЫ на весь перебор. Сквозная включает и саму ВЫДЕЛЕННУЮ
+  // строку (idx), не только строки строго выше неё (см. запрос пользователя) — иначе перебор
+  // поворотов не проходил по всей длине кольца.
+  const seq = horizChainText(idx) + getRowBits(st, idx);
+  if (!seq.length) {
+    stopInterleaveSeq("Сквозная пустая — нет строк выше для интерливинга.");
+    return false;
+  }
+
+  // 🪞 "Сквозная сама с собой" (st.seqSelfMode) — правая (неподвижная) часть тоже сама seq, а не
+  // строка idx: сквозная въезжает сама в себя навстречу, голова к голове (см. запрос
+  // пользователя).
+  const selfMode = !!st.seqSelfMode;
+  const row = selfMode ? seq : getRowBits(st, idx);
+  // "Кольцо" для перебора поворотов — сква + ОДИН дополнительный виток (ringNextLap, тот же,
+  // что рисуется в Черновике как "Скв×2") — см. запрос пользователя: без витка перебор шёл
+  // только по ПОЛОВИНЕ того, что визуально показано кольцом. При включённой 🔁 Инв.кольцо/
+  // реверс виток даёт РЕАЛЬНО другие сдвиги (не повтор seq), их нельзя пропускать.
+  const ringSeq = seq + ringNextLap(seq);
+  const seqRotations = row.length ? rotationsOf(ringSeq) : [];
+  const offset = st.interleaveSeqOffset || 0;
+
+  // 🧱 Блочный интерлив (st.interleaveSeqBlockN): раньше на "ни один сдвиг не подошёл" режим
+  // переключался на строку ВЫШЕ — теперь ВМЕСТО этого пробует БОЛЬШИЙ размер блока: N=1 — обычный
+  // побитовый интерлив (1 бит сквозной, 1 бит строки, снова 1...), N=2 — блоками по 2 символа,
+  // N=3 — по 3, и т.д. (см. запрос пользователя — "если не наход, то делает интерливинг не через
+  // 1 бит а через 2 бита потом через 3 и тд", "вместо" перехода на строку выше, не "и"). Строка
+  // всегда одна — idx (или сама seq в selfMode), больше не переключается. Максимум — длина row:
+  // при N ≥ row.length блок уже не даёт новой структуры (вся строка уходит одним куском).
+  if (!st.interleaveSeqBlockN || st.interleaveSeqBlockN < 1) st.interleaveSeqBlockN = 1;
+  const blockN = st.interleaveSeqBlockN;
+
+  if (!row.length || offset >= seqRotations.length) {
+    const maxN = Math.max(1, row.length);
+    if (!row.length || blockN >= maxN) {
+      st.interleaveSeqOffset = 0;
+      st.interleaveSeqBlockN = 1;
+      stopInterleaveSeq(`Интерлив сквозной${selfMode ? " (сама с собой)" : ""}: для строки ${idx + 1} совпадений не найдено ни на одном сдвиге ни при одном размере блока (1..${maxN}).`);
+      return false;
+    }
+    st.interleaveSeqBlockN = blockN + 1;
+    st.interleaveSeqOffset = 0;
+    say(`Интерлив сквозной: блок ${blockN} не подошёл ни на одном сдвиге, пробую блок ${blockN + 1}...`);
+    render(); saveCache();
+    return true;
+  }
+
+  const patFull = nextPat.text;
+  const seqRot = seqRotations[offset];
+  const searchResult = interleavePair(seqRot, row, "left", blockN);
+
+  // findPatternKinds() — тот же общий поиск, что и у обычных шагов/фон-поиска: сама учитывает
+  // "⏭ Без 1-го" (st.skipFirst) И "⇌ Инв/Рев" (st.allKinds — инверсия/реверс/инверсия+реверс).
+  // Она же ищет по КОЛЬЦУ (text + ringNextLap(text).slice(0,len-1) внутри) — а ringNextLap() сама
+  // учитывает "🔁 Инв. кольцо" (st.ringInvert), так что и оно уже подключено само собой, раз
+  // поиск идёт через findPatternKinds(), а не через ручной indexOf() (см. запросы пользователя —
+  // "Без 1-го подключается?"/"Инв.кольцо тоже должна тут работать"/"по кольцу потом ищется?").
+  const kinds = findPatternKinds(searchResult, patFull);
+  const matchType = kinds.length ? KIND_LABELS_RU[kinds[0].kind] + (kinds[0].skip ? " (без 1-го)" : "") : "";
+
+  // Раскраска "Итог" по ИСТОЧНИКУ каждого символа (все биты строки — синим) — см.
+  // interleavePairMarked()/.interleave-src-row в CSS. И ДОПОЛНИТЕЛЬНО — сам найденный паттерн
+  // (kinds, уже посчитан выше), чтобы было видно, ГДЕ конкретно совпадение (см. запрос
+  // пользователя — "не вижу в результирующей нахождения паттерна"). blockN — та же блочность,
+  // что и у самого поиска (searchResult), иначе подсветка разъехалась бы с текстом.
+  const searchResultHtml = interleavePairMarked(seqRot, row, "left", kinds, blockN);
+
+  // Для показа в Черновике — сквозная НЕПОДВИЖНА (не повёрнутая seqRot, а исходная seq) и
+  // УДВОЕНА, т.к. сдвиг кольцевой — строка на больших offset вылезает за правый край ОДНОЙ
+  // сквозной и "заезжает" на её начало по кругу, второй экземпляр справа это показывает вместо
+  // обрезки на границе. Второй (довесочный) экземпляр — СЕРЫМ (та же .chain-ring-ext, что и у
+  // "Результат фон-поиска"), чтобы визуально не путать его с настоящей сквозной; и это
+  // ringNextLap(seq), а не голое повторение seq — если включена "🔁 Инв. кольцо" (st.ringInvert),
+  // довесок реально ИНВЕРТИРОВАН (0↔1), как и при настоящем кольцевом поиске в
+  // findPatternKinds() (см. запрос пользователя). Строка — с отступом в offset пробелов, чтобы
+  // был виден сдвиг бит-в-бит (сам поиск по-прежнему считается через seqRot — это лишь то же
+  // самое сравнение в эквивалентном отображении). Короткая подпись "Скв×2" (не длинное
+  // описание) — не влезающая в 36px-колонку подписей сбивала бы общее выравнивание битов у всех
+  // строк Черновика.
+  const seqExtHtml = bitsHtml(seq) + '<span class="chain-ring-ext">' + bitsHtml(ringNextLap(seq)) + '</span>';
+  const rowLabel = selfMode ? "Сквозная" : ("№" + (idx + 1));
+  const blockTag = blockN > 1 ? `, блок ${blockN}` : "";
+  const stepDesc = (selfMode ? "Сквозная сама с собой" : `Строка ${idx + 1}`) +
+      `, сдвиг сквозной ${offset}/${seqRotations.length - 1}${blockTag}, паттерн строки ${nextPatIdx + 1} — ` +
+      (matchType ? `совпадение (${matchType})` : "нет совпадения");
+  logStep(
+    "Интерлив сквозной",
+    // selfMode: правая часть — вся сквозная 0..idx, показываем весь её диапазон строк, а не
+    // одну строку (formatOpRows сам сожмёт массив в диапазон "1-N").
+    selfMode ? Array.from({ length: idx + 1 }, (_, i) => i + 1) : [idx + 1],
+    searchResult,
+    stepDesc,
+    [],
+    [{ name: "Скв×2", html: seqExtHtml }, { name: rowLabel, text: " ".repeat(offset) + row }],
+    null,
+    searchResultHtml
+  );
+  // Живой пересчёт при смене st.seqGlueMode/st.ringInvert/st.ringReverse/st.seqSelfMode ПОСЛЕ
+  // записи шага — см. recomputeSeqStepDisplay()/renderStepLogBox(). tryRow сохраняется = idx
+  // (для совместимости с recomputeSeqStepDisplay, откат на строку выше там больше не бывает).
+  st.lastOp.seqStepInfo = { idx, tryRow: idx, offset, blockN, mode: 'interleave' };
+
+  const foundLabel = selfMode ? "сама с собой" : `строка ${idx + 1}`;
+  if (matchType) {
+    // В выделении остаётся ТОЛЬКО следующая строка (nextPatIdx), не обе — иначе повторный клик
+    // по кнопке (он берёт старт как Math.min(...selectedRows), см. её обработчик) снова находил
+    // бы МЕНЬШИЙ индекс (уже пройденную) и перезапускал поиск вместо продолжения дальше.
+    st.selectedRows.clear();
+    st.selectedRows.add(nextPatIdx);
+    st.aIdx = idx;
+    st.bIdx = nextPatIdx;
+    say(`✓ Интерлив сквозной: ${foundLabel} — найдено (${matchType}, сдвиг сквозной ${offset}${blockTag}), иду дальше...`);
+    st.interleaveSeqIdx = idx + 1;
+    st.interleaveSeqOffset = 0;
+    st.interleaveSeqBlockN = 1;
+    render(); saveCache();
+    return true;
+  }
+
+  st.interleaveSeqOffset = offset + 1;
+  say(`Интерлив сквозной: ${foundLabel}, блок ${blockN}, сдвиг ${offset + 1}/${seqRotations.length}...`);
+  render(); saveCache();
+  return true;
+}
+
+/* Останавливает "XOR сквозной" и гасит подсветку её кнопки — см. stopInterleaveSeq() выше,
+   тот же приём. */
+function stopXorSeq(msg){
+  st.xorSeqMode = false;
+  const btn = document.getElementById("bXorSeqSearch");
+  if (btn) btn.classList.remove("mode-act");
+  if (msg) say(msg);
+}
+
+/* "XOR сквозной" (см. #bXorSeqSearch) — ПОЛНАЯ копия механики doInterleaveSeqStep() выше (та же
+   заморозка сквозной/паттерна-цели, тот же перебор по кругу с откатом на строку выше при полном
+   провале, тот же "один вызов = один сдвиг"), только комбинирование через xorPair()/
+   xorPairMarked() вместо interleavePair()/interleavePairMarked() (см. запрос пользователя —
+   "также надо чтобы работал Xor", по образцу интерливинга по сквозной). */
+function doXorSeqStep() {
+  if (!st.xorSeqMode || st.xorSeqIdx < 0) return false;
+
+  const idx = st.xorSeqIdx;
+  if (idx <= 0 || idx >= st.rows.length) {
+    stopXorSeq("Конец строк.");
+    return false;
+  }
+
+  const nextPatIdx = idx + 1;
+  const nextPat = st.pats[nextPatIdx];
+  if (!nextPat || !nextPat.text) {
+    stopXorSeq("Нет паттерна для сравнения.");
+    return false;
+  }
+
+  // Сквозная включает и саму ВЫДЕЛЕННУЮ строку (idx) — см. doInterleaveSeqStep() выше, тот же фикс.
+  const seq = horizChainText(idx) + getRowBits(st, idx);
+  if (!seq.length) {
+    stopXorSeq("Сквозная пустая — нет строк выше для XOR.");
+    return false;
+  }
+
+  // 🪞 "Сквозная сама с собой" (st.seqSelfMode) — см. doInterleaveSeqStep() выше, тот же фикс.
+  const selfMode = !!st.seqSelfMode;
+  if (st.xorSeqTryRow < 0 || st.xorSeqTryRow > idx) st.xorSeqTryRow = idx;
+  const tryRow = selfMode ? idx : st.xorSeqTryRow;
+
+  const row = selfMode ? seq : getRowBits(st, tryRow);
+  // "Кольцо" для перебора — см. doInterleaveSeqStep() выше, тот же фикс (иначе перебор шёл
+  // только по половине кольца, показанного в Черновике как "Скв×2").
+  const ringSeq = seq + ringNextLap(seq);
+  const seqRotations = row.length ? rotationsOf(ringSeq) : [];
+  const offset = st.xorSeqOffset || 0;
+
+  if (!row.length || offset >= seqRotations.length) {
+    if (selfMode || tryRow <= 0) {
+      st.xorSeqOffset = 0;
+      st.xorSeqTryRow = -1;
+      stopXorSeq(selfMode
+        ? `XOR сквозной (сама с собой): для строки ${idx + 1} совпадений не найдено ни на одном сдвиге.`
+        : `XOR сквозной: для строки ${idx + 1} совпадений не найдено ни в одной строке от неё и выше.`);
+      return false;
+    }
+    st.xorSeqTryRow = tryRow - 1;
+    st.xorSeqOffset = 0;
+    say(`XOR сквозной: строка ${tryRow + 1} не подошла ни на одном сдвиге, пробую строку ${tryRow} (выше)...`);
+    render(); saveCache();
+    return true;
+  }
+
+  const patFull = nextPat.text;
+  const seqRot = seqRotations[offset];
+  const searchResult = xorPair(seqRot, row, "left");
+
+  const kinds = findPatternKinds(searchResult, patFull);
+  const matchType = kinds.length ? KIND_LABELS_RU[kinds[0].kind] + (kinds[0].skip ? " (без 1-го)" : "") : "";
+
+  // Подсветка найденного паттерна поверх "Итога" — см. interleavePairMarked() выше.
+  const searchResultHtml = xorPairMarked(seqRot, row, "left", kinds);
+  const seqExtHtml = bitsHtml(seq) + '<span class="chain-ring-ext">' + bitsHtml(ringNextLap(seq)) + '</span>';
+  const rowLabel = selfMode ? "Сквозная" : ("№" + (tryRow + 1));
+  const stepDesc = (selfMode ? "Сквозная сама с собой" : (`Строка ${tryRow + 1}` + (tryRow !== idx ? ` (вместо ${idx + 1})` : ""))) +
+      `, сдвиг сквозной ${offset}/${seqRotations.length - 1}, паттерн строки ${nextPatIdx + 1} — ` +
+      (matchType ? `совпадение (${matchType})` : "нет совпадения");
+  logStep(
+    "XOR сквозной",
+    selfMode ? Array.from({ length: idx + 1 }, (_, i) => i + 1) : [tryRow + 1],
+    searchResult,
+    stepDesc,
+    [],
+    [{ name: "Скв×2", html: seqExtHtml }, { name: rowLabel, text: " ".repeat(offset) + row }],
+    null,
+    searchResultHtml
+  );
+  st.lastOp.seqStepInfo = { idx, tryRow, offset, mode: 'xor' };
+
+  const foundLabel = selfMode ? "сама с собой" : `строка ${tryRow + 1}`;
+  if (matchType) {
+    st.selectedRows.clear();
+    st.selectedRows.add(nextPatIdx);
+    st.aIdx = tryRow;
+    st.bIdx = nextPatIdx;
+    say(`✓ XOR сквозной: ${foundLabel} — найдено (${matchType}, сдвиг сквозной ${offset}), иду дальше...`);
+    st.xorSeqIdx = idx + 1;
+    st.xorSeqTryRow = -1;
+    st.xorSeqOffset = 0;
+    render(); saveCache();
+    return true;
+  }
+
+  st.xorSeqOffset = offset + 1;
+  say(`XOR сквозной: ${foundLabel}, сдвиг ${offset + 1}/${seqRotations.length}...`);
+  render(); saveCache();
   return true;
 }
 
@@ -5960,6 +6763,9 @@ function captureUiSettings(){
     autoShift: cAutoShiftEl ? cAutoShiftEl.checked : false, stopOnHit: cStopOnHitEl ? cStopOnHitEl.checked : true,
     vert: cVertEl.checked, pad: cPadEl.checked, kinds: cKindsEl.checked, skip1: cSkipEl.checked,
     ringInvert: cRingInvertEl ? cRingInvertEl.checked : false,
+    ringReverse: cRingReverseEl ? cRingReverseEl.checked : false,
+    seqSelf: cSeqSelfEl ? cSeqSelfEl.checked : false,
+    seqGlueMode: st.seqGlueMode || "right",
     align: st.align, mode: st.mode || "step1", rowCount: rowCountEl ? rowCountEl.value : 256,
     bgSearch: cBgSearchEl ? cBgSearchEl.checked : false, bgSearchModes: st.bgSearchModes,
     bgSubPatterns: cBgSubPatternsEl ? cBgSubPatternsEl.checked : false,
@@ -5999,6 +6805,14 @@ function applyUiSettings(u){
   if (u.kinds     !== undefined) cKindsEl.checked     = u.kinds;
   if (u.skip1     !== undefined) cSkipEl.checked      = u.skip1;
   if (u.ringInvert !== undefined && cRingInvertEl) cRingInvertEl.checked = u.ringInvert;
+  if (u.ringReverse !== undefined && cRingReverseEl) cRingReverseEl.checked = u.ringReverse;
+  if (u.seqSelf !== undefined && cSeqSelfEl) cSeqSelfEl.checked = u.seqSelf;
+
+  if (u.seqGlueMode) {
+    st.seqGlueMode = u.seqGlueMode;
+    const seqBtns = document.querySelectorAll("#seqGlueGrp button");
+    seqBtns.forEach(b => b.classList.toggle("act", b.getAttribute("data-val") === u.seqGlueMode));
+  }
 
   if (u.align) {
     st.align = u.align;
@@ -6122,8 +6936,9 @@ function applyUiSettings(u){
 const DEFAULT_UI_SETTINGS = {
   pull: true, order: true, nextOnly: false, stageXor: false, invPass: false,
   autoShift: false, stopOnHit: true, vert: false, pad: false, kinds: false, skip1: true,
+  ringInvert: false, ringReverse: false, seqSelf: false, seqGlueMode: "right",
   align: "center", mode: "step1", rowCount: "100",
-  bgSearch: true, bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatL", "vertR", "vertL", "snakeR", "snakeL"],
+  bgSearch: true, bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatRInv", "concatRRevInv", "concatL", "concatLInv", "concatLRevInv", "concatSnake", "concatSnakeInv", "concatSnakeRevInv", "vertR", "vertL", "snakeR", "snakeL"],
   bgSubPatterns: false,
   highlight01: false,
   highlightVert1: false,
@@ -6232,6 +7047,8 @@ for (const el of [cPullEl, cOrderEl, cNextOnlyEl, cStageXorEl, cInvPassEl, cAuto
 // cBgSearch, ему нужен явный render(), иначе изменение не видно, пока не случится другое
 // действие (правка строки и т.п.), которое само вызовет render().
 if (cRingInvertEl) cRingInvertEl.addEventListener("change", () => { readToggles(); render(); saveCache(); });
+if (cRingReverseEl) cRingReverseEl.addEventListener("change", () => { readToggles(); render(); saveCache(); });
+if (cSeqSelfEl) cSeqSelfEl.addEventListener("change", () => { readToggles(); render(); saveCache(); });
 
 if (!loadCache()){
   /* Самая первая загрузка вообще (localStorage ещё пуст) — createDefaultTabState() берёт

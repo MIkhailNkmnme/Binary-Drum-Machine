@@ -8,7 +8,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius GPU v0.190 (Core + Synth)</title>
+    <title>Zerkalius GPU v0.191 (Core + Synth)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
         body { background: #050505; color: #00ff66; font-family: 'Roboto Mono', monospace; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; transition: background 0.3s; }
@@ -189,7 +189,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
     <!-- Верхняя полоса-меню: пункты открывают выпадающие окна, в Дзене полоса скрывается -->
     <div id="menuBar">
         <div style="display:flex; align-items:center; gap:6px; justify-self:start;">
-            <h3 id="appTitle" title="Обновить страницу" style="margin:0;">Zerkalius GPU Core + Synth — v0.190</h3>
+            <h3 id="appTitle" title="Обновить страницу" style="margin:0;">Zerkalius GPU Core + Synth — v0.191</h3>
             <a id="hubLink" href="index.html" title="К Zerkalius Control Hub" style="text-decoration:none; font-size:14px; line-height:1;">🏠</a>
         </div>
         <div id="menuTabs">
@@ -333,6 +333,17 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                     <label class="checkbox-row" style="margin-top:4px;"><input type="checkbox" id="wrapXCheck"><span style="color:#ff9900;">🔁 Кольцевать по X (повтор)</span></label>
                     <label class="checkbox-row"><input type="checkbox" id="wrapYCheck" checked><span style="color:#ff9900;">🔁 Кольцевать по Y (повтор)</span></label>
                     <button id="zerkaliusBtn" class="btn-zerkalius" style="background:#00ccff;">Создать Фигуру</button>
+                </div>
+
+                <div class="control-group control-group-highlight" id="pasteAlignGroup" style="border-color: #00ccff;">
+                    <label style="color:#00ccff; text-align:center; font-weight:bold;" title="Как выравнивать строки разной длины при вставке фигуры (Ctrl+V / перетаскивание файла) внутри общей ширины — портировано из Zerkalius-fold.html (см. запрос пользователя)">Выравнивание вставки (Ctrl+V)</label>
+                    <input type="hidden" id="pasteAlignSelect" value="left">
+                    <div class="player-buttons" style="margin-top:4px;">
+                        <button id="pasteAlignLeftBtn" class="btn-step dir-active" style="background:#003344; color:#00ccff; flex:1;" title="По левому краю">⇤</button>
+                        <button id="pasteAlignCenterBtn" class="btn-step" style="background:#003344; color:#00ccff; flex:1;" title="По центру">↔</button>
+                        <button id="pasteAlignRightBtn" class="btn-step" style="background:#003344; color:#00ccff; flex:1;" title="По правому краю">⇥</button>
+                        <button id="pasteAlignStairsBtn" class="btn-step" style="background:#003344; color:#00ccff; flex:1;" title="Лесенка: каждая строка сдвинута вправо на (её длина − 1) — выстраиваются диагональю, а не по общей ширине">⇱</button>
+                    </div>
                 </div>
 
                 <div class="control-group control-group-highlight" id="gridGroup" style="border-color: #cc00ff;">
@@ -858,7 +869,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             menuView:   { title: 'Вид',      zone: 'rightSlot', pin: true,  ids: ['viewGroup', 'paletteGroup', 'fxGroup'], floatable: true },
             menuRadar:  { title: 'Радар',    zone: 'rightSlot', pin: false, ids: ['radarGroup'], floatable: true },
             menuMove:   { title: 'Движение', zone: 'leftSlot',  pin: true,  ids: ['motionGroup', 'animGroup', 'reactGroup', 'dualGroup'], floatable: true },
-            menuGen:    { title: 'Генератор', zone: 'leftSlot', pin: true,  ids: ['genGroup'], floatable: true },
+            menuGen:    { title: 'Генератор', zone: 'leftSlot', pin: true,  ids: ['genGroup', 'pasteAlignGroup'], floatable: true },
             menuGrid:   { title: 'Сетка',    zone: 'leftSlot',  pin: true,  ids: ['gridGroup'], floatable: true },
             menuSearch: { title: 'Поиск',    zone: 'rightSlot', pin: true,  ids: ['searchGroup'], floatable: true }
         };
@@ -1677,13 +1688,37 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             UI.fontSizeRange.value = Math.round(STATE.fSize);
         }
 
+        // Сдвиг короткой строки внутри общей ширины maxLen — портировано из Zerkalius-fold.html
+        // (alignShift), см. #pasteAlignSelect/loadFigureFromText() ниже. "half"-варианты (⇱½ и
+        // т.п.) из fold.html НЕ портированы — там это чисто CSS-подвижка на 0.5 символа для
+        // ШРИФТОВОГО рендера строк, а тут дискретная матрица ячеек: половины ячейки не бывает,
+        // "halfcenter"/"halfstairs" дали бы РОВНО ТЕ ЖЕ индексы, что center/stairs (см. запрос
+        // пользователя, портируем то же выравнивание, но применительно к вставке фигуры Ctrl+V).
+        function alignShift(maxLen, len, align) {
+            const diff = maxLen - len;
+            if (align === 'right') return diff;
+            // "Лесенка" — сдвиг растёт с длиной САМОЙ строки (len-1), а не с остатком до maxLen,
+            // поэтому НАМЕРЕННО может вылезти за maxLen — ширину матрицы (w) под это специально
+            // досчитывает вызывающий код (loadFigureFromText), в отличие от fold.html (там это
+            // просто текст, ему разъезжаться некуда).
+            if (align === 'stairs') return len ? len - 1 : 0;
+            if (align === 'center') return diff >> 1;
+            return 0; // left (по умолчанию — прежнее поведение, каждая строка с x=0)
+        }
+
         // Ctrl+V: вставить фигуру (строки из 0/1) прямо на холст
         function loadFigureFromText(txt) {
             let lines = txt.replace(/\r/g, '').split('\n').filter(l => /[01]/.test(l)); if(!lines.length) return false;
             let prevM = STATE.lines, prevW = STATE.COLS, prevH = STATE.ROWS;
-            let h = lines.length, w = Math.max(...lines.map(l => l.length));
+            let h = lines.length, maxLen = Math.max(...lines.map(l => l.length));
+            let align = (document.getElementById('pasteAlignSelect') || {}).value || 'left';
+            let shifts = lines.map(l => alignShift(maxLen, l.length, align));
+            // w — ширина матрицы: обычно maxLen, но у "Лесенки" отдельные строки уходят правее
+            // maxLen (см. alignShift) — расширяем под самый дальний правый край, иначе запись
+            // ушла бы за границы массива.
+            let w = Math.max(maxLen, ...lines.map((l, i) => l.length + shifts[i]));
             let m = createEmptyMatrix(w, h);
-            for(let y=0; y<h; y++) for(let x=0; x<lines[y].length; x++) { let ch = lines[y][x]; if(ch === '0' || ch === '1') m[y][x].c = ch; }
+            for(let y=0; y<h; y++) for(let x=0; x<lines[y].length; x++) { let ch = lines[y][x]; if(ch === '0' || ch === '1') m[y][x + shifts[y]].c = ch; }
             let mg = overlayOnPrev(precalcAct(m), w, h, prevM, prevW, prevH); m = mg.m; STATE.COLS = mg.w; STATE.ROWS = mg.h;
             STATE.lines = m; STATE.animatrixRow = 0; resetClearBackup(); updateDataTexture(); fitView();
             document.getElementById('statusInfo').textContent = 'Загружено: ' + w + '×' + h;
@@ -2092,6 +2127,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             if(s.gridSep !== undefined) { document.getElementById('gridSepCheck').checked = !!s.gridSep; updateGridSepPlayBtn(); }
             if(s.gridRate !== undefined) { document.getElementById('gridRateRange').value = s.gridRate; document.getElementById('gridRateLabel').textContent = s.gridRate; }
             if(s.gridRateDir !== undefined) { document.getElementById('gridRateDirSelect').value = s.gridRateDir; document.getElementById('gridRateFwdBtn').classList.toggle('dir-active', s.gridRateDir === 'fwd'); document.getElementById('gridRateBackBtn').classList.toggle('dir-active', s.gridRateDir !== 'fwd'); }
+            if(s.pasteAlign !== undefined) setPasteAlign(s.pasteAlign);
             if(s.autoZoom !== undefined) { document.getElementById('autoZoomCheck').checked = !!s.autoZoom; updateAutoZoomPlayBtn(); }
             if(s.autoZoomRate !== undefined) document.getElementById('autoZoomRate').value = s.autoZoomRate;
             if(s.autoZoomDir !== undefined) { document.getElementById('autoZoomDirSelect').value = s.autoZoomDir; document.getElementById('autoZoomInBtn').classList.toggle('dir-active', s.autoZoomDir !== 'out'); document.getElementById('autoZoomOutBtn').classList.toggle('dir-active', s.autoZoomDir === 'out'); }
@@ -2171,7 +2207,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                 layers: UI.layersRange.value, loopRows: document.getElementById('loopRowsRange').value,
                 search: document.getElementById('searchInput').value,
                 searchSeq: document.getElementById('searchSeqCheck').checked, searchSkip1: document.getElementById('searchSkipFirstCheck').checked, searchDir: document.getElementById('searchDirSelect').value,
-                noWrapX: !UI.wrapXCheck.checked, noWrapY: !UI.wrapYCheck.checked, lightBg: STATE.lightBg, bgColor: document.getElementById('bgColorPicker').value, gridStep: document.getElementById('gridStepInput').value, charZoom: UI.charZoomRange.value, searchOff: document.getElementById('searchOffCheck').checked, fontFace: document.getElementById('fontFaceSelect').value, pixelPerfect: UI.pixelPerfectCheck.checked, radarMode: document.getElementById('radarModeSelect').value, gridSep: document.getElementById('gridSepCheck').checked, gridRate: document.getElementById('gridRateRange').value, gridRateDir: document.getElementById('gridRateDirSelect').value, autoZoom: document.getElementById('autoZoomCheck').checked, autoZoomRate: document.getElementById('autoZoomRate').value, autoZoomDir: document.getElementById('autoZoomDirSelect').value, centerHole: document.getElementById('centerHoleRange').value, sphereRadius: document.getElementById('sphereRadiusRange').value, seamlessZoom: document.getElementById('seamlessZoomCheck').checked, zoomPeriod: document.getElementById('zoomPeriodInput').value,
+                noWrapX: !UI.wrapXCheck.checked, noWrapY: !UI.wrapYCheck.checked, lightBg: STATE.lightBg, bgColor: document.getElementById('bgColorPicker').value, gridStep: document.getElementById('gridStepInput').value, charZoom: UI.charZoomRange.value, searchOff: document.getElementById('searchOffCheck').checked, fontFace: document.getElementById('fontFaceSelect').value, pixelPerfect: UI.pixelPerfectCheck.checked, radarMode: document.getElementById('radarModeSelect').value, gridSep: document.getElementById('gridSepCheck').checked, gridRate: document.getElementById('gridRateRange').value, gridRateDir: document.getElementById('gridRateDirSelect').value, pasteAlign: document.getElementById('pasteAlignSelect').value, autoZoom: document.getElementById('autoZoomCheck').checked, autoZoomRate: document.getElementById('autoZoomRate').value, autoZoomDir: document.getElementById('autoZoomDirSelect').value, centerHole: document.getElementById('centerHoleRange').value, sphereRadius: document.getElementById('sphereRadiusRange').value, seamlessZoom: document.getElementById('seamlessZoomCheck').checked, zoomPeriod: document.getElementById('zoomPeriodInput').value,
                 snap: STATE.lines.map(r => r.map(c => c.c).join('')).join('\n'),
                 pos: { x: STATE.offsetX, y: STATE.offsetMatY, dy: STATE.dragY, pY: STATE.panY, l2: STATE.layer2Y, ang: STATE.globalAngle, f: STATE.fSize, elkaS: STATE.elkaShift }
             };
@@ -2364,6 +2400,15 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         // Как ◀/▶| у Плеера: клик сразу двигает сетку на один шаг, а не только выбирает направление для «↕ Сетка».
         gridRateFwdBtn.addEventListener('click', () => { gridRateDirEl.value = 'fwd'; gridRateFwdBtn.classList.add('dir-active'); gridRateBackBtn.classList.remove('dir-active'); STATE.gridOffY += 1; });
         gridRateBackBtn.addEventListener('click', () => { gridRateDirEl.value = 'back'; gridRateBackBtn.classList.add('dir-active'); gridRateFwdBtn.classList.remove('dir-active'); STATE.gridOffY -= 1; });
+        // Выравнивание вставки Ctrl+V (⇤/↔/⇥/⇱, см. alignShift()/loadFigureFromText() выше) —
+        // тот же приём переключения (hidden input + toggle .dir-active), что у направления сетки.
+        let pasteAlignEl = document.getElementById('pasteAlignSelect');
+        let pasteAlignBtns = { left: document.getElementById('pasteAlignLeftBtn'), center: document.getElementById('pasteAlignCenterBtn'), right: document.getElementById('pasteAlignRightBtn'), stairs: document.getElementById('pasteAlignStairsBtn') };
+        function setPasteAlign(v) { pasteAlignEl.value = v; for (const k in pasteAlignBtns) pasteAlignBtns[k].classList.toggle('dir-active', k === v); }
+        pasteAlignBtns.left.addEventListener('click', () => setPasteAlign('left'));
+        pasteAlignBtns.center.addEventListener('click', () => setPasteAlign('center'));
+        pasteAlignBtns.right.addEventListener('click', () => setPasteAlign('right'));
+        pasteAlignBtns.stairs.addEventListener('click', () => setPasteAlign('stairs'));
         let gridSepCheckEl = document.getElementById('gridSepCheck'), gridSepPlayBtn = document.getElementById('gridSepPlayBtn');
         function updateGridSepPlayBtn() { gridSepPlayBtn.textContent = gridSepCheckEl.checked ? '⏸ Сетка' : '↕ Сетка'; gridSepPlayBtn.style.background = gridSepCheckEl.checked ? '#ff33ff' : '#660066'; gridSepPlayBtn.style.color = gridSepCheckEl.checked ? '#330033' : '#ff66ff'; }
         gridSepPlayBtn.addEventListener('click', () => { gridSepCheckEl.checked = !gridSepCheckEl.checked; updateGridSepPlayBtn(); });
