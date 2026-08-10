@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.278</title>
+<title>Zerkalius Fold — v0.308</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -129,8 +129,16 @@
   .chain-dd-mini:hover{color:var(--acc);opacity:1}
   .menu-panel{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:4px;
               background:var(--panel);padding:0 4px 4px}
+  /* position:sticky — у длинного содержимого (напр. "Лог находок" + "Суммы длин") панель
+     скроллится ЦЕЛИКОМ вместе с заголовком (см. .floating-panel/.controls/.menu-drop —
+     overflow-y:auto стоит на НИХ, а не отдельно на теле панели) — шапка с заголовком/крестиком
+     уезжала вместе с контентом. Sticky держит её прибитой к верху ИМЕННО того контейнера,
+     который реально скроллится, не трогая сам контент — запрос пользователя "скролл норм
+     сделай, и чтобы заголовок не трогал". background — иначе проскроленный текст просвечивал
+     бы под ней. */
   .panel-head{display:flex;align-items:center;gap:8px;padding:6px 2px 4px;border-bottom:1px solid var(--line);
-              margin-bottom:2px;cursor:grab;touch-action:none}
+              margin-bottom:2px;cursor:grab;touch-action:none;
+              position:sticky;top:0;z-index:2;background:var(--panel)}
   .panel-head:active{cursor:grabbing}
   .panel-drag{color:var(--dim);font-size:12px;letter-spacing:2px;user-select:none}
   .panel-head:hover .panel-drag{color:var(--acc)}
@@ -138,8 +146,13 @@
   .panel-close{color:var(--dim);font-size:13px;line-height:1;cursor:pointer;padding:2px 3px}
   .panel-close:hover{color:var(--red)}
   .dragging{opacity:.45;outline:1px dashed var(--acc)}
+  /* max-height/overflow-y — иначе у вкладки, вытащенной плавающим окном на холст (в отличие от
+     закреплённого дока .controls/выпадающего .menu-drop — у обоих есть свой overflow-y:auto),
+     длинное содержимое (напр. "Лог находок" + "Суммы длин") просто обрезалось краем экрана без
+     возможности прокрутки — запрос пользователя "скрола не хватает". */
   .floating-panel{position:fixed;z-index:120;width:290px;box-shadow:0 8px 24px rgba(0,0,0,.6);
-                  opacity:1 !important;outline:none !important;user-select:none}
+                  opacity:1 !important;outline:none !important;user-select:none;
+                  max-height:80vh;overflow-y:auto}
   .control-group{display:flex;flex-direction:column;gap:4px}
   .control-group-btn{display:flex;flex-wrap:wrap;gap:4px}
 
@@ -154,12 +167,14 @@
   .control-group-flow{display:flex;flex-direction:column;gap:4px;border:1px solid var(--acc);
     background:rgba(77,163,255,.08);border-radius:3px;padding:4px;margin-bottom:4px}
   /* Авто/Стоп отделены от сетки режимов ниже пунктиром + своим отступом — иначе в общей рамке
-     не видно, что это разные по смыслу группы (сама рамка теперь общая на обе). */
-  .control-group-flow .flow-top-row{display:flex;gap:4px;padding-bottom:4px;
+     не видно, что это разные по смыслу группы (сама рамка теперь общая на обе). Кнопка Авто —
+     ТОГО ЖЕ размера, что и остальные (не растянута на всю ширину flex:1), просто ПО ЦЕНТРУ своей
+     строки (justify-content:center) — запрос пользователя "кнопку такого же размера как и все,
+     но расположи по центру на своей строке". */
+  .control-group-flow .flow-top-row{display:flex;gap:4px;padding-bottom:4px;justify-content:center;
     border-bottom:1px dashed rgba(77,163,255,.35)}
   .control-group-flow .flow-modes-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
   .control-group-flow button{min-height:var(--std-btn-h)}
-  .control-group-flow .flow-top-row button{flex:1}
 
   /* «Плеер» правки строк — крупные кнопки транспортного вида (вкладка «Правка строк»).
      Сетка 2 колонки РОВНО (не flex-wrap с процентами — тот пакует то 2, то 3 в ряд
@@ -744,6 +759,11 @@
   text-align: right;
 }
 .horiz-ride-text { color: var(--fg); flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+/* Позиции СКВОЗНОЙ, куда цепочка ещё/уже не дотягивается (см. computeHorizXorInfo) — тусклая
+   точка вместо невидимого пробела, чтобы была видна ВСЯ протяжённость строки (той же длины,
+   что ЦЕЛЬ), а не только кусочек с реальными битами — запрос пользователя "покажи всю длину
+   сквозной". */
+.horiz-chain-gap { color: var(--dim); opacity: .35; }
 .horiz-ride-row.expanded { align-items: flex-start; }
 .horiz-ride-row.expanded .horiz-ride-text { white-space: pre-wrap; word-break: break-all; overflow: visible; text-overflow: clip; }
 /* Активная (только что въехавшая) позиция — только цветом, без сдвига символов */
@@ -824,9 +844,16 @@
 
 /* "🧮 Суммы длин" (см. findLengthSumCombos/renderLengthSumsHtml в JS) — каждая строка-комбинация
    в своём цвете на каждый источник (LSUM_COLORS, циклится), совпавшая с паттерном ниже — рамка. */
-.lsum-block{margin-top:4px;padding-top:4px;border-top:1px solid var(--line)}
-.lsum-title{padding:1px 3px;color:var(--dim);font-size:11px;opacity:.8}
-.lsum-row{display:flex;gap:6px;padding:1px 3px;font-size:11px;align-items:baseline}
+.lsum-block{margin-top:3px;padding-top:3px;border-top:1px solid var(--line)}
+.lsum-title{padding:0 3px;color:var(--dim);font-size:11px;line-height:1.1;opacity:.8}
+.lsum-row{display:flex;gap:6px;padding:0 3px;font-size:11px;line-height:1.1;align-items:baseline}
+/* Искомый паттерн — ТОЧНО той же разметкой/шрифтом/размером, что и суммы ниже (.lsum-row/
+   .lsum-label/.lsum-bits без переопределения font-size/font-weight — иначе даже в моноширинном
+   шрифте разный размер/начертание сдвигает колонки, бит НЕ строго над битом) — запрос
+   пользователя "тем же шрифтом биты над битами". Только цвет светлее + рамка снизу, чтобы
+   визуально отделяться от списка сумм под ним, не трогая ширину символов. */
+.lsum-pattern-bits{color:var(--fg)}
+.lsum-pattern-row{padding-bottom:2px;margin-bottom:2px;border-bottom:1px solid var(--line)}
 .lsum-row.lsum-matched{background:rgba(255,207,107,.12);border-radius:2px;outline:1px solid var(--acc)}
 .lsum-label{flex:0 0 auto;color:var(--dim);min-width:3.5em}
 .lsum-bits{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--chain-ff, "Roboto Mono", Consolas, monospace)}
@@ -1035,7 +1062,7 @@
 <!-- === МАРКЕР 03: HEADER_UI === -->
 <div id="menuBar">
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
-    <h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.278</span></h3>
+    <h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.308</span></h3>
   </div>
   <div id="menuTabs">
     <button id="bUndo" style="font-size:12px;padding:3px 8px;" title="Шаг назад / отмена ручной правки (Backspace / Ctrl+Z)">↩ Отменить</button>
@@ -1106,14 +1133,23 @@
        сквозная-режимы теперь в одном месте. -->
   <button id="bInterleaveSearch" title="Интерливинг пары + поиск совпадения в паттерне 3-й строки">⧬ Интерлив</button>
   <button id="bXorSelected" style="color:#ff66cc;" title="XOR выделённой строки и всех над ней, показать результат внизу и перейти на нижнюю если совпадает">⨁ XOR выдел</button>
-  <!-- Тетрис: каждый клик — один ОТДЕЛЬНЫЙ шаг (см. tetrisDrop() в JS): если 1-биты строки НАД
-       выделенной не влезают в её 0-пустоты как есть, клик крутит выделенную строку до
-       подходящего поворота; если НИ ОДИН поворот не подошёл — следующий клик инвертирует (0↔1)
-       строку сверху (само падение ещё не происходит); когда уже влезает — клик выполняет
-       падение (выделенная получает эти 1-биты, строка сверху гасит их в 0, строки никогда не
-       удаляются и не сдвигаются); ещё один клик после этого — только переводит выделение на
-       строку ниже, чтобы продолжать тетрис вниз повторяя клики. -->
-  <button id="bTetris" style="color:#ff9900;" title="Тетрис (каждый клик — один отдельный шаг): крутит выделенную строку до подходящего поворота; если ни один не подошёл — отдельным кликом инвертирует строку сверху; когда влезает — отдельным кликом роняет 1-биты строки сверху в её 0-пустоты; следующим кликом переводит выделение на строку ниже. Строки никогда не удаляются и не сдвигаются">🧱 Тетрис</button>
+  <!-- Тетрис/Тетрис 2 — общая рамка, один уровень в сетке (grid-column:1/-1) — тот же приём,
+       что и у блока Гориз.XOR/Спирали, запрос пользователя "тоже рамкой объедини". -->
+  <div style="grid-column:1 / -1; display:flex; gap:6px; border:1px solid #ff9900; background:rgba(255,153,0,0.08); border-radius:3px; padding:4px;">
+    <!-- Тетрис: каждый клик — один ОТДЕЛЬНЫЙ шаг (см. tetrisDrop() в JS): если 1-биты строки НАД
+         выделенной не влезают в её 0-пустоты как есть, клик крутит выделенную строку круговым
+         сдвигом (направление/инверсия — та же, что сейчас активна у ◄/►Круг/Круг Инв, см.
+         tetrisRotateFns()/st.lastDirMode — запрос пользователя), пока не найдётся подходящий
+         поворот; если НИ ОДИН поворот не подошёл — просто сообщаем об этом, ничего не меняем;
+         когда уже влезает — клик выполняет падение (выделенная получает эти 1-биты, строка сверху
+         гасит их в 0, строки никогда не удаляются и не сдвигаются); ещё один клик после этого —
+         только переводит выделение на строку ниже, чтобы продолжать тетрис вниз повторяя клики. -->
+    <button id="bTetris" style="color:#ff9900; flex:1;" title="Тетрис (каждый клик — один отдельный шаг): крутит выделенную строку круговым сдвигом (направление/инверсия — та же, что активна у ◄/►Круг/Круг Инв) до подходящего поворота; когда влезает — отдельным кликом роняет 1-биты строки сверху в её 0-пустоты; следующим кликом переводит выделение на строку ниже. Строки никогда не удаляются и не сдвигаются">🧱 Тетрис</button>
+    <!-- Тетрис 2 — зеркало обычного Тетриса: падают 1-биты строки ПОД выделенной, ВВЕРХ в неё (см.
+         tetris2Drop() в JS). В отличие от обычного Тетриса падающая строка ДЛИННЕЕ выделенной не
+         отклоняется сразу — можно, если её "лишний" хвост весь из нулей. -->
+    <button id="bTetris2" style="color:#ffb84d; flex:1;" title="Тетрис 2 (каждый клик — один отдельный шаг): 1-биты строки ПОД выделенной падают ВВЕРХ в неё. Двухуровневый поиск поворотом выделенной и (если не помогло) строки снизу — направление то же, что активно у ◄/►Круг/Круг Инв, но БЕЗ инверсии (обычный Круг, даже если сейчас активен Круг Инв); когда влезает — падение (строка снизу гасится в 0); следующим кликом переводит выделение на опустевшую строку. Строка снизу может быть длиннее выделенной, если её лишний хвост весь из нулей">🧱 Тетрис 2</button>
+  </div>
 </div>
 
 <!-- Назад/Авто/Стоп + все кнопки-РЕЖИМЫ (см. setMode() в JS — подсвечиваются .mode-act, именно
@@ -1126,10 +1162,16 @@
     <button id="bAuto" title="Автоматический прогон по выбранному режиму (Enter) / повторный клик — остановить">🚀 Авто</button>
   </div>
   <div class="flow-modes-grid">
-    <button id="bStep" title="Один шаг (обычный интерливинг)">▶ Шаг</button>
-    <button id="bStep2" title="Шаг по 2 (принудительный интерливинг пары)">▶ Шаг 2</button>
-    <button id="bStepXor" style="color:var(--purple);" title="Накопительный XOR всех строк до текущей">⨁ XOR</button>
-    <button id="bStep2Xor" style="color:var(--acc);" title="Принудительный XOR пары строк">⨁ XOR 2</button>
+    <!-- Шаг/Шаг 2 и XOR/XOR 2 — каждая пара в своей рамке, тот же приём, что и у Круг/Круг Инв
+         ниже — запрос пользователя "также для... Шаг и XOR XOR2". -->
+    <div style="grid-column:1 / -1; display:flex; gap:6px; border:1px solid var(--line); border-radius:3px; padding:4px;">
+      <button id="bStep" style="flex:1;" title="Один шаг (обычный интерливинг)">▶ Шаг</button>
+      <button id="bStep2" style="flex:1;" title="Шаг по 2 (принудительный интерливинг пары)">▶ Шаг 2</button>
+    </div>
+    <div style="grid-column:1 / -1; display:flex; gap:6px; border:1px solid var(--line); border-radius:3px; padding:4px;">
+      <button id="bStepXor" style="color:var(--purple); flex:1;" title="Накопительный XOR всех строк до текущей">⨁ XOR</button>
+      <button id="bStep2Xor" style="color:var(--acc); flex:1;" title="Принудительный XOR пары строк">⨁ XOR 2</button>
+    </div>
     <!-- ◄/► Гориз.XOR — та же сквозная цепочка (символы строк выше по одному заходят в
          текущую, ксорят её), но с двух разных краёв: ► въезжает справа (было раньше, теперь
          реально крутит строку по кругу до находки, а не останавливается после одного прохода
@@ -1150,19 +1192,22 @@
         <label class="chk" title="Развернуть порядок самой цепочки — ведущий край не «строка, ближайшая к цели», а «самая верхняя строка» (и наоборот)"><input type="checkbox" id="cHorizReverseChain">↕ Развернуть цепочку</label>
       </div>
     </div>
-    <button id="bStepXorProj" style="color:#ff66cc;" title="Проекция XOR: Вычисляет XOR всех строк ВЫШЕ текущей и полностью перезаписывает им текущую строку.">⏬ Проекц.XOR</button>
     <!-- Круговой сдвиг и Спираль — тоже "режимы для Авто" (см. st.lastDirMode/DIR_MODE_BTN
          в JS), поэтому перенесены сюда же, из "Правки строк". Взаимоисключающая подсветка
          .mode-act — общая с Шаг/XOR/Гориз.XOR/Скан ниже (см. setLastDirMode()/setMode() в JS).
-         Стоят ПЕРЕД Сканом (не после) — в 2-колоночной сетке ◄►Круг должна попасть на свою
-         отдельную строку целиком, а не разбиваться Сканом пополам (см. запрос пользователя —
-         "круги на одной строке и спирали, Скан вниз"). -->
-    <button id="bShiftL" title="Круговой сдвиг влево выбранных строк (◄ или Ctrl+Клик)">◄ Круг</button>
-    <button id="bShiftR" title="Круговой сдвиг вправо выбранных строк (► или Ctrl+Клик)">► Круг</button>
+         Каждая пара (◄/►Круг, ◄/►Круг Инв) — в СВОЕЙ рамке (запрос пользователя "Круг и Круг Инв
+         расположи по парно в строках и объедини каждую пару рамкой"), grid-column:1/-1 — та же
+         двухколоночная сетка flow-modes-grid, растягиваем рамку на всю ширину. -->
+    <div style="grid-column:1 / -1; display:flex; gap:6px; border:1px solid var(--acc); background:rgba(77,163,255,0.08); border-radius:3px; padding:4px;">
+      <button id="bShiftL" style="flex:1;" title="Круговой сдвиг влево выбранных строк (◄ или Ctrl+Клик)">◄ Круг</button>
+      <button id="bShiftR" style="flex:1;" title="Круговой сдвиг вправо выбранных строк (► или Ctrl+Клик)">► Круг</button>
+    </div>
     <!-- То же самое, но бит, уходящий за границу строки, при каждом переходе инвертируется —
          запрос пользователя. -->
-    <button id="bShiftLInv" title="Круговой сдвиг влево с инверсией бита при переходе границы строки">◄ Круг Инв</button>
-    <button id="bShiftRInv" title="Круговой сдвиг вправо с инверсией бита при переходе границы строки">► Круг Инв</button>
+    <div style="grid-column:1 / -1; display:flex; gap:6px; border:1px solid var(--acc); background:rgba(77,163,255,0.08); border-radius:3px; padding:4px;">
+      <button id="bShiftLInv" style="flex:1;" title="Круговой сдвиг влево с инверсией бита при переходе границы строки">◄ Круг Инв</button>
+      <button id="bShiftRInv" style="flex:1;" title="Круговой сдвиг вправо с инверсией бита при переходе границы строки">► Круг Инв</button>
+    </div>
     <!-- ▲/▼ Спираль + переключатель "какая сторона ленты — вверх" (st.spiralUpDir) — в ОДНОЙ
          рамке (см. запрос пользователя — переключатель влияет только на Спираль, значит и жить
          должен рядом с ней, а не во вкладке "Сквозная", куда его раньше унесли заодно со всем
@@ -1176,6 +1221,9 @@
         <button class="act" data-val="right" title="Вправо по ленте = вверх">►</button>
       </div>
     </div>
+    <!-- Проекц.XOR и Скан — перенесены сюда, друг напротив друга (2-колоночная сетка) — запрос
+         пользователя "перенесу вниз справа от Скан". -->
+    <button id="bStepXorProj" style="color:#ff66cc;" title="Проекция XOR: Вычисляет XOR всех строк ВЫШЕ текущей и полностью перезаписывает им текущую строку.">⏬ Проекц.XOR</button>
     <button id="bStepScan" style="color:var(--green);" title="Сканировать строки на паттерны без изменения символов">👁 Скан</button>
   </div>
 </div>
@@ -1253,6 +1301,10 @@
     <label class="chk" title="Фоновый поиск: при любом изменении строк проверяет, найден ли паттерн строки НИЖЕ выделенной в выбранном результате (см. переключатель ниже). Выделенная строка фиксирована — сама не двигается">
       <input type="checkbox" id="cBgSearch" checked> 🔍 Фон-поиск
     </label>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+      <span style="font-size:11px;color:var(--dim);">Режимы фон-поиска:</span>
+      <button id="bBgModeAllNone" style="font-size:11px;padding:1px 6px;" title="Тоггл: первый клик включает ВСЕ режимы ниже (включая 🧮 Суммы длин); повторный клик — оставляет включённым только ⨁ XOR-Чёт">Всё / только XOR-Чёт</button>
+    </div>
     <div class="align-grp" id="bgSearchModeGrp" title="Какой результат проверять на совпадение с паттерном строки ниже выделенной">
       <button data-val="interleave" class="act" title="Интерливинг выделенной и строки над ней">⧬ Интерлив</button>
       <button data-val="xor2" class="act" title="XOR выделенной и строки над ней">⨁ XOR 2</button>
@@ -1270,15 +1322,19 @@
       <button data-val="vertL" class="act" title="Вертикальная склейка: строки от 1-й до выделенной читаются по СТОЛБЦАМ (сверху вниз в каждом столбце), столбцы справа налево">↕ Верт. ←</button>
       <button data-val="snakeR" class="act" title="Змейка: как вертикальная склейка, но направление чтения строк внутри столбца чередуется (то сверху вниз, то снизу вверх), столбцы слева направо">🐍 Змейка →</button>
       <button data-val="snakeL" class="act" title="Змейка: как вертикальная склейка, но направление чтения строк внутри столбца чередуется (то сверху вниз, то снизу вверх), столбцы справа налево">🐍 Змейка ←</button>
+      <!-- "Суммы длин" — подпункт ЭТОЙ ЖЕ группы режимов (та же кнопка-тоггл, тот же .act/data-val
+           механизм), а не отдельная галка ниже — запрос пользователя. В отличие от остальных
+           кнопок группы НЕ участвует в общем расчёте "один результат на сверку с паттерном" (см.
+           computeBgSearchTarget() — modes.filter(m=>m!=="lengthSums")), у неё своя отдельная
+           отрисовка (см. renderLengthSumsHtml() в "Логе находок"), проверяется по
+           st.bgSearchModes.includes("lengthSums"). -->
+      <button data-val="lengthSums" title="Из каких комбинаций строк (включая саму выделенную) можно собрать длину искомой строки ниже (напр. длина искомой = 6 → строки 1+6, 2+5, 3+4, 1+2+4...), сверяя с её паттерном кольцевым поиском — каждая строка-источник в комбинации подсвечена своим цветом. Показывается в отдельной вкладке «Лог находок»">🧮 Суммы длин</button>
     </div>
     <label class="chk" title="Например паттерн 1110, «Без 1-го» даёт 110 — с этой галкой ищем не только 110, но и ВСЕ варианты его циклического сдвига (101, 011). Найдено, если совпал хотя бы один. Полный список подпаттернов и какие из них нашлись — см. «🧾 Черновик последнего шага»">
       <input type="checkbox" id="cBgSubPatterns"> 🔀 Подпаттерны сдвига
     </label>
     <label class="chk" title="По умолчанию результат сверяется только с паттерном строки СРАЗУ НИЖЕ выделенной. С этой галкой — со всеми паттернами от неё и до конца списка, находка засчитывается по первой совпавшей строке">
       <input type="checkbox" id="cBgAllBelow"> 🔽 Все ниже
-    </label>
-    <label class="chk" title="Новый инструмент: по длине выделенной строки перебирает, из КАКИХ комбинаций строк ВЫШЕ (по сумме их длин) можно её собрать (напр. длина 6 = строки 1+6, 2+5, 3+4, 1+2+4...), и показывает биты каждой такой комбинации (склеены в порядке номеров), сверяя с паттерном строки ниже — каждая строка-источник в комбинации подсвечена своим цветом">
-      <input type="checkbox" id="cShowLengthSums"> 🧮 Суммы длин
     </label>
   </div>
   <div style="grid-column:1 / -1;display:grid;grid-template-columns:repeat(2, 1fr);gap:4px;">
@@ -1293,11 +1349,15 @@
 <div id="findLogGroup" class="control-group">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px;">
     <span style="font-size:12px;color:var(--dim);">Находки фон-поиска (см. вкладку «Поиск»)</span>
-    <button id="bClearFindLog" style="font-size:12px;padding:2px 6px;" title="Очистить лог находок">🧹 Очистить</button>
+    <div style="display:flex;gap:4px;">
+      <button id="bScanLengthSumsLog" style="font-size:12px;padding:2px 6px;" title="Перебрать ВСЕ варианты «Суммы длин» для текущей выделенной строки прямо сейчас (даже если строки не менялись — обычный автопоиск пишет в лог только при ИЗМЕНЕНИИ находки) и записать в лог ВСЕ найденные, не только первый">🧮 Найти суммы</button>
+      <button id="bClearFindLog" style="font-size:12px;padding:2px 6px;" title="Очистить лог находок">🧹 Очистить</button>
+    </div>
   </div>
   <div id="findLogList"></div>
   <!-- "🧮 Суммы длин" — перенесено сюда из панели "Результат фон-поиска" (см. вкладку «Поиск» —
-       галка cShowLengthSums по-прежнему её включает/выключает), запрос пользователя. Заполняет
+       кнопка-режим 🧮 Суммы длин в bgSearchModeGrp по-прежнему её включает/выключает, тот же
+       .act/data-val="lengthSums", что и у остальных режимов), запрос пользователя. Заполняет
        renderLengthSumsHtml() внутри renderFindLogPanel(). -->
   <div id="lengthSumsContainer"></div>
 </div>
@@ -2113,7 +2173,6 @@ const st = {
   // разделителей считается ОТДЕЛЬНО по каждой секции между ними, как будто других строк нет —
   // запрос пользователя.
   rowDividers: new Set(),
-  showLengthSums: false,
   activeTab: 0, tabs: [],
   align: "center", vertical: false, padZero: false, allKinds: false, ringInvert: false,
   pull: true, keepOrder: true, stopOnHit: true, stopOnBalance: false,
@@ -2156,7 +2215,8 @@ const BG_SEARCH_MODE_LABELS = {
   concatL: "Сквозная ←", concatLInv: "Сквозная ← Инв", concatLRevInv: "Сквозная ← Рев+Инв",
   concatSnake: "Сквозная 🐍", concatSnakeInv: "Сквозная 🐍 Инв", concatSnakeRevInv: "Сквозная 🐍 Рев+Инв",
   vertR: "Верт. →", vertL: "Верт. ←",
-  snakeR: "Змейка →", snakeL: "Змейка ←"
+  snakeR: "Змейка →", snakeL: "Змейка ←",
+  lengthSums: "Суммы длин"
 };
 /* Какие строки результата фон-поиска сейчас развёрнуты кликом (см. render() → bgResultHtml).
    Чисто UI-состояние, не сохраняется в кэш/по вкладкам — сворачивается заново при перезагрузке. */
@@ -2577,36 +2637,50 @@ function computeHorizXorInfo(){
   // Единая шкала p по всей объединённой строке (chain, затем цель) — подсветка сперва растёт
   // внутри цели снизу, и только потом переходит на цепочку.
   const winRange = horizWindowRange(chainLen, fullLen, S, dir);
-  let chainHtml = "";
-  for (let idx = 0; idx < chainLen; idx++) {
-    const ch = chain[idx];
-    const active = !!winRange && idx >= winRange.start && idx <= winRange.end;
-    if (active && (ch === '0' || ch === '1')) chainHtml += '<span class="xored-bit" title="Сейчас касается цели">' + ch + '</span>';
-    else if (ch === '0' || ch === '1') chainHtml += '<span class="b' + ch + '">' + ch + '</span>';
-    else chainHtml += esc(ch);
-  }
-  if (!chainHtml) chainHtml = '<span class="empty">пусто</span>';
+  // Все ТРИ строки (Сквозная/Цель/Результат) рисуются на ОДНОЙ общей шкале p — не [0,fullLen)
+  // цели, а РАСШИРЕННОЙ до полного охвата цепочки, даже когда та ещё не вся вошла в цель (или
+  // уже частично вышла) — иначе сквозная обрезалась до 1-2 текущих битов, "хвоста" не было
+  // видно, хотя на самом деле цепочка целиком длиннее — запрос пользователя "надо показать
+  // целиком какая она" (после более раннего "покажи всю длину сквозной" — точки-заглушки
+  // помогли увидеть протяжённость, но не сами реальные биты хвоста). chainStart/chainEnd — та
+  // же формула chainIdx, что и в applyHorizBigSlide, просто выражена как диапазон p, где
+  // цепочка физически лежит (chainEnd-chainStart+1 === chainLen всегда, и не зависит от dir).
+  const chainStart = dir === "left" ? S : (fullLen - S);
+  const chainEnd = chainStart + chainLen - 1;
+  const canvasStart = Math.min(0, chainStart);
+  const canvasEnd = Math.max(fullLen - 1, chainEnd);
+  let chainHtml = "", origHtml = "", resHtml = "";
+  for (let p = canvasStart; p <= canvasEnd; p++) {
+    // СКВОЗНАЯ: реальный бит цепочки в этой позиции, если p внутри её текущего охвата.
+    const chainIdx = dir === "left" ? (S - 1 + chainLen - p) : (fullLen + chainLen - 1 - S - p);
+    if (chainIdx >= 0 && chainIdx < chainLen) {
+      const ch = chain[chainIdx];
+      chainHtml += (ch === '0' || ch === '1')
+        ? ('<span class="xored-bit" title="Сейчас над этим битом цели">' + ch + '</span>')
+        : esc(ch);
+    } else {
+      chainHtml += '<span class="horiz-chain-gap" title="Сквозная сюда ещё/уже не достаёт">·</span>';
+    }
+    // ЦЕЛЬ/РЕЗУЛЬТАТ: своих позиций за пределами [0,fullLen) у них нет — там, где сейчас
+    // "торчит" не вошедший в цель хвост цепочки, у цели просто ничего нет, точка-заглушка.
+    if (p < 0 || p >= fullLen) {
+      origHtml += '<span class="horiz-chain-gap">·</span>';
+      resHtml += '<span class="horiz-chain-gap">·</span>';
+      continue;
+    }
+    const origCh = full[p];
+    origHtml += (origCh === '0' || origCh === '1') ? ('<span class="b' + origCh + '">' + origCh + '</span>') : esc(origCh);
 
-  let origHtml = "";
-  for (let k = 0; k < fullLen; k++) {
-    const ch = full[k];
-    origHtml += (ch === '0' || ch === '1') ? ('<span class="b' + ch + '">' + ch + '</span>') : esc(ch);
-  }
-
-  // Позиции цели, сейчас накрытые въезжающей (справа) цепочкой (тот же winRange, что и выше) —
-  // И, ПОВЕРХ этого, найденный паттерн (hitAt, chain-hit-bits — тот же класс/цвета kind, что и у
-  // Интерлив/XOR сквозной, см. buildHitMap()).
-  let resHtml = "";
-  for (let j = 0; j < fullLen; j++) {
-    const ch = res[j];
-    const covered = !!winRange && j >= winRange.start && j <= winRange.end;
-    const hitInfo = hitAt ? hitAt[j] : null;
-    if (ch !== '0' && ch !== '1') { resHtml += esc(ch); continue; }
-    const cls = [covered ? 'xored-bit' : ('b' + ch)];
+    const resCh = res[p];
+    const covered = !!winRange && p >= winRange.start && p <= winRange.end;
+    const hitInfo = hitAt ? hitAt[p] : null;
+    if (resCh !== '0' && resCh !== '1') { resHtml += esc(resCh); continue; }
+    const cls = [covered ? 'xored-bit' : ('b' + resCh)];
     if (hitInfo) { cls.push('chain-hit-bits'); if (KIND_CLS[hitInfo.kind]) cls.push(KIND_CLS[hitInfo.kind]); if (hitInfo.skip) cls.push('skip1'); }
     const title = hitInfo ? 'Совпадение с паттерном' : (covered ? 'Под въезжающей цепочкой сейчас' : '');
-    resHtml += '<span class="' + cls.join(" ") + '"' + (title ? ' title="' + title + '"' : '') + '>' + ch + '</span>';
+    resHtml += '<span class="' + cls.join(" ") + '"' + (title ? ' title="' + title + '"' : '') + '>' + resCh + '</span>';
   }
+  if (!chainLen) chainHtml = '<span class="empty">пусто</span>';
 
   // Прогресс единого непрерывного прохода (въезд + полное перекрытие + выезд)
   const totalSteps = st.horizChainLen || (chainLen + fullLen);
@@ -2760,12 +2834,17 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
 
         const stepNumber = st.horizXoredLength + 1; // 1-индексированный номер шага поиска
         const res = applyHorizBigSlide(st.horizBigChain, st.horizBigOrig, stepNumber, st.horizCurrentDir);
-        const rowLenHere = rowB.length;
 
-        // "Хвост" результата (последние rowLenHere символов) показываем в самой строке —
-        // для наглядности; реальный поиск идёт по ВСЕЙ сквозной строке res целиком.
-        st.rows[b] = res.length >= rowLenHere ? res.slice(-rowLenHere) : res;
-
+        // Раньше тут в st.rows[b] писался "хвост" промежуточного результата — "для наглядности"
+        // (когда прогресс ещё не показывался в "Черновике шага"). Баг: это МЕНЯЛО реальные данные
+        // строки b на каждом шаге поиска, а не только её отображение — если пасс завершался БЕЗ
+        // находки и без "Крутить по кругу" (или между шагами что-то читало текущее содержимое
+        // строки b, напр. цепочка для СЛЕДУЮЩЕЙ строки — horizChainTextOrdered включает и b),
+        // строка b необратимо оставалась испорченным промежуточным XOR-артефактом — запрос
+        // пользователя ("Результат и строки в цепочке не соответствуют друг другу, в цепочке
+        // ошибка"). Теперь прогресс показывается ТОЛЬКО через computeHorizXorInfo() (Черновик
+        // шага), которая считает всё заново из st.horizBigChain/st.horizBigOrig/S — сама строка
+        // st.rows[b] больше не трогается до самого факта находки (см. targetPat.found ниже).
         const winRange = horizWindowRange(st.horizBigChain.length, st.horizBigOrig.length, stepNumber, st.horizCurrentDir);
         logStep("Гориз.XOR", [b + 1], res, `Шаг поиска ${stepNumber}/${st.horizChainLen} (${st.horizCurrentDir === "left" ? "◄ слева" : "► справа"}${st.horizReverseChain ? ", цепочка развёрнута" : ""}${st.horizRotations ? `, поворот ${st.horizRotations}` : ""})`, [], inputsForLog, winRange);
         if (!st.running) say(`Гориз.XOR: шаг поиска ${stepNumber}/${st.horizChainLen} → '${res}'`);
@@ -3004,6 +3083,14 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
       st.used[b] = true;
       st.aIdx = b;
       st.bIdx = nextRow;
+      // Баг: st.selectedRows (то, что реально подсвечено выделением в таблице) тут раньше НЕ
+      // обновлялось — двигался только st.bIdx. Из-за этого (1) визуально выделение оставалось
+      // на СТАРОЙ строке ("выделение не переходит на новую строку"), и (2) КАЖДЫЙ следующий клик
+      // ◄/►Гориз.XOR идёт через startHorizXor(), который берёт стартовую строку ИЗ selectedRows —
+      // раз оно не сдвинулось, следующий клик тащил bIdx обратно на старую строку, откатывая
+      // прогресс и застревая в стопоре на месте — запрос пользователя ("после находки стопор
+      // в поиске").
+      st.selectedRows = new Set([nextRow]);
       st.horizFoundInPass = false;
       st.horizXoredLength = 0;
       st.horizChainLen = 0;
@@ -3042,6 +3129,10 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
         st.tplRows[genIdx] = candidate;
         st.aIdx = b;
         st.bIdx = genIdx;
+        // Тот же фикс, что и у обычного перехода выше — selectedRows должен следовать за bIdx,
+        // иначе выделение остаётся на старой строке и следующий клик ◄/►Гориз.XOR (см.
+        // startHorizXor()) откатывает bIdx обратно на неё.
+        st.selectedRows = new Set([genIdx]);
         st.horizXoredLength = 0;
         st.horizFoundInPass = false;
         st.horizChainLen = 0;
@@ -3207,6 +3298,19 @@ function resetAll(){
   st.shiftVariantTotal = null;
   st.shiftVariantRows = null;
   st.manualShiftTurns = 0;
+  tetrisRotKey = null;
+  tetrisRotAttempt = 0;
+  tetrisRotOriginal = null;
+  tetrisRotOriginalFlags = null;
+  tetrisPendingAdvance = -1;
+  tetris2RotKey = null;
+  tetris2FloorAttempt = 0;
+  tetris2FloorOriginal = null;
+  tetris2FloorOriginalFlags = null;
+  tetris2BelowAttempt = 0;
+  tetris2BelowOriginal = null;
+  tetris2BelowOriginalFlags = null;
+  tetris2PendingAdvance = -1;
 
   // Ползунок rowCount должен резать ОБЕ ветки одинаково — раньше limit считался ТОЛЬКО в ветке
   // "нет сохранёнки", и для вкладок с 💾-сохранением (обычное дело) двигать ползунок вообще ничего
@@ -3711,8 +3815,11 @@ function renderFindLogPanel(){
   // его ДО ранних return ниже — иначе при пустом логе блок сумм длин молча пропадал бы тоже.
   const lsumEl = document.getElementById("lengthSumsContainer");
   if (lsumEl) {
-    const selIdx = (st.selectedRows && st.selectedRows.size) ? Math.max(...st.selectedRows) : -1;
-    lsumEl.innerHTML = (st.showLengthSums && selIdx > 0) ? renderLengthSumsHtml(st, selIdx) : "";
+    // Несколько строк выделено — ориентир самая НИЖНЯЯ (см. seqAnchorIdx(), тот же принцип
+    // "самая нижняя выделенная", что и везде в приложении) — запрос пользователя.
+    const selIdx = seqAnchorIdx();
+    const lengthSumsOn = st.bgSearchModes && st.bgSearchModes.includes("lengthSums");
+    lsumEl.innerHTML = (lengthSumsOn && selIdx > 0) ? renderLengthSumsHtml(st, selIdx) : "";
   }
 
   const el = document.getElementById("findLogList");
@@ -3731,7 +3838,12 @@ function renderFindLogPanel(){
     const cells = modesUsed.map(m => {
       const kinds = e.matches[m];
       if (!kinds) return '<span class="find-log-cell"></span>';
-      const tip = kinds.map(k => KIND_LABELS_SHORT[k.kind] + (k.skip ? "⏭" : "")).join(",");
+      // "lengthSums" — записи с label (см. lengthSumsMatchedCombos): показываем САМИ найденные
+      // варианты сумм ("1+2+9[Прям],3+8+1[Рев]"), не только kind — запрос пользователя "в лог
+      // записать Суммы длин всех найденные варианты сумм".
+      const tip = kinds.map(k =>
+        (k.label ? k.label + ":" : "") + KIND_LABELS_SHORT[k.kind] + (k.skip ? "⏭" : "")
+      ).join(", ");
       return '<span class="find-log-cell find-log-plus" title="' + esc(tip) + '">+</span>';
     }).join("");
     return '<div class="find-log-row"><span class="find-log-cell find-log-row-no">Стр. ' + (e.row + 1) + '</span>' + cells + '</div>';
@@ -3740,39 +3852,54 @@ function renderFindLogPanel(){
   el.innerHTML = head + rows;
 }
 
-/* "🧮 Суммы длин" — новый инструмент фон-поиска: из каких комбинаций строк ВЫШЕ выделенной (по
-   возрастанию номера, без повторов) можно собрать её ДЛИНУ (сумма длин строк комбинации ровно
-   равна длине выделенной), напр. длина 6 = строки "1+6", "2+5", "3+4", "1+2+4"... — запрос
-   пользователя. Перебор подмножеств в худшем случае экспоненциальный — останавливаемся, как
-   только набрали LENGTH_SUM_MAX_SETS штук (для реальных размеров таблицы этого достаточно,
-   искать AБСОЛЮТНО все подмножества незачем — их и так может быть очень много). */
+/* "🧮 Суммы длин" — новый инструмент фон-поиска: из каких комбинаций строк можно собрать ДЛИНУ
+   ИСКОМОЙ строки (той, чей паттерн ищем — строка СРАЗУ ПОД выделенной, selIdx+1, тот же
+   ориентир, что и у остального фон-поиска), напр. длина искомой = 6 → строки "1+6", "2+5",
+   "3+4", "1+2+4"... В комбинацию берутся ВСЕ строки ВЫШЕ выделенной И САМА выделенная (не
+   только выше, как раньше) — запрос пользователя "сумму делаем для искомой строки для её
+   длины, и берем все что выше выделенной и саму выделенную". Перебор подмножеств в худшем
+   случае экспоненциальный — останавливаемся, как только набрали LENGTH_SUM_MAX_SETS штук (для
+   реальных размеров таблицы этого достаточно, искать AБСОЛЮТНО все подмножества незачем — их и
+   так может быть очень много). */
 const LENGTH_SUM_MAX_SETS = 30;
 const LENGTH_SUM_MAX_COMBOS = 60;
 function findLengthSumSubsets(st, selIdx, maxSets){
-  const targetLen = getRowBits(st, selIdx).length;
+  // Искомая строка — СЛЕДУЮЩАЯ за выделенной (selIdx+1), её паттерн и пытаемся собрать —
+  // см. renderLengthSumsHtml() ниже, тот же ориентир (computeBgSearchTarget: targetIdx=selIdx+1).
+  const targetLen = getRowBits(st, selIdx + 1).length;
   if (!targetLen || selIdx <= 0) return [];
   const candidates = [];
   // Строка 0 в комбинации НЕ участвует вообще (запрос пользователя) — начинаем с i=1, не с i=0.
-  // Длины — реальные (getRowBits().length, а не что-то кэшированное/из паттерна).
-  for (let i = 1; i < selIdx; i++) {
+  // Но САМА выделенная (selIdx) теперь ТОЖЕ кандидат (запрос пользователя), поэтому i<=selIdx,
+  // не i<selIdx. Длины — реальные (getRowBits().length, а не что-то кэшированное/из паттерна).
+  for (let i = 1; i <= selIdx; i++) {
     const l = getRowBits(st, i).length;
     if (l > 0 && l <= targetLen) candidates.push(i);
   }
   const results = [];
-  function dfs(pos, remaining, chosen){
+  // Одна и та же ДЛИНА в комбинации дважды не допускается (даже если это две РАЗНЫЕ строки
+  // одинаковой длины) — напр. "3+3+1" не считается вариантом суммы — запрос пользователя.
+  function dfs(pos, remaining, chosen, usedLens){
     if (results.length >= maxSets) return;
     if (remaining === 0 && chosen.length > 0) { results.push(chosen.slice()); return; }
     for (let p = pos; p < candidates.length; p++){
       const idx = candidates[p];
       const l = getRowBits(st, idx).length;
-      if (l > remaining) continue;
+      if (l > remaining || usedLens.has(l)) continue;
       chosen.push(idx);
-      dfs(p + 1, remaining - l, chosen);
+      usedLens.add(l);
+      dfs(p + 1, remaining - l, chosen, usedLens);
+      usedLens.delete(l);
       chosen.pop();
       if (results.length >= maxSets) return;
     }
   }
-  dfs(0, targetLen, []);
+  dfs(0, targetLen, [], new Set());
+  // "Простые" (короткие, из МЕНЬШЕГО числа слагаемых) суммы — наверх списка, длинные комбинации
+  // ниже — запрос пользователя. DFS выше находит их вперемешку (сначала уходит вглубь, т.е.
+  // длинные комбинации раньше коротких), поэтому досортировываем уже готовый список по числу
+  // слагаемых (stable sort — порядок ВНУТРИ одинаковой длины, как нашёл DFS, не трогаем).
+  results.sort((a, b) => a.length - b.length);
   return results;
 }
 /* Перебирает ВСЕ перестановки arr (не только "по возрастанию номера"), вызывая cb(perm) на
@@ -3798,13 +3925,14 @@ function permuteEach(arr, cb){
   }
   go();
 }
-/* Сами КОМБИНАЦИИ для показа — сначала находим подмножества (см. findLengthSumSubsets), потом
-   разворачиваем КАЖДОЕ в ВСЕ его перестановки, пока не наберём maxCombos штук суммарно по всем
-   подмножествам разом (перестановок у одного подмножества размера k может быть k! — на 7+
-   строках в комбинации это уже тысячи, поэтому общий потолок один на всех, а не на каждое
-   подмножество отдельно). */
-function findLengthSumCombos(st, selIdx, maxCombos){
-  const subsets = findLengthSumSubsets(st, selIdx, LENGTH_SUM_MAX_SETS);
+/* Сами КОМБИНАЦИИ для показа — сначала находим подмножества (см. findLengthSumSubsets, либо
+   переиспользуем уже готовые — необязательный 4-й параметр subsets, см. renderLengthSumsHtml,
+   чтобы не гонять DFS дважды за один рендер), потом разворачиваем КАЖДОЕ в ВСЕ его перестановки,
+   пока не наберём maxCombos штук суммарно по всем подмножествам разом (перестановок у одного
+   подмножества размера k может быть k! — на 7+ строках в комбинации это уже тысячи, поэтому
+   общий потолок один на всех, а не на каждое подмножество отдельно). */
+function findLengthSumCombos(st, selIdx, maxCombos, subsets){
+  subsets = subsets || findLengthSumSubsets(st, selIdx, LENGTH_SUM_MAX_SETS);
   const results = [];
   for (const subset of subsets) {
     if (results.length >= maxCombos) break;
@@ -3815,36 +3943,90 @@ function findLengthSumCombos(st, selIdx, maxCombos){
   }
   return results;
 }
+function factorial(n){ let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; }
+/* Точное число ВСЕХ возможных вариантов сумм (каждое подмножество × все его перестановки), а не
+   только тех, что реально показаны (см. LENGTH_SUM_MAX_COMBOS) — запрос пользователя "показать
+   число всех возможных вариантов". Самих ПОДМНОЖЕСТВ обычно немного даже без потолка (в отличие
+   от их перестановок — там k! на каждое, вот ЭТО могло бы взорваться), поэтому считаем БЕЗ
+   LENGTH_SUM_MAX_SETS (только защитный LENGTH_SUM_COUNT_CAP на случай патологии), а сами
+   перестановки не генерируем — суммируем только их КОЛИЧЕСТВО (k!) на подмножество. Необязательный
+   4-й параметр subsets — то же переиспользование, что и у findLengthSumCombos выше. */
+const LENGTH_SUM_COUNT_CAP = 2000;
+function countLengthSumTotalVariants(st, selIdx, subsets){
+  subsets = subsets || findLengthSumSubsets(st, selIdx, LENGTH_SUM_COUNT_CAP);
+  let total = 0;
+  for (const s of subsets) total += factorial(s.length);
+  return { total, cappedSubsets: subsets.length >= LENGTH_SUM_COUNT_CAP };
+}
 /* Палитра для подсветки "какой кусок из какой строки" в комбинации — циклится, если строк в
    комбинации больше, чем цветов (запрос пользователя — "отделить символы только цветом", без
    скобок/разделителей). */
 const LSUM_COLORS = ["lsum-c0", "lsum-c1", "lsum-c2", "lsum-c3", "lsum-c4", "lsum-c5"];
 function renderLengthSumsHtml(st, selIdx){
-  const combos = findLengthSumCombos(st, selIdx, LENGTH_SUM_MAX_COMBOS);
+  // Подмножества считаем ОДИН раз (с бо́льшим, "счётным" потолком) и переиспользуем и для показа
+  // комбинаций, и для точного числа всех вариантов — иначе DFS гонялась бы дважды за рендер.
+  const subsets = findLengthSumSubsets(st, selIdx, LENGTH_SUM_COUNT_CAP);
+  if (!subsets.length) return "";
+  const combos = findLengthSumCombos(st, selIdx, LENGTH_SUM_MAX_COMBOS, subsets);
   if (!combos.length) return "";
-  // Сверяем с тем же паттерном, что и остальной фон-поиск — строки НИЖЕ выделенной (см.
-  // computeBgSearchTarget: targetIdx = selIdx+1).
+  // Искомый паттерн — тот же, что и у остального фон-поиска: строка СРАЗУ ПОД выделенной (см.
+  // computeBgSearchTarget: targetIdx = selIdx+1). Поиск КОЛЬЦЕВОЙ (findPatternKinds — как и
+  // основной findMatch()), не обычный indexOf — запрос пользователя "ищем кольцевым поиском":
+  // паттерн, "переезжающий" через конец собранной строки обратно в начало, тоже засчитывается.
+  // buildHitMap раскладывает найденные kind'ы по позициям, чтобы подсветить САМ найденный
+  // паттерн внутри собранных бит (.chain-hit-bits), а не только обвести всю строку рамкой.
   const nextPat = st.pats[selIdx + 1];
   const patText = nextPat && nextPat.text ? nextPat.text : "";
+  // Ширина колонки label — под САМУЮ ДЛИННУЮ подпись из ТЕКУЩЕГО списка (не жёсткий CSS
+  // min-width, который был мал для длинных "5+4+1+2" и слишком широк для коротких "1+9" —
+  // из-за этого биты у разных строк начинались в разных местах, "рваным" левым краем) —
+  // запрос пользователя "выровняй биты". "ch" — ширина символа "0" в текущем шрифте label'а.
+  const maxLabelLen = Math.max(...combos.map(combo => combo.join("+").length));
+  const labelStyle = 'style="min-width:' + (maxLabelLen + 0.5) + 'ch"';
   const lines = combos.map(combo => {
     const label = combo.join("+");
-    let bits = "";
     let plain = "";
+    combo.forEach(idx => { plain += getRowBits(st, idx); });
+    const kinds = patText ? findPatternKinds(plain, patText) : [];
+    const matched = kinds.length > 0;
+    const hitAt = buildHitMap(plain.length, kinds);
+    let bits = "";
+    let pos = 0;
     combo.forEach((idx, ci) => {
       const s = getRowBits(st, idx);
       const cls = LSUM_COLORS[ci % LSUM_COLORS.length];
-      plain += s;
-      for (const ch of s) bits += '<span class="' + cls + '">' + esc(ch) + '</span>';
+      for (const ch of s) {
+        const clsList = [cls];
+        const hit = hitAt[pos++];
+        if (hit) { clsList.push('chain-hit-bits'); if (KIND_CLS[hit.kind]) clsList.push(KIND_CLS[hit.kind]); if (hit.skip) clsList.push('skip1'); }
+        bits += '<span class="' + clsList.join(" ") + '">' + esc(ch) + '</span>';
+      }
     });
-    const matched = patText ? textMatchesPattern(plain, patText) : false;
-    return '<div class="lsum-row' + (matched ? ' lsum-matched' : '') + '" title="Строки ' + esc(label) + (matched ? ' — совпадает с паттерном строки ниже' : '') + '">' +
-      '<span class="lsum-label">' + esc(label) + '</span>' +
+    return '<div class="lsum-row' + (matched ? ' lsum-matched' : '') + '" title="Строки ' + esc(label) + (matched ? ' — совпадает с искомым паттерном (кольцевой поиск)' : '') + '">' +
+      '<span class="lsum-label" ' + labelStyle + '>' + esc(label) + '</span>' +
       '<span class="lsum-bits">' + bits + '</span>' +
     '</div>';
   }).join("");
-  const cap = combos.length >= LENGTH_SUM_MAX_COMBOS ? (' (показаны первые ' + LENGTH_SUM_MAX_COMBOS + ')') : '';
+  // Паттерн — ПЕРВОЙ строкой над самими суммами, БИТ В БИТ выровненный с ними (та же разметка
+  // .lsum-row/.lsum-label/.lsum-bits, что и у строк-комбинаций — label пустой, но той же ширины
+  // labelStyle, чтобы битовая колонка паттерна начиналась РОВНО там же, где начинаются биты
+  // сумм ниже) — запрос пользователя "искомый паттерн прямо над суммами бит в бит" (раньше был
+  // отдельной строкой без выравнивания с колонкой бит). Плюс число ВСЕХ возможных вариантов —
+  // запрос пользователя "показать число всех возможных вариантов".
+  const totalInfo = countLengthSumTotalVariants(st, selIdx, subsets);
+  const totalLabel = totalInfo.total + (totalInfo.cappedSubsets ? "+" : "");
+  const shownLabel = combos.length < totalInfo.total ? ("показано " + combos.length + " из " + totalLabel) : ("" + totalLabel);
+  // Заголовок ("🧮 Сумма длин — вариантов: N") — ПЕРЕД паттерном, а не МЕЖДУ паттерном и суммами:
+  // паттерн должен идти вплотную к суммам ниже (та же разметка/шрифт, бит в бит), чтобы сразу
+  // сравнивать глазами — запрос пользователя "прям первой строкой [перед суммами] запиши
+  // паттерн, тем же шрифтом биты над битами".
+  const patternRow = '<div class="lsum-row lsum-pattern-row" title="Искомый паттерн">' +
+    '<span class="lsum-label" ' + labelStyle + '></span>' +
+    '<span class="lsum-bits lsum-pattern-bits">' + esc(patText) + '</span>' +
+  '</div>';
   return '<div class="lsum-block">' +
-    '<div class="lsum-title">🧮 Суммы длин — из каких строк выше можно собрать длину выделенной' + cap + ':</div>' +
+    '<div class="lsum-title">🧮 Сумма длин — вариантов: ' + shownLabel + '</div>' +
+    patternRow +
     lines +
   '</div>';
 }
@@ -3883,10 +4065,17 @@ function render(){
     const hitNow = bgMatched ? bgTargetIdx : null;
     if (hitNow !== st.bgSearchLastHit) {
       if (hitNow != null) {
-        const matchedLabel = bgInfo.results.filter(r => r.matched).map(r =>
+        const matchedLabels = bgInfo.results.filter(r => r.matched).map(r =>
           (BG_SEARCH_MODE_LABELS[r.mode] || r.mode) + "[" + r.kinds.map(k => KIND_LABELS_SHORT[k.kind] + (k.skip ? "⏭" : "")).join(",") + "]"
-        ).join(", ");
-        say(`🔍 Фон-поиск: паттерн строки ${hitNow + 1} найден! (${matchedLabel})`);
+        );
+        // 🧮 Суммы длин не даёт kind'ов на весь результат (у неё МНОЖЕСТВО комбинаций сразу) —
+        // записываем в лог ВСЕ совпавшие варианты сумм целиком (не просто отметку "нашлось") —
+        // запрос пользователя "в лог записать Суммы длин всех найденные варианты сумм".
+        const lengthSumsHits = bgInfo.lengthSumsMatched ? lengthSumsMatchedCombos(st, bgInfo.selIdx) : [];
+        if (lengthSumsHits.length) {
+          matchedLabels.push(BG_SEARCH_MODE_LABELS.lengthSums + "[" + lengthSumsHits.map(h => h.label).join(",") + "]");
+        }
+        say(`🔍 Фон-поиск: паттерн строки ${hitNow + 1} найден! (${matchedLabels.join(", ")})`);
         // Фон-поиск — чисто отображение (подсветка найденной строки), без действий: выделение
         // строк НЕ переключаем, якорь для computeBgSearchTarget() остаётся тем, что выбрал
         // пользователь/другой режим — см. запрос пользователя.
@@ -3895,6 +4084,7 @@ function render(){
         // запрос пользователя "распредели по столбцам, где нашлось ставь +".
         const matches = {};
         for (const r of bgInfo.results) if (r.matched) matches[r.mode] = r.kinds;
+        if (lengthSumsHits.length) matches.lengthSums = lengthSumsHits;
         bgFindLog.unshift({ row: hitNow, matches });
         if (bgFindLog.length > BG_FIND_LOG_MAX) bgFindLog.length = BG_FIND_LOG_MAX;
       }
@@ -3919,7 +4109,31 @@ function render(){
   const hxS = hxActive ? (st.horizXoredLength || 0) : 0;
   const hxExhausted = hxActive && (st.horizChainLen || 0) > 0 && hxS >= (st.horizChainLen || 0);
   const hxWin = (hxActive && !hxExhausted) ? horizWindowRange(hxChainLenAll, hxFullLenAll, hxS, hxDir) : null;
-  let hxChainOffset = 0; // бежит вперёд по мере прохода строк цикла (только для i < hxTarget)
+  // Смещение строки i (i < hxTarget) внутри st.horizBigChain — раньше просто накапливалось по
+  // ходу цикла рендера (i=0,1,2,...), что верно ТОЛЬКО для обычного порядка склейки. При
+  // включённой "↕ Развернуть цепочку" (st.horizReverseChain) сам st.horizBigChain собран в
+  // ОБРАТНОМ порядке (horizChainTextOrdered(b, true): строка hxTarget-1 первая, строка 0
+  // последняя, см. её комментарий) — офсеты строк выше в этом случае нужно считать С КОНЦА
+  // (суффиксная сумма), а не с начала, иначе подсветка "синим" на строках цепочки уезжает не в
+  // те позиции — запрос пользователя ("Результат и строки в цепочке не соответствуют друг
+  // другу"). Считаем ОДИН РАЗ заранее (не накопительно в цикле), т.к. порядок обхода для
+  // reversed — уже не совпадает с порядком самого цикла рендера (i возрастает всегда).
+  const hxChainOffsets = new Map();
+  if (hxActive && !hxExhausted && hxTarget > 0) {
+    if (st.horizReverseChain) {
+      let off = 0;
+      for (let i = hxTarget - 1; i >= 0; i--) {
+        const len = (st.rows[i] || "").length;
+        if (len > 0) { hxChainOffsets.set(i, off); off += len; }
+      }
+    } else {
+      let off = 0;
+      for (let i = 0; i < hxTarget; i++) {
+        const len = (st.rows[i] || "").length;
+        if (len > 0) { hxChainOffsets.set(i, off); off += len; }
+      }
+    }
+  }
 
   // Режим "🔢 Выбор столбца": границы строк — см. colSelectRowRange() (1 выделенная строка —
   // от начала до неё, 2+ — только между крайними); и подсветка колонки, и сам клик по номеру
@@ -4050,7 +4264,7 @@ function render(){
       if (isHxChainRow && hxWin) {
         // Та же единая шкала p, что и у целевой строки (см. horizWindowRange) — цепочка
         // подсвечивается только после того, как подсветка "дойдёт" до её позиций снизу вверх.
-        const globalIdx = hxChainOffset + k;
+        const globalIdx = (hxChainOffsets.get(i) || 0) + k;
         isXoredBit = globalIdx >= hxWin.start && globalIdx <= hxWin.end;
       } else if (isHxTargetRow && hxWin) {
         const globalIdx = hxChainLenAll + k;
@@ -4092,7 +4306,6 @@ function render(){
       }
     }
     }
-    if (isHxChainRow) hxChainOffset += s.length;
 
     bits += blankRun(shift + s.length, padRight);
 
@@ -4546,6 +4759,28 @@ if (bClearFindLogEl) {
   bClearFindLogEl.onclick = () => {
     bgFindLog = [];
     renderFindLogPanel();
+  };
+}
+// "🧮 Найти суммы" — ручной разовый прогон "Суммы длин" по кнопке, независимо от того, менялись
+// строки или нет: обычный автопоиск (см. render() → bgFindLog.unshift) пишет в лог только когда
+// МЕНЯЕТСЯ сам факт находки (hitNow !== st.bgSearchLastHit) — если строки стоят на месте, то же
+// самое совпадение повторно не запишется. Эта кнопка просто берёт ТЕКУЩЕЕ состояние как есть и
+// перебирает ВСЕ варианты сумм для паттерна текущей выделенной строки (не только первый
+// найденный — см. lengthSumsMatchedCombos), пишет всё найденное в лог — запрос пользователя.
+const bScanLengthSumsLogEl = document.getElementById("bScanLengthSumsLog");
+if (bScanLengthSumsLogEl) {
+  bScanLengthSumsLogEl.onclick = () => {
+    const selIdx = seqAnchorIdx();
+    if (selIdx == null || selIdx <= 0) { say("Выделите строку — не от чего искать суммы."); return; }
+    const targetIdx = selIdx + 1;
+    if (targetIdx >= st.rows.length) { say("Под выделенной строкой нет строки — искомого паттерна нет."); return; }
+    const hits = lengthSumsMatchedCombos(st, selIdx);
+    if (!hits.length) { say("🧮 Суммы длин: совпадений с паттерном строки " + (targetIdx + 1) + " не найдено."); return; }
+    bgFindLog.unshift({ row: targetIdx, matches: { lengthSums: hits } });
+    if (bgFindLog.length > BG_FIND_LOG_MAX) bgFindLog.length = BG_FIND_LOG_MAX;
+    renderFindLogPanel();
+    saveCache();
+    say(`🧮 Суммы длин: записано в лог ${hits.length} найденных вариантов (строка ${targetIdx + 1}).`);
   };
 }
 
@@ -5775,14 +6010,6 @@ if (cBgAllBelowEl) {
     saveCache();
   };
 }
-const cShowLengthSumsEl = document.getElementById("cShowLengthSums");
-if (cShowLengthSumsEl) {
-  cShowLengthSumsEl.onchange = () => {
-    st.showLengthSums = cShowLengthSumsEl.checked;
-    render();
-    saveCache();
-  };
-}
 const bgSearchModeBtns = document.querySelectorAll("#bgSearchModeGrp button");
 bgSearchModeBtns.forEach(btn => {
   btn.onclick = () => {
@@ -5800,6 +6027,66 @@ bgSearchModeBtns.forEach(btn => {
     saveCache();
   };
 });
+// Тоггл "Всё / только XOR-Чёт" рядом с группой режимов фон-поиска — запрос пользователя: первый
+// клик включает ВСЕ кнопки-режимы (включая 🧮 Суммы длин), повторный клик сбрасывает до ОДНОГО
+// включённого — ⨁ XOR-Чёт (не до буквально пустого набора — фон-поиску нужен хоть один режим).
+const bBgModeAllNoneEl = document.getElementById("bBgModeAllNone");
+if (bBgModeAllNoneEl) {
+  bBgModeAllNoneEl.onclick = () => {
+    const allVals = Array.from(bgSearchModeBtns).map(b => b.getAttribute("data-val"));
+    const allOn = allVals.every(v => st.bgSearchModes.includes(v));
+    st.bgSearchModes = allOn ? ["xorAll"] : allVals.slice();
+    bgSearchModeBtns.forEach(b => b.classList.toggle("act", st.bgSearchModes.includes(b.getAttribute("data-val"))));
+    st.bgSearchLastHit = -1;
+    render();
+    saveCache();
+  };
+}
+
+/* "lengthSums" (🧮 Суммы длин) не даёт ОДИН результат-строку, как остальные режимы (у неё
+   МНОЖЕСТВО комбинаций сразу, см. findLengthSumCombos/renderLengthSumsHtml) — поэтому её
+   "нашлось ли хоть что-то" считается отдельно, тем же кольцевым поиском (findPatternKinds),
+   что и её собственная подсветка. Используется, чтобы находка через Суммы длин ТОЖЕ считалась
+   находкой фон-поиска (см. computeBgSearchTarget → matched ниже) — запрос пользователя: "при
+   круговой сдвиг должен также включать новую строку [в выделение], если было выделено
+   несколько" — раньше это работало только для обычных режимов (interleave/xor2/...), Суммы
+   длин в bgInfo.matched не участвовали вообще. */
+function lengthSumsHasMatch(st, selIdx){
+  if (!(st.bgSearchModes && st.bgSearchModes.includes("lengthSums"))) return false;
+  const nextPat = st.pats[selIdx + 1];
+  const patText = nextPat && nextPat.text ? nextPat.text : "";
+  if (!patText) return false;
+  const combos = findLengthSumCombos(st, selIdx, LENGTH_SUM_MAX_COMBOS);
+  for (const combo of combos) {
+    let plain = "";
+    combo.forEach(idx => { plain += getRowBits(st, idx); });
+    if (findPatternKinds(plain, patText).length > 0) return true;
+  }
+  return false;
+}
+/* Полный список НАЙДЕННЫХ (совпавших) комбинаций "Суммы длин" — в отличие от lengthSumsHasMatch()
+   (тот просто останавливается на первой же находке, для быстрой проверки "нашлось ли вообще")
+   тут собираются ВСЕ совпавшие варианты сумм, чтобы записать их в "Лог находок" целиком — запрос
+   пользователя "в лог записать Суммы длин всех найденные варианты сумм" (не просто отметку
+   "нашлось", а САМИ варианты). Каждая запись — {label, kind, skip}, тот же kind/skip, что и у
+   обычных findPatternKinds (берётся ПЕРВЫЙ найденный вариант данной комбинации), label — подпись
+   вида "1+2+9" (см. renderLengthSumsHtml). Вызывается только при записи НОВОЙ находки в лог
+   (не на каждый render), поэтому полный (не ранне-обрывающийся) перебор тут не проблема
+   производительности. */
+function lengthSumsMatchedCombos(st, selIdx){
+  const nextPat = st.pats[selIdx + 1];
+  const patText = nextPat && nextPat.text ? nextPat.text : "";
+  if (!patText) return [];
+  const combos = findLengthSumCombos(st, selIdx, LENGTH_SUM_MAX_COMBOS);
+  const out = [];
+  for (const combo of combos) {
+    let plain = "";
+    combo.forEach(idx => { plain += getRowBits(st, idx); });
+    const kinds = findPatternKinds(plain, patText);
+    if (kinds.length > 0) out.push({ label: combo.join("+"), kind: kinds[0].kind, skip: kinds[0].skip });
+  }
+  return out;
+}
 
 /* Фоновый поиск: выделенная строка ФИКСИРОВАНА (не двигается сама, в отличие от doInterleaveStep/
    doXorSelectedStep) — при каждом render() пересчитывает результат (интерлив / XOR пары / XOR
@@ -5820,7 +6107,11 @@ function computeBgSearchTarget(){
 
   const rowAbove = getRowBits(st, selIdx - 1);
   const rowSel = getRowBits(st, selIdx);
-  const modes = (st.bgSearchModes && st.bgSearchModes.length) ? st.bgSearchModes : ["interleave"];
+  // "lengthSums" (🧮 Суммы длин) сидит в той же группе кнопок/том же st.bgSearchModes, что и
+  // остальные режимы, но не даёт ОДИН результат для сверки с паттерном — у неё своя отдельная
+  // отрисовка (renderLengthSumsHtml, вкладка «Лог находок») — исключаем из этого расчёта.
+  const modesAll = (st.bgSearchModes && st.bgSearchModes.length) ? st.bgSearchModes : ["interleave"];
+  const modes = modesAll.filter(m => m !== "lengthSums");
   const results = modes.map(mode => {
     let result;
     if (mode === "xor2") {
@@ -5873,7 +6164,11 @@ function computeBgSearchTarget(){
     const kinds = findPatternKinds(result, pat.text);
     return { mode, result, matched: kinds.length > 0, kinds, tried: kinds.tried };
   });
-  return { targetIdx, results, matched: results.some(r => r.matched), aboveIdx: selIdx - 1, selIdx, rowAbove, rowSel };
+  const lengthSumsMatched = lengthSumsHasMatch(st, selIdx);
+  return {
+    targetIdx, results, matched: results.some(r => r.matched) || lengthSumsMatched,
+    aboveIdx: selIdx - 1, selIdx, rowAbove, rowSel, lengthSumsMatched
+  };
 }
 
 /* === "Спираль": строки в диапазоне (см. colSelectRowRange — весь список, либо от начала до
@@ -6425,26 +6720,36 @@ if (bPadZerosAboveEl) {
 
 /* Тетрис: 1-биты строки НАД выделенной "падают" в неё — в её 0-пустоты. Каждый клик делает
    РОВНО ОДНО из следующих действий (все — отдельными кликами, ничего не объединяется):
-   1) Не влезает как есть — КРУТИТ выделенную строку круговым сдвигом (вправо, как и остальные
-      ручные сдвиги ◄/►), перебирая повороты, пока не найдётся подходящий (клик). Если НИ ОДИН
-      поворот не подошёл — просто сообщаем об этом и ничего не меняем (раньше тут была
-      автоматическая инверсия падающей строки — убрана по запросу пользователя).
-   2) Уже влезает как есть (сразу либо после поворота на одном из прошлых кликов) —
+   1) Не влезает как есть — крутит выделенную строку РОВНО НА ОДИН круговой сдвиг ЗА ЭТОТ клик —
+      видимо, на экране (раньше весь перебор поворотов делался мгновенно внутри одного клика
+      скрыто, и если подходящего не находилось, строка на экране вообще не шевелилась — запрос
+      пользователя "но ни один раз не сдвинул"). Направление и инверсия — ТЕ ЖЕ, что сейчас
+      активны у кнопок ◄/►Круг/Круг Инв (см. tetrisRotateFns()/st.lastDirMode), а не жёстко
+      "вправо с инверсией" — запрос пользователя "пусть тетрис 2 и тетрис сдвигают с инверсией
+      или без в зависимости от [режима] и направление право-лево". tetrisRotKey/tetrisRotAttempt/
+      tetrisRotOriginal(Flags) следят за поиском для ТЕКУЩЕЙ пары (aboveIdx, selIdx): как только
+      очередной поворот приводит СТРОКУ ОБРАТНО К ИСХОДНОМУ ВИДУ (полный круг — а у сдвига с
+      инверсией это, в отличие от обычного сдвига, может занять ДО 2×длина попыток, не длина-1,
+      т.к. значения битов тоже меняются, а не только позиции) — сообщаем о неудаче и
+      ВОЗВРАЩАЕМ строку к тому виду, с которого начали поиск (см. tetrisRotOriginal; иначе,
+      например, "111" после неудачного перебора навсегда остался бы "001" — запрос пользователя
+      "почему для 111 сделал 001").
+   2) Уже влезает как есть (сразу либо после одного из поворотов на прошлых кликах) —
       ПАДЕНИЕ: выделенная получает 1-биты падающей (в её 0-пустотах), строка сверху гасит ВСЕ
       свои биты, что были 1 (и упали), в 0 (какие были 0 — так и остаются), длина не меняется.
-      Переход выделения на строку ниже — НЕ в этом же клике (клик).
+      Переход выделения на строку ниже — НЕ в этом же клике (клик). Опустевшая строка сверху
+      (aboveIdx) "закрывается": все строки, что были НАД ней (0..aboveIdx-1), сдвигаются вниз на
+      одну — как в классическом тетрисе при очистке линии — самая верхняя (0) остаётся пустой
+      (запрос пользователя: "если строка падает вниз то все которые над нею уже есть тоже вниз
+      сдвигаются"). Строки не удаляются (массив st.rows той же длины), invFlagsMap/rowDividers
+      едут вместе со своим содержимым.
    3) Строка только что приняла падение (см. tetrisPendingAdvance) — клик ТОЛЬКО переводит
       выделение на строку НИЖЕ (selIdx+1, если она есть), без изменения битов — чтобы тетрис
       можно было продолжать вниз по таблице, просто повторяя клики.
-   Строки НИКОГДА не удаляются и не сдвигаются — ни на каком шаге, ни при каком исходе слияния
-   (в т.ч. если выделенная стала целиком из единиц). Кроме tetrisPendingAdvance (нужен именно
-   для разделения шагов 2 и 3) функция не хранит своего состояния — она каждый раз проверяет
-   текущий факт "влезает ли падающая в выделенную КАК ЕСТЬ", поэтому шаг 1 на СЛЕДУЮЩЕМ клике
-   (если строку повернули вручную между кликами) сам собой приводит ко входу в шаг 2.
-   Падающая строка ДЛИННЕЕ выделенной — сразу не влезает ни при каком повороте (лишним битам
-   падающей просто некуда падать) — это отдельная проверка перед циклом поворотов, а не то же
-   самое "не нашлось поворота". st.pats и st.used не трогаются вообще — они на строки никак
-   не завязаны в этой функции. */
+   Строки НИКОГДА не удаляются — только сдвигаются (Шаг 2, см. выше). Падающая строка ДЛИННЕЕ
+   выделенной — сразу не влезает ни при каком повороте (лишним битам падающей просто некуда
+   падать) — это отдельная проверка перед поворотами, а не то же самое "не нашлось поворота".
+   st.pats и st.used не трогаются вообще — они на строки никак не завязаны в этой функции. */
 /* Строки в таблице визуально выровнены (⇤/↔/⇥) относительно ОБЩЕЙ самой длинной строки —
    короткая строка не начинается с raw-индекса 0 на экране, если align не "left" (см.
    alignShift()/render()). "1 над 0" на глаз проверяется ИМЕННО по видимым колонкам, а не по
@@ -6469,23 +6774,44 @@ function bitsFitIntoGaps(falling, floor, offset){
   }
   return true;
 }
-/* Ищет поворот floor0 (вправо, начиная с "без поворота"), при котором falling помещается в его
-   0-пустоты (с учётом visual offset — см. tetrisAlignOffset). Возвращает {floor, rotations}
-   первого подходящего, либо null, если ни один. */
-function findFitRotation(falling, floor0, offset){
-  if (bitsFitIntoGaps(falling, floor0, offset)) return { floor: floor0, rotations: 0 };
-  let floor = floor0;
-  for (let t = 1; t < floor0.length; t++){
-    floor = rotateStrRight(floor);
-    if (bitsFitIntoGaps(falling, floor, offset)) return { floor, rotations: t };
-  }
-  return null;
+/* Направление/инверсия поворота для Тетриса и Тетриса 2 — те же 4 варианта, что и у кнопок
+   ◄/►Круг/Круг Инв (st.lastDirMode), а не жёстко "вправо + инверсия" — запрос пользователя
+   "пусть тетрис 2 и тетрис сдвигают с инверсией или без в зависимости от [режима] и направление
+   право-лево". lastDirMode ещё ни разу не выбран (null) — по умолчанию вправо с инверсией, как
+   было раньше (то, с чего тетрис вообще начинался).
+   stripInv=true — Тетрис 2 берёт НАПРАВЛЕНИЕ из lastDirMode, но ИНВЕРСИЮ игнорирует всегда
+   (использует обычный Круг, не Круг Инв) — запрос пользователя "Тетрис 2 по умолчанию Круг (не
+   инверт)". Тетрис (обычный) вызывает без параметра — следует lastDirMode полностью, включая
+   инверсию. */
+function tetrisRotateFns(stripInv){
+  let mode = st.lastDirMode || "shiftRInv";
+  if (stripInv) mode = mode === "shiftLInv" ? "shiftL" : (mode === "shiftRInv" ? "shiftR" : mode);
+  if (mode === "shiftL") return { rotate: rotateStrLeft, rotateFlags: rotateInvFlagsLeft, label: "◄ Круг" };
+  if (mode === "shiftR") return { rotate: rotateStrRight, rotateFlags: rotateInvFlagsRight, label: "► Круг" };
+  if (mode === "shiftLInv") return { rotate: rotateStrLeftInv, rotateFlags: rotateInvFlagsLeftInv, label: "◄ Круг Инв" };
+  return { rotate: rotateStrRightInv, rotateFlags: rotateInvFlagsRightInv, label: "► Круг Инв" };
 }
 // Строка, в которую только что упало (см. "Шаг 2" ниже) и которая ждёт ОТДЕЛЬНОГО клика,
 // переводящего выделение на строку ниже — само падение больше не делает это в том же клике.
 // -1 = ничего не ждёт. Сбрасывается, как только клик пришёл на ДРУГУЮ строку (проверка по
 // равенству selIdx), так что случайный клик по другой строке не запускает лишний переход.
 let tetrisPendingAdvance = -1;
+// Состояние поиска поворота с инверсией для ТЕКУЩЕЙ пары строк (aboveIdx:selIdx) — см. "Шаг 1"
+// в tetrisDrop(): один клик = один видимый поворот, а не мгновенный скрытый перебор всех сразу.
+// tetrisRotOriginal/tetrisRotOriginalFlags — состояние строки ДО начала этого поиска: сдвиг с
+// инверсией МЕНЯЕТ сами биты (не просто переставляет, как обычный круговой сдвиг), поэтому если
+// круг поворотов исчерпан и подходящий так и не нашёлся, строку нужно вернуть к тому, с чего
+// начали, а не оставлять "как получилось" (иначе, например, "111" после неудачного перебора
+// оставался бы "001" — потерял два бита навсегда, запрос пользователя "почему для 111 сделал
+// 001"). Полный круг у сдвига-с-инверсией — до 2×длина попыток (не длина-1, как у обычного
+// сдвига): один физический оборот (длина попыток) переставляет позиции обратно, но у каждого
+// бита успевает накопиться ровно один переворот, второй оборот возвращает и позиции, и значения
+// битов к исходным — поэтому цикл может завершиться раньше (см. tetrisRotAttempt) сам, когда
+// текущее состояние совпало с исходным.
+let tetrisRotKey = null;
+let tetrisRotAttempt = 0;
+let tetrisRotOriginal = null;
+let tetrisRotOriginalFlags = null;
 function tetrisDrop(){
   if (!st.selectedRows || st.selectedRows.size !== 1) { say("Выделите ровно одну строку — тетрис роняет строку сверху именно в неё."); return; }
   const selIdx = Array.from(st.selectedRows)[0];
@@ -6525,28 +6851,210 @@ function tetrisDrop(){
     }
     st.rows[selIdx] = mergedArr.join("");
     st.rows[aboveIdx] = "0".repeat(falling.length);
+    // Опустевшая строка сверху (aboveIdx) "закрывается" — все строки, что были НАД ней, сами
+    // сдвигаются вниз на одну (как в классическом тетрисе при очистке линии): строка i-1
+    // занимает место строки i, самая верхняя (0) остаётся пустой — запрос пользователя "если
+    // строка падает вниз то все которые над нею уже есть тоже вниз сдвигаются". Подсветка
+    // .bit-inv (invFlagsMap) и разделители (rowDividers) едут вместе со своими строками, чтобы
+    // не отвязаться от съехавшего содержимого.
+    const topLen = st.rows[0].length;
+    for (let i = aboveIdx; i > 0; i--){
+      st.rows[i] = st.rows[i - 1];
+      if (invFlagsMap.has(i - 1)) invFlagsMap.set(i, invFlagsMap.get(i - 1)); else invFlagsMap.delete(i);
+      if (st.rowDividers && st.rowDividers.has(i - 1)) st.rowDividers.add(i); else if (st.rowDividers) st.rowDividers.delete(i);
+    }
+    st.rows[0] = "0".repeat(topLen);
+    invFlagsMap.delete(0);
+    if (st.rowDividers) st.rowDividers.delete(0);
     tetrisPendingAdvance = selIdx;
+    tetrisRotKey = null; tetrisRotAttempt = 0; tetrisRotOriginal = null; tetrisRotOriginalFlags = null;
     render(); saveCache();
-    say(`🧱 Тетрис: строка №${aboveIdx + 1} упала в выделенную №${selIdx + 1} — нажмите ещё раз, чтобы перейти на строку ниже.`);
+    say(`🧱 Тетрис: строка №${aboveIdx + 1} упала в выделенную №${selIdx + 1}, строки выше сдвинуты вниз — нажмите ещё раз, чтобы перейти на строку ниже.`);
     return;
   }
 
-  // Шаг 1: не влезает как есть — крутим выделенную строку.
-  const rot = findFitRotation(falling, floor0, offset);
-  if (rot) {
-    snapshot();
-    if (rot.rotations > 0) st.rows[selIdx] = rot.floor;
+  // Шаг 1: не влезает как есть — крутим выделенную строку РОВНО НА ОДИН круговой сдвиг за этот
+  // клик (видимо, на экране), направление и инверсия — та же, что сейчас активна у ◄/►Круг/Круг
+  // Инв (см. tetrisRotateFns()), не жёстко "вправо с инверсией".
+  const { rotate, rotateFlags, label } = tetrisRotateFns();
+  const key = aboveIdx + ":" + selIdx;
+  if (tetrisRotKey !== key) {
+    tetrisRotKey = key; tetrisRotAttempt = 0;
+    tetrisRotOriginal = floor0;
+    tetrisRotOriginalFlags = getInvFlags(selIdx, floor0.length).slice();
+  }
+  const maxAttempts = floor0.length * 2;
+  snapshot();
+  const rotated = rotate(floor0);
+  const rotatedFlags = rotateFlags(getInvFlags(selIdx, floor0.length));
+  tetrisRotAttempt++;
+  const backToStart = rotated === tetrisRotOriginal;
+  const giveUp = backToStart || tetrisRotAttempt >= maxAttempts;
+  if (giveUp) {
+    // Круг поворотов исчерпан (сам вернулся к исходному состоянию, либо упёрлись в защитный
+    // предел) — ни один не подошёл. Возвращаем строку к тому, с чего начали (сдвиг с инверсией
+    // необратимо меняет биты, оставлять "как получилось на последнем повороте" нельзя — для
+    // обычного сдвига без инверсии это не критично, но возвращаем всегда, для единообразия).
+    st.rows[selIdx] = tetrisRotOriginal;
+    invFlagsMap.set(selIdx, tetrisRotOriginalFlags);
+    tetrisRotKey = null; tetrisRotAttempt = 0; tetrisRotOriginal = null; tetrisRotOriginalFlags = null;
     render(); saveCache();
-    say(`🧱 Тетрис: выделенная строка повёрнута (сдвиг на ${rot.rotations}) — нажмите ещё раз, чтобы уронить единицы.`);
+    say(`🧱 Тетрис: испробован весь круг поворотов (${label}) — ни один не даёт падающей строке влезть в пустоты, строка возвращена к исходному виду.`);
     return;
   }
-
-  // Ни один поворот не подошёл — раньше тут была автоматическая инверсия падающей строки, убрана
-  // по запросу пользователя. Просто сообщаем, что не влезает, ничего не меняем.
-  say("🧱 Тетрис: ни один поворот выделенной строки не даёт падающей строке влезть в пустоты.");
+  st.rows[selIdx] = rotated;
+  invFlagsMap.set(selIdx, rotatedFlags);
+  render(); saveCache();
+  say(`🧱 Тетрис: выделенная строка повёрнута (${label}, попытка ${tetrisRotAttempt}/${maxAttempts}) — нажмите ещё раз.`);
 }
 const bTetrisEl = document.getElementById("bTetris");
 if (bTetrisEl) bTetrisEl.onclick = tetrisDrop;
+
+/* Тетрис 2 — зеркало обычного Тетриса: падают 1-биты строки ПОД выделенной, ВВЕРХ в неё (а не
+   строки НАД, вниз) — запрос пользователя. Тот же принцип на каждом клике (поворот направлением
+   из tetrisRotateFns(true) / падение / переход выделения), см. комментарий у tetrisDrop() —
+   тут только различия:
+   1) Падающая строка ДЛИННЕЕ выделенной — В ОТЛИЧИЕ от обычного Тетриса это НЕ отклоняется сразу:
+      разрешено, ЕСЛИ "лишний" хвост падающей (за пределами длины выделенной) весь из нулей — тем
+      единицам просто некуда падать, но раз их и нет, ничего не теряется (запрос пользователя:
+      "если там строка длиннее то не впадёт даже в эти нули пока её выходящий за биты текущей
+      наполнен 1 а не 0"). bitsFitIntoGaps() это уже умеет сама (для "1" за границей — false, для
+      "0" за границей — просто пропускается), отдельная проверка длины тут не нужна вообще.
+   2) Падение: выделенная получает 1-биты строки ПОД ней, та строка гасится в 0 — как и раньше,
+      без каскадного сдвига других строк (это отдельная фича обычного Тетриса, тут не просили).
+   3) Переход выделения — ВНИЗ, на саму опустевшую строку (не ещё дальше) — чтобы дальше
+      проверять, может ли СЛЕДУЮЩАЯ (ещё ниже) строка впасть в эти освободившиеся нули —
+      запрос пользователя "дальше смотрим может ли следующая впасть в эти 0ли".
+   4) Шаг 1 (не влезает) — ДВУХУРОВНЕВЫЙ поиск, не только по выделенной: если строка СНИЗУ
+      длиннее и в её "хвосте" (за пределами длины выделенной) стоит 1 — ни один поворот ОДНОЙ
+      выделенной этого не исправит (см. bitsFitIntoGaps: "1" за границей = не влезает всегда,
+      независимо от поворота выделенной) — запрос пользователя: "если под выделенной строка, в
+      которой на месте выходящего бита стоит 1ца, то нужно двигать нижнюю до тех пор пока там
+      не будет 0, затем передвигать выделенную; если пройден круг и ничего не впадает, то снова
+      двигать нижнюю, и так далее, пока обе строки не сделают [полный] круг оборотов". Крутим
+      ВЫДЕЛЕННУЮ (как обычно) один круг; если весь круг выделенной исчерпан без фита —
+      восстанавливаем выделенную к ЕЁ истинному оригиналу и КРУТИМ СТРОКУ СНИЗУ на один шаг (тот
+      же клик), затем на следующих кликах снова крутим выделенную полный круг против УЖЕ НОВОЙ
+      ориентации строки снизу — и так далее, пока строка снизу тоже не пройдёт полный круг (тогда
+      сдаёмся, возвращаем ОБЕ строки к их истинным оригиналам). Направление — общее для обеих
+      строк, из tetrisRotateFns(true) — инверсию Тетрис 2 всегда игнорирует (см. её комментарий,
+      запрос пользователя "Тетрис 2 по умолчанию Круг (не инверт)"). */
+let tetris2PendingAdvance = -1;
+let tetris2RotKey = null;
+let tetris2FloorAttempt = 0;
+let tetris2FloorOriginal = null;
+let tetris2FloorOriginalFlags = null;
+let tetris2BelowAttempt = 0;
+let tetris2BelowOriginal = null;
+let tetris2BelowOriginalFlags = null;
+function tetris2Drop(){
+  if (!st.selectedRows || st.selectedRows.size !== 1) { say("Выделите ровно одну строку — Тетрис 2 роняет строку СНИЗУ именно в неё."); return; }
+  const selIdx = Array.from(st.selectedRows)[0];
+
+  if (tetris2PendingAdvance === selIdx) {
+    tetris2PendingAdvance = -1;
+    const nextIdx = selIdx + 1;
+    if (nextIdx >= st.rows.length) { say("🧱 Тетрис 2: это последняя строка — переходить некуда."); return; }
+    st.selectedRows = new Set([nextIdx]);
+    render(); saveCache();
+    say(`🧱 Тетрис 2: выделение перешло на опустевшую строку №${nextIdx + 1}.`);
+    return;
+  }
+
+  const belowIdx = selIdx + 1;
+  if (belowIdx >= st.rows.length) { say("Под выделенной строкой ничего нет — падать неоткуда."); return; }
+  const falling = st.rows[belowIdx] || "";
+  const floor0 = st.rows[selIdx] || "";
+  if (!falling.length) { say("Строка снизу пуста — падать нечему."); return; }
+  if (!floor0.length) { say("Выделенная строка пуста — падать некуда."); return; }
+
+  const offset = tetrisAlignOffset(falling.length, floor0.length);
+
+  if (bitsFitIntoGaps(falling, floor0, offset)) {
+    snapshot();
+    const mergedArr = floor0.split("");
+    for (let i = 0; i < falling.length; i++){
+      if (falling[i] === "1") mergedArr[i + offset] = "1";
+    }
+    st.rows[selIdx] = mergedArr.join("");
+    st.rows[belowIdx] = "0".repeat(falling.length);
+    tetris2PendingAdvance = selIdx;
+    tetris2RotKey = null; tetris2FloorAttempt = 0; tetris2FloorOriginal = null; tetris2FloorOriginalFlags = null;
+    tetris2BelowAttempt = 0; tetris2BelowOriginal = null; tetris2BelowOriginalFlags = null;
+    render(); saveCache();
+    say(`🧱 Тетрис 2: строка №${belowIdx + 1} впала вверх в выделенную №${selIdx + 1} — нажмите ещё раз, чтобы перейти на опустевшую строку.`);
+    return;
+  }
+
+  // Шаг 1: не влезает как есть — двухуровневый поиск (см. комментарий над функцией). Направление —
+  // из tetrisRotateFns() (та же, что активна у ◄/►Круг/Круг Инв), инверсию Тетрис 2 ИГНОРИРУЕТ
+  // всегда (stripInv=true) — запрос пользователя "Тетрис 2 по умолчанию Круг (не инверт)".
+  const { rotate, rotateFlags, label } = tetrisRotateFns(true);
+  const key = belowIdx + ":" + selIdx;
+  if (tetris2RotKey !== key) {
+    // Новая пара строк — фиксируем ИСТИННЫЕ оригиналы ОБЕИХ (к ним возвращаемся, если весь
+    // двухуровневый поиск в итоге ничего не найдёт).
+    tetris2RotKey = key;
+    tetris2FloorAttempt = 0;
+    tetris2FloorOriginal = floor0;
+    tetris2FloorOriginalFlags = getInvFlags(selIdx, floor0.length).slice();
+    tetris2BelowAttempt = 0;
+    tetris2BelowOriginal = falling;
+    tetris2BelowOriginalFlags = getInvFlags(belowIdx, falling.length).slice();
+  }
+  const maxFloorAttempts = tetris2FloorOriginal.length * 2;
+  const maxBelowAttempts = tetris2BelowOriginal.length * 2;
+  snapshot();
+
+  if (tetris2FloorAttempt < maxFloorAttempts) {
+    // Круг выделенной для ТЕКУЩЕЙ ориентации строки снизу ещё не исчерпан — крутим выделенную
+    // на один шаг, как в обычном Тетрисе.
+    const rotatedFloor = rotate(st.rows[selIdx]);
+    const rotatedFloorFlags = rotateFlags(getInvFlags(selIdx, st.rows[selIdx].length));
+    tetris2FloorAttempt++;
+    // Круг мог замкнуться САМ (вернуться к оригиналу) раньше maxFloorAttempts — форсируем переход
+    // к строке снизу на следующем клике, не дожидаясь формального предела попыток.
+    if (rotatedFloor === tetris2FloorOriginal) tetris2FloorAttempt = maxFloorAttempts;
+    st.rows[selIdx] = rotatedFloor;
+    invFlagsMap.set(selIdx, rotatedFloorFlags);
+    render(); saveCache();
+    say(`🧱 Тетрис 2: выделенная строка повёрнута (${label}, попытка ${tetris2FloorAttempt}/${maxFloorAttempts}) — нажмите ещё раз.`);
+    return;
+  }
+
+  if (tetris2BelowAttempt < maxBelowAttempts) {
+    // Круг выделенной исчерпан без фита — возвращаем выделенную к истинному оригиналу и крутим
+    // строку СНИЗУ на один шаг (запрос пользователя: "если под выделенной строка, в которой на
+    // месте выходящего бита стоит 1ца — двигать нижнюю, пока там не будет 0"). Следующие клики
+    // снова крутят выделенную полный круг, но уже против НОВОЙ ориентации строки снизу.
+    st.rows[selIdx] = tetris2FloorOriginal;
+    invFlagsMap.set(selIdx, tetris2FloorOriginalFlags);
+    tetris2FloorAttempt = 0;
+
+    const rotatedBelow = rotate(st.rows[belowIdx]);
+    const rotatedBelowFlags = rotateFlags(getInvFlags(belowIdx, st.rows[belowIdx].length));
+    tetris2BelowAttempt++;
+    if (rotatedBelow === tetris2BelowOriginal) tetris2BelowAttempt = maxBelowAttempts;
+    st.rows[belowIdx] = rotatedBelow;
+    invFlagsMap.set(belowIdx, rotatedBelowFlags);
+    render(); saveCache();
+    say(`🧱 Тетрис 2: круг выделенной исчерпан — повёрнута строка снизу (${label}, попытка ${tetris2BelowAttempt}/${maxBelowAttempts}) — нажмите ещё раз.`);
+    return;
+  }
+
+  // Оба круга (выделенной под каждую ориентацию снизу, и самой строки снизу) исчерпаны — нигде
+  // не подошло. Возвращаем ОБЕ строки к их истинным оригиналам.
+  st.rows[selIdx] = tetris2FloorOriginal;
+  invFlagsMap.set(selIdx, tetris2FloorOriginalFlags);
+  st.rows[belowIdx] = tetris2BelowOriginal;
+  invFlagsMap.set(belowIdx, tetris2BelowOriginalFlags);
+  tetris2RotKey = null; tetris2FloorAttempt = 0; tetris2FloorOriginal = null; tetris2FloorOriginalFlags = null;
+  tetris2BelowAttempt = 0; tetris2BelowOriginal = null; tetris2BelowOriginalFlags = null;
+  render(); saveCache();
+  say(`🧱 Тетрис 2: испробованы все повороты обеих строк (${label}) — ни одно расположение не даёт впасть, обе строки возвращены к исходному виду.`);
+}
+const bTetris2El = document.getElementById("bTetris2");
+if (bTetris2El) bTetris2El.onclick = tetris2Drop;
 
 const bDelFirstEl = document.getElementById("bDelFirst");
 if (bDelFirstEl) {
@@ -7699,7 +8207,6 @@ function captureUiSettings(){
     bgSearch: cBgSearchEl ? cBgSearchEl.checked : false, bgSearchModes: st.bgSearchModes,
     bgSubPatterns: cBgSubPatternsEl ? cBgSubPatternsEl.checked : false,
     bgSearchAllBelow: cBgAllBelowEl ? cBgAllBelowEl.checked : false,
-    showLengthSums: cShowLengthSumsEl ? cShowLengthSumsEl.checked : false,
     resultHeightLocked: resultHeightLocked,
     highlight01: !!st.highlight01,
     highlightVert1: !!st.highlightVert1,
@@ -7764,7 +8271,6 @@ function applyUiSettings(u){
   if (u.bgSearch !== undefined && cBgSearchEl) { cBgSearchEl.checked = u.bgSearch; st.bgSearch = u.bgSearch; }
   if (u.bgSubPatterns !== undefined && cBgSubPatternsEl) { cBgSubPatternsEl.checked = u.bgSubPatterns; st.bgSubPatterns = u.bgSubPatterns; }
   if (u.bgSearchAllBelow !== undefined && cBgAllBelowEl) { cBgAllBelowEl.checked = u.bgSearchAllBelow; st.bgSearchAllBelow = u.bgSearchAllBelow; }
-  if (u.showLengthSums !== undefined && cShowLengthSumsEl) { cShowLengthSumsEl.checked = u.showLengthSums; st.showLengthSums = u.showLengthSums; }
   // applyResultHeightLock() тут НЕ вызываем — #chainText на этот момент ещё пустой/не
   // отрендерен реальным содержимым, замерять высоту рано; следующий render() (см. его конец)
   // сам применит актуальное resultHeightLocked с реальным контентом.
@@ -7884,7 +8390,6 @@ const DEFAULT_UI_SETTINGS = {
   bgSearch: true, bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatRInv", "concatRRevInv", "concatL", "concatLInv", "concatLRevInv", "concatSnake", "concatSnakeInv", "concatSnakeRevInv", "vertR", "vertL", "snakeR", "snakeL"],
   bgSubPatterns: false,
   bgSearchAllBelow: false,
-  showLengthSums: false,
   resultHeightLocked: true,
   highlight01: false,
   highlightVert1: false,
@@ -7976,6 +8481,15 @@ function loadCache(){
   }
   
   readToggles();
+  // st.lastDirMode не сохраняется между загрузками (см. captureUiSettings/applyUiSettings —
+  // его там нет намеренно, это чисто рабочее состояние текущей сессии), поэтому ВСЕГДА null
+  // после setMode() выше (тот сам его гасит). Реальное поведение по умолчанию у Тетриса/Тетриса 2
+  // (см. tetrisRotateFns()) — "вправо с инверсией", если ни одна из 4 кнопок ещё не нажата — так
+  // что кнопку ► Круг Инв нужно сразу пометить активной, а не оставлять ничего не подсвеченным,
+  // раз это и есть фактически действующий режим — запрос пользователя "при этом кнопку выделить
+  // тогда включить". Вызывается ПОСЛЕ всех setMode()/loadTabState() выше (те сбрасывают
+  // lastDirMode в null), иначе тут же было бы затёрто обратно.
+  setLastDirMode("shiftRInv");
   render();
   return st.rows.length > 0;
 }
@@ -8012,6 +8526,11 @@ if (!loadCache()){
   st.activeTab = 0;
   loadTabState(0, true);
   applyColors();
+  // loadTabState() выше применяет uiSettings свежесозданной вкладки (см. createDefaultTabState),
+  // а это по пути дёргает setMode() — та гасит lastDirMode обратно в null, затирая то, что уже
+  // выставил loadCache() (см. её конец) — досовём тот же дефолт ещё раз, уже после. setLastDirMode()
+  // сама подсвечивает кнопку (прямой classList.toggle) — отдельный render() тут не нужен.
+  setLastDirMode("shiftRInv");
   saveCache();
 }
 </script>
