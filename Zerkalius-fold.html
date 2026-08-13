@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.390</title>
+<title>Zerkalius Fold — v0.393</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -1141,7 +1141,7 @@
 <!-- === МАРКЕР 03: HEADER_UI === -->
 <div id="menuBar">
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
-    <h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.390</span></h3>
+    <h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.393</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -4079,6 +4079,24 @@ function renderColHeader(maxLen){
     '<span class="bits ' + alignCls + '"><span' + offAttr + '>' + ticks + '</span></span><span class="num num-r2"></span><span class="pat2"></span></div>';
 }
 
+/* Сколько столбцов реально ЗАНИМАЕТ картинка на экране — НЕ то же самое, что maxLen (длина
+   самой длинной строки). У "Лесенки"/"Лесенки ½"/"Ось"/"ОсьБит" сдвиг строки зависит от её
+   НОМЕРА (у stairs shift = ri, см. alignShift()), поэтому нижние строки стоят правее maxLen:
+   инвариант "shift+len <= maxLen" там намеренно не соблюдается. Линейка столбцов рисовалась
+   ровно на maxLen засечек, и над уехавшим вправо хвостом лесенки засечек просто не было —
+   кликнуть по такому столбцу было нечем (запрос пользователя "правее нет засечек для
+   столбцов"). Берём максимум правого края (shift+len) по всем строкам, не меньше maxLen. */
+function visibleColCount(maxLen){
+  let w = maxLen;
+  for (let i = 0; i < st.rows.length; i++){
+    const s = st.rows[i] || "";
+    if (!s.length) continue;
+    const end = rowShiftFor(maxLen, i, s, st.align) + s.length;
+    if (end > w) w = end;
+  }
+  return w;
+}
+
 /* Границы строк для режима "🔢 Выбор столбца":
    - без выделения — все строки (как раньше);
    - выделена ОДНА строка — от начала таблицы до неё включительно (строки выше и она сама);
@@ -4098,14 +4116,19 @@ function colSelectRowRange(){
 function selectColumn(col){
   let maxLen = 0;
   for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
-  if (col < 0 || col >= maxLen) return;
+  // Граница — по ВИДИМОЙ ширине (см. visibleColCount()), а не по maxLen: у "Лесенки"/"Оси"
+  // столбцы правее maxLen реально существуют на экране, и клик по ним раньше молча отсекался.
+  if (col < 0 || col >= visibleColCount(maxLen)) return;
 
   const range = colSelectRowRange();
   snapshot();
   for (let i = range.lo; i < st.rows.length && i <= range.hi; i++) {
     const rowStr = st.rows[i];
     if (!rowStr || !rowStr.length) continue;
-    const shift = alignShift(maxLen, rowStr.length, st.align, i);
+    // rowShiftFor (не голый alignShift) — ровно та же геометрия, по которой render() проставляет
+    // data-col: у "⊙ Ось"/"ОсьБит" alignShift даёт совсем другой сдвиг, и клик по столбцу попадал
+    // не в тот бит.
+    const shift = rowShiftFor(maxLen, i, rowStr, st.align);
     const localCol = col - shift;
     if (localCol < 0 || localCol >= rowStr.length) continue;
     const d = bestColumnShift(rowStr, localCol);
@@ -4374,7 +4397,10 @@ function render(){
 
   let maxLen = 0;
   for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
-  const renderWidth = maxLen;
+  // ВАЖНО: maxLen (длина самой длинной строки) остаётся точкой отсчёта для alignShift/rowShiftFor —
+  // менять его нельзя, иначе поедет вся геометрия выравниваний. Ширина КАРТИНКИ (линейка столбцов
+  // + добивка пробелами справа) считается отдельно — см. visibleColCount().
+  const renderWidth = visibleColCount(maxLen);
   renderColHeader(renderWidth);
 
   // Реальный шаг столбца в px — запрос пользователя "ручка #axisSplit должна двигать ВСЁ, кроме
@@ -5951,7 +5977,7 @@ function saveLayout() {
   let pins = {}; for (let m in MENUS) pins[m] = MENUS[m].pin;
   // overlayOrderV2 — флаг разовой миграции порядка окон, см. loadLayout(). Пишется всегда, поэтому
   // после первого же сохранения текущий порядок снова становится главнее default'а.
-  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ pins: pins, groups: g, overlayOrder: overlayOrder, overlayOrderV2: true, overlayHidden: overlayHidden })); } catch (e) {}
+  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ pins: pins, groups: g, overlayOrder: overlayOrder, overlayOrderV2: true, overlayHidden: overlayHidden, hideAllSnap: (typeof pinsBeforeHideAll !== 'undefined' ? pinsBeforeHideAll : null) })); } catch (e) {}
 }
 
 const SLOT_OF = { leftPanel: 'leftSlot', rightPanel: 'rightSlot' };
@@ -6095,20 +6121,56 @@ for (let mid in MENUS) {
 }
 
 function updateToggleAllPinsBtn() {
-  let allOn = Object.keys(MENUS).every(mid => isTabVisible(mid));
+  let anyOn = Object.keys(MENUS).some(mid => isTabVisible(mid));
   let bar = document.getElementById('toggleAllPinsBtn');
-  bar.classList.toggle('all-on', allOn);
-  bar.title = allOn ? 'Скрыть все панели' : 'Показать все панели';
+  bar.classList.toggle('all-on', anyOn);
+  bar.title = anyOn ? 'Скрыть все панели' : 'Вернуть панели (как было до скрытия)';
 }
 /* Вынесено в отдельную функцию — запрос пользователя: то же самое действие, что и у кнопки
    📌, должно срабатывать ещё и по клику колёсиком мыши (средняя кнопка) — см. её обработчик
    ниже. */
-function toggleAllPins() {
-  let turnOn = !Object.keys(MENUS).every(mid => isTabVisible(mid));
+let pinsBeforeHideAll = null;
+function snapshotTabsState() {
+  let snap = {};
   for (let mid in MENUS) {
-    MENUS[mid].pin = turnOn;
-    let cb = document.getElementById(mid + 'Pin'); if (cb) cb.checked = turnOn;
-    applyMenu(mid);
+    let w = MENUS[mid].wrapper, fl = w.classList.contains('floating-panel');
+    snap[mid] = {
+      pin: !!MENUS[mid].pin,
+      float: fl,
+      x: fl ? (parseInt(w.style.left, 10) || 0) : 0,
+      y: fl ? (parseInt(w.style.top, 10) || 0) : 0
+    };
+  }
+  return snap;
+}
+function toggleAllPins() {
+  let anyVisible = Object.keys(MENUS).some(mid => isTabVisible(mid));
+  if (anyVisible) {
+    pinsBeforeHideAll = snapshotTabsState();
+    for (let mid in MENUS) {
+      MENUS[mid].pin = false;
+      let cb = document.getElementById(mid + 'Pin'); if (cb) cb.checked = false;
+      applyMenu(mid);
+    }
+  } else {
+    let snap = pinsBeforeHideAll;
+    for (let mid in MENUS) {
+      let s = snap && snap[mid];
+      MENUS[mid].pin = s ? s.pin : true;
+      let cb = document.getElementById(mid + 'Pin'); if (cb) cb.checked = MENUS[mid].pin;
+      applyMenu(mid);
+      if (s && s.float) {
+        let w = MENUS[mid].wrapper;
+        w.classList.add('floating-panel');
+        document.body.appendChild(w);
+        w.style.left = Math.max(0, Math.min(window.innerWidth - 40, s.x)) + 'px';
+        w.style.top = Math.max(0, Math.min(window.innerHeight - 40, s.y)) + 'px';
+        let btn = document.querySelector('.menu-btn[data-menu="' + mid + '"]');
+        if (btn) btn.classList.add('pinned');
+      }
+    }
+    pinsBeforeHideAll = null;
+    updateDockVisibility();
   }
   saveLayout();
   updateToggleAllPinsBtn();
@@ -6137,6 +6199,7 @@ document.addEventListener('mousedown', (e) => {
   if (L && L.overlayHidden) {
     for (let id in overlayHidden) if (L.overlayHidden[id] !== undefined) overlayHidden[id] = !!L.overlayHidden[id];
   }
+  if (L && L.hideAllSnap) pinsBeforeHideAll = L.hideAllSnap;
   if (L && L.pins) for (let m in MENUS) if (L.pins[m] !== undefined) { MENUS[m].pin = !!L.pins[m]; let cb = document.getElementById(m + 'Pin'); if (cb) cb.checked = MENUS[m].pin; }
   if (L && L.groups) for (let m in MENUS) { let wid = 'panelWrap_' + m; if (MENUS[m].pin && L.groups[wid] && L.groups[wid].z !== 'canvas') MENUS[m].zone = L.groups[wid].z; }
   for (let m in MENUS) applyMenu(m);
@@ -8580,7 +8643,7 @@ document.addEventListener("keydown", e => {
     e.preventDefault();
     let maxLen = 0;
     for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
-    const next = e.key === "ArrowRight" ? Math.min(maxLen - 1, st.selectedCol + 1) : Math.max(0, st.selectedCol - 1);
+    const next = e.key === "ArrowRight" ? Math.min(visibleColCount(maxLen) - 1, st.selectedCol + 1) : Math.max(0, st.selectedCol - 1);
     selectColumn(next);
   } else if (e.key === "ArrowLeft") {
     e.preventDefault();
