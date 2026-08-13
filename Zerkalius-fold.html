@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.393</title>
+<title>Zerkalius Fold — v0.394</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -463,6 +463,16 @@
      в глаза (см. запрос пользователя). */
   .row-balance-eq{color:#ffcf6b !important;background:rgba(255,207,107,.18);border-radius:2px;
     box-shadow:0 0 6px rgba(255,207,107,.5)}
+  /* ОБЩИЙ баланс над колонкой построчных балансов (в линейке столбцов, см. renderColHeader()):
+     сумма единиц/нулей по ВЫДЕЛЕННЫМ строкам, а если ничего не выделено — по всей таблице.
+     Число заметно шире построчных меток, поэтому оно position:absolute ВНУТРИ той же распорки:
+     ширину распорки (а значит и позицию .bits в шапке) не меняет, просто вылезает влево поверх
+     пустой колонки паттернов — иначе линейка столбцов разъехалась бы со строками (та же природа
+     бага, что и "после вставки баланса съехала", см. комментарий у balanceSpacer).
+     z-index:2 — .pat в этой же шапке имеет свой фон и z-index:1, иначе он перекрыл бы вылезшую
+     влево часть числа. */
+  .col-hdr-balance{position:relative}
+  .col-hdr-balance-val{position:absolute;right:3px;top:0;white-space:pre;z-index:2;padding:0 3px}
   /* Номер у ЛЕВОГО края поля битов (см. render()) сидит сразу после .pat, а у .pat справа уже
      зарезервировано 28px под номер шага найденного паттерна (.st) — без компенсации отступ
      слева у этого номера был заметно больше, чем у остальных (не "одинаково", как просили).
@@ -1141,7 +1151,7 @@
 <!-- === МАРКЕР 03: HEADER_UI === -->
 <div id="menuBar">
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
-    <h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.393</span></h3>
+    <h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.394</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -3803,6 +3813,21 @@ function updateSelBalance(){
   if (el0) el0.textContent = total0;
 }
 
+/* Общий баланс для шапки над колонкой построчных балансов (см. renderColHeader()): считается по
+   ВЫДЕЛЕННЫМ строкам, а если не выделено ни одной — по ВСЕЙ таблице (запрос пользователя). Этим
+   отличается от computeSelBalance() выше: та всегда только по выделенным (её Σ в шапке
+   "Результата" при пустом выделении просто прячется). */
+function computeHeaderBalance(){
+  let total1 = 0, total0 = 0;
+  const hasSel = !!(st.selectedRows && st.selectedRows.size);
+  const idxs = hasSel ? Array.from(st.selectedRows) : st.rows.map((_, i) => i);
+  for (const i of idxs) {
+    const rb = computeRowBalance(st.rows[i] || "");
+    total1 += rb.total1; total0 += rb.total0;
+  }
+  return { total1, total0, hasSel };
+}
+
 /* "Пробеги вместо битов" (#bRunsAsBits) — сама строка "0"/"1" ПОЛНОСТЬЮ заменяется её пробегами
    (см. computeRowBalance() выше), каждый своим цветом (var(--c1)/var(--c0), как у обычных
    битов), НАЧИНАЯ с той же позиции (сдвиг alignShift), что и настоящие биты — только визуально,
@@ -4067,7 +4092,17 @@ function renderColHeader(maxLen){
       if (String(rb.total1).length > w1) w1 = String(rb.total1).length;
       if (String(rb.total0).length > w0) w0 = String(rb.total0).length;
     }
-    balanceSpacer = '<span class="row-balance">' + " ".repeat(w1 + 1 + w0) + "</span>";
+    const hb = computeHeaderBalance();
+    const eqCls = hb.total1 === hb.total0 ? " row-balance-eq" : "";
+    const valHtml = hb.total1 === hb.total0
+      ? (hb.total1 + "-" + hb.total0)
+      : ('<span style="color:#fff">' + hb.total1 + '</span>-<span style="color:#888">' + hb.total0 + '</span>');
+    const hbTitle = "Общий баланс: сумма единиц и нулей по " +
+      (hb.hasSel ? "ВЫДЕЛЕННЫМ строкам" : "ВСЕМ строкам (ничего не выделено)") +
+      ". Подсвечивается, если единиц и нулей поровну";
+    balanceSpacer = '<span class="row-balance col-hdr-balance" title="' + hbTitle + '">' +
+      '<span class="col-hdr-balance-val' + eqCls + '">' + valHtml + '</span>' +
+      " ".repeat(w1 + 1 + w0) + "</span>";
   }
   // Тот же общий визуальный сдвиг ручки #axisSplit, что и у строк (см. extraCh в render()) —
   // линейка обязана ехать ВМЕСТЕ со строками, иначе тик N перестаёт стоять над столбцом N
