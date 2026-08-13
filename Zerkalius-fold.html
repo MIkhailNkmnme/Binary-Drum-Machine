@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.365</title>
+<title>Zerkalius Fold — v0.390</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -234,10 +234,15 @@
   #bgSearchModeGrp{flex-wrap:wrap}
   .align-grp button{border:none;border-radius:0;border-right:1px solid var(--line);padding:1px 5px}
   .align-grp button:last-child{border-right:none}
-  /* Именно #alignGrp в верхнем меню (⇤↔⇥) — шире и той же высоты, что остальные кнопки шапки
-     (.menu-btn: padding:3px 10px); остальные .align-grp (в панелях — bgSearchModeGrp,
-     spiralDirGrp и т.п.) намеренно компактные, не трогаем. */
-  #alignGrp button{padding:3px 10px}
+  /* #alignGrp (⇤↔⇥…) — плавающая полоса ПОВЕРХ баров «Результат»/«Черновик», сразу под верхним
+     меню (запрос пользователя). В DOM он переносится в .main-layout скриптом (см. МАРКЕР 10.2b —
+     иначе position:absolute считался бы от .chain, где он лежал раньше, и полоса ехала бы вместе
+     с холстом при скролле). z-index выше .overlay-box (95), чтобы быть НАД панелями, а не под
+     ними. top:6px — та же стартовая высота, с которой layoutOverlayBoxes() кладёт первый бар
+     стопки. Кнопки крупнее прежних 3px/10px — запрос "увеличь высоту иконок" (~24px). */
+  #alignGrp{position:absolute;top:6px;left:50%;transform:translateX(-50%);z-index:100;
+    background:rgba(14,16,21,0.97);box-shadow:0 4px 14px rgba(0,0,0,.45)}
+  #alignGrp button{padding:5px 12px;font-size:13px;line-height:1.1}
   /* ◄/► переключатель "какая сторона — вверх" для Спирали (spiralDirGrp) — сидит В ОДНОЙ рамке
      с ▲/▼ Спираль во вкладке "Шаги" (flow-modes-grid, см. запрос пользователя — переключатель
      влияет только на Спираль, значит должен быть рядом с ней). ID-селектор нужен независимо от
@@ -771,7 +776,8 @@
   box-shadow: 0 4px 14px rgba(0, 0, 0, .45);
 }
 .chain-result-head b { color: var(--acc); }
-.chain-result-box.collapsed .chain-result-text { display: none; }
+.chain-result-box.collapsed .chain-result-text,
+.chain-result-box.collapsed #chainResultResizeHandle { display: none; }
 /* ✕ — ПОЛНОСТЬЮ скрывает бар (в отличие от клика по шапке, который просто сворачивает в
    строку-заголовок); вернуть можно только кнопками в верхнем меню (#bToggleResultBox/
    #bToggleStepLog), см. JS МАРКЕР 10.2b OVERLAY_STACK. */
@@ -866,7 +872,11 @@
    все строки, см. render()) + сами биты. По умолчанию биты обрезаны в одну линию, чтобы длинные
    результаты не распирали окошко; клик по строке (см. JS-обработчик на #chainText) разворачивает
    её целиком построчным переносом. */
-.chain-result-line{display:flex;gap:6px;cursor:pointer;line-height:1.5;padding:1px 3px;border-radius:2px;position:relative}
+/* line-height:1 + нулевой вертикальный padding — запрос пользователя "убери вертикальные
+   отступы, пусть символы прикасаются": строки результата идут вплотную друг к другу, как строки
+   самой цепочки. Горизонтальный padding (3px) оставлен — он держит фон-полоски/значок "▸ ещё" от
+   краёв окна, на вертикальную плотность не влияет. */
+.chain-result-line{display:flex;gap:6px;cursor:pointer;line-height:1;padding:0 3px;border-radius:2px;position:relative}
 /* Явная метка "тут обрезано, кликни" — ставится по факту (JS меряет scrollWidth/clientWidth,
    см. render()), а не всегда: родной "…" от text-overflow легко потерять среди битов на мелком
    шрифте, поэтому поверх правого края строки — свой заметный цветной значок */
@@ -1025,7 +1035,8 @@
   gap: 8px;
   font-family: "Roboto Mono", Consolas, monospace;
   font-size: 11.5px;
-  line-height: 1.1;
+  /* 1, а не 1.1 — тот же запрос "пусть символы прикасаются", что и у .chain-result-line. */
+  line-height: 1;
   white-space: pre;
 }
 .step-log-input-name {
@@ -1049,7 +1060,7 @@
    строк"). */
 .step-log-result-row { display: flex; align-items: baseline; gap: 8px; margin-top: 0; }
 /* Тёмно-серый фон — единственное исключение из "без доп рамок" (сам "Итог" — отдельно
-   попросили выделить фоном); одна строка по левому краю, тот же интервал (line-height 1.1),
+   попросили выделить фоном); одна строка по левому краю, тот же интервал (line-height 1),
    что у строк-источников выше; обрезана (text-overflow), клик разворачивает целиком (см. JS:
    bStepLogResultEl click-обработчик), тот же приём "▸ ещё" при реальной обрезке. */
 .step-log-result {
@@ -1058,13 +1069,13 @@
   min-width: 0;
   font-family: "Roboto Mono", Consolas, monospace;
   font-size: 12px;
-  line-height: 1.1;
+  line-height: 1;
   text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
-  padding: 1px 4px;
+  padding: 0 4px;
   border-radius: 3px;
   background: rgba(255, 255, 255, .07);
   color: var(--fg);
@@ -1130,7 +1141,7 @@
 <!-- === МАРКЕР 03: HEADER_UI === -->
 <div id="menuBar">
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
-    <h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.365</span></h3>
+    <h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.390</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -1376,7 +1387,7 @@
   <label class="chk" title="Держать изначальный порядок паттернов"><input type="checkbox" id="cOrder" checked>🔒 Порядок</label>
   <label class="chk" title="Искать строго только один следующий паттерн по порядку (не засчитывать другие раньше времени)"><input type="checkbox" id="cNextOnly">🎯 Только 1-й</label>
   <label class="chk" title="Сквозная цепочка по вертикалям"><input type="checkbox" id="cVert">↕ Верт.</label>
-  <label class="chk" title="Дополнять пустые места нулями"><input type="checkbox" id="cPad">0️⃣ Паддинг</label>
+  <label class="chk" title="Пустые места (столбец засчитан — в нём есть символ хотя бы у одной строки, но КОНКРЕТНАЯ строка до него не достаёт) заполнять нулями вместо того, чтобы просто пропускать. Влияет на вертикальную склейку — режимы фон-поиска «Верт. →»/«Верт. ←», а также на вертикальную сквозную (↕ Верт.). Полностью пустые столбцы (дырки между разъехавшимися строками) пропускаются в любом случае, нулями не заполняются"><input type="checkbox" id="cPad">0️⃣ 0 вместо пустот</label>
   <label class="chk" title="При круговом сдвиге (◄/►Круг/Круг Инв, вручную и под «Авто») — если фон-поиск нашёл совпадение, ДОБАВЛЯТЬ найденную строку к выделению и крутить её дальше вместе с остальными. Работает для любого выделения, в т.ч. ОДНОЙ строки (раньше — только если исходно было выделено несколько). Выключено — выделение не меняется само по себе"><input type="checkbox" id="cCaptureOnFind" checked>🧲 Захват находки</label>
   <label class="chk" title="В режиме Интерливинга: делать XOR результата с нижней строкой пары"><input type="checkbox" id="cInterleaveXor">⧬+⨁ Интерл.XOR</label>
 
@@ -1389,16 +1400,16 @@
     <!-- "Фон-поиск" — больше не отдельная галка (запрос пользователя: "сама кнопка фон поиск
          больше не нужна") — просто заголовок, подсвечивается сам (см. .bg-search-active в CSS),
          когда включён хотя бы один режим ниже (bgSearchActive() в JS). Полностью выключить —
-         кнопкой "Всё/только XOR-Чёт/Выкл" ниже (3-й клик снимает все режимы разом). -->
+         кнопкой "Всё/только XOR-Все/Выкл" ниже (3-й клик снимает все режимы разом). -->
     <span id="bgSearchTitle" title="Фоновый поиск: при любом изменении строк проверяет, найден ли паттерн строки НИЖЕ выделенной в выбранном результате (см. переключатель ниже). Выделенная строка фиксирована — сама не двигается; активен, пока включён хотя бы один режим">🔍 Фон-поиск</span>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
       <span style="font-size:11px;color:var(--dim);">Режимы фон-поиска:</span>
-      <button id="bBgModeAllNone" style="font-size:11px;padding:1px 6px;" title="Тоггл: 1-й клик — включить ВСЕ режимы ниже (включая 🧮 Суммы длин); 2-й клик — оставить только ⨁ XOR-Чёт; 3-й клик — снять все режимы (выключить Фон-поиск)">Всё / XOR-Чёт / Выкл</button>
+      <button id="bBgModeAllNone" style="font-size:11px;padding:1px 6px;" title="Тоггл: 1-й клик — включить ВСЕ режимы ниже (включая 🧮 Суммы длин); 2-й клик — оставить только ⨁ XOR-Все; 3-й клик — снять все режимы (выключить Фон-поиск)">Всё / XOR-Все / Выкл</button>
     </div>
     <div class="align-grp" id="bgSearchModeGrp" title="Какой результат проверять на совпадение с паттерном строки ниже выделенной">
       <button data-val="interleave" class="act" title="Интерливинг выделенной и строки над ней">⧬ Интерлив</button>
-      <button data-val="xor2" class="act" title="XOR выделенной и строки над ней">⨁ Xor</button>
-      <button data-val="xorAll" class="act" title="XOR-Чёт: строки над выделенной и сама выделенная — на обычных выравниваниях просто все разом, на ½-выравниваниях делятся на 2 группы по чётности (см. hasHalfNudge) и результаты чередуются">⨁ XOR-Чёт</button>
+      <button data-val="xor2" class="act" title="XOR РОВНО двух строк: выделенной и той, что прямо над ней. Складывается по столбцам с учётом реального сдвига строк — при полусимвольном смещении соседних строк это даёт переплетение бит (интерлив), при совпадении столбец-в-столбец — обычный XOR">⨁ Xor 2</button>
+      <button data-val="xorAll" class="act" title="XOR-Все: строки над выделенной и сама выделенная — на обычных выравниваниях просто все разом, на ½-выравниваниях делятся на 2 группы по чётности (см. hasHalfNudge) и результаты чередуются">⨁ XOR-Все</button>
       <button data-val="concatR" class="act" title="Сквозная строка: все строки от 1-й до выделенной (включительно) просто склеены по порядку — новая строка приклеивается СПРАВА">🔗 Сквозная →</button>
       <button data-val="concatRInv" class="act" title="То же самое, что 🔗 Сквозная →, но результат целиком инвертирован (0↔1)">🔗 Сквозная → Инв</button>
       <button data-val="concatRRevInv" class="act" title="То же самое, что 🔗 Сквозная →, но результат инвертирован (0↔1) И реверснут (порядок бит наоборот)">🔗 Сквозная → Рев+Инв</button>
@@ -1408,8 +1419,8 @@
       <button data-val="concatSnake" class="act" title="Сквозная строка: все строки от 1-й до выделенной (включительно) склеены по порядку (как 🔗 Сквозная →), но у КАЖДОЙ ВТОРОЙ строки биты реверснуты — та же логика, что у «Змейка» в Порядке склейки сквозной (seqGlueMode)">🔗 Сквозная 🐍</button>
       <button data-val="concatSnakeInv" class="act" title="То же самое, что 🔗 Сквозная 🐍, но результат целиком инвертирован (0↔1)">🔗 Сквозная 🐍 Инв</button>
       <button data-val="concatSnakeRevInv" class="act" title="То же самое, что 🔗 Сквозная 🐍, но результат инвертирован (0↔1) И реверснут (порядок бит наоборот)">🔗 Сквозная 🐍 Рев+Инв</button>
-      <button data-val="vertR" class="act" title="Вертикальная склейка: строки от 1-й до выделенной читаются по СТОЛБЦАМ (сверху вниз в каждом столбце), столбцы слева направо">↕ Верт. →</button>
-      <button data-val="vertL" class="act" title="Вертикальная склейка: строки от 1-й до выделенной читаются по СТОЛБЦАМ (сверху вниз в каждом столбце), столбцы справа налево">↕ Верт. ←</button>
+      <button data-val="vertR" class="act" title="Вертикальная склейка: строки от 1-й до выделенной читаются по СТОЛБЦАМ (сверху вниз в каждом столбце), столбцы слева направо. Столбец идёт в счёт, если символ есть хотя бы у одной строки; пустое место внутри такого столбца пропускается, а с галкой «0️⃣ 0 вместо пустот» (панель настроек) — заполняется нулём">↕ Верт. →</button>
+      <button data-val="vertL" class="act" title="Вертикальная склейка: строки от 1-й до выделенной читаются по СТОЛБЦАМ (сверху вниз в каждом столбце), столбцы справа налево. Столбец идёт в счёт, если символ есть хотя бы у одной строки; пустое место внутри такого столбца пропускается, а с галкой «0️⃣ 0 вместо пустот» (панель настроек) — заполняется нулём">↕ Верт. ←</button>
       <button data-val="snakeR" class="act" title="Змейка: как вертикальная склейка, но направление чтения строк внутри столбца чередуется (то сверху вниз, то снизу вверх), столбцы слева направо">🐍 Змейка →</button>
       <button data-val="snakeL" class="act" title="Змейка: как вертикальная склейка, но направление чтения строк внутри столбца чередуется (то сверху вниз, то снизу вверх), столбцы справа налево">🐍 Змейка ←</button>
       <!-- "Суммы длин" — подпункт ЭТОЙ ЖЕ группы режимов (та же кнопка-тоггл, тот же .act/data-val
@@ -1597,6 +1608,7 @@
       <span class="overlay-close" id="bHideResultBox" title="Скрыть полностью (вернуть — кнопкой в верхнем меню)">✕</span>
     </div>
     <div class="chain-result-text" id="chainText"></div>
+    <div class="step-log-resize-handle" id="chainResultResizeHandle" title="Потянуть — изменить высоту вручную"></div>
   </div>
   <div class="step-log-box overlay-box" id="stepLogBox">
     <div class="step-log-head overlay-head">
@@ -1611,7 +1623,7 @@
   <div class="controls" id="leftPanel"><div class="scrollable-settings" id="leftSlot"></div></div>
   <div class="canvas" id="screenCanvas">
     <!-- Теги записаны в одну плотную строку, чтобы white-space: pre не создавал фантомных пустых строк -->
-    <div class="chain" id="chain"><div class="chain-head"><span class="num">№</span><span class="pat h-pat">Паттерн</span><span class="num num-l2">№</span><span class="bits h-bits"></span><span class="num num-r2">№</span><span class="pat2 h-pat2">Паттерн</span></div><div class="vsplit" id="vsplit" title="Тяни, чтобы менять ширину левой колонки паттернов"></div><div class="vsplit2" id="vsplit2" title="Тяни, чтобы менять ширину правой колонки паттернов"></div><div class="align-grp" id="alignGrp" style="margin:0 auto 4px auto;width:fit-content;"><button data-val="left" title="По левому краю">⇤</button><button class="act" data-val="center" title="По центру">↔</button><button data-val="right" title="По правому краю">⇥</button><button data-val="halfcenter" title="По центру, но с точностью до половины символа — короткая строка встаёт СТРОГО между символами длинной (напр. «1» строго между двумя «1» у «11»), а не вплотную к одной из них">↔½</button><button data-val="stairs" title="Лесенка: каждая строка сдвинута вправо на (её длина − 1) — «1»/«11»/«111»/«1111» и т.п. выстраиваются диагональной лестницей, а не по общей ширине">↘</button><button data-val="halfstairs" title="Лесенка ½: та же лестница, но вдвое положе — сдвиг каждой строки на половину символа за шаг, а не на целый">↘½</button><button data-val="rstairs" title="Лесенка правая: зеркало обычной Лесенки — строка читается как обычно, слева направо (НЕ реверсируется), но диагональ/ось — по ПОСЛЕДНЕМУ биту строки, а не по первому">↙</button><button data-val="axis" title="Ось: столбец посередине видимой области. Изначально строка начинается с оси (как «По левому краю», но от центра). Круговой сдвиг ◄/►Круг(Инв) двигает ТОЛЬКО картинку — строка целиком уезжает влево/вправо от оси (не переставляя свои символы), не меняя реальные данные строки; куда именно останавливается сдвиг — см. галку «⊙ Ось: сдвиг только на «1»/между «1-0»» в «Правке строк». Поиск/XOR/Тетрис по-прежнему видят исходную строку, как будто её не двигали">⊙</button><button data-val="axis12" title="Ось 1/2: та же ось, но она — ЗАЗОР между двумя соседними символами (полсимвол), не сам бит; при включённой галке «⊙ Ось: сдвиг только на «1»/между «1-0»» — только в зазоре между «1» и «0» (именно в этом порядке, не «0» и «1»; строки без такой пары заморожены, стоят по центру)">⊙½</button><button data-val="axisbit" title="ОсьБит: ось — не фиксированный столбец, а строка НАД текущей. Круговой сдвиг ◄/►Круг(Инв) двигает строку так, чтобы хоть одна её «1» встала в тот же столбец, что хоть одна «1» строки выше (при включённой галке «⊙ Ось: сдвиг только на «1»/между «1-0»» — иначе обычный одиночный шаг). У первой строки/если строка выше пустая — двигать не на что">↥</button><button data-val="axisbit12" title="ОсьБит ½: та же ось-от-строки-выше, но ЗАЗОР между «1» и «0» строки выше (именно в этом порядке), не сам бит — аналогично «Ось 1.2»">↥½</button></div><div id="colHeader"></div><div class="axis-split" id="axisSplit" title="Тяни — сдвинуть начало отсчёта столбцов (работает для любого выравнивания, не только «⊙ Ось»/«Ось 1/2»)"></div><div id="rows"></div></div>
+    <div class="chain" id="chain"><div class="chain-head"><span class="num">№</span><span class="pat h-pat">Паттерн</span><span class="num num-l2">№</span><span class="bits h-bits"></span><span class="num num-r2">№</span><span class="pat2 h-pat2">Паттерн</span></div><div class="vsplit" id="vsplit" title="Тяни, чтобы менять ширину левой колонки паттернов"></div><div class="vsplit2" id="vsplit2" title="Тяни, чтобы менять ширину правой колонки паттернов"></div><div class="align-grp" id="alignGrp" style="margin:0 auto 4px auto;width:fit-content;"><button data-val="left" title="По левому краю">⇤</button><button class="act" data-val="center" title="По центру">↔</button><button data-val="right" title="По правому краю">⇥</button><button data-val="halfcenter" title="По центру, но с точностью до половины символа — короткая строка встаёт СТРОГО между символами длинной (напр. «1» строго между двумя «1» у «11»), а не вплотную к одной из них">↔½</button><button data-val="stairs" title="Лесенка: каждая следующая строка сдвинута вправо на 1 колонку ОТНОСИТЕЛЬНО ПРЕДЫДУЩЕЙ — ровная диагональ вниз независимо от длин строк (две строки одинаковой длины тоже смещены друг от друга)">↘</button><button data-val="halfstairs" title="Лесенка ½: та же лестница по номерам строк, но вдвое положе — сдвиг на половину символа за строку, а не на целый">↘½</button><button data-val="rstairs" title="Лесенка правая: зеркало обычной Лесенки — строка читается как обычно, слева направо (НЕ реверсируется), но диагональ/ось — по ПОСЛЕДНЕМУ биту строки, а не по первому">↙</button><button data-val="rhalfstairs" title="Лесенка правая ½: та же правая лестница (диагональ по ПОСЛЕДНЕМУ биту строки), но вдвое положе — правый край смещается на полсимвола за шаг, а не на целый (так же, как «Лесенка ½» относится к обычной «Лесенке»)">↙½</button><button data-val="axis" title="Ось: столбец посередине видимой области. Изначально строка начинается с оси (как «По левому краю», но от центра). Круговой сдвиг ◄/►Круг(Инв) двигает ТОЛЬКО картинку — строка целиком уезжает влево/вправо от оси (не переставляя свои символы), не меняя реальные данные строки; куда именно останавливается сдвиг — см. галку «⊙ Ось: сдвиг только на «1»/между «1-0»» в «Правке строк». Поиск/XOR/Тетрис по-прежнему видят исходную строку, как будто её не двигали">⊙</button><button data-val="axis12" title="Ось 1/2: та же ось, но она — ЗАЗОР между двумя соседними символами (полсимвол), не сам бит; при включённой галке «⊙ Ось: сдвиг только на «1»/между «1-0»» — только в зазоре между «1» и «0» (именно в этом порядке, не «0» и «1»; строки без такой пары заморожены, стоят по центру)">⊙½</button><button data-val="axisbit" title="ОсьБит: ось — не фиксированный столбец, а строка НАД текущей. Круговой сдвиг ◄/►Круг(Инв) двигает строку так, чтобы хоть одна её «1» встала в тот же столбец, что хоть одна «1» строки выше (при включённой галке «⊙ Ось: сдвиг только на «1»/между «1-0»» — иначе обычный одиночный шаг). У первой строки/если строка выше пустая — двигать не на что">↥</button><button data-val="axisbit12" title="ОсьБит ½: та же ось-от-строки-выше, но ЗАЗОР между «1» и «0» строки выше (именно в этом порядке), не сам бит — аналогично «Ось 1.2»">↥½</button></div><div id="colHeader"></div><div class="axis-split" id="axisSplit" title="Тяни — сдвинуть начало отсчёта столбцов (работает для любого выравнивания, не только «⊙ Ось»/«Ось 1/2»)"></div><div id="rows"></div></div>
   </div>
   <div class="controls" id="rightPanel"><div class="scrollable-settings" id="rightSlot"></div></div>
 </div>
@@ -1662,8 +1674,15 @@ function computeShiftTotalTurns(idxs, isShiftInv){
    РАЗ за L шагов, а значит к исходному значению (не только позиции) он вернётся только через
    ДВА полных круга — 2×L шагов (см. totalTurns в autoRun() ниже, отдельно посчитан для этих
    двух режимов). */
-function rotateStrRightInv(s) { if (!s || s.length <= 1) return s; return invertBits(s.slice(-1)) + s.slice(0, -1); }
-function rotateStrLeftInv(s) { if (!s || s.length <= 1) return s; return s.slice(1) + invertBits(s[0]); }
+/* Условие выхода — только ПУСТАЯ строка (не "длина <= 1", как у обычных поворотов выше). У строки
+   из ОДНОГО символа круговой сдвиг сам по себе ничего не переставляет, но её единственный символ
+   при этом ПЕРЕСЕКАЕТ границу строки — а значит, в «Инв»-варианте обязан перевернуться. Раньше
+   такая строка выходила отсюда нетронутой, и «1» навсегда оставалась «1» (запрос пользователя —
+   "строка с 1 символом, Круг Инв не работает, там всегда 1, нет 0"). Сами формулы ниже для длины 1
+   дают ровно то, что нужно: slice(0,-1)/slice(1) возвращают "", остаётся один инвертированный
+   символ. */
+function rotateStrRightInv(s) { if (!s) return s; return invertBits(s.slice(-1)) + s.slice(0, -1); }
+function rotateStrLeftInv(s) { if (!s) return s; return s.slice(1) + invertBits(s[0]); }
 
 /* Все варианты циклического сдвига строки, включая саму строку (индекс 0) — для "Подпаттерны
    сдвига" фон-поиска: напр. "110" -> ["110","101","011"]. */
@@ -1715,9 +1734,14 @@ function getMaxPatLen(st) {
   return maxL;
 }
 
-/* Сдвиг короткой строки внутри сетки шириной maxLen */
-function alignShift(maxLen, len, align){
+/* Сдвиг короткой строки внутри сетки шириной maxLen.
+   rowIdx — НОМЕР строки в таблице; нужен только "Лесенкам" (см. их ветки ниже — с запроса
+   пользователя они считают ступеньку от номера строки, а не от её длины). Остальным
+   выравниваниям он не нужен, поэтому параметр необязательный: где его не передали, берётся 0 —
+   для не-лесенок это ничего не меняет. */
+function alignShift(maxLen, len, align, rowIdx){
   const diff = maxLen - len;
+  const ri = rowIdx || 0;
   // "Ось"/"Ось 1.2" (⊙, data-val="axis"/"axis12") — базовое (СТАТИЧЕСКОЕ) значение: столбец
   // оси = maxLen/2 — середина ВИДИМОЙ области (между #vsplit и #vsplit2), см. подробный
   // комментарий у axisRowShift() выше (реальная сетка под "Ось" вдвое шире maxLen, но лишняя
@@ -1727,35 +1751,45 @@ function alignShift(maxLen, len, align){
   // (alignShift) используется как обобщённая точка отсчёта там, где конкретная строка/её сдвиг
   // ещё не важны (Тетрис-Ось и т.п.).
   if (align === "axis" || align === "axis12") return Math.floor(maxLen / 2); // свой сдвиг оси — см. axisRowShift(), там свой же axisCenterOffset
-  // Ручка #axisSplit ("передвигающая начало линия столбца") — запрос пользователя "для каждого
-  // выравнивания нужна эта линия" — раньше двигала только "⊙ Ось"/"Ось 1.2" (через axisRowShift
-  // выше), теперь st.axisCenterOffset прибавляется к сдвигу ЛЮБОГО выравнивания здесь же, одной
-  // строкой на все ветки ниже (кроме axis/axis12 — у той сдвиг уже посчитан отдельной формулой
-  // строкой выше). Для Тетрис-Ось (tetrisAlignOffset — РАЗНИЦА двух alignShift()) offset
-  // одинаковый у обеих строк и просто взаимно сокращается, не меняет её поведение.
-  const off = st.axisCenterOffset || 0;
-  if (align === "left") return off;
-  if (align === "right") return diff + off;
-  // "Лесенка" (↘, см. #alignGrp data-val="stairs") — сдвиг растёт вместе с длиной самой строки
-  // (shift = len-1), а не с разницей до maxLen, как у остальных режимов: "1"/"11"/"111"/"1111"
-  // превращаются в диагональную лестницу вправо, а не выравниваются по общей ширине. Это
-  // НАМЕРЕННО ломает обычный инвариант "shift+len <= maxLen" (у длинных строк общая ширина
-  // становится БОЛЬШЕ maxLen) — места, где от этого мог бы уйти в минус остаток паддинга
-  // (repeat() с отрицательным числом), подстрахованы Math.max(0, …) по месту вызова.
-  if (align === "stairs") return (len ? len - 1 : 0) + off;
-  // "Лесенка ½" (↘½, data-val="halfstairs") — та же "Лесенка", но вдвое положе: целочисленный
-  // сдвиг — половина от обычной "Лесенки" (округление вниз), а недостающие 0.5 символа при
-  // нечётном (len-1) довешиваются transform:translateX(0.5ch) в render() (halfShiftAttr), тем
-  // же приёмом, что и у "halfcenter" относительно обычного "center".
-  if (align === "halfstairs") return (len ? (len - 1) >> 1 : 0) + off;
-  // "Лесенка правая" (↙, data-val="rstairs") — зеркало обычной "Лесенки": строка НЕ
-  // реверсируется (читается как обычно, слева направо), но диагональ/ось — по ПОСЛЕДНЕМУ биту,
-  // не по первому. Сдвиг = −2×(длина−1), тоже без учёта maxLen: правый край строки
-  // (shift+len-1) получается 0,−1,−2,−3... — сама диагональ, левый край уезжает всё дальше в
-  // минус (свободно, см. общий код отрицательного сдвига в render() — "if (shift < 0) extraCh
+  // ВАЖНО: сдвиг ручки #axisSplit (st.axisCenterOffset) СЮДА НЕ ВХОДИТ и входить не должен.
+  // Раньше он прибавлялся здесь, к сдвигу каждой строки — и тем самым протекал в ДАННЫЕ, а не
+  // только в картинку: alignShift() зовут не только render(), но и вертикальная склейка/XOR/
+  // фон-поиск (concatVerticalDownTo, xorRowsDownTo, buildVerticalChain и т.п.). Там колонки
+  // перебираются от 0, поэтому при сдвиге ВПРАВО первые offset колонок оказывались пустыми у
+  // ВСЕХ строк разом, и галка "padZero" набивала в результат длинный хвост нулей (запрос
+  // пользователя — "Xor в фоновом поиске откуда-то добавляет 000000 при перемещении вправо").
+  // Плюс сдвиг ломал совпадение data-col строк с номерами столбцов линейки #colHeader.
+  // Теперь offset — ЧИСТО ВИЗУАЛЬНЫЙ и применяется ОДИН РАЗ ко всей картинке разом (одинаковым
+  // transform на строках и на линейке, см. render()/renderColHeader()) — данные, нумерация
+  // столбцов и все расчёты его вообще не видят, а картинка едет целиком, как и просили
+  // ("сдвигает всё, кроме паттернов; что наезжает на паттерны — прячется за ними").
+  if (align === "left") return 0;
+  if (align === "right") return diff;
+  // ЛЕСЕНКИ считают ступеньку от НОМЕРА СТРОКИ (rowIdx), а НЕ от её длины — запрос пользователя:
+  // "две строки «1» и «1» стоят 1 под 1, а надо со смещением". При старой формуле (от длины)
+  // сдвиг был функцией ТОЛЬКО длины, поэтому любые строки одинаковой длины неизбежно вставали
+  // ровно друг под друга, сколько бы их ни было. От номера же лестница идёт ровно вниз всегда,
+  // независимо от того, какие строки в таблице.
+  // Инвариант "shift+len <= maxLen" тут НАМЕРЕННО не соблюдается (общая ширина у нижних строк
+  // становится БОЛЬШЕ maxLen) — места, где остаток паддинга мог бы уйти в минус, подстрахованы
+  // Math.max(0, …) по месту вызова.
+  // "Лесенка" (↘, data-val="stairs") — шаг +1 колонка на строку.
+  if (align === "stairs") return ri;
+  // "Лесенка ½" (↘½, data-val="halfstairs") — та же лестница, но вдвое положе: шаг +0.5 на
+  // строку. Целая часть — здесь, недостающие 0.5 символа у НЕЧЁТНЫХ строк довешивает
+  // transform:translateX в render() (см. extraCh/hasHalfNudge), тем же приёмом, что и "Центр ½".
+  if (align === "halfstairs") return ri >> 1;
+  // "Лесенка правая" (↙, data-val="rstairs") — зеркало обычной: строка НЕ реверсируется (читается
+  // слева направо), но диагональ идёт по ПОСЛЕДНЕМУ биту строки. Правый край (shift+len−1) должен
+  // идти 0,−1,−2,… по номеру строки, откуда shift = −ri − (len−1). Левый край при этом свободно
+  // уезжает в минус (см. общий код отрицательного сдвига в render() — "if (shift < 0) extraCh
   // += shift;", он не завязан на конкретное выравнивание).
-  if (align === "rstairs") return (len ? -2 * (len - 1) : 0) + off;
-  return (diff >> 1) + off;
+  if (align === "rstairs") return -ri - (len ? len - 1 : 0);
+  // "Лесенка правая ½" (↙½, data-val="rhalfstairs") — то же, но правый край шагает на −0.5 за
+  // строку: shift = −ri/2 − (len−1). Целая часть вниз (для отрицательных Math.floor уводит
+  // «дальше в минус»), полсимвола у нечётных строк — тем же transform, что и у "Лесенка ½".
+  if (align === "rhalfstairs") return -Math.ceil(ri / 2) - (len ? len - 1 : 0);
+  return (diff >> 1);
 }
 
 function invertBits(s){ let o = ""; for (const c of s) o += (c === "0" ? "1" : c === "1" ? "0" : c); return o; }
@@ -2050,32 +2084,51 @@ function concatSnakeGlueDownTo(st, stopIdx){
    остатка, а НЕ по чётности номера строки). Берём только под-сетку, в которую попадает сама
    stopIdx-строка — иначе колонки на экране реально не совпадают. */
 function concatVerticalDownTo(st, stopIdx, dir){
-  const isHalfAlign = st.align === "halfcenter" || st.align === "halfstairs";
+  const isHalfAlign = st.align === "halfcenter" || st.align === "halfstairs" || st.align === "rhalfstairs";
   let maxLen = 0;
   for (let i = 0; i <= stopIdx; i++) { const s = getRowBits(st, i); if (s.length > maxLen) maxLen = s.length; }
-  const wantNudge = isHalfAlign ? hasHalfNudge(getRowBits(st, stopIdx), maxLen, st.align) : null;
-  const keep = (s) => !isHalfAlign || hasHalfNudge(s, maxLen, st.align) === wantNudge;
+  const wantNudge = isHalfAlign ? hasHalfNudge(getRowBits(st, stopIdx), maxLen, st.align, stopIdx) : null;
+  const keep = (s, i) => !isHalfAlign || hasHalfNudge(s, maxLen, st.align, i) === wantNudge;
 
-  let reach = 0;
+  // Сдвиг берётся через rowShiftFor(), а не alignShift() — только она знает про текущий
+  // круговой/осевой сдвиг конкретной строки (axisOffsetMap/axisBitShiftMap), поэтому под
+  // "⊙ Ось"/"Ось 1.2"/"ОсьБит"/"ОсьБит ½" столбцы теперь берутся те же, что реально видны на
+  // экране (запрос пользователя — "проверь при всех выравниваниях"); alignShift() про эти сдвиги
+  // не знает и собирала столбцы не там.
+  const parts = [];
+  let minCol = Infinity, maxCol = -Infinity;
   for (let i = 0; i <= stopIdx; i++) {
     const s = getRowBits(st, i);
-    if (!s.length || !keep(s)) continue;
-    const r = alignShift(maxLen, s.length, st.align) + s.length;
-    if (r > reach) reach = r;
+    if (!s.length || !keep(s, i)) continue;
+    const shift = rowShiftFor(maxLen, i, s, st.align);
+    parts.push({ s, shift });
+    if (shift < minCol) minCol = shift;
+    if (shift + s.length > maxCol) maxCol = shift + s.length;
   }
-  if (!reach) return "";
+  if (!parts.length) return "";
+  // Отсчёт колонок — от САМОЙ ЛЕВОЙ занятой, а не жёстко от нуля: у "Лесенка правая" и осевых
+  // режимов строка свободно уезжает левее нулевой колонки, и её биты раньше просто не попадали
+  // в перебор.
   const cols = [];
-  for (let c = 0; c < reach; c++) cols.push(c);
+  for (let c = minCol; c < maxCol; c++) cols.push(c);
   if (dir === "left") cols.reverse();
 
   let out = "";
   for (const c of cols) {
-    for (let i = 0; i <= stopIdx; i++) {
-      const s = getRowBits(st, i);
-      if (!s.length || !keep(s)) continue;
-      const shift = alignShift(maxLen, s.length, st.align);
-      const localCol = c - shift;
-      if (localCol >= 0 && localCol < s.length) out += s[localCol];
+    // "Столбец идёт в счёт, только если хоть в одной строке в нём есть символ" — полностью пустые
+    // столбцы (дырки между разъехавшимися строками) пропускаем целиком. Без этой проверки при
+    // включённой галке "0 вместо пустот" (st.padZero) такая дырка дала бы столбик нулей по числу
+    // строк на ровном месте.
+    let any = false;
+    for (const p of parts) { const j = c - p.shift; if (j >= 0 && j < p.s.length) { any = true; break; } }
+    if (!any) continue;
+    for (const p of parts) {
+      const j = c - p.shift;
+      // Пустое место ВНУТРИ засчитанного столбца (эта строка сюда не достаёт): по умолчанию не
+      // пишем ничего, а при включённой галке — "0" (запрос пользователя: "сами пустоты не писать,
+      // и писать там 0 — по включённой кнопке настройки").
+      if (j >= 0 && j < p.s.length) out += p.s[j];
+      else if (st.padZero) out += "0";
     }
   }
   return out;
@@ -2086,17 +2139,17 @@ function concatVerticalDownTo(st, stopIdx, dir){
    бустрофедоне. dir — та же логика направления столбцов, что у concatVerticalDownTo.
    При "½"-выравниваниях — та же под-сетка по hasHalfNudge, что и у concatVerticalDownTo выше. */
 function concatSnakeDownTo(st, stopIdx, dir){
-  const isHalfAlign = st.align === "halfcenter" || st.align === "halfstairs";
+  const isHalfAlign = st.align === "halfcenter" || st.align === "halfstairs" || st.align === "rhalfstairs";
   let maxLen = 0;
   for (let i = 0; i <= stopIdx; i++) { const s = getRowBits(st, i); if (s.length > maxLen) maxLen = s.length; }
-  const wantNudge = isHalfAlign ? hasHalfNudge(getRowBits(st, stopIdx), maxLen, st.align) : null;
-  const keep = (s) => !isHalfAlign || hasHalfNudge(s, maxLen, st.align) === wantNudge;
+  const wantNudge = isHalfAlign ? hasHalfNudge(getRowBits(st, stopIdx), maxLen, st.align, stopIdx) : null;
+  const keep = (s, i) => !isHalfAlign || hasHalfNudge(s, maxLen, st.align, i) === wantNudge;
 
   let reach = 0;
   for (let i = 0; i <= stopIdx; i++) {
     const s = getRowBits(st, i);
-    if (!s.length || !keep(s)) continue;
-    const r = alignShift(maxLen, s.length, st.align) + s.length;
+    if (!s.length || !keep(s, i)) continue;
+    const r = alignShift(maxLen, s.length, st.align, i) + s.length;
     if (r > reach) reach = r;
   }
   if (!reach) return "";
@@ -2109,12 +2162,12 @@ function concatSnakeDownTo(st, stopIdx, dir){
     const rowOrder = [];
     for (let i = 0; i <= stopIdx; i++) {
       const s = getRowBits(st, i);
-      if (s.length && keep(s)) rowOrder.push(i);
+      if (s.length && keep(s, i)) rowOrder.push(i);
     }
     if (colIdx % 2 === 1) rowOrder.reverse();
     for (const i of rowOrder) {
       const s = getRowBits(st, i);
-      const shift = alignShift(maxLen, s.length, st.align);
+      const shift = alignShift(maxLen, s.length, st.align, i);
       const localCol = c - shift;
       if (localCol >= 0 && localCol < s.length) out += s[localCol];
     }
@@ -2129,9 +2182,14 @@ function concatSnakeDownTo(st, stopIdx, dir){
    строки (это была ошибка в первой версии этой функции: строки одинаковой длины ВСЕГДА в одной
    подсетке независимо от порядка, а строки разной длины могут попасть в одну ИЛИ в разные,
    строго по формуле ниже). */
-function hasHalfNudge(s, maxLen, align){
+function hasHalfNudge(s, maxLen, align, rowIdx){
   if (!s.length) return false;
-  return align === "halfstairs" ? (s.length - 1) % 2 !== 0 : (maxLen - s.length) % 2 !== 0;
+  // "Лесенка ½"/"Лесенка правая ½" — от чётности НОМЕРА строки: у них и сам сдвиг считается от
+  // номера (см. alignShift), поэтому в "полу"-сетку садятся именно нечётные строки. У "Центр ½"
+  // по-прежнему от чётности остатка (maxLen − длина) — там сдвиг зависит от длины.
+  return (align === "halfstairs" || align === "rhalfstairs")
+    ? (rowIdx || 0) % 2 !== 0
+    : (maxLen - s.length) % 2 !== 0;
 }
 
 /* ХОР строк 0..stopIdx, отфильтрованных предикатом wantNudge (true/false — см. hasHalfNudge) —
@@ -2155,8 +2213,11 @@ function rowShiftFor(maxLen, i, s, align){
   // (та же логика, что и в render()), остальные — по осевой геометрии. При выключенной галке
   // заморозки нет вообще — все строки по осевой геометрии.
   if (align === "axis12") return (!st.axisSnap || rowHasOneZeroPair(s)) ? axisRowShift(maxLen, i, s.length) : alignShift(maxLen, s.length, "center");
-  if (align === "axisbit" || align === "axisbit12") return resolveAxisBitShift(i) + (st.axisCenterOffset || 0);
-  return alignShift(maxLen, s.length, align);
+  // Без st.axisCenterOffset — он общий визуальный сдвиг картинки, не часть геометрии строки
+  // (см. alignShift()).
+  if (align === "axisbit" || align === "axisbit12") return resolveAxisBitShift(i);
+  // i пробрасывается дальше — "Лесенкам" он нужен, они считают ступеньку от номера строки.
+  return alignShift(maxLen, s.length, align, i);
 }
 function xorRowsFiltered(rows, stopIdx, align, st, wantNudge, rowIdxs){
   const idxs = rowIdxs || Array.from({ length: stopIdx + 1 }, (_, i) => i);
@@ -2165,23 +2226,33 @@ function xorRowsFiltered(rows, stopIdx, align, st, wantNudge, rowIdxs){
     const s = st ? getRowBits(st, i) : rows[i];
     if (s.length > maxLen) maxLen = s.length;
   }
-  let reach = 0;
+  // Границы занятых колонок. Раньше считался только ПРАВЫЙ край (reach), а массив всегда начинался
+  // с колонки 0 — поэтому биты строк с ОТРИЦАТЕЛЬНЫМ сдвигом (он бывает у "Лесенка правая" и у
+  // осевых режимов, где строка свободно уезжает левее нулевой колонки) писались в отрицательный
+  // индекс Uint8Array и МОЛЧА пропадали: на экране бит у верхней строки есть, а в результате его
+  // нет (запрос пользователя — "когда верхняя строка имеет биты, которых в выделенной нет, их надо
+  // учитывать"). Теперь начало отсчёта — min(0, самый левый сдвиг): при неотрицательных сдвигах
+  // (обычные выравнивания) origin=0 и результат ровно прежний, включая ведущие нули, а при
+  // отрицательных диапазон честно расширяется влево.
+  let reach = 0, minShift = 0;
   for (const i of idxs){
     const s = st ? getRowBits(st, i) : rows[i];
-    if (!s.length || (wantNudge !== null && hasHalfNudge(s, maxLen, align) !== wantNudge)) continue;
+    if (!s.length || (wantNudge !== null && hasHalfNudge(s, maxLen, align, i) !== wantNudge)) continue;
     const shift = rowShiftFor(maxLen, i, s, align);
     if (shift + s.length > reach) reach = shift + s.length;
+    if (shift < minShift) minShift = shift;
   }
-  if (!reach) return "";
-  const bits = new Uint8Array(reach);
+  const width = reach - minShift;
+  if (width <= 0) return "";
+  const bits = new Uint8Array(width);
   for (const i of idxs){
     const s = st ? getRowBits(st, i) : rows[i];
-    if (!s.length || (wantNudge !== null && hasHalfNudge(s, maxLen, align) !== wantNudge)) continue;
+    if (!s.length || (wantNudge !== null && hasHalfNudge(s, maxLen, align, i) !== wantNudge)) continue;
     const shift = rowShiftFor(maxLen, i, s, align);
-    for (let k = 0; k < s.length; k++) if (s[k] === "1") bits[shift + k] ^= 1;
+    for (let k = 0; k < s.length; k++) if (s[k] === "1") bits[shift + k - minShift] ^= 1;
   }
   let out = "";
-  for (let i = 0; i < reach; i++) out += bits[i];
+  for (let i = 0; i < width; i++) out += bits[i];
   return out;
 }
 
@@ -2195,7 +2266,7 @@ function xorRowsFiltered(rows, stopIdx, align, st, wantNudge, rowIdxs){
    остаток более длинной группы ДОПИСЫВАЕТСЯ в конец, не пропадает — запрос пользователя,
    проверено на примере "1,1,11,111,1000" → "011010100". */
 function xorRowsDownTo(rows, stopIdx, align, st, rowIdxs){
-  const isHalfAlign = align === "halfcenter" || align === "halfstairs";
+  const isHalfAlign = align === "halfcenter" || align === "halfstairs" || align === "rhalfstairs";
   if (!isHalfAlign) return xorRowsFiltered(rows, stopIdx, align, st, null, rowIdxs);
   const groupWhole = xorRowsFiltered(rows, stopIdx, align, st, false, rowIdxs);
   const groupHalf = xorRowsFiltered(rows, stopIdx, align, st, true, rowIdxs);
@@ -2232,7 +2303,7 @@ function buildChain(st, aIdx, bIdx){
     const s = getRowBits(st, r);
     if (s.length > maxLen) maxLen = s.length;
   }
-  const shifts = part.map(r => alignShift(maxLen, getRowBits(st, r).length, st.align));
+  const shifts = part.map(r => alignShift(maxLen, getRowBits(st, r).length, st.align, r));
   const buf = [];
   for (let p = 0; p < maxLen; p++){
     for (let k = 0; k < part.length; k++){
@@ -2330,7 +2401,10 @@ const st = {
 const UNDO_DEPTH = 500;
 /* Фон-поиск теперь мульти-select: можно включить сразу несколько режимов проверки одновременно */
 const BG_SEARCH_MODE_LABELS = {
-  interleave: "Интерлив", xor2: "Xor", xorAll: "XOR-Чёт",
+  interleave: "Интерлив", xor2: "Xor 2", xorAll: "XOR-Все",
+  // Три набора, на которые распадается "Xor 2" при выделении НЕСКОЛЬКИХ строк (см. flatMap в
+  // computeBgSearchInfo): места считаются от самой выделенной строки вверх.
+  xor2odd: "Xor 2 нечёт", xor2even: "Xor 2 чёт", xor2mix: "Xor 2 интерлив",
   concatR: "Сквозная →", concatRInv: "Сквозная → Инв", concatRRevInv: "Сквозная → Рев+Инв",
   concatL: "Сквозная ←", concatLInv: "Сквозная ← Инв", concatLRevInv: "Сквозная ← Рев+Инв",
   concatSnake: "Сквозная 🐍", concatSnakeInv: "Сквозная 🐍 Инв", concatSnakeRevInv: "Сквозная 🐍 Рев+Инв",
@@ -2448,7 +2522,10 @@ function axisBitHasMatch(cur, curShift, above, aboveShift, requirePair, adj){
    непрозрачны (var(--bg)) И стоят выше .bits по z-index (см. CSS), независимо от порядка в DOM. */
 function axisRowShift(dataMaxLen, rowIdx, len){
   if (!len) return 0;
-  return Math.floor(dataMaxLen / 2) + (st.axisCenterOffset || 0) - getAxisOffset(rowIdx, len);
+  // st.axisCenterOffset тут больше НЕ прибавляется — он стал общим визуальным сдвигом всей
+  // картинки (см. комментарий в alignShift() и render()/renderColHeader()), одинаковым для всех
+  // выравниваний, а не частью посточной геометрии.
+  return Math.floor(dataMaxLen / 2) - getAxisOffset(rowIdx, len);
 }
 /* "Ось 1.2" (st.align==="axis12") — есть ли у строки ХОТЬ ОДНА пара соседних битов «1»→«0»
    (ИМЕННО в этом порядке — «0»→«1» не считается, ЛИНЕЙНО, БЕЗ зацикливания через край строки —
@@ -2464,9 +2541,12 @@ function rowHasOneZeroPair(s){
 function rotateInvFlagsLeft(arr){ return arr.length <= 1 ? arr : arr.slice(1).concat([arr[0]]); }
 function rotateInvFlagsRight(arr){ return arr.length <= 1 ? arr : [arr[arr.length - 1]].concat(arr.slice(0, -1)); }
 /* То же самое, но у бита, переходящего границу, флаг ПЕРЕКЛЮЧАЕТСЯ (не сохраняется как есть) —
-   ровно то же место в массиве, что и переворачиваемый символ в rotateStrLeftInv/rotateStrRightInv. */
-function rotateInvFlagsLeftInv(arr){ return arr.length <= 1 ? arr : arr.slice(1).concat([!arr[0]]); }
-function rotateInvFlagsRightInv(arr){ return arr.length <= 1 ? arr : [!arr[arr.length - 1]].concat(arr.slice(0, -1)); }
+   ровно то же место в массиве, что и переворачиваемый символ в rotateStrLeftInv/rotateStrRightInv.
+   Выход только на ПУСТОМ массиве — по той же причине, что и там: единственный бит строки длины 1
+   границу пересекает, значит и его флаг обязан переключиться, иначе подсветка "перевёрнут" разошлась
+   бы с реально перевёрнутым битом. */
+function rotateInvFlagsLeftInv(arr){ return arr.length < 1 ? arr : arr.slice(1).concat([!arr[0]]); }
+function rotateInvFlagsRightInv(arr){ return arr.length < 1 ? arr : [!arr[arr.length - 1]].concat(arr.slice(0, -1)); }
 /* Развёрнут ли результат в "Черновике последнего шага" (клик по .step-log-result) — единственный
    результат в этом окне, поэтому просто bool, а не Set по ключу, как у bgResultExpanded. */
 let stepLogResultExpanded = false;
@@ -3074,9 +3154,11 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
         const padToLen = (str, targetLen, align) => {
           if (str.length >= targetLen) return str;
           const shift = alignShift(targetLen, str.length, align);
-          // Math.max(0, …) — у "лесенки" (align==="stairs") shift растёт вместе с длиной строки,
-          // а не с остатком до targetLen, поэтому остаток паддинга справа МОЖЕТ уйти в минус.
-          return "0".repeat(shift) + str + "0".repeat(Math.max(0, targetLen - str.length - shift));
+          // Math.max(0, …) с ОБЕИХ сторон — у "лесенок" shift не связан с остатком до targetLen
+          // (он считается от номера строки), поэтому в минус может уйти и правый остаток, и сам
+          // shift ("Лесенка правая" даёт отрицательный сдвиг) — repeat() от минуса бросает
+          // RangeError.
+          return "0".repeat(Math.max(0, shift)) + str + "0".repeat(Math.max(0, targetLen - str.length - shift));
         };
 
         let maxLen = 0;
@@ -3142,13 +3224,17 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
           // только БЕЗ второй группы) — запрос пользователя ("хорить со всеми строками выше
           // своей чётности, с теми где биты под битами"). Паддинг (padToLen выше) на a/b не
           // трогаем — он относится к обычному (не-½) случаю ниже.
-          const isHalfAlign = st.align === "halfcenter" || st.align === "halfstairs";
+          const isHalfAlign = st.align === "halfcenter" || st.align === "halfstairs" || st.align === "rhalfstairs";
           if (isHalfAlign) {
             const rowBHere = getRowBits(st, b);
             let maxLenXor2 = 0;
             for (let i = 0; i <= b; i++) { const s = getRowBits(st, i); if (s.length > maxLenXor2) maxLenXor2 = s.length; }
-            const wantNudge = hasHalfNudge(rowBHere, maxLenXor2, st.align);
+            const wantNudge = hasHalfNudge(rowBHere, maxLenXor2, st.align, b);
             res = xorRowsFiltered(st.rows, b, st.align, st, wantNudge);
+          } else if (st.align === "stairs" || st.align === "rstairs") {
+            // Лесенки считают сдвиг от НОМЕРА строки — xorPair() номеров не знает (см. её вызов
+            // в computeBgSearchInfo, там та же развилка).
+            res = xorRowsFiltered(st.rows, b, st.align, st, null, [a, b]);
           } else {
             res = xorPair(getRowBits(st, a), getRowBits(st, b), st.align);
           }
@@ -3609,7 +3695,7 @@ const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const KIND_CLS = ["", "inv", "rev", "invrev"];
 const KIND_LABELS_RU = ["прямая", "инверсия", "реверс", "инверсия+реверс"];
 const KIND_LABELS_SHORT = ["пр", "инв", "рев", "инв+рев"];
-const ALIGN_LABELS = { left: "По левому краю", center: "По центру", right: "По правому краю", halfcenter: "Центр ½", stairs: "Лесенка", halfstairs: "Лесенка ½", rstairs: "Лесенка правая", axisbit: "ОсьБит", axisbit12: "ОсьБит ½" };
+const ALIGN_LABELS = { left: "По левому краю", center: "По центру", right: "По правому краю", halfcenter: "Центр ½", stairs: "Лесенка", halfstairs: "Лесенка ½", rstairs: "Лесенка правая", rhalfstairs: "Лесенка правая ½", axisbit: "ОсьБит", axisbit12: "ОсьБит ½" };
 
 /* Компактная запись номеров строк для шапки "Черновика шага": подряд идущие номера — диапазоном
    ("2-3"), остальные через запятую ("2-3, 7"). op.rows бывает и готовой строкой (напр. "1–5" из
@@ -3751,7 +3837,7 @@ function computeVertOnesMask(rows, align){
   if (n < 2) return masks;
   let maxLen = 0;
   for (const s of rows) if (s.length > maxLen) maxLen = s.length;
-  const shifts = rows.map(s => s.length ? alignShift(maxLen, s.length, align) : 0);
+  const shifts = rows.map((s, i) => s.length ? alignShift(maxLen, s.length, align, i) : 0);
   const addHit = (idx, k) => {
     if (!masks[idx]) masks[idx] = new Set();
     masks[idx].add(k);
@@ -3807,15 +3893,15 @@ function computeDiagOnesMask(rows, align){
   if (n < 2) return masks;
   let maxLen = 0;
   for (const s of rows) if (s.length > maxLen) maxLen = s.length;
-  const isHalfAlign = align === "halfcenter" || align === "halfstairs";
-  const shifts = rows.map(s => s.length ? alignShift(maxLen, s.length, align) : 0);
+  const isHalfAlign = align === "halfcenter" || align === "halfstairs" || align === "rhalfstairs";
+  const shifts = rows.map((s, i) => s.length ? alignShift(maxLen, s.length, align, i) : 0);
   // Всё считается в ПОЛУсимвольных единицах (×2) — на "½"-выравниваниях часть строк имеет ещё
   // +0.5ch визуальный сдвиг (см. hasHalfNudge/halfShiftAttr в render()), которого целочисленный
   // alignShift() не знает. На этих режимах диагональ идёт с шагом ПОЛсимвола за строку (запрос
   // пользователя — "диагональ должна идти по сдвигу ½"), т.е. dirStep=1 в ×2-единицах = 0.5
   // реального столбца; на обычных выравниваниях dirStep=2×0.5=1 целый столбец/строку — то же
   // самое поведение, что было раньше (rel2x всегда чётный, k=rel2x/2 совпадает со старым k).
-  const shift2x = rows.map((s, i) => s.length ? (2 * shifts[i] + (isHalfAlign && hasHalfNudge(s, maxLen, align) ? 1 : 0)) : 0);
+  const shift2x = rows.map((s, i) => s.length ? (2 * shifts[i] + (isHalfAlign && hasHalfNudge(s, maxLen, align, i) ? 1 : 0)) : 0);
   const dirStep = isHalfAlign ? 1 : 2;
   const addHit = (idx, k) => {
     if (!masks[idx]) masks[idx] = new Set();
@@ -3983,9 +4069,14 @@ function renderColHeader(maxLen){
     }
     balanceSpacer = '<span class="row-balance">' + " ".repeat(w1 + 1 + w0) + "</span>";
   }
+  // Тот же общий визуальный сдвиг ручки #axisSplit, что и у строк (см. extraCh в render()) —
+  // линейка обязана ехать ВМЕСТЕ со строками, иначе тик N перестаёт стоять над столбцом N
+  // (запрос пользователя — "линии для выделения столбцов уехали от реальных").
+  const off = st.axisCenterOffset || 0;
+  const offAttr = off ? ' style="transform:translateX(' + (off * realColStepPx()).toFixed(2) + 'px)"' : '';
   el.innerHTML =
     '<div class="col-hdr-row"><span class="num"></span><span class="pat"></span><span class="num num-l2"></span>' + balanceSpacer +
-    '<span class="bits ' + alignCls + '"><span>' + ticks + '</span></span><span class="num num-r2"></span><span class="pat2"></span></div>';
+    '<span class="bits ' + alignCls + '"><span' + offAttr + '>' + ticks + '</span></span><span class="num num-r2"></span><span class="pat2"></span></div>';
 }
 
 /* Границы строк для режима "🔢 Выбор столбца":
@@ -4014,7 +4105,7 @@ function selectColumn(col){
   for (let i = range.lo; i < st.rows.length && i <= range.hi; i++) {
     const rowStr = st.rows[i];
     if (!rowStr || !rowStr.length) continue;
-    const shift = alignShift(maxLen, rowStr.length, st.align);
+    const shift = alignShift(maxLen, rowStr.length, st.align, i);
     const localCol = col - shift;
     if (localCol < 0 || localCol >= rowStr.length) continue;
     const d = bestColumnShift(rowStr, localCol);
@@ -4272,22 +4363,35 @@ function render(){
   renderTabs(); // <-- ЭТО ТА САМАЯ СТРОКА, КОТОРУЮ Я ЗАБЫЛ В ПРОШЛЫЙ РАЗ!
   document.getElementById("stepNo").textContent = st.step;
 
-  // Выделение НИКОГДА не должно оставаться пустым (см. запрос пользователя — "когда нет
-  // выделения для Авто что делает?? пусть всегда что-то выбрано"): раньше эта гарантия стояла
-  // только в resetAll()/loadTabState(), но Ctrl+клик по единственной выделенной строке (см. обработчик
-  // "rows".onclick — ветка delete) мог опустошить st.selectedRows и дальше это не чинилось нигде.
-  // render() вызывается почти после ЛЮБОГО изменения состояния, поэтому это самое надёжное общее
-  // место — если строк вообще нет, firstDataIdx() вернёт -1 и мы ничего не трогаем.
+  // ПУСТОЕ выделение здесь БОЛЬШЕ НЕ ЧИНИТСЯ. Раньше тут стояла гарантия "выделение никогда не
+  // пусто" (добавляла первую строку с данными) — из-за неё повторный клик по уже выделенной
+  // строке визуально не снимал выделение, а ПЕРЕПРЫГИВАЛ на первую строку: обработчик клика
+  // честно очищал набор, а следующий же render() тут же клал туда firstDataIdx(). Запрос
+  // пользователя — "пусть просто снимает выделение". Та же гарантия при СТАРТЕ/переключении
+  // вкладки осталась на месте (см. resetAll()/loadTabState) — там пустое выделение и правда
+  // выглядело бы как потерянное состояние, в отличие от явного клика пользователя.
   if (!st.selectedRows) st.selectedRows = new Set();
-  if (st.selectedRows.size === 0) {
-    const fd = firstDataIdx();
-    if (fd >= 0) st.selectedRows.add(fd);
-  }
 
   let maxLen = 0;
   for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
   const renderWidth = maxLen;
   renderColHeader(renderWidth);
+
+  // Реальный шаг столбца в px — запрос пользователя "ручка #axisSplit должна двигать ВСЁ, кроме
+  // паттернов, а то что наезжает на паттерны — просто прячется за ними, БЕЗ перекоса". Раньше
+  // "довесок" за пределы обычного посимвольного паддинга (extraCh, см. halfShiftAttr ниже —
+  // отрицательный shift/половинки символа у halfcenter и т.п.) рисовался через CSS-юнит "ch" —
+  // ширину ТОЛЬКО глифа "0", БЕЗ letter-spacing. А сам текст строки — обычные inline-span'ы
+  // внутри одного span'а (не flex-items), поэтому letter-spacing МЕЖДУ ними реально участвует в
+  // раскладке. При --chain-ls != 0 (запрос пользователя, скрин: chPx=3.2, letter-spacing=-4px)
+  // "ch"-transform и посимвольный паддинг расходились на letter-spacing НА КАЖДЫЙ символ
+  // довеска — расхождение росло с величиной сдвига и на глаз выглядело как диагональ. Меряем тем
+  // же приёмом, что и applySquareCellLs() (canvas.measureText того же шрифта/размера) + сам
+  // letter-spacing — это и есть настоящий шаг столбца внутри .bits. axisCharWidthPx() (ширина
+  // .col-cell) для этого не годится: линейка столбцов — display:flex, а letter-spacing на
+  // flex-item'ы не действует (он только для inline-текста), поэтому её ширина систематически не
+  // совпадает с реальным шагом столбца в строках, когда letter-spacing != 0.
+  const colStepPx = realColStepPx();
 
   const hl = new Map();
   if (st.hit) for (const c of st.hit.cells){
@@ -4436,8 +4540,8 @@ function render(){
     const shift = s.length ? (
       st.align === "axis" ? axisRowShift(maxLen, i, s.length) :
       st.align === "axis12" ? (axis12Frozen ? alignShift(maxLen, s.length, "center") : axisRowShift(maxLen, i, s.length)) :
-      (st.align === "axisbit" || st.align === "axisbit12") ? resolveAxisBitShift(i) + (st.axisCenterOffset || 0) :
-      alignShift(maxLen, s.length, st.align)
+      (st.align === "axisbit" || st.align === "axisbit12") ? resolveAxisBitShift(i) :
+      alignShift(maxLen, s.length, st.align, i)
     ) : 0;
     const padRight = s.length ? (renderWidth - s.length - shift) : renderWidth;
     const marks = hl.get(i);
@@ -4467,11 +4571,24 @@ function render(){
     // символов) довешиваем этим же 0.5ch-трансформом, просто целым числом символов, а не долей.
     let extraCh = 0;
     if (st.align === "halfcenter" && (maxLen - s.length) % 2 !== 0) extraCh += 0.5;
-    if (st.align === "halfstairs" && (s.length - 1) % 2 !== 0) extraCh += 0.5;
+    // "Лесенка ½"/"Лесенка правая ½" — от чётности НОМЕРА строки (их сдвиг тоже считается от
+    // номера, см. alignShift()), а не от длины, как у "Центр ½" выше. См. hasHalfNudge().
+    if ((st.align === "halfstairs" || st.align === "rhalfstairs") && i % 2 !== 0) extraCh += 0.5;
     if (isAxisBetween) extraCh -= 0.5;
     if (isAxisBitBetween) extraCh -= 0.5;
     if (shift < 0) extraCh += shift;
-    const halfShiftAttr = s.length && extraCh !== 0 ? ' style="transform:translateX(' + extraCh + 'ch)"' : '';
+    // Сдвиг ручки #axisSplit — ОДИНАКОВЫЙ довесок ко ВСЕМ строкам разом (и к линейке столбцов,
+    // см. renderColHeader()). Именно потому, что он одинаковый, он не может ничего перекосить:
+    // вся картинка едет как одно целое. Раньше он прибавлялся к shift КАЖДОЙ строки по
+    // отдельности (внутри alignShift) — и строки с положительным shift печатались пробелами, а
+    // ушедшие в минус — трансформом, из-за чего два разных механизма расходились по субпикселям
+    // и пирамида кривела тем сильнее, чем дальше утащили ручку (запрос пользователя — "при
+    // центр. выравнивании кривая пирамида, по мере перемещения за линию центра изменяется").
+    extraCh += (st.axisCenterOffset || 0);
+    // px, не CSS "ch" — colStepPx (см. её комментарий в начале render()) учитывает letter-spacing,
+    // как и реальный текст строки; чистый "ch" его игнорирует и на большом сдвиге накапливал
+    // видимый диагональный перекос столбцов относительно печатных (не-transform) строк.
+    const halfShiftAttr = s.length && extraCh !== 0 ? ' style="transform:translateX(' + (extraCh * colStepPx).toFixed(2) + 'px)"' : '';
 
     // Эта строка — сама целевая строка? (сквозная цепочка Гориз.XOR теперь всегда = эта же
     // строка, "чужих" строк-цепочки выше больше нет — см. horizSelfChain())
@@ -5073,6 +5190,38 @@ if (stepLogResizeHandleEl) {
     saveCache();
   });
 }
+/* Такая же ручка высоты у панели «Результат» (запрос пользователя — "сделай такую же ручку
+   перетаскивания границы у Результатов, как и у Черновика"). Класс ручки переиспользован тот же
+   (.step-log-resize-handle), чтобы вид/поведение совпадали один в один. Отличие от Черновика — тут
+   высоту храним прямо в inline-стиле #chainText, отдельной переменной не нужно: у этой панели нет
+   аналога applyStepLogBodyHeight(), которая пересчитывала бы высоту на каждом render(). Заодно
+   снимаем max-height (по умолчанию 40vh) — иначе перетаскивание ВЫШЕ этого потолка визуально
+   ничего бы не давало. */
+const chainResultResizeHandleEl = document.getElementById("chainResultResizeHandle");
+const chainTextResizeEl = document.getElementById("chainText");
+if (chainResultResizeHandleEl && chainTextResizeEl) {
+  let dragStartY = 0, dragStartH = 0, dragging = false;
+  chainResultResizeHandleEl.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    dragging = true;
+    dragStartY = e.clientY;
+    dragStartH = chainTextResizeEl.offsetHeight;
+    chainResultResizeHandleEl.classList.add("dragging");
+  });
+  window.addEventListener("mousemove", (e) => {
+    if (!dragging) return;
+    const h = Math.max(24, dragStartH + (e.clientY - dragStartY));
+    chainTextResizeEl.style.maxHeight = "none";
+    chainTextResizeEl.style.height = h + "px";
+  });
+  window.addEventListener("mouseup", () => {
+    if (!dragging) return;
+    dragging = false;
+    chainResultResizeHandleEl.classList.remove("dragging");
+    saveCache();
+  });
+}
 /* === МАРКЕР 10: СОБЫТИЯ === */
 const cPullEl      = document.getElementById("cPull");
 const cOrderEl     = document.getElementById("cOrder");
@@ -5638,8 +5787,8 @@ function copySelectedRows(){
   const idxs = Array.from(st.selectedRows).sort((a, b) => a - b);
   const lines = idxs.map(i => {
     const s = getRowBits(st, i) || "";
-    const shift = s.length ? alignShift(maxLen, s.length, st.align) : 0;
-    return " ".repeat(shift) + s;
+    const shift = s.length ? alignShift(maxLen, s.length, st.align, i) : 0;
+    return " ".repeat(Math.max(0, shift)) + s;
   });
   copyTextToClipboard(lines.join("\n"), `Скопировано строк: ${idxs.length}`);
 }
@@ -5772,7 +5921,10 @@ const LAYOUT_KEY = 'zerk_fold_layout';
 /* Порядок стековых overlay-баров сверху вниз (см. МАРКЕР 10.2b OVERLAY_STACK ниже) —
    меняется только перетаскиванием за ручку ⋮⋮ в шапке, персистится вместе с остальной
    раскладкой (тот же LAYOUT_KEY). */
-let overlayOrder = ['chainResultBox', 'stepLogBox'];
+// «Черновик шага» ВВЕРХУ, «Результат фон-поиска» под ним — запрос пользователя. Это лишь порядок
+// ПО УМОЛЧАНИЮ: если пользователь уже менял его перетаскиванием за «⋮⋮», сохранённый порядок из
+// layout-кэша перекроет этот (см. loadLayout — там overlayOrder читается из L.overlayOrder).
+let overlayOrder = ['stepLogBox', 'chainResultBox'];
 /* Полностью скрытые крестиком ✕ overlay-бары (в отличие от collapsed — тот просто сворачивает
    в строку-заголовок, а не убирает бар из вида совсем). Вернуть — только кнопками
    #bToggleResultBox/#bToggleStepLog в верхнем меню, см. МАРКЕР 10.2b OVERLAY_STACK. */
@@ -5797,7 +5949,9 @@ function saveLayout() {
   ['leftSlot', 'rightSlot'].forEach(z => Array.from(document.getElementById(z).children).forEach((el, i) => { if (el.id) g[el.id] = { z: z, i: i }; }));
   document.querySelectorAll('body > .floating-panel').forEach(el => { if (el.id) g[el.id] = { z: 'canvas', x: parseInt(el.style.left, 10) || 0, y: parseInt(el.style.top, 10) || 0 }; });
   let pins = {}; for (let m in MENUS) pins[m] = MENUS[m].pin;
-  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ pins: pins, groups: g, overlayOrder: overlayOrder, overlayHidden: overlayHidden })); } catch (e) {}
+  // overlayOrderV2 — флаг разовой миграции порядка окон, см. loadLayout(). Пишется всегда, поэтому
+  // после первого же сохранения текущий порядок снова становится главнее default'а.
+  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ pins: pins, groups: g, overlayOrder: overlayOrder, overlayOrderV2: true, overlayHidden: overlayHidden })); } catch (e) {}
 }
 
 const SLOT_OF = { leftPanel: 'leftSlot', rightPanel: 'rightSlot' };
@@ -5970,7 +6124,13 @@ document.addEventListener('mousedown', (e) => {
 (function loadLayout() {
   let raw = null; try { raw = localStorage.getItem(LAYOUT_KEY); } catch (e) {}
   let L = null; if (raw) { try { L = JSON.parse(raw); } catch (e) {} }
-  if (L && Array.isArray(L.overlayOrder) && L.overlayOrder.length === overlayOrder.length
+  // Разовая миграция порядка окон: смена значения по умолчанию («Черновик» наверх) сама по себе
+  // ничего не даёт тем, у кого в localStorage уже лежит СТАРЫЙ порядок — он читается ниже и
+  // перекрывает default (запрос пользователя: "порядок не изменился"). Флаг overlayOrderV2
+  // взводится один раз: пока его нет, сохранённый порядок игнорируется и берётся новый default,
+  // а дальше всё как раньше — перетаскивание за «⋮⋮» сохраняется и уважается.
+  const overlayOrderMigrated = !!(L && L.overlayOrderV2);
+  if (overlayOrderMigrated && Array.isArray(L.overlayOrder) && L.overlayOrder.length === overlayOrder.length
       && overlayOrder.every(id => L.overlayOrder.includes(id))) {
     overlayOrder = L.overlayOrder;
   }
@@ -6004,6 +6164,22 @@ document.addEventListener('mousedown', (e) => {
    в актуальном виде (сумма высот обеих + зазор между ними), чтобы .canvas резервировал верхний
    отступ (padding-top: calc(6px + var(--result-box-h))) и строки таблицы не уезжали под бары. */
 const OVERLAY_GAP = 6;
+/* Перенос группы выравниваний (#alignGrp) из холста (.chain) в .main-layout — запрос
+   пользователя: она должна висеть плавающей полосой ПОВЕРХ баров «Результат»/«Черновик», сразу
+   под верхним меню. Перенос нужен именно в DOM, а не только в CSS: position:absolute считается от
+   ближайшего позиционированного предка, и, останься элемент внутри холста, полоса уезжала бы
+   вместе с содержимым при скролле — а .overlay-box'ы позиционируются как раз от .main-layout.
+   Инлайновые margin/width из разметки снимаем — теперь положение задаёт CSS (top/left/transform),
+   а прежний "margin:0 auto" центрировал его как блок в потоке, чего больше нет. */
+{
+  const alignGrpEl = document.getElementById("alignGrp");
+  const mainLayoutEl = document.querySelector(".main-layout");
+  if (alignGrpEl && mainLayoutEl) {
+    alignGrpEl.style.margin = "";
+    alignGrpEl.style.width = "";
+    mainLayoutEl.appendChild(alignGrpEl);
+  }
+}
 function layoutOverlayBoxes(){
   // Скрытые (✕, overlayHidden) полностью выпадают из стопки — ни места, ни зазора после них.
   const visible = overlayOrder.filter(id => !overlayHidden[id]);
@@ -6016,7 +6192,15 @@ function layoutOverlayBoxes(){
     top += h + OVERLAY_GAP;
     stackH += h + (i < visible.length - 1 ? OVERLAY_GAP : 0);
   });
-  document.documentElement.style.setProperty('--result-box-h', stackH + 'px');
+  // Плавающая полоса выравниваний (#alignGrp) висит НАД стопкой и тоже занимает место сверху —
+  // но она не часть overlayOrder, поэтому в stackH не попадала. Когда все бары скрыты (✕),
+  // stackH=0, отступ холста схлопывался и линейка столбцов/строки уезжали ПОД эту полосу (запрос
+  // пользователя — "когда нет панелей, полоски накладываются на меню выравниваний"). Берём
+  // максимум: пока бары видны, полоса и так внутри их высоты (она поверх них), а когда скрыты —
+  // отступ держится по самой полосе.
+  const alignGrpEl = document.getElementById("alignGrp");
+  const alignH = alignGrpEl ? alignGrpEl.offsetHeight + OVERLAY_GAP : 0;
+  document.documentElement.style.setProperty('--result-box-h', Math.max(stackH, alignH) + 'px');
 }
 // Подсветка mode-act — ПОКА ОКНО ВИДНО (!hidden), а не пока скрыто — запрос пользователя
 // ("наоборот, когда выключены — не подсвечивать надо").
@@ -6314,6 +6498,14 @@ alignBtns.forEach(btn => {
     alignBtns.forEach(b => b.classList.remove("act"));
     btn.classList.add("act");
     st.align = btn.getAttribute("data-val");
+    // Запрос пользователя: смена режима выравнивания СБРАСЫВАЕТ ручку #axisSplit на середину
+    // видимой области (между колонками паттернов) — без этого offset, натянутый в прошлом режиме,
+    // складывался с ЧУЖОЙ точкой отсчёта нового режима и уводил всю цепочку далеко за экран.
+    // Два render(): первый — чтобы centerAxisOffset() считала уже по новому выравниванию (у
+    // "ОсьБит" сдвиг берётся из axisBitShiftMap, а её наполняет именно render()), второй —
+    // применить сам сброшенный offset.
+    render();
+    st.axisCenterOffset = centerAxisOffset();
     render();
     saveCache();
   };
@@ -6473,32 +6665,57 @@ function computeBgSearchTarget(){
   // отрисовка (renderLengthSumsHtml, вкладка «Лог находок») — исключаем из этого расчёта.
   const modesAll = (st.bgSearchModes && st.bgSearchModes.length) ? st.bgSearchModes : ["interleave"];
   const modes = modesAll.filter(m => m !== "lengthSums");
-  const results = modes.map(mode => {
+  // flatMap, а не map — один режим может дать НЕСКОЛЬКО отдельных строк результата (см. "Xor 2"
+  // при мультивыделении ниже: три самостоятельные строки вместо одной склейки через пробел —
+  // запрос пользователя, чтобы фон-поиск сверял паттерн с КАЖДЫМ набором отдельно; в одной
+  // строке-склейке совпадение через границу наборов было бы невозможно, а сам разделитель-пробел
+  // мешал бы поиску).
+  const mkResult = (m, result) => {
+    const kinds = findPatternKinds(result, pat.text);
+    return { mode: m, result, matched: kinds.length > 0, kinds, tried: kinds.tried };
+  };
+  const results = modes.flatMap(mode => {
     let result;
     if (mode === "xor2") {
       if (multiSelIdxs) {
-        // Явно выделено несколько строк — ХОР-им ровно их, без фильтра по под-сетке ½-выравнивания
-        // (пользователь сам выбрал ТОЧНО эти строки).
-        result = xorRowsFiltered(st.rows, selIdx, st.align, st, null, multiSelIdxs);
+        // Выделено НЕСКОЛЬКО строк — запрос пользователя: считать НЕ один общий ХОР по всем (это
+        // делало режим неотличимым от "XOR-Все"), а ТРИ ОТДЕЛЬНЫЕ строки результата:
+        //   1) ХОР строк на НЕЧЁТНЫХ местах, считая ОТ САМОЙ ВЫДЕЛЕННОЙ вверх (сама она — место
+        //      №1, значит нечётное), т.е. через одну;
+        //   2) ХОР строк на ЧЁТНЫХ местах — оставшаяся половина, отдельно;
+        //   3) интерливинг первых двух наборов между собой.
+        // Именно тремя записями (см. flatMap/mkResult выше), а не одной склейкой через пробел —
+        // так фон-поиск сверяет паттерн с каждым набором независимо.
+        // Счёт мест идёт СНИЗУ ВВЕРХ (от выделенной), поэтому список выделенных индексов
+        // (multiSelIdxs отсортирован по возрастанию) разворачиваем.
+        const fromBottom = multiSelIdxs.slice().reverse();
+        const oddIdxs = fromBottom.filter((_, k) => k % 2 === 0).sort((a, b) => a - b);
+        const evenIdxs = fromBottom.filter((_, k) => k % 2 === 1).sort((a, b) => a - b);
+        const oddXor = oddIdxs.length ? xorRowsFiltered(st.rows, selIdx, st.align, st, null, oddIdxs) : "";
+        const evenXor = evenIdxs.length ? xorRowsFiltered(st.rows, selIdx, st.align, st, null, evenIdxs) : "";
+        return [
+          mkResult("xor2odd", oddXor),
+          mkResult("xor2even", evenXor),
+          mkResult("xor2mix", interleavePair(oddXor, evenXor, st.align)),
+        ];
       } else {
-        // При "½"-выравниваниях (Центр ½/Лесенка ½) соседние строки сдвинуты друг относительно
-        // друга на ПОЛсимвола (transform:translateX(0.5ch), см. halfShiftAttr) — биты соседних
-        // строк физически НЕ стоят друг под другом. XOR 2 поэтому ХОР-ит НЕ строку прямо над
-        // выделенной, а ВСЕ строки 0..selIdx из ТОЙ ЖЕ под-сетки, что и сама выделенная (см.
-        // hasHalfNudge/xorRowsFiltered — та же логика, что у XOR-Чёт, только БЕЗ второй группы) —
-        // запрос пользователя. Для обычных выравниваний — как раньше, просто строка над ней.
-        const isHalfAlign = st.align === "halfcenter" || st.align === "halfstairs";
-        if (isHalfAlign) {
-          let maxLenXor2 = 0;
-          for (let i = 0; i <= selIdx; i++) { const s = getRowBits(st, i); if (s.length > maxLenXor2) maxLenXor2 = s.length; }
-          const wantNudge = hasHalfNudge(rowSel, maxLenXor2, st.align);
-          result = xorRowsFiltered(st.rows, selIdx, st.align, st, wantNudge);
-        } else if (st.align === "axis" || st.align === "axis12" || st.align === "axisbit" || st.align === "axisbit12") {
-          // "⊙ Ось"/"Ось 1.2"/"ОсьБит"/"ОсьБит ½" — тот же случай, что и ½-выравнивания: xorPair()
-          // не знает индексов строк и не может учесть их текущий круговой/осевой сдвиг
-          // (axisOffsetMap/axisBitShiftMap) — ХОР-им через xorRowsFiltered (она уже умеет "по
-          // столбцам" под этими выравниваниями, см. rowShiftFor) ровно строку над выделенной и
-          // саму выделенную, явным списком индексов.
+        // "Xor 2" — ВСЕГДА ровно ДВЕ строки: выделенная и та, что прямо над ней (запрос
+        // пользователя). Раньше при "½"-выравниваниях сюда подмешивались ВСЕ строки 0..selIdx из
+        // той же под-сетки — это делало режим неотличимым от "XOR-Все" и противоречило самому его
+        // смыслу. Никакой особой обработки полусдвига не нужно: xorRowsFiltered() складывает
+        // строки ПО СТОЛБЦАМ с учётом их реального сдвига (см. rowShiftFor), поэтому полусимвольное
+        // смещение соседних строк само собой даёт переплетение бит (интерлив), а совпадение
+        // столбец-в-столбец — обычный XOR, ровно как и просили.
+        // Все ЛЕСЕНКИ тоже сюда: их сдвиг зависит от НОМЕРА строки (см. alignShift), а xorPair()
+        // видит только сами строки, без номеров — она годится лишь там, где сдвиг определяется
+        // одними длинами (⇤ / ↔ / ⇥).
+        const needsColumnAware = st.align === "halfcenter" ||
+          st.align === "stairs" || st.align === "halfstairs" ||
+          st.align === "rstairs" || st.align === "rhalfstairs" ||
+          st.align === "axis" || st.align === "axis12" || st.align === "axisbit" || st.align === "axisbit12";
+        if (needsColumnAware) {
+          // xorPair() не знает индексов строк и потому не видит ни полусдвига, ни текущего
+          // кругового/осевого сдвига (axisOffsetMap/axisBitShiftMap) — тут только xorRowsFiltered.
           result = xorRowsFiltered(st.rows, selIdx, st.align, st, null, [selIdx - 1, selIdx]);
         } else {
           result = xorPair(rowAbove, rowSel, st.align);
@@ -6537,8 +6754,7 @@ function computeBgSearchTarget(){
     } else {
       result = interleavePair(rowAbove, rowSel, st.align);
     }
-    const kinds = findPatternKinds(result, pat.text);
-    return { mode, result, matched: kinds.length > 0, kinds, tried: kinds.tried };
+    return [mkResult(mode, result)];
   });
   const lengthSumsMatched = lengthSumsHasMatch(st, selIdx);
   return {
@@ -7071,6 +7287,32 @@ function shiftOneRowAxisAware(r, axisDelta, realRotateFn, invFlagsRotateFn){
     if (!above || !above.length) return; // нет строки выше — двигать не на что
     const aboveShift = resolveAxisBitShift(aboveIdx);
     let sh = resolveAxisBitShift(r);
+    const shBefore = sh; // нужен ниже, чтобы утащить за собой все строки НИЖЕ на ту же величину
+    // ЗНАК ОБРАТНЫЙ axisDelta (запрос пользователя — "жму влево, а реально уходят вправо"):
+    // в "⊙ Ось"/"Ось 1.2" axisDelta — шаг ИНДЕКСА символа, стоящего на оси (больше индекс —
+    // строка стоит ЛЕВЕЕ, т.к. shift = axisCol − off), поэтому там ◄ = +1. Здесь же sh — это
+    // сам СТОЛБЕЦ сдвига строки, где больше = ПРАВЕЕ, то есть та же +1 уводила строку в
+    // противоположную нажатой сторону.
+    const shStep = -axisDelta;
+    // Предел расхождения строк (запрос пользователя: «111» и «0000» вместе дают максимум
+    // «1110000» — семь символов, не больше; дальше застопорить). Крайние допустимые положения —
+    // те, где строки СТЫКУЮТСЯ без нахлёста и без дыры: sh = aboveShift − len (эта строка
+    // кончается ровно там, где начинается верхняя) и sh = aboveShift + above.length (начинается
+    // ровно там, где верхняя кончилась). В обоих случаях общая ширина = len + above.length; уйди
+    // строка дальше — между ними появится пустой зазор, и суммарная ширина станет БОЛЬШЕ суммы
+    // длин, чего и просили не допускать.
+    // "ОсьБит ½" — граница та же по смыслу, но считать её надо по ВИДИМОМУ положению строк, а не
+    // по целому sh: в этом режиме строка с НЕЧЁТНЫМ числом полушаговых звеньев рисуется на
+    // полсимвола левее своего sh (см. isAxisBitBetween/extraCh в render()). У соседних строк эта
+    // полушаговая поправка разная, поэтому вещественная граница уезжает на ±0.5 (запрос
+    // пользователя — "там не на 1, а на 0,5 надо максимальное расхождение"). Приводим обратно к
+    // целому sh через ceil/floor — так стоп срабатывает ровно на полсимвола раньше или позже, но
+    // сама строка по-прежнему встаёт на целую позицию. У обычной "ОсьБит" обе поправки нулевые,
+    // и формула вырождается в прежнюю.
+    const halfOf = (idx) => (st.align === "axisbit12" && axisBitHalfSteps(idx) % 2 === 1) ? 0.5 : 0;
+    const halfCorr = halfOf(r) - halfOf(aboveIdx);
+    const minSh = Math.ceil(aboveShift + halfCorr - len);
+    const maxSh = Math.floor(aboveShift + halfCorr + above.length);
     if (st.axisSnap) {
       // В отличие от "⊙ Ось"/"Ось 1.2" (циклический перебор off по модулю длины строки — ВСЕГДА
       // проходит через каждое возможное положение), тут sh — обычное целое БЕЗ зацикливания:
@@ -7085,14 +7327,27 @@ function shiftOneRowAxisAware(r, axisDelta, realRotateFn, invFlagsRotateFn){
       let found = false;
       let sh2 = sh;
       for (let i = 0; i < maxSteps; i++) {
-        sh2 += axisDelta;
+        sh2 += shStep;
+        if (sh2 < minSh || sh2 > maxSh) break; // дальше строки разъедутся с зазором — стоп
         if (axisBitHasMatch(s, sh2, above, aboveShift, requirePair, adj)) { found = true; sh = sh2; break; }
       }
       if (!found) { say("ОсьБит: в эту сторону подходящего положения нет — попробуй другое направление."); return; }
     } else {
-      sh += axisDelta;
+      sh = Math.max(minSh, Math.min(maxSh, sh + shStep));
     }
     axisBitShiftMap.set(r, sh);
+    // Запрос пользователя: в "ОсьБит"/"ОсьБит ½" вся часть таблицы НИЖЕ сдвигаемой строки едет
+    // за ней "монолитом". Строки без собственной записи в axisBitShiftMap и так наследуют сдвиг
+    // сверху (см. resolveAxisBitShift) — они последуют сами; а вот те, что когда-то двигали
+    // отдельно, имеют свою запись и раньше оставались на месте, разрывая картину. Добавляем им
+    // ровно ту же дельту, на которую реально уехала эта строка (не axisDelta: при включённой
+    // галке "⊙ На оси только «1»" перебор мог перескочить сразу несколько позиций).
+    const shDelta = sh - shBefore;
+    if (shDelta) {
+      for (let k = r + 1; k < st.rows.length; k++) {
+        if (axisBitShiftMap.has(k)) axisBitShiftMap.set(k, axisBitShiftMap.get(k) + shDelta);
+      }
+    }
   } else if (st.axisSnap) {
     const len = st.rows[r] ? st.rows[r].length : 0;
     if (!len) return;
@@ -7185,10 +7440,10 @@ if (bPadZerosAboveEl) {
       for (let i = 0; i < selIdx; i++) {
         const rowLen = st.rows[i].length;
         if (rowLen < len) {
-          const shift = alignShift(len, rowLen, st.align);
-          // Math.max(0, …) — см. комментарий у padToLen() в doStep(): у "лесенки" остаток
-          // паддинга справа может уйти в минус.
-          st.rows[i] = "0".repeat(shift) + st.rows[i] + "0".repeat(Math.max(0, len - rowLen - shift));
+          const shift = alignShift(len, rowLen, st.align, i);
+          // Math.max(0, …) с обеих сторон — см. комментарий у padToLen() в doStep(): у "лесенок"
+          // в минус может уйти и правый остаток, и сам сдвиг.
+          st.rows[i] = "0".repeat(Math.max(0, shift)) + st.rows[i] + "0".repeat(Math.max(0, len - rowLen - shift));
         }
       }
     }
@@ -7235,10 +7490,13 @@ if (bPadZerosAboveEl) {
    floor[i + offset], где offset — разница их собственных визуальных сдвигов относительно той же
    общей ширины maxLen, что использует render(). При align="left" alignShift всегда 0 для обеих
    строк, offset тоже 0 — поведение не меняется (полностью совместимо со старым). */
-function tetrisAlignOffset(fallingLen, floorLen){
+/* fallingIdx/floorIdx — НОМЕРА этих строк в таблице. Нужны "Лесенкам": с тех пор как они считают
+   ступеньку от номера строки, а не от длины, разница сдвигов без номеров была бы неверной (у
+   остальных выравниваний номер не участвует, и результат тот же, что и раньше). */
+function tetrisAlignOffset(fallingLen, floorLen, fallingIdx, floorIdx){
   let maxLen = 0;
   for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
-  return alignShift(maxLen, fallingLen, st.align) - alignShift(maxLen, floorLen, st.align);
+  return alignShift(maxLen, fallingLen, st.align, fallingIdx) - alignShift(maxLen, floorLen, st.align, floorIdx);
 }
 function bitsFitIntoGaps(falling, floor, offset){
   offset = offset || 0;
@@ -7316,7 +7574,7 @@ function tetrisDrop(){
 
   // Смещение между визуальными колонками falling и floor при текущем выравнивании таблицы
   // (⇤/↔/⇥) — см. tetrisAlignOffset(). При align="left" всегда 0 (как раньше).
-  const offset = tetrisAlignOffset(falling.length, floor0.length);
+  const offset = tetrisAlignOffset(falling.length, floor0.length, aboveIdx, selIdx);
 
   if (bitsFitIntoGaps(falling, floor0, offset)) {
     // Шаг 2: уже влезает как есть (сразу либо после поворота/инверсии на прошлом клике) — падаем.
@@ -7446,7 +7704,7 @@ function tetris2Drop(){
   if (!falling.length) { say("Строка снизу пуста — падать нечему."); return; }
   if (!floor0.length) { say("Выделенная строка пуста — падать некуда."); return; }
 
-  const offset = tetrisAlignOffset(falling.length, floor0.length);
+  const offset = tetrisAlignOffset(falling.length, floor0.length, belowIdx, selIdx);
 
   if (bitsFitIntoGaps(falling, floor0, offset)) {
     snapshot();
@@ -7580,7 +7838,7 @@ function tetrisAxisDrop(){
   if (!falling0.length) { say("Выделенная строка пуста — двигать нечего."); return; }
   if (!floor0.length) { say("Строка сверху пуста — двигать некуда."); return; }
 
-  const offset = tetrisAlignOffset(falling0.length, floor0.length);
+  const offset = tetrisAlignOffset(falling0.length, floor0.length, selIdx, aboveIdx);
   const axisCharIdx = axisCharIdxOf(selIdx, falling0.length); // позиция оси ВНУТРИ выделенной
                                                // строки — вращением не меняется (сдвиг и длина
                                                // строк вращением не трогаются), остаётся тем же
@@ -8777,16 +9035,90 @@ function axisCharWidthPx(){
   if (cell) { const w = cell.getBoundingClientRect().width; if (w > 0) return w; }
   return 8; // разумный запасной вариант, если линейка ещё не отрисована
 }
+/* Настоящий шаг столбца внутри .bits, В ОТЛИЧИЕ от axisCharWidthPx() (та меряет .col-cell —
+   display:flex, letter-spacing на flex-items не действует). Строки битов — обычный inline-текст
+   (span'ы внутри одного span'а), там letter-spacing реально раздвигает символы.
+   Меряем НАПРЯМУЮ по уже отрисованному DOM — расстояние между двумя реальными соседними битами
+   (data-col N и N+1) в первой попавшейся строке, где такая пара есть. Раньше здесь стоял
+   canvas.measureText("0")+letter-spacing (тот же приём, что applySquareCellLs()) — но выяснилось,
+   что Canvas 2D измеряет текст НЕ идентично тому, как браузер реально раскладывает inline-текст
+   со letter-spacing (используется наверное другой алгоритм субпиксельного округления) — на
+   большом сдвиге (сотни колонок) эта мелкая на 1 символ погрешность накапливалась в заметный
+   перекос столбцов (запрос пользователя — "строки уезжают" даже после перехода на px). Прямой
+   замер по DOM такой ошибки не копит вообще — это и есть окончательный источник истины.
+   Используется и в drag-обработчике #axisSplit (перевод px мыши в колонки), и в
+   updateAxisSplitPosition() (запасной путь, если бит-элемента ещё нет), и в render() (transform
+   довеска extraCh) — везде должен быть ОДИН И ТОТ ЖЕ шаг. */
+function realColStepPx(){
+  const rowsEl = document.getElementById("rows");
+  if (rowsEl) {
+    for (const row of rowsEl.children) {
+      // ".b0,.b1" (а НЕ "[data-col]") — data-col проставляется ТОЛЬКО строкам внутри
+      // colSelectRowRange() (см. colAttr в цикле рендера), т.е. у произвольной строки его может
+      // не быть вообще; класс b0/b1 есть у КАЖДОГО реального бита всегда. Соседние такие span'ы
+      // в одной строке — это соседние символы строки, т.е. соседние столбцы (шаг ровно 1), а
+      // сама подсветка пустого места из blankRun() имеет класс col-sel-bit БЕЗ b0/b1 и сюда не
+      // попадает.
+      const bits = row.querySelectorAll ? row.querySelectorAll(".bits .b0, .bits .b1") : null;
+      if (!bits || bits.length < 2) continue;
+      // Меряем на ВСЮ длину строки (первый бит → последний), а не по одной соседней паре: одна
+      // пара даёт расстояние в один символ, и субпиксельная погрешность этого замера потом
+      // умножается на сотни колонок сдвига. Деление длинной базы на число промежутков
+      // усредняет её и даёт шаг с точностью, которой хватает на любой сдвиг.
+      const d = (bits[bits.length - 1].getBoundingClientRect().left - bits[0].getBoundingClientRect().left) / (bits.length - 1);
+      if (d > 0) return d;
+    }
+  }
+  // Запасной вариант — строки ещё не отрисованы (самый первый рендер) — canvas-оценка.
+  const fsPx = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--chain-fs")) || 12;
+  const ff = getComputedStyle(document.documentElement).getPropertyValue("--chain-ff").trim() || '"Roboto Mono", Consolas, monospace';
+  const ls = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--chain-ls")) || 0;
+  const c = document.createElement("canvas");
+  const ctx = c.getContext("2d");
+  ctx.font = fsPx + "px " + ff;
+  const w = ctx.measureText("0").width + ls;
+  return w > 0 ? w : 8;
+}
+/* Значение st.axisCenterOffset, при котором ручка #axisSplit встаёт РОВНО ПОСЕРЕДИНЕ видимой
+   области битов (между колонками паттернов .pat/.pat2, т.е. между #vsplit и #vsplit2) — запрос
+   пользователя: при КАЖДОМ переключении режима выравнивания линия сбрасывается именно туда, а не
+   тащит за собой offset от прошлого режима (у разных выравниваний своя точка отсчёта, из-за чего
+   чужой offset уводил строки далеко за экран). Середина видимой области = столбец maxLen/2 — та
+   же величина, что и статическая ось у "⊙ Ось" (см. axisRowShift()).
+   Для не-⊙ выравниваний линия привязана к ПЕРВОМУ БИТУ ПЕРВОЙ строки (см.
+   updateAxisSplitPosition() ниже), поэтому нужный offset = (середина) − (собственный сдвиг этого
+   выравнивания). alignShift()/resolveAxisBitShift() теперь offset НЕ включают вообще (он —
+   отдельный общий визуальный сдвиг картинки, см. комментарий в alignShift()), так что их
+   результат и есть искомый собственный сдвиг, без каких-либо поправок. */
+function centerAxisOffset(){
+  let maxLen = 0;
+  for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
+  if (!maxLen) return 0;
+  // У "⊙ Ось"/"Ось 1/2" ось при offset=0 и так стоит ровно на maxLen/2 — центр это и есть 0.
+  if (st.align === "axis" || st.align === "axis12") return 0;
+  const fd = firstDataIdx();
+  const len0 = fd >= 0 ? (st.rows[fd] || "").length : 0;
+  const base = (st.align === "axisbit" || st.align === "axisbit12")
+    ? resolveAxisBitShift(fd >= 0 ? fd : 0)
+    : alignShift(maxLen, len0, st.align, fd >= 0 ? fd : 0);
+  return Math.floor(maxLen / 2) - base;
+}
 /* Пересчитывает position:absolute left/height/видимость #axisSplit — вызывается в конце
    render(). Столбец, где стоит линия: у "⊙ Ось"/"Ось 1/2" — maxLen/2 + axisCenterOffset (та же
-   формула, что и в axisRowShift()) — там offset двигает ОСЬ ПОСЕРЕДИНЕ; у ЛЮБОГО другого
-   выравнивания offset прибавляется НАПРЯМУЮ к сдвигу каждой строки (см. alignShift()), поэтому
-   там линия стоит просто в столбце axisCenterOffset (столбец 0 — это где была бы строка при
-   offset=0). Переводим в пиксели через реальный левый край .bits (зависит от текущей ширины
-   панелей паттернов — .vsplit/.vsplit2 не участвуют в формуле напрямую, поэтому меряем
-   фактическую геометрию, а не считаем через CSS-переменные). document.getElementById() каждый
-   раз заново (не кэшируем в const на верхнем уровне) — эта функция ВЫЗЫВАЕТСЯ из render(), а
-   render() дёргается местами ещё ДО того, как скрипт дойдёт до этого места (см. остальные
+   формула, что и в axisRowShift()) — там offset двигает ОСЬ ПОСЕРЕДИНЕ. У ЛЮБОГО другого
+   выравнивания линия должна стоять РОВНО на первом символе первой (реально существующей) строки
+   (запрос пользователя — "привязана к первому символу первой строки", а раньше ошибочно считалось
+   axisCol=offset, т.е. как у "По левому краю", где это совпадает случайно: shift="По левому краю"
+   как раз ВСЕГДА равен offset — а у "center"/"stairs"/т.п. первая строка сама по себе уже сдвинута
+   на свой собственный alignShift(), офсет только ДОБАВЛЯЕТСЯ к нему — без этой строки линия
+   стояла в другом месте, чем реальный первый бит первой строки, у всех выравниваний, кроме
+   "По левому краю"). alignShift()/resolveAxisBitShift() сами уже прибавляют offset внутри себя —
+   тут просто читаем ИХ РЕЗУЛЬТАТ для первой строки, как это делает и сам render() (см. shift
+   в цикле рендера строк выше). Переводим в пиксели через реальный левый край .bits (зависит от
+   текущей ширины панелей паттернов — .vsplit/.vsplit2 не участвуют в формуле напрямую, поэтому
+   меряем фактическую геометрию, а не считаем через CSS-переменные). document.getElementById()
+   каждый раз заново (не кэшируем в const на верхнем уровне) — эта функция ВЫЗЫВАЕТСЯ из render(),
+   а render() дёргается местами ещё ДО того, как скрипт дойдёт до этого места (см. остальные
    render() выше по файлу) — кэш в const поймал бы temporal dead zone. */
 function updateAxisSplitPosition(maxLen){
   const axisSplitEl = document.getElementById("axisSplit");
@@ -8798,10 +9130,44 @@ function updateAxisSplitPosition(maxLen){
   if (!chainEl || !bitsEl) { axisSplitEl.classList.remove("act"); return; }
   const chainRect = chainEl.getBoundingClientRect();
   const bitsRect = bitsEl.getBoundingClientRect();
-  const chPx = axisCharWidthPx();
+  const chPx = realColStepPx();
   const isAxisFamily = st.align === "axis" || st.align === "axis12";
-  const axisCol = (isAxisFamily ? Math.floor(maxLen / 2) : 0) + (st.axisCenterOffset || 0);
-  const leftPx = (bitsRect.left - chainRect.left) + axisCol * chPx;
+  let leftPx;
+  if (isAxisFamily) {
+    const axisCol = Math.floor(maxLen / 2) + (st.axisCenterOffset || 0);
+    leftPx = (bitsRect.left - chainRect.left) + axisCol * chPx;
+  } else {
+    // Меряем НАПРЯМУЮ из уже отрисованного DOM первой существующей строки (её .bits > span —
+    // тот самый span с extraCh-трансформом, см. render() — внутри первый настоящий бит-span
+    // ".b0"/".b1" стоит СРАЗУ на реальной позиции строки: паддинг перед ним — просто текстовые
+    // "&nbsp;", не спаны). Раньше здесь пересчитывали то же самое формулой (alignShift() *
+    // chPx) — совпадает с реальным рендером только при МАЛЫХ сдвигах: canvas.measureText()
+    // (см. realColStepPx()) даёт чуть другую ширину символа, чем реальная раскладка текста
+    // браузером, и на большом сдвиге (напр. "По центру" с короткой первой строкой — там
+    // сдвиг может быть сотни колонок) эта мелкая на один символ погрешность накапливается в
+    // заметный пиксельный промах (запрос пользователя — "не совпадает, только у центрального").
+    // Прямой замер геометрии такой ошибки не копит вообще.
+    // ".b0,.b1" (а не просто "span") — иначе первым найденным span'ом мог оказаться
+    // <span class="col-sel-bit"> ИЗ ПАДДИНГА (см. blankRun() — режим "🔢 Выбор столбца" красит
+    // ОДНУ пустую клетку ДО настоящего бита, если st.selectedCol туда попадает), и линия
+    // промахивалась на весь отступ. "[data-col]" тут тоже не годится — он есть только у строк
+    // внутри colSelectRowRange() (см. colAttr там же), а класс b0/b1 — у любого реального бита.
+    const fd = firstDataIdx();
+    const wrapEl = fd >= 0 ? document.querySelector('#rows .ln[data-idx="' + fd + '"] .bits > span') : null;
+    const bitEl = wrapEl ? wrapEl.querySelector(".b0, .b1") : null;
+    if (bitEl) {
+      leftPx = bitEl.getBoundingClientRect().left - chainRect.left;
+    } else {
+      // Запасной вариант (строки ещё не отрисованы / нет цветных спанов) — старая формула.
+      // offset прибавляется здесь ЯВНО: alignShift()/resolveAxisBitShift() его больше не
+      // содержат (он — общий визуальный сдвиг картинки, см. комментарий в alignShift()).
+      const len0 = fd >= 0 ? (st.rows[fd] || "").length : 0;
+      const axisCol = ((st.align === "axisbit" || st.align === "axisbit12")
+        ? resolveAxisBitShift(fd >= 0 ? fd : 0)
+        : alignShift(maxLen, len0, st.align, fd >= 0 ? fd : 0)) + (st.axisCenterOffset || 0);
+      leftPx = (bitsRect.left - chainRect.left) + axisCol * chPx;
+    }
+  }
   axisSplitEl.style.left = leftPx + "px";
   const headBottom = colHeaderEl ? (colHeaderEl.getBoundingClientRect().bottom - chainRect.top) : 24;
   axisSplitEl.style.height = Math.max(16, headBottom) + "px";
@@ -8813,7 +9179,7 @@ function updateAxisSplitPosition(maxLen){
     e.preventDefault();
     const startX = e.clientX;
     const startOffset = st.axisCenterOffset || 0;
-    const chPx = axisCharWidthPx();
+    const chPx = realColStepPx();
     axisSplitEl.classList.add("drag");
     document.body.classList.add("dragging");
     const move = (ev) => {
