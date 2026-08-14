@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.394</title>
+<title>Zerkalius Fold — v0.408</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -478,11 +478,19 @@
      слева у этого номера был заметно больше, чем у остальных (не "одинаково", как просили).
      Тянем его назад в счёт этого резерва, но НЕ дальше границы .vsplit (та стоит ровно на
      правом крае .pat, без учёта его 28px padding) — иначе номер заезжает НА линию разделителя
-     и накладывается на неё. -20px пересекал границу; -6px оставляет небольшой зазор от неё. */
-  .num-l2{margin-left:-10px}
+     и накладывается на неё. -20px пересекал границу; -6px оставляет небольшой зазор от неё.
+     ФИКСИРОВАННЫЕ -10px были верны только для крупного шрифта: ширина самого номера — 2em при
+     font-size:.85em, т.е. 1.7 * --chain-fs, и она едет вместе с ползунком "A" (#fs, 6..22px).
+     При fs=19 номер шириной ~32px и оттяжка в 10px не мешает, а при fs=6..8 он всего 10-13px
+     широкий — те же -10px затаскивали цифры ровно на линию .vsplit (запрос пользователя:
+     "линия у левых балансов налезает на номера при определённых размерах шрифта").
+     max(-10px, -0.6em) — оттяжка не больше 0.6 собственного кегля (это 30% ширины бокса, цифры
+     прижаты вправо и до линии не достают ни при каком размере), при крупном шрифте упирается в
+     прежний потолок 10px, так что вид на дефолтных 19px практически не меняется. */
+  .num-l2{margin-left:max(-10px, -0.6em)}
   /* Симметрично: номер у ПРАВОГО края поля битов (сосед .pat2, "числа паттернов" в терминах
      пользователя) — та же компенсация зазора от .vsplit2, что у .num-l2 от .vsplit. */
-  .num-r2{margin-left:-10px}
+  .num-r2{margin-left:max(-10px, -0.6em)}
   
   /* Подсветка выделенных кликом / Ctrl+Кликом строк — только фон, настраивается отдельно
      (см. #rowBgSel/--rowbg-sel), не трогая невыделенные строки и цвета 0/1. */
@@ -557,6 +565,33 @@
      включена (эти символы реально инвертированы относительно оригинала); совместим с
      .chain-hit-bits.* — просто гасит яркость поверх обычной/цветной подсветки находки. */
   .chain-ring-ext{opacity:.5}
+
+  /* Витки кольца в строке результата фон-поиска — каждый своим фоном, чтобы было видно, из
+     скольких кусков собрано кольцо и где проходят их границы. При включённой 🔁 Инв. кольцо
+     период двойной (прямой виток + инвертированный), а показывается он дважды — итого ЧЕТЫРЕ
+     набора бит подряд (запрос пользователя: "цветом обозначить все 4 набора бит, когда кольцо
+     из 4 состоит"). Красим именно ФОНОМ, а не цветом текста: цвет символа уже занят под
+     значение бита (.b0/.b1) и под подсветку находки (.chain-hit-bits.*), их перебивать нельзя.
+     Виток 0 — настоящие биты строки, он без пометки; дальше 1/2/3 по кругу.
+     Фон (rgba .16) пробовали — "еле различим" (запрос пользователя), заменён на тонкое пунктирное
+     подчёркивание в цвет витка: на тёмном полотне видно куда лучше и при этом не спорит ни с
+     цветом символа, ни с фоном подсветки находки. У .chain-hit-bits.skip1 своё пунктирное
+     подчёркивание через border-bottom (currentColor) — теперь они не конфликтуют вовсе, тут
+     другое свойство.
+     ВАЖНО №1: класс вешается на обёртку ВСЕГО витка, а не на каждый символ (см. render()) —
+     пунктир на элементе шириной в один знак давал 1-2 штриха, которые при 100% масштаба
+     округлялись в ничто и проявлялись только к 175%.
+     ВАЖНО №2: это text-decoration, а НЕ border-bottom. Контейнер .chain-result-line-bits имеет
+     overflow:hidden (нужен для обрезки многоточием), а .chain-result-line — line-height:1, то
+     есть контентный бокс ровно по высоте шрифта. Рамка рисуется ПОД ним и просто срезалась
+     клипом — линии не было видно вообще. text-decoration рисуется внутри строки и под обрезку
+     не попадает. offset держим маленьким по той же причине. */
+  /* Подчёркиваются только ЧЁТНЫЕ наборы из четырёх (2-й и 4-й — это и есть витки-продолжения,
+     инвертированные относительно прямых), белым — запрос пользователя. Нечётные (1-й и 3-й,
+     прямые) остаются без пометки, так что пунктир сам по себе читается как "тут инверсия".
+     .ring-lap-2 (0-based, повтор прямого витка) поэтому пустой и в разметке не вешается. */
+  .ring-lap-1,.ring-lap-3{text-decoration-line:underline;text-decoration-style:dashed;
+    text-decoration-thickness:1px;text-underline-offset:1px;text-decoration-color:#ffffff}
 
   /* Пропущенный 1-й символ паттерна подсвечивается тусклым серым */
   .pat-skip{color:var(--dim); opacity:0.5}
@@ -704,6 +739,11 @@
   .col-cell.sel{color:#000;background:#ffcf6b;font-weight:700;box-shadow:0 0 6px rgba(255,207,107,.7)}
   .col-cell.col-hover{color:var(--fg);background:rgba(255,255,255,.10)}
   .col-sel-bit{background:rgba(255,207,107,.35) !important;border-radius:2px}
+  /* "0 вместо пустот" (st.padZero): те самые нули, которые склейки/XOR подставляют на месте
+     пустот, показываются и в самой таблице — сильно приглушённо, чтобы не путать их с
+     настоящими битами строки. Чистая ВИДИМОСТЬ, в st.rows ничего не пишется (см. blankRun в
+     render()). Цвет берём тот же, что у настоящих нулей (--c0), но полупрозрачным. */
+  .pad-zero-bit{color:var(--c0);opacity:.28}
   .col-hover-bit{background:rgba(255,255,255,.15) !important;border-radius:2px}
   /* Особая подсветка "01" (см. #bHighlight01 в "Виде") — ЗАМЕНЯЕТ обычный цвет 0/1 (.b0/.b1)
      одним сплошным цветом (без прозрачности — та была почти не видна на тёмном фоне): и "0", и
@@ -1151,7 +1191,7 @@
 <!-- === МАРКЕР 03: HEADER_UI === -->
 <div id="menuBar">
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
-    <h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.394</span></h3>
+    <h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.408</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -1433,6 +1473,8 @@
       <button data-val="vertL" class="act" title="Вертикальная склейка: строки от 1-й до выделенной читаются по СТОЛБЦАМ (сверху вниз в каждом столбце), столбцы справа налево. Столбец идёт в счёт, если символ есть хотя бы у одной строки; пустое место внутри такого столбца пропускается, а с галкой «0️⃣ 0 вместо пустот» (панель настроек) — заполняется нулём">↕ Верт. ←</button>
       <button data-val="snakeR" class="act" title="Змейка: как вертикальная склейка, но направление чтения строк внутри столбца чередуется (то сверху вниз, то снизу вверх), столбцы слева направо">🐍 Змейка →</button>
       <button data-val="snakeL" class="act" title="Змейка: как вертикальная склейка, но направление чтения строк внутри столбца чередуется (то сверху вниз, то снизу вверх), столбцы справа налево">🐍 Змейка ←</button>
+      <button data-val="vertZigR" class="act" title="Верт. зигзаг: столбцы берутся попеременно с двух краёв навстречу друг другу — самый левый, самый правый, следующий слева, следующий справа... до встречи в середине. Начинает с ЛЕВОГО края">⇄ Верт. зигзаг →</button>
+      <button data-val="vertZigL" class="act" title="То же самое, но начинает с ПРАВОГО края: самый правый, самый левый, следующий справа, следующий слева...">⇆ Верт. зигзаг ←</button>
       <!-- "Суммы длин" — подпункт ЭТОЙ ЖЕ группы режимов (та же кнопка-тоггл, тот же .act/data-val
            механизм), а не отдельная галка ниже — запрос пользователя. В отличие от остальных
            кнопок группы НЕ участвует в общем расчёте "один результат на сверку с паттерном" (см.
@@ -1817,6 +1859,20 @@ function ringNextLap(text){
   return out;
 }
 
+/* ПОЛНЫЙ ПЕРИОД кольца. Обычное кольцо повторяет саму строку, период = её длина. Но с
+   🔁 Инв. кольцо/реверс следующий виток ДРУГОЙ, а к себе строка возвращается только через ДВА
+   витка (invert(invert)=исходная, reverse(reverse)=исходная, вместе тоже) — значит настоящий
+   период вдвое длиннее, а привычное "прямое + инверсия" это лишь ПОЛОВИНА кольца (запрос
+   пользователя: "прямое+инверсия = это полукольцо, надо его удвоить и в нём искать, чтобы по
+   краям можно было найти паттерн"). Поиск (findPatternKinds) и показ результата (bgResultHtml
+   в render()) обязаны брать ОДИН И ТОТ ЖЕ период, иначе подсветка находки разъедется с тем, что
+   реально искали. Когда инверсия/реверс выключены, виток равен строке и всё сводится к прежнему
+   поведению: период = длина, показ = строка + её копия. */
+function ringCycle(text){
+  const lap2 = ringNextLap(text);
+  return lap2 === text ? text : text + lap2;
+}
+
 /* Проверка "текст содержит паттерн как подстроку" — целиком / без 1-го символа / реверсом /
    реверсом без 1-го, СТРОГО с учётом галок st.skipFirst и st.allKinds (как везде в
    приложении). Используется Гориз.XOR (генерация И скольжение) вместо общего findMatch(),
@@ -1856,7 +1912,12 @@ function textMatchesPattern(text, patText){
 function findPatternKinds(text, patText){
   const len = text.length;
   if (!patText || !len) return [];
-  const ring = len > 1 ? text + ringNextLap(text).slice(0, len - 1) : text;
+  // Ищем в ПЕРИОДЕ кольца, удвоенном без последнего символа (чтобы не находить тривиальный
+  // повтор всего периода целиком). При выключенных инверсии/реверсе период = сам text, и
+  // выражение сводится к прежнему text + text.slice(0, len-1).
+  const cycle = ringCycle(text);
+  const period = cycle.length;
+  const ring = period > 1 ? cycle + cycle.slice(0, period - 1) : cycle;
   // Порядок как в основном движке findMatch() (см. p.s0/s1/s2 там): СНАЧАЛА срезаем первый
   // символ паттерна («Без 1-го»), и только ПОТОМ считаем инверсию/реверс от уже урезанной
   // строки — не наоборот. Раньше было наоборот (инверсия/реверс полного паттерна, а срез —
@@ -1874,12 +1935,14 @@ function findPatternKinds(text, patText){
     const candidates = st.bgSubPatterns ? rotationsOf(full) : [full];
     const variants = candidates.map(cand => {
       const idx = ring.indexOf(cand);
-      const found = idx >= 0 && idx < len;
+      // Начало находки может лежать В ЛЮБОМ месте периода (в т.ч. во втором, инвертированном
+      // витке) — раньше тут стояло idx < len, т.е. половина кольца в поиске не участвовала.
+      const found = idx >= 0 && idx < period;
       return { text: cand, found, start: found ? idx : -1 };
     });
     const hit = variants.find(v => v.found);
     tried.push({ kind, base: full, variants, matched: !!hit });
-    if (hit) out.push({ kind, start: hit.start, end: (hit.start + hit.text.length - 1) % len, len: hit.text.length, skip: skipApplied, sub: hit.text !== full ? hit.text : null });
+    if (hit) out.push({ kind, start: hit.start, end: (hit.start + hit.text.length - 1) % period, len: hit.text.length, skip: skipApplied, sub: hit.text !== full ? hit.text : null });
   };
   tryKind(0, base);
   if (st.allKinds) {
@@ -1889,6 +1952,12 @@ function findPatternKinds(text, patText){
     tryKind(3, reverseStr(inv)); // инверсия + реверс одновременно
   }
   out.tried = tried;
+  // Период кольца едет вместе с результатом — buildHitMap() раскладывает kd.start по позициям и
+  // обязан знать, по какому модулю сворачивать (при 🔁 Инв. кольцо период вдвое длиннее строки,
+  // и по модулю её длины находка из второго витка легла бы не на те биты). Так период получают
+  // ВСЕ потребители без правки сигнатур; массивы kinds, собранные вручную (напр. [hit] в
+  // computeHorizXorInfo), поля не имеют — там buildHitMap честно откатится на len.
+  out.period = period;
   return out;
 }
 
@@ -1954,7 +2023,7 @@ function interleavePair(top, bot, align, N){
 
 /* Карта "какой kind (и его skip-флаг) покрывает эту позицию" для подсветки найденного паттерна
    поверх готового HTML-результата (см. interleavePairMarked/xorPairMarked ниже) — тот же приём,
-   что и у bgResultHtml в render() (kindAt/skipAt), только по модулю len вместо физического
+   что и у bgResultHtml в render() (kindAt/skipAt), только по модулю периода кольца вместо физического
    продолжения строки: находка, "заехавшая" за конец (kd.end < kd.start), просто подсвечивается
    ДВУМЯ кусками — в хвосте и в начале ТОГО ЖЕ отображаемого результата, без лишнего "довеска"
    кольца в самом Итоге (кольцо и так уже показано отдельно, в "Скв×2"). Первый (самый ранний)
@@ -1962,10 +2031,17 @@ function interleavePair(top, bot, align, N){
 function buildHitMap(len, kinds){
   const map = new Array(len).fill(null);
   if (!kinds || !len) return map;
+  // Сворачиваем по ПЕРИОДУ кольца (kinds.period, см. findPatternKinds), а не по длине показанной
+  // строки. Без инверсии/реверса период равен len и всё как раньше. С 🔁 Инв. кольцо период
+  // вдвое длиннее: позиции второго витка — это ИНВЕРТИРОВАННЫЕ биты, в "Итоге" (там показан один
+  // прямой виток) их попросту нет, поэтому такие позиции пропускаем, а не красим ими чужие биты.
+  // Часть находки, ушедшая за период и завернувшаяся обратно в прямой виток, при этом
+  // подсвечивается правильно — она сворачивается в q < len.
+  const P = (kinds && kinds.period) || len;
   for (const kd of kinds) {
     for (let i = 0; i < kd.len; i++) {
-      const p = (kd.start + i) % len;
-      if (!map[p]) map[p] = { kind: kd.kind, skip: kd.skip };
+      const q = (kd.start + i) % P;
+      if (q < len && !map[q]) map[q] = { kind: kd.kind, skip: kd.skip };
     }
   }
   return map;
@@ -2089,99 +2165,174 @@ function concatSnakeGlueDownTo(st, stopIdx){
    concatRowsDownTo) — для каждого столбца сверху вниз собираются реальные символы тех строк,
    которые своей (со сдвигом выравнивания) шириной реально достают до этого столбца.
    dir "right": столбцы слева направо (0..maxLen-1). dir "left": столбцы справа налево.
-   При "½"-выравниваниях часть строк сидит в "целой" сетке колонок, часть — в "полу" (сдвинутой
-   на +0.5ch, см. hasHalfNudge выше — ТА ЖЕ группировка, что и в xorRowsDownTo, по чётности длины/
-   остатка, а НЕ по чётности номера строки). Берём только под-сетку, в которую попадает сама
-   stopIdx-строка — иначе колонки на экране реально не совпадают. */
-function concatVerticalDownTo(st, stopIdx, dir){
+   Идём от КРАЙНЕГО столбца (по направлению dir) и останавливаемся на первом же столбце, в
+   котором нет битов НИ В ОДНОЙ участвующей строке — то, что лежит за этой дыркой, в результат
+   уже не входит (запрос пользователя). Раньше пустые столбцы просто пропускались и склейка
+   продолжалась до конца занятого диапазона, подхватывая оторванные куски за дыркой.
+   При "½"-выравниваниях столбцы перебираются в ПОЛОВИННОМ разрешении (шаг 0.5 колонки, позиция
+   строки = 2*сдвиг, +1 у той, что сидит в "полу"-сетке — тот же приём, что в computeDiagOnesMask),
+   и участвуют ВСЕ строки, а не только под-сетка stopIdx-строки: на экране биты двух под-сеток
+   стоят в РАЗНЫХ полустолбцах, и обход слева направо честно берёт их по очереди.
+   Пример из запроса пользователя: строки "1","1","11" при "Центр ½" стоят так — полустолбец 0.5
+   занят двумя единицами верхних строк, полустолбцы 0 и 1 — единицами нижней; обход даёт
+   1 + 11 + 1 = "1111". Раньше фильтр по под-сетке оставлял ОДНУ нижнюю строку и выдавал "11".
+   Строка ЧУЖОЙ под-сетки в полустолбце не считается даже дыркой — её там нет вовсе, поэтому
+   галка "0 вместо пустот" на неё не срабатывает (иначе результат распух бы нулями вдвое). */
+/* ОБЩИЙ план поколоночного обхода — им пользуются ВСЕ три поколоночных режима (Верт., Змейка,
+   Верт.-зигзаг). Вынесено из concatVerticalDownTo(), потому что Змейка раньше жила на своей
+   копии этой логики и постепенно отстала от неё: считала сдвиг через alignShift() (под
+   "⊙ Ось"/"ОсьБит" это не те столбцы, что на экране), начинала колонки жёстко с нуля (биты,
+   уехавшие левее, терялись), фильтровала ½-выравнивания по под-сетке выделенной строки и не
+   знала про обрыв на дырке. Теперь любая правка геометрии автоматически видна во всех трёх.
+
+   Сдвиг берётся через rowShiftFor(), а не alignShift() — только она знает про текущий
+   круговой/осевой сдвиг конкретной строки (axisOffsetMap/axisBitShiftMap), поэтому под
+   "⊙ Ось"/"Ось 1.2"/"ОсьБит"/"ОсьБит ½" столбцы берутся те же, что реально видны на экране.
+   Всё считается в ПОЛУСТОЛБЦАХ (×2), чтобы полушаг ½-выравниваний был обычным целым числом:
+   при не-½ выравниваниях все строки садятся на чётные полустолбцы и шаг обхода 2 — то есть
+   ровно прежнее поведение, колонка в колонку.
+   Отсчёт колонок — от САМОЙ ЛЕВОЙ занятой, а не жёстко от нуля: у "Лесенка правая" и осевых
+   режимов строка свободно уезжает левее нулевой колонки.
+   cols всегда слева направо — разворачивает его уже сам режим. */
+function vertColumnPlan(st, stopIdx){
   const isHalfAlign = st.align === "halfcenter" || st.align === "halfstairs" || st.align === "rhalfstairs";
   let maxLen = 0;
   for (let i = 0; i <= stopIdx; i++) { const s = getRowBits(st, i); if (s.length > maxLen) maxLen = s.length; }
-  const wantNudge = isHalfAlign ? hasHalfNudge(getRowBits(st, stopIdx), maxLen, st.align, stopIdx) : null;
-  const keep = (s, i) => !isHalfAlign || hasHalfNudge(s, maxLen, st.align, i) === wantNudge;
-
-  // Сдвиг берётся через rowShiftFor(), а не alignShift() — только она знает про текущий
-  // круговой/осевой сдвиг конкретной строки (axisOffsetMap/axisBitShiftMap), поэтому под
-  // "⊙ Ось"/"Ось 1.2"/"ОсьБит"/"ОсьБит ½" столбцы теперь берутся те же, что реально видны на
-  // экране (запрос пользователя — "проверь при всех выравниваниях"); alignShift() про эти сдвиги
-  // не знает и собирала столбцы не там.
+  const nudgeMax = nudgeRefMaxLen(st, null);
   const parts = [];
   let minCol = Infinity, maxCol = -Infinity;
   for (let i = 0; i <= stopIdx; i++) {
     const s = getRowBits(st, i);
-    if (!s.length || !keep(s, i)) continue;
-    const shift = rowShiftFor(maxLen, i, s, st.align);
-    parts.push({ s, shift });
-    if (shift < minCol) minCol = shift;
-    if (shift + s.length > maxCol) maxCol = shift + s.length;
+    if (!s.length) continue;
+    const shift2x = 2 * rowShiftFor(maxLen, i, s, st.align) +
+      (isHalfAlign && hasHalfNudge(s, nudgeMax, st.align, i) ? 1 : 0);
+    parts.push({ s, shift2x });
+    if (shift2x < minCol) minCol = shift2x;
+    if (shift2x + 2 * (s.length - 1) > maxCol) maxCol = shift2x + 2 * (s.length - 1);
   }
-  if (!parts.length) return "";
-  // Отсчёт колонок — от САМОЙ ЛЕВОЙ занятой, а не жёстко от нуля: у "Лесенка правая" и осевых
-  // режимов строка свободно уезжает левее нулевой колонки, и её биты раньше просто не попадали
-  // в перебор.
+  if (!parts.length) return null;
+  const step = isHalfAlign ? 1 : 2;
   const cols = [];
-  for (let c = minCol; c < maxCol; c++) cols.push(c);
-  if (dir === "left") cols.reverse();
+  for (let c = minCol; c <= maxCol; c += step) cols.push(c);
+  // Одиночный пустой ПОЛУстолбец при ½-выравниваниях — это НЕ дырка в картинке, а нормальное
+  // чередование двух под-сеток: если все участвующие строки оказались в одной под-сетке, каждый
+  // второй полустолбец пуст ПО ПОСТРОЕНИЮ (напр. "1" и "111" при "Центр ½", maxLen=3: обе в
+  // чётной под-сетке, заняты 0/2/4, а 1 и 3 пусты всегда). Обрыв по такому полустолбцу срабатывал
+  // сразу после первого столбца, причём в каждую сторону на своём месте — отсюда и совсем разные
+  // "Верт. →" и "Верт. ←" (запрос пользователя "почему прав и лев вертик дают разные?").
+  // Дыркой считаем пустой ЦЕЛЫЙ столбец = gapLimit подряд пустых полустолбцов.
+  return { parts, cols, gapLimit: isHalfAlign ? 2 : 1 };
+}
 
-  let out = "";
+/* Есть ли в полустолбце c хоть один РЕАЛЬНЫЙ бит. Нечётная разность (d % 2) — строка сидит в
+   другой полусетке, в этом полустолбце её нет вообще. */
+function vertColHasBit(parts, c){
+  for (const p of parts) {
+    const d = c - p.shift2x;
+    if (d >= 0 && d % 2 === 0 && d / 2 < p.s.length) return true;
+  }
+  return false;
+}
+
+/* Проход по столбцам в УЖЕ заданном порядке с правилом обрыва: ведущие пустышки пропускаем, а
+   дойдя до настоящей дырки (gapLimit подряд пустых полустолбцов) — останавливаемся. Возвращает
+   список столбцов, которые реально идут в результат. */
+function vertWalkCols(cols, parts, gapLimit){
+  const out = [];
+  let started = false, emptyRun = 0;
   for (const c of cols) {
-    // "Столбец идёт в счёт, только если хоть в одной строке в нём есть символ" — полностью пустые
-    // столбцы (дырки между разъехавшимися строками) пропускаем целиком. Без этой проверки при
-    // включённой галке "0 вместо пустот" (st.padZero) такая дырка дала бы столбик нулей по числу
-    // строк на ровном месте.
-    let any = false;
-    for (const p of parts) { const j = c - p.shift; if (j >= 0 && j < p.s.length) { any = true; break; } }
-    if (!any) continue;
-    for (const p of parts) {
-      const j = c - p.shift;
-      // Пустое место ВНУТРИ засчитанного столбца (эта строка сюда не достаёт): по умолчанию не
-      // пишем ничего, а при включённой галке — "0" (запрос пользователя: "сами пустоты не писать,
-      // и писать там 0 — по включённой кнопке настройки").
-      if (j >= 0 && j < p.s.length) out += p.s[j];
-      else if (st.padZero) out += "0";
+    if (!vertColHasBit(parts, c)) {
+      // До первого занятого столбца ещё не дошли — такие ведущие пустышки просто пропускаем.
+      if (!started) continue;
+      // Пустой ЦЕЛЫЙ столбец — КОНЕЦ склейки, а не повод пропустить его и собирать дальше
+      // (запрос пользователя: идём от крайнего столбца и останавливаемся там, где битов уже нет).
+      emptyRun++;
+      if (emptyRun >= gapLimit) break;
+      continue;
     }
+    emptyRun = 0;
+    started = true;
+    out.push(c);
   }
   return out;
 }
 
+/* Символы одного полустолбца: сверху вниз, а при reversed — снизу вверх (нужно Змейке). */
+function vertColBits(st, parts, c, reversed){
+  const order = reversed ? parts.slice().reverse() : parts;
+  let out = "";
+  for (const p of order) {
+    const d = c - p.shift2x;
+    // Чужая полусетка — этого полустолбца у строки нет вовсе, она тут не участвует и дыркой
+    // не считается (иначе "0 вместо пустот" удваивал бы результат нулями).
+    if (d % 2 !== 0) continue;
+    const j = d / 2;
+    // Пустое место ВНУТРИ засчитанного столбца (эта строка сюда не достаёт): по умолчанию не
+    // пишем ничего, а при включённой галке — "0" (запрос пользователя: "сами пустоты не писать,
+    // и писать там 0 — по включённой кнопке настройки").
+    if (j >= 0 && j < p.s.length) out += p.s[j];
+    else if (st.padZero) out += "0";
+  }
+  return out;
+}
+
+function concatVerticalDownTo(st, stopIdx, dir){
+  const plan = vertColumnPlan(st, stopIdx);
+  if (!plan) return "";
+  const cols = dir === "left" ? plan.cols.slice().reverse() : plan.cols;
+  let out = "";
+  for (const c of vertWalkCols(cols, plan.parts, plan.gapLimit)) out += vertColBits(st, plan.parts, c, false);
+  return out;
+}
+
+/* "Верт. зигзаг" — столбцы берутся ПОПЕРЕМЕННО С ДВУХ КРАЁВ навстречу друг другу: крайний слева,
+   крайний справа, следующий слева, следующий справа... пока не сойдутся в середине (запрос
+   пользователя: "сначала слева потом справа потом снова слева"). dir задаёт, с какого края
+   начинать: "right" — первым идёт САМЫЙ ЛЕВЫЙ столбец, "left" — самый правый.
+   Обрыв на дырке считается ОТДЕЛЬНО для каждой стороны — тем же vertWalkCols(), что и у Верт.:
+   левый ход идёт слева до первой дырки, правый — справа до первой дырки. Если дырки нет, обе
+   стороны покрывают все столбцы и встречаются в середине, поэтому уже взятые столбцы
+   отсеиваются через seen — иначе середина попала бы в результат дважды. */
+function concatVertZigzagDownTo(st, stopIdx, dir){
+  const plan = vertColumnPlan(st, stopIdx);
+  if (!plan) return "";
+  const fromLeft = vertWalkCols(plan.cols, plan.parts, plan.gapLimit);
+  const fromRight = vertWalkCols(plan.cols.slice().reverse(), plan.parts, plan.gapLimit);
+  const seen = new Set();
+  const order = [];
+  let a = 0, b = 0, takeLeft = dir !== "left";
+  while (a < fromLeft.length || b < fromRight.length) {
+    if (takeLeft) {
+      while (a < fromLeft.length && seen.has(fromLeft[a])) a++;
+      if (a < fromLeft.length) { seen.add(fromLeft[a]); order.push(fromLeft[a]); a++; }
+    } else {
+      while (b < fromRight.length && seen.has(fromRight[b])) b++;
+      if (b < fromRight.length) { seen.add(fromRight[b]); order.push(fromRight[b]); b++; }
+    }
+    takeLeft = !takeLeft;
+  }
+  let out = "";
+  for (const c of order) out += vertColBits(st, plan.parts, c, false);
+  return out;
+}
+
+
 /* "Змейка" — та же вертикальная склейка по столбцам, но направление обхода строк ВНУТРИ
    столбца чередуется через один столбец (то сверху вниз, то снизу вверх), как в змейке/
    бустрофедоне. dir — та же логика направления столбцов, что у concatVerticalDownTo.
-   При "½"-выравниваниях — та же под-сетка по hasHalfNudge, что и у concatVerticalDownTo выше. */
+   Сами столбцы считает общий vertColumnPlan() — раньше тут была своя копия геометрии, отставшая
+   от Верт. (alignShift вместо rowShiftFor, колонки от нуля, фильтр ½-под-сеток, без обрыва на
+   дырке); теперь Змейка отличается от Верт. РОВНО одним — разворотом порядка строк в каждом
+   втором взятом столбце. */
 function concatSnakeDownTo(st, stopIdx, dir){
-  const isHalfAlign = st.align === "halfcenter" || st.align === "halfstairs" || st.align === "rhalfstairs";
-  let maxLen = 0;
-  for (let i = 0; i <= stopIdx; i++) { const s = getRowBits(st, i); if (s.length > maxLen) maxLen = s.length; }
-  const wantNudge = isHalfAlign ? hasHalfNudge(getRowBits(st, stopIdx), maxLen, st.align, stopIdx) : null;
-  const keep = (s, i) => !isHalfAlign || hasHalfNudge(s, maxLen, st.align, i) === wantNudge;
-
-  let reach = 0;
-  for (let i = 0; i <= stopIdx; i++) {
-    const s = getRowBits(st, i);
-    if (!s.length || !keep(s, i)) continue;
-    const r = alignShift(maxLen, s.length, st.align, i) + s.length;
-    if (r > reach) reach = r;
-  }
-  if (!reach) return "";
-  const cols = [];
-  for (let c = 0; c < reach; c++) cols.push(c);
-  if (dir === "left") cols.reverse();
-
+  const plan = vertColumnPlan(st, stopIdx);
+  if (!plan) return "";
+  const cols = dir === "left" ? plan.cols.slice().reverse() : plan.cols;
+  const walk = vertWalkCols(cols, plan.parts, plan.gapLimit);
   let out = "";
-  cols.forEach((c, colIdx) => {
-    const rowOrder = [];
-    for (let i = 0; i <= stopIdx; i++) {
-      const s = getRowBits(st, i);
-      if (s.length && keep(s, i)) rowOrder.push(i);
-    }
-    if (colIdx % 2 === 1) rowOrder.reverse();
-    for (const i of rowOrder) {
-      const s = getRowBits(st, i);
-      const shift = alignShift(maxLen, s.length, st.align, i);
-      const localCol = c - shift;
-      if (localCol >= 0 && localCol < s.length) out += s[localCol];
-    }
-  });
+  // Чередование считается по номеру РЕАЛЬНО взятого столбца (walk), а не по индексу в общем
+  // списке — иначе пропущенные ведущие пустышки сбивали бы чётность.
+  walk.forEach((c, k) => { out += vertColBits(st, plan.parts, c, k % 2 === 1); });
   return out;
 }
 
@@ -2192,6 +2343,22 @@ function concatSnakeDownTo(st, stopIdx, dir){
    строки (это была ошибка в первой версии этой функции: строки одинаковой длины ВСЕГДА в одной
    подсетке независимо от порядка, а строки разной длины могут попасть в одну ИЛИ в разные,
    строго по формуле ниже). */
+/* Опорная ширина для hasHalfNudge — ВСЕГДА общий maxLen по ВСЕЙ таблице, а не по подмножеству
+   участвующих строк. У "Центр ½" подсетка строки считается от чётности (maxLen − длина), и
+   render() берёт maxLen по ВСЕМ st.rows, тогда как XOR/склейки строят локальную сетку только по
+   строкам 0..stopIdx (или по выделенным). Если чётность локального и общего maxLen разная, ВСЕ
+   строки разом переезжают в противоположную подсетку: сама разбивка на группы при этом
+   сохраняется (взаимный сдвиг двух строк = (len_b − len_a)/2 и от maxLen не зависит), но метки
+   "целая"/"полу" меняются местами — и xorRowsDownTo() отдаёт группы в чередование в обратном
+   порядке, т.е. результат расходится с тем, что нарисовано на экране. Достаточно ОДНОЙ длинной
+   строки НИЖЕ выделенной, чтобы порядок бит перевернулся. У "Лесенка ½"/"Лесенка правая ½"
+   этого нет — там подсетка считается от НОМЕРА строки и от maxLen не зависит вообще. */
+function nudgeRefMaxLen(st, rows){
+  const src = (st && st.rows) ? st.rows : (rows || []);
+  let m = 0;
+  for (const s of src) if (s && s.length > m) m = s.length;
+  return m;
+}
 function hasHalfNudge(s, maxLen, align, rowIdx){
   if (!s.length) return false;
   // "Лесенка ½"/"Лесенка правая ½" — от чётности НОМЕРА строки: у них и сам сдвиг считается от
@@ -2236,6 +2403,10 @@ function xorRowsFiltered(rows, stopIdx, align, st, wantNudge, rowIdxs){
     const s = st ? getRowBits(st, i) : rows[i];
     if (s.length > maxLen) maxLen = s.length;
   }
+  // Локальный maxLen выше остаётся точкой отсчёта для САМИХ сдвигов (rowShiftFor) — результат
+  // строится в своей сетке. А вот принадлежность строки к "целой"/"полу" подсетке обязана
+  // считаться от ОБЩЕЙ ширины таблицы, как её видит render() — см. nudgeRefMaxLen().
+  const nudgeMax = nudgeRefMaxLen(st, rows);
   // Границы занятых колонок. Раньше считался только ПРАВЫЙ край (reach), а массив всегда начинался
   // с колонки 0 — поэтому биты строк с ОТРИЦАТЕЛЬНЫМ сдвигом (он бывает у "Лесенка правая" и у
   // осевых режимов, где строка свободно уезжает левее нулевой колонки) писались в отрицательный
@@ -2247,7 +2418,7 @@ function xorRowsFiltered(rows, stopIdx, align, st, wantNudge, rowIdxs){
   let reach = 0, minShift = 0;
   for (const i of idxs){
     const s = st ? getRowBits(st, i) : rows[i];
-    if (!s.length || (wantNudge !== null && hasHalfNudge(s, maxLen, align, i) !== wantNudge)) continue;
+    if (!s.length || (wantNudge !== null && hasHalfNudge(s, nudgeMax, align, i) !== wantNudge)) continue;
     const shift = rowShiftFor(maxLen, i, s, align);
     if (shift + s.length > reach) reach = shift + s.length;
     if (shift < minShift) minShift = shift;
@@ -2257,7 +2428,7 @@ function xorRowsFiltered(rows, stopIdx, align, st, wantNudge, rowIdxs){
   const bits = new Uint8Array(width);
   for (const i of idxs){
     const s = st ? getRowBits(st, i) : rows[i];
-    if (!s.length || (wantNudge !== null && hasHalfNudge(s, maxLen, align, i) !== wantNudge)) continue;
+    if (!s.length || (wantNudge !== null && hasHalfNudge(s, nudgeMax, align, i) !== wantNudge)) continue;
     const shift = rowShiftFor(maxLen, i, s, align);
     for (let k = 0; k < s.length; k++) if (s[k] === "1") bits[shift + k - minShift] ^= 1;
   }
@@ -2394,7 +2565,7 @@ const st = {
   selectedCol: -1,
   spiralUpDir: "right",
   seqGlueMode: "right", ringReverse: false,
-  bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatRInv", "concatRRevInv", "concatL", "concatLInv", "concatLRevInv", "concatSnake", "concatSnakeInv", "concatSnakeRevInv", "vertR", "vertL", "snakeR", "snakeL"], bgSearchLastHit: -1,
+  bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatRInv", "concatRRevInv", "concatL", "concatLInv", "concatLRevInv", "concatSnake", "concatSnakeInv", "concatSnakeRevInv", "vertR", "vertL", "snakeR", "snakeL", "vertZigR", "vertZigL"], bgSearchLastHit: -1,
   bgSubPatterns: false,
   bgSearchAllBelow: false,
   highlight01: false,
@@ -2420,6 +2591,7 @@ const BG_SEARCH_MODE_LABELS = {
   concatSnake: "Сквозная 🐍", concatSnakeInv: "Сквозная 🐍 Инв", concatSnakeRevInv: "Сквозная 🐍 Рев+Инв",
   vertR: "Верт. →", vertL: "Верт. ←",
   snakeR: "Змейка →", snakeL: "Змейка ←",
+  vertZigR: "Верт. зигзаг →", vertZigL: "Верт. зигзаг ←",
   lengthSums: "Суммы длин"
 };
 /* Какие строки результата фон-поиска сейчас развёрнуты кликом (см. render() → bgResultHtml).
@@ -3237,9 +3409,7 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
           const isHalfAlign = st.align === "halfcenter" || st.align === "halfstairs" || st.align === "rhalfstairs";
           if (isHalfAlign) {
             const rowBHere = getRowBits(st, b);
-            let maxLenXor2 = 0;
-            for (let i = 0; i <= b; i++) { const s = getRowBits(st, i); if (s.length > maxLenXor2) maxLenXor2 = s.length; }
-            const wantNudge = hasHalfNudge(rowBHere, maxLenXor2, st.align, b);
+            const wantNudge = hasHalfNudge(rowBHere, nudgeRefMaxLen(st, null), st.align, b);
             res = xorRowsFiltered(st.rows, b, st.align, st, wantNudge);
           } else if (st.align === "stairs" || st.align === "rstairs") {
             // Лесенки считают сдвиг от НОМЕРА строки — xorPair() номеров не знает (см. её вызов
@@ -4518,6 +4688,29 @@ function render(){
   // столбца (см. selectColumn()) это учитывают.
   const colSelRange = colSelectRowRange();
 
+  // "0 вместо пустот" (st.padZero): ghost-нули рисуются НЕ по всей ширине полотна, а только в тех
+  // столбцах, которые реально заняты УЧАСТВУЮЩИМИ строками, и только в самих этих строках —
+  // запрос пользователя ("только по столбцам, которые входят в включённые строки над выделенной
+  // или всех выделенных"). Набор участников берём ровно тот же, что и фон-поиск (см.
+  // computeBgSearchTarget/multiSelIdxs): выделено НЕСКОЛЬКО строк — участвуют ровно они, иначе —
+  // всё от 0 до самой нижней выделенной включительно (seqAnchorIdx). Сдвиг считаем через
+  // rowShiftFor() — той же геометрией, что и сами склейки/XOR.
+  let padRowSet = null, padCols = null;
+  if (st.padZero) {
+    const anchor = seqAnchorIdx();
+    const padIdxs = (st.selectedRows && st.selectedRows.size > 1)
+      ? Array.from(st.selectedRows).sort((a, b) => a - b)
+      : Array.from({ length: Math.max(0, anchor + 1) }, (_, k) => k);
+    padRowSet = new Set(padIdxs);
+    padCols = new Set();
+    for (const ri of padIdxs) {
+      const rs = st.rows[ri] || "";
+      if (!rs.length) continue;
+      const rsh = rowShiftFor(maxLen, ri, rs, st.align);
+      for (let k = 0; k < rs.length; k++) padCols.add(rsh + k);
+    }
+  }
+
   // База для подсветки "номер изменился" (.num.changed) — то, к чему реально вернёт "↺ Сброс":
   // если вкладка уже сохранена (💾), это savedChain.rows, а не исходный шаблон tplRows — иначе
   // после сохранения новой цепочки как базовой номера продолжали бы висеть "изменены" вечно,
@@ -4661,13 +4854,30 @@ function render(){
     // если выбранный столбец попадает именно сюда (в этой строке для него просто нет бита),
     // всё равно подсвечиваем один "пустой" символ на его месте, чтобы подсветка столбца шла
     // сплошной линией по всем строкам диапазона, а не пропускала короткие/пустые строки.
+    // При включённой "0 вместо пустот" (st.padZero) пустоты рисуются не пробелами, а теми самыми
+    // приглушёнными нулями, которые склейки/XOR реально подставляют на этих местах — ТОЛЬКО
+    // видимость, в st.rows ничего не пишется (запрос пользователя: "эти 0 добавить в строки как
+    // видимость только"). Ограничено участвующими строками и занятыми ими столбцами — см.
+    // padRowSet/padCols выше. Пустые строки исключены и там, и тут: алгоритмы их вообще
+    // пропускают (см. vertColumnPlan/xorRowsFiltered — там `if (!s.length) continue`).
+    const ghostZero = st.padZero && s.length > 0 && padRowSet && padRowSet.has(i);
     const blankRun = (startCol, len) => {
       if (len <= 0) return "";
-      if (isColSel && st.selectedCol >= startCol && st.selectedCol < startCol + len) {
-        const off = st.selectedCol - startCol;
-        return "&nbsp;".repeat(off) + '<span class="col-sel-bit">&nbsp;</span>' + "&nbsp;".repeat(len - off - 1);
+      let outRun = "";
+      for (let t = 0; t < len; t++) {
+        const c = startCol + t;
+        // Ноль ставим, только если этот столбец реально занят кем-то из участвующих строк —
+        // за их пределами (слева/справа от общей занятой области) остаётся пустое место.
+        const ghost = ghostZero && padCols.has(c);
+        if (isColSel && st.selectedCol === c) {
+          outRun += ghost
+            ? '<span class="col-sel-bit pad-zero-bit">0</span>'
+            : '<span class="col-sel-bit">&nbsp;</span>';
+        } else {
+          outRun += ghost ? '<span class="pad-zero-bit">0</span>' : "&nbsp;";
+        }
       }
-      return "&nbsp;".repeat(len);
+      return outRun;
     };
     let bits = blankRun(0, Math.max(0, shift));
     if (st.runsAsBits) {
@@ -4819,8 +5029,13 @@ function render(){
       .join("\n");
     bgResultHtml = bgInfo.results.map((r, i) => {
       const len = r.result.length;
-      const ringExt = ringNextLap(r.result);
-      const full = r.result + ringExt;
+      // Показываем РОВНО тот буфер, в котором искали (см. ringCycle/findPatternKinds): период
+      // кольца, повторённый дважды. Без инверсии/реверса период = сама строка, и это прежнее
+      // "строка + её копия". С 🔁 Инв. кольцо период уже двойной (прямой виток + инвертированный),
+      // поэтому строка результата становится вчетверо длиннее исходной — иначе находку, начавшуюся
+      // во втором витке и ушедшую за его край, просто нечем было бы показать.
+      const cycle = ringCycle(r.result);
+      const full = cycle + cycle;
       // Карта "какой kind (и его skip-флаг) покрывает этот символ" — приоритет у более раннего
       // kind (прямая версия перекрывает инверсию/реверс, если их диапазоны совпадают по позиции).
       // Индексы идут БЕЗ модуля — kd.start/kd.len уже посчитаны в раскладке text+ringExt.
@@ -4830,14 +5045,34 @@ function render(){
         const p = kd.start + i;
         if (p < full.length && kindAt[p] < 0) { kindAt[p] = kd.kind; skipAt[p] = kd.skip; }
       }
+      // Сколько витков реально показано: без инверсии/реверса период = самой строке и витков
+      // два (строка + копия), с 🔁 Инв. кольцо период двойной и витков ЧЕТЫРЕ
+      // (прямой, инвертированный, снова прямой, снова инвертированный).
+      const lapCount = len ? Math.round(full.length / len) : 0;
+      const lapTitle = (lap) => "Виток " + (lap + 1) + " из " + lapCount +
+        (lap === 0 ? " — настоящие биты строки" : (lap % 2 === 0 ? " — повтор прямого витка" : " — следующий виток кольца"));
+      // Виток оборачивается в ОДИН span целиком, а не помечается посимвольно: пунктир на
+      // элементе шириной в один знак — это один-два штриха, которые на 100% масштаба браузера
+      // округляются в ничто и проявляются только к 175% (запрос пользователя "не вижу
+      // подчёркивания"). На обёртке во весь виток линия идёт непрерывно и видна при любом
+      // масштабе. Посимвольные span'ы (подсветка находки/приглушение кольца) остаются внутри.
       let bits = "";
-      for (let k = 0; k < full.length; k++) {
-        const ch = esc(full[k]);
-        const kd = kindAt[k];
-        const cls = [];
-        if (kd >= 0) { cls.push("chain-hit-bits"); if (KIND_CLS[kd]) cls.push(KIND_CLS[kd]); if (skipAt[k]) cls.push("skip1"); }
-        if (k >= len) cls.push("chain-ring-ext");
-        bits += cls.length ? ('<span class="' + cls.join(" ") + '">' + ch + '</span>') : ch;
+      for (let lap = 0; lap < lapCount; lap++) {
+        const from = lap * len, to = Math.min(full.length, from + len);
+        let inner = "";
+        for (let k = from; k < to; k++) {
+          const ch = esc(full[k]);
+          const kd = kindAt[k];
+          const cls = [];
+          if (kd >= 0) { cls.push("chain-hit-bits"); if (KIND_CLS[kd]) cls.push(KIND_CLS[kd]); if (skipAt[k]) cls.push("skip1"); }
+          if (k >= len) cls.push("chain-ring-ext");
+          inner += cls.length ? ('<span class="' + cls.join(" ") + '">' + ch + '</span>') : ch;
+        }
+        // Помечаем только ЧЁТНЫЕ наборы (2-й и 4-й, они же нечётные 0-based) — см. .ring-lap-* в
+        // CSS. Прямые витки (1-й и 3-й) остаются без пометки.
+        bits += (lap % 2 === 1)
+          ? ('<span class="ring-lap-' + (lap % 4) + '" title="' + lapTitle(lap) + '">' + inner + '</span>')
+          : inner;
       }
       const checkHtml = r.kinds.map(kd =>
         '<span class="chain-result-line-check-mark' + (KIND_CLS[kd.kind] ? " " + KIND_CLS[kd.kind] : "") + (kd.skip ? " skip1" : "") + '" title="Найдено: ' + KIND_LABELS_RU[kd.kind] + (kd.skip ? " (без 1-го символа)" : "") + '">✓</span>'
@@ -6849,6 +7084,10 @@ function computeBgSearchTarget(){
       result = concatSnakeDownTo(st, selIdx, "right");
     } else if (mode === "snakeL") {
       result = concatSnakeDownTo(st, selIdx, "left");
+    } else if (mode === "vertZigR") {
+      result = concatVertZigzagDownTo(st, selIdx, "right");
+    } else if (mode === "vertZigL") {
+      result = concatVertZigzagDownTo(st, selIdx, "left");
     } else {
       result = interleavePair(rowAbove, rowSel, st.align);
     }
@@ -9534,7 +9773,7 @@ const DEFAULT_UI_SETTINGS = {
   horizRotateOnFail: true, horizAlternateSide: false, horizReverseChain: false, horizShowLiveXor: true,
   axisSnap: true, axisCenterOffset: 0,
   align: "center", mode: "step1", rowCount: "100",
-  bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatRInv", "concatRRevInv", "concatL", "concatLInv", "concatLRevInv", "concatSnake", "concatSnakeInv", "concatSnakeRevInv", "vertR", "vertL", "snakeR", "snakeL"],
+  bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatRInv", "concatRRevInv", "concatL", "concatLInv", "concatLRevInv", "concatSnake", "concatSnakeInv", "concatSnakeRevInv", "vertR", "vertL", "snakeR", "snakeL", "vertZigR", "vertZigL"],
   bgSubPatterns: false,
   bgSearchAllBelow: false,
   resultHeightLocked: true,
