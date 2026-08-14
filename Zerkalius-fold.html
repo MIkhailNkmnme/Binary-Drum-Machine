@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.408</title>
+<title>Zerkalius Fold — v0.434</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -65,9 +65,19 @@
      старая полоска toggleAllPinsBtn) — просто не рисовалось. Функциональность выпадающих
      списков важнее подстраховки от горизонтального переполнения — убрано. */
   #menuTabs{display:flex;align-items:center;gap:4px;position:relative;min-width:0}
-  /* Кнопки показать/скрыть overlay-баров — одинаковой минимальной ширины (по самой длинной
-     подписи), а не "гуляющей" по длине текста, как было бы без min-width */
-  .overlay-toggle-btn{font-size:12px;padding:3px 8px;min-width:60px;text-align:center}
+  /* Переключатели верхнего меню (◧П1/П2◨/🔗Р//🧾Ч/) — все ОДНОЙ ширины, а не "гуляющей" по длине
+     текста. Раньше класс висел только на Р//Ч, а П1/П2 имели инлайновый стиль и ширину по
+     содержимому — кнопки выходили разными (запрос пользователя "одинаковую ширину").
+     justify-content нужен потому, что глобальное правило button{} задаёт display:flex, а на
+     flex-контейнер text-align не действует — без него подпись липнет влево. */
+  .overlay-toggle-btn{font-size:12px;padding:3px 8px;min-width:64px;
+    text-align:center;justify-content:center}
+  /* Включённое состояние у переключателей верхнего меню (◧П1/П2◨/🔗Р//🧾Ч/) — ПРИГЛУШЁННОЕ, не
+     как у кнопок-режимов: .mode-act даёт белую рамку с двойным свечением, и четыре таких кнопки
+     подряд слепили (запрос пользователя "убавь яркость включённых"). Тут — только мягкая
+     акцентная рамка и лёгкая заливка, состояние читается, но в глаза не бьёт. */
+  .overlay-on{border-color:var(--acc) !important;color:var(--acc) !important;
+    background:rgba(77,163,255,.10) !important;box-shadow:none !important;font-weight:normal !important}
   .menu-btn{display:flex;align-items:center;gap:5px;background:none;border:1px solid var(--line);color:var(--dim);
             font-family:inherit;font-size:12px;padding:3px 10px;cursor:pointer;border-radius:3px}
   .menu-btn:hover{background:var(--bg);color:var(--fg);border-color:var(--acc)}
@@ -137,6 +147,17 @@
   .chain-dd-mini{flex:0 0 auto;background:none;border:none;color:var(--dim);cursor:pointer;
     padding:0 2px;font-size:11px;line-height:1;opacity:.7}
   .chain-dd-mini:hover{color:var(--acc);opacity:1}
+  /* Подвал выпадающего списка вкладок — экспорт/импорт ВСЕХ цепочек. position:sticky, чтобы при
+     длинном списке (он скроллится, max-height:60vh) кнопки оставались на виду внизу, а не
+     уезжали под список. Отделён линией сверху — это действие не про конкретную вкладку. */
+  .chain-dd-footer{position:sticky;bottom:0;display:flex;gap:4px;padding:4px 6px;
+    border-top:1px solid var(--line);background:var(--panel)}
+  .chain-dd-file{flex:1;font-size:11px;padding:3px 6px;background:#232735;color:var(--fg);
+    border:1px solid var(--line);border-radius:3px;cursor:pointer;justify-content:center}
+  .chain-dd-file:hover{border-color:var(--acc);color:var(--acc)}
+  /* Очистка кэша — действие необратимое, поэтому отделена цветом от соседних "Файл". */
+  .chain-dd-wipe{color:var(--red)}
+  .chain-dd-wipe:hover{border-color:var(--red);color:var(--red);background:rgba(255,77,77,.12)}
   .menu-panel{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:4px;
               background:var(--panel);padding:0 4px 4px}
   /* position:sticky — у длинного содержимого (напр. "Лог находок" + "Суммы длин") панель
@@ -251,6 +272,10 @@
      min-height не перебивает), нужно переопределить и padding/font-size тоже, не только высоту. */
   #spiralDirGrp button{min-height:var(--std-btn-h);padding:1px 5px;font-size:12px}
   .align-grp button.act{background:rgba(77,163,255,0.2);color:var(--acc)}
+  /* Фон-поиск выключен целиком (клик по заголовку, см. toggleBgSearch): выбранные режимы
+     остаются отмеченными — набор ведь сохраняется, — но красятся СЕРЫМ вместо акцентного синего,
+     чтобы сразу было видно, что сейчас они ни на что не влияют (запрос пользователя). */
+  #bgSearchModeGrp.bg-off button.act{background:rgba(255,255,255,0.07);color:var(--dim)}
 
   label.chk{display:inline-flex;align-items:center;gap:2px;color:var(--dim);cursor:pointer;user-select:none;white-space:nowrap;
              border:1px solid transparent;border-radius:3px;padding:1px 5px;transition:border-color .15s,box-shadow .15s,color .15s}
@@ -268,7 +293,13 @@
   /* "🔍 Фон-поиск" — больше не галка, просто заголовок, подсвечивается сам (та же светящаяся
      рамка, что у чекбоксов выше), когда включён хотя бы один режим фон-поиска — см.
      bgSearchActive()/render() в JS. */
-  #bgSearchTitle{display:inline-block;color:var(--dim);border:1px solid transparent;border-radius:3px;padding:1px 5px;}
+  /* Выглядит как обычная кнопка (рамка + фон + ховер, как у <button>), а не как подпись: это
+     переключатель "фон-поиск вкл/выкл" по клику, и в выключенном состоянии, без свечения, он
+     читался просто как текст — было непонятно, что по нему вообще можно нажать (запрос
+     пользователя). Рамка была border:1px solid transparent — то есть невидимая. */
+  #bgSearchTitle{display:inline-block;color:var(--dim);background:#232735;
+    border:1px solid var(--line);border-radius:3px;padding:2px 8px;user-select:none}
+  #bgSearchTitle:hover{border-color:var(--acc);color:var(--fg)}
   #bgSearchTitle.bg-search-active{border-color:#ffffff;box-shadow:0 0 6px #ffffff, inset 0 0 4px rgba(255,255,255,0.3);color:var(--fg);font-weight:bold;}
   /* Заголовок + цветной квадратик — тоже в виде кнопки (рамка+фон, как у обычных <button>),
      а не голый текст с плавающим квадратиком без границ (см. "Цвет 1"/"Цвет 0"/"Фон" и т.п.). */
@@ -325,6 +356,16 @@
      группы кнопок в приложении (см. .ops-btn-grid/.control-group-player/.preset-grp) */
   .search-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
   .search-grid > label.chk{min-height:var(--std-btn-h);box-sizing:border-box}
+
+  /* Рамка "как сверять паттерн": ⇌ Инв/Рев + ⏭ Без 1-го, под ними 🔁 Инв. кольцо (+ реверс).
+     white-space:normal и min-width:0 у галок внутри — ЗАЩИТА от того же бага, на котором
+     споткнулась подпись "⏩ Турбо": минимум колонки у 1fr равен min-content, а .chk по умолчанию
+     nowrap, поэтому длинная подпись ("🔁 Инв. кольцо реверс") раздула бы свою колонку и перекосила
+     всю сетку. Тут она просто переносится на вторую строку. */
+  .search-match-box{grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr;gap:4px;
+    border:1px solid var(--m-indigo);background:rgba(77,77,138,0.12);border-radius:3px;padding:4px}
+  .search-match-box > label.chk{min-width:0;white-space:normal;min-height:var(--std-btn-h);
+    box-sizing:border-box}
 
   /* Компактные палитры цветов */
   input[type="color"]{width:14px;height:14px;padding:0;border:1px solid var(--line);border-radius:2px;cursor:pointer;background:transparent}
@@ -1191,7 +1232,9 @@
 <!-- === МАРКЕР 03: HEADER_UI === -->
 <div id="menuBar">
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
-    <h3 style="margin:0;font-size:13px;">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.408</span></h3>
+    <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
+         (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.434</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -1204,7 +1247,10 @@
       <div class="menu-btn" data-menu="menuSeq"><span>Сквозная</span><input type="checkbox" class="menu-pin-inline" id="menuSeqPin" title="Показывать в панели"></div>
     </div>
     <!-- Перенесена ПОСЛЕ меню вкладок и переименована — запрос пользователя. -->
-    <button id="bUndo" style="font-size:12px;padding:3px 8px;border-color:#ff9900;color:#ff9900;" title="Шаг назад / отмена ручной правки (Backspace / Ctrl+Z)">↩ Отмена</button>
+    <!-- margin-left — тот же отступ, что и внутренний горизонтальный padding кнопки: у #menuTabs
+         gap всего 4px, и своя оранжевая рамка почти упиралась в рамку группы вкладок слева,
+         тогда как справа от кнопки пусто (запрос пользователя "слева также паддинг"). -->
+    <button id="bUndo" style="font-size:12px;padding:3px 8px;margin-left:8px;border-color:#ff9900;color:#ff9900;" title="Шаг назад / отмена ручной правки (Backspace / Ctrl+Z)">↩ Отмена</button>
     <div id="menuOps" class="menu-drop"></div>
     <div id="menuEdit" class="menu-drop"></div>
     <div id="menuSearch" class="menu-drop"></div>
@@ -1217,12 +1263,6 @@
     <!-- П1/П2/Р//Ч/ — объединены в одну рамку (запрос пользователя). Вернуть overlay-бары,
          скрытые крестиком ✕ в их шапке (см. .overlay-close) — сами бары полностью пропадают из
          вида (display:none), других способов их вернуть нет. -->
-    <div style="display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:3px;padding:2px 4px;">
-      <button id="bTogglePatL" style="font-size:12px;padding:3px 8px;" title="Скрыть/показать левую колонку паттернов">◧ П1</button>
-      <button id="bTogglePatR" style="font-size:12px;padding:3px 8px;" title="Скрыть/показать правую колонку паттернов">П2 ◨</button>
-      <button id="bToggleResultBox" class="overlay-toggle-btn" title="Показать/скрыть окно «Результат»">🔗 Р/</button>
-      <button id="bToggleStepLog" class="overlay-toggle-btn" title="Показать/скрыть окно «Черновик последнего шага»">🧾 Ч/</button>
-    </div>
 
     <!-- Управление цепочками (вкладками) — вынесено из шапки таблицы строк в верхнее меню.
          Раньше был нативный <select> + отдельная кнопка "✕" (закрывала только ТЕКУЩУЮ
@@ -1237,13 +1277,24 @@
       </div>
       <button id="bAddTab" style="font-size:12px;padding:3px 6px;" title="Создать новую вкладку цепочки">+</button>
       <button id="bSaveChain" style="font-size:12px;padding:3px 6px;" title="Сохранить текущую цепочку и все настройки-кнопки (восстановится при сбросе)">💾</button>
-      <button id="bClearTab" style="font-size:12px;padding:3px 6px;" title="Полностью стереть данные текущей вкладки (строки, паттерны, историю)">🧹</button>
+      <!-- 🧹 отсюда убрана (запрос пользователя): очистка есть у КАЖДОЙ цепочки в выпадающем
+           списке (.chain-dd-mini data-act="clear"), дублировать её ещё и тут незачем. -->
       <button id="bReset" style="font-size:12px;padding:3px 6px;" title="Сбросить к шаблону (Escape)">↺ Сброс</button>
-      <!-- Экспорт/импорт ВСЕХ цепочек (вкладок) целиком в файл — запрос пользователя "сохранить
-           все настройки с цепочками в файл, и загрузить все из файла". -->
-      <button id="bExportTabs" style="font-size:12px;padding:3px 6px;" title="Сохранить ВСЕ вкладки-цепочки (со всеми их строками/паттернами/настройками) в файл .json">⬇ Файл</button>
-      <button id="bImportTabs" style="font-size:12px;padding:3px 6px;" title="Загрузить вкладки-цепочки из файла .json (заменит текущие все)">⬆ Файл</button>
+      <!-- Экспорт/импорт ВСЕХ цепочек (вкладок) целиком в файл — сами кнопки переехали ВНИЗ
+           выпадающего списка вкладок (см. .chain-dd-footer в renderTabs()), по запросу
+           пользователя. Тут остался только скрытый file-input: он невидим, и где лежит — неважно. -->
       <input type="file" id="importTabsInput" accept=".json,application/json" style="display:none">
+    </div>
+
+    <!-- Переключатели колонок паттернов и overlay-окон — ПРАВЕЕ блока цепочек (запрос
+         пользователя, раньше стояли левее него). Включённое состояние помечается классом
+         .overlay-on вместо общего .mode-act: тот светит белой рамкой с двойным свечением и на
+         четырёх кнопках подряд бил по глазам — см. CSS. -->
+    <div style="display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:3px;padding:2px 4px;">
+      <button id="bTogglePatL" class="overlay-toggle-btn" title="Скрыть/показать левую колонку паттернов">◧ П1</button>
+      <button id="bTogglePatR" class="overlay-toggle-btn" title="Скрыть/показать правую колонку паттернов">П2 ◨</button>
+      <button id="bToggleResultBox" class="overlay-toggle-btn" title="Показать/скрыть окно «Результат»">🔗 Р/</button>
+      <button id="bToggleStepLog" class="overlay-toggle-btn" title="Показать/скрыть окно «Черновик последнего шага»">🧾 Ч/</button>
     </div>
   </div>
   <span class="counter" style="justify-self:end;">Ш: <b id="stepNo">0</b></span>
@@ -1288,6 +1339,10 @@
     <!-- Одна кнопка вместо пары "Авто"/"Стоп" — сама переключает подпись/цвет между "🚀 Авто"
          (клик — запустить) и "⏹ Стоп" (клик — остановить), см. setAutoBtnState() в JS. -->
     <button id="bAuto" title="Автоматический прогон по выбранному режиму (Enter) / повторный клик — остановить">🚀 Авто</button>
+    <!-- КОПИЯ кнопки "↺ Сброс" из верхнего меню (запрос пользователя — именно копия, оригинал
+         вверху остаётся): под рукой там же, где запускается прогон. Своего обработчика не имеет —
+         просто кликает по оригиналу, чтобы логика сброса жила в одном месте. -->
+    <button id="bResetFlow" title="Сбросить к шаблону (Escape) — то же, что «↺ Сброс» в верхнем меню">↺ Сброс</button>
   </div>
   <div class="flow-modes-grid">
     <!-- Шаг/Шаг 2 и XOR/XOR 2 — каждая пара в своей рамке, тот же приём, что и у Круг/Круг Инв
@@ -1350,6 +1405,12 @@
         <button id="bShiftRInv" style="flex:1;" title="Круговой сдвиг вправо с инверсией бита при переходе границы строки">► Круг Инв</button>
       </div>
       <label class="chk" title="Для «⊙ Ось»: вкл — на оси только «1», «0» перепрыгивается; выкл — сдвиг на любой символ. Для «Ось 1.2»: вкл — зазор только между «1» и «0» (строки без такой пары заморожены); выкл — зазор между любыми соседними символами, заморозки нет. Для ВСЕХ остальных выравниваний: вкл — Круг/Круг Инв крутят строку, пока на её оси (первый бит, у «По правому краю»/«Лесенки правой» — последний) не встанет «1»; выкл — обычный одиночный поворот"><input type="checkbox" id="cAxisSnap" checked> ⊙ Сдвиг только на «1» / «1-0»</label>
+      <!-- Что делать, когда Круг довёл строку до края: по умолчанию перескок на противоположный
+           край (кольцо), с галкой — разворот и ход обратно до упора, потом снова вперёд.
+           Работает и в "ОсьБит"/"ОсьБит ½" (край допустимого диапазона положений), и в остальных
+           выравниваниях (край собственного кольца поворотов строки). См. axisBitNextSh()/
+           rowRotOffMap в JS. -->
+      <label class="chk" title="Дойдя до края, Круг не перескакивает через границу дальше по кругу, а разворачивается и идёт обратно до упора, потом снова вперёд. В «ОсьБит»/«ОсьБит ½» край — это предел допустимых положений относительно строки выше; в остальных выравниваниях — край собственного кольца поворотов строки (когда первый символ дошёл до другого конца)"><input type="checkbox" id="cAxisBitBounce"> ↩ От края назад, не по кольцу</label>
     </div>
     <!-- ▲/▼ Спираль + переключатель "какая сторона ленты — вверх" (st.spiralUpDir) — в ОДНОЙ
          рамке (см. запрос пользователя — переключатель влияет только на Спираль, значит и жить
@@ -1416,20 +1477,33 @@
       <button data-val="snake" title="Порядок строк обычный (строка 0 первая), но КАЖДАЯ ВТОРАЯ строка читается в обратном порядке БИТ внутри себя — змейкой/бустрофедоном">🐍 Змейка</button>
     </div>
   </div>
-  <div style="grid-column:1 / -1;display:flex;flex-direction:column;gap:4px;border:1px solid var(--m-indigo);background:rgba(77,77,138,0.12);border-radius:3px;padding:4px;margin-top:6px;">
-    <label class="chk" title="Кольцевой поиск в результирующей строке (Интерлив/XOR/Сквозная): при переходе на новый виток кольца биты инвертируются (0↔1) — 111 даёт кольцо 111 000 111 000... вместо 111 111 111..., и паттерн ищется уже в нём"><input type="checkbox" id="cRingInvert">🔁 Инв. кольцо</label>
-    <label class="chk" title="То же самое кольцо, но следующий виток ЕЩЁ И реверсируется (порядок бит наоборот) — если включена ЕЩЁ и обычная 🔁 Инв. кольцо, следующий виток получается инвертирован И реверснут одновременно"><input type="checkbox" id="cRingReverse">🔁 Инв. кольцо реверс</label>
-  </div>
+  <!-- 🔁 Инв. кольцо / Инв. кольцо реверс переехали отсюда во вкладку "Поиск", в одну рамку с
+       ⇌ Инв/Рев и ⏭ Без 1-го (запрос пользователя): все четыре — про то, КАК паттерн сверяется
+       с результатом, и логичнее им жить вместе. См. .search-match-box ниже. -->
 </div>
 
 <div id="searchGroup" class="control-group search-grid">
-  <!-- Перенесены в самый верх вкладки — запрос пользователя. -->
-  <div style="grid-column:1 / -1;display:grid;grid-template-columns:repeat(2, 1fr);gap:4px;">
+  <!-- Всё про то, КАК паттерн сверяется с результатом — в ОДНОЙ рамке (запрос пользователя):
+       варианты самого паттерна (инверсия/реверс, пропуск первого символа), продолжение кольца,
+       и рядом же — чем заполнять пустоты и что делать с находкой. 🔁-галки переехали сюда из
+       вкладки "Сквозная", 0️⃣/🧲 — из общего списка галок ниже. -->
+  <div class="search-match-box">
     <label class="chk" title="Искать также инверсию и реверс"><input type="checkbox" id="cKinds">⇌ Инв/Рев</label>
     <label class="chk" title="Первый символ паттерна не проверяется (ищется хвост со второго)"><input type="checkbox" id="cSkip1" checked>⏭ Без 1-го</label>
+    <label class="chk" title="Кольцевой поиск в результирующей строке (Интерлив/XOR/Сквозная): при переходе на новый виток кольца биты инвертируются (0↔1) — 111 даёт кольцо 111 000 111 000... вместо 111 111 111..., и паттерн ищется уже в нём"><input type="checkbox" id="cRingInvert">🔁 Инв. кольцо</label>
+    <label class="chk" title="То же самое кольцо, но следующий виток ЕЩЁ И реверсируется (порядок бит наоборот) — если включена ЕЩЁ и обычная 🔁 Инв. кольцо, следующий виток получается инвертирован И реверснут одновременно"><input type="checkbox" id="cRingReverse">🔁 Инв.кольц.рев.</label>
+    <label class="chk" title="Пустые места (столбец засчитан — в нём есть символ хотя бы у одной строки, но КОНКРЕТНАЯ строка до него не достаёт) заполнять нулями вместо того, чтобы просто пропускать. Влияет на вертикальную склейку — режимы фон-поиска «Верт. →»/«Верт. ←», а также на вертикальную сквозную (↕ Верт.). Полностью пустые столбцы (дырки между разъехавшимися строками) пропускаются в любом случае, нулями не заполняются"><input type="checkbox" id="cPad">0️⃣ 0 вместо пустот</label>
+    <label class="chk" title="При круговом сдвиге (◄/►Круг/Круг Инв, вручную и под «Авто») — если фон-поиск нашёл совпадение, найденная строка попадает в выделение и крутится дальше вместе с остальными. Выделена ОДНА строка — выделение растёт. Выделено НЕСКОЛЬКО — выделение едет ОКНОМ постоянного размера: найденная добавляется снизу, самая верхняя выбрасывается, число выделенных строк не меняется. Выключено — выделение не меняется само по себе"><input type="checkbox" id="cCaptureOnFind" checked>🧲 Захват находки</label>
   </div>
   <label class="chk" title="Остановить автоматический прогон (Авто), если найдено совпадение с паттерном"><input type="checkbox" id="cStopOnHit" checked>🛑 Стоп на находке</label>
   <label class="chk" title="Остановить круговой сдвиг (◄/►Круг/Круг Инв) под «Авто», если суммарное число единиц и нулей по всем выделенным строкам стало РОВНО (баланс) — см. «⚖ Показать балансы»"><input type="checkbox" id="cStopOnBalance">🛑 Стоп при балансе</label>
+  <!-- Пропуск отрисовки во время «Авто» — см. tick()/showFrame в autoRun(). Сам перебор идёт с
+       той же плотностью, экономится только перерисовка таблицы и запись кэша на каждом кадре.
+       ПОДПИСЬ КОРОТКАЯ НАМЕРЕННО: .search-grid — это grid-template-columns:1fr 1fr, а минимум
+       колонки у 1fr равен min-content; у .chk стоит white-space:nowrap, поэтому длинная подпись
+       раздувает свою колонку и сжимает соседнюю — вся сетка галок съезжает (так и случилось с
+       вариантом "⏩ Турбо: рисовать только находки"). Подробности — в title. -->
+  <label class="chk" title="Не перерисовывать таблицу во время прокрутки под «Авто»: строки обновляются только когда фон-поиск что-то нашёл (и ещё раз при остановке). Заметно быстрее, потому что перерисовка и запись кэша на каждом кадре и съедают основное время; промежуточные варианты на такой скорости всё равно не разглядеть"><input type="checkbox" id="cTurboAuto">⏩ Турбо</label>
   <label class="chk" title="Когда некуда двигаться (нет находок) — не переходить на 1-ю строку, а циклически сдвигать нижнюю строку и повторять операцию"><input type="checkbox" id="cAutoShift">🔀 Сдвиг снизу</label>
   <label class="chk" title="Разбивать XOR на два отдельных визуальных шага: 1) Дополнение нулями 2) Вычисление XOR"><input type="checkbox" id="cStageXor">2️⃣ 2-этапный XOR</label>
   <label class="chk" title="При повторном заходе с 1-й строки читать биты инверсно (0↔1)"><input type="checkbox" id="cInvPass">🔄 Инв. заход</label>
@@ -1437,8 +1511,6 @@
   <label class="chk" title="Держать изначальный порядок паттернов"><input type="checkbox" id="cOrder" checked>🔒 Порядок</label>
   <label class="chk" title="Искать строго только один следующий паттерн по порядку (не засчитывать другие раньше времени)"><input type="checkbox" id="cNextOnly">🎯 Только 1-й</label>
   <label class="chk" title="Сквозная цепочка по вертикалям"><input type="checkbox" id="cVert">↕ Верт.</label>
-  <label class="chk" title="Пустые места (столбец засчитан — в нём есть символ хотя бы у одной строки, но КОНКРЕТНАЯ строка до него не достаёт) заполнять нулями вместо того, чтобы просто пропускать. Влияет на вертикальную склейку — режимы фон-поиска «Верт. →»/«Верт. ←», а также на вертикальную сквозную (↕ Верт.). Полностью пустые столбцы (дырки между разъехавшимися строками) пропускаются в любом случае, нулями не заполняются"><input type="checkbox" id="cPad">0️⃣ 0 вместо пустот</label>
-  <label class="chk" title="При круговом сдвиге (◄/►Круг/Круг Инв, вручную и под «Авто») — если фон-поиск нашёл совпадение, ДОБАВЛЯТЬ найденную строку к выделению и крутить её дальше вместе с остальными. Работает для любого выделения, в т.ч. ОДНОЙ строки (раньше — только если исходно было выделено несколько). Выключено — выделение не меняется само по себе"><input type="checkbox" id="cCaptureOnFind" checked>🧲 Захват находки</label>
   <label class="chk" title="В режиме Интерливинга: делать XOR результата с нижней строкой пары"><input type="checkbox" id="cInterleaveXor">⧬+⨁ Интерл.XOR</label>
 
   <!-- Фоновый поиск: выделенная строка ФИКСИРОВАНА (не двигается сама, в отличие от ⧬ Интерлив /
@@ -1451,10 +1523,10 @@
          больше не нужна") — просто заголовок, подсвечивается сам (см. .bg-search-active в CSS),
          когда включён хотя бы один режим ниже (bgSearchActive() в JS). Полностью выключить —
          кнопкой "Всё/только XOR-Все/Выкл" ниже (3-й клик снимает все режимы разом). -->
-    <span id="bgSearchTitle" title="Фоновый поиск: при любом изменении строк проверяет, найден ли паттерн строки НИЖЕ выделенной в выбранном результате (см. переключатель ниже). Выделенная строка фиксирована — сама не двигается; активен, пока включён хотя бы один режим">🔍 Фон-поиск</span>
+    <span id="bgSearchTitle" style="cursor:pointer;" title="КЛИК — включить/выключить фоновый поиск целиком. Выбранный набор режимов при этом сохраняется (в отличие от кнопки «Всё / Выкл», которая именно снимает/ставит галки режимов). Сам поиск: при любом изменении строк проверяет, найден ли паттерн строки НИЖЕ выделенной в выбранном результате; выделенная строка фиксирована и сама не двигается">🔍 Фон-поиск</span>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
       <span style="font-size:11px;color:var(--dim);">Режимы фон-поиска:</span>
-      <button id="bBgModeAllNone" style="font-size:11px;padding:1px 6px;" title="Тоггл: 1-й клик — включить ВСЕ режимы ниже (включая 🧮 Суммы длин); 2-й клик — оставить только ⨁ XOR-Все; 3-й клик — снять все режимы (выключить Фон-поиск)">Всё / XOR-Все / Выкл</button>
+      <button id="bBgModeAllNone" style="font-size:11px;padding:1px 6px;" title="Тоггл: выделить ВСЕ режимы ниже (включая 🧮 Суммы длин) / снять все. Это только про галки режимов — сам фон-поиск включается кликом по заголовку «🔍 Фон-поиск»">Всё / Выкл</button>
     </div>
     <div class="align-grp" id="bgSearchModeGrp" title="Какой результат проверять на совпадение с паттерном строки ниже выделенной">
       <button data-val="interleave" class="act" title="Интерливинг выделенной и строки над ней">⧬ Интерлив</button>
@@ -2547,7 +2619,7 @@ const st = {
   rowDividers: new Set(),
   activeTab: 0, tabs: [],
   align: "center", vertical: false, padZero: false, allKinds: false, ringInvert: false,
-  pull: true, keepOrder: true, stopOnHit: true, stopOnBalance: false, captureOnFind: true, axisSnap: true, axisCenterOffset: 0,
+  pull: true, keepOrder: true, stopOnHit: true, stopOnBalance: false, turboAuto: false, captureOnFind: true, axisSnap: true, axisBitBounce: false, axisCenterOffset: 0,
   undo: [], running: false, msg: "",
   horizBitIdx: 0, horizXoredLength: 0, lastHorizRow: null, lastHorizDir: null, horizFoundInPass: false, horizChainLen: 0,
   horizBigChain: "", horizBigOrig: "", horizBigTargetIdx: -1, horizRotations: 0, horizNeedRebuild: false,
@@ -2566,6 +2638,7 @@ const st = {
   spiralUpDir: "right",
   seqGlueMode: "right", ringReverse: false,
   bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatRInv", "concatRRevInv", "concatL", "concatLInv", "concatLRevInv", "concatSnake", "concatSnakeInv", "concatSnakeRevInv", "vertR", "vertL", "snakeR", "snakeL", "vertZigR", "vertZigL"], bgSearchLastHit: -1,
+  bgSearchOn: true,
   bgSubPatterns: false,
   bgSearchAllBelow: false,
   highlight01: false,
@@ -2655,6 +2728,27 @@ function getAxisOffset(rowIdx, len){
    строка выше — двигать не на что, Круг/Круг Инв для такой строки ничего не делают (тот же no-op,
    что у "Ось 1.2" при длине < 2). */
 let axisBitShiftMap = new Map();
+/* Текущее направление обхода для режима "↩ От края назад" (st.axisBitBounce) — своё у КАЖДОЙ
+   строки, потому что пользователь жмёт одну и ту же кнопку Круга, а строка должна помнить, идёт
+   она сейчас вперёд или уже отразилась от края и возвращается. */
+let axisBitDirMap = new Map();
+/* Следующее положение sh внутри допустимого диапазона [minSh..maxSh].
+   По умолчанию — КОЛЬЦО: упёрлись в край, продолжаем с противоположного.
+   При включённой "↩ От края назад" вместо перескока на другой конец РАЗВОРАЧИВАЕМ направление —
+   строка идёт обратно до упора, там разворачивается снова и т.д. (запрос пользователя: "чтобы
+   дойдя до края не переход по кольцу, а шаг назад до упора и снова вперёд"). */
+function axisBitNextSh(r, sh, step, minSh, maxSh){
+  if (maxSh <= minSh) return sh;
+  const dir = axisBitDirMap.get(r) || 1;
+  let next = sh + step * dir;
+  if (next >= minSh && next <= maxSh) return next;
+  if (st.axisBitBounce) {
+    axisBitDirMap.set(r, -dir);
+    next = sh - step * dir;
+    return (next >= minSh && next <= maxSh) ? next : sh;
+  }
+  return next > maxSh ? minSh : maxSh;
+}
 function resolveAxisBitShift(rowIdx){
   if (axisBitShiftMap.has(rowIdx)) return axisBitShiftMap.get(rowIdx);
   if (rowIdx <= 0) return 0;
@@ -3793,6 +3887,11 @@ function resetAll(){
   invFlagsMap.clear();
   axisOffsetMap.clear();
   axisBitShiftMap.clear();
+  // Направление обхода и запасной счётчик поворотов для "↩ От края назад" — тоже часть текущей
+  // сессии сдвига: после Сброса строка стоит в исходном положении, и идти она должна снова
+  // ВПЕРЁД, а не доигрывать разворот, случившийся до сброса.
+  axisBitDirMap.clear();
+  rowRotOffMap.clear();
   st.shiftVariantTotal = null;
   st.shiftVariantRows = null;
   st.manualShiftTurns = 0;
@@ -4209,7 +4308,16 @@ function renderTabs() {
       '<button type="button" class="chain-dd-close" data-idx="' + i + '" title="Закрыть эту вкладку"' +
         (st.tabs.length <= 1 ? " disabled" : "") + '>✕</button>' +
     '</div>'
-  ).join("");
+  ).join("") +
+  // Экспорт/импорт ВСЕХ вкладок — подвалом этого же списка (запрос пользователя: перенести сюда
+  // из верхней панели). Рисуется ВНУТРИ innerHTML, а не отдельным статическим элементом, потому
+  // что renderTabs() перезаписывает список целиком и статику отсюда просто стёрло бы. Клик
+  // ловится тем же делегированным обработчиком, что и остальные кнопки списка.
+  '<div class="chain-dd-footer">' +
+    '<button type="button" class="chain-dd-file" data-act="export" title="Сохранить ВСЕ вкладки-цепочки (со всеми их строками/паттернами/настройками) в файл .json">⬇ Файл</button>' +
+    '<button type="button" class="chain-dd-file" data-act="import" title="Загрузить вкладки-цепочки из файла .json (заменит текущие все)">⬆ Файл</button>' +
+    '<button type="button" class="chain-dd-file chain-dd-wipe" data-act="wipe" title="ПОЛНОСТЬЮ очистить кэш приложения в браузере: все вкладки-цепочки, настройки и раскладку панелей. Нужно, когда сохранённое состояние само вешает вкладку. Сначала выгрузи нужное кнопкой «⬇ Файл»">🗑 Кэш</button>' +
+  '</div>';
 }
 
 /* Линейка номеров столбцов — всегда видна над строками, выровнена под сетку битов той же
@@ -4432,22 +4540,33 @@ function findLengthSumSubsets(st, selIdx, maxSets){
     const l = getRowBits(st, i).length;
     if (l > 0 && l <= targetLen) candidates.push(i);
   }
+  // Длины кандидатов считаем ОДИН раз: getRowBits() вызывался внутри DFS на КАЖДОМ узле перебора.
+  const candLen = candidates.map(idx => getRowBits(st, idx).length);
   const results = [];
+  /* ЗАЩИТА ОТ ЗАВИСАНИЯ. Раньше перебор ограничивался ТОЛЬКО числом НАЙДЕННЫХ комбинаций
+     (maxSets). Но если нужная сумма не набирается вовсе (или набирается редко), выход по этому
+     условию не срабатывает никогда, и DFS честно обходит всё дерево подмножеств — 2^N ветвей по
+     числу строк-кандидатов. При нескольких десятках строк это миллиарды узлов, а
+     renderLengthSumsHtml() зовётся из КАЖДОГО render() — вкладка вставала намертво, кнопки
+     переставали нажиматься. Потолок на число посещённых узлов делает перебор конечным при любых
+     данных: в худшем случае список комбинаций окажется неполным, но интерфейс жив. */
+  let nodes = 0;
+  const NODE_BUDGET = 200000;
   // Одна и та же ДЛИНА в комбинации дважды не допускается (даже если это две РАЗНЫЕ строки
   // одинаковой длины) — напр. "3+3+1" не считается вариантом суммы — запрос пользователя.
   function dfs(pos, remaining, chosen, usedLens){
-    if (results.length >= maxSets) return;
+    if (results.length >= maxSets || nodes >= NODE_BUDGET) return;
+    nodes++;
     if (remaining === 0 && chosen.length > 0) { results.push(chosen.slice()); return; }
     for (let p = pos; p < candidates.length; p++){
-      const idx = candidates[p];
-      const l = getRowBits(st, idx).length;
+      const l = candLen[p];
       if (l > remaining || usedLens.has(l)) continue;
-      chosen.push(idx);
+      chosen.push(candidates[p]);
       usedLens.add(l);
       dfs(p + 1, remaining - l, chosen, usedLens);
       usedLens.delete(l);
       chosen.pop();
-      if (results.length >= maxSets) return;
+      if (results.length >= maxSets || nodes >= NODE_BUDGET) return;
     }
   }
   dfs(0, targetLen, [], new Set());
@@ -4635,7 +4754,19 @@ function render(){
   const bgTargetIdx = bgInfo ? bgInfo.targetIdx : null;
   const bgMatched = !!(bgInfo && bgInfo.matched);
   const bgSearchTitleEl = document.getElementById("bgSearchTitle");
-  if (bgSearchTitleEl) bgSearchTitleEl.classList.toggle("bg-search-active", bgSearchActive());
+  if (bgSearchTitleEl) {
+    bgSearchTitleEl.classList.toggle("bg-search-active", bgSearchActive());
+    // Явная подпись состояния: свечения рамки мало — оно гаснет и когда поиск выключен целиком,
+    // и когда просто не выбрано ни одного режима, а это разные вещи.
+    // Подпись с явным "нажми, чтобы переключить" — так кнопочная природа читается даже без
+    // наведения. Состояние идёт первым символом-индикатором.
+    bgSearchTitleEl.textContent = st.bgSearchOn === false
+      ? "🔍 Фон-поиск: ВЫКЛ — включить"
+      : (bgSearchActive() ? "🔍 Фон-поиск: ВКЛ — выключить" : "🔍 Фон-поиск: нет режимов");
+  }
+  // Выключен целиком — гасим подсветку выбранных режимов в серый (см. #bgSearchModeGrp.bg-off).
+  const bgModeGrpEl = document.getElementById("bgSearchModeGrp");
+  if (bgModeGrpEl) bgModeGrpEl.classList.toggle("bg-off", st.bgSearchOn === false);
   if (bgSearchActive()) {
     const hitNow = bgMatched ? bgTargetIdx : null;
     if (hitNow !== st.bgSearchLastHit) {
@@ -4863,6 +4994,13 @@ function render(){
     const ghostZero = st.padZero && s.length > 0 && padRowSet && padRowSet.has(i);
     const blankRun = (startCol, len) => {
       if (len <= 0) return "";
+      // БЫСТРЫЙ ПУТЬ: ни ghost-нулей, ни выбранного столбца в этом отрезке — отдаём одной
+      // строкой, как было до появления "0 вместо пустот". Иначе на каждую строку шёл посимвольный
+      // цикл по ВСЕЙ ширине полотна (а у "Лесенки" ширина растёт с числом строк), и при сотне
+      // строк это десятки тысяч итераций со склейкой строк на КАЖДЫЙ render — из-за чего
+      // интерфейс и начал тормозить.
+      const selHere = isColSel && st.selectedCol >= startCol && st.selectedCol < startCol + len;
+      if (!ghostZero && !selHere) return "&nbsp;".repeat(len);
       let outRun = "";
       for (let t = 0; t < len; t++) {
         const c = startCol + t;
@@ -5039,11 +5177,20 @@ function render(){
       // Карта "какой kind (и его skip-флаг) покрывает этот символ" — приоритет у более раннего
       // kind (прямая версия перекрывает инверсию/реверс, если их диапазоны совпадают по позиции).
       // Индексы идут БЕЗ модуля — kd.start/kd.len уже посчитаны в раскладке text+ringExt.
-      const kindAt = new Array(full.length).fill(-1);
-      const skipAt = new Array(full.length).fill(false);
+      /* ПОТОЛОК ОТРИСОВКИ. Строка результата клипается CSS в одну линию
+         (.chain-result-line-bits — overflow:hidden;white-space:nowrap), развернуть её можно
+         кликом. При этом режимов включено до 18 сразу, у "Сквозной" длина результата равна сумме
+         ВСЕХ строк цепочки, а с удвоением кольца это ещё ×2..×4 — итого десятки тысяч <span> на
+         КАЖДЫЙ render(), которые всё равно не видны. Именно это и подвесило интерфейс.
+         Рисуем только то, что реально может быть на виду; развёрнутая строка получает потолок
+         побольше. На сам ПОИСК потолок не влияет — он уже отработал по полному кольцу. */
+      const renderCap = bgResultExpanded.has(r.mode) ? 4000 : 400;
+      const shown = Math.min(full.length, renderCap);
+      const kindAt = new Array(shown).fill(-1);
+      const skipAt = new Array(shown).fill(false);
       for (const kd of r.kinds) for (let i = 0; i < kd.len; i++) {
         const p = kd.start + i;
-        if (p < full.length && kindAt[p] < 0) { kindAt[p] = kd.kind; skipAt[p] = kd.skip; }
+        if (p < shown && kindAt[p] < 0) { kindAt[p] = kd.kind; skipAt[p] = kd.skip; }
       }
       // Сколько витков реально показано: без инверсии/реверса период = самой строке и витков
       // два (строка + копия), с 🔁 Инв. кольцо период двойной и витков ЧЕТЫРЕ
@@ -5058,7 +5205,9 @@ function render(){
       // масштабе. Посимвольные span'ы (подсветка находки/приглушение кольца) остаются внутри.
       let bits = "";
       for (let lap = 0; lap < lapCount; lap++) {
-        const from = lap * len, to = Math.min(full.length, from + len);
+        const from = lap * len;
+        if (from >= shown) break; // дальше потолка не рисуем — см. renderCap выше
+        const to = Math.min(shown, from + len);
         let inner = "";
         for (let k = from; k < to; k++) {
           const ch = esc(full[k]);
@@ -5073,6 +5222,11 @@ function render(){
         bits += (lap % 2 === 1)
           ? ('<span class="ring-lap-' + (lap % 4) + '" title="' + lapTitle(lap) + '">' + inner + '</span>')
           : inner;
+      }
+      // Явная отметка, что строка урезана ради скорости — чтобы обрыв не выглядел как баг данных.
+      if (shown < full.length) {
+        bits += '<span class="chain-ring-ext" title="Показано ' + shown + ' символов из ' + full.length +
+          ' — остальное не рисуется ради скорости. Клик по строке разворачивает её (потолок выше)">…</span>';
       }
       const checkHtml = r.kinds.map(kd =>
         '<span class="chain-result-line-check-mark' + (KIND_CLS[kd.kind] ? " " + KIND_CLS[kd.kind] : "") + (kd.skip ? " skip1" : "") + '" title="Найдено: ' + KIND_LABELS_RU[kd.kind] + (kd.skip ? " (без 1-го символа)" : "") + '">✓</span>'
@@ -5089,8 +5243,12 @@ function render(){
       'Строки ' + bgInfo.aboveIdx + '+' + bgInfo.selIdx + ' (' + esc(alignLabel) + '): ' + esc(bgInfo.rowAbove) + '+' + esc(bgInfo.rowSel) +
     '</div>' + bgResultHtml;
     if (chainResultLabelEl) {
+      // В заголовке — только слово "Результат" (запрос пользователя): перечисление режимов
+      // разрасталось на две строки и всё равно дублирует подписи слева в каждой строке панели.
+      // Полный список остаётся в подсказке при наведении, чтобы информация не потерялась.
       const modeLabels = bgInfo.results.map(r => BG_SEARCH_MODE_LABELS[r.mode] || r.mode).join(" + ");
-      chainResultLabelEl.textContent = "🔍 Результат фон-поиска (" + modeLabels + ")";
+      chainResultLabelEl.textContent = "🔍 Результат";
+      chainResultLabelEl.title = "Включённые режимы фон-поиска: " + modeLabels;
     }
   } else if (bgSearchActive()) {
     // Нет валидной цели для фон-поиска (нет выделения, или выделена 1-я/последняя строка) —
@@ -5109,10 +5267,14 @@ function render(){
       '</div>'
     ).join("");
     if (chainResultLabelEl) {
-      chainResultLabelEl.textContent = "🔍 Результат фон-поиска (" + bgLabels.join(" + ") + ")";
+      chainResultLabelEl.textContent = "🔍 Результат";
+      chainResultLabelEl.title = "Включённые режимы фон-поиска: " + bgLabels.join(" + ");
     }
   } else if (chainResultLabelEl) {
+    // Фон-поиск выключен — тут окно показывает не находки, а обычную сквозную строку, поэтому
+    // заголовок остаётся своим (иначе непонятно, что именно в окне).
     chainResultLabelEl.textContent = "🔗 Сквозная строка результата";
+    chainResultLabelEl.title = "";
   }
   lastChainResultText = fullChainText;
   renderFindLogPanel();
@@ -5527,6 +5689,7 @@ const cInvPassEl   = document.getElementById("cInvPass");
 const cAutoShiftEl = document.getElementById("cAutoShift");
 const cStopOnHitEl = document.getElementById("cStopOnHit");
 const cStopOnBalanceEl = document.getElementById("cStopOnBalance");
+const cTurboAutoEl = document.getElementById("cTurboAuto");
 const cCaptureOnFindEl = document.getElementById("cCaptureOnFind");
 const cVertEl      = document.getElementById("cVert");
 const cPadEl       = document.getElementById("cPad");
@@ -5540,6 +5703,7 @@ const cHorizAlternateSideEl = document.getElementById("cHorizAlternateSide");
 const cHorizReverseChainEl = document.getElementById("cHorizReverseChain");
 const cHorizShowLiveXorEl = document.getElementById("cHorizShowLiveXor");
 const cAxisSnapEl = document.getElementById("cAxisSnap");
+const cAxisBitBounceEl = document.getElementById("cAxisBitBounce");
 const rowCountEl   = document.getElementById("rowCount");
 
 function readToggles(){
@@ -5551,6 +5715,7 @@ function readToggles(){
   st.autoShift = cAutoShiftEl ? cAutoShiftEl.checked : false;
   st.stopOnHit = cStopOnHitEl ? cStopOnHitEl.checked : true;
   st.stopOnBalance = cStopOnBalanceEl ? cStopOnBalanceEl.checked : false;
+  st.turboAuto = cTurboAutoEl ? cTurboAutoEl.checked : false;
   st.captureOnFind = cCaptureOnFindEl ? cCaptureOnFindEl.checked : true;
   st.horizRotateOnFail = cHorizRotateOnFailEl ? cHorizRotateOnFailEl.checked : true;
   st.horizAlternateSide = cHorizAlternateSideEl ? cHorizAlternateSideEl.checked : false;
@@ -5564,6 +5729,7 @@ function readToggles(){
   st.ringReverse = cRingReverseEl ? cRingReverseEl.checked : false;
   st.seqSelfMode = cSeqSelfEl ? cSeqSelfEl.checked : false;
   st.axisSnap = cAxisSnapEl ? cAxisSnapEl.checked : true;
+  st.axisBitBounce = cAxisBitBounceEl ? cAxisBitBounceEl.checked : false;
 }
 
 /* Функция полной очистки данных текущего активного слота (цепочки).
@@ -5802,6 +5968,18 @@ if (chainDdToggleEl && chainDdListEl) {
     chainDdListEl.classList.toggle("open");
   };
   chainDdListEl.addEventListener("click", e => {
+    // Подвал списка — экспорт/импорт ВСЕХ вкладок (см. .chain-dd-footer в renderTabs()).
+    // Проверяем ПЕРВЫМ: эти кнопки не относятся ни к какой конкретной вкладке, у них нет
+    // data-idx, и ниже они не должны попасть в ветку "клик по строке списка".
+    const fileBtn = e.target.closest(".chain-dd-file");
+    if (fileBtn) {
+      e.stopPropagation();
+      const act = fileBtn.dataset.act;
+      if (act === "export") exportAllTabs();
+      else if (act === "wipe") clearAllCache();
+      else importAllTabs();
+      return;
+    }
     const miniBtn = e.target.closest(".chain-dd-mini");
     if (miniBtn) {
       e.stopPropagation();
@@ -5905,27 +6083,45 @@ if (bSaveChainEl) {
    объектов вкладок, включая rows/pats/used/uiSettings у каждой), что уже хранится в
    localStorage — просто дамп/восстановление ЦЕЛИКОМ, никакой отдельной схемы придумывать не
    нужно. */
-const bExportTabsEl = document.getElementById("bExportTabs");
-if (bExportTabsEl) {
-  bExportTabsEl.onclick = () => {
-    saveActiveTabState(); // флашим живые правки текущей вкладки в st.tabs перед дампом
-    const payload = { app: "Zerkalius Fold", exportedAt: new Date().toISOString(), tabs: st.tabs, activeTab: st.activeTab };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "zerkalius-fold-tabs-" + new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-") + ".json";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    say(`Сохранено в файл: ${st.tabs.length} вкладок.`);
-  };
+// Кнопки живут в подвале выпадающего списка вкладок и пересоздаются на каждый renderTabs(),
+// поэтому логика — в обычных функциях, а клик по ним ловится делегированием (см. chainDdListEl).
+function exportAllTabs(){
+  saveActiveTabState(); // флашим живые правки текущей вкладки в st.tabs перед дампом
+  const payload = { app: "Zerkalius Fold", exportedAt: new Date().toISOString(), tabs: st.tabs, activeTab: st.activeTab };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "zerkalius-fold-tabs-" + new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-") + ".json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  say(`Сохранено в файл: ${st.tabs.length} вкладок.`);
 }
-const bImportTabsEl = document.getElementById("bImportTabs");
 const importTabsInputEl = document.getElementById("importTabsInput");
-if (bImportTabsEl && importTabsInputEl) {
-  bImportTabsEl.onclick = () => importTabsInputEl.click();
+function importAllTabs(){
+  if (importTabsInputEl) importTabsInputEl.click();
+}
+
+/* ПОЛНАЯ очистка кэша этого приложения в браузере: и состояние цепочек (CACHE_KEY), и раскладка
+   панелей (LAYOUT_KEY). Нужна, когда именно сохранённое состояние вешает вкладку — в другом
+   браузере тот же файл открывается нормально просто потому, что там localStorage пуст.
+   Работает и в аварийном режиме (#safe): ключи стираются напрямую, загруженное состояние для
+   этого не требуется. Перед reload взводим cacheWiped, иначе любой saveCache(), случившийся до
+   перезагрузки, запишет всё обратно. */
+function clearAllCache(){
+  const msg = "Полностью очистить кэш?\n\n" +
+    "Будут стёрты ВСЕ вкладки-цепочки со строками и паттернами, все настройки и раскладка панелей — " +
+    "всё, что это приложение хранит в браузере. Отменить нельзя.\n\n" +
+    "Если цепочки нужны — сначала выгрузи их кнопкой «⬇ Файл».\n\nПродолжить?";
+  if (!confirm(msg)) return;
+  cacheWiped = true;
+  try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
+  try { localStorage.removeItem(LAYOUT_KEY); } catch (e) {}
+  location.reload();
+}
+if (importTabsInputEl) {
   importTabsInputEl.onchange = () => {
     const file = importTabsInputEl.files && importTabsInputEl.files[0];
     importTabsInputEl.value = ""; // сброс — чтобы повторный выбор ТОГО ЖЕ файла тоже сработал
@@ -5960,10 +6156,10 @@ if (bAddTabEl) {
   };
 }
 
-const bClearTabEl = document.getElementById("bClearTab");
-if (bClearTabEl) {
-  bClearTabEl.onclick = () => clearActiveTab();
-}
+// Кнопки #bClearTab в верхнем меню больше нет (убрана по запросу пользователя) — очистка вкладки
+// осталась в выпадающем списке цепочек, у каждой своя (.chain-dd-mini data-act="clear" →
+// tabClearChainData). Саму clearActiveTab() не удаляю — её зовёт tabClearChainData(), когда
+// чистят ИМЕННО активную вкладку.
 
 if (rowCountEl) {
   rowCountEl.oninput = () => {
@@ -6543,7 +6739,7 @@ function setOverlayHidden(id, hidden){
   if (el) el.classList.toggle('hidden', hidden);
   const btnId = id === 'chainResultBox' ? 'bToggleResultBox' : 'bToggleStepLog';
   const btn = document.getElementById(btnId);
-  if (btn) btn.classList.toggle('mode-act', !hidden);
+  if (btn) btn.classList.toggle('overlay-on', !hidden);
   layoutOverlayBoxes();
   saveLayout();
 }
@@ -6552,7 +6748,7 @@ for (let id in overlayHidden) {
   if (el) el.classList.toggle('hidden', overlayHidden[id]);
   const btnId = id === 'chainResultBox' ? 'bToggleResultBox' : 'bToggleStepLog';
   const btn = document.getElementById(btnId);
-  if (btn) btn.classList.toggle('mode-act', !overlayHidden[id]);
+  if (btn) btn.classList.toggle('overlay-on', !overlayHidden[id]);
 }
 const bHideResultBoxEl = document.getElementById('bHideResultBox');
 if (bHideResultBoxEl) bHideResultBoxEl.addEventListener('click', e => { e.stopPropagation(); setOverlayHidden('chainResultBox', true); });
@@ -6889,8 +7085,12 @@ bgSearchModeBtns.forEach(btn => {
     const val = btn.getAttribute("data-val");
     const idx = st.bgSearchModes.indexOf(val);
     if (idx >= 0) {
-      /* Не даём снять последний включённый режим — иначе фон-поиску нечего будет проверять */
-      if (st.bgSearchModes.length > 1) st.bgSearchModes.splice(idx, 1);
+      /* Снимается ЛЮБОЙ режим, в том числе последний (запрос пользователя: "если второй раз
+         нажать — должна потухнуть, даже если нет других"). Раньше тут стоял запрет на снятие
+         последнего: выключить фон-поиск было больше нечем, и пустой набор оставлял его в
+         подвешенном состоянии. Теперь для этого есть отдельный выключатель — клик по заголовку
+         "🔍 Фон-поиск" (toggleBgSearch), который к тому же сохраняет выбранный набор. */
+      st.bgSearchModes.splice(idx, 1);
     } else {
       st.bgSearchModes.push(val);
     }
@@ -6900,19 +7100,18 @@ bgSearchModeBtns.forEach(btn => {
     saveCache();
   };
 });
-// Тоггл "Всё / XOR-Чёт / Выкл" рядом с группой режимов фон-поиска — запрос пользователя (галка
-// "🔍 Фон-поиск" убрана, эта кнопка теперь единственный способ выключить фон-поиск целиком):
-// 1-й клик — ВСЕ кнопки-режимы (включая 🧮 Суммы длин), 2-й — только ⨁ XOR-Чёт, 3-й — ни одного
-// (bgSearchActive() станет false, заголовок "Фон-поиск" погаснет). Индивидуальные кнопки-режимы
-// ниже по-прежнему не дают снять ПОСЛЕДНИЙ включённый (см. их обработчик выше) — до пустого
-// набора можно дойти только этой кнопкой, осознанно.
+// Тоггл "Всё / Выкл" рядом с группой режимов фон-поиска: выделить ВСЕ кнопки-режимы (включая
+// 🧮 Суммы длин) или снять все. Это ТОЛЬКО про набор режимов; выключить сам фон-поиск, сохранив
+// набор, — клик по заголовку "🔍 Фон-поиск" (toggleBgSearch).
 const bBgModeAllNoneEl = document.getElementById("bBgModeAllNone");
 if (bBgModeAllNoneEl) {
   bBgModeAllNoneEl.onclick = () => {
+    // Просто "выделить всё / снять всё" (запрос пользователя) — промежуточного состояния
+    // "только XOR-Все" больше нет. Выключение самого фон-поиска — клик по заголовку, см.
+    // toggleBgSearch(): набор режимов там сохраняется.
     const allVals = Array.from(bgSearchModeBtns).map(b => b.getAttribute("data-val"));
     const allOn = allVals.every(v => st.bgSearchModes.includes(v));
-    const onlyXorAll = st.bgSearchModes.length === 1 && st.bgSearchModes[0] === "xorAll";
-    st.bgSearchModes = allOn ? ["xorAll"] : (onlyXorAll ? [] : allVals.slice());
+    st.bgSearchModes = allOn ? [] : allVals.slice();
     bgSearchModeBtns.forEach(b => b.classList.toggle("act", st.bgSearchModes.includes(b.getAttribute("data-val"))));
     st.bgSearchLastHit = -1;
     render();
@@ -6968,7 +7167,16 @@ function lengthSumsMatchedCombos(st, selIdx){
 /* "Фон-поиск" больше не отдельная галка (запрос пользователя) — активен, ПОКА включён хотя бы
    один режим в st.bgSearchModes; полностью выключить можно только кнопкой "Всё/XOR-Чёт/Выкл"
    (сбрасывает bgSearchModes до пустого массива). */
-function bgSearchActive(){ return !!(st.bgSearchModes && st.bgSearchModes.length); }
+function bgSearchActive(){ return st.bgSearchOn !== false && !!(st.bgSearchModes && st.bgSearchModes.length); }
+/* Общий выключатель фон-поиска (клик по заголовку "🔍 Фон-поиск"). ОТДЕЛЬНО от списка режимов:
+   раньше выключить можно было только сняв все режимы разом, и выбранный набор при этом терялся —
+   теперь он остаётся, а поиск просто не работает, пока выключен (запрос пользователя). */
+function toggleBgSearch(){
+  st.bgSearchOn = st.bgSearchOn === false;
+  st.bgSearchLastHit = -1;
+  render();
+  saveCache();
+}
 /* Фоновый поиск: выделенная строка ФИКСИРОВАНА (не двигается сама, в отличие от doInterleaveStep/
    doXorSelectedStep) — при каждом render() пересчитывает результат (интерлив / XOR пары / XOR
    всех выше+выделенной, где пара всегда — строка над выделенной + сама выделенная) и сверяет
@@ -7228,6 +7436,10 @@ function autoRun(){
       let bgHit = null;
       let balanceHit = false;
       let cycleDone = false;
+      // Была ли находка в ЭТОЙ пачке — не то же самое, что bgHit: тот выставляется только при
+      // включённом "🛑 Стоп на находке". В режиме "⏩ Турбо" именно по этому флагу решается,
+      // показывать кадр или нет.
+      let hadHit = false;
       while (performance.now() - t0 < 12) {
         if (totalTurns > 0 && turns >= totalTurns) { cycleDone = true; break; }
         if (isShift) {
@@ -7247,6 +7459,7 @@ function autoRun(){
 
         const bgInfo = computeBgSearchTarget();
         if (bgInfo && bgInfo.matched) {
+          hadHit = true;
           // Находка СРАЗУ добавляется к выделению (не заменяет его — запрос пользователя), если
           // включена "🧲 Захват находки" (st.captureOnFind) — работает для ЛЮБОГО выделения, в
           // т.ч. одной строки (раньше — только если исходно было выделено несколько). Найденная
@@ -7255,9 +7468,12 @@ function autoRun(){
           // (запрос пользователя — раньше найденные строки вообще никогда не крутились дальше,
           // что выглядело как баг). Останавливаемся только если включено "Стоп на находке".
           if (st.captureOnFind) {
-            if (!st.selectedRows) st.selectedRows = new Set();
-            st.selectedRows.add(bgInfo.targetIdx);
+            // При МУЛЬТИвыделении окно едет с постоянным размером — выброшенную сверху строку
+            // убираем и из набора вращаемых, иначе она продолжала бы крутиться, уже не будучи
+            // выделенной (см. captureFoundRow).
+            const dropped = captureFoundRow(bgInfo.targetIdx);
             rotIdxs.add(bgInfo.targetIdx);
+            if (dropped >= 0) rotIdxs.delete(dropped);
           }
           if (st.stopOnHit) { bgHit = bgInfo; break; }
         }
@@ -7272,11 +7488,20 @@ function autoRun(){
         }
       }
 
-      say(`Авто (${dirLabel}): вариант ${turns}` + (totalTurns ? ` из ${totalTurns}` : ""));
       st.shiftVariantTurns = turns;
       if (isShift) st.shiftVariantRows = Array.from(rotIdxs); // могло вырасти находками
-      updateVariantCounter();
-      render(); saveCache();
+      // "⏩ Турбо": во время прокрутки не рисуем и не сохраняем вообще — картинка обновляется
+      // только когда что-то реально произошло (находка, баланс, конец цикла, нечего двигать) и
+      // ещё раз в finishAuto() на выходе. Именно перерисовка таблицы и запись кэша в localStorage
+      // на КАЖДОМ кадре съедали основное время, а промежуточные варианты на такой скорости всё
+      // равно не читаются глазами (запрос пользователя — "чтобы вообще не крутила, а меняла
+      // строки только во время находки"). Сам перебор идёт с прежней плотностью.
+      const showFrame = !st.turboAuto || hadHit || balanceHit || cycleDone || !moved;
+      if (showFrame) {
+        say(`Авто (${dirLabel}): вариант ${turns}` + (totalTurns ? ` из ${totalTurns}` : ""));
+        updateVariantCounter();
+        render(); saveCache();
+      }
       if (bgHit) {
         return finishAuto(`🎯 Авто (${dirLabel}): найдено совпадение на строке ${bgHit.targetIdx + 1}!`);
       }
@@ -7421,6 +7646,17 @@ document.getElementById("bUndo").onclick  = () => {
   render(); saveCache();
 };
 document.getElementById("bReset").onclick = () => { resetAll(); say("Сброшено к шаблону."); saveCache(); };
+// Копия "↺ Сброс" в блоке "Авто" — своей логики не имеет, кликает по оригиналу выше.
+const bResetFlowEl = document.getElementById("bResetFlow");
+if (bResetFlowEl) bResetFlowEl.onclick = () => document.getElementById("bReset").click();
+// Клик по заголовку в шапке — просто перезагрузка страницы (запрос пользователя). saveCache()
+// вызывается на каждое действие, так что терять нечего; специально НЕ сохраняем тут повторно —
+// иначе в аварийном режиме (#safe) клик записал бы пустую сессию поверх сохранённых цепочек.
+const appTitleEl = document.getElementById("appTitle");
+if (appTitleEl) appTitleEl.onclick = () => location.reload();
+// Клик по "🔍 Фон-поиск" — общий выключатель, см. toggleBgSearch().
+const bgSearchTitleClickEl = document.getElementById("bgSearchTitle");
+if (bgSearchTitleClickEl) bgSearchTitleClickEl.onclick = () => toggleBgSearch();
 
 /* Удаление выделенных (кликом) строк — отдельная операция, НЕ связанная с откатом шага.
    Вызывается клавишей Delete (см. глобальные хоткеи ниже). Шаблон (tplRows/tplPats — то,
@@ -7523,6 +7759,8 @@ if (colHeaderEl) {
   });
 }
 
+// ВНИМАНИЕ: сам захват теперь в captureFoundRow() ниже — при МУЛЬТИвыделении он не наращивает
+// выделение, а двигает его окном постоянного размера (см. её комментарий).
 // Общий хвост ручных ◄/►Круг/Круг Инв: после сдвига проверяем фон-поиск и, если что-то нашлось
 // И включена "🧲 Захват находки" (st.captureOnFind), ДОБАВЛЯЕМ найденную строку к текущему
 // выделению (не заменяя его) — запрос пользователя. Раньше это работало ТОЛЬКО если исходно
@@ -7534,13 +7772,30 @@ if (colHeaderEl) {
 // накапливается по кликам подряд, а не по тикам — запрос пользователя ("при ручном тоже надо
 // это показывать"). st.manualShiftTurns копится, пока не сменится выделение кликом по строке
 // или режим (см. reset в rows.onclick / setMode()).
+/* Захват найденной строки в выделение — общий и для "Авто", и для ручных ◄/►Круг.
+   Выделена ОДНА строка — просто добавляем найденную, выделение растёт: прежнее поведение,
+   оставлено как есть (запрос пользователя).
+   Выделено НЕСКОЛЬКО — выделение едет ОКНОМ постоянного размера: добавляем найденную и
+   выбрасываем САМУЮ ВЕРХНЮЮ, чтобы число выделенных строк всегда оставалось одним и тем же
+   (запрос пользователя). Возвращает индекс выброшенной строки (или -1) — вызывающему коду в
+   autoRun() он нужен, чтобы убрать её ещё и из набора вращаемых строк.
+   ИНВАРИАНТ: targetIdx ВСЕГДА строго ниже всего выделения — см. computeBgSearchTarget():
+   selIdx = Math.max(...st.selectedRows), targetIdx = selIdx + 1. Поэтому найденная строка не
+   может ни уже быть в выделении, ни оказаться самой верхней, и проверок на это тут нет. */
+function captureFoundRow(targetIdx){
+  if (!st.selectedRows) st.selectedRows = new Set();
+  const wasMulti = st.selectedRows.size > 1;
+  st.selectedRows.add(targetIdx);
+  if (!wasMulti) return -1;
+  const top = Math.min(...st.selectedRows);
+  st.selectedRows.delete(top);
+  return top;
+}
+
 function afterShiftBgCheck(isShiftInv){
   if (st.captureOnFind) {
     const bgInfo = computeBgSearchTarget();
-    if (bgInfo && bgInfo.matched) {
-      if (!st.selectedRows) st.selectedRows = new Set();
-      st.selectedRows.add(bgInfo.targetIdx);
-    }
+    if (bgInfo && bgInfo.matched) captureFoundRow(bgInfo.targetIdx);
   }
   st.manualShiftTurns = (st.manualShiftTurns || 0) + 1;
   const idxs = st.selectedRows ? Array.from(st.selectedRows) : [];
@@ -7581,6 +7836,38 @@ function nonAxisSnapCharIdx(align, len){
 //                         "оси" (см. nonAxisSnapCharIdx ниже) не окажется «1», либо пока не
 //                         пройден полный круг.
 //  ЛЮБОЕ ДРУГОЕ выравнивание, галка ВЫКЛ — обычный одиночный поворот, как раньше.
+/* Обратная пара к каждой из четырёх функций поворота — нужна режиму "↩ От края назад" в ОБЫЧНЫХ
+   выравниваниях: отразившись от края, строку надо крутить в СТОРОНУ, ПРОТИВОПОЛОЖНУЮ нажатой
+   кнопке, а сюда приходит только пара для нажатого направления. Через таблицу, чтобы не менять
+   сигнатуру и все четыре места вызова. */
+const OPPOSITE_ROT = new Map([
+  [rotateStrLeft,     [rotateStrRight,    rotateInvFlagsRight]],
+  [rotateStrRight,    [rotateStrLeft,     rotateInvFlagsLeft]],
+  [rotateStrLeftInv,  [rotateStrRightInv, rotateInvFlagsRightInv]],
+  [rotateStrRightInv, [rotateStrLeftInv,  rotateInvFlagsLeftInv]]
+]);
+/* Позиция строки внутри её собственного кольца поворотов (0..len-1) для режима "↩ От края назад".
+   В обычном режиме не нужна вообще — там поворот и так циклический.
+   Это лишь ЗАПАСНОЙ счётчик: основной отсчёт берётся ИЗ ДАННЫХ, см. rotationOffsetFromBase(). */
+let rowRotOffMap = new Map();
+/* На сколько строка r повёрнута вправо ОТНОСИТЕЛЬНО ИСХОДНОЙ — той, к которой возвращает
+   "↺ Сброс" (savedChain.rows у сохранённой вкладки, иначе шаблон tplRows; тот же ориентир, что
+   у подсветки "номер изменён" в render()). Считается ПО ДАННЫМ перебором поворотов, а не
+   накапливается по нажатиям: сколько раз и в какую сторону строку крутили до этого, знать не
+   нужно, а Сброс сам собой возвращает отсчёт в ноль — запрос пользователя ("надо запоминать
+   строку и первое её положение при сбросах"). null — сопоставить не удалось: строку правили
+   вручную, меняли длину, или биты перевёрнуты "Круг Инв" (тогда чистым поворотом исходную не
+   получить) — в этом случае вызывающий код падает на запасной rowRotOffMap.
+   У строк с повторяющимся узором ("1010") подходящих k несколько — берём наименьший, чтобы
+   отсчёт был однозначным. */
+function rotationOffsetFromBase(r, s){
+  const tabObj = st.tabs && st.tabs[st.activeTab];
+  const baseArr = (tabObj && tabObj.savedChain) ? tabObj.savedChain.rows : st.tplRows;
+  const b = (baseArr && baseArr[r]) || "";
+  if (!b || !s || b.length !== s.length) return null;
+  for (let k = 0; k < s.length; k++) if (rotateRightBy(b, k) === s) return k;
+  return null;
+}
 function shiftOneRowAxisAware(r, axisDelta, realRotateFn, invFlagsRotateFn){
   if (st.align === "axis") {
     const s = st.rows[r];
@@ -7651,26 +7938,37 @@ function shiftOneRowAxisAware(r, axisDelta, realRotateFn, invFlagsRotateFn){
     const minSh = Math.ceil(aboveShift + halfCorr - len);
     const maxSh = Math.floor(aboveShift + halfCorr + above.length);
     if (st.axisSnap) {
-      // В отличие от "⊙ Ось"/"Ось 1.2" (циклический перебор off по модулю длины строки — ВСЕГДА
-      // проходит через каждое возможное положение), тут sh — обычное целое БЕЗ зацикливания:
-      // если единственные валидные положения лежат в ПРОТИВОПОЛОЖНУЮ от axisDelta сторону (или
-      // их нет вовсе), перебор в эту сторону может уйти за пределы валидного диапазона и ничего
-      // не найти. Раньше в этом случае строка молча улетала на bad-позицию (запрос пользователя
-      // "биты ушли за пределы своих осей") — теперь, как и Тетрис при провале перебора, просто
-      // НЕ трогаем строку (см. axisBitShiftMap.set ниже — не вызывается при found=false).
+      // Перебор здесь ЦИКЛИЧЕСКИЙ, как и у "⊙ Ось"/"Ось 1.2", только кольцо не по модулю длины
+      // строки, а по допустимому диапазону положений [minSh..maxSh] (см. ниже). Если совпадения
+      // нет НИ НА ОДНОМ положении, строка не трогается вовсе — тот же принцип, что у Тетриса при
+      // провале перебора (см. axisBitShiftMap.set ниже — не вызывается при found=false), чтобы
+      // она не улетала на позицию без совпадения (запрос пользователя "биты ушли за пределы
+      // своих осей").
       const requirePair = st.align === "axisbit12";
       const adj = requirePair && (axisBitHalfSteps(r) % 2 === 1) ? 1 : 0;
-      const maxSteps = s.length + above.length;
+      // Перебор идёт ПО КОЛЬЦУ внутри допустимого диапазона [minSh..maxSh]: дойдя до края,
+      // продолжаем с противоположного, а не останавливаемся (запрос пользователя — "когда Круг
+      // сдвиг доходит до конца, надо заново по кольцу крутить, а сейчас останавливается").
+      // Раньше тут стоял break по границе, и строка упиралась в край: чтобы добраться до
+      // положения, лежащего позади, приходилось жать противоположную кнопку.
+      // Сам диапазон при этом НЕ расширен — заворачиваем строго внутри него, и позиция всё так же
+      // принимается только по axisBitHasMatch, поэтому "за пределы своих осей" строка уехать
+      // по-прежнему не может. Длина цикла = размер диапазона: каждое допустимое положение
+      // проверяется ровно один раз, повторов нет.
+      const span = maxSh - minSh + 1;
       let found = false;
       let sh2 = sh;
-      for (let i = 0; i < maxSteps; i++) {
-        sh2 += shStep;
-        if (sh2 < minSh || sh2 > maxSh) break; // дальше строки разъедутся с зазором — стоп
+      for (let i = 0; i < span; i++) {
+        sh2 = axisBitNextSh(r, sh2, shStep, minSh, maxSh);
         if (axisBitHasMatch(s, sh2, above, aboveShift, requirePair, adj)) { found = true; sh = sh2; break; }
       }
-      if (!found) { say("ОсьБит: в эту сторону подходящего положения нет — попробуй другое направление."); return; }
+      if (!found) { say("ОсьБит: подходящего положения нет ни на одном сдвиге — строка оставлена на месте."); return; }
     } else {
-      sh = Math.max(minSh, Math.min(maxSh, sh + shStep));
+      // Раньше тут стоял ЗАЖИМ в диапазон (Math.max/Math.min) — упёршись в край, строка вставала
+      // намертво и следующие нажатия не меняли ничего вообще (запрос пользователя: "следующее
+      // нажатие ничего не меняет"). Теперь край обрабатывается так же, как в ветке со снапом:
+      // по умолчанию кольцо, а с "↩ От края назад" — отражение (см. axisBitNextSh).
+      sh = axisBitNextSh(r, sh, shStep, minSh, maxSh);
     }
     axisBitShiftMap.set(r, sh);
     // Запрос пользователя: в "ОсьБит"/"ОсьБит ½" вся часть таблицы НИЖЕ сдвигаемой строки едет
@@ -7695,6 +7993,36 @@ function shiftOneRowAxisAware(r, axisDelta, realRotateFn, invFlagsRotateFn){
       if (st.rows[r][localIdx] === "1") break;
     }
   } else {
+    const len = st.rows[r] ? st.rows[r].length : 0;
+    if (!len) return;
+    // "↩ От края назад" работает и тут: как только первый символ доходит до другого края кольца,
+    // строка не перескакивает через границу дальше по кругу, а разворачивается и идёт обратно до
+    // упора, потом снова вперёд (запрос пользователя). Положение внутри кольца считаем сами
+    // (rowRotOffMap) — по самим данным этого не видно, поворот всегда циклический.
+    if (st.axisBitBounce && len > 1) {
+      // ЗНАК: axisDelta — это шаг индекса символа, стоящего на оси (◄ = +1, ► = −1), а off здесь
+      // считает положение ПЕРВОГО СИМВОЛА строки внутри кольца поворотов, и оно движется в
+      // ПРОТИВОПОЛОЖНУЮ сторону: ► сдвигает содержимое вправо, то есть первый символ уезжает на
+      // бо́льший индекс. Ровно та же инверсия, что и у shStep = −axisDelta в ветке "ОсьБит" выше.
+      // Без неё ► от стартового off = 0 сразу упирался в нижний край и отражался, из-за чего
+      // "10000" по ► давало "00001" (поворот ВЛЕВО) вместо "01000" — баг-репорт пользователя.
+      const step = -axisDelta;
+      // Отсчёт — от ИСХОДНОГО положения строки (то, к которому вернёт "↺ Сброс"), вычисленный по
+      // самим данным; запомненное значение нужно только когда сопоставить не вышло (ручная
+      // правка/"Круг Инв", см. rotationOffsetFromBase).
+      const fromBase = rotationOffsetFromBase(r, st.rows[r]);
+      const off = (fromBase != null) ? fromBase : (rowRotOffMap.get(r) || 0);
+      const next = axisBitNextSh(r, off, step, 0, len - 1);
+      const applied = next - off;
+      if (!applied) return;
+      rowRotOffMap.set(r, next);
+      const pair = (applied === step) ? null : OPPOSITE_ROT.get(realRotateFn);
+      const rotFn = pair ? pair[0] : realRotateFn;
+      const flagFn = pair ? pair[1] : invFlagsRotateFn;
+      invFlagsMap.set(r, flagFn(getInvFlags(r, len)));
+      st.rows[r] = rotFn(st.rows[r]);
+      return;
+    }
     invFlagsMap.set(r, invFlagsRotateFn(getInvFlags(r, st.rows[r].length)));
     st.rows[r] = realRotateFn(st.rows[r]);
   }
@@ -8982,7 +9310,7 @@ const bTogglePatLEl = document.getElementById("bTogglePatL");
 if (bTogglePatLEl) {
   bTogglePatLEl.onclick = () => {
     const hidden = document.body.classList.toggle("hide-pat-l");
-    bTogglePatLEl.classList.toggle("mode-act", !hidden);
+    bTogglePatLEl.classList.toggle("overlay-on", !hidden);
     saveCache();
   };
 }
@@ -8990,7 +9318,7 @@ const bTogglePatREl = document.getElementById("bTogglePatR");
 if (bTogglePatREl) {
   bTogglePatREl.onclick = () => {
     const hidden = document.body.classList.toggle("hide-pat-r");
-    bTogglePatREl.classList.toggle("mode-act", !hidden);
+    bTogglePatREl.classList.toggle("overlay-on", !hidden);
     saveCache();
   };
 }
@@ -9537,6 +9865,16 @@ function updateAxisSplitPosition(maxLen){
 }
 /* === МАРКЕР 11: CACHE === */
 const CACHE_KEY = "zerk_fold_v1";
+/* АВАРИЙНЫЙ РЕЖИМ: добавь "#safe" в конец адреса и перезагрузи — кэш НЕ читается и НЕ пишется.
+   Нужен, когда сохранённое состояние само по себе вешает вкладку (много длинных цепочек ×
+   включённые тяжёлые режимы фон-поиска): в другом браузере тот же файл открывается нормально
+   именно потому, что там localStorage пуст. Запись тоже отключена — сохранённые цепочки
+   остаются нетронутыми, их можно спокойно выгрузить (⬇ Файл в списке цепочек) и уже потом
+   чистить. Без "#safe" всё работает как раньше. */
+const SAFE_MODE = /(^|[#?&])safe\b/.test(location.hash + location.search);
+/* Взводится кнопкой "🗑 Кэш" перед перезагрузкой — чтобы ни один saveCache(), случившийся между
+   стиранием и reload, не записал всё обратно. */
+let cacheWiped = false;
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
 /* Генератор фрактала Серпинского 90 (Rule 90 / Pascal mod 2) */
@@ -9564,6 +9902,7 @@ function captureUiSettings(){
     stageXor: cStageXorEl ? cStageXorEl.checked : false, invPass: cInvPassEl ? cInvPassEl.checked : false,
     autoShift: cAutoShiftEl ? cAutoShiftEl.checked : false, stopOnHit: cStopOnHitEl ? cStopOnHitEl.checked : true,
     stopOnBalance: cStopOnBalanceEl ? cStopOnBalanceEl.checked : false,
+    turboAuto: cTurboAutoEl ? cTurboAutoEl.checked : false,
     captureOnFind: cCaptureOnFindEl ? cCaptureOnFindEl.checked : true,
     vert: cVertEl.checked, pad: cPadEl.checked, kinds: cKindsEl.checked, skip1: cSkipEl.checked,
     ringInvert: cRingInvertEl ? cRingInvertEl.checked : false,
@@ -9574,10 +9913,12 @@ function captureUiSettings(){
     horizReverseChain: cHorizReverseChainEl ? cHorizReverseChainEl.checked : false,
     horizShowLiveXor: cHorizShowLiveXorEl ? cHorizShowLiveXorEl.checked : true,
     axisSnap: cAxisSnapEl ? cAxisSnapEl.checked : true,
+    axisBitBounce: cAxisBitBounceEl ? cAxisBitBounceEl.checked : false,
     axisCenterOffset: st.axisCenterOffset || 0,
     seqGlueMode: st.seqGlueMode || "right",
     align: st.align, mode: st.mode || "step1", rowCount: rowCountEl ? rowCountEl.value : 256,
     bgSearchModes: st.bgSearchModes,
+    bgSearchOn: st.bgSearchOn !== false,
     bgSubPatterns: cBgSubPatternsEl ? cBgSubPatternsEl.checked : false,
     bgSearchAllBelow: cBgAllBelowEl ? cBgAllBelowEl.checked : false,
     resultHeightLocked: resultHeightLocked,
@@ -9614,12 +9955,14 @@ function applyUiSettings(u){
   if (u.autoShift !== undefined) cAutoShiftEl.checked = u.autoShift;
   if (u.stopOnHit !== undefined && cStopOnHitEl) cStopOnHitEl.checked = u.stopOnHit;
   if (u.stopOnBalance !== undefined && cStopOnBalanceEl) cStopOnBalanceEl.checked = u.stopOnBalance;
+  if (u.turboAuto !== undefined && cTurboAutoEl) cTurboAutoEl.checked = u.turboAuto;
   if (u.captureOnFind !== undefined && cCaptureOnFindEl) cCaptureOnFindEl.checked = u.captureOnFind;
   if (u.horizRotateOnFail !== undefined && cHorizRotateOnFailEl) cHorizRotateOnFailEl.checked = u.horizRotateOnFail;
   if (u.horizAlternateSide !== undefined && cHorizAlternateSideEl) cHorizAlternateSideEl.checked = u.horizAlternateSide;
   if (u.horizReverseChain !== undefined && cHorizReverseChainEl) cHorizReverseChainEl.checked = u.horizReverseChain;
   if (u.horizShowLiveXor !== undefined && cHorizShowLiveXorEl) cHorizShowLiveXorEl.checked = u.horizShowLiveXor;
   if (u.axisSnap !== undefined && cAxisSnapEl) cAxisSnapEl.checked = u.axisSnap;
+  if (u.axisBitBounce !== undefined && cAxisBitBounceEl) cAxisBitBounceEl.checked = u.axisBitBounce;
   if (u.axisCenterOffset !== undefined) st.axisCenterOffset = u.axisCenterOffset;
   if (u.vert      !== undefined) cVertEl.checked      = u.vert;
   if (u.pad       !== undefined) cPadEl.checked       = u.pad;
@@ -9682,6 +10025,7 @@ function applyUiSettings(u){
     const b = document.getElementById("bRunsAsBits");
     if (b) b.classList.toggle("mode-act", st.runsAsBits);
   }
+  if (u.bgSearchOn !== undefined) st.bgSearchOn = !!u.bgSearchOn;
   if (u.bgSearchModes && u.bgSearchModes.length) {
     st.bgSearchModes = u.bgSearchModes;
     const bgBtns = document.querySelectorAll("#bgSearchModeGrp button");
@@ -9720,12 +10064,12 @@ function applyUiSettings(u){
   if (u.hidePatL !== undefined) {
     document.body.classList.toggle("hide-pat-l", !!u.hidePatL);
     const b = document.getElementById("bTogglePatL");
-    if (b) b.classList.toggle("mode-act", !u.hidePatL);
+    if (b) b.classList.toggle("overlay-on", !u.hidePatL);
   }
   if (u.hidePatR !== undefined) {
     document.body.classList.toggle("hide-pat-r", !!u.hidePatR);
     const b = document.getElementById("bTogglePatR");
-    if (b) b.classList.toggle("mode-act", !u.hidePatR);
+    if (b) b.classList.toggle("overlay-on", !u.hidePatR);
   }
 
   if (u.c1) col1.value = u.c1;
@@ -9768,12 +10112,13 @@ function applyUiSettings(u){
    в самом HTML), а не на то, что было сохранено кнопкой "Сохр. настройки". */
 const DEFAULT_UI_SETTINGS = {
   pull: true, order: true, nextOnly: false, stageXor: false, invPass: false,
-  autoShift: false, stopOnHit: true, stopOnBalance: false, captureOnFind: true, vert: false, pad: false, kinds: false, skip1: true,
+  autoShift: false, stopOnHit: true, stopOnBalance: false, turboAuto: false, captureOnFind: true, vert: false, pad: false, kinds: false, skip1: true,
   ringInvert: false, ringReverse: false, seqSelf: false, seqGlueMode: "right",
   horizRotateOnFail: true, horizAlternateSide: false, horizReverseChain: false, horizShowLiveXor: true,
-  axisSnap: true, axisCenterOffset: 0,
+  axisSnap: true, axisBitBounce: false, axisCenterOffset: 0,
   align: "center", mode: "step1", rowCount: "100",
   bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatRInv", "concatRRevInv", "concatL", "concatLInv", "concatLRevInv", "concatSnake", "concatSnakeInv", "concatSnakeRevInv", "vertR", "vertL", "snakeR", "snakeL", "vertZigR", "vertZigL"],
+  bgSearchOn: true,
   bgSubPatterns: false,
   bgSearchAllBelow: false,
   resultHeightLocked: true,
@@ -9813,6 +10158,7 @@ if (bResetUiSettingsEl) {
 }
 
 function saveCache(){
+  if (SAFE_MODE || cacheWiped) return; // см. SAFE_MODE/cacheWiped — кэш не перезаписываем
   try{
     saveActiveTabState(); // Обязательно сохраняем вкладку перед записью в сторадж
     localStorage.setItem(CACHE_KEY, JSON.stringify({
@@ -9825,6 +10171,11 @@ function saveCache(){
 }
 
 function loadCache(){
+  if (SAFE_MODE) {
+    // Сообщение с задержкой — say() до готовности DOM ничего не покажет.
+    setTimeout(() => say("Аварийный режим (#safe): сохранённые цепочки не загружены и не перезаписываются."), 300);
+    return false;
+  }
   let d = null;
   try{ d = JSON.parse(localStorage.getItem(CACHE_KEY) || "null"); }catch(e){}
   if (!d) return false;
@@ -9887,7 +10238,7 @@ const taPatsEl = document.getElementById("taPats");
 if (taRowsEl) taRowsEl.addEventListener("input", saveCache);
 if (taPatsEl) taPatsEl.addEventListener("input", saveCache);
 
-for (const el of [cPullEl, cOrderEl, cNextOnlyEl, cStageXorEl, cInvPassEl, cAutoShiftEl, cStopOnHitEl, cStopOnBalanceEl, cCaptureOnFindEl, cVertEl, cPadEl, cKindsEl, cSkipEl, cHorizRotateOnFailEl, cHorizAlternateSideEl, cHorizReverseChainEl]) {
+for (const el of [cPullEl, cOrderEl, cNextOnlyEl, cStageXorEl, cInvPassEl, cAutoShiftEl, cStopOnHitEl, cStopOnBalanceEl, cTurboAutoEl, cCaptureOnFindEl, cVertEl, cPadEl, cKindsEl, cSkipEl, cHorizRotateOnFailEl, cHorizAlternateSideEl, cHorizReverseChainEl]) {
   if (el) el.addEventListener("change", () => { readToggles(); saveCache(); });
 }
 // cRingInvert влияет только на панель результата фон-поиска (не на данные строк) — ему нужен
@@ -9900,6 +10251,9 @@ if (cSeqSelfEl) cSeqSelfEl.addEventListener("change", () => { readToggles(); ren
 // её комментарий выше — нужен явный render(), как и у cRingInvert/cRingReverse/cSeqSelf.
 if (cHorizShowLiveXorEl) cHorizShowLiveXorEl.addEventListener("change", () => { readToggles(); render(); saveCache(); });
 if (cAxisSnapEl) cAxisSnapEl.addEventListener("change", () => { readToggles(); render(); saveCache(); });
+// Смена режима края сбрасывает накопленные направления обхода — иначе строка, уже "идущая
+// обратно", продолжила бы двигаться против только что нажатой кнопки.
+if (cAxisBitBounceEl) cAxisBitBounceEl.addEventListener("change", () => { readToggles(); axisBitDirMap.clear(); rowRotOffMap.clear(); render(); saveCache(); });
 
 if (!loadCache()){
   /* Самая первая загрузка вообще (localStorage ещё пуст) — createDefaultTabState() берёт
