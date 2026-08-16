@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.449</title>
+<title>Zerkalius Fold — v0.450</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -1029,6 +1029,9 @@
 .find-log-head{color:var(--dim);font-weight:700;border-bottom:1px solid var(--acc)}
 .find-log-cell{flex:0 0 auto;width:3.2em;padding:2px 3px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .find-log-row-no{width:4.5em;text-align:left;color:var(--dim)}
+/* Номер шага (варианта прокрутки), на котором случилась находка — своя колонка рядом с номером
+   строки (см. bgFindLog: в записи лежит step). */
+.find-log-step{width:4.5em;text-align:left;color:var(--dim)}
 .find-log-mode{width:4.2em}
 .find-log-plus{color:var(--acc);font-weight:700}
 
@@ -1255,7 +1258,7 @@
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.449</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.450</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -4932,6 +4935,7 @@ function renderFindLogPanel(){
 
   const head = '<div class="find-log-row find-log-head">' +
     '<span class="find-log-cell find-log-row-no"></span>' +
+    '<span class="find-log-cell find-log-step" title="Номер шага (варианта прокрутки), на котором нашлось. Под «Авто» это тот же счётчик «Вар: N/M», при ручных ◄/► — сколько кликов подряд сделано с момента смены выделения">шаг</span>' +
     modesUsed.map(m => '<span class="find-log-cell find-log-mode" title="' + esc(bgModeLabel(m)) + '">' + esc(bgModeLabel(m)) + '</span>').join("") +
   '</div>';
 
@@ -4947,7 +4951,8 @@ function renderFindLogPanel(){
       ).join(", ");
       return '<span class="find-log-cell find-log-plus" title="' + esc(tip) + '">+</span>';
     }).join("");
-    return '<div class="find-log-row"><span class="find-log-cell find-log-row-no">Стр. ' + (e.row + 1) + '</span>' + cells + '</div>';
+    return '<div class="find-log-row"><span class="find-log-cell find-log-row-no">Стр. ' + (e.row + 1) + '</span>' +
+      '<span class="find-log-cell find-log-step">' + (e.step ? "№" + e.step : "") + '</span>' + cells + '</div>';
   }).join("");
 
   el.innerHTML = head + rows;
@@ -5234,7 +5239,10 @@ function render(){
         const matches = {};
         for (const r of bgInfo.results) if (r.matched) matches[r.mode] = r.kinds;
         if (lengthSumsHits.length) matches.lengthSums = lengthSumsHits;
-        bgFindLog.unshift({ row: hitNow, matches });
+        // step — номер шага (варианта прокрутки), на котором нашлось: под "Авто" это turns из
+        // autoRun(), при ручных ◄/► — счётчик кликов подряд (afterShiftBgCheck кладёт его в то же
+        // поле). Раньше в логе был только номер строки, и было не понять, на каком шаге это было.
+        bgFindLog.unshift({ row: hitNow, step: st.shiftVariantTurns || 0, matches });
         if (bgFindLog.length > BG_FIND_LOG_MAX) bgFindLog.length = BG_FIND_LOG_MAX;
       }
       st.bgSearchLastHit = hitNow;
@@ -7923,6 +7931,13 @@ function autoRun(){
     st.shiftVariantTurns = 0;
     updateVariantCounter();
 
+    // Через сколько шагов оживлять счётчик в режиме "⏩ Турбо" (см. ниже). 100 — потому что
+    // реальная частота всё равно упирается в кадр: за один tick делается целая пачка шагов, и
+    // чаще одного обновления за кадр этого не случится при любом пороге. Больший порог (1000) на
+    // медленном переборе — это уже секунды тишины, меньший ничего не ускоряет.
+    const TURBO_REPORT_STEP = 100;
+    let lastTurboReport = 0;
+
     const tick = () => {
       if (!st.running) return finishAuto();
 
@@ -7996,6 +8011,15 @@ function autoRun(){
         say(`Авто (${dirLabel}): вариант ${turns}` + (totalTurns ? ` из ${totalTurns}` : ""));
         updateVariantCounter();
         render(); saveCache();
+        lastTurboReport = turns;
+      } else if (turns - lastTurboReport >= TURBO_REPORT_STEP) {
+        // Турбо идёт вслепую, и без единой цифры на экране непонятно, работает ли он вообще
+        // (запрос пользователя). Показываем ТОЛЬКО номер шага: это две записи текста в готовые
+        // элементы, без render() и без saveCache() — то есть без всего, ради чего Турбо и нужен.
+        // Чаще, чем раз в кадр, оно всё равно не случится: пачка шагов делается за один tick.
+        lastTurboReport = turns;
+        say(`⏩ Турбо (${dirLabel}): шаг ${turns}` + (totalTurns ? ` из ${totalTurns}` : "") + " — идёт поиск…");
+        updateVariantCounter();
       }
       if (bgHit) {
         return finishAuto(`🎯 Авто (${dirLabel}): найдено совпадение на строке ${bgHit.targetIdx + 1}!`);
