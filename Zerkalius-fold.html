@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.573</title>
+<title>Zerkalius Fold — v0.576</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -532,7 +532,17 @@
      обрезается своей же границей) — каждый вариант давал свой визуальный артефакт. Оставлено
      БЕЗ фона (как было исходно) — тут это того не стоит, в отличие от .pat/.pat2 (те длинные и
      реже страдают от вертикального нахлёста соседних строк). */
-  .num{flex:0 0 2em;text-align:right;color:#4b5262;font-size:.85em;white-space:nowrap}
+  /* Ширина колонки номера — НЕ жёсткие 2em, а --num-w, который считается по самому длинному
+     номеру в текущем шрифте/letter-spacing (см. fitNumW() в JS). Раньше стояло flex:0 0 2em, и
+     с 100-й строки трёхзначный номер переставал влезать: у flex-элемента min-width:auto, поэтому
+     бокс раздувался ПОД содержимое — и всё, что правее (паттерн, биты), уезжало вправо ровно
+     начиная с этой строки (запрос пользователя: "на 100 строке съехало выравнивание левое").
+     Теперь ширина одна на ВСЕ строки и на линейку столбцов, поэтому съезжать нечему. */
+  .num{flex:0 0 var(--num-w, 2em);text-align:right;color:#4b5262;font-size:.85em;white-space:nowrap}
+  /* Невидимая линейка для замера --num-w: та же .num (шрифт, размер, letter-spacing), но вне
+     потока и без фиксированной ширины — по ней меряется реальная ширина самого длинного номера. */
+  .num-probe{position:absolute;top:0;left:0;visibility:hidden;pointer-events:none;
+             flex:0 0 auto;width:auto;white-space:pre}
   /* Номер строки, изменённой относительно исходного шаблона (tplRows) — см. render() */
   .num.changed{color:#ff9900;font-weight:700}
   /* "⚖ Показать балансы" (см. #bShowBalances в "Виде", formatBalanceTotals() в JS) — итоговая
@@ -1386,7 +1396,7 @@
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.573</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.576</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -1599,6 +1609,10 @@
 </div>
 
 <div id="editGroup" class="control-group control-group-player">
+  <!-- "Выделить все" (запрос пользователя): разом помечает все строки цепочки, чтобы не тащить
+       мышью по всему списку. Тоггл — если выделены уже все, клик снимает выделение. Биты не
+       трогает, меняется только st.selectedRows (см. bSelectAllRows в JS). -->
+  <button id="bSelectAllRows" style="grid-column:1 / -1; border-color:#ffcf6b; color:#ffcf6b;" title="Выделить ВСЕ строки цепочки разом. Если все строки уже выделены — клик снимает выделение. Сами биты не меняются, работает только выделение">☰ Выделить все</button>
   <button id="bInvertSelected" title="Инвертировать биты (0↔1) в выделенных строках">🔁 Инверсия</button>
   <!-- Заливка одним значением: нажатие — все биты в 0, следующее — все в 1, и так по кругу
        (запрос пользователя "заменяет все 1 на 0, а потом все 0 на 1"). -->
@@ -1634,6 +1648,10 @@
     <button id="bMask" style="flex:1; border-color:#ffcf6b; color:#ffcf6b;" title="Маска: накладывает паттерн строки на саму строку — XOR, строка на строку, столбец в столбец по ТЕКУЩЕМУ выравниванию цепочек. Одинаковые длины → 111 на 111 даёт 000. Работает по выделенным строкам, а если ничего не выделено — по всем. Биты, которые реально изменились, красятся красным и остаются красными, пока не изменится любой бит в любой строке">🎭 Маска</button>
     <button id="bMaskColor" class="mode-act" style="flex:0 0 auto; border-color:#ff3b3b; color:#ff3b3b;" title="Красная подсветка бит, изменённых Маской: нажатие — убрать цвет, следующее — вернуть, и так по кругу. Сами биты не меняются, только их окраска">🎨</button>
   </div>
+  <!-- "Конверт" — сгиб по диагонали из левого символа выделенной строки вправо-вверх: всё над
+       диагональю отражается через неё и ХОРится с тем, что под ней, сама диагональ становится "1"
+       (см. foldEnvelopeXor() в JS). -->
+  <button id="bFoldEnvelope" style="grid-column:1 / -1; border-color:#7cd4ff; color:#7cd4ff;" title="Конверт по диагонали: из ПЕРВОГО (левого) символа выделенной строки диагональ идёт вправо-вверх (столбец на строку). Всё, что над диагональю, складывается через неё, как конверт, и ХОРится с тем, что под ней; верхние ячейки после сгиба гасятся в 0. Сами биты на диагонали ХОРить не с чем — они становятся «1». Выделено несколько строк — участок от самой верхней выделенной, одна — от 1-й строки таблицы. Считается по ТЕКУЩЕМУ выравниванию, столбец в столбец с экраном">✉ Конверт ⧄</button>
   <!-- "Паттерн-цепочка": заполняет выделенные строки повтором очередного ПАТТЕРНА, а следующим
        нажатием ХОРит с предыдущим результатом. Фон-поиск при этом ищет уже СЛЕДУЮЩИЙ паттерн
        (см. st.patChainStep/computeBgSearchTarget). -->
@@ -6493,6 +6511,9 @@ function render(){
              '<span class="' + numCls + ' num-r2">' + i + "</span>" + patRight + "</div>");
   }
   document.getElementById("rows").innerHTML = out.join("");
+  // Ширина колонки номеров (--num-w) — по самому длинному номеру, ОДНА на все строки, иначе
+  // трёхзначные номера раздвигают свою строку и та едет вправо (см. fitNumW/.num в CSS).
+  fitNumW(st.rows.length - 1);
   // Ширина правой колонки паттернов — под самый длинный паттерн (см. fitPatW2): считается ПОСЛЕ
   // отрисовки строк, потому что шаг столбца меряется по реальным битам в DOM.
   fitPatW2();
@@ -10776,6 +10797,27 @@ if (bRotate90El) bRotate90El.onclick = () => rotateSelected90(false);
 const bRotate90CcwEl = document.getElementById("bRotate90ccw");
 if (bRotate90CcwEl) bRotate90CcwEl.onclick = () => rotateSelected90(true);
 
+/* "☰ Выделить все" — выделяет все строки разом; если все уже выделены, клик снимает выделение.
+   Данные не меняются, поэтому snapshot() не нужен. Счётчики кругового сдвига сбрасываются так же,
+   как при обычном клике по строке (новое выделение = новая "сессия" сдвига, см. onclick по .ln). */
+const bSelectAllRowsEl = document.getElementById("bSelectAllRows");
+if (bSelectAllRowsEl) {
+  bSelectAllRowsEl.onclick = () => {
+    const n = st.rows.length;
+    if (!n) { say("Строк нет."); return; }
+    if (!st.selectedRows) st.selectedRows = new Set();
+    const allSelected = st.selectedRows.size === n;
+    st.manualShiftTurns = 0;
+    st.shiftVariantTotal = null;
+    st.shiftVariantRows = null;
+    st.captureGrown = false;
+    st.selectedRows = allSelected ? new Set() : new Set(st.rows.map((_, i) => i));
+    updateVariantCounter();
+    render();
+    saveCache();
+  };
+}
+
 const bInvertSelectedEl = document.getElementById("bInvertSelected");
 if (bInvertSelectedEl) {
   bInvertSelectedEl.onclick = () => {
@@ -10785,6 +10827,100 @@ if (bInvertSelectedEl) {
     render(); saveCache();
   };
 }
+
+/* "✉ Конверт ⧄" — складывание картинки по ДИАГОНАЛИ (запрос пользователя).
+   Диагональ выходит из ПЕРВОГО (левого) символа выделенной строки и идёт вправо-вверх, по одному
+   столбцу на строку: строка R столбец c0, строка R−1 столбец c0+1, и так до верха участка. Всё,
+   что лежит НАД этой диагональю, отражается через неё (как лист бумаги, сложенный конвертом) и
+   ХОРится с тем, что лежит под ней; сами верхние ячейки после сгиба гасятся в 0. Ячейки НА самой
+   диагонали ХОРить не с чем (они отражаются сами в себя) — по правилу пользователя они просто
+   становятся "1" ("если 0 на диагонали, он становится 1").
+   Отражение в экранных координатах (строка r, столбец col): линия — это r + col = K, отражение
+   меняет строку и столбец местами относительно неё: (r, col) → (K − col, K − r).
+   Считаем, как и все диагональные режимы, в ПОЛУСТОЛБЦАХ (×2), чтобы полушаг ½-выравниваний был
+   целым числом, а геометрия совпадала с экранной: сдвиг строки — тот же rowShiftFor() от того же
+   maxLen, что и в render(), плюс полушаговый нудж (hasHalfNudge).
+   Участок — как у диагональных режимов (diagStartIdx): выделено несколько строк — от самой верхней
+   выделенной, одна — от 1-й строки таблицы. Ячейки, которым после отражения некуда лечь (в строке
+   нет такого столбца, или отражение уводит за пределы участка), считаются потерянными — их число
+   уходит в сообщение, чтобы обрезка не была молчаливой. */
+function foldEnvelopeXor(){
+  if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
+  const R = Math.max(...st.selectedRows);
+  const start = st.selectedRows.size > 1 ? Math.min(...st.selectedRows) : 0;
+  if (!(st.rows[R] || "").length) { say("Выделенная строка пустая — от неё не идёт диагональ."); return; }
+
+  // Геометрия ровно та же, что на экране: maxLen по ВСЕМ строкам (см. render()).
+  let maxLen = 0;
+  for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
+  const isHalf = st.align === "halfcenter" || st.align === "halfstairs" || st.align === "rhalfstairs";
+  const sh2x = st.rows.map((s, i) => (s && s.length)
+    ? 2 * rowShiftFor(maxLen, i, s, st.align) + (isHalf && hasHalfNudge(s, maxLen, st.align, i) ? 1 : 0)
+    : 0);
+  // Индекс символа в строке i, стоящего в полустолбце c2x (−1 — такого символа нет: строка левее/
+  // правее или сидит в чужой полусетке).
+  const cellAt = (i, c2x) => {
+    const s = st.rows[i] || "";
+    if (!s.length) return -1;
+    const d = c2x - sh2x[i];
+    if (d < 0 || d % 2 !== 0) return -1;
+    const k = d / 2;
+    return k < s.length ? k : -1;
+  };
+
+  const K = sh2x[R] + 2 * R;               // инвариант диагонали: полустолбец + 2*номер строки
+  const src = st.rows.map(s => s.split("")); // читаем ТОЛЬКО отсюда — исходная картинка
+  const res = st.rows.map(s => s.split("")); // пишем сюда (верх и низ диагонали не пересекаются)
+
+  let moved = 0, lost = 0;
+  for (let r = start; r <= R; r++) {
+    const row = src[r];
+    for (let k = 0; k < row.length; k++) {
+      const ch = row[k];
+      if (ch !== "0" && ch !== "1") continue;
+      const c = sh2x[r] + 2 * k;
+      if (c + 2 * r >= K) continue;        // не над диагональю (на ней или под ней) — не двигаем
+      res[r][k] = "0";                     // сгиб: верхняя половина уходит вниз
+      const rTo2 = K - c;                  // ×2, чтобы поймать чужую полусетку
+      if (rTo2 % 2 !== 0) { lost++; continue; }
+      const rTo = rTo2 / 2;
+      if (rTo < start || rTo > R) { lost++; continue; }
+      const kTo = cellAt(rTo, K - 2 * r);
+      if (kTo < 0) { lost++; continue; }
+      const v = res[rTo][kTo];
+      if (v !== "0" && v !== "1") { lost++; continue; }
+      res[rTo][kTo] = (v === ch) ? "0" : "1";
+      moved++;
+    }
+  }
+  // Сама диагональ — всегда "1".
+  let diagCells = 0;
+  for (let r = start; r <= R; r++) {
+    const k = cellAt(r, K - 2 * r);
+    if (k < 0) continue;
+    const v = res[r][k];
+    if (v !== "0" && v !== "1") continue;
+    res[r][k] = "1";
+    diagCells++;
+  }
+
+  snapshot();
+  let touched = 0;
+  for (let r = start; r <= R; r++) {
+    const nv = res[r].join("");
+    if (nv !== st.rows[r]) {
+      st.rows[r] = nv;
+      insertedFlagsMap.delete(r);
+      invFlagsMap.delete(r);
+      touched++;
+    }
+  }
+  render(); saveCache();
+  say("Конверт: сложено " + moved + " бит, диагональ " + diagCells + " → 1, строк изменено " + touched +
+      (lost ? (", не легло " + lost) : ""));
+}
+const bFoldEnvelopeEl = document.getElementById("bFoldEnvelope");
+if (bFoldEnvelopeEl) bFoldEnvelopeEl.onclick = foldEnvelopeXor;
 
 /* "🔴 Инверсия между символами" (11→1010): после КАЖДОГО символа строки вставляется его
    инверсия. Работает по выделенным строкам, а если ничего не выделено — по всем (тот же принцип,
@@ -12927,6 +13063,28 @@ function fitPatW2(){
   const step = realColStepPx() || 8;
   const w = Math.max(40, Math.min(1200, Math.round(maxLen * step) + 36));
   document.documentElement.style.setProperty("--pat-w2", w + "px");
+}
+
+/* Ширина колонки номеров строк (--num-w, см. .num в CSS). Меряется по РЕАЛЬНОЙ раскладке —
+   невидимым span'ом с тем же классом .num внутри таблицы, поэтому учитывает и текущий шрифт
+   цепочки (--chain-fs), и letter-spacing (--chain-ls), которые пользователь крутит ползунками.
+   Ширина ставится ОДНА на все строки и на линейку столбцов: иначе строка с более длинным номером
+   раздувает свой бокс (у flex-элемента min-width:auto) и уезжает вправо относительно соседей —
+   ровно это и было со 100-й строки, когда номер становился трёхзначным. Нижняя граница — ширина
+   двузначного номера, чтобы на коротких списках вид остался прежним (2em ≈ "00"). */
+var numProbeEl = null; // var, а не let: render() может вызвать fitNumW() раньше этой строки (TDZ)
+function fitNumW(maxIdx){
+  const host = document.getElementById("rows");
+  if (!host) return;
+  // render() перезаписывает innerHTML целиком — линейку каждый раз создаём заново.
+  if (!numProbeEl || !numProbeEl.isConnected || numProbeEl.parentNode !== host) {
+    numProbeEl = document.createElement("span");
+    numProbeEl.className = "num num-probe";
+    host.appendChild(numProbeEl);
+  }
+  const measure = (txt) => { numProbeEl.textContent = txt; return numProbeEl.getBoundingClientRect().width; };
+  const w = Math.ceil(Math.max(measure("00"), measure(String(Math.max(0, maxIdx | 0))))) + 1;
+  if (w > 0) document.documentElement.style.setProperty("--num-w", w + "px");
 }
 
 /* Ручка переноса начала отсчёта столбцов — запрос пользователя "для каждого выравнивания нужна
