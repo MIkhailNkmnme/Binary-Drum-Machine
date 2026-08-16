@@ -5,11 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<<<<<<< HEAD
-<title>Zerkalius Fold — v0.450</title>
-=======
 <title>Zerkalius Fold — v0.573</title>
->>>>>>> 72a8375ede445b06b00903e8f6407a20f5a7be02
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -1145,14 +1141,10 @@
 /* Номер шага (варианта прокрутки), на котором случилась находка — своя колонка рядом с номером
    строки (см. bgFindLog: в записи лежит step). */
 .find-log-step{width:4.5em;text-align:left;color:var(--dim)}
-<<<<<<< HEAD
-.find-log-mode{width:4.2em}
-=======
 /* Шире прежнего: в шапке короткие, но РАЗЛИЧИМЫЕ подписи ("Скв→и", "ВЗ←", "↘#12", см.
    BG_MODE_SHORT) — они должны помещаться целиком, иначе столбцы снова сливаются в "Сквозн…". */
 .find-log-mode{width:6.2em}
 .find-log-head .find-log-mode{font-size:10.5px;letter-spacing:0}
->>>>>>> 72a8375ede445b06b00903e8f6407a20f5a7be02
 .find-log-plus{color:var(--acc);font-weight:700}
 /* Шапка лога кликабельна — сортировка по столбцу (см. findLogSort). */
 .find-log-head .find-log-cell[data-sort]{cursor:pointer;user-select:none}
@@ -1394,11 +1386,7 @@
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-<<<<<<< HEAD
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.450</span></h3>
-=======
     <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.573</span></h3>
->>>>>>> 72a8375ede445b06b00903e8f6407a20f5a7be02
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -5703,15 +5691,9 @@ function renderFindLogPanel(){
   // возрастанию, второй — по убыванию, третий — обратно в исходный порядок (новые находки сверху).
   const sortMark = k => findLogSort.key === k ? (findLogSort.dir > 0 ? " ▲" : " ▼") : "";
   const head = '<div class="find-log-row find-log-head">' +
-<<<<<<< HEAD
-    '<span class="find-log-cell find-log-row-no"></span>' +
-    '<span class="find-log-cell find-log-step" title="Номер шага (варианта прокрутки), на котором нашлось. Под «Авто» это тот же счётчик «Вар: N/M», при ручных ◄/► — сколько кликов подряд сделано с момента смены выделения">шаг</span>' +
-    modesUsed.map(m => '<span class="find-log-cell find-log-mode" title="' + esc(bgModeLabel(m)) + '">' + esc(bgModeLabel(m)) + '</span>').join("") +
-=======
     '<span class="find-log-cell find-log-row-no" data-sort="row" title="Сортировать по номеру строки">стр.' + sortMark("row") + '</span>' +
     '<span class="find-log-cell find-log-step" data-sort="step" title="Номер шага (варианта прокрутки), на котором нашлось. Под «Авто» это тот же счётчик «Вар: N/M», при ручных ◄/► — сколько кликов подряд сделано с момента смены выделения; пусто — находка появилась вне прокрутки. Клик — сортировать по шагу">шаг' + sortMark("step") + '</span>' +
     modesUsed.map(m => '<span class="find-log-cell find-log-mode" data-sort="' + esc(m) + '" title="' + esc(bgModeLabel(m)) + ' — клик: сначала находки этого режима">' + esc(bgModeShortLabel(m)) + sortMark(m) + '</span>').join("") +
->>>>>>> 72a8375ede445b06b00903e8f6407a20f5a7be02
   '</div>';
 
   const entries = bgFindLog.slice();
@@ -6127,14 +6109,10 @@ function render(){
         // step — номер шага (варианта прокрутки), на котором нашлось: под "Авто" это turns из
         // autoRun(), при ручных ◄/► — счётчик кликов подряд (afterShiftBgCheck кладёт его в то же
         // поле). Раньше в логе был только номер строки, и было не понять, на каком шаге это было.
-<<<<<<< HEAD
-        bgFindLog.unshift({ row: hitNow, step: st.shiftVariantTurns || 0, matches });
-=======
         // 0 (пустая клетка в логе) — находка появилась ВНЕ прокрутки: прогон уже кончился, а
         // строки изменились кликом/правкой/сменой режима. Иначе такие записи получали последний
         // номер прогона, и колонка вырождалась в столбик одинаковых чисел.
         bgFindLog.unshift({ row: hitNow, step: st.stepStale ? 0 : (st.shiftVariantTurns || 0), matches });
->>>>>>> 72a8375ede445b06b00903e8f6407a20f5a7be02
         if (bgFindLog.length > BG_FIND_LOG_MAX) bgFindLog.length = BG_FIND_LOG_MAX;
       }
       st.bgSearchLastHit = hitNow;
