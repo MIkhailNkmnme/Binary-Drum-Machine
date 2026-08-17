@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.576</title>
+<title>Zerkalius Fold — v0.577</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -816,6 +816,10 @@
      чтобы сразу было видно, что в строке добавлено, а что было. Держится, пока длина строки не
      изменится чем-то ещё (та же страховка, что и у .bit-inv). */
   .bit-ins { color: #ff3b3b !important; font-weight: 700; }
+  /* ПРЕДПРОСМОТР диагонали "✉ Конверт": первое нажатие кнопки не складывает, а показывает линию
+     сгиба (см. envPreview/foldEnvelopeXor) — второе нажатие уже складывает. Ярко-зелёный фон,
+     чтобы линия читалась поверх любых других подсветок. */
+  .env-diag { background: #00e676; color: #05130a !important; font-weight: 700; border-radius: 2px; }
   /* Биты, РЕАЛЬНО изменившиеся на текущем шаге (0→1 или 1→0) — красным. Совпавшие значения
      (1→1, 0→0) не красятся, даже если операция их "пересчитала" (запрос пользователя). */
   .bit-chg { color: #ff3b3b !important; font-weight: 700; }
@@ -1396,7 +1400,7 @@
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.576</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.577</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -3820,6 +3824,18 @@ let invFlagsMap = new Map();
    булевых по позициям). Чисто подсветка (.bit-ins), в данные не входит; сбрасывается Сбросом и
    сама перестаёт рисоваться, если длина строки изменилась чем-то другим. */
 let insertedFlagsMap = new Map();
+/* Предпросмотр диагонали "✉ Конверт": {key, cells:Map(номер строки → Set индексов символов)}.
+   Первое нажатие кнопки только рисует линию сгиба (.env-diag), второе — складывает. Чисто
+   визуально, в данные и в кэш не входит. Ключ (envPreviewKey) держит выделение/выравнивание/
+   длины строк: если что-то из этого поменялось, показ считается устаревшим — render() его
+   гасит, а кнопка снова показывает линию, а не складывает вслепую. */
+let envPreview = null;
+function envPreviewKey(){
+  const sel = (st.selectedRows && st.selectedRows.size) ? Array.from(st.selectedRows).sort((a, b) => a - b).join(",") : "";
+  let lens = "";
+  for (const s of st.rows) lens += s.length + ".";
+  return sel + "|" + st.align + "|" + lens;
+}
 function getInvFlags(rowIdx, len){
   let arr = invFlagsMap.get(rowIdx);
   if (!arr || arr.length !== len) { arr = new Array(len).fill(false); invFlagsMap.set(rowIdx, arr); }
@@ -5941,6 +5957,8 @@ function renderLengthSumsHtml(st, selIdx){
 
 function render(){
   renderTabs(); // <-- ЭТО ТА САМАЯ СТРОКА, КОТОРУЮ Я ЗАБЫЛ В ПРОШЛЫЙ РАЗ!
+  // Показ диагонали "Конверта" живёт только пока не тронули выделение/выравнивание/длины строк.
+  if (envPreview && envPreview.key !== envPreviewKey()) envPreview = null;
   document.getElementById("stepNo").textContent = st.step;
 
   // ПУСТОЕ выделение здесь БОЛЬШЕ НЕ ЧИНИТСЯ. Раньше тут стояла гарантия "выделение никогда не
@@ -6432,6 +6450,9 @@ function render(){
       // Вставленный символ (см. insertedFlagsMap/"🔴 Инверсия между символами").
       const insFlagsRow = insertedFlagsMap.get(i);
       const isInsBit = !!(insFlagsRow && insFlagsRow.length === s.length && insFlagsRow[k]);
+      // Показанная (ещё не выполненная) линия сгиба "✉ Конверт" — см. envPreview.
+      const envRow = envPreview ? envPreview.cells.get(i) : null;
+      const isEnvDiag = !!(envRow && envRow.has(k) && (bit === '0' || bit === '1'));
       // Бит, перевёрнутый ПОСЛЕДНИМ шагом (см. prevRows). Только настоящая смена значения:
       // 1→1 и 0→0 не считаются.
       const prevRow = prevRows ? prevRows[i] : null;
@@ -6442,6 +6463,10 @@ function render(){
         // Выбранная курсором ячейка — поверх любых других подсветок: это то, с чем сейчас работают
         // кнопки «Инв. ячеек»/«90° ячеек»/«Сдвиг».
         bits += '<span class="b' + bit + ' cell-sel"' + colAttr + '>' + bit + '</span>';
+      } else if (isEnvDiag) {
+        // Линия сгиба показывается ПОВЕРХ прочих подсветок: сейчас важно только одно — где пойдёт
+        // сгиб, если нажать "Конверт" второй раз.
+        bits += '<span class="env-diag" title="Линия сгиба «Конверта» — нажмите кнопку ещё раз, чтобы сложить"' + colAttr + '>' + bit + '</span>';
       } else if (marks && marks.has(k)) {
         bits += '<span class="' + hitCls + '"' + colAttr + '>' + bit + '</span>';
       } else if (isMaskBit && (bit === '0' || bit === '1')) {
@@ -10828,7 +10853,9 @@ if (bInvertSelectedEl) {
   };
 }
 
-/* "✉ Конверт ⧄" — складывание картинки по ДИАГОНАЛИ (запрос пользователя).
+/* "✉ Конверт ⧄" — складывание картинки по ДИАГОНАЛИ (запрос пользователя). Кнопка ДВУХШАГОВАЯ:
+   первое нажатие только подсвечивает биты диагонали, по которой пойдёт сгиб (envPreview/.env-diag),
+   второе — собственно складывает.
    Диагональ выходит из ПЕРВОГО (левого) символа выделенной строки и идёт вправо-вверх, по одному
    столбцу на строку: строка R столбец c0, строка R−1 столбец c0+1, и так до верха участка. Всё,
    что лежит НАД этой диагональю, отражается через неё (как лист бумаги, сложенный конвертом) и
@@ -10869,6 +10896,27 @@ function foldEnvelopeXor(){
   };
 
   const K = sh2x[R] + 2 * R;               // инвариант диагонали: полустолбец + 2*номер строки
+
+  // ПЕРВОЕ нажатие — только показать диагональ, по которой пойдёт сгиб (запрос пользователя),
+  // складывает уже ВТОРОЕ. Показ гаснет сам, если сменить выделение/выравнивание/длины строк
+  // (см. envPreviewKey/render), так что вслепую по устаревшей линии сложить нельзя.
+  const key = envPreviewKey();
+  if (!envPreview || envPreview.key !== key) {
+    const cells = new Map();
+    let n = 0;
+    for (let r = start; r <= R; r++) {
+      const k = cellAt(r, K - 2 * r);
+      if (k < 0) continue;
+      cells.set(r, new Set([k]));
+      n++;
+    }
+    envPreview = { key, cells };
+    render();
+    say("Конверт: показана диагональ (" + n + " ячеек) — нажмите «Конверт» ещё раз, чтобы сложить.");
+    return;
+  }
+  envPreview = null;
+
   const src = st.rows.map(s => s.split("")); // читаем ТОЛЬКО отсюда — исходная картинка
   const res = st.rows.map(s => s.split("")); // пишем сюда (верх и низ диагонали не пересекаются)
 
