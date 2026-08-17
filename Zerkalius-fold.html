@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.597</title>
+<title>Zerkalius Fold — v0.598</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -1405,15 +1405,6 @@
      z-index:1000; pointer-events:none; opacity:0; transition:opacity 0.2s ease, transform 0.2s ease}
 #msg.show{opacity:1; transform:translateX(-50%) scale(1)}
 
-/* Базовая мобильная поддержка: крупнее тач-цели у кнопок и ползунков (сама раскладка панелей
-   не переверстывается — только это). viewport-тег (см. <head>) отвечает за корректный
-   масштаб/зум страницы на телефоне. */
-@media (pointer: coarse) {
-  button{min-height:34px;padding:6px 10px}
-  input[type="range"]{height:28px}
-  label.chk{padding:5px 6px}
-}
-
 /* ═══ КОМПАКТНЫЙ ВИД (запрос пользователя: "минимизируй всё, кроме верхнего меню и выравниваний")
    Одним блоком в самом конце стилей — то есть поверх всего написанного выше, по порядку каскада.
    Так это правится и откатывается целиком, не разыскивая полсотни мест по файлу.
@@ -1486,13 +1477,54 @@ textarea{font-size:11px;padding:3px}
 #menuBar .menu-btn,#menuTabsGroup button,#menuTabs button{padding:3px 8px;gap:5px;border-radius:3px;font-size:13px}
 .align-grp button{padding:2px 6px;font-size:13px;gap:3px;border-radius:0}
 .control-group-player .align-grp button{flex:1;font-size:16px;padding:7px 4px;min-height:auto}
+/* ═══ ТАЧ-УСТРОЙСТВА ═══════════════════════════════════════════════════════════════════════
+   СТОИТ В САМОМ КОНЦЕ — И ЭТО ГЛАВНОЕ. Раньше этот блок лежал ВЫШЕ компактного вида, а тот бьёт
+   по тем же селекторам (button, label.chk) с той же специфичностью — и, как более поздний,
+   выигрывал. То есть на телефоне кнопки получали компактные 17px вместо тач-размера, и попасть по
+   ним пальцем было нечем. Порядок тут не косметика: любые новые правила размеров дописывай ВЫШЕ
+   этого блока, иначе снова затрёшь тач-цели.
+   Размеры — от 34px: это нижняя граница, ниже которой палец начинает промахиваться. */
+@media (pointer: coarse) {
+  button{min-height:34px;padding:6px 10px;font-size:13px}
+  input[type="range"]{height:28px}
+  label.chk{padding:6px 8px;font-size:13px;min-height:34px}
+  select,input[type="text"],input[type="number"]{min-height:32px;font-size:13px;padding:2px 6px}
+  body{font-size:13px}
+  /* Панели шире: на узком экране 260px мало, а места по бокам всё равно нет. */
+  :root{--side-w:min(86vw, 340px); --panel-w:min(86vw, 340px)}
+  /* Полосы прокрутки в панелях возвращаем: на тач-экране полоса — единственный намёк, что
+     содержимое длиннее видимого, а колесо мыши тут подсказать не может. */
+  .menu-drop,.floating-panel,.scrollable-settings{scrollbar-width:thin}
+  .menu-drop::-webkit-scrollbar,.floating-panel::-webkit-scrollbar,
+  .scrollable-settings::-webkit-scrollbar{width:6px;height:6px}
+}
+
+/* Виртуальный курсор для тача (см. JS: МАРКЕР TOUCHPAD). Сам курсор — перекрестье поверх всего,
+   мышиных событий не ловит: клики за него шлёт JS в элемент ПОД перекрестьем. */
+#vcur{position:fixed;z-index:2000;width:26px;height:26px;margin:-13px 0 0 -13px;display:none;
+      pointer-events:none}
+#vcur::before,#vcur::after{content:"";position:absolute;background:#22d3ee;box-shadow:0 0 4px #000}
+#vcur::before{left:12px;top:0;width:2px;height:26px}
+#vcur::after{top:12px;left:0;height:2px;width:26px}
+body.vcur-on #vcur{display:block}
+body.vcur-hold #vcur::before,body.vcur-hold #vcur::after{background:#ffcf6b}
+/* Панель управления курсором — снизу, чтобы не спорить с верхним меню. Показывается только когда
+   режим включён. */
+#vcurBar{position:fixed;left:50%;transform:translateX(-50%);bottom:6px;z-index:2001;display:none;
+         gap:6px;background:rgba(10,14,20,.92);border:1px solid var(--acc);border-radius:6px;padding:5px}
+body.vcur-on #vcurBar{display:flex}
+#vcurBar button{min-height:38px;padding:6px 12px;font-size:14px}
+/* Кнопка включения тач-режима — только на тач-устройствах, поверх всего, в углу. */
+#vcurToggle{position:fixed;right:6px;bottom:6px;z-index:2001;display:none;min-height:38px}
+@media (pointer: coarse){ #vcurToggle{display:flex} }
+
 </style>
 <!-- === МАРКЕР 03: HEADER_UI === -->
 <div id="menuBar">
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.597</span></h3>
+    <a href="index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (index.html)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.598</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -14617,8 +14649,149 @@ if (!loadCache()){
   setLastDirMode("shiftRInv");
   saveCache();
 }
+/* === МАРКЕР TOUCHPAD: ВИРТУАЛЬНЫЙ КУРСОР ДЛЯ ТАЧ-УСТРОЙСТВ =================================
+   Задача: на телефоне попадать по ОТДЕЛЬНОМУ БИТУ. Прямое касание для этого не годится в
+   принципе — палец накрывает несколько строк сразу и физически закрывает собой то место, куда
+   целишься. Поэтому работаем как удалёнка (AnyDesk и подобные): палец водит перекрестье
+   ОТНОСИТЕЛЬНО, как по тачпаду ноутбука, а нажатия шлются отдельными кнопками.
+   Разделение пальцев выбрано так, чтобы НИЧЕГО не отнять у браузера:
+     один палец  — двигает перекрестье (только тут зовём preventDefault);
+     два пальца  — не трогаем вообще, поэтому родная прокрутка и ЩИПКОВЫЙ ЗУМ работают как всегда.
+   Клик синтезируем в элемент ПОД перекрестьем (elementFromPoint). Шлём полную последовательность
+   pointerdown → mousedown → mouseup → click: обработчики в приложении навешаны на разные события
+   (где-то onclick, где-то mousedown/mousemove), и половинчатая последовательность часть из них
+   просто не разбудила бы.
+   "Зажать" держит кнопку нажатой между касаниями — только так работают протяжки: выделение
+   диапазона строк, выбор ячеек, перетаскивание ручки оси и разделителей колонок. */
+(function(){
+  const cur = document.getElementById("vcur");
+  const toggle = document.getElementById("vcurToggle");
+  if (!cur || !toggle) return;
+  // Чувствительность: <1 — перекрестье движется МЕДЛЕННЕЕ пальца. Это и есть весь смысл затеи —
+  // мелкое прицеливание там, где палец грубее цели.
+  const SPEED = 0.6;
+  let x = Math.round(innerWidth / 2), y = Math.round(innerHeight / 2);
+  let lastX = 0, lastY = 0, tracking = false, held = false;
+
+  const place = () => { cur.style.left = x + "px"; cur.style.top = y + "px"; };
+  const clamp = () => {
+    x = Math.max(0, Math.min(innerWidth - 1, x));
+    y = Math.max(0, Math.min(innerHeight - 1, y));
+  };
+  const target = () => document.elementFromPoint(x, y);
+  const fire = (el, type, extra) => {
+    if (!el) return;
+    const init = Object.assign({ bubbles: true, cancelable: true, clientX: x, clientY: y,
+                                 view: window, button: 0, buttons: 1 }, extra || {});
+    // PointerEvent есть не везде — там, где его нет, обходимся мышиными: приложение слушает
+    // именно мышиные, pointer* добавлены только для полноты.
+    if (type.startsWith("pointer")) {
+      if (typeof PointerEvent !== "function") return;
+      el.dispatchEvent(new PointerEvent(type, Object.assign({ pointerId: 1, pointerType: "touch",
+                                                              isPrimary: true }, init)));
+    } else {
+      el.dispatchEvent(new MouseEvent(type, init));
+    }
+  };
+  const press = () => { const el = target(); fire(el, "pointerdown"); fire(el, "mousedown"); return el; };
+  const release = (el) => {
+    const t = el || target();
+    fire(t, "mouseup", { buttons: 0 });
+    fire(t, "pointerup", { buttons: 0 });
+    return t;
+  };
+
+  // ── Перемещение перекрестья одним пальцем ────────────────────────────────────────────────
+  const onStart = (e) => {
+    if (!document.body.classList.contains("vcur-on")) return;
+    if (e.touches.length !== 1) { tracking = false; return; } // два пальца — отдаём браузеру
+    // Касания по самой панели курсора и по кнопке включения — обычные нажатия, не движение.
+    if (e.target.closest && e.target.closest("#vcurBar, #vcurToggle")) return;
+    tracking = true;
+    lastX = e.touches[0].clientX;
+    lastY = e.touches[0].clientY;
+    e.preventDefault();
+  };
+  const onMove = (e) => {
+    if (!tracking || !document.body.classList.contains("vcur-on")) return;
+    if (e.touches.length !== 1) { tracking = false; return; }
+    const t = e.touches[0];
+    x += (t.clientX - lastX) * SPEED;
+    y += (t.clientY - lastY) * SPEED;
+    lastX = t.clientX; lastY = t.clientY;
+    clamp(); place();
+    // Пока кнопка "зажата", движение должно доходить до приложения — иначе протяжкой ничего не
+    // выделить: и выделение строк, и ручки слушают именно mousemove.
+    if (held) { const el = target(); fire(el, "pointermove"); fire(el, "mousemove"); }
+    e.preventDefault();
+  };
+  const onEnd = () => { tracking = false; };
+  // passive:false обязателен — иначе preventDefault не сработает и страница будет уезжать под
+  // пальцем вместо движения перекрестья.
+  document.addEventListener("touchstart", onStart, { passive: false });
+  document.addEventListener("touchmove", onMove, { passive: false });
+  document.addEventListener("touchend", onEnd, { passive: true });
+  document.addEventListener("touchcancel", onEnd, { passive: true });
+
+  // ── Кнопки ───────────────────────────────────────────────────────────────────────────────
+  const bind = (id, fn) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    // click, а не touchstart: кнопки панели должны работать и мышью (удобно проверять на десктопе).
+    el.addEventListener("click", (ev) => { ev.preventDefault(); ev.stopPropagation(); fn(); });
+  };
+  bind("vcurClick", () => { const el = press(); release(el); fire(el, "click", { buttons: 0 }); });
+  bind("vcurDbl", () => {
+    const el = press(); release(el); fire(el, "click", { buttons: 0, detail: 1 });
+    press(); release(el); fire(el, "click", { buttons: 0, detail: 2 });
+    fire(el, "dblclick", { buttons: 0, detail: 2 });
+  });
+  bind("vcurHold", () => {
+    const btn = document.getElementById("vcurHold");
+    if (!held) {
+      press(); held = true;
+      document.body.classList.add("vcur-hold");
+      if (btn) btn.textContent = "✋ Отпустить";
+    } else {
+      const el = release(); held = false;
+      fire(el, "click", { buttons: 0 });
+      document.body.classList.remove("vcur-hold");
+      if (btn) btn.textContent = "✊ Зажать";
+    }
+  });
+  const setOn = (on) => {
+    document.body.classList.toggle("vcur-on", on);
+    if (on) { clamp(); place(); }
+    else if (held) {
+      // Выходя из режима, кнопку обязательно отпускаем: иначе приложение осталось бы думать, что
+      // мышь всё ещё нажата, и следующая протяжка повела бы себя непредсказуемо.
+      release(); held = false;
+      document.body.classList.remove("vcur-hold");
+      const btn = document.getElementById("vcurHold");
+      if (btn) btn.textContent = "✊ Зажать";
+    }
+  };
+  bind("vcurOff", () => setOn(false));
+  toggle.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    setOn(!document.body.classList.contains("vcur-on"));
+  });
+  addEventListener("resize", () => { clamp(); place(); });
+  place();
+})();
+
 </script>
 <div id="msg"></div>
+<!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;
+     кнопка включения видна только при pointer:coarse. -->
+<div id="vcur"></div>
+<div id="vcurBar">
+  <button id="vcurClick" title="Клик в точке перекрестья">⊙ Клик</button>
+  <button id="vcurDbl" title="Двойной клик в точке перекрестья">⊙⊙ 2×</button>
+  <button id="vcurHold" title="Зажать/отпустить кнопку в точке перекрестья — этим тянут выделение, ручки и разделители">✊ Зажать</button>
+  <button id="vcurOff" title="Выключить режим курсора — вернуться к обычным касаниям">✕</button>
+</div>
+<button id="vcurToggle" title="Режим курсора: одним пальцем двигаешь перекрестье (как тачпад), двумя — обычная прокрутка и щипковый зум. Нужен, чтобы попадать по отдельным битам, где палец закрывает полстроки">🎯 Курсор</button>
 </body>
 </html>
 <!-- === МАРКЕР 99: ФИНИШ === -->
