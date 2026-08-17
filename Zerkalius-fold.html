@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.581</title>
+<title>Zerkalius Fold — v0.597</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -530,6 +530,9 @@
      бы сейчас не нарисованные строки. Благодаря ей полоса прокрутки и позиция любой строки такие
      же, как при полной отрисовке. Своей ширины не имеет и мышь не ловит. */
   .vspacer{width:1px;pointer-events:none}
+  /* Бит, накрытый находкой режима "🌈 Все паттерны сразу" — фон задаётся инлайном (свой цвет у
+     каждого паттерна, см. allPatColor), тут только тёмный текст поверх яркого фона. */
+  .allpat-bit{color:#0a0e14 !important;border-radius:1px}
   /* Непрозрачный фон под .num пробовали трижды (обычный background — "полосы"; ::before с
      нахлёстом — двойная opacity на стыке строк из-за своей opacity:var(--dim-op) у каждой .ln;
      ::before без нахлёста — "разрывы" в цифрах, где хвост символа при плотном line-height
@@ -652,12 +655,19 @@
   .pat2.found.rev{color:var(--green)}
 
   /* Фоновый поиск (cBgSearch): подсветка ТОЛЬКО ячейки паттерна, без затрагивания самой строки/
-     битов. bg-search-target — что ищем прямо сейчас (голубым, пока совпадения ещё нет);
-     bg-search-hit — совпадение найдено (жёлтым, поверх target-подсветки). */
-  .pat.bg-search-target, .pat2.bg-search-target{background:rgba(77,163,255,.25);color:var(--acc) !important;
-    border-radius:2px; box-shadow:0 0 4px rgba(77,163,255,.6)}
+     битов. bg-search-target — что ищем прямо сейчас; bg-search-hit — совпадение найдено (жёлтым).
+     У target'а ФОНА И СВЕЧЕНИЯ БОЛЬШЕ НЕТ (запрос пользователя: "подсветка фоном, пока паттерн не
+     найден, убрать в паттернах") — заливка остаётся признаком именно НАЙДЕННОГО. Какой паттерн
+     ищется сейчас, по-прежнему видно по цвету текста. */
+  .pat.bg-search-target, .pat2.bg-search-target{color:var(--acc) !important}
   .pat.bg-search-hit, .pat2.bg-search-hit{background:rgba(255,207,107,.35);color:#ffcf6b !important;
     border-radius:2px; box-shadow:0 0 4px rgba(255,207,107,.6)}
+
+  /* ОТДЕЛЬНОЕ выделение паттернов (st.selectedPats, клик по ячейке паттерна) — сужает список того,
+     что ищет "🌈 Все паттерны сразу". Намеренно НЕ заливка, а рамка: заливка тут уже занята
+     признаком "найден" (.bg-search-hit выше и цвет самого паттерна), и два фона спорили бы между
+     собой. Рамка читается поверх любого из них и ни с чем не путается. */
+  .pat.pat-sel, .pat2.pat-sel{outline:1px solid var(--acc);outline-offset:-1px;border-radius:2px}
 
   /* То же жёлтое совпадение, но для конкретных найденных бит внутри окошка результата
      фон-поиска (#chainText) — показывает, ГДЕ именно паттерн нашёлся в строке результата.
@@ -742,9 +752,14 @@
      updateAxisSplitPosition() в JS, там же считается и left, т.к. позиция оси зависит от
      данных/сдвига и не выражается статичной CSS-формулой, в отличие от .vsplit/.vsplit2).
      display:none по умолчанию — показывается только под "⊙ Ось"/"Ось 1/2" (см. JS). */
-  .axis-split{position:absolute;top:0;width:7px;margin-left:-3px;cursor:col-resize;z-index:16;display:none}
+  /* Зона захвата шире самой линии (запрос пользователя "неудобно хватать"): бокс 13px, а видимая
+     линия — 1px посередине него. margin-left и left у ::before держат ровно половину ширины, иначе
+     линия встанет не на тот столбец: JS ставит left равным левому краю столбца, а margin сдвигает
+     бокс назад на половину, чтобы центр пришёлся точно туда. Высоту задаёт JS —
+     см. updateAxisSplitPosition(). */
+  .axis-split{position:absolute;top:0;width:13px;margin-left:-6px;cursor:col-resize;z-index:16;display:none}
   .axis-split.act{display:block}
-  .axis-split::before{content:"";position:absolute;left:3px;top:0;bottom:0;width:1px;background:var(--m-purple2,#8a5da8)}
+  .axis-split::before{content:"";position:absolute;left:6px;top:0;bottom:0;width:1px;background:var(--m-purple2,#8a5da8)}
   .axis-split:hover::before,.axis-split.drag::before{background:#fff;width:2px}
 
   /* overflow снят совсем (была попытка overflow-x:hidden + overflow-y:visible — обрезать только
@@ -1398,13 +1413,86 @@
   input[type="range"]{height:28px}
   label.chk{padding:5px 6px}
 }
+
+/* ═══ КОМПАКТНЫЙ ВИД (запрос пользователя: "минимизируй всё, кроме верхнего меню и выравниваний")
+   Одним блоком в самом конце стилей — то есть поверх всего написанного выше, по порядку каскада.
+   Так это правится и откатывается целиком, не разыскивая полсотни мест по файлу.
+   НЕ ТРОГАЕМ, намеренно: верхнее меню (#menuBar/#menuTabs/#menuTabsGroup/.menu-btn) и кнопки
+   выравниваний (.align-grp) — они остаются прежнего размера. Полотно цепочки тоже не трогаем:
+   его шрифт и интервалы это --chain-fs/--chain-lh/--chain-ls, ими управляют ползунки в "Виде". */
+:root{
+  /* Ширина ЛЕВОЙ и ПРАВОЙ колонок-доков (#leftPanel/#rightPanel), куда закрепляются вкладки-панели.
+     Было 300px. Плавающие панели и выпадающее меню здесь ни при чём — у них своя ширина (260px,
+     см. .floating-panel/.menu-drop ниже), они остаются шире доков намеренно. */
+  --side-w:260px;
+  /* Ширина ПЛАВАЮЩИХ панелей и выпадающего меню — отдельно от доков: у закреплённой колонки и у
+     оторванного окна разные задачи, и одинаковыми они быть не обязаны (запрос пользователя —
+     доки узкие, плавающие панели 260). */
+  --panel-w:260px;
+  --std-btn-h:17px;    /* было 24px — высота кнопок в сетках */
+}
+body{font-size:11px}
+/* Кнопки и галки — минимальные отступы. Исключения восстанавливаются ниже. */
+button{padding:0 4px;gap:2px;border-radius:2px}
+label.chk{padding:0 4px;gap:2px;border-radius:2px}
+.box{padding:3px;border-radius:3px}
+.box h3{margin:0 0 2px;font-size:10px;letter-spacing:.2px}
+.panel-head{padding:2px 2px 2px;gap:4px}
+/* Промежутки между блоками настроек */
+.scrollable-settings{gap:3px}
+.control-group{gap:2px}
+.control-group-btn{gap:2px}
+.control-group-flow{gap:2px;padding:2px}
+.control-group-flow .flow-top-row{gap:2px;padding-bottom:2px}
+.control-group-flow .flow-modes-grid{gap:2px}
+.control-group-player{gap:2px}
+.control-group-player button{font-size:12px;padding:0 4px}
+.preset-grp button{font-size:10px;padding:0 1px}
+#spiralDirGrp button{padding:0 4px;font-size:11px}
+#chainTileGrp button{padding:0 4px;font-size:10px}
+/* Поля ввода и выпадающие списки */
+select,input[type="text"],input[type="number"]{padding:0 2px;font-size:11px}
+textarea{font-size:11px;padding:3px}
+/* Выпадающее меню и плавающие панели — уже по ширине */
+/* Панели вкладок меню — своя ширина --panel-w (см. :root), не привязанная к узким докам.
+   !important здесь по делу: у "Лога находок" стоит resize:both, и после ручного растягивания
+   браузер пишет ШИРИНУ ПРЯМО В style элемента — инлайн перебивает любое обычное правило, и панель
+   навсегда застревала бы на старом размере. */
+.menu-drop{width:var(--panel-w) !important}
+.floating-panel{width:var(--panel-w) !important;min-width:140px}
+/* Исключение: "Лог находок" тянут за угол намеренно — ему ручной размер оставляем. */
+#panelWrap_menuFindLog.floating-panel{width:var(--panel-w)}
+/* Отступ полотна от краёв — по минимуму. ВЕРХНИЙ отступ ОБЯЗАН остаться формулой с
+   --result-box-h: им резервируется место под закреплённые оверлеи ("Результат" + "Черновик шага",
+   см. OVERLAY_STACK), иначе первые строки цепочек уезжают под них и до них не добраться, не
+   прокрутив вверх. Тут была ровно эта ошибка: сокращённое свойство padding сбрасывает и
+   padding-top, вместе с ним улетал и резерв, заданный выше по файлу. Поэтому padding-top идёт
+   ОТДЕЛЬНОЙ строкой ПОСЛЕ сокращённой — порядок важен. */
+.canvas{padding:2px 6px 2px 2px}
+.canvas{padding-top:calc(2px + var(--result-box-h, 0px))}
+
+/* ПОЛОСЫ ПРОКРУТКИ У ПАНЕЛЕЙ УБРАНЫ (запрос пользователя) — сама прокрутка колесом и тачем
+   остаётся рабочей, не рисуется только полоса. Тот же приём, что давно стоял у .controls: ширина
+   ::-webkit-scrollbar в ноль плюс scrollbar-width:none для Firefox. Полосу полотна (.canvas) это
+   не трогает — там горизонтальная нужна и сделана намеренно видимой. */
+.menu-drop,.floating-panel,.scrollable-settings,#menuTabs,.chain-dd-list{scrollbar-width:none}
+.menu-drop::-webkit-scrollbar,.floating-panel::-webkit-scrollbar,
+.scrollable-settings::-webkit-scrollbar,#menuTabs::-webkit-scrollbar,
+.chain-dd-list::-webkit-scrollbar{width:0;height:0;background:transparent}
+
+/* ── ВОССТАНОВЛЕНИЕ ИСКЛЮЧЁННОГО ─────────────────────────────────────────────────────────
+   Правила выше бьют по всем button/label.chk сразу, поэтому верхнему меню и выравниваниям
+   возвращаем их прежние размеры явно. Селекторы специфичнее (два уровня), поэтому выигрывают. */
+#menuBar .menu-btn,#menuTabsGroup button,#menuTabs button{padding:3px 8px;gap:5px;border-radius:3px;font-size:13px}
+.align-grp button{padding:2px 6px;font-size:13px;gap:3px;border-radius:0}
+.control-group-player .align-grp button{flex:1;font-size:16px;padding:7px 4px;min-height:auto}
 </style>
 <!-- === МАРКЕР 03: HEADER_UI === -->
 <div id="menuBar">
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.581</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.597</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -1641,6 +1729,7 @@
   <div style="grid-column:1 / -1; display:flex; gap:4px;">
     <button id="bRotate90" style="flex:1; border-color:#22d3ee; color:#22d3ee;" title="Повернуть блок строк на 90° ПО ЧАСОВОЙ: строки кладутся на сетку по ТЕКУЩЕМУ выравниванию, столбцы становятся строками (столбец читается снизу вверх) — вертикальная ось симметрии (у треугольника — его высота) ложится горизонтально, вершина смотрит ВПРАВО. Работает по выделенным строкам (берётся весь диапазон от верхней до нижней), а если ничего не выделено — по всей цепочке. Число строк меняется на число столбцов; пустые места внутри повёрнутой строки становятся нулями, по краям просто обрезаются">◺ 90° ↻</button>
     <button id="bRotate90ccw" style="flex:1; border-color:#22d3ee; color:#22d3ee;" title="То же самое, но ПРОТИВ ЧАСОВОЙ: столбцы берутся справа налево и читаются сверху вниз — вершина треугольника смотрит ВЛЕВО, а ось ложится в другую сторону">◹ 90° ↺</button>
+    <button id="bSquareFill" style="flex:1; border-color:#22d3ee; color:#22d3ee;" title="Достроить фигуру до КВАДРАТА зеркалом по главной диагонали ВВЕРХ: в каждую пустую клетку кладётся значение зеркальной ей клетки, то есть у треугольника (лесенки 1/11/111...) верхняя половина достраивается из нижней. Клетка, пустая и у себя, и у зеркала, заполняется нулём — дыр в квадрате не остаётся. Сторона квадрата = max(строк, столбцов), чтобы вся фигура влезла целиком. Сетка берётся по ТЕКУЩЕМУ выравниванию, как и у поворотов. Работает по выделенным строкам, а если ничего не выделено — по всей цепочке. Паттерны не тронуты">⬔ До квадрата</button>
   </div>
   <button id="bPadZerosAbove" title="Добавить нули вверх: для выделенных строк (по самой длинной из них) добавить нули выше">0⬆</button>
   <button id="bDelFirst" title="Удалить первый символ (слева) из выделенных строк (или всех, если ничего не выделено)">🗑 ←1</button>
@@ -1816,9 +1905,16 @@
     <label class="chk" title="По умолчанию результат сверяется только с паттерном строки СРАЗУ НИЖЕ выделенной. С этой галкой — со всеми паттернами от неё и до конца списка, находка засчитывается по первой совпавшей строке">
       <input type="checkbox" id="cBgAllBelow"> 🔽 Все ниже
     </label>
+    <!-- Обе галки режима "🌈 Все паттерны сразу" — В ОДНУ СТРОКУ (запрос пользователя): вторая
+         без первой смысла не имеет, и стоять они должны рядом, а не одна под другой. -->
+    <div style="display:flex;gap:4px;align-items:center;">
     <label class="chk" title="Искать в каждом результате СРАЗУ ВСЕ паттерны списка, а не один искомый. Перебор идёт с САМОЙ ВЕРХНЕЙ строки вниз; как только паттерн нашёлся — он засчитан и дальше не ищется (одна находка на паттерн, самая ранняя позиция). Каждый найденный паттерн подсвечивается СВОИМ цветом — и в строках результата, и в колонке паттернов, чтобы было видно, что где нашлось. Это ТОЛЬКО подсветка: на сообщение «паттерн строки N найден», лог находок, «🧲 Захват находки» и «🛑 Стоп на находке» эти находки не влияют — там по-прежнему считается только ИСКОМЫЙ паттерн строки под выделенной">
-      <input type="checkbox" id="cBgAllPats"> 🌈 Все паттерны сразу (подсветка)
-    </label>
+        <input type="checkbox" id="cBgAllPats"> 🌈 Все паттерны сразу
+      </label>
+      <label class="chk" title="Работает вместе с «🌈 Все паттерны сразу». Без неё каждый паттерн засчитывается ОДИН раз — по самой ранней позиции, и дальше не ищется. С ней подсвечиваются ВСЕ вхождения паттерна по всем строкам, сколько бы раз он ни встретился. Вариант (сам паттерн / инверсия / реверс) при этом выбирается как обычно, приоритет у основного, — и уже все вхождения ИМЕННО ЭТОГО варианта и показываются">
+        <input type="checkbox" id="cBgAllPatsEvery"> 🔁 Все вхождения
+      </label>
+    </div>
   </div>
 
   <!-- Перенесены сюда из "Вида" — запрос пользователя. Подсветки 01/1↕1/1⤡1 (со своими цветами)
@@ -1891,9 +1987,6 @@
   <div style="display:flex;gap:4px;margin-bottom:4px;border:1px solid var(--m-blue3);background:rgba(61,72,120,0.12);border-radius:3px;padding:4px;">
     <button id="bShowBalances" style="flex:1;" title="Показать итоговый баланс строки: «N-M» — сумма всех единиц минус сумма всех нулей, «1» белым, «0» серым. Если единиц и нулей поровну — подсвечивается отдельно">⚖ Балансы</button>
     <button id="bRunsAsBits" style="flex:1;" title="Заменить сами биты 0/1 их пробегами со знаком, напр. «111001» -> «+3-2+1» (то же выравнивание, что у обычных битов). Посимвольные подсветки в этом режиме не действуют">🔀 Пробеги</button>
-    <!-- Общий выключатель КРАСНОЙ подсветки изменённых бит: и штатной "изменён последним шагом"
-         (по стеку отката), и той, что оставляет «🎭 Маска». -->
-    <button id="bToggleChgBits" class="mode-act" style="flex:1;" title="Красная подсветка изменённых бит: и «изменён последним шагом» (по стеку отката), и та, что оставляет «🎭 Маска». Нажатие — выключить совсем, повторное — вернуть. Состояние сохраняется в настройках вида">🔴 Изм. биты</button>
   </div>
   <div style="display:flex;gap:6px;margin-bottom:4px;border:1px solid var(--m-green);background:rgba(61,122,82,0.12);border-radius:3px;padding:4px;">
     <button id="bCopyRows" style="flex:1;" title="Скопировать строки цепочки в буфер обмена — каждая своей строкой, с ведущими пробелами по текущему выравниванию (как они стоят в таблице). Выделены строки — копируются только они, ничего не выделено — вся цепочка. То же самое делает Ctrl+C по выделенным строкам">📋 Скопировать строки-цепочки</button>
@@ -1910,19 +2003,26 @@
     <button data-val="bw">Ч/Б</button>
     <button data-val="custom" title="Свои цвета: последние вручную выбранные (col1/col0/colBg) — как только меняешь цвет вручную при любом активном пресете, сам пресет не трогается, а изменение уходит сюда и сохраняется в кэше. Пока своих цветов ещё не было — по умолчанию как Ч/Б">Своя</button>
   </div>
-  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;border:1px solid var(--m-orange);background:rgba(163,112,61,0.12);border-radius:3px;padding:4px;">
-    <label class="chk" title="Цвет единиц">Цвет 1 <input type="color" id="col1" value="#ff3333"></label>
-    <label class="chk" title="Цвет нулей">Цвет 0 <input type="color" id="col0" value="#555555"></label>
-    <label class="chk" title="Фон полотна">Фон <input type="color" id="colBg" value="#000000"></label>
-    <!-- Жирность символов 0/1 — просто font-weight:bold через body.bold-bits (см. CSS), без
-         отдельного цвета, как у соседних тумблеров подсветки. -->
-    <button id="bBoldBits" title="Жирность символов «0»/«1» — вкл/выкл">Жирность</button>
-  </div>
-
-  <!-- Шрифт цифр 0/1 на полотне (см. --chain-ff в CSS) — на разных системах одно и то же
-       начертание рендерится то жирным, то тонким, единого правильного выбора нет, поэтому
-       готовый набор шрифтов на пробу вместо жёсткого хардкода одного варианта. -->
-  <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;border:1px solid var(--m-cyan);background:rgba(61,122,133,0.12);border-radius:3px;padding:4px;">
+  <!-- ОДНА ОБЩАЯ РАМКА на три группы (запрос пользователя): выключатель подсветки изменённых бит,
+       цвета с жирностью и шрифт полотна раньше стояли в трёх отдельных боксах, каждый со своей
+       рамкой и фоном. Сам "🔴 Изм. биты" при этом переехал сюда из ряда с "Балансами"/"Пробегами":
+       по смыслу он про то же — как выглядят биты, а не про то, что показано рядом со строкой.
+       Внутренние ряды остались (у них разная раскладка), но собственных рамок и фонов у них
+       больше нет — рамка одна, внешняя. -->
+  <div style="margin-bottom:4px;border:1px solid var(--m-orange);background:rgba(163,112,61,0.12);border-radius:3px;padding:4px;display:flex;flex-direction:column;gap:4px;">
+    <button id="bToggleChgBits" class="mode-act" title="Красная подсветка изменённых бит: и «изменён последним шагом» (по стеку отката), и та, что оставляет «🎭 Маска». Нажатие — выключить совсем, повторное — вернуть. Состояние сохраняется в настройках вида">🔴 Изм. биты</button>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+      <label class="chk" title="Цвет единиц">Цвет 1 <input type="color" id="col1" value="#ff3333"></label>
+      <label class="chk" title="Цвет нулей">Цвет 0 <input type="color" id="col0" value="#555555"></label>
+      <label class="chk" title="Фон полотна">Фон <input type="color" id="colBg" value="#000000"></label>
+      <!-- Жирность символов 0/1 — просто font-weight:bold через body.bold-bits (см. CSS), без
+           отдельного цвета, как у соседних тумблеров подсветки. -->
+      <button id="bBoldBits" title="Жирность символов «0»/«1» — вкл/выкл">Жирность</button>
+    </div>
+    <!-- Шрифт цифр 0/1 на полотне (см. --chain-ff в CSS) — на разных системах одно и то же
+         начертание рендерится то жирным, то тонким, единого правильного выбора нет, поэтому
+         готовый набор шрифтов на пробу вместо жёсткого хардкода одного варианта. -->
+    <div style="display:flex;align-items:center;gap:6px;">
     <span class="view-slider-icon" title="Шрифт цифр на полотне">🔤</span>
     <select id="chainFontSel" style="flex:1;" title="Шрифт цифр 0/1 на полотне — если текущий выглядит слишком жирным/тонким, попробуй другой">
       <option value='&quot;Roboto Mono&quot;, Consolas, monospace'>Roboto Mono</option>
@@ -1932,6 +2032,7 @@
       <option value='&quot;Lucida Console&quot;, Consolas, monospace'>Lucida Console</option>
       <option value='monospace'>Системный monospace</option>
     </select>
+    </div>
   </div>
 
   <!-- Ползунки шрифта/интервалов — межстрочный (lh) вертикальный и стоит СБОКУ от остальных
@@ -3666,6 +3767,9 @@ const st = {
   // разделителей считается ОТДЕЛЬНО по каждой секции между ними, как будто других строк нет —
   // запрос пользователя.
   rowDividers: new Set(),
+  // Отдельное выделение ПАТТЕРНОВ (клик по ячейке паттерна) — сужает список того, что ищет
+  // "🌈 Все паттерны сразу". С выделением СТРОК (selectedRows) никак не связано.
+  selectedPats: new Set(),
   activeTab: 0, tabs: [],
   align: "center", vertical: false, padZero: false, allKinds: false, ringInvert: false, ringOff: false,
   pull: true, keepOrder: true, stopOnHit: true, stopOnBalance: false, turboAuto: false, captureOnFind: true, axisSnap: true, axisBitBounce: false, axisCenterOffset: 0,
@@ -3693,6 +3797,9 @@ const st = {
   // "🌈 Все паттерны сразу" — в каждом результате ищутся ВСЕ паттерны списка сверху вниз, по одной
   // (самой ранней) находке на паттерн; см. findAllPatternsInResult/allPatColor.
   bgAllPats: false,
+  // "🔁 Все вхождения" — подсвечивать паттерн ВЕЗДЕ, где встретился, а не только в первом
+  // месте (работает только вместе с bgAllPats, см. findAllPatternsInResult).
+  bgAllPatsEvery: false,
   highlight01: false,
   highlightVert1: false,
   highlightDiag1: false,
@@ -4006,6 +4113,7 @@ function createDefaultTabState(name = "Цепочка 1") {
     tailBuffer: st.tailBuffer || "",
     selectedRows: Array.from(st.selectedRows || []),
     rowDividers: Array.from(st.rowDividers || []),
+    selectedPats: Array.from(st.selectedPats || []),
     undo: st.undo ? st.undo.slice() : [],
     // Настройки вида/поиска (все кнопки/галки/ползунки, включая цвета) — свои у каждой цепочки
     // (см. loadTabState/saveActiveTabState): новая вкладка стартует с того, что сейчас реально
@@ -4036,6 +4144,7 @@ function saveActiveTabState() {
     tailBuffer: st.tailBuffer || "",
     selectedRows: Array.from(st.selectedRows || []),
     rowDividers: Array.from(st.rowDividers || []),
+    selectedPats: Array.from(st.selectedPats || []),
     undo: (st.undo || []).slice(),
     // Текущие настройки вида/поиска этой (ещё активной на момент вызова) вкладки — см.
     // loadTabState().
@@ -4070,6 +4179,7 @@ function loadTabState(index, skipSave = false) {
     if (fd >= 0) st.selectedRows.add(fd);
   }
   st.rowDividers = new Set(t.rowDividers || []);
+  st.selectedPats = new Set(t.selectedPats || []);
   st.undo = t.undo ? t.undo.slice() : [];
   st.hit = null;
   st.lastOp = null;
@@ -4143,7 +4253,8 @@ function snapshot(){
     horizChainRow: st.horizChainRow,
     horizBigTargetIdx: st.horizBigTargetIdx,
     selectedCol: st.selectedCol,
-    rowDividers: Array.from(st.rowDividers || [])
+    rowDividers: Array.from(st.rowDividers || []),
+    selectedPats: Array.from(st.selectedPats || [])
   });
   if (st.undo.length > UNDO_DEPTH) st.undo.shift();
 }
@@ -4169,6 +4280,7 @@ function restore(){
   st.horizBigTargetIdx = s.horizBigTargetIdx != null ? s.horizBigTargetIdx : -1;
   st.selectedCol = s.selectedCol != null ? s.selectedCol : -1;
   st.rowDividers = new Set(s.rowDividers || []);
+  st.selectedPats = new Set(s.selectedPats || []);
   st.hit = null;
   return true;
 }
@@ -6086,9 +6198,13 @@ function scrollToRow(idx){
   const pitch = vrowsPitchPx();
   const rowsTop = host.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop;
   const top = rowsTop + idx * pitch, bottom = top + pitch;
-  const viewTop = sc.scrollTop, viewBottom = viewTop + sc.clientHeight;
+  // Верхняя полоса полотна закрыта закреплёнными оверлеями ("Результат" + "Черновик шага", их
+  // суммарная высота лежит в --result-box-h, см. OVERLAY_STACK). Считаем её занятой: иначе переход
+  // к найденной строке аккуратно подводил бы её ровно ПОД эти окна, и на экране её не было бы.
+  const overlayPx = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--result-box-h")) || 0;
+  const viewTop = sc.scrollTop + overlayPx, viewBottom = sc.scrollTop + sc.clientHeight;
   let next = null;
-  if (top < viewTop) next = top;
+  if (top < viewTop) next = top - overlayPx;
   else if (bottom > viewBottom) next = bottom - sc.clientHeight;
   if (next === null) return;
   sc.scrollTop = Math.max(0, next);
@@ -6145,6 +6261,13 @@ function render(){
   // ВАЖНО: maxLen (длина самой длинной строки) остаётся точкой отсчёта для alignShift/rowShiftFor —
   // менять его нельзя, иначе поедет вся геометрия выравниваний. Ширина КАРТИНКИ (линейка столбцов
   // + добивка пробелами справа) считается отдельно — см. visibleColCount().
+
+  // Ось цепочек не выпускаем за колонки паттернов (см. clampAxisOffset). Зажим стоит ЗДЕСЬ, до
+  // renderColHeader и до цикла строк: и линейка столбцов, и сам сдвиг строк (extraCh) читают
+  // st.axisCenterOffset ниже, и поправить его после них значило бы кадр рассинхрона. Заодно это
+  // чинит уже сохранённое в кэше значение вне границ и случай, когда поле битов сузили руками.
+  st.axisCenterOffset = clampAxisOffset(st.axisCenterOffset || 0, maxLen);
+
   const renderWidth = visibleColCount(maxLen);
   renderColHeader(renderWidth);
 
@@ -6207,17 +6330,75 @@ function render(){
   // результата (запрос пользователя "подсветить все найденные разным цветом и там, и там").
   let allPatHits = null;
   if (st.bgAllPats && bgInfo && bgInfo.results) {
-    // Паттерны отключённых "⛔" строк сюда и так не попадают (findAllPatternsInResult их не ищет),
-    // но проверку оставляем явной — колонка паттернов не должна их подсвечивать ни при каких
-    // остатках прежних расчётов.
-    const lastActive = patChainLastIdx(seqAnchorIdx());
+    // Подсветка НЕ ЗАВИСИТ от того, где стоит выделение (запрос пользователя). Раньше тут стояла
+    // отсечка "h.patIdx > lastActive — пропустить", из-за которой найденное переставало светиться,
+    // стоило выделению уехать выше. Отключённые галками "⛔" строки по-прежнему не подсвечиваются:
+    // их паттерны и не ищутся — см. lastRow в findAllPatternsInResult.
     for (const r of bgInfo.results) {
       if (!r.allHits) continue;
       for (const h of r.allHits) {
-        if (h.patIdx > lastActive) continue;
         if (!allPatHits) allPatHits = new Map();
         if (!allPatHits.has(h.patIdx)) allPatHits.set(h.patIdx, { kind: h.kind, mode: r.mode });
       }
+    }
+  }
+
+  // "🌈 Все паттерны сразу" — найденные паттерны подсвечиваются ПРЯМО В СТРОКАХ, и делается это
+  // НЕЗАВИСИМО ОТ ФОН-ПОИСКА (запрос пользователя: "по умолчанию, даже если фон-поиск отключён").
+  // Раньше подсветка бралась из bgInfo.results, а значит требовала и включённых режимов фон-поиска,
+  // и выделенной строки: выключил поиск — пропала и подсветка. Теперь это отдельный, ни от чего не
+  // зависящий путь: ищем в СКВОЗНОЙ склейке всех строк сверху вниз и раскладываем позиции обратно
+  // на строки. Отсюда и разрыв: паттерн, лежащий НА СТЫКЕ (хвост одной строки + начало следующей),
+  // подсвечивается в обеих — целиком его нет ни в одной, и построчный поиск такого не нашёл бы.
+  // Через кэш (см. memoMask) — склейка тут строится по всем данным сразу, гонять её на каждый
+  // рендер незачем. В зависимостях перечислено всё, что читает findAllPatternsInResult: тексты
+  // паттернов (сами объекты st.pats меняют на месте, поэтому именно тексты), настройки кольца и
+  // разбора, "🔁 Все вхождения", выделение паттернов и отсечка "⛔" нижних строк.
+  let allPatRows = null, allPatSelfHits = null;
+  if (st.bgAllPats) {
+    const self = memoMask("allPatSelf",
+      [st.rows, st.pats.map(p => (p && p.text) || ""), st.skipFirst, st.allKinds, st.ringOff,
+       st.ringInvert, st.ringReverse, st.bgAllPatsEvery,
+       Array.from(st.selectedPats || []).sort((a, b) => a - b),
+       st.chainCutBelow, st.chainCutTail, seqAnchorIdx()],
+      () => {
+        // Склейка + карта "позиция → строка/бит". Длину считаем заранее и берём типизированные
+        // массивы: на картинке в миллион бит массив объектов {r,p} съел бы куда больше памяти.
+        let total = 0;
+        for (const s of st.rows) total += s.length;
+        if (!total) return null;
+        const cellR = new Int32Array(total), cellP = new Int32Array(total);
+        let text = "", n = 0;
+        for (let r = 0; r < st.rows.length; r++) {
+          const s = st.rows[r] || "";
+          if (!s.length) continue;
+          text += s;
+          for (let p = 0; p < s.length; p++, n++) { cellR[n] = r; cellP[n] = p; }
+        }
+        const hits = findAllPatternsInResult(text);
+        if (!hits.length) return null;
+        const period = hits.period || total;
+        const rows = new Map();
+        for (const h of hits) for (let q = 0; q < h.len; q++) {
+          const pos = period ? (h.start + q) % period : (h.start + q);
+          if (pos >= total) continue;
+          const r = cellR[pos];
+          let arr = rows.get(r);
+          if (!arr) { arr = []; rows.set(r, arr); }
+          // Первый занявший бит и остаётся: список паттернов идёт сверху вниз, верхний приоритетнее.
+          if (arr[cellP[pos]] === undefined) arr[cellP[pos]] = h.patIdx;
+        }
+        return { rows, hits };
+      });
+    if (self) { allPatRows = self.rows; allPatSelfHits = self.hits; }
+  }
+  // Колонка паттернов: пока фон-поиск работает, метки берутся из его результатов (там известен и
+  // режим, которым нашлось, — он показывается в подсказке). Когда он выключен, красим по находкам
+  // из самих строк, иначе колонка молчала бы, хотя в строках подсветка есть.
+  if (st.bgAllPats && !allPatHits && allPatSelfHits) {
+    for (const h of allPatSelfHits) {
+      if (!allPatHits) allPatHits = new Map();
+      if (!allPatHits.has(h.patIdx)) allPatHits.set(h.patIdx, { kind: h.kind, mode: null });
     }
   }
 
@@ -6488,8 +6669,11 @@ function render(){
     let patRight = "";
     if (p && p.text){
       const bgHitSuffix = i === bgTargetIdx ? (bgMatched ? " bg-search-hit" : " bg-search-target") : "";
-      const c = (p.found ? ("pat found " + KIND_CLS[p.kind || 0]) : "pat") + bgHitSuffix;
-      const c2 = (p.found ? ("pat2 found " + KIND_CLS[p.kind || 0]) : "pat2") + bgHitSuffix;
+      // ОТДЕЛЬНОЕ выделение паттернов (st.selectedPats) — своё, не связанное с выделением строк:
+      // им сужается список того, что ищет "🌈 Все паттерны сразу" (см. findAllPatternsInResult).
+      const patSel = (st.selectedPats && st.selectedPats.has(i)) ? " pat-sel" : "";
+      const c = (p.found ? ("pat found " + KIND_CLS[p.kind || 0]) : "pat") + bgHitSuffix + patSel;
+      const c2 = (p.found ? ("pat2 found " + KIND_CLS[p.kind || 0]) : "pat2") + bgHitSuffix + patSel;
       
       const stepHtml = p.found ? '<span class="st">#' + p.step + "</span>" : "";
       
@@ -6497,7 +6681,16 @@ function render(){
       // Фоновый поиск сверяется через textMatchesPattern(), который сам учитывает живую
       // st.skipFirst (а не "замороженный" p.skip1, записанный только при обычной находке) —
       // подсветка первого символа для target/hit-строки идёт по тому же живому флагу.
-      if ((p.found && p.skip1 && p.text.length > 1) || (i === bgTargetIdx && st.skipFirst && p.text.length > 1)) {
+      // "🌈 Все паттерны сразу" и ВЫДЕЛЕННЫЕ паттерны — тоже показываем первый символ отрезанным,
+      // когда включено "⏭ Без 1-го" (запрос пользователя). Искалось-то уже без него всегда:
+      // findAllPatternsInResult режет base = text.slice(1) по той же живой st.skipFirst. А в колонке
+      // паттерн при этом рисовался целиком — и выходило, что подсвечен один кусок, а ищется другой.
+      // Условие то же живое, что и у target-строки, а не "замороженный" p.skip1 (он пишется только
+      // при обычной находке).
+      const skipShown = st.skipFirst && p.text.length > 1 &&
+        (i === bgTargetIdx || (allPatHits && allPatHits.has(i)) ||
+         (st.selectedPats && st.selectedPats.has(i)));
+      if ((p.found && p.skip1 && p.text.length > 1) || skipShown) {
         textHtml = '<span class="pat-skip">' + esc(p.text[0]) + '</span>' + esc(p.text.slice(1));
       }
       
@@ -6505,9 +6698,14 @@ function render(){
       // биты в строке результата, см. allPatColor) прямо в колонке паттернов: сразу видно, какие
       // из них уже найдены и где именно.
       const allHit = allPatHits ? allPatHits.get(i) : null;
+      // mode === null — находка НЕ из фон-поиска, а прямо из сквозной склейки строк (так работает
+      // "🌈 Все паттерны сразу" при выключенном фон-поиске, см. allPatSelfHits). Режима там нет и
+      // называть в подсказке нечего.
       const allHitStyle = allHit
-        ? ' style="color:' + allPatColor(i) + ' !important;font-weight:700" title="Найден режимом «' +
-          esc(bgModeLabel(allHit.mode)) + '» (' + KIND_LABELS_RU[allHit.kind] + ')"'
+        ? ' style="color:' + allPatColor(i) + ' !important;font-weight:700" title="' +
+          (allHit.mode ? ('Найден режимом «' + esc(bgModeLabel(allHit.mode)) + '»')
+                       : 'Найден в строках цепочки') +
+          ' (' + KIND_LABELS_RU[allHit.kind] + ')"'
         : '';
       pat = '<span class="' + c + '"' + allHitStyle + '>' + textHtml + stepHtml + '</span>';
       patRight = '<span class="' + c2 + '"' + allHitStyle + '>' + textHtml + stepHtml + '</span>';
@@ -6671,6 +6869,7 @@ function render(){
     const insFlagsRow = insertedFlagsMap.get(i);
     const envRow = envPreview ? envPreview.cells.get(i) : null;
     const prevRow = prevRows ? prevRows[i] : null;
+    const allPatRow = allPatRows ? allPatRows.get(i) : null; // "🌈 Все паттерны сразу", см. выше
 
     for (let k = 0; k < s.length; k++) {
       const bit = s[k];
@@ -6706,6 +6905,8 @@ function render(){
       const isInsBit = !!(insFlagsRow && insFlagsRow.length === s.length && insFlagsRow[k]);
       // Показанная (ещё не выполненная) линия сгиба "✉ Конверт" — см. envPreview.
       const isEnvDiag = !!(envRow && envRow.has(k) && (bit === '0' || bit === '1'));
+      // Номер паттерна, накрывшего этот бит в режиме "🌈 Все паттерны сразу" (см. allPatRows).
+      const allPatBit = allPatRow ? allPatRow[k] : undefined;
       // Бит, перевёрнутый ПОСЛЕДНИМ шагом (см. prevRows). Только настоящая смена значения:
       // 1→1 и 0→0 не считаются.
       const isChgBit = showChgBits && !!(prevRow && prevRow.length === s.length && (bit === '0' || bit === '1') &&
@@ -6756,6 +6957,12 @@ function render(){
           ? ' style="' + (foldBgStyle ? 'background:' : 'color:') + foldOrderColor(diagFoldOrd, diagFoldMask.total || 1) + '"'
           : '';
         emit('<span class="' + hlCls + '"' + foldStyle + colAttr + '>', bit, mrg);
+      } else if (allPatBit !== undefined && (bit === '0' || bit === '1')) {
+        // "🌈 Все паттерны сразу" — фон цветом САМОГО ПАТТЕРНА (тем же, что в колонке паттернов и в
+        // окне "Результат"). Стоит последней из подсветок: это самая общая, справочная — любая
+        // адресная (находка цепочки, изменённые биты, выбранная ячейка) должна её перебивать.
+        emit('<span class="b' + bit + ' allpat-bit" style="background:' + allPatColor(allPatBit) +
+             '" title="Найденный паттерн №' + (allPatBit + 1) + '"' + colAttr + '>', bit, mrg);
       } else if (bit === '0' || bit === '1') {
         // Самая массовая ветка — обычный неподсвеченный бит. Именно её склейка и убирает
         // основную массу узлов: подряд идущие одинаковые биты уходят одним span'ом.
@@ -6898,7 +7105,7 @@ function render(){
     fullChainText = srcLine + "\n" + bgInfo.results
       .map((r, i) => bgLabels[i].padEnd(bgLabelW, " ") + (r.matched ? " ✓[" + r.kinds.map(kindTag).join(",") + "]" : "") +
         // "🌈 Все паттерны сразу" — какие именно паттерны нашлись в этой строке (для копирования)
-        ((r.allHits && r.allHits.length) ? " 🌈[" + r.allHits.map(h => "№" + (h.patIdx + 1)).join(",") + "]" : "") +
+        ((r.allHits && r.allHits.length) ? " 🌈[" + allHitsByPat(r.allHits).map(h => "№" + (h.patIdx + 1)).join(",") + "]" : "") +
         ": " + r.result)
       .join("\n");
     // Одна строка результата — вынесена в функцию, потому что рисуется ДВАЖДЫ: в самой панели
@@ -7016,7 +7223,9 @@ function render(){
       // "🌈 Все паттерны сразу" — СВОЙ столбец с номерами всех найденных в этой строке паттернов,
       // каждый своим цветом (тем же, что у его бит) и кликабельный: клик выделяет строку этого
       // паттерна в таблице.
-      const hitsHtml = (r.allHits || []).map(h =>
+      // По ОДНОМУ номеру на паттерн: при "🔁 Все вхождения" находок у одного паттерна много, и
+      // список номеров иначе повторял бы его столько же раз.
+      const hitsHtml = allHitsByPat(r.allHits).map(h =>
         '<span class="chain-hit-num" data-pat-idx="' + h.patIdx + '" style="color:' + allPatColor(h.patIdx) +
         '" title="Паттерн №' + (h.patIdx + 1) + ' (строка ' + h.patIdx + '), ' + KIND_LABELS_RU[h.kind] +
         (h.skip ? " (без 1-го символа)" : "") + ' — клик: выделить эту строку">' + (h.patIdx + 1) + '</span>'
@@ -9276,6 +9485,25 @@ document.getElementById("rows").onclick = e => {
   const idx = +ln.dataset.idx;
   if (isNaN(idx)) return;
 
+  // КОЛОНКА ПАТТЕРНОВ — только своё выделение паттернов, строки цепочек ею НЕ выделяются вовсе
+  // (запрос пользователя). Выход здесь БЕЗУСЛОВНЫЙ: даже клик по пустой ячейке паттерна не должен
+  // проваливаться в выделение строки — иначе колонка ведёт себя по-разному в зависимости от того,
+  // есть в этой строке паттерн или нет. Переключаем только там, где паттерн реально есть.
+  // Этим выделением сужается список того, что ищет "🌈 Все паттерны сразу": выделено хоть что-то —
+  // ищутся только выделенные, пусто — все, как и раньше (см. findAllPatternsInResult).
+  // Повторный клик по тому же паттерну снимает выделение.
+  if (e.target.closest(".pat, .pat2")) {
+    if (patDragMoved) return; // протяжка уже выставила набор — не схлопывать его обратно к одному
+    if (st.pats[idx] && st.pats[idx].text) {
+      if (!st.selectedPats) st.selectedPats = new Set();
+      if (st.selectedPats.has(idx)) st.selectedPats.delete(idx);
+      else st.selectedPats.add(idx);
+      render();
+      saveCache();
+    }
+    return;
+  }
+
   resetSeqSearchModes();
   // Новый клик по строке — новая "сессия" кругового сдвига, счётчик "Вар: N/M" начинается заново.
   st.manualShiftTurns = 0;
@@ -9309,6 +9537,11 @@ document.getElementById("rows").onclick = e => {
    [якорь..курсор] целиком, mouseup фиксирует. Ctrl/Cmd+клик оставлен как раньше — точечное
    добавление/снятие одной строки без протяжки. */
 let rowDragAnchor = null, rowDragMoved = false;
+/* Протяжка по КОЛОНКЕ ПАТТЕРНОВ — выделяет несколько паттернов подряд (запрос пользователя),
+   ровно тем же жестом, каким протяжка по самой строке выделяет диапазон строк. Якорь и признак
+   реального движения держатся отдельно от строчных: колонка паттернов к выделению строк не
+   причастна совсем. */
+let patDragAnchor = null, patDragMoved = false;
 document.getElementById("rows").addEventListener("mousedown", e => {
   if (cellSelMode) return; // в режиме выбора ячеек протяжка выделяет ЯЧЕЙКИ, а не диапазон строк
   if (e.target.tagName === "INPUT" || e.target.closest(".edit-row-input")) return;
@@ -9317,8 +9550,37 @@ document.getElementById("rows").addEventListener("mousedown", e => {
   if (!ln) return;
   const idx = +ln.dataset.idx;
   if (isNaN(idx)) return;
+  // Начали в колонке паттернов — это протяжка ПАТТЕРНОВ. Строчный якорь при этом не ставим вовсе,
+  // иначе то же движение мыши заодно красило бы диапазон строк.
+  if (e.target.closest(".pat, .pat2")) {
+    patDragAnchor = idx;
+    patDragMoved = false;
+    return;
+  }
   rowDragAnchor = idx;
   rowDragMoved = false;
+});
+document.getElementById("rows").addEventListener("mousemove", e => {
+  if (patDragAnchor === null || !(e.buttons & 1)) return;
+  const ln = e.target.closest(".ln");
+  if (!ln) return;
+  const idx = +ln.dataset.idx;
+  if (isNaN(idx) || (idx === patDragAnchor && !patDragMoved)) return;
+  patDragMoved = true;
+  const lo = Math.min(patDragAnchor, idx), hi = Math.max(patDragAnchor, idx);
+  // Протяжка ЗАДАЁТ набор заново (как и у строк), а не добавляет к прежнему. Пустые ячейки в
+  // диапазон не попадают — выделять там нечего.
+  st.selectedPats = new Set();
+  for (let i = lo; i <= hi; i++) if (st.pats[i] && st.pats[i].text) st.selectedPats.add(i);
+  render();
+});
+window.addEventListener("mouseup", () => {
+  if (patDragAnchor === null) return;
+  if (patDragMoved) saveCache();
+  patDragAnchor = null;
+  // Сброс через setTimeout — click браузер шлёт ПОСЛЕ mouseup, и он должен успеть увидеть флаг
+  // (тот же приём, что и у строчной протяжки ниже).
+  setTimeout(() => { patDragMoved = false; }, 0);
 });
 document.getElementById("rows").addEventListener("mousemove", e => {
   if (rowDragAnchor === null || !(e.buttons & 1)) return;
@@ -9420,6 +9682,20 @@ document.getElementById("rows").addEventListener("dblclick", e => {
   const idx = +ln.dataset.idx;
   if (isNaN(idx)) return;
 
+  // ДВОЙНОЙ КЛИК ПО КОЛОНКЕ ПАТТЕРНОВ — снять выделение со ВСЕХ паттернов разом (запрос
+  // пользователя). Иначе набранное протяжкой приходилось бы разбирать по одному кликом.
+  // В ручную правку строки отсюда не уходим: колонка паттернов строк вообще не касается
+  // (см. одиночный клик выше) — правка открывается двойным кликом по самой строке.
+  // Первый клик пары успел переключить свой паттерн, поэтому чистим набор целиком уже здесь.
+  if (e.target.closest(".pat, .pat2")) {
+    if (st.selectedPats && st.selectedPats.size) {
+      st.selectedPats.clear();
+      render();
+      saveCache();
+    }
+    return;
+  }
+
   startEditRow(idx);
 });
 
@@ -9494,6 +9770,15 @@ const cBgAllPatsEl = document.getElementById("cBgAllPats");
 if (cBgAllPatsEl) {
   cBgAllPatsEl.onchange = () => {
     st.bgAllPats = cBgAllPatsEl.checked;
+    st.bgSearchLastHit = -1;
+    render();
+    saveCache();
+  };
+}
+const cBgAllPatsEveryEl = document.getElementById("cBgAllPatsEvery");
+if (cBgAllPatsEveryEl) {
+  cBgAllPatsEveryEl.onchange = () => {
+    st.bgAllPatsEvery = cBgAllPatsEveryEl.checked;
     st.bgSearchLastHit = -1;
     render();
     saveCache();
@@ -9608,6 +9893,22 @@ function allPatColor(idx){
    в findPatternKinds() — просто кольцевой буфер строится ОДИН раз на весь список паттернов, а не
    заново на каждый (иначе на длинных результатах это десятки лишних мегабайт строк за render).
    Возвращает [{patIdx, kind, skip, start, len}] в порядке следования паттернов. */
+/* Минимальная длина паттерна, участвующего в "🌈 Все паттерны сразу" (см. findAllPatternsInResult).
+   Ниже этого порога паттерн в этом режиме не ищется и не подсвечивается вовсе. */
+const ALL_PATS_MIN_LEN = 2;
+/* Список находок, свёрнутый ДО ОДНОЙ НА ПАТТЕРН (самой ранней). Нужен там, где показывается
+   перечень НОМЕРОВ найденных паттернов: сама подсветка при "🔁 Все вхождения" рисует каждое
+   вхождение, а вот в списке номеров один и тот же паттерн повторяться не должен. */
+function allHitsByPat(hits){
+  if (!hits || !hits.length) return [];
+  const seen = new Set(), out = [];
+  for (const h of hits) {
+    if (seen.has(h.patIdx)) continue;
+    seen.add(h.patIdx);
+    out.push(h);
+  }
+  return out;
+}
 function findAllPatternsInResult(text){
   const out = [];
   if (!text || !st.pats || !st.pats.length) return out;
@@ -9617,12 +9918,23 @@ function findAllPatternsInResult(text){
   // Отключённые галками "⛔" нижние строки не участвуют ни в чём: их паттерны тут даже не ищутся
   // (запрос пользователя "если строки выключены — в них паттерны не искать и не светить").
   const lastRow = (st.chainCutBelow || st.chainCutTail) ? patChainLastIdx(seqAnchorIdx()) : (st.pats.length - 1);
+  // ОТДЕЛЬНОЕ ВЫДЕЛЕНИЕ ПАТТЕРНОВ (запрос пользователя): выделен хоть один — ищем ТОЛЬКО выделенные,
+  // не выделено ничего — ищем все, как и раньше. Действует только здесь, то есть только в режиме
+  // "🌈 Все паттерны сразу" (других вызовов у этой функции нет); обычный фон-поиск и Паттерн-цепочка
+  // этого выделения не видят вовсе.
+  const onlySel = (st.selectedPats && st.selectedPats.size) ? st.selectedPats : null;
   for (let i = 0; i < st.pats.length && i <= lastRow; i++) {
+    if (onlySel && !onlySel.has(i)) continue;
     const p = st.pats[i];
     if (!p || !p.text) continue;
     const skipApplied = st.skipFirst && p.text.length > 1;
     const base = skipApplied ? p.text.slice(1) : p.text;
     if (!base || base.length > period) continue;
+    // Нижняя граница длины паттерна для этого режима. Меряем по base, т.е. по РЕАЛЬНО искомому
+    // куску (уже с учётом "⏭ Без 1-го") — ровно он потом и подсвечивается. Было 5 (">4 бит"),
+    // теперь минимум 2 — запрос пользователя. Одиночный бит отсекается всегда: он есть буквально
+    // везде, и подсветка от него превращается в сплошную заливку.
+    if (base.length < ALL_PATS_MIN_LEN) continue;
     const variants = [[0, base]];
     if (st.allKinds) {
       const inv = invertBits(base);
@@ -9631,10 +9943,36 @@ function findAllPatternsInResult(text){
     let best = null;
     for (const [kind, cand] of variants) {
       const idx = ring.indexOf(cand);
-      if (idx >= 0 && idx < period && (!best || idx < best.start)) best = { kind, start: idx, len: cand.length };
+      if (idx < 0 || idx >= period) continue;
+      // ПРИОРИТЕТ ОСНОВНОГО ВАРИАНТА (запрос пользователя): нашёлся сам паттерн — показываем только
+      // его, а инверсию/реверс/реверс-инверсию не показываем вовсе, даже если какая-то из них легла
+      // РАНЬШЕ по позиции. Раньше побеждал просто самый ранний вариант, и на месте обычной находки
+      // мог оказаться инвертированный кусок. variants[0] — всегда основной, поэтому проверка первая.
+      if (kind === 0) { best = { kind, cand, start: idx }; break; }
+      if (!best || idx < best.start) best = { kind, cand, start: idx };
     }
-    if (best) out.push({ patIdx: i, kind: best.kind, start: best.start, len: best.len, skip: skipApplied });
+    if (!best) continue;
+    if (!st.bgAllPatsEvery) {
+      // Как было всегда: одна находка на паттерн, самая ранняя позиция.
+      out.push({ patIdx: i, kind: best.kind, start: best.start, len: best.cand.length, skip: skipApplied });
+    } else {
+      // "🔁 Все вхождения" (запрос пользователя): подсвечиваем паттерн ВЕЗДЕ, где он встретился, а не
+      // только в первом месте. Вариант при этом уже выбран выше по обычному правилу (приоритет у
+      // основного) — перебираем вхождения ИМЕННО ЕГО, иначе на одной картинке смешались бы сам
+      // паттерн и его инверсия, а это ровно то, чего просили не показывать.
+      // Шаг from = idx + 1, а не + длину: перекрывающиеся вхождения (у самоподобных паттернов вроде
+      // "10101" их полно) — тоже вхождения и тоже должны светиться.
+      const cand = best.cand;
+      for (let from = 0;;) {
+        const idx = ring.indexOf(cand, from);
+        if (idx < 0 || idx >= period) break;
+        out.push({ patIdx: i, kind: best.kind, start: idx, len: cand.length, skip: skipApplied });
+        from = idx + 1;
+      }
+    }
   }
+  // Период кольца — тем, кто раскладывает эти позиции обратно на строки (см. allPatRows в render()).
+  out.period = period;
   return out;
 }
 
@@ -11089,6 +11427,90 @@ const bRotate90El = document.getElementById("bRotate90");
 if (bRotate90El) bRotate90El.onclick = () => rotateSelected90(false);
 const bRotate90CcwEl = document.getElementById("bRotate90ccw");
 if (bRotate90CcwEl) bRotate90CcwEl.onclick = () => rotateSelected90(true);
+
+/* "⬔ До квадрата" — достраивает фигуру до КВАДРАТА зеркалом по главной диагонали ВВЕРХ (запрос
+   пользователя: "если треугольник — зеркально по диагонали вверх").
+   Работает по той же сетке текущего выравнивания, что и поворот 90° (rowShiftFor знает про лесенки
+   и оси), поэтому у лесенки 1 / 11 / 111 ступеньки лежат ровно по диагонали, а не по длинам строк.
+   Правило простое: в каждую пустую клетку кладётся значение ЗЕРКАЛЬНОЙ ей клетки (r,c) ← (c,r).
+   У нижнего треугольника это ровно и достраивает верхний, давая квадрат. Клетка, пустая и у себя,
+   и у зеркала (фигура была не треугольником), заполняется нулём — квадрат должен остаться
+   квадратом, дыр в нём быть не может.
+   Сторона квадрата — max(строк, столбцов): меньшей стороной квадрат не накрыл бы всю фигуру, и
+   часть данных пришлось бы отрезать. */
+function squareFillSelected(){
+  const sel = (st.selectedRows && st.selectedRows.size) ? Array.from(st.selectedRows).sort((a, b) => a - b) : null;
+  const start = sel ? sel[0] : 0;
+  const end = sel ? sel[sel.length - 1] : st.rows.length - 1;
+  const src = [];
+  for (let i = start; i <= end; i++) src.push(st.rows[i] || "");
+  if (!src.some(s => s.length)) { say("До квадрата: нет непустых строк."); return; }
+
+  let maxLen = 0;
+  for (const s of src) if (s.length > maxLen) maxLen = s.length;
+  const shifts = src.map((s, k) => s.length ? rowShiftFor(maxLen, start + k, s, st.align) : 0);
+  let minCol = Infinity, maxCol = -Infinity;
+  src.forEach((s, k) => {
+    if (!s.length) return;
+    if (shifts[k] < minCol) minCol = shifts[k];
+    if (shifts[k] + s.length - 1 > maxCol) maxCol = shifts[k] + s.length - 1;
+  });
+  if (!isFinite(minCol)) { say("До квадрата: нечего достраивать."); return; }
+
+  const R = src.length, W = maxCol - minCol + 1;
+  const N = Math.max(R, W);
+  // Клетка сетки по номеру строки и столбца, отсчитанному от левого края фигуры (minCol).
+  const cellAt = (r, c) => {
+    if (r < 0 || r >= R) return null;
+    const s = src[r];
+    const j = (minCol + c) - shifts[r];
+    return (j >= 0 && j < s.length) ? s[j] : null;
+  };
+  const out = [];
+  let mirrored = 0, filled = 0;
+  for (let r = 0; r < N; r++) {
+    let line = "";
+    for (let c = 0; c < N; c++) {
+      const own = cellAt(r, c);
+      if (own !== null) { line += own; continue; }
+      const mir = cellAt(c, r); // зеркало по главной диагонали
+      if (mir !== null) { line += mir; mirrored++; }
+      else { line += "0"; filled++; }
+    }
+    out.push(line);
+  }
+
+  snapshot();
+  // Паттерны не трогаем — как и у поворота: меняются только сами строки.
+  const newUsed = out.map(() => false);
+  st.rows.splice(start, R, ...out);
+  st.used.splice(start, R, ...newUsed);
+  while (st.pats.length < st.rows.length) {
+    st.pats.push({ text: "", ord: st.pats.length, found: false, kind: null, step: null });
+  }
+  if (st.rowDividers && st.rowDividers.size) {
+    const delta = N - R, shifted = new Set();
+    for (const d of st.rowDividers) {
+      if (d >= start && d <= end) continue;
+      shifted.add(d > end ? d + delta : d);
+    }
+    st.rowDividers = shifted;
+  }
+  insertedFlagsMap.clear();
+  invFlagsMap.clear();
+  maskChangedMap.clear(); maskBaseRows = null;
+  if (sel) {
+    const ns = new Set();
+    for (let i = start; i < start + N && i < st.rows.length; i++) ns.add(i);
+    st.selectedRows = ns;
+  }
+  st.hit = null;
+  say(`До квадрата: было ${R} стр. × ${W} столб. — стал квадрат ${N}×${N} (зеркалом ${mirrored} бит, нулями ${filled}). Паттерны не тронуты.`);
+  logStep("До квадрата", `${start + 1}–${end + 1}`, out.join(""), `Блок ${R}×${W} достроен до ${N}×${N}`);
+  render(); saveCache();
+}
+const bSquareFillEl = document.getElementById("bSquareFill");
+if (bSquareFillEl) bSquareFillEl.onclick = squareFillSelected;
 
 /* "☰ Выделить все" — выделяет все строки разом; если все уже выделены, клик снимает выделение.
    Данные не меняются, поэтому snapshot() не нужен. Счётчики кругового сдвига сбрасываются так же,
@@ -13509,6 +13931,37 @@ function realColStepPx(){
    выравнивания). alignShift()/resolveAxisBitShift() теперь offset НЕ включают вообще (он —
    отдельный общий визуальный сдвиг картинки, см. комментарий в alignShift()), так что их
    результат и есть искомый собственный сдвиг, без каких-либо поправок. */
+/* Ограничение ручки #axisSplit: ось цепочек НЕ ДОЛЖНА выходить за колонки паттернов (запрос
+   пользователя). Раньше drag-обработчик писал st.axisCenterOffset = startOffset + deltaCols вообще
+   без границ, и линию можно было утащить хоть на сотни колонок — вместе со всей картинкой, под
+   колонки паттернов и за экран.
+   Позиция линии линейна по offset с шагом ровно в одну колонку (см. updateAxisSplitPosition), так
+   что достаточно загнать в пределы САМ НОМЕР СТОЛБЦА, на котором стоит ось: 0 — левый край поля
+   битов (граница с левой колонкой паттернов), colsMax — правый (граница с правой).
+   Ширину поля меряем по реальной геометрии .bits, а не считаем из maxLen: средний столбец тянут
+   руками за #vsplit2 (--bits-w, bitsWManual), и расчёт по длине строк тут расходился бы с тем, что
+   на экране. Столбец оси при offset = 0 берём той же формулой, что и updateAxisSplitPosition, —
+   иначе зажим считал бы одно, а линия рисовалась по другому. */
+function clampAxisOffset(off, maxLen){
+  const bitsEl = document.querySelector("#colHeader .bits") || document.querySelector(".ln .bits");
+  if (!bitsEl || !maxLen) return off;
+  const chPx = realColStepPx();
+  if (!(chPx > 0)) return off;
+  const colsMax = Math.floor(bitsEl.getBoundingClientRect().width / chPx);
+  let base;
+  if (st.align === "axis" || st.align === "axis12") {
+    base = Math.floor(maxLen / 2);
+  } else {
+    const fd = firstDataIdx();
+    const len0 = fd >= 0 ? (st.rows[fd] || "").length : 0;
+    base = (st.align === "axisbit" || st.align === "axisbit12")
+      ? resolveAxisBitShift(fd >= 0 ? fd : 0)
+      : alignShift(maxLen, len0, st.align, fd >= 0 ? fd : 0);
+  }
+  const lo = -base, hi = colsMax - base;
+  if (hi < lo) return off; // поле битов уже одного столбца — придерживать не от чего
+  return Math.max(lo, Math.min(hi, off));
+}
 function centerAxisOffset(){
   let maxLen = 0;
   for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
@@ -13599,8 +14052,14 @@ function updateAxisSplitPosition(maxLen){
     }
   }
   axisSplitEl.style.left = leftPx + "px";
+  // Линия спускается НИЖЕ линейки столбцов на AXIS_SPLIT_EXTRA_PX (запрос пользователя: "выдвинь
+  // ещё вниз, неудобно хватать"). Изначально она кончалась ровно на нижнем крае #colHeader, чтобы
+  // не наезжать на биты строк, — но хватать такую полоску и правда тяжело. Наезд теперь есть, и он
+  // осознанный: в этой узкой зоне поверх верхних строк клик достанется ручке, а не биту. Во всю
+  // высоту полотна (как #vsplit/#vsplit2) не растягиваем — вот это перекрыло бы биты по-настоящему.
+  const AXIS_SPLIT_EXTRA_PX = 46;
   const headBottom = colHeaderEl ? (colHeaderEl.getBoundingClientRect().bottom - chainRect.top) : 24;
-  axisSplitEl.style.height = Math.max(16, headBottom) + "px";
+  axisSplitEl.style.height = (Math.max(16, headBottom) + AXIS_SPLIT_EXTRA_PX) + "px";
   axisSplitEl.classList.add("act");
   // Полоса выравниваний (#alignGrp) — не по центру экрана, а РОВНО НАД ОСЬЮ первой строки, и
   // едет вместе с ручкой оси/границами столбцов (запрос пользователя). Считаем в координатах
@@ -13642,6 +14101,11 @@ function updateAxisSplitPosition(maxLen){
 }
 /* === МАРКЕР 11: CACHE === */
 const CACHE_KEY = "zerk_fold_v1";
+/* Метка раскладки. Сохранённая ширина боковых доков ложится инлайном на documentElement и потому
+   перебивает CSS (см. loadCache). Пока метка совпадает — уважаем сохранённое (ширину тянут мышью).
+   Не совпала — сохранённое считается снятым со старой раскладки и игнорируется, действует CSS.
+   Увеличивай при изменении ширин в стилях, иначе правка не дойдёт до тех, у кого уже есть кэш. */
+const LAYOUT_V = 2;
 /* АВАРИЙНЫЙ РЕЖИМ: добавь "#safe" в конец адреса и перезагрузи — кэш НЕ читается и НЕ пишется.
    Нужен, когда сохранённое состояние само по себе вешает вкладку (много длинных цепочек ×
    включённые тяжёлые режимы фон-поиска): в другом браузере тот же файл открывается нормально
@@ -13703,6 +14167,7 @@ function captureUiSettings(){
     bgSubPatterns: cBgSubPatternsEl ? cBgSubPatternsEl.checked : false,
     bgSearchAllBelow: cBgAllBelowEl ? cBgAllBelowEl.checked : false,
     bgAllPats: cBgAllPatsEl ? cBgAllPatsEl.checked : false,
+    bgAllPatsEvery: cBgAllPatsEveryEl ? cBgAllPatsEveryEl.checked : false,
     popupFontPx: popupFontPx,
     resultHeightLocked: resultHeightLocked,
     highlight01: !!st.highlight01,
@@ -13715,7 +14180,7 @@ function captureUiSettings(){
     chgBitsOn: chgBitsOn,
     fs: fs.value, lh: lh.value, ls: ls.value, dim: dimEl.value,
     chainFont: chainFontSelEl ? chainFontSelEl.value : undefined,
-    sideW: cssVar("--side-w"), patW: cssVar("--pat-w"), patW2: cssVar("--pat-w2"), patW2Manual: patW2Manual,
+    sideW: cssVar("--side-w"), layoutV: LAYOUT_V, patW: cssVar("--pat-w"), patW2: cssVar("--pat-w2"), patW2Manual: patW2Manual,
     bitsW: cssVar("--bits-w"), bitsWManual: bitsWManual,
     patAlign: patAlign, pat2Align: pat2Align,
     hideSide: document.body.classList.contains("hide-side"),
@@ -13786,6 +14251,7 @@ function applyUiSettings(u){
   if (u.bgSubPatterns !== undefined && cBgSubPatternsEl) { cBgSubPatternsEl.checked = u.bgSubPatterns; st.bgSubPatterns = u.bgSubPatterns; }
   if (u.bgSearchAllBelow !== undefined && cBgAllBelowEl) { cBgAllBelowEl.checked = u.bgSearchAllBelow; st.bgSearchAllBelow = u.bgSearchAllBelow; }
   if (u.bgAllPats !== undefined && cBgAllPatsEl) { cBgAllPatsEl.checked = u.bgAllPats; st.bgAllPats = u.bgAllPats; }
+  if (u.bgAllPatsEvery !== undefined && cBgAllPatsEveryEl) { cBgAllPatsEveryEl.checked = u.bgAllPatsEvery; st.bgAllPatsEvery = u.bgAllPatsEvery; }
   if (u.popupFontPx !== undefined) { popupFontPx = u.popupFontPx; applyPopupFont(); }
   // applyResultHeightLock() тут НЕ вызываем — #chainText на этот момент ещё пустой/не
   // отрендерен реальным содержимым, замерять высоту рано; следующий render() (см. его конец)
@@ -13856,7 +14322,14 @@ function applyUiSettings(u){
   if (u.ls !== undefined){ ls.value = u.ls; applyLs(); }
   if (u.dim){ dimEl.value = u.dim; applyDim(); }
 
-  if (u.sideW) document.documentElement.style.setProperty("--side-w", u.sideW);
+  // Ширина боковых доков. ВАЖНО: значение отсюда ложится ИНЛАЙНОМ на documentElement, а инлайн
+  // перебивает любое правило в <style> — то есть сохранённая ширина сильнее той, что задана в CSS.
+  // Из-за этого правка --side-w в стилях НЕ ДОХОДИЛА до тех, у кого уже лежала сохранёнка со старой
+  // шириной (300px): в CSS одно, на экране другое, и разница объяснялась только через инспектор.
+  // Поэтому вместе с шириной пишется метка раскладки (layoutV): не совпала с текущей — сохранённая
+  // ширина считается устаревшей и не применяется, берётся значение из CSS. Меняешь ширины в стилях
+  // и хочешь, чтобы это увидели все, — увеличь LAYOUT_V.
+  if (u.sideW && u.layoutV === LAYOUT_V) document.documentElement.style.setProperty("--side-w", u.sideW);
   // Подстраховка от старых сохранёнок с шириной колонки паттернов ниже нового минимума
   // перетаскивания (40px, см. makeDrag/makeDragRight ниже) — при таком значении текст
   // паттерна раньше утыкался в границу .vsplit/.vsplit2 (см. комментарий там).
@@ -13946,6 +14419,9 @@ const DEFAULT_UI_SETTINGS = {
   bgSubPatterns: false,
   bgSearchAllBelow: false,
   bgAllPats: false,
+  // "🔁 Все вхождения" — подсвечивать паттерн ВЕЗДЕ, где встретился, а не только в первом
+  // месте (работает только вместе с bgAllPats, см. findAllPatternsInResult).
+  bgAllPatsEvery: false,
   chgBitsOn: true,
   popupFontPx: 10,
   resultHeightLocked: true,
