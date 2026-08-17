@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.577</title>
+<title>Zerkalius Fold — v0.581</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -526,6 +526,10 @@
   .ln{display:flex;gap:8px;align-items:center;opacity:var(--dim-op);transition:opacity 0.2s;cursor:pointer;
       height:var(--row-h, 12px)}
   .ln:hover{background:rgba(255,255,255,0.03)}
+  /* Распорка виртуализации (см. vrowsRange() в JS) — пустой блок ровно той высоты, которую заняли
+     бы сейчас не нарисованные строки. Благодаря ей полоса прокрутки и позиция любой строки такие
+     же, как при полной отрисовке. Своей ширины не имеет и мышь не ловит. */
+  .vspacer{width:1px;pointer-events:none}
   /* Непрозрачный фон под .num пробовали трижды (обычный background — "полосы"; ::before с
      нахлёстом — двойная opacity на стыке строк из-за своей opacity:var(--dim-op) у каждой .ln;
      ::before без нахлёста — "разрывы" в цифрах, где хвост символа при плотном line-height
@@ -1400,7 +1404,7 @@
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.577</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.581</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -5679,14 +5683,33 @@ function selectColumn(col){
 /* Наведение на номер столбца (режим "🔢 Выбор столбца"): подсвечивает ВЕСЬ столбец —
    сам номер (в обоих рядах десятки/единицы) и соответствующий бит в каждой строке ниже,
    с учётом текущего выравнивания (data-col проставлен в render() по видимой колонке). */
+/* Подсвеченные сейчас элементы держим СПИСКОМ, а не ищем их заново по классу. Раньше снятие
+   подсветки делало document.querySelectorAll(".col-hover-bit") — обход ВСЕГО документа, а в нём
+   на картинке 1000x1000 полмиллиона span'ов (по одному на бит). Два таких обхода на каждое
+   наведение мыши на номер столбца — мышь по линейке ползла рывками. Сам поиск битов тоже сузили:
+   не общий '#rows [data-col=...]' (тот всё равно обходит всё поддерево строк), а по одному
+   querySelector на строку — он останавливается на первом совпадении, а data-col в строке
+   уникален (это shift+k, см. colAttr в render()).
+   var — по той же причине, что и colStepCache выше (возможный вызов до этой строки). */
+var colHoverEls = [];
 function highlightColumn(col){
   clearColumnHighlight();
-  document.querySelectorAll('#colHeader .col-cell[data-col="' + col + '"]').forEach(el => el.classList.add("col-hover"));
-  document.querySelectorAll('#rows [data-col="' + col + '"]').forEach(el => el.classList.add("col-hover-bit"));
+  const sel = '[data-col="' + col + '"]';
+  document.querySelectorAll('#colHeader .col-cell' + sel).forEach(el => {
+    el.classList.add("col-hover");
+    colHoverEls.push(el);
+  });
+  const rowsEl = document.getElementById("rows");
+  if (rowsEl) for (const row of rowsEl.children) {
+    const el = row.querySelector ? row.querySelector('.bits ' + sel) : null;
+    if (el) { el.classList.add("col-hover-bit"); colHoverEls.push(el); }
+  }
 }
 function clearColumnHighlight(){
-  document.querySelectorAll(".col-hover").forEach(el => el.classList.remove("col-hover"));
-  document.querySelectorAll(".col-hover-bit").forEach(el => el.classList.remove("col-hover-bit"));
+  // Ссылки на уже выброшенные render()'ом узлы тут безопасны — classList.remove на них просто
+  // ничего не делает, а сам список мы всё равно обнуляем.
+  for (const el of colHoverEls) el.classList.remove("col-hover", "col-hover-bit");
+  colHoverEls = [];
 }
 
 /* Лог находок фон-поиска (см. bgFindLog выше) — своя отдельная вкладка "Лог находок" (см. MENUS),
@@ -5955,6 +5978,153 @@ function renderLengthSumsHtml(st, selIdx){
   '</div>';
 }
 
+/* ── КЭШ ДОРОГИХ МАСОК ПОДСВЕТКИ ──────────────────────────────────────────────────────────
+   render() зовётся на ЛЮБОЕ действие — в том числе на те, что данных не меняют вовсе: клик по
+   строке, смена выравнивания, переключение вкладки настроек, наведение мыши. А маски подсветки
+   пересчитывались каждый раз с нуля: "1 под 1" и "1 по диагонали" — по всей картинке, маска "01" —
+   по каждой строке, а построчный поиск Паттерн-цепочки гонял findPatternKinds() по КАЖДОЙ строке.
+   На 1000 строк это самая тяжёлая часть кадра — и почти всегда ради ровно того же результата, что
+   и в прошлый раз.
+   Сравниваем ВХОДЫ и, если они не разошлись, отдаём прошлый результат. Именно входы, а не "флаг,
+   что что-то поменялось": так кэш не может разъехаться с данными — разошлось хоть что-то, и он
+   просто не сработает, а не покажет старое.
+   ЧЕМ ЭТО ОБОСНОВАНО: computeVertOnesMask/computeDiagOnesMask/computeDiagOnesMaskSectioned не
+   читают st ВООБЩЕ — это чистые функции своих аргументов, поэтому их входы и есть их аргументы.
+   compute01HighlightMask — чистая функция одной строки. А findPatternKinds() лезет в st за
+   настройками поиска (allKinds/bgSubPatterns/ringOff/skipFirst, и через ringCycle → ringNextLap
+   ещё ringInvert/ringReverse) — все они перечислены в зависимостях ЯВНО там, где вызываются.
+   ЕСЛИ ПОЯВИТСЯ НОВАЯ НАСТРОЙКА ПОИСКА — её нужно дописать в тот список, иначе подсветка
+   Паттерн-цепочки залипнет на старой. Сам поиск (computeBgSearchTarget и всё, что он зовёт) тут
+   не кэшируется вообще и работает как работал. */
+var maskMemo = new Map(); // имя → {deps, val}
+function memoDepsSame(a, b){
+  if (!a || !b || a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i], y = b[i];
+    if (Array.isArray(x)) {
+      if (!Array.isArray(y) || x.length !== y.length) return false;
+      // Строки в st.rows между рендерами — обычно ТЕ ЖЕ САМЫЕ объекты, поэтому сравнение тысячи
+      // элементов упирается в сравнение указателей и почти ничего не стоит.
+      for (let j = 0; j < x.length; j++) if (x[j] !== y[j]) return false;
+    } else if (x !== y) return false;
+  }
+  return true;
+}
+function memoMask(name, deps, compute){
+  const prev = maskMemo.get(name);
+  if (prev && memoDepsSame(prev.deps, deps)) return prev.val;
+  const val = compute();
+  // Массивы-зависимости кладём КОПИЕЙ. Иначе сюда попала бы ссылка на тот же самый st.rows,
+  // который меняют НА МЕСТЕ — и в следующий раз мы сравнивали бы массив сам с собой, всегда
+  // получали "не изменилось" и отдавали протухшую маску.
+  maskMemo.set(name, { deps: deps.map(d => Array.isArray(d) ? d.slice() : d), val });
+  return val;
+}
+/* Маска "01" — своя на КАЖДУЮ строку, поэтому и кэш построчный: пересчитывается только та строка,
+   которая реально изменилась, остальные берутся готовыми. Ключ — сама строка (она неизменяемая,
+   так что сравнение по значению тут безопасно). */
+var hl01Cache = { src: [], masks: [] };
+function hl01MaskFor(i, s){
+  if (hl01Cache.src[i] === s) return hl01Cache.masks[i];
+  const m = compute01HighlightMask(s);
+  hl01Cache.src[i] = s;
+  hl01Cache.masks[i] = m;
+  return m;
+}
+
+/* ── ВИРТУАЛИЗАЦИЯ СТРОК ──────────────────────────────────────────────────────────────────
+   Держим в DOM только те строки, которые сейчас видно, плюс запас сверху и снизу; всё остальное
+   заменяют две распорки (.vspacer) нужной высоты. Полоса прокрутки и позиция каждой строки при
+   этом ровно те же, что при полной отрисовке, — а узлов в DOM вместо тысячи строк остаётся
+   несколько десятков.
+   ПОЧЕМУ ЭТО ЗАКОННО, два условия, оба проверены по коду:
+   1) Высота строки ФИКСИРОВАНА: .ln{height:var(--row-h)}, а глобальный *{box-sizing:border-box}
+      прячет внутрь неё и рамку "разделителя строк" (.ln.row-divider). Значит шаг строки — ровно
+      --row-h, и позиция строки это idx * шаг, безо всяких замеров.
+   2) В цикле рендера строк НЕТ накопителей: каждая строка считается только из себя, своего номера
+      и данных, общих на весь рендер (hxChainLenAll и прочее посчитаны ДО цикла как const). Поэтому
+      любой поддиапазон строк рисуется ровно так же, как рисовался бы в полном проходе.
+   Прокручиваемый контейнер — .canvas (#screenCanvas), а НЕ .chain: у .chain overflow:visible. */
+var VROWS_OVERSCAN = 16; // запас строк сверху/снизу: при обычной прокрутке колесом строка успевает
+                         // быть нарисованной до того, как её станет видно
+var VROWS_MIN = 300;     // меньше этого числа строк не виртуализируем вовсе — выигрыша нет, а
+                         // лишняя ветка в пути рендера это лишний источник расхождений
+var vrowsWindow = { lo: 0, hi: -1 }; // что сейчас реально лежит в DOM
+function vrowsPitchPx(){
+  const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--row-h"));
+  return v > 0 ? v : 12;
+}
+/* Диапазон строк, который должен сейчас быть в DOM. pad — запас с каждой стороны. */
+function vrowsRange(total, pad){
+  const pitch = vrowsPitchPx();
+  if (total < VROWS_MIN) return { lo: 0, hi: total - 1, pitch, on: false };
+  const host = document.getElementById("rows");
+  const sc = document.getElementById("screenCanvas");
+  if (!host || !sc || !sc.clientHeight) return { lo: 0, hi: total - 1, pitch, on: false };
+  // Верх поля строк в системе координат ПРОКРУЧИВАЕМОГО СОДЕРЖИМОГО. Через rect, а не offsetTop:
+  // offsetTop считается от ближайшего позиционированного предка, а между #rows и .canvas стоит
+  // .chain со своим position:relative — цепочку пришлось бы складывать руками.
+  const rowsTop = host.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop;
+  const viewTop = sc.scrollTop - rowsTop;
+  let lo = Math.floor(viewTop / pitch) - pad;
+  let hi = Math.ceil((viewTop + sc.clientHeight) / pitch) + pad;
+  if (lo < 0) lo = 0;
+  if (lo > total - 1) lo = Math.max(0, total - 1); // прокрутили ниже последней строки
+  if (hi > total - 1) hi = total - 1;
+  if (hi < lo) hi = lo;
+  return { lo, hi, pitch, on: true };
+}
+/* Прокрутка к строке по НОМЕРУ, без обращения к её элементу. При виртуализации нужной строки в DOM
+   может не быть вовсе, и прежний querySelector('.ln[data-idx=...]') + scrollIntoView просто тихо
+   не сработал бы — то есть "нашлось, но не перепрыгнуло". Считаем позицию арифметикой; это ещё и
+   надёжнее прежнего варианта. Поведение block:"nearest" повторяем вручную: строка видна целиком —
+   не двигаем ничего. */
+function scrollToRow(idx){
+  const sc = document.getElementById("screenCanvas");
+  const host = document.getElementById("rows");
+  if (!sc || !host || !(idx >= 0)) return;
+  const pitch = vrowsPitchPx();
+  const rowsTop = host.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop;
+  const top = rowsTop + idx * pitch, bottom = top + pitch;
+  const viewTop = sc.scrollTop, viewBottom = viewTop + sc.clientHeight;
+  let next = null;
+  if (top < viewTop) next = top;
+  else if (bottom > viewBottom) next = bottom - sc.clientHeight;
+  if (next === null) return;
+  sc.scrollTop = Math.max(0, next);
+  // Окно строк переехало — пересобираем сразу, чтобы строка уже лежала в DOM для того, кто её
+  // сейчас будет искать (например, для перехода в ручное редактирование).
+  vrowsScrollOnly = true;
+  try { render(); } finally { vrowsScrollOnly = false; }
+}
+/* Перерисовка при прокрутке. Не на каждое событие, а раз на кадр, и только когда видимая область
+   реально подошла к краю уже нарисованного запаса — иначе колесо гоняло бы render() на каждый
+   кадр впустую.
+   vrowsScrollOnly — признак "этот render() вызван ТОЛЬКО прокруткой". Прокрутка не меняет в st
+   ничего, поэтому при ней можно переиспользовать результат фон-поиска с прошлого полного рендера
+   (см. bgInfo в render()) вместо того, чтобы гонять его заново на каждый кадр прокрутки. Любое
+   настоящее изменение идёт через обычный render(), где флаг снят и поиск считается как всегда. */
+var vrowsScrollOnly = false;
+var vrowsPending = false;
+var bgInfoLast;  // результат фон-поиска с последнего ПОЛНОГО рендера (см. bgInfo в render())
+function vrowsOnScroll(){
+  if (vrowsPending) return;
+  vrowsPending = true;
+  requestAnimationFrame(() => {
+    vrowsPending = false;
+    const total = Math.max(st.rows.length, st.pats.length);
+    const vis = vrowsRange(total, 2); // без запаса: только то, что вот-вот покажется
+    if (!vis.on) return;
+    if (vis.lo >= vrowsWindow.lo && vis.hi <= vrowsWindow.hi) return; // всё ещё внутри запаса
+    vrowsScrollOnly = true;
+    try { render(); } finally { vrowsScrollOnly = false; }
+  });
+}
+(function bindVrowsScroll(){
+  const sc = document.getElementById("screenCanvas");
+  if (sc) sc.addEventListener("scroll", vrowsOnScroll, { passive: true });
+})();
+
 function render(){
   renderTabs(); // <-- ЭТО ТА САМАЯ СТРОКА, КОТОРУЮ Я ЗАБЫЛ В ПРОШЛЫЙ РАЗ!
   // Показ диагонали "Конверта" живёт только пока не тронули выделение/выравнивание/длины строк.
@@ -6022,7 +6192,13 @@ function render(){
   }
   const hitCls = st.hit ? ("hit " + KIND_CLS[st.hit.kind]) : "hit";
 
-  const bgInfo = computeBgSearchTarget();
+  // Фон-поиск считается как считался — КРОМЕ одного случая: когда render() вызван исключительно
+  // прокруткой (vrowsScrollOnly, см. vrowsOnScroll). Прокрутка не меняет в st ровно ничего, так что
+  // результат прошлого раза там заведомо тот же самый; а гонять поиск по всей склейке строк на
+  // каждый кадр прокрутки — самое дорогое, что тут можно сделать. Любое настоящее изменение идёт
+  // обычным render(), где флаг снят и поиск выполняется полностью, как всегда.
+  const bgInfo = (vrowsScrollOnly && bgInfoLast !== undefined) ? bgInfoLast : computeBgSearchTarget();
+  bgInfoLast = bgInfo;
   const bgTargetIdx = bgInfo ? bgInfo.targetIdx : null;
   const bgMatched = !!(bgInfo && bgInfo.matched);
 
@@ -6064,16 +6240,34 @@ function render(){
     // Строки, отключённые галками "⛔" (см. patChainLastIdx), не подсвечиваем вовсе — в них
     // паттерн не ищется и подсвечивать там нечего (запрос пользователя).
     const lastActiveRow = patChainLastIdx(seqAnchorIdx());
-    patChainHitRows = new Map();
-    if (seekText && chainOn) {
-      for (let r = 0; r < st.rows.length && r <= lastActiveRow; r++) {
-        const rs = st.rows[r] || "";
-        if (!rs.length) continue;
-        const kinds = findPatternKinds(rs, seekText);
-        if (!kinds.length) continue;
-        patChainHitRows.set(r, buildHitMap(rs.length, kinds));
-      }
-    }
+    // Через кэш (см. memoMask выше) — это самое дорогое место рендера: findPatternKinds() строит
+    // кольцо строки и ищет в нём, и так по КАЖДОЙ строке, а зовётся всё это на каждый рендер, в том
+    // числе когда ни строки, ни настройки поиска не менялись. Зависимости перечислены ПОЛНОСТЬЮ:
+    // аргументы (строки, искомый паттерн, граница активных строк) плюс те поля st, в которые
+    // findPatternKinds лезет сама (allKinds/bgSubPatterns/ringOff/skipFirst) и через
+    // ringCycle→ringNextLap (ringInvert/ringReverse). buildHitMap чистая. Появится новая настройка
+    // поиска — дописать сюда, иначе подсветка залипнет.
+    const chainRowHits = (seekText && chainOn)
+      ? memoMask("patChainRows",
+          [st.rows, seekText, lastActiveRow, st.allKinds, st.bgSubPatterns, st.ringOff,
+           st.skipFirst, st.ringInvert, st.ringReverse],
+          () => {
+            const m = new Map();
+            for (let r = 0; r < st.rows.length && r <= lastActiveRow; r++) {
+              const rs = st.rows[r] || "";
+              if (!rs.length) continue;
+              const kinds = findPatternKinds(rs, seekText);
+              if (!kinds.length) continue;
+              m.set(r, buildHitMap(rs.length, kinds));
+            }
+            return m;
+          })
+      : null;
+    // Массивы из кэша НЕЛЬЗЯ менять на месте: разбор сквозных режимов ниже дописывает в них свои
+    // биты, и кэш копился бы находками прошлых шагов. Отвязываем строку от кэша ровно в тот момент,
+    // когда в неё правда пишут (см. chainRowsOwn ниже) — на большинстве строк копии не будет вовсе.
+    patChainHitRows = chainRowHits ? new Map(chainRowHits) : new Map();
+    const chainRowsOwn = new Set();
     // НАХОДКА В СКВОЗНОЙ — ПО САМИМ СТРОКАМ: раскладываем совпадение сквозного режима обратно на
     // строки через bgConcatCellMap(), поэтому видно, какие именно биты совпали, даже когда паттерн
     // лежит НА СТЫКЕ (часть в одной строке, часть в следующей — целиком его в строках нет, и
@@ -6089,7 +6283,16 @@ function render(){
         const cell = pos < cellMap.length ? cellMap[pos] : null;
         if (!cell || cell.r > lastActiveRow) continue; // отключённые строки не подсвечиваем
         let arr = patChainHitRows.get(cell.r);
-        if (!arr) { arr = []; patChainHitRows.set(cell.r, arr); }
+        if (!arr) {
+          arr = [];
+          patChainHitRows.set(cell.r, arr);
+          chainRowsOwn.add(cell.r);
+        } else if (!chainRowsOwn.has(cell.r)) {
+          // Первая запись в строку, пришедшую из кэша — берём её копию, оригинал в кэше не трогаем.
+          arr = arr.slice();
+          patChainHitRows.set(cell.r, arr);
+          chainRowsOwn.add(cell.r);
+        }
         if (!arr[cell.p]) arr[cell.p] = { kind: kd.kind, skip: kd.skip };
       }
     }
@@ -6211,8 +6414,16 @@ function render(){
 
   // Подсветка "1 под 1" (см. #bHighlightVert1) — считается ОДИН РАЗ на весь рендер (сравнивает
   // соседние строки между собой), не на отдельную строку, как compute01HighlightMask.
-  const vertOnesMask = st.highlightVert1 ? computeVertOnesMask(st.rows, st.align) : null;
-  const diagOnesMask = st.highlightDiag1 ? computeDiagOnesMaskSectioned(st.rows, st.align, st.rowDividers) : null;
+  // Обе — через кэш (см. memoMask выше): функции чистые, входы = их аргументы. st.rowDividers это
+  // Set, который меняют НА МЕСТЕ, поэтому в зависимости он идёт развёрнутым в отсортированный
+  // массив — иначе изменение внутри Set'а осталось бы незамеченным.
+  const vertOnesMask = st.highlightVert1
+    ? memoMask("vertOnes", [st.rows, st.align], () => computeVertOnesMask(st.rows, st.align))
+    : null;
+  const diagOnesMask = st.highlightDiag1
+    ? memoMask("diagOnes", [st.rows, st.align, Array.from(st.rowDividers || []).sort((a, b) => a - b)],
+               () => computeDiagOnesMaskSectioned(st.rows, st.align, st.rowDividers))
+    : null;
   // "⧅⧄ Диагонали склейки" — линии обхода режимов "Диаг. ↘/↙" (см. computeDiagFoldMask).
   // Кнопка — ГЛАВНЫЙ выключатель: погашена — не рисуем ничего, даже если какая-то диагональ
   // выбрана кликом в "Результате" (раньше выбор рисовался в обход кнопки, и выключить подсветку
@@ -6230,19 +6441,31 @@ function render(){
   // неё вбок (см. запрос пользователя — "выравнивание съехало").
   let balW1 = 1, balW0 = 1;
   if (st.showBalances) {
-    for (const s of st.rows) {
-      if (!s) continue;
-      const rb = computeRowBalance(s);
-      if (String(rb.total1).length > balW1) balW1 = String(rb.total1).length;
-      if (String(rb.total0).length > balW0) balW0 = String(rb.total0).length;
-    }
+    // Через кэш (см. memoMask): проход считает баланс КАЖДОЙ строки, т.е. обходит все данные
+    // целиком, а нужны из него только две ширины. computeRowBalance чистая — проверено.
+    const bw = memoMask("balW", [st.rows], () => {
+      let w1 = 1, w0 = 1;
+      for (const s of st.rows) {
+        if (!s) continue;
+        const rb = computeRowBalance(s);
+        if (String(rb.total1).length > w1) w1 = String(rb.total1).length;
+        if (String(rb.total0).length > w0) w0 = String(rb.total0).length;
+      }
+      return { w1, w0 };
+    });
+    balW1 = bw.w1; balW0 = bw.w0;
     updateSelBalance();
   } else {
     const wrap = document.getElementById("selBalanceWrap");
     if (wrap) wrap.style.display = "none";
   }
 
-  for (let i = 0; i < n; i++){
+  // Окно строк, которые реально рисуем (см. vrowsRange). Пока строк мало — это по-прежнему ВСЕ
+  // строки, и рендер идёт ровно как раньше.
+  const vr = vrowsRange(n, VROWS_OVERSCAN);
+  vrowsWindow = { lo: vr.lo, hi: vr.hi };
+
+  for (let i = vr.lo; i <= vr.hi; i++){
     // "👁 XOR на строке" (st.horizShowLiveXor) теперь РЕАЛЬНО пишет промежуточный XOR в
     // st.rows[b] по ходу поиска (см. doStep()), поэтому тут достаточно простого чтения —
     // никакого отдельного вычисления/подмены значения для отображения не нужно.
@@ -6407,7 +6630,7 @@ function render(){
     // красит ВЕСЬ пробег нулей перед единицей целиком (напр. "0001" — все 4 символа), а не
     // только последний "0" рядом с "1". Единица, перед которой нет ни одного "0" (например,
     // сразу после другой единицы), не красится.
-    const hl01Mask = st.highlight01 ? compute01HighlightMask(s) : null;
+    const hl01Mask = st.highlight01 ? hl01MaskFor(i, s) : null; // построчный кэш, см. hl01MaskFor
     // Позиции найденного паттерна в ЭТОЙ строке (см. patChainHitRows выше) — null, если цепочка
     // не активна, находки ещё нет или в этой строке паттерн не лежит.
     const patChainHitMap = patChainHitRows ? patChainHitRows.get(i) : null;
@@ -6415,6 +6638,39 @@ function render(){
     // Биты, изменённые "🎭 Маской" (см. maskApply) — красные, пока не тронут любой бит, пока
     // окраска не выключена кнопкой 🎨 (maskColorOn) и пока включён общий выключатель "🔴 Изм. биты".
     const maskFlagsRow = (maskColorOn && chgBitsOn) ? maskChangedMap.get(i) : null;
+
+    // СКЛЕЙКА СОСЕДНИХ БИТОВ. Раньше на КАЖДЫЙ символ строки выпускался свой <span> — на картинке
+    // 1000 строк по 1000 символов это до полумиллиона узлов DOM (десятки мегабайт HTML на один
+    // innerHTML и сотни мегабайт памяти под сами элементы). Но подряд идущие биты сплошь и рядом
+    // оформлены ОДИНАКОВО (два нуля подряд, кусок найденного паттерна, отрезок диагонали), а для
+    // раскладки безразлично, лежат они в одном span'е или в десяти: letter-spacing добавляется
+    // ПОСЛЕ каждого символа независимо от границ inline-элементов, поэтому геометрия не меняется
+    // ни на пиксель. Копим подряд идущие биты с ОДНИМ И ТЕМ ЖЕ открывающим тегом и выпускаем их
+    // одним span'ом.
+    // Исключение — биты с data-col (режимы "🔢 Выбор столбца"/выбора ячеек): их номер столбца свой
+    // у каждого, по нему мышь и собирает набор (см. colAttr ниже, highlightColumn и обработчик
+    // mousedown), поэтому такие идут отдельными span'ами, как и раньше.
+    let runOpen = null, runText = "";
+    const flushRun = () => {
+      if (runOpen === null) return;
+      bits += runOpen ? (runOpen + runText + "</span>") : runText;
+      runOpen = null; runText = "";
+    };
+    // open — открывающий тег целиком ("" = голый текст без span'а); mergeable=false выпускает бит
+    // отдельным элементом (у него собственный data-col, склеивать нельзя).
+    const emit = (open, ch, mergeable) => {
+      if (mergeable && runOpen === open) { runText += ch; return; }
+      flushRun();
+      if (!mergeable) { bits += open ? (open + ch + "</span>") : ch; return; }
+      runOpen = open; runText = ch;
+    };
+
+    // Всё это — свойства СТРОКИ, а не символа: раньше они доставались из Map заново на каждый бит
+    // (полмиллиона лишних Map.get на кадр), хотя внутри строки не меняются.
+    const invFlagsRow = invFlagsMap.get(i);
+    const insFlagsRow = insertedFlagsMap.get(i);
+    const envRow = envPreview ? envPreview.cells.get(i) : null;
+    const prevRow = prevRows ? prevRows[i] : null;
 
     for (let k = 0; k < s.length; k++) {
       const bit = s[k];
@@ -6444,33 +6700,33 @@ function render(){
       const diagFoldOrd = (diagFoldMask && diagFoldMask[i] && (bit === '0' || bit === '1')) ? diagFoldMask[i].get(k) : undefined;
       const isDiagFold = diagFoldOrd !== undefined;
       // Бит, сейчас находящийся в перевёрнутом состоянии (нечётное число переходов границы) —
-      // см. invFlagsMap выше.
-      const invFlagsRow = invFlagsMap.get(i);
+      // см. invFlagsMap выше (сама строка флагов взята до цикла).
       const isInvBit = !!(invFlagsRow && invFlagsRow.length === s.length && invFlagsRow[k]);
       // Вставленный символ (см. insertedFlagsMap/"🔴 Инверсия между символами").
-      const insFlagsRow = insertedFlagsMap.get(i);
       const isInsBit = !!(insFlagsRow && insFlagsRow.length === s.length && insFlagsRow[k]);
       // Показанная (ещё не выполненная) линия сгиба "✉ Конверт" — см. envPreview.
-      const envRow = envPreview ? envPreview.cells.get(i) : null;
       const isEnvDiag = !!(envRow && envRow.has(k) && (bit === '0' || bit === '1'));
       // Бит, перевёрнутый ПОСЛЕДНИМ шагом (см. prevRows). Только настоящая смена значения:
       // 1→1 и 0→0 не считаются.
-      const prevRow = prevRows ? prevRows[i] : null;
       const isChgBit = showChgBits && !!(prevRow && prevRow.length === s.length && (bit === '0' || bit === '1') &&
         (prevRow[k] === '0' || prevRow[k] === '1') && prevRow[k] !== bit);
+
+      // mrg — можно ли приклеить этот бит к предыдущему (см. emit/flushRun выше): нельзя, когда у
+      // бита свой data-col.
+      const mrg = !colAttr;
 
       if (isCellSel && (bit === '0' || bit === '1')) {
         // Выбранная курсором ячейка — поверх любых других подсветок: это то, с чем сейчас работают
         // кнопки «Инв. ячеек»/«90° ячеек»/«Сдвиг».
-        bits += '<span class="b' + bit + ' cell-sel"' + colAttr + '>' + bit + '</span>';
+        emit('<span class="b' + bit + ' cell-sel"' + colAttr + '>', bit, mrg);
       } else if (isEnvDiag) {
         // Линия сгиба показывается ПОВЕРХ прочих подсветок: сейчас важно только одно — где пойдёт
         // сгиб, если нажать "Конверт" второй раз.
-        bits += '<span class="env-diag" title="Линия сгиба «Конверта» — нажмите кнопку ещё раз, чтобы сложить"' + colAttr + '>' + bit + '</span>';
+        emit('<span class="env-diag" title="Линия сгиба «Конверта» — нажмите кнопку ещё раз, чтобы сложить"' + colAttr + '>', bit, mrg);
       } else if (marks && marks.has(k)) {
-        bits += '<span class="' + hitCls + '"' + colAttr + '>' + bit + '</span>';
+        emit('<span class="' + hitCls + '"' + colAttr + '>', bit, mrg);
       } else if (isMaskBit && (bit === '0' || bit === '1')) {
-        bits += '<span class="b' + bit + ' bit-chg" title="Изменён «Маской»"' + colAttr + '>' + bit + '</span>';
+        emit('<span class="b' + bit + ' bit-chg" title="Изменён «Маской»"' + colAttr + '>', bit, mrg);
       } else if (patChainHit && (bit === '0' || bit === '1')) {
         // Найденный "🧩 Паттерн-цепочкой" паттерн — теми же цветами, что и в окне "Результат"
         // (.chain-hit-bits + kind/skip1), чтобы подсветка в строках и в результате читались как
@@ -6478,17 +6734,17 @@ function render(){
         const hitClsRow = 'b' + bit + ' chain-hit-bits' +
           (KIND_CLS[patChainHit.kind] ? ' ' + KIND_CLS[patChainHit.kind] : '') +
           (patChainHit.skip ? ' skip1' : '');
-        bits += '<span class="' + hitClsRow + '" title="Найденный паттерн"' + colAttr + '>' + bit + '</span>';
+        emit('<span class="' + hitClsRow + '" title="Найденный паттерн"' + colAttr + '>', bit, mrg);
       } else if (isInvBit && (bit === '0' || bit === '1')) {
-        bits += '<span class="b' + bit + ' bit-inv" title="Перевёрнут переходом границы строки"' + colAttr + '>' + bit + '</span>';
+        emit('<span class="b' + bit + ' bit-inv" title="Перевёрнут переходом границы строки"' + colAttr + '>', bit, mrg);
       } else if (isInsBit && (bit === '0' || bit === '1')) {
-        bits += '<span class="b' + bit + ' bit-ins" title="Вставлен кнопкой «Инверсия между символами»"' + colAttr + '>' + bit + '</span>';
+        emit('<span class="b' + bit + ' bit-ins" title="Вставлен кнопкой «Инверсия между символами»"' + colAttr + '>', bit, mrg);
       } else if (isChgBit) {
-        bits += '<span class="b' + bit + ' bit-chg" title="Изменён последним шагом"' + colAttr + '>' + bit + '</span>';
+        emit('<span class="b' + bit + ' bit-chg" title="Изменён последним шагом"' + colAttr + '>', bit, mrg);
       } else if (isColSelBit && (bit === '0' || bit === '1')) {
-        bits += '<span class="col-sel-bit b' + bit + '"' + colAttr + '>' + bit + '</span>';
+        emit('<span class="col-sel-bit b' + bit + '"' + colAttr + '>', bit, mrg);
       } else if (isXoredBit && (bit === '0' || bit === '1')) {
-        bits += '<span class="xored-bit"' + colAttr + '>' + bit + '</span>';
+        emit('<span class="xored-bit"' + colAttr + '>', bit, mrg);
       } else if (is01Pair || isVert1 || isDiag1 || isDiagFold) {
         // Несколько подсветок могут совпасть на одном символе — вешаем все подходящие классы;
         // порядок объявления в CSS (.hl01 → .hlv1 → .hld1 → .hldf) решает, чей цвет визуально победит.
@@ -6499,15 +6755,18 @@ function render(){
         const foldStyle = isDiagFold
           ? ' style="' + (foldBgStyle ? 'background:' : 'color:') + foldOrderColor(diagFoldOrd, diagFoldMask.total || 1) + '"'
           : '';
-        bits += '<span class="' + hlCls + '"' + foldStyle + colAttr + '>' + bit + '</span>';
+        emit('<span class="' + hlCls + '"' + foldStyle + colAttr + '>', bit, mrg);
       } else if (bit === '0' || bit === '1') {
-        bits += '<span class="b' + bit + '"' + colAttr + '>' + bit + '</span>';
+        // Самая массовая ветка — обычный неподсвеченный бит. Именно её склейка и убирает
+        // основную массу узлов: подряд идущие одинаковые биты уходят одним span'ом.
+        emit('<span class="b' + bit + '"' + colAttr + '>', bit, mrg);
       } else if (colAttr) {
-        bits += '<span' + colAttr + '>' + esc(bit) + '</span>';
+        emit('<span' + colAttr + '>', esc(bit), false);
       } else {
-        bits += esc(bit);
+        emit("", esc(bit), true);
       }
     }
+    flushRun(); // хвост последнего пробега
     }
 
     bits += blankRun(shift + s.length, padRight);
@@ -6535,7 +6794,14 @@ function render(){
              '<span class="bits ' + alignCls + '"><span' + halfShiftAttr + '>' + bits + "</span></span>" +
              '<span class="' + numCls + ' num-r2">' + i + "</span>" + patRight + "</div>");
   }
-  document.getElementById("rows").innerHTML = out.join("");
+  // Распорки вместо не нарисованных строк (см. vrowsRange) — держат высоту, поэтому полоса
+  // прокрутки и позиция каждой строки такие же, как при полной отрисовке.
+  const vTopPad = vr.lo * vr.pitch;
+  const vBotPad = (n - 1 - vr.hi) * vr.pitch;
+  document.getElementById("rows").innerHTML =
+    (vTopPad > 0 ? '<div class="vspacer" style="height:' + vTopPad + 'px"></div>' : "") +
+    out.join("") +
+    (vBotPad > 0 ? '<div class="vspacer" style="height:' + vBotPad + 'px"></div>' : "");
   // Ширина колонки номеров (--num-w) — по самому длинному номеру, ОДНА на все строки, иначе
   // трёхзначные номера раздвигают свою строку и та едет вправо (см. fitNumW/.num в CSS).
   fitNumW(st.rows.length - 1);
@@ -7786,8 +8052,7 @@ if (chainTextEl2) {
         st.captureGrown = false;
         st.manualShiftTurns = 0;
         render(); saveCache();
-        const rowEl = document.querySelector('#rows .ln[data-idx="' + idx + '"]');
-        if (rowEl && rowEl.scrollIntoView) rowEl.scrollIntoView({ block: "nearest" });
+        scrollToRow(idx); // по номеру, а не по элементу — строки может не быть в DOM, см. scrollToRow
         say("Паттерн №" + (idx + 1) + ": выделена строка " + idx + ".");
       }
       return;
@@ -9078,6 +9343,9 @@ window.addEventListener("mouseup", () => {
 /* Режим РУЧНОГО РЕДАКТИРОВАНИЯ строки — вызывается и по двойному клику, и по клавише F2,
    когда выделена ровно одна строка (см. глобальный обработчик хоткеев ниже). */
 function startEditRow(idx){
+  // Строка могла быть за пределами нарисованного окна (F2 при выделении, уехавшем за экран) —
+  // сначала подводим её к виду, scrollToRow заодно пересобирает окно, и только потом ищем элемент.
+  scrollToRow(idx);
   const ln = document.getElementById("rows").querySelector('.ln[data-idx="' + idx + '"]');
   if (!ln) return;
   if (ln.querySelector(".edit-row-input")) return;
@@ -12540,8 +12808,7 @@ document.addEventListener("keydown", e => {
     st.selectedRows.add(next);
     render();
     saveCache();
-    const rowEl = document.querySelector('.ln[data-idx="' + next + '"]');
-    if (rowEl) rowEl.scrollIntoView({ block: "nearest" });
+    scrollToRow(next); // по номеру, а не по элементу — см. scrollToRow
   }
 });
 
@@ -12643,7 +12910,7 @@ function applyFont(){
   document.getElementById("fsVal").textContent = v;
   updateRowHeight();
 }
-fs.oninput = () => { applyFont(); saveCache(); };
+fs.oninput = () => { applyFont(); saveCacheSoon(); };
 
 function applyLh(){
   const v = +lh.value;
@@ -12651,14 +12918,14 @@ function applyLh(){
   document.getElementById("lhVal").textContent = v;
   updateRowHeight();
 }
-lh.oninput = () => { applyLh(); saveCache(); };
+lh.oninput = () => { applyLh(); saveCacheSoon(); };
 
 function applyLs(){
   const v = +ls.value;
   document.documentElement.style.setProperty("--chain-ls", v + "px");
   document.getElementById("lsVal").textContent = v;
 }
-ls.oninput = () => { applyLs(); saveCache(); };
+ls.oninput = () => { applyLs(); saveCacheSoon(); };
 
 /* "📐90°" — подбирает межсимвольный интервал (ls) так, чтобы ячейка символа стала КВАДРАТНОЙ
    (ширина = высоте строки --row-h) при текущих fs/lh — тогда любая "лестница" (1,11,111...)
@@ -12704,7 +12971,7 @@ function applyDim(){
   document.documentElement.style.setProperty("--dim-op", dimEl.value / 100);
   document.getElementById("dimVal").textContent = dimEl.value;
 }
-dimEl.oninput = () => { applyDim(); saveCache(); };
+dimEl.oninput = () => { applyDim(); saveCacheSoon(); };
 
 /* --- ЛОГИКА ЦВЕТОВ И ПРЕСЕТОВ --- */
 const PRESETS = {
@@ -12786,7 +13053,7 @@ function applyColor01(){
   if (col01El) document.documentElement.style.setProperty("--c01-hl", col01El.value);
 }
 if (col01El) {
-  col01El.oninput = () => { applyColor01(); saveCache(); };
+  col01El.oninput = () => { applyColor01(); saveCacheSoon(); };
 }
 
 /* "1 под 1" (см. #bHighlightVert1/.hlv1 в CSS) — та же логика вкл/выкл + цвет, что у "01",
@@ -12805,7 +13072,7 @@ function applyColorVert1(){
   if (colVert1El) document.documentElement.style.setProperty("--cv1-hl", colVert1El.value);
 }
 if (colVert1El) {
-  colVert1El.oninput = () => { applyColorVert1(); saveCache(); };
+  colVert1El.oninput = () => { applyColorVert1(); saveCacheSoon(); };
 }
 
 /* "1 по диагонали" (см. #bHighlightDiag1/.hld1 в CSS) — та же логика вкл/выкл + цвет, что у
@@ -12876,7 +13143,7 @@ function applyColorDiag1(){
   if (colDiag1El) document.documentElement.style.setProperty("--cd1-hl", colDiag1El.value);
 }
 if (colDiag1El) {
-  colDiag1El.oninput = () => { applyColorDiag1(); saveCache(); };
+  colDiag1El.oninput = () => { applyColorDiag1(); saveCacheSoon(); };
 }
 
 /* "⧅⧄ Диагонали склейки" (см. #bHighlightDiagFold/.hldf в CSS, computeDiagFoldMask) — тот же
@@ -12900,7 +13167,7 @@ function applyColorDiagFold(){
   if (colDiagFoldEl) document.documentElement.style.setProperty("--cdf-hl", colDiagFoldEl.value);
 }
 if (colDiagFoldEl) {
-  colDiagFoldEl.oninput = () => { applyColorDiagFold(); saveCache(); };
+  colDiagFoldEl.oninput = () => { applyColorDiagFold(); saveCacheSoon(); };
 }
 
 /* Пресеты цветов — раньше <select>, теперь кнопки (см. #presetGrp). currentPreset хранит,
@@ -12954,8 +13221,8 @@ col0.oninput = markCustomColor;
 colBg.oninput = markCustomColor;
 
 /* Фон выделенных строк — цвет + прозрачность, без пресетов (см. #rowBgSel/#rowBgSelOpacity в HTML). */
-rowBgSel.oninput = () => { applyColorsSel(); saveCache(); };
-if (rowBgSelOpacityEl) rowBgSelOpacityEl.oninput = () => { applyColorsSel(); saveCache(); };
+rowBgSel.oninput = () => { applyColorsSel(); saveCacheSoon(); };
+if (rowBgSelOpacityEl) rowBgSelOpacityEl.oninput = () => { applyColorsSel(); saveCacheSoon(); };
 
 function makeDrag(el, varName, x0fn, min, max){
   el.addEventListener("mousedown", e => {
@@ -13162,24 +13429,63 @@ function axisCharWidthPx(){
    Используется и в drag-обработчике #axisSplit (перевод px мыши в колонки), и в
    updateAxisSplitPosition() (запасной путь, если бит-элемента ещё нет), и в render() (transform
    довеска extraCh) — везде должен быть ОДИН И ТОТ ЖЕ шаг. */
+/* КЭШ ЗАМЕРА. Сам замер дорогой: querySelectorAll по ВСЕМ битам строки + два
+   getBoundingClientRect (а это принудительный пересчёт раскладки), и зовётся он по 3-4 раза за
+   ОДИН render() (renderColHeader → offAttr, colStepPx, --bits-w, fitPatW2). На картинке
+   1000x1000 каждый такой вызов перебирает тысячу узлов — четыре полных пересчёта раскладки на
+   кадр только ради одного и того же числа.
+   Шаг столбца зависит ТОЛЬКО от шрифта, его размера и letter-spacing — от СОДЕРЖИМОГО строк он
+   не зависит вообще, поэтому ключ кэша строим по этим трём CSS-переменным: поменял пользователь
+   ползунок — ключ разошёлся, меряем заново; не поменял — отдаём прошлое число.
+   Результат canvas-прикидки (ветка ниже, когда строк в DOM ещё нет) НЕ кэшируем: он
+   приблизительный и обязан смениться настоящим замером, как только строки отрисуются.
+   var, а не let: realColStepPx() может быть вызвана из render() ещё на инициализации, раньше
+   этой строки (у let это была бы TDZ-ошибка — в этом файле уже наступали на такое дважды). */
+var colStepCache = null; // {key, val}
+function colStepCacheKey(){
+  const cs = getComputedStyle(document.documentElement);
+  return (cs.getPropertyValue("--chain-fs") || "") + "|" +
+         (cs.getPropertyValue("--chain-ff") || "") + "|" +
+         (cs.getPropertyValue("--chain-ls") || "");
+}
 function realColStepPx(){
+  const cacheKey = colStepCacheKey();
+  if (colStepCache && colStepCache.key === cacheKey) return colStepCache.val;
   const rowsEl = document.getElementById("rows");
   if (rowsEl) {
     for (const row of rowsEl.children) {
-      // ".b0,.b1" (а НЕ "[data-col]") — data-col проставляется ТОЛЬКО строкам внутри
-      // colSelectRowRange() (см. colAttr в цикле рендера), т.е. у произвольной строки его может
-      // не быть вообще; класс b0/b1 есть у КАЖДОГО реального бита всегда. Соседние такие span'ы
-      // в одной строке — это соседние символы строки, т.е. соседние столбцы (шаг ровно 1), а
-      // сама подсветка пустого места из blankRun() имеет класс col-sel-bit БЕЗ b0/b1 и сюда не
-      // попадает.
-      const bits = row.querySelectorAll ? row.querySelectorAll(".bits .b0, .bits .b1") : null;
-      if (!bits || bits.length < 2) continue;
-      // Меряем на ВСЮ длину строки (первый бит → последний), а не по одной соседней паре: одна
+      // СЧИТАЕМ КОЛОНКИ ПО СИМВОЛАМ, а не по числу span'ов. Раньше здесь бралось
+      // querySelectorAll(".bits .b0, .bits .b1") и расстояние делилось на (число span'ов - 1) —
+      // это верно, только если КАЖДЫЙ бит лежит в собственном span'е с классом b0/b1. Оба условия
+      // больше не выполняются: биты с одинаковым оформлением теперь склеены в один span (см. emit()
+      // в render()), да и раньше между крайними битами могли попасться span'ы БЕЗ b0/b1
+      // (.hit, .xored-bit, .env-diag) и голый текст паддинга — они в счёт не входили, и делитель
+      // выходил меньше настоящего числа колонок, т.е. шаг завышался.
+      // Идём по плоскому списку узлов строки (.bits > span — тот самый враппер с extraCh-
+      // трансформом, внутри него всё лежит одним уровнем) и накапливаем номер колонки по ДЛИНЕ
+      // ТЕКСТА каждого узла: и "&nbsp;" паддинга, и многосимвольный склеенный span, и одиночный
+      // бит считаются одинаково честно — один символ = одна колонка.
+      const wrap = row.querySelector ? row.querySelector(".bits > span") : null;
+      if (!wrap) continue;
+      let col = 0, firstEl = null, firstCol = 0, lastEl = null, lastCol = 0;
+      for (const node of wrap.childNodes) {
+        const len = (node.textContent || "").length;
+        // Крайними точками замера годится ЛЮБОЙ элемент (у текстового узла нет своего
+        // прямоугольника) — его левый край стоит ровно на колонке, посчитанной до него.
+        if (node.nodeType === 1 && len > 0) {
+          if (!firstEl) { firstEl = node; firstCol = col; }
+          lastEl = node; lastCol = col;
+        }
+        col += len;
+      }
+      if (!firstEl || firstEl === lastEl || lastCol === firstCol) continue;
+      // Меряем на ВСЮ длину строки (первый элемент → последний), а не по одной соседней паре: одна
       // пара даёт расстояние в один символ, и субпиксельная погрешность этого замера потом
-      // умножается на сотни колонок сдвига. Деление длинной базы на число промежутков
+      // умножается на сотни колонок сдвига. Деление длинной базы на число колонок между ними
       // усредняет её и даёт шаг с точностью, которой хватает на любой сдвиг.
-      const d = (bits[bits.length - 1].getBoundingClientRect().left - bits[0].getBoundingClientRect().left) / (bits.length - 1);
-      if (d > 0) return d;
+      const d = (lastEl.getBoundingClientRect().left - firstEl.getBoundingClientRect().left) / (lastCol - firstCol);
+      // Кэшируем ТОЛЬКО настоящий замер по DOM (см. colStepCache выше) — он и есть источник истины.
+      if (d > 0) { colStepCache = { key: cacheKey, val: d }; return d; }
     }
   }
   // Запасной вариант — строки ещё не отрисованы (самый первый рендер) — canvas-оценка.
@@ -13233,6 +13539,9 @@ function centerAxisOffset(){
    каждый раз заново (не кэшируем в const на верхнем уровне) — эта функция ВЫЗЫВАЕТСЯ из render(),
    а render() дёргается местами ещё ДО того, как скрипт дойдёт до этого места (см. остальные
    render() выше по файлу) — кэш в const поймал бы temporal dead zone. */
+/* Поправка "замер минус формула" для линии оси — см. её использование ниже. var по той же причине,
+   что и остальные кэши: функция вызывается из render(), а тот дёргается ещё до этой строки. */
+var axisMeasureFix = { key: null, dx: 0 };
 function updateAxisSplitPosition(maxLen){
   const axisSplitEl = document.getElementById("axisSplit");
   if (!axisSplitEl) return;
@@ -13268,17 +13577,25 @@ function updateAxisSplitPosition(maxLen){
     const fd = firstDataIdx();
     const wrapEl = fd >= 0 ? document.querySelector('#rows .ln[data-idx="' + fd + '"] .bits > span') : null;
     const bitEl = wrapEl ? wrapEl.querySelector(".b0, .b1") : null;
+    // Формулу считаем ВСЕГДА: она и запасной путь, и база для поправки ниже. offset прибавляется
+    // здесь ЯВНО: alignShift()/resolveAxisBitShift() его больше не содержат (он — общий визуальный
+    // сдвиг картинки, см. комментарий в alignShift()).
+    const len0 = fd >= 0 ? (st.rows[fd] || "").length : 0;
+    const axisCol = ((st.align === "axisbit" || st.align === "axisbit12")
+      ? resolveAxisBitShift(fd >= 0 ? fd : 0)
+      : alignShift(maxLen, len0, st.align, fd >= 0 ? fd : 0)) + (st.axisCenterOffset || 0);
+    const formulaLeft = (bitsRect.left - chainRect.left) + axisCol * chPx;
+    // Ключ поправки: всё, от чего зависит расхождение замера с формулой. При простой прокрутке он
+    // не меняется — значит поправка остаётся в силе и линия стоит там же.
+    const fixKey = st.align + "|" + (st.axisCenterOffset || 0) + "|" + maxLen + "|" + len0 + "|" + fd + "|" + chPx;
     if (bitEl) {
       leftPx = bitEl.getBoundingClientRect().left - chainRect.left;
+      // Запоминаем, насколько замер разошёлся с формулой. При виртуализации первой строки с данными
+      // в DOM может не быть вовсе (уехала за окно), и тогда доступна только формула — без этой
+      // поправки линия оси прыгала бы при прокрутке туда-сюда.
+      axisMeasureFix = { key: fixKey, dx: leftPx - formulaLeft };
     } else {
-      // Запасной вариант (строки ещё не отрисованы / нет цветных спанов) — старая формула.
-      // offset прибавляется здесь ЯВНО: alignShift()/resolveAxisBitShift() его больше не
-      // содержат (он — общий визуальный сдвиг картинки, см. комментарий в alignShift()).
-      const len0 = fd >= 0 ? (st.rows[fd] || "").length : 0;
-      const axisCol = ((st.align === "axisbit" || st.align === "axisbit12")
-        ? resolveAxisBitShift(fd >= 0 ? fd : 0)
-        : alignShift(maxLen, len0, st.align, fd >= 0 ? fd : 0)) + (st.axisCenterOffset || 0);
-      leftPx = (bitsRect.left - chainRect.left) + axisCol * chPx;
+      leftPx = formulaLeft + (axisMeasureFix.key === fixKey ? axisMeasureFix.dx : 0);
     }
   }
   axisSplitEl.style.left = leftPx + "px";
@@ -13681,6 +13998,30 @@ function saveCache(){
   }catch(e){}
 }
 
+/* ОТЛОЖЕННАЯ запись кэша — для мест, где saveCache() зовётся ПОТОКОМ.
+   saveCache() выше сериализует ВСЕ вкладки целиком: на картинке 1000 строк по 1000 символов это
+   мегабайты JSON, и localStorage.setItem пишет их СИНХРОННО, тормозя всё остальное. При этом
+   ползунки шрифта/интервала/затемнения и ввод в текстовые поля зовут её на КАЖДЫЙ oninput —
+   десятки раз за одно перетаскивание ручки и на каждое нажатие клавиши. Склеиваем такие пачки в
+   одну запись.
+   Что кладётся в кэш, при этом не меняется НИ НА ЙОТУ — меняется только момент записи, поэтому
+   на поиск, подсветки и любую другую логику это не влияет. Чтобы отложенное не потерялось,
+   дописываем его принудительно при уходе со страницы и при сворачивании вкладки.
+   var — тот же случай, что colStepCache/colHoverEls (вызов возможен раньше этой строки). */
+var saveCacheTimer = null;
+function saveCacheSoon(){
+  if (saveCacheTimer) return; // пачка уже собирается — запись состоится в её конце
+  saveCacheTimer = setTimeout(() => { saveCacheTimer = null; saveCache(); }, 250);
+}
+function flushSaveCache(){
+  if (!saveCacheTimer) return;
+  clearTimeout(saveCacheTimer);
+  saveCacheTimer = null;
+  saveCache();
+}
+window.addEventListener("beforeunload", flushSaveCache);
+document.addEventListener("visibilitychange", () => { if (document.hidden) flushSaveCache(); });
+
 function loadCache(){
   if (SAFE_MODE) {
     // Сообщение с задержкой — say() до готовности DOM ничего не покажет.
@@ -13746,8 +14087,8 @@ function loadCache(){
 // ЗАЩИТА: Добавляем слушатели только если элементы существуют!
 const taRowsEl = document.getElementById("taRows");
 const taPatsEl = document.getElementById("taPats");
-if (taRowsEl) taRowsEl.addEventListener("input", saveCache);
-if (taPatsEl) taPatsEl.addEventListener("input", saveCache);
+if (taRowsEl) taRowsEl.addEventListener("input", saveCacheSoon);
+if (taPatsEl) taPatsEl.addEventListener("input", saveCacheSoon);
 
 for (const el of [cPullEl, cOrderEl, cNextOnlyEl, cStageXorEl, cInvPassEl, cAutoShiftEl, cStopOnHitEl, cStopOnBalanceEl, cTurboAutoEl, cCaptureOnFindEl, cVertEl, cPadEl, cKindsEl, cSkipEl, cHorizRotateOnFailEl, cHorizAlternateSideEl, cHorizReverseChainEl]) {
   if (el) el.addEventListener("change", () => { readToggles(); saveCache(); });
