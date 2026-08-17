@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.598</title>
+<title>Zerkalius Fold — v0.600</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -1490,8 +1490,20 @@ textarea{font-size:11px;padding:3px}
   label.chk{padding:6px 8px;font-size:13px;min-height:34px}
   select,input[type="text"],input[type="number"]{min-height:32px;font-size:13px;padding:2px 6px}
   body{font-size:13px}
-  /* Панели шире: на узком экране 260px мало, а места по бокам всё равно нет. */
-  :root{--side-w:min(86vw, 340px); --panel-w:min(86vw, 340px)}
+  /* Панели УЖЕ и МЕЛЬЧЕ. Прошлый заход делал наоборот — min(86vw,340px), почти во весь экран, —
+     и панели закрывали собой полотно целиком.
+     Масштаб задаётся через zoom, а не transform:scale. Разница принципиальная: zoom пересчитывает
+     РАСКЛАДКУ, поэтому панель реально занимает меньше места и перестаёт лезть на полотно, тогда как
+     scale только рисует мельче, оставляя исходный бокс — перекрытие никуда бы не делось.
+     ZOOM ВЕШАЕТСЯ ТОЛЬКО НА ПАНЕЛИ. На .canvas/.chain его вешать нельзя: шаг столбца и позиция оси
+     меряются там через getBoundingClientRect (см. realColStepPx/updateAxisSplitPosition), а zoom
+     сдвигает эти координаты — вся геометрия выравниваний поедет. */
+  :root{--side-w:min(58vw, 210px); --panel-w:min(66vw, 240px); --ui-zoom:0.8}
+  .controls,.menu-drop,.floating-panel{zoom:var(--ui-zoom)}
+  /* Тач-цели считаем ПОСЛЕ зума: при 0.8 кнопка в 34px даёт на экране 27px — уже мелко для пальца,
+     поэтому базовую высоту поднимаем так, чтобы после сжатия осталось те же ~34px. */
+  button{min-height:42px}
+  label.chk{min-height:42px}
   /* Полосы прокрутки в панелях возвращаем: на тач-экране полоса — единственный намёк, что
      содержимое длиннее видимого, а колесо мыши тут подсказать не может. */
   .menu-drop,.floating-panel,.scrollable-settings{scrollbar-width:thin}
@@ -1516,7 +1528,10 @@ body.vcur-on #vcurBar{display:flex}
 #vcurBar button{min-height:38px;padding:6px 12px;font-size:14px}
 /* Кнопка включения тач-режима — только на тач-устройствах, поверх всего, в углу. */
 #vcurToggle{position:fixed;right:6px;bottom:6px;z-index:2001;display:none;min-height:38px}
-@media (pointer: coarse){ #vcurToggle{display:flex} }
+/* Быстрое "убрать панели" — на телефоне штатная кнопка спрятана в панели, до которой из-за самих
+   же панелей и не добраться. Эта висит поверх всего, в углу. */
+#sideHideBtn{position:fixed;left:6px;bottom:6px;z-index:2001;display:none;min-height:38px}
+@media (pointer: coarse){ #vcurToggle{display:flex} #sideHideBtn{display:flex} }
 
 </style>
 <!-- === МАРКЕР 03: HEADER_UI === -->
@@ -1524,7 +1539,7 @@ body.vcur-on #vcurBar{display:flex}
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <a href="index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (index.html)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.598</span></h3>
+    <a href="index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (index.html)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.600</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -14663,9 +14678,12 @@ if (!loadCache()){
    просто не разбудила бы.
    "Зажать" держит кнопку нажатой между касаниями — только так работают протяжки: выделение
    диапазона строк, выбор ячеек, перетаскивание ручки оси и разделителей колонок. */
-(function(){
+function initTouchPad(){
   const cur = document.getElementById("vcur");
   const toggle = document.getElementById("vcurToggle");
+  // Разметка курсора лежит в body ПОСЛЕ этого <script>, поэтому на момент разбора скрипта её ещё
+  // нет — при немедленном запуске getElementById вернул бы null и весь режим молча не включился бы
+  // вовсе. Отсюда отложенный старт ниже.
   if (!cur || !toggle) return;
   // Чувствительность: <1 — перекрестье движется МЕДЛЕННЕЕ пальца. Это и есть весь смысл затеи —
   // мелкое прицеливание там, где палец грубее цели.
@@ -14778,7 +14796,21 @@ if (!loadCache()){
   });
   addEventListener("resize", () => { clamp(); place(); });
   place();
-})();
+
+  // "▤ Панели" — тот же переключатель, что и штатная кнопка (body.hide-side), просто доступный
+  // с телефона. Состояние сохраняется тем же saveCache, так что после перезагрузки останется как
+  // оставили.
+  const sideBtn = document.getElementById("sideHideBtn");
+  if (sideBtn) sideBtn.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    document.body.classList.toggle("hide-side");
+    saveCache();
+  });
+}
+// Ждём разбора body — см. комментарий в initTouchPad. Если DOM уже готов (скрипт подключили иначе),
+// запускаемся сразу.
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initTouchPad);
+else initTouchPad();
 
 </script>
 <div id="msg"></div>
@@ -14791,6 +14823,7 @@ if (!loadCache()){
   <button id="vcurHold" title="Зажать/отпустить кнопку в точке перекрестья — этим тянут выделение, ручки и разделители">✊ Зажать</button>
   <button id="vcurOff" title="Выключить режим курсора — вернуться к обычным касаниям">✕</button>
 </div>
+<button id="sideHideBtn" title="Убрать/вернуть боковые панели — то же самое, что штатный переключатель панелей, но доступное с телефона, когда панели закрыли собой всё">▤ Панели</button>
 <button id="vcurToggle" title="Режим курсора: одним пальцем двигаешь перекрестье (как тачпад), двумя — обычная прокрутка и щипковый зум. Нужен, чтобы попадать по отдельным битам, где палец закрывает полстроки">🎯 Курсор</button>
 </body>
 </html>
