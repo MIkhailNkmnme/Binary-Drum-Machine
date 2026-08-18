@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.693</title>
+<title>Zerkalius Fold — v0.694</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -1616,7 +1616,7 @@ body.vcur-on #vcurBar{display:flex}
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <a href="index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (index.html)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.693</span></h3>
+    <a href="index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (index.html)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.694</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -11345,6 +11345,8 @@ function autoRun(){
       ? new Set((st.selectedRows && st.selectedRows.size > 0) ? Array.from(st.selectedRows) : st.rows.map((_, i) => i))
       : null;
     if (isShift) {
+      // Тот же принцип, что и у ручного сдвига: прогон крутит всё, что видно.
+      mirrorsBeforeShift();
       totalTurns = computeShiftTotalTurns(rotIdxs, isShiftInv);
     } else {
       const range = colSelectRowRange();
@@ -12053,6 +12055,7 @@ if (bShiftLEl) {
   bShiftLEl.onclick = () => {
     if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
     setLastDirMode("shiftL");
+    mirrorsBeforeShift();
     snapshot();
     for (const r of st.selectedRows) if (st.rows[r]) {
       shiftOneRowAxisAware(r, 1, rotateStrLeft, rotateInvFlagsLeft);
@@ -12066,6 +12069,7 @@ if (bShiftREl) {
   bShiftREl.onclick = () => {
     if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
     setLastDirMode("shiftR");
+    mirrorsBeforeShift();
     snapshot();
     for (const r of st.selectedRows) if (st.rows[r]) {
       shiftOneRowAxisAware(r, -1, rotateStrRight, rotateInvFlagsRight);
@@ -12079,6 +12083,7 @@ if (bShiftLInvEl) {
   bShiftLInvEl.onclick = () => {
     if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
     setLastDirMode("shiftLInv");
+    mirrorsBeforeShift();
     snapshot();
     for (const r of st.selectedRows) if (st.rows[r]) {
       shiftOneRowAxisAware(r, 1, rotateStrLeftInv, rotateInvFlagsLeftInv);
@@ -12092,6 +12097,7 @@ if (bShiftRInvEl) {
   bShiftRInvEl.onclick = () => {
     if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
     setLastDirMode("shiftRInv");
+    mirrorsBeforeShift();
     snapshot();
     for (const r of st.selectedRows) if (st.rows[r]) {
       shiftOneRowAxisAware(r, -1, rotateStrRightInv, rotateInvFlagsRightInv);
@@ -13239,6 +13245,16 @@ function mirrorsAutoSides(){
   if (m === "right") return { left: false, right: true };
   if (m === "both") return { left: true, right: true };
   return null;
+}
+/* ПЕРЕД КРУГОВЫМ СДВИГОМ: если зеркала сейчас показаны, вписываем их в строки — сдвиг обязан
+   крутить всё, что видно, а не только настоящие биты (запрос пользователя: "при Круге сдвиге — как
+   будто включены зеркала в строки"). Показ после этого выключается сам (так работает вписывание):
+   биты уже в данных, и рисовать поверх них зеркала зеркал нельзя. Предел вписываний общий, так что
+   бесконтрольно цепочка не растёт.
+   Зеркала выключены — не делает ничего, сдвиг идёт как обычно. */
+function mirrorsBeforeShift(){
+  if (!st.leftMirror && !st.rightMirror) return;
+  applyMirrorsToRows(false);
 }
 function mirrorsAutoStep(){
   const sides = mirrorsAutoSides();
