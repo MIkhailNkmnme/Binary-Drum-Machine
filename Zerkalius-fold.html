@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.692</title>
+<title>Zerkalius Fold — v0.693</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -1616,7 +1616,7 @@ body.vcur-on #vcurBar{display:flex}
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <a href="index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (index.html)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.692</span></h3>
+    <a href="index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (index.html)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.693</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -1874,7 +1874,7 @@ body.vcur-on #vcurBar{display:flex}
     <button id="bLeftMirror" style="flex:1 1 100%; border-color:#9aa4b2; color:#9aa4b2;" title="Показать СЛЕВА зеркало у строк ОТ ВЕРХА ДО ВЫДЕЛЕННОЙ включительно (без выделения зеркал нет): биты идут от первого бита строки влево, сам первый бит в зеркало не входит, значения инвертированы (0↔1). Печатается серым и только для вида — данные не меняются, в склейки и поиск эти биты не идут, на лестничное выравнивание не влияют. Если левого отступа не хватает, видна та часть зеркала, что влезла — сдвинь ось правее">◀ Зеркало влево</button>
     <button id="bRightMirror" style="flex:1 1 100%; border-color:#9aa4b2; color:#9aa4b2;" title="Показать СПРАВА зеркало у строк ОТ ВЕРХА ДО ВЫДЕЛЕННОЙ включительно (без выделения зеркал нет): биты идут от последнего бита строки вправо, сам последний бит в зеркало не входит, значения инвертированы (0↔1). Печатается серым и только для вида — данные не меняются, в склейки и поиск эти биты не идут, на выравнивание не влияют. Если правого отступа не хватает, видна та часть зеркала, что влезла">▶ Зеркало вправо</button>
     <button id="bMirrorsApply" style="flex:1 1 100%; border-color:#38c172; color:#38c172;" title="ВПИСАТЬ показанные серым зеркала прямо в строки: то, что сейчас видно слева и справа, становится настоящими битами строки. После этого зеркала участвуют во всём наравне с остальными битами — в поиске, склейках, XOR, подсветках. Идёт по тем же строкам, что и показ: сверху по выделенную включительно. Сам показ зеркал при этом выключается, иначе поверх новых строк тут же нарисовались бы зеркала зеркал. Отменяется обычным Undo">⇔ Вписать зеркала в строки</button>
-    <button id="bMirrorShiftAsIf" style="flex:1 1 100%; border-color:#9aa4b2; color:#9aa4b2;" title="Ставить строки так, будто зеркала уже вписаны: выравнивание считается по длине строки ВМЕСТЕ с зеркалами, поэтому биты стоят ровно там, где оказались бы после вписывания, и зеркала не обрезаются. Сами данные при этом не меняются">⇔ Сдвиг как с зеркалами: выкл</button>
+    <button id="bMirrorShiftAsIf" style="flex:1 1 100%; border-color:#9aa4b2; color:#9aa4b2;" title="Дать зеркалам место: полотно расширяется на самое длинное зеркало слева и справа, и ровно на столько же растёт левый отступ КАЖДОЙ строки. Прибавка одинаковая для всех, поэтому выравнивание не меняется — картинка просто целиком встаёт правее, а линейка столбцов едет вместе с ней. Без этого зеркала видны лишь настолько, насколько влезли в собственные отступы строк. Данные не меняются">⇔ Место под зеркала: выкл</button>
     <button id="bMirrorsAuto" style="flex:1 1 100%; border-color:#38c172; color:#38c172;" title="Вписывать зеркала в строки автоматически — каждый раз, когда выделение расширяется захватом находки (в прогоне «Авто», на ручном ◄/► и в Паттерн-цепочке). Нажатия перебирают: выкл → влево → вправо → обе стороны. Сторона задаётся ЗДЕСЬ и от серого показа «◀/▶ Зеркало» не зависит — поэтому зеркало на зеркале не появляется">⇔ Авто-зеркала: выкл</button>
     <label class="chk" style="flex:1 1 100%;" title="Сколько раз вообще можно вписать зеркала в строки — предел общий и для автоматики, и для ручной кнопки «⇔ Вписать зеркала в строки». Каждое вписывание удлиняет строку почти втрое, поэтому по умолчанию 1 — вписать один раз и остановиться. Счёт обнуляется «↺ Сбросом», сменой этого числа и переключением кнопки авто-зеркал">⇔ Зеркал не больше: <input type="number" id="mirrorsAutoMax" min="1" max="99" step="1" value="1" style="width:52px;margin-left:4px;"></label>
     <button id="bTopBuildOnSelect" style="flex:1 1 100%;" title="Достраивать вверх САМО, как только строка выделена мышью: выделил — верх сразу построился под неё. Переключил выделение на другую строку — верх приводится к ней заново (лишние зеркала снимаются, недостающие дописываются). Выделение при этом остаётся на той строке, по которой щёлкнули, вниз не уезжает">🖱 По выделению: не трогать</button>
@@ -6836,16 +6836,8 @@ function render(){
   // тем же сдвигом (см. renderColHeader ниже). Именно попытка двигать строки ПООТДЕЛЬНОСТИ и ломала
   // центр в прошлой версии.
   const mirrorToRow = mirrorBoundRow();
-  // При "сдвиге как с зеркалами" самая длинная строка тоже считается с ними — иначе выравнивание
-  // считалось бы от одной ширины, а рисовалось по другой.
-  if (st.mirrorShiftAsIf && (st.leftMirror || st.rightMirror)) {
-    for (let r = 0; r < st.rows.length; r++) {
-      const L = mirroredRowBits(r).length;
-      if (L > maxLen) maxLen = L;
-    }
-  }
   let mirrorPadL = 0, mirrorPadR = 0;
-  if (mirrorToRow >= 0 && (st.leftMirror || st.rightMirror)) {
+  if (st.mirrorShiftAsIf && mirrorToRow >= 0 && (st.leftMirror || st.rightMirror)) {
     for (let r = 0; r <= mirrorToRow && r < st.rows.length; r++) {
       const L = (st.rows[r] || "").length;
       if (L < 2) continue;
@@ -7359,9 +7351,11 @@ function render(){
     // любые, если галка выкл) — та же геометрия оси, что у "⊙ Ось" (axisRowShift), просто зазор
     // между off/off+1, а не сам бит.
     const axis12Frozen = st.align === "axis12" && st.axisSnap && !rowHasOneZeroPair(s);
-    // "⇔ Сдвиг как с зеркалами": длина для расчёта берётся ВМЕСТЕ с зеркалами, поэтому строка встаёт
-    // туда же, куда встала бы после вписывания, и зеркала целиком помещаются в свои отступы.
-    const geomLen = (st.mirrorShiftAsIf && (st.leftMirror || st.rightMirror)) ? mirroredRowBits(i).length : s.length;
+    // Длина для расчёта — СОБСТВЕННАЯ длина строки. Считать её вместе с зеркалами (чтобы строка
+    // встала как после вписывания) я пробовал — выравнивание от этого разъезжается: у строк разной
+    // длины прибавка разная, и центр перестаёт быть центром. Место под зеркала даётся иначе —
+    // ОДИНАКОВОЙ прибавкой ко всем строкам сразу, см. mirrorPadL/mirrorPadR в начале render().
+    const geomLen = s.length;
     const shift = s.length ? (
       st.align === "axis" ? axisRowShift(maxLen, i, geomLen) :
       st.align === "axis12" ? (axis12Frozen ? alignShift(maxLen, geomLen, "center") : axisRowShift(maxLen, i, s.length)) :
@@ -13277,12 +13271,12 @@ function setMirrorShiftAsIf(on, quiet){
   const b = document.getElementById("bMirrorShiftAsIf");
   if (b) {
     b.classList.toggle("mode-act", st.mirrorShiftAsIf);
-    b.textContent = st.mirrorShiftAsIf ? "⇔ Сдвиг как с зеркалами: вкл" : "⇔ Сдвиг как с зеркалами: выкл";
+    b.textContent = st.mirrorShiftAsIf ? "⇔ Место под зеркала: вкл" : "⇔ Место под зеркала: выкл";
   }
   if (!quiet) {
     say(st.mirrorShiftAsIf
-      ? "Строки стоят так, будто зеркала вписаны — данные не тронуты."
-      : "Строки снова стоят по своей длине, без учёта зеркал.");
+      ? "Полотно расширено под зеркала: все строки сдвинуты одинаково, выравнивание прежнее."
+      : "Место под зеркала убрано — видно столько, сколько влезает в отступы строк.");
     render(); saveCache();
   }
 }
