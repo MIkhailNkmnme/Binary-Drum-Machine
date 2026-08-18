@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.614</title>
+<title>Zerkalius Fold — v0.619</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -576,7 +576,7 @@
      бы сейчас не нарисованные строки. Благодаря ей полоса прокрутки и позиция любой строки такие
      же, как при полной отрисовке. Своей ширины не имеет и мышь не ловит. */
   .vspacer{width:1px;pointer-events:none}
-  /* Бит, накрытый находкой режима "🌈 Все паттерны сразу" — фон задаётся инлайном (свой цвет у
+  /* Бит, накрытый находкой режима "🌈 Все паттерны" — фон задаётся инлайном (свой цвет у
      каждого паттерна, см. allPatColor), тут только тёмный текст поверх яркого фона. */
   .allpat-bit{color:#0a0e14 !important;border-radius:1px}
   /* Непрозрачный фон под .num пробовали трижды (обычный background — "полосы"; ::before с
@@ -714,7 +714,7 @@
     border-radius:2px; box-shadow:0 0 4px rgba(255,207,107,.6)}
 
   /* ОТДЕЛЬНОЕ выделение паттернов (st.selectedPats, клик по ячейке паттерна) — сужает список того,
-     что ищет "🌈 Все паттерны сразу". Намеренно НЕ заливка, а рамка: заливка тут уже занята
+     что ищет "🌈 Все паттерны". Намеренно НЕ заливка, а рамка: заливка тут уже занята
      признаком "найден" (.bg-search-hit выше и цвет самого паттерна), и два фона спорили бы между
      собой. Рамка читается поверх любого из них и ни с чем не путается. */
   .pat.pat-sel, .pat2.pat-sel{outline:1px solid var(--acc);outline-offset:-1px;border-radius:2px}
@@ -1187,7 +1187,7 @@
    паттерна (прямая/инверсия/реверс/инверсия+реверс) совпало у конкретной строки. */
 .chain-result-line-check{flex:0 0 auto;width:3.4em;text-align:center;display:inline-flex;
   justify-content:center;gap:1px;overflow:hidden}
-/* Столбец НОМЕРОВ НАЙДЕННЫХ ПАТТЕРНОВ (режим "🌈 Все паттерны сразу") — отдельная колонка
+/* Столбец НОМЕРОВ НАЙДЕННЫХ ПАТТЕРНОВ (режим "🌈 Все паттерны") — отдельная колонка
    фиксированной ширины, а не приписка к галочкам: иначе длинный список номеров налезал на подпись
    режима слева (запрос пользователя "тут наложение"). Номера КЛИКАБЕЛЬНЫ: клик выделяет строку
    этого паттерна в таблице и подводит её к глазам. Не влезли — прокручивается колёсиком внутри
@@ -1589,7 +1589,7 @@ body.vcur-on #vcurBar{display:flex}
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <a href="index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (index.html)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.614</span></h3>
+    <a href="index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (index.html)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.619</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -1826,6 +1826,14 @@ body.vcur-on #vcurBar{display:flex}
     <button id="bCellShiftR" style="flex:1;" title="Сдвинуть биты выбранных ячеек ВПРАВО по кругу — внутри каждой строки выделения отдельно, только по выбранным позициям">► Сдвиг</button>
     <button id="bCellClear" style="flex:1;" title="Снять выделение ячеек">✕ Снять</button>
   </div>
+  <!-- ЧТО ДЕЛАЕТ КЛИК ПО НОМЕРУ СТОЛБЦА (линейка над цепочкой) — два режима, активен всегда
+       ровно один (запрос пользователя: "две кнопки, первая — то, что уже включает, вторая
+       обрезает от стороны выравнивания"). Первая — прежнее и единственное до сих пор поведение,
+       ничего в нём не меняется. -->
+  <div style="grid-column:1 / -1; display:flex; gap:4px; border:1px solid var(--m-gold); background:rgba(194,171,106,0.10); border-radius:3px; padding:4px;">
+    <button id="bColModeShift" class="mode-act" style="flex:1; min-width:0; white-space:normal;" title="Клик по номеру столбца — как было всегда: каждую строку, которая своими символами реально достаёт до этого столбца, циклически сдвигает так, чтобы на нём оказалась «1» (с минимумом единиц слева от неё). Строки без единиц и не достающие до столбца не трогаются. Повторный клик по выбранному столбцу снимает выделение">⇅ Столбец: сдвиг к «1»</button>
+    <button id="bColModeTrim" style="flex:1; min-width:0; white-space:normal; border-color:#ff7b72; color:#ff7b72;" title="Клик по номеру столбца — ОБРЕЗКА: у каждой строки отрезается часть со стороны ТЕКУЩЕГО выравнивания по этот столбец включительно. Выравнивание влево (и лесенки от левого края) — режется слева, вправо — справа, у центра/оси стороны как таковой нет, поэтому режется та половина, в которой стоит сам столбец. Остаток снова встаёт по выравниванию. Работает по выделенным строкам, а если ничего не выделено — по всем. Отменяется обычным Undo">✂ Столбец: обрезать</button>
+  </div>
   <div style="grid-column:1 / -1; display:flex; gap:4px;">
     <button id="bRotate90" style="flex:1; border-color:#22d3ee; color:#22d3ee;" title="Повернуть блок строк на 90° ПО ЧАСОВОЙ: строки кладутся на сетку по ТЕКУЩЕМУ выравниванию, столбцы становятся строками (столбец читается снизу вверх) — вертикальная ось симметрии (у треугольника — его высота) ложится горизонтально, вершина смотрит ВПРАВО. Работает по выделенным строкам (берётся весь диапазон от верхней до нижней), а если ничего не выделено — по всей цепочке. Число строк меняется на число столбцов; пустые места внутри повёрнутой строки становятся нулями, по краям просто обрезаются">◺ 90° ↻</button>
     <button id="bRotate90ccw" style="flex:1; border-color:#22d3ee; color:#22d3ee;" title="То же самое, но ПРОТИВ ЧАСОВОЙ: столбцы берутся справа налево и читаются сверху вниз — вершина треугольника смотрит ВЛЕВО, а ось ложится в другую сторону">◹ 90° ↺</button>
@@ -2014,20 +2022,32 @@ body.vcur-on #vcurBar{display:flex}
          подпись в одну строку — вдвоём они распирали рамку за край панели. -->
     <div id="patSearchGrp" style="grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px;border:1px solid var(--m-teal);background:rgba(61,122,112,0.12);border-radius:3px;padding:4px;">
       <label class="chk" style="min-width:0;white-space:normal;" title="Искать в каждом результате СРАЗУ ВСЕ паттерны списка, а не один искомый. Перебор идёт с САМОЙ ВЕРХНЕЙ строки вниз; как только паттерн нашёлся — он засчитан и дальше не ищется (одна находка на паттерн, самая ранняя позиция). Каждый найденный паттерн подсвечивается СВОИМ цветом — и в строках результата, и в колонке паттернов, чтобы было видно, что где нашлось. Это ТОЛЬКО подсветка: на сообщение «паттерн строки N найден», лог находок, «🧲 Захват находки» и «🛑 Стоп на находке» эти находки не влияют — там по-прежнему считается только ИСКОМЫЙ паттерн строки под выделенной">
-        <input type="checkbox" id="cBgAllPats"> 🌈 Все паттерны сразу
+        <input type="checkbox" id="cBgAllPats"> 🌈 Все паттерны
       </label>
-      <label class="chk" style="min-width:0;white-space:normal;" title="Работает вместе с «🌈 Все паттерны сразу». Без неё каждый паттерн засчитывается ОДИН раз — по самой ранней позиции, и дальше не ищется. С ней подсвечиваются ВСЕ вхождения паттерна по всем строкам, сколько бы раз он ни встретился. Вариант (сам паттерн / инверсия / реверс) при этом выбирается как обычно, приоритет у основного, — и уже все вхождения ИМЕННО ЭТОГО варианта и показываются">
+      <label class="chk" style="min-width:0;white-space:normal;" title="Работает вместе с «🌈 Все паттерны». Без неё каждый паттерн засчитывается ОДИН раз — по самой ранней позиции, и дальше не ищется. С ней подсвечиваются ВСЕ вхождения паттерна по всем строкам, сколько бы раз он ни встретился. Вариант (сам паттерн / инверсия / реверс) при этом выбирается как обычно, приоритет у основного, — и уже все вхождения ИМЕННО ЭТОГО варианта и показываются">
         <input type="checkbox" id="cBgAllPatsEvery"> 🔁 Все вхождения
       </label>
-      <button id="bSearchOnlyHl" style="min-width:0;white-space:normal;" title="Поиск (все виды — интерлив/XOR/сквозная/конкат/вертикальный/змейкой и т.п.) считает «1» ТОЛЬКО там, где сейчас реально подсвечено цветом (01 / 1↕1 / 1⤡1), остальные позиции — «0», независимо от исходного бита. Работает только вместе с включённой хотя бы одной из этих подсветок — иначе везде «0»">🔍 Поиск только по выделенным</button>
-      <label class="chk" style="min-width:0;white-space:normal;" title="Работает вместе с «🌈 Все паттерны сразу». Если паттерн целиком в результате НЕ нашёлся — подсвечивается САМЫЙ ДЛИННЫЙ его непрерывный кусок, который там есть (не короче 2 бит), то есть видно, насколько близко подошло. Длины перебираются сверху вниз, на каждой длине сначала сам паттерн, потом инверсия/реверс (тот же приоритет вариантов, что и у обычной находки), внутри варианта куски слева направо. Если паттерн нашёлся целиком — эта галка ничего не меняет">
-        <input type="checkbox" id="cBgAllPatsPartial"> 🧩 Наибольшая часть
+      <button id="bSearchOnlyHl" style="min-width:0;white-space:normal;" title="Поиск (все виды — интерлив/XOR/сквозная/конкат/вертикальный/змейкой и т.п.) считает «1» ТОЛЬКО там, где сейчас реально подсвечено цветом (01 / 1↕1 / 1⤡1), остальные позиции — «0», независимо от исходного бита. Работает только вместе с включённой хотя бы одной из этих подсветок — иначе везде «0»">🔍 По подсветке</button>
+      <label class="chk" style="min-width:0;white-space:normal;" title="Работает вместе с «🌈 Все паттерны». Если паттерн целиком в результате НЕ нашёлся — подсвечивается САМЫЙ ДЛИННЫЙ его непрерывный кусок, который там есть (не короче 2 бит), то есть видно, насколько близко подошло. Длины перебираются сверху вниз, на каждой длине сначала сам паттерн, потом инверсия/реверс (тот же приоритет вариантов, что и у обычной находки), внутри варианта куски слева направо. Если паттерн нашёлся целиком — эта галка ничего не меняет">
+        <input type="checkbox" id="cBgAllPatsPartial"> 🧩 Макс. часть
       </label>
+      <!-- Пятой строкой во всю ширину рамки: кнопка не про то, ЧТО искать, а про то, что сделать с
+           уже найденным (запрос пользователя). -->
+      <button id="bCutFoundPats" style="grid-column:1 / -1;min-width:0;white-space:normal;border-color:#ff7b72;color:#ff7b72;" title="Удалить из строк цепочек ВСЕ биты, подсвеченные сейчас как найденные паттерны — ровно то, что видно на экране: выделены паттерны в колонке, значит только они, не выделено ничего — весь список «🌈 Все паттерны». Оставшиеся биты строки смыкаются, строка становится короче и встаёт по ТЕКУЩЕМУ выравниванию. Работает по выделенным строкам, а если ничего не выделено — по всем, где есть находки. Отменяется обычным Undo">✂ Вырезать найденные</button>
+      <!-- Какой именно КУСОК паттерна ищет "🧩 Макс. часть" (запрос пользователя): любой, только
+           с начала паттерна или только с его конца. Считается всегда от ИСХОДНОГО паттерна — у
+           реверс-вариантов начало и конец меняются местами автоматически. -->
+      <div id="partPickGrp" style="grid-column:1 / -1;display:flex;align-items:center;gap:4px;">
+        <span style="color:var(--dim);font-size:11px;flex:0 0 auto;">🧩 кусок:</span>
+        <button id="bPartAny" class="mode-act" style="flex:1;min-width:0;white-space:normal;" title="Любой непрерывный кусок паттерна — как было всегда: берётся самый длинный, который вообще есть в результате, откуда бы он ни начинался">любой</button>
+        <button id="bPartHead" style="flex:1;min-width:0;white-space:normal;" title="Только кусок ОТ НАЧАЛА паттерна: подходят 1-й бит, первые два, первые три и т.д. — самый длинный из тех, что нашлись. Хвостовые куски не рассматриваются вовсе">с начала</button>
+        <button id="bPartTail" style="flex:1;min-width:0;white-space:normal;" title="Только кусок С КОНЦА паттерна: подходят последний бит, два последних, три последних и т.д. — самый длинный из тех, что нашлись. Куски от начала не рассматриваются вовсе">с конца</button>
+      </div>
     </div>
   </div>
 
   <!-- Перенесены сюда из "Вида" — запрос пользователя. Подсветки 01/1↕1/1⤡1 со своими цветами.
-       "🔍 Поиск только по выделенным" стояла тут же (она использует ИМЕННО эти подсветки как
+       "🔍 По подсветке" стояла тут же (она использует ИМЕННО эти подсветки как
        фильтр), но по запросу пользователя переехала выше — в общую рамку четырёх переключателей
        поиска по паттернам. -->
   <div style="grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:4px;border:1px solid var(--m-slate);background:rgba(74,85,104,0.14);border-radius:3px;padding:4px;">
@@ -2552,7 +2572,7 @@ function findPatternKinds(text, patText){
   return out;
 }
 
-/* "Поиск только по выделенным" (см. #bSearchOnlyHl в "Виде"): строит СВОЮ строку из "0"/"1" для
+/* "По подсветке" (см. #bSearchOnlyHl в "Виде"): строит СВОЮ строку из "0"/"1" для
    строки r — "1" там, где позиция ПРЯМО СЕЙЧАС подсвечена цветом (объединение ВКЛЮЧЁННЫХ
    подсветок "1↕1"/"1⤡1"), остальные позиции — "0", НЕЗАВИСИМО от исходного бита в st.rows.
    У подсветки "01" логика ОБРАТНАЯ: "1" там, где позиция НЕ входит в её пробег ("01" красит и
@@ -3882,7 +3902,7 @@ const st = {
   // запрос пользователя.
   rowDividers: new Set(),
   // Отдельное выделение ПАТТЕРНОВ (клик по ячейке паттерна) — сужает список того, что ищет
-  // "🌈 Все паттерны сразу". С выделением СТРОК (selectedRows) никак не связано.
+  // "🌈 Все паттерны". С выделением СТРОК (selectedRows) никак не связано.
   selectedPats: new Set(),
   activeTab: 0, tabs: [],
   align: "center", vertical: false, padZero: false, allKinds: false, ringInvert: false, ringOff: false,
@@ -3908,15 +3928,18 @@ const st = {
   bgSearchOn: true,
   bgSubPatterns: false,
   bgSearchAllBelow: false,
-  // "🌈 Все паттерны сразу" — в каждом результате ищутся ВСЕ паттерны списка сверху вниз, по одной
+  // "🌈 Все паттерны" — в каждом результате ищутся ВСЕ паттерны списка сверху вниз, по одной
   // (самой ранней) находке на паттерн; см. findAllPatternsInResult/allPatColor.
   bgAllPats: false,
   // "🔁 Все вхождения" — подсвечивать паттерн ВЕЗДЕ, где встретился, а не только в первом
   // месте (работает только вместе с bgAllPats, см. findAllPatternsInResult).
   bgAllPatsEvery: false,
-  // "🧩 Наибольшая часть" — паттерн целиком не нашёлся: показать самый длинный его непрерывный
+  // "🧩 Макс. часть" — паттерн целиком не нашёлся: показать самый длинный его непрерывный
   // кусок, который в результате есть (тоже только вместе с bgAllPats, см. findLongestPartialHit).
   bgAllPatsPartial: false,
+  // Какой кусок паттерна ищет "🧩 Макс. часть": "any" — любой (как было всегда), "head" — только
+  // от начала паттерна, "tail" — только с его конца. См. #partPickGrp/findLongestPartialHit.
+  partialPick: "any",
   highlight01: false,
   highlightVert1: false,
   highlightDiag1: false,
@@ -5356,6 +5379,9 @@ function updateVariantCounter(){
   if (rowsEl) rowsEl.textContent = (st.shiftVariantRows && st.shiftVariantRows.length) ? st.shiftVariantRows.join(",") : "";
 }
 
+/* Escape зовёт тот же Сброс, что и кнопка, но выделять первую строку при пустом выделении он не
+   должен (запрос пользователя). Флаг живёт ровно один вызов resetAll(). */
+var resetNoAutoSelect = false;
 function resetAll(){
   st.running = false;
   setAutoBtnState(false);
@@ -5449,9 +5475,10 @@ function resetAll(){
   // сквозной"/"⨁ XOR сквозной" вообще отказываются стартовать без выделения) ведут себя
   // неочевидно на пустом выделении — пусть оно по умолчанию никогда не бывает пустым (см. запрос
   // пользователя — "пусть всегда одна выделена").
-  if ((!st.selectedRows || st.selectedRows.size === 0) && f >= 0) {
+  if (!resetNoAutoSelect && (!st.selectedRows || st.selectedRows.size === 0) && f >= 0) {
     st.selectedRows = new Set([f]);
   }
+  resetNoAutoSelect = false;
   updateVariantCounter();
   render();
 }
@@ -5912,6 +5939,64 @@ function colSelectRowRange(){
    символами реально достаёт до этого столбца (с учётом выравнивания), циклически сдвигает
    так, чтобы на этом столбце оказалась '1' — с минимумом единиц слева от неё (bestColumnShift).
    Строки без единиц или не достающие до столбца — не трогаются. */
+/* ЧТО ДЕЛАЕТ КЛИК ПО НОМЕРУ СТОЛБЦА: "shift" — прежний сдвиг строк к «1» (selectColumn),
+   "trim" — обрезка строк по этому столбцу (trimAtColumn). Переключается парой кнопок
+   #bColModeShift/#bColModeTrim. */
+var colClickMode = "shift";
+/* С какой стороны режет "✂ Столбец: обрезать" — по текущему выравниванию: у прижатых влево
+   (включая лесенки от левого края) левый край и есть "сторона выравнивания", у прижатых вправо —
+   правый. У центра/оси/осевых стороны нет вовсе, поэтому режем ту половину картинки, в которой
+   стоит сам кликнутый столбец: клик слева от середины отрезает слева, справа — справа. */
+function colTrimSide(col, maxLen){
+  if (st.align === "right" || st.align === "rstairs") return "right";
+  if (st.align === "left" || st.align === "stairs" || st.align === "halfstairs") return "left";
+  return col < Math.floor(maxLen / 2) ? "left" : "right";
+}
+/* Обрезка по столбцу: у каждой строки отрезается всё, что лежит от стороны выравнивания ДО
+   кликнутого столбца ВКЛЮЧИТЕЛЬНО (сам столбец тоже уходит — иначе клик по самому краю не делал
+   бы ничего). Считаем в КОЛОНКАХ ПОЛОТНА, то есть с учётом сдвига строки по выравниванию — те же
+   номера, что показывает линейка и что лежат в data-col у битов. Строки, которые до столбца не
+   достают, остаются как были; строка, целиком попавшая под нож, становится пустой.
+   Остаток никуда двигать не нужно: на место его ставит обычное выравнивание при отрисовке. */
+function trimAtColumn(col){
+  const idxs = (st.selectedRows && st.selectedRows.size)
+    ? Array.from(st.selectedRows).sort((a, b) => a - b)
+    : st.rows.map((_, i) => i);
+  let maxLen = 0;
+  for (const s of st.rows) if (s && s.length > maxLen) maxLen = s.length;
+  const side = colTrimSide(col, maxLen);
+  // Сначала считаем результат и только потом трогаем данные — snapshot() на пустую правку
+  // засорял бы Undo (то же правило, что у "✂ Вырезать найденные").
+  const plan = [];
+  let cut = 0;
+  for (const r of idxs) {
+    const s = st.rows[r];
+    if (!s || !s.length) continue;
+    const shift = rowShiftFor(maxLen, r, s, st.align);
+    const j = col - shift; // индекс кликнутого столбца ВНУТРИ строки
+    const out = (side === "left")
+      ? s.slice(Math.min(s.length, Math.max(0, j + 1)))
+      : s.slice(0, Math.max(0, Math.min(s.length, j)));
+    if (out === s) continue;
+    plan.push([r, out]);
+    cut += s.length - out.length;
+  }
+  if (!cut) {
+    say(`Обрезка по столбцу ${col + 1}: резать нечего — строки до него не достают.`);
+    return;
+  }
+  snapshot();
+  for (const pr of plan) {
+    st.rows[pr[0]] = pr[1];
+    insertedFlagsMap.delete(pr[0]);
+    invFlagsMap.delete(pr[0]);
+  }
+  maskChangedMap.clear(); maskBaseRows = null;
+  st.hit = null;
+  say(`Обрезка по столбцу ${col + 1} (${side === "left" ? "слева" : "справа"}): убрано ${cut} бит в ${plan.length} стр.`);
+  logStep("Обрезка по столбцу", plan.map(pr => pr[0] + 1).join(","), "", `Столбец ${col + 1}, ${cut} бит`);
+  render(); saveCache();
+}
 function selectColumn(col){
   let maxLen = 0;
   for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
@@ -6472,11 +6557,11 @@ function render(){
   const bgTargetIdx = bgInfo ? bgInfo.targetIdx : null;
   const bgMatched = !!(bgInfo && bgInfo.matched);
 
-  // "🌈 Все паттерны сразу": какие паттерны нашлись в этом рендере (по всем включённым режимам
+  // "🌈 Все паттерны": какие паттерны нашлись в этом рендере (по всем включённым режимам
   // сразу) — их ячейки в колонке паттернов красятся тем же цветом, что и сама находка в строке
   // результата (запрос пользователя "подсветить все найденные разным цветом и там, и там").
   let allPatHits = null;
-  if (st.bgAllPats && bgInfo && bgInfo.results) {
+  if (allPatsShown() && bgInfo && bgInfo.results) {
     // Подсветка НЕ ЗАВИСИТ от того, где стоит выделение (запрос пользователя). Раньше тут стояла
     // отсечка "h.patIdx > lastActive — пропустить", из-за которой найденное переставало светиться,
     // стоило выделению уехать выше. Отключённые галками "⛔" строки по-прежнему не подсвечиваются:
@@ -6490,7 +6575,7 @@ function render(){
     }
   }
 
-  // "🌈 Все паттерны сразу" — найденные паттерны подсвечиваются ПРЯМО В СТРОКАХ, и делается это
+  // "🌈 Все паттерны" — найденные паттерны подсвечиваются ПРЯМО В СТРОКАХ, и делается это
   // НЕЗАВИСИМО ОТ ФОН-ПОИСКА (запрос пользователя: "по умолчанию, даже если фон-поиск отключён").
   // Раньше подсветка бралась из bgInfo.results, а значит требовала и включённых режимов фон-поиска,
   // и выделенной строки: выключил поиск — пропала и подсветка. Теперь это отдельный, ни от чего не
@@ -6502,10 +6587,10 @@ function render(){
   // паттернов (сами объекты st.pats меняют на месте, поэтому именно тексты), настройки кольца и
   // разбора, "🔁 Все вхождения", выделение паттернов и отсечка "⛔" нижних строк.
   let allPatRows = null, allPatSelfHits = null;
-  if (st.bgAllPats) {
+  if (allPatsShown()) {
     const self = memoMask("allPatSelf",
       [st.rows, st.pats.map(p => (p && p.text) || ""), st.skipFirst, st.allKinds, st.ringOff,
-       st.ringInvert, st.ringReverse, st.bgAllPatsEvery, st.bgAllPatsPartial,
+       st.ringInvert, st.ringReverse, st.bgAllPatsEvery, st.bgAllPatsPartial, st.partialPick,
        Array.from(st.selectedPats || []).sort((a, b) => a - b),
        st.chainCutBelow, st.chainCutTail, seqAnchorIdx()],
       () => {
@@ -6546,7 +6631,7 @@ function render(){
   // Колонка паттернов: пока фон-поиск работает, метки берутся из его результатов (там известен и
   // режим, которым нашлось, — он показывается в подсказке). Когда он выключен, красим по находкам
   // из самих строк, иначе колонка молчала бы, хотя в строках подсветка есть.
-  if (st.bgAllPats && !allPatHits && allPatSelfHits) {
+  if (allPatsShown() && !allPatHits && allPatSelfHits) {
     for (const h of allPatSelfHits) {
       if (!allPatHits) allPatHits = new Map();
       if (!allPatHits.has(h.patIdx)) allPatHits.set(h.patIdx, { kind: h.kind, mode: null, patStart: h.patStart, patLen: h.patLen });
@@ -6821,7 +6906,7 @@ function render(){
     if (p && p.text){
       const bgHitSuffix = i === bgTargetIdx ? (bgMatched ? " bg-search-hit" : " bg-search-target") : "";
       // ОТДЕЛЬНОЕ выделение паттернов (st.selectedPats) — своё, не связанное с выделением строк:
-      // им сужается список того, что ищет "🌈 Все паттерны сразу" (см. findAllPatternsInResult).
+      // им сужается список того, что ищет "🌈 Все паттерны" (см. findAllPatternsInResult).
       const patSel = (st.selectedPats && st.selectedPats.has(i)) ? " pat-sel" : "";
       const c = (p.found ? ("pat found " + KIND_CLS[p.kind || 0]) : "pat") + bgHitSuffix + patSel;
       const c2 = (p.found ? ("pat2 found " + KIND_CLS[p.kind || 0]) : "pat2") + bgHitSuffix + patSel;
@@ -6829,7 +6914,7 @@ function render(){
       const stepHtml = p.found ? '<span class="st">#' + p.step + "</span>" : "";
       
       const allHit = allPatHits ? allPatHits.get(i) : null;
-      // "🧩 Наибольшая часть": паттерн нашёлся НЕ целиком — в колонке красим ТОЛЬКО найденный кусок
+      // "🧩 Макс. часть": паттерн нашёлся НЕ целиком — в колонке красим ТОЛЬКО найденный кусок
       // (запрос пользователя), остальное остаётся обычным приглушённым текстом паттерна.
       const partStart = (allHit && allHit.patLen > 0 && allHit.patStart >= 0)
         ? Math.min(allHit.patStart, p.text.length) : -1;
@@ -6839,7 +6924,7 @@ function render(){
       // Фоновый поиск сверяется через textMatchesPattern(), который сам учитывает живую
       // st.skipFirst (а не "замороженный" p.skip1, записанный только при обычной находке) —
       // подсветка первого символа для target/hit-строки идёт по тому же живому флагу.
-      // "🌈 Все паттерны сразу" и ВЫДЕЛЕННЫЕ паттерны — тоже показываем первый символ отрезанным,
+      // "🌈 Все паттерны" и ВЫДЕЛЕННЫЕ паттерны — тоже показываем первый символ отрезанным,
       // когда включено "⏭ Без 1-го" (запрос пользователя). Искалось-то уже без него всегда:
       // findAllPatternsInResult режет base = text.slice(1) по той же живой st.skipFirst. А в колонке
       // паттерн при этом рисовался целиком — и выходило, что подсвечен один кусок, а ищется другой.
@@ -6863,12 +6948,12 @@ function render(){
         textHtml = '<span class="pat-skip">' + esc(p.text[0]) + '</span>' + esc(p.text.slice(1));
       }
 
-      // "🌈 Все паттерны сразу" — нашедшийся паттерн красится СВОИМ цветом (тем же, что и его
+      // "🌈 Все паттерны" — нашедшийся паттерн красится СВОИМ цветом (тем же, что и его
       // биты в строке результата, см. allPatColor) прямо в колонке паттернов: сразу видно, какие
       // из них уже найдены и где именно. При ЧАСТИЧНОЙ находке цвет уже висит на самом куске
       // (см. textHtml выше), и всю ячейку им красить нельзя — иначе непонятно, что нашлась часть.
       // mode === null — находка НЕ из фон-поиска, а прямо из сквозной склейки строк (так работает
-      // "🌈 Все паттерны сразу" при выключенном фон-поиске, см. allPatSelfHits). Режима там нет и
+      // "🌈 Все паттерны" при выключенном фон-поиске, см. allPatSelfHits). Режима там нет и
       // называть в подсказке нечего.
       const allHitStyle = allHit
         ? (partStart >= 0 ? '' : ' style="color:' + allPatColor(i) + ' !important;font-weight:700"') +
@@ -7040,7 +7125,7 @@ function render(){
     const insFlagsRow = insertedFlagsMap.get(i);
     const envRow = envPreview ? envPreview.cells.get(i) : null;
     const prevRow = prevRows ? prevRows[i] : null;
-    const allPatRow = allPatRows ? allPatRows.get(i) : null; // "🌈 Все паттерны сразу", см. выше
+    const allPatRow = allPatRows ? allPatRows.get(i) : null; // "🌈 Все паттерны", см. выше
 
     for (let k = 0; k < s.length; k++) {
       const bit = s[k];
@@ -7076,7 +7161,7 @@ function render(){
       const isInsBit = !!(insFlagsRow && insFlagsRow.length === s.length && insFlagsRow[k]);
       // Показанная (ещё не выполненная) линия сгиба "✉ Конверт" — см. envPreview.
       const isEnvDiag = !!(envRow && envRow.has(k) && (bit === '0' || bit === '1'));
-      // Номер паттерна, накрывшего этот бит в режиме "🌈 Все паттерны сразу" (см. allPatRows).
+      // Номер паттерна, накрывшего этот бит в режиме "🌈 Все паттерны" (см. allPatRows).
       const allPatBit = allPatRow ? allPatRow[k] : undefined;
       // Бит, перевёрнутый ПОСЛЕДНИМ шагом (см. prevRows). Только настоящая смена значения:
       // 1→1 и 0→0 не считаются.
@@ -7129,7 +7214,7 @@ function render(){
           : '';
         emit('<span class="' + hlCls + '"' + foldStyle + colAttr + '>', bit, mrg);
       } else if (allPatBit !== undefined && (bit === '0' || bit === '1')) {
-        // "🌈 Все паттерны сразу" — фон цветом САМОГО ПАТТЕРНА (тем же, что в колонке паттернов и в
+        // "🌈 Все паттерны" — фон цветом САМОГО ПАТТЕРНА (тем же, что в колонке паттернов и в
         // окне "Результат"). Стоит последней из подсветок: это самая общая, справочная — любая
         // адресная (находка цепочки, изменённые биты, выбранная ячейка) должна её перебивать.
         emit('<span class="b' + bit + ' allpat-bit" style="background:' + allPatColor(allPatBit) +
@@ -7275,7 +7360,7 @@ function render(){
     const srcLine = "Строки " + bgInfo.aboveIdx + "+" + bgInfo.selIdx + " (" + alignLabel + "): " + bgInfo.rowAbove + "+" + bgInfo.rowSel;
     fullChainText = srcLine + "\n" + bgInfo.results
       .map((r, i) => bgLabels[i].padEnd(bgLabelW, " ") + (r.matched ? " ✓[" + r.kinds.map(kindTag).join(",") + "]" : "") +
-        // "🌈 Все паттерны сразу" — какие именно паттерны нашлись в этой строке (для копирования)
+        // "🌈 Все паттерны" — какие именно паттерны нашлись в этой строке (для копирования)
         ((r.allHits && r.allHits.length) ? " 🌈[" + allHitsByPat(r.allHits).map(h => "№" + (h.patIdx + 1)).join(",") + "]" : "") +
         ": " + r.result)
       .join("\n");
@@ -7315,7 +7400,7 @@ function render(){
         const p = kd.start + i;
         if (p < shown && kindAt[p] < 0) { kindAt[p] = kd.kind; skipAt[p] = kd.skip; }
       }
-      // "🌈 Все паттерны сразу": позиции найденных паттернов — каждый своим цветом (allPatColor по
+      // "🌈 Все паттерны": позиции найденных паттернов — каждый своим цветом (allPatColor по
       // номеру паттерна, тот же цвет получает и его ячейка в колонке паттернов). Перебор идёт
       // сверху вниз, и позиция достаётся ПЕРВОМУ, кто её занял — то есть паттерну выше по списку.
       const allPatAt = r.allHits && r.allHits.length ? new Array(shown).fill(-1) : null;
@@ -7358,7 +7443,7 @@ function render(){
           // (.chain-hit-bits) задан классом с !important; сама находка остаётся видна начертанием.
           const ordStyle = (isPickedLine && k < len)
             ? ' style="color:' + foldOrderColor(k, len) + ' !important"' : '';
-          // Найденный паттерн из режима "🌈 Все паттерны сразу" — своим цветом (перебивает
+          // Найденный паттерн из режима "🌈 Все паттерны" — своим цветом (перебивает
           // радугу порядка обхода, но не обычную подсветку искомого паттерна: та со своим
           // классом и приоритетом выше, см. kd).
           const allPatIdx = allPatAt ? allPatAt[k] : -1;
@@ -7391,7 +7476,7 @@ function render(){
       const checkHtml = r.kinds.map(kd =>
         '<span class="chain-result-line-check-mark' + (KIND_CLS[kd.kind] ? " " + KIND_CLS[kd.kind] : "") + (kd.skip ? " skip1" : "") + '" title="Найдено: ' + KIND_LABELS_RU[kd.kind] + (kd.skip ? " (без 1-го символа)" : "") + '">✓</span>'
       ).join("");
-      // "🌈 Все паттерны сразу" — СВОЙ столбец с номерами всех найденных в этой строке паттернов,
+      // "🌈 Все паттерны" — СВОЙ столбец с номерами всех найденных в этой строке паттернов,
       // каждый своим цветом (тем же, что у его бит) и кликабельный: клик выделяет строку этого
       // паттерна в таблице.
       // По ОДНОМУ номеру на паттерн: при "🔁 Все вхождения" находок у одного паттерна много, и
@@ -7411,7 +7496,7 @@ function render(){
       return '<div class="chain-result-line' + expanded + pickedCls + '" data-mode="' + esc(r.mode) + '" title="' + lineTitle + '">' +
         '<span class="chain-result-line-label" style="min-width:' + bgLabelW + 'ch">' + esc(bgLabels[i]) + '</span>' +
         '<span class="chain-result-line-check">' + checkHtml + '</span>' +
-        (st.bgAllPats ? '<span class="chain-result-line-hits">' + hitsHtml + '</span>' : '') +
+        (allPatsShown() ? '<span class="chain-result-line-hits">' + hitsHtml + '</span>' : '') +
         '<span class="chain-result-line-colon">:</span>' +
         '<span class="chain-result-line-bits">' + bits + '</span>' +
       '</div>';
@@ -8431,7 +8516,7 @@ if (chainResultHeadEl) {
 const chainTextEl2 = document.getElementById("chainText");
 if (chainTextEl2) {
   chainTextEl2.addEventListener("click", (e) => {
-    // Клик по НОМЕРУ найденного паттерна (режим "🌈 Все паттерны сразу") — выделяем его строку в
+    // Клик по НОМЕРУ найденного паттерна (режим "🌈 Все паттерны") — выделяем его строку в
     // таблице и подводим к глазам; саму строку результата при этом не сворачиваем/разворачиваем.
     const hitNum = e.target.closest && e.target.closest(".chain-hit-num");
     if (hitNum) {
@@ -8755,7 +8840,7 @@ function openPanelsPopup(){
       '#panelsHost .menu-panel{position:absolute;width:var(--side-w,300px);background:var(--panel,#11151c);' +
         'border:1px solid var(--line,#232a36);border-radius:5px;padding:4px 6px 6px;' +
         'box-shadow:0 6px 18px rgba(0,0,0,.5)}' +
-      /* Длинные подписи кнопок (напр. "🔍 Поиск только по выделенным") по глобальному правилу
+      /* Длинные подписи кнопок (напр. "🔍 По подсветке") по глобальному правилу
          button{white-space:nowrap} не переносятся и ВЫЛЕЗАЛИ за правый край панели — в доке это
          было незаметно, а тут панель стоит на пустом фоне (запрос пользователя "вылезает кнопка
          в Окне"). Внутри панели разрешаем перенос и разрешаем блокам сжиматься (min-width:0 —
@@ -9219,7 +9304,7 @@ function saveLayout() {
    тому же паттерну — к следующему вхождению, по кругу (запрос пользователя). Где паттерн лежит,
    берём из той же карты, по которой он подсвечивается в строках (allPatRows режима "🌈 Все
    паттерны сразу", см. render) — значит переходы идут ровно по видимой подсветке, включая
-   частичные находки "🧩 Наибольшая часть" и каждое вхождение при "🔁 Все вхождения".
+   частичные находки "🧩 Макс. часть" и каждое вхождение при "🔁 Все вхождения".
    var, а не let: присваивание живёт внутри render(), которая по коду ВЫШЕ этого места. */
 var lastAllPatRows = null;
 var patNavPat = -1, patNavIdx = -1;
@@ -9264,7 +9349,18 @@ function scrollToBit(r, p){
 /* Следующее вхождение кликнутого паттерна. Кликнули ДРУГОЙ паттерн — начинаем с первого. */
 function patNavStep(patIdx){
   const targets = patHitTargets(patIdx);
-  if (!targets.length) { patNavPat = -1; patNavIdx = -1; return; }
+  if (!targets.length) {
+    patNavPat = -1; patNavIdx = -1;
+    // Молчать тут нельзя (запрос пользователя): непонятно, поиск не нашёл или его вовсе нет.
+    // Разбираем ПОЧЕМУ пусто: отсечки поиска (⛔, «⏭ Без 1-го», чужое выделение) снаружи никак
+    // не видны, и молчаливое "не найдено" на них выглядит как поломка (запрос пользователя).
+    const why = allPatSkipReason(patIdx);
+    const pt = (st.pats[patIdx] && st.pats[patIdx].text) || "";
+    say(why
+      ? `Паттерн строки ${patIdx + 1} не искался: ${why}.`
+      : `Паттерн строки ${patIdx + 1} («${pt}») в строках цепочек не встречается${st.bgAllPatsPartial ? "" : " — включите «🧩 Макс. часть», чтобы увидеть самый длинный совпавший кусок"}.`);
+    return;
+  }
   patNavIdx = (patNavPat === patIdx) ? (patNavIdx + 1) % targets.length : 0;
   patNavPat = patIdx;
   const t = targets[patNavIdx];
@@ -9766,7 +9862,7 @@ document.getElementById("rows").onclick = e => {
   // (запрос пользователя). Выход здесь БЕЗУСЛОВНЫЙ: даже клик по пустой ячейке паттерна не должен
   // проваливаться в выделение строки — иначе колонка ведёт себя по-разному в зависимости от того,
   // есть в этой строке паттерн или нет. Переключаем только там, где паттерн реально есть.
-  // Этим выделением сужается список того, что ищет "🌈 Все паттерны сразу": выделено хоть что-то —
+  // Этим выделением сужается список того, что ищет "🌈 Все паттерны": выделено хоть что-то —
   // ищутся только выделенные, пусто — все, как и раньше (см. findAllPatternsInResult).
   // Правило то же, что у выделения СТРОК (запрос пользователя): обычный клик выделяет РОВНО ОДИН
   // паттерн, сбрасывая прежний набор; повторный клик по единственному выделенному — снимает
@@ -9784,7 +9880,7 @@ document.getElementById("rows").onclick = e => {
         // Повторный клик по тому же паттерну выделение НЕ снимает: у него теперь своё дело —
         // переход к следующему вхождению (см. patNavStep ниже). Раньше снимал, и набор выделенных
         // мигал на каждый второй клик; а он входит в ключ memo-кэша поиска, так что каждый второй
-        // клик заново перелопачивал ВЕСЬ список паттернов (с "🧩 Наибольшая часть" это и подвисало).
+        // клик заново перелопачивал ВЕСЬ список паттернов (с "🧩 Макс. часть" это и подвисало).
         // Снять выделение по-прежнему можно Ctrl+кликом.
         st.selectedPats.clear();
         st.selectedPats.add(idx);
@@ -10081,6 +10177,29 @@ if (cBgAllPatsEveryEl) {
     saveCache();
   };
 }
+/* "🧩 кусок: любой / с начала / с конца" — что именно ищет "🧩 Макс. часть", когда паттерн целиком
+   не нашёлся (см. findLongestPartialHit). Переключатель на три положения, активно всегда одно. */
+function setPartialPick(m, quiet){
+  st.partialPick = m;
+  const map = { any: "bPartAny", head: "bPartHead", tail: "bPartTail" };
+  for (const k in map) {
+    const el = document.getElementById(map[k]);
+    if (el) el.classList.toggle("mode-act", k === m);
+  }
+  if (!quiet) {
+    say(m === "head" ? "🧩 Макс. часть: ищем только кусок ОТ НАЧАЛА паттерна."
+      : m === "tail" ? "🧩 Макс. часть: ищем только кусок С КОНЦА паттерна."
+      : "🧩 Макс. часть: ищем любой непрерывный кусок паттерна.");
+    render(); saveCache();
+  }
+}
+const bPartAnyEl = document.getElementById("bPartAny");
+if (bPartAnyEl) bPartAnyEl.onclick = () => setPartialPick("any");
+const bPartHeadEl = document.getElementById("bPartHead");
+if (bPartHeadEl) bPartHeadEl.onclick = () => setPartialPick("head");
+const bPartTailEl = document.getElementById("bPartTail");
+if (bPartTailEl) bPartTailEl.onclick = () => setPartialPick("tail");
+
 const cBgAllPatsPartialEl = document.getElementById("cBgAllPatsPartial");
 if (cBgAllPatsPartialEl) {
   cBgAllPatsPartialEl.onchange = () => {
@@ -10184,7 +10303,7 @@ function lengthSumsMatchedCombos(st, selIdx){
   return out;
 }
 
-/* Цвет конкретного ПАТТЕРНА для режима "🌈 Все паттерны сразу" — по его номеру в списке, чтобы
+/* Цвет конкретного ПАТТЕРНА для режима "🌈 Все паттерны" — по его номеру в списке, чтобы
    один и тот же паттерн был одного цвета и в строке результата, и в колонке паттернов. Шаг по
    кругу цветов взят простым числом (137°, "золотой угол"), поэтому соседние номера получают
    заметно разные оттенки, а не плавный градиент. */
@@ -10192,14 +10311,22 @@ function allPatColor(idx){
   return "hsl(" + ((idx * 137) % 360) + ", 85%, 62%)";
 }
 
-/* "🌈 Все паттерны сразу" (st.bgAllPats): ищем в готовой строке результата НЕ один искомый
+/* "🌈 Все паттерны" (st.bgAllPats): ищем в готовой строке результата НЕ один искомый
    паттерн, а ВСЕ паттерны списка — сверху вниз. Каждый паттерн засчитывается ОДИН раз, по самой
    ранней позиции, и дальше не ищется (запрос пользователя: "поиск идёт с верхней строки вниз,
    если находится — больше не ищется"). Кольцо/⏭ Без 1-го/⇌ Инв-Рев учитываются ровно так же, как
    в findPatternKinds() — просто кольцевой буфер строится ОДИН раз на весь список паттернов, а не
    заново на каждый (иначе на длинных результатах это десятки лишних мегабайт строк за render).
    Возвращает [{patIdx, kind, skip, start, len}] в порядке следования паттернов. */
-/* Минимальная длина паттерна, участвующего в "🌈 Все паттерны сразу" (см. findAllPatternsInResult).
+/* ВЫДЕЛЕНИЕ ПАТТЕРНА САМО ВКЛЮЧАЕТ ПОИСК (запрос пользователя: "выделил паттерн, вхождение в
+   цепочках точно есть, а он ничего не находит"). Выделение паттернов и раньше сужало список
+   искомого до выделенных (см. onlySel в findAllPatternsInResult), но ВСЯ ветка поиска висела на
+   одной галке "🌈 Все паттерны": с выключенной галкой выделенный паттерн не искался нигде — ни в
+   строках, ни в результатах фон-поиска, — а клик по нему молча никуда не вёл, потому что карта
+   подсветки (lastAllPatRows) вообще не строилась. Теперь достаточно любого из двух: галка ищет
+   ВСЕ паттерны, выделение — только выделенные. */
+function allPatsShown(){ return !!(st.bgAllPats || (st.selectedPats && st.selectedPats.size)); }
+/* Минимальная длина паттерна, участвующего в "🌈 Все паттерны" (см. findAllPatternsInResult).
    Ниже этого порога паттерн в этом режиме не ищется и не подсвечивается вовсе. */
 const ALL_PATS_MIN_LEN = 2;
 /* Список находок, свёрнутый ДО ОДНОЙ НА ПАТТЕРН (самой ранней). Нужен там, где показывается
@@ -10215,7 +10342,7 @@ function allHitsByPat(hits){
   }
   return out;
 }
-/* "🧩 Наибольшая часть" (st.bgAllPatsPartial): паттерн целиком в результате не нашёлся — ищем
+/* "🧩 Макс. часть" (st.bgAllPatsPartial): паттерн целиком в результате не нашёлся — ищем
    САМЫЙ ДЛИННЫЙ его непрерывный кусок, который там есть. Длины перебираются СВЕРХУ ВНИЗ, поэтому
    первая же находка и есть самая длинная; внутри длины порядок тот же, что у обычной находки —
    сначала сам паттерн, потом инверсия/реверс (variants уже в этом порядке), а внутри варианта
@@ -10229,7 +10356,18 @@ function findLongestPartialHit(ring, period, variants, minLen){
     const seen = new Set();
     for (const [kind, cand] of variants) {
       if (cand.length < L) continue;
-      for (let s = 0; s + L <= cand.length; s++) {
+      // "🧩 кусок: с начала / с конца" (st.partialPick) — вместо всех кусков подряд берём ровно
+      // один: тот, что начинается с НАЧАЛА самого паттерна, или тот, что упирается в его КОНЕЦ.
+      // Считаем от ИСХОДНОГО паттерна, поэтому у реверс-вариантов (kind 2/3) начало и конец
+      // меняются местами — иначе "с начала" на реверсе означало бы конец, чего никто не просил.
+      const pick = st.partialPick || "any";
+      let sFrom = 0, sTo = cand.length - L;
+      if (pick !== "any") {
+        const rev = (kind === 2 || kind === 3);
+        sFrom = sTo = ((pick === "head") !== rev) ? 0 : cand.length - L;
+      }
+      for (let s = sFrom; s <= sTo; s++) {
+
         const sub = cand.slice(s, s + L);
         if (seen.has(sub)) continue;
         seen.add(sub);
@@ -10257,27 +10395,66 @@ function findLongestPartialHit(ring, period, variants, minLen){
   }
   return best;
 }
+/* ПОЧЕМУ паттерн не нашёлся — разбор ровно тех отсечек, что стоят в findAllPatternsInResult выше.
+   Нужен, чтобы сообщение "вхождений не найдено" не было загадкой (запрос пользователя: паттерн
+   в строках виден глазами, а поиск молчит): чаще всего дело не в самом поиске, а в том, что этот
+   паттерн до поиска вообще не дошёл — отсечён "⛔", короче порога после "⏭ Без 1-го" или не входит
+   в выделенный набор. null — значит паттерн честно искали и правда не нашли. */
+function allPatSkipReason(i){
+  const p = st.pats[i];
+  if (!p || !p.text) return "у этой строки нет паттерна";
+  const lastRow = (st.chainCutBelow || st.chainCutTail) ? patChainLastIdx(seqAnchorIdx()) : (st.pats.length - 1);
+  if (i > lastRow && !(st.selectedPats && st.selectedPats.has(i))) return `строка отсечена галкой «⛔» — паттерны ищутся только по строку ${lastRow + 1} (выделенный паттерн ищется в любом случае)`;
+  if (st.selectedPats && st.selectedPats.size) {
+    let anyNonEmpty = false;
+    for (const si of st.selectedPats) if (st.pats[si] && st.pats[si].text) { anyNonEmpty = true; break; }
+    if (anyNonEmpty && !st.selectedPats.has(i)) return "выделены другие паттерны — ищутся только они";
+  }
+  const base = (st.skipFirst && p.text.length > 1) ? p.text.slice(1) : p.text;
+  if (base.length < ALL_PATS_MIN_LEN) {
+    return `искать нечего: «${base}»${st.skipFirst && p.text.length > 1 ? " (после «⏭ Без 1-го»)" : ""} короче ${ALL_PATS_MIN_LEN} бит`;
+  }
+  return null;
+}
 function findAllPatternsInResult(text){
   const out = [];
   if (!text || !st.pats || !st.pats.length) return out;
   const cycle = ringCycle(text);
   const period = cycle.length;
   const ring = st.ringOff ? cycle : (period > 1 ? cycle + cycle.slice(0, period - 1) : cycle);
-  // Отключённые галками "⛔" нижние строки не участвуют ни в чём: их паттерны тут даже не ищутся
-  // (запрос пользователя "если строки выключены — в них паттерны не искать и не светить").
+  // Отключённые галками "⛔" нижние строки не участвуют в АВТОМАТИЧЕСКОМ переборе: их паттерны тут
+  // не ищутся (запрос пользователя "если строки выключены — в них паттерны не искать и не светить").
+  // Выделенных вручную паттернов это не касается, см. цикл ниже.
   const lastRow = (st.chainCutBelow || st.chainCutTail) ? patChainLastIdx(seqAnchorIdx()) : (st.pats.length - 1);
   // ОТДЕЛЬНОЕ ВЫДЕЛЕНИЕ ПАТТЕРНОВ (запрос пользователя): выделен хоть один — ищем ТОЛЬКО выделенные,
   // не выделено ничего — ищем все, как и раньше. Действует только здесь, то есть только в режиме
-  // "🌈 Все паттерны сразу" (других вызовов у этой функции нет); обычный фон-поиск и Паттерн-цепочка
+  // "🌈 Все паттерны" (других вызовов у этой функции нет); обычный фон-поиск и Паттерн-цепочка
   // этого выделения не видят вовсе.
-  const onlySel = (st.selectedPats && st.selectedPats.size) ? st.selectedPats : null;
-  for (let i = 0; i < st.pats.length && i <= lastRow; i++) {
-    if (onlySel && !onlySel.has(i)) continue;
+  // В набор берём ТОЛЬКО непустые паттерны. Строки могут уехать относительно колонки паттернов
+  // (⬔ До квадрата и ◺ 90° вставляют строки, а паттерны сознательно остаются на своих номерах), и
+  // выделенный номер оказывается на пустой ячейке. Раньше такой набор глушил поиск ЦЕЛИКОМ: режим
+  // честно искал "только выделенные", а выделенный был пуст — и не находилось вообще ничего
+  // (запрос пользователя: "после До квадрата вообще не ищет"). Пусто после отсева — ищем все.
+  let onlySel = null;
+  if (st.selectedPats && st.selectedPats.size) {
+    for (const si of st.selectedPats) {
+      if (st.pats[si] && st.pats[si].text) { if (!onlySel) onlySel = new Set(); onlySel.add(si); }
+    }
+  }
+
+  for (let i = 0; i < st.pats.length; i++) {
+    // ЯВНОЕ ВЫДЕЛЕНИЕ СИЛЬНЕЕ ОТСЕЧКИ "⛔" (запрос пользователя: выделил паттерн 4-й строки, а в
+    // ответ "строка отсечена, паттерны ищутся только по строку 2"). Отсечка про то, докуда идёт
+    // АВТОМАТИЧЕСКИЙ перебор всего списка; паттерн, ткнутый пальцем, ищется всегда — иначе
+    // выделение просто не работает и непонятно почему.
+    if (onlySel) { if (!onlySel.has(i)) continue; }
+    else if (i > lastRow) continue;
+
     const p = st.pats[i];
     if (!p || !p.text) continue;
     const skipApplied = st.skipFirst && p.text.length > 1;
     const base = skipApplied ? p.text.slice(1) : p.text;
-    // Паттерн длиннее самого результата целиком не влезет — но при "🧩 Наибольшая часть" его
+    // Паттерн длиннее самого результата целиком не влезет — но при "🧩 Макс. часть" его
     // КУСОК влезть может, поэтому там такой паттерн не отбрасываем.
     if (!base) continue;
     if (base.length > period && !st.bgAllPatsPartial) continue;
@@ -10302,7 +10479,7 @@ function findAllPatternsInResult(text){
       if (kind === 0) { best = { kind, cand, start: idx }; break; }
       if (!best || idx < best.start) best = { kind, cand, start: idx };
     }
-    // Целиком не нашёлся — при "🧩 Наибольшая часть" берём самый длинный подходящий кусок.
+    // Целиком не нашёлся — при "🧩 Макс. часть" берём самый длинный подходящий кусок.
     if (!best && st.bgAllPatsPartial) best = findLongestPartialHit(ring, period, variants, ALL_PATS_MIN_LEN);
     if (!best) continue;
     // Какую часть САМОГО паттерна подсветить в колонке (запрос пользователя: "подсветить только
@@ -10454,13 +10631,13 @@ function computeBgSearchTarget(){
   // мешал бы поиску).
   const mkResult = (m, result) => {
     const kinds = findPatternKinds(result, patText);
-    // "🌈 Все паттерны сразу" — вдобавок к обычной сверке ищем в этом же результате ВЕСЬ список
+    // "🌈 Все паттерны" — вдобавок к обычной сверке ищем в этом же результате ВЕСЬ список
     // паттернов (см. findAllPatternsInResult). Это ТОЛЬКО подсветка: в matched такие находки НЕ
     // идут (запрос пользователя — иначе "паттерн строки N найден" писалось на каждой строке, хотя
     // сам искомый паттерн не находился и даже мог отсутствовать). matched, как и раньше, значит
     // ровно одно: совпал ИСКОМЫЙ паттерн строки под выделенной — на нём и завязаны сообщение о
     // находке, подсветка ячейки паттерна, лог, захват находки и "🛑 Стоп на находке".
-    const allHits = st.bgAllPats ? findAllPatternsInResult(result) : null;
+    const allHits = allPatsShown() ? findAllPatternsInResult(result) : null;
     return { mode: m, result, kinds, tried: kinds.tried, allHits, matched: kinds.length > 0 };
   };
   const results = modes.flatMap(mode => {
@@ -11027,12 +11204,30 @@ if (bGenSierpinskiEl) {
   };
 }
 
+/* Пара кнопок "что делает клик по номеру столбца" — переключатель на два положения, активна
+   всегда ровно одна (см. colClickMode). Данные ни одна из них сама по себе не трогает. */
+function setColClickMode(m){
+  colClickMode = m;
+  const bs = document.getElementById("bColModeShift"), bt = document.getElementById("bColModeTrim");
+  if (bs) bs.classList.toggle("mode-act", m === "shift");
+  if (bt) bt.classList.toggle("mode-act", m === "trim");
+  say(m === "trim"
+    ? "Клик по номеру столбца теперь ОБРЕЗАЕТ строки по этому столбцу со стороны выравнивания."
+    : "Клик по номеру столбца снова сдвигает строки к «1» на нём.");
+}
+const bColModeShiftEl = document.getElementById("bColModeShift");
+if (bColModeShiftEl) bColModeShiftEl.onclick = () => setColClickMode("shift");
+const bColModeTrimEl = document.getElementById("bColModeTrim");
+if (bColModeTrimEl) bColModeTrimEl.onclick = () => setColClickMode("trim");
+
 const colHeaderEl = document.getElementById("colHeader");
 if (colHeaderEl) {
   colHeaderEl.addEventListener("click", e => {
     const cell = e.target.closest(".col-cell");
     if (!cell) return;
     const col = +cell.dataset.col;
+    // Режим "✂ Столбец: обрезать" — клик по номеру не выделяет столбец, а режет строки.
+    if (colClickMode === "trim") { trimAtColumn(col); return; }
     if (col === st.selectedCol) {
       // Клик по уже выбранному столбцу — тоже снимает выделение
       st.selectedCol = -1;
@@ -11501,6 +11696,58 @@ if (bFillZeroOneEl) {
   };
 }
 
+/* "✂ Вырезать найденные" — выкинуть из строк цепочек биты, подсвеченные как найденные паттерны
+   (запрос пользователя). Берём РОВНО ту карту, по которой подсветка сейчас и нарисована
+   (lastAllPatRows — по ней же ходит клик по паттерну), поэтому вырезается именно видимое:
+   частичные находки "🧩 Макс. часть" и каждое вхождение при "🔁 Все вхождения" в том числе.
+   Оставшиеся биты просто смыкаются — строка становится короче, а на место её ставит обычное
+   выравнивание при отрисовке, отдельно двигать ничего не нужно. */
+const bCutFoundPatsEl = document.getElementById("bCutFoundPats");
+if (bCutFoundPatsEl) {
+  bCutFoundPatsEl.onclick = () => {
+    const map = lastAllPatRows;
+    if (!map || !map.size) {
+      say("Вырезать нечего: в строках сейчас не подсвечено ни одной находки — включите «🌈 Все паттерны» или выделите паттерн в колонке.");
+      return;
+    }
+    const onlyRows = (st.selectedRows && st.selectedRows.size) ? st.selectedRows : null;
+    // Сначала считаем результат и только потом трогаем данные: snapshot() на правку, которая
+    // ничего не меняет, засорял бы Undo.
+    const plan = [];
+    let cutBits = 0;
+    for (const [r, arr] of map) {
+      if (onlyRows && !onlyRows.has(r)) continue;
+      const s = st.rows[r];
+      if (!s || !s.length) continue;
+      let out = "", n = 0;
+      for (let p = 0; p < s.length; p++) {
+        if (arr[p] !== undefined) { n++; continue; }
+        out += s[p];
+      }
+      if (!n) continue;
+      plan.push([r, out]);
+      cutBits += n;
+    }
+    if (!cutBits) {
+      say(onlyRows ? "Вырезать нечего: в выделенных строках находок нет." : "Вырезать нечего: находок в строках нет.");
+      return;
+    }
+    snapshot();
+    for (const pr of plan) {
+      st.rows[pr[0]] = pr[1];
+      // Длина строки изменилась — позиционные флаги (вставленные символы, инверсия между
+      // символами, маска) к ней больше не относятся, как и у остальных правок длины.
+      insertedFlagsMap.delete(pr[0]);
+      invFlagsMap.delete(pr[0]);
+    }
+    maskChangedMap.clear(); maskBaseRows = null;
+    st.hit = null;
+    say(`Вырезано ${cutBits} бит найденных паттернов в ${plan.length} стр. Оставшиеся биты сомкнулись и стоят по текущему выравниванию.`);
+    logStep("Вырезать найденные", plan.map(pr => pr[0] + 1).join(","), "", `${cutBits} бит в ${plan.length} стр.`);
+    render(); saveCache();
+  };
+}
+
 /* === ВЫБОР ОТДЕЛЬНЫХ ЯЧЕЕК (БИТОВ) КУРСОРОМ ===
    cellSel — набор ключей "строка|столбец" (столбец — НОМЕР КОЛОНКИ ПОЛОТНА, тот же, что в
    data-col у бита: сдвиг строки уже учтён, поэтому прямоугольник получается визуальным, а не
@@ -11718,8 +11965,18 @@ if (bCellRotateEl) bCellRotateEl.onclick = () => cellSelApply("Поворот я
    заменяется целиком — вместе с паттернами/флагами и с поправкой разделителей строк. */
 function rotateSelected90(ccw){
   const sel = (st.selectedRows && st.selectedRows.size) ? Array.from(st.selectedRows).sort((a, b) => a - b) : null;
+  // ОДНА выделенная строка = блок ОТ САМОГО ВЕРХА до неё (запрос пользователя: "пусть все до
+  // верха сначала выделит и потом квадрат"). Выделение при этом реально расширяется — видно, с
+  // чем работала кнопка, и следующее нажатие (инверсия достроенного) видит тот же блок.
+  if (sel && sel.length === 1 && sel[0] > 0) {
+    const top = sel[0];
+    sel.length = 0;
+    st.selectedRows = new Set();
+    for (let i = 0; i <= top; i++) { sel.push(i); st.selectedRows.add(i); }
+  }
   const start = sel ? sel[0] : 0;
   const end = sel ? sel[sel.length - 1] : st.rows.length - 1;
+
   const src = [];
   for (let i = start; i <= end; i++) src.push(st.rows[i] || "");
   if (!src.some(s => s.length)) { say("Поворот: нет непустых строк."); return; }
@@ -13570,6 +13827,8 @@ document.addEventListener("keydown", e => {
     if (typeof patChainAutoTimer !== "undefined" && patChainAutoTimer) {
       patChainAutoStop("Паттерн-цепочка (Авто): остановлено (Escape).");
     }
+    // Сброс по Escape НЕ выделяет первую строку на пустом выделении (запрос пользователя).
+    resetNoAutoSelect = true;
     document.getElementById("bReset").click();
     // Выделение строк (st.selectedRows) Escape НЕ трогает — то же поведение, что и у клика по
     // самой кнопке "↺ Сброс" (см. resetAll()) — запрос пользователя (отменяет более раннее
@@ -13929,7 +14188,7 @@ if (bHighlightDiag1El) {
     saveCache();
   };
 }
-/* "Поиск только по выделенным" (см. #bSearchOnlyHl, computeHighlightedOnlyRow()) — сам эффект
+/* "По подсветке" (см. #bSearchOnlyHl, computeHighlightedOnlyRow()) — сам эффект
    применяется в getRowBits() и затрагивает только логику поиска; на подсветку/раскраску экрана
    не влияет, поэтому тут просто toggle + перерисовка (актуализирует состояние bg-поиска и т.п.,
    раз данные для поиска изменились). */
@@ -14590,6 +14849,7 @@ function captureUiSettings(){
     bgAllPats: cBgAllPatsEl ? cBgAllPatsEl.checked : false,
     bgAllPatsEvery: cBgAllPatsEveryEl ? cBgAllPatsEveryEl.checked : false,
     bgAllPatsPartial: cBgAllPatsPartialEl ? cBgAllPatsPartialEl.checked : false,
+    partialPick: st.partialPick || "any",
     popupFontPx: popupFontPx,
     resultHeightLocked: resultHeightLocked,
     highlight01: !!st.highlight01,
@@ -14675,6 +14935,7 @@ function applyUiSettings(u){
   if (u.bgAllPats !== undefined && cBgAllPatsEl) { cBgAllPatsEl.checked = u.bgAllPats; st.bgAllPats = u.bgAllPats; }
   if (u.bgAllPatsEvery !== undefined && cBgAllPatsEveryEl) { cBgAllPatsEveryEl.checked = u.bgAllPatsEvery; st.bgAllPatsEvery = u.bgAllPatsEvery; }
   if (u.bgAllPatsPartial !== undefined && cBgAllPatsPartialEl) { cBgAllPatsPartialEl.checked = u.bgAllPatsPartial; st.bgAllPatsPartial = u.bgAllPatsPartial; }
+  if (u.partialPick) setPartialPick(u.partialPick, true);
   if (u.popupFontPx !== undefined) { popupFontPx = u.popupFontPx; applyPopupFont(); }
   // applyResultHeightLock() тут НЕ вызываем — #chainText на этот момент ещё пустой/не
   // отрендерен реальным содержимым, замерять высоту рано; следующий render() (см. его конец)
@@ -14845,8 +15106,11 @@ const DEFAULT_UI_SETTINGS = {
   // "🔁 Все вхождения" — подсвечивать паттерн ВЕЗДЕ, где встретился, а не только в первом
   // месте (работает только вместе с bgAllPats, см. findAllPatternsInResult).
   bgAllPatsEvery: false,
-  // "🧩 Наибольшая часть" — см. findLongestPartialHit (тоже только вместе с bgAllPats).
+  // "🧩 Макс. часть" — см. findLongestPartialHit (тоже только вместе с bgAllPats).
   bgAllPatsPartial: false,
+  // Какой кусок паттерна ищет "🧩 Макс. часть": "any" — любой (как было всегда), "head" — только
+  // от начала паттерна, "tail" — только с его конца. См. #partPickGrp/findLongestPartialHit.
+  partialPick: "any",
   chgBitsOn: true,
   popupFontPx: 10,
   resultHeightLocked: true,
