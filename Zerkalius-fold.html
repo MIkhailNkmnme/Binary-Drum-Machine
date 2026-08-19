@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.694</title>
+<title>Zerkalius Fold — v0.711</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -1616,7 +1616,7 @@ body.vcur-on #vcurBar{display:flex}
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <a href="index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (index.html)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.694</span></h3>
+    <a href="index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (index.html)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.711</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -1834,7 +1834,7 @@ body.vcur-on #vcurBar{display:flex}
     </div>
     <!-- Проекц.XOR и Скан — перенесены сюда, друг напротив друга (2-колоночная сетка) — запрос
          пользователя "перенесу вниз справа от Скан". -->
-    <button id="bStepXorProj" style="color:#ff66cc;" title="Проекция XOR: Вычисляет XOR всех строк ВЫШЕ текущей и полностью перезаписывает им текущую строку.">⏬ Проекц.XOR</button>
+    <button id="bStepXorProj" style="color:#ff66cc;" title="Проекция XOR ПО ОДНОЙ ВЕРХНЕЙ СТРОКЕ ЗА НАЖАТИЕ: первое нажатие складывает выделенную строку с БЛИЖАЙШЕЙ строкой сверху, второе — со следующей выше, и так вверх по цепочке. Результат каждый раз перезаписывает саму выделенную строку. Берутся только те верхние строки, у которых есть БИТ НАД БИТОМ выделенной — то есть реально пересекающиеся с ней по столбцам; стоящие сбоку пропускаются, как и строки чужой подсетки на «½»-выравниваниях (их биты стоят в промежуточных полустолбцах и друг над другом не встают). Складывается по настоящим столбцам: выравнивание, полустолбцы «½», показанные зеркала. Сменили выделение — подъём начинается заново. Откатывается «↩ Отменой»">⏬ Проекц.XOR</button>
     <button id="bStepScan" style="color:var(--green);" title="Сканировать строки на паттерны без изменения символов">👁 Скан</button>
   </div>
 </div>
@@ -1875,8 +1875,8 @@ body.vcur-on #vcurBar{display:flex}
     <button id="bRightMirror" style="flex:1 1 100%; border-color:#9aa4b2; color:#9aa4b2;" title="Показать СПРАВА зеркало у строк ОТ ВЕРХА ДО ВЫДЕЛЕННОЙ включительно (без выделения зеркал нет): биты идут от последнего бита строки вправо, сам последний бит в зеркало не входит, значения инвертированы (0↔1). Печатается серым и только для вида — данные не меняются, в склейки и поиск эти биты не идут, на выравнивание не влияют. Если правого отступа не хватает, видна та часть зеркала, что влезла">▶ Зеркало вправо</button>
     <button id="bMirrorsApply" style="flex:1 1 100%; border-color:#38c172; color:#38c172;" title="ВПИСАТЬ показанные серым зеркала прямо в строки: то, что сейчас видно слева и справа, становится настоящими битами строки. После этого зеркала участвуют во всём наравне с остальными битами — в поиске, склейках, XOR, подсветках. Идёт по тем же строкам, что и показ: сверху по выделенную включительно. Сам показ зеркал при этом выключается, иначе поверх новых строк тут же нарисовались бы зеркала зеркал. Отменяется обычным Undo">⇔ Вписать зеркала в строки</button>
     <button id="bMirrorShiftAsIf" style="flex:1 1 100%; border-color:#9aa4b2; color:#9aa4b2;" title="Дать зеркалам место: полотно расширяется на самое длинное зеркало слева и справа, и ровно на столько же растёт левый отступ КАЖДОЙ строки. Прибавка одинаковая для всех, поэтому выравнивание не меняется — картинка просто целиком встаёт правее, а линейка столбцов едет вместе с ней. Без этого зеркала видны лишь настолько, насколько влезли в собственные отступы строк. Данные не меняются">⇔ Место под зеркала: выкл</button>
-    <button id="bMirrorsAuto" style="flex:1 1 100%; border-color:#38c172; color:#38c172;" title="Вписывать зеркала в строки автоматически — каждый раз, когда выделение расширяется захватом находки (в прогоне «Авто», на ручном ◄/► и в Паттерн-цепочке). Нажатия перебирают: выкл → влево → вправо → обе стороны. Сторона задаётся ЗДЕСЬ и от серого показа «◀/▶ Зеркало» не зависит — поэтому зеркало на зеркале не появляется">⇔ Авто-зеркала: выкл</button>
-    <label class="chk" style="flex:1 1 100%;" title="Сколько раз вообще можно вписать зеркала в строки — предел общий и для автоматики, и для ручной кнопки «⇔ Вписать зеркала в строки». Каждое вписывание удлиняет строку почти втрое, поэтому по умолчанию 1 — вписать один раз и остановиться. Счёт обнуляется «↺ Сбросом», сменой этого числа и переключением кнопки авто-зеркал">⇔ Зеркал не больше: <input type="number" id="mirrorsAutoMax" min="1" max="99" step="1" value="1" style="width:52px;margin-left:4px;"></label>
+    <button id="bMirrorsAuto" style="flex:1 1 100%; border-color:#38c172; color:#38c172;" title="Вписывать зеркала в строки автоматически — В САМ МОМЕНТ, когда захват находки добавляет к выделению новую строку: зеркало ей строится сразу, до достройки вверх и прочего. Работает на всех путях захвата одинаково — в прогоне «Авто», на ручном ◄/►/Круге и в Паттерн-цепочке. Нажатия перебирают: выкл → влево → вправо → обе стороны. Сторона задаётся ЗДЕСЬ и от серого показа «◀/▶ Зеркало» не зависит — поэтому зеркало на зеркале не появляется">⇔ Авто-зеркала: выкл</button>
+    <label class="chk" style="flex:1 1 100%;" title="Сколько раз можно вписать зеркала В ОДНУ СТРОКУ — предел считается по каждой строке отдельно и общий для автоматики и для ручной кнопки «⇔ Вписать зеркала в строки». Каждое вписывание удлиняет строку почти втрое, поэтому по умолчанию 1: зеркало на зеркале не строится, но КАЖДАЯ новая захваченная строка своё зеркало получает. Счёт обнуляется «↺ Сбросом», сменой этого числа и переключением кнопки авто-зеркал">⇔ Зеркал не больше: <input type="number" id="mirrorsAutoMax" min="1" max="99" step="1" value="1" style="width:52px;margin-left:4px;"></label>
     <button id="bTopBuildOnSelect" style="flex:1 1 100%;" title="Достраивать вверх САМО, как только строка выделена мышью: выделил — верх сразу построился под неё. Переключил выделение на другую строку — верх приводится к ней заново (лишние зеркала снимаются, недостающие дописываются). Выделение при этом остаётся на той строке, по которой щёлкнули, вниз не уезжает">🖱 По выделению: не трогать</button>
     <button id="bTopBuildNeedHit" style="flex:1 1 100%;" title="Условие для РУЧНОГО нажатия «⬆ Достроить вверх»: «только при находке» — кнопка сработает лишь тогда, когда фон-поиск прямо сейчас нашёл искомый паттерн, а без находки просто скажет «стоп» и ничего не построит. «Всегда» — обычное поведение, строит по нажатию в любом случае. На автодостройку по находке эта настройка не влияет">✋ Вручную: всегда</button>
     <button id="bTopBuildOnHit" style="flex:1 1 100%;" title="Достраивать вверх САМО на каждой находке — то же самое, что нажать «⬆ Достроить вверх», в текущем режиме (переписывать/дописывать). Работает везде, где находка вообще случается: прогон «🚀 Авто», ручной круговой сдвиг ◄/►, шаг и прогон «🧩 Паттерн-цепочки»">🎯 При находке: не трогать</button>
@@ -1910,10 +1910,11 @@ body.vcur-on #vcurBar{display:flex}
     <button id="bCellShiftR" style="flex:1;" title="Сдвинуть биты выбранных ячеек ВПРАВО по кругу — внутри каждой строки выделения отдельно, только по выбранным позициям">► Сдвиг</button>
     <button id="bCellClear" style="flex:1;" title="Снять выделение ячеек">✕ Снять</button>
   </div>
-  <div style="grid-column:1 / -1; display:flex; gap:4px;">
+  <div style="grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:4px;">
     <button id="bRotate90" style="flex:1; border-color:#22d3ee; color:#22d3ee;" title="Повернуть блок строк на 90° ПО ЧАСОВОЙ: строки кладутся на сетку по ТЕКУЩЕМУ выравниванию, столбцы становятся строками (столбец читается снизу вверх) — вертикальная ось симметрии (у треугольника — его высота) ложится горизонтально, вершина смотрит ВПРАВО. Работает по выделенным строкам (берётся весь диапазон от верхней до нижней), а если ничего не выделено — по всей цепочке. Число строк меняется на число столбцов; пустые места внутри повёрнутой строки становятся нулями, по краям просто обрезаются">◺ 90° ↻</button>
     <button id="bRotate90ccw" style="flex:1; border-color:#22d3ee; color:#22d3ee;" title="То же самое, но ПРОТИВ ЧАСОВОЙ: столбцы берутся справа налево и читаются сверху вниз — вершина треугольника смотрит ВЛЕВО, а ось ложится в другую сторону">◹ 90° ↺</button>
     <button id="bSquareFill" style="flex:1; border-color:#22d3ee; color:#22d3ee;" title="Достроить фигуру до КВАДРАТА зеркалом по главной диагонали ВВЕРХ: в каждую пустую клетку кладётся значение зеркальной ей клетки, то есть у треугольника (лесенки 1/11/111...) верхняя половина достраивается из нижней. Клетка, пустая и у себя, и у зеркала, заполняется нулём — дыр в квадрате не остаётся. Сторона квадрата = max(строк, столбцов), чтобы вся фигура влезла целиком. Сетка берётся по ТЕКУЩЕМУ выравниванию, как и у поворотов. Работает по выделенным строкам, а если ничего не выделено — по всей цепочке. Паттерны не тронуты. ПОВТОРНОЕ нажатие достраивать уже нечего — оно ИНВЕРТИРУЕТ ровно ту часть, которую достроило предыдущее (исходная фигура не трогается), следующее возвращает как было, и так по кругу">⬔ До квадрата</button>
+    <button id="bGrowDownOnFind" style="flex:1 1 100%; border-color:#22d3ee; color:#22d3ee;" title="Расширять выделение ВНИЗ при каждой находке: как только фон-поиск нашёл паттерн, строка ПОД выделением (та самая, чей паттерн искали) добавляется к выделению, а верхняя граница остаётся на месте — выделенный блок просто растёт вниз, строка за строкой. Отличие от «🧲 Захват находки»: тот при выделении, набранном руками, ведёт окно ПОСТОЯННОГО размера (добавляет снизу и снимает верхнюю), а тут ничего не снимается никогда. Работает и в прогоне «▶ Авто» (новая строка сразу начинает крутиться вместе с остальными), и на ручных ◄/►Круг, и в «🧩 Паттерн-цепочке» — там выделение не переезжает на находку, а дорастает до неё. Включённый режим сильнее «🧲 Захвата»: если включены оба, выделение растёт, а не едет окном">⬇ Расширять вниз: выкл</button>
   </div>
   <button id="bPadZerosAbove" title="Добавить нули вверх: для выделенных строк (по самой длинной из них) добавить нули выше">0⬆</button>
   <button id="bDelFirst" title="Удалить первый символ (слева) из выделенных строк (или всех, если ничего не выделено)">🗑 ←1</button>
@@ -2117,12 +2118,13 @@ body.vcur-on #vcurBar{display:flex}
       <!-- Какой именно КУСОК паттерна ищет "🧩 Макс. часть" (запрос пользователя): любой, только
            с начала паттерна или только с его конца. Считается всегда от ИСХОДНОГО паттерна — у
            реверс-вариантов начало и конец меняются местами автоматически. -->
-      <!-- ГДЕ искать (запрос пользователя): по всей цепочке или только по строкам до выделенной
-           включительно. На то, ЧТО ищется, не влияет — только на область поиска. -->
+      <!-- ГДЕ искать (запрос пользователя): по всей цепочке или "до паттерна" — каждый паттерн
+           только в строках ВЫШЕ САМОГО СЕБЯ (своя граница у каждого, от выделения не зависит).
+           На то, ЧТО ищется, не влияет — только на область поиска. -->
       <div id="allPatScopeGrp" style="grid-column:1 / -1;display:flex;align-items:center;gap:4px;">
         <span style="color:var(--dim);font-size:11px;flex:0 0 auto;">🔎 где:</span>
         <button id="bScopeAll" class="mode-act" style="flex:1;min-width:0;white-space:normal;" title="Искать по ВСЕЙ цепочке — все строки сверху донизу, независимо от того, где стоит выделение. Как и раньше">вся цепочка</button>
-        <button id="bScopeSel" style="flex:1;min-width:0;white-space:normal;" title="Искать только по строкам ДО ВЫДЕЛЕННОЙ ВКЛЮЧИТЕЛЬНО — всё, что ниже, в поиск не идёт и не подсвечивается. Ничего не выделено — ищется вся цепочка">до выделенной</button>
+        <button id="bScopeSel" style="flex:1;min-width:0;white-space:normal;" title="Каждый паттерн ищется ТОЛЬКО В СТРОКАХ ВЫШЕ САМОГО СЕБЯ: паттерн 5-й строки — по строкам 1–4, паттерн 2-й — только по 1-й, у паттерна самой верхней строки искать негде вовсе. Граница у каждого паттерна СВОЯ (его собственная строка) и от выделения не зависит. Вхождение засчитывается целиком: задело свою строку или что-то ниже — не идёт ни в подсветку, ни в метку колонки паттернов">до паттерна</button>
       </div>
       <div id="partPickGrp" style="grid-column:1 / -1;display:flex;align-items:center;gap:4px;">
         <span style="color:var(--dim);font-size:11px;flex:0 0 auto;">🧩 кусок:</span>
@@ -2724,6 +2726,55 @@ function mirroredRowBits(r){
   const l = st.leftMirror ? invertBits(reverseStr(s0.slice(1))) : "";
   const rr = st.rightMirror ? invertBits(reverseStr(s0.slice(0, -1))) : "";
   return l + s0 + rr;
+}
+/* Сколько бит приписали к строке ПОКАЗАННЫЕ зеркала слева и справа — ровно по тем же условиям,
+   что и mirroredRowBits() выше. Нужно всем, кто считает КОЛОНКИ (XOR, интерлив): на экране
+   зеркало ВИСИТ СБОКУ от строки и на её выравнивание не влияет — render() берёт сдвиг по
+   СОБСТВЕННОЙ длине строки (см. geomLen там), а зеркало печатает внутри её левого отступа.
+   Значит и в расчёте столбцов сдвиг надо считать от собственной длины, а начало строки С
+   ЗЕРКАЛОМ — сдвинуть влево ровно на его длину. Раньше зеркала входили в строку как обычные
+   биты, и "По центру" центровало строку ВМЕСТЕ с ними — колонки XOR разъезжались с картинкой
+   (запрос пользователя: "XOR-Все при выравнивании центр неверно при включенном зеркале влево"). */
+function mirrorPadsOf(st, r){
+  const none = { l: 0, r: 0 };
+  // "Искать только по подсвеченному" отдаёт СВОЮ строку (computeHighlightedOnlyRow) — зеркал в
+  // ней нет вовсе, см. getRowBits().
+  if (!st || st.searchOnlyHighlighted) return none;
+  if (!st.leftMirror && !st.rightMirror) return none;
+  const s0 = st.rows[r] || "";
+  if (s0.length < 2) return none;
+  if (r > mirrorBoundRow()) return none;
+  return { l: st.leftMirror ? s0.length - 1 : 0, r: st.rightMirror ? s0.length - 1 : 0 };
+}
+/* КАРТИНКА НЕ ДОЛЖНА ПРЫГАТЬ, когда операция удлинила строку (запрос пользователя: "интерлив
+   когда изменяет строку и результат длинный — не надо перемещать ось").
+   Почему прыгала: точка отсчёта выравнивания — самая длинная строка таблицы. Стала строка вдвое
+   длиннее — вырос maxLen, а вместе с ним и сдвиг КАЖДОЙ строки (у "По центру" на половину
+   прибавки, у "По правому краю" на всю, у осевых — вместе с осью), и вся цепочка уезжала вбок,
+   иногда за край экрана.
+   Лечится общим ВИЗУАЛЬНЫМ сдвигом полотна (st.axisCenterOffset — та же ручка #axisSplit): меряем,
+   где стояла строка-ориентир ДО операции, и после операции возвращаем полотно ровно на столько же.
+   В данные это не входит вообще (см. alignShift) — столбцы, склейки и поиск его не видят. */
+function axisAnchorShift(anchorIdx){
+  const s = st.rows[anchorIdx] || "";
+  if (!s.length) return null;
+  let maxLen = 0;
+  for (const r of st.rows) if (r && r.length > maxLen) maxLen = r.length;
+  // В ПОЛУСТОЛБЦАХ (×2): у "½"-выравниваний половина позиции живёт не в целочисленном сдвиге, а в
+  // полушаге (render кладёт его отдельным transform, см. extraCh += 0.5 там же). Мерить одним лишь
+  // rowShiftFor мало: смена чётности maxLen перекидывает строку в другую подсетку, и картинка
+  // уезжала на полстолбца даже с компенсацией (запрос пользователя — "↔½ съезжает также").
+  const isHalfAlign = st.align === "halfcenter" || st.align === "halfstairs" || st.align === "rhalfstairs";
+  return 2 * rowShiftFor(maxLen, anchorIdx, s, st.align) +
+    (isHalfAlign && hasHalfNudge(s, maxLen, st.align, anchorIdx) ? 1 : 0);
+}
+function keepAxisAfter(anchorIdx, before){
+  if (before == null) return;
+  const after = axisAnchorShift(anchorIdx);
+  if (after == null || after === before) return;
+  // Считали в полустолбцах — гасим половиной разницы (дробные полстолбца полотну не помеха:
+  // extraCh в render() и так считает в долях колонки).
+  st.axisCenterOffset = (st.axisCenterOffset || 0) - (after - before) / 2;
 }
 function firstActiveRow(){
   const built = st.topBuilt || 0;
@@ -3944,66 +3995,132 @@ function rowShiftFor(maxLen, i, s, align){
 }
 function xorRowsFiltered(rows, stopIdx, align, st, wantNudge, rowIdxs){
   const idxs = rowIdxs || Array.from({ length: stopIdx + 1 }, (_, i) => i);
+  // Точка отсчёта выравнивания — СОБСТВЕННЫЕ длины строк, без показанных зеркал (см.
+  // mirrorPadsOf): ровно так же считает и render(), иначе колонки результата разъедутся с
+  // картинкой. Сами биты зеркал в XOR при этом идут (они часть строки), просто стоят СБОКУ.
   let maxLen = 0;
   for (const i of idxs){
     const s = st ? getRowBits(st, i) : rows[i];
-    if (s.length > maxLen) maxLen = s.length;
+    if (!s.length) continue;
+    const m = st ? mirrorPadsOf(st, i) : { l: 0, r: 0 };
+    const ownLen = s.length - m.l - m.r;
+    if (ownLen > maxLen) maxLen = ownLen;
   }
-  // Локальный maxLen выше остаётся точкой отсчёта для САМИХ сдвигов (rowShiftFor) — результат
-  // строится в своей сетке. А вот принадлежность строки к "целой"/"полу" подсетке обязана
-  // считаться от ОБЩЕЙ ширины таблицы, как её видит render() — см. nudgeRefMaxLen().
+  // ФИЛЬТР "в какой подсетке живёт строка" (wantNudge) по-прежнему считается от ОБЩЕЙ ширины
+  // таблицы, как её видит render() — см. nudgeRefMaxLen(): вызывающий (см. "Xor 2" при "½") сам
+  // берёт подсетку выделенной строки от того же общего maxLen, и мерить их надо одной линейкой.
   const nudgeMax = nudgeRefMaxLen(st, rows);
-  // Границы занятых колонок. Раньше считался только ПРАВЫЙ край (reach), а массив всегда начинался
-  // с колонки 0 — поэтому биты строк с ОТРИЦАТЕЛЬНЫМ сдвигом (он бывает у "Лесенка правая" и у
-  // осевых режимов, где строка свободно уезжает левее нулевой колонки) писались в отрицательный
-  // индекс Uint8Array и МОЛЧА пропадали: на экране бит у верхней строки есть, а в результате его
-  // нет (запрос пользователя — "когда верхняя строка имеет биты, которых в выделенной нет, их надо
-  // учитывать"). Теперь начало отсчёта — min(0, самый левый сдвиг): при неотрицательных сдвигах
-  // (обычные выравнивания) origin=0 и результат ровно прежний, включая ведущие нули, а при
-  // отрицательных диапазон честно расширяется влево.
-  let reach = 0, minShift = 0;
+  const isHalfAlign = align === "halfcenter" || align === "halfstairs" || align === "rhalfstairs";
+  // ВСЁ СЧИТАЕТСЯ В ПОЛУСТОЛБЦАХ (×2) — ровно как в vertColumnPlan() у поколоночных режимов.
+  // Раньше здесь были ЦЕЛЫЕ колонки, а полусимвольное смещение "½"-выравниваний в координату не
+  // входило вовсе (оно работало только как метка подсетки) — из-за этого биты двух подсеток
+  // складывались в ОДНУ колонку, а xorRowsDownTo() потом сшивал две половины простым чередованием
+  // "целая-полу", не глядя, какая из них начинается левее. На "Центр ½" со строками 1 / 11 / 111
+  // это давало 11101 вместо правильного 11011 (запрос пользователя). Теперь позиция бита — это
+  // 2*сдвиг + полушаг, то есть настоящий полустолбец с экрана, и XOR идёт колонка в колонку.
+  // ВАЖНО: полушаг-КООРДИНАТА берётся от ЛОКАЛЬНОГО maxLen — от того же, от которого считается сам
+  // сдвиг (иначе строки разъезжаются, см. тот же разбор в vertColumnPlan). Смена точки отсчёта
+  // сдвигает ВСЕ строки на одну и ту же константу, поэтому картинка относительно себя не меняется.
+  const parts = [];
+  let minCol = Infinity, maxCol = -Infinity, evens = 0, odds = 0;
   for (const i of idxs){
     const s = st ? getRowBits(st, i) : rows[i];
-    if (!s.length || (wantNudge !== null && hasHalfNudge(s, nudgeMax, align, i) !== wantNudge)) continue;
-    const shift = rowShiftFor(maxLen, i, s, align);
-    if (shift + s.length > reach) reach = shift + s.length;
-    if (shift < minShift) minShift = shift;
+    if (!s.length) continue;
+    // own — строка БЕЗ зеркал: от неё считаются и выравнивание, и подсетка ("½"), как на экране.
+    const m = st ? mirrorPadsOf(st, i) : { l: 0, r: 0 };
+    const own = (m.l || m.r) ? s.slice(m.l, s.length - m.r) : s;
+    if (wantNudge !== null && hasHalfNudge(own, nudgeMax, align, i) !== wantNudge) continue;
+    // Зеркало слева отодвигает НАЧАЛО строки влево на свою длину — сам сдвиг строки от него не
+    // меняется (см. mirrorPadsOf).
+    const shift2x = 2 * (rowShiftFor(maxLen, i, own, align) - m.l) +
+      (isHalfAlign && hasHalfNudge(own, maxLen, align, i) ? 1 : 0);
+    parts.push({ s, shift2x });
+    if (shift2x < minCol) minCol = shift2x;
+    if (shift2x + 2 * (s.length - 1) > maxCol) maxCol = shift2x + 2 * (s.length - 1);
+    if (shift2x & 1) odds++; else evens++;
   }
-  const width = reach - minShift;
-  if (width <= 0) return "";
-  const bits = new Uint8Array(width);
-  for (const i of idxs){
-    const s = st ? getRowBits(st, i) : rows[i];
-    if (!s.length || (wantNudge !== null && hasHalfNudge(s, nudgeMax, align, i) !== wantNudge)) continue;
-    const shift = rowShiftFor(maxLen, i, s, align);
-    for (let k = 0; k < s.length; k++) if (s[k] === "1") bits[shift + k - minShift] ^= 1;
-  }
+  if (!parts.length) return "";
+  // Шаг обхода: обе подсетки заняты — идём по КАЖДОМУ полустолбцу (их биты и правда стоят через
+  // полсимвола), все строки в одной — шаг целый, иначе каждый второй полустолбец пуст ПО
+  // ПОСТРОЕНИЮ и результат распух бы нулями вдвое. У не-½ выравниваний все сдвиги чётные, шаг
+  // всегда 2 — то есть ровно прежнее поведение, колонка в колонку.
+  const step = (evens && odds) ? 1 : 2;
+  // Начало отсчёта — min(0, самый левый занятый полустолбец): при неотрицательных сдвигах
+  // (обычные выравнивания) origin=0 и результат прежний, ВКЛЮЧАЯ ведущие нули, а при
+  // отрицательных (Лесенка правая, осевые режимы — строка уезжает левее нулевой колонки)
+  // диапазон честно расширяется влево, и её биты не теряются (запрос пользователя — "когда
+  // верхняя строка имеет биты, которых в выделенной нет, их надо учитывать").
+  let startCol = Math.min(0, minCol);
+  if (((startCol ^ minCol) & 1)) startCol += 1; // сетка держится чётности занятых полустолбцов
   let out = "";
-  for (let i = 0; i < width; i++) out += bits[i];
+  for (let c = startCol; c <= maxCol; c += step){
+    let bit = 0, has = false;
+    for (const p of parts){
+      const d = c - p.shift2x;
+      if (d < 0 || (d & 1) !== 0 || (d >> 1) >= p.s.length) continue;
+      has = true;
+      if (p.s[d >> 1] === "1") bit ^= 1;
+    }
+    // ШАГ 1 (обе подсетки заняты) — ПУСТОЙ полустолбец в результат не идёт вовсе: там на экране
+    // просто нет бита, и подставлять вместо него ноль нельзя. Пример пользователя, "Центр ½" с
+    // зеркалом влево: строки "1" и "011" (зеркало у второй) стоят в полустолбцах 1 и −2/0/2, между
+    // −2 и 0 бита нет ни у кого — правильный ответ 0111, а не 00111.
+    // При шаге 2 (все строки в одной подсетке) пустая колонка внутри участка — настоящая дырка
+    // картинки, и там ноль по-прежнему печатается: так же, как и ведущие нули от начала отсчёта
+    // (см. startCol выше) — это прежнее поведение обычных выравниваний, его не трогаем.
+    if (step === 1 && !has) continue;
+    out += bit;
+  }
+  return out;
+}
+
+/* Интерлив ПАРЫ СТРОК по их настоящим экранным полустолбцам — только для "½"-выравниваний (см.
+   xorRowsFiltered выше, геометрия ровно та же). Обычный interleavePair() читает обе строки с
+   позиции 0 и хвост без пары отбрасывает — на "Центр ½" это давало 1111 вместо 11111 для строк
+   11 / 111 (запрос пользователя): на экране их биты стоят через полсимвола и переплетаются ВСЕ,
+   ни один не лишний. Обход слева направо, внутри одного полустолбца сначала верхняя строка,
+   потом нижняя; пустые полустолбцы в переплетение ничего не дают. */
+function interleavePairRows(st, aIdx, bIdx, align, N){
+  const isHalfAlign = align === "halfcenter" || align === "halfstairs" || align === "rhalfstairs";
+  const top = getRowBits(st, aIdx), bot = getRowBits(st, bIdx);
+  // Блочный интерлив (N > 1, "Интерлив сквозной") живёт по своим правилам — его не трогаем.
+  if (!isHalfAlign || (N && N > 1)) return interleavePair(top, bot, align, N);
+  // Зеркала — как и в xorRowsFiltered: биты идут в переплетение, но выравнивание считается по
+  // СОБСТВЕННОЙ длине строки, а левое зеркало отодвигает её начало влево (см. mirrorPadsOf).
+  const mTop = mirrorPadsOf(st, aIdx), mBot = mirrorPadsOf(st, bIdx);
+  const maxLen = Math.max(top.length - mTop.l - mTop.r, bot.length - mBot.l - mBot.r);
+  const parts = [];
+  let minCol = Infinity, maxCol = -Infinity;
+  for (const [i, s, m] of [[aIdx, top, mTop], [bIdx, bot, mBot]]){
+    if (!s.length) continue;
+    const own = (m.l || m.r) ? s.slice(m.l, s.length - m.r) : s;
+    const shift2x = 2 * (rowShiftFor(maxLen, i, own, align) - m.l) +
+      (hasHalfNudge(own, maxLen, align, i) ? 1 : 0);
+    parts.push({ s, shift2x });
+    if (shift2x < minCol) minCol = shift2x;
+    if (shift2x + 2 * (s.length - 1) > maxCol) maxCol = shift2x + 2 * (s.length - 1);
+  }
+  if (!parts.length) return "";
+  let out = "";
+  for (let c = minCol; c <= maxCol; c++){
+    for (const p of parts){
+      const d = c - p.shift2x;
+      if (d >= 0 && (d & 1) === 0 && (d >> 1) < p.s.length) out += p.s[d >> 1];
+    }
+  }
   return out;
 }
 
 
-/* Накопительный ХОР. При обычных выравниваниях — как раньше, ХОР всех строк 0..stopIdx разом.
-   При "½"-выравниваниях (Центр ½/Лесенка ½) часть строк сидит на экране в "целой" сетке колонок,
-   часть — в "полу" (сдвинутой на +0.5ch, см. hasHalfNudge) — единая колонка на самом деле не одна,
-   а ДВЕ отдельные, не совпадающие друг с другом. Поэтому обе группы ХОР-ятся ОТДЕЛЬНО каждая сама
-   с собой (xorRowsFiltered), а готовые результаты чередуются побитно ("целая" группа первой,
-   "полу" второй) — и, В ОТЛИЧИЕ от парного "Интерлив" (там непарный хвост отбрасывался), здесь
-   остаток более длинной группы ДОПИСЫВАЕТСЯ в конец, не пропадает — запрос пользователя,
-   проверено на примере "1,1,11,111,1000" → "011010100". */
+/* Накопительный ХОР всех строк 0..stopIdx разом — ОДНИМ проходом по полустолбцам, на любом
+   выравнивании (см. xorRowsFiltered: там и геометрия, и выбор шага 1/2).
+   Раньше "½"-выравнивания шли особым путём: строки делились на "целую" и "полу" подсетки, каждая
+   ХОР-илась сама с собой, а две половины сшивались чередованием, "целая" первой. Сшивка не
+   смотрела, какая из половин начинается ЛЕВЕЕ на экране, и на строках 1 / 11 / 111 при "Центр ½"
+   выдавала 11101 вместо 11011 (запрос пользователя). Позиция бита теперь считается сразу в
+   полустолбцах, поэтому делить на группы и сшивать их не нужно вовсе. */
 function xorRowsDownTo(rows, stopIdx, align, st, rowIdxs){
-  const isHalfAlign = align === "halfcenter" || align === "halfstairs" || align === "rhalfstairs";
-  if (!isHalfAlign) return xorRowsFiltered(rows, stopIdx, align, st, null, rowIdxs);
-  const groupWhole = xorRowsFiltered(rows, stopIdx, align, st, false, rowIdxs);
-  const groupHalf = xorRowsFiltered(rows, stopIdx, align, st, true, rowIdxs);
-  const len = Math.max(groupWhole.length, groupHalf.length);
-  let out = "";
-  for (let i = 0; i < len; i++){
-    if (i < groupWhole.length) out += groupWhole[i];
-    if (i < groupHalf.length) out += groupHalf[i];
-  }
-  return out;
+  return xorRowsFiltered(rows, stopIdx, align, st, null, rowIdxs);
 }
 
 /* Сквозная строка цепочки */
@@ -4136,8 +4253,8 @@ const st = {
   // Какой кусок паттерна ищет "🧩 Макс. часть": "any" — любой (как было всегда), "head" — только
   // от начала паттерна, "tail" — только с его конца. См. #partPickGrp/findLongestPartialHit.
   partialPick: "any",
-  // Где ищет "🌈 Все паттерны": false — по всей цепочке, true — только по строкам до выделенной
-  // включительно (см. #allPatScopeGrp).
+  // Где ищет "🌈 Все паттерны": false — по всей цепочке, true — "до паттерна": каждый паттерн
+  // только в строках ВЫШЕ своей собственной (см. #allPatScopeGrp).
   allPatScopeSel: false,
   // ПОСТРОЕНИЯ НАД ПЕРВОЙ СТРОКОЙ (см. buildTopMirror/rowLabel): сколько строк добавлено сверху.
   // Настоящая первая строка всегда остаётся номером 0, достроенные нумеруются отрицательно.
@@ -4154,6 +4271,8 @@ const st = {
   topBuildNeedHit: false,
   // Достраивать вверх сразу по выделению строки мышью (см. #bTopBuildOnSelect).
   topBuildOnSelect: false,
+  // Расширять выделение ВНИЗ на каждой находке, ничего не снимая сверху (см. #bGrowDownOnFind).
+  growDownOnFind: false,
   // Показывать слева от строк их зеркало (инверсия, от первого бита, серым) — см. #bLeftMirror.
   leftMirror: false,
   // То же самое, но справа — от последнего бита строки (см. #bRightMirror).
@@ -5229,7 +5348,10 @@ function doStep(pairOnly, forceXor = false, isScan = false, isHorizXor = false, 
           res = xorRowsDownTo(st.rows, b, st.align, st);
         }
       } else {
-        res = interleavePair(getRowBits(st, a), getRowBits(st, b), st.align);
+        // Через interleavePairRows() — на "½"-выравниваниях биты пары стоят через полсимвола и
+        // переплетаются по настоящим полустолбцам (см. её саму); на прочих — прежний
+        // interleavePair() один в один.
+        res = interleavePairRows(st, a, b, st.align);
       }
       
       if (!res.length) {
@@ -5574,6 +5696,7 @@ function syncRowCountToTpl(){
     rowCountEl.value = total;
   }
   document.getElementById("rowCountVal").textContent = rowCountEl.value;
+  if (typeof rowCountStashClear === "function") rowCountStashClear();
 }
 
 function loadTemplate(){
@@ -5626,6 +5749,11 @@ var resetNoAutoSelect = false;
 function resetAll(){
   st.running = false;
   setAutoBtnState(false);
+  // Выделение Сброс/Escape не трогает ВООБЩЕ (запрос пользователя). Мало не сбрасывать сам набор
+  // строк — по дороге его молча СДВИГАЛ ensureZeroRow(): вставляя пустую нулевую строку, он
+  // пересчитывал индексы (r+1), и выделение уезжало на строку ниже. Запоминаем набор как есть и
+  // возвращаем его в конце — номера строк остаются теми же, что были до Сброса.
+  const keepSel = st.selectedRows ? new Set(st.selectedRows) : null;
   // Сброс снимает и защёлку находок "Авто" (см. allPatLatch).
   allPatLatch.clear();
   // Оранжевая подсветка "перевёрнутых" битов (см. .bit-inv/invFlagsMap, "◄/►Круг Инв") и счётчик
@@ -5648,6 +5776,7 @@ function resetAll(){
   st.captureGrown = false;
   // "🧩 Паттерн-цепочка" начинается заново — вместе со списком уже задействованных ею строк.
   st.patChainStep = 0; st.patChainFilledTo = -1; st.patChainPendingMove = -1;
+  if (typeof xorProjStep !== "undefined") xorProjStep = { target: -1, upto: -1 };
   st.patChainCycleBase = 0;
   patChainSeenRows.clear();
   tetrisRotKey = null;
@@ -5674,6 +5803,9 @@ function resetAll(){
   // не давало (resetAll() восстанавливал savedChain целиком, лимит просто не применялся).
   const rowCountEl = document.getElementById("rowCount");
   const limit = rowCountEl ? +rowCountEl.value : st.tplRows.length;
+  // Строки собираются заново из шаблона/сохранёнки — спрятанный ползунком хвост к ним уже не
+  // относится (см. rowCountStash).
+  if (typeof rowCountStashClear === "function") rowCountStashClear();
   // ПОСТРОЕНИЯ СВЕРХУ СБРОС НЕ УДАЛЯЕТ (запрос пользователя: "Escape пусть не удаляет верхние
   // построения, только сбрасывает биты в нижних и соответственно в верхних"). Запоминаем их до
   // восстановления данных и возвращаем на место после — а содержимое зеркал обновится под новые
@@ -5722,7 +5854,7 @@ function resetAll(){
   // Зеркала сверху пересчитываем под восстановленные строки: биты внизу сброшены, значит и вверху
   // должны быть их отражения, а не прежние (в режиме "дописывать" верх намеренно не трогается).
   refreshTopMirrors();
-  mirrorsAutoDone = 0; // Сброс — автоматические зеркала можно вписывать заново
+  mirrorsRowDone.clear(); // Сброс — автоматические зеркала можно вписывать заново
   st.step = 0; st.passCount = 0; st.tailBuffer = "";
   // Выделение строк (st.selectedRows) НЕ сбрасываем — Сброс возвращает данные к шаблону, но
   // пользователь может специально держать выделение (например, чтобы сразу опробовать Тетрис/
@@ -5740,6 +5872,9 @@ function resetAll(){
   // сквозной"/"⨁ XOR сквозной" вообще отказываются стартовать без выделения) ведут себя
   // неочевидно на пустом выделении — пусть оно по умолчанию никогда не бывает пустым (см. запрос
   // пользователя — "пусть всегда одна выделена").
+  // Возвращаем выделение ровно тем, каким оно было до Сброса (см. keepSel выше). Отсеиваем только
+  // номера, которых после Сброса физически нет (ползунок rowCount мог обрезать цепочку короче).
+  if (keepSel) st.selectedRows = new Set(Array.from(keepSel).filter(r => r < st.rows.length));
   if (!resetNoAutoSelect && (!st.selectedRows || st.selectedRows.size === 0) && f >= 0) {
     st.selectedRows = new Set([f]);
   }
@@ -6941,16 +7076,13 @@ function render(){
       [st.rows, st.pats.map(p => (p && p.text) || ""), st.skipFirst, st.skipLast, st.allKinds, st.ringOff,
        st.ringInvert, st.ringReverse, st.bgAllPatsEvery, st.bgAllPatsPartial, st.partialPick, allPatLatch.size,
        Array.from(st.selectedPats || []).sort((a, b) => a - b),
-       st.allPatScopeSel, (st.allPatScopeSel && st.selectedRows && st.selectedRows.size) ? Math.max(...st.selectedRows) : -1],
+       st.allPatScopeSel],
       () => {
         // Склейка + карта "позиция → строка/бит". Длину считаем заранее и берём типизированные
         // массивы: на картинке в миллион бит массив объектов {r,p} съел бы куда больше памяти.
-        // ОБЛАСТЬ ПОИСКА (см. #allPatScopeGrp): вся цепочка или только строки до выделенной
-        // включительно. Ниже границы строки в склейку не входят вовсе — значит и находок там не
-        // будет, и подсвечивать нечего.
-        const lastSearchRow = (st.allPatScopeSel && st.selectedRows && st.selectedRows.size)
-          ? Math.min(st.rows.length - 1, Math.max(...st.selectedRows))
-          : st.rows.length - 1;
+        // Склейка ВСЕГДА по всей цепочке — область поиска "🔎 до паттерна" режет не её, а сами
+        // НАХОДКИ (см. ниже): у каждого паттерна своя граница, общей склейкой её не выразить.
+        const lastSearchRow = st.rows.length - 1;
         let total = 0;
         for (let r = 0; r <= lastSearchRow; r++) total += (st.rows[r] || "").length;
         if (!total) return null;
@@ -6962,9 +7094,34 @@ function render(){
           text += s;
           for (let p = 0; p < s.length; p++, n++) { cellR[n] = r; cellP[n] = p; }
         }
-        const hits = findAllPatternsInResult(text);
-        if (!hits.length) return null;
-        const period = hits.period || total;
+        const hits0 = findAllPatternsInResult(text);
+        if (!hits0.length) return null;
+        const period = hits0.period || total;
+        // ОБЛАСТЬ ПОИСКА (см. #allPatScopeGrp): "вся цепочка" — берём всё как нашлось; "до
+        // паттерна" — КАЖДЫЙ паттерн засчитывается только в строках ВЫШЕ САМОГО СЕБЯ (запрос
+        // пользователя). Граница у каждого своя — номер его собственной строки (st.pats идёт
+        // параллельно st.rows), поэтому режется не склейка, а находки: вхождение целиком должно
+        // лежать в строках с номером МЕНЬШЕ patIdx, иначе оно выбрасывается вместе с подсветкой и
+        // с меткой в колонке паттернов. Вхождение "через кольцо" (хвост склейки + её начало)
+        // всегда задевает нижние строки — значит тут не годится и оно.
+        // Отбрасывать одни вхождения и оставлять другие безопасно и при выключенном "🔁 Все
+        // вхождения": там на паттерн приходит САМОЕ РАННЕЕ вхождение, и если уж оно оказалось не
+        // выше своей строки, то и остальные (позже по позиции) — тем более.
+        let hits = hits0;
+        if (st.allPatScopeSel) {
+          hits = [];
+          for (const h of hits0) {
+            let ok = true;
+            for (let q = 0; q < h.len; q++) {
+              const pos = period ? (h.start + q) % period : (h.start + q);
+              if (pos >= total) continue;
+              if (cellR[pos] >= h.patIdx) { ok = false; break; }
+            }
+            if (ok) hits.push(h);
+          }
+          if (!hits.length) return null;
+          hits.period = period;
+        }
         const rows = new Map();
         for (const h of hits) for (let q = 0; q < h.len; q++) {
           const pos = period ? (h.start + q) % period : (h.start + q);
@@ -8903,10 +9060,75 @@ if (bAddTabEl) {
 // tabClearChainData). Саму clearActiveTab() не удаляю — её зовёт tabClearChainData(), когда
 // чистят ИМЕННО активную вкладку.
 
+/* Ползунок "🔢 строк" НИЧЕГО не сбрасывает (запрос пользователя: "это не должно двигать ось
+   цепочек"). Раньше он звал resetAll() — то есть полноценный Сброс: биты возвращались к шаблону,
+   а вместе с ними обнулялись осевые сдвиги строк (axisOffsetMap/axisBitShiftMap), накрутка
+   ◄/►Круг, инверсии — вся картинка прыгала на место. Теперь ползунок только ПРЯЧЕТ хвост строк
+   снизу и возвращает их обратно: всё, что выше границы, остаётся ровно как было, включая
+   положение строк относительно оси.
+   Спрятанные строки лежат в стопке ниже и возвращаются такими же, какими ушли (флаги в
+   axisOffsetMap/invFlagsMap и т.п. привязаны к НОМЕРУ строки, а номера у оставшихся не меняются —
+   режем только с конца). Стопка обнуляется Сбросом и загрузкой нового шаблона: там строки
+   пересобираются заново, и старый хвост к ним уже не относится. */
+var rowCountStash = { rows: [], pats: [], used: [] };
+var rowCountApplied = null;
+function rowCountStashClear(){
+  rowCountStash = { rows: [], pats: [], used: [] };
+  const el = document.getElementById("rowCount");
+  rowCountApplied = el ? +el.value : null;
+}
+function applyRowCountDelta(newVal){
+  if (rowCountApplied === null) { rowCountApplied = newVal; return; }
+  const delta = newVal - rowCountApplied;
+  rowCountApplied = newVal;
+  if (!delta) return;
+  const built = st.topBuilt || 0;
+  if (delta < 0) {
+    // Прячем хвост. Нулевую строку и построения сверху не трогаем — под ползунок идёт только
+    // цепочка, и хотя бы одна её строка обязана остаться.
+    const cut = Math.min(-delta, Math.max(0, st.rows.length - built - 1));
+    if (!cut) return;
+    const at = st.rows.length - cut;
+    rowCountStash.rows = st.rows.splice(at, cut).concat(rowCountStash.rows);
+    rowCountStash.pats = st.pats.splice(at, cut).concat(rowCountStash.pats);
+    rowCountStash.used = st.used.splice(at, cut).concat(rowCountStash.used);
+    if (st.selectedRows && st.selectedRows.size) {
+      st.selectedRows = new Set(Array.from(st.selectedRows).filter(r => r < at));
+    }
+    if (st.rowDividers && st.rowDividers.size) {
+      st.rowDividers = new Set(Array.from(st.rowDividers).filter(d => d < at));
+    }
+  } else {
+    let need = delta;
+    const back = Math.min(need, rowCountStash.rows.length);
+    if (back) {
+      st.rows = st.rows.concat(rowCountStash.rows.splice(0, back));
+      st.pats = st.pats.concat(rowCountStash.pats.splice(0, back));
+      st.used = st.used.concat(rowCountStash.used.splice(0, back));
+      need -= back;
+    }
+    // Стопка кончилась, а ползунок подняли ещё выше — недостающие строки берём из ШАБЛОНА, с той
+    // же позиции, где кончается цепочка (то же правило, что и в resetAll при поднятом ползунке).
+    if (need > 0) {
+      const from = st.rows.length - built;
+      const extraRows = (st.tplRows || []).slice(from, from + need);
+      const extraPats = (st.tplPats || []).slice(from, from + need);
+      if (extraRows.length) {
+        const baseOrd = st.rows.length;
+        st.rows = st.rows.concat(extraRows);
+        st.used = st.used.concat(extraRows.map(() => false));
+        st.pats = st.pats.concat(extraRows.map((_, k) => ({
+          text: extraPats[k] || "", ord: baseOrd + k, found: false, kind: null, step: null
+        })));
+      }
+    }
+  }
+}
 if (rowCountEl) {
   rowCountEl.oninput = () => {
     document.getElementById("rowCountVal").textContent = rowCountEl.value;
-    resetAll();
+    applyRowCountDelta(+rowCountEl.value);
+    render();
     saveCache();
   };
 }
@@ -10648,9 +10870,10 @@ function setPartialPick(m, quiet){
     render(); saveCache();
   }
 }
-/* "🔎 где: вся цепочка / до выделенной" — ОБЛАСТЬ поиска режима "🌈 Все паттерны" (запрос
-   пользователя). Меняет только то, какие строки склеиваются в текст, по которому идёт поиск;
-   список искомых паттернов и все прочие настройки от этого не зависят. */
+/* "🔎 где: вся цепочка / до паттерна" — ОБЛАСТЬ поиска режима "🌈 Все паттерны" (запрос
+   пользователя). Меняет только то, в каких строках вхождение засчитывается: "до паттерна" — у
+   каждого паттерна своя граница, строки ВЫШЕ его собственной. Список искомых паттернов и все
+   прочие настройки от этого не зависят. */
 function setAllPatScope(sel, quiet){
   st.allPatScopeSel = !!sel;
   const a = document.getElementById("bScopeAll"), b = document.getElementById("bScopeSel");
@@ -10658,7 +10881,7 @@ function setAllPatScope(sel, quiet){
   if (b) b.classList.toggle("mode-act", st.allPatScopeSel);
   if (!quiet) {
     say(st.allPatScopeSel
-      ? "🌈 Все паттерны: ищем только по строкам до выделенной включительно."
+      ? "🌈 Все паттерны: каждый паттерн ищем только в строках ВЫШЕ него самого."
       : "🌈 Все паттерны: ищем по всей цепочке.");
     render(); saveCache();
   }
@@ -11227,7 +11450,9 @@ function computeBgSearchTarget(){
         diagSplitResults(st, chainIdx, slant, ddir, mode).map(d => mkResult(d.mode, d.result))
       );
     } else {
-      result = interleavePair(rowAbove, rowSel, st.align);
+      // "½"-выравнивания переплетают пару по настоящим полустолбцам (см. interleavePairRows),
+      // на прочих — прежний побитовый интерлив.
+      result = interleavePairRows(st, pairTop, pairBottom, st.align);
     }
     return [mkResult(mode, result)];
   });
@@ -11417,11 +11642,13 @@ function autoRun(){
           // остальными как ни в чём не бывало, накрутка уже идущих строк при этом не сбрасывается
           // (запрос пользователя — раньше найденные строки вообще никогда не крутились дальше,
           // что выглядело как баг). Останавливаемся только если включено "Стоп на находке".
-          if (st.captureOnFind) {
+          // "⬇ Расширять вниз" (st.growDownOnFind) работает и сам по себе, без "🧲 Захвата", и
+          // сильнее его: окно не едет, выделение только растёт вниз (см. captureFoundRow).
+          if (st.captureOnFind || st.growDownOnFind) {
             // При МУЛЬТИвыделении окно едет с постоянным размером — выброшенную сверху строку
             // убираем и из набора вращаемых, иначе она продолжала бы крутиться, уже не будучи
             // выделенной (см. captureFoundRow).
-            const dropped = captureFoundRow(bgInfo.targetIdx);
+            const dropped = captureFoundRow(bgInfo.targetIdx, st.growDownOnFind);
             rotIdxs.add(bgInfo.targetIdx);
             if (dropped >= 0) rotIdxs.delete(dropped);
           }
@@ -11614,8 +11841,74 @@ function startHorizXor(modeName){
 }
 document.getElementById("bStepHorizXor").onclick = () => startHorizXor("horiz_xor");
 document.getElementById("bStepHorizXorLeft").onclick = () => startHorizXor("horiz_xor_left");
-document.getElementById("bStepXorProj").onclick = () => doModeStep("xor_proj");
-document.getElementById("bStepScan").onclick = () => doModeStep("scan");
+/* "⏬ Проекц.XOR" — XOR ВЫДЕЛЕННОЙ СТРОКИ С ОДНОЙ ВЕРХНЕЙ ЗА НАЖАТИЕ (запрос пользователя):
+   первое нажатие складывает её с БЛИЖАЙШЕЙ строкой сверху, второе — со следующей выше, и так
+   вверх по цепочке. Результат каждый раз ложится в саму выделенную строку.
+   БЕРУТСЯ ТОЛЬКО ТЕ ВЕРХНИЕ СТРОКИ, У КОТОРЫХ ЕСТЬ БИТ НАД БИТОМ выделенной — то есть строки,
+   реально пересекающиеся с ней по столбцам (см. rowsOverlapCols). Строка, стоящая совсем сбоку,
+   в XOR ничего бы не изменила по существу, только растянула бы результат, — такие пропускаются.
+   На "½"-выравниваниях строка ЧУЖОЙ подсетки тоже пропускается: её биты стоят в полустолбцах
+   между битами выделенной, друг над другом они не стоят никогда.
+   Складывает xorRowsFiltered — по настоящим столбцам, с учётом выравнивания, полустолбцов и
+   показанных зеркал. Счётчик "докуда дошли" привязан к строке: сменили выделение — счёт с нуля. */
+var xorProjStep = { target: -1, upto: -1 };
+/* Половина столбца, с которой начинается строка на экране, — тот же расчёт, что в
+   xorRowsFiltered (сдвиг по СОБСТВЕННОЙ длине, левое зеркало отодвигает начало влево). */
+function rowColStart2x(st, i, s, m, maxLen, align){
+  const own = (m.l || m.r) ? s.slice(m.l, s.length - m.r) : s;
+  const isHalf = align === "halfcenter" || align === "halfstairs" || align === "rhalfstairs";
+  return 2 * (rowShiftFor(maxLen, i, own, align) - m.l) +
+    (isHalf && hasHalfNudge(own, maxLen, align, i) ? 1 : 0);
+}
+/* Есть ли у двух строк хоть один ОБЩИЙ столбец — "бит над битом". Разная подсетка ("½") — нет
+   никогда: биты стоят через полсимвола и друг над другом не встают. */
+function rowsOverlapCols(st, i, j, align){
+  const si = getRowBits(st, i), sj = getRowBits(st, j);
+  if (!si.length || !sj.length) return false;
+  const mi = mirrorPadsOf(st, i), mj = mirrorPadsOf(st, j);
+  const maxLen = Math.max(si.length - mi.l - mi.r, sj.length - mj.l - mj.r);
+  const ai = rowColStart2x(st, i, si, mi, maxLen, align);
+  const aj = rowColStart2x(st, j, sj, mj, maxLen, align);
+  if ((ai ^ aj) & 1) return false;
+  return Math.max(ai, aj) <= Math.min(ai + 2 * (si.length - 1), aj + 2 * (sj.length - 1));
+}
+document.getElementById("bStepXorProj").onclick = () => {
+  if (!st.selectedRows || !st.selectedRows.size) { say("⏬ Проекц.XOR: выделите строку кликом."); return; }
+  const target = Math.max(...st.selectedRows);
+  if (!getRowBits(st, target).length) { say("⏬ Проекц.XOR: выделенная строка пуста."); return; }
+  // Продолжаем подъём по той же строке или начинаем заново, если выделение сменилось.
+  const from = (xorProjStep.target === target && xorProjStep.upto > 0) ? xorProjStep.upto - 1 : target - 1;
+  let src = -1;
+  for (let r = from; r >= 0; r--) {
+    if (!getRowBits(st, r).length) continue;
+    if (!rowsOverlapCols(st, r, target, st.align)) continue;
+    src = r; break;
+  }
+  if (src < 0) {
+    xorProjStep = { target: -1, upto: -1 };
+    say(`⏬ Проекц.XOR: выше строки ${rowLabel(target)} подходящих строк больше нет (нужен бит над битом) — счёт начат заново.`);
+    return;
+  }
+  const res = xorRowsFiltered(st.rows, target, st.align, st, null, [src, target]);
+  if (!res.length) { say("⏬ Проекц.XOR: складывать нечего."); return; }
+  snapshot();
+  const before = st.rows[target];
+  st.rows[target] = res;
+  // Строка переписана целиком — позиционные флаги к ней больше не относятся.
+  insertedFlagsMap.delete(target);
+  invFlagsMap.delete(target);
+  maskChangedMap.clear(); maskBaseRows = null;
+  st.hit = null;
+  xorProjStep = { target: target, upto: src };
+  logStep("Проекция XOR", `${rowLabel(src)}+${rowLabel(target)}`, res,
+    `XOR со строкой ${rowLabel(src)} записан в строку ${rowLabel(target)}`,
+    [{ row: target + 1, before, after: res }],
+    [{ name: `№${rowLabel(src)}`, text: getRowBits(st, src) }, { name: `№${rowLabel(target)}`, text: before }]);
+  say(`⏬ Проекц.XOR: строка ${rowLabel(target)} сложена со строкой ${rowLabel(src)} — ${res.length} бит. Следующее нажатие возьмёт строку выше.`);
+  // ВЫДЕЛЕНИЕ НЕ ТРОГАЕМ ВООБЩЕ (запрос пользователя): захвата находки тут нет, выделение остаётся
+  // на той же строке — иначе подъём вверх сбивался бы, ему нужна одна и та же цель.
+  render(); saveCache();
+};document.getElementById("bStepScan").onclick = () => doModeStep("scan");
 
 document.getElementById("bAuto").onclick  = () => { if (st.running) st.running = false; else autoRun(); };
 document.getElementById("bUndo").onclick  = () => {
@@ -11794,11 +12087,23 @@ if (colHeaderEl) {
    ИНВАРИАНТ: targetIdx ВСЕГДА строго ниже всего выделения — см. computeBgSearchTarget():
    selIdx = Math.max(...st.selectedRows), targetIdx = selIdx + 1. Поэтому найденная строка не
    может ни уже быть в выделении, ни оказаться самой верхней, и проверок на это тут нет. */
-function captureFoundRow(targetIdx){
+function captureFoundRow(targetIdx, forceGrow){
   if (!st.selectedRows) st.selectedRows = new Set();
-  const wasMulti = st.selectedRows.size > 1 && !st.captureGrown;
+  // "⬇ Расширять вниз" (forceGrow, см. #bGrowDownOnFind) — окно НЕ едет никогда: строка снизу
+  // добавляется, верхняя остаётся выделенной, сколько бы находок ни случилось.
+  const wasMulti = !forceGrow && st.selectedRows.size > 1 && !st.captureGrown;
   if (st.selectedRows.size <= 1) st.captureGrown = true;
+  const grew = !st.selectedRows.has(targetIdx);
   st.selectedRows.add(targetIdx);
+  // ЗЕРКАЛО НОВОЙ СТРОКЕ — СРАЗУ, ещё до всего остального (достройки вверх, поиска, пересборки
+  // индексов): захват — это и есть тот момент, когда "выделение расширилось", ради которого
+  // "⇔ Авто-зеркала" и делались. Раньше вызов стоял только в самих прогонах ПОСЛЕ захвата, и на
+  // части путей (в т.ч. на ручном Круге) до него дело не доходило — запрос пользователя "не
+  // строит не всегда: при ручном сдвиге Круг, когда захватывает новую строку, сразу зеркало, а
+  // потом остальное". Зовём только на РЕАЛЬНОМ расширении: строка уже выделена — вписывать
+  // нечего. Предел по строке внутри applyMirrorsToRows() не даёт вписать зеркало дважды, поэтому
+  // прежние вызовы mirrorsAutoStep() в прогонах остаются безвредными.
+  if (grew) mirrorsAutoStep();
   if (!wasMulti) return -1;
   const top = Math.min(...st.selectedRows);
   st.selectedRows.delete(top);
@@ -11817,7 +12122,7 @@ function afterShiftBgCheck(isShiftInv){
   refreshTopMirrors();
   const bgInfo = computeBgSearchTarget();
   const hit = !!(bgInfo && bgInfo.matched);
-  if (st.captureOnFind && hit) captureFoundRow(bgInfo.targetIdx);
+  if ((st.captureOnFind || st.growDownOnFind) && hit) captureFoundRow(bgInfo.targetIdx, st.growDownOnFind);
   if (hit) { mirrorsAutoStep(); topBuildOnHitStep(); }
   st.manualShiftTurns = (st.manualShiftTurns || 0) + 1;
   st.stepStale = false; // ручной ◄/► — это тоже настоящий шаг, номер живой (см. finishAuto)
@@ -12594,10 +12899,25 @@ function rotateSelected90(ccw){
   logStep("Поворот 90°", `${start + 1}–${end + 1}`, out.join(""), `Блок ${R}×${W} повёрнут ${dirLabel}`);
   render(); saveCache();
 }
+/* Проверить фон-поиск ПРЯМО СЕЙЧАС и, если паттерн нашёлся, захватить находку — тот же захват, что
+   и после ручного ◄/►Круга (см. afterShiftBgCheck): "🧲 Захват находки" / "⬇ Расширять вниз",
+   авто-зеркала (они внутри captureFoundRow) и "🎯 При находке: достраивать".
+   Нужен операциям, которые меняют биты НЕ сдвигом — "⬔ До квадрата", "◺/◹ 90°": раньше находка
+   после них только подсвечивалась, а выделение стояло на месте (запрос пользователя: "До квадрата
+   дал паттерн, захват включён, а выделение не расширилось"). Возвращает true, если что-то
+   захвачено, — вызывающему остаётся перерисовать. */
+function captureOnFindNow(){
+  if (!st.captureOnFind && !st.growDownOnFind) return false;
+  const bgInfo = computeBgSearchTarget();
+  if (!bgInfo || !bgInfo.matched) return false;
+  captureFoundRow(bgInfo.targetIdx, st.growDownOnFind);
+  topBuildOnHitStep();
+  return true;
+}
 const bRotate90El = document.getElementById("bRotate90");
-if (bRotate90El) bRotate90El.onclick = () => rotateSelected90(false);
+if (bRotate90El) bRotate90El.onclick = () => { rotateSelected90(false); if (captureOnFindNow()) { render(); saveCache(); } };
 const bRotate90CcwEl = document.getElementById("bRotate90ccw");
-if (bRotate90CcwEl) bRotate90CcwEl.onclick = () => rotateSelected90(true);
+if (bRotate90CcwEl) bRotate90CcwEl.onclick = () => { rotateSelected90(true); if (captureOnFindNow()) { render(); saveCache(); } };
 
 /* "⬔ До квадрата" — достраивает фигуру до КВАДРАТА зеркалом по главной диагонали ВВЕРХ (запрос
    пользователя: "если треугольник — зеркально по диагонали вверх").
@@ -12830,7 +13150,7 @@ function squareFillSelected(){
   render(); saveCache();
 }
 const bSquareFillEl = document.getElementById("bSquareFill");
-if (bSquareFillEl) bSquareFillEl.onclick = squareFillSelected;
+if (bSquareFillEl) bSquareFillEl.onclick = () => { squareFillSelected(); if (captureOnFindNow()) { render(); saveCache(); } };
 
 /* "☰ Выделить все" — выделяет все строки разом; если все уже выделены, клик снимает выделение.
    Данные не меняются, поэтому snapshot() не нужен. Счётчики кругового сдвига сбрасываются так же,
@@ -12969,7 +13289,7 @@ function buildTopMirror(mode, keepSel){
    Ключи, ушедшие в минус (строки, которых больше нет), выбрасываем. */
 function shiftRowMaps(delta){
   if (!delta) return;
-  const maps = [insertedFlagsMap, invFlagsMap, maskChangedMap, axisOffsetMap, axisBitShiftMap, axisBitDirMap, rowRotOffMap];
+  const maps = [insertedFlagsMap, invFlagsMap, maskChangedMap, axisOffsetMap, axisBitShiftMap, axisBitDirMap, rowRotOffMap, mirrorsRowDone];
   for (const m of maps) {
     if (!m || !m.size) continue;
     const moved = [];
@@ -13106,6 +13426,26 @@ function setTopBuildOnSelect(on, quiet){
     saveCache();
   }
 }
+/* "⬇ Расширять вниз" — на каждой находке добавлять к выделению строку ПОД ним, ничего не снимая
+   сверху (запрос пользователя). Отличие от "🧲 Захват находки": тот у выделения, набранного
+   руками, ведёт окно постоянного размера — добавляет снизу, снимает сверху. Здесь блок только
+   растёт. Включён — сильнее "Захвата" (он в этом случае окном не едет). */
+function setGrowDownOnFind(on, quiet){
+  st.growDownOnFind = !!on;
+  const b = document.getElementById("bGrowDownOnFind");
+  if (b) {
+    b.classList.toggle("mode-act", st.growDownOnFind);
+    b.textContent = st.growDownOnFind ? "⬇ Расширять вниз: вкл" : "⬇ Расширять вниз: выкл";
+  }
+  if (!quiet) {
+    say(st.growDownOnFind
+      ? "Выделение будет расти ВНИЗ на каждой находке — верхняя граница остаётся на месте."
+      : "Расширение выделения вниз выключено.");
+    saveCache();
+  }
+}
+const bGrowDownOnFindEl = document.getElementById("bGrowDownOnFind");
+if (bGrowDownOnFindEl) bGrowDownOnFindEl.onclick = () => setGrowDownOnFind(!st.growDownOnFind);
 /* "◀ Зеркало влево" — чистая настройка показа, данные не трогает (см. .lm-bit в CSS и render). */
 /* "⇅ Вид: инверсия / реверс+инв" — переключатель заполнения построенных строк (см. topMirrorOf). */
 const TOP_BUILD_KINDS = ["inv", "revinv", "rev"]; // порядок перебора по нажатиям кнопки
@@ -13161,7 +13501,10 @@ function setRightMirror(on, quiet){
    включено, — и дальше живут как обычные биты: ищутся, склеиваются, участвуют в XOR.
    Показ зеркал сразу выключается: иначе следующий же кадр нарисовал бы вокруг удлинённых строк
    зеркала зеркал, и понять, где данные, стало бы невозможно. */
-function applyMirrorsToRows(keepShow, sides){
+/* silent — не сообщать "вписывать нечего": так зовут те, кто дёргает вписывание САМ, без прямого
+   нажатия кнопки (автомат по захвату и подготовка к Кругу, см. mirrorsBeforeShift) — для них
+   "уже всё вписано" нормальное состояние, а не повод писать в лог на каждом шаге. */
+function applyMirrorsToRows(keepShow, sides, silent){
   // Стороны задаются ЯВНО (запрос пользователя: "нужно отдельные, иначе зеркало на зеркале").
   // Ручная кнопка берёт их у показа — вписывает ровно то, что видно; автоматика имеет свою
   // настройку сторон и от показа не зависит вовсе, поэтому не плодит зеркало на зеркале.
@@ -13177,25 +13520,36 @@ function applyMirrorsToRows(keepShow, sides){
   // вниз. Без выделения вписывать нечего — на экране зеркал в этот момент тоже нет.
   const mirrorTo = (st.selectedRows && st.selectedRows.size) ? Math.max(...st.selectedRows) : -1;
   if (mirrorTo < 0) { say("Вписать зеркала: сначала выделите строку — зеркала строятся до неё сверху."); return; }
+  // ПРЕДЕЛ СЧИТАЕТСЯ ПО КАЖДОЙ СТРОКЕ ОТДЕЛЬНО (mirrorsRowDone), а не одним счётчиком на всю
+  // сессию. Общий счётчик означал "вписали один раз где угодно — и больше никогда": первое же
+  // вписывание (в том числе автоматическое перед ручным Кругом, см. mirrorsBeforeShift) съедало
+  // весь запас, и на следующих захватах зеркала уже не строились (запрос пользователя — "не
+  // строит, не всегда"). По строкам предел работает так, как и задумывался: зеркало на зеркале не
+  // появляется, каждая строка обрастает им не больше N раз, а КАЖДАЯ НОВАЯ захваченная строка своё
+  // зеркало получает сразу. Рост при этом ограничен ровно так же (строка длиннее втрое, не больше
+  // N раз), поэтому предохранитель по общему размеру ниже остаётся на месте.
+  const maxApply = (st.mirrorsAutoMax == null) ? 1 : st.mirrorsAutoMax;
   const plan = [];
+  let blocked = 0;
   for (let r = 0; r <= mirrorTo && r < st.rows.length; r++) {
     const s0 = st.rows[r] || "";
     if (s0.length < 2) continue; // из одного бита зеркала не выходит: сам бит в него не входит
+    if ((mirrorsRowDone.get(r) || 0) >= maxApply) { blocked++; continue; }
     const left = useLeft ? invertBits(reverseStr(s0.slice(1))) : "";
     const right = useRight ? invertBits(reverseStr(s0.slice(0, -1))) : "";
     if (!left && !right) continue;
     plan.push([r, left + s0 + right, left.length + right.length]);
   }
-  if (!plan.length) { say("Вписать зеркала: подходящих строк нет (нужны строки хотя бы из двух бит)."); return; }
-  // ПРЕДЕЛ СЧИТАЕТСЯ ЗДЕСЬ, поэтому он общий для автоматики И для ручной кнопки (запрос
-  // пользователя: "и ручные тоже пусть ограничивает"). Счёт обнуляется "↺ Сбросом" и сменой самого
-  // числа/режима авто-зеркал.
-  const maxApply = (st.mirrorsAutoMax == null) ? 1 : st.mirrorsAutoMax;
-  if (mirrorsAutoDone >= maxApply) {
-    say(`Вписать зеркала: предел ${maxApply} уже исчерпан. Увеличьте число рядом с кнопкой или сбросьте счёт «↺ Сбросом».`);
+  if (!plan.length) {
+    // Автомат молчит: он зовётся на каждом захвате, и "нечего вписывать" — его нормальное
+    // состояние (все строки участка уже со своими зеркалами).
+    if (!silent && !sides) {
+      say(blocked
+        ? `Вписать зеркала: во все строки участка зеркала уже вписаны по ${maxApply} раз(а). Увеличьте число рядом с кнопкой или сбросьте счёт «↺ Сбросом».`
+        : "Вписать зеркала: подходящих строк нет (нужны строки хотя бы из двух бит).");
+    }
     return;
   }
-  mirrorsAutoDone++;
   // ПРЕДОХРАНИТЕЛЬ ПО РАЗМЕРУ: каждое вписывание удлиняет строку почти втрое, и на серии находок
   // цепочка легко раздувается до полной неработоспособности. Считаем итог заранее и отказываемся,
   // если он переходит границу разумного, — лучше сообщение, чем повисший браузер.
@@ -13212,6 +13566,8 @@ function applyMirrorsToRows(keepShow, sides){
   for (const pr of plan) {
     st.rows[pr[0]] = pr[1];
     added += pr[2];
+    // Счёт вписываний ведётся по КАЖДОЙ строке отдельно (см. предел выше).
+    mirrorsRowDone.set(pr[0], (mirrorsRowDone.get(pr[0]) || 0) + 1);
     // Длина строки изменилась — позиционные флаги к ней больше не относятся.
     insertedFlagsMap.delete(pr[0]);
     invFlagsMap.delete(pr[0]);
@@ -13237,7 +13593,7 @@ function applyMirrorsToRows(keepShow, sides){
    удлиняет строку примерно втрое, поэтому без предела серия находок раздувала цепочку до
    неработоспособности — браузер вставал, и перезагрузка не помогала, потому что раздутые строки
    уже лежали в кэше. Счётчик обнуляется Сбросом и переключением самой кнопки. */
-var mirrorsAutoDone = 0;
+var mirrorsRowDone = new Map(); // строка → сколько раз в неё уже вписаны зеркала
 const MIRROR_AUTO_SIDES = ["off", "left", "right", "both"]; // порядок перебора по нажатиям
 function mirrorsAutoSides(){
   const m = st.mirrorsAutoSide || "off";
@@ -13254,21 +13610,21 @@ function mirrorsAutoSides(){
    Зеркала выключены — не делает ничего, сдвиг идёт как обычно. */
 function mirrorsBeforeShift(){
   if (!st.leftMirror && !st.rightMirror) return;
-  applyMirrorsToRows(false);
+  applyMirrorsToRows(false, null, true); // молча: строки участка могут быть уже со своими зеркалами
 }
 function mirrorsAutoStep(){
   const sides = mirrorsAutoSides();
   if (!sides) return;
-  const max = (st.mirrorsAutoMax == null) ? 1 : st.mirrorsAutoMax;
-  if (mirrorsAutoDone >= max) return; // предел исчерпан — молча, без сообщения на каждой находке
-  // Сам счёт ведёт applyMirrorsToRows (он общий с ручной кнопкой).
+  // Общего "предел исчерпан — больше никогда" тут больше нет: предел считается по каждой строке
+  // отдельно внутри applyMirrorsToRows(), поэтому новая захваченная строка своё зеркало получает
+  // всегда, даже если у строк выше оно уже вписано.
   // Показ зеркал тут ни при чём: у автоматики свои стороны, поэтому включать серые зеркала ради
   // вписывания не нужно, и зеркала на зеркале не появляется.
   applyMirrorsToRows(true, sides);
 }
 function setMirrorsAuto(m, quiet){
   st.mirrorsAutoSide = MIRROR_AUTO_SIDES.indexOf(m) >= 0 ? m : "off";
-  mirrorsAutoDone = 0; // новая настройка — счёт вписываний с нуля
+  mirrorsRowDone.clear(); // новая настройка — счёт вписываний с нуля
   const b = document.getElementById("bMirrorsAuto");
   const lbl = { off: "выкл", left: "влево", right: "вправо", both: "обе стороны" };
   if (b) {
@@ -13304,7 +13660,7 @@ if (mirrorsAutoMaxEl) {
     const v = Math.max(1, Math.min(99, parseInt(mirrorsAutoMaxEl.value, 10) || 1));
     mirrorsAutoMaxEl.value = v;
     st.mirrorsAutoMax = v;
-    mirrorsAutoDone = 0; // предел сменили — счёт заново
+    mirrorsRowDone.clear(); // предел сменили — счёт заново
     say(`Зеркала: не больше ${v} вписываний — и автоматикой, и вручную.`);
     saveCache();
   };
@@ -13646,8 +14002,16 @@ function patChainApplyOnce(silent){
     if (st.patChainPendingMove >= 0 && st.patChainPendingMove < st.rows.length) {
       const moveTo = st.patChainPendingMove;
       st.patChainPendingMove = -1;
-      st.selectedRows = new Set([moveTo]);
-      st.captureGrown = false; // выделение не "выросло" — оно переехало, правило окна ни при чём
+      // "⬇ Расширять вниз" (см. #bGrowDownOnFind) — выделение не ПЕРЕЕЗЖАЕТ на находку, а
+      // ДОРАСТАЕТ до неё: прежние строки остаются выделенными, снизу добавляется найденная.
+      if (st.growDownOnFind) {
+        if (!st.selectedRows) st.selectedRows = new Set();
+        st.selectedRows.add(moveTo);
+        st.captureGrown = true;
+      } else {
+        st.selectedRows = new Set([moveTo]);
+        st.captureGrown = false; // выделение не "выросло" — оно переехало, правило окна ни при чём
+      }
       // ОДНОВРЕМЕННО С ПЕРЕЕЗДОМ обнуляем новую строку ПОД выделением (запрос пользователя): она
       // только что стала искомой, и её прежние биты не должны попасть ни в укладку, ни в результат
       // поиска. Помечаем её как уже задействованную — повторно обнулять при укладке не нужно.
@@ -13830,7 +14194,7 @@ function patChainApplyOnce(silent){
       [], [{ name: "Накладываем", text: tiledAll }, { name: "Сквозная", text: beforeAll }]);
     const bgInfoNow = computeBgSearchTarget();
     const matched = !!(bgInfoNow && bgInfoNow.matched);
-    if (matched && st.captureOnFind) st.patChainPendingMove = bgInfoNow.targetIdx;
+    if (matched && (st.captureOnFind || st.growDownOnFind)) st.patChainPendingMove = bgInfoNow.targetIdx;
     st.bgSearchLastHit = -1;
     // "⏩ Турбо": промежуточные кадры не рисуем и кэш не пишем — но находку показываем всегда,
     // иначе не видно, ради чего всё и крутилось.
@@ -14579,17 +14943,61 @@ if (bXorSelectedEl) {
   };
 }
 
+/* "⧬ Интерлив" — ОДИН шаг по выделению (запрос пользователя: "пусть эта кнопка записывает
+   результат прямо под выделенную строку, изменяя саму строку цепочки, и ищет паттерн этой же
+   строки"). Переплетаются те же две строки, что и у одноимённого режима фон-поиска: строка НАД
+   выделенной и сама выделенная (interleavePairRows — значит с учётом полустолбцов "½"-выравниваний
+   и показанных зеркал). Результат КЛАДЁТСЯ В СТРОКУ ПОД ВЫДЕЛЕННОЙ — ту самую, чей паттерн
+   фон-поиск и так сверяет, — и сверяется с её паттерном тут же, на месте.
+   Прежнее поведение (режим st.interleaveMode: прогон по парам сверху вниз) отсюда убрано; сам
+   пошаговый механизм (doInterleaveStep) остался нетронутым для "⧬ Интерлив сквозной" и прогонов. */
 const bInterleaveSearchEl = document.getElementById("bInterleaveSearch");
 if (bInterleaveSearchEl) {
   bInterleaveSearchEl.onclick = () => {
-    if (st.aIdx < 0 || st.bIdx >= st.rows.length || st.aIdx >= st.bIdx) {
-      say("Нельзя делать интерливинг, недостаточно строк.");
-      return;
+    if (!st.selectedRows || !st.selectedRows.size) { say("⧬ Интерлив: выделите строку кликом."); return; }
+    const selIdx = Math.max(...st.selectedRows);
+    const aboveIdx = selIdx - 1, targetIdx = selIdx + 1;
+    if (aboveIdx < 0) { say("⧬ Интерлив: нужна строка НАД выделенной — переплетать не с чем."); return; }
+    if (targetIdx >= st.rows.length) { say("⧬ Интерлив: нужна строка ПОД выделенной — результат писать некуда."); return; }
+    const res = interleavePairRows(st, aboveIdx, selIdx, st.align);
+    if (!res.length) { say("⧬ Интерлив: обе строки пусты — переплетать нечего."); return; }
+    snapshot();
+    // Ориентир для оси — сама выделенная строка: её длина не меняется, значит по ней и видно,
+    // насколько уехало бы полотно от удлинения соседней (см. keepAxisAfter).
+    const axisBefore = axisAnchorShift(selIdx);
+    st.rows[targetIdx] = res;
+    keepAxisAfter(selIdx, axisBefore);
+    // Длина строки изменилась — позиционные флаги к ней больше не относятся (как и везде, где
+    // строка переписывается целиком).
+    insertedFlagsMap.delete(targetIdx);
+    invFlagsMap.delete(targetIdx);
+    maskChangedMap.clear(); maskBaseRows = null;
+    st.hit = null;
+    // Паттерн ЭТОЙ ЖЕ строки — ровно тот, что сверял фон-поиск и раньше. Сверка общая
+    // (findPatternKinds), то есть с теми же настройками: ⏭ Без 1-го, ⇌ Инв/Рев, кольцо и прочее.
+    const pat = st.pats[targetIdx];
+    const patText = pat && pat.text ? pat.text : "";
+    const kinds = patText ? findPatternKinds(res, patText) : null;
+    const found = !!(kinds && kinds.length);
+    say(`⧬ Интерлив: строки ${rowLabel(aboveIdx)}+${rowLabel(selIdx)} переплетены в строку ${rowLabel(targetIdx)} (${res.length} бит) — ` +
+        (patText ? (found ? `паттерн этой строки НАЙДЕН (${KIND_LABELS_RU[kinds[0].kind] || "прямая"}).` : "паттерна этой строки в ней нет.")
+                 : "у неё нет паттерна для сверки."));
+    logStep("Интерлив", `${rowLabel(aboveIdx)}+${rowLabel(selIdx)} → ${rowLabel(targetIdx)}`, res, found ? "паттерн найден" : "");
+    // ВЫДЕЛЕНИЕ ПЕРЕЕЗЖАЕТ НА ИЗМЕНЁННУЮ СТРОКУ (запрос пользователя): следующее нажатие
+    // переплетает уже следующую пару вниз — бывшая выделенная становится "строкой сверху", а
+    // результат ляжет в строку под новой выделенной. С включённым "⬇ Расширять вниз" выделение
+    // не переезжает, а ДОРАСТАЕТ до неё — прежние строки остаются выделенными.
+    if (st.growDownOnFind) {
+      st.selectedRows.add(targetIdx);
+      st.captureGrown = true;
+    } else {
+      st.selectedRows = new Set([targetIdx]);
+      st.captureGrown = false;
     }
-    st.interleaveMode = true;
-    st.interleavePairIdx = st.aIdx;
-    say(`Режим Интерливинг активен. Ищу совпадение...`);
-    doInterleaveStep();
+    // Граница показа зеркал/участка сместилась вместе с выделением — новой строке своё зеркало
+    // (если включены "⇔ Авто-зеркала"), как и при захвате находки.
+    mirrorsAutoStep();
+    render(); saveCache();
   };
 }
 
@@ -14676,7 +15084,7 @@ function doInterleaveStep() {
 
   const rowA = getRowBits(st, aIdx);
   const rowB = getRowBits(st, bIdx);
-  const intResult = interleavePair(rowA, rowB, st.align);
+  const intResult = interleavePairRows(st, aIdx, bIdx, st.align);
 
   let searchResult = intResult;
   const cInterleaveXor = document.getElementById("cInterleaveXor");
@@ -16243,6 +16651,7 @@ function captureUiSettings(){
     topBuildOnHit: !!st.topBuildOnHit,
     topBuildNeedHit: !!st.topBuildNeedHit,
     topBuildOnSelect: !!st.topBuildOnSelect,
+    growDownOnFind: !!st.growDownOnFind,
     leftMirror: !!st.leftMirror,
     rightMirror: !!st.rightMirror,
     mirrorsAutoMax: st.mirrorsAutoMax == null ? 1 : st.mirrorsAutoMax,
@@ -16341,6 +16750,7 @@ function applyUiSettings(u){
   if (u.topBuildOnHit !== undefined) setTopBuildOnHit(u.topBuildOnHit, true);
   if (u.topBuildNeedHit !== undefined) setTopBuildNeedHit(u.topBuildNeedHit, true);
   if (u.topBuildOnSelect !== undefined) setTopBuildOnSelect(u.topBuildOnSelect, true);
+  if (u.growDownOnFind !== undefined) setGrowDownOnFind(u.growDownOnFind, true);
   if (u.leftMirror !== undefined) setLeftMirror(u.leftMirror, true);
   if (u.rightMirror !== undefined) setRightMirror(u.rightMirror, true);
   // Автоматику зеркал из кэша НЕ восстанавливаем: если она успела раздуть цепочку, то при загрузке
@@ -16513,6 +16923,7 @@ const DEFAULT_UI_SETTINGS = {
   seqSelf: false, seqGlueMode: "right",
   horizRotateOnFail: true, horizAlternateSide: false, horizReverseChain: false, horizShowLiveXor: true,
   axisSnap: true, axisBitBounce: false, axisCenterOffset: 0,
+  growDownOnFind: false,
   align: "center", mode: "step1", rowCount: "100",
   bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatRInv", "concatRRevInv", "concatL", "concatLInv", "concatLRevInv", "concatSnake", "concatSnakeInv", "concatSnakeRevInv", "vertR", "vertL", "snakeR", "snakeL", "vertZigR", "vertZigL", "diagR", "diagL"],
   bgSearchOn: true,
