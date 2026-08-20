@@ -4408,6 +4408,8 @@ const st = {
   // axisSnapLocalIdxs). Пустой массив — ни одной оси не назначено.
   axisSnapCols: [],
   axisSnapGroups: [],
+  // "⤡ Диагональ осей" (кнопка bAxisDiagCols): 0 выкл, 1 наклон по лестнице, −1 зеркальный.
+  axisDiagCols: 0,
   spiralUpDir: "right",
   seqGlueMode: "right", ringReverse: false,
   bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatRInv", "concatRRevInv", "concatL", "concatLInv", "concatLRevInv", "concatSnake", "concatSnakeInv", "concatSnakeRevInv", "concatSnakeFromR", "concatSnakeFromRInv", "concatSnakeFromRRevInv", "vertR", "vertL", "snakeR", "snakeL", "vertZigR", "vertZigL", "diagR", "diagL"], bgSearchLastHit: -1,
@@ -11190,6 +11192,9 @@ alignBtns.forEach(btn => {
     // тот момент по НОВОМУ выравниванию со СТАРЫМ сдвигом, то есть по заведомо неверной паре.
     // Следующий кадр честно ставил ось по этому испорченному значению, и картинка прыгала.
     axisPinCol = prevAxisCol;
+    // Подпись "⤡ Диагональ осей" показывает РЕАЛЬНУЮ стрелку, а она зависит от выравнивания
+    // (у "Лесенки правой ½" наклон зеркальный, вне "½" диагонали нет вовсе) — обновляем молча.
+    setAxisDiagCols(st.axisDiagCols, true);
     render();
     saveCache();
   };
@@ -17610,7 +17615,7 @@ function captureUiSettings(){
     axisBitBounce: cAxisBitBounceEl ? cAxisBitBounceEl.checked : false,
     edgeOnes: cEdgeOnesEl ? cEdgeOnesEl.checked : false,
     noSplitOnes: cNoSplitOnesEl ? cNoSplitOnesEl.checked : false,
-    axisDiagCols: cAxisDiagColsEl ? cAxisDiagColsEl.checked : false,
+    axisDiagCols: st.axisDiagCols | 0,
     interleavePadEven: cInterleavePadEvenEl ? cInterleavePadEvenEl.checked : false,
     axisSnapAny: cAxisSnapAnyEl ? cAxisSnapAnyEl.checked : false,
     axisCenterOffset: st.axisCenterOffset || 0,
@@ -17689,7 +17694,8 @@ function applyUiSettings(u){
   if (u.axisBitBounce !== undefined && cAxisBitBounceEl) cAxisBitBounceEl.checked = u.axisBitBounce;
   if (u.edgeOnes !== undefined && cEdgeOnesEl) cEdgeOnesEl.checked = u.edgeOnes;
   if (u.noSplitOnes !== undefined && cNoSplitOnesEl) cNoSplitOnesEl.checked = u.noSplitOnes;
-  if (u.axisDiagCols !== undefined && cAxisDiagColsEl) cAxisDiagColsEl.checked = u.axisDiagCols;
+  // Старые сохранёнки хранили здесь галку (true/false) — число из неё получится тем же |0.
+  if (u.axisDiagCols !== undefined) setAxisDiagCols(u.axisDiagCols | 0, true);
   if (u.interleavePadEven !== undefined && cInterleavePadEvenEl) cInterleavePadEvenEl.checked = u.interleavePadEven;
   if (u.axisSnapAny !== undefined && cAxisSnapAnyEl) cAxisSnapAnyEl.checked = u.axisSnapAny;
   if (u.axisCenterOffset !== undefined) st.axisCenterOffset = u.axisCenterOffset;
@@ -17736,6 +17742,9 @@ function applyUiSettings(u){
       else b.classList.remove("act");
     });
   }
+  // ПОСЛЕ восстановления выравнивания: стрелка на кнопке "⤡ Диагональ осей" зависит от него, а
+  // сам режим читался выше (u.axisDiagCols), когда st.align был ещё старый.
+  setAxisDiagCols(st.axisDiagCols, true);
 
   if (u.mode) setMode(u.mode);
 
@@ -18134,7 +18143,6 @@ if (cPadRealEl) cPadRealEl.addEventListener("change", () => {
 if (cAxisBitBounceEl) cAxisBitBounceEl.addEventListener("change", () => { readToggles(); axisBitDirMap.clear(); rowRotOffMap.clear(); render(); saveCache(); });
 if (cEdgeOnesEl) cEdgeOnesEl.addEventListener("change", () => { readToggles(); edgeOnesSideMap.clear(); render(); saveCache(); });
 if (cNoSplitOnesEl) cNoSplitOnesEl.addEventListener("change", () => { readToggles(); render(); saveCache(); });
-if (cAxisDiagColsEl) cAxisDiagColsEl.addEventListener("change", () => { readToggles(); render(); saveCache(); });
 
 if (!loadCache()){
   /* Самая первая загрузка вообще (localStorage ещё пуст) — createDefaultTabState() берёт
@@ -18342,7 +18350,7 @@ const TIPS = {
   t24: "Снять жёлтое выделение столбца. Синий назначенный столбец («⊙ Ось сюда») это не трогает — его снимает соседняя кнопка «✕ Снять столбец»",
   t25: "Когда назначено НЕСКОЛЬКО осей («⊙ Ось сюда»): по умолчанию Круг ◄/► принимает только то положение строки, где «1» стоит на ВСЕХ осях сразу — а с этой галкой хватает ЛЮБОЙ ОДНОЙ из них, строка встаёт на ближайшее такое положение. На одной-единственной оси разницы нет",
   t26: "Взять ВСЕ единицы выделенной строки и назначить их столбцы осями для Круга — разом, вместо того чтобы тыкать в каждый столбец. Это ОТДЕЛЬНАЯ ГРУППА своего цвета: она действует на строки ОТ ЭТОЙ СТРОКИ И НИЖЕ — до следующей строки, где так же назначены оси. Зоны групп не накладываются друг на друга, прежние группы остаются на своих местах. Заодно выделение переносится на строки НИЖЕ этой: до следующей выделенной строки, а если её нет — до самого низа цепочки. Сама строка-источник из выделения выходит, чтобы Круг её не крутил (её единицы и задают оси). Дальше ◄/►Круг ставит нижние строки на эти оси: по умолчанию нужны «1» на всех сразу, с галкой ниже — хватит любой",
-  t26b: "На «½»-выравниваниях (Центр ½/Лесенка ½/Лесенка правая ½) строки едут на ПОЛСТОЛБЦА за строку, поэтому вертикальная ось попадает в биты только у половины строк — у второй половины бит стоит в полустолбце между (без галки так и есть, это прежнее поведение). С галкой ось становится НАКЛОННОЙ ЛИНИЕЙ с тем же шагом ½ столбца на строку (у «Лесенки правой ½» — влево, у остальных — вправо): она идёт через реальные биты строк ЛЮБОЙ чётности, и подсветка видна как диагональ, а не как прерывистая вертикаль. Линия проходит через строку-якорь: у «⊙ Оси по «1» строки» это сама строка-источник, у клика по столбцу — верхняя выделенная строка",
+  t26b: "На «½»-выравниваниях (Центр ½/Лесенка ½/Лесенка правая ½) строки едут на ПОЛСТОЛБЦА за строку, поэтому вертикальная ось попадает в биты только у половины строк — у второй бит стоит в полустолбце между (это состояние «выкл», прежнее поведение). Нажатия перебирают ТРИ состояния: 1-е — ось становится НАКЛОННОЙ ЛИНИЕЙ с шагом ½ столбца на строку по наклону самой лестницы, 2-е — та же линия в ДРУГУЮ сторону, 3-е — снова выкл. Диагональ идёт через реальные биты строк ЛЮБОЙ чётности, поэтому подсветка видна сплошной наклонной линией, а не прерывистой вертикалью. Линия проходит через строку-якорь: у «⊙ Оси по «1» строки» это сама строка-источник, у клика по столбцу — верхняя выделенная строка",
   t27: "Достроить ВВЕРХ зеркало из строк: берутся настоящие строки от первой до выделенной, их порядок переворачивается, и над первой строкой кладётся столько же строк — каждая ИНВЕРСИЯ (0↔1) своей строки. Для 1/11/111 сверху появятся 000/00/0 (инверсия единиц), а для 101 — 010. Цепочка съезжает вниз, настоящая первая строка остаётся номером 0, а достроенные получают отрицательные номера и участвуют во всех склейках и поиске наравне с остальными",
   t28: "Что делать, когда верх УЖЕ построен: «переписывать» — каждый раз строить всё отражение заново по текущему выделению, все построенные строки обновляются. «Дописывать» — уже построенные НЕ ТРОГАТЬ вовсе, даже если настоящие строки с тех пор изменились: сверху просто доводится число строк до числа настоящих строк по выделенную включительно — не хватает, дописываются недостающие, а если выделение уехало выше, лишние снимаются с самого верха",
   t29: "Чем заполняются достроенные сверху строки, перебор по кругу: «инверсия» — просто инверсия строки-источника (0↔1); «реверс+инв» — инверсия плюс разворот порядка бит; «реверс» — только разворот, биты как есть. Переключение сразу пересобирает верх (в режиме «переписывать»)",
