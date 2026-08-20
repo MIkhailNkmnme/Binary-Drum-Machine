@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.738</title>
+<title>Zerkalius Fold — v0.740</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -45,6 +45,7 @@
                           и "0", и "1" в найденном пробеге красятся ровно в этот один цвет */
     --cv1-hl:#00ccff; /* цвет подсветки "1 под 1" (см. #bHighlightVert1/#colVert1) — тоже сплошной */
     --cd1-hl:#66ff66; /* цвет подсветки "1 по диагонали" (см. #bHighlightDiag1/#colDiag1) — тоже сплошной */
+    --c11r-hl:#a78bfa; /* цвет подсветки "1 правее 1" (см. #bHighlight1Right/#col1Right) — сплошной */
     --cdf-hl:#ff5ecb; /* цвет подсветки "диагонали склейки" (см. #bHighlightDiagFold/#colDiagFold) —
                           показывает САМИ ЛИНИИ, по которым режимы "⧅ Диаг. ↘/↙" собирают результат
                           (и нули тоже, не только единицы — это линия, а не находка) */
@@ -1014,6 +1015,10 @@
      .hl01/.hlv1. Объявлена ПОСЛЕ них — при совпадении сразу нескольких подсветок на одном
      символе она визуально побеждает (см. порядок классов в render()). */
   .hld1{color:var(--cd1-hl) !important}
+  /* Подсветка "1 правее 1" (см. #bHighlight1Right) — красит ЕДИНИЦУ, у которой сосед СЛЕВА в той
+     же строке тоже "1" (то есть вторую и все следующие единицы в каждой сплошной группе; одиночная
+     "1" не красится). Оформление то же, что у .hl01/.hlv1/.hld1 — сплошной цвет текста. */
+  .hl11r{color:var(--c11r-hl) !important}
   /* Подсветка "диагонали склейки" (см. #bHighlightDiagFold/computeDiagFoldMask) — это не находка
      из единиц, как .hld1, а САМИ линии обхода режимов "⧅ Диаг. ↘/↙": красятся ВСЕ биты на линии,
      и "1", и "0". Объявлена последней — при совпадении с другими подсветками побеждает она
@@ -1643,7 +1648,7 @@ body.vcur-on #vcurBar{display:flex}
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <a href="index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (index.html)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.738</span></h3>
+    <a href="index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (index.html)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.740</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -1780,6 +1785,17 @@ body.vcur-on #vcurBar{display:flex}
          прогон, поэтому её место рядом с кнопкой, которая этот прогон запускает. Галка та же
          самая (#cTurboAuto), обработчик и логика не тронуты. -->
     <label class="chk" data-tip="t7"><input type="checkbox" id="cTurboAuto">⏩ Турбо</label>
+  </div>
+  <!-- "🐢 Замедление" — противоположность Турбо: прогон идёт РОВНО ПО ОДНОМУ шагу за тик, и каждый
+       шаг держится на экране заданное число кадров (ползунок рядом), чтобы движение можно было
+       разглядеть. Работает во всех режимах Авто (см. autoBatch/autoFrame в JS). СВОЯ строка, а не
+       рядом с "Авто/Сброс/Турбо": вместе с ползунком они в один ряд не влезали и ломали разметку. -->
+  <div class="flow-top-row" style="flex-wrap:nowrap">
+    <button id="bSlowAuto" style="flex:0 1 auto;white-space:nowrap" title="Замедление: Авто делает ровно один шаг за раз и держит каждый кадр столько кадров, сколько выставлено ползунком — видно каждый шаг. Отменяет пакетную прокрутку (и «⏩ Турбо» на время замедления).">🐢 Замедление</button>
+    <label class="chk" style="flex:1 1 auto;min-width:0;gap:4px" title="Сколько кадров экрана держится каждый шаг замедления (1 ≈ 60 шагов в секунду, 60 ≈ один шаг в секунду)">
+      <input type="range" id="slowFrames" min="1" max="60" step="1" value="10" style="flex:1 1 auto;min-width:40px;accent-color:#4da3ff">
+      <span id="slowFramesVal" style="flex:0 0 auto;min-width:2.2em;text-align:right">10</span>
+    </label>
   </div>
   <div class="flow-modes-grid">
     <!-- Шаг/Шаг 2 и XOR/XOR 2 — каждая пара в своей рамке, тот же приём, что и у Круг/Круг Инв
@@ -1952,11 +1968,16 @@ body.vcur-on #vcurBar{display:flex}
        а собирают набор ячеек (см. cellSel в JS), и над этим набором работают кнопки справа. -->
   <div style="grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:4px; border:1px solid var(--m-teal); background:rgba(34,211,238,0.10); border-radius:3px; padding:4px;">
     <button id="bCellMode" style="flex:1 1 100%; border-color:#22d3ee; color:#22d3ee;" data-tip="t43">▭ Выбор ячеек</button>
+    <!-- "⊙ Оси по битам": выбранные ячейки становятся ОСЯМИ Круга — каждая строка с выбранными
+         битами задаёт свою группу осей, действующую от неё ВНИЗ до следующей строки с выбранными
+         битами (та же зона, что у "⊙ Оси по «1» строки"). Взаимоисключимо со столбцами-осями:
+         включение стирает столбцовые оси, а назначение столбца-оси выключает этот режим. -->
+    <button id="bCellAxis" style="flex:1 1 100%; border-color:#4da3ff; color:#4da3ff;" title="Оси по выбранным битам: каждая строка с выбранными ячейками задаёт свои оси — на ней самой и вниз до следующей строки с выбранными битами (вертикальные, а с галкой «⤡ Диагональные столбцы на «½»» — наклонные). Включается вместе с «▭ Выбор ячеек»; столбцы-оси при этом снимаются, а назначение столбца-оси выключает этот режим.">⊙ Оси по битам</button>
     <button id="bCellInvert" style="flex:1;" title="Инвертировать (0↔1) ТОЛЬКО выбранные ячейки">🔁 Инв. ячеек</button>
     <button id="bCellRotate" style="flex:1;" data-tip="t44">◺ 90° ячеек</button>
     <button id="bCellShiftL" style="flex:1;" data-tip="t45">◄ Сдвиг</button>
     <button id="bCellShiftR" style="flex:1;" data-tip="t46">► Сдвиг</button>
-    <button id="bCellClear" style="flex:1;" title="Снять выделение ячеек">✕ Снять</button>
+    <button id="bCellClear" style="flex:1;" title="Стереть ВЕСЬ набор выбранных битов. Единственный способ очистить выделение: выключение режима «▭ Выбор ячеек» его только прячет, клики по битам добавляют/снимают по одному.">✕ Очистить биты</button>
   </div>
   <div style="grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:4px;">
     <button id="bRotate90" style="flex:1; border-color:#22d3ee; color:#22d3ee;" data-tip="t47">◺ 90° ↻</button>
@@ -2216,6 +2237,12 @@ body.vcur-on #vcurBar{display:flex}
     <span class="hl-combo">
       <button id="bHighlightDiag1" data-tip="t111">1⤡1</button>
       <input type="color" id="colDiag1" value="#66ff66" title="Цвет подсветки «1 по диагонали»">
+    </span>
+    <!-- "1▸1" — единица, СТОЯЩАЯ ПРАВЕЕ другой единицы в той же строке (запрос пользователя):
+         красится вторая и каждая следующая "1" сплошной группы, одиночные не трогаются. -->
+    <span class="hl-combo">
+      <button id="bHighlight1Right" title="Подсветка «1 правее 1»: красит единицу, слева от которой в той же строке стоит другая единица — то есть вторую и все следующие «1» в каждой сплошной группе. Одиночная «1» не красится">1▸1</button>
+      <input type="color" id="col1Right" value="#a78bfa" title="Цвет подсветки «1 правее 1»">
     </span>
     <!-- Отдельная подсветка ИМЕННО тех диагоналей, по которым складывают строки режимы фон-поиска
          "⧅ Диаг. ↘ →"/"⧄ Диаг. ↙ ←" (см. computeDiagFoldMask/concatDiagDownTo) — не путать с
@@ -4386,7 +4413,7 @@ const st = {
   align: "center", vertical: false, padZero: false, allKinds: false, ringInvert: false, ringOff: false,
   // "⏮ Без посл." — не проверять ПОСЛЕДНИЙ символ паттерна (пара к st.skipFirst, см. patBase).
   skipLast: false,
-  pull: true, keepOrder: true, stopOnHit: true, stopOnBalance: false, turboAuto: false, captureOnFind: true, axisSnap: true, axisBitBounce: false, axisCenterOffset: 0,
+  pull: true, keepOrder: true, stopOnHit: true, stopOnBalance: false, turboAuto: false, slowAuto: false, slowFrames: 10, captureOnFind: true, axisSnap: true, axisBitBounce: false, axisCenterOffset: 0,
   undo: [], redo: [], running: false, msg: "",
   horizBitIdx: 0, horizXoredLength: 0, lastHorizRow: null, lastHorizDir: null, horizFoundInPass: false, horizChainLen: 0,
   horizBigChain: "", horizBigOrig: "", horizBigRow: "", horizChainRow: -1, horizBigTargetIdx: -1, horizRotations: 0, horizNeedRebuild: false,
@@ -4462,6 +4489,7 @@ const st = {
   // Предел автоматических вписываний зеркал (см. mirrorsAutoStep). 1 — вписать один раз и всё.
   mirrorsAutoMax: 1,
   highlight01: false,
+  highlight1Right: false,
   highlightVert1: false,
   highlightDiag1: false,
   highlightDiagFold: false,
@@ -4888,6 +4916,11 @@ function loadTabState(index, skipSave = false) {
     if (t.colors.cd1 && colDiag1El) {
       colDiag1El.value = t.colors.cd1;
       applyColorDiag1();
+    }
+
+    if (t.colors.c11r && col1RightEl) {
+      col1RightEl.value = t.colors.c11r;
+      applyColor1Right();
     }
 
     if (t.colors.cdf && colDiagFoldEl) {
@@ -6673,6 +6706,9 @@ function axisToColumn(col){
   // назначение не сбрасывает — снимает его только "✕ Снять столбец".
   // Режим "🔢 Выбор столбца" после назначения отжимается сам: столбец выбран, ось на нём.
   if (typeof colPickMode !== "undefined" && colPickMode) setColPickMode(false);
+  // СТОЛБЦЫ И БИТЫ — ВЗАИМОИСКЛЮЧИМЫ (запрос пользователя): назначение столбца-оси выключает
+  // режим "⊙ Оси по битам" и убирает поставленные им группы, чтобы оси не смешивались.
+  if (typeof bitAxisMode !== "undefined" && bitAxisMode) setBitAxisMode(false, true);
   // Ручной клик — ГРУППА ИЗ ОДНОГО СТОЛБЦА (см. addAxisGroup): снимается она так же, как
   // группа от строки, одним нажатием "✕ Снять выбор".
   const had = syncAxisSnapCols().includes(col);
@@ -7252,6 +7288,9 @@ function render(){
 
   let maxLen = 0;
   for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
+  // "⊙ Оси по битам" — пересобрать группы осей, если набор выбранных ячеек (или выравнивание)
+  // изменился с прошлого кадра (см. bitAxesRefresh). Дешёвая проверка по сигнатуре набора.
+  if (typeof bitAxesRefresh === "function") bitAxesRefresh();
   // ВАЖНО: maxLen (длина самой длинной строки) остаётся точкой отсчёта для alignShift/rowShiftFor —
   // менять его нельзя, иначе поедет вся геометрия выравниваний. Ширина КАРТИНКИ (линейка столбцов
   // + добивка пробелами справа) считается отдельно — см. visibleColCount().
@@ -8092,9 +8131,15 @@ function render(){
       // в том числе ниже выделенной строки (подсветка при этом остаётся в своём диапазоне).
       const colAttr = (cellSelMode || colPickMode || (i >= colSelRange.lo && i <= colSelRange.hi))
         ? (' data-col="' + (shift + k) + '"') : "";
-      const isCellSel = cellSelMode && cellSel.size && cellSel.has(i + "|" + (shift + k));
+      // Подсветка выбранных ячеек видна и с выключенным режимом добавления, если по ним включены
+      // "⊙ Оси по битам": такие ячейки активны сами по себе — по ним стоят оси.
+      const isCellSel = (cellSelMode || (typeof bitAxisMode !== "undefined" && bitAxisMode)) &&
+        cellSel.size && cellSel.has(i + "|" + (shift + k));
 
       const is01Pair = hl01Mask ? hl01Mask[k] : false;
+      // "1 правее 1" — соседа ищем в САМОЙ строке (без масок и предрасчёта): единица, слева от
+      // которой стоит другая единица.
+      const is1Right = st.highlight1Right && bit === '1' && k > 0 && s[k - 1] === '1';
       // "1 под 1"/"1 по диагонали" — только для "1" (не для "0"), см. computeVertOnesMask()/
       // computeDiagOnesMask() выше.
       const isVert1 = !!(vertOnesMask && vertOnesMask[i] && bit === '1' && vertOnesMask[i].has(k));
@@ -8154,10 +8199,10 @@ function render(){
         emit('<span class="col-sel-bit b' + bit + '"' + colAttr + '>', bit, mrg);
       } else if (isXoredBit && (bit === '0' || bit === '1')) {
         emit('<span class="xored-bit"' + colAttr + '>', bit, mrg);
-      } else if (is01Pair || isVert1 || isDiag1 || isDiagFold) {
+      } else if (is01Pair || is1Right || isVert1 || isDiag1 || isDiagFold) {
         // Несколько подсветок могут совпасть на одном символе — вешаем все подходящие классы;
         // порядок объявления в CSS (.hl01 → .hlv1 → .hld1 → .hldf) решает, чей цвет визуально победит.
-        const hlCls = 'b' + bit + (is01Pair ? ' hl01' : '') + (isVert1 ? ' hlv1' : '') + (isDiag1 ? ' hld1' : '') +
+        const hlCls = 'b' + bit + (is01Pair ? ' hl01' : '') + (is1Right ? ' hl11r' : '') + (isVert1 ? ' hlv1' : '') + (isDiag1 ? ' hld1' : '') +
           (isDiagFold ? (' hldf' + (foldBgStyle ? ' hldf-bg' : '')) : '');
         // Цвет — по порядку сбора (foldOrderColor): у поколоночных режимов красим фон, у
         // диагоналей сам символ.
@@ -12087,7 +12132,7 @@ function autoRun(){
       // включённом "🛑 Стоп на находке". В режиме "⏩ Турбо" именно по этому флагу решается,
       // показывать кадр или нет.
       let hadHit = false;
-      while (performance.now() - t0 < 12) {
+      while (autoBatch(t0)) {
         if (totalTurns > 0 && turns >= totalTurns) { cycleDone = true; break; }
         if (isShift) {
           if (rotIdxs.size === 0 || ![...rotIdxs].some(i => st.rows[i])) { moved = false; break; }
@@ -12165,7 +12210,8 @@ function autoRun(){
       // на КАЖДОМ кадре съедали основное время, а промежуточные варианты на такой скорости всё
       // равно не читаются глазами (запрос пользователя — "чтобы вообще не крутила, а меняла
       // строки только во время находки"). Сам перебор идёт с прежней плотностью.
-      const showFrame = !st.turboAuto || hadHit || balanceHit || cycleDone || !moved;
+      // Замедление сильнее Турбо: смысл замедления в том, чтобы КАЖДЫЙ шаг был виден.
+      const showFrame = st.slowAuto || !st.turboAuto || hadHit || balanceHit || cycleDone || !moved;
       if (showFrame) {
         say(`Авто (${dirLabel}): вариант ${turns}` + (totalTurns ? ` из ${totalTurns}` : ""));
         updateVariantCounter();
@@ -12188,9 +12234,9 @@ function autoRun(){
       }
       if (cycleDone) return finishAuto(`Авто (${dirLabel}) остановлен: полный цикл вариантов (${turns} из ${totalTurns}) пройден, совпадений не найдено.`);
       if (!moved) return finishAuto(`Авто (${dirLabel}) остановлен: больше нечего сдвигать.`);
-      requestAnimationFrame(tick);
+      autoFrame(tick);
     };
-    requestAnimationFrame(tick);
+    autoFrame(tick);
     return;
   }
 
@@ -12200,7 +12246,7 @@ function autoRun(){
 
       const t0 = performance.now();
       let stepsCount = 0;
-      while (performance.now() - t0 < 12) {
+      while (autoBatch(t0)) {
         if (!doXorSelectedStep()) {
           return finishAuto(`Режим XOR выдел завершен (выполнено ${stepsCount} сдвигов).`);
         }
@@ -12208,9 +12254,9 @@ function autoRun(){
       }
 
       render();
-      requestAnimationFrame(tick);
+      autoFrame(tick);
     };
-    requestAnimationFrame(tick);
+    autoFrame(tick);
     return;
   }
 
@@ -12220,7 +12266,7 @@ function autoRun(){
 
       const t0 = performance.now();
       let stepsCount = 0;
-      while (performance.now() - t0 < 12) {
+      while (autoBatch(t0)) {
         if (!doInterleaveStep()) {
           return finishAuto(`Режим Интерливинг завершен (выполнено ${stepsCount} шагов).`);
         }
@@ -12228,9 +12274,9 @@ function autoRun(){
       }
 
       render();
-      requestAnimationFrame(tick);
+      autoFrame(tick);
     };
-    requestAnimationFrame(tick);
+    autoFrame(tick);
     return;
   }
 
@@ -12243,9 +12289,9 @@ function autoRun(){
       if (!doInterleaveSeqStep()) {
         return finishAuto(`Режим Интерлив сквозной завершен.`);
       }
-      requestAnimationFrame(tick);
+      autoFrame(tick);
     };
-    requestAnimationFrame(tick);
+    autoFrame(tick);
     return;
   }
 
@@ -12256,9 +12302,9 @@ function autoRun(){
       if (!doXorSeqStep()) {
         return finishAuto(`Режим XOR сквозной завершен.`);
       }
-      requestAnimationFrame(tick);
+      autoFrame(tick);
     };
-    requestAnimationFrame(tick);
+    autoFrame(tick);
     return;
   }
 
@@ -12270,7 +12316,7 @@ function autoRun(){
     // Оптимизация 4: Time-based батчинг
     const t0 = performance.now();
     let stepsCount = 0;
-    while (performance.now() - t0 < 12) {
+    while (autoBatch(t0)) {
       if (!doStep(pairOnly, forceXor, isScan, isHorizXor, isXorProj, horizDir)) {
         return finishAuto(`Прогон завершен: двигаться некуда (выполнено ${stepsCount} ш. в посл. кадре).`);
       }
@@ -12285,9 +12331,59 @@ function autoRun(){
     }
 
     render();
-    requestAnimationFrame(tick);
+    autoFrame(tick);
   };
-  requestAnimationFrame(tick);
+  autoFrame(tick);
+}
+
+/* === "🐢 ЗАМЕДЛЕНИЕ" ===
+   Прогон Авто во всех режимах устроен одинаково: тик rAF, а внутри — пачка шагов, сколько влезет
+   в 12 мс. Замедление ломает обе половины этой схемы, не трогая сами режимы:
+   autoBatch() — условие пакетного цикла: с замедлением пропускает РОВНО ОДИН шаг за тик
+     (второй вызов на том же t0 возвращает false). Если цикл вышел раньше по break/return, флаг
+     останется от прежнего t0 — а он у следующего тика уже другой, так что сбой не накапливается.
+   autoFrame() — планировщик следующего тика: держит кадр st.slowFrames кадров экрана.
+   Турбо и Замедление противоречат друг другу (один прячет кадры, другой их показывает) — при
+   включённом замедлении кадр рисуется всегда, см. showFrame в autoRun(). */
+var autoSlowT0 = -1;
+function autoBatch(t0){
+  if (!st.slowAuto) return performance.now() - t0 < 12;
+  if (autoSlowT0 === t0) { autoSlowT0 = -1; return false; }
+  autoSlowT0 = t0;
+  return true;
+}
+function autoFrame(fn){
+  const n = st.slowAuto ? Math.max(1, st.slowFrames | 0) : 1;
+  if (n <= 1) return requestAnimationFrame(fn);
+  let left = n;
+  const hop = () => { if (--left <= 0) fn(); else requestAnimationFrame(hop); };
+  return requestAnimationFrame(hop);
+}
+function slowAutoSync(){
+  const b = document.getElementById("bSlowAuto");
+  if (b) b.classList.toggle("mode-act", !!st.slowAuto);
+  const r = document.getElementById("slowFrames");
+  if (r) r.value = st.slowFrames || 10;
+  const v = document.getElementById("slowFramesVal");
+  if (v) v.textContent = String(st.slowFrames || 10);
+}
+{
+  const b = document.getElementById("bSlowAuto");
+  if (b) b.onclick = () => {
+    st.slowAuto = !st.slowAuto;
+    slowAutoSync();
+    say(st.slowAuto
+      ? `🐢 Замедление включено: один шаг за раз, ${st.slowFrames || 10} кадр(ов) на шаг.`
+      : "🐢 Замедление выключено — Авто снова идёт пачками.");
+    saveCache();
+  };
+  slowAutoSync(); // стартовое состояние кнопки/ползунка из st (дальше — из кэша, см. loadCache)
+  const r = document.getElementById("slowFrames");
+  if (r) r.oninput = () => {
+    st.slowFrames = Math.max(1, Math.min(60, +r.value || 1));
+    slowAutoSync();
+    saveCache();
+  };
 }
 
 function finishAuto(m){
@@ -12553,6 +12649,8 @@ if (bAxisFromRowEl) bAxisFromRowEl.onclick = () => {
   const cols = [], p2 = [];
   for (let k = 0; k < s.length; k++) if (s[k] === "1") { cols.push(sh + k); p2.push(h2 + 2 * k); }
   if (!cols.length) { say(`⊙ Оси по «1»: в строке ${rowLabel(src)} нет ни одной единицы.`); return; }
+  // Как и "⊙ Ось сюда": столбцовые оси гасят режим "⊙ Оси по битам" вместе с его группами.
+  if (typeof bitAxisMode !== "undefined" && bitAxisMode) setBitAxisMode(false, true);
   // ГРУППОЙ (запрос пользователя): единицы одной строки — одна группа, своим цветом, и
   // снимается она целиком одним нажатием "✕ Снять выбор". Прежние группы остаются.
   addAxisGroup(cols, src, p2, src);
@@ -12770,6 +12868,31 @@ function axisLocalIdxMapForRow(r, len, align){
    по умолчанию не трогаем). Столбцы, до которых строка не достаёт, отбрасываются. null — осей не
    назначено вовсе (работает прежнее правило по краю), пустой массив — строка не достаёт ни до
    одной оси, крутить её незачем. */
+/* ПОД-СЕТКА строки против под-сетки ЯКОРЯ группы осей (только "½"-выравнивания, только
+   ВЕРТИКАЛЬНЫЕ оси — у диагональных линия сама проходит через биты обеих чётностей).
+   Ровно то же правило, по которому render() решает, светить ли ось на строке (см. axisGroupNudge
+   там): совпали под-сетки — на строке реально есть бит этой оси, не совпали — оси у неё нет. */
+function axisRowSubgridOk(r, gi, align, maxLen){
+  if (axisDiagSlope2x(align) !== 0) return true;
+  if (!(align === "halfcenter" || align === "halfstairs" || align === "rhalfstairs")) return true;
+  const g = axisGroups()[gi];
+  if (!g) return true;
+  const a = (g.anch != null) ? g.anch : (g.row != null ? g.row : 0);
+  return hasHalfNudge(st.rows[r] || "", maxLen, align, r) ===
+         hasHalfNudge(st.rows[a] || "", maxLen, align, a);
+}
+/* Строка ЧУЖОЙ под-сетки: оси на неё формально распространяются (она в зоне группы), но
+   подсвеченного бита у неё нет — значит и ДЕРЖАТЬ её оси не должны (запрос пользователя: "те
+   строки, которые не выделены, не должны придерживать «1»-цы, у них нет выделенного бита").
+   Такая строка при ◄/►Круг просто крутится на один шаг, без привязки к «1» на оси. */
+function axisRowOffSubgrid(r, align){
+  if (axisDiagSlope2x(align) !== 0) return false;
+  if (!(align === "halfcenter" || align === "halfstairs" || align === "rhalfstairs")) return false;
+  const map = axisColorMapForRow(r);
+  if (!map || !map.size) return false;
+  for (const gi of map.values()) if (axisRowSubgridOk(r, gi, align, nudgeRefMaxLen(st))) return false;
+  return true;
+}
 function axisSnapLocalIdxs(r, len, align){
   // ДИАГОНАЛЬНЫЙ режим — своя геометрия целиком (см. axisLocalIdxMapForRow): она сразу отдаёт
   // локальные индексы, переводить столбцы не нужно.
@@ -12788,7 +12911,11 @@ function axisSnapLocalIdxs(r, len, align){
   const rowStr = st.rows[r] || "";
   const sh = rowShiftFor(maxLen, r, rowStr, align);
   const out = [];
-  for (const c of map.keys()) {
+  for (const [c, gi] of map) {
+    // Оси чужой под-сетки на эту строку не действуют (см. axisRowSubgridOk): бита у неё там нет,
+    // целиться незачем. Если ВСЕ оси строки такие — см. axisRowOffSubgrid в shiftOneRowAxisAware:
+    // строка крутится обычным шагом, а не замирает.
+    if (!axisRowSubgridOk(r, gi, align, maxLen)) continue;
     const k = Math.round(c - sh);
     if (k >= 0 && k < len) out.push(k);
   }
@@ -13039,6 +13166,14 @@ function shiftOneRowAxisAware(r, axisDelta, realRotateFn, invFlagsRotateFn){
     // Назначены столбцы-оси — целимся сразу во ВСЕ (запрос пользователя): подходит только то
     // положение, где «1» стоит на КАЖДОЙ из осей, до которых строка достаёт. Ни одной такой оси
     // нет (строка целиком в стороне) — не трогаем строку вовсе.
+    // Чужая под-сетка "½"-выравнивания — ось эту строку не держит: обычный поворот на шаг
+    // (см. axisRowOffSubgrid). Проверяем ДО axisSnapLocalIdxs: там такая строка отдала бы пустой
+    // список, а пустой список означает "стоять на месте".
+    if (axisRowOffSubgrid(r, st.align)) {
+      invFlagsMap.set(r, invFlagsRotateFn(getInvFlags(r, st.rows[r].length)));
+      st.rows[r] = realRotateFn(st.rows[r]);
+      return;
+    }
     const multi = axisSnapLocalIdxs(r, len, st.align);
     if (multi && !multi.length) return;
     const targets = multi || [nonAxisSnapCharIdx(st.align, len)];
@@ -13338,15 +13473,21 @@ function cellSelMaxLen(){
   for (const s of st.rows) if (s && s.length > m) m = s.length;
   return m;
 }
-/* Прямоугольник от якоря протяжки до текущей ячейки — берём ВСЕ настоящие биты внутри рамки. */
-function cellSelectRect(r0, c0, r1, c1){
+/* Прямоугольник от якоря протяжки до текущей ячейки — все настоящие биты внутри рамки.
+   ПРЕЖНЕЕ ВЫДЕЛЕНИЕ НЕ СТИРАЕТСЯ (запрос пользователя: "нажатие на другие биты — добавлять/
+   отключать биты, а не перемещать выделение"): рамка накладывается ПОВЕРХ снимка набора на
+   момент начала протяжки (base). del=true — та же рамка не добавляет, а снимает биты (протяжка,
+   начатая с уже выбранного бита). Полностью очистить набор можно только кнопкой "✕ Очистить биты". */
+function cellSelectRect(r0, c0, r1, c1, base, del){
   const maxLen = cellSelMaxLen();
   const rLo = Math.min(r0, r1), rHi = Math.max(r0, r1);
   const cLo = Math.min(c0, c1), cHi = Math.max(c0, c1);
-  cellSel.clear();
+  cellSel = new Set(base || cellSel);
   for (let r = rLo; r <= rHi; r++) {
     for (let c = cLo; c <= cHi; c++) {
-      if (cellBitIdx(r, c, maxLen) >= 0) cellSel.add(cellKey(r, c));
+      if (cellBitIdx(r, c, maxLen) < 0) continue;
+      const key = cellKey(r, c);
+      if (del) cellSel.delete(key); else cellSel.add(key);
     }
   }
 }
@@ -13371,7 +13512,12 @@ const bCellModeEl = document.getElementById("bCellMode");
 if (bCellModeEl) {
   bCellModeEl.onclick = () => {
     cellSelMode = !cellSelMode;
-    if (!cellSelMode) cellSel.clear();
+    // Набор ячеек при выключении НЕ стирается, только прячется (подсветка и клики по битам живут
+    // лишь в режиме) — запрос пользователя: "при отключении не удалять, а скрывать; при включении
+    // снова показать построенные выделения". Стирает набор только кнопка "✕ Очистить биты".
+    // "⊙ Оси по битам" НЕ гасим: режим выбора ячеек — это лишь способ ДОБАВЛЯТЬ/СНИМАТЬ ячейки
+    // мышью, а уже построенные по ним оси (и подсветка самих ячеек) к нему не относятся — они
+    // живут, пока включены оси по битам (запрос пользователя).
     cellSelUpdateBtns();
     say(cellSelMode
       ? "Выбор ячеек: клик — одна, протяжка — прямоугольник, Ctrl+клик — по одной."
@@ -13380,7 +13526,82 @@ if (bCellModeEl) {
   };
 }
 const bCellClearEl = document.getElementById("bCellClear");
-if (bCellClearEl) bCellClearEl.onclick = () => { cellSel.clear(); render(); };
+if (bCellClearEl) bCellClearEl.onclick = () => {
+  cellSel.clear();
+  say("Выделения битов очищены.");
+  render();
+};
+
+/* === "⊙ ОСИ ПО БИТАМ" (bitAxisMode) ===
+   Оси Круга задаются не столбцами, а ВЫБРАННЫМИ ЯЧЕЙКАМИ: каждая строка, где есть выбранные
+   биты, превращается в СВОЮ группу осей (см. addAxisGroup — группа с row=r действует от строки r
+   вниз до следующей такой же строки, ровно как у "⊙ Оси по «1» строки"). Столбцовые оси и оси по
+   битам взаимоисключимы (запрос пользователя): включение этого режима стирает все прежние группы,
+   а назначение столбца-оси ("⊙ Ось сюда"/"⊙ Оси по «1»") выключает режим и убирает битовые оси.
+   Группы пересобираются, когда меняется сам набор ячеек или выравнивание (см. bitAxisSig): между
+   пересборками группы живут обычной жизнью — их можно снимать по одной кнопкой "✕ Снять выбор". */
+var bitAxisMode = false;
+var bitAxisSig = "";
+function bitAxisSignature(){
+  return st.align + "|" + Array.from(cellSel).sort().join(",");
+}
+function syncBitAxesFromCells(){
+  const byRow = cellSelByRow();
+  const maxLen = cellSelMaxLen();
+  const groups = [];
+  for (const r of Array.from(byRow.keys()).sort((a, b) => a - b)) {
+    const sRow = st.rows[r] || "";
+    if (!sRow.length) continue;
+    const sh = rowShiftFor(maxLen, r, sRow, st.align);
+    // p2 — позиции осей в ПОЛУстолбцах на самой строке-якоре: нужны диагональному режиму
+    // ("⤡ Диагональные столбцы на «½»"), у вертикальных осей это просто 2×столбец. Считается
+    // ровно так же, как в "⊙ Оси по «1» строки" (axisColShift2x + 2×локальный индекс).
+    const h2 = axisColShift2x(r, sRow, st.align, maxLen);
+    const cols = [], p2 = [];
+    for (const c of byRow.get(r)) {
+      const k = c - sh;
+      if (k < 0 || k >= sRow.length) continue; // ячейка вне самой строки — осью быть не может
+      cols.push(c); p2.push(h2 + 2 * k);
+    }
+    if (cols.length) groups.push({ cols, p2, row: r, anch: r });
+  }
+  st.axisSnapGroups = groups;
+  syncAxisSnapCols();
+}
+/* Пересборка по требованию — зовётся из render(): набор ячеек меняется в нескольких местах
+   (клик, протяжка, "✕ Снять"), а render() после каждого из них всё равно вызывается. */
+function bitAxesRefresh(){
+  if (!bitAxisMode) return;
+  const sig = bitAxisSignature();
+  if (sig === bitAxisSig) return;
+  bitAxisSig = sig;
+  syncBitAxesFromCells();
+}
+function setBitAxisMode(on, quiet){
+  bitAxisMode = !!on;
+  const b = document.getElementById("bCellAxis");
+  if (b) b.classList.toggle("mode-act", bitAxisMode);
+  if (bitAxisMode) {
+    // Режим осмыслен только вместе с выбором ячеек — включаем его заодно.
+    if (!cellSelMode) { cellSelMode = true; cellSelUpdateBtns(); }
+    if (typeof colPickMode !== "undefined" && colPickMode) setColPickMode(false);
+    st.selectedCol = -1;
+    bitAxisSig = bitAxisSignature();
+    syncBitAxesFromCells();
+    if (!quiet) say(cellSel.size
+      ? "Оси по битам: выбранные ячейки стали осями — каждая строка с ячейками держит их до следующей такой строки."
+      : "Оси по битам включены: выбирайте ячейки — они сразу станут осями (строка и вниз до следующей строки с ячейками).");
+  } else {
+    // Выключение снимает ИМЕННО битовые оси (других в этом режиме и не было).
+    st.axisSnapGroups = [];
+    syncAxisSnapCols();
+    bitAxisSig = "";
+    if (!quiet) say("Оси по битам выключены — оси сняты.");
+  }
+  render(); saveCache();
+}
+const bCellAxisEl = document.getElementById("bCellAxis");
+if (bCellAxisEl) bCellAxisEl.onclick = () => setBitAxisMode(!bitAxisMode);
 
 /* "🔢 Выделить столбцы" (colPickMode) — выбор столбца КЛИКОМ ПО САМОМУ БИТУ в цепочке.
    Линейка столбцов теперь чистая (без палочек и крестиков), поэтому столбец берут прямо из
@@ -13478,22 +13699,24 @@ if (bColSelClearFloatEl) bColSelClearFloatEl.onclick = clearAxisGroupOnce;
       const cell = cellAtEvent(e);
       e.preventDefault();
       e.stopPropagation(); // не даём клику выделить строку
-      if (!cell) { cellSel.clear(); render(); return; }
-      if (e.ctrlKey || e.metaKey) {
-        const key = cellKey(cell.r, cell.col);
-        if (cellSel.has(key)) cellSel.delete(key); else cellSel.add(key);
-        cellDragAnchor = null;
-      } else {
-        cellDragAnchor = cell;
-        cellSelectRect(cell.r, cell.col, cell.r, cell.col);
-      }
+      // Клик мимо бита (пустое место полотна) больше НИЧЕГО не стирает — раньше он сбрасывал весь
+      // набор ячеек, и выделение терялось от случайного промаха.
+      if (!cell) return;
+      const key = cellKey(cell.r, cell.col);
+      // Любой клик по биту — ПЕРЕКЛЮЧАТЕЛЬ (был выбран — снялся, не был — добавился), Ctrl больше
+      // не нужен: выделение накапливается, а не перепрыгивает на новый бит. Протяжка от этого же
+      // бита продолжает то же действие: с невыбранного — добавляет рамку, с выбранного — снимает.
+      const del = cellSel.has(key);
+      cellDragAnchor = { r: cell.r, col: cell.col, base: new Set(cellSel), del };
+      cellSelectRect(cell.r, cell.col, cell.r, cell.col, cellDragAnchor.base, del);
       render();
     }, true);
     rowsEl.addEventListener("mousemove", (e) => {
       if (!cellSelMode || !cellDragAnchor || e.buttons !== 1) return;
       const cell = cellAtEvent(e);
       if (!cell) return;
-      cellSelectRect(cellDragAnchor.r, cellDragAnchor.col, cell.r, cell.col);
+      cellSelectRect(cellDragAnchor.r, cellDragAnchor.col, cell.r, cell.col,
+                     cellDragAnchor.base, cellDragAnchor.del);
       render();
     });
     window.addEventListener("mouseup", () => { cellDragAnchor = null; });
@@ -15176,7 +15399,8 @@ function patChainAutoStop(msg){
    saveCache(), поэтому за кадр успевает уложиться целая ПАЧКА паттернов — время кадра тратится на
    саму укладку, а не на перерисовку таблицы. Находка и остановка рисуются всегда. */
 function patChainAutoTick(){
-  const turbo = !!st.turboAuto;
+  // Под "🐢 Замедление" молчаливый режим отключаем: каждый уложенный паттерн должен быть виден.
+  const turbo = !!st.turboAuto && !st.slowAuto;
   const t0 = performance.now();
   do {
     const res = patChainApplyOnce(turbo);
@@ -15226,13 +15450,13 @@ function patChainAutoTick(){
         patChainSeenRows.clear();
         say(`Паттерн-цепочка (Авто): два круга вхолостую — верхние строки возвращены к шаблону (${n} стр.), укладка пошла заново.`);
         render(); saveCache();
-        patChainAutoTimer = requestAnimationFrame(patChainAutoTick);
+        patChainAutoTimer = autoFrame(patChainAutoTick);
         return;
       }
     }
-  } while (turbo && performance.now() - t0 < 12);
+  } while (turbo && !st.slowAuto && performance.now() - t0 < 12);
   if (turbo) say(`⏩ Турбо (Паттерн-цепочка): уложено ${st.patChainStep} — идёт поиск…`);
-  patChainAutoTimer = requestAnimationFrame(patChainAutoTick);
+  patChainAutoTimer = autoFrame(patChainAutoTick);
 }
 const bPatChainAutoEl = document.getElementById("bPatChainAuto");
 if (bPatChainAutoEl) {
@@ -15241,7 +15465,7 @@ if (bPatChainAutoEl) {
     setPatChainAutoBtnState(true);
     patChainNoHitCycles = 0; patChainResetsDone = 0;
     say("Паттерн-цепочка (Авто): пошла укладка…");
-    patChainAutoTimer = requestAnimationFrame(patChainAutoTick);
+    patChainAutoTimer = autoFrame(patChainAutoTick);
   };
 }
 
@@ -16861,6 +17085,7 @@ function captureColors(){
     c01: typeof col01El !== "undefined" && col01El ? col01El.value : "#ff9900",
     cv1: typeof colVert1El !== "undefined" && colVert1El ? colVert1El.value : "#00ccff",
     cd1: typeof colDiag1El !== "undefined" && colDiag1El ? colDiag1El.value : "#66ff66",
+    c11r: typeof col1RightEl !== "undefined" && col1RightEl ? col1RightEl.value : "#a78bfa",
     cdf: typeof colDiagFoldEl !== "undefined" && colDiagFoldEl ? colDiagFoldEl.value : "#ff5ecb"
   };
 }
@@ -16883,6 +17108,25 @@ function applyColor01(){
 }
 if (col01El) {
   col01El.oninput = () => { applyColor01(); saveCacheSoon(); };
+}
+
+/* "1 правее 1" (см. #bHighlight1Right/.hl11r в CSS) — та же логика вкл/выкл + цвет, что у "01";
+   считать нечего заранее, признак берётся прямо в render() по соседу слева. */
+const bHighlight1RightEl = document.getElementById("bHighlight1Right");
+if (bHighlight1RightEl) {
+  bHighlight1RightEl.onclick = () => {
+    st.highlight1Right = !st.highlight1Right;
+    bHighlight1RightEl.classList.toggle("mode-act", st.highlight1Right);
+    render();
+    saveCache();
+  };
+}
+const col1RightEl = document.getElementById("col1Right");
+function applyColor1Right(){
+  if (col1RightEl) document.documentElement.style.setProperty("--c11r-hl", col1RightEl.value);
+}
+if (col1RightEl) {
+  col1RightEl.oninput = () => { applyColor1Right(); saveCacheSoon(); };
 }
 
 /* "1 под 1" (см. #bHighlightVert1/.hlv1 в CSS) — та же логика вкл/выкл + цвет, что у "01",
@@ -17676,6 +17920,7 @@ function captureUiSettings(){
     popupFontPx: popupFontPx,
     resultHeightLocked: resultHeightLocked,
     highlight01: !!st.highlight01,
+    highlight1Right: !!st.highlight1Right,
     highlightVert1: !!st.highlightVert1,
     highlightDiag1: !!st.highlightDiag1,
     highlightDiagFold: !!st.highlightDiagFold,
@@ -17699,6 +17944,7 @@ function captureUiSettings(){
     c01: col01El ? col01El.value : "#ff9900",
     cv1: colVert1El ? colVert1El.value : "#00ccff",
     cd1: colDiag1El ? colDiag1El.value : "#66ff66",
+    c11r: col1RightEl ? col1RightEl.value : "#a78bfa",
     cdf: colDiagFoldEl ? colDiagFoldEl.value : "#ff5ecb"
   };
 }
@@ -17714,6 +17960,7 @@ function applyUiSettings(u){
   if (u.stopOnHit !== undefined && cStopOnHitEl) cStopOnHitEl.checked = u.stopOnHit;
   if (u.stopOnBalance !== undefined && cStopOnBalanceEl) cStopOnBalanceEl.checked = u.stopOnBalance;
   if (u.turboAuto !== undefined && cTurboAutoEl) cTurboAutoEl.checked = u.turboAuto;
+  if (typeof slowAutoSync === "function") slowAutoSync(); // "🐢 Замедление" — кнопка и ползунок из st
   if (u.captureOnFind !== undefined && cCaptureOnFindEl) cCaptureOnFindEl.checked = u.captureOnFind;
   if (u.horizRotateOnFail !== undefined && cHorizRotateOnFailEl) cHorizRotateOnFailEl.checked = u.horizRotateOnFail;
   if (u.horizAlternateSide !== undefined && cHorizAlternateSideEl) cHorizAlternateSideEl.checked = u.horizAlternateSide;
@@ -17812,6 +18059,11 @@ function applyUiSettings(u){
     st.highlight01 = !!u.highlight01;
     const b = document.getElementById("bHighlight01");
     if (b) b.classList.toggle("mode-act", st.highlight01);
+  }
+  if (u.highlight1Right !== undefined) {
+    st.highlight1Right = !!u.highlight1Right;
+    const b = document.getElementById("bHighlight1Right");
+    if (b) b.classList.toggle("mode-act", st.highlight1Right);
   }
   if (u.highlightVert1 !== undefined) {
     st.highlightVert1 = !!u.highlightVert1;
@@ -17941,6 +18193,9 @@ function applyUiSettings(u){
   if (u.cd1 && colDiag1El) colDiag1El.value = u.cd1;
   applyColorDiag1();
 
+  if (u.c11r && col1RightEl) col1RightEl.value = u.c11r;
+  applyColor1Right();
+
   if (u.cdf && colDiagFoldEl) colDiagFoldEl.value = u.cdf;
   applyColorDiagFold();
 
@@ -18002,7 +18257,7 @@ const DEFAULT_UI_SETTINGS = {
   boldBits: false,
   rowBgSel: "#ffcf6b",
   rowBgSelOpacity: 18,
-  c01: "#ff9900", cv1: "#00ccff", cd1: "#66ff66", cdf: "#ff5ecb"
+  c01: "#ff9900", cv1: "#00ccff", cd1: "#66ff66", c11r: "#a78bfa", cdf: "#ff5ecb"
 };
 
 const bSaveUiSettingsEl = document.getElementById("bSaveUiSettings");
