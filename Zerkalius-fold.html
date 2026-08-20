@@ -7653,6 +7653,20 @@ function render(){
   // от начала до неё, 2+ — только между крайними); и подсветка колонки, и сам клик по номеру
   // столбца (см. selectColumn()) это учитывают.
   const colSelRange = colSelectRowRange();
+  // ПОД-СЕТКА "½"-выравниваний: вертикальная подсветка (жёлтый столбец и синие оси) проходит
+  // только через строки той же под-сетки, что и ЯКОРНАЯ строка — см. skipColHighlight в цикле.
+  // selAnchorNudge — якорь жёлтого столбца (верхняя выделенная строка, иначе верх диапазона);
+  // axisGroupNudge — по якорю каждой ГРУППЫ осей (у "⊙ Оси по «1»" это строка-источник).
+  const isHalfNudgeAlign = st.align === "halfcenter" || st.align === "halfstairs" || st.align === "rhalfstairs";
+  const selAnchorRow = (st.selectedRows && st.selectedRows.size) ? Math.min(...st.selectedRows) : colSelRange.lo;
+  const selAnchorNudge = isHalfNudgeAlign &&
+    hasHalfNudge(st.rows[selAnchorRow] || "", maxLen, st.align, selAnchorRow);
+  const axisGroupNudge = isHalfNudgeAlign
+    ? axisGroups().map(g => {
+        const a = (g.anch != null) ? g.anch : (g.row != null ? g.row : 0);
+        return hasHalfNudge(st.rows[a] || "", maxLen, st.align, a);
+      })
+    : null;
   // Назначенные "⊙ Ось сюда" столбцы (их может быть несколько) — в Set один раз на кадр, а не
   // перебором массива на каждый бит.
 
@@ -7929,12 +7943,15 @@ function render(){
 
     const isColSel = st.selectedCol >= 0 && i >= colSelRange.lo && i <= colSelRange.hi;
     // В "½"-выравниваниях (Центр ½/Лесенка ½/Лесенка правая ½) половина строк стоит на полсимвола
-    // в сторону (см. hasHalfNudge/extraCh выше) — столбец там физически смещён и с тем же номером
-    // столбца у соседних строк не совпадает. Прерывистая подсветка (запрос пользователя: "по
-    // чётности длин, там где не совпадает четность пусть пропускает эту строку"): такие строки не
-    // подсвечиваются ни жёлтым выбранным столбцом, ни синей осью.
-    const isHalfNudgeAlign = st.align === "halfcenter" || st.align === "halfstairs" || st.align === "rhalfstairs";
-    const skipColHighlight = isHalfNudgeAlign && hasHalfNudge(s, maxLen, st.align, i);
+    // в сторону (см. hasHalfNudge/extraCh выше) — вертикальный столбец физически проходит только
+    // через строки ОДНОЙ под-сетки, вторая половина строк пропускается. ВАЖНО: пропускать надо не
+    // "все сдвинутые строки", а те, чья под-сетка НЕ СОВПАДАЕТ С ЯКОРНОЙ строкой (с той, по
+    // которой столбец/ось и назначали). Раньше сравнения с якорем не было, и если сама якорная
+    // строка стояла на полусетке (запрос пользователя: 1-я строка "1", 2-я "11"), подсветка
+    // выпадала именно из неё, а появлялась на соседней. Теперь: якорь без нуджа — светятся строки
+    // без нуджа (1-я и 3-я в примере "1"/"11"/"111"), якорь с нуджем — светятся строки с нуджем.
+    const rowHalfNudge = isHalfNudgeAlign && hasHalfNudge(s, maxLen, st.align, i);
+    const skipColHighlight = isHalfNudgeAlign && rowHalfNudge !== selAnchorNudge;
 
     // Пустой участок строки (до сдвига выравнивания или после конца короткой/пустой строки) —
     // если выбранный столбец попадает именно сюда (в этой строке для него просто нет бита),
@@ -8045,16 +8062,28 @@ function render(){
         const globalIdx = hxChainLenAll + k;
         isXoredBit = globalIdx >= hxWin.start && globalIdx <= hxWin.end;
       }
+      // Раньше строки, стоящие на "полусетке" ½-выравниваний, из подсветки выбранного столбца
+      // ВЫПАДАЛИ (skipColHighlight) — линия шла через строку. Запрос пользователя: "не выделяются
+      // нечётные строки, они также должны выделяться". Теперь подсвечиваем биты и там: у сдвинутой
+      // на полсимвола строки берём бит с тем же индексом столбца (он стоит на полстолбца правее),
+      // так что подсветка идёт по ВСЕМ строкам диапазона, чуть зигзагом. Ось (isAxisColBit ниже)
+      // по-прежнему живёт по своим правилам — у неё есть отдельная галка "диагональные столбцы".
       const isColSelBit = isColSel && !skipColHighlight && (shift + k) === st.selectedCol;
       // Назначенный "⊙ Ось сюда" столбец красим во ВСЕХ строках, а не только в диапазоне
       // выделения: это не выделение, а постоянная метка "сюда целится Круг". С галкой
       // "⤡ Диагональные столбцы на «½»" ось — НАКЛОННАЯ линия, и попадание считается по локальному
       // индексу бита (axisDiagLocalMap), поэтому skipColHighlight тут не нужен: линия сама проходит
-      // через реальные биты строк ОБЕИХ чётностей. Без галки — прежнее поведение: наивный
-      // "shift + k", строки с нуджем гасятся (skipColHighlight), как и раньше.
-      const axisGroupIdx = axisDiagLocalMap
+      // через реальные биты строк ОБЕИХ чётностей. Без галки — тот же наивный "shift + k", но
+      // строки с полусеточным нуджем БОЛЬШЕ НЕ гасятся (запрос пользователя: строка-источник с
+      // нечётным остатком сама выпадала из подсветки, и ось было видно только на соседней строке).
+      let axisGroupIdx = axisDiagLocalMap
         ? axisDiagLocalMap.get(k)
-        : (axisRowColorMap && !skipColHighlight ? axisRowColorMap.get(shift + k) : undefined);
+        : (axisRowColorMap ? axisRowColorMap.get(shift + k) : undefined);
+      // У ВЕРТИКАЛЬНОЙ оси под-сетка сверяется с якорем ИМЕННО ЭТОЙ группы (axisGroupNudge), а не
+      // с выделенной строкой: групп может быть несколько, у каждой свой источник ("⊙ Оси по «1»"
+      // ставит якорем строку-источник, ручной клик — верхнюю выделенную).
+      if (!axisDiagLocalMap && axisGroupIdx !== undefined && axisGroupNudge &&
+          axisGroupNudge[axisGroupIdx] !== rowHalfNudge) axisGroupIdx = undefined;
       const isAxisColBit = axisGroupIdx !== undefined;
 
       // В режиме выбора ячеек номер столбца нужен КАЖДОМУ биту (по нему мышь и собирает набор),
