@@ -1952,11 +1952,16 @@ body.vcur-on #vcurBar{display:flex}
        а собирают набор ячеек (см. cellSel в JS), и над этим набором работают кнопки справа. -->
   <div style="grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:4px; border:1px solid var(--m-teal); background:rgba(34,211,238,0.10); border-radius:3px; padding:4px;">
     <button id="bCellMode" style="flex:1 1 100%; border-color:#22d3ee; color:#22d3ee;" data-tip="t43">▭ Выбор ячеек</button>
+    <!-- "⊙ Оси по битам": выбранные ячейки становятся ОСЯМИ Круга — каждая строка с выбранными
+         битами задаёт свою группу осей, действующую от неё ВНИЗ до следующей строки с выбранными
+         битами (та же зона, что у "⊙ Оси по «1» строки"). Взаимоисключимо со столбцами-осями:
+         включение стирает столбцовые оси, а назначение столбца-оси выключает этот режим. -->
+    <button id="bCellAxis" style="flex:1 1 100%; border-color:#4da3ff; color:#4da3ff;" title="Оси по выбранным битам: каждая строка с выбранными ячейками задаёт свои оси — на ней самой и вниз до следующей строки с выбранными битами (вертикальные, а с галкой «⤡ Диагональные столбцы на «½»» — наклонные). Включается вместе с «▭ Выбор ячеек»; столбцы-оси при этом снимаются, а назначение столбца-оси выключает этот режим.">⊙ Оси по битам</button>
     <button id="bCellInvert" style="flex:1;" title="Инвертировать (0↔1) ТОЛЬКО выбранные ячейки">🔁 Инв. ячеек</button>
     <button id="bCellRotate" style="flex:1;" data-tip="t44">◺ 90° ячеек</button>
     <button id="bCellShiftL" style="flex:1;" data-tip="t45">◄ Сдвиг</button>
     <button id="bCellShiftR" style="flex:1;" data-tip="t46">► Сдвиг</button>
-    <button id="bCellClear" style="flex:1;" title="Снять выделение ячеек">✕ Снять</button>
+    <button id="bCellClear" style="flex:1;" title="Стереть ВЕСЬ набор выбранных битов. Единственный способ очистить выделение: выключение режима «▭ Выбор ячеек» его только прячет, клики по битам добавляют/снимают по одному.">✕ Очистить биты</button>
   </div>
   <div style="grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:4px;">
     <button id="bRotate90" style="flex:1; border-color:#22d3ee; color:#22d3ee;" data-tip="t47">◺ 90° ↻</button>
@@ -4408,6 +4413,8 @@ const st = {
   // axisSnapLocalIdxs). Пустой массив — ни одной оси не назначено.
   axisSnapCols: [],
   axisSnapGroups: [],
+  // "⤡ Диагональ осей" (кнопка bAxisDiagCols): 0 выкл, 1 наклон по лестнице, −1 зеркальный.
+  axisDiagCols: 0,
   spiralUpDir: "right",
   seqGlueMode: "right", ringReverse: false,
   bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatRInv", "concatRRevInv", "concatL", "concatLInv", "concatLRevInv", "concatSnake", "concatSnakeInv", "concatSnakeRevInv", "concatSnakeFromR", "concatSnakeFromRInv", "concatSnakeFromRRevInv", "vertR", "vertL", "snakeR", "snakeL", "vertZigR", "vertZigL", "diagR", "diagL"], bgSearchLastHit: -1,
@@ -6671,6 +6678,9 @@ function axisToColumn(col){
   // назначение не сбрасывает — снимает его только "✕ Снять столбец".
   // Режим "🔢 Выбор столбца" после назначения отжимается сам: столбец выбран, ось на нём.
   if (typeof colPickMode !== "undefined" && colPickMode) setColPickMode(false);
+  // СТОЛБЦЫ И БИТЫ — ВЗАИМОИСКЛЮЧИМЫ (запрос пользователя): назначение столбца-оси выключает
+  // режим "⊙ Оси по битам" и убирает поставленные им группы, чтобы оси не смешивались.
+  if (typeof bitAxisMode !== "undefined" && bitAxisMode) setBitAxisMode(false, true);
   // Ручной клик — ГРУППА ИЗ ОДНОГО СТОЛБЦА (см. addAxisGroup): снимается она так же, как
   // группа от строки, одним нажатием "✕ Снять выбор".
   const had = syncAxisSnapCols().includes(col);
@@ -7250,6 +7260,9 @@ function render(){
 
   let maxLen = 0;
   for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
+  // "⊙ Оси по битам" — пересобрать группы осей, если набор выбранных ячеек (или выравнивание)
+  // изменился с прошлого кадра (см. bitAxesRefresh). Дешёвая проверка по сигнатуре набора.
+  if (typeof bitAxesRefresh === "function") bitAxesRefresh();
   // ВАЖНО: maxLen (длина самой длинной строки) остаётся точкой отсчёта для alignShift/rowShiftFor —
   // менять его нельзя, иначе поедет вся геометрия выравниваний. Ширина КАРТИНКИ (линейка столбцов
   // + добивка пробелами справа) считается отдельно — см. visibleColCount().
@@ -7651,6 +7664,20 @@ function render(){
   // от начала до неё, 2+ — только между крайними); и подсветка колонки, и сам клик по номеру
   // столбца (см. selectColumn()) это учитывают.
   const colSelRange = colSelectRowRange();
+  // ПОД-СЕТКА "½"-выравниваний: вертикальная подсветка (жёлтый столбец и синие оси) проходит
+  // только через строки той же под-сетки, что и ЯКОРНАЯ строка — см. skipColHighlight в цикле.
+  // selAnchorNudge — якорь жёлтого столбца (верхняя выделенная строка, иначе верх диапазона);
+  // axisGroupNudge — по якорю каждой ГРУППЫ осей (у "⊙ Оси по «1»" это строка-источник).
+  const isHalfNudgeAlign = st.align === "halfcenter" || st.align === "halfstairs" || st.align === "rhalfstairs";
+  const selAnchorRow = (st.selectedRows && st.selectedRows.size) ? Math.min(...st.selectedRows) : colSelRange.lo;
+  const selAnchorNudge = isHalfNudgeAlign &&
+    hasHalfNudge(st.rows[selAnchorRow] || "", maxLen, st.align, selAnchorRow);
+  const axisGroupNudge = isHalfNudgeAlign
+    ? axisGroups().map(g => {
+        const a = (g.anch != null) ? g.anch : (g.row != null ? g.row : 0);
+        return hasHalfNudge(st.rows[a] || "", maxLen, st.align, a);
+      })
+    : null;
   // Назначенные "⊙ Ось сюда" столбцы (их может быть несколько) — в Set один раз на кадр, а не
   // перебором массива на каждый бит.
 
@@ -7927,12 +7954,15 @@ function render(){
 
     const isColSel = st.selectedCol >= 0 && i >= colSelRange.lo && i <= colSelRange.hi;
     // В "½"-выравниваниях (Центр ½/Лесенка ½/Лесенка правая ½) половина строк стоит на полсимвола
-    // в сторону (см. hasHalfNudge/extraCh выше) — столбец там физически смещён и с тем же номером
-    // столбца у соседних строк не совпадает. Прерывистая подсветка (запрос пользователя: "по
-    // чётности длин, там где не совпадает четность пусть пропускает эту строку"): такие строки не
-    // подсвечиваются ни жёлтым выбранным столбцом, ни синей осью.
-    const isHalfNudgeAlign = st.align === "halfcenter" || st.align === "halfstairs" || st.align === "rhalfstairs";
-    const skipColHighlight = isHalfNudgeAlign && hasHalfNudge(s, maxLen, st.align, i);
+    // в сторону (см. hasHalfNudge/extraCh выше) — вертикальный столбец физически проходит только
+    // через строки ОДНОЙ под-сетки, вторая половина строк пропускается. ВАЖНО: пропускать надо не
+    // "все сдвинутые строки", а те, чья под-сетка НЕ СОВПАДАЕТ С ЯКОРНОЙ строкой (с той, по
+    // которой столбец/ось и назначали). Раньше сравнения с якорем не было, и если сама якорная
+    // строка стояла на полусетке (запрос пользователя: 1-я строка "1", 2-я "11"), подсветка
+    // выпадала именно из неё, а появлялась на соседней. Теперь: якорь без нуджа — светятся строки
+    // без нуджа (1-я и 3-я в примере "1"/"11"/"111"), якорь с нуджем — светятся строки с нуджем.
+    const rowHalfNudge = isHalfNudgeAlign && hasHalfNudge(s, maxLen, st.align, i);
+    const skipColHighlight = isHalfNudgeAlign && rowHalfNudge !== selAnchorNudge;
 
     // Пустой участок строки (до сдвига выравнивания или после конца короткой/пустой строки) —
     // если выбранный столбец попадает именно сюда (в этой строке для него просто нет бита),
@@ -8043,16 +8073,28 @@ function render(){
         const globalIdx = hxChainLenAll + k;
         isXoredBit = globalIdx >= hxWin.start && globalIdx <= hxWin.end;
       }
+      // Раньше строки, стоящие на "полусетке" ½-выравниваний, из подсветки выбранного столбца
+      // ВЫПАДАЛИ (skipColHighlight) — линия шла через строку. Запрос пользователя: "не выделяются
+      // нечётные строки, они также должны выделяться". Теперь подсвечиваем биты и там: у сдвинутой
+      // на полсимвола строки берём бит с тем же индексом столбца (он стоит на полстолбца правее),
+      // так что подсветка идёт по ВСЕМ строкам диапазона, чуть зигзагом. Ось (isAxisColBit ниже)
+      // по-прежнему живёт по своим правилам — у неё есть отдельная галка "диагональные столбцы".
       const isColSelBit = isColSel && !skipColHighlight && (shift + k) === st.selectedCol;
       // Назначенный "⊙ Ось сюда" столбец красим во ВСЕХ строках, а не только в диапазоне
       // выделения: это не выделение, а постоянная метка "сюда целится Круг". С галкой
       // "⤡ Диагональные столбцы на «½»" ось — НАКЛОННАЯ линия, и попадание считается по локальному
       // индексу бита (axisDiagLocalMap), поэтому skipColHighlight тут не нужен: линия сама проходит
-      // через реальные биты строк ОБЕИХ чётностей. Без галки — прежнее поведение: наивный
-      // "shift + k", строки с нуджем гасятся (skipColHighlight), как и раньше.
-      const axisGroupIdx = axisDiagLocalMap
+      // через реальные биты строк ОБЕИХ чётностей. Без галки — тот же наивный "shift + k", но
+      // строки с полусеточным нуджем БОЛЬШЕ НЕ гасятся (запрос пользователя: строка-источник с
+      // нечётным остатком сама выпадала из подсветки, и ось было видно только на соседней строке).
+      let axisGroupIdx = axisDiagLocalMap
         ? axisDiagLocalMap.get(k)
-        : (axisRowColorMap && !skipColHighlight ? axisRowColorMap.get(shift + k) : undefined);
+        : (axisRowColorMap ? axisRowColorMap.get(shift + k) : undefined);
+      // У ВЕРТИКАЛЬНОЙ оси под-сетка сверяется с якорем ИМЕННО ЭТОЙ группы (axisGroupNudge), а не
+      // с выделенной строкой: групп может быть несколько, у каждой свой источник ("⊙ Оси по «1»"
+      // ставит якорем строку-источник, ручной клик — верхнюю выделенную).
+      if (!axisDiagLocalMap && axisGroupIdx !== undefined && axisGroupNudge &&
+          axisGroupNudge[axisGroupIdx] !== rowHalfNudge) axisGroupIdx = undefined;
       const isAxisColBit = axisGroupIdx !== undefined;
 
       // В режиме выбора ячеек номер столбца нужен КАЖДОМУ биту (по нему мышь и собирает набор),
@@ -8061,7 +8103,10 @@ function render(){
       // в том числе ниже выделенной строки (подсветка при этом остаётся в своём диапазоне).
       const colAttr = (cellSelMode || colPickMode || (i >= colSelRange.lo && i <= colSelRange.hi))
         ? (' data-col="' + (shift + k) + '"') : "";
-      const isCellSel = cellSelMode && cellSel.size && cellSel.has(i + "|" + (shift + k));
+      // Подсветка выбранных ячеек видна и с выключенным режимом добавления, если по ним включены
+      // "⊙ Оси по битам": такие ячейки активны сами по себе — по ним стоят оси.
+      const isCellSel = (cellSelMode || (typeof bitAxisMode !== "undefined" && bitAxisMode)) &&
+        cellSel.size && cellSel.has(i + "|" + (shift + k));
 
       const is01Pair = hl01Mask ? hl01Mask[k] : false;
       // "1 под 1"/"1 по диагонали" — только для "1" (не для "0"), см. computeVertOnesMask()/
@@ -11190,6 +11235,9 @@ alignBtns.forEach(btn => {
     // тот момент по НОВОМУ выравниванию со СТАРЫМ сдвигом, то есть по заведомо неверной паре.
     // Следующий кадр честно ставил ось по этому испорченному значению, и картинка прыгала.
     axisPinCol = prevAxisCol;
+    // Подпись "⤡ Диагональ осей" показывает РЕАЛЬНУЮ стрелку, а она зависит от выравнивания
+    // (у "Лесенки правой ½" наклон зеркальный, вне "½" диагонали нет вовсе) — обновляем молча.
+    setAxisDiagCols(st.axisDiagCols, true);
     render();
     saveCache();
   };
@@ -12519,6 +12567,8 @@ if (bAxisFromRowEl) bAxisFromRowEl.onclick = () => {
   const cols = [], p2 = [];
   for (let k = 0; k < s.length; k++) if (s[k] === "1") { cols.push(sh + k); p2.push(h2 + 2 * k); }
   if (!cols.length) { say(`⊙ Оси по «1»: в строке ${rowLabel(src)} нет ни одной единицы.`); return; }
+  // Как и "⊙ Ось сюда": столбцовые оси гасят режим "⊙ Оси по битам" вместе с его группами.
+  if (typeof bitAxisMode !== "undefined" && bitAxisMode) setBitAxisMode(false, true);
   // ГРУППОЙ (запрос пользователя): единицы одной строки — одна группа, своим цветом, и
   // снимается она целиком одним нажатием "✕ Снять выбор". Прежние группы остаются.
   addAxisGroup(cols, src, p2, src);
@@ -12736,6 +12786,31 @@ function axisLocalIdxMapForRow(r, len, align){
    по умолчанию не трогаем). Столбцы, до которых строка не достаёт, отбрасываются. null — осей не
    назначено вовсе (работает прежнее правило по краю), пустой массив — строка не достаёт ни до
    одной оси, крутить её незачем. */
+/* ПОД-СЕТКА строки против под-сетки ЯКОРЯ группы осей (только "½"-выравнивания, только
+   ВЕРТИКАЛЬНЫЕ оси — у диагональных линия сама проходит через биты обеих чётностей).
+   Ровно то же правило, по которому render() решает, светить ли ось на строке (см. axisGroupNudge
+   там): совпали под-сетки — на строке реально есть бит этой оси, не совпали — оси у неё нет. */
+function axisRowSubgridOk(r, gi, align, maxLen){
+  if (axisDiagSlope2x(align) !== 0) return true;
+  if (!(align === "halfcenter" || align === "halfstairs" || align === "rhalfstairs")) return true;
+  const g = axisGroups()[gi];
+  if (!g) return true;
+  const a = (g.anch != null) ? g.anch : (g.row != null ? g.row : 0);
+  return hasHalfNudge(st.rows[r] || "", maxLen, align, r) ===
+         hasHalfNudge(st.rows[a] || "", maxLen, align, a);
+}
+/* Строка ЧУЖОЙ под-сетки: оси на неё формально распространяются (она в зоне группы), но
+   подсвеченного бита у неё нет — значит и ДЕРЖАТЬ её оси не должны (запрос пользователя: "те
+   строки, которые не выделены, не должны придерживать «1»-цы, у них нет выделенного бита").
+   Такая строка при ◄/►Круг просто крутится на один шаг, без привязки к «1» на оси. */
+function axisRowOffSubgrid(r, align){
+  if (axisDiagSlope2x(align) !== 0) return false;
+  if (!(align === "halfcenter" || align === "halfstairs" || align === "rhalfstairs")) return false;
+  const map = axisColorMapForRow(r);
+  if (!map || !map.size) return false;
+  for (const gi of map.values()) if (axisRowSubgridOk(r, gi, align, nudgeRefMaxLen(st))) return false;
+  return true;
+}
 function axisSnapLocalIdxs(r, len, align){
   // ДИАГОНАЛЬНЫЙ режим — своя геометрия целиком (см. axisLocalIdxMapForRow): она сразу отдаёт
   // локальные индексы, переводить столбцы не нужно.
@@ -12754,7 +12829,11 @@ function axisSnapLocalIdxs(r, len, align){
   const rowStr = st.rows[r] || "";
   const sh = rowShiftFor(maxLen, r, rowStr, align);
   const out = [];
-  for (const c of map.keys()) {
+  for (const [c, gi] of map) {
+    // Оси чужой под-сетки на эту строку не действуют (см. axisRowSubgridOk): бита у неё там нет,
+    // целиться незачем. Если ВСЕ оси строки такие — см. axisRowOffSubgrid в shiftOneRowAxisAware:
+    // строка крутится обычным шагом, а не замирает.
+    if (!axisRowSubgridOk(r, gi, align, maxLen)) continue;
     const k = Math.round(c - sh);
     if (k >= 0 && k < len) out.push(k);
   }
@@ -13005,6 +13084,14 @@ function shiftOneRowAxisAware(r, axisDelta, realRotateFn, invFlagsRotateFn){
     // Назначены столбцы-оси — целимся сразу во ВСЕ (запрос пользователя): подходит только то
     // положение, где «1» стоит на КАЖДОЙ из осей, до которых строка достаёт. Ни одной такой оси
     // нет (строка целиком в стороне) — не трогаем строку вовсе.
+    // Чужая под-сетка "½"-выравнивания — ось эту строку не держит: обычный поворот на шаг
+    // (см. axisRowOffSubgrid). Проверяем ДО axisSnapLocalIdxs: там такая строка отдала бы пустой
+    // список, а пустой список означает "стоять на месте".
+    if (axisRowOffSubgrid(r, st.align)) {
+      invFlagsMap.set(r, invFlagsRotateFn(getInvFlags(r, st.rows[r].length)));
+      st.rows[r] = realRotateFn(st.rows[r]);
+      return;
+    }
     const multi = axisSnapLocalIdxs(r, len, st.align);
     if (multi && !multi.length) return;
     const targets = multi || [nonAxisSnapCharIdx(st.align, len)];
@@ -13304,15 +13391,21 @@ function cellSelMaxLen(){
   for (const s of st.rows) if (s && s.length > m) m = s.length;
   return m;
 }
-/* Прямоугольник от якоря протяжки до текущей ячейки — берём ВСЕ настоящие биты внутри рамки. */
-function cellSelectRect(r0, c0, r1, c1){
+/* Прямоугольник от якоря протяжки до текущей ячейки — все настоящие биты внутри рамки.
+   ПРЕЖНЕЕ ВЫДЕЛЕНИЕ НЕ СТИРАЕТСЯ (запрос пользователя: "нажатие на другие биты — добавлять/
+   отключать биты, а не перемещать выделение"): рамка накладывается ПОВЕРХ снимка набора на
+   момент начала протяжки (base). del=true — та же рамка не добавляет, а снимает биты (протяжка,
+   начатая с уже выбранного бита). Полностью очистить набор можно только кнопкой "✕ Очистить биты". */
+function cellSelectRect(r0, c0, r1, c1, base, del){
   const maxLen = cellSelMaxLen();
   const rLo = Math.min(r0, r1), rHi = Math.max(r0, r1);
   const cLo = Math.min(c0, c1), cHi = Math.max(c0, c1);
-  cellSel.clear();
+  cellSel = new Set(base || cellSel);
   for (let r = rLo; r <= rHi; r++) {
     for (let c = cLo; c <= cHi; c++) {
-      if (cellBitIdx(r, c, maxLen) >= 0) cellSel.add(cellKey(r, c));
+      if (cellBitIdx(r, c, maxLen) < 0) continue;
+      const key = cellKey(r, c);
+      if (del) cellSel.delete(key); else cellSel.add(key);
     }
   }
 }
@@ -13337,7 +13430,12 @@ const bCellModeEl = document.getElementById("bCellMode");
 if (bCellModeEl) {
   bCellModeEl.onclick = () => {
     cellSelMode = !cellSelMode;
-    if (!cellSelMode) cellSel.clear();
+    // Набор ячеек при выключении НЕ стирается, только прячется (подсветка и клики по битам живут
+    // лишь в режиме) — запрос пользователя: "при отключении не удалять, а скрывать; при включении
+    // снова показать построенные выделения". Стирает набор только кнопка "✕ Очистить биты".
+    // "⊙ Оси по битам" НЕ гасим: режим выбора ячеек — это лишь способ ДОБАВЛЯТЬ/СНИМАТЬ ячейки
+    // мышью, а уже построенные по ним оси (и подсветка самих ячеек) к нему не относятся — они
+    // живут, пока включены оси по битам (запрос пользователя).
     cellSelUpdateBtns();
     say(cellSelMode
       ? "Выбор ячеек: клик — одна, протяжка — прямоугольник, Ctrl+клик — по одной."
@@ -13346,7 +13444,82 @@ if (bCellModeEl) {
   };
 }
 const bCellClearEl = document.getElementById("bCellClear");
-if (bCellClearEl) bCellClearEl.onclick = () => { cellSel.clear(); render(); };
+if (bCellClearEl) bCellClearEl.onclick = () => {
+  cellSel.clear();
+  say("Выделения битов очищены.");
+  render();
+};
+
+/* === "⊙ ОСИ ПО БИТАМ" (bitAxisMode) ===
+   Оси Круга задаются не столбцами, а ВЫБРАННЫМИ ЯЧЕЙКАМИ: каждая строка, где есть выбранные
+   биты, превращается в СВОЮ группу осей (см. addAxisGroup — группа с row=r действует от строки r
+   вниз до следующей такой же строки, ровно как у "⊙ Оси по «1» строки"). Столбцовые оси и оси по
+   битам взаимоисключимы (запрос пользователя): включение этого режима стирает все прежние группы,
+   а назначение столбца-оси ("⊙ Ось сюда"/"⊙ Оси по «1»") выключает режим и убирает битовые оси.
+   Группы пересобираются, когда меняется сам набор ячеек или выравнивание (см. bitAxisSig): между
+   пересборками группы живут обычной жизнью — их можно снимать по одной кнопкой "✕ Снять выбор". */
+var bitAxisMode = false;
+var bitAxisSig = "";
+function bitAxisSignature(){
+  return st.align + "|" + Array.from(cellSel).sort().join(",");
+}
+function syncBitAxesFromCells(){
+  const byRow = cellSelByRow();
+  const maxLen = cellSelMaxLen();
+  const groups = [];
+  for (const r of Array.from(byRow.keys()).sort((a, b) => a - b)) {
+    const sRow = st.rows[r] || "";
+    if (!sRow.length) continue;
+    const sh = rowShiftFor(maxLen, r, sRow, st.align);
+    // p2 — позиции осей в ПОЛУстолбцах на самой строке-якоре: нужны диагональному режиму
+    // ("⤡ Диагональные столбцы на «½»"), у вертикальных осей это просто 2×столбец. Считается
+    // ровно так же, как в "⊙ Оси по «1» строки" (axisColShift2x + 2×локальный индекс).
+    const h2 = axisColShift2x(r, sRow, st.align, maxLen);
+    const cols = [], p2 = [];
+    for (const c of byRow.get(r)) {
+      const k = c - sh;
+      if (k < 0 || k >= sRow.length) continue; // ячейка вне самой строки — осью быть не может
+      cols.push(c); p2.push(h2 + 2 * k);
+    }
+    if (cols.length) groups.push({ cols, p2, row: r, anch: r });
+  }
+  st.axisSnapGroups = groups;
+  syncAxisSnapCols();
+}
+/* Пересборка по требованию — зовётся из render(): набор ячеек меняется в нескольких местах
+   (клик, протяжка, "✕ Снять"), а render() после каждого из них всё равно вызывается. */
+function bitAxesRefresh(){
+  if (!bitAxisMode) return;
+  const sig = bitAxisSignature();
+  if (sig === bitAxisSig) return;
+  bitAxisSig = sig;
+  syncBitAxesFromCells();
+}
+function setBitAxisMode(on, quiet){
+  bitAxisMode = !!on;
+  const b = document.getElementById("bCellAxis");
+  if (b) b.classList.toggle("mode-act", bitAxisMode);
+  if (bitAxisMode) {
+    // Режим осмыслен только вместе с выбором ячеек — включаем его заодно.
+    if (!cellSelMode) { cellSelMode = true; cellSelUpdateBtns(); }
+    if (typeof colPickMode !== "undefined" && colPickMode) setColPickMode(false);
+    st.selectedCol = -1;
+    bitAxisSig = bitAxisSignature();
+    syncBitAxesFromCells();
+    if (!quiet) say(cellSel.size
+      ? "Оси по битам: выбранные ячейки стали осями — каждая строка с ячейками держит их до следующей такой строки."
+      : "Оси по битам включены: выбирайте ячейки — они сразу станут осями (строка и вниз до следующей строки с ячейками).");
+  } else {
+    // Выключение снимает ИМЕННО битовые оси (других в этом режиме и не было).
+    st.axisSnapGroups = [];
+    syncAxisSnapCols();
+    bitAxisSig = "";
+    if (!quiet) say("Оси по битам выключены — оси сняты.");
+  }
+  render(); saveCache();
+}
+const bCellAxisEl = document.getElementById("bCellAxis");
+if (bCellAxisEl) bCellAxisEl.onclick = () => setBitAxisMode(!bitAxisMode);
 
 /* "🔢 Выделить столбцы" (colPickMode) — выбор столбца КЛИКОМ ПО САМОМУ БИТУ в цепочке.
    Линейка столбцов теперь чистая (без палочек и крестиков), поэтому столбец берут прямо из
@@ -13444,22 +13617,24 @@ if (bColSelClearFloatEl) bColSelClearFloatEl.onclick = clearAxisGroupOnce;
       const cell = cellAtEvent(e);
       e.preventDefault();
       e.stopPropagation(); // не даём клику выделить строку
-      if (!cell) { cellSel.clear(); render(); return; }
-      if (e.ctrlKey || e.metaKey) {
-        const key = cellKey(cell.r, cell.col);
-        if (cellSel.has(key)) cellSel.delete(key); else cellSel.add(key);
-        cellDragAnchor = null;
-      } else {
-        cellDragAnchor = cell;
-        cellSelectRect(cell.r, cell.col, cell.r, cell.col);
-      }
+      // Клик мимо бита (пустое место полотна) больше НИЧЕГО не стирает — раньше он сбрасывал весь
+      // набор ячеек, и выделение терялось от случайного промаха.
+      if (!cell) return;
+      const key = cellKey(cell.r, cell.col);
+      // Любой клик по биту — ПЕРЕКЛЮЧАТЕЛЬ (был выбран — снялся, не был — добавился), Ctrl больше
+      // не нужен: выделение накапливается, а не перепрыгивает на новый бит. Протяжка от этого же
+      // бита продолжает то же действие: с невыбранного — добавляет рамку, с выбранного — снимает.
+      const del = cellSel.has(key);
+      cellDragAnchor = { r: cell.r, col: cell.col, base: new Set(cellSel), del };
+      cellSelectRect(cell.r, cell.col, cell.r, cell.col, cellDragAnchor.base, del);
       render();
     }, true);
     rowsEl.addEventListener("mousemove", (e) => {
       if (!cellSelMode || !cellDragAnchor || e.buttons !== 1) return;
       const cell = cellAtEvent(e);
       if (!cell) return;
-      cellSelectRect(cellDragAnchor.r, cellDragAnchor.col, cell.r, cell.col);
+      cellSelectRect(cellDragAnchor.r, cellDragAnchor.col, cell.r, cell.col,
+                     cellDragAnchor.base, cellDragAnchor.del);
       render();
     });
     window.addEventListener("mouseup", () => { cellDragAnchor = null; });
@@ -17610,7 +17785,7 @@ function captureUiSettings(){
     axisBitBounce: cAxisBitBounceEl ? cAxisBitBounceEl.checked : false,
     edgeOnes: cEdgeOnesEl ? cEdgeOnesEl.checked : false,
     noSplitOnes: cNoSplitOnesEl ? cNoSplitOnesEl.checked : false,
-    axisDiagCols: cAxisDiagColsEl ? cAxisDiagColsEl.checked : false,
+    axisDiagCols: st.axisDiagCols | 0,
     interleavePadEven: cInterleavePadEvenEl ? cInterleavePadEvenEl.checked : false,
     axisSnapAny: cAxisSnapAnyEl ? cAxisSnapAnyEl.checked : false,
     axisCenterOffset: st.axisCenterOffset || 0,
@@ -17689,7 +17864,8 @@ function applyUiSettings(u){
   if (u.axisBitBounce !== undefined && cAxisBitBounceEl) cAxisBitBounceEl.checked = u.axisBitBounce;
   if (u.edgeOnes !== undefined && cEdgeOnesEl) cEdgeOnesEl.checked = u.edgeOnes;
   if (u.noSplitOnes !== undefined && cNoSplitOnesEl) cNoSplitOnesEl.checked = u.noSplitOnes;
-  if (u.axisDiagCols !== undefined && cAxisDiagColsEl) cAxisDiagColsEl.checked = u.axisDiagCols;
+  // Старые сохранёнки хранили здесь галку (true/false) — число из неё получится тем же |0.
+  if (u.axisDiagCols !== undefined) setAxisDiagCols(u.axisDiagCols | 0, true);
   if (u.interleavePadEven !== undefined && cInterleavePadEvenEl) cInterleavePadEvenEl.checked = u.interleavePadEven;
   if (u.axisSnapAny !== undefined && cAxisSnapAnyEl) cAxisSnapAnyEl.checked = u.axisSnapAny;
   if (u.axisCenterOffset !== undefined) st.axisCenterOffset = u.axisCenterOffset;
@@ -17736,6 +17912,9 @@ function applyUiSettings(u){
       else b.classList.remove("act");
     });
   }
+  // ПОСЛЕ восстановления выравнивания: стрелка на кнопке "⤡ Диагональ осей" зависит от него, а
+  // сам режим читался выше (u.axisDiagCols), когда st.align был ещё старый.
+  setAxisDiagCols(st.axisDiagCols, true);
 
   if (u.mode) setMode(u.mode);
 
@@ -18134,7 +18313,6 @@ if (cPadRealEl) cPadRealEl.addEventListener("change", () => {
 if (cAxisBitBounceEl) cAxisBitBounceEl.addEventListener("change", () => { readToggles(); axisBitDirMap.clear(); rowRotOffMap.clear(); render(); saveCache(); });
 if (cEdgeOnesEl) cEdgeOnesEl.addEventListener("change", () => { readToggles(); edgeOnesSideMap.clear(); render(); saveCache(); });
 if (cNoSplitOnesEl) cNoSplitOnesEl.addEventListener("change", () => { readToggles(); render(); saveCache(); });
-if (cAxisDiagColsEl) cAxisDiagColsEl.addEventListener("change", () => { readToggles(); render(); saveCache(); });
 
 if (!loadCache()){
   /* Самая первая загрузка вообще (localStorage ещё пуст) — createDefaultTabState() берёт
@@ -18342,7 +18520,7 @@ const TIPS = {
   t24: "Снять жёлтое выделение столбца. Синий назначенный столбец («⊙ Ось сюда») это не трогает — его снимает соседняя кнопка «✕ Снять столбец»",
   t25: "Когда назначено НЕСКОЛЬКО осей («⊙ Ось сюда»): по умолчанию Круг ◄/► принимает только то положение строки, где «1» стоит на ВСЕХ осях сразу — а с этой галкой хватает ЛЮБОЙ ОДНОЙ из них, строка встаёт на ближайшее такое положение. На одной-единственной оси разницы нет",
   t26: "Взять ВСЕ единицы выделенной строки и назначить их столбцы осями для Круга — разом, вместо того чтобы тыкать в каждый столбец. Это ОТДЕЛЬНАЯ ГРУППА своего цвета: она действует на строки ОТ ЭТОЙ СТРОКИ И НИЖЕ — до следующей строки, где так же назначены оси. Зоны групп не накладываются друг на друга, прежние группы остаются на своих местах. Заодно выделение переносится на строки НИЖЕ этой: до следующей выделенной строки, а если её нет — до самого низа цепочки. Сама строка-источник из выделения выходит, чтобы Круг её не крутил (её единицы и задают оси). Дальше ◄/►Круг ставит нижние строки на эти оси: по умолчанию нужны «1» на всех сразу, с галкой ниже — хватит любой",
-  t26b: "На «½»-выравниваниях (Центр ½/Лесенка ½/Лесенка правая ½) строки едут на ПОЛСТОЛБЦА за строку, поэтому вертикальная ось попадает в биты только у половины строк — у второй половины бит стоит в полустолбце между (без галки так и есть, это прежнее поведение). С галкой ось становится НАКЛОННОЙ ЛИНИЕЙ с тем же шагом ½ столбца на строку (у «Лесенки правой ½» — влево, у остальных — вправо): она идёт через реальные биты строк ЛЮБОЙ чётности, и подсветка видна как диагональ, а не как прерывистая вертикаль. Линия проходит через строку-якорь: у «⊙ Оси по «1» строки» это сама строка-источник, у клика по столбцу — верхняя выделенная строка",
+  t26b: "На «½»-выравниваниях (Центр ½/Лесенка ½/Лесенка правая ½) строки едут на ПОЛСТОЛБЦА за строку, поэтому вертикальная ось попадает в биты только у половины строк — у второй бит стоит в полустолбце между (это состояние «выкл», прежнее поведение). Нажатия перебирают ТРИ состояния: 1-е — ось становится НАКЛОННОЙ ЛИНИЕЙ с шагом ½ столбца на строку по наклону самой лестницы, 2-е — та же линия в ДРУГУЮ сторону, 3-е — снова выкл. Диагональ идёт через реальные биты строк ЛЮБОЙ чётности, поэтому подсветка видна сплошной наклонной линией, а не прерывистой вертикалью. Линия проходит через строку-якорь: у «⊙ Оси по «1» строки» это сама строка-источник, у клика по столбцу — верхняя выделенная строка",
   t27: "Достроить ВВЕРХ зеркало из строк: берутся настоящие строки от первой до выделенной, их порядок переворачивается, и над первой строкой кладётся столько же строк — каждая ИНВЕРСИЯ (0↔1) своей строки. Для 1/11/111 сверху появятся 000/00/0 (инверсия единиц), а для 101 — 010. Цепочка съезжает вниз, настоящая первая строка остаётся номером 0, а достроенные получают отрицательные номера и участвуют во всех склейках и поиске наравне с остальными",
   t28: "Что делать, когда верх УЖЕ построен: «переписывать» — каждый раз строить всё отражение заново по текущему выделению, все построенные строки обновляются. «Дописывать» — уже построенные НЕ ТРОГАТЬ вовсе, даже если настоящие строки с тех пор изменились: сверху просто доводится число строк до числа настоящих строк по выделенную включительно — не хватает, дописываются недостающие, а если выделение уехало выше, лишние снимаются с самого верха",
   t29: "Чем заполняются достроенные сверху строки, перебор по кругу: «инверсия» — просто инверсия строки-источника (0↔1); «реверс+инв» — инверсия плюс разворот порядка бит; «реверс» — только разворот, биты как есть. Переключение сразу пересобирает верх (в режиме «переписывать»)",
