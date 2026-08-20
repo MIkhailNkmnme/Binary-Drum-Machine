@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.738</title>
+<title>Zerkalius Fold — v0.740</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -45,6 +45,7 @@
                           и "0", и "1" в найденном пробеге красятся ровно в этот один цвет */
     --cv1-hl:#00ccff; /* цвет подсветки "1 под 1" (см. #bHighlightVert1/#colVert1) — тоже сплошной */
     --cd1-hl:#66ff66; /* цвет подсветки "1 по диагонали" (см. #bHighlightDiag1/#colDiag1) — тоже сплошной */
+    --c11r-hl:#a78bfa; /* цвет подсветки "1 правее 1" (см. #bHighlight1Right/#col1Right) — сплошной */
     --cdf-hl:#ff5ecb; /* цвет подсветки "диагонали склейки" (см. #bHighlightDiagFold/#colDiagFold) —
                           показывает САМИ ЛИНИИ, по которым режимы "⧅ Диаг. ↘/↙" собирают результат
                           (и нули тоже, не только единицы — это линия, а не находка) */
@@ -1014,6 +1015,10 @@
      .hl01/.hlv1. Объявлена ПОСЛЕ них — при совпадении сразу нескольких подсветок на одном
      символе она визуально побеждает (см. порядок классов в render()). */
   .hld1{color:var(--cd1-hl) !important}
+  /* Подсветка "1 правее 1" (см. #bHighlight1Right) — красит ЕДИНИЦУ, у которой сосед СЛЕВА в той
+     же строке тоже "1" (то есть вторую и все следующие единицы в каждой сплошной группе; одиночная
+     "1" не красится). Оформление то же, что у .hl01/.hlv1/.hld1 — сплошной цвет текста. */
+  .hl11r{color:var(--c11r-hl) !important}
   /* Подсветка "диагонали склейки" (см. #bHighlightDiagFold/computeDiagFoldMask) — это не находка
      из единиц, как .hld1, а САМИ линии обхода режимов "⧅ Диаг. ↘/↙": красятся ВСЕ биты на линии,
      и "1", и "0". Объявлена последней — при совпадении с другими подсветками побеждает она
@@ -1643,7 +1648,7 @@ body.vcur-on #vcurBar{display:flex}
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <a href="index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (index.html)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.738</span></h3>
+    <a href="index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (index.html)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.740</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -1780,6 +1785,17 @@ body.vcur-on #vcurBar{display:flex}
          прогон, поэтому её место рядом с кнопкой, которая этот прогон запускает. Галка та же
          самая (#cTurboAuto), обработчик и логика не тронуты. -->
     <label class="chk" data-tip="t7"><input type="checkbox" id="cTurboAuto">⏩ Турбо</label>
+  </div>
+  <!-- "🐢 Замедление" — противоположность Турбо: прогон идёт РОВНО ПО ОДНОМУ шагу за тик, и каждый
+       шаг держится на экране заданное число кадров (ползунок рядом), чтобы движение можно было
+       разглядеть. Работает во всех режимах Авто (см. autoBatch/autoFrame в JS). СВОЯ строка, а не
+       рядом с "Авто/Сброс/Турбо": вместе с ползунком они в один ряд не влезали и ломали разметку. -->
+  <div class="flow-top-row" style="flex-wrap:nowrap">
+    <button id="bSlowAuto" style="flex:0 1 auto;white-space:nowrap" title="Замедление: Авто делает ровно один шаг за раз и держит каждый кадр столько кадров, сколько выставлено ползунком — видно каждый шаг. Отменяет пакетную прокрутку (и «⏩ Турбо» на время замедления).">🐢 Замедление</button>
+    <label class="chk" style="flex:1 1 auto;min-width:0;gap:4px" title="Сколько кадров экрана держится каждый шаг замедления (1 ≈ 60 шагов в секунду, 60 ≈ один шаг в секунду)">
+      <input type="range" id="slowFrames" min="1" max="60" step="1" value="10" style="flex:1 1 auto;min-width:40px;accent-color:#4da3ff">
+      <span id="slowFramesVal" style="flex:0 0 auto;min-width:2.2em;text-align:right">10</span>
+    </label>
   </div>
   <div class="flow-modes-grid">
     <!-- Шаг/Шаг 2 и XOR/XOR 2 — каждая пара в своей рамке, тот же приём, что и у Круг/Круг Инв
@@ -2221,6 +2237,12 @@ body.vcur-on #vcurBar{display:flex}
     <span class="hl-combo">
       <button id="bHighlightDiag1" data-tip="t111">1⤡1</button>
       <input type="color" id="colDiag1" value="#66ff66" title="Цвет подсветки «1 по диагонали»">
+    </span>
+    <!-- "1▸1" — единица, СТОЯЩАЯ ПРАВЕЕ другой единицы в той же строке (запрос пользователя):
+         красится вторая и каждая следующая "1" сплошной группы, одиночные не трогаются. -->
+    <span class="hl-combo">
+      <button id="bHighlight1Right" title="Подсветка «1 правее 1»: красит единицу, слева от которой в той же строке стоит другая единица — то есть вторую и все следующие «1» в каждой сплошной группе. Одиночная «1» не красится">1▸1</button>
+      <input type="color" id="col1Right" value="#a78bfa" title="Цвет подсветки «1 правее 1»">
     </span>
     <!-- Отдельная подсветка ИМЕННО тех диагоналей, по которым складывают строки режимы фон-поиска
          "⧅ Диаг. ↘ →"/"⧄ Диаг. ↙ ←" (см. computeDiagFoldMask/concatDiagDownTo) — не путать с
@@ -4391,7 +4413,7 @@ const st = {
   align: "center", vertical: false, padZero: false, allKinds: false, ringInvert: false, ringOff: false,
   // "⏮ Без посл." — не проверять ПОСЛЕДНИЙ символ паттерна (пара к st.skipFirst, см. patBase).
   skipLast: false,
-  pull: true, keepOrder: true, stopOnHit: true, stopOnBalance: false, turboAuto: false, captureOnFind: true, axisSnap: true, axisBitBounce: false, axisCenterOffset: 0,
+  pull: true, keepOrder: true, stopOnHit: true, stopOnBalance: false, turboAuto: false, slowAuto: false, slowFrames: 10, captureOnFind: true, axisSnap: true, axisBitBounce: false, axisCenterOffset: 0,
   undo: [], redo: [], running: false, msg: "",
   horizBitIdx: 0, horizXoredLength: 0, lastHorizRow: null, lastHorizDir: null, horizFoundInPass: false, horizChainLen: 0,
   horizBigChain: "", horizBigOrig: "", horizBigRow: "", horizChainRow: -1, horizBigTargetIdx: -1, horizRotations: 0, horizNeedRebuild: false,
@@ -4467,6 +4489,7 @@ const st = {
   // Предел автоматических вписываний зеркал (см. mirrorsAutoStep). 1 — вписать один раз и всё.
   mirrorsAutoMax: 1,
   highlight01: false,
+  highlight1Right: false,
   highlightVert1: false,
   highlightDiag1: false,
   highlightDiagFold: false,
@@ -4893,6 +4916,11 @@ function loadTabState(index, skipSave = false) {
     if (t.colors.cd1 && colDiag1El) {
       colDiag1El.value = t.colors.cd1;
       applyColorDiag1();
+    }
+
+    if (t.colors.c11r && col1RightEl) {
+      col1RightEl.value = t.colors.c11r;
+      applyColor1Right();
     }
 
     if (t.colors.cdf && colDiagFoldEl) {
@@ -8109,6 +8137,9 @@ function render(){
         cellSel.size && cellSel.has(i + "|" + (shift + k));
 
       const is01Pair = hl01Mask ? hl01Mask[k] : false;
+      // "1 правее 1" — соседа ищем в САМОЙ строке (без масок и предрасчёта): единица, слева от
+      // которой стоит другая единица.
+      const is1Right = st.highlight1Right && bit === '1' && k > 0 && s[k - 1] === '1';
       // "1 под 1"/"1 по диагонали" — только для "1" (не для "0"), см. computeVertOnesMask()/
       // computeDiagOnesMask() выше.
       const isVert1 = !!(vertOnesMask && vertOnesMask[i] && bit === '1' && vertOnesMask[i].has(k));
@@ -8168,10 +8199,10 @@ function render(){
         emit('<span class="col-sel-bit b' + bit + '"' + colAttr + '>', bit, mrg);
       } else if (isXoredBit && (bit === '0' || bit === '1')) {
         emit('<span class="xored-bit"' + colAttr + '>', bit, mrg);
-      } else if (is01Pair || isVert1 || isDiag1 || isDiagFold) {
+      } else if (is01Pair || is1Right || isVert1 || isDiag1 || isDiagFold) {
         // Несколько подсветок могут совпасть на одном символе — вешаем все подходящие классы;
         // порядок объявления в CSS (.hl01 → .hlv1 → .hld1 → .hldf) решает, чей цвет визуально победит.
-        const hlCls = 'b' + bit + (is01Pair ? ' hl01' : '') + (isVert1 ? ' hlv1' : '') + (isDiag1 ? ' hld1' : '') +
+        const hlCls = 'b' + bit + (is01Pair ? ' hl01' : '') + (is1Right ? ' hl11r' : '') + (isVert1 ? ' hlv1' : '') + (isDiag1 ? ' hld1' : '') +
           (isDiagFold ? (' hldf' + (foldBgStyle ? ' hldf-bg' : '')) : '');
         // Цвет — по порядку сбора (foldOrderColor): у поколоночных режимов красим фон, у
         // диагоналей сам символ.
@@ -12101,7 +12132,7 @@ function autoRun(){
       // включённом "🛑 Стоп на находке". В режиме "⏩ Турбо" именно по этому флагу решается,
       // показывать кадр или нет.
       let hadHit = false;
-      while (performance.now() - t0 < 12) {
+      while (autoBatch(t0)) {
         if (totalTurns > 0 && turns >= totalTurns) { cycleDone = true; break; }
         if (isShift) {
           if (rotIdxs.size === 0 || ![...rotIdxs].some(i => st.rows[i])) { moved = false; break; }
@@ -12179,7 +12210,8 @@ function autoRun(){
       // на КАЖДОМ кадре съедали основное время, а промежуточные варианты на такой скорости всё
       // равно не читаются глазами (запрос пользователя — "чтобы вообще не крутила, а меняла
       // строки только во время находки"). Сам перебор идёт с прежней плотностью.
-      const showFrame = !st.turboAuto || hadHit || balanceHit || cycleDone || !moved;
+      // Замедление сильнее Турбо: смысл замедления в том, чтобы КАЖДЫЙ шаг был виден.
+      const showFrame = st.slowAuto || !st.turboAuto || hadHit || balanceHit || cycleDone || !moved;
       if (showFrame) {
         say(`Авто (${dirLabel}): вариант ${turns}` + (totalTurns ? ` из ${totalTurns}` : ""));
         updateVariantCounter();
@@ -12202,9 +12234,9 @@ function autoRun(){
       }
       if (cycleDone) return finishAuto(`Авто (${dirLabel}) остановлен: полный цикл вариантов (${turns} из ${totalTurns}) пройден, совпадений не найдено.`);
       if (!moved) return finishAuto(`Авто (${dirLabel}) остановлен: больше нечего сдвигать.`);
-      requestAnimationFrame(tick);
+      autoFrame(tick);
     };
-    requestAnimationFrame(tick);
+    autoFrame(tick);
     return;
   }
 
@@ -12214,7 +12246,7 @@ function autoRun(){
 
       const t0 = performance.now();
       let stepsCount = 0;
-      while (performance.now() - t0 < 12) {
+      while (autoBatch(t0)) {
         if (!doXorSelectedStep()) {
           return finishAuto(`Режим XOR выдел завершен (выполнено ${stepsCount} сдвигов).`);
         }
@@ -12222,9 +12254,9 @@ function autoRun(){
       }
 
       render();
-      requestAnimationFrame(tick);
+      autoFrame(tick);
     };
-    requestAnimationFrame(tick);
+    autoFrame(tick);
     return;
   }
 
@@ -12234,7 +12266,7 @@ function autoRun(){
 
       const t0 = performance.now();
       let stepsCount = 0;
-      while (performance.now() - t0 < 12) {
+      while (autoBatch(t0)) {
         if (!doInterleaveStep()) {
           return finishAuto(`Режим Интерливинг завершен (выполнено ${stepsCount} шагов).`);
         }
@@ -12242,9 +12274,9 @@ function autoRun(){
       }
 
       render();
-      requestAnimationFrame(tick);
+      autoFrame(tick);
     };
-    requestAnimationFrame(tick);
+    autoFrame(tick);
     return;
   }
 
@@ -12257,9 +12289,9 @@ function autoRun(){
       if (!doInterleaveSeqStep()) {
         return finishAuto(`Режим Интерлив сквозной завершен.`);
       }
-      requestAnimationFrame(tick);
+      autoFrame(tick);
     };
-    requestAnimationFrame(tick);
+    autoFrame(tick);
     return;
   }
 
@@ -12270,9 +12302,9 @@ function autoRun(){
       if (!doXorSeqStep()) {
         return finishAuto(`Режим XOR сквозной завершен.`);
       }
-      requestAnimationFrame(tick);
+      autoFrame(tick);
     };
-    requestAnimationFrame(tick);
+    autoFrame(tick);
     return;
   }
 
@@ -12284,7 +12316,7 @@ function autoRun(){
     // Оптимизация 4: Time-based батчинг
     const t0 = performance.now();
     let stepsCount = 0;
-    while (performance.now() - t0 < 12) {
+    while (autoBatch(t0)) {
       if (!doStep(pairOnly, forceXor, isScan, isHorizXor, isXorProj, horizDir)) {
         return finishAuto(`Прогон завершен: двигаться некуда (выполнено ${stepsCount} ш. в посл. кадре).`);
       }
@@ -12299,9 +12331,59 @@ function autoRun(){
     }
 
     render();
-    requestAnimationFrame(tick);
+    autoFrame(tick);
   };
-  requestAnimationFrame(tick);
+  autoFrame(tick);
+}
+
+/* === "🐢 ЗАМЕДЛЕНИЕ" ===
+   Прогон Авто во всех режимах устроен одинаково: тик rAF, а внутри — пачка шагов, сколько влезет
+   в 12 мс. Замедление ломает обе половины этой схемы, не трогая сами режимы:
+   autoBatch() — условие пакетного цикла: с замедлением пропускает РОВНО ОДИН шаг за тик
+     (второй вызов на том же t0 возвращает false). Если цикл вышел раньше по break/return, флаг
+     останется от прежнего t0 — а он у следующего тика уже другой, так что сбой не накапливается.
+   autoFrame() — планировщик следующего тика: держит кадр st.slowFrames кадров экрана.
+   Турбо и Замедление противоречат друг другу (один прячет кадры, другой их показывает) — при
+   включённом замедлении кадр рисуется всегда, см. showFrame в autoRun(). */
+var autoSlowT0 = -1;
+function autoBatch(t0){
+  if (!st.slowAuto) return performance.now() - t0 < 12;
+  if (autoSlowT0 === t0) { autoSlowT0 = -1; return false; }
+  autoSlowT0 = t0;
+  return true;
+}
+function autoFrame(fn){
+  const n = st.slowAuto ? Math.max(1, st.slowFrames | 0) : 1;
+  if (n <= 1) return requestAnimationFrame(fn);
+  let left = n;
+  const hop = () => { if (--left <= 0) fn(); else requestAnimationFrame(hop); };
+  return requestAnimationFrame(hop);
+}
+function slowAutoSync(){
+  const b = document.getElementById("bSlowAuto");
+  if (b) b.classList.toggle("mode-act", !!st.slowAuto);
+  const r = document.getElementById("slowFrames");
+  if (r) r.value = st.slowFrames || 10;
+  const v = document.getElementById("slowFramesVal");
+  if (v) v.textContent = String(st.slowFrames || 10);
+}
+{
+  const b = document.getElementById("bSlowAuto");
+  if (b) b.onclick = () => {
+    st.slowAuto = !st.slowAuto;
+    slowAutoSync();
+    say(st.slowAuto
+      ? `🐢 Замедление включено: один шаг за раз, ${st.slowFrames || 10} кадр(ов) на шаг.`
+      : "🐢 Замедление выключено — Авто снова идёт пачками.");
+    saveCache();
+  };
+  slowAutoSync(); // стартовое состояние кнопки/ползунка из st (дальше — из кэша, см. loadCache)
+  const r = document.getElementById("slowFrames");
+  if (r) r.oninput = () => {
+    st.slowFrames = Math.max(1, Math.min(60, +r.value || 1));
+    slowAutoSync();
+    saveCache();
+  };
 }
 
 function finishAuto(m){
@@ -15317,7 +15399,8 @@ function patChainAutoStop(msg){
    saveCache(), поэтому за кадр успевает уложиться целая ПАЧКА паттернов — время кадра тратится на
    саму укладку, а не на перерисовку таблицы. Находка и остановка рисуются всегда. */
 function patChainAutoTick(){
-  const turbo = !!st.turboAuto;
+  // Под "🐢 Замедление" молчаливый режим отключаем: каждый уложенный паттерн должен быть виден.
+  const turbo = !!st.turboAuto && !st.slowAuto;
   const t0 = performance.now();
   do {
     const res = patChainApplyOnce(turbo);
@@ -15367,13 +15450,13 @@ function patChainAutoTick(){
         patChainSeenRows.clear();
         say(`Паттерн-цепочка (Авто): два круга вхолостую — верхние строки возвращены к шаблону (${n} стр.), укладка пошла заново.`);
         render(); saveCache();
-        patChainAutoTimer = requestAnimationFrame(patChainAutoTick);
+        patChainAutoTimer = autoFrame(patChainAutoTick);
         return;
       }
     }
-  } while (turbo && performance.now() - t0 < 12);
+  } while (turbo && !st.slowAuto && performance.now() - t0 < 12);
   if (turbo) say(`⏩ Турбо (Паттерн-цепочка): уложено ${st.patChainStep} — идёт поиск…`);
-  patChainAutoTimer = requestAnimationFrame(patChainAutoTick);
+  patChainAutoTimer = autoFrame(patChainAutoTick);
 }
 const bPatChainAutoEl = document.getElementById("bPatChainAuto");
 if (bPatChainAutoEl) {
@@ -15382,7 +15465,7 @@ if (bPatChainAutoEl) {
     setPatChainAutoBtnState(true);
     patChainNoHitCycles = 0; patChainResetsDone = 0;
     say("Паттерн-цепочка (Авто): пошла укладка…");
-    patChainAutoTimer = requestAnimationFrame(patChainAutoTick);
+    patChainAutoTimer = autoFrame(patChainAutoTick);
   };
 }
 
@@ -17002,6 +17085,7 @@ function captureColors(){
     c01: typeof col01El !== "undefined" && col01El ? col01El.value : "#ff9900",
     cv1: typeof colVert1El !== "undefined" && colVert1El ? colVert1El.value : "#00ccff",
     cd1: typeof colDiag1El !== "undefined" && colDiag1El ? colDiag1El.value : "#66ff66",
+    c11r: typeof col1RightEl !== "undefined" && col1RightEl ? col1RightEl.value : "#a78bfa",
     cdf: typeof colDiagFoldEl !== "undefined" && colDiagFoldEl ? colDiagFoldEl.value : "#ff5ecb"
   };
 }
@@ -17024,6 +17108,25 @@ function applyColor01(){
 }
 if (col01El) {
   col01El.oninput = () => { applyColor01(); saveCacheSoon(); };
+}
+
+/* "1 правее 1" (см. #bHighlight1Right/.hl11r в CSS) — та же логика вкл/выкл + цвет, что у "01";
+   считать нечего заранее, признак берётся прямо в render() по соседу слева. */
+const bHighlight1RightEl = document.getElementById("bHighlight1Right");
+if (bHighlight1RightEl) {
+  bHighlight1RightEl.onclick = () => {
+    st.highlight1Right = !st.highlight1Right;
+    bHighlight1RightEl.classList.toggle("mode-act", st.highlight1Right);
+    render();
+    saveCache();
+  };
+}
+const col1RightEl = document.getElementById("col1Right");
+function applyColor1Right(){
+  if (col1RightEl) document.documentElement.style.setProperty("--c11r-hl", col1RightEl.value);
+}
+if (col1RightEl) {
+  col1RightEl.oninput = () => { applyColor1Right(); saveCacheSoon(); };
 }
 
 /* "1 под 1" (см. #bHighlightVert1/.hlv1 в CSS) — та же логика вкл/выкл + цвет, что у "01",
@@ -17817,6 +17920,7 @@ function captureUiSettings(){
     popupFontPx: popupFontPx,
     resultHeightLocked: resultHeightLocked,
     highlight01: !!st.highlight01,
+    highlight1Right: !!st.highlight1Right,
     highlightVert1: !!st.highlightVert1,
     highlightDiag1: !!st.highlightDiag1,
     highlightDiagFold: !!st.highlightDiagFold,
@@ -17840,6 +17944,7 @@ function captureUiSettings(){
     c01: col01El ? col01El.value : "#ff9900",
     cv1: colVert1El ? colVert1El.value : "#00ccff",
     cd1: colDiag1El ? colDiag1El.value : "#66ff66",
+    c11r: col1RightEl ? col1RightEl.value : "#a78bfa",
     cdf: colDiagFoldEl ? colDiagFoldEl.value : "#ff5ecb"
   };
 }
@@ -17855,6 +17960,7 @@ function applyUiSettings(u){
   if (u.stopOnHit !== undefined && cStopOnHitEl) cStopOnHitEl.checked = u.stopOnHit;
   if (u.stopOnBalance !== undefined && cStopOnBalanceEl) cStopOnBalanceEl.checked = u.stopOnBalance;
   if (u.turboAuto !== undefined && cTurboAutoEl) cTurboAutoEl.checked = u.turboAuto;
+  if (typeof slowAutoSync === "function") slowAutoSync(); // "🐢 Замедление" — кнопка и ползунок из st
   if (u.captureOnFind !== undefined && cCaptureOnFindEl) cCaptureOnFindEl.checked = u.captureOnFind;
   if (u.horizRotateOnFail !== undefined && cHorizRotateOnFailEl) cHorizRotateOnFailEl.checked = u.horizRotateOnFail;
   if (u.horizAlternateSide !== undefined && cHorizAlternateSideEl) cHorizAlternateSideEl.checked = u.horizAlternateSide;
@@ -17953,6 +18059,11 @@ function applyUiSettings(u){
     st.highlight01 = !!u.highlight01;
     const b = document.getElementById("bHighlight01");
     if (b) b.classList.toggle("mode-act", st.highlight01);
+  }
+  if (u.highlight1Right !== undefined) {
+    st.highlight1Right = !!u.highlight1Right;
+    const b = document.getElementById("bHighlight1Right");
+    if (b) b.classList.toggle("mode-act", st.highlight1Right);
   }
   if (u.highlightVert1 !== undefined) {
     st.highlightVert1 = !!u.highlightVert1;
@@ -18082,6 +18193,9 @@ function applyUiSettings(u){
   if (u.cd1 && colDiag1El) colDiag1El.value = u.cd1;
   applyColorDiag1();
 
+  if (u.c11r && col1RightEl) col1RightEl.value = u.c11r;
+  applyColor1Right();
+
   if (u.cdf && colDiagFoldEl) colDiagFoldEl.value = u.cdf;
   applyColorDiagFold();
 
@@ -18143,7 +18257,7 @@ const DEFAULT_UI_SETTINGS = {
   boldBits: false,
   rowBgSel: "#ffcf6b",
   rowBgSelOpacity: 18,
-  c01: "#ff9900", cv1: "#00ccff", cd1: "#66ff66", cdf: "#ff5ecb"
+  c01: "#ff9900", cv1: "#00ccff", cd1: "#66ff66", c11r: "#a78bfa", cdf: "#ff5ecb"
 };
 
 const bSaveUiSettingsEl = document.getElementById("bSaveUiSettings");
