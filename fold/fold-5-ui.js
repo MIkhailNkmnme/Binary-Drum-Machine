@@ -140,11 +140,14 @@ const PRESETS = {
 const col1 = document.getElementById("col1");
 const col0 = document.getElementById("col0");
 const colBg = document.getElementById("colBg");
+// Цвет битов, изменённых последним шагом (.bit-chg) — раньше был хардкодом в CSS.
+const colChg = document.getElementById("colChg");
 
 function applyColors() {
   document.documentElement.style.setProperty("--c1", col1.value);
   document.documentElement.style.setProperty("--c0", col0.value);
   document.documentElement.style.setProperty("--cbg", colBg.value);
+  if (colChg) document.documentElement.style.setProperty("--cchg", colChg.value);
 }
 
 /* #RRGGBB -> rgba(...) с заданной прозрачностью — цвет <input type="color"> всегда непрозрачный,
@@ -392,6 +395,9 @@ function markCustomColor(){
 col1.oninput = markCustomColor;
 col0.oninput = markCustomColor;
 colBg.oninput = markCustomColor;
+/* Цвет изменённых бит в пресеты НЕ входит (у них только c1/c0/bg) — поэтому свой обработчик:
+   применяем переменную и сохраняем, но пресет на "свой" не переключаем. */
+if (colChg) colChg.oninput = () => { applyColors(); st.colChg = colChg.value; saveCache(); };
 
 /* Фон выделенных строк — цвет + прозрачность, без пресетов (см. #rowBgSel/#rowBgSelOpacity в HTML). */
 rowBgSel.oninput = () => { applyColorsSel(); saveCacheSoon(); };
@@ -1044,6 +1050,14 @@ function captureUiSettings(){
     bgSearchOn: st.bgSearchOn !== false,
     bgMaskText: st.bgMaskText || "",
     bgMaskRingRestart: st.bgMaskRingRestart !== false,
+    // "⇄ Сдвиг по маске" — своя маска и режим её подсветки, отдельные от поисковой (см. fold-4).
+    maskShiftText: st.maskShiftText || "",
+    maskPaintMode: st.maskPaintMode || "off",
+    // Подсветка прореживающей маски в строках + общие цвета обеих подсветок.
+    bgMaskPaintMode: st.bgMaskPaintMode || "off",
+    colChg: (typeof colChg !== "undefined" && colChg) ? colChg.value : (st.colChg || "#ff3b3b"),
+    maskPaintColor1: st.maskPaintColor1 || "#b060ff",
+    maskPaintColor0: st.maskPaintColor0 || "#22d3ee",
     bgSubPatterns: cBgSubPatternsEl ? cBgSubPatternsEl.checked : false,
     bgSearchAllBelow: cBgAllBelowEl ? cBgAllBelowEl.checked : false,
     bgAllPats: cBgAllPatsEl ? cBgAllPatsEl.checked : false,
@@ -1177,6 +1191,31 @@ function applyUiSettings(u){
 
   if (u.bgMaskText !== undefined) { st.bgMaskText = u.bgMaskText; if (bgMaskTextEl) bgMaskTextEl.value = u.bgMaskText; }
   if (u.bgMaskRingRestart !== undefined) { st.bgMaskRingRestart = u.bgMaskRingRestart; if (cBgMaskRingRestartEl) cBgMaskRingRestartEl.checked = u.bgMaskRingRestart; }
+  // "⇄ Сдвиг по маске" — поле и трёхпозиционная кнопка подсветки (см. fold-4). Элементы ищем по
+  // id прямо тут: их обработчики живут в fold-4, который грузится ПОСЛЕ этого файла, и держать на
+  // них ссылки-константы здесь было бы рано.
+  if (u.maskShiftText !== undefined) {
+    st.maskShiftText = u.maskShiftText;
+    const el = document.getElementById("maskShiftText");
+    if (el) el.value = u.maskShiftText;
+  }
+  if (u.maskPaintMode !== undefined) {
+    st.maskPaintMode = u.maskPaintMode;
+    if (typeof updateMaskPaintBtn === "function") updateMaskPaintBtn();
+  }
+  if (u.bgMaskPaintMode !== undefined) {
+    st.bgMaskPaintMode = u.bgMaskPaintMode;
+    if (typeof updateBgMaskPaintBtn === "function") updateBgMaskPaintBtn();
+  }
+  if (u.colChg !== undefined && typeof colChg !== "undefined" && colChg) {
+    colChg.value = u.colChg; st.colChg = u.colChg; applyColors();
+  }
+  for (const key of ["maskPaintColor1", "maskPaintColor0"]) {
+    if (u[key] === undefined) continue;
+    st[key] = u[key];
+    const el = document.getElementById(key);
+    if (el) el.value = u[key];
+  }
   if (u.bgSubPatterns !== undefined && cBgSubPatternsEl) { cBgSubPatternsEl.checked = u.bgSubPatterns; st.bgSubPatterns = u.bgSubPatterns; }
   if (u.bgSearchAllBelow !== undefined && cBgAllBelowEl) { cBgAllBelowEl.checked = u.bgSearchAllBelow; st.bgSearchAllBelow = u.bgSearchAllBelow; }
   if (u.bgAllPats !== undefined && cBgAllPatsEl) { cBgAllPatsEl.checked = u.bgAllPats; st.bgAllPats = u.bgAllPats; }
@@ -1394,6 +1433,13 @@ const DEFAULT_UI_SETTINGS = {
   // "🎭 Маска" фон-поиска — пусто по умолчанию (ищем паттерн строки ниже, как всегда).
   bgMaskText: "",
   bgMaskRingRestart: true,
+  // "⇄ Сдвиг по маске": маска пуста, обе подсветки групп выключены, цвета по умолчанию.
+  maskShiftText: "",
+  maskPaintMode: "off",
+  bgMaskPaintMode: "off",
+  colChg: "#ff3b3b",
+  maskPaintColor1: "#b060ff",
+  maskPaintColor0: "#22d3ee",
   bgSearchAllBelow: false,
   bgAllPats: false,
   // "🔁 Все вхождения" — подсвечивать паттерн ВЕЗДЕ, где встретился, а не только в первом

@@ -236,6 +236,26 @@ function resetAll(){
     st.selectedRows = new Set([f]);
   }
   resetNoAutoSelect = false;
+  // РЕЖИМЫ ВЫДЕЛЕНИЯ ЯЧЕЕК/СТОЛБЦОВ Сброс и Escape ВЫКЛЮЧАЮТ (запрос пользователя: "пусть по
+  // умолчанию, и при Escape отключать выделение ячеек или столбцов, если включены"). Раньше оба
+  // переживали Сброс: плавающая панель "⊙ Ось сюда / ✕ Снять столбец" продолжала висеть над
+  // полотном, а клики по битам — выбирать столбцы вместо обычного выделения строк.
+  // Гасим ТОЛЬКО режимы и жёлтый выбранный столбец. Сам набор ячеек (cellSel) и группы осей не
+  // трогаем: они не про режим, живут своей жизнью (на них завязаны "⊙ Оси по битам"), и у них
+  // свои кнопки — "✕ Очистить биты" и "✕ Снять выбор".
+  // Выключаем молча, как это делает clearAxisGroupOnce(), а не через setColPickMode(false):
+  // у того свой say() и render(), которые перебили бы сообщение самого Сброса.
+  if (typeof colPickMode !== "undefined" && colPickMode) {
+    colPickMode = false;
+    document.body.classList.remove("col-pick");
+    const bColMode = document.getElementById("bColPickMode");
+    if (bColMode) bColMode.classList.remove("mode-act");
+  }
+  if (typeof cellSelMode !== "undefined" && cellSelMode) {
+    cellSelMode = false;
+    if (typeof cellSelUpdateBtns === "function") cellSelUpdateBtns();
+  }
+  st.selectedCol = -1;
   updateVariantCounter();
   render();
 }
@@ -1805,10 +1825,35 @@ function render(){
       if (!res.matched || !res.kinds || !res.kinds.length) continue;
       const cellMap = bgConcatCellMap(res.mode, bgInfo.chainIdx);
       if (!cellMap) continue;
-      const period = res.kinds.period || res.result.length;
+      /* ПЕРЕВОД КООРДИНАТ ПОД "🎭 МАСКУ". kd.start/kd.len — позиции в той строке, ПО КОТОРОЙ
+         реально искали, а с маской это ПРОРЕЖЁННАЯ строка (maskInfo.picked), тогда как cellMap
+         проиндексирован по ПОЛНОЙ склейке. Без перевода подсветка в строках уезжала: находка на
+         позициях 5–8 прорежённой строки красила cellMap[4..7], то есть совсем другие биты совсем
+         другой строки (баг-репорт пользователя — "а почему в строках выделило это"). pickMap[j] —
+         какой индекс полной строки дал j-й взятый бит: тот же обход, что в applyPickMask. */
+      const mi = res.maskInfo;
+      const resLen = res.result.length;
+      let pickMap = null;
+      if (mi && mi.mask) {
+        pickMap = [];
+        const n = mi.mask.length;
+        // through — маску клали на удвоенную строку (галка "заново каждый виток" снята).
+        const srcLen = mi.through ? resLen * 2 : resLen;
+        for (let i = 0; i < srcLen; i++) if (mi.mask[(i + mi.phase) % n] === "1") pickMap.push(i);
+      }
+      const pickedLen = mi ? mi.picked.length : resLen;
+      const period = res.kinds.period || pickedLen;
       for (const kd of res.kinds) for (let q = 0; q < kd.len; q++) {
         const pos = period ? (kd.start + q) % period : (kd.start + q);
-        const cell = pos < cellMap.length ? cellMap[pos] : null;
+        // Позиции второго витка кольца (🔁 Инв./реверс — там период вдвое длиннее) в строках не
+        // существуют: это инвертированные биты, а не сами данные. Раньше их отсекала проверка
+        // pos < cellMap.length, теперь — явно, до перевода координат.
+        if (pos >= pickedLen) continue;
+        let full = pickMap ? pickMap[pos] : pos;
+        if (full == null) continue;
+        // Маска шла сквозь витки — второй виток это та же самая склейка, сворачиваем обратно.
+        if (full >= resLen) full -= resLen;
+        const cell = full < cellMap.length ? cellMap[full] : null;
         if (!cell || cell.r > lastActiveRow) continue; // отключённые строки не подсвечиваем
         let arr = patChainHitRows.get(cell.r);
         if (!arr) {
@@ -1833,9 +1878,14 @@ function render(){
     // и когда просто не выбрано ни одного режима, а это разные вещи.
     // Подпись с явным "нажми, чтобы переключить" — так кнопочная природа читается даже без
     // наведения. Состояние идёт первым символом-индикатором.
+    // Подпись КОРОТКАЯ, в одну строку (запрос пользователя: "одна высота у всех кнопок"). Полный
+    // вариант ("ВЫКЛ — включить") переносился на вторую строку и делал ряд выше соседней кнопки
+    // "Всё / Выкл". Что клик переключает — сказано в подсказке при наведении.
     bgSearchTitleEl.textContent = st.bgSearchOn === false
-      ? "🔍 Фон-поиск: ВЫКЛ — включить"
-      : (bgSearchActive() ? "🔍 Фон-поиск: ВКЛ — выключить" : "🔍 Фон-поиск: нет режимов");
+      ? "🔍 Фон-поиск: ВЫКЛ"
+      : (bgSearchActive() ? "🔍 Фон-поиск: ВКЛ" : "🔍 Фон-поиск: нет режимов");
+    bgSearchTitleEl.title = (st.bgSearchOn === false ? "Фон-поиск выключен. " : "Фон-поиск включён. ") +
+      "Клик — переключить";
   }
   // Выключен целиком — гасим подсветку выбранных режимов в серый (см. #bgSearchModeGrp.bg-off).
   const bgModeGrpEl = document.getElementById("bgSearchModeGrp");
@@ -2033,6 +2083,28 @@ function render(){
   const mirrorTo = (st.selectedRows && st.selectedRows.size) ? Math.max(...st.selectedRows) : -1;
   // Выделена ровно одна строка — зеркало только у неё (см. mirrorTopRow в ядре).
   const mirrorFrom = mirrorTopRow();
+  /* ПОДСВЕТКА ГРУПП МАСКИ. Два независимых источника, цвета общие (красится САМА ЦИФРА, не фон —
+     запрос пользователя "разными цифрами лучше чем фон, выбор цвета"):
+       mpShift  — маска "⇄ Сдвига по маске" (вкладка «Строки»): какие биты пойдут одним кольцом,
+                  какие другим. Диапазон — все строки, сдвиг применяется к выделенным.
+       mpBgMask — прореживающая маска фон-поиска (вкладка «Поиск»): какие биты она БЕРЁТ, а какие
+                  выбрасывает. Диапазон — colSelectRowRange (одна строка выделена → от верха до
+                  неё, несколько → только они) — запрос пользователя.
+     Режим "seq" — фаза маски идёт СКВОЗЬ строки (нужна нарастающая сумма длин, считаем раз на
+     кадр), "row" — маска начинается заново в каждой строке. */
+  const cumLenFrom = (from) => {
+    const a = []; let acc = 0;
+    for (let r = from; r < st.rows.length; r++) { a[r] = acc; acc += (st.rows[r] || "").length; }
+    return a;
+  };
+  const mpShift = (typeof maskShiftBits === "function" && st.maskPaintMode && st.maskPaintMode !== "off")
+    ? maskShiftBits() : "";
+  const mpShiftOff = (mpShift && st.maskPaintMode === "seq") ? cumLenFrom(0) : null;
+  const mpBgMask = (typeof maskBits === "function" && st.bgMaskPaintMode && st.bgMaskPaintMode !== "off")
+    ? maskBits() : "";
+  const mpBgRange = mpBgMask ? colSelectRowRange() : null;
+  const mpBgOff = (mpBgMask && st.bgMaskPaintMode === "seq") ? cumLenFrom(Math.max(0, mpBgRange.lo)) : null;
+  const mpColor = [st.maskPaintColor0 || "#22d3ee", st.maskPaintColor1 || "#b060ff"];
   for (let i = vr.lo; i <= vr.hi; i++){
     // "👁 XOR на строке" (st.horizShowLiveXor) теперь РЕАЛЬНО пишет промежуточный XOR в
     // st.rows[b] по ходу поиска (см. doStep()), поэтому тут достаточно простого чтения —
@@ -2047,7 +2119,14 @@ function render(){
     // сейчас в расчётах не участвуют.
     if (i < topActiveFrom) cls.push("top-inactive");
     if (st.used[i]) cls.push("used");
-    if (i === st.aIdx || i === st.bIdx) cls.push("cur");
+    /* СИНЯЯ ПАРА (.cur = st.aIdx/st.bIdx) — только когда шаги реально идут (запрос пользователя:
+       "выделение первых 2 строк синим — может их отключить? код похоже на них смотрит, а не на
+       то, что руками выделяю"). Это указатели пошагового движка, а НЕ выделение мышью, но
+       выглядят они похоже, и сразу после загрузки/Сброса resetAll() ставит их на первые две
+       строки с данными — из-за чего пустое выделение читалось как "строка выделена", а фон-поиск
+       при этом честно отвечал "нет цели". До первого шага пары на экране больше нет; сам
+       механизм не тронут — шаги, автопоиск и Гориз.XOR по-прежнему держатся на aIdx/bIdx. */
+    if ((st.step > 0 || st.running) && (i === st.aIdx || i === st.bIdx)) cls.push("cur");
     if (st.selectedRows && st.selectedRows.has(i)) cls.push("selected");
     // Гориз.XOR активен — сквозная цепочка теперь всегда = сама целевая строка (см.
     // horizSelfChain()), поэтому ВСЕ остальные строки (и выше, и ниже цели) сейчас никак не
@@ -2412,6 +2491,18 @@ function render(){
       // бита свой data-col.
       const mrg = !colAttr;
 
+      // К какой группе маски относится этот бит (см. mpShift/mpBgMask выше): 1 — под «1» маски,
+      // 0 — под «0», null — подсветка не про этот бит. Сдвиговая маска в приоритете: она про
+      // действие, которое вот-вот сделают, а прореживающая — справочная.
+      let mpGrp = null;
+      if (mpShift) {
+        const gi = (mpShiftOff ? mpShiftOff[i] : 0) + k;
+        mpGrp = mpShift[gi % mpShift.length] === "1" ? 1 : 0;
+      } else if (mpBgMask && i >= mpBgRange.lo && i <= mpBgRange.hi) {
+        const gi = (mpBgOff ? mpBgOff[i] : 0) + k;
+        mpGrp = mpBgMask[gi % mpBgMask.length] === "1" ? 1 : 0;
+      }
+
       if (isCellSel && (bit === '0' || bit === '1')) {
         // Выбранная курсором ячейка — поверх любых других подсветок: это то, с чем сейчас работают
         // кнопки «Инв. ячеек»/«90° ячеек»/«Сдвиг».
@@ -2461,6 +2552,14 @@ function render(){
         // адресная (находка цепочки, изменённые биты, выбранная ячейка) должна её перебивать.
         emit('<span class="b' + bit + ' allpat-bit" style="background:' + allPatColor(allPatBit) +
              '" title="Найденный паттерн №' + (allPatBit + 1) + '"' + colAttr + '>', bit, mrg);
+      } else if (mpGrp !== null && (bit === '0' || bit === '1')) {
+        // Подсветка групп маски — самая нижняя по приоритету: краска справочная, любая адресная
+        // подсветка (находка, изменённые биты, выбранная ячейка) должна её перебивать. Цвет —
+        // инлайном, чтобы перекрыть обычные .b0/.b1 (у тех !important нет).
+        emit('<span class="b' + bit + '" style="color:' + mpColor[mpGrp] + '" title="' +
+             (mpShift ? ('Кольцо «' + mpGrp + '» сдвига по маске')
+                      : (mpGrp ? 'Маска БЕРЁТ этот бит в поиск' : 'Маска выбрасывает этот бит')) +
+             '"' + colAttr + '>', bit, mrg);
       } else if (bit === '0' || bit === '1') {
         // Самая массовая ветка — обычный неподсвеченный бит. Именно её склейка и убирает
         // основную массу узлов: подряд идущие одинаковые биты уходят одним span'ом.
@@ -2859,6 +2958,11 @@ function render(){
         (cyc ? `. Полный круг — ${cyc} укладок (${cyc / 2} паттернов × 2 прохода): после него биты повторяются, дальше крутить бессмысленно. Отсчёт круга начинается заново после каждого переезда выделения на находку` : "");
     }
   }
+  // СЧЁТЧИК ШАГОВ — В ЗАГОЛОВКЕ ОКНА "Результат" (запрос пользователя: "это пиши в Результатах,
+  // заголовке окна"). В шапке приложения он тоже остаётся (#stepNo), но там его легко потерять
+  // среди кнопок, а тут он рядом с тем, на что и влияет. Дописываем ПОСЛЕ всех веток, каким бы
+  // ни оказался заголовок — обычным, сквозной строкой или с довеском Паттерн-цепочки.
+  if (chainResultLabelEl) chainResultLabelEl.textContent += " · Ш: " + st.step;
   lastChainResultText = fullChainText;
   renderFindLogPanel();
 
@@ -2902,6 +3006,10 @@ function render(){
   updateResultPopup(popupResultHtml, fullChainText);
 
   renderStepLogBox(bgInfo);
+  // Значки включённых режимов в углах поля цепочек (см. renderStateBadges в fold-4). Живут тем же
+  // кадром, что и всё остальное: любое переключение в панелях зовёт render(), значит полоска
+  // всегда отражает текущее состояние.
+  if (typeof renderStateBadges === "function") renderStateBadges();
   updateAxisSplitPosition(maxLen);
   updateUndoRedoBtns();
 }
@@ -3056,7 +3164,164 @@ function renderMaskFindingsHtml(bgInfo){
     '</div>';
 }
 
+/* "🔗 РАЗБОР КОЛЬЦА" — отдельный блок Черновика (запрос пользователя: "паттерн 1000 нашёлся в
+   11111 при проходе маской 2 круга?? или сколько — это бы разложить и показать наглядно").
+   По сухому "@5·4" в логе не видно ГЛАВНОГО: находка длиннее самой строки не потому, что маска
+   прокручена несколько раз, а потому что findPatternKinds ищет не в строке, а в КОЛЬЦЕ —
+   строка + ещё один виток без последнего символа (см. fold-1: cycle + cycle.slice(0, period-1)).
+   Тут это разложено буквально теми же символами, по которым реально шёл indexOf:
+     [виток 1] | [виток 2] ¦ [хвост-довесок]
+   Виток 2 существует отдельным куском только при 🔁 Инв.кольцо/реверс (там это ДРУГИЕ биты, и
+   период вдвое длиннее строки); без неё период равен строке, и сразу за ней идёт хвост.
+   Жёлтым — найденный кусок, ровно тот же, что подсвечен в "Результате": по границе витка и
+   видно, на сколько бит находка заехала за край. Предел заезда — period-1: паттерн длиннее
+   2·период−1 не найдётся никогда, сколько кругов ни рисуй.
+   Строку берём ТУ САМУЮ, по которой считалось совпадение: с маской — прорежённую
+   (r.maskInfo.picked), без маски — сам результат. Пересчитывать нечего, всё уже посчитано в
+   computeBgSearchTarget — здесь только раскладка. */
+const RING_BREAK_BITS_CAP = 400;  // сколько символов кольца показываем (длинные "Сквозные" рвут раскладку)
+const RING_BREAK_ROWS_CAP = 12;   // сколько строк-находок максимум — иначе блок на пол-экрана
+function renderRingBreakdownHtml(bgInfo){
+  /* Блок живёт на данных ФОН-ПОИСКА (bgInfo) — своего поиска не ведёт, но рисуется БЕЗУСЛОВНО:
+     ни одного немого return "" тут больше нет, при любом раскладе он показывает строку с
+     причиной. Так задумано после того, как блок "не появлялся" и разобрать, которое из условий
+     не сошлось, было нельзя (запрос пользователя: "включён, но не считает черновик всё равно").
+     Раз блок виден ВСЕГДА — его отсутствие на экране означает ровно одно: исполняется старый код
+     (браузер держит прежние fold-*.js в кеше либо открыт до-разрезной Zerkalius-fold.html).
+     Номер версии в заголовке блока для того и стоит — берётся из <title> прямо в момент
+     отрисовки, поэтому соврать не может и руками его поддерживать не нужно. */
+  const ver = (document.title.match(/v0\.\d+/) || [""])[0];
+  const wrap = inner =>
+    '<div class="step-log-row" style="display:block;border-top:1px dashed var(--line);margin-top:6px;padding-top:6px">' +
+      '<span class="step-log-label" style="display:block;margin-bottom:4px" title="Поиск идёт не по строке, а по кольцу: строка + ещё один виток без последнего символа. Поэтому паттерн бывает ДЛИННЕЕ строки — он заезжает за её край и продолжается с начала. Предел — 2·период−1 символов">' +
+        '🔗 Разбор кольца <span style="color:var(--dim);font-weight:normal;font-size:10px">' + esc(ver) + '</span></span>' + inner + '</div>';
+  if (typeof bgSearchActive === "function" && !bgSearchActive()) {
+    return wrap('<span class="empty">фон-поиск выключен — включите его во вкладке «Поиск» (заголовок 🔍 Фон-поиск) и выберите хотя бы один режим</span>');
+  }
+  if (!bgInfo || !bgInfo.results || !bgInfo.results.length) {
+    /* РАЗВОДИМ ПРИЧИНЫ. computeBgSearchTarget() отдаёт null в трёх разных случаях, и одно общее
+       сообщение на всех оставляло гадать, в каком именно (запрос пользователя: "включён, но не
+       считает всё равно — выделена строка, паттерн внизу"). Условия тут — те же самые, что в
+       начале computeBgSearchTarget, просто названные вслух. */
+    const selN = st.selectedRows ? st.selectedRows.size : 0;
+    const selMax = selN ? Math.max(...st.selectedRows) : -1;
+    let why;
+    if (!selN) {
+      why = 'не выделена НИ ОДНА строка (st.selectedRows пуст) — кликните по строке в полотне. ' +
+            'Предпросмотр «Скв×2» выше этим не мешает: он берёт запасной ориентир st.bIdx и рисуется даже без выделения';
+    } else if (selMax <= 0) {
+      why = 'выделена самая первая строка (№1) — над ней строк нет, а фон-поиску нужна пара «строка выше + выделенная». Выделите любую строку ниже';
+    } else if (!bgInfo) {
+      why = 'выделена строка ' + (selMax + 1) + ', но фон-поиск не отдал цель — режимы: ' +
+            ((st.bgSearchModes || []).join(", ") || "нет");
+    } else {
+      why = 'ни один включённый режим не дал результата (режимов в наборе: ' +
+            ((st.bgSearchModes || []).length) + ') — проверьте, что выбран хоть один режим, кроме «🧮 Суммы длин»';
+    }
+    return wrap('<span class="empty">' + esc(why) + '</span>');
+  }
+  const pat = bgInfo.targetIdx < st.pats.length ? st.pats[bgInfo.targetIdx] : null;
+  const patText = pat && pat.text ? pat.text : "";
+  if (!patText) {
+    return wrap('<span class="empty">у строки ' + (bgInfo.targetIdx + 1) + ' (под выделенной) нет паттерна — сверять не с чем</span>');
+  }
+  const base = patBase(patText);
+  const rows = [];
+  let anyInvRing = false;
+  for (const r of bgInfo.results) {
+    if (rows.length >= RING_BREAK_ROWS_CAP) break;
+    if (!r.matched || !r.kinds || !r.kinds.length) continue;
+    const searched = r.maskInfo ? r.maskInfo.picked : r.result;
+    if (!searched) continue;
+    // Один в один арифметика findPatternKinds — иначе картинка разъедется с тем, где реально нашлось.
+    const cycle = ringCycle(searched);
+    const period = cycle.length;
+    const ring = st.ringOff ? cycle : (period > 1 ? cycle + cycle.slice(0, period - 1) : cycle);
+    const len = searched.length;
+    if (period > len) anyInvRing = true;
+    for (const kd of r.kinds) {
+      if (rows.length >= RING_BREAK_ROWS_CAP) break;
+      const hitLo = kd.start, hitHi = kd.start + kd.len;
+      // Показываем не меньше, чем нужно, чтобы находка влезла целиком: обрезать ровно по ней —
+      // ради чего блок и затевался.
+      const cap = Math.min(ring.length, Math.max(RING_BREAK_BITS_CAP, hitHi));
+      let bits = "";
+      for (let i = 0; i < cap; i++) {
+        if (i === len && period > len) {
+          bits += '<span class="step-log-ring-sep" title="граница витка: дальше второй виток кольца — при 🔁 Инв./реверс это уже ДРУГИЕ биты">|</span>';
+        } else if (i === period && ring.length > period) {
+          bits += '<span class="step-log-ring-sep" title="дальше хвост-довесок: повтор начала кольца длиной period−1. Дальше него поиск не заходит — это и есть предел находки">¦</span>';
+        }
+        let cls = i >= period ? "step-log-ring-tail" : (i >= len ? "step-log-ring-lap2" : "");
+        if (i >= hitLo && i < hitHi) {
+          cls += " chain-hit-bits" + (KIND_CLS[kd.kind] ? " " + KIND_CLS[kd.kind] : "") + (kd.skip ? " skip1" : "");
+        }
+        const ch = esc(ring[i]);
+        bits += cls ? '<span class="' + cls.trim() + '">' + ch + '</span>' : ch;
+      }
+      if (cap < ring.length) bits += '<span class="chain-ring-ext">…</span>';
+      // Сколько находка забрала сверх самой строки — то самое "сколько кругов" из вопроса.
+      const over = hitHi - len;
+      const noteTxt = over > 0
+        ? "за край на " + over + " бит (из " + len + ")"
+        : "целиком внутри строки";
+      const tip = "Режим " + bgModeLabel(r.mode) + " · " + (KIND_LABELS_RU[kd.kind] || "прямая") +
+        (kd.skip ? " (⏭ без 1-го)" : "") + (kd.sub ? " · подпаттерн сдвига " + kd.sub : "") +
+        " · строка " + len + " бит" + (r.maskInfo ? " (прорежена маской, фаза " + (r.maskInfo.phase + 1) + ")" : "") +
+        " · период кольца " + period + " · всего в поиске " + ring.length + " символов (период + хвост " +
+        Math.max(0, ring.length - period) + ")" +
+        " · находка с позиции " + (hitLo + 1) + ", длина " + kd.len +
+        (over > 0 ? " → уходит за край строки на " + over + " бит и продолжается с её начала"
+                  : " → укладывается внутри строки, край не задет") +
+        ". Длиннее " + Math.max(0, 2 * period - 1) + " символов тут не найдётся ничего.";
+      rows.push(
+        '<div class="step-log-ring-row" title="' + esc(tip) + '">' +
+          '<span class="step-log-ring-name">' + esc(bgModeShortLabel(r.mode)) + '</span>' +
+          '<span class="step-log-ring-note">' + esc(KIND_LABELS_SHORT[kd.kind] + " " + len + "→" + period + " · " + noteTxt) + '</span>' +
+          '<span class="step-log-ring-bits">' + bits + '</span>' +
+        '</div>'
+      );
+    }
+  }
+  if (!rows.length) {
+    // Режимы посчитались, паттерн есть — просто ни один не совпал. Раскладывать нечего, но
+    // сказать об этом надо: иначе блок выглядит сломанным.
+    return wrap('<span class="empty">паттерн ' + esc(base) + ' (' + base.length + ' бит) не совпал ни в одном из ' +
+      bgInfo.results.length + ' режимов — раскладывать нечего</span>');
+  }
+  return '<div class="step-log-row" style="display:block;border-top:1px dashed var(--line);margin-top:6px;padding-top:6px">' +
+    '<span class="step-log-label" style="display:block;margin-bottom:4px" title="Поиск идёт не по строке, а по кольцу: строка + ещё один виток без последнего символа. Поэтому паттерн бывает ДЛИННЕЕ строки — он заезжает за её край и продолжается с начала. Предел — 2·период−1 символов">' +
+      '🔗 Разбор кольца <span style="color:var(--dim);font-weight:normal;font-size:10px">' + esc(ver) + '</span> · паттерн ' + esc(base) + ' (' + base.length + ' бит) · ' +
+      (st.ringOff ? '🚫 без кольца — ищем только внутри строки'
+                  : (anyInvRing ? '🔁 инв./реверс кольца: период вдвое длиннее строки'
+                                : 'период = длине строки, дальше хвост-довесок')) +
+    '</span>' +
+    '<div class="step-log-sub-container">' + rows.join("") + '</div>' +
+    '</div>';
+}
+
+/* ОБЁРТКА-СТРАХОВКА (v0.782). Всё тело Черновика собирается в renderStepLogBoxInner(), и любое
+   исключение по дороге раньше означало НЕВИДИМУЮ поломку: bodyEl.innerHTML просто не доходил до
+   присвоения, тело оставалось от прошлого рендера — на экране "шагов ещё не было" и никаких
+   блоков, будто их и не добавляли. Именно так это и выглядело у пользователя ("блок пропал
+   совсем"), и отличить зависший Черновик от "блок не отрисовался" было невозможно.
+   Теперь при падении в тело пишется сама ошибка: сообщение + первая строка стека (там видно
+   функцию и место). Остальной render() при этом не страдает — он и раньше шёл дальше. */
 function renderStepLogBox(bgInfo){
+  try {
+    renderStepLogBoxInner(bgInfo);
+  } catch (err) {
+    const bodyEl = document.getElementById("stepLogBody");
+    if (!bodyEl) return;
+    const stack = String((err && err.stack) || "").split("\n").slice(0, 2).join(" | ");
+    bodyEl.innerHTML = '<div class="step-log-row" style="display:block">' +
+      '<span class="step-log-label" style="color:var(--red)">⚠ Черновик: ошибка отрисовки</span>' +
+      '<div class="empty" style="white-space:pre-wrap">' + esc(String((err && err.message) || err)) + '</div>' +
+      '<div class="empty" style="white-space:pre-wrap;font-size:10px;opacity:.7">' + esc(stack) + '</div>' +
+      '</div>';
+  }
+}
+function renderStepLogBoxInner(bgInfo){
   const noEl = document.getElementById("stepLogNo");
   const bodyEl = document.getElementById("stepLogBody");
   if (!bodyEl) return;
@@ -3101,6 +3366,20 @@ function renderStepLogBox(bgInfo){
   // показывается и до первого реального шага.
   subHtml += renderMaskFindingsHtml(bgInfo);
 
+  // "🔗 Разбор кольца" — следом за находками по маскам, тем же приёмом. Тоже живой блок: это не
+  // история шага, а раскладка ТЕКУЩЕЙ находки по виткам кольца (см. renderRingBreakdownHtml).
+  // try/catch — не перестраховка: этот блок лезет в kinds/maskInfo/период кольца, и любая
+  // неожиданность там уронила бы ВЕСЬ renderStepLogBox, а значит bodyEl.innerHTML не обновился
+  // бы вовсе — Черновик замер бы на прошлом содержимом ("шагов ещё не было"), и выглядело бы
+  // это не как ошибка, а как "блок не появляется". Лучше показать строку с текстом ошибки.
+  try {
+    subHtml += renderRingBreakdownHtml(bgInfo);
+  } catch (err) {
+    subHtml += '<div class="step-log-row" style="display:block;border-top:1px dashed var(--line);margin-top:6px;padding-top:6px">' +
+      '<span class="step-log-label" style="display:block;margin-bottom:4px">🔗 Разбор кольца</span>' +
+      '<span class="empty">ошибка разбора: ' + esc(String(err && err.message || err)) + '</span></div>';
+  }
+
   const rowsHeadEl = document.getElementById("stepLogRowsHead");
 
   // Гориз.XOR: прогресс + Сквозная/Цель/Результат — раньше рисовалось поверх окна "Результат",
@@ -3138,7 +3417,11 @@ function renderStepLogBox(bgInfo){
     // "шагов ещё не было", а показывается ПЕРЕД ним, только если есть хоть одна строка выше
     // якорной (иначе сквозная пуста и показывать нечего).
     let previewHtml = "";
-    if (!horizInfo) {
+    // ТОЛЬКО ПРИ НЕПУСТОМ ВЫДЕЛЕНИИ (запрос пользователя, та же путаница, что и с синей парой):
+    // seqAnchorIdx() при пустом выделении падает на запасной st.bIdx, и предпросмотр рисовался
+    // даже тогда, когда выделять было нечего — выглядело это как "строка выделена, а поиск не
+    // работает". Нет выделения — нет и предпросмотра.
+    if (!horizInfo && st.selectedRows && st.selectedRows.size) {
       const anchorIdx = seqAnchorIdx();
       if (anchorIdx > 0) {
         const seq = horizChainText(anchorIdx);

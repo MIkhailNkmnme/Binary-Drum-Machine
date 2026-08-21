@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.773</title>
+<title>Zerkalius Fold — v0.819</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -384,7 +384,16 @@
      внутри, а не два отдельных бордюра рядом (тот же приём, что у .align-grp). */
   .hl-combo{display:inline-flex;align-items:stretch;border:1px solid var(--line);border-radius:3px;overflow:hidden}
   .hl-combo:hover{border-color:var(--acc)}
-  .hl-combo button{border:none;border-radius:0;border-right:1px solid var(--line)}
+  /* Пять пар "кнопка+цвет" должны влезать В ОДНУ СТРОКУ (запрос пользователя), поэтому у
+     кнопок подсветок свои узкие отступы и мелкий шрифт — общий min-height они сохраняют. */
+  .hl-combo button{border:none;border-radius:0;border-right:1px solid var(--line);
+    padding:2px 4px; font-size:11px; white-space:nowrap}
+  .hl-combo{flex:0 0 auto}
+  /* Ряд "Цвет 1 / Цвет 0 / Фон / Изм. биты" — В ОДНУ СТРОКУ (запрос пользователя): четыре пары
+     "подпись + квадратик" влезают только если у них узкие отступы и мелкий шрифт. */
+  .color-row label.chk{font-size:11px; gap:3px; flex:0 0 auto; min-width:0}
+  .color-row input[type="color"]{width:18px; padding:0}
+  .color-row button{padding:2px 5px; font-size:11px; white-space:nowrap}
   .hl-combo input[type="color"]{border:none;border-radius:0;width:18px}
   select{background:#232735;color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:1px;font-size:11px}
 
@@ -430,6 +439,18 @@
   /* Вкладка "Поиск" — галки в 2 колонки, той же стандартной высоты (34px), что и остальные
      группы кнопок в приложении (см. .ops-btn-grid/.control-group-player/.preset-grp) */
   .search-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+  /* ОДНА МИНИМАЛЬНАЯ ВЫСОТА у всех кнопок и галок в панелях (запрос пользователя: "кнопка —
+     высота одна у всех минимум"). Раньше min-height стояла точечно (ops-btn-grid, player, flow,
+     search-grid), поэтому однострочная галка была заметно ниже соседней кнопки, а двухстрочная
+     выбивалась вверх. Теперь низ у всех общий, а перерасти его может только реально длинная
+     подпись в две строки. */
+  .control-group button, .control-group label.chk{min-height:var(--std-btn-h); box-sizing:border-box}
+  /* И НЕ ВЫШЕ стандартной: подпись в две строки растягивала галку вдвое и ломала ряд
+     (запрос пользователя "минимальная высота — стандарт кнопок, сократи"). Не влезло —
+     обрезаем многоточием, полный текст и так в подсказке. Исключение — .search-match-box,
+     там подписи намеренно многострочные (см. ниже). */
+  .control-group label.chk:not(.search-match-box label.chk){white-space:nowrap; overflow:hidden;
+    text-overflow:ellipsis}
   .search-grid > label.chk{min-height:var(--std-btn-h);box-sizing:border-box}
 
   /* Рамка "как сверять паттерн": ⇌ Инв/Рев + ⏭ Без 1-го, под ними 🔁 Инв. кольцо (+ реверс).
@@ -936,7 +957,9 @@
   .env-diag { background: #00e676; color: #05130a !important; font-weight: 700; border-radius: 2px; }
   /* Биты, РЕАЛЬНО изменившиеся на текущем шаге (0→1 или 1→0) — красным. Совпавшие значения
      (1→1, 0→0) не красятся, даже если операция их "пересчитала" (запрос пользователя). */
-  .bit-chg { color: #ff3b3b !important; font-weight: 700; }
+  /* Цвет задаётся пикером #colChg (см. applyColors в fold-5) — прежний хардкод #ff3b3b
+     остался значением по умолчанию переменной. */
+  .bit-chg { color: var(--cchg, #ff3b3b) !important; font-weight: 700; }
   /* Строки НИЖЕ искомой строки Паттерн-цепочки (т.е. все, кроме первой под выделенной): паттерн ложится и
      в них тоже, но они приглушаются цветом, чтобы не спорить с рабочими строками (запрос
      пользователя: "не удаляет их из виду, а просто делает менее яркими"). Паттерны (.pat/.pat2)
@@ -1279,6 +1302,56 @@
 /* Биты, выброшенные "🎭 Маской" фон-поиска: не вырезаются, а гаснут — видно и саму строку
    результата целиком, и то, какие её биты пошли в поиск этой фазы (см. dimMaskedBits в JS). */
 .mask-off{opacity:.25}
+/* ЗНАЧКИ-КОПИИ КОНТРОЛОВ (см. renderStateBadges в fold-4) — полоска в верхних углах поля
+   цепочек. Пустая, пока пользователь сам не перетащит туда контрол из панели: перетаскивание =
+   КОПИРОВАНИЕ, оригинал остаётся на месте. Клик по значку жмёт сам контрол, двойной — убирает
+   значок. pointer-events:none у контейнера и auto у значков: пустая полоса не должна
+   перехватывать клики и протяжку по полотну под ней. */
+/* z-index ВЫШЕ оверлей-баров «Черновик»/«Результат» (те до 300): они лежат поверх верха полотна,
+   и полоса на низком слое оказывалась под ними — значки не видно и мышью в них не попасть. */
+.state-badges{position:absolute; top:2px; left:0; right:0; height:36px; z-index:350;
+  pointer-events:none}
+/* Группы режимов фон-поиска (см. #bgSearchModeGrp) — каждая в своей тонкой рамке. Рамка нарочно
+   неприметная (тот же --line, что у разделителей, плюс еле заметная подложка): её дело —
+   показать границу семейства режимов, а не спорить за внимание с самими кнопками.
+   Вложенность на JS не влияет: там везде селектор "#bgSearchModeGrp button" — по потомкам. */
+.bg-modes{display:flex; flex-direction:column; gap:4px}
+.bg-modes-grp{display:flex; flex-wrap:wrap; gap:3px; align-items:center;
+  border:1px solid var(--line); border-radius:3px; padding:3px 4px 4px;
+  background:rgba(255,255,255,.02)}
+/* Подпись группы — своей строкой: flex-basis 100% рвёт ряд, вложенных контейнеров не нужно. */
+.bg-modes-cap{flex:1 1 100%; font-size:10px; color:var(--dim); margin:0 0 1px; line-height:1}
+/* Кнопки режимов с короткими подписями ("Прав РевИнв") — им нужна не ширина, а воздух. */
+.bg-modes button{padding:2px 6px; font-size:11px; white-space:nowrap}
+/* Значок стоит там, где его отпустили: left задаётся инлайном долей ширины, translateX(-50%)
+   центрирует его по этой точке (иначе у правого края он вылезал бы за полосу). */
+/* Размер значков — вдвое против первой версии (запрос пользователя: "значки квадратики —
+   увеличь в 2 раза"): 20px вместо 10px и вдвое больше отступы. */
+.state-badge{position:absolute; transform:translateX(-50%); white-space:nowrap;
+  pointer-events:auto; cursor:pointer; user-select:none; font-size:20px; line-height:1;
+  padding:4px 8px; border-radius:4px; border:1px solid var(--line); background:rgba(26,29,38,.55);
+  color:var(--fg); opacity:.85; font-family:"Roboto Mono",Consolas,monospace}
+.state-badge:hover{border-color:var(--acc)}
+/* Контрол сейчас выключен — значок приглушён (сам значок остаётся, он ярлык, а не индикатор). */
+.state-badge.off{opacity:.28; color:var(--dim)}
+/* Пока тащат контрол — полоски становятся видимыми мишенями: в пустую полосу нулевой ширины
+   попасть нечем (тот же приём, что подсветка доков при перетаскивании вкладок). */
+/* Пока тащат — показываем ВСЮ зону приёма, а она шире самой полосы (см. inBand в fold-4:
+   от верха окна и на 60px ниже полосы), иначе целиться было бы не во что. */
+body.badge-dragging .state-badges{border:1px dashed var(--acc); border-radius:3px;
+  background:rgba(77,163,255,.10); height:70px}
+/* Призрак под курсором — показывает, что именно тащим. */
+/* translate(-50%,-115%) — призрак стоит НАД остриём курсора и по центру: так он не оказывается
+   под самой рукой-курсором и не закрывает точку, куда целишься. */
+.badge-ghost{position:fixed; z-index:9999; pointer-events:none; transform:translate(-50%,-115%);
+  font-size:20px; line-height:1;
+  padding:4px 8px; border-radius:3px; border:1px solid var(--acc); background:var(--panel);
+  color:var(--fg); font-family:"Roboto Mono",Consolas,monospace; opacity:.9}
+
+/* Подсветка групп маски (см. mpColor в render): цвет задаётся ИНЛАЙНОМ из настроек
+   (#maskPaintColor1/#maskPaintColor0), поэтому своих правил тут нет — красится сама цифра, а не
+   фон (запрос пользователя: "разными цифрами лучше чем фон, выбор цвета"). Инлайн перекрывает
+   обычные .b0/.b1 — у тех !important нет. */
 /* "3+4) 111+10000" — из каких строк (номер+содержимое) считаются режимы фон-поиска ниже, см. render() */
 .chain-result-src-row{padding:1px 3px 3px;color:var(--dim);font-size:11px;opacity:.8;cursor:default}
 /* Лог находок фон-поиска — своя вкладка "Лог находок" (#findLogList, см. bgFindLog/
@@ -1516,6 +1589,22 @@
    раскладку блока по ширине (тот же приём, что у .chain-result-line-bits). */
 .step-log-mask-bits { flex: 1 1 auto; min-width: 0; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
 .step-log-mask-bits::-webkit-scrollbar { height: 0; }
+/* "🔗 Разбор кольца" (см. renderRingBreakdownHtml в fold-2) — развёртка ТОЙ САМОЙ строки, по
+   которой findPatternKinds реально искал: виток 1, виток 2 (при 🔁 Инв.кольцо — другие биты) и
+   хвост-довесок в period-1 символов. Живёт в том же .step-log-sub-container, что маски и
+   подпаттерны, поэтому своей прокрутки не заводит — только горизонтальную у самих бит. */
+.step-log-ring-row { display: flex; align-items: baseline; gap: 6px; font-family: "Roboto Mono", Consolas, monospace;
+  font-size: 11px; line-height: 1.5; padding-left: 10px; margin-bottom: 1px; color: #cbd3e1; min-width: 0; }
+.step-log-ring-name { flex: 0 0 auto; min-width: 72px; color: #ffcf6b; font-weight: 700; }
+.step-log-ring-note { flex: 0 0 auto; min-width: 150px; font-size: 10px; color: var(--dim); }
+.step-log-ring-bits { flex: 1 1 auto; min-width: 0; overflow-x: auto; white-space: nowrap; scrollbar-width: none; letter-spacing: 1px; }
+.step-log-ring-bits::-webkit-scrollbar { height: 0; }
+/* Граница витка — вертикальная черта: по ней и видно, на сколько бит находка заехала за край. */
+.step-log-ring-sep { color: var(--acc); font-weight: 700; padding: 0 2px; }
+/* Второй виток кольца и хвост-довесок — приглушены: это не новые данные, а продолжение той же
+   строки (при 🔁 Инв.кольцо второй виток — реально другие биты, но структурно всё равно повтор). */
+.step-log-ring-lap2 { opacity: .62; }
+.step-log-ring-tail { opacity: .32; }
 .step-log-changes { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 2px; }
 .step-log-change-item { display: flex; flex-direction: column; gap: 4px; }
 .step-log-diff { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px 10px; }
@@ -1691,7 +1780,7 @@ body.vcur-on #vcurBar{display:flex}
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <a href="../index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (../index.html — на уровень выше, файл лежит в подпапке fold/)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.773</span></h3>
+    <a href="../index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (../index.html — на уровень выше, файл лежит в подпапке fold/)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.819</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -1703,6 +1792,7 @@ body.vcur-on #vcurBar{display:flex}
       <div class="menu-btn" data-menu="menuTopBuild"><span>Зеркала</span><input type="checkbox" class="menu-pin-inline" id="menuTopBuildPin" title="Показывать в панели"></div>
       <div class="menu-btn" data-menu="menuSearch"><span>Поиск</span><input type="checkbox" class="menu-pin-inline" id="menuSearchPin" title="Показывать в панели"></div>
       <div class="menu-btn" data-menu="menuFindLog"><span>Лог</span><input type="checkbox" class="menu-pin-inline" id="menuFindLogPin" title="Показывать в панели"></div>
+      <div class="menu-btn" data-menu="menuMask"><span>Маски</span><input type="checkbox" class="menu-pin-inline" id="menuMaskPin" title="Показывать в панели"></div>
       <div class="menu-btn" data-menu="menuSeq"><span>Сквозная</span><input type="checkbox" class="menu-pin-inline" id="menuSeqPin" title="Показывать в панели"></div>
     </div>
     <!-- Перенесена ПОСЛЕ меню вкладок и переименована — запрос пользователя. -->
@@ -1716,7 +1806,6 @@ body.vcur-on #vcurBar{display:flex}
     <!-- Все вкладки-панели разом — в отдельное окно (см. openPanelsPopup в JS). Сами панели
          ПЕРЕЕЗЖАЮТ туда живыми (не копии), поэтому продолжают работать; в окне их можно
          свободно таскать за ⋮⋮. Закрыл окно — панели возвращаются на свои места. -->
-    <button id="bPanelsPopout" style="font-size:12px;padding:3px 8px;margin-left:6px;border-color:#22d3ee;color:#22d3ee;" data-tip="t2">🗗 Панели в окно</button>
     <div id="menuOps" class="menu-drop"></div>
     <div id="menuEdit" class="menu-drop"></div>
     <div id="menuColEdit" class="menu-drop"></div>
@@ -1724,6 +1813,7 @@ body.vcur-on #vcurBar{display:flex}
     <div id="menuSearch" class="menu-drop"></div>
     <div id="menuFindLog" class="menu-drop"></div>
     <div id="menuView" class="menu-drop"></div>
+    <div id="menuMask" class="menu-drop"></div>
     <div id="menuSeq" class="menu-drop"></div>
 
     <!-- Скрыть/показать колонки паттернов по отдельности (левую/правую) -->
@@ -1773,9 +1863,20 @@ body.vcur-on #vcurBar{display:flex}
       </span>
       <button id="bToggleResultBox" class="overlay-toggle-btn" title="Показать/скрыть окно «Результат»">🔗 Р/</button>
       <button id="bToggleStepLog" class="overlay-toggle-btn" title="Показать/скрыть окно «Черновик последнего шага»">🧾 Ч/</button>
+      <button id="bPanelsPopout" style="font-size:12px;padding:3px 8px;margin-left:4px;border-color:#2b6b74;color:#5d8f96;" data-tip="t2">🗗 Панели в окно</button>
     </div>
   </div>
   <span class="counter" style="justify-self:end;">Ш: <b id="stepNo">0</b></span>
+</div>
+
+<!-- ДВЕ ГЛАВНЫЕ КНОПКИ — В САМЫЙ ВЕРХ, НАД "Авто" (запрос пользователя): своя группа,
+     идущая в MENUS первой в списке ids вкладки "Шаги", поэтому она рисуется выше flowGroup.
+     Сами кнопки и их обработчики не тронуты — переехала только разметка. -->
+<div id="topActionsGroup" class="control-group control-group-player" style="display:flex; flex-wrap:wrap; gap:4px;">
+  <button id="bInterleaveSearch" title="Переплетает строку НАД выделенной с выделенной, результатом ПЕРЕЗАПИСЫВАЕТ строку ПОД выделенной; если в ней нашёлся её же паттерн — выделение перепрыгивает на неё, не нашёлся — остаётся на месте">⧬ Интерлив</button>
+  <button id="bXorSelected" style="color:#ff66cc;" title="XOR прямо в выделенную строку: выделено несколько строк — складываются ровно они, выделена одна — все строки от самого верха до неё включительно. Результат записывается в выделенную (при нескольких — в самую нижнюю из них). Если фон-поиск нашёл паттерн строки ниже — выделение съезжает на строку вниз, как обычно">⨁ XOR выдел</button>
+  <label class="chk" style="flex:1 1 100%;" data-tip="t3"><input type="checkbox" id="cInterleavePadEven">⧬+1 Бит слева при чётной разности</label>
+    <button id="bPlainCheck" style="flex:1 1 100%; color:#7fd1ff;" data-tip="t142">🔎 Проверка (без сдвигов)</button>
 </div>
 
 <div id="opsGroup" class="control-group ops-btn-grid">
@@ -1785,11 +1886,8 @@ body.vcur-on #vcurBar{display:flex}
        (взаимоисключающая .mode-act подсветка с Шаг/XOR/.../Круг/Спираль), но живут во вкладке
        "Сквозная" (seqGroup), а не тут и не в flowGroup — см. запрос пользователя, все
        сквозная-режимы теперь в одном месте. -->
-  <button id="bInterleaveSearch" title="Интерливинг пары + поиск совпадения в паттерне 3-й строки">⧬ Интерлив</button>
   <!-- Настройка к кнопке выше: при ЧЁТНОЙ разности длин двух строк верхняя получает лишний бит
        слева, чтобы биты пары не вставали столбец в столбец, а честно переплетались. -->
-  <label class="chk" style="grid-column:1 / -1;" data-tip="t3"><input type="checkbox" id="cInterleavePadEven">⧬+1 Бит слева при чётной разности</label>
-  <button id="bXorSelected" style="color:#ff66cc;" title="XOR прямо в выделенную строку: выделено несколько строк — складываются ровно они, выделена одна — все строки от самого верха до неё включительно. Результат записывается в выделенную (при нескольких — в самую нижнюю из них). Если фон-поиск нашёл паттерн строки ниже — выделение съезжает на строку вниз, как обычно">⨁ XOR выдел</button>
   <!-- Тетрис/Тетрис 2 — общая рамка, один уровень в сетке (grid-column:1/-1) — тот же приём,
        что и у блока Гориз.XOR/Спирали, запрос пользователя "тоже рамкой объедини". -->
   <div style="grid-column:1 / -1; display:flex; gap:6px; border:1px solid var(--m-orange); background:rgba(163,112,61,0.12); border-radius:3px; padding:4px;">
@@ -1840,6 +1938,39 @@ body.vcur-on #vcurBar{display:flex}
       <span id="slowFramesVal" style="flex:0 0 auto;min-width:2.2em;text-align:right">10</span>
     </label>
   </div>
+    <!-- Круг / Круг Инв / галка "снап" оси — ВСЕ в ОДНОЙ рамке (запрос пользователя, было 3
+         отдельные). Галка — ОБЩАЯ ВКЛ/ВЫКЛ для ВСЕХ выравниваний (не только "⊙ Ось"/"Ось 1.2" —
+         запрос пользователя "эта кнопка должна влиять на все режимы выравнивания"): включена —
+         "⊙ Ось" останавливается только на «1», "Ось 1.2" — только в зазоре между «1» и «0»
+         (именно в этом порядке, не «0» и «1»), любое ДРУГОЕ выравнивание крутит саму строку по
+         кругу, пока на её "оси" не окажется «1» (ось — первый бит строки, кроме "По правому
+         краю"/"Лесенки правой", там последний, см. nonAxisSnapCharIdx в JS); выключена — "⊙ Ось"
+         сдвигается на любой символ (в т.ч. «0»), "Ось 1.2" — в зазор между ЛЮБЫМИ соседними
+         символами (полсимвол всё равно остаётся, просто без требования «1»→«0»), строки без
+         «1»→«0» тоже не заморожены, остальные выравнивания — обычный одиночный поворот. См.
+         st.axisSnap/shiftOneRowAxisAware в JS. -->
+    <div style="grid-column:1 / -1; display:flex; flex-direction:column; gap:6px; border:1px solid var(--m-blue); background:rgba(61,90,120,0.12); border-radius:3px; padding:4px;">
+      <!-- Каждая пара — своя строка (display:flex БЕЗ wrap), а не общий flex-wrap на все 4 —
+           запрос пользователя: flex-wrap мог разбить пары по разным строкам вперемешку
+           (напр. Круг/Круг/Круг Инв на одной, Круг Инв одна на другой) в зависимости от ширины. -->
+      <div style="display:flex; gap:6px;">
+        <button id="bShiftL" style="flex:1;" title="Круговой сдвиг влево выбранных строк (◄ или Ctrl+Клик)">◄ Круг</button>
+        <button id="bShiftR" style="flex:1;" title="Круговой сдвиг вправо выбранных строк (► или Ctrl+Клик)">► Круг</button>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button id="bShiftLInv" style="flex:1;" title="Круговой сдвиг влево с инверсией бита при переходе границы строки">◄ Круг Инв</button>
+        <button id="bShiftRInv" style="flex:1;" title="Круговой сдвиг вправо с инверсией бита при переходе границы строки">► Круг Инв</button>
+      </div>
+      <label class="chk" data-tip="t14"><input type="checkbox" id="cAxisSnap" checked> ⊙ Сдвиг только на «1» / «1-0»</label>
+      <!-- Что делать, когда Круг довёл строку до края: по умолчанию перескок на противоположный
+           край (кольцо), с галкой — разворот и ход обратно до упора, потом снова вперёд.
+           Работает и в "ОсьБит"/"ОсьБит ½" (край допустимого диапазона положений), и в остальных
+           выравниваниях (край собственного кольца поворотов строки). См. axisBitNextSh()/
+           rowRotOffMap в JS. -->
+      <label class="chk" data-tip="t15"><input type="checkbox" id="cAxisBitBounce"> ↩ От края назад, не по кольцу</label>
+      <label class="chk" data-tip="t15b"><input type="checkbox" id="cEdgeOnes"> ⇔ Крайние «1»</label>
+      <label class="chk" data-tip="t15c"><input type="checkbox" id="cNoSplitOnes"> 🔗 Не рвать «1»-группы по краю</label>
+    </div>
   <div class="flow-modes-grid">
     <!-- Шаг/Шаг 2 и XOR/XOR 2 — каждая пара в своей рамке, тот же приём, что и у Круг/Круг Инв
          ниже — запрос пользователя "также для... Шаг и XOR XOR2". -->
@@ -1877,39 +2008,6 @@ body.vcur-on #vcurBar{display:flex}
          Каждая пара (◄/►Круг, ◄/►Круг Инв) — в СВОЕЙ рамке (запрос пользователя "Круг и Круг Инв
          расположи по парно в строках и объедини каждую пару рамкой"), grid-column:1/-1 — та же
          двухколоночная сетка flow-modes-grid, растягиваем рамку на всю ширину. -->
-    <!-- Круг / Круг Инв / галка "снап" оси — ВСЕ в ОДНОЙ рамке (запрос пользователя, было 3
-         отдельные). Галка — ОБЩАЯ ВКЛ/ВЫКЛ для ВСЕХ выравниваний (не только "⊙ Ось"/"Ось 1.2" —
-         запрос пользователя "эта кнопка должна влиять на все режимы выравнивания"): включена —
-         "⊙ Ось" останавливается только на «1», "Ось 1.2" — только в зазоре между «1» и «0»
-         (именно в этом порядке, не «0» и «1»), любое ДРУГОЕ выравнивание крутит саму строку по
-         кругу, пока на её "оси" не окажется «1» (ось — первый бит строки, кроме "По правому
-         краю"/"Лесенки правой", там последний, см. nonAxisSnapCharIdx в JS); выключена — "⊙ Ось"
-         сдвигается на любой символ (в т.ч. «0»), "Ось 1.2" — в зазор между ЛЮБЫМИ соседними
-         символами (полсимвол всё равно остаётся, просто без требования «1»→«0»), строки без
-         «1»→«0» тоже не заморожены, остальные выравнивания — обычный одиночный поворот. См.
-         st.axisSnap/shiftOneRowAxisAware в JS. -->
-    <div style="grid-column:1 / -1; display:flex; flex-direction:column; gap:6px; border:1px solid var(--m-blue); background:rgba(61,90,120,0.12); border-radius:3px; padding:4px;">
-      <!-- Каждая пара — своя строка (display:flex БЕЗ wrap), а не общий flex-wrap на все 4 —
-           запрос пользователя: flex-wrap мог разбить пары по разным строкам вперемешку
-           (напр. Круг/Круг/Круг Инв на одной, Круг Инв одна на другой) в зависимости от ширины. -->
-      <div style="display:flex; gap:6px;">
-        <button id="bShiftL" style="flex:1;" title="Круговой сдвиг влево выбранных строк (◄ или Ctrl+Клик)">◄ Круг</button>
-        <button id="bShiftR" style="flex:1;" title="Круговой сдвиг вправо выбранных строк (► или Ctrl+Клик)">► Круг</button>
-      </div>
-      <div style="display:flex; gap:6px;">
-        <button id="bShiftLInv" style="flex:1;" title="Круговой сдвиг влево с инверсией бита при переходе границы строки">◄ Круг Инв</button>
-        <button id="bShiftRInv" style="flex:1;" title="Круговой сдвиг вправо с инверсией бита при переходе границы строки">► Круг Инв</button>
-      </div>
-      <label class="chk" data-tip="t14"><input type="checkbox" id="cAxisSnap" checked> ⊙ Сдвиг только на «1» / «1-0»</label>
-      <!-- Что делать, когда Круг довёл строку до края: по умолчанию перескок на противоположный
-           край (кольцо), с галкой — разворот и ход обратно до упора, потом снова вперёд.
-           Работает и в "ОсьБит"/"ОсьБит ½" (край допустимого диапазона положений), и в остальных
-           выравниваниях (край собственного кольца поворотов строки). См. axisBitNextSh()/
-           rowRotOffMap в JS. -->
-      <label class="chk" data-tip="t15"><input type="checkbox" id="cAxisBitBounce"> ↩ От края назад, не по кольцу</label>
-      <label class="chk" data-tip="t15b"><input type="checkbox" id="cEdgeOnes"> ⇔ Крайние «1»</label>
-      <label class="chk" data-tip="t15c"><input type="checkbox" id="cNoSplitOnes"> 🔗 Не рвать «1»-группы по краю</label>
-    </div>
     <!-- ▲/▼ Спираль + переключатель "какая сторона ленты — вверх" (st.spiralUpDir) — в ОДНОЙ
          рамке (см. запрос пользователя — переключатель влияет только на Спираль, значит и жить
          должен рядом с ней, а не во вкладке "Сквозная", куда его раньше унесли заодно со всем
@@ -1931,7 +2029,6 @@ body.vcur-on #vcurBar{display:flex}
          переписывает, только считает все включённые режимы фон-поиска (со всеми фазами "🎭 Маски")
          на ТЕКУЩЕМ положении строк и раскладывает находки в Черновик + Лог находок. Своя строка
          (grid-column:1/-1) — подпись длиннее, чем помещается в половину сетки. -->
-    <button id="bPlainCheck" style="grid-column:1 / -1; color:#7fd1ff;" data-tip="t142">🔎 Проверка (без сдвигов)</button>
   </div>
 </div>
 
@@ -2001,17 +2098,6 @@ body.vcur-on #vcurBar{display:flex}
     <button id="bTopBuild" style="flex:1 1 100%; border-color:#8ab4ff; color:#8ab4ff;" data-tip="t27">⬆ Достроить вверх</button>
     <button id="bTopBuildMode" style="flex:1;" data-tip="t28">↕ Верх: переписывать</button>
     <button id="bTopBuildKind" style="flex:1 1 100%;" data-tip="t29">⇅ Вид: инверсия</button>
-    <button id="bLeftMirror" style="flex:1 1 100%; border-color:#9aa4b2; color:#9aa4b2;" data-tip="t30">◀ Зеркало влево</button>
-    <button id="bMirrorKindL" style="flex:1 1 100%;" data-tip="t135">⇔ Вид ◀: реверс+инв</button>
-    <button id="bMirrorCutL" style="flex:1 1 100%;" data-tip="t137">⊘ Ось ◀: оставить</button>
-    <button id="bRightMirror" style="flex:1 1 100%; border-color:#9aa4b2; color:#9aa4b2;" data-tip="t31">▶ Зеркало вправо</button>
-    <button id="bMirrorKindR" style="flex:1 1 100%;" data-tip="t136">⇔ Вид ▶: реверс+инв</button>
-    <button id="bMirrorCutR" style="flex:1 1 100%;" data-tip="t138">⊘ Ось ▶: оставить</button>
-    <button id="bMirrorsApply" style="flex:1 1 100%; border-color:#38c172; color:#38c172;" data-tip="t32">⇔ Вписать зеркала в строки</button>
-    <button id="bMirrorStep" style="flex:1 1 100%; border-color:#38c172; color:#38c172;" data-tip="t139">⇔ Зеркало шагами: бит наверх</button>
-    <button id="bMirrorShiftAsIf" style="flex:1 1 100%; border-color:#9aa4b2; color:#9aa4b2;" data-tip="t33">⇔ Место под зеркала: выкл</button>
-    <button id="bMirrorsAuto" style="flex:1 1 100%; border-color:#38c172; color:#38c172;" data-tip="t34">⇔ Авто-зеркала: выкл</button>
-    <label class="chk" style="flex:1 1 100%;" data-tip="t35">⇔ Зеркал не больше: <input type="number" id="mirrorsAutoMax" min="1" max="99" step="1" value="1" style="width:52px;margin-left:4px;"></label>
     <button id="bTopBuildOnSelect" style="flex:1 1 100%;" data-tip="t36">🖱 По выделению: не трогать</button>
     <button id="bTopBuildNeedHit" style="flex:1 1 100%;" data-tip="t37">✋ Вручную: всегда</button>
     <button id="bTopBuildOnHit" style="flex:1 1 100%;" data-tip="t38">🎯 При находке: не трогать</button>
@@ -2020,6 +2106,24 @@ body.vcur-on #vcurBar{display:flex}
          (по выделению, только при находке, при находке, зеркало влево) и снимает построения сверху
          (запрос пользователя). -->
     <button id="bTopBuildOffAll" style="flex:1 1 100%; border-color:#ff9900; color:#ff9900;" data-tip="t40">⛔ Выключить всё</button>
+      <!-- ГОРИЗОНТАЛЬНЫЕ ЗЕРКАЛА — своя рамка (запрос пользователя: "это горизонтальные
+           зеркала, отдели в рамку и выше поставь верт. зеркала"). Выше идёт всё про
+           ДОСТРОЙКУ ВВЕРХ (вертикальную), включая её условия включения — раньше
+           горизонтальные кнопки вклинивались в середину этого семейства. -->
+      <div style="flex:1 1 100%; display:flex; flex-wrap:wrap; gap:4px; border:1px solid var(--m-slate); background:rgba(74,85,104,0.12); border-radius:3px; padding:4px; margin-top:4px;">
+        <span style="flex:1 1 100%; font-size:10px; color:var(--dim); line-height:1;">Горизонтальные зеркала</span>
+      <button id="bLeftMirror" style="flex:1 1 100%; border-color:#9aa4b2; color:#9aa4b2;" data-tip="t30">◀ Зеркало влево</button>
+      <button id="bMirrorKindL" style="flex:1 1 100%;" data-tip="t135">⇔ Вид ◀: реверс+инв</button>
+      <button id="bMirrorCutL" style="flex:1 1 100%;" data-tip="t137">⊘ Ось ◀: оставить</button>
+      <button id="bRightMirror" style="flex:1 1 100%; border-color:#9aa4b2; color:#9aa4b2;" data-tip="t31">▶ Зеркало вправо</button>
+      <button id="bMirrorKindR" style="flex:1 1 100%;" data-tip="t136">⇔ Вид ▶: реверс+инв</button>
+      <button id="bMirrorCutR" style="flex:1 1 100%;" data-tip="t138">⊘ Ось ▶: оставить</button>
+      <button id="bMirrorsApply" style="flex:1 1 100%; border-color:#38c172; color:#38c172;" data-tip="t32">⇔ Вписать зеркала в строки</button>
+      <button id="bMirrorStep" style="flex:1 1 100%; border-color:#38c172; color:#38c172;" data-tip="t139">⇔ Зеркало шагами: бит наверх</button>
+      <button id="bMirrorShiftAsIf" style="flex:1 1 100%; border-color:#9aa4b2; color:#9aa4b2;" data-tip="t33">⇔ Место под зеркала: выкл</button>
+      <button id="bMirrorsAuto" style="flex:1 1 100%; border-color:#38c172; color:#38c172;" data-tip="t34">⇔ Авто-зеркала: выкл</button>
+      <label class="chk" style="flex:1 1 100%;" data-tip="t35">⇔ Зеркал не больше: <input type="number" id="mirrorsAutoMax" min="1" max="99" step="1" value="1" style="width:52px;margin-left:4px;"></label>
+      </div>
   </div>
 </div>
 
@@ -2040,6 +2144,56 @@ body.vcur-on #vcurBar{display:flex}
     <button id="bSquareFill" style="flex:1; border-color:#22d3ee; color:#22d3ee;" data-tip="t49">⬔ До квадрата</button>
     <button id="bGrowDownOnFind" style="flex:1 1 100%; border-color:#22d3ee; color:#22d3ee;" data-tip="t50">⬇ Расширять вниз: выкл</button>
   </div>
+  <!-- ⇄ СДВИГ ПО МАСКЕ (v0.785). Круговой сдвиг НЕ всей строкой, а двумя независимыми кольцами:
+       биты под «1» маски крутятся по своим позициям, биты под «0» — по своим, между группами
+       ничего не перемешивается (см. maskShiftRow в JS). Маска СВОЯ, не та, что у фон-поиска.
+       Направления: «к центру/от центра» (сделано первым), ◄/► (тот же механизм), ▲/▼ — кнопки
+       есть, вертикаль пока не реализована. -->
+  <div style="grid-column:1 / -1; display:flex; flex-direction:column; gap:4px; border:1px solid var(--m-purple); background:rgba(107,77,138,0.12); border-radius:3px; padding:4px;">
+    <span style="font-size:11px;color:var(--dim);" title="Сдвиг битов по маске: строка делится на две группы (под «1» и под «0» маски), каждая крутится СВОИМ кольцом по своим позициям">⇄ Сдвиг по маске</span>
+    <input type="text" id="maskShiftText" placeholder="маска, напр. 110" spellcheck="false"
+           style="width:100%; box-sizing:border-box; font-family:'Roboto Mono',Consolas,monospace; font-size:12px; background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:3px; padding:2px 4px;"
+           title="Своя маска сдвига, отдельная от поисковой. Нужны И «1», И «0»: иначе группа одна и это обычный Круг. Всё, кроме 0/1, выбрасывается">
+    <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:4px;">
+      <button id="bMaskShiftCenter" style="border-color:#b060ff; color:#b060ff;" title="Обе половины каждой группы едут К СЕРЕДИНЕ (левая вправо, правая влево). Обратна кнопке «От центра»">⇥⇤ К центру</button>
+      <button id="bMaskShiftUncenter" style="border-color:#b060ff; color:#b060ff;" title="Обе половины каждой группы едут ОТ СЕРЕДИНЫ к краям — отменяет «К центру»">⇤⇥ От центра</button>
+      <button id="bMaskShiftLeft" style="border-color:#b060ff; color:#b060ff;" title="Каждая группа крутится ВЛЕВО по своим позициям">◄ Влево</button>
+      <button id="bMaskShiftRight" style="border-color:#b060ff; color:#b060ff;" title="Каждая группа крутится ВПРАВО по своим позициям">► Вправо</button>
+      <button id="bMaskShiftUp" style="border-color:var(--dim); color:var(--dim);" title="К нам: бит уходит в строку выше по тому же столбцу — пока не реализовано">▲ К нам</button>
+      <button id="bMaskShiftDown" style="border-color:var(--dim); color:var(--dim);" title="От нас: бит уходит в строку ниже по тому же столбцу — пока не реализовано">▼ От нас</button>
+    </div>
+    <button id="bMaskPaint" style="border-color:#b060ff; color:#b060ff;" title="Красит обе группы разными цветами прямо в строках. Три состояния: выкл → от строки (маска начинается заново в каждой строке) → сквозно (счёт идёт через все строки сверху)">🎨 Подсветка по маске: выкл</button>
+    <!-- ЦВЕТА ГРУПП — общие для обеих подсветок: и для "⇄ Сдвига по маске" тут, и для подсветки
+         прореживающей маски фон-поиска (кнопка «🎨 Подсветка маски» во вкладке «Поиск»). Красится
+         САМА ЦИФРА, а не фон (запрос пользователя: "разными цифрами лучше чем фон"). -->
+    <div style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--dim);">
+      <label class="chk" style="gap:3px;" title="Цвет битов, стоящих под «1» маски">под 1
+        <input type="color" id="maskPaintColor1" value="#b060ff"></label>
+      <label class="chk" style="gap:3px;" title="Цвет битов, стоящих под «0» маски">под 0
+        <input type="color" id="maskPaintColor0" value="#22d3ee"></label>
+    </div>
+  </div>
+  <!-- ✂ ПЕРЕНОС СТРОК (v0.798, см. wrapRebuild в JS). Две линии режут у строк края по ЧИСЛУ БИТ,
+       отрезанное уходит в НОВУЮ строку под собой, всё ниже съезжает вниз. Диапазон — как везде:
+       выделена одна строка → от первой до неё, несколько → только они, нет выделения → все.
+       Это ПРЕДПРОСМОТР: не нажал «Применить» — выход из режима или Escape вернёт всё как было. -->
+  <div style="grid-column:1 / -1; display:flex; flex-direction:column; gap:4px; border:1px solid var(--m-indigo); background:rgba(77,77,138,0.12); border-radius:3px; padding:4px;">
+    <button id="bWrapMode" style="border-color:#8b8bd8; color:#8b8bd8;" title="Включить режим переноса. Тяни мышью по полотну: начал в левой половине — двигаешь левую линию, в правой — правую. Escape или повторный клик — отмена без изменений">✂ Перенос строк</button>
+    <div style="display:flex; align-items:center; gap:4px; font-size:11px; color:var(--dim);">
+      <span>слева</span>
+      <button id="bWrapLDec" style="padding:1px 5px;" title="Левая линия на бит назад">−</button>
+      <button id="bWrapLInc" style="padding:1px 5px;" title="Левая линия на бит вперёд">+</button>
+      <span style="margin-left:6px;">справа</span>
+      <button id="bWrapRDec" style="padding:1px 5px;" title="Правая линия на бит назад">−</button>
+      <button id="bWrapRInc" style="padding:1px 5px;" title="Правая линия на бит вперёд">+</button>
+      <span id="wrapInfo" style="margin-left:auto;"></span>
+    </div>
+    <label class="chk" title="Отрезанное слева ложится в новую строку СПРАВА, а отрезанное справа — слева: кусок как бы огибает строку. Снять — и куски лягут тем же концом, каким были отрезаны"><input type="checkbox" id="cWrapOpposite" checked> ↩ Класть противоположным концом</label>
+    <button id="bWrapCommit" style="display:none; border-color:var(--green); color:var(--green);" title="Закрепить то, что видно. Отменить целиком можно потом кнопкой «↩ Отмена»">✔ Применить перенос</button>
+  </div>
+  <!-- Стереть СОДЕРЖИМОЕ, не трогая места (см. clearSelectedOrAll в JS): строки и ячейки
+       остаются, номера и соответствие строк паттернам не съезжают — в отличие от Delete. -->
+  <button id="bClearAllRows" style="grid-column:1 / -1; border-color:var(--m-gold); color:#c2ab6a;" title="Стереть содержимое, оставив строки и ячейки на местах. Выделены строки — чистятся их биты, выделены ячейки паттернов — их тексты, выделено и там и там — и то и другое, ничего не выделено — ВСЕ строки цепочки (паттерны при этом целы)">🧹 Очистить (строки / паттерны)</button>
   <button id="bPadZerosAbove" title="Добавить нули вверх: для выделенных строк (по самой длинной из них) добавить нули выше">0⬆</button>
   <button id="bDelFirst" title="Удалить первый символ (слева) из выделенных строк (или всех, если ничего не выделено)">🗑 ←1</button>
   <button id="bDelLast" title="Удалить последний символ (справа) из выделенных строк (или всех, если ничего не выделено)">🗑 1→</button>
@@ -2050,6 +2204,10 @@ body.vcur-on #vcurBar{display:flex}
   <!-- Паттерны → цепочка: строки стираются целиком и заменяются текстами паттернов, строка в
        строку (см. patternsToRows() в JS). -->
   <button id="bPatsToRows" style="grid-column:1 / -1; border-color:#38c172; color:#38c172;" data-tip="t53">🧩⬇ Паттерны в цепочку</button>
+  <!-- Отдельной кнопки удаления паттерна НЕТ (запрос пользователя: "просто без кнопки"): удаление
+       одно на обе колонки — Delete сносит и строку, и её паттерн, что бы из двух ни было выделено
+       (см. deleteSelectedRows). Выделять в колонке паттернов можно и пустые ячейки, поэтому
+       нулевая строка тоже выбирается и удаляется. -->
   <button id="bAddRightToggle" data-tip="t54">1/0→</button>
   <!-- Вставка инверсии между символами: 11 → 1010. Вставленные символы подсвечиваются красным
        (см. insertedFlagsMap/.bit-ins). -->
@@ -2114,6 +2272,45 @@ body.vcur-on #vcurBar{display:flex}
      всё сквозная-related в одном месте). НЕ путать с bgSearchModeGrp ниже (concatR/concatL/
      vertR/... — свои отдельные режимы фон-поиска через concatRowsDownTo()/concatVerticalDownTo(),
      другая функция, эту вкладку не трогают). -->
+<!-- МАСКИ — своя вкладка (запрос пользователя: "свое меню им"). Всё про прореживающую
+     маску фон-поиска: само поле, подсветка взятых битов в строках, поведение на витках кольца
+     и перебор масок. Раньше жило внутри "Поиска", где терялось среди режимов и галок.
+     ВАЖНО: у каждой записи в MENUS должна быть СВОЯ разметка в шапке — .menu-btn с data-menu и
+     галка #<id>Pin, плюс пустой .menu-drop контейнер. Без них инициализация панелей падает и
+     страница остаётся пустой (см. цикл по MENUS с чекбоксами). -->
+<div id="maskGroup" class="control-group control-group-player">
+    <!-- "🎭 Маска" — ПРОРЕЖИВАНИЕ строки результата: «1» — бит взять, «0» — пропустить, маска идёт
+         по кругу и прикладывается с каждого своего символа (фазы «#м1», «#м2»…). Ищется в готовой
+         прорежённой строке всё то же — паттерн строки ниже выделенной. Пустое поле — поведение
+         прежнее. Всё, кроме 0/1, из маски выбрасывается (см. maskBits/applyPickMask в JS). -->
+    <label class="chk" data-tip="t140" style="display:flex;align-items:center;gap:4px;">
+      🎭 Маска (прореж.):
+      <input type="text" id="bgMaskText" placeholder="напр. 110" spellcheck="false"
+             style="flex:1;min-width:0;background:#0d1117;color:#e6edf3;border:1px solid var(--line);border-radius:3px;padding:1px 4px;font-family:inherit;">
+    </label>
+    <!-- ПОДСВЕТКА ПРОРЕЖИВАЮЩЕЙ МАСКИ ПРЯМО В СТРОКАХ (v0.786, запрос пользователя: "и здесь пусть
+         будет, такого же цвета, у всех строк сразу"). Красит цифры двумя цветами: какие биты маска
+         БЕРЁТ, а какие выбрасывает. Диапазон строк — обычный colSelectRowRange: выделена одна
+         строка — от верха до неё, выделено несколько — только они. Цвета общие с "⇄ Сдвигом по
+         маске" (вкладка «Строки»), там же и выбираются. -->
+    <button id="bBgMaskPaint" style="border-color:#b060ff; color:#b060ff;" title="Подсветить в самих строках, какие биты берёт маска прореживания. Три состояния: выкл → сквозно (фаза идёт непрерывно через строки диапазона) → от строки (маска начинается заново в каждой строке). Диапазон: выделена одна строка — от верха до неё, выделено несколько — только они">🎨 Подсветка маски: выкл</button>
+    <!-- Как маска ведёт себя на витках кольца: заново с каждого витка (по умолчанию — так же
+         работает и сам поиск) или сквозняком через все витки. -->
+    <label class="chk" data-tip="t141">
+      <input type="checkbox" id="cBgMaskRingRestart" checked> 🎭 Маска заново каждый виток
+    </label>
+    <!-- ПЕРЕБОР МАСОК: прогнать по включённым режимам ВСЕ непериодические маски до заданного
+         периода и показать те, что дают находку (см. bgMaskScan в JS). -->
+    <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+      <button id="bBgMaskScan" style="flex:1 1 auto;" data-tip="t142">🎭 Перебор масок</button>
+      <label class="chk" data-tip="t142">до&nbsp;периода
+        <input type="number" id="bgMaskScanMax" min="2" max="14" step="1" value="8" style="width:44px;margin-left:3px;">
+      </label>
+      <label class="chk" data-tip="t142"><input type="checkbox" id="cBgMaskScanRing"> сквозной</label>
+    </div>
+    <div id="bgMaskScanOut" style="display:none;"></div>
+</div>
+
 <div id="seqGroup" class="control-group">
   <!-- Режимы "Авто", работающие по сквозной (круговые повороты через rotationsOf(), см.
        doInterleaveSeqStep()/doXorSeqStep()) — перенесены сюда из flowGroup (см. запрос
@@ -2140,6 +2337,12 @@ body.vcur-on #vcurBar{display:flex}
 </div>
 
 <div id="searchGroup" class="control-group search-grid">
+  <!-- Две галки — В ОДНУ СТРОКУ И В САМЫЙ ВЕРХ вкладки (запрос пользователя). Подписи
+       сокращены: полные — в подсказках t98/t99. -->
+  <div style="grid-column:1 / -1; display:flex; flex-wrap:nowrap; gap:4px; align-items:center;">
+    <label class="chk" style="flex:1 1 0; min-width:0;" data-tip="t98"><input type="checkbox" id="cBgSubPatterns"> 🔀 Подпаттерны</label>
+    <label class="chk" style="flex:1 1 0; min-width:0;" data-tip="t99"><input type="checkbox" id="cBgAllBelow"> 🔽 Все ниже</label>
+  </div>
   <!-- Всё про то, КАК паттерн сверяется с результатом — в ОДНОЙ рамке (запрос пользователя):
        варианты самого паттерна (инверсия/реверс, пропуск первого символа), продолжение кольца,
        и рядом же — чем заполнять пустоты и что делать с находкой. 🔁-галки переехали сюда из
@@ -2151,12 +2354,12 @@ body.vcur-on #vcurBar{display:flex}
     <label class="chk" data-tip="t73"><input type="checkbox" id="cRingInvert">🔁 Инв. кольцо</label>
     <label class="chk" data-tip="t74"><input type="checkbox" id="cRingReverse">🔁 Инв.кольц.рев.</label>
     <label class="chk" data-tip="t75"><input type="checkbox" id="cRingOff">🚫 Без кольца</label>
-    <label class="chk" data-tip="t76"><input type="checkbox" id="cPad">0️⃣ 0 вместо пустот</label><!-- влияет и на «🧩 Паттерн-цепочку»: там строки участка добиваются нулями до общей ширины по текущему выравниванию, и паттерн ложится в бывшие пустоты тоже -->
+    <label class="chk" data-tip="t76"><input type="checkbox" id="cPad">0️⃣ 0 в пустоты</label><!-- влияет и на «🧩 Паттерн-цепочку»: там строки участка добиваются нулями до общей ширины по текущему выравниванию, и паттерн ложится в бывшие пустоты тоже -->
     <!-- Те же нули, но НЕ показом, а данными: вписываются в сами строки (запрос пользователя
          "включает эти 0 в строки и меняет биты при Круге сдвиге — и вообще везде"). -->
-    <label class="chk" data-tip="t77"><input type="checkbox" id="cPadReal">0️⃣→ Нули в сами строки</label>
+    <label class="chk" data-tip="t77"><input type="checkbox" id="cPadReal">0️⃣→ Нули в строки</label>
     <!-- Виртуальная нулевая строка в хвост результата (запрос пользователя). -->
-    <label class="chk" data-tip="t78"><input type="checkbox" id="cTailZeros">0️⃣→ Хвост нулей по искомой строке</label>
+    <label class="chk" data-tip="t78"><input type="checkbox" id="cTailZeros">0️⃣→ Хвост нулей</label>
     <label class="chk" data-tip="t79"><input type="checkbox" id="cCaptureOnFind" checked>🧲 Захват находки</label>
   </div>
   <label class="chk" title="Остановить автоматический прогон (Авто), если найдено совпадение с паттерном"><input type="checkbox" id="cStopOnHit" checked>🛑 Стоп на находке</label>
@@ -2186,79 +2389,65 @@ body.vcur-on #vcurBar{display:flex}
          больше не нужна") — просто заголовок, подсвечивается сам (см. .bg-search-active в CSS),
          когда включён хотя бы один режим ниже (bgSearchActive() в JS). Полностью выключить —
          кнопкой "Всё/только XOR-Все/Выкл" ниже (3-й клик снимает все режимы разом). -->
-    <span id="bgSearchTitle" style="cursor:pointer;" data-tip="t82">🔍 Фон-поиск</span>
+    <!-- Заголовок-выключатель и "Всё / Выкл" — В ОДНУ СТРОКУ (запрос пользователя). Подпись
+         "Режимы фон-поиска:" убрана как лишняя: под ней и так сразу идут сами режимы. -->
     <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
-      <span style="font-size:11px;color:var(--dim);">Режимы фон-поиска:</span>
-      <button id="bBgModeAllNone" style="font-size:11px;padding:1px 6px;" data-tip="t83">Всё / Выкл</button>
+      <span id="bgSearchTitle" style="cursor:pointer;display:inline-flex;align-items:center;min-height:var(--std-btn-h);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-tip="t82">🔍 Фон-поиск</span>
+      <button id="bBgModeAllNone" style="font-size:11px;padding:1px 6px;flex:0 0 auto;" data-tip="t83">Всё / Выкл</button>
     </div>
-    <div class="align-grp" id="bgSearchModeGrp" title="Какой результат проверять на совпадение с паттерном строки ниже выделенной">
-      <button data-val="interleave" class="act" title="Интерливинг выделенной и строки над ней">⧬ Интерлив</button>
-      <button data-val="xor2" class="act" data-tip="t84">⨁ Xor 2</button>
-      <button data-val="xorAll" class="act" data-tip="t85">⨁ XOR-Все</button>
-      <button data-val="concatR" class="act" data-tip="t86">🔗 Сквозная →</button>
-      <button data-val="concatRInv" class="act" title="То же самое, что 🔗 Сквозная →, но результат целиком инвертирован (0↔1)">🔗 Сквозная → Инв</button>
-      <button data-val="concatRRevInv" class="act" title="То же самое, что 🔗 Сквозная →, но результат инвертирован (0↔1) И реверснут (порядок бит наоборот)">🔗 Сквозная → Рев+Инв</button>
-      <button data-val="concatL" class="act" data-tip="t87">🔗 Сквозная ←</button>
-      <button data-val="concatLInv" class="act" title="То же самое, что 🔗 Сквозная ←, но результат целиком инвертирован (0↔1)">🔗 Сквозная ← Инв</button>
-      <button data-val="concatLRevInv" class="act" title="То же самое, что 🔗 Сквозная ←, но результат инвертирован (0↔1) И реверснут (порядок бит наоборот)">🔗 Сквозная ← Рев+Инв</button>
-      <button data-val="concatSnake" class="act" data-tip="t88">🔗 Сквозная 🐍 ←</button>
-      <button data-val="concatSnakeInv" class="act" title="То же самое, что 🔗 Сквозная 🐍 ←, но результат целиком инвертирован (0↔1)">🔗 Сквозная 🐍 ← Инв</button>
-      <button data-val="concatSnakeRevInv" class="act" title="То же самое, что 🔗 Сквозная 🐍 ←, но результат инвертирован (0↔1) И реверснут (порядок бит наоборот)">🔗 Сквозная 🐍 ← Рев+Инв</button>
-      <!-- ПРАВАЯ сквозная змейка (запрос пользователя): первая строка читается СПРАВА, вторая
-           слева, третья снова справа — зеркальная пара к трём кнопкам выше. -->
-      <button data-val="concatSnakeFromR" class="act" data-tip="t89">🔗 Сквозная 🐍 →</button>
-      <button data-val="concatSnakeFromRInv" class="act" title="То же самое, что 🔗 Сквозная 🐍 →, но результат целиком инвертирован (0↔1)">🔗 Сквозная 🐍 → Инв</button>
-      <button data-val="concatSnakeFromRRevInv" class="act" title="То же самое, что 🔗 Сквозная 🐍 →, но результат инвертирован (0↔1) И реверснут (порядок бит наоборот)">🔗 Сквозная 🐍 → Рев+Инв</button>
-      <button data-val="vertR" class="act" data-tip="t90">↕ Верт. →</button>
-      <button data-val="vertL" class="act" data-tip="t91">↕ Верт. ←</button>
-      <button data-val="snakeR" class="act" data-tip="t92">🐍 Змейка →</button>
-      <button data-val="snakeL" class="act" data-tip="t93">🐍 Змейка ←</button>
-      <button data-val="vertZigR" class="act" data-tip="t94">⇄ Верт. зигзаг →</button>
-      <button data-val="vertZigL" class="act" title="То же самое, но начинает с ПРАВОГО края: самый правый, самый левый, следующий справа, следующий слева...">⇆ Верт. зигзаг ←</button>
-      <!-- "Диагонали" — то же, что вертикальная склейка, но линия наклонная (полстолбца вбок на
-           каждую строку, та же геометрия, что у подсветки "1⤡1"). Пока считаются ТОЛЬКО на
-           выравнивании "Центр ½" (см. diagAlignOk/concatDiagDownTo) — на остальных кнопки
-           гасятся классом .mode-na, а сам режим отдаёт пустой результат. -->
-      <button data-val="diagR" data-diag="1" class="act" data-tip="t95">⧅ Зигзаг ↘ →</button>
-      <button data-val="diagL" data-diag="1" class="act" data-tip="t96">⧄ Зигзаг ↙ ←</button>
-      <!-- "Суммы длин" — подпункт ЭТОЙ ЖЕ группы режимов (та же кнопка-тоггл, тот же .act/data-val
-           механизм), а не отдельная галка ниже — запрос пользователя. В отличие от остальных
-           кнопок группы НЕ участвует в общем расчёте "один результат на сверку с паттерном" (см.
-           computeBgSearchTarget() — modes.filter(m=>m!=="lengthSums")), у неё своя отдельная
-           отрисовка (см. renderLengthSumsHtml() в "Логе находок"), проверяется по
-           st.bgSearchModes.includes("lengthSums"). -->
-      <button data-val="lengthSums" data-tip="t97">🧮 Суммы длин</button>
+    <!-- РЕЖИМЫ ФОН-ПОИСКА — ГРУППАМИ И КОРОТКИМИ ПОДПИСЯМИ (запрос пользователя: "расположи
+         группами и сократи слова, минимизируй"). Раньше это был один список из 24 кнопок с
+         полными названиями ("🔗 Сквозная 🐍 ← Рев+Инв"), который занимал пол-панели и читался
+         хуже, чем группы: у большинства режимов различие только в двух признаках — сторона
+         (→/←) и обработка результата (обычный / Инв / Рев+Инв).
+         data-val у КАЖДОЙ кнопки прежние — от них зависит st.bgSearchModes, computeBgSearchTarget
+         и сохранённые наборы в кэше; менять их нельзя. Полные названия ушли в title/data-tip,
+         так что подсказка по наведению не потерялась.
+         Сокращения: "и" = Инв (результат инвертирован), "ри" = Рев+Инв (инвертирован и реверснут). -->
+    <div class="align-grp bg-modes" id="bgSearchModeGrp" title="Какой результат проверять на совпадение с паттерном строки ниже выделенной">
+      <div class="bg-modes-grp">
+        <span class="bg-modes-cap">Пары и XOR</span>
+        <button data-val="interleave" class="act" title="⧬ Интерлив — интерливинг выделенной и строки над ней">Интер</button>
+        <button data-val="xor2" class="act" data-tip="t84">Хор2</button>
+        <button data-val="xorAll" class="act" data-tip="t85">ХорВсе</button>
+      </div>
+      <div class="bg-modes-grp">
+        <span class="bg-modes-cap">Сквозная</span>
+        <button data-val="concatR" class="act" data-tip="t86">Прав</button>
+        <button data-val="concatRInv" class="act" title="🔗 Сквозная → Инв — то же, что «Сквозная →», но результат целиком инвертирован (0↔1)">Прав Инв</button>
+        <button data-val="concatRRevInv" class="act" title="🔗 Сквозная → Рев+Инв — то же, что «Сквозная →», но результат инвертирован (0↔1) И реверснут (порядок бит наоборот)">Прав РевИнв</button>
+        <button data-val="concatL" class="act" data-tip="t87">Лев</button>
+        <button data-val="concatLInv" class="act" title="🔗 Сквозная ← Инв — то же, что «Сквозная ←», но результат целиком инвертирован (0↔1)">Лев Инв</button>
+        <button data-val="concatLRevInv" class="act" title="🔗 Сквозная ← Рев+Инв — то же, что «Сквозная ←», но результат инвертирован (0↔1) И реверснут">Лев РевИнв</button>
+      </div>
+      <div class="bg-modes-grp">
+        <span class="bg-modes-cap">Сквозная 🐍</span>
+        <button data-val="concatSnakeFromR" class="act" title="🔗 Сквозная 🐍 → — построчная склейка змейкой, начиная СЛЕВА: у каждой второй строки биты в обратном порядке">ЗмейПрав</button>
+        <button data-val="concatSnakeFromRInv" class="act" title="🔗 Сквозная 🐍 → Инв — то же, но результат целиком инвертирован (0↔1)">ЗмейПрав Инв</button>
+        <button data-val="concatSnakeFromRRevInv" class="act" title="🔗 Сквозная 🐍 → Рев+Инв — то же, но результат инвертирован И реверснут">ЗмейПрав РевИнв</button>
+        <button data-val="concatSnake" class="act" data-tip="t88">ЗмейЛев</button>
+        <button data-val="concatSnakeInv" class="act" title="🔗 Сквозная 🐍 ← Инв — то же, что «Сквозная 🐍 ←», но результат целиком инвертирован (0↔1)">ЗмейЛев Инв</button>
+        <button data-val="concatSnakeRevInv" class="act" title="🔗 Сквозная 🐍 ← Рев+Инв — то же, но результат инвертирован И реверснут">ЗмейЛев РевИнв</button>
+      </div>
+      <div class="bg-modes-grp">
+        <span class="bg-modes-cap">По столбцам</span>
+        <button data-val="vertR" class="act" data-tip="t90">Прав</button>
+        <button data-val="vertL" class="act" data-tip="t91">Лев</button>
+        <button data-val="snakeR" class="act" data-tip="t92">ЗмейПрав</button>
+        <button data-val="snakeL" class="act" data-tip="t93">ЗмейЛев</button>
+        <button data-val="vertZigR" class="act" data-tip="t94">ЗигПрав</button>
+        <button data-val="vertZigL" class="act" title="⇆ Верт. зигзаг ← — то же, что «Верт. зигзаг →», но начинает с ПРАВОГО края: самый правый столбец, самый левый, следующий справа, следующий слева...">ЗигЛев</button>
+      </div>
+      <div class="bg-modes-grp">
+        <span class="bg-modes-cap">Диагонали</span>
+        <button data-val="diagR" data-diag="1" class="act" data-tip="t95">Прав</button>
+        <button data-val="diagL" data-diag="1" class="act" data-tip="t96">Лев</button>
+      </div>
+      <div class="bg-modes-grp">
+        <span class="bg-modes-cap">Прочее</span>
+        <button data-val="lengthSums" data-tip="t97">Суммы</button>
+      </div>
     </div>
-    <!-- "🎭 Маска" — ПРОРЕЖИВАНИЕ строки результата: «1» — бит взять, «0» — пропустить, маска идёт
-         по кругу и прикладывается с каждого своего символа (фазы «#м1», «#м2»…). Ищется в готовой
-         прорежённой строке всё то же — паттерн строки ниже выделенной. Пустое поле — поведение
-         прежнее. Всё, кроме 0/1, из маски выбрасывается (см. maskBits/applyPickMask в JS). -->
-    <label class="chk" data-tip="t140" style="display:flex;align-items:center;gap:4px;">
-      🎭 Маска (прореж.):
-      <input type="text" id="bgMaskText" placeholder="напр. 110" spellcheck="false"
-             style="flex:1;min-width:0;background:#0d1117;color:#e6edf3;border:1px solid var(--line);border-radius:3px;padding:1px 4px;font-family:inherit;">
-    </label>
-    <!-- Как маска ведёт себя на витках кольца: заново с каждого витка (по умолчанию — так же
-         работает и сам поиск) или сквозняком через все витки. -->
-    <label class="chk" data-tip="t141">
-      <input type="checkbox" id="cBgMaskRingRestart" checked> 🎭 Маска заново каждый виток
-    </label>
-    <!-- ПЕРЕБОР МАСОК: прогнать по включённым режимам ВСЕ непериодические маски до заданного
-         периода и показать те, что дают находку (см. bgMaskScan в JS). -->
-    <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
-      <button id="bBgMaskScan" style="flex:1 1 auto;" data-tip="t142">🎭 Перебор масок</button>
-      <label class="chk" data-tip="t142">до&nbsp;периода
-        <input type="number" id="bgMaskScanMax" min="2" max="14" step="1" value="8" style="width:44px;margin-left:3px;">
-      </label>
-      <label class="chk" data-tip="t142"><input type="checkbox" id="cBgMaskScanRing"> сквозной</label>
-    </div>
-    <div id="bgMaskScanOut" style="display:none;"></div>
-    <label class="chk" data-tip="t98">
-      <input type="checkbox" id="cBgSubPatterns"> 🔀 Подпаттерны сдвига
-    </label>
-    <label class="chk" data-tip="t99">
-      <input type="checkbox" id="cBgAllBelow"> 🔽 Все ниже
-    </label>
     <!-- ОДНА РАМКА на четыре переключателя поиска по паттернам, ПО ДВА В СТРОКУ (запрос
          пользователя). Раньше "🌈"/"🔁" стояли своей парой без рамки, а "🔍 Поиск только по
          выделенным" жила в рамке подсветок 01/1↕1/1⤡1 (она их использует как фильтр) — но по
@@ -2300,37 +2489,6 @@ body.vcur-on #vcurBar{display:flex}
     </div>
   </div>
 
-  <!-- Перенесены сюда из "Вида" — запрос пользователя. Подсветки 01/1↕1/1⤡1 со своими цветами.
-       "🔍 По подсветке" стояла тут же (она использует ИМЕННО эти подсветки как
-       фильтр), но по запросу пользователя переехала выше — в общую рамку четырёх переключателей
-       поиска по паттернам. -->
-  <div style="grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:4px;border:1px solid var(--m-slate);background:rgba(74,85,104,0.14);border-radius:3px;padding:4px;">
-    <span class="hl-combo">
-      <button id="bHighlight01" data-tip="t109">01</button>
-      <input type="color" id="col01" value="#ff9900" title="Цвет подсветки «01»">
-    </span>
-    <span class="hl-combo">
-      <button id="bHighlightVert1" data-tip="t110">1↕1</button>
-      <input type="color" id="colVert1" value="#00ccff" title="Цвет подсветки «1 под 1»">
-    </span>
-    <span class="hl-combo">
-      <button id="bHighlightDiag1" data-tip="t111">1⤡1</button>
-      <input type="color" id="colDiag1" value="#66ff66" title="Цвет подсветки «1 по диагонали»">
-    </span>
-    <!-- "1▸1" — единица, СТОЯЩАЯ ПРАВЕЕ другой единицы в той же строке (запрос пользователя):
-         красится вторая и каждая следующая "1" сплошной группы, одиночные не трогаются. -->
-    <span class="hl-combo">
-      <button id="bHighlight1Right" title="Подсветка «1 правее 1»: красит единицу, слева от которой в той же строке стоит другая единица — то есть вторую и все следующие «1» в каждой сплошной группе. Одиночная «1» не красится">1▸1</button>
-      <input type="color" id="col1Right" value="#a78bfa" title="Цвет подсветки «1 правее 1»">
-    </span>
-    <!-- Отдельная подсветка ИМЕННО тех диагоналей, по которым складывают строки режимы фон-поиска
-         "⧅ Диаг. ↘ →"/"⧄ Диаг. ↙ ←" (см. computeDiagFoldMask/concatDiagDownTo) — не путать с
-         соседней "1⤡1": та ищет находки из единиц, а эта рисует сами линии обхода (и нули тоже). -->
-    <span class="hl-combo">
-      <button id="bHighlightDiagFold" data-tip="t112">⧅⧄</button>
-      <input type="color" id="colDiagFold" value="#ff5ecb" title="Цвет подсветки «диагонали склейки»">
-    </span>
-  </div>
 
 </div>
 
@@ -2399,19 +2557,25 @@ body.vcur-on #vcurBar{display:flex}
        Внутренние ряды остались (у них разная раскладка), но собственных рамок и фонов у них
        больше нет — рамка одна, внешняя. -->
   <div style="margin-bottom:4px;border:1px solid var(--m-orange);background:rgba(163,112,61,0.12);border-radius:3px;padding:4px;display:flex;flex-direction:column;gap:4px;">
-    <div style="display:flex;flex-wrap:wrap;gap:6px;">
-      <label class="chk" title="Цвет единиц">Цвет 1 <input type="color" id="col1" value="#ff3333"></label>
-      <label class="chk" title="Цвет нулей">Цвет 0 <input type="color" id="col0" value="#555555"></label>
+    <!-- Слово "Цвета" один раз слева, дальше только "1 / 0 / Фон / Изм" (запрос пользователя:
+         "не поместилась, сократи 1, 0, цвета можешь один раз написать слева") — иначе четвёртая
+         пара не влезала в ширину панели и обрезалась. Полные названия — в подсказках. -->
+    <div class="color-row" style="display:flex;flex-wrap:nowrap;gap:4px;align-items:center;overflow:hidden;">
+      <span style="flex:0 0 auto;font-size:10px;color:var(--dim);">Цвета</span>
+      <label class="chk" title="Цвет единиц">1 <input type="color" id="col1" value="#ff3333"></label>
+      <label class="chk" title="Цвет нулей">0 <input type="color" id="col0" value="#555555"></label>
       <label class="chk" title="Фон полотна">Фон <input type="color" id="colBg" value="#000000"></label>
+      <!-- Тумблер подсветки изменённых бит и её цвет (переменная --cchg, см. applyColors). -->
+      <label class="chk" title="Цвет битов, изменённых последним шагом"><button id="bToggleChgBits" class="mode-act" style="padding:2px 4px;" data-tip="t118">Изм</button> <input type="color" id="colChg" value="#ff3b3b"></label>
     </div>
     <!-- Два тумблера вида бит — одной строкой (запрос пользователя): "🔴 Изм. биты" раньше стоял
          отдельной широкой кнопкой сверху, а "Жирность" ютилась в хвосте ряда с цветами. Теперь
          это свой ряд из двух равных кнопок, цвета — сами по себе. -->
     <div style="display:flex;gap:6px;">
-      <button id="bToggleChgBits" class="mode-act" style="flex:1;" data-tip="t118">🔴 Изм. биты</button>
       <!-- Жирность символов 0/1 — просто font-weight:bold через body.bold-bits (см. CSS), без
            отдельного цвета, как у соседних тумблеров подсветки. -->
       <button id="bBoldBits" style="flex:1;" title="Жирность символов «0»/«1» — вкл/выкл">Жирность</button>
+      <button id="rightTriangle90Btn" style="flex:0 0 auto; padding:2px 6px; font-size:8px; color:#ffd500; border-color:#ffd500;" data-tip="t119">📐90°</button>
     </div>
     <!-- Шрифт цифр 0/1 на полотне (см. --chain-ff в CSS) — на разных системах одно и то же
          начертание рендерится то жирным, то тонким, единого правильного выбора нет, поэтому
@@ -2456,7 +2620,6 @@ body.vcur-on #vcurBar{display:flex}
         <input type="range" id="dim" min="10" max="100" step="5" value="100" class="view-slider-range">
         <span id="dimVal" class="view-slider-val">100</span>
       </label>
-      <button id="rightTriangle90Btn" style="margin:2px 0 0; padding:2px 3px; width:100%; font-size:8px; color:#ffd500; border-color:#ffd500;" data-tip="t119">📐90°</button>
     </div>
     <label class="chk chk-vertical" title="Межстрочный интервал (line-height, до 0.2 с наездом)">
       <span class="view-slider-icon">↕</span>
@@ -2471,6 +2634,37 @@ body.vcur-on #vcurBar{display:flex}
   <div style="margin-bottom:4px;border:1px solid var(--m-gold);background:rgba(138,122,61,0.12);border-radius:3px;padding:4px;display:flex;align-items:center;gap:8px;">
     <label class="chk" title="Фон выделенной строки">Фон <input type="color" id="rowBgSel" value="#ffcf6b"></label>
     <label class="chk" style="flex:1;" title="Прозрачность фона выделенных строк"><input type="range" id="rowBgSelOpacity" min="0" max="100" value="18" style="flex:1;">&nbsp;<span id="rowBgSelOpacityVal">18%</span></label>
+  </div>
+  <!-- Перенесены сюда из "Вида" — запрос пользователя. Подсветки 01/1↕1/1⤡1 со своими цветами.
+       "🔍 По подсветке" стояла тут же (она использует ИМЕННО эти подсветки как
+       фильтр), но по запросу пользователя переехала выше — в общую рамку четырёх переключателей
+       поиска по паттернам. -->
+  <div style="grid-column:1 / -1;display:flex;flex-wrap:nowrap;align-items:center;gap:3px;margin-bottom:4px;border:1px solid var(--m-slate);background:rgba(74,85,104,0.14);border-radius:3px;padding:3px;overflow:hidden;">
+    <span class="hl-combo">
+      <button id="bHighlight01" data-tip="t109">01</button>
+      <input type="color" id="col01" value="#ff9900" title="Цвет подсветки «01»">
+    </span>
+    <span class="hl-combo">
+      <button id="bHighlightVert1" data-tip="t110">1↕1</button>
+      <input type="color" id="colVert1" value="#00ccff" title="Цвет подсветки «1 под 1»">
+    </span>
+    <span class="hl-combo">
+      <button id="bHighlightDiag1" data-tip="t111">1⤡1</button>
+      <input type="color" id="colDiag1" value="#66ff66" title="Цвет подсветки «1 по диагонали»">
+    </span>
+    <!-- "1▸1" — единица, СТОЯЩАЯ ПРАВЕЕ другой единицы в той же строке (запрос пользователя):
+         красится вторая и каждая следующая "1" сплошной группы, одиночные не трогаются. -->
+    <span class="hl-combo">
+      <button id="bHighlight1Right" title="Подсветка «1 правее 1»: красит единицу, слева от которой в той же строке стоит другая единица — то есть вторую и все следующие «1» в каждой сплошной группе. Одиночная «1» не красится">1▸1</button>
+      <input type="color" id="col1Right" value="#a78bfa" title="Цвет подсветки «1 правее 1»">
+    </span>
+    <!-- Отдельная подсветка ИМЕННО тех диагоналей, по которым складывают строки режимы фон-поиска
+         "⧅ Диаг. ↘ →"/"⧄ Диаг. ↙ ←" (см. computeDiagFoldMask/concatDiagDownTo) — не путать с
+         соседней "1⤡1": та ищет находки из единиц, а эта рисует сами линии обхода (и нули тоже). -->
+    <span class="hl-combo">
+      <button id="bHighlightDiagFold" data-tip="t112">⧅⧄</button>
+      <input type="color" id="colDiagFold" value="#ff5ecb" title="Цвет подсветки «диагонали склейки»">
+    </span>
   </div>
 </div>
 <!-- === МАРКЕР 04: MAIN_UI === -->
@@ -2509,7 +2703,7 @@ body.vcur-on #vcurBar{display:flex}
   <div class="controls" id="leftPanel"><div class="scrollable-settings" id="leftSlot"></div></div>
   <div class="canvas" id="screenCanvas">
     <!-- Теги записаны в одну плотную строку, чтобы white-space: pre не создавал фантомных пустых строк -->
-    <div class="chain" id="chain"><div id="colPickFloat"><button type="button" id="bColSelClearFloat" title="Снять группу осей — по одной за нажатие (то же, что «✕ Снять выбор» в панели «Выделить»)">✕ Снять выбор</button></div><div class="chain-head"><span class="num">№</span><span class="pat h-pat">Паттерн</span><span class="num num-l2">№</span><span class="bits h-bits"></span><span class="num num-r2">№</span><span class="pat2 h-pat2">Паттерн</span></div><div class="vsplit" id="vsplit" title="Тяни, чтобы менять ширину левой колонки паттернов"></div><div class="vsplit2" id="vsplit2" title="Тяни — ширина среднего столбца «Цепочки» (поля битов)"></div><div class="vsplit3" id="vsplit3" title="Тяни — ширина правой колонки паттернов П2"></div><div class="align-grp" id="alignGrp" style="margin:0 auto 4px auto;width:fit-content;"><button data-val="left" title="По левому краю">⇤</button><button class="act" data-val="center" title="По центру">↔</button><button data-val="right" title="По правому краю">⇥</button><button data-val="halfcenter" data-tip="t124">↔½</button><button data-val="stairs" data-tip="t125">↘</button><button data-val="halfstairs" data-tip="t126">↘½</button><button data-val="rstairs" data-tip="t127">↙</button><button data-val="rhalfstairs" data-tip="t128">↙½</button><button data-val="axis" data-tip="t129">⊙</button><button data-val="axis12" data-tip="t130">⊙½</button><button data-val="axisbit" data-tip="t131">↥</button><button data-val="axisbit12" data-tip="t132">↥½</button></div><div id="colHeader"></div><div class="axis-split" id="axisSplit" title="Тяни — сдвинуть начало отсчёта столбцов (работает для любого выравнивания, не только «⊙ Ось»/«Ось 1/2»)"></div><div id="rows"></div></div>
+    <div class="chain" id="chain"><div class="state-badges" id="stateBadges"></div><div id="colPickFloat"><button type="button" id="bColSelClearFloat" title="Снять группу осей — по одной за нажатие (то же, что «✕ Снять выбор» в панели «Выделить»)">✕ Снять выбор</button></div><div class="chain-head"><span class="num">№</span><span class="pat h-pat">Паттерн</span><span class="num num-l2">№</span><span class="bits h-bits"></span><span class="num num-r2">№</span><span class="pat2 h-pat2">Паттерн</span></div><div class="vsplit" id="vsplit" title="Тяни, чтобы менять ширину левой колонки паттернов"></div><div class="vsplit2" id="vsplit2" title="Тяни — ширина среднего столбца «Цепочки» (поля битов)"></div><div class="vsplit3" id="vsplit3" title="Тяни — ширина правой колонки паттернов П2"></div><div class="align-grp" id="alignGrp" style="margin:0 auto 4px auto;width:fit-content;"><button data-val="left" title="По левому краю">⇤</button><button class="act" data-val="center" title="По центру">↔</button><button data-val="right" title="По правому краю">⇥</button><button data-val="halfcenter" data-tip="t124">↔½</button><button data-val="stairs" data-tip="t125">↘</button><button data-val="halfstairs" data-tip="t126">↘½</button><button data-val="rstairs" data-tip="t127">↙</button><button data-val="rhalfstairs" data-tip="t128">↙½</button><button data-val="axis" data-tip="t129">⊙</button><button data-val="axis12" data-tip="t130">⊙½</button><button data-val="axisbit" data-tip="t131">↥</button><button data-val="axisbit12" data-tip="t132">↥½</button></div><div id="colHeader"></div><div class="axis-split" id="axisSplit" title="Тяни — сдвинуть начало отсчёта столбцов (работает для любого выравнивания, не только «⊙ Ось»/«Ось 1/2»)"></div><div id="rows"></div></div>
   </div>
   <div class="controls" id="rightPanel"><div class="scrollable-settings" id="rightSlot"></div></div>
 </div>
@@ -2517,12 +2711,18 @@ body.vcur-on #vcurBar{display:flex}
 <!-- Скрипт разрезан на 5 файлов (v0.750). Это ОБЫЧНЫЕ скрипты, не модули: общий scope,
      всё видно между файлами. Порядок подключения ОБЯЗАТЕЛЕН — 1→5, как было в едином файле.
      CSS остаётся здесь, в <style>: попапы «Панели» и «Результат» собирают оформление
-     через document.querySelectorAll("style") и внешний файл не увидят. -->
-<script src="fold-1-core.js"></script>
-<script src="fold-2-render.js"></script>
-<script src="fold-3-ops.js"></script>
-<script src="fold-4-tools.js"></script>
-<script src="fold-5-ui.js"></script>
+     через document.querySelectorAll("style") и внешний файл не увидят.
+
+     ?v=NNN — АНТИКЕШ, обязателен (v0.779). До этого теги шли голыми, и после разреза на файлы
+     появилась ловушка, которой не было у единого HTML: сам fold.html браузер перечитывает
+     (видно новый номер версии в заголовке), а fold-*.js берёт из кеша — то есть новый код
+     просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
+     версией в <title>/<h3>, теми же тремя цифрами. -->
+<script src="fold-1-core.js?v=819"></script>
+<script src="fold-2-render.js?v=819"></script>
+<script src="fold-3-ops.js?v=819"></script>
+<script src="fold-4-tools.js?v=819"></script>
+<script src="fold-5-ui.js?v=819"></script>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;
      кнопка включения видна только при pointer:coarse. -->

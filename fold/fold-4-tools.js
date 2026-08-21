@@ -2934,12 +2934,14 @@ if (bXorSelectedEl) {
   };
 }
 
-/* "⧬ Интерлив" — ОДИН шаг по выделению (запрос пользователя: "пусть эта кнопка записывает
-   результат прямо под выделенную строку, изменяя саму строку цепочки, и ищет паттерн этой же
-   строки"). Переплетаются те же две строки, что и у одноимённого режима фон-поиска: строка НАД
-   выделенной и сама выделенная (interleavePairRows — значит с учётом полустолбцов "½"-выравниваний
-   и показанных зеркал). Результат КЛАДЁТСЯ В СТРОКУ ПОД ВЫДЕЛЕННОЙ — ту самую, чей паттерн
-   фон-поиск и так сверяет, — и сверяется с её паттерном тут же, на месте.
+/* "⧬ Интерлив" — ОДИН шаг по выделению (запрос пользователя: "записать в нижнюю, переписав её, и
+   выделение на неё перепрыгнуть, если она совпала с паттерном"). Переплетаются те же две строки,
+   что и у одноимённого режима фон-поиска: строка НАД выделенной и сама выделенная
+   (interleavePairRows — значит с учётом полустолбцов "½"-выравниваний и показанных зеркал).
+   Результат ПЕРЕЗАПИСЫВАЕТ СТРОКУ ПОД ВЫДЕЛЕННОЙ и сверяется с ЕЁ ЖЕ паттерном — тем самым, что
+   и так сверяет фон-поиск. НАШЁЛСЯ — выделение перепрыгивает на эту нижнюю строку (следующее
+   нажатие переплетёт уже следующую пару вниз); НЕ нашёлся — выделение остаётся на месте (раньше
+   переезжало безусловно).
    Прежнее поведение (режим st.interleaveMode: прогон по парам сверху вниз) отсюда убрано; сам
    пошаговый механизм (doInterleaveStep) остался нетронутым для "⧬ Интерлив сквозной" и прогонов. */
 const bInterleaveSearchEl = document.getElementById("bInterleaveSearch");
@@ -2953,11 +2955,7 @@ if (bInterleaveSearchEl) {
     const res = interleavePairRows(st, aboveIdx, selIdx, st.align);
     if (!res.length) { say("⧬ Интерлив: обе строки пусты — переплетать нечего."); return; }
     snapshot();
-    // Ориентир для оси — сама выделенная строка: её длина не меняется, значит по ней и видно,
-    // насколько уехало бы полотно от удлинения соседней (см. keepAxisAfter).
-    const axisBefore = axisAnchorShift(selIdx);
     st.rows[targetIdx] = res;
-    keepAxisAfter(selIdx, axisBefore);
     // Длина строки изменилась — позиционные флаги к ней больше не относятся (как и везде, где
     // строка переписывается целиком).
     insertedFlagsMap.delete(targetIdx);
@@ -2970,14 +2968,13 @@ if (bInterleaveSearchEl) {
     const patText = pat && pat.text ? pat.text : "";
     const kinds = patText ? findPatternKinds(res, patText) : null;
     const found = !!(kinds && kinds.length);
-    say(`⧬ Интерлив: строки ${rowLabel(aboveIdx)}+${rowLabel(selIdx)} переплетены в строку ${rowLabel(targetIdx)} (${res.length} бит) — ` +
-        (patText ? (found ? `паттерн этой строки НАЙДЕН (${KIND_LABELS_RU[kinds[0].kind] || "прямая"}).` : "паттерна этой строки в ней нет.")
-                 : "у неё нет паттерна для сверки."));
-    logStep("Интерлив", `${rowLabel(aboveIdx)}+${rowLabel(selIdx)} → ${rowLabel(targetIdx)}`, res, found ? "паттерн найден" : "");
-    // ВЫДЕЛЕНИЕ ПЕРЕЕЗЖАЕТ НА ИЗМЕНЁННУЮ СТРОКУ (запрос пользователя): следующее нажатие
-    // переплетает уже следующую пару вниз — бывшая выделенная становится "строкой сверху", а
-    // результат ляжет в строку под новой выделенной. С включённым "⬇ Расширять вниз" выделение
-    // не переезжает, а ДОРАСТАЕТ до неё — прежние строки остаются выделенными.
+    // ВЫДЕЛЕНИЕ ПРЫГАЕТ НА НЕЁ ВСЕГДА (запрос пользователя: "вниз делает интерливинг и сам туда
+    // прыгает"), независимо от того, совпал паттерн или нет: бывшая выделенная становится
+    // "строкой сверху", и следующее нажатие переплетает уже следующую пару вниз — кнопку можно
+    // жать подряд, спускаясь по цепочке. Короткое время условие было "прыгать только при
+    // находке" (v0.775) — без находки выделение стояло, и спуск обрывался.
+    // С включённым "⬇ Расширять вниз" выделение не переезжает, а ДОРАСТАЕТ до неё — прежние
+    // строки остаются выделенными.
     if (st.growDownOnFind) {
       st.selectedRows.add(targetIdx);
       st.captureGrown = true;
@@ -2988,6 +2985,12 @@ if (bInterleaveSearchEl) {
     // Граница показа зеркал/участка сместилась вместе с выделением — новой строке своё зеркало
     // (если включены "⇔ Авто-зеркала"), как и при захвате находки.
     mirrorsAutoStep();
+    say(`⧬ Интерлив: строки ${rowLabel(aboveIdx)}+${rowLabel(selIdx)} переплетены в строку ${rowLabel(targetIdx)} (${res.length} бит) — ` +
+        (patText ? (found ? `паттерн этой строки НАЙДЕН (${KIND_LABELS_RU[kinds[0].kind] || "прямая"}).`
+                          : "паттерна этой строки в ней нет.")
+                 : "у неё нет паттерна для сверки.") +
+        " Выделение перепрыгнуло на неё.");
+    logStep("Интерлив", `${rowLabel(aboveIdx)}+${rowLabel(selIdx)} → ${rowLabel(targetIdx)}`, res, found ? "паттерн найден" : "");
     render(); saveCache();
   };
 }
@@ -3599,6 +3602,11 @@ document.addEventListener("keydown", e => {
     autoRun();
   } else if (e.key === "Escape") {
     e.preventDefault();
+    // РЕЖИМ ПЕРЕНОСА СТРОК Escape отменяет ПЕРВЫМ и на этом останавливается (запрос пользователя:
+    // "если не сохранить, то при отключении режима или Escape — всё сбрасывать"). Дальше по
+    // ветке идёт общий Сброс цепочки к шаблону, а он тут не нужен: человек отменяет раскрой, а
+    // не всю работу.
+    if (typeof wrapModeOn === "function" && wrapModeOn()) { wrapCancel(); return; }
     closeMenus();
     // Escape сначала ОСТАНАВЛИВАЕТ прогоны — общий "Авто" и свой "Авто" Паттерн-цепочки, — и
     // только потом сбрасывает (запрос пользователя "пусть Esc останавливает и сбрасывает Авто
@@ -3744,3 +3752,593 @@ if (bTogglePatREl) {
   };
 }
 
+
+/* === "⇄ СДВИГ ПО МАСКЕ" (v0.785) ==========================================================
+   Круговой сдвиг битов НЕ всей строкой целиком, а по маске — ДВУМЯ НЕЗАВИСИМЫМИ КОЛЬЦАМИ
+   (запрос пользователя: "биты под 1 и под 0 становятся разными на одной строке"):
+     группа A — позиции, где маска даёт «1»;
+     группа B — позиции, где «0».
+   Каждая группа крутится ПО СВОИМ ПОЗИЦИЯМ и только по ним: значения переезжают с одной позиции
+   группы на следующую позицию ТОЙ ЖЕ группы, а между группами биты не перемешиваются никогда.
+   Поэтому маска "10" на строке 8 бит даёт два кольца по 4 бита — чётное и нечётное, и после
+   сдвига строка выглядит совсем иначе, чем после обычного ◄/►.
+   Маска — СВОЯ, отдельная от поисковой (#maskShiftText, st.maskShiftText): у сдвига и у
+   прореживания в фон-поиске разные задачи, и держать их на одном поле неудобно.
+   Направлений задумано три пары; сделана первой пара «к центру / от центра» (запрос
+   пользователя — "первым сделай центру"), ◄/► идут тем же механизмом, ▲/▼ пока заглушка. */
+function maskShiftBits(){
+  return (st.maskShiftText || "").replace(/[^01]/g, "");
+}
+/* Позиции строки, разложенные по двум группам маски. Маска идёт по кругу, как везде в приложении. */
+function maskShiftGroups(len, mask){
+  const n = mask.length, g1 = [], g0 = [];
+  for (let i = 0; i < len; i++) (mask[i % n] === "1" ? g1 : g0).push(i);
+  return [g1, g0];
+}
+/* Циклический сдвиг массива значений: dir=-1 — влево (первый уходит в конец), dir=1 — вправо. */
+function rotVals(v, dir){
+  if (v.length < 2) return v.slice();
+  return dir === 1 ? [v[v.length - 1]].concat(v.slice(0, -1)) : v.slice(1).concat([v[0]]);
+}
+/* Один шаг сдвига для ОДНОЙ группы значений.
+   left/right — обычное кольцо по позициям группы.
+   center/uncenter — группа делится пополам, и половины крутятся В РАЗНЫЕ стороны: к центру левая
+   едет вправо, правая влево (вытесненные из середины возвращаются на края своей половины), от
+   центра — наоборот. При нечётной длине средний элемент не принадлежит ни одной половине и
+   стоит на месте. Обе операции — перестановки и точно обратны друг другу, так что "к центру" и
+   "от центра" отменяют одна другую. */
+function maskShiftVals(v, mode){
+  if (mode === "left")  return rotVals(v, -1);
+  if (mode === "right") return rotVals(v, 1);
+  const k = v.length, mid = Math.floor(k / 2);
+  if (k < 2) return v.slice();
+  const L = v.slice(0, mid), R = v.slice(k - mid), M = (k % 2) ? [v[mid]] : [];
+  const toCenter = mode === "center";
+  return rotVals(L, toCenter ? 1 : -1).concat(M, rotVals(R, toCenter ? -1 : 1));
+}
+function maskShiftRow(s, mask, mode){
+  const out = s.split("");
+  for (const grp of maskShiftGroups(s.length, mask)) {
+    if (grp.length < 2) continue;
+    const nv = maskShiftVals(grp.map(i => s[i]), mode);
+    grp.forEach((pos, j) => { out[pos] = nv[j]; });
+  }
+  return out.join("");
+}
+const MASK_SHIFT_LABELS = {
+  center: "к центру", uncenter: "от центра", left: "влево", right: "вправо"
+};
+function maskShiftApply(mode){
+  if (mode === "up" || mode === "down") {
+    // ▲/▼ — сдвиг бита в строку выше/ниже по тому же столбцу. Кнопки заведены сразу (запрос
+    // пользователя: "все три запиши и кнопки сделай"), сама механика — следующим заходом:
+    // тут нужно решить, что делать со строками разной длины и с выравниванием, а это отдельный
+    // разговор, не такой же однострочный, как поворот внутри строки.
+    say("▲/▼ по маске: пока не сделано — сначала «к центру/от центра» и ◄/►. Скажи, и добавлю вертикаль.");
+    return;
+  }
+  const mask = maskShiftBits();
+  if (!mask) { say("⇄ Сдвиг по маске: впишите маску в поле рядом (например 110)."); return; }
+  if (mask.indexOf("1") < 0 || mask.indexOf("0") < 0) {
+    // Одна группа на всю строку — это ровно обычный круговой сдвиг, для него есть ◄/► Круг.
+    say("⇄ Сдвиг по маске: в маске нужны И «1», И «0» — иначе группа получается одна, а это обычный Круг.");
+    return;
+  }
+  if (!st.selectedRows || !st.selectedRows.size) { say("⇄ Сдвиг по маске: выделите строку (или несколько)."); return; }
+  const rows = Array.from(st.selectedRows).sort((a, b) => a - b);
+  snapshot();
+  let changed = 0;
+  for (const r of rows) {
+    const s = st.rows[r] || "";
+    if (s.length < 2) continue;
+    const out = maskShiftRow(s, mask, mode);
+    if (out === s) continue;
+    st.rows[r] = out;
+    // Длина не меняется, но значения бит — да: позиционные пометки прошлых операций к ним
+    // больше не относятся (как и везде, где строка переписывается целиком).
+    invFlagsMap.delete(r);
+    insertedFlagsMap.delete(r);
+    changed++;
+  }
+  maskChangedMap.clear(); maskBaseRows = null;
+  say(changed
+    ? `⇄ Сдвиг по маске ${mask} (${MASK_SHIFT_LABELS[mode]}): сдвинуто строк — ${changed}.`
+    : `⇄ Сдвиг по маске ${mask}: ничего не изменилось (в группах меньше двух бит).`);
+  render(); saveCache();
+}
+const maskShiftTextEl = document.getElementById("maskShiftText");
+if (maskShiftTextEl) {
+  maskShiftTextEl.value = st.maskShiftText || "";
+  maskShiftTextEl.oninput = () => { st.maskShiftText = maskShiftTextEl.value; render(); saveCache(); };
+}
+for (const [id, mode] of [["bMaskShiftCenter", "center"], ["bMaskShiftUncenter", "uncenter"],
+                          ["bMaskShiftLeft", "left"], ["bMaskShiftRight", "right"],
+                          ["bMaskShiftUp", "up"], ["bMaskShiftDown", "down"]]) {
+  const el = document.getElementById(id);
+  if (el) el.onclick = () => maskShiftApply(mode);
+}
+
+/* "🎨 Подсветка по маске" — тоггл на ТРИ состояния (запрос пользователя: "кнопку Подсвет фоновой
+   по маске — 1 вар строка-начало, 2 все сверху сквозно"):
+     off  — не красим;
+     row  — маска начинается ЗАНОВО в каждой строке (фаза 0 = первый бит строки);
+     seq  — сквозной счёт: фаза продолжается через все строки сверху вниз, как будто они склеены
+            в одну ленту (тогда на разных строках под «1» маски попадают разные столбцы).
+   Красит фоном обе группы РАЗНЫМИ цветами (см. .mshift1/.mshift0), чтобы было видно, какие биты
+   поедут одним кольцом, а какие другим. Стоит в самом низу цепочки подсветок в render() —
+   любая адресная подсветка (находка, изменённые биты, выбранная ячейка) её перебивает. */
+const MASK_PAINT_MODES = ["off", "row", "seq"];
+const MASK_PAINT_LABELS = { off: "выкл", row: "от строки", seq: "сквозно" };
+function updateMaskPaintBtn(){
+  const b = document.getElementById("bMaskPaint");
+  if (!b) return;
+  const m = st.maskPaintMode || "off";
+  b.textContent = "🎨 Подсветка по маске: " + MASK_PAINT_LABELS[m];
+  b.classList.toggle("mode-act", m !== "off");
+}
+const bMaskPaintEl = document.getElementById("bMaskPaint");
+if (bMaskPaintEl) {
+  bMaskPaintEl.onclick = () => {
+    const i = MASK_PAINT_MODES.indexOf(st.maskPaintMode || "off");
+    st.maskPaintMode = MASK_PAINT_MODES[(i + 1) % MASK_PAINT_MODES.length];
+    updateMaskPaintBtn();
+    say(st.maskPaintMode === "off"
+      ? "Подсветка по маске выключена."
+      : (st.maskPaintMode === "row"
+          ? "Подсветка по маске: маска начинается заново в КАЖДОЙ строке."
+          : "Подсветка по маске: сквозной счёт через все строки сверху."));
+    render(); saveCache();
+  };
+  updateMaskPaintBtn();
+}
+
+/* "🎨 Подсветка маски" у ПРОРЕЖИВАЮЩЕЙ маски фон-поиска (вкладка «Поиск», кнопка #bBgMaskPaint) —
+   тот же трёхпозиционный тоггл, что и у сдвига, но красит, какие биты маска БЕРЁТ в поиск, а какие
+   выбрасывает. Первым идёт "сквозно" (запрос пользователя: "прореживание по сквозной... биты
+   сквозные, и также в каждой строке начало масок") — именно сквозной счёт отвечает тому, как
+   маска реально ложится на склеенный результат; "от строки" — второй вариант.
+   Диапазон строк — colSelectRowRange() (см. render): выделена одна строка — от верха до неё,
+   выделено несколько — только они. Цвета общие с "⇄ Сдвигом по маске". */
+const BG_MASK_PAINT_MODES = ["off", "seq", "row"];
+const BG_MASK_PAINT_LABELS = { off: "выкл", seq: "сквозно", row: "от строки" };
+function updateBgMaskPaintBtn(){
+  const b = document.getElementById("bBgMaskPaint");
+  if (!b) return;
+  const m = st.bgMaskPaintMode || "off";
+  b.textContent = "🎨 Подсветка маски: " + BG_MASK_PAINT_LABELS[m];
+  b.classList.toggle("mode-act", m !== "off");
+}
+const bBgMaskPaintEl = document.getElementById("bBgMaskPaint");
+if (bBgMaskPaintEl) {
+  bBgMaskPaintEl.onclick = () => {
+    const i = BG_MASK_PAINT_MODES.indexOf(st.bgMaskPaintMode || "off");
+    st.bgMaskPaintMode = BG_MASK_PAINT_MODES[(i + 1) % BG_MASK_PAINT_MODES.length];
+    updateBgMaskPaintBtn();
+    const mask = (typeof maskBits === "function") ? maskBits() : "";
+    say(st.bgMaskPaintMode === "off"
+      ? "Подсветка маски выключена."
+      : (!mask
+          ? "Подсветка маски включена, но само поле «🎭 Маска (прореж.)» пусто — красить нечего (нужны и «1», и «0»)."
+          : (st.bgMaskPaintMode === "seq"
+              ? `Подсветка маски ${mask}: сквозной счёт через строки диапазона.`
+              : `Подсветка маски ${mask}: маска начинается заново в каждой строке.`)));
+    render(); saveCache();
+  };
+  updateBgMaskPaintBtn();
+}
+/* Цвета групп — общие на обе подсветки (см. mpColor в render). Красится сама цифра, поэтому цвет
+   стоит брать поконтрастнее к обычным цветам битов, иначе группы сольются с неподсвеченными. */
+for (const [id, key, def] of [["maskPaintColor1", "maskPaintColor1", "#b060ff"],
+                              ["maskPaintColor0", "maskPaintColor0", "#22d3ee"]]) {
+  const el = document.getElementById(id);
+  if (!el) continue;
+  el.value = st[key] || def;
+  el.oninput = () => { st[key] = el.value; render(); saveCache(); };
+}
+
+
+
+/* === ЗНАЧКИ-КОПИИ КОНТРОЛОВ НАД ПОЛОТНОМ (v0.794) ========================================
+   Полоса ВО ВСЮ ШИРИНУ поля цепочек (запрос пользователя: "пусть тут по всей ширине можно
+   прикрепить"), пустая по умолчанию — наполняет её пользователь сам:
+     ПЕРЕТАСКИВАНИЕ = КОПИРОВАНИЕ: контрол остаётся в своей панели, наверху появляется значок.
+     Тащить можно ЛЮБОЙ контрол панелей — кнопку или галку.
+     Значок встаёт ТУДА, ГДЕ ОТПУСТИЛИ: позиция хранится долей ширины (0..1), поэтому держится
+     на месте и при изменении размера окна. Уже закреплённый значок можно перетащить в другое
+     место той же полосы — он просто переедет.
+     Клик по значку = клик по самому контролу (вся логика режима остаётся в одном месте).
+     Двойной клик по значку — открепить.
+   Состояние читается У САМОГО КОНТРОЛА, а не из st: галка — по checked, кнопка — по своим
+   классам-признакам включённости (.mode-act/.act/.overlay-on/.bg-search-active). Поэтому набор
+   ни с чем не разъезжается и не надо знать имя поля состояния для каждой кнопки.
+   Хранится отдельным ключом localStorage, не в раскладке панелей: это набор ярлыков, а не
+   геометрия окон. */
+const BADGE_KEY = "zerk_fold_badges";
+/* [{ id, x }], x — доля ширины полосы от 0 до 1. */
+let badgePins = [];
+try {
+  const savedPins = JSON.parse(localStorage.getItem(BADGE_KEY) || "null");
+  if (Array.isArray(savedPins)) {
+    badgePins = savedPins.filter(p => p && p.id).map(p => ({ id: p.id, x: +p.x || 0 }));
+  } else if (savedPins && Array.isArray(savedPins.L) && Array.isArray(savedPins.R)) {
+    // Миграция с двух угловых полосок (v0.793): левые раскладываем от левого края, правые — к
+    // правому, дальше пользователь двигает их как хочет.
+    savedPins.L.forEach((id, i) => badgePins.push({ id, x: Math.min(0.45, 0.02 + i * 0.045) }));
+    savedPins.R.forEach((id, i) => badgePins.push({ id, x: Math.max(0.55, 0.98 - i * 0.045) }));
+  }
+} catch (e) { /* мусор в кэше — начинаем с пустой полосы */ }
+function saveBadgePins(){
+  try { localStorage.setItem(BADGE_KEY, JSON.stringify(badgePins)); } catch (e) {}
+}
+/* Включён ли контрол ПРЯМО СЕЙЧАС. null — у контрола нет состояния (обычная кнопка-действие):
+   такой значок всегда рисуется обычным, гасить его не за чем. */
+function badgeCtrlOn(el){
+  if (!el) return null;
+  if (el.tagName === "INPUT" && el.type === "checkbox") return !!el.checked;
+  for (const c of ["mode-act", "act", "overlay-on", "bg-search-active"]) {
+    if (el.classList.contains(c)) return true;
+  }
+  // Кнопка-переключатель в выключенном виде от кнопки-действия неотличима — но и вреда от
+  // "рисуем обычным" тут нет: пользователь сам решил, что этот ярлык ему нужен.
+  return null;
+}
+/* Подпись контрола: у галки — текст её label, у кнопки — собственный текст. */
+function badgeCtrlLabel(el){
+  if (!el) return "";
+  const host = (el.tagName === "INPUT") ? (el.closest("label") || el) : el;
+  return (host.textContent || "").replace(/\s+/g, " ").trim();
+}
+/* Что показать на значке: первое "слово" подписи — обычно это как раз эмодзи-иконка ("🎭", "⏭",
+   "⧬+⨁"). Пусто (галка без текста) — берём id. Длиннее 4 символов не пускаем, иначе значок
+   перестаёт быть значком. */
+function badgeCtrlIcon(el, id){
+  const first = (badgeCtrlLabel(el).split(" ")[0] || "").trim();
+  const src = first || id.replace(/^[bc]/, "");
+  return Array.from(src).slice(0, 4).join("");
+}
+function renderStateBadges(){
+  const box = document.getElementById("stateBadges");
+  if (!box) return;
+  let html = "";
+  for (const pin of badgePins) {
+    const el = document.getElementById(pin.id);
+    if (!el) continue;              // контрол пропал (переименовали id) — молча пропускаем
+    const on = badgeCtrlOn(el);
+    const label = badgeCtrlLabel(el) || pin.id;
+    // translateX(-50%) — значок центрируется по точке, куда его положили, поэтому у самого края
+    // он не вылезает за полосу наполовину, а плавно упирается (см. clamp при сохранении x).
+    html += '<span class="state-badge' + (on === false ? " off" : "") + '" data-ctrl="' + pin.id +
+      '" style="left:' + (pin.x * 100).toFixed(3) + '%" title="' +
+      esc(label) + (on === null ? "" : (on ? " — включено" : " — выключено")) +
+      '. Клик — нажать сам контрол, двойной клик — убрать, перетаскиванием — подвинуть">' +
+      esc(badgeCtrlIcon(el, pin.id)) + '</span>';
+  }
+  box.innerHTML = html;
+}
+/* Клик — жмём тот же контрол, что и в панели: у галки .click() сам переключает checked и шлёт
+   change, у кнопки срабатывает её onclick. Двойной клик снимает значок. */
+const badgeBoxEl = document.getElementById("stateBadges");
+if (badgeBoxEl) {
+  badgeBoxEl.onclick = (e) => {
+    const b = e.target.closest(".state-badge");
+    if (!b) return;
+    const el = document.getElementById(b.getAttribute("data-ctrl"));
+    if (el) el.click();
+    renderStateBadges();
+  };
+  badgeBoxEl.ondblclick = (e) => {
+    const b = e.target.closest(".state-badge");
+    if (!b) return;
+    const id = b.getAttribute("data-ctrl");
+    badgePins = badgePins.filter(p => p.id !== id);
+    saveBadgePins();
+    renderStateBadges();
+    say("Значок убран из полосы.");
+  };
+}
+
+/* ПЕРЕТАСКИВАНИЕ. Свой mousedown/mousemove/mouseup, а не HTML5 drag-and-drop — тот в приложении
+   уже занят вставкой фигуры файлом и конфликтует (та же причина, по которой на ручном драге
+   сделаны и сами панели-вкладки). Порог в 5px: пока мышь не уехала, это обычный клик по контролу
+   (или по значку) и он должен работать как всегда.
+   Источников два: контрол в панели (тогда это КОПИРОВАНИЕ) и уже стоящий значок (тогда это
+   перемещение по полосе). */
+let badgeDrag = null;
+document.addEventListener("mousedown", (e) => {
+  if (e.button !== 0) return;
+  // Уже стоящий значок — двигаем его самого.
+  const badge = e.target.closest(".state-badge");
+  if (badge) {
+    badgeDrag = { id: badge.getAttribute("data-ctrl"), move: true, x0: e.clientX, y0: e.clientY, moved: false, ghost: null };
+    return;
+  }
+  // Контрол ВНУТРИ панели — копируем. Шапки панелей (.panel-head) и вкладки (.menu-btn) не
+  // трогаем: за них таскают сами панели, и перехват сломал бы их перетаскивание.
+  const host = e.target.closest("#leftPanel, #rightPanel, .menu-drop, .floating-panel");
+  if (!host || e.target.closest(".panel-head, .menu-btn")) return;
+  let ctrl = e.target.closest("button, input[type=checkbox]");
+  // ХВАТАТЬ МОЖНО ЗА ПОДПИСЬ (запрос пользователя — "эти тоже туда" про галки «Без 1-го», «Инв.
+  // кольцо» и прочие). Сама <input type=checkbox> — квадратик в 13px, целиться в него мышью
+  // бессмысленно, а закрывающий её <label> внутри себя и содержит: closest() от текста подписи
+  // до чекбокса не дойдёт (он вложен, а не наоборот), поэтому ищем его сверху вниз.
+  if (!ctrl) {
+    const lab = e.target.closest("label");
+    if (lab) ctrl = lab.querySelector('input[type=checkbox]');
+  }
+  if (!ctrl || !ctrl.id) return;
+  badgeDrag = { id: ctrl.id, move: false, x0: e.clientX, y0: e.clientY, moved: false, ghost: null };
+}, true);
+document.addEventListener("mousemove", (e) => {
+  if (!badgeDrag) return;
+  if (!badgeDrag.moved) {
+    if (Math.abs(e.clientX - badgeDrag.x0) < 5 && Math.abs(e.clientY - badgeDrag.y0) < 5) return;
+    badgeDrag.moved = true;
+    // Тащим за подпись — браузер иначе начнёт выделять её текст, и вместо переноса получается
+    // синее выделение через пол-панели.
+    e.preventDefault();
+    // Полоса-приёмник получает видимую рамку, пока идёт перенос (тот же приём, что подсветка
+    // доков при перетаскивании вкладок) — иначе в пустую полосу нечем целиться.
+    document.body.classList.add("badge-dragging");
+    const el = document.getElementById(badgeDrag.id);
+    const g = document.createElement("div");
+    g.className = "badge-ghost";
+    g.textContent = badgeCtrlIcon(el, badgeDrag.id);
+    document.body.appendChild(g);
+    badgeDrag.ghost = g;
+  }
+  if (badgeDrag.ghost) {
+    // Призрак цепляется к ВЕРХНЕМУ КРАЮ курсора (запрос пользователя: "рука неудобно прилипает
+    // к значку"): раньше он висел на 8px ниже-правее острия и лез под саму руку-курсор, закрывая
+    // то место, куда целишься. Смещение делает CSS (translate(-50%,-115%)) — тут просто ставим
+    // точку острия.
+    badgeDrag.ghost.style.left = e.clientX + "px";
+    badgeDrag.ghost.style.top = e.clientY + "px";
+  }
+});
+document.addEventListener("mouseup", (e) => {
+  if (!badgeDrag) return;
+  const drag = badgeDrag;
+  badgeDrag = null;
+  if (drag.ghost) drag.ghost.remove();
+  document.body.classList.remove("badge-dragging");
+  if (!drag.moved) return;   // обычный клик — ничего не перехватываем
+  const box = document.getElementById("stateBadges");
+  if (box) {
+    const r = box.getBoundingClientRect();
+    // ЗОНА ПРИЁМА ШИРОКАЯ (запрос пользователя: "от кнопки зажато провести прямо до площади").
+    // Полоса тонкая (18px), и требовать попадания в неё пиксель в пиксель — мучение: целимся
+    // в ПОЛОСУ СВЕРХУ полотна целиком. Вверх пускаем до самого верха окна (там меню-бар, мимо
+    // не промахнёшься), вниз — с запасом в 60px. По горизонтали доля зажимается в 0..1, значок
+    // центрируется по точке (translateX(-50%)) и у краёв наружу не вылезает.
+    const inBand = e.clientY <= r.bottom + 70 && e.clientX >= r.left && e.clientX <= r.right;
+    if (inBand && r.width > 0) {
+      const x = Math.max(0.01, Math.min(0.99, (e.clientX - r.left) / r.width));
+      const found = badgePins.find(p => p.id === drag.id);
+      if (found) found.x = x;                       // уже стоял — просто переехал
+      else badgePins.push({ id: drag.id, x: x });   // КОПИЯ: контрол остался в своей панели
+      saveBadgePins();
+      renderStateBadges();
+      if (!drag.move) {
+        const el = document.getElementById(drag.id);
+        say("Значок закреплён: " + (badgeCtrlLabel(el) || drag.id) + ". Двойной клик по нему — убрать.");
+      }
+    } else if (drag.move) {
+      // Утащили значок ПРОЧЬ с полосы — это и есть "снять" (кроме двойного клика).
+      badgePins = badgePins.filter(p => p.id !== drag.id);
+      saveBadgePins();
+      renderStateBadges();
+      say("Значок убран из полосы.");
+    }
+  }
+  // Протяжка кончилась — гасим клик, который браузер выдаст следом: иначе контрол сработал бы
+  // сам по себе от одного лишь перетаскивания.
+  const killClick = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
+  document.addEventListener("click", killClick, { capture: true, once: true });
+  setTimeout(() => document.removeEventListener("click", killClick, true), 0);
+});
+
+/* === "✂ РЕЖИМ ПЕРЕНОСА СТРОК" (v0.798) ===================================================
+   Две вертикальные линии — слева и справа — отрезают у строк края, и отрезанное уезжает В НОВУЮ
+   СТРОКУ ПОД СОБОЙ, а всё, что ниже, съезжает вниз (запрос пользователя: "две линии тяну на
+   строки, биты перенести на другую строку под себя, а другие строки смещать вниз").
+   РЕЖЕТ ПО ЧИСЛУ БИТ ОТ КРАЯ (а не по столбцу экрана): у каждой строки диапазона отрезается
+   ОДИНАКОВОЕ число бит от её собственного края, независимо от выравнивания и длины.
+   КОНЕЦ, КОТОРЫМ КУСОК ЛОЖИТСЯ В НОВУЮ СТРОКУ, по умолчанию ПРОТИВОПОЛОЖНЫЙ (отрезали слева —
+   легло справа, кусок как бы огибает строку); галка "тем же концом" переключает.
+   ДИАПАЗОН СТРОК — тот же colSelectRowRange(), что и везде: выделена одна строка → от первой до
+   неё, выделено несколько → только они, нет выделения → все строки.
+   ПРЕДПРОСМОТР, А НЕ ПРАВКА: при входе в режим снимается слепок, и каждое движение линий
+   пересобирает цепочку ИЗ СЛЕПКА заново. Не нажал "✔ Применить" — выход из режима (та же кнопка
+   или Escape) возвращает всё как было (прямой запрос пользователя). */
+let wrapBase = null;   // { rows, pats, used } — слепок на входе в режим
+function wrapModeOn(){ return !!wrapBase; }
+/* Пересобрать цепочку из слепка под текущие линии. Инкрементально резать нельзя: линии ездят
+   туда-сюда, и накопленные срезы было бы не отмотать. */
+function wrapRebuild(){
+  if (!wrapBase) return;
+  const L = Math.max(0, st.wrapL | 0), R = Math.max(0, st.wrapR | 0);
+  const r = colSelectRowRange();
+  const n = wrapBase.rows.length;
+  const lo = Math.max(0, r.lo);
+  const hi = Math.min(n - 1, r.hi === Infinity ? n - 1 : r.hi);
+  const rows = [], pats = [], used = [];
+  for (let i = 0; i < n; i++) {
+    const s = wrapBase.rows[i] || "";
+    const inRange = i >= lo && i <= hi;
+    // Резать нечего, если линии не выставлены, строка вне диапазона или целиком помещается
+    // между линиями (тогда середина пуста и переносить было бы саму строку).
+    if (!inRange || (!L && !R) || s.length <= L + R) {
+      rows.push(s); pats.push(wrapBase.pats[i]); used.push(wrapBase.used[i]);
+      continue;
+    }
+    const left = L ? s.slice(0, L) : "";
+    const right = R ? s.slice(s.length - R) : "";
+    const mid = s.slice(L, s.length - R);
+    // Противоположным концом: отрезанное СЛЕВА встаёт в новой строке СПРАВА, и наоборот —
+    // поэтому порядок кусков переворачивается.
+    const moved = st.wrapOpposite === false ? (left + right) : (right + left);
+    rows.push(mid); pats.push(wrapBase.pats[i]); used.push(wrapBase.used[i]);
+    if (moved) {
+      rows.push(moved);
+      // У новой строки своей ячейки паттерна нет — заводим пустую (ord:-1 = "не из шаблона",
+      // тот же приём, что у достроенных сверху строк).
+      pats.push({ text: "", ord: -1, found: false, kind: null, step: null });
+      used.push(false);
+    }
+  }
+  st.rows = rows; st.pats = pats; st.used = used;
+  render();
+}
+function wrapStart(){
+  if (wrapBase) return;
+  wrapBase = {
+    rows: st.rows.slice(),
+    pats: st.pats.slice(),
+    used: st.used.slice()
+  };
+  if (st.wrapOpposite === undefined) st.wrapOpposite = true;
+  st.wrapL = st.wrapL | 0; st.wrapR = st.wrapR | 0;
+  document.body.classList.add("wrap-mode");
+  updateWrapUi();
+  wrapRebuild();
+  say("✂ Перенос строк: тяни линии мышью по полотну (левая половина — левая линия, правая — правая). «✔ Применить» закрепит, Escape или повторный клик по кнопке — отменит.");
+}
+/* Выход БЕЗ применения — цепочка возвращается к слепку. */
+function wrapCancel(quiet){
+  if (!wrapBase) return;
+  st.rows = wrapBase.rows; st.pats = wrapBase.pats; st.used = wrapBase.used;
+  wrapBase = null;
+  st.wrapL = 0; st.wrapR = 0;
+  document.body.classList.remove("wrap-mode");
+  updateWrapUi();
+  render(); saveCache();
+  if (!quiet) say("✂ Перенос строк отменён — цепочка вернулась как была.");
+}
+/* "✔ Применить" — фиксируем то, что видно, и выходим. snapshot() берём ЗДЕСЬ и от СЛЕПКА:
+   в st.rows сейчас лежит уже перекроенная цепочка, и откат должен вести к исходной. */
+function wrapCommit(){
+  if (!wrapBase) return;
+  const preview = { rows: st.rows, pats: st.pats, used: st.used };
+  st.rows = wrapBase.rows; st.pats = wrapBase.pats; st.used = wrapBase.used;
+  snapshot();
+  st.rows = preview.rows; st.pats = preview.pats; st.used = preview.used;
+  const added = preview.rows.length - wrapBase.rows.length;
+  wrapBase = null;
+  st.wrapL = 0; st.wrapR = 0;
+  document.body.classList.remove("wrap-mode");
+  // Длины строк изменились — позиционные пометки прошлых операций к ним больше не относятся.
+  invFlagsMap.clear(); insertedFlagsMap.clear();
+  maskChangedMap.clear(); maskBaseRows = null;
+  updateWrapUi();
+  render(); saveCache();
+  say(`✂ Перенос применён: добавлено строк — ${added}. Отменить целиком — «↩ Отмена».`);
+}
+function updateWrapUi(){
+  const b = document.getElementById("bWrapMode");
+  if (b) {
+    b.classList.toggle("mode-act", wrapModeOn());
+    b.textContent = wrapModeOn() ? "✂ Перенос строк: идёт" : "✂ Перенос строк";
+  }
+  const info = document.getElementById("wrapInfo");
+  if (info) info.textContent = wrapModeOn() ? ("слева " + (st.wrapL | 0) + " · справа " + (st.wrapR | 0)) : "";
+  const cm = document.getElementById("bWrapCommit");
+  if (cm) cm.style.display = wrapModeOn() ? "" : "none";
+}
+const bWrapModeEl = document.getElementById("bWrapMode");
+if (bWrapModeEl) bWrapModeEl.onclick = () => { if (wrapModeOn()) wrapCancel(); else wrapStart(); };
+const bWrapCommitEl = document.getElementById("bWrapCommit");
+if (bWrapCommitEl) bWrapCommitEl.onclick = wrapCommit;
+const cWrapOppositeEl = document.getElementById("cWrapOpposite");
+if (cWrapOppositeEl) {
+  cWrapOppositeEl.checked = st.wrapOpposite !== false;
+  cWrapOppositeEl.onchange = () => {
+    st.wrapOpposite = cWrapOppositeEl.checked;
+    if (wrapModeOn()) wrapRebuild();
+    saveCache();
+  };
+}
+/* Кнопки-шаги на случай, когда мышью неудобно (и чтобы можно было выставить ровное число бит). */
+for (const [id, delta, side] of [["bWrapLDec", -1, "L"], ["bWrapLInc", 1, "L"],
+                                 ["bWrapRDec", -1, "R"], ["bWrapRInc", 1, "R"]]) {
+  const el = document.getElementById(id);
+  if (!el) continue;
+  el.onclick = () => {
+    if (!wrapModeOn()) { say("✂ Сначала включите режим переноса."); return; }
+    const key = side === "L" ? "wrapL" : "wrapR";
+    st[key] = Math.max(0, (st[key] | 0) + delta);
+    updateWrapUi();
+    wrapRebuild();
+  };
+}
+
+/* ЛИНИИ ТЯНУТСЯ МЫШЬЮ ПО ПОЛОТНУ. Пока режим включён, протяжка по полю строк не выделяет строки
+   (см. проверку wrapModeOn() в обработчиках #rows), а двигает ближайшую линию: начал в левой
+   половине — левую, в правой — правую. Число бит считается по ширине символа (realColStepPx),
+   тем же счётом, что и всё остальное позиционирование. */
+let wrapDrag = null;
+document.addEventListener("mousedown", (e) => {
+  if (!wrapModeOn() || e.button !== 0) return;
+  const rowsEl = document.getElementById("rows");
+  if (!rowsEl || !rowsEl.contains(e.target)) return;
+  const r = rowsEl.getBoundingClientRect();
+  const side = (e.clientX - r.left) < r.width / 2 ? "L" : "R";
+  wrapDrag = { side, x0: e.clientX, start: st[side === "L" ? "wrapL" : "wrapR"] | 0 };
+  e.preventDefault();
+  e.stopPropagation();
+}, true);
+document.addEventListener("mousemove", (e) => {
+  if (!wrapDrag) return;
+  const step = (typeof realColStepPx === "function") ? realColStepPx() : 0;
+  if (!(step > 0)) return;
+  // Левая линия едет вправо — режет больше; правая наоборот (её "внутрь" — это влево).
+  const d = Math.round((e.clientX - wrapDrag.x0) / step) * (wrapDrag.side === "L" ? 1 : -1);
+  const val = Math.max(0, wrapDrag.start + d);
+  const key = wrapDrag.side === "L" ? "wrapL" : "wrapR";
+  if (st[key] === val) return;
+  st[key] = val;
+  updateWrapUi();
+  wrapRebuild();
+});
+document.addEventListener("mouseup", () => { wrapDrag = null; });
+
+/* "🧹 Очистить" — СТЕРЕТЬ СОДЕРЖИМОЕ, не трогая места (запрос пользователя: "очистка всех
+   строк"). В отличие от Delete строки и ячейки остаются, просто становятся пустыми — ни номера,
+   ни соответствие строк паттернам не съезжают.
+   Колонки, как и при удалении (см. deleteSelectedRows), берутся СВОИМИ выделениями:
+     выделены строки           → чистятся их биты;
+     выделены ячейки паттернов → чистятся их тексты;
+     выделено и там, и там     → и то, и другое;
+     не выделено ничего        → чистятся ВСЕ строки цепочки (паттерны при этом целы: стереть
+                                 разом весь список паттернов — потеря, которую не восстановить
+                                 ничем, кроме Отмены). */
+function clearSelectedOrAll(){
+  const rowSel = (st.selectedRows && st.selectedRows.size) ? Array.from(st.selectedRows) : null;
+  const patSel = (st.selectedPats && st.selectedPats.size) ? Array.from(st.selectedPats) : null;
+  snapshot();
+  let rowsDone = 0, patsDone = 0;
+  const rowIdxs = rowSel || (patSel ? [] : st.rows.map((_, i) => i));
+  for (const i of rowIdxs) {
+    if (i < 0 || i >= st.rows.length || !st.rows[i]) continue;
+    st.rows[i] = "";
+    invFlagsMap.delete(i); insertedFlagsMap.delete(i);
+    rowsDone++;
+  }
+  for (const i of (patSel || [])) {
+    const p = (i >= 0 && i < st.pats.length) ? st.pats[i] : null;
+    if (!p || !p.text) continue;
+    p.text = ""; p.found = false; p.kind = null; p.step = null;
+    patsDone++;
+  }
+  maskChangedMap.clear(); maskBaseRows = null;
+  // Нулевая строка должна остаться ровно одна и на своём месте — после очистки строк выше неё
+  // могла образоваться вторая пустая (см. ensureZeroRow).
+  ensureZeroRow();
+  render(); saveCache();
+  const parts = [];
+  if (rowsDone) parts.push(`строк — ${rowsDone}` + (rowSel ? "" : " (все)"));
+  if (patsDone) parts.push(`паттернов — ${patsDone}`);
+  say(parts.length ? "🧹 Очищено: " + parts.join(", ") + ". Строки и ячейки на местах."
+                   : "🧹 Очищать нечего — всё и так пусто.");
+}
+const bClearAllRowsEl = document.getElementById("bClearAllRows");
+if (bClearAllRowsEl) bClearAllRowsEl.onclick = clearSelectedOrAll;

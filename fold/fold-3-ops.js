@@ -1052,8 +1052,14 @@ const MENUS = {
      layout) — Шаги+Поиск слева, Вид+Правка строк справа, все 4 закреплены: панели одной зоны
      appendChild'ятся в том порядке, в котором идут тут (см. цикл for..in MENUS ниже), поэтому
      порядок пар menuOps/menuSearch и menuView/menuEdit в объекте важен. */
-  menuOps:    { title: 'Шаги',         zone: 'leftSlot',  pin: true, ids: ['flowGroup', 'opsGroup'], floatable: true },
+  // topActionsGroup — "⧬ Интерлив" и "⨁ XOR выдел" в САМОМ ВЕРХУ, над "Авто" (запрос
+  // пользователя). Порядок в ids — это и есть порядок отрисовки (см. цикл appendChild ниже),
+  // поэтому группа стоит первой, раньше flowGroup.
+  menuOps:    { title: 'Шаги',         zone: 'leftSlot',  pin: true, ids: ['topActionsGroup', 'flowGroup', 'opsGroup'], floatable: true },
   menuSearch: { title: 'Поиск',        zone: 'leftSlot',  pin: true, ids: ['searchGroup'], floatable: true },
+  // МАСКИ — вынесены из "Поиска" в свою вкладку (запрос пользователя: "свое меню им"). pin:false —
+  // по умолчанию живёт выпадающим окном, не занимая место в доке: маска нужна не в каждом сеансе.
+  menuMask:   { title: 'Маски',        zone: 'leftSlot',  pin: false, ids: ['maskGroup'], floatable: true },
   menuFindLog:{ title: 'Лог находок',  zone: 'leftSlot',  pin: false, ids: ['findLogGroup'], floatable: true },
   menuView:   { title: 'Вид',          zone: 'rightSlot', pin: true, ids: ['viewGroup'],   floatable: true },
   menuEdit:   { title: 'Строки',       zone: 'rightSlot', pin: true, ids: ['editGroup'],   floatable: true },
@@ -1393,21 +1399,15 @@ function toggleAllPins() {
       applyMenu(mid);
     }
   } else {
-    let snap = pinsBeforeHideAll;
+    /* ПОКАЗЫВАЕМ ВСЕ, А НЕ ТО, ЧТО БЫЛО (запрос пользователя: "эта должна всё скрывать и
+       показать ВСЁ, а не то что было"). Раньше кнопка возвращала снимок раскладки, снятый перед
+       скрытием: если до этого часть вкладок была не закреплена или висела плавающими окнами,
+       "показать все" возвращало ровно ту же картину — то есть показывало не все. Теперь она
+       просто закрепляет КАЖДУЮ вкладку в её доке. Снимок больше не нужен. */
     for (let mid in MENUS) {
-      let s = snap && snap[mid];
-      MENUS[mid].pin = s ? s.pin : true;
-      let cb = document.getElementById(mid + 'Pin'); if (cb) cb.checked = MENUS[mid].pin;
+      MENUS[mid].pin = true;
+      let cb = document.getElementById(mid + 'Pin'); if (cb) cb.checked = true;
       applyMenu(mid);
-      if (s && s.float) {
-        let w = MENUS[mid].wrapper;
-        w.classList.add('floating-panel');
-        document.body.appendChild(w);
-        w.style.left = Math.max(0, Math.min(window.innerWidth - 40, s.x)) + 'px';
-        w.style.top = Math.max(0, Math.min(window.innerHeight - 40, s.y)) + 'px';
-        let btn = document.querySelector('.menu-btn[data-menu="' + mid + '"]');
-        if (btn) btn.classList.add('pinned');
-      }
     }
     pinsBeforeHideAll = null;
     updateDockVisibility();
@@ -1676,7 +1676,12 @@ document.getElementById("rows").onclick = e => {
   // набор молча накапливался.
   if (e.target.closest(".pat, .pat2")) {
     if (patDragMoved) return; // протяжка уже выставила набор — не схлопывать его обратно к одному
-    if (st.pats[idx] && st.pats[idx].text) {
+    // ПУСТЫЕ ЯЧЕЙКИ ТОЖЕ ВЫДЕЛЯЮТСЯ (запрос пользователя: "чтобы в паттернах тоже можно было
+    // выбрать 0 строку"). Раньше условие было `st.pats[idx].text` — и нулевая строка (её паттерн
+    // всегда пуст, см. ensureZeroRow) не выделялась вовсе, а значит её нельзя было и удалить
+    // кнопкой "🗑 Паттерн". На поиск это не влияет: "🌈 Все паттерны" и подсказки смотрят на
+    // НЕПУСТЫЕ выделенные (anyNonEmpty), пустая ячейка в наборе им не мешает.
+    if (st.pats[idx]) {
       if (!st.selectedPats) st.selectedPats = new Set();
       if (e.ctrlKey || e.metaKey) {
         if (st.selectedPats.has(idx)) st.selectedPats.delete(idx);
@@ -1694,7 +1699,8 @@ document.getElementById("rows").onclick = e => {
       saveCache();
       // ...и сразу ведём к вхождению этого паттерна в строках; клик по нему же — к следующему
       // (см. patNavStep). render() выше уже пересчитал подсветку, по которой мы и переходим.
-      patNavStep(idx);
+      // У пустой ячейки искать нечего — переход пропускаем, выделение при этом остаётся.
+      if (st.pats[idx].text) patNavStep(idx);
     }
     return;
   }
@@ -1747,6 +1753,9 @@ let rowDragAnchor = null, rowDragMoved = false;
 let patDragAnchor = null, patDragMoved = false;
 document.getElementById("rows").addEventListener("mousedown", e => {
   if (cellSelMode) return; // в режиме выбора ячеек протяжка выделяет ЯЧЕЙКИ, а не диапазон строк
+  // В режиме "✂ Перенос строк" протяжка двигает линии раскроя (см. wrapDrag в fold-4), а не
+  // выделяет строки — иначе одно движение мыши делало бы сразу два дела.
+  if (typeof wrapModeOn === "function" && wrapModeOn()) return;
   if (e.target.tagName === "INPUT" || e.target.closest(".edit-row-input")) return;
   if (e.ctrlKey || e.metaKey || e.button !== 0) return;
   const ln = e.target.closest(".ln");
@@ -1848,6 +1857,12 @@ function startEditRow(idx){
     if (save && inp.value !== currentText) {
       snapshot(); // Сохраняем историю для отката (Undo / Ctrl+Z)
       st.rows[idx] = inp.value.trim();
+      // НАПИСАЛИ В НУЛЕВУЮ — ОНА СТАНОВИТСЯ ПЕРВОЙ, А НАД НЕЙ ПОЯВЛЯЕТСЯ НОВАЯ НУЛЕВАЯ (запрос
+      // пользователя). Это ровно то, что делает ensureZeroRow(): пустая строка на месте
+      // st.topBuilt должна быть всегда, и как только туда вписали биты, она перестаёт быть
+      // границей — граница заводится заново выше. Раньше проверка стояла только в загрузке и
+      // в удалении строк, поэтому правкой нулевую можно было "занять" насовсем.
+      ensureZeroRow();
     }
     render();
     saveCache();
@@ -1941,16 +1956,27 @@ alignBtns.forEach(btn => {
     // добавляется только когда есть что править (разница от столбца и больше) — при переключении
     // между выравниваниями с похожим сдвигом третьей перерисовки не будет. Остаток меньше столбца
     // не убрать: сдвиг — целое число колонок, дробный поехал бы в добивку строк пробелами.
+    // ДОВОДКА ИТЕРАТИВНАЯ, а не в один проход (запрос пользователя: "съехало Ось при выравнивании,
+    // пусть не двигается"). Один проход не сходился: поправка округляется до ЦЕЛЫХ столбцов, а
+    // после её применения линию ещё раз двигает зажим по ширине поля бит (clampAxisOffset) — и
+    // остаток мог оказаться больше столбца, то есть ось так и оставалась уехавшей. Теперь мерим
+    // после каждой правки и повторяем, пока не сойдётся (или пока правка вообще что-то меняет).
+    // Три прохода — потолок от зацикливания: если ось упёрлась в зажим и дальше не идёт, разница
+    // перестанет уменьшаться, и мы просто выходим с тем, что есть.
     if (prevPx != null) {
-      const chPx = realColStepPx();
-      const nowPx = axisScreenPx();
-      if (nowPx != null && chPx > 0) {
+      for (let pass = 0; pass < 3; pass++) {
+        const chPx = realColStepPx();
+        const nowPx = axisScreenPx();
+        if (nowPx == null || !(chPx > 0)) break;
         const d = Math.round((nowPx - prevPx) / chPx);
-        if (d) {
-          st.axisCenterOffset = (st.axisCenterOffset || 0) - d;
-          axisPinCol = axisBaseCol() + st.axisCenterOffset;
-          render();
-        }
+        if (!d) break;                       // сошлось — ось стоит там же, где стояла
+        const before = st.axisCenterOffset || 0;
+        st.axisCenterOffset = before - d;
+        axisPinCol = axisBaseCol() + st.axisCenterOffset;
+        render();
+        // Зажим мог не пустить ось дальше (упёрлась в край поля бит) — тогда следующий проход
+        // считал бы ту же поправку снова и снова. Ничего не изменилось — выходим.
+        if ((st.axisCenterOffset || 0) === before) break;
       }
     }
     saveCache();
@@ -3426,15 +3452,51 @@ if (bgSearchTitleClickEl) bgSearchTitleClickEl.onclick = () => toggleBgSearch();
    что было закинуто дропом изначально) НЕ трогаем: удаление затрагивает только текущую
    рабочую копию, чтобы "Сброс" всегда мог вернуть исходные строки как они были при первой
    загрузке, независимо от последующих ручных удалений/сдвигов/правок. */
+/* КАЖДАЯ КОЛОНКА УДАЛЯЕТСЯ СВОИМ ВЫДЕЛЕНИЕМ (запрос пользователя: "удалять цепочки строки и
+   паттерны отдельно надо, и вместе если выделить и там и там"):
+     выделены только строки  → уходят строки, паттерны остаются на своих номерах;
+     выделены только паттерны → уходят паттерны, строки не двигаются;
+     выделено и там, и там    → уходит и то, и другое (при совпадающих номерах это ровно прежнее
+                                поведение — строка вместе со своим паттерном).
+   Длины st.rows и st.pats при раздельном удалении расходятся — это нормально: render() считает
+   число строк как Math.max(st.rows.length, st.pats.length), то есть хвост более длинной колонки
+   виден и не теряется. Ничего внизу не дописывается (прямой запрос пользователя). */
 function deleteSelectedRows(){
-  if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
+  const rowSel = (st.selectedRows && st.selectedRows.size) ? Array.from(st.selectedRows).sort((a, b) => b - a) : [];
+  const patSel = (st.selectedPats && st.selectedPats.size) ? Array.from(st.selectedPats).sort((a, b) => b - a) : [];
+  if (!rowSel.length && !patSel.length) { say("Выделите строку кликом (или ячейку в колонке паттернов)."); return; }
   snapshot();
-  const selected = Array.from(st.selectedRows).sort((a, b) => b - a);
   const topBefore = st.topBuilt || 0;
-  for (const idx of selected) {
-    st.rows.splice(idx, 1);
+  // ПАТТЕРНЫ — своим списком и ДО строк: массивы независимые, порядок на индексы не влияет.
+  // Нулевая строка и тут не вырезается, а стирается на месте (см. ниже про st.topBuilt).
+  let patsCleared = 0, patsRemoved = 0;
+  for (const idx of patSel) {
+    if (idx < 0 || idx >= st.pats.length) continue;
+    if (idx === (st.topBuilt || 0)) {
+      const p = st.pats[idx];
+      if (p) { p.text = ""; p.found = false; p.kind = null; p.step = null; }
+      patsCleared++;
+      continue;
+    }
     st.pats.splice(idx, 1);
+    patsRemoved++;
+  }
+  const selected = rowSel;
+  for (const idx of selected) {
+    // НУЛЕВАЯ СТРОКА НЕ УДАЛЯЕТСЯ, А ОЧИЩАЕТСЯ НА МЕСТЕ (запрос пользователя: "чисто стирать —
+    // место не двигать"). Она граница между построениями сверху (номера отрицательные) и
+    // настоящими данными, и должна быть всегда ровно одна: вырезать её со сдвигом бессмысленно —
+    // ensureZeroRow() тут же завела бы новую, а вся цепочка под ней съехала бы на строку.
+    // Стираем только БИТЫ: ячейка паттерна — дело выделения паттернов, у неё свой список выше.
+    // Индекс берём каждый раз заново: удаление построений выше уменьшает st.topBuilt.
+    if (idx === (st.topBuilt || 0)) {
+      st.rows[idx] = "";
+      continue;
+    }
+    st.rows.splice(idx, 1);
     st.used.splice(idx, 1);
+    // st.pats тут НЕ трогаем — колонка паттернов удаляется своим выделением (см. patSel выше).
+    // Выделено и там, и там — паттерн этой же строки уже ушёл в том цикле.
     // УДАЛИЛИ ПОСТРОЕННУЮ СВЕРХУ СТРОКУ — построений стало на одну меньше (запрос пользователя:
     // "при достройке вверх и ручном удалении неверно потом считает реальные строки — с минусом их
     // пишет"). Номер строки считается как i − st.topBuilt (см. rowLabel): всё, что ниже удалённой,
@@ -3469,13 +3531,22 @@ function deleteSelectedRows(){
   // (1, 2, 3…), см. ensureZeroRow(). Если удалили именно её, вернуть её на место обязательно:
   // иначе настоящие строки поедут в нумерации на единицу вверх и первая станет нулевой.
   ensureZeroRow();
-  st.selectedRows.clear();
+  if (st.selectedRows) st.selectedRows.clear();
+  // Выделение в колонке паттернов после удаления тоже недействительно: номера съехали.
+  if (st.selectedPats) st.selectedPats.clear();
   // Построений стало меньше — слепок для Сброса снимаем заново, иначе он остался бы снят под
   // прежнее их число и Сброс просто ничего бы не восстановил (см. topBaseRestore).
   if ((st.topBuilt || 0) !== topBefore) topBaseCapture();
   render(); saveCache();
-  say(`Удалено ${selected.length} строк(и)` +
-      ((st.topBuilt || 0) !== topBefore ? `, из них построений сверху ${topBefore - (st.topBuilt || 0)}` : "") + ".");
+  // Нулевая в счёт удалённых не идёт — она очищена на месте, а не вырезана (см. выше).
+  const zeroCleared = selected.includes(topBefore) ? 1 : 0;
+  const rowsRemoved = selected.length - zeroCleared;
+  const parts = [];
+  if (rowsRemoved) parts.push(`строк — ${rowsRemoved}` +
+    ((st.topBuilt || 0) !== topBefore ? ` (построений сверху ${topBefore - (st.topBuilt || 0)})` : ""));
+  if (patsRemoved) parts.push(`паттернов — ${patsRemoved}`);
+  if (zeroCleared || patsCleared) parts.push("нулевая очищена на месте, не сдвинута");
+  say(parts.length ? "Удалено: " + parts.join(", ") + "." : "Удалять было нечего.");
 }
 
 /* Разделитель-граница снизу выделенной строки (Numpad0 / кнопка) — переключатель (повторный
