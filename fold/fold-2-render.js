@@ -587,6 +587,7 @@ function renderTabs() {
   }
 
   const active = st.tabs[st.activeTab];
+  const patBankCount = (st.patBank && st.patBank.length) || 0;
   toggleEl.innerHTML = esc(active ? active.name : "Цепочка") + ' <span class="chain-dd-arrow">⌄</span>';
 
   listEl.innerHTML = st.tabs.map((tab, i) =>
@@ -605,9 +606,24 @@ function renderTabs() {
   // что renderTabs() перезаписывает список целиком и статику отсюда просто стёрло бы. Клик
   // ловится тем же делегированным обработчиком, что и остальные кнопки списка.
   '<div class="chain-dd-footer">' +
+    '<div class="chain-dd-frow">' +
     '<button type="button" class="chain-dd-file" data-act="export" title="Сохранить ВСЕ вкладки-цепочки (со всеми их строками/паттернами/настройками) в файл .json">⬇ Файл</button>' +
     '<button type="button" class="chain-dd-file" data-act="import" title="Загрузить вкладки-цепочки из файла .json (заменит текущие все)">⬆ Файл</button>' +
     '<button type="button" class="chain-dd-file chain-dd-wipe" data-act="wipe" title="ПОЛНОСТЬЮ очистить кэш приложения в браузере: все вкладки-цепочки, настройки и раскладку панелей. Нужно, когда сохранённое состояние само вешает вкладку. Сначала выгрузи нужное кнопкой «⬇ Файл»">🗑 Кэш</button>' +
+    '</div>' +
+  // ВТОРОЙ РЯД — КЭШ ПАТТЕРНОВ (v0.822, упрощён в v0.825 по просьбе пользователя: "просто
+  // текущие паттерны текущей цепочки туда в кэш отдельно, чтобы там не менялись они").
+  // Кладём СНИМОК колонки паттернов в st.patBank — он лежит в кэше браузера отдельно от вкладок,
+  // общий на все, и сам собой не меняется. Дальше двумя кнопками раскладывается обратно: либо в
+  // колонку паттернов, либо прямо в цепочку.
+  // Счётчик в подписи — сколько записей сейчас в кэше; пустой кэш обе кнопки отключает.
+    '<div class="chain-dd-frow">' +
+    '<button type="button" class="chain-dd-file chain-dd-bank" data-act="banksave" title="Отложить в кэш ТЕКУЩИЕ паттерны этой цепочки — отдельной копией. Дальше их можно как угодно править, переключать цепочки и сбрасывать: отложенное в кэше не меняется, пока не отложишь заново. Лежит в браузере, переживает перезагрузку">💾 Паттерны в кэш' + (patBankCount ? ' (' + patBankCount + ')' : '') + '</button>' +
+    '</div>' +
+    '<div class="chain-dd-frow">' +
+    '<button type="button" class="chain-dd-file chain-dd-bank" data-act="bankpats"' + (patBankCount ? '' : ' disabled') + ' title="Разложить паттерны ИЗ КЭША в колонку паттернов: паттерн №N = строка файла №N. Прежние паттерны заменяются целиком, строки цепочки не трогаются. Отменяется через Undo">🧩→ В паттерны</button>' +
+    '<button type="button" class="chain-dd-file chain-dd-bank" data-act="bankrows"' + (patBankCount ? '' : ' disabled') + ' title="Разложить паттерны ИЗ КЭША в саму цепочку: строка №N = строка файла №N. Прежние строки цепочки стираются целиком (как у «🧩⬇ Паттерны в цепочку»). Отменяется через Undo">🧩⬇ В цепочку</button>' +
+    '</div>' +
   '</div>';
 }
 
@@ -1881,12 +1897,16 @@ function render(){
     // Подпись КОРОТКАЯ, в одну строку (запрос пользователя: "одна высота у всех кнопок"). Полный
     // вариант ("ВЫКЛ — включить") переносился на вторую строку и делал ряд выше соседней кнопки
     // "Всё / Выкл". Что клик переключает — сказано в подсказке при наведении.
+    // Подпись без слова "фон" (v0.826, запрос пользователя "сократить фон"): в ряду теперь три
+    // кнопки, и лишние символы заголовка съедали место у соседней "🎭 По маске".
     bgSearchTitleEl.textContent = st.bgSearchOn === false
-      ? "🔍 Фон-поиск: ВЫКЛ"
-      : (bgSearchActive() ? "🔍 Фон-поиск: ВКЛ" : "🔍 Фон-поиск: нет режимов");
+      ? "🔍 Поиск: ВЫКЛ"
+      : (bgSearchActive() ? "🔍 Поиск: ВКЛ" : "🔍 Поиск: нет реж.");
     bgSearchTitleEl.title = (st.bgSearchOn === false ? "Фон-поиск выключен. " : "Фон-поиск включён. ") +
       "Клик — переключить";
   }
+  // Соседняя "🎭 По маске" — там же и по тому же поводу: её подпись зависит от поля маски.
+  if (typeof updateBgMaskOnBtn === "function") updateBgMaskOnBtn();
   // Выключен целиком — гасим подсветку выбранных режимов в серый (см. #bgSearchModeGrp.bg-off).
   const bgModeGrpEl = document.getElementById("bgSearchModeGrp");
   if (bgModeGrpEl) bgModeGrpEl.classList.toggle("bg-off", st.bgSearchOn === false);
@@ -4045,6 +4065,9 @@ if (chainDdToggleEl && chainDdListEl) {
       const act = fileBtn.dataset.act;
       if (act === "export") exportAllTabs();
       else if (act === "wipe") clearAllCache();
+      else if (act === "banksave") patsToPatBank();
+      else if (act === "bankpats") patBankToPats();
+      else if (act === "bankrows") patBankToRows();
       else importAllTabs();
       return;
     }
@@ -4212,6 +4235,59 @@ if (importTabsInputEl) {
     };
     reader.readAsText(file);
   };
+}
+
+/* КЭШ ПАТТЕРНОВ (v0.822, упрощён в v0.825). Три кнопки во втором ряду подвала списка цепочек:
+   отложить текущие паттерны в кэш → вернуть кэш в колонку паттернов → разложить кэш в цепочку.
+   Смысл — "отдельная полка": паттерны цепочки живут своей жизнью (правятся, стираются, уезжают
+   вместе с переключением вкладки), а снятая с них копия лежит нетронутой, пока её не переснимут.
+   Кэш (st.patBank) хранится в localStorage РЯДОМ с вкладками (см. saveCache), поэтому он один
+   на все цепочки и переживает перезагрузку; стирается только общей "🗑 Кэш".
+   Загрузку паттернов из текстового файла тут не делаем — оказалась не нужна (v0.825). */
+function patsToPatBank(){
+  const texts = (st.pats || []).map(p => (p && p.text) ? p.text : "");
+  // Хвост пустых ячеек в кэш не кладём — он ничего не значит и только раздувает счётчик.
+  while (texts.length && !texts[texts.length - 1]) texts.pop();
+  const list = texts.filter(t => t);
+  if (!list.length) { say("Отложить в кэш нечего: в этой цепочке нет ни одного паттерна."); return; }
+  const had = (st.patBank && st.patBank.length) || 0;
+  if (had && !confirm(`В кэше уже лежит ${had} паттернов. Заменить их текущими (${list.length})? Прежние пропадут.`)) return;
+  st.patBank = list;
+  renderTabs(); saveCache();
+  say(`Отложено в кэш: ${list.length} паттернов. Правь их в цепочке как угодно — в кэше они останутся такими.`);
+}
+/* Кэш → КОЛОНКА ПАТТЕРНОВ. Строки цепочки не трогаем вообще: колонки живут независимо, их общая
+   длина считается как Math.max(rows.length, pats.length), так что паттернов может быть и больше,
+   чем строк. Отметки "найден"/kind/step у новых паттернов пустые — прежние находки не про них. */
+function patBankToPats(){
+  const bank = (st.patBank || []).filter(t => t);
+  if (!bank.length) { say("Кэш паттернов пуст — сначала отложи туда текущие кнопкой «💾 Паттерны в кэш»."); return; }
+  snapshot();
+  /* НАЧИНАЕМ НЕ С НУЛЕВОГО ИНДЕКСА (исправлено в v0.829, жалоба "паттерны уходят вниз, если
+     цепочку из кэша вставлять"). Сверху цепочки всегда стоит пустая нулевая строка (см.
+     ensureZeroRow), а под ней может быть достроенный зеркальный верх — данных там нет, и
+     паттернов у этих строк тоже быть не должно. Раньше кэш ложился с индекса 0, то есть первый
+     паттерн вставал напротив нулевой строки, вся колонка оказывалась на строку выше цепочки, а
+     следующая вставка "🧩⬇ В цепочку" (она зовёт ensureZeroRow и сдвигает всё вниз) добавляла
+     ещё одну ступеньку — колонки расползались всё дальше. Теперь кэш кладётся ровно с первой
+     строки С ДАННЫМИ, а если цепочка пуста — сразу под нулевую строку. */
+  const firstData = firstDataIdx();
+  const lead = firstData >= 0 ? firstData : (st.topBuilt || 0) + 1;
+  const out = [];
+  for (let i = 0; i < lead; i++) out.push({ text: "", ord: i, found: false, kind: null, step: null });
+  bank.forEach((t, j) => out.push({ text: t, ord: lead + j, found: false, kind: null, step: null }));
+  st.pats = out;
+  st.selectedPats = new Set();
+  render(); saveCache();
+  say(`Паттерны из кэша разложены в колонку паттернов: ${bank.length} шт., начиная со строки №${lead + 1}. Прежние заменены — вернуть можно Undo.`);
+  logStep("Кэш в паттерны", "", "", `${bank.length} шт.`);
+}
+/* Кэш → ЦЕПОЧКА. Та же самая работа, что у "🧩⬇ Паттерны в цепочку" — общая textsToChainRows()
+   (см. fold-4-tools.js), только тексты берутся не из колонки паттернов, а из кэша. */
+function patBankToRows(){
+  const bank = (st.patBank || []).filter(t => t);
+  if (!bank.length) { say("Кэш паттернов пуст — сначала отложи туда текущие кнопкой «💾 Паттерны в кэш»."); return; }
+  textsToChainRows(bank, "Паттерны из кэша");
 }
 
 const bAddTabEl = document.getElementById("bAddTab");

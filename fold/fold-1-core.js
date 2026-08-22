@@ -2101,6 +2101,15 @@ const st = {
   // Отдельное выделение ПАТТЕРНОВ (клик по ячейке паттерна) — сужает список того, что ищет
   // "🌈 Все паттерны". С выделением СТРОК (selectedRows) никак не связано.
   selectedPats: new Set(),
+  /* КЭШ ПАТТЕРНОВ (v0.822, v0.825) — СНИМОК колонки паттернов, отложенный "на полку" кнопкой
+     "💾 Паттерны в кэш". Лежит в кэше браузера ОТДЕЛЬНО от вкладок-цепочек: общий на все вкладки,
+     переживает и переключение цепочки, и сброс, и сам собой не меняется, что бы ни делали с
+     живыми паттернами. Ни на что не влияет — только две кнопки в подвале списка цепочек
+     раскладывают его обратно: либо в колонку паттернов, либо в саму цепочку. */
+  patBank: [],
+  /* "⇄ Сдвиг по маске": какая группа НЕ едет. "" — крутятся обе (как было), "1" — биты под «1»
+     маски стоят на месте, едет только группа «0», "0" — наоборот. См. maskShiftRow в fold-4. */
+  maskShiftFreeze: "",
   activeTab: 0, tabs: [],
   align: "center", vertical: false, padZero: false, allKinds: false, ringInvert: false, ringOff: false,
   // "⏮ Без посл." — не проверять ПОСЛЕДНИЙ символ паттерна (пара к st.skipFirst, см. patBase).
@@ -2187,6 +2196,9 @@ const st = {
   // "🎭 Маска" фон-поиска (поле #bgMaskText): непустая — фон-поиск ищет в результатах ЕЁ, а не
   // паттерн строки под выделенной (см. maskSearchText/computeBgSearchTarget).
   bgMaskText: "",
+  // Применять ли маску из поля (кнопка "🎭 По маске", v0.826). Поле маску хранит всегда, а этот
+  // выключатель решает, идёт ли она в дело — чтобы гасить маску, не стирая её из поля.
+  bgMaskOn: true,
   // "🎭 Маска заново каждый виток" — см. mkResult/dimMaskedBits. По умолчанию включена.
   bgMaskRingRestart: true,
   // Автоматически вписывать зеркала в строки при расширении выделения (см. mirrorsAutoStep).
@@ -2703,10 +2715,20 @@ function applyState(s){
   st.horizChainRow = (s.horizChainRow === undefined) ? -1 : s.horizChainRow;
   st.horizBigTargetIdx = s.horizBigTargetIdx != null ? s.horizBigTargetIdx : -1;
   st.selectedCol = s.selectedCol != null ? s.selectedCol : -1;
-  // Группы осей — вместе с остальным снимком (см. axisGroups/syncAxisSnapCols).
+  /* Группы осей — вместе с остальным снимком (см. axisGroups/syncAxisSnapCols).
+     p2/anch ОБЯЗАТЕЛЬНО тянем дальше (исправлено в v0.827): captureState() их пишет, а тут они
+     раньше отбрасывались — и на первом же Undo/Redo ось теряла и свою истинную позицию в
+     полустолбцах, и строку-якорь. axisGroups() достраивала их заново по умолчанию (p2 = 2×столбец,
+     anch = 0), то есть ось молча превращалась в обычную вертикаль, привязанную к нулевой строке, —
+     ровно то, на что жаловался пользователь ("потерялась ось", "как бы прикреплена к первому
+     символу 0 строки"). Формат восстановления — тот же, что в applyUiSettings(). */
   st.axisSnapGroups = Array.isArray(s.axisSnapGroups)
-    ? s.axisSnapGroups.map(g => Array.isArray(g) ? { cols: g.slice(), row: null }
-                                                 : { cols: ((g && g.cols) || []).slice(), row: (g && g.row != null) ? g.row : null })
+    ? s.axisSnapGroups.map(g => Array.isArray(g)
+        ? { cols: g.slice(), row: null }
+        : { cols: ((g && g.cols) || []).slice(),
+            p2: (g && Array.isArray(g.p2)) ? g.p2.slice() : undefined,
+            row: (g && g.row != null) ? g.row : null,
+            anch: (g && g.anch != null) ? g.anch : undefined })
     : (Array.isArray(s.axisSnapCols) ? s.axisSnapCols.map(c => ({ cols: [c], row: null })) : []);
   syncAxisSnapCols();
   st.rowDividers = new Set(s.rowDividers || []);

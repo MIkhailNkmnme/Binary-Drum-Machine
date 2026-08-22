@@ -2804,45 +2804,74 @@ if (bParityViewEl) bParityViewEl.onclick = () => setParityView((st.parityView | 
    строка в строку: строка №N = паттерн №N. Сами паттерны остаются на местах (снимаются только
    отметки "найден"/kind/step — цепочка новая, старые находки к ней не относятся).
    Шаблон (st.tplRows) НЕ трогаем: "↺ Сброс" по-прежнему возвращает к нему, а не к паттернам. */
+/* Тело вынесено в функцию (v0.822): ровно тем же способом в цепочку кладётся и КЭШ ПАТТЕРНОВ
+   (st.patBank, кнопка "🧩⬇ В цепочку" в подвале списка цепочек) — логика "стереть строки и
+   положить вместо них тексты" у них одна на двоих, дублировать её вторым экземпляром незачем.
+   texts — готовый список текстов, srcLabel — как называть источник в сообщении и в логе шагов. */
+function textsToChainRows(texts, srcLabel) {
+  texts = texts.slice();
+  // Хвост пустых паттернов в строки не превращаем — иначе цепочка обрастает пустыми строками.
+  while (texts.length && !texts[texts.length - 1]) texts.pop();
+  if (!texts.some(t => t.length)) { say(srcLabel + " в цепочку: вставлять нечего — список пуст."); return; }
+  snapshot();
+  st.rows = texts.slice();
+  st.used = st.rows.map(() => false);
+  st.pats = st.rows.map((t, i) => {
+    const p = st.pats[i];
+    return p ? { ...p, found: false, kind: null, step: null }
+             : { text: "", ord: i, found: false, kind: null, step: null };
+  });
+  // Строки заменены целиком — всё, что привязано к их прежним позициям, больше не про них.
+  st.topBuilt = 0;
+  topBaseCapture();
+  invFlagsMap.clear();
+  insertedFlagsMap.clear();
+  axisOffsetMap.clear();
+  axisBitShiftMap.clear();
+  axisBitDirMap.clear();
+  rowRotOffMap.clear();
+  edgeOnesSideMap.clear();
+  mirrorsRowDone.clear();
+  maskChangedMap.clear(); maskBaseRows = null;
+  st.step = 0; st.passCount = 0; st.tailBuffer = ""; st.hit = null;
+  st.horizBitIdx = 0; st.lastXorBitA = null;
+  st.selectedRows = new Set();
+  ensureZeroRow();
+  // Выделение как после Сброса — первая строка с данными (многие режимы без выделения не идут).
+  const f = firstDataIdx();
+  if (f >= 0) st.selectedRows = new Set([f]);
+  const filled = st.rows.filter(t => t.length).length;
+  render(); saveCache();
+  say(`${srcLabel} вставлены в цепочку: ${filled} стр. (строка №N = запись №N). Прежние строки удалены — вернуть можно Undo.`);
+  logStep(srcLabel + " в цепочку", "", "", `${filled} стр.`);
+}
+/* "🗑 Удалить ячейки паттернов" (v0.829, запрос пользователя: "нужно чтоб вручную можно было
+   удалять строки, даже пустые, в паттернах отдельно от цепочек"). Обычный Delete сносит строку
+   ВМЕСТЕ с её паттерном — это по-прежнему так; здесь же удаляются ТОЛЬКО выделенные ячейки
+   колонки паттернов, всё, что ниже, подтягивается вверх, а строки цепочки не трогаются вообще.
+   Пустые ячейки удаляются наравне с заполненными: ими как раз и выравнивают колонку.
+   Выделять ячейки — клик по колонке паттернов (st.selectedPats), тот же набор, что использует
+   "🌈 Все паттерны". p.ord НЕ пересчитываем: это привязка "паттерн ↔ его исходная строка", она
+   от сдвига колонки не меняется. */
+const bDelPatsEl = document.getElementById("bDelPats");
+if (bDelPatsEl) {
+  bDelPatsEl.onclick = () => {
+    const sel = (st.selectedPats && st.selectedPats.size)
+      ? Array.from(st.selectedPats).sort((a, b) => b - a) // сверху вниз нельзя: индексы поедут
+      : [];
+    if (!sel.length) { say("Удалить ячейки паттернов: сначала выдели их в колонке паттернов (клик по ячейке, можно и по пустой)."); return; }
+    snapshot();
+    let gone = 0;
+    for (const i of sel) if (i >= 0 && i < st.pats.length) { st.pats.splice(i, 1); gone++; }
+    st.selectedPats = new Set();
+    render(); saveCache();
+    say(`Удалено ячеек паттернов: ${gone}. Строки цепочки не тронуты, нижние паттерны подтянулись вверх — вернуть можно Undo.`);
+    logStep("Удалить ячейки паттернов", "", "", `${gone} шт.`);
+  };
+}
 const bPatsToRowsEl = document.getElementById("bPatsToRows");
 if (bPatsToRowsEl) {
-  bPatsToRowsEl.onclick = () => {
-    const texts = st.pats.map(p => (p && p.text) ? p.text : "");
-    // Хвост пустых паттернов в строки не превращаем — иначе цепочка обрастает пустыми строками.
-    while (texts.length && !texts[texts.length - 1]) texts.pop();
-    if (!texts.some(t => t.length)) { say("Паттерны в цепочку: паттернов нет — вставлять нечего."); return; }
-    snapshot();
-    st.rows = texts.slice();
-    st.used = st.rows.map(() => false);
-    st.pats = st.rows.map((t, i) => {
-      const p = st.pats[i];
-      return p ? { ...p, found: false, kind: null, step: null }
-               : { text: "", ord: i, found: false, kind: null, step: null };
-    });
-    // Строки заменены целиком — всё, что привязано к их прежним позициям, больше не про них.
-    st.topBuilt = 0;
-    topBaseCapture();
-    invFlagsMap.clear();
-    insertedFlagsMap.clear();
-    axisOffsetMap.clear();
-    axisBitShiftMap.clear();
-    axisBitDirMap.clear();
-    rowRotOffMap.clear();
-    edgeOnesSideMap.clear();
-    mirrorsRowDone.clear();
-    maskChangedMap.clear(); maskBaseRows = null;
-    st.step = 0; st.passCount = 0; st.tailBuffer = ""; st.hit = null;
-    st.horizBitIdx = 0; st.lastXorBitA = null;
-    st.selectedRows = new Set();
-    ensureZeroRow();
-    // Выделение как после Сброса — первая строка с данными (многие режимы без выделения не идут).
-    const f = firstDataIdx();
-    if (f >= 0) st.selectedRows = new Set([f]);
-    const filled = st.rows.filter(t => t.length).length;
-    render(); saveCache();
-    say(`Паттерны вставлены в цепочку: ${filled} стр. (строка №N = паттерн №N). Прежние строки удалены — вернуть можно Undo.`);
-    logStep("Паттерны в цепочку", "", "", `${filled} стр.`);
-  };
+  bPatsToRowsEl.onclick = () => textsToChainRows(st.pats.map(p => (p && p.text) ? p.text : ""), "Паттерны");
 }
 
 /* "1/0→" — добавляет бит СПРАВА к выделенным строкам (или всем, если ничего не выделено).
@@ -3796,13 +3825,26 @@ function maskShiftVals(v, mode){
   const toCenter = mode === "center";
   return rotVals(L, toCenter ? 1 : -1).concat(M, rotVals(R, toCenter ? -1 : 1));
 }
+/* ЗАМОРОЗКА ГРУППЫ (v0.823, запрос пользователя: "нужна кнопка заморозить 1 или 0 в маске,
+   чтобы не двигались 1 а только 0 например"). st.maskShiftFreeze: "" — едут обе группы (как
+   было), "1" — биты под «1» маски стоят намертво, едет только группа «0», "0" — наоборот.
+   Стоящая группа не участвует в сдвиге ВООБЩЕ: её позиции и значения остаются как есть, а
+   вторая группа крутится по своим позициям ровно так же, как раньше — то есть заморозка это
+   не отдельный режим сдвига, а фильтр "какие кольца сегодня крутим". */
+function maskShiftFreeze(){
+  const f = st.maskShiftFreeze;
+  return (f === "1" || f === "0") ? f : "";
+}
 function maskShiftRow(s, mask, mode){
   const out = s.split("");
-  for (const grp of maskShiftGroups(s.length, mask)) {
-    if (grp.length < 2) continue;
+  const freeze = maskShiftFreeze();
+  // maskShiftGroups отдаёт [группа «1», группа «0»] — индекс 0 это «1», индекс 1 это «0».
+  maskShiftGroups(s.length, mask).forEach((grp, gi) => {
+    if (grp.length < 2) return;
+    if (freeze === (gi === 0 ? "1" : "0")) return; // эта группа заморожена — не трогаем
     const nv = maskShiftVals(grp.map(i => s[i]), mode);
     grp.forEach((pos, j) => { out[pos] = nv[j]; });
-  }
+  });
   return out.join("");
 }
 const MASK_SHIFT_LABELS = {
@@ -3841,9 +3883,11 @@ function maskShiftApply(mode){
     changed++;
   }
   maskChangedMap.clear(); maskBaseRows = null;
+  const frz = maskShiftFreeze();
+  const frzNote = frz ? `, «${frz}» заморожены` : "";
   say(changed
-    ? `⇄ Сдвиг по маске ${mask} (${MASK_SHIFT_LABELS[mode]}): сдвинуто строк — ${changed}.`
-    : `⇄ Сдвиг по маске ${mask}: ничего не изменилось (в группах меньше двух бит).`);
+    ? `⇄ Сдвиг по маске ${mask} (${MASK_SHIFT_LABELS[mode]}${frzNote}): сдвинуто строк — ${changed}.`
+    : `⇄ Сдвиг по маске ${mask}${frzNote}: ничего не изменилось (в группах меньше двух бит${frz ? ", либо едет только замороженная" : ""}).`);
   render(); saveCache();
 }
 const maskShiftTextEl = document.getElementById("maskShiftText");
@@ -3856,6 +3900,28 @@ for (const [id, mode] of [["bMaskShiftCenter", "center"], ["bMaskShiftUncenter",
                           ["bMaskShiftUp", "up"], ["bMaskShiftDown", "down"]]) {
   const el = document.getElementById(id);
   if (el) el.onclick = () => maskShiftApply(mode);
+}
+/* "❄ Заморозить" — тоггл на три состояния по кругу: выкл → «1» → «0» → выкл. Отдельной кнопкой,
+   а не парой галок: состояний ровно три и они взаимоисключающие. Подсветка .mode-act — общий
+   приём для всех включённых режимов в приложении. */
+const MASK_FREEZE_ORDER = ["", "1", "0"];
+const MASK_FREEZE_LABELS = { "": "выкл", "1": "стоят 1", "0": "стоят 0" };
+function updateMaskShiftFreezeBtn(){
+  const b = document.getElementById("bMaskShiftFreeze");
+  if (!b) return;
+  const f = maskShiftFreeze();
+  b.textContent = "❄ Заморозить: " + MASK_FREEZE_LABELS[f];
+  b.classList.toggle("mode-act", f !== "");
+}
+const bMaskShiftFreezeEl = document.getElementById("bMaskShiftFreeze");
+if (bMaskShiftFreezeEl) {
+  bMaskShiftFreezeEl.onclick = () => {
+    const i = MASK_FREEZE_ORDER.indexOf(maskShiftFreeze());
+    st.maskShiftFreeze = MASK_FREEZE_ORDER[(i + 1) % MASK_FREEZE_ORDER.length];
+    updateMaskShiftFreezeBtn();
+    render(); saveCache();
+  };
+  updateMaskShiftFreezeBtn();
 }
 
 /* "🎨 Подсветка по маске" — тоггл на ТРИ состояния (запрос пользователя: "кнопку Подсвет фоновой
@@ -4007,10 +4073,18 @@ function renderStateBadges(){
     const label = badgeCtrlLabel(el) || pin.id;
     // translateX(-50%) — значок центрируется по точке, куда его положили, поэтому у самого края
     // он не вылезает за полосу наполовину, а плавно упирается (см. clamp при сохранении x).
-    html += '<span class="state-badge' + (on === false ? " off" : "") + '" data-ctrl="' + pin.id +
+    /* ПОДСКАЗКА — КОРОТКАЯ (v0.831, запрос пользователя "подсказка нужна проще: название и инфо
+       ВКЛ/Выкл"): только подпись контрола и его состояние, без инструкции про клик, двойной клик
+       и перетаскивание — она была длиннее самой подписи и повторялась у каждого значка. Если
+       подпись САМА уже говорит "ВКЛ"/"ВЫКЛ" (как у "🎭 По маске: ВКЛ"), второй раз не дописываем. */
+    const saysState = /ВКЛ|ВЫКЛ/.test(label);
+    const stateNote = (on === null || saysState) ? "" : (on ? " — ВКЛ" : " — ВЫКЛ");
+    // Включён — обводим рамкой (v0.832, запрос пользователя "когда включена — рамкой обводи,
+    // чтобы понятно было, вкл она или выкл"): выключенный значок и так приглушён (.off), но
+    // между "выключен" и "состояния нет" разницы на глаз не было.
+    html += '<span class="state-badge' + (on === false ? " off" : (on ? " on" : "")) + '" data-ctrl="' + pin.id +
       '" style="left:' + (pin.x * 100).toFixed(3) + '%" title="' +
-      esc(label) + (on === null ? "" : (on ? " — включено" : " — выключено")) +
-      '. Клик — нажать сам контрол, двойной клик — убрать, перетаскиванием — подвинуть">' +
+      esc(label + stateNote) + '">' +
       esc(badgeCtrlIcon(el, pin.id)) + '</span>';
   }
   box.innerHTML = html;

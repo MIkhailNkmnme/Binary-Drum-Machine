@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Fold — v0.819</title>
+<title>Zerkalius Fold — v0.832</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -187,11 +187,21 @@
   /* Подвал выпадающего списка вкладок — экспорт/импорт ВСЕХ цепочек. position:sticky, чтобы при
      длинном списке (он скроллится, max-height:60vh) кнопки оставались на виду внизу, а не
      уезжали под список. Отделён линией сверху — это действие не про конкретную вкладку. */
-  .chain-dd-footer{position:sticky;bottom:0;display:flex;gap:4px;padding:4px 6px;
+  .chain-dd-footer{position:sticky;bottom:0;display:flex;flex-direction:column;gap:4px;padding:4px 6px;
     border-top:1px solid var(--line);background:var(--panel)}
+  /* Подвал теперь в НЕСКОЛЬКО РЯДОВ (v0.822): «Файл-Файл-Кэш», под ними «Паттерны в кэш» и пара
+     «В паттерны / В цепочку». Ряды — обычные flex-строки внутри одного sticky-подвала: два
+     отдельных sticky-блока с bottom:0 налезли бы друг на друга. */
+  .chain-dd-frow{display:flex;gap:4px}
   .chain-dd-file{flex:1;font-size:11px;padding:3px 6px;background:#232735;color:var(--fg);
-    border:1px solid var(--line);border-radius:3px;cursor:pointer;justify-content:center}
+    border:1px solid var(--line);border-radius:3px;cursor:pointer;justify-content:center;white-space:nowrap}
   .chain-dd-file:hover{border-color:var(--acc);color:var(--acc)}
+  .chain-dd-file[disabled]{opacity:.4;cursor:default}
+  .chain-dd-file[disabled]:hover{border-color:var(--line);color:var(--fg)}
+  /* Кэш паттернов — зелёным, тем же цветом, что и родственная кнопка "🧩⬇ Паттерны в цепочку"
+     во вкладке "Строки": обе про одно и то же — разложить готовые паттерны по местам. */
+  .chain-dd-bank{color:#38c172}
+  .chain-dd-bank:hover{border-color:#38c172;color:#38c172;background:rgba(56,193,114,.12)}
   /* Очистка кэша — действие необратимое, поэтому отделена цветом от соседних "Файл". */
   .chain-dd-wipe{color:var(--red)}
   .chain-dd-wipe:hover{border-color:var(--red);color:var(--red);background:rgba(255,77,77,.12)}
@@ -1334,6 +1344,10 @@
 .state-badge:hover{border-color:var(--acc)}
 /* Контрол сейчас выключен — значок приглушён (сам значок остаётся, он ярлык, а не индикатор). */
 .state-badge.off{opacity:.28; color:var(--dim)}
+/* А включён — обведён рамкой (v0.832, запрос пользователя). Та же светящаяся рамка, что у
+   включённых кнопок в панелях (.mode-act), чтобы состояние читалось одинаково и там, и тут. */
+.state-badge.on{opacity:1; border-color:var(--acc); box-shadow:0 0 0 1px rgba(77,163,255,.45);
+  background:rgba(77,163,255,.14)}
 /* Пока тащат контрол — полоски становятся видимыми мишенями: в пустую полосу нулевой ширины
    попасть нечем (тот же приём, что подсветка доков при перетаскивании вкладок). */
 /* Пока тащат — показываем ВСЮ зону приёма, а она шире самой полосы (см. inBand в fold-4:
@@ -1780,7 +1794,7 @@ body.vcur-on #vcurBar{display:flex}
   <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <a href="../index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (../index.html — на уровень выше, файл лежит в подпапке fold/)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.819</span></h3>
+    <a href="../index.html" id="hubLink" style="margin-right:6px;text-decoration:none;color:var(--dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:12px;" title="Вернуться в Zerkalius Hub (../index.html — на уровень выше, файл лежит в подпапке fold/)">← Хаб</a><h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Fold <span style="color:var(--dim);font-weight:normal;">v0.832</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -2045,8 +2059,6 @@ body.vcur-on #vcurBar{display:flex}
        строки. Данные меняет только третий. -->
   <div style="grid-column:1 / -1; display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:4px; border:1px solid var(--m-gold); background:rgba(194,171,106,0.10); border-radius:3px; padding:4px;">
     <button id="bColModeShift" class="mode-act" style="min-width:0; white-space:nowrap; font-size:11px; padding:3px 3px; overflow:hidden;" data-tip="t19">⇅ Сдвиг к «1»</button>
-    <!-- Режим включён (запрос пользователя "активируй"). -->
-    <button id="bColModeAxis" style="min-width:0; white-space:nowrap; font-size:11px; padding:3px 3px; overflow:hidden; border-color:#4da3ff; color:#4da3ff;" data-tip="t20">⊙ Ось сюда</button>
     <button id="bColModeTrim" style="min-width:0; white-space:nowrap; font-size:11px; padding:3px 3px; overflow:hidden; border-color:#ff7b72; color:#ff7b72;" data-tip="t21">✂ Обрезать</button>
     <!-- Снять НАЗНАЧЕННЫЙ столбец (синий). Обычное жёлтое выделение столбца снимается кликом по
          его номеру и назначение не трогает — оно живёт отдельно и запоминается. -->
@@ -2058,8 +2070,14 @@ body.vcur-on #vcurBar{display:flex}
     <!-- Как считать несколько назначенных осей: по умолчанию «1» нужна на ВСЕХ сразу, с этой
          галкой — достаточно любой одной (запрос пользователя). -->
     <label class="chk" style="grid-column:1 / -1; font-size:11px;" data-tip="t25"><input type="checkbox" id="cAxisSnapAny">⊙ Хватит любой из осей</label>
-    <!-- Все «1» выделенной строки — сразу в оси (запрос пользователя). -->
-    <button id="bAxisFromRow" style="grid-column:1 / -1; min-width:0; white-space:nowrap; font-size:11px; padding:3px 3px; border-color:#4da3ff; color:#4da3ff;" data-tip="t26">⊙ Оси по «1» строки</button>
+    <!-- ОДНА КНОПКА ВМЕСТО ДВУХ (v0.830, запрос пользователя): бывшие "⊙ Ось сюда" и "⊙ Оси по
+         «1» строки" делали одно и то же — назначали оси Кругу — и различались только тем, откуда
+         их брать. Теперь кнопка смотрит на выделение сама: выделен столбец — осью станет он,
+         выделена строка — осями станут все её единицы (группой), не выделено ничего — просто
+         включается режим "клик по номеру столбца назначает ось". Она же остаётся третьим
+         положением переключателя "что делает клик по номеру столбца" (id прежний, .mode-act
+         на ней). Поэтому и стоит отдельной широкой строкой, а не в паре с "Сдвиг/Обрезать". -->
+    <button id="bColModeAxis" style="grid-column:1 / -1; min-width:0; white-space:nowrap; font-size:11px; padding:3px 3px; overflow:hidden; border-color:#4da3ff; color:#4da3ff;" data-tip="t20">⊙ Ось: столбец или «1» строки</button>
     <!-- Диагональные оси на "½"-выравниваниях (запрос пользователя — доп.опцией, старое поведение
          по умолчанию не трогаем). КНОПКА-ЦИКЛЕР, а не галка: наклон бывает двух направлений, и
          нажатия перебирают выкл → ↘ → ↙ → выкл (запрос пользователя "второе нажатие делает
@@ -2144,35 +2162,6 @@ body.vcur-on #vcurBar{display:flex}
     <button id="bSquareFill" style="flex:1; border-color:#22d3ee; color:#22d3ee;" data-tip="t49">⬔ До квадрата</button>
     <button id="bGrowDownOnFind" style="flex:1 1 100%; border-color:#22d3ee; color:#22d3ee;" data-tip="t50">⬇ Расширять вниз: выкл</button>
   </div>
-  <!-- ⇄ СДВИГ ПО МАСКЕ (v0.785). Круговой сдвиг НЕ всей строкой, а двумя независимыми кольцами:
-       биты под «1» маски крутятся по своим позициям, биты под «0» — по своим, между группами
-       ничего не перемешивается (см. maskShiftRow в JS). Маска СВОЯ, не та, что у фон-поиска.
-       Направления: «к центру/от центра» (сделано первым), ◄/► (тот же механизм), ▲/▼ — кнопки
-       есть, вертикаль пока не реализована. -->
-  <div style="grid-column:1 / -1; display:flex; flex-direction:column; gap:4px; border:1px solid var(--m-purple); background:rgba(107,77,138,0.12); border-radius:3px; padding:4px;">
-    <span style="font-size:11px;color:var(--dim);" title="Сдвиг битов по маске: строка делится на две группы (под «1» и под «0» маски), каждая крутится СВОИМ кольцом по своим позициям">⇄ Сдвиг по маске</span>
-    <input type="text" id="maskShiftText" placeholder="маска, напр. 110" spellcheck="false"
-           style="width:100%; box-sizing:border-box; font-family:'Roboto Mono',Consolas,monospace; font-size:12px; background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:3px; padding:2px 4px;"
-           title="Своя маска сдвига, отдельная от поисковой. Нужны И «1», И «0»: иначе группа одна и это обычный Круг. Всё, кроме 0/1, выбрасывается">
-    <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:4px;">
-      <button id="bMaskShiftCenter" style="border-color:#b060ff; color:#b060ff;" title="Обе половины каждой группы едут К СЕРЕДИНЕ (левая вправо, правая влево). Обратна кнопке «От центра»">⇥⇤ К центру</button>
-      <button id="bMaskShiftUncenter" style="border-color:#b060ff; color:#b060ff;" title="Обе половины каждой группы едут ОТ СЕРЕДИНЫ к краям — отменяет «К центру»">⇤⇥ От центра</button>
-      <button id="bMaskShiftLeft" style="border-color:#b060ff; color:#b060ff;" title="Каждая группа крутится ВЛЕВО по своим позициям">◄ Влево</button>
-      <button id="bMaskShiftRight" style="border-color:#b060ff; color:#b060ff;" title="Каждая группа крутится ВПРАВО по своим позициям">► Вправо</button>
-      <button id="bMaskShiftUp" style="border-color:var(--dim); color:var(--dim);" title="К нам: бит уходит в строку выше по тому же столбцу — пока не реализовано">▲ К нам</button>
-      <button id="bMaskShiftDown" style="border-color:var(--dim); color:var(--dim);" title="От нас: бит уходит в строку ниже по тому же столбцу — пока не реализовано">▼ От нас</button>
-    </div>
-    <button id="bMaskPaint" style="border-color:#b060ff; color:#b060ff;" title="Красит обе группы разными цветами прямо в строках. Три состояния: выкл → от строки (маска начинается заново в каждой строке) → сквозно (счёт идёт через все строки сверху)">🎨 Подсветка по маске: выкл</button>
-    <!-- ЦВЕТА ГРУПП — общие для обеих подсветок: и для "⇄ Сдвига по маске" тут, и для подсветки
-         прореживающей маски фон-поиска (кнопка «🎨 Подсветка маски» во вкладке «Поиск»). Красится
-         САМА ЦИФРА, а не фон (запрос пользователя: "разными цифрами лучше чем фон"). -->
-    <div style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--dim);">
-      <label class="chk" style="gap:3px;" title="Цвет битов, стоящих под «1» маски">под 1
-        <input type="color" id="maskPaintColor1" value="#b060ff"></label>
-      <label class="chk" style="gap:3px;" title="Цвет битов, стоящих под «0» маски">под 0
-        <input type="color" id="maskPaintColor0" value="#22d3ee"></label>
-    </div>
-  </div>
   <!-- ✂ ПЕРЕНОС СТРОК (v0.798, см. wrapRebuild в JS). Две линии режут у строк края по ЧИСЛУ БИТ,
        отрезанное уходит в НОВУЮ строку под собой, всё ниже съезжает вниз. Диапазон — как везде:
        выделена одна строка → от первой до неё, несколько → только они, нет выделения → все.
@@ -2204,10 +2193,11 @@ body.vcur-on #vcurBar{display:flex}
   <!-- Паттерны → цепочка: строки стираются целиком и заменяются текстами паттернов, строка в
        строку (см. patternsToRows() в JS). -->
   <button id="bPatsToRows" style="grid-column:1 / -1; border-color:#38c172; color:#38c172;" data-tip="t53">🧩⬇ Паттерны в цепочку</button>
-  <!-- Отдельной кнопки удаления паттерна НЕТ (запрос пользователя: "просто без кнопки"): удаление
-       одно на обе колонки — Delete сносит и строку, и её паттерн, что бы из двух ни было выделено
-       (см. deleteSelectedRows). Выделять в колонке паттернов можно и пустые ячейки, поэтому
-       нулевая строка тоже выбирается и удаляется. -->
+  <!-- Delete по-прежнему сносит СТРОКУ ВМЕСТЕ с её паттерном, что бы из двух ни было выделено
+       (см. deleteSelectedRows). А вот кнопка ниже (v0.829, запрос пользователя) удаляет ТОЛЬКО
+       выделенные ячейки колонки паттернов — отдельно от цепочки, включая пустые: ими как раз и
+       подгоняют колонку по высоте. Выделять ячейки — кликом по колонке паттернов. -->
+  <button id="bDelPats" style="grid-column:1 / -1; border-color:#38c172; color:#38c172;" title="Удалить ВЫДЕЛЕННЫЕ ячейки колонки паттернов (в том числе пустые). Строки цепочки остаются на месте, паттерны ниже подтягиваются вверх. Отменяется через Undo">🗑🧩 Удалить ячейки паттернов</button>
   <button id="bAddRightToggle" data-tip="t54">1/0→</button>
   <!-- Вставка инверсии между символами: 11 → 1010. Вставленные символы подсвечиваются красным
        (см. insertedFlagsMap/.bit-ins). -->
@@ -2278,7 +2268,12 @@ body.vcur-on #vcurBar{display:flex}
      ВАЖНО: у каждой записи в MENUS должна быть СВОЯ разметка в шапке — .menu-btn с data-menu и
      галка #<id>Pin, плюс пустой .menu-drop контейнер. Без них инициализация панелей падает и
      страница остаётся пустой (см. цикл по MENUS с чекбоксами). -->
-<div id="maskGroup" class="control-group control-group-player">
+    <!-- ОДНА КОЛОНКА, НЕ .control-group-player (v0.820, "поправь не вмещаются"): у player-сетки
+     grid-template-columns:1fr 1fr, то есть в панели 260px каждой колонке достаётся ~125px. Все
+     подписи тут длинные и .chk по умолчанию nowrap — поле "🎭 Маска (прореж.)", кнопка
+     "🎨 Подсветка маски", галка "🎭 Маска заново каждый виток" и "🎭 Перебор масок" вылезали
+     за края панели и обрезались. В один столбец каждому элементу достаётся вся ширина. -->
+<div id="maskGroup" class="control-group">
     <!-- "🎭 Маска" — ПРОРЕЖИВАНИЕ строки результата: «1» — бит взять, «0» — пропустить, маска идёт
          по кругу и прикладывается с каждого своего символа (фазы «#м1», «#м2»…). Ищется в готовой
          прорежённой строке всё то же — паттерн строки ниже выделенной. Пустое поле — поведение
@@ -2303,12 +2298,53 @@ body.vcur-on #vcurBar{display:flex}
          периода и показать те, что дают находку (см. bgMaskScan в JS). -->
     <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
       <button id="bBgMaskScan" style="flex:1 1 auto;" data-tip="t142">🎭 Перебор масок</button>
-      <label class="chk" data-tip="t142">до&nbsp;периода
-        <input type="number" id="bgMaskScanMax" min="2" max="14" step="1" value="8" style="width:44px;margin-left:3px;">
+      <!-- ДИАПАЗОН длин масок, а не только верхняя граница (v0.828, запрос пользователя "можно
+           задать от 10 до 11 например"): нижнее поле отсекает короткие маски, которые уже
+           перебирали, — на длинах 10–12 их тысячи и ждать их незачем. Поля перепутали местами —
+           bgMaskScan() сам поменяет их обратно. -->
+      <label class="chk" data-tip="t142">период&nbsp;от
+        <input type="number" id="bgMaskScanMin" min="2" max="14" step="1" value="2" style="width:38px;margin:0 3px;">
+        до
+        <input type="number" id="bgMaskScanMax" min="2" max="14" step="1" value="8" style="width:38px;margin-left:3px;">
       </label>
       <label class="chk" data-tip="t142"><input type="checkbox" id="cBgMaskScanRing"> сквозной</label>
     </div>
     <div id="bgMaskScanOut" style="display:none;"></div>
+    <!-- ⇄ СДВИГ ПО МАСКЕ (v0.785, переехал сюда из "Строк" в v0.821 по просьбе пользователя —
+         все маски в одной вкладке). Круговой сдвиг НЕ всей строкой, а двумя независимыми
+         кольцами: биты под «1» маски крутятся по своим позициям, биты под «0» — по своим, между группами
+         ничего не перемешивается (см. maskShiftRow в JS). Маска СВОЯ, не та, что у фон-поиска.
+         Направления: «к центру/от центра» (сделано первым), ◄/► (тот же механизм), ▲/▼ — кнопки
+         есть, вертикаль пока не реализована. -->
+    <div style="display:flex; flex-direction:column; gap:4px; border:1px solid var(--m-purple); background:rgba(107,77,138,0.12); border-radius:3px; padding:4px;">
+    <span style="font-size:11px;color:var(--dim);" title="Сдвиг битов по маске: строка делится на две группы (под «1» и под «0» маски), каждая крутится СВОИМ кольцом по своим позициям">⇄ Сдвиг по маске</span>
+    <input type="text" id="maskShiftText" placeholder="маска, напр. 110" spellcheck="false"
+             style="width:100%; box-sizing:border-box; font-family:'Roboto Mono',Consolas,monospace; font-size:12px; background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:3px; padding:2px 4px;"
+             title="Своя маска сдвига, отдельная от поисковой. Нужны И «1», И «0»: иначе группа одна и это обычный Круг. Всё, кроме 0/1, выбрасывается">
+    <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:4px;">
+      <button id="bMaskShiftCenter" style="border-color:#b060ff; color:#b060ff;" title="Обе половины каждой группы едут К СЕРЕДИНЕ (левая вправо, правая влево). Обратна кнопке «От центра»">⇥⇤ К центру</button>
+      <button id="bMaskShiftUncenter" style="border-color:#b060ff; color:#b060ff;" title="Обе половины каждой группы едут ОТ СЕРЕДИНЫ к краям — отменяет «К центру»">⇤⇥ От центра</button>
+      <button id="bMaskShiftLeft" style="border-color:#b060ff; color:#b060ff;" title="Каждая группа крутится ВЛЕВО по своим позициям">◄ Влево</button>
+      <button id="bMaskShiftRight" style="border-color:#b060ff; color:#b060ff;" title="Каждая группа крутится ВПРАВО по своим позициям">► Вправо</button>
+      <button id="bMaskShiftUp" style="border-color:var(--dim); color:var(--dim);" title="К нам: бит уходит в строку выше по тому же столбцу — пока не реализовано">▲ К нам</button>
+      <button id="bMaskShiftDown" style="border-color:var(--dim); color:var(--dim);" title="От нас: бит уходит в строку ниже по тому же столбцу — пока не реализовано">▼ От нас</button>
+    </div>
+    <!-- ❄ ЗАМОРОЗКА ГРУППЫ (v0.823, запрос пользователя: "чтобы не двигались 1 а только 0").
+         Три состояния по кругу: выкл (едут оба кольца, как раньше) → «стоят 1» (биты под «1»
+         маски не двигаются вообще, крутится только группа «0») → «стоят 0» (наоборот).
+         Работает для ВСЕХ направлений сразу — и для ⇥⇤/⇤⇥, и для ◄/►. См. maskShiftRow в JS. -->
+    <button id="bMaskShiftFreeze" style="border-color:#7fd1ff; color:#7fd1ff;" title="Какая группа маски стоит на месте. Выкл — крутятся обе. «стоят 1» — биты под «1» маски заморожены, едут только те, что под «0». «стоят 0» — наоборот. Действует на все направления сдвига">❄ Заморозить: выкл</button>
+    <button id="bMaskPaint" style="border-color:#b060ff; color:#b060ff;" title="Красит обе группы разными цветами прямо в строках. Три состояния: выкл → от строки (маска начинается заново в каждой строке) → сквозно (счёт идёт через все строки сверху)">🎨 Подсветка по маске: выкл</button>
+    <!-- ЦВЕТА ГРУПП — общие для обеих подсветок: и для "⇄ Сдвига по маске" тут, и для подсветки
+         прореживающей маски фон-поиска (кнопка «🎨 Подсветка маски» — теперь тоже здесь, выше по
+         этой же вкладке). Красится САМА ЦИФРА, а не фон (запрос пользователя: "разными цифрами лучше чем фон"). -->
+    <div style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--dim);">
+      <label class="chk" style="gap:3px;" title="Цвет битов, стоящих под «1» маски">под 1
+          <input type="color" id="maskPaintColor1" value="#b060ff"></label>
+      <label class="chk" style="gap:3px;" title="Цвет битов, стоящих под «0» маски">под 0
+          <input type="color" id="maskPaintColor0" value="#22d3ee"></label>
+    </div>
+  </div>
 </div>
 
 <div id="seqGroup" class="control-group">
@@ -2391,8 +2427,13 @@ body.vcur-on #vcurBar{display:flex}
          кнопкой "Всё/только XOR-Все/Выкл" ниже (3-й клик снимает все режимы разом). -->
     <!-- Заголовок-выключатель и "Всё / Выкл" — В ОДНУ СТРОКУ (запрос пользователя). Подпись
          "Режимы фон-поиска:" убрана как лишняя: под ней и так сразу идут сами режимы. -->
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;flex-wrap:wrap;">
       <span id="bgSearchTitle" style="cursor:pointer;display:inline-flex;align-items:center;min-height:var(--std-btn-h);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-tip="t82">🔍 Фон-поиск</span>
+      <!-- "🎭 По маске" — МЕЖДУ общим выключателем поиска и "Всё / Выкл" (запрос пользователя).
+           Включает/выключает прореживающую маску, НЕ трогая её поле во вкладке "Маски": маска
+           остаётся набранной и ждёт. Пока годной маски нет (нужны и «1», и «0») — кнопка
+           неактивна, включать нечего. Подпись/состояние — updateBgMaskOnBtn() в fold-3. -->
+      <button id="bBgMaskOn" style="font-size:11px;padding:1px 6px;flex:0 1 auto;" disabled>🎭 По маске: нет маски</button>
       <button id="bBgModeAllNone" style="font-size:11px;padding:1px 6px;flex:0 0 auto;" data-tip="t83">Всё / Выкл</button>
     </div>
     <!-- РЕЖИМЫ ФОН-ПОИСКА — ГРУППАМИ И КОРОТКИМИ ПОДПИСЯМИ (запрос пользователя: "расположи
@@ -2718,11 +2759,11 @@ body.vcur-on #vcurBar{display:flex}
      (видно новый номер версии в заголовке), а fold-*.js берёт из кеша — то есть новый код
      просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
      версией в <title>/<h3>, теми же тремя цифрами. -->
-<script src="fold-1-core.js?v=819"></script>
-<script src="fold-2-render.js?v=819"></script>
-<script src="fold-3-ops.js?v=819"></script>
-<script src="fold-4-tools.js?v=819"></script>
-<script src="fold-5-ui.js?v=819"></script>
+<script src="fold-1-core.js?v=832"></script>
+<script src="fold-2-render.js?v=832"></script>
+<script src="fold-3-ops.js?v=832"></script>
+<script src="fold-4-tools.js?v=832"></script>
+<script src="fold-5-ui.js?v=832"></script>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;
      кнопка включения видна только при pointer:coarse. -->

@@ -2078,9 +2078,12 @@ if (cBgMaskRingRestartEl) {
    Остаются все НЕПЕРИОДИЧЕСКИЕ строки длины 2..N — их Σ по d|n μ(d)·2^(n/d) штук: 2, 6, 12, 30,
    54, 126, 240, 504, 990, 2046, 4020 для длин 2..12. До периода 8 это 470 масок, до 10 — 1964,
    до 12 — 8030; перебор синхронный, поэтому на 12+ интерфейс заметно подвиснет. */
-function primitiveMasks(maxLen){
+/* minLen/maxLen — ДИАПАЗОН длин (v0.828, запрос пользователя: "можно задать от 10 до 11
+   например"). Раньше перебор всегда начинался с 2, и чтобы посмотреть только длинные маски,
+   приходилось ждать все короткие: до периода 11 это 4000+ лишних масок против 2046 нужных. */
+function primitiveMasks(minLen, maxLen){
   const out = [];
-  for (let n = 2; n <= maxLen; n++){
+  for (let n = Math.max(2, minLen); n <= maxLen; n++){
     const total = 1 << n;
     // v=0 — все нули (брать нечего), v=total-1 — все единицы (не выбрасывается ничего).
     for (let v = 1; v < total - 1; v++){
@@ -2100,9 +2103,15 @@ function primitiveMasks(maxLen){
 }
 function bgMaskScan(){
   const outEl = document.getElementById("bgMaskScanOut");
+  const minEl = document.getElementById("bgMaskScanMin");
   const maxEl = document.getElementById("bgMaskScanMax");
   const ringEl = document.getElementById("cBgMaskScanRing");
-  const maxLen = Math.max(2, Math.min(14, maxEl ? (+maxEl.value || 8) : 8));
+  let minLen = Math.max(2, Math.min(14, minEl ? (+minEl.value || 2) : 2));
+  let maxLen = Math.max(2, Math.min(14, maxEl ? (+maxEl.value || 8) : 8));
+  // Поля перепутаны местами — молча меняем их обратно, а не отдаём пустой перебор.
+  if (minLen > maxLen) { const t = minLen; minLen = maxLen; maxLen = t; }
+  // Подпись диапазона: одна длина — так и пишем, без "от ... до ...".
+  const lenNote = (minLen === maxLen) ? ("период " + minLen) : ("период " + minLen + "–" + maxLen);
   // Сырые результаты режимов берём БЕЗ маски: сама она тут перебирается, а с ней в поле
   // computeBgSearchTarget отдала бы уже фазы одной-единственной маски.
   const savedMask = st.bgMaskText;
@@ -2119,7 +2128,8 @@ function bgMaskScan(){
   // "сквозной" — маска кладётся на удвоенную строку, то есть идёт через границу витка (тот же
   // смысл, что у снятой галки "🎭 Маска заново каждый виток").
   const thru = !!(ringEl && ringEl.checked);
-  const masks = primitiveMasks(maxLen);
+  const masks = primitiveMasks(minLen, maxLen);
+  if (!masks.length) { say("Перебор масок: в этом диапазоне длин непериодических масок нет."); return; }
   const hits = [];
   for (const mask of masks){
     for (const r of info.results){
@@ -2137,15 +2147,15 @@ function bgMaskScan(){
     const shown = hits.slice(0, 300);
     outEl.innerHTML =
       '<span class="mask-note">Найдено масок: ' + hits.length + ' из ' + masks.length +
-        ' (период до ' + maxLen + (thru ? ', сквозной' : '') + '). Клик — поставить маску в поле.' +
+        ' (' + lenNote + (thru ? ', сквозной' : '') + '). Клик — поставить маску в поле.' +
         (hits.length > shown.length ? ' Показаны первые ' + shown.length + '.' : '') + '</span>' +
       shown.map(h => '<span class="mask-hit' + (h.mask === maskBits() ? " cur" : "") + '" data-mask="' + h.mask +
         '" title="' + bgModeLabel(h.mode) + ' — ' + KIND_LABELS_RU[h.kind] + (h.skip ? " (без 1-го символа)" : "") +
         '">' + h.mask + '</span>').join("");
   }
   say(hits.length
-    ? `🎭 Перебор масок: находку дают ${hits.length} маск(и) из ${masks.length} (период до ${maxLen}${thru ? ", сквозной" : ""}) — список под кнопкой, клик ставит маску в поле.`
-    : `🎭 Перебор масок: ни одна из ${masks.length} масок (период до ${maxLen}) не даёт находки — паттерн строки №${info.targetIdx + 1} не собирается ни одним прореживанием этой длины.`);
+    ? `🎭 Перебор масок: находку дают ${hits.length} маск(и) из ${masks.length} (${lenNote}${thru ? ", сквозной" : ""}) — список под кнопкой, клик ставит маску в поле.`
+    : `🎭 Перебор масок: ни одна из ${masks.length} масок (${lenNote}) не даёт находки — паттерн строки №${info.targetIdx + 1} не собирается ни одним прореживанием этой длины.`);
 }
 const bBgMaskScanEl = document.getElementById("bBgMaskScan");
 if (bBgMaskScanEl) bBgMaskScanEl.onclick = bgMaskScan;
@@ -2641,7 +2651,9 @@ function toggleBgSearch(){
    биты и нечётные, "110" — три разные выборки по две трети бит.
    Маска пустая (или без единиц — из неё нечего брать) — ничего не меняется, режимы отдают свои
    результаты как всегда. Всё, кроме 0/1, из маски выбрасывается, так что писать можно с пробелами. */
-function maskBits(){
+/* Разбор ПОЛЯ маски, без оглядки на выключатель: нужен и самой maskBits(), и кнопке
+   "🎭 По маске" — ей надо знать, есть ли вообще годная маска, чтобы гасить себя при пустом поле. */
+function maskBitsRaw(){
   const raw = (st.bgMaskText || "").replace(/[^01]/g, "");
   // Ни одной "1" — брать нечего; ни одного "0" — не выбрасывается ничего. И то, и другое означает
   // "маски нет": иначе маска вида "11" честно плодила бы N одинаковых фаз результата и множила
@@ -2649,6 +2661,15 @@ function maskBits(){
   // считается и ищется столько раз, какова её длина.
   if (raw.indexOf("1") < 0 || raw.indexOf("0") < 0) return "";
   return raw;
+}
+/* ВЫКЛЮЧАТЕЛЬ МАСКИ (v0.826, запрос пользователя: "кнопку По Маске — включает поиск по маске и
+   выкл"). Раньше маска работала всегда, пока в поле что-то есть, и чтобы её отключить, поле
+   приходилось чистить — а вместе с ним терялась и сама маска. Теперь поле маску хранит, а
+   кнопка решает, применять её или нет. Гасится ЗДЕСЬ, в одной точке: маску тянут через
+   maskBits() и фон-поиск, и подсветка, и перебор — значит и выключаться им всем разом. */
+function maskBits(){
+  if (st.bgMaskOn === false) return "";
+  return maskBitsRaw();
 }
 /* Одна фаза прореживания: маска прикладывается к строке начиная со своего символа phase. */
 function applyPickMask(s, mask, phase){
@@ -3443,6 +3464,35 @@ if (bResetFlowEl) bResetFlowEl.onclick = () => document.getElementById("bReset")
 // иначе в аварийном режиме (#safe) клик записал бы пустую сессию поверх сохранённых цепочек.
 const appTitleEl = document.getElementById("appTitle");
 if (appTitleEl) appTitleEl.onclick = () => location.reload();
+/* "🎭 По маске" — выключатель прореживающей маски, рядом с общим выключателем поиска.
+   Без годной маски в поле (нужны И «1», И «0» — см. maskBitsRaw) кнопка неактивна: включать
+   нечего. Подпись и состояние обновляет updateBgMaskOnBtn(), её зовёт render() — так кнопка
+   оживает прямо по ходу набора маски в поле. */
+function updateBgMaskOnBtn(){
+  const b = document.getElementById("bBgMaskOn");
+  if (!b) return;
+  const has = !!maskBitsRaw();
+  const on = has && st.bgMaskOn !== false;
+  b.disabled = !has;
+  /* Значок ОДИН И ТОТ ЖЕ во всех состояниях (v0.832 — в v0.831 он менялся на 🚫/➖, пользователь
+     попросил вернуть): "🎭" это имя контрола, а не индикатор. Включённость видно по рамке —
+     .mode-act на самой кнопке и .state-badge.on на её значке в полосе. */
+  b.textContent = "🎭 По маске: " + (!has ? "нет маски" : (on ? "ВКЛ" : "ВЫКЛ"));
+  b.classList.toggle("mode-act", on);
+  b.title = has
+    ? (on ? `Маска «${maskBitsRaw()}» применяется: поиск идёт по прорежённым ею результатам. Клик — выключить, поле при этом не чистится`
+          : `Маска «${maskBitsRaw()}» в поле есть, но не применяется. Клик — включить`)
+    : "Впиши маску в поле «🎭 Маска (прореж.)» во вкладке «Маски» — нужны и «1», и «0»";
+}
+const bBgMaskOnEl = document.getElementById("bBgMaskOn");
+if (bBgMaskOnEl) {
+  bBgMaskOnEl.onclick = () => {
+    if (!maskBitsRaw()) return;
+    st.bgMaskOn = st.bgMaskOn === false;
+    st.bgSearchLastHit = -1; // цель поиска сменилась — прежняя находка к ней не относится
+    render(); saveCache();
+  };
+}
 // Клик по "🔍 Фон-поиск" — общий выключатель, см. toggleBgSearch().
 const bgSearchTitleClickEl = document.getElementById("bgSearchTitle");
 if (bgSearchTitleClickEl) bgSearchTitleClickEl.onclick = () => toggleBgSearch();
@@ -3615,8 +3665,20 @@ const bColModeShiftEl = document.getElementById("bColModeShift");
 if (bColModeShiftEl) bColModeShiftEl.onclick = () => setColClickMode("shift");
 const bColModeTrimEl = document.getElementById("bColModeTrim");
 if (bColModeTrimEl) bColModeTrimEl.onclick = () => setColClickMode("trim");
+/* ОДНА КНОПКА НА ДВА ДЕЙСТВИЯ (v0.830, запрос пользователя: "если выделен столбец — по столбцу,
+   а если строка — по строке, одна кнопка вместо двух"). Прежние "⊙ Ось сюда" и "⊙ Оси по «1»
+   строки" делали одно и то же — назначали оси Кругу, — просто брали их из разных мест. Теперь
+   кнопка одна и смотрит на выделение:
+     выделен СТОЛБЕЦ (жёлтый) → он и становится осью (это делает сам setColClickMode);
+     иначе выделена СТРОКА    → осями становятся все её единицы, группой (axisFromSelectedRow);
+     не выделено ничего       → просто включается режим "клик по номеру столбца назначает ось".
+   Столбец идёт первым: он выбирается прицельно, а строка почти всегда выделена под что-то ещё. */
 const bColModeAxisEl = document.getElementById("bColModeAxis");
-if (bColModeAxisEl) bColModeAxisEl.onclick = () => setColClickMode("axis");
+if (bColModeAxisEl) bColModeAxisEl.onclick = () => {
+  const hadCol = st.selectedCol >= 0;
+  setColClickMode("axis");
+  if (!hadCol && st.selectedRows && st.selectedRows.size) axisFromSelectedRow();
+};
 /* "✕ Снять столбец" — убрать НАЗНАЧЕННЫЙ "⊙ Ось сюда" столбец (синяя подсветка + цель Круга).
    Обычное жёлтое выделение столбца при этом не трогается: это разные вещи. */
 const bColAxisClearEl = document.getElementById("bColAxisClear");
@@ -3645,8 +3707,7 @@ if (bColAxisClearEl) bColAxisClearEl.onclick = () => {
    строки под ней — до СЛЕДУЮЩЕЙ выделенной, а если такой нет, до конца цепочки. Сама строка-
    источник из выделения выходит: её единицы и задают оси, крутить её незачем.
    Данные не трогаются вовсе — двигает строки только сам Круг ◄/►. */
-const bAxisFromRowEl = document.getElementById("bAxisFromRow");
-if (bAxisFromRowEl) bAxisFromRowEl.onclick = () => {
+function axisFromSelectedRow(){
   if (!st.selectedRows || !st.selectedRows.size) { say("⊙ Оси по «1»: выделите строку кликом."); return; }
   const sel = Array.from(st.selectedRows).sort((a, b) => a - b);
   const src = sel[0];
@@ -3682,7 +3743,7 @@ if (bAxisFromRowEl) bAxisFromRowEl.onclick = () => {
         ? `Выделены строки ниже — по ${rowLabel(hi)} включительно; ◄/►Круг поставит их на эти оси.`
         : "Строк ниже нет — выделение оставлено как было."));
   render(); saveCache();
-};
+}
 
 const colHeaderEl = document.getElementById("colHeader");
 if (colHeaderEl) {
