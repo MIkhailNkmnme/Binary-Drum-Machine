@@ -36,6 +36,27 @@ var chgColorOffRows = null;
 var chgBitsOn = true;
 var maskColorOn = true;
 var cellSel = new Set();
+/* НАКОПИТЕЛЬ ЗАФИКСИРОВАННЫХ БИТОВ (v0.945, кнопка "📌 Зафиксировать"). Ключ — "строка|индекс
+   бита В СТРОКЕ", НЕ "строка|столбец", как у cellSel: сюда кладут результат поиска образца, а он
+   считается по индексам внутри строки (см. cellSampleRows в render). Сеты разные и по смыслу, и
+   по системе координат — не путать. Живёт только в сеансе, в кэш не пишется: это рабочая пометка
+   "вот это я уже собрал", а не состояние цепочки. */
+var cellPin = new Set();
+/* ВЫБРАННЫЕ БИТЫ В КОЛОНКЕ ПАТТЕРНОВ (v0.950, запрос пользователя "в поле паттерны тоже надо
+   выделять биты и также везде их подсветить"). Ключ — "строка|индекс символа в тексте паттерна".
+   ПОСТРОЧНО: одновременно выбирать можно биты ТОЛЬКО ОДНОГО паттерна — пока набор не снят, клики
+   по другим строкам игнорируются (прямое требование пользователя: "если выделил в одной строке,
+   то в другой не выделять, пока тут не сниму"). Отдельный набор от cellSel: там координата —
+   СТОЛБЕЦ полотна, тут — позиция внутри самого паттерна, это разные системы координат. */
+var patCellSel = new Set();
+// Строка, в которой сейчас идёт выбор бит паттерна (-1 — набор пуст).
+function patCellSelRow(){
+  for (const key of patCellSel) return +key.split("|")[0];
+  return -1;
+}
+// Последний посчитанный разбор "🔎 Показать выделенное" (Map строка → массив видов по битам) —
+// его перекладывает в cellPin кнопка "📌 Зафиксировать". Заполняется в render().
+var lastCellSampleRows = null;
 var cellSelMode = false;
 var cellDragAnchor = null; // {r, col} — с какой ячейки начали протяжку прямоугольника
 var bitAxisMode = false;
@@ -197,6 +218,33 @@ function getMaxPatLen(st) {
    пользователя они считают ступеньку от номера строки, а не от её длины). Остальным
    выравниваниям он не нужен, поэтому параметр необязательный: где его не передали, берётся 0 —
    для не-лесенок это ничего не меняет. */
+/* ГРУППИРОВКА СТУПЕНЕЙ ЛЕСЕНКИ (v0.875, запрос пользователя: "для каждой лесенки поле для ввода
+   цифры, по умолчанию 1 — группирует по 1 строке; если там 2, то по 2 строки"). Поля стоят рядом
+   со своими лесенками в полосе выравниваний (#stairsGrpR/#stairsGrpL). 1 — как было, каждая
+   строка своя ступенька; N — ступенька меняется раз в N строк, то есть N строк подряд стоят на
+   одном уровне. Своё число у каждого направления: ↘/↘½ и ↙/↙½ — разные лесенки.
+   Всё, что раньше считалось от НОМЕРА строки (ri), теперь считается от НОМЕРА СТУПЕНИ. */
+function stairsGroupFor(align){
+  const g = (align === "rstairs" || align === "rhalfstairs") ? st.stairsGroupL : st.stairsGroupR;
+  const n = Math.round(+g);
+  return (n > 1) ? n : 1;
+}
+function stairsStepIdx(align, rowIdx){
+  return Math.floor((rowIdx || 0) / stairsGroupFor(align));
+}
+/* НА СКОЛЬКО КОЛОНОК СДВИГАЕТ ОДНА СТУПЕНЬ (v0.876, вторая цифра у каждой лесенки; по умолчанию
+   1 — как было всегда). Вместе с группировкой выше даёт полный контроль над наклоном: "через
+   сколько строк ступенька" × "на сколько колонок она сдвигает". */
+function stairsStepSize(align){
+  const s = (align === "rstairs" || align === "rhalfstairs") ? st.stairsStepL : st.stairsStepR;
+  const n = Math.round(+s);
+  return (n > 1) ? n : 1;
+}
+/* Полный сдвиг лесенки в ПОЛУШАГАХ у "½"-вариантов и в колонках у обычных: номер ступени × её
+   величина. Всё, что раньше считалось от номера строки, считается отсюда. */
+function stairsUnits(align, rowIdx){
+  return stairsStepIdx(align, rowIdx) * stairsStepSize(align);
+}
 function alignShift(maxLen, len, align, rowIdx){
   const diff = maxLen - len;
   const ri = rowIdx || 0;
@@ -232,21 +280,21 @@ function alignShift(maxLen, len, align, rowIdx){
   // становится БОЛЬШЕ maxLen) — места, где остаток паддинга мог бы уйти в минус, подстрахованы
   // Math.max(0, …) по месту вызова.
   // "Лесенка" (↘, data-val="stairs") — шаг +1 колонка на строку.
-  if (align === "stairs") return ri;
+  if (align === "stairs") return stairsUnits(align, ri);
   // "Лесенка ½" (↘½, data-val="halfstairs") — та же лестница, но вдвое положе: шаг +0.5 на
   // строку. Целая часть — здесь, недостающие 0.5 символа у НЕЧЁТНЫХ строк довешивает
   // transform:translateX в render() (см. extraCh/hasHalfNudge), тем же приёмом, что и "Центр ½".
-  if (align === "halfstairs") return ri >> 1;
+  if (align === "halfstairs") return stairsUnits(align, ri) >> 1;
   // "Лесенка правая" (↙, data-val="rstairs") — зеркало обычной: строка НЕ реверсируется (читается
   // слева направо), но диагональ идёт по ПОСЛЕДНЕМУ биту строки. Правый край (shift+len−1) должен
   // идти 0,−1,−2,… по номеру строки, откуда shift = −ri − (len−1). Левый край при этом свободно
   // уезжает в минус (см. общий код отрицательного сдвига в render() — "if (shift < 0) extraCh
   // += shift;", он не завязан на конкретное выравнивание).
-  if (align === "rstairs") return -ri - (len ? len - 1 : 0);
+  if (align === "rstairs") return -stairsUnits(align, ri) - (len ? len - 1 : 0);
   // "Лесенка правая ½" (↙½, data-val="rhalfstairs") — то же, но правый край шагает на −0.5 за
   // строку: shift = −ri/2 − (len−1). Целая часть вниз (для отрицательных Math.floor уводит
   // «дальше в минус»), полсимвола у нечётных строк — тем же transform, что и у "Лесенка ½".
-  if (align === "rhalfstairs") return -Math.ceil(ri / 2) - (len ? len - 1 : 0);
+  if (align === "rhalfstairs") return -Math.ceil(stairsUnits(align, ri) / 2) - (len ? len - 1 : 0);
   return (diff >> 1);
 }
 
@@ -297,14 +345,32 @@ function patBase(t){
   if (st.skipLast && out.length > 1) out = out.slice(0, -1);
   return out;
 }
+/* ⇌ ИНВ/РЕВ — ЧЕТЫРЕ ПОЛОЖЕНИЯ ВМЕСТО ГАЛКИ (v0.912, запрос пользователя "эту кнопку раздельно:
+   вкл только реверс, инверсия и реверс, только инверсия, только прямой"). ПРЯМОЙ вариант паттерна
+   ищется ВСЕГДА (подтверждено пользователем) — кнопка только ДОБАВЛЯЕТ к нему версии:
+     ""       — только прямой (прежнее "галка снята");
+     "rev"    — прямой + реверс;
+     "invrev" — прямой + инверсия + реверс (+ инверсия-с-реверсом там, где такой kind есть) —
+                это ровно прежнее "галка стоит";
+     "inv"    — прямой + инверсия.
+   st.allKinds остаётся булевым "включена хоть одна лишняя версия" — на него завязаны ключи мемо-
+   кэшей и ветвления, где важен только сам факт; ГДЕ ИМЕННО перебираются версии, там теперь
+   спрашивают kindsInvOn()/kindsRevOn() по отдельности. Держать оба в синхроне обязан
+   setKindsMode(). */
+const KINDS_MODES = ["", "rev", "invrev", "inv"];
+const KINDS_MODE_LABELS = { "": "⇌ Прямой", rev: "⇌ +Реверс", invrev: "⇌ +Инв+Рев", inv: "⇌ +Инверсия" };
+function kindsInvOn(){ const m = st.kindsMode || ""; return m === "inv" || m === "invrev"; }
+function kindsRevOn(){ const m = st.kindsMode || ""; return m === "rev" || m === "invrev"; }
 function textMatchesPattern(text, patText){
   if (!patText) return false;
   // Порядок как в findMatch(): сначала срез первого символа («Без 1-го»), инверсия/реверс —
   // от уже урезанной строки, а не наоборот (см. findPatternKinds() выше — тот же фикс).
   const base = patBase(patText);
   if (text.indexOf(base) >= 0) return true;
-  if (!st.allKinds) return false;
-  return text.indexOf(invertBits(base)) >= 0 || text.indexOf(reverseStr(base)) >= 0;
+  // Версии перебираются ПО ОТДЕЛЬНОСТИ — см. KINDS_MODES/kindsInvOn/kindsRevOn.
+  if (kindsInvOn() && text.indexOf(invertBits(base)) >= 0) return true;
+  if (kindsRevOn() && text.indexOf(reverseStr(base)) >= 0) return true;
+  return false;
 }
 
 /* Та же проверка, что textMatchesPattern(), но вместо true/false (первого найденного варианта)
@@ -366,12 +432,12 @@ function findPatternKinds(text, patText){
     if (hit) out.push({ kind, start: hit.start, end: (hit.start + hit.text.length - 1) % period, len: hit.text.length, skip: skipApplied, sub: hit.text !== full ? hit.text : null });
   };
   tryKind(0, base);
-  if (st.allKinds) {
-    const inv = invertBits(base);
-    tryKind(1, inv);
-    tryKind(2, reverseStr(base));
-    tryKind(3, reverseStr(inv)); // инверсия + реверс одновременно
-  }
+  // Каждая версия — по своему тумблеру (см. KINDS_MODES). kind 3 (инверсия+реверс сразу) требует
+  // обеих: это не отдельная версия, а их наложение.
+  const inv = invertBits(base);
+  if (kindsInvOn()) tryKind(1, inv);
+  if (kindsRevOn()) tryKind(2, reverseStr(base));
+  if (kindsInvOn() && kindsRevOn()) tryKind(3, reverseStr(inv));
   out.tried = tried;
   // Период кольца едет вместе с результатом — buildHitMap() раскладывает kd.start по позициям и
   // обязан знать, по какому модулю сворачивать (при 🔁 Инв. кольцо период вдвое длиннее строки,
@@ -379,7 +445,31 @@ function findPatternKinds(text, patText){
   // ВСЕ потребители без правки сигнатур; массивы kinds, собранные вручную (напр. [hit] в
   // computeHorizXorInfo), поля не имеют — там buildHitMap честно откатится на len.
   out.period = period;
-  return out;
+  return keepBestKind(out);
+}
+/* ТОЛЬКО ОДНА ВЕРСИЯ НАХОДКИ НА РЕЗУЛЬТАТ (v0.917, запрос пользователя: "если нашлась прямая
+   находка — жёлтым, и другие инверс/реверс не показывать вообще, затем реверс, и потом только
+   инверс, если ничего не нашлось").
+   Раньше отдавались ВСЕ совпавшие версии сразу: в строке результата стояло по галочке ✓ на
+   каждую, а подсветка красила куски разными цветами вперемешку — по прямой находке было не
+   понять, она это или случайно легшая рядом инверсия. Теперь из списка остаётся ровно одна
+   версия — старшая из найденных, а её вхождений может быть несколько (подпаттерны/повторы).
+   Старшинство: прямой → реверс → инверсия → инверсия+реверс. Реверс выше инверсии — так просил
+   пользователь: развёрнутый паттерн это та же фигура, а инвертированный уже другая.
+   Фильтруем ЗДЕСЬ, в одной точке, а не в отрисовке: тем же списком живут галочки ✓, matched,
+   лог и захват находки — расходиться им нельзя. Диагностика (out.tried) не трогается: в
+   "Черновике" по-прежнему видно, какие версии пробовались и что из них совпало. */
+const KIND_PRIORITY = [0, 2, 1, 3];
+function keepBestKind(kinds){
+  if (!kinds || kinds.length < 2) return kinds;
+  for (const k of KIND_PRIORITY) {
+    const only = kinds.filter(x => x.kind === k);
+    if (!only.length) continue;
+    only.tried = kinds.tried;
+    only.period = kinds.period;
+    return only;
+  }
+  return kinds;
 }
 
 /* "По подсветке" (см. #bSearchOnlyHl в "Виде"): строит СВОЮ строку из "0"/"1" для
@@ -1783,8 +1873,10 @@ function hasHalfNudge(s, maxLen, align, rowIdx){
   // "Лесенка ½"/"Лесенка правая ½" — от чётности НОМЕРА строки: у них и сам сдвиг считается от
   // номера (см. alignShift), поэтому в "полу"-сетку садятся именно нечётные строки. У "Центр ½"
   // по-прежнему от чётности остатка (maxLen − длина) — там сдвиг зависит от длины.
+  // При группировке ступеней (см. stairsStepIdx) "нечётной" считается не строка, а СТУПЕНЬ —
+  // иначе внутри одной ступени строки разъезжались бы на полсимвола друг относительно друга.
   return (align === "halfstairs" || align === "rhalfstairs")
-    ? (rowIdx || 0) % 2 !== 0
+    ? stairsUnits(align, rowIdx) % 2 !== 0
     : (maxLen - s.length) % 2 !== 0;
 }
 
@@ -2053,7 +2145,11 @@ function findMatch(st, chainText, bIdx){
   // Оптимизация 1: Однократное выделение памяти под кольцевой буфер (native V8 engine optimization)
   // "🚫 Без кольца" (st.ringOff) — буфер равен самой цепочке, замыкания через край нет.
   const ringText = st.ringOff ? chainText : chainText + chainText.slice(0, len - 1);
-  const kindsMax = st.allKinds ? 2 : 0;
+  // Какие версии паттерна перебирать — по отдельному тумблеру на каждую (см. KINDS_MODES).
+  // kind 0 (прямой) в списке всегда, порядок прежний: прямой → инверсия → реверс.
+  const kindList = [0];
+  if (kindsInvOn()) kindList.push(1);
+  if (kindsRevOn()) kindList.push(2);
 
   for (let i = bIdx + 1; i < st.pats.length; i++){
     const p = st.pats[i];
@@ -2075,7 +2171,7 @@ function findMatch(st, chainText, bIdx){
     if (p.s0.length < 1 || p.s0.length > len) continue;
     
     // Оптимизация 3: Быстрый поиск через нативный indexOf
-    for (let kind = 0; kind <= kindsMax; kind++){
+    for (const kind of kindList){
       const tail = kind === 0 ? p.s0 : kind === 1 ? p.s1 : p.s2;
       const pos = ringText.indexOf(tail);
       if (pos >= 0 && pos < len) {
@@ -2112,6 +2208,15 @@ const st = {
   maskShiftFreeze: "",
   activeTab: 0, tabs: [],
   align: "center", vertical: false, padZero: false, allKinds: false, ringInvert: false, ringOff: false,
+  // Какие ВЕРСИИ паттерна искать помимо прямого (см. KINDS_MODES) и тумблер "🔎 Показать
+  // выделенное" (подсветка совпадений с образцом из выбранных ячеек, см. cellSampleRows).
+  kindsMode: "", cellSampleOn: false,
+  // "⛓ сквозно" у "🔎 Показать выделенное" (v0.942): искать образец ещё и в склейке всех строк,
+  // чтобы находились совпадения, лежащие на стыке соседних строк.
+  cellSampleSeq: false,
+  // Чья находка разложена по строкам цепочки — имя режима из окна "Результат" (клик по строке).
+  // null — первый совпавший по порядку. Состояние окна, в кэш не пишется.
+  bgHitPick: null,
   // "⏮ Без посл." — не проверять ПОСЛЕДНИЙ символ паттерна (пара к st.skipFirst, см. patBase).
   skipLast: false,
   pull: true, keepOrder: true, stopOnHit: true, stopOnBalance: false, turboAuto: false, slowAuto: false, slowFrames: 10, captureOnFind: true, axisSnap: true, axisBitBounce: false, axisCenterOffset: 0,
@@ -2201,6 +2306,20 @@ const st = {
   bgMaskOn: true,
   // "🎭 Маска заново каждый виток" — см. mkResult/dimMaskedBits. По умолчанию включена.
   bgMaskRingRestart: true,
+  // Свой список масок для "🎭 Перебора масок" (textarea #bgMaskScanList, по маске в строке):
+  // непустой ОТМЕНЯЕТ диапазон длин, см. maskScanListMasks/bgMaskScan.
+  bgMaskScanList: "",
+  // Подсветка маски в строках: отдельный выключатель (v0.936) и режим счёта фазы ("seq"/"row").
+  bgMaskPaintOn: true,
+  // "📈 Проверка маской +1 бит" (см. doMaskGrowCheck в fold-4): полная маска, по началам которой
+  // идёт обход, и длина текущего начала. Держим в состоянии, чтобы обход пережил перезагрузку.
+  maskGrowBase: "",
+  maskGrowLen: 0,
+  // Какая по счёту маска СПИСКА сейчас наращивается (v0.947): обход идёт по списку по очереди.
+  maskGrowIdx: 0,
+  // Откуда взялась текущая база наращивания (v0.953): "list" — из списка масок, "field" — из
+  // однострочного поля, "seq" — сквозная выделенной строки (собирается заново на каждой новой).
+  maskGrowSrc: "",
   // Автоматически вписывать зеркала в строки при расширении выделения (см. mirrorsAutoStep).
   mirrorsAutoSide: "off",
   // Считать геометрию строк по длине С ЗЕРКАЛАМИ, не вписывая их (см. #bMirrorShiftAsIf).
@@ -2251,6 +2370,34 @@ const st = {
   searchOnlyHighlighted: false,
   showBalances: false,
   runsAsBits: false,
+  // "🔢 Двоичные номера" (см. rowNumText()) — номера строк показываются в двоичном виде.
+  binRowNums: false,
+  // Какой стороной номера приклеены к паттернам ("" — не приклеены, "right"/"left"), см.
+  // numGlueToggle() в fold-4: по этому же значению они и отрываются обратно.
+  numGlue: "",
+  // То же для САМИХ СТРОК цепочки (кнопка "🔢 Номер к строке", см. numGlueRowsToggle()).
+  numGlueRows: "",
+  // Вид балансов: "" — десятичный "1-0", "1"/"0" — только единицы/нули двоичным, "10"/"01" — оба
+  // двоичным в этом порядке (кнопка "⚖ Баланс", см. binBalanceToggle()).
+  binBalance: "",
+  // Номер строки внутри ячеек паттернов: слева (П1) и справа (П2) — свои кнопки «№» в полосе
+  // выравниваний, см. togglePatNum(). У П2 по умолчанию включено, как было до v0.873.
+  patNumL: false,
+  patNumR: true,
+  // По сколько строк на одну ступеньку лесенки (поля в полосе выравниваний, см. stairsGroupFor):
+  // R — у ↘/↘½, L — у ↙/↙½. 1 — каждая строка своя ступень, как было всегда.
+  stairsGroupR: 1,
+  stairsGroupL: 1,
+  // На сколько колонок сдвигает ОДНА ступень (вторая цифра у лесенки, см. stairsStepSize).
+  stairsStepR: 1,
+  stairsStepL: 1,
+  // Выравнивание, ИЗ которого пришли на "ОсьБит"/"ОсьБит ½" первым нажатием: пока оно тут, строки
+  // без своего сдвига в axisBitShiftMap рисуются по нему (см. render()). Второе нажатие по той же
+  // кнопке — снимается. Чистое состояние показа, в кэш не пишется.
+  axisBitSeedAlign: null,
+  // Какой фазой маски нарисована полоса "вся сквозная" в блоке "🎭 Находки по маскам" Черновика
+  // (клик по строке фазы, см. maskThroughHtml). Чисто состояние показа, в кэш не пишется.
+  maskDraftPhase: 0,
   // Последняя нажатая из 4 кнопок направления (◄ ► ▲ ▼ Спираль) — "shiftL"/"shiftR"/
   // "spiralUp"/"spiralDown"/null. См. setLastDirMode()/autoRun(): "Авто" повторяет именно её,
   // пока не нажат заново другой режим (setMode()) или другая из этих 4 кнопок.
@@ -2348,6 +2495,49 @@ let invFlagsMap = new Map();
    булевых по позициям). Чисто подсветка (.bit-ins), в данные не входит; сбрасывается Сбросом и
    сама перестаёт рисоваться, если длина строки изменилась чем-то другим. */
 let insertedFlagsMap = new Map();
+/* НОВЫЕ БИТЫ (v0.885, запрос пользователя: "все новые биты отдельного цвета, при сохранении пусть
+   не меняют своего цвета"). Номер строки → массив булевых по позициям: true — этот бит ДОПИСАН
+   построением ("🔺 Серпинский"/"🔢 Номера" в режимах вправо/влево/по центру) или зеркалом
+   (вписанные ◀/▶, "⇔ Зеркало шагами", достроенные сверху строки).
+   В отличие от insertedFlagsMap/invFlagsMap пометка ПЕРСИСТЕНТНА: она пишется в кэш вкладки
+   (createDefaultTabState/saveActiveTabState/loadTabState) и в 💾-сохранёнку (tabSaveChainData),
+   переживает перезагрузку и Сброс — и снимается только кнопкой "✕" рядом с цветом «Нов» во
+   вкладке "Вид" (см. bClearNewBits). Цвет — --cnew, класс .bit-new. */
+let newBitsMap = new Map();
+/* Строке дописали addLeft бит слева и addRight справа — помечаем дописанное «новым», а прежние
+   флаги строки едут вместе с её прежним содержимым (oldLen — длина ДО приписки). Прежние флаги
+   берутся только если их длина совпадает со старой строкой: иначе они относятся к другому
+   набору бит и разложились бы не по тем позициям. */
+function newBitsWrap(rowIdx, oldLen, addLeft, addRight){
+  const len = addLeft + oldLen + addRight;
+  if (len <= 0) { newBitsMap.delete(rowIdx); return; }
+  const prev = newBitsMap.get(rowIdx);
+  const arr = new Array(len).fill(false);
+  for (let i = 0; i < addLeft; i++) arr[i] = true;
+  for (let i = 0; i < addRight; i++) arr[len - 1 - i] = true;
+  if (prev && prev.length === oldLen) for (let i = 0; i < oldLen; i++) if (prev[i]) arr[addLeft + i] = true;
+  newBitsMap.set(rowIdx, arr);
+}
+/* Строка новая ЦЕЛИКОМ (построенное сверху зеркало, строка построения ниже конца цепочки). */
+function newBitsWhole(rowIdx, len){
+  if (len > 0) newBitsMap.set(rowIdx, new Array(len).fill(true));
+  else newBitsMap.delete(rowIdx);
+}
+function newBitsClearAll(){ newBitsMap.clear(); }
+/* В кэш/сохранёнку — компактно: [[номер строки, "0110…"], …]. */
+function newBitsSerialize(){
+  const out = [];
+  for (const [k, v] of newBitsMap) if (v && v.length) out.push([k, v.map(b => b ? "1" : "0").join("")]);
+  return out;
+}
+function newBitsLoad(data){
+  newBitsMap.clear();
+  if (!Array.isArray(data)) return;
+  for (const kv of data) {
+    if (!kv || kv.length < 2 || typeof kv[1] !== "string") continue;
+    newBitsMap.set(kv[0] | 0, Array.prototype.map.call(kv[1], c => c === "1"));
+  }
+}
 /* Предпросмотр диагонали "✉ Конверт": {key, cells:Map(номер строки → Set индексов символов)}.
    Первое нажатие кнопки только рисует линию сгиба (.env-diag), второе — складывает. Чисто
    визуально, в данные и в кэш не входит. Ключ (envPreviewKey) держит выделение/выравнивание/
@@ -2494,6 +2684,40 @@ function rotateInvFlagsRight(arr){ return arr.length <= 1 ? arr : [arr[arr.lengt
    бы с реально перевёрнутым битом. */
 function rotateInvFlagsLeftInv(arr){ return arr.length < 1 ? arr : arr.slice(1).concat([!arr[0]]); }
 function rotateInvFlagsRightInv(arr){ return arr.length < 1 ? arr : [!arr[arr.length - 1]].concat(arr.slice(0, -1)); }
+/* КАК КРУТИТСЯ ПОМЕТКА «НОВЫЙ» (v0.888, вопрос пользователя "а при сдвигах новые не сохраняет?").
+   У invFlags четыре варианта поворота: Inv-версии переворачивают заезжающий через шов флаг, потому
+   что "Круг Инв" заодно инвертирует сам бит. Пометке «новый» инвертировать нечего — бит остаётся
+   ТЕМ ЖЕ САМЫМ битом, даже если его значение перевернулось, — поэтому обе Inv-версии сводятся к
+   обычному повороту в ту же сторону. */
+const NEW_BITS_ROT = new Map([
+  [rotateInvFlagsLeft, rotateInvFlagsLeft],
+  [rotateInvFlagsLeftInv, rotateInvFlagsLeft],
+  [rotateInvFlagsRight, rotateInvFlagsRight],
+  [rotateInvFlagsRightInv, rotateInvFlagsRight]
+]);
+/* ОДИН круговой поворот строки r ВМЕСТЕ со всеми её позиционными картами: сами биты, флаги
+   «перевёрнутых» (invFlagsMap) и пометка «новых» (newBitsMap). Раньше первые две строчки были
+   расписаны вручную примерно в семи местах shiftOneRowAxisAware(), а newBitsMap не двигался
+   вовсе — после Круга цвет новых бит оставался на прежних ПОЗИЦИЯХ, то есть уезжал на чужие
+   биты (а при смене длины строки пропадал совсем). */
+function rotateRowWithFlags(r, realRotateFn, invFlagsRotateFn){
+  const len = st.rows[r] ? st.rows[r].length : 0;
+  if (!len) return;
+  invFlagsMap.set(r, invFlagsRotateFn(getInvFlags(r, len)));
+  const nb = newBitsMap.get(r);
+  if (nb && nb.length === len) newBitsMap.set(r, (NEW_BITS_ROT.get(invFlagsRotateFn) || rotateInvFlagsLeft)(nb));
+  st.rows[r] = realRotateFn(st.rows[r]);
+}
+/* Повернуть ТОЛЬКО пометку «новых бит» строки — для мест, где саму строку и invFlags крутят
+   отдельно (Тетрис 2 / Тетрис-ось: там сперва считают результат поворота, а применять его или
+   откатить решают уже потом). Снимок пометки для такого отката — newBitsSnap()/newBitsPut(). */
+function rotateNewBitsRow(rowIdx, invFlagsRotateFn){
+  const nb = newBitsMap.get(rowIdx);
+  const len = st.rows[rowIdx] ? st.rows[rowIdx].length : 0;
+  if (nb && nb.length === len) newBitsMap.set(rowIdx, (NEW_BITS_ROT.get(invFlagsRotateFn) || rotateInvFlagsLeft)(nb));
+}
+function newBitsSnap(rowIdx){ const nb = newBitsMap.get(rowIdx); return nb ? nb.slice() : null; }
+function newBitsPut(rowIdx, snap){ if (snap) newBitsMap.set(rowIdx, snap.slice()); else newBitsMap.delete(rowIdx); }
 /* Развёрнут ли результат в "Черновике последнего шага" (клик по .step-log-result) — единственный
    результат в этом окне, поэтому просто bool, а не Set по ключу, как у bgResultExpanded. */
 let stepLogResultExpanded = false;
@@ -2528,6 +2752,8 @@ function createDefaultTabState(name = "Цепочка 1") {
     selectedRows: Array.from(st.selectedRows || []),
     rowDividers: Array.from(st.rowDividers || []),
     selectedPats: Array.from(st.selectedPats || []),
+    // Пометка «новые биты» — своя у каждой цепочки и переживает перезагрузку (см. newBitsMap).
+    newBits: newBitsSerialize(),
     undo: st.undo ? st.undo.slice() : [],
     // Настройки вида/поиска (все кнопки/галки/ползунки, включая цвета) — свои у каждой цепочки
     // (см. loadTabState/saveActiveTabState): новая вкладка стартует с того, что сейчас реально
@@ -2559,6 +2785,7 @@ function saveActiveTabState() {
     selectedRows: Array.from(st.selectedRows || []),
     rowDividers: Array.from(st.rowDividers || []),
     selectedPats: Array.from(st.selectedPats || []),
+    newBits: newBitsSerialize(), // см. newBitsMap — пометка новых бит живёт вместе с цепочкой
     undo: (st.undo || []).slice(),
     // Текущие настройки вида/поиска этой (ещё активной на момент вызова) вкладки — см.
     // loadTabState().
@@ -2598,6 +2825,8 @@ function loadTabState(index, skipSave = false) {
   }
   st.rowDividers = new Set(t.rowDividers || []);
   st.selectedPats = new Set(t.selectedPats || []);
+  // Пометка «новые биты» этой вкладки (см. newBitsMap): у старого кэша поля нет — тогда пусто.
+  newBitsLoad(t.newBits);
   st.undo = t.undo ? t.undo.slice() : [];
   // Стек повтора — только в памяти и только внутри одной вкладки: переключились на другую цепочку,
   // повторять там нечего (её собственной ветки "вперёд" у нас нет).
@@ -2685,7 +2914,13 @@ function captureState(){
     axisSnapCols: (st.axisSnapCols || []).slice(),
     axisSnapGroups: axisGroups().map(g => ({ cols: g.cols.slice(), p2: (g.p2 || []).slice(), row: g.row, anch: g.anch })),
     rowDividers: Array.from(st.rowDividers || []),
-    selectedPats: Array.from(st.selectedPats || [])
+    selectedPats: Array.from(st.selectedPats || []),
+    // Пометка «новые биты» ходит вместе с самими битами (v0.887, запрос пользователя: "отмена-
+    // повтор не должна снимать новые"). Без неё Undo возвращал прежние ДЛИНЫ строк, а флаги
+    // оставались от длинной версии — проверка newFlagsRow.length === s.length переставала
+    // совпадать, и цвет новых бит просто пропадал, хотя пометку никто не снимал. Теперь откат и
+    // повтор возвращают её ровно в то состояние, в каком она была на этом шаге.
+    newBits: newBitsSerialize()
   };
 }
 function snapshot(){
@@ -2733,6 +2968,9 @@ function applyState(s){
   syncAxisSnapCols();
   st.rowDividers = new Set(s.rowDividers || []);
   st.selectedPats = new Set(s.selectedPats || []);
+  // Пометка «новые биты» — см. captureState(). У снимков, снятых до v0.887, поля нет: тогда
+  // пометку НЕ ТРОГАЕМ вовсе (лучше оставить как есть, чем снять то, что пользователь не снимал).
+  if (s.newBits !== undefined) newBitsLoad(s.newBits);
   st.hit = null;
 }
 
@@ -2761,6 +2999,19 @@ function redoRestore(){
    именно за её первый бит (запрос пользователя: "ось держать на 1 бите первой строки реальной"):
    построения сверху приходят и уходят, и привязка к ним таскала бы всю картинку за собой.
    Построений нет — это обычная первая непустая строка, то есть прежнее поведение. */
+/* ЭЛЕМЕНТ ПО id — С ОГЛЯДКОЙ НА ОТДЕЛЬНЫЕ ОКНА (v0.937). Панели переезжают в окна браузера
+   ЖИВЫМИ узлами (см. openPanelsPopup/openMaskPopup в fold-3), то есть перестают быть частью
+   основного документа — и обычный document.getElementById для них возвращает null. Обработчики,
+   захватившие ссылку на элемент при загрузке, от этого не страдают, а вот те, что ищут элемент
+   в момент вызова (подписи кнопок, приглушение полей), молча переставали работать. Ищем в
+   основном документе, затем в открытых окнах. */
+function elById(id){
+  const el = document.getElementById(id);
+  if (el) return el;
+  try { if (typeof maskPopupAlive === "function" && maskPopupAlive()) { const e = maskPopupWin.document.getElementById(id); if (e) return e; } } catch (err) {}
+  try { if (typeof panelsPopupAlive === "function" && panelsPopupAlive()) { const e = panelsPopupWin.document.getElementById(id); if (e) return e; } } catch (err) {}
+  return null;
+}
 function firstRealRowIdx(){
   const built = st.topBuilt || 0;
   if (built) {
@@ -2915,10 +3166,8 @@ function findHorizPatternHit(text, patText){
   const skipApplied = st.skipFirst && patText.length > 1;
   const base = patBase(patText);
   const variants = [{ kind: 0, text: base }];
-  if (st.allKinds) {
-    variants.push({ kind: 1, text: invertBits(base) });
-    variants.push({ kind: 2, text: reverseStr(base) });
-  }
+  if (kindsInvOn()) variants.push({ kind: 1, text: invertBits(base) });
+  if (kindsRevOn()) variants.push({ kind: 2, text: reverseStr(base) });
   for (const v of variants) {
     const idx = text.indexOf(v.text);
     if (idx >= 0) return { kind: v.kind, start: idx, len: v.text.length, skip: skipApplied };

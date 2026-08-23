@@ -96,6 +96,12 @@ var resetNoAutoSelect = false;
    который может вызваться раньше этой строки. */
 var bgBelowHits = new Set();
 function resetAll(){
+  /* СБРОС ТЕПЕРЬ ОТМЕНЯЕМ (v0.860, запрос пользователя: "Escape что делает — Повтор кнопка пусть
+     повторит обратное"). Раньше resetAll() не клал состояние в стек отмены вообще: Escape (и та же
+     кнопка "↺ Сброс", и загрузка файла поверх работы) стирал набранное безвозвратно. Теперь перед
+     сбросом идёт обычный snapshot() — значит "↩ Отмена" возвращает то, что было ДО сброса, а
+     "↪ Повтор" после неё повторяет сам сброс, как с любым другим действием. */
+  snapshot();
   st.running = false;
   setAutoBtnState(false);
   // Выделение Сброс/Escape не трогает ВООБЩЕ (запрос пользователя). Мало не сбрасывать сам набор
@@ -210,6 +216,11 @@ function resetAll(){
   // Зеркала сверху пересчитываем под восстановленные строки: биты внизу сброшены, значит и вверху
   // должны быть их отражения, а не прежние (в режиме "дописывать" верх намеренно не трогается).
   refreshTopMirrors();
+  // Пометка «новые биты» — часть 💾-сохранёнки (запрос пользователя: цвет новых бит держится и
+  // после сохранения). Есть сохранёнка — возвращаем её пометку; нет — снимаем вместе с битами,
+  // которые Сброс и так пересобрал из шаблона.
+  if (savedChain && savedChain.newBits) newBitsLoad(savedChain.newBits);
+  else newBitsClearAll();
   bgBelowHits.clear();    // Сброс/Escape — накопленная подсветка "🔽 Все ниже" гаснет
   mirrorsRowDone.clear(); // Сброс — автоматические зеркала можно вписывать заново
   st.step = 0; st.passCount = 0; st.tailBuffer = "";
@@ -338,14 +349,73 @@ function computeRowBalance(s){
    строк вместо ровной колонки (см. запрос пользователя — "выравнивание съехало"). Если единиц
    и нулей ровно поровну — вместо двух цветов один акцентный цвет с подсветкой (.row-balance-eq
    в CSS), чтобы такая "сбалансированная" строка сразу бросалась в глаза. */
-function formatBalanceTotals(total1, total0, w1, w0){
+/* ДВОИЧНЫЕ БАЛАНСЫ (v0.863, запрос пользователя "балансы в двоичном показать, 4 варианта одной
+   кнопки: 0-лей, 1-ц, вместе справа 0 слева 1 и наоборот"). Кнопка "⚖ Баланс: 10-й" во вкладке
+   "Вид" (см. #bBinBalance/binBalanceToggle) ходит по кругу:
+     ""    — как было, десятичный "1-0";
+     "1"   — только единицы, в двоичном;
+     "0"   — только нули, в двоичном;
+     "10"  — оба, слева единицы, справа нули;
+     "01"  — оба, слева нули, справа единицы.
+   Само число — обычный toString(2). Выравнивание пробелами (w1/w0) в двоичных режимах не
+   используется: ширины там свои, а колонка балансов и так flex:0 0 auto. */
+function balanceNumText(n){ return (st.binBalance ? Number(n).toString(2) : String(n)); }
+/* СЛИТНО И РАЗНЫМ ЦВЕТОМ (v0.889, запрос пользователя "балансы показывать слитно 0 и 1, но также
+   разным цветом"): в двоичных режимах дефис между числами убран совсем — разделяет их только цвет
+   (белый у единиц, серый у нулей). В ДЕСЯТИЧНОМ виде слитно нельзя (5 и 3 слиплись бы в "53"),
+   поэтому там наоборот — явные знаки "1+0=сумма" (сумма и есть длина строки).
+   Когда единиц и нулей поровну, вся метка идёт одним акцентным цветом (.row-balance-eq) —
+   инлайновые цвета в этом случае не ставим, иначе они перебьют подсветку. */
+/* ЗНАК СВЕРКИ С НОМЕРОМ СТРОКИ (v0.891, запрос пользователя "если равно то так 3+2=5, если нет то
+   3+1 /= 5 — 5 это номер строки"). Метка баланса стоит ПЕРЕД номером, и знак между ними говорит,
+   сходится ли сумма единиц и нулей (то есть длина строки) с её номером: "=" — сходится, "≠" — нет.
+   ОДНИМ символом (v0.895, запрос пользователя "не равно — это перечёркнутое равно, сделай одним
+   символом"): двухсимвольное "/=" читалось как деление и вдобавок требовало добивать "=" пробелом,
+   чтобы номер не гулял по строкам. У "≠" и "=" ширина одна и та же сама собой. */
+function balanceEqSign(total1, total0, rowNum){ return (total1 + total0) === rowNum ? "=" : "≠"; }
+function formatBalanceTotals(total1, total0, w1, w0, bw1, bw0, rowNum){
+  const mode = st.binBalance || "";
+  const isEq = total1 === total0;
+  const eq = isEq ? " row-balance-eq" : "";
+  // Цвета чисел ставим ВСЕГДА, в том числе при "баланс поровну" (v0.899): та подсветка теперь
+  // только фоновая (.row-balance-eq), текст она не перекрашивает — значит гасить деление на
+  // белые единицы и серые нули больше незачем.
+  const paint = (txt, color) => '<span style="color:' + color + '">' + txt + "</span>";
+  const sign = balanceEqSign(total1, total0, rowNum);
+  if (mode) {
+    const s1 = balanceNumText(total1), s0 = balanceNumText(total0);
+    const b1 = paint(s1, "#fff"), b0 = paint(s0, "#888");
+    const body = mode === "1" ? b1
+               : mode === "0" ? b0
+               : mode === "10" ? (b1 + b0)
+               : (b0 + b1);
+    // Ширина метки одна на все строки — иначе номер слева от неё гулял бы по строкам и цепочка
+    // ехала бы вбок (та же причина, что у padStart в десятичной ветке ниже). Добиваем пробелами
+    // ВСЮ метку целиком, а не каждое число по отдельности: между числами разделителя быть не
+    // должно — они идут слитно, различаются только цветом.
+    const have = mode === "1" ? s1.length : mode === "0" ? s0.length : s1.length + s0.length;
+    const want = mode === "1" ? (bw1 || 1) : mode === "0" ? (bw0 || 1) : ((bw1 || 1) + (bw0 || 1));
+    return '<span class="row-balance' + eq + '">' + " ".repeat(Math.max(0, want - have)) + body + sign + "</span>";
+  }
+  // Суммы после "=" больше нет: её место занял САМ НОМЕР СТРОКИ, который печатается сразу за
+  // меткой (см. render()). Знак и говорит, сходятся ли они — "3+2=5" против "3+1≠5".
   const t1 = String(total1).padStart(w1 || 0, " ");
   const t0 = String(total0).padStart(w0 || 0, " ");
-  if (total1 === total0) {
-    return '<span class="row-balance row-balance-eq">' + t1 + "-" + t0 + "</span>";
-  }
-  return '<span class="row-balance"><span style="color:#fff">' + t1 +
-    '</span>-<span style="color:#888">' + t0 + "</span></span>";
+  return '<span class="row-balance' + eq + '">' +
+    paint(t1, "#fff") + "+" + paint(t0, "#888") + sign + "</span>";
+}
+/* Самая ШИРОКАЯ метка баланса в текущем режиме — «болванка» из девяток/единиц той же разметки,
+   что и настоящая метка. По ней fitNumW() меряет, сколько места занять колонке номеров: с v0.889
+   баланс печатается ВНУТРИ неё, а не отдельной колонкой. Знак сверки — один символ, что "=",
+   что "≠", поэтому в болванке годится любой. */
+function balanceSampleHtml(w1, w0, b1, b0){
+  if (!st.showBalances) return "";
+  const mode = st.binBalance || "";
+  const body = mode === "1" ? "1".repeat(b1)
+             : mode === "0" ? "1".repeat(b0)
+             : mode ? "1".repeat(b1 + b0)
+             : ("9".repeat(w1) + "+" + "9".repeat(w0));
+  return '<span class="row-balance">' + body + "≠" + "</span>";
 }
 
 /* Суммарный баланс единиц/нулей по ВСЕМ выделенным строкам вместе (Σ в шапке "Результата") —
@@ -594,8 +664,6 @@ function renderTabs() {
     '<div class="chain-dd-item' + (i === st.activeTab ? " act" : "") + '" data-idx="' + i + '">' +
       '<span class="chain-dd-name" title="Двойной клик — переименовать">' + esc(tab.name) + '</span>' +
       '<button type="button" class="chain-dd-mini" data-act="save" data-idx="' + i + '" title="Сохранить эту цепочку (без переключения)">💾</button>' +
-      '<button type="button" class="chain-dd-mini" data-act="clear" data-idx="' + i + '" title="Полностью очистить эту цепочку — и строки, и паттерны">🧹</button>' +
-      '<button type="button" class="chain-dd-mini" data-act="clearrows" data-idx="' + i + '" title="Очистить ТОЛЬКО поле цепочки — строки битов. Паттерны (обе колонки) и шаблон паттернов остаются на месте">🧹1</button>' +
       '<button type="button" class="chain-dd-mini" data-act="reset" data-idx="' + i + '" title="Сбросить эту цепочку к сохранению/шаблону">↺</button>' +
       '<button type="button" class="chain-dd-close" data-idx="' + i + '" title="Закрыть эту вкладку"' +
         (st.tabs.length <= 1 ? " disabled" : "") + '>✕</button>' +
@@ -624,6 +692,21 @@ function renderTabs() {
     '<button type="button" class="chain-dd-file chain-dd-bank" data-act="bankpats"' + (patBankCount ? '' : ' disabled') + ' title="Разложить паттерны ИЗ КЭША в колонку паттернов: паттерн №N = строка файла №N. Прежние паттерны заменяются целиком, строки цепочки не трогаются. Отменяется через Undo">🧩→ В паттерны</button>' +
     '<button type="button" class="chain-dd-file chain-dd-bank" data-act="bankrows"' + (patBankCount ? '' : ' disabled') + ' title="Разложить паттерны ИЗ КЭША в саму цепочку: строка №N = строка файла №N. Прежние строки цепочки стираются целиком (как у «🧩⬇ Паттерны в цепочку»). Отменяется через Undo">🧩⬇ В цепочку</button>' +
     '</div>' +
+  // ПОСЛЕДНИЙ РЯД — НАСТРОЙКИ ВИДА (v0.834): переехали сюда из вкладки "Вид" по запросу
+  // пользователя. Данных цепочек не трогают вообще — сохраняют/сбрасывают только вид и поиск
+  // (цвета, шрифт, галки), поэтому и стоят отдельным рядом своим цветом (.chain-dd-ui).
+  // По id их обработчик вешать нельзя: renderTabs() перерисовывает список целиком — клик ловит
+  // тот же делегированный обработчик (см. data-act="uisave"/"uireset").
+  // Копирование самих строк цепочки — сюда же (v0.835). В буфер кладутся ДВА формата: обычный
+  // текст и HTML с посимвольными цветами, чтобы вставка в Excel приезжала раскрашенной
+  // (см. copySelectedRows/clipRowsHtml).
+    '<div class="chain-dd-frow">' +
+    '<button type="button" class="chain-dd-file chain-dd-ui" data-act="copychain" title="Скопировать строки цепочки в буфер обмена — каждая своей строкой, с ведущими пробелами по текущему выравниванию. Выделены строки — копируются только они, ничего не выделено — вся цепочка. В Excel вставляется с цветами символов (строка = одна ячейка). То же самое делает Ctrl+C по выделенным строкам">📋 Скопировать строки-цепочки</button>' +
+    '</div>' +
+    '<div class="chain-dd-frow">' +
+    '<button type="button" class="chain-dd-file chain-dd-ui" data-act="uisave" title="Сохранить текущие настройки вида/поиска (цвета, шрифт, галки и т.п.) — данные цепочек не трогает">💾 Сохр. настройки</button>' +
+    '<button type="button" class="chain-dd-file chain-dd-ui" data-act="uireset" title="Сбросить настройки вида/поиска к значениям по умолчанию — данные цепочек не трогает">↺ Сброс настроек</button>' +
+    '</div>' +
   '</div>';
 }
 
@@ -633,11 +716,9 @@ function renderTabs() {
    так что не уезжает при скролле строк вниз.
    Снять выделение — клик по метке ВЫБРАННОГО столбца: её палочка "|" заменяется на "✕" прямо
    на месте (col-cell-clear-glyph) — крестик всегда там же, где сама подсветка, а не отдельно
-   сбоку. Символ метки-линии — ASCII "|", не "│": box-drawing глиф не всегда той же ширины, что
-   цифры 0/1 в моноширинном шрифте, и линии "съезжали" с сеткой битов на длинных строках; "|"
-   гарантированно той же ширины. "Жирность" линии — не шрифтом (не двигает раскладку), а
-   CSS-трансформом (scaleX) в .col-cell-tick, см. CSS (у "✕" трансформ отключён — иначе крестик
-   растягивало в кривой овал). */
+   сбоку. Ни палочек, ни крестиков в линейке сейчас НЕТ — ячейка содержит один пробел, которым и
+   задана её ширина (ровно символ, чтобы совпадать с сеткой битов); обёртка .col-cell-tick со
+   scaleX для старой палочки удалена в v0.853. */
 function renderColHeader(maxLen, mirrorPadL){
   const el = document.getElementById("colHeader");
   if (!el) return;
@@ -663,10 +744,13 @@ function renderColHeader(maxLen, mirrorPadL){
     const isSel = st.selectedCol === c;
     const selCls = isSel ? " sel" : "";
     // Ни палочек, ни крестиков (запрос пользователя "убери засечки те для столбцов и
-    // крестики"): линейка осталась чистой полосой — ячейки на месте, кликабельны и
-    // подсвечиваются при наведении, но ничего не рисуют. Выбранный столбец видно по жёлтой
-    // заливке самой ячейки (.col-cell.sel) и по битам в строках (.col-sel-bit).
-    const glyph = '<span class="col-cell-tick">&nbsp;</span>';
+    // крестики"): линейка осталась чистой полосой — ячейки на месте и кликабельны, но ничего не
+    // рисуют. Выбранный столбец видно по битам в самих строках (.col-sel-bit/.axis-col-bit).
+    // Обёртки .col-cell-tick больше нет (v0.853, запрос пользователя "col-cell-tick нужен? убери,
+    // перекрывает он биты"): она осталась от старых засечек и держала только scaleX(1.6) для
+    // палочки "|", которой уже нет. Сам "&nbsp;" ОБЯЗАН остаться — им и задана ширина ячейки
+    // ровно в один символ, без него линейка схлопнется и клик по столбцу попадать будет мимо.
+    const glyph = '&nbsp;';
     // Столбцы левее первого — место под зеркала: настоящих бит строк там нет, есть только серые
     // зеркальные, поэтому и подпись у них своя.
     // Подсказка без "клик снимет выделение": выделять/снимать столбец линейкой больше нельзя,
@@ -679,34 +763,35 @@ function renderColHeader(maxLen, mirrorPadL){
   // Дополнительный пустой <span class="num"> перед .bits — держит линейку в той же разметке,
   // что и строки (см. render(): теперь номер строки есть и у ЛЕВОГО края .bits), иначе тики
   // снова разъедутся с битами (тот же класс бага, что уже правили раньше в этом файле).
-  // Тот же приём — заглушка под "⚖ Показать балансы" (formatBalanceTotals()/.row-balance в
-  // render()): без неё при включённых балансах линейка съезжает относительно битов (см. запрос
-  // пользователя — "после вставки баланса съехала"). Ширина ДОЛЖНА совпадать с паддингом
-  // formatBalanceTotals() в render() (balW1+"-"+balW0) — иначе, если самое длинное total1 и
-  // самое длинное total0 встречаются в РАЗНЫХ строках, сумма их максимумов будет ШИРЕ, чем длина
-  // любой отдельной строки, и заглушка снова разойдётся с реальными метками (та же природа бага,
-  // что и "выравнивание съехало"). "Пробеги вместо битов" (#bRunsAsBits) заглушки не требует —
-  // та фича заменяет сами биты, а не добавляет колонку.
-  let balanceSpacer = "";
-  if (st.showBalances) {
-    let w1 = 1, w0 = 1;
-    for (const s of st.rows) {
-      if (!s) continue;
-      const rb = computeRowBalance(s);
-      if (String(rb.total1).length > w1) w1 = String(rb.total1).length;
-      if (String(rb.total0).length > w0) w0 = String(rb.total0).length;
-    }
+  // ОТДЕЛЬНОЙ ЗАГЛУШКИ ПОД БАЛАНС ТУТ БОЛЬШЕ НЕТ (v0.889): с этой версии построчный баланс
+  // печатается ВНУТРИ поля номера (см. render()), своей колонки у него не осталось, а ширину
+  // .num-l2 и в строках, и в этой линейке задаёт одна и та же --num-w — значит линейка и биты
+  // расходиться не могут в принципе (раньше заглушку приходилось подгонять по ширине вручную,
+  // и она разъезжалась, если самые длинные total1 и total0 встречались в РАЗНЫХ строках).
+  const alignBalEl = document.getElementById("alignBalance");
+  /* ОБЩИЙ БАЛАНС В ПОЛОСЕ — ВСЕГДА НА ЭКРАНЕ, И СРАЗУ В ДВУХ ВИДАХ (v0.864, запрос пользователя
+     "тут всегда отображать балансы и рядом их же битами, это как бы кнопки тоже будут — вкл/выкл
+     балансов в строках"). Показывается независимо от того, включены ли построчные балансы: он же
+     служит их выключателем. Две половинки — обычные числа и они же в двоичном — работают как пара
+     кнопок: клик по половинке включает построчные балансы В ЭТОМ ВИДЕ, повторный клик по уже
+     активной — выключает (см. обработчик #alignBalance в fold-3). */
+  if (alignBalEl) {
     const hb = computeHeaderBalance();
     const eqCls = hb.total1 === hb.total0 ? " row-balance-eq" : "";
-    const valHtml = hb.total1 === hb.total0
-      ? (hb.total1 + "-" + hb.total0)
-      : ('<span style="color:#fff">' + hb.total1 + '</span>-<span style="color:#888">' + hb.total0 + '</span>');
-    const hbTitle = "Общий баланс: сумма единиц и нулей по " +
-      (hb.hasSel ? "ВЫДЕЛЕННЫМ строкам" : "ВСЕМ строкам (ничего не выделено)") +
-      ". Подсвечивается, если единиц и нулей поровну";
-    balanceSpacer = '<span class="row-balance col-hdr-balance" title="' + hbTitle + '">' +
-      '<span class="col-hdr-balance-val' + eqCls + '">' + valHtml + '</span>' +
-      " ".repeat(w1 + 1 + w0) + "</span>";
+    const pair = (t1, t0) => hb.total1 === hb.total0
+      ? (t1 + "-" + t0)
+      : ('<span style="color:#fff">' + t1 + '</span>-<span style="color:#888">' + t0 + '</span>');
+    const decHtml = pair(String(hb.total1), String(hb.total0));
+    const binHtml = pair(hb.total1.toString(2), hb.total0.toString(2));
+    const where = hb.hasSel ? "ВЫДЕЛЕННЫМ строкам" : "ВСЕМ строкам (ничего не выделено)";
+    // Активна та половинка, в чьём виде сейчас показаны построчные балансы.
+    const decAct = st.showBalances && !st.binBalance ? " act" : "";
+    const binAct = st.showBalances && st.binBalance ? " act" : "";
+    alignBalEl.innerHTML =
+      '<span class="align-bal-part' + decAct + eqCls + '" data-bal="dec" title="Общий баланс по ' + where +
+        ' — единиц и нулей. Клик — показать/убрать балансы в самих строках (десятичным)">' + decHtml + '</span>' +
+      '<span class="align-bal-part' + binAct + eqCls + '" data-bal="bin" title="То же самое в двоичном виде. Клик — показать/убрать балансы в строках двоичным">' + binHtml + '</span>';
+    alignBalEl.style.display = "";
   }
   // Тот же общий визуальный сдвиг ручки #axisSplit, что и у строк (см. extraCh в render()) —
   // линейка обязана ехать ВМЕСТЕ со строками, иначе тик N перестаёт стоять над столбцом N
@@ -715,8 +800,8 @@ function renderColHeader(maxLen, mirrorPadL){
   const off = (st.axisCenterOffset || 0);
   const offAttr = off ? ' style="transform:translateX(' + (off * realColStepPx()).toFixed(2) + 'px)"' : '';
   el.innerHTML =
-    '<div class="col-hdr-row"><span class="num"></span><span class="pat"></span><span class="num num-l2"></span>' + balanceSpacer +
-    '<span class="bits ' + alignCls + '"><span' + offAttr + '>' + ticks + '</span></span><span class="num num-r2"></span><span class="pat2"></span></div>';
+    '<div class="col-hdr-row"><span class="pat"></span><span class="num num-l2"></span>' +
+    '<span class="bits ' + alignCls + '"><span' + offAttr + '>' + ticks + '</span></span><span class="pat2"></span></div>';
 }
 
 /* Сколько столбцов реально ЗАНИМАЕТ картинка на экране — НЕ то же самое, что maxLen (длина
@@ -1091,6 +1176,9 @@ function dimMaskedBits(root, doc, cut){
 let findLogSort = { key: null, dir: 1 };
 
 function renderFindLogPanel(){
+  // Отдельное окно лога (v0.953) наполняется тем же содержимым — вызов в самом начале, чтобы не
+  // зависеть от ранних return ниже: окно обновится следующей же перерисовкой.
+  setTimeout(() => { if (typeof updateFindLogPopup === "function") updateFindLogPopup(); }, 0);
   // "🧮 Суммы длин" — перенесено сюда из панели "Результат фон-поиска" (запрос пользователя),
   // считается независимо от самого лога находок (не завязано на bgFindLog), поэтому обновляем
   // его ДО ранних return ниже — иначе при пустом логе блок сумм длин молча пропадал бы тоже.
@@ -1113,10 +1201,41 @@ function renderFindLogPanel(){
   // Сортировка по любому столбцу (см. findLogSort и обработчик клика по шапке): клик — по
   // возрастанию, второй — по убыванию, третий — обратно в исходный порядок (новые находки сверху).
   const sortMark = k => findLogSort.key === k ? (findLogSort.dir > 0 ? " ▲" : " ▼") : "";
-  const head = '<div class="find-log-row find-log-head">' +
+  /* КОМПАКТНАЯ ШАПКА ДЛЯ ФАЗ МАСКИ (v0.955, запрос пользователя: "имена столбцов как-то в ширину
+     одного символа надо, там же + только, а названия можно общие и номера разные"). С маской
+     каждый режим даёт СТОЛЬКО столбцов, сколько в ней бит, и подпись «Скв→#м12» в каждом — это
+     метры ширины при одном плюсике в ячейке. Разбираем подпись на общую часть и номер фазы:
+     общая уходит в ВЕРХНИЙ ярус шапки одной ячейкой на всю группу, в нижнем остаются номера, а
+     столбец сужается до пары символов. Режимы без фаз (маски нет) остаются как были — там общей
+     части нет и сжимать нечего. */
+  const parsed = modesUsed.map(m => {
+    const lbl = bgModeShortLabel(m);
+    const p = lbl.indexOf("#м");
+    return p >= 0 ? { m, base: lbl.slice(0, p), num: lbl.slice(p + 2) } : { m, base: lbl, num: "" };
+  });
+  const compact = parsed.some(x => x.num);
+  const nw = compact ? " nw" : "";
+  let head = "";
+  if (compact) {
+    // Верхний ярус: подряд идущие столбцы одного режима сливаются в одну ячейку. Ширину задаём
+    // инлайном через ту же переменную --flw, что и ширину узкого столбца, — иначе ярусы разъедутся.
+    let grp = '<div class="find-log-row find-log-head find-log-grp-row">' +
+      '<span class="find-log-cell find-log-row-no"></span><span class="find-log-cell find-log-step"></span>';
+    for (let i = 0; i < parsed.length; ) {
+      let n = 1;
+      while (i + n < parsed.length && parsed[i + n].base === parsed[i].base) n++;
+      grp += '<span class="find-log-grp" style="width:calc(var(--flw,1.9em) * ' + n + ')" title="' +
+        esc(bgModeLabel(parsed[i].m)) + '">' + esc(parsed[i].base) + '</span>';
+      i += n;
+    }
+    head = grp + '</div>';
+  }
+  head += '<div class="find-log-row find-log-head">' +
     '<span class="find-log-cell find-log-row-no" data-sort="row" title="Сортировать по номеру строки">стр.' + sortMark("row") + '</span>' +
     '<span class="find-log-cell find-log-step" data-sort="step" title="Номер шага (варианта прокрутки), на котором нашлось. Под «Авто» это тот же счётчик «Вар: N/M», при ручных ◄/► — сколько кликов подряд сделано с момента смены выделения; пусто — находка появилась вне прокрутки. Клик — сортировать по шагу">шаг' + sortMark("step") + '</span>' +
-    modesUsed.map(m => '<span class="find-log-cell find-log-mode" data-sort="' + esc(m) + '" title="' + esc(bgModeLabel(m)) + ' — клик: сначала находки этого режима">' + esc(bgModeShortLabel(m)) + sortMark(m) + '</span>').join("") +
+    parsed.map(x => '<span class="find-log-cell find-log-mode' + nw + '" data-sort="' + esc(x.m) + '" title="' +
+      esc(bgModeLabel(x.m)) + ' — клик: сначала находки этого режима">' +
+      esc(x.num || x.base) + sortMark(x.m) + '</span>').join("") +
   '</div>';
 
   const entries = bgFindLog.slice();
@@ -1138,14 +1257,14 @@ function renderFindLogPanel(){
       // ВАЖНО: тот же класс ширины find-log-mode, что и у заголовка столбца — иначе ячейки данных
       // (3.2em по умолчанию) не совпадают с шапкой (6.2em) и вся таблица разъезжается по столбцам
       // (запрос пользователя "чтоб столбцы были чётко").
-      if (!kinds) return '<span class="find-log-cell find-log-mode"></span>';
+      if (!kinds) return '<span class="find-log-cell find-log-mode' + nw + '"></span>';
       // "lengthSums" — записи с label (см. lengthSumsMatchedCombos): показываем САМИ найденные
       // варианты сумм ("1+2+9[Прям],3+8+1[Рев]"), не только kind — запрос пользователя "в лог
       // записать Суммы длин всех найденные варианты сумм".
       const tip = kinds.map(k =>
         (k.label ? k.label + ":" : "") + KIND_LABELS_SHORT[k.kind] + (k.skip ? "⏭" : "")
       ).join(", ");
-      return '<span class="find-log-cell find-log-mode find-log-plus" title="' + esc(tip) + '">+</span>';
+      return '<span class="find-log-cell find-log-mode find-log-plus' + nw + '" title="' + esc(tip) + '">+</span>';
     }).join("");
     return '<div class="find-log-row"><span class="find-log-cell find-log-row-no">Стр. ' + (e.row + 1) + '</span>' +
       '<span class="find-log-cell find-log-step">' + (e.step ? "№" + e.step : "") + '</span>' + cells + '</div>';
@@ -1698,7 +1817,7 @@ function render(){
 
   if (allPatsShown()) {
     const self = memoMask("allPatSelf",
-      [st.rows, st.pats.map(p => (p && p.text) || ""), st.skipFirst, st.skipLast, st.allKinds, st.ringOff,
+      [st.rows, st.pats.map(p => (p && p.text) || ""), st.skipFirst, st.skipLast, st.allKinds, st.kindsMode || "", st.ringOff,
        st.ringInvert, st.ringReverse, st.bgAllPatsEvery, st.bgAllPatsPartial, st.partialPick, allPatLatch.size,
        Array.from(st.selectedPats || []).sort((a, b) => a - b),
        st.allPatScopeSel],
@@ -1813,7 +1932,7 @@ function render(){
     // поиска — дописать сюда, иначе подсветка залипнет.
     const chainRowHits = (seekText && chainOn)
       ? memoMask("patChainRows",
-          [st.rows, seekText, lastActiveRow, st.allKinds, st.bgSubPatterns, st.ringOff,
+          [st.rows, seekText, lastActiveRow, st.allKinds, st.kindsMode || "", st.bgSubPatterns, st.ringOff,
            st.skipFirst, st.skipLast, st.ringInvert, st.ringReverse],
           () => {
             const m = new Map();
@@ -1837,8 +1956,17 @@ function render(){
     // лежит НА СТЫКЕ (часть в одной строке, часть в следующей — целиком его в строках нет, и
     // построчный поиск выше такого не найдёт). Позиции сворачиваем по периоду кольца, как
     // buildHitMap().
-    for (const res of bgInfo.results) {
-      if (!res.matched || !res.kinds || !res.kinds.length) continue;
+    /* В СТРОКИ КЛАДЁМ НАХОДКУ ТОЛЬКО ОДНОГО РЕЖИМА (v0.918, запрос пользователя: "в цепочках
+       подсветить только самую первую находку, не надо все накладывать, если её биты
+       пересекаются; по нажатию только переключать").
+       Совпасть может сразу несколько режимов (а с "🎭 Маской" — ещё и каждая её фаза), и раньше
+       все они красили одни и те же строки поверх друг друга: позицию занимал тот, кто добрался
+       до неё первым, и по картинке было не понять, чья это находка. Теперь берём ОДИН результат —
+       выбранный кликом по его строке в окне "Результат" (st.bgHitPick), а если ничего не выбрано
+       или выбранное больше не совпадает, то первый совпавший по порядку режимов. */
+    const matchedResults = bgInfo.results.filter(r => r.matched && r.kinds && r.kinds.length);
+    const hitRes = matchedResults.find(r => r.mode === st.bgHitPick) || matchedResults[0];
+    for (const res of (hitRes ? [hitRes] : [])) {
       const cellMap = bgConcatCellMap(res.mode, bgInfo.chainIdx);
       if (!cellMap) continue;
       /* ПЕРЕВОД КООРДИНАТ ПОД "🎭 МАСКУ". kd.start/kd.len — позиции в той строке, ПО КОТОРОЙ
@@ -1907,6 +2035,7 @@ function render(){
   }
   // Соседняя "🎭 По маске" — там же и по тому же поводу: её подпись зависит от поля маски.
   if (typeof updateBgMaskOnBtn === "function") updateBgMaskOnBtn();
+  if (typeof updateBgMaskPhaseBtn === "function") updateBgMaskPhaseBtn();
   // Выключен целиком — гасим подсветку выбранных режимов в серый (см. #bgSearchModeGrp.bg-off).
   const bgModeGrpEl = document.getElementById("bgSearchModeGrp");
   if (bgModeGrpEl) bgModeGrpEl.classList.toggle("bg-off", st.bgSearchOn === false);
@@ -2070,26 +2199,214 @@ function render(){
   // "⚖ Показать балансы" — ширина под каждое число ОДНА для ВСЕХ строк (см. formatBalanceTotals()
   // выше) — без этого метка "гуляла" по ширине от строки к строке и уводила саму цепочку правее
   // неё вбок (см. запрос пользователя — "выравнивание съехало").
-  let balW1 = 1, balW0 = 1;
+  let balW1 = 1, balW0 = 1, balB1 = 1, balB0 = 1;
   if (st.showBalances) {
     // Через кэш (см. memoMask): проход считает баланс КАЖДОЙ строки, т.е. обходит все данные
-    // целиком, а нужны из него только две ширины. computeRowBalance чистая — проверено.
+    // целиком, а нужны из него только ширины. computeRowBalance чистая — проверено.
+    // b1/b0 — те же максимумы, но в ДВОИЧНОМ виде: в двоичных режимах метка совсем другой ширины,
+    // а её ширину теперь обязана знать колонка номеров (баланс печатается внутри неё).
     const bw = memoMask("balW", [st.rows], () => {
-      let w1 = 1, w0 = 1;
+      let w1 = 1, w0 = 1, b1 = 1, b0 = 1;
       for (const s of st.rows) {
         if (!s) continue;
         const rb = computeRowBalance(s);
         if (String(rb.total1).length > w1) w1 = String(rb.total1).length;
         if (String(rb.total0).length > w0) w0 = String(rb.total0).length;
+        if (rb.total1.toString(2).length > b1) b1 = rb.total1.toString(2).length;
+        if (rb.total0.toString(2).length > b0) b0 = rb.total0.toString(2).length;
       }
-      return { w1, w0 };
+      return { w1, w0, b1, b0 };
     });
-    balW1 = bw.w1; balW0 = bw.w0;
+    balW1 = bw.w1; balW0 = bw.w0; balB1 = bw.b1 || 1; balB0 = bw.b0 || 1;
     updateSelBalance();
   } else {
     const wrap = document.getElementById("selBalanceWrap");
     if (wrap) wrap.style.display = "none";
   }
+  /* "🔎 Показать выделенное" (v0.912, запрос пользователя) — образец из выбранных ячеек (▭)
+     ищется во ВСЕХ строках цепочки и подсвечивается прямо в них, теми же цветами, что и находки
+     фон-поиска (.chain-hit-bits + KIND_CLS). Версии образца — по тому же переключателю
+     "⇌ Инв/Рев", что и весь поиск (см. KINDS_MODES): прямой всегда, остальные по режиму.
+     Строка → массив по позициям: kind совпадения или -1. Первый найденный вариант позицию не
+     отдаёт (marks[k] < 0), поэтому прямое совпадение всегда важнее инверсии/реверса — тот же
+     приоритет, что и в "🌈 Все паттерны".
+     Образец короче двух бит не ищем: одиночный бит есть буквально везде, подсветка от него
+     превращается в сплошную заливку. */
+  let cellSampleRows = null;
+  /* Зафиксированное — своей картой Map(строка → Set(индексы бит)): в наборе может быть полстроки,
+     и дёргать cellPin.has() на каждый бит означало бы разбор строкового ключа полмиллиона раз за
+     кадр (та же причина, по которой sampleRow достаётся один раз на строку, а не на символ). */
+  const cellPinRows = cellPin.size ? (() => {
+    const m = new Map();
+    for (const key of cellPin) {
+      const p = key.split("|"), r = +p[0], k = +p[1];
+      if (!m.has(r)) m.set(r, new Set());
+      m.get(r).add(k);
+    }
+    return m;
+  })() : null;
+  // Образец собирается и из ячеек строк, и из выбранных бит паттерна (v0.950) — хватит любого.
+  if (st.cellSampleOn && (cellSel.size || patCellSel.size) && typeof cellSelSampleText === "function") {
+    const sample = cellSelSampleText();
+    if (sample.length >= 2) {
+      /* ОДНА ВЫДЕЛЕННАЯ СТРОКА — ИЩЕМ ТОЛЬКО В НЕЙ (v0.943, запрос пользователя "если выделена
+         одна строка, то выделения ячеек искать только в ней"). Это способ сузить показ: пока
+         выделения нет (а «🔎 Показать» его при включении как раз снимает) — ищем по всей цепочке,
+         как раньше. Несколько выделенных строк ограничением НЕ считаются: там выделение обычно
+         про другое действие (склейки, XOR), и глушить показ было бы неожиданно. */
+      const onlyRow = (st.selectedRows && st.selectedRows.size === 1) ? Math.max(...st.selectedRows) : -1;
+      // bgSearchModes в ключе — от него зависит НАБОР склеек сквозного поиска (см. ниже).
+      cellSampleRows = memoMask("cellSample",
+        [st.rows, sample, st.kindsMode || "", st.align, !!st.cellSampleSeq, onlyRow,
+         (st.bgSearchModes || []).join(",")], () => {
+        const inv = invertBits(sample);
+        const variants = [[0, sample]];
+        if (kindsInvOn()) variants.push([1, inv]);
+        if (kindsRevOn()) variants.push([2, reverseStr(sample)]);
+        if (kindsInvOn() && kindsRevOn()) variants.push([3, reverseStr(inv)]);
+        const out = new Map();
+        const markAt = (row, k, kind) => {
+          const len = (st.rows[row] || "").length;
+          if (k < 0 || k >= len) return;
+          let marks = out.get(row);
+          if (!marks) { marks = new Array(len).fill(-1); out.set(row, marks); }
+          if (marks[k] < 0) marks[k] = kind;
+        };
+        for (let i = 0; i < st.rows.length; i++) {
+          if (onlyRow >= 0 && i !== onlyRow) continue;
+          const s = st.rows[i] || "";
+          if (s.length < sample.length) continue;
+          for (const [kind, v] of variants) {
+            let from = 0, idx;
+            while ((idx = s.indexOf(v, from)) >= 0) {
+              for (let k = idx; k < idx + v.length; k++) markAt(i, k, kind);
+              from = idx + 1;
+            }
+          }
+        }
+        /* "⛓ сквозно" (v0.942): тот же образец ищется в СКЛЕЙКЕ строк, а найденное раскладывается
+           обратно по строкам через карту позиция→(строка, бит). Так засчитывается совпадение,
+           которое начинается в конце одной строки и кончается в начале следующей, — построчный
+           indexOf такое не видит в принципе. Идёт ВДОБАВОК к построчному поиску, приоритет вида
+           (прямой важнее инверсии/реверса) держится тем же правилом marks[k] < 0.
+           ПОРЯДОК СКЛЕЙКИ — ПО ФОН-ПОИСКУ (v0.944, запрос пользователя "пусть берёт все склейки,
+           включённые в поиске фоновом"): сколько разных склеек отмечено в «🔍 Фон-поиске», по
+           стольким и ищем. Порядков ровно четыре, всё остальное к ним сводится:
+             concatR*          — сверху вниз, строки как есть;
+             concatL*          — снизу вверх (порядок СТРОК обратный, биты внутри строки прямые);
+             concatSnake*      — змейка от левого края: у каждой второй строки биты задом наперёд;
+             concatSnakeFromR* — та же змейка, но первая строка читается справа.
+           Вариантов "Инв"/"Рев+Инв" тут НЕТ намеренно, и это не упрощение: искать образец в
+           инвертированной склейке — то же самое, что искать инвертированный образец в обычной, а
+           инверсию/реверс самого образца уже даёт переключатель «⇌ Инв/Рев» (см. variants выше).
+           Разными они делают только порядок обхода, поэтому по нему и группируем.
+           Ни одной склейки в фон-поиске не отмечено — берём обычную сверху вниз, чтобы кнопка не
+           оказалась немой. */
+        // При одной выделенной строке сквозной поиск смысла не имеет: склеивать нечего, а сама
+        // строка уже прочёсана выше — ровно тем же образцом и теми же вариантами.
+        if (st.cellSampleSeq && onlyRow < 0) {
+          const modes = st.bgSearchModes || [];
+          const hasL = modes.some(m => m.indexOf("concatL") === 0);
+          const hasSnakeR = modes.some(m => m.indexOf("concatSnakeFromR") === 0);
+          const hasSnake = modes.some(m => m.indexOf("concatSnake") === 0 && m.indexOf("concatSnakeFromR") !== 0);
+          let hasR = modes.some(m => m.indexOf("concatR") === 0);
+          if (!hasR && !hasL && !hasSnake && !hasSnakeR) hasR = true;
+          /* order: "down"/"up" — в каком порядке идут СТРОКИ; snakeStart: null — биты всегда слева
+             направо, false/true — змейка (чётность берём по НОМЕРУ СТРОКИ, ровно как
+             concatSnakeGlueDownTo в fold-1, иначе пропуск пустых строк сдвигал бы чередование). */
+          const buildSeq = (order, snakeStart) => {
+            let text = ""; const map = [];
+            const idxs = [];
+            for (let i = 0; i < st.rows.length; i++) if ((st.rows[i] || "").length) idxs.push(i);
+            if (order === "up") idxs.reverse();
+            for (const i of idxs) {
+              const s = st.rows[i];
+              const rev = (snakeStart !== null) && ((i % 2 === 1) !== !!snakeStart);
+              if (rev) for (let k = s.length - 1; k >= 0; k--) { text += s[k]; map.push([i, k]); }
+              else     for (let k = 0; k < s.length; k++)      { text += s[k]; map.push([i, k]); }
+            }
+            return { text, map };
+          };
+          const seqs = [];
+          if (hasR)      seqs.push(buildSeq("down", null));
+          if (hasL)      seqs.push(buildSeq("up", null));
+          if (hasSnake)  seqs.push(buildSeq("down", false));
+          if (hasSnakeR) seqs.push(buildSeq("down", true));
+          for (const sq of seqs) {
+            for (const [kind, v] of variants) {
+              let from = 0, idx;
+              while ((idx = sq.text.indexOf(v, from)) >= 0) {
+                for (let p = idx; p < idx + v.length; p++) {
+                  const m = sq.map[p];
+                  if (m) markAt(m[0], m[1], kind);
+                }
+                from = idx + 1;
+              }
+            }
+          }
+        }
+        return out;
+      });
+    }
+  }
+  // Кнопке "📌 Зафиксировать" нужен ТОТ ЖЕ разбор, что сейчас нарисован (см. bCellSampleFix): сама
+  // она ничего не ищет, а перекладывает готовые находки в накопитель.
+  lastCellSampleRows = cellSampleRows;
+  /* ТОТ ЖЕ ОБРАЗЕЦ — И В КОЛОНКЕ ПАТТЕРНОВ (v0.948, запрос пользователя "в паттернах надо и туда
+     выделять находки части, а не в строках"). Раньше «🔎 Показать» искал только в самих строках,
+     и совпадение куска паттерна с выбранными ячейками нигде не было видно — а именно оно и
+     интересно: паттерн собирается по частям, и хочется видеть, какая его часть уже нашлась.
+     Ищем в ТЕКСТЕ паттерна теми же вариантами (⇌ Инв/Рев) и с тем же приоритетом (прямой важнее),
+     подсветка — теми же классами, что и в строках. Ограничение "выделена одна строка" (v0.943)
+     действует и тут: тогда смотрим только её паттерн.
+     Считаем ОТДЕЛЬНО от строк: у паттернов свои тексты и своя длина, мешать их в одну карту
+     нельзя. Зависимость — склейка текстов паттернов, а не сам массив: объекты паттернов меняют
+     на месте, и сравнение по ссылке отдавало бы протухшую подсветку. */
+  let cellSamplePats = null;
+  // Образец собирается и из ячеек строк, и из выбранных бит паттерна (v0.950) — хватит любого.
+  if (st.cellSampleOn && (cellSel.size || patCellSel.size) && typeof cellSelSampleText === "function") {
+    const sample = cellSelSampleText();
+    if (sample.length >= 2) {
+      const onlyRowP = (st.selectedRows && st.selectedRows.size === 1) ? Math.max(...st.selectedRows) : -1;
+      const patsKey = st.pats.map(p => (p && p.text) || "").join("|");
+      cellSamplePats = memoMask("cellSamplePats", [patsKey, sample, st.kindsMode || "", onlyRowP], () => {
+        const inv = invertBits(sample);
+        const variants = [[0, sample]];
+        if (kindsInvOn()) variants.push([1, inv]);
+        if (kindsRevOn()) variants.push([2, reverseStr(sample)]);
+        if (kindsInvOn() && kindsRevOn()) variants.push([3, reverseStr(inv)]);
+        const out = new Map();
+        for (let i = 0; i < st.pats.length; i++) {
+          if (onlyRowP >= 0 && i !== onlyRowP) continue;
+          const t = (st.pats[i] && st.pats[i].text) || "";
+          if (t.length < sample.length) continue;
+          let marks = null;
+          for (const [kind, v] of variants) {
+            let from = 0, idx;
+            while ((idx = t.indexOf(v, from)) >= 0) {
+              if (!marks) marks = new Array(t.length).fill(-1);
+              for (let k = idx; k < idx + v.length; k++) if (marks[k] < 0) marks[k] = kind;
+              from = idx + 1;
+            }
+          }
+          if (marks) out.set(i, marks);
+        }
+        return out;
+      });
+    }
+  }
+  // При включённых балансах у .num-l2 снимается отрицательный margin-left (см. CSS body.has-balances):
+  // та оттяжка была заведена, когда в боксе стоял ОДИН номер и его подтягивали ближе к колонке
+  // паттернов. Теперь слева в боксе стоит метка баланса, и оттяжка вдвигала её прямо на линию
+  // разделителя (запрос пользователя: "небольшой отступ от границы для балансов надо оставить").
+  document.body.classList.toggle("has-balances", !!st.showBalances);
+  // Ширина номера строки — ОДНА на все строки (см. numTxtL ниже). Кандидатов ровно два: самый
+  // нижний номер (самый длинный положительный) и самый верхний (у построений он отрицательный,
+  // и минус добавляет символ).
+  const numPadW = Math.max(
+    String(rowLabel(Math.max(0, st.rows.length - 1))).length,
+    String(rowLabel(0)).length
+  );
 
   // Окно строк, которые реально рисуем (см. vrowsRange). Пока строк мало — это по-прежнему ВСЕ
   // строки, и рендер идёт ровно как раньше.
@@ -2103,13 +2420,13 @@ function render(){
   const mirrorTo = (st.selectedRows && st.selectedRows.size) ? Math.max(...st.selectedRows) : -1;
   // Выделена ровно одна строка — зеркало только у неё (см. mirrorTopRow в ядре).
   const mirrorFrom = mirrorTopRow();
-  /* ПОДСВЕТКА ГРУПП МАСКИ. Два независимых источника, цвета общие (красится САМА ЦИФРА, не фон —
-     запрос пользователя "разными цифрами лучше чем фон, выбор цвета"):
-       mpShift  — маска "⇄ Сдвига по маске" (вкладка «Строки»): какие биты пойдут одним кольцом,
-                  какие другим. Диапазон — все строки, сдвиг применяется к выделенным.
-       mpBgMask — прореживающая маска фон-поиска (вкладка «Поиск»): какие биты она БЕРЁТ, а какие
-                  выбрасывает. Диапазон — colSelectRowRange (одна строка выделена → от верха до
-                  неё, несколько → только они) — запрос пользователя.
+  /* ПОДСВЕТКА ГРУПП МАСКИ — ОДИН источник на оба смысла (v0.929: маска общая, см. mpBgMask ниже;
+     раньше рядом жил отдельный mpShift для "⇄ Сдвига по маске" и всегда перебивал этот).
+     Красится САМА ЦИФРА, не фон (запрос пользователя "разными цифрами лучше чем фон, выбор цвета"):
+       под «1» — маска БЕРЁТ бит в поиск, он же едет кольцом единиц "⇄ Сдвига по маске";
+       под «0» — выбрасывает, и это кольцо нулей.
+     Диапазон — colSelectRowRange (одна строка выделена → от верха до неё, несколько → только
+     они, ничего не выделено → вся цепочка) — запрос пользователя.
      Режим "seq" — фаза маски идёт СКВОЗЬ строки (нужна нарастающая сумма длин, считаем раз на
      кадр), "row" — маска начинается заново в каждой строке. */
   const cumLenFrom = (from) => {
@@ -2117,14 +2434,20 @@ function render(){
     for (let r = from; r < st.rows.length; r++) { a[r] = acc; acc += (st.rows[r] || "").length; }
     return a;
   };
-  const mpShift = (typeof maskShiftBits === "function" && st.maskPaintMode && st.maskPaintMode !== "off")
-    ? maskShiftBits() : "";
-  const mpShiftOff = (mpShift && st.maskPaintMode === "seq") ? cumLenFrom(0) : null;
-  const mpBgMask = (typeof maskBits === "function" && st.bgMaskPaintMode && st.bgMaskPaintMode !== "off")
-    ? maskBits() : "";
+  /* ОДНА подсветка на одну маску (v0.929): отдельной ветки "⇄ Сдвига по маске" (mpShift,
+     st.maskPaintMode) больше нет — маска у сдвига и у прореживания общая, красили они одно и то
+     же, а ветка сдвига к тому же всегда перебивала вторую. Своего «выкл» у подсветки тоже нет:
+     маска пуста (или в ней нет «1» и «0» разом) — mpBgMask пустая, и подсветка гаснет сама.
+     Берём maskBitsRaw(), а не maskBits(): выключатель «🎭 По маске» гасит ПОИСК, а не картинку. */
+  // st.bgMaskPaintOn (v0.936) — отдельный выключатель подсветки: маска в поле остаётся, красить
+  // перестаём. Пустое поле по-прежнему гасит подсветку само, независимо от этого флага.
+  const mpBgMask = (st.bgMaskPaintOn !== false && typeof maskBitsRaw === "function") ? maskBitsRaw() : "";
   const mpBgRange = mpBgMask ? colSelectRowRange() : null;
-  const mpBgOff = (mpBgMask && st.bgMaskPaintMode === "seq") ? cumLenFrom(Math.max(0, mpBgRange.lo)) : null;
+  const mpBgOff = (mpBgMask && st.bgMaskPaintMode !== "row") ? cumLenFrom(Math.max(0, mpBgRange.lo)) : null;
   const mpColor = [st.maskPaintColor0 || "#22d3ee", st.maskPaintColor1 || "#b060ff"];
+  // Выбранная фаза прореживающей маски (кнопка "🎭 Фаза маски" во вкладке "Маски" и клик по фазе
+  // в Черновике — одно и то же значение). На маску "⇄ Сдвига" не влияет: у той своей фазы нет.
+  const mpBgPhase = mpBgMask ? (((st.maskDraftPhase | 0) % mpBgMask.length) + mpBgMask.length) % mpBgMask.length : 0;
   for (let i = vr.lo; i <= vr.hi; i++){
     // "👁 XOR на строке" (st.horizShowLiveXor) теперь РЕАЛЬНО пишет промежуточный XOR в
     // st.rows[b] по ходу поиска (см. doStep()), поэтому тут достаточно простого чтения —
@@ -2155,7 +2478,34 @@ function render(){
     if (st.rowDividers && st.rowDividers.has(i)) cls.push("row-divider");
 
     const rowBal = (st.showBalances || st.runsAsBits) ? computeRowBalance(s) : null;
-    const balanceHtml = st.showBalances ? formatBalanceTotals(rowBal.total1, rowBal.total0, balW1, balW0) : "";
+    const balanceHtml = st.showBalances ? formatBalanceTotals(rowBal.total1, rowBal.total0, balW1, balW0, balB1, balB0, rowLabel(i)) : "";
+
+    // Номер строки (текст + класс "изменённой") считается ЗДЕСЬ, а не ниже у out.push: правый
+    // номер теперь печатается ВНУТРИ ячейки П2 (запрос пользователя — "убери правые номера
+    // цепочек в правые паттерны, слева от них"), а она собирается прямо в этом блоке.
+    const numCls = "num" + (s !== (changedBase[i] || "") ? " changed" : "");
+    // Номер для показа — через rowLabelText(): у достроенных сверху строк он отрицательный, а при
+    // включённых "🔢 Двоичных номерах" ещё и в двоичном виде.
+    const numTxt = rowLabelText(i);
+    // НОМЕР В ПОЛЕ ЦЕПОЧКИ — ВСЕГДА ДЕСЯТИЧНЫЙ (v0.884, запрос пользователя "номера в цепочках —
+    // только 10-ные пусть"). Двоичный вид (кнопка "🔢 Двоичные номера") остаётся у номеров ВНУТРИ
+    // паттернов: там он к месту — паттерн сам из 0/1, и номер читается как его продолжение. А в
+    // поле цепочки нужен обычный счёт строк, тот же, что в логе и сообщениях.
+    // Номер добит пробелами до ОДНОЙ ширины на все строки (v0.891). Бокс .num-l2 выровнен по
+    // правому краю, и без этого номер разной длины сдвигал бы стоящую ПЕРЕД ним метку баланса —
+    // "+" и "=" гуляли бы по строкам (запрос пользователя "= под =, + под +"). Пробелы держатся
+    // за счёт white-space:pre у .num.
+    const numTxtL = String(rowLabel(i)).padStart(numPadW, " ");
+    /* Номера ВНУТРИ ячеек паттернов — по кнопке у каждой колонки отдельно (v0.873, запрос
+       пользователя "отображение вообще номеров в паттернах, лево право поля отдельные кнопки").
+       Правый (в П2) теперь стоит СПРАВА от текста паттерна, а не слева, как было с v0.833
+       ("справа номера от паттернов"); левый (в П1) — зеркально, у левого края своей ячейки.
+       Место под них резервируют body.patnum-r/.patnum-l в CSS, сами номера позиционируются
+       абсолютом. */
+    const numRightHtml = st.patNumR === false ? ""
+      : '<span class="' + numCls + ' num-r2">' + numTxt + "</span>";
+    const numLeftHtml = st.patNumL
+      ? '<span class="' + numCls + ' num-p1">' + numTxt + "</span>" : "";
 
     let pat = "";
     let patRight = "";
@@ -2189,22 +2539,54 @@ function render(){
       // паттерн при этом рисовался целиком — и выходило, что подсвечен один кусок, а ищется другой.
       // Условие то же живое, что и у target-строки, а не "замороженный" p.skip1 (он пишется только
       // при обычной находке).
-      const skipShown = st.skipFirst && p.text.length > 1 &&
-        (i === bgTargetIdx || (allPatHits && allPatHits.has(i)) ||
-         (st.selectedPats && st.selectedPats.has(i)));
+      // ВКЛЮЧЕНО "⏭ Без 1-го" — первый символ приглушён У ВСЕХ ПАТТЕРНОВ без разбора (v0.906,
+      // запрос пользователя "и у паттернов первый символ затемнить"). Раньше тут стоял список
+      // исключений (текущая цель, строки из "🔽 Все ниже", находки "🌈 Все паттерны", выделенные
+      // ячейки) — но флаг-то глобальный: поиск отбрасывает первый символ У ЛЮБОГО паттерна, а в
+      // колонке это было видно лишь у нескольких, и остальные читались так, будто ищутся целиком.
+      const skipShown = st.skipFirst && p.text.length > 1;
       const skipDim = ((p.found && p.skip1 && p.text.length > 1) || skipShown);
-      if (partStart >= 0 && partEnd > partStart) {
-        // Первый символ, отрезанный "⏭ Без 1-го", остаётся приглушённым — он всегда левее куска
-        // (кусок ищется уже по base, то есть начиная со второго символа).
-        const head = (skipDim && partStart > 0)
-          ? '<span class="pat-skip">' + esc(p.text[0]) + '</span>' + esc(p.text.slice(1, partStart))
-          : esc(p.text.slice(0, partStart));
-        textHtml = head +
+      // Отрезанный первый символ ВЫНЕСЕН ЗА .pat-txt (v0.905): заливка находки лежит на .pat-txt
+      // (см. её сборку ниже), поэтому всё, что попадает внутрь, ею и красится. Символ, которого в
+      // совпадении не было, снаружи — и остаётся просто приглушённым.
+      const skipHead = skipDim ? '<span class="pat-skip">' + esc(p.text[0]) + '</span>' : "";
+      const from = skipDim ? 1 : 0;
+      // Совпадения с образцом из выбранных ячеек ВНУТРИ паттерна (v0.948, см. cellSamplePats).
+      // Идут первыми: пока идёт разбор «🔎 Показать», важнее видеть найденный кусок образца, чем
+      // цвет «🧩 Макс. части» — тот вернётся, как только показ выключат.
+      const patSampleMarks = cellSamplePats ? cellSamplePats.get(i) : null;
+      /* ВЫБОР БИТ ПРЯМО В ПАТТЕРНЕ (v0.950): пока включён режим "▭ Выбор ячеек", каждый символ
+         паттерна печатается своим span'ом с data-pcol — по нему и ловится клик (см. patCellAtEvent
+         в fold-4). Вне режима спанов не плодим: паттернов сотни, и лишние узлы на каждый кадр тут
+         ни к чему — ровно та же логика, что у data-col у бит строки. */
+      const patCellRow = (patCellSel.size && patCellSelRow() === i) ? patCellSel : null;
+      if ((patSampleMarks && patSampleMarks.length === p.text.length) || cellSelMode) {
+        let t = "";
+        for (let k = from; k < p.text.length; k++) {
+          const kd = (patSampleMarks && patSampleMarks.length === p.text.length) ? patSampleMarks[k] : -1;
+          const sel = patCellRow && patCellRow.has(i + "|" + k);
+          const ch = esc(p.text[k]);
+          let cls = "";
+          if (sel) cls = "cell-sel";
+          else if (kd >= 0) cls = "chain-hit-bits" + (KIND_CLS[kd] ? " " + KIND_CLS[kd] : "");
+          const attr = cellSelMode ? ' data-pcol="' + k + '"' : "";
+          t += (cls || attr)
+            ? ('<span' + (cls ? ' class="' + cls + '"' : "") + attr +
+               (sel ? ' title="Выбранный бит паттерна"' : (kd >= 0 ? ' title="Совпало с выбранными ячейками"' : "")) +
+               '>' + ch + '</span>')
+            : ch;
+        }
+        textHtml = t;
+      } else if (partStart >= 0 && partEnd > partStart) {
+        // Кусок ищется уже по base (со второго символа), поэтому в отрезанный первый попасть не
+        // может — но зажимаем на всякий случай, чтобы срез не ушёл левее начала .pat-txt.
+        const ps = Math.max(from, partStart), pe = Math.max(ps, partEnd);
+        textHtml = esc(p.text.slice(from, ps)) +
           '<span style="color:' + allPatColor(i) + ' !important;font-weight:700">' +
-          esc(p.text.slice(partStart, partEnd)) + '</span>' +
-          esc(p.text.slice(partEnd));
-      } else if (skipDim) {
-        textHtml = '<span class="pat-skip">' + esc(p.text[0]) + '</span>' + esc(p.text.slice(1));
+          esc(p.text.slice(ps, pe)) + '</span>' +
+          esc(p.text.slice(pe));
+      } else {
+        textHtml = esc(p.text.slice(from));
       }
 
       // "🌈 Все паттерны" — нашедшийся паттерн красится СВОИМ цветом (тем же, что и его
@@ -2222,11 +2604,20 @@ function render(){
           (partStart >= 0 ? (' — только часть, ' + (partEnd - partStart) + ' из ' + p.text.length + ' бит') : '') +
           ' (' + KIND_LABELS_RU[allHit.kind] + ')"'
         : '';
-      pat = '<span class="' + c + '"' + allHitStyle + '>' + textHtml + stepHtml + '</span>';
-      patRight = '<span class="' + c2 + '"' + allHitStyle + '>' + textHtml + stepHtml + '</span>';
+      // У ЛЕВОЙ колонки номер идёт ПОСЛЕ текста (то есть справа от паттерна), у правой — ДО него
+      // (слева), см. body.patnum-* в CSS: сторона фиксированная, запрос пользователя.
+      // Сам текст паттерна — в своей обёртке .pat-txt (v0.902, запрос пользователя "найденные
+      // паттерны фон только на битах паттернов, не вся строка"). Заливки находки/выделения висят
+      // теперь на ней, а не на ячейке .pat: ячейка — колонка фиксированной ширины, и фон на ней
+      // растягивался на всю её длину, читаясь как подсветка целой строки. Номер строки и метка
+      // шага (#N) в обёртку не входят намеренно — они не часть паттерна.
+      // skipHead — отрезанный "⏭ Без 1-го" первый символ, СНАРУЖИ заливки (см. выше).
+      const patTxtHtml = skipHead + '<span class="pat-txt">' + textHtml + '</span>';
+      pat = '<span class="' + c + '"' + allHitStyle + '>' + patTxtHtml + numLeftHtml + stepHtml + '</span>';
+      patRight = '<span class="' + c2 + '"' + allHitStyle + '>' + numRightHtml + patTxtHtml + stepHtml + '</span>';
     } else {
-      pat = '<span class="pat"></span>';
-      patRight = '<span class="pat2"></span>';
+      pat = '<span class="pat">' + numLeftHtml + '</span>';
+      patRight = '<span class="pat2">' + numRightHtml + '</span>';
     }
 
     // "Ось 1.2" (st.align==="axis12") — по галке "⊙ Ось: сдвиг только на «1»/между «1-0»"
@@ -2245,7 +2636,17 @@ function render(){
     const shift = s.length ? (
       st.align === "axis" ? axisRowShift(maxLen, i, geomLen) :
       st.align === "axis12" ? (axis12Frozen ? alignShift(maxLen, geomLen, "center") : axisRowShift(maxLen, i, s.length)) :
-      (st.align === "axisbit" || st.align === "axisbit12") ? resolveAxisBitShift(i) :
+      /* ОсьБит с "семенем" (первое нажатие ↥/↥½, см. st.axisBitSeedAlign в обработчике кнопок):
+         сдвиг ОсьБита прибавляется К ПОЗИЦИИ В ПРЕЖНЕМ ВЫРАВНИВАНИИ, а не заменяет её. Пока
+         ОсьБит строку не двигал, его сдвиг равен нулю — строка стоит ровно там, где стояла. А
+         когда двинули, она едет ОТ ЭТОГО ЖЕ МЕСТА на столько, на сколько её сдвинул ОсьБит
+         (v0.883, запрос пользователя: "когда сдвигаю, надо чтобы с того же места двигались,
+         сейчас скачут куда-то"). Раньше строка с записью в axisBitShiftMap разом переходила на
+         АБСОЛЮТНЫЙ сдвиг ОсьБита — отсчёт у него от левого края, отсюда и прыжок. */
+      (st.align === "axisbit" || st.align === "axisbit12")
+        ? (st.axisBitSeedAlign
+            ? alignShift(maxLen, geomLen, st.axisBitSeedAlign, i) + resolveAxisBitShift(i)
+            : resolveAxisBitShift(i)) :
       alignShift(maxLen, geomLen, st.align, i)
     ) : 0;
     // Левый отступ строки растёт на место под зеркала, правый считается уже от него.
@@ -2287,7 +2688,10 @@ function render(){
     if (st.align === "halfcenter" && (maxLen - s.length) % 2 !== 0) extraCh += 0.5;
     // "Лесенка ½"/"Лесенка правая ½" — от чётности НОМЕРА строки (их сдвиг тоже считается от
     // номера, см. alignShift()), а не от длины, как у "Центр ½" выше. См. hasHalfNudge().
-    if ((st.align === "halfstairs" || st.align === "rhalfstairs") && i % 2 !== 0) extraCh += 0.5;
+    // Полшага у "½"-лесенок — по чётности СТУПЕНИ, а не строки (см. stairsStepIdx): при
+    // группировке строки внутри одной ступени обязаны стоять ровно друг под другом.
+    if ((st.align === "halfstairs" || st.align === "rhalfstairs") &&
+        stairsUnits(st.align, i) % 2 !== 0) extraCh += 0.5;
     if (isAxisBetween) extraCh -= 0.5;
     if (isAxisBitBetween) extraCh -= 0.5;
     if (shift < 0) extraCh += shift;
@@ -2430,6 +2834,11 @@ function render(){
     // (полмиллиона лишних Map.get на кадр), хотя внутри строки не меняются.
     const invFlagsRow = invFlagsMap.get(i);
     const insFlagsRow = insertedFlagsMap.get(i);
+    // Совпадения с образцом из выбранных ячеек — см. cellSampleRows выше.
+    const sampleRow = cellSampleRows ? cellSampleRows.get(i) : null;
+    const pinRow = cellPinRows ? cellPinRows.get(i) : null;   // зафиксированные биты этой строки
+    // «Новые» биты этой строки (дописанные построением/зеркалом) — см. newBitsMap.
+    const newFlagsRow = newBitsMap.get(i);
     const envRow = envPreview ? envPreview.cells.get(i) : null;
     const prevRow = prevRows ? prevRows[i] : null;
     const allPatRow = allPatRows ? allPatRows.get(i) : null; // "🌈 Все паттерны", см. выше
@@ -2498,6 +2907,9 @@ function render(){
       const isInvBit = !!(invFlagsRow && invFlagsRow.length === s.length && invFlagsRow[k]);
       // Вставленный символ (см. insertedFlagsMap/"🔴 Инверсия между символами").
       const isInsBit = !!(insFlagsRow && insFlagsRow.length === s.length && insFlagsRow[k]);
+      // Дописанный построением/зеркалом бит (см. newBitsMap/.bit-new). Пометка держится, пока её
+      // не снимут кнопкой "✕" рядом с цветом «Нов» в "Виде", — переживает сохранение и Сброс.
+      const isNewBit = !!(newFlagsRow && newFlagsRow.length === s.length && newFlagsRow[k]);
       // Показанная (ещё не выполненная) линия сгиба "✉ Конверт" — см. envPreview.
       const isEnvDiag = !!(envRow && envRow.has(k) && (bit === '0' || bit === '1'));
       // Номер паттерна, накрывшего этот бит в режиме "🌈 Все паттерны" (см. allPatRows).
@@ -2511,22 +2923,32 @@ function render(){
       // бита свой data-col.
       const mrg = !colAttr;
 
-      // К какой группе маски относится этот бит (см. mpShift/mpBgMask выше): 1 — под «1» маски,
-      // 0 — под «0», null — подсветка не про этот бит. Сдвиговая маска в приоритете: она про
-      // действие, которое вот-вот сделают, а прореживающая — справочная.
+      // К какой группе маски относится этот бит (см. mpBgMask выше): 1 — под «1» маски,
+      // 0 — под «0», null — подсветка не про этот бит. Это же деление показывает, какие биты
+      // поедут одним кольцом «⇄ Сдвига по маске», а какие другим — маска общая.
       let mpGrp = null;
-      if (mpShift) {
-        const gi = (mpShiftOff ? mpShiftOff[i] : 0) + k;
-        mpGrp = mpShift[gi % mpShift.length] === "1" ? 1 : 0;
-      } else if (mpBgMask && i >= mpBgRange.lo && i <= mpBgRange.hi) {
-        const gi = (mpBgOff ? mpBgOff[i] : 0) + k;
+      if (mpBgMask && i >= mpBgRange.lo && i <= mpBgRange.hi) {
+        // + mpBgPhase — та же арифметика, что в applyPickMask(): фаза сдвигает маску по её же
+        // символам. Так подсветка в строках показывает ровно ту фазу, что выбрана кнопкой
+        // "🎭 Фаза маски" / кликом по фазе в Черновике.
+        const gi = (mpBgOff ? mpBgOff[i] : 0) + k + mpBgPhase;
         mpGrp = mpBgMask[gi % mpBgMask.length] === "1" ? 1 : 0;
       }
 
+      const sampleKind = (sampleRow && sampleRow.length === s.length) ? sampleRow[k] : -1;
       if (isCellSel && (bit === '0' || bit === '1')) {
         // Выбранная курсором ячейка — поверх любых других подсветок: это то, с чем сейчас работают
         // кнопки «Инв. ячеек»/«90° ячеек»/«Сдвиг».
         emit('<span class="b' + bit + ' cell-sel"' + colAttr + '>', bit, mrg);
+      } else if (pinRow && pinRow.has(k) && (bit === '0' || bit === '1')) {
+        // Накопитель "📌 Зафиксировать" — ВЫШЕ свежей находки: смысл набора в том, что он держится,
+        // когда образец сменили и подсветка находки уже про другое место.
+        emit('<span class="b' + bit + ' cell-pin" title="Зафиксированный бит (📌). Escape или выключение «🔎 Показать» — сбросить набор"' + colAttr + '>', bit, mrg);
+      } else if (sampleKind >= 0 && (bit === '0' || bit === '1')) {
+        // Совпадение с образцом из выбранных ячеек ("🔎 Показать выделенное") — теми же цветами,
+        // что и находки фон-поиска, чтобы читалось как одно и то же "нашлось".
+        emit('<span class="b' + bit + ' chain-hit-bits' + (KIND_CLS[sampleKind] ? ' ' + KIND_CLS[sampleKind] : '') +
+          '" title="Совпало с выбранными ячейками"' + colAttr + '>', bit, mrg);
       } else if (isEnvDiag) {
         // Линия сгиба показывается ПОВЕРХ прочих подсветок: сейчас важно только одно — где пойдёт
         // сгиб, если нажать "Конверт" второй раз.
@@ -2547,6 +2969,8 @@ function render(){
         emit('<span class="b' + bit + ' bit-inv" title="Перевёрнут переходом границы строки"' + colAttr + '>', bit, mrg);
       } else if (isInsBit && (bit === '0' || bit === '1')) {
         emit('<span class="b' + bit + ' bit-ins" title="Вставлен кнопкой «Инверсия между символами»"' + colAttr + '>', bit, mrg);
+      } else if (isNewBit && (bit === '0' || bit === '1')) {
+        emit('<span class="b' + bit + ' bit-new" title="Новый бит — дописан построением или зеркалом"' + colAttr + '>', bit, mrg);
       } else if (isChgBit) {
         emit('<span class="b' + bit + ' bit-chg" title="Изменён последним шагом"' + colAttr + '>', bit, mrg);
       } else if (isAxisColBit && (bit === '0' || bit === '1')) {
@@ -2576,9 +3000,11 @@ function render(){
         // Подсветка групп маски — самая нижняя по приоритету: краска справочная, любая адресная
         // подсветка (находка, изменённые биты, выбранная ячейка) должна её перебивать. Цвет —
         // инлайном, чтобы перекрыть обычные .b0/.b1 (у тех !important нет).
+        // Подсказка сразу про оба смысла общей маски (v0.929): «1» — бит идёт в поиск и едет
+        // кольцом единиц «⇄ Сдвига», «0» — выбрасывается из поиска и едет кольцом нулей.
         emit('<span class="b' + bit + '" style="color:' + mpColor[mpGrp] + '" title="' +
-             (mpShift ? ('Кольцо «' + mpGrp + '» сдвига по маске')
-                      : (mpGrp ? 'Маска БЕРЁТ этот бит в поиск' : 'Маска выбрасывает этот бит')) +
+             (mpGrp ? 'Маска БЕРЁТ этот бит в поиск · кольцо «1» сдвига по маске'
+                    : 'Маска выбрасывает этот бит · кольцо «0» сдвига по маске') +
              '"' + colAttr + '>', bit, mrg);
       } else if (bit === '0' || bit === '1') {
         // Самая массовая ветка — обычный неподсвеченный бит. Именно её склейка и убирает
@@ -2610,9 +3036,6 @@ function render(){
       bits += blankRun(shiftPad + shownRowLen, padRight);
     }
 
-    // Строка изменилась относительно базы (см. changedBase выше) — подсвечиваем номер отдельным
-    // цветом (см. .num.changed в CSS), чтобы было видно, какие строки реально трогали.
-    const numCls = "num" + (s !== (changedBase[i] || "") ? " changed" : "");
     // Пока работает "🧩 Паттерн-цепочка" — ниже выделенной ярко светится только ПЕРВАЯ строка под
     // ней (та, чей паттерн сейчас ищется), все остальные идут тусклым (запрос пользователя).
     // Паттерн ложится и в них тоже, но по смыслу это уже хвост ниже искомой строки.
@@ -2624,16 +3047,23 @@ function render(){
       cls.push("pat-chain-dim");
     }
     // Номер строки — теперь ещё и вплотную к ЛЕВОМУ краю самого поля битов (не только снаружи
-    // колонки паттерна слева), симметрично уже существовавшему номеру у ПРАВОГО края битов
-    // (см. запрос пользователя — номер должен быть "в поле цепочки", а не только у паттернов).
+    // колонки паттерна слева). ПРАВЫЙ номер своей колонки больше не занимает — он ушёл ВНУТРЬ
+    // ячейки П2 (см. numRightHtml выше), поэтому поле битов доходит до самой колонки паттернов.
     // Нумерация с 0 (не с 1) — см. запрос пользователя: первая строка получает номер "0".
-    // Номер для показа — через rowLabel(): у достроенных сверху строк он отрицательный.
-    const numTxt = rowLabel(i);
-    out.push('<div class="' + cls.join(" ") + '" data-idx="' + i + '"><span class="' + numCls + '">' + numTxt + "</span>" +
-             pat + '<span class="' + numCls + ' num-l2">' + numTxt + "</span>" +
-             balanceHtml +
+    // КРАЙНЕГО ЛЕВОГО НОМЕРА (снаружи от П1) БОЛЬШЕ НЕТ — v0.858, запрос пользователя "номера из
+    // левых паттернов удали". Слева остался только номер у самого поля бит (.num-l2), справа —
+    // тот, что внутри ячейки П2. Строка теперь начинается прямо с колонки паттернов.
+    // БАЛАНС ЖИВЁТ ВНУТРИ ПОЛЯ НОМЕРА (v0.889): отдельной колонки .row-balance между номером и
+    // битами больше нет — метка и номер сидят в одном боксе, место под них обоих держит --num-w
+    // (см. fitNumW/balanceSampleHtml). Заглушка в линейке столбцов тоже не нужна: ширина колонки
+    // одна и та же и там, и тут.
+    // ПОРЯДОК: сперва баланс, потом номер (v0.891, запрос пользователя "баланс перед номерами").
+    // Метка кончается знаком "=" или "≠", и номер читается как правая часть равенства: "3+2=5"
+    // — сумма единиц и нулей сошлась с номером строки, "3+1≠5" — не сошлась.
+    out.push('<div class="' + cls.join(" ") + '" data-idx="' + i + '">' +
+             pat + '<span class="' + numCls + ' num-l2">' + balanceHtml + numTxtL + "</span>" +
              '<span class="bits ' + alignCls + '"><span' + halfShiftAttr + '>' + bits + "</span></span>" +
-             '<span class="' + numCls + ' num-r2">' + numTxt + "</span>" + patRight + "</div>");
+             patRight + "</div>");
   }
   // Распорки вместо не нарисованных строк (см. vrowsRange) — держат высоту, поэтому полоса
   // прокрутки и позиция каждой строки такие же, как при полной отрисовке.
@@ -2645,9 +3075,10 @@ function render(){
     (vBotPad > 0 ? '<div class="vspacer" style="height:' + vBotPad + 'px"></div>' : "");
   // Ширина колонки номеров (--num-w) — по самому длинному номеру, ОДНА на все строки, иначе
   // трёхзначные номера раздвигают свою строку и та едет вправо (см. fitNumW/.num в CSS).
-  fitNumW(rowLabel(st.rows.length - 1));
-  // Ширина правой колонки паттернов — под самый длинный паттерн (см. fitPatW2): считается ПОСЛЕ
+  fitNumW(numPadW, balanceSampleHtml(balW1, balW0, balB1, balB0));
+  // Ширина колонок паттернов — под самый длинный паттерн (см. fitPatW/fitPatW2): считается ПОСЛЕ
   // отрисовки строк, потому что шаг столбца меряется по реальным битам в DOM.
+  fitPatW();
   fitPatW2();
   // Базовая ширина поля битов (--bits-w, см. .bits в CSS) — от длины САМОЙ ДЛИННОЙ СТРОКИ, а НЕ
   // от renderWidth: тот растёт от выравнивания (Лесенка сдвигает каждую строку), и раскладка
@@ -2752,7 +3183,11 @@ function render(){
       const len = r.result.length;
       // Строка ОДНОЙ диагонали ("diagR#3") или поколоночного режима — её можно выбрать кликом,
       // и тогда её линия горит в таблице (см. st.diagFoldPick/computeDiagFoldMask).
-      const isDiagLine = r.mode.indexOf("#") >= 0 || VERT_PICK_MODES.includes(r.mode);
+      // "#" в имени режима бывает ДВУХ видов: у диагоналей это её номер ("diagR#3"), у фаз
+      // "🎭 Маски" — "#мN" ("concatR#м2"). Диагональ — только первый: /#\d/ (v0.922). Раньше сюда
+      // попадали и масочные строки, и клик по ним уходил в ветку выбора диагонали — то есть
+      // включал радугу порядка обхода и не доходил до выбора находки (st.bgHitPick).
+      const isDiagLine = /#\d/.test(r.mode) || VERT_PICK_MODES.includes(r.mode);
       const isPickedLine = isDiagLine && st.diagFoldPick === r.mode && st.highlightDiagFold;
       // Показываем РОВНО тот буфер, в котором искали (см. ringCycle/findPatternKinds): период
       // кольца, повторённый дважды. Без инверсии/реверса период = сама строка, и это прежнее
@@ -2775,18 +3210,42 @@ function render(){
          побольше. На сам ПОИСК потолок не влияет — он уже отработал по полному кольцу. */
       const renderCap = capOverride || (bgResultExpanded.has(r.mode) ? 4000 : 400);
       const shown = Math.min(full.length, renderCap);
+      /* ПЕРЕВОД ПОЗИЦИЙ ИЗ ПРОРЕЖЁННОЙ СТРОКИ В ПОЛНУЮ (v0.915, баг-репорт пользователя: "ищем
+         10001, в цепочках подсветка норм, а в результатах подсвечены 1 и 0").
+         С "🎭 Маской" поиск идёт по ПРОРЕЖЁННОЙ строке (matchOn/maskInfo.picked, см. mkResult), и
+         r.kinds/r.allHits хранят позиции ИМЕННО В НЕЙ. Рисуем же мы строку ПОЛНУЮ — выброшенные
+         маской биты не вырезаются, а гасятся (см. dimMaskedBits). Индексы поэтому означали разные
+         биты: находка из 5 бит подсвечивала 5 подряд идущих позиций полной строки, то есть чужие
+         биты, да ещё и не все свои.
+         pickMap[j] — какой бит ПОЛНОЙ строки дал j-й бит прорежённой; строится тем же правилом,
+         что и applyPickMask. За пределами первого периода добавляем целые периоды: находка могла
+         начаться на витке кольца. Без маски карты нет и позиции идут как раньше, один в один. */
+      const mi = r.maskInfo;
+      let pickMap = null, pickBaseLen = len;
+      if (mi && mi.mask && mi.mask.length) {
+        pickBaseLen = mi.through ? len * 2 : len;
+        pickMap = [];
+        for (let j = 0; j < pickBaseLen; j++) if (mi.mask[(j + mi.phase) % mi.mask.length] === "1") pickMap.push(j);
+      }
+      const mapPos = (p) => {
+        if (!pickMap || !pickMap.length) return p;
+        const period = pickMap.length;
+        const lap = Math.floor(p / period);
+        return pickMap[p - lap * period] + lap * pickBaseLen;
+      };
       const kindAt = new Array(shown).fill(-1);
       const skipAt = new Array(shown).fill(false);
       for (const kd of r.kinds) for (let i = 0; i < kd.len; i++) {
-        const p = kd.start + i;
+        const p = mapPos(kd.start + i);
         if (p < shown && kindAt[p] < 0) { kindAt[p] = kd.kind; skipAt[p] = kd.skip; }
       }
       // "🌈 Все паттерны": позиции найденных паттернов — каждый своим цветом (allPatColor по
       // номеру паттерна, тот же цвет получает и его ячейка в колонке паттернов). Перебор идёт
       // сверху вниз, и позиция достаётся ПЕРВОМУ, кто её занял — то есть паттерну выше по списку.
       const allPatAt = r.allHits && r.allHits.length ? new Array(shown).fill(-1) : null;
+      // Те же позиции из прорежённой строки — findAllPatternsInResult() тоже искал в matchOn.
       if (allPatAt) for (const h of r.allHits) for (let i = 0; i < h.len; i++) {
-        const p = h.start + i;
+        const p = mapPos(h.start + i);
         if (p < shown && allPatAt[p] < 0) allPatAt[p] = h.patIdx;
       }
       // Сколько витков реально показано: без инверсии/реверса период = самой строке и витков
@@ -2812,28 +3271,19 @@ function render(){
           const cls = [];
           if (kd >= 0) { cls.push("chain-hit-bits"); if (KIND_CLS[kd]) cls.push(KIND_CLS[kd]); if (skipAt[k]) cls.push("skip1"); }
           if (k >= len) cls.push("chain-ring-ext");
-          // У ВЫБРАННОЙ строки (её линия сейчас горит в таблице) символы ПЕРВОГО витка красятся
-          // той же радугой по порядку, что и биты в таблице: k-й символ результата — это k-й
-          // собранный бит, и цвет позволяет сопоставить одно с другим (запрос пользователя
-          // "показать, что первое, что потом — цветом, и там и там"). Находки поверх этого
-          // остаются как были: у них свой класс, он и побеждает.
-          // У ВЫБРАННОЙ линии радуга порядка обхода красит ВСЕ биты первого витка — в том числе
-          // попавшие в находку (раньше находка перебивала её своим цветом, и один и тот же бит был
-          // в таблице одного цвета, а в «Результате» другого — запрос пользователя "одинаковым
-          // цветом выделять и в Результатах, и в цепочках"). !important — потому что цвет находки
-          // (.chain-hit-bits) задан классом с !important; сама находка остаётся видна начертанием.
-          const ordStyle = (isPickedLine && k < len)
-            ? ' style="color:' + foldOrderColor(k, len) + ' !important"' : '';
+          // РАДУГИ ПОРЯДКА ОБХОДА В РЕЗУЛЬТАТАХ БОЛЬШЕ НЕТ (v0.922, запрос пользователя "в
+          // результатах убери радужную подсветку вообще"). У выбранной строки-диагонали каждый бит
+          // первого витка красился своим цветом по порядку сбора — вместе с находкой, галочками и
+          // цветами «🌈 Все паттерны» строка превращалась в мешанину, в которой само совпадение
+          // терялось. В самой таблице радуга остаётся (там она и нужна — показать порядок обхода),
+          // выбранная строка по-прежнему помечена классом .picked.
           // Найденный паттерн из режима "🌈 Все паттерны" — своим цветом (перебивает
           // радугу порядка обхода, но не обычную подсветку искомого паттерна: та со своим
           // классом и приоритетом выше, см. kd).
           const allPatIdx = allPatAt ? allPatAt[k] : -1;
-          const allPatStyle = (allPatIdx >= 0 && kd < 0)
+          const styleAttr = (allPatIdx >= 0 && kd < 0)
             ? ' style="color:' + allPatColor(allPatIdx) + '" title="Паттерн №' + (allPatIdx + 1) + ' (стр. ' + allPatIdx + ')"'
             : '';
-          // Радуга выбранной линии — главнее цвета "всех паттернов": она должна совпадать с тем,
-          // что нарисовано в самой таблице.
-          const styleAttr = ordStyle || allPatStyle;
           inner += (cls.length || styleAttr)
             ? ('<span' + (cls.length ? ' class="' + cls.join(" ") + '"' : '') + styleAttr + '>' + ch + '</span>')
             : ch;
@@ -2868,7 +3318,10 @@ function render(){
         (h.skip ? " (без 1-го символа)" : "") + ' — клик: выделить эту строку">' + (h.patIdx + 1) + '</span>'
       ).join("");
       const expanded = bgResultExpanded.has(r.mode) ? " expanded" : "";
-      const pickedCls = isPickedLine ? " picked" : "";
+      // hit-pick — чья находка сейчас разложена по строкам цепочки (см. st.bgHitPick/hitRes выше).
+      // Отдельный класс, а не .picked: тот про выбранную диагональ и красит совсем другое.
+      const pickedCls = (isPickedLine ? " picked" : "") +
+        (r.matched && r.kinds && r.kinds.length && r.mode === st.bgHitPick ? " hit-pick" : "");
       /* АРИФМЕТИКА МАСКИ НА КОЛЬЦЕ — прямо в подсказке строки (запрос пользователя). Виток k
          сквозной маски начинается с фазы (k·длина) mod (длина маски), поэтому всё определяется
          НОД: он делит длину маски — значит различных положений N/НОД, а вся картина повторяется
@@ -2909,8 +3362,16 @@ function render(){
     if (maskChkEl && maskChkEl.parentElement) {
       const matters = !!maskNow && bgInfo.results.some(r => r.result.length && (r.result.length % maskNow.length !== 0));
       maskChkEl.parentElement.classList.toggle("mode-na", !matters);
+      /* TIPS БЕРЁМ ЧЕРЕЗ try/catch, а не через typeof (v0.932). TIPS объявлен `const` в fold-5, и
+         до этой строки исполнение доходит РАНЬШЕ: loadCache() зовёт render() из середины fold-5,
+         когда объявление TIPS ещё впереди. Для let/const это временная мёртвая зона, а `typeof`
+         от неё НЕ защищает — он сам бросает ReferenceError (стояла именно такая "защита", и она
+         роняла всю загрузку: Cannot access 'TIPS' before initialization). До инициализации просто
+         оставляем подсказку пустой — на следующем render() она встанет на место. */
+      let t141 = "";
+      try { t141 = (TIPS && TIPS.t141) || ""; } catch (e) { t141 = ""; }
       maskChkEl.parentElement.title = matters
-        ? ((typeof TIPS !== "undefined" && TIPS.t141) ? TIPS.t141 : "") // обратно обычная подсказка
+        ? t141 // обратно обычная подсказка
         : (maskNow
             ? "Сейчас ничего не меняет: длина маски (" + maskNow.length + ") делит длину результата у всех включённых режимов — каждый виток и так начинается с начала маски."
             : "Сейчас ничего не меняет: маска не задана.");
@@ -3098,6 +3559,76 @@ function recomputeSeqStepDisplay(info){
    Подсветка найденного куска — теми же классами, что и везде (buildHitMap/KIND_CLS), чтобы цвет
    вида совпадения был один и тот же в Черновике, в "Результате" и в таблице. */
 const MASK_FIND_BITS_CAP = 200;
+/* ВСЯ СКВОЗНАЯ ВЫБРАННОЙ ФАЗОЙ (v0.845, запрос пользователя: "покажи всю сквозную и маску —
+   текущую фазу цветом, при клике на фазу меняет показ в сквозной"). Раньше в блоке были видны
+   только прорежённые куски по 200 бит — по ним не понять, ЧТО именно маска выкинула. Тут строка
+   показана ЦЕЛИКОМ (до предела ниже), а маска наложена цветом: что она берёт — цветом «1»
+   подсветки маски и пожирнее, что выбрасывает — цветом «0» и приглушённо. Цвета те же самые, что
+   у "🎨 Подсветки маски" в таблице (st.maskPaintColor1/0), чтобы одно и то же значило одно и то же.
+   Красим ПРОБЕГАМИ одинаковых (взял/выкинул), а не посимвольно: у маски вроде "10" пробег равен
+   одному символу, и на длинной сквозной это тысячи узлов на каждый render(). */
+const MASK_THROUGH_CAP = 600;
+function maskThroughHtml(list, mask, ph, N){
+  if (!list || !list.length) return "";
+  // Строка берётся у НАЙДЕННОГО режима этой фазы, а если находок нет — у первого: у разных
+  // режимов результаты разной длины, и смешивать их в одной полосе нельзя.
+  const r = list.find(x => x.matched) || list[0];
+  const mi = r && r.maskInfo;
+  if (!mi) return "";
+  // through — маску клали на УДВОЕННУЮ строку (см. mkResult), показываем ровно то же, по чему
+  // считалось, иначе вторая половина картинки соврёт.
+  const src = mi.through ? (r.result + r.result) : r.result;
+  if (!src) return "";
+  const cTake = st.maskPaintColor1 || "#b060ff", cDrop = st.maskPaintColor0 || "#22d3ee";
+  /* САМА НАХОДКА — ПОВЕРХ МАСКИ (v0.920, запрос пользователя "тут тоже как-то выделить находку").
+     Полоса показывала только ЧТО маска берёт, а что выбрасывает, — а где в этой строке легло
+     совпадение, видно не было. Позиции у kinds считаны в ПРОРЕЖЁННОЙ строке, поэтому переводим их
+     в полную тем же обходом, что и applyPickMask (pickMap[j] — какой бит src дал j-й взятый бит).
+     Кольцо сворачиваем по модулю: за пределами первого периода повторяются те же самые биты src,
+     и подсветить их надо на тех же местах. Найденные биты всегда из «взятых» — выброшенные в
+     pickMap не попадают вовсе. */
+  const hits = [];
+  if (r.matched && r.kinds && r.kinds.length) {
+    const pickMap = [];
+    for (let i = 0; i < src.length; i++) if (mask[(i + ph) % N] === "1") pickMap.push(i);
+    const period = pickMap.length;
+    if (period) for (const kd of r.kinds) for (let q = 0; q < kd.len; q++) {
+      hits.push([pickMap[(kd.start + q) % period], kd.kind]);
+    }
+  }
+  let firstHit = -1;
+  for (const h of hits) if (firstHit < 0 || h[0] < firstHit) firstHit = h[0];
+  /* ОБРЕЗКА НЕ ДОЛЖНА ПРЯТАТЬ САМУ НАХОДКУ (v0.921, запрос пользователя "если сквозная не
+     помещается — должна крутиться вправо и по щелчку передвинуться туда, где находка"). Полоса
+     режется по MASK_THROUGH_CAP ради скорости, а совпадение вполне может лежать дальше — тогда
+     показывать было нечего и прокручивать не к чему. Растягиваем предел ровно до находки плюс
+     небольшой хвост, чтобы она была не у самого края. */
+  const cap = Math.min(src.length, firstHit >= 0 ? Math.max(MASK_THROUGH_CAP, firstHit + 200) : MASK_THROUGH_CAP);
+  const hitAt = new Array(cap).fill(-1);
+  for (const h of hits) if (h[0] < cap && hitAt[h[0]] < 0) hitAt[h[0]] = h[1];
+  let bits = "", i = 0;
+  while (i < cap) {
+    const take = mask[(i + ph) % N] === "1";
+    const h = hitAt[i];
+    let j = i;
+    // Пробег рвём и на границе находки — иначе её биты слились бы с соседними «взятыми».
+    while (j < cap && (mask[(j + ph) % N] === "1") === take && hitAt[j] === h) j++;
+    const chunk = esc(src.slice(i, j));
+    bits += h >= 0
+      ? ('<span class="chain-hit-bits' + (KIND_CLS[h] ? " " + KIND_CLS[h] : "") + '" title="Здесь нашёлся паттерн">' + chunk + '</span>')
+      : ('<span style="color:' + (take ? cTake + ';font-weight:700' : cDrop + ';opacity:.5') + '">' + chunk + '</span>');
+    i = j;
+  }
+  if (cap < src.length) bits += '<span class="chain-ring-ext">… ещё ' + (src.length - cap) + '</span>';
+  return '<div class="step-log-mask-through" title="Сквозная строка режима «' + esc(bgModeLabel(r.mode)) +
+    '» целиком, с наложенной маской ' + esc(mask) + ' в фазе ' + (ph + 1) + ' из ' + N +
+    '. Ярким — биты, которые маска БЕРЁТ в поиск, приглушённым — выброшенные, цветом находки — где именно лёг найденный паттерн. Клик по любой фазе ниже покажет строку её фазой">' +
+    '<span class="step-log-mask-name">сквозная · фаза ' + (ph + 1) + '/' + N + '</span>' +
+    // data-hit-at/data-bits-len — для прокрутки к находке по клику (см. обработчик #stepLogBody):
+    // сколько символов реально нарисовано и на каком из них начинается совпадение.
+    '<span class="step-log-mask-bits" data-hit-at="' + firstHit + '" data-bits-len="' + cap + '">' + bits + '</span>' +
+  '</div>';
+}
 function renderMaskFindingsHtml(bgInfo){
   const mask = (typeof maskBits === "function") ? maskBits() : "";
   if (!mask || !bgInfo || !bgInfo.results) return "";
@@ -3111,8 +3642,15 @@ function renderMaskFindingsHtml(bgInfo){
   if (!phases.size) return "";
   const N = mask.length;
   const through = phases.values().next().value[0].maskInfo.through;
+  // ВЫБРАННАЯ ФАЗА (v0.845, запрос пользователя "сделай интерактивным … при клике на фазу меняет
+  // показ в сквозной"): по ней рисуется полоса сквозной над списком фаз. Клик по строке фазы
+  // кладёт её номер в st.maskDraftPhase (см. обработчик на #stepLogBody). Фаз столько же, сколько
+  // бит в маске, но набор ключей зависит от режима — если сохранённой фазы в нём нет (маску
+  // сменили), берём первую имеющуюся.
+  const phaseKeys = Array.from(phases.keys()).sort((a, b) => a - b);
+  const selPh = phases.has(st.maskDraftPhase) ? st.maskDraftPhase : phaseKeys[0];
   let hitTotal = 0, allTotal = 0;
-  const phasesHtml = Array.from(phases.keys()).sort((a, b) => a - b).map(ph => {
+  const phasesHtml = phaseKeys.map(ph => {
     const list = phases.get(ph);
     const view = list[0].maskInfo.view;
     const hits = list.filter(r => r.matched);
@@ -3161,15 +3699,24 @@ function renderMaskFindingsHtml(bgInfo){
         (len ? (" · НОД(" + len + "," + N + ")=" + g + (per ? ", период " + per + " бит = " + (N / g) + " витк." : ", период больше предела счёта")) : "") +
         (len && len % N === 0 ? " · маска делит строку — витки одинаковы" : "") +
         (r.matched ? " · НАЙДЕНО: " + r.kinds.map(kd => KIND_LABELS_RU[kd.kind] + (kd.skip ? " (без 1-го)" : "") + ", позиция " + (kd.start + 1)).join("; ") : " · не найдено");
-      return '<div class="step-log-mask-mode' + (r.matched ? " found" : "") + '" title="' + esc(tip) + '">' +
+      // data-hit-mode + класс hit-pick (v0.919, запрос пользователя "клик на любом из найденных
+      // должен только его показать в цепочках"): клик по строке режима кладёт её в st.bgHitPick,
+      // и в строках цепочки остаётся ТОЛЬКО эта находка (см. hitRes в render). Атрибут вешаем
+      // всем строкам, включая ненайденные, — по клику будет видно, что показывать нечего.
+      return '<div class="step-log-mask-mode' + (r.matched ? " found" : "") +
+        (r.matched && r.mode === st.bgHitPick ? " hit-pick" : "") +
+        '" data-hit-mode="' + esc(r.mode) + '" title="' + esc(tip) +
+        (r.matched ? " · КЛИК — показать именно эту находку в самих цепочках" : "") + '">' +
         '<span class="step-log-mask-name">' + esc(bgModeShortLabel(r.mode)) + '</span>' +
         '<span class="step-log-mask-cnt">' + kept + '/' + from + '</span>' +
         '<span class="step-log-mask-kinds">' + (r.matched ? esc(kindsTxt) : "—") + '</span>' +
         '<span class="step-log-mask-bits">' + bits + '</span>' +
       '</div>';
     }).join("");
-    return '<div class="step-log-mask-phase' + (hits.length ? " found" : "") + '" title="Фаза ' + (ph + 1) +
-      ': маска приложена начиная со своего ' + (ph + 1) + '-го символа — на первый бит строки ложится ' + esc(view) + '">' +
+    return '<div class="step-log-mask-phase' + (hits.length ? " found" : "") + (ph === selPh ? " sel" : "") +
+      '" data-mask-phase="' + ph + '" title="Фаза ' + (ph + 1) +
+      ': маска приложена начиная со своего ' + (ph + 1) + '-го символа — на первый бит строки ложится ' + esc(view) +
+      '. Клик — показать сквозную именно этой фазой">' +
       '<span class="step-log-mask-ph">фаза ' + (ph + 1) + '/' + N + '</span>' +
       '<span class="step-log-mask-view">' + esc(view) + '</span>' +
       '<span class="step-log-mask-sum">' + (hits.length ? "✅ " + hits.length + " из " + list.length : "нет находок (" + list.length + ")") + '</span>' +
@@ -3180,6 +3727,7 @@ function renderMaskFindingsHtml(bgInfo){
       '🎭 Находки по маскам · маска ' + esc(mask) + ' (' + N + ' бит) · ' +
       (through ? "сквозь витки кольца" : "заново каждый виток") + ' · совпало ' + hitTotal + ' из ' + allTotal +
     '</span>' +
+    maskThroughHtml(phases.get(selPh), mask, selPh, N) +
     '<div class="step-log-sub-container">' + phasesHtml + '</div>' +
     '</div>';
 }
@@ -3340,6 +3888,11 @@ function renderStepLogBox(bgInfo){
       '<div class="empty" style="white-space:pre-wrap;font-size:10px;opacity:.7">' + esc(stack) + '</div>' +
       '</div>';
   }
+  // Черновик может быть вынесен в отдельное окно — зеркалим туда то же содержимое (см.
+  // openStepLogPopup в fold-3). Ошибка отрисовки выше тоже уедет в окно, и это правильно.
+  // typeof-проверка: fold-3 грузится ПОСЛЕ этого файла, а render() местами дёргается ещё по ходу
+  // загрузки — до объявления функции.
+  if (typeof updateStepLogPopup === "function") updateStepLogPopup();
 }
 function renderStepLogBoxInner(bgInfo){
   const noEl = document.getElementById("stepLogNo");
@@ -3547,7 +4100,10 @@ function applyStepLogBodyHeight(bodyEl){
 }
 
 let msgTimer = null;
-function say(t){
+/* kind (v0.951) — необязательная пометка вида сообщения: "hit" красит плашку в зелёный (см.
+   #msg.hit в CSS). Всё, что зовёт say() одним аргументом, ведёт себя как раньше — класс каждый
+   раз снимается заново, чтобы зелёный не «залипал» на следующем обычном сообщении. */
+function say(t, kind){
   const el = document.getElementById("msg");
   if (!el) return;
   if (!t) {
@@ -3555,6 +4111,7 @@ function say(t){
     return;
   }
   el.textContent = t;
+  el.classList.toggle("hit", kind === "hit");
   el.classList.add("show");
   if (msgTimer) clearTimeout(msgTimer);
   msgTimer = setTimeout(() => {
@@ -3628,6 +4185,49 @@ if (bScanLengthSumsLogEl) {
 const stepLogBodyEl = document.getElementById("stepLogBody");
 if (stepLogBodyEl) {
   stepLogBodyEl.addEventListener("click", (e) => {
+    // Клик по строке фазы в "🎭 Находках по маскам" — показать сквозную ЭТОЙ фазой (см.
+    // maskThroughHtml). Проверяем раньше остальных веток: строка фазы лежит внутри того же блока.
+    /* Клик по строке РЕЖИМА в "🎭 Находках по маскам" — показать в самих цепочках ТОЛЬКО эту
+       находку (v0.919, запрос пользователя). То же, что клик по строке в окне "Результат", но
+       оттуда фазы маски не выбрать: там на каждый режим+фазу своя строка, а тут они разложены по
+       фазам. Проверяем ПЕРЕД строкой фазы: строка режима лежит внутри того же блока, а у самой
+       фазы своё действие (показать сквозную этой фазой). Повторный клик снимает выбор — снова
+       показывается первая совпавшая находка. */
+    /* Клик по полосе «сквозная · фаза» — ПЕРЕМОТАТЬ ЕЁ К НАХОДКЕ (v0.921, запрос пользователя).
+       Полоса длиннее своей ширины и прокручивается, но скроллбар у неё скрыт, и добраться до
+       совпадения вручную было почти нельзя. Шаг символа берём из реальной геометрии
+       (scrollWidth / число нарисованных символов) — шрифт моноширинный, так что этого достаточно
+       и мерить отдельный бит не нужно. Ставим находку по центру видимой части; повторный клик,
+       когда она уже видна, отматывает полосу в начало. */
+    const thr = e.target.closest(".step-log-mask-through");
+    if (thr) {
+      const box = thr.querySelector(".step-log-mask-bits");
+      const at = box ? +box.dataset.hitAt : -1;
+      const total = box ? +box.dataset.bitsLen : 0;
+      if (box && at >= 0 && total > 0 && box.scrollWidth > box.clientWidth) {
+        const step = box.scrollWidth / total;
+        const want = Math.max(0, at * step - box.clientWidth / 2);
+        const seen = box.scrollLeft <= at * step && at * step <= box.scrollLeft + box.clientWidth;
+        box.scrollLeft = seen ? 0 : want;
+      }
+      return;
+    }
+    const hitEl = e.target.closest("[data-hit-mode]");
+    if (hitEl) {
+      const m = hitEl.dataset.hitMode;
+      st.bgHitPick = (st.bgHitPick === m) ? null : m;
+      render();
+      say(st.bgHitPick
+        ? "В цепочках показана находка режима «" + bgModeLabel(m) + "»."
+        : "Выбор снят — в цепочках снова первая совпавшая находка.");
+      return;
+    }
+    const phEl = e.target.closest("[data-mask-phase]");
+    if (phEl) {
+      st.maskDraftPhase = +phEl.dataset.maskPhase;
+      render();
+      return;
+    }
     const horizRow = e.target.closest(".horiz-ride-row");
     if (horizRow) {
       const tag = horizRow.dataset.tag;
@@ -3715,7 +4315,170 @@ const cVertEl      = document.getElementById("cVert");
 const cPadEl       = document.getElementById("cPad");
 const cPadRealEl   = document.getElementById("cPadReal");
 const cTailZerosEl = document.getElementById("cTailZeros");
-const cKindsEl     = document.getElementById("cKinds");
+// #cKinds стал кнопкой на 4 положения (v0.912) — состояние живёт в st.kindsMode (см. KINDS_MODES
+// в fold-1). st.allKinds держится ПРОИЗВОДНЫМ: на него завязаны ключи мемо-кэшей и ветвления, где
+// важен только сам факт "ищем не только прямой".
+const bKindsEl     = document.getElementById("bKinds");
+function setKindsMode(m, quiet){
+  st.kindsMode = KINDS_MODES.indexOf(m) >= 0 ? m : "";
+  st.allKinds = kindsInvOn() || kindsRevOn();
+  if (bKindsEl) {
+    bKindsEl.textContent = KINDS_MODE_LABELS[st.kindsMode];
+    bKindsEl.classList.toggle("mode-act", !!st.kindsMode);
+  }
+  if (!quiet) { render(); saveCache(); }
+}
+if (bKindsEl) bKindsEl.onclick = () => {
+  const cur = KINDS_MODES.indexOf(st.kindsMode || "");
+  setKindsMode(KINDS_MODES[(cur + 1) % KINDS_MODES.length]);
+  say("Версии паттерна: " + KINDS_MODE_LABELS[st.kindsMode].replace("⇌ ", "") +
+      " (прямой ищется всегда).");
+};
+setKindsMode(st.kindsMode || "", true);
+/* "🔎 Показать выделенное" — тумблер подсветки совпадений с образцом из выбранных ячеек
+   (см. cellSampleRows в render()). Данные не трогает вообще, только показ. */
+const bCellSampleEl = document.getElementById("bCellSample");
+/* ВЫДЕЛЕНИЕ СТРОК НА ВРЕМЯ РЕЖИМА СНИМАЕТСЯ И ВОЗВРАЩАЕТСЯ (v0.913, запрос пользователя "в этом
+   режиме убирать выделения всех строк, потом возвращать"): жёлтый фон выделенной строки лежит под
+   битами всей строки целиком и спорит с подсветкой найденных кусков — на выделенной строке
+   совпадение просто не разглядеть. Набор запоминается тут (в памяти сессии, в кэш не пишется) и
+   возвращается при выключении режима — но только если за это время выделение никто не менял сам:
+   иначе мы затёрли бы его свежий выбор. */
+var selRowsBeforeCellSample = null;
+function setCellSampleOn(on, quiet){
+  const was = !!st.cellSampleOn;
+  st.cellSampleOn = !!on;
+  if (st.cellSampleOn && !was) {
+    selRowsBeforeCellSample = new Set(st.selectedRows || []);
+    st.selectedRows = new Set();
+  } else if (!st.cellSampleOn && was && selRowsBeforeCellSample) {
+    // Пока режим работал, выделения быть не должно было — если оно появилось, значит его сделал
+    // пользователь уже внутри режима, и оно важнее старого.
+    if (!st.selectedRows || !st.selectedRows.size) st.selectedRows = new Set(selRowsBeforeCellSample);
+    selRowsBeforeCellSample = null;
+  }
+  // Выход из режима показа очищает накопитель "📌" — так и задумано (v0.945): набор собирают под
+  // конкретную задачу, и тащить его в следующий сеанс показа незачем.
+  if (!st.cellSampleOn && typeof cellPin !== "undefined" && cellPin.size) {
+    cellPin.clear();
+    if (typeof updateCellSampleFixBtn === "function") updateCellSampleFixBtn();
+  }
+  if (bCellSampleEl) bCellSampleEl.classList.toggle("mode-act", st.cellSampleOn);
+  if (!quiet) { render(); saveCache(); }
+}
+if (bCellSampleEl) bCellSampleEl.onclick = () => {
+  setCellSampleOn(!st.cellSampleOn);
+  if (!st.cellSampleOn) { say("Показ совпадений с выбранными ячейками выключен."); return; }
+  const sample = (typeof cellSelSampleText === "function") ? cellSelSampleText() : "";
+  say(!cellSel.size
+    ? "Показать выделенное: сначала выберите ячейки («▭ Выбор ячеек» во вкладке «Выделить»)."
+    : sample.length < 2
+      ? `Показать выделенное: образец «${sample}» короче двух бит — такой есть в каждой строке, искать нечего.`
+      : `Показать выделенное: ищу «${sample}» во всех строках (${KINDS_MODE_LABELS[st.kindsMode || ""].replace("⇌ ", "")}).`);
+};
+setCellSampleOn(st.cellSampleOn, true);
+/* "📌 ЗАФИКСИРОВАТЬ" (v0.945, запрос пользователя: "кнопку зафиксить найденное в этой строке, пока
+   не выйти из режима или по Escape... потом другие выделенные ячейки ищут и может найдут
+   оставшиеся биты, ещё раз нажму — и они тоже отметятся, так могу всю строку склеить").
+   Найденное образцом живёт ровно до следующего выбора ячеек. Кнопка перекладывает то, что сейчас
+   подсвечено, в отдельный набор cellPin — он копится от нажатия к нажатию и рисуется своим цветом
+   ПОВЕРХ свежих находок (см. .cell-pin в render). Так строка собирается по кускам: выбрал ячейки —
+   нашлось — зафиксировал — выбрал другие — нашлось ещё — зафиксировал.
+   Своего поиска у кнопки нет: берёт lastCellSampleRows, тот самый разбор, что нарисован на экране.
+   Значит и ограничение "выделена одна строка → только она" (v0.943) действует само собой. */
+function updateCellSampleFixBtn(){
+  const b = elById("bCellSampleFix");
+  if (!b) return;
+  b.textContent = "📌 Зафиксировать: " + cellPin.size;
+  b.classList.toggle("mode-act", cellPin.size > 0);
+}
+function clearCellPin(quiet){
+  if (!cellPin.size) return false;
+  cellPin.clear();
+  updateCellSampleFixBtn();
+  if (!quiet) say("Накопитель зафиксированных бит очищен.");
+  render();
+  return true;
+}
+const bCellSampleFixEl = document.getElementById("bCellSampleFix");
+if (bCellSampleFixEl) bCellSampleFixEl.onclick = () => {
+  if (!st.cellSampleOn) { say("📌 Фиксировать нечего: включите «🔎 Показать» — фиксируются именно его находки."); return; }
+  const rowsMap = lastCellSampleRows;
+  if (!rowsMap || !rowsMap.size) { say("📌 Фиксировать нечего: сейчас ни одного совпадения с образцом не подсвечено."); return; }
+  let added = 0;
+  rowsMap.forEach((marks, r) => {
+    for (let k = 0; k < marks.length; k++) {
+      if (marks[k] < 0) continue;
+      const key = r + "|" + k;
+      if (cellPin.has(key)) continue;
+      cellPin.add(key); added++;
+    }
+  });
+  updateCellSampleFixBtn();
+  say(added
+    ? `📌 Зафиксировано бит: +${added} (всего ${cellPin.size}). Выберите другие ячейки — найденное ими можно дофиксировать сюда же. Сброс — Escape.`
+    : `📌 Все подсвеченные биты уже в накопителе (всего ${cellPin.size}).`);
+  render();
+};
+updateCellSampleFixBtn();
+/* Escape — сброс накопителя. Слушаем на документе: у полей ввода строк свои обработчики Escape,
+   и они гасят событие stopPropagation'ом, так что правку строки эта кнопка не заденет. */
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape" || !cellPin.size) return;
+  const t = e.target;
+  if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+  clearCellPin();
+});
+/* "⛓ сквозно" — вторая кнопка рядом с "🔎 Показать" (v0.942). Своего поиска не ведёт: просто
+   флаг, который читает cellSampleRows выше. Подпись держим в одном месте, чтобы состояние было
+   видно и после перезагрузки/переключения вкладки (applyUiSettings зовёт ту же функцию). */
+const bCellSampleSeqEl = document.getElementById("bCellSampleSeq");
+function updateCellSampleSeqBtn(){
+  const b = elById("bCellSampleSeq");
+  if (!b) return;
+  b.textContent = "⛓ сквозно: " + (st.cellSampleSeq ? "вкл" : "выкл");
+  b.classList.toggle("mode-act", !!st.cellSampleSeq);
+}
+if (bCellSampleSeqEl) bCellSampleSeqEl.onclick = () => {
+  st.cellSampleSeq = !st.cellSampleSeq;
+  updateCellSampleSeqBtn();
+  say(st.cellSampleSeq
+    ? "Образец из ячеек ищется ТАКЖЕ сквозь строки — по всем склейкам, отмеченным в «🔍 Фон-поиске» (→ / ← / 🐍 / 🐍 справа). Совпадение на стыке засчитывается и подсвечивается в обеих строках."
+    : "Сквозной поиск образца выключен — только внутри каждой строки."
+  );
+  render(); saveCache();
+};
+updateCellSampleSeqBtn();
+/* КЛИК ПО ХОЛСТУ МИМО БИТОВ — СНЯТЬ НАБОР ЯЧЕЕК (v0.913, запрос пользователя "клик вне битов
+   цепочек — снять все выделенные биты"). Раньше единственным способом очистить набор была кнопка
+   "✕ Очистить биты": выключение режима "▭ Выбор ячеек" его только прячет.
+   СНИМАЮТСЯ ТОЛЬКО ЯЧЕЙКИ (подтверждено пользователем в v0.939): выделение строк и выбранный
+   столбец этот клик не трогает — в v0.938 я их тоже сбрасывал, и это откачено, потому что вместе
+   со строкой уходила цель фон-поиска.
+   ЧТО СЧИТАТЬ "МИМО БИТОВ" (правка v0.939): раньше стояла проверка e.target.closest(".bits") —
+   а .bits это ВСЯ полоса поля во всю ширину, включая пустое место слева и справа от самой
+   строки. Клик по пустоте внутри строки в неё попадал, и набор не снимался — работало только
+   ниже последней строки (жалоба пользователя "а их не снимает"). Теперь выходим, только если
+   попали в НАСТОЯЩИЙ бит (.b0/.b1): по ним идёт выбор ячеек, и снимать набор при клике по ним
+   нельзя, а всё остальное поле — это "мимо".
+   Ловим на самом холсте, а не на документе: клики по кнопкам панелей набор трогать не должны —
+   иначе первое же нажатие "🔎 Показать выделенное" стирало бы то, что собирались показать.
+   Исключены и служебные элементы ВНУТРИ холста: полоса выравниваний, линейка столбцов и все
+   перетаскиваемые границы — там идёт своя работа мышью, и снимать набор посреди неё нельзя.
+   mousedown, а не click: протяжка по битам заканчивается mouseup вне .bits, и click от неё
+   пришёл бы уже на холст, стирая только что набранное. */
+{
+  const canvasEl = document.getElementById("screenCanvas");
+  if (canvasEl) canvasEl.addEventListener("mousedown", (e) => {
+    if (e.button !== 0 || !(cellSel.size || patCellSel.size)) return;
+    if (e.target.closest(".b0, .b1, [data-pcol]")) return;
+    if (e.target.closest("#alignGrp, #colHeader, .vsplit, .vsplit2, .vsplit3, .axis-split, #colPickFloat, .state-badges, button, input, select, label")) return;
+    cellSel.clear();
+    patCellSel.clear();
+    render(); saveCache();
+    say("Выделения битов сняты (клик мимо битов).");
+  });
+}
 const cSkipEl      = document.getElementById("cSkip1");
 const cSkipLastEl  = document.getElementById("cSkipLast");
 const cRingInvertEl = document.getElementById("cRingInvert");
@@ -3755,7 +4518,7 @@ function readToggles(){
   st.padZero   = cPadEl.checked;
   st.padZeroReal = cPadRealEl ? cPadRealEl.checked : false;
   st.tailZerosByTarget = cTailZerosEl ? cTailZerosEl.checked : false;
-  st.allKinds  = cKindsEl.checked;
+  // st.allKinds теперь ПРОИЗВОДНОЕ от st.kindsMode (см. setKindsMode) — readToggles его не трогает.
   st.skipFirst = cSkipEl.checked;
   st.skipLast  = cSkipLastEl ? cSkipLastEl.checked : false;
   st.ringInvert = cRingInvertEl ? cRingInvertEl.checked : false;
@@ -3823,13 +4586,24 @@ function clearActiveTab() {
 function tabSaveChainData(idx) {
   if (!st.tabs || !st.tabs[idx]) return;
   const isActive = idx === st.activeTab;
+  // ВПИСЫВАНИЕ ЗЕРКАЛ — теперь часть сохранения (v0.886, запрос пользователя: отдельную кнопку
+  // "⇔ Вписать зеркала в строки" убрали). Что видно зеркалами, то и уходит в сохранёнку живыми
+  // битами: дальше они участвуют в поиске и склейках наравне с остальными. Показ ◀/▶ при этом
+  // гаснет — иначе следующее сохранение вписало бы зеркало на зеркале. Только для АКТИВНОЙ
+  // вкладки: у неактивной показа зеркал нет вовсе, там сохранять нечего.
+  if (isActive && (st.leftMirror || st.rightMirror) && typeof applyMirrorsToRows === "function") {
+    applyMirrorsToRows(false, null, true);
+  }
   const src = isActive ? st : st.tabs[idx];
   st.tabs[idx].savedChain = {
     rows: (src.rows || []).slice(),
     pats: (src.pats || []).map(p => p ? { ...p } : null),
     used: (src.used || []).slice(),
     tplRows: (src.tplRows || []).slice(),
-    tplPats: (src.tplPats || []).slice()
+    tplPats: (src.tplPats || []).slice(),
+    // Пометка «новые биты» сохраняется ВМЕСТЕ с цепочкой: после Сброса/Escape новые биты
+    // возвращаются такими же новыми (см. newBitsMap и ветку savedChain в resetAll).
+    newBits: isActive ? newBitsSerialize() : ((st.tabs[idx].newBits) || [])
   };
   // Сохранённое состояние стало новой базой для подсветки "номер изменился" (см. changedBase
   // в render()) — перерисовываем строки сразу, иначе оранжевые номера висят до следующего
@@ -4068,7 +4842,14 @@ if (chainDdToggleEl && chainDdListEl) {
       else if (act === "banksave") patsToPatBank();
       else if (act === "bankpats") patBankToPats();
       else if (act === "bankrows") patBankToRows();
-      else importAllTabs();
+      // Настройки вида — см. последний ряд подвала в renderTabs(). Сами функции объявлены в
+      // fold-5-ui.js (он грузится позже, но к моменту клика уже выполнен).
+      else if (act === "uisave") saveUiSettingsNow();
+      else if (act === "uireset") resetUiSettingsNow();
+      else if (act === "copychain") copySelectedRows(true);
+      // Явная ветка вместо прежнего "else importAllTabs()": с ростом числа кнопок молчаливый
+      // fallback означал бы, что любая новая кнопка без своей ветки внезапно грузит файл.
+      else if (act === "import") importAllTabs();
       return;
     }
     const miniBtn = e.target.closest(".chain-dd-mini");
@@ -4076,9 +4857,10 @@ if (chainDdToggleEl && chainDdListEl) {
       e.stopPropagation();
       const idx = +miniBtn.dataset.idx;
       const act = miniBtn.dataset.act;
+      // "clear"/"clearrows" из этого списка убраны (v0.890, запрос пользователя "перемести в
+      // Построения") — теперь это две кнопки во вкладке "Построения" и работают они по АКТИВНОЙ
+      // цепочке. Сами tabClearChainData()/tabClearRowsOnly() на месте, вызываются оттуда.
       if (act === "save") tabSaveChainData(idx);
-      else if (act === "clear") tabClearChainData(idx);
-      else if (act === "clearrows") tabClearRowsOnly(idx);
       else if (act === "reset") tabResetChainData(idx);
       return;
     }
@@ -4301,8 +5083,12 @@ if (bAddTabEl) {
   };
 }
 
-// Кнопки #bClearTab в верхнем меню больше нет (убрана по запросу пользователя) — очистка вкладки
-// осталась в выпадающем списке цепочек, у каждой своя (.chain-dd-mini data-act="clear" →
-// tabClearChainData). Саму clearActiveTab() не удаляю — её зовёт tabClearChainData(), когда
-// чистят ИМЕННО активную вкладку.
+// Кнопки #bClearTab в верхнем меню нет, и из выпадающего списка цепочек очистка тоже убрана
+// (v0.890) — она переехала во вкладку "Построения": #bClearChainAll (строки + паттерны) и
+// #bClearChainRows (только строки), обе по АКТИВНОЙ цепочке, см. их обработчики в fold-3.
+// clearActiveTab() на месте — её зовёт tabClearChainData(), когда чистят активную вкладку.
+const bClearChainAllEl = document.getElementById("bClearChainAll");
+if (bClearChainAllEl) bClearChainAllEl.onclick = () => tabClearChainData(st.activeTab);
+const bClearChainRowsOnlyEl = document.getElementById("bClearChainRows");
+if (bClearChainRowsOnlyEl) bClearChainRowsOnlyEl.onclick = () => tabClearRowsOnly(st.activeTab);
 

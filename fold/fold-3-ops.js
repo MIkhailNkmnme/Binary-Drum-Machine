@@ -115,7 +115,9 @@ if (chainTextEl2) {
     const line = e.target.closest(".chain-result-line");
     if (!line) return;
     const mode = line.dataset.mode;
-    if (mode && (mode.indexOf("#") >= 0 || VERT_PICK_MODES.includes(mode))) {
+    // Только НАСТОЯЩИЕ диагонали ("diagR#3"), а не фазы маски ("concatR#м2") — см. isDiagLine
+    // в fold-2: у масочных строк своё действие, выбор показанной в цепочках находки (ниже).
+    if (mode && (/#\d/.test(mode) || VERT_PICK_MODES.includes(mode))) {
       const picked = st.diagFoldPick === mode;
       st.diagFoldPick = picked ? null : mode;
       // Выбор диагонали сам включает подсветку — иначе клик по строке ничего бы не показал, пока
@@ -130,6 +132,13 @@ if (chainTextEl2) {
       render();
       return;
     }
+    /* КЛИК ПО СТРОКЕ РЕЗУЛЬТАТА ПЕРЕКЛЮЧАЕТ, ЧЬЯ НАХОДКА ПОКАЗАНА В ЦЕПОЧКАХ (v0.918, запрос
+       пользователя). В строки кладётся находка ровно одного режима (см. st.bgHitPick в render) —
+       кликом выбираем, какого именно. Повторный клик по уже выбранному снимает выбор: тогда снова
+       показывается первый совпавший по порядку режимов.
+       Разворачивание строки при этом осталось на своём месте — это то же нажатие, просто у него
+       теперь два действия сразу: показать эту находку в цепочках и развернуть саму строку. */
+    st.bgHitPick = (st.bgHitPick === mode) ? null : mode;
     if (bgResultExpanded.has(mode)) bgResultExpanded.delete(mode);
     else bgResultExpanded.add(mode);
     render();
@@ -509,6 +518,105 @@ if (bPanelsPopoutEl) bPanelsPopoutEl.onclick = () => { panelsPopupAlive() ? clos
 // нём всё равно умрут вместе с исходным документом).
 window.addEventListener("pagehide", () => { if (panelsPopupAlive()) panelsPopupWin.close(); });
 
+/* === ОТДЕЛЬНОЕ ОКНО ВКЛАДКИ «МАСКИ» (кнопка 🗗 в самой вкладке, v0.937) ===
+   Запрос пользователя: "сделай возможность в отдельном окне Маски, и там всё нормально показать".
+   Кнопка "🗗 Панели в окно" в верхнем меню уносит СРАЗУ ВСЕ вкладки — а тут нужна одна: в доке
+   ей 260px, и поле списка масок с находками в такой ширине не читается.
+   Механика та же, что у окна панелей: узел #maskGroup переезжает в новое окно ЖИВЫМ (adoptNode),
+   поэтому все обработчики, значения полей и подсветка продолжают работать без единой строчки
+   синхронизации. Отличия только в оформлении: панель тянется на всю ширину окна, textarea
+   списка выше, плашки находок переносятся по строкам.
+   На месте вкладки в основном окне остаётся заглушка со ссылкой обратно — иначе вкладка
+   выглядела бы просто пропавшей. */
+let maskPopupWin = null, maskPopupHome = null;
+function maskPopupAlive(){ return !!(maskPopupWin && !maskPopupWin.closed); }
+function returnMaskHome(){
+  const home = maskPopupHome;
+  maskPopupHome = null;
+  if (!home) return;
+  try {
+    const ph = document.getElementById("maskPopoutStub");
+    if (ph) ph.remove();
+    document.adoptNode(home.el);
+    home.el.style.width = ""; home.el.style.maxWidth = "";
+    if (home.parent && home.parent.isConnected) {
+      if (home.next && home.next.parentNode === home.parent) home.parent.insertBefore(home.el, home.next);
+      else home.parent.appendChild(home.el);
+    } else {
+      const slot = document.getElementById("leftSlot");
+      if (slot) slot.appendChild(home.el);
+    }
+  } catch (err) {}
+  render();
+}
+function closeMaskPopup(){
+  if (maskPopupAlive()) { const w = maskPopupWin; maskPopupWin = null; returnMaskHome(); w.close(); }
+  else { maskPopupWin = null; returnMaskHome(); }
+}
+function openMaskPopup(){
+  if (maskPopupAlive()) { maskPopupWin.focus(); return; }
+  const el = document.getElementById("maskGroup");
+  if (!el) return;
+  const win = window.open("", "zerkaliusMask", winFeatures("mask", 620, 900));
+  if (!win) { say("Браузер заблокировал окно — разрешите всплывающие окна для этой страницы."); return; }
+  const styles = Array.from(document.querySelectorAll("style")).map(s => s.innerHTML).join("\n");
+  const doc = win.document;
+  doc.open();
+  doc.write('<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Маски — Zerkalius Fold</title>' +
+    '<style>' + styles + '</style>' +
+    '<style>' +
+      // Тот же сброс, что и у окна панелей: копия стилей основной страницы делает body flex-колонкой
+      // высотой в экран с overflow:hidden, и всё ниже сгиба становится недостижимым.
+      'html,body{background:var(--bg,#0b0e14);color:var(--fg,#dfe6f2);margin:0;padding:0;' +
+        'font:12px/1.3 system-ui,sans-serif;width:100%;height:auto;min-height:100%;' +
+        'max-height:none;overflow:auto;display:block}' +
+      '#maskBar{position:sticky;top:0;z-index:9999;display:flex;gap:8px;align-items:center;' +
+        'padding:5px 8px;background:var(--panel,#11151c);border-bottom:1px solid var(--line,#232a36);' +
+        'font-size:11px;color:var(--dim,#8b93a3)}' +
+      '#maskBar button{background:#1a2130;color:var(--fg,#dfe6f2);border:1px solid var(--line,#232a36);' +
+        'border-radius:3px;padding:3px 8px;cursor:pointer;font:11px/1.2 system-ui,sans-serif}' +
+      '#maskHost{padding:8px}' +
+      // ШИРИНА — по окну, а не 260px дока: ради неё окно и открывали. Кнопкам разрешаем перенос
+      // подписи (в доке они nowrap и тут вылезали бы), полю списка — расти вместе с окном.
+      '#maskHost .control-group{width:auto;max-width:none;box-sizing:border-box}' +
+      '#maskHost button, #maskHost label.chk{white-space:normal;min-width:0}' +
+      '#maskHost #bgMaskScanList{min-height:160px}' +
+      // Плашки находок в доке жались в узкую колонку — тут раскладываем по всей ширине.
+      '#maskHost #bgMaskScanOut{flex-wrap:wrap;gap:3px}' +
+    '</style></head><body>' +
+    '<div id="maskBar"><button id="maskBack">↩ Вернуть в основное окно</button>' +
+    '<span>Вкладка «Маски» работает здесь живьём — поля, перебор и подсветка те же самые. Закрытие окна вернёт её на место.</span></div>' +
+    '<div id="maskHost"></div></body></html>');
+  doc.close();
+  maskPopupWin = win;
+  maskPopupHome = { el, parent: el.parentNode, next: el.nextSibling };
+  // Заглушка на месте вкладки — чтобы «Маски» не выглядели пропавшими.
+  try {
+    const stub = document.createElement("div");
+    stub.id = "maskPopoutStub";
+    stub.style.cssText = "padding:8px;font-size:11px;color:var(--dim);text-align:center;";
+    stub.textContent = "🗗 Вкладка «Маски» открыта в отдельном окне.";
+    if (maskPopupHome.parent) maskPopupHome.parent.insertBefore(stub, maskPopupHome.next || null);
+  } catch (err) {}
+  try { doc.adoptNode(el); } catch (err) {}
+  doc.getElementById("maskHost").appendChild(el);
+  const backBtn = doc.getElementById("maskBack");
+  if (backBtn) backBtn.onclick = () => closeMaskPopup();
+  trackWindowGeometry("mask", win);
+  win.addEventListener("pagehide", () => { maskPopupWin = null; returnMaskHome(); });
+  // Дубль опросом: закрытому окну событие приходит не во всех браузерах вовремя, а потерять
+  // живой узел панели нельзя — он единственный.
+  const watch = setInterval(() => {
+    if (!win.closed) return;
+    clearInterval(watch);
+    if (maskPopupHome) { maskPopupWin = null; returnMaskHome(); }
+  }, 700);
+  render();
+}
+const bMaskPopoutEl = document.getElementById("bMaskPopout");
+if (bMaskPopoutEl) bMaskPopoutEl.onclick = () => { maskPopupAlive() ? closeMaskPopup() : openMaskPopup(); };
+window.addEventListener("pagehide", () => { if (maskPopupAlive()) maskPopupWin.close(); });
+
 /* === ОТДЕЛЬНОЕ ОКНО РЕЗУЛЬТАТА (кнопка 🗗 в шапке панели) ===
    Зачем: в самой панели строки результата обрезаны — и по ширине (одна линия), и по числу
    нарисованных символов (renderCap, иначе десятки тысяч span'ов на каждый render вешают
@@ -809,6 +917,10 @@ function openResultPopup(){
   applyPopupFont();
   applyPopupStyle();
   trackWindowGeometry("result", resultPopupWin); // размер/положение окна помнятся между сеансами
+  // Пока окно живо, панель "Результат" в основном документе не показывается (запрос пользователя),
+  // а закрыли окно — возвращается на своё место в стопке.
+  resultPopupWin.addEventListener("pagehide", () => setTimeout(syncPopoutBoxes, 60));
+  syncPopoutBoxes();
   render(); // сразу наполняем содержимым
 }
 /* Вызывается в конце каждого render(): html — уже готовая разметка без потолка (строится только
@@ -831,8 +943,153 @@ function updateResultPopup(html, plainText){
   const title = document.getElementById("chainResultLabel");
   resultPopupWin.document.title = (title ? title.textContent : "Результат") + " — Zerkalius Fold";
 }
+/* ДВЕ ПОЛОВИНКИ ОБЩЕГО БАЛАНСА В ПОЛОСЕ ВЫРАВНИВАНИЙ КАК ПАРА КНОПОК (v0.864, запрос
+   пользователя). Клик по половинке включает построчные балансы в её виде; клик по уже активной —
+   выключает их совсем. Обработчик делегированный: содержимое #alignBalance перерисовывает
+   renderColHeader() на каждый render(), вешать onclick на сами половинки было бы не на что. */
+{
+  const alignBalClickEl = document.getElementById("alignBalance");
+  if (alignBalClickEl) alignBalClickEl.addEventListener("click", (e) => {
+    const part = e.target.closest("[data-bal]");
+    if (!part) return;
+    const wantBin = part.dataset.bal === "bin";
+    const activeNow = st.showBalances && (!!st.binBalance === wantBin);
+    if (activeNow) {
+      st.showBalances = false;              // повторный клик по активной — убрать балансы из строк
+    } else {
+      st.showBalances = true;
+      // Вид держим тем же переключателем, что и кнопка "⚖ Баланс" во вкладке "Вид": пустая строка
+      // — десятичный, "10" — оба числа двоичным (см. binBalanceToggle/formatBalanceTotals).
+      // Уже выбранный двоичный подвид ("1"/"0"/"01") не перебиваем — он тоже двоичный.
+      if (wantBin) { if (!st.binBalance) st.binBalance = "10"; }
+      else st.binBalance = "";
+    }
+    const b = document.getElementById("bShowBalances");
+    if (b) b.classList.toggle("mode-act", st.showBalances);
+    if (typeof updateBinBalanceBtn === "function") updateBinBalanceBtn();
+    render(); saveCache();
+  });
+}
 const bPopoutResultEl = document.getElementById("bPopoutResult");
 if (bPopoutResultEl) bPopoutResultEl.onclick = (e) => { e.stopPropagation(); openResultPopup(); };
+
+/* === ЧЕРНОВИК ШАГА В ОТДЕЛЬНОМ ОКНЕ (v0.844, запрос пользователя) ===
+   Проще "Результата": своих настроек оформления у черновика нет, поэтому содержимое #stepLogBody
+   просто зеркалится innerHTML'ом при каждой его перерисовке. Стили копируются из основного
+   документа целиком — разметка строк черновика та же самая.
+   ПОКА ОКНО ЖИВО, панель в основном документе НЕ ПОКАЗЫВАЕТСЯ (то же и у "Результата" — запрос
+   пользователя "когда в отдельном — тут окно не отображать"): иначе одно и то же висит в двух
+   местах и зря ест высоту холста. Прячется классом .popped-out, а НЕ overlayHidden — состояние
+   кнопок "показать/скрыть" в верхнем меню при этом не меняется, и после закрытия окна панель
+   возвращается ровно такой, какой была. */
+let stepLogPopupWin = null;
+function stepLogPopupAlive(){ return !!(stepLogPopupWin && !stepLogPopupWin.closed); }
+/* Панель прячется/возвращается по тому, живо ли её окно. Перекладку стопки дёргаем ТОЛЬКО при
+   реальной смене состояния — функцию зовут и из render(), и по фокусу окна. */
+function syncPopoutBoxes(){
+  let changed = false;
+  [["chainResultBox", resultPopupAlive()], ["stepLogBox", stepLogPopupAlive()]].forEach(pair => {
+    const el = document.getElementById(pair[0]);
+    if (!el) return;
+    if (el.classList.contains("popped-out") !== pair[1]) {
+      el.classList.toggle("popped-out", pair[1]);
+      changed = true;
+    }
+  });
+  if (changed) layoutOverlayBoxes();
+}
+// Окно могли закрыть крестиком — узнаём об этом, когда основное окно снова получает фокус.
+window.addEventListener("focus", syncPopoutBoxes);
+function openStepLogPopup(){
+  if (stepLogPopupAlive()) { stepLogPopupWin.focus(); render(); return; }
+  stepLogPopupWin = window.open("", "zerkaliusStepLog", winFeatures("steplog", 900, 700));
+  if (!stepLogPopupWin) { say("Браузер заблокировал окно — разрешите всплывающие окна для этой страницы."); return; }
+  const styles = Array.from(document.querySelectorAll("style")).map(s => s.innerHTML).join("\n");
+  const doc = stepLogPopupWin.document;
+  doc.open();
+  doc.write('<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Черновик шага — Zerkalius Fold</title>' +
+    '<style>' + styles + '</style>' +
+    '<style>' +
+      // Те же сбросы, что и у окна "Результата": в основном документе body — flex-колонка на
+      // 100vh с overflow:hidden, в отдельном окне из-за этого содержимое обрезалось бы.
+      'html{scrollbar-width:none}' +
+      'html::-webkit-scrollbar, body::-webkit-scrollbar{width:0;height:0;background:transparent}' +
+      'html,body{background:var(--cbg,#05070c);color:var(--fg,#dfe6f2);margin:0;padding:0;' +
+        'width:100%;height:auto;min-height:100%;max-height:none;overflow:visible;display:block}' +
+      // Высота тела черновика в панели держится вручную (stepLogBodyHeight) — в окне она не нужна,
+      // содержимое занимает окно целиком.
+      '#popStepLog{padding:6px 8px;box-sizing:border-box;width:100%;height:auto !important;' +
+        'max-height:none !important;overflow:visible !important;background:none;border:none}' +
+      '#popStepLog .step-log-result{white-space:pre-wrap !important;overflow:visible !important;' +
+        'text-overflow:clip !important;max-width:none !important}' +
+      '#popStepLog .step-log-result-line.truncated::after{content:none !important}' +
+    '</style></head><body><div class="step-log-body" id="popStepLog"></div></body></html>');
+  doc.close();
+  trackWindowGeometry("steplog", stepLogPopupWin);
+  // Закрыли окно — панель тут же возвращается в стопку.
+  stepLogPopupWin.addEventListener("pagehide", () => setTimeout(syncPopoutBoxes, 60));
+  syncPopoutBoxes();
+  render(); // сразу наполняем содержимым
+}
+/* Зовётся в конце renderStepLogBox() — что в панели, то и в окне. */
+function updateStepLogPopup(){
+  if (!stepLogPopupAlive()) return;
+  const src = document.getElementById("stepLogBody");
+  const box = stepLogPopupWin.document.getElementById("popStepLog");
+  if (src && box) box.innerHTML = src.innerHTML;
+  const no = document.getElementById("stepLogNo");
+  stepLogPopupWin.document.title = "Черновик шага № " + (no ? no.textContent : "") + " — Zerkalius Fold";
+}
+const bPopoutStepLogEl = document.getElementById("bPopoutStepLog");
+if (bPopoutStepLogEl) bPopoutStepLogEl.onclick = (e) => { e.stopPropagation(); openStepLogPopup(); };
+
+/* === ОТДЕЛЬНОЕ ОКНО ЛОГА НАХОДОК (v0.953, запрос пользователя "лог находок также в отдельное
+   окно надо") === Устроено как окно Черновика: содержимое КОПИРУЕТСЯ туда на каждой перерисовке
+   (updateFindLogPopup зовёт renderFindLogPanel), а не переезжает живым узлом, как панели. Разница
+   принципиальная: панель одна и её нельзя показывать в двух местах сразу, а лог — просто разметка,
+   и держать её копию дешевле, чем таскать узел туда-обратно. Поэтому панель в основном окне
+   остаётся на месте и продолжает работать.
+   Копируем и сам список, и блок «🧮 Суммы длин» — он живёт в той же вкладке и в окне нужен так же. */
+let findLogPopupWin = null;
+function findLogPopupAlive(){ return !!(findLogPopupWin && !findLogPopupWin.closed); }
+function updateFindLogPopup(){
+  if (!findLogPopupAlive()) return;
+  const doc = findLogPopupWin.document;
+  const list = document.getElementById("findLogList");
+  const sums = document.getElementById("lengthSumsContainer");
+  const boxL = doc.getElementById("popFindLog");
+  const boxS = doc.getElementById("popFindSums");
+  if (list && boxL) boxL.innerHTML = list.innerHTML;
+  if (boxS) boxS.innerHTML = sums ? sums.innerHTML : "";
+}
+function openFindLogPopup(){
+  if (findLogPopupAlive()) { findLogPopupWin.focus(); render(); return; }
+  findLogPopupWin = window.open("", "zerkaliusFindLog", winFeatures("findlog", 900, 700));
+  if (!findLogPopupWin) { say("Браузер заблокировал окно — разрешите всплывающие окна для этой страницы."); return; }
+  const styles = Array.from(document.querySelectorAll("style")).map(s => s.innerHTML).join("\n");
+  const doc = findLogPopupWin.document;
+  doc.open();
+  doc.write('<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Лог находок — Zerkalius Fold</title>' +
+    '<style>' + styles + '</style>' +
+    '<style>' +
+      // Тот же сброс, что и у прочих окон: копия стилей делает body flex-колонкой в 100vh с
+      // overflow:hidden, и всё ниже сгиба стало бы недостижимым.
+      'html,body{background:var(--cbg,#05070c);color:var(--fg,#dfe6f2);margin:0;padding:0;' +
+        'width:100%;height:auto;min-height:100%;max-height:none;overflow:auto;display:block}' +
+      // В панели список тянут за угол и держат ручной размер (см. #findLogList) — в окне это
+      // мешает: пусть занимает окно целиком и прокручивается вместе с ним.
+      '#popFindLog{padding:6px 8px;box-sizing:border-box;width:100%;height:auto !important;' +
+        'max-height:none !important;overflow:visible !important;resize:none !important}' +
+      '#popFindSums{padding:0 8px 8px}' +
+    '</style></head><body><div id="popFindLog"></div><div id="popFindSums"></div></body></html>');
+  doc.close();
+  trackWindowGeometry("findlog", findLogPopupWin);
+  updateFindLogPopup();
+  render();
+}
+const bPopoutFindLogEl = document.getElementById("bPopoutFindLog");
+if (bPopoutFindLogEl) bPopoutFindLogEl.onclick = (e) => { e.stopPropagation(); openFindLogPopup(); };
+window.addEventListener("pagehide", () => { if (findLogPopupAlive()) findLogPopupWin.close(); });
 
 /* Кнопка копирования сквозной строки результата */
 const bCopyChainEl = document.getElementById("bCopyChain");
@@ -926,11 +1183,97 @@ function copySelectedRows(allRows){
     const shift = s.length ? alignShift(maxLen, s.length, st.align, i) : 0;
     return " ".repeat(Math.max(0, shift)) + s;
   });
-  copyTextToClipboard(lines.join("\n"), `Скопировано строк: ${idxs.length}`);
+  // Рядом с обычным текстом кладём в буфер HTML-таблицу с цветами — см. clipRowsHtml().
+  copyRichToClipboard(lines.join("\n"), clipRowsHtml(idxs, lines), `Скопировано строк: ${idxs.length}`);
 }
 
-const bCopyRowsEl = document.getElementById("bCopyRows");
-if (bCopyRowsEl) bCopyRowsEl.onclick = () => { copySelectedRows(true); };
+/* === КОПИРОВАНИЕ С ЦВЕТАМИ (v0.835, запрос пользователя: "чтобы при вставке в ексель цвета
+   символов также были и по строкам") ===
+   В буфер кладутся ДВА формата сразу: text/plain (как и раньше, ровно те же строки) и text/html.
+   Excel при вставке предпочитает html и сохраняет цвет КАЖДОГО символа внутри ячейки, а раскладка
+   при этом остаётся построчной: строка цепочки = одна ячейка (по выбору пользователя, не "бит =
+   ячейка"). Куда html не понимают (блокнот, поле ввода) — приезжает обычный текст. */
+
+/* Базовые цвета символов "1" и "0" — те, что выставлены сейчас в настройках вида (.b1/.b0 →
+   var(--c1)/var(--c0)). Меряем настоящим элементом, а не читаем переменную: цвет приходит и от
+   пресетов, и от ползунков, и вычисленное значение уже готово к подстановке в style. */
+function clipBaseBitColors(){
+  const probe = document.createElement("div");
+  probe.style.cssText = "position:absolute;left:-9999px;top:0;visibility:hidden";
+  probe.innerHTML = '<span class="b1">1</span><span class="b0">0</span>';
+  document.body.appendChild(probe);
+  const res = { "1": getComputedStyle(probe.firstChild).color,
+                "0": getComputedStyle(probe.lastChild).color };
+  probe.remove();
+  return res;
+}
+
+/* Цвет КАЖДОГО символа строки i — снимаем с уже отрисованной строки таблицы, чтобы в Excel уехали
+   не только базовые 0/1, но и подсветки находок (они живут в классах/инлайн-стилях render()).
+   Строки вне экрана в DOM не существуют (виртуализация, см. vrowsRange) — для них возвращаем null
+   и красим базовыми цветами. Зеркала (.lm-bit) в подсчёт не идут: их нет в самой строке.
+   Ведущие/хвостовые пробелы-распорки (blankRun) обрезаем. Если после этого длина всё равно не
+   совпала со строкой (разделители витков, "пробеги вместо битов" и прочие вставки) — тоже null:
+   лучше базовые цвета, чем сдвинутая на символ раскраска. */
+function clipRowCharColors(i, s){
+  const host = document.querySelector('#rows .ln[data-idx="' + i + '"] .bits');
+  if (!host) return null;
+  const chars = [], colors = [];
+  const walk = (node) => {
+    for (const ch of node.childNodes) {
+      if (ch.nodeType === 3) {
+        const col = getComputedStyle(ch.parentElement).color;
+        for (const c of ch.nodeValue) { chars.push(c); colors.push(col); }
+      } else if (ch.nodeType === 1 && !ch.classList.contains("lm-bit")) {
+        walk(ch);
+      }
+    }
+  };
+  walk(host);
+  let a = 0, b = chars.length;
+  while (a < b && chars[a] === " ") a++;
+  while (b > a && chars[b - 1] === " ") b--;
+  return (b - a === s.length) ? colors.slice(a, b) : null;
+}
+
+/* HTML для буфера: по одной ячейке на строку цепочки. Ведущие пробелы выравнивания — &nbsp;
+   (обычные пробелы Excel по краям ячейки съедает), шрифт моноширинный, чтобы вставленное
+   выглядело так же, как в таблице. */
+function clipRowsHtml(idxs, lines){
+  const base = clipBaseBitColors();
+  const escChar = (c) => c === "&" ? "&amp;" : c === "<" ? "&lt;" : c === ">" ? "&gt;" : c;
+  const rows = idxs.map((i, k) => {
+    const s = getRowBits(st, i) || "";
+    const lead = Math.max(0, (lines[k] || "").length - s.length);
+    const cols = clipRowCharColors(i, s);
+    let cell = "&nbsp;".repeat(lead);
+    for (let p = 0; p < s.length; p++) {
+      const col = (cols && cols[p]) || base[s[p]] || base["0"];
+      cell += '<span style="color:' + col + '">' + escChar(s[p]) + "</span>";
+    }
+    return '<tr><td style="font-family:Consolas,\'Courier New\',monospace;white-space:pre">' + cell + "</td></tr>";
+  }).join("");
+  return '<table border="0" cellspacing="0" cellpadding="0">' + rows + "</table>";
+}
+
+/* Кладём в буфер оба формата разом. ClipboardItem есть только в secure context (https/localhost);
+   где его нет — молча уходим на обычное текстовое копирование: данные те же, теряется только
+   раскраска. */
+function copyRichToClipboard(text, html, successMsg){
+  if (navigator.clipboard && navigator.clipboard.write && window.ClipboardItem) {
+    try {
+      const item = new ClipboardItem({
+        "text/plain": new Blob([text], { type: "text/plain" }),
+        "text/html":  new Blob([html],  { type: "text/html"  })
+      });
+      navigator.clipboard.write([item])
+        .then(() => say(successMsg))
+        .catch(() => copyTextToClipboard(text, successMsg));
+      return;
+    } catch(e) { /* ClipboardItem есть, но формат не принят — уходим на текст */ }
+  }
+  copyTextToClipboard(text, successMsg);
+}
 
 /* Переключение режимов работы (выделение рамкой + перемещение кнопки "↩ Назад" слева от активной) */
 function getModeParams(mode){
@@ -1066,7 +1409,9 @@ const MENUS = {
   // Панель про ВЫДЕЛЕНИЕ целиком (запрос пользователя): столбцы-оси и «Выбор ячеек», который
   // переехал сюда из «Строк». id группы (colEditGroup) не трогаем — по нему живёт раскладка в кэше.
   menuColEdit:{ title: 'Выделить', zone: 'rightSlot', pin: true, ids: ['colEditGroup'], floatable: true },
-  menuTopBuild:{ title: 'Зеркала',    zone: 'rightSlot', pin: true, ids: ['topBuildGroup'], floatable: true },
+  // "Построения" (бывш. "Зеркала", v0.885): к зеркалам сюда переехал генератор Серпинского из
+  // "Строк" и добавлены "🔢 Номера" — всё, что СТРОИТ новые биты, в одной вкладке.
+  menuTopBuild:{ title: 'Построения', zone: 'rightSlot', pin: true, ids: ['topBuildGroup'], floatable: true },
   menuSeq:    { title: 'Сквозная',     zone: 'rightSlot', pin: true, ids: ['seqGroup'],    floatable: true }
 };
 const LAYOUT_KEY = 'zerk_fold_layout';
@@ -1103,7 +1448,7 @@ function saveLayout() {
   let pins = {}; for (let m in MENUS) pins[m] = MENUS[m].pin;
   // overlayOrderV2 — флаг разовой миграции порядка окон, см. loadLayout(). Пишется всегда, поэтому
   // после первого же сохранения текущий порядок снова становится главнее default'а.
-  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ pins: pins, groups: g, overlayOrder: overlayOrder, overlayOrderV2: true, overlayHidden: overlayHidden, hideAllSnap: (typeof pinsBeforeHideAll !== 'undefined' ? pinsBeforeHideAll : null) })); } catch (e) {}
+  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ pins: pins, groups: g, overlayOrder: overlayOrder, overlayOrderV2: true, overlayHidden: overlayHidden })); } catch (e) {}
 }
 
 /* КЛИК ПО НАЙДЕННОМУ ПАТТЕРНУ ведёт к его вхождению в самих строках цепочек, повторный клик по
@@ -1370,29 +1715,19 @@ function updateToggleAllPinsBtn() {
   let anyOn = Object.keys(MENUS).some(mid => isTabVisible(mid));
   let bar = document.getElementById('toggleAllPinsBtn');
   bar.classList.toggle('all-on', anyOn);
-  bar.title = anyOn ? 'Скрыть все панели' : 'Вернуть панели (как было до скрытия)';
+  // Подсказка обязана совпадать с тем, что кнопка реально делает (v0.894, запрос пользователя
+  // "должна все панели показать, а не те, которые были до скрытия — исправь подсказку"): снимок
+  // раскладки перед скрытием не снимается уже давно, показываются ВСЕ вкладки без исключения.
+  bar.title = anyOn
+    ? 'Скрыть все панели разом'
+    : 'Показать ВСЕ панели — каждая вкладка закрепится в своём доке (не только те, что были видны до скрытия)';
 }
 /* Вынесено в отдельную функцию — запрос пользователя: то же самое действие, что и у кнопки
    📌, должно срабатывать ещё и по клику колёсиком мыши (средняя кнопка) — см. её обработчик
    ниже. */
-let pinsBeforeHideAll = null;
-function snapshotTabsState() {
-  let snap = {};
-  for (let mid in MENUS) {
-    let w = MENUS[mid].wrapper, fl = w.classList.contains('floating-panel');
-    snap[mid] = {
-      pin: !!MENUS[mid].pin,
-      float: fl,
-      x: fl ? (parseInt(w.style.left, 10) || 0) : 0,
-      y: fl ? (parseInt(w.style.top, 10) || 0) : 0
-    };
-  }
-  return snap;
-}
 function toggleAllPins() {
   let anyVisible = Object.keys(MENUS).some(mid => isTabVisible(mid));
   if (anyVisible) {
-    pinsBeforeHideAll = snapshotTabsState();
     for (let mid in MENUS) {
       MENUS[mid].pin = false;
       let cb = document.getElementById(mid + 'Pin'); if (cb) cb.checked = false;
@@ -1403,13 +1738,13 @@ function toggleAllPins() {
        показать ВСЁ, а не то что было"). Раньше кнопка возвращала снимок раскладки, снятый перед
        скрытием: если до этого часть вкладок была не закреплена или висела плавающими окнами,
        "показать все" возвращало ровно ту же картину — то есть показывало не все. Теперь она
-       просто закрепляет КАЖДУЮ вкладку в её доке. Снимок больше не нужен. */
+       просто закрепляет КАЖДУЮ вкладку в её доке. Снимок не снимается и в раскладку не пишется
+       (v0.894 — вычищен вместе с pinsBeforeHideAll/snapshotTabsState/L.hideAllSnap). */
     for (let mid in MENUS) {
       MENUS[mid].pin = true;
       let cb = document.getElementById(mid + 'Pin'); if (cb) cb.checked = true;
       applyMenu(mid);
     }
-    pinsBeforeHideAll = null;
     updateDockVisibility();
   }
   saveLayout();
@@ -1439,7 +1774,8 @@ document.addEventListener('mousedown', (e) => {
   if (L && L.overlayHidden) {
     for (let id in overlayHidden) if (L.overlayHidden[id] !== undefined) overlayHidden[id] = !!L.overlayHidden[id];
   }
-  if (L && L.hideAllSnap) pinsBeforeHideAll = L.hideAllSnap;
+  // L.hideAllSnap из раскладок старее v0.894 просто игнорируется: "показать все" больше ничего
+  // не восстанавливает по снимку, оно закрепляет все вкладки без исключения.
   if (L && L.pins) for (let m in MENUS) if (L.pins[m] !== undefined) { MENUS[m].pin = !!L.pins[m]; let cb = document.getElementById(m + 'Pin'); if (cb) cb.checked = MENUS[m].pin; }
   if (L && L.groups) for (let m in MENUS) { let wid = 'panelWrap_' + m; if (MENUS[m].pin && L.groups[wid] && L.groups[wid].z !== 'canvas') MENUS[m].zone = L.groups[wid].z; }
   for (let m in MENUS) applyMenu(m);
@@ -1483,9 +1819,17 @@ const OVERLAY_GAP = 6;
     mainLayoutEl.appendChild(alignGrpEl);
   }
 }
+/* Кто реально стоит в стопке: не скрытые крестиком (overlayHidden) и не вынесенные в отдельное
+   окно (.popped-out, см. syncPopoutBoxes) — у вынесенных ни места, ни зазора не занимается. */
+function overlayStackIds(){
+  return overlayOrder.filter(id => {
+    if (overlayHidden[id]) return false;
+    const el = document.getElementById(id);
+    return !(el && el.classList.contains("popped-out"));
+  });
+}
 function layoutOverlayBoxes(){
-  // Скрытые (✕, overlayHidden) полностью выпадают из стопки — ни места, ни зазора после них.
-  const visible = overlayOrder.filter(id => !overlayHidden[id]);
+  const visible = overlayStackIds();
   let top = 6, stackH = 0;
   visible.forEach((id, i) => {
     const el = document.getElementById(id);
@@ -1495,15 +1839,34 @@ function layoutOverlayBoxes(){
     top += h + OVERLAY_GAP;
     stackH += h + (i < visible.length - 1 ? OVERLAY_GAP : 0);
   });
-  // Плавающая полоса выравниваний (#alignGrp) висит НАД стопкой и тоже занимает место сверху —
-  // но она не часть overlayOrder, поэтому в stackH не попадала. Когда все бары скрыты (✕),
-  // stackH=0, отступ холста схлопывался и линейка столбцов/строки уезжали ПОД эту полосу (запрос
-  // пользователя — "когда нет панелей, полоски накладываются на меню выравниваний"). Берём
-  // максимум: пока бары видны, полоса и так внутри их высоты (она поверх них), а когда скрыты —
-  // отступ держится по самой полосе.
+  // Полоса выравниваний (#alignGrp) стоит ПОД стопкой баров и СРАЗУ НАД первой строкой цепочки,
+  // то есть занимает своё собственное место сверху — раньше она висела ПОВЕРХ баров, и её нижний
+  // край накрывал ручку изменения высоты "Результата", тянуть которую становилось нечем (запрос
+  // пользователя: "окно результат немного выдвинь вниз за эти кнопки, чтоб можно было его там
+  // тянуть вниз"). Поэтому отступ холста = низ полосы, а не max(стопка, полоса).
   const alignGrpEl = document.getElementById("alignGrp");
-  const alignH = alignGrpEl ? alignGrpEl.offsetHeight + OVERLAY_GAP : 0;
-  document.documentElement.style.setProperty('--result-box-h', Math.max(stackH, alignH) + 'px');
+  const alignTop = positionAlignGrpTop();
+  const alignH = alignGrpEl ? alignGrpEl.offsetHeight : 0;
+  document.documentElement.style.setProperty('--result-box-h', Math.round(alignTop + alignH + 2) + 'px');
+}
+
+/* Высота полосы выравниваний (#alignGrp, v0.839): она идёт СЛЕДУЮЩЕЙ за стопкой баров, поэтому
+   её top считается тем же счётом, что и top каждого бара, — сумма высот видимых баров плюс
+   зазоры. Никаких getBoundingClientRect: функция вызывается в том числе из ResizeObserver, а
+   принудительный замер там лишний. Возвращает свой top — его же берёт --result-box-h.
+   Отдельной функцией — потому что двигать полосу нужно не только на render()
+   (updateAxisSplitPosition() зовёт её же), но и на КАЖДОЕ изменение стопки: высоту "Результата"
+   тянут мышью, и без этого вызова полоса догоняла бы строки только следующей перерисовкой
+   (запрос пользователя: "тупит, пусть уезжает сразу вместе со строками"). */
+function positionAlignGrpTop(){
+  let top = 6;
+  overlayStackIds().forEach(id => {
+    const b = document.getElementById(id);
+    if (b) top += b.offsetHeight + OVERLAY_GAP;
+  });
+  const el = document.getElementById("alignGrp");
+  if (el) el.style.top = Math.round(top) + "px";
+  return top;
 }
 // Подсветка mode-act — ПОКА ОКНО ВИДНО (!hidden), а не пока скрыто — запрос пользователя
 // ("наоборот, когда выключены — не подсвечивать надо").
@@ -1862,7 +2225,10 @@ function startEditRow(idx){
       // st.topBuilt должна быть всегда, и как только туда вписали биты, она перестаёт быть
       // границей — граница заводится заново выше. Раньше проверка стояла только в загрузке и
       // в удалении строк, поэтому правкой нулевую можно было "занять" насовсем.
-      ensureZeroRow();
+      // keepPats=true (v0.897): вниз едет ТОЛЬКО цепочка. Раньше вместе с ней уезжала и колонка
+      // паттернов — а она к росту цепочки отношения не имеет, у неё своя нулевая ячейка и свои
+      // кнопки (см. patInsertCellHere/#bDelPats).
+      ensureZeroRow(true);
     }
     render();
     saveCache();
@@ -1917,7 +2283,10 @@ document.getElementById("rows").addEventListener("dblclick", e => {
   startEditRow(idx);
 });
 
-const alignBtns = document.querySelectorAll("#alignGrp button");
+/* ТОЛЬКО кнопки выравниваний — у них есть data-val (v0.867). Раньше селектор брал ВСЕ кнопки
+   полосы, а после переезда сюда кнопок колонок и окон (◧П1/П2◨/Р//Ч//Панели, v0.866) им бы тоже
+   повесили обработчик выравнивания и затёрли собственный. */
+const alignBtns = document.querySelectorAll("#alignGrp button[data-val]");
 alignBtns.forEach(btn => {
   btn.onclick = () => {
     alignBtns.forEach(b => b.classList.remove("act"));
@@ -1935,7 +2304,22 @@ alignBtns.forEach(btn => {
     // экране, и ось заметно дёргалась при переключении (запрос пользователя). Доводим по факту
     // ниже, после перерисовки.
     const prevPx = axisScreenPx();
-    st.align = btn.getAttribute("data-val");
+    const nextAlign = btn.getAttribute("data-val");
+    /* "ОсьБит"/"ОсьБит ½" (↥ / ↥½) — ПЕРВОЕ нажатие не двигает строки вовсе (v0.881, запрос
+       пользователя: "пусть при переключении на эти выравнивания строки изначально будут как в том
+       выравнивании, из которого клик делается, а при втором клике — как обычно"). Причина: у
+       ОсьБита сдвиг строки берётся из axisBitShiftMap, а она пустая, пока не поработали сами
+       ОсьБит-операции, — то есть переключение швыряло всю цепочку к левому краю. Запоминаем
+       выравнивание, ИЗ которого пришли, и до второго нажатия рисуем строки по нему
+       (см. st.axisBitSeedAlign в render()). Второе нажатие по той же кнопке снимает семя —
+       дальше ОсьБит работает как всегда. Уход на любое другое выравнивание тоже его снимает. */
+    if (nextAlign === "axisbit" || nextAlign === "axisbit12") {
+      if (st.align === nextAlign) st.axisBitSeedAlign = null;          // второе нажатие подряд
+      else if (st.align !== "axisbit" && st.align !== "axisbit12") st.axisBitSeedAlign = st.align;
+    } else {
+      st.axisBitSeedAlign = null;
+    }
+    st.align = nextAlign;
     // Два render(): первый — чтобы axisBaseCol() считала уже по новому выравниванию (у "ОсьБит"
     // сдвиг берётся из axisBitShiftMap, а её наполняет именно render()), второй — применить
     // пересчитанный offset. clampAxisOffset внутри render() не даст уехать за колонки паттернов.
@@ -2051,6 +2435,9 @@ if (bgMaskTextEl) {
   bgMaskTextEl.oninput = () => {
     st.bgMaskText = bgMaskTextEl.value;
     st.bgSearchLastHit = -1; // новая цель поиска — прежняя находка к ней не относится
+    // Поле теперь общее на всё (поиск, "⇄ Сдвиг по маске", подсветка), а у подсветки нет своего
+    // "выкл" — её кнопка гаснет и оживает вместе с полем (см. updateBgMaskPaintBtn в fold-4).
+    if (typeof updateBgMaskPaintBtn === "function") updateBgMaskPaintBtn();
     render();
     saveCache();
   };
@@ -2101,17 +2488,58 @@ function primitiveMasks(minLen, maxLen){
   }
   return out;
 }
+/* СВОЙ СПИСОК МАСОК (v0.926, запрос пользователя: "сюда бы окно для текстового ввода масок
+   строчками для перебора"). Диапазон "период от/до" перебирает ВСЕ непериодические маски этих
+   длин — но руками собранный список бывает нужнее: проверить свой десяток любой длины, в том
+   числе длиннее 14 (потолок полей диапазона) и периодических, которые primitiveMasks нарочно
+   выбрасывает. Непустой список ОТМЕНЯЕТ диапазон целиком, а не дополняет его: подмешать десять
+   своих к восьми тысячам сгенерированных — значит потерять их в списке находок.
+   Разбор построчный, из каждой строки берутся только 0/1 (рядом можно писать пометки), пустые и
+   без единой «1» отбрасываются (прореживание, которое не берёт ничего, ничего и не найдёт),
+   повторы снимаются — иначе одна и та же маска проверится дважды. */
+function maskScanListMasks(){
+  const seen = new Set(), out = [];
+  for (const line of (st.bgMaskScanList || "").split("\n")){
+    /* ПОМЕТКА ОТРЕЗАЕТСЯ ПО ПЕРВОМУ РАЗДЕЛИТЕЛЮ (v0.937). Раньше из всей строки просто
+       выбрасывалось всё, кроме 0/1, — и подпись вроде "№ 13" молча дописывала к маске "1",
+       а "1101 строка 10" превращалась в "1101110". Подпись нужна (кнопки-заполнители теперь
+       пишут, из какой строки маска), поэтому маской считается только ПЕРВОЕ СЛОВО, а всё
+       после пробела/«#»/«;» — комментарий. Строка, начинающаяся с комментария, пропускается. */
+    const head = (line.split(/[\s#;]/)[0] || "");
+    const m = head.replace(/[^01]/g, "");
+    if (!m || m.indexOf("1") < 0 || seen.has(m)) continue;
+    seen.add(m); out.push(m);
+  }
+  return out;
+}
+/* Подпись маски из своего списка (v0.937): «патт. №5», «строка №3», «сквозная строк 1–7» — то,
+   что дописали кнопки-заполнители. Нужна в плашке находки: без неё в списке результатов видны
+   одни биты, и чья это была строка, уже не вспомнить. */
+function maskScanNoteFor(mask){
+  for (const line of (st.bgMaskScanList || "").split("\n")){
+    const parts = line.trim().split(/\s+/);
+    if (!parts.length) continue;
+    if ((parts[0] || "").replace(/[^01]/g, "") !== mask) continue;
+    const note = parts.slice(1).join(" ").replace(/^[#;]+\s*/, "");
+    if (note) return note;
+  }
+  return "";
+}
 function bgMaskScan(){
-  const outEl = document.getElementById("bgMaskScanOut");
-  const minEl = document.getElementById("bgMaskScanMin");
-  const maxEl = document.getElementById("bgMaskScanMax");
-  const ringEl = document.getElementById("cBgMaskScanRing");
+  // elById, а не document.getElementById: вкладка «Маски» может жить в своём окне (см. openMaskPopup).
+  const outEl = elById("bgMaskScanOut");
+  const minEl = elById("bgMaskScanMin");
+  const maxEl = elById("bgMaskScanMax");
   let minLen = Math.max(2, Math.min(14, minEl ? (+minEl.value || 2) : 2));
   let maxLen = Math.max(2, Math.min(14, maxEl ? (+maxEl.value || 8) : 8));
   // Поля перепутаны местами — молча меняем их обратно, а не отдаём пустой перебор.
   if (minLen > maxLen) { const t = minLen; minLen = maxLen; maxLen = t; }
-  // Подпись диапазона: одна длина — так и пишем, без "от ... до ...".
-  const lenNote = (minLen === maxLen) ? ("период " + minLen) : ("период " + minLen + "–" + maxLen);
+  // Свой список (см. maskScanListMasks) ОТМЕНЯЕТ диапазон: перебираем ровно то, что вписано.
+  const listMasks = maskScanListMasks();
+  // Подпись: свой список или диапазон длин (одна длина — так и пишем, без "от ... до ...").
+  const lenNote = listMasks.length
+    ? ("свой список, " + listMasks.length + " шт.")
+    : ((minLen === maxLen) ? ("период " + minLen) : ("период " + minLen + "–" + maxLen));
   // Сырые результаты режимов берём БЕЗ маски: сама она тут перебирается, а с ней в поле
   // computeBgSearchTarget отдала бы уже фазы одной-единственной маски.
   const savedMask = st.bgMaskText;
@@ -2125,21 +2553,49 @@ function bgMaskScan(){
   const pat = info.targetIdx < st.pats.length ? st.pats[info.targetIdx] : null;
   const patText = pat && pat.text ? pat.text : "";
   if (!patText) { say("Перебор масок: у строки ниже выделенной нет паттерна — искать нечего."); return; }
-  // "сквозной" — маска кладётся на удвоенную строку, то есть идёт через границу витка (тот же
-  // смысл, что у снятой галки "🎭 Маска заново каждый виток").
-  const thru = !!(ringEl && ringEl.checked);
-  const masks = primitiveMasks(minLen, maxLen);
+  /* ВИТКИ КОЛЬЦА — ОДНОЙ И ТОЙ ЖЕ ГАЛКОЙ, что и обычный поиск (v0.928, запрос пользователя
+     "вообще в одну кнопку это надо"). Раньше у перебора был свой чекбокс "сквозной" с ОБРАТНОЙ
+     логикой: включённый "сквозной" = снятая "🎭 Маска заново каждый виток". Их легко было
+     развести — и тогда маска, найденная перебором, вставала по клику в поле и не находилась,
+     потому что поиск считал её по другому правилу. Теперь выражение буквально то же, что в
+     mkResult (включая "🚫 Без кольца": без кольца удваивать нечего). */
+  const thru = (st.bgMaskRingRestart === false && !st.ringOff);
+  const masks = listMasks.length ? listMasks : primitiveMasks(minLen, maxLen);
   if (!masks.length) { say("Перебор масок: в этом диапазоне длин непериодических масок нет."); return; }
+  /* ФАЗЫ У СВОЕГО СПИСКА (v0.935, вопрос пользователя: "перебор все фазы делает? скорость
+     моментальная"). Раньше КАЖДАЯ маска проверялась только в фазе 0 — и это было правильно
+     ровно для перебора по ДИАПАЗОНУ: primitiveMasks перечисляет все непериодические строки
+     длины n, то есть все повороты каждой маски уже лежат в списке отдельными записями, а
+     applyPickMask(s, M, p) — это буквально applyPickMask(s, поворот(M,p), 0). Крутить там ещё и
+     фазы значит делать ту же работу n раз впустую.
+     А вот в СВОЁМ списке (и в том, что кладут туда кнопки «🧩 Паттерны»/«⛓ Строки»/«➡ Сквозные»)
+     поворотов никто не генерирует — там фаза 0 честно теряла находки. Крутим фазы только для него.
+     ПОТОЛОК — ПО РАБОТЕ, А НЕ ПО ДЛИНЕ МАСКИ. Стоимость шага ≈ длина строки (прореживание + кольцо),
+     шагов = сумма длин масок × число режимов. Маска 70 бит на строке 2200 — это пара миллионов
+     операций, миллисекунды; а маска из «➡ Сквозные» длиной со саму строку даёт квадрат и вешает
+     интерфейс на секунды и минуты. Поэтому считаем работу заранее и при перерасходе честно
+     откатываемся на одну фазу, написав об этом в шапке результатов. */
+  const PHASE_WORK_BUDGET = 40e6;
+  const lenSum = info.results.reduce((a, r) => a + (r.result ? (thru ? r.result.length * 2 : r.result.length) : 0), 0);
+  const phaseSum = masks.reduce((a, m) => a + m.length, 0);
+  const allPhases = listMasks.length > 0 && lenSum > 0 && phaseSum * lenSum <= PHASE_WORK_BUDGET;
+  const phaseNote = listMasks.length
+    ? (allPhases ? ", все фазы" : ", только 1-я фаза (перебор всех фаз тут слишком долгий)")
+    : ", все фазы (повороты в списке)";
   const hits = [];
   for (const mask of masks){
-    for (const r of info.results){
-      if (!r.result) continue;
-      const thin = applyPickMask(thru ? r.result + r.result : r.result, mask, 0);
-      if (thin.length < patText.length) continue;
-      const kinds = findPatternKinds(thin, patText);
-      // Одна запись на маску: какой режим первым дал находку, тем и подписываем — иначе список
-      // разрастается в десятки строк на одну и ту же маску.
-      if (kinds.length) { hits.push({ mask, mode: r.mode, kind: kinds[0].kind, skip: !!kinds[0].skip }); break; }
+    const phN = allPhases ? mask.length : 1;
+    let done = false;
+    for (let ph = 0; ph < phN && !done; ph++){
+      for (const r of info.results){
+        if (!r.result) continue;
+        const thin = applyPickMask(thru ? r.result + r.result : r.result, mask, ph);
+        if (thin.length < patText.length) continue;
+        const kinds = findPatternKinds(thin, patText);
+        // Одна запись на маску: какая фаза и какой режим первыми дали находку, теми и подписываем —
+        // иначе список разрастается в десятки строк на одну и ту же маску.
+        if (kinds.length) { hits.push({ mask, phase: ph, mode: r.mode, kind: kinds[0].kind, skip: !!kinds[0].skip }); done = true; break; }
+      }
     }
   }
   if (outEl) {
@@ -2147,23 +2603,132 @@ function bgMaskScan(){
     const shown = hits.slice(0, 300);
     outEl.innerHTML =
       '<span class="mask-note">Найдено масок: ' + hits.length + ' из ' + masks.length +
-        ' (' + lenNote + (thru ? ', сквозной' : '') + '). Клик — поставить маску в поле.' +
+        ' (' + lenNote + (thru ? ', сквозной' : '') + phaseNote + '). Клик — поставить маску в поле.' +
         (hits.length > shown.length ? ' Показаны первые ' + shown.length + '.' : '') + '</span>' +
-      shown.map(h => '<span class="mask-hit' + (h.mask === maskBits() ? " cur" : "") + '" data-mask="' + h.mask +
-        '" title="' + bgModeLabel(h.mode) + ' — ' + KIND_LABELS_RU[h.kind] + (h.skip ? " (без 1-го символа)" : "") +
-        '">' + h.mask + '</span>').join("");
+      // В поле кладём маску КАК ЕСТЬ, без поворота к найденной фазе: обычный поиск и так считает
+      // все её фазы (см. mkResults), так что находка воспроизведётся. Номер фазы — в подписи.
+      shown.map(h => {
+        const note = listMasks.length ? maskScanNoteFor(h.mask) : "";
+        return '<span class="mask-hit' + (h.mask === maskBits() ? " cur" : "") + '" data-mask="' + h.mask +
+          '" title="' + (note ? note + ' · ' : '') + bgModeLabel(h.mode) + ' — ' + KIND_LABELS_RU[h.kind] +
+          (h.skip ? " (без 1-го символа)" : "") + ', фаза ' + (h.phase + 1) + ' из ' + h.mask.length +
+          '">' + h.mask + (h.phase ? '<sub>ф' + (h.phase + 1) + '</sub>' : '') +
+          (note ? '<i style="font-style:normal;color:var(--dim);"> ' + esc(note) + '</i>' : '') + '</span>';
+      }).join("");
   }
   say(hits.length
-    ? `🎭 Перебор масок: находку дают ${hits.length} маск(и) из ${masks.length} (${lenNote}${thru ? ", сквозной" : ""}) — список под кнопкой, клик ставит маску в поле.`
-    : `🎭 Перебор масок: ни одна из ${masks.length} масок (${lenNote}) не даёт находки — паттерн строки №${info.targetIdx + 1} не собирается ни одним прореживанием этой длины.`);
+    ? `🎭 Перебор масок: находку дают ${hits.length} маск(и) из ${masks.length} (${lenNote}${thru ? ", сквозной" : ""}${phaseNote}) — список под кнопкой, клик ставит маску в поле.`
+    : `🎭 Перебор масок: ни одна из ${masks.length} масок (${lenNote}${phaseNote}) не даёт находки — паттерн строки №${info.targetIdx + 1} не собирается ни одним из этих прореживаний.`);
 }
 const bBgMaskScanEl = document.getElementById("bBgMaskScan");
 if (bBgMaskScanEl) bBgMaskScanEl.onclick = bgMaskScan;
+/* Поле своего списка. Пересчёта не требует — перебор читает его в момент клика по кнопке, а на
+   обычный фон-поиск (маска из #bgMaskText) список не влияет вообще. Пока он непуст, поля
+   "период от/до" приглушаем классом mode-na (тот же приём, что у "заново каждый виток"), чтобы
+   не гадать, что из двух сейчас в деле; title у метки не трогаем — он приходит из data-tip. */
+const bgMaskScanListEl = document.getElementById("bgMaskScanList");
+function updateMaskScanRangeNA(){
+  const lbl = elById("bgMaskScanRangeLbl");
+  if (lbl) lbl.classList.toggle("mode-na", maskScanListMasks().length > 0);
+}
+if (bgMaskScanListEl) {
+  bgMaskScanListEl.value = st.bgMaskScanList || "";
+  bgMaskScanListEl.oninput = () => {
+    st.bgMaskScanList = bgMaskScanListEl.value;
+    updateMaskScanRangeNA();
+    saveCache();
+  };
+}
+updateMaskScanRangeNA();
+/* ГОТОВЫЕ МАСКИ ИЗ САМИХ ДАННЫХ (v0.927, запрос пользователя: "вставка строк-паттернов, и
+   вставка строк Цепочек, и их сквозных до искомого паттерна"). Три кнопки над полем списка
+   набивают его тем, что уже лежит в цепочке, — руками переписывать те же строки незачем.
+   ГРАНИЦА «до искомого паттерна» — ровно та же, по которой считает фон-поиск: искомый паттерн
+   лежит в строке ПОД выделенной (targetIdx = selIdx+1, см. computeBgSearchTarget), значит в
+   список идёт всё ПО ВЫДЕЛЕННУЮ СТРОКУ включительно. Ничего не выделено — берём всю цепочку до
+   последней непустой строки, чтобы кнопки работали и без выделения. */
+function maskScanBoundIdx(){
+  if (st.selectedRows && st.selectedRows.size) return Math.max(...st.selectedRows);
+  let last = -1;
+  for (let i = 0; i < st.rows.length; i++) if (st.rows[i] && st.rows[i].length) last = i;
+  return last;
+}
+/* Дописываем в КОНЕЦ списка, а не затираем его: список собирают по кускам (свои маски + паттерны
+   + сквозная), и затирание съедало бы набранное вручную. Фильтр тут тот же, что в разборе
+   (только 0/1, без пустых и без «одни нули»), — иначе кнопка отчиталась бы о добавленных
+   строках, которые перебор потом молча выбросит. Повторы не проверяем: их снимет maskScanListMasks. */
+/* items — строка ИЛИ {bits, note} (v0.937, запрос пользователя "если по паттернам, то номер
+   строки тоже показать"). Подпись дописывается после маски через пробелы и в саму маску не
+   идёт: разбор берёт только первое слово (см. maskScanListMasks). Колонку подписей выравниваем
+   по самой длинной маске пачки — иначе номера скачут. */
+function maskScanAddLines(items, what){
+  const add = (items || [])
+    .map(it => (typeof it === "string") ? { bits: it, note: "" } : (it || { bits: "", note: "" }))
+    .map(it => ({ bits: (it.bits || "").replace(/[^01]/g, ""), note: it.note || "" }))
+    .filter(it => it.bits && it.bits.indexOf("1") >= 0);
+  if (!add.length) { say("🎭 Вставлять нечего: " + what + " — пусто или без единиц (маска из одних нулей не берёт ни одного бита)."); return; }
+  const w = Math.min(40, add.reduce((a, it) => Math.max(a, it.bits.length), 0));
+  const cur = (st.bgMaskScanList || "").replace(/\s+$/, "");
+  st.bgMaskScanList = (cur ? cur + "\n" : "") +
+    add.map(it => it.note ? (it.bits.padEnd(w, " ") + "  " + it.note) : it.bits).join("\n");
+  if (bgMaskScanListEl) bgMaskScanListEl.value = st.bgMaskScanList;
+  updateMaskScanRangeNA();
+  saveCache();
+  say(`🎭 В список масок добавлено ${add.length} — ${what}. Всего в списке: ${maskScanListMasks().length}. Перебор пойдёт по нему, диапазон длин не используется.`);
+}
+// Сами паттерны как маски: их «1» решают, какие биты результата брать.
+const bgMaskScanFromPatsEl = document.getElementById("bgMaskScanFromPats");
+if (bgMaskScanFromPatsEl) bgMaskScanFromPatsEl.onclick = () => {
+  /* ВСЕ ПАТТЕРНЫ, БЕЗ ГРАНИЦЫ ПО ВЫДЕЛЕНИЮ (v0.947, запрос пользователя "кнопки Паттерны — пусть
+     все вставляет, а не до выделенной туда"). У «⛓ Строк» и «➡ Сквозных» граница осталась: они
+     про то, что уже разобрано выше искомого паттерна. А паттерны — это список задач на всю
+     цепочку целиком, и обрезать его выделением смысла нет.
+     Номер строки в подписи (v0.937): паттерны у строк разные, и без номера потом не понять, чей
+     именно дал находку. */
+  const out = [];
+  for (let i = 0; i < st.pats.length; i++){ const p = st.pats[i]; if (p && p.text) out.push({ bits: p.text, note: "патт. №" + (i + 1) }); }
+  maskScanAddLines(out, `все паттерны цепочки (${out.length})`);
+};
+// Сами строки цепочки. stripDots — точки-пустоты в маске означали бы «пропустить», а это уже
+// решает «0»; берём голые биты, ровно как concatRowsDownTo.
+const bgMaskScanFromRowsEl = document.getElementById("bgMaskScanFromRows");
+if (bgMaskScanFromRowsEl) bgMaskScanFromRowsEl.onclick = () => {
+  const bound = maskScanBoundIdx();
+  const out = [];
+  for (let i = 0; i <= bound; i++){ const b = stripDots(getRowBits(st, i)); if (b) out.push({ bits: b, note: "строка №" + (i + 1) }); }
+  maskScanAddLines(out, `строки цепочки 1–${bound + 1}`);
+};
+/* Очистка списка (v0.933). Кнопки-заполнители только дописывают, и накопленное иначе пришлось бы
+   выделять мышью. Отдельного подтверждения нет: список набирается в два клика, а Undo на поля
+   ввода в приложении и так не распространяется. */
+const bgMaskScanListClearEl = document.getElementById("bgMaskScanListClear");
+if (bgMaskScanListClearEl) bgMaskScanListClearEl.onclick = () => {
+  if (!(st.bgMaskScanList || "").trim()) { say("🎭 Список масок и так пуст."); return; }
+  const was = maskScanListMasks().length;
+  st.bgMaskScanList = "";
+  if (bgMaskScanListEl) bgMaskScanListEl.value = "";
+  updateMaskScanRangeNA();
+  saveCache();
+  say(`🎭 Список масок очищен (было ${was}). Перебор снова пойдёт по диапазону длин.`);
+};
+// Две сквозные склейки: строк (той же функцией, что и режим "Сквозная →" фон-поиска, чтобы
+// маска совпадала с тем, что человек видит в "Результате") и паттернов.
+const bgMaskScanFromSeqEl = document.getElementById("bgMaskScanFromSeq");
+if (bgMaskScanFromSeqEl) bgMaskScanFromSeqEl.onclick = () => {
+  const bound = maskScanBoundIdx();
+  if (bound < 0) { maskScanAddLines([], "сквозные"); return; }
+  let pats = "";
+  for (let i = 0; i <= bound; i++){ const p = st.pats[i]; if (p && p.text) pats += p.text; }
+  maskScanAddLines([
+    { bits: concatRowsDownTo(st, bound), note: "сквозная строк 1–" + (bound + 1) },
+    { bits: pats, note: "сквозная патт. 1–" + (bound + 1) }
+  ], `сквозные до строки ${bound + 1} (строки + паттерны)`);
+};
 const bgMaskScanOutEl = document.getElementById("bgMaskScanOut");
 if (bgMaskScanOutEl) bgMaskScanOutEl.onclick = (e) => {
   const chip = e.target.closest(".mask-hit");
   if (!chip) return;
-  const el = document.getElementById("bgMaskText");
+  const el = elById("bgMaskText");
   st.bgMaskText = chip.dataset.mask;
   if (el) el.value = st.bgMaskText;
   bgMaskScanOutEl.querySelectorAll(".mask-hit").forEach(c => c.classList.toggle("cur", c === chip));
@@ -2518,9 +3083,12 @@ function findAllPatternsInResult(text){
     // везде, и подсветка от него превращается в сплошную заливку.
     if (base.length < ALL_PATS_MIN_LEN) continue;
     const variants = [[0, base]];
-    if (st.allKinds) {
+    {
+      // По отдельному тумблеру на версию (см. KINDS_MODES); kind 3 — наложение обеих.
       const inv = invertBits(base);
-      variants.push([1, inv], [2, reverseStr(base)], [3, reverseStr(inv)]);
+      if (kindsInvOn()) variants.push([1, inv]);
+      if (kindsRevOn()) variants.push([2, reverseStr(base)]);
+      if (kindsInvOn() && kindsRevOn()) variants.push([3, reverseStr(inv)]);
     }
     let best = null;
     for (const [kind, cand] of variants) {
@@ -3468,30 +4036,67 @@ if (appTitleEl) appTitleEl.onclick = () => location.reload();
    Без годной маски в поле (нужны И «1», И «0» — см. maskBitsRaw) кнопка неактивна: включать
    нечего. Подпись и состояние обновляет updateBgMaskOnBtn(), её зовёт render() — так кнопка
    оживает прямо по ходу набора маски в поле. */
+/* Кнопка ДВЕ: своя в "Поиске" (рядом с "🔍 Фон-поиск") и её дубль наверху вкладки "Маски" —
+   маску набирают там же, в поле под ней (v0.836, запрос пользователя). Состояние одно на обе,
+   поэтому и подпись, и обработчик общие. */
+const BG_MASK_ON_BTN_IDS = ["bBgMaskOn", "bBgMaskOn2"];
 function updateBgMaskOnBtn(){
-  const b = document.getElementById("bBgMaskOn");
-  if (!b) return;
   const has = !!maskBitsRaw();
   const on = has && st.bgMaskOn !== false;
-  b.disabled = !has;
   /* Значок ОДИН И ТОТ ЖЕ во всех состояниях (v0.832 — в v0.831 он менялся на 🚫/➖, пользователь
      попросил вернуть): "🎭" это имя контрола, а не индикатор. Включённость видно по рамке —
      .mode-act на самой кнопке и .state-badge.on на её значке в полосе. */
-  b.textContent = "🎭 По маске: " + (!has ? "нет маски" : (on ? "ВКЛ" : "ВЫКЛ"));
-  b.classList.toggle("mode-act", on);
-  b.title = has
+  const label = "🎭 По маске: " + (!has ? "нет маски" : (on ? "ВКЛ" : "ВЫКЛ"));
+  const title = has
     ? (on ? `Маска «${maskBitsRaw()}» применяется: поиск идёт по прорежённым ею результатам. Клик — выключить, поле при этом не чистится`
           : `Маска «${maskBitsRaw()}» в поле есть, но не применяется. Клик — включить`)
     : "Впиши маску в поле «🎭 Маска (прореж.)» во вкладке «Маски» — нужны и «1», и «0»";
+  for (const id of BG_MASK_ON_BTN_IDS) {
+    const b = elById(id);   // одна из двух кнопок может жить в окне вкладки «Маски»
+    if (!b) continue;
+    b.disabled = !has;
+    b.textContent = label;
+    b.classList.toggle("mode-act", on);
+    b.title = title;
+  }
 }
-const bBgMaskOnEl = document.getElementById("bBgMaskOn");
-if (bBgMaskOnEl) {
-  bBgMaskOnEl.onclick = () => {
-    if (!maskBitsRaw()) return;
-    st.bgMaskOn = st.bgMaskOn === false;
-    st.bgSearchLastHit = -1; // цель поиска сменилась — прежняя находка к ней не относится
-    render(); saveCache();
-  };
+/* "🎭 Фаза маски" (#bBgMaskPhase во вкладке "Маски", v0.847) — показывает ТЕКУЩУЮ и ОБЩЕЕ число
+   фаз (общее = длина маски: её можно приложить с любого своего символа) и по клику переключает
+   фазу по кругу. Значение общее с Черновиком (st.maskDraftPhase): клик по строке фазы в блоке
+   "🎭 Находки по маскам" и эта кнопка — один переключатель. Подсветка маски в строках рисуется
+   этой же фазой (см. mpBgPhase в render), поэтому результат виден сразу. Подпись обновляет
+   render() вместе с updateBgMaskOnBtn(). */
+function updateBgMaskPhaseBtn(){
+  const b = elById("bBgMaskPhase");
+  if (!b) return;
+  const m = maskBits();
+  const N = m.length;
+  b.disabled = !N;
+  if (!N) { b.textContent = "🎭 Фаза маски: —"; b.classList.remove("mode-act"); return; }
+  const ph = ((st.maskDraftPhase | 0) % N + N) % N;
+  // Как выглядит маска в этой фазе — то же, что показано в Черновике: маска, прокрученная на ph.
+  const view = m.slice(ph) + m.slice(0, ph);
+  b.textContent = "🎭 Фаза маски: " + (ph + 1) + "/" + N + " · " + view;
+  b.classList.toggle("mode-act", ph > 0);
+}
+function toggleBgMaskPhase(){
+  const N = maskBits().length;
+  if (!N) return;
+  st.maskDraftPhase = (((st.maskDraftPhase | 0) + 1) % N + N) % N;
+  render(); saveCache();
+}
+const bBgMaskPhaseEl = document.getElementById("bBgMaskPhase");
+if (bBgMaskPhaseEl) bBgMaskPhaseEl.onclick = toggleBgMaskPhase;
+
+function toggleBgMaskOn(){
+  if (!maskBitsRaw()) return;
+  st.bgMaskOn = st.bgMaskOn === false;
+  st.bgSearchLastHit = -1; // цель поиска сменилась — прежняя находка к ней не относится
+  render(); saveCache();
+}
+for (const id of BG_MASK_ON_BTN_IDS) {
+  const el = document.getElementById(id);
+  if (el) el.onclick = toggleBgMaskOn;
 }
 // Клик по "🔍 Фон-поиск" — общий выключатель, см. toggleBgSearch().
 const bgSearchTitleClickEl = document.getElementById("bgSearchTitle");
@@ -3558,7 +4163,7 @@ function deleteSelectedRows(){
     // осевые сдвиги и счётчик вписанных зеркал оставались на прежних номерах, то есть на чужих
     // строках (тот же класс бага, что чинит shiftRowMaps при построении/снятии верха — но там
     // сдвиг общий, а тут дыра в одном месте).
-    for (const m of [insertedFlagsMap, invFlagsMap, maskChangedMap, axisOffsetMap, axisBitShiftMap, axisBitDirMap, rowRotOffMap, mirrorsRowDone]) {
+    for (const m of [insertedFlagsMap, invFlagsMap, newBitsMap, maskChangedMap, axisOffsetMap, axisBitShiftMap, axisBitDirMap, rowRotOffMap, mirrorsRowDone]) {
       if (!m || !m.size) continue;
       const moved = [];
       for (const [k, v] of m) { if (k === idx) continue; moved.push([k > idx ? k - 1 : k, v]); }
@@ -3613,32 +4218,125 @@ function toggleRowDivider(){
 const bToggleRowDividerEl = document.getElementById("bToggleRowDivider");
 if (bToggleRowDividerEl) bToggleRowDividerEl.onclick = toggleRowDivider;
 
-/* Генератор фрактала Серпинского по кнопке (тот же generateSierpinski90, что и при пустом
-   кэше при первом запуске) — заменяет ТЕКУЩУЮ цепочку и паттерны на N строк из поля рядом. */
+/* ПОСТРОЕНИЯ ФИГУР (вкладка "Построения", бывш. "Зеркала"): "🔺 Серпинский" (тот же
+   generateSierpinski90, что и при пустом кэше на первом запуске) и "🔢 Номера"
+   (generateBinaryNumbers). Обе кнопки идут через один applyGeneratedRows() — разница только в
+   том, какой массив строк они ему передают.
+
+   ЧТО ДЕЛАЕТСЯ С ТЕКУЩЕЙ ЦЕПОЧКОЙ ПЕРЕД ПОСТРОЕНИЕМ (v0.885, запрос пользователя) — кнопка
+   "⟳ Текущие" (#bBuildPlace), перебор по кругу:
+     clear  — прежнее поведение: цепочка и паттерны заменяются построением целиком;
+     right  — строка построения ПРИПИСЫВАЕТСЯ справа к каждой строке цепочки;
+     left   — то же самое слева;
+     center — и справа, и слева сразу, то есть текущая цепочка остаётся в середине.
+   Во всех трёх режимах приписки паттерны НЕ трогаются (это правка бит, а не загрузка шаблона),
+   а всё дописанное помечается «новыми битами» — см. newBitsWrap/newBitsWhole. */
+const BUILD_PLACE_MODES = ["clear", "right", "left", "center"];
+const BUILD_PLACE_LABELS = { clear: "стереть", right: "вправо", left: "влево", center: "по центру" };
+function updateBuildPlaceBtn(){
+  const b = document.getElementById("bBuildPlace");
+  if (b) b.textContent = "⟳ Текущие: " + (BUILD_PLACE_LABELS[st.buildPlace] || BUILD_PLACE_LABELS.clear);
+}
+const bBuildPlaceEl = document.getElementById("bBuildPlace");
+if (bBuildPlaceEl) {
+  bBuildPlaceEl.onclick = () => {
+    const cur = BUILD_PLACE_MODES.indexOf(st.buildPlace || "clear");
+    st.buildPlace = BUILD_PLACE_MODES[(cur + 1) % BUILD_PLACE_MODES.length];
+    updateBuildPlaceBtn();
+    saveCache();
+    say("Построения: текущая цепочка — " + BUILD_PLACE_LABELS[st.buildPlace] + ".");
+  };
+}
+updateBuildPlaceBtn();
+
+function applyGeneratedRows(gen, title){
+  const mode = st.buildPlace || "clear";
+  snapshot();
+  if (mode === "clear") {
+    st.tplRows = gen.slice();
+    st.tplPats = gen.slice();
+    st.rows = gen.slice();
+    st.used = st.rows.map(() => false);
+    st.pats = st.tplPats.map((t, i) => ({ text: t, ord: i, found: false, kind: null, step: null }));
+    st.selectedRows = new Set();
+    // Прежних строк больше нет — значит нет и построений вверх над ними (раньше st.topBuilt
+    // оставался от стёртой цепочки, и первые строки новой фигуры считались «зеркалами»).
+    st.topBuilt = 0;
+    if (typeof topBaseCapture === "function") topBaseCapture();
+    // Цепочки, к которой относилась пометка, больше нет — снимаем её вместе со старыми битами.
+    newBitsClearAll();
+    insertedFlagsMap.clear(); invFlagsMap.clear();
+    maskChangedMap.clear(); maskBaseRows = null;
+    // Пустая нулевая строка — граница нумерации (см. ensureZeroRow). Без неё первая строка фигуры
+    // считалась бы нулевой, и приписка следующим построением легла бы не с той строки.
+    ensureZeroRow();
+    st.step = 0; st.passCount = 0; st.tailBuffer = "";
+    st.aIdx = 0; st.bIdx = 1; st.goingUp = false; st.hit = null;
+    const rowCountEl = document.getElementById("rowCount");
+    if (rowCountEl) {
+      rowCountEl.max = gen.length;
+      rowCountEl.value = gen.length;
+      const rcVal = document.getElementById("rowCountVal");
+      if (rcVal) rcVal.textContent = gen.length;
+    }
+    render(); saveCache();
+    say(`${title}: построено ${gen.length} строк, прежняя цепочка стёрта.`);
+    logStep(title, "", "", `${gen.length} строк, со стиранием`);
+    return;
+  }
+  // Первая НАСТОЯЩАЯ строка цепочки: индекс st.topBuilt — всегда пустая нулевая строка
+  // (см. ensureZeroRow), выше неё только построения вверх. Строку построения №1 приписываем
+  // к ней, №2 — к следующей и так далее.
+  const base = (st.topBuilt || 0) + 1;
+  let addedBits = 0, addedRows = 0, touched = 0;
+  for (let g = 0; g < gen.length; g++) {
+    const idx = base + g;
+    const add = gen[g] || "";
+    if (!add) continue;
+    if (idx >= st.rows.length) {
+      // Построение длиннее цепочки — недостающие строки заводим: они новые целиком.
+      st.rows.push(add);
+      st.used.push(false);
+      st.pats.push({ text: "", ord: st.pats.length, found: false, kind: null, step: null });
+      newBitsWhole(idx, add.length);
+      addedRows++; addedBits += add.length;
+      continue;
+    }
+    const cur = st.rows[idx] || "";
+    const left = (mode === "left" || mode === "center") ? add : "";
+    const right = (mode === "right" || mode === "center") ? add : "";
+    st.rows[idx] = left + cur + right;
+    // Длина строки изменилась — позиционные подсветки к ней больше не относятся, а вот пометка
+    // «новый» ПЕРЕЕЗЖАЕТ вместе со старыми битами (см. newBitsWrap).
+    newBitsWrap(idx, cur.length, left.length, right.length);
+    insertedFlagsMap.delete(idx);
+    invFlagsMap.delete(idx);
+    addedBits += left.length + right.length;
+    touched++;
+  }
+  maskChangedMap.clear(); maskBaseRows = null;
+  st.hit = null;
+  render(); saveCache();
+  say(`${title}: приписано ${BUILD_PLACE_LABELS[mode]} к ${touched} стр.` +
+      (addedRows ? `, заведено новых строк ${addedRows}` : "") +
+      `, всего новых бит ${addedBits}.`);
+  logStep(title, `${rowLabel(base)}…`, "", `${BUILD_PLACE_LABELS[mode]}, +${addedBits} бит`);
+}
+
 const bGenSierpinskiEl = document.getElementById("bGenSierpinski");
 const sierpinskiNEl = document.getElementById("sierpinskiN");
 if (bGenSierpinskiEl) {
   bGenSierpinskiEl.onclick = () => {
     const n = Math.max(2, Math.min(2048, +(sierpinskiNEl ? sierpinskiNEl.value : 128) || 128));
-    snapshot();
-    const s90 = generateSierpinski90(n);
-    st.tplRows = s90;
-    st.tplPats = s90.slice();
-    st.rows = s90.slice();
-    st.used = st.rows.map(() => false);
-    st.pats = st.tplPats.map((t, i) => ({ text: t, ord: i, found: false, kind: null, step: null }));
-    st.selectedRows = new Set();
-    st.step = 0; st.passCount = 0; st.tailBuffer = "";
-    st.aIdx = 0; st.bIdx = 1; st.goingUp = false; st.hit = null;
-    const rowCountEl = document.getElementById("rowCount");
-    if (rowCountEl) {
-      rowCountEl.max = n;
-      rowCountEl.value = n;
-      const rcVal = document.getElementById("rowCountVal");
-      if (rcVal) rcVal.textContent = n;
-    }
-    render(); saveCache();
-    say(`Сгенерирован фрактал Серпинского: ${n} строк.`);
+    applyGeneratedRows(generateSierpinski90(n), "Серпинский");
+  };
+}
+const bGenNumbersEl = document.getElementById("bGenNumbers");
+const numbersNEl = document.getElementById("numbersN");
+if (bGenNumbersEl) {
+  bGenNumbersEl.onclick = () => {
+    const n = Math.max(2, Math.min(4096, +(numbersNEl ? numbersNEl.value : 128) || 128));
+    applyGeneratedRows(generateBinaryNumbers(n), "Номера");
   };
 }
 
@@ -4101,10 +4799,7 @@ function shiftOneRowAxisAware(r, axisDelta, realRotateFn, invFlagsRotateFn){
   if (st.edgeOnes) {
     const len = st.rows[r] ? st.rows[r].length : 0;
     if (len < 2) return;
-    const rotOnce = () => {
-      invFlagsMap.set(r, invFlagsRotateFn(getInvFlags(r, st.rows[r].length)));
-      st.rows[r] = realRotateFn(st.rows[r]);
-    };
+    const rotOnce = () => rotateRowWithFlags(r, realRotateFn, invFlagsRotateFn);
     if (!st.noSplitOnes) {
       let found = false;
       for (let i = 0; i < len; i++) {
@@ -4136,8 +4831,7 @@ function shiftOneRowAxisAware(r, axisDelta, realRotateFn, invFlagsRotateFn){
     const len = st.rows[r] ? st.rows[r].length : 0;
     if (len < 2) return;
     for (let i = 0; i < len; i++) {
-      invFlagsMap.set(r, invFlagsRotateFn(getInvFlags(r, st.rows[r].length)));
-      st.rows[r] = realRotateFn(st.rows[r]);
+      rotateRowWithFlags(r, realRotateFn, invFlagsRotateFn);
       const s = st.rows[r];
       if (!(s[0] === "1" && s[s.length - 1] === "1")) break;
     }
@@ -4267,8 +4961,7 @@ function shiftOneRowAxisAware(r, axisDelta, realRotateFn, invFlagsRotateFn){
     // (см. axisRowOffSubgrid). Проверяем ДО axisSnapLocalIdxs: там такая строка отдала бы пустой
     // список, а пустой список означает "стоять на месте".
     if (axisRowOffSubgrid(r, st.align)) {
-      invFlagsMap.set(r, invFlagsRotateFn(getInvFlags(r, st.rows[r].length)));
-      st.rows[r] = realRotateFn(st.rows[r]);
+      rotateRowWithFlags(r, realRotateFn, invFlagsRotateFn);
       return;
     }
     const multi = axisSnapLocalIdxs(r, len, st.align);
@@ -4288,10 +4981,12 @@ function shiftOneRowAxisAware(r, axisDelta, realRotateFn, invFlagsRotateFn){
     // если подходящего положения не нашлось ни на одном повороте.
     const origRow = st.rows[r];
     const origFlags = getInvFlags(r, len).slice();
+    // Пометку «новых бит» откатываем вместе с ними (см. rotateRowWithFlags): иначе провалившийся
+    // перебор возвращал биты на место, а цвет оставался повёрнутым.
+    const origNew = newBitsMap.has(r) ? newBitsMap.get(r).slice() : null;
     let found = false;
     for (let i = 0; i < len; i++) {
-      invFlagsMap.set(r, invFlagsRotateFn(getInvFlags(r, st.rows[r].length)));
-      st.rows[r] = realRotateFn(st.rows[r]);
+      rotateRowWithFlags(r, realRotateFn, invFlagsRotateFn);
       // "⊙ Хватит любой из осей" (st.axisSnapAny) — принимаем положение, где «1» стоит хотя бы
       // на ОДНОЙ оси; без галки нужны единицы на ВСЕХ сразу.
       let ok = !(st.axisSnapAny && targets.length > 1);
@@ -4302,6 +4997,7 @@ function shiftOneRowAxisAware(r, axisDelta, realRotateFn, invFlagsRotateFn){
     if (!found) {
       st.rows[r] = origRow;
       invFlagsMap.set(r, origFlags);
+      if (origNew) newBitsMap.set(r, origNew); else newBitsMap.delete(r);
       say(`Круг: строка ${rowLabel(r)} — ни на одном повороте «1» не встаёт на ${targets.length > 1 ? (st.axisSnapAny ? "хотя бы одну из осей" : "ВСЕ оси сразу") : "ось"}, строка оставлена как была. ` +
           (targets.length > 1 && !st.axisSnapAny ? "Помогает галка «⊙ Хватит любой из осей»." : "Снимите «⊙ Ось: сдвиг только на «1»», чтобы крутить обычным шагом."));
     }
@@ -4332,12 +5028,10 @@ function shiftOneRowAxisAware(r, axisDelta, realRotateFn, invFlagsRotateFn){
       const pair = (applied === step) ? null : OPPOSITE_ROT.get(realRotateFn);
       const rotFn = pair ? pair[0] : realRotateFn;
       const flagFn = pair ? pair[1] : invFlagsRotateFn;
-      invFlagsMap.set(r, flagFn(getInvFlags(r, len)));
-      st.rows[r] = rotFn(st.rows[r]);
+      rotateRowWithFlags(r, rotFn, flagFn);
       return;
     }
-    invFlagsMap.set(r, invFlagsRotateFn(getInvFlags(r, st.rows[r].length)));
-    st.rows[r] = realRotateFn(st.rows[r]);
+    rotateRowWithFlags(r, realRotateFn, invFlagsRotateFn);
   }
 }
 const bShiftLEl = document.getElementById("bShiftL");

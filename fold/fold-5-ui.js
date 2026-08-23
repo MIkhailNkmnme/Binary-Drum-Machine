@@ -72,6 +72,47 @@ function applyLh(){
   updateRowHeight();
 }
 lh.oninput = () => { applyLh(); saveCacheSoon(); };
+/* ДВОЙНОЙ КЛИК ПО ЗНАЧКУ "↕" (v0.908, запрос пользователя "пусть двойной щелчок по значку делает
+   такую высоту междустрочных отступов, чтобы все строки поместились в экран — если это возможно").
+   Считаем, сколько вертикали реально доступно строкам: от верхней кромки #rows до низа
+   прокручиваемого холста (.canvas) — так учитываются и полоса выравниваний, и линейка столбцов, и
+   зарезервированное сверху место под overlay-бары (--result-box-h).
+   Высота строки — --row-h = round(--chain-fs * --chain-lh) (см. updateRowHeight), поэтому нужный
+   интервал = доступная высота / число строк / кегль. Округляем ВНИЗ по шагу ползунка (0.05):
+   лишние полпикселя на строку на тысяче строк дают полэкрана.
+   Ползунок ниже 0.2 не опускается — если и на минимуме не влезает, ставим минимум и честно
+   говорим, на сколько строк не хватило: дальше уменьшать надо уже кегль ("A"). */
+function fitLhToScreen(){
+  const rowsEl = document.getElementById("rows");
+  const n = st.rows ? st.rows.length : 0;
+  if (!rowsEl || !n) { say("Интервал по экрану: в цепочке нет строк."); return; }
+  const scroller = rowsEl.closest(".canvas");
+  if (!scroller) { say("Интервал по экрану: не нашёл холст — мерить не от чего."); return; }
+  const avail = scroller.clientHeight -
+    (rowsEl.getBoundingClientRect().top - scroller.getBoundingClientRect().top);
+  if (avail <= 0) { say("Интервал по экрану: под строки не осталось места на холсте."); return; }
+  const step = +lh.step || 0.05, lo = +lh.min || 0.2, hi = +lh.max || 2;
+  const want = (avail / n) / (+fs.value || 1);
+  const snapped = Math.max(lo, Math.min(hi, Math.floor(want / step) * step));
+  lh.value = snapped.toFixed(2);
+  applyLh();
+  render(); saveCache();
+  const rowPx = Math.round((+fs.value) * (+lh.value)) || 1;
+  const fit = Math.floor(avail / rowPx);
+  say(fit >= n
+    ? `Интервал ${lh.value}: все ${n} строк помещаются в экран.`
+    : `Интервал ${lh.value} — это минимум ползунка, влезает ${fit} строк из ${n}. Дальше уменьшайте кегль ползунком «A».`);
+}
+{
+  // Значок стоит перед ползунком внутри общей .chk-обёртки — вешаем на неё, но срабатываем
+  // только по самому значку: двойной клик по ползунку менять интервал не должен.
+  const lhWrap = lh.closest("label");
+  if (lhWrap) lhWrap.addEventListener("dblclick", (e) => {
+    if (!e.target.closest(".view-slider-icon")) return;
+    e.preventDefault();
+    fitLhToScreen();
+  });
+}
 
 function applyLs(){
   const v = +ls.value;
@@ -142,12 +183,15 @@ const col0 = document.getElementById("col0");
 const colBg = document.getElementById("colBg");
 // Цвет битов, изменённых последним шагом (.bit-chg) — раньше был хардкодом в CSS.
 const colChg = document.getElementById("colChg");
+// Цвет НОВЫХ бит (.bit-new, см. newBitsMap) — дописанных построениями и зеркалами.
+const colNew = document.getElementById("colNew");
 
 function applyColors() {
   document.documentElement.style.setProperty("--c1", col1.value);
   document.documentElement.style.setProperty("--c0", col0.value);
   document.documentElement.style.setProperty("--cbg", colBg.value);
   if (colChg) document.documentElement.style.setProperty("--cchg", colChg.value);
+  if (colNew) document.documentElement.style.setProperty("--cnew", colNew.value);
 }
 
 /* #RRGGBB -> rgba(...) с заданной прозрачностью — цвет <input type="color"> всегда непрозрачный,
@@ -288,6 +332,19 @@ if (bShowBalancesEl) {
   };
 }
 
+/* "🔢 Двоичные номера" (см. rowNumText() в fold-4) — тоже чисто визуальный тумблер: номера строк
+   во всех трёх колонках печатаются в двоичном виде. Ширину колонки номеров пересчитывает сам
+   render() через fitNumW(), который меряет уже двоичную подпись. */
+const bBinRowNumsEl = document.getElementById("bBinRowNums");
+if (bBinRowNumsEl) {
+  bBinRowNumsEl.onclick = () => {
+    st.binRowNums = !st.binRowNums;
+    bBinRowNumsEl.classList.toggle("mode-act", st.binRowNums);
+    render();
+    saveCache();
+  };
+}
+
 /* "🔴 Изм. биты" — общий выключатель красной подсветки изменённых бит (см. chgBitsOn): гасит и
    штатную "изменён последним шагом", и ту, что оставляет "🎭 Маска". Чисто визуальный тумблер,
    состояние живёт в настройках вида. */
@@ -359,6 +416,14 @@ function setPresetActive(val){
       b.classList.toggle("mode-act", b.getAttribute("data-val") === currentPreset);
     });
   }
+  // Свои слоты (#presetSlotGrp) — та же подсветка, значение вида "slot3". getElementById, а не
+  // константа: setPresetActive() зовут из loadCache(), а он выполняется раньше этих объявлений.
+  const slotGrp = document.getElementById("presetSlotGrp");
+  if (slotGrp) {
+    slotGrp.querySelectorAll("button[data-slot]").forEach(b => {
+      b.classList.toggle("mode-act", ("slot" + b.dataset.slot) === currentPreset);
+    });
+  }
 }
 /* "Своя" (custom: true/false) — не фиксированная тройка цветов, как остальные PRESETS, а
    последние вручную подобранные (см. col1/col0/colBg.oninput ниже): любая ручная правка цвета
@@ -386,8 +451,73 @@ if (presetGrpEl) {
   });
 }
 
+/* ЧЕТЫРЕ СВОИХ СЛОТА ЦВЕТОВ ("Своя 1..4", #presetSlotGrp, v0.841 — запрос пользователя
+   "запоминает и на других цепочках синхронится, чтобы из одной в другую можно").
+   ГЛОБАЛЬНЫЕ, в отличие от всех прочих настроек вида: st.colorSlots лежит рядом с вкладками
+   (см. saveCache/loadCache, ровно как st.patBank), а не в uiSettings каждой цепочки — иначе
+   перенести подобранный набор из одной цепочки в другую было бы нечем. "↺ Сброс настроек" их
+   не трогает по той же причине.
+   Клик — применить; клик по ПУСТОМУ слоту — сохранить в него текущие цвета; Ctrl+клик или
+   правая кнопка — перезаписать занятый слот. */
+function colorSlotGet(n){ return (Array.isArray(st.colorSlots) && st.colorSlots[n - 1]) || null; }
+function updateColorSlotBtns(){
+  const grp = document.getElementById("presetSlotGrp");
+  if (!grp) return;
+  grp.querySelectorAll("button[data-slot]").forEach(b => {
+    const n = +b.dataset.slot;
+    const c = colorSlotGet(n);
+    b.classList.toggle("slot-empty", !c);
+    // Рамка цветом "1" из слота — набор видно, не наводя мышь.
+    b.style.borderColor = c ? c.c1 : "";
+    b.title = c
+      ? `Слот «Своя ${n}»: «1» — ${c.c1}, «0» — ${c.c0}, фон — ${c.bg}. Клик — применить, Ctrl+клик или правая кнопка — перезаписать текущими цветами. Слот ОБЩИЙ для всех цепочек`
+      : `Слот «Своя ${n}» пуст. Клик — сохранить в него текущие цвета. Слот ОБЩИЙ для всех цепочек: сохранил тут — применяется в любой другой`;
+  });
+}
+function colorSlotSave(n){
+  if (!Array.isArray(st.colorSlots)) st.colorSlots = [];
+  st.colorSlots[n - 1] = { c1: col1.value, c0: col0.value, bg: colBg.value };
+  updateColorSlotBtns();
+  setPresetActive("slot" + n);
+  saveCache();
+  say(`🎨 Цвета сохранены в «Своя ${n}» — слот общий для всех цепочек`);
+}
+function colorSlotApply(n){
+  const c = colorSlotGet(n);
+  if (!c) { colorSlotSave(n); return; }   // пустой слот — первый клик кладёт в него текущие цвета
+  col1.value = c.c1; col0.value = c.c0; colBg.value = c.bg || c.cBg;
+  applyColors();
+  setPresetActive("slot" + n);
+  saveCache();
+}
+{
+  const slotGrp = document.getElementById("presetSlotGrp");
+  if (slotGrp) {
+    slotGrp.querySelectorAll("button[data-slot]").forEach(btn => {
+      const n = +btn.dataset.slot;
+      btn.onclick = (e) => { if (e.ctrlKey || e.metaKey) colorSlotSave(n); else colorSlotApply(n); };
+      btn.oncontextmenu = (e) => { e.preventDefault(); colorSlotSave(n); };
+    });
+    updateColorSlotBtns();
+  }
+}
+
 function markCustomColor(){
   applyColors();
+  /* Активен один из СВОИХ СЛОТОВ ("Своя 1..4") — правка цвета уходит ПРЯМО В НЕГО и остаётся там
+     (v0.846, запрос пользователя: "должны глобально меняться при изменении, сейчас просто одно и
+     то же всегда"). Раньше любая правка перекидывала на общую "Свою", а слот оставался с тем
+     снимком, что положили при сохранении, — и кнопка всегда возвращала одно и то же.
+     say() тут нет намеренно: обработчик висит на oninput и срабатывает на каждое движение в
+     палитре. Слот глобальный, поэтому изменение сразу видно во всех цепочках. */
+  const slotN = /^slot([1-4])$/.exec(currentPreset || "");
+  if (slotN) {
+    if (!Array.isArray(st.colorSlots)) st.colorSlots = [];
+    st.colorSlots[+slotN[1] - 1] = { c1: col1.value, c0: col0.value, bg: colBg.value };
+    updateColorSlotBtns();
+    saveCache();
+    return;
+  }
   st.customPreset = { c1: col1.value, c0: col0.value, bg: colBg.value };
   setPresetActive("custom");
   saveCache();
@@ -398,6 +528,19 @@ colBg.oninput = markCustomColor;
 /* Цвет изменённых бит в пресеты НЕ входит (у них только c1/c0/bg) — поэтому свой обработчик:
    применяем переменную и сохраняем, но пресет на "свой" не переключаем. */
 if (colChg) colChg.oninput = () => { applyColors(); st.colChg = colChg.value; saveCache(); };
+/* Цвет новых бит — там же и по той же причине (в пресеты не входит). */
+if (colNew) colNew.oninput = () => { applyColors(); st.colNew = colNew.value; saveCache(); };
+/* ЕДИНСТВЕННЫЙ способ снять пометку «новый» (запрос пользователя: "при сохранении пусть не меняют
+   своего цвета" — её не снимают ни сохранение, ни перезагрузка, ни Сброс). Сами биты не трогаем:
+   меняется только их цвет. */
+const bClearNewBitsEl = document.getElementById("bClearNewBits");
+if (bClearNewBitsEl) bClearNewBitsEl.onclick = () => {
+  if (!newBitsMap.size) { say("Новых бит и нет — снимать нечего."); return; }
+  const n = newBitsMap.size;
+  newBitsClearAll();
+  render(); saveCache();
+  say(`Пометка «новый» снята: строк ${n}. Биты остались на месте, просто стали обычного цвета.`);
+};
 
 /* Фон выделенных строк — цвет + прозрачность, без пресетов (см. #rowBgSel/#rowBgSelOpacity в HTML). */
 rowBgSel.oninput = () => { applyColorsSel(); saveCacheSoon(); };
@@ -497,8 +640,10 @@ function makeColResizer(el, varName, selectorOfCol, minPx, onManual){
     window.addEventListener("mouseup", up);
   });
 }
-makeColResizer(document.getElementById("vsplit"), "--pat-w", ".pat", 40);
+makeColResizer(document.getElementById("vsplit"), "--pat-w", ".pat", 40, () => { patWManual = true; });
 makeColResizer(document.getElementById("vsplit2"), "--bits-w", ".bits", 40, () => {
+  // Ширину повели рукой — подгонка по оси больше не «применена», её двойной клик снимать нечего.
+  axisFitOn = false;
   bitsWManual = true;
   document.body.classList.add("bits-w-manual");
 });
@@ -525,6 +670,14 @@ function fitPatColumnTo(varName){
   if (vL) vL.addEventListener("dblclick", e => { e.preventDefault(); fitPatColumnTo("--pat-w"); });
   const vR = document.getElementById("vsplit3");
   if (vR) vR.addEventListener("dblclick", e => { e.preventDefault(); fitPatColumnTo("--pat-w2"); });
+  /* ПУТЬ НАЗАД ДЛЯ СРЕДНЕГО СТОЛБЦА (v0.916). Его ширину задают руками (перетаскивание #vsplit2)
+     и двойной клик по оси (axisCenterAndFitBits) — оба ставят bitsWManual, и render() перестаёт
+     считать --bits-w по самой длинной строке. Флаг живёт в кэше, поэтому неудачная ширина
+     переживала и перезагрузку: вернуть её было нечем (баг-репорт "двойной щелчок по оси всё
+     сломал"). Двойной клик по этой же ручке снимает флаг — ближайший render() пересчитает
+     ширину сам. Общий визуальный сдвиг тоже обнуляем: он мог остаться от подгонки. */
+  const vM = document.getElementById("vsplit2");
+  if (vM) vM.addEventListener("dblclick", e => { e.preventDefault(); axisFitReset(); });
 }
 
 
@@ -568,18 +721,42 @@ function updateSplitPositions(){
   }
 }
 
+/* Ширину ЛЕВОЙ колонки паттернов тоже подбираем автоматически (v0.862, запрос пользователя
+   "убери отступы слева от паттернов левых"): раньше она держалась на фиксированных 12em из CSS, и
+   при коротких паттернах (или совсем без них) слева от цепочки оставалась широкая пустая полоса.
+   Флаг тот же по смыслу, что и patW2Manual: подвинул ручку #vsplit руками — автоподбор выключен,
+   иначе следующий render() отменил бы ручную ширину. */
+var patWManual = false;
 var patW2Manual = false; // var, а не let: и saveCache(), и render() могут дотянуться до флага
                          // раньше, чем выполнится эта строка (у let это была бы TDZ-ошибка)
 // Ширину среднего столбца (поля цепочек) тянули руками — render() больше не пересчитывает
 // --bits-w по длине самой длинной строки, ширина остаётся ровно той, что выставили.
 var bitsWManual = false;
+function fitPatW(){
+  if (patWManual) return;
+  let maxLen = 0;
+  for (const p of (st.pats || [])) if (p && p.text && p.text.length > maxLen) maxLen = p.text.length;
+  const step = realColStepPx() || 8;
+  // Паттернов нет вовсе — колонка сжимается до минимума, а не держит пустые 12em.
+  // +32 — собственные отступы .pat (слева 0, справа 28px под бейдж «#N») плюс небольшой запас;
+  // плюс ширина номера, если он включён внутри П1 (body.patnum-l).
+  const numW = st.patNumL
+    ? (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--num-w")) || 0) : 0;
+  const w = Math.max(40, Math.min(1200, Math.round(maxLen * step) + 32 + numW));
+  document.documentElement.style.setProperty("--pat-w", w + "px");
+}
 function fitPatW2(){
   if (patW2Manual) return;
   let maxLen = 0;
   for (const p of (st.pats || [])) if (p && p.text && p.text.length > maxLen) maxLen = p.text.length;
   if (!maxLen) return;
   const step = realColStepPx() || 8;
-  const w = Math.max(40, Math.min(1200, Math.round(maxLen * step) + 36));
+  // Номер строки внутри ячейки П2 (если включён кнопкой «№», см. body.patnum-r) съедает часть её
+  // ширины — box-sizing:border-box. Без прибавки его ширины автоширина резала бы длинные паттерны
+  // ровно на номер.
+  const numW = (st.patNumR === false) ? 0
+    : (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--num-w")) || 0);
+  const w = Math.max(40, Math.min(1200, Math.round(maxLen * step) + 36 + numW));
   document.documentElement.style.setProperty("--pat-w2", w + "px");
 }
 
@@ -591,7 +768,11 @@ function fitPatW2(){
    ровно это и было со 100-й строки, когда номер становился трёхзначным. Нижняя граница — ширина
    двузначного номера, чтобы на коротких списках вид остался прежним (2em ≈ "00"). */
 var numProbeEl = null; // var, а не let: render() может вызвать fitNumW() раньше этой строки (TDZ)
-function fitNumW(maxIdx){
+/* extraHtml (v0.889) — «болванка» самой широкой метки баланса: с этой версии баланс печатается
+   ВНУТРИ поля номера (см. render()/balanceSampleHtml()), значит и место под него держит та же
+   --num-w. Меряем номер ВМЕСТЕ с этой болванкой, в той же разметке (класс .row-balance со своим
+   font-size и padding) — иначе метка раздувала бы бокс номера и вся строка ехала бы вправо. */
+function fitNumW(numPadW, extraHtml){
   const host = document.getElementById("rows");
   if (!host) return;
   // render() перезаписывает innerHTML целиком — линейку каждый раз создаём заново.
@@ -600,18 +781,30 @@ function fitNumW(maxIdx){
     numProbeEl.className = "num num-probe";
     host.appendChild(numProbeEl);
   }
-  const measure = (txt) => { numProbeEl.textContent = txt; return numProbeEl.getBoundingClientRect().width; };
-  // Меряем и САМЫЙ ОТРИЦАТЕЛЬНЫЙ номер (достроенные сверху строки, см. rowLabel/st.topBuilt):
-  // минус плюс те же цифры шире положительного номера, и без этого замера колонка оставалась
-  // узкой — номер не влезал, раздувал свой бокс, и вся верхняя часть картинки уезжала вправо
-  // относительно нижней (запрос пользователя: "выравнивание у верха страдает").
-  const minLbl = -(st.topBuilt || 0);
-  const w = Math.ceil(Math.max(
-    measure("00"),
-    measure(String(Math.max(0, maxIdx | 0))),
-    minLbl < 0 ? measure(String(minLbl)) : 0
-  )) + 1;
-  if (w > 0) document.documentElement.style.setProperty("--num-w", w + "px");
+  const pad = "0".repeat(Math.max(1, numPadW | 0));
+  // ДВЕ РАЗНЫЕ ШИРИНЫ (v0.904, запрос пользователя "при включении/откл балансов ось не должна
+  // прыгать"). Раньше --num-w была одна на всех, а с v0.889 в неё входит ещё и метка баланса —
+  // и её ширину получали ЗАОДНО номера ВНУТРИ ячеек паттернов (.num-r2/.num-p1), которые никаких
+  // балансов не показывают. Хуже того, fitPatW()/fitPatW2() прибавляют --num-w к ширине САМИХ
+  // колонок паттернов: включение балансов раздувало обе колонки на ширину метки, поле цепочек
+  // уезжало вправо на двойную величину, а вместе с ним прыгала и ось.
+  //   --num-w  — чистый номер в кегле паттерна: для .num-r2/.num-p1 и для fitPatW/fitPatW2.
+  //              Балансы на неё не влияют вообще, поэтому колонки паттернов стоят на месте.
+  //   --numl-w — номер ПЛЮС болванка самой широкой метки баланса, в кегле поля цепочек (.85em):
+  //              только для .num-l2, где метка и печатается.
+  // Номер и там и там ВСЕГДА десятичный и уже добит пробелами до общей ширины numPadW (см.
+  // render()); отдельного замера самого отрицательного номера не нужно — минус у построений уже
+  // учтён в самом numPadW, он считается по обоим краям цепочки.
+  numProbeEl.className = "num num-probe";
+  numProbeEl.textContent = pad;
+  const wNum = Math.ceil(numProbeEl.getBoundingClientRect().width) + 1;
+  // Болванку меряем в той же разметке, в какой она печатается: класс .num-l2 (свой кегль .85em)
+  // плюс сама метка в .row-balance (свой font-size и padding).
+  numProbeEl.className = "num num-l2 num-probe";
+  numProbeEl.innerHTML = pad + (extraHtml || "");
+  const wL = Math.ceil(numProbeEl.getBoundingClientRect().width) + 1;
+  if (wNum > 0) document.documentElement.style.setProperty("--num-w", wNum + "px");
+  if (wL > 0) document.documentElement.style.setProperty("--numl-w", wL + "px");
 }
 
 /* Ручка переноса начала отсчёта столбцов — запрос пользователя "для каждого выравнивания нужна
@@ -816,6 +1009,20 @@ function axisScreenPx(){
   if (!bitEl) return null;
   return bitEl.getBoundingClientRect().left - chainEl.getBoundingClientRect().left;
 }
+/* РЕАЛЬНАЯ ширина одного символа бит — по уже отрисованному span'у: в нём склеен ПРОБЕГ одинаковых
+   бит (см. emit/flushRun в render), поэтому ширина/длина даёт ровно один знак. Нужна там, где
+   промах в доли пикселя виден глазом (полшага для линии оси в "½"-выравниваниях): realColStepPx()
+   меряет шрифт через canvas.measureText и с реальной раскладкой браузера совпадает не идеально —
+   ровно та же причина, по которой позиция самой линии берётся замером, а не формулой. */
+function realBitCharPx(){
+  const fd = firstRealRowIdx();
+  if (fd < 0) return 0;
+  const wrapEl = document.querySelector('#rows .ln[data-idx="' + fd + '"] .bits > span');
+  const bitEl = wrapEl ? wrapEl.querySelector(".b0, .b1") : null;
+  const len = bitEl ? (bitEl.textContent || "").length : 0;
+  if (!len) return 0;
+  return bitEl.getBoundingClientRect().width / len;
+}
 function axisDrawFixCols(){
   const chPx = realColStepPx();
   if (!(chPx > 0) || !axisMeasureFix || !axisMeasureFix.dx) return 0;
@@ -865,6 +1072,9 @@ function centerAxisOffset(){
 /* Поправка "замер минус формула" для линии оси — см. её использование ниже. var по той же причине,
    что и остальные кэши: функция вызывается из render(), а тот дёргается ещё до этой строки. */
 var axisMeasureFix = { key: null, dx: 0 };
+/* Выравнивания "на полсимвола" (кнопки с "½") — у них линия оси рисуется по ЦЕНТРУ знака, а не по
+   границе столбца, см. ниже в updateAxisSplitPosition(). */
+const HALF_ALIGNS = new Set(["halfcenter", "halfstairs", "rhalfstairs", "axis12", "axisbit12"]);
 function updateAxisSplitPosition(maxLen){
   const axisSplitEl = document.getElementById("axisSplit");
   if (!axisSplitEl) return;
@@ -879,7 +1089,7 @@ function updateAxisSplitPosition(maxLen){
   // Отдельной ветки для "⊙ Ось"/"Ось 1.2" больше нет: линия у всех выравниваний стоит на первом
   // бите первой строки (см. axisBaseCol), а он есть в DOM — значит и мерить его можно напрямую,
   // тем же путём, каким это уже делалось для остальных режимов.
-  let leftPx;
+  let leftPx, axisMeasured = null;   // axisMeasured — замер реального бита, нужен ещё и зажиму ниже
   {
     // Меряем НАПРЯМУЮ из уже отрисованного DOM первой существующей строки (её .bits > span —
     // тот самый span с extraCh-трансформом, см. render() — внутри первый настоящий бит-span
@@ -897,7 +1107,7 @@ function updateAxisSplitPosition(maxLen){
     // промахивалась на весь отступ. "[data-col]" тут тоже не годится — он есть только у строк
     // внутри colSelectRowRange() (см. colAttr там же), а класс b0/b1 — у любого реального бита.
     const fd = firstRealRowIdx();
-    const measured = axisScreenPx();
+    const measured = axisMeasured = axisScreenPx();
     // Формулу считаем ВСЕГДА: она и запасной путь, и база для поправки ниже. offset прибавляется
     // здесь ЯВНО: alignShift()/resolveAxisBitShift() его больше не содержат (он — общий визуальный
     // сдвиг картинки, см. комментарий в alignShift()).
@@ -920,19 +1130,52 @@ function updateAxisSplitPosition(maxLen){
   // пользователя). clampAxisOffset() держит сам сдвиг, но он умеет не сработать — полосы бит ещё
   // нет в DOM, шаг столбца не измерился, значение пришло из старого кэша, — а нарисовать линию
   // поверх паттернов нельзя ни в одном из этих случаев.
-  const bandLeft = bitsRect.left - chainRect.left;
-  const bandRight = bandLeft + bitsRect.width - (axisSplitEl.offsetWidth || 2);
+  /* ПОЛОВИННЫЕ ВЫРАВНИВАНИЯ — ЛИНИЯ ПО ЦЕНТРУ СИМВОЛА (v0.856, запрос пользователя: "сделай её по
+     центру символа в 1/2 выравниваниях, и слева справа остальные"). У обычных выравниваний ось
+     стоит на ГРАНИЦЕ столбца (слева от символа) — так она и должна стоять, столбцы там целые.
+     А "½"-режимы двигают строки на полсимвола, и граница столбца приходится ровно на середину
+     знака соседней строки — линия выглядела воткнутой в цифру сбоку. Сдвигаем её на полшага,
+     чтобы она шла ПО ЦЕНТРУ символа. Сдвиг чисто визуальный: ни st.axisCenterOffset, ни расчёт
+     столбца (axisBaseCol) он не трогает, поэтому перетаскивание и арифметика колонок прежние. */
+  if (HALF_ALIGNS.has(st.align)) {
+    // Полшага берём по РЕАЛЬНОЙ ширине знака (realBitCharPx), а не по chPx: chPx считан через
+    // canvas.measureText и расходится с раскладкой браузера на доли пикселя — на полушаге это
+    // видно глазом ("както не совсем по центру символа"). Плюс поправка на толщину самой линии:
+    // ::before рисуется ОТ левого края, а по центру знака должна прийтись её середина.
+    const charPx = realBitCharPx() || chPx;
+    const lineW = 1.5;
+    leftPx += charPx / 2 - lineW / 2;
+  }
+  /* ПОЛОСА ЗАЖИМА ОБЯЗАНА ВКЛЮЧАТЬ РЕАЛЬНО ИЗМЕРЕННЫЙ БИТ (v0.931, баг-репорт пользователя:
+     "уходит ручка-ось от самих строк", на других цепочках нормально). bitsRect — габариты
+     ЭЛЕМЕНТА .bits, а строки внутри него сдвинуты трансформом (extraCh, см. halfShiftAttr в
+     render): у "Лесенки правой"/осевых режимов с большим st.axisCenterOffset биты уезжают за
+     край собственной коробки. Коробка при этом не двигается — и зажим стаскивал линию на её
+     край, за сотни пикселей от бита, на который она только что честно села по замеру
+     (в цифрах пользователя: бит на 662, коробка с 930, линия оказалась на 927).
+     Сам зажим нужен и остаётся — он не даёт нарисовать ось поверх колонок паттернов, когда
+     позиция взята формулой (полосы бит ещё нет в DOM, шаг столбца не измерился, значение из
+     старого кэша). Но замеренный бит по определению стоит там, где он нарисован, поэтому
+     раздвигаем полосу до него: зажим продолжает ловить дикие значения и перестал спорить с
+     реальной геометрией. */
+  let bandLeft = bitsRect.left - chainRect.left;
+  let bandRight = bandLeft + bitsRect.width - (axisSplitEl.offsetWidth || 2);
+  if (axisMeasured != null) {
+    bandLeft = Math.min(bandLeft, axisMeasured);
+    bandRight = Math.max(bandRight, axisMeasured);
+  }
   if (bandRight > bandLeft) leftPx = Math.max(bandLeft, Math.min(bandRight, leftPx));
   axisSplitEl.style.left = leftPx + "px";
 
-  // Линия спускается НИЖЕ линейки столбцов на AXIS_SPLIT_EXTRA_PX (запрос пользователя: "выдвинь
-  // ещё вниз, неудобно хватать"). Изначально она кончалась ровно на нижнем крае #colHeader, чтобы
-  // не наезжать на биты строк, — но хватать такую полоску и правда тяжело. Наезд теперь есть, и он
-  // осознанный: в этой узкой зоне поверх верхних строк клик достанется ручке, а не биту. Во всю
-  // высоту полотна (как #vsplit/#vsplit2) не растягиваем — вот это перекрыло бы биты по-настоящему.
-  const AXIS_SPLIT_EXTRA_PX = 46;
+  /* ДЛИНА РУЧКИ — ровно на ОДНУ СТРОКУ ниже линейки столбцов (v0.856, запрос пользователя:
+     "ручку-ось укороти, пусть только на строку, на бит ложится"). Раньше тут стояли фиксированные
+     46px "чтобы удобнее было хватать" — при плотном межстрочном это накрывало три-четыре верхних
+     строки. Меряем ВЫСОТУ РЕАЛЬНОЙ СТРОКИ (она зависит от шрифта и ползунка межстрочного), а не
+     считаем формулой: ровно столько линия и заезжает на биты — на один ряд, ни больше. */
+  const rowEl = document.querySelector("#rows .ln");
+  const rowH = rowEl ? rowEl.getBoundingClientRect().height : 16;
   const headBottom = colHeaderEl ? (colHeaderEl.getBoundingClientRect().bottom - chainRect.top) : 24;
-  axisSplitEl.style.height = (Math.max(16, headBottom) + AXIS_SPLIT_EXTRA_PX) + "px";
+  axisSplitEl.style.height = (Math.max(16, headBottom) + Math.max(8, rowH)) + "px";
   axisSplitEl.classList.add("act");
   // Полоса выравниваний (#alignGrp) — не по центру экрана, а РОВНО НАД ОСЬЮ первой строки, и
   // едет вместе с ручкой оси/границами столбцов (запрос пользователя). Считаем в координатах
@@ -942,38 +1185,172 @@ function updateAxisSplitPosition(maxLen){
   const mainEl = alignGrpEl && alignGrpEl.offsetParent;
   if (alignGrpEl && mainEl) {
     const mainRect = mainEl.getBoundingClientRect();
-    const half = alignGrpEl.offsetWidth / 2;
-    const want = (chainRect.left + leftPx) - mainRect.left;
-    alignGrpEl.style.left = Math.round(Math.max(half + 2, Math.min(mainRect.width - half - 2, want))) + "px";
+    // На ось садится не центр полосы, а ЗАЗОР между её половинами (#alignAxisGap, v0.848): линия
+    // проходит между группами кнопок, где её и можно схватить. Половины разной ширины, поэтому
+    // "translateX(-50%)" тут больше не годится — считаем смещение зазора внутри полосы (offsetLeft
+    // отсчитывается от неё же: она position:absolute, то есть сама себе offsetParent для детей).
+    const gapEl = document.getElementById("alignAxisGap");
+    const anchorX = gapEl ? (gapEl.offsetLeft + gapEl.offsetWidth / 2) : alignGrpEl.offsetWidth / 2;
+    /* У КРАЁВ ЭКРАНА ПОЛОСУ БОЛЬШЕ НЕ ПРИДЕРЖИВАЕМ (v0.878, запрос пользователя). Раньше её
+       left зажимался в [2, ширина−2], и как только полоса подросла (в неё переехали П1/№/баланс/
+       П2), зажим начинал срабатывать почти всегда: зазор переставал стоять на оси, и полоса
+       "отклеивалась" от цепочки. Теперь зазор ВСЕГДА ровно на оси, а крайние кнопки при этом могут
+       уехать за край экрана — сознательный размен (см. вопрос пользователю). */
+    alignGrpEl.style.left = Math.round((chainRect.left + leftPx) - mainRect.left - anchorX) + "px";
+    // ВЫСОТА: полоса стоит не под верхним меню, а СРАЗУ НАД первой строкой цепочки (v0.839,
+    // запрос пользователя). Сам расчёт — в positionAlignGrpTop() (fold-3): его же зовёт
+    // layoutOverlayBoxes(), чтобы полоса ехала вместе со строками, пока тянут высоту
+    // "Результата", а не догоняла их следующей перерисовкой.
+    positionAlignGrpTop();
+    // Где внутри полосы проходит ось — для линии-продолжения (#alignGrp::after). Считаем ПОСЛЕ
+    // сдвигов: у краёв экрана полосу придерживают, и её центр перестаёт совпадать с осью.
+    const grpRect = alignGrpEl.getBoundingClientRect();
+    alignGrpEl.style.setProperty("--axis-x", ((chainRect.left + leftPx) - grpRect.left).toFixed(1) + "px");
   }
+}
+/* ДВОЙНОЙ КЛИК ПО ОСИ ЦЕПОЧЕК (v0.903, запрос пользователя: "пусть ставит ось в середину между
+   границами паттернов, а границы паттернов раздвигает так, чтобы самая длинная строка поместилась
+   между и не залезала даже на балансы").
+   Два требования решаются одной формулой. Пусть cols — ширина поля битов в столбцах, off — общий
+   визуальный сдвиг (st.axisCenterOffset), base — столбец оси при off = 0 (см. axisBaseCol()).
+     ось ровно посередине:   base + off = cols/2
+     ничего не вылезает:     minShift + off >= 1  и  maxEnd + off <= cols - 1
+   Подставив off из первого во второе, получаем
+     cols >= 2*(base - minShift + 1)   и   cols >= 2*(maxEnd - base + 1),
+   то есть cols = 2 * max(...). Берём именно так: ось встаёт точно в середину, а поле раздвигается
+   ровно настолько, чтобы самая длинная строка (и любая другая) уместилась целиком, с запасом в
+   один столбец от каждой границы — значит на колонку паттернов слева она не заезжает, а вместе с
+   ней и на поле номеров с балансами, которое стоит ещё левее.
+   Считаем по РЕАЛЬНОЙ геометрии выравнивания (rowShiftFor), а не по одной maxLen: у лесенок и
+   осевых режимов строки разъезжаются вбок, и "самая длинная" далеко не всегда самая правая. */
+/* Подгонка сейчас применена — второй двойной клик по оси её СНИМЕТ (v0.925, баг-репорт "ось
+   цепочек съехала"). Отдельный флаг, а не bitsWManual: тот бывает поднят и обычным
+   перетаскиванием ручки #vsplit2, и снимать чужую ручную ширину двойным кликом по оси было бы
+   свинством. Живёт только в памяти сессии: после перезагрузки первый двойной клик снова
+   подгоняет — это и логичнее, и безопаснее, чем «неизвестно, в каком мы состоянии». */
+var axisFitOn = false;
+function axisFitReset(quiet){
+  axisFitOn = false;
+  bitsWManual = false;          // ширину среднего столбца снова считает render() по строкам
+  st.axisCenterOffset = 0;      // общий визуальный сдвиг картинки
+  axisPinCol = null;            // и закреплённый за осью столбец (см. holdAxisOnMaxLenChange)
+  render(); saveCache();
+  if (!quiet) say("Подгонка снята: ширина поля цепочек снова автоматическая, сдвиг оси сброшен.");
+}
+function axisCenterAndFitBits(){
+  // Повторный двойной клик — откат. Так у операции есть путь назад тем же движением, которым её
+  // включили, и не надо помнить про ручку #vsplit2.
+  if (axisFitOn) { axisFitReset(); return; }
+  let maxLen = 0;
+  for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
+  if (!maxLen) { say("Ось: в цепочке нет ни одной строки с битами — раздвигать нечего."); return; }
+  let minShift = Infinity, maxEnd = -Infinity;
+  for (let i = 0; i < st.rows.length; i++) {
+    const s = st.rows[i] || "";
+    if (!s.length) continue;
+    const sh = rowShiftFor(maxLen, i, s, st.align);
+    if (sh < minShift) minShift = sh;
+    if (sh + s.length > maxEnd) maxEnd = sh + s.length;
+  }
+  if (!isFinite(minShift)) { say("Ось: в цепочке нет ни одной строки с битами — раздвигать нечего."); return; }
+  const base = axisBaseCol();
+  /* ДВА ВАРИАНТА ШИРИНЫ (v0.916 — исправление того, что натворила v0.903):
+       tight   — поле ПЛОТНО по картинке: сколько столбцов она реально занимает, плюс по одному
+                 запаса с каждой стороны;
+       axisFit — поле, симметричное вокруг оси (формула выше), то есть ось ровно посередине.
+     Ось посередине стоит дороже, и на НЕСИММЕТРИЧНЫХ вокруг неё выравниваниях — очень дорого: у
+     "по левому краю" ось сидит на первом бите первой строки, значит axisFit ≈ вдвое шире картинки,
+     и половина поля остаётся пустой, а цепочка уезжает в дальний край. Именно это и случилось у
+     пользователя ("двойной щелчок по оси всё сломал"): раньше axisFit брался ВСЕГДА.
+     Теперь ось выводим в середину, только пока переплата не больше половины; иначе подгоняем поле
+     плотно и просто прижимаем картинку к левому краю поля. */
+  const tight = (maxEnd - minShift) + 2;
+  const axisFit = 2 * Math.max(base - minShift + 1, maxEnd - base + 1);
+  const useAxis = axisFit <= tight * 1.5;
+  const cols = Math.max(2, useAxis ? axisFit : tight);
+  const step = realColStepPx() || 8;
+  // Потолок в пикселях — страховка от абсурдной ширины (битая геометрия выравнивания, гигантская
+  // цепочка): лучше поле с прокруткой, чем неработоспособное окно.
+  document.documentElement.style.setProperty("--bits-w", Math.min(400000, Math.round(cols * step)) + "px");
+  // Ширину среднего столбца выставили сами — render() больше не пересчитывает её по maxLen, иначе
+  // ближайший же кадр вернул бы прежнюю (тот же флаг, что ставит ручка #vsplit2). Вернуть
+  // автоширину — двойной клик по самой ручке #vsplit2.
+  bitsWManual = true;
+  st.axisCenterOffset = useAxis ? (Math.round(cols / 2) - base) : (1 - minShift);
+  // Закрепляем за осью новый столбец, иначе удержание вернёт её на прежнее место (см.
+  // holdAxisOnMaxLenChange) — ровно то же делает перетаскивание ручки.
+  axisPinCol = base + st.axisCenterOffset;
+  axisFitOn = true;
+  render(); saveCache();
+  say(`Поле цепочек — ${cols} столбцов, самая длинная строка (${maxLen} бит) помещается целиком` +
+      (useAxis ? ", ось ровно посередине." :
+       ". Ось посередине не ставил: картинка вокруг неё несимметрична, и поле пришлось бы раздуть вдвое. Вернуть автоширину — двойной клик по ручке между цепочкой и правыми паттернами."));
+}
+/* Начало перетаскивания оси. Вынесено функцией, потому что тянуть её можно ЗА ДВА МЕСТА: за саму
+   ручку #axisSplit под полосой кнопок и за продолжение линии ВНУТРИ полосы (v0.843, запрос
+   пользователя "линию между кнопок тоже цепляемой") — логика одна и та же. */
+function startAxisDrag(e){
+  const axisSplitEl = document.getElementById("axisSplit");
+  e.preventDefault();
+  const startX = e.clientX;
+  const startOffset = st.axisCenterOffset || 0;
+  const chPx = realColStepPx();
+  if (axisSplitEl) axisSplitEl.classList.add("drag");
+  document.body.classList.add("dragging");
+  const move = (ev) => {
+    const deltaCols = Math.round((ev.clientX - startX) / chPx);
+    st.axisCenterOffset = startOffset + deltaCols;
+    // Ручка — единственный способ ПЕРЕДВИНУТЬ ось; закрепляем за ней новый столбец, иначе
+    // ближайший же кадр вернул бы ось на прежнее место (см. holdAxisOnMaxLenChange).
+    axisPinCol = axisBaseCol() + st.axisCenterOffset;
+    render();
+  };
+  const up = () => {
+    if (axisSplitEl) axisSplitEl.classList.remove("drag");
+    document.body.classList.remove("dragging");
+    window.removeEventListener("mousemove", move);
+    window.removeEventListener("mouseup", up);
+    saveCache();
+  };
+  window.addEventListener("mousemove", move);
+  window.addEventListener("mouseup", up);
 }
 {
   const axisSplitEl = document.getElementById("axisSplit");
-  if (axisSplitEl) axisSplitEl.addEventListener("mousedown", (e) => {
-    e.preventDefault();
-    const startX = e.clientX;
-    const startOffset = st.axisCenterOffset || 0;
-    const chPx = realColStepPx();
-    axisSplitEl.classList.add("drag");
-    document.body.classList.add("dragging");
-    const move = (ev) => {
-      const deltaCols = Math.round((ev.clientX - startX) / chPx);
-      st.axisCenterOffset = startOffset + deltaCols;
-      // Ручка — единственный способ ПЕРЕДВИНУТЬ ось; закрепляем за ней новый столбец, иначе
-      // ближайший же кадр вернул бы ось на прежнее место (см. holdAxisOnMaxLenChange).
-      axisPinCol = axisBaseCol() + st.axisCenterOffset;
-      render();
+  if (axisSplitEl) axisSplitEl.addEventListener("mousedown", startAxisDrag);
+  // Двойной клик — ось по центру + подгонка ширины поля битов (см. axisCenterAndFitBits).
+  if (axisSplitEl) axisSplitEl.addEventListener("dblclick", (e) => { e.preventDefault(); axisCenterAndFitBits(); });
+  /* Полоса кнопок: линия внутри неё нарисована псевдоэлементом, а у псевдоэлемента своих событий
+     нет — они приходят на сам #alignGrp. Поэтому ловим mousedown на полосе и берём его себе,
+     только если курсор рядом с линией (±AXIS_GRAB_PX от --axis-x). Всё, что дальше, — обычные
+     клики по кнопкам выравнивания, их не трогаем.
+     capture:true — mousedown должен достаться оси РАНЬШЕ кнопки, на краю которой стоит линия.
+     Курсор col-resize над этой зоной ставится там же, на mousemove: рисовать его через CSS
+     нечем — зона задана не геометрией элемента, а расстоянием до линии. */
+  const alignGrpDragEl = document.getElementById("alignGrp");
+  if (alignGrpDragEl) {
+    const AXIS_GRAB_PX = 5;
+    const nearAxis = (e) => {
+      const x = parseFloat(getComputedStyle(alignGrpDragEl).getPropertyValue("--axis-x"));
+      if (!isFinite(x)) return false;
+      return Math.abs((e.clientX - alignGrpDragEl.getBoundingClientRect().left) - x) <= AXIS_GRAB_PX;
     };
-    const up = () => {
-      axisSplitEl.classList.remove("drag");
-      document.body.classList.remove("dragging");
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
-      saveCache();
-    };
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
-  });
+    alignGrpDragEl.addEventListener("mousedown", (e) => {
+      if (e.button !== 0 || !nearAxis(e)) return;
+      e.stopPropagation();
+      startAxisDrag(e);
+    }, true);
+    // Двойной клик по продолжению линии внутри полосы кнопок — то же, что и по самой ручке.
+    alignGrpDragEl.addEventListener("dblclick", (e) => {
+      if (!nearAxis(e)) return;
+      e.stopPropagation(); e.preventDefault();
+      axisCenterAndFitBits();
+    }, true);
+    alignGrpDragEl.addEventListener("mousemove", (e) => {
+      alignGrpDragEl.style.cursor = nearAxis(e) ? "col-resize" : "";
+    });
+    alignGrpDragEl.addEventListener("mouseleave", () => { alignGrpDragEl.style.cursor = ""; });
+  }
 }
 /* === МАРКЕР 11: CACHE === */
 const CACHE_KEY = "zerk_fold_v1";
@@ -1011,6 +1388,15 @@ function generateSierpinski90(n) {
   return rows;
 }
 
+/* Генератор ДВОИЧНЫХ НОМЕРОВ (v0.885, запрос пользователя "добавь построение номеров"): строка i —
+   само число i в двоичном виде, 1 / 10 / 11 / 100 / 101 … Длины растут ступеньками, как у
+   Серпинского, поэтому обе фигуры одинаково ложатся на любое выравнивание. */
+function generateBinaryNumbers(n) {
+  const rows = [];
+  for (let i = 1; i <= n; i++) rows.push(i.toString(2));
+  return rows;
+}
+
 /* Снимок всех настроек-кнопок/галочек/ползунков — используется и обычным кэшем в localStorage,
    и кнопкой "💾 Сохран" (сохранение цепочки), чтобы не дублировать список полей дважды. */
 function captureUiSettings(){
@@ -1022,7 +1408,7 @@ function captureUiSettings(){
     turboAuto: cTurboAutoEl ? cTurboAutoEl.checked : false,
     captureOnFind: cCaptureOnFindEl ? cCaptureOnFindEl.checked : true,
     skipLast: cSkipLastEl ? cSkipLastEl.checked : false,
-    vert: cVertEl.checked, pad: cPadEl.checked, padReal: cPadRealEl ? cPadRealEl.checked : false, tailZeros: cTailZerosEl ? cTailZerosEl.checked : false, kinds: cKindsEl.checked, skip1: cSkipEl.checked,
+    vert: cVertEl.checked, pad: cPadEl.checked, padReal: cPadRealEl ? cPadRealEl.checked : false, tailZeros: cTailZerosEl ? cTailZerosEl.checked : false, kindsMode: st.kindsMode || "", cellSampleOn: !!st.cellSampleOn, cellSampleSeq: !!st.cellSampleSeq, skip1: cSkipEl.checked,
     ringInvert: cRingInvertEl ? cRingInvertEl.checked : false,
     ringReverse: cRingReverseEl ? cRingReverseEl.checked : false,
     ringOff: cRingOffEl ? cRingOffEl.checked : false,
@@ -1051,14 +1437,21 @@ function captureUiSettings(){
     bgMaskText: st.bgMaskText || "",
     bgMaskOn: st.bgMaskOn !== false,
     bgMaskRingRestart: st.bgMaskRingRestart !== false,
-    // "⇄ Сдвиг по маске" — своя маска и режим её подсветки, отдельные от поисковой (см. fold-4).
-    maskShiftText: st.maskShiftText || "",
-    // Какая группа маски стоит на месте: "" обе едут, "1"/"0" — эта группа заморожена.
+    // Свой список масок для "🎭 Перебора масок" (см. maskScanListMasks в fold-3).
+    bgMaskScanList: st.bgMaskScanList || "",
+    // "⇄ Сдвиг по маске": своего поля маски и своей подсветки у него больше нет (v0.929) —
+    // маска общая (bgMaskText), подсветка одна (bgMaskPaintMode). Осталась только заморозка:
+    // какая группа маски стоит на месте ("" обе едут, "1"/"0" — эта группа заморожена).
     maskShiftFreeze: st.maskShiftFreeze || "",
-    maskPaintMode: st.maskPaintMode || "off",
-    // Подсветка прореживающей маски в строках + общие цвета обеих подсветок.
-    bgMaskPaintMode: st.bgMaskPaintMode || "off",
+    // Единственная подсветка маски в строках: "seq" (сквозно) или "row" (от строки). Своего
+    // "выкл" у неё нет — гаснет сама при пустом поле маски.
+    bgMaskPaintMode: st.bgMaskPaintMode === "row" ? "row" : "seq",
+    // Отдельный выключатель подсветки (v0.936), маску в поле не трогает.
+    bgMaskPaintOn: st.bgMaskPaintOn !== false,
     colChg: (typeof colChg !== "undefined" && colChg) ? colChg.value : (st.colChg || "#ff3b3b"),
+    colNew: (typeof colNew !== "undefined" && colNew) ? colNew.value : (st.colNew || "#00e5a0"),
+    // Что делать с текущей цепочкой перед построением (см. BUILD_PLACE_MODES/#bBuildPlace).
+    buildPlace: st.buildPlace || "clear",
     maskPaintColor1: st.maskPaintColor1 || "#b060ff",
     maskPaintColor0: st.maskPaintColor0 || "#22d3ee",
     bgSubPatterns: cBgSubPatternsEl ? cBgSubPatternsEl.checked : false,
@@ -1095,10 +1488,20 @@ function captureUiSettings(){
     searchOnlyHighlighted: !!st.searchOnlyHighlighted,
     showBalances: !!st.showBalances,
     runsAsBits: !!st.runsAsBits,
+    binRowNums: !!st.binRowNums,
+    // Какой стороной сейчас приклеены номера к паттернам ("", "right", "left") — см. numGlueToggle():
+    // по нему же они отрываются обратно, поэтому состояние обязано пережить перезагрузку.
+    numGlue: st.numGlue || "",
+    numGlueRows: st.numGlueRows || "",
+    binBalance: st.binBalance || "",
+    patNumL: !!st.patNumL, patNumR: st.patNumR !== false,
+    stairsGroupL: st.stairsGroupL || 1, stairsGroupR: st.stairsGroupR || 1,
+    stairsStepL: st.stairsStepL || 1, stairsStepR: st.stairsStepR || 1,
     chgBitsOn: chgBitsOn,
     fs: fs.value, lh: lh.value, ls: ls.value, dim: dimEl.value,
     chainFont: chainFontSelEl ? chainFontSelEl.value : undefined,
-    sideW: cssVar("--side-w"), layoutV: LAYOUT_V, patW: cssVar("--pat-w"), patW2: cssVar("--pat-w2"), patW2Manual: patW2Manual,
+    sideW: cssVar("--side-w"), layoutV: LAYOUT_V, patW: cssVar("--pat-w"), patW2: cssVar("--pat-w2"),
+    patWManual: patWManual, patW2Manual: patW2Manual,
     bitsW: cssVar("--bits-w"), bitsWManual: bitsWManual,
     patAlign: patAlign, pat2Align: pat2Align,
     hideSide: document.body.classList.contains("hide-side"),
@@ -1159,7 +1562,15 @@ function applyUiSettings(u){
   if (u.pad       !== undefined) cPadEl.checked       = u.pad;
   if (u.padReal !== undefined && cPadRealEl) cPadRealEl.checked = u.padReal;
   if (u.tailZeros !== undefined && cTailZerosEl) cTailZerosEl.checked = u.tailZeros;
-  if (u.kinds     !== undefined) cKindsEl.checked     = u.kinds;
+  // kindsMode — новый формат (v0.912). Старый кэш хранил булево u.kinds: true означало "все
+  // версии сразу", то есть нынешний "invrev".
+  if (u.kindsMode !== undefined) setKindsMode(u.kindsMode, true);
+  else if (u.kinds !== undefined) setKindsMode(u.kinds ? "invrev" : "", true);
+  if (u.cellSampleOn !== undefined) setCellSampleOn(u.cellSampleOn, true);
+  if (u.cellSampleSeq !== undefined) {
+    st.cellSampleSeq = u.cellSampleSeq;
+    if (typeof updateCellSampleSeqBtn === "function") updateCellSampleSeqBtn();
+  }
   if (u.skip1     !== undefined) cSkipEl.checked      = u.skip1;
   if (u.skipLast  !== undefined && cSkipLastEl) { cSkipLastEl.checked = u.skipLast; st.skipLast = u.skipLast; }
   if (u.ringInvert !== undefined && cRingInvertEl) cRingInvertEl.checked = u.ringInvert;
@@ -1180,7 +1591,9 @@ function applyUiSettings(u){
 
   if (u.align) {
     st.align = u.align;
-    const alignBtns = document.querySelectorAll("#alignGrp button");
+    // Только кнопки выравниваний (data-val) — в полосе теперь живут и чужие, см. v0.866/v0.867:
+    // без уточнения ".act" снимался бы и с них (у ◧П1/П2◨ он означает совсем другое).
+    const alignBtns = document.querySelectorAll("#alignGrp button[data-val]");
     alignBtns.forEach(b => {
       if (b.getAttribute("data-val") === u.align) b.classList.add("act");
       else b.classList.remove("act");
@@ -1192,27 +1605,32 @@ function applyUiSettings(u){
 
   if (u.mode) setMode(u.mode);
 
-  if (u.bgMaskText !== undefined) { st.bgMaskText = u.bgMaskText; if (bgMaskTextEl) bgMaskTextEl.value = u.bgMaskText; }
+  if (u.bgMaskText !== undefined) {
+    st.bgMaskText = u.bgMaskText;
+    if (bgMaskTextEl) bgMaskTextEl.value = u.bgMaskText;
+    // Маска теперь общая и ею же живёт подсветка — её кнопка гаснет/оживает вместе с полем.
+    if (typeof updateBgMaskPaintBtn === "function") updateBgMaskPaintBtn();
+  }
   if (u.bgMaskOn !== undefined) {
     st.bgMaskOn = u.bgMaskOn;
     if (typeof updateBgMaskOnBtn === "function") updateBgMaskOnBtn();
   }
   if (u.bgMaskRingRestart !== undefined) { st.bgMaskRingRestart = u.bgMaskRingRestart; if (cBgMaskRingRestartEl) cBgMaskRingRestartEl.checked = u.bgMaskRingRestart; }
+  if (u.bgMaskScanList !== undefined) {
+    st.bgMaskScanList = u.bgMaskScanList;
+    if (bgMaskScanListEl) bgMaskScanListEl.value = u.bgMaskScanList;
+    if (typeof updateMaskScanRangeNA === "function") updateMaskScanRangeNA();
+  }
   // "⇄ Сдвиг по маске" — поле и трёхпозиционная кнопка подсветки (см. fold-4). Элементы ищем по
   // id прямо тут: их обработчики живут в fold-4, который грузится ПОСЛЕ этого файла, и держать на
   // них ссылки-константы здесь было бы рано.
-  if (u.maskShiftText !== undefined) {
-    st.maskShiftText = u.maskShiftText;
-    const el = document.getElementById("maskShiftText");
-    if (el) el.value = u.maskShiftText;
-  }
   if (u.maskShiftFreeze !== undefined) {
     st.maskShiftFreeze = u.maskShiftFreeze;
     if (typeof updateMaskShiftFreezeBtn === "function") updateMaskShiftFreezeBtn();
   }
-  if (u.maskPaintMode !== undefined) {
-    st.maskPaintMode = u.maskPaintMode;
-    if (typeof updateMaskPaintBtn === "function") updateMaskPaintBtn();
+  if (u.bgMaskPaintOn !== undefined) {
+    st.bgMaskPaintOn = u.bgMaskPaintOn;
+    if (typeof updateBgMaskPaintBtn === "function") updateBgMaskPaintBtn();
   }
   if (u.bgMaskPaintMode !== undefined) {
     st.bgMaskPaintMode = u.bgMaskPaintMode;
@@ -1220,6 +1638,13 @@ function applyUiSettings(u){
   }
   if (u.colChg !== undefined && typeof colChg !== "undefined" && colChg) {
     colChg.value = u.colChg; st.colChg = u.colChg; applyColors();
+  }
+  if (u.colNew !== undefined && typeof colNew !== "undefined" && colNew) {
+    colNew.value = u.colNew; st.colNew = u.colNew; applyColors();
+  }
+  if (u.buildPlace !== undefined) {
+    st.buildPlace = u.buildPlace;
+    if (typeof updateBuildPlaceBtn === "function") updateBuildPlaceBtn();
   }
   for (const key of ["maskPaintColor1", "maskPaintColor0"]) {
     if (u[key] === undefined) continue;
@@ -1307,6 +1732,36 @@ function applyUiSettings(u){
     const b = document.getElementById("bRunsAsBits");
     if (b) b.classList.toggle("mode-act", st.runsAsBits);
   }
+  if (u.binRowNums !== undefined) {
+    st.binRowNums = !!u.binRowNums;
+    const b = document.getElementById("bBinRowNums");
+    if (b) b.classList.toggle("mode-act", st.binRowNums);
+  }
+  if (u.numGlue !== undefined) {
+    st.numGlue = u.numGlue || "";
+    updateNumGlueBtn();
+  }
+  if (u.numGlueRows !== undefined) {
+    st.numGlueRows = u.numGlueRows || "";
+    updateNumGlueRowsBtn();
+  }
+  if (u.binBalance !== undefined) {
+    st.binBalance = u.binBalance || "";
+    updateBinBalanceBtn();
+  }
+  if (u.patNumL !== undefined || u.patNumR !== undefined) {
+    if (u.patNumL !== undefined) st.patNumL = !!u.patNumL;
+    if (u.patNumR !== undefined) st.patNumR = !!u.patNumR;
+    applyPatNumClasses();
+  }
+  if (u.stairsGroupL !== undefined || u.stairsGroupR !== undefined ||
+      u.stairsStepL !== undefined || u.stairsStepR !== undefined) {
+    st.stairsGroupL = Math.max(1, Math.round(+u.stairsGroupL) || 1);
+    st.stairsGroupR = Math.max(1, Math.round(+u.stairsGroupR) || 1);
+    st.stairsStepL = Math.max(1, Math.round(+u.stairsStepL) || 1);
+    st.stairsStepR = Math.max(1, Math.round(+u.stairsStepR) || 1);
+    applyStairsGroupInputs();
+  }
   if (u.chgBitsOn !== undefined) {
     chgBitsOn = !!u.chgBitsOn;
     const b = document.getElementById("bToggleChgBits");
@@ -1352,6 +1807,7 @@ function applyUiSettings(u){
   if (u.patW2) document.documentElement.style.setProperty("--pat-w2", Math.max(40, parseFloat(u.patW2) || 40) + "px");
   // Ширину правой колонки пользователь двигал сам — автоподбор по длине паттерна (fitPatW2) не
   // вмешивается; иначе она подгоняется на каждом render().
+  if (u.patWManual !== undefined) patWManual = !!u.patWManual;
   if (u.patW2Manual !== undefined) patW2Manual = !!u.patW2Manual;
   if (u.patAlign || u.pat2Align) {
     if (u.patAlign) patAlign = u.patAlign;
@@ -1425,7 +1881,7 @@ function applyUiSettings(u){
    в самом HTML), а не на то, что было сохранено кнопкой "Сохр. настройки". */
 const DEFAULT_UI_SETTINGS = {
   pull: true, order: true, nextOnly: false, stageXor: false, invPass: false,
-  autoShift: false, stopOnHit: true, stopOnBalance: false, turboAuto: false, captureOnFind: true, vert: false, pad: false, kinds: false, skip1: true,
+  autoShift: false, stopOnHit: true, stopOnBalance: false, turboAuto: false, captureOnFind: true, vert: false, pad: false, kindsMode: "", cellSampleOn: false, cellSampleSeq: false, skip1: true,
   ringInvert: false, ringReverse: false, ringOff: false,
   chainCutBelow: false, chainCutTail: false, chainTileMode: "none",
   seqSelf: false, seqGlueMode: "right",
@@ -1437,6 +1893,8 @@ const DEFAULT_UI_SETTINGS = {
   axisSnapAny: false,
   growDownOnFind: false,
   parityView: 0,
+  colNew: "#00e5a0",
+  buildPlace: "clear",
   align: "center", mode: "step1", rowCount: "100",
   bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatRInv", "concatRRevInv", "concatL", "concatLInv", "concatLRevInv", "concatSnake", "concatSnakeInv", "concatSnakeRevInv", "concatSnakeFromR", "concatSnakeFromRInv", "concatSnakeFromRRevInv", "vertR", "vertL", "snakeR", "snakeL", "vertZigR", "vertZigL", "diagR", "diagL"],
   bgSearchOn: true,
@@ -1445,11 +1903,12 @@ const DEFAULT_UI_SETTINGS = {
   bgMaskText: "",
   bgMaskOn: true,
   bgMaskRingRestart: true,
-  // "⇄ Сдвиг по маске": маска пуста, обе подсветки групп выключены, цвета по умолчанию.
-  maskShiftText: "",
+  bgMaskScanList: "",
+  // "⇄ Сдвиг по маске": маска общая (bgMaskText), заморозка выключена. Подсветка маски одна и
+  // своего "выкл" не имеет — по умолчанию сквозной счёт, гаснет сама при пустом поле маски.
   maskShiftFreeze: "",
-  maskPaintMode: "off",
-  bgMaskPaintMode: "off",
+  bgMaskPaintMode: "seq",
+  bgMaskPaintOn: true,
   colChg: "#ff3b3b",
   maskPaintColor1: "#b060ff",
   maskPaintColor0: "#22d3ee",
@@ -1474,6 +1933,12 @@ const DEFAULT_UI_SETTINGS = {
   searchOnlyHighlighted: false,
   showBalances: false,
   runsAsBits: false,
+  binRowNums: false,
+  numGlue: "",
+  numGlueRows: "",
+  binBalance: "",
+  patNumL: false, patNumR: true,
+  stairsGroupL: 1, stairsGroupR: 1, stairsStepL: 1, stairsStepR: 1,
   fs: "19", lh: "0.65", ls: "0", dim: "100",
   chainFont: '"Roboto Mono", Consolas, monospace',
   sideW: "300px", patW: "12em", patW2: "12em",
@@ -1485,22 +1950,20 @@ const DEFAULT_UI_SETTINGS = {
   c01: "#ff9900", cv1: "#00ccff", cd1: "#66ff66", c11r: "#a78bfa", cdf: "#ff5ecb"
 };
 
-const bSaveUiSettingsEl = document.getElementById("bSaveUiSettings");
-if (bSaveUiSettingsEl) {
-  bSaveUiSettingsEl.onclick = () => {
-    st.savedUiSettings = captureUiSettings();
-    saveCache();
-    say("✓ Настройки вида/поиска сохранены!");
-  };
+/* Сохранение/сброс настроек вида. Кнопки переехали из вкладки "Вид" в подвал выпадающего списка
+   цепочек (v0.834, запрос пользователя), а тот перерисовывается целиком при каждом renderTabs() —
+   вешать onclick по id больше не на что. Поэтому тут просто функции, а зовёт их делегированный
+   обработчик списка (см. data-act="uisave"/"uireset" в fold-2-render.js). */
+function saveUiSettingsNow(){
+  st.savedUiSettings = captureUiSettings();
+  saveCache();
+  say("✓ Настройки вида/поиска сохранены!");
 }
-const bResetUiSettingsEl = document.getElementById("bResetUiSettings");
-if (bResetUiSettingsEl) {
-  bResetUiSettingsEl.onclick = () => {
-    applyUiSettings(DEFAULT_UI_SETTINGS);
-    render();
-    saveCache();
-    say("✓ Настройки вида/поиска сброшены к умолчаниям!");
-  };
+function resetUiSettingsNow(){
+  applyUiSettings(DEFAULT_UI_SETTINGS);
+  render();
+  saveCache();
+  say("✓ Настройки вида/поиска сброшены к умолчаниям!");
 }
 
 function saveCache(){
@@ -1513,7 +1976,10 @@ function saveCache(){
       ui: captureUiSettings(),
       savedUiSettings: st.savedUiSettings || null,
       // Кэш паттернов (см. st.patBank) — рядом с вкладками, а не внутри них: он один на все.
-      patBank: st.patBank || []
+      patBank: st.patBank || [],
+      // Свои слоты цветов "Своя 1..4" — там же и по той же причине: они общие для всех цепочек
+      // (см. colorSlotSave/colorSlotApply).
+      colorSlots: st.colorSlots || []
     }));
   }catch(e){}
 }
@@ -1561,6 +2027,9 @@ function loadCache(){
   if (u.hideSide === undefined) document.body.classList.add("hide-side");
   st.savedUiSettings = d.savedUiSettings || null;
   st.patBank = Array.isArray(d.patBank) ? d.patBank.filter(t => typeof t === "string") : [];
+  // Слоты цветов — общие для всех цепочек, поэтому читаются из корня кэша, а не из uiSettings.
+  st.colorSlots = Array.isArray(d.colorSlots) ? d.colorSlots.slice(0, 4).map(c => (c && c.c1) ? c : null) : [];
+  updateColorSlotBtns();
 
   // Загружаем вкладки Цепочек из кэша
   if (d.tabs && d.tabs.length > 0) {
@@ -1611,7 +2080,7 @@ const taPatsEl = document.getElementById("taPats");
 if (taRowsEl) taRowsEl.addEventListener("input", saveCacheSoon);
 if (taPatsEl) taPatsEl.addEventListener("input", saveCacheSoon);
 
-for (const el of [cSkipLastEl, cPullEl, cOrderEl, cNextOnlyEl, cStageXorEl, cInvPassEl, cAutoShiftEl, cStopOnHitEl, cStopOnBalanceEl, cTurboAutoEl, cCaptureOnFindEl, cVertEl, cPadEl, cKindsEl, cSkipEl, cHorizRotateOnFailEl, cHorizAlternateSideEl, cHorizReverseChainEl]) {
+for (const el of [cSkipLastEl, cPullEl, cOrderEl, cNextOnlyEl, cStageXorEl, cInvPassEl, cAutoShiftEl, cStopOnHitEl, cStopOnBalanceEl, cTurboAutoEl, cCaptureOnFindEl, cVertEl, cPadEl, cSkipEl, cHorizRotateOnFailEl, cHorizAlternateSideEl, cHorizReverseChainEl]) {
   if (el) el.addEventListener("change", () => { readToggles(); saveCache(); });
 }
 // cRingInvert влияет только на панель результата фон-поиска (не на данные строк) — ему нужен
@@ -1838,7 +2307,8 @@ else initTouchPad();
    сам текст лежит здесь и проставляется в element.title при загрузке.
    ПРАВИТЬ ПОДСКАЗКУ НАДО ТУТ, а не в разметке. */
 const TIPS = {
-  t1: "Повтор отменённого шага (Ctrl+Y / Ctrl+Shift+Z). Ходит по той же цепочке, что и «↩ Отмена», только вперёд; как только сделано любое новое действие — повторять становится нечего",
+  t144: "Один клик — одна проверка «без сдвигов», но не всей маской целиком, а её НАЧАЛОМ, которое с каждым кликом длиннее на бит. Маски берутся из МНОГОСТРОЧНОГО ПОЛЯ СПИСКА ниже (по одной в строке — можно писать руками или набить кнопками «🧩 Паттерны»/«⛓ Строки»/«➡ Сквозные»): сначала проходятся все начала первой маски списка, потом второй и так далее, кончился список — обход идёт по кругу. Список пуст — наращивается маска из однострочного поля «🎭 Маска (прореж.)». Первый шаг берёт самое короткое начало, где есть и «1», и «0» (короче маска ничего не прореживает), последний — маску целиком; дальше обход начинается сначала. Задумано под длинные маски из «➡ Сквозные»: целиком такая почти ничего не берёт, зато видно, на какой длине начала находка появляется или пропадает. Строки при этом не двигаются — считаются все включённые режимы фон-поиска и все фазы текущего начала, а полный разбор шага (какая сейчас маска, какие строки, какая фаза, что взято и где совпало) пишется в «🧾 Черновик шага» и в «Лог находок». Начало ставится прямо в поле «🎭 Маска (прореж.)», так что подсветка и «Результат» показывают ровно его. Поле правили руками — обход начнётся заново от того, что в нём сейчас; кнопка ↺ рядом сбрасывает обход принудительно",
+  t1:"Повтор отменённого шага (Ctrl+Y / Ctrl+Shift+Z). Ходит по той же цепочке, что и «↩ Отмена», только вперёд; как только сделано любое новое действие — повторять становится нечего",
   t2: "Открыть ВСЕ вкладки в отдельном окне: панели переезжают туда живыми (продолжают работать), в окне их можно свободно перемещать мышью за ручку ⋮⋮. Закрытие окна (или кнопка «Вернуть») возвращает панели на прежние места",
   t3: "Перед переплетением ДОБАВЛЯТЬ ОДИН БИТ «0» СЛЕВА к ВЕРХНЕЙ строке пары — но только если разность длин двух строк ЧЁТНАЯ (в том числе нулевая, когда строки одной длины). При чётной разности обе строки сидят в ОДНОЙ подсетке колонок: их биты стоят строго друг под другом, и переплетения не получается — выходит обычная склейка столбец в столбец. Лишний бит слева переводит верхнюю строку в соседнюю подсетку, и биты идут через один, как и должно быть. При нечётной разности ничего не добавляется. Действует на всё переплетение пары: и на кнопку «⧬ Интерлив», и на одноимённый режим фон-поиска. Сами строки не меняются — бит живёт только внутри расчёта",
   t4: "Тетрис (каждый клик — один отдельный шаг): крутит выделенную строку круговым сдвигом (направление/инверсия — та же, что активна у ◄/►Круг/Круг Инв) до подходящего поворота; когда влезает — отдельным кликом роняет 1-биты строки сверху в её 0-пустоты; следующим кликом переводит выделение на строку ниже. Строки никогда не удаляются и не сдвигаются",
@@ -1872,7 +2342,6 @@ const TIPS = {
   t29: "Чем заполняются достроенные сверху строки, перебор по кругу: «инверсия» — просто инверсия строки-источника (0↔1); «реверс+инв» — инверсия плюс разворот порядка бит; «реверс» — только разворот, биты как есть. Переключение сразу пересобирает верх (в режиме «переписывать»)",
   t30: "Показать СЛЕВА зеркало у строк ОТ ВЕРХА ДО ВЫДЕЛЕННОЙ включительно (без выделения зеркал нет): биты идут от первого бита строки влево, сам первый бит в зеркало не входит, значения инвертированы (0↔1) — если не сменить вид кнопкой «⇔ Зеркала». Печатается серым и только для вида — данные не меняются, в склейки и поиск эти биты не идут, на лестничное выравнивание не влияют. Если левого отступа не хватает, видна та часть зеркала, что влезла — сдвинь ось правее",
   t31: "Показать СПРАВА зеркало у строк ОТ ВЕРХА ДО ВЫДЕЛЕННОЙ включительно (без выделения зеркал нет): биты идут от последнего бита строки вправо, сам последний бит в зеркало не входит, значения инвертированы (0↔1) — если не сменить вид кнопкой «⇔ Зеркала». Печатается серым и только для вида — данные не меняются, в склейки и поиск эти биты не идут, на выравнивание не влияют. Если правого отступа не хватает, видна та часть зеркала, что влезла",
-  t32: "ВПИСАТЬ показанные серым зеркала прямо в строки: то, что сейчас видно слева и справа, становится настоящими битами строки. После этого зеркала участвуют во всём наравне с остальными битами — в поиске, склейках, XOR, подсветках. Идёт по тем же строкам, что и показ: сверху по выделенную включительно. Сам показ зеркал при этом выключается, иначе поверх новых строк тут же нарисовались бы зеркала зеркал. Отменяется обычным Undo",
   t33: "Дать зеркалам место: полотно расширяется на самое длинное зеркало слева и справа, и ровно на столько же растёт левый отступ КАЖДОЙ строки. Прибавка одинаковая для всех, поэтому выравнивание не меняется — картинка просто целиком встаёт правее, а линейка столбцов едет вместе с ней. Без этого зеркала видны лишь настолько, насколько влезли в собственные отступы строк. Данные не меняются",
   t34: "Вписывать зеркала в строки автоматически — В САМ МОМЕНТ, когда захват находки добавляет к выделению новую строку: зеркало ей строится сразу, до достройки вверх и прочего. Работает на всех путях захвата одинаково — в прогоне «Авто», на ручном ◄/►/Круге и в Паттерн-цепочке. Нажатия перебирают: выкл → влево → вправо → обе стороны. Сторона задаётся ЗДЕСЬ и от серого показа «◀/▶ Зеркало» не зависит — поэтому зеркало на зеркале не появляется",
   t35: "Сколько раз можно вписать зеркала В ОДНУ СТРОКУ — предел считается по каждой строке отдельно и общий для автоматики и для ручной кнопки «⇔ Вписать зеркала в строки». Каждое вписывание удлиняет строку почти втрое, поэтому по умолчанию 1: зеркало на зеркале не строится, но КАЖДАЯ новая захваченная строка своё зеркало получает. Счёт обнуляется «↺ Сбросом», сменой этого числа и переключением кнопки авто-зеркал",
@@ -1978,9 +2447,9 @@ const TIPS = {
   t135: "Чем заполняется ЛЕВОЕ зеркало. Нажатие переключает по кругу: «реверс+инв» — как было, строка отражается и биты инвертируются; «реверс» — отражается, биты как есть; «инверсия» — порядок бит как в строке, значения 0↔1; «копия» — строка как есть. Вид действует и на серый показ, и на поиск по зеркалам, и на «⇔ Вписать зеркала в строки». У правого зеркала вид свой, отдельный",
   t136: "Чем заполняется ПРАВОЕ зеркало — те же четыре вида по кругу, что и у левого, но настраивается независимо от него",
   t137: "Убрать САМ осевой (опорный) бит ЛЕВОГО зеркала — первый бит строки. «Оставить» (как было всегда): бит в зеркало не входит, но в строке остаётся единственным центром симметрии — «1011» показывается как [зеркало от «011»] + «1011». «Убрать»: бита нет вовсе, зеркало смыкается с остатком — [зеркало от «011»] + «011». Действует и на серый показ, и на поиск по зеркалам, и на «⇔ Вписать зеркала в строки» — там бит удаляется уже из данных",
-  t142: "Прогоняет по всем включённым режимам ВСЕ осмысленно различные маски до заданного периода и показывает те, что дают находку — паттерн строки под выделенной. Пропускаются только бессмысленные: сплошная, пустая и та, что сама есть повтор более короткой («1010» = «10»). Повороты маски НЕ пропускаются — это и есть её фазы, и находят они разное. Масок получается 2, 6, 12, 30, 54, 126, 240, 504, 990, 2046, 4020 для периодов 2…12; до периода 8 — 470 штук, до 10 — 1964, до 12 — 8030, и на 12+ интерфейс на секунды подвиснет (перебор синхронный). Галка «сквозной» кладёт маску на удвоенную строку, то есть через границу витка кольца — это второе, отдельное множество вариантов, его стоит прогнать отдельно. Клик по найденной маске ставит её в поле",
+  t143: "Прогоняет по всем включённым режимам ВСЕ осмысленно различные маски до заданного периода и показывает те, что дают находку — паттерн строки под выделенной. Пропускаются только бессмысленные: сплошная, пустая и та, что сама есть повтор более короткой («1010» = «10»). Повороты маски НЕ пропускаются — это и есть её фазы, и находят они разное. Масок получается 2, 6, 12, 30, 54, 126, 240, 504, 990, 2046, 4020 для периодов 2…12; до периода 8 — 470 штук, до 10 — 1964, до 12 — 8030, и на 12+ интерфейс на секунды подвиснет (перебор синхронный). ФАЗЫ: по диапазону они уже покрыты самим списком (все повороты каждой маски в нём есть отдельными записями), а для своего списка масок фазы крутятся отдельно — но только пока перебор укладывается в бюджет работы (сумма длин масок × длина строки); на слишком длинных масках проверяется одна фаза, и об этом пишется в шапке результатов. Витки кольца перебор считает ТОЙ ЖЕ галкой «🎭 Маска заново каждый виток», что и обычный поиск: своего переключателя у него больше нет (раньше был «сквозной» с обратной логикой, и найденная им маска при клике не находилась). Снимите галку — маска ляжет на удвоенную строку, то есть пойдёт через границу витка: это второе, отдельное множество вариантов, его стоит прогнать отдельно. Если поле списка масок ниже непусто, диапазон длин не используется — перебор идёт ровно по списку. Клик по найденной маске ставит её в поле",
   t142: "Простой шаг БЕЗ сдвигов: ни одна строка не двигается, не крутится и не переписывается — просто проверяется, не совпал ли паттерн ПРЯМО СЕЙЧАС, в текущем положении строк (вдруг он там уже есть). Считаются все включённые режимы фон-поиска, а если задана «🎭 Маска» — то и все её фазы. Результат раскладывается в «🧾 Черновик шага» (какие режимы проверены, что совпало, а по маскам — отдельный разбор по фазам: сколько бит взято, где именно нашлось) и записывается в «Лог находок» — в том числе повторно, если та же строка уже находилась раньше",
-  t141: "Как «🎭 Маска» ведёт себя на витках кольца (строка результата показывается и ищется повторённой). ВКЛЮЧЕНО (по умолчанию): в каждом витке маска начинается заново со своей фазы — маска ложится на саму строку, и уже результат повторяется кольцом. СНЯТО: маска идёт сквозь витки подряд, на границе витка счёт не сбрасывается — тогда во втором витке гаснут другие биты, чем в первом (если длина результата не делится на длину маски). Показ и поиск всегда согласованы: что погашено, то и не участвует",
+  t141: "Как «🎭 Маска» ведёт себя на витках кольца (строка результата показывается и ищется повторённой). ВКЛЮЧЕНО (по умолчанию): в каждом витке маска начинается заново со своей фазы — маска ложится на саму строку, и уже результат повторяется кольцом. СНЯТО: маска идёт сквозь витки подряд, на границе витка счёт не сбрасывается — тогда во втором витке гаснут другие биты, чем в первом (если длина результата не делится на длину маски). Показ и поиск всегда согласованы: что погашено, то и не участвует. Этой же галкой считает и «🎭 Перебор масок» — своего переключателя витков у него нет, чтобы найденная им маска потом искалась ровно так же, как нашлась",
   t140: "🎭 Маска ПРОРЕЖИВАЕТ строку результата, а не ищется в ней. Маска прикладывается к результату по кругу: «1» — бит идёт в поиск, «0» — пропускается; фон-поиск ищет паттерн строки ниже в том, что осталось. Маска «10» — каждый второй бит. В самой строке результата ничего НЕ вырезается: пропущенные биты просто затемняются, видно и всю строку, и что из неё взято. СО СДВИГОМ: маска прикладывается с каждого своего символа, поэтому маска длины N даёт N строк результата (фазы «#м1», «#м2»…) — строка одна и та же, гаснут в ней разные биты, и совпадение считается в каждой отдельно. Работает у всех включённых режимов разом — Xor, Сквозные, поколоночные и прочие. Всё, кроме 0 и 1, из маски выбрасывается, писать можно с пробелами. Пустое поле (или маска из одних нулей) — режимы отдают свои результаты как всегда",
   t139: "Один клик = ВСЕ биты зеркала выделенной строки уходят НАВЕРХ ЛЕСЕНКОЙ: первый бит — в строку прямо над выделенной, второй — ещё строкой выше, и так далее; каждый дописывается в конец своей строки, в первое свободное место. Пример: строки «1» и «11», зеркало «11» — это «0», он уходит в пустое место над ней → «10»/«11»; у строки «111» зеркало «00» уедет сразу в две строки выше → «100»/«110»/«111». Выделение переходит на строку ниже ТОЛЬКО если фон-поиск нашёл её паттерн — иначе остаётся на месте и клик можно повторить. Стороны — те, что включены (обе — по очереди: правый бит, левый, правый…), порядок внутри стороны — от строки наружу",
   t138: "То же самое для ПРАВОГО зеркала: его осевой бит — ПОСЛЕДНИЙ бит строки. Флаг свой, независимый от левого; включены обе стороны с обрезкой — строка теряет и первый, и последний бит",
