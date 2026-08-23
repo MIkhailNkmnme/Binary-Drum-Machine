@@ -257,6 +257,7 @@ if (bColSelClearFloatEl) bColSelClearFloatEl.onclick = clearAxisGroupOnce;
   const rowsElPick = document.getElementById("rows");
   if (rowsElPick) {
     rowsElPick.addEventListener("mousedown", (e) => {
+      if (!selectionAllowed()) return; // "🔒 Выделение" выключено
       if (!colPickMode || cellSelMode || e.button !== 0) return;
       const el = e.target.closest && e.target.closest("[data-col]");
       if (!el) return;
@@ -346,6 +347,7 @@ if (bColSelClearFloatEl) bColSelClearFloatEl.onclick = clearAxisGroupOnce;
       }
     };
     rowsEl.addEventListener("mousedown", (e) => {
+      if (!selectionAllowed()) return; // "🔒 Выделение" выключено — биты не выбираются
       if (!cellSelMode || e.button !== 0) return;
       /* Паттерны проверяем ПЕРВЫМИ: их спаны лежат в той же .ln, что и биты строки, и общий
          сброс "клик мимо бита" (см. ниже) иначе стёр бы набор ещё до того, как мы поймём, что
@@ -1215,7 +1217,14 @@ function ensureZeroRow(keepPats){
   // цепочка, паттерны к этому отношения не имеют, у них своя нулевая (см. patInsertCellHere).
   // Без флага (загрузка данных, Сброс, удаление строк) пустая ячейка по-прежнему вставляется НА
   // ТО ЖЕ место — там паттерн N обязан остаться напротив строки N шаблона.
-  if (keepPats) st.pats.push({ text: "", ord: st.pats.length, found: false, kind: null, step: null });
+  // keepPats === "none" (v0.958, запрос пользователя: "при удалении из строк цепочек не надо
+  // ничего удалять и менять в паттернах") — колонку паттернов не трогаем ВООБЩЕ, даже пустой
+  // ячейкой в хвосте. Так зовёт удаление строк (deleteSelectedRows): там паттерны живут своим
+  // выделением, и возврат нулевой строки к ним отношения не имеет. Длины массивов при этом
+  // расходятся — это штатно, render() считает число строк как Math.max(rows.length, pats.length);
+  // а вот лишняя ячейка в конце дорисовала бы внизу пустую строку, то есть тоже "меняла" колонку.
+  if (keepPats === "none") { /* паттерны не трогаем */ }
+  else if (keepPats) st.pats.push({ text: "", ord: st.pats.length, found: false, kind: null, step: null });
   else st.pats.splice(at, 0, { text: "", ord: at, found: false, kind: null, step: null });
   if (st.selectedRows && st.selectedRows.size) {
     st.selectedRows = new Set(Array.from(st.selectedRows).map(r => r >= at ? r + 1 : r));
@@ -2083,6 +2092,55 @@ if (bInvertSelectedEl) {
     snapshot();
     for (const r of st.selectedRows) if (st.rows[r]) st.rows[r] = invertBits(st.rows[r]);
     render(); saveCache();
+  };
+}
+
+/* "⇄ Реверс" (v0.968, запрос пользователя) — пара к "🔁 Инверсии", только разворачивает строки
+   задом наперёд, а не меняет значения бит. Кнопка САМА СЕБЕ ОБРАТНАЯ: разворот — операция,
+   применённая дважды дающая исходное, поэтому "по кругу вкл/выкл" получается само собой. Флажок
+   st.revToggled только ЗАЖИГАЕТ кнопку, пока цепочка стоит развёрнутой, — на сами данные он не
+   влияет и ничего не хранит, кроме чётности нажатий.
+   Ничего не выделено — работает по ВСЕМ строкам (у "Инверсии" тут ругань, но у разворота нет
+   причины требовать выделение: это цельная операция над картинкой, а не точечная правка). */
+const bReverseSelectedEl = document.getElementById("bReverseSelected");
+if (bReverseSelectedEl) {
+  bReverseSelectedEl.onclick = () => {
+    const idxs = (st.selectedRows && st.selectedRows.size)
+      ? Array.from(st.selectedRows).sort((a, b) => a - b)
+      : st.rows.map((_, i) => i);
+    const live = idxs.filter(r => st.rows[r] && st.rows[r].length);
+    if (!live.length) { say("⇄ Реверс: разворачивать нечего — нет непустых строк."); return; }
+    snapshot();
+    for (const r of live) {
+      st.rows[r] = reverseStr(st.rows[r]);
+      // Строка перевёрнута целиком — позиционные пометки к ней больше не относятся (то же
+      // правило, что и везде, где строка переписывается не по месту).
+      invFlagsMap.delete(r);
+      insertedFlagsMap.delete(r);
+      newBitsMap.delete(r);
+    }
+    st.revToggled = !st.revToggled;
+    bReverseSelectedEl.classList.toggle("mode-act", st.revToggled);
+    render(); saveCache();
+    say(`⇄ Реверс: развёрнуто строк — ${live.length}` +
+        (st.revToggled ? ". Повторный клик вернёт как было." : ". Строки вернулись в исходный вид."));
+    logStep("Реверс", live.map(r => rowLabel(r)).join(","), "", "");
+  };
+}
+
+/* "⇄🔎 Реверс: неподвижные" — ПОКАЗ, данные не трогает. Подсвечивает биты, которые от разворота
+   строки не изменятся: те, что стоят на палиндромных позициях (бит №k равен биту №«длина−1−k»).
+   Сам признак считается прямо в render() по строке — заранее готовить нечего, тут только
+   переключатель (см. isRevKeep/.hlrk). */
+const bReverseKeepEl = document.getElementById("bReverseKeep");
+if (bReverseKeepEl) {
+  bReverseKeepEl.onclick = () => {
+    st.revKeepShow = !st.revKeepShow;
+    bReverseKeepEl.classList.toggle("mode-act", st.revKeepShow);
+    render(); saveCache();
+    say(st.revKeepShow
+      ? "⇄🔎 Реверс: подсвечены биты, которые разворот строки НЕ изменит (палиндромные позиции)."
+      : "⇄🔎 Реверс: подсветка неподвижных бит снята.");
   };
 }
 
@@ -3328,8 +3386,9 @@ function textsToChainRows(texts, srcLabel) {
   logStep(srcLabel + " в цепочку", "", "", `${filled} стр.`);
 }
 /* "🗑 Удалить ячейки паттернов" (v0.829, запрос пользователя: "нужно чтоб вручную можно было
-   удалять строки, даже пустые, в паттернах отдельно от цепочек"). Обычный Delete сносит строку
-   ВМЕСТЕ с её паттерном — это по-прежнему так; здесь же удаляются ТОЛЬКО выделенные ячейки
+   удалять строки, даже пустые, в паттернах отдельно от цепочек"). Обычный Delete работает по
+   выделению каждой колонки отдельно и колонку паттернов сам по себе не трогает вообще (см.
+   deleteSelectedRows в fold-3-ops.js); здесь же удаляются ТОЛЬКО выделенные ячейки
    колонки паттернов, всё, что ниже, подтягивается вверх, а строки цепочки не трогаются вообще.
    Пустые ячейки удаляются наравне с заполненными: ими как раз и выравнивают колонку.
    Выделять ячейки — клик по колонке паттернов (st.selectedPats), тот же набор, что использует
@@ -3445,12 +3504,63 @@ if (bXorSelectedEl) {
   };
 }
 
+/* "⨁ XOR чёт" (v0.960, запрос пользователя: "здесь xor раздели на две кнопки — та, что сейчас, и
+   XOR по своим чётностям, строкам всем сверху, так же"). Отдельная кнопка рядом с "⨁ XOR выдел",
+   вся разница — В НАБОРЕ СКЛАДЫВАЕМЫХ СТРОК:
+     "⨁ XOR выдел" — подряд все строки сверху до выделенной (или ровно выделенные);
+     "⨁ XOR чёт"   — сверху до выделенной, но ТОЛЬКО те, чья ДЛИНА той же чётности, что у неё:
+                     у выделенной 8 бит → идут все строки чётной длины (2, 4, 6, 8, 10…);
+                     у выделенной 7 бит → все нечётной (1, 3, 5, 7, 9…).
+   ЧЁТНОСТЬ БЕРЁТСЯ ИЗ ДЛИНЫ СТРОКИ, а не из её номера (уточнение пользователя, v0.961): считаем
+   по числу бит в самой строке (st.rows[i].length) — то же число, что видно в колонке длин.
+   Пустые строки пропускаются: длины у них нет, а формально нулевая длина затащила бы их во
+   всякий "чётный" набор.
+   Несколько выделенных строк набор НЕ задают (в отличие от "XOR выдел"): чётность берётся у
+   самой нижней из них, и складывается всё сверху по этой чётности — иначе кнопка повторяла бы
+   соседнюю. Всё остальное — геометрия колонок (xorRowsDownTo), запись результата в выделенную
+   строку, сброс invFlagsMap и переезд выделения вниз при находке фон-поиска — один в один как у
+   "⨁ XOR выдел". */
+const bXorParityEl = document.getElementById("bXorParity");
+if (bXorParityEl) {
+  bXorParityEl.onclick = () => {
+    if (!st.selectedRows || st.selectedRows.size === 0) { say("XOR чёт: выделите строку кликом."); return; }
+    const sel = Array.from(st.selectedRows).sort((a, b) => a - b);
+    const dstIdx = sel[sel.length - 1];
+    const rowLen = i => (st.rows[i] ? st.rows[i].length : 0);
+    const selLen = rowLen(dstIdx); // ДО записи результата: он ложится в эту же строку и её длину меняет
+    const want = selLen % 2;
+    if (!selLen) { say("XOR чёт: выделенная строка пуста — не от чего брать чётность длины."); return; }
+    const idxs = [];
+    for (let i = 0; i <= dstIdx; i++) if (rowLen(i) && rowLen(i) % 2 === want) idxs.push(i);
+    const parWord = want === 0 ? "чётной" : "нечётной";
+    if (idxs.length < 2) { say(`XOR чёт: складывать нечего — выше выделенной нет строк ${parWord} длины.`); return; }
+    const res = xorRowsDownTo(st.rows, dstIdx, st.align, st, idxs);
+    if (!res.length) { say("XOR чёт: все участвующие строки пусты."); return; }
+    snapshot();
+    st.rows[dstIdx] = res;
+    // Длина строки изменилась — прежние флаги перевёрнутых бит к ней уже не относятся.
+    invFlagsMap.delete(dstIdx);
+    // Находку считаем ДО переезда выделения — ровно как в "⨁ XOR выдел" (см. там же почему).
+    const bgInfo = computeBgSearchTarget();
+    const matched = !!(bgInfo && bgInfo.matched);
+    const canMove = matched && dstIdx + 1 < st.rows.length;
+    if (canMove) st.selectedRows = new Set(sel.map(r => r + 1));
+    render(); saveCache();
+    const nums = idxs.map(rowLabel).join(", ");
+    say(`XOR чёт: сложены строки ${parWord} длины — №${nums} (по ${selLen} бит у выделенной). Результат записан в строку ${rowLabel(dstIdx)}. ` +
+      (canMove ? `Фон-поиск нашёл паттерн строки ниже — выделение съехало на строку вниз.`
+               : matched ? "Фон-поиск нашёл, но ниже строк нет — выделение осталось на месте."
+                         : "Фон-поиск ничего не нашёл — выделение осталось на месте."));
+    logStep("XOR чёт", nums, "", res);
+  };
+}
+
 /* "⧬ Интерлив" — ОДИН шаг по выделению (запрос пользователя: "записать в нижнюю, переписав её, и
    выделение на неё перепрыгнуть, если она совпала с паттерном"). Переплетаются те же две строки,
    что и у одноимённого режима фон-поиска: строка НАД выделенной и сама выделенная
    (interleavePairRows — значит с учётом полустолбцов "½"-выравниваний и показанных зеркал).
-   Результат ПЕРЕЗАПИСЫВАЕТ СТРОКУ ПОД ВЫДЕЛЕННОЙ и сверяется с ЕЁ ЖЕ паттерном — тем самым, что
-   и так сверяет фон-поиск. НАШЁЛСЯ — выделение перепрыгивает на эту нижнюю строку (следующее
+   Результат ПЕРЕЗАПИСЫВАЕТ СТРОКУ ПОД ВЫДЕЛЕННОЙ (если её нет — она создаётся внизу, v0.959) и
+   сверяется с ЕЁ ЖЕ паттерном — тем самым, что и так сверяет фон-поиск. НАШЁЛСЯ — выделение перепрыгивает на эту нижнюю строку (следующее
    нажатие переплетёт уже следующую пару вниз); НЕ нашёлся — выделение остаётся на месте (раньше
    переезжало безусловно).
    Прежнее поведение (режим st.interleaveMode: прогон по парам сверху вниз) отсюда убрано; сам
@@ -3462,10 +3572,18 @@ if (bInterleaveSearchEl) {
     const selIdx = Math.max(...st.selectedRows);
     const aboveIdx = selIdx - 1, targetIdx = selIdx + 1;
     if (aboveIdx < 0) { say("⧬ Интерлив: нужна строка НАД выделенной — переплетать не с чем."); return; }
-    if (targetIdx >= st.rows.length) { say("⧬ Интерлив: нужна строка ПОД выделенной — результат писать некуда."); return; }
     const res = interleavePairRows(st, aboveIdx, selIdx, st.align);
     if (!res.length) { say("⧬ Интерлив: обе строки пусты — переплетать нечего."); return; }
     snapshot();
+    // СТРОКИ ПОД ВЫДЕЛЕННОЙ НЕТ — ЗАВОДИМ ЕЁ (v0.959, запрос пользователя: "если нет, то всё
+    // равно записать — создать строку"). Раньше кнопка тут просто ругалась и не делала ничего,
+    // и спуск подряд ("жать ⧬ и ехать вниз") обрывался на последней строке цепочки.
+    // Выделенная строка всегда существует, значит targetIdx = selIdx + 1 максимум равен
+    // st.rows.length — дописать надо ровно одну пустую строку в самый низ.
+    // Колонку паттернов НЕ трогаем (у новой строки паттерна нет, сверять нечего): длины массивов
+    // расходятся штатно, число строк на экране = Math.max(rows.length, pats.length).
+    const rowAdded = targetIdx >= st.rows.length;
+    if (rowAdded) { st.rows.push(""); st.used.push(false); }
     st.rows[targetIdx] = res;
     // Длина строки изменилась — позиционные флаги к ней больше не относятся (как и везде, где
     // строка переписывается целиком).
@@ -3500,7 +3618,7 @@ if (bInterleaveSearchEl) {
         (patText ? (found ? `паттерн этой строки НАЙДЕН (${KIND_LABELS_RU[kinds[0].kind] || "прямая"}).`
                           : "паттерна этой строки в ней нет.")
                  : "у неё нет паттерна для сверки.") +
-        " Выделение перепрыгнуло на неё.");
+        " Выделение перепрыгнуло на неё." + (rowAdded ? " Строки под выделенной не было — она создана внизу." : ""));
     logStep("Интерлив", `${rowLabel(aboveIdx)}+${rowLabel(selIdx)} → ${rowLabel(targetIdx)}`, res, found ? "паттерн найден" : "");
     render(); saveCache();
   };
@@ -4381,6 +4499,20 @@ document.addEventListener("keydown", e => {
     // не всю работу.
     if (typeof wrapModeOn === "function" && wrapModeOn()) { wrapCancel(); return; }
     closeMenus();
+    /* ESCAPE СНИМАЕТ ВСЕ ВЫДЕЛЕНИЯ РАЗОМ (v0.974, запрос пользователя: "сделай по Escape — убрать
+       выделения все, и паттернов, строк и цепочек"). Наборов четыре, и живут они порознь:
+       st.selectedRows — строки цепочки, st.selectedPats — ячейки колонки паттернов,
+       cellSel — биты полотна, patCellSel — биты внутри паттерна (см. их объявления в fold-1-core).
+       Раньше Escape не трогал выделение вовсе — это было прежнее требование ("Сброс/Escape
+       выделение не трогает"), теперь отменено этим запросом. Выбранный столбец и накопитель
+       "📌 Зафиксировать" снимаем заодно: это тоже выделения, просто других видов. */
+    if (st.selectedRows) st.selectedRows.clear();
+    if (st.selectedPats) st.selectedPats.clear();
+    if (typeof cellSel !== "undefined") cellSel.clear();
+    if (typeof patCellSel !== "undefined") patCellSel.clear();
+    if (typeof cellPin !== "undefined") cellPin.clear();
+    st.selectedCol = -1;
+    st.captureGrown = false;
     // Escape сначала ОСТАНАВЛИВАЕТ прогоны — общий "Авто" и свой "Авто" Паттерн-цепочки, — и
     // только потом сбрасывает (запрос пользователя "пусть Esc останавливает и сбрасывает Авто
     // цепочки"). Без этого цепочка продолжала укладывать паттерны прямо поверх сброшенных строк.
@@ -4412,6 +4544,41 @@ document.addEventListener("keydown", e => {
     e.preventDefault();
     if (st.selectedRows && st.selectedRows.size === 1) {
       startEditRow([...st.selectedRows][0]);
+    }
+  } else if (!selectionAllowed() && (e.key === "ArrowLeft" || e.key === "ArrowRight" ||
+                                     e.key === "ArrowUp" || e.key === "ArrowDown")) {
+    /* ПОД ЗАМКОМ (🔒) СТРЕЛКИ ДВИГАЮТ НЕ СОДЕРЖИМОЕ, А КАРТИНКУ (v0.975, запрос пользователя:
+       "верх-вниз стрелки — двигали влево-право границу выделенную, а верх-низ все строки").
+       ←/→ — ГРАНИЦА ПОЛЯ, ровно та, за которую последней брались мышью (activeBorderId, его
+       ставит makeColResizer; до первого касания это граница центрального поля). Шаг — один
+       столбец (realColStepPx), тот же, каким мерится всё остальное, чтобы граница вставала по
+       битам, а не по случайным пикселям.
+       ↑/↓ — ВСЯ КАРТИНКА разом: прокрутка полотна на высоту строки. Именно прокрутка, а не
+       перестановка строк: под замком содержимое не меняется вовсе, в этом весь смысл режима. */
+    e.preventDefault();
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      const map = { vsplit: "--pat-w", vsplit2: "--bits-w", vsplit3: "--pat-w2" };
+      const sel = { vsplit: ".pat", vsplit2: ".bits", vsplit3: ".pat2" };
+      const varName = map[activeBorderId] || "--bits-w";
+      const row = document.querySelector("#rows .ln") || document.querySelector(".chain-head");
+      const colEl = row ? row.querySelector(sel[activeBorderId] || ".bits") : null;
+      if (!colEl) return;
+      const step = Math.max(1, Math.round((typeof realColStepPx === "function" ? realColStepPx() : 8) || 8));
+      const w = Math.max(40, Math.round(colEl.getBoundingClientRect().width + (e.key === "ArrowRight" ? step : -step)));
+      document.documentElement.style.setProperty(varName, w + "px");
+      // Те же флаги "ширину ведут рукой", что ставит перетаскивание, — иначе ближайший render()
+      // отменил бы шаг автоподбором ширины.
+      if (activeBorderId === "vsplit") patWManual = true;
+      else if (activeBorderId === "vsplit2") { bitsWManual = true; document.body.classList.add("bits-w-manual"); }
+      else patW2Manual = true;
+      if (typeof updateSplitPositions === "function") updateSplitPositions();
+      saveCache();
+    } else {
+      const sc = document.getElementById("screenCanvas");
+      if (!sc) return;
+      const rowEl = document.querySelector("#rows .ln");
+      const h = rowEl ? Math.max(4, Math.round(rowEl.getBoundingClientRect().height)) : 12;
+      sc.scrollTop += (e.key === "ArrowDown" ? h : -h);
     }
   } else if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && st.selectedCol >= 0) {
     // Пока выбран столбец, ◄► переключают ВЫБРАННЫЙ СТОЛБЕЦ (не крутят символы строк).

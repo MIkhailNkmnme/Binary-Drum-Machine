@@ -4,30 +4,38 @@
    saveCache/loadCache, тачпад, подсказки и вся стартовая навеска обработчиков.
    Подключается ПОСЛЕДНИМ, после fold-4-tools.js. */
 
-/* Выравнивание текста ПАТТЕРНОВ внутри своей колонки — у П1 и П2 своё, переключается по кругу
-   второй половинкой той же кнопки (запрос пользователя: "каждую кнопку пополам, одна кнопка по
-   кругу право-центр-лево, для П1 и П2 разное"). Влияет только на положение текста в ячейке
-   (--pat-ta/--pat2-ta → text-align у .pat/.pat2), к выравниванию самих СТРОК (⇤↔⇥ в полосе над
-   холстом) отношения не имеет. */
-const PAT_ALIGNS = ["left", "center", "right"];
-const PAT_ALIGN_ICON = { left: "⇤", center: "↔", right: "⇥" };
-let patAlign = "left", pat2Align = "left";
+/* ВЫРАВНИВАНИЕ ПОЛЕЙ ПАТТЕРНОВ (v0.971). Раньше это был просто text-align текста в ячейке, три
+   положения (⇤/↔/⇥). Теперь П1 и П2 — ПОЛНОЦЕННЫЕ ПОЛЯ с той же геометрией, что и цепочка: кнопка
+   гоняет по всему списку FIELD_ALIGNS (см. fold-1-core.js), включая обе лесенки и их "½", а
+   отступ каждой строки печатается столбцами через alignShift() — отсюда и "треуголы".
+   text-align (--pat-ta/--pat2-ta) при этом принудительно left: положение задаётся напечатанным
+   отступом, и второе, конкурирующее правило только смазывало бы картинку. */
 function applyPatAligns(){
-  document.documentElement.style.setProperty("--pat-ta", patAlign);
-  document.documentElement.style.setProperty("--pat2-ta", pat2Align);
-  // При выравнивании ВПРАВО место под бейдж номера шага резервируется слева, а не справа —
-  // иначе текст паттерна не доходит до правого края колонки (см. body.pat-ta-right в CSS).
+  document.documentElement.style.setProperty("--pat-ta", "left");
+  document.documentElement.style.setProperty("--pat2-ta", "left");
+  // Бейдж номера шага при правом выравнивании резервирует место слева (см. body.pat-ta-right).
   document.body.classList.toggle("pat-ta-right", patAlign === "right");
   document.body.classList.toggle("pat2-ta-right", pat2Align === "right");
   const b1 = document.getElementById("bAlignPatL"), b2 = document.getElementById("bAlignPatR");
-  if (b1) b1.textContent = PAT_ALIGN_ICON[patAlign];
-  if (b2) b2.textContent = PAT_ALIGN_ICON[pat2Align];
+  if (b1) b1.textContent = FIELD_ALIGN_ICON[patAlign] || "⇤";
+  if (b2) b2.textContent = FIELD_ALIGN_ICON[pat2Align] || "⇤";
 }
 function cyclePatAlign(which){
   const cur = which === "l" ? patAlign : pat2Align;
-  const next = PAT_ALIGNS[(PAT_ALIGNS.indexOf(cur) + 1) % PAT_ALIGNS.length];
+  const field = which === "l" ? "L" : "R";
+  let idx = FIELD_ALIGNS.indexOf(cur);
+  if (idx < 0) idx = 0;
+  // fieldAlignAllowed крайние поля не режет, но проверку зовём всё равно: запрет живёт в ОДНОМ
+  // месте (CENTER_FIELD_LR_BAN), и если его когда-нибудь расширят на другие поля, цикл сам начнёт
+  // их пропускать, а не разъедется с правилом.
+  let next = cur;
+  for (let k = 1; k <= FIELD_ALIGNS.length; k++) {
+    const cand = FIELD_ALIGNS[(idx + k) % FIELD_ALIGNS.length];
+    if (fieldAlignAllowed(field, cand)) { next = cand; break; }
+  }
   if (which === "l") patAlign = next; else pat2Align = next;
   applyPatAligns();
+  render();
   saveCache();
 }
 const bAlignPatLEl = document.getElementById("bAlignPatL");
@@ -35,6 +43,146 @@ if (bAlignPatLEl) bAlignPatLEl.onclick = () => cyclePatAlign("l");
 const bAlignPatREl = document.getElementById("bAlignPatR");
 if (bAlignPatREl) bAlignPatREl.onclick = () => cyclePatAlign("r");
 applyPatAligns();
+// Запрет левого/правого у центрального поля — сразу на старте: гасим кнопки и, если из кэша
+// пришло запрещённое выравнивание, уводим поле на "по центру" (см. syncAlignBanned в fold-3).
+if (typeof syncAlignBanned === "function") syncAlignBanned();
+/* ═══ ОКНО «ℹ Поле» (v0.972, запрос пользователя: "убираем номера в подсказку — окно в меню,
+   показывает текущее поле, строку, столбец, считает выделенные биты, отображает их") ═══
+   Куда переехали номера строк из самих полей: в полях теперь только биты, а всё справочное —
+   здесь. Показывает ПОД КУРСОРОМ: какое поле (П1 / Цепочка / П2), какая строка, какой столбец;
+   и отдельно — сколько бит сейчас выбрано и какие именно.
+   СТОЛБЕЦ СЧИТАЕТСЯ ГЕОМЕТРИЕЙ, А НЕ ПО data-col. Атрибут data-col render() проставляет только
+   в режиме "▭ Выбор ячеек" (иначе на каждый бит пришлось бы по span'у — см. там же), а окно
+   должно работать всегда. Меряем от левого края СОДЕРЖИМОГО поля тем же шагом колонки, каким
+   render() печатает отступы (realColStepPx) — то есть ровно теми же столбцами, что видит глаз.
+   Выбранные биты берутся из ДВУХ наборов: cellSel — "строка|СТОЛБЕЦ полотна" (центральное поле),
+   patCellSel — "строка|индекс символа в тексте паттерна" (поля паттернов). Системы координат у
+   них разные (см. их объявления в fold-1-core.js), поэтому и разбираются они по отдельности. */
+var fieldInfoOn = false;
+var fieldInfoAt = { field: null, row: null, col: null };
+
+function fieldInfoLabel(f){
+  return f === "L" ? "П1 (левое)" : (f === "R" ? "П2 (правое)" : (f === "C" ? "Цепочка (центр)" : "—"));
+}
+/* Биты центрального поля, лежащие в cellSel, — по возрастанию строки, затем столбца. Столбец
+   переводится в индекс внутри строки тем же сдвигом, каким она напечатана (rowShiftFor). */
+function fieldInfoSelectedBits(){
+  const out = [];
+  if (typeof cellSel !== "undefined" && cellSel.size) {
+    let maxLen = 0;
+    for (const s of st.rows) if (s && s.length > maxLen) maxLen = s.length;
+    const keys = Array.from(cellSel).map(k => {
+      const p = k.split("|");
+      return { r: +p[0], c: +p[1] };
+    }).sort((a, b) => a.r - b.r || a.c - b.c);
+    for (const k of keys) {
+      const s = st.rows[k.r] || "";
+      if (!s.length) continue;
+      const sh = rowShiftFor(maxLen, k.r, s, st.align);
+      const idx = k.c - sh;
+      out.push((idx >= 0 && idx < s.length) ? s[idx] : "·");
+    }
+  }
+  if (typeof patCellSel !== "undefined" && patCellSel.size) {
+    const keys = Array.from(patCellSel).map(k => {
+      const p = k.split("|");
+      return { r: +p[0], c: +p[1] };
+    }).sort((a, b) => a.r - b.r || a.c - b.c);
+    for (const k of keys) {
+      const p = st.pats[k.r];
+      const t = (p && p.text) ? p.text : "";
+      out.push((k.c >= 0 && k.c < t.length) ? t[k.c] : "·");
+    }
+  }
+  return out;
+}
+function updateFieldInfo(){
+  const el = document.getElementById("fieldInfo");
+  if (!el || !fieldInfoOn) return;
+  const bits = fieldInfoSelectedBits();
+  const at = fieldInfoAt;
+  const rowTxt = (at.row == null) ? "—" : String(rowLabel(at.row));
+  const colTxt = (at.col == null) ? "—" : String(at.col + 1);
+  let html = '<span class="fi-field">' + fieldInfoLabel(at.field) + "</span>" +
+             " · строка <b>" + rowTxt + "</b> · столбец <b>" + colTxt + "</b>" +
+             " · выбрано бит: <b>" + bits.length + "</b>";
+  if (bits.length) html += '<span class="fi-bits">' + bits.join("") + "</span>";
+  el.innerHTML = html;
+}
+/* Курсор ходит по полям — ловим делегированно на всём полотне: строки перерисовываются каждым
+   render(), вешать слушатель на каждую было бы бессмысленно. */
+(function(){
+  const sc = document.getElementById("screenCanvas");
+  if (!sc) return;
+  sc.addEventListener("mousemove", (e) => {
+    if (!fieldInfoOn) return;
+    const ln = e.target.closest && e.target.closest(".ln");
+    if (!ln) { fieldInfoAt = { field: null, row: null, col: null }; updateFieldInfo(); return; }
+    const row = +ln.getAttribute("data-idx");
+    let host = e.target.closest(".bits"), field = "C";
+    if (!host) { host = e.target.closest(".pat");  if (host) field = "L"; }
+    if (!host) { host = e.target.closest(".pat2"); if (host) field = "R"; }
+    if (!host) { fieldInfoAt = { field: null, row: row, col: null }; updateFieldInfo(); return; }
+    // Отсчёт — от левого края СОДЕРЖИМОГО: у .bits это внутренняя обёртка (на ней висит
+    // transform полушага/отрицательного сдвига, см. halfShiftAttr), у полей паттернов — сама
+    // ячейка с её padding-left.
+    const inner = (field === "C" && host.firstElementChild) ? host.firstElementChild : host;
+    const rect = inner.getBoundingClientRect();
+    const step = (typeof realColStepPx === "function" ? realColStepPx() : 0) || 1;
+    const col = Math.floor((e.clientX - rect.left) / step);
+    fieldInfoAt = { field: field, row: row, col: col >= 0 ? col : null };
+    updateFieldInfo();
+  });
+  sc.addEventListener("mouseleave", () => {
+    if (!fieldInfoOn) return;
+    fieldInfoAt = { field: null, row: null, col: null };
+    updateFieldInfo();
+  });
+})();
+function applyFieldInfo(){
+  document.body.classList.toggle("show-field-info", fieldInfoOn);
+  // Номера строк живут в полях и уходят вместе с включением окна — в этом и смысл переноса
+  // ("на полях чисто биты должны быть").
+  document.body.classList.toggle("hide-rownums", fieldInfoOn);
+  const b = document.getElementById("bToggleFieldInfo");
+  if (b) b.classList.toggle("overlay-on", fieldInfoOn);
+  updateFieldInfo();
+}
+/* Кнопка общего выключателя выделения (v0.974). Сам запрет держит selectionAllowed() в
+   fold-1-core.js — она зовётся на входе КАЖДОГО выделяющего обработчика; здесь только
+   переключатель и вид кнопки. Значок меняется 🔓/🔒, чтобы состояние читалось без наведения. */
+function applySelectEnabled(){
+  const b = document.getElementById("bToggleSelect");
+  if (b) {
+    b.textContent = selectEnabled ? "🔓" : "🔒";
+    b.classList.toggle("overlay-on", !selectEnabled);
+  }
+}
+const bToggleSelectEl = document.getElementById("bToggleSelect");
+if (bToggleSelectEl) {
+  bToggleSelectEl.onclick = () => {
+    selectEnabled = !selectEnabled;
+    applySelectEnabled();
+    saveCache();
+    say(selectEnabled
+      ? "🔓 Выделение включено — строки, паттерны и биты снова выделяются."
+      : "🔒 Выделение выключено — по полотну ничего не выделяется, поля по-прежнему двигаются.");
+  };
+}
+applySelectEnabled();
+
+const bToggleFieldInfoEl = document.getElementById("bToggleFieldInfo");
+if (bToggleFieldInfoEl) {
+  bToggleFieldInfoEl.onclick = () => {
+    fieldInfoOn = !fieldInfoOn;
+    applyFieldInfo();
+    saveCache();
+    say(fieldInfoOn
+      ? "ℹ Поле: окно включено, номера строк убраны из полей — в полях остались чисто биты."
+      : "ℹ Поле: окно выключено, колонки номеров вернулись в поля.");
+  };
+}
+
 /* === МАРКЕР 10.4: ВИЗУАЛЬНЫЕ НАСТРОЙКИ === */
 /* Ползунки шрифта, межстрочного и межсимвольного интервала */
 const fs = document.getElementById("fs");
@@ -233,7 +381,9 @@ function captureColors(){
     cv1: typeof colVert1El !== "undefined" && colVert1El ? colVert1El.value : "#00ccff",
     cd1: typeof colDiag1El !== "undefined" && colDiag1El ? colDiag1El.value : "#66ff66",
     c11r: typeof col1RightEl !== "undefined" && col1RightEl ? col1RightEl.value : "#a78bfa",
-    cdf: typeof colDiagFoldEl !== "undefined" && colDiagFoldEl ? colDiagFoldEl.value : "#ff5ecb"
+    cdf: typeof colDiagFoldEl !== "undefined" && colDiagFoldEl ? colDiagFoldEl.value : "#ff5ecb",
+    cdl: typeof colDiffLeftEl !== "undefined" && colDiffLeftEl ? colDiffLeftEl.value : "#4dd0e1",
+    cdu: typeof colDiffUpEl !== "undefined" && colDiffUpEl ? colDiffUpEl.value : "#ff8fa3"
   };
 }
 
@@ -275,6 +425,38 @@ function applyColor1Right(){
 if (col1RightEl) {
   col1RightEl.oninput = () => { applyColor1Right(); saveCacheSoon(); };
 }
+
+/* "Δ◧" и "Δ▲" (v0.968, запрос пользователя "подсвет битов, которые поменялись с предыдущим левым,
+   и другая с верхним") — обычные показные переключатели, той же выделки, что "01"/"1 правее 1"
+   рядом. "Δ◧" считать заранее нечего, признак виден прямо в строке; "Δ▲" сравнивает строку с той,
+   что над ней, в ЭКРАННЫХ столбцах — за это отвечает computeDiffUpMask() в fold-2-render.js. */
+const bDiffLeftEl = document.getElementById("bDiffLeft");
+if (bDiffLeftEl) {
+  bDiffLeftEl.onclick = () => {
+    st.diffLeftShow = !st.diffLeftShow;
+    bDiffLeftEl.classList.toggle("mode-act", st.diffLeftShow);
+    render(); saveCache();
+  };
+}
+const colDiffLeftEl = document.getElementById("colDiffLeft");
+function applyColorDiffLeft(){
+  if (colDiffLeftEl) document.documentElement.style.setProperty("--cdl-hl", colDiffLeftEl.value);
+}
+if (colDiffLeftEl) colDiffLeftEl.oninput = () => { applyColorDiffLeft(); saveCacheSoon(); };
+
+const bDiffUpEl = document.getElementById("bDiffUp");
+if (bDiffUpEl) {
+  bDiffUpEl.onclick = () => {
+    st.diffUpShow = !st.diffUpShow;
+    bDiffUpEl.classList.toggle("mode-act", st.diffUpShow);
+    render(); saveCache();
+  };
+}
+const colDiffUpEl = document.getElementById("colDiffUp");
+function applyColorDiffUp(){
+  if (colDiffUpEl) document.documentElement.style.setProperty("--cdu-hl", colDiffUpEl.value);
+}
+if (colDiffUpEl) colDiffUpEl.oninput = () => { applyColorDiffUp(); saveCacheSoon(); };
 
 /* "1 под 1" (см. #bHighlightVert1/.hlv1 в CSS) — та же логика вкл/выкл + цвет, что у "01",
    просто другая функция подсчёта (computeVertOnesMask, сравнивает соседние строки). */
@@ -622,6 +804,9 @@ function makeColResizer(el, varName, selectorOfCol, minPx, onManual){
     const startX = e.clientX;
     el.classList.add("drag");
     document.body.classList.add("dragging");
+    // Запоминаем, за какую границу взялись: под замком (🔒) её же двигают стрелки ←/→
+    // (см. ветку в обработчике клавиш, fold-4-tools.js).
+    if (el.id) activeBorderId = el.id;
     if (onManual) onManual();
     const move = ev => {
       const w = Math.max(minPx, Math.round(startW + (ev.clientX - startX)));
@@ -1034,15 +1219,22 @@ function clampAxisOffset(off, maxLen){
   if (!bitsEl || !maxLen) return off;
   const chPx = realColStepPx();
   if (!(chPx > 0)) return off;
-  const colsMax = Math.floor(bitsEl.getBoundingClientRect().width / chPx);
   const base = axisBaseCol();
   // Границы — по РЕАЛЬНОМУ положению бита, а не по формуле (см. axisDrawFixCols выше). Округляем
   // наружу: лучше отпустить на неполный столбец дальше — линию всё равно придержит жёсткий зажим
   // по полосе бит в updateAxisSplitPosition(), и она сядет ровно на границу.
   const fix = axisDrawFixCols();
-  const lo = Math.floor(-base - fix), hi = Math.ceil(colsMax - base - fix);
-  if (hi < lo) return off; // поле битов уже одного столбца — придерживать не от чего
-  return Math.max(lo, Math.min(hi, off));
+  const lo = Math.floor(-base - fix);
+  /* ПРАВОГО ПОТОЛКА БОЛЬШЕ НЕТ (v0.974, запрос пользователя: "убери запрет правой границы
+     двигаться вправо за ось центральную"). Раньше здесь стоял hi = colsMax - base - fix, то есть
+     сдвиг зажимался шириной ПОЛОСЫ БИТ: центральное поле не могло уехать вправо дальше
+     собственной коробки и утыкалось в границу с П2. После v0.973, где .bits рисуется ПОВЕРХ
+     колонок паттернов, этот потолок стал единственным, что мешало полю «заезжать своим центром
+     на биты крайних полей», — снят.
+     Левый зажим оставлен намеренно: он не декоративный, а держит точку отсчёта столбцов от ухода
+     в отрицательные номера, на которых ломается вся арифметика колонок (data-col, линейка,
+     склейки). colsMax теперь не нужен вовсе. */
+  return Math.max(lo, off);
 }
 function centerAxisOffset(){
   let maxLen = 0;
@@ -1159,12 +1351,13 @@ function updateAxisSplitPosition(maxLen){
      раздвигаем полосу до него: зажим продолжает ловить дикие значения и перестал спорить с
      реальной геометрией. */
   let bandLeft = bitsRect.left - chainRect.left;
-  let bandRight = bandLeft + bitsRect.width - (axisSplitEl.offsetWidth || 2);
-  if (axisMeasured != null) {
-    bandLeft = Math.min(bandLeft, axisMeasured);
-    bandRight = Math.max(bandRight, axisMeasured);
-  }
-  if (bandRight > bandLeft) leftPx = Math.max(bandLeft, Math.min(bandRight, leftPx));
+  if (axisMeasured != null) bandLeft = Math.min(bandLeft, axisMeasured);
+  /* ЗАЖИМ ТЕПЕРЬ ТОЛЬКО СЛЕВА (v0.974, та же правка, что и в clampAxisOffset выше). Прежний
+     bandRight не давал ручке уйти правее полосы бит — вместе со снятым потолком сдвига он стал
+     бессмысленным: сдвиг уезжает вправо, а ручка упиралась бы в край коробки и отставала от
+     своей же оси. Слева зажим нужен по-прежнему — там за краем начинаются отрицательные номера
+     столбцов. */
+  leftPx = Math.max(bandLeft, leftPx);
   axisSplitEl.style.left = leftPx + "px";
 
   /* ДЛИНА РУЧКИ — ровно на ОДНУ СТРОКУ ниже линейки столбцов (v0.856, запрос пользователя:
@@ -1456,6 +1649,7 @@ function captureUiSettings(){
     maskPaintColor0: st.maskPaintColor0 || "#22d3ee",
     bgSubPatterns: cBgSubPatternsEl ? cBgSubPatternsEl.checked : false,
     bgSearchAllBelow: cBgAllBelowEl ? cBgAllBelowEl.checked : false,
+    fullPassMode: !!st.fullPassMode,
     bgAllPats: cBgAllPatsEl ? cBgAllPatsEl.checked : false,
     bgAllPatsEvery: cBgAllPatsEveryEl ? cBgAllPatsEveryEl.checked : false,
     bgAllPatsPartial: cBgAllPatsPartialEl ? cBgAllPatsPartialEl.checked : false,
@@ -1480,8 +1674,12 @@ function captureUiSettings(){
     popupFontPx: popupFontPx,
     popupStyle: popupStyle,
     resultHeightLocked: resultHeightLocked,
+    stepLogHeightLocked: stepLogHeightLocked,
     highlight01: !!st.highlight01,
     highlight1Right: !!st.highlight1Right,
+    revKeepShow: !!st.revKeepShow,
+    diffLeftShow: !!st.diffLeftShow,
+    diffUpShow: !!st.diffUpShow,
     highlightVert1: !!st.highlightVert1,
     highlightDiag1: !!st.highlightDiag1,
     highlightDiagFold: !!st.highlightDiagFold,
@@ -1504,6 +1702,8 @@ function captureUiSettings(){
     patWManual: patWManual, patW2Manual: patW2Manual,
     bitsW: cssVar("--bits-w"), bitsWManual: bitsWManual,
     patAlign: patAlign, pat2Align: pat2Align,
+    fieldInfoOn: !!fieldInfoOn,
+    selectEnabled: selectEnabled !== false,
     hideSide: document.body.classList.contains("hide-side"),
     hidePatL: document.body.classList.contains("hide-pat-l"),
     hidePatR: document.body.classList.contains("hide-pat-r"),
@@ -1654,6 +1854,8 @@ function applyUiSettings(u){
   }
   if (u.bgSubPatterns !== undefined && cBgSubPatternsEl) { cBgSubPatternsEl.checked = u.bgSubPatterns; st.bgSubPatterns = u.bgSubPatterns; }
   if (u.bgSearchAllBelow !== undefined && cBgAllBelowEl) { cBgAllBelowEl.checked = u.bgSearchAllBelow; st.bgSearchAllBelow = u.bgSearchAllBelow; }
+  // "🔻 Полный проход" — кнопка, а не чекбокс: состояние показывается классом mode-act (applyFullPassBtn).
+  if (u.fullPassMode !== undefined) { st.fullPassMode = u.fullPassMode; if (typeof applyFullPassBtn === "function") applyFullPassBtn(); }
   if (u.bgAllPats !== undefined && cBgAllPatsEl) { cBgAllPatsEl.checked = u.bgAllPats; st.bgAllPats = u.bgAllPats; }
   if (u.bgAllPatsEvery !== undefined && cBgAllPatsEveryEl) { cBgAllPatsEveryEl.checked = u.bgAllPatsEvery; st.bgAllPatsEvery = u.bgAllPatsEvery; }
   if (u.bgAllPatsPartial !== undefined && cBgAllPatsPartialEl) { cBgAllPatsPartialEl.checked = u.bgAllPatsPartial; st.bgAllPatsPartial = u.bgAllPatsPartial; }
@@ -1692,6 +1894,8 @@ function applyUiSettings(u){
   // отрендерен реальным содержимым, замерять высоту рано; следующий render() (см. его конец)
   // сам применит актуальное resultHeightLocked с реальным контентом.
   if (u.resultHeightLocked !== undefined) resultHeightLocked = u.resultHeightLocked;
+  // Высоту "Черновика шага" применит ближайший render() (applyStepLogBodyHeight) — тут только флаг.
+  if (u.stepLogHeightLocked !== undefined) stepLogHeightLocked = u.stepLogHeightLocked;
   if (u.highlight01 !== undefined) {
     st.highlight01 = !!u.highlight01;
     const b = document.getElementById("bHighlight01");
@@ -1701,6 +1905,22 @@ function applyUiSettings(u){
     st.highlight1Right = !!u.highlight1Right;
     const b = document.getElementById("bHighlight1Right");
     if (b) b.classList.toggle("mode-act", st.highlight1Right);
+  }
+  // v0.968 — три новые показные подсветки, тем же порядком.
+  if (u.revKeepShow !== undefined) {
+    st.revKeepShow = !!u.revKeepShow;
+    const b = document.getElementById("bReverseKeep");
+    if (b) b.classList.toggle("mode-act", st.revKeepShow);
+  }
+  if (u.diffLeftShow !== undefined) {
+    st.diffLeftShow = !!u.diffLeftShow;
+    const b = document.getElementById("bDiffLeft");
+    if (b) b.classList.toggle("mode-act", st.diffLeftShow);
+  }
+  if (u.diffUpShow !== undefined) {
+    st.diffUpShow = !!u.diffUpShow;
+    const b = document.getElementById("bDiffUp");
+    if (b) b.classList.toggle("mode-act", st.diffUpShow);
   }
   if (u.highlightVert1 !== undefined) {
     st.highlightVert1 = !!u.highlightVert1;
@@ -1809,10 +2029,13 @@ function applyUiSettings(u){
   // вмешивается; иначе она подгоняется на каждом render().
   if (u.patWManual !== undefined) patWManual = !!u.patWManual;
   if (u.patW2Manual !== undefined) patW2Manual = !!u.patW2Manual;
+  if (u.fieldInfoOn !== undefined) { fieldInfoOn = !!u.fieldInfoOn; applyFieldInfo(); }
+  if (u.selectEnabled !== undefined) { selectEnabled = u.selectEnabled !== false; applySelectEnabled(); }
   if (u.patAlign || u.pat2Align) {
     if (u.patAlign) patAlign = u.patAlign;
     if (u.pat2Align) pat2Align = u.pat2Align;
     applyPatAligns();
+    if (typeof syncAlignBanned === "function") syncAlignBanned();
   }
   if (u.bitsWManual) {
     bitsWManual = true;
@@ -1867,6 +2090,11 @@ function applyUiSettings(u){
   if (u.cdf && colDiagFoldEl) colDiagFoldEl.value = u.cdf;
   applyColorDiagFold();
 
+  if (u.cdl && colDiffLeftEl) colDiffLeftEl.value = u.cdl;
+  applyColorDiffLeft();
+  if (u.cdu && colDiffUpEl) colDiffUpEl.value = u.cdu;
+  applyColorDiffUp();
+
   if (u.rowCount && rowCountEl) {
     rowCountEl.value = u.rowCount;
     document.getElementById("rowCountVal").textContent = rowCountEl.value;
@@ -1913,6 +2141,7 @@ const DEFAULT_UI_SETTINGS = {
   maskPaintColor1: "#b060ff",
   maskPaintColor0: "#22d3ee",
   bgSearchAllBelow: false,
+  fullPassMode: false,
   bgAllPats: false,
   // "🔁 Все вхождения" — подсвечивать паттерн ВЕЗДЕ, где встретился, а не только в первом
   // месте (работает только вместе с bgAllPats, см. findAllPatternsInResult).
@@ -1926,6 +2155,7 @@ const DEFAULT_UI_SETTINGS = {
   popupFontPx: 10,
   popupStyle: { ff: "", fg: "", bg: "", lh: 1, bits: false, one: "#ffe08a", zero: "#5a6a85", bare: false, flow: false, maskCut: false, pulse: false, pulseSec: 1.6 },
   resultHeightLocked: true,
+  stepLogHeightLocked: false,
   highlight01: false,
   highlightVert1: false,
   highlightDiag1: false,

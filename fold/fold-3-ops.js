@@ -1133,6 +1133,20 @@ if (bLockResultHeightEl) {
   };
 }
 
+/* Та же "📌", но для "Черновика шага" (v0.962, запрос пользователя "сделай фикс размера как в
+   Результатах — кнопка"). Высоту черновика держит applyStepLogBodyHeight() (fold-2-render.js) —
+   там же и читается stepLogHeightLocked; здесь только переключатель. Отдельная перерисовка не
+   нужна: применяется на ближайшем render(), а чтобы кнопка сразу подсветилась, красим её тут. */
+const bLockStepLogHeightEl = document.getElementById("bLockStepLogHeight");
+if (bLockStepLogHeightEl) {
+  bLockStepLogHeightEl.onclick = () => {
+    stepLogHeightLocked = !stepLogHeightLocked;
+    bLockStepLogHeightEl.classList.toggle("mode-act", stepLogHeightLocked);
+    render(); saveCache();
+    say(stepLogHeightLocked ? "Высота панели «Черновик шага» закреплена." : "Высота панели «Черновик шага» снова растёт под содержимое.");
+  };
+}
+
 /* Общий помощник копирования в буфер — сначала через Clipboard API, при неудаче/отсутствии
    (напр. страница открыта не по https) — через скрытый textarea + execCommand("copy"). */
 function copyTextToClipboard(text, successMsg) {
@@ -1803,6 +1817,23 @@ document.addEventListener('mousedown', (e) => {
    в актуальном виде (сумма высот обеих + зазор между ними), чтобы .canvas резервировал верхний
    отступ (padding-top: calc(6px + var(--result-box-h))) и строки таблицы не уезжали под бары. */
 const OVERLAY_GAP = 6;
+/* ВИД ЗАПРЕЩЁННЫХ ЦЕНТРАЛЬНОМУ ПОЛЮ ВЫРАВНИВАНИЙ (v0.971). Гасит в полосе те кнопки, которые
+   fieldAlignAllowed("C", ...) не пропускает, и — если сохранённое состояние пришло с запрещённым
+   выравниванием (кэш от версии до запрета) — молча уводит поле на "по центру". Без этого запрет
+   был бы только на новых кликах, а старая настройка так и висела бы. */
+function syncAlignBanned(){
+  const grp = document.getElementById("alignGrp");
+  if (!grp) return;
+  grp.querySelectorAll("button[data-val]").forEach(b => {
+    const v = b.getAttribute("data-val");
+    b.classList.toggle("align-banned", !fieldAlignAllowed("C", v));
+  });
+  if (!fieldAlignAllowed("C", st.align)) {
+    st.align = "center";
+    grp.querySelectorAll("button[data-val]").forEach(b => b.classList.toggle("act", b.getAttribute("data-val") === "center"));
+  }
+}
+
 /* Перенос группы выравниваний (#alignGrp) из холста (.chain) в .main-layout — запрос
    пользователя: она должна висеть плавающей полосой ПОВЕРХ баров «Результат»/«Черновик», сразу
    под верхним меню. Перенос нужен именно в DOM, а не только в CSS: position:absolute считается от
@@ -1828,9 +1859,18 @@ function overlayStackIds(){
     return !(el && el.classList.contains("popped-out"));
   });
 }
+/* Отступ, с которого начинается стопка overlay-баров и полоса выравниваний (v0.969). Раньше
+   было просто 6 — полоса меню стояла В ПОТОКЕ и своё место занимала сама. Теперь она плавающая
+   и прозрачная (position:fixed, см. блок "ПРОЗРАЧНАЯ ШАПКА" в конце стилей), полотно начинается
+   от самого верха экрана — и всё, что не отодвинуть, ушло бы прямо под кнопки. Высоту берём из
+   той же переменной --menubar-h, которой задана и сама полоса, чтобы два числа не разъезжались. */
+function overlayTopBase(){
+  const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--menubar-h"));
+  return 6 + (v > 0 ? v : 42);
+}
 function layoutOverlayBoxes(){
   const visible = overlayStackIds();
-  let top = 6, stackH = 0;
+  let top = overlayTopBase(), stackH = 0;
   visible.forEach((id, i) => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -1859,7 +1899,7 @@ function layoutOverlayBoxes(){
    тянут мышью, и без этого вызова полоса догоняла бы строки только следующей перерисовкой
    (запрос пользователя: "тупит, пусть уезжает сразу вместе со строками"). */
 function positionAlignGrpTop(){
-  let top = 6;
+  let top = overlayTopBase(); // тот же старт, что у стопки баров, — см. overlayTopBase()
   overlayStackIds().forEach(id => {
     const b = document.getElementById(id);
     if (b) top += b.offsetHeight + OVERLAY_GAP;
@@ -2004,6 +2044,8 @@ function resetSeqSearchModes(){
 }
 
 document.getElementById("rows").onclick = e => {
+  // "🔒 Выделение" выключено — полотно только двигают, ничего не выделяют (см. selectionAllowed).
+  if (!selectionAllowed()) return;
   // Режим "▭ Выбор ячеек" — клики по полотну собирают ЯЧЕЙКИ и не должны трогать выделение СТРОК
   // (запрос пользователя: режим "автоматически снимает все выделения строк"). mousedown мы уже
   // перехватываем на фазе захвата, но следом браузер шлёт click — вот он и переключал строки.
@@ -2115,6 +2157,8 @@ let rowDragAnchor = null, rowDragMoved = false;
    причастна совсем. */
 let patDragAnchor = null, patDragMoved = false;
 document.getElementById("rows").addEventListener("mousedown", e => {
+  if (!selectionAllowed()) return; // "🔒 Выделение" выключено — протяжка по строкам не выделяет
+
   if (cellSelMode) return; // в режиме выбора ячеек протяжка выделяет ЯЧЕЙКИ, а не диапазон строк
   // В режиме "✂ Перенос строк" протяжка двигает линии раскроя (см. wrapDrag в fold-4), а не
   // выделяет строки — иначе одно движение мыши делало бы сразу два дела.
@@ -2305,6 +2349,16 @@ alignBtns.forEach(btn => {
     // ниже, после перерисовки.
     const prevPx = axisScreenPx();
     const nextAlign = btn.getAttribute("data-val");
+    /* ЗАПРЕТ ЛЕВОГО/ПРАВОГО У ЦЕНТРАЛЬНОГО ПОЛЯ (v0.971). Правило живёт одной константой в
+       fold-1-core.js (CENTER_FIELD_LR_BAN = true) — здесь только проверка. Кнопки ⇤/⇥ при
+       включённом запрете ещё и гасятся классом .align-banned (см. syncAlignBanned), но клик
+       перехватываем и тут: отключение кнопки — это про вид, а запрет должен держаться в логике,
+       иначе его обойдёт любой другой путь к st.align (горячие клавиши, восстановление настроек).
+       Крайних полей (П1/П2) запрет не касается — им левое/правое как раз и нужно. */
+    if (!fieldAlignAllowed("C", nextAlign)) {
+      say("Центральному полю левое и правое выравнивание запрещены — только центр, лесенки и осевые. Крайним полям (П1/П2) они по-прежнему доступны.");
+      return;
+    }
     /* "ОсьБит"/"ОсьБит ½" (↥ / ↥½) — ПЕРВОЕ нажатие не двигает строки вовсе (v0.881, запрос
        пользователя: "пусть при переключении на эти выравнивания строки изначально будут как в том
        выравнивании, из которого клик делается, а при втором клике — как обычно"). Причина: у
@@ -2836,6 +2890,26 @@ if (cBgAllBelowEl) {
     saveCache();
   };
 }
+/* "🔻 Полный проход" — ОДНА кнопка на весь режим (v0.963, запрос пользователя). Что она делает,
+   расписано в computeBgSearchTarget() (поиск в своей строке и во всех нижних) и в autoRun()
+   (захват — только когда пройдены все варианты текущей строки). Тут только переключатель:
+   подсветка кнопки, сброс прошлой находки (цель поиска сменилась) и перерисовка. */
+const bFullPassEl = document.getElementById("bFullPass");
+function applyFullPassBtn(){
+  if (bFullPassEl) bFullPassEl.classList.toggle("mode-act", !!st.fullPassMode);
+}
+if (bFullPassEl) {
+  bFullPassEl.onclick = () => {
+    st.fullPassMode = !st.fullPassMode;
+    applyFullPassBtn();
+    st.bgSearchLastHit = -1;
+    render(); saveCache();
+    say(st.fullPassMode
+      ? "🔻 Полный проход включён: разом ищутся ВСЕ ещё не найденные паттерны — и выше выделенной, и в ней самой, и ниже; совпавшие держат зелёную метку до Сброса. В «Авто» новая строка захватывается только когда пройдены ВСЕ варианты текущей."
+      : "🔻 Полный проход выключен: обычный поиск по паттерну строки под выделенной, захват сразу на находке.");
+  };
+}
+
 const bgSearchModeBtns = document.querySelectorAll("#bgSearchModeGrp button");
 bgSearchModeBtns.forEach(btn => {
   btn.onclick = () => {
@@ -3354,7 +3428,13 @@ function computeBgSearchTarget(){
       ? { phase: maskPhase, mask, view: mask.slice(maskPhase) + mask.slice(0, maskPhase),
           picked: matchOn, through: (st.bgMaskRingRestart === false && !st.ringOff) }
       : null;
-    return { mode: m, result, kinds, tried: kinds.tried, allHits, matched: kinds.length > 0, maskInfo };
+    // matchOn едет наружу (v0.965): по ЭТОЙ строке реально считается совпадение — с наложенной
+    // "🎭 Маской" и с хвостом нулей, — и по ней же обязан искать "🔻 Полный проход". Раньше он
+    // сверял чужие паттерны с полем result (полной, НЕмаскированной строкой) и при включённой
+    // маске отчитывался о находках, которых на экране не было вовсе — панель-то показывает
+    // совпадения по matchOn (жалоба пользователя: "ложные срабатывания, типа нашёл, но в
+    // результатах не подсветил ничего").
+    return { mode: m, result, matchOn, kinds, tried: kinds.tried, allHits, matched: kinds.length > 0, maskInfo };
   };
   /* Результаты ОДНОГО режима с учётом "🎭 Маски" (см. maskBits/applyPickMask выше): маски нет —
      ровно одна строка, как было всегда; маска есть — вместо неё N строк-фаз, по одной на каждый
@@ -3483,25 +3563,70 @@ function computeBgSearchTarget(){
      отличить цветом от текущих находок").
      До этой правки галка была мёртвой: st.bgSearchAllBelow писался обработчиком и сохранялся в
      кэш, но не читался НИГДЕ — то есть "Все ниже" не делала ровным счётом ничего. */
+  /* "🔻 Полный проход" (v0.963, #bFullPass, запрос пользователя: "нужен режим для фонового и
+     любых автопоисков — одна кнопка — которая позволяет искать паттерны в нижних строчках и
+     текущей, и захват новой строки там только по завершению всех вариантов текущей строки").
+     ПЕРВАЯ половина режима — здесь: сверяемся не с одним паттерном строки СРАЗУ НИЖЕ выделенной,
+     а СО ВСЕМИ ЕЩЁ НЕ НАЙДЕННЫМИ ПАТТЕРНАМИ СПИСКА СРАЗУ — и ниже выделенной, и в самой
+     выделенной, и ВЫШЕ неё (уточнение пользователя: "надо искать паттерн и выше выделения, если
+     он ещё не найден, и ниже"). Поэтому цикл идёт от нулевой строки, а не от targetIdx.
+     ВЫШЕ выделенной берутся только НЕнайденные паттерны (p.found): найденный своё место в
+     цепочке уже занял, искать его заново незачем — и он бы иначе «совпадал» каждый кадр, забивая
+     подсветку и сообщения. Ниже выделенной берутся все подряд: там ещё ничего не отработано.
+     Обходится дёшево: сами результаты режимов от искомого паттерна не зависят вовсе — они уже
+     посчитаны выше, здесь идёт только сверка очередного текста с готовой строкой результата.
+     Порог "🔎 до паттерна" при "Полном проходе" НЕ применяем намеренно: он для того и стоит,
+     чтобы строка не находила себя в склейке из собственных бит, а тут пользователь просит
+     искать в том числе и в своей строке.
+     Всё найденное копится в bgBelowHits (см. render) и держится подсвеченным до Сброса/Escape —
+     в том числе при обычном РУЧНОМ выделении строки, без всякого "Авто" (запрос пользователя).
+     ВТОРАЯ половина режима (отложенный до конца цикла вариантов захват) — в autoRun(). */
   const belowHits = [];
-  if (st.bgSearchAllBelow) {
+  const belowOn = st.bgSearchAllBelow || st.fullPassMode;
+  const belowFrom = st.fullPassMode ? 0 : targetIdx;
+  if (belowOn) {
     const lastBelow = Math.max(st.rows.length, st.pats.length);
-    for (let r = targetIdx; r < lastBelow; r++) {
+    for (let r = belowFrom; r < lastBelow; r++) {
       const pr = st.pats[r];
       const t = pr && pr.text ? pr.text : "";
       if (!t) continue;
+      // Выше выделенной — только то, что ещё не найдено (см. шапку блока).
+      if (st.fullPassMode && r < selIdx && pr.found) continue;
       // Та же оговорка, что и у "🌈 Все паттерны" (см. bgDeepRow в render): при "🔎 до паттерна"
       // строка, чьи собственные биты вошли в цепочку, себя же в ней находить не должна. Обычно
       // сюда не попадает никто — цикл и так идёт ниже выделенной, — но "🧩 Паттерн-цепочка"
       // уводит chainIdx ниже, и вот тогда порог начинает работать.
-      if (st.allPatScopeSel && r <= Math.max(chainIdx, pairBottom)) continue;
+      if (!st.fullPassMode && st.allPatScopeSel && r <= Math.max(chainIdx, pairBottom)) continue;
       for (const res of results) {
-        if (res.result && findPatternKinds(res.result, t).length > 0) { belowHits.push(r); break; }
+        // Ищем ровно в той строке, по которой судит панель (см. matchOn в mkResult).
+        const hay = res.matchOn || res.result;
+        if (!hay) continue;
+        const kk = findPatternKinds(hay, t);
+        if (!kk.length) continue;
+        belowHits.push(r);
+        /* ПОДСВЕТКА ЧУЖОЙ НАХОДКИ (v0.965). Обычный фон-поиск красит в результате только kinds —
+           а это совпадения ИСКОМОГО паттерна (строки targetIdx). Находка любого другого паттерна
+           не рисовалась ничем, и режим выглядел как враньё: "паттерн строки N найден", а в
+           "Результате" пусто. Кладём её в allHits того же результата — дальше её рисует уже
+           готовый механизм "🌈 Все паттерны" (свой цвет по номеру паттерна, те же mapPos для
+           прорежённой маской строки, см. allPatAt в render). Сам targetIdx сюда не берём: его
+           kinds уже подсветили, второй слой поверх только сменил бы цвет привычной находки. */
+        if (st.fullPassMode && r !== targetIdx) {
+          if (!res.allHits) res.allHits = [];
+          for (const kd of kk) res.allHits.push({ patIdx: r, start: kd.start, len: kd.len, kind: kd.kind });
+        }
+        break;
       }
     }
   }
+  // primaryMatched — совпал паттерн ИМЕННО строки targetIdx (обычная находка фон-поиска, ровно то,
+  // что раньше и называлось matched). При "🔻 Полном проходе" находкой считается ещё и совпадение
+  // любого паттерна из belowHits — иначе режим искал бы в своей/нижних строках, но прогон об этом
+  // не узнавал бы (matched читают и "🛑 Стоп на находке", и захват, и все автопоиски).
+  const primaryMatched = results.some(r => r.matched) || lengthSumsMatched;
   return {
-    targetIdx, results, belowHits, matched: results.some(r => r.matched) || lengthSumsMatched,
+    targetIdx, results, belowHits, primaryMatched,
+    matched: primaryMatched || (st.fullPassMode && belowHits.length > 0),
     aboveIdx: pairTop, selIdx: pairBottom, anchorIdx: selIdx, rowAbove, rowSel, lengthSumsMatched,
     // По какую строку включительно собирались режимы-цепочки — нужен подсветке находки в самих
     // строках (см. bgConcatCellMap в render()), чтобы разложить совпадение обратно по строкам.
@@ -3623,6 +3748,11 @@ function autoRun(){
       for (let i = lo; i <= hi; i++) totalTurns += (st.rows[i] || "").length;
     }
     let turns = 0;
+    /* "🔻 Полный проход" (v0.963): находки за текущий цикл вариантов КОПЯТСЯ здесь, а захват
+       строк делается один раз — когда цикл пройден целиком (запрос пользователя: "захват новой
+       строки там только по завершению всех вариантов текущей строки"). Обычный режим захватывает
+       сразу на находке и тем самым обрывает перебор оставшихся вариантов текущей строки. */
+    const pendingHits = new Set();
     st.shiftVariantTotal = isShift ? totalTurns : null;
     // Номера строк (те же 0-based номера, что и в самой таблице — см. .num), которые реально
     // крутятся сейчас — запрос пользователя: показывать в счётчике не только N/M, но и КАКИЕ
@@ -3687,7 +3817,14 @@ function autoRun(){
           // что выглядело как баг). Останавливаемся только если включено "Стоп на находке".
           // "⬇ Расширять вниз" (st.growDownOnFind) работает и сам по себе, без "🧲 Захвата", и
           // сильнее его: окно не едет, выделение только растёт вниз (см. captureFoundRow).
-          if (st.captureOnFind || st.growDownOnFind) {
+          if (st.fullPassMode) {
+            // "🔻 Полный проход": НИЧЕГО не захватываем прямо сейчас — только запоминаем, что
+            // именно совпало, и крутим дальше. Захват будет на cycleDone, когда все варианты
+            // текущей строки перебраны. Свою строку (selIdx) в копилку не берём — она и так
+            // выделена, захватывать нечего.
+            if (bgInfo.primaryMatched) pendingHits.add(bgInfo.targetIdx);
+            if (bgInfo.belowHits) for (const r of bgInfo.belowHits) if (r > bgInfo.anchorIdx) pendingHits.add(r);
+          } else if (st.captureOnFind || st.growDownOnFind) {
             // При МУЛЬТИвыделении окно едет с постоянным размером — выброшенную сверху строку
             // убираем и из набора вращаемых, иначе она продолжала бы крутиться, уже не будучи
             // выделенной (см. captureFoundRow).
@@ -3713,7 +3850,10 @@ function autoRun(){
               for (const r of moved) rotIdxs.add(r);
             }
           }
-          if (st.stopOnHit) { bgHit = bgInfo; break; }
+          // При "🔻 Полном проходе" "🛑 Стоп на находке" НЕ рвёт перебор: смысл режима как раз в
+          // том, чтобы досмотреть все варианты текущей строки. Остановка (если она включена)
+          // случится на cycleDone, уже после захвата.
+          if (st.stopOnHit && !st.fullPassMode) { bgHit = bgInfo; break; }
         }
 
         // "🛑 Стоп при балансе" — суммарно по ВСЕМ выделенным строкам единиц и нулей стало
@@ -3755,6 +3895,41 @@ function autoRun(){
       }
       if (balanceHit) {
         return finishAuto(`⚖ Авто (${dirLabel}) остановлен: баланс единиц и нулей по выделенным строкам сравнялся.`);
+      }
+      if (cycleDone && st.fullPassMode && pendingHits.size) {
+        /* ВЕСЬ ЦИКЛ ВАРИАНТОВ ТЕКУЩЕЙ СТРОКИ ПРОЙДЕН — вот теперь захватываем. Строки берём ПО
+           ПОРЯДКУ сверху вниз (тот же принцип, что у captureBelowRun: перескакивать через
+           неотработанный участок нельзя), захват — обычный captureFoundRow, то есть с учётом
+           "⬇ Расширять вниз", разделителей и нулевой строки.
+           Дальше начинается НОВЫЙ круг: набор вращаемых строк вырос, значит и предел вариантов
+           у него другой — пересчитываем totalTurns и обнуляем turns, иначе прогон тут же снова
+           упёрся бы в старый предел. */
+        const list = Array.from(pendingHits).sort((a, b) => a - b);
+        const taken = [];
+        for (const idx of list) {
+          const dropped = captureFoundRow(idx, st.growDownOnFind);
+          if (idx >= 0 && idx < st.rows.length) taken.push(idx);
+          rotIdxs.add(idx);
+          if (dropped >= 0) rotIdxs.delete(dropped);
+        }
+        pendingHits.clear();
+        turns = 0;
+        if (isShift) {
+          mirrorsBeforeShift();
+          totalTurns = computeShiftTotalTurns(rotIdxs, isShiftInv);
+          st.shiftVariantTotal = totalTurns;
+          st.shiftVariantRows = Array.from(rotIdxs);
+        }
+        st.shiftVariantTurns = 0;
+        updateVariantCounter();
+        render(); saveCache();
+        const takenTxt = taken.length ? taken.map(r => rowLabel(r)).join(", ") : "—";
+        if (st.stopOnHit) {
+          return finishAuto(`🔻 Полный проход (${dirLabel}): цикл вариантов пройден, захвачены строки ${takenTxt}. Остановлено по «🛑 Стоп на находке».`);
+        }
+        say(`🔻 Полный проход (${dirLabel}): цикл вариантов пройден, захвачены строки ${takenTxt} — пошёл новый круг.`);
+        autoFrame(tick);
+        return;
       }
       if (cycleDone) return finishAuto(`Авто (${dirLabel}) остановлен: полный цикл вариантов (${turns} из ${totalTurns}) пройден, совпадений не найдено.`);
       if (!moved) return finishAuto(`Авто (${dirLabel}) остановлен: больше нечего сдвигать.`);
@@ -4185,7 +4360,12 @@ function deleteSelectedRows(){
   // Нулевая строка — граница между построениями (номера отрицательные) и настоящими данными
   // (1, 2, 3…), см. ensureZeroRow(). Если удалили именно её, вернуть её на место обязательно:
   // иначе настоящие строки поедут в нумерации на единицу вверх и первая станет нулевой.
-  ensureZeroRow();
+  // "none" — вернуть строку, но КОЛОНКУ ПАТТЕРНОВ НЕ ТРОГАТЬ (v0.958, запрос пользователя: "при
+  // удалении из строк цепочек не надо ничего удалять и менять в паттернах"). Раньше шло без
+  // флага, и ensureZeroRow вставлял ещё и пустую ячейку паттернов на то же место — после удаления
+  // строк (например, построенных сверху, из-за чего st.topBuilt уменьшался и на его месте
+  // оказывалась непустая строка) вся колонка паттернов молча съезжала на строку вниз.
+  ensureZeroRow("none");
   if (st.selectedRows) st.selectedRows.clear();
   // Выделение в колонке паттернов после удаления тоже недействительно: номера съехали.
   if (st.selectedPats) st.selectedPats.clear();
@@ -5037,6 +5217,7 @@ function shiftOneRowAxisAware(r, axisDelta, realRotateFn, invFlagsRotateFn){
 const bShiftLEl = document.getElementById("bShiftL");
 if (bShiftLEl) {
   bShiftLEl.onclick = () => {
+    if (!shiftAllowed()) return; // 🔒 замок — Круг бит не двигает (см. shiftAllowed в fold-1-core)
     if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
     setLastDirMode("shiftL");
     mirrorsBeforeShift();
@@ -5051,6 +5232,7 @@ if (bShiftLEl) {
 const bShiftREl = document.getElementById("bShiftR");
 if (bShiftREl) {
   bShiftREl.onclick = () => {
+    if (!shiftAllowed()) return; // 🔒 замок — Круг бит не двигает (см. shiftAllowed в fold-1-core)
     if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
     setLastDirMode("shiftR");
     mirrorsBeforeShift();
@@ -5065,6 +5247,7 @@ if (bShiftREl) {
 const bShiftLInvEl = document.getElementById("bShiftLInv");
 if (bShiftLInvEl) {
   bShiftLInvEl.onclick = () => {
+    if (!shiftAllowed()) return; // 🔒 замок — Круг бит не двигает (см. shiftAllowed в fold-1-core)
     if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
     setLastDirMode("shiftLInv");
     mirrorsBeforeShift();
@@ -5079,6 +5262,7 @@ if (bShiftLInvEl) {
 const bShiftRInvEl = document.getElementById("bShiftRInv");
 if (bShiftRInvEl) {
   bShiftRInvEl.onclick = () => {
+    if (!shiftAllowed()) return; // 🔒 замок — Круг бит не двигает (см. shiftAllowed в fold-1-core)
     if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
     setLastDirMode("shiftRInv");
     mirrorsBeforeShift();

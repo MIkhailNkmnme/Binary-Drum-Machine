@@ -485,6 +485,38 @@ function formatRunsHtml(runs){
    участок был целым. Считается ОДИН РАЗ на весь render() (не на отдельную строку, как
    compute01HighlightMask). Возвращает массив по индексу строки — Set<локальный индекс символа
    ВНУТРИ этой строки> (не абсолютная колонка), какие позиции подсвечивать; null у строк без хитов. */
+/* "Δ▲" (см. #bDiffUp/.hldu) — бит, который НЕ РАВЕН биту НАД ним. "Над ним" — в том же ЭКРАННОМ
+   столбце, а не по индексу внутри строки: строки стоят со своими сдвигами выравнивания, и сравнение
+   по индексу сравнивало бы биты из разных столбцов. Геометрия берётся тем же rowShiftFor(), что и в
+   render(), поэтому подсветка всегда совпадает с картинкой (в том числе на "Лесенках" и осевых).
+   Сравнивается строка i с i−1 БУКВАЛЬНО, а не с ближайшей непустой выше: пустая строка — это
+   намеренный разрыв цепочки, перепрыгивать через неё значило бы сравнивать несоседние строки.
+   Нет бита над этим местом (строка выше короче/левее) — не красим: сравнивать не с чем. */
+function computeDiffUpMask(rows, align){
+  const n = rows.length;
+  const masks = new Array(n).fill(null);
+  if (n < 2) return masks;
+  let maxLen = 0;
+  for (const s of rows) if (s && s.length > maxLen) maxLen = s.length;
+  const shifts = rows.map((s, i) => (s && s.length) ? rowShiftFor(maxLen, i, s, align) : 0);
+  for (let i = 1; i < n; i++) {
+    const s = rows[i], up = rows[i - 1];
+    if (!s || !s.length || !up || !up.length) continue;
+    for (let k = 0; k < s.length; k++) {
+      const ch = s[k];
+      if (ch !== "0" && ch !== "1") continue;
+      const kUp = (k + shifts[i]) - shifts[i - 1];
+      if (kUp < 0 || kUp >= up.length) continue;
+      const chUp = up[kUp];
+      if (chUp !== "0" && chUp !== "1") continue;
+      if (chUp === ch) continue;
+      if (!masks[i]) masks[i] = new Set();
+      masks[i].add(k);
+    }
+  }
+  return masks;
+}
+
 function computeVertOnesMask(rows, align){
   const n = rows.length;
   const masks = new Array(n).fill(null);
@@ -678,6 +710,12 @@ function renderTabs() {
     '<button type="button" class="chain-dd-file" data-act="export" title="Сохранить ВСЕ вкладки-цепочки (со всеми их строками/паттернами/настройками) в файл .json">⬇ Файл</button>' +
     '<button type="button" class="chain-dd-file" data-act="import" title="Загрузить вкладки-цепочки из файла .json (заменит текущие все)">⬆ Файл</button>' +
     '<button type="button" class="chain-dd-file chain-dd-wipe" data-act="wipe" title="ПОЛНОСТЬЮ очистить кэш приложения в браузере: все вкладки-цепочки, настройки и раскладку панелей. Нужно, когда сохранённое состояние само вешает вкладку. Сначала выгрузи нужное кнопкой «⬇ Файл»">🗑 Кэш</button>' +
+    '</div>' +
+  // Выгрузка ТЕКУЩЕЙ цепочки в Excel (v0.966, запрос пользователя) — своим рядом: это не дамп
+  // состояния, как «⬇ Файл», а картинка для печати/разбора, и формат у неё совсем другой
+  // (см. exportChainToExcelXml).
+    '<div class="chain-dd-frow">' +
+    '<button type="button" class="chain-dd-file" data-act="xlsx" title="Выгрузить ТЕКУЩУЮ цепочку в Excel (формат «Таблица XML 2003», открывается двойным кликом). Столбец A — вся строка одним текстом, столбец B пустой, дальше с C — ПО ОДНОМУ БИТУ В ЯЧЕЙКУ, ровно с тем же выравниванием, что на экране. Формат ячеек текстовый, ячейки мелкими квадратиками под шрифт 8, цвета бит и фон полотна переносятся как есть. «½»-выравнивания встают в ближайший целый столбец — половины столбца в Excel не бывает">📊 Excel XML (цепочка)</button>' +
     '</div>' +
   // ВТОРОЙ РЯД — КЭШ ПАТТЕРНОВ (v0.822, упрощён в v0.825 по просьбе пользователя: "просто
   // текущие паттерны текущей цепочки туда в кэш отдельно, чтобы там не менялись они").
@@ -1638,6 +1676,21 @@ function render(){
 
   let maxLen = 0;
   for (const s of st.rows) if (s.length > maxLen) maxLen = s.length;
+  /* ПОЛЯ ПАТТЕРНОВ — СВОЯ ТОЧКА ОТСЧЁТА (v0.971). У цепочки это maxLen по её строкам; у П1/П2 —
+     длина самого длинного ПАТТЕРНА. Иначе короткие паттерны раскладывались бы по ширине цепочки
+     и треугол в колонке был бы не виден вовсе (сотня столбцов пустого отступа на пару бит).
+     Одно число на обе колонки: текст в них один и тот же (st.pats[i].text), отличается только
+     выравнивание, а оно берётся из patAlign/pat2Align. */
+  let maxPatLen = 0;
+  for (const p of (st.pats || [])) if (p && p.text && p.text.length > maxPatLen) maxPatLen = p.text.length;
+  // Отступ строки поля паттернов в СИМВОЛАХ — та же alignShift(), что и у цепочки. Печатается
+  // неразрывными пробелами, ровно как отступ битов в .bits (см. blankRun там же), поэтому
+  // "номер символа = номер столбца" работает и здесь — в том числе для экспорта в Excel.
+  const patFieldPad = (align, len, rowIdx) => {
+    if (!len || !maxPatLen) return "";
+    const sh = alignShift(maxPatLen, len, align, rowIdx);
+    return sh > 0 ? "&nbsp;".repeat(sh) : "";
+  };
   // "⊙ Оси по битам" — пересобрать группы осей, если набор выбранных ячеек (или выравнивание)
   // изменился с прошлого кадра (см. bitAxesRefresh). Дешёвая проверка по сигнатуре набора.
   if (typeof bitAxesRefresh === "function") bitAxesRefresh();
@@ -2061,7 +2114,8 @@ function render(){
   if (bgBelowNow) {
     const fresh = [];
     for (const r of bgBelowNow) if (!bgBelowHits.has(r)) { bgBelowHits.add(r); fresh.push(r); }
-    if (fresh.length) say("🔽 Все ниже: совпал паттерн " + (fresh.length > 1 ? "строк" : "строки") +
+    if (fresh.length) say((st.fullPassMode ? "🔻 Полный проход" : "🔽 Все ниже") +
+      ": совпал паттерн " + (fresh.length > 1 ? "строк" : "строки") +
       " № " + fresh.map(r => r + 1).join(", ") + " — помечены зелёным до Сброса.");
   }
   if (bgSearchActive()) {
@@ -2180,6 +2234,16 @@ function render(){
   const vertOnesMask = st.highlightVert1
     ? memoMask("vertOnes", [st.rows, st.align], () => computeVertOnesMask(st.rows, st.align))
     : null;
+  // "Δ▲" — своя маска: сравнение идёт со строкой ВЫШЕ, в render'е такого соседа под рукой нет.
+  const diffUpMask = st.diffUpShow
+    ? memoMask("diffUp", [st.rows, st.align], () => computeDiffUpMask(st.rows, st.align))
+    : null;
+  // "⇄🔎 Реверс: неподвижные" и "Δ◧" маски не требуют — признак виден прямо в строке, — но им
+  // нужен НАБОР СТРОК: выделенные, а если не выделено ничего, то все (то же правило, что и у
+  // самой кнопки "⇄ Реверс").
+  const revKeepRows = st.revKeepShow
+    ? ((st.selectedRows && st.selectedRows.size) ? st.selectedRows : null)
+    : undefined;
   const diagOnesMask = st.highlightDiag1
     ? memoMask("diagOnes", [st.rows, st.align, Array.from(st.rowDividers || []).sort((a, b) => a - b)],
                () => computeDiagOnesMaskSectioned(st.rows, st.align, st.rowDividers))
@@ -2613,8 +2677,13 @@ function render(){
       // шага (#N) в обёртку не входят намеренно — они не часть паттерна.
       // skipHead — отрезанный "⏭ Без 1-го" первый символ, СНАРУЖИ заливки (см. выше).
       const patTxtHtml = skipHead + '<span class="pat-txt">' + textHtml + '</span>';
-      pat = '<span class="' + c + '"' + allHitStyle + '>' + patTxtHtml + numLeftHtml + stepHtml + '</span>';
-      patRight = '<span class="' + c2 + '"' + allHitStyle + '>' + numRightHtml + patTxtHtml + stepHtml + '</span>';
+      /* ОТСТУП ПОЛЯ — СНАРУЖИ .pat-txt (v0.971). Внутри нельзя: на .pat-txt лежит заливка находки,
+         и отступ красился бы вместе с паттерном, читаясь как найденные пустые биты. У П1 и П2
+         отступ СВОЙ — у полей разное выравнивание, в этом весь смысл разделения на три поля. */
+      const padL = patFieldPad(patAlign, p.text.length, i);
+      const padR = patFieldPad(pat2Align, p.text.length, i);
+      pat = '<span class="' + c + '"' + allHitStyle + '>' + padL + patTxtHtml + numLeftHtml + stepHtml + '</span>';
+      patRight = '<span class="' + c2 + '"' + allHitStyle + '>' + numRightHtml + padR + patTxtHtml + stepHtml + '</span>';
     } else {
       pat = '<span class="pat">' + numLeftHtml + '</span>';
       patRight = '<span class="pat2">' + numRightHtml + '</span>';
@@ -2902,6 +2971,15 @@ function render(){
       // чередуется яркость соседних линий (.hldf-alt).
       const diagFoldOrd = (diagFoldMask && diagFoldMask[i] && (bit === '0' || bit === '1')) ? diagFoldMask[i].get(k) : undefined;
       const isDiagFold = diagFoldOrd !== undefined;
+      // v0.968: три новые подсветки, все чисто показные (см. .hlrk/.hldl/.hldu в CSS).
+      // "Реверс: неподвижные" — палиндромная позиция: разворот строки оставит тут то же значение.
+      const isRevKeep = st.revKeepShow && (bit === '0' || bit === '1') && s.length > 0 &&
+        (revKeepRows === null || (revKeepRows && revKeepRows.has(i))) && s[s.length - 1 - k] === bit;
+      // "Δ слева" — бит не равен соседу слева. Первый бит строки не красится: слева ничего нет.
+      const isDiffLeft = st.diffLeftShow && (bit === '0' || bit === '1') && k > 0 &&
+        (s[k - 1] === '0' || s[k - 1] === '1') && s[k - 1] !== bit;
+      // "Δ сверху" — готовый ответ из computeDiffUpMask (там же и вся геометрия столбцов).
+      const isDiffUp = !!(diffUpMask && diffUpMask[i] && diffUpMask[i].has(k));
       // Бит, сейчас находящийся в перевёрнутом состоянии (нечётное число переходов границы) —
       // см. invFlagsMap выше (сама строка флагов взята до цикла).
       const isInvBit = !!(invFlagsRow && invFlagsRow.length === s.length && invFlagsRow[k]);
@@ -2979,10 +3057,11 @@ function render(){
         emit('<span class="col-sel-bit b' + bit + '"' + colAttr + '>', bit, mrg);
       } else if (isXoredBit && (bit === '0' || bit === '1')) {
         emit('<span class="xored-bit"' + colAttr + '>', bit, mrg);
-      } else if (is01Pair || is1Right || isVert1 || isDiag1 || isDiagFold) {
+      } else if (is01Pair || is1Right || isVert1 || isDiag1 || isDiagFold || isRevKeep || isDiffLeft || isDiffUp) {
         // Несколько подсветок могут совпасть на одном символе — вешаем все подходящие классы;
         // порядок объявления в CSS (.hl01 → .hlv1 → .hld1 → .hldf) решает, чей цвет визуально победит.
         const hlCls = 'b' + bit + (is01Pair ? ' hl01' : '') + (is1Right ? ' hl11r' : '') + (isVert1 ? ' hlv1' : '') + (isDiag1 ? ' hld1' : '') +
+          (isRevKeep ? ' hlrk' : '') + (isDiffLeft ? ' hldl' : '') + (isDiffUp ? ' hldu' : '') +
           (isDiagFold ? (' hldf' + (foldBgStyle ? ' hldf-bg' : '')) : '');
         // Цвет — по порядку сбора (foldOrderColor): у поколоночных режимов красим фон, у
         // диагоналей сам символ.
@@ -3481,6 +3560,13 @@ function render(){
       chainTextEl.innerHTML = html || '<span class="empty">пусто</span>';
     }
     applyResultHeightLock();
+    // Окно «ℹ Поле» (v0.972) считает выбранные биты из cellSel/patCellSel — они меняются
+    // кликами, а не курсором, поэтому обновлять надо и на перерисовке, не только на mousemove.
+    if (typeof updateFieldInfo === "function") updateFieldInfo();
+    // Подсветка "🔻 Полного прохода" — это кнопка, а не чекбокс, и сама за состоянием не следит:
+    // st.fullPassMode живёт в состоянии ВКЛАДКИ, значит при переключении вкладок класс на кнопке
+    // надо переставить. Дешевле всего — тут же, где чинится и замок высоты панели.
+    if (typeof applyFullPassBtn === "function") applyFullPassBtn();
   }
   // Отдельное окно результата живёт своей жизнью, но содержимое обновляется тем же render()
   // (см. openResultPopup): что в панели, то и в окне — только без потолка и с переносом строк.
@@ -4093,6 +4179,12 @@ function markHorizTruncated(bodyEl){
    прокрутка у длинных вложенных списков вроде .step-log-sub-container); вручную (за ручку
    .step-log-resize-handle) растянуть можно и больше — тот предел не трогаем. */
 function applyStepLogBodyHeight(bodyEl){
+  // "📌" — высота ЗАКРЕПЛЕНА на текущем размере (v0.962, запрос пользователя "сделай фикс размера
+  // как в Результатах — кнопка"): пара к #bLockResultHeight у панели "Результат". Панель больше
+  // не растёт под новое содержимое, внутри просто скролл (у .step-log-body свой overflow-y).
+  const lockBtn = document.getElementById("bLockStepLogHeight");
+  if (lockBtn) lockBtn.classList.toggle("mode-act", stepLogHeightLocked);
+  if (stepLogHeightLocked && stepLogBodyHeight !== null) { bodyEl.style.height = stepLogBodyHeight + "px"; return; }
   bodyEl.style.height = "";
   const natural = Math.min(bodyEl.scrollHeight, window.innerHeight * 0.5);
   if (stepLogBodyHeight === null || natural > stepLogBodyHeight) stepLogBodyHeight = natural;
@@ -4100,6 +4192,15 @@ function applyStepLogBodyHeight(bodyEl){
 }
 
 let msgTimer = null;
+/* ВЫСОТА ПЛАШКИ ТОЛЬКО РАСТЁТ (v0.962, запрос пользователя: "если увеличиваешь высоту то не
+   уменьшай — это при Авто шагах, когда там много уведомлений показывается"). Тот же приём, что у
+   #stepLogBody (см. applyStepLogBodyHeight): меряем, сколько РЕАЛЬНО нужно новому тексту (для
+   этого на момент замера снимаем inline-height, иначе scrollHeight вернул бы уже применённую
+   старую высоту), и запоминаем максимум за всё время. Короткое сообщение после длинного коробку
+   больше не ужимает, так что нижний край стоит на месте; верхний край стоит всегда — он прибит
+   в CSS (#msg top:calc(100vh - 144px)), а расти коробке разрешено только вниз, в отведённые
+   max-height:120px. */
+let msgBoxHeight = 0;
 /* kind (v0.951) — необязательная пометка вида сообщения: "hit" красит плашку в зелёный (см.
    #msg.hit в CSS). Всё, что зовёт say() одним аргументом, ведёт себя как раньше — класс каждый
    раз снимается заново, чтобы зелёный не «залипал» на следующем обычном сообщении. */
@@ -4113,6 +4214,10 @@ function say(t, kind){
   el.textContent = t;
   el.classList.toggle("hit", kind === "hit");
   el.classList.add("show");
+  el.style.height = "";
+  const natural = el.scrollHeight;
+  if (natural > msgBoxHeight) msgBoxHeight = natural;
+  el.style.height = msgBoxHeight + "px";
   if (msgTimer) clearTimeout(msgTimer);
   msgTimer = setTimeout(() => {
     el.classList.remove("show");
@@ -4847,6 +4952,7 @@ if (chainDdToggleEl && chainDdListEl) {
       else if (act === "uisave") saveUiSettingsNow();
       else if (act === "uireset") resetUiSettingsNow();
       else if (act === "copychain") copySelectedRows(true);
+      else if (act === "xlsx") exportChainToExcelXml();
       // Явная ветка вместо прежнего "else importAllTabs()": с ростом числа кнопок молчаливый
       // fallback означал бы, что любая новая кнопка без своей ветки внезапно грузит файл.
       else if (act === "import") importAllTabs();
@@ -4973,6 +5079,196 @@ function exportAllTabs(){
   URL.revokeObjectURL(url);
   say(`Сохранено в файл: ${st.tabs.length} вкладок.`);
 }
+/* ═══ ЭКСПОРТ ЦЕПОЧКИ В EXCEL XML (v0.966, запрос пользователя) ═══
+   Формат — SpreadsheetML 2003 (.xml, "Excel 2003 XML"): обычный текстовый XML, который Excel
+   открывает как книгу. Взят намеренно вместо .xlsx: тот — zip-архив, его без сторонней
+   библиотеки не собрать, а тут вся книга со стилями пишется одной строкой.
+   Раскладка (ровно как просил пользователь):
+     столбец A — ВСЯ строка цепочки одним текстом;
+     столбец B — пустой разделитель;
+     столбцы C и дальше — ПО ОДНОМУ БИТУ В ЯЧЕЙКУ, с соблюдением выравнивания.
+   ВЫРАВНИВАНИЕ И ЦВЕТА БЕРУТСЯ ИЗ ЖИВОГО DOM, а не считаются заново. Это не лень, а точность:
+   render() уже разложил каждую строку по столбцам (отступы напечатаны как &nbsp;, поэтому НОМЕР
+   СИМВОЛА В .bits И ЕСТЬ НОМЕР СТОЛБЦА) и уже покрасил каждый бит всеми слоями подсветки —
+   находка, изменённые биты, маска, «🌈 Все паттерны», зеркала, выбранный столбец. Повторять эту
+   арифметику здесь значило бы завести вторую копию правил, которая разъедется с первой на первой
+   же правке. getComputedStyle отдаёт итоговый цвет как он есть на экране.
+   ЕДИНСТВЕННОЕ, ЧТО НЕ ПЕРЕЕЗЖАЕТ — полустолбцы «½»-выравниваний: они живут не в символах, а в
+   transform на полстолбца (см. halfShiftAttr), а ячейки в половину столбца в Excel не бывает.
+   Такие строки встают в ближайший целый столбец. */
+function xlsxRgbToHex(v){
+  if (!v) return null;
+  const m = String(v).match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?/);
+  if (!m) return null;
+  if (m[4] !== undefined && parseFloat(m[4]) === 0) return null; // прозрачный — фона нет
+  const h = x => (+x).toString(16).padStart(2, "0");
+  return "#" + h(m[1]) + h(m[2]) + h(m[3]);
+}
+/* Ближайший НЕпрозрачный фон: у самого бита он обычно не задан, и цвет надо взять у предка
+   (строки/полотна) — иначе в книгу уехало бы "фона нет" вместо реального тёмного полотна. */
+function xlsxSolidBg(el){
+  for (let node = el; node && node !== document.documentElement; node = node.parentElement) {
+    const c = xlsxRgbToHex(getComputedStyle(node).backgroundColor);
+    if (c) return c;
+  }
+  return null;
+}
+function xlsxEsc(s){
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function exportChainToExcelXml(){
+  const n = Math.max(st.rows.length, st.pats.length);
+  if (!n) { say("📊 Excel: выгружать нечего — в цепочке нет строк."); return; }
+  /* ВИРТУАЛИЗАЦИЯ (см. vrowsRange/VROWS_MIN): в DOM лежит только видимое окно строк, а выгрузить
+     надо все. Временно поднимаем порог, перерисовываем — и возвращаем как было. Иначе у длинных
+     цепочек в файл ушла бы только та часть, что случайно оказалась на экране. */
+  const prevMin = VROWS_MIN;
+  VROWS_MIN = Math.max(prevMin, n + 16);
+  render();
+
+  const rowsHost = document.getElementById("rows");
+  const canvasEl = document.getElementById("screenCanvas");
+  const sheetBg = (canvasEl ? xlsxSolidBg(canvasEl) : null) || "#12141a";
+  const sheetFg = xlsxRgbToHex(getComputedStyle(canvasEl || document.body).color) || "#d8dce6";
+
+  // Стили заводим по мере надобности, по одному на пару "цвет + фон" — в книге их выходит
+  // десяток-другой, а не по стилю на ячейку.
+  const styles = new Map();
+  const styleId = (color, bg) => {
+    const key = (color || sheetFg) + "|" + (bg || sheetBg);
+    let id = styles.get(key);
+    if (!id) { id = "s" + styles.size; styles.set(key, id); }
+    return id;
+  };
+
+  /* СДВИГ, КОТОРОГО НЕТ В ТЕКСТЕ (v0.967, жалоба пользователя: "обычная лесенка — выравнивание не
+     соблюдено"). Пробелами (&nbsp;) печатается только ПОЛОЖИТЕЛЬНЫЙ отступ строки. Отрицательный
+     сдвиг, полушаг "½"-выравниваний и общий сдвиг ручки #axisSplit render кладёт в
+     transform:translateX(...) на внутреннем span (см. halfShiftAttr) — в тексте .bits их нет
+     вовсе. У обычной "Лесенки" сдвиг верхних строк как раз уходит в минус, поэтому вся диагональ
+     в книге и рассыпалась: пробелов напечатано 0, а строка на экране стоит левее.
+     Читаем этот трансформ и переводим пиксели обратно в столбцы тем же шагом, каким render его
+     считал (realColStepPx). Полушаги округляются до целого столбца — половины столбца в Excel
+     не бывает. */
+  const colStep = (typeof realColStepPx === "function" ? realColStepPx() : 0) || 1;
+  const rowShiftCols = (el) => {
+    const inner = el && el.firstElementChild;
+    if (!inner || !inner.style || !inner.style.transform) return 0;
+    const m = inner.style.transform.match(/translateX\(\s*(-?[\d.]+)px/);
+    return m ? Math.round(parseFloat(m[1]) / colStep) : 0;
+  };
+
+  /* Собираем ВСЁ в память до записи XML: с отрицательным сдвигом номер столбца уходит в минус, а
+     столбцов с отрицательным номером не бывает. Поэтому сперва находим самый левый занятый
+     столбец по ВСЕЙ цепочке и уже от него отсчитываем колонку C — картинка от этого только
+     прижимается к левому краю листа, взаимное расположение строк не меняется. */
+  const picked = [];
+  let minCol = Infinity;
+  const csCache = new Map();
+  for (let i = 0; i < n; i++) {
+    const line = [];
+    const ln = rowsHost ? rowsHost.querySelector('.ln[data-idx="' + i + '"]') : null;
+    const bitsEl = ln ? ln.querySelector(".bits") : null;
+    if (bitsEl) {
+      const base = rowShiftCols(bitsEl);
+      const walker = document.createTreeWalker(bitsEl, NodeFilter.SHOW_TEXT, null);
+      let col = 0, tn;
+      while ((tn = walker.nextNode())) {
+        const host = tn.parentElement;
+        let look = csCache.get(host);
+        if (!look) {
+          const cs = getComputedStyle(host);
+          look = { color: xlsxRgbToHex(cs.color), bg: xlsxSolidBg(host) };
+          csCache.set(host, look);
+        }
+        for (const ch of tn.nodeValue) {
+          //   — тот самый &nbsp;, которым напечатан отступ выравнивания: место занимает,
+          // бита в нём нет. Столбец всё равно считаем — на нём и держится вся геометрия.
+          if (ch !== " " && ch !== " " && ch !== "\n") {
+            const c = base + col;
+            if (c < minCol) minCol = c;
+            line.push({ c: c, ch: ch, color: look.color, bg: look.bg });
+          }
+          col++;
+        }
+      }
+    }
+    picked.push(line);
+  }
+
+  VROWS_MIN = prevMin;
+  render();
+
+  if (!isFinite(minCol)) minCol = 0;
+  const rowsXml = [];
+  let maxCol = 0;
+  for (let i = 0; i < n; i++) {
+    const cells = [];
+    const text = st.rows[i] != null ? st.rows[i] : "";
+    // Столбец A — сама строка целиком, текстом.
+    cells.push('<Cell ss:Index="1" ss:StyleID="sA"><Data ss:Type="String">' + xlsxEsc(text) + "</Data></Cell>");
+    for (const b of picked[i]) {
+      const excelCol = 3 + (b.c - minCol); // C и дальше
+      if (excelCol > maxCol) maxCol = excelCol;
+      cells.push('<Cell ss:Index="' + excelCol + '" ss:StyleID="' + styleId(b.color, b.bg) +
+                 '"><Data ss:Type="String">' + xlsxEsc(b.ch) + "</Data></Cell>");
+    }
+    rowsXml.push('<Row ss:Height="11">' + cells.join("") + "</Row>");
+  }
+
+  const styleXml = Array.from(styles.entries()).map(function(kv){
+    const parts = kv[0].split("|");
+    return '<Style ss:ID="' + kv[1] + '"><Font ss:FontName="Consolas" ss:Size="8" ss:Color="' + parts[0] +
+           '"/><Interior ss:Color="' + parts[1] + '" ss:Pattern="Solid"/></Style>';
+  }).join("");
+
+  /* Стиль Default Excel применяет ко ВСЕМ ячейкам листа, в том числе пустым — им и красим фон
+     полотна целиком. Иначе пропуски между битами остались бы белыми и картинка распалась бы.
+     NumberFormat "@" — тот самый ТЕКСТОВЫЙ формат ячеек: без него Excel считает "1"/"0" числами,
+     выравнивает их вправо и съедает ведущие нули в столбце A. */
+  const sheetName = xlsxEsc(String((st.tabs && st.tabs[st.activeTab] ? st.tabs[st.activeTab].name : "Цепочка")).slice(0, 28));
+  const xml =
+    '<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n' +
+    '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"' +
+    ' xmlns:o="urn:schemas-microsoft-com:office:office"' +
+    ' xmlns:x="urn:schemas-microsoft-com:office:excel"' +
+    ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n' +
+    "<Styles>" +
+      '<Style ss:ID="Default" ss:Name="Normal">' +
+        '<Alignment ss:Horizontal="Center" ss:Vertical="Center"/>' +
+        '<Font ss:FontName="Consolas" ss:Size="8" ss:Color="' + sheetFg + '"/>' +
+        '<Interior ss:Color="' + sheetBg + '" ss:Pattern="Solid"/>' +
+        '<NumberFormat ss:Format="@"/>' +
+      "</Style>" +
+      // Столбец A — тот же текстовый формат, но по левому краю: там целая строка, а не один бит.
+      '<Style ss:ID="sA"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/>' +
+        '<Font ss:FontName="Consolas" ss:Size="8" ss:Color="' + sheetFg + '"/>' +
+        '<Interior ss:Color="' + sheetBg + '" ss:Pattern="Solid"/>' +
+        '<NumberFormat ss:Format="@"/></Style>' +
+      styleXml +
+    "</Styles>\n" +
+    '<Worksheet ss:Name="' + sheetName + '">\n' +
+    "<Table>\n" +
+    // Ширины в ПУНКТАХ. 11pt при шрифте 8 даёт ячейку примерно в свой же рост — то самое
+    // "мелкими квадратиками" (высота строк тоже 11, см. ss:Height выше).
+    '<Column ss:Index="1" ss:Width="220"/>' +
+    '<Column ss:Index="2" ss:Width="10"/>' +
+    (maxCol >= 3 ? '<Column ss:Index="3" ss:Width="11" ss:Span="' + (maxCol - 3) + '"/>' : "") + "\n" +
+    rowsXml.join("\n") +
+    "\n</Table>\n</Worksheet>\n</Workbook>\n";
+
+  const blob = new Blob(["﻿" + xml], { type: "application/vnd.ms-excel;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "zerkalius-fold-" + new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-") + ".xml";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  say("📊 Excel XML: выгружено строк — " + n + ", столбцов бит — " + Math.max(0, maxCol - 2) + ". Открывается двойным кликом в Excel.");
+}
+
 const importTabsInputEl = document.getElementById("importTabsInput");
 function importAllTabs(){
   if (importTabsInputEl) importTabsInputEl.click();
