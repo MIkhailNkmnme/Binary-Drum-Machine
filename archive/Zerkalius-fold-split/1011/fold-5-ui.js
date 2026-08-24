@@ -92,19 +92,33 @@ function applyPatOffsets(){
   root.style.setProperty("--bits-offy", ((bitsOffY || 0) * rowH).toFixed(2) + "px");
   root.style.setProperty("--chain-shift-x", ((chainShiftCols || 0) * step).toFixed(2) + "px");
 }
+/* СТОПОР У ЛЕВОГО КРАЯ БРАУЗЕРА, А НЕ ОБРЕЗКА (v1.010, запрос пользователя: "биты попадая туда
+   заходят за неё и упираются в границу браузера, каждая строка по-своему... не обрезать их, а
+   стопорить"). Протяжка П1 мышью (pan.field==="L" в блоке "ТАЩИТЬ ПОЛЕ ЗА БИТЫ" ниже) уводит
+   .pat-shift сколь угодно далеко влево (наезжать можно докуда угодно, см. v0.976) — без стопора
+   она рано или поздно уезжает ЗА ФИЗИЧЕСКИЙ ЛЕВЫЙ КРАЙ ОКНА БРАУЗЕРА (x=0) и там просто обрезается
+   вьюпортом, невидимо. НУЖНО СТОПОРИТЬ, А НЕ ДАВАТЬ ОБРЕЗАТЬ — и ПО КАЖДОЙ СТРОКЕ ОТДЕЛЬНО: строки
+   могут отличаться (своё выравнивание, длина паттерна), поэтому самая левая точка — не общий
+   счёт от patOffL, а РЕАЛЬНЫЙ getBoundingClientRect() каждого отрисованного .pat-shift.
+   Зависимость патOffL→пиксели строго линейна (шаг = realColStepPx()), поэтому одной поправки
+   ЦЕЛЫМИ столбцами хватает без цикла: если самая левая точка ушла в минус, отодвигаем patOffL
+   вправо ровно настолько, чтобы она вернулась на 0 (с округлением вверх — лучше на пиксель левее
+   от точной границы, чем снова пересечь её). */
+function clampPatOffLLeftEdge(){
+  const shifts = document.querySelectorAll("#rows .ln .pat > .pat-shift");
+  if (!shifts.length) return;
+  let minLeft = Infinity;
+  shifts.forEach(el => { const l = el.getBoundingClientRect().left; if (l < minLeft) minLeft = l; });
+  if (!(minLeft < 0)) return;
+  const step = realColStepPx() || 8;
+  patOffL = (patOffL || 0) + Math.ceil(-minLeft / step);
+  applyPatOffsets();
+}
 /* СДВИНУТЬ ПОЛЕ НА N СТОЛБЦОВ / N СТРОК (v0.982). Одна точка входа для мыши, клавиатуры и сброса —
    иначе три способа двигать поле разошлись бы в мелочах (что считать шагом, кого перерисовывать).
    Центральному полю горизонталь — это st.axisCenterOffset, та же величина, что у ручки оси;
    вертикаль у всех трёх чисто визуальная и перерисовки не требует. */
 function nudgeField(field, dCols, dRows){
-  /* ЗАМОК ОСЕЙ (v1.024, «{=-=}» в полоске под осью, см. moveLock в fold-1-core.js). Гасим ось
-     ЗДЕСЬ, а не у вызывающих: сюда сходятся все три способа подвинуть поле стрелками (Alt+стрелки,
-     стрелки под 🔒, ручки осей через свои функции), и одна проверка на входе надёжнее трёх
-     раскиданных. Обнулённая составляющая просто ничего не делает — жест остаётся живым по
-     разрешённой оси. */
-  if (!moveColsAllowed()) dCols = 0;
-  if (!moveRowsAllowed()) dRows = 0;
-  if (!dCols && !dRows) return;
   if (field === "C") {
     if (dCols) {
       st.axisCenterOffset = (st.axisCenterOffset || 0) + dCols;
@@ -122,10 +136,15 @@ function nudgeField(field, dCols, dRows){
     applyPatOffsets();
   }
 }
-/* nudgeAllFields() (v0.988 — v1.017) УБРАНА вместе со своим мышиным жестом: протяжка вне полей
-   больше не двигает все три поля разом, а честно мотает полотно вбок (см. "ПРОТЯЖКА МИМО ГЛИФОВ"
-   ниже). Раз "всё разом" нечем включить, не нужна и ветка lastPanField === "ALL" в обработчике
-   Alt+стрелок (fold-4-tools.js) — она убрана там же. */
+/* СДВИНУТЬ ВСЕ ТРИ ПОЛЯ РАЗОМ (v0.988) — клавиатурный аналог протяжки за пустое место холста
+   (v0.985, "как горизонтальный скролл, сразу всех"). lastPanField встаёт в "ALL" тем же кликом
+   вне полей и строк (см. canvasPanEl.mousedown в блоке протяжки ниже) — Alt+стрелки после такого
+   клика попадают сюда, а не в nudgeField() одного поля. */
+function nudgeAllFields(dCols, dRows){
+  nudgeField("L", dCols, dRows);
+  nudgeField("R", dCols, dRows);
+  nudgeField("C", dCols, dRows);
+}
 const bAlignPatLEl = document.getElementById("bAlignPatL");
 // e.detail >= 2 — второй (и далее) click той же двойной-клик-последовательности: цикл ей не
 // достаётся, дальше идёт dblclick-сброс (см. dblReset выше) — иначе двойной клик успевал бы
@@ -248,24 +267,16 @@ function applySelectEnabled(){
     b.textContent = selectEnabled ? "🔓" : "🔒";
     b.classList.toggle("overlay-on", !selectEnabled);
   }
-  /* И сразу за ярлыком этой же кнопки в слотах (v1.021): СНЯТИЕ замка идёт без render() — только
-     applySelectEnabled() + saveCache(), — поэтому одного вызова из render() тут не хватает, ярлык
-     оставался бы с 🔒 до ближайшей перерисовки по другому поводу. */
-  if (typeof refreshPinSlotIcons === "function") refreshPinSlotIcons();
 }
 const bToggleSelectEl = document.getElementById("bToggleSelect");
 if (bToggleSelectEl) {
   bToggleSelectEl.onclick = () => {
     selectEnabled = !selectEnabled;
     applySelectEnabled();
-    // Включение замка (🔒) не только запрещает НОВОЕ выделение (см. selectionAllowed), но и
-    // сразу гасит уже выбранное — запрос пользователя "в режиме Замка все выделения снимать".
-    // Та же функция, что и у Escape (см. clearAllSelections в fold-1-core).
-    if (!selectEnabled) { clearAllSelections(); render(); }
     saveCache();
     say(selectEnabled
       ? "🔓 Выделение включено — строки, паттерны и биты снова выделяются."
-      : "🔒 Выделение выключено — все выделения сняты, по полотну ничего не выделяется, поля по-прежнему двигаются.");
+      : "🔒 Выделение выключено — по полотну ничего не выделяется, поля по-прежнему двигаются.");
   };
 }
 applySelectEnabled();
@@ -456,27 +467,6 @@ function applyFieldColors() {
 if (colFieldL) colFieldL.oninput = () => { applyFieldColors(); saveCacheSoon(); };
 if (colFieldC) colFieldC.oninput = () => { applyFieldColors(); saveCacheSoon(); };
 if (colFieldR) colFieldR.oninput = () => { applyFieldColors(); saveCacheSoon(); };
-
-/* ЦВЕТА «1» И «0» В КОЛОНКАХ ПАТТЕРНОВ (v1.031, запрос пользователя: "цвета для 1 и 0 П1 и П2 надо
-   задавать"). Пара к applyColors() выше, только та красит биты ЦЕПОЧКИ (--c1/--c0), а эта — текст
-   паттернов, своей парой на каждую колонку. Разными функциями и разными пикерами по той же причине,
-   что и у фонов полей: слои разные, и крутят их независимо.
-   Перерисовка не нужна вовсе — цвет живёт целиком в CSS-переменных, разметка от него не меняется ни
-   на символ (сами обёртки .pb1/.pb0 ставит colorPatBits() в render). */
-const colPat1L = document.getElementById("colPat1L");
-const colPat0L = document.getElementById("colPat0L");
-const colPat1R = document.getElementById("colPat1R");
-const colPat0R = document.getElementById("colPat0R");
-function applyPatBitColors(){
-  const root = document.documentElement;
-  if (colPat1L) root.style.setProperty("--pat-c1-l", colPat1L.value);
-  if (colPat0L) root.style.setProperty("--pat-c0-l", colPat0L.value);
-  if (colPat1R) root.style.setProperty("--pat-c1-r", colPat1R.value);
-  if (colPat0R) root.style.setProperty("--pat-c0-r", colPat0R.value);
-}
-for (const el of [colPat1L, colPat0L, colPat1R, colPat0R]) {
-  if (el) el.oninput = () => { applyPatBitColors(); saveCacheSoon(); };
-}
 
 /* #RRGGBB -> rgba(...) с заданной прозрачностью — цвет <input type="color"> всегда непрозрачный,
    а фон выделенной строки (--rowbg-sel) должен оставаться полупрозрачным, иначе перекроет
@@ -1098,8 +1088,8 @@ function fitPatColumnTo(varName){
    .vsplit-границы и коробки колонок никуда не ехали, слева проступал не единый пустой холст, а
    огрызки фоновых плашек ячеек. Теперь честный layout-сдвиг: chainShiftCols → margin-left у
    .chain (см. .chain{margin-left:var(--chain-shift-x)} в CSS и её же в applyPatOffsets()).
-   .vsplit-границы, #colHeader, #axisSplit — все position:absolute ОТНОСИТЕЛЬНО .chain, поэтому
-   едут вместе с ней бесплатно, никакого пересчёта их left не нужно. Слева проступает родной фон .canvas
+   .vsplit*/#colHeader/#axisSplit — все position:absolute ОТНОСИТЕЛЬНО .chain, поэтому едут вместе
+   с ней бесплатно, никакого пересчёта their left не нужно. Слева проступает родной фон .canvas
    (--cbg, он уже #000) — отдельно красить в чёрный не пришлось.
    Стопор влево — до нуля (упор в левый край экрана), дальше нельзя: это ЗАКРЫВАЕТ пустоту, а не
    уводит раскладку в минус (там ей уже нечего делать — левее исходного положения нет смысла). */
@@ -1148,207 +1138,6 @@ function fitPatColumnTo(varName){
   });
 }
 
-/* ═══ СЛОТЫ ЗАКРЕПЛЁННЫХ КНОПОК СЛЕВА/СПРАВА ОТ ПОЛОСЫ ВЫРАВНИВАНИЙ (v1.012, запрос пользователя:
-   "поля справа и слева от выравниваний меню — для вставки значков кнопок, которые перетаскиванием
-   закрепляются"; уточнение — "любая кнопка из любого места", "фиксированное число, хранится в
-   кэше") ═══
-   В слоте лежит НЕ клон логики, а маленький ПРОКСИ: клик по нему делает
-   document.getElementById(id).click() — работает одинаково для ЛЮБОЙ кнопки приложения,
-   независимо от того, как у неё устроен обработчик (onclick-атрибут, addEventListener,
-   делегирование) — раз кликается сам оригинал, все его пути срабатывают как обычно.
-   draggable="true" кнопкам в разметке не прописан (это тысячи кнопок по всему файлу) —
-   выставляется ЛЕНИВО, при первом mousedown по любой кнопке с id (делегирование на document),
-   один раз на кнопку. У прокси-кнопок В САМИХ СЛОТАХ id нет — поэтому они сами никогда не
-   попадают под этот же селектор и не тащатся рекурсивно. */
-var PIN_SLOTS_N = 5;   // столько пустых ячеек с каждой стороны — если мало/много, менять только тут
-                       // (var, а не const — см. про TDZ у pinSlots ниже)
-/* Стартовый набор (v1.015, запрос пользователя — прислал два скриншота с "эти закрепи"/"эти тоже
-   перенеси"): "◐ Слои"/"⌖ Поля на место"/"⬇ Меню вниз" слева, ↩/↪/🔗/🧾/🔒/ℹ справа. Актуален
-   только пока в кэше нет своего pinSlots — как только пользователь сам перетащит что-то (или уже
-   перетаскивал раньше), applyUiSettings() перекроет этот набор сохранённым. */
-/* var, А НЕ let (испр. v1.022, ошибка в консоли: "Cannot access 'PIN_SLOTS_N' before
-   initialization"). С v1.021 ярлыки обновляет refreshPinSlotIcons(), и зовёт её в том числе
-   render() из fold-2 — а тот успевает отработать РАНЬШЕ, чем выполнится эта строка в fold-5
-   (файл грузится последним). Сама функция всплывает как объявление и вызывается нормально, но её
-   тело читает pinSlots/PIN_SLOTS_N — у let/const это временная мёртвая зона, то есть исключение.
-   Та же причина и то же лекарство, что у patW2Manual/numProbeEl и прочих глобалов, к которым
-   render() дотягивается до их строки: объявляем var — оно всплывает вместе с функцией. */
-var pinSlots = {
-  L: ["bLayerFocus", "bResetFields", "bMenuBarBottom", "bUndo", "bRedo"],
-  R: ["bToggleResultBox", "bToggleStepLog", "bToggleSelect", "bToggleFieldInfo", null]
-};
-/* ТОЛЬКО ЗНАЧОК, БЕЗ ТЕКСТА (запрос пользователя: "в слотах надо значки без текста"). Раньше в
-   слот копировался innerHTML оригинала целиком — вместе с подписью ("🔒 Выделение", "⌖ Поля на
-   место"), и пять таких ярлыков растягивали полосу выравниваний на пол-экрана. Берём ПЕРВОЕ
-   "слово" подписи — у кнопок приложения это как раз эмодзи-иконка ("🔗", "⧬+⨁", "↩"), — и режем
-   до 4 символов. Подпись целиком остаётся в title, так что что это за кнопка, видно по наведению.
-   Пусто (кнопка вообще без текста) — показываем id без служебной первой буквы b/c. */
-function pinSlotIcon(src, id){
-  const label = ((src && src.textContent) || "").replace(/\s+/g, " ").trim();
-  const first = (label.split(" ")[0] || "").trim();
-  return Array.from(first || id.replace(/^[bc]/, "")).slice(0, 4).join("");
-}
-function renderPinSlot(container, side, idx){
-  if (!container) return;
-  let cell = container.children[idx];
-  if (!cell) {
-    cell = document.createElement("div");
-    cell.className = "align-pin-slot";
-    container.appendChild(cell);
-  }
-  const pinnedId = pinSlots[side][idx];
-  cell.innerHTML = "";
-  cell.classList.toggle("filled", !!pinnedId);
-  if (!pinnedId) { cell.title = "Перетащи сюда любую кнопку приложения — закрепится как ярлык"; return; }
-  cell.removeAttribute("title");
-  const src = document.getElementById(pinnedId);
-  if (!src) { pinSlots[side][idx] = null; cell.classList.remove("filled"); return; }   // кнопка исчезла/переименована — молча снимаем
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.textContent = pinSlotIcon(src, pinnedId);
-  /* ОТКРЕПЛЯЮТ ПЕРЕТАСКИВАНИЕМ НАРУЖУ, А НЕ КРЕСТИКОМ (v1.018, запрос пользователя: "для кнопок
-     закреп не надо крестик-красный, убрать — перемещением вне слота, и всё"). Красный "✕" в углу
-     (.pin-remove) убран целиком: он висел поверх маленького значка, перехватывал у него часть
-     кликов и в квадратном слоте без отступов (там же, v1.018) закрывал бы сам значок.
-     draggable + dataset.pinFrom — за них берётся обработчик dragstart/drop ниже: бросили в другой
-     слот — ярлык переехал, бросили мимо слотов — открепился. */
-  btn.draggable = true;
-  btn.dataset.pinFrom = side + ":" + idx;
-  btn.title = "Закреплённая кнопка — " + (src.title || src.textContent || "").trim() +
-              ". Перетащи в другой слот — переедет, вытащи наружу — открепится.";
-  /* После клика по оригиналу его значок мог смениться (🔓→🔒 и т.п.) — подхватываем это тем же
-     кадром, иначе ярлык показывал бы прежнее состояние до ближайшего render(). Многие кнопки
-     меняют вид не синхронно, а через свои say()/saveCache(), поэтому ещё и на следующем тике. */
-  btn.addEventListener("click", e => {
-    e.stopPropagation();
-    src.click();
-    refreshPinSlotIcons();
-    setTimeout(refreshPinSlotIcons, 0);
-  });
-  cell.appendChild(btn);
-}
-function renderPinSlots(){
-  const l = document.getElementById("alignPinL"), r = document.getElementById("alignPinR");
-  for (let i = 0; i < PIN_SLOTS_N; i++) { renderPinSlot(l, "L", i); renderPinSlot(r, "R", i); }
-}
-/* ЗНАЧОК ЯРЛЫКА ДОЛЖЕН ЖИТЬ ВМЕСТЕ С ОРИГИНАЛОМ (v1.021, баг-репорт пользователя: "значок замка не
-   меняется"). renderPinSlot() снимает с кнопки СЛЕПОК — один раз, в момент закрепления, — а у
-   кнопок-переключателей значок меняется по ходу дела: applySelectEnabled() перебивает 🔓 на 🔒,
-   и копия в слоте оставалась с прежним. Тут мы обновляем ярлыки ПО МЕСТУ, не пересобирая DOM:
-   пересборка (renderPinSlot) в середине перетаскивания уронила бы сам перетаскиваемый узел, а
-   зовётся эта функция в том числе из render(), который идёт потоком.
-   Заодно переносим на ярлык состояние оригинала (.mode-act/.act/.overlay-on) — тем кнопкам, у
-   которых значок от состояния не меняется, иначе включённость по ярлыку не прочитать. */
-function refreshPinSlotIcons(){
-  // Ранний render() (до строки с pinSlots — см. про var/TDZ там же) застаёт набор ещё
-  // необъявленным: var всплывает как undefined. Обновлять тогда нечего — слоты и сами ещё не
-  // отрисованы, их наполнит renderPinSlots() чуть позже.
-  if (!pinSlots || !PIN_SLOTS_N) return;
-  for (const side of ["L", "R"]) {
-    const c = document.getElementById(side === "L" ? "alignPinL" : "alignPinR");
-    if (!c) continue;
-    for (let i = 0; i < PIN_SLOTS_N; i++) {
-      const cell = c.children[i];
-      const btn = cell && cell.querySelector("button");
-      const id = pinSlots[side][i];
-      if (!btn || !id) continue;
-      const src = document.getElementById(id);
-      if (!src) continue;
-      const icon = pinSlotIcon(src, id);
-      if (btn.textContent !== icon) btn.textContent = icon;
-      const on = ["mode-act", "act", "overlay-on"].some(cl => src.classList.contains(cl));
-      btn.classList.toggle("pin-on", on);
-    }
-  }
-}
-{
-  /* CAPTURE, А НЕ BUBBLE (испр. v1.015, баг-репорт "не работает вставка значков") — очень многие
-     кнопки/поля приложения гасят mousedown через e.stopPropagation() (протяжки полей, границы,
-     панели — весь этот файл ими полон), и делегирование НА BUBBLE до document тогда просто не
-     доезжало: draggable вообще не выставлялся, поэтому браузер и не начинал перетаскивание.
-     capture идёт СВЕРХУ ВНИЗ, ДО того как событие доберётся до самой кнопки и та успеет вызвать
-     свой stopPropagation — не отменить. */
-  document.addEventListener("mousedown", e => {
-    const btn = e.target.closest("button[id]");
-    if (btn && !btn.closest(".align-pin-slots") && btn.getAttribute("draggable") !== "true") {
-      btn.setAttribute("draggable", "true");
-    }
-  }, true);
-  /* ДВА ИСТОЧНИКА ПЕРЕТАСКИВАНИЯ (v1.018). Первый, как и раньше, — ЛЮБАЯ кнопка приложения с id:
-     это КОПИРОВАНИЕ, оригинал остаётся на своём месте. Второй — сам УЖЕ ЗАКРЕПЛЁННЫЙ значок в
-     слоте: это ПЕРЕМЕЩЕНИЕ, и оно же единственный способ открепить (крестик убран, см.
-     renderPinSlot). У значков в слотах своего id нет, поэтому отличаем их по dataset.pinFrom
-     ("сторона:индекс"), который им проставляет renderPinSlot. */
-  let pinDrag = null;   // { id, from } — from: "L:2" или null, если тащат копию из приложения
-  document.addEventListener("dragstart", e => {
-    const slotBtn = e.target.closest(".align-pin-slots button[data-pin-from]");
-    if (slotBtn) {
-      const [side, idx] = slotBtn.dataset.pinFrom.split(":");
-      pinDrag = { id: pinSlots[side][+idx], from: slotBtn.dataset.pinFrom };
-      e.dataTransfer.setData("text/plain", pinDrag.id || "");
-      e.dataTransfer.effectAllowed = "move";
-      return;
-    }
-    const btn = e.target.closest("button[id]");
-    if (!btn || btn.closest(".align-pin-slots")) return;
-    pinDrag = { id: btn.id, from: null };
-    e.dataTransfer.setData("text/plain", btn.id);
-    e.dataTransfer.effectAllowed = "copy";
-  }, true);
-  /* БРОСИЛИ МИМО СЛОТОВ — ОТКРЕПИТЬ (v1.018, запрос пользователя: "убрать — перемещением вне слота,
-     и всё"). dragend прилетает ВСЕГДА, чем бы перетаскивание ни кончилось, и всегда ПОСЛЕ drop —
-     поэтому слот-приёмник успевает погасить pinDrag, и до этой ветки доходят только те броски, что
-     ни в один слот не попали. Копию из приложения бросили мимо — просто ничего не произошло. */
-  document.addEventListener("dragend", () => {
-    if (pinDrag && pinDrag.from) {
-      const [side, idx] = pinDrag.from.split(":");
-      pinSlots[side][+idx] = null;
-      renderPinSlot(document.getElementById(side === "L" ? "alignPinL" : "alignPinR"), side, +idx);
-      saveCache();
-      say("Значок откреплён — вытащили из слота.");
-    }
-    pinDrag = null;
-    document.querySelectorAll(".align-pin-slot.drag-over").forEach(c => c.classList.remove("drag-over"));
-  }, true);
-  const wireSlotContainer = (container, side) => {
-    if (!container) return;
-    container.addEventListener("dragover", e => {
-      const cell = e.target.closest(".align-pin-slot");
-      if (!cell) return;
-      e.preventDefault();
-      e.dataTransfer.dropEffect = (pinDrag && pinDrag.from) ? "move" : "copy";
-      cell.classList.add("drag-over");
-    });
-    container.addEventListener("dragleave", e => {
-      const cell = e.target.closest(".align-pin-slot");
-      if (cell) cell.classList.remove("drag-over");
-    });
-    container.addEventListener("drop", e => {
-      const cell = e.target.closest(".align-pin-slot");
-      if (!cell) return;
-      e.preventDefault();
-      cell.classList.remove("drag-over");
-      const id = (pinDrag && pinDrag.id) || e.dataTransfer.getData("text/plain");
-      if (!id || !document.getElementById(id)) return;
-      const idx = Array.from(container.children).indexOf(cell);
-      if (idx < 0) return;
-      // Тащили ИЗ слота — он должен опустеть (перемещение, а не размножение). Чистим ДО записи в
-      // приёмник: бросок в тот же самый слот тогда просто вернёт значок на место, а не сотрёт его.
-      if (pinDrag && pinDrag.from) {
-        const [fSide, fIdx] = pinDrag.from.split(":");
-        pinSlots[fSide][+fIdx] = null;
-        renderPinSlot(document.getElementById(fSide === "L" ? "alignPinL" : "alignPinR"), fSide, +fIdx);
-      }
-      pinSlots[side][idx] = id;
-      renderPinSlot(container, side, idx);
-      saveCache();
-      pinDrag = null;   // гасим до dragend — иначе тот счёл бы бросок промахом и открепил значок
-    });
-  };
-  renderPinSlots();
-  wireSlotContainer(document.getElementById("alignPinL"), "L");
-  wireSlotContainer(document.getElementById("alignPinR"), "R");
-}
 
 /* Ширина ПРАВОЙ колонки паттернов — по самому длинному паттерну, чтобы он влезал целиком, а не
    обрезался многоточием (запрос пользователя). Считается тем же шагом столбца, что и биты
@@ -1770,106 +1559,10 @@ var axisMeasureFix = { key: null, dx: 0 };
 /* Выравнивания "на полсимвола" (кнопки с "½") — у них линия оси рисуется по ЦЕНТРУ знака, а не по
    границе столбца, см. ниже в updateAxisSplitPosition(). */
 const HALF_ALIGNS = new Set(["halfcenter", "halfstairs", "rhalfstairs", "axis12", "axisbit12"]);
-/* ПОЛОЖЕНИЕ РУЧЕК КРАЙНИХ ПОЛЕЙ (v1.018, запрос пользователя: "такую же ручку для паттернов, как и
-   основных битов, надо"). Отдельной функцией, а не куском updateAxisSplitPosition(), потому что её
-   зовёт ещё и сама протяжка ручки: та обязана ехать вместе со своими глифами каждый кадр, а
-   updateAxisSplitPosition() без maxLen просто спрятала бы ось (см. её первую же проверку).
-   X берётся от РЕАЛЬНЫХ глифов (.pat-txt первой отрисованной строки), а не от коробки колонки:
-   patOffL/patOffR двигают именно глифы, и ручка обязана стоять там, где они нарисованы СЕЙЧАС —
-   иначе отставала бы от своего же поля ровно на текущий сдвиг.
-   Высоту берём у оси цепочки, уже посчитанную ею: длина у всех трёх ручек одна и та же, и считать
-   её второй раз (строка + линейка столбцов) незачем.
-   Паттернов нет (пустая колонка — у неё и .pat-txt не печатается) — ручку прячем: двигать нечего,
-   а висящая в пустоте линия только сбивала бы с толку. */
-/* ПОЛОЖЕНИЕ ВЕРХНЕГО КРАЯ ПОЛЕЙ («горизонт», v1.026). Граница живёт НОМЕРОМ СТРОКИ (alignHorizon,
-   fold-1-core.js), а на экране её место — верх строки с этим номером. Считаем от верха #rows плюс
-   alignHorizon высот строки: --row-h это то самое целое число пикселей, которым живут сами строки
-   (см. updateRowHeight), поэтому линия всегда садится ровно на стык, без накопления дробей.
-   Класс .on — граница опущена, то есть выше неё есть замороженные строки (иначе линия почти не
-   видна и не мозолит глаз). */
-function updateTopHorizon(){
-  const el = document.getElementById("hsplitTop");
-  if (!el) return;
-  const chainEl = document.getElementById("chain");
-  const rowsEl = document.getElementById("rows");
-  if (!chainEl || !rowsEl || !(st.rows || []).length) { el.classList.remove("act"); return; }
-  const rowH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--row-h")) || 12;
-  const top = (rowsEl.getBoundingClientRect().top - chainEl.getBoundingClientRect().top)
-            + (alignHorizon || 0) * rowH;
-  el.style.top = top + "px";
-  el.classList.add("act");
-  el.classList.toggle("on", (alignHorizon || 0) > 0);
-}
-{
-  /* ПЕРЕТАСКИВАНИЕ ГОРИЗОНТА. Свой mousedown/mousemove/mouseup, как у остальных ручек полотна.
-     Шаг — ровно высота строки: граница ходит по строкам, а не по пикселям, поэтому "опустил на
-     три" всегда значит ровно три строки. Ниже последней строки и выше нуля не пускает
-     setAlignHorizon() (см. её же — это и есть "только если там вверху есть биты").
-     render() зовём только когда номер реально сменился: слепки берутся ИМЕННО в этот момент, и
-     лишний кадр тут не нужен. */
-  const el = document.getElementById("hsplitTop");
-  if (el) {
-    el.addEventListener("mousedown", (e) => {
-      if (e.button !== 0) return;
-      e.preventDefault();
-      e.stopPropagation();
-      const y0 = e.clientY, base = alignHorizon || 0;
-      const rowH = Math.max(4, parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--row-h")) || 12);
-      el.classList.add("drag");
-      document.body.classList.add("dragging");
-      if (document.body.dataset.hov) document.body.dataset.hov = "";
-      const move = (ev) => {
-        if (setAlignHorizon(base + Math.round((ev.clientY - y0) / rowH))) render();
-      };
-      const up = () => {
-        el.classList.remove("drag");
-        document.body.classList.remove("dragging");
-        window.removeEventListener("mousemove", move);
-        window.removeEventListener("mouseup", up);
-        saveCache();
-        say(alignHorizon > 0
-          ? `Верхний край полей опущен на ${alignHorizon} стр.: они выпали из выравнивания и замерли такими, какими были. Меняй выравнивание и опускай дальше — слои копятся.`
-          : "Верхний край полей поднят в самый верх — все строки снова в общем выравнивании.");
-      };
-      window.addEventListener("mousemove", move);
-      window.addEventListener("mouseup", up);
-    });
-    // Двойной клик — поднять границу в ноль и разморозить всё разом.
-    el.addEventListener("dblclick", (e) => {
-      e.preventDefault();
-      if (setAlignHorizon(0)) { render(); saveCache(); }
-      say("Верхний край полей поднят в самый верх — все строки снова в общем выравнивании.");
-    });
-  }
-}
-function updatePatFieldHandles(){
-  const chainEl = document.getElementById("chain");
-  const axisSplitEl = document.getElementById("axisSplit");
-  if (!chainEl) return;
-  const chainLeft = chainEl.getBoundingClientRect().left;
-  const h = axisSplitEl ? axisSplitEl.style.height : "";
-  for (const [id, sel] of [["axisSplitPatL", ".pat .pat-txt"], ["axisSplitPatR", ".pat2 .pat-txt"]]) {
-    const el = document.getElementById(id);
-    if (!el) continue;
-    const txt = document.querySelector("#rows .ln " + sel);
-    if (!txt) { el.classList.remove("act"); continue; }
-    el.style.left = (txt.getBoundingClientRect().left - chainLeft) + "px";
-    if (h) el.style.height = h;
-    el.classList.add("act");
-  }
-}
 function updateAxisSplitPosition(maxLen){
   const axisSplitEl = document.getElementById("axisSplit");
   if (!axisSplitEl) return;
-  // Строк нет вовсе — прячем и ось, и обе ручки крайних полей, и текстовую полоску под осью:
-  // ставить их не на что.
-  if (!maxLen) {
-    axisSplitEl.classList.remove("act");
-    const s0 = document.getElementById("axisStrip");
-    if (s0) s0.classList.remove("act");
-    updatePatFieldHandles();
-    return;
-  }
+  if (!maxLen) { axisSplitEl.classList.remove("act"); return; }
   const chainEl = document.getElementById("chain");
   const bitsEl = document.querySelector("#colHeader .bits") || document.querySelector(".ln .bits");
   const colHeaderEl = document.getElementById("colHeader");
@@ -1959,47 +1652,16 @@ function updateAxisSplitPosition(maxLen){
   leftPx = Math.max(bandLeft, leftPx);
   axisSplitEl.style.left = leftPx + "px";
 
-  /* ЗОНА ЗАХВАТА — НА ВСЮ ВЫСОТУ ПОЛЯ (v1.029, запрос пользователя: "тянуть только за верхнюю
-     получается — надо по всей высоте чтоб"). Раньше ручка была ростом в линейку столбцов плюс ОДНУ
-     строку (v0.856, "ручку-ось укороти, пусть только на строку, на бит ложится") — тогда она сама
-     же и рисовала линию, и длинная линия резала картинку. Теперь линии нет вовсе: у оси цепочки
-     знаки печатает планка (v1.027), у ручек паттернов — короткие «1 1» вверху, и они прибиты к
-     top:0, то есть от высоты элемента не зависят. Значит высоту можно отдать целиком под захват:
-     ось цепляется на любом ряду, а не только у самой шапки.
-     Меряем РЕАЛЬНУЮ высоту #rows, а не считаем формулой из числа строк: при виртуализации в DOM
-     лежит лишь окно видимости, и «строк × высота строки» дало бы совсем другое число. */
+  /* ДЛИНА РУЧКИ — ровно на ОДНУ СТРОКУ ниже линейки столбцов (v0.856, запрос пользователя:
+     "ручку-ось укороти, пусть только на строку, на бит ложится"). Раньше тут стояли фиксированные
+     46px "чтобы удобнее было хватать" — при плотном межстрочном это накрывало три-четыре верхних
+     строки. Меряем ВЫСОТУ РЕАЛЬНОЙ СТРОКИ (она зависит от шрифта и ползунка межстрочного), а не
+     считаем формулой: ровно столько линия и заезжает на биты — на один ряд, ни больше. */
   const rowEl = document.querySelector("#rows .ln");
   const rowH = rowEl ? rowEl.getBoundingClientRect().height : 16;
   const headBottom = colHeaderEl ? (colHeaderEl.getBoundingClientRect().bottom - chainRect.top) : 24;
-  const rowsBoxEl = document.getElementById("rows");
-  const rowsH = rowsBoxEl ? rowsBoxEl.getBoundingClientRect().height : 0;
-  axisSplitEl.style.height = (Math.max(16, headBottom) + Math.max(Math.max(8, rowH), rowsH)) + "px";
+  axisSplitEl.style.height = (Math.max(16, headBottom) + Math.max(8, rowH)) + "px";
   axisSplitEl.classList.add("act");
-  /* ТЕКСТОВАЯ ПОЛОСКА ПОД ОСЬЮ (v1.024) — её средний знак «|» обязан прийтись РОВНО на ось, а
-     кнопки расходятся от него в обе стороны. Ставим в два приёма: сначала обнуляем left, чтобы
-     offsetLeft знака посчитался внутри самой полоски (она position:absolute, то есть сама себе
-     offsetParent для детей), потом сдвигаем полоску влево ровно на это смещение. Одним действием
-     не выйдет — надо сперва узнать, где знак стоит в ещё не сдвинутой полоске.
-     top — сразу под ручкой оси, той же формулой, что и её высота. */
-  {
-    const strip = document.getElementById("axisStrip");
-    if (strip) {
-      strip.classList.add("act");
-      /* ПЛАНКА СТОИТ НА САМОМ ВЕРХУ, НА МЕСТЕ ЗНАКОВ РУЧКИ (v1.027, уточнение пользователя: "это
-         и есть ось, в ней 1 под 1 — это ось; перемести её наверх, вместо 11, которые над ней").
-         Была под ручкой (top = высота ручки), и «1 1» получалось два комплекта: свои у #axisSplit и
-         свои в планке. Теперь комплект один — планкин: она села ровно туда, где рисовались знаки
-         ручки, а сама ручка их больше не печатает (см. #axisSplit::before{content:none} в CSS) и
-         осталась только зоной захвата под планкой. */
-      strip.style.top = "0px";
-      strip.style.left = "0px";
-      const mark = strip.querySelector(".axis-strip-mark");
-      const markMid = mark ? (mark.offsetLeft + mark.offsetWidth / 2) : (strip.offsetWidth / 2);
-      strip.style.left = (leftPx - markMid) + "px";
-    }
-  }
-  updatePatFieldHandles();
-  updateTopHorizon();
   // Полоса выравниваний (#alignGrp) — не по центру экрана, а РОВНО НАД ОСЬЮ первой строки, и
   // едет вместе с ручкой оси/границами столбцов (запрос пользователя). Считаем в координатах
   // .main-layout — именно от неё отсчитывается её position:absolute; transform:translateX(-50%)
@@ -2008,16 +1670,21 @@ function updateAxisSplitPosition(maxLen){
   const mainEl = alignGrpEl && alignGrpEl.offsetParent;
   if (alignGrpEl && mainEl) {
     const mainRect = mainEl.getBoundingClientRect();
+    // На ось садится не центр полосы, а ЗАЗОР между её половинами (#alignAxisGap, v0.848): линия
+    // проходит между группами кнопок, где её и можно схватить. Половины разной ширины, поэтому
+    // "translateX(-50%)" тут больше не годится — считаем смещение зазора внутри полосы (offsetLeft
+    // отсчитывается от неё же: она position:absolute, то есть сама себе offsetParent для детей).
     /* ПОЛОСА ЗАКРЕПЛЕНА (v0.976, запрос пользователя: "пусть верхняя панель вообще будет всегда
-       закреплена"). Раньше её зазор под ось (#alignAxisGap) садился РОВНО НА ОСЬ, и вся полоса ездила
+       закреплена"). Раньше её зазор (#alignAxisGap) садился РОВНО НА ОСЬ, и вся полоса ездила
        по горизонтали вместе с цепочкой: тянешь ось или поле — кнопки уползают следом, а крайние
        (◧ П1 / П2 ◨ / лесеночные счётчики) уходят за край экрана и становятся недоступны. Это
        стало окончательно неудобно, когда полоса превратилась в главный пульт полей: теперь ею
        переключают выравнивание не только цепочки, но и П1/П2 (см. alignTarget), а с v0.976 поля
        ещё и таскают мышью — полоса дёргалась бы на каждое движение.
        Теперь она стоит НАМЕРТВО по центру .main-layout и не зависит ни от оси, ни от сдвигов
-       полей; остатки той привязки — линия-продолжение оси (v1.016) и сам зазор под неё (v1.017) —
-       из полосы убраны, на месте зазора теперь кнопка-приёмник #bAlignTargetInd.
+       полей. Сама линия оси внутри полосы (#alignGrp::after по --axis-x) считается по-прежнему от
+       реального положения оси — просто теперь она ездит ВНУТРИ неподвижной полосы, а если ось
+       ушла за её край, линия прячется под overflow:hidden самой полосы.
        Вертикаль — в positionAlignGrpTop() ниже, она и так была привязана к стопке баров. */
     alignGrpEl.style.left = Math.max(2, Math.round((mainRect.width - alignGrpEl.offsetWidth) / 2)) + "px";
     // ВЫСОТА: полоса стоит не под верхним меню, а СРАЗУ НАД первой строкой цепочки (v0.839,
@@ -2025,6 +1692,10 @@ function updateAxisSplitPosition(maxLen){
     // layoutOverlayBoxes(), чтобы полоса ехала вместе со строками, пока тянут высоту
     // "Результата", а не догоняла их следующей перерисовкой.
     positionAlignGrpTop();
+    // Где внутри полосы проходит ось — для линии-продолжения (#alignGrp::after). Считаем ПОСЛЕ
+    // сдвигов: у краёв экрана полосу придерживают, и её центр перестаёт совпадать с осью.
+    const grpRect = alignGrpEl.getBoundingClientRect();
+    alignGrpEl.style.setProperty("--axis-x", ((chainRect.left + leftPx) - grpRect.left).toFixed(1) + "px");
   }
 }
 /* ДВОЙНОЙ КЛИК ПО ОСИ ЦЕПОЧЕК (v0.903, запрос пользователя: "пусть ставит ось в середину между
@@ -2055,12 +1726,10 @@ var axisFitOn = false;
    так что хватать по-прежнему есть за что), но искать, сколько и куда тянуть, — не дело.
    Возвращает РАЗОМ всё, что двигает геометрию трёх полей:
      сдвиги   — patOffL / patOffR / st.axisCenterOffset в ноль, закреплённый столбец оси снят;
-     ширины   — крайние поля по 20% ширины холста каждое, остальное цепочке (v1.019), чтобы обе
-                границы стояли на виду и на равном отступе от краёв окна;
-     подгонка — снята (axisFitOn), она тоже держала ширину среднего столбца;
-     выравн.  — к предустановке "по фэншую": П1 вправо, цепочка по центру, П2 влево (v1.018).
-   Строки, паттерны и групповые выравнивания выделенных строк НЕ трогаются: это возврат раскладки,
-   а не сброс работы. */
+     ширины   — все три колонки назад на АВТОПОДБОР (ручные флаги сняты), то есть П1 по самому
+                длинному паттерну, цепочка по самой длинной строке, П2 по паттерну же;
+     подгонка — снята (axisFitOn), она тоже держала ширину среднего столбца.
+   Строки, паттерны, выравнивания и группы НЕ трогаются: это возврат раскладки, а не сброс работы. */
 /* Переключатель «◑ Слои» (v0.982). quiet — восстановление из кэша: там сообщение ни к чему. */
 function setLayerFocus(on, quiet){
   document.body.classList.toggle("layers-on", !!on);
@@ -2110,73 +1779,10 @@ function resetFieldsLayout(){
   patW2Manual = false;
   bitsWManual = false;
   document.body.classList.remove("bits-w-manual");
-  /* ШИРИНЫ — ДОЛЯМИ ЭКРАНА, А НЕ ПО СОДЕРЖИМОМУ (v1.019, запрос пользователя: "граница левого поля
-     и центрального должны быть видны и от границ браузера выступать примерно на 20%"). Автоподбор
-     (флаги выше) считает колонку паттернов по самому длинному паттерну — а когда паттерны короткие
-     или их нет вовсе, П1 сжимается до своего минимума в 40px, и граница П1|цепочка оказывается
-     вплотную к левому краю холста: не видно её и не ухватить. Ровно от этого кнопка и должна
-     спасать, так что после неё ставим ЯВНЫЕ доли: по 20% холста каждому крайнему полю, остальное
-     цепочке. Обе границы (#vsplit слева, #vsplit2 справа) тогда стоят на виду, на равном отступе
-     от краёв окна, симметрично.
-     Флаги при этом поднимаются обратно в true — иначе ближайший же render() отменил бы эти ширины
-     автоподбором (ради чего флаги и заведены). Ширины и флаги живут в кэше (см. captureUiSettings),
-     поэтому раскладка переживает перезагрузку.
-     Считаем от clientWidth холста — это его ВНУТРЕННЯЯ ширина, без полосы прокрутки; если он ещё
-     не разложен (нулевая ширина при самом первом вызове), долей не ставим и оставляем автоподбор,
-     как было. */
-  {
-    const canvasEl = document.getElementById("screenCanvas");
-    const availW = canvasEl ? canvasEl.clientWidth : 0;
-    if (availW > 240) {
-      const side = Math.round(availW * 0.20);
-      // Между колонками есть свои зазоры и отступы (см. .vsplit: 3px + --pat-w + 8px), плюс две
-      // колонки номеров — вычитаем их из середины, чтобы сумма не переполнила холст и не завела
-      // горизонтальную прокрутку прямо после "возврата на место".
-      const numW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--num-w")) || 0;
-      const mid = Math.max(80, availW - 2 * side - 2 * numW - 24);
-      const root = document.documentElement;
-      root.style.setProperty("--pat-w", side + "px");
-      root.style.setProperty("--pat-w2", side + "px");
-      root.style.setProperty("--bits-w", mid + "px");
-      patWManual = true;
-      patW2Manual = true;
-      bitsWManual = true;
-      document.body.classList.add("bits-w-manual");
-    }
-  }
-  /* ВЫРАВНИВАНИЯ — ТОЖЕ НА МЕСТО (v1.018, запрос пользователя: "«Поля на место» должна и поля, и
-     выравнивания все поправить: правое у паттернов, центр у основ, левое у П2"). Раньше кнопка их
-     намеренно не трогала ("возврат раскладки, а не сброс работы") — но уехавшее выравнивание
-     крайнего поля выглядит ровно тем же беспорядком, что и уехавший сдвиг, и возвращать его
-     приходилось отдельно, по кнопке ⇤ каждого поля.
-     Набор — тот же "по фэншую", что стоит в приложении по умолчанию (см. patAlign/pat2Align в
-     fold-1-core.js): у П1 ПРАВОЕ, у цепочки ЦЕНТР, у П2 ЛЕВОЕ — оба треугола паттернов развёрнуты
-     К ЦЕНТРУ, к цепочке между ними. Групповые выравнивания выделенных строк (applyGroupAlign) сюда
-     НЕ входят: это про поля целиком, а группы — отдельная, осознанно заданная вещь. */
-  patAlign = "right";
-  pat2Align = "left";
-  st.align = "center";
-  if (typeof applyPatAligns === "function") applyPatAligns();
-  // syncAlignBanned() заодно зовёт syncAlignActMarks() — иначе отметка "act" в полосе осталась бы
-  // на прежней кнопке, хотя выравнивание уже другое.
-  if (typeof syncAlignBanned === "function") syncAlignBanned();
   applyPatOffsets();
   render();
-  /* И ПОСЛЕДНЕЕ — ЦЕПОЧКА РОВНО ПО ЦЕНТРУ ЭКРАНА (v1.023, запрос пользователя: "при выравнивании
-     полей вот так должно быть, по центру цепочки"). Долей ширины (20/60/20 выше) для этого мало:
-     колонки номеров по краям поля битов НЕ симметричны — у левой свой flex-basis (--numl-w, в неё
-     печатается ещё и метка баланса), у правой обычный --num-w, — плюс зазоры между колонками. На
-     сумме этих мелочей середина поля битов оказывается в стороне от середины холста, и вся картина
-     стоит чуть боком, хотя ширины заданы поровну.
-     Доводим ПРОКРУТКОЙ, а не сдвигом: centerFieldOnScreen() трогает только scrollLeft, поэтому
-     раскладка, которую мы только что выставили, остаётся ровно такой, какой её задали, — двигается
-     точка обзора. Через rAF, потому что мерить надо УЖЕ РАЗЛОЖЕННЫЙ кадр: render() выше только что
-     переписал разметку и сменил три CSS-переменных ширины. */
-  requestAnimationFrame(() => {
-    if (typeof centerFieldOnScreen === "function") centerFieldOnScreen("C");
-  });
   saveCache();
-  say("Поля на месте: сдвиги П1 / цепочки / П2 обнулены, крайние поля разведены по 20% ширины холста (обе границы на виду, симметрично от краёв), выравнивания сведены к предустановке — П1 по правому краю, цепочка по центру, П2 по левому, и экран доведён так, чтобы цепочка стояла ровно посередине. Строки и паттерны не тронуты.");
+  say("Поля на месте: сдвиги П1 / цепочки / П2 обнулены, ширины всех трёх колонок снова считаются автоматически. Строки, паттерны и выравнивания не тронуты.");
 }
 {
   const b = document.getElementById("bResetFields");
@@ -2273,52 +1879,32 @@ function axisCenterAndFitBits(){
    «КРОМЕ ОСЕЙ» — прямое требование: ручка оси, её продолжение внутри полосы кнопок, границы полей
    и линейка столбцов тянут своё и панорамированию не отдаются. Режимы, где протяжка уже занята
    (выбор ячеек, выбор столбцов, перенос строк), тоже пропускаем. */
-/* ОБЩАЯ ГЕОМЕТРИЯ ДЛЯ ДВУХ РАЗНЫХ ПРОТЯЖЕК — вынесена сюда, НАД обоими блоками (этим и
-   "ПРОТЯЖКА МИМО ГЛИФОВ" ниже), потому что нужна ОБОИМ, а они в разных {}-областях видимости.
-   Отвечает на один вопрос: на ЧЬИХ РЕАЛЬНО НАРИСОВАННЫХ глифах стоит курсор — "C" (биты цепочки),
-   "L"/"R" (текст паттернов П1/П2) или "" (мимо всего, под курсором пустое место).
-   ЭТО И ЕСТЬ ГРАНИЦА МЕЖДУ ДВУМЯ ЖЕСТАМИ (v1.018, запрос пользователя: "пусть перетаскивание за
-   поле любое мимо битов если — как скролл горизонтальный действует"). Попал в глифы — тянется ТО
-   САМОЕ поле (блок ниже). Не попал — полотно мотается вбок, как за ползунок горизонтальной
-   прокрутки, и неважно, пустое там место холста или пустая часть строки/колонки паттернов.
-   Прежняя chainShiftedBitsHit() (v1.009) отвечала на кусок этого же вопроса (только про цепочку и
-   только при ненулевом bitsOffY) и растворилась здесь.
-   ПОЧЕМУ ГЕОМЕТРИЯ, А НЕ e.target: у .ln .bits стоит pointer-events:none (давняя основа разметки,
-   см. CSS), поэтому e.target НИКОГДА не бывает глифом цепочки — спрашивать приходится координаты.
-   Плюс при ненулевом bitsOffY биты ПОСЛЕДНИХ строк уезжают (position:relative+top) вообще за
-   пределы собственной высоты #rows, на пустое полотно, — поэтому перебираем строки, а не смотрим
-   только ту .ln, что физически под курсором. Виртуализация держит в DOM лишь окно видимости плюс
-   запас, и зовётся всё это на mousedown, а не на каждом движении мыши. */
-function fieldGlyphsHit(e){
-  const hitRect = (els) => {
-    if (!els || !els.length) return false;
-    const r0 = els[0].getBoundingClientRect(), r1 = els[els.length - 1].getBoundingClientRect();
-    return e.clientX >= Math.min(r0.left, r1.left) && e.clientX < Math.max(r0.right, r1.right) &&
-           e.clientY >= Math.min(r0.top, r1.top) && e.clientY < Math.max(r0.bottom, r1.bottom);
-  };
-  /* ЦЕПОЧКА ПЕРВОЙ: её биты нарисованы НАД паттернами (z-index:2 у .bits>span против 1 у
-     .pat-shift), значит при наложении хватать надо именно их — тот же порядок, что и в
-     fieldAtEventEl ниже. Меряем по ПЕРВОМУ и ПОСЛЕДНЕМУ .b0/.b1 строки, а не по span'у целиком:
-     в span входит ещё и отступ выравнивания неразрывными пробелами — невидимый, но занимающий
-     реальную ширину, из-за чего "попадание" срабатывало там, где на экране бит нет. */
+/* ОБЩАЯ ГЕОМЕТРИЯ ДЛЯ ДВУХ РАЗНЫХ ПРОТЯЖЕК (v1.009) — вынесена сюда, НАД обоими блоками (этим и
+   "ПРОТЯЖКА ВНЕ СТРОК" ниже), потому что нужна ОБОИМ, а они в разных {}-областях видимости.
+   Отвечает на один вопрос: лежат ли под курсором РЕАЛЬНО ОТРИСОВАННЫЕ (сдвинутые --bits-offy)
+   биты какой-нибудь строки цепочки — независимо от того, чья .ln (если вообще чья-то) физически
+   стоит в этой точке экрана. Нужна для баг-репорта "не цепляет перетаскиванием биты, если они уже
+   сдвинуты и находятся ниже границы полей, у паттернов такого бага нет": при большом bitsOffY
+   биты ПОСЛЕДНИХ строк списка уезжают (position:relative+top) ЗА ПРЕДЕЛЫ собственной высоты
+   #rows (тот кончается вместе со своими строками, чужой оверфлоу его не раздвигает) — то есть на
+   пустое полотно .canvas. Раньше это полотно занято ДРУГОЙ протяжкой — "тянуть все три поля
+   разом" (см. блок ниже, слушает #screenCanvas ИМЕННО из-за той же особенности #rows) — она
+   ничего не знала про сдвинутые биты и просто хватала клик себе. Эта функция даёт обеим протяжкам
+   ОБЩИЙ критерий: если курсор на самом деле накрывает нарисованные биты — забирает протяжка ЗА
+   БИТЫ (см. wiring ниже), а "разом" уступает; если бит там нет — как и было, полотно за "разом". */
+function chainShiftedBitsHit(e){
   const off = Math.round((typeof bitsOffY === "number" ? bitsOffY : 0) || 0);
-  const bitsOf = ln => ln ? ln.querySelectorAll(".bits > span .b0, .bits > span .b1") : null;
-  if (off) {
-    const rows = document.querySelectorAll("#rows .ln");
-    for (let i = 0; i < rows.length; i++) if (hitRect(bitsOf(rows[i]))) return "C";
-  } else {
-    // bitsOffY нулевой (подавляющее большинство кликов) — биты не покидают своей строки, хватит
-    // той .ln, что под курсором, без перебора вообще.
-    if (hitRect(bitsOf(e.target.closest(".ln")))) return "C";
+  if (!off) return false;   // без сдвига биты не покидают #rows — старая проверка по #rows и так работает
+  const rows = document.querySelectorAll("#rows .ln");
+  for (let i = 0; i < rows.length; i++) {
+    const bits = rows[i].querySelectorAll(".bits > span .b0, .bits > span .b1");
+    if (!bits.length) continue;
+    const r0 = bits[0].getBoundingClientRect(), r1 = bits[bits.length - 1].getBoundingClientRect();
+    const left = Math.min(r0.left, r1.left), right = Math.max(r0.right, r1.right);
+    const top = Math.min(r0.top, r1.top), bottom = Math.max(r0.bottom, r1.bottom);
+    if (e.clientX >= left && e.clientX < right && e.clientY >= top && e.clientY < bottom) return true;
   }
-  /* ПАТТЕРНЫ ловят мышь сами (pointer-events у .pat/.pat2 не снят, и с overflow:visible они ловят
-     её даже там, куда уехали за свои границы), поэтому им геометрия не нужна — хватает e.target.
-     .pat-txt — это РОВНО глифы паттерна: без отступа выравнивания и без номера строки, они в
-     обёртку намеренно не входят (см. patTxtHtml в render()). У пустой ячейки .pat-txt нет вовсе —
-     значит пустое место в колонке паттернов честно считается "мимо" и уходит скроллу. */
-  const txt = e.target.closest && e.target.closest(".pat-txt");
-  if (txt) return txt.closest(".pat2") ? "R" : "L";
-  return "";
+  return false;
 }
 {
   /* СЛУШАТЕЛЬ — НА #screenCanvas, А НЕ НА #rows (испр. v1.009, баг-репорт пользователя: "не
@@ -2424,17 +2010,23 @@ function fieldGlyphsHit(e){
     if (cellSelMode || colPickMode) return;
     if (typeof wrapModeOn === "function" && wrapModeOn()) return;
     if (e.target.tagName === "INPUT" || e.target.closest(".edit-row-input")) return;
-    if (e.target.closest(".axis-split, .axis-strip, .hsplit-top, .vsplit, .vsplit2, .vsplit3, #alignGrp, #colHeader")) return;
-    /* ТОЛЬКО ПО РЕАЛЬНО НАРИСОВАННЫМ ГЛИФАМ (v1.018, запрос пользователя: "пусть перетаскивание за
-       поле любое мимо битов если — как скролл горизонтальный действует"). Раньше поле тянулось от
-       клика в ЛЮБУЮ его точку — в том числе по пустому месту строки и по пустой части колонки
-       паттернов (это был сознательный "побочный эффект, который нужен", см. fieldAtEventEl: иначе
-       короткие паттерны трудно поймать). Теперь пустое место занято другим жестом — горизонтальной
-       прокруткой полотна (блок ниже), — и граница между ними одна на оба: fieldGlyphsHit(). Она же
-       заменила прежние проверки по .ln/#rows: попадание считается по глифам, а не по коробкам,
-       поэтому и сдвинутые --bits-offy биты за пределами #rows ловятся сами собой. */
-    const field = fieldGlyphsHit(e);
-    if (!field) return;   // мимо глифов — жест забирает горизонтальная прокрутка (блок ниже)
+    if (e.target.closest("#axisSplit, .vsplit, .vsplit2, .vsplit3, #alignGrp, #colHeader")) return;
+    const ln = e.target.closest(".ln");
+    /* КРОМЕ .ln — ЕЩЁ И ПУСТОЕ МЕСТО ВНУТРИ #rows (v1.006), ПЛЮС ГЕОМЕТРИЧЕСКОЕ ПОПАДАНИЕ В
+       СДВИНУТЫЕ БИТЫ ДАЖЕ ЗА ПРЕДЕЛАМИ #rows (v1.009, баг-репорт: "биты стоят на своих строках,
+       но все строки сдвинуты вниз за нижнюю границу поля — биты центрального поля не
+       захватываются"). При большом bitsOffY глифы .bits>span (position:relative+top) визуально
+       уезжают НИЖЕ СВОЕЙ ЖЕ строки — и если это последние строки списка, уезжают вообще ЗА
+       ПРЕДЕЛЫ собственной высоты #rows (той, что по нормальному потоку, чужой оверфлоу её не
+       раздвигает) — то есть уже на пустое полотно .canvas. Раньше слушатель сидел на #rows, и
+       туда это событие вообще не всплывало (#rows — потомок .canvas, а не предок, см. комментарий
+       у rowsPanEl про перенос слушателя на #screenCanvas); "#rows"-проверку саму по себе тут
+       НЕ РАСШИРЯЕМ до "любая точка холста" — иначе отбирали бы клики у protяжки "все поля разом"
+       (см. её блок ниже, она как раз ХОЗЯИН пустого полотна). Вместо этого — узкий, геометрический
+       пропуск: chainShiftedBitsHit() отвечает да только там, где под курсором и правда нарисованы
+       биты, а не просто пустой холст. */
+    if (!ln && !(e.target.closest && e.target.closest("#rows")) && !chainShiftedBitsHit(e)) return;
+    const field = fieldAtEventEl(e);
     lastPanField = field;   // им же двигают стрелки с Alt (см. обработчик клавиш в fold-4-tools.js)
     /* ПОСЛЕДНИЙ ЩЕЛЧОК НАД БИТАМИ — ОН ЖЕ ПРИЁМНИК ПОЛОСЫ ВЫРАВНИВАНИЙ (v1.003, запрос
        пользователя: "последний щелчок над битами выбирает цепочку для выравнивания"). Раньше
@@ -2503,17 +2095,13 @@ function fieldGlyphsHit(e){
        просто на другом её ряду. Отсчёт — от точки самого mousedown (pan.y0/pan.baseY), без
        перевзвода: раз модификатора больше нет, взводить его не на чем — вертикаль участвует в
        протяжке с первого же движения, вместе с горизонталью, одной диагональю. */
-    // ЗАМОК ОСЕЙ (v1.024, «{=-=}» под осью): запертую ось протяжка просто не трогает, а по
-    // свободной продолжает ехать — диагональный жест становится строго горизонтальным или строго
-    // вертикальным. См. moveLock в fold-1-core.js.
-    if (moveRowsAllowed()) {
+    {
       const rowH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--row-h")) || 12;
       const dRows = Math.round((e.clientY - pan.y0) / Math.max(4, rowH));
       const v = pan.baseY + dRows;
       if (pan.field === "C") bitsOffY = v; else if (pan.field === "L") patOffLY = v; else patOffRY = v;
       applyPatOffsets();
     }
-    if (!moveColsAllowed()) return;   // вбок нельзя — вертикаль выше уже применена, больше делать нечего
     if (pan.field === "C") {
       st.axisCenterOffset = pan.base + d;
       // Тот же приём, что у ручки оси: закрепляем за ней новый столбец, иначе ближайший же кадр
@@ -2527,6 +2115,7 @@ function fieldGlyphsHit(e){
       // строк и линейки столбцов.
       if (pan.field === "L") patOffL = pan.base + d; else patOffR = pan.base + d;
       applyPatOffsets();
+      if (pan.field === "L") clampPatOffLLeftEdge();
     }
   });
   /* ═══ «◑ СЛОИ»: ПОЛЕ ПОД КУРСОРОМ — В ПОЛНУЮ ЯРКОСТЬ, ОСТАЛЬНЫЕ ПРИГЛУШЕНЫ (v0.982) ═══
@@ -2564,55 +2153,63 @@ function fieldGlyphsHit(e){
   });
 }
 
-/* ═══ ПРОТЯЖКА МИМО ГЛИФОВ — ГОРИЗОНТАЛЬНАЯ ПРОКРУТКА ПОЛОТНА (v1.018, запрос пользователя:
-   "пусть перетаскивание за поле любое мимо битов если — как скролл горизонтальный действует";
-   тем же запросом: "а общее передвижение битов когда вне полей — убери") ═══
-   Протяжка ЗА ГЛИФЫ (блок выше) двигает ОДНО поле — то, чьи биты/паттерн под курсором. Всё
-   остальное на холсте — пустое место ниже последней строки, пустая часть самой строки, пустая
-   ячейка колонки паттернов — теперь МОТАЕТ ПОЛОТНО ВБОК, ровно как если бы тянули ползунок
-   горизонтальной прокрутки внизу (.canvas сама по себе overflow-x:auto, см. CSS).
-   ЧТО УБРАНО: до v1.018 этот же жест двигал ВСЕ ТРИ ПОЛЯ РАЗОМ (patOffL/patOffR/axisCenterOffset
-   на одно и то же число столбцов, v0.985) — то есть менял РАСКЛАДКУ, а не точку обзора, и уехавшую
-   картинку потом приходилось возвращать «⌖ Поля на место». Вместе с жестом ушёл и его
-   клавиатурный аналог nudgeAllFields()/lastPanField === "ALL" (v0.988): двигать «всё разом»
-   больше нечем ни мышью, ни Alt+стрелками. Настоящая прокрутка ничего не сдвигает и в кэш не
-   пишется — это просто scrollLeft, поэтому тут нет ни saveCache(), ни render().
-   Слушатель висит на #screenCanvas (не на #rows — под последней строкой это уже ПОЛОТНО: #rows
-   высотой ровно в свои строки и заканчивается вместе с ними), с тем же списком исключений, что и
-   у "клика мимо" для сброса выбора ячеек (см. её блок в fold-2-render.js): служебные элементы
-   холста ведут свою протяжку сами. */
+/* ═══ ПРОТЯЖКА ВНЕ СТРОК — ВСЕ ТРИ ПОЛЯ РАЗОМ, КАК ГОРИЗОНТАЛЬНЫЙ СКРОЛЛ (v0.985, запрос
+   пользователя: "сделай перетаскивание как по скролу горизонт нижнему сразу всех при перемещении
+   курсором вне полей снизу сверху") ═══
+   Протяжка ЗА БИТЫ (блок выше) двигает ОДНО поле — то, что под курсором. Эта протяжка — за ПУСТОЕ
+   МЕСТО холста (там, где НЕТ ни одной строки — обычно ниже последней, иногда выше первой при
+   малом числе строк) — двигает ВСЕ ТРИ поля СРАЗУ на одно и то же число столбцов, как будто
+   схватили всю картинку целиком. Только горизонталь — по смыслу это то же самое, что тянуть
+   ползунок горизонтального скролла внизу холста, а тот двигает только вбок.
+   Слушатель висит на #screenCanvas (не на #rows — под последней строкой это уже ПОЛОТНО, не
+   #rows: тот высотой ровно в свои строки и заканчивается вместе с ними), с тем же списком
+   исключений, что и у "клика мимо" для сброса выбора ячеек (см. её блок в fold-2-render.js):
+   служебные элементы холста ведут свою протяжку сами. */
 {
   const canvasPanEl = document.getElementById("screenCanvas");
-  const PAN_SCROLL_DEAD_PX = 3;   // своя мёртвая зона: PAN_DEAD_PX выше — в другом блоке, вне видимости
-  let panScroll = null;
+  const PAN_ALL_DEAD_PX = 3;   // своя мёртвая зона: PAN_DEAD_PX выше — в другом блоке, вне видимости
+  let panAll = null;
   if (canvasPanEl) canvasPanEl.addEventListener("mousedown", e => {
     if (e.button !== 0 || e.ctrlKey || e.metaKey || e.altKey) return;
     if (cellSelMode || colPickMode) return;
     if (typeof wrapModeOn === "function" && wrapModeOn()) return;
-    if (e.target.closest("#alignGrp, #colHeader, .vsplit, .vsplit2, .vsplit3, .axis-split, .axis-strip, .hsplit-top, #colPickFloat, button, input, select, label")) return;
-    // На глифах — там протяжка поля (блок выше). Один и тот же критерий у обоих жестов, поэтому
-    // спорить за клик им не о чем: ровно одна из двух проверок пропускает событие дальше.
-    if (fieldGlyphsHit(e)) return;
+    if (e.target.closest(".ln")) return;   // по строке — та протяжка выше, эта не её дело
+    /* v1.009: НЕ ТОЛЬКО по .ln — ещё и если курсор геометрически лежит на СДВИНУТЫХ бит-глифах,
+       которые --bits-offy увёл ЗА пределы #rows на пустое полотно (см. chainShiftedBitsHit() и
+       комментарий у неё же). Иначе эта протяжка отбирала бы такой клик у "тащить поле за биты"
+       выше — тот теперь тоже умеет забирать клики отсюда, но только эти, не любые. */
+    if (e.target.closest("#alignGrp, #colHeader, .vsplit, .vsplit2, .vsplit3, .axis-split, #colPickFloat, .state-badges, button, input, select, label") || chainShiftedBitsHit(e)) return;
+    // Клик мимо полей и строк — с этого момента Alt+стрелки двигают ВСЕ ТРИ поля разом, а не
+    // последнее из них (v0.988, см. nudgeAllFields выше и ветку lastPanField в fold-4-tools.js).
+    lastPanField = "ALL";
     lastGrabWasBorder = false;   // под замком (🔒) без Alt стрелки пойдут в поле, а не в границу
-    panScroll = { x0: e.clientX, base: canvasPanEl.scrollLeft, moved: false };
+    panAll = { x0: e.clientX, moved: false,
+               baseL: patOffL || 0, baseC: st.axisCenterOffset || 0, baseR: patOffR || 0 };
   });
   window.addEventListener("mousemove", e => {
-    if (!panScroll) return;
-    if (!(e.buttons & 1)) { panScroll = null; return; }
-    const dx = e.clientX - panScroll.x0;
-    if (!panScroll.moved) {
-      if (Math.abs(dx) < PAN_SCROLL_DEAD_PX) return;
-      panScroll.moved = true;
+    if (!panAll) return;
+    if (!(e.buttons & 1)) { panAll = null; return; }
+    const dx = e.clientX - panAll.x0;
+    if (!panAll.moved) {
+      if (Math.abs(dx) < PAN_ALL_DEAD_PX) return;
+      panAll.moved = true;
       document.body.classList.add("field-panning");
     }
-    // Минус: тянем полотно ВПРАВО — содержимое едет вправо, значит окно обзора уезжает ВЛЕВО.
-    // Это "схватил лист и подвинул", а не "подвинул ползунок", — так же ведёт себя рука на тачпаде.
-    canvasPanEl.scrollLeft = panScroll.base - dx;
+    const step = realColStepPx() || 8;
+    const d = Math.round(dx / step);
+    patOffL = panAll.baseL + d;
+    patOffR = panAll.baseR + d;
+    st.axisCenterOffset = panAll.baseC + d;
+    axisPinCol = axisBaseCol() + st.axisCenterOffset;
+    render();   // applyPatOffsets() входит в конец render() — красит и крайние поля тем же кадром
   });
   window.addEventListener("mouseup", () => {
-    if (!panScroll) return;
-    panScroll = null;
+    if (!panAll) return;
+    const moved = panAll.moved;
+    panAll = null;
     document.body.classList.remove("field-panning");
+    if (!moved) return;
+    saveCache();
   });
 }
 
@@ -2622,9 +2219,6 @@ function fieldGlyphsHit(e){
 function startAxisDrag(e){
   const axisSplitEl = document.getElementById("axisSplit");
   e.preventDefault();
-  // Ручка двигает ось ТОЛЬКО вбок, по столбцам — значит запрет «/-/»/«#-#» её глушит целиком
-  // (v1.024, см. moveLock в fold-1-core.js).
-  if (!moveColsAllowed()) { say(MOVE_LOCK_NOTE[moveLock]); return; }
   const startX = e.clientX;
   const startOffset = st.axisCenterOffset || 0;
   const chPx = realColStepPx();
@@ -2657,125 +2251,36 @@ function startAxisDrag(e){
   if (axisSplitEl) axisSplitEl.addEventListener("mousedown", startAxisDrag);
   // Двойной клик — ось по центру + подгонка ширины поля битов (см. axisCenterAndFitBits).
   if (axisSplitEl) axisSplitEl.addEventListener("dblclick", (e) => { e.preventDefault(); axisCenterAndFitBits(); });
-}
-/* ПЕРЕТАСКИВАНИЕ РУЧЕК КРАЙНИХ ПОЛЕЙ (v1.018, запрос пользователя: "такую же ручку для паттернов,
-   как и основных битов, надо"). Близнец startAxisDrag() выше, с двумя отличиями по существу:
-   двигаем patOffL/patOffR вместо st.axisCenterOffset, и обходимся applyPatOffsets() вместо
-   render() — сдвиг крайнего поля это одна CSS-переменная на обёртке .pat-shift, разметка от него
-   не меняется ни на символ (тот же приём, что в протяжке П1/П2 за глифы). Оттого ручка идёт ровно
-   и не грузит страницу. Позицию самих ручек считает updateAxisSplitPosition() — там же, где и ось.
-   ЗАЖИМА НЕТ намеренно, как и у оси с v0.974: поле можно увести куда угодно, а вернуть — двойным
-   кликом по этой же ручке или кнопкой «⌖ Поля на место». */
-function startPatFieldDrag(e, which){
-  const el = document.getElementById(which === "L" ? "axisSplitPatL" : "axisSplitPatR");
-  e.preventDefault();
-  // Как и ось цепочки, эта ручка ходит только вбок — «/-/»/«#-#» её глушат (v1.024).
-  if (!moveColsAllowed()) { say(MOVE_LOCK_NOTE[moveLock]); return; }
-  const startX = e.clientX;
-  const startOffset = (which === "L" ? patOffL : patOffR) || 0;
-  const chPx = realColStepPx() || 8;
-  if (el) el.classList.add("drag");
-  document.body.classList.add("dragging");
-  // Схватили ручку — гасим подсветку слоя, застрявшую на поле под курсором (см. startAxisDrag).
-  if (document.body.dataset.hov) document.body.dataset.hov = "";
-  // Стрелки с Alt после этого двигают ЭТО поле — ручку взяли, значит про него сейчас и речь.
-  lastPanField = which;
-  lastGrabWasBorder = false;
-  const move = (ev) => {
-    const d = Math.round((ev.clientX - startX) / chPx);
-    if (which === "L") patOffL = startOffset + d; else patOffR = startOffset + d;
-    applyPatOffsets();
-    // Ручка обязана ехать вместе со своими глифами — позиция считается от них (см. там же).
-    updatePatFieldHandles();
-  };
-  const up = () => {
-    if (el) el.classList.remove("drag");
-    document.body.classList.remove("dragging");
-    window.removeEventListener("mousemove", move);
-    window.removeEventListener("mouseup", up);
-    saveCache();
-  };
-  window.addEventListener("mousemove", move);
-  window.addEventListener("mouseup", up);
-}
-/* ПРОКРУТИТЬ ЭКРАН ТАК, ЧТОБЫ БИТЫ ПОЛЯ ОКАЗАЛИСЬ ПО ЦЕНТРУ (v1.020, уточнено в v1.021, запрос
-   пользователя: "не перемещает биты за ось, а должен просто скролл экрана подвинуть так, как
-   возможно, чтобы биты оказались в центре экрана, не перемещая их в полях").
-   Висит на ДВОЙНОМ КЛИКЕ по кнопке-приёмнику #bAlignTargetInd (Ц/П1/П2) и работает с тем полем,
-   которое там сейчас выбрано, — одиночный клик у неё занят переключением приёмника по кругу.
-   ДВИГАЕМ ТОЧКУ ОБЗОРА, А НЕ САМУ РАСКЛАДКУ. В первой редакции (v1.020) функция прибавляла сдвиг
-   полю — patOffL/patOffR у крайних, st.axisCenterOffset у цепочки, — то есть РЕАЛЬНО переставляла
-   биты относительно других полей и ломала взаимное расположение, ради которого их и раскладывают.
-   Теперь трогается только scrollLeft холста: биты остаются ровно там, где стояли, в кэш ничего не
-   пишется (прокрутка не часть раскладки), render() и applyPatOffsets() не нужны вовсе.
-   "КАК ВОЗМОЖНО" — про упор в края: браузер сам зажимает scrollLeft в [0, scrollWidth-clientWidth],
-   поэтому у самого края поле встаёт настолько близко к центру, насколько холст позволяет прокрутке
-   уехать, и ничего дополнительно считать не надо.
-   СЧИТАЕМ ПО РЕАЛЬНЫМ ГЛИФАМ, а не по коробке колонки: коробка стоит на месте всегда, а в центр
-   надо вывести то, что НАРИСОВАНО, — с учётом набранного сдвига и выравнивания. У крайних полей
-   глифы это .pat-txt, у цепочки — пробег .b0/.b1 внутри .bits>span (первый и последний дают её
-   реальный охват, без пустого отступа выравнивания по краям — та же мерка, что в fieldGlyphsHit). */
-/* ВЕРХНИЙ БИТ ЦЕПОЧКИ — В ЦЕНТР ЭКРАНА (v1.030, запрос пользователя: "шифт и стрелка влево-право
-   когда — надо держать в центре экрана биты так, чтобы самый верхний оставался на оси; ось не
-   смещать при этом").
-   Мерим ПЕРВЫЙ бит ПЕРВОЙ строки — он и есть "самый верхний", и именно через него проходит ось при
-   выравнивании по центру. Доводим ПРОКРУТКОЙ: ось (st.axisCenterOffset/axisPinCol) не трогаем
-   вовсе — она и биты лежат в одном прокручиваемом слое и едут вместе, так что их взаимное
-   положение прокрутка не меняет; двигается только окно обзора. Это ровно то, что просили: "ось не
-   смещать".
-   Возвращает false, когда мерить нечего (пустая цепочка) — вызывающий тогда молчит. */
-function centerTopBitOnScreen(){
-  const canvasEl = document.getElementById("screenCanvas");
-  const ln = document.querySelector("#rows .ln");
-  if (!canvasEl || !ln) return false;
-  const bits = ln.querySelectorAll(".bits > span .b0, .bits > span .b1");
-  if (!bits.length) return false;
-  const r = bits[0].getBoundingClientRect();
-  const cr = canvasEl.getBoundingClientRect();
-  if (!cr.width) return false;
-  canvasEl.scrollLeft += (r.left + r.width / 2) - (cr.left + cr.width / 2);
-  return true;
-}
-function centerFieldOnScreen(which){
-  const canvasEl = document.getElementById("screenCanvas");
-  if (!canvasEl) return false;
-  const cr = canvasEl.getBoundingClientRect();
-  if (!cr.width) return false;
-  let left, right;
-  if (which === "C") {
-    const ln = document.querySelector("#rows .ln");
-    const bits = ln ? ln.querySelectorAll(".bits > span .b0, .bits > span .b1") : null;
-    if (!bits || !bits.length) return false;
-    const r0 = bits[0].getBoundingClientRect(), r1 = bits[bits.length - 1].getBoundingClientRect();
-    left = Math.min(r0.left, r1.left); right = Math.max(r0.right, r1.right);
-  } else {
-    const txt = document.querySelector("#rows .ln " + (which === "L" ? ".pat .pat-txt" : ".pat2 .pat-txt"));
-    if (!txt) return false;
-    const r = txt.getBoundingClientRect();
-    left = r.left; right = r.right;
-  }
-  if (right <= left) return false;
-  // Прокрутить ВПРАВО на X — значит увести содержимое ВЛЕВО на X. Значит к scrollLeft прибавляем
-  // "насколько центр глифов сейчас правее центра холста".
-  canvasEl.scrollLeft += ((left + right) / 2) - (cr.left + cr.width / 2);
-  return true;
-}
-{
-  for (const which of ["L", "R"]) {
-    const el = document.getElementById(which === "L" ? "axisSplitPatL" : "axisSplitPatR");
-    if (!el) continue;
-    el.addEventListener("mousedown", e => startPatFieldDrag(e, which));
-    // Двойной клик — вернуть ЭТО поле на место. Пара к такому же жесту на кнопках ⇤ (dblReset) и
-    // к «⌖ Поля на место», которая возвращает разом всё. А "в центр экрана" висит на
-    // кнопке-приёмнике #bAlignTargetInd (см. centerFieldOnScreen и её вызов в fold-4-tools.js).
-    el.addEventListener("dblclick", e => {
-      e.preventDefault();
-      if (which === "L") { patOffL = 0; patOffLY = 0; } else { patOffR = 0; patOffRY = 0; }
-      applyPatOffsets();
-      updatePatFieldHandles();
-      saveCache();
-      say((which === "L" ? "Левое поле (П1)" : "Правое поле (П2)") + " возвращено на место — сдвиг обнулён.");
+  /* Полоса кнопок: линия внутри неё нарисована псевдоэлементом, а у псевдоэлемента своих событий
+     нет — они приходят на сам #alignGrp. Поэтому ловим mousedown на полосе и берём его себе,
+     только если курсор рядом с линией (±AXIS_GRAB_PX от --axis-x). Всё, что дальше, — обычные
+     клики по кнопкам выравнивания, их не трогаем.
+     capture:true — mousedown должен достаться оси РАНЬШЕ кнопки, на краю которой стоит линия.
+     Курсор col-resize над этой зоной ставится там же, на mousemove: рисовать его через CSS
+     нечем — зона задана не геометрией элемента, а расстоянием до линии. */
+  const alignGrpDragEl = document.getElementById("alignGrp");
+  if (alignGrpDragEl) {
+    const AXIS_GRAB_PX = 5;
+    const nearAxis = (e) => {
+      const x = parseFloat(getComputedStyle(alignGrpDragEl).getPropertyValue("--axis-x"));
+      if (!isFinite(x)) return false;
+      return Math.abs((e.clientX - alignGrpDragEl.getBoundingClientRect().left) - x) <= AXIS_GRAB_PX;
+    };
+    alignGrpDragEl.addEventListener("mousedown", (e) => {
+      if (e.button !== 0 || !nearAxis(e)) return;
+      e.stopPropagation();
+      startAxisDrag(e);
+    }, true);
+    // Двойной клик по продолжению линии внутри полосы кнопок — то же, что и по самой ручке.
+    alignGrpDragEl.addEventListener("dblclick", (e) => {
+      if (!nearAxis(e)) return;
+      e.stopPropagation(); e.preventDefault();
+      axisCenterAndFitBits();
+    }, true);
+    alignGrpDragEl.addEventListener("mousemove", (e) => {
+      alignGrpDragEl.style.cursor = nearAxis(e) ? "col-resize" : "";
     });
+    alignGrpDragEl.addEventListener("mouseleave", () => { alignGrpDragEl.style.cursor = ""; });
   }
 }
 /* === МАРКЕР 11: CACHE === */
@@ -2937,14 +2442,6 @@ function captureUiSettings(){
     patAlign: patAlign, pat2Align: pat2Align,
     fieldInfoOn: !!fieldInfoOn,
     selectEnabled: selectEnabled !== false,
-    moveLock: moveLock || "",   // замок осей движения «{=-=}» (v1.024)
-    /* Верхний край полей и снятые за ним слепки выравниваний (v1.026). Map с составным ключом в
-       JSON не сериализуется сама — раскладываем в простой объект и собираем обратно в
-       applyUiSettings(). Без слепков один только номер границы бесполезен: после перезагрузки
-       замороженные строки перестроились бы по текущему выравниванию, а весь смысл в том, что они
-       держат СВОЁ. */
-    alignHorizon: alignHorizon || 0,
-    frozenAlign: (() => { const o = {}; frozenAlign.forEach((v, k) => { o[k] = v; }); return o; })(),
     hideSide: document.body.classList.contains("hide-side"),
     // hidePatL/hidePatR больше не пишутся: скрытия колонок П1/П2 нет вовсе (v0.976). Вместо них —
     // приёмник выравниваний и собственные визуальные сдвиги крайних полей.
@@ -2952,16 +2449,10 @@ function captureUiSettings(){
     patOffL: patOffL || 0, patOffR: patOffR || 0,
     patOffLY: patOffLY || 0, patOffRY: patOffRY || 0, bitsOffY: bitsOffY || 0,
     chainShiftCols: chainShiftCols || 0,
-    pinSlots: pinSlots,
     layerFocus: document.body.classList.contains("layers-on"),
     menuBarBottom: document.body.classList.contains("menubar-bottom"),
     msgPos: msgPos || "",
     c1: col1.value, c0: col0.value, cBg: colBg.value, preset: currentPreset,
-    // Цвета «1»/«0» в колонках паттернов (v1.031) — своей парой на каждую колонку.
-    patC1L: colPat1L ? colPat1L.value : "#8a94a6",
-    patC0L: colPat0L ? colPat0L.value : "#4b5262",
-    patC1R: colPat1R ? colPat1R.value : "#8a94a6",
-    patC0R: colPat0R ? colPat0R.value : "#4b5262",
     fldL: colFieldL ? colFieldL.value : "#161a22",
     fldC: colFieldC ? colFieldC.value : "#12141a",
     fldR: colFieldR ? colFieldR.value : "#161a22",
@@ -3288,24 +2779,6 @@ function applyUiSettings(u){
   if (u.patW2Manual !== undefined) patW2Manual = !!u.patW2Manual;
   if (u.fieldInfoOn !== undefined) { fieldInfoOn = !!u.fieldInfoOn; applyFieldInfo(); }
   if (u.selectEnabled !== undefined) { selectEnabled = u.selectEnabled !== false; applySelectEnabled(); }
-  if (u.moveLock !== undefined) {
-    moveLock = MOVE_LOCK_ORDER.includes(u.moveLock) ? u.moveLock : "";
-    if (typeof applyMoveLockBtn === "function") applyMoveLockBtn();
-  }
-  /* Верхний край полей (v1.026). Слепки восстанавливаем ПЕРВЫМИ, потом номер границы: frozenAlign
-     читается по alignHorizon, и обратный порядок на один кадр показал бы замороженные строки
-     живыми. setAlignHorizon() тут звать НЕЛЬЗЯ — она сняла бы слепки заново, по текущему
-     выравниванию, затерев восстановленные; присваиваем напрямую. */
-  if (u.frozenAlign && typeof u.frozenAlign === "object") {
-    frozenAlign = new Map();
-    for (const k in u.frozenAlign) {
-      const v = u.frozenAlign[k];
-      if (v && typeof v === "object") frozenAlign.set(k, { align: v.align, maxLen: +v.maxLen || 0, idx: +v.idx || 0 });
-    }
-  }
-  if (typeof u.alignHorizon === "number") {
-    alignHorizon = Math.max(0, Math.min((st.rows || []).length, Math.round(u.alignHorizon) || 0));
-  }
   if (u.patAlign || u.pat2Align) {
     if (u.patAlign) patAlign = u.patAlign;
     if (u.pat2Align) pat2Align = u.pat2Align;
@@ -3334,14 +2807,6 @@ function applyUiSettings(u){
   if (typeof u.patOffRY === "number") patOffRY = u.patOffRY;
   if (typeof u.bitsOffY === "number") bitsOffY = u.bitsOffY;
   if (typeof u.chainShiftCols === "number") chainShiftCols = u.chainShiftCols;
-  if (u.pinSlots && typeof u.pinSlots === "object") {
-    ["L", "R"].forEach(side => {
-      const arr = Array.isArray(u.pinSlots[side]) ? u.pinSlots[side].slice(0, PIN_SLOTS_N) : [];
-      while (arr.length < PIN_SLOTS_N) arr.push(null);
-      pinSlots[side] = arr;
-    });
-    if (typeof renderPinSlots === "function") renderPinSlots();
-  }
   if (u.layerFocus !== undefined) setLayerFocus(!!u.layerFocus, true);
   if (u.menuBarBottom !== undefined) setMenuBarBottom(!!u.menuBarBottom, true);
   if (typeof applyMsgPos === "function") applyMsgPos(u.msgPos || "");
@@ -3357,11 +2822,6 @@ function applyUiSettings(u){
   if (u.preset !== undefined) setPresetActive(u.preset);
   applyColors();
 
-  if (u.patC1L && colPat1L) colPat1L.value = u.patC1L;
-  if (u.patC0L && colPat0L) colPat0L.value = u.patC0L;
-  if (u.patC1R && colPat1R) colPat1R.value = u.patC1R;
-  if (u.patC0R && colPat0R) colPat0R.value = u.patC0R;
-  applyPatBitColors();
   if (u.fldL && colFieldL) colFieldL.value = u.fldL;
   if (u.fldC && colFieldC) colFieldC.value = u.fldC;
   if (u.fldR && colFieldR) colFieldR.value = u.fldR;

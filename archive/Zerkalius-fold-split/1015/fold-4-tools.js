@@ -1016,19 +1016,11 @@ function updateNumGlueRowsBtn(){
 function applyPatNumClasses(){
   document.body.classList.toggle("patnum-l", !!st.patNumL);
   document.body.classList.toggle("patnum-r", st.patNumR !== false);
-  /* Две кнопки «№» в полосе выравниваний УБРАНЫ (v1.024, запрос пользователя: "нажать это вместо
-     кнопки Номера в паттернах показать, а ту удали") — их заменила одна «{#}» в текстовой полоске
-     под осью, и она правит ОБЕ колонки разом (см. togglePatNumBoth ниже). Поиск по старым id
-     оставлен на случай, если кнопки когда-нибудь вернут: обе проверки и так через if. */
   const bl = document.getElementById("bPatNumL");
   if (bl) bl.classList.toggle("overlay-on", !!st.patNumL);
   const br = document.getElementById("bPatNumR");
   if (br) br.classList.toggle("overlay-on", st.patNumR !== false);
-  const bAll = document.getElementById("bAxisPatNum");
-  if (bAll) bAll.classList.toggle("on", patNumsOn());
 }
-// Номера в паттернах включены хоть где-то. Одна кнопка на две колонки — состояние общее.
-function patNumsOn(){ return !!st.patNumL || st.patNumR !== false; }
 /* Поля "по сколько строк на ступеньку" у лесенок (#stairsGrpL/#stairsGrpR, v0.875). Значение
    живёт в настройках вида (своё у каждой цепочки) и читается из alignShift() через
    stairsGroupFor(). Меньше 1 не бывает — пустое поле и мусор считаем единицей. */
@@ -1053,41 +1045,6 @@ function togglePatNum(side){
   else st.patNumR = (st.patNumR === false);
   applyPatNumClasses();
   render(); saveCache();
-}
-/* ОБЕ КОЛОНКИ РАЗОМ (v1.024) — то, что делает «{#}» в полоске под осью. Прежние «№» правили П1 и
-   П2 порознь, но кнопка теперь одна, поэтому и состояние общее: включено хоть где-то — гасим обе,
-   погашено везде — зажигаем обе. */
-function togglePatNumBoth(){
-  const on = patNumsOn();
-  st.patNumL = !on;
-  st.patNumR = !on;
-  applyPatNumClasses();
-  render(); saveCache();
-  say(on ? "Номера в паттернах убраны из обеих колонок." : "Номера строк показаны внутри ячеек паттернов — в обеих колонках, П1 и П2.");
-}
-/* ЗАМОК ОСЕЙ ДВИЖЕНИЯ — кнопка «{=-=}» в полоске под осью (v1.024). Крутит moveLock по кругу
-   ""→rows→cols→all→"" (см. MOVE_LOCK_ORDER в fold-1-core.js, там же и что каждое значение значит).
-   Сама кнопка ничего не запрещает — только переставляет флаг; запрет живёт в moveColsAllowed()/
-   moveRowsAllowed(), которые спрашивают все пути сдвига полей. */
-function applyMoveLockBtn(){
-  const b = document.getElementById("bAxisMoveLock");
-  if (!b) return;
-  b.textContent = MOVE_LOCK_LABEL[moveLock] || MOVE_LOCK_LABEL[""];
-  b.classList.toggle("on", !!moveLock);
-}
-function cycleMoveLock(){
-  const i = MOVE_LOCK_ORDER.indexOf(moveLock);
-  moveLock = MOVE_LOCK_ORDER[(i < 0 ? 0 : i + 1) % MOVE_LOCK_ORDER.length];
-  applyMoveLockBtn();
-  saveCache();
-  say(MOVE_LOCK_NOTE[moveLock]);
-}
-{
-  const bNum = document.getElementById("bAxisPatNum");
-  if (bNum) bNum.onclick = () => togglePatNumBoth();
-  const bLock = document.getElementById("bAxisMoveLock");
-  if (bLock) bLock.onclick = () => cycleMoveLock();
-  applyMoveLockBtn();
 }
 
 /* "⤒🧩 Начало паттернов сюда" (#bPatZeroHere, v0.868, запрос пользователя "пусть нулевая строка в
@@ -4472,17 +4429,19 @@ function doXorSelectedStep() {
   return true;
 }
 
-/* СДВИНУТЬ ПОЛЕ СТРЕЛКОЙ (v0.982, вынесено в отдельную функцию в v0.994 — теперь её зовут ДВА
-   разных обработчика: Alt+стрелки (всегда) и замок 🔒 без Alt, когда последним хватали именно
-   поле, а не границу, см. lastGrabWasBorder). Цель — та, что в lastPanField: "L"/"R"/"C", то есть
-   поле, за глифы которого брались последним. До первого касания мышью — "C" (цепочка).
-   Ветка "ALL" (все три поля разом, v0.988) убрана в v1.018 вместе с самой возможностью двигать всё
-   разом: жест, который её включал (протяжка мимо полей), теперь мотает полотно вбок и раскладку не
-   трогает — см. "ПРОТЯЖКА МИМО ГЛИФОВ" в fold-5-ui.js. */
+/* СДВИНУТЬ ПОЛЕ/ВСЕ ПОЛЯ СТРЕЛКОЙ (v0.982/988, вынесено в отдельную функцию в v0.994 — теперь
+   её зовут ДВА разных обработчика: Alt+стрелки (всегда) и замок 🔒 без Alt, когда последним
+   хватали именно поле, а не границу, см. lastGrabWasBorder). Три цели, как решает lastPanField:
+   "ALL" (кликнули мимо полей и строк) — все три поля разом; "L"/"R"/"C" (взяли конкретное поле за
+   биты) — оно одно. До первого касания мышью — "C" (цепочка). */
 function doFieldNudge(key){
   const dCols = key === "ArrowRight" ? 1 : (key === "ArrowLeft" ? -1 : 0);
   const dRows = key === "ArrowDown" ? 1 : (key === "ArrowUp" ? -1 : 0);
-  if (typeof nudgeField === "function") {
+  if (lastPanField === "ALL" && typeof nudgeAllFields === "function") {
+    nudgeAllFields(dCols, dRows);
+    saveCache();
+    say(`Все три поля: сдвиг на ${dCols ? (dCols > 0 ? "столбец вправо" : "столбец влево") : (dRows > 0 ? "строку вниз" : "строку вверх")}. Клик мимо полей и строк выбирает "все поля разом", клик по конкретному полю — снова только его; «⌖ Поля на место» во вкладке «Вид» вернёт всё к предустановкам.`);
+  } else if (typeof nudgeField === "function") {
     nudgeField(lastPanField, dCols, dRows);
     saveCache();
     const nm = lastPanField === "L" ? "П1" : (lastPanField === "R" ? "П2" : "Цепочка");
@@ -4569,11 +4528,19 @@ document.addEventListener("keydown", e => {
     if (typeof wrapModeOn === "function" && wrapModeOn()) { wrapCancel(); return; }
     closeMenus();
     /* ESCAPE СНИМАЕТ ВСЕ ВЫДЕЛЕНИЯ РАЗОМ (v0.974, запрос пользователя: "сделай по Escape — убрать
-       выделения все, и паттернов, строк и цепочек"). Раньше Escape не трогал выделение вовсе —
-       это было прежнее требование ("Сброс/Escape выделение не трогает"), теперь отменено этим
-       запросом. Логика вынесена в clearAllSelections() (fold-1-core) — её же зовёт включение
-       замка. */
-    clearAllSelections();
+       выделения все, и паттернов, строк и цепочек"). Наборов четыре, и живут они порознь:
+       st.selectedRows — строки цепочки, st.selectedPats — ячейки колонки паттернов,
+       cellSel — биты полотна, patCellSel — биты внутри паттерна (см. их объявления в fold-1-core).
+       Раньше Escape не трогал выделение вовсе — это было прежнее требование ("Сброс/Escape
+       выделение не трогает"), теперь отменено этим запросом. Выбранный столбец и накопитель
+       "📌 Зафиксировать" снимаем заодно: это тоже выделения, просто других видов. */
+    if (st.selectedRows) st.selectedRows.clear();
+    if (st.selectedPats) st.selectedPats.clear();
+    if (typeof cellSel !== "undefined") cellSel.clear();
+    if (typeof patCellSel !== "undefined") patCellSel.clear();
+    if (typeof cellPin !== "undefined") cellPin.clear();
+    st.selectedCol = -1;
+    st.captureGrown = false;
     // Escape ОСТАНАВЛИВАЕТ прогоны — общий "Авто" и свой "Авто" Паттерн-цепочки (запрос
     // пользователя "пусть Esc останавливает Авто цепочки"). Это не откат данных, а просто стоп
     // идущего процесса — поэтому остаётся тут же, рядом со снятием выделений.
@@ -4676,24 +4643,6 @@ document.addEventListener("keydown", e => {
       const h = rowEl ? Math.max(4, Math.round(rowEl.getBoundingClientRect().height)) : 12;
       sc.scrollTop += (e.key === "ArrowDown" ? h : -h);
     }
-  } else if (e.shiftKey && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
-    /* SHIFT + ←/→ — ТОТ ЖЕ ◄/► КРУГ, НО С ДОВОДКОЙ ОБЗОРА (v1.030, запрос пользователя: "шифт и
-       стрелка влево-право когда — надо держать в центре экрана биты так, чтобы самый верхний
-       оставался на оси; ось не смещать при этом"). Обычные ←/→ крутят биты и уводят картину из
-       поля зрения — приходится догонять её мышью. Здесь после каждого шага экран сам подматывается
-       так, чтобы верхний бит цепочки стоял посередине.
-       ВАЖНО: доводим ИМЕННО ПРОКРУТКОЙ (centerTopBitOnScreen в fold-5-ui.js), а не сдвигом оси —
-       ось остаётся ровно там, где стояла, как и просили.
-       requestAnimationFrame — клик по ◄/► ведёт к render(), и мерить биты можно только на уже
-       разложенном кадре, иначе прокрутка считалась бы по старой геометрии.
-       Ветка стоит ПОСЛЕ замка (🔒) намеренно: под замком Круг молчит (shiftAllowed), и подменять
-       там смысл стрелок нечем. */
-    e.preventDefault();
-    if (e.key === "ArrowLeft") { if (bShiftLEl) bShiftLEl.click(); }
-    else { if (bShiftREl) bShiftREl.click(); }
-    requestAnimationFrame(() => {
-      if (typeof centerTopBitOnScreen === "function") centerTopBitOnScreen();
-    });
   } else if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && st.selectedCol >= 0) {
     // Пока выбран столбец, ◄► переключают ВЫБРАННЫЙ СТОЛБЕЦ (не крутят символы строк).
     e.preventDefault();
@@ -4812,29 +4761,10 @@ function setAlignTarget(field, quiet){
 }
 const bAlignTargetIndEl = document.getElementById("bAlignTargetInd");
 if (bAlignTargetIndEl) {
-  // e.detail >= 2 — второй (и далее) click той же двойной-клик-последовательности: цикл ему не
-  // достаётся, дальше идёт dblclick-центрирование ниже. Тот же приём, что у кнопок ⇤ (bAlignPatL/R
-  // в fold-5-ui.js) — иначе двойной клик успевал бы провернуть приёмник на два шага ПЕРЕД тем, как
-  // сработает центрирование, и в центр уехало бы совсем не то поле, по которому целились.
-  bAlignTargetIndEl.onclick = (e) => {
-    if (e.detail >= 2) return;
+  bAlignTargetIndEl.onclick = () => {
     const idx = ALIGN_TARGET_ORDER.indexOf(alignTarget);
     setAlignTarget(ALIGN_TARGET_ORDER[(idx < 0 ? -1 : idx) + 1 >= ALIGN_TARGET_ORDER.length ? 0 : idx + 1]);
   };
-  /* ДВОЙНОЙ КЛИК — ПРОКРУТИТЬ ЭКРАН К БИТАМ ТЕКУЩЕГО ПОЛЯ (v1.020, уточнено в v1.021: "не
-     перемещает биты за ось, а должен просто скролл экрана подвинуть"). Поле берётся то, что сейчас
-     в приёмнике, — кнопка его и показывает (Ц/П1/П2), так что целиться отдельно не во что. Сама
-     раскладка при этом НЕ меняется, двигается только точка обзора — см. centerFieldOnScreen()
-     (fold-5-ui.js), там же и почему замер идёт по глифам, а не по коробке колонки. */
-  bAlignTargetIndEl.addEventListener("dblclick", (e) => {
-    e.preventDefault();
-    const nm = alignTarget === "C" ? "Цепочка" : (alignTarget === "L" ? "Левое поле (П1)" : "Правое поле (П2)");
-    if (typeof centerFieldOnScreen === "function" && centerFieldOnScreen(alignTarget)) {
-      say(nm + ": экран прокручен к его битам — сами биты остались на месте, сдвиги полей не тронуты. Приёмник переключается одиночным кликом по этой же кнопке.");
-    } else {
-      say(nm + ": прокручивать не к чему — в поле нет ни одного бита.");
-    }
-  });
 }
 
 
@@ -5068,15 +4998,235 @@ for (const [id, key, def] of [["maskPaintColor1", "maskPaintColor1", "#b060ff"],
 
 
 
-/* СТАРАЯ ПОЛОСА ЗНАЧКОВ-КОПИЙ НАД ПОЛОТНОМ (.state-badges/#stateBadges, v0.794 — v1.017) УБРАНА
-   ЦЕЛИКОМ по запросу пользователя ("не слоты убрать надо было, а другое поле для такого же
-   закрепления, старое"). Это был ВТОРОЙ, более ранний способ закреплять ярлыки кнопок: полоса во
-   всю ширину поля цепочек, куда контрол перетаскивался мышью и вставал в произвольную точку
-   (позиция долей ширины). Он дублировал слоты у полосы выравниваний (align-pin-slots в
-   fold-5-ui.js), которые и остались единственным механизмом закрепления.
-   Вместе с ним ушли: BADGE_KEY/badgePins (свой ключ localStorage "zerk_fold_badges"),
-   renderStateBadges(), badgeCtrl*() и весь ручной drag (mousedown/mousemove/mouseup на document).
-   Старые записи в localStorage под этим ключом просто перестают читаться. */
+/* === ЗНАЧКИ-КОПИИ КОНТРОЛОВ НАД ПОЛОТНОМ (v0.794) ========================================
+   Полоса ВО ВСЮ ШИРИНУ поля цепочек (запрос пользователя: "пусть тут по всей ширине можно
+   прикрепить"), пустая по умолчанию — наполняет её пользователь сам:
+     ПЕРЕТАСКИВАНИЕ = КОПИРОВАНИЕ: контрол остаётся на своём месте, наверху появляется значок.
+     Тащить можно ЛЮБОЙ контрол панелей (кнопку или галку) И ЛЮБУЮ КНОПКУ ВЕРХНЕГО МЕНЮ
+     (v0.923) — кроме вкладок-панелей, за них таскают сами панели.
+     Значок встаёт ТУДА, ГДЕ ОТПУСТИЛИ: позиция хранится долей ширины (0..1), поэтому держится
+     на месте и при изменении размера окна. Уже закреплённый значок можно перетащить в другое
+     место той же полосы — он просто переедет.
+     Клик по значку = клик по самому контролу (вся логика режима остаётся в одном месте).
+     Двойной клик по значку — открепить.
+   Состояние читается У САМОГО КОНТРОЛА, а не из st: галка — по checked, кнопка — по своим
+   классам-признакам включённости (.mode-act/.act/.overlay-on/.bg-search-active). Поэтому набор
+   ни с чем не разъезжается и не надо знать имя поля состояния для каждой кнопки.
+   Хранится отдельным ключом localStorage, не в раскладке панелей: это набор ярлыков, а не
+   геометрия окон. */
+const BADGE_KEY = "zerk_fold_badges";
+/* [{ id, x }], x — доля ширины полосы от 0 до 1. */
+let badgePins = [];
+try {
+  const savedPins = JSON.parse(localStorage.getItem(BADGE_KEY) || "null");
+  if (Array.isArray(savedPins)) {
+    badgePins = savedPins.filter(p => p && p.id).map(p => ({ id: p.id, x: +p.x || 0 }));
+  } else if (savedPins && Array.isArray(savedPins.L) && Array.isArray(savedPins.R)) {
+    // Миграция с двух угловых полосок (v0.793): левые раскладываем от левого края, правые — к
+    // правому, дальше пользователь двигает их как хочет.
+    savedPins.L.forEach((id, i) => badgePins.push({ id, x: Math.min(0.45, 0.02 + i * 0.045) }));
+    savedPins.R.forEach((id, i) => badgePins.push({ id, x: Math.max(0.55, 0.98 - i * 0.045) }));
+  }
+} catch (e) { /* мусор в кэше — начинаем с пустой полосы */ }
+function saveBadgePins(){
+  try { localStorage.setItem(BADGE_KEY, JSON.stringify(badgePins)); } catch (e) {}
+}
+/* Включён ли контрол ПРЯМО СЕЙЧАС. null — у контрола нет состояния (обычная кнопка-действие):
+   такой значок всегда рисуется обычным, гасить его не за чем. */
+function badgeCtrlOn(el){
+  if (!el) return null;
+  if (el.tagName === "INPUT" && el.type === "checkbox") return !!el.checked;
+  for (const c of ["mode-act", "act", "overlay-on", "bg-search-active"]) {
+    if (el.classList.contains(c)) return true;
+  }
+  // Кнопка-переключатель в выключенном виде от кнопки-действия неотличима — но и вреда от
+  // "рисуем обычным" тут нет: пользователь сам решил, что этот ярлык ему нужен.
+  return null;
+}
+/* Подпись контрола: у галки — текст её label, у кнопки — собственный текст. */
+function badgeCtrlLabel(el){
+  if (!el) return "";
+  const host = (el.tagName === "INPUT") ? (el.closest("label") || el) : el;
+  return (host.textContent || "").replace(/\s+/g, " ").trim();
+}
+/* Что показать на значке: первое "слово" подписи — обычно это как раз эмодзи-иконка ("🎭", "⏭",
+   "⧬+⨁"). Пусто (галка без текста) — берём id. Длиннее 4 символов не пускаем, иначе значок
+   перестаёт быть значком. */
+function badgeCtrlIcon(el, id){
+  const first = (badgeCtrlLabel(el).split(" ")[0] || "").trim();
+  const src = first || id.replace(/^[bc]/, "");
+  return Array.from(src).slice(0, 4).join("");
+}
+function renderStateBadges(){
+  const box = document.getElementById("stateBadges");
+  if (!box) return;
+  let html = "";
+  for (const pin of badgePins) {
+    const el = document.getElementById(pin.id);
+    if (!el) continue;              // контрол пропал (переименовали id) — молча пропускаем
+    const on = badgeCtrlOn(el);
+    const label = badgeCtrlLabel(el) || pin.id;
+    // translateX(-50%) — значок центрируется по точке, куда его положили, поэтому у самого края
+    // он не вылезает за полосу наполовину, а плавно упирается (см. clamp при сохранении x).
+    /* ПОДСКАЗКА — КОРОТКАЯ (v0.831, запрос пользователя "подсказка нужна проще: название и инфо
+       ВКЛ/Выкл"): только подпись контрола и его состояние, без инструкции про клик, двойной клик
+       и перетаскивание — она была длиннее самой подписи и повторялась у каждого значка. Если
+       подпись САМА уже говорит "ВКЛ"/"ВЫКЛ" (как у "🎭 По маске: ВКЛ"), второй раз не дописываем. */
+    const saysState = /ВКЛ|ВЫКЛ/.test(label);
+    const stateNote = (on === null || saysState) ? "" : (on ? " — ВКЛ" : " — ВЫКЛ");
+    // Включён — обводим рамкой (v0.832, запрос пользователя "когда включена — рамкой обводи,
+    // чтобы понятно было, вкл она или выкл"): выключенный значок и так приглушён (.off), но
+    // между "выключен" и "состояния нет" разницы на глаз не было.
+    html += '<span class="state-badge' + (on === false ? " off" : (on ? " on" : "")) + '" data-ctrl="' + pin.id +
+      '" style="left:' + (pin.x * 100).toFixed(3) + '%" title="' +
+      esc(label + stateNote) + '">' +
+      esc(badgeCtrlIcon(el, pin.id)) + '</span>';
+  }
+  box.innerHTML = html;
+}
+/* Клик — жмём тот же контрол, что и в панели: у галки .click() сам переключает checked и шлёт
+   change, у кнопки срабатывает её onclick. Двойной клик снимает значок. */
+const badgeBoxEl = document.getElementById("stateBadges");
+if (badgeBoxEl) {
+  badgeBoxEl.onclick = (e) => {
+    const b = e.target.closest(".state-badge");
+    if (!b) return;
+    const el = document.getElementById(b.getAttribute("data-ctrl"));
+    if (el) el.click();
+    renderStateBadges();
+  };
+  badgeBoxEl.ondblclick = (e) => {
+    const b = e.target.closest(".state-badge");
+    if (!b) return;
+    const id = b.getAttribute("data-ctrl");
+    badgePins = badgePins.filter(p => p.id !== id);
+    saveBadgePins();
+    renderStateBadges();
+    say("Значок убран из полосы.");
+  };
+}
+
+/* ПЕРЕТАСКИВАНИЕ. Свой mousedown/mousemove/mouseup, а не HTML5 drag-and-drop — тот в приложении
+   уже занят вставкой фигуры файлом и конфликтует (та же причина, по которой на ручном драге
+   сделаны и сами панели-вкладки). Порог в 5px: пока мышь не уехала, это обычный клик по контролу
+   (или по значку) и он должен работать как всегда.
+   Источников два: контрол в панели (тогда это КОПИРОВАНИЕ) и уже стоящий значок (тогда это
+   перемещение по полосе). */
+let badgeDrag = null;
+document.addEventListener("mousedown", (e) => {
+  if (e.button !== 0) return;
+  // Уже стоящий значок — двигаем его самого.
+  const badge = e.target.closest(".state-badge");
+  if (badge) {
+    badgeDrag = { id: badge.getAttribute("data-ctrl"), move: true, x0: e.clientX, y0: e.clientY, moved: false, ghost: null };
+    return;
+  }
+  /* Контрол ВНУТРИ панели ИЛИ В ВЕРХНЕМ МЕНЮ — копируем (#menuBar добавлен в v0.923, запрос
+     пользователя "кнопки из верхнего меню тоже должны быть копируемыми значками на поле
+     цепочек"). Там живут ↩/↪, 💾, 📌, 🗗 и переключатели окон 🔗Р/ 🧾Ч/ — ими пользуются чаще
+     всего, а до верхней полосы каждый раз тянуться мышью через весь экран.
+     Шапки панелей (.panel-head) и вкладки (.menu-btn) по-прежнему не трогаем: за них таскают
+     сами панели, и перехват сломал бы их перетаскивание. Заголовок и ссылка на Хаб — не
+     button/input, до проверки ниже они и не доходят. Кнопки в выпадающем списке цепочек (💾/↺/✕
+     у каждой) своих id не имеют, поэтому отсеются там же: значок без id не привязать к контролу. */
+  const host = e.target.closest("#leftPanel, #rightPanel, .menu-drop, .floating-panel, #menuBar");
+  if (!host || e.target.closest(".panel-head, .menu-btn")) return;
+  let ctrl = e.target.closest("button, input[type=checkbox]");
+  // ХВАТАТЬ МОЖНО ЗА ПОДПИСЬ (запрос пользователя — "эти тоже туда" про галки «Без 1-го», «Инв.
+  // кольцо» и прочие). Сама <input type=checkbox> — квадратик в 13px, целиться в него мышью
+  // бессмысленно, а закрывающий её <label> внутри себя и содержит: closest() от текста подписи
+  // до чекбокса не дойдёт (он вложен, а не наоборот), поэтому ищем его сверху вниз.
+  if (!ctrl) {
+    const lab = e.target.closest("label");
+    if (lab) ctrl = lab.querySelector('input[type=checkbox]');
+  }
+  if (!ctrl || !ctrl.id) return;
+  badgeDrag = { id: ctrl.id, move: false, x0: e.clientX, y0: e.clientY, moved: false, ghost: null };
+}, true);
+document.addEventListener("mousemove", (e) => {
+  if (!badgeDrag) return;
+  if (!badgeDrag.moved) {
+    if (Math.abs(e.clientX - badgeDrag.x0) < 5 && Math.abs(e.clientY - badgeDrag.y0) < 5) return;
+    badgeDrag.moved = true;
+    // Тащим за подпись — браузер иначе начнёт выделять её текст, и вместо переноса получается
+    // синее выделение через пол-панели.
+    e.preventDefault();
+    // Полоса-приёмник получает видимую рамку, пока идёт перенос (тот же приём, что подсветка
+    // доков при перетаскивании вкладок) — иначе в пустую полосу нечем целиться.
+    document.body.classList.add("badge-dragging");
+    const el = document.getElementById(badgeDrag.id);
+    const g = document.createElement("div");
+    g.className = "badge-ghost";
+    g.textContent = badgeCtrlIcon(el, badgeDrag.id);
+    document.body.appendChild(g);
+    badgeDrag.ghost = g;
+  }
+  if (badgeDrag.ghost) {
+    // Призрак цепляется к ВЕРХНЕМУ КРАЮ курсора (запрос пользователя: "рука неудобно прилипает
+    // к значку"): раньше он висел на 8px ниже-правее острия и лез под саму руку-курсор, закрывая
+    // то место, куда целишься. Смещение делает CSS (translate(-50%,-115%)) — тут просто ставим
+    // точку острия.
+    badgeDrag.ghost.style.left = e.clientX + "px";
+    badgeDrag.ghost.style.top = e.clientY + "px";
+  }
+});
+document.addEventListener("mouseup", (e) => {
+  if (!badgeDrag) return;
+  const drag = badgeDrag;
+  badgeDrag = null;
+  if (drag.ghost) drag.ghost.remove();
+  document.body.classList.remove("badge-dragging");
+  if (!drag.moved) return;   // обычный клик — ничего не перехватываем
+  /* ПОСЛЕ НАСТОЯЩЕГО ПЕРЕТАСКИВАНИЯ ГЛУШИМ СЛЕДУЮЩИЙ КЛИК (v0.924). Браузер шлёт click по
+     кнопке-источнику даже когда мышь уехала с неё на сотни пикселей, — то есть протащить контрол
+     на полосу значило заодно НАЖАТЬ его. У кнопок панелей это в основном безобидно, но с v0.923
+     источником стало и верхнее меню: попытка перетащить оттуда "📌" срабатывала как обычное
+     нажатие и прятала ВСЕ панели разом (баг-репорт "разметка полетела снова"). Тот же фокус, что
+     и с rowDragMoved у выделения строк протяжкой: одноразовый перехватчик на фазе capture,
+     который съедает ровно один ближайший click и снимает сам себя. */
+  const swallow = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
+  document.addEventListener("click", swallow, true);
+  setTimeout(() => document.removeEventListener("click", swallow, true), 0);
+  const box = document.getElementById("stateBadges");
+  if (box) {
+    const r = box.getBoundingClientRect();
+    // ЗОНА ПРИЁМА ШИРОКАЯ (запрос пользователя: "от кнопки зажато провести прямо до площади").
+    // Полоса тонкая (18px), и требовать попадания в неё пиксель в пиксель — мучение: целимся
+    // в ПОЛОСУ СВЕРХУ полотна целиком. Вверх пускаем до самого верха окна (там меню-бар, мимо
+    // не промахнёшься), вниз — с запасом в 60px. По горизонтали доля зажимается в 0..1, значок
+    // центрируется по точке (translateX(-50%)) и у краёв наружу не вылезает.
+    /* Нижняя граница зоны широкая (см. выше), а ВЕРХНЯЯ появилась в v0.923 вместе с
+       перетаскиванием из верхнего меню: раньше принималось всё, что выше полосы, вплоть до самого
+       верха окна — и теперь любой микро-сдвиг мыши на кнопке меню (5px порога) закреплял бы
+       значок, хотя до полосы её никто не доводил. Требуем дотянуть хотя бы до подступов к полосе. */
+    const inBand = e.clientY <= r.bottom + 70 && e.clientY >= r.top - 30 &&
+      e.clientX >= r.left && e.clientX <= r.right;
+    if (inBand && r.width > 0) {
+      const x = Math.max(0.01, Math.min(0.99, (e.clientX - r.left) / r.width));
+      const found = badgePins.find(p => p.id === drag.id);
+      if (found) found.x = x;                       // уже стоял — просто переехал
+      else badgePins.push({ id: drag.id, x: x });   // КОПИЯ: контрол остался в своей панели
+      saveBadgePins();
+      renderStateBadges();
+      if (!drag.move) {
+        const el = document.getElementById(drag.id);
+        say("Значок закреплён: " + (badgeCtrlLabel(el) || drag.id) + ". Двойной клик по нему — убрать.");
+      }
+    } else if (drag.move) {
+      // Утащили значок ПРОЧЬ с полосы — это и есть "снять" (кроме двойного клика).
+      badgePins = badgePins.filter(p => p.id !== drag.id);
+      saveBadgePins();
+      renderStateBadges();
+      say("Значок убран из полосы.");
+    }
+  }
+  // Протяжка кончилась — гасим клик, который браузер выдаст следом: иначе контрол сработал бы
+  // сам по себе от одного лишь перетаскивания.
+  const killClick = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
+  document.addEventListener("click", killClick, { capture: true, once: true });
+  setTimeout(() => document.removeEventListener("click", killClick, true), 0);
+});
+
 /* === "✂ РЕЖИМ ПЕРЕНОСА СТРОК" (v0.798) ===================================================
    Две вертикальные линии — слева и справа — отрезают у строк края, и отрезанное уезжает В НОВУЮ
    СТРОКУ ПОД СОБОЙ, а всё, что ниже, съезжает вниз (запрос пользователя: "две линии тяну на

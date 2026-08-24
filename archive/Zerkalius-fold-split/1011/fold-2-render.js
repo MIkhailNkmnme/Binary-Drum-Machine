@@ -757,40 +757,6 @@ function renderTabs() {
    сбоку. Ни палочек, ни крестиков в линейке сейчас НЕТ — ячейка содержит один пробел, которым и
    задана её ширина (ровно символ, чтобы совпадать с сеткой битов); обёртка .col-cell-tick со
    scaleX для старой палочки удалена в v0.853. */
-/* ОБЁРНУТЬ «1» И «0» ТЕКСТА ПАТТЕРНА В СПАНЫ ДЛЯ ПОКРАСКИ (v1.031, запрос пользователя: "цвета для
-   1 и 0 П1 и П2 надо задавать"). Сам цвет задаётся в CSS потомковым селектором от колонки
-   (.ln .pat .pb1 и т.д.) — разметка-то у П1 и П2 общая, её собирают один раз на обе.
-   ТОЛЬКО ВЕРХНИЙ УРОВЕНЬ. На вход приходит уже готовый HTML, в котором могут стоять span'ы
-   подсветки: «🌈 Все паттерны» красит найденный паттерн своим цветом, частичная находка — только
-   свой кусок, «⏭ Без 1-го» — отрезанный первый символ. Если обернуть символы и внутри них, у
-   вложенного span'а окажется СВОЙ color, и он перебил бы цвет находки (color родителя, даже с
-   !important, на потомка не распространяется как запрет — потомок красится своим правилом). Поэтому
-   считаем глубину вложенности и трогаем только то, что лежит снаружи всех тегов.
-   Разбор простой, но этого хватает: строку собираем тут же, рядом, и ничего кроме <span ...> и
-   </span> в ней быть не может. Сущности (&amp;, &nbsp;) начинаются с «&», под ветку тегов не
-   попадают и проходят насквозь как обычный текст. */
-function colorPatBits(html){
-  if (!html) return html;
-  let out = "", depth = 0, i = 0;
-  while (i < html.length) {
-    const ch = html[i];
-    if (ch === "<") {
-      const gt = html.indexOf(">", i);
-      if (gt < 0) { out += html.slice(i); break; }   // битый хвост — отдаём как есть
-      const tag = html.slice(i, gt + 1);
-      if (tag[1] === "/") depth--;
-      else if (tag[gt - i - 1] !== "/") depth++;      // не самозакрывающийся
-      out += tag;
-      i = gt + 1;
-      continue;
-    }
-    out += (depth === 0 && (ch === "0" || ch === "1"))
-      ? '<span class="pb' + ch + '">' + ch + '</span>'
-      : ch;
-    i++;
-  }
-  return out;
-}
 function renderColHeader(maxLen, mirrorPadL){
   const el = document.getElementById("colHeader");
   if (!el) return;
@@ -1704,13 +1670,7 @@ function render(){
   renderTabs(); // <-- ЭТО ТА САМАЯ СТРОКА, КОТОРУЮ Я ЗАБЫЛ В ПРОШЛЫЙ РАЗ!
   // Показ диагонали "Конверта" живёт только пока не тронули выделение/выравнивание/длины строк.
   if (envPreview && envPreview.key !== envPreviewKey()) envPreview = null;
-  /* #stepNo УБРАН ИЗ ВЕРХНЕЙ ПОЛОСЫ (v1.022, запрос пользователя: "это убери из менюполоски").
-     Проверка на null обязательна: элемента в разметке больше нет, а безусловное обращение к
-     .textContent роняло бы весь render() на первой же строке. Номер шага никуда не делся — он
-     печатается в шапке «🧾 Черновик шага № N» (см. renderStepLogBox), там он и на виду, и рядом
-     с самим разбором шага. */
-  const stepNoEl = document.getElementById("stepNo");
-  if (stepNoEl) stepNoEl.textContent = st.step;
+  document.getElementById("stepNo").textContent = st.step;
 
   // ПУСТОЕ выделение здесь БОЛЬШЕ НЕ ЧИНИТСЯ. Раньше тут стояла гарантия "выделение никогда не
   // пусто" (добавляла первую строку с данными) — из-за неё повторный клик по уже выделенной
@@ -1738,20 +1698,8 @@ function render(){
      них — её паттерн задаёт и точку отсчёта (свою длину вместо maxPatLen), и начало (столбец, где
      сама рамка стоит по общему выравниванию поля). Разница с цепочкой только в том, что здесь
      всё считается по ТЕКСТУ ПАТТЕРНА строки, а не по её битам. */
-  /* Точки отсчёта этого кадра — в глобалы, чтобы снимок за горизонт (snapshotRowAlign в
-     fold-1-core.js) брался ровно тем же масштабом, каким строка сейчас нарисована. Ставим ДО
-     первого использования: границу могут дёрнуть в любой момент между кадрами. */
-  alignSnapMaxLen = maxLen;
-  alignSnapMaxPatLen = maxPatLen;
   const patFieldPad = (align, len, rowIdx, field) => {
     if (!len || !maxPatLen) return "";
-    // ЗА ГОРИЗОНТОМ (v1.026) — замерший слепок: у колонок паттернов своё выравнивание, поэтому и
-    // слепок свой, по ключу поля. Группы к замершим строкам не применяются, как и у цепочки.
-    const fz = frozenAlignGet(field, rowIdx);
-    if (fz) {
-      const shF = alignShift(fz.maxLen, len, fz.align, fz.idx);
-      return shF > 0 ? "&nbsp;".repeat(shF) : "";
-    }
     let sh = null;
     const g = rowGroupOfField(field, rowIdx);
     if (g && rowIdx !== rowGroupAnchor(g)) {
@@ -2761,14 +2709,7 @@ function render(){
       // растягивался на всю её длину, читаясь как подсветка целой строки. Номер строки и метка
       // шага (#N) в обёртку не входят намеренно — они не часть паттерна.
       // skipHead — отрезанный "⏭ Без 1-го" первый символ, СНАРУЖИ заливки (см. выше).
-      /* colorPatBits() — покраска «1»/«0» поколоночно (v1.031). НЕ ТРОГАЕМ ячейку, у которой цвет
-         находки стоит на ней самой: это случай "паттерн найден ЦЕЛИКОМ" (allHit при partStart < 0,
-         см. allHitStyle выше — там color на самом .pat/.pat2). Обёртки .pb1/.pb0 внутри неё имели бы
-         СВОЙ цвет и перебили бы цвет находки — inline !important родителя потомку не указ, тот
-         красится своим правилом. У ЧАСТИЧНОЙ находки цвет висит на внутреннем span'е, а не на
-         ячейке, и там всё в порядке: colorPatBits() и так обходит всё, что лежит внутри тегов. */
-      const patTxtHtml = skipHead + '<span class="pat-txt">' +
-        ((allHit && partStart < 0) ? textHtml : colorPatBits(textHtml)) + '</span>';
+      const patTxtHtml = skipHead + '<span class="pat-txt">' + textHtml + '</span>';
       /* ОТСТУП ПОЛЯ — СНАРУЖИ .pat-txt (v0.971). Внутри нельзя: на .pat-txt лежит заливка находки,
          и отступ красился бы вместе с паттерном, читаясь как найденные пустые биты. У П1 и П2
          отступ СВОЙ — у полей разное выравнивание, в этом весь смысл разделения на три поля. */
@@ -3676,10 +3617,10 @@ function render(){
   updateResultPopup(popupResultHtml, fullChainText);
 
   renderStepLogBox(bgInfo);
-  // Ярлыки в слотах полосы выравниваний — значок и подсветка берутся у ОРИГИНАЛОВ, поэтому
-  // обновляются тем же кадром, что и всё остальное: любое переключение в панелях зовёт render()
-  // (см. refreshPinSlotIcons в fold-5-ui.js — она правит по месту, DOM не пересобирает).
-  if (typeof refreshPinSlotIcons === "function") refreshPinSlotIcons();
+  // Значки включённых режимов в углах поля цепочек (см. renderStateBadges в fold-4). Живут тем же
+  // кадром, что и всё остальное: любое переключение в панелях зовёт render(), значит полоска
+  // всегда отражает текущее состояние.
+  if (typeof renderStateBadges === "function") renderStateBadges();
   updateAxisSplitPosition(maxLen);
   updateUndoRedoBtns();
 }
@@ -4329,23 +4270,6 @@ function ensureMsgClickDismiss(){
     const el = document.getElementById("msg");
     if (el) el.classList.remove("show");
   }, true);
-  /* ...И ПО НАЖАТИЮ КЛАВИШ ТОЖЕ (v1.021, запрос пользователя: "уведомления также убирать при
-     нажатии клавиш, стрелок"). Плашка вне авто-прогона висит, пока её не снимут, — а работа со
-     стрелками (сдвиг поля, ◄/► Круг, навигация) идёт без единого клика мышью, и старое сообщение
-     оставалось висеть поверх картинки неопределённо долго.
-     CAPTURE, А НЕ BUBBLE — и это здесь принципиально: сами клавиатурные обработчики (см. keydown в
-     fold-4-tools.js) висят на всплытии и ЧАСТО показывают своё сообщение через say(). Снятие на
-     фазе перехвата идёт РАНЬШЕ них, поэтому порядок получается правильный: сначала гаснет прежняя
-     плашка, потом та же клавиша печатает новую. На всплытии мы бы гасили как раз то, что клавиша
-     только что и вывела.
-     ЧИСТЫЕ МОДИФИКАТОРЫ ПРОПУСКАЕМ: Ctrl/Shift/Alt/Meta в приложении зажимают перед протяжкой
-     (межстрочный, межсимвольный, Alt+стрелки), и снимать сообщение в момент, когда человек только
-     берётся за мышь, — значит гасить ровно ту подсказку, которую он читает. */
-  document.addEventListener("keydown", e => {
-    if (e.key === "Control" || e.key === "Shift" || e.key === "Alt" || e.key === "Meta") return;
-    const el = document.getElementById("msg");
-    if (el) el.classList.remove("show");
-  }, true);
 }
 /* КЛИК ПО ПЛАШКЕ — ПО КРУГУ МЕЖДУ НИЗОМ-ЦЕНТРОМ И ЧЕТЫРЬМЯ УГЛАМИ (v1.002, запрос пользователя:
    "уведомления в самый низ и возможность убрать в углы по клику, чтоб там закрепилась"). Порядок
@@ -4760,7 +4684,7 @@ updateCellSampleSeqBtn();
   if (canvasEl) canvasEl.addEventListener("mousedown", (e) => {
     if (e.button !== 0 || !(cellSel.size || patCellSel.size)) return;
     if (e.target.closest(".b0, .b1, [data-pcol]")) return;
-    if (e.target.closest("#alignGrp, #colHeader, .vsplit, .vsplit2, .vsplit3, .axis-split, #colPickFloat, button, input, select, label")) return;
+    if (e.target.closest("#alignGrp, #colHeader, .vsplit, .vsplit2, .vsplit3, .axis-split, #colPickFloat, .state-badges, button, input, select, label")) return;
     cellSel.clear();
     patCellSel.clear();
     render(); saveCache();
