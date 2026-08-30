@@ -1738,28 +1738,21 @@ function render(){
      них — её паттерн задаёт и точку отсчёта (свою длину вместо maxPatLen), и начало (столбец, где
      сама рамка стоит по общему выравниванию поля). Разница с цепочкой только в том, что здесь
      всё считается по ТЕКСТУ ПАТТЕРНА строки, а не по её битам. */
-  /* Точки отсчёта этого кадра — в глобалы, чтобы снимок за горизонт (snapshotRowAlign в
-     fold-1-core.js) брался ровно тем же масштабом, каким строка сейчас нарисована. Ставим ДО
-     первого использования: границу могут дёрнуть в любой момент между кадрами. */
-  alignSnapMaxLen = maxLen;
-  alignSnapMaxPatLen = maxPatLen;
+  /* Ветка «за горизонтом» (v1.026) отсюда убрана вместе со всем горизонтом — см. комментарий у
+     rowAlignCtx() в fold-1-core.js (v1.043). Точки отсчёта кадра (alignSnapMaxLen/
+     alignSnapMaxPatLen) держались только ради снимков и тоже удалены. */
   const patFieldPad = (align, len, rowIdx, field) => {
     if (!len || !maxPatLen) return "";
-    // ЗА ГОРИЗОНТОМ (v1.026) — замерший слепок: у колонок паттернов своё выравнивание, поэтому и
-    // слепок свой, по ключу поля. Группы к замершим строкам не применяются, как и у цепочки.
-    const fz = frozenAlignGet(field, rowIdx);
-    if (fz) {
-      const shF = alignShift(fz.maxLen, len, fz.align, fz.idx);
-      return shF > 0 ? "&nbsp;".repeat(shF) : "";
-    }
     let sh = null;
     const g = rowGroupOfField(field, rowIdx);
     if (g && rowIdx !== rowGroupAnchor(g)) {
       const aIdx = rowGroupAnchor(g);
       const aPat = st.pats[aIdx];
       const aLen = (aPat && aPat.text) ? aPat.text.length : 0;
+      // Порядковый внутри группы — от рамки вверх (v1.063, см. rowGroupOrd): у колонок паттернов
+      // та же механика, что у цепочки, и разъезжаться они не должны.
       if (aLen) sh = alignShift(maxPatLen, aLen, align, aIdx)
-                   + alignShift(aLen, len, g.align, g.rows.indexOf(rowIdx));
+                   + alignShift(aLen, len, g.align, rowGroupOrd(g, rowIdx));
     }
     if (sh === null) sh = alignShift(maxPatLen, len, align, rowIdx);
     return sh > 0 ? "&nbsp;".repeat(sh) : "";
@@ -2540,9 +2533,12 @@ function render(){
   // Ширина номера строки — ОДНА на все строки (см. numTxtL ниже). Кандидатов ровно два: самый
   // нижний номер (самый длинный положительный) и самый верхний (у построений он отрицательный,
   // и минус добавляет символ).
+  // МЕРЯЕМ ТЕМ ЖЕ rowNumColText, ЧТО И ПЕЧАТАЕМ (v1.033): в двоичном виде номер втрое длиннее
+  // десятичного, и прежний String(rowLabel(...)) занижал бы ширину — колонка не вмещала бы номер
+  // и метки баланса перед ним разъехались бы по строкам.
   const numPadW = Math.max(
-    String(rowLabel(Math.max(0, st.rows.length - 1))).length,
-    String(rowLabel(0)).length
+    rowNumColText(Math.max(0, st.rows.length - 1)).length,
+    rowNumColText(0).length
   );
 
   // Окно строк, которые реально рисуем (см. vrowsRange). Пока строк мало — это по-прежнему ВСЕ
@@ -2613,16 +2609,37 @@ function render(){
     // участвуют в поиске — сильно затемняем, чтобы не отвлекали (запрос пользователя).
     if (hxActive && hxTarget >= 0 && i !== hxTarget) cls.push("horiz-dim");
     if (st.rowDividers && st.rowDividers.has(i)) cls.push("row-divider");
+    let grpBadge = "";   // ярлык группы на строке-рамке, см. ниже (v1.062)
     /* Метка группы со своим выравниванием (v0.977). Без неё разложенная группа ничем не отличается
        от строк, просто удачно вставших — а понимать, что у них своя геометрия, нужно постоянно.
        Отдельно помечается РАМКА (нижняя строка): она держит границы, и её положение объясняет
        положение всей группы. */
     for (const fld of ["C", "L", "R"]) {
+      /* ПОД ОСЕВЫМ ВЫРАВНИВАНИЕМ ЗАСЕЧКИ ГРУППЫ НЕТ (v1.061, запрос пользователя: "погаси").
+         С v1.059 группа на геометрию в осевых режимах не влияет (см. rowAlignCtx), а метка всё
+         равно рисовалась — синяя полоса у границы поля обещала действующую группировку, которой
+         сейчас нет. Сама группа цела и вернётся вместе с обычным выравниванием.
+         Проверка только для "C": крайним полям осевые выравнивания не даются вовсе
+         (см. FIELD_ALIGNS в fold-1-core.js), там условие было бы всегда ложным. */
+      if (fld === "C" && isAxisAlign(st.align)) continue;
       const grp = rowGroupOfField(fld, i);
       if (!grp) continue;
       cls.push(fld === "C" ? "grp-align" : (fld === "L" ? "grp-align-l" : "grp-align-r"));
       if (i === rowGroupAnchor(grp)) {
         cls.push(fld === "C" ? "grp-anchor" : (fld === "L" ? "grp-anchor-l" : "grp-anchor-r"));
+        /* ЯРЛЫК ГРУППЫ НА СТРОКЕ-РАМКЕ (v1.062, запрос пользователя: "это как-то надо попроще
+           распускать и видеть, что тут какое выравнивание"). Засечка слева говорила ТОЛЬКО «тут
+           группа»; какое у неё выравнивание, приходилось вспоминать, а распустить — выделять те же
+           строки и повторно жать ту же кнопку полосы. Теперь на рамке стоит сам значок выравнивания
+           (⇤ ↔ ↔½ ⇥ ↘ ↘½ ↙ ↙½), и клик по нему распускает группу на месте.
+           Только на РАМКЕ, а не на каждой строке: рамка и так помечена отдельно, она объясняет
+           положение всей группы — ярлык на всех строках превратился бы в столбик из одинаковых
+           значков вдоль всей группы. */
+        grpBadge = '<span class="grp-badge" data-grp-fld="' + fld + '" data-grp-row="' + i +
+          '" title="Группа строк со своим выравниванием «' +
+          ((typeof FIELD_ALIGN_ICON === "object" && FIELD_ALIGN_ICON[grp.align]) || grp.align) +
+          '» (' + grp.rows.length + ' стр., рамка — эта строка). КЛИК — распустить группу: строки вернутся в общее выравнивание поля">' +
+          esc((typeof FIELD_ALIGN_ICON === "object" && FIELD_ALIGN_ICON[grp.align]) || grp.align) + "</span>";
       }
     }
 
@@ -2636,15 +2653,18 @@ function render(){
     // Номер для показа — через rowLabelText(): у достроенных сверху строк он отрицательный, а при
     // включённых "🔢 Двоичных номерах" ещё и в двоичном виде.
     const numTxt = rowLabelText(i);
-    // НОМЕР В ПОЛЕ ЦЕПОЧКИ — ВСЕГДА ДЕСЯТИЧНЫЙ (v0.884, запрос пользователя "номера в цепочках —
-    // только 10-ные пусть"). Двоичный вид (кнопка "🔢 Двоичные номера") остаётся у номеров ВНУТРИ
-    // паттернов: там он к месту — паттерн сам из 0/1, и номер читается как его продолжение. А в
-    // поле цепочки нужен обычный счёт строк, тот же, что в логе и сообщениях.
+    // НОМЕР В ПОЛЕ ЦЕПОЧКИ — ПО СВОЕЙ КНОПКЕ «{10}» В ПОЛОСКЕ ПОД ОСЬЮ (v1.033, запрос
+    // пользователя: "кнопку сюда слева вкл выкл номера строк и переключения 10-ной и 2-ном
+    // представлении их"). До этого он был ВСЕГДА десятичным (v0.884, "номера в цепочках — только
+    // 10-ные пусть"): двоичный вид отдавался только номерам ВНУТРИ паттернов, где он к месту —
+    // паттерн сам из 0/1. Теперь у колонки поля свой независимый переключатель st.rowNumMode
+    // (dec/bin/off), а кнопка "🔢 Двоичные номера" по-прежнему правит только паттерны.
+    // Лог и сообщения не тронуты — они зовут rowLabel() и остаются десятичными.
     // Номер добит пробелами до ОДНОЙ ширины на все строки (v0.891). Бокс .num-l2 выровнен по
     // правому краю, и без этого номер разной длины сдвигал бы стоящую ПЕРЕД ним метку баланса —
     // "+" и "=" гуляли бы по строкам (запрос пользователя "= под =, + под +"). Пробелы держатся
     // за счёт white-space:pre у .num.
-    const numTxtL = String(rowLabel(i)).padStart(numPadW, " ");
+    const numTxtL = rowNumColText(i).padStart(numPadW, " ");
     /* Номера ВНУТРИ ячеек паттернов — по кнопке у каждой колонки отдельно (v0.873, запрос
        пользователя "отображение вообще номеров в паттернах, лево право поля отдельные кнопки").
        Правый (в П2) теперь стоит СПРАВА от текста паттерна, а не слева, как было с v0.833
@@ -2799,9 +2819,39 @@ function render(){
     // длины прибавка разная, и центр перестаёт быть центром. Место под зеркала даётся иначе —
     // ОДИНАКОВОЙ прибавкой ко всем строкам сразу, см. mirrorPadL/mirrorPadR в начале render().
     const geomLen = s.length;
-    const shift = s.length ? (
-      st.align === "axis" ? axisRowShift(maxLen, i, geomLen) :
-      st.align === "axis12" ? (axis12Frozen ? alignShift(maxLen, geomLen, "center") : axisRowShift(maxLen, i, s.length)) :
+    /* ═══ СВОЁ ВЫРАВНИВАНИЕ ГРУППЫ — ТЕПЕРЬ ВИДНО В САМОЙ КАРТИНКЕ (v1.040, баг-репорт
+       пользователя: "это не работает, только пишет правильно") ═══
+       Сдвиг строки цепочки считался здесь ГОЛЫМ alignShift(maxLen, len, st.align, i) — то есть по
+       ОБЩЕМУ выравниванию поля и номеру строки в цепочке — группа (v0.977, «своё выравнивание
+       выделенным») в этот расчёт не входила вообще.
+       При этом ВСЯ ОСТАЛЬНАЯ геометрия — data-col, visibleColCount, интерлив, поколоночные режимы
+       фон-поиска — давно спрашивает rowShiftFor(), а та группу разбирает. Отсюда и симптом: сообщение
+       про группу печаталось верное, состояние сохранялось, столбцы считались с учётом рамки, и
+       только сами биты на экране не двигались с места.
+       Считаем ровно то же, что rowShiftFor()/rowHalf2x() в fold-1-core.js, чтобы картинка и расчёты
+       не разошлись снова: строка внутри группы встаёт ОТ МЕСТА СВОЕЙ РАМКИ (нижней строки группы) и
+       дальше выравнивается по длине рамки и своему ПОРЯДКОВОМУ номеру в группе.
+       Ветка «за горизонтом» отсюда убрана вместе со всем горизонтом (v1.043).
+       ОСЕВЫЕ РЕЖИМЫ ГРУППУ НЕ СПРАШИВАЮТ (v1.059) — то же правило, что в rowAlignCtx(), см. его
+       комментарий: под «⊙ Ось»/«ОсьБит» строка стоит по своей карте сдвигов, и рамка группы для
+       неё не точка отсчёта. Условие продублировано здесь, а не взято вызовом rowAlignCtx: этой
+       ветке нужны ещё и grpA/grpAStr для отсчёта от рамки, которых та не отдаёт. */
+    const grpC = isAxisAlign(st.align) ? null : rowGroupOf(i);
+    const grpA = grpC ? rowGroupAnchor(grpC) : -1;
+    const grpAStr = grpC ? (st.rows[grpA] || "") : "";
+    // Сама рамка идёт обычным путём — иначе группе не от чего отсчитываться.
+    const inGrp = !!(grpC && i !== grpA && grpAStr.length);
+    const effAlign  = inGrp ? grpC.align : st.align;
+    const effMaxLen = inGrp ? grpAStr.length : maxLen;
+    // Порядковый — от РАМКИ вверх (v1.063, см. rowGroupOrd в fold-1-core.js), а не от верха группы.
+    const effIdx    = inGrp ? rowGroupOrd(grpC, i) : i;
+    /* Прежнее выражение целиком, вынесено в функцию: его зовут теперь дважды — для самой строки и
+       для строки-рамки, чтобы узнать, откуда группе начинать. Внутри всё по-прежнему от st.align. */
+    const baseShiftOf = (idx, str) => (
+      st.align === "axis" ? axisRowShift(maxLen, idx, str.length) :
+      st.align === "axis12" ? ((st.axisSnap && !rowHasOneZeroPair(str))
+                                 ? alignShift(maxLen, str.length, "center")
+                                 : axisRowShift(maxLen, idx, str.length)) :
       /* ОсьБит с "семенем" (первое нажатие ↥/↥½, см. st.axisBitSeedAlign в обработчике кнопок):
          сдвиг ОсьБита прибавляется К ПОЗИЦИИ В ПРЕЖНЕМ ВЫРАВНИВАНИИ, а не заменяет её. Пока
          ОсьБит строку не двигал, его сдвиг равен нулю — строка стоит ровно там, где стояла. А
@@ -2811,10 +2861,18 @@ function render(){
          АБСОЛЮТНЫЙ сдвиг ОсьБита — отсчёт у него от левого края, отсюда и прыжок. */
       (st.align === "axisbit" || st.align === "axisbit12")
         ? (st.axisBitSeedAlign
-            ? alignShift(maxLen, geomLen, st.axisBitSeedAlign, i) + resolveAxisBitShift(i)
-            : resolveAxisBitShift(i)) :
-      alignShift(maxLen, geomLen, st.align, i)
-    ) : 0;
+            /* Строка была в группе — берём её РЕАЛЬНОЕ место, снятое при переходе (v1.061,
+               см. axisBitSeedGrpShift): голый alignShift() знает только общее выравнивание поля и
+               сбросил бы её с группового места, хотя семя обещает «остаться, где стояла». */
+            ? (axisBitSeedGrpShift.has(idx)
+                 ? axisBitSeedGrpShift.get(idx)
+                 : alignShift(maxLen, str.length, st.axisBitSeedAlign, idx)) + resolveAxisBitShift(idx)
+            : resolveAxisBitShift(idx)) :
+      alignShift(maxLen, str.length, st.align, idx)
+    );
+    const shift = !s.length ? 0
+      : inGrp ? baseShiftOf(grpA, grpAStr) + alignShift(effMaxLen, geomLen, effAlign, effIdx)
+      : baseShiftOf(i, s);
     // Левый отступ строки растёт на место под зеркала, правый считается уже от него.
     const shiftPad = shift + mirrorPadL;
     const padRight = s.length ? (renderWidth - s.length - shiftPad) : renderWidth;
@@ -2851,13 +2909,20 @@ function render(){
     // blankRun() не может напечатать отрицательный отступ, поэтому недостающую часть (shift
     // символов) довешиваем этим же 0.5ch-трансформом, просто целым числом символов, а не долей.
     let extraCh = 0;
-    if (st.align === "halfcenter" && (maxLen - s.length) % 2 !== 0) extraCh += 0.5;
+    /* ПОЛУШАГ — ПО ТОМУ ЖЕ ЭФФЕКТИВНОМУ ВЫРАВНИВАНИЮ, ЧТО И СДВИГ (v1.040, та же правка).
+       Здесь стояли st.align/maxLen/i, то есть общее выравнивание поля и номер строки в цепочке.
+       Для строки внутри группы это вторая половина той же поломки: целочисленный сдвиг мог уже
+       считаться по группе, а недостающие полсимвола — по полю, и «½»-выравнивание группы
+       (а пользователь выбрал именно «↘½») разъезжалось бы с собственной рамкой. eff* вне группы и
+       вне горизонта равны прежним st.align/maxLen/i — для обычных строк поведение бит в бит то же.
+       Считается ровно как rowHalf2x()/hasHalfNudgeRaw() в fold-1-core.js. */
+    if (effAlign === "halfcenter" && (effMaxLen - s.length) % 2 !== 0) extraCh += 0.5;
     // "Лесенка ½"/"Лесенка правая ½" — от чётности НОМЕРА строки (их сдвиг тоже считается от
     // номера, см. alignShift()), а не от длины, как у "Центр ½" выше. См. hasHalfNudge().
     // Полшага у "½"-лесенок — по чётности СТУПЕНИ, а не строки (см. stairsStepIdx): при
     // группировке строки внутри одной ступени обязаны стоять ровно друг под другом.
-    if ((st.align === "halfstairs" || st.align === "rhalfstairs") &&
-        stairsUnits(st.align, i) % 2 !== 0) extraCh += 0.5;
+    if ((effAlign === "halfstairs" || effAlign === "rhalfstairs") &&
+        stairsUnits(effAlign, effIdx) % 2 !== 0) extraCh += 0.5;
     if (isAxisBetween) extraCh -= 0.5;
     if (isAxisBitBetween) extraCh -= 0.5;
     if (shift < 0) extraCh += shift;
@@ -3238,7 +3303,9 @@ function render(){
     // — сумма единиц и нулей сошлась с номером строки, "3+1≠5" — не сошлась.
     out.push('<div class="' + cls.join(" ") + '" data-idx="' + i + '">' +
              pat + '<span class="' + numCls + ' num-l2">' + balanceHtml + numTxtL + "</span>" +
-             '<span class="bits ' + alignCls + '"><span' + halfShiftAttr + '>' + bits + "</span></span>" +
+             // grpBadge — внутри .bits (та position:relative), поэтому позиционируется от края
+             // поля и едет вместе с ним; на раскладку самих бит не влияет (position:absolute).
+             '<span class="bits ' + alignCls + '"><span' + halfShiftAttr + '>' + bits + "</span>" + grpBadge + "</span>" +
              patRight + "</div>");
   }
   // Распорки вместо не нарисованных строк (см. vrowsRange) — держат высоту, поэтому полоса

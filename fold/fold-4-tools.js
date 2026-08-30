@@ -900,6 +900,15 @@ function rowNumText(n){
   return (n < 0 ? "-" : "") + Math.abs(n).toString(2);
 }
 function rowLabelText(i){ return rowNumText(rowLabel(i)); }
+/* Номер для КОЛОНКИ поля (.num-l2, слева от бит) — у неё свой переключатель «{10}» в полоске под
+   осью (st.rowNumMode, см. cycleRowNumMode в fold-5-ui.js), а не общий с паттернами binRowNums.
+   Состояние "off" сюда не доходит: колонка в этом случае скрыта целиком через body.hide-rownums,
+   а не пустым текстом — иначе место под номер осталось бы занятым. */
+function rowNumColText(i){
+  const n = rowLabel(i);
+  if (st.rowNumMode === "bin") return (n < 0 ? "-" : "") + Math.abs(n).toString(2);
+  return String(n);
+}
 
 /* === НОМЕРА СТРОК КАК ДАННЫЕ (v0.842, запрос пользователя) ===
    Номер берётся ВСЕГДА в двоичном виде — независимо от кнопки "🔢 Двоичные номера" (та только про
@@ -3412,6 +3421,8 @@ function textsToChainRows(texts, srcLabel) {
   axisOffsetMap.clear();
   axisBitShiftMap.clear();
   axisBitDirMap.clear();
+  // Снимок мест группы для семени ОсьБита (v1.061) — тоже про ПРЕЖНИЕ строки, держать его незачем.
+  if (typeof axisBitSeedGrpShift !== "undefined") axisBitSeedGrpShift.clear();
   rowRotOffMap.clear();
   edgeOnesSideMap.clear();
   mirrorsRowDone.clear();
