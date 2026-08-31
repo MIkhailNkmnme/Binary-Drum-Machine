@@ -1741,20 +1741,11 @@ function render(){
   /* Ветка «за горизонтом» (v1.026) отсюда убрана вместе со всем горизонтом — см. комментарий у
      rowAlignCtx() в fold-1-core.js (v1.043). Точки отсчёта кадра (alignSnapMaxLen/
      alignSnapMaxPatLen) держались только ради снимков и тоже удалены. */
+  /* САМ ОТСТУП СЧИТАЕТ ЯДРО (patFieldShiftFor в fold-1-core.js) — здесь остаётся только печать.
+     Порядковый внутри группы — от рамки вверх (v1.063, см. rowGroupOrd): у колонок паттернов та же
+     механика, что у цепочки, и разъезжаться они не должны. */
   const patFieldPad = (align, len, rowIdx, field) => {
-    if (!len || !maxPatLen) return "";
-    let sh = null;
-    const g = rowGroupOfField(field, rowIdx);
-    if (g && rowIdx !== rowGroupAnchor(g)) {
-      const aIdx = rowGroupAnchor(g);
-      const aPat = st.pats[aIdx];
-      const aLen = (aPat && aPat.text) ? aPat.text.length : 0;
-      // Порядковый внутри группы — от рамки вверх (v1.063, см. rowGroupOrd): у колонок паттернов
-      // та же механика, что у цепочки, и разъезжаться они не должны.
-      if (aLen) sh = alignShift(maxPatLen, aLen, align, aIdx)
-                   + alignShift(aLen, len, g.align, rowGroupOrd(g, rowIdx));
-    }
-    if (sh === null) sh = alignShift(maxPatLen, len, align, rowIdx);
+    const sh = patFieldShiftFor(align, len, rowIdx, field, maxPatLen);
     return sh > 0 ? "&nbsp;".repeat(sh) : "";
   };
   // "⊙ Оси по битам" — пересобрать группы осей, если набор выбранных ячеек (или выравнивание)
@@ -1884,6 +1875,12 @@ function render(){
   bgInfoLast = bgInfo;
   const bgTargetIdx = bgInfo ? bgInfo.targetIdx : null;
   const bgMatched = !!(bgInfo && bgInfo.matched);
+  /* ЦЕЛЕЙ МОЖЕТ БЫТЬ НЕСКОЛЬКО (v1.099): при выделенных паттернах ищутся ВСЕ выделенные (см.
+     searchKinds в computeBgSearchTarget), и «что ищем» — это все их ячейки, а не одна. Наборы
+     могут не прийти из старого кеша bgInfoLast — тогда падаем на единственный targetIdx. */
+  const bgTargetSet = new Set(bgInfo && bgInfo.targetIdxs ? bgInfo.targetIdxs
+                                                          : (bgTargetIdx !== null ? [bgTargetIdx] : []));
+  const bgHitSet = (bgInfo && bgInfo.hitPatIdxs) ? bgInfo.hitPatIdxs : null;
 
   // "🌈 Все паттерны": какие паттерны нашлись в этом рендере (по всем включённым режимам
   // сразу) — их ячейки в колонке паттернов красятся тем же цветом, что и сама находка в строке
@@ -2187,7 +2184,12 @@ function render(){
   if (bgSearchActive()) {
     // Прямая цель не совпала, а кто-то ниже совпал — в сообщение и в лог идёт ПЕРВАЯ такая строка
     // (подсказка галки: "находка засчитывается по первой совпавшей строке").
-    const hitNow = bgMatched ? bgTargetIdx : ((bgBelowNow && bgBelowNow.length) ? bgBelowNow[0] : null);
+    // Искомых может быть несколько (выделенные паттерны, v1.099) — в сообщение и в лог идёт тот,
+    // что РЕАЛЬНО нашёлся, а не первый по списку: иначе «найден паттерн строки N» назвал бы чужой
+    // номер. Набора нет (одна цель) — он и есть цель, как раньше.
+    const hitNow = bgMatched
+      ? ((bgHitSet && bgHitSet.size) ? Math.min(...bgHitSet) : bgTargetIdx)
+      : ((bgBelowNow && bgBelowNow.length) ? bgBelowNow[0] : null);
     if (hitNow !== st.bgSearchLastHit) {
       if (hitNow != null) {
         // 🧮 Суммы длин не даёт kind'ов на весь результат (у неё МНОЖЕСТВО комбинаций сразу) —
@@ -2614,13 +2616,15 @@ function render(){
        от строк, просто удачно вставших — а понимать, что у них своя геометрия, нужно постоянно.
        Отдельно помечается РАМКА (нижняя строка): она держит границы, и её положение объясняет
        положение всей группы. */
-    for (const fld of ["C", "L", "R"]) {
+    /* ТОЛЬКО ЦЕПОЧКА (v1.090): групп у колонок паттернов больше нет — выравнивание там одно на всю
+       колонку и от выделения строк не зависит (см. patFieldShiftFor в fold-1-core.js). Цикл по трём
+       полям остался одной итерацией, чтобы не разбирать ветку целиком: вернуть L/R, если
+       понадобится, — это один элемент в списке. */
+    for (const fld of ["C"]) {
       /* ПОД ОСЕВЫМ ВЫРАВНИВАНИЕМ ЗАСЕЧКИ ГРУППЫ НЕТ (v1.061, запрос пользователя: "погаси").
          С v1.059 группа на геометрию в осевых режимах не влияет (см. rowAlignCtx), а метка всё
          равно рисовалась — синяя полоса у границы поля обещала действующую группировку, которой
-         сейчас нет. Сама группа цела и вернётся вместе с обычным выравниванием.
-         Проверка только для "C": крайним полям осевые выравнивания не даются вовсе
-         (см. FIELD_ALIGNS в fold-1-core.js), там условие было бы всегда ложным. */
+         сейчас нет. Сама группа цела и вернётся вместе с обычным выравниванием. */
       if (fld === "C" && isAxisAlign(st.align)) continue;
       const grp = rowGroupOfField(fld, i);
       if (!grp) continue;
@@ -2650,9 +2654,8 @@ function render(){
     // номер теперь печатается ВНУТРИ ячейки П2 (запрос пользователя — "убери правые номера
     // цепочек в правые паттерны, слева от них"), а она собирается прямо в этом блоке.
     const numCls = "num" + (s !== (changedBase[i] || "") ? " changed" : "");
-    // Номер для показа — через rowLabelText(): у достроенных сверху строк он отрицательный, а при
-    // включённых "🔢 Двоичных номерах" ещё и в двоичном виде.
-    const numTxt = rowLabelText(i);
+    // numTxt (общий rowLabelText по st.binRowNums) больше не нужен: у каждой колонки паттернов своя
+    // система счисления, см. patNumTextFor ниже (v1.082).
     // НОМЕР В ПОЛЕ ЦЕПОЧКИ — ПО СВОЕЙ КНОПКЕ «{10}» В ПОЛОСКЕ ПОД ОСЬЮ (v1.033, запрос
     // пользователя: "кнопку сюда слева вкл выкл номера строк и переключения 10-ной и 2-ном
     // представлении их"). До этого он был ВСЕГДА десятичным (v0.884, "номера в цепочках — только
@@ -2671,17 +2674,25 @@ function render(){
        ("справа номера от паттернов"); левый (в П1) — зеркально, у левого края своей ячейки.
        Место под них резервируют body.patnum-r/.patnum-l в CSS, сами номера позиционируются
        абсолютом. */
+    /* СИСТЕМА СЧИСЛЕНИЯ — СВОЯ У КАЖДОЙ КОЛОНКИ (v1.082): кнопка «№» в планке П1/П2 ходит по кругу
+       «десятичные → двоичные → выключены», поэтому текст номера считается для каждой колонки
+       отдельно (patNumTextFor в fold-4-tools.js), а не общим rowLabelText() по st.binRowNums. */
     const numRightHtml = st.patNumR === false ? ""
-      : '<span class="' + numCls + ' num-r2">' + numTxt + "</span>";
+      : '<span class="' + numCls + ' num-r2">' + patNumTextFor("r", i) + "</span>";
     const numLeftHtml = st.patNumL
-      ? '<span class="' + numCls + ' num-p1">' + numTxt + "</span>" : "";
+      ? '<span class="' + numCls + ' num-p1">' + patNumTextFor("l", i) + "</span>" : "";
 
     let pat = "";
     let patRight = "";
     if (p && p.text){
       // Текущая цель — своим жёлтым, как и раньше. Строка, чей паттерн когда-либо совпал при
       // "🔽 Все ниже", — СВОИМ цветом (.bg-below-hit) и остаётся помеченной до Сброса/Escape.
-      const bgHitSuffix = i === bgTargetIdx ? (bgMatched ? " bg-search-hit" : " bg-search-target")
+      /* Жёлтый «найден» — ПОКЛЕТОЧНО (v1.099): при нескольких искомых часть могла найтись, часть
+         нет, и красить их всех по общему bgMatched значило бы врать про половину. Набор
+         найденных приходит из поиска (hitPatIdxs); нет набора (одна цель, старый кеш) — прежнее
+         поведение по общему флагу. */
+      const bgHitSuffix = bgTargetSet.has(i)
+        ? ((bgHitSet ? bgHitSet.has(i) : bgMatched) ? " bg-search-hit" : " bg-search-target")
         : (bgBelowHits.has(i) ? " bg-below-hit" : "");
       // ОТДЕЛЬНОЕ выделение паттернов (st.selectedPats) — своё, не связанное с выделением строк:
       // им сужается список того, что ищет "🌈 Все паттерны" (см. findAllPatternsInResult).
@@ -2787,8 +2798,23 @@ function render(){
          СВОЙ цвет и перебили бы цвет находки — inline !important родителя потомку не указ, тот
          красится своим правилом. У ЧАСТИЧНОЙ находки цвет висит на внутреннем span'е, а не на
          ячейке, и там всё в порядке: colorPatBits() и так обходит всё, что лежит внутри тегов. */
+      /* ...И ТО ЖЕ САМОЕ ВЕРНО ДЛЯ ЛЮБОГО ЦВЕТА НА ЯЧЕЙКЕ (испр. v1.080, баг-репорт пользователя:
+         "пропала подсветка целевого паттерна под нижней строкой выделенных цепочек").
+         Исключение выше было выписано только под «🌈 Все паттерны» (allHit), хотя причина у него
+         общая и касается ВСЕХ, кто красит саму ячейку: цвет потомка (.pb1/.pb0) всегда бьёт
+         унаследованный от родителя, сколько бы !important на родителе ни стояло. Под раздачу
+         попадали:
+           .pat.bg-search-target — белый «вот что ищем сейчас»;
+           .pat.bg-search-hit    — жёлтый «паттерн найден»;
+           .bg-below-hit         — зелёная метка «🔽 Все ниже»;
+           .pat.found            — красный/фиолетовый/зелёный вид находки.
+         Все они с v1.031 перекрывались поколоночной покраской и на глаз пропали: у находки
+         оставалась только заливка на .pat-txt, у цели — вообще ничего, паттерн выглядел обычным.
+         Правило простое: ячейка уже несёт свой цвет — поколоночную покраску не применяем. Там, где
+         своего цвета нет (обычные паттерны), всё как было. */
+      const cellHasOwnColor = !!bgHitSuffix || !!p.found || (allHit && partStart < 0);
       const patTxtHtml = skipHead + '<span class="pat-txt">' +
-        ((allHit && partStart < 0) ? textHtml : colorPatBits(textHtml)) + '</span>';
+        (cellHasOwnColor ? textHtml : colorPatBits(textHtml)) + '</span>';
       /* ОТСТУП ПОЛЯ — СНАРУЖИ .pat-txt (v0.971). Внутри нельзя: на .pat-txt лежит заливка находки,
          и отступ красился бы вместе с паттерном, читаясь как найденные пустые биты. У П1 и П2
          отступ СВОЙ — у полей разное выравнивание, в этом весь смысл разделения на три поля. */
@@ -2799,8 +2825,17 @@ function render(){
          целое, включая отступ выравнивания и номер строки. Бейдж шага (.st) в обёртку НЕ входит
          намеренно: он position:absolute и должен считаться от самой ячейки .pat/.pat2, а не от
          обёртки — иначе он поехал бы вместе с битами и уплыл из своей колонки. */
-      pat = '<span class="' + c + '"' + allHitStyle + '><span class="pat-shift">' + padL + patTxtHtml + numLeftHtml + '</span>' + stepHtml + '</span>';
-      patRight = '<span class="' + c2 + '"' + allHitStyle + '><span class="pat-shift">' + numRightHtml + padR + patTxtHtml + '</span>' + stepHtml + '</span>';
+      /* ПОЛУШАГ «½»-ВЫРАВНИВАНИЙ (v1.085, см. patFieldHalfFor в fold-1-core.js) — тем же приёмом,
+         что и у цепочки: целые столбцы печатаются пробелами (padL/padR выше), а недостающие
+         полсимвола добавляет transform. Своя величина у каждой колонки: выравнивания у П1 и П2
+         разные, значит и половинки у них разные.
+         transform на .pat-shift безопасен: бейдж «#N» (stepHtml) лежит СНАРУЖИ обёртки и в новый
+         контекст наложения не попадает — иначе он уехал бы из своего угла колонки. */
+      const halfL = patFieldHalfFor(patAlign, p.text.length, i, "L", maxPatLen);
+      const halfR = patFieldHalfFor(pat2Align, p.text.length, i, "R", maxPatLen);
+      const halfAttr = h => h ? ' style="transform:translateX(' + (h * colStepPx).toFixed(2) + 'px)"' : '';
+      pat = '<span class="' + c + '"' + allHitStyle + '><span class="pat-shift"' + halfAttr(halfL) + '>' + padL + patTxtHtml + numLeftHtml + '</span>' + stepHtml + '</span>';
+      patRight = '<span class="' + c2 + '"' + allHitStyle + '><span class="pat-shift"' + halfAttr(halfR) + '>' + numRightHtml + padR + patTxtHtml + '</span>' + stepHtml + '</span>';
     } else {
       pat = '<span class="pat"><span class="pat-shift">' + numLeftHtml + '</span></span>';
       patRight = '<span class="pat2"><span class="pat-shift">' + numRightHtml + '</span></span>';
@@ -2870,9 +2905,18 @@ function render(){
             : resolveAxisBitShift(idx)) :
       alignShift(maxLen, str.length, st.align, idx)
     );
+    /* ЦЕПОЧКА ГРУПП (v1.084, см. rowChainLift в fold-1-core.js): строка ВНЕ группы, под которой
+       есть группа, считается не от края поля, а от ВЕРХНЕЙ строки этой группы — так верхний стык
+       группы с полотном перестаёт рваться. Ядро уже считает так же (rowShiftFor); повторяем здесь,
+       чтобы картинка и расчёты не разошлись. baseShiftOf() остаётся своя: у неё осевые режимы и
+       «семя» ОсьБита, которых нет у rowShiftBase(). */
+    const liftOf = (idx, str) => {
+      const lift = rowChainLift(idx, str, st.align);
+      return baseShiftOf(lift.idx, lift.str) + lift.add;
+    };
     const shift = !s.length ? 0
-      : inGrp ? baseShiftOf(grpA, grpAStr) + alignShift(effMaxLen, geomLen, effAlign, effIdx)
-      : baseShiftOf(i, s);
+      : inGrp ? liftOf(grpA, grpAStr) + alignShift(effMaxLen, geomLen, effAlign, effIdx)
+      : liftOf(i, s);
     // Левый отступ строки растёт на место под зеркала, правый считается уже от него.
     const shiftPad = shift + mirrorPadL;
     const padRight = s.length ? (renderWidth - s.length - shiftPad) : renderWidth;
@@ -3301,11 +3345,35 @@ function render(){
     // ПОРЯДОК: сперва баланс, потом номер (v0.891, запрос пользователя "баланс перед номерами").
     // Метка кончается знаком "=" или "≠", и номер читается как правая часть равенства: "3+2=5"
     // — сумма единиц и нулей сошлась с номером строки, "3+1≠5" — не сошлась.
+    /* НАЛОЖЕНИЕ НА ЭТОЙ СТРОКЕ (v1.104, см. mergePasteIntoRow в fold-1-core.js) — абсолютом внутри
+       .bits, ровно как grpBadge: та position:relative, и её левый край — нулевой столбец сетки, в
+       которой живёт paste.col. Прибавляем ТОЛЬКО st.axisCenterOffset: это общий сдвиг всей картинки
+       цепочки (см. extraCh выше), он одинаков у всех строк; остальные слагаемые extraCh — поправки
+       КОНКРЕТНОЙ строки, а блок стоит в сетке сам по себе и от них не зависит.
+       На раскладку бит не влияет вовсе (position:absolute), поэтому строка рисуется как обычно, а
+       блок ложится поверх неё — что и означает «в общих столбцах побеждает наложение».
+       Строка блока находится по СМЕЩЕНИЮ от его якоря (i − paste.row), а её собственный off держит
+       форму куска — см. шапку mergePasteIntoRow. */
+    let insHtml = "";
+    if (st.paste && st.paste.rows && st.paste.row >= 0) {
+      const pk = i - st.paste.row;
+      const prow = (pk >= 0 && pk < st.paste.rows.length) ? st.paste.rows[pk] : null;
+      if (prow && prow.txt) {
+        const leftPx = ((st.paste.col + (prow.off || 0) + (st.axisCenterOffset || 0)) * colStepPx).toFixed(2);
+        insHtml = '<span class="paste-bits' + (st.paste.on === false ? " paste-off" : "") +
+          '" style="left:' + leftPx + 'px" title="Наложение, строка ' + (pk + 1) + ' из ' +
+          st.paste.rows.length + ' (цепочка: строка ' + rowLabel(i) + ', столбец ' +
+          (st.paste.col + (prow.off || 0)) + ', ' + prow.txt.length + ' бит).' +
+          (st.paste.on === false ? " СЕЙЧАС ВЫКЛЮЧЕНО — в расчёт не идёт." :
+            " Идёт в склейки и фон-поиск как биты этой строки; где накрыло биты строки, считается оно.") +
+          ' Тяни мышью — переставить ВЕСЬ блок по столбцам и строкам">' + esc(prow.txt) + "</span>";
+      }
+    }
     out.push('<div class="' + cls.join(" ") + '" data-idx="' + i + '">' +
              pat + '<span class="' + numCls + ' num-l2">' + balanceHtml + numTxtL + "</span>" +
              // grpBadge — внутри .bits (та position:relative), поэтому позиционируется от края
              // поля и едет вместе с ним; на раскладку самих бит не влияет (position:absolute).
-             '<span class="bits ' + alignCls + '"><span' + halfShiftAttr + '>' + bits + "</span>" + grpBadge + "</span>" +
+             '<span class="bits ' + alignCls + '"><span' + halfShiftAttr + '>' + bits + "</span>" + grpBadge + insHtml + "</span>" +
              patRight + "</div>");
   }
   // Распорки вместо не нарисованных строк (см. vrowsRange) — держат высоту, поэтому полоса
@@ -3737,6 +3805,8 @@ function render(){
     // st.fullPassMode живёт в состоянии ВКЛАДКИ, значит при переключении вкладок класс на кнопке
     // надо переставить. Дешевле всего — тут же, где чинится и замок высоты панели.
     if (typeof applyFullPassBtn === "function") applyFullPassBtn();
+    // "⛔ Паттерны выше выделенной" — та же история: кнопка с mode-act, состояние во вкладке.
+    if (typeof applyNoPatsAboveBtn === "function") applyNoPatsAboveBtn();
   }
   // Отдельное окно результата живёт своей жизнью, но содержимое обновляется тем же render()
   // (см. openResultPopup): что в панели, то и в окне — только без потолка и с переносом строк.

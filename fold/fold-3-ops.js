@@ -1547,7 +1547,15 @@ function pidUnderCursor(x, y, precise) {
     // панель ниже по стопке): раньше хватало попадания по X, и пустой низ колонки утягивал панель
     // к себе, хотя пунктира там нет (запрос пользователя).
     if (el.classList.contains('drop-zone-hint') || el.classList.contains('drag-target')) {
-      if (y >= r.top && y <= r.top + r.height * DOCK_HINT_FRAC) return pid;
+      /* Полоса-подсказка при нижнем меню нарисована у НИЖНЕГО края дока (v1.095, запрос
+         пользователя "эти внизу должны быть, когда полоса внизу меню" — доки там прибиты к низу,
+         см. body.menubar-bottom .controls в CSS). Зона поимки обязана ехать вместе с пунктиром:
+         иначе рамка рисуется внизу, а ловит по-прежнему верх — панель не берётся там, где её
+         зовут, и берётся там, где ничего не показано. */
+      const atBottom = document.body.classList.contains('menubar-bottom');
+      const band = r.height * DOCK_HINT_FRAC;
+      if (atBottom ? (y <= r.bottom && y >= r.bottom - band)
+                   : (y >= r.top && y <= r.top + band)) return pid;
       const slot = document.getElementById(SLOT_OF[pid]);
       let overPanel = false;
       for (const ch of slot.children) {
@@ -1880,6 +1888,15 @@ function syncAlignBanned(){
     indEl.textContent = ALIGN_TARGET_LABEL[tgt] || "Ц";
     indEl.classList.toggle("align-target-on", tgt !== "C");
   }
+  /* ПРИЁМНИК ПОКАЗЫВАЮТ ПОДПИСИ ПЛАНОК (v1.088). Кнопка-индикатор выше из полосы убрана (запрос
+     пользователя), и «какое поле сейчас правит полоса» читается прямо у поля: подсвечена подпись
+     «П1», «Ц» или «П2». Кнопки в разметке больше нет, но обращение к ней оставлено через if —
+     сломать оно ничего не может, а вернуть её при желании можно одной строкой в HTML. */
+  for (const [stripId, f] of [["patStripL", "L"], ["axisStrip", "C"], ["patStripR", "R"]]) {
+    const el = document.getElementById(stripId);
+    const lab = el ? el.querySelector(".pat-strip-lab") : null;
+    if (lab) lab.classList.toggle("align-target-on", tgt === f);
+  }
 }
 
 /* Перенос группы выравниваний (#alignGrp) из холста (.chain) в .main-layout — запрос
@@ -1957,8 +1974,25 @@ function positionAlignGrpTop(){
     if (b) top += b.offsetHeight + OVERLAY_GAP;
   });
   const el = document.getElementById("alignGrp");
-  if (el) el.style.top = Math.round(top) + "px";
-  return top;
+  /* ПОЛОСА ПОДНЯТА НАД ПЛАНКАМИ ПОЛЕЙ (v1.087, запрос пользователя: "накладываются, подвинь вверх
+     меню"). С v1.085 планки «П1»/«Ц»/«П2» стоят НАД верхней чертой поля, то есть в той же полосе,
+     где кончается #alignGrp, — и налезали на её кнопки.
+     Поднимаем полосу ровно на высоту планки. ВАЖНО: возвращаем при этом top НИЖНЕГО края полосы
+     ПЛЮС подъём — по нему считается --result-box-h, то есть верхний отступ холста (см. вызывающую
+     layoutOverlayBoxes). Не поднимай холст вслед за полосой: строки уехали бы вверх вместе с ней,
+     планки — за строками, и наложение вернулось бы ровно туда же. А так между низом полосы и
+     холстом открывается пустая полоса высотой в планку — в ней планки и стоят.
+     ПОТОЛОК (v1.091, запрос пользователя "меню наложились"): подъём не должен загонять полосу под
+     саму шапку меню. Когда стопка баров пуста, свой top у полосы всего 6+--menubar-h, и подъём на
+     планку уносил её ВЫШЕ нижнего края шапки — кнопки выравниваний оказывались под ней. Ниже
+     шапки полосу не пускаем; когда меню внизу экрана (menubar-bottom) потолок — просто 2px.
+     Если подъём упёрся в потолок, холст всё равно отодвигаем на полную высоту планки — пустая
+     полоса под кнопками сохраняется, планкам есть куда встать. */
+  const strip = document.getElementById("axisStrip");
+  const lift = (strip && strip.offsetHeight) ? (strip.offsetHeight + 4) : 0;
+  const ceil = overlayTopBase() - 4; // низ шапки меню + 2px (или 2px, если меню внизу)
+  if (el) el.style.top = Math.round(Math.max(ceil, top - lift)) + "px";
+  return Math.max(ceil, top - lift) + lift;
 }
 // Подсветка mode-act — ПОКА ОКНО ВИДНО (!hidden), а не пока скрыто — запрос пользователя
 // ("наоборот, когда выключены — не подсвечивать надо").
@@ -2096,6 +2130,10 @@ function resetSeqSearchModes(){
 }
 
 document.getElementById("rows").onclick = e => {
+  // ВСТАВКА (v1.068) — по ней тянут, а не выделяют: клик, пришедший после её перетаскивания, не
+  // должен заодно переставить выделение на строку, над которой её отпустили. И в режиме «▭ Выбор
+  // ячеек» тоже: попасть по вставке — это попасть по вставке, а не по биту под ней.
+  if (e.target.closest && e.target.closest(".paste-bits")) { e.stopPropagation(); return; }
   /* ЯРЛЫК ГРУППЫ (v1.062) — раньше всех проверок: это не выделение, а действие над самой группой,
      и работать оно должно даже там, где выделение выключено или занято другим режимом (🔒, выбор
      ячеек, «✂ Перенос строк»). Клик по нему до строки не доходит — иначе тот же клик заодно
@@ -2158,12 +2196,25 @@ document.getElementById("rows").onclick = e => {
       if (e.ctrlKey || e.metaKey) {
         if (st.selectedPats.has(idx)) st.selectedPats.delete(idx);
         else st.selectedPats.add(idx);
+      } else if (st.selectedPats.has(idx)) {
+        /* КЛИК ПО УЖЕ ВЫДЕЛЕННОМУ ПАТТЕРНУ СНИМАЕТ ЕГО (v1.089, запрос пользователя: "одинарный
+           клик по выделенному паттерну — пусть снимает его").
+           С v0.95x повторный клик выделение НЕ снимал: за ним закрепили переход к СЛЕДУЮЩЕМУ
+           вхождению этого паттерна в строках (patNavStep ниже), а снимать предлагалось Ctrl+кликом.
+           Причина была не в удобстве, а в производительности: набор выделенных входит в ключ
+           memo-кэша поиска, и мигание «выделил — снял» на каждый второй клик заново перелопачивало
+           ВЕСЬ список паттернов (с «🧩 Макс. часть» это подвисало).
+           Сейчас снятие важнее: выделение паттернов сужает область поиска («🌈 Все паттерны» ищет
+           только выделенные), и выйти из этого сужения тем же кликом, которым в него вошёл, —
+           единственное очевидное движение. Переход к следующему вхождению остаётся за повторным
+           кликом по НЕвыделенному (то есть после снятия — следующий клик снова ведёт к находке).
+           Снимаем именно ЭТОТ паттерн, а не весь набор: при нескольких выделенных (протяжкой) клик
+           по одному из них убирает из набора его одного, остальные остаются. */
+        st.selectedPats.delete(idx);
+        render();
+        saveCache();
+        return;
       } else {
-        // Повторный клик по тому же паттерну выделение НЕ снимает: у него теперь своё дело —
-        // переход к следующему вхождению (см. patNavStep ниже). Раньше снимал, и набор выделенных
-        // мигал на каждый второй клик; а он входит в ключ memo-кэша поиска, так что каждый второй
-        // клик заново перелопачивал ВЕСЬ список паттернов (с "🧩 Макс. часть" это и подвисало).
-        // Снять выделение по-прежнему можно Ctrl+кликом.
         st.selectedPats.clear();
         st.selectedPats.add(idx);
       }
@@ -2224,9 +2275,11 @@ let rowDragAnchor = null, rowDragMoved = false;
    причастна совсем. */
 let patDragAnchor = null, patDragMoved = false;
 document.getElementById("rows").addEventListener("mousedown", e => {
-  // Ярлык группы (v1.062) — по нему кликают, а не тянут: якорь протяжки не ставим, иначе то же
-  // нажатие заодно начало бы выделять строки, и click по ярлыку пришёл бы уже с rowDragMoved.
-  if (e.target.closest && e.target.closest(".grp-badge")) return;
+  // Ярлык группы (v1.062) и вставка (v1.068) — по ним кликают/тянут ИХ, а не строки: якорь протяжки
+  // не ставим, иначе то же нажатие заодно начало бы выделять строки. Обработчик вставки висит на
+  // этом же #rows и зарегистрирован ПОЗЖЕ (fold-4 грузится после fold-3), поэтому его
+  // stopPropagation сюда не успевает — проверку надо повторить здесь.
+  if (e.target.closest && e.target.closest(".grp-badge, .paste-bits")) return;
   if (!selectionAllowed()) return; // "🔒 Выделение" выключено — протяжка по строкам не выделяет
 
   if (cellSelMode) return; // в режиме выбора ячеек протяжка выделяет ЯЧЕЙКИ, а не диапазон строк
@@ -2247,14 +2300,58 @@ document.getElementById("rows").addEventListener("mousedown", e => {
     if (!patsEditAllowed()) return;
     patDragAnchor = idx;
     patDragMoved = false;
+    dragOverRowsOn();
     return;
   }
   rowDragAnchor = idx;
   rowDragMoved = false;
+  dragOverRowsOn();
 });
-document.getElementById("rows").addEventListener("mousemove", e => {
+/* ═══ ПЛАШКА УВЕДОМЛЕНИЙ НЕ ЛОВИТ МЫШЬ, ПОКА ТЯНУТ ВЫДЕЛЕНИЕ (испр. v1.075) ═══
+   Баг-репорт пользователя: "при ручном выделении, последовательно увеличивая строки протяжкой
+   вниз — если находится паттерн в нижней строке, то обрывается всё выделение, не даёт дальше
+   выделять".
+   Причина не в самом выделении и не в правиле окна (captureFoundRow): протяжка добирает строки по
+   e.target.closest(".ln") — то есть по тому, что физически под курсором. А #msg стоит
+   position:fixed внизу по центру и в показанном виде ловит мышь (#msg.show{pointer-events:auto} —
+   по плашке кликают, чтобы гонять её по углам). Находка эту плашку и показывает. Тянут выделение
+   ВНИЗ, ровно на неё: курсор уезжает на плашку, closest(".ln") отдаёт null, mousemove выходит по
+   первой же проверке — и строки перестают добираться. Со стороны выглядит как «находка оборвала
+   выделение», хотя выделение цело, просто до строк под плашкой не дотянуться.
+   Гасим приём мыши НА ВРЕМЯ ПРОТЯЖКИ. Насовсем нельзя — плашку кликают намеренно. Класс на body, а
+   не стиль на элементе: плашка живёт своей жизнью (say() зовут отовсюду, в том числе прямо во время
+   протяжки), и перебивать ей inline-стиль значило бы гоняться за ней. */
+function dragOverRowsOn(){ document.body.classList.add("row-dragging"); }
+function dragOverRowsOff(){ document.body.classList.remove("row-dragging"); }
+window.addEventListener("mouseup", dragOverRowsOff);
+/* КАКАЯ СТРОКА ПОД КУРСОРОМ — НЕ ПО e.target, А ПО КООРДИНАТЕ (испр. v1.078, баг-репорт
+   пользователя: "тяну выделение вниз с 1 строки, включаю 2,3,4… на 5 находится паттерн, дальше
+   тяну вниз на 6, 7 — выделение не идёт").
+   Оба обработчика протяжки висели на #rows и спрашивали e.target.closest(".ln"). Пока над строками
+   пусто, это одно и то же; но стоит находке ПОКАЗАТЬ что-нибудь плавающее поверх полотна (плашка
+   уведомления, окно «Результат», любая всплывшая панель) — и всё ломается сразу с двух сторон:
+   e.target становится этим окном, а главное — mousemove над ним до #rows ВООБЩЕ НЕ ДОЛЕТАЕТ,
+   потому что окно не потомок #rows и всплытию идти некуда. Протяжка молча замирала ровно на той
+   строке, где случилась находка, и «дальше не шла».
+   Гасить pointer-events у каждого такого окна по одному — бесконечная игра в догонялки (в v1.075
+   так закрыли только #msg, а окон больше). Поэтому: слушаем window (событие доходит всегда) и
+   строку ищем по СТОПКЕ элементов под курсором — elementsFromPoint отдаёт не только верхний
+   элемент, но и всё, что под ним, так что .ln находится и сквозь накрывшее её окно.
+   Дорогой путь (elementsFromPoint) идёт только когда дешёвый не сработал, то есть в норме его нет
+   вовсе. */
+function lnAtPoint(e){
+  const direct = e.target && e.target.closest ? e.target.closest(".ln") : null;
+  if (direct) return direct;
+  if (!document.elementsFromPoint) return null;
+  for (const el of document.elementsFromPoint(e.clientX, e.clientY)) {
+    const ln = el.closest ? el.closest(".ln") : null;
+    if (ln) return ln;
+  }
+  return null;
+}
+window.addEventListener("mousemove", e => {
   if (patDragAnchor === null || !(e.buttons & 1)) return;
-  const ln = e.target.closest(".ln");
+  const ln = lnAtPoint(e);
   if (!ln) return;
   const idx = +ln.dataset.idx;
   if (isNaN(idx) || (idx === patDragAnchor && !patDragMoved)) return;
@@ -2274,9 +2371,9 @@ window.addEventListener("mouseup", () => {
   // (тот же приём, что и у строчной протяжки ниже).
   setTimeout(() => { patDragMoved = false; }, 0);
 });
-document.getElementById("rows").addEventListener("mousemove", e => {
+window.addEventListener("mousemove", e => {
   if (rowDragAnchor === null || !(e.buttons & 1)) return;
-  const ln = e.target.closest(".ln");
+  const ln = lnAtPoint(e);   // см. lnAtPoint выше — строка ищется и сквозь накрывшее её окно
   if (!ln) return;
   const idx = +ln.dataset.idx;
   if (isNaN(idx) || (idx === rowDragAnchor && !rowDragMoved)) return;
@@ -2451,6 +2548,9 @@ function applyGroupAlign(align, field){
   }
   const rowsMax = field === "C" ? st.rows.length : Math.max(st.rows.length, (st.pats || []).length);
   const rows = Array.from(st.selectedRows).filter(i => i >= 0 && i < rowsMax).sort((a, b) => a - b);
+  // Страховка. С v1.070 полоса выравниваний сюда с одной строкой уже не заходит (там порог
+  // size > 1, и одна выделенная строка переключает выравнивание ПОЛЯ, как будто выделения нет) —
+  // но функция публичная, и остаться без проверки не может.
   if (rows.length < 2) {
     say("Своё выравнивание задаётся ГРУППЕ строк: выделите хотя бы две. Нижняя из них станет рамкой — её левый и правый бит и есть границы, по которым выровняются верхние.");
     return;
@@ -2490,14 +2590,31 @@ alignBtns.forEach(btn => {
        rowAlignCtx в fold-1-core.js). Снять выделение (Escape или клик по строке) — и полоса снова
        про поле целиком, как раньше. Приёмник П1/П2 разбирается ниже и выделения не касается: там
        речь про колонки паттернов, а группы — про строки цепочки. */
-    if (st.selectedRows && st.selectedRows.size && !isAxisAlign(valNow)) {
-      // Куда назначать — решает ПРИЁМНИК (v0.982): полоса бьёт в центр — группа у цепочки, нажата
-      // «◧ П1»/«П2 ◨» — у соответствующей колонки паттернов. Одна кнопка на оба смысла: "это поле"
-      // и "эти строки этого поля".
-      applyGroupAlign(valNow, alignTarget);
+    /* ОДНА ВЫДЕЛЕННАЯ СТРОКА — ЭТО «НИЧЕГО НЕ ВЫДЕЛЕНО» (v1.070, запрос пользователя: "пусть если
+       выделена одна строка, то даёт переключаться выравниваниям — не надо уведомлять, что выделена
+       одна, а надо несколько; пусть выравнивает как будто ничего не выделено, если одна").
+       Группе нужны минимум две строки (нижняя работает рамкой, см. applyGroupAlign), и раньше полоса
+       всё равно уводила клик туда — только чтобы получить отказ. А выделена ровно одна строка почти
+       всегда: приложение само держит выделение непустым (см. гарантию в resetAll/loadTabState), то
+       есть в самом обычном состоянии полоса выравниваний просто не работала и ругалась.
+       Теперь порог — size > 1 в ОБЕИХ ветках: одна строка проваливается дальше, к обычному
+       переключению выравнивания поля. Отметка активной кнопки это уже понимала и раньше — у
+       selectedRowsGroupAlign() тот же порог (fold-5-ui.js). */
+    /* ГРУППЫ БЫВАЮТ ТОЛЬКО У ЦЕПОЧКИ (v1.090, запрос пользователя: "в паттернах выравнивание
+       вообще не должно зависеть от выделенных строк — одно на все строки всегда").
+       С v0.982 приёмник решал не только «какому полю», но и «полю целиком или выделенным строкам
+       этого поля», и у П1/П2 заводились свои группы (st.rowGroupsL/rowGroupsR). Для колонки
+       паттернов это оказалось вредно: выравнивание там — свойство всей колонки, а не отдельных
+       ячеек, и выделение строк не должно на него влиять вообще.
+       Теперь группу получает только цепочка. Полоса при приёмнике П1/П2 всегда правит ВСЮ колонку —
+       ветка ниже, — сколько бы строк ни было выделено. */
+    if (alignTarget === "C" && st.selectedRows && st.selectedRows.size > 1 && !isAxisAlign(valNow)) {
+      applyGroupAlign(valNow, "C");
       return;
     }
-    if (alignTarget === "C" && st.selectedRows && st.selectedRows.size) {
+    // Осевые (⊙/⊙½/↥/↥½) при выделенной ГРУППЕ: сюда они доходят только затем, чтобы applyGroupAlign
+    // объяснила, почему группе они не даются. При одной выделенной строке — тоже мимо, как и выше.
+    if (alignTarget === "C" && st.selectedRows && st.selectedRows.size > 1) {
       applyGroupAlign(valNow, "C");
       return;
     }
@@ -3116,26 +3233,12 @@ if (cBgAllPatsPartialEl) {
     saveCache();
   };
 }
-const cBgAllBelowEl = document.getElementById("cBgAllBelow");
-if (cBgAllBelowEl) {
-  cBgAllBelowEl.onchange = () => {
-    st.bgSearchAllBelow = cBgAllBelowEl.checked;
-    st.bgSearchLastHit = -1;
-    render();
-    // Сразу отчитываемся, что нашлось (запрос пользователя: "Все ниже — не работает"). Сама по
-    // себе включённая галка ничем себя не проявляла: пока ни один паттерн ниже не совпал, на
-    // экране не менялось ничего, и понять, работает она вообще или нет, было нечем. Теперь она
-    // честно говорит и про пустой результат, и про то, что искать не с чем.
-    if (st.bgSearchAllBelow) {
-      const info = computeBgSearchTarget();
-      if (!info) say("🔽 Все ниже: искать не с чем — выключен фон-поиск или не выделена строка.");
-      else if (!info.belowHits || !info.belowHits.length)
-        say("🔽 Все ниже: включено. Ни один паттерн ниже выделенной пока не совпал с результатом — совпавшие будут помечены зелёным.");
-      else say(`🔽 Все ниже: совпало строк — ${info.belowHits.length} (№ ${info.belowHits.map(r => r + 1).join(", ")}). Помечены зелёным до Сброса.`);
-    }
-    saveCache();
-  };
-}
+/* Галка «🔽 Все ниже» (#cBgAllBelow, st.bgSearchAllBelow) УДАЛЕНА в v1.090 — по запросу
+   пользователя вместе с приходом «ищем выделенный паттерн» (см. patSelMode в
+   computeBgSearchTarget). Делала она ровно то же, только вслепую: сверяла результат со ВСЕМИ
+   паттернами ниже выделения и метила совпавшие зелёным. Теперь нужный паттерн выделяется руками, и
+   гадать, который из нижних имелся в виду, не приходится.
+   Сам сбор belowHits ниже остался — им пользуется «🔻 Полный проход» (st.fullPassMode). */
 /* "🔻 Полный проход" — ОДНА кнопка на весь режим (v0.963, запрос пользователя). Что она делает,
    расписано в computeBgSearchTarget() (поиск в своей строке и во всех нижних) и в autoRun()
    (захват — только когда пройдены все варианты текущей строки). Тут только переключатель:
@@ -3153,6 +3256,25 @@ if (bFullPassEl) {
     say(st.fullPassMode
       ? "🔻 Полный проход включён: разом ищутся ВСЕ ещё не найденные паттерны — и выше выделенной, и в ней самой, и ниже; совпавшие держат зелёную метку до Сброса. В «Авто» новая строка захватывается только когда пройдены ВСЕ варианты текущей."
       : "🔻 Полный проход выключен: обычный поиск по паттерну строки под выделенной, захват сразу на находке.");
+  };
+}
+
+/* "⛔ Паттерны выше выделенной — не искать" (v1.100) — переключатель к patSearchFloorIdx() выше.
+   Устроен ровно как "🔻 Полный проход" рядом: подсветка кнопки, сброс прошлой находки (область
+   поиска изменилась — старая находка могла быть как раз из отсечённой части) и перерисовка. */
+const bNoPatsAboveEl = document.getElementById("bNoPatsAbove");
+function applyNoPatsAboveBtn(){
+  if (bNoPatsAboveEl) bNoPatsAboveEl.classList.toggle("mode-act", !!st.noPatsAbove);
+}
+if (bNoPatsAboveEl) {
+  bNoPatsAboveEl.onclick = () => {
+    st.noPatsAbove = !st.noPatsAbove;
+    applyNoPatsAboveBtn();
+    st.bgSearchLastHit = -1;
+    render(); saveCache();
+    say(st.noPatsAbove
+      ? "⛔ Паттерны выше выделенной строки И ЕЁ СОБСТВЕННЫЙ больше не ищутся — ни «🌈 Все паттерны», ни «🔻 Полный проход», ни выделенные ячейки. Остаются только те, что строго ниже выделения."
+      : "⛔ Отсечка снята: паттерны выше выделенной снова участвуют в поиске.");
   };
 }
 
@@ -3352,6 +3474,23 @@ function allPatSkipReason(i){
   }
   return null;
 }
+/* ⛔ «Паттерны выше выделенной — не искать» (st.noPatsAbove, v1.100, запрос пользователя).
+   Отдаёт номер строки, НИЖЕ которой (включительно) паттерны ещё участвуют в поиске; −1 — отсечки
+   нет. Ориентир — самая нижняя выделенная строка, тот же, что и у всего остального в фон-поиске
+   (см. selIdx в computeBgSearchTarget), а граница — СЛЕДУЮЩАЯ за ней: паттерн САМОЙ выделенной
+   строки тоже не ищется (v1.101, уточнение пользователя: "включая саму выделенную — тут тоже
+   паттерн не искать"). То есть остаются ровно те паттерны, что строго НИЖЕ выделения, начиная с
+   обычной цели фон-поиска (targetIdx = selIdx + 1).
+   Отсечка СИЛЬНЕЕ выделения ячеек — в этом её смысл ("даже если они выделены"). Это прямо
+   противоположно правилу порога "⛔", где явное выделение паттерна всегда побеждало (см. коммент
+   в цикле findAllPatternsInResult): там отсечка была побочной, здесь — единственное назначение
+   кнопки, и «выделил, а не ищет» тут не сюрприз, а то, что просили.
+   Ничего не выделено — границу считать не от чего, отсечки нет. */
+function patSearchFloorIdx(){
+  if (!st.noPatsAbove) return -1;
+  if (!st.selectedRows || !st.selectedRows.size) return -1;
+  return Math.max(...st.selectedRows) + 1;
+}
 function findAllPatternsInResult(text){
   const out = [];
   if (!text || !st.pats || !st.pats.length) return out;
@@ -3379,11 +3518,16 @@ function findAllPatternsInResult(text){
     }
   }
 
+  const patFloor = patSearchFloorIdx();
+
   for (let i = 0; i < st.pats.length; i++) {
-    // ЯВНОЕ ВЫДЕЛЕНИЕ СИЛЬНЕЕ ОТСЕЧКИ "⛔" (запрос пользователя: выделил паттерн 4-й строки, а в
-    // ответ "строка отсечена, паттерны ищутся только по строку 2"). Отсечка про то, докуда идёт
-    // АВТОМАТИЧЕСКИЙ перебор всего списка; паттерн, ткнутый пальцем, ищется всегда — иначе
-    // выделение просто не работает и непонятно почему.
+    // ⛔ «Паттерны выше выделенной — не искать» (v1.100) — ПЕРЕД проверкой выделения: эта отсечка
+    // бьёт и по выделенным ячейкам тоже (см. patSearchFloorIdx). Выключена — patFloor = −1.
+    if (patFloor >= 0 && i < patFloor) continue;
+    // ЯВНОЕ ВЫДЕЛЕНИЕ СИЛЬНЕЕ ОТСЕЧКИ "⛔ до паттерна" (запрос пользователя: выделил паттерн 4-й
+    // строки, а в ответ "строка отсечена, паттерны ищутся только по строку 2"). Тот порог про то,
+    // докуда идёт АВТОМАТИЧЕСКИЙ перебор всего списка; паттерн, ткнутый пальцем, ищется всегда —
+    // иначе выделение просто не работает и непонятно почему.
     if (onlySel && !onlySel.has(i)) continue;
     // Уже защёлкнут "Авто" (см. allPatLatch) — второй раз не ищем вовсе.
     if (allPatLatch.size && allPatLatch.has(i)) continue;
@@ -3582,8 +3726,63 @@ function computeBgSearchTarget(){
   // нет) функция возвращала null, и окно показывало "нет цели" вместо результата. Теперь режимы
   // считаются как обычно, просто сверять не с чем — findPatternKinds("") даёт пустой список,
   // значит kinds=[] и matched=false у всех строк.
-  const pat = targetIdx < st.rows.length ? st.pats[targetIdx] : null;
+  /* ═══ ВЫДЕЛЕННЫЕ ПАТТЕРНЫ ЗАМЕНЯЮТ ЦЕЛЬ (v1.090) ═══
+     Запрос пользователя: "если выделен паттерн, то целевой паттерн для поиска от выделения цепочек
+     не учитываем и не показываем, ищем только выделенный (или несколько)".
+     По умолчанию фон-поиск сверяет результат с паттерном строки СРАЗУ ПОД выделением (targetIdx =
+     selIdx + 1) — это и есть «цель». Выделение паттернов до сих пор сужало только «🌈 Все паттерны»
+     (см. allPatsShown), а цель жила своей жизнью: её и подсвечивало, и по ней считалось «найдено».
+     Получалось два искомых сразу, и выделить паттерн ради «ищи вот это» было нельзя.
+     Теперь выделение паттернов ПЕРЕБИВАЕТ цель: искомым становится оно, targetIdx переезжает на
+     первый выделенный паттерн (значит и подсветка «что ищем»/«найдено» встаёт на него, а не на
+     строку под выделением). Пустые ячейки в счёт не идут: искать в них нечего.
+     ВСЕ ВЫДЕЛЕННЫЕ РАВНОПРАВНЫ (v1.099, запрос пользователя: "когда выделено несколько паттернов —
+     искать все выделенные"). В v1.090 по-настоящему искался только ПЕРВЫЙ: по нему считались kinds
+     (а значит и подсветка совпадения в «Результате», и разбор в «Черновике»), остальные же лишь
+     задним числом поднимали флаг «найдено», ничего не подсвечивая. Теперь findPatternKinds
+     прогоняется по КАЖДОМУ выделенному, а находки складываются в один список — см. searchKinds()
+     ниже. Каждая находка помечена своим patIdx, поэтому видно не только «нашлось что-то», но и
+     КАКОЙ именно паттерн нашёлся: targetIdxs/hitPatIdxs едут наружу, и подсветка ячеек красит
+     найденные жёлтым, а ещё не найденные — белым «ищем» (см. bgHitSuffix в render()).
+     Флаг patSelMode едет наружу — по нему прогоны глушат ЗАХВАТ НАХОДКИ: захват двигает выделение
+     СТРОК к цели, а тут цель не строка под выделением, а выбранный руками паттерн, и утаскивать за
+     ним выделение было бы самоуправством. */
+  /* ⛔ «Паттерны выше выделенной — не искать» (v1.100) режет и этот список — именно про него
+     сказано «даже если они выделены». Отсекло ВСЁ выделение (все выбранные ячейки оказались выше
+     границы) — patSelMode гаснет сам собой, и цель возвращается к обычной строке под выделением:
+     она по определению ниже границы, так что отсечке не противоречит. */
+  const patFloor = patSearchFloorIdx();
+  const selPatIdxs = (st.selectedPats && st.selectedPats.size)
+    ? Array.from(st.selectedPats)
+        .filter(r => st.pats[r] && st.pats[r].text && (patFloor < 0 || r >= patFloor))
+        .sort((a, b) => a - b)
+    : [];
+  const patSelMode = selPatIdxs.length > 0;
+  const patTargetIdx = patSelMode ? selPatIdxs[0] : targetIdx;
+  const pat = patSelMode ? st.pats[patTargetIdx]
+                         : (targetIdx < st.rows.length ? st.pats[targetIdx] : null);
   const patText = pat && pat.text ? pat.text : "";
+  /* Что именно ищем: при выделенных паттернах — ВСЕ они, иначе один паттерн строки под выделением.
+     Пары [индекс ячейки, текст] — индекс нужен, чтобы пометить им находку (см. searchKinds). */
+  const searchPats = patSelMode
+    ? selPatIdxs.map(r => ({ idx: r, text: st.pats[r].text }))
+    : [{ idx: targetIdx, text: patText }];
+  /* Находки по ВСЕМ искомым паттернам в одном списке — той же формы, что отдаёт findPatternKinds
+     (массив + свойство .tried), поэтому всё, что ниже читает kinds/tried, менять не пришлось.
+     Один паттерн — старый путь без изменений: ни лишнего копирования, ни поля patIdx там, где
+     оно всё равно одно и то же. */
+  const searchKinds = (matchOn) => {
+    if (searchPats.length === 1) return findPatternKinds(matchOn, searchPats[0].text);
+    const out = [];
+    const tried = [];
+    for (const sp of searchPats) {
+      const k = findPatternKinds(matchOn, sp.text);
+      for (const it of k) { it.patIdx = sp.idx; out.push(it); }
+      if (k.tried) for (const tr of k.tried) { tr.patIdx = sp.idx; tried.push(tr); }
+    }
+    out.tried = tried;
+    return out;
+  };
 
   // ВКЛЮЧЕНИЕ ИСКОМОЙ СТРОКИ В РАСЧЁТ — ТОЛЬКО ПОКА РАБОТАЕТ "🧩 Паттерн-цепочка" (запрос
   // пользователя: "для остальных ничего не меняем"). Без неё всё как было всегда: парные режимы
@@ -3652,7 +3851,7 @@ function computeBgSearchTarget(){
     const matchOn = (mask && maskPhase >= 0)
       ? applyPickMask((st.bgMaskRingRestart === false && !st.ringOff) ? result + result : result, mask, maskPhase)
       : result;
-    const kinds = findPatternKinds(matchOn, patText);
+    const kinds = searchKinds(matchOn);
     // "🌈 Все паттерны" — вдобавок к обычной сверке ищем в этом же результате ВЕСЬ список
     // паттернов (см. findAllPatternsInResult). Это ТОЛЬКО подсветка: в matched такие находки НЕ
     // идут (запрос пользователя — иначе "паттерн строки N найден" писалось на каждой строке, хотя
@@ -3828,8 +4027,11 @@ function computeBgSearchTarget(){
      в том числе при обычном РУЧНОМ выделении строки, без всякого "Авто" (запрос пользователя).
      ВТОРАЯ половина режима (отложенный до конца цикла вариантов захват) — в autoRun(). */
   const belowHits = [];
-  const belowOn = st.bgSearchAllBelow || st.fullPassMode;
-  const belowFrom = st.fullPassMode ? 0 : targetIdx;
+  const belowOn = st.fullPassMode;   // «🔽 Все ниже» удалена в v1.090, остался только Полный проход
+  // ⛔ «Паттерны выше выделенной — не искать» (v1.100) обрезает и "Полный проход": без неё он берёт
+  // список от самого верха (0), в этом его смысл. Отсечка выключена — patSearchFloorIdx() даёт −1,
+  // и старт остаётся прежним нулём.
+  const belowFrom = st.fullPassMode ? Math.max(0, patSearchFloorIdx()) : targetIdx;
   if (belowOn) {
     const lastBelow = Math.max(st.rows.length, st.pats.length);
     for (let r = belowFrom; r < lastBelow; r++) {
@@ -3870,8 +4072,20 @@ function computeBgSearchTarget(){
   // любого паттерна из belowHits — иначе режим искал бы в своей/нижних строках, но прогон об этом
   // не узнавал бы (matched читают и "🛑 Стоп на находке", и захват, и все автопоиски).
   const primaryMatched = results.some(r => r.matched) || lengthSumsMatched;
+  /* КАКИЕ ИМЕННО из искомых паттернов нашлись (v1.099). Отдельный второй проход по остальным
+     выделенным (v1.090) больше не нужен: searchKinds уже прогнала их ВСЕ, и находка любого сама
+     попала в kinds — значит и в r.matched, и в primaryMatched выше. Остаётся собрать индексы:
+     ими подсветка отличает найденные ячейки от ещё не найденных. patIdx проставлен только при
+     нескольких искомых (см. searchKinds) — при одном находка может относиться лишь к нему. */
+  const hitPatIdxs = new Set();
+  for (const res of results) {
+    if (!res.kinds || !res.kinds.length) continue;
+    for (const k of res.kinds) hitPatIdxs.add(k.patIdx !== undefined ? k.patIdx : patTargetIdx);
+  }
   return {
-    targetIdx, results, belowHits, primaryMatched,
+    targetIdx: patTargetIdx, patSelMode, results, belowHits, primaryMatched,
+    // Все ячейки-цели (при выделенных паттернах их несколько) и те из них, что реально нашлись.
+    targetIdxs: searchPats.map(sp => sp.idx), hitPatIdxs,
     matched: primaryMatched || (st.fullPassMode && belowHits.length > 0),
     aboveIdx: pairTop, selIdx: pairBottom, anchorIdx: selIdx, rowAbove, rowSel, lengthSumsMatched,
     // По какую строку включительно собирались режимы-цепочки — нужен подсветке находки в самих
@@ -4070,7 +4284,9 @@ function autoRun(){
             // выделена, захватывать нечего.
             if (bgInfo.primaryMatched) pendingHits.add(bgInfo.targetIdx);
             if (bgInfo.belowHits) for (const r of bgInfo.belowHits) if (r > bgInfo.anchorIdx) pendingHits.add(r);
-          } else if (st.captureOnFind || st.growDownOnFind) {
+          } else if ((st.captureOnFind || st.growDownOnFind) && !bgInfo.patSelMode) {
+            // patSelMode — ищем ВЫДЕЛЕННЫЙ ПАТТЕРН (v1.090): цель не строка под выделением, тянуть
+            // за ней выделение строк нечего. См. тот же запрет в afterShiftBgCheck().
             // При МУЛЬТИвыделении окно едет с постоянным размером — выброшенную сверху строку
             // убираем и из набора вращаемых, иначе она продолжала бы крутиться, уже не будучи
             // выделенной (см. captureFoundRow).
@@ -4683,12 +4899,39 @@ updateBuildPlaceBtn();
 function applyGeneratedRows(gen, title){
   const mode = st.buildPlace || "clear";
   snapshot();
-  if (mode === "clear") {
+  /* «СТЕРЕТЬ» ПО ПУСТОМУ ХОЛСТУ — СТИРАЕТ, ПО НАБРАННОЙ ЦЕПОЧКЕ — ТОЛЬКО ПЕРЕЗАПИСЫВАЕТ СВОИ
+     СТРОКИ (v1.103, запрос пользователя: "если вставка в уже существующие биты в цепочках, то не
+     всё очищает, а только те строки, куда вставляет, а другие оставит как есть").
+     Полная замена (ветка ниже) обнуляет ВСЁ разом: строки, шаблон, счётчики, пометки, построения
+     вверх. Это правильно на чистом холсте — там и терять нечего, — но по набранной цепочке
+     означало, что фигура на 16 строк сносит остальные 200. Теперь при непустой цепочке
+     построение идёт общим циклом приписки (он же обслуживает «вправо/влево/по центру»), только
+     с заменой строки вместо обрамления: строка, куда фигура пишет, берёт её текст целиком,
+     остальные не трогаются вовсе.
+     Меряем по наличию БИТ, а не по длине массива: у цепочки всегда есть служебная пустая нулевая
+     строка (см. ensureZeroRow), поэтому st.rows.length никогда не ноль и признаком «холст пуст»
+     служить не может. */
+  const chainHasBits = st.rows.some(r => r && r.length);
+  if (mode === "clear" && !chainHasBits) {
+    /* «СТЕРЕТЬ» СТИРАЕТ ТОЛЬКО ЦЕПОЧКУ, ЕСЛИ ПАТТЕРНЫ НЕ ПУСТЫ (v1.102, запрос пользователя: "тут
+       только цепочку переписывать, если паттерны не пусты"). Раньше режим всегда клал построение
+       И в строки, И в колонку паттернов (tplPats = те же gen) — то есть набранные вручную паттерны
+       молча заменялись копией фигуры, и вернуть их можно было только через Undo. Копирование в
+       паттерны имеет смысл ровно в одном случае — когда колонка ПУСТА (первый запуск, чистый холст):
+       тогда фигура заодно становится и шаблоном для поиска. Есть хоть один непустой паттерн — это
+       чужая работа, и построение к ней отношения не имеет.
+       Снимаем только отметки «найден/вид/шаг»: они указывали на строки прежней цепочки, которой
+       больше нет, и переносить их на новую нельзя. Сами тексты и порядок остаются нетронутыми. */
+    const keepPats = (st.pats || []).some(p => p && p.text);
     st.tplRows = gen.slice();
-    st.tplPats = gen.slice();
     st.rows = gen.slice();
     st.used = st.rows.map(() => false);
-    st.pats = st.tplPats.map((t, i) => ({ text: t, ord: i, found: false, kind: null, step: null }));
+    if (keepPats) {
+      for (const p of st.pats) if (p) { p.found = false; p.kind = null; p.step = null; }
+    } else {
+      st.tplPats = gen.slice();
+      st.pats = st.tplPats.map((t, i) => ({ text: t, ord: i, found: false, kind: null, step: null }));
+    }
     st.selectedRows = new Set();
     // Прежних строк больше нет — значит нет и построений вверх над ними (раньше st.topBuilt
     // оставался от стёртой цепочки, и первые строки новой фигуры считались «зеркалами»).
@@ -4700,7 +4943,11 @@ function applyGeneratedRows(gen, title){
     maskChangedMap.clear(); maskBaseRows = null;
     // Пустая нулевая строка — граница нумерации (см. ensureZeroRow). Без неё первая строка фигуры
     // считалась бы нулевой, и приписка следующим построением легла бы не с той строки.
-    ensureZeroRow();
+    /* "none" при сохранённых паттернах (v1.102): обычный вызов ВСТАВЛЯЕТ пустую ячейку в начало
+       колонки, чтобы паттерн N встал напротив строки N нового шаблона. Здесь колонка не наша —
+       она уже стоит там, где её оставил пользователь, и сдвиг всей колонки вниз на одну как раз и
+       был бы тем «троганьем паттернов», которого просили избежать. */
+    ensureZeroRow(keepPats ? "none" : undefined);
     st.step = 0; st.passCount = 0; st.tailBuffer = "";
     st.aIdx = 0; st.bIdx = 1; st.goingUp = false; st.hit = null;
     const rowCountEl = document.getElementById("rowCount");
@@ -4711,8 +4958,10 @@ function applyGeneratedRows(gen, title){
       if (rcVal) rcVal.textContent = gen.length;
     }
     render(); saveCache();
-    say(`${title}: построено ${gen.length} строк, прежняя цепочка стёрта.`);
-    logStep(title, "", "", `${gen.length} строк, со стиранием`);
+    say(`${title}: построено ${gen.length} строк, прежняя цепочка стёрта.` +
+        (keepPats ? " Колонка паттернов не тронута — она не пуста (сняты только отметки «найден»)."
+                  : " Паттерны заполнены той же фигурой — колонка была пуста."));
+    logStep(title, "", "", `${gen.length} строк, со стиранием${keepPats ? ", паттерны сохранены" : ""}`);
     return;
   }
   // Первая НАСТОЯЩАЯ строка цепочки: индекс st.topBuilt — всегда пустая нулевая строка
@@ -4734,6 +4983,20 @@ function applyGeneratedRows(gen, title){
       continue;
     }
     const cur = st.rows[idx] || "";
+    if (mode === "clear") {
+      /* «Стереть» по набранной цепочке (v1.103, см. шапку функции): строка ЗАМЕНЯЕТСЯ целиком,
+         без обрамления. Прежних бит в ней не остаётся, поэтому и переносить нечего — вся строка
+         помечается новой (newBitsWhole), а не сдвигается вместе со старыми (newBitsWrap).
+         Строки, до которых фигура не дотянулась, этот цикл не перебирает вовсе — они и остаются
+         как были, в этом весь смысл правки. */
+      st.rows[idx] = add;
+      newBitsWhole(idx, add.length);
+      insertedFlagsMap.delete(idx);
+      invFlagsMap.delete(idx);
+      addedBits += add.length;
+      touched++;
+      continue;
+    }
     const left = (mode === "left" || mode === "center") ? add : "";
     const right = (mode === "right" || mode === "center") ? add : "";
     st.rows[idx] = left + cur + right;
@@ -4748,10 +5011,15 @@ function applyGeneratedRows(gen, title){
   maskChangedMap.clear(); maskBaseRows = null;
   st.hit = null;
   render(); saveCache();
-  say(`${title}: приписано ${BUILD_PLACE_LABELS[mode]} к ${touched} стр.` +
+  say(mode === "clear"
+    ? `${title}: переписано строк ${touched}` +
+      (addedRows ? `, заведено новых ${addedRows}` : "") +
+      `, всего бит ${addedBits}. Остальные строки цепочки и паттерны не тронуты.`
+    : `${title}: приписано ${BUILD_PLACE_LABELS[mode]} к ${touched} стр.` +
       (addedRows ? `, заведено новых строк ${addedRows}` : "") +
       `, всего новых бит ${addedBits}.`);
-  logStep(title, `${rowLabel(base)}…`, "", `${BUILD_PLACE_LABELS[mode]}, +${addedBits} бит`);
+  logStep(title, `${rowLabel(base)}…`, "",
+    (mode === "clear" ? "перезапись строк" : BUILD_PLACE_LABELS[mode]) + `, +${addedBits} бит`);
 }
 
 const bGenSierpinskiEl = document.getElementById("bGenSierpinski");
@@ -4980,7 +5248,7 @@ function captureFoundRow(targetIdx, forceGrow){
    вращаемых строк (rotIdxs в прогоне). */
 function captureBelowRun(forceGrow){
   const done = [];
-  if (!st.bgSearchAllBelow || typeof bgBelowHits === "undefined" || !bgBelowHits.size) return done;
+  if (!st.fullPassMode || typeof bgBelowHits === "undefined" || !bgBelowHits.size) return done;
   const lastRow = Math.max(st.rows.length, st.pats.length);
   for (;;) {
     const sel = (st.selectedRows && st.selectedRows.size) ? Math.max(...st.selectedRows) : -1;
@@ -5005,7 +5273,10 @@ function afterShiftBgCheck(isShiftInv){
   refreshTopMirrors();
   const bgInfo = computeBgSearchTarget();
   const hit = !!(bgInfo && bgInfo.matched);
-  if ((st.captureOnFind || st.growDownOnFind) && hit) {
+  /* ЗАХВАТ НЕ РАБОТАЕТ, ПОКА ИЩЕМ ВЫДЕЛЕННЫЙ ПАТТЕРН (v1.090, см. patSelMode в
+     computeBgSearchTarget): захват тянет выделение СТРОК к цели, а цель сейчас — паттерн, выбранный
+     руками, а не строка под выделением. Утаскивать за ним выделение строк было бы самоуправством. */
+  if ((st.captureOnFind || st.growDownOnFind) && hit && !bgInfo.patSelMode) {
     captureFoundRow(bgInfo.targetIdx, st.growDownOnFind);
     captureBelowRun(st.growDownOnFind);
   }
@@ -5169,9 +5440,11 @@ function axisSnapLocalIdxs(r, len, align){
 //                         У строк совсем без пары «1»→«0» — заморожено, шаг не делает ничего.
 //  "axis12", галка ВЫКЛ — зазор между ЛЮБЫМИ соседними символами, ограничения «1»→«0» нет,
 //                         заморозки тоже нет — обычный одиночный шаг индекса зазора (по кругу).
-//  ЛЮБОЕ ДРУГОЕ выравнивание, галка ВКЛ — сама строка крутится (realRotateFn), пока на её
-//                         "оси" (см. nonAxisSnapCharIdx ниже) не окажется «1», либо пока не
-//                         пройден полный круг.
+//  ЛЮБОЕ ДРУГОЕ выравнивание, галка ВКЛ — сама строка крутится (realRotateFn), пока её «1» не
+//                         встанет под «1» БЛИЖАЙШЕЙ НЕПУСТОЙ СТРОКИ ВЫШЕ (v1.096; назначены свои
+//                         столбцы-оси — целимся в них, а не в соседнюю строку; выше вообще ничего
+//                         нет — запасное правило по nonAxisSnapCharIdx), либо пока не пройден
+//                         полный круг.
 //  ЛЮБОЕ ДРУГОЕ выравнивание, галка ВЫКЛ — обычный одиночный поворот, как раньше.
 /* Обратная пара к каждой из четырёх функций поворота — нужна режиму "↩ От края назад" в ОБЫЧНЫХ
    выравниваниях: отразившись от края, строку надо крутить в СТОРОНУ, ПРОТИВОПОЛОЖНУЮ нажатой
@@ -5406,7 +5679,32 @@ function shiftOneRowAxisAware(r, axisDelta, realRotateFn, invFlagsRotateFn){
       say(`Круг: строка ${rowLabel(r)} не достаёт ни до одной назначенной оси («⊙ Ось сюда»/«⊙ Оси по «1» строки») — двигать её не по чему. Снимите оси кнопкой сброса осей или назначьте их в столбцах этой строки.`);
       return;
     }
-    const targets = multi || [nonAxisSnapCharIdx(st.align, len)];
+    /* БЕЗ НАЗНАЧЕННЫХ ОСЕЙ ЦЕЛИМСЯ В «1» СТРОКИ ВЫШЕ (v1.096, баг-репорт пользователя: "не верно
+       работает, надо смотреть по верхней строке 1цы и делать сдвиги так, когда 1ца падает на 1цу,
+       независимо от первого символа").
+       Раньше запасной целью был ОДИН фиксированный символ самой строки — nonAxisSnapCharIdx():
+       первый бит (у правых выравниваний последний). То есть галка означала не "1 на 1", а "первый
+       символ строки — «1»", и до соседней строки ей не было никакого дела: строка вставала в
+       положение, где её начало единица, хоть бы над ней в этом столбце был ноль.
+       Теперь условие то же, что у "ОсьБит" (axisBitHasMatch): подходит любое положение, где ХОТЬ
+       ОДНА «1» этой строки стоит в ТОМ ЖЕ ЭКРАННОМ СТОЛБЦЕ, что «1» строки выше. Какой там символ
+       по счёту — неважно.
+       Экранный столбец = rowShiftFor() + индекс в строке. Сдвиг считаем ОДИН РАЗ до перебора:
+       поворот длину строки не меняет, а вся геометрия выравнивания (группы, лесенки, ½) висит
+       именно на длине и номере строки — значит, за время перебора сдвиг постоянен. Режимы "⊙ Ось"/
+       "Ось 1.2"/"ОсьБит" сюда не попадают вовсе, у них свои ветки выше.
+       Строка выше — БЛИЖАЙШАЯ НЕПУСТАЯ (пустые пропускаем: под ними целиться не по чему). Если
+       выше нет ни одной — снапить не на что, и остаётся прежнее правило по первому символу, иначе
+       самая верхняя строка перестала бы двигаться вообще. */
+    const fallbackIdx = nonAxisSnapCharIdx(st.align, len);
+    const targets = multi || null;
+    let snapMaxLen = 0;
+    for (const q of st.rows) if (q && q.length > snapMaxLen) snapMaxLen = q.length;
+    let aboveIdx = -1;
+    if (!targets) for (let k = r - 1; k >= 0; k--) { if (st.rows[k] && st.rows[k].length) { aboveIdx = k; break; } }
+    const aboveRow = aboveIdx >= 0 ? st.rows[aboveIdx] : "";
+    const aboveShift = aboveIdx >= 0 ? rowShiftFor(snapMaxLen, aboveIdx, aboveRow, st.align) : 0;
+    const curShift = rowShiftFor(snapMaxLen, r, st.rows[r], st.align);
     // ОТКАТ ПРИ ПРОВАЛЕ ПЕРЕБОРА. Раньше тут стояло "len поворотов = оборот, строка вернётся к
     // исходному виду сама, откат не нужен" — и это ВЕРНО ТОЛЬКО ДЛЯ ОБЫЧНОГО Круга. У "Круг Инв"
     // поворот вдобавок переворачивает биты, и полный оборот по позициям (len) оставляет ВСЕ БИТЫ
@@ -5421,19 +5719,33 @@ function shiftOneRowAxisAware(r, axisDelta, realRotateFn, invFlagsRotateFn){
     let found = false;
     for (let i = 0; i < len; i++) {
       rotateRowWithFlags(r, realRotateFn, invFlagsRotateFn);
-      // "⊙ Хватит любой из осей" (st.axisSnapAny) — принимаем положение, где «1» стоит хотя бы
-      // на ОДНОЙ оси; без галки нужны единицы на ВСЕХ сразу.
-      let ok = !(st.axisSnapAny && targets.length > 1);
-      if (ok) { for (const t of targets) if (st.rows[r][t] !== "1") { ok = false; break; } }
-      else { for (const t of targets) if (st.rows[r][t] === "1") { ok = true; break; } }
+      let ok;
+      if (!targets) {
+        // Назначенных осей нет — совпадение «1» под «1» со строкой выше (см. комментарий выше).
+        ok = aboveRow
+          ? axisBitHasMatch(st.rows[r], curShift, aboveRow, aboveShift, false, 0)
+          : st.rows[r][fallbackIdx] === "1";
+      } else {
+        // "⊙ Хватит любой из осей" (st.axisSnapAny) — принимаем положение, где «1» стоит хотя бы
+        // на ОДНОЙ оси; без галки нужны единицы на ВСЕХ сразу.
+        ok = !(st.axisSnapAny && targets.length > 1);
+        if (ok) { for (const t of targets) if (st.rows[r][t] !== "1") { ok = false; break; } }
+        else { for (const t of targets) if (st.rows[r][t] === "1") { ok = true; break; } }
+      }
       if (ok) { found = true; break; }
     }
     if (!found) {
       st.rows[r] = origRow;
       invFlagsMap.set(r, origFlags);
       if (origNew) newBitsMap.set(r, origNew); else newBitsMap.delete(r);
-      say(`Круг: строка ${rowLabel(r)} — ни на одном повороте «1» не встаёт на ${targets.length > 1 ? (st.axisSnapAny ? "хотя бы одну из осей" : "ВСЕ оси сразу") : "ось"}, строка оставлена как была. ` +
-          (targets.length > 1 && !st.axisSnapAny ? "Помогает галка «⊙ Хватит любой из осей»." : "Снимите «⊙ Ось: сдвиг только на «1»», чтобы крутить обычным шагом."));
+      if (!targets) {
+        say(aboveRow
+          ? `Круг: строка ${rowLabel(r)} — ни на одном повороте её «1» не встаёт под «1» строки ${rowLabel(aboveIdx)}, строка оставлена как была. Снимите «⊙ Сдвиг только на «1»», чтобы крутить обычным шагом.`
+          : `Круг: строка ${rowLabel(r)} — «1» в ней нет, крутить нечего.`);
+      } else {
+        say(`Круг: строка ${rowLabel(r)} — ни на одном повороте «1» не встаёт на ${targets.length > 1 ? (st.axisSnapAny ? "хотя бы одну из осей" : "ВСЕ оси сразу") : "ось"}, строка оставлена как была. ` +
+            (targets.length > 1 && !st.axisSnapAny ? "Помогает галка «⊙ Хватит любой из осей»." : "Снимите «⊙ Ось: сдвиг только на «1»», чтобы крутить обычным шагом."));
+      }
     }
   } else {
     const len = st.rows[r] ? st.rows[r].length : 0;

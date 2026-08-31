@@ -95,6 +95,190 @@ function cellSelUpdateBtns(){
   if (b) b.classList.toggle("mode-act", cellSelMode);
   document.body.classList.toggle("cell-mode", cellSelMode);
 }
+
+/* ═══ НАЛОЖЕНИЕ: БУФЕР, ПАНЕЛЬ И ЖЕСТЫ (v1.104) ═══
+   Сама механика и смысл — в mergePasteIntoRow() (fold-1-core.js). Здесь три части: что кладёт в
+   буфер Ctrl+C, что достаёт оттуда кнопка «Вставить», и перетаскивание блока по холсту.
+   Панель живёт в группе «Выделить» рядом с кнопками выбора ячеек: оттуда копия и берётся.
+
+   БУФЕР ОТДЕЛЬНЫЙ ОТ СИСТЕМНОГО. Ctrl+C по-прежнему кладёт текст в системный буфер обмена
+   (copySelectedRows — с ним ходят в Excel), но ЧИТАТЬ его обратно нельзя без асинхронного
+   разрешения браузера, а «Вставить» должна срабатывать сразу и без диалогов. Поэтому тем же
+   нажатием форма куска запоминается здесь, в pasteBuf. Он один на приложение и переживает
+   переключение вкладок — скопировать в одной цепочке и наложить в другой это ровно то, зачем
+   такой инструмент и нужен. */
+let pasteBuf = null;
+/* Снять форму куска с ВЫДЕЛЕННЫХ СТРОК: каждая строка идёт целиком, а её экранный сдвиг
+   (rowShiftFor — центрирование, лесенки, группы) превращается в off относительно самой левой.
+   Без этого блок, снятый с центрированной цепочки, лёг бы всеми строками от одного столбца и
+   потерял бы форму. Пустые строки внутри диапазона сохраняются пустыми — ими держится
+   вертикальный интервал между кусками. */
+function pasteGrabFromRows(){
+  if (!st.selectedRows || !st.selectedRows.size) return null;
+  const idxs = Array.from(st.selectedRows).sort((a, b) => a - b);
+  let maxLen = 0;
+  for (const q of st.rows) if (q && q.length > maxLen) maxLen = q.length;
+  const items = [];
+  let lo = Infinity;
+  for (let r = idxs[0]; r <= idxs[idxs.length - 1]; r++) {
+    const txt = st.selectedRows.has(r) ? (getRowBits(st, r) || "") : "";
+    const sh = txt.length ? rowShiftFor(maxLen, r, txt, st.align) : 0;
+    if (txt.length && sh < lo) lo = sh;
+    items.push({ txt, sh });
+  }
+  if (!items.some(it => it.txt)) return null;
+  if (!isFinite(lo)) lo = 0;
+  return { rows: items.map(it => ({ txt: it.txt, off: it.txt.length ? it.sh - lo : 0 })), row: idxs[0], col: lo };
+}
+/* Снять форму куска с ВЫБРАННЫХ ЯЧЕЕК. От строки берётся сплошной отрезок от самой левой выбранной
+   ячейки до самой правой — «дырки» внутри отрезка заполняются настоящими битами строки, а не
+   выбрасываются: в ленте бит дырку изобразить нечем, а сплошной кусок — это ровно то, что видно
+   на экране между крайними выбранными ячейками. */
+function pasteGrabFromCells(){
+  const byRow = (typeof cellSelByRow === "function") ? cellSelByRow() : new Map();
+  if (!byRow.size) return null;
+  const maxLen = (typeof cellSelMaxLen === "function") ? cellSelMaxLen() : 0;
+  const rowsIdx = Array.from(byRow.keys()).sort((a, b) => a - b);
+  let lo = Infinity;
+  for (const r of rowsIdx) { const c0 = byRow.get(r)[0]; if (c0 < lo) lo = c0; }
+  const out = [];
+  for (let r = rowsIdx[0]; r <= rowsIdx[rowsIdx.length - 1]; r++) {
+    const cols = byRow.get(r);
+    if (!cols || !cols.length) { out.push({ txt: "", off: 0 }); continue; }
+    const src = st.rows[r] || "";
+    let txt = "";
+    for (let c = cols[0]; c <= cols[cols.length - 1]; c++) {
+      const j = (typeof cellBitIdx === "function") ? cellBitIdx(r, c, maxLen) : -1;
+      txt += (j >= 0 && j < src.length) ? src[j] : "0";
+    }
+    out.push({ txt, off: cols[0] - lo });
+  }
+  if (!out.some(it => it.txt)) return null;
+  return { rows: out, row: rowsIdx[0], col: lo };
+}
+/* Запомнить копию. Ячейки приоритетнее строк: выбор ячеек — жест точнее и делается поверх уже
+   выделенных строк, поэтому при обоих наборах человек имеет в виду именно ячейки. */
+function pasteGrab(){
+  const got = ((typeof cellSel !== "undefined" && cellSel.size) ? pasteGrabFromCells() : null) || pasteGrabFromRows();
+  if (!got) return false;
+  pasteBuf = got;
+  pasteRenderBox();
+  return true;
+}
+function pastePut(){
+  if (!pasteBuf) {
+    say("Наложение: сначала скопируйте кусок — выделите строки или выберите ячейки и нажмите Ctrl+C.");
+    return;
+  }
+  /* КУДА КЛАДЁМ. Ничего не выделено — на то же место, откуда взяли (сразу видно, что копия накрыла
+     оригинал). Выделены строки — ПОД самую нижнюю из них: копию затем и делают, чтобы приложить
+     кусок к другому месту, а класть поверх выделения значило бы прятать то, с чем сравнивают. */
+  const anchor = (st.selectedRows && st.selectedRows.size)
+    ? Math.min(Math.max(...st.selectedRows) + 1, Math.max(0, st.rows.length - 1))
+    : pasteBuf.row;
+  st.paste = {
+    rows: pasteBuf.rows.map(r => ({ ...r })),
+    row: Math.max(0, anchor),
+    col: pasteBuf.col,
+    on: true
+  };
+  pasteNorm();
+  pasteRenderBox();
+  render(); saveCache();
+  const n = st.paste ? st.paste.rows.length : 0;
+  say(`Наложение: ${n} стр. на строке ${rowLabel(st.paste.row)}, столбец ${st.paste.col}. Идёт в склейки и фон-поиск как биты своих строк; где накрыло биты строки, считается оно. Таскай мышью прямо по холсту.`);
+}
+function pasteRenderBox(){
+  const info = document.getElementById("pasteInfo");
+  const bOn = document.getElementById("pasteOn");
+  const bClr = document.getElementById("pasteClr");
+  const p = st.paste;
+  const has = !!(p && p.rows && p.rows.length && p.row >= 0);
+  if (info) {
+    if (has) {
+      const bits = p.rows.reduce((n, r) => n + r.txt.length, 0);
+      info.textContent = p.rows.length + " стр., " + bits + " бит — стр " + rowLabel(p.row) + ", ст " + p.col;
+      info.title = p.rows.map((r, k) => (k + 1) + ") +" + r.off + " " + (r.txt || "—")).join("\n");
+    } else {
+      info.textContent = pasteBuf ? ("в буфере: " + pasteBuf.rows.length + " стр. — нажмите «Вставить»") : "пусто";
+      info.title = pasteBuf ? "Скопировано, но ещё не положено на холст" : "Выделите строки или ячейки и нажмите Ctrl+C";
+    }
+  }
+  if (bOn) { bOn.classList.toggle("mode-act", has && p.on !== false); bOn.disabled = !has; }
+  if (bClr) bClr.disabled = !has;
+}
+{
+  const bPut = document.getElementById("bPastePut");
+  if (bPut) bPut.onclick = () => pastePut();
+  const bOnEl = document.getElementById("pasteOn");
+  if (bOnEl) bOnEl.onclick = () => {
+    if (!st.paste) return;
+    st.paste.on = st.paste.on === false;
+    pasteRenderBox();
+    render(); saveCache();
+    say("Наложение: " + (st.paste.on ? "в расчёте" : "выключено — видно на холсте, но в склейки и поиск не идёт") + ".");
+  };
+  const bClrEl = document.getElementById("pasteClr");
+  if (bClrEl) bClrEl.onclick = () => {
+    st.paste = null;
+    pasteRenderBox();
+    render(); saveCache();
+    say("Наложение убрано. Скопированное осталось в буфере — «Вставить» положит его снова.");
+  };
+  pasteRenderBox();
+}
+/* ПЕРЕТАСКИВАНИЕ БЛОКА ПО ХОЛСТУ. Единственный жест, который в этом приложении ещё что-то двигает
+   мышью, — и это осознанно: наложение затем и завели, чтобы прикладывать группу бит к нужному
+   месту (поля, наоборот, прибиты, см. v1.066). Шаг — ровно столбец по горизонтали и ровно строка
+   по вертикали, чтобы биты блока всегда стояли в той же сетке, что и биты цепочки. Хватать можно
+   ЛЮБУЮ строку блока — едет он всегда целиком, взаимные off не меняются.
+   Слушатель на #rows и через closest: сами .paste-bits перерисовываются каждым render(), вешать
+   на них по обработчику было бы бессмысленно. */
+{
+  const rowsEl = document.getElementById("rows");
+  let pasteDrag = null;
+  if (rowsEl) rowsEl.addEventListener("mousedown", e => {
+    const el = e.target.closest && e.target.closest(".paste-bits");
+    if (!el || e.button !== 0 || !st.paste) return;
+    e.preventDefault();
+    /* stopImmediatePropagation, а не просто stopPropagation: на этом же #rows ниже по файлу висит
+       сбор ЯЧЕЕК («▭ Выбор ячеек»), и он зарегистрирован ПОЗЖЕ — обычный stopPropagation его не
+       остановил бы, и нажатие на блок заодно добавляло бы ячейку под ним. Обработчик выделения
+       строк из fold-3 зарегистрирован РАНЬШЕ и сюда не доходит вовсе — там своя проверка на
+       .paste-bits. */
+    e.stopImmediatePropagation();
+    const rowH = Math.max(4, parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--row-h")) || 12);
+    pasteDrag = { x0: e.clientX, y0: e.clientY, col0: st.paste.col, row0: st.paste.row,
+                  step: (typeof realColStepPx === "function" ? realColStepPx() : 0) || 8, rowH: rowH, moved: false };
+    document.body.classList.add("paste-dragging");
+  });
+  window.addEventListener("mousemove", e => {
+    if (!pasteDrag) return;
+    if (!(e.buttons & 1) || !st.paste) { pasteDrag = null; document.body.classList.remove("paste-dragging"); return; }
+    const dCols = Math.round((e.clientX - pasteDrag.x0) / pasteDrag.step);
+    const dRows = Math.round((e.clientY - pasteDrag.y0) / pasteDrag.rowH);
+    const col = pasteDrag.col0 + dCols;
+    /* За пределы списка строк не выпускаем: строка блока вне цепочки нигде не считалась бы, и
+       вернуть её было бы нечем — на холсте её просто не нарисовали бы. Держим ВЕСЬ блок, поэтому
+       нижняя граница считается по его последней строке, а не по якорю. */
+    const maxRow = Math.max(0, (st.rows || []).length - st.paste.rows.length);
+    const row = Math.max(0, Math.min(maxRow, pasteDrag.row0 + dRows));
+    if (col === st.paste.col && row === st.paste.row) return;
+    st.paste.col = col; st.paste.row = row;
+    pasteDrag.moved = true;
+    pasteRenderBox();
+    render();
+  });
+  window.addEventListener("mouseup", () => {
+    if (!pasteDrag) return;
+    const moved = pasteDrag.moved;
+    pasteDrag = null;
+    document.body.classList.remove("paste-dragging");
+    if (!moved || !st.paste) return;
+    saveCache();
+    say("Наложение переставлено: строка " + rowLabel(st.paste.row) + ", столбец " + st.paste.col + ".");
+  });
+}
 const bCellModeEl = document.getElementById("bCellMode");
 if (bCellModeEl) {
   bCellModeEl.onclick = () => {
@@ -1022,17 +1206,42 @@ function updateNumGlueRowsBtn(){
    в полосе выравниваний. Чистый показ: место под номер и его позицию задают классы body
    (patnum-l/patnum-r, см. CSS), сам номер печатает render(). У П2 номер стоит СПРАВА от паттерна
    (бейдж шага при этом уезжает влево), у П1 — зеркально, слева. */
+/* ТРИ ПОЛОЖЕНИЯ НОМЕРА В ЯЧЕЙКАХ ПАТТЕРНОВ (v1.082) — те же, что у номеров колонки поля
+   (ROW_NUM_ORDER/ROW_NUM_LABEL в fold-5-ui.js) и теми же подписями: кнопки в трёх планках должны
+   читаться одинаково. Свой набор, а не общий с той: там «off» ещё и прячет колонку целиком
+   (body.hide-rownums), здесь — просто не печатает номер внутри ячейки. */
+const PAT_NUM_ORDER = ["dec", "bin", "off"];
+const PAT_NUM_LABEL = { dec: "№ 10", bin: "№ 01", off: "№ —" };
+/* Режим колонки. Старый кэш знает только булевы patNumL/patNumR — разворачиваем их в режим, чтобы
+   сохранённая раскладка не сбрасывалась в умолчание при первом же запуске новой версии. */
+function patNumModeOf(side){
+  const key = side === "l" ? "patNumModeL" : "patNumModeR";
+  const v = st[key];
+  if (v === "dec" || v === "bin" || v === "off") return v;
+  const on = side === "l" ? !!st.patNumL : st.patNumR !== false;
+  return on ? "dec" : "off";
+}
+/* Текст номера ДЛЯ КОНКРЕТНОЙ КОЛОНКИ. Не rowLabelText(): та печатает по общему выключателю
+   «🔢 Двоичные номера» (st.binRowNums), один на обе колонки, а с v1.082 система счисления у П1 и
+   П2 своя. Достроенные сверху строки (номер отрицательный) печатаются с минусом, как и раньше. */
+function patNumTextFor(side, i){
+  const n = rowLabel(i);
+  if (patNumModeOf(side) === "bin") return (n < 0 ? "-" : "") + Math.abs(n).toString(2);
+  return String(n);
+}
 function applyPatNumClasses(){
-  document.body.classList.toggle("patnum-l", !!st.patNumL);
-  document.body.classList.toggle("patnum-r", st.patNumR !== false);
-  /* Две кнопки «№» в полосе выравниваний УБРАНЫ (v1.024, запрос пользователя: "нажать это вместо
-     кнопки Номера в паттернах показать, а ту удали") — их заменила одна «{#}» в текстовой полоске
-     под осью, и она правит ОБЕ колонки разом (см. togglePatNumBoth ниже). Поиск по старым id
-     оставлен на случай, если кнопки когда-нибудь вернут: обе проверки и так через if. */
+  // Режим — источник правды; булевы флаги считаются из него и остаются для всех, кто спрашивает
+  // просто «включено ли»: классы body ниже, ширина колонки (fitPatW/fitPatW2), разметка render().
+  const ml = patNumModeOf("l"), mr = patNumModeOf("r");
+  st.patNumModeL = ml; st.patNumModeR = mr;
+  st.patNumL = ml !== "off";
+  st.patNumR = mr !== "off";
+  document.body.classList.toggle("patnum-l", st.patNumL);
+  document.body.classList.toggle("patnum-r", st.patNumR);
   const bl = document.getElementById("bPatNumL");
-  if (bl) bl.classList.toggle("overlay-on", !!st.patNumL);
+  if (bl) { bl.textContent = PAT_NUM_LABEL[ml]; bl.classList.toggle("on", ml !== "off"); }
   const br = document.getElementById("bPatNumR");
-  if (br) br.classList.toggle("overlay-on", st.patNumR !== false);
+  if (br) { br.textContent = PAT_NUM_LABEL[mr]; br.classList.toggle("on", mr !== "off"); }
   const bAll = document.getElementById("bAxisPatNum");
   if (bAll) bAll.classList.toggle("on", patNumsOn());
 }
@@ -1057,19 +1266,29 @@ function applyStairsGroupInputs(){
   set("stairsStepR", st.stairsStepR);
 }
 
-function togglePatNum(side){
-  if (side === "l") st.patNumL = !st.patNumL;
-  else st.patNumR = (st.patNumR === false);
+/* Кнопка «№» своей колонки: десятичные → двоичные → выключены → снова десятичные (v1.082).
+   render() обязателен: меняется и текст номера, и его ширина, а от неё — ширина всей колонки
+   (fitPatW/fitPatW2 прибавляют --num-w). */
+function cyclePatNum(side){
+  const key = side === "l" ? "patNumModeL" : "patNumModeR";
+  const i = PAT_NUM_ORDER.indexOf(patNumModeOf(side));
+  st[key] = PAT_NUM_ORDER[(i < 0 ? 0 : i + 1) % PAT_NUM_ORDER.length];
   applyPatNumClasses();
   render(); saveCache();
+  const nm = side === "l" ? "П1" : "П2";
+  const m = st[key];
+  say(m === "off" ? `${nm}: номера строк в ячейках убраны.`
+    : `${nm}: номера строк в ячейках — ${m === "bin" ? "двоичные" : "десятичные"}.`);
 }
 /* ОБЕ КОЛОНКИ РАЗОМ (v1.024) — то, что делает «{#}» в полоске под осью. Прежние «№» правили П1 и
    П2 порознь, но кнопка теперь одна, поэтому и состояние общее: включено хоть где-то — гасим обе,
    погашено везде — зажигаем обе. */
 function togglePatNumBoth(){
   const on = patNumsOn();
-  st.patNumL = !on;
-  st.patNumR = !on;
+  // Через режимы (v1.082): гасим обе или возвращаем обеим десятичные. Свою систему счисления у
+  // каждой колонки эта кнопка не трогает — она про «показывать/не показывать».
+  st.patNumModeL = on ? "off" : "dec";
+  st.patNumModeR = on ? "off" : "dec";
   applyPatNumClasses();
   render(); saveCache();
   say(on ? "Номера в паттернах убраны из обеих колонок." : "Номера строк показаны внутри ячеек паттернов — в обеих колонках, П1 и П2.");
@@ -1236,9 +1455,9 @@ function numsAsRows(){
   const bPatInsertCellEl = document.getElementById("bPatInsertCell");
   if (bPatInsertCellEl) bPatInsertCellEl.onclick = patInsertCellHere;
   const bPatNumLEl = document.getElementById("bPatNumL");
-  if (bPatNumLEl) bPatNumLEl.onclick = () => togglePatNum("l");
+  if (bPatNumLEl) bPatNumLEl.onclick = () => cyclePatNum("l");
   const bPatNumREl = document.getElementById("bPatNumR");
-  if (bPatNumREl) bPatNumREl.onclick = () => togglePatNum("r");
+  if (bPatNumREl) bPatNumREl.onclick = () => cyclePatNum("r");
   applyPatNumClasses();
   // change, а не input: пока цифру набирают, промежуточное значение (пустая строка, "0") дёргало
   // бы перерисовку всей цепочки на каждый символ.
@@ -4483,24 +4702,25 @@ function doXorSelectedStep() {
   return true;
 }
 
-/* СДВИНУТЬ ПОЛЕ СТРЕЛКОЙ (v0.982, вынесено в отдельную функцию в v0.994 — теперь её зовут ДВА
-   разных обработчика: Alt+стрелки (всегда) и замок 🔒 без Alt, когда последним хватали именно
-   поле, а не границу, см. lastGrabWasBorder). Цель — та, что в lastPanField: "L"/"R"/"C", то есть
-   поле, за глифы которого брались последним. До первого касания мышью — "C" (цепочка).
-   Ветка "ALL" (все три поля разом, v0.988) убрана в v1.018 вместе с самой возможностью двигать всё
-   разом: жест, который её включал (протяжка мимо полей), теперь мотает полотно вбок и раскладку не
-   трогает — см. "ПРОТЯЖКА МИМО ГЛИФОВ" в fold-5-ui.js. */
+/* СДВИНУТЬ ОСЬ ЦЕПОЧКИ СТРЕЛКОЙ (v0.982 как «сдвинуть поле»; вынесено в функцию в v0.994 — её
+   зовут ДВА обработчика: Alt+стрелки (всегда) и замок 🔒 без Alt, когда последним хватали не
+   границу, см. lastGrabWasBorder).
+   ЦЕЛИ БОЛЬШЕ НЕТ (v1.066): раньше сдвигалось поле из lastPanField ("L"/"R"/"C"), потому что поля
+   можно было растаскивать. Теперь поля неподвижны, и единственное, что двигают стрелки, — ось
+   цепочки, та же величина, что у ручки #axisSplit. Вертикали у неё нет, поэтому ↑/↓ молчат. */
 function doFieldNudge(key){
   const dCols = key === "ArrowRight" ? 1 : (key === "ArrowLeft" ? -1 : 0);
-  const dRows = key === "ArrowDown" ? 1 : (key === "ArrowUp" ? -1 : 0);
-  if (typeof nudgeField === "function") {
-    nudgeField(lastPanField, dCols, dRows);
-    saveCache();
-    const nm = lastPanField === "L" ? "П1" : (lastPanField === "R" ? "П2" : "Цепочка");
-    say(`${nm}: сдвиг на ${dCols ? (dCols > 0 ? "столбец вправо" : "столбец влево") : (dRows > 0 ? "строку вниз" : "строку вверх")}. Стрелки двигают поле, за которое брались последним (с Alt — всегда, без Alt — если под замком 🔒 и последней хватали именно поле); «⌖ Поля на место» во вкладке «Вид» вернёт всё к предустановкам.`);
-  }
+  if (!dCols || typeof nudgeAxis !== "function") return;
+  nudgeAxis(dCols);
+  saveCache();
+  say(`Ось цепочки: сдвиг на столбец ${dCols > 0 ? "вправо" : "влево"}. «⌖ Всё на место» во вкладке «Вид» вернёт раскладку к предустановкам.`);
 }
 
+/* Двойной Escape = "↺ Сброс" (v1.098). Окно между нажатиями — примерно то же, что у системного
+   двойного клика: короче 300мс два раза не успеть намеренно, длиннее — под двойное подпадали бы
+   два отдельных Escape подряд (снял выделение, подумал, снял ещё раз). */
+const ESC_DBL_MS = 500;
+let lastEscAt = 0;
 // ГЛОБАЛЬНЫЕ ХОТКЕИ (срабатывают, только если мы не вводим текст в инпутах)
 document.addEventListener("keydown", e => {
   if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT") return;
@@ -4527,9 +4747,17 @@ document.addEventListener("keydown", e => {
   // copySelectedRows). Если ничего не выделено кликом ИЛИ есть обычное текстовое выделение
   // мышью (например в окошке результата) — не вмешиваемся, пусть браузер копирует как обычно.
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c") {
-    if (st.selectedRows && st.selectedRows.size > 0 && !window.getSelection().toString()) {
+    const cellsPicked = (typeof cellSel !== "undefined" && cellSel.size > 0);
+    if ((cellsPicked || (st.selectedRows && st.selectedRows.size > 0)) && !window.getSelection().toString()) {
       e.preventDefault();
-      copySelectedRows();
+      /* ТЕМ ЖЕ НАЖАТИЕМ — В БУФЕР НАЛОЖЕНИЯ (v1.104, см. pasteGrab в этом же файле). Системный
+         буфер остаётся как был (copySelectedRows — текст с выравниванием, с ним ходят в Excel), но
+         прочитать его обратно нельзя без асинхронного разрешения браузера, поэтому форма куска
+         запоминается отдельно, здесь же. Выбранные ЯЧЕЙКИ теперь тоже повод сработать: раньше
+         Ctrl+C смотрел только на выделенные строки. */
+      if (typeof pasteGrab === "function") pasteGrab();
+      if (st.selectedRows && st.selectedRows.size > 0) copySelectedRows();
+      else say("Скопировано в буфер наложения: выбранные ячейки. Кнопка «📋 Вставить» во вкладке «Выделить» положит их на холст.");
       return;
     }
   }
@@ -4578,6 +4806,19 @@ document.addEventListener("keydown", e => {
     // ветке идёт общий Сброс цепочки к шаблону, а он тут не нужен: человек отменяет раскрой, а
     // не всю работу.
     if (typeof wrapModeOn === "function" && wrapModeOn()) { wrapCancel(); return; }
+    /* ДВОЙНОЙ ESCAPE — СБРОС К ШАБЛОНУ (v1.098, запрос пользователя: "двойное нажатие Escape —
+       сброс можно?"). Одиночный Escape сбросом к шаблону быть перестал в v1.014 ("пусть Escape
+       только выделения снимает, Сброс по кнопке") — это остаётся в силе, второе нажатие ПОДРЯД
+       ничего случайно не сбросит: между ними должно пройти меньше ESC_DBL_MS.
+       Отметку времени берём ПОСЛЕ отмены раскроя (выше по ветке): та своим Escape уходит в return,
+       и засчитывать её как половину двойного нажатия нельзя — следующий Escape тогда сбрасывал бы
+       цепочку, хотя человек всего лишь отменил раскрой.
+       После срабатывания отметка обнуляется: три нажатия подряд — это ОДИН сброс, а не два.
+       e.repeat отсеиваем: ЗАЖАТЫЙ Escape сыплет автоповторами через десятки миллисекунд, и без
+       этой проверки любое залипание клавиши гарантированно давало бы сброс к шаблону. */
+    const escNow = Date.now();
+    const escDouble = !e.repeat && (escNow - lastEscAt) <= ESC_DBL_MS;
+    if (!e.repeat) lastEscAt = escDouble ? 0 : escNow;
     closeMenus();
     /* ESCAPE СНИМАЕТ ВСЕ ВЫДЕЛЕНИЯ РАЗОМ (v0.974, запрос пользователя: "сделай по Escape — убрать
        выделения все, и паттернов, строк и цепочек"). Раньше Escape не трогал выделение вовсе —
@@ -4607,6 +4848,9 @@ document.addEventListener("keydown", e => {
        перерисовку давал побочным эффектом клик по #bReset (убран строкой выше). Сами Set'ы очищены
        (st.selectedPats.clear() и т.д.) — это меняет ДАННЫЕ, но подсветка в DOM держится до
        следующей перерисовки, а без клика по кнопке её больше некому позвать. */
+    // Второе нажатие подряд — то же, что кнопка "↺ Сброс" (resetAll кладёт состояние в стек
+    // отмены и перерисовывает сам, поэтому render() ниже ему не нужен — но и не мешает).
+    if (escDouble) { resetAll(); say("Сброшено к шаблону (двойной Escape)."); saveCache(); return; }
     render();
   } else if (e.key === "Delete") {
     // Delete — удалить выделенные (кликом) строки. НЕ связано с откатом шага.
@@ -4820,6 +5064,28 @@ function setAlignTarget(field, quiet){
           ". Осевые (⊙/⊙½/↥/↥½) по-прежнему уходят цепочке — в колонке паттернов им опереться не на что.");
     saveCache();
   }
+}
+/* ПОДПИСИ ПЛАНОК КАК ПРИЁМНИК (v1.088) — то, что раньше делала кнопка #bAlignTargetInd в полосе
+   выравниваний: клик выбирает поле, в которое бьёт полоса, двойной клик прокручивает экран к его
+   битам. Разница только в том, что теперь указателей три и каждый стоит у своего поля, а не один
+   общий, который надо было гонять по кругу до нужного. Сама кнопка из разметки убрана по запросу
+   пользователя; её обработчики ниже оставлены под if и просто не находят элемент. */
+for (const [stripId, field] of [["patStripL", "L"], ["axisStrip", "C"], ["patStripR", "R"]]) {
+  const strip = document.getElementById(stripId);
+  const lab = strip ? strip.querySelector(".pat-strip-lab") : null;
+  if (!lab) continue;
+  const nm = field === "C" ? "Цепочка" : (field === "L" ? "Левое поле (П1)" : "Правое поле (П2)");
+  // e.detail >= 2 — второй click двойной последовательности: он достаётся dblclick ниже, иначе
+  // приёмник успевал бы переключиться дважды ещё до центрирования (тот же приём, что был у кнопки).
+  lab.onclick = (e) => { if (e.detail < 2 && typeof setAlignTarget === "function") setAlignTarget(field); };
+  lab.addEventListener("dblclick", (e) => {
+    e.preventDefault();
+    if (typeof centerFieldOnScreen === "function" && centerFieldOnScreen(field)) {
+      say(nm + ": экран прокручен к его битам — сами биты остались на месте, раскладка не тронута.");
+    } else {
+      say(nm + ": прокручивать не к чему — в поле нет ни одного бита.");
+    }
+  });
 }
 const bAlignTargetIndEl = document.getElementById("bAlignTargetInd");
 if (bAlignTargetIndEl) {
