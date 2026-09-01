@@ -97,17 +97,34 @@ function cellSelUpdateBtns(){
 }
 
 /* ═══ НАЛОЖЕНИЕ: БУФЕР, ПАНЕЛЬ И ЖЕСТЫ (v1.104) ═══
-   Сама механика и смысл — в mergePasteIntoRow() (fold-1-core.js). Здесь три части: что кладёт в
-   буфер Ctrl+C, что достаёт оттуда кнопка «Вставить», и перетаскивание блока по холсту.
+   Сама механика и смысл — в mergePasteIntoRow() (fold-1-core.js). Здесь три части: как снимается
+   форма куска (pasteGrab — её зовёт и сама кнопка «Вставить», и Ctrl+C), что кнопка кладёт на
+   холст, и перетаскивание блока по холсту.
    Панель живёт в группе «Выделить» рядом с кнопками выбора ячеек: оттуда копия и берётся.
 
    БУФЕР ОТДЕЛЬНЫЙ ОТ СИСТЕМНОГО. Ctrl+C по-прежнему кладёт текст в системный буфер обмена
    (copySelectedRows — с ним ходят в Excel), но ЧИТАТЬ его обратно нельзя без асинхронного
    разрешения браузера, а «Вставить» должна срабатывать сразу и без диалогов. Поэтому тем же
-   нажатием форма куска запоминается здесь, в pasteBuf. Он один на приложение и переживает
-   переключение вкладок — скопировать в одной цепочке и наложить в другой это ровно то, зачем
-   такой инструмент и нужен. */
+   нажатием форма куска запоминается здесь, в pasteBuf. С v1.106 буфер стал запасным путём —
+   кнопка обычно копирует сама, а из pasteBuf берёт только когда ничего не выделено. Он один на
+   приложение и переживает переключение вкладок — скопировать в одной цепочке и наложить в другой
+   это ровно то, зачем такой инструмент и нужен. */
 let pasteBuf = null;
+/* БЛОК «СХВАЧЕН» — ЕГО И ДВИГАЮТ СТРЕЛКИ (v1.111, запрос пользователя: "последние кликнутые биты —
+   то передвигать стрелками"). Мышью блок таскают грубо, а доводить до столбца удобнее клавишами;
+   но стрелки в этом приложении заняты (Круг ◄/►, выбор столбца, границы полей под замком), и
+   отдавать их наложению НАВСЕГДА нельзя. Поэтому у блока есть признак «последним трогали именно
+   его»: ставится кликом по его цифрам или ручке (и сразу после «Вставить»), снимается любым другим
+   нажатием по полотну. Пока он поднят — стрелки ведут блок, как только ткнули мимо — стрелки снова
+   делают то, что делали.
+   var, а не let: флаг читают обработчики из этого же файла ниже по тексту и pastePut() выше. */
+var pasteFocus = false;
+/* ШАГ СТРЕЛКИ: СТОЛБЕЦ ИЛИ ПОЛСТОЛБЦА (v1.111, запрос пользователя: "кнопку — сдвиг на 1 или на ½
+   при стрелке"). Половина столбца — величина чисто экранная (см. half в pasteNorm): в ленте бит
+   половин не бывает, и в склейки блок всё равно входит целыми столбцами. Нужна она затем же, зачем
+   «½»-выравнивания у самих строк — приложить кусок МЕЖДУ столбцами цепочки и посмотреть, что
+   получается. Кнопка — «⇥1»/«⇥½» в панели наложения. */
+var pasteHalfStep = false;
 /* Снять форму куска с ВЫДЕЛЕННЫХ СТРОК: каждая строка идёт целиком, а её экранный сдвиг
    (rowShiftFor — центрирование, лесенки, группы) превращается в off относительно самой левой.
    Без этого блок, снятый с центрированной цепочки, лёг бы всеми строками от одного столбца и
@@ -124,11 +141,15 @@ function pasteGrabFromRows(){
     const txt = st.selectedRows.has(r) ? (getRowBits(st, r) || "") : "";
     const sh = txt.length ? rowShiftFor(maxLen, r, txt, st.align) : 0;
     if (txt.length && sh < lo) lo = sh;
-    items.push({ txt, sh });
+    // Полушаг «½»-выравниваний (v1.107, "выравнивание надо тоже брать что и у оригинала") — вторая
+    // половина сдвига строки, целыми столбцами не выразимая: берём ту же rowHalf2x, по которой
+    // строку двигает render() (там она внутри extraCh). В расчёт не идёт, только в отрисовку.
+    const hf = txt.length ? (typeof rowHalf2x === "function" ? rowHalf2x(r, txt, st.align, maxLen) : 0) : 0;
+    items.push({ txt, sh, hf });
   }
   if (!items.some(it => it.txt)) return null;
   if (!isFinite(lo)) lo = 0;
-  return { rows: items.map(it => ({ txt: it.txt, off: it.txt.length ? it.sh - lo : 0 })), row: idxs[0], col: lo };
+  return { rows: items.map(it => ({ txt: it.txt, off: it.txt.length ? it.sh - lo : 0, hf: it.txt.length ? it.hf : 0 })), row: idxs[0], col: lo };
 }
 /* Снять форму куска с ВЫБРАННЫХ ЯЧЕЕК. От строки берётся сплошной отрезок от самой левой выбранной
    ячейки до самой правой — «дырки» внутри отрезка заполняются настоящими битами строки, а не
@@ -144,14 +165,17 @@ function pasteGrabFromCells(){
   const out = [];
   for (let r = rowsIdx[0]; r <= rowsIdx[rowsIdx.length - 1]; r++) {
     const cols = byRow.get(r);
-    if (!cols || !cols.length) { out.push({ txt: "", off: 0 }); continue; }
+    if (!cols || !cols.length) { out.push({ txt: "", off: 0, hf: 0 }); continue; }
     const src = st.rows[r] || "";
     let txt = "";
     for (let c = cols[0]; c <= cols[cols.length - 1]; c++) {
       const j = (typeof cellBitIdx === "function") ? cellBitIdx(r, c, maxLen) : -1;
       txt += (j >= 0 && j < src.length) ? src[j] : "0";
     }
-    out.push({ txt, off: cols[0] - lo });
+    // Полушаг исходной строки (v1.107) — тот же, что у неё на экране: сетка выбранных ячеек
+    // целочисленная, а «½»-выравнивание стоит между столбцами. См. hf в pasteNorm.
+    const hf = src.length ? (typeof rowHalf2x === "function" ? rowHalf2x(r, src, st.align, maxLen) : 0) : 0;
+    out.push({ txt, off: cols[0] - lo, hf });
   }
   if (!out.some(it => it.txt)) return null;
   return { rows: out, row: rowsIdx[0], col: lo };
@@ -166,27 +190,45 @@ function pasteGrab(){
   return true;
 }
 function pastePut(){
+  /* КНОПКА САМА И КОПИРУЕТ (v1.106, запрос пользователя: "пусть без контрол С — просто если нажать
+     кнопку вставит то что выделено ещё раз и двигать отдельно"). Ctrl+C для наложения больше не
+     нужен: есть живое выделение — снимаем форму прямо сейчас тем же pasteGrab(), которым её раньше
+     снимал Ctrl+C. Сам Ctrl+C работает как работал, и буфер никуда не делся: нажали кнопку, ничего
+     не выделив — ляжет то, что скопировано в прошлый раз. Так «Вставить» становится одним жестом:
+     выделил кусок → нажал → копия лежит рядом и таскается мышью, как будто паттерны и цепочки
+     двигают руками между собой. */
+  const cellsSel = (typeof cellSel !== "undefined" && cellSel.size);
+  const rowsSel = !!(st.selectedRows && st.selectedRows.size);
+  if (cellsSel || rowsSel) pasteGrab();
   if (!pasteBuf) {
-    say("Наложение: сначала скопируйте кусок — выделите строки или выберите ячейки и нажмите Ctrl+C.");
+    say("Наложение: нечего класть — выделите строки или выберите ячейки и нажмите «Вставить» ещё раз.");
     return;
   }
-  /* КУДА КЛАДЁМ. Ничего не выделено — на то же место, откуда взяли (сразу видно, что копия накрыла
-     оригинал). Выделены строки — ПОД самую нижнюю из них: копию затем и делают, чтобы приложить
-     кусок к другому месту, а класть поверх выделения значило бы прятать то, с чем сравнивают. */
-  const anchor = (st.selectedRows && st.selectedRows.size)
-    ? Math.min(Math.max(...st.selectedRows) + 1, Math.max(0, st.rows.length - 1))
-    : pasteBuf.row;
+  /* КУДА КЛАДЁМ. Копия встаёт ПОД тем, с чего снята, — иначе она легла бы ровно на оригинал и на
+     вид ничего бы не произошло. Выделены строки — под самой нижней из них; выбраны ячейки (или
+     кладём старый буфер вообще без выделения) — под нижней строкой самого куска. Дальше блок
+     таскают мышью куда надо. Ниже конца цепочки не пускаем, тем же расчётом, что и перетаскивание:
+     строка блока вне списка нигде не считалась бы. */
+  const anchorMax = Math.max(0, (st.rows || []).length - pasteBuf.rows.length);
+  const anchor = (rowsSel && !cellsSel)
+    ? Math.max(...st.selectedRows) + 1
+    : pasteBuf.row + pasteBuf.rows.length;
   st.paste = {
     rows: pasteBuf.rows.map(r => ({ ...r })),
-    row: Math.max(0, anchor),
+    row: Math.max(0, Math.min(anchorMax, anchor)),
     col: pasteBuf.col,
+    half: 0,
     on: true
   };
   pasteNorm();
+  /* Свежеположенный блок сразу СХВАЧЕН (v1.111): стрелки двигают именно его, без предварительного
+     клика по цифрам. Иначе после «Вставить» пришлось бы сперва ткнуть в блок мышью — а он ровно
+     для того и положен, чтобы его сейчас же двигали. См. pasteFocus ниже. */
+  pasteFocus = true;
   pasteRenderBox();
   render(); saveCache();
   const n = st.paste ? st.paste.rows.length : 0;
-  say(`Наложение: ${n} стр. на строке ${rowLabel(st.paste.row)}, столбец ${st.paste.col}. Идёт в склейки и фон-поиск как биты своих строк; где накрыло биты строки, считается оно. Таскай мышью прямо по холсту.`);
+  say(`Наложение: ${n} стр. на строке ${rowLabel(st.paste.row)}, столбец ${st.paste.col}. Идёт в склейки и фон-поиск как биты своих строк; где накрыло биты строки, считается оно. Таскай мышью прямо по холсту. Ещё нажатие с новым выделением — новая копия на его месте.`);
 }
 function pasteRenderBox(){
   const info = document.getElementById("pasteInfo");
@@ -197,15 +239,61 @@ function pasteRenderBox(){
   if (info) {
     if (has) {
       const bits = p.rows.reduce((n, r) => n + r.txt.length, 0);
-      info.textContent = p.rows.length + " стр., " + bits + " бит — стр " + rowLabel(p.row) + ", ст " + p.col;
+      info.textContent = p.rows.length + " стр., " + bits + " бит — стр " + rowLabel(p.row) + ", ст " + p.col + (p.half ? "½" : "");
       info.title = p.rows.map((r, k) => (k + 1) + ") +" + r.off + " " + (r.txt || "—")).join("\n");
     } else {
       info.textContent = pasteBuf ? ("в буфере: " + pasteBuf.rows.length + " стр. — нажмите «Вставить»") : "пусто";
-      info.title = pasteBuf ? "Скопировано, но ещё не положено на холст" : "Выделите строки или ячейки и нажмите Ctrl+C";
+      info.title = pasteBuf ? "В буфере с прошлого раза; «Вставить» без выделения положит именно его" : "Выделите строки или выберите ячейки и нажмите «Вставить»";
     }
+  }
+  /* Кнопка шага стрелки (v1.111) — сама себе индикатор: на ней написано, каким шагом сейчас пойдёт
+     блок, «⇥1» или «⇥½». Живёт она в одном ряду с ✓/✕ и обновляется здесь же, чтобы состояние
+     панели собиралось одним местом. Доступна всегда, даже когда блока на холсте нет: это настройка
+     инструмента, а не свойство конкретной копии. */
+  const bStep = document.getElementById("pasteStep");
+  if (bStep) {
+    bStep.textContent = pasteHalfStep ? "⇥½" : "⇥1";
+    bStep.classList.toggle("mode-act", pasteHalfStep);
   }
   if (bOn) { bOn.classList.toggle("mode-act", has && p.on !== false); bOn.disabled = !has; }
   if (bClr) bClr.disabled = !has;
+}
+/* СДВИНУТЬ БЛОК СТРЕЛКОЙ (v1.111, запрос пользователя: "последние кликнутые биты — то передвигать
+   стрелками ... кнопку — сдвиг на 1 или на ½"). То же самое, что делает протяжка мышью, только
+   ровно на один шаг и без промаха: ←/→ — по горизонтали, ↑/↓ — на строку.
+   ГОРИЗОНТАЛЬ СЧИТАЕТСЯ В ПОЛУСТОЛБЦАХ (col*2 + half) и раскладывается обратно: так «½»-шаг и
+   целый шаг живут в одной арифметике, и переключение кнопки посреди пути ничего не ломает —
+   блок, стоящий на половине, целым шагом просто уедет на столбец, оставшись на половине.
+   Math.floor, а не деление нацело: при отрицательном положении (блок увели левее нулевого столбца
+   — это разрешено и мышью) остаток обязан оставаться 0/1, иначе half стал бы отрицательным.
+   Вертикаль — целыми строками и с тем же стопором, что у мыши: весь блок обязан оставаться в
+   пределах цепочки, иначе его строки нигде не считались бы. */
+function pasteNudge(key){
+  const p = st.paste;
+  if (!p || !p.rows || !p.rows.length || !(p.row >= 0)) return false;
+  if (key === "ArrowLeft" || key === "ArrowRight") {
+    const dir = key === "ArrowRight" ? 1 : -1;
+    if (pasteHalfStep) {
+      const h = p.col * 2 + (p.half || 0) + dir;
+      p.col = Math.floor(h / 2);
+      p.half = h - p.col * 2;
+    } else {
+      p.col += dir;
+    }
+  } else if (key === "ArrowUp" || key === "ArrowDown") {
+    const maxRow = Math.max(0, (st.rows || []).length - p.rows.length);
+    const row = Math.max(0, Math.min(maxRow, p.row + (key === "ArrowDown" ? 1 : -1)));
+    if (row === p.row) return true; // упёрлись в край — но стрелку всё равно съедаем, блок наш
+    p.row = row;
+  } else {
+    return false;
+  }
+  pasteRenderBox();
+  render(); saveCache();
+  say("Наложение: строка " + rowLabel(p.row) + ", столбец " + p.col + (p.half ? "½" : "") +
+      ". Шаг стрелки — " + (pasteHalfStep ? "полстолбца" : "столбец") +
+      " (кнопка «⇥» в панели наложения). Клик мимо блока — и стрелки снова у цепочки.");
+  return true;
 }
 {
   const bPut = document.getElementById("bPastePut");
@@ -220,10 +308,24 @@ function pasteRenderBox(){
   };
   const bClrEl = document.getElementById("pasteClr");
   if (bClrEl) bClrEl.onclick = () => {
+    pasteFocus = false; // блока нет — стрелки сразу возвращаются цепочке
     st.paste = null;
     pasteRenderBox();
     render(); saveCache();
     say("Наложение убрано. Скопированное осталось в буфере — «Вставить» положит его снова.");
+  };
+  /* «⇥1»/«⇥½» — каким шагом стрелки ведут блок (v1.111). Настройка инструмента, а не копии:
+     переживает и очистку наложения, и смену вкладки (лежит в UI-настройках, см. captureUiSettings
+     в fold-5-ui.js). Блок при переключении НЕ дёргается — меняется только величина следующего
+     шага, поэтому и перерисовки тут нет, только обновление самой кнопки. */
+  const bStepEl = document.getElementById("pasteStep");
+  if (bStepEl) bStepEl.onclick = () => {
+    pasteHalfStep = !pasteHalfStep;
+    pasteRenderBox();
+    saveCacheSoon();
+    say(pasteHalfStep
+      ? "Шаг стрелки для наложения: ПОЛСТОЛБЦА. Блок можно поставить между столбцами цепочки — на экране; в склейки и поиск он по-прежнему входит целыми столбцами."
+      : "Шаг стрелки для наложения: столбец.");
   };
   pasteRenderBox();
 }
@@ -231,14 +333,26 @@ function pasteRenderBox(){
    мышью, — и это осознанно: наложение затем и завели, чтобы прикладывать группу бит к нужному
    месту (поля, наоборот, прибиты, см. v1.066). Шаг — ровно столбец по горизонтали и ровно строка
    по вертикали, чтобы биты блока всегда стояли в той же сетке, что и биты цепочки. Хватать можно
-   ЛЮБУЮ строку блока — едет он всегда целиком, взаимные off не меняются.
+   ЛЮБУЮ строку блока или его ручку — рамку поверх первой цифры (v1.107, переделана в v1.109) — едет он всегда целиком,
+   взаимные off не меняются.
    Слушатель на #rows и через closest: сами .paste-bits перерисовываются каждым render(), вешать
    на них по обработчику было бы бессмысленно. */
 {
   const rowsEl = document.getElementById("rows");
   let pasteDrag = null;
+  /* КТО СХВАЧЕН ПОСЛЕДНИМ (v1.111) — отдельный слушатель на ФАЗЕ ПЕРЕХВАТА, и это принципиально:
+     обработчик перетаскивания ниже гасит событие через stopImmediatePropagation (иначе нажатие на
+     блок заодно добавляло бы ячейку под ним), а перехват отрабатывает РАНЬШЕ всплытия и потому
+     виден всегда — и при попадании в блок, и при клике мимо него.
+     Одна строка смысла: ткнули в цифры блока или в его ручку — стрелки теперь его; ткнули куда-то
+     ещё по полотну — стрелки вернулись к тому, чем занимались (Круг, выбор столбца, границы полей
+     под замком). */
   if (rowsEl) rowsEl.addEventListener("mousedown", e => {
-    const el = e.target.closest && e.target.closest(".paste-bits");
+    pasteFocus = !!(st.paste && e.target.closest && e.target.closest(".paste-bits, .paste-grip"));
+  }, true);
+  if (rowsEl) rowsEl.addEventListener("mousedown", e => {
+    // .paste-grip — своя ручка блока (v1.107, см. её в render()): тот же жест, что и за цифры.
+    const el = e.target.closest && e.target.closest(".paste-bits, .paste-grip");
     if (!el || e.button !== 0 || !st.paste) return;
     e.preventDefault();
     /* stopImmediatePropagation, а не просто stopPropagation: на этом же #rows ниже по файлу висит
@@ -1293,29 +1407,9 @@ function togglePatNumBoth(){
   render(); saveCache();
   say(on ? "Номера в паттернах убраны из обеих колонок." : "Номера строк показаны внутри ячеек паттернов — в обеих колонках, П1 и П2.");
 }
-/* ЗАМОК ОСЕЙ ДВИЖЕНИЯ — кнопка «{=-=}» в полоске под осью (v1.024). Крутит moveLock по кругу
-   ""→rows→cols→all→"" (см. MOVE_LOCK_ORDER в fold-1-core.js, там же и что каждое значение значит).
-   Сама кнопка ничего не запрещает — только переставляет флаг; запрет живёт в moveColsAllowed()/
-   moveRowsAllowed(), которые спрашивают все пути сдвига полей. */
-function applyMoveLockBtn(){
-  const b = document.getElementById("bAxisMoveLock");
-  if (!b) return;
-  b.textContent = MOVE_LOCK_LABEL[moveLock] || MOVE_LOCK_LABEL[""];
-  b.classList.toggle("on", !!moveLock);
-}
-function cycleMoveLock(){
-  const i = MOVE_LOCK_ORDER.indexOf(moveLock);
-  moveLock = MOVE_LOCK_ORDER[(i < 0 ? 0 : i + 1) % MOVE_LOCK_ORDER.length];
-  applyMoveLockBtn();
-  saveCache();
-  say(MOVE_LOCK_NOTE[moveLock]);
-}
 {
   const bNum = document.getElementById("bAxisPatNum");
   if (bNum) bNum.onclick = () => togglePatNumBoth();
-  const bLock = document.getElementById("bAxisMoveLock");
-  if (bLock) bLock.onclick = () => cycleMoveLock();
-  applyMoveLockBtn();
 }
 
 /* "⤒🧩 Начало паттернов сюда" (#bPatZeroHere, v0.868, запрос пользователя "пусть нулевая строка в
@@ -4865,6 +4959,19 @@ document.addEventListener("keydown", e => {
     if (st.selectedRows && st.selectedRows.size === 1) {
       startEditRow([...st.selectedRows][0]);
     }
+  } else if (pasteFocus && st.paste && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey &&
+             (e.key === "ArrowLeft" || e.key === "ArrowRight" ||
+              e.key === "ArrowUp" || e.key === "ArrowDown")) {
+    /* СТРЕЛКИ ВЕДУТ СХВАЧЕННОЕ НАЛОЖЕНИЕ (v1.111, запрос пользователя: "последние кликнутые биты —
+       то передвигать стрелками"). Ветка стоит ПЕРВОЙ среди стрелочных — и до Alt+стрелок, и до
+       замка, и до Круга ◄/►: пока блок схвачен (ткнули в его цифры или ручку, либо только что
+       нажали «Вставить»), стрелки принадлежат ему целиком, и никакой другой смысл им не подходит.
+       Права на клавиши блок держит ровно до клика мимо себя — см. pasteFocus выше.
+       Модификаторы намеренно исключены все: Alt+стрелки — это ось цепочки, Shift+стрелки — Круг с
+       доводкой обзора, Ctrl — системное. Захватывать чужие сочетания блок не должен.
+       Шаг — столбец или полстолбца, по кнопке «⇥» в панели наложения (pasteHalfStep). */
+    e.preventDefault();
+    pasteNudge(e.key);
   } else if (e.altKey && (e.key === "ArrowLeft" || e.key === "ArrowRight" ||
                           e.key === "ArrowUp" || e.key === "ArrowDown")) {
     /* ALT + СТРЕЛКИ — ТОЧНАЯ ПОДГОНКА ПОЛЯ (v0.982, запрос пользователя). Мышью поле ведут грубо,

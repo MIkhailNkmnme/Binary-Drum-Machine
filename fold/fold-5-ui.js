@@ -27,10 +27,10 @@ function applyPatAligns(){
   if (typeof syncAlignActMarks === "function") syncAlignActMarks();
 }
 function cyclePatAlign(which){
-  // 🔏 Паттерны заморожены (v1.057): "в паттернах вообще не менять ничего" — выравнивание колонки
-  // меняет положение КАЖДОГО её паттерна, то есть ровно то, что этот режим и запирает.
+  // Под замком (🔒) выравнивание колонки не трогается: оно меняет положение КАЖДОГО её паттерна,
+  // то есть ровно то, что замок и запирает (с v1.112 отдельного «🔏 паттерны заморожены» нет).
   if (typeof patsEditAllowed === "function" && !patsEditAllowed()) {
-    say("🔏 Паттерны заморожены — выравнивание П1/П2 не переключается. Кнопка-замок на полотне вернёт 🔓.");
+    say("🔒 Замок — выравнивание П1/П2 не переключается. Кнопка-замок на полотне вернёт 🔓.");
     return;
   }
   const cur = which === "l" ? patAlign : pat2Align;
@@ -113,9 +113,7 @@ function applyPatOffsets(){
    нет (v1.066), осталась одна величина — st.axisCenterOffset, общий сдвиг картинки цепочки, тот же,
    что у ручки #axisSplit. Вертикали у неё нет вовсе, поэтому и параметра dRows больше нет. */
 function nudgeAxis(dCols){
-  // ЗАМОК ОСЕЙ («{=-=}» в полоске под осью, см. moveLock в fold-1-core.js) — проверка на входе,
-  // одна на все способы сдвинуть ось (Alt+стрелки, стрелки под 🔒, сама ручка).
-  if (!dCols || !moveColsAllowed()) return;
+  if (!dCols) return;
   st.axisCenterOffset = (st.axisCenterOffset || 0) + dCols;
   axisPinCol = axisBaseCol() + st.axisCenterOffset;
   render();
@@ -280,10 +278,11 @@ function cycleRowNumMode(){
 function applySelectEnabled(){
   const b = document.getElementById("bToggleSelect");
   if (b) {
-    // Три состояния (v1.057): 🔓 всё живое → 🔏 заморожены П1/П2 → 🔒 не трогается ничего.
-    // Подсвечена кнопка в обоих «несвободных» — иначе замок паттернов читался бы как обычный 🔓.
-    b.textContent = !selectEnabled ? "🔒" : (patsLocked ? "🔏" : "🔓");
-    b.classList.toggle("overlay-on", !selectEnabled || patsLocked);
+    // ДВА состояния (v1.112, запрос пользователя "надо 2 режима — обычный и замок"): 🔓 всё живое
+    // → 🔒 не трогается ничего. Средний 🔏 «паттерны заморожены» (v1.057) убран, см. patsEditAllowed
+    // в fold-1-core.js.
+    b.textContent = selectEnabled ? "🔓" : "🔒";
+    b.classList.toggle("overlay-on", !selectEnabled);
   }
   /* И сразу за ярлыком этой же кнопки в слотах (v1.021): СНЯТИЕ замка идёт без render() — только
      applySelectEnabled() + saveCache(), — поэтому одного вызова из render() тут не хватает, ярлык
@@ -292,31 +291,18 @@ function applySelectEnabled(){
 }
 const bToggleSelectEl = document.getElementById("bToggleSelect");
 if (bToggleSelectEl) {
-  /* КРУГ ИЗ ТРЁХ (v1.057): 🔓 всё живое → 🔏 паттерны заморожены → 🔒 ничего не трогается → 🔓.
-     Порядок не случайный: замок паттернов стоит МЕЖДУ свободным и полным стопом — это ослабленный
-     стоп, и по кругу он идёт как промежуточная ступень, а не как отдельная ветка. */
+  /* ПЕРЕКЛЮЧАТЕЛЬ НА ДВА ПОЛОЖЕНИЯ (v1.112): 🔓 ↔ 🔒. */
   bToggleSelectEl.onclick = () => {
-    if (selectEnabled && !patsLocked)      { patsLocked = true; }
-    else if (selectEnabled && patsLocked)  { patsLocked = false; selectEnabled = false; }
-    else                                   { selectEnabled = true; patsLocked = false; }
+    selectEnabled = !selectEnabled;
     applySelectEnabled();
     // Включение замка (🔒) не только запрещает НОВОЕ выделение (см. selectionAllowed), но и
     // сразу гасит уже выбранное — запрос пользователя "в режиме Замка все выделения снимать".
     // Та же функция, что и у Escape (см. clearAllSelections в fold-1-core).
     if (!selectEnabled) { clearAllSelections(); render(); }
-    // 🔏 снимает выделение ТОЛЬКО с ячеек паттернов: их больше нельзя ни выбрать, ни сдвинуть,
-    // и оставленный набор висел бы подсвеченным, ни на что не влияя. Выделение строк цепочки при
-    // этом не трогаем — в этом режиме оно как раз рабочее.
-    if (selectEnabled && patsLocked && st.selectedPats && st.selectedPats.size) {
-      st.selectedPats.clear();
-      render();
-    }
     saveCache();
     say(!selectEnabled
-      ? "🔒 Выделение выключено — все выделения сняты, по полотну ничего не выделяется, поля по-прежнему двигаются."
-      : (patsLocked
-          ? "🔏 Паттерны заморожены: колонки П1 и П2 не выделяются и не двигаются, их выравнивание и сдвиги заперты. Строки цепочки работают как обычно — выделяются и крутятся."
-          : "🔓 Выделение включено — строки, паттерны и биты снова выделяются."));
+      ? "🔒 Замок: все выделения сняты, по полотну ничего не выделяется и биты не двигаются — ни мышью, ни Кругом ◄/►. Стрелки двигают картинку: ←/→ — границу поля, ↑/↓ — прокрутка. Наложение (📋) стрелкам по-прежнему подчиняется: кликнул по блоку — ведёшь его."
+      : "🔓 Выделение включено — строки, паттерны и биты снова выделяются.");
   };
 }
 applySelectEnabled();
@@ -528,6 +514,24 @@ function applyPatBitColors(){
 for (const el of [colPat1L, colPat0L, colPat1R, colPat0R]) {
   if (el) el.oninput = () => { applyPatBitColors(); saveCacheSoon(); };
 }
+
+/* ЦВЕТА «1» И «0» В НАЛОЖЕНИИ (v1.111, запрос пользователя: "для наложения надо настройки цвета
+   0 и 1"). Третья такая пара после цепочки (--c1/--c0) и колонок (--pat-c1-L|R и --pat-c0-L|R) — и по
+   той же причине отдельная: блок лежит ПОВЕРХ чужих бит, и разводить его цифры по цвету надо
+   независимо от того, как покрашен слой под ним.
+   Перерисовка не нужна: обёртки .ps1/.ps0 ставит render() всегда (см. pasteBitsHtml в
+   fold-2-render.js), а цвет берётся из CSS-переменной — смена пикера видна тем же кадром. */
+const colPaste1 = document.getElementById("colPaste1");
+const colPaste0 = document.getElementById("colPaste0");
+function applyPasteBitColors(){
+  const root = document.documentElement;
+  if (colPaste1) root.style.setProperty("--paste-c1", colPaste1.value);
+  if (colPaste0) root.style.setProperty("--paste-c0", colPaste0.value);
+}
+for (const el of [colPaste1, colPaste0]) {
+  if (el) el.oninput = () => { applyPasteBitColors(); saveCacheSoon(); };
+}
+applyPasteBitColors();
 
 /* #RRGGBB -> rgba(...) с заданной прозрачностью — цвет <input type="color"> всегда непрозрачный,
    а фон выделенной строки (--rowbg-sel) должен оставаться полупрозрачным, иначе перекроет
@@ -2164,7 +2168,7 @@ function updateAxisSplitPosition(maxLen){
       /* ОСЬ ПРОХОДИТ В ЗАЗОР МЕЖДУ КНОПКАМИ (v1.086, запрос пользователя: "пропусти ось между
          кнопок, кнопки расположи справа слева от оси"). В v1.081 планку ставили ЦЕНТРОМ на ось, и
          линия шла прямо по кнопке. Теперь в планке есть пустая вставка (.axis-strip-gap), и на ось
-         наводится ОНА: слева от линии остаются подпись и номера, справа — замок осей.
+         наводится ОНА: слева от линии остаются подпись и номера, справа — пусто.
          В два приёма, как когда-то со знаком «1 над 1»: сперва обнуляем left, чтобы offsetLeft
          вставки посчитался внутри самой планки (она position:absolute, то есть сама себе
          offsetParent для детей), и только потом сдвигаем планку на это смещение. Одним действием
@@ -2595,9 +2599,6 @@ function fieldGlyphsHit(e){
 function startAxisDrag(e){
   const axisSplitEl = document.getElementById("axisSplit");
   e.preventDefault();
-  // Ручка двигает ось ТОЛЬКО вбок, по столбцам — значит запрет «/-/»/«#-#» её глушит целиком
-  // (v1.024, см. moveLock в fold-1-core.js).
-  if (!moveColsAllowed()) { say(MOVE_LOCK_NOTE[moveLock]); return; }
   const startX = e.clientX;
   const startOffset = st.axisCenterOffset || 0;
   const chPx = realColStepPx();
@@ -2861,8 +2862,6 @@ function captureUiSettings(){
     patAlign: patAlign, pat2Align: pat2Align,
     fieldInfoOn: !!fieldInfoOn,
     selectEnabled: selectEnabled !== false,
-    patsLocked: !!patsLocked,   // третий режим кнопки-замка «🔏 паттерны заморожены» (v1.057)
-    moveLock: moveLock || "",   // замок осей движения «{=-=}» (v1.024)
     /* alignHorizon + frozenAlign (v1.026) больше не пишутся: горизонт удалён целиком (v1.043,
        см. rowAlignCtx в fold-1-core.js). Вертикальный сдвиг, который теперь делает та же ручка, —
        это chainShiftRows ниже. */
@@ -2882,6 +2881,10 @@ function captureUiSettings(){
     patC0L: colPat0L ? colPat0L.value : "#4b5262",
     patC1R: colPat1R ? colPat1R.value : "#8a94a6",
     patC0R: colPat0R ? colPat0R.value : "#4b5262",
+    // Цвета «1»/«0» в НАЛОЖЕНИИ (v1.111) и шаг, которым его двигают стрелки (⇥1/⇥½).
+    pasteC1: colPaste1 ? colPaste1.value : "#22d3ee",
+    pasteC0: colPaste0 ? colPaste0.value : "#22d3ee",
+    pasteHalfStep: (typeof pasteHalfStep !== "undefined") ? !!pasteHalfStep : false,
     fldL: colFieldL ? colFieldL.value : "#161a22",
     fldC: colFieldC ? colFieldC.value : "#12141a",
     fldR: colFieldR ? colFieldR.value : "#161a22",
@@ -3217,15 +3220,12 @@ function applyUiSettings(u){
   if (u.patWManual !== undefined) patWManual = !!u.patWManual;
   if (u.patW2Manual !== undefined) patW2Manual = !!u.patW2Manual;
   if (u.fieldInfoOn !== undefined) { fieldInfoOn = !!u.fieldInfoOn; applyFieldInfo(); }
-  // patsLocked ставим ДО applySelectEnabled(): значок кнопки зависит от обоих флагов сразу, и в
-  // обратном порядке 🔏 на один кадр показался бы обычным 🔓.
-  if (u.patsLocked !== undefined) patsLocked = !!u.patsLocked;
+  /* u.patsLocked (средний режим кнопки-замка «🔏 паттерны заморожены», v1.057) больше НЕ читается:
+     режим удалён в v1.112 (см. patsEditAllowed в fold-1-core.js). Старые кэши и 💾-сохранёнки этот
+     ключ ещё содержат — он просто игнорируется, и полотно оттуда встаёт в обычном 🔓. */
   if (u.selectEnabled !== undefined) { selectEnabled = u.selectEnabled !== false; applySelectEnabled(); }
-  else if (u.patsLocked !== undefined) applySelectEnabled();
-  if (u.moveLock !== undefined) {
-    moveLock = MOVE_LOCK_ORDER.includes(u.moveLock) ? u.moveLock : "";
-    if (typeof applyMoveLockBtn === "function") applyMoveLockBtn();
-  }
+  /* u.moveLock (замок осей движения, v1.024) больше не читается: замок удалён целиком (v1.105).
+     Старые кэши этот ключ ещё содержат — он просто игнорируется, чистить ничего не нужно. */
   /* Восстановление горизонта (u.alignHorizon / u.frozenAlign, v1.026) убрано вместе с самим
      горизонтом (v1.043). Старые кэши эти ключи ещё содержат — они просто игнорируются, ничего
      чистить не нужно: строки из них поднимутся в общее выравнивание, что теперь и правильно. */
@@ -3279,6 +3279,15 @@ function applyUiSettings(u){
   if (u.patC0L && colPat0L) colPat0L.value = u.patC0L;
   if (u.patC1R && colPat1R) colPat1R.value = u.patC1R;
   if (u.patC0R && colPat0R) colPat0R.value = u.patC0R;
+  if (u.pasteC1 && colPaste1) colPaste1.value = u.pasteC1;
+  if (u.pasteC0 && colPaste0) colPaste0.value = u.pasteC0;
+  applyPasteBitColors();
+  /* Шаг стрелки у наложения (v1.111). Кнопку обновляет pasteRenderBox() — зовём её, только если
+     она уже объявлена: applyUiSettings может отработать раньше, чем инициализируется fold-4. */
+  if (u.pasteHalfStep !== undefined && typeof pasteHalfStep !== "undefined") {
+    pasteHalfStep = !!u.pasteHalfStep;
+    if (typeof pasteRenderBox === "function") pasteRenderBox();
+  }
   applyPatBitColors();
   if (u.fldL && colFieldL) colFieldL.value = u.fldL;
   if (u.fldC && colFieldC) colFieldC.value = u.fldC;
