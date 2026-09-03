@@ -46,18 +46,14 @@ function cyclePatAlign(which){
     if (fieldAlignAllowed(field, cand)) { next = cand; break; }
   }
   if (which === "l") patAlign = next; else pat2Align = next;
-  // applyPatAligns() заодно переставит отметку "act" в полосе, если та сейчас бьёт в это же поле
-  // (см. alignTarget) — иначе кнопка-половинка и полоса разошлись бы в показаниях.
   applyPatAligns();
   render();
   saveCache();
 }
 /* ОТМЕТКА "act" В ПОЛОСЕ ВЫРАВНИВАНИЙ — ОДНО МЕСТО НА ВСЮ ПРОГРАММУ (v0.976). Раньше её ставил
-   сам обработчик клика ("снять со всех, повесить на нажатую"), и это работало, пока полоса всегда
-   правила центральное поле. Теперь у полосы есть ПРИЁМНИК (alignTarget): подсвечена должна быть
-   кнопка того выравнивания, которое стоит У ПРИЁМНИКА, а не последняя нажатая. У крайних полей
-   осевых выравниваний не бывает вовсе — при приёмнике П1/П2 кнопки ⊙/⊙½/↥/↥½ не подсвечены
-   никогда, и это правильно: они адресованы цепочке. */
+   сам обработчик клика ("снять со всех, повесить на нажатую"), и это разъезжалось с настоящим
+   состоянием поля. Горит выравнивание ЦЕПОЧКИ — единственного поля, которое полоса правит
+   (v1.143), — или выделенной группы строк, если выделение совпало ровно с ней. */
 /* ВЫРАВНИВАНИЕ ГРУППЫ, КОТОРУЮ СЕЙЧАС ВЫДЕЛИЛИ (v0.977) — или null, если выделение не совпадает
    ровно с одной готовой группой. Нужно ТОЛЬКО для подсветки: пока выделены строки одной группы,
    в полосе должна гореть ЕЁ кнопка, а не выравнивание поля — иначе непонятно, что даст повторный
@@ -65,14 +61,9 @@ function cyclePatAlign(which){
    подсветки не получают: назначать им всё равно придётся заново, целиком. */
 function selectedRowsGroupAlign(){
   if (!st.selectedRows || st.selectedRows.size < 2) return null;
-  /* ГРУППЫ ЕСТЬ ТОЛЬКО У ЦЕПОЧКИ (v1.090). Раньше смотрели группу ТОГО поля, в которое бьёт полоса
-     (rowGroupOfField(alignTarget, …)) — с приёмником П1/П2 это была их собственная группировка.
-     Её больше нет: в колонках паттернов выравнивание одно на всю колонку. Приёмник не на цепочке —
-     значит и подсвечивать надо выравнивание САМОЙ КОЛОНКИ, а не какой-то группы; отдаём null, и
-     syncAlignActMarks() ниже возьмёт patAlign/pat2Align.
-     Проверка нужна и ради СТАРОГО КЭША: сохранённые прежде st.rowGroupsL/rowGroupsR оттуда всё ещё
-     приходят, на геометрию уже не влияют, и подсвечивать по ним кнопку значило бы врать. */
-  if (alignTarget !== "C") return null;
+  /* ГРУППЫ ЕСТЬ ТОЛЬКО У ЦЕПОЧКИ (v1.090): в колонках паттернов выравнивание одно на всю колонку.
+     Сохранённые в старых кэшах st.rowGroupsL/rowGroupsR сюда не попадают вовсе — rowGroupOf()
+     смотрит только группы цепочки. */
   const rows = Array.from(st.selectedRows);
   const g = rowGroupOf(rows[0]);
   if (!g || g.rows.length !== rows.length) return null;
@@ -82,8 +73,7 @@ function selectedRowsGroupAlign(){
 function syncAlignActMarks(){
   const grp = document.getElementById("alignGrp");
   if (!grp) return;
-  const cur = selectedRowsGroupAlign()
-           || (alignTarget === "L" ? patAlign : (alignTarget === "R" ? pat2Align : st.align));
+  const cur = selectedRowsGroupAlign() || st.align;
   grp.querySelectorAll("button[data-val]").forEach(b => {
     b.classList.toggle("act", b.getAttribute("data-val") === cur);
   });
@@ -2160,6 +2150,8 @@ function updateAxisSplitPosition(maxLen){
     axisSplitEl.classList.remove("act");
     const s0 = document.getElementById("axisStrip");
     if (s0) s0.classList.remove("act");
+    const p0 = document.getElementById("pasteBarsStrip");   // «⧉ Кнопки» — там же и по той же причине (v1.212)
+    if (p0) p0.classList.remove("act");
     return;
   }
   const chainEl = document.getElementById("chain");
@@ -2270,6 +2262,37 @@ function updateAxisSplitPosition(maxLen){
   const rowsBoxEl = document.getElementById("rows");
   const rowsTop = rowsBoxEl ? (rowsBoxEl.getBoundingClientRect().top - chainRect.top) : 24;
   axisSplitEl.style.height = Math.max(16, rowsTop) + "px";
+  /* ЛИНИЯ ДОХОДИТ ДО ПЕРВОГО БИТА ЦЕПОЧКИ (v1.210, запрос пользователя: «ось не отделяй от битов
+     цепочек, когда вверху появляются строки для наложений»).
+     Верхнее поле наложений — это пустые строки в НАЧАЛЕ списка (см. addTopRows/syncFieldPatterns):
+     цепочка от них уезжает вниз на десяток строк, а линия кончалась у верхней черты поля — между
+     ней и первым битом повисал провал, и ось читалась как деталь, висящая сама по себе.
+     Низ линии теперь считается по firstRealRowIdx() — по ТОЙ ЖЕ строке, по которой выше меряется
+     её левая позиция: и низ, и лево у оси говорят про одну строку, что и значит «не отделять».
+     Правило v1.086 «ось не заходит на биты» не нарушено: пройденные строки бит цепочки не имеют.
+     ЗОНА ЗАХВАТА НЕ РАСТЁТ — height выше остался прежним: удлиняется только линия (--axis-line-h,
+     см. .axis-split::before). Иначе 13-пиксельная полоса с курсором col-resize легла бы поверх
+     поля наложений, и блок, попавший под ось, стало бы нечем схватить.
+     Строку меряем в DOM; при виртуализации её в разметке может не быть — тогда считаем по шагу
+     строки, тем же vrowsPitchPx(), которым считает прокрутка. */
+  let axisLineBottom = rowsTop;
+  const fdRow = (typeof firstRealRowIdx === "function") ? firstRealRowIdx() : -1;
+  if (fdRow > 0 && rowsBoxEl) {
+    const fdEl = rowsBoxEl.querySelector('.ln[data-idx="' + fdRow + '"]');
+    if (fdEl) axisLineBottom = fdEl.getBoundingClientRect().top - chainRect.top;
+    else if (typeof vrowsPitchPx === "function") axisLineBottom = rowsTop + fdRow * vrowsPitchPx();
+  }
+  /* ДЛИНА — ПАРА СТРОК, НЕ БОЛЬШЕ (v1.211, запрос «уменьши длину оси цепочек, чтобы она не
+     перекрывала наложения поле, у битов её оставь не высоко»). В v1.210 линия тянулась от верха
+     раскладки до первой строки цепочки и проходила через всё поле наложений поверх блоков.
+     Держим прежнее ГЛАВНОЕ: низ упирается в первую настоящую строку цепочки (ось не отрывается от
+     битов). Меняется только верх — отрезок отсчитывается вверх от этого низа на две высоты строки,
+     поэтому над полем наложений его просто нет. Меряем шагом строки, а не пикселями: при другом
+     размере шрифта отрезок останется теми же двумя строками. */
+  const axisLinePitch = (typeof vrowsPitchPx === "function") ? vrowsPitchPx() : 16;
+  const axisLineH = Math.max(14, Math.min(Math.max(16, rowsTop), axisLinePitch * 2));
+  axisSplitEl.style.setProperty("--axis-line-h", axisLineH + "px");
+  axisSplitEl.style.setProperty("--axis-line-top", Math.max(0, axisLineBottom - axisLineH) + "px");
   axisSplitEl.classList.add("act");
   /* ТЕКСТОВАЯ ПОЛОСКА ПОД ОСЬЮ (v1.024) — её средний знак «|» обязан прийтись РОВНО на ось, а
      кнопки расходятся от него в обе стороны. Ставим в два приёма: сначала обнуляем left, чтобы
@@ -2295,11 +2318,16 @@ function updateAxisSplitPosition(maxLen){
          вставки посчитался внутри самой планки (она position:absolute, то есть сама себе
          offsetParent для детей), и только потом сдвигаем планку на это смещение. Одним действием
          не выйдет — надо сперва узнать, где вставка стоит в ещё не сдвинутой планке. */
+      /* ПЛАНКА — СПРАВА ОТ ОСИ И ВПЛОТНУЮ К НЕЙ (v1.212, запрос пользователя: «это справа от оси
+         цепочек всегда, а не отдельно надо»). С v1.086 она ставилась ЦЕНТРОМ зазора на линию:
+         подпись и номера слева от оси, пусто справа. Пока линия шла через всю шапку, планка на ней
+         и висела; после v1.211 линия — короткий отрезок у самых бит, и планка, оставшаяся наверху,
+         оказалась деталью сама по себе, ни к чему не привязанной.
+         Теперь у неё одна привязка на обе координаты: левый край — сразу вправо от линии (тот же
+         отступ 7px, что у панели наложения от его оси, чтобы саму черту было видно), низ — на
+         нижнем конце линии, у первой строки цепочки. Куда бы ось ни поехала, планка едет с ней. */
       strip.style.top = "0px";
-      strip.style.left = "0px";
-      const gap = strip.querySelector(".axis-strip-gap");
-      const gapMid = gap ? (gap.offsetLeft + gap.offsetWidth / 2) : ((strip.offsetWidth || 60) / 2);
-      strip.style.left = (leftPx - gapMid) + "px";
+      strip.style.left = (leftPx + 7) + "px";
       /* ПЛАНКА ВЫШЕ ГОРИЗОНТАЛЬНОЙ РУЧКИ, БЕЗ НАЛОЖЕНИЯ (v1.052, запрос пользователя: "пусть это
          не залезает за ручку горизонтальную, подними чуть выше 1цы оси… hsplit-top act — не
          залезает на неё"). Планка стояла на top:0 (v1.027, "перемести её наверх"), а #hsplitTop —
@@ -2315,7 +2343,26 @@ function updateAxisSplitPosition(maxLen){
         const r = document.getElementById("rows");
         return r ? (r.getBoundingClientRect().top - chainRect.top) : 0;
       })();
-      strip.style.top = (rowsTopPx - (strip.offsetHeight || 24) - 3) + "px";
+      strip.style.top = (axisLineBottom - (strip.offsetHeight || 24) - 3) + "px";
+      /* НА ОСВОБОДИВШЕЕСЯ МЕСТО — «⧉ Кнопки» (v1.212, запрос: «а на их место поставь кнопку,
+         которая вкл-выкл отображение у осей наложений всех кнопок»). Стоит ровно там, где до
+         v1.212 стояла планка «Ц»: над верхней чертой поля, центром на оси. Что она делает — см.
+         st.pasteBarsOn в fold-1-core.js и togglePasteBars() ниже. */
+      const pbStrip = document.getElementById("pasteBarsStrip");
+      if (pbStrip) {
+        pbStrip.classList.add("act");
+        pbStrip.style.top = "0px";
+        pbStrip.style.left = "0px";
+        /* СЛЕВА ОТ ОСИ, А НЕ ЦЕНТРОМ НА НЕЙ (испр. v1.215, баг-репорт «подвинь — накладываются»).
+           В v1.212 кнопка встала центром на линию — «на место планки Ц». Но планка «Ц» с той же
+           версии стоит СПРАВА от линии, в 7px от неё, а правая половина кнопки заходила ровно
+           туда: пока верхнего поля нет, низ линии совпадает с верхом строк, обе оказываются на
+           одной высоте и накрывают друг друга.
+           Теперь линия проходит МЕЖДУ ними: «⧉ Кнопки» слева от неё, «№ 10 / ▤ Панели» справа, с
+           одинаковым отступом. Пересечься они больше не могут ни при какой высоте поля. */
+        pbStrip.style.left = (leftPx - (pbStrip.offsetWidth || 60) - 7) + "px";
+        pbStrip.style.top = (rowsTopPx - (pbStrip.offsetHeight || 24) - 3) + "px";
+      }
     }
   }
   updateTopHorizon();
@@ -2333,7 +2380,7 @@ function updateAxisSplitPosition(maxLen){
        по горизонтали вместе с цепочкой: тянешь ось или поле — кнопки уползают следом, а крайние
        (◧ П1 / П2 ◨ / лесеночные счётчики) уходят за край экрана и становятся недоступны. Это
        стало окончательно неудобно, когда полоса превратилась в главный пульт полей: теперь ею
-       переключают выравнивание не только цепочки, но и П1/П2 (см. alignTarget), а с v0.976 поля
+       переключают выравнивание не только цепочки, но и П1/П2, а с v0.976 поля
        ещё и таскают мышью — полоса дёргалась бы на каждое движение.
        Теперь она стоит НАМЕРТВО по центру .main-layout и не зависит ни от оси, ни от сдвигов
        полей; остатки той привязки — линия-продолжение оси (v1.016) и сам зазор под неё (v1.017) —
@@ -2609,7 +2656,8 @@ function fieldGlyphsHit(e){
     if (e.target.closest(".axis-split, .axis-strip, .hsplit-top, .vsplit, .vsplit2, .vsplit3, #alignGrp, #colHeader")) return;
     const field = fieldGlyphsHit(e);
     if (!field) return;
-    if (typeof setAlignTarget === "function") setAlignTarget(field, true);
+    /* setAlignTarget(field, true) отсюда убран (v1.213): приёмника выравниваний больше нет, и клик
+       по битам поля ничего не «наводил» — полоса и так всегда про цепочку. */
     lastGrabWasBorder = false;   // под замком (🔒) без Alt стрелки пойдут в ось, а не в границу
   });
 }
@@ -2868,6 +2916,33 @@ function generateBinaryNumbers(n) {
 
 /* Снимок всех настроек-кнопок/галочек/ползунков — используется и обычным кэшем в localStorage,
    и кнопкой "💾 Сохран" (сохранение цепочки), чтобы не дублировать список полей дважды. */
+/* ═══ КНОПКИ У ОСЕЙ НАЛОЖЕНИЙ: ПОКАЗАТЬ / СПРЯТАТЬ ВСЕ РАЗОМ (v1.212) ═══
+   Запрос пользователя: «на их место поставь кнопку, которая вкл-выкл отображение у осей наложений
+   всех кнопок». Прячется ТОЛЬКО вид — панель операции/шага/крестика и квадратики цвета у каждого
+   блока (см. .paste-bar/.paste-colbtns в fold.html); оси-черты остаются, иначе блок стало бы не за
+   что схватить, а его биты, операции и участие в расчёте не меняются вовсе.
+   Классом на body, без перерисовки: render() тут не при чём, а блоков может быть три, и каждый
+   рисует свою панель на каждой своей строке. */
+function applyPasteBarsMode(){
+  const on = st.pasteBarsOn !== false;
+  document.body.classList.toggle("paste-bars-off", !on);
+  const b = document.getElementById("bPasteBars");
+  if (b) b.classList.toggle("mode-act", on);
+}
+function togglePasteBars(){
+  st.pasteBarsOn = (st.pasteBarsOn === false);
+  applyPasteBarsMode();
+  say(st.pasteBarsOn
+    ? "⧉ Кнопки наложений показаны: у каждого блока снова видна его панель (операция, шаг, ✕) и цвета."
+    : "⧉ Кнопки наложений скрыты: остались только оси блоков — за них же их и таскают. Сами блоки и расчёт не изменились.");
+  saveCache();
+}
+{
+  const b = document.getElementById("bPasteBars");
+  if (b) b.addEventListener("click", togglePasteBars);
+  applyPasteBarsMode();
+}
+
 function captureUiSettings(){
   return {
     pull: cPullEl.checked, order: cOrderEl.checked, nextOnly: cNextOnlyEl.checked,
@@ -2906,6 +2981,7 @@ function captureUiSettings(){
     bgMaskText: st.bgMaskText || "",
     bgMaskOn: st.bgMaskOn !== false,
     bgMaskRingRestart: st.bgMaskRingRestart !== false,
+    pasteBarsOn: st.pasteBarsOn !== false,          // «⧉ Кнопки» (v1.212)
     // Свой список масок для "🎭 Перебора масок" (см. maskScanListMasks в fold-3).
     bgMaskScanList: st.bgMaskScanList || "",
     // "⇄ Сдвиг по маске": своего поля маски и своей подсветки у него больше нет (v0.929) —
@@ -2992,7 +3068,6 @@ function captureUiSettings(){
     // hidePatL/hidePatR больше не пишутся: скрытия колонок П1/П2 нет вовсе (v0.976).
     // patOffL/patOffR/patOffLY/patOffRY/bitsOffY — тоже: сдвигов отдельных полей нет с v1.066,
     // остались только сдвиги ВСЕЙ раскладки (chainShiftCols/chainShiftRows) и ось цепочки.
-    alignTarget: alignTarget,
     chainShiftCols: chainShiftCols || 0,
     chainShiftRows: chainShiftRows || 0,   // вертикальный сдвиг всей раскладки, ручка #hsplitTop (v1.045)
     pinSlots: pinSlots,
@@ -3301,6 +3376,7 @@ function applyUiSettings(u){
     const b = document.getElementById("bToggleChgBits");
     if (b) b.classList.toggle("mode-act", chgBitsOn);
   }
+  if (u.pasteBarsOn !== undefined) { st.pasteBarsOn = !!u.pasteBarsOn; applyPasteBarsMode(); }
   if (u.bgSearchOn !== undefined) st.bgSearchOn = !!u.bgSearchOn;
   if (u.bgSearchModes && u.bgSearchModes.length) {
     st.bgSearchModes = u.bgSearchModes;
@@ -3373,10 +3449,8 @@ function applyUiSettings(u){
      hidePatL/hidePatR могли остаться включёнными, и поле так и осталось бы невидимым, а вернуть
      его теперь нечем — кнопка занята другим делом. */
   document.body.classList.remove("hide-pat-l", "hide-pat-r");
-  // Приёмник выравниваний и визуальные сдвиги крайних полей — на их место.
-  /* v1.143: приёмник полосы выравниваний закреплён за цепочкой. В старых кэшах и 💾-сохранёнках
-     лежит «L»/«R» — читать это больше нельзя, иначе полоса опять начала бы ровнять колонки. */
-  alignTarget = "C";
+  /* u.alignTarget из старых кэшей и 💾-сохранёнок НЕ ЧИТАЕТСЯ: приёмник полосы убран (v1.213,
+     закреплён за цепочкой ещё с v1.143). Поле в старых записях просто игнорируется. */
   if (typeof u.chainShiftCols === "number") chainShiftCols = u.chainShiftCols;
   if (typeof u.chainShiftRows === "number") chainShiftRows = u.chainShiftRows;
   if (u.pinSlots && typeof u.pinSlots === "object") {
@@ -3477,8 +3551,6 @@ const DEFAULT_UI_SETTINGS = {
   seqSelf: false, seqGlueMode: "right",
   horizRotateOnFail: true, horizAlternateSide: false, horizReverseChain: false, horizShowLiveXor: true,
   axisSnap: true, axisBitBounce: false, axisCenterOffset: 0,
-  // Полоса выравниваний бьёт в центральное поле, крайние поля не сдвинуты (v0.976).
-  alignTarget: "C",
   chainShiftCols: 0, chainShiftRows: 0, msgPos: "", menuBarBottom: false,
   axisSnapCols: [],
   axisSnapGroups: [],

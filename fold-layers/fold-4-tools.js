@@ -144,6 +144,85 @@ function pasteCur(){
 }
 /* Есть ли кому слушаться стрелок: либо выбрана цепочка, либо лежит блок. */
 function pasteHasTarget(){ return pasteTargetIsChain() || !!pasteCur(); }
+/* УБРАТЬ БЛОК ПО НОМЕРУ (v1.213) — вынесено из кнопки «✕», потому что то же самое теперь делает
+   клавиша Delete, пока стрелки принадлежат блоку (см. keydown). Соседи после этого сдвигаются по
+   номерам, и активным становится ближайший — иначе панель показывала бы несуществующий №3. */
+function pasteDeleteAt(pi){
+  const list = pasteList();
+  if (!(pi >= 0) || pi >= list.length) return false;
+  if (typeof snapshot === "function") snapshot();
+  list.splice(pi, 1);
+  if (pasteActive >= list.length) pasteActive = Math.max(0, list.length - 1);
+  if (!list.length) pasteFocus = false;   // блоков нет — стрелки возвращаются цепочке
+  pasteRenderBox();
+  render(); saveCache();
+  say("Наложение №" + (pi + 1) + " убрано. Отмена (Ctrl+Z) вернёт его на место, повтор (Ctrl+Y) уберёт снова." +
+      (list.length ? " Осталось: " + list.length + "." : ""));
+  return true;
+}
+/* ═══ КОПИИ БЛОКА: ПРОСТАЯ И ДВЕ ЗЕРКАЛЬНЫЕ (v1.213) ═══════════════════════════════════════════
+   Запрос пользователя: «сюда добавить кнопку — копия наложения, зеркальная копия вверх и вправо —
+   три кнопки». Все три кладут НОВЫЙ блок ВПЛОТНУЮ к исходному, чтобы из копий сразу собиралась
+   симметричная картина, а не приходилось подгонять её стрелками:
+     ⎘  копия   — та же форма, СПРАВА, впритык (столбец = col + ширина блока);
+     ⇄  зеркало вправо — там же справа, но каждая строка развёрнута задом наперёд: ось отражения
+        проходит ровно по стыку блоков, и вместе они читаются как одна симметричная фигура;
+     ⇅  зеркало вверх — НАД блоком, порядок строк перевёрнут; ось отражения — стык по горизонтали.
+   ШИРИНА блока считается по самой правой цифре любой его строки (off + длина): строки внутри куска
+   стоят со своими сдвигами, и брать длину одной из них было бы неверно.
+   ПОЛУШАГИ: у зеркала вправо построчный hf меняет знак — это тот же поворот, что и у самих цифр;
+   у зеркала вверх он не трогается, отражение по горизонтали столбцов не касается.
+   МЕСТО СВЕРХУ: если копия уходит выше нулевой строки, полотно дорастает само — тем же
+   pasteSetRow(), которым растёт под перетаскивание (v1.146).
+   БОЛЬШЕ PASTE_MAX блоков не кладём: список слоёв на то и ограничен, и молчаливо выбрасывать
+   лишний было бы хуже отказа. */
+function pasteCopyBlock(pi, kind){
+  const list = pasteList();
+  const src = list[pi];
+  if (!src || !src.rows || !src.rows.length) return;
+  if (list.length >= PASTE_MAX) {
+    say("Наложений уже " + PASTE_MAX + " — это предел. Уберите одно (✕ или Delete), тогда копию будет куда положить.");
+    return;
+  }
+  if (typeof snapshot === "function") snapshot();
+  let w = 0;
+  for (const r of src.rows) if (r && r.txt) w = Math.max(w, (r.off || 0) + r.txt.length);
+  if (!w) w = 1;
+  const rows = src.rows.map(r => ({ txt: (r && r.txt) || "", off: (r && r.off) | 0, hf: (r && r.hf) | 0 }));
+  let row = src.row, col = src.col;
+  if (kind === "mirv") {
+    rows.reverse();
+    row = src.row - src.rows.length;
+  } else {
+    if (kind === "mirh") {
+      for (const r of rows) {
+        const len = r.txt.length;
+        r.txt = r.txt.split("").reverse().join("");
+        r.off = w - (r.off + len);
+        r.hf = -r.hf;
+      }
+    }
+    col = src.col + w;
+  }
+  const copy = {
+    rows, row, col,
+    half: src.half === 1 ? 1 : 0,
+    op: src.op, halfStep: !!src.halfStep,
+    c1: src.c1 || null, c0: src.c0 || null,
+    src: src.src || null,
+    on: src.on !== false
+  };
+  list.push(copy);
+  pasteActive = list.length - 1;
+  pasteFocus = true;                      // копию сразу ведут стрелки — её для того и делают
+  if (typeof pasteSetRow === "function") pasteSetRow(copy, copy.row);
+  if (typeof pasteNorm === "function") pasteNorm();
+  pasteRenderBox();
+  render(); saveCache();
+  say(kind === "mirv" ? ("Зеркальная копия ВВЕРХ: наложение №" + (pasteActive + 1) + " встало над исходным, строки перевёрнуты. Стрелки ведут его.")
+    : kind === "mirh" ? ("Зеркальная копия ВПРАВО: наложение №" + (pasteActive + 1) + " встало справа впритык, биты развёрнуты. Стрелки ведут его.")
+    : ("Копия: наложение №" + (pasteActive + 1) + " встало справа впритык, той же формы. Стрелки ведут его."));
+}
 /* ШАГ СТРЕЛКИ: СТОЛБЕЦ ИЛИ ПОЛСТОЛБЦА (v1.111, запрос пользователя: "кнопку — сдвиг на 1 или на ½
    при стрелке"). Половина столбца — величина чисто экранная (см. half в pasteNorm): в ленте бит
    половин не бывает, и в склейки блок всё равно входит целыми столбцами. Нужна она затем же, зачем
@@ -599,7 +678,7 @@ function pasteNudge(key){
     say("Наложение №" + (pasteActive + 1) + ": " +
       (cur.on ? "в расчёте" : "выключено — видно на холсте, но в склейки и поиск не идёт") + ".");
   };
-  /* ✕ убирает ТОЛЬКО активный блок (v1.124), а не все разом: блоков теперь до трёх, и «убрать»
+  /* ✕ убирает ТОЛЬКО активный блок (v1.124), а не все разом: блоков теперь до десяти, и «убрать»
      без уточнения, какой именно, было бы гаданием. Соседи после этого сдвигаются по номерам, и
      активным становится ближайший — иначе панель показывала бы несуществующий №3. */
   const bClrEl = document.getElementById("pasteClr");
@@ -741,16 +820,8 @@ function pasteNudge(key){
       host.click();
       return;
     }
-    if (act === "del") {
-      if (typeof snapshot === "function") snapshot();
-      list.splice(pi, 1);
-      if (pasteActive >= list.length) pasteActive = Math.max(0, list.length - 1);
-      if (!list.length) pasteFocus = false;
-      pasteRenderBox();
-      render(); saveCache();
-      say("Наложение №" + (pi + 1) + " убрано. Отмена (Ctrl+Z) вернёт его на место, повтор (Ctrl+Y) уберёт снова." +
-          (list.length ? " Осталось: " + list.length + "." : ""));
-    }
+    if (act === "dup" || act === "mirv" || act === "mirh") { pasteCopyBlock(pi, act); return; }
+    if (act === "del") { pasteDeleteAt(pi); }
   }, true);
   if (rowsEl) rowsEl.addEventListener("mousedown", e => {
     // .paste-grip и .paste-axis — ручка блока и его ось (v1.107, ось добавлена в v1.205): тот же жест, что и за цифры.
@@ -778,9 +849,29 @@ function pasteNudge(key){
                   step: (typeof realColStepPx === "function" ? realColStepPx() : 0) || 8, rowH: rowH, moved: false };
     document.body.classList.add("paste-dragging");
   });
+  /* ОДНА ОТРИСОВКА НА КАДР (v1.217, жалоба «наложения двигаются как-то тормознуто»).
+     mousemove приходит чаще, чем экран успевает обновиться (на 120-герцовой мыши — вдвое чаще
+     кадра), а каждое движение звало ПОЛНЫЙ render(): он заново собирает разметку всех видимых
+     строк и следом меряет их в DOM (fitNumW/fitPatW/updateSplitPositions — принудительная
+     раскладка). Половина этой работы уходила в никуда: следующее событие приходило раньше, чем
+     браузер успевал показать нарисованное.
+     Само положение блока меняется по-прежнему СРАЗУ, на каждом событии, — откладывается только
+     картинка, и ровно до ближайшего кадра. Отпустили кнопку — дорисовываем немедленно, чтобы
+     последнее движение не осталось непоказанным. */
+  let pasteDragFrame = 0;
+  const pasteDragDraw = () => {
+    if (pasteDragFrame) return;
+    pasteDragFrame = requestAnimationFrame(() => { pasteDragFrame = 0; render(); });
+  };
+  const pasteDragDrawFlush = () => {
+    if (!pasteDragFrame) return;
+    cancelAnimationFrame(pasteDragFrame);
+    pasteDragFrame = 0;
+    render();
+  };
   window.addEventListener("mousemove", e => {
     if (!pasteDrag) return;
-    if (!(e.buttons & 1) || !pasteCur()) { pasteDrag = null; document.body.classList.remove("paste-dragging"); return; }
+    if (!(e.buttons & 1) || !pasteCur()) { pasteDrag = null; pasteDragDrawFlush(); document.body.classList.remove("paste-dragging"); return; }
     const dCols = Math.round((e.clientX - pasteDrag.x0) / pasteDrag.step);
     const dRows = Math.round((e.clientY - pasteDrag.y0) / pasteDrag.rowH);
     const col = pasteDrag.col0 + dCols;
@@ -798,12 +889,13 @@ function pasteNudge(key){
     if (grew) pasteDrag.row0 += grew;
     pasteDrag.moved = true;
     pasteRenderBox();
-    render();
+    pasteDragDraw();
   });
   window.addEventListener("mouseup", () => {
     if (!pasteDrag) return;
     const moved = pasteDrag.moved;
     pasteDrag = null;
+    pasteDragDrawFlush();
     document.body.classList.remove("paste-dragging");
     const cur = pasteCur();
     if (!moved || !cur) return;
@@ -5773,8 +5865,14 @@ document.addEventListener("keydown", e => {
     if (escDouble) { resetAll(); say("Сброшено к шаблону (двойной Escape) — снята и подсветка «Полного прохода»."); saveCache(); return; }
     render();
   } else if (e.key === "Delete") {
-    // Delete — удалить выделенные (кликом) строки. НЕ связано с откатом шага.
     e.preventDefault();
+    /* СНАЧАЛА — НАЛОЖЕНИЕ (v1.213, запрос пользователя: «последний клик на наложение и потом
+       делит — удалить наложение»). Пока стрелки принадлежат блоку (pasteFocus держится ровно до
+       клика мимо него, см. mousedown выше), Delete относится к нему же: рука уже на блоке, и
+       удалять в этот момент строки цепочки было бы полной неожиданностью.
+       Клик мимо блока снимает pasteFocus — и Delete снова про выделенные строки, как раньше. */
+    if (pasteFocus && !pasteTargetIsChain() && pasteCur() && pasteDeleteAt(pasteActive)) return;
+    // Delete — удалить выделенные (кликом) строки. НЕ связано с откатом шага.
     deleteSelectedRows();
   } else if (e.key === "Backspace") {
     e.preventDefault();
@@ -6028,82 +6126,32 @@ if (bBoldBitsEl) {
   };
 }
 
-/* ПРИЁМНИК ВЫРАВНИВАНИЙ (v0.976 — v1.003, запрос пользователя: "последний щелчок над битами
-   выбирает цепочку для выравнивания" + "в центре кнопку-индикатор, по кругу переключает выбор" +
-   "кнопки П1 и П2 удали"). Раньше приёмник переключался ДВУМЯ кнопками «◧ П1»/«П2 ◨» по бокам
-   полосы — их убрали совсем. Теперь ДВА равноправных пути к тому же самому alignTarget:
-     1. АВТОМАТИЧЕСКИ — последним кликом/протяжкой за биты любого поля (см. mousedown в блоке
-        "ТАЩИТЬ ПОЛЕ ЗА БИТЫ", fold-5-ui.js: там же, где lastPanField, теперь ставится и
-        alignTarget — без своего сообщения, тихо, иначе сообщение сыпалось бы на каждый клик).
-     2. РУКАМИ — клик по кнопке-индикатору #bAlignTargetInd в центре полосы (см. HTML), она же
-        показывает ТЕКУЩИЙ приёмник и по клику гонит его по кругу: П1 → Ц → П2 → снова П1.
-   syncAlignBanned() ниже — общая точка: и гасит ⇤/⇥ там, где сейчас запрещено, и перекладывает
-   текст/подсветку индикатора на актуальный приёмник — вызывается из ОБОИХ путей. */
-const ALIGN_TARGET_ORDER = ["L", "C", "R"];
-const ALIGN_TARGET_LABEL = { L: "П1", C: "Ц", R: "П2" };
-/* ПРИЁМНИК ЗАКРЕПЛЁН ЗА ЦЕПОЧКОЙ (v1.143, запрос пользователя: «эти только цепочки пусть
-   выравнивает, паттернов своя кнопка есть»).
-   Полоса ⇤/↔/⇥/↘ и её «½»-версии била в то поле, которое стояло приёмником, — и приёмник
-   переключался САМ, последним кликом по битам колонки. Отсюда и жалоба: человек ровняет цепочку, а
-   уезжают паттерны, потому что он до этого случайно ткнул в колонку.
-   Теперь полоса всегда работает с цепочкой. У колонок для этого свои кнопки «◧ П1»/«П2 ◨»
-   (cyclePatAlign в fold-5-ui.js) — там выравнивание колонки и живёт, и второй путь к нему был
-   лишним. Функцию оставляю на месте: её зовут из нескольких мест, и пусть все они приходят к
-   одному и тому же ответу, а не обходят её мимо. */
-function setAlignTarget(field, quiet){
-  const was = alignTarget;
-  alignTarget = "C";
-  if (typeof syncAlignBanned === "function") syncAlignBanned();
-  if (!quiet && (field === "L" || field === "R") && was === "C") {
-    say("Полоса выравниваний работает только с ЦЕПОЧКОЙ. Колонку " + (field === "L" ? "П1" : "П2") +
-        " ровняют её собственной кнопкой «" + (field === "L" ? "◧ П1" : "П2 ◨") + "» в планке над ней.");
-  } else if (!quiet) {
-    saveCache();
-  }
-}
-/* ПОДПИСИ ПЛАНОК КАК ПРИЁМНИК (v1.088) — клик по подписи планки выбирал поле, в которое бьёт
-   полоса выравниваний. С v1.143 полоса закреплена за цепочкой, поэтому такой клик приёмника уже
-   не меняет (setAlignTarget выше приводит всё к «Ц»), а полезное действие у него осталось —
-   подвести это поле к центру экрана. Обработчики оставлены под if: разметка планок есть не во всех
-   раскладках. */
-for (const [stripId, field] of [["patStripL", "L"], ["axisStrip", "C"], ["patStripR", "R"]]) {
+/* ═══ ПРИЁМНИКА ВЫРАВНИВАНИЙ БОЛЬШЕ НЕТ (v1.213) ═══════════════════════════════════════════════
+   Здесь жили ALIGN_TARGET_ORDER/ALIGN_TARGET_LABEL, setAlignTarget() и обработчики кнопки-индикатора
+   #bAlignTargetInd (её самой в разметке нет с v1.088). Полоса выравниваний закреплена за цепочкой
+   с v1.143, поэтому всё это только приводило любое значение к «C» и печатало пояснения. Убрано по
+   запросу «только Ц убери и вычисти» — вместе с подписью «Ц» в планке, которая приёмник и
+   переключала. Выравнивание колонок П1/П2 — их собственные кнопки «⇤» (cyclePatAlign в fold-5-ui.js).
+
+   ПОДПИСИ ПЛАНОК П1/П2 (v1.088) остаются, но теперь у них ровно одно дело — ДВОЙНОЙ клик подводит
+   поле к центру экрана. Одиночный только объясняет, где живёт выравнивание колонки: раньше он
+   переключал приёмник, и рука к нему привыкла. */
+for (const [stripId, field] of [["patStripL", "L"], ["patStripR", "R"]]) {
   const strip = document.getElementById(stripId);
   const lab = strip ? strip.querySelector(".pat-strip-lab") : null;
   if (!lab) continue;
-  const nm = field === "C" ? "Цепочка" : (field === "L" ? "Левое поле (П1)" : "Правое поле (П2)");
+  const nm = field === "L" ? "Левое поле (П1)" : "Правое поле (П2)";
   // e.detail >= 2 — второй click двойной последовательности: он достаётся dblclick ниже, иначе
-  // приёмник успевал бы переключиться дважды ещё до центрирования (тот же приём, что был у кнопки).
-  lab.onclick = (e) => { if (e.detail < 2 && typeof setAlignTarget === "function") setAlignTarget(field); };
+  // сообщение выскакивало бы и при двойном клике, поверх сообщения о прокрутке.
+  lab.onclick = (e) => {
+    if (e.detail >= 2) return;
+    say("Полоса выравниваний работает только с ЦЕПОЧКОЙ. Колонку " + (field === "L" ? "П1" : "П2") +
+        " ровняет её собственная кнопка «⇤» в этой же планке. Двойной клик по подписи — подвести поле к центру экрана.");
+  };
   lab.addEventListener("dblclick", (e) => {
     e.preventDefault();
     if (typeof centerFieldOnScreen === "function" && centerFieldOnScreen(field)) {
       say(nm + ": экран прокручен к его битам — сами биты остались на месте, раскладка не тронута.");
-    } else {
-      say(nm + ": прокручивать не к чему — в поле нет ни одного бита.");
-    }
-  });
-}
-const bAlignTargetIndEl = document.getElementById("bAlignTargetInd");
-if (bAlignTargetIndEl) {
-  // e.detail >= 2 — второй (и далее) click той же двойной-клик-последовательности: цикл ему не
-  // достаётся, дальше идёт dblclick-центрирование ниже. Тот же приём, что у кнопок ⇤ (bAlignPatL/R
-  // в fold-5-ui.js) — иначе двойной клик успевал бы провернуть приёмник на два шага ПЕРЕД тем, как
-  // сработает центрирование, и в центр уехало бы совсем не то поле, по которому целились.
-  bAlignTargetIndEl.onclick = (e) => {
-    if (e.detail >= 2) return;
-    const idx = ALIGN_TARGET_ORDER.indexOf(alignTarget);
-    setAlignTarget(ALIGN_TARGET_ORDER[(idx < 0 ? -1 : idx) + 1 >= ALIGN_TARGET_ORDER.length ? 0 : idx + 1]);
-  };
-  /* ДВОЙНОЙ КЛИК — ПРОКРУТИТЬ ЭКРАН К БИТАМ ТЕКУЩЕГО ПОЛЯ (v1.020, уточнено в v1.021: "не
-     перемещает биты за ось, а должен просто скролл экрана подвинуть"). Поле берётся то, что сейчас
-     в приёмнике, — кнопка его и показывает (Ц/П1/П2), так что целиться отдельно не во что. Сама
-     раскладка при этом НЕ меняется, двигается только точка обзора — см. centerFieldOnScreen()
-     (fold-5-ui.js), там же и почему замер идёт по глифам, а не по коробке колонки. */
-  bAlignTargetIndEl.addEventListener("dblclick", (e) => {
-    e.preventDefault();
-    const nm = alignTarget === "C" ? "Цепочка" : (alignTarget === "L" ? "Левое поле (П1)" : "Правое поле (П2)");
-    if (typeof centerFieldOnScreen === "function" && centerFieldOnScreen(alignTarget)) {
-      say(nm + ": экран прокручен к его битам — сами биты остались на месте, сдвиги полей не тронуты. Приёмник переключается одиночным кликом по этой же кнопке.");
     } else {
       say(nm + ": прокручивать не к чему — в поле нет ни одного бита.");
     }

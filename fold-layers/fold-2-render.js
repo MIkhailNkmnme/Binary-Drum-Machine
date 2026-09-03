@@ -9,21 +9,31 @@
    тега вместо шести. Сами цвета живут в CSS (--paste-c1/--paste-c0, см. .ps1/.ps0 в fold.html),
    поэтому смена пикера перерисовки не требует вовсе.
    Текст сюда приходит уже очищенным до [01] (pasteNorm в fold-1-core.js), но на всякий случай всё,
-   что не 0 и не 1, проходит через esc() и остаётся без обёртки — цвет ему возьмётся от .paste-bits. */
-function pasteBitsHtml(txt, chg){
+   что не 0 и не 1, проходит через esc() и остаётся без обёртки — цвет ему возьмётся от .paste-bits.
+   hits (v1.210, запрос «найденные паттерны надо также подсвечивать в наложениях, битах») — массив
+   по индексу бита блока: { kind, skip } на позициях, куда лёг найденный паттерн (см. pasteTraceRow
+   в fold-1-core.js и pasteHitRows в render). Класс тот же, что у бит цепочки, .chain-hit-bits +
+   KIND_CLS, и цвет он берёт свой — правило стоит с !important и перебивает .ps1/.ps0. */
+function pasteBitsHtml(txt, chg, hits){
   const s = String(txt == null ? "" : txt);
   const m = String(chg == null ? "" : chg);
+  // Две находки склеиваются в одну серию, только если это одна и та же находка (вид и «⏭ Без 1-го»).
+  const eqHit = (a, b) => (!a && !b) || (!!a && !!b && a.kind === b.kind && !!a.skip === !!b.skip);
   let out = "";
   for (let i = 0; i < s.length; ) {
     const ch = s[i];
     const mk = m[i] === "1";
-    // Серия обрывается и на смене цифры, и на смене «изменилось/не изменилось» — классы у них
-    // разные, склеить такие места в один тег нельзя.
+    const hit = hits ? (hits[i] || null) : null;
+    // Серия обрывается и на смене цифры, и на смене «изменилось/не изменилось», и на границе
+    // найденного паттерна — классы у них разные, склеить такие места в один тег нельзя.
     let j = i + 1;
-    while (j < s.length && s[j] === ch && (m[j] === "1") === mk) j++;
+    while (j < s.length && s[j] === ch && (m[j] === "1") === mk && eqHit(hits ? (hits[j] || null) : null, hit)) j++;
     const run = s.slice(i, j);
     if (ch === "1" || ch === "0") {
-      out += '<i class="ps' + ch + (mk ? " ps-chg" : "") + '">' + run + "</i>";
+      const hitCls = hit
+        ? (" chain-hit-bits" + (KIND_CLS[hit.kind] ? " " + KIND_CLS[hit.kind] : "") + (hit.skip ? " skip1" : ""))
+        : "";
+      out += '<i class="ps' + ch + (mk ? " ps-chg" : "") + hitCls + '">' + run + "</i>";
     } else {
       out += esc(run);
     }
@@ -2187,6 +2197,13 @@ function render(){
   // buildHitMap(). Работает ТОЛЬКО пока цепочка активна и совпадение уже есть — вне её ничего не
   // меняется. Map: индекс строки → (позиция бита → {kind, skip}).
   let patChainHitRows = null;
+  /* ТЕ ЖЕ НАХОДКИ — НА БИТАХ НАЛОЖЕНИЙ (v1.210, запрос «найденные паттерны надо также
+     подсвечивать в наложениях, битах»). Блок входит в склейку наравне со строками (getRowBits
+     подмешивает его последним слоем), поэтому найденный паттерн запросто лежит на его цифрах —
+     а гореть ему было негде: подсветка выше раскладывается по СОБСТВЕННЫМ битам строк.
+     Map: строка → (номер блока в st.pastes → массив по индексу бита блока → {kind, skip}).
+     Чей бит в какой позиции ленты — отвечает pasteTraceRow() в fold-1-core.js. */
+  let pasteHitRows = null;
   if (bgInfo && bgInfo.matched) {
     const seekPat = st.pats[bgInfo.targetIdx];
     const seekText = seekPat && seekPat.text ? seekPat.text : "";
@@ -2197,7 +2214,15 @@ function render(){
     const chainOn = st.patChainFilledTo === bgInfo.targetIdx;
     // Строки, отключённые галками "⛔" (см. patChainLastIdx), не подсвечиваем вовсе — в них
     // паттерн не ищется и подсвечивать там нечего (запрос пользователя).
-    const lastActiveRow = patChainLastIdx(seqAnchorIdx());
+    /* ПОД ЛИНИЕЙ НЕ ИЩЕМ ВОВСЕ (v1.217, см. procCeilRow в fold-1-core.js). Это самое дорогое
+       место всего кадра: findPatternKinds строит кольцо КАЖДОЙ строки и ищет в нём, и до сих пор
+       перебор шёл по всей цепочке — включая строки под линией, которых в расчёте нет с v1.131.
+       Ограничение попадает и в ключ кэша (lastActiveRow там уже перечислен), поэтому поднятая
+       линия честно сбрасывает старый результат. */
+    const procCeil = (typeof procCeilRow === "function") ? procCeilRow() : -1;
+    const lastActiveRow = procCeil >= 0
+      ? Math.min(patChainLastIdx(seqAnchorIdx()), procCeil - 1)
+      : patChainLastIdx(seqAnchorIdx());
     // Через кэш (см. memoMask выше) — это самое дорогое место рендера: findPatternKinds() строит
     // кольцо строки и ищет в нём, и так по КАЖДОЙ строке, а зовётся всё это на каждый рендер, в том
     // числе когда ни строки, ни настройки поиска не менялись. Зависимости перечислены ПОЛНОСТЬЮ:
@@ -2239,6 +2264,16 @@ function render(){
        до неё первым, и по картинке было не понять, чья это находка. Теперь берём ОДИН результат —
        выбранный кликом по его строке в окне "Результат" (st.bgHitPick), а если ничего не выбрано
        или выбранное больше не совпадает, то первый совпавший по порядку режимов. */
+    /* Трасса ленты по строке — по требованию и один раз на строку (v1.210): она повторяет
+       склейку наложений, и гонять её на каждый бит находки было бы расточительно. Нет ни одного
+       блока — не считаем вовсе, тогда и подсвечивать в наложениях нечего. */
+    const anyPastes = !!(Array.isArray(st.pastes) && st.pastes.length);
+    const traceCache = new Map();
+    const traceOf = (r) => {
+      if (!anyPastes || typeof pasteTraceRow !== "function") return null;
+      if (!traceCache.has(r)) traceCache.set(r, pasteTraceRow(st, r));
+      return traceCache.get(r);
+    };
     const matchedResults = bgInfo.results.filter(r => r.matched && r.kinds && r.kinds.length);
     const hitRes = matchedResults.find(r => r.mode === st.bgHitPick) || matchedResults[0];
     for (const res of (hitRes ? [hitRes] : [])) {
@@ -2286,6 +2321,20 @@ function render(){
           chainRowsOwn.add(cell.r);
         }
         if (!arr[cell.p]) arr[cell.p] = { kind: kd.kind, skip: kd.skip };
+        /* ...и то же самое на биты наложений (v1.210). cell.p — позиция в ЛЕНТЕ строки
+           (getRowBits), а лента собрана из бит строки и бит блоков; pasteTraceRow говорит, чей
+           именно бит стоит в этой позиции и каким по счёту он идёт внутри блока. Трасса считается
+           не чаще раза на строку (traceOf кэширует) и только когда наложения вообще есть. */
+        const tcell = traceOf(cell.r);
+        const tc = (tcell && cell.p < tcell.length) ? tcell[cell.p] : null;
+        if (tc && tc.pi >= 0 && tc.t >= 0) {
+          if (!pasteHitRows) pasteHitRows = new Map();
+          let pm = pasteHitRows.get(cell.r);
+          if (!pm) { pm = new Map(); pasteHitRows.set(cell.r, pm); }
+          let pa = pm.get(tc.pi);
+          if (!pa) { pa = []; pm.set(tc.pi, pa); }
+          if (!pa[tc.t]) pa[tc.t] = { kind: kd.kind, skip: kd.skip };
+        }
       }
     }
     if (!patChainHitRows.size) patChainHitRows = null;
@@ -2549,6 +2598,8 @@ function render(){
       // bgSearchModes в ключе — от него зависит НАБОР склеек сквозного поиска (см. ниже).
       cellSampleRows = memoMask("cellSample",
         [st.rows, sample, st.kindsMode || "", st.align, !!st.cellSampleSeq, onlyRow,
+         // v1.217: линия режет диапазон поиска (см. smpCeil ниже) — двинули её, кэш обязан пересчитаться.
+         st.horizonRow,
          (st.bgSearchModes || []).join(",")], () => {
         const inv = invertBits(sample);
         const variants = [[0, sample]];
@@ -2563,7 +2614,10 @@ function render(){
           if (!marks) { marks = new Array(len).fill(-1); out.set(row, marks); }
           if (marks[k] < 0) marks[k] = kind;
         };
-        for (let i = 0; i < st.rows.length; i++) {
+        // Под линией образец не ищем (v1.217, procCeilRow): там всё исключено из обработки.
+        const smpCeil = (typeof procCeilRow === "function") ? procCeilRow() : -1;
+        const smpLast = smpCeil >= 0 ? Math.min(st.rows.length, smpCeil) : st.rows.length;
+        for (let i = 0; i < smpLast; i++) {
           if (onlyRow >= 0 && i !== onlyRow) continue;
           const s = st.rows[i] || "";
           if (s.length < sample.length) continue;
@@ -2742,6 +2796,16 @@ function render(){
   // Выбранная фаза прореживающей маски (кнопка "🎭 Фаза маски" во вкладке "Маски" и клик по фазе
   // в Черновике — одно и то же значение). На маску "⇄ Сдвига" не влияет: у той своей фазы нет.
   const mpBgPhase = mpBgMask ? (((st.maskDraftPhase | 0) % mpBgMask.length) + mpBgMask.length) % mpBgMask.length : 0;
+  /* ═══ ПАТТЕРНЫ ПОД ЛИНИЕЙ ПРЯЧУТСЯ, ПОКА ОНИ ЕСТЬ НАД НЕЙ (v1.216) ═══
+     Запрос пользователя: «скрывай паттерны под горизонтом, если над горизонтом есть паттерны».
+     В верхнее поле паттерны цепочки ДУБЛИРУЮТСЯ (v1.173, syncFieldPatterns) — те же самые строки
+     образцов, только копиями. Пока поле открыто, колонки П1/П2 показывают их дважды: вверху копию,
+     внизу оригинал, — и глаз читает это как два разных набора, хотя набор один.
+     Прячем НИЖНИЕ: работа идёт наверху, там же и образцы. Копий нет (поле пустое, дублирование ещё
+     не звали) — внизу всё как было, иначе паттерны исчезли бы вовсе.
+     Только вид: st.pats не трогаем, поиск, «🌈 Все паттерны» и укладка видят их все. */
+  const patsHideBelowRow = (typeof procCeilRow === "function") ? procCeilRow() : -1;
+  const PAT_HIDDEN_CELL = { text: "", ord: -1, found: false, kind: null, step: null };
   for (let i = vr.lo; i <= vr.hi; i++){
     // "👁 XOR на строке" (st.horizShowLiveXor) теперь РЕАЛЬНО пишет промежуточный XOR в
     // st.rows[b] по ходу поиска (см. doStep()), поэтому тут достаточно простого чтения —
@@ -2750,7 +2814,8 @@ function render(){
     // строки от этого не меняется, поэтому геометрия, флаги и подсветки считаются как обычно.
     const sRaw = st.rows[i] || "";
     const s = st.parityView ? applyParityMask(sRaw, i, 0, 0) : sRaw;
-    const p = st.pats[i];
+    // Ниже линии паттерн печатается пустым, пока его копия лежит наверху (см. patsHideBelowRow).
+    const p = (patsHideBelowRow >= 0 && i >= patsHideBelowRow) ? PAT_HIDDEN_CELL : st.pats[i];
     const cls = ["ln"];
     /* ЗАТЕМНЕНИЕ ВЕРХНИХ СТРОК УБРАНО (v1.161, баг-репорт: «какое-то затемнение идёт битов начиная
        сверху, когда двигаю»). Класс .top-inactive гасил строки выше границы участия построений до
@@ -3549,6 +3614,9 @@ function render(){
        Проверка стоит ДО разбора строк блока: так пропускается вся строка целиком, вместе с осью,
        панелью и кнопками, а не одни цифры. */
     const belowLine = (typeof horizonOn === "function" && horizonOn() && i >= horizonRow());
+    // Найденный паттерн, лёгший на блоки ЭТОЙ строки (v1.210, см. pasteHitRows выше): номер
+    // блока → массив по индексу его бита. null — в этой строке находка блоков не касается.
+    const pasteHitMap = pasteHitRows ? (pasteHitRows.get(i) || null) : null;
     for (let pi = 0; pi < pasteAll.length && !belowLine; pi++) {
       const pb = pasteAll[pi];
       if (!pb || !pb.rows || !Number.isInteger(pb.row)) continue;
@@ -3637,7 +3705,7 @@ function render(){
           (pb.on === false ? " СЕЙЧАС ВЫКЛЮЧЕНО — в расчёт не идёт." :
             " Идёт в склейки и фон-поиск как биты этой строки; где накрыло биты строки, считается оно.") +
           ' Тяни мышью — переставить ВЕСЬ блок. Клик отдаёт ему стрелки: ←/→ и ↑/↓ ведут последний тронутый блок">' +
-          pasteBitsHtml(pTxt, pChg) + "</span>";
+          pasteBitsHtml(pTxt, pChg, pasteHitMap ? pasteHitMap.get(pi) : null) + "</span>";
         /* РУЧКА-РАМКА НА ПЕРВОЙ ЦИФРЕ УБРАНА (v1.168, запрос «убери границу первого бита — рамку»).
            Она стояла с v1.109 как единственное место, за которое блок было удобно хватать: цифры
            тогда просвечивали и попасть в них мышью было непросто. Теперь у блока есть своя ось и
@@ -3680,7 +3748,13 @@ function render(){
               (pb.op === "xor" ? "⊕" : (pb.op === "and" ? "∧" : "⧉")) + '</b>' +
             '<b data-act="step" title="Шаг, которым стрелки двигают ЭТОТ блок: целый столбец или полстолбца. На полустолбце биты блока встают МЕЖДУ битами строки и в склейке чередуются с ними, а не заменяют их">' +
               (pb.halfStep ? "⇥½" : "⇥1") + '</b>' +
-            '<b data-act="del" class="paste-bar-del" title="Убрать это наложение. Отмена (Ctrl+Z) вернёт, повтор (Ctrl+Y) уберёт снова">✕</b>' +
+            /* ТРИ КОПИИ (v1.213, запрос «копия наложения, зеркальная копия вверх и вправо — три
+               кнопки»). Все кладут новый блок ВПЛОТНУЮ к этому — см. pasteCopyBlock в
+               fold-4-tools.js, там же про ширину, полушаги и рост полотна вверх. */
+            '<b data-act="dup" title="Копия этого наложения — той же формы, СПРАВА впритык. Новый блок сразу становится активным, его ведут стрелки. Всего блоков не больше десяти">⎘</b>' +
+            '<b data-act="mirh" title="Зеркальная копия ВПРАВО: тот же кусок, но каждая строка развёрнута задом наперёд, и встаёт справа впритык — ось отражения проходит ровно по стыку, и пара читается как одна симметричная фигура">⇄</b>' +
+            '<b data-act="mirv" title="Зеркальная копия ВВЕРХ: тот же кусок с перевёрнутым порядком строк, встаёт НАД этим блоком впритык. Не хватает места сверху — полотно дорастает само">⇅</b>' +
+            '<b data-act="del" class="paste-bar-del" title="Убрать это наложение. Отмена (Ctrl+Z) вернёт, повтор (Ctrl+Y) уберёт снова. То же делает клавиша Delete, пока стрелки принадлежат блоку">✕</b>' +
             '</span>';
         }
       }
