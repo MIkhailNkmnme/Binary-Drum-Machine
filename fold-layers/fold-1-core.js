@@ -111,7 +111,12 @@ function shiftAllowed(){
    (после включения замка и после Escape он нужен в разных местах общего обработчика). */
 function clearAllSelections(){
   if (st.selectedRows) st.selectedRows.clear();
-  if (st.selectedPats) st.selectedPats.clear();
+  /* ВЫДЕЛЕНИЕ ПАТТЕРНОВ ESCAPE БОЛЬШЕ НЕ СНИМАЕТ (v1.172, запрос: «выделение паттернов там не
+     снимать Escape-ом, только кликом мышки»). Оно задаёт ЦЕЛЬ ПОИСКА — что именно искать, — то
+     есть это не подсветка, которую хочется сбросить одним движением, а осознанная настройка, и
+     слетать от клавиши, которой снимают всё подряд, ей не следует. Снимается кликом по той же
+     ячейке и кнопкой «✕ Снять выбор».
+     Остальные наборы Escape чистит как чистил: строки, ячейки полотна, биты внутри паттернов. */
   cellSel.clear();
   patCellSel.clear();
   cellPin.clear();
@@ -994,12 +999,41 @@ function pasteNormOne(p){
     /* half — ПОЛУСТОЛБЕЦ ВСЕГО БЛОКА (0 или 1, v1.111): положение по горизонтали = col*2 + half.
        Величина чисто визуальная, ровно как построчный hf: в ленте бит половин не бывает. */
     half: (p.half === 1 ? 1 : 0),
+    /* СВОЯ ОПЕРАЦИЯ И СВОЙ ШАГ У КАЖДОГО БЛОКА (v1.167, запрос: «кнопки Поверх, AND, XOR, шаг ½»
+       у самого наложения). Раньше это были ОБЩИЕ настройки инструмента: переключил — поменялось у
+       всех трёх блоков разом, и сложить на холсте, скажем, XOR поверх AND было нечем.
+       Старые блоки без этих полей получают прежние значения: «поверх» и целый шаг. */
+    /* СВОИ ЦВЕТА У КАЖДОГО БЛОКА (v1.178, запрос «каждому наложению свой раскрас битов»). null —
+       цвет не задан, берётся общий (--paste-c1/--paste-c0). Так старые блоки выглядят как прежде,
+       а заданный цвет живёт вместе с блоком: переложил его — цвет поехал с ним. */
+    c1: (typeof p.c1 === "string" && /^#[0-9a-fA-F]{6}$/.test(p.c1)) ? p.c1 : null,
+    c0: (typeof p.c0 === "string" && /^#[0-9a-fA-F]{6}$/.test(p.c0)) ? p.c0 : null,
+    op: (p.op === "xor" || p.op === "and") ? p.op : "over",
+    halfStep: !!p.halfStep,
     src: (p.src === "L" || p.src === "R") ? p.src : null,   // v1.140: снят с колонки паттернов — красится её цветами
     on: p.on !== false
   };
 }
 function pasteNorm(){
   const list = pasteList().map(pasteNormOne).filter(Boolean).slice(0, PASTE_MAX);
+  /* НИ ОДИН БЛОК НЕ ОСТАЁТСЯ ЦЕЛИКОМ ПОД ЛИНИЕЙ (v1.181, запрос «не дать уйти всем битам под
+     горизонт — а то их не вытащить потом»).
+     Под линией блок не рисуется (см. render) и в расчёт не идёт, то есть исчезает с глаз совсем.
+     Схватить его там нечем, стрелки ведут только активный, а какой активен — не видно: положение
+     безвыходное. Поэтому при каждой нормализации блок, уехавший под линию, поднимается обратно так,
+     чтобы стоять ровно над ней. Ниже нуля не опускаем — выше первой строки холста ничего нет.
+     Проверка именно здесь: pasteNorm() зовут после любой правки списка — укладки, сдвига, загрузки
+     вкладки, отмены, — и одно место закрывает их все разом. */
+  if (typeof horizonOn === "function" && horizonOn()) {
+    const h = horizonRow();
+    for (const p of list) {
+      if (!p || !p.rows || !p.rows.length) continue;
+      /* v1.192: держим над линией ПЕРВУЮ строку блока, а не весь блок — хвост может прятаться под
+         линией, лишь бы было за что вытянуть обратно (ось и панель стоят на первой строке). */
+      const maxRow = h - 1;
+      if (p.row > maxRow) p.row = Math.max(0, maxRow);
+    }
+  }
   st.pastes = list;
   return list.length ? list : null;
 }
@@ -1046,7 +1080,7 @@ function pasteMergeOne(p, r, rowBits, rowStart){
       if (rb !== null) out += rb;   // бит строки — в своём столбце
       if (pb !== null) out += pb;   // бит блока — сразу за ним, он на полстолбца правее
     } else {
-      const ch = pasteCombine(pb, rb);
+      const ch = pasteCombine(pb, rb, p.op);
       if (ch !== null) out += ch;   // столбец, где нет никого — просто пропускается
     }
   }
@@ -1095,13 +1129,14 @@ const PASTE_OP_NOTE = {
   xor: "Наложение: XOR — единица там, где биты блока и строки РАЗНЫЕ. Там, где блок висит над пустотой, ложатся его собственные биты.",
   and: "Наложение: AND — единица только там, где единицы и в блоке, и в строке. Там, где блок висит над пустотой, ложатся его собственные биты."
 };
-function pasteCombine(pb, rb){
+function pasteCombine(pb, rb, mode){
   const rOk = (rb === "0" || rb === "1");
   const pOk = (pb === "0" || pb === "1");
   if (pb === null) return rb;                   // блок сюда не дотянулся — бит строки как был
   if (!rOk || !pOk) return pb;                  // операнда под блоком нет (пусто или точка)
-  if (pasteOpMode === "xor") return (pb === rb) ? "0" : "1";
-  if (pasteOpMode === "and") return (pb === "1" && rb === "1") ? "1" : "0";
+  const op = (mode === "xor" || mode === "and" || mode === "over") ? mode : pasteOpMode;
+  if (op === "xor") return (pb === rb) ? "0" : "1";
+  if (op === "and") return (pb === "1" && rb === "1") ? "1" : "0";
   return pb;
 }
 
@@ -1123,7 +1158,7 @@ function pasteCombine(pb, rb){
    Возвращает две строки одной длины: txt — что печатать, chg — где результат ОТЛИЧАЕТСЯ от бита
    строки, который был под ним («1» = изменилось). Позиции, где под блоком не было бита вовсе,
    изменением не считаются: там ничего не портилось, блок просто лёг на пустое место. */
-function pasteOverlayCells(pieceTxt, start, rowBits, rowStart){
+function pasteOverlayCells(pieceTxt, start, rowBits, rowStart, mode){
   const src = String(pieceTxt == null ? "" : pieceTxt);
   const row = String(rowBits == null ? "" : rowBits);
   /* ОБА НАЧАЛА — ДРОБНЫЕ, И ОКРУГЛЯЕТСЯ ИМЕННО ИХ РАЗНИЦА (испр. v1.119 по замерам пользователя:
@@ -1147,7 +1182,7 @@ function pasteOverlayCells(pieceTxt, start, rowBits, rowStart){
     const pb = src[t];
     const j = base + t;
     const rb = (j >= 0 && j < row.length) ? row[j] : null;
-    const res = pasteCombine(pb, rb);
+    const res = pasteCombine(pb, rb, mode);
     txt += (res === null ? pb : res);
     chg += ((rb === "0" || rb === "1") && res !== rb) ? "1" : "0";
   }
@@ -3515,6 +3550,16 @@ function saveActiveTabState() {
     bIdx: st.bIdx || 1,
     goingUp: !!st.goingUp,
     passCount: st.passCount || 0,
+    /* ВЫСОТА ДОБОРА И ЛИНИЯ — ТОЖЕ В КЭШ (испр. v1.206, баг-репорт «как-то наложения оказались
+       под горизонтом, но это при F5»).
+       Кэш браузера тут ни при чём: топ-билд и горизонт эта функция не писала вовсе, а объект
+       вкладки достраивала спредом поверх прежнего. Оба ключа заводит только createDefaultTabState,
+       то есть момент СОЗДАНИЯ вкладки, — и после этого они висели замороженными: строки, паттерны
+       и наложения сохранялись живыми, а линия возвращалась той, что была при создании (у вкладки
+       старше поля — нулевой). Отсюда и «оказались под горизонтом» ровно на F5: блоки приезжали
+       на свои места, а поля под ними уже не было. Та же природа, что у отмены в v1.201. */
+    topBuilt: st.topBuilt || 0,
+    horizonRow: st.horizonRow || 0,
     horizBitIdx: st.horizBitIdx || 0,
     horizXoredLength: st.horizXoredLength || 0,
     lastHorizRow: st.lastHorizRow || null,
@@ -3527,7 +3572,7 @@ function saveActiveTabState() {
     rowGroupsR: (st.rowGroupsR || []).map(g => ({ rows: g.rows.slice(), align: g.align })),
     selectedPats: Array.from(st.selectedPats || []),
     // Наложения (v1.104; список из нескольких — v1.124) — свой слой данных этой цепочки.
-    pastes: pasteList().map(p => ({ rows: p.rows.map(r => ({ ...r })), row: p.row, col: p.col, half: p.half || 0, src: p.src || null, on: p.on })),
+    pastes: pasteList().map(p => ({ rows: p.rows.map(r => ({ ...r })), row: p.row, col: p.col, half: p.half || 0, src: p.src || null, op: p.op, halfStep: !!p.halfStep, c1: p.c1 || null, c0: p.c0 || null, on: p.on })),
     newBits: newBitsSerialize(), // см. newBitsMap — пометка новых бит живёт вместе с цепочкой
     undo: (st.undo || []).slice(),
     // Текущие настройки вида/поиска этой (ещё активной на момент вызова) вкладки — см.
@@ -3584,7 +3629,7 @@ function loadTabState(index, skipSave = false) {
   const tPastes = Array.isArray(t.pastes) ? t.pastes : (t.paste ? [t.paste] : []);
   st.pastes = tPastes.filter(Boolean).map(p => ({
     rows: (p.rows || []).map(r => ({ ...r })),
-    row: p.row, col: p.col, half: p.half || 0, src: p.src || null, on: p.on
+    row: p.row, col: p.col, half: p.half || 0, src: p.src || null, op: p.op, halfStep: !!p.halfStep, c1: p.c1 || null, c0: p.c0 || null, on: p.on
   }));
   st.paste = null;
   pasteNorm();
@@ -3663,6 +3708,14 @@ function captureState(){
     pats: st.pats.map(p => p ? { ...p } : null),
     tplRows: st.tplRows.slice(), tplPats: st.tplPats.slice(),
     step: st.step, aIdx: st.aIdx, bIdx: st.bIdx, goingUp: st.goingUp, passCount: st.passCount, topBuilt: st.topBuilt || 0,
+    /* ГОРИЗОНТ — ЧАСТЬ СНИМКА (испр. v1.201, баг-репорт «как-то оказались под горизонтом
+       наложения»). Отмена восстанавливала строки, добор сверху (topBuilt) и сами блоки, а
+       номер строки, перед которой режет линия, оставляла как есть. Стоило отменить действие,
+       менявшее высоту поля (укладка блока открывает поле, addTopRows/removeTopRows его двигают),
+       и линия оставалась от одного состояния, а блоки — от другого: поле схлопывалось, блоки
+       никуда не девались и оказывались под линией. Ничего специально для этого делать не нужно
+       было — хватало одного Ctrl+Z. */
+    horizonRow: st.horizonRow | 0,
     tailBuffer: st.tailBuffer || "",
     selectedRows: Array.from(st.selectedRows || []),
     horizBitIdx: st.horizBitIdx,
@@ -3693,7 +3746,7 @@ function captureState(){
        блок, было бы нечем отменить — снимок его просто не помнил. Копия глубокая: строки блока
        правятся на месте (см. pasteNudge), и мелкой копией снимок протух бы при первом же сдвиге. */
     pastes: (typeof pasteList === "function" ? pasteList() : []).map(p => ({
-      rows: p.rows.map(r => ({ ...r })), row: p.row, col: p.col, half: p.half || 0, src: p.src || null, on: p.on
+      rows: p.rows.map(r => ({ ...r })), row: p.row, col: p.col, half: p.half || 0, src: p.src || null, op: p.op, halfStep: !!p.halfStep, c1: p.c1 || null, c0: p.c0 || null, on: p.on
     })),
     newBits: newBitsSerialize()
   };
@@ -3712,13 +3765,20 @@ function applyState(s){
   st.step = s.step; st.aIdx = s.aIdx; st.bIdx = s.bIdx; st.goingUp = s.goingUp;
   st.passCount = s.passCount || 0;
   st.topBuilt = s.topBuilt || 0;
+  // Линия возвращается вместе со строками, которые она режет (v1.201, см. captureState).
+  // В снимках, снятых до этой версии, ключа нет — оставляем текущую, как было раньше.
+  if (s.horizonRow !== undefined) st.horizonRow = s.horizonRow | 0;
   st.tailBuffer = s.tailBuffer || "";
   /* Наложения (v1.133) — из снимка, глубокой копией. В снимках, снятых до 1.133, ключа нет: там
      оставляем то, что лежит на холсте сейчас, — иначе старая отмена молча стирала бы блоки. */
   if (Array.isArray(s.pastes)) {
-    st.pastes = s.pastes.map(p => ({ rows: (p.rows || []).map(r => ({ ...r })), row: p.row, col: p.col, half: p.half || 0, src: p.src || null, on: p.on }));
+    st.pastes = s.pastes.map(p => ({ rows: (p.rows || []).map(r => ({ ...r })), row: p.row, col: p.col, half: p.half || 0, src: p.src || null, op: p.op, halfStep: !!p.halfStep, c1: p.c1 || null, c0: p.c0 || null, on: p.on }));
     st.paste = null;
   }
+  /* И сразу общая проверка: блок, оказавшийся под линией, поднимается к ней (v1.201).
+     Снимки, снятые до этой версии, горизонта не несут, и после них пара «линия + блоки»
+     может не сойтись — pasteNorm приводит её к правилу «наложения всегда над линией». */
+  if (typeof pasteNorm === "function") pasteNorm();
   st.selectedRows = new Set(s.selectedRows || []);
   st.rowGroups = (s.rowGroups || []).map(g => ({ rows: g.rows.slice(), align: g.align }));
   st.rowGroupsL = (s.rowGroupsL || []).map(g => ({ rows: g.rows.slice(), align: g.align }));

@@ -163,7 +163,11 @@ function pasteGrabFromRows(){
   const items = [];
   let lo = Infinity;
   for (let r = idxs[0]; r <= idxs[idxs.length - 1]; r++) {
-    const txt = st.selectedRows.has(r) ? (getRowBits(st, r) || "") : "";
+    /* КОПИРУЕМ В ОБХОД ГОРИЗОНТА (испр. v1.176, баг-репорт «строки выделены, а пишет: нечего
+       класть»). getRowBits() с v1.131 отдаёт ПУСТОТУ для строк ниже линии — они не участвуют в
+       расчёте. Но копирование это не расчёт: строки цепочки как раз и лежат под линией, и брать
+       их оттуда надо. Поэтому спрашиваем слои напрямую, без горизонтного отсечения. */
+    const txt = st.selectedRows.has(r) ? (mergePasteIntoRow(st, r, getRowBitsNoPaste(st, r)) || "") : "";
     const sh = txt.length ? rowShiftFor(maxLen, r, txt, st.align) : 0;
     if (txt.length && sh < lo) lo = sh;
     // Полушаг «½»-выравниваний (v1.107, "выравнивание надо тоже брать что и у оригинала") — вторая
@@ -313,6 +317,34 @@ function pastePut(){
   if (list.length < PASTE_MAX) { list.push(block); pasteActive = list.length - 1; }
   else { pasteActive = Math.max(0, Math.min(PASTE_MAX - 1, pasteActive)); list[pasteActive] = block; }
   pasteNorm();
+  /* НОВЫЙ БЛОК СРАЗУ В ВЕРХНЕЕ ПОЛЕ (v1.172). Горизонт поднят — кладём блок вплотную под линию,
+     то есть в самый низ рабочего поля: там он не закрывает уже лежащие выше и сразу идёт в расчёт.
+     Горизонта нет — заводим его прямо здесь, по высоте самого блока: просьба «все наложения
+     появляются над нею» подразумевает, что поле возникает вместе с первым же блоком, а не ждёт,
+     когда его настроят руками. Места не хватает — pasteSetRow дорастит сверху. */
+  {
+    const cur0 = pasteCur();
+    if (cur0) {
+      if (!(typeof horizonOn === "function" && horizonOn())) {
+        /* ПОЛЕ ОТКРЫВАЕТСЯ, А НЕ ВЫРЕЗАЕТСЯ ИЗ ЦЕПОЧКИ (испр. v1.177, баг-репорт «когда вставляешь
+           наложение, горизонт прыгнул на строки цепочек»).
+           Было `st.horizonRow = длина блока` — то есть линия просто вставала на строку с этим
+           номером, а она принадлежит ЦЕПОЧКЕ. Снаружи это выглядело как разрез посреди данных, и
+           верхние строки цепочки уходили в поле, чего делать нельзя.
+           Правильно — сперва ДОБАВИТЬ столько пустых строк, сколько нужно блоку, и только потом
+           объявить их полем: цепочка при этом не трогается вовсе, она просто съезжает ниже вместе
+           со всеми своими привязками (addTopRows двигает и выделения, и группы, и якоря блоков). */
+        addTopRows(cur0.rows.length, true);
+        st.horizonRow = cur0.rows.length;
+      }
+      /* Паттерны цепочки дублируются в поле СРАЗУ при укладке блока (v1.173) — и до того, как
+         блок встанет на место: syncFieldPatterns может нарастить поле, а значит сдвинуть горизонт,
+         и место блока считается уже по новому. */
+      syncFieldPatterns();
+      pasteSetRow(cur0, (typeof horizonRow === "function" ? horizonRow() : 0) - cur0.rows.length);
+      pasteNorm();
+    }
+  }
   /* Свежеположенный блок сразу СХВАЧЕН (v1.111): стрелки двигают именно его, без предварительного
      клика по цифрам. Иначе после «Вставить» пришлось бы сперва ткнуть в блок мышью — а он ровно
      для того и положен, чтобы его сейчас же двигали. См. pasteFocus ниже. */
@@ -371,13 +403,17 @@ function pasteRenderBox(){
      даже когда блока на холсте нет. */
   const bOp = document.getElementById("pasteOp");
   if (bOp) {
-    bOp.textContent = PASTE_OP_LABEL[pasteOpMode] || PASTE_OP_LABEL.over;
-    bOp.classList.toggle("mode-act", pasteOpMode !== "over");
+    /* v1.167: панель показывает и правит настройки АКТИВНОГО блока — они теперь свои у каждого.
+       Блока нет вовсе — показываем общее умолчание, чтобы кнопка не пустовала. */
+    const opNow = p ? p.op : pasteOpMode;
+    bOp.textContent = PASTE_OP_LABEL[opNow] || PASTE_OP_LABEL.over;
+    bOp.classList.toggle("mode-act", opNow !== "over");
   }
   const bStep = document.getElementById("pasteStep");
   if (bStep) {
-    bStep.textContent = pasteHalfStep ? "⇥½" : "⇥1";
-    bStep.classList.toggle("mode-act", pasteHalfStep);
+    const stepNow = p ? !!p.halfStep : pasteHalfStep;
+    bStep.textContent = stepNow ? "⇥½" : "⇥1";
+    bStep.classList.toggle("mode-act", stepNow);
   }
   if (bOn) { bOn.classList.toggle("mode-act", has && p.on !== false); bOn.disabled = !has; }
   if (bClr) bClr.disabled = !has;
@@ -463,15 +499,20 @@ function pasteNudge(key){
       return true;
     }
     if (key === "ArrowUp" || key === "ArrowDown") {
+      /* ПРИ ПОДНЯТОМ ГОРИЗОНТЕ ЦЕПОЧКА ПО ВЕРТИКАЛИ НЕ ХОДИТ (v1.184, запрос: «когда тяну за нижнее
+         поле под горизонтом, то, что над горизонтом, не должно изменяться»).
+         Вертикальный сдвиг — это chainShiftRows, а он двигает ВСЮ раскладку разом, вместе с верхним
+         полем. Чтобы поле при этом оставалось на месте, приходилось компенсировать и горизонт, и
+         блоки — а от этого менялась ВЫСОТА поля, то есть ровно то, что меняться не должно.
+         Поэтому с поднятым горизонтом вертикаль у цепочки отключена: поле неприкосновенно, а
+         двигать цепочку вбок это не мешает. Горизонт опущен — всё как было. */
+      if (typeof horizonOn === "function" && horizonOn()) {
+        say("Поле наложений поднято — цепочка по вертикали не двигается: иначе поле уехало бы вместе с ней. Убери горизонт или двигай вбок.");
+        return true;
+      }
       const dR = (key === "ArrowDown" ? 1 : -1);
       chainShiftRows = (chainShiftRows || 0) + dR;
-      pasteShiftAllBy(0, dR);      // блоки остаются на месте — едет цепочка под ними (v1.128)
-      /* ГОРИЗОНТ ТОЖЕ ОСТАЁТСЯ НА МЕСТЕ (v1.147, запрос: «вместе с битами не надо его перемещать,
-         цепочки можно двигать сквозь него вверх-вниз»). Линия стоит на экране, цепочка проходит
-         под ней — значит при сдвиге раскладки на dR строк номер строки, ПЕРЕД которой линия режет,
-         обязан измениться на столько же в обратную сторону. Иначе линия ехала бы вместе со
-         строками, и «протащить цепочку сквозь горизонт» было бы нечем. */
-      if ((st.horizonRow | 0) > 0) st.horizonRow = Math.max(0, Math.min((st.rows || []).length, (st.horizonRow | 0) - dR));
+      pasteShiftAllBy(0, dR);
       if (typeof applyPatOffsets === "function") applyPatOffsets();
       saveCache();
       say("Цепочка: вся раскладка сдвинута на строку " + (key === "ArrowDown" ? "вниз" : "вверх") +
@@ -485,7 +526,7 @@ function pasteNudge(key){
   if (!p || !p.rows || !p.rows.length || !Number.isInteger(p.row)) return false;
   if (key === "ArrowLeft" || key === "ArrowRight") {
     const dir = key === "ArrowRight" ? 1 : -1;
-    if (pasteHalfStep) {
+    if (p.halfStep) {   // v1.167: шаг — свойство ЭТОГО блока, а не общая настройка
       const h = p.col * 2 + (p.half || 0) + dir;
       p.col = Math.floor(h / 2);
       p.half = h - p.col * 2;
@@ -503,7 +544,7 @@ function pasteNudge(key){
   pasteRenderBox();
   render(); saveCache();
   say("Наложение: строка " + rowLabel(p.row) + ", столбец " + p.col + (p.half ? "½" : "") +
-      ". Шаг стрелки — " + (pasteHalfStep ? "полстолбца" : "столбец") +
+      ". Шаг стрелки — " + (p.halfStep ? "полстолбца" : "столбец") +
       " (кнопка «⇥» в панели наложения). Клик мимо блока — и стрелки снова у цепочки.");
   return true;
 }
@@ -598,22 +639,30 @@ function pasteNudge(key){
   /* «⧉ Поверх → ⊕ XOR → ∧ AND → …» (v1.115). Перерисовка ОБЯЗАТЕЛЬНА, в отличие от кнопки шага:
      от режима меняются сами цифры, которые печатает блок, и подсветка изменённых бит — а заодно и
      то, что уходит в склейки и фон-поиск (см. pasteCombine в fold-1-core.js). */
+  /* Кнопки панели правят АКТИВНЫЙ блок (v1.167): операция и шаг стали его собственными полями.
+     Блока нет — меняем общее умолчание, с которым будет положен следующий. */
   const bOpEl = document.getElementById("pasteOp");
   if (bOpEl) bOpEl.onclick = () => {
-    const i = PASTE_OPS.indexOf(pasteOpMode);
-    pasteOpMode = PASTE_OPS[(i < 0 ? 0 : i + 1) % PASTE_OPS.length];
+    const cur = pasteCur();
+    const was = cur ? cur.op : pasteOpMode;
+    const i = PASTE_OPS.indexOf(was);
+    const next = PASTE_OPS[(i < 0 ? 0 : i + 1) % PASTE_OPS.length];
+    if (cur) cur.op = next; else pasteOpMode = next;
     pasteRenderBox();
     render(); saveCache();
-    say(PASTE_OP_NOTE[pasteOpMode] + " Изменённые биты подсвечены прямо на холсте.");
+    say((cur ? ("Наложение №" + (pasteActive + 1) + ": ") : "") + PASTE_OP_NOTE[next] +
+        " Изменённые биты подсвечены прямо на холсте.");
   };
   const bStepEl = document.getElementById("pasteStep");
   if (bStepEl) bStepEl.onclick = () => {
-    pasteHalfStep = !pasteHalfStep;
+    const cur = pasteCur();
+    const next = cur ? !cur.halfStep : !pasteHalfStep;
+    if (cur) cur.halfStep = next; else pasteHalfStep = next;
     pasteRenderBox();
-    saveCacheSoon();
-    say(pasteHalfStep
-      ? "Шаг стрелки для наложения: ПОЛСТОЛБЦА. Блок можно поставить между столбцами цепочки — на экране; в склейки и поиск он по-прежнему входит целыми столбцами."
-      : "Шаг стрелки для наложения: столбец.");
+    render(); saveCache();
+    say((cur ? ("Наложение №" + (pasteActive + 1) + ": ") : "") + (next
+      ? "шаг стрелки ПОЛСТОЛБЦА. На половине биты блока встают между битами строки и в склейке чередуются с ними, а не заменяют их."
+      : "шаг стрелки — целый столбец."));
   };
   pasteRenderBox();
 }
@@ -636,33 +685,76 @@ function pasteNudge(key){
      ещё по полотну — стрелки вернулись к тому, чем занимались (Круг, выбор столбца, границы полей
      под замком). */
   if (rowsEl) rowsEl.addEventListener("mousedown", e => {
-    pasteFocus = !!(pasteList().length && e.target.closest && e.target.closest(".paste-bits, .paste-grip"));
+    pasteFocus = !!(pasteList().length && e.target.closest && e.target.closest(".paste-bits, .paste-grip, .paste-axis"));
   }, true);
-  /* КРЕСТИК УДАЛЯЕТ СВОЙ БЛОК (v1.133). Слушатель на ФАЗЕ ПЕРЕХВАТА и на mousedown, а не на click:
-     ниже по файлу на том же #rows висит протяжка наложения, и она гасит событие через
-     stopImmediatePropagation — до обычного click дело просто не дошло бы.
-     snapshot() ПЕРЕД удалением: наложения входят в снимок состояния (см. captureState в
-     fold-1-core.js), поэтому Ctrl+Z возвращает блок, а Ctrl+Y убирает снова — как и просили. */
+  /* ═══ ПАНЕЛЬ БЛОКА: ОПЕРАЦИЯ, ШАГ, КРЕСТИК (v1.167) ═══
+     Слушатель на ФАЗЕ ПЕРЕХВАТА и на mousedown, а не на click: ниже по файлу на том же #rows висит
+     протяжка наложения, и она гасит событие через stopImmediatePropagation — до обычного click
+     дело просто не дошло бы.
+     Операция и шаг — свойства КОНКРЕТНОГО блока (см. op/halfStep в pasteNormOne), поэтому кнопки
+     правят только его. Удаление идёт через snapshot(): наложения входят в снимок состояния, и
+     Ctrl+Z возвращает блок, а Ctrl+Y убирает снова.
+     Клик по любой кнопке заодно делает блок активным — дальше его же ведут стрелки. */
   if (rowsEl) rowsEl.addEventListener("mousedown", e => {
-    const del = e.target.closest && e.target.closest(".paste-del");
-    if (!del || e.button !== 0) return;
+    const btn = e.target.closest && e.target.closest(".paste-bar b, .paste-colbtns b");
+    if (!btn || e.button !== 0) return;
     e.preventDefault();
     e.stopImmediatePropagation();
-    const pi = +(del.getAttribute("data-pi") || 0);
+    const bar = btn.closest(".paste-bar, .paste-colbtns");
+    const pi = +((bar && bar.getAttribute("data-pi")) || 0);
     const list = pasteList();
     if (!(pi >= 0) || pi >= list.length) return;
-    if (typeof snapshot === "function") snapshot();
-    list.splice(pi, 1);
-    if (pasteActive >= list.length) pasteActive = Math.max(0, list.length - 1);
-    if (!list.length) pasteFocus = false;
-    pasteRenderBox();
-    render(); saveCache();
-    say("Наложение №" + (pi + 1) + " убрано. Отмена (Ctrl+Z) вернёт его на место, повтор (Ctrl+Y) уберёт снова." +
-        (list.length ? " Осталось: " + list.length + "." : ""));
+    const blk = list[pi];
+    const act = btn.getAttribute("data-act");
+    pasteActive = pi;
+    pasteFocus = true;
+    if (act === "op") {
+      const order = ["over", "and", "xor"];
+      const k = order.indexOf(blk.op === "xor" || blk.op === "and" ? blk.op : "over");
+      blk.op = order[(k + 1) % order.length];
+      pasteRenderBox();
+      render(); saveCache();
+      say("Наложение №" + (pi + 1) + ": " + (PASTE_OP_NOTE[blk.op] || ""));
+      return;
+    }
+    if (act === "step") {
+      blk.halfStep = !blk.halfStep;
+      pasteRenderBox();
+      render(); saveCache();
+      say("Наложение №" + (pi + 1) + ": шаг стрелки — " +
+          (blk.halfStep ? "ПОЛСТОЛБЦА. На половине биты блока встают между битами строки и в склейке чередуются с ними, а не заменяют их."
+                        : "целый столбец."));
+      return;
+    }
+    if (act === "c1" || act === "c0") {
+      /* ЦВЕТ ВЫБИРАЕТСЯ ЧЕРЕЗ СТАТИЧЕСКИЙ input, А НЕ ЧЕРЕЗ ТОТ, ЧТО В ПАНЕЛИ БЛОКА (v1.178).
+         Панель блока перерисовывается каждым кадром, и системный диалог выбора цвета вырвало бы
+         из-под курсора вместе с ней. Поэтому кнопка на блоке — просто квадратик с цветом, а
+         диалог открывает спрятанный input, который живёт вне строк и не перерисовывается.
+         Какому блоку и какому цвету он сейчас служит — помним в data-атрибутах самого input. */
+      const host = document.getElementById(act === "c1" ? "colPaste1Ax" : "colPaste0Ax");
+      if (!host) return;
+      host.dataset.pi = String(pi);
+      host.dataset.slot = act;
+      const cur = (act === "c1" ? blk.c1 : blk.c0);
+      if (cur) host.value = cur;
+      host.click();
+      return;
+    }
+    if (act === "del") {
+      if (typeof snapshot === "function") snapshot();
+      list.splice(pi, 1);
+      if (pasteActive >= list.length) pasteActive = Math.max(0, list.length - 1);
+      if (!list.length) pasteFocus = false;
+      pasteRenderBox();
+      render(); saveCache();
+      say("Наложение №" + (pi + 1) + " убрано. Отмена (Ctrl+Z) вернёт его на место, повтор (Ctrl+Y) уберёт снова." +
+          (list.length ? " Осталось: " + list.length + "." : ""));
+    }
   }, true);
   if (rowsEl) rowsEl.addEventListener("mousedown", e => {
-    // .paste-grip — своя ручка блока (v1.107, см. её в render()): тот же жест, что и за цифры.
-    const el = e.target.closest && e.target.closest(".paste-bits, .paste-grip");
+    // .paste-grip и .paste-axis — ручка блока и его ось (v1.107, ось добавлена в v1.205): тот же жест, что и за цифры.
+    const el = e.target.closest && e.target.closest(".paste-bits, .paste-grip, .paste-axis");
     if (!el || e.button !== 0) return;
     /* ЗА КАКОЙ ИМЕННО БЛОК СХВАТИЛИСЬ (v1.124) — номер лежит в data-pi самой цифры или ручки, его
        ставит render(). Схваченный тут же становится активным: дальше его ведут и мышь, и стрелки,
@@ -740,13 +832,21 @@ function pasteNudge(key){
   if (rowsEl2) rowsEl2.addEventListener("mousedown", e => {
     if (e.button !== 0) return;
     if (typeof selectionAllowed === "function" && selectionAllowed()) return;  // не под замком — жест чужой
-    if (e.target.closest && e.target.closest(".paste-bits, .paste-grip")) return;
+    if (e.target.closest && e.target.closest(".paste-bits, .paste-grip, .paste-axis")) return;
     /* ПОПАДАНИЕ В ПОЛЕ БИТ СЧИТАЕМ ПО ГЕОМЕТРИИ, А НЕ ПО ЦЕЛИ СОБЫТИЯ: у .ln .bits в стилях стоит
        pointer-events:none (иначе поле перехватывало бы клики, предназначенные строке), поэтому
        mousedown приходит на саму .ln, и closest(".bits") не нашёл бы ничего никогда. Берём строку,
        спрашиваем у неё её поле бит и сверяем, попал ли курсор в его горизонтальные границы — так
        жест остаётся именно «схватил за биты», а не «ткнул куда угодно в строку». */
-    const lnEl = e.target.closest && e.target.closest(".ln");
+    /* СТРОКУ ПОД КУРСОРОМ ИСКАТЬ НЕ ОБЯЗАТЕЛЬНО (испр. v1.183, баг-репорт «не всегда могу за биты
+       цепочки подхватить, перемещая курсором»).
+       Раньше жест требовал попасть ТОЧНО в строку: не нашёл .ln под курсором — молчал. А промахнуться
+       легко: между строками есть межстрочный интервал, снизу под последней строкой пусто, и там
+       нажатие просто проваливалось. Ощущалось это как «иногда хватает, иногда нет».
+       Поле бит у всех строк одно и то же по горизонтали, поэтому для проверки годится ЛЮБАЯ строка:
+       не нашли под курсором — берём первую попавшуюся. Смысл жеста не меняется, он лишь перестал
+       требовать снайперской точности по вертикали. */
+    const lnEl = (e.target.closest && e.target.closest(".ln")) || rowsEl2.querySelector(".ln");
     if (!lnEl) return;
     const bitsEl = lnEl.querySelector(".bits");
     if (!bitsEl) return;
@@ -785,16 +885,19 @@ function pasteNudge(key){
        Стало: помним, сколько уже скомпенсировали за этот жест (appliedHalf/appliedRows), и каждый
        кадр досылаем ровно недостающее. Правки, которые вносит клампинг, в счёт не идут — жест их
        не заказывал. */
+    /* С ПОДНЯТЫМ ГОРИЗОНТОМ ВЕРТИКАЛЬ ОТКЛЮЧЕНА (v1.184, см. ту же причину в стрелках выше):
+       chainShiftRows двигает ВСЮ раскладку вместе с верхним полем, и удержать поле на месте можно
+       было только компенсацией горизонта — от которой менялась его высота. Поле должно оставаться
+       нетронутым, поэтому вертикальная составляющая жеста просто игнорируется. */
+    const fieldUp = (typeof horizonOn === "function" && horizonOn());
     const wantHalf = Math.round(d * 2);
-    const wantRows = dRows;
+    const wantRows = fieldUp ? 0 : dRows;
     const dHalf = wantHalf - (chainDrag.appliedHalf || 0);
     const dRow = wantRows - (chainDrag.appliedRows || 0);
     if (!dHalf && !dRow) return;
     st.axisCenterOffset = chainDrag.base + d;
-    chainShiftRows = chainDrag.baseRows + dRows;
+    if (!fieldUp) chainShiftRows = chainDrag.baseRows + wantRows;
     pasteShiftAllBy(dHalf, dRow);
-    // Горизонт остаётся на месте, цепочка идёт сквозь него (v1.147) — та же компенсация, что у блоков.
-    if (dRow && (st.horizonRow | 0) > 0) st.horizonRow = Math.max(0, Math.min((st.rows || []).length, (st.horizonRow | 0) - dRow));
     chainDrag.appliedHalf = wantHalf;
     chainDrag.appliedRows = wantRows;
     if (typeof applyPatOffsets === "function") applyPatOffsets();   // --chain-shift-y для вертикали
@@ -1305,12 +1408,18 @@ function rotateSelected90(ccw){
   // переписывается ни одна строка.
   let blockEnd = end;
   const lackTop = Math.max(0, W - (blockEnd + 1));
+  /* НЕДОСТАЮЩИЕ СТРОКИ ДОБАВЛЯЕТ addTopRows (испр. v1.209, найдено разбором кода).
+     Здесь стояла своя вставка пустых строк в начало списка — и на этом всё: номера, которыми
+     заведует остальное приложение, оставались от прежней нумерации. Строки уезжали, а горизонт,
+     якоря наложений, выделения строк и паттернов, группы, указатели прогона и построчные карты
+     оставались на месте — то же расхождение, что чинилось в clearTopBuilt(). addTopRows() двигает
+     весь набор разом и заводит ячейки паттернов, поэтому здесь остаётся поправить СВОИ номера. */
   if (lackTop) {
-    const blanks = new Array(lackTop).fill("");
-    st.rows.splice(0, 0, ...blanks);
-    st.used.splice(0, 0, ...blanks.map(() => false));
+    addTopRowsBulk(lackTop, true);
     blockEnd += lackTop;
   }
+  // Границы блока после сдвига — по ним ниже правятся разделители и подпись в журнале.
+  const startS = start + lackTop, endS = end + lackTop;
   const from = blockEnd - W + 1;
   const newUsed = out.map(() => false);
   st.rows.splice(from, W, ...out);
@@ -1322,8 +1431,8 @@ function rotateSelected90(ccw){
   if (st.rowDividers && st.rowDividers.size) {
     const delta = W - R, shifted = new Set();
     for (const d of st.rowDividers) {
-      if (d >= start && d <= end) continue;
-      shifted.add(d > end ? d + delta : d);
+      if (d >= startS && d <= endS) continue;
+      shifted.add(d > endS ? d + delta : d);
     }
     st.rowDividers = shifted;
   }
@@ -1343,7 +1452,7 @@ function rotateSelected90(ccw){
   st.hit = null;
   const dirLabel = ccw ? "против часовой" : "по часовой";
   say(`Поворот 90° (${dirLabel}): было ${R} стр. × ${W} столб. — стало ${W} стр. Паттерны не тронуты.`);
-  logStep("Поворот 90°", `${start + 1}–${end + 1}`, out.join(""), `Блок ${R}×${W} повёрнут ${dirLabel}`);
+  logStep("Поворот 90°", `${startS + 1}–${endS + 1}`, out.join(""), `Блок ${R}×${W} повёрнут ${dirLabel}`);
   render(); saveCache();
 }
 /* Проверить фон-поиск ПРЯМО СЕЙЧАС и, если паттерн нашёлся, захватить находку — тот же захват, что
@@ -2046,27 +2155,18 @@ function buildTopMirror(mode, keepSel){
   snapshot();
   let shift = 0;
   if (built < need) {
-    const add = need - built;
-    const blanks = new Array(add).fill("");
-    st.rows.splice(0, 0, ...blanks);
-    st.used.splice(0, 0, ...blanks.map(() => false));
-    st.pats.splice(0, 0, ...blanks.map(() => ({ text: "", ord: -1, found: false, kind: null, step: null })));
-    st.topBuilt = need;
-    shift = add;
+    /* Строки заводит addTopRows (испр. v1.209, найдено разбором кода): своя вставка двигала
+       только выделение строк и разделители (см. блок ниже, теперь пустой), а горизонт, якоря
+       наложений, выделение паттернов, группы и указатели прогона оставались от прежней
+       нумерации — то же расхождение, что чинилось в clearTopBuilt() и в повороте на 90°.
+       topBuilt при этом получается ровно need: он и был built, а добавили need − built. */
+    shift = addTopRowsBulk(need - built, true);
   }
   // built > need — НИЧЕГО НЕ СНИМАЕМ (запрос пользователя: "если уже есть построение верхнее на
   // меньшую высоту, пусть просто затемняет и исключает из поиска, а не удаляет и строит заново").
   // Лишние зеркала остаются на месте, их и так не видно в расчётах: всё выше границы участия
   // затемнено и отдаёт пустую строку любому режиму (см. firstActiveRow/getRowBits).
-  if (shift) {
-    if (st.selectedRows && st.selectedRows.size) {
-      st.selectedRows = new Set(Array.from(st.selectedRows).map(r => r + shift).filter(r => r >= 0));
-    }
-    if (st.rowDividers && st.rowDividers.size) {
-      st.rowDividers = new Set(Array.from(st.rowDividers).map(d => d + shift).filter(d => d >= 0));
-    }
-    shiftRowMaps(shift);
-  }
+  // Номера (выделения, разделители, горизонт, якоря блоков, карты) сдвинул addTopRows выше.
   // Раскладка: 0..B-1 — зеркала, B — нулевая строка, B + L — строка с номером L. Значит источник
   // зеркала j (сверху вниз) лежит в 2*B - j.
   const B = st.topBuilt || 0;
@@ -2219,6 +2319,20 @@ function addTopRows(n, quiet){
    на единицу, поэтому ничего сдвигать не надо вовсе — ни выделений, ни групп, ни якорей наложений,
    ни построчных карт. Оттого здесь нет и половины того, что понадобилось наверху.
    Строки пустые: в расчёт они не идут, а лежащие на них наложения идут — ровно как сверху. */
+/* СКОЛЬКО БЫ НИ ПОПРОСИЛИ (v1.209). addTopRows() за один вызов добавляет не больше 200 строк —
+   разумный предохранитель для жестов, но операциям вроде поворота на 90° или достроения зеркал
+   вглубь цепочки может понадобиться и больше. Зовём столько раз, сколько нужно, и возвращаем
+   ОБЩЕЕ число добавленного; ноль в ответ (расти дальше некуда) обрывает цикл, чтобы он не стал
+   бесконечным. */
+function addTopRowsBulk(n, quiet){
+  let want = Math.max(0, n | 0), got = 0;
+  while (want > 0) {
+    const done = addTopRows(Math.min(200, want), quiet);
+    if (!done) break;
+    got += done; want -= done;
+  }
+  return got;
+}
 function addBottomRows(n, quiet){
   const add = Math.max(1, Math.min(200, n | 0));
   if (!quiet) snapshot();
@@ -2229,6 +2343,47 @@ function addBottomRows(n, quiet){
   }
   if (!quiet) { render(); saveCache(); }
   return add;
+}
+
+/* ═══ УБРАТЬ ПУСТЫЕ СТРОКИ СВЕРХУ (v1.175) ═══ Обратная операция к addTopRows(): нужна, чтобы
+   ЛИНИЯ ГОРИЗОНТА могла не только открывать место наверху, но и закрывать его.
+   Снимаем ТОЛЬКО пустые строки и только те, под которыми нет наложения: линия управляет размером
+   рабочего поля, а не содержимым — стереть чужие биты она права не имеет. Наткнулись на непустую
+   строку — останавливаемся, сколько сняли, столько и вернём.
+   Все привязки к номерам сдвигаются назад ровно на снятое: выделения, разделители, группы, пара
+   строк, горизонт, якоря наложений и построчные карты — тем же shiftRowMaps, что и при росте. */
+function removeTopRows(n, quiet){
+  const want = Math.max(0, n | 0);
+  if (!want) return 0;
+  const covered = new Set();
+  for (const pp of (Array.isArray(st.pastes) ? st.pastes : [])) {
+    if (!pp || !pp.rows) continue;
+    for (let k = 0; k < pp.rows.length; k++) if (pp.rows[k] && pp.rows[k].txt) covered.add((pp.row | 0) + k);
+  }
+  let cut = 0;
+  while (cut < want && cut < st.rows.length
+         && !((st.rows[cut] || "").length)
+         && !covered.has(cut)) cut++;
+  if (!cut) return 0;
+  if (!quiet) snapshot();
+  st.rows.splice(0, cut);
+  st.used.splice(0, cut);
+  st.pats.splice(0, cut);
+  st.topBuilt = Math.max(0, (st.topBuilt || 0) - cut);
+  if (st.selectedRows && st.selectedRows.size) st.selectedRows = new Set(Array.from(st.selectedRows).map(r => r - cut).filter(r => r >= 0));
+  if (st.selectedPats && st.selectedPats.size) st.selectedPats = new Set(Array.from(st.selectedPats).map(r => r - cut).filter(r => r >= 0));
+  if (st.rowDividers && st.rowDividers.size) st.rowDividers = new Set(Array.from(st.rowDividers).map(d => d - cut).filter(d => d >= 0));
+  for (const key of ["rowGroups", "rowGroupsL", "rowGroupsR"]) {
+    for (const g of (st[key] || [])) g.rows = g.rows.map(r => r - cut).filter(r => r >= 0);
+  }
+  if (typeof rowGroupsTouch === "function") rowGroupsTouch();
+  st.aIdx = Math.max(0, (st.aIdx | 0) - cut);
+  st.bIdx = Math.max(0, (st.bIdx | 0) - cut);
+  if ((st.horizonRow | 0) > 0) st.horizonRow = Math.max(0, (st.horizonRow | 0) - cut);
+  for (const pp of (Array.isArray(st.pastes) ? st.pastes : [])) if (pp) pp.row = (pp.row | 0) - cut;
+  if (typeof shiftRowMaps === "function") shiftRowMaps(-cut);
+  if (!quiet) { render(); saveCache(); }
+  return cut;
 }
 
 /* ═══ ПОЛОТНО РАСТЁТ САМО, КОГДА БЛОК УПИРАЕТСЯ В КРАЙ (v1.146) ═══
@@ -2243,17 +2398,134 @@ function addBottomRows(n, quiet){
    ВНИЗ ничего не сдвигается — строки дописываются в конец, — и возвращается 0.
    quiet=true у обеих: перерисовку и снимок делает вызывающий, иначе на каждом кадре протяжки был бы
    и render, и запись в стек отмены. */
+/* ═══ НАЛОЖЕНИЯ ЖИВУТ ТОЛЬКО НАД ГОРИЗОНТОМ (v1.172, шаг 1 из переделки) ═══
+   Запрос пользователя: «пусть все наложения автоматом появляются над нею и ниже неё не заходят
+   вообще — как бы отдельное поле сверху для работы с наложениями».
+   Горизонт из «линии, отсекающей расчёт» становится ГРАНИЦЕЙ ПОЛЯ: выше неё рабочая площадка с
+   блоками, ниже — цепочка, которая в расчёте не участвует (это правило стоит с v1.131).
+   Отсюда два следствия, оба здесь:
+     1. блок не может уйти вниз за линию — верхняя граница жёсткая, и целиком, а не первой строкой:
+        свесившийся наполовину блок наполовину же и выпал бы из расчёта, что необъяснимо;
+     2. если места над линией не хватает, оно ДОБАВЛЯЕТСЯ — пустые строки сверху, а горизонт
+        сдвигается вместе с ними (addTopRows двигает и его), так что поле просто становится выше.
+   Горизонт выключен — правило спит, блок ходит как раньше: не всякая работа требует этого поля. */
+/* ═══ ПАТТЕРНЫ ЦЕПОЧКИ ДУБЛИРУЮТСЯ В ВЕРХНЕЕ ПОЛЕ (v1.173, шаг 2 переделки) ═══
+   Запрос пользователя: «паттерны автоматом просто дублируются в верхнее поле в свои поля… паттерны
+   все сразу, вне зависимости от наложения размера».
+   Верхнее поле — строки НАД горизонтом, где работают наложения. Чтобы искать в нём те же паттерны,
+   что и в цепочке, их надо там иметь: колонки П1/П2 у этих строк заполняются копиями паттернов
+   цепочки, по одному на строку, сверху вниз.
+   ВСЕ СРАЗУ И НЕЗАВИСИМО ОТ БЛОКА: сколько непустых паттернов в цепочке, столько строк поле и
+   получит, даже если блок ниже и короче. Не хватает строк — поле дорастает вверх (addTopRows двигает
+   и горизонт, и сами блоки, поэтому взаимное положение не меняется).
+   КОПИЯ, А НЕ ССЫЛКА: правка паттерна в цепочке не переписывает копию задним числом — синхронизация
+   происходит в момент вызова. Иначе пришлось бы решать, что делать с расхождениями, а вопрос этот
+   пока не поставлен.
+   Горизонт выключен — функция не делает ничего: верхнего поля нет, дублировать некуда. */
+function syncFieldPatterns(){
+  if (!(typeof horizonOn === "function" && horizonOn())) return 0;
+  const h = horizonRow();
+  const n = (st.rows || []).length;
+  /* НУМЕРАЦИЯ: МИНУСЫ ТОЛЬКО НАД ЛИНИЕЙ (v1.193, запрос «проследи, чтобы под горизонтом не
+     оказывались строки с минус номером»).
+     Номер строки считается как i − topBuilt, то есть отрицательные достаются первым topBuilt
+     строкам. Пока topBuilt совпадает с высотой поля, минусы ровно над линией и есть. Но эти два
+     счётчика умели расходиться: addTopRows поднимает topBuilt всегда, а горизонт — только если он
+     уже поднят. Стоило открыть поле не с нуля, и topBuilt оказывался больше — строки между линией
+     и topBuilt получали минусовые номера, находясь ПОД линией.
+     Пока поле есть, приравниваем их: над линией — минусы, под линией — обычная нумерация с нуля. */
+  st.topBuilt = h;
+  /* СКОЛЬКО ОТКРЫТО МЕСТА — СТОЛЬКО ПАТТЕРНОВ И КЛАДЁМ (v1.175, запрос: «паттерны класть
+     поочерёдно; если сверху открыто место для 10 строк, то положить первые 10 паттернов»).
+     Поле БОЛЬШЕ НЕ РАСТЁТ под число паттернов — его высотой распоряжается только линия горизонта.
+     Берём первые h паттернов цепочки по порядку и раскладываем сверху вниз; остальные ждут, пока
+     поле откроют шире.
+     Копии помечены признаком fieldCopy и в исходники не берутся никогда — иначе, оказавшись под
+     линией при сужении поля, они копировались бы снова и размножались (см. v1.174).
+     Функция ИДЕМПОТЕНТНА: её можно звать после каждого изменения поля, результат зависит только от
+     высоты поля и от паттернов самой цепочки. */
+  /* КОПИИ, ОКАЗАВШИЕСЯ ПОД ЛИНИЕЙ, — МУСОР (v1.190). Поле могло сжаться, строки сдвинуться, и
+     тогда помеченные копии остаются в цепочке: на вид они неотличимы от настоящих паттернов, а на
+     деле дублируют их же. Снимаем — настоящие при этом не трогаются, у них признака копии нет. */
+  for (let i = h; i < n; i++) {
+    if (st.pats[i] && st.pats[i].fieldCopy) { st.pats[i].text = ""; st.pats[i].fieldCopy = false; }
+  }
+  const src = [];
+  for (let i = h; i < n; i++) {
+    const p = st.pats[i];
+    if (!p || p.fieldCopy) continue;
+    if (p.text) src.push(p.text);
+    if (src.length >= h) break;      // больше, чем открыто строк, всё равно не поместится
+  }
+  /* В ПОЛЕ ЛЕЖАТ ТОЛЬКО КОПИИ (v1.183, запрос: «в верхней части за горизонтом только дубли
+     паттернов, нельзя чтобы там были и другие — при перемещении снизу попадают вверх, и там каша»).
+     Проходим ВСЕ строки поля, а не только те, куда легли копии: чужая ячейка, оказавшаяся наверху
+     от прежней раскладки, затирается. Поле — отражение паттернов цепочки, и держать в нём что-то
+     своё нельзя: искать по такой смеси всё равно бессмысленно. */
+  for (let r = 0; r < h && r < st.rows.length; r++) {
+    if (!st.pats[r]) st.pats[r] = { text: "", ord: -1, found: false, kind: null, step: null };
+    /* НАСТОЯЩИЙ ПАТТЕРН НЕ ТРОГАЕМ НИКОГДА (испр. v1.190, баг-репорт: «сдвинул границу горизонта —
+       паттерны продублировались, норм; потом нажал Escape — дубли залезли на сами паттерны под
+       горизонтом»).
+       В v1.183 раскладка переписывала ВСЕ строки поля без разбора, чтобы вычистить оттуда чужое.
+       Но стоит границе поля разойтись с реальностью хоть на строку — а после Сброса, обрезки
+       пустого добора и сдвигов это возможно, — и под перезапись попадают паттерны САМОЙ ЦЕПОЧКИ.
+       Это уже потеря данных, а не косметика.
+       Поэтому строку с непустым и НЕ помеченным как копия паттерном пропускаем: чужое в поле
+       по-прежнему вычищается, но настоящее переживает любую путаницу с границами. */
+    if (st.pats[r].text && !st.pats[r].fieldCopy) continue;
+    const t = (r < src.length) ? src[r] : "";
+    st.pats[r].text = t;
+    st.pats[r].fieldCopy = !!t;      // пустая ячейка копией не считается — её можно занять позже
+    st.pats[r].found = false;
+    st.pats[r].kind = null;
+    st.pats[r].step = null;
+  }
+  return 0;
+}
+/* ДОКУДА БЛОКУ МОЖНО ВНИЗ (v1.192, запрос: «наложения должны уезжать ниже границы, только скрываясь
+   под ней, но так, чтобы нельзя было тот бит, за который тянешь, увезти вниз и скрыть — иначе его
+   потом не вытянуть обратно»).
+   Раньше (v1.172) блок держали ЦЕЛИКОМ над линией: свесившийся наполовину наполовину же выпадал бы
+   из расчёта. Но так теряется полезное — спрятать хвост блока под линию, оставив в работе только
+   его верх.
+   Теперь вниз можно, пока над линией остаётся ПЕРВАЯ строка блока. Именно на ней стоят ось, панель
+   с кнопками и крестик, то есть всё, чем блок хватают: пока она видна, блок всегда можно вытянуть
+   обратно. Строки, ушедшие под линию, не рисуются и в расчёт не идут (см. render и getRowBits) —
+   они просто ждут, когда их поднимут. */
+function pasteFieldTop(p){
+  const h = (typeof horizonRow === "function") ? horizonRow() : 0;
+  return h > 0 ? (h - 1) : null;   // null — горизонта нет, потолка тоже
+}
 function pasteSetRow(p, wantRow){
   if (!p || !p.rows || !p.rows.length) return 0;
-  if (wantRow < 0) {
-    const add = -wantRow;
-    addTopRows(add, true);      // сдвигает и p.row, и всё остальное
-    p.row = 0;                  // после сдвига желаемое место — самый верх
+  const top = pasteFieldTop(p);
+  let want = wantRow;
+  if (top !== null && want > top) want = top;   // ниже линии не пускаем
+  if (want < 0) {
+    /* Места над линией не хватило — доращиваем поле. addTopRows сдвигает всё, включая горизонт и
+       сам блок, поэтому после него желаемое место — самый верх. */
+    const add = -want;
+    addTopRows(add, true);
+    p.row = 0;
     return add;
   }
-  const need = wantRow + p.rows.length - (st.rows || []).length;
-  if (need > 0) addBottomRows(need, true);
-  p.row = wantRow;
+  /* ПОД ЛИНИЕЙ ПОЛОТНО НЕ РАСТИМ (v1.203, баг-репорт «делает пустые строки под горизонтом при
+     перемещении, иногда»). Хвост блока с v1.192 законно свисает под линию — там он не рисуется
+     и в расчёт не идёт, значит и строк под него заводить не нужно. Полотно росло всё равно:
+     счёт шёл по ВСЕЙ длине блока, и стоило хвосту оказаться ниже последней строки цепочки, как
+     снизу дописывались пустые строки. Отсюда и «иногда»: короткий блок у верха поля до конца
+     цепочки не доставал, и рост не срабатывал.
+     Над линией доращивать нечего по определению: якорь уже прижат к полю (top выше), а строки
+     поля существуют все. Горизонт выключен — блок обязан помещаться целиком, и рост прежний. */
+  if (!(typeof horizonOn === "function" && horizonOn())) {
+    const need = want + p.rows.length - (st.rows || []).length;
+    if (need > 0) addBottomRows(need, true);
+  }
+  p.row = want;
+  /* Поле могло изменить высоту (строки добавились или снялись) — приводим его паттерны в порядок
+     тут же (v1.183). Иначе в верхних строках оставались бы чужие ячейки от прежней раскладки. */
+  if (typeof syncFieldPatterns === "function") syncFieldPatterns();
   return 0;
 }
 /* ЧЕМ ЗАПОЛНЯЕТСЯ ПОСТРОЕННАЯ СТРОКА (запрос пользователя: "кнопку — достраивает вверх не инверсию,
@@ -2269,6 +2541,12 @@ function topMirrorOf(src){
 function refreshTopMirrors(){
   const need = st.topBuilt || 0;
   if (!need || (st.topBuildMode || "rebuild") !== "rebuild") return 0;
+  /* ПОЛЕ — НЕ ПОСТРОЕНИЯ (испр. v1.207, баг-репорт «опять при Escape появилось верхнее
+     достроение»). Пока поднят горизонт, topBuilt приравнен высоте поля (v1.193, ради нумерации
+     строк), и эта функция принимала строки поля за зеркала цепочки: Сброс честно переписывал их
+     отражениями, и над линией возникало «достроение», которого никто не делал. Над линией живут
+     копии паттернов и наложения — зеркалам там места нет. Горизонт выключен — всё как было. */
+  if (typeof horizonOn === "function" && horizonOn()) return 0;
   let n = 0;
   for (let j = 0; j < need; j++) {
     const val = topMirrorOf(st.rows[2 * need - j]);
@@ -2291,14 +2569,33 @@ function clearTopBuilt(){
   st.topBuilt = 0;
   topBaseCapture(); // построений нет — и базы для Сброса тоже
   shiftRowMaps(-built);
-  // Нулевая строка построением НЕ является — она остаётся на месте и просто снова становится
-  // самой верхней (см. ensureZeroRow).
+  /* ═══ НОМЕРА ЕДУТ ВСЕ, А НЕ ВЫБОРОЧНО (испр. v1.209, найдено разбором кода) ═══
+     Строки снимаются сверху, значит ВСЁ, что хранит номер строки, обязано уехать на столько же.
+     Правились только выделение строк и разделители — а горизонт, якоря наложений, выделение
+     паттернов, группы строк и указатели прогона (aIdx/bIdx) оставались от прежней нумерации.
+     Ровно от этого и «биты цепочек оказались выше горизонта»: линия держала свой старый номер,
+     под которым теперь лежали строки цепочки. Список тот же, что у removeTopRows() выше, — эти
+     две функции обязаны быть зеркальными.
+     Якоря блоков не пускаем выше нуля: уехавший в минус блок рисуется за краем полотна, и
+     вытащить его обратно нечем (то же правило, что в pasteNorm). */
   if (st.selectedRows && st.selectedRows.size) {
     st.selectedRows = new Set(Array.from(st.selectedRows).map(r => r - built).filter(r => r >= 0));
+  }
+  if (st.selectedPats && st.selectedPats.size) {
+    st.selectedPats = new Set(Array.from(st.selectedPats).map(r => r - built).filter(r => r >= 0));
   }
   if (st.rowDividers && st.rowDividers.size) {
     st.rowDividers = new Set(Array.from(st.rowDividers).map(d => d - built).filter(d => d >= 0));
   }
+  for (const key of ["rowGroups", "rowGroupsL", "rowGroupsR"]) {
+    for (const g of (st[key] || [])) g.rows = g.rows.map(r => r - built).filter(r => r >= 0);
+  }
+  if (typeof rowGroupsTouch === "function") rowGroupsTouch();
+  st.aIdx = Math.max(0, (st.aIdx | 0) - built);
+  st.bIdx = Math.max(0, (st.bIdx | 0) - built);
+  if ((st.horizonRow | 0) > 0) st.horizonRow = Math.max(0, (st.horizonRow | 0) - built);
+  for (const p of pasteList()) if (p) p.row = Math.max(0, (p.row | 0) - built);
+  if (typeof pasteNorm === "function") pasteNorm();
   insertedFlagsMap.clear();
   invFlagsMap.clear();
   maskChangedMap.clear(); maskBaseRows = null;
@@ -5380,11 +5677,26 @@ document.addEventListener("keydown", e => {
     }
   }
 
-  // Q — горячая клавиша "🔢 Выбор столбца" вкл/выкл (запрос пользователя), без Ctrl/Alt/Meta,
-  // чтобы не мешать системным сочетаниям.
-  if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === "q") {
+  /* Q — «📋 ВСТАВИТЬ» И СРАЗУ СНЯТЬ ВЫДЕЛЕНИЕ (v1.166, запрос пользователя: «горячую клавишу и
+     сразу снятие выделения, пусть Q»).
+     РАНЬШЕ Q ВКЛЮЧАЛА «🔢 Выбор столбца» (setColPickMode) — это назначение снято по прямой просьбе
+     отдать клавишу наложению. Сам режим никуда не делся, он по-прежнему на своей кнопке в панели.
+     Порядок важен: сперва pastePut() — она берёт форму куска ИЗ ВЫДЕЛЕНИЯ, — и только потом
+     выделение снимается. Наоборот было бы нечего класть.
+     Снятие тем же clearAllSelections(), что у Escape: уходят и строки, и ячейки, и выбранный
+     столбец. Смысл в том, что после «Вставить» выделение уже отработало, а подсветка мешает
+     разглядеть сам блок. */
+  /* КЛАВИША ЛОВИТСЯ ПО КОДУ, А НЕ ПО СИМВОЛУ (испр. v1.170, баг-репорт «Q не срабатывает»).
+     Было e.key === "q". При РУССКОЙ раскладке та же физическая клавиша даёт "й", проверка её не
+     узнавала, и горячая клавиша молчала — а работа тут идёт как раз в русской раскладке.
+     e.code («KeyQ») описывает саму клавишу и от раскладки не зависит вовсе. e.key оставлен вторым
+     условием: на случай раскладок, где кода может не быть. */
+  if (!e.ctrlKey && !e.metaKey && !e.altKey &&
+      (e.code === "KeyQ" || (e.key && e.key.toLowerCase() === "q"))) {
     e.preventDefault();
-    setColPickMode(!colPickMode);
+    if (typeof pastePut === "function") pastePut();
+    if (typeof clearAllSelections === "function") clearAllSelections();
+    render();
     return;
   }
 
@@ -5648,7 +5960,62 @@ const bLoadEl = document.getElementById("bLoad");
 if (bLoadEl) bLoadEl.onclick = () => { loadTemplate(); saveCache(); };
 
 const bSideEl = document.getElementById("bSide");
+
+/* ═══ ПАНЕЛИ ВОЗВРАЩАЮТСЯ КЛИКОМ КОЛЁСИКОМ (v1.163) ═══
+   Запрос пользователя: «сделай показ панелей после закрытия по клику колёсиком, чтобы показать
+   обратно без клика можно было».
+   Беда закрытых панелей в том, что вместе с ними уходит и кнопка «▤ Панели», которой их вернуть, —
+   остаётся искать её в меню. Средняя кнопка мыши для этого удобна: по полотну она ничем не занята,
+   промахнуться некуда, и жест не пересекается ни с выделением, ни с протяжкой.
+   Работает В ОБЕ СТОРОНЫ — и закрыть, и открыть, — чтобы не заводить два разных жеста для одного
+   действия. Ловим на всём документе, но не внутри полей ввода: там средняя кнопка вставляет текст
+   из буфера в некоторых системах, и отбирать это у неё не стоит.
+   auxclick, а не mousedown: это штатное событие именно для средней и правой кнопок, и браузер сам
+   не путает его с обычным кликом. preventDefault глушит автопрокрутку, которую Windows вешает на
+   среднюю кнопку — иначе страница начинала бы «ехать» вслед за курсором. */
+document.addEventListener("auxclick", e => {
+  if (e.button !== 1) return;
+  const t = e.target;
+  if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" ||
+            (t.closest && t.closest("input, textarea, select, a")))) return;
+  e.preventDefault();
+  const hidden = document.body.classList.toggle("hide-side");
+  saveCache();
+  say(hidden
+    ? "Панели скрыты (клик колёсиком). Тем же кликом — вернуть."
+    : "Панели показаны (клик колёсиком).");
+});
+/* Автопрокрутку Windows заводит уже по mousedown средней кнопки, поэтому глушим и её — иначе
+   курсор успевает превратиться в «компас» ещё до того, как сработает auxclick. */
+document.addEventListener("mousedown", e => {
+  if (e.button !== 1) return;
+  const t = e.target;
+  if (t && t.closest && t.closest("input, textarea, select, a")) return;
+  e.preventDefault();
+});
 if (bSideEl) bSideEl.onclick = () => { document.body.classList.toggle("hide-side"); saveCache(); };
+/* Кнопка возврата в полосе выравниваний (v1.164): видна только при скрытых панелях, поэтому ей
+   достаточно уметь ПОКАЗАТЬ — прятать нечего, себя она этим же кликом и уберёт. */
+const bSideBackEl = document.getElementById("bSideBack");
+if (bSideBackEl) bSideBackEl.onclick = () => {
+  /* ДВЕ РАЗНЫЕ ПРИЧИНЫ, ПО КОТОРЫМ ПАНЕЛЕЙ НЕ ВИДНО (испр. v1.165, баг-репорт: «при нажатии на
+     кнопку панели не показываются, хотя уведомление есть»).
+     Первая — доки скрыты классом hide-side. Вторая — доки на месте, но ПУСТЫЕ: крестик на панели
+     зовёт hideTab() и снимает саму вкладку. Снаружи это выглядит одинаково, а лечится по-разному,
+     и в v1.164 я снимал только класс — потому кнопка честно сообщала об успехе, а на экране не
+     менялось ничего.
+     Теперь сперва показываем доки, а если после этого ни одной вкладки так и не видно — зовём
+     toggleAllPins(), ту же функцию, что и общая кнопка «показать все панели». */
+  document.body.classList.remove("hide-side");
+  const anyVisible = (typeof MENUS === "object" && typeof isTabVisible === "function")
+    ? Object.keys(MENUS).some(mid => isTabVisible(mid))
+    : true;
+  if (!anyVisible && typeof toggleAllPins === "function") toggleAllPins();
+  saveCache();
+  say(anyVisible
+    ? "Панели показаны. Спрятать — кнопкой «▤ Панели» или кликом колёсиком."
+    : "Панели возвращены: все вкладки закреплены заново. Крестик на панели убирает её по одной.");
+};
 
 /* Жирность символов 0/1 (см. #bBoldBits/body.bold-bits в CSS) — простой тумблер без своего
    цвета, та же mode-act подсветка кнопки, что у "01"/"1↕1"/"1⤡1". */

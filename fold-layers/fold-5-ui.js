@@ -523,13 +523,52 @@ for (const el of [colPat1L, colPat0L, colPat1R, colPat0R]) {
    fold-2-render.js), а цвет берётся из CSS-переменной — смена пикера видна тем же кадром. */
 const colPaste1 = document.getElementById("colPaste1");
 const colPaste0 = document.getElementById("colPaste0");
-function applyPasteBitColors(){
+/* ДВЕ ПАРЫ ПИКЕРОВ НА ОДНУ НАСТРОЙКУ (v1.171). Одна живёт в панели «Наложение», вторая — в полосе
+   осей: полоса видна всегда, даже когда панели скрыты, и подобраться к цвету оттуда быстрее.
+   Значение одно, поэтому любая правка тут же переписывается во вторую пару — иначе они разошлись бы
+   и показывали разное при одном и том же цвете на холсте. */
+const colPaste1Ax = document.getElementById("colPaste1Ax");
+const colPaste0Ax = document.getElementById("colPaste0Ax");
+function applyPasteBitColors(src){
   const root = document.documentElement;
-  if (colPaste1) root.style.setProperty("--paste-c1", colPaste1.value);
-  if (colPaste0) root.style.setProperty("--paste-c0", colPaste0.value);
+  const v1 = (src === "ax" && colPaste1Ax) ? colPaste1Ax.value : (colPaste1 ? colPaste1.value : null);
+  const v0 = (src === "ax" && colPaste0Ax) ? colPaste0Ax.value : (colPaste0 ? colPaste0.value : null);
+  if (v1) {
+    root.style.setProperty("--paste-c1", v1);
+    if (colPaste1 && colPaste1.value !== v1) colPaste1.value = v1;
+    if (colPaste1Ax && colPaste1Ax.value !== v1) colPaste1Ax.value = v1;
+  }
+  if (v0) {
+    root.style.setProperty("--paste-c0", v0);
+    if (colPaste0 && colPaste0.value !== v0) colPaste0.value = v0;
+    if (colPaste0Ax && colPaste0Ax.value !== v0) colPaste0Ax.value = v0;
+  }
 }
 for (const el of [colPaste1, colPaste0]) {
   if (el) el.oninput = () => { applyPasteBitColors(); saveCacheSoon(); };
+}
+/* Эта пара служит ДВУМ задачам (v1.178): пока у неё нет data-pi — она правит ОБЩИЙ цвет наложений
+   (значение по умолчанию для новых блоков); как только кнопка на блоке позвала её через .click(),
+   в data-pi лежит номер блока, и правка уходит ЕМУ ОДНОМУ.
+   Признак снимается сразу после применения: следующий заход снова общий, пока блок не попросит. */
+for (const el of [colPaste1Ax, colPaste0Ax]) {
+  if (!el) continue;
+  el.oninput = () => {
+    const pi = el.dataset.pi;
+    if (pi !== undefined && pi !== "") {
+      const list = (typeof pasteList === "function") ? pasteList() : [];
+      const blk = list[+pi];
+      if (blk) {
+        if (el.dataset.slot === "c0") blk.c0 = el.value; else blk.c1 = el.value;
+        if (typeof render === "function") render();
+        saveCacheSoon();
+        return;
+      }
+    }
+    applyPasteBitColors("ax");
+    saveCacheSoon();
+  };
+  el.onchange = () => { delete el.dataset.pi; delete el.dataset.slot; };
 }
 applyPasteBitColors();
 
@@ -1106,7 +1145,12 @@ function makeColResizer(el, varName, selectorOfCol, minPx, onManual, invert, fie
          запрещает, а вот таскать за собой биты — как раз тот сдвиг поля, который он и держит. */
       // fieldKey остался только у ЦЕПОЧКИ ("C"): у крайних полей своего сдвига больше нет (v1.066),
       // их биты стоят на месте, а граница меняет только ширину коробки.
-      if (fieldKey === "C" && (typeof moveColsAllowed !== "function" || moveColsAllowed())) {
+      /* «L» — правая граница П1 (v1.187, запрос: «граница П1 едет вправо, содержимое цепочки
+         уезжает влево на то же число столбцов, чтобы его не накрывало»). Знак ОБРАТНЫЙ знаку
+         цепочки: расширяя П1, мы толкаем цепочку вправо, и чтобы картинка стояла на месте, её
+         содержимое надо увести влево ровно на столько же. Данные при этом не трогаются — едет
+         только сдвиг оси, как и у самой цепочки. */
+      if ((fieldKey === "C" || fieldKey === "L") && (typeof moveColsAllowed !== "function" || moveColsAllowed())) {
         const step = (typeof realColStepPx === "function" ? realColStepPx() : 0) || 8;
         const dCols = Math.round((w - startW) / step);
         if (dCols !== lastDCols) {
@@ -1114,7 +1158,7 @@ function makeColResizer(el, varName, selectorOfCol, minPx, onManual, invert, fie
           // Сдвиг цепочки — это st.axisCenterOffset, а он входит в геометрию строки, поэтому нужен
           // полноценный render(). Он тут не на каждый пиксель, а на каждый перейденный столбец,
           // то есть заметно реже движений мыши.
-          st.axisCenterOffset = baseOffC + dCols;
+          st.axisCenterOffset = baseOffC + (fieldKey === "L" ? -dCols : dCols);
           if (typeof render === "function") render();
         }
       }
@@ -1133,7 +1177,10 @@ function makeColResizer(el, varName, selectorOfCol, minPx, onManual, invert, fie
     window.addEventListener("mouseup", up);
   });
 }
-makeColResizer(document.getElementById("vsplit"), "--pat-w", ".pat", 40, () => { patWManual = true; }, false, null);
+/* Правая граница П1 (v1.187): fieldKey «L» — при её движении содержимое ЦЕПОЧКИ отъезжает на
+   столько же столбцов в обратную сторону, чтобы расширяющаяся колонка его не накрывала (см.
+   ветку fieldKey в makeColResizer). */
+makeColResizer(document.getElementById("vsplit"), "--pat-w", ".pat", 40, () => { patWManual = true; }, false, "L");
 /* vsplitL0 (внешняя левая граница П1) БОЛЬШЕ НЕ через makeColResizer — с v1.010 она не меняет
    ширину П1 вовсе (за это отвечает только #vsplit выше), а двигает все три поля разом. Свой
    отдельный обработчик — см. блок "vsplitL0 — СДВИГ ВСЕХ ТРЁХ ПОЛЕЙ" ниже. */
@@ -1957,6 +2004,39 @@ const HALF_ALIGNS = new Set(["halfcenter", "halfstairs", "rhalfstairs", "axis12"
    chainShiftRows при этом никуда не делся: он по-прежнему живёт в кэше и в настройках и сдвигает
    картинку, просто эта ручка больше не он. Понадобится сдвиг картинки отдельной ручкой — заведём,
    но мешать два смысла в одном перетаскивании было и есть источник путаницы. */
+/* СВОБОДНОЕ МЕСТО СЛЕВА ОТ П1 (v1.198) — сюда пускают биты длинного паттерна вместо обрезки
+   по границе колонки (см. clip-path у .ln .pat в fold.html). Считаем от левого края колонки
+   влево, придерживая тем, что там реально стоит: левой панелью настроек и полосой прокрутки,
+   когда они открыты. Скрыты — места до самого края окна. Значение уходит в --pat-spill;
+   ноль означает прежнее поведение, обрезку ровно по границе. */
+function updatePatSpill(){
+  const root = document.documentElement;
+  const cell = document.querySelector("#rows .ln .pat");
+  if (!cell) { root.style.setProperty("--pat-spill", "0px"); return; }
+  let guard = 0;
+  for (const id of ["leftPanel", "vScroll"]) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    const r = el.getBoundingClientRect();
+    // Скрытая панель — коробка нулевая или уехавшая за край; такая не мешает.
+    if (r.width > 0 && r.height > 0 && r.right > guard) guard = r.right;
+  }
+  const room = Math.floor(cell.getBoundingClientRect().left - guard - 2);
+  root.style.setProperty("--pat-spill", (room > 0 ? room : 0) + "px");
+}
+
+/* Свободное место меняется и БЕЗ перерисовки: от размера окна и от того, скрыты ли панели
+   (это просто класс на body, render за ним не идёт). Оба случая ловим сами и складываем
+   пересчёт в кадр, чтобы частые переключения классов не дёргали раскладку. */
+let patSpillQueued = 0;
+function queuePatSpill(){
+  if (patSpillQueued) return;
+  patSpillQueued = requestAnimationFrame(() => { patSpillQueued = 0; updatePatSpill(); });
+}
+addEventListener("resize", queuePatSpill);
+if (document.body) new MutationObserver(queuePatSpill)
+  .observe(document.body, { attributes: true, attributeFilter: ["class"] });
+
 function updateTopHorizon(){
   const el = document.getElementById("hsplitTop");
   if (!el) return;
@@ -1966,6 +2046,12 @@ function updateTopHorizon(){
   const rowH = Math.max(4, parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--row-h")) || 12);
   const h = (typeof horizonRow === "function") ? horizonRow() : 0;
   el.style.top = (rowsEl.getBoundingClientRect().top - chainEl.getBoundingClientRect().top + h * rowH) + "px";
+  /* ШИРИНУ СТАВИМ ЧИСЛОМ (испр. v1.186, баг-репорт «обрезалась горизонт-линия, продли её вправо до
+     конца браузера»). В CSS стояло width:max(100%,100vw), но 100% тут считается от #chain, а он
+     заметно уже окна — линия и обрывалась на его правом краю. Считаем сами: берём наибольшее из
+     ширины самой раскладки и ширины окна, плюс запас на отступ #chain от левого края экрана. */
+  const chainLeft = chainEl.getBoundingClientRect().left;
+  el.style.width = Math.max(chainEl.scrollWidth, window.innerWidth - chainLeft + 40) + "px";
   el.classList.add("act");
   // .on — горизонт СЕЙЧАС режет (над ним есть строки). Это не «стоит на месте», а «работает».
   el.classList.toggle("on", h > 0);
@@ -1993,15 +2079,32 @@ function updateTopHorizon(){
       el.classList.add("drag");
       document.body.classList.add("dragging");
       if (document.body.dataset.hov) document.body.dataset.hov = "";
+      let applied = 0;   // сколько строк поля уже добавлено/снято за этот жест
       const move = (ev) => {
-        /* Шаг — ровно высота строки: линия обязана вставать МЕЖДУ строк, а не «примерно там».
-           Ниже последней строки не пускаем: горизонт, под которым нет ничего, ничем не отличается
-           от выключенного, а состояние «вроде включён, но не режет» только путало бы. */
-        const n = (st.rows || []).length;
-        const next = Math.max(0, Math.min(n, base + Math.round((ev.clientY - y0) / rowH)));
-        if (next === (st.horizonRow | 0)) return;
-        st.horizonRow = next;
-        render();              // режет ДАННЫЕ — перерисовка обязательна, одним applyPatOffsets не обойтись
+        /* ЛИНИЯ ОТКРЫВАЕТ МЕСТО, А НЕ ЕДЕТ ПО СТРОКАМ (v1.175, запрос: «отключи перетаскивание
+           через строки цепочек, перетаскивание должно только открывать место сверху, не скакать
+           по строкам»).
+           Раньше жест двигал НОМЕР строки, перед которой режет линия, — то есть она проезжала
+           сквозь цепочку, и под неё поочерёдно попадали настоящие строки. Теперь она меняет
+           ВЫСОТУ ПОЛЯ: тянешь вниз — сверху добавляются пустые строки, тянешь вверх — снимаются.
+           Цепочка при этом стоит на месте и в поле не втягивается никогда.
+           Считаем от НАМЕРЕНИЯ жеста (applied), а не от текущей высоты: добавление строк сдвигает
+           и сам горизонт, и точку отсчёта, и разница «сколько хотели минус сколько уже сделали»
+           единственная величина, которая при этом не врёт.
+           Снять можно только пустые строки без наложений — см. removeTopRows(); упёрлись в занятую,
+           и поле дальше не сжимается, сколько ни тяни. */
+        const want = Math.round((ev.clientY - y0) / rowH);
+        const d = want - applied;
+        if (!d) return;
+        let done = 0;
+        if (d > 0) done = addTopRows(d, true);
+        else done = -removeTopRows(-d, true);
+        if (!done) return;
+        applied += done;
+        /* Поля ещё не было — заводим его прямо жестом: горизонт выключен, и addTopRows его не
+           двигает, потому что двигать нечего. Высота поля равна тому, сколько уже открыли. */
+        if ((st.horizonRow | 0) <= 0 && applied > 0) st.horizonRow = applied;
+        render();
         updateTopHorizon();
       };
       const up = () => {
@@ -2009,39 +2112,23 @@ function updateTopHorizon(){
         document.body.classList.remove("dragging");
         window.removeEventListener("mousemove", move);
         window.removeEventListener("mouseup", up);
+        /* Паттерны раскладываем по итогу жеста, а не на каждом кадре: их число зависит от высоты
+           поля, а она меняется до самого отпускания кнопки (v1.175). */
+        if (typeof syncFieldPatterns === "function") syncFieldPatterns();
+        render();
         saveCache();
         const h = (typeof horizonRow === "function") ? horizonRow() : 0;
-        say(h ? `Горизонт перед строкой ${h}: в расчёт идёт только то, что ВЫШЕ него — биты строк, их паттерны и лежащие там наложения. Всё ниже не участвует ни в склейках, ни в сквозной, ни в фон-поиске.`
-              : "Горизонт убран — считается вся цепочка.");
+        say(h ? ("Поле наложений: " + h + " строк над цепочкой. Паттерны цепочки разложены в него по порядку, сколько поместилось. Тяни линию — поле открывается и закрывается; сама цепочка стоит на месте.")
+              : "Поле наложений закрыто — считается вся цепочка.");
       };
       window.addEventListener("mousemove", move);
       window.addEventListener("mouseup", up);
     });
-    /* ДВОЙНОЙ КЛИК — В САМЫЙ НИЗ, ПОВТОРНЫЙ — В САМЫЙ ВЕРХ (v1.152, запрос пользователя: «пусть
-       двойной клик по горизонту выставляет его в самый низ, нижнюю строку над собой, и прокрутка
-       туда; а если там — то в самый верх и прокрутка»).
-       Раньше двойной клик просто убирал горизонт. Теперь это переключатель между двумя крайними
-       положениями: «всё в расчёте» (линия под последней строкой) и «выше линии нет ничего» (линия
-       у самого верха, правило спит). Оба — те состояния, в которые чаще всего и хочется попасть,
-       а тащить линию через всю цепочку руками долго.
-       Прокрутка идёт ПОСЛЕ перерисовки, через requestAnimationFrame: до неё высота содержимого ещё
-       старая, и scrollHeight соврал бы. */
-    el.addEventListener("dblclick", (e) => {
-      e.preventDefault();
-      const n = (st.rows || []).length;
-      const toBottom = ((typeof horizonRow === "function") ? horizonRow() : 0) < n;
-      st.horizonRow = toBottom ? n : 0;
-      render();
-      updateTopHorizon();
-      saveCache();
-      requestAnimationFrame(() => {
-        const sc = document.getElementById("screenCanvas");
-        if (sc) sc.scrollTop = toBottom ? sc.scrollHeight : 0;
-      });
-      say(toBottom
-        ? "Горизонт — в самый низ: вся цепочка выше линии, значит всё идёт в расчёт. Ещё двойной клик — вернуть линию наверх."
-        : "Горизонт — в самый верх: выше линии ничего нет, и правило спит, считается вся цепочка. Ещё двойной клик — опустить линию вниз.");
-    });
+    /* ДВОЙНОЙ КЛИК ПО ЛИНИИ УБРАН (v1.177, запрос: «убери двойной клик по нему»). В v1.152 он
+       швырял горизонт в самый низ или в самый верх, и это спорило с новым смыслом линии: она
+       больше не ездит по цепочке, а открывает и закрывает место сверху. Прыжок «в самый низ»
+       означал бы разом втянуть в поле всю цепочку — ровно то, чего быть не должно.
+       Закрыть поле теперь можно тем же перетаскиванием: тянешь линию вверх до упора. */
   }
 }
 /* РУЧКИ ОСЕЙ П1/П2 — КОРОТКИЕ, ТОЛЬКО ШАПКА ПЛЮС ПЕРВАЯ СТРОКА (v1.038, баг-репорт пользователя:
@@ -2232,6 +2319,7 @@ function updateAxisSplitPosition(maxLen){
     }
   }
   updateTopHorizon();
+  updatePatSpill();
   // Полоса выравниваний (#alignGrp) — не по центру экрана, а РОВНО НАД ОСЬЮ первой строки, и
   // едет вместе с ручкой оси/границами столбцов (запрос пользователя). Считаем в координатах
   // .main-layout — именно от неё отсчитывается её position:absolute; transform:translateX(-50%)
@@ -3989,23 +4077,32 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
    render() меняет число строк, а значит и высоту содержимого, и без этого бегунок остался бы с
    размером от прошлой картинки. */
 {
-  const bar = document.getElementById("vScroll");
-  const thumb = document.getElementById("vScrollThumb");
+  /* ОДНА ЛОГИКА НА ОБЕ ПОЛОСЫ (v1.188). Полос теперь две — у левого и правого краёв окна, — и
+     каждая должна и показывать положение, и вести полотно. Заводим их списком и вешаем один и тот
+     же набор обработчиков: расходиться в поведении им незачем, а дублировать код тем более. */
+  const bars = [
+    { bar: document.getElementById("vScroll"),  thumb: document.getElementById("vScrollThumb") },
+    { bar: document.getElementById("vScrollR"), thumb: document.getElementById("vScrollThumbR") }
+  ].filter(b => b.bar && b.thumb);
+  const bar = bars.length ? bars[0].bar : null;
+  const thumb = bars.length ? bars[0].thumb : null;
   const sc = document.getElementById("screenCanvas");
   if (bar && thumb && sc) {
     let drag = null;
     const sync = () => {
       const view = sc.clientHeight;
       const full = sc.scrollHeight;
-      if (!(full > view + 1)) { bar.classList.remove("on"); return; }
-      bar.classList.add("on");
-      const track = bar.clientHeight;
-      const h = Math.max(18, Math.round(track * view / full));
-      const maxTop = track - h;
+      if (!(full > view + 1)) { for (const b of bars) b.bar.classList.remove("on"); return; }
       const maxScroll = full - view;
-      const top = maxScroll > 0 ? Math.round(maxTop * (sc.scrollTop / maxScroll)) : 0;
-      thumb.style.height = h + "px";
-      thumb.style.top = Math.max(0, Math.min(maxTop, top)) + "px";
+      for (const b of bars) {
+        b.bar.classList.add("on");
+        const track = b.bar.clientHeight;
+        const h = Math.max(18, Math.round(track * view / full));
+        const maxTop = track - h;
+        const top = maxScroll > 0 ? Math.round(maxTop * (sc.scrollTop / maxScroll)) : 0;
+        b.thumb.style.height = h + "px";
+        b.thumb.style.top = Math.max(0, Math.min(maxTop, top)) + "px";
+      }
     };
     /* Обратный пересчёт: из положения бегунка — в scrollTop полотна. Считаем от ЦЕНТРА бегунка,
        поэтому щелчок по дорожке уводит туда, куда человек показал, а не на полбегунка мимо. */
@@ -4016,21 +4113,25 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
       const t = Math.max(0, Math.min(maxTop, topPx));
       sc.scrollTop = (full - view) * (t / maxTop);
     };
-    thumb.addEventListener("mousedown", e => {
-      if (e.button !== 0) return;
-      e.preventDefault(); e.stopPropagation();
-      drag = { y0: e.clientY, top0: parseFloat(thumb.style.top) || 0 };
-      document.body.classList.add("vscroll-drag");
-    });
-    bar.addEventListener("mousedown", e => {
-      if (e.button !== 0 || e.target === thumb) return;
-      e.preventDefault();
-      // Щелчок по дорожке — бегунок серединой под курсор.
-      const rect = bar.getBoundingClientRect();
-      const h = parseFloat(thumb.style.height) || 18;
-      scrollToThumbTop(e.clientY - rect.top - h / 2);
-      sync();
-    });
+    /* Обработчики вешаем на КАЖДУЮ полосу (v1.188): тянуть можно и левую, и правую, а положение
+       бегунка после этого пересчитывается у обеих — они показывают одно и то же полотно. */
+    for (const b of bars) {
+      b.thumb.addEventListener("mousedown", e => {
+        if (e.button !== 0) return;
+        e.preventDefault(); e.stopPropagation();
+        drag = { y0: e.clientY, top0: parseFloat(b.thumb.style.top) || 0, bar: b.bar, thumb: b.thumb };
+        document.body.classList.add("vscroll-drag");
+      });
+      b.bar.addEventListener("mousedown", e => {
+        if (e.button !== 0 || e.target === b.thumb) return;
+        e.preventDefault();
+        // Щелчок по дорожке — бегунок серединой под курсор.
+        const rect = b.bar.getBoundingClientRect();
+        const h = parseFloat(b.thumb.style.height) || 18;
+        scrollToThumbTop(e.clientY - rect.top - h / 2);
+        sync();
+      });
+    }
     window.addEventListener("mousemove", e => {
       if (!drag) return;
       if (!(e.buttons & 1)) { drag = null; document.body.classList.remove("vscroll-drag"); return; }
@@ -4054,4 +4155,31 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
     }
     sync();
   }
+}
+
+/* ═══ ПОЗИЦИЯ ПАРЫ ПИКЕРОВ У НАЛОЖЕНИЯ (v1.173) ═══
+   Запрос пользователя: «это к оси битов наложения, а не у цепочек надо».
+   Пара стоит НАД осью самого верхнего блока — там же, где его панель, — поэтому читается как его
+   настройка, а не как настройка цепочки. Ось блока (.paste-axis) render рисует каждым кадром, у неё
+   и спрашиваем координаты: считать их заново значило бы повторять всю арифметику выравниваний.
+   Сам элемент при этом СТАТИЧЕСКИЙ и живёт вне #rows — если бы он перерисовывался вместе со
+   строками, открытый системный диалог выбора цвета вырывало бы из-под курсора.
+   Блоков нет — прячем: пустая плашка посреди холста только мешала бы. */
+/* НЕ ВЫЗЫВАЕТСЯ С v1.179: плашка «Нал» убрана с глаз, ставить её больше некуда. Функцию оставляю —
+   если пара пикеров когда-нибудь снова понадобится на холсте, вернуть её это одна строка в render().
+   Внутри стоит ранний выход, чтобы случайный вызов ничего не двигал. */
+function positionPasteColBar(){
+  return;
+  const bar = document.getElementById("pasteColBar");
+  if (!bar) return;
+  const ax = document.querySelector("#rows .paste-axis");
+  if (!ax) { bar.classList.remove("on"); return; }
+  const r = ax.getBoundingClientRect();
+  const canvas = document.getElementById("screenCanvas");
+  const cr = canvas ? canvas.getBoundingClientRect() : null;
+  // За край полотна не выпускаем: у верхних блоков ось может уйти выше видимой части.
+  const top = Math.max(cr ? cr.top + 2 : 2, r.top - 40);
+  bar.style.left = Math.round(r.left) + "px";
+  bar.style.top = Math.round(top) + "px";
+  bar.classList.add("on");
 }

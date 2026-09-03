@@ -225,6 +225,27 @@ function resetAll(){
     st.pats = st.tplPats.slice(0, limit).map((t, i) => ({ text: t, ord: i, found: false, kind: null, step: null }));
   }
 
+  /* ═══ НАЛОЖЕНИЯ И ГОРИЗОНТ ПРИ СБРОСЕ (v1.208) ═══
+     Запрос пользователя: «должен убирать все наложения, если не были сохранены, и запоминать,
+     если сохранены, в том числе и положение горизонта».
+     Сохранёнка есть — возвращаем блоки и линию ИЗ НЕЁ: они лежали в ней вместе со строками,
+     значит и по номерам сходятся. Сохранёнки нет — Сброс возвращает холст к чистому виду:
+     блоков нет, поля нет. Ставим это ДО подрезки пустого верха ниже, чтобы она считала уже по
+     тому, что останется: без блоков верх схлопывается полностью, с блоками — ровно настолько,
+     чтобы поле их удержало (см. ограничение подрезки, v1.202). */
+  if (savedChain && Array.isArray(savedChain.pastes)) {
+    st.pastes = savedChain.pastes.map(p => ({
+      rows: (p.rows || []).map(r => ({ ...r })), row: p.row, col: p.col, half: p.half || 0,
+      src: p.src || null, op: p.op, halfStep: !!p.halfStep, c1: p.c1 || null, c0: p.c0 || null,
+      on: p.on !== false
+    }));
+    st.paste = null;
+    st.horizonRow = savedChain.horizonRow | 0;
+  } else if (!savedChain) {
+    st.pastes = [];
+    st.paste = null;
+    st.horizonRow = 0;
+  }
   // Верх возвращаем на место (см. keepTop выше) и обновляем зеркала под свежие строки.
   if (keepTop && topRows) {
     st.rows.splice(0, 0, ...topRows);
@@ -252,6 +273,15 @@ function resetAll(){
      Всё, что привязано к номерам строк, сдвигается на столько же назад — тем же shiftRowMaps(),
      которым авторост двигал их вперёд. */
   {
+    /* КОПИИ ПАТТЕРНОВ В ПОЛЕ СБРОС ТОЖЕ СНИМАЕТ (испр. v1.176, баг-репорт «по Escape вставил
+       достроение вверх строк из цепочки»). Строки поля пусты по битам, но с v1.173 в их колонках
+       лежат КОПИИ паттернов цепочки — и проверка «пустая ли строка» об них спотыкалась: добор
+       переставал сниматься и оставался на холсте как непрошеная достройка вверх.
+       Копия помечена признаком fieldCopy, поэтому её видно и снять её безопасно: это не данные, а
+       отражение того, что и так лежит в цепочке. */
+    for (let i = 0; i < (st.topBuilt || 0) && i < st.pats.length; i++) {
+      if (st.pats[i] && st.pats[i].fieldCopy) { st.pats[i].text = ""; st.pats[i].fieldCopy = false; }
+    }
     const covered = new Set();
     for (const pp of (Array.isArray(st.pastes) ? st.pastes : [])) {
       if (!pp || !pp.rows) continue;
@@ -262,6 +292,18 @@ function resetAll(){
            && !((st.rows[pad] || "").length)
            && !(st.pats[pad] && st.pats[pad].text)
            && !covered.has(pad)) pad++;
+    /* ПОДРЕЗКА НЕ ОПУСКАЕТ ЛИНИЮ НИЖЕ БЛОКОВ (v1.202). Строки сверху снимаются вместе с линией
+       и вместе с якорями блоков, так что взаимное положение обычно сохраняется само. Ломается
+       это на одном краю: линия упирается в ноль (Math.max ниже), а якоря продолжают уезжать вверх —
+       поле схлопывается, блоки остаются на холсте и оказываются под линией. Поэтому режем не
+       больше, чем поле может отдать, оставив нижний блок над линией. */
+    if (pad > 0 && typeof horizonOn === "function" && horizonOn()) {
+      let low = -1;
+      for (const pp of (Array.isArray(st.pastes) ? st.pastes : [])) {
+        if (pp && pp.rows && pp.rows.length) low = Math.max(low, pp.row | 0);
+      }
+      if (low >= 0) pad = Math.min(pad, Math.max(0, (st.horizonRow | 0) - (low + 1)));
+    }
     if (pad > 0) {
       st.rows.splice(0, pad);
       st.used.splice(0, pad);
@@ -281,6 +323,11 @@ function resetAll(){
       if (typeof shiftRowMaps === "function") shiftRowMaps(-pad);
     }
   }
+  /* Здесь стояла страховка v1.196: после подрезки она ПОДНИМАЛА линию к блокам. Снята в
+     v1.202 по баг-репорту «биты цепочек оказались выше горизонта» — поднимая линию, она
+     затягивала в поле те строки, что оказались над ней, а это строки ЦЕПОЧКИ. Поле обязано
+     открываться пустыми строками, а не вырезаться из цепочки; за то же самое отвечает теперь
+     ограничение подрезки выше, и оно двигает не линию, а границу самой подрезки. */
   /* СБРОС СНИМАЕТ ПОМЕТКУ ПОИСКА У ВСЕХ ПАТТЕРНОВ (испр. v1.151, баг-репорт: «сброс снова не
      убирает зелёное выделение паттернов»).
      st.hit обнуляется выше, а сами паттерны пересобираются из шаблона уже с found:false — но
@@ -292,6 +339,8 @@ function resetAll(){
   for (const p of (st.pats || [])) if (p) { p.found = false; p.kind = null; p.step = null; p.bgFound = false; }
   // Данные только что загружены — следим, что строка с номером 0 пустая (см. ensureZeroRow).
   ensureZeroRow();
+  // Блоки приводим к новым границам поля тем же общим правилом (v1.196, см. pasteNorm).
+  if (typeof pasteNorm === "function") pasteNorm();
   // Зеркала сверху пересчитываем под восстановленные строки: биты внизу сброшены, значит и вверху
   // должны быть их отражения, а не прежние (в режиме "дописывать" верх намеренно не трогается).
   refreshTopMirrors();
@@ -1922,6 +1971,10 @@ function render(){
   // flex-item'ы не действует (он только для inline-текста), поэтому её ширина систематически не
   // совпадает с реальным шагом столбца в строках, когда letter-spacing != 0.
   const colStepPx = realColStepPx();
+  /* Высота строки в пикселях — для оси наложения (v1.167): её длина = число строк блока на эту
+     величину. Считаем ОДИН раз на кадр, а не в цикле строк: getComputedStyle тут самая дорогая
+     операция, а значение одно на всю картинку. */
+  const rowHpxForPaste = Math.max(4, parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--row-h")) || 12);
 
   // "🎭 Маска": красная подсветка изменённых ею бит держится, ПОКА не изменится любой бит в любой
   // строке (запрос пользователя). Сравниваем текущие строки со снимком, сделанным сразу после
@@ -2034,6 +2087,7 @@ function render(){
     const self = memoMask("allPatSelf",
       [st.rows, st.pats.map(p => (p && p.text) || ""), st.skipFirst, st.skipLast, st.allKinds, st.kindsMode || "", st.ringOff,
        st.ringInvert, st.ringReverse, st.bgAllPatsEvery, st.bgAllPatsPartial, st.partialPick, allPatLatch.size,
+       st.horizonRow,   // линия режет диапазон поиска — сдвинули её, кэш обязан пересчитаться
        Array.from(st.selectedPats || []).sort((a, b) => a - b),
        st.allPatScopeSel],
       () => {
@@ -2041,7 +2095,13 @@ function render(){
         // массивы: на картинке в миллион бит массив объектов {r,p} съел бы куда больше памяти.
         // Склейка ВСЕГДА по всей цепочке — область поиска "🔎 до паттерна" режет не её, а сами
         // НАХОДКИ (см. ниже): у каждого паттерна своя граница, общей склейкой её не выразить.
-        const lastSearchRow = st.rows.length - 1;
+        /* ПОД ЛИНИЕЙ БИТОВ ДЛЯ ЭТОГО ПОИСКА НЕТ (v1.200, запрос: «работаем только над
+           горизонтом»). Склейка тут собирается по СЫРЫМ st.rows, мимо getRowBits, — потому
+           поднятый горизонт её и не резал: паттерны продолжали находиться в нижних строках
+           и подсвечиваться прямо в них. Обрываем сбор на линии; сама карта «позиция → строка»
+           строится по тому же диапазону, так что и подсветка ниже не появится. */
+        const lastSearchRow = ((typeof horizonOn === "function" && horizonOn())
+                               ? horizonRow() : st.rows.length) - 1;
         let total = 0;
         for (let r = 0; r <= lastSearchRow; r++) total += (st.rows[r] || "").length;
         if (!total) return null;
@@ -2692,9 +2752,14 @@ function render(){
     const s = st.parityView ? applyParityMask(sRaw, i, 0, 0) : sRaw;
     const p = st.pats[i];
     const cls = ["ln"];
-    // Построения выше границы участия — затемняем (см. firstActiveRow): видно, что эти строки
-    // сейчас в расчётах не участвуют.
-    if (i < topActiveFrom) cls.push("top-inactive");
+    /* ЗАТЕМНЕНИЕ ВЕРХНИХ СТРОК УБРАНО (v1.161, баг-репорт: «какое-то затемнение идёт битов начиная
+       сверху, когда двигаю»). Класс .top-inactive гасил строки выше границы участия построений до
+       opacity .38. Граница считается от st.topBuilt, а тот с v1.146 растёт САМ, когда полотно
+       дорастает под уводимый вверх блок, — и затемнение начинало ползти по цепочке прямо во время
+       перетаскивания, без всякой связи с построениями.
+       Само правило участия никуда не делось: что идёт в расчёт, а что нет, решают горизонт
+       (getRowBits) и firstActiveRow(). Убран только показ — он вводил в заблуждение чаще, чем
+       помогал. Понадобится снова — вернуть одну строку, класс и стиль на месте. */
     if (st.used[i]) cls.push("used");
     /* СИНЯЯ ПАРА (.cur = st.aIdx/st.bIdx) — только когда шаги реально идут (запрос пользователя:
        "выделение первых 2 строк синим — может их отключить? код похоже на них смотрит, а не на
@@ -2933,9 +2998,26 @@ function render(){
          контекст наложения не попадает — иначе он уехал бы из своего угла колонки. */
       const halfL = patFieldHalfFor(patAlign, p.text.length, i, "L", maxPatLen);
       const halfR = patFieldHalfFor(pat2Align, p.text.length, i, "R", maxPatLen);
-      const halfAttr = h => h ? ' style="transform:translateX(' + (h * colStepPx).toFixed(2) + 'px)"' : '';
-      pat = '<span class="' + c + '"' + allHitStyle + '><span class="pat-shift"' + halfAttr(halfL) + '>' + padL + patTxtHtml + numLeftHtml + '</span>' + stepHtml + '</span>';
-      patRight = '<span class="' + c2 + '"' + allHitStyle + '><span class="pat-shift"' + halfAttr(halfR) + '>' + numRightHtml + padR + patTxtHtml + '</span>' + stepHtml + '</span>';
+      /* ПЕРЕПОЛНЕННЫЙ ПАТТЕРН ПРИЖИМАЕТСЯ К ПРАВОМУ КРАЮ КОЛОНКИ (v1.194, запрос: «биты спрятались,
+         а должны уехать влево»).
+         Отступ паттерна внутри колонки считается по СЕТКЕ (patFieldShiftFor — от самого длинного
+         паттерна), а не по фактической ширине колонки. Сузил границу П1 — и хвост уезжает за правый
+         край, где его срезает overflow:hidden: биты будто пропадают.
+         Считаем, на сколько столбцов паттерн вылезает за колонку, и на столько же сдвигаем его
+         ВЛЕВО. Тогда у правого края видно окончание паттерна, а срезается начало — то есть ровно
+         то, что просили: «уехать влево», а не спрятаться.
+         Ширину колонки берём из той же переменной, которой её задаёт граница. Колонка шире
+         паттерна — поправка нулевая, и всё остаётся как было. */
+      const colPx = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--pat-w")) || 0;
+      const colCols = (colPx > 0 && colStepPx > 0) ? (colPx / colStepPx) : 0;
+      const shL = patFieldShiftFor(patAlign, p.text.length, i, "L", maxPatLen);
+      const overL = colCols > 0 ? Math.max(0, shL + p.text.length - colCols) : 0;
+      const halfAttr = (h, extra) => {
+        const px = (h * colStepPx) - ((extra || 0) * colStepPx);
+        return px ? ' style="transform:translateX(' + px.toFixed(2) + 'px)"' : '';
+      };
+      pat = '<span class="' + c + '"' + allHitStyle + '><span class="pat-shift"' + halfAttr(halfL, overL) + '>' + padL + patTxtHtml + numLeftHtml + '</span>' + stepHtml + '</span>';
+      patRight = '<span class="' + c2 + '"' + allHitStyle + '><span class="pat-shift"' + halfAttr(halfR, 0) + '>' + numRightHtml + padR + patTxtHtml + '</span>' + stepHtml + '</span>';
     } else {
       pat = '<span class="pat"><span class="pat-shift">' + numLeftHtml + '</span></span>';
       patRight = '<span class="pat2"><span class="pat-shift">' + numRightHtml + '</span></span>';
@@ -3460,7 +3542,14 @@ function render(){
        понимает, за какой именно блок схватились, и его же ведут стрелки. */
     let insHtml = "";
     const pasteAll = Array.isArray(st.pastes) ? st.pastes : [];
-    for (let pi = 0; pi < pasteAll.length; pi++) {
+    /* НИЖЕ ЛИНИИ НАЛОЖЕНИЙ НЕ ВИДНО (v1.181, запрос «скрывать биты, ушедшие под горизонт»).
+       Верхнее поле — рабочая площадка блоков, и всё, что оказалось под линией, в расчёт уже не
+       идёт (см. getRowBits). Рисовать его при этом означало показывать биты, которых для программы
+       не существует, — самая неприятная разновидность вранья на экране.
+       Проверка стоит ДО разбора строк блока: так пропускается вся строка целиком, вместе с осью,
+       панелью и кнопками, а не одни цифры. */
+    const belowLine = (typeof horizonOn === "function" && horizonOn() && i >= horizonRow());
+    for (let pi = 0; pi < pasteAll.length && !belowLine; pi++) {
       const pb = pasteAll[pi];
       if (!pb || !pb.rows || !Number.isInteger(pb.row)) continue;
       const pk = i - pb.row;
@@ -3528,7 +3617,7 @@ function render(){
         const rowHalf = extraCh - (st.axisCenterOffset || 0);
         const blockHalf = (prow.hf || 0) / 2 + (pb.half || 0) / 2;
         const pcells = (typeof pasteOverlayCells === "function")
-          ? pasteOverlayCells(prow.txt, pb.col + (prow.off || 0) + blockHalf, s, shiftPad + rowHalf)
+          ? pasteOverlayCells(prow.txt, pb.col + (prow.off || 0) + blockHalf, s, shiftPad + rowHalf, pb.op)
           : null;
         const pTxt = pcells ? pcells.txt : prow.txt;
         const pChg = pcells ? pcells.chg : "";
@@ -3538,38 +3627,61 @@ function render(){
         /* Блок, снятый с колонки паттернов, красится ЕЁ цветами (v1.140): класс paste-src-l/-r,
            см. .paste-src-* в стилях. Просьба «пусть со всеми цветами паттернов копирует». */
         const srcCls = (pb.src === "L" ? " paste-src-l" : (pb.src === "R" ? " paste-src-r" : ""));
+        /* Свои цвета блока (v1.178) — переменными прямо на его span: правила .ps1/.ps0 читают
+           именно их, поэтому цвет достаётся только этому блоку. Не задан — наследуется общий. */
+        const colVars = (pb.c1 ? "--paste-c1:" + pb.c1 + ";" : "") + (pb.c0 ? "--paste-c0:" + pb.c0 + ";" : "");
         insHtml += '<span class="paste-bits' + offCls + srcCls + '" data-pi="' + pi +
-          '" style="left:' + leftPx + '" title="Наложение №' + (pi + 1) + ', строка ' + (pk + 1) +
+          '" style="left:' + leftPx + ';' + colVars + '" title="Наложение №' + (pi + 1) + ', строка ' + (pk + 1) +
           ' из ' + pb.rows.length + ' (цепочка: строка ' + rowLabel(i) + ', столбец ' +
           (pb.col + (prow.off || 0)) + (pb.half ? "½" : "") + ', ' + prow.txt.length + ' бит).' +
           (pb.on === false ? " СЕЙЧАС ВЫКЛЮЧЕНО — в расчёт не идёт." :
             " Идёт в склейки и фон-поиск как биты этой строки; где накрыло биты строки, считается оно.") +
           ' Тяни мышью — переставить ВЕСЬ блок. Клик отдаёт ему стрелки: ←/→ и ↑/↓ ведут последний тронутый блок">' +
           pasteBitsHtml(pTxt, pChg) + "</span>";
-        /* РУЧКА — ОДНА НА БЛОК, ПРЯМО НА ЕГО ПЕРВОЙ ЦИФРЕ (v1.109). Пустая рамка в столбец шириной
-           и во всю высоту строки: попасть в неё мышью легко, цифра под полупрозрачной заливкой
-           видна, а печатать нечего — значит и ломать строку нечем.
-           Строка выбирается ПЕРВАЯ НЕПУСТАЯ (пустые внутри куска сохраняются — ими держится
-           вертикальный интервал, и цифры, на которую класть ручку, там просто нет).
-           С v1.124 ручек столько же, сколько блоков, и у каждой свой data-pi — иначе, схватив
-           ручку №2, поехал бы блок №1. */
+        /* РУЧКА-РАМКА НА ПЕРВОЙ ЦИФРЕ УБРАНА (v1.168, запрос «убери границу первого бита — рамку»).
+           Она стояла с v1.109 как единственное место, за которое блок было удобно хватать: цифры
+           тогда просвечивали и попасть в них мышью было непросто. Теперь у блока есть своя ось и
+           панель над первой строкой (v1.167), и рамка только загораживала первый бит.
+           Тащить блок по-прежнему можно за ЛЮБУЮ его цифру — обработчик протяжки как ловил
+           .paste-bits, так и ловит. Класс .paste-grip и его стили оставлены: вернуть рамку, если
+           понадобится, это одна строка здесь.
+           gripK нужен и без неё — по нему панель ставится на ПЕРВУЮ НЕПУСТУЮ строку блока: пустые
+           внутри куска сохраняются, и вешать панель на строку без цифр было бы не на что. */
         let gripK = 0;
         while (gripK < pb.rows.length && !(pb.rows[gripK] && pb.rows[gripK].txt)) gripK++;
         if (pk === gripK) {
-          insHtml += '<span class="paste-grip' + offCls + '" data-pi="' + pi +
-            '" style="left:' + leftPx + ';width:' + colStepPx.toFixed(2) +
-            'px" title="Ручка наложения №' + (pi + 1) +
-            ' — тяни, и ВЕСЬ этот блок едет по столбцам и строкам, отдельно от бит цепочки и от других блоков"></span>';
-          /* КРЕСТИК РЯДОМ С РУЧКОЙ (v1.133, запрос пользователя: «рядом крестик по нажатию удаляет,
-             отмена должна возвращать удалённое, а повтор снова удалять»). Стоит вплотную СПРАВА от
-             ручки — на ширину столбца правее, — чтобы не закрывать первую цифру блока, за которую
-             его и хватают. Удаление идёт через snapshot(), поэтому Ctrl+Z возвращает блок целиком,
-             а Ctrl+Y снова его убирает: наложения теперь входят в снимок состояния (см. captureState
-             в fold-1-core.js). */
-          insHtml += '<span class="paste-del' + offCls + '" data-pi="' + pi +
-            '" style="left:' + leftAt(pasteCols + 1) + ';width:' + colStepPx.toFixed(2) +
-            'px" title="Убрать наложение №' + (pi + 1) +
-            '. Отмена (Ctrl+Z) вернёт его на место, повтор (Ctrl+Y) снова уберёт">✕</span>';
+          /* ═══ СВОЯ ОСЬ И СВОЯ ПАНЕЛЬ У КАЖДОГО БЛОКА (v1.167) ═══
+             Запрос пользователя: «ось у наложения битов — пусть будет линия такая же, как у
+             цепочек, и справа-слева от неё крестик, а также кнопки Поверх, AND, XOR, шаг ½».
+             ЛИНИЯ — вертикальная черта по левому краю блока, во всю его высоту: тот же смысл, что
+             у оси цепочки, — «вот отсюда блок начинается». По ней же видно, где он стоит, когда
+             сами цифры теряются среди бит цепочки.
+             ПАНЕЛЬ — над первой строкой блока: операция (⧉ поверх / ∧ AND / ⊕ XOR), шаг стрелки
+             (⇥1 / ⇥½) и крестик. Каждая кнопка правит СВОЙ блок, а не общую настройку: сложить на
+             холсте XOR поверх AND стало возможно только с этой версии.
+             Высота линии — число строк блока на высоту строки; берём --row-h, ту же переменную,
+             которой меряет себя вся цепочка. */
+          /* ВЫСОТУ ОСИ ЗАДАЁТ CSS, А НЕ РАЗМЕР БЛОКА (v1.205, запрос «сделай её короткой, как у
+             цепочек, чтобы немного над кнопками выходила»). Раньше сюда шло число строк блока
+             на высоту строки, и черта тянулась во всю его высоту. Теперь это КОРОТКАЯ РУЧКА
+             постоянной длины — чуть выше панели кнопок, — и за неё же блок таскают. */
+          insHtml += '<span class="paste-axis' + offCls + '" data-pi="' + pi +
+            '" style="left:' + leftAt(pasteCols) +
+            '" title="Ось наложения №' + (pi + 1) + ' — левый край блока. Тяни, чтобы двигать блок"></span>';
+          /* Кнопки раскраски — СЛЕВА ОТ ОСИ (v1.178, запрос «сделай кнопки раскраски слева от
+             оси»): своя полоска с тем же left, но сдвинутая на свою ширину влево. Цвет каждой
+             показан прямо на кнопке, поэтому какой блок каким покрашен — видно без наведения. */
+          insHtml += '<span class="paste-colbtns" data-pi="' + pi + '" style="left:' + leftAt(pasteCols) + '">' +
+            '<b data-act="c1" style="background:' + (pb.c1 || "var(--paste-c1,#22d3ee)") + '" title="Цвет «1» ЭТОГО наложения. Клик — выбрать; у каждого блока свой"></b>' +
+            '<b data-act="c0" style="background:' + (pb.c0 || "var(--paste-c0,#22d3ee)") + '" title="Цвет «0» ЭТОГО наложения"></b>' +
+            '</span>';
+          insHtml += '<span class="paste-bar" data-pi="' + pi + '" style="left:' + leftAt(pasteCols) + '">' +
+            '<b data-act="op" title="Операция этого блока: ⧉ поверх — бит блока закрывает бит строки; ∧ AND — единица только там, где единицы в обоих; ⊕ XOR — единица там, где биты разные. Клик гоняет по кругу. Настройка СВОЯ у каждого блока">' +
+              (pb.op === "xor" ? "⊕" : (pb.op === "and" ? "∧" : "⧉")) + '</b>' +
+            '<b data-act="step" title="Шаг, которым стрелки двигают ЭТОТ блок: целый столбец или полстолбца. На полустолбце биты блока встают МЕЖДУ битами строки и в склейке чередуются с ними, а не заменяют их">' +
+              (pb.halfStep ? "⇥½" : "⇥1") + '</b>' +
+            '<b data-act="del" class="paste-bar-del" title="Убрать это наложение. Отмена (Ctrl+Z) вернёт, повтор (Ctrl+Y) уберёт снова">✕</b>' +
+            '</span>';
         }
       }
     }
@@ -3614,8 +3726,18 @@ function render(){
   // горит её кнопка), а выделение меняется как раз перерисовкой. Дюжина кнопок, дешевле не надо.
   if (typeof syncAlignActMarks === "function") syncAlignActMarks();
 
-  let fullChainText = "";
-  if (st.mode === "step1" || st.mode === "step2") {
+  /* ПОЛЕ НАЛОЖЕНИЙ САМО И ЕСТЬ СКВОЗНАЯ (испр. v1.182, баг-репорт «сквозную из наложений не
+     считает, пусто»).
+     Ветки ниже собирают строку по-разному, и первая же из них — режимы «Шаг 1/2», основные —
+     берёт СЫРЫЕ st.rows[aIdx] и st.rows[bIdx]: без наложений, без горизонта, прямо из данных.
+     Пока поля не было, это работало; с полем оно показывает две пустые строки-заготовки, отчего в
+     окне и оказывались три бита вместо всего, что лежит над линией.
+     С поднятым горизонтом ответ один на все режимы: сквозная — это склейка того, что ВЫШЕ линии,
+     той же horizChainText(), которой её считает и фон-поиск. Строки под линией в неё не попадают,
+     потому что getRowBits() отдаёт их пустыми, а биты блоков — попадают. */
+  if (typeof horizonOn === "function" && horizonOn()) {
+    fullChainText = horizChainText(horizonRow());
+  } else if (st.mode === "step1" || st.mode === "step2") {
     const aRow = st.rows[st.aIdx] || "";
     const bRow = st.rows[st.bIdx] || "";
     fullChainText = (st.tailBuffer || "") + aRow + bRow;
@@ -5177,7 +5299,13 @@ function clearActiveTab() {
       pats: st.pats.map(p => p ? { ...p } : null),
       used: st.used.slice(),
       tplRows: st.tplRows.slice(),
-      tplPats: st.tplPats.slice()
+      tplPats: st.tplPats.slice(),
+      // Холст целиком (v1.208, см. tabSaveChainData): блоки и линия — тоже часть сохранёнки.
+      pastes: (typeof pasteList === "function" ? pasteList() : [])
+                .map(p => ({ rows: (p.rows || []).map(r => ({ ...r })), row: p.row, col: p.col,
+                             half: p.half || 0, src: p.src || null, op: p.op, halfStep: !!p.halfStep,
+                             c1: p.c1 || null, c0: p.c0 || null, on: p.on !== false })),
+      horizonRow: st.horizonRow | 0
     };
   }
   st.tplRows = [];
@@ -5232,7 +5360,18 @@ function tabSaveChainData(idx) {
     tplPats: (src.tplPats || []).slice(),
     // Пометка «новые биты» сохраняется ВМЕСТЕ с цепочкой: после Сброса/Escape новые биты
     // возвращаются такими же новыми (см. newBitsMap и ветку savedChain в resetAll).
-    newBits: isActive ? newBitsSerialize() : ((st.tabs[idx].newBits) || [])
+    newBits: isActive ? newBitsSerialize() : ((st.tabs[idx].newBits) || []),
+    /* НАЛОЖЕНИЯ И ГОРИЗОНТ — ЧАСТЬ СОХРАНЁНКИ (v1.208, запрос: «Сброс должен убирать все
+       наложения, если не были сохранены, и запоминать, если сохранены, в том числе и положение
+       горизонта»). Раньше сохранялись только строки с паттернами, а блоки и линия жили сами по
+       себе: Сброс возвращал старые данные и оставлял поверх них блоки от текущей работы.
+       Теперь сохранёнка — полный снимок холста, и Сброс возвращает именно то, что сохранили. */
+    pastes: (isActive ? (typeof pasteList === "function" ? pasteList() : [])
+                      : ((st.tabs[idx].pastes) || []))
+              .map(p => ({ rows: (p.rows || []).map(r => ({ ...r })), row: p.row, col: p.col,
+                           half: p.half || 0, src: p.src || null, op: p.op, halfStep: !!p.halfStep,
+                           c1: p.c1 || null, c0: p.c0 || null, on: p.on !== false })),
+    horizonRow: (isActive ? (st.horizonRow | 0) : ((st.tabs[idx].horizonRow | 0) || 0))
   };
   // Сохранённое состояние стало новой базой для подсветки "номер изменился" (см. changedBase
   // в render()) — перерисовываем строки сразу, иначе оранжевые номера висят до следующего
@@ -5256,7 +5395,12 @@ function tabClearChainData(idx) {
       pats: (t.pats || []).map(p => p ? { ...p } : null),
       used: (t.used || []).slice(),
       tplRows: (t.tplRows || []).slice(),
-      tplPats: (t.tplPats || []).slice()
+      tplPats: (t.tplPats || []).slice(),
+      // Холст целиком (v1.208, см. tabSaveChainData).
+      pastes: (t.pastes || []).map(p => ({ rows: (p.rows || []).map(r => ({ ...r })), row: p.row,
+                col: p.col, half: p.half || 0, src: p.src || null, op: p.op, halfStep: !!p.halfStep,
+                c1: p.c1 || null, c0: p.c0 || null, on: p.on !== false })),
+      horizonRow: t.horizonRow | 0
     };
   }
   t.tplRows = []; t.tplPats = []; t.rows = []; t.used = []; t.pats = [];
@@ -5285,7 +5429,12 @@ function tabClearRowsOnly(idx) {
       pats: (src.pats || []).map(p => p ? { ...p } : null),
       used: (src.used || []).slice(),
       tplRows: (src.tplRows || []).slice(),
-      tplPats: (src.tplPats || []).slice()
+      tplPats: (src.tplPats || []).slice(),
+      // Холст целиком (v1.208, см. tabSaveChainData).
+      pastes: (src.pastes || []).map(p => ({ rows: (p.rows || []).map(r => ({ ...r })), row: p.row,
+                col: p.col, half: p.half || 0, src: p.src || null, op: p.op, halfStep: !!p.halfStep,
+                c1: p.c1 || null, c0: p.c0 || null, on: p.on !== false })),
+      horizonRow: src.horizonRow | 0
     };
   }
   if (isActive) {
