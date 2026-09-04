@@ -2859,6 +2859,7 @@ function setLeftMirror(on, quiet){
   st.leftMirror = !!on;
   const b = document.getElementById("bLeftMirror");
   if (b) b.classList.toggle("mode-act", st.leftMirror);
+  if (typeof syncBuildMirrorBtn === "function") syncBuildMirrorBtn();   // v1.218: подпись кнопки-круга
   if (!quiet) {
     say(st.leftMirror
       ? `Зеркало влево показано серым: ${mirrorKindWord("l")} — от её первого бита, сам бит не в счёт.`
@@ -2870,12 +2871,121 @@ function setRightMirror(on, quiet){
   st.rightMirror = !!on;
   const b = document.getElementById("bRightMirror");
   if (b) b.classList.toggle("mode-act", st.rightMirror);
+  if (typeof syncBuildMirrorBtn === "function") syncBuildMirrorBtn();   // v1.218: подпись кнопки-круга
   if (!quiet) {
     say(st.rightMirror
       ? `Зеркало вправо показано серым: ${mirrorKindWord("r")} — от её последнего бита, сам бит не в счёт.`
       : "Зеркало вправо убрано.");
     render(); saveCache();
   }
+}
+/* ═══ ЗЕРКАЛА ОДНОЙ КНОПКОЙ, ПО КРУГУ (v1.218) ═══════════════════════════════════════════════
+   Запрос пользователя: «нужна кнопка тут — добавить зеркальные биты слева-справа-отмена, по циклу»
+   (в панели «Построения фигур», рядом с ⟳ «Текущие», которая тоже ходит по кругу).
+   НОВОГО МЕХАНИЗМА НЕТ: это те же st.leftMirror/st.rightMirror, что и кнопки «Зеркало ◀»/«▶» в
+   панели «Зеркала», — значит и вид отражения (реверс/инверсия/копия), и срез опорного бита, и
+   участие в расчёте берутся оттуда же, а два места не могут разойтись в поведении.
+   КРУГ: выкл → слева → справа → выкл. Состояние «обе стороны сразу» кнопкой не набирается (для
+   этого есть панель «Зеркала»), но если оно уже стоит — следующий клик просто гасит обе: это
+   единственный шаг, который не удивит.
+   Подпись кнопки держится в syncBuildMirrorBtn() и обновляется из ОБОИХ путей — иначе переключение
+   в панели «Зеркала» оставляло бы здесь старую надпись. */
+function syncBuildMirrorBtn(){
+  const b = document.getElementById("bBuildMirrorCycle");
+  const l = !!st.leftMirror, r = !!st.rightMirror;
+  if (b) {
+    const word = (l && r) ? "вместе" : l ? "слева" : r ? "справа" : "выкл";
+    b.textContent = "⇔ Зеркало: " + word;
+    b.classList.toggle("mode-act", l || r);
+  }
+  const bi = document.getElementById("bBuildMirrorInv");
+  if (bi) {
+    // «Инв» показывает состояние ЛЕВОЙ стороны: кнопка ставит обе одинаково, а разойтись они могут
+    // только через панель «Зеркала» — там у каждой стороны своя кнопка вида, и она главнее.
+    const on = mirrorKindOf("l") === "revinv" || mirrorKindOf("l") === "inv";
+    bi.textContent = "Инв: " + (on ? "вкл" : "выкл");
+    bi.classList.toggle("mode-act", on);
+  }
+}
+/* КРУГ ИЗ ЧЕТЫРЁХ (v1.219, запрос «выкл → слева → справа → ВМЕСТЕ → выкл»): «вместе» — обе стороны
+   разом, самое частое состояние при работе с наложениями, и добираться до него через панель
+   «Зеркала» было лишним шагом.
+   ЗЕРКАЛО ЗДЕСЬ — СО ВСЕМИ БИТАМИ (тот же запрос): кнопка включает st.mirrorFull, то есть строка
+   отражается целиком, вместе с опорным битом. Флаг общий на всё приложение, поэтому зеркала в
+   панели «Зеркала» тоже становятся полными — об этом прямо сказано в сообщении, чтобы это не
+   выглядело как самоуправство. Выключение зеркал флаг не трогает: он про ВИД отражения, а не про
+   то, показано оно или нет. */
+function cycleBuildMirror(){
+  const l = !!st.leftMirror, r = !!st.rightMirror;
+  const next = (!l && !r) ? "l" : (l && !r) ? "r" : (!l && r) ? "lr" : "off";
+  if (next !== "off") st.mirrorFull = true;
+  setLeftMirror(next === "l" || next === "lr", true);
+  setRightMirror(next === "r" || next === "lr", true);
+  syncBuildMirrorBtn();
+  const tail = " Отражается вся строка целиком, вместе с опорным битом; идёт в склейки и поиск наравне с обычными битами.";
+  say(next === "l" ? `Зеркальные биты СЛЕВА: ${mirrorKindWord("l")}.` + tail
+    : next === "r" ? `Зеркальные биты СПРАВА: ${mirrorKindWord("r")}.` + tail
+    : next === "lr" ? `Зеркальные биты С ОБЕИХ СТОРОН: слева ${mirrorKindWord("l")}, справа ${mirrorKindWord("r")}.` + tail
+    : "Зеркальные биты убраны с обеих сторон.");
+  render(); saveCache();
+}
+/* «Инв» — инверсия в зеркале, сразу для обеих сторон (v1.219, запрос «и задать инвер-откл вкл»).
+   Гоняет вид зеркала между «реверс + инверсия» и «только реверс»: это и есть «с инверсией» и «без».
+   Остальные два вида (только инверсия, копия как есть) остаются за панелью «Зеркала» — они нужны
+   реже, а кнопке в одну надпись их не уместить. */
+function toggleBuildMirrorInv(){
+  const on = mirrorKindOf("l") === "revinv" || mirrorKindOf("l") === "inv";
+  const val = on ? "rev" : "revinv";
+  setMirrorKind("l", val, true);
+  setMirrorKind("r", val, true);
+  syncBuildMirrorBtn();
+  say(val === "revinv"
+    ? "Зеркала с ИНВЕРСИЕЙ: отражение с переворотом бит (0↔1) — «реверс + инверсия», обе стороны."
+    : "Зеркала БЕЗ инверсии: чистое отражение, биты как есть — «только реверс», обе стороны.");
+  render(); saveCache();
+}
+/* «⤓ Вписать» (v1.220, запрос пользователя: «и ещё кнопку — вписать в цепочки, чтобы применилось,
+   потом выравнивание обновилось»). Отдельная кнопка вписывания была убрана в v0.886 — тогда решили,
+   что достаточно автоматического вписывания при сохранении цепочки. С зеркалами «со всеми битами»
+   (v1.219) ручное вписывание снова понадобилось: зеркало складывают, смотрят и хотят закрепить
+   ИМЕННО СЕЙЧАС, не дожидаясь сохранения.
+   Работает та же applyMirrorsToRows(), что и у автомата: она сама делает снимок для отмены,
+   считает предел по битам, красит добавленное как «новые биты», гасит показ зеркал и зовёт
+   render() — а значит и выравнивание пересчитывается по новым длинам строк, ради чего кнопка и
+   просилась. Сторон не передаём: вписывается ровно то, что показано. */
+function applyBuildMirrors(){
+  if (typeof applyMirrorsToRows !== "function") return;
+  applyMirrorsToRows(false);
+  syncBuildMirrorBtn();
+  // Геометрия колонок и отметки полосы выравниваний — по уже перерисованным строкам.
+  if (typeof applyPatAligns === "function") applyPatAligns();
+  if (typeof syncAlignActMarks === "function") syncAlignActMarks();
+  if (typeof updateSplitPositions === "function") updateSplitPositions();
+}
+/* «= Цвет» (v1.222, запрос пользователя: «и кнопку — цвет вписанных такой же, как и у цепочки»).
+   Вписанное зеркало помечается как «новые биты» (newBitsWrap в applyMirrorsToRows) и красится
+   своим цветом — это правильно в момент вписывания, но мешает, как только на картинку смотрят
+   целиком: половина цепочки светится, хотя биты давно стали её частью.
+   Кнопка снимает пометку со ВСЕХ строк разом — то же самое, что «Снять новые» во вкладке «Вид»
+   (bClearNewBits в fold-5-ui.js), просто под рукой: вписал — и тут же уравнял цвет. Сами биты не
+   трогаются вовсе, меняется только пометка. */
+function plainNewBits(){
+  if (typeof newBitsMap === "undefined" || !newBitsMap.size) { say("Новых бит и нет — цвет вписанных и так как у цепочки."); return; }
+  const n = newBitsMap.size;
+  newBitsClearAll();
+  render(); saveCache();
+  say(`Цвет вписанных сравнён с цепочкой: пометка «новый» снята со строк — ${n}. Сами биты остались на месте.`);
+}
+{
+  const b = document.getElementById("bBuildMirrorCycle");
+  if (b) b.onclick = cycleBuildMirror;
+  const bp = document.getElementById("bBuildMirrorPlain");
+  if (bp) bp.onclick = plainNewBits;
+  const bi = document.getElementById("bBuildMirrorInv");
+  if (bi) bi.onclick = toggleBuildMirrorInv;
+  const ba = document.getElementById("bBuildMirrorApply");
+  if (ba) ba.onclick = applyBuildMirrors;
+  syncBuildMirrorBtn();
 }
 /* Словами, что сейчас кладётся в зеркало ЭТОЙ стороны — для сообщений кнопок зеркал. */
 function mirrorKindWord(side){
@@ -2894,6 +3004,7 @@ function setMirrorKind(side, k, quiet){
   const right = side === "r";
   const val = MIRROR_KINDS.indexOf(k) >= 0 ? k : "revinv";
   if (right) st.mirrorKindR = val; else st.mirrorKindL = val;
+  if (typeof syncBuildMirrorBtn === "function") syncBuildMirrorBtn();   // v1.219: подпись кнопки «Инв»
   const b = document.getElementById(right ? "bMirrorKindR" : "bMirrorKindL");
   if (b) {
     b.classList.toggle("mode-act", val !== "revinv");
@@ -2987,8 +3098,8 @@ function applyMirrorsToRows(keepShow, sides, silent){
     const s0 = st.rows[r] || "";
     if (s0.length < 2) continue; // из одного бита зеркала не выходит: сам бит в него не входит
     if ((mirrorsRowDone.get(r) || 0) >= maxApply) { blocked++; continue; }
-    const left = useLeft ? mirrorSideBits(s0.slice(1), "l") : "";
-    const right = useRight ? mirrorSideBits(s0.slice(0, -1), "r") : "";
+    const left = useLeft ? mirrorSideBits(mirrorSrcBits(s0, "l"), "l") : "";
+    const right = useRight ? mirrorSideBits(mirrorSrcBits(s0, "r"), "r") : "";
     if (!left && !right) continue;
     // "⊘ Ось ◀/▶": опорный бит той стороны, что режет, из строки УДАЛЯЕТСЯ — тут по-настоящему,
     // в данных (на экране он просто не печатался, см. cutHead/cutTail в render). Стороны берутся

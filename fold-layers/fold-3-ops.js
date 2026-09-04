@@ -1511,6 +1511,20 @@ function scrollToBit(r, p){
   const max = Math.max(0, sc.scrollWidth - sc.clientWidth);
   sc.scrollLeft = Math.max(0, Math.min(max, x - sc.clientWidth / 2));
 }
+/* Первое вхождение паттерна в НАЛОЖЕНИЯХ (v1.218) — {pi, row} или null: номер блока и строка
+   цепочки, на которой лежит эта его строка. Карту считает render (lastAllPatPaste). */
+function patNavPasteRow(patIdx){
+  if (!lastAllPatPaste) return null;
+  for (const [pi, byRow] of lastAllPatPaste) {
+    const pb = (st.pastes || [])[pi];
+    if (!pb) continue;
+    for (const [k, arr] of byRow) {
+      if (!arr) continue;
+      for (let t = 0; t < arr.length; t++) if (arr[t] === patIdx) return { pi, row: (pb.row | 0) + k };
+    }
+  }
+  return null;
+}
 /* Следующее вхождение кликнутого паттерна. Кликнули ДРУГОЙ паттерн — начинаем с первого. */
 function patNavStep(patIdx){
   const targets = patHitTargets(patIdx);
@@ -1521,6 +1535,17 @@ function patNavStep(patIdx){
     // не видны, и молчаливое "не найдено" на них выглядит как поломка (запрос пользователя).
     const why = allPatSkipReason(patIdx);
     const pt = (st.pats[patIdx] && st.pats[patIdx].text) || "";
+    /* А ЕСЛИ ОН НАШЁЛСЯ В НАЛОЖЕНИИ (v1.218, баг-репорт «но он нашёлся в наложениях») — говорить
+       «не встречается» нельзя: человек видит его на холсте. Блоки ищутся отдельным проходом (см.
+       allPatPasteRows в render), поэтому здесь достаточно заглянуть в его карту и подвести экран
+       к строке блока. Горизонтально не целимся: у блока своя сетка столбцов, и scrollToBit,
+       считающий колонку по битам СТРОКИ, увёл бы совсем не туда. */
+    const inPaste = patNavPasteRow(patIdx);
+    if (inPaste) {
+      scrollToRow(inPaste.row);
+      say(`Паттерн строки ${patIdx + 1} («${pt}») в строках цепочек не встречается, но найден в НАЛОЖЕНИИ №${inPaste.pi + 1} — экран подведён к его строке.`);
+      return;
+    }
     say(why
       ? `Паттерн строки ${patIdx + 1} не искался: ${why}.`
       : `Паттерн строки ${patIdx + 1} («${pt}») в строках цепочек не встречается${st.bgAllPatsPartial ? "" : " — включите «🧩 Макс. часть», чтобы увидеть самый длинный совпавший кусок"}.`);
@@ -4756,7 +4781,9 @@ if (appTitleEl) appTitleEl.onclick = () => location.reload();
 /* Кнопка ДВЕ: своя в "Поиске" (рядом с "🔍 Фон-поиск") и её дубль наверху вкладки "Маски" —
    маску набирают там же, в поле под ней (v0.836, запрос пользователя). Состояние одно на обе,
    поэтому и подпись, и обработчик общие. */
-const BG_MASK_ON_BTN_IDS = ["bBgMaskOn", "bBgMaskOn2"];
+/* Третий — дубль в шапке «Результата» (v1.225). Список на то и заведён: и подпись, и состояние,
+   и обработчик клика раздаются по нему всем разом. */
+const BG_MASK_ON_BTN_IDS = ["bBgMaskOn", "bBgMaskOn2", "bBgMaskOn3"];
 function updateBgMaskOnBtn(){
   const has = !!maskBitsRaw();
   const on = has && st.bgMaskOn !== false;
@@ -4818,6 +4845,9 @@ for (const id of BG_MASK_ON_BTN_IDS) {
 // Клик по "🔍 Фон-поиск" — общий выключатель, см. toggleBgSearch().
 const bgSearchTitleClickEl = document.getElementById("bgSearchTitle");
 if (bgSearchTitleClickEl) bgSearchTitleClickEl.onclick = () => toggleBgSearch();
+/* Дубль в шапке «Результата» (v1.225) — та же функция, а не своя копия поведения. */
+const bgSearchTitleDupEl = document.getElementById("bgSearchTitleDup");
+if (bgSearchTitleDupEl) bgSearchTitleDupEl.onclick = () => toggleBgSearch();
 
 /* Удаление выделенных (кликом) строк — отдельная операция, НЕ связанная с откатом шага.
    Вызывается клавишей Delete (см. глобальные хоткеи ниже). Шаблон (tplRows/tplPats — то,

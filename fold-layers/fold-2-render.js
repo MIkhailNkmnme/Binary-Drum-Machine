@@ -14,26 +14,34 @@
    по индексу бита блока: { kind, skip } на позициях, куда лёг найденный паттерн (см. pasteTraceRow
    в fold-1-core.js и pasteHitRows в render). Класс тот же, что у бит цепочки, .chain-hit-bits +
    KIND_CLS, и цвет он берёт свой — правило стоит с !important и перебивает .ps1/.ps0. */
-function pasteBitsHtml(txt, chg, hits){
+function pasteBitsHtml(txt, chg, hits, patHits){
   const s = String(txt == null ? "" : txt);
   const m = String(chg == null ? "" : chg);
   // Две находки склеиваются в одну серию, только если это одна и та же находка (вид и «⏭ Без 1-го»).
   const eqHit = (a, b) => (!a && !b) || (!!a && !!b && a.kind === b.kind && !!a.skip === !!b.skip);
+  const patAt = (k) => (patHits && patHits[k] !== undefined) ? patHits[k] : -1;
   let out = "";
   for (let i = 0; i < s.length; ) {
     const ch = s[i];
     const mk = m[i] === "1";
     const hit = hits ? (hits[i] || null) : null;
+    /* «🌈 Все паттерны», нашедшиеся в САМОМ блоке (v1.218) — своим цветом паттерна, тем же, что и
+       у его находок в строках (allPatColor). Находка фон-поиска важнее: она про то, что ищут
+       прямо сейчас, и красится своим классом. */
+    const pat = hit ? -1 : patAt(i);
     // Серия обрывается и на смене цифры, и на смене «изменилось/не изменилось», и на границе
-    // найденного паттерна — классы у них разные, склеить такие места в один тег нельзя.
+    // найденного паттерна — оформление у них разное, склеить такие места в один тег нельзя.
     let j = i + 1;
-    while (j < s.length && s[j] === ch && (m[j] === "1") === mk && eqHit(hits ? (hits[j] || null) : null, hit)) j++;
+    while (j < s.length && s[j] === ch && (m[j] === "1") === mk &&
+           eqHit(hits ? (hits[j] || null) : null, hit) && (hit ? true : patAt(j) === pat)) j++;
     const run = s.slice(i, j);
     if (ch === "1" || ch === "0") {
       const hitCls = hit
         ? (" chain-hit-bits" + (KIND_CLS[hit.kind] ? " " + KIND_CLS[hit.kind] : "") + (hit.skip ? " skip1" : ""))
         : "";
-      out += '<i class="ps' + ch + (mk ? " ps-chg" : "") + hitCls + '">' + run + "</i>";
+      const patStyle = (!hit && pat >= 0 && typeof allPatColor === "function")
+        ? ' style="color:' + allPatColor(pat) + ' !important;font-weight:700"' : "";
+      out += '<i class="ps' + ch + (mk ? " ps-chg" : "") + hitCls + '"' + patStyle + '>' + run + "</i>";
     } else {
       out += esc(run);
     }
@@ -347,6 +355,8 @@ function resetAll(){
      полотна под наложения). Проходим по всем и снимаем: Сброс не должен оставлять следов поиска
      нигде. */
   for (const p of (st.pats || [])) if (p) { p.found = false; p.kind = null; p.step = null; p.bgFound = false; }
+  // ...и метка не должна вернуться тем же кадром — см. foundLatchMute (v1.223).
+  if (typeof armFoundLatchMute === "function") armFoundLatchMute();
   // Данные только что загружены — следим, что строка с номером 0 пустая (см. ensureZeroRow).
   ensureZeroRow();
   // Блоки приводим к новым границам поля тем же общим правилом (v1.196, см. pasteNorm).
@@ -2029,11 +2039,19 @@ function render(){
      (см. resetAll, там же снимаются found/kind/step) или двойным Escape, который теперь и есть Сброс.
      Пишем в состояние прямо из render() осознанно: другого места, где виден результат фон-поиска,
      нет, а стоит это одну проверку на кадр — набор пустой в подавляющем большинстве случаев. */
+  /* Кто найден В ЭТОМ КАДРЕ — и фон-поиском, и в наложениях. Нужен заглушке защёлки: сразу после
+     Сброса/Escape этот набор запоминается как «уже зачтённый» и метку не зажигает (см.
+     foundLatchMute в fold-1-core.js), а паттерн, переставший находиться, из заглушки выпадает. */
+  const foundNowPats = new Set();
+  const latchFoundPat = (idx) => {
+    foundNowPats.add(idx);
+    if (foundLatchMuteArm) return;                       // кадр сразу после сброса — только считаем
+    if (foundLatchMute && foundLatchMute.has(idx)) return;
+    const pp = st.pats[idx];
+    if (pp) pp.bgFound = true;
+  };
   if (bgInfo && bgInfo.hitPatIdxs && bgInfo.hitPatIdxs.size) {
-    for (const hp of bgInfo.hitPatIdxs) {
-      const hpat = st.pats[hp];
-      if (hpat) hpat.bgFound = true;
-    }
+    for (const hp of bgInfo.hitPatIdxs) latchFoundPat(hp);
   }
   const bgTargetIdx = bgInfo ? bgInfo.targetIdx : null;
   const bgMatched = !!(bgInfo && bgInfo.matched);
@@ -2169,6 +2187,70 @@ function render(){
   // (см. patHitTargets/scrollToBit). Держим последнюю посчитанную здесь, чтобы не гонять поиск
   // второй раз: переходы обязаны идти ровно по той подсветке, которая сейчас на экране.
   lastAllPatRows = allPatRows;
+  /* ═══ ТЕ ЖЕ ПАТТЕРНЫ — И В САМИХ НАЛОЖЕНИЯХ (v1.218) ═══
+     Баг-репорт пользователя: приложение говорит «паттерн строки 14 в строках цепочек не
+     встречается», а на холсте он лежит в наложении и прекрасно виден.
+     ПОЧЕМУ ТАК БЫЛО. Склейка выше собирается по СЫРЫМ st.rows — блоки в неё не входят вовсе, они
+     подмешиваются только в getRowBits. Режим честно не видел того, что видит человек.
+     ПОЧЕМУ НЕ ПЕРЕВЁЛ ВСЮ СКЛЕЙКУ НА getRowBits. Позиции в ней — это позиции ЛЕНТЫ, куда входят и
+     зеркала, и прореживание, и блоки; а подсветка строк раскладывается по СЫРЫМ индексам (по ним
+     же печатает render). Смена источника увела бы подсветку у всех, кто блоками не пользуется, —
+     цена несоразмерная.
+     ПОЭТОМУ БЛОКИ ИЩУТСЯ ОТДЕЛЬНЫМ ПРОХОДОМ: у каждого своя склейка — его строки подряд сверху
+     вниз, ровно как «Сквозная →» склеивает строки цепочки. Найденное красится на цифрах самого
+     блока и ставит паттерну метку «найден» в колонке.
+     ИЩЕМ СОБСТВЕННЫЕ БИТЫ БЛОКА: при «⧉ Поверх» это ровно то, что нарисовано. У XOR/AND нарисован
+     результат с битами строки под ним — его видит обычный фон-поиск, он как раз работает по ленте
+     (см. pasteTraceRow, v1.210), так что и этот случай без присмотра не остаётся.
+     Выключенный блок (✕ «в расчёт не идёт») не ищется: его нет и в склейках. */
+  let allPatPasteRows = null;   // Map(pi → Map(k строки блока → массив по индексу бита → patIdx))
+  if (allPatsShown()) {
+    const plist = Array.isArray(st.pastes) ? st.pastes : [];
+    if (plist.length) {
+      // Ключ кэша — только ТЕКСТЫ блоков и их участие: от положения блока его собственная склейка
+      // не зависит, значит и пересчитывать её при каждом сдвиге незачем.
+      const sig = plist.map(p => (p && p.on !== false && p.rows)
+        ? p.rows.map(r => (r && r.txt) || "").join("/") : "-").join("|");
+      allPatPasteRows = memoMask("allPatPaste",
+        [sig, st.pats.map(p => (p && p.text) || ""), st.skipFirst, st.skipLast, st.allKinds,
+         st.kindsMode || "", st.ringOff, st.ringInvert, st.ringReverse, st.bgAllPatsEvery,
+         st.bgAllPatsPartial, st.partialPick, allPatLatch.size, st.horizonRow,
+         Array.from(st.selectedPats || []).sort((a, b) => a - b)],
+        () => {
+          const out = new Map();
+          for (let pi = 0; pi < plist.length; pi++) {
+            const pb = plist[pi];
+            if (!pb || pb.on === false || !pb.rows || !pb.rows.length) continue;
+            let text = "";
+            const cellK = [], cellT = [];
+            for (let k = 0; k < pb.rows.length; k++) {
+              const t = (pb.rows[k] && pb.rows[k].txt) || "";
+              for (let j = 0; j < t.length; j++) { cellK.push(k); cellT.push(j); }
+              text += t;
+            }
+            if (text.length < 2) continue;
+            const hits = findAllPatternsInResult(text);
+            if (!hits.length) continue;
+            const period = hits.period || text.length;
+            const byRow = new Map();
+            for (const h of hits) for (let q = 0; q < h.len; q++) {
+              const pos = period ? (h.start + q) % period : (h.start + q);
+              if (pos >= text.length) continue;
+              const k = cellK[pos];
+              let arr = byRow.get(k);
+              if (!arr) { arr = []; byRow.set(k, arr); }
+              // Первый занявший бит и остаётся — то же правило, что и в строках.
+              if (arr[cellT[pos]] === undefined) arr[cellT[pos]] = h.patIdx;
+            }
+            if (byRow.size) { byRow.hits = hits; out.set(pi, byRow); }
+          }
+          return out.size ? out : null;
+        });
+    }
+  }
+  // Клик по номеру паттерна ходит по этой же карте (см. patNavStep в fold-3-ops.js): нашёлся
+  // только в блоке — ведём к блоку, а не говорим «не встречается».
+  lastAllPatPaste = allPatPasteRows;
   // Колонка паттернов: пока фон-поиск работает, метки берутся из его результатов (там известен и
   // режим, которым нашлось, — он показывается в подсказке). Когда он выключен, красим по находкам
   // из самих строк, иначе колонка молчала бы, хотя в строках подсветка есть.
@@ -2176,6 +2258,29 @@ function render(){
     for (const h of allPatSelfHits) {
       if (!allPatHits) allPatHits = new Map();
       if (!allPatHits.has(h.patIdx)) allPatHits.set(h.patIdx, { kind: h.kind, mode: null, patStart: h.patStart, patLen: h.patLen });
+    }
+  }
+  /* Метка «найден» и за находки в наложениях (v1.218) — ПОСЛЕ строк: где паттерн лежит и там, и
+     там, в подсказке останется находка из строк, она главнее. */
+  if (allPatsShown() && allPatPasteRows) {
+    for (const [pi, byRow] of allPatPasteRows) {
+      for (const h of (byRow.hits || [])) {
+        if (!allPatHits) allPatHits = new Map();
+        if (!allPatHits.has(h.patIdx)) {
+          allPatHits.set(h.patIdx, { kind: h.kind, mode: null, patStart: h.patStart, patLen: h.patLen, pasteIdx: pi });
+        }
+        /* ...И ТОЧКА, КОТОРАЯ НЕ ГАСНЕТ (v1.218, запрос: «когда при сдвигах наложений находятся и
+           красятся паттерны — помечать жирной точкой, и не снимать её до Сброса или Escape»).
+           Находка в блоке живёт ровно до следующего сдвига: подвинул — склейка другая, и красить
+           уже нечего. Поэтому ставим тот же стойкий признак, которым с v1.156 закрепляются находки
+           фон-поиска: он снимается Сбросом/Escape и рисуется точкой в своей колонке (.pat-dot).
+           Находки в САМИХ СТРОКАХ сюда намеренно не попадают: паттерн, лежащий в цепочке, нашёлся
+           бы сразу и навсегда, и точки стояли бы у всех подряд — метка перестала бы что-либо
+           значить. Точка — про то, что удалось СЛОЖИТЬ наложениями.
+           Через latchFoundPat() (v1.223): находка в блоке статична, и без заглушки метка
+           возвращалась бы в первый же кадр после Сброса. */
+        latchFoundPat(h.patIdx);
+      }
     }
   }
 
@@ -2188,6 +2293,13 @@ function render(){
   if (allPatsShown() && allPatLatch.size) {
     if (!allPatHits) allPatHits = new Map();
     for (const [pi, info] of allPatLatch) if (!allPatHits.has(pi)) allPatHits.set(pi, info);
+  }
+  /* Бухгалтерия заглушки (v1.223): первый кадр после Сброса/Escape запоминает всё найденное как
+     «уже зачтённое», дальше из заглушки выпадают те, кто находиться перестал, — и их следующая
+     находка снова зажжёт метку. */
+  if (foundLatchMuteArm) { foundLatchMute = new Set(foundNowPats); foundLatchMuteArm = false; }
+  else if (foundLatchMute && foundLatchMute.size) {
+    for (const idx of Array.from(foundLatchMute)) if (!foundNowPats.has(idx)) foundLatchMute.delete(idx);
   }
   // "🧩 Паттерн-цепочка" нашла паттерн — подсвечиваем его ВО ВСЕХ строках, где он реально лежит,
   // включая нижние (запрос пользователя: "найденное сначала подсветить везде где нашлось даже в
@@ -2339,6 +2451,10 @@ function render(){
     }
     if (!patChainHitRows.size) patChainHitRows = null;
   }
+  /* Дубль «🔍 Фон-поиска» в шапке «Результата» (v1.225) повторяет оригинал слово в слово: подпись,
+     подсказку и признак «включён» копируем сразу после того, как их поставили оригиналу, — так
+     две кнопки не могут разойтись в показаниях. */
+  const bgSearchTitleDup = document.getElementById("bgSearchTitleDup");
   const bgSearchTitleEl = document.getElementById("bgSearchTitle");
   if (bgSearchTitleEl) {
     bgSearchTitleEl.classList.toggle("bg-search-active", bgSearchActive());
@@ -2356,6 +2472,11 @@ function render(){
       : (bgSearchActive() ? "🔍 Поиск: ВКЛ" : "🔍 Поиск: нет реж.");
     bgSearchTitleEl.title = (st.bgSearchOn === false ? "Фон-поиск выключен. " : "Фон-поиск включён. ") +
       "Клик — переключить";
+    if (bgSearchTitleDup) {
+      bgSearchTitleDup.textContent = bgSearchTitleEl.textContent;
+      bgSearchTitleDup.title = bgSearchTitleEl.title;
+      bgSearchTitleDup.classList.toggle("bg-search-active", bgSearchTitleEl.classList.contains("bg-search-active"));
+    }
   }
   // Соседняя "🎭 По маске" — там же и по тому же поводу: её подпись зависит от поля маски.
   if (typeof updateBgMaskOnBtn === "function") updateBgMaskOnBtn();
@@ -3229,7 +3350,7 @@ function render(){
     // печатать его целиком, вынося левее отступа и возвращая строку трансформом (чтобы не обрезалось)
     // — от этого разъезжалось выравнивание, поэтому вернул как было: что влезло в отступ, то и видно
     // (запрос пользователя "зеркала стали рушить выравнивание, сделай как до этого было").
-    const lmSrc = (st.leftMirror && i >= mirrorFrom && i <= mirrorTo && s.length > 1) ? mirrorSideBits(sRaw.slice(1), "l") : "";
+    const lmSrc = (st.leftMirror && i >= mirrorFrom && i <= mirrorTo && s.length > 1) ? mirrorSideBits(mirrorSrcBits(sRaw, "l"), "l") : "";
     // "⊘ Ось ◀/▶" (см. mirrorCutOf в ядре): опорный бит зеркала — первый бит строки у левого,
     // последний у правого — просто НЕ ПЕЧАТАЕТСЯ. Ничего пересчитывать не надо: соседние символы
     // сами сдвигаются на его место, и зеркало смыкается с остатком строки вплотную (левый отступ
@@ -3555,7 +3676,7 @@ function render(){
     // ПОСЛЕДНЕГО бита (сам последний бит в отражение не входит), биты инвертированы, цвет серый.
     // Тоже только показ: данных не меняет, в склейки и поиск не идёт, на выравнивание не влияет.
     // Не хватило правого отступа — печатаем ту часть, что влезла.
-    const rmSrc = (st.rightMirror && i >= mirrorFrom && i <= mirrorTo && s.length > 1) ? mirrorSideBits(sRaw.slice(0, -1), "r") : "";
+    const rmSrc = (st.rightMirror && i >= mirrorFrom && i <= mirrorTo && s.length > 1) ? mirrorSideBits(mirrorSrcBits(sRaw, "r"), "r") : "";
     if (rmSrc) {
       // В пределах правого отступа — как и слева, ширину полотна не расширяем.
       const shownR = rmSrc.length <= padRight ? rmSrc : rmSrc.slice(0, padRight);
@@ -3705,7 +3826,8 @@ function render(){
           (pb.on === false ? " СЕЙЧАС ВЫКЛЮЧЕНО — в расчёт не идёт." :
             " Идёт в склейки и фон-поиск как биты этой строки; где накрыло биты строки, считается оно.") +
           ' Тяни мышью — переставить ВЕСЬ блок. Клик отдаёт ему стрелки: ←/→ и ↑/↓ ведут последний тронутый блок">' +
-          pasteBitsHtml(pTxt, pChg, pasteHitMap ? pasteHitMap.get(pi) : null) + "</span>";
+          pasteBitsHtml(pTxt, pChg, pasteHitMap ? pasteHitMap.get(pi) : null,
+            (allPatPasteRows && allPatPasteRows.get(pi)) ? allPatPasteRows.get(pi).get(pk) : null) + "</span>";
         /* РУЧКА-РАМКА НА ПЕРВОЙ ЦИФРЕ УБРАНА (v1.168, запрос «убери границу первого бита — рамку»).
            Она стояла с v1.109 как единственное место, за которое блок было удобно хватать: цифры
            тогда просвечивали и попасть в них мышью было непросто. Теперь у блока есть своя ось и
@@ -3759,12 +3881,20 @@ function render(){
         }
       }
     }
+    /* ПОЛОСКА ПОД ТОЧКУ НАХОДКИ (v1.220) — своя узкая колонка по обе стороны от поля бит, см.
+       .pat-dot в fold.html. Стоит в КАЖДОЙ строке, зажигается только у закреплённой находки
+       (.bgfound, живёт до Сброса/Escape), поэтому появление точки ничего не двигает. */
+    // p может не быть вовсе: строк бывает больше, чем паттернов (испр. v1.224 — «Uncaught
+    // TypeError: Cannot read properties of undefined (reading 'bgFound')»). Весь блок отрисовки
+    // паттерна стоит под проверкой «if (p && p.text)», а эта строка в v1.220 оказалась вне её.
+    const dotCls = 'pat-dot' + ((p && p.bgFound) ? ' on' : '');
     out.push('<div class="' + cls.join(" ") + '" data-idx="' + i + '">' +
-             pat + '<span class="' + numCls + ' num-l2">' + balanceHtml + numTxtL + "</span>" +
+             pat + '<span class="' + dotCls + '">●</span>' +
+             '<span class="' + numCls + ' num-l2">' + balanceHtml + numTxtL + "</span>" +
              // grpBadge — внутри .bits (та position:relative), поэтому позиционируется от края
              // поля и едет вместе с ним; на раскладку самих бит не влияет (position:absolute).
              '<span class="bits ' + alignCls + '"><span' + halfShiftAttr + '>' + bits + "</span>" + grpBadge + insHtml + "</span>" +
-             patRight + "</div>");
+             '<span class="' + dotCls + '">●</span>' + patRight + "</div>");
   }
   // Распорки вместо не нарисованных строк (см. vrowsRange) — держат высоту, поэтому полоса
   // прокрутки и позиция каждой строки такие же, как при полной отрисовке.

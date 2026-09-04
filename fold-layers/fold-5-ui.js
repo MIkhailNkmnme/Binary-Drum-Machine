@@ -2027,6 +2027,14 @@ addEventListener("resize", queuePatSpill);
 if (document.body) new MutationObserver(queuePatSpill)
   .observe(document.body, { attributes: true, attributeFilter: ["class"] });
 
+/* Левая позиция оси цепочек в координатах #chain — её ставит updateAxisSplitPosition, а читает
+   вырез горизонта ниже. null — оси на экране нет, вырезать не от чего. */
+var lastAxisLeftPx = null;
+/* ШИРИНА ВЫРЕЗА в горизонте по обе стороны от оси (v1.226, запрос пользователя: «обрежь горизонт-
+   линию там, где ось цепочек, чтобы там не хваталась горизонт, влево-вправо от оси на сколько-то»).
+   16px — чуть шире зоны захвата самой оси (13px), чтобы промахнуться мимо неё и попасть в горизонт
+   было нельзя даже дрожащей рукой. */
+const HORIZON_AXIS_GAP = 16;
 function updateTopHorizon(){
   const el = document.getElementById("hsplitTop");
   if (!el) return;
@@ -2042,6 +2050,23 @@ function updateTopHorizon(){
      ширины самой раскладки и ширины окна, плюс запас на отступ #chain от левого края экрана. */
   const chainLeft = chainEl.getBoundingClientRect().left;
   el.style.width = Math.max(chainEl.scrollWidth, window.innerWidth - chainLeft + 40) + "px";
+  /* ВЫРЕЗ ПОД ОСЬ ЦЕПОЧЕК (v1.226). Горизонт — полоса на всю ширину раскладки с курсором
+     row-resize, и у оси она проходила ровно под её чертой: тянешься за ось, а хватается горизонт.
+     Вырезаем окно шириной 2×HORIZON_AXIS_GAP вокруг оси — clip-path режет не только картинку, но
+     и попадание мыши, поэтому в этом окне полоса перестаёт ловить события вовсе, и ось (а заодно
+     кнопки, что стоят рядом с ней) снова доступна.
+     Полигон обходит ДВА прямоугольника — левее выреза и правее, — соединённые нулевой перемычкой
+     по нижнему краю: две встречные стороны по одной прямой площади не дают, и окно остаётся
+     пустым. Оси на экране нет — вырез снимаем, линия сплошная, как была. */
+  const axisX = (typeof lastAxisLeftPx === "number" && isFinite(lastAxisLeftPx)) ? lastAxisLeftPx : null;
+  if (axisX !== null) {
+    const x1 = Math.max(0, axisX - HORIZON_AXIS_GAP).toFixed(1);
+    const x2 = Math.max(0, axisX + HORIZON_AXIS_GAP).toFixed(1);
+    el.style.clipPath = "polygon(0 0, " + x1 + "px 0, " + x1 + "px 100%, " + x2 + "px 100%, " +
+                        x2 + "px 0, 100% 0, 100% 100%, 0 100%)";
+  } else {
+    el.style.clipPath = "";
+  }
   el.classList.add("act");
   // .on — горизонт СЕЙЧАС режет (над ним есть строки). Это не «стоит на месте», а «работает».
   el.classList.toggle("on", h > 0);
@@ -2242,6 +2267,8 @@ function updateAxisSplitPosition(maxLen){
      столбцов. */
   leftPx = Math.max(bandLeft, leftPx);
   axisSplitEl.style.left = leftPx + "px";
+  // Где сейчас стоит ось — по ней горизонт делает вырез (v1.226, см. updateTopHorizon).
+  lastAxisLeftPx = leftPx;
 
   /* ЗОНА ЗАХВАТА — НА ВСЮ ВЫСОТУ ПОЛЯ (v1.029, запрос пользователя: "тянуть только за верхнюю
      получается — надо по всей высоте чтоб"). Раньше ручка была ростом в линейку столбцов плюс ОДНУ
@@ -2982,6 +3009,7 @@ function captureUiSettings(){
     bgMaskOn: st.bgMaskOn !== false,
     bgMaskRingRestart: st.bgMaskRingRestart !== false,
     pasteBarsOn: st.pasteBarsOn !== false,          // «⧉ Кнопки» (v1.212)
+    mirrorFull: !!st.mirrorFull,                   // зеркало со всеми битами (v1.219)
     // Свой список масок для "🎭 Перебора масок" (см. maskScanListMasks в fold-3).
     bgMaskScanList: st.bgMaskScanList || "",
     // "⇄ Сдвиг по маске": своего поля маски и своей подсветки у него больше нет (v0.929) —
@@ -3377,6 +3405,7 @@ function applyUiSettings(u){
     if (b) b.classList.toggle("mode-act", chgBitsOn);
   }
   if (u.pasteBarsOn !== undefined) { st.pasteBarsOn = !!u.pasteBarsOn; applyPasteBarsMode(); }
+  if (u.mirrorFull !== undefined) st.mirrorFull = !!u.mirrorFull;
   if (u.bgSearchOn !== undefined) st.bgSearchOn = !!u.bgSearchOn;
   if (u.bgSearchModes && u.bgSearchModes.length) {
     st.bgSearchModes = u.bgSearchModes;
