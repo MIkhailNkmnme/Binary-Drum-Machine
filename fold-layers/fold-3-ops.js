@@ -94,6 +94,36 @@ if (chainResultHeadEl) {
    разом (запрос пользователя). Повторный клик снимает выбор. Выбранная строка заодно
    разворачивается, чтобы было видно её целиком. */
 const chainTextEl2 = document.getElementById("chainText");
+/* ═══ ТОЧКИ-ПЕРЕКЛЮЧАТЕЛИ РЕЖИМОВ: КЛИК И ПРОТЯЖКА (v1.242) ══════════════════════════════════
+   Запрос пользователя: «двойной клик не работает — лучше кнопки-точки, нажатие вкл-выкл и
+   протяжку всех, чтоб можно было зацеплять».
+   Работаем по mousedown, а не по click: так жест начинается сразу и его можно продолжить
+   протяжкой. Первая точка задаёт НАПРАВЛЕНИЕ (включаем или выключаем), остальные, через которые
+   прошли с зажатой кнопкой, приводятся к тому же состоянию — иначе одна и та же точка под
+   дрожащим курсором мигала бы туда-сюда.
+   Список перерисовывается на каждое переключение, то есть узлы под курсором подменяются; поэтому
+   протяжка слушается через делегирование на #chainText (mouseover), а не на самих точках. */
+let modeDotPaint = null;
+if (chainTextEl2) {
+  chainTextEl2.addEventListener("mousedown", (e) => {
+    const dot = e.target.closest && e.target.closest("[data-mode-toggle]");
+    if (!dot || e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const val = dot.getAttribute("data-mode-toggle");
+    modeDotPaint = { want: !(st.bgSearchModes || []).includes(val) };
+    toggleBgSearchMode(val);
+  });
+  chainTextEl2.addEventListener("mouseover", (e) => {
+    if (!modeDotPaint) return;
+    if (!(e.buttons & 1)) { modeDotPaint = null; return; }   // кнопку отпустили мимо окна
+    const dot = e.target.closest && e.target.closest("[data-mode-toggle]");
+    if (!dot) return;
+    const val = dot.getAttribute("data-mode-toggle");
+    if ((st.bgSearchModes || []).includes(val) !== modeDotPaint.want) toggleBgSearchMode(val);
+  });
+  window.addEventListener("mouseup", () => { modeDotPaint = null; });
+}
 if (chainTextEl2) {
   chainTextEl2.addEventListener("click", (e) => {
     // Клик по НОМЕРУ найденного паттерна (режим "🌈 Все паттерны") — выделяем его строку в
@@ -112,6 +142,9 @@ if (chainTextEl2) {
       }
       return;
     }
+    /* ПЕРЕКЛЮЧЕНИЕ РЕЖИМА ПЕРЕЕХАЛО НА ДВОЙНОЙ КЛИК (v1.240, запрос пользователя «по 2-му клику
+       переделай вкл-выкл»): одиночный по этой же строке разворачивает её и выбирает диагональ, и
+       два разных дела на одном жесте мешали друг другу. Обработчик — ниже, отдельным dblclick. */
     const line = e.target.closest(".chain-result-line");
     if (!line) return;
     const mode = line.dataset.mode;
@@ -1096,7 +1129,13 @@ const bCopyChainEl = document.getElementById("bCopyChain");
 if (bCopyChainEl) {
   bCopyChainEl.onclick = () => {
     if (!lastChainResultText) { say("Окно результата пусто"); return; }
-    copyTextToClipboard(lastChainResultText, "Скопировано!");
+    /* КОЛОНКАМИ, ЕСЛИ ЕСТЬ ЧЕМ (v1.236): у списка режимов есть табличный вариант — подпись,
+       отметки и биты через таб. Excel/Calc/Sheets раскладывают такой текст по ячейкам сами и
+       выравнивают своими средствами; пробелы для этого не годятся — вся строка легла бы в одну
+       ячейку. Обычная сквозная строка табличного варианта не имеет и копируется как раньше. */
+    const cells = (typeof lastChainResultCells === "string" && lastChainResultCells) ? lastChainResultCells : "";
+    copyTextToClipboard(cells || lastChainResultText,
+      cells ? "Скопировано колонками — вставится в таблицу по ячейкам." : "Скопировано!");
   };
 }
 
@@ -1121,7 +1160,17 @@ function applyResultHeightLock(){
     el.style.height = "";
     el.style.height = el.offsetHeight + "px";
     resultHeightAppliedOnce = true;
+    return;
   }
+  /* ЗАКРЕПЛЁННАЯ ВЫСОТА НЕ РАСТЁТ, НО И НЕ ДЕРЖИТ ПУСТОТУ (v1.278, баг-репорт «остался отступ»).
+     Высота замерялась ОДИН раз и держалась дальше как есть. Пока содержимое росло, это ровно то,
+     чего и хотели («📌 закрепить»): панель не скачет. Но стоило режимам поиска выключиться или
+     цели пропасть — строк оставалось две, а панель по-прежнему занимала высоту вчерашнего списка,
+     и под ней зияла чёрная пустота, которую снаружи и не отличить от отступа холста.
+     Поэтому «закреплено» теперь значит «не растёт»: если содержимое стало КОРОЧЕ закреплённой
+     высоты, ужимаем панель по нему. Вверх она по-прежнему не тянется — за этим и закрепляли. */
+  const fixedH = parseFloat(el.style.height) || 0;
+  if (fixedH && el.scrollHeight + 2 < fixedH) el.style.height = el.scrollHeight + "px";
 }
 const bLockResultHeightEl = document.getElementById("bLockResultHeight");
 if (bLockResultHeightEl) {
@@ -1741,8 +1790,19 @@ function updateResultBoxInset() {
   const leftPanel = document.getElementById('leftPanel');
   const rightPanel = document.getElementById('rightPanel');
   if (!leftPanel || !rightPanel) return;
-  const left = leftPanel.classList.contains('dock-empty') ? '6px' : 'calc(var(--side-w) + 6px)';
-  const right = rightPanel.classList.contains('dock-empty') ? '6px' : 'calc(var(--side-w) + 6px)';
+  /* ═══ ОТСТУП СЧИТАЕТСЯ ОТ ПРАВОГО КРАЯ ДОКА, А НЕ ОТ ЕГО ШИРИНЫ (испр. v1.280) ═══
+     Баг-репорт: «накладывается на меню справа, слева — чуть залезают примерно на 10».
+     Формула была «ширина дока плюс 6px зазора» и молчаливо считала, что док начинается от самого
+     края холста. С v1.188 это уже не так: доки отодвинуты от краёв на 15px, чтобы не накрывать
+     собой полосы прокрутки (см. #leftPanel/#rightPanel в fold.html). То есть правый край левого
+     дока стоит на 15 + --side-w, а бар вставал на --side-w + 6 — на 9px ЛЕВЕЕ, ровно те «десять
+     пикселей», которыми он и наезжал на панель. Справа — зеркально.
+     Теперь в формуле есть и сам отступ дока: --side-gap (та же переменная, которой он задан), плюс
+     прежние 6px зазора между баром и панелью. Пустой док места не занимает — там по-прежнему 6px
+     от края холста, и --side-gap не при чём: отступать не от чего. */
+  const inset = 'calc(var(--side-w) + var(--side-gap) + 6px)';
+  const left = leftPanel.classList.contains('dock-empty') ? '6px' : inset;
+  const right = rightPanel.classList.contains('dock-empty') ? '6px' : inset;
   document.querySelectorAll('.overlay-box').forEach(box => { box.style.left = left; box.style.right = right; });
 }
 
@@ -1969,9 +2029,56 @@ function layoutOverlayBoxes(){
   // пользователя: "окно результат немного выдвинь вниз за эти кнопки, чтоб можно было его там
   // тянуть вниз"). Поэтому отступ холста = низ полосы, а не max(стопка, полоса).
   const alignGrpEl = document.getElementById("alignGrp");
+  const stackBottom = top;   // низ стопки баров «Результат»/«Черновик» — см. цикл выше
   const alignTop = positionAlignGrpTop();
   const alignH = alignGrpEl ? alignGrpEl.offsetHeight : 0;
-  document.documentElement.style.setProperty('--result-box-h', Math.round(alignTop + alignH + 2) + 'px');
+  /* Планки «П1»/«П2»/«№» стоят с полосой в одном ряду — их высота берётся отсюда же (v1.241),
+     чтобы ряд читался ровным при любом кегле и межстрочном. */
+  if (alignH) document.documentElement.style.setProperty("--strip-h", alignH + "px");
+  /* Высота ряда под полосу (v1.260): на неё сдвигаются вниз строки цепочки вместе с колонками
+     паттернов, чтобы полоса встала под горизонтом, а не поверх шапки. Ставится по РЕАЛЬНОЙ высоте
+     полосы: та меняется и от кегля, и от того, скольким кнопкам хватает места в строке.
+     ПЛЮС ДВЕ СТРОКИ ПОД ОСЬ (v1.261, запрос пользователя: «вверх ось надо, но сдвинь ещё на пару
+     строк вниз всё, чтобы ось видна»). Ось растёт ВВЕРХ от первой строки цепочки — ей нужен
+     просвет между полосой и битами, иначе она снова уходит полосе за спину. Две строки — тот же
+     размер, которым мерится всё остальное в цепочке, поэтому просвет выглядит её частью, а не
+     случайным отступом. */
+  if (alignH) {
+    const pitchPx = (typeof vrowsPitchPx === "function") ? vrowsPitchPx() : 16;
+    /* ТРИ СТРОКИ ПРОСВЕТА, А НЕ ДВЕ (v1.264, запрос пользователя «сдвинь ось и биты цепочек вниз»):
+       на двух ось упиралась макушкой в полосу, а биты начинались сразу под ней, без воздуха. */
+    /* ДВЕ СТРОКИ ПРОСВЕТА ПОД ПОЛОСОЙ (v1.266, запрос пользователя «2 строки под полосой цепочки»):
+       в этом просвете стоит ось, и он же отделяет ряд управления от первой строки цепочки. */
+    document.documentElement.style.setProperty("--align-band-h", (alignH + 4 + pitchPx * 2) + "px");
+    document.documentElement.style.setProperty("--axis-gap-h", (pitchPx * 2) + "px");
+  }
+  /* Высота выпадающего этажа полосы (½-варианты и счётчики лесенок) — РОВНО как у обычной кнопки
+     полосы (v1.250): её меряем на месте, потому что кегль и межстрочный ходят ползунками, и
+     число в CSS разъехалось бы с реальностью при первом же их сдвиге. */
+  if (alignGrpEl) {
+    const b0 = alignGrpEl.querySelector(".align-half > button");
+    if (b0 && b0.offsetHeight) {
+      document.documentElement.style.setProperty("--align-h2-h", b0.offsetHeight + "px");
+    }
+  }
+  /* ═══ ХОЛСТ НАЧИНАЕТСЯ СРАЗУ ПОД БАРАМИ (испр. v1.270) ═══
+     Баг-репорт: «цепочки сдвигаются». Верхний отступ холста считался как «низ полосы выравниваний
+     плюс 2px» — верно, пока полоса стояла НАД холстом. С v1.266 она переехала внутрь, в разрыв
+     между полем наложений и цепочкой, а отступ по-прежнему резервировал её высоту наверху: под
+     барами оставалась пустая полоса в целую полосу высотой, и вся цепочка съезжала на неё вниз.
+     Теперь отступ — ровно низ стопки баров: полоса своё место занимает сама, внутри строк. */
+  /* НЕТ ОТКРЫТЫХ БАРОВ — НЕТ И ЗАПАСА (v1.273, запрос пользователя «убери тут отступ вертикальный»).
+     Отступ холста держал место под ДВА резерва разом: под саму шапку меню (она прозрачная и вынута
+     из потока, см. overlayTopBase) и под стопку баров «Результат»/«Черновик». Пока полоса
+     выравниваний стояла в этом промежутке, он был занят делом; с v1.266 она ушла внутрь строк, и
+     при закрытых барах промежуток остался пустой чёрной полосой в полсотни пикселей.
+     Теперь: бары открыты — запас прежний, они не должны накрывать строки; закрыты — цепочка
+     начинается почти от самого верха, под прозрачной шапкой, ради которой ту и делали прозрачной.
+     Сами бары своего места не меняют: они позиционируются от overlayTopBase() и остаются под
+     кнопками меню, а не под ними. */
+  const anyOverlayBars = visible.length > 0;
+  document.documentElement.style.setProperty('--result-box-h',
+    Math.round(anyOverlayBars ? stackBottom : 8) + 'px');   // v1.276: без лишних 2px
 }
 
 /* Высота полосы выравниваний (#alignGrp, v0.839): она идёт СЛЕДУЮЩЕЙ за стопкой баров, поэтому
@@ -2003,11 +2110,56 @@ function positionAlignGrpTop(){
      шапки полосу не пускаем; когда меню внизу экрана (menubar-bottom) потолок — просто 2px.
      Если подъём упёрся в потолок, холст всё равно отодвигаем на полную высоту планки — пустая
      полоса под кнопками сохраняется, планкам есть куда встать. */
-  const strip = document.getElementById("axisStrip");
-  const lift = (strip && strip.offsetHeight) ? (strip.offsetHeight + 4) : 0;
+  /* ПОЛОСА ОПУЩЕНА НА ОСВОБОДИВШЕЕСЯ МЕСТО (v1.231, запрос пользователя: «выравнивания перемести
+     на место, где пока Кнопки»). Подъём на высоту планки (v1.087) заводился, чтобы под полосой
+     оставалась пустая строка — в ней стояли планки полей и, с v1.212, кнопка «⧉ Кнопки». Кнопка
+     оттуда ушла в саму полосу, и держать полосу выше стало незачем: она садится вплотную к
+     холсту, туда, где кнопка и стояла.
+     ═══ ПОЛОСА СТОИТ НА ОДНОЙ ЛИНИИ С ПЛАНКАМИ «П1»/«П2» (испр. v1.239) ═══
+     Баг-репорт: «не применилось, сдвиг вниз». В v1.231/1.238 я убирал ЗАЗОР под полосой — а зазор
+     был не там. Между полосой и планками лежит верх самого холста: шапка колонок («Паттерн № №
+     Паттерн») и линейка столбцов. Полоса всегда стояла НАД холстом, планки — внутри него, у самых
+     строк, и сколько ни ужимай отступ, эти два элемента разделяла вся эта верхушка.
+     Поэтому полоса больше не «стоит над холстом», а КЛАДЁТСЯ на его верхнюю часть: её низ ставим
+     туда же, где низ планок, — на 3px выше первой строки. Шапка и линейка оказываются под ней;
+     они и так справочные, а планки с полосой теперь читаются как один ряд управления.
+     МЕСТО СВЕРХУ РЕЗЕРВИРУЕТСЯ ПО-ПРЕЖНЕМУ (возвращаемое значение считается от стопки баров, а НЕ
+     от нового top): иначе вышла бы петля — отступ холста двигал бы строки, строки двигали бы
+     полосу, полоса снова отступ. Отсчёт от стопки от положения полосы не зависит вовсе. */
   const ceil = overlayTopBase() - 4; // низ шапки меню + 2px (или 2px, если меню внизу)
-  if (el) el.style.top = Math.round(Math.max(ceil, top - lift)) + "px";
-  return Math.max(ceil, top - lift) + lift;
+  const stackTop = Math.max(ceil, top);
+  let shownTop = stackTop;
+  if (el) {
+    const rowsEl = document.getElementById("rows");
+    const host = el.offsetParent;
+    if (rowsEl && host) {
+      const rowsRect = rowsEl.getBoundingClientRect();
+      const hostRect = host.getBoundingClientRect();
+      /* ═══ ПОЛОСА ВИСИТ НА САМОЙ ЧЕРТЕ ГОРИЗОНТА (испр. v1.262) ═══
+         Баг-репорт: «горизонт оказался под меню-полоской». Обе величины считались независимо —
+         черта от строк минус ряд, полоса от строк минус её высота минус просвет, — и стоило
+         любому слагаемому разойтись (не успела обновиться переменная ряда, изменилась высота
+         полосы), как они менялись местами.
+         Теперь полоса не вычисляет своё место заново, а берёт его У ЧЕРТЫ: её верх — сразу под
+         чертой, где бы та ни стояла. Разъехаться они больше не могут по построению, а «черта
+         всегда над полосой» выполняется само собой.
+         Координаты у них разные: черта живёт внутри .chain, полоса — в .main-layout, поэтому
+         переводим через верх .chain. Черты на экране нет (пустая цепочка) — считаем как раньше,
+         от строк. */
+      const hLineEl = document.getElementById("hsplitTop");
+      const chainForBar = document.getElementById("chain");
+      const hLineTop = (hLineEl && chainForBar && hLineEl.classList.contains("act"))
+        ? (chainForBar.getBoundingClientRect().top - hostRect.top) + (parseFloat(hLineEl.style.top) || 0)
+        : null;
+      const want = (hLineTop !== null)
+        ? hLineTop + 3
+        : (rowsRect.top - hostRect.top - (el.offsetHeight || 0) - 2);
+      // Выше стопки баров не пускаем: там она перекрыла бы «Результат»/«Черновик».
+      if (want > stackTop) shownTop = want;
+    }
+    el.style.top = Math.round(shownTop) + "px";
+  }
+  return stackTop;
 }
 // Подсветка mode-act — ПОКА ОКНО ВИДНО (!hidden), а не пока скрыто — запрос пользователя
 // ("наоборот, когда выключены — не подсвечивать надо").
@@ -2210,6 +2362,7 @@ document.getElementById("rows").onclick = e => {
     // кнопкой "🗑 Паттерн". На поиск это не влияет: "🌈 Все паттерны" и подсказки смотрят на
     // НЕПУСТЫЕ выделенные (anyNonEmpty), пустая ячейка в наборе им не мешает.
     if (st.pats[idx]) {
+      markLastSel("pats");   // v1.229: Delete теперь смотрит, где выделяли последним
       if (!st.selectedPats) st.selectedPats = new Set();
       if (e.ctrlKey || e.metaKey) {
         if (st.selectedPats.has(idx)) st.selectedPats.delete(idx);
@@ -2276,6 +2429,7 @@ document.getElementById("rows").onclick = e => {
     }
     return;
   }
+  markLastSel("rows");     // v1.229: см. lastSelKind в fold-1-core.js
   if (!st.selectedRows) st.selectedRows = new Set();
 
   if (e.ctrlKey || e.metaKey) {
@@ -2401,6 +2555,7 @@ window.addEventListener("mousemove", e => {
   const lo = Math.min(patDragAnchor, idx), hi = Math.max(patDragAnchor, idx);
   // Протяжка ЗАДАЁТ набор заново (как и у строк), а не добавляет к прежнему. Пустые ячейки в
   // диапазон не попадают — выделять там нечего.
+  markLastSel("pats");
   st.selectedPats = new Set();
   for (let i = lo; i <= hi; i++) if (st.pats[i] && st.pats[i].text) st.selectedPats.add(i);
   render();
@@ -2421,6 +2576,7 @@ window.addEventListener("mousemove", e => {
   if (isNaN(idx) || (idx === rowDragAnchor && !rowDragMoved)) return;
   if (!rowDragMoved) resetSeqSearchModes();
   rowDragMoved = true;
+  markLastSel("rows");
   const lo = Math.min(rowDragAnchor, idx), hi = Math.max(rowDragAnchor, idx);
   st.selectedRows = new Set();
   /* Протяжка тоже не берёт строки над линией (v1.195): диапазон может начаться ниже и уехать
@@ -2679,6 +2835,16 @@ alignBtns.forEach(btn => {
     // offset нельзя: у каждого выравнивания своя точка отсчёта (axisBaseCol()), и чужой offset
     // уводил бы цепочку за экран. Поэтому запоминаем СТОЛБЕЦ оси до переключения и пересчитываем
     // offset так, чтобы в новом режиме ось встала на тот же столбец.
+    /* НАЛОЖЕНИЯ ПРИ СМЕНЕ ВЫРАВНИВАНИЯ НЕ ЕДУТ (v1.249, запрос пользователя: «наложения ни при чём,
+       когда выравнивания переключаются»).
+       Чтобы ось осталась на месте, переключение правит st.axisCenterOffset (см. ниже всю доводку).
+       Но этот же сдвиг входит и в экранную позицию блоков (pasteCols в render: pb.col + off + …) —
+       значит блоки уезжали ровно на ту величину, которой удерживали ось. На картинке это читалось
+       как «ось поехала»: сама линия стояла, а весь холст под ней сдвигался.
+       Запоминаем сдвиг ДО переключения, а в конце — на сколько он изменился, и на столько же
+       двигаем блоки в обратную сторону. Их положение относительно ЭКРАНА и оси не меняется вовсе,
+       а биты строк перекладываются по новому выравниванию — то самое «от оси располагай биты». */
+    const offBeforeAlign = st.axisCenterOffset || 0;
     const prevAxisCol = axisBaseCol() + (st.axisCenterOffset || 0);
     // ...и ГДЕ ОНА СТОЯЛА НА ЭКРАНЕ. Одного столбца мало: счёт колонок идёт по measureText, а
     // браузер раскладывает текст по своей ширине символа, и расхождение копится пропорционально
@@ -2805,6 +2971,15 @@ alignBtns.forEach(btn => {
         const d = (nowPx2 + chNow.getBoundingClientRect().left) - prevClientX;
         if (Math.abs(d) > 0.5) sc.scrollLeft += d;
       }
+    }
+    /* ...и возвращаем блоки на место (v1.249, см. offBeforeAlign выше). Считаем в ПОЛУСТОЛБЦАХ —
+       в них живёт положение блока (col*2 + half), и pasteShiftAllBy вычитает ровно эту величину.
+       Прокрутка полотна выше блокам не мешает: она двигает точку обзора, а не раскладку. */
+    const dOffAlign = (st.axisCenterOffset || 0) - offBeforeAlign;
+    if (dOffAlign && typeof pasteShiftAllBy === "function" && pasteList().length) {
+      pasteShiftAllBy(dOffAlign * 2, 0);
+      if (typeof pasteNorm === "function") pasteNorm();
+      render();
     }
     saveCache();
   };
@@ -3328,6 +3503,24 @@ if (bNoPatsAboveEl) {
   };
 }
 
+/* ═══ ВКЛЮЧИТЬ/ВЫКЛЮЧИТЬ РЕЖИМ ПОИСКА — ОДНО МЕСТО НА ВСЕХ (v1.230) ═══════════════════════════
+   Раньше это жило прямо в обработчике кнопок режимов. Теперь тем же самым занимаются и подписи
+   строк в окне «Результат» (запрос пользователя: «сделай, чтобы заголовки сквозных интерактивно
+   включались-выключались в поиске по одинарному клику»), и обе точки обязаны делать РОВНО одно и
+   то же — иначе кнопка и подпись начнут расходиться в показаниях. */
+function toggleBgSearchMode(val){
+  if (!val || !Array.isArray(st.bgSearchModes)) return;
+  const idx = st.bgSearchModes.indexOf(val);
+  /* Снимается ЛЮБОЙ режим, в том числе последний (запрос пользователя: "если второй раз нажать —
+     должна потухнуть, даже если нет других"). Выключить сам фон-поиск, сохранив набор, — клик по
+     заголовку «🔍 Фон-поиск» (toggleBgSearch). */
+  if (idx >= 0) st.bgSearchModes.splice(idx, 1); else st.bgSearchModes.push(val);
+  const btn = document.querySelector('#bgSearchModeGrp button[data-val="' + val + '"]');
+  if (btn) btn.classList.toggle("act", st.bgSearchModes.includes(val));
+  st.bgSearchLastHit = -1;
+  render();
+  saveCache();
+}
 const bgSearchModeBtns = document.querySelectorAll("#bgSearchModeGrp button");
 bgSearchModeBtns.forEach(btn => {
   btn.onclick = () => {
@@ -4867,12 +5060,25 @@ function deleteSelectedRows(){
   const rowSel = (st.selectedRows && st.selectedRows.size) ? Array.from(st.selectedRows).sort((a, b) => b - a) : [];
   const patSel = (st.selectedPats && st.selectedPats.size) ? Array.from(st.selectedPats).sort((a, b) => b - a) : [];
   if (!rowSel.length && !patSel.length) { say("Выделите строку кликом (или ячейку в колонке паттернов)."); return; }
+  /* ВЫДЕЛЕНО И ТАМ, И ТАМ — УДАЛЯЕМ ТОЛЬКО ПОСЛЕДНЕЕ (v1.229, запрос пользователя: «если выделение
+     на цепочке, а потом последнее выделение на паттернах, то Delete только последнее удалить
+     должен — паттерн, а не вместе»).
+     Выделение строк почти всегда непустое: оно держит контекст работы (фон-поиск смотрит на строку
+     под выделенной, прогоны крутят выделенные), и снимать его ради удаления одной ячейки паттерна
+     человек не станет. Поэтому Delete раньше сносил обе колонки разом — и терял строки там, где
+     хотели убрать один образец.
+     Какая колонка «последняя», помнит markLastSel() (см. lastSelKind в fold-1-core.js): её ставят
+     все четыре выделяющих жеста — клик и протяжка, по строкам и по паттернам. Пусто в одной из
+     колонок — вопрос не стоит, удаляется то, что есть. */
+  const bothSel = !!(rowSel.length && patSel.length);
+  const onlyPats = bothSel && lastSelKind === "pats";
+  const onlyRows = bothSel && !onlyPats;
   snapshot();
   const topBefore = st.topBuilt || 0;
   // ПАТТЕРНЫ — своим списком и ДО строк: массивы независимые, порядок на индексы не влияет.
   // Нулевая строка и тут не вырезается, а стирается на месте (см. ниже про st.topBuilt).
   let patsCleared = 0, patsRemoved = 0;
-  for (const idx of patSel) {
+  for (const idx of (onlyRows ? [] : patSel)) {
     if (idx < 0 || idx >= st.pats.length) continue;
     if (idx === (st.topBuilt || 0)) {
       const p = st.pats[idx];
@@ -4883,7 +5089,7 @@ function deleteSelectedRows(){
     st.pats.splice(idx, 1);
     patsRemoved++;
   }
-  const selected = rowSel;
+  const selected = onlyPats ? [] : rowSel;
   for (const idx of selected) {
     // НУЛЕВАЯ СТРОКА НЕ УДАЛЯЕТСЯ, А ОЧИЩАЕТСЯ НА МЕСТЕ (запрос пользователя: "чисто стирать —
     // место не двигать"). Она граница между построениями сверху (номера отрицательные) и
@@ -4938,9 +5144,10 @@ function deleteSelectedRows(){
   // строк (например, построенных сверху, из-за чего st.topBuilt уменьшался и на его месте
   // оказывалась непустая строка) вся колонка паттернов молча съезжала на строку вниз.
   ensureZeroRow("none");
-  if (st.selectedRows) st.selectedRows.clear();
-  // Выделение в колонке паттернов после удаления тоже недействительно: номера съехали.
-  if (st.selectedPats) st.selectedPats.clear();
+  /* Снимаем выделение ТОЛЬКО той колонки, в которой удаляли (v1.229): номера в ней съехали и
+     набор недействителен, а соседнюю трогать незачем — её как раз и берегли. */
+  if (!onlyPats && st.selectedRows) st.selectedRows.clear();
+  if (!onlyRows && st.selectedPats) st.selectedPats.clear();
   // Построений стало меньше — слепок для Сброса снимаем заново, иначе он остался бы снят под
   // прежнее их число и Сброс просто ничего бы не восстановил (см. topBaseRestore).
   if ((st.topBuilt || 0) !== topBefore) topBaseCapture();
@@ -4953,7 +5160,10 @@ function deleteSelectedRows(){
     ((st.topBuilt || 0) !== topBefore ? ` (построений сверху ${topBefore - (st.topBuilt || 0)})` : ""));
   if (patsRemoved) parts.push(`паттернов — ${patsRemoved}`);
   if (zeroCleared || patsCleared) parts.push("нулевая очищена на месте, не сдвинута");
-  say(parts.length ? "Удалено: " + parts.join(", ") + "." : "Удалять было нечего.");
+  const kept = onlyPats ? " Выделение строк цепочки не тронуто — удалялось последнее выделение, в паттернах."
+            : onlyRows ? " Выделенные паттерны не тронуты — удалялось последнее выделение, в строках."
+            : "";
+  say(parts.length ? "Удалено: " + parts.join(", ") + "." + kept : "Удалять было нечего.");
 }
 
 /* Разделитель-граница снизу выделенной строки (Numpad0 / кнопка) — переключатель (повторный

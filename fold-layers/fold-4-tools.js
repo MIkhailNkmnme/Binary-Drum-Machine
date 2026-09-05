@@ -817,6 +817,20 @@ function pasteNudge(key){
       host.dataset.slot = act;
       const cur = (act === "c1" ? blk.c1 : blk.c0);
       if (cur) host.value = cur;
+      /* ДИАЛОГ ОТКРЫВАЕТСЯ РЯДОМ С КНОПКОЙ (v1.252, баг-репорт «расположение выбора палитры уехало
+         вниз-влево экрана»). Системный выбор цвета браузер вешает на САМ input, а тот живёт в
+         служебной полоске #pasteColBar, прибитой к левому нижнему углу экрана (она размером в
+         пиксель и почти прозрачна — её задача только держать input вне перерисовываемых строк).
+         Значит и палитра открывалась там же, через весь экран от блока, по которому кликнули.
+         Перед открытием переносим полоску под кнопку: сама она невидима, а диалог встаёт возле
+         неё. По краям придерживаем, чтобы у нижней/правой кромки палитра не ушла за экран. */
+      const colBar = document.getElementById("pasteColBar");
+      if (colBar) {
+        const r = btn.getBoundingClientRect();
+        colBar.style.bottom = "auto";
+        colBar.style.left = Math.round(Math.max(2, Math.min(window.innerWidth - 40, r.left))) + "px";
+        colBar.style.top = Math.round(Math.max(2, Math.min(window.innerHeight - 30, r.bottom + 2))) + "px";
+      }
       host.click();
       return;
     }
@@ -983,7 +997,14 @@ function pasteNudge(key){
        нетронутым, поэтому вертикальная составляющая жеста просто игнорируется. */
     const fieldUp = (typeof horizonOn === "function" && horizonOn());
     const wantHalf = Math.round(d * 2);
-    const wantRows = fieldUp ? 0 : dRows;
+    /* ТОЛЬКО ВЛЕВО-ВПРАВО (v1.238, запрос пользователя: «сделай цепочки перемещаемыми при Замке,
+       так же как наложения за биты, но только влево-вправо — как будто за ось их двигать»).
+       Вертикаль тут двигала chainShiftRows — сдвиг ВСЕЙ раскладки, ту же величину тянет ручка
+       #hsplitTop. При жесте «схватил цепочку за биты» она только мешала: рука ведёт вбок, картинка
+       заодно съезжает вверх-вниз, и вернуть её на место можно лишь двойным кликом по ручке.
+       Жест стал чисто горизонтальным — тем же, что и таскание за ось. Сама вертикаль никуда не
+       делась: её по-прежнему тянут ручкой #hsplitTop, для которой она и заведена. */
+    const wantRows = 0;
     const dHalf = wantHalf - (chainDrag.appliedHalf || 0);
     const dRow = wantRows - (chainDrag.appliedRows || 0);
     if (!dHalf && !dRow) return;
@@ -2176,10 +2197,36 @@ function numsAsRows(){
   applyPatNumClasses();
   // change, а не input: пока цифру набирают, промежуточное значение (пустая строка, "0") дёргало
   // бы перерисовку всей цепочки на каждый символ.
-  [["stairsGrpL", "stairsGroupL"], ["stairsGrpR", "stairsGroupR"],
-   ["stairsStepL", "stairsStepL"], ["stairsStepR", "stairsStepR"]].forEach(pair => {
-    const el = document.getElementById(pair[0]);
-    if (el) el.onchange = () => readStairsGroup(pair[0], pair[1]);
+  const STAIRS_KEY_BY_INPUT = { stairsGrpL: "stairsGroupL", stairsGrpR: "stairsGroupR",
+                                stairsStepL: "stairsStepL", stairsStepR: "stairsStepR" };
+  Object.keys(STAIRS_KEY_BY_INPUT).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.onchange = () => readStairsGroup(id, STAIRS_KEY_BY_INPUT[id]);
+  });
+  /* СТРЕЛКИ ▲▼ У СЧЁТЧИКОВ (v1.281, запрос пользователя «добавь им стрелки верх вниз — чтобы
+     менять число»). Родные спиннеры number-полей отключены глобально ещё в v0.877 (см. .stairs-grp
+     в стилях: в полосе выравниваний они съедали половину и без того узкого поля). Пока поля жили
+     в полосе, это терпелось; теперь они переехали к оси (v1.281) и стали единственным местом, где
+     эти числа правят, — значит менять их должно быть чем, кроме набора с клавиатуры.
+     Идём через тот же readStairsGroup, что и onchange выше: там и зажим 1..99, и render с
+     saveCache. Зовём его НАПРЯМУЮ, а не через dispatchEvent("change") — программная запись в
+     .value события change не порождает, и обработчик бы просто не сработал.
+     stopPropagation обязателен: коробка лежит в просвете оси, и клик, дошедший до холста, начал бы
+     тащить ось или снимать выделение строк. */
+  document.querySelectorAll(".stairs-spin-btns button").forEach(btn => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = btn.dataset.inp;
+      const inp = document.getElementById(id);
+      const key = STAIRS_KEY_BY_INPUT[id];
+      if (!inp || !key) return;
+      const d = btn.classList.contains("stairs-spin-up") ? 1 : -1;
+      inp.value = String(Math.min(99, Math.max(1, (Math.round(+inp.value) || 1) + d)));
+      readStairsGroup(id, key);
+    };
+    // Мышь по кнопке не должна доставать до оси/строк под коробкой — там свои mousedown-жесты.
+    btn.onmousedown = (e) => e.stopPropagation();
   });
   applyStairsGroupInputs();
   const bNumsAsRowsEl = document.getElementById("bNumsAsRows");

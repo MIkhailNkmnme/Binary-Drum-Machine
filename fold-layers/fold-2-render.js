@@ -14,6 +14,87 @@
    по индексу бита блока: { kind, skip } на позициях, куда лёг найденный паттерн (см. pasteTraceRow
    в fold-1-core.js и pasteHitRows в render). Класс тот же, что у бит цепочки, .chain-hit-bits +
    KIND_CLS, и цвет он берёт свой — правило стоит с !important и перебивает .ps1/.ps0. */
+/* ═══ ВЫКЛЮЧЕННЫЕ РЕЖИМЫ ПОИСКА — СТРОКАМИ ВНИЗУ «РЕЗУЛЬТАТА» (v1.230) ════════════════════════
+   Запрос пользователя: «сделай, чтобы заголовки сквозных интерактивно включались-выключались в
+   поиске по одинарному клику, и вверх переставлялись включённые, а неактивные внизу».
+   Включённые идут первыми сами собой — это их результаты. Следом дописываем строки-заглушки для
+   всех остальных режимов группы кнопок: набор поиска правится прямо тут, не уходя во вкладку
+   «Поиск», и сразу видно, что считается, а что нет.
+   Порядок выключенных — тот же, что у кнопок в группе: привычный и не скачет от того, в каком
+   порядке их выключали. Клик по подписи ловит обработчик #chainText (см. toggleBgSearchMode в
+   fold-3-ops.js). */
+/* ═══ ШИРИНА КОЛОНКИ ПОДПИСЕЙ В «РЕЗУЛЬТАТЕ» — ПО РЕАЛЬНЫМ ГЛИФАМ (v1.234) ═══════════════════
+   Баг-репорт пользователя: «выравнивание битов страдает при значке змеек».
+   Колонка подписи держалась на min-width, посчитанной в ch по ДЛИНЕ СТРОКИ. Для моноширинного
+   текста это верно: символ — один ch. Но в подписях есть значки («🐍» у змеек, «⟳» у кольца), а
+   они моноширинными не бывают: рисуются шире своего места и раздвигают подпись сверх min-width.
+   Строка со значком становится длиннее остальных, и биты в ней начинаются правее — колонка едет.
+   Меряем НАСТОЯЩУЮ ширину каждой подписи тем же приёмом, каким приложение меряет шаг столбца
+   (canvas.measureText, см. realColStepPx), и ставим колонке ширину в пикселях по самой широкой.
+   Тогда «ширина» перестаёт зависеть от того, сколько ch занимает глиф, и все строки начинаются с
+   одного места независимо от значков.
+   Холст один на всё приложение: создавать его на каждый кадр незачем. */
+var bgLabelCanvas = null;
+function bgLabelWidthPx(labels){
+  if (!labels || !labels.length) return 0;
+  const host = document.getElementById("chainText");
+  if (!bgLabelCanvas) bgLabelCanvas = document.createElement("canvas");
+  const ctx = bgLabelCanvas.getContext("2d");
+  if (!ctx) return 0;
+  if (host) {
+    const cs = getComputedStyle(host);
+    // Шрифт-шорткат в некоторых браузерах пуст — собираем из частей, иначе мерили бы 10px sans.
+    ctx.font = cs.font && cs.font.trim() ? cs.font : (cs.fontSize + " " + cs.fontFamily);
+  }
+  let w = 0;
+  for (const l of labels) w = Math.max(w, ctx.measureText(String(l)).width);
+  return Math.ceil(w) + 2;   // +2px — чтобы подпись не липла к галочкам
+}
+/* Подписи ВЫКЛЮЧЕННЫХ режимов — их тоже надо учесть в ширине колонки, иначе включённые и
+   выключенные строки разъедутся между собой. */
+function bgOffModeLabels(){
+  const grp = document.getElementById("bgSearchModeGrp");
+  if (!grp) return [];
+  const on = new Set(st.bgSearchModes || []);
+  const out = [];
+  grp.querySelectorAll("button[data-val]").forEach(b => {
+    const val = b.getAttribute("data-val");
+    if (val && !on.has(val)) out.push(bgModeLabel(val));
+  });
+  return out;
+}
+/* ═══ ТОЧКА-ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМА (v1.242) ════════════════════════════════════════════════════
+   Запрос пользователя: «двойной клик не работает — лучше поставь кнопки-точки, как у паттернов:
+   нажатие вкл-выкл и протяжку всех, чтоб можно было зацеплять; курсор — палец».
+   В v1.230 переключателем была сама подпись режима, в v1.240 её перевели на двойной клик — и то,
+   и другое конфликтовало с одиночным кликом по строке (тот разворачивает её и выбирает диагональ).
+   Теперь у переключения СВОЯ мишень — точка слева от подписи, как у найденных паттернов: зелёная,
+   когда режим в поиске, тусклая, когда нет. Клик переключает, протяжка по точкам с зажатой кнопкой
+   переключает подряд (см. обработчики в fold-3-ops.js). Подпись снова занимается только своим
+   делом — разворотом строки. */
+function modeDotHtml(val, on){
+  return '<span class="mode-dot' + (on ? " on" : "") + '" data-mode-toggle="' + esc(val) +
+    '" title="' + (on ? "Режим в поиске. Клик — выключить" : "Режим выключен. Клик — включить") +
+    '. Можно вести мышью по точкам, не отпуская кнопку — переключатся все, через которые прошли">●</span>';
+}
+function bgOffModesHtml(labelW){
+  const grp = document.getElementById("bgSearchModeGrp");
+  if (!grp) return "";
+  const on = new Set(st.bgSearchModes || []);
+  let out = "";
+  grp.querySelectorAll("button[data-val]").forEach(b => {
+    const val = b.getAttribute("data-val");
+    if (!val || on.has(val)) return;
+    out += '<div class="chain-result-line chain-result-line-off" data-mode="' + esc(val) + '">' +
+      modeDotHtml(val, false) +
+      '<span class="chain-result-line-label" style="min-width:' + labelW + 'px">' +
+        esc(bgModeLabel(val)) + '</span>' +
+      '<span class="chain-result-line-colon">:</span>' +
+      '<span class="chain-result-line-bits">выключен</span>' +
+    '</div>';
+  });
+  return out;
+}
 function pasteBitsHtml(txt, chg, hits, patHits){
   const s = String(txt == null ? "" : txt);
   const m = String(chg == null ? "" : chg);
@@ -2927,6 +3008,9 @@ function render(){
      Только вид: st.pats не трогаем, поиск, «🌈 Все паттерны» и укладка видят их все. */
   const patsHideBelowRow = (typeof procCeilRow === "function") ? procCeilRow() : -1;
   const PAT_HIDDEN_CELL = { text: "", ord: -1, found: false, kind: null, step: null };
+  // Строка, открывающая разрыв под полосу (см. rowGapStyle ниже): граница горизонта, а при
+  // опущенном горизонте — первая строка.
+  const gapRowIdx = (typeof horizonRow === "function") ? horizonRow() : 0;
   for (let i = vr.lo; i <= vr.hi; i++){
     // "👁 XOR на строке" (st.horizShowLiveXor) теперь РЕАЛЬНО пишет промежуточный XOR в
     // st.rows[b] по ходу поиска (см. doStep()), поэтому тут достаточно простого чтения —
@@ -3888,7 +3972,18 @@ function render(){
     // TypeError: Cannot read properties of undefined (reading 'bgFound')»). Весь блок отрисовки
     // паттерна стоит под проверкой «if (p && p.text)», а эта строка в v1.220 оказалась вне её.
     const dotCls = 'pat-dot' + ((p && p.bgFound) ? ' on' : '');
-    out.push('<div class="' + cls.join(" ") + '" data-idx="' + i + '">' +
+    /* ═══ РАЗРЫВ ПОД ПОЛОСУ — РОВНО НА ГРАНИЦЕ ГОРИЗОНТА (v1.266) ═══
+       Запрос пользователя: «меню-полоса должна быть вне строк, не должна вообще накладываться;
+       раздели полосой цепочки и наложения — вместо горизонта теперь нижняя-верхняя полосы меню».
+       Разрыв высотой в полосу открывает САМА СТРОКА, с которой начинается цепочка (это строка
+       горизонта; когда горизонт опущен, horizonRow() = 0, то есть самая первая). Выше разрыва
+       остаётся поле наложений, ниже — цепочка, а в разрыве стоят полоса и ось: полоса больше
+       ничего не накрывает, и её верхняя кромка читается как та самая граница.
+       Почему у строки, а не общим отступом у #rows (как было в v1.260): общий отступ открывает ряд
+       только НАД всем списком — с поднятым горизонтом полоса оказывалась над полем, а не между
+       полем и цепочкой. */
+    const rowGapStyle = (i === gapRowIdx) ? ' style="margin-top:var(--align-band-h,0px)"' : '';
+    out.push('<div class="' + cls.join(" ") + '" data-idx="' + i + '"' + rowGapStyle + '>' +
              pat + '<span class="' + dotCls + '">●</span>' +
              '<span class="' + numCls + ' num-l2">' + balanceHtml + numTxtL + "</span>" +
              // grpBadge — внутри .bits (та position:relative), поэтому позиционируется от края
@@ -3898,7 +3993,16 @@ function render(){
   }
   // Распорки вместо не нарисованных строк (см. vrowsRange) — держат высоту, поэтому полоса
   // прокрутки и позиция каждой строки такие же, как при полной отрисовке.
-  const vTopPad = vr.lo * vr.pitch;
+  /* РАЗРЫВ УЧИТЫВАЕТСЯ И В РАСПОРКЕ (v1.266). Верхняя распорка держит высоту не нарисованных
+     строк; если строка с разрывом осталась выше окна виртуализации, её отступ в DOM не попал —
+     и всё, что ниже, поднялось бы на высоту полосы. Дописываем разрыв к распорке ровно в этом
+     случае. */
+  const bandPxRows = (() => {
+    if (!(vr.lo > gapRowIdx)) return 0;
+    const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--align-band-h"));
+    return isFinite(v) ? v : 0;
+  })();
+  const vTopPad = vr.lo * vr.pitch + bandPxRows;
   const vBotPad = (n - 1 - vr.hi) * vr.pitch;
   document.getElementById("rows").innerHTML =
     (vTopPad > 0 ? '<div class="vspacer" style="height:' + vTopPad + 'px"></div>' : "") +
@@ -3918,7 +4022,18 @@ function render(){
   if (!bitsWManual) {
     const stepPx = realColStepPx();
     if (stepPx > 0 && maxLen > 0) {
-      document.documentElement.style.setProperty("--bits-w", Math.round(maxLen * stepPx) + "px");
+      /* НЕ УЖЕ ПОЛОСЫ ВЫРАВНИВАНИЙ (v1.238, запрос пользователя: «ширина цепочек — минимум, чтобы
+         меню выравниваний вмещать»). Полоса стоит по центру НАД полем, и когда цепочка коротка,
+         поле оказывалось уже полосы: кнопки нависали над колонками паттернов и над холстом рядом.
+         Берём наибольшее из «по самой длинной строке» и ширины самой полосы. Ручную ширину
+         (bitsWManual) не трогаем — там человек сам решил, сколько поле занимает. */
+      const alignGrpW = (() => {
+        const g = document.getElementById("alignGrp");
+        const strip = document.getElementById("axisStrip");   // планка «№» стоит у левого края поля
+        return (g ? g.offsetWidth : 0) + (strip && strip.classList.contains("act") ? strip.offsetWidth + 8 : 0);
+      })();
+      document.documentElement.style.setProperty("--bits-w",
+        Math.max(Math.round(maxLen * stepPx), alignGrpW + 24) + "px");   // +24px: чтобы полоса не липла к планкам (v1.241)
     }
   }
   // Разделители колонок — по реальной геометрии строки (строка может быть шире полотна).
@@ -3929,6 +4044,15 @@ function render(){
   // Подсветка в полосе выравниваний зависит от ВЫДЕЛЕНИЯ (v0.977: выделены строки одной группы —
   // горит её кнопка), а выделение меняется как раз перерисовкой. Дюжина кнопок, дешевле не надо.
   if (typeof syncAlignActMarks === "function") syncAlignActMarks();
+  /* ПОЛОСА ДОВОДИТСЯ СЛЕДУЮЩИМ КАДРОМ (испр. v1.244, баг-репорт «меню только при клике оказывается
+     где надо»). Её место считается по РЕАЛЬНЫМ коробкам — верху строк и полю бит (v1.239/1.241), —
+     а на первой отрисовке (и на любой, где ширина поля только что изменилась) эти коробки на
+     момент расчёта ещё старые: --bits-w ставится строкой выше, браузер применит его позже.
+     Поэтому после кадра просим пересчитать положение ещё раз, уже по новой раскладке. Ни render,
+     ни перерисовки строк это не вызывает — только двигает саму полосу, поэтому петли нет. */
+  if (typeof requestAnimationFrame === "function" && typeof layoutOverlayBoxes === "function") {
+    requestAnimationFrame(() => layoutOverlayBoxes());
+  }
 
   /* ПОЛЕ НАЛОЖЕНИЙ САМО И ЕСТЬ СКВОЗНАЯ (испр. v1.182, баг-репорт «сквозную из наложений не
      считает, пусто»).
@@ -4005,7 +4129,10 @@ function render(){
        округления по модулю, "заехавшая" в кольцо находка рисуется как единый непрерывный
        подсвеченный кусок, переходящий из реальных бит в продолжение кольца. */
     const bgLabels = bgInfo.results.map(r => bgModeLabel(r.mode));
+    // Для текстовой копии (fullChainText ниже) ширина по-прежнему в символах — там пробелы.
     const bgLabelW = Math.max(...bgLabels.map(l => l.length));
+    // А для КОЛОНКИ на экране — в пикселях, по реальным глифам (v1.234, см. bgLabelWidthPx).
+    const bgLabelPx = bgLabelWidthPx(bgLabels.concat(bgOffModeLabels()));
     const kindTag = k => KIND_LABELS_SHORT[k.kind] + (k.skip ? "⏭" : "");
     // Из каких именно строк (номер+содержимое) и с каким выравниванием считаются режимы
     // ниже — сама пара rowAbove/rowSel одна и та же для ВСЕХ режимов (xorAll/concat*/vert*/
@@ -4013,12 +4140,35 @@ function render(){
     // запрос пользователя: видеть "Строки 3+4 (Лесенка ½): 111+10000" прямо над списком,
     // а не гадать по вкладке "Строки" и панели выравнивания.
     const alignLabel = ALIGN_LABELS[st.align] || st.align;
-    const srcLine = "Строки " + bgInfo.aboveIdx + "+" + bgInfo.selIdx + " (" + alignLabel + "): " + bgInfo.rowAbove + "+" + bgInfo.rowSel;
-    fullChainText = srcLine + "\n" + bgInfo.results
-      .map((r, i) => bgLabels[i].padEnd(bgLabelW, " ") + (r.matched ? " ✓[" + r.kinds.map(kindTag).join(",") + "]" : "") +
+    /* ═══ ОТКУДА СЧИТАЕМ: НОМЕРА КАК В КОЛОНКЕ, А В ПОЛЕ — «НАЛОЖЕНИЯ» (v1.247) ═══
+       Запрос пользователя: «тут верно номера строк тоже надо, проверь — при наложениях и при
+       цепочках; если наложения, то писать Наложения».
+       ДВЕ ПРАВКИ РАЗОМ.
+       1. НОМЕРА. Печатались сырые индексы массива, а в колонке поля у строк стоят номера со
+          сдвигом на достройку сверху (rowLabel: i − topBuilt; у достроенных они отрицательные).
+          Стоило открыть поле или достроить верх — и «Строки 31+32» указывали на строки, которых
+          на экране под такими номерами нет. Теперь тот же rowLabel, что и в колонке.
+       2. ПОЛЕ НАЛОЖЕНИЙ. Когда линия поднята и в поле есть биты, считается ОНО, а не пара строк
+          цепочки: сама пара берётся из последних строк поля, и «Строки 31+32» описывали её так,
+          будто это обычные строки цепочки. Пишем «Наложения», а номера строк поля оставляем в
+          скобках — понять, какие именно строки взяты, всё равно нужно. */
+    const srcField = (typeof horizonOn === "function" && horizonOn() &&
+                      (typeof horizonFieldHasData !== "function" || horizonFieldHasData()));
+    const srcNums = (typeof rowLabel === "function")
+      ? (rowLabel(bgInfo.aboveIdx) + "+" + rowLabel(bgInfo.selIdx))
+      : (bgInfo.aboveIdx + "+" + bgInfo.selIdx);
+    const srcHead = (srcField ? "Наложения, строки " : "Строки ") + srcNums;
+    const srcLine = srcHead + " (" + alignLabel + "): " + bgInfo.rowAbove + "+" + bgInfo.rowSel;
+    const bgMarks = (r) => (r.matched ? "✓[" + r.kinds.map(kindTag).join(",") + "]" : "") +
         // "🌈 Все паттерны" — какие именно паттерны нашлись в этой строке (для копирования)
-        ((r.allHits && r.allHits.length) ? " 🌈[" + allHitsByPat(r.allHits).map(h => "№" + (h.patIdx + 1)).join(",") + "]" : "") +
-        ": " + r.result)
+        ((r.allHits && r.allHits.length) ? " 🌈[" + allHitsByPat(r.allHits).map(h => "№" + (h.patIdx + 1)).join(",") + "]" : "");
+    fullChainText = srcLine + "\n" + bgInfo.results
+      .map((r, i) => bgLabels[i].padEnd(bgLabelW, " ") + (bgMarks(r) ? " " + bgMarks(r) : "") + ": " + r.result)
+      .join("\n");
+    /* ТОТ ЖЕ СПИСОК КОЛОНКАМИ — ДЛЯ ТАБЛИЦ (v1.236, см. lastChainResultCells в fold-1-core.js):
+       подпись / отметки / биты через таб, без единого выравнивающего пробела. */
+    lastChainResultCells = srcLine + "\n" + bgInfo.results
+      .map((r, i) => bgLabels[i] + "\t" + bgMarks(r) + "\t" + r.result)
       .join("\n");
     // Одна строка результата — вынесена в функцию, потому что рисуется ДВАЖДЫ: в самой панели
     // (с потолком отрисовки) и, если открыто отдельное окно результата, там же без потолка —
@@ -4189,17 +4339,27 @@ function render(){
             ? "Клик — показать в таблице ЛИНИЮ ЗАХВАТА этого режима: биты подсвечиваются фоном, соседние колонки чередуются яркостью (видно порядок обхода). Повторный клик снимает выбор"
             : "Клик — подсветить в таблице ИМЕННО этот зигзаг (повторный клик снимает выбор). Пока он выбран, ▲▼ переключают на соседний")) + maskNote;
       return '<div class="chain-result-line' + expanded + pickedCls + '" data-mode="' + esc(r.mode) + '" title="' + esc(lineTitle) + '">' +
-        '<span class="chain-result-line-label" style="min-width:' + bgLabelW + 'ch">' + esc(bgLabels[i]) + '</span>' +
+        modeDotHtml(String(r.mode).split("#")[0], true) +
+        '<span class="chain-result-line-label" style="min-width:' + bgLabelPx + 'px">' + esc(bgLabels[i]) + '</span>' +
         '<span class="chain-result-line-check">' + checkHtml + '</span>' +
-        (allPatsShown() ? '<span class="chain-result-line-hits">' + hitsHtml + '</span>' : '') +
+        /* СТОЛБЕЦ НОМЕРОВ НАЙДЕННЫХ ПАТТЕРНОВ УБРАН (v1.243, запрос пользователя «номера находок
+           отсюда удали»): на каждой строке это был десяток разноцветных чисел, и список результата
+           читался как пёстрая таблица чисел, а не как биты. Сами находки никуда не делись — они
+           видны цветом в колонке паттернов и подсветкой в строках цепочки, а в текстовой копии
+           («📋 Копировать») номера по-прежнему перечислены в скобках 🌈[…].
+           hitsHtml выше оставлен: его же формат идёт в копию, и он ещё пригодится, если столбец
+           попросят вернуть. */
         '<span class="chain-result-line-colon">:</span>' +
         '<span class="chain-result-line-bits">' + bits + '</span>' +
       '</div>';
     };
-    const srcRowHtml = '<div class="chain-result-src-row" title="Из каких строк считается (номер строки над выделенной + номер выделенной), в скобках — текущее выравнивание">' +
-      'Строки ' + bgInfo.aboveIdx + '+' + bgInfo.selIdx + ' (' + esc(alignLabel) + '): ' + esc(bgInfo.rowAbove) + '+' + esc(bgInfo.rowSel) +
+    const srcRowHtml = '<div class="chain-result-src-row" title="' +
+      (srcField
+        ? 'Считается ПОЛЕ НАЛОЖЕНИЙ — строки над линией горизонта: цепочка ниже линии в расчёт не идёт вовсе. В скобках — текущее выравнивание'
+        : 'Из каких строк считается (номер строки над выделенной + номер выделенной), в скобках — текущее выравнивание') +
+      '">' + esc(srcHead) + ' (' + esc(alignLabel) + '): ' + esc(bgInfo.rowAbove) + '+' + esc(bgInfo.rowSel) +
     '</div>';
-    bgResultHtml = srcRowHtml + bgInfo.results.map((r, i) => buildResultLine(r, i)).join("");
+    bgResultHtml = srcRowHtml + bgInfo.results.map((r, i) => buildResultLine(r, i)).join("") + bgOffModesHtml(bgLabelPx);
     /* Галка "🎭 Маска заново каждый виток" решает что-то ТОЛЬКО когда длина маски не делит длину
        результата хотя бы у одного режима: иначе каждый виток и так начинается с фазы 0, и оба
        положения галки дают одно и то же. Приглушаем её (label.chk.mode-na) и пишем в подсказке,
@@ -4238,9 +4398,33 @@ function render(){
       // чей это паттерн (та, что сразу под выделенной).
       const seekPat = st.pats[bgInfo.targetIdx];
       const seekText = seekPat && seekPat.text ? seekPat.text : "";
+      /* ИСКОМЫХ НЕСКОЛЬКО — ПИШЕМ НОМЕРА СТРОК, А НЕ ПАТТЕРН (v1.245, запрос пользователя: «если
+         не один паттерн в поиске, то не писать паттерн, а писать номера строк 2-5 например»).
+         Выделив несколько ячеек в колонке паттернов, человек ищет их ВСЕ разом (targetIdxs,
+         см. computeBgSearchTarget). Заголовок при этом показывал текст лишь ПЕРВОГО из них — то
+         есть говорил про одну цель, когда их пять, и по нему нельзя было понять, что ищется.
+         Теперь в этом случае перечисляем номера строк: подряд идущие сворачиваются в диапазон
+         («2-5»), разрозненные идут через запятую («2, 7, 9» — тут просто через запятую).
+         Один искомый — всё как было, текст паттерна и его строка. */
+      const seekIdxs = (bgInfo.targetIdxs && bgInfo.targetIdxs.length > 1)
+        ? Array.from(new Set(bgInfo.targetIdxs)).sort((a, b) => a - b) : null;
+      const seekRowsText = seekIdxs ? (() => {
+        const parts = [];
+        let from = seekIdxs[0], prev = seekIdxs[0];
+        for (let k = 1; k <= seekIdxs.length; k++) {
+          const cur = seekIdxs[k];
+          if (cur === prev + 1) { prev = cur; continue; }
+          parts.push(from === prev ? String(rowLabel(from)) : (rowLabel(from) + "-" + rowLabel(prev)));
+          from = prev = cur;
+        }
+        return parts.join(", ");
+      })() : "";
       chainResultLabelEl.textContent = "🔍 Результат" +
-        (seekText ? ` · ищем ${seekText} (стр. ${bgInfo.targetIdx})` : "");
-      chainResultLabelEl.title = (seekText ? `Искомый паттерн: ${seekText} — из строки ${bgInfo.targetIdx} (сразу под выделенной) | ` : "") +
+        (seekRowsText ? ` · ищем паттерны строк ${seekRowsText}`
+                      : (seekText ? ` · ищем ${seekText} (стр. ${bgInfo.targetIdx})` : ""));
+      chainResultLabelEl.title = (seekRowsText
+          ? `Искомых паттернов ${seekIdxs.length}: строки ${seekRowsText}. Найденным ставится жёлтая метка в колонке | `
+          : (seekText ? `Искомый паттерн: ${seekText} — из строки ${bgInfo.targetIdx} (сразу под выделенной) | ` : "")) +
         "Включённые режимы фон-поиска: " + modeLabels;
     }
   } else if (bgSearchActive()) {
@@ -4250,15 +4434,18 @@ function render(){
     const modes = (st.bgSearchModes && st.bgSearchModes.length) ? st.bgSearchModes : ["interleave"];
     const bgLabels = modes.map(m => bgModeLabel(m));
     const bgLabelW = Math.max(...bgLabels.map(l => l.length));
+    const bgLabelPx = bgLabelWidthPx(bgLabels.concat(bgOffModeLabels()));
     fullChainText = bgLabels.map(l => l.padEnd(bgLabelW, " ") + "   : ").join("\n");
+    lastChainResultCells = bgLabels.map(l => l + "\t\t").join("\n");   // v1.236: колонками, см. выше
     bgResultHtml = modes.map((m, i) =>
       '<div class="chain-result-line" data-mode="' + esc(m) + '">' +
-        '<span class="chain-result-line-label" style="min-width:' + bgLabelW + 'ch">' + esc(bgLabels[i]) + '</span>' +
+        modeDotHtml(m, true) +
+        '<span class="chain-result-line-label" style="min-width:' + bgLabelPx + 'px">' + esc(bgLabels[i]) + '</span>' +
         '<span class="chain-result-line-check"></span>' +
         '<span class="chain-result-line-colon">:</span>' +
         '<span class="chain-result-line-bits"><span class="empty">нет цели</span></span>' +
       '</div>'
-    ).join("");
+    ).join("") + bgOffModesHtml(bgLabelPx);
     if (chainResultLabelEl) {
       chainResultLabelEl.textContent = "🔍 Результат";
       chainResultLabelEl.title = "Включённые режимы фон-поиска: " + bgLabels.join(" + ");
@@ -4292,6 +4479,8 @@ function render(){
   // ни оказался заголовок — обычным, сквозной строкой или с довеском Паттерн-цепочки.
   if (chainResultLabelEl) chainResultLabelEl.textContent += " · Ш: " + st.step;
   lastChainResultText = fullChainText;
+  // Не табличная выдача (обычная сквозная строка) — колонкам взяться неоткуда, копируем как есть.
+  if (!bgInfo && !bgSearchActive()) lastChainResultCells = "";
   renderFindLogPanel();
 
   const chainLenEl = document.getElementById("chainLen");
