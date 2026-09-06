@@ -1671,6 +1671,45 @@ function makeDraggable(handle, panel) {
     start(e.touches[0].clientX, e.touches[0].clientY);
   }, { passive: false });
 }
+/* ═══ ШАПКА ПЛАВАЮЩЕЙ ПАНЕЛИ НЕ УХОДИТ ЗА КРАЙ ОКНА (v1.291) ═══
+   Запрос пользователя: «не давай заголовкам панелей уезжать за браузер, а то потом не за что
+   хватать для перетаскивания, вверху внизу когда тоже».
+   Панель таскают ТОЛЬКО за шапку (makeDraggable висит на .panel-head), поэтому уехавшая за кромку
+   шапка — это потерянная панель: вернуть её мышью нечем. Раньше координаты не ограничивались вовсе,
+   и увести панель за любой край можно было одним движением.
+   Что именно бережём:
+     • по вертикали — ВСЮ шапку целиком. Сверху не выше нуля, снизу не ниже, чем «окно минус высота
+       шапки»: за что хватать, остаётся видно в обоих случаях. Это и есть «вверху внизу когда тоже».
+     • по горизонтали — не всю панель, а KEEP пикселей её ширины. Требовать целиком нельзя: панель
+       бывает шире окна, и тогда ни одна позиция не подошла бы. KEEP взят с запасом на угол шапки,
+       где у неё кнопки закрытия, — за такой кусок уже можно ухватиться.
+   Меряем окно, а не документ: панель position:fixed, её координаты — экранные, прокрутка на них
+   не влияет.
+   Функция общая для протяжки и для смены размера окна (слушатель resize ниже): сузили браузер —
+   панели подтягиваются обратно, а не остаются за кромкой. */
+function clampFloatPanelPos(panel, x, y) {
+  const KEEP = 48;
+  const w = panel.offsetWidth || 200;
+  const head = panel.querySelector('.panel-head');
+  const headH = (head && head.offsetHeight) || 24;
+  const maxX = window.innerWidth - KEEP;
+  const minX = KEEP - w;
+  const maxY = window.innerHeight - headH;
+  return {
+    x: Math.round(Math.min(maxX, Math.max(minX, x))),
+    y: Math.round(Math.min(maxY, Math.max(0, y)))
+  };
+}
+/* Смена размера окна (v1.291) — панели, оказавшиеся за новой кромкой, подтягиваются обратно тем же
+   зажимом. Без этого правило соблюдалось бы только в момент протяжки: сузил окно — и шапка снова
+   недосягаема, хотя мышью её туда никто не уводил. */
+window.addEventListener('resize', () => {
+  document.querySelectorAll('.floating-panel').forEach(p => {
+    const pos = clampFloatPanelPos(p, parseFloat(p.style.left) || 0, parseFloat(p.style.top) || 0);
+    p.style.left = pos.x + 'px';
+    p.style.top = pos.y + 'px';
+  });
+});
 function dragMove(clientX, clientY) {
   if (!draggedEl) return;
   let floatable = draggedEl.dataset.floatable === '1';
@@ -1679,8 +1718,9 @@ function dragMove(clientX, clientY) {
   let zone = pid ? document.getElementById(SLOT_OF[pid]) : null;
   if (floatable && !zone) {
     if (!draggedEl.classList.contains('floating-panel')) { draggedEl.classList.add('floating-panel'); document.body.appendChild(draggedEl); }
-    draggedEl.style.left = Math.round(clientX - dragOffX) + 'px';
-    draggedEl.style.top = Math.round(clientY - dragOffY) + 'px';
+    const pos = clampFloatPanelPos(draggedEl, clientX - dragOffX, clientY - dragOffY);
+    draggedEl.style.left = pos.x + 'px';
+    draggedEl.style.top = pos.y + 'px';
     return;
   }
   if (draggedEl.classList.contains('floating-panel')) { draggedEl.classList.remove('floating-panel'); draggedEl.style.left = ''; draggedEl.style.top = ''; }
@@ -2007,10 +2047,41 @@ function overlayStackIds(){
 /* Когда полоса меню внизу экрана (menubar-bottom, см. setMenuBarBottom в fold-5-ui.js), запас
    --menubar-h сверху больше не нужен — там никакой полосы нет, и стопка баров/#alignGrp могут
    встать с самого верха (запрос пользователя: "сместить на самый верх", когда меню внизу). */
+/* ═══ СТОПКА НАЧИНАЕТСЯ ПОД КНОПКАМИ МЕНЮ, А НЕ ПОД ВСЕЙ ЕГО ПОЛОСОЙ (v1.293) ═══
+   Запрос пользователя: «отступ верт. от результата до строк верхних сократи, таким же, как между
+   Черновиком» — и уточнение: промежуток НАД барами, под шапкой меню.
+   Резервировались все --menubar-h (42px) плюс 6px. Но 42px — это высота ПОЛОСЫ, а не того, что в
+   ней нарисовано: #menuBar прозрачен (background:transparent, см. её CSS), фон есть только у
+   содержимого — #menuBarTitle и #menuTabs, а сами они в полосе отцентрованы по вертикали
+   (align-items:center). Значит сверху и снизу от кнопок оставалось по одинаковому пустому полю, и
+   нижнее мы честно резервировали как занятое. Отсюда и чёрная полоса над «Результатом».
+   Считаем реальный низ содержимого: при центрировании это (высота полосы + высота содержимого) / 2.
+   Дальше тот же зазор, что и между барами — OVERLAY_GAP, ровно как просили («таким же»).
+   ЗАМЕР ЧЕРЕЗ offsetHeight, А НЕ getBoundingClientRect: функция зовётся в том числе из
+   ResizeObserver (см. layoutOverlayBoxes), и там принудительный замер геометрии рискует зациклить
+   наблюдателя. offsetHeight — собственная высота элемента, от прокрутки и позиции не зависит.
+   МЕНЮ СКРЫТО ЦЕЛИКОМ (body.all-hidden — «чисто биты») — резервировать нечего, отдаём те же 6px,
+   что и при меню внизу экрана. Раньше запас в 48px оставался и в этом режиме, хотя над барами не
+   было вообще ничего.
+   Содержимое не измерилось (ранний вызов до отрисовки шапки) — падаем на прежнюю формулу. */
 function overlayTopBase(){
   if (document.body.classList.contains("menubar-bottom")) return 6;
-  const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--menubar-h"));
-  return 6 + (v > 0 ? v : 42);
+  const barEl = document.getElementById("menuBar");
+  const barH = (() => {
+    const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--menubar-h"));
+    return v > 0 ? v : 42;
+  })();
+  /* Спрятанность проверяем по offsetHeight, а НЕ по offsetParent: #menuBar — position:fixed, а у
+     таких элементов offsetParent равен null всегда, и условие срабатывало бы при живом меню тоже.
+     При display:none (body.all-hidden) offsetHeight честно нулевой. */
+  if (!barEl || !barEl.offsetHeight) return 6;   // меню спрятано — над барами пусто
+  let contentH = 0;
+  ["menuBarTitle", "menuTabs"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.offsetHeight > contentH) contentH = el.offsetHeight;
+  });
+  if (!contentH) return 6 + barH;
+  return Math.round(Math.min(barH, (barH + contentH) / 2) + OVERLAY_GAP);
 }
 function layoutOverlayBoxes(){
   const visible = overlayStackIds();
@@ -2784,8 +2855,30 @@ function applyGroupAlign(align, field){
   saveCache();
 }
 const alignBtns = document.querySelectorAll("#alignGrp button[data-val]");
+/* ═══ ВЫПАДАЮЩИЙ ½-РЯД ЗАКРЫВАЕТСЯ СРАЗУ ПОСЛЕ ВЫБОРА (v1.286) ═══
+   Запрос пользователя: «после нажатия на 1.2 выравнивания скрывай сразу кнопки 1.2».
+   Механику держит CSS (см. .half-picked в fold.html) — здесь только вешаем класс и снимаем фокус
+   с нажатой кнопки. Оба действия нужны вместе: класс перебивает :hover, blur() — :focus-within.
+   Снимаем класс по уходу курсора с полосы: вернулся — значит снова выбирает, и ряд выпадает
+   как прежде. Слушатель одноразовый, поэтому повторные клики его не копят.
+   Список значений тот же, что в CSS: продублирован намеренно — правило и обработчик читаются
+   каждый сам по себе, а расходиться им не даёт единственное место, где ½-кнопки заводятся,
+   разметка #alignGrp. */
+const HALF_ALIGN_VALS = new Set(["halfcenter", "halfstairs", "rhalfstairs", "axis12", "axisbit12"]);
+function closeHalfRowAfterPick(btn){
+  if (!HALF_ALIGN_VALS.has(btn.getAttribute("data-val"))) return;
+  const grpEl = document.getElementById("alignGrp");
+  if (grpEl) {
+    grpEl.classList.add("half-picked");
+    grpEl.addEventListener("mouseleave", () => grpEl.classList.remove("half-picked"), { once: true });
+  }
+  btn.blur();
+}
 alignBtns.forEach(btn => {
   btn.onclick = () => {
+    // Закрываем ½-ряд ПЕРВЫМ делом (v1.286): ниже по обработчику есть ранние return'ы
+    // (выделенная группа строк), и после них до конца функции дело не доходит.
+    closeHalfRowAfterPick(btn);
     /* ПОЛОСА ВСЕГДА ПРАВИТ ЦЕПОЧКУ (v1.143, окончательно — v1.213). Кнопка «◧ П1»/«П2 ◨»-приёмник
        в v0.976 умела направить полосу в колонку паттернов; с v1.143 это отменено запросом «эти
        только цепочки пусть выравнивает, паттернов своя кнопка есть», а в v1.213 вычищен и сам

@@ -6104,7 +6104,12 @@ document.addEventListener("keydown", e => {
       if (!colEl) return;
       const step = Math.max(1, Math.round((typeof realColStepPx === "function" ? realColStepPx() : 8) || 8));
       const grow = e.key === "ArrowRight";
-      const w = Math.max(40, Math.round(colEl.getBoundingClientRect().width + (grow ? step : -step)));
+      /* Тот же нижний упор, что и у протяжки мышью (v1.285): поле цепочки не ужимается уже полосы
+         выравниваний. Формула одна на все пути — minBitsWidthPx() в fold-5-ui.js. У колонок
+         паттернов упор прежний, 40px: полоса над ними не стоит. */
+      const minW = (varName === "--bits-w" && typeof minBitsWidthPx === "function")
+        ? Math.max(40, minBitsWidthPx()) : 40;
+      const w = Math.max(minW, Math.round(colEl.getBoundingClientRect().width + (grow ? step : -step)));
       document.documentElement.style.setProperty(varName, w + "px");
       // Те же флаги "ширину ведут рукой", что ставит перетаскивание, — иначе ближайший render()
       // отменил бы шаг автоподбором ширины.
@@ -6253,6 +6258,17 @@ if (bSideEl) bSideEl.onclick = () => { document.body.classList.toggle("hide-side
 /* Кнопка возврата в полосе выравниваний (v1.164): видна только при скрытых панелях, поэтому ей
    достаточно уметь ПОКАЗАТЬ — прятать нечего, себя она этим же кликом и уберёт. */
 const bSideBackEl = document.getElementById("bSideBack");
+/* ═══ КНОПКУ ВЫНИМАЕМ ИЗ ПЛАНКИ ОСИ В <body> (v1.288) ═══
+   Запрос пользователя: «кнопку эту в самый верх браузера по середине».
+   Само место задаёт CSS (position:fixed, top:0, left:50%) — но fixed отсчитывается от окна только
+   пока НИ У ОДНОГО предка нет transform/filter/perspective: любой из них делает предка
+   containing block, и «верх окна» превращается в «верх планки». А .chain, внутри которой лежит
+   #axisStrip, трансформируется при отрисовке строк. Полагаться на то, что трансформа именно
+   сейчас нет, нельзя, поэтому переносим кнопку в <body>: там предков, кроме него, не осталось.
+   Тем же приёмом в v1.011 переезжала полоса выравниваний (moveAlignGrpToLayout в fold-3-ops.js).
+   Перенос ничего не ломает: обработчик ниже висит на самом элементе, а видимостью правят классы
+   на <body> (body.hide-side/.no-panels) — они действуют откуда угодно. */
+if (bSideBackEl && bSideBackEl.parentElement !== document.body) document.body.appendChild(bSideBackEl);
 if (bSideBackEl) bSideBackEl.onclick = () => {
   /* ДВЕ РАЗНЫЕ ПРИЧИНЫ, ПО КОТОРЫМ ПАНЕЛЕЙ НЕ ВИДНО (испр. v1.165, баг-репорт: «при нажатии на
      кнопку панели не показываются, хотя уведомление есть»).
