@@ -347,6 +347,45 @@ function cycleRowNumMode(){
     cycleRowNumMode();
   });
 }
+
+/* ═══ ПРОТЯЖКА ВВЕРХ-ВНИЗ ПО КОЛОНКЕ НОМЕРОВ = МЕЖСТРОЧНЫЙ (v1.460) ═══
+   Запрос пользователя (со скриншотом ползунка «↕»): «в номерах Ц поле если верх вниз перетаскивать
+   пусть работает».
+   Колонка номеров цепочки (.num-l2) для мыши была почти мёртвой: одиночный клик по ней намеренно
+   не делает ничего, протяжку выделения она не начинает (см. обе проверки .num-l2 в fold-3-ops.js),
+   а живёт там один жест — двойной клик, переключающий систему счисления. Вертикаль в ней свободна
+   целиком, а межстрочный до сих пор крутили либо на границе поля (.vsplit), либо с зажатым Ctrl
+   над битами — и то и другое ещё нужно найти.
+   Тут ручка сама просится: колонка идёт вдоль всей цепочки, узкая, промахнуться некуда, и результат
+   виден ровно там, где тянешь. Ползунок тот же самый — «↕» во вкладке «Вид» (#lh), — поэтому и код
+   тот же makeLhVDrag(): своей шкалы и своего шага не заводим.
+   БЕЗ МОДИФИКАТОРОВ (active=true с первого кадра): в отличие от протяжки над битами, вертикали в
+   колонке номеров больше нечего делать, путать не с чем. С любой зажатой клавишей жест не
+   начинается — Ctrl/Shift над полотном заняты своими ручками, и перебивать их отсюда незачем.
+   Горизонтальную прокрутку обзора не перехватываем (нет stopPropagation): она висит на
+   #screenCanvas и включается только после 3px по горизонтали, так что вертикальному жесту не мешает
+   и остаётся доступной с этого же места, как была.
+   Колонка скрыта окном «ℹ Поле» — жест молчит, как и двойной клик выше. */
+{
+  const rowsForNumLh = document.getElementById("rows");
+  let numLhDrag = null;
+  if (rowsForNumLh) rowsForNumLh.addEventListener("mousedown", (e) => {
+    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+    if (document.body.classList.contains("hide-rownums")) return;
+    const cell = e.target && e.target.closest ? e.target.closest(".num-l2") : null;
+    if (!cell || !cell.closest(".ln")) return;
+    numLhDrag = makeLhVDrag(e.clientY);
+  });
+  // Кнопку отпустили где угодно (в том числе за окном) — жест кончился: тот же приём, что у
+  // прокрутки обзора, где проверяется e.buttons на каждом кадре.
+  window.addEventListener("mousemove", (e) => {
+    if (!numLhDrag) return;
+    if (!(e.buttons & 1)) { numLhDrag = null; return; }
+    numLhDrag(e.clientY, true);
+  }, { passive: true });
+  window.addEventListener("mouseup", () => { numLhDrag = null; });
+  window.addEventListener("blur", () => { numLhDrag = null; });
+}
 {
   const bRowNum = document.getElementById("bAxisRowNum");
   if (bRowNum) bRowNum.onclick = () => cycleRowNumMode();
@@ -6646,13 +6685,46 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
      кромку, левый не уходит за нуль. Пока подсказка помещается, она стоит там, где ей и место;
      упор срабатывает ровно в том случае, с которого всё началось.
      Обе оси считаются одинаково: сперва желаемое место у курсора, потом зажим в окно. */
+  /* ═══ ПОДСКАЗКА НЕ НАКРЫВАЕТ САМУ КНОПКУ (испр. v1.459) ═══
+     Баг-репорт со скриншотом: «иногда подсказка закрывает саму кнопку». Так и было: место
+     считалось ТОЛЬКО от курсора (clientY + 18), а потом зажималось в окно. Подсказки тут длинные,
+     абзацами: у нижней половины экрана коробка в 300–400 пикселей высотой в остаток снизу не
+     влезала, зажим тянул её вверх — и она ложилась ровно на ту кнопку, с которой её и вызвали.
+     Читать текст можно, а вот куда целиться мышью — уже нет.
+     Теперь место считается ОТ ЭЛЕМЕНТА, а не от курсора: сначала под ним, не влезло — над ним,
+     не влезло ни там ни там (элемент выше окна или окно совсем низкое) — сбоку, с той стороны,
+     где места больше. При любом из трёх исходов коробка стоит ВНЕ прямоугольника элемента, то
+     есть накрыть его не может по построению. Курсор при этом не забыт: по свободной оси коробка
+     по-прежнему идёт за ним (сверху/снизу — по горизонтали, сбоку — по вертикали), поэтому длинный
+     ряд кнопок не заставляет глаза бегать через полэкрана.
+     Зажим в окно остался прежним и стоит ПОСЛЕДНИМ: он лишь не даёт вылезти за кромку.
+     Единственный случай, когда перекрытие всё же возможно, — элемент, вокруг которого свободного
+     места нет ни с одной стороны; тогда деваться коробке некуда, и это уже не про кнопки. */
   const posTip = (clientX, clientY) => {
     const h = tipBox.offsetHeight || 0;
     const w = tipBox.offsetWidth || 0;
-    const maxTop = Math.max(4, window.innerHeight - h - 6);
-    tipBox.style.top = Math.min(maxTop, Math.max(4, clientY + 18)) + "px";
-    const maxLeft = Math.max(4, window.innerWidth - w - 8);
-    tipBox.style.left = Math.min(maxLeft, Math.max(4, clientX + 16)) + "px";
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const M = 8;                       // зазор между коробкой и элементом
+    const clampL = (x) => Math.min(Math.max(4, x), Math.max(4, vw - w - 8));
+    const clampT = (y) => Math.min(Math.max(4, y), Math.max(4, vh - h - 6));
+    const r = (tipEl && tipEl.getBoundingClientRect) ? tipEl.getBoundingClientRect() : null;
+    if (!r) {                          // элемента нет (вызвали не от наведения) — как было, у курсора
+      tipBox.style.top = clampT(clientY + 18) + "px";
+      tipBox.style.left = clampL(clientX + 16) + "px";
+      return;
+    }
+    if (h <= vh - r.bottom - M) {      // помещается ПОД элементом
+      tipBox.style.top = (r.bottom + M) + "px";
+      tipBox.style.left = clampL(clientX + 16) + "px";
+    } else if (h <= r.top - M) {       // помещается НАД элементом
+      tipBox.style.top = (r.top - h - M) + "px";
+      tipBox.style.left = clampL(clientX + 16) + "px";
+    } else {                           // ни под, ни над — уводим ВБОК, где просторнее
+      const spaceR = vw - r.right - M, spaceL = r.left - M;
+      const left = (spaceR >= spaceL) ? r.right + M : r.left - w - M;
+      tipBox.style.left = clampL(left) + "px";
+      tipBox.style.top = clampT(clientY - h / 2) + "px";
+    }
   };
   document.addEventListener("mouseover", (e) => {
     const t = (e.target && e.target.closest) ? e.target.closest("[title]") : null;
