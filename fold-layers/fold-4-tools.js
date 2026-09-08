@@ -1980,7 +1980,14 @@ const PAT_NUM_ORDER = ["dec", "bin", "off"];
    названии кнопки»): планки узкие, и лишний знак в подписи стоит целого столбца.
    Подписи здесь и в ROW_NUM_LABEL (fold-5-ui.js) обязаны совпадать — это одна и та же
    кнопка в трёх планках, править надо обе сразу. */
-const PAT_NUM_LABEL = { dec: "№10", bin: "№01", off: "№—" };
+/* ═══ НА КНОПКЕ ВСЕГДА ОДИН ЗНАК «№» (v1.438) ═══
+   Запрос пользователя: «убери из П1 и П2 в кнопке № 0 и 1, оставь всегда № при любом переключении».
+   Подпись показывала и систему счисления, и выключенное состояние («№10» / «№01» / «№—»), из-за
+   чего кнопка меняла ширину на каждом щелчке и дёргала за собой всю планку. Режим и так виден по
+   самим номерам в ячейках, а «включено ли» — по классу .on (подпись горит акцентным цветом,
+   см. .pat-strip button.on). Подписи трёх режимов оставлены одной строкой: круг переключения,
+   порядок режимов и подсказка не тронуты. */
+const PAT_NUM_LABEL = { dec: "№", bin: "№", off: "№" };
 /* Режим колонки. Старый кэш знает только булевы patNumL/patNumR — разворачиваем их в режим, чтобы
    сохранённая раскладка не сбрасывалась в умолчание при первом же запуске новой версии. */
 function patNumModeOf(side){
@@ -6725,6 +6732,10 @@ function updateWrapUi(){
   if (info) info.textContent = wrapModeOn() ? ("слева " + (st.wrapL | 0) + " · справа " + (st.wrapR | 0)) : "";
   const cm = document.getElementById("bWrapCommit");
   if (cm) cm.style.display = wrapModeOn() ? "" : "none";
+  // Ряд «слева − + справа − +» — тоже только в режиме (v1.458): вне его линий нет и двигать нечего.
+  // display у ряда flex, а не "" — в разметке он изначально none, и пустая строка вернула бы block.
+  const nr = document.getElementById("wrapNudgeRow");
+  if (nr) nr.style.display = wrapModeOn() ? "flex" : "none";
 }
 const bWrapModeEl = document.getElementById("bWrapMode");
 if (bWrapModeEl) bWrapModeEl.onclick = () => { if (wrapModeOn()) wrapCancel(); else wrapStart(); };
