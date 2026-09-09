@@ -3378,6 +3378,8 @@ const BG_SEARCH_MODE_LABELS = {
   vertR: "Верт. →", vertL: "Верт. ←",
   snakeR: "Змейка →", snakeL: "Змейка ←",
   vertZigR: "Верт. зигзаг →", vertZigL: "Верт. зигзаг ←",
+  // Столбик чётности переноса (v1.478) — по биту на строку, см. wrapXorColText в fold-4-tools.js.
+  wrapParity: "Xor строк (столбик)",
   // Переименованы в "Зигзаг" (запрос пользователя): ход и правда не одна прямая диагональ, а
   // зигзаг с отскоками от границ участка. Ключи режимов (diagR/diagL) не трогаем — они лежат в
   // сохранённых наборах/логах, менять их значило бы сломать сохранёнки.
@@ -3408,6 +3410,7 @@ const BG_MODE_SHORT = {
   concatSnakeFromR: "Змк→", concatSnakeFromRInv: "Змк→и", concatSnakeFromRRevInv: "Змк→ри",
   vertR: "Вер→", vertL: "Вер←", snakeR: "Зм→", snakeL: "Зм←",
   vertZigR: "ВЗ→", vertZigL: "ВЗ←",
+  wrapParity: "Xor↕",
   xor2odd: "X2 неч", xor2even: "X2 чёт", xor2mix: "X2 микс",
   lengthSums: "Суммы"
 };

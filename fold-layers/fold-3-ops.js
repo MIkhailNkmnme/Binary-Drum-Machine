@@ -1499,13 +1499,42 @@ for (let mid in MENUS) {
   let wrap = document.createElement('div'); wrap.className = 'menu-panel'; wrap.id = 'panelWrap_' + mid;
   if (m.floatable) wrap.dataset.floatable = '1';
   let head = document.createElement('div'); head.className = 'panel-head';
-  head.innerHTML = '<span class="panel-drag" title="Перетащить панель' + (m.floatable ? ' — можно и на холст' : '') + '">⋮⋮</span><span class="panel-title">' + m.title + '</span><span class="panel-close" title="Скрыть панель">✕</span>';
+  /* ГВОЗДЬ 📌 В ШАПКЕ КАЖДОЙ ПАНЕЛИ (v1.490, запрос пользователя: «в каждой вкладке сделай у
+     заголовка, чтобы не скрывались при режиме скрытия всех меню»). Отмеченная им панель НЕ уходит,
+     когда всё прячут кнопкой 📌 в верхнем меню или кликом колёсиком: остаётся на своём месте,
+     пока остальное поле чистится. Ровно для того и заведено — держать под рукой одну-две рабочие
+     панели на голом полотне. */
+  head.innerHTML = '<span class="panel-drag" title="Перетащить панель' + (m.floatable ? ' — можно и на холст' : '') + '">⋮⋮</span><span class="panel-title">' + m.title + '</span>' +
+    '<span class="panel-keep" title="Не прятать эту панель, когда скрывают все меню (кнопка 📌 сверху или клик колёсиком). Отмеченная остаётся на месте, всё остальное уходит — так на голом полотне можно держать под рукой ровно то, чем сейчас работаешь">📌</span>' +
+    '<span class="panel-close" title="Скрыть панель">✕</span>';
   let closeBtn = head.querySelector('.panel-close');
   closeBtn.addEventListener('mousedown', e => e.stopPropagation());
   closeBtn.addEventListener('click', e => { e.stopPropagation(); hideTab(mid); });
+  let keepBtn = head.querySelector('.panel-keep');
+  keepBtn.addEventListener('mousedown', e => e.stopPropagation());   // шапку тут не тащим
+  keepBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    m.keep = !m.keep;
+    applyKeepMark(mid);
+    updateDockVisibility();
+    updateToggleAllPinsBtn();
+    saveLayout();
+    say(m.keep
+      ? '📌 «' + m.title + '» не будет прятаться при скрытии всех меню.'
+      : '📌 «' + m.title + '» снова прячется вместе со всеми.');
+  });
   wrap.appendChild(head);
   m.ids.forEach(id => { let el = document.getElementById(id); if (el) wrap.appendChild(el); });
   m.wrapper = wrap;
+}
+/* Пометка «не прятать» — на самой обёртке и на кнопке (v1.490). Классом её видит и CSS (гвоздь
+   загорается), и updateDockVisibility, которой надо понять, держит ли док что-то нескрываемое. */
+function applyKeepMark(mid) {
+  let m = MENUS[mid];
+  if (!m || !m.wrapper) return;
+  m.wrapper.classList.toggle('keep-vis', !!m.keep);
+  let b = m.wrapper.querySelector('.panel-keep');
+  if (b) b.classList.toggle('on', !!m.keep);
 }
 
 /* Снимок раскладки панелей ОТДЕЛЬНО ОТ ЗАПИСИ (v1.452): тот же объект, что уходит в LAYOUT_KEY,
@@ -1518,9 +1547,12 @@ function captureLayout() {
   ['leftSlot', 'rightSlot'].forEach(z => Array.from(document.getElementById(z).children).forEach((el, i) => { if (el.id) g[el.id] = { z: z, i: i }; }));
   document.querySelectorAll('body > .floating-panel').forEach(el => { if (el.id) g[el.id] = { z: 'canvas', x: parseInt(el.style.left, 10) || 0, y: parseInt(el.style.top, 10) || 0 }; });
   let pins = {}; for (let m in MENUS) pins[m] = MENUS[m].pin;
+  // Гвозди «не прятать» (v1.490) — рядом с закреплениями и по той же причине: это раскладка, а не
+  // состояние работы, и после F5 она должна вернуться такой же.
+  let keeps = {}; for (let m in MENUS) keeps[m] = !!MENUS[m].keep;
   // overlayOrderV2 — флаг разовой миграции порядка окон, см. applyLayout(). Пишется всегда, поэтому
   // после первого же сохранения текущий порядок снова становится главнее default'а.
-  return { pins: pins, groups: g, overlayOrder: overlayOrder, overlayOrderV2: true, overlayHidden: overlayHidden };
+  return { pins: pins, keeps: keeps, groups: g, overlayOrder: overlayOrder, overlayOrderV2: true, overlayHidden: overlayHidden };
 }
 function saveLayout() {
   try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(captureLayout())); } catch (e) {}
@@ -1825,6 +1857,11 @@ function isTabVisible(mid) {
 function updateDockVisibility() {
   ['leftPanel', 'rightPanel'].forEach(pid => {
     let p = document.getElementById(pid);
+    /* Док, в котором осталась прибитая гвоздём панель, не гаснет вместе с остальными (v1.490):
+       hide-side убирает доки целиком, и без этой пометки «не прятать» ничего бы не значило для
+       панели, стоящей в доке. Обычные соседи к этому моменту уже вынесены в выпадашку, так что
+       на экране остаётся ровно прибитое, а не полдока заодно. */
+    p.classList.toggle('has-keep', !!p.querySelector('.menu-panel.keep-vis'));
     p.classList.toggle('dock-empty', !p.querySelector('.menu-panel'));
   });
   updateResultBoxInset();
@@ -1871,7 +1908,8 @@ for (let mid in MENUS) {
 }
 
 function updateToggleAllPinsBtn() {
-  let anyOn = Object.keys(MENUS).some(mid => isTabVisible(mid));
+  // Панели с гвоздём в счёт не идут — по той же причине, что и в toggleAllPins (v1.490).
+  let anyOn = Object.keys(MENUS).some(mid => !MENUS[mid].keep && isTabVisible(mid));
   /* Признак «панелей на экране нет вовсе» (v1.165) — по нему в полосе выравниваний показывается
      кнопка возврата «▤ Панели». Пустые доки от скрытых доков не отличить глазом, а причина у них
      разная: hide-side прячет сами доки, а крестик на панели снимает вкладку, и док остаётся, но
@@ -1890,7 +1928,10 @@ function updateToggleAllPinsBtn() {
    📌, должно срабатывать ещё и по клику колёсиком мыши (средняя кнопка) — см. её обработчик
    ниже. */
 function toggleAllPins() {
-  let anyVisible = Object.keys(MENUS).some(mid => isTabVisible(mid));
+  /* ПАНЕЛИ С ГВОЗДЁМ ИЗ СЧЁТА ИСКЛЮЧЕНЫ (v1.490). Они видны всегда, и считай мы их — «что-то ещё
+     на экране есть» было бы верно вечно, а кнопка навсегда застряла бы в положении «спрятать» и
+     перестала показывать. Решение о показе/скрытии принимается по ОБЫЧНЫМ панелям. */
+  let anyVisible = Object.keys(MENUS).some(mid => !MENUS[mid].keep && isTabVisible(mid));
   /* ВЕРХНЕЕ МЕНЮ ТОЖЕ ПРЯЧЕТСЯ (v1.001, запрос пользователя: "также, всё, и меню тоже, чисто
      биты оставим"). Раньше 📌/клик колёсиком прятали только боковые доки-вкладки — #menuBar
      (Вид/Шаг/Строк/... и кнопки сверху, включая саму кнопку 📌) оставался на месте. Теперь тем же
@@ -1916,6 +1957,7 @@ function toggleAllPins() {
   document.body.classList.toggle("hide-side", anyVisible);
   if (anyVisible) {
     for (let mid in MENUS) {
+      if (MENUS[mid].keep) continue;   // гвоздь: эту не трогаем вовсе (v1.490)
       MENUS[mid].pin = false;
       let cb = document.getElementById(mid + 'Pin'); if (cb) cb.checked = false;
       applyMenu(mid);
@@ -1996,6 +2038,9 @@ function applyLayout(L) {
   // L.hideAllSnap из раскладок старее v0.894 просто игнорируется: "показать все" больше ничего
   // не восстанавливает по снимку, оно закрепляет все вкладки без исключения.
   if (L && L.pins) for (let m in MENUS) if (L.pins[m] !== undefined) { MENUS[m].pin = !!L.pins[m]; let cb = document.getElementById(m + 'Pin'); if (cb) cb.checked = MENUS[m].pin; }
+  // Гвозди «не прятать» (v1.490). Раскладок без этого ключа полно — в них гвоздей просто нет,
+  // и applyKeepMark честно снимет пометку со всех, а не оставит её от прошлой сессии.
+  for (let m in MENUS) { MENUS[m].keep = !!(L && L.keeps && L.keeps[m]); applyKeepMark(m); }
   if (L && L.groups) for (let m in MENUS) { let wid = 'panelWrap_' + m; if (MENUS[m].pin && L.groups[wid] && L.groups[wid].z !== 'canvas') MENUS[m].zone = L.groups[wid].z; }
   for (let m in MENUS) applyMenu(m);
 
@@ -3874,6 +3919,11 @@ function toggleBgSearchMode(val){
 }
 const bgSearchModeBtns = document.querySelectorAll("#bgSearchModeGrp button");
 bgSearchModeBtns.forEach(btn => {
+  /* Кнопка БЕЗ data-val — не режим из набора, а зеркало чужого выключателя (v1.488, «Столбик»:
+     см. #bBgWrapParity в разметке и его обработчик в fold-4-tools.js). Общая машинерия к ней
+     неприменима: положи её val в st.bgSearchModes — и он остался бы там мёртвым грузом после
+     выхода из режима переноса, а в сохранённом наборе жил бы вечно. */
+  if (!btn.getAttribute("data-val")) return;
   btn.onclick = () => {
     const val = btn.getAttribute("data-val");
     const idx = st.bgSearchModes.indexOf(val);
@@ -3902,10 +3952,15 @@ if (bBgModeAllNoneEl) {
     // Просто "выделить всё / снять всё" (запрос пользователя) — промежуточного состояния
     // "только XOR-Все" больше нет. Выключение самого фон-поиска — клик по заголовку, см.
     // toggleBgSearch(): набор режимов там сохраняется.
-    const allVals = Array.from(bgSearchModeBtns).map(b => b.getAttribute("data-val"));
+    // Кнопки без data-val (зеркало «Столбика», v1.488) в набор не входят — ни «выделить всё»,
+    // ни «снять всё» их не касаются: их состоянием распоряжается свой выключатель.
+    const allVals = Array.from(bgSearchModeBtns).map(b => b.getAttribute("data-val")).filter(Boolean);
     const allOn = allVals.every(v => st.bgSearchModes.includes(v));
     st.bgSearchModes = allOn ? [] : allVals.slice();
-    bgSearchModeBtns.forEach(b => b.classList.toggle("act", st.bgSearchModes.includes(b.getAttribute("data-val"))));
+    bgSearchModeBtns.forEach(b => {
+      const v = b.getAttribute("data-val");
+      if (v) b.classList.toggle("act", st.bgSearchModes.includes(v));
+    });
     st.bgSearchLastHit = -1;
     render();
     saveCache();
@@ -4466,6 +4521,13 @@ function computeBgSearchTarget(){
   // безусловная, кнопки нет). Отсеиваем, чтобы он, застряв в чьём-то сохранённом наборе, не упал
   // в ветку "иначе" и не дорисовал лишнюю строку-интерлив под чужим именем.
   const modes = modesAll.filter(m => m !== "lengthSums" && m !== "diagSplit");
+  /* СТОЛБИК XOR СТРОК подмешивается САМ, пока включена его кнопка в панели «Перенос» (v1.478,
+     wrapXorColOn в fold-4-tools.js). Своей кнопки в наборе режимов у него нет намеренно: он
+     считается только внутри режима переноса и вне его показал бы пустоту, а мёртвая кнопка в
+     общем наборе сбивала бы с толку. Здесь же он и уходит из списка, стоит режиму кончиться. */
+  if (typeof wrapXorColOn === "function" && wrapXorColOn() && !modes.includes("wrapParity")) {
+    modes.push("wrapParity");
+  }
   // flatMap, а не map — один режим может дать НЕСКОЛЬКО отдельных строк результата (см. "Xor 2"
   // при мультивыделении ниже: три самостоятельные строки вместо одной склейки через пробел —
   // запрос пользователя, чтобы фон-поиск сверял паттерн с КАЖДЫМ набором отдельно; в одной
@@ -4609,6 +4671,9 @@ function computeBgSearchTarget(){
       result = invertBits(concatSnakeGlueDownTo(st, chainIdx, true));
     } else if (mode === "concatSnakeFromRRevInv") {
       result = reverseStr(invertBits(concatSnakeGlueDownTo(st, chainIdx, true)));
+    } else if (mode === "wrapParity") {
+      // Столбик чётности строк переноса — готовая строка из fold-4-tools.js (см. wrapXorColText).
+      result = (typeof wrapXorColText === "function") ? wrapXorColText() : "";
     } else if (mode === "vertR") {
       result = concatVerticalDownTo(st, chainIdx, "right");
     } else if (mode === "vertL") {
@@ -5578,8 +5643,41 @@ if (bBuildPlaceEl) {
 }
 updateBuildPlaceBtn();
 
+/* СМЕЩЕНИЕ УКЛАДКИ (v1.461, запрос пользователя: «нужна кнопка верх вниз, чтобы сдвигать их
+   относительно имевшихся ранее — то есть строки чтобы ложились с 0, потом с 1, потом с 2»).
+   Общее для ОБОИХ построений: и "🔺 Серпинский", и "🔢 Номера" идут через applyGeneratedRows(),
+   и кнопка "⟳ Текущие" у них тоже одна на двоих — смещение встаёт туда же.
+   Считается в СТРОКАХ и только вниз (0 и больше): 0 — фигура ложится с первой настоящей строки
+   цепочки, как было всегда; 1 — со следующей; 2 — ещё ниже. Саму фигуру смещение не меняет,
+   двигается только место укладки. "↑ Выше" убавляет, "↓ Ниже" прибавляет. */
+function buildOffsetVal(){
+  const el = document.getElementById("buildOffset");
+  const raw = el ? +el.value : (st.buildOffset || 0);
+  return Math.max(0, Math.min(4096, (raw | 0) || 0));
+}
+function updateBuildOffsetInput(){
+  const el = document.getElementById("buildOffset");
+  if (el) el.value = Math.max(0, Math.min(4096, (st.buildOffset | 0) || 0));
+}
+function setBuildOffset(v){
+  const n = Math.max(0, Math.min(4096, (v | 0) || 0));
+  st.buildOffset = n;
+  updateBuildOffsetInput();
+  saveCache();
+  say(n ? `Построения лягут на ${n} стр. ниже первой строки цепочки.`
+        : "Построения лягут с первой строки цепочки.");
+}
+const buildOffsetEl = document.getElementById("buildOffset");
+if (buildOffsetEl) buildOffsetEl.oninput = () => { st.buildOffset = buildOffsetVal(); saveCache(); };
+const bBuildOffUpEl = document.getElementById("bBuildOffUp");
+if (bBuildOffUpEl) bBuildOffUpEl.onclick = () => setBuildOffset(buildOffsetVal() - 1);
+const bBuildOffDownEl = document.getElementById("bBuildOffDown");
+if (bBuildOffDownEl) bBuildOffDownEl.onclick = () => setBuildOffset(buildOffsetVal() + 1);
+updateBuildOffsetInput();
+
 function applyGeneratedRows(gen, title){
   const mode = st.buildPlace || "clear";
+  const off = buildOffsetVal();
   snapshot();
   /* «СТЕРЕТЬ» ПО ПУСТОМУ ХОЛСТУ — СТИРАЕТ, ПО НАБРАННОЙ ЦЕПОЧКЕ — ТОЛЬКО ПЕРЕЗАПИСЫВАЕТ СВОИ
      СТРОКИ (v1.103, запрос пользователя: "если вставка в уже существующие биты в цепочках, то не
@@ -5605,13 +5703,19 @@ function applyGeneratedRows(gen, title){
        Снимаем только отметки «найден/вид/шаг»: они указывали на строки прежней цепочки, которой
        больше нет, и переносить их на новую нельзя. Сами тексты и порядок остаются нетронутыми. */
     const keepPats = (st.pats || []).some(p => p && p.text);
-    st.tplRows = gen.slice();
-    st.rows = gen.slice();
+    /* УКЛАДКА СО СМЕЩЕНИЕМ на пустом холсте: пустых строк сверху ровно off + 1. Единица — это
+       служебная нулевая строка, которую иначе вставила бы ensureZeroRow ниже; заводим её здесь
+       сами, потому что подмешать пустые ПОСЛЕ неё нельзя — нулевую она ищет по st.rows[topBuilt]
+       === "" и первую же нашу пустую приняла бы ЗА неё, и смещение 1 не отличалось бы от нуля.
+       Вызов ensureZeroRow при этом остаётся: он теперь просто убеждается, что нулевая на месте. */
+    const laid = new Array(off + 1).fill("").concat(gen);
+    st.tplRows = laid.slice();
+    st.rows = laid.slice();
     st.used = st.rows.map(() => false);
     if (keepPats) {
       for (const p of st.pats) if (p) { p.found = false; p.kind = null; p.step = null; }
     } else {
-      st.tplPats = gen.slice();
+      st.tplPats = laid.slice();
       st.pats = st.tplPats.map((t, i) => ({ text: t, ord: i, found: false, kind: null, step: null }));
     }
     st.selectedRows = new Set();
@@ -5630,26 +5734,39 @@ function applyGeneratedRows(gen, title){
        она уже стоит там, где её оставил пользователь, и сдвиг всей колонки вниз на одну как раз и
        был бы тем «троганьем паттернов», которого просили избежать. */
     ensureZeroRow(keepPats ? "none" : undefined);
+    /* ЦВЕТ НОВЫХ БИТ И НА ПУСТОМ ХОЛСТЕ (v1.461, запрос пользователя: «пока их не вписать — они
+       другим цветом»). Эта ветка только СНИМАЛА пометку (newBitsClearAll выше) и ничего не ставила
+       взамен: построение по пустому холсту приходило сразу цветом цепочки, в отличие от режимов
+       «вправо/влево/по центру», где дописанное честно метится newBitsWrap/newBitsWhole. Теперь
+       фигура помечается целиком, и «= Цвет» снимает пометку так же, как после приписки.
+       Метим ПОСЛЕ ensureZeroRow: она двигает индексы строк, а newBitsMap за ней не едет. Пустые
+       строки (нулевая и те, что дало смещение) newBitsWhole пропускает сам — при нулевой длине он
+       удаляет запись, а не заводит её. */
+    for (let i = 0; i < st.rows.length; i++) newBitsWhole(i, (st.rows[i] || "").length);
     st.step = 0; st.passCount = 0; st.tailBuffer = "";
     st.aIdx = 0; st.bIdx = 1; st.goingUp = false; st.hit = null;
     const rowCountEl = document.getElementById("rowCount");
     if (rowCountEl) {
-      rowCountEl.max = gen.length;
-      rowCountEl.value = gen.length;
+      rowCountEl.max = laid.length;
+      rowCountEl.value = laid.length;
       const rcVal = document.getElementById("rowCountVal");
-      if (rcVal) rcVal.textContent = gen.length;
+      if (rcVal) rcVal.textContent = laid.length;
     }
     render(); saveCache();
     say(`${title}: построено ${gen.length} строк, прежняя цепочка стёрта.` +
+        (off ? ` Уложено на ${off} стр. ниже.` : "") +
         (keepPats ? " Колонка паттернов не тронута — она не пуста (сняты только отметки «найден»)."
                   : " Паттерны заполнены той же фигурой — колонка была пуста."));
-    logStep(title, "", "", `${gen.length} строк, со стиранием${keepPats ? ", паттерны сохранены" : ""}`);
+    logStep(title, "", "", `${gen.length} строк, со стиранием${off ? `, сдвиг ${off}` : ""}${keepPats ? ", паттерны сохранены" : ""}`);
     return;
   }
   // Первая НАСТОЯЩАЯ строка цепочки: индекс st.topBuilt — всегда пустая нулевая строка
   // (см. ensureZeroRow), выше неё только построения вверх. Строку построения №1 приписываем
   // к ней, №2 — к следующей и так далее.
-  const base = (st.topBuilt || 0) + 1;
+  // Смещение (v1.461, «↑ Выше»/«↓ Ниже») сдвигает ровно эту точку отсчёта: при 0 всё как было,
+  // при 1 фигура начинается со следующей строки, и так далее. Строки выше точки отсчёта цикл
+  // не перебирает вовсе — они остаются как есть, в этом и смысл «сдвинуть относительно имевшихся».
+  const base = (st.topBuilt || 0) + 1 + off;
   let addedBits = 0, addedRows = 0, touched = 0;
   for (let g = 0; g < gen.length; g++) {
     const idx = base + g;
@@ -5699,9 +5816,11 @@ function applyGeneratedRows(gen, title){
       `, всего бит ${addedBits}. Остальные строки цепочки и паттерны не тронуты.`
     : `${title}: приписано ${BUILD_PLACE_LABELS[mode]} к ${touched} стр.` +
       (addedRows ? `, заведено новых строк ${addedRows}` : "") +
-      `, всего новых бит ${addedBits}.`);
+      `, всего новых бит ${addedBits}.` +
+      (off ? ` Начало сдвинуто на ${off} стр. вниз.` : ""));
   logStep(title, `${rowLabel(base)}…`, "",
-    (mode === "clear" ? "перезапись строк" : BUILD_PLACE_LABELS[mode]) + `, +${addedBits} бит`);
+    (mode === "clear" ? "перезапись строк" : BUILD_PLACE_LABELS[mode]) +
+    (off ? `, сдвиг ${off}` : "") + `, +${addedBits} бит`);
 }
 
 const bGenSierpinskiEl = document.getElementById("bGenSierpinski");

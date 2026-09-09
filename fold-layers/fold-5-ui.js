@@ -2239,6 +2239,20 @@ function updateSplitPositions(){
     // Координата в системе .chain ручке больше не ставится (v1.397): она position:fixed и стоит
     // по правому краю окна, см. присваивание right выше.
   }
+  /* ═══ ЛЕВАЯ ГРАНИЦА П2 (v1.464) ═══
+     Баг-репорт: «граница П2 левая — вообще не видно её» и уточнение «это не та граница, ещё правее».
+     Соседняя #vsplit2 выше стоит на правом крае ПОЛЯ БИТ — это граница цепочки, там кончается её
+     заливка. Левый край самой П2 лежит дальше вправо: между ними колонка номеров (.num-r2) и точка
+     (.pat-dot), в заливки не входящие. Ставим отметку ровно на левый край .pat2 — по той же коробке,
+     по которой putFieldBg ниже кладёт заливку #fieldBgR, чтобы линия и край заливки не разъехались
+     (тот же приём и та же причина, что у пары «кнопка №» и #fieldBgC, см. v1.315).
+     Смещение −2 — общее для всех границ (v1.330): ::before встаёт ровно на измеренный край.
+     Колонка скрыта — линию не ставим: показывать край нечему (CSS гасит её тем же hide-pat-r). */
+  const v4 = document.getElementById("vsplit4");
+  if (v4 && pat2El && !document.body.classList.contains("hide-pat-r")) {
+    v4.style.left = (pat2El.getBoundingClientRect().left - cr.left - 2) + "px";
+    v4.style.right = "auto";
+  }
   /* ПЛАНКИ ПОЛЕЙ П1/П2 — ПРИБИТЫ К ГРАНИЦАМ (v1.081, запрос пользователя: "пусть кнопки будут
      фиксированы у границ П1 и П2"). Раньше их ставила updatePatFieldHandles() от ручек-осей
      крайних полей — тех ручек больше нет (см. комментарий в разметке), да и цеплялись они за
@@ -2768,7 +2782,10 @@ function updateSplitPositions(){
      а не стык полей, и мерить её полем строк нечем. */
   if (rowsRect) {
     const splitTopPx = rowsRect.top - cr.top;
-    for (const idSplit of ["vsplitL0", "vsplit", "vsplit2"]) {
+    // vsplit4 (v1.464) меряется здесь же: это такой же стык полей внутри .chain, как и три первых,
+    // и выступать над полем строк ему нельзя ровно по той же причине. Исключение по-прежнему одно —
+    // #vsplit3, рамка окна.
+    for (const idSplit of ["vsplitL0", "vsplit", "vsplit2", "vsplit4"]) {
       const elSplit = document.getElementById(idSplit);
       if (!elSplit) continue;
       elSplit.style.top = splitTopPx + "px";
@@ -3894,6 +3911,155 @@ function hideAxisColBox(){}
        Пикеры цепочки, замок и слоты закреплённых значков в полосе ОСТАЮТСЯ: они не привязаны ни к
        какому крайнему полю, и там им самое место. */
   }
+}
+/* ═══ ЛИНИИ РЕЗА РЕЖИМА «✂ ПЕРЕНОС СТРОК» (v1.466, переделаны в v1.468) ════════
+   Запрос пользователя: «при переносе покажи линией 1пксель неяркой что двигаем». До этого
+   режим шёл вслепую — тянешь мышь по полотну, а куда доехал нож, видно только по цифрам в панели.
+
+   НИКАКОЙ АРИФМЕТИКИ ПО СТОЛБЦАМ — ТОЛЬКО ЗАМЕР DOM. Первые две попытки считали
+   позицию формулой: столбец реза → пиксели через сдвиг выравнивания, полушаг «½», общий
+   сдвиг полотна и ширину знака. Каждое слагаемое тут — своя погрешность, и вместе они уводили
+   линию в пустое место мимо бит (баг-репорт: «не на месте где биты, а в других местах проходят,
+   не найдут биты»).
+   Сейчас линии ставятся по краям РЕАЛЬНО ОТРИСОВАННОЙ СТРОКИ-ОРИЕНТИРА (wrapLineRow,
+   fold-4-tools.js) — той самой нижней строки диапазона, до которой и режется всё выше. Это не
+   приближение, а точное попадание: у этой строки нож УЖЕ отрезал L бит слева и R справа,
+   значит её левый и правый края и есть обе линии. Ноль ручек — строка целая, линии стоят
+   на её собственных краях. Любое выравнивание, полушаг, сдвиг полотна и прокрутка учтены
+   сами собой — мы читаем готовую картинку, а не предсказываем её.
+
+   ЛИНИИ — ЭТО КРАЯ УЖЕ ОТРЕЗАННОЙ СТРОКИ-ОРИЕНТИРА. Она режется наравне со всеми (v1.471), и
+   нож снял с неё ровно L бит слева и R справа — значит её левый и правый края И ЕСТЬ обе линии.
+   Ничего досчитывать не надо: ноль ручек — строка целая, линии на её собственных краях; дальше
+   они сходятся вместе с самой строкой.
+   ЗЕРКАЛА ОТСЕКАЮТСЯ НОМЕРОМ БИТА, А НЕ ПИКСЕЛЯМИ. Показанные зеркала ◀/▶ подмешиваются в
+   строку до отрисовки (mirroredRowBits) и в DOM от настоящих бит неотличимы, а режет перенос
+   СОБСТВЕННЫЕ биты строки. Поэтому край берём не у первого нарисованного бита, а у бита номер
+   mirrorPadsOf().l, и своя длина берётся у st.rows, а не у ленты — иначе линия встала бы на
+   край зеркала. */
+/* Пиксель ЛЕВОГО края k-го бита строки (k с нуля). k, равное числу бит, даёт правый край
+   последнего — то есть линию, стоящую вплотную за строкой. */
+function wrapBitEdgeX(bitEls, k){
+  let acc = 0;
+  for (const el of bitEls) {
+    const len = (el.textContent || "").length;
+    if (!len) continue;
+    const r = el.getBoundingClientRect();
+    if (k < acc + len) return r.left + (k - acc) * (r.width / len);
+    acc += len;
+  }
+  const last = bitEls[bitEls.length - 1];
+  return last ? last.getBoundingClientRect().right : null;
+}
+function updateWrapLines(){
+  const lEl = document.getElementById("wrapLineL");
+  const rEl = document.getElementById("wrapLineR");
+  /* СТОЛБИК ГАСИТСЯ ВМЕСТЕ С ЛИНИЯМИ (испр. v1.496, баг-репорт «сброс всего переноса оставляет за
+     собой… биты некоторые столбика Xor»).
+     Он рисуется в самом конце этой функции — а до конца она доходит далеко не всегда: выше стоит
+     полдюжины ранних выходов (режима нет, строки-ориентира нет в DOM, мерить нечего). Любой из
+     них уводил мимо уборки, и последний нарисованный столбик так и оставался висеть на холсте.
+     Теперь гашение линий и столбика — одно действие, и вызывается оно во ВСЕХ выходах. */
+  const clearCol = () => {
+    const host = document.getElementById("wrapXorCol");
+    if (!host) return;
+    if (host.innerHTML) host.innerHTML = "";
+    host.classList.remove("act");
+  };
+  if (!lEl && !rEl) { clearCol(); return; }
+  const hideBoth = () => {
+    if (lEl) lEl.classList.remove("act");
+    if (rEl) rEl.classList.remove("act");
+    clearCol();
+  };
+  const on = (typeof wrapModeOn === "function") && wrapModeOn();
+  /* ЛИНИИ ЖИВУТ И ПОСЛЕ ВЫХОДА ИЗ РЕЖИМА (v1.499, запрос «при нажатии Откл пусть не убирает
+     линии»). Разница только в том, по чему их мерить.
+     В РЕЖИМЕ строка-ориентир уже обрезана ножом, и её края И ЕСТЬ обе линии — считать нечего.
+     ПОСЛЕ ВЫХОДА рез снят, строка снова целая, и то же место приходится отмерять от её краёв:
+     L бит слева, R справа (wrapGhost помнит, сколько их было). Строку берём по выделению — ту же
+     нижнюю выделенную, от которой перенос и отсчитывался. */
+  const ghost = (!on && typeof wrapGhost !== "undefined" && wrapGhost && (wrapGhost.l || wrapGhost.r))
+    ? wrapGhost : null;
+  const chainEl = document.getElementById("chain");
+  const rowsEl = document.getElementById("rows");
+  const idx = on
+    ? ((typeof wrapLineRow !== "undefined") ? wrapLineRow : null)
+    : (ghost && st.selectedRows && st.selectedRows.size ? Math.max(...st.selectedRows) : null);
+  if ((!on && !ghost) || !chainEl || !rowsEl || idx == null) { hideBoth(); return; }
+  // Строка-ориентир и её биты. ".b0,.b1" — только настоящие биты: в паддинге строки
+  // встречаются и другие span'ы (напр. .col-sel-bit из режима выбора столбца), и по ним
+  // край строки мерять нельзя — та же грабля, что у axisScreenPx().
+  const lnEl = rowsEl.querySelector('.ln[data-idx="' + idx + '"]');
+  const bitsEl = lnEl ? lnEl.querySelector(".bits") : null;
+  const bitEls = bitsEl ? bitsEl.querySelectorAll(".b0, .b1") : null;
+  if (!bitEls || !bitEls.length) { hideBoth(); return; }   // строки нет на экране — мерить нечего
+  const own = (st.rows[idx] || "").length;
+  if (!own) { hideBoth(); return; }
+  const pads = (typeof mirrorPadsOf === "function") ? mirrorPadsOf(st, idx) : null;
+  const padL = pads ? (pads.l | 0) : 0;
+  const gl = ghost ? Math.min(ghost.l | 0, own) : 0;
+  const gr = ghost ? Math.max(0, own - (ghost.r | 0)) : own;
+  const xL = wrapBitEdgeX(bitEls, padL + gl);
+  const xR = wrapBitEdgeX(bitEls, padL + gr);
+  if (xL == null || xR == null) { hideBoth(); return; }
+  const chainRect = chainEl.getBoundingClientRect();
+  const leftPx = xL - chainRect.left;
+  const rightPx = xR - chainRect.left;
+  /* ОТРЕЗОК ПО ВЕРТИКАЛИ — ТОЛЬКО ЗАДЕТЫЕ СТРОКИ (wrapSpan), а не всё полотно: рез идёт по
+     диапазону выделения (colSelectRowRange), и линия во всю цепочку обещала бы больше, чем режет.
+     Крайних строк может не оказаться в DOM — тогда честный запасной вариант это весь блок строк. */
+  const rowsRect = rowsEl.getBoundingClientRect();
+  let topPx = rowsRect.top - chainRect.top;
+  let botPx = topPx + rowsRect.height;
+  const span = (!on) ? null : ((typeof wrapSpan !== "undefined") ? wrapSpan : null);
+  if (span) {
+    const a = rowsEl.querySelector('.ln[data-idx="' + span.from + '"]');
+    const b = rowsEl.querySelector('.ln[data-idx="' + span.to + '"]');
+    if (a && b) {
+      topPx = a.getBoundingClientRect().top - chainRect.top;
+      botPx = b.getBoundingClientRect().bottom - chainRect.top;
+    }
+  }
+  const hPx = Math.max(1, Math.round(botPx - topPx));
+  for (const [el, x] of [[lEl, leftPx], [rEl, rightPx]]) {
+    if (!el) continue;
+    el.style.left = Math.round(x) + "px";
+    el.style.top = Math.round(topPx) + "px";
+    el.style.height = hPx + "px";
+    el.classList.add("act");
+  }
+  updateWrapXorCol(chainRect, rowsEl, rightPx);
+}
+/* ═══ СТОЛБИК XOR СТРОК — СРАЗУ ЗА ЛИНИЕЙ РЕЗА (v1.478) ═══════════════════════════════════════
+   Запрос пользователя: «пишет столбик за границей». Что именно в нём стоит — считает
+   wrapXorColRows() (fold-4-tools.js): по биту на строку, XOR всех её бит.
+   МЕСТО — от ПРАВОЙ линии реза, той же координаты, по которой линия и нарисована: столбик обязан
+   читаться как её продолжение вбок, а не как ещё одна колонка со своей жизнью. Небольшой отступ
+   вправо — чтобы цифры не легли на саму линию.
+   ВЫСОТА КАЖДОЙ ЦИФРЫ — от ЕЁ СОБСТВЕННОЙ строки, замером в DOM. Ряды разной высоты (межстрочный
+   правится ползунком, у ряда оси он свой), и считать их «шагом» значило бы разъехаться с
+   картинкой на первой же нестандартной строке. */
+function updateWrapXorCol(chainRect, rowsEl, xPx){
+  const host = document.getElementById("wrapXorCol");
+  if (!host) return;
+  const rows = (typeof wrapXorColRows === "function") ? wrapXorColRows() : null;
+  if (!rows || !rows.length || xPx == null || !rowsEl) {
+    if (host.innerHTML) host.innerHTML = "";
+    host.classList.remove("act");
+    return;
+  }
+  let html = "";
+  for (const r of rows) {
+    const ln = rowsEl.querySelector('.ln[data-idx="' + r.idx + '"]');
+    if (!ln) continue;   // строки нет на экране — цифре не на чем стоять
+    const rect = ln.getBoundingClientRect();
+    html += '<span class="wrap-xor-bit b' + r.bit + '" style="top:' +
+      Math.round(rect.top - chainRect.top) + 'px;height:' + Math.round(rect.height) + 'px">' + r.bit + '</span>';
+  }
+  host.style.left = Math.round(xPx + 6) + "px";
+  host.innerHTML = html;
+  host.classList.toggle("act", !!html);
 }
 function updateAxisSplitPosition(maxLen){
   const axisSplitEl = document.getElementById("axisSplit");
@@ -5452,6 +5618,8 @@ function captureUiSettings(){
     colNew: (typeof colNew !== "undefined" && colNew) ? colNew.value : (st.colNew || "#00e5a0"),
     // Что делать с текущей цепочкой перед построением (см. BUILD_PLACE_MODES/#bBuildPlace).
     buildPlace: st.buildPlace || "clear",
+    // На сколько строк ниже ложится построение (v1.461, «↑ Выше»/«↓ Ниже», см. #buildOffset).
+    buildOffset: (st.buildOffset | 0) || 0,
     maskPaintColor1: st.maskPaintColor1 || "#b060ff",
     maskPaintColor0: st.maskPaintColor0 || "#22d3ee",
     bgSubPatterns: cBgSubPatternsEl ? cBgSubPatternsEl.checked : false,
@@ -5679,6 +5847,10 @@ function applyUiSettings(u){
   if (u.buildPlace !== undefined) {
     st.buildPlace = u.buildPlace;
     if (typeof updateBuildPlaceBtn === "function") updateBuildPlaceBtn();
+  }
+  if (u.buildOffset !== undefined) {
+    st.buildOffset = Math.max(0, Math.min(4096, (u.buildOffset | 0) || 0));
+    if (typeof updateBuildOffsetInput === "function") updateBuildOffsetInput();
   }
   for (const key of ["maskPaintColor1", "maskPaintColor0"]) {
     if (u[key] === undefined) continue;
@@ -6016,6 +6188,7 @@ const DEFAULT_UI_SETTINGS = {
   parityView: 0,
   colNew: "#00e5a0",
   buildPlace: "clear",
+  buildOffset: 0,
   align: "center", mode: "step1", rowCount: "100",
   bgSearchModes: ["interleave", "xor2", "xorAll", "concatR", "concatRInv", "concatRRevInv", "concatL", "concatLInv", "concatLRevInv", "concatSnake", "concatSnakeInv", "concatSnakeRevInv", "concatSnakeFromR", "concatSnakeFromRInv", "concatSnakeFromRRevInv", "vertR", "vertL", "snakeR", "snakeL", "vertZigR", "vertZigL", "diagR", "diagL"],
   bgSearchOn: true,
@@ -6544,7 +6717,7 @@ const TIPS = {
   t50: "Расширять выделение ВНИЗ при каждой находке: как только фон-поиск нашёл паттерн, строка ПОД выделением (та самая, чей паттерн искали) добавляется к выделению, а верхняя граница остаётся на месте — выделенный блок просто растёт вниз, строка за строкой. Отличие от «🧲 Захват находки»: тот при выделении, набранном руками, ведёт окно ПОСТОЯННОГО размера (добавляет снизу и снимает верхнюю), а тут ничего не снимается никогда. Работает и в прогоне «▶ Авто» (новая строка сразу начинает крутиться вместе с остальными), и на ручных ◄/►Круг, и в «🧩 Паттерн-цепочке» — там выделение не переезжает на находку, а дорастает до неё. Включённый режим сильнее «🧲 Захвата»: если включены оба, выделение растёт, а не едет окном",
   t51: "Удалить ЦЕНТРАЛЬНЫЙ символ строки — из выделенных строк (или всех, если ничего не выделено). У нечётной длины это ровно средний бит; у чётной середины как таковой нет, поэтому удаляется ЛЕВЫЙ из двух средних (так же, как «По центру» кладёт лишний пробел справа). Строка смыкается и становится короче на 1, встаёт по текущему выравниванию. Отменяется обычным Undo",
   t52: "Показывать в строках только КАЖДЫЙ ВТОРОЙ бит — остальные заменяются точками «.» и НЕ участвуют ни в чём: ни в склейках, ни в XOR, ни в интерливе, ни в поиске, ни в сквозной (точка — это не ноль, а «бита тут нет», как пустая клетка чужой полусетки). Нажатия перебирают: все → чёт → нечёт → чёт по сквозной → нечёт по сквозной → снова все. «Чёт/нечёт» считаются В КАЖДОЙ СТРОКЕ заново, от её первого бита; «по сквозной» — единой нумерацией с самого первого бита ПЕРВОЙ строки, поэтому в строке чётность зависит от суммы длин всех строк выше. Сами данные не меняются — точки живут только в показе и расчётах, любое нажатие считается от исходных строк",
-  t53: "Паттерны → в цепочку: СНАЧАЛА удаляет все строки цепочки, потом вставляет вместо них ВСЕ паттерны — строка №N становится текстом паттерна №N, порядок и нумерация те же, что в колонке паттернов. Сами паттерны остаются на своих местах (отметки «найден» при этом снимаются — цепочка новая). Пустые паттерны дают пустые строки, хвост пустых отбрасывается. Достроенные сверху строки убираются. Отменяется обычным Undo; «↺ Сброс» по-прежнему возвращает к шаблону",
+  t53: "Паттерны → в цепочку: СНАЧАЛА удаляет все строки цепочки, потом вставляет вместо них ВСЕ паттерны — строка №N становится текстом паттерна №N, порядок и нумерация те же, что в колонке паттернов. Сами паттерны остаются на своих местах (отметки «найден» при этом снимаются — цепочка новая). ПУСТОЙ ПАТТЕРН СТРОКУ НЕ ТРОГАЕТ — она остаётся как была (v1.475): пустыми ячейками колонку выравнивают, и затирать под ними цепочку незачем. Если строк больше, чем паттернов, хвост цепочки тоже остаётся нетронутым; отбрасывается только хвост, пустой и там, и там. Достроенные сверху строки убираются. Отменяется обычным Undo; «↺ Сброс» по-прежнему возвращает к шаблону",
   t54: "Добавить бит справа: первый клик добавляет 1; повторный клик подряд по тем же строкам (пока ничего больше не менялось) не добавляет новый бит, а переключает только что добавленный между 1 и 0",
   t55: "Вставляет между каждым символом строки его инверсию (11→1010) — в выделенных строках, или во всех, если ничего не выделено. Вставленные символы подсвечиваются красным",
   t56: "Маска: накладывает паттерн строки на саму строку — XOR, строка на строку, столбец в столбец по ТЕКУЩЕМУ выравниванию цепочек. Одинаковые длины → 111 на 111 даёт 000. Работает по выделенным строкам, а если ничего не выделено — по всем. Биты, которые реально изменились, красятся красным и остаются красными, пока не изменится любой бит в любой строке",

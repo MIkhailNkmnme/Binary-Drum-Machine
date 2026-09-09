@@ -963,7 +963,7 @@ function renderTabs() {
     '</div>' +
     '<div class="chain-dd-frow">' +
     '<button type="button" class="chain-dd-file chain-dd-bank" id="bDdBankPats" data-act="bankpats"' + (patBankCount ? '' : ' disabled') + ' title="Разложить паттерны ИЗ КЭША в колонку паттернов: паттерн №N = строка файла №N. Прежние паттерны заменяются целиком, строки цепочки не трогаются. Отменяется через Undo">🧩→ В паттерны</button>' +
-    '<button type="button" class="chain-dd-file chain-dd-bank" id="bDdBankRows" data-act="bankrows"' + (patBankCount ? '' : ' disabled') + ' title="Разложить паттерны ИЗ КЭША в саму цепочку: строка №N = строка файла №N. Прежние строки цепочки стираются целиком (как у «🧩⬇ Паттерны в цепочку»). Отменяется через Undo">🧩⬇ В цепочку</button>' +
+    '<button type="button" class="chain-dd-file chain-dd-bank" id="bDdBankRows" data-act="bankrows"' + (patBankCount ? '' : ' disabled') + ' title="Разложить паттерны ИЗ КЭША в саму цепочку: строка №N = строка файла №N. Пустая строка файла свою строку цепочки НЕ трогает — она остаётся как была (как и у «🧩⬇ Паттерны в цепочку», v1.475). Отменяется через Undo">🧩⬇ В цепочку</button>' +
     '</div>' +
   // ПОСЛЕДНИЙ РЯД — НАСТРОЙКИ ВИДА (v0.834): переехали сюда из вкладки "Вид" по запросу
   // пользователя. Данных цепочек не трогают вообще — сохраняют/сбрасывают только вид и поиск
@@ -3090,16 +3090,19 @@ function render(){
   // Выбранная фаза прореживающей маски (кнопка "🎭 Фаза маски" во вкладке "Маски" и клик по фазе
   // в Черновике — одно и то же значение). На маску "⇄ Сдвига" не влияет: у той своей фазы нет.
   const mpBgPhase = mpBgMask ? (((st.maskDraftPhase | 0) % mpBgMask.length) + mpBgMask.length) % mpBgMask.length : 0;
-  /* ═══ ПАТТЕРНЫ ПОД ЛИНИЕЙ ПРЯЧУТСЯ, ПОКА ОНИ ЕСТЬ НАД НЕЙ (v1.216) ═══
-     Запрос пользователя: «скрывай паттерны под горизонтом, если над горизонтом есть паттерны».
+  /* ═══ ПАТТЕРНЫ ПОД ЛИНИЕЙ — ЗАТЕМНЯЮТСЯ, ПОКА ОНИ ЕСТЬ НАД НЕЙ (v1.216, изм. v1.462) ═══
+     Запрос v1.216 был: «скрывай паттерны под горизонтом, если над горизонтом есть паттерны».
      В верхнее поле паттерны цепочки ДУБЛИРУЮТСЯ (v1.173, syncFieldPatterns) — те же самые строки
      образцов, только копиями. Пока поле открыто, колонки П1/П2 показывают их дважды: вверху копию,
      внизу оригинал, — и глаз читает это как два разных набора, хотя набор один.
-     Прячем НИЖНИЕ: работа идёт наверху, там же и образцы. Копий нет (поле пустое, дублирование ещё
-     не звали) — внизу всё как было, иначе паттерны исчезли бы вовсе.
+     v1.462, уточнение пользователя: «когда над горизонтом паттерны, то такие же строки внизу, с
+     которых они взялись, затемнить». То есть нижние больше НЕ ПРЯЧУТСЯ совсем: они остаются на
+     своих местах, но приглушены (класс .pat-lifted). Разница по смыслу — спрятанный оригинал
+     читался как «его нет», и было не видно, ОТКУДА взялась копия наверху; затемнённый показывает
+     ровно это: строка на месте, но работают сейчас не с ней.
+     Копий нет (поле пустое, дублирование ещё не звали) — внизу всё как было, без затемнения.
      Только вид: st.pats не трогаем, поиск, «🌈 Все паттерны» и укладка видят их все. */
-  const patsHideBelowRow = (typeof procCeilRow === "function") ? procCeilRow() : -1;
-  const PAT_HIDDEN_CELL = { text: "", ord: -1, found: false, kind: null, step: null };
+  const patsDimBelowRow = (typeof procCeilRow === "function") ? procCeilRow() : -1;
   // Строка, открывающая разрыв под полосу (см. rowGapStyle ниже): граница горизонта, а при
   // опущенном горизонте — первая строка.
   const gapRowIdx = (typeof horizonRow === "function") ? horizonRow() : 0;
@@ -3111,8 +3114,10 @@ function render(){
     // строки от этого не меняется, поэтому геометрия, флаги и подсветки считаются как обычно.
     const sRaw = st.rows[i] || "";
     const s = st.parityView ? applyParityMask(sRaw, i, 0, 0) : sRaw;
-    // Ниже линии паттерн печатается пустым, пока его копия лежит наверху (см. patsHideBelowRow).
-    const p = (patsHideBelowRow >= 0 && i >= patsHideBelowRow) ? PAT_HIDDEN_CELL : st.pats[i];
+    // Ниже линии паттерн ЗАТЕМНЯЕТСЯ, пока его копия лежит наверху (см. patsDimBelowRow). Сама
+    // ячейка берётся настоящая: прячет её теперь не подмена пустышкой, а класс .pat-lifted ниже.
+    const patLifted = (patsDimBelowRow >= 0 && i >= patsDimBelowRow);
+    const p = st.pats[i];
     const cls = ["ln"];
     /* ЗАТЕМНЕНИЕ ВЕРХНИХ СТРОК УБРАНО (v1.161, баг-репорт: «какое-то затемнение идёт битов начиная
        сверху, когда двигаю»). Класс .top-inactive гасил строки выше границы участия построений до
@@ -3428,8 +3433,10 @@ function render(){
       // им сужается список того, что ищет "🌈 Все паттерны" (см. findAllPatternsInResult).
       const patSel = (st.selectedPats && st.selectedPats.has(i)) ? " pat-sel" : "";
       const bgFoundCls = p.bgFound ? " bgfound" : "";   // v1.156: закреплённая находка фон-поиска, живёт до Сброса
-      const c = (p.found ? ("pat found " + KIND_CLS[p.kind || 0]) : "pat") + bgHitSuffix + patSel + bgFoundCls;
-      const c2 = (p.found ? ("pat2 found " + KIND_CLS[p.kind || 0]) : "pat2") + bgHitSuffix + patSel + bgFoundCls;
+      // v1.462: оригинал под линией, копия которого лежит в поле наверху — приглушён (см. patLifted).
+      const liftedCls = patLifted ? " pat-lifted" : "";
+      const c = (p.found ? ("pat found " + KIND_CLS[p.kind || 0]) : "pat") + bgHitSuffix + patSel + bgFoundCls + liftedCls;
+      const c2 = (p.found ? ("pat2 found " + KIND_CLS[p.kind || 0]) : "pat2") + bgHitSuffix + patSel + bgFoundCls + liftedCls;
       
       const stepHtml = p.found ? '<span class="st">#' + p.step + "</span>" : "";
       
@@ -3832,6 +3839,14 @@ function render(){
     const envRow = envPreview ? envPreview.cells.get(i) : null;
     const prevRow = prevRows ? prevRows[i] : null;
     const allPatRow = allPatRows ? allPatRows.get(i) : null; // "🌈 Все паттерны", см. выше
+    // Красные пометки предпросмотра "✂ Переноса" (v1.472): что уже перенесено и что уйдёт
+    // следующим. Считается один раз на строку и только пока идёт режим — см. wrapBitMarks()
+    // в fold-4-tools.js, там же и весь разбор.
+    const wrapMarkRow = (typeof wrapBitMarks === "function") ? wrapBitMarks(i) : null;
+    /* «🎨 Красить перенос» гасит ВСЮ прочую раскраску цепочки (v1.477): пока он включён, любой
+       бит без пометки переноса рисуется голым — без находок, масок, изменённых и вставленных.
+       Иначе два красных бита просто тонут среди остального. */
+    const wrapPlain = (typeof wrapPaintOn === "function") && wrapPaintOn();
 
     for (let k = 0; k < s.length; k++) {
       // Срезанный опорный бит зеркала (см. cutHead/cutTail выше) — не печатаем вовсе.
@@ -3935,7 +3950,25 @@ function render(){
       }
 
       const sampleKind = (sampleRow && sampleRow.length === s.length) ? sampleRow[k] : -1;
-      if (isCellSel && (bit === '0' || bit === '1')) {
+      // Чьей ручке принадлежит ЭТОТ бит (v1.495): левой — синий, правой — красный. Кто внутри пары
+      // «ушёл» и кто «уйдёт», видно по строке, а не по оттенку (см. wrapMarkL в fold-4-tools.js).
+      // Списки — Set'ы (v1.503): красится весь перенесённый кусок, и на длинной строке перебор
+      // массивом стоил бы квадрата от её длины.
+      const wrapHot = !!(wrapMarkRow && wrapMarkRow.left && wrapMarkRow.left.has(k));
+      const wrapNxt = !wrapHot && !!(wrapMarkRow && wrapMarkRow.right && wrapMarkRow.right.has(k));
+      if ((wrapHot || wrapNxt) && (bit === '0' || bit === '1')) {
+        /* ПОВЕРХ ВСЕГО ОСТАЛЬНОГО — и это осознанно: "✂ Перенос" модальный режим с
+           предпросмотром, пока он идёт, важно ровно одно — что уехало сейчас и что уедет
+           следующим шагом. Обычные подсветки (находки, маски, изменённые биты) вернутся, как
+           только из режима выйдут; сама цепочка от них не зависит. */
+        emit('<span class="b' + bit + (wrapHot ? ' wrap-bit-left" title="ЛЕВАЯ ручка (синий): всё, что она уже перенесла, плюс бит, который уйдёт следующим. Перенесённое стоит в строке-куске, следующий — в остатке строки"'
+                                               : ' wrap-bit-right" title="ПРАВАЯ ручка (красный): всё, что она уже перенесла, плюс бит, который уйдёт следующим. Перенесённое стоит в строке-куске, следующий — в остатке строки"') +
+          colAttr + '>', bit, mrg);
+      } else if (wrapPlain && (bit === '0' || bit === '1')) {
+        // Голый бит: пометки переноса на нём нет, а вся прочая раскраска на время режима погашена
+        // (см. wrapPlain выше). Своих цветов «0»/«1» это не трогает — гаснут только подсветки.
+        emit('<span class="b' + bit + '"' + colAttr + '>', bit, mrg);
+      } else if (isCellSel && (bit === '0' || bit === '1')) {
         // Выбранная курсором ячейка — поверх любых других подсветок: это то, с чем сейчас работают
         // кнопки «Инв. ячеек»/«90° ячеек»/«Сдвиг».
         emit('<span class="b' + bit + ' cell-sel"' + colAttr + '>', bit, mrg);
@@ -4829,6 +4862,14 @@ function render(){
   // (см. refreshPinSlotIcons в fold-5-ui.js — она правит по месту, DOM не пересобирает).
   if (typeof refreshPinSlotIcons === "function") refreshPinSlotIcons();
   updateAxisSplitPosition(maxLen);
+  // Линии реза «✂ Переноса» (v1.466) — сразу за осью и по той же причине: они считаются тем же
+  // замером первого бита, и любое место, где ось уже поставлена, — единственное, где подсказка
+  // гарантированно не разъедется с картинкой.
+  if (typeof updateWrapLines === "function") updateWrapLines();
+  // Сторож выделения (v1.474): сменили его в обход предпросмотра — режим останавливается. Здесь
+  // же, в хвосте кадра, потому что до выделения добираются из десятка мест, а через render()
+  // проходят все они разом.
+  if (typeof wrapWatchSelection === "function") wrapWatchSelection();
   updateUndoRedoBtns();
 }
 
