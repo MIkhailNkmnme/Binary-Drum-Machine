@@ -1592,7 +1592,10 @@ function concatRowPadded(st, i, g){
   }
   return out;
 }
-function concatRowsDownTo(st, stopIdx, dir){
+/* rowOk (v1.507) — НЕОБЯЗАТЕЛЬНЫЙ фильтр строк: берутся только те, на которых он даёт true.
+   Заведён под «сквозные отдельно для кусков и остатков» в режиме переноса (см. concatPartText
+   ниже). Без него — прежнее поведение слово в слово, все строки 0..stopIdx. */
+function concatRowsDownTo(st, stopIdx, dir, rowOk){
   let out = "";
   // С "0 вместо пустот" склейка идёт ПО СЕТКЕ выравнивания, а не по голым строкам: у голых строк
   // пустот нет вовсе, поэтому галка на сквозных не работала совсем, и результат не менялся от
@@ -1600,9 +1603,9 @@ function concatRowsDownTo(st, stopIdx, dir){
   // поведение слово в слово.
   const g = st.padZero ? concatGridBounds(st, stopIdx) : null;
   if (dir === "left") {
-    for (let i = stopIdx; i >= 0; i--) out += g ? concatRowPadded(st, i, g) : stripDots(getRowBits(st, i));
+    for (let i = stopIdx; i >= 0; i--) { if (rowOk && !rowOk(i)) continue; out += g ? concatRowPadded(st, i, g) : stripDots(getRowBits(st, i)); }
   } else {
-    for (let i = 0; i <= stopIdx; i++) out += g ? concatRowPadded(st, i, g) : stripDots(getRowBits(st, i));
+    for (let i = 0; i <= stopIdx; i++) { if (rowOk && !rowOk(i)) continue; out += g ? concatRowPadded(st, i, g) : stripDots(getRowBits(st, i)); }
   }
   return out;
 }
@@ -1612,19 +1615,59 @@ function concatRowsDownTo(st, stopIdx, dir){
    реверснуты — та же логика, что у seqGlueMode "snake" в horizChainText() (см. запрос
    пользователя). НЕ путать с concatSnakeDownTo() выше — там змейка ПО СТОЛБЦАМ (другая
    механика, отдельный режим "🐍 Змейка →/←"). */
-function concatSnakeGlueDownTo(st, stopIdx, startRev){
+function concatSnakeGlueDownTo(st, stopIdx, startRev, rowOk){
   let out = "";
   // "0 вместо пустот" — та же сетка, что и у прямой сквозной (см. concatRowsDownTo); разворачивается
   // при этом уже РАЗЛОЖЕННАЯ ПО СЕТКЕ строка, иначе нули оказались бы не с той стороны.
   const g = st.padZero ? concatGridBounds(st, stopIdx) : null;
+  /* СЧЁТ ПОВОРОТОВ ПРИ ФИЛЬТРЕ — ПО ВЗЯТЫМ СТРОКАМ, А НЕ ПО ИХ НОМЕРАМ (v1.507). Без фильтра
+     чередование идёт по номеру строки, как было всегда. С фильтром так нельзя: куски и остатки
+     стоят в цепочке ЧЕРЕЗ ОДИН, и по номеру вся выборка попала бы в одну чётность — змейка
+     выродилась бы в обычную сквозную, без единого разворота. */
+  let taken = 0;
   for (let i = 0; i <= stopIdx; i++){
+    if (rowOk && !rowOk(i)) continue;
     const s = g ? concatRowPadded(st, i, g) : getRowBits(st, i);
     if (!s.length) continue;
+    const n = rowOk ? taken : i;
     // startRev — ПРАВАЯ змейка (запрос пользователя): первая строка читается СПРАВА, вторая
     // слева, третья снова справа. Без него всё как было — первая слева.
-    out += ((i % 2 === 1) !== !!startRev) ? reverseStr(s) : s;
+    out += ((n % 2 === 1) !== !!startRev) ? reverseStr(s) : s;
+    taken++;
   }
   return out;
+}
+
+/* ═══ СКВОЗНЫЕ ОТДЕЛЬНО ПО КУСКАМ И ПО ОСТАТКАМ (v1.507) ══════════════════════════════════════
+   Запрос пользователя: «нужно ещё собирать сквозные при переносе отдельно для перенесённых
+   символов и остающихся, также построчно и также с разными лев-прав, змейками».
+   ЧТО ЭТО. Пока идёт «✂ Перенос строк», цепочка состоит из двух перемежающихся видов строк:
+   КУСКИ (то, что нож уже отрезал и переложил) и ОСТАТКИ (то, чем строка осталась после реза).
+   Обычная сквозная склеивает подряд и те и другие — то есть смешивает два разных потока бит.
+   Здесь тот же обход, но по одному виду строк: получаются две самостоятельные сквозные, и
+   фон-поиск сверяет паттерн с каждой отдельно.
+   ЧТО В ВЫБОРКУ НЕ ВХОДИТ: строки, которых нож не касался вовсе (вне диапазона реза или целиком
+   между линиями). Они не «остаток» — в операции они не участвовали; примешивать их значило бы
+   вернуть ту же кашу, ради разделения которой всё и заводилось.
+   ВАРИАНТЫ ТЕ ЖЕ, ЧТО У ОБЫЧНОЙ СКВОЗНОЙ: →/←, змейка слева и справа, Инв и Рев+Инв — они
+   считываются прямо из имени режима, ровно тем же разбором, что и в bgConcatCellMap (fold-3-ops),
+   поэтому новых веток на каждый из двенадцати заводить не нужно.
+   null — режим не сквозной (складывать по строкам нечего) либо переноса сейчас нет. */
+function concatPartText(mode, stopIdx, part){
+  if (typeof mode !== "string" || stopIdx == null || stopIdx < 0) return null;
+  const set = (typeof wrapPartRows === "function") ? wrapPartRows(part) : null;
+  if (!set || !set.size) return null;
+  const ok = (i) => set.has(i);
+  let base;
+  if (mode.indexOf("concatSnakeFromR") === 0)   base = concatSnakeGlueDownTo(st, stopIdx, true, ok);
+  else if (mode.indexOf("concatSnake") === 0)   base = concatSnakeGlueDownTo(st, stopIdx, false, ok);
+  else if (mode.indexOf("concatL") === 0)       base = concatRowsDownTo(st, stopIdx, "left", ok);
+  else if (mode.indexOf("concatR") === 0)       base = concatRowsDownTo(st, stopIdx, "right", ok);
+  else return null;
+  // Порядок проверок важен: "RevInv" содержит в себе "Inv", и наоборот не бывает.
+  if (mode.indexOf("RevInv") >= 0) return reverseStr(invertBits(base));
+  if (mode.indexOf("Inv") >= 0) return invertBits(base);
+  return base;
 }
 
 /* Вертикальная склейка строк 0..stopIdx: читаются ПО СТОЛБЦАМ (а не по строкам, как
@@ -3313,6 +3356,13 @@ const st = {
   runsAsBits: false,
   // "🔢 Двоичные номера" (см. rowNumText()) — номера строк показываются в двоичном виде.
   binRowNums: false,
+  /* ПОДСКАЗКИ ПРИ НАВЕДЕНИИ — ВЫКЛЮЧЕНЫ ПО УМОЛЧАНИЮ (v1.505, запрос пользователя: «нужна кнопка
+     отключения всех подсказок при наведении, по умолчанию выкл подсказки»). Один выключатель на
+     ВСЕ подсказки разом: и на те, что в разметке, и на те, что приходят из TIPS, — гасит их
+     единственная точка показа (обработчик mouseover у #tipBox в fold-5-ui.js). Сами title из
+     разметки не выкидываются: их читает другой код, да и включить подсказки обратно надо уметь
+     без перезагрузки. Кнопка — «💬 Подсказки» во вкладке «Вид». */
+  tipsOn: false,
   // КОЛОНКА НОМЕРОВ СЛЕВА ОТ БИТ — кнопка «{10}» в полоске под осью (v1.033, см. cycleRowNumMode()
   // в fold-5-ui.js). Три состояния: "dec" — десятичные (как было всегда), "bin" — двоичные,
   // "off" — колонка спрятана. Двоичный вид тут СВОЙ, отдельный от binRowNums: та кнопка про
@@ -3416,9 +3466,14 @@ const BG_MODE_SHORT = {
 };
 function bgModeShortLabel(m){
   if (!m) return m;
+  // Пометка потока переноса (v1.507) — одной буквой: «к» куски, «о» остатки. Колонка лога узкая,
+  // и полное слово тут не поместится, а без пометки два столбца стали бы неразличимы.
+  const part = bgModePart(m);
+  const partMk = part ? BG_WRAP_PART_SHORT[part] : "";
+  if (part) m = bgModeNoPart(m);
   const hash = m.indexOf("#");
   const base = hash < 0 ? m : m.slice(0, hash);
-  const num = hash < 0 ? "" : "#" + m.slice(hash + 1);
+  const num = partMk + (hash < 0 ? "" : "#" + m.slice(hash + 1));
   if (base === "diagR") return "↘" + num;
   if (base === "diagL") return "↙" + num;
   if (BG_MODE_SHORT[base]) return BG_MODE_SHORT[base] + num;
@@ -3426,12 +3481,41 @@ function bgModeShortLabel(m){
   return (full.length > 7 ? full.slice(0, 7) + "…" : full) + num;
 }
 
+/* ═══ ЧАСТЬ ПЕРЕНОСА В ИМЕНИ РЕЖИМА (v1.507) ═══
+   Ключ строки результата — "concatR@mv" или "concatR@mv#м2": до "@" обычный режим, после — какой
+   поток бит взят, куски ("mv") или остатки ("md"), а "#..." по-прежнему фаза маски или номер
+   диагонали. Разделитель СВОЙ, не "#": по "#" уже разбирают фазы маски (dimMaskedBits) и
+   отдельные диагонали, и подмешать туда третий смысл значило бы сломать оба разбора.
+   Подписи собираются здесь же, поэтому двадцати четырёх новых записей в таблицах имён не нужно —
+   к имени базового режима просто дописывается пометка потока. */
+const BG_WRAP_PART_LABELS = { mv: " ✂куски", md: " ✂остатки" };
+const BG_WRAP_PART_SHORT = { mv: "к", md: "о" };
+function bgModePart(m){
+  if (typeof m !== "string") return null;
+  const hash = m.indexOf("#");
+  const head = hash < 0 ? m : m.slice(0, hash);
+  const at = head.indexOf("@");
+  if (at < 0) return null;
+  const p = head.slice(at + 1);
+  return BG_WRAP_PART_LABELS[p] ? p : null;
+}
+// Имя режима без пометки потока — по нему и ищут в таблицах подписей, и разбирают направление.
+function bgModeNoPart(m){
+  if (typeof m !== "string") return m;
+  const at = m.indexOf("@");
+  if (at < 0) return m;
+  const hash = m.indexOf("#");
+  return hash < 0 ? m.slice(0, at) : m.slice(0, at) + m.slice(hash);
+}
 function bgModeLabel(m){
   if (!m) return m;
-  const hash = m.indexOf("#");
-  if (hash < 0) return BG_SEARCH_MODE_LABELS[m] || m;
-  const base = m.slice(0, hash);
-  return (BG_SEARCH_MODE_LABELS[base] || base) + " #" + m.slice(hash + 1);
+  const part = bgModePart(m);
+  const partLbl = part ? BG_WRAP_PART_LABELS[part] : "";
+  const bare = part ? bgModeNoPart(m) : m;
+  const hash = bare.indexOf("#");
+  if (hash < 0) return (BG_SEARCH_MODE_LABELS[bare] || bare) + partLbl;
+  const base = bare.slice(0, hash);
+  return (BG_SEARCH_MODE_LABELS[base] || base) + partLbl + " #" + bare.slice(hash + 1);
 }
 /* Какие строки результата фон-поиска сейчас развёрнуты кликом (см. render() → bgResultHtml).
    Чисто UI-состояние, не сохраняется в кэш/по вкладкам — сворачивается заново при перезагрузке. */

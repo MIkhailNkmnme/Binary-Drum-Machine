@@ -922,6 +922,27 @@ if (bBinRowNumsEl) {
   };
 }
 
+/* «💬 Подсказки» (v1.505) — один выключатель на ВСЕ подсказки при наведении, по умолчанию
+   выключено. Самим показом распоряжается обработчик #tipBox (см. там же, ниже по файлу): он
+   единственная точка, через которую проходит любая подсказка приложения.
+   render() отсюда не зовём: ни одной бит и ни одной строки это не касается — только подпись самой
+   кнопки и её подсветка. */
+function updateTipsBtn(){
+  const b = document.getElementById("bTipsOn");
+  if (!b) return;
+  b.textContent = st.tipsOn ? "💬 Подсказки: вкл" : "💬 Подсказки: выкл";
+  b.classList.toggle("mode-act", !!st.tipsOn);
+}
+const bTipsOnEl = document.getElementById("bTipsOn");
+if (bTipsOnEl) {
+  bTipsOnEl.onclick = () => {
+    st.tipsOn = !st.tipsOn;
+    updateTipsBtn();
+    saveCache();
+  };
+}
+updateTipsBtn();
+
 /* "🔴 Изм. биты" — общий выключатель красной подсветки изменённых бит (см. chgBitsOn): гасит и
    штатную "изменён последним шагом", и ту, что оставляет "🎭 Маска". Чисто визуальный тумблер,
    состояние живёт в настройках вида. */
@@ -4031,12 +4052,20 @@ function updateWrapLines(){
   }
   updateWrapXorCol(chainRect, rowsEl, rightPx);
 }
-/* ═══ СТОЛБИК XOR СТРОК — СРАЗУ ЗА ЛИНИЕЙ РЕЗА (v1.478) ═══════════════════════════════════════
+/* ═══ СТОЛБИК XOR СТРОК — НА НАЧАЛЬНОМ МЕСТЕ ПРАВОЙ ЛИНИИ (v1.478, прибит в v1.504) ═══════════
    Запрос пользователя: «пишет столбик за границей». Что именно в нём стоит — считает
    wrapXorColRows() (fold-4-tools.js): по биту на строку, XOR всех её бит.
-   МЕСТО — от ПРАВОЙ линии реза, той же координаты, по которой линия и нарисована: столбик обязан
-   читаться как её продолжение вбок, а не как ещё одна колонка со своей жизнью. Небольшой отступ
-   вправо — чтобы цифры не легли на саму линию.
+   МЕСТО — НЕПОДВИЖНОЕ (v1.504, запрос «столбик Xor надо где-нибудь неподвижно, чтоб был за
+   начальной границей»): колонка, в которой правая линия реза стояла на ПЕРВОМ шаге, до того как
+   нож откусил первый бит. Её запоминает wrapXorColAnchorCol (fold-4-tools.js), а сюда она
+   приходит номером колонки и переводится в пиксели по сетке поля — тем же способом, что и линия
+   оси в updateAxisSplitPosition: левый край полосы бит плюс колонка на ширину столбца.
+   БЫЛО ДО v1.504: столбик брал координату ПРЯМО У ПРАВОЙ ЛИНИИ и ехал вместе с ней — каждый шаг
+   ручки уводит линию на бит влево, и цифры ползли следом, наезжая на ещё не срезанный кусок.
+   Столбик читался как часть движения, а не как его итог.
+   ЗАПАСНОЙ ПУТЬ — прежняя координата линии (xPx): колонки нет, пока нет слепка (например, столбик
+   рисуют по «призраку» после выхода из режима), и тогда лучше показать цифры у линии, чем не
+   показать вовсе. Небольшой отступ вправо — чтобы цифры не легли на саму линию.
    ВЫСОТА КАЖДОЙ ЦИФРЫ — от ЕЁ СОБСТВЕННОЙ строки, замером в DOM. Ряды разной высоты (межстрочный
    правится ползунком, у ряда оси он свой), и считать их «шагом» значило бы разъехаться с
    картинкой на первой же нестандартной строке. */
@@ -4057,9 +4086,25 @@ function updateWrapXorCol(chainRect, rowsEl, xPx){
     html += '<span class="wrap-xor-bit b' + r.bit + '" style="top:' +
       Math.round(rect.top - chainRect.top) + 'px;height:' + Math.round(rect.height) + 'px">' + r.bit + '</span>';
   }
-  host.style.left = Math.round(xPx + 6) + "px";
+  const fixed = wrapXorColFixedPx(chainRect);
+  host.style.left = Math.round((fixed != null ? fixed : xPx) + 6) + "px";
   host.innerHTML = html;
   host.classList.toggle("act", !!html);
+}
+/* Колонка начального места правой линии → пиксели от левого края .chain (v1.504).
+   Считается ровно так же, как формульная ветка оси в updateAxisSplitPosition(): левый край полосы
+   бит плюс номер колонки на измеренную ширину столбца. Полосу берём у шапки столбцов (#colHeader),
+   а если её нет — у любой отрисованной строки: обе стоят в одной сетке.
+   null — колонки нет (режим не идёт), нечем мерить сетку или шаг столбца не измерился; звонящий
+   в этом случае вернётся к координате самой линии. */
+function wrapXorColFixedPx(chainRect){
+  const col = (typeof wrapXorColAnchorCol !== "undefined") ? wrapXorColAnchorCol : null;
+  if (col == null || !chainRect) return null;
+  const bitsEl = document.querySelector("#colHeader .bits") || document.querySelector(".ln .bits");
+  if (!bitsEl) return null;
+  const chPx = realColStepPx();
+  if (!chPx) return null;
+  return (bitsEl.getBoundingClientRect().left - chainRect.left) + col * chPx;
 }
 function updateAxisSplitPosition(maxLen){
   const axisSplitEl = document.getElementById("axisSplit");
@@ -5662,6 +5707,7 @@ function captureUiSettings(){
     showBalances: !!st.showBalances,
     runsAsBits: !!st.runsAsBits,
     binRowNums: !!st.binRowNums,
+    tipsOn: !!st.tipsOn,   // «💬 Подсказки» (v1.505) — настройка вида, живёт вместе с остальными
     rowNumMode: st.rowNumMode || "dec",
     // Какой стороной сейчас приклеены номера к паттернам ("", "right", "left") — см. numGlueToggle():
     // по нему же они отрываются обратно, поэтому состояние обязано пережить перезагрузку.
@@ -5964,6 +6010,10 @@ function applyUiSettings(u){
     const b = document.getElementById("bBinRowNums");
     if (b) b.classList.toggle("mode-act", st.binRowNums);
   }
+  if (u.tipsOn !== undefined) {
+    st.tipsOn = !!u.tipsOn;
+    if (typeof updateTipsBtn === "function") updateTipsBtn();
+  }
   if (u.rowNumMode !== undefined) {
     st.rowNumMode = ROW_NUM_ORDER.indexOf(u.rowNumMode) >= 0 ? u.rowNumMode : "dec";
     applyRowNumMode();
@@ -6230,6 +6280,7 @@ const DEFAULT_UI_SETTINGS = {
   showBalances: false,
   runsAsBits: false,
   binRowNums: false,
+  tipsOn: false,   // «💬 Подсказки» (v1.505): сброс настроек возвращает их ВЫКЛЮЧЕННЫМИ
   rowNumMode: "dec",
   numGlue: "",
   numGlueRows: "",
@@ -6908,6 +6959,15 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
     if (!txt) return;
     tipEl = t; tipText = txt;
     t.removeAttribute("title");
+    /* ═══ ВЫКЛЮЧАТЕЛЬ ВСЕХ ПОДСКАЗОК (v1.505) ═══
+       Кнопка «💬 Подсказки» во вкладке «Вид», st.tipsOn, по умолчанию ВЫКЛЮЧЕНО.
+       Гасить их здесь — единственное место, где это делается один раз и на всё приложение: через
+       этот обработчик проходит ЛЮБАЯ подсказка, и та, что записана в разметке, и та, что пришла из
+       TIPS, и та, что живёт на строке, отрисованной секунду назад.
+       Атрибут при этом всё равно СНИМАЕТСЯ (строка выше), иначе браузер показал бы вместо нашей
+       коробки свою нативную — то есть выключатель бы ничего не выключил. Возвращает его, как и
+       всегда, hideTip() по уходу курсора, поэтому для остального кода title остаётся на месте. */
+    if (!st.tipsOn) return;
     tipBox.textContent = txt;
     tipBox.classList.add("on");
     posTip(e.clientX, e.clientY);

@@ -4280,6 +4280,14 @@ function findAllPatternsInResult(text){
    целиком, поэтому карта разворачивается. */
 function bgConcatCellMap(mode, stopIdx){
   if (typeof mode !== "string" || stopIdx == null || stopIdx < 0) return null;
+  /* СКЛЕЙКА ПО ОДНОМУ ПОТОКУ ПЕРЕНОСА (v1.507) — та же карта, но по тем же строкам, что и сама
+     склейка: имя режима несёт пометку "@mv"/"@md" (см. bgModePart в fold-1-core.js). Без этого
+     карта строилась бы по ВСЕМ строкам подряд и подсвечивала бы находку не там, где она нашлась —
+     ветки ниже сработали бы по префиксу "concat…" и пометки просто не заметили. */
+  const part = (typeof bgModePart === "function") ? bgModePart(mode) : null;
+  const partSet = part && (typeof wrapPartRows === "function") ? wrapPartRows(part) : null;
+  if (part && (!partSet || !partSet.size)) return null;
+  const rowOk = partSet ? ((r) => partSet.has(r)) : null;
   const cells = [];
   // Карта обязана повторять склейку ОДИН В ОДИН, поэтому знает и про "0 вместо пустот": на местах
   // подставленных нулей в карте стоит null — настоящего бита там нет, и подсвечивать нечего
@@ -4307,11 +4315,19 @@ function bgConcatCellMap(mode, stopIdx){
     // Правая змейка (concatSnakeFromR*) начинает с ПРАВОГО края первой строки — разворот
     // достаётся чётным строкам, а не нечётным.
     const snakeStartRev = mode.indexOf("concatSnakeFromR") === 0;
-    for (let i = 0; i <= stopIdx; i++) pushRow(i, (i % 2 === 1) !== snakeStartRev);
+    // При фильтре повороты считаются по ВЗЯТЫМ строкам — тем же счётом, что и в самой склейке
+    // (v1.507, разбор там же): иначе карта разъехалась бы со строкой результата.
+    let taken = 0;
+    for (let i = 0; i <= stopIdx; i++) {
+      if (rowOk && !rowOk(i)) continue;
+      if (!getRowBits(st, i).length) continue;
+      pushRow(i, ((rowOk ? taken : i) % 2 === 1) !== snakeStartRev);
+      taken++;
+    }
   } else if (mode.indexOf("concatL") === 0) {
-    for (let i = stopIdx; i >= 0; i--) pushRow(i, false);
+    for (let i = stopIdx; i >= 0; i--) { if (rowOk && !rowOk(i)) continue; pushRow(i, false); }
   } else if (mode.indexOf("concatR") === 0) {
-    for (let i = 0; i <= stopIdx; i++) pushRow(i, false);
+    for (let i = 0; i <= stopIdx; i++) { if (rowOk && !rowOk(i)) continue; pushRow(i, false); }
   } else {
     return null;
   }
@@ -4322,7 +4338,15 @@ function bgConcatCellMap(mode, stopIdx){
 /* "Фон-поиск" больше не отдельная галка (запрос пользователя) — активен, ПОКА включён хотя бы
    один режим в st.bgSearchModes; полностью выключить можно только кнопкой "Всё/XOR-Чёт/Выкл"
    (сбрасывает bgSearchModes до пустого массива). */
-function bgSearchActive(){ return st.bgSearchOn !== false && !!(st.bgSearchModes && st.bgSearchModes.length); }
+/* «СТОЛБИК» СЧИТАЕТСЯ РЕЖИМОМ НАРАВНЕ С ОСТАЛЬНЫМИ (испр. v1.504, баг-репорт: «пишет нет режима,
+   хотя включён столбик»). Он единственный, кого нет в st.bgSearchModes — его подмешивает сам
+   computeBgSearchTarget по своему выключателю (см. wrapParity там же), — и проверка «набор пуст»
+   его не замечала: кнопка горит, поиск честно работает, а подпись говорит «нет реж.».
+   Включить его можно только внутри режима переноса (см. #bBgWrapParity в fold-4-tools.js), а
+   wrapXorColOn() и есть «режим идёт И кнопка включена» — то самое условие, при котором столбик
+   реально уходит в поиск. */
+function bgWrapParityOn(){ return (typeof wrapXorColOn === "function") && wrapXorColOn(); }
+function bgSearchActive(){ return st.bgSearchOn !== false && (!!(st.bgSearchModes && st.bgSearchModes.length) || bgWrapParityOn()); }
 /* Общий выключатель фон-поиска (клик по заголовку "🔍 Фон-поиск"). ОТДЕЛЬНО от списка режимов:
    раньше выключить можно было только сняв все режимы разом, и выбранный набор при этом терялся —
    теперь он остаётся, а поиск просто не работает, пока выключен (запрос пользователя). */
@@ -4516,15 +4540,23 @@ function computeBgSearchTarget(){
   // "lengthSums" (🧮 Суммы длин) сидит в той же группе кнопок/том же st.bgSearchModes, что и
   // остальные режимы, но не даёт ОДИН результат для сверки с паттерном — у неё своя отдельная
   // отрисовка (renderLengthSumsHtml, вкладка «Лог находок») — исключаем из этого расчёта.
-  const modesAll = (st.bgSearchModes && st.bgSearchModes.length) ? st.bgSearchModes : ["interleave"];
+  /* Запасной "interleave" — только когда РЕЖИМОВ НЕТ ВОВСЕ (испр. v1.504, из того же баг-репорта
+     про «нет реж.»). Столбик в st.bgSearchModes не лежит, и при выбранном ОДНОМ лишь столбике
+     набор пуст — прежняя строка молча подкладывала сюда интерлив, и в находках рядом со столбиком
+     всплывала вторая, никем не заказанная строка. */
+  const modesAll = (st.bgSearchModes && st.bgSearchModes.length)
+    ? st.bgSearchModes
+    : (bgWrapParityOn() ? [] : ["interleave"]);
   // "diagSplit" — легаси-ключ бывшей кнопки-модификатора "Каждая диаг. отдельно" (теперь разбивка
   // безусловная, кнопки нет). Отсеиваем, чтобы он, застряв в чьём-то сохранённом наборе, не упал
   // в ветку "иначе" и не дорисовал лишнюю строку-интерлив под чужим именем.
   const modes = modesAll.filter(m => m !== "lengthSums" && m !== "diagSplit");
   /* СТОЛБИК XOR СТРОК подмешивается САМ, пока включена его кнопка в панели «Перенос» (v1.478,
-     wrapXorColOn в fold-4-tools.js). Своей кнопки в наборе режимов у него нет намеренно: он
-     считается только внутри режима переноса и вне его показал бы пустоту, а мёртвая кнопка в
-     общем наборе сбивала бы с толку. Здесь же он и уходит из списка, стоит режиму кончиться. */
+     wrapXorColOn в fold-4-tools.js). Здесь же он и уходит из списка, стоит режиму кончиться.
+     В st.bgSearchModes его ключа НЕТ и с появлением кнопки «Столбик» в наборе (v1.488) не
+     появилось: та кнопка — зеркало того же выключателя, а не отдельный режим, иначе ключ остался
+     бы в наборе мёртвым грузом после выхода из переноса. Отсюда же и правка v1.504: всё, что
+     спрашивает «есть ли режимы», обязано спрашивать про столбик отдельно — см. bgSearchActive(). */
   if (typeof wrapXorColOn === "function" && wrapXorColOn() && !modes.includes("wrapParity")) {
     modes.push("wrapParity");
   }
@@ -4597,6 +4629,31 @@ function computeBgSearchTarget(){
     const mask = maskBits();
     if (!mask) return [mkResult(m, result, -1)];
     return Array.from({ length: mask.length }, (_, ph) => mkResult(m + "#м" + (ph + 1), result, ph));
+  };
+  /* ═══ СКВОЗНЫЕ ОТДЕЛЬНО ПО КУСКАМ И ПО ОСТАТКАМ (v1.507) ═══════════════════════════════════
+     Запрос пользователя: «нужно ещё собирать сквозные при переносе отдельно для перенесённых
+     символов и остающихся, также построчно и также с разными лев-прав, змейками».
+     К каждому включённому сквозному режиму, ПОКА ИДЁТ ПЕРЕНОС, добавляются ещё две строки
+     результата: та же склейка, но только по строкам-кускам и только по строкам-остаткам (сам
+     текст считает concatPartText в fold-1-core.js, наборы строк — wrapPartRows в fold-4-tools.js).
+     Направления, змейки, Инв и Рев+Инв достаются даром: часть берётся из имени того же режима,
+     поэтому все двенадцать сквозных получают свою пару без единой новой ветки.
+     БЕЗ ОТДЕЛЬНОЙ КНОПКИ-МОДИФИКАТОРА — по тому же резону, что и разбивка диагоналей выше: она
+     требовала бы второго клика и на уже сохранённом наборе режимов молча ничего не показывала. Вне
+     переноса не стоит ничего: наборов строк нет, и обе добавки просто не рождаются.
+     МЕСТО НАЗНАЧЕНИЯ у них общее с базовым режимом — тот же паттерн под выделенной строкой: это
+     по-прежнему один поиск, просто теперь он видит три разные склейки вместо одной. */
+  const wrapPartResults = (mode) => {
+    if (!(typeof wrapModeOn === "function" && wrapModeOn())) return [];
+    if (typeof concatPartText !== "function") return [];
+    const out = [];
+    for (const part of ["mv", "md"]) {
+      const txt = concatPartText(mode, chainIdx, part);
+      if (txt == null) break;      // режим не сквозной — частей у него нет вовсе
+      if (!txt.length) continue;   // этот поток пока пуст (нож ещё не тронул строки)
+      for (const r of mkResults(mode + "@" + part, txt)) out.push(r);
+    }
+    return out;
   };
   const results = modes.flatMap(mode => {
     let result;
@@ -4705,7 +4762,9 @@ function computeBgSearchTarget(){
       // на прочих — прежний побитовый интерлив.
       result = interleavePairRows(st, pairTop, pairBottom, st.align);
     }
-    return mkResults(mode, result);
+    // Сквозным режимам во время переноса достаётся ещё пара строк — по кускам и по остаткам
+    // (v1.507, см. wrapPartResults выше). Всем прочим он отдаёт пустой список.
+    return mkResults(mode, result).concat(wrapPartResults(mode));
   });
   const lengthSumsMatched = lengthSumsHasMatch(st, selIdx);
   /* "🔽 Все ниже" (#cBgAllBelow): результат сверяется не только с паттерном строки СРАЗУ НИЖЕ

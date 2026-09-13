@@ -6740,7 +6740,44 @@ let wrapSelRow = null;
    зеркала ◀/▶ добавляет уже wrapBitMarks(): их видит только render. */
 let wrapMarkL = null;   // номер строки → [локальные индексы] левой ручки, синие
 let wrapMarkR = null;   // номер строки → [локальные индексы] правой ручки, красные
+/* БИТ, КОТОРЫЙ УЙДЁТ СЛЕДУЮЩИМ ШАГОМ — ОТДЕЛЬНЫМ СПИСКОМ (v1.506, запрос пользователя: «пусть тот
+   символ, что на следующем шаге перенесётся, приглуши яркость ему»).
+   Третья карта, а не третий цвет: сторона у этого бита своя (левый — синий, правый — красный), и
+   терять её незачем — приглушается ТА ЖЕ краска, а не заменяется чужой. До v1.506 «уже ушедшее» и
+   «уйдёт следующим» лежали в одних и тех же wrapMarkL/wrapMarkR, и render их различить не мог:
+   весь кусок и крайний бит остатка красились одинаково, в полную яркость.
+   Хранит, как и соседи, ЛОКАЛЬНЫЕ индексы; поправку на показанные зеркала добавляет wrapBitMarks(). */
+let wrapMarkNext = null;
+/* ═══ КАКИЕ СТРОКИ — КУСКИ, А КАКИЕ — ОСТАТКИ (v1.507) ═══════════════════════════════════════
+   Запрос пользователя: «нужно ещё собирать сквозные при переносе отдельно для перенесённых
+   символов и остающихся».
+   Перекроенная цепочка состоит из двух перемежающихся видов строк: КУСОК (то, что нож отрезал и
+   переложил) и ОСТАТОК (чем строка осталась после реза). Обычная сквозная склеивает подряд и те
+   и другие, то есть смешивает два разных потока бит; чтобы собрать их порознь, нужно знать, где
+   какая строка стоит, — вот эти два набора номеров и есть ответ. Складывает их сюда сама
+   перекройка, в тех же точках, где вешает цветные пометки: другого места, где эти строки
+   различимы, попросту нет — дальше они обычные строки цепочки.
+   Строки, которых нож не касался (вне диапазона, целиком между линиями), не попадают НИ В ОДИН
+   набор: они не «остаток», в операции они не участвовали.
+   Читает наборы concatPartText (fold-1-core.js) через wrapPartRows(). */
+let wrapPartRowsMv = null;   // номера строк-КУСКОВ
+let wrapPartRowsMd = null;   // номера строк-ОСТАТКОВ
+function wrapPartRows(part){
+  if (!wrapBase) return null;   // режим не идёт — делить нечего
+  return part === "mv" ? wrapPartRowsMv : (part === "md" ? wrapPartRowsMd : null);
+}
 let wrapAnchorLen = 0;
+/* КОЛОНКА, В КОТОРОЙ СТОИТ СТОЛБИК XOR (v1.504, запрос пользователя: «столбик Xor надо где-нибудь
+   неподвижно, чтоб был за начальной границей»). Это НАЧАЛЬНОЕ место правой линии реза — правый
+   край строки-ориентира при R = 0, то есть до того, как нож откусил первый бит.
+   ЗАЧЕМ. До v1.504 столбик стоял вплотную к правой линии и ехал вместе с ней: каждый шаг ручки
+   уводит линию влево на бит, и цифры ползли за ней, наезжая на ещё не срезанный кусок строки.
+   Читать столбик в движении было нельзя — он сам был частью движения.
+   ПОЧЕМУ КОЛОНКА, А НЕ ПИКСЕЛИ. Число считается по слепку (wrapBase + starts), который за весь
+   прогон не меняется, — значит и колонка одна и та же от первого шага до последнего. В пиксели
+   её переводит уже updateWrapXorCol (fold-5-ui.js) по сетке поля, поэтому столбик держится места
+   и при прокрутке, и при смене межстрочного, и при таскании границ. */
+let wrapXorColAnchorCol = null;
 /* Слепок выделения, каким его ПОСЛЕДНИЙ РАЗ ПОСТАВИЛ сам предпросмотр (v1.474). По нему видно,
    что выделение сменили СНАРУЖИ — рукой, кнопкой панели, чем угодно, — и режим пора останавливать:
    диапазон реза снят на входе и новому выделению уже не отвечает. Хранится строкой, чтобы
@@ -6804,6 +6841,7 @@ function wrapBitMarks(i){
   if (!wrapPaintOn()) return null;
   const bl = wrapMarkL ? wrapMarkL.get(i) : null;
   const rd = wrapMarkR ? wrapMarkR.get(i) : null;
+  const nx = wrapMarkNext ? wrapMarkNext.get(i) : null;
   if (!bl && !rd) return null;
   const pads = (typeof mirrorPadsOf === "function") ? mirrorPadsOf(st, i) : null;
   const padL = pads ? (pads.l | 0) : 0;
@@ -6811,7 +6849,10 @@ function wrapBitMarks(i){
      и indexOf на каждый бит превратил бы отрисовку строки в квадрат. */
   return {
     left: bl ? new Set(bl.map(k => k + padL)) : null,
-    right: rd ? new Set(rd.map(k => k + padL)) : null
+    right: rd ? new Set(rd.map(k => k + padL)) : null,
+    // Кто уйдёт следующим (v1.506) — подмножество тех же двух списков, поэтому своей стороны у него
+    // нет: сторону render берёт из left/right, а отсюда — только «приглушить».
+    next: nx ? new Set(nx.map(k => k + padL)) : null
   };
 }
 /* Пересобрать цепочку из слепка под текущие линии. Инкрементально резать нельзя: линии ездят
@@ -6880,6 +6921,7 @@ function wrapRebuild(){
      Строка-точка отсчёта берётся нижняя НЕПУСТАЯ: у пустой краёв нет вовсе. */
   let colL = null, colR = null, anchorIdx = -1;
   wrapAnchorLen = 0;
+  wrapXorColAnchorCol = null;
   for (let i = hi; i >= lo; i--) {
     const s0 = wrapBase.rows[i] || "";
     if (!s0.length) continue;
@@ -6887,6 +6929,9 @@ function wrapRebuild(){
     wrapAnchorLen = s0.length;   // период кольцевого хода ручек, см. обработчики ±
     colL = starts[i] + L;
     colR = starts[i] + s0.length - R;
+    // Та же правая колонка, но БЕЗ вычета R: место столбика XOR (v1.504) — там, где линия стояла
+    // на первом шаге. R её уводит влево, столбик остаётся.
+    wrapXorColAnchorCol = starts[i] + s0.length;
     break;
   }
   wrapLineRow = null;
@@ -6915,6 +6960,9 @@ function wrapRebuild(){
   const pushGap = () => { rows.push(""); pats.push(gapPat()); used.push(false); };
   wrapMarkL = new Map();
   wrapMarkR = new Map();
+  wrapMarkNext = new Map();   // v1.506: те же биты, но только «уйдёт следующим» — их render глушит
+  wrapPartRowsMv = new Set();   // v1.507: строки-куски
+  wrapPartRowsMd = new Set();   // v1.507: строки-остатки
   const addMark = (map, row, k) => {
     const arr = map.get(row);
     if (arr) arr.push(k); else map.set(row, [k]);
@@ -7024,12 +7072,17 @@ function wrapRebuild(){
       // moved = right + left либо left + right.
       if (cutL) markRange(wrapMarkL, mRow, sameEnd ? 0 : cutR, cutL);
       if (cutR) markRange(wrapMarkR, mRow, sameEnd ? cutL : 0, cutR);
+      wrapPartRowsMv.add(mRow);   // v1.507: эта строка — кусок
     };
     // Кто уйдёт следующим таким же шагом: крайние биты оставшейся середины, каждый со своей
     // стороны и только если эта ручка вообще в ходу.
     const markMidRow = (midRow) => {
-      if (cutL && mid.length) addMark(wrapMarkL, midRow, 0);
-      if (cutR && mid.length) addMark(wrapMarkR, midRow, mid.length - 1);
+      // Тот же бит попадает в ДВЕ карты: в свою сторону — за цвет, и в wrapMarkNext — за
+      // приглушение (v1.506). Порознь их не развести: краска у «ушедшего» и «уйдёт следующим»
+      // одна и та же, разное только то, насколько она яркая.
+      if (cutL && mid.length) { addMark(wrapMarkL, midRow, 0); addMark(wrapMarkNext, midRow, 0); }
+      if (cutR && mid.length) { addMark(wrapMarkR, midRow, mid.length - 1); addMark(wrapMarkNext, midRow, mid.length - 1); }
+      wrapPartRowsMd.add(midRow);   // v1.507: эта строка — остаток
     };
     const pushMid = () => {
       // Карта переезда и якорь линий указывают на СЕРЕДИНУ, а не на отрезанное: строка — это она.
@@ -7201,8 +7254,8 @@ function wrapCancel(quiet, dropSpread){
   // Куда был наведён нож — помним и после выхода (v1.499): линии останутся на этом месте.
   // При остановке по смене выделения (dropSpread) не помним: цепочка и цель уже не те.
   wrapGhost = dropSpread ? null : { l: st.wrapL | 0, r: st.wrapR | 0 };
-  wrapBase = null; wrapSpan = null; wrapLineRow = null; wrapSelRow = null; wrapMarkL = null; wrapMarkR = null;
-  wrapAnchorLen = 0; wrapSelStamp = null;   // отрезок, якорь линий, красные пометки, период кольца и сторож выделения — всё уходит вместе со слепком
+  wrapBase = null; wrapSpan = null; wrapLineRow = null; wrapSelRow = null; wrapMarkL = null; wrapMarkR = null; wrapMarkNext = null; wrapPartRowsMv = null; wrapPartRowsMd = null;
+  wrapAnchorLen = 0; wrapSelStamp = null; wrapXorColAnchorCol = null;   // отрезок, якорь линий, красные пометки, период кольца, сторож выделения и колонка столбика XOR — всё уходит вместе со слепком
   st.wrapL = 0; st.wrapR = 0;
   document.body.classList.remove("wrap-mode");
   updateWrapUi();
@@ -7228,8 +7281,8 @@ function wrapCommit(){
   st.rows = preview.rows; st.pats = preview.pats; st.used = preview.used;
   st.selectedRows = preview.sel; st.bIdx = preview.bIdx;
   const added = preview.rows.length - wrapBase.rows.length;
-  wrapBase = null; wrapSpan = null; wrapLineRow = null; wrapSelRow = null; wrapMarkL = null; wrapMarkR = null;
-  wrapAnchorLen = 0; wrapSelStamp = null;   // отрезок, якорь линий, красные пометки, период кольца и сторож выделения — всё уходит вместе со слепком
+  wrapBase = null; wrapSpan = null; wrapLineRow = null; wrapSelRow = null; wrapMarkL = null; wrapMarkR = null; wrapMarkNext = null; wrapPartRowsMv = null; wrapPartRowsMd = null;
+  wrapAnchorLen = 0; wrapSelStamp = null; wrapXorColAnchorCol = null;   // отрезок, якорь линий, красные пометки, период кольца, сторож выделения и колонка столбика XOR — всё уходит вместе со слепком
   st.wrapL = 0; st.wrapR = 0;
   document.body.classList.remove("wrap-mode");
   // Длины строк изменились — позиционные пометки прошлых операций к ним больше не относятся.
