@@ -1943,6 +1943,9 @@ function scrollToRow(idx){
 var vrowsScrollOnly = false;
 var vrowsPending = false;
 var bgInfoLast;  // результат фон-поиска с последнего ПОЛНОГО рендера (см. bgInfo в render())
+// Сквозной максимум «🟡 Общих кусков» с последнего ПОЛНОГО рендера (v1.509) — та же роль и то же
+// правило переиспользования при прокрутке, что у bgInfoLast выше. См. wrapLcsScan в fold-4-tools.js.
+var wrapLcsScanLast;
 function vrowsOnScroll(){
   if (vrowsPending) return;
   vrowsPending = true;
@@ -3106,6 +3109,18 @@ function render(){
   // Строка, открывающая разрыв под полосу (см. rowGapStyle ниже): граница горизонта, а при
   // опущенном горизонте — первая строка.
   const gapRowIdx = (typeof horizonRow === "function") ? horizonRow() : 0;
+  // «🟡 Общие куски» (v1.508): искомые паттерны — один раз на кадр, а не на строку. Цель та же,
+  // что у фон-поиска (bgInfo выше); разбор — у wrapLcsPatTexts в fold-4-tools.js. Пары {idx, text}
+  // (v1.511): номер строки паттерна нужен области «🔎 где: до паттерна».
+  const wrapLcsPats = (typeof wrapLcsPatTexts === "function") ? wrapLcsPatTexts(bgInfo) : null;
+  /* Сквозной максимум (v1.509) — ОДИН на кадр и по ВСЕЙ цепочке, а не по видимым строкам: оттенок
+     «самого длинного из найденных» не должен меняться от того, куда прокручено полотно. Кэш при
+     чистой прокрутке — тот же приём и по той же причине, что у bgInfo выше: st прокрутка не
+     меняет, значит и результат заведомо прежний. */
+  const wrapLcsScanRes = (vrowsScrollOnly && wrapLcsScanLast !== undefined)
+    ? wrapLcsScanLast
+    : ((wrapLcsPats && typeof wrapLcsScan === "function") ? wrapLcsScan(wrapLcsPats) : null);
+  wrapLcsScanLast = wrapLcsScanRes;
   for (let i = vr.lo; i <= vr.hi; i++){
     // "👁 XOR на строке" (st.horizShowLiveXor) теперь РЕАЛЬНО пишет промежуточный XOR в
     // st.rows[b] по ходу поиска (см. doStep()), поэтому тут достаточно простого чтения —
@@ -3847,6 +3862,16 @@ function render(){
        бит без пометки переноса рисуется голым — без находок, масок, изменённых и вставленных.
        Иначе два красных бита просто тонут среди остального. */
     const wrapPlain = (typeof wrapPaintOn === "function") && wrapPaintOn();
+    // Наибольшие общие куски строки и искомого паттерна (v1.508) — считаются раз на строку и
+    // только пока включена «🟡 Общие куски»; null — красить нечего. См. wrapLcsMarks в fold-4-tools.js.
+    /* Паттерны, которые видит ИМЕННО ЭТА строка (v1.511): при «🔎 где: до паттерна» строка ниже
+       паттерна его не видит вовсе — см. wrapLcsPatsFor. Тот же фильтр стоял и в wrapLcsScan,
+       когда считался пьедестал, поэтому длины и краски здесь считаются по одному и тому же. */
+    const lcsPats = (wrapLcsScanRes && typeof wrapLcsPatsFor === "function")
+      ? wrapLcsPatsFor(wrapLcsPats, i) : null;
+    const lcsRow = lcsPats
+      ? wrapLcsMarks(s, lcsPats, wrapLcsScanRes.rows.get(i), wrapLcsScanRes.tops)
+      : null;
 
     for (let k = 0; k < s.length; k++) {
       // Срезанный опорный бит зеркала (см. cutHead/cutTail выше) — не печатаем вовсе.
@@ -3959,7 +3984,22 @@ function render(){
       // Уйдёт СЛЕДУЮЩИМ шагом (v1.506) — сторона у него своя, как у всех, а цвет приглушённый:
       // список см. wrapMarkNext в fold-4-tools.js.
       const wrapDim = !!(wrapMarkRow && wrapMarkRow.next && wrapMarkRow.next.has(k));
-      if ((wrapHot || wrapNxt) && (bit === '0' || bit === '1')) {
+      if (lcsRow && lcsRow[k] && (bit === '0' || bit === '1')) {
+        /* «🟡 Общие куски» (v1.508) — САМАЯ ВЕРХНЯЯ ветка, выше даже пометок переноса: запрос
+           пользователя был именно «поверх раскраски переносов», а те сами стоят поверх всего
+           прочего. Класс свой, без .wrap-bit-*: синий/красный под жёлтым всё равно не виден, а
+           приглушение .wrap-bit-next жёлтое гасило бы. */
+        /* ПЬЕДЕСТАЛ ИЗ ТРЁХ МЕСТ (v1.510): значение маски 2/3/4 — длина этого куска заняла
+           1/2/3-е место среди всех построчных максимумов цепочки, 1 — просто максимум своей
+           строки. Места считает wrapLcsScan, здесь только выбор класса и подписи. */
+        const lcsRank = lcsRow[k] - 1;   // 0 — вне пьедестала
+        const lcsLen = lcsRank > 0 ? wrapLcsScanRes.tops[lcsRank - 1] : 0;
+        emit('<span class="b' + bit + ' wrap-lcs' + (lcsRank > 0 ? ' wrap-lcs-' + lcsRank : '') +
+          '" title="' + (lcsRank > 0
+            ? lcsRank + '-е МЕСТО по длине общего куска с искомым паттерном во всей цепочке (🟡 Общие куски) — ' + lcsLen + ' бит'
+            : 'Наибольший общий кусок с искомым паттерном в этой строке (🟡 Общие куски). Три самые длинные по всей цепочке — своими оттенками') +
+          '"' + colAttr + '>', bit, mrg);
+      } else if ((wrapHot || wrapNxt) && (bit === '0' || bit === '1')) {
         /* ПОВЕРХ ВСЕГО ОСТАЛЬНОГО — и это осознанно: "✂ Перенос" модальный режим с
            предпросмотром, пока он идёт, важно ровно одно — что уехало сейчас и что уедет
            следующим шагом. Обычные подсветки (находки, маски, изменённые биты) вернутся, как
