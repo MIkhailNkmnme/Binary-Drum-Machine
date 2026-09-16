@@ -9,16 +9,18 @@ const FPS = 24, FRAMES = 120, W = 1280, H = 720;
 const LIST = [
  { id:'h01', name:'Хоррор · Красный тотем',
    set:{ sierpRule:'xorora', sierpSeed:'11011', sierpRows:56, fontSlider:18, presetSelect:'blood',
-         fontSelect:"'VT323', monospace", trailCheck:true, neonCheck:true, speedSlider:970 },
+         fontSelect:"'VT323', monospace", trailCheck:true, neonCheck:true, speedSlider:970, frameCheck:false, showRowNumbersCheck:false },
    click:['sierpBtn'], postClicks:['playerModeBtn','floatingCenterBtn'] },
 
  { id:'h02', name:'Хоррор · Призрак',
    set:{ sierpRule:'shift', sierpSeed:'1011011', sierpRows:90, fontSlider:14, presetSelect:'bw',
-         fillXCheck:true, hideUnchangedCheck:true, trailCheck:true, speedSlider:975 },
+         fillXCheck:true, hideUnchangedCheck:true, trailCheck:true, speedSlider:975, frameCheck:false, showRowNumbersCheck:false },
    click:['sierpBtn'], postClicks:['playerModeBtn','floatingCenterBtn'] },
 
+ // XorRora без модификаторов стоит на месте: в режиме симуляции кадры выходят
+ // байт-в-байт одинаковые. Движение даёт переключение плеера в скроллинг.
  { id:'r03b', name:'XorRora (исправлен)',
-   set:{ sierpRule:'xorora', sierpSeed:'110101', sierpRows:96, fontSlider:11, speedSlider:990 },
+   set:{ sierpRule:'xorora', sierpSeed:'110101', sierpRows:96, fontSlider:11, speedSlider:990, frameCheck:false, showRowNumbersCheck:false },
    click:['sierpBtn'], postClicks:['playerModeBtn','floatingCenterBtn'] },
 ];
 
