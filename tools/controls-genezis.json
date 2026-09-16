@@ -1,0 +1,1746 @@
+[
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "radarCheck",
+  "label": "",
+  "value": false
+ },
+ {
+  "tag": "button",
+  "type": "button",
+  "id": "langBtnRu",
+  "label": "Русский",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "button",
+  "id": "langBtnEn",
+  "label": "English",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "toggleAllPinsBtn",
+  "label": "Показать все панели",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "menuPlayerPin",
+  "label": "Показывать в панели",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "menuFramePin",
+  "label": "Показывать в панели",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "menuSystemPin",
+  "label": "Показывать в панели",
+  "value": true
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "menuSlotsPin",
+  "label": "Показывать в панели",
+  "value": true
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "menuSierpPin",
+  "label": "Показывать в панели",
+  "value": false
+ },
+ {
+  "tag": "select",
+  "type": "select-one",
+  "id": "sierpRule",
+  "label": "Форма: Сдвиг (Кирпичная кладка) Форма: Центр (Симметричная пирамида) Ф",
+  "value": "shift",
+  "options": [
+   "shift",
+   "center",
+   "xorora"
+  ]
+ },
+ {
+  "tag": "input",
+  "type": "text",
+  "id": "sierpSeed",
+  "label": "Сид",
+  "value": "1"
+ },
+ {
+  "tag": "input",
+  "type": "number",
+  "id": "sierpRows",
+  "label": "Строки",
+  "value": "128"
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "sierpBtn",
+  "label": "Сгенерировать",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "buildTriangleBtn",
+  "label": "Строит пирамиду из сида (поле 'Сид' выше): строка1 = сид, строка2 = си",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "menuSeedPin",
+  "label": "Показывать в панели",
+  "value": false
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "seedOverlayStepBtn",
+  "label": "Один шаг = одна копия сида, XOR-наложенная на итог каждой строки-патте",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "seedOverlayUndoBtn",
+  "label": "Отменить последний шаг у всех строк",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "seedOverlayResetBtn",
+  "label": "Сбросить шаги и результат, перечитать поле сида(ов)",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "seedOverlayCumulativeCheck",
+  "label": "Накопительная длина (все строки = одна дорожка)",
+  "value": false
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "seedOverlayPlayBtn",
+  "label": "Автоматически повторять 'Шаг' по таймеру (скорость — общий ползунок ск",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "seedOverlayMultiXorBtn",
+  "label": "За 1 шаг: на каждую строку холста накладывается (XOR) не только её соб",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "seedOverlayCycleSeedBtn",
+  "label": "Каждый клик — на ВСЕ строки холста накладывается ОДИН сид из списка (п",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "seedOverlayAllAtOnceBtn",
+  "label": "На все строки холста разом накладываются (XOR) ВСЕ сиды из списка сраз",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "seedOverlayAccumBtn",
+  "label": "Каждый клик — на ВСЕ строки холста накладывается (XOR) накопление сидо",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "cascadeStepBtn",
+  "label": "Один раунд каскада: сид строки — свой стрим с бюджетом раунд×длина_сид",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "cascadeUndoBtn",
+  "label": "Раунд назад (полным пересчётом). Строки, запертые позже нового раунда,",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "cascadeAutoBtn",
+  "label": "Крутит раунды по таймеру (скорость — общий ползунок скорости), пока вс",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "menuAudioPin",
+  "label": "Показывать в панели",
+  "value": false
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "audioBtnText",
+  "label": "Загрузить аудио-трек (играет по кругу, стартует и встаёт на паузу вмес",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "micBtn",
+  "label": "Захват системного звука: браузер попросит выбрать окно/вкладку — поста",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "file",
+  "id": "audioLoader",
+  "label": "",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "audioReactCheck",
+  "label": "Визуализатор звука (пульсация от баса)",
+  "value": true
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "menuAppearancePin",
+  "label": "Показывать в панели",
+  "value": true
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "menuMotionPin",
+  "label": "Показывать в панели",
+  "value": true
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "menuShiftPin",
+  "label": "Показывать в панели",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "oscXCheck",
+  "label": "Сдвиг X (Пинг-Понг)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "number",
+  "id": "oscXLeft",
+  "label": "",
+  "value": "50"
+ },
+ {
+  "tag": "input",
+  "type": "number",
+  "id": "oscXRight",
+  "label": "",
+  "value": "50"
+ },
+ {
+  "tag": "input",
+  "type": "number",
+  "id": "oscXStep",
+  "label": "",
+  "value": "1"
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "oscYCheck",
+  "label": "Сдвиг Y (Пинг-Понг)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "number",
+  "id": "oscYUp",
+  "label": "",
+  "value": "50"
+ },
+ {
+  "tag": "input",
+  "type": "number",
+  "id": "oscYDown",
+  "label": "",
+  "value": "50"
+ },
+ {
+  "tag": "input",
+  "type": "number",
+  "id": "oscYStep",
+  "label": "",
+  "value": "1"
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "loopCheck",
+  "label": "A-B Повтор",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "pingPongCheck",
+  "label": "Пинг-Понг",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "number",
+  "id": "loopStart",
+  "label": "",
+  "value": "0"
+ },
+ {
+  "tag": "input",
+  "type": "number",
+  "id": "loopEnd",
+  "label": "",
+  "value": "100"
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "menuTerminalPin",
+  "label": "Показывать в панели",
+  "value": true
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "menuDnaPin",
+  "label": "Показывать в панели",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "interleaveAnalysisCheck",
+  "label": "🧬 Анализ пересечений (LCS)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "accumulateInterleaveCheck",
+  "label": "⛓️ Накопительный каскад (Цепной)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "number",
+  "id": "interleaveCapInput",
+  "label": "",
+  "value": "128",
+  "min": "10",
+  "max": "1000"
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "interleavingCheck",
+  "label": "Использовать как триггер Каскада",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "radio",
+  "id": "interleaveSrcSnake",
+  "label": "Сплетать: Коса по рамке (низ→верх, змейкой)",
+  "value": "on"
+ },
+ {
+  "tag": "input",
+  "type": "radio",
+  "id": "interleaveSrcTopBorder",
+  "label": "Сплетать: Верхняя граница (2 строки внутри)",
+  "value": "on"
+ },
+ {
+  "tag": "input",
+  "type": "radio",
+  "id": "interleaveSrcBottomBorder",
+  "label": "Сплетать: Нижняя граница (2 строки внутри)",
+  "value": "on"
+ },
+ {
+  "tag": "input",
+  "type": "radio",
+  "id": "interleaveSrcPerimeter",
+  "label": "Сплетать: Периметр рамки (верх+низ+бока)",
+  "value": "on"
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "interleaveSwapOrderCheck",
+  "label": "🔁 Менять порядок пары (нижняя/верхняя)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "autoShiftInterleaveTopCheck",
+  "label": "⚙️ Авто-сдвиг (Цилиндр)",
+  "value": false
+ },
+ {
+  "tag": "select",
+  "type": "select-one",
+  "id": "autoShiftInterleaveDirSelect",
+  "label": "Влево Вправо",
+  "value": "left",
+  "options": [
+   "left",
+   "right"
+  ]
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "forceInterleaveBtn",
+  "label": "🧬 Синтезировать сплетение (Записать вниз)",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "weaveWithTemplateBtn",
+  "label": "Каждую строку рамки сплетает с её ИЗНАЧАЛЬНЫМ (template) вариантом — т",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "calcAllInterleavesBtn",
+  "label": "Рассчитать и подсветить LCS-пересечения для всех строк внутри рамки (п",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "calcAllInterleavesRawBtn",
+  "label": "Записывает RAW A+B (неочищенные строки, с точками/филлерами) напрямую ",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "ignoreFirstInterleaveCharCheck",
+  "label": "Пропуск 1-го символа при сплетении",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "ignoreFirstTargetCharCheck",
+  "label": "Пропуск 1-го символа кандидата",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "frameCheck",
+  "label": "Рамка",
+  "value": true
+ },
+ {
+  "tag": "select",
+  "type": "select-one",
+  "id": "frameTypeSelect",
+  "label": "Прямоуг. Ромб Симв. Ромб Тр-к ▼ Тр-к ▲",
+  "value": "rect",
+  "options": [
+   "rect",
+   "rhomb",
+   "sq_rhomb",
+   "tri_down",
+   "tri_up"
+  ]
+ },
+ {
+  "tag": "input",
+  "type": "color",
+  "id": "frameColorInput",
+  "label": "",
+  "value": "#ffd500"
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "balanceCheck",
+  "label": "⚖️ Детектор баланса",
+  "value": true
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "frameCenterLockCheck",
+  "label": "⌖ По умолчанию за центром",
+  "value": true
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "frameScannerActiveCheck",
+  "label": "🤖 Авто-шаг рамки",
+  "value": false
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "scannerDirBtn",
+  "label": "⬇️ Вниз",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "scannerPlayBtn",
+  "label": "▶ Пуск",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "scannerStepBtn",
+  "label": "➡️ Шаг",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "scannerAutoInvertCheck",
+  "label": "🔄 Авто-инверсия при 0=1",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "scannerAutoBuildUpCheck",
+  "label": "🏗️ Авто-достройка вверх (Отражение при 0=1)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "number",
+  "id": "instantScanMaxSpan",
+  "label": "",
+  "value": "4"
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "instantScanBtn",
+  "label": "🔍 Искать всё",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "clearScanBtn",
+  "label": "🧹 Сброс",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "exportCodeBtn",
+  "label": "Экспорт",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "importCodeBtn",
+  "label": "Импорт",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "file",
+  "id": "importFileLoader",
+  "label": "",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "photoBtn",
+  "label": "📸 ФОТО",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "exportBanksDataBtn",
+  "label": "Экспортировать все 3 слота вместе с их паттернами в файл banks_data.js",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "autosaveEnabledCheck",
+  "label": "🛟 Автосохранение страницы",
+  "value": true
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "bankBtn0",
+  "label": "Клик: открыть/закрыть. Двойной клик: Сброс к исходнику",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "bankBtn1",
+  "label": "Клик: открыть/закрыть. Двойной клик: Сброс к исходнику",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "bankBtn2",
+  "label": "Клик: открыть/закрыть. Двойной клик: Сброс к исходнику",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "bankBtn3",
+  "label": "Клик: открыть/закрыть. Двойной клик: Сброс к исходнику",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "slotSrcGetBtn",
+  "label": "Получить текущий холст в исходную и сохранить как исходник слота",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "slotSrcSendBtn",
+  "label": "Отправить исходную (1/0) на холст",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "slotViewAllBtn",
+  "label": "Переключить: Оба / Только исходная / Только визуал",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "slotVisGetBtn",
+  "label": "Получить текущий холст в визуал (исходная не меняется)",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "slotVisSendBtn",
+  "label": "Отправить визуал как есть на холст (исходная не меняется)",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "text",
+  "id": "slotChar1Active",
+  "label": "",
+  "value": "1"
+ },
+ {
+  "tag": "input",
+  "type": "text",
+  "id": "slotChar0Active",
+  "label": "",
+  "value": "0"
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "alignLeftBtn",
+  "label": "Выровнять всё по левому краю (добавить точки)",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "alignCenterBtn",
+  "label": "Выровнять всё по центру (добавить точки)",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "alignRightBtn",
+  "label": "Выровнять всё по правому краю (добавить точки)",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "mirrorTransposeLeftBtn",
+  "label": "Транспонировать: 1-я строка = первые символы каждой строки, считая с П",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "mirrorCheck",
+  "label": "↕️",
+  "value": false
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "mirrorTransposeRightBtn",
+  "label": "Транспонировать: 1-я строка = первые символы каждой строки, считая с Л",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "appendBelowMirrorCheck",
+  "label": "Зеркало: добавлять строки внизу (вместо приклеивания)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "text",
+  "id": "repA1",
+  "label": "",
+  "value": "1"
+ },
+ {
+  "tag": "input",
+  "type": "text",
+  "id": "repB1",
+  "label": "",
+  "value": "\\"
+ },
+ {
+  "tag": "input",
+  "type": "text",
+  "id": "repA2",
+  "label": "",
+  "value": "0"
+ },
+ {
+  "tag": "input",
+  "type": "text",
+  "id": "repB2",
+  "label": "",
+  "value": "/"
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "toggleReplaceBtn",
+  "label": "🔄",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "reverseBtn",
+  "label": "🔃 Вперед",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "playerModeBtn",
+  "label": "⬌ Функция: Симуляция (XOR)",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "floatingUndoBtn",
+  "label": "Отменить (Ctrl+Z)",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "floatingRedoBtn",
+  "label": "Повторить (Ctrl+Y)",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "floatingCenterBtn",
+  "label": "Клик: 100% высота. Двойной клик: 30% высота.",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "floatingRadarBtn",
+  "label": "Топологический Радар",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "floatingRotateViewBtn",
+  "label": "Временно повернуть весь вид на 90° (как монитор повернуть) — повторное",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "floatingRotateDataBtn",
+  "label": "НАСТОЯЩИЙ поворот сетки на 90° по часовой: столбцы становятся строками",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "floatingWebglBtn",
+  "label": "⚡ WebGL-рендер: ускоренная отрисовка (только движение — без рамки, под",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "floatingPasteBtn",
+  "label": "Вставить из буфера обмена прямо на холст",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "floatingFrameBtn",
+  "label": "Включить/Выключить Рамку",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "floatingInterleaveBtn",
+  "label": "Анализ пересечений (LCS)",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "floatingSwapOrderBtn",
+  "label": "Менять порядок пары (нижняя/верхняя) — интерливинг",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "floatingWeaveModeBtn",
+  "label": "Сплетать: Коса по рамке (низ→верх, змейкой)",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "uiCompactCheck",
+  "label": "🎛 Компактный монохром (панели)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "webglRenderCheck",
+  "label": "⚡ WebGL-рендер (только движение, без рамки/паттернов)",
+  "value": false
+ },
+ {
+  "tag": "select",
+  "type": "select-one",
+  "id": "fontSelect",
+  "label": "Шрифт: Consolas Шрифт: Roboto Mono Шрифт: Моноширинный Шрифт: Courier ",
+  "value": "'Consolas', monospace",
+  "options": [
+   "'Consolas', monospace",
+   "'Roboto Mono', monospace",
+   "monospace",
+   "'Courier New', Courier, monospace",
+   "'Share Tech Mono', monospace",
+   "'VT323', monospace",
+   "'Major Mono Display', monospace"
+  ]
+ },
+ {
+  "tag": "select",
+  "type": "select-one",
+  "id": "presetSelect",
+  "label": "Пресет: Матрица Пресет: Киберпанк Пресет: Кровавый Пресет: Synthwave П",
+  "value": "matrix",
+  "options": [
+   "matrix",
+   "cyber",
+   "blood",
+   "synthwave",
+   "zerkalius",
+   "bw",
+   "acid",
+   "electro",
+   "amber"
+  ]
+ },
+ {
+  "tag": "input",
+  "type": "color",
+  "id": "color1",
+  "label": "",
+  "value": "#ffffff"
+ },
+ {
+  "tag": "input",
+  "type": "range",
+  "id": "alpha1",
+  "label": "",
+  "value": "1",
+  "min": "0.1",
+  "max": "1",
+  "step": "0.1"
+ },
+ {
+  "tag": "input",
+  "type": "color",
+  "id": "color0",
+  "label": "",
+  "value": "#00ff66"
+ },
+ {
+  "tag": "input",
+  "type": "range",
+  "id": "alpha0",
+  "label": "",
+  "value": "0.5",
+  "min": "0.1",
+  "max": "1",
+  "step": "0.1"
+ },
+ {
+  "tag": "input",
+  "type": "color",
+  "id": "bgColor",
+  "label": "",
+  "value": "#050505"
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "showRowNumbersCheck",
+  "label": "Показывать номера строк",
+  "value": true
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "rowBottomBorderCheck",
+  "label": "Ниж. границы строк",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "color",
+  "id": "rowBottomBorderColorInput",
+  "label": "Ниж. границы строк",
+  "value": "#ff9900"
+ },
+ {
+  "tag": "input",
+  "type": "number",
+  "id": "rowBottomBorderStepInput",
+  "label": "",
+  "value": "1",
+  "min": "1",
+  "max": "20"
+ },
+ {
+  "tag": "input",
+  "type": "range",
+  "id": "nFactor",
+  "label": "",
+  "value": "1",
+  "min": "1",
+  "max": "11"
+ },
+ {
+  "tag": "select",
+  "type": "select-one",
+  "id": "symModeSelect",
+  "label": "💠 Режим: Классика (Лесенка) 💠 Режим: Центр по Базе (Наклон) 💠 Режим",
+  "value": "centerTrack2",
+  "options": [
+   "classic",
+   "centerBase",
+   "centerTrack",
+   "centerTrack2"
+  ]
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "phaseShiftCheck",
+  "label": "Фазовый сдвиг (+1 к циклу)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "rowPendulumCheck",
+  "label": "🔁 Маятник внутри строки (A-B-A)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "meetCenterCheck",
+  "label": "↔️ Встречное движение",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "splitCenterCheck",
+  "label": "🪞 Раскол по центру (N=1)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "fillXCheck",
+  "label": "Заполнять пустоты 'x' (Рентген)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "trailCheck",
+  "label": "👣 Оставлять след (Шлейф)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "spacedCheck",
+  "label": "⚙️ Разрядка (Шестеренки)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "naezdCheck",
+  "label": "🛸 Наезд (Слияние строк)",
+  "value": false
+ },
+ {
+  "tag": "select",
+  "type": "select-one",
+  "id": "naezdModeSelect",
+  "label": "Вариант 1: Раздвигать строку Вариант 2: Пропуск на след. строку",
+  "value": "widen",
+  "options": [
+   "widen",
+   "skip"
+  ]
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "naezdSaveCheck",
+  "label": "💾 Накапливать изменения (Сохранять)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "drumModeCheck",
+  "label": "🥁 Режим Барабан (Сетка)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "range",
+  "id": "drumRadius",
+  "label": "",
+  "value": "5",
+  "min": "0",
+  "max": "50"
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "redFirstOneCheck",
+  "label": "🎯 Трассер 1-го символа",
+  "value": true
+ },
+ {
+  "tag": "input",
+  "type": "color",
+  "id": "tracerColor",
+  "label": "",
+  "value": "#ff3333"
+ },
+ {
+  "tag": "input",
+  "type": "number",
+  "id": "deltaNInput",
+  "label": "",
+  "value": "1"
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "hideChangedCheck",
+  "label": "Скрыть меняющиеся символы",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "hideUnchangedCheck",
+  "label": "Скрыть НЕменяющиеся символы",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "conglomerateCheck",
+  "label": "🧩 Конгломераты (≥ 3)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "stableConglomCheck",
+  "label": "Фиксация цветов (Без мерцания)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "neonCheck",
+  "label": "✨ Свечение (Neon)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "funnelCheck",
+  "label": "🕸️ Режим Воронка (Сетка)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "color",
+  "id": "gridColorInput",
+  "label": "Цвет сетки",
+  "value": "#00ff66"
+ },
+ {
+  "tag": "input",
+  "type": "range",
+  "id": "gridAlpha",
+  "label": "Прозрачность сетки",
+  "value": "0.4",
+  "min": "0.1",
+  "max": "1.0",
+  "step": "0.1"
+ },
+ {
+  "tag": "input",
+  "type": "number",
+  "id": "radarRotateSnapInput",
+  "label": "",
+  "value": "1",
+  "min": "1",
+  "max": "100"
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "waveAnalysisCheck",
+  "label": "🔊 Стоячая волна (Анализ)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "number",
+  "id": "waveHistoryInput",
+  "label": "",
+  "value": "32",
+  "min": "2",
+  "max": "500"
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "hideBlinkingCheck",
+  "label": "Скрыть мигающие символы",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "file",
+  "id": "patternFileLoader",
+  "label": "",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "clearMemoryBtn",
+  "label": "🧹 Сброс",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "resetTerminalLogicBtn",
+  "label": "Сбросить все опции терминала по умолчанию",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "autoCascadeCheck",
+  "label": "Авто-Каскад (1 cycle = +1 строка)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "cascadeOnBalanceCheck",
+  "label": "Переход только после равенства (0 = 1)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "pauseOnBalanceCheck",
+  "label": "⏸ Пауза при равенстве (0 = 1)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "keepPhaseOnCascadeCheck",
+  "label": "Не сбрасывать фазу (сохранять рисунок)",
+  "value": true
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "activateOnPatternCheck",
+  "label": "Разморозка строк по паттерну",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "ignoreFirstPatternCharCheck",
+  "label": "Не считывать 1-й символ",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "ignoreLastPatternCharCheck",
+  "label": "Не считывать Последний символ",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "sequentialSearchCheck",
+  "label": "Искать строго по очереди (каскад)",
+  "value": true
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "selfRowMatchCheck",
+  "label": "Паттерн засчитывается и в своей строке",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "globalSearchCheck",
+  "label": "🔍 Сквозной поиск паттернов",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "verticalSearchCheck",
+  "label": "📐 Вертикальный поиск паттернов",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "substeppingCheck",
+  "label": "⚡ Суб-шаговый поиск (Turbo)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "highlightCheck",
+  "label": "Подсветка паттернов",
+  "value": true
+ },
+ {
+  "tag": "input",
+  "type": "color",
+  "id": "foundPatternColor",
+  "label": "Цвет найденных активных паттернов",
+  "value": "#bfff00"
+ },
+ {
+  "tag": "input",
+  "type": "color",
+  "id": "inactivePatternColorInput",
+  "label": "Цвет потенциальных (неактивных) паттернов",
+  "value": "#ffff00"
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "filterCheck",
+  "label": "Скрывать замороженные строки",
+  "value": false
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "clearCanvasBtn",
+  "label": "🧹 Очистить",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "hideControlsOnDimCheck",
+  "label": "Затемн.",
+  "value": false
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "resetPlayerSlidersBtn",
+  "label": "Сбросить масштаб, экран и интервалы по умолчанию",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "dpadUpBtn",
+  "label": "Скроллинг строк — вверх",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "dpadLeftBtn",
+  "label": "Симуляция XOR — назад (реверс)",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "dpadStopBtn",
+  "label": "Стоп: остановить и сбросить на кадр 0",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "dpadRightBtn",
+  "label": "Симуляция XOR — вперёд",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "dpadDownBtn",
+  "label": "Скроллинг строк — вниз",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "rightTriangle90Btn",
+  "label": "Подгоняет интервал X так, чтобы ячейка символа стала квадратной (ширин",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "range",
+  "id": "lhSlider",
+  "label": "",
+  "value": "1",
+  "min": "0.5",
+  "max": "3.0",
+  "step": "0.1"
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "speedDecBtn",
+  "label": "−",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "range",
+  "id": "speedSlider",
+  "label": "",
+  "value": "950",
+  "min": "1",
+  "max": "1000"
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "speedIncBtn",
+  "label": "+",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "turboDecBtn",
+  "label": "−",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "range",
+  "id": "turboSlider",
+  "label": "",
+  "value": "1",
+  "min": "1",
+  "max": "1111"
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "turboIncBtn",
+  "label": "+",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "boldCheck",
+  "label": "Жирн.",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "range",
+  "id": "charSizeSlider",
+  "label": "",
+  "value": "1",
+  "min": "0.5",
+  "max": "3.0",
+  "step": "0.1"
+ },
+ {
+  "tag": "input",
+  "type": "range",
+  "id": "fontSlider",
+  "label": "",
+  "value": "16",
+  "min": "1",
+  "max": "100"
+ },
+ {
+  "tag": "input",
+  "type": "number",
+  "id": "scrollStepInput",
+  "label": "",
+  "value": "1",
+  "min": "1"
+ },
+ {
+  "tag": "input",
+  "type": "range",
+  "id": "stepSlider",
+  "label": "",
+  "value": "0",
+  "min": "0",
+  "max": "100000"
+ },
+ {
+  "tag": "input",
+  "type": "range",
+  "id": "cwSlider",
+  "label": "",
+  "value": "1",
+  "min": "0.1",
+  "max": "2.5",
+  "step": "0.05"
+ },
+ {
+  "tag": "input",
+  "type": "range",
+  "id": "screenSlider",
+  "label": "",
+  "value": "128",
+  "min": "1",
+  "max": "200"
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "prevBtn",
+  "label": "Шаг назад",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "playBtn",
+  "label": "Старт / Пауза (Space)",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "stopBtn",
+  "label": "Сбросить на 0",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "nextBtn",
+  "label": "Шаг вперед",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "invertFrameBtn",
+  "label": "Инвертировать символы внутри рамки (0 ↔ 1, \\ ↔ /)",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "invertFrameExceptFirstBtn",
+  "label": "Инвертировать символы внутри рамки, пропуская первый символ каждой стр",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "reverseFrameBtn",
+  "label": "Зеркалить символы слева-направо внутри каждой строки рамки (без инверс",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "deltaColorModeBtn",
+  "label": "Цикл (Δ, кадр -N): 1) показать только НЕменяющиеся (красные), меняющие",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "insertInversionBtn",
+  "label": "Вставляет между каждым символом строки его инверсию (11→1010); вставле",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "buildUpwardsBtn",
+  "label": "Скопировать блок в рамке, перевернуть и безусловно вставить сверху",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "buildRightwardsBtn",
+  "label": "Транспонировать и пристроить блок в рамке вправо (завершить в прямоуго",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "buildUpwardsUntilBalancedBtn",
+  "label": "Один клик = один шаг. Если 0≠1 в рамке — достраивает зеркальную строку",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "searchBelowRowThroughBtn",
+  "label": "Строка сразу под рамкой (без 1-го и последнего символа) ищется как пат",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "searchBelowRowInterleaveBtn",
+  "label": "Строка сразу под рамкой (без 1-го и последнего символа) ищется как пат",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "searchBelowRowAndBalanceBtn",
+  "label": "Одной кнопкой: ищет нижнюю строку сквозным поиском ИЛИ интерливингом, ",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "searchBelowRowAutoCheck",
+  "label": "🔍 Искать нижнюю (авто: Цилиндр/Спираль/XOR)",
+  "value": false
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "searchBelowRowNoStopCheck",
+  "label": "🔁 Без остановки",
+  "value": false
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "padCharLeftBtn",
+  "label": "Добавить символ (или удалить, если минус) слева",
+  "value": ""
+ },
+ {
+  "tag": "select",
+  "type": "select-one",
+  "id": "padCharSelect",
+  "label": "0 и 1 добавляют, минус (-) удаляет",
+  "value": "0",
+  "options": [
+   "0",
+   "1",
+   "-"
+  ]
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "padCharRightBtn",
+  "label": "Добавить символ (или удалить, если минус) справа",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "manualCylinderShiftLeftBtn",
+  "label": "Вручную сдвинуть влево все строки в рамке циклически на 1 символ",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "cylinderCheck",
+  "label": "",
+  "value": false
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "cylinderAutoBtn",
+  "label": "Непрерывный ручной сдвиг Цилиндром (как Пуск) в направлении последней ",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "manualCylinderShiftRightBtn",
+  "label": "Вручную сдвинуть вправо все строки в рамке циклически на 1 символ",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "manualElkaShiftLeftBtn",
+  "label": "Вручную сдвинуть влево весь блок в рамке циклически по спирали на 1 си",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "elkaCheck",
+  "label": "",
+  "value": false
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "elkaAutoBtn",
+  "label": "Непрерывный ручной сдвиг Спиралью (как Пуск) в направлении последней н",
+  "value": ""
+ },
+ {
+  "tag": "button",
+  "type": "submit",
+  "id": "manualElkaShiftRightBtn",
+  "label": "Вручную сдвинуть вправо весь блок в рамке циклически по спирали на 1 с",
+  "value": ""
+ },
+ {
+  "tag": "input",
+  "type": "checkbox",
+  "id": "searchOnManualShiftCheck",
+  "label": "🔍 Искать паттерны при сдвиге",
+  "value": false
+ }
+]
