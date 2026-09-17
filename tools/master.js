@@ -80,8 +80,9 @@ const virtualClock = () => {
   }
   await ctx.close(); await browser.close();
 
-  const file = `${OUT}/${RECIPE}-${BPM}bpm-${BEATS}beats.mp4`;
+  const file = `${OUT}/${arg('out', `${RECIPE}-${BPM}bpm-${BEATS}beats`)}.mp4`;
   execFileSync(process.env.FFMPEG || 'ffmpeg', ['-y','-framerate',String(FPS),'-i',`${dir}/f%05d.png`,
     '-c:v','libx264','-preset','slow','-crf','18','-pix_fmt','yuv420p', file], { stdio:'ignore' });
+  fs.rmSync(dir, { recursive:true, force:true });   // кадры больше не нужны: 1080p PNG съедают гигабайты
   console.log(`${r.name}: ${FRAMES} кадров, ${BPM} BPM, шаг каждые ${framesPerStep.toFixed(1)} кадра → ${file}`);
 })();
