@@ -122,6 +122,36 @@ VERSION: Pro 33.0 (The Architect's Fix)
             padding: 4px; box-sizing: border-box; box-shadow: inset 0 0 5px rgba(255,204,0,0.2);
         }
 
+        /* Своё место у правого края, ниже кнопок выравнивания. В дзен-режиме
+           кнопка остаётся видимой — иначе запись не остановить, не выходя из него. */
+        #screenContainer #recBtn { right: 8px; left: auto; top: 112px; background: #1a1a1a; color: #ff5555;
+            border: 1px solid #552222; font-size: 18px; }
+        #recBtn:hover { background: #331111; color: #ff8888; }
+        body.zen-mode #recBtn { opacity: 0.35 !important; pointer-events: auto !important; }
+        body.zen-mode #recBtn.recording { opacity: 1 !important; }
+        /* Холст всегда занимает всё окно, панель плавает поверх него. Так кадр не
+           зависит от того, открыта панель или нет — а в запись панель не попадает
+           в любом случае, потому что пишется холст, а не экран. */
+        .controls { position: absolute; top: 0; left: 0; height: 100%; z-index: 60;
+            box-shadow: 0 0 24px rgba(0,0,0,.75); }
+        body.panel-right .controls { left: auto; right: 0; }
+        /* Кнопки отодвигаются от панели, пока она открыта, и возвращаются к краю,
+           когда её скрыли или включили дзен. */
+        #screenContainer .float-btn:not(.align-btn) { left: 312px; }
+        body.panel-right #screenContainer .float-btn:not(.align-btn) { left: auto; right: 312px; }
+        body.panel-right #screenContainer #recBtn { right: auto; left: 8px; }
+        #screenContainer .align-btn { right: 8px; left: auto; }
+        body.panel-right #screenContainer .align-btn { left: 8px; right: auto; }
+        body.panel-hidden #screenContainer .float-btn:not(.align-btn),
+        body.zen-mode #screenContainer .float-btn:not(.align-btn) { left: 8px; right: auto; }
+        body.panel-hidden.panel-right #screenContainer .float-btn:not(.align-btn),
+        body.zen-mode.panel-right #screenContainer .float-btn:not(.align-btn) { left: auto; right: 8px; }
+        #recBtn.recording { color: #fff; background: #cc0000; border-color: #ff3333;
+            animation: recPulse 1.2s infinite alternate; }
+        @keyframes recPulse { from { box-shadow: 0 0 2px #ff3333; } to { box-shadow: 0 0 12px #ff3333; } }
+        #recTimer { position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+            font: bold 12px 'Courier New', monospace; color: #ff5555; background: rgba(0,0,0,.6);
+            padding: 2px 8px; border-radius: 3px; z-index: 50; display: none; }
         .range-with-arrows { display: flex; align-items: center; gap: 2px; flex: 1; min-width: 0; }
         .range-with-arrows input[type="range"] { flex: 1; min-width: 0; }
         .range-arrow { flex: 0 0 auto; width: 14px; height: 14px; padding: 0; line-height: 12px;
@@ -365,6 +395,8 @@ VERSION: Pro 33.0 (The Architect's Fix)
         </div>
 
         <div id="screenContainer">
+            <div id="recTimer">● REC 0:00</div>
+            <button id="recBtn" class="float-btn" title="Запись видео с холста (пишется всё, что происходит, вместе с треком)">⏺</button>
             <button id="toggleMenuBtn" class="float-btn" title="Скрыть/Показать панель">⚙</button>
             <button id="toggleSideBtn" class="float-btn" title="Переместить панель (Влево/Вправо)">⇄</button>
             
@@ -397,6 +429,65 @@ VERSION: Pro 33.0 (The Architect's Fix)
         };
 
 
+
+
+        // === ЗАПИСЬ ВИДЕО ПРЯМО ИЗ БРАУЗЕРА ===
+        // Пишет холст как есть — со всеми изменениями настроек на ходу. Если играет
+        // трек, он подмешивается в запись: звук берётся из того же графа, что и
+        // визуализатор, поэтому анализатор продолжает работать.
+        const RECORDER = {
+            rec: null, chunks: [], startedAt: 0, timer: null, mime: '', _noticeTo: null,
+            // Своё короткое сообщение: функции уведомлений в этой машине нет.
+            notify(text) {
+                const el = document.getElementById('recTimer');
+                if (!el) return;
+                el.textContent = text; el.style.display = 'block';
+                clearTimeout(this._noticeTo);
+                this._noticeTo = setTimeout(() => { if (!this.rec) el.style.display = 'none'; }, 1800);
+            },
+            pickMime() {
+                const want = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4',
+                              'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+                return want.find(m => window.MediaRecorder && MediaRecorder.isTypeSupported(m)) || '';
+            },
+            audioTrack() {
+                const A = AUDIO_VISUALIZER, bgAudio = document.getElementById('bgAudio');
+                if (!A.isInit || !A.audioCtx || !A.source) return null;
+                try {
+                    if (!this._dest) { this._dest = A.audioCtx.createMediaStreamDestination(); A.source.connect(this._dest); }
+                    if (A.audioCtx.state === 'suspended') A.audioCtx.resume();
+                    return this._dest.stream.getAudioTracks()[0] || null;
+                } catch (e) { return null; }
+            },
+            start(fps) {
+                const canvas = document.getElementById('screenCanvas');
+                this.mime = this.pickMime();
+                if (!canvas || !this.mime) { this.notify('ЗАПИСЬ НЕ ПОДДЕРЖИВАЕТСЯ'); return false; }
+                const stream = canvas.captureStream(fps || 60);
+                const at = this.audioTrack();
+                if (at) stream.addTrack(at);
+                this.chunks = [];
+                this.rec = new MediaRecorder(stream, { mimeType: this.mime, videoBitsPerSecond: 16000000 });
+                this.rec.ondataavailable = e => { if (e.data && e.data.size) this.chunks.push(e.data); };
+                this.rec.onstop = () => this.save();
+                this.rec.start(1000);
+                this.startedAt = Date.now();
+                return true;
+            },
+            stop() { if (this.rec && this.rec.state !== 'inactive') this.rec.stop(); this.rec = null; },
+            save() {
+                if (!this.chunks.length) return;
+                const ext = this.mime.startsWith('video/mp4') ? 'mp4' : 'webm';
+                const blob = new Blob(this.chunks, { type: this.mime });
+                const a = document.createElement('a');
+                const d = new Date(), pad = n => String(n).padStart(2, '0');
+                a.download = `zerkalius-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.${ext}`;
+                a.href = URL.createObjectURL(blob);
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+                this.chunks = [];
+            }
+        };
 
         // === КРИПТО-ХЕШ (СПЕКТР) ===
         // Цвет ячейки берётся из хеша её координат и содержимого — как в
@@ -595,6 +686,7 @@ VERSION: Pro 33.0 (The Architect's Fix)
             fill1010Btn: document.getElementById('fill1010Btn'), searchInput: document.getElementById('searchInput'),
             implantModeCheck: document.getElementById('implantModeCheck'), echoModeCheck: document.getElementById('echoModeCheck'),
             audioReactCheck: document.getElementById('audioReactCheck'), autoPilotCheck: document.getElementById('autoPilotCheck'),
+            recBtn: document.getElementById('recBtn'),
             rainbowTextCheck: document.getElementById('rainbowTextCheck'), syntaxColorCheck: document.getElementById('syntaxColorCheck'),
             
             dualCoreCheck: document.getElementById('dualCoreCheck'), dualCoreSpeedInput: document.getElementById('dualCoreSpeedInput'),
@@ -1622,13 +1714,20 @@ VERSION: Pro 33.0 (The Architect's Fix)
                 }
 
                 if(UI.themeSelect) { UI.themeSelect.addEventListener('change', function() { const t = THEMES[this.value]; if(t) { UI.activeColorPicker.value = t.act; UI.activeAlphaRange.value = t.actA; UI.staticColorPicker.value = t.stat; UI.staticAlphaRange.value = t.statA; RENDERER.renderFrame(); } }); }
-                if(UI.toggleMenuBtn) { UI.toggleMenuBtn.addEventListener('click', function() { const panel = document.querySelector('.controls'); if (panel.style.display === 'none') { panel.style.display = 'flex'; this.style.background = '#00ff66'; } else { panel.style.display = 'none'; this.style.background = '#222'; } RENDERER.renderFrame(); }); }
+                if(UI.toggleMenuBtn) { UI.toggleMenuBtn.addEventListener('click', function() { const panel = document.querySelector('.controls'); if (panel.style.display === 'none') { panel.style.display = 'flex'; this.style.background = '#00ff66'; } else { panel.style.display = 'none'; this.style.background = '#222'; } document.body.classList.toggle('panel-hidden', document.querySelector('.controls').style.display === 'none'); RENDERER.renderFrame(); }); }
                 if(UI.toggleSideBtn) {
                     let currentLayout = 'left';
                     UI.toggleSideBtn.addEventListener('click', function() {
-                        const container = document.querySelector('.main-layout'); const btns = [UI.toggleMenuBtn, UI.toggleSideBtn, UI.toggleCenterBtn, UI.toggleTrackBtn, UI.toggleReverseBtn, UI.toggleFrameBtn, UI.toggleRadarBtn]; const alignBtns = [UI.alignLeftBtn, UI.alignCenterBtn, UI.alignRightBtn];
-                        if (currentLayout === 'left') { container.style.flexDirection = 'row-reverse'; currentLayout = 'right'; btns.forEach(b => { if(b) { b.style.left = 'auto'; b.style.right = '8px'; }}); alignBtns.forEach(b => { if(b) { b.style.right = 'auto'; b.style.left = '8px'; }}); } 
-                        else { container.style.flexDirection = 'row'; currentLayout = 'left'; btns.forEach(b => { if(b) { b.style.right = 'auto'; b.style.left = '8px'; }}); alignBtns.forEach(b => { if(b) { b.style.left = 'auto'; b.style.right = '8px'; }}); } RENDERER.renderFrame();
+                        // Панель теперь плавает поверх холста, поэтому сторону задаёт класс,
+                        // а не направление флекса. Встроенные стили у кнопок сняты — иначе
+                        // они перебивают правила и кнопки уезжают под панель.
+                        currentLayout = currentLayout === 'left' ? 'right' : 'left';
+                        document.body.classList.toggle('panel-right', currentLayout === 'right');
+                        [UI.toggleMenuBtn, UI.toggleSideBtn, UI.toggleCenterBtn, UI.toggleTrackBtn,
+                         UI.toggleReverseBtn, UI.toggleFrameBtn, UI.toggleRadarBtn, UI.recBtn,
+                         UI.alignLeftBtn, UI.alignCenterBtn, UI.alignRightBtn]
+                            .forEach(b => { if (b) { b.style.left = ''; b.style.right = ''; } });
+                        RENDERER.renderFrame();
                     });
                 }
 
@@ -1665,6 +1764,28 @@ VERSION: Pro 33.0 (The Architect's Fix)
                     UI.activeColorPicker, UI.activeAlphaRange, UI.staticColorPicker, UI.staticAlphaRange, UI.fontSelect, UI.freezeScrollCheck, UI.spin3dCheck, UI.breathingZoomCheck, UI.autoPilotCheck, UI.speedMultInput, UI.rainbowTextCheck, UI.syntaxColorCheck
                 ];
                 rerenderEvents.forEach(el => { if(el) { el.addEventListener('change', () => RENDERER.renderFrame()); el.addEventListener('input', () => RENDERER.renderFrame()); }});
+                // Запись: одна кнопка на старт и стоп, рядом счётчик времени.
+                if (UI.recBtn) {
+                    UI.recBtn.addEventListener('click', () => {
+                        const timer = document.getElementById('recTimer');
+                        if (RECORDER.rec) {
+                            RECORDER.stop();
+                            clearInterval(RECORDER.timer);
+                            UI.recBtn.classList.remove('recording');
+                            if (timer) timer.style.display = 'none';
+                            RECORDER.notify('● СОХРАНЕНО');
+                            return;
+                        }
+                        if (!RECORDER.start(60)) return;
+                        UI.recBtn.classList.add('recording');
+                        if (timer) timer.style.display = 'block';
+                        RECORDER.timer = setInterval(() => {
+                            const sec = Math.floor((Date.now() - RECORDER.startedAt) / 1000);
+                            if (timer) timer.textContent = `● REC ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
+                        }, 500);
+
+                    });
+                }
                 // К каждому ползунку в панели — по стрелке слева и справа: колесо
                 // и перетаскивание годятся для грубой настройки, а точное значение
                 // пальцем не поймать. Удержание повторяет шаг.
