@@ -122,6 +122,13 @@ VERSION: Pro 33.0 (The Architect's Fix)
             padding: 4px; box-sizing: border-box; box-shadow: inset 0 0 5px rgba(255,204,0,0.2);
         }
 
+        .range-with-arrows { display: flex; align-items: center; gap: 2px; flex: 1; min-width: 0; }
+        .range-with-arrows input[type="range"] { flex: 1; min-width: 0; }
+        .range-arrow { flex: 0 0 auto; width: 14px; height: 14px; padding: 0; line-height: 12px;
+            font-size: 9px; color: #888; background: #1a1a1a; border: 1px solid #333;
+            border-radius: 2px; cursor: pointer; user-select: none; }
+        .range-arrow:hover { color: #00ff66; border-color: #00ff66; }
+        .range-arrow:active { background: #00ff66; color: #000; }
         body.zen-mode .controls { display: none !important; }
         body.zen-mode .float-btn { opacity: 0 !important; pointer-events: none; }
         body.zen-mode .main-layout { gap: 0; }
@@ -1592,12 +1599,26 @@ VERSION: Pro 33.0 (The Architect's Fix)
                 UI.alignLeftBtn.addEventListener('click', function() { setAlign('left', this); }); UI.alignCenterBtn.addEventListener('click', function() { setAlign('center', this); }); UI.alignRightBtn.addEventListener('click', function() { setAlign('right', this); });
 
                 if(UI.canvas) {
-                    UI.canvas.addEventListener('dblclick', function(e) { e.preventDefault(); document.body.classList.toggle('zen-mode'); MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0; setTimeout(() => RENDERER.renderFrame(), 50); });
+                    const toggleZen = (e) => { e.preventDefault(); document.body.classList.toggle('zen-mode');
+                        MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0; setTimeout(() => RENDERER.renderFrame(), 50); };
+                    UI.canvas.addEventListener('dblclick', toggleZen);
+                    // Щелчок колесиком — тот же дзен. mousedown нужен, чтобы погасить
+                    // автопрокрутку Windows, иначе браузер включит её вместо режима.
+                    UI.canvas.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
+                    UI.canvas.addEventListener('auxclick', e => { if (e.button === 1) toggleZen(e); });
                     UI.canvas.addEventListener('mousedown', function(e) { MODULE_STATE.isDragging = true; MODULE_STATE.hasMoved = false; MODULE_STATE.dragStartX = e.clientX; MODULE_STATE.dragStartY = e.clientY; MODULE_STATE.startOffsetX = MODULE_STATE.offsetX; MODULE_STATE.startOffsetY = MODULE_STATE.offsetY; });
                     UI.canvas.addEventListener('mousemove', function(e) { if (MODULE_STATE.isDragging) { const dx = e.clientX - MODULE_STATE.dragStartX; const dy = e.clientY - MODULE_STATE.dragStartY; if (Math.abs(dx) > 3 || Math.abs(dy) > 3) MODULE_STATE.hasMoved = true; MODULE_STATE.offsetX = MODULE_STATE.startOffsetX + dx; MODULE_STATE.offsetY = MODULE_STATE.startOffsetY + dy; RENDERER.renderFrame(); } });
                     window.addEventListener('mouseup', function(e) { MODULE_STATE.isDragging = false; });
                     UI.canvas.addEventListener('click', function(e) { if (!MODULE_STATE.hasMoved && MODULE_STATE.lines.length > 0) { if (MODULE_STATE.isPlaying) PLAYER.pause(); else PLAYER.start(); }});
-                    UI.canvas.addEventListener('wheel', function(e) { if (MODULE_STATE.lines.length === 0) return; e.preventDefault(); if(UI.fontSizeRange) { let size = parseInt(UI.fontSizeRange.value, 10); if (0 > e.deltaY) size = Math.min(100, size + 1); else size = Math.max(1, size - 1);  UI.fontSizeRange.value = size; if(UI.fontSizeVal) UI.fontSizeVal.textContent = size + "px"; } RENDERER.renderFrame(); });
+                    // Колесо шлёт события пачками, и на каждое шла полная перерисовка —
+                    // отсюда рывки при смене масштаба. Склеиваем: сколько бы событий ни
+                    // пришло, перерисовка будет одна на кадр.
+                    let wheelRaf = 0;
+                    const scheduleWheelRender = () => {
+                        if (wheelRaf) return;
+                        wheelRaf = requestAnimationFrame(() => { wheelRaf = 0; RENDERER.renderFrame(); });
+                    };
+                    UI.canvas.addEventListener('wheel', function(e) { if (MODULE_STATE.lines.length === 0) return; e.preventDefault(); if(UI.fontSizeRange) { let size = parseInt(UI.fontSizeRange.value, 10); if (0 > e.deltaY) size = Math.min(100, size + 1); else size = Math.max(1, size - 1);  UI.fontSizeRange.value = size; if(UI.fontSizeVal) UI.fontSizeVal.textContent = size + "px"; } scheduleWheelRender(); }, { passive: false });
                 }
 
                 if(UI.themeSelect) { UI.themeSelect.addEventListener('change', function() { const t = THEMES[this.value]; if(t) { UI.activeColorPicker.value = t.act; UI.activeAlphaRange.value = t.actA; UI.staticColorPicker.value = t.stat; UI.staticAlphaRange.value = t.statA; RENDERER.renderFrame(); } }); }
@@ -1644,6 +1665,42 @@ VERSION: Pro 33.0 (The Architect's Fix)
                     UI.activeColorPicker, UI.activeAlphaRange, UI.staticColorPicker, UI.staticAlphaRange, UI.fontSelect, UI.freezeScrollCheck, UI.spin3dCheck, UI.breathingZoomCheck, UI.autoPilotCheck, UI.speedMultInput, UI.rainbowTextCheck, UI.syntaxColorCheck
                 ];
                 rerenderEvents.forEach(el => { if(el) { el.addEventListener('change', () => RENDERER.renderFrame()); el.addEventListener('input', () => RENDERER.renderFrame()); }});
+                // К каждому ползунку в панели — по стрелке слева и справа: колесо
+                // и перетаскивание годятся для грубой настройки, а точное значение
+                // пальцем не поймать. Удержание повторяет шаг.
+                document.querySelectorAll('#leftPanel input[type="range"]').forEach(el => {
+                    if (el.dataset.arrowed) return;
+                    el.dataset.arrowed = '1';
+                    const wrap = document.createElement('span');
+                    wrap.className = 'range-with-arrows';
+                    el.parentNode.insertBefore(wrap, el);
+                    const mk = (text, dir) => {
+                        const b = document.createElement('button');
+                        b.type = 'button'; b.className = 'range-arrow'; b.textContent = text;
+                        b.tabIndex = -1;
+                        const step = () => {
+                            const st = parseFloat(el.step) || 1;
+                            const min = parseFloat(el.min), max = parseFloat(el.max);
+                            let v = parseFloat(el.value) + dir * st;
+                            if (!isNaN(min)) v = Math.max(min, v);
+                            if (!isNaN(max)) v = Math.min(max, v);
+                            const dec = (String(st).split('.')[1] || '').length;
+                            el.value = dec ? v.toFixed(dec) : v;
+                            el.dispatchEvent(new Event('input', { bubbles: true }));
+                            el.dispatchEvent(new Event('change', { bubbles: true }));
+                        };
+                        let hold = null, rep = null;
+                        const stop = () => { clearTimeout(hold); clearInterval(rep); hold = rep = null; };
+                        b.addEventListener('mousedown', ev => { ev.preventDefault(); step();
+                            hold = setTimeout(() => { rep = setInterval(step, 55); }, 380); });
+                        ['mouseup', 'mouseleave', 'blur'].forEach(t => b.addEventListener(t, stop));
+                        return b;
+                    };
+                    wrap.appendChild(mk('\u25C2', -1));
+                    wrap.appendChild(el);
+                    wrap.appendChild(mk('\u25B8', +1));
+                });
+
                 // Показываем значение множителя рядом с "x" — у ползунка своей подписи нет.
                 if (UI.speedMultInput) {
                     const multVal = document.getElementById('speedMultVal');
