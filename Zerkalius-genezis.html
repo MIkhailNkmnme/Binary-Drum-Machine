@@ -9781,6 +9781,13 @@ safeBind('stopBtn', 'click', () => {
                         else ctx.globalAlpha = (!lineData.isActive && applyFilter) ? 0 : 1.0;
                     }
 
+                    // ctx.save()/restore() на каждый символ сериализует всё состояние контекста —
+                    // на кольцах это основной расход. Вместо него запоминаем те пять свойств,
+                    // которые ветки раскраски реально трогают, и возвращаем их после отрисовки.
+                    const ringAlpha0 = ctx.globalAlpha, ringShadow0 = ctx.shadowBlur, ringFont0 = ctx.font;
+                    let curAlpha = ringAlpha0;
+                    const cullPad = m.charWidth * 3;
+                    ctx.textAlign = 'center';
                     for (let c = 0; c < text.length; c++) {
                         let char = text[c];
                         if (char === ' ') { if (isDrum) char = '.'; else continue; }
@@ -9791,7 +9798,7 @@ safeBind('stopBtn', 'click', () => {
                             if (!STATE.waveAnalysis.staticCells.has(cellKey)) isBlinkingDimmed = true;
                         }
 
-                        if (isBlinkingDimmed) ctx.globalAlpha = 0.05;
+                        if (isBlinkingDimmed) { ctx.globalAlpha = 0.05; curAlpha = 0.05; }
 
                         let isFiller = lineData.fillerMask[c];
                         if (isFiller && (char === 'x' || char === '.')) {
@@ -9799,7 +9806,12 @@ safeBind('stopBtn', 'click', () => {
                             let angle = c * angleStep - (Math.PI / 2);
                             let cx = centerX + Math.cos(angle) * r;
                             let cy = centerY + Math.sin(angle) * r;
-                            ctx.save(); ctx.translate(cx, cy); ctx.rotate(angle + Math.PI / 2); ctx.textAlign = 'center'; ctx.fillText(char, 0, 0); ctx.restore();
+                            if (cx >= -cullPad && cx <= canvas.width + cullPad && cy >= -cullPad && cy <= canvas.height + cullPad) {
+                                const ca = Math.cos(angle), sa = Math.sin(angle);
+                                ctx.setTransform(-sa, ca, -ca, -sa, cx, cy);
+                                ctx.fillText(char, 0, 0);
+                                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                            }
                             continue;
                         }
 
@@ -9817,7 +9829,7 @@ safeBind('stopBtn', 'click', () => {
                         let isChar1 = isType1(char);
                         let cBlobColor = useConglomerates ? conglomColors.get(actualIndex + "_" + c) : null;
                         
-                        ctx.save();
+                        ctx.shadowBlur = ringShadow0;
                         // Подсветка найденных паттернов (isHl) имеет приоритет над трассером, конгломератами
                         // и вспышкой — если "Подсветка паттернов" включена, цвет паттерна должен быть виден
                         // поверх остальной раскраски символа.
@@ -9844,7 +9856,13 @@ safeBind('stopBtn', 'click', () => {
                         if (isRingSelected) { ctx.shadowBlur = 15; ctx.shadowColor = hlColor; ctx.font = `bold ${baseFontSize * charScale * 1.5}px ${fontSelectVal}`; }
                         else if (isRingHovered) { ctx.shadowBlur = 10; ctx.shadowColor = rawColor0; ctx.font = `bold ${baseFontSize * charScale}px ${fontSelectVal}`; }
 
-                        ctx.translate(cx, cy); ctx.rotate(angle + Math.PI / 2); ctx.textAlign = 'center'; ctx.fillText(char, 0, 0); ctx.restore();
+                        if (cx >= -cullPad && cx <= canvas.width + cullPad && cy >= -cullPad && cy <= canvas.height + cullPad) {
+                            const ca2 = Math.cos(angle), sa2 = Math.sin(angle);
+                            ctx.setTransform(-sa2, ca2, -ca2, -sa2, cx, cy);
+                            ctx.fillText(char, 0, 0);
+                            ctx.setTransform(1, 0, 0, 1, 0, 0);
+                        }
+                        ctx.globalAlpha = curAlpha; ctx.shadowBlur = ringShadow0; ctx.font = ringFont0;
                     }
                 }
 
