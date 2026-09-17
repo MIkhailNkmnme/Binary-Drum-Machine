@@ -2,20 +2,26 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 34.2 (Запись видео, холст во всё окно, цвет как код)
+VERSION: Pro 34.3 (Запись видео, холст во всё окно, цвет как код)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 34.2)</title>
+    <title>Binary Drum Machine (Zerkalius 34.3)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
+        /* Шрифт сначала ищется на самой машине, и только потом — файлом рядом со
+           страницей. Файлов RobotoMono*.ttf в проекте нет, поэтому раньше браузер
+           каждый раз ругался в консоль на ненайденный ресурс. Объявление оставлено:
+           если файлы положат рядом, они подхватятся. */
         @font-face {
             font-family: 'Roboto Mono Local';
-            src: url('RobotoMono-Regular.ttf') format('truetype'), url('RobotoMono.ttf') format('truetype');
+            src: local('Roboto Mono'), local('RobotoMono-Regular'),
+                 url('RobotoMono-Regular.ttf') format('truetype'),
+                 url('RobotoMono.ttf') format('truetype');
             font-weight: normal; font-style: normal;
         }
 
@@ -152,6 +158,10 @@ VERSION: Pro 34.2 (Запись видео, холст во всё окно, ц�
         #recTimer { position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
             font: bold 12px 'Courier New', monospace; color: #ff5555; background: rgba(0,0,0,.6);
             padding: 2px 8px; border-radius: 3px; z-index: 50; display: none; }
+        /* Моноширинные цифры в счётчиках: иначе смена значения меняет ширину
+           подписи и тянет за собой пересчёт раскладки соседних элементов. */
+        #timelineVal, #speedMultVal, #fontSizeVal, #heightVal, #lineHeightVal, #speedVal {
+            font-variant-numeric: tabular-nums; }
         .range-with-arrows { display: flex; align-items: center; gap: 2px; flex: 1; min-width: 0; }
         .range-with-arrows input[type="range"] { flex: 1; min-width: 0; }
         .range-arrow { flex: 0 0 auto; width: 14px; height: 14px; padding: 0; line-height: 12px;
@@ -181,7 +191,7 @@ VERSION: Pro 34.2 (Запись видео, холст во всё окно, ц�
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 34.2)</h3>
+                <h3>Binary Drum Machine (Pro 34.3)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
@@ -1159,13 +1169,26 @@ VERSION: Pro 34.2 (Запись видео, холст во всё окно, ц�
                 if (UI.canvas.width !== rect.width || UI.canvas.height !== rect.height) { UI.canvas.width = rect.width; UI.canvas.height = rect.height; }
             },
             updateTimeline: function() {
-                if (MODULE_STATE.lines.length > 0) {
-                    if(UI.timelineRange) { UI.timelineRange.max = MODULE_STATE.lines.length - 1; UI.timelineRange.value = MODULE_STATE.currentIndex; }
-                    if(UI.timelineVal) UI.timelineVal.textContent = `${MODULE_STATE.currentIndex + 1} / ${MODULE_STATE.lines.length}`;
-                } else {
-                    if(UI.timelineRange) { UI.timelineRange.max = 0; UI.timelineRange.value = 0; }
-                    if(UI.timelineVal) UI.timelineVal.textContent = "0 / 0";
+                // Подпись и ползунок трогаем только при изменении: запись в DOM на
+                // каждом кадре заставляла браузер пересчитывать стили и раскладку,
+                // а меняющаяся ширина числа ещё и двигала соседей (смещения макета).
+                // Во время проигрывания счётчик меняется каждый кадр, поэтому проверка
+                // «значение то же» его не спасает — ограничиваем частоту обновления.
+                // Десять раз в секунду глаз не отличит, а браузер перестаёт пересчитывать
+                // стили и раскладку по шестьдесят раз в секунду.
+                const now = performance.now();
+                if (MODULE_STATE.isPlaying && now - (this._tlAt || 0) < 100) return;
+                this._tlAt = now;
+
+                const n = MODULE_STATE.lines.length;
+                const max = n > 0 ? n - 1 : 0;
+                const val = n > 0 ? MODULE_STATE.currentIndex : 0;
+                const text = n > 0 ? `${MODULE_STATE.currentIndex + 1} / ${n}` : "0 / 0";
+                if (UI.timelineRange) {
+                    if (+UI.timelineRange.max !== max) UI.timelineRange.max = max;
+                    if (+UI.timelineRange.value !== val) UI.timelineRange.value = val;
                 }
+                if (UI.timelineVal && UI.timelineVal.textContent !== text) UI.timelineVal.textContent = text;
             },
             hexToRgb: function(hex) {
                 let r = 0, g = 0, b = 0;
