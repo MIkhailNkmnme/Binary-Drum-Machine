@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 34.1 (Запись видео, холст во всё окно, цвет как код)
+VERSION: Pro 34.2 (Запись видео, холст во всё окно, цвет как код)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 34.1)</title>
+    <title>Binary Drum Machine (Zerkalius 34.2)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -181,7 +181,7 @@ VERSION: Pro 34.1 (Запись видео, холст во всё окно, ц�
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 34.1)</h3>
+                <h3>Binary Drum Machine (Pro 34.2)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
@@ -1280,7 +1280,18 @@ VERSION: Pro 34.1 (Запись видео, холст во всё окно, ц�
                         if (r > maxVisibleR) break;          // это кольцо и все следующие — за кадром
                         // Разбор синтаксиса — один раз на строку. Вызов на каждый символ стоил
                         // секунд: при мелком кегле на экране десятки тысяч символов.
-                        const synCols = isSyntax ? syntaxColorsFor(text) : null;
+                        let synCols = null;
+                        if (isSyntax) {
+                            // Разбор кэшируем на самой строке: пока её текст не менялся,
+                            // повторно не разбираем и не обращаемся к общей карте —
+                            // та хеширует длинный текст на каждом обращении и оставляет
+                            // мусор, из-за которого набегали паузы сборщика.
+                            if (lineData._synText !== text) {
+                                lineData._synText = text;
+                                lineData._synCols = syntaxColorsFor(text);
+                            }
+                            synCols = lineData._synCols;
+                        }
                         let angleStep = (Math.PI * 2) / renderLen;
 
                         for (let charIdx = 0; charIdx < renderLen; charIdx++) {
@@ -1456,7 +1467,11 @@ VERSION: Pro 34.1 (Запись видео, холст во всё окно, ц�
                         let charShadowBlur = (useNeon && isChanged) ? 6 + AUDIO_VISUALIZER.audioGlow : 0;
                         
                         if (isSyntax) {
-                            cRgb = (lineData._synCols || (lineData._synCols = syntaxColorsFor(lineData.text || '')))[actualIdx] || SYNTAX_COLORS.text;
+                            if (lineData._synText !== (lineData.text || '')) {
+                                lineData._synText = lineData.text || '';
+                                lineData._synCols = syntaxColorsFor(lineData._synText);
+                            }
+                            cRgb = lineData._synCols[actualIdx] || SYNTAX_COLORS.text;
                             cAlpha = 1.0;
                         } else if (isCrypto) {
                             cRgb = this.hslToRgb(cryptoHue(i, actualIdx, finalChar), 1, isChanged || isCollision ? 0.62 : 0.45);
