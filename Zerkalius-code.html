@@ -328,6 +328,7 @@ VERSION: Pro 33.0 (The Architect's Fix)
                 <!-- ПАЛИТРА -->
                 <div class="control-group" style="border: none; padding: 0; margin-top: 2px;">
                     <label class="checkbox-row" style="margin-bottom:4px;"><input type="checkbox" id="rainbowTextCheck"><span style="color:#ff3333; font-weight:bold;">🌈 Радужный Текст (ASCII)</span></label>
+                                        <label class="checkbox-row" style="margin-bottom:4px;"><input type="checkbox" id="syntaxColorCheck"><span style="color:#569cd6; font-weight:bold;">🎨 Цвет как код (синтаксис)</span></label>
                     <select id="themeSelect" style="padding: 2px;">
                         <option value="matrix">Пресет: Матрица</option>
                         <option value="cyberpunk">Пресет: Киберпанк</option>
@@ -384,6 +385,64 @@ VERSION: Pro 33.0 (The Architect's Fix)
             mutation: { act: '#ffffff', actA: 1.0, stat: '#444444', statA: 0.2 }, 
             crypto: { act: '#ff3333', actA: 1.0, stat: '#555555', statA: 0.3 }
         };
+
+
+        // === ПОДСВЕТКА СИНТАКСИСА ===
+        // Красит символы по их роли в коде — теги, атрибуты, строки, числа,
+        // комментарии — вместо радуги по коду символа. Разбор построчный, без
+        // состояния между строками: для радара этого достаточно, а результат
+        // кэшируется по тексту строки, иначе разбор пойдёт на каждый кадр.
+        const SYNTAX_COLORS = {
+            tag:     '86, 156, 214',    // < > имена тегов
+            attr:    '156, 220, 254',   // имена атрибутов
+            str:     '206, 145, 120',   // строки в кавычках
+            num:     '181, 206, 168',   // числа
+            comment: '106, 153, 85',    // комментарии
+            punct:   '212, 212, 212',   // скобки, знаки
+            text:    '160, 160, 160'    // прочий текст
+        };
+        const SYNTAX_CACHE = new Map();
+        function syntaxColorsFor(text) {
+            let got = SYNTAX_CACHE.get(text);
+            if (got) return got;
+            const n = text.length, out = new Array(n);
+            let inStr = null, inTag = false, inComment = false, afterTagOpen = false;
+            for (let i = 0; i < n; i++) {
+                const ch = text[i];
+                if (inComment) {
+                    out[i] = SYNTAX_COLORS.comment;
+                    if ((ch === '>' && text.slice(i-2, i+1) === '-->') || (ch === '/' && text[i-1] === '*')) inComment = false;
+                    continue;
+                }
+                if (inStr) {
+                    out[i] = SYNTAX_COLORS.str;
+                    if (ch === inStr) inStr = null;
+                    continue;
+                }
+                if (text.startsWith('<!--', i) || text.startsWith('/*', i) || text.startsWith('//', i)) {
+                    inComment = !text.startsWith('//', i);   // // гасится концом строки сама собой
+                    out[i] = SYNTAX_COLORS.comment;
+                    if (!inComment) { for (let k = i; k < n; k++) out[k] = SYNTAX_COLORS.comment; return cacheSyntax(text, out); }
+                    continue;
+                }
+                if (ch === '"' || ch === "'") { inStr = ch; out[i] = SYNTAX_COLORS.str; continue; }
+                if (ch === '<') { inTag = true; afterTagOpen = true; out[i] = SYNTAX_COLORS.tag; continue; }
+                if (ch === '>') { inTag = false; out[i] = SYNTAX_COLORS.tag; continue; }
+                if (ch >= '0' && ch <= '9') { out[i] = SYNTAX_COLORS.num; continue; }
+                if (inTag) {
+                    if (ch === ' ') { afterTagOpen = false; out[i] = SYNTAX_COLORS.punct; continue; }
+                    out[i] = afterTagOpen ? SYNTAX_COLORS.tag : SYNTAX_COLORS.attr;
+                    continue;
+                }
+                out[i] = /[A-Za-zА-Яа-яЁё_]/.test(ch) ? SYNTAX_COLORS.text : SYNTAX_COLORS.punct;
+            }
+            return cacheSyntax(text, out);
+        }
+        function cacheSyntax(text, out) {
+            if (SYNTAX_CACHE.size > 4000) SYNTAX_CACHE.clear();
+            SYNTAX_CACHE.set(text, out);
+            return out;
+        }
 
         const MUTATION_COLORS = ['#ff3333', '#ffcc00', '#00ff66', '#00ccff', '#cc33ff'];
 
@@ -495,7 +554,7 @@ VERSION: Pro 33.0 (The Architect's Fix)
             fill1010Btn: document.getElementById('fill1010Btn'), searchInput: document.getElementById('searchInput'),
             implantModeCheck: document.getElementById('implantModeCheck'), echoModeCheck: document.getElementById('echoModeCheck'),
             audioReactCheck: document.getElementById('audioReactCheck'), autoPilotCheck: document.getElementById('autoPilotCheck'),
-            rainbowTextCheck: document.getElementById('rainbowTextCheck'),
+            rainbowTextCheck: document.getElementById('rainbowTextCheck'), syntaxColorCheck: document.getElementById('syntaxColorCheck'),
             
             dualCoreCheck: document.getElementById('dualCoreCheck'), dualCoreSpeedInput: document.getElementById('dualCoreSpeedInput'),
             dualMaskCheck: document.getElementById('dualMaskCheck'), zerkaliusAnimCheck: document.getElementById('zerkaliusAnimCheck'),
@@ -1004,7 +1063,8 @@ VERSION: Pro 33.0 (The Architect's Fix)
                 const freezeLayer1 = UI.freezeLayer1Check?.checked || false; 
                 const spin3d = UI.spin3dCheck?.checked || false;
                 const isBreathing = UI.breathingZoomCheck?.checked || false;
-                const isRainbow = UI.rainbowTextCheck?.checked || false; 
+                const isRainbow = UI.rainbowTextCheck?.checked || false;
+                const isSyntax = UI.syntaxColorCheck?.checked || false; 
                 const activeTheme = UI.themeSelect?.value || 'matrix';
                 
                 let baseFontSize = parseInt(UI.fontSizeRange?.value || 24, 10);
@@ -1062,6 +1122,17 @@ VERSION: Pro 33.0 (The Architect's Fix)
                     let baseAngle1 = spin3d ? (MODULE_STATE.globalAngle * 0.05) : 0;
                     let baseAngle2 = spin3d ? (-MODULE_STATE.globalAngle * 0.08) : 0;
 
+                    // Кольца рисовались все подряд, хотя в кадр влезает лишь несколько десятков:
+                    // дальше угла холста нет ни одного видимого символа. Радиусы растут с i,
+                    // поэтому за первым же слишком большим кольцом можно выйти из цикла целиком.
+                    const cullPad = fontSize * 2;
+                    const maxVisibleR = Math.hypot(Math.max(centerX, width - centerX),
+                                                   Math.max(centerY, height - centerY)) + cullPad;
+                    // Цвет и тень на каждый символ переставлялись заново, даже когда не менялись,
+                    // а строка rgba() собиралась заново на каждый символ — кэшируем и то и другое.
+                    const rgbaCache = RENDERER._rgbaCache || (RENDERER._rgbaCache = new Map());
+                    let lastFill = null, lastBlur = -1, lastShadowCol = null;
+
                     for (let i = 0; i < visibleHeight; i++) {
                         if (!visibleLines[i]) continue;
                         const lineData = visibleLines[i].data; const dualData = visibleLines[i].dualData;
@@ -1070,6 +1141,7 @@ VERSION: Pro 33.0 (The Architect's Fix)
 
                         let renderLen = Math.max(text.length, dualText.length);
                         let r = (i + 1) * fontSize * lh * 1.25; 
+                        if (r > maxVisibleR) break;          // это кольцо и все следующие — за кадром
                         let angleStep = (Math.PI * 2) / renderLen;
 
                         for (let charIdx = 0; charIdx < renderLen; charIdx++) {
@@ -1101,7 +1173,10 @@ VERSION: Pro 33.0 (The Architect's Fix)
                             let cRgb = isChanged ? actRgb : statRgb; let cAlpha = isChanged ? actAlpha : statAlpha;
                             let charShadowBlur = (useNeon && isChanged) ? 6 + AUDIO_VISUALIZER.audioGlow : 0;
                             
-                            if (isRainbow) {
+                            if (isSyntax) {
+                                cRgb = syntaxColorsFor(text)[charIdx] || SYNTAX_COLORS.text;
+                                cAlpha = 1.0;
+                            } else if (isRainbow) {
                                 if (isExactMatch) {
                                     cRgb = '255, 51, 51'; cAlpha = 1.0; charShadowBlur = 10;
                                 } else if (finalChar !== ' ' && finalChar !== '0' && finalChar !== '1') {
@@ -1119,22 +1194,29 @@ VERSION: Pro 33.0 (The Architect's Fix)
                             if (cAlpha <= 0.01) continue; 
 
                             let a = (isCollision && spin3d ? baseAngle2 : baseAngle1) + charIdx * angleStep;
-                            let cx = centerX + Math.cos(a) * r; let cy = centerY + Math.sin(a) * r;
+                            const ca = Math.cos(a), sa = Math.sin(a);
+                            const cx = centerX + ca * r, cy = centerY + sa * r;
+                            if (cx < -cullPad || cx > width + cullPad || cy < -cullPad || cy > height + cullPad) continue;
 
-                            ctx.save(); ctx.translate(cx, cy); ctx.rotate(a + Math.PI/2); 
-                            let rgbaStr = `rgba(${cRgb}, ${cAlpha})`;
                             if (11 > fontSize) charShadowBlur = 0; 
-                            
-                            ctx.fillStyle = rgbaStr;
-                            if (charShadowBlur > 0) { 
-                                ctx.shadowBlur = charShadowBlur; 
-                                ctx.shadowColor = (activeTheme === 'mutation' && lineData.mutFlags && lineData.mutFlags[charIdx] > 0) 
-                                    ? MUTATION_COLORS[(lineData.mutFlags[charIdx] - 1) % MUTATION_COLORS.length] 
-                                    : (isRainbow && isExactMatch ? '#ff3333' : (isChanged?actColor:statColor)); 
+                            const key = cRgb + '|' + cAlpha;
+                            let rgbaStr = rgbaCache.get(key);
+                            if (rgbaStr === undefined) { rgbaStr = `rgba(${cRgb}, ${cAlpha})`; rgbaCache.set(key, rgbaStr); }
+                            if (rgbaStr !== lastFill) { ctx.fillStyle = rgbaStr; lastFill = rgbaStr; }
+                            if (charShadowBlur !== lastBlur) { ctx.shadowBlur = charShadowBlur; lastBlur = charShadowBlur; }
+                            if (charShadowBlur > 0) {
+                                const shCol = (activeTheme === 'mutation' && lineData.mutFlags && lineData.mutFlags[charIdx] > 0)
+                                    ? MUTATION_COLORS[(lineData.mutFlags[charIdx] - 1) % MUTATION_COLORS.length]
+                                    : (isRainbow && isExactMatch ? '#ff3333' : (isChanged ? actColor : statColor));
+                                if (shCol !== lastShadowCol) { ctx.shadowColor = shCol; lastShadowCol = shCol; }
                             }
-                            ctx.fillText(finalChar, 0, 0); ctx.restore();
+                            // поворот символа вдоль кольца: одна матрица вместо save/rotate/restore
+                            ctx.setTransform(-sa, ca, -ca, -sa, cx, cy);
+                            ctx.fillText(finalChar, 0, 0);
                         }
                     }
+                    ctx.setTransform(1, 0, 0, 1, 0, 0);   // вернуть холст в обычные координаты
+                    ctx.shadowBlur = 0;
                     return; 
                 }
 
@@ -1225,7 +1307,10 @@ VERSION: Pro 33.0 (The Architect's Fix)
                         let cRgb = isChanged ? actRgb : statRgb; let cAlpha = isChanged ? actAlpha : statAlpha;
                         let charShadowBlur = (useNeon && isChanged) ? 6 + AUDIO_VISUALIZER.audioGlow : 0;
                         
-                        if (isRainbow) {
+                        if (isSyntax) {
+                            cRgb = syntaxColorsFor(lineData.text || '')[actualIdx] || SYNTAX_COLORS.text;
+                            cAlpha = 1.0;
+                        } else if (isRainbow) {
                             if (isExactMatch) {
                                 cRgb = '255, 51, 51'; cAlpha = 1.0; charShadowBlur = 10;
                             } else if (finalChar !== ' ' && finalChar !== '0' && finalChar !== '1') {
@@ -1504,7 +1589,7 @@ VERSION: Pro 33.0 (The Architect's Fix)
                 const rerenderEvents = [
                     UI.cylinderCheck, UI.elkaCheck, UI.hideStaticCheck, UI.deltaModeSelect, UI.neonGlowCheck, 
                     UI.findDiagonalsCheck, UI.logicalOpSelect, UI.dualCoreCheck, UI.dualCoreSpeedInput, UI.dualMaskCheck, UI.freezeLayer1Check,
-                    UI.activeColorPicker, UI.activeAlphaRange, UI.staticColorPicker, UI.staticAlphaRange, UI.fontSelect, UI.freezeScrollCheck, UI.spin3dCheck, UI.breathingZoomCheck, UI.autoPilotCheck, UI.speedMultInput, UI.rainbowTextCheck
+                    UI.activeColorPicker, UI.activeAlphaRange, UI.staticColorPicker, UI.staticAlphaRange, UI.fontSelect, UI.freezeScrollCheck, UI.spin3dCheck, UI.breathingZoomCheck, UI.autoPilotCheck, UI.speedMultInput, UI.rainbowTextCheck, UI.syntaxColorCheck
                 ];
                 rerenderEvents.forEach(el => { if(el) { el.addEventListener('change', () => RENDERER.renderFrame()); el.addEventListener('input', () => RENDERER.renderFrame()); }});
                 window.addEventListener('resize', () => RENDERER.renderFrame());
