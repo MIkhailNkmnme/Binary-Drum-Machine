@@ -12,6 +12,9 @@ const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ?
 const BPM = +arg('bpm', 120), FPS = +arg('fps', 30), BEATS = +arg('beats', 16);
 const FONT = +arg('font', 22), W = +arg('w', 1920), H = +arg('h', 1080);
 const STEPS_PER_BEAT = +arg('stepsPerBeat', 1);
+const SECONDS = arg('seconds', null);      // длительность напрямую, вместо долей
+const STEPS_FILE = arg('steps', null);     // моменты ударов (tools/onsets.py) для музыки без ровной сетки
+const FROM = +arg('from', 0);              // с какой секунды трека берётся кусок
 const RECIPE = arg('recipe', 'k1');
 const REVERSE = process.argv.includes('--reverse');
 const OUT = __dirname + '/../renders/masters';
@@ -53,7 +56,15 @@ const virtualClock = () => {
   const r = RECIPES[RECIPE];
   if (!r) throw new Error('нет такого рецепта: ' + RECIPE);
   const framesPerStep = (FPS * 60 / BPM) / STEPS_PER_BEAT;
-  const FRAMES = Math.round(BEATS * FPS * 60 / BPM);
+  const FRAMES = SECONDS ? Math.round(+SECONDS * FPS) : Math.round(BEATS * FPS * 60 / BPM);
+  // Шаг либо по сетке долей, либо по реальным ударам: для рваной музыки сетка
+  // разъезжается уже на первом такте, а удары держат картинку на месте.
+  let stepFrames = null;
+  if (STEPS_FILE) {
+    const j = JSON.parse(fs.readFileSync(STEPS_FILE, 'utf8'));
+    stepFrames = new Set(j.times.filter(t => t >= FROM && t < FROM + FRAMES / FPS)
+                                .map(t => Math.round((t - FROM) * FPS)));
+  }
   const dir = `${OUT}/${RECIPE}-frames`;
   fs.rmSync(dir, { recursive:true, force:true }); fs.mkdirSync(dir, { recursive:true });
 
@@ -94,7 +105,8 @@ const virtualClock = () => {
   await page.evaluate(() => document.getElementById('playBtn')?.click());
   let nextStep = 0;
   for (let f = 0; f < FRAMES; f++) {
-    if (f >= nextStep) { await page.evaluate(() => window.__tick(16)); nextStep += framesPerStep; }
+    const doStep = stepFrames ? stepFrames.has(f) : (f >= nextStep);
+    if (doStep) { await page.evaluate(() => window.__tick(16)); if (!stepFrames) nextStep += framesPerStep; }
     await page.screenshot({ path: `${dir}/f${String(f).padStart(5,'0')}.png` });
   }
   await ctx.close(); await browser.close();
@@ -103,5 +115,5 @@ const virtualClock = () => {
   execFileSync(process.env.FFMPEG || 'ffmpeg', ['-y','-framerate',String(FPS),'-i',`${dir}/f%05d.png`,
     '-c:v','libx264','-preset','slow','-crf','18','-pix_fmt','yuv420p', file], { stdio:'ignore' });
   fs.rmSync(dir, { recursive:true, force:true });   // кадры больше не нужны: 1080p PNG съедают гигабайты
-  console.log(`${r.name}: ${FRAMES} кадров, ${BPM} BPM, шаг каждые ${framesPerStep.toFixed(1)} кадра → ${file}`);
+  console.log(`${r.name}: ${FRAMES} кадров, ${BPM} BPM, ${stepFrames ? `шагов по ударам: ${stepFrames.size}` : `шаг каждые ${framesPerStep.toFixed(1)} кадра`} → ${file}`);
 })();
