@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 34.3 (Запись видео, холст во всё окно, цвет как код)
+VERSION: Pro 34.4 (Запись видео, холст во всё окно, цвет как код)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 34.3)</title>
+    <title>Binary Drum Machine (Zerkalius 34.4)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -191,7 +191,7 @@ VERSION: Pro 34.3 (Запись видео, холст во всё окно, ц�
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 34.3)</h3>
+                <h3>Binary Drum Machine (Pro 34.4)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
@@ -1165,8 +1165,33 @@ VERSION: Pro 34.3 (Запись видео, холст во всё окно, ц�
                 return `${Math.round((r+m)*255)}, ${Math.round((g+m)*255)}, ${Math.round((b+m)*255)}`;
             },
             resizeCanvas: function() {
-                const rect = UI.screenContainer.getBoundingClientRect();
-                if (UI.canvas.width !== rect.width || UI.canvas.height !== rect.height) { UI.canvas.width = rect.width; UI.canvas.height = rect.height; }
+                // Раньше здесь на каждом кадре спрашивался getBoundingClientRect. Этот
+                // запрос заставляет браузер немедленно пересчитать стили и раскладку
+                // всей страницы — при шестидесяти кадрах в секунду это и давало
+                // огромное «Отображение» в профиле, хотя картинка живёт на холсте.
+                // Теперь за размером следит наблюдатель: он срабатывает только когда
+                // контейнер действительно изменился.
+                if (!this._ro && window.ResizeObserver) {
+                    const apply = (w, h) => {
+                        w = Math.round(w); h = Math.round(h);
+                        if (w > 0 && h > 0 && (UI.canvas.width !== w || UI.canvas.height !== h)) {
+                            UI.canvas.width = w; UI.canvas.height = h;
+                        }
+                    };
+                    this._ro = new ResizeObserver(entries => {
+                        const cr = entries[entries.length - 1].contentRect;
+                        apply(cr.width, cr.height);
+                        this.renderFrame();
+                    });
+                    this._ro.observe(UI.screenContainer);
+                    const rect = UI.screenContainer.getBoundingClientRect();   // один раз при старте
+                    apply(rect.width, rect.height);
+                } else if (!window.ResizeObserver) {
+                    const rect = UI.screenContainer.getBoundingClientRect();   // очень старый браузер
+                    if (UI.canvas.width !== rect.width || UI.canvas.height !== rect.height) {
+                        UI.canvas.width = rect.width; UI.canvas.height = rect.height;
+                    }
+                }
             },
             updateTimeline: function() {
                 // Подпись и ползунок трогаем только при изменении: запись в DOM на
