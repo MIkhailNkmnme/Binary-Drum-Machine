@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # Сборка финала: сцены по порядку + трек + затемнения на концах.
 #
-#   FFMPEG=/путь/к/ffmpeg bash tools/assemble.sh трек.mp3 renders/final.mp4
+#   FFMPEG=/путь/к/ffmpeg bash tools/assemble.sh трек.mp3 renders/final.mp4 [префикс]
+#
+# Префикс выбирает, какие сцены брать: s — раскладка под «Laniakea» (по умолчанию),
+# vs — под Venetian Snares. Сцены склеиваются в алфавитном порядке имён.
 #
 # Сцены склеиваются без перекодирования, затем один общий проход с фейдами
 # и звуком. Видео чуть длиннее трека — лишнее обрезается по звуку (-shortest).
@@ -10,8 +13,9 @@ cd "$(dirname "$0")/.."
 FF=${FFMPEG:-ffmpeg}
 TRACK=$1
 OUT=${2:-renders/final.mp4}
+PREFIX=${3:-s}
 LIST=$(mktemp)
-for f in renders/masters/s*.mp4; do echo "file '$PWD/$f'" >> "$LIST"; done
+for f in renders/masters/${PREFIX}*.mp4; do echo "file '$PWD/$f'" >> "$LIST"; done
 echo "сцен в сборке: $(wc -l < "$LIST")"
 
 "$FF" -y -v error -f concat -safe 0 -i "$LIST" -c copy renders/_video.mp4
