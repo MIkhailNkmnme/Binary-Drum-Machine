@@ -19,6 +19,12 @@ const W = +arg('w', 1920), H = +arg('h', 1080), N = +arg('frames', 40);
   await page.evaluate(() => document.getElementById('toggleRadarBtn')?.click());
   if (process.argv.includes('--neon')) await page.evaluate(() => { const n=document.getElementById('neonGlowCheck'); if(n&&!n.checked) n.click(); });
   if (process.argv.includes('--syntax')) await page.evaluate(() => document.getElementById('syntaxColorCheck')?.click());
+  const FS = +arg('font', 0), SR = +arg('rows', 0);
+  if (FS || SR) await page.evaluate(([f, r]) => {
+    const put = (id, v) => { const el = document.getElementById(id); if (el && v) { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); } };
+    put('fontSizeRange', f); put('heightRange', r);
+  }, [FS, SR]);
+  await page.waitForTimeout(800);
   await page.waitForTimeout(1200);
 
   const stats = await page.evaluate(async n => {

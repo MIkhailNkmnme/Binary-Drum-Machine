@@ -290,9 +290,12 @@ VERSION: Pro 33.0 (The Architect's Fix)
                 <div class="control-group" style="border: none; padding: 0;">
                     <div class="compact-row">
                         <label style="flex:1;">Скорость (1 - 1000мс):</label>
-                        <label style="color:#ff3333; font-weight:bold;">x<input type="number" id="speedMultInput" value="1" min="1" max="100" style="width:35px; margin-left:4px; text-align:center; padding:2px;"></label>
+                        <label style="color:#ff3333; font-weight:bold;">x<span id="speedMultVal" style="display:inline-block; min-width:22px; text-align:right;">1</span></label>
                     </div>
-                    <input type="range" id="speedRange" min="1" max="1000" value="920">
+                    <!-- Множитель шагов за тик: раньше было поле с микроскопическими стрелками,
+                         теперь ползунок — значение видно в подписи "x" справа сверху. -->
+                    <input type="range" id="speedMultInput" min="1" max="100" value="1" style="accent-color:#ff3333;" title="Сколько шагов симуляции за один тик таймера">
+                    <input type="range" id="speedRange" min="1" max="1000" value="920" title="Интервал таймера в миллисекундах: правее — быстрее">
                     <div class="compact-row" style="margin-top:2px;">
                         <span style="font-size:10px; color:#555;">🐌</span>
                         <span id="speedVal" style="font-size:10px; color:#00ff66;">80 мс</span>
@@ -1164,6 +1167,8 @@ VERSION: Pro 33.0 (The Architect's Fix)
                     // а строка rgba() собиралась заново на каждый символ — кэшируем и то и другое.
                     const rgbaCache = RENDERER._rgbaCache || (RENDERER._rgbaCache = new Map());
                     let lastFill = null, lastBlur = -1, lastShadowCol = null;
+                    const tinyGlyph = fontSize <= 3;
+                    const tinySize = Math.max(1, Math.round(fontSize)), tinyHalf = tinySize / 2;
 
                     for (let i = 0; i < visibleHeight; i++) {
                         if (!visibleLines[i]) continue;
@@ -1174,6 +1179,9 @@ VERSION: Pro 33.0 (The Architect's Fix)
                         let renderLen = Math.max(text.length, dualText.length);
                         let r = (i + 1) * fontSize * lh * 1.25; 
                         if (r > maxVisibleR) break;          // это кольцо и все следующие — за кадром
+                        // Разбор синтаксиса — один раз на строку. Вызов на каждый символ стоил
+                        // секунд: при мелком кегле на экране десятки тысяч символов.
+                        const synCols = isSyntax ? syntaxColorsFor(text) : null;
                         let angleStep = (Math.PI * 2) / renderLen;
 
                         for (let charIdx = 0; charIdx < renderLen; charIdx++) {
@@ -1206,7 +1214,7 @@ VERSION: Pro 33.0 (The Architect's Fix)
                             let charShadowBlur = (useNeon && isChanged) ? 6 + AUDIO_VISUALIZER.audioGlow : 0;
                             
                             if (isSyntax) {
-                                cRgb = syntaxColorsFor(text)[charIdx] || SYNTAX_COLORS.text;
+                                cRgb = synCols[charIdx] || SYNTAX_COLORS.text;
                                 cAlpha = 1.0;
                             } else if (isCrypto) {
                                 cRgb = this.hslToRgb(cryptoHue(i, charIdx, finalChar), 1, isChanged || isCollision ? 0.62 : 0.45);
@@ -1245,9 +1253,15 @@ VERSION: Pro 33.0 (The Architect's Fix)
                                     : (isRainbow && isExactMatch ? '#ff3333' : (isChanged ? actColor : statColor));
                                 if (shCol !== lastShadowCol) { ctx.shadowColor = shCol; lastShadowCol = shCol; }
                             }
-                            // поворот символа вдоль кольца: одна матрица вместо save/rotate/restore
-                            ctx.setTransform(-sa, ca, -ca, -sa, cx, cy);
-                            ctx.fillText(finalChar, 0, 0);
+                            if (tinyGlyph) {
+                                // При кегле в несколько пикселей символ неразличим, а стоит он
+                                // дороже точки: отрисовка текста требует раскладки глифа.
+                                ctx.fillRect(cx - tinyHalf, cy - tinyHalf, tinySize, tinySize);
+                            } else {
+                                // поворот символа вдоль кольца: одна матрица вместо save/rotate/restore
+                                ctx.setTransform(-sa, ca, -ca, -sa, cx, cy);
+                                ctx.fillText(finalChar, 0, 0);
+                            }
                         }
                     }
                     ctx.setTransform(1, 0, 0, 1, 0, 0);   // вернуть холст в обычные координаты
@@ -1343,7 +1357,7 @@ VERSION: Pro 33.0 (The Architect's Fix)
                         let charShadowBlur = (useNeon && isChanged) ? 6 + AUDIO_VISUALIZER.audioGlow : 0;
                         
                         if (isSyntax) {
-                            cRgb = syntaxColorsFor(lineData.text || '')[actualIdx] || SYNTAX_COLORS.text;
+                            cRgb = (lineData._synCols || (lineData._synCols = syntaxColorsFor(lineData.text || '')))[actualIdx] || SYNTAX_COLORS.text;
                             cAlpha = 1.0;
                         } else if (isCrypto) {
                             cRgb = this.hslToRgb(cryptoHue(i, actualIdx, finalChar), 1, isChanged || isCollision ? 0.62 : 0.45);
@@ -1630,6 +1644,13 @@ VERSION: Pro 33.0 (The Architect's Fix)
                     UI.activeColorPicker, UI.activeAlphaRange, UI.staticColorPicker, UI.staticAlphaRange, UI.fontSelect, UI.freezeScrollCheck, UI.spin3dCheck, UI.breathingZoomCheck, UI.autoPilotCheck, UI.speedMultInput, UI.rainbowTextCheck, UI.syntaxColorCheck
                 ];
                 rerenderEvents.forEach(el => { if(el) { el.addEventListener('change', () => RENDERER.renderFrame()); el.addEventListener('input', () => RENDERER.renderFrame()); }});
+                // Показываем значение множителя рядом с "x" — у ползунка своей подписи нет.
+                if (UI.speedMultInput) {
+                    const multVal = document.getElementById('speedMultVal');
+                    const showMult = () => { if (multVal) multVal.textContent = UI.speedMultInput.value; };
+                    UI.speedMultInput.addEventListener('input', showMult);
+                    showMult();
+                }
                 window.addEventListener('resize', () => RENDERER.renderFrame());
             }
         };
