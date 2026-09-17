@@ -16,6 +16,8 @@ const STEPS_PER_BEAT = +arg('stepsPerBeat', 1);
 const SCENE = arg('scene', 'sourcecode');
 const FONT = +arg('font', 24);
 const RAINBOW = process.argv.includes('--rainbow');
+const SYNTAX = process.argv.includes('--syntax');
+const REVERSE = process.argv.includes('--reverse');
 const OUT = __dirname + '/../renders/masters';
 
 const virtualClock = () => {
@@ -47,13 +49,14 @@ const virtualClock = () => {
 
   await page.evaluate(() => document.getElementById('toggleRadarBtn')?.click());
   await page.waitForTimeout(1200);
-  await page.evaluate(([font, rainbow]) => {
+  await page.evaluate(([font, rainbow, syntax]) => {
     const f = document.getElementById('fontSizeRange');
     if (f) { f.value = font; f.dispatchEvent(new Event('input', { bubbles:true })); }
     if (rainbow) { const rb = document.getElementById('rainbowTextCheck'); if (rb && !rb.checked) rb.click(); }
+    if (syntax)  { const sx = document.getElementById('syntaxColorCheck'); if (sx && !sx.checked) sx.click(); }
     const s = document.getElementById('speedRange');
     if (s) { s.value = 1000; s.dispatchEvent(new Event('input', { bubbles:true })); }  // шаг на каждый тик
-  }, [FONT, RAINBOW]);
+  }, [FONT, RAINBOW, SYNTAX]);
 
   // сцена сама запускает плеер через setTimeout — дожидаемся и убираем панели
   await page.waitForTimeout(1500);
@@ -62,6 +65,7 @@ const virtualClock = () => {
   await page.evaluate(() => { MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0; window.dispatchEvent(new Event('resize')); });
   await page.waitForTimeout(900);
 
+  if (REVERSE) await page.evaluate(() => { MODULE_STATE.isReverse = true; });   // ход назад
   await page.evaluate(virtualClock);
   await page.evaluate(() => { if (!MODULE_STATE.isPlaying) document.getElementById('playBtn')?.click(); });
   let nextStep = 0;

@@ -13,6 +13,7 @@ const BPM = +arg('bpm', 120), FPS = +arg('fps', 30), BEATS = +arg('beats', 16);
 const FONT = +arg('font', 22), W = +arg('w', 1920), H = +arg('h', 1080);
 const STEPS_PER_BEAT = +arg('stepsPerBeat', 1);
 const RECIPE = arg('recipe', 'k1');
+const REVERSE = process.argv.includes('--reverse');
 const OUT = __dirname + '/../renders/masters';
 
 const RECIPES = {
@@ -88,6 +89,7 @@ const virtualClock = () => {
   await page.evaluate(() => { STATE.offsetY = 0; STATE.autoOffsetY = 0; STATE.offsetX = 0; STATE.autoOffsetX = 0; render(); });
   await page.waitForTimeout(300);
 
+  if (REVERSE) await page.evaluate(() => { STATE.isReverse = true; });   // ход назад
   await page.evaluate(virtualClock);
   await page.evaluate(() => document.getElementById('playBtn')?.click());
   let nextStep = 0;

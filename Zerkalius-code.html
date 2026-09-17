@@ -425,6 +425,23 @@ VERSION: Pro 33.0 (The Architect's Fix)
                     if (!inComment) { for (let k = i; k < n; k++) out[k] = SYNTAX_COLORS.comment; return cacheSyntax(text, out); }
                     continue;
                 }
+                // #rrggbb прямо в коде красится сам в себя: цвет строки кода —
+                // ровно тот, который она задаёт. Слишком тёмные подсветляем,
+                // иначе на чёрном фоне их просто не видно.
+                if (ch === '#') {
+                    const m = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})/.exec(text.slice(i, i + 8));
+                    if (m) {
+                        let h = m[1];
+                        if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+                        let r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+                        const lum = 0.2126*r + 0.7152*g + 0.0722*b;
+                        if (lum < 70) { const k = (70 - lum) / 255 + 0.35; r += (255-r)*k; g += (255-g)*k; b += (255-b)*k; }
+                        const lit = `${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}`;
+                        for (let k = 0; k < m[0].length && i + k < n; k++) out[i + k] = lit;
+                        i += m[0].length - 1;
+                        continue;
+                    }
+                }
                 if (ch === '"' || ch === "'") { inStr = ch; out[i] = SYNTAX_COLORS.str; continue; }
                 if (ch === '<') { inTag = true; afterTagOpen = true; out[i] = SYNTAX_COLORS.tag; continue; }
                 if (ch === '>') { inTag = false; out[i] = SYNTAX_COLORS.tag; continue; }
