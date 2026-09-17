@@ -8,7 +8,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius GPU v0.192 (Core + Synth)</title>
+    <title>Zerkalius GPU v0.191 (Core + Synth)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
         body { background: #050505; color: #00ff66; font-family: 'Roboto Mono', monospace; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; transition: background 0.3s; }
@@ -2602,6 +2602,5 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
 
         window.onload = () => { window.dispatchEvent(new Event('resize')); if(!loadCache()) generateMatrix(); requestAnimationFrame(renderLoop); };
     </script>
-    <script src="recorder.js"></script>
 </body>
 </html>
