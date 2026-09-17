@@ -387,6 +387,20 @@ VERSION: Pro 33.0 (The Architect's Fix)
         };
 
 
+
+        // === КРИПТО-ХЕШ (СПЕКТР) ===
+        // Цвет ячейки берётся из хеша её координат и содержимого — как в
+        // визуализациях хеш-сумм: тот же узор всегда даёт ту же раскраску,
+        // а изменение одного бита перекрашивает ячейку в произвольный цвет.
+        function cryptoHue(row, col, ch) {
+            let h = 2166136261;
+            h ^= (row + 0x9e37); h = Math.imul(h, 16777619);
+            h ^= (col + 0x85eb); h = Math.imul(h, 16777619);
+            h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619);
+            h ^= h >>> 13; h = Math.imul(h, 16777619); h ^= h >>> 16;
+            return (h >>> 0) % 360;
+        }
+
         // === ПОДСВЕТКА СИНТАКСИСА ===
         // Красит символы по их роли в коде — теги, атрибуты, строки, числа,
         // комментарии — вместо радуги по коду символа. Разбор построчный, без
@@ -1083,6 +1097,7 @@ VERSION: Pro 33.0 (The Architect's Fix)
                 const isRainbow = UI.rainbowTextCheck?.checked || false;
                 const isSyntax = UI.syntaxColorCheck?.checked || false; 
                 const activeTheme = UI.themeSelect?.value || 'matrix';
+                const isCrypto = activeTheme === 'crypto';
                 
                 let baseFontSize = parseInt(UI.fontSizeRange?.value || 24, 10);
                 let zoomMod = 1;
@@ -1192,6 +1207,9 @@ VERSION: Pro 33.0 (The Architect's Fix)
                             
                             if (isSyntax) {
                                 cRgb = syntaxColorsFor(text)[charIdx] || SYNTAX_COLORS.text;
+                                cAlpha = 1.0;
+                            } else if (isCrypto) {
+                                cRgb = this.hslToRgb(cryptoHue(i, charIdx, finalChar), 1, isChanged || isCollision ? 0.62 : 0.45);
                                 cAlpha = 1.0;
                             } else if (isRainbow) {
                                 if (isExactMatch) {
@@ -1326,6 +1344,9 @@ VERSION: Pro 33.0 (The Architect's Fix)
                         
                         if (isSyntax) {
                             cRgb = syntaxColorsFor(lineData.text || '')[actualIdx] || SYNTAX_COLORS.text;
+                            cAlpha = 1.0;
+                        } else if (isCrypto) {
+                            cRgb = this.hslToRgb(cryptoHue(i, actualIdx, finalChar), 1, isChanged || isCollision ? 0.62 : 0.45);
                             cAlpha = 1.0;
                         } else if (isRainbow) {
                             if (isExactMatch) {
