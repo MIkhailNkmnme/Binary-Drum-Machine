@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 34.4 (Запись видео, холст во всё окно, цвет как код)
+VERSION: Pro 34.5 (Запись видео, холст во всё окно, цвет как код)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 34.4)</title>
+    <title>Binary Drum Machine (Zerkalius 34.5)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -191,7 +191,7 @@ VERSION: Pro 34.4 (Запись видео, холст во всё окно, ц�
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 34.4)</h3>
+                <h3>Binary Drum Machine (Pro 34.5)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
@@ -1768,11 +1768,16 @@ VERSION: Pro 34.4 (Запись видео, холст во всё окно, ц�
                     // Колесо шлёт события пачками, и на каждое шла полная перерисовка —
                     // отсюда рывки при смене масштаба. Склеиваем: сколько бы событий ни
                     // пришло, перерисовка будет одна на кадр.
-                    let wheelRaf = 0;
+                    // Один планировщик на всё: колесо, ползунки, пипетки цвета. События
+                    // ввода летят пачками (перетаскивание ползунка — это десятки событий
+                    // в секунду), а раньше каждое вызывало полную перерисовку и они
+                    // выстраивались в очередь, задерживая отклик на сотни миллисекунд.
+                    let uiRaf = 0;
                     const scheduleWheelRender = () => {
-                        if (wheelRaf) return;
-                        wheelRaf = requestAnimationFrame(() => { wheelRaf = 0; RENDERER.renderFrame(); });
+                        if (uiRaf) return;
+                        uiRaf = requestAnimationFrame(() => { uiRaf = 0; RENDERER.renderFrame(); });
                     };
+                    window.__zerkScheduleRender = scheduleWheelRender;
                     UI.canvas.addEventListener('wheel', function(e) { if (MODULE_STATE.lines.length === 0) return; e.preventDefault(); if(UI.fontSizeRange) { let size = parseInt(UI.fontSizeRange.value, 10); if (0 > e.deltaY) size = Math.min(100, size + 1); else size = Math.max(1, size - 1);  UI.fontSizeRange.value = size; if(UI.fontSizeVal) UI.fontSizeVal.textContent = size + "px"; } scheduleWheelRender(); }, { passive: false });
                 }
 
@@ -1799,7 +1804,7 @@ VERSION: Pro 34.4 (Запись видео, холст во всё окно, ц�
                 if(UI.toggleRadarBtn) UI.toggleRadarBtn.addEventListener('click', function() { MODULE_STATE.isRadarActive = !MODULE_STATE.isRadarActive; if(MODULE_STATE.isRadarActive) { this.classList.add('active-yellow'); this.style.background = '#00ff66'; } else { this.classList.remove('active-yellow'); this.style.background = '#cc33ff'; MODULE_STATE.globalAngle = 0; } RENDERER.renderFrame(); });
                 if(UI.toggleTrackBtn) UI.toggleTrackBtn.addEventListener('click', function() { MODULE_STATE.isTrackRowActive = !MODULE_STATE.isTrackRowActive; if(MODULE_STATE.isTrackRowActive) { this.classList.add('active-red'); MODULE_STATE.trackedRowIndex = MODULE_STATE.currentIndex; MODULE_STATE.isCenterActive = false; UI.toggleCenterBtn.classList.remove('active-yellow'); } else { this.classList.remove('active-red'); MODULE_STATE.trackedRowIndex = -1; } RENDERER.renderFrame(); });
                 if(UI.toggleReverseBtn) UI.toggleReverseBtn.addEventListener('click', function() { MODULE_STATE.isReverse = !MODULE_STATE.isReverse; if(MODULE_STATE.isReverse) this.classList.add('active-green'); else this.classList.remove('active-green'); });
-                if(UI.timelineRange) UI.timelineRange.addEventListener('input', (e) => { if (MODULE_STATE.isPlaying) PLAYER.stop(); MODULE_STATE.currentIndex = parseInt(e.target.value, 10); RENDERER.renderFrame(); });
+                if(UI.timelineRange) UI.timelineRange.addEventListener('input', (e) => { if (MODULE_STATE.isPlaying) PLAYER.stop(); MODULE_STATE.currentIndex = parseInt(e.target.value, 10); scheduleRender(); });
                 if(UI.prevBtn) UI.prevBtn.addEventListener('click', () => { if (MODULE_STATE.isPlaying) PLAYER.stop(); if (MODULE_STATE.lines.length > 0) { MODULE_STATE.currentIndex = (MODULE_STATE.currentIndex - 1 + MODULE_STATE.lines.length) % MODULE_STATE.lines.length; RENDERER.renderFrame(); RENDERER.updateTimeline(); }});
                 if(UI.nextBtn) UI.nextBtn.addEventListener('click', () => { if (MODULE_STATE.isPlaying) PLAYER.stop(); if (MODULE_STATE.lines.length > 0) { MODULE_STATE.currentIndex = (MODULE_STATE.currentIndex + 1) % MODULE_STATE.lines.length; RENDERER.renderFrame(); RENDERER.updateTimeline(); }});
                 if(UI.stopBtn) UI.stopBtn.addEventListener('click', () => PLAYER.stop());
@@ -1816,9 +1821,9 @@ VERSION: Pro 34.4 (Запись видео, холст во всё окно, ц�
                 });
                 
                 if(UI.speedRange) { UI.speedRange.addEventListener('input', (e) => { const val = parseInt(e.target.value, 10); UI.speedVal.textContent = (1001 - val) + ' мс'; }); }
-                if(UI.fontSizeRange) UI.fontSizeRange.addEventListener('input', (e) => { if(UI.fontSizeVal) UI.fontSizeVal.textContent = e.target.value + 'px'; RENDERER.renderFrame(); });
-                if(UI.heightRange) UI.heightRange.addEventListener('input', (e) => { if(UI.heightVal) UI.heightVal.textContent = e.target.value; RENDERER.renderFrame(); });
-                if(UI.lineHeightRange) UI.lineHeightRange.addEventListener('input', (e) => { if(UI.lineHeightVal) UI.lineHeightVal.textContent = e.target.value; RENDERER.renderFrame(); });
+                if(UI.fontSizeRange) UI.fontSizeRange.addEventListener('input', (e) => { if(UI.fontSizeVal) UI.fontSizeVal.textContent = e.target.value + 'px'; scheduleRender(); });
+                if(UI.heightRange) UI.heightRange.addEventListener('input', (e) => { if(UI.heightVal) UI.heightVal.textContent = e.target.value; scheduleRender(); });
+                if(UI.lineHeightRange) UI.lineHeightRange.addEventListener('input', (e) => { if(UI.lineHeightVal) UI.lineHeightVal.textContent = e.target.value; scheduleRender(); });
                 if(UI.zerkaliusBtn) UI.zerkaliusBtn.addEventListener('click', () => MODULE_DATA.generateSierpinski());
                 
                 const rerenderEvents = [
@@ -1826,7 +1831,8 @@ VERSION: Pro 34.4 (Запись видео, холст во всё окно, ц�
                     UI.findDiagonalsCheck, UI.logicalOpSelect, UI.dualCoreCheck, UI.dualCoreSpeedInput, UI.dualMaskCheck, UI.freezeLayer1Check,
                     UI.activeColorPicker, UI.activeAlphaRange, UI.staticColorPicker, UI.staticAlphaRange, UI.fontSelect, UI.freezeScrollCheck, UI.spin3dCheck, UI.breathingZoomCheck, UI.autoPilotCheck, UI.speedMultInput, UI.rainbowTextCheck, UI.syntaxColorCheck
                 ];
-                rerenderEvents.forEach(el => { if(el) { el.addEventListener('change', () => RENDERER.renderFrame()); el.addEventListener('input', () => RENDERER.renderFrame()); }});
+                const scheduleRender = () => (window.__zerkScheduleRender || (() => RENDERER.renderFrame()))();
+                rerenderEvents.forEach(el => { if(el) { el.addEventListener('change', scheduleRender); el.addEventListener('input', scheduleRender); }});
                 // Запись: одна кнопка на старт и стоп, рядом счётчик времени.
                 if (UI.recBtn) {
                     UI.recBtn.addEventListener('click', () => {
