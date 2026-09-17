@@ -19,16 +19,27 @@ if errorlevel 1 (
   exit /b 1
 )
 
-if exist "%DIR%\.git" (
+rem A folder may carry a .git FILE instead of a folder - that is a worktree or a
+rem submodule, and its link can point to a path that does not exist on this
+rem machine. So we ask git itself instead of looking for the file.
+set "MODE=clone"
+if exist "%DIR%" (
+  pushd "%DIR%"
+  git rev-parse --is-inside-work-tree >nul 2>nul
+  if errorlevel 1 (set "MODE=link") else (set "MODE=pull")
+  popd
+)
+
+if "%MODE%"=="pull" (
   echo.
   echo === Updating %DIR% ===
   echo.
   cd "%DIR%"
   git pull origin main
-) else if exist "%DIR%" (
+) else if "%MODE%"=="link" (
   rem The folder is here but was never cloned: link it to GitHub in place.
   echo.
-  echo === Folder %DIR% exists but is not a git clone ===
+  echo === Folder %DIR% is not a working git clone ===
   echo Linking it to GitHub without deleting anything...
   echo.
   cd "%DIR%"
