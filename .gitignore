@@ -5,3 +5,6 @@ renders/**/*-frames/
 
 # промежуточные сцены сборки — из них склеивается финал, в репозиторий не нужны
 renders/masters/
+
+# мастер 1080p — 141 МБ, больше лимита GitHub: пересобирается из tools/assemble.sh
+renders/laniakea-1080p.mp4

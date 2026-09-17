@@ -58,7 +58,9 @@ const virtualClock = () => {
   }, SCENE);
   await page.waitForTimeout(1800);
 
-  await page.evaluate(() => document.getElementById('toggleRadarBtn')?.click());
+  // Сцены Карты Сокровищ несут собственный флаг радара: у «Hypnosis» он уже
+  // включён, и слепой клик его выключал. Включаем только если выключен.
+  await page.evaluate(() => { if (!MODULE_STATE.isRadarActive) document.getElementById('toggleRadarBtn')?.click(); });
   await page.waitForTimeout(1200);
   await page.evaluate(([font, rainbow, syntax]) => {
     const f = document.getElementById('fontSizeRange');
