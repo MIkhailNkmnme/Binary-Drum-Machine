@@ -16,12 +16,28 @@ const RECIPE = arg('recipe', 'k1');
 const OUT = __dirname + '/../renders/masters';
 
 const RECIPES = {
-  k1: { name:'CRT-терминал · кровь',
-        set:{ sierpRule:'xorora', sierpSeed:'11011', sierpRows:220, presetSelect:'blood',
-              fontSelect:"'VT323', monospace", frameCheck:false, showRowNumbersCheck:false } },
-  k2: { name:'CRT-терминал · янтарь',
-        set:{ sierpRule:'xorora', sierpSeed:'1101101', sierpRows:220, presetSelect:'amber',
-              fontSelect:"'VT323', monospace", frameCheck:false, showRowNumbersCheck:false } },
+  k1:    { name:'CRT · кровь', scroll:true,
+           set:{ sierpRule:'xorora', sierpSeed:'11011', sierpRows:220, presetSelect:'blood',
+                 fontSelect:"'VT323', monospace", frameCheck:false, showRowNumbersCheck:false } },
+  k2:    { name:'CRT · янтарь', scroll:true,
+           set:{ sierpRule:'xorora', sierpSeed:'1101101', sierpRows:220, presetSelect:'amber',
+                 fontSelect:"'VT323', monospace", frameCheck:false, showRowNumbersCheck:false } },
+  ghost: { name:'Призрак', scroll:true,
+           set:{ sierpRule:'shift', sierpSeed:'1011011', sierpRows:220, presetSelect:'bw',
+                 fillXCheck:true, hideUnchangedCheck:true, trailCheck:true,
+                 frameCheck:false, showRowNumbersCheck:false } },
+  xray:  { name:'Рентген', scroll:true,
+           set:{ sierpRule:'center', sierpSeed:'110110', sierpRows:220, presetSelect:'matrix',
+                 fillXCheck:true, conglomerateCheck:true,
+                 frameCheck:false, showRowNumbersCheck:false } },
+  radar: { name:'Радар', scroll:false,
+           set:{ sierpRule:'center', sierpSeed:'1101', sierpRows:200, presetSelect:'blood',
+                 radarCheck:true, funnelCheck:true, radarRotateSnapInput:7,
+                 frameCheck:false, showRowNumbersCheck:false } },
+  gpu:   { name:'Радар-воронка на GPU', scroll:false, gl:true,
+           set:{ sierpRule:'center', sierpSeed:'1101', sierpRows:200, presetSelect:'blood',
+                 radarCheck:true, funnelCheck:true, radarRotateSnapInput:5,
+                 frameCheck:false, showRowNumbersCheck:false } },
 };
 
 const virtualClock = () => {
@@ -55,18 +71,19 @@ const virtualClock = () => {
 
   // Генерация, затем кадрирование: экран ровно на высоту кадра. Порядок важен —
   // «Сгенерировать» пересчитывает экран под себя и затирает выставленное до него.
-  await page.evaluate(([set, font, rowsOnScreen]) => {
+  await page.evaluate(([set, font, rowsOnScreen, scroll]) => {
     const put = (id,v) => { const el=document.getElementById(id); if(!el) return;
       if (el.type==='checkbox'){ if(el.checked!==v) el.click(); }
       else { el.value=v; el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true})); } };
     for (const [k,v] of Object.entries(set)) put(k,v);
     document.getElementById('sierpBtn')?.click();
     put('fontSlider', font); put('lhSlider', 1); put('screenSlider', rowsOnScreen); put('speedSlider', 1000);
-    document.getElementById('playerModeBtn')?.click();   // скроллинг: поле едет, а не стоит
-  }, [r.set, FONT, Math.ceil(H / FONT) + 2]);
+    if (scroll) document.getElementById('playerModeBtn')?.click();  // поле едет, а не стоит
+  }, [r.set, FONT, Math.ceil(H / FONT) + 2, !!r.scroll]);
 
   // Движок ещё около полсекунды дотягивает сетку под пульт плеера — панели скрыты,
   // поэтому этот сдвиг только мешает. Обнуляем его последним действием перед съёмкой.
+  if (r.gl) { await page.evaluate(() => { const c = document.getElementById('webglRenderCheck'); if (c && !c.checked) c.click(); }); await page.waitForTimeout(1500); }
   await page.waitForTimeout(1600);
   await page.evaluate(() => { STATE.offsetY = 0; STATE.autoOffsetY = 0; STATE.offsetX = 0; STATE.autoOffsetX = 0; render(); });
   await page.waitForTimeout(300);
