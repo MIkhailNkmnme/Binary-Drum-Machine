@@ -23,7 +23,7 @@ zerk s02-bars008-032-k1           k1            96   1              # 8-32    о
 zerk s03-bars032-064-k1-fast      k1           128   2              # 32-64   вдвое чаще
 zerk s04-bars064-072-ghost        ghost         32   0.5            # 64-72   первый брейк
 zerk s05-bars072-096-xray         xray          96   1              # 72-96   цветной взрыв
-code s06-bars096-104-code         sourcecode    32   0.5            # 96-104  второй брейк: кольца кода
+code s06-bars096-104-code         sourcecode    32   0.5  --syntax  # 96-104  второй брейк: кольца кода
 code s07-bars104-118-wormhole     wormhole      56   1    --syntax  # 104-118 червоточина
 code s08-bars118-132-hypnosis     hypnosis      56   2    --syntax --reverse  # 118-132 туннель назад
 zerk s09-bars132-160-k1-rev       k1           112   2    --reverse # 132-160 кровь задом наперёд
