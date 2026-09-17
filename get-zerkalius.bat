@@ -25,6 +25,27 @@ if exist "%DIR%\.git" (
   echo.
   cd "%DIR%"
   git pull origin main
+) else if exist "%DIR%" (
+  rem The folder is here but was never cloned: link it to GitHub in place.
+  echo.
+  echo === Folder %DIR% exists but is not a git clone ===
+  echo Linking it to GitHub without deleting anything...
+  echo.
+  cd "%DIR%"
+  git init
+  git remote add origin "%REPO%" 2>nul
+  git fetch origin main
+  git checkout -B main origin/main
+  if errorlevel 1 (
+    echo.
+    echo Could not link: local files would be overwritten by the ones from GitHub.
+    echo Nothing was deleted. Rename this folder, for example to
+    echo   %DIR%-old
+    echo and run this file again - it will download a clean copy.
+    echo.
+    pause
+    exit /b 1
+  )
 ) else (
   echo.
   echo === Cloning into %DIR% ===
