@@ -459,7 +459,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 <!-- === МАРКЕР 06: ЗАГОЛОВОК НАЧАЛО === -->
     <div id="menuBar">
         <div style="display:flex; align-items:center; gap:6px; justify-self:start;">
-            <div id="appTitle"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.425 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
+            <div id="appTitle"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.424 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
             <a id="hubLink" href="index.html" title="К Хабу" style="text-decoration:none; font-size:14px; line-height:1;">🏠</a>
         </div>
         <div id="menuTabs">
@@ -1514,9 +1514,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             if (fType === 'tri_up') return { top: fy, bot: cy };
             return { top: fy, bot: fy + fh };
         }
-
-        // Таблицы косинусов/синусов для квантованного поворота глифов (см. радар).
-        let RENDER_ANGLE_TABLES = null;
 
         const STATE = {
             lines: [],          
@@ -9785,25 +9782,6 @@ safeBind('stopBtn', 'click', () => {
                     ctx.restore();
                 }
 
-                // Поворот глифа: у каждого символа в кольце свой угол, поэтому растровый кэш
-                // шрифта промахивается на каждом символе и глиф растрируется заново. Округляем
-                // сам поворот до конечного набора углов — позиция при этом остаётся точной.
-                // Шаг берём по кеглю: край глифа высотой h уезжает на h*delta/2, и это должно
-                // остаться меньше трети пикселя.
-                const ANG = (function (h) {
-                    let Q = 1 << Math.ceil(Math.log2(Math.max(1, 9 * h)));
-                    if (Q < 64) Q = 64; else if (Q > 1024) Q = 1024;
-                    RENDER_ANGLE_TABLES = RENDER_ANGLE_TABLES || new Map();
-                    let t = RENDER_ANGLE_TABLES.get(Q);
-                    if (!t) {
-                        const st = (Math.PI * 2) / Q, COS = new Float64Array(Q), SIN = new Float64Array(Q);
-                        for (let q = 0; q < Q; q++) { COS[q] = Math.cos(q * st); SIN[q] = Math.sin(q * st); }
-                        t = { Q, st, COS, SIN };
-                        RENDER_ANGLE_TABLES.set(Q, t);
-                    }
-                    return t;
-                })(baseFontSize * charScale * AUDIO_VISUALIZER.audioScale);
-
                 for (let i = 0; i < m.renderCount; i++) {
                     let actualIndex = (m.startIndex + i) % STATE.lines.length;
                     let lineData = STATE.lines[actualIndex];
@@ -9850,8 +9828,7 @@ safeBind('stopBtn', 'click', () => {
                             let cx = centerX + Math.cos(angle) * r;
                             let cy = centerY + Math.sin(angle) * r;
                             if (cx >= -cullPad && cx <= canvas.width + cullPad && cy >= -cullPad && cy <= canvas.height + cullPad) {
-                                const qa = ((Math.round(angle / ANG.st) % ANG.Q) + ANG.Q) % ANG.Q;
-                                const ca = ANG.COS[qa], sa = ANG.SIN[qa];
+                                const ca = Math.cos(angle), sa = Math.sin(angle);
                                 ctx.setTransform(-sa, ca, -ca, -sa, cx, cy);
                                 ctx.fillText(char, 0, 0);
                                 ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -9901,8 +9878,7 @@ safeBind('stopBtn', 'click', () => {
                         else if (isRingHovered) { ctx.shadowBlur = 10; ctx.shadowColor = rawColor0; ctx.font = `bold ${baseFontSize * charScale}px ${fontSelectVal}`; }
 
                         if (cx >= -cullPad && cx <= canvas.width + cullPad && cy >= -cullPad && cy <= canvas.height + cullPad) {
-                            const qa2 = ((Math.round(angle / ANG.st) % ANG.Q) + ANG.Q) % ANG.Q;
-                            const ca2 = ANG.COS[qa2], sa2 = ANG.SIN[qa2];
+                            const ca2 = Math.cos(angle), sa2 = Math.sin(angle);
                             ctx.setTransform(-sa2, ca2, -ca2, -sa2, cx, cy);
                             ctx.fillText(char, 0, 0);
                             ctx.setTransform(1, 0, 0, 1, 0, 0);

@@ -1,6 +1,11 @@
 // Замер скорости отрисовки радара в Zerkalius-code.html: сколько миллисекунд
 // уходит на кадр и сколько символов рисуется. Запускать при выключенном рендере,
 // иначе фоновая нагрузка исказит цифры.
+//
+// Важно: canvas в Chromium растрирует отложенно — вызовы fillText лишь копятся в
+// списке команд. Без принудительного сброса таймер ловит не отрисовку, а момент,
+// когда очередь случайно сбросилась, и цифры скачут на два порядка. Поэтому после
+// каждого кадра дёргаем getImageData: он ждёт, пока конвейер опустеет.
 const { chromium } = require('playwright');
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i+1] : d; };
 const W = +arg('w', 1920), H = +arg('h', 1080), N = +arg('frames', 40);
@@ -29,18 +34,19 @@ const W = +arg('w', 1920), H = +arg('h', 1080), N = +arg('frames', 40);
 
   const stats = await page.evaluate(async n => {
     // считаем символы: перехватываем fillText на один кадр
-    const ctx = document.getElementById('mainCanvas')?.getContext('2d')
-             || document.querySelector('canvas').getContext('2d');
+    const ctx = UI.ctx;
     let chars = 0;
     const orig = ctx.fillText.bind(ctx);
     ctx.fillText = function (...a) { chars++; return orig(...a); };
     RENDERER.renderFrame();
     ctx.fillText = orig;
 
+    const flush = () => ctx.getImageData(0, 0, 1, 1);
     const t = [];
     for (let i = 0; i < n; i++) {
       const t0 = performance.now();
       RENDERER.renderFrame();
+      flush();
       t.push(performance.now() - t0);
     }
     t.sort((a, b) => a - b);

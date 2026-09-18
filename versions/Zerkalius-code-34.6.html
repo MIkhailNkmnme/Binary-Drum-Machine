@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 34.7 (Запись видео, холст во всё окно, цвет как код)
+VERSION: Pro 34.6 (Запись видео, холст во всё окно, цвет как код)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 34.7)</title>
+    <title>Binary Drum Machine (Zerkalius 34.6)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -190,7 +190,7 @@ VERSION: Pro 34.7 (Запись видео, холст во всё окно, ц�
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 34.7)</h3>
+                <h3>Binary Drum Machine (Pro 34.6)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
@@ -1214,31 +1214,6 @@ VERSION: Pro 34.7 (Запись видео, холст во всё окно, ц�
                 }
                 if (UI.timelineVal && UI.timelineVal.textContent !== text) UI.timelineVal.textContent = text;
             },
-            // Строка rgba() собиралась заново на каждый символ: при мелком кегле это
-            // десятки тысяч коротких строк за кадр — отсюда и паузы сборщика раз в пару
-            // секунд. Кэш двухуровневый: общий ключ пришлось бы склеивать, а склейка
-            // сама была бы тем же мусором.
-            _angTables: new Map(),
-            angleTable: function(fontSize) {
-                let Q = 1 << Math.ceil(Math.log2(Math.max(1, 9 * fontSize)));
-                if (Q < 64) Q = 64; else if (Q > 1024) Q = 1024;
-                let t = this._angTables.get(Q);
-                if (t === undefined) {
-                    const st = (Math.PI * 2) / Q, COS = new Float64Array(Q), SIN = new Float64Array(Q);
-                    for (let q = 0; q < Q; q++) { COS[q] = Math.cos(q * st); SIN[q] = Math.sin(q * st); }
-                    t = { Q, st, COS, SIN };
-                    this._angTables.set(Q, t);
-                }
-                return t;
-            },
-            _rgba: new Map(),
-            rgba: function(rgb, alpha) {
-                let byAlpha = this._rgba.get(rgb);
-                if (byAlpha === undefined) { byAlpha = new Map(); this._rgba.set(rgb, byAlpha); }
-                let s = byAlpha.get(alpha);
-                if (s === undefined) { s = `rgba(${rgb}, ${alpha})`; byAlpha.set(alpha, s); }
-                return s;
-            },
             hexToRgb: function(hex) {
                 let r = 0, g = 0, b = 0;
                 if (hex.length === 7) { r = parseInt(hex.slice(1, 3), 16); g = parseInt(hex.slice(3, 5), 16); b = parseInt(hex.slice(5, 7), 16); }
@@ -1334,15 +1309,10 @@ VERSION: Pro 34.7 (Запись видео, холст во всё окно, ц�
                     const cullPad = fontSize * 2;
                     const maxVisibleR = Math.hypot(Math.max(centerX, width - centerX),
                                                    Math.max(centerY, height - centerY)) + cullPad;
-                    // Цвет и тень на каждый символ переставлялись заново, даже когда не менялись.
+                    // Цвет и тень на каждый символ переставлялись заново, даже когда не менялись,
+                    // а строка rgba() собиралась заново на каждый символ — кэшируем и то и другое.
+                    const rgbaCache = RENDERER._rgbaCache || (RENDERER._rgbaCache = new Map());
                     let lastFill = null, lastBlur = -1, lastShadowCol = null;
-                    // Поворот глифа: у каждого символа в кольце свой угол, из-за чего растровый
-                    // кэш шрифта промахивается на каждом символе и глиф рисуется заново.
-                    // Округляем сам поворот до 1/ANG_Q оборота (позиция остаётся точной) —
-                    // на глаз неотличимо, а вариантов растра становится конечное число.
-                    // Шаг берём по кеглю: край глифа высотой h уезжает на h*delta/2, и чтобы
-                    // это оставалось меньше трети пикселя, крупному шрифту нужен шаг мельче.
-                    const ANG_Q = RENDERER.angleTable(fontSize);
                     const tinyGlyph = fontSize <= 3;
                     const tinySize = Math.max(1, Math.round(fontSize)), tinyHalf = tinySize / 2;
 
@@ -1429,7 +1399,9 @@ VERSION: Pro 34.7 (Запись видео, холст во всё окно, ц�
                             if (cx < -cullPad || cx > width + cullPad || cy < -cullPad || cy > height + cullPad) continue;
 
                             if (11 > fontSize) charShadowBlur = 0; 
-                            const rgbaStr = this.rgba(cRgb, cAlpha);
+                            const key = cRgb + '|' + cAlpha;
+                            let rgbaStr = rgbaCache.get(key);
+                            if (rgbaStr === undefined) { rgbaStr = `rgba(${cRgb}, ${cAlpha})`; rgbaCache.set(key, rgbaStr); }
                             if (rgbaStr !== lastFill) { ctx.fillStyle = rgbaStr; lastFill = rgbaStr; }
                             if (charShadowBlur !== lastBlur) { ctx.shadowBlur = charShadowBlur; lastBlur = charShadowBlur; }
                             if (charShadowBlur > 0) {
@@ -1444,9 +1416,7 @@ VERSION: Pro 34.7 (Запись видео, холст во всё окно, ц�
                                 ctx.fillRect(cx - tinyHalf, cy - tinyHalf, tinySize, tinySize);
                             } else {
                                 // поворот символа вдоль кольца: одна матрица вместо save/rotate/restore
-                                const q = ((Math.round(a / ANG_Q.st) % ANG_Q.Q) + ANG_Q.Q) % ANG_Q.Q;
-                                const cq = ANG_Q.COS[q], sq = ANG_Q.SIN[q];
-                                ctx.setTransform(-sq, cq, -cq, -sq, cx, cy);
+                                ctx.setTransform(-sa, ca, -ca, -sa, cx, cy);
                                 ctx.fillText(finalChar, 0, 0);
                             }
                         }
@@ -1476,10 +1446,6 @@ VERSION: Pro 34.7 (Запись видео, холст во всё окно, ц�
                     }
                 }
 
-                // Вариантов начертания всего два — собираем строки один раз на кадр,
-                // а не на каждый символ.
-                const fontNormal = `normal ${fontSize}px ${selectedFont}`;
-                const fontBold = `bold ${fontSize}px ${selectedFont}`;
                 let lastFont = ""; let lastFillStyle = ""; let lastShadowBlur = -1; let lastShadowColor = "";
 
                 for (let i = 0; i < visibleHeight; i++) {
@@ -1541,7 +1507,7 @@ VERSION: Pro 34.7 (Запись видео, холст во всё окно, ц�
                         if (isCollision) isChanged = true;
 
                         const isCharBold = (findDiagonals && boldMask[i] && boldMask[i][actualIdx]);
-                        const currentFont = isCharBold ? fontBold : fontNormal;
+                        const currentFont = `${isCharBold ? 'bold' : 'normal'} ${fontSize}px ${selectedFont}`;
                         if (lastFont !== currentFont) { ctx.font = currentFont; lastFont = currentFont; }
                         
                         let cRgb = isChanged ? actRgb : statRgb; let cAlpha = isChanged ? actAlpha : statAlpha;
@@ -1574,7 +1540,7 @@ VERSION: Pro 34.7 (Запись видео, холст во всё окно, ц�
                         if (hideStatic && !isChanged && !isCollision) cAlpha = 0.0;
                         if (cAlpha <= 0.01) continue; 
 
-                        const rgbaStr = this.rgba(cRgb, cAlpha);
+                        let rgbaStr = `rgba(${cRgb}, ${cAlpha})`;
                         if (11 > fontSize) charShadowBlur = 0; 
                         
                         if (lastFillStyle !== rgbaStr) { ctx.fillStyle = rgbaStr; lastFillStyle = rgbaStr; }
