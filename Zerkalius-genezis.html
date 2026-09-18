@@ -459,7 +459,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 <!-- === МАРКЕР 06: ЗАГОЛОВОК НАЧАЛО === -->
     <div id="menuBar">
         <div style="display:flex; align-items:center; gap:6px; justify-self:start;">
-            <div id="appTitle"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.423 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
+            <div id="appTitle"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.424 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
             <a id="hubLink" href="index.html" title="К Хабу" style="text-decoration:none; font-size:14px; line-height:1;">🏠</a>
         </div>
         <div id="menuTabs">
@@ -5207,6 +5207,27 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
             if (rule === "xorora") {
                 let steps = parseInt(seed) || 32;
+
+                // ПРЕДОХРАНИТЕЛЬ. Сид здесь — двоичная строка, но читается как десятичное
+                // число: «1101101» превращается в 1 101 101 шагов. Каждая лишняя цифра
+                // умножает работу на десять, а ширина сетки растёт вместе с шагами, и
+                // при миллионе шагов массив занимает сотни мегабайт — вкладка умирает.
+                // Стоимость одной ветви примерно пропорциональна квадрату числа строк,
+                // поэтому ограничиваем не число шагов, а общий объём работы: при малом
+                // числе строк шагов позволено больше. Всё, что укладывалось в бюджет
+                // раньше, считается как считалось — обрезаются только те сиды, которые
+                // и так не досчитывались никогда.
+                const WORK_BUDGET = 5e8;
+                const maxSteps = Math.max(1, Math.min(50000, Math.floor(WORK_BUDGET / Math.max(1, rows * rows))));
+                if (steps > maxSteps) {
+                    const asked = steps;
+                    steps = maxSteps;
+                    showNotification(`СИД ${seed} = ${asked.toLocaleString('ru')} ШАГОВ — ОБРЕЗАНО ДО ${maxSteps.toLocaleString('ru')}`);
+                    console.warn(`[Серпинский] Сид «${seed}» читается как десятичное число ${asked}, ` +
+                        `то есть ${asked.toLocaleString('ru')} шагов. При ${rows} строках это повесило бы вкладку, ` +
+                        `поэтому обрезано до ${maxSteps}. Возьмите сид короче.`);
+                }
+
                 let width = (steps * 2) + (rows * 2) + 100;
                 let center = Math.floor(width / 2);
                 
