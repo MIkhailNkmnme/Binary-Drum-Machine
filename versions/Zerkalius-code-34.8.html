@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 34.9 (Запись видео, холст во всё окно, цвет как код)
+VERSION: Pro 34.8 (Запись видео, холст во всё окно, цвет как код)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 34.9)</title>
+    <title>Binary Drum Machine (Zerkalius 34.8)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -190,7 +190,7 @@ VERSION: Pro 34.9 (Запись видео, холст во всё окно, ц�
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 34.9)</h3>
+                <h3>Binary Drum Machine (Pro 34.8)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
@@ -648,7 +648,7 @@ VERSION: Pro 34.9 (Запись видео, холст во всё окно, ц�
             algoPointer: 0, alignMode: 'center', globalAngle: 0, breathTime: 0,
             isDragging: false, hasMoved: false, dragStartX: 0, dragStartY: 0, 
             offsetX: 0, offsetY: 0, startOffsetX: 0, startOffsetY: 0,
-            bassHistory: [], framesSinceChange: 0, uiDirty: false,
+            bassHistory: [], framesSinceChange: 0,
             foundPatterns: new Set(),
             mutationTracker: [], animatrixRow: 0
         };
@@ -1284,11 +1284,6 @@ VERSION: Pro 34.9 (Запись видео, холст во всё окно, ц�
                 return `${r}, ${g}, ${b}`;
             },
             renderFrame: function() {
-                // Любая перерисовка закрывает отложенный запрос от интерфейса: иначе
-                // во время воспроизведения кадр рисовался дважды — один раз циклом
-                // проигрывателя, второй раз обработчиком ввода, и прокрутка колеса
-                // удваивала и без того тяжёлый кадр.
-                MODULE_STATE.uiDirty = false;
                 AUDIO_VISUALIZER.update();
 
                 if (MODULE_STATE.lines.length === 0) {
@@ -1849,18 +1844,10 @@ VERSION: Pro 34.9 (Запись видео, холст во всё окно, ц�
                     // ввода летят пачками (перетаскивание ползунка — это десятки событий
                     // в секунду), а раньше каждое вызывало полную перерисовку и они
                     // выстраивались в очередь, задерживая отклик на сотни миллисекунд.
-                    // Проигрыватель уже рисует кадр в своём цикле, поэтому запрос от
-                    // интерфейса — это пометка «картинка устарела»: если кадр в этом
-                    // такте всё равно нарисуется, второй раз рисовать нечего.
                     let uiRaf = 0;
                     const scheduleWheelRender = () => {
-                        MODULE_STATE.uiDirty = true;
                         if (uiRaf) return;
-                        uiRaf = requestAnimationFrame(() => {
-                            uiRaf = 0;
-                            if (!MODULE_STATE.uiDirty) return;   // проигрыватель успел раньше
-                            RENDERER.renderFrame();
-                        });
+                        uiRaf = requestAnimationFrame(() => { uiRaf = 0; RENDERER.renderFrame(); });
                     };
                     window.__zerkScheduleRender = scheduleWheelRender;
                     UI.canvas.addEventListener('wheel', function(e) { if (MODULE_STATE.lines.length === 0) return; e.preventDefault(); if(UI.fontSizeRange) { let size = parseInt(UI.fontSizeRange.value, 10); if (0 > e.deltaY) size = Math.min(100, size + 1); else size = Math.max(1, size - 1);  UI.fontSizeRange.value = size; if(UI.fontSizeVal) UI.fontSizeVal.textContent = size + "px"; } scheduleWheelRender(); }, { passive: false });

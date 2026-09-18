@@ -459,7 +459,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 <!-- === МАРКЕР 06: ЗАГОЛОВОК НАЧАЛО === -->
     <div id="menuBar">
         <div style="display:flex; align-items:center; gap:6px; justify-self:start;">
-            <div id="appTitle"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.426 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
+            <div id="appTitle"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.425 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
             <a id="hubLink" href="index.html" title="К Хабу" style="text-decoration:none; font-size:14px; line-height:1;">🏠</a>
         </div>
         <div id="menuTabs">
@@ -1520,7 +1520,6 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
         const STATE = {
             lines: [],          
-            uiDirty: false,     // интерфейс попросил перерисовку, а кадр ещё не нарисован
             globalStep: 0,
             maxCycle: 1,
             isPlaying: false,
@@ -9546,22 +9545,12 @@ safeBind('stopBtn', 'click', () => {
         // работа; копим изменения и рисуем не чаще частоты кадров.
         let renderQueued = false;
         function requestRender() {
-            // Во время воспроизведения кадр и так рисуется в цикле, поэтому запрос от
-            // интерфейса — это пометка «картинка устарела». Иначе прокрутка колеса
-            // рисовала кадр дважды: один раз циклом, второй раз обработчиком.
-            STATE.uiDirty = true;
             if (renderQueued) return;
             renderQueued = true;
-            requestAnimationFrame(() => {
-                renderQueued = false;
-                if (!STATE.uiDirty) return;   // цикл успел раньше
-                render();
-            });
+            requestAnimationFrame(() => { renderQueued = false; render(); });
         }
 
         function render() {
-            // Любая перерисовка закрывает отложенный запрос от интерфейса.
-            STATE.uiDirty = false;
             const canvas = UI.canvas;
             const container = UI.container;
             const ctx = UI.ctx;
