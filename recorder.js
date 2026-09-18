@@ -94,11 +94,55 @@
             return out.sort((a, b) => b.sid - a.sid);
         },
 
-        async assemble(sid) {
-            await this.open();
-            const rows = await this.wrap(this.index().getAll(sid));
-            rows.sort((a, b) => a.seq - b.seq);
-            return rows.map(r => r.blob);
+        assemble(sid) {
+            // Через ту же очередь, что и записи: иначе сборка успевает начаться
+            // раньше, чем последний кусок ляжет на диск, и хвост записи теряется.
+            return this.chain(async () => {
+                await this.open();
+                const rows = await this.wrap(this.index().getAll(sid));
+                rows.sort((a, b) => a.seq - b.seq);
+                // В первом куске лежит заголовок файла. Без него видео не открывает
+                // ни один проигрыватель, поэтому оборванную с начала цепочку честнее
+                // вернуть пустой, чем отдать обломок, который выглядит как видео.
+                if (!rows.length || rows[0].seq !== 0) return [];
+                return rows.map(r => r.blob);
+            });
+        },
+
+        /* Приёмник кусков одной записи.
+
+           Куски нельзя делить между памятью и диском: хранилище готово не мгновенно,
+           а заголовок браузер отдаёт одним из первых кусков. Если ранние ушли в
+           память, а поздние на диск, собранный с диска файл оказывается без
+           заголовка — ровно так и получалось видео, которое не открывалось.
+           Поэтому до подтверждения готовности куски ждут в памяти и уходят на диск
+           все разом, начиная с нулевого. */
+        sink(sid, meta) {
+            const V = this;
+            const waiting = [];
+            let ready = false, broken = false, seq = 0;
+            const flush = () => {
+                while (ready && !broken && waiting.length) {
+                    const blob = waiting.shift();
+                    V.put(sid, seq++, blob).catch(() => { broken = true; });
+                }
+            };
+            const started = V.begin(sid, meta).then(() => { ready = true; flush(); },
+                                                    () => { broken = true; });
+            return {
+                get onDisk() { return ready && !broken; },
+                push(blob) { waiting.push(blob); flush(); },
+                async finish() {
+                    await started.catch(() => {});
+                    flush();
+                    // На диске лежит начало записи, в памяти — хвост, который туда не
+                    // успел (или не смог). Порядок между ними известен, поэтому просто
+                    // складываем: что бы ни отвалилось, запись собирается целиком.
+                    const parts = seq > 0 ? await V.assemble(sid).catch(() => []) : [];
+                    return parts.concat(waiting);
+                },
+                drop() { return V.drop(sid).catch(() => {}); }
+            };
         },
 
         async drop(sid) {
@@ -123,8 +167,8 @@
     });
 
     const REC = {
-        rec: null, chunks: [], startedAt: 0, timer: null, mime: '', raf: 0, mix: null, noticeTo: null,
-        sid: 0, seq: 0, vaulted: false, flushTimer: null,
+        rec: null, startedAt: 0, timer: null, mime: '', raf: 0, mix: null, noticeTo: null,
+        sid: 0, sink: null,
 
         pickMime() {
             const want = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4',
@@ -190,31 +234,17 @@
             if (!this.mix) { this.notify('ХОЛСТ НЕ НАЙДЕН'); return false; }
             const at = this.audioTrack();
             if (at) this.mix.stream.addTrack(at);
-            this.chunks = [];
-            this.sid = Date.now(); this.seq = 0; this.vaulted = false;
-            const name = this.fileBase();
-            // Пробуем хранилище заранее: если IndexedDB недоступна (приватное окно,
-            // запрет на сайте), пишем по-старому в память и честно говорим об этом.
-            VAULT.begin(this.sid, { mime: this.mime, startedAt: this.sid, name })
-                 .then(() => { this.vaulted = true; })
-                 .catch(() => { this.vaulted = false; this.notify('ПАМЯТЬ ВКЛАДКИ — НЕ ЗАКРЫВАЙТЕ'); });
+            this.sid = Date.now();
+            this.sink = VAULT.sink(this.sid, { mime: this.mime, startedAt: this.sid, name: this.fileBase(this.sid) });
 
             this.rec = new MediaRecorder(this.mix.stream, { mimeType: this.mime, videoBitsPerSecond: 16000000 });
-            this.rec.ondataavailable = e => {
-                if (!e.data || !e.data.size) return;
-                if (this.vaulted) VAULT.put(this.sid, this.seq++, e.data).catch(() => { this.vaulted = false; this.chunks.push(e.data); });
-                else this.chunks.push(e.data);
-            };
+            this.rec.ondataavailable = e => { if (e.data && e.data.size) this.sink.push(e.data); };
             this.rec.onstop = () => this.save();
+            // Шаг в start(1000) соблюдает только webm: mp4-муксер Chrome копит кадры у
+            // себя и отдаёт их примерно раз в три секунды, а на requestData() отвечает
+            // пустыми кусками. Столько и потеряется, если вкладку всё-таки оборвут.
             this.rec.start(1000);
             this.startedAt = Date.now();
-            // Шаг в start(1000) mp4-муксер Chrome не соблюдает: он копит кадры у себя и
-            // отдаёт их, когда сочтёт нужным — при обрыве на диск успевает лечь слишком
-            // мало. Просим сбросить буфер сами, раз в две секунды.
-            clearInterval(this.flushTimer);
-            this.flushTimer = setInterval(() => {
-                try { if (this.rec && this.rec.state === 'recording') this.rec.requestData(); } catch (e) {}
-            }, 2000);
             // Вкладку, закрытую во время записи, браузер сам не удержит — просим его
             // переспросить. Это и есть та самая пятая минута, которая пропала.
             window.addEventListener('beforeunload', guardUnload);
@@ -222,7 +252,6 @@
         },
 
         stop() {
-            clearInterval(this.flushTimer); this.flushTimer = null;
             if (this.rec && this.rec.state !== 'inactive') this.rec.stop();
             this.rec = null;
             if (this.mix) { this.mix.stop(); this.mix = null; }
@@ -248,6 +277,18 @@
             return `${name}-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
         },
 
+        // Файл обязан начинаться с заголовка. Если первым идёт фрагмент, значит
+        // потерялось начало записи и такое видео не откроет ни один проигрыватель —
+        // честнее сказать это сразу и пометить файл, чем отдать его молча.
+        async hasHeader(parts) {
+            if (!parts.length) return false;
+            try {
+                const head = new Uint8Array(await parts[0].slice(0, 8).arrayBuffer());
+                const typ = String.fromCharCode(head[4], head[5], head[6], head[7]);
+                return typ !== 'moof' && typ !== 'mdat';
+            } catch (e) { return true; }
+        },
+
         download(parts, mime, base) {
             if (!parts.length) return false;
             const ext = (mime || '').startsWith('video/mp4') ? 'mp4' : 'webm';
@@ -260,14 +301,14 @@
         },
 
         async save() {
-            const sid = this.sid, mime = this.mime;
-            if (this.vaulted) {
-                try {
-                    const parts = await VAULT.assemble(sid);
-                    if (this.download(parts, mime, this.fileBase(sid))) { await VAULT.drop(sid); return; }
-                } catch (e) { /* дальше попробуем из памяти */ }
-            }
-            if (this.download(this.chunks, mime, this.fileBase(sid))) this.chunks = [];
+            const sink = this.sink, sid = this.sid;
+            if (!sink) return;
+            this.sink = null;
+            const parts = await sink.finish();
+            if (!parts.length) { this.notify('ЗАПИСЬ ПУСТА'); return; }
+            const ok = await this.hasHeader(parts);
+            if (this.download(parts, this.mime, this.fileBase(sid) + (ok ? '' : '-BEZ-ZAGOLOVKA'))) await sink.drop();
+            if (!ok) this.notify('ЗАПИСЬ БЕЗ ЗАГОЛОВКА — НЕ ОТКРОЕТСЯ');
         },
 
         // Недописанные записи прошлых сеансов: вкладку закрыли, остановка не
@@ -280,7 +321,8 @@
 
         async recoverOne(sess) {
             const parts = await VAULT.assemble(sess.sid);
-            const ok = this.download(parts, sess.mime, (sess.name || this.fileBase(sess.startedAt)) + '-vosstanovleno');
+            const base = (sess.name || this.fileBase(sess.startedAt)) + '-vosstanovleno';
+            const ok = this.download(parts, sess.mime, base);
             await VAULT.drop(sess.sid);
             return ok;
         },
