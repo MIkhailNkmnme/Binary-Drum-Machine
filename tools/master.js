@@ -23,8 +23,11 @@ const RECIPES = {
   k1:    { name:'CRT · кровь', scroll:true,
            set:{ sierpRule:'xorora', sierpSeed:'11011', sierpRows:220, presetSelect:'blood',
                  fontSelect:"'VT323', monospace", frameCheck:false, showRowNumbersCheck:false } },
+  // Сид 1101101 вешал генератор насмерть: XorRora на некоторых сидах растёт
+  // лавинообразно и убивает вкладку (проверено — 110101 и 1011011 тоже).
+  // 10110 даёт 220 строк за 3.7 секунды.
   k2:    { name:'CRT · янтарь', scroll:true,
-           set:{ sierpRule:'xorora', sierpSeed:'1101101', sierpRows:220, presetSelect:'amber',
+           set:{ sierpRule:'xorora', sierpSeed:'10110', sierpRows:220, presetSelect:'amber',
                  fontSelect:"'VT323', monospace", frameCheck:false, showRowNumbersCheck:false } },
   ghost: { name:'Призрак', scroll:true,
            set:{ sierpRule:'shift', sierpSeed:'1011011', sierpRows:220, presetSelect:'bw',

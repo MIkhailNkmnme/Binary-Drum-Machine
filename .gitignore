@@ -8,3 +8,6 @@ renders/masters/
 
 # мастер 1080p — 141 МБ, больше лимита GitHub: пересобирается из tools/assemble.sh
 renders/laniakea-1080p.mp4
+
+# мастер 1080p третьего ролика — 146 МБ, больше лимита GitHub
+renders/merlin-1080p.mp4
