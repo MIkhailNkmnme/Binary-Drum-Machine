@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 34.8 (Запись видео, холст во всё окно, цвет как код)
+VERSION: Pro 34.7 (Запись видео, холст во всё окно, цвет как код)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 34.8)</title>
+    <title>Binary Drum Machine (Zerkalius 34.7)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -190,7 +190,7 @@ VERSION: Pro 34.8 (Запись видео, холст во всё окно, ц�
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 34.8)</h3>
+                <h3>Binary Drum Machine (Pro 34.7)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
@@ -446,7 +446,6 @@ VERSION: Pro 34.8 (Запись видео, холст во всё окно, ц�
         // визуализатор, поэтому анализатор продолжает работать.
         const RECORDER = {
             rec: null, chunks: [], startedAt: 0, timer: null, mime: '', _noticeTo: null,
-            sid: 0, seq: 0, vaulted: false, flushTimer: null,
             // Своё короткое сообщение: функции уведомлений в этой машине нет.
             notify(text) {
                 const el = document.getElementById('recTimer');
@@ -477,63 +476,25 @@ VERSION: Pro 34.8 (Запись видео, холст во всё окно, ц�
                 const at = this.audioTrack();
                 if (at) stream.addTrack(at);
                 this.chunks = [];
-                this.sid = Date.now(); this.seq = 0; this.vaulted = false;
-                // Куски уходят на диск сразу: раньше они лежали в памяти вкладки и
-                // превращались в файл только при остановке — закрытая посреди записи
-                // вкладка уносила всё. Хранилище общее, из recorder.js.
-                const V = window.__zerkVault;
-                if (V) V.begin(this.sid, { mime: this.mime, startedAt: this.sid, name: this.fileBase(this.sid) })
-                        .then(() => { this.vaulted = true; })
-                        .catch(() => { this.vaulted = false; this.notify('ПАМЯТЬ ВКЛАДКИ — НЕ ЗАКРЫВАЙТЕ'); });
-
                 this.rec = new MediaRecorder(stream, { mimeType: this.mime, videoBitsPerSecond: 16000000 });
-                this.rec.ondataavailable = e => {
-                    if (!e.data || !e.data.size) return;
-                    if (this.vaulted) V.put(this.sid, this.seq++, e.data).catch(() => { this.vaulted = false; this.chunks.push(e.data); });
-                    else this.chunks.push(e.data);
-                };
+                this.rec.ondataavailable = e => { if (e.data && e.data.size) this.chunks.push(e.data); };
                 this.rec.onstop = () => this.save();
                 this.rec.start(1000);
                 this.startedAt = Date.now();
-                // Шаг в start(1000) mp4-муксер Chrome не соблюдает: он копит кадры у себя и
-                // отдаёт их, когда сочтёт нужным — при обрыве на диск успевает лечь слишком
-                // мало. Просим сбросить буфер сами, раз в две секунды.
-                clearInterval(this.flushTimer);
-                this.flushTimer = setInterval(() => {
-                    try { if (this.rec && this.rec.state === 'recording') this.rec.requestData(); } catch (e) {}
-                }, 2000);
-                window.__zerkRecGuard?.on();
                 return true;
             },
-            stop() {
-                clearInterval(this.flushTimer); this.flushTimer = null;
-                if (this.rec && this.rec.state !== 'inactive') this.rec.stop();
-                this.rec = null;
-                window.__zerkRecGuard?.off();
-            },
-            fileBase(at) {
-                const d = at ? new Date(at) : new Date(), pad = n => String(n).padStart(2, '0');
-                return `zerkalius-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
-            },
-            download(parts, base) {
-                if (!parts.length) return false;
+            stop() { if (this.rec && this.rec.state !== 'inactive') this.rec.stop(); this.rec = null; },
+            save() {
+                if (!this.chunks.length) return;
                 const ext = this.mime.startsWith('video/mp4') ? 'mp4' : 'webm';
+                const blob = new Blob(this.chunks, { type: this.mime });
                 const a = document.createElement('a');
-                a.download = `${base}.${ext}`;
-                a.href = URL.createObjectURL(new Blob(parts, { type: this.mime }));
+                const d = new Date(), pad = n => String(n).padStart(2, '0');
+                a.download = `zerkalius-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.${ext}`;
+                a.href = URL.createObjectURL(blob);
                 a.click();
                 setTimeout(() => URL.revokeObjectURL(a.href), 30000);
-                return true;
-            },
-            async save() {
-                const V = window.__zerkVault, sid = this.sid;
-                if (this.vaulted && V) {
-                    try {
-                        const parts = await V.assemble(sid);
-                        if (this.download(parts, this.fileBase(sid))) { await V.drop(sid); return; }
-                    } catch (e) { /* дальше попробуем из памяти */ }
-                }
-                if (this.download(this.chunks, this.fileBase(sid))) this.chunks = [];
+                this.chunks = [];
             }
         };
 
@@ -1982,7 +1943,6 @@ VERSION: Pro 34.8 (Запись видео, холст во всё окно, ц�
             }
         };
     </script>
-    <script src="recorder.js"></script>
     <script src="hub-link.js"></script>
 </body>
 </html>

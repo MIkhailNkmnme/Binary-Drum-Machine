@@ -10,9 +10,112 @@
    Звук подмешивается, если страница уже построила аудиограф для визуализатора:
    берём тот же источник, поэтому анализатор продолжает работать. Если графа
    нет, но играет <audio> — пробуем его напрямую.
+
+   Запись не живёт в памяти вкладки: каждый кусок сразу уходит в IndexedDB, и
+   закрытая посреди записи вкладка её больше не уносит — при следующем открытии
+   страница сама предложит сохранить недописанное.
    =========================================================================== */
 (function () {
     if (window.__zerkRecorder) return;
+
+    /* ---------------------------------------------------------------------
+       Хранилище кусков.
+
+       Раньше куски копились в массиве и превращались в файл только в момент
+       остановки: закрытая на пятой минуте вкладка уносила всё, на диске не
+       оставалось ничего — собирать было не из чего. Теперь каждый кусок сразу
+       ложится в IndexedDB, которая переживает и закрытие вкладки, и перезапуск
+       браузера. Заодно уходит расход памяти: на 16 Мбит/с пять минут записи —
+       это больше полугигабайта, который прежде целиком лежал в куче вкладки.
+       --------------------------------------------------------------------- */
+    const VAULT = {
+        db: null, ready: null, tail: Promise.resolve(),
+
+        open() {
+            if (this.ready) return this.ready;
+            this.ready = new Promise((res, rej) => {
+                let rq;
+                try { rq = indexedDB.open('zerkalius-rec', 1); } catch (e) { return rej(e); }
+                rq.onupgradeneeded = () => {
+                    const db = rq.result;
+                    if (!db.objectStoreNames.contains('chunks')) {
+                        db.createObjectStore('chunks', { keyPath: 'id', autoIncrement: true })
+                          .createIndex('sid', 'sid');
+                    }
+                    if (!db.objectStoreNames.contains('sessions')) db.createObjectStore('sessions', { keyPath: 'sid' });
+                };
+                rq.onsuccess = () => { this.db = rq.result; res(this.db); };
+                rq.onerror = () => rej(rq.error);
+            }).catch(e => { this.ready = null; throw e; });
+            return this.ready;
+        },
+
+        wrap(rq) { return new Promise((res, rej) => { rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error); }); },
+
+        // Записи выстроены в одну цепочку: порядок кусков в файле обязан совпасть
+        // с порядком, в котором их отдал MediaRecorder.
+        chain(fn) { this.tail = this.tail.then(fn, fn); return this.tail; },
+
+        begin(sid, meta) {
+            return this.chain(async () => {
+                await this.open();
+                return this.wrap(this.db.transaction('sessions', 'readwrite').objectStore('sessions').put({ sid, ...meta }));
+            });
+        },
+
+        put(sid, seq, blob) {
+            return this.chain(async () => {
+                await this.open();
+                // Время кладём в сам кусок: считать длину по их числу нельзя, браузер
+                // отдаёт куски неравномерно, а вести счётчик в записи сеанса — лишняя
+                // запись в базу на каждый сброс.
+                return this.wrap(this.db.transaction('chunks', 'readwrite').objectStore('chunks').add({ sid, seq, blob, at: Date.now() }));
+            });
+        },
+
+        index() { return this.db.transaction('chunks').objectStore('chunks').index('sid'); },
+
+        async sessions() {
+            await this.open();
+            const all = await this.wrap(this.db.transaction('sessions').objectStore('sessions').getAll());
+            const out = [];
+            for (const s of all) {
+                // Транзакция на каждый запрос своя: одна, растянутая через await,
+                // закрывается сама, как только цепочка запросов прервётся, и
+                // следующее обращение к ней падает.
+                s.chunks = await this.wrap(this.index().count(s.sid));
+                if (!s.chunks) continue;
+                // Длину берём по времени последнего куска: по их числу считать
+                // нельзя, браузер отдаёт куски неравномерно.
+                const last = await this.wrap(this.index().openCursor(IDBKeyRange.only(s.sid), 'prev'));
+                s.ms = last && last.value.at ? last.value.at - s.startedAt : 0;
+                out.push(s);
+            }
+            return out.sort((a, b) => b.sid - a.sid);
+        },
+
+        async assemble(sid) {
+            await this.open();
+            const rows = await this.wrap(this.index().getAll(sid));
+            rows.sort((a, b) => a.seq - b.seq);
+            return rows.map(r => r.blob);
+        },
+
+        async drop(sid) {
+            await this.open();
+            return new Promise((res, rej) => {
+                const tx = this.db.transaction(['chunks', 'sessions'], 'readwrite');
+                const chunks = tx.objectStore('chunks');
+                tx.objectStore('sessions').delete(sid);
+                // Курсор идёт внутри той же транзакции и без await: каждый следующий
+                // шаг ставится прямо из обработчика, поэтому она не успевает закрыться.
+                const rq = chunks.index('sid').openKeyCursor(IDBKeyRange.only(sid));
+                rq.onsuccess = () => { const c = rq.result; if (c) { chunks.delete(c.primaryKey); c.continue(); } };
+                tx.oncomplete = () => res();
+                tx.onerror = () => rej(tx.error);
+            });
+        }
+    };
 
     const visibleCanvases = () => [...document.querySelectorAll('canvas')].filter(c => {
         const st = getComputedStyle(c);
@@ -21,6 +124,7 @@
 
     const REC = {
         rec: null, chunks: [], startedAt: 0, timer: null, mime: '', raf: 0, mix: null, noticeTo: null,
+        sid: 0, seq: 0, vaulted: false, flushTimer: null,
 
         pickMime() {
             const want = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4',
@@ -87,37 +191,158 @@
             const at = this.audioTrack();
             if (at) this.mix.stream.addTrack(at);
             this.chunks = [];
+            this.sid = Date.now(); this.seq = 0; this.vaulted = false;
+            const name = this.fileBase();
+            // Пробуем хранилище заранее: если IndexedDB недоступна (приватное окно,
+            // запрет на сайте), пишем по-старому в память и честно говорим об этом.
+            VAULT.begin(this.sid, { mime: this.mime, startedAt: this.sid, name })
+                 .then(() => { this.vaulted = true; })
+                 .catch(() => { this.vaulted = false; this.notify('ПАМЯТЬ ВКЛАДКИ — НЕ ЗАКРЫВАЙТЕ'); });
+
             this.rec = new MediaRecorder(this.mix.stream, { mimeType: this.mime, videoBitsPerSecond: 16000000 });
-            this.rec.ondataavailable = e => { if (e.data && e.data.size) this.chunks.push(e.data); };
+            this.rec.ondataavailable = e => {
+                if (!e.data || !e.data.size) return;
+                if (this.vaulted) VAULT.put(this.sid, this.seq++, e.data).catch(() => { this.vaulted = false; this.chunks.push(e.data); });
+                else this.chunks.push(e.data);
+            };
             this.rec.onstop = () => this.save();
             this.rec.start(1000);
             this.startedAt = Date.now();
+            // Шаг в start(1000) mp4-муксер Chrome не соблюдает: он копит кадры у себя и
+            // отдаёт их, когда сочтёт нужным — при обрыве на диск успевает лечь слишком
+            // мало. Просим сбросить буфер сами, раз в две секунды.
+            clearInterval(this.flushTimer);
+            this.flushTimer = setInterval(() => {
+                try { if (this.rec && this.rec.state === 'recording') this.rec.requestData(); } catch (e) {}
+            }, 2000);
+            // Вкладку, закрытую во время записи, браузер сам не удержит — просим его
+            // переспросить. Это и есть та самая пятая минута, которая пропала.
+            window.addEventListener('beforeunload', guardUnload);
             return true;
         },
 
         stop() {
+            clearInterval(this.flushTimer); this.flushTimer = null;
             if (this.rec && this.rec.state !== 'inactive') this.rec.stop();
             this.rec = null;
             if (this.mix) { this.mix.stop(); this.mix = null; }
+            window.removeEventListener('beforeunload', guardUnload);
         },
 
-        save() {
-            if (!this.chunks.length) return;
-            const ext = this.mime.startsWith('video/mp4') ? 'mp4' : 'webm';
-            const blob = new Blob(this.chunks, { type: this.mime });
+        // Кириллицу в имени файла Chrome у blob-ссылок не принимает: атрибут download
+        // молча отбрасывается, и запись падает на диск безымянным файлом «download»
+        // без расширения. Поэтому заголовок страницы переводим в латиницу.
+        translit(text) {
+            const M = { а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'zh',з:'z',и:'i',й:'y',к:'k',л:'l',м:'m',
+                        н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'h',ц:'c',ч:'ch',ш:'sh',щ:'sch',
+                        ъ:'',ы:'y',ь:'',э:'e',ю:'yu',я:'ya' };
+            return text.replace(/[А-Яа-яЁё]/g, ch => {
+                const low = ch.toLowerCase(), t = M[low] || '';
+                return ch === low ? t : t.charAt(0).toUpperCase() + t.slice(1);
+            });
+        },
+
+        fileBase(at) {
+            const d = at ? new Date(at) : new Date(), pad = n => String(n).padStart(2, '0');
+            const name = this.translit(document.title || 'zerkalius').replace(/[^\w.-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'zerkalius';
+            return `${name}-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+        },
+
+        download(parts, mime, base) {
+            if (!parts.length) return false;
+            const ext = (mime || '').startsWith('video/mp4') ? 'mp4' : 'webm';
             const a = document.createElement('a');
-            const d = new Date(), pad = n => String(n).padStart(2, '0');
-            const name = (document.title || 'zerkalius').replace(/[^\wА-Яа-яЁё.-]+/g, '-').slice(0, 40);
-            a.download = `${name}-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.${ext}`;
-            a.href = URL.createObjectURL(blob);
+            a.download = `${base}.${ext}`;
+            a.href = URL.createObjectURL(new Blob(parts, { type: mime }));
             a.click();
             setTimeout(() => URL.revokeObjectURL(a.href), 30000);
-            this.chunks = [];
-        }
+            return true;
+        },
+
+        async save() {
+            const sid = this.sid, mime = this.mime;
+            if (this.vaulted) {
+                try {
+                    const parts = await VAULT.assemble(sid);
+                    if (this.download(parts, mime, this.fileBase(sid))) { await VAULT.drop(sid); return; }
+                } catch (e) { /* дальше попробуем из памяти */ }
+            }
+            if (this.download(this.chunks, mime, this.fileBase(sid))) this.chunks = [];
+        },
+
+        // Недописанные записи прошлых сеансов: вкладку закрыли, остановка не
+        // случилась, но куски на диске лежат и собираются в обычный файл.
+        async recover() {
+            let list = [];
+            try { list = await VAULT.sessions(); } catch (e) { return []; }
+            return list.filter(x => x.sid !== this.sid);
+        },
+
+        async recoverOne(sess) {
+            const parts = await VAULT.assemble(sess.sid);
+            const ok = this.download(parts, sess.mime, (sess.name || this.fileBase(sess.startedAt)) + '-vosstanovleno');
+            await VAULT.drop(sess.sid);
+            return ok;
+        },
+
+        async forget(sess) { await VAULT.drop(sess.sid); }
     };
 
+    // Диалог «уйти со страницы?» браузер показывает только по такому обработчику
+    // и только пока запись идёт — в остальное время он никому не мешает.
+    function guardUnload(e) {
+        e.preventDefault();
+        e.returnValue = 'Идёт запись видео. Если закрыть вкладку, запись останется недописанной.';
+        return e.returnValue;
+    }
+
+    // Полоса «нашлась незавершённая запись». Появляется только если в хранилище
+    // действительно что-то лежит, и уходит, как только человек решил её судьбу.
+    const МЕСЯЦ = 30 * 24 * 3600 * 1000;
+
+    async function offerRecovery() {
+        let list;
+        try { list = await REC.recover(); } catch (e) { return; }
+        // Брошенные записи не должны копиться в профиле браузера: на 16 Мбит/с
+        // каждая забытая минута — это больше сотни мегабайт. Месяц предлагаем
+        // сохранить, дальше убираем.
+        const old = list.filter(s => Date.now() - s.sid > МЕСЯЦ);
+        for (const s of old) { try { await REC.forget(s); } catch (e) {} }
+        list = list.filter(s => Date.now() - s.sid <= МЕСЯЦ);
+        if (!list.length) return;
+
+        const bar = document.createElement('div');
+        bar.id = 'zerkRecRescue';
+        const draw = () => {
+            const s = list[0];
+            const secs = Math.max(0, Math.round((s.ms || 0) / 1000));
+            const len = secs ? ` ~${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}` : '';
+            bar.innerHTML = '';
+            const txt = document.createElement('span');
+            txt.textContent = `● НЕЗАВЕРШЁННАЯ ЗАПИСЬ${len}` + (list.length > 1 ? ` (ещё ${list.length - 1})` : '');
+            const save = document.createElement('button'); save.type = 'button'; save.textContent = 'СОХРАНИТЬ';
+            const drop = document.createElement('button'); drop.type = 'button'; drop.textContent = 'УДАЛИТЬ';
+            // Сборка длинной записи занимает время: пока идёт, кнопки заперты —
+            // иначе второй щелчок снял бы с очереди следующую запись.
+            const once = (fn) => async () => {
+                save.disabled = drop.disabled = true;
+                const s = list.shift();
+                try { await fn(s); } catch (e) { list.unshift(s); }
+                list.length ? draw() : bar.remove();
+            };
+            save.addEventListener('click', once(s => REC.recoverOne(s)));
+            drop.addEventListener('click', once(s => REC.forget(s)));
+            bar.append(txt, save, drop);
+        };
+        draw();
+        document.body.appendChild(bar);
+    }
+
     function build() {
-        if (document.getElementById('zerkRecBtn')) return;
+        // На страницах со своей кнопкой записи (у них она вписана в панель) вторую
+        // плавающую не добавляем — хранилище и полоса восстановления общие, а
+        // управление остаётся тамошнее.
+        if (document.getElementById('zerkRecBtn') || document.getElementById('recBtn')) return;
         const css = document.createElement('style');
         css.textContent = `
             #zerkRecBtn { position: fixed; right: 10px; bottom: 10px; z-index: 99999;
@@ -131,7 +356,15 @@
             @keyframes zerkRecPulse { from { box-shadow: 0 0 3px #ff3333; } to { box-shadow: 0 0 14px #ff3333; } }
             #zerkRecTimer { position: fixed; right: 56px; bottom: 18px; z-index: 99999; display: none;
                 font: bold 12px 'Courier New', monospace; color: #ff5555;
-                background: rgba(0,0,0,.65); padding: 3px 8px; border-radius: 3px; }`;
+                background: rgba(0,0,0,.65); padding: 3px 8px; border-radius: 3px; }
+            #zerkRecRescue { position: fixed; right: 56px; bottom: 54px; z-index: 99999;
+                display: flex; align-items: center; gap: 8px;
+                font: bold 12px 'Courier New', monospace; color: #ffcc00;
+                background: rgba(0,0,0,.85); border: 1px solid #665500;
+                padding: 6px 10px; border-radius: 3px; }
+            #zerkRecRescue button { font: bold 11px 'Courier New', monospace; cursor: pointer;
+                background: #222; color: #ffcc00; border: 1px solid #665500; padding: 3px 8px; border-radius: 2px; }
+            #zerkRecRescue button:hover { background: #443300; color: #fff; }`;
         document.head.appendChild(css);
 
         const timer = document.createElement('div');
@@ -167,6 +400,13 @@
     }
 
     window.__zerkRecorder = REC;
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);
-    else build();
+    // Хранилище и защита от закрытия нужны и машинам со своей кнопкой записи —
+    // отдаём их наружу, чтобы вся возня с IndexedDB жила в одном месте.
+    window.__zerkVault = VAULT;
+    window.__zerkRecGuard = { on: () => window.addEventListener('beforeunload', guardUnload),
+                              off: () => window.removeEventListener('beforeunload', guardUnload) };
+
+    const init = () => { build(); offerRecovery(); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
 })();
