@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 35.1 (Запись видео, холст во всё окно, цвет как код)
+VERSION: Pro 35.0 (Запись видео, холст во всё окно, цвет как код)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 35.1)</title>
+    <title>Binary Drum Machine (Zerkalius 35.0)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -190,7 +190,7 @@ VERSION: Pro 35.1 (Запись видео, холст во всё окно, ц�
         <div class="controls" id="leftPanel">
             
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 35.1)</h3>
+                <h3>Binary Drum Machine (Pro 35.0)</h3>
                 
                 <button id="clearCanvasBtn" class="btn-clear-canvas">🧽 Мгновенная Очистка Холста</button>
 
@@ -446,7 +446,7 @@ VERSION: Pro 35.1 (Запись видео, холст во всё окно, ц�
         // визуализатор, поэтому анализатор продолжает работать.
         const RECORDER = {
             rec: null, startedAt: 0, timer: null, mime: '', _noticeTo: null,
-            sid: 0, sink: null, pumpRaf: 0,
+            sid: 0, sink: null,
             // Своё короткое сообщение: функции уведомлений в этой машине нет.
             notify(text) {
                 const el = document.getElementById('recTimer');
@@ -493,26 +493,10 @@ VERSION: Pro 35.1 (Запись видео, холст во всё окно, ц�
                 // отвечает пустыми кусками. Столько и потеряется при обрыве.
                 this.rec.start(1000);
                 this.startedAt = Date.now();
-
-                // Пока идёт запись, холст перерисовывается каждый кадр экрана.
-                // captureStream отдаёт кадр только когда картинка сменилась, а между
-                // шагами проигрывателя (при 81 мс это дюжина шагов в секунду) она не
-                // меняется — в файле выходило 12 кадров в секунду с рваными
-                // промежутками, и это видно как подтормаживание. Через общий
-                // планировщик, поэтому лишней перерисовки не будет: если кадр в этом
-                // такте рисует сам проигрыватель, второй раз никто не рисует.
-                const pump = () => {
-                    if (!this.rec) return;
-                    window.__zerkScheduleRender?.();
-                    this.pumpRaf = requestAnimationFrame(pump);
-                };
-                this.pumpRaf = requestAnimationFrame(pump);
-
                 window.__zerkRecGuard?.on();
                 return true;
             },
             stop() {
-                cancelAnimationFrame(this.pumpRaf); this.pumpRaf = 0;
                 if (this.rec && this.rec.state !== 'inactive') this.rec.stop();
                 this.rec = null;
                 window.__zerkRecGuard?.off();
@@ -683,14 +667,6 @@ VERSION: Pro 35.1 (Запись видео, холст во всё окно, ц�
                 this.source.connect(this.audioCtx.destination); 
                 
                 document.getElementById('audioBtnText').textContent = "🎵 Файл Готов";
-
-                // Трек обычно подкладывают на ходу, когда картинка уже крутится. Раньше
-                // play() звучал только в момент нажатия «Пуск», поэтому загруженный
-                // позже трек молчал: в браузере тишина, хотя в записи он есть — туда
-                // он попадал через граф. Выбор файла сам по себе жест пользователя,
-                // так что запустить можно прямо здесь.
-                if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
-                if (MODULE_STATE.isPlaying) bgAudio.play().catch(() => {});
             },
             initMic: async function() {
                 this.initCore();
