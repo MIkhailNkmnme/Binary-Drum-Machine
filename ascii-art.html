@@ -37,6 +37,13 @@
   input[type=color] { padding:1px; width:148px }
   input[type=checkbox] { margin:0 4px; accent-color:var(--acc) }
   .hidden { display:none !important }
+  .cc { display:flex; flex-wrap:wrap; gap:4px; margin:2px 0 4px }
+  .cc .c { display:flex; align-items:center; gap:3px; background:#0f1012; border:1px solid var(--line); border-radius:5px; padding:1px 4px }
+  .cc .c b { font-family:Consolas, monospace; min-width:10px; text-align:center; font-size:13px }
+  .cc input[type=color] { width:24px; height:18px; padding:0; border:none; background:none; opacity:.35 }
+  .cc .c.on input[type=color] { opacity:1 }
+  .cc .x { color:var(--dim); cursor:pointer; font-size:10px; padding:0 2px }
+  .cc .x:hover { color:#f77 }
   .zerk-range-wrap { width:148px !important; flex:none !important }   /* стрелки ◂ ▸ из slider-arrows.js */
   .row { display:flex; gap:5px; flex-wrap:wrap }
   .save { flex:none; padding:8px 12px; border-top:1px solid var(--line); background:var(--panel) }
@@ -50,12 +57,15 @@
   .drop.over::after { content:"Отпустите файлы"; position:absolute; inset:12px; border:2px dashed var(--acc); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; color:var(--acc); background:rgba(0,0,0,.5) }
   canvas#out { max-width:100%; max-height:100%; box-shadow:0 0 0 1px var(--line), 0 20px 60px rgba(0,0,0,.6); background:#050507 }
   /* оригинал поверх предпросмотра, пока курсор на картинке в списке */
-  #peek { position:absolute; inset:16px; object-fit:contain; background:var(--bg); z-index:5; pointer-events:none }
+  #peek { position:absolute; left:16px; top:16px; width:calc(100% - 32px); height:calc(100% - 32px); object-fit:contain; background:var(--bg); z-index:5; pointer-events:none }
   .hint { color:var(--dim); text-align:center; line-height:1.7 }
   .hint kbd { background:#2a2d33; border-radius:4px; padding:1px 6px; border:1px solid var(--line) }
-  .hint button.big { display:block; margin:0 auto 18px; padding:22px 40px; font-size:22px; font-weight:600; border-radius:14px;
-    background:var(--acc); color:#0b1a10; border:none; box-shadow:0 8px 30px rgba(95,216,138,.25) }
-  .hint button.big:hover { filter:brightness(1.08); transform:translateY(-1px) }
+  /* прозрачная, без скруглений, двойная обводка: тонкая внешняя + внутренняя через outline */
+  .hint button.big { display:block; margin:0 auto 18px; padding:20px 40px; font-size:22px; font-weight:600; border-radius:0;
+    background:rgba(95,216,138,.06); color:var(--acc); border:1px solid var(--acc);
+    outline:1px solid rgba(95,216,138,.45); outline-offset:4px; transition:background .15s, outline-offset .15s }
+  .hint button.big:hover { background:rgba(95,216,138,.16); outline-offset:6px }
+  .hint button.big:active { background:rgba(95,216,138,.3) }
   .hint-sub { margin-bottom:14px }
   .hint-err { color:#f0a060; margin-top:12px; min-height:1.4em }
   .bar { flex:none; padding:6px 16px; border-top:1px solid var(--line); background:var(--panel) }
@@ -83,6 +93,7 @@
 <aside>
 <div class="panel">
   <h1>ASCII-арт студия</h1>
+  <label><span>Пресет</span><select id="preset"><option value="">— выбрать —</option></select></label>
 
   <h2>Режим</h2>
   <label><span>Символы</span>
@@ -92,6 +103,7 @@
       <option value="custom">Свой набор →</option>
     </select></label>
   <label id="charsRow" class="hidden"><span>Свой набор</span><input type="text" id="chars" value="01" placeholder="например #@$"></label>
+  <div class="cc hidden" id="charColors" title="Свой цвет для каждого символа; ✕ — обратно к общему оттенку"></div>
 
   <h2>Шрифт</h2>
   <label><span>Шрифт</span>
@@ -139,6 +151,7 @@
   <h2>Цвет</h2>
   <label><span>Оттенок</span>
     <select id="tint">
+      <option value="orig">Оригинал (цвета картинки)</option>
       <option value="255,255,255">Серый</option>
       <option value="90,255,130">Зелёный</option>
       <option value="90,190,255">Голубой</option>
@@ -146,6 +159,16 @@
       <option value="custom">Свой →</option>
     </select></label>
   <label id="tintRow" class="hidden"><span>Свой цвет</span><input type="color" id="tintCustom" value="#5aff82"></label>
+
+  <h2>Свечение</h2>
+  <label title="Радиус размытия ореола вокруг ярких символов, px"><span>Радиус</span><input type="range" id="glow" min="0" max="40" step="1" value="0"><output>0</output></label>
+  <label title="Сила ореола"><span>Сила</span><input type="range" id="glowStr" min="0.2" max="3" step="0.1" value="1"><output>1</output></label>
+  <label><span>Цвет свечения</span>
+    <select id="glowMode">
+      <option value="auto">как у символа</option>
+      <option value="custom">свой →</option>
+    </select></label>
+  <label id="glowRow" class="hidden"><span>Свой цвет</span><input type="color" id="glowColor" value="#5fd88a"></label>
 </div>
 <div class="save">
   <div class="row">
@@ -215,14 +238,16 @@ function settings() {
   const chars = mode === '01' ? '01' : mode === 'custom' ? ($('chars').value || '01') : null;
   const tintSel = $('tint').value;
   let tint;
-  if (tintSel === 'custom') { const h = $('tintCustom').value; tint = [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16)); }
-  else tint = tintSel.split(',').map(Number);
+  if (tintSel === 'orig') tint = 'orig';
+  else if (tintSel === 'custom') { const h = $('tintCustom').value; tint = [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16)); }
+  else if (tintSel !== 'orig') tint = tintSel.split(',').map(Number);
   return {
     mode, chars, font: $('font').value, size: +$('size').value, bold: $('bold').checked,
     cols: +$('cols').value, sx: +$('sx').value, sy: +$('sy').value,
     crop: +$('crop').value, aspect: $('aspect').value, invert: $('invert').checked,
     gamma: +$('gamma').value, noise: +$('noise').value, seed: +$('seed').value || 0,
-    tint, tintName: tintSel === '255,255,255' ? 'серый' : tintSel === '90,255,130' ? 'зелёный' : 'цвет',
+    tint, tintName: tintSel === 'orig' ? 'оригинал' : tintSel === '255,255,255' ? 'серый' : tintSel === '90,255,130' ? 'зелёный' : 'цвет',
+    glow: +$('glow').value, glowStr: +$('glowStr').value, glowMode: $('glowMode').value, glowColor: $('glowColor').value,
   };
 }
 
@@ -257,14 +282,18 @@ function imageToGrid(img, s, charAspect) {
   g.drawImage(img, r.x, r.y, r.w, r.h, 0, 0, cols, rows);
   const d = g.getImageData(0, 0, cols, rows).data;
   const arr = new Float32Array(cols * rows);
-  for (let i = 0; i < cols * rows; i++) { let v = (0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]) / 255; arr[i] = s.invert ? 1 - v : v; }
+  const rgb = new Uint8ClampedArray(cols * rows * 3);   // исходный цвет ячейки — для оттенка «оригинал»
+  for (let i = 0; i < cols * rows; i++) {
+    let v = (0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]) / 255; arr[i] = s.invert ? 1 - v : v;
+    rgb[i * 3] = d[i * 4]; rgb[i * 3 + 1] = d[i * 4 + 1]; rgb[i * 3 + 2] = d[i * 4 + 2];
+  }
   const sorted = Float32Array.from(arr).sort();
   const lo = percentile(sorted, 0.02), hi = percentile(sorted, 0.98);
   for (let i = 0; i < arr.length; i++) { let v = hi > lo ? Math.min(1, Math.max(0, (arr[i] - lo) / (hi - lo))) : arr[i]; arr[i] = Math.pow(v, s.gamma); }
-  return { arr, cols, rows };
+  return { arr, rgb, cols, rows };
 }
 
-function gridToCells({ arr, cols, rows }, s) {
+function gridToCells({ arr, rgb, cols, rows }, s) {
   const rng = mulberry32(s.seed);
   const cells = [];
   for (let y = 0; y < rows; y++) {
@@ -275,14 +304,27 @@ function gridToCells({ arr, cols, rows }, s) {
       if (s.chars) ch = s.chars[Math.floor(rng() * s.chars.length)];
       else { const lv = Math.min(LEVELS.length - 1, Math.floor(v * LEVELS.length)); const set = LEVELS[lv]; ch = set[Math.floor(rng() * set.length)]; }
       const b = Math.min(1, Math.max(s.noise * (0.6 + rng() * 0.8), v));
-      row.push([ch, b]);
+      const i = (y * cols + x) * 3;
+      row.push([ch, b, [rgb[i], rgb[i + 1], rgb[i + 2]]]);
     }
     cells.push(row);
   }
   return cells;
 }
 
-function cellRgb(b, tint) { const g = 30 + 225 * b; return `rgb(${Math.round(g * tint[0] / 255)},${Math.round(g * tint[1] / 255)},${Math.round(g * tint[2] / 255)})`; }
+let charColors = {};   // символ -> '#rrggbb'; если не задан — общий оттенок
+function hexRgb(h) { return [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16)); }
+function origBase(o) {
+  // цвет пикселя, растянутый до полной яркости: сам цвет остаётся, а яркость задаёт b.
+  // Чёрный/почти чёрный фон — серый, чтобы шум был виден.
+  const m = Math.max(o[0], o[1], o[2]);
+  return m < 24 ? [255, 255, 255] : [o[0] * 255 / m, o[1] * 255 / m, o[2] * 255 / m];
+}
+function cellRgb(b, tint, ch, o) {
+  const g = 30 + 225 * b;
+  const base = ch !== undefined && charColors[ch] ? hexRgb(charColors[ch]) : tint === 'orig' ? origBase(o || [255, 255, 255]) : tint;
+  return `rgb(${Math.round(g * base[0] / 255)},${Math.round(g * base[1] / 255)},${Math.round(g * base[2] / 255)})`;
+}
 
 // ---------- рендер ----------
 function fontSpec(s, bold) { return `${bold ? 'bold ' : ''}${s.size}px "${s.font}", monospace`; }
@@ -303,13 +345,31 @@ function renderCanvas(canvas, cells, s, tint) {
   g.fillStyle = '#050507'; g.fillRect(0, 0, canvas.width, canvas.height);
   g.textBaseline = 'top';
   const fReg = fontSpec(s, false), fBold = fontSpec(s, s.bold);
+  // свечение: яркие символы рисуем на отдельном слое, размываем и подкладываем под текст
+  if (s.glow > 0) {
+    const G = document.createElement('canvas'); G.width = canvas.width; G.height = canvas.height;
+    const gg = G.getContext('2d'); gg.textBaseline = 'top'; gg.font = fBold;
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+      const [c, b, o] = cells[y][x];
+      if (b <= BRIGHT) continue;
+      gg.fillStyle = s.glowMode === 'custom' ? s.glowColor : cellRgb(1, tint, c, o);
+      gg.fillText(c, cw + x * cw, ch + y * ch);
+    }
+    g.save();
+    g.globalCompositeOperation = 'lighter';
+    g.filter = `blur(${s.glow}px)`;
+    const passes = Math.max(1, Math.ceil(s.glowStr));
+    g.globalAlpha = Math.min(1, s.glowStr / passes);
+    for (let i = 0; i < passes; i++) g.drawImage(G, 0, 0);
+    g.restore();
+  }
   // сначала фон, потом объект — меньше переключений шрифта
   for (const pass of [0, 1]) {
     g.font = pass ? fBold : fReg;
     for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
-      const [c, b] = cells[y][x];
+      const [c, b, o] = cells[y][x];
       if ((b > BRIGHT) !== !!pass) continue;
-      g.fillStyle = cellRgb(b, tint);
+      g.fillStyle = cellRgb(b, tint, c, o);
       g.fillText(c, cw + x * cw, ch + y * ch);
     }
   }
@@ -471,15 +531,66 @@ $('fontFile').addEventListener('change', async e => {
 });
 
 // ---------- контролы ----------
+let charsKey = null;
+function rebuildCharColors(force) {
+  const s = settings();
+  const chars = s.chars ? [...new Set(s.chars.replace(/ /g, ''))] : [];
+  const key = chars.join('');
+  if (!force && key === charsKey) return;   // не пересобирать, пока крутят ползунки или выбирают цвет
+  charsKey = key;
+  const box = $('charColors'); box.innerHTML = ''; box.classList.toggle('hidden', !chars.length);
+  for (const ch of chars) {
+    const c = document.createElement('span'); c.className = 'c' + (charColors[ch] ? ' on' : '');
+    const b = document.createElement('b'); b.textContent = ch;
+    const inp = document.createElement('input'); inp.type = 'color'; inp.value = charColors[ch] || '#ffffff'; inp.title = 'Цвет символа ' + ch;
+    inp.oninput = () => { charColors[ch] = inp.value; c.classList.add('on'); scheduleRender(); };
+    const x = document.createElement('span'); x.className = 'x'; x.textContent = '✕'; x.title = 'Обратно к общему оттенку';
+    x.onclick = () => { delete charColors[ch]; inp.value = '#ffffff'; c.classList.remove('on'); scheduleRender(); };
+    c.append(b, inp, x); box.appendChild(c);
+  }
+}
+
+// ---------- пресеты: цвета + настройки ----------
+const PRESETS = [
+  ['Дамп кода',        { mode: 'code', font: 'Consolas', size: 14, bold: true, cols: 240, sx: 1, sy: 1, gamma: 1.3, noise: 0.12, tint: '255,255,255', charColors: {}, glow: 0, glowStr: 1, glowMode: 'auto' }],
+  ['Матрица',          { mode: '01', font: 'Share Tech Mono', size: 14, bold: true, cols: 240, sx: 1, sy: 0.9, gamma: 1.3, noise: 0.16, tint: '90,255,130', charColors: { '0': '#1fbf5a', '1': '#c8ffd9' }, glow: 8, glowStr: 1.2, glowMode: 'auto' }],
+  ['Киберпанк',        { mode: '01', font: 'Orbitron', size: 12, bold: true, cols: 220, sx: 1.1, sy: 1, gamma: 1.2, noise: 0.2, tint: '#05d9e8', charColors: { '0': '#ff2a6d', '1': '#05d9e8' }, glow: 14, glowStr: 1.6, glowMode: 'auto' }],
+  ['Синтвейв',         { mode: '01', font: 'Major Mono Display', size: 12, bold: true, cols: 200, sx: 1, sy: 0.85, gamma: 1.2, noise: 0.18, tint: '#ff71ce', charColors: { '0': '#ff71ce', '1': '#01cdfe' }, glow: 12, glowStr: 1.4, glowMode: 'custom', glowColor: '#b967ff' }],
+  ['Янтарный терминал',{ mode: 'code', font: 'VT323', size: 18, bold: true, cols: 220, sx: 1, sy: 0.9, gamma: 1.4, noise: 0.1, tint: '255,160,60', charColors: {}, glow: 0, glowStr: 1, glowMode: 'auto' }],
+  ['Хакер',            { mode: 'code', font: 'JetBrains Mono', size: 13, bold: true, cols: 260, sx: 1, sy: 1, gamma: 1.5, noise: 0.12, tint: '#00ff66', charColors: {}, glow: 0, glowStr: 1, glowMode: 'auto' }],
+  ['Ретро-пиксель',    { mode: '01', font: 'Press Start 2P', size: 9, bold: false, cols: 150, sx: 1.2, sy: 1.2, gamma: 1.2, noise: 0.15, tint: '255,255,255', charColors: { '0': '#9aa0a6', '1': '#ffffff' }, glow: 0, glowStr: 1, glowMode: 'auto' }],
+  ['Огонь',            { mode: '01', font: 'Orbitron', size: 12, bold: true, cols: 220, sx: 1, sy: 0.9, gamma: 1.1, noise: 0.22, tint: '#ffb000', charColors: { '0': '#ff3b1f', '1': '#ffd166' }, glow: 16, glowStr: 2, glowMode: 'auto' }],
+  ['Лёд',              { mode: '01', font: 'VT323', size: 16, bold: true, cols: 300, sx: 0.6, sy: 0.7, gamma: 1.3, noise: 0.12, tint: '90,190,255', charColors: { '0': '#4fc3ff', '1': '#ffffff' }, glow: 10, glowStr: 1.2, glowMode: 'custom', glowColor: '#7fdcff' }],
+  ['Призрак',          { mode: 'code', font: 'Fira Code', size: 13, bold: true, cols: 240, sx: 1, sy: 1, gamma: 2, noise: 0.05, tint: '#c8c8ff', charColors: {}, glow: 0, glowStr: 1, glowMode: 'auto' }],
+  ['Чертёж',           { mode: 'custom', chars: '+-|/.', font: 'Source Code Pro', size: 13, bold: true, cols: 240, sx: 1, sy: 1, gamma: 1.3, noise: 0.15, tint: '#7fb2ff', charColors: { '+': '#ffffff' }, glow: 0, glowStr: 1, glowMode: 'auto' }],
+  ['Плотный 0/1',      { mode: '01', font: 'Consolas', size: 14, bold: true, cols: 400, sx: 0.5, sy: 0.6, gamma: 1.3, noise: 0.12, tint: '90,255,130', charColors: {}, glow: 0, glowStr: 1, glowMode: 'auto' }],
+];
+PRESETS.forEach(([name], i) => { const o = document.createElement('option'); o.value = i; o.textContent = name; $('preset').appendChild(o); });
+function setCtl(id, val) {
+  const el = $(id); if (val === undefined) return;
+  if (el.type === 'checkbox') el.checked = val; else el.value = val;
+  const o = el.closest('label')?.querySelector('output'); if (o) o.value = el.value;
+}
+function applyPreset(i) {
+  const v = PRESETS[i][1];
+  charColors = { ...v.charColors };
+  for (const k of ['mode', 'chars', 'font', 'size', 'bold', 'cols', 'sx', 'sy', 'gamma', 'noise', 'glow', 'glowStr', 'glowMode', 'glowColor']) setCtl(k, v[k]);
+  if (v.tint) { if (v.tint.startsWith('#')) { setCtl('tint', 'custom'); setCtl('tintCustom', v.tint); } else setCtl('tint', v.tint); }
+  syncRows(); rebuildCharColors(true); scheduleRender();
+}
+$('preset').addEventListener('change', () => { if ($('preset').value !== '') applyPreset(+$('preset').value); });
+
 function syncRows() {
   $('charsRow').classList.toggle('hidden', $('mode').value !== 'custom');
   $('tintRow').classList.toggle('hidden', $('tint').value !== 'custom');
+  $('glowRow').classList.toggle('hidden', $('glowMode').value !== 'custom');
 }
 document.querySelectorAll('aside input, aside select').forEach(el => {
   if (el.id === 'fontFile') return;
-  el.addEventListener('input', () => { const o = el.parentElement.querySelector('output'); if (o) o.value = el.value; syncRows(); scheduleRender(); });
+  if (el.id === 'preset') return;
+  el.addEventListener('input', () => { const o = el.closest('label')?.querySelector('output'); if (o) o.value = el.value; syncRows(); rebuildCharColors(); scheduleRender(); });
 });
-syncRows();
+syncRows(); rebuildCharColors();
 
 // ---------- сохранение ----------
 function suffix(s) {
@@ -496,7 +607,8 @@ $('saveTxt').onclick = () => { if (!lastCells) return; download(new Blob([lastCe
 $('saveHtml').onclick = () => {
   if (!lastCells) return; const s = lastMeta.s;
   const esc = c => c.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;');
-  const lines = lastCells.map(r => r.map(([c, b]) => `<span style="color:${cellRgb(b, s.tint)}">${esc(c)}</span>`).join(''));
+  const shadow = (c, o) => s.glow > 0 ? `;text-shadow:0 0 ${s.glow}px ${s.glowMode === 'custom' ? s.glowColor : cellRgb(1, s.tint, c, o)}` : '';
+  const lines = lastCells.map(r => r.map(([c, b, o]) => `<span style="color:${cellRgb(b, s.tint, c, o)}${b > BRIGHT ? shadow(c, o) : ''}">${esc(c)}</span>`).join(''));
   const html = `<!doctype html><meta charset="utf-8"><title>ascii art</title><body style="margin:0;background:#050507"><pre style="margin:0;padding:16px;font:${s.size}px/${(1.15 * s.sy).toFixed(2)} '${s.font}',monospace;letter-spacing:${((s.sx - 1) * 0.6).toFixed(2)}em;white-space:pre;color:#ccc">${lines.join('\n')}</pre></body>`;
   download(new Blob([html], { type: 'text/html' }), baseName(lastMeta, s.tintName) + '.html');
 };
