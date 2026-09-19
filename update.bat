@@ -4,7 +4,12 @@ cd /d "%~dp0"
 echo.
 echo === Zerkalius: pulling latest from GitHub ===
 echo.
-git pull origin main
+rem gc.auto=0: иначе git изредка сам затевает уборку хранилища прямо посреди
+rem обновления и, если какой-то файл держит антивирус или индексатор Windows,
+rem останавливается на вопросе "Deletion of directory failed. Try again?".
+rem Обновление в один клик не должно ничего спрашивать. Хранилище чистится
+rem отдельно, файлом cleanup.bat рядом.
+git -c gc.auto=0 pull origin main
 if errorlevel 1 (
   echo.
   echo Pull failed. If you have local edits, run:  git stash  then run this file again.
