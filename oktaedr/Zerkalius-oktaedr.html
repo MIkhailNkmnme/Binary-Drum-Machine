@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.011. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Октаэдр — v0.012. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.011</title>
+<title>Zerkalius Октаэдр — v0.012</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -139,7 +139,7 @@
 <body>
 <div id="title">zerkalius</div>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.011</div>
+<div id="ver">v0.012</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -173,6 +173,7 @@
     <tr><td>Z · колесо</td><td>Дзен: спрятать всё, кроме тела (щелчок колесом мыши — то же)</td></tr>
     <tr><td>R</td><td>запись видео с холста, она же кнопка ⏺ в углу</td></tr>
     <tr><td>Клик по цифре</td><td>закрепить пару; повторный клик — снять</td></tr>
+    <tr><td>Shift+клик</td><td>перевернуть бит — двойник перевернётся сам</td></tr>
     <tr><td>Esc</td><td>снять все закрепления (а в методичке — закрыть её)</td></tr>
     <tr><td>H · F1</td><td>открыть и закрыть эту методичку</td></tr>
   </table>
@@ -244,6 +245,10 @@
   штриховку.</p>
   <p>Нить всегда отвесная: отражение идёт через плоскость экватора, у двойников общие две координаты
   из трёх, а третья ровно противоположна.</p>
+  <p><b>Shift+клик по цифре переворачивает бит.</b> На экране переворачиваются сразу ДВА: двойник
+  меняется сам, потому что он не копия, а то же самое число, прочитанное с другой стороны зеркала.
+  Это стоит попробовать руками — видно, что связь между ними не пересылка, а одно целое. Память
+  этого места при этом обнуляется: она считает шаги, а ручная правка шагом не является.</p>
 
   <h3>Остальные кнопки</h3>
   <ul>
@@ -620,20 +625,30 @@ function draw(){
   //    его грани отвёрнуты; на силуэте хотя бы одна лицевая, и оно уходит в яркие.
   const faceFront = new Map();
   for (const s of shown) faceFront.set(s.f, s.front);
-  const edgeVisible = (e) => {
+  /* НАСКОЛЬКО ЯРКИМ ИМЕЕТ ПРАВО БЫТЬ РЕБРО (v0.012, баг-репорт «грань не тухнет как надо»).
+     Отдаёт наклон САМОЙ РАЗВЁРНУТОЙ из лицевых граней, которым это ребро принадлежит, или −1,
+     если лицевых среди них нет вовсе (ребро скрыто).
+     Зачем число вместо «да/нет». Прежде любое ребро хоть одной лицевой грани рисовалось в полную
+     силу. Отвернувшаяся грань при этом не рисует ни заливки, ни цифр — и остаётся ПУСТЫМ ЯРКИМ
+     ТРЕУГОЛЬНИКОМ, обведённым рёбрами соседей. Снаружи это выглядит как «грань горит, а на ней
+     ничего нет». Теперь ребро гаснет вместе с гранью, которая его держит, и пустых ярких рамок
+     не остаётся. Нижний порог оставлен: силуэт тела обязан читаться всегда, иначе на скользящих
+     ракурсах октаэдр расплывётся в туман. */
+  const edgeFacing = (e) => {
+    let best = -1;
     for (const s of shown) {
       if (!s.front) continue;
       const vs = s.f.v;
       let hitA = false, hitB = false;
       for (const v of vs) { if (v === e.a) hitA = true; if (v === e.b) hitB = true; }
-      if (hitA && hitB) return true;
+      if (hitA && hitB && s.facing > best) best = s.facing;
     }
-    return false;
+    return best;
   };
   if (showHidden) {
     ctx.lineWidth = 1; ctx.globalAlpha = 0.20;
     for (const e of EDGES) {
-      if (edgeVisible(e)) continue;
+      if (edgeFacing(e) >= 0) continue;
       const a = project(e.a), b = project(e.b);
       ctx.strokeStyle = e.kind === "eq" ? cEq : (e.kind === "up" ? cUp : cDn);
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
@@ -773,14 +788,18 @@ function draw(){
   for (const pass of ["side", "eq"]) {
     for (const e of EDGES) {
       if ((pass === "eq") !== (e.kind === "eq")) continue;
-      if (!edgeVisible(e)) continue;
+      const fa = edgeFacing(e);
+      if (fa < 0) continue;
       const a = project(e.a), b = project(e.b);
       ctx.strokeStyle = e.kind === "eq" ? cEq : (e.kind === "up" ? cUp : cDn);
       ctx.lineWidth = e.kind === "eq" ? 2.6 : 2;
-      ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = e.kind === "eq" ? 14 : 9;
+      // 0.42 — тот самый порог читаемости силуэта; выше него ребро набирает яркость по наклону.
+      ctx.globalAlpha = 0.42 + 0.58 * Math.sqrt(fa);
+      ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = (e.kind === "eq" ? 14 : 9) * ctx.globalAlpha;
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
     }
   }
+  ctx.globalAlpha = 1;
   ctx.shadowBlur = 0;
 }
 
@@ -864,10 +883,22 @@ const stopDrag = (e) => {
       if (d < bd) { bd = d; best = q; }
     }
     if (best) {
-      const key = pinKey(best.slot, best.r, best.k);
-      // Повторный клик по закреплённому снимает его — иначе набранное пришлось бы сбрасывать целиком.
-      if (pinned.has(key)) pinned.delete(key); else pinned.add(key);
-      syncUI();
+      if (e.shiftKey) {
+        /* SHIFT+КЛИК — ПРАВКА БИТА (v0.012, запрос пользователя). Меняется ОДНО число в картине,
+           а на экране переворачиваются ДВА: верхняя грань показывает его как есть, нижняя —
+           инвертированным, и двойник меняется сам, потому что он не копия, а то же самое число,
+           прочитанное с другой стороны зеркала. Ради этого и стоит попробовать: видно, что связь
+           не пересылка, а одно целое.
+           Память места сбрасывается: она считает шаги, а ручная правка — не шаг, и засчитывать
+           её как «бит устоял» было бы враньём. */
+        bits[best.slot][best.r][best.k] ^= 1;
+        keep[best.slot][best.r][best.k] = 0;
+      } else {
+        const key = pinKey(best.slot, best.r, best.k);
+        // Повторный клик по закреплённому снимает его — иначе набранное пришлось бы сбрасывать целиком.
+        if (pinned.has(key)) pinned.delete(key); else pinned.add(key);
+        syncUI();
+      }
     }
   }
   // Второй палец подняли, первый остался — поворот подхватывается с ЕГО текущего места, иначе
