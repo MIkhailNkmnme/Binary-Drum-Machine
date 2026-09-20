@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.008. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Октаэдр — v0.010. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.008</title>
+<title>Zerkalius Октаэдр — v0.010</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -16,10 +16,11 @@
     --dn:#ffcf6b;    /* нижняя половина — зазеркалье, биты инвертированы */
     --eq:#e8edf5;    /* линия основания: само зеркало, самое яркое место знака */
     --mem:#ff5d5d;   /* память: бит, который шаг за шагом остаётся на месте */
+    --pin:#c08cff;   /* закреплённый кликом бит и его двойник */
   }
   html[data-theme="green"]{
     --bg:#000000; --panel:#050b07; --line:#0e2a1b; --fg:#7dffc4; --dim:#2f7a56;
-    --up:#2bff9e; --dn:#0f9d63; --eq:#c9ffe6; --mem:#ff5d5d;
+    --up:#2bff9e; --dn:#0f9d63; --eq:#c9ffe6; --mem:#ff5d5d; --pin:#c08cff;
   }
   /* ЗАПРЕТ ВЫДЕЛЕНИЯ (v0.003, баг-репорт пользователя). Крутят тело протяжкой мыши, а протяжка
      для браузера — это ещё и выделение текста: подписи кнопок, ползунков и сам заголовок
@@ -131,7 +132,7 @@
 <body>
 <div id="title">zerkalius</div>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.008</div>
+<div id="ver">v0.010</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -162,7 +163,9 @@
     <tr><td>1 2 3</td><td>действие: ⇄ разворот, ⇅ инв-разв, ↻ Круг Инв</td></tr>
     <tr><td>D · L · F</td><td>биты · нити · забыть память</td></tr>
     <tr><td>R · T</td><td>новая картина · сменить палитру</td></tr>
-    <tr><td>H · Esc</td><td>открыть и закрыть эту методичку</td></tr>
+    <tr><td>Клик по цифре</td><td>закрепить пару; повторный клик — снять</td></tr>
+    <tr><td>Esc</td><td>снять все закрепления (а в методичке — закрыть её)</td></tr>
+    <tr><td>H · F1</td><td>открыть и закрыть эту методичку</td></tr>
   </table>
   <p class="sub">Буквы работают и в русской раскладке. Если фокус стоит в ползунке, клавиши ему и
   достаются — стрелки двигают бегунок.</p>
@@ -172,6 +175,10 @@
     <li><b>Плотность бит</b> — сколько рядов умещается на грани, от 4 до 26. Меняет число бит, поэтому
     картина пересобирается заново.</li>
     <li><b>Размер цифр</b> — кегль на ближней грани; дальше он убывает сам.</li>
+    <li><b>Свечение бит</b> — радиус ореола вокруг цифры. Ореол берёт её собственный цвет, поэтому
+    красные биты памяти светятся красным. Ноль гасит свечение совсем — это же и самый быстрый
+    режим: тень считается на каждую цифру отдельно, и на большой плотности она дороже всего
+    остального вместе взятого. Биты, погасшие памятью, не светятся никогда.</li>
     <li><b>Скорость вращения</b> — ноль останавливает.</li>
     <li><b>Такт цикла</b> — от 60 до 1200 мс между шагами.</li>
     <li><b>Нитей: каждая N-я</b> — прореживание занавеса связей.</li>
@@ -215,7 +222,15 @@
   же миг, и не потому, что между ними что-то передалось, а потому, что они с самого начала одно
   целое, просто увиденное с двух сторон зеркала.</p>
   <p><b>Наведите курсор на цифру</b> — загорится её двойник, между ними протянется нить, на концах
-  кольца. Работает всегда. Кнопка <b>🔗 Нити</b> показывает занавес целиком; ползунок рядом
+  кольца. Работает всегда.</p>
+  <p><b>Кликните по цифре</b> — пара закрепится и останется гореть своим цветом, даже когда курсор
+  ушёл и тело крутится дальше. Так можно набрать несколько пар и смотреть, что с ними делает шаг.
+  Повторный клик по той же цифре снимает её; <b>✕ Снять</b> или <b>Esc</b> снимают все разом, а на
+  кнопке видно, сколько набрано. Смена плотности бит снимает закрепления тоже: мест становится
+  другое число, и старые указывали бы в пустоту.</p>
+  <p class="sub">Клик отличается от поворота по тому, сдвинулась ли рука: дальше четырёх пикселей —
+  это поворот, на месте — клик.</p>
+  <p> Кнопка <b>🔗 Нити</b> показывает занавес целиком; ползунок рядом
   прореживает его — при 26 рядах пар больше тысячи, и без прореживания тело превращается в сплошную
   штриховку.</p>
   <p>Нить всегда отвесная: отражение идёт через плоскость экватора, у двойников общие две координаты
@@ -263,6 +278,14 @@
     </div>
   </div>
   <div class="set">
+    <label>Свечение бит: <b id="vGlow">7</b></label>
+    <div class="srow">
+      <button class="arr" data-for="sGlow" data-d="-1" title="Слабее (держать — быстро)">◄</button>
+      <input type="range" id="sGlow" min="0" max="20" step="1" value="7">
+      <button class="arr" data-for="sGlow" data-d="1" title="Ярче (держать — быстро)">►</button>
+    </div>
+  </div>
+  <div class="set">
     <label>Скорость вращения: <b id="vSpeed">42</b></label>
     <div class="srow">
       <button class="arr" data-for="sSpeed" data-d="-1" title="На шаг меньше (держать — быстро)">◄</button>
@@ -286,6 +309,7 @@
   <div class="cap">Связанные биты</div>
   <div class="row">
     <button id="bLinks" title="L">🔗 Нити</button>
+    <button id="bUnpin" title="Esc — снять все">✕ Снять</button>
   </div>
   <div class="set">
     <label>Нитей: каждая <b id="vLink">3</b>-я</label>
@@ -355,7 +379,9 @@ for (let s = 0; s < 4; s++) {
    «Плотность бит» её меняет, и картина тут же пересобирается — ряды считаются от неё, а не от
    длины массива, поэтому рассинхрону взяться неоткуда. DIG — кегль цифры на ближней грани (дальше
    он сам убывает делением перспективы), SPEED — скорость своего вращения, в тысячных радиана за кадр. */
-let ROWS = 13, DIG = 13, SPEED = 42;
+/* GLOW — радиус ореола вокруг цифры в пикселях (v0.009, запрос пользователя «свечение бит»).
+   0 — без свечения, как было до этого. */
+let ROWS = 13, DIG = 13, SPEED = 42, GLOW = 7;
 let bits = [];
 /* ═══ ПАМЯТЬ РЕВЕРСА ══════════════════════════════════════════════════════════════════════════
    Запрос пользователя: «реверс с поиском: одни — неменяющиеся — их красным например, а
@@ -426,6 +452,15 @@ let stepOp = "rev";
    hoverBit — пара под курсором: она показывается ВСЕГДА, даже когда занавес выключен. Это и есть
    «потрогай один — увидь второй». */
 let showLinks = false, LINK_EVERY = 3, hoverBit = null;
+/* ЗАКРЕПЛЁННЫЕ БИТЫ (v0.010, запрос пользователя: «клик по битам выделяет и закрепляет, снимает
+   по кнопке или Escape со всех сразу»). Наведение держится ровно пока мышь на месте — отвёл, и
+   пара погасла, а тело ещё и само крутится. Клик оставляет пару гореть: можно набрать несколько,
+   отпустить мышь и смотреть, как они ходят при вращении и что с ними делает шаг.
+   Ключ — строка "слот:ряд:место", а не объект: набор проверяется на КАЖДУЮ цифру каждого кадра,
+   и сравнение строк тут дешевле любого обхода. Числа обратно достаются разбором ключа — это
+   делается лишь для закреплённых, которых единицы. */
+const pinned = new Set();
+const pinKey = (sl, r, k) => sl + ":" + r + ":" + k;
 // Куда попала каждая нарисованная цифра на последнем кадре — по этому списку и ищется ближайшая
 // к курсору. Список строится самой отрисовкой: она всё равно считает эти точки.
 let pickList = [];
@@ -527,7 +562,8 @@ function ramp(base, mem){
 
 function draw(){
   ctx.clearRect(0, 0, W, HGT);
-  const cUp = css("--up"), cDn = css("--dn"), cEq = css("--eq"), cMem = css("--mem");
+  const cUp = css("--up"), cDn = css("--dn"), cEq = css("--eq"), cMem = css("--mem"),
+        cPin = css("--pin");
 
   // Видимость грани: нормаль, повёрнутая вместе с телом, смотрит на камеру — грань лицевая.
   const shown = [];
@@ -583,7 +619,7 @@ function draw(){
   if (!showDigits) { pickList = []; hoverBit = null; }
 
   // 2.5. Связанные биты: нити между двойниками. Идут ПОД цифрами — это фон, а не содержание.
-  if (showLinks || hoverBit) {
+  if (showLinks || hoverBit || pinned.size) {
     const cLink = mix(cUp, cDn, 0.5);
     ctx.lineWidth = 1;
     if (showLinks) {
@@ -602,6 +638,23 @@ function draw(){
         }
       }
       ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    // Закреплённые — своим цветом и держатся, пока их не снимут. Рисуются ДО наведения, чтобы
+    // пара под курсором читалась поверх них, даже если она же и закреплена.
+    if (pinned.size) {
+      ctx.strokeStyle = cPin; ctx.lineWidth = 1.7; ctx.globalAlpha = 0.85;
+      for (const key of pinned) {
+        const q = key.split(":");
+        const sl = +q[0], r = +q[1], k = +q[2];
+        if (r >= ROWS || k > r) continue;   // плотность сменили — такого места больше нет
+        const a = project(bitPoint(FTOP[sl], r, k));
+        const b = project(bitPoint(FBOT[sl], r, k));
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        for (const p of [a, b]) {
+          ctx.beginPath(); ctx.arc(p.x, p.y, 10 * p.k * zoom, 0, 6.2832); ctx.stroke();
+        }
+      }
       ctx.globalAlpha = 1;
     }
     if (hoverBit) {
@@ -647,16 +700,35 @@ function draw(){
              краснеет тем сильнее, чем дольше стоит. Через несколько тактов на гранях остаётся
              светиться один скелет — и это не украшение, а симметрия ряда, видимая глазом. */
           const m = keep[f.slot][r][k];
-          if (memOn && m === 0) { ctx.fillStyle = rmp[0]; ctx.globalAlpha = face * 0.24; }
+          let lit = true;   // «живая» цифра — светится; погасшая памятью — нет
+          if (memOn && m === 0) { ctx.fillStyle = rmp[0]; ctx.globalAlpha = face * 0.24; lit = false; }
           else if (memOn) {
             const i = m > MEM_FULL ? MEM_FULL : m;
             ctx.fillStyle = rmp[i];
             ctx.globalAlpha = face * (0.74 + 0.26 * (i / MEM_FULL));
           } else { ctx.fillStyle = rmp[0]; ctx.globalAlpha = face; }
+          /* СВЕЧЕНИЕ. Ореол берёт цвет самой цифры, поэтому красные биты памяти светятся красным,
+             а не голубым — подсветка и накал остаются одним и тем же сообщением.
+             Радиус уменьшается с расстоянием (p.k — то же деление перспективы, что у кегля):
+             без этого дальние цифры светились бы как ближние и картинка спереди назад сплющивалась.
+             ПОГАСШИЕ ПАМЯТЬЮ НЕ СВЕТЯТСЯ ВОВСЕ — и по смыслу (они ушли в фон), и по делу: тень
+             считается на каждую букву отдельно, и отключить её там, где она не нужна, дешевле,
+             чем рисовать. */
+          if (GLOW && lit) {
+            ctx.shadowColor = ctx.fillStyle;
+            ctx.shadowBlur = GLOW * p.k * zoom;
+          } else ctx.shadowBlur = 0;
           // Бит под курсором и его двойник — поверх любой памяти, самым ярким цветом: сейчас
           // разговор про них, а не про симметрию.
+          // Закреплённый — поверх памяти, но ПОД наведением: то, на что сейчас показывают, всегда
+          // главнее того, что отложено про запас.
+          if (pinned.size && pinned.has(pinKey(f.slot, r, k))) {
+            ctx.fillStyle = cPin; ctx.globalAlpha = 1;
+            if (GLOW) { ctx.shadowColor = cPin; ctx.shadowBlur = (GLOW + 4) * p.k * zoom; }
+          }
           if (hoverBit && hoverBit.slot === f.slot && hoverBit.r === r && hoverBit.k === k) {
             ctx.fillStyle = cEq; ctx.globalAlpha = 1;
+            if (GLOW) { ctx.shadowColor = cEq; ctx.shadowBlur = (GLOW + 6) * p.k * zoom; }
           }
           ctx.fillText(val ? "1" : "0", p.x, p.y);
           pickList.push({ x: p.x, y: p.y, slot: f.slot, r, k });
@@ -664,6 +736,7 @@ function draw(){
       }
     }
     ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;   // рёбра ниже ставят свою тень сами, чужая им ни к чему
   }
 
   // 4. Видимые рёбра поверх всего; экватор — последним и толще прочих.
@@ -700,9 +773,14 @@ function pinchDist(){
   const a = Array.from(pts.values());
   return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
 }
+/* КЛИК ИЛИ ПРОТЯЖКА. Одна и та же кнопка мыши и крутит тело, и закрепляет бит, поэтому решает
+   не само нажатие, а то, сдвинулась ли рука: ушли дальше 4 пикселей — это поворот, остались на
+   месте — клик. Порог нужен и для мыши (рука дрожит), и особенно для пальца. */
+let downX = 0, downY = 0, moved = false;
 cv.addEventListener("pointerdown", (e) => {
   pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
   cv.setPointerCapture(e.pointerId);
+  downX = e.clientX; downY = e.clientY; moved = false;
   if (pts.size >= 2) { dragging = false; cv.classList.remove("drag"); pinchD = pinchDist(); return; }
   dragging = true; lastX = e.clientX; lastY = e.clientY;
   cv.classList.add("drag");
@@ -729,6 +807,7 @@ cv.addEventListener("pointermove", (e) => {
     hoverBit = best ? { slot: best.slot, r: best.r, k: best.k } : null;
     return;
   }
+  if (!moved && Math.hypot(e.clientX - downX, e.clientY - downY) > 4) moved = true;
   yaw += (e.clientX - lastX) * 0.008;
   // Наклон зажат чуть меньше прямого угла: ровно с ребра октаэдр вырождается в линию, и
   // смотреть там не на что.
@@ -737,8 +816,26 @@ cv.addEventListener("pointermove", (e) => {
 });
 // Положение тела запоминается тоже — вернувшись на страницу, застаёшь её той же стороной.
 const stopDrag = (e) => {
+  const wasLast = !!e && pts.has(e.pointerId) && pts.size === 1;
   if (e && pts.has(e.pointerId)) pts.delete(e.pointerId);
   if (pts.size < 2) pinchD = 0;
+  // Отпустили единственный палец, не сдвинув, — это клик по биту. Ищем ближайшую цифру там же,
+  // где её ищет наведение, и по тому же списку: что нарисовано, то и берётся.
+  if (wasLast && !moved && e) {
+    const rect = cv.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    let best = null, bd = 17 * 17;
+    for (const q of pickList) {
+      const dx = q.x - mx, dy = q.y - my, d = dx * dx + dy * dy;
+      if (d < bd) { bd = d; best = q; }
+    }
+    if (best) {
+      const key = pinKey(best.slot, best.r, best.k);
+      // Повторный клик по закреплённому снимает его — иначе набранное пришлось бы сбрасывать целиком.
+      if (pinned.has(key)) pinned.delete(key); else pinned.add(key);
+      syncUI();
+    }
+  }
   // Второй палец подняли, первый остался — поворот подхватывается с ЕГО текущего места, иначе
   // тело дёрнулось бы на всю разницу между пальцами.
   if (pts.size === 1) {
@@ -778,13 +875,13 @@ bReset.onclick = () => { yaw = 0.6; pitch = -0.42; zoom = 1; save(); };
    исключение, и без обёртки страница не поднялась бы вообще. */
 const KEY = "zerkalius-oktaedr-v1";
 const sRows = document.getElementById("sRows"), sSize = document.getElementById("sSize"),
-      sSpeed = document.getElementById("sSpeed");
+      sSpeed = document.getElementById("sSpeed"), sGlow = document.getElementById("sGlow");
 const vRows = document.getElementById("vRows"), vSize = document.getElementById("vSize"),
-      vSpeed = document.getElementById("vSpeed");
+      vSpeed = document.getElementById("vSpeed"), vGlow = document.getElementById("vGlow");
 function save(){
   try {
     localStorage.setItem(KEY, JSON.stringify({
-      ROWS, DIG, SPEED, spin, showDigits, showHidden, zoom, yaw, pitch, stepOp, TICK,
+      ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, zoom, yaw, pitch, stepOp, TICK,
       showLinks, LINK_EVERY,
       theme: document.documentElement.getAttribute("data-theme") || ""
     }));
@@ -797,6 +894,7 @@ function load(){
   if (o.ROWS >= 4 && o.ROWS <= 26) ROWS = o.ROWS | 0;
   if (o.DIG  >= 7 && o.DIG  <= 22) DIG  = o.DIG  | 0;
   if (o.SPEED >= 0 && o.SPEED <= 160) SPEED = o.SPEED | 0;
+  if (o.GLOW >= 0 && o.GLOW <= 20) GLOW = o.GLOW | 0;
   if (typeof o.spin === "boolean") spin = o.spin;
   if (typeof o.showDigits === "boolean") showDigits = o.showDigits;
   if (typeof o.showHidden === "boolean") showHidden = o.showHidden;
@@ -814,6 +912,7 @@ function load(){
 function syncUI(){
   sRows.value = ROWS;  vRows.textContent = ROWS;
   sSize.value = DIG;   vSize.textContent = DIG;
+  sGlow.value = GLOW;  vGlow.textContent = GLOW;
   sSpeed.value = SPEED; vSpeed.textContent = SPEED;
   bSpin.classList.toggle("act", spin);
   bDig.classList.toggle("act", showDigits);
@@ -825,13 +924,20 @@ function syncUI(){
   opRevInv.classList.toggle("act", stepOp === "revinv");
   opRoll.classList.toggle("act", stepOp === "roll");
   bLinks.classList.toggle("act", showLinks);
+  // На кнопке видно, сколько набрано: закреплённые могут уехать на дальнюю сторону тела, и без
+  // счётчика было бы непонятно, снимать вообще нечего или просто не видно.
+  bUnpin.textContent = pinned.size ? "✕ Снять (" + pinned.size + ")" : "✕ Снять";
+  bUnpin.classList.toggle("act", pinned.size > 0);
   sLink.value = LINK_EVERY; vLink.textContent = LINK_EVERY;
   bAuto.classList.toggle("act", !!autoTimer);
   bAuto.textContent = autoTimer ? "⏸ Стоп" : "▶ Цикл";
 }
 // Плотность меняет ЧИСЛО рядов, значит старая картина бит под неё не подходит — пересобираем.
-sRows.oninput  = () => { ROWS = +sRows.value; vRows.textContent = ROWS; rollBits(); save(); };
+// Плотность меняет число мест, и прежние закрепления указывали бы в пустоту — снимаем их вместе
+// с картиной бит.
+sRows.oninput  = () => { ROWS = +sRows.value; vRows.textContent = ROWS; rollBits(); unpinAll(); save(); };
 sSize.oninput  = () => { DIG = +sSize.value;  vSize.textContent = DIG;  save(); };
+sGlow.oninput  = () => { GLOW = +sGlow.value; vGlow.textContent = GLOW; save(); };
 sSpeed.oninput = () => { SPEED = +sSpeed.value; vSpeed.textContent = SPEED; save(); };
 for (const b of [bSpin, bDig, bEdge, bTheme]) {
   const prev = b.onclick;
@@ -871,6 +977,9 @@ bAuto.onclick = () => { autoTimer ? stopAuto() : startAuto(); };
 const bLinks = document.getElementById("bLinks"), sLink = document.getElementById("sLink"),
       vLink = document.getElementById("vLink");
 bLinks.onclick = () => { showLinks = !showLinks; syncUI(); save(); };
+const bUnpin = document.getElementById("bUnpin");
+function unpinAll(){ if (pinned.size) { pinned.clear(); syncUI(); } }
+bUnpin.onclick = unpinAll;
 sLink.oninput = () => { LINK_EVERY = +sLink.value; vLink.textContent = LINK_EVERY; save(); };
 // Такт меняется на ходу: если цикл идёт, перезаводим его с новой величиной, а не ждём остановки.
 sTick.oninput = () => {
@@ -946,6 +1055,7 @@ window.addEventListener("keydown", (e) => {
     return;   // читают методичку — прибор молчит
   }
   if (k === "h" || k === "р" || k === "F1") { e.preventDefault(); helpOpen(true); return; }
+  if (k === "Escape") { e.preventDefault(); unpinAll(); return; }
   if (e.code === "Space")          { e.preventDefault(); bSpin.onclick(); }
   else if (e.code === "Enter" || e.code === "NumpadEnter") { e.preventDefault(); bAuto.onclick(); }
   else if (k === "ArrowRight")     { e.preventDefault(); stopAuto(); doStep(1); }
