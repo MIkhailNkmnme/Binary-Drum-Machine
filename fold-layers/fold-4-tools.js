@@ -8089,3 +8089,122 @@ function clearSelectedOrAll(){
 }
 const bClearAllRowsEl = document.getElementById("bClearAllRows");
 if (bClearAllRowsEl) bClearAllRowsEl.onclick = clearSelectedOrAll;
+
+/* ═══ "🪞 ОСИ СКВОЗНОЙ" — СИММЕТРИЯ ЧЕРЕЗ ГРАНИЦЫ СТРОК (v1.515) ═══════════════════
+   Построчная карта (см. buildAxisMap в fold-1-core) видит только то, что уместилось ВНУТРИ строки.
+   Но цепочка читается и как одна лента, и симметрия ленты границ строк не знает: ось запросто
+   садится на стык, половина в одной строке, половина в следующей. Увидеть такую до сих пор было
+   нечем — ни поиском (он ищет ОБРАЗЕЦ), ни построчной картой.
+   ЛЕНТА БЕРЁТСЯ НЕ САМА ПО СЕБЕ, А ЧЕРЕЗ КАРТУ ЯЧЕЕК. bgConcatCellMap() отдаёт для сквозного
+   режима массив «место в ленте → {r, p}», собранный ТЕМ ЖЕ обходом, что и сама склейка. Если
+   строить ленту отдельно (concatRowsDownTo), а карту отдельно, две стороны могут разъехаться —
+   например, на точках «⋮ чёт/нечёт»: склейка их выбрасывает stripDots, а карта ячеек нет. Поэтому
+   лента собирается ИЗ САМОЙ КАРТЫ: сколько ячеек, столько бит, и разъехаться им негде.
+   РЕЖИМ ОБХОДА — обычная сквозная сверху вниз ("concatR") по всей цепочке. Остальные одиннадцать
+   (влево, змейки, Инв, Рев+Инв) читаются тем же bgConcatCellMap и подключаются одной строкой, если
+   понадобятся, — но начинать с самого частого обхода честнее, чем молча брать текущий режим
+   фон-поиска: тот меняется по ходу работы, и карта означала бы каждый раз разное.
+   ЧТО ОСТАЁТСЯ В КАРТЕ. Только оси, пересёкшие границу строк. Всё, что лежит внутри одной строки,
+   и так показывает построчная кнопка — дублировать её значило бы утопить редкие сквозные оси в
+   сотне обычных. Фильтр отдан в axisMarksOf через keep (см. там же).
+   СКОЛЬКО СТРОК ПЕРЕСЕКЛА ОСЬ — за одно вычитание, а не пересчётом по всей её длине: заранее
+   считается префикс «сколько раз сменилась строка к этому месту», и охват = разность на концах
+   плюс единица. Без этого длинная ось стоила бы прохода по себе, и всё вместе снова стало бы
+   квадратом — ровно тем, ради ухода от которого и взят Манакер. */
+function buildAxisMapThru(){
+  axisMap.clear();
+  const rows = st.rows || [];
+  const empty = { pal: 0, anti: 0, total: 0, rows: 0, rowList: "", maxLen: 0, tape: 0 };
+  const stop = rows.length - 1;
+  if (stop < 0) { axisMapBaseRows = null; axisMapKind = null; return empty; }
+  const cells = (typeof bgConcatCellMap === "function") ? bgConcatCellMap("concatR", stop) : null;
+  if (!cells || !cells.length) { axisMapBaseRows = null; axisMapKind = null; return empty; }
+  const cache = new Map();
+  const bitsOf = (r) => { let v = cache.get(r); if (v === undefined) { v = getRowBits(st, r); cache.set(r, v); } return v; };
+  const n = cells.length;
+  const rowAt = new Array(n).fill(-1);
+  let tape = "";
+  for (let i = 0; i < n; i++) {
+    const c = cells[i];
+    if (c) { const s = bitsOf(c.r); tape += (s && s[c.p]) || "0"; rowAt[i] = c.r; }
+    // null — место, где бита нет, а в склейке с «0 вместо пустот» стоит ноль (см. concatRowPadded).
+    else tape += "0";
+  }
+  // Пустые места достаются строке, внутри чьего куска они стоят: каждая строка идёт в ленте одним
+  // непрерывным куском, поэтому протяжка от ближайшего настоящего бита попадает в неё точно.
+  let last = -1;
+  for (let i = 0; i < n; i++) { if (rowAt[i] >= 0) last = rowAt[i]; else if (last >= 0) rowAt[i] = last; }
+  for (let i = n - 2; i >= 0; i--) if (rowAt[i] < 0) rowAt[i] = rowAt[i + 1];
+  const bnd = new Array(n).fill(0);
+  for (let i = 1; i < n; i++) bnd[i] = bnd[i - 1] + (rowAt[i] !== rowAt[i - 1] ? 1 : 0);
+  // Ось принимается, только если её концы лежат в РАЗНЫХ строках; ответ — сколько строк она прошла.
+  const keep = (lo, hi) => {
+    if (lo < 0 || hi >= n) return 0;
+    const d = bnd[hi] - bnd[lo];
+    return d > 0 ? d + 1 : 0;
+  };
+  const res = axisMarksOf(tape, keep);
+  let maxLen = 0;
+  const rowsHit = new Set();
+  for (const [idx, info] of res.marks) {
+    const c = cells[idx];
+    if (!c) continue;                       // ось задела подставленный ноль — настоящего бита там нет
+    const rowLen = (rows[c.r] || "").length;
+    if (c.p < 0 || c.p >= rowLen) continue; // бит зеркала, а не самой строки — показывать негде
+    let own = axisMap.get(c.r);
+    if (!own) { own = new Map(); axisMap.set(c.r, own); }
+    own.set(c.p, info);
+    rowsHit.add(c.r);
+    if (info.pal > maxLen) maxLen = info.pal;
+    if (info.anti > maxLen) maxLen = info.anti;
+  }
+  axisMapBaseRows = rows.slice();
+  axisMapKind = "thru";
+  const list = Array.from(rowsHit).sort((a, b) => a - b).map(r => r + 1).join(", ");
+  return { pal: res.pal, anti: res.anti, total: res.pal + res.anti, rows: rowsHit.size, rowList: list, maxLen, tape: n };
+}
+const bAxisMapThruEl = document.getElementById("bAxisMapThru");
+if (bAxisMapThruEl) {
+  bAxisMapThruEl.onclick = () => {
+    // Своя карта гасится, ЧУЖАЯ (построчная) — пересчитывается по сквозной, см. axisMapKind.
+    if (axisMap.size && axisMapKind === "thru") { clearAxisMap(); say("🪞 Оси сквозной сняты."); render(); return; }
+    const res = buildAxisMapThru();
+    if (!res.total) {
+      say(`🪞 Оси сквозной: осей длиной от ${AXIS_MAP_MIN_LEN} бит, выходящих за границу строки, не нашлось` +
+          (res.tape ? ` (лента ${res.tape} бит).` : " — сквозную собрать не из чего."));
+      render(); return;
+    }
+    say(`🪞 Оси сквозной (обход ⟶ сверху вниз, лента ${res.tape} бит): палиндромных ${res.pal}, антипалиндромных ${res.anti}, самая длинная ${res.maxLen} бит. ` +
+        (axisMap.size ? `Отмечены в ${res.rows} стр. толстой чертой — все они идут ЧЕРЕЗ стык строк; наведение показывает длину и охват.`
+                      : "Но все они пришлись на зеркала или подставленные нули — на самих строках показывать нечего.") +
+        " Ещё нажатие — снять.");
+    logStep("Оси сквозной", res.rowList, "", `Палиндромных ${res.pal}, антипалиндромных ${res.anti}, макс. ${res.maxLen} бит, лента ${res.tape}`);
+    render();
+  };
+}
+
+
+/* ═══ "🪞 КАРТА ОСЕЙ" — КНОПКА (v1.514) ══════════════════════════════════
+   Считает и показывает; данные не трогает вовсе, поэтому ни snapshot(), ни saveCache() тут нет —
+   отменять нечего и сохранять нечего. Повторное нажатие снимает карту.
+   Сама карта живёт до первой правки бит: render() сверяет её со снимком строк и снимает, как
+   только что-нибудь изменилось (см. axisMapBaseRows). */
+const bAxisMapEl = document.getElementById("bAxisMap");
+if (bAxisMapEl) {
+  bAxisMapEl.onclick = () => {
+    // Своя карта гасится, ЧУЖАЯ (по сквозной) — пересчитывается построчно, см. axisMapKind.
+    if (axisMap.size && axisMapKind === "row") { clearAxisMap(); say("🪞 Карта осей снята."); render(); return; }
+    const res = buildAxisMap();
+    if (!res.total) {
+      say(`🪞 Карта осей: осей длиной от ${AXIS_MAP_MIN_LEN} бит не нашлось ни в одной строке.`);
+      render(); return;
+    }
+    const shown = axisMap.size;
+    say(`🪞 Карта осей: палиндромных осей ${res.pal}, антипалиндромных ${res.anti}` +
+        (shown ? `, показаны в ${res.rows} стр.` : " — но все они пришлись на зеркальные поля, в самих строках показывать нечего") +
+        `. Бит с чертой СНИЗУ — ось палиндрома, СВЕРХУ — ось антипалиндрома; наведение показывает длину. Порог ${AXIS_MAP_MIN_LEN} бит. Ещё нажатие — снять.`);
+    logStep("Карта осей", res.rowList, "", `Палиндромных осей ${res.pal}, антипалиндромных ${res.anti}, порог ${AXIS_MAP_MIN_LEN} бит`);
+    render();
+  };
+}
+

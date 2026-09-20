@@ -1,0 +1,970 @@
+<!-- Zerkalius Октаэдр — v0.008. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+     Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
+     Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zerkalius Октаэдр — v0.008</title>
+<style>
+  /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
+     линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
+  :root{
+    --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598;
+    --up:#7cd4ff;    /* верхняя половина — прямые биты */
+    --dn:#ffcf6b;    /* нижняя половина — зазеркалье, биты инвертированы */
+    --eq:#e8edf5;    /* линия основания: само зеркало, самое яркое место знака */
+    --mem:#ff5d5d;   /* память: бит, который шаг за шагом остаётся на месте */
+  }
+  html[data-theme="green"]{
+    --bg:#000000; --panel:#050b07; --line:#0e2a1b; --fg:#7dffc4; --dim:#2f7a56;
+    --up:#2bff9e; --dn:#0f9d63; --eq:#c9ffe6; --mem:#ff5d5d;
+  }
+  /* ЗАПРЕТ ВЫДЕЛЕНИЯ (v0.003, баг-репорт пользователя). Крутят тело протяжкой мыши, а протяжка
+     для браузера — это ещё и выделение текста: подписи кнопок, ползунков и сам заголовок
+     закрашивались синим, стоило потянуть чуть мимо холста. Запрет ставится на всю страницу разом,
+     а не на каждый элемент: выделять тут нечего нигде — это не документ, а прибор. */
+  html,body{ margin:0; height:100%; background:var(--bg); color:var(--fg); overflow:hidden;
+    font-family:"Segoe UI", Inter, system-ui, sans-serif;
+    user-select:none; -webkit-user-select:none; -ms-user-select:none;
+    -webkit-tap-highlight-color:transparent; }
+  canvas{ display:block; width:100%; height:100%; cursor:grab; touch-action:none; }
+  canvas.drag{ cursor:grabbing; }
+  #title{ position:fixed; left:0; right:0; top:18px; text-align:center; pointer-events:none;
+    font-size:30px; font-weight:300; letter-spacing:11px; color:var(--fg); opacity:.85; }
+  #ver{ position:fixed; right:12px; top:14px; font-size:11px; color:var(--dim); letter-spacing:1px; }
+  #hint{ position:fixed; left:0; right:0; bottom:14px; text-align:center; pointer-events:none;
+    font-size:12px; color:var(--dim); letter-spacing:.5px; }
+  #hint b{ color:var(--fg); font-weight:500; }
+  #panel{ position:fixed; left:12px; top:12px; display:flex; flex-direction:column; gap:5px;
+    width:188px; }
+  button{ background:var(--panel); color:var(--fg); border:1px solid var(--line); border-radius:3px;
+    padding:4px 9px; font:12px/1.2 inherit; cursor:pointer; text-align:left; letter-spacing:.3px; }
+  button:hover{ border-color:var(--up); color:var(--up); }
+  button.act{ border-color:var(--up); color:var(--up); }
+  /* Настройки — той же плотности, что панели приложения: подпись со значением и ползунок под ней. */
+  .set{ background:var(--panel); border:1px solid var(--line); border-radius:3px; padding:5px 8px 7px; }
+  .set label{ display:block; font-size:11px; color:var(--dim); letter-spacing:.3px; margin-bottom:3px; }
+  .set label b{ color:var(--fg); font-weight:500; }
+  .set input[type=range]{ width:100%; height:3px; accent-color:var(--up); background:var(--line);
+    border-radius:2px; -webkit-appearance:none; appearance:none; cursor:pointer; }
+  .set input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:11px; height:11px;
+    border-radius:50%; background:var(--up); }
+  .row{ display:flex; gap:4px; }
+  .row button{ flex:1; text-align:center; padding:4px 2px; }
+  .cap{ font-size:11px; color:var(--dim); letter-spacing:.3px; margin:4px 0 1px; }
+  #stepInfo{ font-size:11px; color:var(--dim); letter-spacing:.3px; }
+  #stepInfo b{ color:var(--mem); font-weight:600; }
+  /* СТРЕЛКИ У ПОЛЗУНКОВ (v0.004, запрос пользователя). Ползунком удобно гнать грубо, но попасть в
+     соседнее значение мышью почти невозможно — особенно у «такта» с шагом 20 из 1140. Стрелка
+     двигает ровно на ОДИН шаг самого поля, поэтому у каждого ползунка своя цена клика и её не надо
+     нигде дублировать: шаг берётся из атрибута step. */
+  .srow{ display:flex; align-items:center; gap:4px; }
+  .srow input[type=range]{ flex:1; min-width:0; }
+  .arr{ flex:0 0 auto; padding:2px 5px; font-size:11px; line-height:1.1; text-align:center;
+    color:var(--dim); }
+  .arr:active{ border-color:var(--up); color:var(--up); }
+  /* ═══ МЕТОДИЧКА (v0.007, запрос пользователя: «инструкцию сразу выписать, и кнопку на текст») ══
+     Лист поверх холста, со своей прокруткой. Не отдельный файл и не всплывающее окно: справка,
+     живущая рядом с прибором, расходится с ним на второй же правке, а живущая ВНУТРИ — правится
+     тем же движением, что и сам прибор. */
+  #helpWrap{ position:fixed; inset:0; z-index:9; display:none;
+    background:rgba(5,7,11,.72); backdrop-filter:blur(2px); }
+  #helpWrap.on{ display:block; }
+  #help{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:min(760px, calc(100vw - 32px)); max-height:min(84vh, 900px); overflow-y:auto;
+    background:var(--panel); border:1px solid var(--line); border-radius:6px;
+    padding:20px 24px 26px; box-shadow:0 18px 60px rgba(0,0,0,.6); }
+  #help h2{ margin:0 0 4px; font-size:19px; font-weight:400; letter-spacing:5px; color:var(--fg); }
+  #help h3{ margin:20px 0 6px; font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--up); }
+  #help p, #help li{ margin:5px 0; font-size:12.5px; line-height:1.55; color:var(--fg); opacity:.9; }
+  #help ul{ margin:4px 0 4px 18px; padding:0; }
+  #help b{ color:var(--eq); font-weight:600; }
+  #help a{ color:var(--up); }
+  #help code{ font-family:Consolas, monospace; font-size:11.5px; color:var(--up);
+    background:var(--bg); border:1px solid var(--line); border-radius:3px; padding:1px 5px; }
+  #help .sub{ font-size:11.5px; color:var(--dim); letter-spacing:.3px; margin:0 0 6px; }
+  #help table{ border-collapse:collapse; margin:6px 0 2px; width:100%; }
+  #help td{ padding:3px 8px 3px 0; font-size:12.5px; color:var(--fg); opacity:.9;
+    border-bottom:1px solid var(--line); vertical-align:top; }
+  #help td:first-child{ width:132px; color:var(--up); white-space:nowrap; font-weight:600; }
+  #help .mem{ color:var(--mem); font-weight:600; }
+  #helpClose{ position:sticky; top:0; float:right; margin:-6px -8px 0 8px; }
+  /* Единственное место на странице, где выделение РАЗРЕШЕНО: отсюда текст копируют. Общий запрет
+     (см. user-select у body) заведён против случайного выделения при протяжке по холсту, а здесь
+     протяжкой как раз читают и выписывают. */
+  #help{ user-select:text; -webkit-user-select:text; }
+  /* Кнопка «⚙» — только на узком экране: там панель занимает низ и её прячут, чтобы видеть тело. */
+  #gear{ display:none; position:fixed; left:10px; top:10px; z-index:3; padding:7px 10px; }
+
+  /* ═══ УЗКИЙ ЭКРАН (v0.004) ═══════════════════════════════════════════════════════════════════
+     На телефоне колонка слева съедала половину ширины и не влезала по высоте, а body с
+     overflow:hidden не давал до неё доскроллить — нижние настройки были просто недостижимы.
+     Поэтому панель переезжает ВНИЗ отдельным листом: два столбца, своя прокрутка, ограничение по
+     высоте и отступ под системную полосу (env(safe-area-inset-bottom) — вырез и «домашняя»
+     полоска на iPhone). Кнопки крупнее: палец — не курсор. */
+  @media (max-width: 720px){
+    #title{ font-size:20px; letter-spacing:6px; top:10px; }
+    #ver{ font-size:10px; top:11px; }
+    #hint{ display:none; }
+    #gear{ display:block; }
+    #panel{ left:0; right:0; bottom:0; top:auto; width:auto; z-index:2;
+      display:grid; grid-template-columns:1fr 1fr; gap:6px; align-content:start;
+      padding:9px 10px calc(10px + env(safe-area-inset-bottom));
+      background:var(--panel); border-top:1px solid var(--line);
+      max-height:56vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+    #panel.hidden{ display:none; }
+    #panel > .set, #panel > .cap, #panel > .row, #panel > #stepInfo{ grid-column:1 / -1; }
+    #stepInfo{ text-align:center; padding-bottom:2px; }
+    button{ padding:8px 10px; font-size:13px; }
+    .arr{ min-width:38px; padding:7px 4px; font-size:13px; }
+    .set input[type=range]{ height:5px; }
+    .set input[type=range]::-webkit-slider-thumb{ width:17px; height:17px; }
+    /* На телефоне методичка занимает экран целиком: обрезать её рамкой там нечем и незачем. */
+    #help{ width:100vw; max-height:100vh; height:100%; border-radius:0; border:0;
+      padding:16px 16px calc(24px + env(safe-area-inset-bottom)); }
+    #help td:first-child{ width:104px; }
+  }
+</style>
+</head>
+<body>
+<div id="title">zerkalius</div>
+<button id="gear" title="Показать или спрятать настройки">⚙</button>
+<div id="ver">v0.008</div>
+<div id="helpWrap">
+<div id="help">
+  <button id="helpClose" title="Esc">✕ Закрыть</button>
+  <h2>zerkalius</h2>
+  <p class="sub">Октаэдр — методичка. Версия страницы стоит в правом верхнем углу.</p>
+
+  <h3>Что это</h3>
+  <p>Знак Zerkalius, показанный телом: пирамида и её зеркало, сложенные основаниями. Общее
+  основание — квадрат в горизонтальной плоскости — и есть <b>зеркало</b>, поэтому оно нарисовано
+  ярче всего остального.</p>
+  <p>На гранях лежат биты. Верхняя половина несёт картину как есть, нижняя — <b>ту же самую</b>
+  картину, отражённую и инвертированную. Сравните любой ряд сверху с тем же рядом снизу: это не
+  похожая картинка, это одна и та же, увиденная с другой стороны зеркала. В терминах самого
+  приложения — зеркало «инв-разв».</p>
+  <p>Биты идут рядами, параллельными экватору: ряд у вершины — один бит, каждый следующий на бит
+  длиннее. Цифры живут в объёме вместе с телом, а не наклеены картинкой: размер убывает с
+  расстоянием, яркость — по тому, насколько грань отвёрнута от взгляда.</p>
+
+  <h3>Управление</h3>
+  <table>
+    <tr><td>Мышь</td><td>тянуть — крутить; колесо — ближе и дальше</td></tr>
+    <tr><td>Палец</td><td>один — крутить; два — щипок для увеличения</td></tr>
+    <tr><td>Наведение</td><td>подвести курсор к цифре — загорится её двойник на той стороне</td></tr>
+    <tr><td>Пробел</td><td>вращение включить и остановить</td></tr>
+    <tr><td>Enter</td><td>цикл шагов включить и остановить</td></tr>
+    <tr><td>◄ ►</td><td>шаг назад и вперёд</td></tr>
+    <tr><td>▲ ▼</td><td>такт цикла быстрее и медленнее</td></tr>
+    <tr><td>1 2 3</td><td>действие: ⇄ разворот, ⇅ инв-разв, ↻ Круг Инв</td></tr>
+    <tr><td>D · L · F</td><td>биты · нити · забыть память</td></tr>
+    <tr><td>R · T</td><td>новая картина · сменить палитру</td></tr>
+    <tr><td>H · Esc</td><td>открыть и закрыть эту методичку</td></tr>
+  </table>
+  <p class="sub">Буквы работают и в русской раскладке. Если фокус стоит в ползунке, клавиши ему и
+  достаются — стрелки двигают бегунок.</p>
+
+  <h3>Настройки</h3>
+  <ul>
+    <li><b>Плотность бит</b> — сколько рядов умещается на грани, от 4 до 26. Меняет число бит, поэтому
+    картина пересобирается заново.</li>
+    <li><b>Размер цифр</b> — кегль на ближней грани; дальше он убывает сам.</li>
+    <li><b>Скорость вращения</b> — ноль останавливает.</li>
+    <li><b>Такт цикла</b> — от 60 до 1200 мс между шагами.</li>
+    <li><b>Нитей: каждая N-я</b> — прореживание занавеса связей.</li>
+  </ul>
+  <p>У каждого ползунка стрелки <b>◄ ►</b>: клик двигает ровно на один шаг этого поля, удержание
+  гонит быстро. Настройки, палитра и положение тела сохраняются в памяти браузера и переживают
+  перезагрузку.</p>
+
+  <h3>Реверс с памятью</h3>
+  <p>Три действия над каждым рядом бит — те же зеркала, что и в самом приложении:</p>
+  <ul>
+    <li><b>⇄ разворот</b> — ряд читается задом наперёд;</li>
+    <li><b>⇅ инв-разв</b> — разворот вместе с инверсией;</li>
+    <li><b>↻ Круг Инв</b> — оборот на один бит, и бит, перешедший шов, переворачивается.</li>
+  </ul>
+  <p><b>Память</b> считает, сколько шагов подряд бит на этом месте не менял значения. Держится —
+  счётчик растёт, дрогнул — обнуляется. Место, которое дрогнуло, гаснет почти до фона; место,
+  которое стоит, <span class="mem">разгорается и краснеет</span> тем сильнее, чем дольше держится.
+  Через несколько тактов на гранях светится один скелет — и это не украшение, а симметрия ряда,
+  ставшая видимой.</p>
+  <p>Считается по значению «до и после», а не по формуле «какие места палиндромные». Палиндромность
+  — верный ответ ровно для одного разворота; возьмёшь другое действие, и правило станет другим, а
+  вопрос тем же. Поэтому все три кнопки пользуются одной памятью.</p>
+  <p><b>Чего ждать от каждого действия.</b> Разворот сам себе обратен: два шага возвращают ряд.
+  Значений всего два, поэтому бит меняется тогда и только тогда, когда его место не палиндромное —
+  разворот сам и есть «изменяющиеся переворачиваются». Память поэтому насыщается за пару тактов и
+  дальше стоит: палиндромные места не сдвинутся никогда. Чтобы память <b>рисовала</b>, а не замирала,
+  возьмите <b>↻ Круг Инв</b>: у ряда длины n он возвращается к себе лишь через 2n шагов, каждый такт
+  задевает другие места, и красный скелет всё время перестраивается. Поставьте медленный такт и
+  запустите цикл — вот там и начинается самое интересное.</p>
+  <p>Шаг назад отматывает картину, но не память: она про то, что бит выдержал сделанный шаг, а шаг
+  назад — такой же сделанный шаг. Снимает её только <b>✕ Забыть</b>. Смена действия тоже обнуляет
+  память: счётчики набраны прежним действием, продолжать их новым значило бы показывать красным то,
+  чего не проверяли.</p>
+  <p>Строка внизу панели: номер шага — на сколько картина ушла от исходной — и доля бит, устоявших
+  на последнем шаге.</p>
+
+  <h3>Связанные биты</h3>
+  <p>Бит верхней грани и бит нижней с тем же номером вокруг оси и теми же координатами стоят в
+  зеркальных точках и <b>всегда противоположны по значению</b>. Тронешь один — второй меняется в тот
+  же миг, и не потому, что между ними что-то передалось, а потому, что они с самого начала одно
+  целое, просто увиденное с двух сторон зеркала.</p>
+  <p><b>Наведите курсор на цифру</b> — загорится её двойник, между ними протянется нить, на концах
+  кольца. Работает всегда. Кнопка <b>🔗 Нити</b> показывает занавес целиком; ползунок рядом
+  прореживает его — при 26 рядах пар больше тысячи, и без прореживания тело превращается в сплошную
+  штриховку.</p>
+  <p>Нить всегда отвесная: отражение идёт через плоскость экватора, у двойников общие две координаты
+  из трёх, а третья ровно противоположна.</p>
+
+  <h3>Остальные кнопки</h3>
+  <ul>
+    <li><b>△ Скрытые рёбра</b> — показывать ли рёбра дальней стороны; без них силуэт чище, с ними
+    лучше читается объём.</li>
+    <li><b>🎲 Новая картина</b> — перебросить все биты заново, память при этом снимается.</li>
+    <li><b>🎨</b> — переключение между палитрой приложения и прежней зеленью.</li>
+    <li><b>⌖ Вид сверху</b> — вернуть камеру в исходное положение.</li>
+  </ul>
+
+  <h3>Где искать остальное</h3>
+  <p>Что менялось от версии к версии, почему именно так, что осталось несделанным и <b>словарь
+  непонятных слов</b> — в соседней странице <a href="Zerkalius-dnevnik.html" target="_blank"
+  rel="noopener">Борт-журнал</a> (<code>Zerkalius-dnevnik.html</code>, лежит рядом). Каждая версия
+  целиком хранится в <code>archive\Zerkalius-oktaedr\</code>.</p>
+</div>
+</div>
+<canvas id="cv"></canvas>
+<div id="panel">
+  <button id="bSpin" class="act" title="Пробел">⟳ Вращение</button>
+  <button id="bDig" class="act" title="D">01 Биты</button>
+  <button id="bEdge" class="act">△ Скрытые рёбра</button>
+  <button id="bRoll" title="R">🎲 Новая картина</button>
+  <button id="bTheme" title="T">🎨 Зелень</button>
+  <button id="bReset">⌖ Вид сверху</button>
+  <button id="bHelp" title="H или F1">📖 Методичка</button>
+  <div class="set">
+    <label>Плотность бит: <b id="vRows">13</b> рядов</label>
+    <div class="srow">
+      <button class="arr" data-for="sRows" data-d="-1" title="На шаг меньше (держать — быстро)">◄</button>
+      <input type="range" id="sRows" min="4" max="26" step="1" value="13">
+      <button class="arr" data-for="sRows" data-d="1" title="На шаг больше (держать — быстро)">►</button>
+    </div>
+  </div>
+  <div class="set">
+    <label>Размер цифр: <b id="vSize">13</b></label>
+    <div class="srow">
+      <button class="arr" data-for="sSize" data-d="-1" title="На шаг меньше (держать — быстро)">◄</button>
+      <input type="range" id="sSize" min="7" max="22" step="1" value="13">
+      <button class="arr" data-for="sSize" data-d="1" title="На шаг больше (держать — быстро)">►</button>
+    </div>
+  </div>
+  <div class="set">
+    <label>Скорость вращения: <b id="vSpeed">42</b></label>
+    <div class="srow">
+      <button class="arr" data-for="sSpeed" data-d="-1" title="На шаг меньше (держать — быстро)">◄</button>
+      <input type="range" id="sSpeed" min="0" max="160" step="2" value="42">
+      <button class="arr" data-for="sSpeed" data-d="1" title="На шаг больше (держать — быстро)">►</button>
+    </div>
+  </div>
+  <div class="cap">Реверс с памятью</div>
+  <div class="row">
+    <button id="opRev" class="act" title="[1] Разворот ряда. Не меняются биты на палиндромных местах">⇄</button>
+    <button id="opRevInv" title="[2] Разворот с инверсией — зеркало «инв-разв». Не меняются биты на антипалиндромных местах">⇅</button>
+    <button id="opRoll" title="[3] Круг Инв: оборот на один бит с переворотом на шве. Ряд длины n возвращается только через 2n шагов">↻</button>
+  </div>
+  <div class="row">
+    <button id="bStep" title="► — шаг вперёд, ◄ — назад">⇄ Шаг</button>
+    <button id="bAuto" title="Enter. ▲ ▼ — такт быстрее и медленнее">▶ Цикл</button>
+  </div>
+  <div class="row">
+    <button id="bForget" title="F">✕ Забыть</button>
+  </div>
+  <div class="cap">Связанные биты</div>
+  <div class="row">
+    <button id="bLinks" title="L">🔗 Нити</button>
+  </div>
+  <div class="set">
+    <label>Нитей: каждая <b id="vLink">3</b>-я</label>
+    <div class="srow">
+      <button class="arr" data-for="sLink" data-d="-1" title="Чаще">◄</button>
+      <input type="range" id="sLink" min="1" max="12" step="1" value="3">
+      <button class="arr" data-for="sLink" data-d="1" title="Реже">►</button>
+    </div>
+  </div>
+  <div class="set">
+    <label>Такт цикла: <b id="vTick">420</b> мс</label>
+    <div class="srow">
+      <button class="arr" data-for="sTick" data-d="-1" title="На шаг меньше (держать — быстро)">◄</button>
+      <input type="range" id="sTick" min="60" max="1200" step="20" value="420">
+      <button class="arr" data-for="sTick" data-d="1" title="На шаг больше (держать — быстро)">►</button>
+    </div>
+  </div>
+  <div id="stepInfo">шаг 0 · устояло <b>—</b></div>
+</div>
+<script>
+/* ═══ ГЕОМЕТРИЯ ═══════════════════════════════════════════════════════════════════════════════
+   Октаэдр — это ровно то, что нарисовано в знаке: пирамида и её зеркало, сложенные основаниями.
+   Шесть вершин: две вершины пирамид по оси Y и четыре угла общего квадрата в плоскости Y=0.
+   Эта плоскость и есть зеркало, поэтому вся арифметика ниже строится от неё. */
+const T = [0, 1, 0], B = [0, -1, 0];
+const EQ = [[1, 0, 0], [0, 0, 1], [-1, 0, 0], [0, 0, -1]];
+
+/* Восемь граней, по четыре на половину. slot — номер грани ВОКРУГ оси (0..3): у верхней и нижней
+   грани с одним slot общее ребро на экваторе, и они зеркальны друг другу. Поэтому картину бит
+   достаточно завести ОДНУ на slot: верхняя грань показывает её как есть, нижняя — инвертированной,
+   и на том же месте, потому что отсчёт в обеих идёт от своей вершины. */
+const FACES = [];
+for (let s = 0; s < 4; s++) {
+  FACES.push({ v: [T, EQ[s], EQ[(s + 1) % 4]], slot: s, up: true });
+  FACES.push({ v: [B, EQ[s], EQ[(s + 1) % 4]], slot: s, up: false });
+}
+/* Обход вершин выправляется по факту, а не подбирается руками: нормаль грани у выпуклого тела с
+   центром в нуле обязана смотреть НАРУЖУ, то есть в ту же сторону, что и её собственный центр.
+   Смотрит внутрь — меняем две вершины местами. Так отсечение невидимых граней ниже работает без
+   единого исключения. */
+for (const f of FACES) {
+  const n = cross(sub(f.v[1], f.v[0]), sub(f.v[2], f.v[0]));
+  const c = [(f.v[0][0] + f.v[1][0] + f.v[2][0]) / 3, (f.v[0][1] + f.v[1][1] + f.v[2][1]) / 3,
+             (f.v[0][2] + f.v[1][2] + f.v[2][2]) / 3];
+  if (dot(n, c) < 0) { const t = f.v[1]; f.v[1] = f.v[2]; f.v[2] = t; }
+}
+/* Грани по номеру вокруг оси — чтобы по слоту сразу достать ОБЕ половины пары. */
+const FTOP = [], FBOT = [];
+for (const f of FACES) (f.up ? FTOP : FBOT)[f.slot] = f;
+function sub(a, b){ return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+function cross(a, b){ return [a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0]]; }
+function dot(a, b){ return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+
+/* Двенадцать рёбер: четыре верхних, четыре нижних и четыре экваторных. Экватор помечен отдельно —
+   он рисуется ярче всех: это линия зеркала. */
+const EDGES = [];
+for (let s = 0; s < 4; s++) {
+  EDGES.push({ a: T, b: EQ[s], kind: "up" });
+  EDGES.push({ a: B, b: EQ[s], kind: "dn" });
+  EDGES.push({ a: EQ[s], b: EQ[(s + 1) % 4], kind: "eq" });
+}
+
+/* ═══ КАРТИНА БИТ ═════════════════════════════════════════════════════════════════════════════
+   Биты лежат рядами, ПАРАЛЛЕЛЬНЫМИ экватору: ряд 0 — у самой вершины (один бит), ряд r — r+1 бит.
+   Точки берутся в барицентрических долях со сдвигом на полшага, чтобы не садиться на рёбра. */
+/* ROWS — сколько рядов бит умещается на грани, от вершины до экватора. Величина живая: ползунок
+   «Плотность бит» её меняет, и картина тут же пересобирается — ряды считаются от неё, а не от
+   длины массива, поэтому рассинхрону взяться неоткуда. DIG — кегль цифры на ближней грани (дальше
+   он сам убывает делением перспективы), SPEED — скорость своего вращения, в тысячных радиана за кадр. */
+let ROWS = 13, DIG = 13, SPEED = 42;
+let bits = [];
+/* ═══ ПАМЯТЬ РЕВЕРСА ══════════════════════════════════════════════════════════════════════════
+   Запрос пользователя: «реверс с поиском: одни — неменяющиеся — их красным например, а
+   изменяющиеся чёрным, и по циклу чёрные инвертятся».
+   keep[slot][r][k] — СКОЛЬКО ШАГОВ ПОДРЯД бит на этом месте не менял значения. Ноль — на прошлом
+   шаге он перевернулся. Это и есть память: она копится сама, пока место держится, и обнуляется в
+   тот момент, когда оно дрогнуло.
+   ПОЧЕМУ СЧИТАЕМ ПО ЗНАЧЕНИЮ, А НЕ ПО «ПАЛИНДРОМНОСТИ МЕСТА». Палиндромные места — это ответ для
+   одного-единственного реверса. Стоит взять другое действие (инв-разв, Круг Инв), и правило
+   «какие места устоят» будет уже другим — а вопрос тот же. Сравнение значения ДО и ПОСЛЕ верно
+   для любого действия, поэтому все три кнопки шага пользуются одной и той же памятью.
+   ЧТО ЭТО ПОКАЗЫВАЕТ. У чистого реверса бит меняется тогда и только тогда, когда его место НЕ
+   палиндромное: значений всего два, и несовпадение с зеркальной позицией — это сразу переворот.
+   Поэтому красным проступает ровно скелет симметрии ряда, а всё остальное мигает и гаснет в фон. */
+let keep = [];
+let stepNo = 0, stillPct = null;
+/* Включена ли раскраска памяти. Отдельно от stepNo: пройдя шагами вперёд и вернувшись назад к
+   нулю, счётчик снова покажет 0, но память-то набрана — гасить её в этот момент было бы враньём. */
+let memOn = false;
+function rollBits(){
+  bits = []; keep = [];
+  for (let s = 0; s < 4; s++) {
+    const face = [], mem = [];
+    for (let r = 0; r < ROWS; r++) {
+      const row = [], mrow = [];
+      for (let k = 0; k <= r; k++) { row.push(Math.random() < 0.5 ? 0 : 1); mrow.push(0); }
+      face.push(row); mem.push(mrow);
+    }
+    bits.push(face); keep.push(mem);
+  }
+  stepNo = 0; stillPct = null; memOn = false;
+  updateStepInfo();
+}
+/* Три действия над рядом — те же зеркала, что и в самом приложении.
+   rev    — разворот: место k получает значение места n−1−k;
+   revinv — разворот с инверсией, зеркало «инв-разв»;
+   roll   — «Круг Инв»: оборот вправо на один бит, и бит, перешедший шов, переворачивается. Ряд
+            длины n возвращается к себе только через 2n шагов — из трёх действий только у этого
+            цикл длинный, и память успевает нарисовать узор, а не насытиться за два такта. */
+const OPS = {
+  rev:    (row) => row.slice().reverse(),
+  revinv: (row) => row.slice().reverse().map(v => v ^ 1),
+  roll:   (row) => (row.length < 2 ? row.slice().map(v => v ^ 1)
+                                   : [row[row.length - 1] ^ 1].concat(row.slice(0, -1)))
+};
+/* ШАГ НАЗАД (v0.006, стрелка ◄). Разворот и разворот-с-инверсией сами себе обратны: сделай дважды
+   — вернёшься. А «Круг Инв» вправо обращается «Кругом Инв» ВЛЕВО: раз бит, уходящий через шов,
+   переворачивается, то возвращается он оттуда тоже перевёрнутым. */
+const OPS_BACK = {
+  rev:    OPS.rev,
+  revinv: OPS.revinv,
+  roll:   (row) => (row.length < 2 ? row.slice().map(v => v ^ 1)
+                                   : row.slice(1).concat([row[0] ^ 1]))
+};
+let stepOp = "rev";
+/* ═══ СВЯЗАННЫЕ БИТЫ (v0.005, запрос пользователя: «связанные показать — биты те что инв, как
+   квантово запутанные») ═══════════════════════════════════════════════════════════════════════
+   Пара уже существует, её не надо заводить: бит верхней грани и бит нижней грани с ТЕМ ЖЕ
+   номером вокруг оси и теми же (ряд, место) стоят в зеркальных точках и ВСЕГДА противоположны по
+   значению — так устроен сам знак. Тронешь один — второй меняется в тот же миг, и не потому, что
+   между ними что-то передалось, а потому, что они с самого начала одно целое, просто увиденное с
+   двух сторон зеркала. Это и рисуется: нить между двойниками сквозь тело.
+   Нить всегда ВЕРТИКАЛЬНА — отражение идёт через плоскость экватора, значит у двойников общие две
+   координаты из трёх, а третья ровно противоположна. Поэтому внутри октаэдра получается занавес
+   из отвесных струн, а не путаница.
+   showLinks — рисовать ли занавес целиком; LINK_EVERY — каждую какую нить брать, иначе при
+   плотности в 26 рядов их больше тысячи и тело превращается в сплошную штриховку.
+   hoverBit — пара под курсором: она показывается ВСЕГДА, даже когда занавес выключен. Это и есть
+   «потрогай один — увидь второй». */
+let showLinks = false, LINK_EVERY = 3, hoverBit = null;
+// Куда попала каждая нарисованная цифра на последнем кадре — по этому списку и ищется ближайшая
+// к курсору. Список строится самой отрисовкой: она всё равно считает эти точки.
+let pickList = [];
+function doStep(dir){
+  const back = dir < 0;
+  const f = (back ? OPS_BACK : OPS)[stepOp] || OPS.rev;
+  let still = 0, total = 0;
+  for (let s = 0; s < 4; s++) {
+    for (let r = 0; r < ROWS; r++) {
+      const row = bits[s][r], next = f(row), mem = keep[s][r];
+      for (let k = 0; k < row.length; k++) {
+        if (next[k] === row[k]) { mem[k]++; still++; } else mem[k] = 0;
+        total++;
+      }
+      bits[s][r] = next;
+    }
+  }
+  // Счётчик показывает, на сколько шагов картина ушла от исходной, поэтому назад он убывает. А
+  // ПАМЯТЬ отматывать назад нечем и незачем: она про то, что бит выдержал сделанный шаг, и шаг
+  // назад — такой же сделанный шаг. Снимается память только кнопкой «✕ Забыть».
+  stepNo = back ? Math.max(0, stepNo - 1) : stepNo + 1;
+  memOn = true;
+  stillPct = total ? Math.round(still * 100 / total) : 0;
+  updateStepInfo();
+}
+function forgetMem(){
+  for (let s = 0; s < 4; s++) for (let r = 0; r < ROWS; r++) keep[s][r].fill(0);
+  stepNo = 0; stillPct = null; memOn = false;
+  updateStepInfo();
+}
+function updateStepInfo(){
+  const el = document.getElementById("stepInfo");
+  if (el) el.innerHTML = "шаг " + stepNo + " · устояло <b>" +
+    (stillPct === null ? "—" : stillPct + "%") + "</b>";
+}
+rollBits();
+/* Точка бита (r, k) на грани: доля вдоль высоты — (r+0.5)/ROWS от вершины, доля вдоль ряда —
+   (k+0.5)/(r+1). Возвращает точку в координатах тела. */
+function bitPoint(f, r, k){
+  const a = (r + 0.5) / ROWS;             // насколько ушли от вершины к противоположному ребру
+  const t = (k + 0.5) / (r + 1);          // положение внутри самого ряда
+  const wA = 1 - a, wB = a * (1 - t), wC = a * t;
+  const [V0, V1, V2] = f.v;
+  return [V0[0]*wA + V1[0]*wB + V2[0]*wC,
+          V0[1]*wA + V1[1]*wB + V2[1]*wC,
+          V0[2]*wA + V1[2]*wB + V2[2]*wC];
+}
+
+/* ═══ ВИД ═════════════════════════════════════════════════════════════════════════════════════
+   Камера стоит на оси Z и смотрит в ноль. Тело поворачивается двумя углами: yaw вокруг оси
+   зеркала (Y) и pitch вокруг горизонтали. Перспектива простая, в одно деление: чем дальше точка,
+   тем меньше её масштаб, — этого хватает, чтобы объём читался, и ничего лишнего считать не надо. */
+let yaw = 0.6, pitch = -0.42, zoom = 1, spin = true, showDigits = true, showHidden = true;
+const CAM = 4.2;
+
+function rot(p){
+  const cy = Math.cos(yaw),  sy = Math.sin(yaw);
+  const cx = Math.cos(pitch), sx = Math.sin(pitch);
+  const x = p[0] * cy + p[2] * sy;
+  const z = -p[0] * sy + p[2] * cy;
+  const y = p[1] * cx - z * sx;
+  const z2 = p[1] * sx + z * cx;
+  return [x, y, z2];
+}
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+let W = 0, HGT = 0, R = 1;
+function resize(){
+  // Потолок 2: на телефонах devicePixelRatio бывает 3 и выше, и холст в три раза больше экрана
+  // рисуется втрое дольше — при сотнях цифр на кадр это заметно, а разницы на глаз уже нет.
+  R = Math.min(window.devicePixelRatio || 1, 2);
+  W = cv.clientWidth; HGT = cv.clientHeight;
+  cv.width = Math.round(W * R); cv.height = Math.round(HGT * R);
+  ctx.setTransform(R, 0, 0, R, 0, 0);
+}
+window.addEventListener("resize", resize);
+
+function project(p){
+  const q = rot(p);
+  const k = CAM / (CAM - q[2]);           // деление перспективы
+  const S = Math.min(W, HGT) * 0.30 * zoom;
+  return { x: W / 2 + q[0] * S * k, y: HGT / 2 - q[1] * S * k, z: q[2], k };
+}
+function css(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function hex3(c){ const h = c.replace("#", ""); return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]; }
+function mix(a, b, t){
+  const A = hex3(a), B = hex3(b);
+  return "rgb(" + Math.round(A[0]+(B[0]-A[0])*t) + "," + Math.round(A[1]+(B[1]-A[1])*t) + "," + Math.round(A[2]+(B[2]-A[2])*t) + ")";
+}
+/* Лесенка цветов памяти: от цвета своей половины к красному за MEM_FULL шагов стояния. Считается
+   ОДИН раз на кадр, а не на каждую цифру: цифр на экране сотни, и разбор «#7cd4ff» для каждой из
+   них — самая дорогая мелочь, какую тут можно было устроить. */
+const MEM_FULL = 8;
+function ramp(base, mem){
+  const out = [];
+  for (let i = 0; i <= MEM_FULL; i++) out.push(mix(base, mem, i / MEM_FULL));
+  return out;
+}
+
+function draw(){
+  ctx.clearRect(0, 0, W, HGT);
+  const cUp = css("--up"), cDn = css("--dn"), cEq = css("--eq"), cMem = css("--mem");
+
+  // Видимость грани: нормаль, повёрнутая вместе с телом, смотрит на камеру — грань лицевая.
+  const shown = [];
+  for (const f of FACES) {
+    const P = f.v.map(project);
+    const n = rot(cross(sub(f.v[1], f.v[0]), sub(f.v[2], f.v[0])));
+    const front = n[2] > 0;
+    const c = [(P[0].z + P[1].z + P[2].z) / 3];
+    shown.push({ f, P, front, depth: c[0] });
+  }
+  // Дальние грани рисуются первыми — обычный художник: то, что ближе, ложится поверх.
+  shown.sort((a, b) => a.depth - b.depth);
+
+  // 1. Заливка лицевых граней — еле заметная, чтобы биты не висели в пустоте.
+  for (const s of shown) {
+    if (!s.front) continue;
+    ctx.beginPath();
+    ctx.moveTo(s.P[0].x, s.P[0].y); ctx.lineTo(s.P[1].x, s.P[1].y); ctx.lineTo(s.P[2].x, s.P[2].y);
+    ctx.closePath();
+    ctx.fillStyle = s.f.up ? cUp : cDn;
+    ctx.globalAlpha = 0.07;
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // 2. Скрытые рёбра — под всем остальным, тонкие и тусклые. Ребро считается скрытым, когда ОБЕ
+  //    его грани отвёрнуты; на силуэте хотя бы одна лицевая, и оно уходит в яркие.
+  const faceFront = new Map();
+  for (const s of shown) faceFront.set(s.f, s.front);
+  const edgeVisible = (e) => {
+    for (const s of shown) {
+      if (!s.front) continue;
+      const vs = s.f.v;
+      let hitA = false, hitB = false;
+      for (const v of vs) { if (v === e.a) hitA = true; if (v === e.b) hitB = true; }
+      if (hitA && hitB) return true;
+    }
+    return false;
+  };
+  if (showHidden) {
+    ctx.lineWidth = 1; ctx.globalAlpha = 0.20;
+    for (const e of EDGES) {
+      if (edgeVisible(e)) continue;
+      const a = project(e.a), b = project(e.b);
+      ctx.strokeStyle = e.kind === "eq" ? cEq : (e.kind === "up" ? cUp : cDn);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Цифры выключены — искать под курсором нечего, и прошлый список надо снять, иначе наведение
+  // ловило бы то, чего на экране уже нет.
+  if (!showDigits) { pickList = []; hoverBit = null; }
+
+  // 2.5. Связанные биты: нити между двойниками. Идут ПОД цифрами — это фон, а не содержание.
+  if (showLinks || hoverBit) {
+    const cLink = mix(cUp, cDn, 0.5);
+    ctx.lineWidth = 1;
+    if (showLinks) {
+      ctx.strokeStyle = cLink; ctx.globalAlpha = 0.17;
+      ctx.beginPath();
+      for (let sl = 0; sl < 4; sl++) {
+        let idx = -1;
+        for (let r = 0; r < ROWS; r++) {
+          for (let k = 0; k <= r; k++) {
+            idx++;
+            if (idx % LINK_EVERY) continue;
+            const a = project(bitPoint(FTOP[sl], r, k));
+            const b = project(bitPoint(FBOT[sl], r, k));
+            ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+          }
+        }
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    if (hoverBit) {
+      const a = project(bitPoint(FTOP[hoverBit.slot], hoverBit.r, hoverBit.k));
+      const b = project(bitPoint(FBOT[hoverBit.slot], hoverBit.r, hoverBit.k));
+      ctx.strokeStyle = cEq; ctx.lineWidth = 1.6; ctx.globalAlpha = 0.9;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      // Кольца на обоих концах: видно, что пара — это две точки, а не одна с хвостом.
+      for (const p of [a, b]) {
+        ctx.beginPath(); ctx.arc(p.x, p.y, 9 * p.k * zoom, 0, 6.2832); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // 3. Биты лицевых граней. Верхняя половина — картина как есть, нижняя — та же, инвертированная:
+  //    один и тот же slot, один и тот же (r, k), значение перевёрнуто. Это и есть «инв-разв»
+  //    зеркало приложения, только показанное телом, а не строкой.
+  if (showDigits) {
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const rampUp = ramp(cUp, cMem), rampDn = ramp(cDn, cMem);
+    pickList = [];
+    for (const s of shown) {
+      if (!s.front) continue;
+      const f = s.f;
+      const rmp = f.up ? rampUp : rampDn;
+      // Чем круче грань стоит к взгляду, тем бледнее её цифры — так ближняя грань читается, а
+      // уходящая вбок не рябит. Считаем на ГРАНЬ, а не на каждую цифру: значение одно на всю.
+      const n = rot(cross(sub(f.v[1], f.v[0]), sub(f.v[2], f.v[0])));
+      const nl = Math.hypot(n[0], n[1], n[2]) || 1;
+      const face = 0.20 + 0.65 * (n[2] / nl);
+      for (let r = 0; r < ROWS; r++) {
+        for (let k = 0; k <= r; k++) {
+          const raw = bits[f.slot][r][k];
+          const val = f.up ? raw : (raw ^ 1);
+          const p = project(bitPoint(f, r, k));
+          const size = Math.max(5, DIG * p.k * zoom * (Math.min(W, HGT) / 700));
+          if (size < 5.5) continue;      // мельче — каша, лучше не рисовать вовсе
+          ctx.font = size.toFixed(1) + "px Consolas, monospace";
+          /* ПАМЯТЬ. До первого шага раскрашивать нечем — картина идёт как есть. После шага место,
+             которое дрогнуло, уходит почти в фон (то самое «изменяющиеся чёрным»: на тёмном
+             полотне гаснуть честнее, чем чернеть), а место, которое держится, разгорается и
+             краснеет тем сильнее, чем дольше стоит. Через несколько тактов на гранях остаётся
+             светиться один скелет — и это не украшение, а симметрия ряда, видимая глазом. */
+          const m = keep[f.slot][r][k];
+          if (memOn && m === 0) { ctx.fillStyle = rmp[0]; ctx.globalAlpha = face * 0.24; }
+          else if (memOn) {
+            const i = m > MEM_FULL ? MEM_FULL : m;
+            ctx.fillStyle = rmp[i];
+            ctx.globalAlpha = face * (0.74 + 0.26 * (i / MEM_FULL));
+          } else { ctx.fillStyle = rmp[0]; ctx.globalAlpha = face; }
+          // Бит под курсором и его двойник — поверх любой памяти, самым ярким цветом: сейчас
+          // разговор про них, а не про симметрию.
+          if (hoverBit && hoverBit.slot === f.slot && hoverBit.r === r && hoverBit.k === k) {
+            ctx.fillStyle = cEq; ctx.globalAlpha = 1;
+          }
+          ctx.fillText(val ? "1" : "0", p.x, p.y);
+          pickList.push({ x: p.x, y: p.y, slot: f.slot, r, k });
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // 4. Видимые рёбра поверх всего; экватор — последним и толще прочих.
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  for (const pass of ["side", "eq"]) {
+    for (const e of EDGES) {
+      if ((pass === "eq") !== (e.kind === "eq")) continue;
+      if (!edgeVisible(e)) continue;
+      const a = project(e.a), b = project(e.b);
+      ctx.strokeStyle = e.kind === "eq" ? cEq : (e.kind === "up" ? cUp : cDn);
+      ctx.lineWidth = e.kind === "eq" ? 2.6 : 2;
+      ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = e.kind === "eq" ? 14 : 9;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+  }
+  ctx.shadowBlur = 0;
+}
+
+function frame(){
+  if (spin && !dragging) yaw += SPEED / 10000;
+  draw();
+  requestAnimationFrame(frame);
+}
+
+/* ═══ МЫШЬ И КЛАВИШИ ══════════════════════════════════════════════════════════════════════════ */
+let dragging = false, lastX = 0, lastY = 0;
+/* ЩИПОК ДЛЯ УВЕЛИЧЕНИЯ (v0.004). Колесо на телефоне взять неоткуда, поэтому пальцы считаются
+   поимённо: пока палец один — это поворот, как было; появился второй — поворот прекращается и
+   дальше меняется только масштаб, по отношению расстояний между пальцами. Свой масштаб браузера
+   при этом не срабатывает: у холста touch-action:none. */
+const pts = new Map();
+let pinchD = 0;
+function pinchDist(){
+  const a = Array.from(pts.values());
+  return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+}
+cv.addEventListener("pointerdown", (e) => {
+  pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  cv.setPointerCapture(e.pointerId);
+  if (pts.size >= 2) { dragging = false; cv.classList.remove("drag"); pinchD = pinchDist(); return; }
+  dragging = true; lastX = e.clientX; lastY = e.clientY;
+  cv.classList.add("drag");
+});
+cv.addEventListener("pointermove", (e) => {
+  if (pts.has(e.pointerId)) pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pts.size >= 2) {
+    const d = pinchDist();
+    if (pinchD > 0 && d > 0) zoom = Math.max(0.45, Math.min(3, zoom * (d / pinchD)));
+    pinchD = d;
+    return;
+  }
+  if (!dragging) {
+    // Не тянут — ищем ближайшую цифру к курсору. Список собран последней отрисовкой, поэтому
+    // перебор идёт по тому, что РЕАЛЬНО нарисовано: скрытые грани и слишком мелкие цифры в него
+    // не попали и выбраться не могут.
+    const rect = cv.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    let best = null, bd = 17 * 17;
+    for (const q of pickList) {
+      const dx = q.x - mx, dy = q.y - my, d = dx*dx + dy*dy;
+      if (d < bd) { bd = d; best = q; }
+    }
+    hoverBit = best ? { slot: best.slot, r: best.r, k: best.k } : null;
+    return;
+  }
+  yaw += (e.clientX - lastX) * 0.008;
+  // Наклон зажат чуть меньше прямого угла: ровно с ребра октаэдр вырождается в линию, и
+  // смотреть там не на что.
+  pitch = Math.max(-1.45, Math.min(1.45, pitch - (e.clientY - lastY) * 0.008));
+  lastX = e.clientX; lastY = e.clientY;
+});
+// Положение тела запоминается тоже — вернувшись на страницу, застаёшь её той же стороной.
+const stopDrag = (e) => {
+  if (e && pts.has(e.pointerId)) pts.delete(e.pointerId);
+  if (pts.size < 2) pinchD = 0;
+  // Второй палец подняли, первый остался — поворот подхватывается с ЕГО текущего места, иначе
+  // тело дёрнулось бы на всю разницу между пальцами.
+  if (pts.size === 1) {
+    const p = pts.values().next().value;
+    lastX = p.x; lastY = p.y; dragging = true; cv.classList.add("drag");
+    return;
+  }
+  dragging = false; cv.classList.remove("drag"); save();
+};
+cv.addEventListener("pointerup", stopDrag);
+cv.addEventListener("pointercancel", stopDrag);
+cv.addEventListener("pointerleave", () => { hoverBit = null; });
+cv.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  zoom = Math.max(0.45, Math.min(3, zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
+  save();
+}, { passive: false });
+
+const bSpin = document.getElementById("bSpin"), bDig = document.getElementById("bDig"),
+      bEdge = document.getElementById("bEdge"), bRoll = document.getElementById("bRoll"),
+      bTheme = document.getElementById("bTheme"), bReset = document.getElementById("bReset");
+bSpin.onclick = () => { spin = !spin; bSpin.classList.toggle("act", spin); };
+bDig.onclick  = () => { showDigits = !showDigits; bDig.classList.toggle("act", showDigits); };
+bEdge.onclick = () => { showHidden = !showHidden; bEdge.classList.toggle("act", showHidden); };
+bRoll.onclick = () => rollBits();
+bTheme.onclick = () => {
+  const green = document.documentElement.getAttribute("data-theme") === "green";
+  document.documentElement.setAttribute("data-theme", green ? "" : "green");
+  bTheme.textContent = green ? "🎨 Зелень" : "🎨 Палитра приложения";
+};
+bReset.onclick = () => { yaw = 0.6; pitch = -0.42; zoom = 1; save(); };
+
+/* ═══ ПОЛЗУНКИ И ПАМЯТЬ БРАУЗЕРА ══════════════════════════════════════════════════════════════
+   Настройки переживают перезагрузку — как и в самом приложении, где всё живёт в памяти браузера и
+   сервера нет вовсе. Ключ один на всю страницу: набор маленький, дробить его не на что.
+   Чтение обёрнуто в try: в приватном окне и при запрете на данные сайта localStorage бросает
+   исключение, и без обёртки страница не поднялась бы вообще. */
+const KEY = "zerkalius-oktaedr-v1";
+const sRows = document.getElementById("sRows"), sSize = document.getElementById("sSize"),
+      sSpeed = document.getElementById("sSpeed");
+const vRows = document.getElementById("vRows"), vSize = document.getElementById("vSize"),
+      vSpeed = document.getElementById("vSpeed");
+function save(){
+  try {
+    localStorage.setItem(KEY, JSON.stringify({
+      ROWS, DIG, SPEED, spin, showDigits, showHidden, zoom, yaw, pitch, stepOp, TICK,
+      showLinks, LINK_EVERY,
+      theme: document.documentElement.getAttribute("data-theme") || ""
+    }));
+  } catch (e) {}
+}
+function load(){
+  let o = null;
+  try { o = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) {}
+  if (!o) return;
+  if (o.ROWS >= 4 && o.ROWS <= 26) ROWS = o.ROWS | 0;
+  if (o.DIG  >= 7 && o.DIG  <= 22) DIG  = o.DIG  | 0;
+  if (o.SPEED >= 0 && o.SPEED <= 160) SPEED = o.SPEED | 0;
+  if (typeof o.spin === "boolean") spin = o.spin;
+  if (typeof o.showDigits === "boolean") showDigits = o.showDigits;
+  if (typeof o.showHidden === "boolean") showHidden = o.showHidden;
+  if (o.zoom > 0.4 && o.zoom < 3.1) zoom = o.zoom;
+  if (typeof o.yaw === "number") yaw = o.yaw;
+  if (typeof o.pitch === "number") pitch = o.pitch;
+  if (o.theme === "green") document.documentElement.setAttribute("data-theme", "green");
+  if (o.stepOp === "rev" || o.stepOp === "revinv" || o.stepOp === "roll") stepOp = o.stepOp;
+  if (o.TICK >= 60 && o.TICK <= 1200) TICK = o.TICK | 0;
+  if (typeof o.showLinks === "boolean") showLinks = o.showLinks;
+  if (o.LINK_EVERY >= 1 && o.LINK_EVERY <= 12) LINK_EVERY = o.LINK_EVERY | 0;
+  // Сама память и номер шага НЕ сохраняются намеренно: картина бит каждый раз новая (rollBits при
+  // открытии), а память, набранная на другой картине, была бы про неё, а не про эту.
+}
+function syncUI(){
+  sRows.value = ROWS;  vRows.textContent = ROWS;
+  sSize.value = DIG;   vSize.textContent = DIG;
+  sSpeed.value = SPEED; vSpeed.textContent = SPEED;
+  bSpin.classList.toggle("act", spin);
+  bDig.classList.toggle("act", showDigits);
+  bEdge.classList.toggle("act", showHidden);
+  bTheme.textContent = document.documentElement.getAttribute("data-theme") === "green"
+    ? "🎨 Палитра приложения" : "🎨 Зелень";
+  sTick.value = TICK; vTick.textContent = TICK;
+  opRev.classList.toggle("act", stepOp === "rev");
+  opRevInv.classList.toggle("act", stepOp === "revinv");
+  opRoll.classList.toggle("act", stepOp === "roll");
+  bLinks.classList.toggle("act", showLinks);
+  sLink.value = LINK_EVERY; vLink.textContent = LINK_EVERY;
+  bAuto.classList.toggle("act", !!autoTimer);
+  bAuto.textContent = autoTimer ? "⏸ Стоп" : "▶ Цикл";
+}
+// Плотность меняет ЧИСЛО рядов, значит старая картина бит под неё не подходит — пересобираем.
+sRows.oninput  = () => { ROWS = +sRows.value; vRows.textContent = ROWS; rollBits(); save(); };
+sSize.oninput  = () => { DIG = +sSize.value;  vSize.textContent = DIG;  save(); };
+sSpeed.oninput = () => { SPEED = +sSpeed.value; vSpeed.textContent = SPEED; save(); };
+for (const b of [bSpin, bDig, bEdge, bTheme]) {
+  const prev = b.onclick;
+  b.onclick = () => { prev(); save(); };
+}
+
+/* ═══ УПРАВЛЕНИЕ РЕВЕРСОМ ═════════════════════════════════════════════════════════════════════
+   Смена действия обнуляет память: счётчики набраны ПРЕЖНИМ действием, и продолжать их новым —
+   значит показывать красным то, чего уже не проверяли. Картина бит при этом остаётся, шаги просто
+   начинают считаться заново.
+   ПРО ЧИСТЫЙ РЕВЕРС стоит знать: он сам себе обратный, два шага возвращают ряд к исходному. Память
+   поэтому насыщается сразу и дальше стоит — это не поломка, это и есть ответ: палиндромные места
+   не сдвинутся никогда. Чтобы память рисовала, а не замирала, есть «↻ Круг Инв»: у него период
+   2n, и каждый такт задевает другие места. */
+const opRev = document.getElementById("opRev"), opRevInv = document.getElementById("opRevInv"),
+      opRoll = document.getElementById("opRoll"), bStep = document.getElementById("bStep"),
+      bAuto = document.getElementById("bAuto"), bForget = document.getElementById("bForget"),
+      sTick = document.getElementById("sTick"), vTick = document.getElementById("vTick");
+let TICK = 420, autoTimer = null;
+function setOp(op){ stepOp = op; forgetMem(); syncUI(); save(); }
+opRev.onclick    = () => setOp("rev");
+opRevInv.onclick = () => setOp("revinv");
+opRoll.onclick   = () => setOp("roll");
+bStep.onclick    = () => { stopAuto(); doStep(1); };
+bForget.onclick  = () => forgetMem();
+function startAuto(){
+  if (autoTimer) return;
+  autoTimer = setInterval(() => doStep(1), TICK);
+  syncUI();
+}
+function stopAuto(){
+  if (!autoTimer) return;
+  clearInterval(autoTimer); autoTimer = null;
+  syncUI();
+}
+bAuto.onclick = () => { autoTimer ? stopAuto() : startAuto(); };
+const bLinks = document.getElementById("bLinks"), sLink = document.getElementById("sLink"),
+      vLink = document.getElementById("vLink");
+bLinks.onclick = () => { showLinks = !showLinks; syncUI(); save(); };
+sLink.oninput = () => { LINK_EVERY = +sLink.value; vLink.textContent = LINK_EVERY; save(); };
+// Такт меняется на ходу: если цикл идёт, перезаводим его с новой величиной, а не ждём остановки.
+sTick.oninput = () => {
+  TICK = +sTick.value; vTick.textContent = TICK;
+  if (autoTimer) { clearInterval(autoTimer); autoTimer = setInterval(() => doStep(1), TICK); }
+  save();
+};
+/* ═══ СТРЕЛКИ У ПОЛЗУНКОВ (v0.004) ════════════════════════════════════════════════════════════
+   Одна общая привязка на все четыре: кнопка знает только ИМЯ своего поля и сторону, а величину
+   шага берёт из самого поля (атрибут step). Поэтому новый ползунок достаточно разметить — код
+   трогать не нужно.
+   Значение не присваивается молча, а рассылается событием input: на нём уже висят все обработчики
+   (пересборка картины бит у плотности, перезавод цикла у такта, запись в память браузера). Ставь
+   мы value напрямую — ползунок двигался бы, а дело за ним не делалось.
+   УДЕРЖАНИЕ. Первый шаг — сразу по нажатию, дальше пауза 380 мс (чтобы одиночный клик не
+   превращался в очередь) и повтор каждые 70 мс. */
+function nudge(inp, dir){
+  const st = parseFloat(inp.step) || 1, mn = parseFloat(inp.min), mx = parseFloat(inp.max);
+  const cur = parseFloat(inp.value);
+  const v = Math.min(mx, Math.max(mn, cur + dir * st));
+  if (v === cur) return;
+  inp.value = v;
+  inp.dispatchEvent(new Event("input"));
+}
+let holdWait = null, holdRun = null;
+function holdStop(){ clearTimeout(holdWait); clearInterval(holdRun); holdWait = holdRun = null; }
+for (const b of document.querySelectorAll(".arr")) {
+  const inp = document.getElementById(b.dataset.for);
+  const dir = +b.dataset.d;
+  if (!inp) continue;
+  b.addEventListener("pointerdown", (e) => {
+    e.preventDefault();          // иначе на телефоне долгое нажатие зовёт своё меню
+    holdStop();
+    nudge(inp, dir);
+    holdWait = setTimeout(() => { holdRun = setInterval(() => nudge(inp, dir), 70); }, 380);
+  });
+  for (const ev of ["pointerup", "pointerleave", "pointercancel"]) b.addEventListener(ev, holdStop);
+}
+window.addEventListener("blur", holdStop);   // ушли со вкладки во время удержания — не молотить
+
+/* Методичка: открыть и закрыть. Пока лист открыт, прочие клавиши не работают — иначе Enter,
+   нажатый ради прокрутки, втихую запускал бы цикл за спиной у читающего. */
+const helpWrap = document.getElementById("helpWrap"), bHelp = document.getElementById("bHelp");
+function helpOpen(on){
+  helpWrap.classList.toggle("on", on);
+  bHelp.classList.toggle("act", on);
+  if (on) helpWrap.scrollTop = 0;
+}
+bHelp.onclick = () => helpOpen(!helpWrap.classList.contains("on"));
+document.getElementById("helpClose").onclick = () => helpOpen(false);
+// Клик по затемнению закрывает, клик по самому листу — нет (иначе не выделить и не пролистать).
+helpWrap.addEventListener("pointerdown", (e) => { if (e.target === helpWrap) helpOpen(false); });
+
+// «⚙» — только на узком экране (на широком спрятана стилем): прячет и возвращает нижний лист.
+const gear = document.getElementById("gear");
+gear.onclick = () => document.getElementById("panel").classList.toggle("hidden");
+
+load(); rollBits(); syncUI();
+/* ═══ ГОРЯЧИЕ КЛАВИШИ (v0.006, запрос пользователя) ═══════════════════════════════════════════
+   ПРОБЕЛ — вращение, ENTER — цикл шагов, ◄ ► — шаг назад и вперёд, ▲ ▼ — такт цикла.
+   Буквы продублированы в русской раскладке: переключать её ради кнопки — отдельная морока.
+   ДВЕ ОГОВОРКИ, обе из того, как ведёт себя браузер сам по себе:
+   1. Фокус в ползунке — не трогаем ничего: стрелки там двигают сам бегунок, и это правильно.
+   2. preventDefault обязателен. Пробел и стрелки листают страницу, а пробел с ENTER вдобавок
+      «нажимают» кнопку, на которой остался фокус после клика мышью, — без запрета каждое нажатие
+      срабатывало бы дважды. */
+window.addEventListener("keydown", (e) => {
+  const t = e.target;
+  if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
+  const k = e.key;
+  if (helpWrap.classList.contains("on")) {
+    if (k === "Escape" || k === "h" || k === "р" || k === "F1") { e.preventDefault(); helpOpen(false); }
+    return;   // читают методичку — прибор молчит
+  }
+  if (k === "h" || k === "р" || k === "F1") { e.preventDefault(); helpOpen(true); return; }
+  if (e.code === "Space")          { e.preventDefault(); bSpin.onclick(); }
+  else if (e.code === "Enter" || e.code === "NumpadEnter") { e.preventDefault(); bAuto.onclick(); }
+  else if (k === "ArrowRight")     { e.preventDefault(); stopAuto(); doStep(1); }
+  else if (k === "ArrowLeft")      { e.preventDefault(); stopAuto(); doStep(-1); }
+  else if (k === "ArrowUp")        { e.preventDefault(); nudge(sTick, -1); }   // быстрее — такт меньше
+  else if (k === "ArrowDown")      { e.preventDefault(); nudge(sTick, 1); }
+  else if (k === "d" || k === "в") bDig.onclick();
+  else if (k === "r" || k === "к") bRoll.onclick();
+  else if (k === "t" || k === "е") bTheme.onclick();
+  else if (k === "l" || k === "д") bLinks.onclick();
+  else if (k === "f" || k === "а") bForget.onclick();
+  else if (k === "1") setOp("rev");
+  else if (k === "2") setOp("revinv");
+  else if (k === "3") setOp("roll");
+});
+
+resize();
+frame();
+</script>
+<div id="hint">Тяните мышью — крутится. Колесо — ближе и дальше. Загляните <b>снизу</b>: там та же картина бит, отражённая и инвертированная. <b>Пробел</b> — вращение, <b>Enter</b> — цикл, <b>◄ ►</b> — шаг, <b>▲ ▼</b> — такт. Наведите на цифру — загорится её двойник на той стороне зеркала.</div>
+</body>
+</html>

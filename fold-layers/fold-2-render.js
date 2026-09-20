@@ -2172,6 +2172,15 @@ function render(){
     }
     if (!same) { maskChangedMap.clear(); maskBaseRows = null; }
   }
+  // "🪞 Карта осей" — то же правило, что и у Маски выше: карта посчитана по конкретным строкам,
+  // изменился хоть один бит — она уже про прошлое, и снимается целиком (см. axisMap в fold-1-core).
+  if (axisMap.size && axisMapBaseRows) {
+    let same = axisMapBaseRows.length === st.rows.length;
+    if (same) for (let r = 0; r < st.rows.length; r++) {
+      if ((st.rows[r] || "") !== (axisMapBaseRows[r] || "")) { same = false; break; }
+    }
+    if (!same) clearAxisMap();
+  }
   // Кнопкой 🎨 погашена и штатная подсветка "изменён последним шагом" (см. chgColorOffRows):
   // действует, пока строки не изменятся, дальше сама снимается.
   let showChgBits = chgBitsOn; // общий выключатель "🔴 Изм. биты" (вкладка "Вид")
@@ -3816,6 +3825,10 @@ function render(){
     // окраска не выключена кнопкой 🎨 (maskColorOn) и пока включён общий выключатель "🔴 Изм. биты".
     const maskFlagsRow = (maskColorOn && chgBitsOn) ? maskChangedMap.get(i) : null;
 
+    // Оси симметрии этой строки ("🪞 Карта осей", см. buildAxisMap в fold-1-core): Map(индекс бита
+    // → {pal, anti}). Карта выключена или в строке осей нужной длины нет — null, и ветка молчит.
+    const axisRow = axisMap.size ? axisMap.get(i) : null;
+
     // СКЛЕЙКА СОСЕДНИХ БИТОВ. Раньше на КАЖДЫЙ символ строки выпускался свой <span> — на картинке
     // 1000 строк по 1000 символов это до полумиллиона узлов DOM (десятки мегабайт HTML на один
     // innerHTML и сотни мегабайт памяти под сами элементы). Но подряд идущие биты сплошь и рядом
@@ -3949,6 +3962,8 @@ function render(){
       // Дописанный построением/зеркалом бит (см. newBitsMap/.bit-new). Пометка держится, пока её
       // не снимут кнопкой "✕" рядом с цветом «Нов» в "Виде", — переживает сохранение и Сброс.
       const isNewBit = !!(newFlagsRow && newFlagsRow.length === s.length && newFlagsRow[k]);
+      // Бит, по которому проходит ось симметрии из "🪞 Карты осей" (см. axisRow выше).
+      const axBit = axisRow ? axisRow.get(k) : null;
       // Показанная (ещё не выполненная) линия сгиба "✉ Конверт" — см. envPreview.
       const isEnvDiag = !!(envRow && envRow.has(k) && (bit === '0' || bit === '1'));
       // Номер паттерна, накрывшего этот бит в режиме "🌈 Все паттерны" (см. allPatRows).
@@ -4049,6 +4064,20 @@ function render(){
           (KIND_CLS[patChainHit.kind] ? ' ' + KIND_CLS[patChainHit.kind] : '') +
           (patChainHit.skip ? ' skip1' : '');
         emit('<span class="' + hitClsRow + '" title="Найденный паттерн"' + colAttr + '>', bit, mrg);
+      } else if (axBit && (bit === '0' || bit === '1')) {
+        // Ось симметрии из "🪞 Карты осей" — ВЫШЕ служебных пометок строки (перевёрнут швом,
+        // вставлен, новый, изменён шагом): карту только что позвали руками, и смотрят сейчас
+        // именно на неё. Находки поиска остаются выше — они про то же место, но про образец.
+        // Палиндромная и антипалиндромная оси могут сойтись на одном бите — тогда оба класса.
+        // Ось, вышедшая за границу своей строки (карта по сквозной) — чертой потолще: такую
+        // невозможно увидеть построчно, и она тут главное. Охват хранится рядом с длиной.
+        const axThru = (axBit.palRows > 1 || axBit.antiRows > 1);
+        const axCls = 'b' + bit + (axBit.pal ? ' ax-pal' : '') + (axBit.anti ? ' ax-anti' : '') + (axThru ? ' ax-thru' : '');
+        const axRows = (n) => (n > 1 ? ' — сквозная, через ' + n + ' стр.' : '');
+        const axTip = (axBit.pal ? 'Ось палиндрома, длина ' + axBit.pal + axRows(axBit.palRows) : '') +
+          (axBit.pal && axBit.anti ? '; ' : '') +
+          (axBit.anti ? 'Ось антипалиндрома (зеркало инв-разв), длина ' + axBit.anti + axRows(axBit.antiRows) : '');
+        emit('<span class="' + axCls + '" title="' + axTip + '"' + colAttr + '>', bit, mrg);
       } else if (isInvBit && (bit === '0' || bit === '1')) {
         emit('<span class="b' + bit + ' bit-inv" title="Перевёрнут переходом границы строки"' + colAttr + '>', bit, mrg);
       } else if (isInsBit && (bit === '0' || bit === '1')) {

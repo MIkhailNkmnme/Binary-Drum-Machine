@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="12" fill="#12141a"/>
+  <!-- Песочные часы: ромб с перекладиной посередине. Верх и низ разными цветами —
+       на 16 px цифры не выживают, а два цвета и излом читаются. -->
+  <g fill="none" stroke-linejoin="round" stroke-linecap="round" stroke-width="4">
+    <polyline points="8,32 32,8 56,32" stroke="#7cd4ff"/>
+    <polyline points="8,32 32,56 56,32" stroke="#ffcf6b"/>
+    <line x1="8" y1="32" x2="56" y2="32" stroke="#d8dce6" stroke-width="3"/>
+  </g>
+</svg>

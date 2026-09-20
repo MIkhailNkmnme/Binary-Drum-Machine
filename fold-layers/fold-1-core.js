@@ -500,6 +500,156 @@ function alignShift(maxLen, len, align, rowIdx){
 }
 
 function invertBits(s){ let o = ""; for (const c of s) o += (c === "0" ? "1" : c === "1" ? "0" : c); return o; }
+
+/* ═══ КАРТА ОСЕЙ: ВСЕ ЦЕНТРЫ СИММЕТРИИ СТРОКИ ЗА ОДИН ПРОХОД (v1.514) ═══════════════
+   Запрос пользователя: искать не заданный образец, а САМУ СИММЕТРИЮ — «все оси отражения в
+   ленте, включая те, что вы бы никогда не поставили руками».
+   ЧТО СЧИТАЕТСЯ. Два вида осей, и это ровно те же два зеркала, что стоят на кнопках:
+     • ПАЛИНДРОМ — при отражении бит совпадает с парным, обычное зеркало «разв»;
+     • АНТИПАЛИНДРОМ — бит парному ПРОТИВОПОЛОЖЕН, то есть зеркало «инв-разв». Он всегда ЧЁТНОЙ
+       длины: у нечётной пришлось бы требовать, чтобы средний бит отличался сам от себя.
+   ПОЧЕМУ МАНАКЕР. Перебор центров с разбеганием даёт квадрат по длине строки, а на сквозной это
+   тысячи бит. Манакер считает радиусы ВСЕХ центров за один линейный проход, переиспользуя уже
+   найденное через зеркальный центр. Две классические половины: d1 — нечётные палиндромы (центр
+   на бите), d2 — чётные (центр в шве между битами).
+   АНТИПАЛИНДРОМЫ ТЕМ ЖЕ МАНАКЕРОМ, без второго алгоритма. Подменяем строку: t[i] = s[i] XOR (i&1)
+   — переворачиваем каждый второй бит. У чётной оси сумма номеров пары нечётна, значит ровно один
+   из двух бит перевёрнут, и «биты РАЗНЫЕ в s» превращается в «биты ОДИНАКОВЫЕ в t». То есть
+   чётные палиндромы t — это в точности антипалиндромы s, и хватает того же d2.
+   НЕ-БИТОВЫЕ СИМВОЛЫ. В строке бывают точки («⋮ Биты: чёт/нечёт», см. applyParityMask). Сравнение
+   «точка равна точке» породило бы симметрию на пустом месте, поэтому строка режется на куски из
+   чистых «0»/«1», и каждый кусок считается отдельно — точка рвёт ось, как и должна.
+   ПОРОГ. Осью длины 1 является КАЖДЫЙ бит, а длины 2 — каждая пара «01»/«10»: без порога карта
+   закрасила бы всё подряд и ничего не сказала. AXIS_MAP_MIN_LEN — минимальная длина, при которой
+   ось попадает в карту. */
+const AXIS_MAP_MIN_LEN = 6;
+/* Номер строки → Map(индекс бита → {pal, anti}) — ДЛИНЫ самой длинной оси каждого вида, чей центр
+   проходит по этому биту (0 — оси такого вида здесь нет). Пустая карта = подсветка выключена. */
+let axisMap = new Map();
+/* Снимок строк, по которым карта посчитана: изменился хоть один бит — карта про прошлое и
+   снимается целиком (та же страховка и тот же приём, что у maskChangedMap/maskBaseRows). */
+let axisMapBaseRows = null;
+/* КАКАЯ карта сейчас показана: "row" — построчная (buildAxisMap), "thru" — по сквозной
+   (buildAxisMapThru в fold-4-tools), null — никакой. Нужен ровно для одного: своя кнопка гасит
+   карту, ЧУЖАЯ — пересчитывает её по-своему, а не выключает (нажали «оси сквозной», пока висит
+   построчная, — ждут сквозную, а не пустой холст). */
+let axisMapKind = null;
+function clearAxisMap(){ axisMap.clear(); axisMapBaseRows = null; axisMapKind = null; }
+/* Радиусы НЕЧЁТНЫХ палиндромов: d1[c] — половина палиндрома с центром на бите c, длина 2·d1[c] − 1. */
+function manacherOdd(s){
+  const n = s.length, d = new Array(n).fill(0);
+  for (let i = 0, l = 0, r = -1; i < n; i++) {
+    let k = i > r ? 1 : Math.min(d[l + r - i], r - i + 1);
+    while (i - k >= 0 && i + k < n && s[i - k] === s[i + k]) k++;
+    d[i] = k--;
+    if (i + k > r) { l = i - k; r = i + k; }
+  }
+  return d;
+}
+/* Радиусы ЧЁТНЫХ палиндромов: d2[c] — половина палиндрома, лежащего в шве между битами c−1 и c,
+   длина 2·d2[c]. d2[0] всегда 0 — слева от первого бита шва нет. */
+function manacherEven(s){
+  const n = s.length, d = new Array(n).fill(0);
+  for (let i = 0, l = 0, r = -1; i < n; i++) {
+    let k = i > r ? 0 : Math.min(d[l + r - i + 1], r - i + 1);
+    while (i - k - 1 >= 0 && i + k < n && s[i - k - 1] === s[i + k]) k++;
+    d[i] = k--;
+    if (i + k > r) { l = i - k - 1; r = i + k; }
+  }
+  return d;
+}
+/* t[i] = s[i] XOR (i чётный ? 0 : 1) — подмена, превращающая антипалиндромы в палиндромы. */
+function axisAntiTransform(s){
+  let o = "";
+  for (let i = 0; i < s.length; i++) o += ((s[i] === "1") !== ((i & 1) === 1)) ? "1" : "0";
+  return o;
+}
+/* rows — через сколько СТРОК цепочки проходит эта ось (1 — она целиком внутри одной строки).
+   Хранится рядом с длиной и меняется вместе с ней: в подсказке бита должно стоять «длина и
+   охват» ОДНОЙ и той же, самой длинной оси, а не длина от одной и охват от другой. */
+function axisAddMark(marks, idx, kind, len, rows){
+  if (idx < 0) return;
+  let m = marks.get(idx);
+  if (!m) { m = { pal: 0, anti: 0, palRows: 1, antiRows: 1 }; marks.set(idx, m); }
+  if (len > m[kind]) { m[kind] = len; m[kind + "Rows"] = rows || 1; }
+}
+/* Все оси ОДНОЙ готовой ленты бит: {marks, pal, anti}. pal/anti — число найденных ОСЕЙ, marks —
+   помеченные ими биты (у чётной оси их два: по обе стороны шва, сама ось проходит между ними).
+   keep — необязательный фильтр: получает границы найденной оси В ЭТОЙ ЖЕ ленте (lo..hi включительно)
+   и возвращает 0/false, чтобы ось выбросить, или ЧИСЛО пересечённых ею строк, чтобы принять. Через
+   него работает карта по сквозной (см. buildAxisMapThru): там нужны только оси, вышедшие за границу
+   одной строки, — всё, что внутри строки, уже показывает построчная карта. Без keep берутся все оси,
+   и охват у каждой считается за 1. */
+function axisMarksOf(bits, keep){
+  const marks = new Map();
+  let pal = 0, anti = 0;
+  const n = bits.length;
+  let i = 0;
+  while (i < n) {
+    if (bits[i] !== "0" && bits[i] !== "1") { i++; continue; }
+    let j = i;
+    while (j < n && (bits[j] === "0" || bits[j] === "1")) j++;
+    const seg = bits.slice(i, j);
+    if (seg.length >= AXIS_MAP_MIN_LEN) {
+      const d1 = manacherOdd(seg);
+      const d2 = manacherEven(seg);
+      const d2a = manacherEven(axisAntiTransform(seg));
+      for (let c = 0; c < seg.length; c++) {
+        // Границы оси в ЛЕНТЕ (не в куске): нечётная с центром на бите накрывает c±(d1−1),
+        // чётная в шве перед c — от c−d2 до c+d2−1. Смещение i возвращает их к номерам ленты.
+        const lp1 = 2 * d1[c] - 1;
+        if (lp1 >= AXIS_MAP_MIN_LEN) {
+          const nr = keep ? keep(i + c - d1[c] + 1, i + c + d1[c] - 1) : 1;
+          if (nr) { pal++; axisAddMark(marks, i + c, "pal", lp1, nr); }
+        }
+        const lp2 = 2 * d2[c];
+        if (lp2 >= AXIS_MAP_MIN_LEN) {
+          const nr = keep ? keep(i + c - d2[c], i + c + d2[c] - 1) : 1;
+          if (nr) { pal++; axisAddMark(marks, i + c - 1, "pal", lp2, nr); axisAddMark(marks, i + c, "pal", lp2, nr); }
+        }
+        const la = 2 * d2a[c];
+        if (la >= AXIS_MAP_MIN_LEN) {
+          const nr = keep ? keep(i + c - d2a[c], i + c + d2a[c] - 1) : 1;
+          if (nr) { anti++; axisAddMark(marks, i + c - 1, "anti", la, nr); axisAddMark(marks, i + c, "anti", la, nr); }
+        }
+      }
+    }
+    i = j;
+  }
+  return { marks, pal, anti };
+}
+/* Карта осей по ВСЕЙ цепочке. Строка берётся через getRowBits() — то есть вместе с наложениями,
+   показанными зеркалами и отсечкой горизонта, как того требует общее правило чтения данных. Но
+   рисуется-то на холсте сама строка, без зеркальных полей по бокам, поэтому индексы сдвигаются на
+   левый отступ зеркала (mirrorPadsOf), и всё, что не попало в настоящие биты строки, из карты
+   выпадает: ось внутри самого зеркала в строке показать негде. В счётчиках она остаётся — найдена
+   она честно. */
+function buildAxisMap(){
+  axisMap.clear();
+  let pal = 0, anti = 0;
+  const rowsHit = [];
+  const rows = st.rows || [];
+  for (let r = 0; r < rows.length; r++) {
+    const bits = getRowBits(st, r);
+    if (!bits || bits.length < AXIS_MAP_MIN_LEN) continue;
+    const res = axisMarksOf(bits);
+    pal += res.pal; anti += res.anti;
+    if (!res.marks.size) continue;
+    const pads = mirrorPadsOf(st, r) || { l: 0, r: 0 };
+    const padL = pads.l || 0;
+    const rowLen = (rows[r] || "").length;
+    const own = new Map();
+    for (const [idx, info] of res.marks) {
+      const k = idx - padL;
+      if (k < 0 || k >= rowLen) continue;
+      own.set(k, info);
+    }
+    if (own.size) { axisMap.set(r, own); rowsHit.push(r + 1); }
+  }
+  axisMapBaseRows = rows.slice();
+  axisMapKind = "row";
+  return { pal, anti, total: pal + anti, rows: rowsHit.length, rowList: rowsHit.join(", ") };
+}
 function reverseStr(s){ return s.split("").reverse().join(""); }
 
 /* Следующий виток кольца для кольцевого поиска (см. findPatternKinds) — по умолчанию точная
