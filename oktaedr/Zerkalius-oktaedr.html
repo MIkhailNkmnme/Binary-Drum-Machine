@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.012. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Октаэдр — v0.013. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.012</title>
+<title>Zerkalius Октаэдр — v0.013</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -139,7 +139,7 @@
 <body>
 <div id="title">zerkalius</div>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.012</div>
+<div id="ver">v0.013</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -162,13 +162,13 @@
   <table>
     <tr><td>Мышь</td><td>тянуть — крутить; колесо — ближе и дальше</td></tr>
     <tr><td>Палец</td><td>один — крутить; два — щипок для увеличения</td></tr>
-    <tr><td>Наведение</td><td>подвести курсор к цифре — загорится её двойник на той стороне</td></tr>
+    <tr><td>Наведение</td><td>подвести курсор к цифре — загорится её двойник; работает, только пока включена кнопка «◎ Наведение» (V)</td></tr>
     <tr><td>Пробел</td><td>вращение включить и остановить</td></tr>
     <tr><td>Enter</td><td>цикл шагов включить и остановить</td></tr>
     <tr><td>◄ ►</td><td>шаг назад и вперёд</td></tr>
     <tr><td>▲ ▼</td><td>такт цикла быстрее и медленнее</td></tr>
     <tr><td>1 2 3</td><td>действие: ⇄ разворот, ⇅ инв-разв, ↻ Круг Инв</td></tr>
-    <tr><td>D · L · F</td><td>биты · нити · забыть память</td></tr>
+    <tr><td>D · L · V · F</td><td>биты · нити · наведение · забыть память</td></tr>
     <tr><td>N · T</td><td>новая картина · сменить палитру</td></tr>
     <tr><td>Z · колесо</td><td>Дзен: спрятать всё, кроме тела (щелчок колесом мыши — то же)</td></tr>
     <tr><td>R</td><td>запись видео с холста, она же кнопка ⏺ в углу</td></tr>
@@ -232,7 +232,11 @@
   же миг, и не потому, что между ними что-то передалось, а потому, что они с самого начала одно
   целое, просто увиденное с двух сторон зеркала.</p>
   <p><b>Наведите курсор на цифру</b> — загорится её двойник, между ними протянется нить, на концах
-  кольца. Работает всегда.</p>
+  кольца. Работает, только пока нажата кнопка <b>◎ Наведение</b> (клавиша V); по умолчанию она
+  выключена. Иначе пара загоралась бы от любого движения мыши над телом — в том числе когда её
+  просто ведут мимо, — и подсветка из события превращалась бы в мельтешение.</p>
+  <p class="sub">На клик это не влияет: и закрепление пары, и Shift+правка бита работают всегда.
+  Клик — всегда намеренный, в отличие от проезда мышью.</p>
   <p><b>Кликните по цифре</b> — пара закрепится и останется гореть своим цветом, даже когда курсор
   ушёл и тело крутится дальше. Так можно набрать несколько пар и смотреть, что с ними делает шаг.
   Повторный клик по той же цифре снимает её; <b>✕ Снять</b> или <b>Esc</b> снимают все разом, а на
@@ -329,6 +333,9 @@
     <button id="bForget" title="F">✕ Забыть</button>
   </div>
   <div class="cap">Связанные биты</div>
+  <div class="row">
+    <button id="bHover" title="V. Пока выключено, наведение мышью ничего не подсвечивает">◎ Наведение</button>
+  </div>
   <div class="row">
     <button id="bLinks" title="L">🔗 Нити</button>
     <button id="bUnpin" title="Esc — снять все">✕ Снять</button>
@@ -474,6 +481,15 @@ let stepOp = "rev";
    hoverBit — пара под курсором: она показывается ВСЕГДА, даже когда занавес выключен. Это и есть
    «потрогай один — увидь второй». */
 let showLinks = false, LINK_EVERY = 3, hoverBit = null;
+/* ПОДСВЕТКА ПО НАВЕДЕНИЮ — ТЕПЕРЬ ПО КНОПКЕ (v0.013, запрос пользователя: «нужна кнопка, только
+   когда включена — тогда вот так выделять биты»).
+   Прежде пара загоралась от любого движения мыши над телом, в том числе когда её просто ведут
+   мимо или уже отпустили после поворота. На плотной картине это сплошное мельтешение, и главное —
+   оно случается тогда, когда его не просили.
+   По умолчанию ВЫКЛЮЧЕНО: кнопка заведена ровно затем, чтобы подсветка была событием, а не фоном.
+   На клик это не влияет — и закрепление пары, и Shift+правка бита работают всегда: клик всегда
+   намеренный, в отличие от проезда мышью. */
+let hoverOn = false;
 /* ЗАКРЕПЛЁННЫЕ БИТЫ (v0.010, запрос пользователя: «клик по битам выделяет и закрепляет, снимает
    по кнопке или Escape со всех сразу»). Наведение держится ровно пока мышь на месте — отвёл, и
    пара погасла, а тело ещё и само крутится. Клик оставляет пару гореть: можно набрать несколько,
@@ -847,6 +863,9 @@ cv.addEventListener("pointermove", (e) => {
     return;
   }
   if (!dragging) {
+    // Подсветка выключена — не ищем вовсе: перебор идёт по КАЖДОЙ нарисованной цифре на каждое
+    // движение мыши, и на плотной картине это самая частая работа страницы.
+    if (!hoverOn) { hoverBit = null; return; }
     // Не тянут — ищем ближайшую цифру к курсору. Список собран последней отрисовкой, поэтому
     // перебор идёт по тому, что РЕАЛЬНО нарисовано: скрытые грани и слишком мелкие цифры в него
     // не попали и выбраться не могут.
@@ -947,7 +966,7 @@ function save(){
   try {
     localStorage.setItem(KEY, JSON.stringify({
       ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, zoom, yaw, pitch, stepOp, TICK,
-      showLinks, LINK_EVERY,
+      showLinks, LINK_EVERY, hoverOn,
       theme: document.documentElement.getAttribute("data-theme") || ""
     }));
   } catch (e) {}
@@ -970,6 +989,7 @@ function load(){
   if (o.stepOp === "rev" || o.stepOp === "revinv" || o.stepOp === "roll") stepOp = o.stepOp;
   if (o.TICK >= 60 && o.TICK <= 1200) TICK = o.TICK | 0;
   if (typeof o.showLinks === "boolean") showLinks = o.showLinks;
+  if (typeof o.hoverOn === "boolean") hoverOn = o.hoverOn;
   if (o.LINK_EVERY >= 1 && o.LINK_EVERY <= 12) LINK_EVERY = o.LINK_EVERY | 0;
   // Сама память и номер шага НЕ сохраняются намеренно: картина бит каждый раз новая (rollBits при
   // открытии), а память, набранная на другой картине, была бы про неё, а не про эту.
@@ -988,6 +1008,7 @@ function syncUI(){
   opRev.classList.toggle("act", stepOp === "rev");
   opRevInv.classList.toggle("act", stepOp === "revinv");
   opRoll.classList.toggle("act", stepOp === "roll");
+  bHover.classList.toggle("act", hoverOn);
   bLinks.classList.toggle("act", showLinks);
   // На кнопке видно, сколько набрано: закреплённые могут уехать на дальнюю сторону тела, и без
   // счётчика было бы непонятно, снимать вообще нечего или просто не видно.
@@ -1042,6 +1063,8 @@ bAuto.onclick = () => { autoTimer ? stopAuto() : startAuto(); };
 const bLinks = document.getElementById("bLinks"), sLink = document.getElementById("sLink"),
       vLink = document.getElementById("vLink");
 bLinks.onclick = () => { showLinks = !showLinks; syncUI(); save(); };
+const bHover = document.getElementById("bHover");
+bHover.onclick = () => { hoverOn = !hoverOn; if (!hoverOn) hoverBit = null; syncUI(); save(); };
 const bUnpin = document.getElementById("bUnpin");
 function unpinAll(){ if (pinned.size) { pinned.clear(); syncUI(); } }
 bUnpin.onclick = unpinAll;
@@ -1155,6 +1178,7 @@ window.addEventListener("keydown", (e) => {
   else if (k === "z" || k === "я") zenToggle();
   else if (k === "t" || k === "е") bTheme.onclick();
   else if (k === "l" || k === "д") bLinks.onclick();
+  else if (k === "v" || k === "м") bHover.onclick();
   else if (k === "f" || k === "а") bForget.onclick();
   else if (k === "1") setOp("rev");
   else if (k === "2") setOp("revinv");
