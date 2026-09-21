@@ -4145,6 +4145,12 @@ function render(){
           (axBit.pal && axBit.anti ? '; ' : '') +
           (axBit.anti ? 'Ось антипалиндрома (зеркало инв-разв), длина ' + axBit.anti + axRows(axBit.antiRows) : '');
         emit('<span class="' + axCls + '" title="' + axTip + '"' + colAttr + '>', bit, mrg);
+      } else if (memLv) {
+        /* испр. v1.536 (найдено проверкой): накал памяти стоял в общей ветке подсветок, НИЖЕ
+           служебных пометок «перевёрнут / вставлен / новый / изменён». Круг метит изменённым почти
+           каждый бит, и накал не выходил на экран ни разу. Кнопку «🔥 Память» включают ровно
+           затем, чтобы смотреть на неё, — поэтому она важнее служебных пометок. */
+        emit('<span class="b' + bit + ' hm' + memLv + '" title="Держит значение ' + memN + ' шаг. подряд"' + colAttr + '>', bit, mrg);
       } else if (isInvBit && (bit === '0' || bit === '1')) {
         emit('<span class="b' + bit + ' bit-inv" title="Перевёрнут переходом границы строки"' + colAttr + '>', bit, mrg);
       } else if (isInsBit && (bit === '0' || bit === '1')) {

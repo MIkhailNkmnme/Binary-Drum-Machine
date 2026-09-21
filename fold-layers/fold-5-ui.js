@@ -4432,7 +4432,14 @@ function updateAxisSplitPosition(maxLen){
   }
   const axisTopPx = Math.round(Math.max(axisMinTop, 0, axisLineBottom - axisLinePitch));
   const axisLineHFull = Math.max(1, axisLinePitch * 3 - AXIS_ROW_GAP_PX);
-  axisSplitEl.style.top = axisTopPx + "px";
+  /* ═══ ОСЬ ВО ВСЮ ВЫСОТУ ОКНА (v1.538) ═══
+     Запрос пользователя: «сделай ось по всей высоте браузера в поле». Верх линии — самый верх
+     видимого поля (под меню 1, тот же упор axisMinTop, что держит ось при прокрутке), низ — низ
+     окна или низ последней строки, что ниже. Над горизонтом ось идёт и через поле наложений.
+     axisTopPx остаётся прежним и дальше уходит КОРОБКАМ у оси (лесенки, пикеры, замок): они
+     центруются по своему отрезку у нулевой строки, и тянуть их на середину экрана не просили. */
+  const axisLineTopPx = Math.round(Math.max(axisMinTop, 0));
+  axisSplitEl.style.top = axisLineTopPx + "px";
   /* ═══ НИЗ ОСИ — ПО СЕРЕДИНЕ ПЕРВОЙ СТРОКИ, ПОД ЕЁ БИТАМИ (v1.528) ═══
      Запрос пользователя: «сделай ось по середине первого бита первой строки, но под битами».
      Было три полных шага (−1, 0, 1) без двух пикселей — ось проходила через всю первую строку и
@@ -4446,7 +4453,9 @@ function updateAxisSplitPosition(maxLen){
      строки, даже если она сейчас не нарисована. Короче прежних двух с половиной шагов не бывает. */
   const rowsForAxis = document.getElementById("rows");
   const rowsBottomForAxis = rowsForAxis ? rowsForAxis.getBoundingClientRect().bottom - chainRect.top : 0;
-  axisSplitEl.style.height = Math.round(Math.max(axisLinePitch * 2.5, rowsBottomForAxis - axisTopPx)) + "px";
+  const viewBottomForAxis = window.innerHeight - chainRect.top;
+  axisSplitEl.style.height = Math.round(Math.max(axisLinePitch * 2.5,
+    Math.max(rowsBottomForAxis, viewBottomForAxis) - axisLineTopPx)) + "px";
   axisSplitEl.classList.add("act");
   /* Счётчики лесенок стоят по обе стороны этой самой линии (v1.281) — той же координатой leftPx и
      тем же отрезком, что и она. Зовём здесь, а не отдельным проходом: любое место, где ось уже
