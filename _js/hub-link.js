@@ -1,6 +1,6 @@
 /* ===========================================================================
    ЗНАЧОК «В ХАБ» — один и тот же во всех машинах Зеркалиуса.
-   Подключается одной строкой:  <script src="hub-link.js"></script>
+   Подключается одной строкой:  <script src="_js/hub-link.js"></script>
 
    Путь до хаба вычисляется сам, поэтому модуль одинаково работает и в корне,
    и во вложенных папках вроде fold-layers/. Кнопка стоит в левом нижнем углу —
@@ -13,7 +13,7 @@
     const depth = location.pathname.replace(/\/[^/]*$/, '').split('/').filter(Boolean).length;
     // На GitHub Pages проект лежит в корне домена, поэтому считаем от текущей папки:
     // в корне это index.html, во вложенной папке — на уровень выше.
-    const href = depth > 0 && /\/(fold|fold-layers|fold-v0957)\//.test(location.pathname)
+    const href = depth > 0 && /\/(fold|fold-layers|oktaedr)\//.test(location.pathname)
         ? '../index.html' : 'index.html';
 
     function build() {

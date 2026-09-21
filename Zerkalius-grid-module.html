@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<!--
+===========================================================================
+GRID MODULE — отдельный скелет "живой/редактируемой сетки" для Zerkalius.
+
+Зачем отдельный файл: та же фича, встроенная прямо в Zerkalius-genezis.html
+(див-сетка, где на каждый символ — свой <div>, плюс до 60 строк/столбцов
+"запаса" для панорамирования), пересоздавала тысячи DOM-узлов каждый кадр
+анимации — это и есть причина тормозов при переключении в сетку и обратно
+на слоты.
+
+Здесь сетка рисуется на <canvas> (как и основной холст в Zerkalius) —
+рисуется только то, что видно в вьюпорте (viewport culling), DOM-узлов
+для ячеек вообще нет. Открывается прямо в браузере отдельно от основного
+файла — можно допиливать/тестировать без риска задеть рабочий движок.
+
+Как это будет собираться назад в основной файл: смотри блок
+"ТОЧКИ ИНТЕГРАЦИИ" внизу скрипта — GRID.setLiveSource(fn) и GRID.setColors(...)
+это ровно те два места, куда потом подключится живой STATE.lines и
+цвета/пресеты из основного файла, без переписывания всего остального.
+===========================================================================
+-->
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grid Module — v11</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Share+Tech+Mono&family=VT323&family=Major+Mono+Display&family=Anton&family=Orbitron&family=Press+Start+2P&display=swap');
+    body { margin: 0; overflow: hidden; background: #050505; font-family: 'Consolas', monospace; }
+    /* Шапка + строка формул — один перетаскиваемый блок (как остальные панели в основном
+       файле), а не прибитая к краю окна полоса. Растяни браузер на 2 монитора — холст (0..100%
+       окна) займёт оба, а этот блок можно утащить целиком на "чистый" монитор. */
+    #gridControlsPanel {
+        position: fixed; top: 0; left: 0; z-index: 10; width: 100vw;
+        background: rgba(10,10,10,0.9); border: 1px solid #333; border-radius: 0 0 5px 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    }
+    #gridControlsPanel.floating { width: auto; border-radius: 5px; }
+    #gridHeader {
+        height: 30px; cursor: move; user-select: none;
+        display: flex; align-items: center; gap: 6px; padding: 0 8px; box-sizing: border-box;
+        border-bottom: 1px solid #333; color: #ff6464; font-size: 11px; font-weight: bold;
+    }
+    #gridHeader button, #gridHeader input[type=color] { cursor: pointer; }
+    #gridHeader button { background: #222; border: 1px solid #444; color: #ff6464; border-radius: 3px; padding: 2px 6px; font-size: 11px; }
+    #gridHeader button:hover { background: #333; }
+    #gridHeader input[type=color] { width: 16px; height: 16px; padding: 0; border: none; }
+    /* Строка формул, как в Excel: адрес выбранной ячейки + её текущее значение. */
+    #gridFormulaBar {
+        height: 22px; display: flex; align-items: center; gap: 8px; padding: 0 8px; box-sizing: border-box; font-size: 11px;
+    }
+    #gridFormulaAddr { color: #ffd500; font-weight: bold; min-width: 60px; }
+    #gridFormulaValue { color: #ccc; font-family: 'Roboto Mono', monospace; white-space: pre; }
+    #gridCanvas { position: fixed; top: 0; left: 0; right: 0; bottom: 0; cursor: grab; }
+    #gridCanvas.panning { cursor: grabbing; }
+</style>
+</head>
+<body>
+
+<div id="gridControlsPanel">
+    <div id="gridHeader" title="Перетащить — можно унести на второй монитор">
+        <span id="gridStatusLabel">📊 Кадр: 0</span>
+        <button id="modeBtn">🔴 Живой</button>
+        <button id="digitsModeBtn" title="Показ 1/0: диагонали ⇄ цифры ⇄ произвольные символы (задаются справа)">╲ Диагонали</button>
+        <span class="lbl" style="opacity:0.7;">Симв. '1'</span>
+        <input type="text" id="symbol1Input" value="&lt;" title="Символ, которым показывается '1' в режиме 'Символы'" style="width:28px; background:#222; color:#fff; border:1px solid #444; border-radius:3px; font-size:11px; padding:2px 3px; text-align:center;">
+        <span class="lbl" style="opacity:0.7;">Симв. '0'</span>
+        <input type="text" id="symbol0Input" value="&gt;" title="Символ, которым показывается '0' в режиме 'Символы'" style="width:28px; background:#222; color:#fff; border:1px solid #444; border-radius:3px; font-size:11px; padding:2px 3px; text-align:center;">
+        <select id="presetSelect" title="Цветовой пресет сетки (фон + цвета 1/0)">
+            <optgroup label="Тёмные">
+                <option value="matrix">Матрица</option>
+                <option value="cyber">Киберпанк</option>
+                <option value="blood">Кровавый</option>
+                <option value="synthwave">Synthwave</option>
+                <option value="zerkalius">Zerkalius</option>
+                <option value="bw">ЧБ</option>
+                <option value="acid">Кислота</option>
+                <option value="electro">Электро</option>
+                <option value="amber">Янтарь</option>
+            </optgroup>
+            <optgroup label="Светлые">
+                <option value="excel">Excel</option>
+                <option value="paper">Бумага</option>
+                <option value="ice">Лёд</option>
+            </optgroup>
+            <optgroup label="Яркие">
+                <option value="candy">Конфета</option>
+                <option value="tropical">Тропики</option>
+                <option value="neon">Неон</option>
+            </optgroup>
+        </select>
+        <input type="color" id="bgColorInput" title="Фон выделенных ячеек" value="#1a1a1a">
+        <input type="color" id="textColorInput" title="Цвет текста выделенных ячеек" value="#ff6464">
+        <span style="margin-left:auto; opacity:0.6;">Колесо — зум, ЛКМ протянуть — диапазон, ПКМ / Ctrl+ЛКМ — пан (без сброса выделения), Ctrl+C/X/V — копировать/вырезать/вставить, Delete — очистить</span>
+    </div>
+    <div id="gridFormulaBar">
+        <span id="gridFormulaAddr">R1:C1</span>
+        <span id="gridFormulaValue">(пусто)</span>
+    </div>
+    <div id="seedOverlayBar" style="display:flex; align-items:center; gap:6px; padding:4px 8px; box-sizing:border-box; font-size:11px; border-top:1px solid #333;">
+        <span style="color:#ff3399; font-weight:bold;">🧬 Сид-наложение:</span>
+        <input type="text" id="seedOverlayInput" value="1" title="Сид(ы) через запятую или пробел. Несколько — раздаются строкам по кругу" style="width:110px; background:#222; color:#fff; border:1px solid #444; border-radius:3px; font-size:11px; padding:2px 4px;">
+        <button id="seedOverlayStepBtn" title="Один шаг = одна копия сида, XOR-наложенная на каждую строку (с отскоком от края)">Шаг</button>
+        <button id="seedOverlayUndoBtn" title="Отменить последний шаг у всех строк">Шаг назад</button>
+        <button id="seedOverlayResetBtn" title="Обнулить все строки (сохраняя их число и длину) и перечитать поле сида(ов)">Сброс</button>
+        <button id="seedOverlayPlayBtn" style="color:#00ccff; border-color:#00ccff;" title="Автоматически повторять 'Шаг' по таймеру">▶ Автоплей</button>
+        <select id="seedOverlayAlignSelect" title="Выравнивание строк относительно самой длинной — промежуток заполняется пустыми (не нулевыми) ячейками">
+            <option value="left">⯇ По левому краю</option>
+            <option value="right">По правому краю ⯈</option>
+            <option value="center">По центру ⯇⯈</option>
+        </select>
+        <label style="display:flex; align-items:center; gap:3px; cursor:pointer;" title="Каждый бит расширяется в пару [бит, противобит] перед выравниванием — длина всегда чётная, поэтому центрирование получается ровным без сдвига на 1 ячейку от чётности/нечётности">
+            <input type="checkbox" id="seedOverlayAntiBitCheck"> <span>Анти-бит справа (×2, ровный центр)</span>
+        </label>
+    </div>
+    <div id="gridStyleBar" style="display:flex; align-items:center; gap:6px; padding:4px 8px; box-sizing:border-box; font-size:11px; border-top:1px solid #333;">
+        <span style="color:#00ccff; font-weight:bold;">🎨 Оформление:</span>
+        <span class="lbl" style="opacity:0.7;">Линии</span>
+        <input type="color" id="gridLineColorInput" title="Цвет линий сетки" value="#888888">
+        <span class="lbl" style="opacity:0.7;">'1'</span>
+        <input type="color" id="diagColor1Input" title="Цвет символа/диагонали '1'" value="#ffffff">
+        <span class="lbl" style="opacity:0.7;">'0'</span>
+        <input type="color" id="diagColor0Input" title="Цвет символа/диагонали '0'" value="#00ff66">
+        <span class="lbl" style="opacity:0.7;">Фон</span>
+        <input type="color" id="gridBgColorInput" title="Фон всей сетки" value="#050505">
+        <span class="lbl" style="opacity:0.7;">Толщина диаг.</span>
+        <input type="range" id="diagThicknessSlider" min="0.5" max="6" step="0.5" value="0.5" style="width:70px;" title="Толщина линий диагоналей 1/0">
+        <span class="lbl" style="opacity:0.7;">Шрифт</span>
+        <input type="range" id="fontSizeSlider" min="6" max="40" step="1" value="14" style="width:70px;" title="Размер шрифта (px). По умолчанию считается от масштаба ячейки — сдвиг ползунка переключает на фиксированный размер">
+        <select id="gridFontSelect" title="Гарнитура шрифта">
+            <option value="'Consolas', monospace">Consolas</option>
+            <option value="'Roboto Mono', monospace">Roboto Mono</option>
+            <option value="monospace">Моноширинный</option>
+            <option value="'Courier New', Courier, monospace">Courier New</option>
+            <option value="'Share Tech Mono', monospace">Share Tech Mono</option>
+            <option value="'VT323', monospace">VT323 (CRT-терминал)</option>
+            <option value="'Major Mono Display', monospace">Major Mono Display</option>
+            <option value="Impact, 'Anton', sans-serif">Impact</option>
+            <option value="'Anton', Impact, sans-serif">Anton (запасной Impact)</option>
+            <option value="'Orbitron', monospace">Orbitron (футуристичный)</option>
+            <option value="'Press Start 2P', monospace">Press Start 2P (пиксельный)</option>
+        </select>
+        <button id="saveSettingsBtn" title="Скачать файл со всеми текущими настройками оформления (цвета, толщина, размер шрифта, гарнитура, масштаб, выравнивание, анти-бит)">💾 Сохранить настройки</button>
+        <button id="loadSettingsBtn" title="Загрузить настройки оформления из ранее сохранённого файла">📂 Загрузить настройки</button>
+        <input type="file" id="loadSettingsFile" accept=".json" style="display:none;">
+    </div>
+</div>
+<canvas id="gridCanvas"></canvas>
+
+<script>
+"use strict";
+
+// ===========================================================================
+// ЦВЕТОВЫЕ ПРЕСЕТЫ — тёмные повторяют PRESETS из Zerkalius-genezis.html (для
+// единообразия), светлые и яркие — новые, под разный фон. line (границы сетки)
+// пресетами намеренно не трогается — остаётся нейтральным независимо от темы
+// (см. GRID.colors.line ниже).
+// ===========================================================================
+const GRID_PRESETS = {
+    matrix:    { c1: '#ffffff', c0: '#00ff66', bg: '#050505' },
+    cyber:     { c1: '#ffcc00', c0: '#00ccff', bg: '#0a0a1a' },
+    blood:     { c1: '#ffffff', c0: '#ff0000', bg: '#1a0000' },
+    synthwave: { c1: '#00ffff', c0: '#ff00ff', bg: '#0f0515' },
+    zerkalius: { c1: '#dcdcdc', c0: '#00ccff', bg: '#050a15' },
+    bw:        { c1: '#ffffff', c0: '#555555', bg: '#000000' },
+    acid:      { c1: '#f2ffb8', c0: '#bfff00', bg: '#0c1404' },
+    electro:   { c1: '#00e5ff', c0: '#ff6a00', bg: '#020a0d' },
+    amber:     { c1: '#ffd27a', c0: '#ff9900', bg: '#120900' },
+    // Светлые
+    excel:     { c1: '#1a1a1a', c0: '#217346', bg: '#ffffff' },
+    paper:     { c1: '#2b2b2b', c0: '#8a5a2b', bg: '#f0ede4' },
+    ice:       { c1: '#123a5e', c0: '#0891b2', bg: '#eef6ff' },
+    // Яркие
+    candy:     { c1: '#ff2e88', c0: '#00c2ff', bg: '#fff5fb' },
+    tropical:  { c1: '#ff6a00', c0: '#00b86b', bg: '#fffbea' },
+    neon:      { c1: '#39ff14', c0: '#ff00ff', bg: '#000000' },
+};
+
+// ===========================================================================
+// STATE — модель данных сетки. Полностью независима от рендера/интерактива.
+// ===========================================================================
+const GRID = {
+    // Режим: 'live' — данные берутся из внешнего источника (см. setLiveSource),
+    // 'edit' — из собственного независимого буфера cells (Excel-подобный режим).
+    mode: 'live',
+
+    // Редактируемый буфер: Map("r_c" -> {ch, bg, color}). Растёт сам при вставке/покраске.
+    cells: new Map(),
+    editRows: 20,
+    editCols: 20,
+
+    // Внешний источник для 'live'-режима: функция () => string[] (по одной строке символов
+    // на элемент массива). Пока не подключён — см. ТОЧКИ ИНТЕГРАЦИИ внизу файла.
+    liveSource: null,
+    frameLabel: () => '',
+
+    // Цвета — по умолчанию нейтральные; в основном файле переопределяются через setColors().
+    // line (границы ячеек сетки) намеренно НЕ завязан на c0/c1 (цвета диагоналей 1/0) — иначе
+    // линии сетки сливаются по оттенку с содержимым, как было раньше (оба зелёные). Нейтральный
+    // серый — граница видна отдельно от диагоналей независимо от того, какие c0/c1 выбраны.
+    // line — сплошной hex (не rgba): пикер <input type=color> не умеет в прозрачность,
+    // а раз цвет теперь редактируемый, проще держать формат единым.
+    colors: { c1: '#ffffff', c0: '#00ff66', bg: '#050505', line: '#888888' },
+
+    // Камера: масштаб (px на ячейку) и смещение (в пикселях) панорамирования.
+    cellSize: 24,
+    panX: 0, panY: 0,
+
+    // Выделение — диапазон ячеек, как в Excel: selR/selC — угол, откуда начали тянуть
+    // (якорь), selR2/selC2 — другой угол (текущий конец протягивания). Для одиночного клика
+    // оба угла совпадают. Вставка всегда идёт от верхнего левого угла диапазона.
+    selR: 0, selC: 0,
+    selR2: 0, selC2: 0,
+
+    // Как показывать '1'/'0': 'diagonal' (диагональной чертой, как на основном холсте),
+    // 'digits' (сырыми цифрами 1/0) или 'symbols' (произвольными символами symbol1/symbol0,
+    // по умолчанию "<"/">" — не обязательно однобуквенными).
+    symbolMode: 'diagonal',
+    symbol1: '<',
+    symbol0: '>',
+
+    // Толщина линий диагоналей 1/0 (px), размер шрифта (px, null = авто от cellSize) и гарнитура.
+    diagLineWidth: 0.5,
+    fontSize: null,
+    fontFamily: "'Roboto Mono', monospace",
+
+    // Выравнивание строк сид-наложения относительно самой длинной строки: 'left' (по
+    // умолчанию, как раньше), 'right', 'center' — промежуток заполняется пустыми ячейками
+    // (см. seedOverlayBuildRows/seedOverlayApplyStep).
+    seedOverlayAlign: 'left',
+};
+
+function selBounds() {
+    return {
+        r0: Math.min(GRID.selR, GRID.selR2), r1: Math.max(GRID.selR, GRID.selR2),
+        c0: Math.min(GRID.selC, GRID.selC2), c1: Math.max(GRID.selC, GRID.selC2),
+    };
+}
+
+// ===========================================================================
+// DATA ACCESS — единая точка чтения ячейки независимо от режима (live/edit).
+// Раньше (в основном файле) live- и edit-рендер были двумя почти одинаковыми
+// копипастами функции — здесь это одна точка, чтобы не разъезжались.
+// ===========================================================================
+function getCell(r, c) {
+    if (GRID.mode === 'edit') {
+        return GRID.cells.get(r + '_' + c) || null;
+    }
+    // live: liveSource() должен вернуть массив строк текущего кадра; символ '1'/'0' — те же
+    // спец-стили (диагонали), что и в edit-режиме, остальные символы — просто текст.
+    if (!GRID.liveSource) return null;
+    const rows = GRID.liveSource();
+    if (r < 0 || r >= rows.length) return null;
+    const row = rows[r] || '';
+    if (c < 0 || c >= row.length) return null;
+    const ch = row[c];
+    if (ch === ' ' || ch === '') return null;
+    return { ch, bg: '', color: '' };
+}
+
+function dataRowCount() {
+    if (GRID.mode === 'edit') return GRID.editRows;
+    return GRID.liveSource ? GRID.liveSource().length : 0;
+}
+function dataColCount() {
+    if (GRID.mode === 'edit') return GRID.editCols;
+    if (!GRID.liveSource) return 0;
+    const rows = GRID.liveSource();
+    return rows.reduce((m, row) => Math.max(m, row.length), 0);
+}
+
+function setEditCell(r, c, ch, bg, color) {
+    if (r < 0 || c < 0) return;
+    GRID.cells.set(r + '_' + c, { ch, bg: bg || '', color: color || '' });
+    if (r + 1 > GRID.editRows) GRID.editRows = r + 1;
+    if (c + 1 > GRID.editCols) GRID.editCols = c + 1;
+}
+
+// ===========================================================================
+// RENDER — canvas, только видимый вьюпорт (viewport culling). Никаких DOM-узлов
+// на ячейку — в этом весь смысл переписывания: тысячи div'ов больше не нужны.
+// ===========================================================================
+const ROWHEAD_W = 28, COLHEAD_H = 16;
+const canvas = document.getElementById('gridCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    render();
+}
+window.addEventListener('resize', resizeCanvas);
+
+function render() {
+    const W = canvas.width, H = canvas.height;
+    // Округляем масштаб ДО целого пикселя только для самого рендера (GRID.cellSize остаётся
+    // дробным — зум по колесу считается от него точно). При дробном cs соседние ячейки
+    // округляют свои x/y по-разному ("дрейф"), из-за чего границы сетки и диагонали то
+    // удваиваются, то расходятся дырами — с целым cs дрейфа нет вообще, все стыки ровные.
+    const cs = Math.max(1, Math.round(GRID.cellSize));
+    ctx.fillStyle = GRID.colors.bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Видимый диапазон строк/столбцов данных — считаем от panX/panY, рисуем только его.
+    const firstCol = Math.floor((GRID.panX) / cs);
+    const firstRow = Math.floor((GRID.panY) / cs);
+    const visibleCols = Math.ceil((W - ROWHEAD_W) / cs) + 2;
+    const visibleRows = Math.ceil((H - COLHEAD_H) / cs) + 2;
+
+    ctx.font = `${GRID.fontSize || Math.max(8, cs * 0.6)}px ${GRID.fontFamily}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    const sel = selBounds();
+
+    // Линии сетки — ОДНИМ проходом, не per-cell strokeRect. per-cell вариант рисовал общую
+    // границу между двумя соседними ячейками ДВАЖДЫ (с их собственных, независимо округлённых
+    // x/y) — при нецелом масштабе (зум) округление "плывёт" по-разному для соседних ячеек,
+    // из-за чего одни границы удваивались/утолщались, а другие пропадали (см. скриншот).
+    // Здесь каждая вертикаль/горизонталь считается и рисуется РОВНО ОДИН раз.
+    ctx.strokeStyle = GRID.colors.line;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    for (let ci = 0; ci <= visibleCols; ci++) {
+        const c = firstCol + ci;
+        const x = ROWHEAD_W + Math.round(c * cs - GRID.panX) + 0.25;
+        ctx.moveTo(x, COLHEAD_H);
+        ctx.lineTo(x, H);
+    }
+    for (let ri = 0; ri <= visibleRows; ri++) {
+        const r = firstRow + ri;
+        const y = COLHEAD_H + Math.round(r * cs - GRID.panY) + 0.25;
+        ctx.moveTo(ROWHEAD_W, y);
+        ctx.lineTo(W, y);
+    }
+    ctx.stroke();
+
+    for (let ri = 0; ri < visibleRows; ri++) {
+        const r = firstRow + ri;
+        const y = COLHEAD_H + Math.round(r * cs - GRID.panY);
+        for (let ci = 0; ci < visibleCols; ci++) {
+            const c = firstCol + ci;
+            const x = ROWHEAD_W + Math.round(c * cs - GRID.panX);
+
+            const data = getCell(r, c);
+
+            if (data) {
+                if (data.bg) { ctx.fillStyle = data.bg; ctx.fillRect(x, y, cs, cs); }
+                if ((data.ch === '1' || data.ch === '0') && GRID.symbolMode === 'diagonal') {
+                    // Без отступа от края ячейки (раньше было x+2..x+cs-2) — диагонали соседних
+                    // ячеек должны смыкаться ровно в углу, одной непрерывной зигзаг-линией, а не
+                    // рваться на отдельные "бусины" с зазором.
+                    ctx.strokeStyle = data.ch === '1' ? GRID.colors.c1 : GRID.colors.c0;
+                    ctx.lineWidth = GRID.diagLineWidth;
+                    ctx.beginPath();
+                    if (data.ch === '1') { ctx.moveTo(x, y); ctx.lineTo(x + cs, y + cs); }
+                    else { ctx.moveTo(x, y + cs); ctx.lineTo(x + cs, y); }
+                    ctx.stroke();
+                } else {
+                    ctx.fillStyle = data.color || (data.ch === '1' ? GRID.colors.c1 : data.ch === '0' ? GRID.colors.c0 : GRID.colors.c1);
+                    // В режиме "символы" 1/0 показываются как GRID.symbol1/symbol0 (по умолчанию
+                    // "<"/">"), а не как сырые цифры; остальные символы (текст) — как есть.
+                    let displayCh = data.ch;
+                    if (GRID.symbolMode === 'symbols') {
+                        if (data.ch === '1') displayCh = GRID.symbol1;
+                        else if (data.ch === '0') displayCh = GRID.symbol0;
+                    }
+                    ctx.fillText(displayCh, x + cs / 2, y + cs / 2 + 1);
+                }
+            }
+
+            const inSel = r >= sel.r0 && r <= sel.r1 && c >= sel.c0 && c <= sel.c1;
+            if (inSel) {
+                ctx.fillStyle = 'rgba(255, 213, 0, 0.12)';
+                ctx.fillRect(x, y, cs, cs);
+            }
+            const isAnchor = r === GRID.selR && c === GRID.selC;
+            if (isAnchor) {
+                ctx.strokeStyle = '#ffd500'; ctx.lineWidth = 1.5;
+                ctx.strokeRect(x + 1, y + 1, cs - 2, cs - 2);
+            }
+        }
+    }
+
+    // Внешний контур всего диапазона (поверх заливки отдельных ячеек) — виднее, когда
+    // выделено больше одной ячейки.
+    if (sel.r0 !== sel.r1 || sel.c0 !== sel.c1) {
+        const rx = ROWHEAD_W + Math.round(sel.c0 * cs - GRID.panX);
+        const ry = COLHEAD_H + Math.round(sel.r0 * cs - GRID.panY);
+        const rw = (sel.c1 - sel.c0 + 1) * cs;
+        const rh = (sel.r1 - sel.r0 + 1) * cs;
+        ctx.strokeStyle = '#ffd500'; ctx.lineWidth = 2;
+        ctx.strokeRect(rx + 1, ry + 1, rw - 2, rh - 2);
+    }
+
+    // Шапка (закреплена поверх прокрутки — рисуется поверх данных последней).
+    ctx.fillStyle = 'rgba(10,10,10,0.95)';
+    ctx.fillRect(0, 0, W, COLHEAD_H);
+    ctx.fillRect(0, 0, ROWHEAD_W, H);
+    ctx.fillStyle = '#888';
+    for (let ci = 0; ci < visibleCols; ci++) {
+        const c = firstCol + ci;
+        const x = ROWHEAD_W + Math.round(c * cs - GRID.panX);
+        ctx.strokeStyle = GRID.colors.line; ctx.lineWidth = 0.5;
+        ctx.strokeRect(x + 0.25, 0.25, cs - 0.5, COLHEAD_H - 0.5);
+        ctx.fillText(c + 1, x + cs / 2, COLHEAD_H / 2 + 1);
+    }
+    for (let ri = 0; ri < visibleRows; ri++) {
+        const r = firstRow + ri;
+        const y = COLHEAD_H + Math.round(r * cs - GRID.panY);
+        ctx.strokeStyle = GRID.colors.line; ctx.lineWidth = 0.5;
+        ctx.strokeRect(0.25, y + 0.25, ROWHEAD_W - 0.5, cs - 0.5);
+        ctx.fillText(r + 1, ROWHEAD_W / 2, y + cs / 2 + 1);
+    }
+    ctx.fillStyle = '#111'; ctx.fillRect(0, 0, ROWHEAD_W, COLHEAD_H);
+
+    document.getElementById('gridStatusLabel').textContent =
+        (GRID.mode === 'edit' ? '✏️ ' : '📊 ') + GRID.frameLabel();
+
+    // Строка формул (как в Excel): адрес (одной ячейки или всего диапазона) + значение
+    // активной (якорной) ячейки.
+    const selData = getCell(GRID.selR, GRID.selC);
+    const addr = (sel.r0 === sel.r1 && sel.c0 === sel.c1)
+        ? `R${GRID.selR + 1}:C${GRID.selC + 1}`
+        : `R${sel.r0 + 1}:C${sel.c0 + 1} — R${sel.r1 + 1}:C${sel.c1 + 1}`;
+    document.getElementById('gridFormulaAddr').textContent = addr;
+    document.getElementById('gridFormulaValue').textContent = selData ? selData.ch : '(пусто)';
+}
+
+// ===========================================================================
+// INTERACTION — зум колесом; ЛКМ протягивание = выделение диапазона (как в Excel);
+// ПКМ протягивание = панорама (раз левая кнопка теперь занята выделением).
+// ===========================================================================
+let isPanning = false, panStartX = 0, panStartY = 0, panOrigX = 0, panOrigY = 0;
+let isSelecting = false;
+
+function screenToCell(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left - ROWHEAD_W + GRID.panX;
+    const y = clientY - rect.top - COLHEAD_H + GRID.panY;
+    return { c: Math.floor(x / GRID.cellSize), r: Math.floor(y / GRID.cellSize) };
+}
+
+// Шапка+строка формул перетаскиваются как один блок (двойной монитор: холст растянут на оба
+// окна автоматически, а этот блок можно перенести на "чистый" монитор).
+(function initControlsPanelDrag() {
+    const panel = document.getElementById('gridControlsPanel');
+    const header = document.getElementById('gridHeader');
+    if (!panel || !header) return;
+    let dragging = false, px = 0, py = 0;
+    header.addEventListener('mousedown', e => {
+        if (e.button !== 0 || e.target.closest('input, button, select, textarea, label, a')) return;
+        dragging = true;
+        const rect = panel.getBoundingClientRect();
+        panel.style.left = rect.left + 'px';
+        panel.style.top = rect.top + 'px';
+        panel.classList.add('floating');
+        px = e.clientX; py = e.clientY;
+        e.preventDefault();
+    });
+    window.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        panel.style.left = (panel.offsetLeft - (px - e.clientX)) + 'px';
+        panel.style.top = (panel.offsetTop - (py - e.clientY)) + 'px';
+        px = e.clientX; py = e.clientY;
+    });
+    window.addEventListener('mouseup', () => { dragging = false; });
+})();
+
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.1 : (1 / 1.1);
+    const old = GRID.cellSize;
+    GRID.cellSize = Math.max(3, Math.min(80, GRID.cellSize * factor));
+    // Зумим относительно позиции курсора, а не левого верхнего угла — привычнее.
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left - ROWHEAD_W, my = e.clientY - rect.top - COLHEAD_H;
+    GRID.panX = (GRID.panX + mx) * (GRID.cellSize / old) - mx;
+    GRID.panY = (GRID.panY + my) * (GRID.cellSize / old) - my;
+    render();
+}, { passive: false });
+
+canvas.addEventListener('mousedown', e => {
+    // ПКМ — пан. ЛКМ+Ctrl — тоже пан, но выделение при этом не трогаем (просто двигаем вид).
+    if (e.button === 2 || (e.button === 0 && e.ctrlKey)) {
+        isPanning = true;
+        panStartX = e.clientX; panStartY = e.clientY;
+        panOrigX = GRID.panX; panOrigY = GRID.panY;
+        canvas.classList.add('panning');
+        return;
+    }
+    if (e.button !== 0) return;
+    isSelecting = true;
+    const { r, c } = screenToCell(e.clientX, e.clientY);
+    if (r >= 0 && c >= 0) { GRID.selR = r; GRID.selC = c; GRID.selR2 = r; GRID.selC2 = c; render(); }
+});
+window.addEventListener('mousemove', e => {
+    if (isPanning) {
+        GRID.panX = panOrigX - (e.clientX - panStartX);
+        GRID.panY = panOrigY - (e.clientY - panStartY);
+        render();
+        return;
+    }
+    if (isSelecting) {
+        const { r, c } = screenToCell(e.clientX, e.clientY);
+        GRID.selR2 = Math.max(0, r); GRID.selC2 = Math.max(0, c);
+        render();
+    }
+});
+window.addEventListener('mouseup', e => {
+    if (isPanning) { isPanning = false; canvas.classList.remove('panning'); }
+    isSelecting = false;
+});
+
+// ===========================================================================
+// EDIT MODE — переключение, вставка (текст / HTML-таблица из Excel), покраска.
+// ===========================================================================
+function enterEditMode() {
+    if (GRID.mode === 'edit') return;
+    // Снимок текущего живого кадра, чтобы переключение не стирало то, что видно.
+    const rows = GRID.liveSource ? GRID.liveSource() : [];
+    GRID.cells = new Map();
+    let maxR = 0, maxC = 0;
+    rows.forEach((row, r) => {
+        for (let c = 0; c < row.length; c++) {
+            if (row[c] === ' ' || row[c] === '') continue;
+            GRID.cells.set(r + '_' + c, { ch: row[c], bg: '', color: '' });
+            maxR = Math.max(maxR, r + 1); maxC = Math.max(maxC, c + 1);
+        }
+    });
+    GRID.editRows = Math.max(maxR, 20);
+    GRID.editCols = Math.max(maxC, 20);
+    GRID.mode = 'edit';
+    document.getElementById('modeBtn').textContent = '✏️ Редакт.';
+}
+
+document.getElementById('modeBtn').addEventListener('click', () => {
+    if (GRID.mode === 'edit') {
+        GRID.mode = 'live';
+        document.getElementById('modeBtn').textContent = '🔴 Живой';
+    } else {
+        enterEditMode();
+    }
+    render();
+});
+
+const SYMBOL_MODE_LABELS = { diagonal: '╲ Диагонали', digits: '10 Цифры', symbols: '<> Символы' };
+const SYMBOL_MODE_CYCLE = ['diagonal', 'digits', 'symbols'];
+document.getElementById('digitsModeBtn').addEventListener('click', () => {
+    let idx = SYMBOL_MODE_CYCLE.indexOf(GRID.symbolMode);
+    GRID.symbolMode = SYMBOL_MODE_CYCLE[(idx + 1) % SYMBOL_MODE_CYCLE.length];
+    document.getElementById('digitsModeBtn').textContent = SYMBOL_MODE_LABELS[GRID.symbolMode];
+    render();
+});
+document.getElementById('symbol1Input').addEventListener('input', function() {
+    GRID.symbol1 = this.value || '<';
+    render();
+});
+document.getElementById('symbol0Input').addEventListener('input', function() {
+    GRID.symbol0 = this.value || '>';
+    render();
+});
+
+document.getElementById('presetSelect').addEventListener('change', function() {
+    let p = GRID_PRESETS[this.value];
+    if (p) {
+        GRID.setColors({ c1: p.c1, c0: p.c0, bg: p.bg });
+        syncStyleInputsFromGrid();
+        render();
+    }
+});
+
+// Держит цветовые пикеры/ползунки в синхроне с текущим GRID.colors/diagLineWidth/fontSize —
+// нужно после выбора пресета (пресет не трогает line, поэтому его пикер не переписываем).
+function syncStyleInputsFromGrid() {
+    document.getElementById('gridLineColorInput').value = GRID.colors.line;
+    document.getElementById('diagColor1Input').value = GRID.colors.c1;
+    document.getElementById('diagColor0Input').value = GRID.colors.c0;
+    document.getElementById('gridBgColorInput').value = GRID.colors.bg;
+    document.getElementById('diagThicknessSlider').value = GRID.diagLineWidth;
+    if (GRID.fontSize) document.getElementById('fontSizeSlider').value = GRID.fontSize;
+    document.getElementById('gridFontSelect').value = GRID.fontFamily;
+    document.getElementById('seedOverlayAlignSelect').value = GRID.seedOverlayAlign;
+}
+syncStyleInputsFromGrid();
+
+document.getElementById('gridLineColorInput').addEventListener('input', function() {
+    GRID.colors.line = this.value;
+    render();
+});
+document.getElementById('diagColor1Input').addEventListener('input', function() {
+    GRID.colors.c1 = this.value;
+    render();
+});
+document.getElementById('diagColor0Input').addEventListener('input', function() {
+    GRID.colors.c0 = this.value;
+    render();
+});
+document.getElementById('gridBgColorInput').addEventListener('input', function() {
+    GRID.colors.bg = this.value;
+    render();
+});
+document.getElementById('diagThicknessSlider').addEventListener('input', function() {
+    GRID.diagLineWidth = parseFloat(this.value) || 0.5;
+    render();
+});
+document.getElementById('fontSizeSlider').addEventListener('input', function() {
+    GRID.fontSize = parseInt(this.value, 10) || null;
+    render();
+});
+document.getElementById('gridFontSelect').addEventListener('change', function() {
+    GRID.fontFamily = this.value;
+    render();
+});
+document.getElementById('seedOverlayAlignSelect').addEventListener('change', function() {
+    GRID.seedOverlayAlign = this.value;
+    if (typeof seedOverlayWriteAllRows === 'function') { seedOverlayWriteAllRows(); render(); }
+});
+document.getElementById('seedOverlayAntiBitCheck').addEventListener('change', function() {
+    if (typeof seedOverlayWriteAllRows === 'function') { seedOverlayWriteAllRows(); render(); }
+});
+
+// ===========================================================================
+// СОХРАНЕНИЕ/ЗАГРУЗКА НАСТРОЕК ОФОРМЛЕНИЯ — как в Zerkalius-genezis.html
+// (там снапшот сохраняется целиком в файл), только здесь только настройки
+// оформления (цвета, толщина, шрифт/гарнитура, масштаб, выравнивание, анти-бит),
+// без содержимого ячеек — оно всё равно приходит из STATE.lines/демо-данных.
+// ===========================================================================
+function collectGridSettings() {
+    return {
+        colors: Object.assign({}, GRID.colors),
+        diagLineWidth: GRID.diagLineWidth,
+        fontSize: GRID.fontSize,
+        fontFamily: GRID.fontFamily,
+        cellSize: GRID.cellSize,
+        panX: GRID.panX,
+        panY: GRID.panY,
+        symbolMode: GRID.symbolMode,
+        symbol1: GRID.symbol1,
+        symbol0: GRID.symbol0,
+        seedOverlayAlign: GRID.seedOverlayAlign,
+        seedOverlayAntiBit: document.getElementById('seedOverlayAntiBitCheck').checked,
+    };
+}
+
+function applyGridSettings(s) {
+    if (!s) return;
+    if (s.colors) Object.assign(GRID.colors, s.colors);
+    if (typeof s.diagLineWidth === 'number') GRID.diagLineWidth = s.diagLineWidth;
+    if (s.fontSize !== undefined) GRID.fontSize = s.fontSize;
+    if (s.fontFamily) GRID.fontFamily = s.fontFamily;
+    if (typeof s.cellSize === 'number') GRID.cellSize = s.cellSize;
+    if (typeof s.panX === 'number') GRID.panX = s.panX;
+    if (typeof s.panY === 'number') GRID.panY = s.panY;
+    if (s.symbolMode) GRID.symbolMode = s.symbolMode;
+    if (s.symbol1 !== undefined) GRID.symbol1 = s.symbol1;
+    if (s.symbol0 !== undefined) GRID.symbol0 = s.symbol0;
+    if (s.seedOverlayAlign) GRID.seedOverlayAlign = s.seedOverlayAlign;
+    if (typeof s.seedOverlayAntiBit === 'boolean') document.getElementById('seedOverlayAntiBitCheck').checked = s.seedOverlayAntiBit;
+
+    syncStyleInputsFromGrid();
+    document.getElementById('digitsModeBtn').textContent = SYMBOL_MODE_LABELS[GRID.symbolMode] || '╲ Диагонали';
+    document.getElementById('symbol1Input').value = GRID.symbol1;
+    document.getElementById('symbol0Input').value = GRID.symbol0;
+    if (typeof seedOverlayWriteAllRows === 'function') seedOverlayWriteAllRows();
+    render();
+}
+
+document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+    let json = JSON.stringify(collectGridSettings(), null, 2);
+    let blob = new Blob([json], { type: 'application/json' });
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = 'grid-settings.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+});
+
+document.getElementById('loadSettingsBtn').addEventListener('click', () => {
+    document.getElementById('loadSettingsFile').click();
+});
+document.getElementById('loadSettingsFile').addEventListener('change', function(e) {
+    let file = e.target.files[0];
+    if (!file) return;
+    let reader = new FileReader();
+    reader.onload = function(ev) {
+        try {
+            applyGridSettings(JSON.parse(ev.target.result));
+        } catch (err) {
+            alert('Не удалось прочитать файл настроек: ' + err.message);
+        }
+    };
+    reader.readAsText(file);
+    this.value = ''; // сброс, чтобы можно было выбрать тот же файл повторно
+});
+
+// ===========================================================================
+// СИД-НАЛОЖЕНИЕ — тот же алгоритм и логика, что в Zerkalius-genezis.html:
+// если в сетке уже есть строки (живые или редактируемые) — они обнуляются
+// (все символы -> "0", число строк и длина каждой сохраняются), и сид дальше
+// XOR-ится прямо в эту матрицу нулей (через setEditCell — переключает сетку
+// в edit-режим). Если сетка пуста — свои 512 строк, длина строки N = N.
+// Один шаг = одна копия сида, с отскоком от края строки (бесконечный зигзаг).
+// ===========================================================================
+const SEED_OVERLAY_DEFAULT_ROWS = 512;
+
+function seedOverlayGetSeeds() {
+    let raw = document.getElementById('seedOverlayInput').value || '1';
+    let seeds = raw.split(/[\s,]+/).map(s => s.trim()).filter(s => /^[01]+$/.test(s));
+    if (seeds.length === 0) seeds = ['1'];
+    return seeds;
+}
+
+// Длина строки r — позиция последней непустой ячейки + 1 (строки в сетке могут быть
+// разной длины, как строки-паттерны в основном файле).
+function seedOverlayRowLength(r) {
+    let maxC = -1;
+    let bound = Math.max(dataColCount(), 1);
+    for (let c = 0; c < bound; c++) {
+        if (getCell(r, c)) maxC = c;
+    }
+    return maxC + 1;
+}
+
+function seedOverlayHasContent() {
+    let rowCount = dataRowCount();
+    for (let r = 0; r < rowCount; r++) {
+        if (seedOverlayRowLength(r) > 0) return true;
+    }
+    return false;
+}
+
+function seedOverlayBuildRows() {
+    let seeds = seedOverlayGetSeeds();
+    let rows = [];
+
+    if (seedOverlayHasContent()) {
+        if (GRID.mode !== 'edit') enterEditMode();
+        let rowCount = dataRowCount();
+        for (let r = 0; r < rowCount; r++) {
+            let tLen = seedOverlayRowLength(r);
+            if (tLen <= 0) continue;
+            let seed = seeds[rows.length % seeds.length];
+            rows.push({ row: r, tLen: tLen, seed: seed, step: 0, resultBits: new Array(tLen).fill(0) });
+        }
+        GRID.seedOverlayStandalone = false;
+    } else {
+        if (GRID.mode !== 'edit') {
+            GRID.mode = 'edit';
+            document.getElementById('modeBtn').textContent = '✏️ Редакт.';
+        }
+        for (let i = 0; i < SEED_OVERLAY_DEFAULT_ROWS; i++) {
+            let tLen = i + 1;
+            let seed = seeds[i % seeds.length];
+            rows.push({ row: i, tLen: tLen, seed: seed, step: 0, resultBits: new Array(tLen).fill(0) });
+        }
+        GRID.seedOverlayStandalone = true;
+    }
+    GRID.seedOverlayRows = rows;
+    seedOverlayWriteAllRows();
+}
+
+// Только считает bit-XOR этой копии сида в row.resultBits — запись в сетку теперь ОТДЕЛЬНО
+// (seedOverlayWriteAllRows), потому что выравнивание "по правому краю"/"по центру" нужно
+// считать относительно самой ДЛИННОЙ строки среди ВСЕХ строк разом, а не одной этой.
+function seedOverlayApplyStep(row) {
+    let seedLen = row.seed.length;
+    let tLen = row.tLen;
+    let baseOffset = row.step * seedLen;
+    let period = 2 * tLen;
+    for (let j = 0; j < seedLen; j++) {
+        let t = baseOffset + j;
+        let m = t % period;
+        let pos = (m < tLen) ? m : (period - 1 - m);
+        let bit = parseInt(row.seed[j], 10) || 0;
+        row.resultBits[pos] = row.resultBits[pos] ^ bit;
+    }
+    row.step++;
+}
+
+// Если включена галка "Анти-бит справа": каждый бит расширяется в пару [бит, противобит] —
+// длина становится вдвое больше и ВСЕГДА чётная, поэтому центрирование относительно самой
+// длинной строки получается точным (без паразитного сдвига на 1 ячейку от чётности длины).
+function seedOverlayEffectiveBits(row) {
+    let antiBitEl = document.getElementById('seedOverlayAntiBitCheck');
+    if (!antiBitEl || !antiBitEl.checked) return row.resultBits;
+    let out = [];
+    for (let i = 0; i < row.resultBits.length; i++) {
+        let b = row.resultBits[i];
+        out.push(b, b ^ 1);
+    }
+    return out;
+}
+
+// Пишет ВСЕ строки сид-наложения в сетку разом, с учётом выравнивания (лево/право/центр)
+// относительно самой длинной (эффективной, после анти-бита) строки. Промежутки между краем
+// строки и краем самой длинной — настоящие ПУСТЫЕ ячейки (delete), а не нули.
+function seedOverlayWriteAllRows() {
+    if (!GRID.seedOverlayRows || GRID.seedOverlayRows.length === 0) return;
+    let effArrays = GRID.seedOverlayRows.map(r => seedOverlayEffectiveBits(r));
+    let maxEffLen = effArrays.reduce((m, a) => Math.max(m, a.length), 0);
+    let align = GRID.seedOverlayAlign;
+
+    GRID.seedOverlayRows.forEach((row, idx) => {
+        let bits = effArrays[idx];
+        let effLen = bits.length;
+        let startCol = 0;
+        if (align === 'right') startCol = maxEffLen - effLen;
+        else if (align === 'center') startCol = Math.floor((maxEffLen - effLen) / 2);
+
+        for (let c = 0; c < maxEffLen; c++) GRID.cells.delete(row.row + '_' + c);
+        for (let c = 0; c < effLen; c++) setEditCell(row.row, startCol + c, String(bits[c]), null, null);
+    });
+}
+
+function seedOverlayNeedsRebuild() {
+    // Полагаемся только на флаг режима и количество строк, а НЕ на seedOverlayHasContent() —
+    // после первой сборки автономного режима клетки уже заполнены нулями/битами, так что
+    // "есть содержимое" станет true и в этом режиме тоже, и решение "какой режим" стало бы
+    // неоднозначным на каждом следующем шаге.
+    if (!GRID.seedOverlayRows) return true;
+    if (GRID.seedOverlayStandalone) {
+        return GRID.seedOverlayRows.length !== SEED_OVERLAY_DEFAULT_ROWS;
+    }
+    return GRID.seedOverlayRows.length !== dataRowCount();
+}
+
+function seedOverlayStepAll() {
+    if (seedOverlayNeedsRebuild()) seedOverlayBuildRows();
+    GRID.seedOverlayRows.forEach(row => seedOverlayApplyStep(row));
+    seedOverlayWriteAllRows();
+    render();
+}
+
+function seedOverlayUndoAll() {
+    if (!GRID.seedOverlayRows || GRID.seedOverlayRows.length === 0) return;
+    GRID.seedOverlayRows.forEach(row => {
+        let newStep = row.step - 1;
+        if (newStep < 0) return;
+        row.step = 0;
+        row.resultBits = new Array(row.tLen).fill(0);
+        for (let s = 0; s < newStep; s++) seedOverlayApplyStep(row);
+    });
+    seedOverlayWriteAllRows();
+    render();
+}
+
+function seedOverlayResetAll() {
+    seedOverlayBuildRows(); // уже сам вызывает seedOverlayWriteAllRows() внутри
+    render();
+}
+
+function seedOverlayStopAutoplay() {
+    if (GRID.seedOverlayInterval) {
+        clearInterval(GRID.seedOverlayInterval);
+        GRID.seedOverlayInterval = null;
+        let btn = document.getElementById('seedOverlayPlayBtn');
+        if (btn) { btn.style.background = ''; btn.style.color = '#00ccff'; }
+    }
+}
+
+document.getElementById('seedOverlayStepBtn').addEventListener('click', () => seedOverlayStepAll());
+document.getElementById('seedOverlayUndoBtn').addEventListener('click', () => seedOverlayUndoAll());
+document.getElementById('seedOverlayResetBtn').addEventListener('click', () => seedOverlayResetAll());
+document.getElementById('seedOverlayPlayBtn').addEventListener('click', function() {
+    if (GRID.seedOverlayInterval) {
+        seedOverlayStopAutoplay();
+    } else {
+        this.style.background = '#00ccff';
+        this.style.color = '#000';
+        GRID.seedOverlayInterval = setInterval(() => seedOverlayStepAll(), 400);
+    }
+});
+
+function pasteText(text) {
+    if (!text) return;
+    const rows = text.replace(/\r/g, '').split('\n');
+    while (rows.length && rows[rows.length - 1] === '') rows.pop();
+
+    // Строки с табами — явные Excel-столбцы, режем по ним как есть, без центрирования.
+    // Строки без табов — режем посимвольно; если строк несколько, центрируем их друг
+    // относительно друга (как холст центрирует пирамиду). Целочисленное центрирование само
+    // даёт сдвиг в 1 клетку между строками разной чётности длины — ровно та "пустота в 1 ячейку".
+    const perCharRows = rows.map(r => r.includes('\t') ? null : r.split(''));
+    const maxLen = perCharRows.reduce((m, cells) => cells ? Math.max(m, cells.length) : m, 0);
+    const anchor = selBounds(); // вставка — всегда от верхнего левого угла текущего выделения
+
+    rows.forEach((rowStr, rOff) => {
+        const perChar = perCharRows[rOff];
+        const cells = perChar || rowStr.split('\t');
+        const offset = (perChar && rows.length > 1) ? Math.floor((maxLen - cells.length) / 2) : 0;
+        cells.forEach((val, cOff) => {
+            if (val === '') return;
+            setEditCell(anchor.r0 + rOff, anchor.c0 + offset + cOff, val, null, null);
+        });
+    });
+}
+function pasteHtml(html) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const table = doc.querySelector('table');
+    if (!table) { pasteText(doc.body ? doc.body.textContent : ''); return; }
+
+    // Собираем строки как массив ячеек {text, bg, color} — текст ячейки Excel может быть
+    // многосимвольным (если в одну ячейку Excel вписали несколько символов), но у нас всё равно
+    // 1 символ = 1 ячейка сетки, поэтому режем посимвольно и здесь, просто каждый символ
+    // наследует фон/цвет своей исходной Excel-ячейки.
+    const rows = [];
+    table.querySelectorAll('tr').forEach(tr => {
+        const cells = [];
+        tr.querySelectorAll('td,th').forEach(td => {
+            cells.push({ text: td.textContent || '', bg: td.style.backgroundColor || '', color: td.style.color || '' });
+        });
+        rows.push(cells);
+    });
+
+    // Центрируем строки друг относительно друга так же, как в pasteText — длина строки
+    // считается как сумма длин всех её ячеек после посимвольного разбиения.
+    const rowCharLens = rows.map(cellsArr => cellsArr.reduce((s, cell) => s + cell.text.length, 0));
+    const maxLen = rowCharLens.reduce((m, l) => Math.max(m, l), 0);
+    const anchor = selBounds();
+
+    rows.forEach((cellsArr, rOff) => {
+        const offset = rows.length > 1 ? Math.floor((maxLen - rowCharLens[rOff]) / 2) : 0;
+        let col = anchor.c0 + offset;
+        cellsArr.forEach(cell => {
+            for (const ch of cell.text) {
+                setEditCell(anchor.r0 + rOff, col, ch, cell.bg, cell.color);
+                col++;
+            }
+        });
+    });
+}
+document.addEventListener('paste', e => {
+    e.preventDefault();
+    if (GRID.mode !== 'edit') enterEditMode();
+    const html = e.clipboardData.getData('text/html');
+    if (html && /<table/i.test(html)) pasteHtml(html);
+    else pasteText(e.clipboardData.getData('text/plain'));
+    render();
+});
+
+// Красит ВЕСЬ выделенный диапазон (не только одну ячейку) — красит только уже существующие
+// (непустые) ячейки, чтобы не плодить пустые цветные клетки там, где нет данных.
+function applySelectedColor(kind, hex) {
+    if (GRID.mode !== 'edit') enterEditMode();
+    const sel = selBounds();
+    for (let r = sel.r0; r <= sel.r1; r++) {
+        for (let c = sel.c0; c <= sel.c1; c++) {
+            const key = r + '_' + c;
+            const data = GRID.cells.get(key);
+            if (!data) continue; // покраска пустой ячейки без символа не имеет смысла
+            data[kind] = hex;
+            GRID.cells.set(key, data);
+        }
+    }
+    render();
+}
+document.getElementById('bgColorInput').addEventListener('change', e => applySelectedColor('bg', e.target.value));
+document.getElementById('textColorInput').addEventListener('change', e => applySelectedColor('color', e.target.value));
+
+// Delete — очищает содержимое выделенного диапазона. Ctrl+C/X — копируют диапазон в
+// системный буфер как TSV (символ-в-ячейку, строки \n, столбцы \t) — годится и для вставки
+// обратно сюда, и в настоящий Excel. Ctrl+X дополнительно очищает диапазон после копирования.
+function clearSelection() {
+    const sel = selBounds();
+    for (let r = sel.r0; r <= sel.r1; r++) {
+        for (let c = sel.c0; c <= sel.c1; c++) GRID.cells.delete(r + '_' + c);
+    }
+    render();
+}
+function copySelectionToClipboard() {
+    const sel = selBounds();
+    let lines = [];
+    for (let r = sel.r0; r <= sel.r1; r++) {
+        let cols = [];
+        for (let c = sel.c0; c <= sel.c1; c++) {
+            const data = GRID.cells.get(r + '_' + c);
+            cols.push(data ? data.ch : '');
+        }
+        lines.push(cols.join('\t'));
+    }
+    const text = lines.join('\n');
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(() => {});
+}
+document.addEventListener('keydown', e => {
+    const tag = (document.activeElement.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea') return; // не мешаем вводу в цветовые пикеры и т.п.
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (GRID.mode !== 'edit') enterEditMode();
+        clearSelection();
+    } else if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) {
+        copySelectionToClipboard();
+    } else if (e.ctrlKey && (e.key === 'x' || e.key === 'X')) {
+        if (GRID.mode !== 'edit') enterEditMode();
+        copySelectionToClipboard();
+        clearSelection();
+    }
+});
+
+// ===========================================================================
+// ТОЧКИ ИНТЕГРАЦИИ С ОСНОВНЫМ ФАЙЛОМ (Zerkalius-genezis.html) — сюда подключать
+// постепенно, когда версия там снова станет стабильной:
+//
+// 1) GRID.setLiveSource(() => STATE.lines.map(l => l.display || ""))
+//    + GRID.frameLabel = () => `Кадр: ${STATE.globalStep || 0}`
+//    Вызывать render() из главного render() основного файла, как раньше —
+//    но ТОЛЬКО когда сетка открыта, и без DOM-ячеек тормозить уже не должно.
+//
+// 2) GRID.setColors({ c1: safeValue('color1',...), c0: safeValue('color0',...),
+//    bg: safeValue('bgColor',...), line: hexToRgba(safeValue('gridColorInput',...), ...) })
+//    вызывать при смене пресета/цвета — так же, как было в основном файле.
+//
+// 3) Открытие/закрытие поверх холста — обернуть этот canvas + header в свой
+//    контейнер с тем же z-index/position, что #screenContainer, и toggle
+//    класса active — та же схема, что уже была отработана в основном файле.
+// ===========================================================================
+GRID.setLiveSource = function(fn) { GRID.liveSource = fn; };
+GRID.setColors = function(c) { Object.assign(GRID.colors, c); };
+
+// --- ВРЕМЕННЫЕ ТЕСТОВЫЕ ДАННЫЕ (убрать при интеграции — см. пункт 1 выше) ---
+// Пирамида из 1/0, чтобы было на чём проверять зум/пан/выделение/вставку без
+// основного файла.
+(function demoData() {
+    const rows = [];
+    for (let r = 0; r < 60; r++) {
+        let s = '';
+        for (let c = 0; c <= r; c++) s += (c % 2 === 0) ? '1' : '0';
+        rows.push(s);
+    }
+    GRID.setLiveSource(() => rows);
+    GRID.frameLabel = () => 'ДЕМО (авто-пирамида)';
+})();
+
+resizeCanvas();
+</script>
+    <script src="_js/recorder.js"></script>
+    <script src="_js/hub-link.js"></script>
+    <script src="_js/slider-arrows.js"></script>
+</body>
+</html>
