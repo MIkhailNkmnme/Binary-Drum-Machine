@@ -1,133 +1,176 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.003. Точка входа: ссылки на все страницы проекта.
-     Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера. -->
+<!-- Zerkalius Hub (index) — v0.004. Точка входа: ссылки на все страницы проекта.
+     Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
+     v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Control Hub — v0.003</title>
+    <title>Zerkalius Control Hub — v0.004</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
-        
-        body { 
-            background: #050505; 
-            color: #00ff66; 
-            font-family: 'Consolas', 'Roboto Mono', monospace; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
+
+        html, body { height: 100%; }
+        body {
+            background: #050505;
+            color: #00ff66;
+            font-family: 'Consolas', 'Roboto Mono', monospace;
             margin: 0;
             overflow: hidden;
         }
-        
-        h1 { 
-            margin-bottom: 40px; 
-            text-transform: uppercase; 
-            letter-spacing: 6px; 
-            font-size: 28px;
-            text-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
-        }
-        
-        .menu-btn { 
-            display: block; 
-            text-align: center; 
-            text-decoration: none; 
-            border-radius: 5px; 
-            transition: all 0.25s ease;
-            box-sizing: border-box;
+
+        /* Живой фон: обои Zerkalius. Кликам не мешает — события проходят насквозь */
+        #bg {
+            position: fixed; inset: 0; width: 100%; height: 100%;
+            border: 0; z-index: 0; pointer-events: none;
         }
 
-        /* Стиль главного флагманского движка */
+        /* Всё содержимое — поверх фона. Надпись Zerkalius рисуют сами обои, сверху */
+        .hub {
+            position: relative; z-index: 1;
+            height: 100vh; box-sizing: border-box;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+            padding: 0 24px 6vh;
+            gap: 22px;
+        }
+
+        /* Заголовок для программ чтения и поисковиков; на экране надпись дают обои */
+        h1 {
+            position: absolute; width: 1px; height: 1px; overflow: hidden;
+            clip: rect(0 0 0 0); white-space: nowrap; margin: 0;
+        }
+        .ver {
+            font-size: 11px; opacity: .55; letter-spacing: 3px; color: #9fffc8;
+            text-shadow: 0 0 6px #000;
+        }
+
+        .menu-btn {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.25s ease;
+            box-sizing: border-box;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        /* Флагман */
         .menu-btn.main-engine {
-            width: 320px; 
-            padding: 18px; 
-            font-size: 20px; 
+            width: 340px;
+            padding: 18px;
+            font-size: 22px;
             font-weight: bold;
-            border: 2px solid #00ff66; 
-            color: #00ff66; 
+            letter-spacing: 4px;
+            border: 2px solid #00ff66;
+            color: #00ff66;
+            background: rgba(0, 0, 0, 0.55);
             box-shadow: 0 0 15px rgba(0, 255, 102, 0.35);
             animation: pulse-glow 2s infinite alternate;
         }
-        .menu-btn.main-engine:hover { 
-            background: #00ff66; 
-            color: #000; 
+        .menu-btn.main-engine:hover {
+            background: #00ff66;
+            color: #000;
             box-shadow: 0 0 25px #00ff66;
             transform: scale(1.02);
         }
-        
         @keyframes pulse-glow {
             0% { box-shadow: 0 0 12px rgba(0, 255, 102, 0.25); }
             100% { box-shadow: 0 0 26px rgba(0, 255, 102, 0.65); }
         }
 
-        /* Секция черновиков */
-        .drafts-section {
-            margin-top: 45px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            border-top: 1px dashed rgba(0, 255, 102, 0.15);
-            padding-top: 25px;
-            width: 350px;
+        /* Панели разделов: полупрозрачное стекло поверх обоев */
+        .panel {
+            background: rgba(0, 0, 0, 0.55);
+            border: 1px solid rgba(0, 255, 102, 0.18);
+            border-radius: 10px;
+            padding: 14px 16px 16px;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
         }
-        
-        .drafts-title {
+        .panel-title {
             font-size: 11px;
-            color: #444;
+            color: #6fbf91;
             text-transform: uppercase;
             letter-spacing: 4px;
-            margin-bottom: 15px;
+            margin: 0 0 12px;
             font-weight: bold;
+            text-align: center;
             user-select: none;
         }
 
-        .menu-btn.draft-btn {
-            width: 260px; 
-            padding: 10px; 
-            margin: 6px;
-            font-size: 14px; 
-            border: 1px solid #222; 
-            color: #555; 
-            opacity: 0.6;
+        /* Лаборатория — сетка карточек */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 170px);
+            gap: 10px;
         }
-        .menu-btn.draft-btn:hover { 
-            border-color: #00ff66; 
-            color: #00ff66; 
-            opacity: 1.0;
-            background: rgba(0, 255, 102, 0.04);
-            transform: translateY(-1px);
+        /* Знак и записи — одна строка */
+        .row {
+            display: flex; gap: 10px; justify-content: center;
+        }
+
+        .menu-btn.draft-btn {
+            padding: 11px 8px;
+            font-size: 14px;
+            border: 1px solid rgba(0, 255, 102, 0.22);
+            color: #9fdcb8;
+            background: rgba(0, 20, 8, 0.45);
+        }
+        .row .menu-btn.draft-btn { width: 170px; }
+        .menu-btn.draft-btn:hover {
+            border-color: #00ff66;
+            color: #00ff66;
+            background: rgba(0, 255, 102, 0.10);
+            transform: translateY(-2px);
+            box-shadow: 0 0 12px rgba(0, 255, 102, 0.35);
+        }
+
+        /* Узкий экран: лаборатория в 2 столбца */
+        @media (max-width: 960px) {
+            .grid { grid-template-columns: repeat(2, 160px); }
+            .hub { justify-content: center; overflow-y: auto; padding-top: 28vh; }
+            body { overflow: auto; }
         }
     </style>
 </head>
 <body>
-    <h1>Zerkalius Hub</h1>
-    <div style="text-align:center; margin:-14px 0 18px; font-size:11px; opacity:.45; letter-spacing:2px;">v0.003</div>
-    
-    <!-- Флагман -->
-    <a href="Zerkalius-genezis.html" class="menu-btn main-engine">Zerkalius</a>
+    <!-- Живой фон: обои Zerkalius (папка oboi\, заведено 2026-09-21) -->
+    <iframe id="bg" src="oboi/Zerkalius-oboi.html" title="Обои Zerkalius" tabindex="-1" aria-hidden="true"></iframe>
 
-    <!-- Лаборатория (Черновики) -->
-    <div class="drafts-section">
-        <div class="drafts-title">🔬 Лаборатория (Черновики)</div>
-        <a href="fold-layers/Zerkalius-layers.html" class="menu-btn draft-btn">Fold Layers</a>
-        <a href="fold/Zerkalius-fold-1115.html" class="menu-btn draft-btn">Fold · v1.115</a>
-        <a href="Zerkalius-fold.html" class="menu-btn draft-btn">Fold цельный · v0.741</a>
-        <a href="Zerkalius-genezis-webgl.html" class="menu-btn draft-btn">WebGL Engine</a>
-        <a href="Zerkalius-gpu.html" class="menu-btn draft-btn">GPU Core + Synth</a>
-        <a href="Zerkalius-xor-engine.html" class="menu-btn draft-btn">XOR Engine</a>
-        <a href="Zerkalius-code.html" class="menu-btn draft-btn">Genezis Code 0</a>
-        <a href="Zerkalius-grid-module.html" class="menu-btn draft-btn">Grid Module</a>
-        <a href="Zerkalius-kubits.html" class="menu-btn draft-btn">Кубиты</a>
-        <a href="Zerkalius-ascii-art.html" class="menu-btn draft-btn">ASCII-арт</a>
-    </div>
+    <div class="hub">
+        <h1>Zerkalius Hub</h1>
+        <div class="ver">v0.004</div>
 
-    <!-- Знак и записи (папка oktaedr\), заведено 2026-09-20 -->
-    <div class="drafts-section">
-        <div class="drafts-title">◇ Знак и записи</div>
-        <a href="oktaedr/Zerkalius-oktaedr.html" class="menu-btn draft-btn">Октаэдр</a>
-        <a href="Zerkalius-dnevnik.html" class="menu-btn draft-btn">Борт-журнал</a>
+        <!-- Флагман -->
+        <a href="Zerkalius-genezis.html" class="menu-btn main-engine">Zerkalius</a>
+
+        <!-- Лаборатория (Черновики) -->
+        <div class="panel">
+            <div class="panel-title">🔬 Лаборатория (Черновики)</div>
+            <div class="grid">
+                <a href="fold-layers/Zerkalius-layers.html" class="menu-btn draft-btn">Fold Layers</a>
+                <a href="fold/Zerkalius-fold-1115.html" class="menu-btn draft-btn">Fold · v1.115</a>
+                <a href="Zerkalius-fold.html" class="menu-btn draft-btn">Fold цельный · v0.741</a>
+                <a href="Zerkalius-genezis-webgl.html" class="menu-btn draft-btn">WebGL Engine</a>
+                <a href="Zerkalius-gpu.html" class="menu-btn draft-btn">GPU Core + Synth</a>
+                <a href="Zerkalius-xor-engine.html" class="menu-btn draft-btn">XOR Engine</a>
+                <a href="Zerkalius-code.html" class="menu-btn draft-btn">Genezis Code 0</a>
+                <a href="Zerkalius-grid-module.html" class="menu-btn draft-btn">Grid Module</a>
+                <a href="Zerkalius-kubits.html" class="menu-btn draft-btn">Кубиты</a>
+                <a href="Zerkalius-ascii-art.html" class="menu-btn draft-btn">ASCII-арт</a>
+            </div>
+        </div>
+
+        <!-- Знак и записи (папка oktaedr\), заведено 2026-09-20; обои — 2026-09-21 -->
+        <div class="panel">
+            <div class="panel-title">◇ Знак и записи</div>
+            <div class="row">
+                <a href="oktaedr/Zerkalius-oktaedr.html" class="menu-btn draft-btn">Октаэдр</a>
+                <a href="Zerkalius-dnevnik.html" class="menu-btn draft-btn">Борт-журнал</a>
+                <a href="oboi/Zerkalius-oboi.html" class="menu-btn draft-btn">Обои</a>
+            </div>
+        </div>
     </div>
 </body>
 </html>

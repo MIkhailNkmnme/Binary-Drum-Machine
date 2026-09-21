@@ -1,0 +1,34 @@
+<!-- Zerkalius Обои — v0.003. Живой фон хаба (index.html подключает эту страницу в iframe).
+     Код обоев — копия «Zerkalius Серпинский» из _lively (движок js/main.js), значения — в js/nastroyka.js.
+     v0.002: надпись ниже (blockY 13 → 18). v0.003: ещё ниже и мельче (blockY 24, titleSize 105). -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="data:,">
+<title>Zerkalius Обои — v0.003</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden}
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #rain{z-index:1} #hill{z-index:2} #funnel{z-index:2} #halo{z-index:3} #title{z-index:4}
+  #clock{position:absolute;left:0;right:0;z-index:5;text-align:center;font-family:Consolas,monospace;font-weight:bold;letter-spacing:.08em}
+  #scan{position:absolute;inset:0;z-index:6;pointer-events:none;
+        background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0 2px,rgba(0,0,0,.33) 2px 3px),
+                   radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.75) 100%)}
+</style>
+</head>
+<body>
+<canvas id="rain"></canvas>
+<canvas id="hill"></canvas>
+<canvas id="funnel" style="display:none"></canvas>
+<canvas id="halo"></canvas>
+<canvas id="title"></canvas>
+<div id="clock"></div>
+<div id="scan"></div>
+<script src="js/three.min.js"></script>
+<script src="js/props.js"></script>
+<script src="js/fixed.js"></script>
+<script src="js/main.js"></script>
+<script src="js/nastroyka.js"></script>
+</body>
+</html>
