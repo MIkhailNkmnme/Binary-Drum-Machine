@@ -580,7 +580,9 @@ function axisAddMark(marks, idx, kind, len, rows){
    него работает карта по сквозной (см. buildAxisMapThru): там нужны только оси, вышедшие за границу
    одной строки, — всё, что внутри строки, уже показывает построчная карта. Без keep берутся все оси,
    и охват у каждой считается за 1. */
-function axisMarksOf(bits, keep){
+function axisMarksOf(bits, keep, minLen){
+  // v1.534: minLen — свой порог для ленты (см. axisThruMinLen в fold-4-tools.js); без него прежний.
+  const ml = minLen || AXIS_MAP_MIN_LEN;
   const marks = new Map();
   let pal = 0, anti = 0;
   const n = bits.length;
@@ -590,7 +592,7 @@ function axisMarksOf(bits, keep){
     let j = i;
     while (j < n && (bits[j] === "0" || bits[j] === "1")) j++;
     const seg = bits.slice(i, j);
-    if (seg.length >= AXIS_MAP_MIN_LEN) {
+    if (seg.length >= ml) {
       const d1 = manacherOdd(seg);
       const d2 = manacherEven(seg);
       const d2a = manacherEven(axisAntiTransform(seg));
@@ -598,17 +600,17 @@ function axisMarksOf(bits, keep){
         // Границы оси в ЛЕНТЕ (не в куске): нечётная с центром на бите накрывает c±(d1−1),
         // чётная в шве перед c — от c−d2 до c+d2−1. Смещение i возвращает их к номерам ленты.
         const lp1 = 2 * d1[c] - 1;
-        if (lp1 >= AXIS_MAP_MIN_LEN) {
+        if (lp1 >= ml) {
           const nr = keep ? keep(i + c - d1[c] + 1, i + c + d1[c] - 1) : 1;
           if (nr) { pal++; axisAddMark(marks, i + c, "pal", lp1, nr); }
         }
         const lp2 = 2 * d2[c];
-        if (lp2 >= AXIS_MAP_MIN_LEN) {
+        if (lp2 >= ml) {
           const nr = keep ? keep(i + c - d2[c], i + c + d2[c] - 1) : 1;
           if (nr) { pal++; axisAddMark(marks, i + c - 1, "pal", lp2, nr); axisAddMark(marks, i + c, "pal", lp2, nr); }
         }
         const la = 2 * d2a[c];
-        if (la >= AXIS_MAP_MIN_LEN) {
+        if (la >= ml) {
           const nr = keep ? keep(i + c - d2a[c], i + c + d2a[c] - 1) : 1;
           if (nr) { anti++; axisAddMark(marks, i + c - 1, "anti", la, nr); axisAddMark(marks, i + c, "anti", la, nr); }
         }
@@ -3459,6 +3461,7 @@ const st = {
        revToggled   — не подсветка, а память кнопки "⇄ Реверс": она сама себе обратная, и флажок
                       только зажигает её, пока цепочка стоит развёрнутой. */
   revKeepShow: false,
+  memShow: false,      // v1.531: «🔥 Память» — накал бит по числу шагов без смены (memHeatUpdate)
   diffLeftShow: false,
   diffUpShow: false,
   revToggled: false,

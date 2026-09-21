@@ -2016,7 +2016,63 @@ function patCellPadPx(){
   const l = parseFloat(cs.paddingLeft) || 0, r = parseFloat(cs.paddingRight) || 0;
   return l + r;
 }
+/* ═══ ПАМЯТЬ ПО ЦИКЛУ (v1.531, пункт 1 списка «осталось», вторая половина) ═══
+   Для каждого бита — сколько ШАГОВ ПОДРЯД он держит своё значение. Шаг — любое изменение строки,
+   кто бы его ни сделал: зеркала, Круг, Круг Инв, полуоборот, реверс, ручная правка. Поэтому память
+   не привязана ни к одной кнопке: это ОБЩИЙ проход на входе render(), он сравнивает строку с её
+   прошлым видом. Так задумывалось с самого начала — «реверс» в Layers семейство, и вешать память на
+   каждого члена отдельно значило бы завести пять копий одного счёта.
+   Строка не менялась (перерисовка от наведения, прокрутки, смены цвета) — шагом это не считается,
+   счёт стоит. Длина строки поменялась — позиции больше не соответствуют прежним, счёт строки
+   начинается заново. Ключ — индекс строки: вставка/удаление строк сбивают его так же, как и
+   остальные построчные карты, и следствие то же — счёт затронутых строк обнулится при первой же
+   разнице в длине или просто начнётся с их нынешнего вида.
+   Живёт, только пока включена кнопка «🔥 Память» (st.memShow): выключили — карта очищается,
+   включили — отсчёт идёт с этого мгновения. Накал рисуется классами .hm1….hm4 (см. fold.html). */
+const memHeatMap = new Map();
+function memHeatUpdate(){
+  if (!st.memShow) { if (memHeatMap.size) memHeatMap.clear(); return; }
+  const rows = st.rows || [];
+  for (let i = 0; i < rows.length; i++) {
+    const s = rows[i] || "";
+    const m = memHeatMap.get(i);
+    if (!m || m.s.length !== s.length) { memHeatMap.set(i, { s, keep: new Uint16Array(s.length) }); continue; }
+    if (m.s === s) continue;
+    for (let k = 0; k < s.length; k++) m.keep[k] = (s[k] === m.s[k]) ? Math.min(65535, m.keep[k] + 1) : 0;
+    m.s = s;
+  }
+  for (const key of memHeatMap.keys()) if (key >= rows.length) memHeatMap.delete(key);
+}
+// Уровень накала по числу шагов: 0 — только что сменился (без класса), дальше ступени удваиваются.
+function memHeatLevel(n){ return n <= 0 ? 0 : n === 1 ? 1 : n <= 3 ? 2 : n <= 7 ? 3 : 4; }
+
 function render(){
+  /* ═══ СТОРОЖ НУЛЕВОЙ СТРОКИ (v1.529) ═══
+     Баг-репорт: «в 0 строке не должно быть битов» — на скриншоте первая строка Серпинского («1»)
+     стояла в нулевой, в ряду меню 2. Нулевая обязана быть пустой (см. ensureZeroRow), но
+     ensureZeroRow зовут только после загрузок, и любой путь, который положил биты на st.topBuilt,
+     оставлял их там навсегда. Откуда именно они туда попали в этот раз — не установлено, поэтому
+     проверка стоит здесь, на входе каждой отрисовки: нашлись биты — под них вставляется новая
+     пустая нулевая строка, а строка с битами съезжает вниз и становится первой. Построчные
+     пометки ниже точки вставки сдвигаются вместе со строками (ensureZeroRow сам этого не делает). */
+  {
+    const z = st.topBuilt || 0;
+    if (st.rows && st.rows.length > z && st.rows[z] !== "" && typeof ensureZeroRow === "function") {
+      ensureZeroRow();
+      // try — первая отрисовка может прийти, пока не все файлы объявили свои карты (порядок
+      // подключения), и обращение к ещё не объявленной уронило бы весь render().
+      try {
+        for (const m of [insertedFlagsMap, invFlagsMap, newBitsMap, maskChangedMap, axisOffsetMap, axisBitShiftMap, axisBitDirMap, rowRotOffMap, mirrorsRowDone]) {
+          if (!m || !m.size) continue;
+          const moved = [];
+          for (const [k, v] of m) moved.push([k >= z ? k + 1 : k, v]);
+          m.clear();
+          for (const kv of moved) m.set(kv[0], kv[1]);
+        }
+      } catch (e) { /* карты ещё не объявлены — сдвигать нечего */ }
+    }
+  }
+  memHeatUpdate();   // v1.531: память по циклу — после сторожа, по уже выправленным строкам
   renderTabs(); // <-- ЭТО ТА САМАЯ СТРОКА, КОТОРУЮ Я ЗАБЫЛ В ПРОШЛЫЙ РАЗ!
   // Показ диагонали "Конверта" живёт только пока не тронули выделение/выравнивание/длины строк.
   if (envPreview && envPreview.key !== envPreviewKey()) envPreview = null;
@@ -3949,6 +4005,17 @@ function render(){
       // "Реверс: неподвижные" — палиндромная позиция: разворот строки оставит тут то же значение.
       const isRevKeep = st.revKeepShow && (bit === '0' || bit === '1') && s.length > 0 &&
         (revKeepRows === null || (revKeepRows && revKeepRows.has(i))) && s[s.length - 1 - k] === bit;
+      /* Вторая половина «Реверса»: бит на НЕпалиндромной позиции — тот, который разворот строки
+         перевернёт. Считается тем же сравнением, только с обратным знаком, и в том же наборе строк:
+         две половины обязаны делить строку ровно надвое, без щелей и нахлёста. Пустые места и точки
+         прореживания не в счёт — у них нет значения, которое могло бы измениться. */
+      const isRevMove = st.revKeepShow && (bit === '0' || bit === '1') && s.length > 0 &&
+        (revKeepRows === null || (revKeepRows && revKeepRows.has(i))) &&
+        (s[s.length - 1 - k] === '0' || s[s.length - 1 - k] === '1') && s[s.length - 1 - k] !== bit;
+      // Память по циклу (v1.531): сколько шагов подряд бит держится — см. memHeatUpdate().
+      const memRowK = (st.memShow && (bit === '0' || bit === '1')) ? memHeatMap.get(i) : null;
+      const memN = (memRowK && memRowK.keep.length === s.length) ? memRowK.keep[k] : 0;
+      const memLv = memHeatLevel(memN);
       // "Δ слева" — бит не равен соседу слева. Первый бит строки не красится: слева ничего нет.
       const isDiffLeft = st.diffLeftShow && (bit === '0' || bit === '1') && k > 0 &&
         (s[k - 1] === '0' || s[k - 1] === '1') && s[k - 1] !== bit;
@@ -4092,11 +4159,12 @@ function render(){
         emit('<span class="col-sel-bit b' + bit + '"' + colAttr + '>', bit, mrg);
       } else if (isXoredBit && (bit === '0' || bit === '1')) {
         emit('<span class="xored-bit"' + colAttr + '>', bit, mrg);
-      } else if (is01Pair || is1Right || isVert1 || isDiag1 || isDiagFold || isRevKeep || isDiffLeft || isDiffUp) {
+      } else if (is01Pair || is1Right || isVert1 || isDiag1 || isDiagFold || isRevKeep || isRevMove || isDiffLeft || isDiffUp || memLv) {
         // Несколько подсветок могут совпасть на одном символе — вешаем все подходящие классы;
         // порядок объявления в CSS (.hl01 → .hlv1 → .hld1 → .hldf) решает, чей цвет визуально победит.
         const hlCls = 'b' + bit + (is01Pair ? ' hl01' : '') + (is1Right ? ' hl11r' : '') + (isVert1 ? ' hlv1' : '') + (isDiag1 ? ' hld1' : '') +
-          (isRevKeep ? ' hlrk' : '') + (isDiffLeft ? ' hldl' : '') + (isDiffUp ? ' hldu' : '') +
+          (isRevKeep ? ' hlrk' : '') + (isRevMove ? ' hlrm' : '') + (isDiffLeft ? ' hldl' : '') + (isDiffUp ? ' hldu' : '') +
+          (memLv ? ' hm' + memLv : '') +
           (isDiagFold ? (' hldf' + (foldBgStyle ? ' hldf-bg' : '')) : '');
         // Цвет — по порядку сбора (foldOrderColor): у поколоночных режимов красим фон, у
         // диагоналей сам символ.

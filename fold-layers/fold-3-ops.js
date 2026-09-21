@@ -2306,6 +2306,15 @@ function layoutOverlayBoxes(){
      axisRowH остаётся — по нему считается запасная длина оси (--axis-gap-h ниже), она нужна, когда
      черты горизонта на экране нет. */
     const axisRowH = Math.max(pitchPx, 20);
+    /* ═══ РАЗРЫВ В ОДНУ СТРОКУ СНОВА ЕСТЬ (v1.525) ═══
+       Запрос пользователя: «цепочку сдвинь вниз, чтобы ось не перекрывала первый бит».
+       С v1.524 меню 2 стоит НАД чертой, и нулевая строка под ней больше не занята полосой. Ось же
+       с v1.412 захватывает три шага (−1, 0, 1) и доставала до первой строки с битами.
+       Открываем под чертой разрыв ровно в один шаг строки: вся цепочка съезжает на строку вниз.
+       Ось при этом считается от САМОЙ черты, а не от низа разрыва (см. axisLineBottom в
+       fold-5-ui.js), — иначе она уехала бы вниз вместе со строками и снова легла бы на биты. */
+    /* v1.526 — ОТМЕНЕНО: «не, 0 строка только нужна, в ней меню». Разрыва снова нет; меню стоит
+       на нулевой строке по её середине (см. positionAlignGrpTop). */
     document.documentElement.style.setProperty("--align-band-h", "0px");
     document.documentElement.style.setProperty("--axis-gap-h", (axisRowH + 6) + "px");
   }
@@ -2371,7 +2380,17 @@ function layoutOverlayBoxes(){
     if (!rowsEl || !chainEl) return 0;
     return Math.max(0, rowsEl.getBoundingClientRect().top - chainEl.getBoundingClientRect().top);
   })();
-  const minTopForHorizon = Math.max(0, bar1ForTop + 2 - headOffsetForTop);
+  /* ═══ МЕСТО ПОД ВЕРХНЮЮ ПОЛОВИНУ МЕНЮ 2 (v1.527) ═══
+     Баг-репорт: «линия горизонта — под кнопки, и в 0 строке не должно быть битов». С v1.523 меню 2
+     выше строки, и с v1.526 половина излишка уходит НАД нулевую строку. Отступ холста этой
+     половины не оставлял: строки начинались впритык под меню 1, меню 2 упиралось в него и
+     съезжало вниз — на первую строку с битами, а черта оставалась торчать над кнопками.
+     Резервируем ровно эту половину, тогда меню встаёт по середине нулевой строки и черта
+     (верх нулевой строки) уходит за его сплошной фон. */
+  const m2El = document.getElementById("alignGrp");
+  const m2RowH = cssNum("--row-h", 12);
+  const m2Over = m2El ? Math.max(0, (m2El.offsetHeight - m2RowH) / 2) : 0;
+  const minTopForHorizon = Math.max(0, bar1ForTop + 3 + m2Over - headOffsetForTop);
   document.documentElement.style.setProperty('--result-box-h',
     Math.round(Math.max(minTopForHorizon, anyOverlayBars ? stackBottom : 8)) + 'px');   // v1.276: без лишних 2px
 }
@@ -2449,8 +2468,19 @@ function positionAlignGrpTop(){
       /* Ровно НА черте, без прежних +3 (v1.403): черта стоит на верхней кромке нулевой строки, а
          полоса теперь эту строку и занимает. Три пикселя были зазором под разрыв, которого больше
          нет, — с ними полоса съезжала бы вниз на треть строки. */
+      /* v1.523: полоса стала постоянной высоты (--m2-h) и бывает выше нулевой строки. Тогда её
+         НИЗ ставим на низ нулевой строки, а излишек уходит вверх, на линейку, — вниз нельзя, там
+         биты первой строки. Полоса ниже строки (крупный кегль) садится, как прежде, на черту. */
+      /* v1.524, баг-репорт «линия горизонта прямо по ним»: подъём на излишек оставлял черту
+         посреди кнопок. Теперь полоса целиком НАД чертой — черта идёт ровно по её нижней кромке,
+         нулевая строка под ней остаётся пустой (битов там не бывает). */
+      /* v1.526, уточнение пользователя: «0 строка только нужна, в ней меню, пусть меню вылезает на
+         пол 1 и пол −1 строки и на передний план от линии горизонта». Меню центруется по нулевой
+         строке: излишек его высоты над строкой делится поровну вверх и вниз. Перед чертой оно
+         стоит за счёт непрозрачного фона (см. #alignGrp в fold.html, v1.526). */
+      const rowHpx = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--row-h")) || 0;
       const want = (hLineTop !== null)
-        ? hLineTop
+        ? hLineTop + (rowHpx - (el.offsetHeight || 0)) / 2
         : (rowsRect.top - hostRect.top - (el.offsetHeight || 0) - 2);
       // Выше стопки баров не пускаем: там она перекрыла бы «Результат»/«Черновик».
       if (want > stackTop) shownTop = want;
@@ -4926,6 +4956,76 @@ function step(pairOnly, forceXor = false, isScan = false, isHorizXor = false, is
   saveCache();
 }
 
+/* ═══ ДЕТЕКТОР ЦИКЛА В ПРОГОНЕ (v1.532, пункт 2 списка «осталось») ═══
+   Прогон шагов (▶ Авто в режимах шага, XOR выдел, Интерливинг, сквозные) шёл до находки или до
+   «двигаться некуда» и не знал, что давно ходит по кругу: детерминированная машина, вернувшаяся в
+   уже бывшее состояние, дальше повторит ровно тот же путь, и крутить её бесполезно. Теперь прогон
+   это замечает, останавливается и отчитывается ПАРОЙ ЧИСЕЛ: μ — длина входа (сколько шагов до
+   первого состояния, которое потом повторится), λ — длина петли.
+   СОСТОЯНИЕ — не только строки. Шаг зависит ещё от указателей пары (aIdx/bIdx), направления,
+   хвостового буфера, флагов «использована» и всей кухни Гориз.XOR. Совпадение одних строк при
+   разных указателях — не цикл. Поэтому в ключ идут все поля, которые читает doStep, КРОМЕ
+   счётчиков (st.step, находки): они растут всегда и цикл не дали бы найти никогда. Лишнее поле
+   в ключе грозит только пропуском цикла, недостающее — ложной тревогой; поэтому берём с запасом.
+   ДВА ЯРУСА:
+     точный — первые CYC_EXACT_CAP состояний кладутся в таблицу «отпечаток → номер шага». Первое
+       же повторение даёт μ и λ точно, в самый ранний возможный момент (шаг μ+λ);
+     Брент — дальше таблица не растёт (иначе память ушла бы на долгом прогоне), и работает
+       алгоритм Брента: одна запомненная «черепаха», которая переставляется на позицию «зайца»
+       каждый раз, когда пройденный отрезок достигает степени двойки. Памяти — одно состояние,
+       λ он даёт точно. Вход μ Брент без повторного прогона с начала не знает, поэтому
+       сообщается границей сверху: черепаха уже в петле, значит вход не длиннее её номера.
+   Отпечаток — два 32-битных FNV с разными затравками (64 бита): случайное совпадение у
+   разных состояний на двадцати тысячах шагов практически исключено. Брент сравнивает полные
+   строки состояния и не ошибается вовсе. */
+const CYC_EXACT_CAP = 20000;
+function cycleStateKey(){
+  const f = [st.aIdx, st.bIdx, st.goingUp, st.tailBuffer, st.lastOp, st.pull, st.stageXor,
+    st.horizChainLen, st.horizFoundInPass, st.horizXoredLength, st.horizRotations, st.horizCurrentDir,
+    st.horizBigOrig, st.horizBigChain, st.horizChainRow, st.horizNeedRebuild, st.horizBigRow,
+    st.lastHorizRow, st.lastHorizDir, st.horizBigTargetIdx];
+  let u = "";
+  if (st.used) for (const b of st.used) u += b ? "1" : "0";
+  return (st.rows || []).join("\n") + "" + u + "" + JSON.stringify(f);
+}
+function cycleHash(s){
+  let a = 0x811c9dc5, b = 0x01000193 ^ 0x5bd1e995;
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    a = Math.imul(a ^ c, 0x01000193);
+    b = Math.imul(b ^ c, 0x5bd1e995) ^ (b >>> 13);
+  }
+  return (a >>> 0).toString(36) + ":" + (b >>> 0).toString(36);
+}
+function makeCycleDetector(){
+  const x0 = cycleStateKey();
+  const seen = new Map([[cycleHash(x0), 0]]);
+  return { i: 0, seen, tort: x0, tortStep: 0, power: 1, lam: 1 };
+}
+// Скормить состояние ПОСЛЕ очередного шага. null — цикла пока нет; иначе { mu, lam, exact }.
+function cycleFeed(d){
+  d.i++;
+  const x = cycleStateKey();
+  if (d.seen) {
+    const h = cycleHash(x);
+    const was = d.seen.get(h);
+    if (was !== undefined) return { mu: was, lam: d.i - was, exact: true };
+    if (d.seen.size < CYC_EXACT_CAP) d.seen.set(h, d.i);
+    else d.seen = null;   // таблица полна — дальше только Брент, память отпускаем
+  }
+  if (x === d.tort) return { mu: d.tortStep, lam: d.lam, exact: false };
+  if (d.power === d.lam) { d.tort = x; d.tortStep = d.i; d.power *= 2; d.lam = 0; }
+  d.lam++;
+  return null;
+}
+function cycleReport(c, what){
+  return `🔁 ${what}: прогон зациклился и остановлен — ` +
+    (c.exact ? `вход μ = ${c.mu} шаг., петля λ = ${c.lam} шаг.`
+             : `петля λ = ${c.lam} шаг. (алгоритм Брента), вход μ не длиннее ${c.mu} шаг.`) +
+    ` Дальше машина повторяла бы уже пройденный путь.` +
+    (c.lam === 1 ? " Петля в один шаг — это неподвижная точка: шаг больше ничего не меняет." : "");
+}
+
 function autoRun(){
   readToggles();
   st.running = true;
@@ -5169,6 +5269,8 @@ function autoRun(){
     return;
   }
 
+  // v1.532: детектор цикла — один на прогон, начальное состояние снимается ДО первого шага.
+  const cyc = makeCycleDetector();
   if (st.xorSelectedMode) {
     const tick = () => {
       if (!st.running) return finishAuto();
@@ -5180,6 +5282,7 @@ function autoRun(){
           return finishAuto(`Режим XOR выдел завершен (выполнено ${stepsCount} сдвигов).`);
         }
         stepsCount++;
+        { const c = cycleFeed(cyc); if (c) return finishAuto(cycleReport(c, "XOR выдел")); }
       }
 
       render();
@@ -5200,6 +5303,7 @@ function autoRun(){
           return finishAuto(`Режим Интерливинг завершен (выполнено ${stepsCount} шагов).`);
         }
         stepsCount++;
+        { const c = cycleFeed(cyc); if (c) return finishAuto(cycleReport(c, "Интерливинг")); }
       }
 
       render();
@@ -5218,6 +5322,7 @@ function autoRun(){
       if (!doInterleaveSeqStep()) {
         return finishAuto(`Режим Интерлив сквозной завершен.`);
       }
+      { const c = cycleFeed(cyc); if (c) return finishAuto(cycleReport(c, "Интерлив сквозной")); }
       autoFrame(tick);
     };
     autoFrame(tick);
@@ -5231,6 +5336,7 @@ function autoRun(){
       if (!doXorSeqStep()) {
         return finishAuto(`Режим XOR сквозной завершен.`);
       }
+      { const c = cycleFeed(cyc); if (c) return finishAuto(cycleReport(c, "XOR сквозной")); }
       autoFrame(tick);
     };
     autoFrame(tick);
@@ -5257,6 +5363,7 @@ function autoRun(){
       }
 
       stepsCount++;
+      { const c = cycleFeed(cyc); if (c) return finishAuto(cycleReport(c, "Прогон")); }
     }
 
     render();
@@ -5890,6 +5997,107 @@ if (bGenSierpinskiEl) {
     applyGeneratedRows(generateSierpinski90(n), "Серпинский");
   };
 }
+/* "🔺+1 Ещё строка" (v1.521, запрос пользователя: «кнопку, которая достроит под последней строкой
+   T ещё одну, заполненную, T+1 бит — Серпинского»). В отличие от «🔺 Серпинского», фигуру с нуля
+   не строит: берёт ПОСЛЕДНЮЮ непустую строку цепочки и дописывает под ней следующую.
+   ПРАВИЛО — шаг треугольника Паскаля по модулю 2 (Rule 90): новый бит №j = бит №j−1 XOR бит №j
+   строки над ним, а за краями строки стоят нули. Отсюда длина T+1, и крайние биты равны крайним
+   битам сверху. На строке самого треугольника (края — единицы) это ровно то, что даёт
+   generateSierpinski90: его «1 в начале и в конце» — частный случай тех же нулей за краем. Поэтому
+   правило общее и работает от ЛЮБОЙ строки, а не только от Серпинского.
+   Не 0/1 (точки, пустые места) считаются нулями — у них нет значения, которое можно XOR-ить.
+   Новая строка метится «новыми битами», как всё, что приходит построением.
+   ОТ ВЫДЕЛЕННОЙ, СО СДВИГОМ (v1.522, запрос пользователя: «пусть строит под выделенной, сдвигая
+   нижние, если есть»). Источник — выделенная строка (выделено несколько — самая нижняя из них);
+   ничего не выделено — последняя непустая, как было. Новая строка ВСТАВЛЯЕТСЯ под источником,
+   всё ниже съезжает на одну, ничего не затирается. После вставки выделение переходит на новую
+   строку: следующий клик строит уже от неё, и треугольник растёт вниз подряд.
+   Сдвиг привязок к номерам строк — тот же, что при удалении строки (см. удаление выше), только
+   в обратную сторону: карты построчных флагов и разделители ниже точки вставки получают +1.
+   Колонку паттернов вставка не двигает — по тому же правилу, что и удаление: паттерны живут
+   своей жизнью; при нехватке ячеек в конец дописывается пустая. */
+/* ОБЩАЯ ВСТАВКА «СЛЕДУЮЩЕЙ» СТРОКИ ПОД ВЫДЕЛЕННОЙ (v1.522). Вынесена из «🔺+1», когда тем же
+   жестом попросили и номера («также и номера — пусть следующий номер строит под выделенной»).
+   Кнопки различаются только правилом make(src) → новая строка (или строка-ошибка для say в поле
+   err); выбор источника, вставка со сдвигом, перенос привязок и выделение — одни на двоих. */
+function insertNextBelow(tag, logName, make){
+    let last;
+    const sel = (st.selectedRows && st.selectedRows.size)
+      ? Array.from(st.selectedRows).filter(r => r >= 0 && r < st.rows.length) : [];
+    if (sel.length) {
+      last = Math.max(...sel);
+      if (!(st.rows[last] && st.rows[last].length)) { say(`${tag}: выделенная строка пуста — не из чего достраивать.`); return; }
+    } else {
+      last = st.rows.length - 1;
+      while (last >= 0 && !(st.rows[last] && st.rows[last].length)) last--;
+      if (last < 0) { say(`${tag}: цепочка пуста — не из чего достраивать.`); return; }
+    }
+    const src = st.rows[last];
+    const made = make(src);
+    if (made.err) { say(`${tag}: ${made.err}`); return; }
+    const out = made.out;
+    snapshot();
+    const idx = last + 1;
+    // Вставка со сдвигом: всё, что было на idx и ниже, уезжает на строку вниз.
+    st.rows.splice(idx, 0, out);
+    st.used.splice(idx, 0, false);
+    while (st.pats.length < st.rows.length)
+      st.pats.push({ text: "", ord: st.pats.length, found: false, kind: null, step: null });
+    for (const m of [insertedFlagsMap, invFlagsMap, newBitsMap, maskChangedMap, axisOffsetMap, axisBitShiftMap, axisBitDirMap, rowRotOffMap, mirrorsRowDone]) {
+      if (!m || !m.size) continue;
+      const moved = [];
+      for (const [k, v] of m) moved.push([k >= idx ? k + 1 : k, v]);
+      m.clear();
+      for (const kv of moved) m.set(kv[0], kv[1]);
+    }
+    if (st.rowDividers && st.rowDividers.size) {
+      const shifted = new Set();
+      for (const d of st.rowDividers) shifted.add(d >= idx ? d + 1 : d);
+      st.rowDividers = shifted;
+    }
+    // Вставили в область построений сверху (выше нулевой строки) — построений стало на одно больше,
+    // иначе нумерация настоящих строк съехала бы (см. rowLabel = i − topBuilt).
+    if (idx <= (st.topBuilt || 0) && last < (st.topBuilt || 0)) st.topBuilt++;
+    if (typeof st.aIdx === "number" && st.aIdx >= idx) st.aIdx++;
+    if (typeof st.bIdx === "number" && st.bIdx >= idx) st.bIdx++;
+    st.hit = null;
+    // Выделение — на новую строку: следующий клик продолжит от неё.
+    st.selectedRows = new Set([idx]);
+    newBitsWhole(idx, out.length);
+    const rowCountEl = document.getElementById("rowCount");
+    if (rowCountEl && +rowCountEl.max < st.rows.length) {
+      const follow = +rowCountEl.value >= +rowCountEl.max;
+      rowCountEl.max = st.rows.length;
+      if (follow) {
+        rowCountEl.value = st.rows.length;
+        const rcVal = document.getElementById("rowCountVal");
+        if (rcVal) rcVal.textContent = st.rows.length;
+      }
+    }
+    render(); saveCache();
+    // Сами биты показываем, только пока короткие: строка Серпинского бывает в тысячи знаков.
+    const show = s => s.length <= 24 ? s : `${s.length} бит`;
+    say(`${tag}: под строкой ${rowLabel(last)} (${show(src)}) вставлена ${show(out)}` +
+        (idx < st.rows.length - 1 ? ", строки ниже сдвинуты на одну." : ".") + " Выделена она: следующий клик продолжит от неё.");
+    logStep(logName, rowLabel(idx), "", `${src.length} → ${out.length} бит`);
+}
+const bSierpNextEl = document.getElementById("bSierpNext");
+if (bSierpNextEl) bSierpNextEl.onclick = () => insertNextBelow("🔺+1", "Серпинский +1", src => {
+  const b = k => (k >= 0 && k < src.length && src[k] === "1") ? 1 : 0;
+  let out = "";
+  for (let j = 0; j <= src.length; j++) out += (b(j - 1) ^ b(j));
+  return { out };
+});
+/* "🔢+1 След. номер" (v1.522): строка читается как двоичное число, под ней встаёт число на
+   единицу больше. BigInt — строки бывают длиннее 53 бит, обычное число там уже врёт.
+   Ведущие нули источника сохраняются (ширина не уменьшается): «0011» → «0100». Ширина растёт
+   сама, когда число переполняет её: «111» → «1000». Строка не из одних 0/1 — не число, отказ. */
+const bNumNextEl = document.getElementById("bNumNext");
+if (bNumNextEl) bNumNextEl.onclick = () => insertNextBelow("🔢+1", "Номер +1", src => {
+  if (!/^[01]+$/.test(src)) return { err: "в строке не только 0 и 1 — это не двоичное число." };
+  return { out: (BigInt("0b" + src) + 1n).toString(2).padStart(src.length, "0") };
+});
+
 const bGenNumbersEl = document.getElementById("bGenNumbers");
 const numbersNEl = document.getElementById("numbersN");
 if (bGenNumbersEl) {

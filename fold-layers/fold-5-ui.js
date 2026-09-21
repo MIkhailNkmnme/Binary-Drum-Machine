@@ -511,7 +511,9 @@ function fitLhToScreen(){
   // только по самому значку: двойной клик по ползунку менять интервал не должен.
   const lhWrap = lh.closest("label");
   if (lhWrap) lhWrap.addEventListener("dblclick", (e) => {
-    if (!e.target.closest(".view-slider-icon")) return;
+    // v1.518: значок «↕» убран по просьбе пользователя (отдал место треку), жест переехал на
+    // число под ползунком — оно стоит там же, в той же колонке.
+    if (!e.target.closest(".view-slider-val")) return;
     e.preventDefault();
     fitLhToScreen();
   });
@@ -3538,11 +3540,35 @@ function updateTopHorizon(){
      по нижнему краю: две встречные стороны по одной прямой площади не дают, и окно остаётся
      пустым. Оси на экране нет — вырез снимаем, линия сплошная, как была. */
   const axisX = (typeof lastAxisLeftPx === "number" && isFinite(lastAxisLeftPx)) ? lastAxisLeftPx : null;
-  if (axisX !== null) {
-    const x1 = Math.max(0, axisX - HORIZON_AXIS_GAP).toFixed(1);
-    const x2 = Math.max(0, axisX + HORIZON_AXIS_GAP).toFixed(1);
-    el.style.clipPath = "polygon(0 0, " + x1 + "px 0, " + x1 + "px 100%, " + x2 + "px 100%, " +
-                        x2 + "px 0, 100% 0, 100% 100%, 0 100%)";
+  /* ═══ ЧЕРТА УХОДИТ ПОД МЕНЮ 2 (v1.530) ═══
+     Запрос пользователя, дважды: «линию горизонта — под кнопки». Сплошной фон полосы (v1.526) не
+     помог: полоса и черта живут в разных слоях раскладки, и черта всё равно рисуется поверх.
+     Спорить со слоями не стал — вырезаем из черты кусок ровно под полосой, тем же clip-path, что
+     и окно под ось (v1.226). Вырезов теперь может быть два, и если они перекрываются (ось стоит
+     внутри полосы), сливаются в один. Вырез режет и попадание мыши — за черту под кнопками не
+     схватиться, но там и так кнопки. */
+  const gaps = [];
+  if (axisX !== null) gaps.push([Math.max(0, axisX - HORIZON_AXIS_GAP), Math.max(0, axisX + HORIZON_AXIS_GAP)]);
+  const m2ForLine = document.getElementById("alignGrp");
+  if (m2ForLine && m2ForLine.offsetWidth) {
+    const mr = m2ForLine.getBoundingClientRect(), lr = el.getBoundingClientRect();
+    // Только если полоса и вправду лежит на черте по высоте, иначе резать нечего.
+    const lineY = lr.top + lr.height / 2;
+    if (mr.top <= lineY && mr.bottom >= lineY) gaps.push([Math.max(0, mr.left - lr.left), Math.max(0, mr.right - lr.left)]);
+  }
+  gaps.sort((a, b) => a[0] - b[0]);
+  const merged = [];
+  for (const g of gaps) {
+    const last = merged[merged.length - 1];
+    if (last && g[0] <= last[1]) last[1] = Math.max(last[1], g[1]); else merged.push(g.slice());
+  }
+  if (merged.length) {
+    let poly = "0 0";
+    for (const [a, b] of merged) {
+      const x1 = a.toFixed(1), x2 = b.toFixed(1);
+      poly += ", " + x1 + "px 0, " + x1 + "px 100%, " + x2 + "px 100%, " + x2 + "px 0";
+    }
+    el.style.clipPath = "polygon(" + poly + ", 100% 0, 100% 100%, 0 100%)";
   } else {
     el.style.clipPath = "";
   }
@@ -4207,7 +4233,14 @@ function updateAxisSplitPosition(maxLen){
      значит перетаскивание оси и счёт столбцов прежние. */
   {
     const charPxAxis = realBitCharPx() || chPx;
-    if (charPxAxis > 0) leftPx += charPxAxis / 2;
+    /* ═══ МЕЖСИМВОЛЬНЫЙ НЕ В СЧЁТ (v1.530) ═══
+       Баг-репорт: «ось не совсем по середине». Шаг знака, который меряет realBitCharPx, — это
+       ширина знака ПЛЮС межсимвольный интервал (ползунок ↔), а браузер кладёт интервал целиком
+       СПРАВА от знака. Половина шага поэтому уводила ось от середины цифры на половину интервала:
+       при ↔ = −1,5 — на 0,75 px влево, при положительном — вправо. Середина самой цифры —
+       половина шага БЕЗ интервала. */
+    const lsAxis = parseFloat(getComputedStyle(chainEl).letterSpacing) || 0;
+    if (charPxAxis > 0) leftPx += (charPxAxis - lsAxis) / 2;
   }
   /* ПОЛОСА ЗАЖИМА ОБЯЗАНА ВКЛЮЧАТЬ РЕАЛЬНО ИЗМЕРЕННЫЙ БИТ (v0.931, баг-репорт пользователя:
      "уходит ручка-ось от самих строк", на других цепочках нормально). bitsRect — габариты
@@ -4284,7 +4317,9 @@ function updateAxisSplitPosition(maxLen){
   })();
   let axisLineBottom = rowsTop;
   if (hLineForAxis && hLineForAxis.classList.contains("act")) {
-    axisLineBottom = (parseFloat(hLineForAxis.style.top) || 0) + bandForAxis;
+    // v1.525: без + bandForAxis. Разрыв (одна строка) теперь открыт ради того, чтобы цепочка
+    // ушла ИЗ-ПОД оси; прибавь его — ось съедет вслед за строками и снова ляжет на первый бит.
+    axisLineBottom = (parseFloat(hLineForAxis.style.top) || 0);
   }
   /* ДЛИНА — ПАРА СТРОК, НЕ БОЛЬШЕ (v1.211, запрос «уменьши длину оси цепочек, чтобы она не
      перекрывала наложения поле, у битов её оставь не высоко»). В v1.210 линия тянулась от верха
@@ -4398,7 +4433,20 @@ function updateAxisSplitPosition(maxLen){
   const axisTopPx = Math.round(Math.max(axisMinTop, 0, axisLineBottom - axisLinePitch));
   const axisLineHFull = Math.max(1, axisLinePitch * 3 - AXIS_ROW_GAP_PX);
   axisSplitEl.style.top = axisTopPx + "px";
-  axisSplitEl.style.height = Math.round(axisLineHFull) + "px";
+  /* ═══ НИЗ ОСИ — ПО СЕРЕДИНЕ ПЕРВОЙ СТРОКИ, ПОД ЕЁ БИТАМИ (v1.528) ═══
+     Запрос пользователя: «сделай ось по середине первого бита первой строки, но под битами».
+     Было три полных шага (−1, 0, 1) без двух пикселей — ось проходила через всю первую строку и
+     перечёркивала её бит. Теперь низ — середина первой строки: верх прежний (шаг над чертой), и
+     высота два с половиной шага. «Под битами» — слоем: биты первой строки подняты над осью в CSS
+     (см. .row-zero + .ln .bits в fold.html), поэтому бит рисуется поверх линии, а не она по нему.
+     Коробкам у оси (лесенки, пикеры, замок) отдаём прежнюю величину axisLineHFull — они центруются
+     по ней, и смещать их вслед за линией не просили. */
+  /* v1.529, «продли ось до всей длины строк, до самой нижней, также под битами»: низ — нижняя
+     кромка #rows. Распорки виртуализации держат полную высоту списка, поэтому это низ ПОСЛЕДНЕЙ
+     строки, даже если она сейчас не нарисована. Короче прежних двух с половиной шагов не бывает. */
+  const rowsForAxis = document.getElementById("rows");
+  const rowsBottomForAxis = rowsForAxis ? rowsForAxis.getBoundingClientRect().bottom - chainRect.top : 0;
+  axisSplitEl.style.height = Math.round(Math.max(axisLinePitch * 2.5, rowsBottomForAxis - axisTopPx)) + "px";
   axisSplitEl.classList.add("act");
   /* Счётчики лесенок стоят по обе стороны этой самой линии (v1.281) — той же координатой leftPx и
      тем же отрезком, что и она. Зовём здесь, а не отдельным проходом: любое место, где ось уже
@@ -5698,6 +5746,7 @@ function captureUiSettings(){
     highlight01: !!st.highlight01,
     highlight1Right: !!st.highlight1Right,
     revKeepShow: !!st.revKeepShow,
+    memShow: !!st.memShow,
     diffLeftShow: !!st.diffLeftShow,
     diffUpShow: !!st.diffUpShow,
     highlightVert1: !!st.highlightVert1,
@@ -5964,6 +6013,12 @@ function applyUiSettings(u){
     st.revKeepShow = !!u.revKeepShow;
     const b = document.getElementById("bReverseKeep");
     if (b) b.classList.toggle("mode-act", st.revKeepShow);
+  }
+  // v1.531 — память по циклу; сам счёт не хранится, после загрузки отсчёт начинается заново.
+  if (u.memShow !== undefined) {
+    st.memShow = !!u.memShow;
+    const b = document.getElementById("bMemHeat");
+    if (b) b.classList.toggle("mode-act", st.memShow);
   }
   if (u.diffLeftShow !== undefined) {
     st.diffLeftShow = !!u.diffLeftShow;

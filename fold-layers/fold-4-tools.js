@@ -1450,6 +1450,199 @@ if (bCellRotateEl) bCellRotateEl.onclick = () => cellSelApply("Поворот я
   return n;
 });
 
+/* ═══ «⇅ ЗЕРКАЛО ПО ГОРИЗОНТУ» (v1.533, пункт 3 списка «осталось» в борт-журнале) ═══
+   Третья инволюция. Разворот (⇄) отражает строку по горизонтали, инверсия (🔁) — значения; не
+   хватало отражения ПО ВЕРТИКАЛИ, через черту горизонта: строка r ↔ строка 2h−1−r, где h — номер
+   строки горизонта (черта лежит между h−1 и h). Ингредиенты были — поворот на 90° и зеркала сверху,
+   — но композиция «повернуть, развернуть, повернуть обратно» теряет форму на неровных строках, а
+   прямая перестановка строк точна и ничего не теряет.
+   Все три — инволюции (дважды = ничего) и попарно коммутируют, значит вместе дают группу из восьми
+   элементов (Z₂³): зазеркалье становится двумерным.
+   ЧТО С КРАЯМИ. Отражаются только пары, у которых есть обе строки: над чертой h строк, под ней
+   n−h; меньшая из сторон задаёт, сколько пар. Лишние строки большей стороны остаются на месте.
+   Горизонт не поднят (h = 0) — черты как границы нет, и отражается ВЫДЕЛЕННЫЙ блок: от верхней
+   выделенной строки до нижней, r ↔ lo+hi−r. Не выделено ничего — сказать, что нужно одно из двух.
+   Построчные карты (перевёрнутые биты, вставки, новые, изменённые, осевые сдвиги) едут вместе со
+   своими строками: они описывают содержимое строки, а не её место. Колонку паттернов не трогаем —
+   это правка цепочки, как и у остальных кнопок «Строк». */
+function vMirrorRows(){
+  const n = st.rows.length;
+  const h = (typeof horizonRow === "function") ? horizonRow() : 0;
+  let pairs = [];
+  let how;
+  if (h > 0) {
+    const k = Math.min(h, n - h);
+    for (let t = 0; t < k; t++) pairs.push([h - 1 - t, h + t]);
+    how = `через горизонт (строка ${rowLabel(h)})`;
+  } else {
+    const sel = (st.selectedRows && st.selectedRows.size) ? Array.from(st.selectedRows) : [];
+    if (sel.length < 2) { say("⇅ Зеркало: поднимите горизонт или выделите хотя бы две строки — отражать не через что."); return; }
+    const lo = Math.min(...sel), hi = Math.max(...sel);
+    for (let a = lo, b = hi; a < b; a++, b--) pairs.push([a, b]);
+    how = `выделенного блока ${rowLabel(lo)}…${rowLabel(hi)}`;
+  }
+  // Нулевая строка обязана оставаться пустой и на своём месте (сторож в render() иначе вставил бы
+  // новую и сдвинул всё): пара, в которую она попала, не отражается.
+  const z = st.topBuilt || 0;
+  pairs = pairs.filter(([a, b]) => a !== z && b !== z);
+  if (!pairs.length) { say("⇅ Зеркало: по одну сторону черты нет ни одной строки — отражать нечего."); return; }
+  snapshot();
+  const maps = [insertedFlagsMap, invFlagsMap, newBitsMap, maskChangedMap, axisOffsetMap, axisBitShiftMap, axisBitDirMap, rowRotOffMap];
+  for (const [a, b] of pairs) {
+    const t = st.rows[a]; st.rows[a] = st.rows[b]; st.rows[b] = t;
+    const u = st.used[a]; st.used[a] = st.used[b]; st.used[b] = u;
+    for (const m of maps) {
+      if (!m) continue;
+      const ha = m.has(a), hb = m.has(b), va = m.get(a), vb = m.get(b);
+      m.delete(a); m.delete(b);
+      if (hb) m.set(a, vb);
+      if (ha) m.set(b, va);
+    }
+  }
+  st.hit = null;
+  render(); saveCache();
+  say(`⇅ Зеркало ${how}: переставлено пар строк — ${pairs.length}. Повторный клик вернёт как было.`);
+  logStep("Зеркало ⇅", `${pairs.length} пар`, "", how);
+}
+const bVMirrorEl = document.getElementById("bVMirror");
+if (bVMirrorEl) bVMirrorEl.onclick = vMirrorRows;
+
+/* ═══ «🧮 GF(2)» — НЕПОДВИЖНЫЕ ТОЧКИ АЛГЕБРОЙ, А НЕ ПЕРЕБОРОМ (v1.535, пункт 5 списка «осталось») ═══
+   Почти все операции над строкой в Layers — АФФИННЫЕ над полем из двух элементов: каждый новый бит
+   есть XOR каких-то старых плюс, может быть, константа. Круг — перестановка; Круг Инв — перестановка
+   плюс единица на шве; разворот — перестановка; инверсия — константа из единиц; «x ⊕ сосед» и
+   Правило 90 — настоящие линейные смеси. Значит шаг — это F(x) = A·x ⊕ b, где A — матрица n×n из
+   нулей и единиц, и t шагов подряд — тоже аффинное отображение Fᵗ(x) = Aᵗ·x ⊕ bₜ.
+   ОТСЮДА ГЛАВНОЕ. Вопрос «какие строки вернутся к себе ровно через t шагов» — это уравнение
+   Fᵗ(x) = x, то есть (Aᵗ ⊕ E)·x = bₜ, и решается оно методом Гаусса за n³/32 операций, а не
+   перебором 2ⁿ строк. Ранг r говорит всё сразу: решений либо нет, либо ровно 2^(n−r).
+   AND так не сводится — он нелинеен (x·y не выражается XOR-ами), и там перебор остаётся честным
+   способом; ровно там живёт непредсказуемость. Поэтому в списке операций AND нет.
+   ЧТО ПОКАЗЫВАЕТ КНОПКА для выделенной строки (или первой непустой): сколько строк её длины
+   неподвижны под Fᵗ, одно из решений — ближайшее к самой строке в том смысле, что свободные
+   переменные взяты из её собственных бит, — и собственный период строки под F (прямым прогоном,
+   с потолком). «⤓ Вписать» кладёт это решение в строку (с отменой).
+   Матрица хранится строками-битсетами (Uint32Array): умножение — XOR слов, степень — двоичным
+   возведением. Длина строки ограничена 512 битами: у плотных операций (сосед, Правило 90) каждое
+   умножение матриц стоит n²·n/32, и на большом t их до шестидесяти — дальше страница задумается. */
+const GF2_OPS = {
+  rotL:   { lab: "Круг ◄",       fill(n, A, b){ for (let i = 0; i < n; i++) gf2Set(A[i], (i + 1) % n); } },
+  rotR:   { lab: "Круг ►",       fill(n, A, b){ for (let i = 0; i < n; i++) gf2Set(A[i], (i - 1 + n) % n); } },
+  rotLI:  { lab: "Круг Инв ◄",   fill(n, A, b){ for (let i = 0; i < n; i++) gf2Set(A[i], (i + 1) % n); gf2Set(b, n - 1); } },
+  rotRI:  { lab: "Круг Инв ►",   fill(n, A, b){ for (let i = 0; i < n; i++) gf2Set(A[i], (i - 1 + n) % n); gf2Set(b, 0); } },
+  rev:    { lab: "Разворот ⇄",   fill(n, A, b){ for (let i = 0; i < n; i++) gf2Set(A[i], n - 1 - i); } },
+  revInv: { lab: "Инв-разворот", fill(n, A, b){ for (let i = 0; i < n; i++) { gf2Set(A[i], n - 1 - i); gf2Set(b, i); } } },
+  xorNb:  { lab: "x ⊕ сосед справа (по кругу)", fill(n, A, b){ for (let i = 0; i < n; i++) { gf2Set(A[i], i); gf2Flip(A[i], (i + 1) % n); } } },
+  rule90: { lab: "Правило 90 (левый ⊕ правый, по кругу)", fill(n, A, b){ for (let i = 0; i < n; i++) { gf2Flip(A[i], (i - 1 + n) % n); gf2Flip(A[i], (i + 1) % n); } } },
+};
+function gf2Words(n){ return (n + 31) >>> 5; }
+function gf2Set(v, j){ v[j >>> 5] |= (1 << (j & 31)); }
+function gf2Flip(v, j){ v[j >>> 5] ^= (1 << (j & 31)); }
+function gf2Get(v, j){ return (v[j >>> 5] >>> (j & 31)) & 1; }
+function gf2Zero(n){ const W = gf2Words(n); const A = []; for (let i = 0; i < n; i++) A.push(new Uint32Array(W)); return A; }
+// Композиция аффинных: (A1,b1) после (A2,b2) = (A1·A2, A1·b2 ⊕ b1).
+function gf2MulVec(A, v, n){ const W = gf2Words(n); const out = new Uint32Array(W);
+  for (let i = 0; i < n; i++) { let acc = 0; const r = A[i]; for (let w = 0; w < W; w++) acc ^= r[w] & v[w];
+    acc ^= acc >>> 16; acc ^= acc >>> 8; acc ^= acc >>> 4; acc ^= acc >>> 2; acc ^= acc >>> 1;
+    if (acc & 1) gf2Set(out, i); }
+  return out; }
+function gf2MulMat(A, B, n){ const W = gf2Words(n); const C = gf2Zero(n);
+  for (let i = 0; i < n; i++) { const ci = C[i], ai = A[i];
+    for (let j = 0; j < n; j++) if (gf2Get(ai, j)) { const bj = B[j]; for (let w = 0; w < W; w++) ci[w] ^= bj[w]; } }
+  return C; }
+function gf2Compose(F1, F2, n){ const b = gf2MulVec(F1.A, F2.b, n); for (let w = 0; w < b.length; w++) b[w] ^= F1.b[w]; return { A: gf2MulMat(F1.A, F2.A, n), b }; }
+function gf2Power(F, t, n){
+  let R = { A: gf2Zero(n), b: new Uint32Array(gf2Words(n)) };
+  for (let i = 0; i < n; i++) gf2Set(R.A[i], i);
+  let P = F;
+  while (t > 0) { if (t & 1) R = gf2Compose(P, R, n); t = Math.floor(t / 2); if (t) P = gf2Compose(P, P, n); }
+  return R;
+}
+/* Решить M·x = y. Свободные переменные берутся из hint (биты самой строки) — так решение выходит
+   «ближайшим» к ней по построению. Возвращает { rank, x } или { rank, x: null }, если несовместно. */
+function gf2Solve(M, y, n, hint){
+  const W = gf2Words(n);
+  const rows = M.map(r => r.slice());
+  const rhs = []; for (let i = 0; i < n; i++) rhs.push(gf2Get(y, i));
+  const pivCol = [];
+  let r = 0;
+  for (let c = 0; c < n && r < n; c++) {
+    let p = -1; for (let i = r; i < n; i++) if (gf2Get(rows[i], c)) { p = i; break; }
+    if (p < 0) continue;
+    [rows[r], rows[p]] = [rows[p], rows[r]]; [rhs[r], rhs[p]] = [rhs[p], rhs[r]];
+    for (let i = 0; i < n; i++) if (i !== r && gf2Get(rows[i], c)) { for (let w = 0; w < W; w++) rows[i][w] ^= rows[r][w]; rhs[i] ^= rhs[r]; }
+    pivCol.push(c); r++;
+  }
+  for (let i = r; i < n; i++) if (rhs[i]) return { rank: r, x: null };
+  const isPiv = new Uint8Array(n); for (const c of pivCol) isPiv[c] = 1;
+  const x = new Uint8Array(n);
+  for (let c = 0; c < n; c++) if (!isPiv[c]) x[c] = hint[c];
+  for (let k = r - 1; k >= 0; k--) {
+    const c = pivCol[k]; let v = rhs[k];
+    for (let j = 0; j < n; j++) if (j !== c && x[j] && gf2Get(rows[k], j)) v ^= 1;
+    x[c] = v;
+  }
+  return { rank: r, x };
+}
+function gf2Target(){
+  const sel = (st.selectedRows && st.selectedRows.size) ? Array.from(st.selectedRows).sort((a, b) => a - b) : [];
+  const cand = sel.length ? sel : st.rows.map((_, i) => i);
+  for (const r of cand) { const s = st.rows[r] || ""; if (/^[01]+$/.test(s)) return r; }
+  return -1;
+}
+let gf2Last = null;   // последнее решение — для «⤓ Вписать»
+function gf2Analyze(){
+  const opEl = document.getElementById("gf2Op"), tEl = document.getElementById("gf2T");
+  const key = opEl ? opEl.value : "rotLI";
+  const op = GF2_OPS[key] || GF2_OPS.rotLI;
+  const t = Math.max(1, Math.min(1e9, Math.floor(+(tEl ? tEl.value : 1) || 1)));
+  const r = gf2Target();
+  if (r < 0) { say("🧮 GF(2): нужна строка из одних 0 и 1 — выделите её (без точек и пустот)."); return; }
+  const s = st.rows[r], n = s.length;
+  if (n > 512) { say(`🧮 GF(2): строка ${n} бит — длиннее 512, степень матрицы тут заметно задумается. Возьмите строку короче.`); return; }
+  const F = { A: gf2Zero(n), b: new Uint32Array(gf2Words(n)) };
+  op.fill(n, F.A, F.b);
+  const Ft = gf2Power(F, t, n);
+  const M = Ft.A.map(row => row.slice());
+  for (let i = 0; i < n; i++) gf2Flip(M[i], i);          // Aᵗ ⊕ E
+  const hint = new Uint8Array(n); for (let i = 0; i < n; i++) hint[i] = s[i] === "1" ? 1 : 0;
+  const sol = gf2Solve(M, Ft.b, n, hint);
+  // Собственный период строки под F — прямым прогоном по ней одной, с потолком.
+  const apply = (x) => { const v = new Uint32Array(gf2Words(n)); for (let i = 0; i < n; i++) if (x[i] === "1") gf2Set(v, i);
+    const y = gf2MulVec(F.A, v, n); for (let w = 0; w < y.length; w++) y[w] ^= F.b[w];
+    let o = ""; for (let i = 0; i < n; i++) o += gf2Get(y, i) ? "1" : "0"; return o; };
+  const CAP = 20000;
+  let cur = s, per = 0;
+  for (let i = 1; i <= CAP; i++) { cur = apply(cur); if (cur === s) { per = i; break; } }
+  const free = n - sol.rank;
+  const cnt = sol.x ? (free <= 40 ? String(2 ** free) : `2^${free}`) : "0";
+  const selfFixed = per > 0 && t % per === 0;
+  let sTxt = "";
+  if (sol.x) { sTxt = Array.from(sol.x).join(""); }
+  gf2Last = sol.x ? { r, bits: sTxt, s } : null;
+  const diff = sol.x ? Array.from(sol.x).reduce((a, v, i) => a + (v !== hint[i] ? 1 : 0), 0) : 0;
+  say(`🧮 GF(2), ${op.lab}, t = ${t}, строка ${rowLabel(r)} (${n} бит):\n` +
+      `уравнение (Aᵗ ⊕ E)·x = bₜ — ранг ${sol.rank}, свободных ${free}; строк, неподвижных через t шагов: ${cnt}.\n` +
+      (per ? `Своя строка возвращается к себе через ${per} шаг. — ` + (selfFixed ? "она сама из числа решений." : `через t = ${t} — нет.`)
+           : `Своя строка за ${CAP} шагов к себе не вернулась.`) +
+      (sol.x ? (diff ? `\nБлижайшее решение отличается от строки в ${diff} бит — «⤓ Вписать» положит его в строку.` : "\nБлижайшее решение — сама строка.")
+             : "\nРешений нет: система несовместна — никакая строка этой длины не вернётся к себе ровно через t шагов."));
+  logStep("GF(2)", rowLabel(r), "", `${op.lab}, t=${t}: ранг ${sol.rank}, решений ${cnt}${per ? `, период строки ${per}` : ""}`);
+}
+const bGf2El = document.getElementById("bGf2");
+if (bGf2El) bGf2El.onclick = gf2Analyze;
+const bGf2WriteEl = document.getElementById("bGf2Write");
+if (bGf2WriteEl) bGf2WriteEl.onclick = () => {
+  if (!gf2Last) { say("🧮 ⤓ Вписать: сначала посчитайте «🧮 GF(2)» — решения пока нет."); return; }
+  if ((st.rows[gf2Last.r] || "") !== gf2Last.s) { say("🧮 ⤓ Вписать: строка изменилась после расчёта — посчитайте заново."); gf2Last = null; return; }
+  snapshot();
+  st.rows[gf2Last.r] = gf2Last.bits;
+  invFlagsMap.delete(gf2Last.r); insertedFlagsMap.delete(gf2Last.r);
+  render(); saveCache();
+  say(`🧮 ⤓ Решение вписано в строку ${rowLabel(gf2Last.r)}. Отмена — обычным «назад».`);
+  gf2Last = null;
+};
+
 /* "◺ Поворот 90°" — блок строк кладётся на СЕТКУ ПО ТЕКУЩЕМУ ВЫРАВНИВАНИЮ (rowShiftFor знает про
    все режимы, включая лесенки и оси) и поворачивается по часовой: каждый столбец сетки становится
    строкой, прочитанной СНИЗУ ВВЕРХ. Вертикальная ось симметрии (у треугольника — его высота)
@@ -3598,6 +3791,13 @@ if (bReverseSelectedEl) {
    строки не изменятся: те, что стоят на палиндромных позициях (бит №k равен биту №«длина−1−k»).
    Сам признак считается прямо в render() по строке — заранее готовить нечего, тут только
    переключатель (см. isRevKeep/.hlrk). */
+/* ВТОРАЯ ПОЛОВИНА (v1.516, запрос пользователя: «одни — неменяющиеся — их красным например,
+   а изменяющиеся чёрным»). Кнопка делит строку НАДВОЕ по тому, что с битом сделает разворот:
+     НЕПОДВИЖНЫЕ — палиндромные позиции, разворот их не тронет. Горят своим цветом (.hlrk);
+     МЕНЯЮЩИЕСЯ  — все прочие. Значений всего два, поэтому несовпадение с зеркальной позицией
+                   означает ровно переворот. Гаснут в фон (.hlrm).
+   Почему вторая половина ГАСНЕТ, а не красится ещё одним цветом — см. .hlrm в fold.html.
+   Оба признака считаются прямо в render() по строке: isRevKeep/isRevMove. */
 const bReverseKeepEl = document.getElementById("bReverseKeep");
 if (bReverseKeepEl) {
   bReverseKeepEl.onclick = () => {
@@ -3605,8 +3805,63 @@ if (bReverseKeepEl) {
     bReverseKeepEl.classList.toggle("mode-act", st.revKeepShow);
     render(); saveCache();
     say(st.revKeepShow
-      ? "⇄🔎 Реверс: подсвечены биты, которые разворот строки НЕ изменит (палиндромные позиции)."
-      : "⇄🔎 Реверс: подсветка неподвижных бит снята.");
+      ? "⇄🔎 Реверс: ГОРЯТ биты, которые разворот не изменит (палиндромные позиции), остальные ГАСНУТ в фон — их он перевернёт. На виду остаётся скелет симметрии строки."
+      : "⇄🔎 Реверс: подсветка снята, обе половины.");
+  };
+}
+
+/* "🔁 Инв меняющихся" (v1.519, запрос пользователя: «на этой же строке кнопку, которая будет
+   инвертить изменяемые»). ПРАВКА ДАННЫХ, в отличие от соседки: переворачивает (0↔1) ровно ту
+   половину, которую «⇄🔎 Реверс» гасит, — биты, не равные своему зеркальному №«длина−1−k».
+   Неподвижные, пустые места и точки не трогает. Набор строк тот же, что у подсветки: выделенные,
+   а если ничего не выделено — все, — чтобы кнопка правила ровно то, что показано.
+   ЧТО ВЫХОДИТ. Меняющиеся биты ходят ПАРАМИ: k и зеркальный к нему различаются, значит перевернуть
+   оба — то же, что поменять их местами. А неподвижные при развороте и так стоят на месте. Поэтому
+   на строке из одних 0/1 результат РАВЕН развороту строки. Это не ошибка, а само определение:
+   «меняющиеся» и есть то, что разворот меняет. Разница с «⇄ Реверсом» в другом — здесь биты
+   остаются на своих позициях, поэтому позиционные пометки (инверсии, вставки) сохраняются.
+   Пары после правки по-прежнему различаются, значит кнопка сама себе обратная. */
+/* "🔥 Память" (v1.531) — выключатель памяти по циклу, сам счёт в memHeatUpdate (fold-2-render.js).
+   Включение начинает отсчёт с нынешнего вида строк, выключение забывает всё. */
+const bMemHeatEl = document.getElementById("bMemHeat");
+if (bMemHeatEl) {
+  bMemHeatEl.onclick = () => {
+    st.memShow = !st.memShow;
+    if (typeof memHeatMap !== "undefined") memHeatMap.clear();
+    bMemHeatEl.classList.toggle("mode-act", st.memShow);
+    render(); saveCache();
+    say(st.memShow
+      ? "🔥 Память: отсчёт пошёл с этого мгновения. Каждое изменение строки — шаг; бит, который держит значение, разгорается: 1 шаг, 2–3, 4–7, 8 и больше. Сменился — гаснет до обычного."
+      : "🔥 Память: выключена, счёт забыт.");
+  };
+}
+
+const bRevMoveFlipEl = document.getElementById("bRevMoveFlip");
+if (bRevMoveFlipEl) {
+  bRevMoveFlipEl.onclick = () => {
+    const idxs = (st.selectedRows && st.selectedRows.size)
+      ? Array.from(st.selectedRows).sort((a, b) => a - b)
+      : st.rows.map((_, i) => i);
+    const is01 = c => c === "0" || c === "1";
+    let rowsHit = 0, bitsHit = 0;
+    const next = new Map();
+    for (const r of idxs) {
+      const s = st.rows[r];
+      if (!s || !s.length) continue;
+      const a = s.split("");
+      let n = 0;
+      for (let k = 0; k < s.length; k++) {
+        const m = s[s.length - 1 - k];
+        if (is01(s[k]) && is01(m) && m !== s[k]) { a[k] = s[k] === "0" ? "1" : "0"; n++; }
+      }
+      if (n) { next.set(r, a.join("")); rowsHit++; bitsHit += n; }
+    }
+    if (!rowsHit) { say("🔁 Инв меняющихся: меняющихся бит нет — строки палиндромные, разворот их не трогает."); return; }
+    snapshot();
+    for (const [r, s] of next) st.rows[r] = s;
+    render(); saveCache();
+    say(`🔁 Инв меняющихся: перевёрнуто бит — ${bitsHit}, строк — ${rowsHit}. Неподвижные на месте. Повторный клик вернёт как было.`);
+    logStep("Инв меняющихся", Array.from(next.keys()).map(r => rowLabel(r)).join(","), "", "");
   };
 }
 
@@ -8111,13 +8366,25 @@ if (bClearAllRowsEl) bClearAllRowsEl.onclick = clearSelectedOrAll;
    считается префикс «сколько раз сменилась строка к этому месту», и охват = разность на концах
    плюс единица. Без этого длинная ось стоила бы прохода по себе, и всё вместе снова стало бы
    квадратом — ровно тем, ради ухода от которого и взят Манакер. */
-function buildAxisMapThru(){
+/* ═══ ОСТАЛЬНЫЕ ОБХОДЫ И СВОЙ ПОРОГ ДЛЯ ЛЕНТЫ (v1.534, пункт 6 списка «осталось») ═══
+   ОБХОДЫ. Из двенадцати сквозных режимов для осей РАЗНЫХ всего четыре: → , ←, змейка ←, змейка →.
+   «…Инв» только переворачивает биты — палиндром остаётся палиндромом, антипалиндром антипалиндромом;
+   «…Рев+Инв» вдобавок разворачивает ленту целиком — ось остаётся той же осью, только читается с
+   другого конца. Значит Инв-варианты дали бы ровно ту же карту, и в выбор их не выносим.
+   ПОРОГ. В строке 6 бит — разумный минимум, но лента длиннее в сотни раз, и случайных осей в ней
+   больше: в случайной последовательности из N бит самый длинный палиндром растёт как 2·log₂N (у
+   тысячи бит — около двадцати). С прежним порогом карта ленты тонула в шуме, которого на
+   строке не бывает. Порог ленты — max(6, ⌈2·log₂N⌉): ниже него ось неотличима от случайности. */
+const AXIS_THRU_MODES = ["concatR", "concatL", "concatSnake", "concatSnakeFromR"];
+function axisThruMinLen(n){ return Math.max(AXIS_MAP_MIN_LEN, Math.ceil(2 * Math.log2(Math.max(2, n)))); }
+function buildAxisMapThru(mode){
   axisMap.clear();
+  mode = AXIS_THRU_MODES.includes(mode) ? mode : "concatR";
   const rows = st.rows || [];
-  const empty = { pal: 0, anti: 0, total: 0, rows: 0, rowList: "", maxLen: 0, tape: 0 };
+  const empty = { pal: 0, anti: 0, total: 0, rows: 0, rowList: "", maxLen: 0, tape: 0, minLen: AXIS_MAP_MIN_LEN, mode };
   const stop = rows.length - 1;
   if (stop < 0) { axisMapBaseRows = null; axisMapKind = null; return empty; }
-  const cells = (typeof bgConcatCellMap === "function") ? bgConcatCellMap("concatR", stop) : null;
+  const cells = (typeof bgConcatCellMap === "function") ? bgConcatCellMap(mode, stop) : null;
   if (!cells || !cells.length) { axisMapBaseRows = null; axisMapKind = null; return empty; }
   const cache = new Map();
   const bitsOf = (r) => { let v = cache.get(r); if (v === undefined) { v = getRowBits(st, r); cache.set(r, v); } return v; };
@@ -8143,7 +8410,8 @@ function buildAxisMapThru(){
     const d = bnd[hi] - bnd[lo];
     return d > 0 ? d + 1 : 0;
   };
-  const res = axisMarksOf(tape, keep);
+  const minLen = axisThruMinLen(n);
+  const res = axisMarksOf(tape, keep, minLen);
   let maxLen = 0;
   const rowsHit = new Set();
   for (const [idx, info] of res.marks) {
@@ -8161,20 +8429,22 @@ function buildAxisMapThru(){
   axisMapBaseRows = rows.slice();
   axisMapKind = "thru";
   const list = Array.from(rowsHit).sort((a, b) => a - b).map(r => r + 1).join(", ");
-  return { pal: res.pal, anti: res.anti, total: res.pal + res.anti, rows: rowsHit.size, rowList: list, maxLen, tape: n };
+  return { pal: res.pal, anti: res.anti, total: res.pal + res.anti, rows: rowsHit.size, rowList: list, maxLen, tape: n, minLen, mode };
 }
 const bAxisMapThruEl = document.getElementById("bAxisMapThru");
 if (bAxisMapThruEl) {
   bAxisMapThruEl.onclick = () => {
     // Своя карта гасится, ЧУЖАЯ (построчная) — пересчитывается по сквозной, см. axisMapKind.
     if (axisMap.size && axisMapKind === "thru") { clearAxisMap(); say("🪞 Оси сквозной сняты."); render(); return; }
-    const res = buildAxisMapThru();
+    const selM = document.getElementById("axisThruMode");
+    const res = buildAxisMapThru(selM ? selM.value : "concatR");
+    const modeTxt = (typeof BG_SEARCH_MODE_LABELS === "object" && BG_SEARCH_MODE_LABELS[res.mode]) || res.mode;
     if (!res.total) {
-      say(`🪞 Оси сквозной: осей длиной от ${AXIS_MAP_MIN_LEN} бит, выходящих за границу строки, не нашлось` +
-          (res.tape ? ` (лента ${res.tape} бит).` : " — сквозную собрать не из чего."));
+      say(`🪞 Оси сквозной (${modeTxt}): осей длиной от ${res.minLen} бит, выходящих за границу строки, не нашлось` +
+          (res.tape ? ` (лента ${res.tape} бит; порог ленты ${res.minLen} — короче оси в ленте такой длины бывают и случайно).` : " — сквозную собрать не из чего."));
       render(); return;
     }
-    say(`🪞 Оси сквозной (обход ⟶ сверху вниз, лента ${res.tape} бит): палиндромных ${res.pal}, антипалиндромных ${res.anti}, самая длинная ${res.maxLen} бит. ` +
+    say(`🪞 Оси сквозной (${modeTxt}, лента ${res.tape} бит, порог ${res.minLen}): палиндромных ${res.pal}, антипалиндромных ${res.anti}, самая длинная ${res.maxLen} бит. ` +
         (axisMap.size ? `Отмечены в ${res.rows} стр. толстой чертой — все они идут ЧЕРЕЗ стык строк; наведение показывает длину и охват.`
                       : "Но все они пришлись на зеркала или подставленные нули — на самих строках показывать нечего.") +
         " Ещё нажатие — снять.");
@@ -8183,6 +8453,75 @@ if (bAxisMapThruEl) {
   };
 }
 
+
+/* ═══ "🧬 ЯДРО ДЕЦИМАЦИИ" (v1.534, пункт 4 списка «осталось» в борт-журнале) ═══
+   k-ядро последовательности a — множество всех её прореживаний a(kᵉ·n + r), 0 ≤ r < kᵉ. Теорема
+   Кобэма–Эйленберга: ядро КОНЕЧНО тогда и только тогда, когда последовательность порождается
+   конечным автоматом, читающим номер n в k-ичной записи (k-автоматная). Туэ–Морс, бумажное
+   складывание, Серпинский по строкам — такие; случайная лента — нет.
+   НА КОНЕЧНОЙ ЛЕНТЕ бесконечных подпоследовательностей нет, поэтому сравниваем их ОКНОМ — первыми
+   L битами (L = 16, а для короткой ленты меньше). Уровень e берётся, пока каждая из kᵉ
+   подпоследовательностей ещё дотягивает до L бит. Растущий по уровням счёт «сколько разных
+   видели всего» и есть ответ: перестал расти — ядро замкнулось на этом числе.
+   ЧЕТВЁРКА (V₄, запрошено в формулировке пункта). Каждое окно сводится к наименьшему из четырёх:
+   само, развёрнутое, инвертированное, инв-развёрнутое. Инверсия у автоматных последовательностей
+   встречается прямо в ядре (у Туэ–Морса ядро — {t, инв t}), и склеить их в один класс честно.
+   Разворот окна строже — у бесконечной подпоследовательности его нет, — поэтому это счёт по
+   ОРБИТАМ, а не по элементам: число выходит меньше или равно настоящему, а вот признак «замкнулось
+   / растёт» от склейки не меняется: конечное множество остаётся конечным, растущее — растущим.
+   ЧТО ЭТО НЕ ДОКАЗЫВАЕТ. Окно конечно, уровней мало; «замкнулось» на ленте в сотню бит — повод
+   присмотреться, а не теорема. Поэтому рядом с каждым k — вся лесенка чисел, а не одно слово.
+   Данные не трогает вовсе: ни snapshot(), ни saveCache(). */
+function decimationKernel(tape, k, L){
+  const N = tape.length;
+  const inv = s => { let o = ""; for (let i = 0; i < s.length; i++) o += s[i] === "1" ? "0" : "1"; return o; };
+  const rev = s => s.split("").reverse().join("");
+  const canon = p => { const r = rev(p), i = inv(p), ri = inv(r); let m = p; for (const q of [r, i, ri]) if (q < m) m = q; return m; };
+  const seen = new Set();
+  const sizes = [];
+  for (let m = 1; m <= 4096 && Math.floor(N / m) >= L; m *= k) {
+    for (let r = 0; r < m; r++) {
+      if (r + (L - 1) * m >= N) continue;   // этой подпоследовательности на окно не хватает бит
+      let p = "";
+      for (let j = 0; j < L; j++) p += tape[r + j * m];
+      seen.add(canon(p));
+    }
+    sizes.push(seen.size);
+  }
+  return sizes;
+}
+const bDecimKernelEl = document.getElementById("bDecimKernel");
+if (bDecimKernelEl) {
+  bDecimKernelEl.onclick = () => {
+    const idxs = (st.selectedRows && st.selectedRows.size)
+      ? Array.from(st.selectedRows).sort((a, b) => a - b)
+      : st.rows.map((_, i) => i);
+    let tape = "";
+    for (const r of idxs) {
+      const s = getRowBits(st, r) || "";
+      for (let i = 0; i < s.length; i++) if (s[i] === "0" || s[i] === "1") tape += s[i];
+    }
+    const N = tape.length;
+    if (N < 48) { say(`🧬 Ядро децимации: в ленте ${N} бит — слишком мало, чтобы прореживать хотя бы на два уровня. Нужно от 48.`); return; }
+    const L = Math.max(6, Math.min(16, Math.floor(N / 8)));
+    const lines = [];
+    const closed = [];
+    for (let k = 2; k <= 8; k++) {
+      const sz = decimationKernel(tape, k, L);
+      let verdict;
+      if (sz.length < 3) verdict = "мало уровней — не судить";
+      else if (sz[sz.length - 1] === sz[sz.length - 2]) { verdict = `✓ замкнулось на ${sz[sz.length - 1]}`; closed.push(k); }
+      else verdict = "растёт";
+      lines.push(`k=${k}:  ${sz.join(" → ")}   ${verdict}`);
+    }
+    const head = `🧬 Ядро децимации — лента ${N} бит (${(st.selectedRows && st.selectedRows.size) ? "выделенные строки" : "все строки"}, сквозная →), окно ${L} бит, счёт по четвёркам V₄:`;
+    const tail = closed.length
+      ? `Похоже на автоматную при k = ${closed.join(", ")}: новые виды прореживаний кончились.`
+      : "Ни при одном k ядро не замкнулось — конечного автомата за лентой не видно.";
+    say(head + "\n" + lines.join("\n") + "\n" + tail);
+    logStep("Ядро децимации", `${N} бит`, "", closed.length ? `замкнулось при k=${closed.join(",")}` : "не замкнулось");
+  };
+}
 
 /* ═══ "🪞 КАРТА ОСЕЙ" — КНОПКА (v1.514) ══════════════════════════════════
    Считает и показывает; данные не трогает вовсе, поэтому ни snapshot(), ни saveCache() тут нет —
