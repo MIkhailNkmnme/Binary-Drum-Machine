@@ -1629,6 +1629,82 @@ function gf2Analyze(){
              : "\nРешений нет: система несовместна — никакая строка этой длины не вернётся к себе ровно через t шагов."));
   logStep("GF(2)", rowLabel(r), "", `${op.lab}, t=${t}: ранг ${sol.rank}, решений ${cnt}${per ? `, период строки ${per}` : ""}`);
 }
+/* ═══ «🧮 ЛИН. СЛОЖНОСТЬ» — КРАТЧАЙШЕЕ ЛИНЕЙНОЕ ПРАВИЛО (v1.541) ═══
+   Выросло из разговора про «суперархиватор»: «если бы мы могли быстро вычислять правило, которое
+   непременно приводит к определённой строке, — это и был бы суперархиватор». Для ВСЕХ правил
+   такого поиска нет и быть не может (колмогоровская сложность невычислима). Но внутри одного
+   семейства — есть, и для нашего, линейного над GF(2), он точный и быстрый: алгоритм
+   Берлекэмпа — Мэсси находит кратчайшее правило вида s[n] = s[n−a] ⊕ s[n−b] ⊕ …, которое выдаёт
+   ленту ЦЕЛИКОМ, за n² шагов и с гарантией, что короче не бывает.
+   Длина правила L и есть линейная сложность ленты. Хранить ленту можно как «зерно из L первых бит
+   + отводы правила» — 2·L бит вместо N. Порождённая таким правилом лента даёт L крошечное; у
+   случайной L держится около N/2 — это честное «линейного правила нет», а не неудача поиска.
+   Продолжение ленты по найденному правилу показывается в черновике: это и есть «выйти на строку
+   n + миллион» — но только для ленты, которая этим правилом и порождена.
+   Лента ограничена LINCOMP_MAX битами: алгоритм квадратичный. Данные не трогает. */
+const LINCOMP_MAX = 8192;
+function berlekampMassey(s){
+  const N = s.length;
+  let C = new Uint8Array(N + 1), B = new Uint8Array(N + 1);
+  C[0] = 1; B[0] = 1;
+  let L = 0, m = 1;
+  for (let n = 0; n < N; n++) {
+    let d = s[n];
+    for (let i = 1; i <= L; i++) d ^= C[i] & s[n - i];
+    if (!d) { m++; continue; }
+    if (2 * L <= n) {
+      const T = C.slice();
+      for (let i = 0; i + m <= N; i++) if (B[i]) C[i + m] ^= 1;
+      L = n + 1 - L; B = T; m = 1;
+    } else {
+      for (let i = 0; i + m <= N; i++) if (B[i]) C[i + m] ^= 1;
+      m++;
+    }
+  }
+  const taps = [];
+  for (let i = 1; i <= L; i++) if (C[i]) taps.push(i);
+  return { L, taps };
+}
+const bLinCompEl = document.getElementById("bLinComp");
+if (bLinCompEl) bLinCompEl.onclick = () => {
+  const useSel = st.selectedRows && st.selectedRows.size;
+  const idxs = useSel ? Array.from(st.selectedRows).sort((a, b) => a - b) : st.rows.map((_, i) => i);
+  let tape = "";
+  for (const r of idxs) {
+    const s = st.rows[r] || "";
+    for (let i = 0; i < s.length; i++) if (s[i] === "0" || s[i] === "1") tape += s[i];
+  }
+  const full = tape.length;
+  if (full < 2) { say("🧮 Лин. сложность: в ленте меньше двух бит — считать нечего."); return; }
+  if (tape.length > LINCOMP_MAX) tape = tape.slice(0, LINCOMP_MAX);
+  const N = tape.length;
+  const bits = new Uint8Array(N);
+  for (let i = 0; i < N; i++) bits[i] = tape[i] === "1" ? 1 : 0;
+  const { L, taps } = berlekampMassey(bits);
+  const seed = tape.slice(0, L);
+  // Продолжение по правилу — и заодно проверка: правило обязано воспроизвести ленту целиком.
+  const gen = Array.from(bits.slice(0, L));
+  for (let n = L; n < N + 64; n++) { let v = 0; for (const t of taps) v ^= gen[n - t]; gen.push(v); }
+  let ok = true;
+  for (let i = 0; i < N; i++) if (gen[i] !== bits[i]) { ok = false; break; }
+  const next = gen.slice(N, N + 64).join("");
+  const ruleTxt = L === 0 ? "лента из одних нулей — правило пустое"
+    : "бит = XOR битов, стоящих на " + (taps.length > 24 ? taps.slice(0, 24).join(", ") + ` … (всего отводов ${taps.length})` : taps.join(", ")) + " позиций раньше";
+  const ratio = N ? (2 * L) / N : 1;
+  const verdict = L === 0 ? "лента пустая по смыслу"
+    : ratio <= 0.25 ? `лента порождена простым правилом: хватает ${2 * L} бит вместо ${N}`
+    : L >= N / 2 - Math.sqrt(N) ? "так ведёт себя случайная лента — линейного правила короче половины нет"
+    : "правило есть, но длинное — выигрыш небольшой";
+  logStep("🧮 Лин. сложность", useSel ? idxs.map(r => rowLabel(r)).join(",") : "все", "",
+    `N=${N}, L=${L}${full > N ? ` (взяты первые ${N} из ${full})` : ""}`, [],
+    [{ name: "лента", text: tape }, { name: "зерно", text: seed || "—" }, { name: "дальше", text: next }],
+    null, esc(ruleTxt));
+  render();
+  say(`🧮 Линейная сложность: лента ${N} бит${full > N ? ` (первые ${N} из ${full})` : ""}, кратчайшее линейное правило — длины ${L}. ${verdict}.` +
+      (ok ? "" : " ВНИМАНИЕ: правило не воспроизвело ленту — это ошибка, покажите это сообщение.") +
+      " Правило, зерно и 64 следующих бита — в «🧾 Черновике шага».");
+};
+
 const bGf2El = document.getElementById("bGf2");
 if (bGf2El) bGf2El.onclick = gf2Analyze;
 const bGf2WriteEl = document.getElementById("bGf2Write");
