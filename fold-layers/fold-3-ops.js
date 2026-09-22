@@ -6098,6 +6098,54 @@ if (bNumNextEl) bNumNextEl.onclick = () => insertNextBelow("🔢+1", "Номер
   return { out: (BigInt("0b" + src) + 1n).toString(2).padStart(src.length, "0") };
 });
 
+/* ═══ «▽ СПУСК» — ТРЕУГОЛЬНИК XOR ВНИЗ И ЕГО КРАЙ (v1.540) ═══
+   Запрос пользователя, вырос из разговора про «суперархиватор»: «да, в черновике пусть покажет
+   край». Под строкой пишется XOR каждой пары соседей: n бит → n−1 → … → 1. Каждый этаж теряет
+   бит, поэтому по самому низу строку не восстановить, — но ЛЕВЫЙ КРАЙ треугольника (первый бит
+   каждого этажа, n штук) хранит её целиком. Это биномиальное преобразование над GF(2), и оно само
+   себе обратное: спуск от края даёт исходную строку. То есть спуск не сжимает, а перекладывает.
+   Смысл кнопки — увидеть, как выглядит строка «в краю»: у Серпинского край — одна единица и нули
+   (строка порождена правилом и короче, чем кажется), у случайной — такой же мусор той же длины.
+   Показ, данные не трогает: треугольник и край уходят в «🧾 Черновик шага» (logStep), край — в
+   «Итог». Этажей в черновике не больше DESCENT_SHOW — дальше многоточие; край считается весь. */
+const DESCENT_SHOW = 48;
+function descentOf(s){
+  const levels = [s];
+  let cur = s;
+  while (cur.length > 1) {
+    let nx = "";
+    for (let i = 0; i + 1 < cur.length; i++) nx += (cur[i] === cur[i + 1]) ? "0" : "1";
+    levels.push(nx); cur = nx;
+  }
+  return levels;
+}
+const bDescentEl = document.getElementById("bDescent");
+if (bDescentEl) bDescentEl.onclick = () => {
+  const sel = (st.selectedRows && st.selectedRows.size) ? Array.from(st.selectedRows).sort((a, b) => a - b) : st.rows.map((_, i) => i);
+  let r = -1;
+  for (const i of sel) { const s = st.rows[i] || ""; if (s.length && /^[01]+$/.test(s)) { r = i; break; } }
+  if (r < 0) { say("▽ Спуск: нужна строка из одних 0 и 1 — выделите её (без точек и пустот)."); return; }
+  const s = st.rows[r], n = s.length;
+  const levels = descentOf(s);
+  const edge = levels.map(l => l[0]).join("");
+  const inputs = [];
+  for (let k = 0; k < levels.length && k < DESCENT_SHOW; k++) {
+    const l = levels[k];
+    inputs.push({ name: k === 0 ? "строка" : "−" + k,
+                  html: '<span class="descent-edge b' + l[0] + '" title="Край: первый бит этажа ' + k + '">' + l[0] + '</span>' + bitsHtml(l.slice(1)) });
+  }
+  if (levels.length > DESCENT_SHOW) inputs.push({ name: "…", html: '<span class="empty">ещё ' + (levels.length - DESCENT_SHOW) + ' этаж. — край ниже учтён целиком</span>' });
+  const ones = (x) => { let c = 0; for (const ch of x) if (ch === "1") c++; return c; };
+  const eOnes = ones(edge), sOnes = ones(s);
+  // Грубая мерка порядка: насколько край реже самой строки. Не доказательство — повод смотреть.
+  const verdict = eOnes <= 1 ? "край — одна единица: строка целиком порождается правилом из одного бита"
+    : eOnes * 4 <= sOnes ? "край заметно реже строки — в ней есть порядок"
+    : "край не реже строки — порядка этим спуском не видно";
+  logStep("▽ Спуск", rowLabel(r), edge, `${n} бит → край ${n} бит, единиц в строке ${sOnes}, в краю ${eOnes}`, [], inputs);
+  render();
+  say(`▽ Спуск строки ${rowLabel(r)}: ${n} этаж., край — ${n} бит (единиц ${eOnes} против ${sOnes} в строке): ${verdict}. Треугольник и край — в «🧾 Черновике шага».`);
+};
+
 const bGenNumbersEl = document.getElementById("bGenNumbers");
 const numbersNEl = document.getElementById("numbersN");
 if (bGenNumbersEl) {
