@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 35.20 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию только плеер, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями по бокам плеера; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами; ↺ — все разделы ⇄ только плеер)
+VERSION: Pro 35.24 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопки ⇄ больше нет)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 35.20)</title>
+    <title>Binary Drum Machine (Zerkalius 35.24)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -61,13 +61,13 @@ VERSION: Pro 35.20 (Стартовый вид: радар, рамка, цвет 
         /* 35.12: 🔃 и 🛰️ на плеере. 35.20: это ДУБЛИ — кнопки у холста остаются на месте */
         .player-buttons .pl-extra { flex: 0 0 30px; height: 30px; border-radius: 50%; background: #333; color: #fff;
             font-size: 14px; box-shadow: 0 0 5px rgba(0,0,0,.5); }
-        /* 35.14: у плавающего плеера 🔃 и 🛰️ висят СНАРУЖИ, по бокам окна, на середине его высоты;
-           в боковой панели — по краям строки кнопок (там снаружи места нет). */
+        /* 35.14: у плавающего плеера 🔃 и 🛰️ висят СНАРУЖИ окна; 35.21: не по бокам, а НАД ним —
+           🔃 над левым углом, 🛰️ над правым. В боковой панели — по краям строки кнопок (там снаружи места нет). */
         .tab-sec.floating.fixed-player { overflow: visible; max-height: none; }
-        .tab-sec.floating .player-buttons .pl-extra { position: absolute; top: 50%; transform: translateY(-50%);
+        .tab-sec.floating .player-buttons .pl-extra { position: absolute; top: -44px;
             width: 34px; height: 34px; font-size: 16px; }
-        .tab-sec.floating #plReverseBtn { left: -46px; }
-        .tab-sec.floating #plRadarBtn { right: -46px; }
+        .tab-sec.floating #plReverseBtn { left: 0; }
+        .tab-sec.floating #plRadarBtn { right: 0; }
         #plRadarBtn { border-radius: 7px; background: #cc33ff; }
         .player-buttons .pl-extra.active-yellow, .player-buttons .pl-extra.active-green { outline: 2px solid #00ff66; outline-offset: 2px; }
 
@@ -118,7 +118,6 @@ VERSION: Pro 35.20 (Стартовый вид: радар, рамка, цвет 
         /* ПЛАВАЮЩИЕ КНОПКИ */
         .float-btn { position: absolute; z-index: 10; border: none; cursor: pointer; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: opacity 0.3s, background 0.2s, box-shadow 0.2s; left: 8px;}
         #toggleMenuBtn { top: 8px; background: #00ff66; color: #000; box-shadow: 0 0 8px rgba(0, 255, 102, 0.5); border-radius: 3px; height: 26px; width: 34px;}
-        #toggleSideBtn { top: 40px; background: #00ccff; color: #000; box-shadow: 0 0 8px rgba(0, 204, 255, 0.5); border-radius: 3px; height: 26px; width: 34px;}
         
         #toggleCenterBtn { top: 50%; transform: translateY(-120px); background: #333; color: #fff; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
         #toggleTrackBtn { top: 50%; transform: translateY(-70px); background: #333; color: #fff; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
@@ -215,7 +214,7 @@ VERSION: Pro 35.20 (Стартовый вид: радар, рамка, цвет 
         #alignRightBtn { transform: translateY(204px); }
         #recBtn { transform: translateY(248px); }
         /* 35.8: вкладки, как в Layers. Полоса сверху по центру; левая панель — как была, правая —
-           зеркально у правого края (⇄ меняет их местами). Пустая панель прячется целиком. */
+           зеркально у правого края. Пустая панель прячется целиком. */
         #rightPanel { left: auto; right: 0; }
         body.panel-right #leftPanel { left: auto; right: 0; }
         body.panel-right #rightPanel { left: 0; right: auto; }
@@ -285,7 +284,6 @@ VERSION: Pro 35.20 (Стартовый вид: радар, рамка, цвет 
             #screenContainer { height: 55vh !important; flex-grow: unset !important; }
             .scrollable-settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px; }
             .control-group { border-bottom: none; border-right: 1px solid #222; }
-            #toggleSideBtn { display: none; } 
             #rightPanel { top: 45vh !important; left: 0 !important; right: auto !important; }
             #menuTabs { max-width: calc(100vw - 16px); }
         }
@@ -298,7 +296,7 @@ VERSION: Pro 35.20 (Стартовый вид: радар, рамка, цвет 
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 35.20)</h3>
+                <h3>Binary Drum Machine (Pro 35.24)</h3>
                 <div id="statusInfo">Двойной клик по холсту — Режим Дзен</div>
             </div>
             <div class="scrollable-settings" id="leftSlot">
@@ -551,13 +549,13 @@ VERSION: Pro 35.20 (Стартовый вид: радар, рамка, цвет 
             между другими разделами, там где курсор, — можно и в соседнюю панель; мимо панелей — повиснет на холсте
             отдельным окном, которое тоже двигается за шапку. ✕ в шапке прячет раздел. <b>↺</b> на полосе вкладок
             поочерёдно открывает все разделы и оставляет только ▶ Плеер; <b>Shift+↺</b> возвращает раскладку
-            по умолчанию (только плеер, окном внизу по центру). Раскладку браузер запоминает.</p>
+            по умолчанию (все разделы открыты, плеер окном внизу по центру). Раскладку браузер запоминает.</p>
             <dl>
                 <dt>📂 Файл</dt><dd>🧽 очистка холста; сцены — выбрать из списка и «💾 Сохр.» текущий вид как свою (★);
                     «📂 Текст» — загрузить .txt; «🎵 Трек» — музыкальный файл; «🎤 Звук ПК» — захват звука вкладки/экрана
                     (в окне выбора поставить галочку «звук»); «💾 Сохр.» — выгрузить строки; «📊 в Excel»; «Сетка» — включает и выключает отдельный слой-фон: шахматку 1010
                     на весь холст позади строк, с тем же шагом, что у символов; под 🛰️ радаром — кольцами, по тем же
-                    окружностям, что и строки. Строки и «Экран» она не трогает.</dd>
+                    окружностям, что и строки. На мелком масштабе (символ меньше 5 px) — по пикселям: «1» ярко, «0» тускло. Строки и «Экран» она не трогает.</dd>
                 <dt>🔊 Звук</dt><dd>Визуализатор (картинка пульсирует от баса), 🤖 Авто-пилот (сам меняет сцены), Каскадное эхо (шлейф);
                     «Вставить 0 / 1», «Заполнить 1010» — правка строк.</dd>
                 <dt>🔎 Поиск</dt><dd>Введите узор, например 11011: строки, где он встретился, сохраняются в поле ниже.</dd>
@@ -578,10 +576,10 @@ VERSION: Pro 35.20 (Стартовый вид: радар, рамка, цвет 
 
             <h3>Кнопки у края холста</h3>
             <dl>
-                <dt>⚙ / ⇄</dt><dd>Спрятать обе панели / поменять их местами.</dd>
+                <dt>⚙</dt><dd>Спрятать / показать обе панели.</dd>
                 <dt>🎯</dt><dd>Держать активную рамку по центру.</dd>
                 <dt>📌</dt><dd>Прикрепить картинку к текущей строке и следить за ней.</dd>
-                <dt>🔃</dt><dd>Реверс — движение в обратную сторону. У ▶ Плеера по бокам — их дубли: 🔃 слева, 🛰️ справа (кнопки у холста остаются).</dd>
+                <dt>🔃</dt><dd>Реверс — движение в обратную сторону. Над ▶ Плеером — их дубли: 🔃 над левым углом, 🛰️ над правым (кнопки у холста остаются).</dd>
                 <dt>🔳</dt><dd>Рамка прицела вокруг активной строки.</dd>
                 <dt>🛰️</dt><dd>Радар: вид сверху, строки ложатся спиралью.</dd>
                 <dt>|&lt; &gt;|&lt; &gt;|</dt><dd>Выравнивание строк: влево, по центру, вправо.</dd>
@@ -604,7 +602,6 @@ VERSION: Pro 35.20 (Стартовый вид: радар, рамка, цвет 
             <div id="recTimer">● REC 0:00</div>
             <button id="recBtn" class="float-btn" title="Запись видео с холста (пишется всё, что происходит, вместе с треком)">⏺</button>
             <button id="toggleMenuBtn" class="float-btn" title="Скрыть/Показать панель">⚙</button>
-            <button id="toggleSideBtn" class="float-btn" title="Переместить панель (Влево/Вправо)">⇄</button>
             
             <button id="toggleCenterBtn" class="float-btn" title="Центрировать активную рамку">🎯</button>
             <button id="toggleTrackBtn" class="float-btn" title="Прикрепить матрицу к конкретной строке (Следить)">📌</button>
@@ -971,7 +968,7 @@ VERSION: Pro 35.20 (Стартовый вид: радар, рамка, цвет 
             activeColorPicker: document.getElementById('activeColorPicker'), activeAlphaRange: document.getElementById('activeAlphaRange'),
             staticColorPicker: document.getElementById('staticColorPicker'), staticAlphaRange: document.getElementById('staticAlphaRange'),
             
-            toggleMenuBtn: document.getElementById('toggleMenuBtn'), toggleSideBtn: document.getElementById('toggleSideBtn'), 
+            toggleMenuBtn: document.getElementById('toggleMenuBtn'), 
             toggleCenterBtn: document.getElementById('toggleCenterBtn'), toggleTrackBtn: document.getElementById('toggleTrackBtn'), 
             toggleReverseBtn: document.getElementById('toggleReverseBtn'), toggleFrameBtn: document.getElementById('toggleFrameBtn'), toggleRadarBtn: document.getElementById('toggleRadarBtn'),
             alignLeftBtn: document.getElementById('alignLeftBtn'), alignCenterBtn: document.getElementById('alignCenterBtn'), alignRightBtn: document.getElementById('alignRightBtn')
@@ -1526,10 +1523,13 @@ VERSION: Pro 35.20 (Стартовый вид: радар, рамка, цвет 
             // сетка лежит ровно под символами и едет вместе с перетаскиванием. Рисуется в отдельный
             // холст и переиспользуется, пока ничего из параметров не поменялось.
             drawGridLayer: function(ctx, width, height, fontSize, font, lineSpacing, startY, rgb, alpha) {
-                if (!MODULE_STATE.gridLayer || lineSpacing < 2) return;
+                if (!MODULE_STATE.gridLayer || !(lineSpacing > 0)) return;
                 ctx.save(); ctx.font = `normal ${fontSize}px ${font}`;
-                const cw = ctx.measureText('0').width; ctx.restore();
-                if (cw < 1) return;
+                let cw = ctx.measureText('0').width; ctx.restore();
+                if (!(cw > 0)) cw = fontSize * 0.6;
+                // 35.22: на мелком масштабе символ не прочесть (а при клетке меньше 2 px слой раньше
+                // просто выключался) — сетка рисуется по пикселям: «1» ярко, «0» тускло.
+                if (fontSize < 5 || lineSpacing < 3 || cw < 3) return this.drawGridPixels(ctx, width, height, lineSpacing, cw, startY, rgb, alpha);
                 if (MODULE_STATE.isRadarActive) return this.drawGridRings(ctx, width, height, fontSize, font, lineSpacing, cw, rgb, alpha);
                 const x0 = width / 2 + MODULE_STATE.offsetX;
                 const oy = ((startY % lineSpacing) + lineSpacing) % lineSpacing, ox = ((x0 % cw) + cw) % cw;
@@ -1582,6 +1582,51 @@ VERSION: Pro 35.20 (Стартовый вид: радар, рамка, цвет 
                         }
                     }
                     g.setTransform(1, 0, 0, 1, 0, 0);
+                    this._gridKey = key;
+                }
+                ctx.drawImage(this._gridCanvas, 0, 0);
+            },
+
+            // 35.22: пиксельная сетка для мелкого масштаба — та же шахматка (и кольца под радаром),
+            // но каждая клетка — пиксели, а не глиф. Клетка не меньше 1 px: на масштабе 1 символ уже,
+            // чем пиксель, и шахматка из долей пикселя слилась бы в серую муть или муар.
+            drawGridPixels: function(ctx, width, height, lineSpacing, cw, startY, rgb, alpha) {
+                const radar = MODULE_STATE.isRadarActive;
+                const cx0 = width / 2 + MODULE_STATE.offsetX, cy0 = height / 2 + MODULE_STATE.offsetY;
+                const cwP = Math.max(1, cw), lsP = Math.max(1, lineSpacing), ringP = Math.max(1, lineSpacing * 1.25);
+                const key = ['P', radar ? 1 : 0, width, height, cwP.toFixed(3), lsP.toFixed(3), cx0.toFixed(1), (radar ? cy0 : startY).toFixed(1), rgb, alpha].join('|');
+                if (this._gridKey !== key) {
+                    const c = this._gridCanvas || (this._gridCanvas = document.createElement('canvas'));
+                    c.width = width; c.height = height;
+                    const g = c.getContext('2d');
+                    g.setTransform(1, 0, 0, 1, 0, 0);
+                    const img = g.createImageData(width, height), d = img.data;
+                    const [R, G, B] = rgb.split(',').map(v => parseInt(v, 10) || 0);
+                    const aOn = Math.round(255 * alpha), aOff = Math.round(255 * alpha * 0.3);
+                    if (radar) {
+                        const TAU = 2 * Math.PI, nOf = [];
+                        for (let y = 0, i = 0; y < height; y++) {
+                            const dy = y + 0.5 - cy0;
+                            for (let x = 0; x < width; x++, i += 4) {
+                                const dx = x + 0.5 - cx0, k = Math.round(Math.hypot(dx, dy) / ringP) - 1;
+                                if (k < 0) continue;
+                                let n = nOf[k];
+                                if (n === undefined) { n = Math.max(2, Math.round(TAU * (k + 1) * ringP / cwP)); if (n % 2) n++; nOf[k] = n; }
+                                let a = Math.atan2(dy, dx); if (a < 0) a += TAU;
+                                const j = Math.round(a / TAU * n) % n;
+                                d[i] = R; d[i + 1] = G; d[i + 2] = B; d[i + 3] = ((j + k) & 1) ? aOff : aOn;
+                            }
+                        }
+                    } else {
+                        for (let y = 0, i = 0; y < height; y++) {
+                            const r = Math.round((y + 0.5 - startY) / lsP);
+                            for (let x = 0; x < width; x++, i += 4) {
+                                const q = Math.round((x + 0.5 - cx0) / cwP);
+                                d[i] = R; d[i + 1] = G; d[i + 2] = B; d[i + 3] = ((r + q) & 1) ? aOff : aOn;
+                            }
+                        }
+                    }
+                    g.putImageData(img, 0, 0);
                     this._gridKey = key;
                 }
                 ctx.drawImage(this._gridCanvas, 0, 0);
@@ -2187,21 +2232,7 @@ VERSION: Pro 35.20 (Стартовый вид: радар, рамка, цвет 
 
                 if(UI.themeSelect) { UI.themeSelect.addEventListener('change', function() { const t = THEMES[this.value]; if(t) { UI.activeColorPicker.value = t.act; UI.activeAlphaRange.value = t.actA; UI.staticColorPicker.value = t.stat; UI.staticAlphaRange.value = t.statA; RENDERER.renderFrame(); } }); }
                 if(UI.toggleMenuBtn) { UI.toggleMenuBtn.addEventListener('click', function() { /* 35.8: прячет/показывает обе панели разом, вкладки остаются */ const off = document.body.classList.toggle('menu-off'); this.style.background = off ? '#222' : '#00ff66'; TABS.sync(); }); }
-                if(UI.toggleSideBtn) {
-                    let currentLayout = 'left';
-                    UI.toggleSideBtn.addEventListener('click', function() {
-                        // Панель теперь плавает поверх холста, поэтому сторону задаёт класс,
-                        // а не направление флекса. Встроенные стили у кнопок сняты — иначе
-                        // они перебивают правила и кнопки уезжают под панель.
-                        currentLayout = currentLayout === 'left' ? 'right' : 'left';
-                        document.body.classList.toggle('panel-right', currentLayout === 'right');
-                        [UI.toggleMenuBtn, UI.toggleSideBtn, UI.toggleCenterBtn, UI.toggleTrackBtn,
-                         UI.toggleReverseBtn, UI.toggleFrameBtn, UI.toggleRadarBtn, UI.recBtn,
-                         UI.alignLeftBtn, UI.alignCenterBtn, UI.alignRightBtn]
-                            .forEach(b => { if (b) { b.style.left = ''; b.style.right = ''; } });
-                        RENDERER.renderFrame();
-                    });
-                }
+                // 35.24: кнопка ⇄ (поменять панели местами) убрана по слову пользователя — «не нужно больше».
 
                 if(UI.toggleCenterBtn) UI.toggleCenterBtn.addEventListener('click', function() { MODULE_STATE.isCenterActive = !MODULE_STATE.isCenterActive; if(MODULE_STATE.isCenterActive) { this.classList.add('active-yellow'); MODULE_STATE.isTrackRowActive = false; UI.toggleTrackBtn.classList.remove('active-red'); } else this.classList.remove('active-yellow'); RENDERER.renderFrame(); });
                 if(UI.toggleFrameBtn) UI.toggleFrameBtn.addEventListener('click', function() { MODULE_STATE.isFrameActive = !MODULE_STATE.isFrameActive; if(MODULE_STATE.isFrameActive) this.classList.add('active-yellow'); else this.classList.remove('active-yellow'); RENDERER.renderFrame(); });
@@ -2310,15 +2341,14 @@ VERSION: Pro 35.20 (Стартовый вид: радар, рамка, цвет 
         // разметки (сначала левая панель, потом правая). Щелчок — спрятать/показать раздел.
         // Какие спрятаны — помнится в браузере; память может быть недоступна, тогда всё открыто.
         const TABS = {
-            KEY: 'zcode_tabs_off_v1',
+            KEY: 'zcode_tabs_off_v2',   // 35.23: v1 → v2, чтобы новое умолчание «всё открыто» дошло и до тех, у кого в памяти «только плеер»
             init: function() {
                 const bar = document.getElementById('menuTabs');
                 let off = [];
-                // 35.10: по умолчанию (ничего не сохранено) открыт только ▶ Плеер — остальное вкладками сверху.
+                // 35.23: по умолчанию (ничего не сохранено) открыты ВСЕ разделы (в 35.10–35.22 — только ▶ Плеер).
                 let savedOff = null;
                 try { savedOff = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { savedOff = null; }
-                off = Array.isArray(savedOff) ? savedOff
-                    : Array.from(document.querySelectorAll('.tab-sec')).map(sec => sec.dataset.tab).filter(t => t !== 'player');
+                off = Array.isArray(savedOff) ? savedOff : [];
                 document.querySelectorAll('.tab-sec').forEach(sec => {
                     const b = document.createElement('button');
                     b.type = 'button'; b.textContent = sec.dataset.title;
@@ -2338,7 +2368,7 @@ VERSION: Pro 35.20 (Стартовый вид: радар, рамка, цвет 
                 rl.type = 'button'; rl.textContent = '↺';
                 rl.title = 'Щелчок: все разделы ⇄ только плеер. Shift+щелчок: вернуть раскладку по умолчанию';
                 rl.addEventListener('click', e => {
-                    if (e.shiftKey) { if (confirm('Вернуть раскладку по умолчанию (открыт только плеер)?')) this.resetLayout(); return; }
+                    if (e.shiftKey) { if (confirm('Вернуть раскладку по умолчанию (все разделы открыты, плеер окном внизу по центру)?')) this.resetLayout(); return; }
                     const secs = Array.from(document.querySelectorAll('.tab-sec'));
                     const othersOpen = secs.some(sec => sec.dataset.tab !== 'player' && !sec.classList.contains('off'));
                     secs.forEach(sec => sec.classList.toggle('off', othersOpen && sec.dataset.tab !== 'player'));
