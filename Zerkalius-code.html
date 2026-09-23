@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Zerkalius Code (до 35.31 — Binary Drum Machine)
-VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопок ⇄ и ⚙ больше нет, 🔎 Поиск убран; пресеты — целые сцены, логическая операция работает; выравнивание по видимому краю; 13 шрифтов, свои, без интернета; ▦ скачки ⇄ 〰 плавно в плеере; файл можно бросить на холст; межсимвольный интервал)
+VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопок ⇄ и ⚙ больше нет, 🔎 Поиск убран; пресеты — целые сцены, логическая операция работает; выравнивание по видимому краю; 13 шрифтов, свои, без интернета; ▦ скачки ⇄ 〰 плавно в плеере; файл можно бросить на холст; межсимвольный интервал; крайние панели прозрачные; защита от выделения; ⚓ заморозка — на месте, без прыжка в центр; подсчёт циклов Аниматрицы; ▶ — включить выбранную сцену; F5 не сбрасывает — всё как было; ★ — полный пресет вместе с текстом; ★-сцены файлом для другого компьютера; счётчик Аниматрицы — внизу, среди уведомлений)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Code 35.39</title>
+    <title>Zerkalius Code 35.47</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -113,6 +113,14 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
             font-size: 11px; color: #ffcc00; text-align: center; white-space: nowrap; max-width: 90%; overflow: hidden; text-overflow: ellipsis;
             background: rgba(0,0,0,.55); padding: 2px 10px; border-radius: 3px; pointer-events: none; }
         body.zen-mode #statusInfo { opacity: 0; }
+        /* 35.47: «это внизу показывать, пусть там все уведомления». Счётчик циклов Аниматрицы стоит над строкой
+           состояния тем же видом, своим цветом. Строка состояния — для разовых сообщений (сцена сохранена,
+           файл загружен), счётчик обновляется на каждом шаге, поэтому у него своя строка: иначе он затирал бы
+           сообщения, не дав их прочесть. */
+        #animInfo { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 9;
+            font-size: 11px; color: #ff8a8a; text-align: center; white-space: nowrap; max-width: 90%; overflow: hidden; text-overflow: ellipsis;
+            background: rgba(0,0,0,.55); padding: 2px 10px; border-radius: 3px; pointer-events: none; }
+        body.zen-mode #animInfo { opacity: 0; }
         /* 35.36: файл тащат над холстом — пунктир по краю */
         #screenContainer.drop-file { outline: 2px dashed #00ff66; outline-offset: -8px; }
         #screenContainer { flex-grow: 1; background: #000000; border: 2px solid #111; border-radius: 5px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
@@ -162,6 +170,17 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
            в любом случае, потому что пишется холст, а не экран. */
         .controls { position: absolute; top: 0; left: 0; height: 100%; z-index: 60;
             box-shadow: 0 0 24px rgba(0,0,0,.75); }
+        /* 35.40: крайние панели прозрачные (запрос пользователя) — ни фона, ни рамки, ни тени; холст виден
+           сквозь промежутки. Фон остаётся у карточек разделов (.tab-sec), иначе кнопки терялись бы на
+           бегущих цифрах. Полоса прокрутки — тоже без подложки. */
+        .controls { background: transparent; border-color: transparent; box-shadow: none; }
+        .scrollable-settings::-webkit-scrollbar-track { background: transparent; }
+        /* 35.41: «защити от выделения все панели». Ползунки, кнопки и холст тянут мышью, а протяжка для
+           браузера — ещё и выделение текста: подписи и значки заливались синим. Запрет ставится на всю
+           страницу разом, как в Октаэдре, — и панели, и плавающие окна, и кнопки у холста, и новые
+           разделы получают его сами. Разрешено там, где выделять надо: поля ввода и окно ❓ Помощь. */
+        body { user-select: none; -webkit-user-select: none; }
+        input, textarea, select, [contenteditable], #helpOverlay { user-select: text; -webkit-user-select: text; }
         body.panel-right .controls { left: auto; right: 0; }
         /* Кнопки отодвигаются от панели, пока она открыта, и возвращаются к краю,
            когда её скрыли или включили дзен. */
@@ -305,7 +324,7 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3>Zerkalius Code 35.39</h3>
+                <h3>Zerkalius Code 35.47</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -317,7 +336,16 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
                         <select id="sceneSelect" style="font-weight:bold; color:#ffcc00; flex: 2; border: 1px solid #ff9900;">
                             <option value="">📍 Карта Сокровищ (Выбрать...)</option>
                         </select>
+                        <!-- 35.44: ▶ — включить выбранную сцену. Выбрать в списке уже выбранную браузер не даёт (нет события
+                             change), и только что сохранённую ★ было не включить заново. -->
+                        <button id="loadSceneBtn" class="btn-zerkalius" title="Включить сцену, выбранную в списке (и ту, что уже выбрана)" style="background:#00ff66; color:#000; margin: 0; flex: 0 0 30px; padding: 3px;">▶</button>
                         <button id="saveSceneBtn" class="btn-zerkalius" style="background:#ff9900; margin: 0; flex: 1; padding: 3px;">💾 Сохр.</button>
+                    </div>
+                    <!-- 35.46: перенос ★-сцен на другой компьютер — одним файлом .json, целиком, с текстами -->
+                    <div class="compact-row" style="margin-top:4px;">
+                        <button id="exportScenesBtn" class="btn-zerkalius" title="Все свои ★-сцены целиком (с текстами) — одним файлом .json, чтобы перенести на другой компьютер" style="background:#2a2d36; color:#ffcc00; border:1px solid #ff9900; margin:0; flex:1; padding:3px;">📤 Сцены в файл</button>
+                        <button id="importScenesBtn" class="btn-zerkalius" title="Добавить ★-сцены из файла .json (свои не затираются). Файл можно и просто бросить на холст" style="background:#2a2d36; color:#ffcc00; border:1px solid #ff9900; margin:0; flex:1; padding:3px;">📥 Из файла</button>
+                        <input type="file" id="importScenesInput" accept=".json,application/json" style="display:none">
                     </div>
                 </div>
 
@@ -552,7 +580,8 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
 
             <h3>С чего начать</h3>
             <ul>
-                <li>Страница открывается сразу играющей: сцена «Код Матрицы», радар и реверс включены, рамка выключена.</li>
+                <li>Первый раз страница открывается сразу играющей: сцена «Код Матрицы», радар и реверс включены, рамка выключена.
+                    Дальше F5 и повторное открытие возвращают всё как было: текст, вид, галочки, цвета, сцену и кадр плеера.</li>
                 <li><b>Щелчок по холсту</b> — пауза / продолжить. <b>Двойной щелчок</b> или <b>щелчок колесом</b> — режим Дзен (только картинка, без панелей).</li>
                 <li><b>Колесо мыши</b> над холстом — масштаб. <b>Перетаскивание</b> — сдвинуть картинку.</li>
                 <li>Свой материал: вкладка <b>📂 Файл</b> → «📂 Текст» (файл .txt) или выбрать готовую сцену в «📍 Карта Сокровищ».</li>
@@ -568,7 +597,7 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
             поочерёдно открывает все разделы и оставляет только ▶ Плеер; <b>Shift+↺</b> возвращает раскладку
             по умолчанию (все разделы открыты, плеер окном внизу по центру). Раскладку браузер запоминает.</p>
             <dl>
-                <dt>📂 Файл</dt><dd>🧽 очистка холста; сцены — выбрать из списка (готовая сцена ставит ВСЁ своё: масштаб, интервал, галочки, 🔃 — с чистого листа) и «💾 Сохр.» текущий вид как свою (★, помнит и масштаб, и Экран, и 🔃);
+                <dt>📂 Файл</dt><dd>🧽 очистка холста; сцены — выбрать из списка (готовая сцена ставит ВСЁ своё: масштаб, интервал, галочки, 🔃 — с чистого листа) и «💾 Сохр.» текущий вид как свою (★ — полный пресет: текст холста, вид, галочки, скорость, цвета, радар, рамка, кадр; ★ из версий до 35.45 помнят только настройки); ▶ рядом со списком включает выбранную сцену, в том числе ту, что в нём уже стоит; «📤 Сцены в файл» — все ★ одним файлом .json (с текстами), «📥 Из файла» (или бросить этот файл на холст) — добавить их на другом компьютере, свои не затираются;
                     «📂 Текст» — загрузить .txt (или просто бросить файл на холст; брошенный звуковой файл встаёт треком); «🎵 Трек» — музыкальный файл; «🎤 Звук ПК» — захват звука вкладки/экрана
                     (в окне выбора поставить галочку «звук»); «💾 Сохр.» — выгрузить строки; «📊 в Excel»; «Сетка» — включает и выключает отдельный слой-фон: шахматку 1010
                     на весь холст позади строк, с тем же шагом, что у символов; под 🛰️ радаром — кольцами, по тем же
@@ -583,7 +612,9 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
                     «Кадр» — перемотка. Скорость: красный ползунок — сколько шагов за тик (x1…x100), синий — пауза между тиками (правее — быстрее).</dd>
                 <dt>↕ Движение</dt><dd>Алгоритм Y-сдвига (например «1, 1, 2, -3»), заморозить вертикальную прокрутку, 3D-вращение, 🫁 дыхание (авто-масштаб).</dd>
                 <dt>Δ Логика</dt><dd>«Скрыть статику» — гасит символы, которые не изменились относительно соседа (сверху, по диагоналям
-                    или по Серпинскому). Логическая операция над строкой: NOT, XOR со сдвигом, зеркало. Аниматрица (волна),
+                    или по Серпинскому). Логическая операция над строкой: NOT, XOR со сдвигом, зеркало. Аниматрица (волна;
+                    внизу холста, над строкой сообщений, — сколько раз волна прошла текст и на какой она строке, а когда
+                    текст повторит прежнее состояние — «🔁 цикл» и его период в проходах),
                     Ёлка и Цилиндр (круговой сдвиг), поиск диагоналей, неоновое свечение.</dd>
                 <dt>👁 Вид</dt><dd>Масштаб шрифта, «Экран» — сколько строк видно, интервал между строками, межсимвольный интервал (0.5–3: доля ширины символа; меньше 1 — символы наезжают), шрифт (13 на выбор, в том числе Roboto Mono, JetBrains Mono, VT323, Press Start 2P; лежат в самом проекте, работают и без интернета).</dd>
                 <dt>🎨 Цвет</dt><dd>🌈 радужный текст, 🎨 цвет как код (подсветка синтаксиса), пресеты палитры, цвет и яркость
@@ -618,6 +649,8 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
             <div id="recTimer">● REC 0:00</div>
             <!-- 35.35: строка состояния — внизу холста по центру (была под названием в шапке левой панели) -->
             <div id="statusInfo">Двойной клик по холсту — Режим Дзен</div>
+            <!-- 35.47: счётчик циклов Аниматрицы — внизу, среди уведомлений, над строкой состояния -->
+            <div id="animInfo" style="display:none"></div>
             <button id="recBtn" class="float-btn" title="Запись видео с холста (пишется всё, что происходит, вместе с треком)">⏺</button>
             
             <button id="toggleCenterBtn" class="float-btn" title="Центрировать активную рамку">🎯</button>
@@ -862,6 +895,7 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
         const MODULE_STATE = {
             originalLines: [], lines: [], echoHistory: [], customScenes: {},
             currentIndex: 0, dualCoreIndex: 0, trackedRowIndex: -1,
+            frozenIndex: null,   // 35.42: строка, на которой встал ⚓ замороженный слой 1 (null — взять текущую)
             isCenterActive: false, isTrackRowActive: false, isReverse: false, isFrameActive: true, isRadarActive: false,
             isPlaying: false, isPaused: false, rafId: null, lastTickTime: 0,
             algoPointer: 0, alignMode: 'center', globalAngle: 0, breathTime: 0,
@@ -1068,6 +1102,24 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
                 }
                 UI.sceneSelect.addEventListener('change', (e) => this.loadScene(e.target.value));
                 UI.saveSceneBtn.addEventListener('click', () => this.saveScene());
+                // 35.46: 📤 / 📥 — ★-сцены файлом, для другого компьютера
+                const exB = document.getElementById('exportScenesBtn'), imB = document.getElementById('importScenesBtn'),
+                      imIn = document.getElementById('importScenesInput');
+                if (exB) exB.addEventListener('click', () => this.exportScenes());
+                if (imB && imIn) {
+                    imB.addEventListener('click', () => imIn.click());
+                    imIn.addEventListener('change', () => {
+                        const f = imIn.files[0]; imIn.value = '';   // тот же файл можно выбрать снова
+                        if (!f) return;
+                        f.text().then(t => { if (!this.importScenes(t, f.name)) alert('Это не файл сцен Zerkalius Code: ' + f.name); });
+                    });
+                }
+                // 35.44: ▶ включает выбранную сцену заново — в том числе ту, что в списке уже стоит
+                const lb = document.getElementById('loadSceneBtn');
+                if (lb) lb.addEventListener('click', () => {
+                    if (UI.sceneSelect.value) this.loadScene(UI.sceneSelect.value);
+                    else UI.statusInfo.textContent = 'Сначала выберите сцену в списке';
+                });
             },
             
             loadScene: function(key, preventPlay = false) {
@@ -1078,6 +1130,14 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
                 if(key.startsWith("custom_")) scene = MODULE_STATE.customScenes[key.replace("custom_", "")];
                 if(!scene) return;
 
+                // 35.45: ★ с полным снимком — ставится целиком, вместе с текстом, и больше ничего не надо
+                if (scene.full) {
+                    SESSION.apply(scene.full, false);
+                    UI.sceneSelect.value = key;
+                    UI.statusInfo.textContent = `Сцена загружена: ${scene.name}`;
+                    if (!preventPlay && !MODULE_STATE.isPlaying) setTimeout(() => PLAYER.start(), 200);
+                    return;
+                }
                 // 35.25: встроенный пресет начинает с чистого листа; своя сцена (★) — со всего, что запомнила.
                 // У ★ из версий до 35.25 снимка нет — у них, как раньше, меняется только то, что они хранят.
                 if (scene.ui) this.applyUi(scene.ui);
@@ -1097,6 +1157,7 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
                 if(UI.breathingZoomCheck) UI.breathingZoomCheck.checked = !!scene.breathing;
                 if(UI.rainbowTextCheck) UI.rainbowTextCheck.checked = !!scene.rainbow;
                 if(UI.freezeLayer1Check) UI.freezeLayer1Check.checked = !!scene.freezeLayer1;
+                MODULE_STATE.frozenIndex = null;   // 35.42: сцена — заморозка встаёт на её текущую строку
 
                 MODULE_STATE.isFrameActive = scene.frame !== undefined ? scene.frame : true;
                 if(MODULE_STATE.isFrameActive) UI.toggleFrameBtn.classList.add('active-yellow'); else UI.toggleFrameBtn.classList.remove('active-yellow');
@@ -1137,6 +1198,41 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
                 UI.sceneSelect.value = randomKey;
             },
 
+            /* 35.46: ★-СЦЕНЫ ФАЙЛОМ (запрос пользователя: «надо и файл сохранять, чтобы на другой комп потом»).
+               Сцены живут в памяти браузера, а она у каждого компьютера и браузера своя. 📤 выгружает все ★ разом
+               одним .json — вместе с текстами (полный снимок, 35.45). 📥 (или бросок файла на холст) добавляет
+               их в список: свои сцены не затираются, ключи новые, а сцена, которая уже есть точь-в-точь, второй
+               раз не добавляется. Метка zerkaliusScenes отличает такой файл от обычного текста. */
+            exportScenes: function() {
+                const all = MODULE_STATE.customScenes || {}, n = Object.keys(all).length;
+                if (!n) { alert('Своих сцен (★) пока нет: сначала «💾 Сохр.» у списка сцен.'); return; }
+                const pack = { zerkaliusScenes: 1, saved: new Date().toISOString(), scenes: all };
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([JSON.stringify(pack)], { type: 'application/json' }));
+                a.download = 'Zerkalius-сцены-' + new Date().toISOString().slice(0, 10) + '.json';
+                a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+                UI.statusInfo.textContent = `Сцен в файле: ${n}`;
+            },
+            importScenes: function(text, fileName) {   // true — это был файл сцен
+                let pack = null;
+                try { pack = JSON.parse(text); } catch (e) { return false; }
+                if (!pack || pack.zerkaliusScenes !== 1 || !pack.scenes || typeof pack.scenes !== 'object') return false;
+                if (!MODULE_STATE.customScenes) MODULE_STATE.customScenes = {};
+                const have = new Set(Object.values(MODULE_STATE.customScenes).map(c => JSON.stringify(c)));
+                let added = 0, i = 0; const base = Date.now();
+                Object.values(pack.scenes).forEach(sc => {
+                    if (!sc || typeof sc.name !== 'string') return;
+                    if (have.has(JSON.stringify(sc))) return;
+                    const key = (base + i++).toString();
+                    MODULE_STATE.customScenes[key] = sc;
+                    const opt = document.createElement('option'); opt.value = 'custom_' + key; opt.textContent = '★ ' + sc.name;
+                    UI.sceneSelect.appendChild(opt); added++;
+                });
+                try { localStorage.setItem('saved_scenes_v20', JSON.stringify(MODULE_STATE.customScenes)); }
+                catch (e) { alert('Сцены добавлены в список, но в память браузера не влезли (около 5 МБ на всё): после закрытия страницы их не будет. Удалите лишние сцены и загрузите файл снова.'); }
+                UI.statusInfo.textContent = `Сцены из «${fileName}»: добавлено ${added}` + (added ? '' : ' — все уже были');
+                return true;
+            },
             saveScene: function() {
                 let name = prompt("Назови эту координату (Сцену):", "Мой шедевр");
                 if(!name) return;
@@ -1147,9 +1243,20 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
                     freezeY: UI.freezeScrollCheck.checked, spin3d: UI.spin3dCheck.checked, breathing: UI.breathingZoomCheck?.checked,
                     elka: UI.elkaCheck.checked, neon: UI.neonGlowCheck.checked, frame: MODULE_STATE.isFrameActive, radar: MODULE_STATE.isRadarActive,
                     rainbow: UI.rainbowTextCheck?.checked, freezeLayer1: UI.freezeLayer1Check?.checked,
-                    ui: this.snapshotUi()   // 35.25
+                    ui: this.snapshotUi(),   // 35.25
+                    // 35.45: и текст, и всё остальное — ★ стала полным пресетом (запрос пользователя: «надо и текст, и
+                    // сохранять всё вместе, как пресеты»). Снимок тот же, что у F5 (SESSION.collect).
+                    full: SESSION.collect(true)
                 };
-                MODULE_STATE.customScenes[key] = newScene; localStorage.setItem('saved_scenes_v20', JSON.stringify(MODULE_STATE.customScenes));
+                MODULE_STATE.customScenes[key] = newScene;
+                // Память браузера у страницы не бездонна (около 5 МБ на всё). Не влезло с текстом — сцена
+                // пишется без текста, и об этом говорится прямо, а не молча.
+                try { localStorage.setItem('saved_scenes_v20', JSON.stringify(MODULE_STATE.customScenes)); }
+                catch (e) {
+                    newScene.full = SESSION.collect(false);
+                    try { localStorage.setItem('saved_scenes_v20', JSON.stringify(MODULE_STATE.customScenes)); } catch (e2) {}
+                    alert('Не хватает места в памяти браузера: сцена «' + name + '» сохранена без текста. Удалите старые сцены или сохраните текст файлом.');
+                }
                 let opt = document.createElement('option'); opt.value = "custom_" + key; opt.textContent = "★ " + name;
                 UI.sceneSelect.appendChild(opt); UI.sceneSelect.value = "custom_" + key;
                 UI.statusInfo.textContent = `Сцена сохранена: ${name}`;
@@ -1406,9 +1513,53 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
                 RENDERER.updateTimeline(); RENDERER.renderFrame();
             },
 
+            /* 35.43: ПОДСЧЁТ ЦИКЛОВ АНИМАТРИЦЫ (запрос пользователя: «нужен подсчёт циклов аниматрицы»).
+               Проход — волна дошла от первой строки до последней. После каждого прохода берётся отпечаток всего
+               текста (FNV-1a по всем строкам) и кладётся в animSeen: отпечаток → номер прохода. Встретился
+               отпечаток, который уже был, — текст вернулся в прежнее состояние, и дальше картина ходит по кругу:
+               это и есть цикл, его период — разница номеров. Отпечаток исходного текста — проход 0, поэтому
+               «вернулось к началу» тоже ловится. Сбрасывается при загрузке текста (precalculateLines с isFirstLoad). Правки текста
+               другими средствами (Вставить 0/1 и пр.) счётчик не сбрасывают — цикл тогда может оказаться ложным. */
+            animHash: function() {
+                let h = 2166136261;
+                for (const l of MODULE_STATE.originalLines) {
+                    const t = l.text;
+                    for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); }
+                    h ^= 10; h = Math.imul(h, 16777619);
+                }
+                return h >>> 0;
+            },
+            animReset: function() {
+                MODULE_STATE.animPasses = 0; MODULE_STATE.animSeen = null; MODULE_STATE.animCycle = null;
+                this.animInfoUpd();
+            },
+            animPassDone: function() {
+                const st = MODULE_STATE, h = this.animHash();
+                st.animPasses = (st.animPasses || 0) + 1;
+                if (!st.animSeen) st.animSeen = new Map();
+                if (st.animSeen.has(h)) {
+                    if (!st.animCycle) { const from = st.animSeen.get(h); st.animCycle = { from: from, period: st.animPasses - from }; }
+                } else st.animSeen.set(h, st.animPasses);
+            },
+            animInfoUpd: function() {
+                const el = document.getElementById('animInfo');
+                if (!el) return;
+                const on = !!(UI.zerkaliusAnimCheck && UI.zerkaliusAnimCheck.checked);
+                el.style.display = on ? '' : 'none';
+                if (!on) return;
+                const st = MODULE_STATE, H = st.originalLines.length;
+                // 35.47: одной строкой — она теперь внизу холста, среди уведомлений
+                let t = 'Аниматрица: пройдено циклов <b>' + (st.animPasses || 0) + '</b> · волна на строке ' + (st.animatrixRow || 0) + ' из ' + Math.max(0, H - 1);
+                if (st.animCycle) t += ' · 🔁 цикл: период <b>' + st.animCycle.period + '</b>, повтор ' +
+                    (st.animCycle.from ? 'после ' + st.animCycle.from + '-го прохода' : 'исходного текста');
+                else if (st.animPasses) t += ' · повтора пока нет';
+                el.innerHTML = t;
+            },
             runAnimatrixGlobal: function() {
                 let lines = MODULE_STATE.originalLines;
                 let H = lines.length;
+                // 35.43: отпечаток исходного текста — проход 0, до первого шага волны
+                if (!MODULE_STATE.animSeen) { MODULE_STATE.animSeen = new Map([[this.animHash(), MODULE_STATE.animPasses || 0]]); }
                 if (H < 2) return;
                 
                 if (MODULE_STATE.animatrixRow === undefined || MODULE_STATE.animatrixRow >= H - 1) {
@@ -1437,6 +1588,8 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
                 }
                 lines[row2].text = resStr;
                 MODULE_STATE.animatrixRow++;
+                if (MODULE_STATE.animatrixRow >= H - 1) this.animPassDone();   // 35.43: волна дошла до низа — проход
+                this.animInfoUpd();
                 
                 this.precalculateLines(false);
             },
@@ -1493,6 +1646,7 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
                     }
                     MODULE_STATE.echoHistory = [];
                     MODULE_STATE.animatrixRow = 0;
+                    this.animReset();   // 35.43: новый текст — счёт циклов заново
                 }
                 RENDERER.updateTimeline(); RENDERER.renderFrame();
             },
@@ -1850,7 +2004,10 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
                 for (let i = 0; i < visibleHeight; i++) {
                     let lineIndex;
                     if (freezeLayer1) {
-                        lineIndex = (0 - halfHeight + i + activeLinesSource.length) % activeLinesSource.length;
+                        // 35.42: слой 1 стоит там, где его заморозили, а не на нулевой строке — раньше здесь стоял 0,
+                        // и при постановке галки картинка прыгала к началу текста в центр экрана.
+                        if (MODULE_STATE.frozenIndex == null) MODULE_STATE.frozenIndex = MODULE_STATE.currentIndex;
+                        lineIndex = (MODULE_STATE.frozenIndex - halfHeight + i + activeLinesSource.length) % activeLinesSource.length;
                     } else {
                         lineIndex = (MODULE_STATE.currentIndex - halfHeight + i + activeLinesSource.length) % activeLinesSource.length;
                     }
@@ -2195,6 +2352,7 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
                 MODULE_STATE.isPlaying = false; MODULE_STATE.isPaused = false;
                 cancelAnimationFrame(MODULE_STATE.rafId);
                 MODULE_STATE.currentIndex = 0; MODULE_STATE.dualCoreIndex = 0; MODULE_STATE.algoPointer = 0; MODULE_STATE.globalAngle = 0;
+                MODULE_STATE.frozenIndex = null;   // 35.42
                 UI.playBtn.innerHTML = '▶'; UI.playBtn.style.background = '#00ff66'; UI.playBtn.style.color = '#000'; UI.playBtn.classList.remove('playing');
                 
                 const bgAudio = document.getElementById('bgAudio');
@@ -2445,7 +2603,11 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
                             UI.statusInfo.textContent = `Не текст: ${file.name}`; return;
                         }
                         const reader = new FileReader();
-                        reader.onload = ev => MODULE_DATA.processTextData(ev.target.result, file.name);
+                        reader.onload = ev => {
+                            // 35.46: файл сцен (📤) — в список ★, а не на холст текстом
+                            if (/\.json$/i.test(file.name) && SCENE_MANAGER.importScenes(ev.target.result, file.name)) return;
+                            MODULE_DATA.processTextData(ev.target.result, file.name);
+                        };
                         reader.readAsText(file);
                     });
                     window.addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
@@ -2473,6 +2635,15 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
                 ];
                 const scheduleRender = () => (window.__zerkScheduleRender || (() => RENDERER.renderFrame()))();
                 rerenderEvents.forEach(el => { if(el) { el.addEventListener('change', scheduleRender); el.addEventListener('input', scheduleRender); }});
+                // 35.42: ⚓ поставили — слой 1 встаёт на ту строку, что сейчас в центре; сняли — идёт дальше с неё же,
+                // а не с того места, куда за это время ушёл счётчик кадров. Скачка нет ни в ту, ни в другую сторону.
+                // 35.43: счётчик циклов Аниматрицы виден, пока она включена
+                if (UI.zerkaliusAnimCheck) UI.zerkaliusAnimCheck.addEventListener('change', () => MODULE_DATA.animInfoUpd());
+                if (UI.freezeLayer1Check) UI.freezeLayer1Check.addEventListener('change', () => {
+                    if (UI.freezeLayer1Check.checked) MODULE_STATE.frozenIndex = MODULE_STATE.currentIndex;
+                    else if (MODULE_STATE.frozenIndex != null) { MODULE_STATE.currentIndex = MODULE_STATE.frozenIndex; MODULE_STATE.frozenIndex = null; RENDERER.updateTimeline(); }
+                    scheduleRender();
+                });
                 // Запись: одна кнопка на старт и стоп, рядом счётчик времени.
                 if (UI.recBtn) {
                     UI.recBtn.addEventListener('click', () => {
@@ -2744,6 +2915,85 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
             close: function() { if (this.el) this.el.classList.remove('show'); }
         };
 
+        /* 35.44: F5 НЕ СБРАСЫВАЕТ (запрос пользователя: «F5 не должен сбрасывать, начать с того же»). Раньше при
+           каждом открытии ставился стартовый вид (радар, 350 строк, 60 мс, цвет как код…) и затирал всё, что
+           настроили. Теперь при уходе со страницы (F5, закрытие вкладки, переход в Хаб) состояние целиком ложится
+           в память браузера: текст холста, вид и галочки (тот же снимок, что у ★-сцены), скорость, цвета,
+           радар, рамка, выбранная сцена, кадр плеера и играл ли он. При открытии оно возвращается; стартовый
+           вид остаётся только для самого первого открытия, пока запомненного нет. Не влез текст в память
+           (очень большой файл) — пишется без текста, а текст берётся как раньше. */
+        const SESSION = {
+            KEY: 'zcode_session_v1',
+            bind: function() {
+                const save = () => this.save();
+                window.addEventListener('pagehide', save);
+                window.addEventListener('beforeunload', save);
+                document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+            },
+            collect: function(withText) {
+                return {
+                    v: 1, ui: SCENE_MANAGER.snapshotUi(),
+                    speed: UI.speedRange.value, theme: UI.themeSelect.value,
+                    act: UI.activeColorPicker.value, actA: UI.activeAlphaRange.value,
+                    stat: UI.staticColorPicker.value, statA: UI.staticAlphaRange.value,
+                    echo: UI.echoModeCheck.checked, dual: UI.dualCoreCheck.checked, dualMask: UI.dualMaskCheck.checked,
+                    freezeY: UI.freezeScrollCheck.checked, spin3d: UI.spin3dCheck.checked,
+                    breathing: !!(UI.breathingZoomCheck && UI.breathingZoomCheck.checked),
+                    elka: UI.elkaCheck.checked, neon: UI.neonGlowCheck.checked,
+                    rainbow: !!(UI.rainbowTextCheck && UI.rainbowTextCheck.checked),
+                    frame: MODULE_STATE.isFrameActive, radar: MODULE_STATE.isRadarActive,
+                    scene: UI.sceneSelect.value, idx: MODULE_STATE.currentIndex,
+                    ox: MODULE_STATE.offsetX, oy: MODULE_STATE.offsetY, playing: MODULE_STATE.isPlaying,
+                    text: withText ? MODULE_STATE.originalLines : null
+                };
+            },
+            save: function() {
+                try { localStorage.setItem(this.KEY, JSON.stringify(this.collect(true))); }
+                catch (e) { try { localStorage.setItem(this.KEY, JSON.stringify(this.collect(false))); } catch (e2) {} }
+            },
+            restore: function() {
+                let st = null;
+                try { st = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { st = null; }
+                if (!st || st.v !== 1) return false;
+                this.apply(st, !!st.playing);
+                UI.statusInfo.textContent = 'Продолжено с того же места';
+                return true;
+            },
+            // 35.45: поставить снимок целиком — и при открытии страницы, и для ★-сцены (у неё снимок в поле full).
+            // play — запускать ли плеер после.
+            apply: function(st, play) {
+                // Сначала текст: его загрузка сама выставляет «Экран» по числу строк, а снимок ниже вернёт свой.
+                if (Array.isArray(st.text) && st.text.length) {
+                    MODULE_STATE.originalLines = MODULE_DATA.normalizeLines(st.text);
+                    MODULE_DATA.precalculateLines(true);
+                } else if (!MODULE_DATA.loadFromLocalStorage()) SCENE_MANAGER.loadScene("sourcecode", true);
+                if (st.ui) SCENE_MANAGER.applyUi(st.ui);
+                if (st.speed) { UI.speedRange.value = st.speed; UI.speedVal.textContent = (1001 - UI.speedRange.value) + ' мс'; }
+                if (st.theme) UI.themeSelect.value = st.theme;
+                if (st.act) UI.activeColorPicker.value = st.act;
+                if (st.actA != null) UI.activeAlphaRange.value = st.actA;
+                if (st.stat) UI.staticColorPicker.value = st.stat;
+                if (st.statA != null) UI.staticAlphaRange.value = st.statA;
+                UI.echoModeCheck.checked = !!st.echo; UI.dualCoreCheck.checked = !!st.dual; UI.dualMaskCheck.checked = !!st.dualMask;
+                UI.freezeScrollCheck.checked = !!st.freezeY; UI.spin3dCheck.checked = !!st.spin3d;
+                if (UI.breathingZoomCheck) UI.breathingZoomCheck.checked = !!st.breathing;
+                UI.elkaCheck.checked = !!st.elka; UI.neonGlowCheck.checked = !!st.neon;
+                if (UI.rainbowTextCheck) UI.rainbowTextCheck.checked = !!st.rainbow;
+                MODULE_STATE.isFrameActive = !!st.frame; UI.toggleFrameBtn.classList.toggle('active-yellow', !!st.frame);
+                MODULE_STATE.isRadarActive = !!st.radar;
+                UI.toggleRadarBtn.classList.toggle('active-yellow', !!st.radar);
+                UI.toggleRadarBtn.style.background = st.radar ? '#00ff66' : '#cc33ff';
+                if (st.scene != null && Array.from(UI.sceneSelect.options).some(o => o.value === st.scene)) UI.sceneSelect.value = st.scene;
+                const n = MODULE_STATE.lines.length || 1;
+                MODULE_STATE.currentIndex = (((st.idx | 0) % n) + n) % n;
+                MODULE_STATE.offsetX = +st.ox || 0; MODULE_STATE.offsetY = +st.oy || 0;
+                MODULE_STATE.frozenIndex = null;   // ⚓ встаёт на кадр снимка
+                SCENE_MANAGER.syncLabels();
+                RENDERER.updateTimeline(); RENDERER.renderFrame();
+                if (play && !MODULE_STATE.isPlaying) PLAYER.start();
+            }
+        };
+
         window.onload = function() { 
             TABS.init();
             PLAYER_DOCK.init();
@@ -2755,6 +3005,9 @@ VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет 
             if (UI.canvas) UI.canvas.addEventListener('wheel', refit, { passive: true });
             EVENTS.init(); 
             const spVal = parseInt(UI.speedRange.value, 10); UI.speedVal.textContent = (1001 - spVal) + ' мс';
+            // 35.44: есть запомненное состояние — продолжаем с него, стартовый вид ниже не ставится
+            SESSION.bind();
+            if (SESSION.restore()) return;
             if(!MODULE_DATA.loadFromLocalStorage()) {
                 SCENE_MANAGER.loadScene("sourcecode", true);
             }
