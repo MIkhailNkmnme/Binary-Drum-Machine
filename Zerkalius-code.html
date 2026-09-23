@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Zerkalius Code (до 35.31 — Binary Drum Machine)
-VERSION: Pro 35.52 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопок ⇄ и ⚙ больше нет, 🔎 Поиск убран; пресеты — целые сцены, логическая операция работает; выравнивание по видимому краю; 13 шрифтов, свои, без интернета; ▦ скачки ⇄ 〰 плавно в плеере; файл можно бросить на холст; межсимвольный интервал; крайние панели прозрачные; защита от выделения; ⚓ заморозка — на месте, без прыжка в центр; подсчёт циклов Аниматрицы; ▶ — включить выбранную сцену; F5 не сбрасывает — всё как было; ★ — полный пресет вместе с текстом; ★-сцены файлом для другого компьютера; счётчик Аниматрицы — внизу, среди уведомлений; вкладки в одну строку, плавающие окна целиком на экране; журнал Аниматрицы в файл; ⤒ / Home — к началу текста; Аниматрица целыми циклами: ⏮ ⏭, PageUp/PageDown, плеер по циклам; счёт циклов переживает F5)
+VERSION: Pro 35.54 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопок ⇄ и ⚙ больше нет, 🔎 Поиск убран; пресеты — целые сцены, логическая операция работает; выравнивание по видимому краю; 13 шрифтов, свои, без интернета; ▦ скачки ⇄ 〰 плавно в плеере; файл можно бросить на холст; межсимвольный интервал; крайние панели прозрачные; защита от выделения; ⚓ заморозка — на месте, без прыжка в центр; подсчёт циклов Аниматрицы; ▶ — включить выбранную сцену; F5 не сбрасывает — всё как было; ★ — полный пресет вместе с текстом; ★-сцены файлом для другого компьютера; счётчик Аниматрицы — внизу, среди уведомлений; вкладки в одну строку, плавающие окна целиком на экране; журнал Аниматрицы в файл; ⤒ / Home — к началу текста; Аниматрица целыми циклами: ⏮ ⏭, PageUp/PageDown, плеер по циклам; счёт циклов переживает F5; 🎞 GIF цикла прямо из страницы; ◇ ромбическая сетка)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Code 35.52</title>
+    <title>Zerkalius Code 35.54</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -329,7 +329,7 @@ VERSION: Pro 35.52 (Стартовый вид: радар, рамка, цвет 
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3>Zerkalius Code 35.52</h3>
+                <h3>Zerkalius Code 35.54</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -512,6 +512,18 @@ VERSION: Pro 35.52 (Стартовый вид: радар, рамка, цвет 
                         <button id="animNextBtn" type="button" title="PageDown. Вперёд: волна сразу доходит до конца цикла" style="margin:0; flex:1; padding:2px 4px; font-size:10px; background:#2a1212; color:#ff8a8a; border:1px solid #ff3333; border-radius:3px; cursor:pointer;">⏭ Цикл</button>
                     </div>
                     <label class="checkbox-row" style="margin:0 0 3px 22px;"><input type="checkbox" id="animByPassCheck"><span style="color:#ff8a8a">Плеер — целыми циклами</span></label>
+                    <!-- 35.53: GIF цикла — собирается в самой странице, на копии текста -->
+                    <div class="compact-row" style="margin:0 0 3px 22px;">
+                        <select id="animGifStep" title="Через сколько проходов брать кадр для GIF" style="flex:1.4; margin:0; padding:1px 2px; font-size:10px; background:#1a1010; color:#ff8a8a; border:1px solid #ff3333;">
+                            <option value="1">кадр — каждый проход</option>
+                            <option value="2">каждый 2-й</option>
+                            <option value="4">каждый 4-й</option>
+                            <option value="8">каждый 8-й</option>
+                            <option value="16">каждый 16-й</option>
+                            <option value="64">каждый 64-й</option>
+                        </select>
+                        <button id="animGifBtn" type="button" title="Собрать GIF: волна гонится на копии текста (холст не трогается), кадр через выбранное число проходов, пока картина не вернётся к первому кадру (не больше 256 кадров)" style="margin:0; flex:1; padding:2px 4px; font-size:10px; background:#2a1212; color:#ff8a8a; border:1px solid #ff3333; border-radius:3px; cursor:pointer;">🎞 GIF</button>
+                    </div>
                     <label class="checkbox-row"><input type="checkbox" id="elkaCheck"><span><b style="color:#00ccff">Круговой сдвиг (Ёлка)</b></span></label>
                     <label class="checkbox-row"><input type="checkbox" id="cylinderCheck"><span>Круговой сдвиг (Цилиндр)</span></label>
                     <label class="checkbox-row"><input type="checkbox" id="findDiagonalsCheck"><span>Искать диагонали макросом</span></label>
@@ -554,6 +566,16 @@ VERSION: Pro 35.52 (Стартовый вид: радар, рамка, цвет 
                             <option value="'Share Tech Mono', monospace">Шрифт: Share Tech Mono (Терминал)</option>
                             <option value="'VT323', monospace">Шрифт: VT323 (Старый экран)</option>
                             <option value="'Press Start 2P', monospace">Шрифт: Press Start 2P (Пиксели)</option>
+                        </select>
+                    </div>
+                    <!-- 35.54: ромбическая сетка — диагонали под 45° от вершины текста, через каждые N символов -->
+                    <div class="compact-row" style="margin-top: 4px; align-items:center;">
+                        <label class="checkbox-row" style="margin:0; flex:1.4;" title="Диагональная сетка от вершины текста (середины первой строки): линии под 45° через каждые N символов. Показывает ромбы-«кадры» треугольника"><input type="checkbox" id="rhombGridCheck"><span style="color:#ffcc00">◇ Ромбическая сетка</span></label>
+                        <select id="rhombGridStep" title="Шаг сетки в символах" style="flex:1; margin:0;">
+                            <option value="8">шаг 8</option>
+                            <option value="16">шаг 16</option>
+                            <option value="32" selected>шаг 32</option>
+                            <option value="64">шаг 64</option>
                         </select>
                     </div>
                 </div>
@@ -635,9 +657,11 @@ VERSION: Pro 35.52 (Стартовый вид: радар, рамка, цвет 
                     текст повторит прежнее состояние — «🔁 цикл» и его период в проходах; «⏺ Журнал» под галкой пишет весь
                     текст при старте и после каждого прохода, с отпечатком, числом изменившихся символов и циклом,
                     «💾 Журнал в файл» отдаёт его файлом .txt — точнее любого видео; ⏮ / ⏭ Цикл (PageUp / PageDown) —
-                    назад и вперёд сразу целым проходом волны, «Плеер — целыми циклами» — ▶ идёт цикл за циклом),
+                    назад и вперёд сразу целым проходом волны, «Плеер — целыми циклами» — ▶ идёт цикл за циклом;
+                    🎞 GIF — анимация цикла прямо из страницы: кадр каждый 1-й, 2-й … 64-й проход, пока картина не
+                    вернётся к первому кадру; волна гонится на копии, холст не трогается),
                     Ёлка и Цилиндр (круговой сдвиг), поиск диагоналей, неоновое свечение.</dd>
-                <dt>👁 Вид</dt><dd>Масштаб шрифта, «Экран» — сколько строк видно, интервал между строками, межсимвольный интервал (0.5–3: доля ширины символа; меньше 1 — символы наезжают), шрифт (13 на выбор, в том числе Roboto Mono, JetBrains Mono, VT323, Press Start 2P; лежат в самом проекте, работают и без интернета).</dd>
+                <dt>👁 Вид</dt><dd>◇ Ромбическая сетка — диагонали под 45° от вершины текста через каждые 8 / 16 / 32 / 64 символа: на треугольниках Аниматрицы видно, что картина сложена из почти одинаковых ромбов-«кадров». Масштаб шрифта, «Экран» — сколько строк видно, интервал между строками, межсимвольный интервал (0.5–3: доля ширины символа; меньше 1 — символы наезжают), шрифт (13 на выбор, в том числе Roboto Mono, JetBrains Mono, VT323, Press Start 2P; лежат в самом проекте, работают и без интернета).</dd>
                 <dt>🎨 Цвет</dt><dd>🌈 радужный текст, 🎨 цвет как код (подсветка синтаксиса), пресеты палитры, цвет и яркость
                     активных (изменившихся) и фоновых символов.</dd>
             </dl>
@@ -1052,7 +1076,7 @@ VERSION: Pro 35.52 (Стартовый вид: радар, рамка, цвет 
             LOOK_IDS: ['echoModeCheck', 'dualCoreCheck', 'dualMaskCheck', 'freezeLayer1Check', 'dualCoreSpeedInput',
                 'speedMultInput', 'algorithmInput', 'freezeScrollCheck', 'spin3dCheck', 'breathingZoomCheck',
                 'hideStaticCheck', 'deltaModeSelect', 'logicalOpSelect', 'zerkaliusAnimCheck', 'elkaCheck',
-                'cylinderCheck', 'findDiagonalsCheck', 'neonGlowCheck', 'animByPassCheck', 'fontSizeRange', 'lineHeightRange', 'charSpacingRange',
+                'cylinderCheck', 'findDiagonalsCheck', 'neonGlowCheck', 'animByPassCheck', 'rhombGridCheck', 'rhombGridStep', 'fontSizeRange', 'lineHeightRange', 'charSpacingRange',
                 'fontSelect', 'rainbowTextCheck', 'syntaxColorCheck', 'trimZerosCheck'],
             resetLook: function() {
                 this.LOOK_IDS.forEach(id => {
@@ -1326,6 +1350,56 @@ VERSION: Pro 35.52 (Стартовый вид: радар, рамка, цвет 
                 if(totalCount === 0) return "N/A";
                 let percent = Math.round((symCount / totalCount) * 100);
                 return percent === 100 ? "Симметрия: 100% ⚖️" : `Асимметрия (${percent}%) 📐`;
+            }
+        };
+
+        /* 35.53: GIF-КОДИРОВЩИК — свой, без библиотек: страница работает и с диска, без интернета, а внешний
+           файл пришлось бы возить рядом. Палитра на 4 цвета (фон, «0», «1», подпись), сжатие LZW — как в
+           стандарте GIF89a; порядок роста размера кода — как у проверенного omggif (иначе картинку не прочтёт
+           ни один просмотрщик). Кадры — массивы номеров цвета, по пикселю; delay — в сотых долях секунды. */
+        const GIFENC = {
+            encode: function(frames, w, h, palette, delay) {
+                const out = [];
+                const w16 = v => { out.push(v & 255, (v >> 8) & 255); };
+                const str = t => { for (let i = 0; i < t.length; i++) out.push(t.charCodeAt(i)); };
+                str('GIF89a'); w16(w); w16(h);
+                out.push(0x80 | (1 << 4) | 1, 0, 0);   // глобальная палитра, 4 цвета
+                for (let i = 0; i < 4; i++) { const c = palette[i] || [0, 0, 0]; out.push(c[0], c[1], c[2]); }
+                out.push(0x21, 0xFF, 0x0B); str('NETSCAPE2.0'); out.push(0x03, 0x01, 0, 0, 0);   // по кругу без конца
+                for (const fr of frames) {
+                    out.push(0x21, 0xF9, 0x04, 0x04); w16(delay); out.push(0, 0);
+                    out.push(0x2C); w16(0); w16(0); w16(w); w16(h); out.push(0);
+                    out.push(2);   // минимальный размер кода LZW для 4 цветов
+                    const data = this.lzw(fr, 2);
+                    for (let i = 0; i < data.length; i += 255) {
+                        const n = Math.min(255, data.length - i);
+                        out.push(n);
+                        for (let k = 0; k < n; k++) out.push(data[i + k]);
+                    }
+                    out.push(0);
+                }
+                out.push(0x3B);
+                return new Uint8Array(out);
+            },
+            lzw: function(ix, minSize) {
+                const clear = 1 << minSize, eoi = clear + 1, bytes = [];
+                const tab = this._tab || (this._tab = new Int32Array(1 << 20));   // ключ: (префикс << 8) | цвет
+                tab.fill(-1);
+                let size = minSize + 1, next = eoi + 1, cur = 0, bits = 0;
+                const emit = c => { cur |= c << bits; bits += size; while (bits >= 8) { bytes.push(cur & 255); cur >>>= 8; bits -= 8; } };
+                emit(clear);
+                let pre = ix[0];
+                for (let i = 1; i < ix.length; i++) {
+                    const k = ix[i], key = (pre << 8) | k, code = tab[key];
+                    if (code !== -1) { pre = code; continue; }
+                    emit(pre);
+                    if (next === 4096) { emit(clear); tab.fill(-1); next = eoi + 1; size = minSize + 1; }
+                    else { if (next >= (1 << size)) size++; tab[key] = next++; }
+                    pre = k;
+                }
+                emit(pre); emit(eoi);
+                if (bits > 0) bytes.push(cur & 255);
+                return bytes;
             }
         };
 
@@ -1679,6 +1753,61 @@ VERSION: Pro 35.52 (Стартовый вид: радар, рамка, цвет 
                 if (st.animCycle && st.animCycle.from + st.animCycle.period > snap.p) st.animCycle = null;
                 this.precalculateLines(false); this.animInfoUpd();
                 UI.statusInfo.textContent = `Аниматрица: назад, к циклу ${snap.p}`;
+            },
+            /* 35.53: 🎞 GIF (запрос пользователя: «это отдельными гифками собирать бы прямо в коде»). Волна гонится
+               на КОПИИ текста тем же правилом, что runAnimatrixGlobal: холст, счёт циклов и журнал не трогаются.
+               Если волна сейчас посреди цикла, копия сперва доходит до его конца — кадры стоят на границах
+               циклов. Дальше кадр каждые step проходов, пока картина не вернётся к первому кадру (круг замкнулся)
+               или не наберётся 256 кадров. Шаг 1 — весь цикл и «густо–редко» через проход, 8 — родственники
+               через 8, 64 — вложенный треугольник (см. словарь борт-журнала: «Период — степень двойки»). */
+            animGif: function(stepPasses) {
+                const src = MODULE_STATE.originalLines, H = src.length;
+                if (H < 2) { UI.statusInfo.textContent = 'GIF: на холсте нет текста'; return; }
+                const W = src.reduce((m, l) => Math.max(m, l.text.length), 0);
+                const rows = src.map(l => { const a = new Uint16Array(W).fill(32); for (let i = 0; i < l.text.length; i++) a[i] = l.text.charCodeAt(i); return a; });
+                const stepRow = r => {
+                    const a = rows[r], b = rows[r + 1];
+                    for (let k = 0; k < W; k++) { const c1 = a[k], c2 = b[k]; b[k] = c1 === c2 ? 32 : (c1 !== 32 ? c1 : c2); }
+                };
+                const fullPass = () => { for (let r = 0; r < H - 1; r++) stepRow(r); };
+                const hash = () => { let h = 2166136261; for (const a of rows) for (let k = 0; k < W; k++) { h ^= a[k]; h = Math.imul(h, 16777619); } return h >>> 0; };
+                let pass = MODULE_STATE.animPasses || 0;
+                const r0 = MODULE_STATE.animatrixRow || 0;
+                if (r0 > 0 && r0 < H - 1) { for (let r = r0; r < H - 1; r++) stepRow(r); pass++; }
+                const s = Math.max(1, Math.min(4, Math.floor(900 / W), Math.floor(640 / H)));
+                const capH = 18, gw = W * s, gh = H * s + capH;
+                const cv = document.createElement('canvas'); cv.width = gw; cv.height = capH;
+                const cx = cv.getContext('2d');
+                const first = hash(), p0 = pass, frames = [];
+                let closed = false;
+                for (let f = 0; f < 256; f++) {
+                    const ix = new Uint8Array(gw * gh);
+                    // подпись: рисуется холстом, а в кадр идёт по яркости — жёлтым (3) или фоном (0)
+                    cx.fillStyle = '#000'; cx.fillRect(0, 0, gw, capH);
+                    cx.fillStyle = '#ffcc00'; cx.font = '12px Consolas, monospace'; cx.textBaseline = 'middle';
+                    cx.fillText('проход ' + pass + (stepPasses > 1 ? ' · шаг ' + stepPasses : '') + ' · кадр ' + (f + 1), 4, capH / 2);
+                    const cd = cx.getImageData(0, 0, gw, capH).data;
+                    for (let i = 0, j = 0; i < gw * capH; i++, j += 4) if (cd[j] + cd[j + 1] > 220) ix[i] = 3;
+                    for (let y = 0; y < H; y++) {
+                        const a = rows[y];
+                        for (let x = 0; x < W; x++) {
+                            const c = a[x]; if (c === 32) continue;
+                            const v = c === 48 ? 1 : 2;   // «0» — синий, всё прочее непробельное — светлое
+                            for (let dy = 0; dy < s; dy++) { const base = (capH + y * s + dy) * gw + x * s; for (let dx = 0; dx < s; dx++) ix[base + dx] = v; }
+                        }
+                    }
+                    frames.push(ix);
+                    for (let q = 0; q < stepPasses; q++) fullPass();
+                    pass += stepPasses;
+                    if (hash() === first) { closed = true; break; }
+                }
+                const gif = GIFENC.encode(frames, gw, gh, [[0, 0, 0], [60, 130, 255], [215, 225, 235], [255, 204, 0]], stepPasses === 1 ? 12 : 35);
+                const name = 'Zerkalius-аниматрица-шаг' + stepPasses + '-проходы-' + p0 + '-' + (pass - stepPasses) + '.gif';
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([gif], { type: 'image/gif' }));
+                a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+                UI.statusInfo.textContent = `GIF: ${frames.length} кадров, шаг ${stepPasses}` +
+                    (closed ? ' — круг замкнулся' : ' — до повтора не дошли (предел 256 кадров)') + ` · ${name}`;
             },
             animPassDone: function() {
                 const st = MODULE_STATE, h = this.animHash();
@@ -2362,6 +2491,7 @@ VERSION: Pro 35.52 (Стартовый вид: радар, рамка, цвет 
                 const fontBold = `bold ${fontSize}px ${selectedFont}`;
                 let lastFont = ""; let lastFillStyle = ""; let lastShadowBlur = -1; let lastShadowColor = "";
 
+                const rowX = [];   // 35.54: x начала каждой строки — для ромбической сетки
                 for (let i = 0; i < visibleHeight; i++) {
                     if (!visibleLines[i]) continue;
                     const lineData = visibleLines[i].data; const dualData = visibleLines[i].dualData;
@@ -2390,6 +2520,7 @@ VERSION: Pro 35.52 (Стартовый вид: радар, рамка, цвет 
                         }
                     }
                     
+                    rowX[i] = textStartX;   // 35.54
                     const y = startY + (i + glide) * lineSpacing;   // 35.38: + glide — плавно
                     if (y < -lineSpacing || y > height + lineSpacing) continue; 
 
@@ -2479,6 +2610,47 @@ VERSION: Pro 35.52 (Стартовый вид: радар, рамка, цвет 
                         }
                         
                         ctx.fillText(finalChar, x, y);
+                    }
+                }
+
+                /* 35.54: РОМБИЧЕСКАЯ СЕТКА (запрос пользователя, «кадры» ромбами на треугольнике Аниматрицы).
+                   Треугольник почти точно повторяется при сдвиге по диагонали на 16 строк вниз и 16 символов вбок
+                   (сцена «1», проход 155: 89,5% клеток; на 32 — 90%, на 8 и 24 — около 70%, мимо на символ — 59%,
+                   уровень случайности). Две причины, обе — степени двойки: Правило 90 ведёт узор ровно на символ за
+                   строку, а треугольник Серпинского сложен из своих копий, сдвинутых по диагонали. Сетка — два
+                   семейства прямых через вершину текста (середину непробельной части первой строки): «столбец −
+                   строка» и «столбец + строка» кратны шагу; ромб выходит высотой в шаг, а соседние сдвинуты на
+                   полшага — поэтому решётка сдвигов (16, ±16) это шаг 32, он и стоит по умолчанию. Рисуется только внутри конуса от вершины, по символам
+                   (начало каждой строки — rowX, выравнивание учтено), и рвётся на стыке строк по кругу. */
+                if (!spin3d && document.getElementById('rhombGridCheck')?.checked) {
+                    const S = parseInt(document.getElementById('rhombGridStep')?.value || '32', 10) || 32;
+                    const t0 = (MODULE_STATE.lines[0] && MODULE_STATE.lines[0].text) || '';
+                    const a0 = t0.search(/\S/);
+                    if (a0 >= 0) {
+                        let b0 = t0.length - 1; while (b0 > a0 && t0[b0] === ' ') b0--;
+                        const c0 = (a0 + b0) / 2;
+                        ctx.save(); ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+                        ctx.strokeStyle = 'rgba(255, 204, 0, 0.6)'; ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        for (let i = 0; i < visibleHeight - 1; i++) {
+                            const va = visibleLines[i], vb = visibleLines[i + 1];
+                            if (!va || !vb || rowX[i] === undefined || rowX[i + 1] === undefined) continue;
+                            const La = va.globalIndex, Lb = vb.globalIndex;
+                            if (Lb !== La + 1) continue;   // стык по кругу — линию рвём
+                            const ya = startY + (i + glide) * lineSpacing, yb = ya + lineSpacing;
+                            if (yb < 0 || ya > height) continue;
+                            const w = Math.max(va.data.text.length, vb.data.text.length);
+                            for (const dir of [1, -1]) {
+                                const base = c0 + dir * La;
+                                for (let m = Math.ceil(-base / S); m <= Math.floor((w - 1 - base) / S); m++) {
+                                    const col = base + m * S;
+                                    if (Math.abs(col - c0) > La || Math.abs(col + dir - c0) > Lb) continue;
+                                    ctx.moveTo(rowX[i] + (col + 0.5) * charWidth, ya);
+                                    ctx.lineTo(rowX[i + 1] + (col + dir + 0.5) * charWidth, yb);
+                                }
+                            }
+                        }
+                        ctx.stroke(); ctx.restore();
                     }
                 }
             }
@@ -2819,6 +2991,7 @@ VERSION: Pro 35.52 (Стартовый вид: радар, рамка, цвет 
                 const rerenderEvents = [
                     UI.cylinderCheck, UI.elkaCheck, UI.hideStaticCheck, UI.deltaModeSelect, UI.neonGlowCheck, 
                     UI.findDiagonalsCheck, UI.logicalOpSelect, UI.dualCoreCheck, UI.dualCoreSpeedInput, UI.dualMaskCheck, UI.freezeLayer1Check,
+                    document.getElementById('rhombGridCheck'), document.getElementById('rhombGridStep'),   // 35.54
                     UI.activeColorPicker, UI.activeAlphaRange, UI.staticColorPicker, UI.staticAlphaRange, UI.fontSelect, UI.freezeScrollCheck, UI.spin3dCheck, UI.breathingZoomCheck, UI.autoPilotCheck, UI.speedMultInput, UI.rainbowTextCheck, UI.syntaxColorCheck
                 ];
                 const scheduleRender = () => (window.__zerkScheduleRender || (() => RENDERER.renderFrame()))();
@@ -2837,6 +3010,12 @@ VERSION: Pro 35.52 (Стартовый вид: радар, рамка, цвет 
                 const abB = document.getElementById('animBackBtn'), anB = document.getElementById('animNextBtn');
                 if (abB) abB.addEventListener('click', cycBack);
                 if (anB) anB.addEventListener('click', cycNext);
+                // 35.53: 🎞 GIF — сборка тяжёлая (секунды на большом тексте), поэтому сперва сообщение, потом работа
+                const gifB = document.getElementById('animGifBtn'), gifS = document.getElementById('animGifStep');
+                if (gifB) gifB.addEventListener('click', () => {
+                    UI.statusInfo.textContent = 'GIF собирается…';
+                    setTimeout(() => MODULE_DATA.animGif(parseInt(gifS ? gifS.value : '1', 10) || 1), 30);
+                });
                 document.addEventListener('keydown', e => {
                     if ((e.key !== 'PageDown' && e.key !== 'PageUp') || e.ctrlKey || e.altKey || e.metaKey) return;
                     const t = e.target && e.target.tagName;
