@@ -1,13 +1,14 @@
-<!-- Zerkalius Обои — v0.004. Живой фон хаба (index.html подключает эту страницу в iframe).
+<!-- Zerkalius Обои — v0.005. Живой фон хаба (index.html подключает эту страницу в iframe).
      Код обоев — копия «Zerkalius Серпинский» из _lively (движок _js/main.js), значения — в _js/nastroyka.js.
      v0.002: надпись ниже (blockY 13 → 18). v0.003: ещё ниже и мельче (blockY 24, titleSize 105).
-     v0.004: служебная папка js\ переименована в _js\ — по стандарту имён сайта. -->
+     v0.004: служебная папка js\ переименована в _js\ — по стандарту имён сайта.
+     v0.005: значок «в Хаб» — только когда страница открыта сама, не фоном хаба. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <link rel="icon" href="data:,">
-<title>Zerkalius Обои — v0.004</title>
+<title>Zerkalius Обои — v0.005</title>
 <style>
   html,body{margin:0;height:100%;background:#000;overflow:hidden}
   canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -31,5 +32,9 @@
 <script src="_js/fixed.js"></script>
 <script src="_js/main.js"></script>
 <script src="_js/nastroyka.js"></script>
+<script>
+// Значок «в Хаб» нужен, только когда обои открыты сами. Фоном хаба (в iframe) он лишний: хаб и так здесь.
+if(window.top===window){ var hs=document.createElement('script'); hs.src='../_js/hub-link.js'; document.body.appendChild(hs); }
+</script>
 </body>
 </html>

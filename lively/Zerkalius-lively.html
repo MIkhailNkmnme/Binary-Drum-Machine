@@ -1,0 +1,139 @@
+<!-- Zerkalius Lively — v0.010. Все сцены обоев Lively в одной странице: Холм, Серпинский, Радар, Воронка.
+     Движок — копия _lively\Zerkalius\js (обои 1.9), панель — из «Настройка.html».
+     Звук: трек с диска или звук ПК (_js/zvuk.js → livelyAudioListener). Запись видео — ../_js/recorder.js,
+     кадр сводит _js/zvuk.js (часы, дождь, контраст и полосы экрана тоже попадают в запись).
+     v0.002: убран preserveDrawingBuffer (тормозил); кадр для записи снимается сразу после отрисовки WebGL.
+     v0.003: холм — потолок 120 тыс. символов; старая сетка освобождается; пересборка после отпускания ползунка.
+     v0.004: пустые строки — надписи нет (раньше подставлялось «Zerkalius»); панель прячется колесом мыши.
+     v0.005: компактная панель со сворачиваемыми группами; «А» (авто) у каждого ползунка; строка 4 — название трека.
+     v0.006: кадр «телефон 9:16» — сцена в вертикальной рамке по центру, запись пишет только её.
+     v0.007: свой цвет дождя (галочка и цвет в группе «Дождь»).
+     v0.008: «Мои наборы» — сохранить в браузере, загрузить, удалить, выгрузить в файл и загрузить из файла.
+     v0.009: строка 4 — своё поле; пусто — название трека (файл или вкладка звука ПК), написанное в поле главнее.
+     v0.010: в «Надписи» подзаголовки Строка 1…4 / Вся надпись / Часы, подписи без «строка N:». -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="data:,">
+<title>Zerkalius Lively — v0.010</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:Segoe UI,Arial,sans-serif}
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #rain{z-index:1} #hill{z-index:2} #funnel{z-index:2} #halo{z-index:3} #title{z-index:4}
+  #clock{position:absolute;left:0;right:0;z-index:5;text-align:center;font-family:Consolas,monospace;font-weight:bold;letter-spacing:.08em}
+  #scan{position:absolute;inset:0;z-index:6;pointer-events:none;
+        background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0 2px,rgba(0,0,0,.33) 2px 3px),
+                   radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.75) 100%)}
+
+  #panel{position:absolute;top:0;right:0;bottom:0;width:330px;z-index:10;background:rgba(16,16,16,.93);
+         color:#e0e0e0;font-size:11px;display:flex;flex-direction:column;box-shadow:-6px 0 18px rgba(0,0,0,.6);
+         transition:transform .25s}
+  #panel.hidden{transform:translateX(324px)}
+  #panelHead{padding:6px 8px;border-bottom:1px solid #333;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+  #panelHead b{font-size:12px;margin-right:auto}
+  #panelBody{overflow:auto;padding:0 8px 56px}
+  button{background:#2a2a2a;color:#eee;border:1px solid #3d3d3d;border-radius:3px;padding:2px 6px;font-size:11px;cursor:pointer}
+  button:hover{background:#343434}
+  button:disabled{opacity:.4;cursor:default}
+  button.small{margin:4px 0 2px;color:#9a9a9a}
+  .btnrow{display:flex;gap:3px;margin:3px 0}
+  .btnrow button{flex:1;padding:2px 3px}
+  #hint{color:#7a7a7a;font-size:10px;line-height:1.35;padding:4px 8px 6px;border-bottom:1px solid #333}
+
+  /* группы: заголовок сворачивает */
+  .grp{margin:8px 0 2px;padding:3px 0 3px 12px;border-bottom:1px solid #333;color:#8fe3b4;font-weight:600;
+       letter-spacing:.06em;font-size:10.5px;cursor:pointer;user-select:none;position:relative}
+  .grp::before{content:'▾';position:absolute;left:0;top:2px;color:#5a8f70}
+  .sec.closed .grp::before{content:'▸'}
+  .sec.closed .gbody{display:none}
+  .grp:hover{color:#bff5d6}
+  .sub{margin:6px 0 1px;padding-top:3px;border-top:1px dotted #2e2e2e;color:#6fae8a;font-size:10px;letter-spacing:.04em}
+  .gbody>.sub:first-child{border-top:0;margin-top:2px}
+
+  /* строки: подпись | ползунок | число | «А» — в одну линию */
+  .r{display:grid;align-items:center;column-gap:4px;min-height:20px;margin:1px 0}
+  .r.s{grid-template-columns:112px 1fr 30px 22px}
+  .r.o{grid-template-columns:112px 1fr}
+  .r.c{display:flex;gap:5px;color:#bdbdbd;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lb{color:#b0b0b0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .r .zerk-range-wrap{width:auto !important;min-width:0}
+  input[type=range]{width:100%;min-width:0;margin:0;height:14px;accent-color:#00c46a}
+  input[type=checkbox]{margin:0;width:12px;height:12px;accent-color:#00c46a}
+  input[type=text],select{width:100%;min-width:0;box-sizing:border-box;background:#222;color:#eee;border:1px solid #3a3a3a;border-radius:3px;padding:1px 4px;font-size:11px;height:19px}
+  input[type=color]{width:40px;height:18px;padding:0;background:#222;border:1px solid #3a3a3a;border-radius:3px}
+  .num{text-align:right;color:#8fe3b4;font-variant-numeric:tabular-nums}
+  .au{display:flex;align-items:center;gap:1px;color:#777;font-size:10px;cursor:pointer}
+  .au:has(input:checked){color:#8fe3b4}
+
+  #audioBox{padding:6px 8px;border-bottom:1px solid #333;background:rgba(0,40,20,.25)}
+  #audioBox .ttl{color:#8fe3b4;font-weight:600;letter-spacing:.06em;font-size:10.5px;margin-bottom:4px}
+  #audioBox .btns{display:flex;gap:4px}
+  #audioBox .btns button{flex:1}
+  #btnTrack{border-color:#1f6b45;color:#8fe3b4}
+  #btnSys{border-color:#6b3f8a;color:#d7a6ff}
+  #btnSys.on{background:#3a1f4d;color:#fff}
+  #btnPlay{flex:0 0 32px !important}
+  #trackName{color:#bdbdbd;margin:4px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #audioBox .line{display:flex;align-items:center;gap:6px;color:#9a9a9a}
+  #audioBox .line label{display:flex;align-items:center;gap:3px;white-space:nowrap}
+  #audioNote{color:#ffcc66;min-height:12px}
+  #audioBox .line select{width:auto;flex:1}
+
+  /* телефон 9:16: сцена — в вертикальной рамке по центру */
+  body.phone canvas, body.phone #scan, body.phone #clock{left:calc(50% - var(--pw)/2) !important;right:auto !important;width:var(--pw) !important}
+  #phoneFrame{display:none;position:absolute;top:0;bottom:0;left:calc(50% - var(--pw)/2);width:var(--pw);z-index:7;
+              pointer-events:none;outline:1px dashed rgba(143,227,180,.55);outline-offset:0}
+  #phoneFrame span{position:absolute;top:6px;left:8px;font:10px Consolas,monospace;color:rgba(143,227,180,.7)}
+  body.phone #phoneFrame{display:block}
+</style>
+</head>
+<body>
+<canvas id="rain"></canvas>
+<canvas id="hill"></canvas>
+<canvas id="funnel" style="display:none"></canvas>
+<canvas id="halo"></canvas>
+<canvas id="title"></canvas>
+<div id="clock"></div>
+<div id="scan"></div>
+<div id="phoneFrame"><span>9:16</span></div>
+<audio id="bgAudio" crossorigin="anonymous"></audio>
+
+<div id="panel">
+  <div id="panelHead">
+    <b>Zerkalius Lively <span style="color:#8fe3b4;font-weight:normal">v0.010</span></b>
+    <button id="btnHide" title="Спрятать панель (клавиша P)">скрыть</button>
+    <button id="btnSave" title="Скачать LivelyProperties.json с этими значениями — для обоев в Lively">в Lively</button>
+    <button id="btnCopy">копировать</button>
+    <button id="btnReset">сбросить</button>
+  </div>
+  <div id="audioBox">
+    <div class="ttl">ЗВУК И ЗАПИСЬ</div>
+    <div class="btns">
+      <button id="btnTrack" title="Загрузить аудиофайл с компьютера">🎵 Трек</button>
+      <button id="btnSys" title="Захват звука ПК: браузер попросит выбрать экран или вкладку — поставьте галочку «Предоставить доступ к аудио системы»">🎤 Звук ПК</button>
+      <button id="btnPlay" title="Пуск / пауза трека (пробел)">▶</button>
+    </div>
+    <input type="file" id="audioLoader" accept="audio/*" style="display:none">
+    <div id="trackName">звук не подключён</div>
+    <div class="line">
+      громкость <input type="range" id="vol" min="0" max="100" value="80">
+      <label class="auto"><input type="checkbox" id="loop" checked>по кругу</label>
+    </div>
+    <div class="line">кадр <select id="frameMode" title="Телефон 9:16 — сцена перестраивается под вертикальную рамку, запись пишет только её"><option value="0">весь экран</option><option value="1">телефон 9:16</option></select></div>
+    <div id="audioNote"></div>
+  </div>
+  <div id="hint">Заголовок группы — свернуть. «А» у ползунка — значение само гуляет. ⏺ или R — запись видео (только обои). Колесо над обоями — спрятать/показать панель, P — то же, H — в Хаб, пробел — трек.</div>
+  <div id="panelBody"></div>
+</div>
+
+<script src="_js/three.min.js"></script>
+<script src="_js/props.js?v=010"></script>
+<script src="_js/main.js?v=010"></script>
+<script src="_js/settings.js?v=010"></script>
+<script src="../_js/recorder.js"></script>
+<script src="_js/zvuk.js?v=010"></script>
+<script src="../_js/hub-link.js"></script>
+<script src="../_js/slider-arrows.js"></script>
+</body>
+</html>
