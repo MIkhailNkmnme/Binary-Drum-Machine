@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Zerkalius Code (до 35.31 — Binary Drum Machine)
-VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопок ⇄ и ⚙ больше нет, 🔎 Поиск убран; пресеты — целые сцены, логическая операция работает; выравнивание по видимому краю; 13 шрифтов, свои, без интернета; ▦ скачки ⇄ 〰 плавно в плеере; файл можно бросить на холст; межсимвольный интервал; крайние панели прозрачные; защита от выделения; ⚓ заморозка — на месте, без прыжка в центр; подсчёт циклов Аниматрицы; ▶ — включить выбранную сцену; F5 не сбрасывает — всё как было; ★ — полный пресет вместе с текстом; ★-сцены файлом для другого компьютера; счётчик Аниматрицы — внизу, среди уведомлений)
+VERSION: Pro 35.52 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопок ⇄ и ⚙ больше нет, 🔎 Поиск убран; пресеты — целые сцены, логическая операция работает; выравнивание по видимому краю; 13 шрифтов, свои, без интернета; ▦ скачки ⇄ 〰 плавно в плеере; файл можно бросить на холст; межсимвольный интервал; крайние панели прозрачные; защита от выделения; ⚓ заморозка — на месте, без прыжка в центр; подсчёт циклов Аниматрицы; ▶ — включить выбранную сцену; F5 не сбрасывает — всё как было; ★ — полный пресет вместе с текстом; ★-сцены файлом для другого компьютера; счётчик Аниматрицы — внизу, среди уведомлений; вкладки в одну строку, плавающие окна целиком на экране; журнал Аниматрицы в файл; ⤒ / Home — к началу текста; Аниматрица целыми циклами: ⏮ ⏭, PageUp/PageDown, плеер по циклам; счёт циклов переживает F5)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Code 35.47</title>
+    <title>Zerkalius Code 35.52</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -56,6 +56,7 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
         #playBtn.playing { animation: playBlink 1s ease-in-out infinite; }
         #stopBtn { flex: 1.2; background: #ff3333; color: #fff; } #stopBtn:hover { background: #cc0000; }
         #prevBtn, #nextBtn { flex: 1; background: #202020; color: #fff; border: 1px solid #333; font-size: 14px; }
+        #topBtn { flex: 1; background: #202020; color: #ffcc00; border: 1px solid #333; font-size: 15px; }   /* 35.50 */
         /* 35.12: 🔃 и 🛰️ на плеере. 35.20: это ДУБЛИ — кнопки у холста остаются на месте */
         .player-buttons .pl-extra { flex: 0 0 30px; height: 30px; border-radius: 50%; background: #333; color: #fff;
             font-size: 14px; box-shadow: 0 0 5px rgba(0,0,0,.5); }
@@ -274,7 +275,7 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
         .controls .tab-sec:hover { border-color: #22d3ee; }
         .controls .tab-sec.fixed-player { border-top: 2px solid #00ff66; }
         #menuTabs { position: fixed; top: 8px; left: 50%; transform: translateX(-50%); z-index: 70;
-            display: flex; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 720px); min-width: 120px;
+            display: flex; flex-wrap: nowrap; justify-content: center; max-width: calc(100vw - 624px); min-width: 120px;
             border: 1px solid #22d3ee; border-radius: 3px; overflow: hidden; background: #101010;
             box-shadow: 0 0 12px rgba(0,0,0,.8); }
         #menuTabs button { background: #101010; color: #888; border: none; border-right: 1px solid #222;
@@ -283,6 +284,10 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
         #menuTabs button:hover { color: #fff; background: #1a1a1a; }
         #menuTabs button.on { color: #000; background: #22d3ee; font-weight: bold; }
         #menuTabs button.help { color: #ffcc00; }
+        /* 35.48: полоса не переносится на вторую строку (там «❓ Помощь» съезжала вниз, когда окно у́же — например,
+           с открытой боковой панелью браузера). Вкладки сжимаются в одну строку, длинные подписи обрезаются
+           многоточием; полное имя — во всплывающей подсказке. Места под полосу — всё между двумя панелями. */
+        #menuTabs button { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
         body.zen-mode #menuTabs { display: none; }
         #screenContainer #recTimer { top: 40px; }
         /* 35.8: окно ❓ Помощь */
@@ -324,7 +329,7 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3>Zerkalius Code 35.47</h3>
+                <h3>Zerkalius Code 35.52</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -430,6 +435,8 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
                     <button id="prevBtn" title="Шаг назад">◀</button>
                     <button id="playBtn" title="Старт / Пауза">▶</button>
                     <button id="stopBtn" title="Стоп и сброс">■</button>
+                    <!-- 35.50: ⤒ — к началу: пауза, первая строка текста у верхнего края экрана (клавиша Home) -->
+                    <button id="topBtn" title="К началу (Home): пауза, первая строка текста — у верхнего края экрана">⤒</button>
                     <button id="nextBtn" title="Шаг вперед">▶▶</button>
                     <!-- 35.38: скачки ⇄ плавно (была кнопкой ▦ у холста, 35.33) -->
                     <button id="snapBtn" title="Скачки: строки прыгают по строкам сетки, перетаскивание — по клеткам. Щёлкните — плавно">▦</button>
@@ -494,6 +501,17 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
 
                 <div class="control-group">
                     <label class="checkbox-row"><input type="checkbox" id="zerkaliusAnimCheck"><span><b style="color:#ff3333">Аниматрица (Волна Сверху-Вниз)</b></span></label>
+                    <!-- 35.49: журнал Аниматрицы — весь текст после каждого прохода волны, в файл .txt -->
+                    <div class="compact-row" style="margin:0 0 3px 22px;">
+                        <button id="animLogBtn" type="button" title="Начать / остановить запись журнала: весь текст в момент старта и после каждого прохода волны" style="margin:0; flex:1; padding:2px 4px; font-size:10px; background:#2a1212; color:#ff8a8a; border:1px solid #ff3333; border-radius:3px; cursor:pointer;">⏺ Журнал</button>
+                        <button id="animLogSaveBtn" type="button" title="Скачать журнал файлом .txt (можно и во время записи)" style="margin:0; flex:1; padding:2px 4px; font-size:10px; background:#2a1212; color:#ff8a8a; border:1px solid #ff3333; border-radius:3px; cursor:pointer;">💾 Журнал в файл</button>
+                    </div>
+                    <!-- 35.51: целыми циклами (проходами волны) — назад / вперёд и плеер по циклам -->
+                    <div class="compact-row" style="margin:0 0 3px 22px;">
+                        <button id="animBackBtn" type="button" title="PageUp. Назад: к началу текущего цикла, а с границы — к предыдущему" style="margin:0; flex:1; padding:2px 4px; font-size:10px; background:#2a1212; color:#ff8a8a; border:1px solid #ff3333; border-radius:3px; cursor:pointer;">⏮ Цикл</button>
+                        <button id="animNextBtn" type="button" title="PageDown. Вперёд: волна сразу доходит до конца цикла" style="margin:0; flex:1; padding:2px 4px; font-size:10px; background:#2a1212; color:#ff8a8a; border:1px solid #ff3333; border-radius:3px; cursor:pointer;">⏭ Цикл</button>
+                    </div>
+                    <label class="checkbox-row" style="margin:0 0 3px 22px;"><input type="checkbox" id="animByPassCheck"><span style="color:#ff8a8a">Плеер — целыми циклами</span></label>
                     <label class="checkbox-row"><input type="checkbox" id="elkaCheck"><span><b style="color:#00ccff">Круговой сдвиг (Ёлка)</b></span></label>
                     <label class="checkbox-row"><input type="checkbox" id="cylinderCheck"><span>Круговой сдвиг (Цилиндр)</span></label>
                     <label class="checkbox-row"><input type="checkbox" id="findDiagonalsCheck"><span>Искать диагонали макросом</span></label>
@@ -608,13 +626,16 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
                     Орбитальный конус, Диагональная сетка), сид и число строк → «Создать фигуру». «Вживить в центр» — фигура
                     встаёт внутрь текущей матрицы, а не вместо неё.</dd>
                 <dt>🧬 Слои</dt><dd>Dual Core: второй слой поверх первого со своей скоростью; XOR-линза; ⚓ заморозить первый слой.</dd>
-                <dt>▶ Плеер</dt><dd>◀ шаг назад, ▶ / ⏸ старт-пауза (мигает, пока идёт), ■ стоп и сброс, ▶▶ шаг вперёд.
+                <dt>▶ Плеер</dt><dd>◀ шаг назад, ▶ / ⏸ старт-пауза (мигает, пока идёт), ■ стоп и сброс (первая строка — в центре экрана), ⤒ или клавиша Home — к началу: пауза, первая строка текста у верхнего края экрана, ▶▶ шаг вперёд.
                     «Кадр» — перемотка. Скорость: красный ползунок — сколько шагов за тик (x1…x100), синий — пауза между тиками (правее — быстрее).</dd>
                 <dt>↕ Движение</dt><dd>Алгоритм Y-сдвига (например «1, 1, 2, -3»), заморозить вертикальную прокрутку, 3D-вращение, 🫁 дыхание (авто-масштаб).</dd>
                 <dt>Δ Логика</dt><dd>«Скрыть статику» — гасит символы, которые не изменились относительно соседа (сверху, по диагоналям
                     или по Серпинскому). Логическая операция над строкой: NOT, XOR со сдвигом, зеркало. Аниматрица (волна;
                     внизу холста, над строкой сообщений, — сколько раз волна прошла текст и на какой она строке, а когда
-                    текст повторит прежнее состояние — «🔁 цикл» и его период в проходах),
+                    текст повторит прежнее состояние — «🔁 цикл» и его период в проходах; «⏺ Журнал» под галкой пишет весь
+                    текст при старте и после каждого прохода, с отпечатком, числом изменившихся символов и циклом,
+                    «💾 Журнал в файл» отдаёт его файлом .txt — точнее любого видео; ⏮ / ⏭ Цикл (PageUp / PageDown) —
+                    назад и вперёд сразу целым проходом волны, «Плеер — целыми циклами» — ▶ идёт цикл за циклом),
                     Ёлка и Цилиндр (круговой сдвиг), поиск диагоналей, неоновое свечение.</dd>
                 <dt>👁 Вид</dt><dd>Масштаб шрифта, «Экран» — сколько строк видно, интервал между строками, межсимвольный интервал (0.5–3: доля ширины символа; меньше 1 — символы наезжают), шрифт (13 на выбор, в том числе Roboto Mono, JetBrains Mono, VT323, Press Start 2P; лежат в самом проекте, работают и без интернета).</dd>
                 <dt>🎨 Цвет</dt><dd>🌈 радужный текст, 🎨 цвет как код (подсветка синтаксиса), пресеты палитры, цвет и яркость
@@ -1031,7 +1052,7 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
             LOOK_IDS: ['echoModeCheck', 'dualCoreCheck', 'dualMaskCheck', 'freezeLayer1Check', 'dualCoreSpeedInput',
                 'speedMultInput', 'algorithmInput', 'freezeScrollCheck', 'spin3dCheck', 'breathingZoomCheck',
                 'hideStaticCheck', 'deltaModeSelect', 'logicalOpSelect', 'zerkaliusAnimCheck', 'elkaCheck',
-                'cylinderCheck', 'findDiagonalsCheck', 'neonGlowCheck', 'fontSizeRange', 'lineHeightRange', 'charSpacingRange',
+                'cylinderCheck', 'findDiagonalsCheck', 'neonGlowCheck', 'animByPassCheck', 'fontSizeRange', 'lineHeightRange', 'charSpacingRange',
                 'fontSelect', 'rainbowTextCheck', 'syntaxColorCheck', 'trimZerosCheck'],
             resetLook: function() {
                 this.LOOK_IDS.forEach(id => {
@@ -1187,6 +1208,7 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
                 }
 
                 UI.statusInfo.textContent = `Сцена загружена: ${scene.name}`;
+                MODULE_DATA.animInfoUpd();   // 35.48: сцена могла включить или выключить Аниматрицу
                 RENDERER.renderFrame();
                 if (!preventPlay && !MODULE_STATE.isPlaying) setTimeout(() => PLAYER.start(), 200);
             },
@@ -1531,15 +1553,142 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
             },
             animReset: function() {
                 MODULE_STATE.animPasses = 0; MODULE_STATE.animSeen = null; MODULE_STATE.animCycle = null;
+                MODULE_STATE.animHist = null; MODULE_STATE.animHistSize = 0;   // 35.51
+                if (this.animLogOn) {   // 35.49: в журнале — отметка и новый текст с нуля
+                    this.animLog.prev = null;
+                    this.animLogAdd('##### ЗАГРУЖЕН НОВЫЙ ТЕКСТ — счёт проходов заново #####\n\n');
+                    this.animLogSnap('НОВЫЙ ТЕКСТ');
+                }
                 this.animInfoUpd();
+            },
+            /* 35.49: ЖУРНАЛ АНИМАТРИЦЫ (запрос пользователя: «как смотреть это кино будем» → «журнал в файл»).
+               На видео мелкий текст волны не разглядеть, а журнал точен до символа. ⏺ Журнал пишет весь текст в
+               момент старта, затем — после каждого прохода волны (animPassDone) и при загрузке нового текста
+               (animReset). У записи заголовок: что это (старт / проход N / новый текст), отпечаток всего текста
+               (тот же FNV-1a, что ищет цикл), число непробельных символов, сколько символов изменилось с прошлой
+               записи и найденный цикл. Больше ANIMLOG_MAX текст не пишется — только заголовки: иначе на большом
+               тексте и долгой записи файл разрастался бы на сотни мегабайт. 💾 отдаёт .txt в любой момент. */
+            ANIMLOG_MAX: 40e6,
+            animLogOn: false, animLog: null,
+            animLogAdd: function(t) { this.animLog.parts.push(t); this.animLog.size += t.length; },
+            animLogSnap: function(title) {
+                const st = MODULE_STATE, log = this.animLog, lines = st.originalLines.map(l => l.text);
+                let chars = 0;
+                for (const t of lines) for (let i = 0; i < t.length; i++) if (t[i] !== ' ') chars++;
+                let head = '=== ' + title + ' · отпечаток ' + this.animHash().toString(16).padStart(8, '0') + ' · непробельных ' + chars;
+                if (log.prev) {
+                    let changed = 0; const n = Math.max(log.prev.length, lines.length);
+                    for (let i = 0; i < n; i++) {
+                        const a = log.prev[i] || '', b = lines[i] || '', m = Math.max(a.length, b.length);
+                        for (let k = 0; k < m; k++) if ((a[k] || ' ') !== (b[k] || ' ')) changed++;
+                    }
+                    head += ' · изменилось с прошлой записи ' + changed;
+                }
+                if (st.animCycle) head += ' · ЦИКЛ: период ' + st.animCycle.period + ', повтор ' +
+                    (st.animCycle.from ? 'после прохода ' + st.animCycle.from : 'исходного текста');
+                head += ' ===\n';
+                const body = lines.join('\n') + '\n\n';
+                if (!log.cut && log.size + body.length > this.ANIMLOG_MAX) {
+                    log.cut = true;
+                    this.animLogAdd('(дальше текст не пишется: журнал дошёл до ' + Math.round(this.ANIMLOG_MAX / 1e6) + ' МБ — только заголовки записей)\n\n');
+                }
+                this.animLogAdd(head + (log.cut ? '' : body));
+                log.prev = lines; log.recs++;
+                this.animLogUi();
+            },
+            animLogToggle: function() {
+                const st = MODULE_STATE;
+                if (this.animLogOn) {
+                    this.animLogOn = false;
+                    this.animLogAdd('=== ЗАПИСЬ ОСТАНОВЛЕНА · ' + new Date().toLocaleString('ru-RU') + ' ===\n\n');
+                    UI.statusInfo.textContent = `Журнал остановлен: записей ${this.animLog.recs} — «💾 Журнал в файл»`;
+                    this.animLogUi(); this.animInfoUpd();
+                    return;
+                }
+                if (!st.originalLines.length) { UI.statusInfo.textContent = 'Журнал: на холсте нет текста'; return; }
+                const W = st.originalLines.reduce((m, l) => Math.max(m, l.text.length), 0);
+                this.animLog = { parts: [], size: 0, prev: null, recs: 0, cut: false, t0: new Date() };
+                this.animLogOn = true;
+                this.animLogAdd('ZERKALIUS CODE — ЖУРНАЛ АНИМАТРИЦЫ\n' +
+                    'начат: ' + this.animLog.t0.toLocaleString('ru-RU') + ' · строк: ' + st.originalLines.length + ' · ширина: ' + W +
+                    ' · сцена: ' + (UI.sceneSelect.options[UI.sceneSelect.selectedIndex] ? UI.sceneSelect.options[UI.sceneSelect.selectedIndex].text : '—') + '\n' +
+                    'Проход — волна прошла текст сверху донизу, переписывая каждую строку по строке над ней:\n' +
+                    '  два одинаковых непробельных символа → пробел; символ и пробел → символ; два разных символа → верхний.\n' +
+                    'Отпечаток — FNV-1a всего текста: совпал с прежним — текст повторил прежнее состояние (цикл).\n' +
+                    (UI.zerkaliusAnimCheck && UI.zerkaliusAnimCheck.checked ? '' : 'ВНИМАНИЕ: Аниматрица сейчас выключена — проходов не будет, пока её не включить.\n') +
+                    '\n');
+                this.animLogSnap('СТАРТ ЗАПИСИ · пройдено проходов ' + (st.animPasses || 0) +
+                    (st.animatrixRow ? ' · волна на строке ' + st.animatrixRow : ''));
+                UI.statusInfo.textContent = 'Журнал Аниматрицы пишется';
+                this.animInfoUpd();
+            },
+            animLogSave: function() {
+                const log = this.animLog;
+                if (!log) { UI.statusInfo.textContent = 'Журнал пуст: сначала «⏺ Журнал»'; return; }
+                const txt = log.parts.join('') + (this.animLogOn ? '=== (запись ещё идёт) ===\n' : '=== КОНЕЦ ЖУРНАЛА ===\n');
+                const d = log.t0, pad = n => String(n).padStart(2, '0');
+                const name = 'Zerkalius-аниматрица-' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+                    '-' + pad(d.getHours()) + pad(d.getMinutes()) + '.txt';
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([txt], { type: 'text/plain;charset=utf-8' }));
+                a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+                UI.statusInfo.textContent = `Журнал в файле: ${name} · записей ${log.recs}`;
+            },
+            animLogUi: function() {
+                const b = document.getElementById('animLogBtn'); if (!b) return;
+                const on = this.animLogOn, n = this.animLog ? this.animLog.recs : 0;
+                b.textContent = on ? '⏹ Стоп · ' + n : '⏺ Журнал' + (n ? ' · ' + n : '');
+                b.style.background = on ? '#ff3333' : '#2a1212';
+                b.style.color = on ? '#000' : '#ff8a8a';
+            },
+            /* 35.51: ЦИКЛАМИ (запрос пользователя: «как переключать сразу циклы?»). Цикл здесь — проход волны, тот, что
+               считает «пройдено циклов». ⏭ (PageDown) гонит волну до конца текущего цикла сразу; «Плеер — целыми
+               циклами» делает так на каждом шаге ▶. ⏮ (PageUp) возвращает текст: посреди цикла — к его началу, с
+               границы — к предыдущему. Для этого после каждого цикла текст кладётся в animHist (и исходный — как
+               цикл 0). Держим не больше ANIMHIST_MAX символов, старые циклы уходят — назад за них уже нельзя.
+               При возврате из памяти поиска цикла стираются отпечатки циклов «из будущего»: пройденные заново,
+               они иначе совпали бы сами с собой и дали ложный цикл. */
+            ANIMHIST_MAX: 30e6,
+            animHistPush: function() {
+                const st = MODULE_STATE, lines = st.originalLines.map(l => Object.assign({}, l));
+                const size = lines.reduce((a, l) => a + l.text.length, 0);
+                st.animHist.push({ p: st.animPasses || 0, lines: lines, size: size });
+                st.animHistSize += size;
+                while (st.animHistSize > this.ANIMHIST_MAX && st.animHist.length > 1) st.animHistSize -= st.animHist.shift().size;
+            },
+            animPassFull: function() {
+                const st = MODULE_STATE, H = st.originalLines.length;
+                if (H < 2) return;
+                const p0 = st.animPasses || 0; let guard = H + 2;
+                do { this.runAnimatrixGlobal(true); } while ((st.animPasses || 0) === p0 && --guard > 0);
+                this.precalculateLines(false); this.animInfoUpd();
+            },
+            animPassBack: function() {
+                const st = MODULE_STATE, hist = st.animHist || [];
+                const cur = st.animPasses || 0, want = (st.animatrixRow || 0) > 0 ? cur : cur - 1;
+                if (want < 0) { UI.statusInfo.textContent = 'Аниматрица: это исходный текст — назад некуда'; return; }
+                let i = hist.length - 1;
+                while (i >= 0 && hist[i].p > want) i--;
+                if (i < 0 || hist[i].p !== want) { UI.statusInfo.textContent = `Аниматрица: цикл ${want} уже не хранится — назад некуда`; return; }
+                const snap = hist[i];
+                st.animHist = hist.slice(0, i + 1);
+                st.animHistSize = st.animHist.reduce((a, h) => a + h.size, 0);
+                st.originalLines = snap.lines.map(l => Object.assign({}, l));
+                st.animPasses = snap.p; st.animatrixRow = 0;
+                if (st.animSeen) Array.from(st.animSeen).forEach(([h, p]) => { if (p > snap.p) st.animSeen.delete(h); });
+                if (st.animCycle && st.animCycle.from + st.animCycle.period > snap.p) st.animCycle = null;
+                this.precalculateLines(false); this.animInfoUpd();
+                UI.statusInfo.textContent = `Аниматрица: назад, к циклу ${snap.p}`;
             },
             animPassDone: function() {
                 const st = MODULE_STATE, h = this.animHash();
                 st.animPasses = (st.animPasses || 0) + 1;
                 if (!st.animSeen) st.animSeen = new Map();
-                if (st.animSeen.has(h)) {
+                if (st.animSeen.has(h) && st.animSeen.get(h) !== st.animPasses) {
                     if (!st.animCycle) { const from = st.animSeen.get(h); st.animCycle = { from: from, period: st.animPasses - from }; }
                 } else st.animSeen.set(h, st.animPasses);
+                if (st.animHist) this.animHistPush();   // 35.51: текст после цикла — для ⏮
+                if (this.animLogOn) this.animLogSnap('ПРОХОД ' + st.animPasses);   // 35.49: журнал
             },
             animInfoUpd: function() {
                 const el = document.getElementById('animInfo');
@@ -1553,13 +1702,18 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
                 if (st.animCycle) t += ' · 🔁 цикл: период <b>' + st.animCycle.period + '</b>, повтор ' +
                     (st.animCycle.from ? 'после ' + st.animCycle.from + '-го прохода' : 'исходного текста');
                 else if (st.animPasses) t += ' · повтора пока нет';
+                if (this.animLogOn) t += ' · ⏺ журнал: ' + this.animLog.recs;   // 35.49
                 el.innerHTML = t;
             },
-            runAnimatrixGlobal: function() {
+            // fast (35.51) — без пересчёта строк и счётчика после шага: так идут шаги внутри целого цикла (animPassFull),
+            // пересчёт один раз в конце. Иначе 255 пересчётов всего текста подряд.
+            runAnimatrixGlobal: function(fast) {
                 let lines = MODULE_STATE.originalLines;
                 let H = lines.length;
                 // 35.43: отпечаток исходного текста — проход 0, до первого шага волны
                 if (!MODULE_STATE.animSeen) { MODULE_STATE.animSeen = new Map([[this.animHash(), MODULE_STATE.animPasses || 0]]); }
+                // 35.51: и сам исходный текст — в историю циклов, чтобы ⏮ было куда вернуться
+                if (!MODULE_STATE.animHist) { MODULE_STATE.animHist = []; MODULE_STATE.animHistSize = 0; this.animHistPush(); }
                 if (H < 2) return;
                 
                 if (MODULE_STATE.animatrixRow === undefined || MODULE_STATE.animatrixRow >= H - 1) {
@@ -1589,6 +1743,7 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
                 lines[row2].text = resStr;
                 MODULE_STATE.animatrixRow++;
                 if (MODULE_STATE.animatrixRow >= H - 1) this.animPassDone();   // 35.43: волна дошла до низа — проход
+                if (fast) return;   // 35.51
                 this.animInfoUpd();
                 
                 this.precalculateLines(false);
@@ -2340,6 +2495,26 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
 
                 this.loop(performance.now());
             },
+            /* 35.50: ⤒ К НАЧАЛУ (запрос пользователя: «как вручную, не ловя момент, прокрутить треугольник в начало»).
+               ■ Стоп ставит кадр 0, и первая строка встаёт в ЦЕНТР экрана, а сверху виден хвост текста (экран
+               показывает строки по кругу). Здесь — пауза и такой кадр, чтобы первая строка стояла у ВЕРХНЕГО КРАЯ
+               экрана. Окно строк («Экран») бывает выше холста — тогда его верх уходит за край, и первая строка
+               ставится не к краю окна, а к первой видимой строке: номер её i0 считается так же, как отрисовка
+               ставит строки (startY = (высота − (Экран−1)·шаг)/2, строка i — на startY + i·шаг). */
+            toTop: function() {
+                const n = MODULE_STATE.lines.length;
+                if (!n) return;
+                if (MODULE_STATE.isPlaying) this.pause();
+                const vh = parseInt(UI.heightRange.value || 15, 10), half = Math.floor(vh / 2);
+                const step = parseInt(UI.fontSizeRange.value || 24, 10) * parseFloat(UI.lineHeightRange.value || 1.2);
+                const H = UI.canvas.clientHeight || window.innerHeight;
+                const startY = (H - (vh - 1) * step) / 2;
+                const i0 = Math.max(0, Math.ceil((step / 2 - startY) / step));
+                MODULE_STATE.currentIndex = (((half - i0) % n) + n) % n;
+                MODULE_STATE.offsetY = 0; MODULE_STATE.frozenIndex = null;
+                RENDERER.updateTimeline(); RENDERER.renderFrame();
+                UI.statusInfo.textContent = 'Начало текста — у верхнего края экрана';
+            },
             pause: function() {
                 MODULE_STATE.isPlaying = false; MODULE_STATE.isPaused = true;
                 cancelAnimationFrame(MODULE_STATE.rafId);
@@ -2395,7 +2570,11 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
 
                         // 35.27: 🔎 Поиск (логгер узоров) убран по слову пользователя.
 
-                        if (UI.zerkaliusAnimCheck?.checked && MODULE_STATE.originalLines.length > 0) MODULE_DATA.runAnimatrixGlobal();
+                        if (UI.zerkaliusAnimCheck?.checked && MODULE_STATE.originalLines.length > 0) {
+                            // 35.51: «Плеер — целыми циклами» — за шаг весь проход волны
+                            if (document.getElementById('animByPassCheck')?.checked) MODULE_DATA.animPassFull();
+                            else MODULE_DATA.runAnimatrixGlobal();
+                        }
 
                         if (UI.echoModeCheck?.checked && MODULE_STATE.originalLines.length > 0) {
                             if (!MODULE_STATE.isReverse) {
@@ -2581,6 +2760,15 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
                 if(UI.prevBtn) UI.prevBtn.addEventListener('click', () => { if (MODULE_STATE.isPlaying) PLAYER.stop(); if (MODULE_STATE.lines.length > 0) { MODULE_STATE.currentIndex = (MODULE_STATE.currentIndex - 1 + MODULE_STATE.lines.length) % MODULE_STATE.lines.length; RENDERER.renderFrame(); RENDERER.updateTimeline(); }});
                 if(UI.nextBtn) UI.nextBtn.addEventListener('click', () => { if (MODULE_STATE.isPlaying) PLAYER.stop(); if (MODULE_STATE.lines.length > 0) { MODULE_STATE.currentIndex = (MODULE_STATE.currentIndex + 1) % MODULE_STATE.lines.length; RENDERER.renderFrame(); RENDERER.updateTimeline(); }});
                 if(UI.stopBtn) UI.stopBtn.addEventListener('click', () => PLAYER.stop());
+                // 35.50: ⤒ и Home — к началу текста. Home в поле ввода остаётся полю (в начало строки).
+                const topB = document.getElementById('topBtn');
+                if (topB) topB.addEventListener('click', () => PLAYER.toTop());
+                document.addEventListener('keydown', e => {
+                    if (e.key !== 'Home' || e.ctrlKey || e.altKey || e.metaKey) return;
+                    const t = e.target && e.target.tagName;
+                    if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT' || (e.target && e.target.isContentEditable)) return;
+                    e.preventDefault(); PLAYER.toTop();
+                });
                 if(UI.playBtn) UI.playBtn.addEventListener('click', () => { if (MODULE_STATE.lines.length > 0) { if (MODULE_STATE.isPlaying) PLAYER.pause(); else PLAYER.start(); }});
                 if(UI.exportExcelBtn) UI.exportExcelBtn.addEventListener('click', () => MODULE_DATA.exportToExcel());
                 if(UI.exportBtn) UI.exportBtn.addEventListener('click', async () => { if (MODULE_STATE.originalLines.length === 0) return alert("Нет данных!"); const jsonStr = JSON.stringify(MODULE_STATE.originalLines, null, 2); const blob = new Blob([jsonStr], { type: "text/plain;charset=utf-8" }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "Zerkalius_Data.txt"; link.click(); URL.revokeObjectURL(link.href); });
@@ -2639,6 +2827,23 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
                 // а не с того места, куда за это время ушёл счётчик кадров. Скачка нет ни в ту, ни в другую сторону.
                 // 35.43: счётчик циклов Аниматрицы виден, пока она включена
                 if (UI.zerkaliusAnimCheck) UI.zerkaliusAnimCheck.addEventListener('change', () => MODULE_DATA.animInfoUpd());
+                // 35.49: журнал Аниматрицы
+                const alB = document.getElementById('animLogBtn'), alS = document.getElementById('animLogSaveBtn');
+                if (alB) alB.addEventListener('click', () => MODULE_DATA.animLogToggle());
+                if (alS) alS.addEventListener('click', () => MODULE_DATA.animLogSave());
+                // 35.51: ⏮ / ⏭ цикл, PageUp / PageDown
+                const cycNext = () => { if (!MODULE_STATE.originalLines.length) return; MODULE_DATA.animPassFull(); RENDERER.renderFrame(); UI.statusInfo.textContent = `Аниматрица: цикл ${MODULE_STATE.animPasses || 0}`; };
+                const cycBack = () => { MODULE_DATA.animPassBack(); RENDERER.renderFrame(); };
+                const abB = document.getElementById('animBackBtn'), anB = document.getElementById('animNextBtn');
+                if (abB) abB.addEventListener('click', cycBack);
+                if (anB) anB.addEventListener('click', cycNext);
+                document.addEventListener('keydown', e => {
+                    if ((e.key !== 'PageDown' && e.key !== 'PageUp') || e.ctrlKey || e.altKey || e.metaKey) return;
+                    const t = e.target && e.target.tagName;
+                    if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT' || (e.target && e.target.isContentEditable)) return;
+                    e.preventDefault();
+                    if (e.key === 'PageDown') cycNext(); else cycBack();
+                });
                 if (UI.freezeLayer1Check) UI.freezeLayer1Check.addEventListener('change', () => {
                     if (UI.freezeLayer1Check.checked) MODULE_STATE.frozenIndex = MODULE_STATE.currentIndex;
                     else if (MODULE_STATE.frozenIndex != null) { MODULE_STATE.currentIndex = MODULE_STATE.frozenIndex; MODULE_STATE.frozenIndex = null; RENDERER.updateTimeline(); }
@@ -2806,10 +3011,15 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
                 return null;
             },
             // Плавающее окно не уводим за край: шапка должна оставаться, за что схватить.
+            // 35.48: окно ЦЕЛИКОМ на экране, а не «хотя бы 60 px шапки»: сузили окно браузера (открыли боковую
+            // панель) — плеер уезжал за правый край и оставался обрезанным. Теперь при сужении окна и при открытии
+            // страницы плавающие окна въезжают обратно целиком. У плеера сверху висят дубли 🔃 🛰️ (top −44 px) —
+            // под них оставлен зазор. Окно шире экрана прижимается к левому краю.
             clamp: function(f, x, y) {
-                const w = f.offsetWidth || 284, KEEP = 60;
-                f.style.left = Math.round(Math.min(window.innerWidth - KEEP, Math.max(KEEP - w, x))) + 'px';
-                f.style.top = Math.round(Math.min(window.innerHeight - 24, Math.max(0, y))) + 'px';
+                const w = f.offsetWidth || 284, h = f.offsetHeight || 60;
+                const top0 = f.classList.contains('fixed-player') ? 44 : 0;
+                f.style.left = Math.round(Math.max(0, Math.min(window.innerWidth - w, x))) + 'px';
+                f.style.top = Math.round(Math.max(top0, Math.min(window.innerHeight - h, y))) + 'px';
             },
             dragMove: function(e) {
                 const d = this.drag; if (!d) return;
@@ -2944,6 +3154,9 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
                     frame: MODULE_STATE.isFrameActive, radar: MODULE_STATE.isRadarActive,
                     scene: UI.sceneSelect.value, idx: MODULE_STATE.currentIndex,
                     ox: MODULE_STATE.offsetX, oy: MODULE_STATE.offsetY, playing: MODULE_STATE.isPlaying,
+                    // 35.52: и счёт Аниматрицы — иначе после F5 «пройдено циклов 0» при уже прокрученном тексте
+                    anim: { passes: MODULE_STATE.animPasses || 0, row: MODULE_STATE.animatrixRow || 0,
+                        cycle: MODULE_STATE.animCycle || null, seen: MODULE_STATE.animSeen ? Array.from(MODULE_STATE.animSeen) : null },
                     text: withText ? MODULE_STATE.originalLines : null
                 };
             },
@@ -2988,7 +3201,18 @@ VERSION: Pro 35.47 (Стартовый вид: радар, рамка, цвет 
                 MODULE_STATE.currentIndex = (((st.idx | 0) % n) + n) % n;
                 MODULE_STATE.offsetX = +st.ox || 0; MODULE_STATE.offsetY = +st.oy || 0;
                 MODULE_STATE.frozenIndex = null;   // ⚓ встаёт на кадр снимка
+                // 35.52: счёт Аниматрицы (загрузка текста выше его обнулила — ставим запомненный). Отпечатки прошлых
+                // циклов тоже: без них повтор с циклом до F5 не нашёлся бы. Историю для ⏮ не храним — она большая:
+                // назад можно будет только до того места, где открыли страницу.
+                if (st.anim) {
+                    const a = st.anim;
+                    MODULE_STATE.animPasses = a.passes | 0; MODULE_STATE.animatrixRow = a.row | 0;
+                    MODULE_STATE.animCycle = a.cycle || null;
+                    MODULE_STATE.animSeen = Array.isArray(a.seen) ? new Map(a.seen) : null;
+                    MODULE_STATE.animHist = null; MODULE_STATE.animHistSize = 0;
+                }
                 SCENE_MANAGER.syncLabels();
+                MODULE_DATA.animInfoUpd();   // 35.48: галку Аниматрицы поставил снимок, без события — счётчик показать сразу
                 RENDERER.updateTimeline(); RENDERER.renderFrame();
                 if (play && !MODULE_STATE.isPlaying) PLAYER.start();
             }
