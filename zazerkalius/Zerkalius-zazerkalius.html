@@ -1,0 +1,370 @@
+<!-- Zazerkalius — v0.005. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zazerkalius — v0.005</title>
+<!--
+  ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
+  Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
+  «истинный — Зазеркалиус — окно в ПО на ту сторону зазеркалья»; главное — «симметрия и всё, что
+  с ней связано, в первую очередь недавние, указатели» и «все вчерашние подсказки — чтобы не
+  потерялись, а применились в новом».
+  Устройство:
+    • слева — столбик строк (текущая подсвечена), построения 🔺+1 / 🔢+1 / ⇅;
+    • в центре — ЗЕРКАЛЬНЫЙ КРЕСТ: вертикальная черта — разворот ⇄, горизонтальная — инверсия 🔁
+      (как у знака-октаэдра: нижняя половина — та же картина, отражённая и инвертированная);
+      под крестом — УКАЗАТЕЛИ СИММЕТРИИ: где у строки оси палиндромов и антипалиндромов;
+    • справа — окна-инструменты: тащатся за шапку, тянутся за угол, сворачиваются; у каждого «?»
+      с подсказкой — тексты перенесены из подсказок и борт-журнала Layers.
+  Файлы: эта страница (разметка + стили), zz-core.js (математика, без DOM), zz-ui.js (интерфейс).
+  Версия v0.NNN в ЧЕТЫРЁХ местах: комментарий первой строки, <title>, .ver в шапке, ?v=NNNN у двух
+  скриптов в конце. Архив — archive\Zerkalius-zazerkalius\vNNN\ папкой целиком.
+-->
+<style>
+:root{
+  --bg:#0b0d12; --panel:#121620; --panel2:#171c28; --line:#262d3d; --txt:#d8dde8; --dim:#7d8699;
+  --acc:#b98cf0; --acc2:#22d3ee; --gold:#ffd166; --red:#ff6b6b; --green:#6ee7a0;
+  --b1:#e8ecf4; --b0:#5d6678; --fix:#ffd166; --mov:#ff7ab6;
+  --pal:#b98cf0; --anti:#22d3ee;
+  --ff:"Roboto Mono", Consolas, monospace;
+  --fs:18px; --cw:0.62em;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f4f5f8; --panel:#ffffff; --panel2:#eef0f5; --line:#d5d9e3; --txt:#1c2130; --dim:#6a7285;
+    --acc:#7b4fc4; --acc2:#0e8aa0; --gold:#b07a00; --red:#c53030; --green:#1f8a4c;
+    --b1:#1c2130; --b0:#a3aabb; --fix:#b07a00; --mov:#c2327a; --pal:#7b4fc4; --anti:#0e8aa0;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b0d12; --panel:#121620; --panel2:#171c28; --line:#262d3d; --txt:#d8dde8; --dim:#7d8699;
+  --acc:#b98cf0; --acc2:#22d3ee; --gold:#ffd166; --red:#ff6b6b; --green:#6ee7a0;
+  --b1:#e8ecf4; --b0:#5d6678; --fix:#ffd166; --mov:#ff7ab6; --pal:#b98cf0; --anti:#22d3ee;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--txt);font:13px/1.4 system-ui,"Segoe UI",sans-serif;overflow:hidden}
+button,select,input{font:inherit;color:var(--txt);background:var(--panel2);border:1px solid var(--line);border-radius:4px}
+button{padding:3px 8px;cursor:pointer;white-space:nowrap}
+button:hover{border-color:var(--acc)}
+button.on{border-color:var(--gold);color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+input[type=text],input[type=number]{padding:2px 5px}
+select{padding:2px 4px}
+.dim{color:var(--dim)}
+code{font-family:var(--ff);font-size:.95em}
+
+/* ─── каркас ─── */
+#top{display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;border-bottom:1px solid var(--line);background:var(--panel)}
+#top h1{margin:0;font-size:15px;font-weight:600;letter-spacing:.04em}
+#top .ver{color:var(--dim);font-size:12px}
+#top .sp{flex:1}
+#main{position:absolute;top:40px;left:0;right:0;bottom:0;display:grid;grid-template-columns:260px 1fr}
+#rowsPane{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--panel)}
+#desk{position:relative;overflow:auto;min-width:0}
+
+/* ─── столбик строк ─── */
+.pane-head{padding:8px 10px 4px;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+#rowInputBar{display:flex;gap:4px;padding:0 10px 6px}
+#rowInput{flex:1;min-width:0;font-family:var(--ff)}
+#rowInputBar button{padding:2px 6px}
+body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
+#rowBtns{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 10px 8px}
+#rowBtns .wide{grid-column:1 / -1}
+#rowList{flex:1;overflow:auto;padding:4px 0 10px;border-top:1px solid var(--line)}
+.rw{display:flex;gap:6px;align-items:baseline;padding:1px 10px;cursor:pointer;white-space:nowrap}
+.rw:hover{background:var(--panel2)}
+.rw.cur{background:rgba(185,140,240,.14);box-shadow:inset 3px 0 0 var(--acc)}
+.rw .no{width:26px;flex:0 0 auto;text-align:right;color:var(--dim);font-size:11px}
+.rw .bits{font-family:var(--ff);font-size:13px;overflow:hidden;text-overflow:ellipsis}
+
+/* ─── биты ─── */
+.bits .b1,.bit.b1{color:var(--b1)}
+.bits .b0,.bit.b0{color:var(--b0)}
+.bitrow{font-family:var(--ff);font-size:var(--fs);line-height:1.2;white-space:pre;display:inline-flex}
+.bitrow .bit{display:inline-block;width:var(--cw);text-align:center}
+.showfix .bit.fx{color:var(--fix);text-shadow:0 0 6px rgba(255,209,102,.45)}
+.showfix .bit.mv{color:var(--mov)}
+.bit.hl{background:rgba(185,140,240,.28);border-radius:2px}
+.bit.hla{background:rgba(34,211,238,.25);border-radius:2px}
+.bit.same{opacity:.35}
+
+/* ─── окна ─── */
+.win{position:absolute;background:var(--panel);border:1px solid var(--line);border-radius:6px;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);display:flex;flex-direction:column;min-width:200px;min-height:60px;
+  resize:both;overflow:hidden}
+.win.front{z-index:5}
+.win.collapsed{height:auto !important;min-height:0;resize:none}
+.win.collapsed .wbody,.win.collapsed .whint{display:none}
+.whead{display:flex;align-items:center;gap:6px;padding:4px 6px 4px 10px;background:var(--panel2);
+  border-bottom:1px solid var(--line);cursor:move;user-select:none;flex:0 0 auto}
+.whead .wt{flex:1;font-weight:600;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.whead button{padding:0 6px;font-size:12px;line-height:18px}
+.whint{display:none;padding:8px 10px;font-size:12px;line-height:1.5;background:rgba(185,140,240,.07);
+  border-bottom:1px solid var(--line);color:var(--txt);max-height:40%;overflow:auto;flex:0 0 auto}
+.win.hint .whint{display:block}
+.whint p{margin:0 0 6px}
+.wbody{padding:8px 10px;overflow:auto;flex:1 1 auto;min-height:0}
+.tools{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-bottom:6px}
+.out{font-size:12.5px;white-space:pre-line;overflow-wrap:anywhere}  /* v0.005: длинные ленты переносятся, а не уезжают за край */
+.out b{color:var(--gold);font-weight:600}
+.mono{font-family:var(--ff)}
+
+/* ─── зеркальный крест ─── */
+#cross{display:grid;grid-template-columns:1fr 3px 1fr;grid-template-rows:auto 3px auto;gap:0;margin:4px 0 8px}
+.q{padding:6px 10px;overflow-x:auto;min-width:0}
+.q .lab{font-size:11px;color:var(--dim);margin-bottom:2px}
+.q.l{text-align:right}
+.q.l .lab{text-align:right}
+.mirV{background:linear-gradient(var(--acc),var(--acc2));box-shadow:0 0 10px rgba(185,140,240,.6)}
+.mirH{grid-column:1 / -1;background:linear-gradient(90deg,var(--acc2),var(--acc),var(--acc2));box-shadow:0 0 10px rgba(34,211,238,.5)}
+.q .eq{font-size:11px;color:var(--green);margin-left:6px}
+#crossStats{font-size:12.5px;margin:4px 0 6px}
+#crossStats b{color:var(--gold)}
+
+/* ─── указатели симметрии ─── */
+#ptrWrap{position:relative;overflow-x:auto;padding:4px 0 6px}
+#ptrBits{position:relative;display:inline-block}
+#ptrLanes{position:relative;height:0}
+.ptr{position:absolute;height:6px;border:1.5px solid var(--pal);border-top:none;border-radius:0 0 4px 4px;cursor:pointer;opacity:.8}
+.ptr.anti{border-color:var(--anti)}
+.ptr::after{content:"";position:absolute;left:var(--ax);top:-3px;bottom:-5px;width:2px;margin-left:-1px;background:currentColor}
+.ptr{color:var(--pal)}
+.ptr.anti{color:var(--anti)}
+.ptr:hover{opacity:1;filter:drop-shadow(0 0 4px currentColor)}
+#ptrLegend{font-size:11.5px;color:var(--dim);margin-top:4px}
+#ptrLegend .p{color:var(--pal)} #ptrLegend .a{color:var(--anti)}
+
+/* ─── спуск ─── */
+.dgrid{display:grid;grid-template-columns:auto 1fr;column-gap:8px}
+.dgrid .dl{font-size:11px;color:var(--dim);text-align:right;align-self:center;white-space:nowrap}
+.dgrid .dr{font-family:var(--ff);font-size:var(--fs);line-height:1.15;white-space:pre}
+.dgrid.al-left .dr{text-align:left} .dgrid.al-center .dr{text-align:center} .dgrid.al-right .dr{text-align:right}
+.dgrid .edgebit{background:rgba(255,209,102,.28);outline:1px solid rgba(255,209,102,.55)}
+.dgrid .dr.edge-row{border-top:1px solid var(--line);margin-top:3px;padding-top:2px}
+
+/* ─── цикл: накал памяти ─── */
+.cyc{font-family:var(--ff);font-size:calc(var(--fs) * .8);line-height:1.1;white-space:pre}
+.cyc .h1{color:#8a6bd8} .cyc .h2{color:#c77dff} .cyc .h3{color:#ff9f43} .cyc .h4{color:#ffd166;text-shadow:0 0 5px rgba(255,209,102,.6)}
+.cyc .loop{background:rgba(110,231,160,.10)}
+.hit{cursor:pointer;border-radius:3px;padding:0 3px}
+.hit:hover{background:var(--panel2);color:var(--acc)}
+.cyc .lno{color:var(--dim);display:inline-block;width:3.5em;text-align:right;margin-right:.6em;font-size:.85em}
+
+/* ─── подсказки ─── */
+#helpBody h4{margin:10px 0 4px;color:var(--acc);font-size:13px}
+#helpBody p{margin:0 0 6px;font-size:12.5px;line-height:1.55}
+
+#msg{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);max-width:min(720px,90vw);
+  background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 12px;
+  font-size:12.5px;white-space:pre-line;opacity:0;transition:opacity .25s;pointer-events:none;z-index:50}
+#msg.show{opacity:1}
+
+@media (max-width:760px){
+  body{overflow:auto}
+  #main{position:static;display:block}
+  #rowsPane{border-right:none;border-bottom:1px solid var(--line);max-height:45vh}
+  #desk{overflow:visible}
+  .win{position:relative !important;left:auto !important;top:auto !important;width:auto !important;height:auto !important;margin:8px 16px;resize:none}
+}
+</style>
+</head>
+<body>
+<div id="top">
+  <h1>Zazerkalius</h1><span class="ver">v0.005</span>
+  <span class="sp"></span>
+  <label class="dim" title="Шрифт цифр — тот же набор, что в Layers">🔤
+    <select id="fontSel">
+      <option value='"Roboto Mono", Consolas, monospace'>Roboto Mono</option>
+      <option value='Consolas, monospace'>Consolas</option>
+      <option value='"Courier New", monospace'>Courier New</option>
+      <option value='"Cascadia Mono", Consolas, monospace'>Cascadia Mono</option>
+      <option value='"Lucida Console", Consolas, monospace'>Lucida Console</option>
+      <option value='monospace'>Системный</option>
+    </select></label>
+  <label class="dim" title="Размер цифр">A <input type="range" id="fsRange" min="11" max="30" value="18" style="width:90px;vertical-align:middle"></label>
+  <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
+  <button id="bLayout" title="Разложить окна заново по местам по умолчанию">📐 Разложить</button>
+  <button id="bHelp" title="Окно подсказок: что здесь что и почему">📖 Подсказки</button>
+</div>
+
+<div id="main">
+  <aside id="rowsPane">
+    <div class="pane-head">Строки</div>
+    <div id="rowInputBar">
+      <input type="text" id="rowInput" placeholder="0 и 1, Enter — добавить" title="Впиши строку из 0 и 1. Enter — добавить под текущей; Shift+Enter — заменить текущую. Вставка (Ctrl+V) текста из нескольких строк добавит их все">
+      <button id="bLoad" title="📂 Загрузить текстовый файл со строками (.txt) — каждая строка файла становится строкой столбика, всё кроме 0 и 1 выбрасывается, пустые строки пропускаются. Столбик заменяется целиком (↩ вернёт). Файл можно и просто перетащить на страницу">📂</button>
+      <button id="bSaveTxt" title="💾 Сохранить столбик в текстовый файл — строка на строку, тот же вид, что читает 📂">💾</button>
+      <input type="file" id="fileIn" accept=".txt,.csv,.dat,text/plain" hidden>
+    </div>
+    <div id="rowBtns">
+      <button id="bSierpNext" title="🔺+1 — под текущей строкой новая, длиной на 1 больше: строку обкладывают нулями по краям и под каждой парой соседей пишут их XOR. Это треугольник Паскаля по модулю 2; от «1» — ровно Серпинский. Нижние строки сдвигаются, ничего не затирается; текущей становится новая — жми подряд">🔺+1 Ещё строка</button>
+      <button id="bNumNext" title="🔢+1 — под текущей строкой следующий номер: строка читается как двоичное число, новая — на единицу больше. Ведущие нули сохраняются: 0011 → 0100">🔢+1 След. номер</button>
+      <button id="bRandom" title="Случайная строка той же длины, что текущая (или 16 бит) — под текущей">🎲 Случайная</button>
+      <button id="bSeed" title="Начать с «1» — зерно Серпинского; дальше 🔺+1">● Зерно «1»</button>
+      <button id="bVMirror" title="⇅ ЗЕРКАЛО ПО ГОРИЗОНТУ — весь столбик: первая ↔ последняя, вторая ↔ предпоследняя. Биты внутри строк не трогаются. Сама себе обратная; вместе с разворотом ⇄ и инверсией 🔁 даёт двумерное зазеркалье">⇅ Весь столбик</button>
+      <button id="bVMirrorCur" title="⇅ ВОКРУГ ТЕКУЩЕЙ — зеркало проходит ЧЕРЕЗ текущую строку: она стоит на месте, соседние меняются парами (выше на k ↔ ниже на k). Куда отражению не хватает строк — остаётся как было. Сама себе обратная">⇅ Вокруг текущей</button>
+      <button id="bDelRow" title="Удалить текущую строку">✕ Удалить</button>
+      <button id="bClear" title="Очистить весь столбик">🧹 Очистить</button>
+    </div>
+    <div id="rowList"></div>
+  </aside>
+
+  <main id="desk">
+    <!-- ЗЕРКАЛО -->
+    <section class="win" id="w-mirror" data-title="🪞 Зеркало">
+      <div class="whint">
+        <p><b>Крест из двух зеркал.</b> Вертикальная черта — разворот ⇄: справа та же строка, прочитанная с другого конца. Горизонтальная — инверсия 🔁: внизу 0 и 1 меняются местами. В правом нижнем углу — и то и другое (⇄🔁). Вместе с «ничего не делать» их четыре, и складываются они как повороты квадрата: любое дважды — возвращает. Это группа V₄.</p>
+        <p><b>Неподвижные биты</b> (⇄🔎) — те, что равны своему зеркальному: бит №k и бит №«длина−1−k». Разворот их не трогает. Остальные — меняющиеся, и если инвертировать ровно их (🔁 Инв меняющихся), получится развёрнутая строка — это и есть определение меняющихся.</p>
+        <p><b>Орбита</b> — сколько разных строк среди четырёх. У инверсии неподвижных строк нет (бит не равен сам себе инвертированному), поэтому орбита — 2 или 4: 2, когда строку держит разворот (палиндром) или инв-разворот (антипалиндром).</p>
+      </div>
+      <div class="wbody">
+        <div class="tools">
+          <button id="bFixShow" title="⇄🔎 НЕПОДВИЖНЫЕ — показ, без правки: золотые биты разворот не трогает (равны своему зеркальному), розовые — меняются">⇄🔎 Неподвижные</button>
+          <button id="bGoRev" title="Шагнуть в зеркало: текущая строка становится развёрнутой (с отменой — шагни ещё раз)">⇄</button>
+          <button id="bGoInv" title="Текущая строка становится инвертированной">🔁</button>
+          <button id="bGoInvRev" title="Текущая строка становится инв-развёрнутой">⇄🔁</button>
+          <button id="bFlipMoving" title="ПРАВКА: инвертирует только МЕНЯЮЩИЕСЯ биты — те, что не равны своему зеркальному. Неподвижные не трогает. Результат совпадает с разворотом строки — это и есть определение меняющихся. Повторный клик возвращает как было">🔁 Инв меняющихся</button>
+        </div>
+        <div id="cross"></div>
+        <div id="crossStats"></div>
+        <div class="tools" style="margin-top:8px">
+          <span style="font-weight:600">🎯 Указатели симметрии</span>
+          <label class="dim" title="Показывать оси, отражающие кусок не короче стольких бит">от <input type="number" id="ptrMin" min="2" max="64" value="4" style="width:46px"> бит</label>
+          <label class="dim"><input type="checkbox" id="ptrPal" checked> палиндромы</label>
+          <label class="dim"><input type="checkbox" id="ptrAnti" checked> антипалиндромы</label>
+        </div>
+        <div id="ptrWrap"><div id="ptrBits"></div><div id="ptrLanes"></div></div>
+        <div id="ptrLegend"></div>
+      </div>
+    </section>
+
+    <!-- СПУСК -->
+    <section class="win" id="w-descent" data-title="▽ Спуск">
+      <div class="whint">
+        <p>Под строкой — треугольник: под каждой парой соседей их XOR, n бит → n−1 → … → 1. Каждый этаж теряет бит (<code>0110</code> и <code>1001</code> дают под собой одно и то же), поэтому по низу строку не восстановить.</p>
+        <p>Но <b>левый край</b> (первый бит каждого этажа) — та же строка, переложенная без потерь: n бит ↔ n бит. Это биномиальное преобразование над GF(2), и оно само себе обратное: спуск от края даёт исходную строку. Не сжатие, а зеркало.</p>
+        <p>Разреженный или повторяющийся край — в строке есть порядок; край-мусор той же длины — порядка этим спуском не видно. У Серпинского край — одна единица.</p>
+        <p>Не путать с 🔺+1: там строку обкладывают нулями по краям, и она растёт (1111 → 10001), а здесь краёв нет, и она сжимается (1111 → 000).</p>
+      </div>
+      <div class="wbody">
+        <div class="tools">
+          <select id="descentAlign" title="Выравнивание этажей — своё у этого окна. По центру каждый бит стоит ровно под своей парой, влево — край столбиком">
+            <option value="center">◫ по центру</option><option value="left">◧ влево</option><option value="right">◨ вправо</option>
+          </select>
+          <span id="descentHead" class="dim"></span>
+        </div>
+        <div id="descentView" class="dgrid al-center"></div>
+        <div id="descentVerdict" class="out" style="margin-top:6px"></div>
+      </div>
+    </section>
+
+    <!-- ЦИКЛ И ПАМЯТЬ -->
+    <section class="win" id="w-cycle" data-title="🔁 Цикл и память">
+      <div class="whint">
+        <p>Шаг применяется к строке снова и снова, пока она не повторится. <b>μ</b> — сколько шагов до входа в петлю, <b>λ</b> — длина петли. λ = 1 — неподвижная точка: шаг больше ничего не меняет. У «Круга» на n битах λ делит n, у «Круга Инв» — делит 2n: за n шагов строка становится своей инверсией, ещё за n возвращается.</p>
+        <p><b>🔥 Память:</b> бит разгорается, пока держит своё значение, — фиолетовый, розовый, оранжевый, золото (8 шагов и дольше). Петля подсвечена зеленоватым фоном.</p>
+      </div>
+      <div class="wbody">
+        <div class="tools">
+          <select id="cycOp" title="Какой шаг повторять"></select>
+          <button id="bCycle" title="Прогнать шаг от текущей строки до первого повтора">▶ Прогнать</button>
+          <label class="dim"><input type="checkbox" id="cycHeat" checked> 🔥 память</label>
+        </div>
+        <div id="cycOut" class="out"></div>
+        <div id="cycView" class="cyc"></div>
+      </div>
+    </section>
+
+    <!-- GF(2) -->
+    <section class="win" id="w-gf2" data-title="🧮 GF(2) — неподвижные">
+      <div class="whint">
+        <p><b>GF(2)</b> — арифметика, где есть только 0 и 1 и где 1 + 1 = 0. Сложение — это XOR, умножение — AND.</p>
+        <p>Почти все шаги над строкой — аффинные: каждый новый бит есть XOR каких-то старых плюс, может быть, константа. Значит шаг — это F(x) = A·x ⊕ b, где A — таблица n×n из нулей и единиц, и t шагов подряд — тоже такое же отображение. Вопрос «какие строки вернутся к себе ровно через t шагов» — уравнение (Aᵗ ⊕ E)·x = bₜ, и решается оно методом Гаусса, без перебора 2ⁿ строк. Ранг r говорит всё сразу: решений либо нет, либо ровно 2^(n−r).</p>
+        <p>AND так не сводится — он нелинеен, и там остаётся только перебор; ровно там живёт непредсказуемость. Поэтому AND в списке нет.</p>
+      </div>
+      <div class="wbody">
+        <div class="tools">
+          <select id="gf2Op" title="Шаг F(x) = A·x ⊕ b"></select>
+          <label class="dim">t <input type="number" id="gf2T" min="1" max="1000000000" value="1" style="width:74px" title="Через сколько шагов строка должна вернуться к себе"></label>
+          <button id="bGf2" title="Решить (Aᵗ ⊕ E)·x = bₜ для строк длины текущей">🧮 Решить</button>
+          <button id="bGf2Take" title="Сделать текущей строкой ближайшее решение (свободные биты взяты из самой строки)">⤓ Взять</button>
+        </div>
+        <div id="gf2Out" class="out"></div>
+      </div>
+    </section>
+
+    <!-- ЛИНЕЙНАЯ СЛОЖНОСТЬ -->
+    <section class="win" id="w-lin" data-title="🧮 Лин. сложность">
+      <div class="whint">
+        <p>Самое короткое правило вида «следующий бит = XOR нескольких предыдущих», которое выдаёт ленту <b>целиком</b> (алгоритм Берлекэмпа — Мэсси: за n² шагов и с гарантией, что короче нет). Длина правила L — линейная сложность.</p>
+        <p>L много меньше длины — лента порождена простым правилом и хранится как 2·L бит (зерно + отводы) вместо N. L около половины длины — так ведёт себя случайная лента: линейного правила в ней нет, и это честный ответ, а не промах поиска.</p>
+        <p>Кратчайшее правило среди ВСЕХ возможных (колмогоровская сложность) найти нельзя в принципе, а у большинства строк его и нет: правил короче n бит меньше, чем строк длины n. Точный поиск возможен только внутри одного семейства — здесь линейного.</p>
+      </div>
+      <div class="wbody">
+        <div class="tools">
+          <select id="linSrc" title="Что брать лентой"><option value="cur">текущая строка</option><option value="all">все строки подряд</option></select>
+          <button id="bLin" title="Найти кратчайшее линейное правило">🧮 Найти правило</button>
+        </div>
+        <div id="linOut" class="out"></div>
+      </div>
+    </section>
+
+    <!-- ЛЕНТА: ОСИ И ДЕЦИМАЦИЯ -->
+    <section class="win" id="w-tape" data-title="🧬 Лента: оси и ядро">
+      <div class="whint">
+        <p><b>🪞 Оси ленты.</b> Все строки склеиваются в одну ленту выбранным обходом, и в ней ищутся оси, которые идут <b>через стык строк</b> — их не видно ни в одной строке по отдельности. Порог длины — max(6, ⌈2·log₂N⌉): в случайной ленте из N бит самый длинный палиндром растёт как 2·log₂N, и короче порога ось неотличима от случайности. Инв-обходы не нужны: инверсия и разворот всей ленты осей не меняют.</p>
+        <p><b>🧬 Ядро децимации.</b> Лента прореживается с шагом k = 2…8: каждый k-й бит с каждого сдвига, потом каждый k²-й… Все прореженные куски сводятся к представителю своей четвёрки V₄ и считаются. Перестал расти счёт — ядро замкнулось: лента устроена как k-автоматная (Туэ–Морс, бумажное складывание). Серпинский, склеенный из строк, НЕ замыкается и не должен: длины строк растут. На конечной ленте это повод присмотреться, а не теорема.</p>
+      </div>
+      <div class="wbody">
+        <div class="tools">
+          <select id="thruMode" title="Каким обходом собирать ленту"></select>
+          <button id="bThru" title="Найти оси, идущие через стык строк">🪞 Оси ленты</button>
+          <button id="bDecim" title="Ядро децимации ленты (сквоз →), k = 2…8">🧬 Ядро</button>
+        </div>
+        <div id="tapeOut" class="out"></div>
+      </div>
+    </section>
+
+    <!-- ОРБИТА -->
+    <section class="win" id="w-orbit" data-title="🔎 Орбита">
+      <div class="whint">
+        <p>Ищет в столбике текущую строку <b>вместе с её отражениями</b>: развёрнутую ⇄, инвертированную 🔁 и инв-развёрнутую ⇄🔁. Для зеркал это одна и та же строка, увиденная с разных сторон, — одна орбита.</p>
+        <p><b>Целиком</b> — строки, которые с текущей из одной орбиты (сравниваются по канонике: наименьшей из четырёх). <b>Кусками</b> — где текущая строка или её отражение стоит внутри других строк. Клик по находке — перейти к строке.</p>
+      </div>
+      <div class="wbody">
+        <div class="tools">
+          <button id="bOrbit" title="Найти текущую строку и её отражения в столбике">🔎 Искать</button>
+          <label class="dim" title="Искать ещё и внутри строк — как кусок"><input type="checkbox" id="orbitSub" checked> и кусками внутри строк</label>
+        </div>
+        <div id="orbitOut" class="out"></div>
+      </div>
+    </section>
+
+    <!-- ПОДСКАЗКИ -->
+    <section class="win" id="w-help" data-title="📖 Подсказки">
+      <div class="wbody" id="helpBody">
+        <h4>Зачем Зазеркалиус</h4>
+        <p>Окно на ту сторону зеркала: строка бит и всё, что с ней делают зеркала. Главное здесь — симметрия; всё остальное — способы её увидеть.</p>
+        <h4>Ударение</h4>
+        <p>«За́мок» и «замо́к» пишутся одинаково и различаются тем, как их читают. У бит такое же ударение: где поставить ось, с какого бита начать, как нарезать, по какому правилу читать (как число, как край треугольника, как зерно). Строка та же — смысл другой. Бесплатного сжатия отсюда нет: выбор прочтения — тоже информация (два ударения — один бит), она просто хранится у читателя. Зазеркалиус — такой общий словарь ударений для мира симметрий.</p>
+        <h4>Почему нельзя сжать всё</h4>
+        <p>Два числа, и они РАЗНЫЕ: <b>T</b> — длина зерна (то, что хранишь), <b>N</b> — длина строки, которую из него хочешь получить. Сжатие — это T меньше N. Но зёрен из T бит всего 2^T, значит и результатов любого правила не больше 2^T, а строк длины N — 2^N: при T &lt; N большинство строк недостижимо, какое правило ни возьми. При T = N счёт сходится, но и сжатия нет — «3 = 3», «100 = 100»: так устроен спуск, край треугольника хранит n бит ↔ n бит. Из двух бит правилом 🔺+1 выходят только 4 трёхбитные строки из 8, у всех чётное число единиц. Весь треугольник не помогает: клеток в нём N²/2, а свободы — N бит. Правило не может сделать дешёвыми все строки, но решает, КАКИЕ: для порождённых им сжатие огромное (у Серпинского край — одна единица).</p>
+        <h4>Строка номер миллион</h4>
+        <p>Строку Серпинского с любым номером можно получить сразу, без треугольника: бит k строки n равен 1, когда k AND n = k (теорема Люка). У строки 1 000 000 таких бит 128. «Любую по номеру» — да; «любую по содержанию» — нет: адрес такой строки не короче её самой.</p>
+        <h4>🔺+1 и ▽ — два разных правила</h4>
+        <p>🔺+1 обкладывает строку нулями по краям — Паскаль, строка растёт: 1 → 11 → 101 → 1111 → 10001. ▽ берёт только внутренние пары — строка сжимается: 1111 → 000 → 00 → 0. Вверх от 1111 однозначно: край всегда 1, и из него восстанавливаются все биты строки выше.</p>
+        <h4>Окна</h4>
+        <p>Каждое окно тащится за шапку, тянется за правый нижний угол, «–» сворачивает, «?» открывает подсказку. «📐 Разложить» возвращает всё на места.</p>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="msg"></div>
+
+<script src="zz-core.js?v=0005"></script>
+<script src="zz-ui.js?v=0005"></script>
+<script src="../_js/hub-link.js"></script>
+</body>
+</html>

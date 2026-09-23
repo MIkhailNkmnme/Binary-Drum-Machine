@@ -3462,6 +3462,7 @@ const st = {
                       только зажигает её, пока цепочка стоит развёрнутой. */
   revKeepShow: false,
   memShow: false,      // v1.531: «🔥 Память» — накал бит по числу шагов без смены (memHeatUpdate)
+  memMode: "hold",     // v1.555: что считать накалом — "hold" (не менялся) или "period" (повторяется)
   diffLeftShow: false,
   diffUpShow: false,
   revToggled: false,

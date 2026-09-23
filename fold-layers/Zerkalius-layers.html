@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Layers — v1.541</title>
+<title>Zerkalius Layers — v1.561</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -384,6 +384,8 @@
      Сетка 2 колонки РОВНО (не flex-wrap с процентами — тот пакует то 2, то 3 в ряд
      в зависимости от содержимого и выглядит рвано). */
   .control-group-player{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  /* v1.542: подписи разделов во вкладке «Новое» — на всю ширину сетки */
+  #sessGroup .sess-lab{grid-column:1 / -1;font-size:11px;color:var(--dim);margin:4px 0 -2px;border-bottom:1px solid var(--line)}
   /* padding был 8px 6px — вместе со шрифтом 15px это давало ~34px, min-height:24px не мог
      перебить (контент и так выше). Уменьшил паддинг, чтобы кнопки реально сели на стандартные
      24px, как и остальные группы кнопок (ops-btn-grid/preset-grp/search-grid). */
@@ -2587,8 +2589,11 @@
      видно, а схватить нечем (баг-репорт «не хватается сейчас»). Теперь ручке задаёт положение и
      высоту сам JS, ровно по линии, а линия просто заполняет её целиком — где видно, там и
      хватается. Толщина 2px вместо 1px: тоньше её на плотном узоре не разглядеть («ось пожирнее»). */
-  .axis-split::before{content:"";position:absolute;left:5px;top:0;bottom:0;width:2px;
-    pointer-events:none;background:rgba(186,124,240,.75)}
+  /* v1.545, запрос пользователя «ось потоньше и потуше, слишком выделяется»: 1px вместо 2px и
+     вдвое прозрачнее. left:5.5px — чтобы середина линии осталась ровно там же, где у 2px (6px от
+     края ручки = центр бита, см. v1.530). При наведении и перетаскивании — прежняя яркая. */
+  .axis-split::before{content:"";position:absolute;left:5.5px;top:0;bottom:0;width:1px;
+    pointer-events:none;background:rgba(186,124,240,.38)}
   .axis-split:hover::before,.axis-split.drag::before{width:3px;left:4px;
     background:#d9b8f2;box-shadow:0 0 8px rgba(186,124,240,.7)}
   /* ═══ ПЛАНКИ ПОЛЕЙ: ПОДПИСЬ + ДВЕ ОБЫЧНЫЕ КНОПКИ (v1.081) ═══
@@ -3581,6 +3586,43 @@
 /* v1.540, «▽ Спуск»: первый бит каждого этажа — край треугольника; подсвечен столбцом слева,
    чтобы край читался сверху вниз как отдельная строка (она же в «Итоге»). */
 .descent-edge{ background:rgba(255,209,102,.28); outline:1px solid rgba(255,209,102,.55); }
+/* v1.546: окно «▽ Спуск» — шрифт, кегль и разрядка полотна, чтобы цифры были те же, что в цепочке
+   (0 с точкой внутри и т. п.). Две колонки: подпись этажа и сами биты; выравнивание — у колонки бит. */
+.descent-view{display:grid;grid-template-columns:auto 1fr;column-gap:8px;row-gap:0;
+  min-width:220px;padding:2px 0} /* v1.547: без своего потолка и скролла — размер задаёт окно, его тянут за угол */
+.descent-view .dl{font-size:11px;color:var(--dim);text-align:right;align-self:center;white-space:nowrap}
+.descent-view .dr{font-family:var(--chain-ff);font-size:var(--chain-fs);letter-spacing:var(--chain-ls);
+  line-height:1.15;white-space:pre}
+.descent-view.al-left .dr{text-align:left}
+.descent-view.al-center .dr{text-align:center}
+.descent-view.al-right .dr{text-align:right}
+.descent-view .dr.edge-row{border-top:1px solid var(--line);margin-top:3px;padding-top:2px}
+/* v1.546: и в «🧾 Черновике шага» цифры — шрифтом полотна */
+.step-log-body .b0, .step-log-body .b1, .step-log-body .descent-edge{font-family:var(--chain-ff)}
+/* v1.548: окно «🪞 Крест». Ячейка бита — ровно .62em, поэтому скобки указателей ставятся в тех же em
+   без замеров: бит k начинается на k·.62em. */
+.cross-view{min-width:220px;overflow:auto}
+.cross-view .xgrid{display:grid;grid-template-columns:auto 3px auto;grid-template-rows:auto 3px auto;justify-content:start}
+.cross-view .xq{padding:3px 8px;min-width:0}
+.cross-view .xq.l{text-align:right}
+.cross-view .xlab{font-size:10px;color:var(--dim);white-space:nowrap}
+.cross-view .xeq{color:#6ee7a0}
+.cross-view .xrow,.cross-view .xpbits{font-family:var(--chain-ff);font-size:var(--chain-fs);line-height:1.2;white-space:pre}
+.cross-view .xc{display:inline-block;width:.62em;text-align:center}
+.cross-view .xgrid.showfix .xc.fx{color:#ffd166;text-shadow:0 0 6px rgba(255,209,102,.45)}
+.cross-view .xgrid.showfix .xc.mv{color:#ff7ab6}
+.cross-view .xv{background:linear-gradient(#b98cf0,#22d3ee);box-shadow:0 0 8px rgba(185,140,240,.6)}
+.cross-view .xh{grid-column:1 / -1;background:linear-gradient(90deg,#22d3ee,#b98cf0,#22d3ee);box-shadow:0 0 8px rgba(34,211,238,.5)}
+.cross-view .xstat{font-size:11px;margin:6px 0 8px}
+.cross-view .xstat b{color:#ffd166}
+.cross-view .xp{position:relative;font-size:var(--chain-fs)}
+.cross-view .xptr{position:absolute;height:6px;border:1.5px solid #b98cf0;border-top:none;border-radius:0 0 4px 4px;color:#b98cf0;opacity:.8;cursor:pointer}
+.cross-view .xptr.anti{border-color:#22d3ee;color:#22d3ee}
+.cross-view .xptr::after{content:"";position:absolute;left:var(--ax);top:-3px;bottom:-5px;width:2px;margin-left:-1px;background:currentColor}
+.cross-view .xptr:hover{opacity:1;filter:drop-shadow(0 0 4px currentColor)}
+.cross-view .xc.hl{background:rgba(185,140,240,.3);border-radius:2px}
+.cross-view .xc.hla{background:rgba(34,211,238,.28);border-radius:2px}
+.cross-view .xleg{font-size:10.5px;color:var(--dim);margin-top:4px}
 /* "⧬ Интерлив сквозной" — в "Итог" ВСЕ символы, взятые ИЗ СТРОКИ (не из сквозной), красятся
    синим — так видно, куда легли именно её биты среди переплетения. Фон пробовали — оказалось
    неразборчиво (см. запрос пользователя), заменили на простой цвет текста. */
@@ -3882,10 +3924,18 @@ textarea{font-size:11px;padding:3px}
    !important здесь по делу: у "Лога находок" стоит resize:both, и после ручного растягивания
    браузер пишет ШИРИНУ ПРЯМО В style элемента — инлайн перебивает любое обычное правило, и панель
    навсегда застревала бы на старом размере. */
-.menu-drop{width:var(--panel-w) !important}
-.floating-panel{width:var(--panel-w) !important;min-width:140px}
-/* Исключение: "Лог находок" тянут за угол намеренно — ему ручной размер оставляем. */
-#panelWrap_menuFindLog.floating-panel{width:var(--panel-w)}
+/* ═══ РУЧНОЙ РАЗМЕР У ВСЕХ ОКОН (v1.547) ═══
+   Запрос пользователя: «режется высота показа окон и ширина, и никак не увеличить руками» — про
+   окно «▽ Спуск», но так было у всех: за угол тянулся только «Лог находок», остальным ширину
+   держал !important. Теперь угол есть у каждой плавающей панели и у каждой выпадающей вкладки.
+   Ширина по умолчанию прежняя (--panel-w), но БЕЗ !important: браузер пишет растянутый размер в
+   style элемента, и он должен победить. Та самая опасность, из-за которой !important ставили
+   («панель навсегда застрянет на старом размере»), закрыта с другой стороны: в ДОКЕ ручной размер
+   гасится правилом ниже, и панель там по-прежнему по ширине дока. Высота ограничена экраном, а не
+   80vh: тянуть вниз можно до самого края. */
+.menu-drop{width:var(--panel-w);min-width:140px;min-height:60px;resize:both;max-height:calc(100vh - 50px)}
+.floating-panel{width:var(--panel-w);min-width:140px;min-height:60px;resize:both;overflow:auto;max-height:calc(100vh - 16px)}
+#leftSlot > .menu-panel, #rightSlot > .menu-panel, .menu-drop > .menu-panel{width:auto !important;height:auto !important;resize:none}
 /* Отступ полотна от краёв — по минимуму. ВЕРХНИЙ отступ ОБЯЗАН остаться формулой с
    --result-box-h: им резервируется место под закреплённые оверлеи ("Результат" + "Черновик шага",
    см. OVERLAY_STACK), иначе первые строки цепочек уезжают под них и до них не добраться, не
@@ -4935,7 +4985,7 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
   <!-- Заголовок стоит вплотную слева от вкладок (v1.046), вся связка центрируется полосой — см. #menuBarTitle в CSS. --><div id="menuBarTitle">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.541</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.561</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -4956,6 +5006,12 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
       <!-- «Перенос» — своя вкладка (v1.457, запрос пользователя). Разметка обязательна для КАЖДОЙ
            записи в MENUS: .menu-btn с data-menu, галка #<id>Pin и пустой .menu-drop ниже. -->
       <div class="menu-btn" data-menu="menuWrap"><span>Перенос</span><input type="checkbox" class="menu-pin-inline" id="menuWrapPin" title="Показывать в панели"></div>
+      <!-- «Новое» (v1.542, запрос пользователя): дубли кнопок, сделанных в сессии 2026-09-21/22, одной вкладкой. -->
+      <div class="menu-btn" data-menu="menuSess"><span>Новое</span><input type="checkbox" class="menu-pin-inline" id="menuSessPin" title="Показывать в панели"></div>
+      <!-- «Спуск» (v1.546): своё окно треугольника ▽ — в черновике шага его было не разглядеть. -->
+      <div class="menu-btn" data-menu="menuDescent"><span>▽</span><input type="checkbox" class="menu-pin-inline" id="menuDescentPin" title="Показывать в панели"></div>
+      <!-- «🪞 Крест» (v1.548): зеркальный крест и указатели симметрии — перенесено из Zazerkalius. -->
+      <div class="menu-btn" data-menu="menuCross"><span>🪞</span><input type="checkbox" class="menu-pin-inline" id="menuCrossPin" title="Показывать в панели"></div>
     </div>
     <!-- Перенесена ПОСЛЕ меню вкладок и переименована — запрос пользователя. -->
     <!-- margin-left — тот же отступ, что и внутренний горизонтальный padding кнопки: у #menuTabs
@@ -4981,6 +5037,9 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
     <div id="menuMask" class="menu-drop"></div>
     <div id="menuSeq" class="menu-drop"></div>
     <div id="menuWrap" class="menu-drop"></div>
+    <div id="menuSess" class="menu-drop"></div>
+    <div id="menuDescent" class="menu-drop"></div>
+    <div id="menuCross" class="menu-drop"></div>
 
     <span style="width:1px;align-self:stretch;background:var(--line);margin:0 4px;"></span>
     <!-- "🔗 Р/" и "🧾 Ч/" ВЕРНУЛИСЬ СЮДА из полосы выравниваний (v0.871, запрос пользователя):
@@ -5422,6 +5481,13 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
         </div>
         <!-- v1.521: достроить ОДНУ строку Серпинского под последней, из неё же, а не с нуля. -->
         <div style="flex:1 1 100%; display:flex; gap:6px; align-items:center;">
+          <!-- v1.549, запрос пользователя: «построение делать прямо на строках, кладя в биты (XOR)
+               или между имеющихся». «Между имеющихся» умели и раньше (вставка со сдвигом), а ⊕ —
+               новое: результат не занимает своей строки, а ложится XOR-ом в ту, что под источником. -->
+          <select id="buildMode" style="flex:1 1 100%;" title="Куда девать построенную строку. «⬇ вставлять» — как раньше: новая строка под источником, нижние сдвигаются. «⊕ класть XOR-ом» — строки НЕ сдвигаются: результат XOR-ится в строку, что стоит под источником, бит к биту слева направо; если она короче, строка удлиняется, если её нет или она пуста — вставка как обычно. В строке с точками и пустотами XOR не делается: у них нет значения">
+            <option value="insert">⬇ вставлять новой строкой</option>
+            <option value="xor">⊕ класть XOR-ом в строку ниже</option>
+          </select>
           <button id="bSierpNext" style="flex:1;" title="Вставить под ВЫДЕЛЕННОЙ строкой (ничего не выделено — под последней) новую; строки ниже сдвигаются, ничего не затирается. Из строки длиной T получается строка длиной T+1 по правилу Серпинского: каждый новый бит — XOR двух соседних бит над ним (за краями строки — нули). На треугольнике Паскаля это ровно его следующая строка, но работает от ЛЮБОЙ последней строки. Клик — одна строка; удобно жать подряд">🔺+1 Ещё строка</button>
           <button id="bDescent" style="flex:0 0 auto;" title="▽ СПУСК — показ, данные не трогает. От выделенной строки (ничего не выделено — первая непустая) строит вниз треугольник: под каждой парой соседей их XOR, n бит → n−1 → … → 1. Левый край треугольника (первый бит каждого этажа) — та же строка, переложенная без потерь: из края она восстанавливается целиком, а спуск от края даёт саму строку. Треугольник и край — в «🧾 Черновике шага». Разреженный или повторяющийся край = в строке есть порядок; край-мусор той же длины = порядка не видно">▽ Спуск</button>
         </div>
@@ -5431,6 +5497,9 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
         </div>
         <!-- v1.522: следующий номер под выделенной — пара к «🔺+1 Ещё строка». -->
         <div style="flex:1 1 100%; display:flex; gap:6px; align-items:center;">
+          <!-- v1.553, запрос пользователя «кнопки, чтоб достраивал не вниз, а вверх». -->
+          <button id="bSierpPrev" style="flex:1;" title="ОБРАТНЫЙ шаг Паскаля: над ВЫДЕЛЕННОЙ строкой (ничего не выделено — над последней) встаёт та строка, из которой она получилась бы кнопкой «🔺+1», — на бит КОРОЧЕ. Строки от места вставки съезжают вниз, ничего не затирается. Считается однозначно: первый бит тот же, дальше каждый — XOR с уже полученным соседом слева. Последний бит служит проверкой: если он не сошёлся, родителя у строки нет вовсе — шагом «🔺+1» её не получить (так у половины всех строк). В режиме «⊕» ложится XOR-ом в строку НАД источником">🔻−1 Строка выше</button>
+          <button id="bNumPrev" style="flex:1;" title="Над ВЫДЕЛЕННОЙ строкой встаёт предыдущий номер: строка читается как двоичное число, новая — на единицу меньше. Ширина сохраняется (0100 → 0011); у нуля предшественника нет. В режиме «⊕» ложится XOR-ом в строку НАД источником">🔢−1 Пред. номер</button>
           <button id="bNumNext" style="flex:1;" title="Вставить под ВЫДЕЛЕННОЙ строкой (ничего не выделено — под последней) следующий номер: строка читается как двоичное число, новая — на единицу больше. Строки ниже сдвигаются, ничего не затирается; выделение переходит на новую, так что жать можно подряд. Ведущие нули сохраняются: 0011 → 0100">🔢+1 След. номер</button>
         </div>
       </div>
@@ -5456,6 +5525,7 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
   <button id="bRevMoveFlip" style="flex:1 1 0; min-width:0;" title="ПРАВКА ДАННЫХ: инвертирует (0↔1) только МЕНЯЮЩИЕСЯ биты — те, что стоят НЕ на палиндромных позициях (бит №k не равен биту №«длина−1−k»). Неподвижные не трогает. Работает в выделенных строках, а если ничего не выделено — во всех. Повторный клик возвращает как было. Заметьте: результат совпадает с разворотом строки — это и есть определение меняющихся бит">🔁 Инв меняющихся</button>
   </div>
   <!-- v1.531: память по циклу — вторая половина пункта 1 из борт-журнала. -->
+  <button id="bMemMode" style="grid-column:1 / -1;" title="ЧТО СЧИТАТЬ НАКАЛОМ. «держит значение» — сколько шагов подряд бит не менялся: так горят замершие куски. «повторяется» — через сколько шагов бит повторяет сам себя: 1 — стоит на месте, 2 — мигает через шаг; так разгораются ритмичные строки вроде 10101, которые под Кругом возвращаются к себе за два шага, хотя не держат значение ни одного шага. Период ищется по последним 16 видам строки">🔥 Накал: держит значение</button>
   <button id="bMemHeat" style="grid-column:1 / -1;" title="ПОКАЗ, БЕЗ ПРАВКИ ДАННЫХ: бит разгорается, пока держит своё значение. Шаг — любое изменение строки: зеркала, Круг, Круг Инв, полуоборот, реверс, правка руками. Ступени накала: 1 шаг, 2–3, 4–7, 8 и больше. Сменился бит — гаснет до обычного цвета. Отсчёт начинается с момента включения; выключение забывает счёт. Работает по всем строкам">🔥 Память по циклу</button>
   <!-- Заливка одним значением: нажатие — все биты в 0, следующее — все в 1, и так по кругу
        (запрос пользователя "заменяет все 1 на 0, а потом все 0 на 1"). -->
@@ -5592,6 +5662,99 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
      Разметка перенесена БЕЗ изменений (id прежние — обработчики в fold-4-tools.js не тронуты),
      сняты только grid-column:1 / -1 и внешняя рамка: теперь рамку рисует сама панель.
      Группа НЕ .control-group-player: содержимое одноколоночное, делить его на две колонки нечем. -->
+<!-- ═══ ВКЛАДКА «НОВОЕ» (v1.542) ═══════════════════════════════════════════════════════════
+     Запрос пользователя: «скопировать в дополнительную вкладку все кнопки, которые понадобятся и
+     которые ты сделал в текущей сессии». Здесь НЕ копии с собственным кодом, а ДУБЛИ-ПУЛЬТЫ:
+     data-proxy="id" — клик нажимает настоящую кнопку на её старом месте, надпись и подсказка
+     берутся оттуда же при запуске, подсветка «включено» (mode-act) повторяется за оригиналом.
+     data-mirror="id" — список/поле, которое держит то же значение, что оригинал, в обе стороны.
+     Так у каждой кнопки остаётся ОДИН обработчик, и правка кода в одном месте чинит оба.
+     Разводка — в конце fold-5-ui.js (sessProxyInit). -->
+<div id="sessGroup" class="control-group control-group-player">
+  <div class="sess-lab">Построения</div>
+  <select data-mirror="buildMode" style="grid-column:1 / -1;"></select>
+  <button data-proxy="bSierpNext"></button>
+  <button data-proxy="bNumNext"></button>
+  <button data-proxy="bSierpPrev"></button>
+  <button data-proxy="bNumPrev"></button>
+  <button data-proxy="bDescent" style="grid-column:1 / -1;"></button>
+  <div style="grid-column:1 / -1; display:flex; gap:4px; align-items:center;">
+    <select data-mirror="descentWhat" style="flex:1 1 0; min-width:0;"></select>
+    <select data-mirror="descentDir" style="flex:0 0 auto;"></select>
+  </div>
+  <button data-proxy="bDescentIns"></button>
+  <button data-proxy="bDescentXor"></button>
+  <div class="sess-lab">Разворот и память</div>
+  <button data-proxy="bReverseKeep"></button>
+  <button data-proxy="bRevMoveFlip"></button>
+  <button data-proxy="bMemHeat" style="grid-column:1 / -1;"></button>
+  <button data-proxy="bMemMode" style="grid-column:1 / -1;"></button>
+  <button data-proxy="bVMirror" style="grid-column:1 / -1;"></button>
+  <div class="sess-lab">Алгебра GF(2)</div>
+  <div style="grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:4px;">
+    <select data-mirror="gf2Op" style="flex:1 1 100%;"></select>
+    <input type="number" data-mirror="gf2T" style="width:64px">
+    <button data-proxy="bGf2" style="flex:1;"></button>
+    <button data-proxy="bGf2Write" style="flex:0 0 auto;"></button>
+  </div>
+  <button data-proxy="bLinComp" style="grid-column:1 / -1;"></button>
+  <div class="sess-lab">Лента</div>
+  <div style="grid-column:1 / -1; display:flex; gap:4px;">
+    <button data-proxy="bAxisMapThru" style="flex:1 1 0; min-width:0;"></button>
+    <select data-mirror="axisThruMode" style="flex:0 0 auto;"></select>
+  </div>
+  <button data-proxy="bDecimKernel" style="grid-column:1 / -1;"></button>
+</div>
+
+<!-- ═══ ОКНО «▽ СПУСК» (v1.546) ═══════════════════════════════════════════════════════════
+     Запрос пользователя: «окно черновика как-то там не видно ничего, может новое окно, и чтобы
+     оно как обычные вкладки гуляло по полю, и выравнивание там такое же, как в цепочке текущее»;
+     и «прибавь туда такой же шрифт — 0 с точкой внутри». Обычная вкладка системы MENUS: за ⋮⋮
+     уносится на поле, галкой закрепляется в доке. Цифры — шрифтом и кеглем полотна (--chain-ff,
+     --chain-fs), выравнивание СВОЁ (уточнение пользователя: «стой, выравнивание надо разное, отдельное»). Код — descentPaint в fold-3-ops.js. -->
+<div id="descentGroup" class="control-group">
+  <div style="display:flex;gap:4px;align-items:center;">
+    <span id="descentHead" style="flex:1 1 auto;min-width:0;font-size:11px;color:var(--dim);">Нажми «▽ Спуск» — треугольник появится здесь</span>
+    <select id="descentAlign" style="flex:0 0 auto;" title="Выравнивание этажей — СВОЁ у этого окна, от цепочки не зависит. По центру каждый бит стоит ровно под своей парой (сдвиг на полбита), влево — край столбиком, вправо — правый край столбиком">
+      <option value="center" selected>◫ по центру</option>
+      <option value="left">◧ влево</option>
+      <option value="right">◨ вправо</option>
+    </select>
+  </div>
+  <!-- v1.560, запрос пользователя: «это тоже надо — возможность вставлять, сдвигая, или XOR-ом,
+       вниз-вверх». Спуск умел только показывать; теперь его этажи или край можно положить в саму
+       цепочку. Код — descentWrite в fold-3-ops.js. -->
+  <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+    <select id="descentWhat" title="Что класть в цепочку: весь треугольник этажами (n−1 строк) или только левый край одной строкой">
+      <option value="tri">треугольник</option>
+      <option value="edge">только край</option>
+    </select>
+    <select id="descentDir" title="Куда класть: вниз от исходной строки или вверх от неё">
+      <option value="down">вниз</option>
+      <option value="up">вверх</option>
+    </select>
+    <button id="bDescentIns" style="flex:1;" title="ВСТАВИТЬ новыми строками: этажи спуска (или край) встают рядом с исходной строкой, всё остальное сдвигается, ничего не затирается. ↩ вернёт">⬇ Вставить</button>
+    <button id="bDescentXor" style="flex:1;" title="ПОЛОЖИТЬ XOR-ом в уже стоящие строки: этаж k ложится в строку, отстоящую от исходной на k, бит к биту слева направо. Строки не двигаются. Если какой-то строки нет или в ней не только 0 и 1 — ничего не делается и говорится, где споткнулось. ↩ вернёт">⊕ XOR-ом</button>
+  </div>
+  <div id="descentView" class="descent-view"></div>
+</div>
+
+<!-- ═══ ОКНО «🪞 КРЕСТ» (v1.548) ════════════════════════════════════════════════════════════
+     Запрос пользователя: новое из Zazerkalius «в Layers тоже не помешает — там функционал обширнее».
+     Для выделенной строки (ничего не выделено — первая из одних 0 и 1): зеркальный крест —
+     вертикальная черта разворот ⇄, горизонтальная инверсия 🔁, по четвертям вся орбита V₄, золотом
+     неподвижные биты; и УКАЗАТЕЛИ СИММЕТРИИ — скобки под палиндромами (фиолетовые) и
+     антипалиндромами (бирюзовые), черта скобки — сама ось. Только показ, данные не трогает.
+     Перерисовывается сам, когда меняется строка или выделение. Код — crossPaint в fold-3-ops.js. -->
+<div id="crossGroup" class="control-group">
+  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+    <span id="crossHead" style="flex:1 1 auto;min-width:0;font-size:11px;color:var(--dim);"></span>
+    <label class="chk" title="⇄🔎 Неподвижные — золотом биты, которые разворот не трогает (равны своему зеркальному), розовым — меняющиеся"><input type="checkbox" id="crossFix" checked>⇄🔎</label>
+    <label class="chk" title="Указатели — оси кусков не короче стольких бит">оси от <input type="number" id="crossPtrMin" min="2" max="64" value="4" style="width:44px"></label>
+  </div>
+  <div id="crossView" class="cross-view"></div>
+</div>
+
 <div id="wrapGroup" class="control-group">
   <div style="display:flex; flex-direction:column; gap:4px;">
     <!-- ═══ ПУЛЬТ ПЕРЕНОСА ОДНОЙ СТРОКОЙ (v1.474) ═══════════════════════════════════════════
@@ -6415,11 +6578,11 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
      (видно новый номер версии в заголовке), а fold-*.js берёт из кеша — то есть новый код
      просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
      версией в <title>/<h3>, теми же тремя цифрами. -->
-<script src="fold-1-core.js?v=1541"></script>
-<script src="fold-2-render.js?v=1541"></script>
-<script src="fold-3-ops.js?v=1541"></script>
-<script src="fold-4-tools.js?v=1541"></script>
-<script src="fold-5-ui.js?v=1541"></script>
+<script src="fold-1-core.js?v=1561"></script>
+<script src="fold-2-render.js?v=1561"></script>
+<script src="fold-3-ops.js?v=1561"></script>
+<script src="fold-4-tools.js?v=1561"></script>
+<script src="fold-5-ui.js?v=1561"></script>
 <div id="fieldInfo"></div>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;

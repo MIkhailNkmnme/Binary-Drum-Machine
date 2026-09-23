@@ -5756,6 +5756,7 @@ function captureUiSettings(){
     highlight1Right: !!st.highlight1Right,
     revKeepShow: !!st.revKeepShow,
     memShow: !!st.memShow,
+    memMode: st.memMode || "hold",
     diffLeftShow: !!st.diffLeftShow,
     diffUpShow: !!st.diffUpShow,
     highlightVert1: !!st.highlightVert1,
@@ -6024,6 +6025,10 @@ function applyUiSettings(u){
     if (b) b.classList.toggle("mode-act", st.revKeepShow);
   }
   // v1.531 — память по циклу; сам счёт не хранится, после загрузки отсчёт начинается заново.
+  if (u.memMode !== undefined) {
+    st.memMode = (u.memMode === "period") ? "period" : "hold";
+    if (typeof memModeLabel === "function") memModeLabel();
+  }
   if (u.memShow !== undefined) {
     st.memShow = !!u.memShow;
     const b = document.getElementById("bMemHeat");
@@ -7166,3 +7171,59 @@ function positionPasteColBar(){
   bar.style.top = Math.round(top) + "px";
   bar.classList.add("on");
 }
+
+/* ═══ ВКЛАДКА «НОВОЕ»: ДУБЛИ-ПУЛЬТЫ (v1.542) ═══════════════════════════════════════════════
+   [data-proxy=id] — клик жмёт настоящую кнопку; надпись и подсказка копируются с неё, класс
+   mode-act (кнопка «включена») повторяется за ней через MutationObserver — оригинал может
+   переключиться и сам (загрузка кэша, горячая клавиша), дубль не должен врать.
+   [data-mirror=id] — select/input с тем же значением, что оригинал, в обе стороны; изменение
+   отдаётся оригиналу событиями input+change, чтобы сработали его собственные слушатели.
+   Ссылки на оригиналы берутся ОДИН раз при запуске: «🗗 Панели в окно» переносит панели в
+   другой документ живыми, и getElementById в момент клика их бы уже не нашёл. */
+(function sessProxyInit() {
+  const grp = document.getElementById("sessGroup");
+  if (!grp) return;
+  grp.querySelectorAll("[data-proxy]").forEach(b => {
+    const src = document.getElementById(b.dataset.proxy);
+    if (!src) { b.remove(); return; }
+    b.innerHTML = src.innerHTML;
+    if (src.title) b.title = src.title;
+    ["border-color", "color"].forEach(p => { const v = src.style.getPropertyValue(p); if (v) b.style.setProperty(p, v); });
+    const sync = () => {
+      b.classList.toggle("mode-act", src.classList.contains("mode-act"));
+      b.disabled = src.disabled;
+      // v1.556: у кнопок-переключателей надпись меняется на ходу («🔥 Накал: держит/повторяется»,
+      // «⇔ Вид ◀…»), и дубль обязан повторять её, иначе он врёт о состоянии.
+      if (b.innerHTML !== src.innerHTML) b.innerHTML = src.innerHTML;
+      if (src.title && b.title !== src.title) b.title = src.title;
+    };
+    sync();
+    new MutationObserver(sync).observe(src, { attributes: true, childList: true, characterData: true, subtree: true,
+                                              attributeFilter: ["class", "disabled", "title"] });
+    b.addEventListener("click", e => { e.preventDefault(); src.click(); });
+  });
+  grp.querySelectorAll("[data-mirror]").forEach(m => {
+    const src = document.getElementById(m.dataset.mirror);
+    if (!src) { m.remove(); return; }
+    if (src.tagName === "SELECT") m.innerHTML = src.innerHTML;
+    ["min", "max", "step"].forEach(k => { if (src.hasAttribute(k)) m.setAttribute(k, src.getAttribute(k)); });
+    if (src.title) m.title = src.title;
+    m.value = src.value;
+    let busy = false;
+    const push = () => {
+      if (busy) return; busy = true;
+      src.value = m.value;
+      src.dispatchEvent(new Event("input", { bubbles: true }));
+      src.dispatchEvent(new Event("change", { bubbles: true }));
+      busy = false;
+    };
+    m.addEventListener("input", push);
+    m.addEventListener("change", push);
+    const pull = () => { if (!busy && m.value !== src.value) m.value = src.value; };
+    src.addEventListener("input", pull);
+    src.addEventListener("change", pull);
+    // значение из кэша могут вписать в оригинал без события — сверяемся, когда вкладку открывают
+    grp.addEventListener("pointerenter", pull);
+  });
+})();
+

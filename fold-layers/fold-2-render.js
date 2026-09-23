@@ -286,7 +286,11 @@ function resetAll(){
   // "нет сохранёнки", и для вкладок с 💾-сохранением (обычное дело) двигать ползунок вообще ничего
   // не давало (resetAll() восстанавливал savedChain целиком, лимит просто не применялся).
   const rowCountEl = document.getElementById("rowCount");
-  const limit = rowCountEl ? +rowCountEl.value : st.tplRows.length;
+  /* v1.561: если после прошлого Сброса были встройки (🔺+1, 🔢+1, ▽ Спуск), берём размер, какой был
+     ДО них, а не раздутый нынешний — запрос пользователя. Отметку ставит rowCountMarkInsert. */
+  const baseLimit = (typeof rowCountBase === "number" && rowCountBase > 0) ? rowCountBase : null;
+  const limit = baseLimit !== null ? baseLimit : (rowCountEl ? +rowCountEl.value : st.tplRows.length);
+  if (typeof rowCountBase !== "undefined") rowCountBase = null;
   // Строки собираются заново из шаблона/сохранёнки — спрятанный ползунком хвост к ним уже не
   // относится (см. rowCountStash).
   if (typeof rowCountStashClear === "function") rowCountStashClear();
@@ -2030,16 +2034,85 @@ function patCellPadPx(){
    Живёт, только пока включена кнопка «🔥 Память» (st.memShow): выключили — карта очищается,
    включили — отсчёт идёт с этого мгновения. Накал рисуется классами .hm1….hm4 (см. fold.html). */
 const memHeatMap = new Map();
+/* ═══ СТРОКА, ПЕРЕЖИВШАЯ ШАГ БЕЗ ИЗМЕНЕНИЙ, — САМАЯ ПАМЯТЛИВАЯ (испр. v1.554) ═══
+   Принёс пользователь: «Память по циклу включена, цикл прогнан, а палиндром не разгорелся».
+   Было: счёт прибавлялся ТОЛЬКО когда строка изменилась (`if (m.s === s) continue`). Строку,
+   которую шаг не тронул вовсе, память не замечала, и её биты вечно стояли на нуле — хотя держать
+   значение через шаг это ровно то, что память и меряет. Палиндром под разворотом, неподвижная
+   точка под Кругом Инв, строка над горизонтом — все они как раз такие.
+   Стало: считается ШАГ МАШИНЫ (st.step + st.passCount), а не факт изменения строки. Был шаг —
+   у каждой строки бит, сохранивший значение, прибавляет единицу, сменившийся обнуляется; строка,
+   не изменившаяся ни в одном бите, прибавляет всем. Перерисовка без шага (наведение, прокрутка,
+   смена цвета) счёт по-прежнему не двигает. Ручная правка шага не даёт, но меняет строку — она
+   ловится отдельной веткой, как и раньше. */
+let memHeatStep = null;
+/* ═══ ВТОРОЙ РЕЖИМ НАКАЛА: «ПОВТОРЯЕТСЯ» (v1.555) ═══
+   Принёс пользователь: «Память включена, цикл прогнан, а 10101 не разгорелась». Память считала
+   верно: под Кругом 10101 → 01010 → 10101, и КАЖДЫЙ бит меняется каждый шаг, счёт «держит
+   значение» честно стоит на нуле. Но человек смотрит на другое: строка возвращается к себе через
+   два шага, то есть память у неё предельная, просто не «замер», а «ритм».
+   Поэтому у кнопки два режима (st.memMode):
+     "hold"   — сколько шагов подряд бит не менялся (как было, v1.531);
+     "period" — через сколько шагов бит повторяет сам себя; 1 — стоит на месте, 2 — мигает через
+                шаг, и так до 8. Чем короче период, тем ярче.
+   Период ищется по короткой истории строки (MEM_HIST последних видов): наименьшее p, при котором
+   все хранимые сравнения H[j][k] === H[j−p][k] сошлись, и таких сравнений набралось хотя бы два —
+   одно совпадение случайно, два уже говорят о ритме. Уровень накала общий для обоих режимов
+   (memHeatLevel), поэтому период переводится в те же ступени: 1 → 8 «шагов», 2 → 4, до 4 → 2,
+   до 8 → 1. Показываемый массив лежит в m.show, сам период — в m.per (для подсказки бита). */
+const MEM_HIST = 17;
+function memPeriodOf(hist, k){
+  const H = hist, n = H.length;
+  for (let p = 1; p <= 8; p++) {
+    let seen = 0, ok = true;
+    for (let j = n - 1; j - p >= 0; j--) {
+      if (H[j][k] !== H[j - p][k]) { ok = false; break; }
+      seen++;
+      if (seen >= 4) break;
+    }
+    if (ok && seen >= 2) return p;
+  }
+  return 0;
+}
+function memPeriodLevelN(p){ return p === 1 ? 8 : p === 2 ? 4 : p <= 4 ? 2 : p <= 8 ? 1 : 0; }
 function memHeatUpdate(){
-  if (!st.memShow) { if (memHeatMap.size) memHeatMap.clear(); return; }
+  if (!st.memShow) { if (memHeatMap.size) memHeatMap.clear(); memHeatStep = null; return; }
   const rows = st.rows || [];
+  const stepNow = (st.step | 0) + (st.passCount | 0);
+  /* ШАГОМ СЧИТАЕТСЯ ЛЮБОЕ ИЗМЕНЕНИЕ ЦЕПОЧКИ (v1.555). Счётчика st.step мало: его двигает прогон,
+     но не кнопки-правки («🔁 Инв меняющихся», зеркала, ручная правка бита) — а для памяти это тот
+     же шаг, просто сделанный рукой. Поэтому сперва смотрим, изменилась ли ХОТЬ ОДНА строка, и
+     если да — шаг засчитан всем, включая те строки, которых он не коснулся: они как раз и держат
+     значение дольше всех. Перерисовка без единого изменения (наведение, прокрутка) счёт не двигает. */
+  let anyChanged = false;
+  for (let i = 0; i < rows.length && !anyChanged; i++) {
+    const m0 = memHeatMap.get(i);
+    if (m0 && m0.s !== (rows[i] || "")) anyChanged = true;
+  }
+  const stepped = (memHeatStep !== null && stepNow !== memHeatStep) || anyChanged;
+  memHeatStep = stepNow;
+  const perMode = st.memMode === "period";
   for (let i = 0; i < rows.length; i++) {
     const s = rows[i] || "";
-    const m = memHeatMap.get(i);
-    if (!m || m.s.length !== s.length) { memHeatMap.set(i, { s, keep: new Uint16Array(s.length) }); continue; }
-    if (m.s === s) continue;
-    for (let k = 0; k < s.length; k++) m.keep[k] = (s[k] === m.s[k]) ? Math.min(65535, m.keep[k] + 1) : 0;
-    m.s = s;
+    let m = memHeatMap.get(i);
+    if (!m || m.s.length !== s.length) {
+      m = { s, keep: new Uint16Array(s.length), per: new Uint8Array(s.length), pern: new Uint16Array(s.length), hist: [s] };
+      m.show = m.keep;
+      memHeatMap.set(i, m);
+      continue;
+    }
+    const moved = (m.s !== s) || stepped;
+    if (m.s !== s) {
+      for (let k = 0; k < s.length; k++) m.keep[k] = (s[k] === m.s[k]) ? Math.min(65535, m.keep[k] + 1) : 0;
+      m.s = s;
+    } else if (stepped) {
+      for (let k = 0; k < s.length; k++) m.keep[k] = Math.min(65535, m.keep[k] + 1);
+    }
+    if (moved) { m.hist.push(s); if (m.hist.length > MEM_HIST) m.hist.shift(); }
+    if (perMode && (moved || m.show !== m.pern)) {
+      for (let k = 0; k < s.length; k++) { const p = memPeriodOf(m.hist, k); m.per[k] = p; m.pern[k] = memPeriodLevelN(p); }
+    }
+    m.show = perMode ? m.pern : m.keep;
   }
   for (const key of memHeatMap.keys()) if (key >= rows.length) memHeatMap.delete(key);
 }
@@ -2073,6 +2146,8 @@ function render(){
     }
   }
   memHeatUpdate();   // v1.531: память по циклу — после сторожа, по уже выправленным строкам
+  if (typeof rowCountSync === "function") rowCountSync(); // v1.544: ползунок 🔢 — по всем строкам цепочки
+  if (typeof crossPaint === "function") crossPaint(false); // v1.548: окно 🪞 Крест — за выделенной строкой
   renderTabs(); // <-- ЭТО ТА САМАЯ СТРОКА, КОТОРУЮ Я ЗАБЫЛ В ПРОШЛЫЙ РАЗ!
   // Показ диагонали "Конверта" живёт только пока не тронули выделение/выравнивание/длины строк.
   if (envPreview && envPreview.key !== envPreviewKey()) envPreview = null;
@@ -2869,9 +2944,13 @@ function render(){
   // "⇄🔎 Реверс: неподвижные" и "Δ◧" маски не требуют — признак виден прямо в строке, — но им
   // нужен НАБОР СТРОК: выделенные, а если не выделено ничего, то все (то же правило, что и у
   // самой кнопки "⇄ Реверс").
-  const revKeepRows = st.revKeepShow
-    ? ((st.selectedRows && st.selectedRows.size) ? st.selectedRows : null)
-    : undefined;
+  /* ═══ ВСЯ ЦЕПОЧКА, А НЕ ТОЛЬКО ВЫДЕЛЕННОЕ (испр. v1.551) ═══
+     Принёс пользователь: «1 и 11 горят, а 111 и 10101 — нет», и строки эти в выделение не входили.
+     Прежнее правило («выделенные, иначе все») взято у кнопки «⇄ Реверс», но та ДЕЛАЕТ разворот —
+     ей набор строк нужен. Здесь же чистый показ, ничего не меняющий, и привязка к выделению только
+     врёт: человек видит, что часть строк «не разгорается», и думает, что сломана подсветка.
+     Теперь неподвижные и меняющиеся видны во ВСЕХ строках сразу. */
+  const revKeepRows = st.revKeepShow ? null : undefined;
   const diagOnesMask = st.highlightDiag1
     ? memoMask("diagOnes", [st.rows, st.align, Array.from(st.rowDividers || []).sort((a, b) => a - b)],
                () => computeDiagOnesMaskSectioned(st.rows, st.align, st.rowDividers))
@@ -4014,7 +4093,9 @@ function render(){
         (s[s.length - 1 - k] === '0' || s[s.length - 1 - k] === '1') && s[s.length - 1 - k] !== bit;
       // Память по циклу (v1.531): сколько шагов подряд бит держится — см. memHeatUpdate().
       const memRowK = (st.memShow && (bit === '0' || bit === '1')) ? memHeatMap.get(i) : null;
-      const memN = (memRowK && memRowK.keep.length === s.length) ? memRowK.keep[k] : 0;
+      // v1.555: показываем тот счёт, который выбран режимом накала (m.show — keep или pern).
+      const memArr = memRowK ? (memRowK.show || memRowK.keep) : null;
+      const memN = (memArr && memArr.length === s.length) ? memArr[k] : 0;
       const memLv = memHeatLevel(memN);
       // "Δ слева" — бит не равен соседу слева. Первый бит строки не красится: слева ничего нет.
       const isDiffLeft = st.diffLeftShow && (bit === '0' || bit === '1') && k > 0 &&
@@ -4150,7 +4231,19 @@ function render(){
            служебных пометок «перевёрнут / вставлен / новый / изменён». Круг метит изменённым почти
            каждый бит, и накал не выходил на экран ни разу. Кнопку «🔥 Память» включают ровно
            затем, чтобы смотреть на неё, — поэтому она важнее служебных пометок. */
-        emit('<span class="b' + bit + ' hm' + memLv + '" title="Держит значение ' + memN + ' шаг. подряд"' + colAttr + '>', bit, mrg);
+        emit('<span class="b' + bit + ' hm' + memLv + '" title="' +
+             (st.memMode === "period"
+               ? ('Повторяет себя каждые ' + ((memRowK && memRowK.per[k]) || "?") + ' шаг.')
+               : ('Держит значение ' + memN + ' шаг. подряд')) + '"' + colAttr + '>', bit, mrg);
+      } else if (isRevKeep || isRevMove) {
+        /* испр. v1.550 (принёс пользователь: «1000 и 1110110 разгораются, а 10101 нет»).
+           Та же ловушка, что с накалом памяти в v1.536: подсветка «⇄🔎 Неподвижные» стояла в общей
+           ветке НИЖЕ служебных пометок «новый / изменён / вставлен / перевёрнут». Только что
+           построенная строка (🔺+1, 🔢+1, ⊕, зеркала) помечена новой ЦЕЛИКОМ, и у неё симметрия не
+           показывалась вовсе — обиднее всего как раз на палиндроме, где неподвижны все биты.
+           Кнопку включают ровно затем, чтобы смотреть на симметрию, поэтому она важнее пометок. */
+        emit('<span class="b' + bit + (isRevKeep ? ' hlrk' : ' hlrm') +
+             '" title="' + (isRevKeep ? 'Неподвижный: разворот строки оставит тут то же значение' : 'Меняющийся: разворот строки перевернёт этот бит') + '"' + colAttr + '>', bit, mrg);
       } else if (isInvBit && (bit === '0' || bit === '1')) {
         emit('<span class="b' + bit + ' bit-inv" title="Перевёрнут переходом границы строки"' + colAttr + '>', bit, mrg);
       } else if (isInsBit && (bit === '0' || bit === '1')) {
