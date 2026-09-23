@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 35.24 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопки ⇄ больше нет)
+VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопки ⇄ больше нет; пресеты — целые сцены, логическая операция работает)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 35.24)</title>
+    <title>Binary Drum Machine (Zerkalius 35.26)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -296,7 +296,7 @@ VERSION: Pro 35.24 (Стартовый вид: радар, рамка, цвет 
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 35.24)</h3>
+                <h3>Binary Drum Machine (Pro 35.26)</h3>
                 <div id="statusInfo">Двойной клик по холсту — Режим Дзен</div>
             </div>
             <div class="scrollable-settings" id="leftSlot">
@@ -551,7 +551,7 @@ VERSION: Pro 35.24 (Стартовый вид: радар, рамка, цвет 
             поочерёдно открывает все разделы и оставляет только ▶ Плеер; <b>Shift+↺</b> возвращает раскладку
             по умолчанию (все разделы открыты, плеер окном внизу по центру). Раскладку браузер запоминает.</p>
             <dl>
-                <dt>📂 Файл</dt><dd>🧽 очистка холста; сцены — выбрать из списка и «💾 Сохр.» текущий вид как свою (★);
+                <dt>📂 Файл</dt><dd>🧽 очистка холста; сцены — выбрать из списка (готовая сцена ставит ВСЁ своё: масштаб, интервал, галочки, 🔃 — с чистого листа) и «💾 Сохр.» текущий вид как свою (★, помнит и масштаб, и Экран, и 🔃);
                     «📂 Текст» — загрузить .txt; «🎵 Трек» — музыкальный файл; «🎤 Звук ПК» — захват звука вкладки/экрана
                     (в окне выбора поставить галочку «звук»); «💾 Сохр.» — выгрузить строки; «📊 в Excel»; «Сетка» — включает и выключает отдельный слой-фон: шахматку 1010
                     на весь холст позади строк, с тем же шагом, что у символов; под 🛰️ радаром — кольцами, по тем же
@@ -958,7 +958,7 @@ VERSION: Pro 35.24 (Стартовый вид: радар, рамка, цвет 
             fontSelect: document.getElementById('fontSelect'), 
             cylinderCheck: document.getElementById('cylinderCheck'), elkaCheck: document.getElementById('elkaCheck'), 
             neonGlowCheck: document.getElementById('neonGlowCheck'), hideStaticCheck: document.getElementById('hideStaticCheck'), 
-            deltaModeSelect: document.getElementById('deltaModeSelect'), findDiagonalsCheck: document.getElementById('findDiagonalsCheck'), 
+            deltaModeSelect: document.getElementById('deltaModeSelect'), logicalOpSelect: document.getElementById('logicalOpSelect'), findDiagonalsCheck: document.getElementById('findDiagonalsCheck'), 
             algorithmInput: document.getElementById('algorithmInput'), freezeScrollCheck: document.getElementById('freezeScrollCheck'), 
             spin3dCheck: document.getElementById('spin3dCheck'), breathingZoomCheck: document.getElementById('breathingZoomCheck'),
             timelineRange: document.getElementById('timelineRange'), timelineVal: document.getElementById('timelineVal'),
@@ -975,6 +975,62 @@ VERSION: Pro 35.24 (Стартовый вид: радар, рамка, цвет 
         };
 
         const SCENE_MANAGER = {
+            // 35.25: пресет — это ЦЕЛАЯ сцена. Раньше он ставил лишь свои десяток галочек, а всё прочее
+            // (интервал 0.7, масштаб, цвет как код, реверс, Дыхание, Цилиндр, сдвиг холста…) оставалось
+            // от стартового вида или прошлой сцены, и каждый пресет выглядел как попало. Теперь перед
+            // пресетом эти настройки возвращаются к значениям из разметки страницы, потом ставится сцена.
+            LOOK_IDS: ['echoModeCheck', 'dualCoreCheck', 'dualMaskCheck', 'freezeLayer1Check', 'dualCoreSpeedInput',
+                'speedMultInput', 'algorithmInput', 'freezeScrollCheck', 'spin3dCheck', 'breathingZoomCheck',
+                'hideStaticCheck', 'deltaModeSelect', 'logicalOpSelect', 'zerkaliusAnimCheck', 'elkaCheck',
+                'cylinderCheck', 'findDiagonalsCheck', 'neonGlowCheck', 'fontSizeRange', 'lineHeightRange',
+                'fontSelect', 'rainbowTextCheck', 'syntaxColorCheck', 'trimZerosCheck'],
+            resetLook: function() {
+                this.LOOK_IDS.forEach(id => {
+                    const el = document.getElementById(id); if (!el) return;
+                    if (el.type === 'checkbox') el.checked = el.defaultChecked;
+                    else if (el.tagName === 'SELECT') { const o = Array.from(el.options).find(o => o.defaultSelected) || el.options[0]; if (o) el.value = o.value; }
+                    else el.value = el.defaultValue;
+                });
+                this.setToggles(false);
+                MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0; MODULE_STATE.globalAngle = 0; MODULE_STATE.breathTime = 0;
+                this.syncLabels();
+            },
+            // 🔃 реверс, 🎯 центр, 📌 слежение — у сцены свои; у встроенных пресетов все выключены.
+            setToggles: function(rev) {
+                MODULE_STATE.isReverse = !!rev; UI.toggleReverseBtn.classList.toggle('active-green', !!rev);
+                MODULE_STATE.isCenterActive = false; UI.toggleCenterBtn.classList.remove('active-yellow');
+                MODULE_STATE.isTrackRowActive = false; MODULE_STATE.trackedRowIndex = -1; UI.toggleTrackBtn.classList.remove('active-red');
+            },
+            syncLabels: function() {
+                if (UI.fontSizeVal) UI.fontSizeVal.textContent = UI.fontSizeRange.value + 'px';
+                if (UI.lineHeightVal) UI.lineHeightVal.textContent = UI.lineHeightRange.value;
+                if (UI.heightVal) UI.heightVal.textContent = UI.heightRange.value;
+                const mv = document.getElementById('speedMultVal'); if (mv) mv.textContent = UI.speedMultInput.value;
+            },
+            // Своя сцена (★) с 35.25 помнит всё то же, что сбрасывается у пресета, плюс Экран и 🔃.
+            snapshotUi: function() {
+                const ui = {};
+                this.LOOK_IDS.concat(['heightRange']).forEach(id => {
+                    const el = document.getElementById(id); if (!el) return;
+                    ui[id] = el.type === 'checkbox' ? el.checked : el.value;
+                });
+                ui.__reverse = MODULE_STATE.isReverse;
+                return ui;
+            },
+            applyUi: function(ui) {
+                const opBefore = UI.logicalOpSelect.value;
+                Object.keys(ui).forEach(id => {
+                    const el = document.getElementById(id); if (!el) return;
+                    if (el.type === 'checkbox') el.checked = !!ui[id];
+                    else {
+                        if (id === 'heightRange') el.max = Math.max(parseInt(el.max, 10), parseInt(ui[id], 10) || 1);
+                        el.value = ui[id];
+                    }
+                });
+                this.setToggles(ui.__reverse);
+                this.syncLabels();
+                if (UI.logicalOpSelect.value !== opBefore) MODULE_DATA.precalculateLines(false);
+            },
             init: function() {
                 for(let key in PREBUILT_SCENES) {
                     let opt = document.createElement('option'); opt.value = key; opt.textContent = PREBUILT_SCENES[key].name;
@@ -1001,6 +1057,11 @@ VERSION: Pro 35.24 (Стартовый вид: радар, рамка, цвет 
                 let scene = PREBUILT_SCENES[key];
                 if(key.startsWith("custom_")) scene = MODULE_STATE.customScenes[key.replace("custom_", "")];
                 if(!scene) return;
+
+                // 35.25: встроенный пресет начинает с чистого листа; своя сцена (★) — со всего, что запомнила.
+                // У ★ из версий до 35.25 снимка нет — у них, как раньше, меняется только то, что они хранят.
+                if (scene.ui) this.applyUi(scene.ui);
+                else if (!key.startsWith("custom_")) this.resetLook();
 
                 UI.speedRange.value = scene.speed || 920; UI.speedVal.textContent = (1001 - UI.speedRange.value) + ' мс';
                 UI.themeSelect.value = scene.theme || 'matrix';
@@ -1030,7 +1091,11 @@ VERSION: Pro 35.24 (Стартовый вид: радар, рамка, цвет 
                 if(scene.type === 'vacuum') MODULE_DATA.generateVacuum();
                 else if(scene.type === 'source') {
                     let codeLines = document.documentElement.innerHTML.split('\n').map(l => l.trim()).filter(l => l.length > 0).slice(0, 350).join('\n');
-                    MODULE_DATA.processTextData(codeLines, "Код Матрицы");
+                    // 35.26: код ЗАМЕНЯЕТ строки на холсте, а не вживляется в них — как у фракталов ниже.
+                    // С включённым «Вживлением» (оно включено по умолчанию) текст вклеивался в прежние
+                    // двоичные строки, и вместо кода выходила каша из 0 и 1.
+                    let implantState = UI.implantModeCheck.checked; UI.implantModeCheck.checked = false;
+                    MODULE_DATA.processTextData(codeLines, "Код Матрицы"); UI.implantModeCheck.checked = implantState;
                 }
                 else if (scene.type === 'fractal') {
                     UI.zerkRuleSelect.value = scene.rule || '90';
@@ -1061,7 +1126,8 @@ VERSION: Pro 35.24 (Стартовый вид: радар, рамка, цвет 
                     echo: UI.echoModeCheck.checked, dual: UI.dualCoreCheck.checked, dualMask: UI.dualMaskCheck.checked,
                     freezeY: UI.freezeScrollCheck.checked, spin3d: UI.spin3dCheck.checked, breathing: UI.breathingZoomCheck?.checked,
                     elka: UI.elkaCheck.checked, neon: UI.neonGlowCheck.checked, frame: MODULE_STATE.isFrameActive, radar: MODULE_STATE.isRadarActive,
-                    rainbow: UI.rainbowTextCheck?.checked, freezeLayer1: UI.freezeLayer1Check?.checked
+                    rainbow: UI.rainbowTextCheck?.checked, freezeLayer1: UI.freezeLayer1Check?.checked,
+                    ui: this.snapshotUi()   // 35.25
                 };
                 MODULE_STATE.customScenes[key] = newScene; localStorage.setItem('saved_scenes_v20', JSON.stringify(MODULE_STATE.customScenes));
                 let opt = document.createElement('option'); opt.value = "custom_" + key; opt.textContent = "★ " + name;
@@ -2239,6 +2305,9 @@ VERSION: Pro 35.24 (Стартовый вид: радар, рамка, цвет 
                 if(UI.toggleRadarBtn) UI.toggleRadarBtn.addEventListener('click', function() { MODULE_STATE.isRadarActive = !MODULE_STATE.isRadarActive; if(MODULE_STATE.isRadarActive) { this.classList.add('active-yellow'); this.style.background = '#00ff66'; } else { this.classList.remove('active-yellow'); this.style.background = '#cc33ff'; MODULE_STATE.globalAngle = 0; } RENDERER.renderFrame(); });
                 if(UI.toggleTrackBtn) UI.toggleTrackBtn.addEventListener('click', function() { MODULE_STATE.isTrackRowActive = !MODULE_STATE.isTrackRowActive; if(MODULE_STATE.isTrackRowActive) { this.classList.add('active-red'); MODULE_STATE.trackedRowIndex = MODULE_STATE.currentIndex; MODULE_STATE.isCenterActive = false; UI.toggleCenterBtn.classList.remove('active-yellow'); } else { this.classList.remove('active-red'); MODULE_STATE.trackedRowIndex = -1; } RENDERER.renderFrame(); });
                 if(UI.toggleReverseBtn) UI.toggleReverseBtn.addEventListener('click', function() { MODULE_STATE.isReverse = !MODULE_STATE.isReverse; if(MODULE_STATE.isReverse) this.classList.add('active-green'); else this.classList.remove('active-green'); });
+                // 35.25: «Логическая операция» раньше не работала вовсе — списка не было в UI, и строки
+                // всегда считались как «Оригинал». Теперь смена операции пересчитывает строки.
+                if(UI.logicalOpSelect) UI.logicalOpSelect.addEventListener('change', () => MODULE_DATA.precalculateLines(false));
                 if(UI.timelineRange) UI.timelineRange.addEventListener('input', (e) => { if (MODULE_STATE.isPlaying) PLAYER.stop(); MODULE_STATE.currentIndex = parseInt(e.target.value, 10); scheduleRender(); });
                 if(UI.prevBtn) UI.prevBtn.addEventListener('click', () => { if (MODULE_STATE.isPlaying) PLAYER.stop(); if (MODULE_STATE.lines.length > 0) { MODULE_STATE.currentIndex = (MODULE_STATE.currentIndex - 1 + MODULE_STATE.lines.length) % MODULE_STATE.lines.length; RENDERER.renderFrame(); RENDERER.updateTimeline(); }});
                 if(UI.nextBtn) UI.nextBtn.addEventListener('click', () => { if (MODULE_STATE.isPlaying) PLAYER.stop(); if (MODULE_STATE.lines.length > 0) { MODULE_STATE.currentIndex = (MODULE_STATE.currentIndex + 1) % MODULE_STATE.lines.length; RENDERER.renderFrame(); RENDERER.updateTimeline(); }});
