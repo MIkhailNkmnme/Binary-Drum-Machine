@@ -32,10 +32,12 @@
 
         const a = document.createElement('a');
         a.id = 'zerkHubBtn'; a.href = href; a.textContent = '⌂';
-        a.title = 'В Хаб (H)';
+        // window.zerkHubNoKey = true (ставится ДО подключения модуля) — у страницы своя клавиша H, например
+        // методичка Октаэдра; тогда в Хаб ведёт только значок.
+        a.title = window.zerkHubNoKey ? 'В Хаб' : 'В Хаб (H)';
         document.body.appendChild(a);
 
-        document.addEventListener('keydown', e => {
+        if (!window.zerkHubNoKey) document.addEventListener('keydown', e => {
             if (e.ctrlKey || e.metaKey || e.altKey) return;
             if (!['h', 'H', 'р', 'Р'].includes(e.key)) return;
             const t = e.target.tagName;

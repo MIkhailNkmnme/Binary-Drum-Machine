@@ -1,15 +1,19 @@
-<!-- Zerkalius Обои — v0.006. Живой фон хаба (index.html подключает эту страницу в iframe).
+<!-- Zerkalius Обои — v0.008. Живой фон хаба (index.html подключает эту страницу в iframe).
      Код обоев — копия «Zerkalius Серпинский» из _lively (движок _js/main.js), значения — в _js/nastroyka.js.
      v0.002: надпись ниже (blockY 13 → 18). v0.003: ещё ниже и мельче (blockY 24, titleSize 105).
      v0.004: служебная папка js\ переименована в _js\ — по стандарту имён сайта.
      v0.005: значок «в Хаб» — только когда страница открыта сама, не фоном хаба.
-     v0.006: фоном хаба — не чаще 30 кадров в секунду (хаб тормозил на наведении), см. _js/main.js. -->
+     v0.006: фоном хаба — не чаще 30 кадров в секунду (хаб тормозил на наведении), см. _js/main.js.
+     v0.007: надпись строится отдельно (buildTitle) — хаб меняет её Zerkalius ⇄ Зеркалиус сквозь сбой
+     (window.zerkSetTitle); у main.js и nastroyka.js подпись ?v=007, иначе браузер отдавал их из кэша.
+     v0.008: хаб присылает надпись сообщением (postMessage), а не зовёт функцию: с диска (file://) прямой вызов
+     запрещён, и надпись не менялась. Обои шлют хабу zerkReady, когда загрузились целиком. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <link rel="icon" href="data:,">
-<title>Zerkalius Обои — v0.006</title>
+<title>Zerkalius Обои — v0.008</title>
 <style>
   html,body{margin:0;height:100%;background:#000;overflow:hidden}
   canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -31,8 +35,8 @@
 <script src="_js/three.min.js"></script>
 <script src="_js/props.js"></script>
 <script src="_js/fixed.js"></script>
-<script src="_js/main.js"></script>
-<script src="_js/nastroyka.js"></script>
+<script src="_js/main.js?v=008"></script>
+<script src="_js/nastroyka.js?v=008"></script>
 <script>
 // Значок «в Хаб» нужен, только когда обои открыты сами. Фоном хаба (в iframe) он лишний: хаб и так здесь.
 if(window.top===window){ var hs=document.createElement('script'); hs.src='../_js/hub-link.js'; document.body.appendChild(hs); }

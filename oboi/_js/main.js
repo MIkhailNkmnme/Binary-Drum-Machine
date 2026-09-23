@@ -405,7 +405,12 @@ function layout(){
   CS=Math.max(3,Math.round(P.rainSize*H/1080));
   CWr=Math.max(1,Math.round(CS*P.rainGapX/100)); CHr=Math.max(1,Math.round(CS*P.rainGapY/100)); drops=[];
   for(var x=0;x<W;x+=CWr) drops.push({x:x,y:(Math.random()*2-1)*H/CHr,sp:0.5+Math.random()*0.8,ch:rch()});
+  buildTitle(W,H);
+}
 
+// обои v0.007: надпись строится отдельно от остальной раскладки — чтобы хаб мог менять её текст
+// (Zerkalius ⇄ Зеркалиус) без полной перестройки, которая сбрасывала бы дождь. См. window.zerkSetTitle ниже.
+function buildTitle(W,H){
   var src=[[P.title,P.t1Size,P.t1Font,P.t1Space],[P.title2,P.t2Size,P.t2Font,P.t2Space],[P.title3,P.t3Size,P.t3Font,P.t3Space]];
   var L=src.filter(function(r){return r[0] && r[0].length;}).map(function(r){ return {text:r[0],k:Math.max(0.1,r[1]/100),fc:fontCss(r[2]),sp:r[3]/100}; });
   if(!L.length) L=[{text:'Zerkalius',k:1,fc:fontCss(0),sp:0}];
@@ -503,6 +508,14 @@ function updClock(){
     '&nbsp;&nbsp;&nbsp;'+d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});
 }
 setInterval(updClock,100);
+
+// обои v0.007: хаб меняет надпись сквозь сбой — новый текст и сразу сбойные полосы по надписи.
+window.zerkSetTitle=function(t){ if(!t || t===P.title) return; P.title=t; buildTitle(innerWidth,innerHeight); glitchT=4; };
+// обои v0.008: хаб зовёт не функцию напрямую, а сообщением. Открытые с диска (file://) хаб и обои для браузера —
+// разные сайты, прямой вызов запрещён, и надпись не менялась. Сообщение ходит всегда. «Готово» — только по load:
+// до него nastroyka.js ещё не выставил свою надпись и перебил бы ту, что прислал хаб.
+window.addEventListener('message',function(e){ var d=e.data; if(d && typeof d.zerkTitle==='string') window.zerkSetTitle(d.zerkTitle); });
+if(window.parent!==window) window.addEventListener('load',function(){ try{ window.parent.postMessage({zerkReady:1},'*'); }catch(e){} });
 
 var clk=new THREE.Clock(), acc=0, tt=0;
 // обои v0.006: фоном хаба (в iframe) — не чаще 30 кадров в секунду. Хаб и обои с одного сайта и живут в одном

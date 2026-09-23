@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.023. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.026. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -19,7 +19,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Control Hub — v0.023</title>
+    <title>Zerkalius Control Hub — v0.026</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -188,34 +188,34 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.023</div>
+        <div class="ver">v0.026</div>
 
         <!-- Флагман — с v0.008 это Zerkalius Code (бывшая «Genezis Code 0»), с v0.011 подписан «Code»; решение пользователя 2026-09-23 -->
         <a href="Zerkalius-code.html" class="menu-btn main-engine" data-en="Code" data-ru="Код">Code</a>
 
         <!-- Черновики (до v0.018 — «Лаборатория (Черновики)») — с v0.012 в порядке создания (по первому появлению в git) -->
         <div class="panel">
-            <div class="panel-title" data-en="🔬 Drafts" data-ru="🔬 Черновики">🔬 Черновики</div>
+            <div class="panel-title" data-en="🔬 Drafts" data-ru="🔬 Черновики">🔬 Drafts</div>
             <div class="grid">
                 <a href="Zerkalius-genezis.html" class="menu-btn draft-btn" data-en="Genezis" data-ru="Генезис">Genezis</a>
                 <a href="Zerkalius-gpu.html" class="menu-btn draft-btn" data-en="GPU Core + Synth" data-ru="Ядро GPU + синт">GPU Core + Synth</a>
                 <a href="Zerkalius-grid-module.html" class="menu-btn draft-btn" data-en="Grid Module" data-ru="Модуль сетки">Grid Module</a>
                 <a href="Zerkalius-genezis-webgl.html" class="menu-btn draft-btn" data-en="WebGL Engine" data-ru="Движок WebGL">WebGL Engine</a>
-                <a href="Zerkalius-kubits.html" class="menu-btn draft-btn" data-en="Kubits" data-ru="Кубиты">Кубиты</a>
+                <a href="Zerkalius-kubits.html" class="menu-btn draft-btn" data-en="Kubits" data-ru="Кубиты">Kubits</a>
                 <a href="fold-layers/Zerkalius-layers.html" class="menu-btn draft-btn" data-en="Fold Layers" data-ru="Слои сгиба">Fold Layers</a>
-                <a href="Zerkalius-ascii-art.html" class="menu-btn draft-btn" data-en="ASCII Art" data-ru="ASCII-арт">ASCII-арт</a>
-                <a href="oktaedr/Zerkalius-oktaedr.html" class="menu-btn draft-btn" data-en="Octahedron" data-ru="Октаэдр">Октаэдр</a>
+                <a href="Zerkalius-ascii-art.html" class="menu-btn draft-btn" data-en="ASCII Art" data-ru="ASCII-арт">ASCII Art</a>
+                <a href="oktaedr/Zerkalius-oktaedr.html" class="menu-btn draft-btn" data-en="Octahedron" data-ru="Октаэдр">Octahedron</a>
                 <a href="zazerkalius/Zerkalius-zazerkalius.html" class="menu-btn draft-btn" data-en="Zazerkalius" data-ru="Зазеркалиус">Zazerkalius</a>
-                <a href="lively/Zerkalius-lively.html" class="menu-btn draft-btn" data-en="Lively Wallpaper" data-ru="Обои Lively">Обои Lively</a>
+                <a href="lively/Zerkalius-lively.html" class="menu-btn draft-btn" data-en="Lively Wallpaper" data-ru="Обои Lively">Lively Wallpaper</a>
             </div>
         </div>
 
         <!-- Знак и записи (папка oktaedr\), заведено 2026-09-20; обои — 2026-09-21 -->
         <div class="panel">
-            <div class="panel-title" data-en="◇ Sign &amp; Records" data-ru="◇ Знак и записи">◇ Знак и записи</div>
+            <div class="panel-title" data-en="◇ Sign &amp; Records" data-ru="◇ Знак и записи">◇ Sign &amp; Records</div>
             <div class="row">
-                <a href="Zerkalius-dnevnik.html" class="menu-btn draft-btn" data-en="Logbook" data-ru="Борт-журнал">Борт-журнал</a>
-                <a href="oboi/Zerkalius-oboi.html" class="menu-btn draft-btn" data-en="Wallpaper" data-ru="Обои">Обои</a>
+                <a href="Zerkalius-dnevnik.html" class="menu-btn draft-btn" data-en="Logbook" data-ru="Борт-журнал">Logbook</a>
+                <a href="oboi/Zerkalius-oboi.html" class="menu-btn draft-btn" data-en="Wallpaper" data-ru="Обои">Wallpaper</a>
             </div>
         </div>
 
@@ -225,12 +225,11 @@
         document.querySelectorAll('.menu-btn').forEach(b => {
             b.style.animationDelay = (-Math.random() * 14).toFixed(2) + 's';
         });
-        // v0.023: при открытии все названия — по-английски, чтобы строка меняла язык целиком, а не вперемешку
-        // (в разметке часть кнопок подписана по-русски). data-text — надпись для сбойных полос (v0.018).
-        document.querySelectorAll('.menu-btn, .panel-title').forEach(b => {
-            if (b.dataset.en) { b.textContent = b.dataset.en; b.dataset.lang = 'en'; }
-            b.dataset.text = b.textContent.trim();
-        });
+        // v0.023: строка всегда целиком на одном языке. v0.024: в разметке подписи английские (до скрипта не мелькает
+        // вперемешку). v0.025: «при старте должны быть оба языка» — строки (и надпись обоев, см. ниже) получают язык
+        // поочерёдно сверху вниз со случайного начала, так что с первого кадра видны и английские, и русские.
+        // data-text — надпись для сбойных полос (v0.018).
+        document.querySelectorAll('.menu-btn, .panel-title').forEach(b => { b.dataset.text = b.textContent.trim(); b.dataset.lang = 'en'; });
 
         // v0.018: сбойные полосы у кнопок — как в обоях. v0.020: не по одной кнопке, а ПОСТРОЧНО, как в обоях:
         // полоса идёт через весь экран на своей высоте и срывает вбок кусок каждой кнопки, которую пересекает.
@@ -275,6 +274,20 @@
                 if (!b.dataset.en || !b.dataset.ru) return;
                 const txt = b.dataset[lang]; b.textContent = txt; b.dataset.text = txt; b.dataset.lang = lang;
             };
+            // v0.025: надпись обоев (Zerkalius ⇄ Зеркалиус) — тоже «строка». Обои с того же сайта, их функция
+            // zerkSetTitle сама меняет надпись и пускает по ней сбойные полосы. Пока обои не загрузились — ждём.
+            const bg = document.getElementById('bg');
+            // v0.026: не прямой вызов, а сообщение — с диска (file://) хаб и обои для браузера разные сайты, прямой
+            // вызов запрещён, и надпись не менялась. Обои сами шлют zerkReady, когда загрузились целиком.
+            const TITLE = { lang: 'en', set(lang) { this.lang = lang;
+                try { if (bg && bg.contentWindow) bg.contentWindow.postMessage({ zerkTitle: lang === 'ru' ? 'Зеркалиус' : 'Zerkalius' }, '*'); } catch (e) {} } };
+            // старт: строки сверху вниз и надпись обоев — поочерёдно en / ru, со случайного начала
+            const r0 = Math.random() < 0.5 ? 0 : 1;
+            rowsNow().sort((a, b) => a.top - b.top).forEach((row, i) => { const lang = (i + r0) % 2 ? 'ru' : 'en'; row.list.forEach(b => setLang(b, lang)); });
+            TITLE.lang = r0 ? 'en' : 'ru';
+            const titleStart = () => TITLE.set(TITLE.lang);
+            window.addEventListener('message', e => { if (bg && e.source === bg.contentWindow && e.data && e.data.zerkReady) titleStart(); });
+            if (bg) { bg.addEventListener('load', () => setTimeout(titleStart, 300)); setTimeout(titleStart, 1500); }   // запасной путь
             const glitch = (y0, y1, mid) => {
                 busy = true; let frames = 3;
                 const step = () => {
@@ -291,6 +304,9 @@
                 const now = performance.now();
                 if (now >= nextFlip) {
                     nextFlip = now + 2000 + Math.random() * 1000;
+                    // v0.025: очередь надписи обоев. v0.026: её доля — четверть, а не 1/(строк+1): при семи-восьми
+                    // строках надпись менялась раз в ~20 с, и казалось, что не меняется вовсе.
+                    if (Math.random() < 0.25) return TITLE.set(TITLE.lang === 'ru' ? 'en' : 'ru');
                     const rows = rowsNow(); const row = rows[Math.floor(Math.random() * rows.length)];
                     if (row) {
                         const lang = row.list[0].dataset.lang === 'ru' ? 'en' : 'ru';   // вся строка — на один язык

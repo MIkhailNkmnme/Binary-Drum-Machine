@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.018. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Октаэдр — v0.030. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.018</title>
+<title>Zerkalius Октаэдр — v0.030</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -32,14 +32,61 @@
     -webkit-tap-highlight-color:transparent; }
   canvas{ display:block; width:100%; height:100%; cursor:grab; touch-action:none; }
   canvas.drag{ cursor:grabbing; }
-  #title{ position:fixed; left:0; right:0; top:18px; text-align:center; pointer-events:none;
-    font-size:30px; font-weight:300; letter-spacing:11px; color:var(--fg); opacity:.85; }
+  /* Надпись — первой ячейкой полосы меню (v0.028, запрос пользователя: «перемести в полосу меню
+     зеркалиус-октаэдр»). До этого висела отдельно над телом по центру, а с v0.026 ещё и под полосой. */
+  #title{ align-self:center; padding:3px 12px 3px 14px; font-size:12px; font-weight:300; letter-spacing:4px;
+    color:var(--fg); opacity:.85; white-space:nowrap; border-right:1px solid var(--line); pointer-events:none; }
   #ver{ position:fixed; right:12px; top:14px; font-size:11px; color:var(--dim); letter-spacing:1px; }
   #hint{ position:fixed; left:0; right:0; bottom:14px; text-align:center; pointer-events:none;
     font-size:12px; color:var(--dim); letter-spacing:.5px; }
   #hint b{ color:var(--fg); font-weight:500; }
-  #panel{ position:fixed; left:12px; top:12px; display:flex; flex-direction:column; gap:5px;
-    width:188px; }
+  /* ДОКИ (v0.026). Левая панель #panel и правая #panelR — две колонки, куда складываются разделы.
+     Правая пуста по умолчанию и видна только тогда, когда в ней что-то лежит или раздел тащат:
+     тогда она проступает пунктиром — видно, куда можно бросить. Своя прокрутка: разделов много, а
+     окно бывает низким. Снизу оставлено место под значок ⌂. */
+  .dock{ position:fixed; top:12px; display:flex; flex-direction:column; gap:6px; width:196px;
+    max-height:calc(100vh - 70px); overflow-y:auto; scrollbar-width:thin; }
+  #panel{ left:12px; }
+  #panelR{ right:12px; top:40px; }
+  .dock.empty{ display:none; }
+  /* v0.030: пустая панель во время перетаскивания проступает на всю высоту — это и есть полоса магнита
+     (см. SECS.dockUnder): видно, куда раздел прилипнет. */
+  body.tab-dragging .dock.empty{ display:flex; min-height:calc(100vh - 120px); border:1px dashed var(--line); border-radius:4px; }
+  .dock.drop-hover{ outline:2px solid var(--up); outline-offset:2px; border-radius:4px; }
+  /* РАЗДЕЛЫ (v0.026, запрос пользователя: «всё это меню распредели на группы кнопок, как в Layers и у
+     остальных, чтобы можно передвигать»). Устроено как в Zerkalius Code: у раздела шапка «✥ имя ✕»,
+     за неё раздел таскают — над панелью он встаёт между разделами там, где курсор, мимо панелей висит
+     на холсте плавающим окном. ✕ прячет раздел, вкладка в полосе сверху возвращает. Карточка темнее
+     кнопок: иначе кнопки и рамка раздела сливались бы в одно. */
+  .tab-sec{ display:flex; flex-direction:column; gap:5px; flex-shrink:0; background:var(--bg);
+    border:1px solid var(--line); border-radius:4px; padding:4px 6px 6px; }
+  .tab-sec:hover{ border-color:var(--dim); }
+  .tab-sec.off{ display:none !important; }
+  .sec-head{ display:flex; align-items:center; gap:5px; font-size:11px; color:var(--up); letter-spacing:.4px;
+    padding:1px 0 3px; border-bottom:1px solid var(--line); cursor:move; touch-action:none; }
+  .sec-head .grip{ font-size:12px; line-height:1; opacity:.75; }
+  .sec-head:hover .grip{ opacity:1; }
+  .sec-head .ttl{ flex:1; }
+  .sec-head .x{ background:none; border:none; color:var(--dim); padding:0 2px; font-size:11px; line-height:1; }
+  .sec-head .x:hover{ color:var(--mem); }
+  .tab-sec.floating{ position:fixed; z-index:5; width:196px; box-sizing:border-box; max-height:80vh; overflow-y:auto;
+    border-color:var(--up); box-shadow:0 8px 30px rgba(0,0,0,.6); }
+  .tab-sec.dragging{ opacity:.85; outline:1px dashed var(--up); }
+  body.tab-dragging, body.tab-dragging *{ cursor:move !important; }
+  /* Полоса вкладок сверху по центру: вкладка прячет и показывает свой раздел, ↺ — раскладка по
+     умолчанию, 📖 — методичка. Первая ячейка — надпись «zerkalius · октаэдр» (v0.028). */
+  #menuTabs{ position:fixed; top:8px; left:50%; transform:translateX(-50%); z-index:4; display:flex;
+    flex-wrap:wrap; justify-content:center; max-width:calc(100vw - 460px); min-width:200px;
+    background:var(--panel); border:1px solid var(--line); border-radius:3px; overflow:hidden; }
+  #menuTabs button{ border:0; border-right:1px solid var(--line); border-radius:0; padding:4px 10px;
+    font-size:12px; color:var(--dim); white-space:nowrap; text-align:center; }
+  #menuTabs button:last-child{ border-right:0; }
+  #menuTabs button.act{ color:var(--up); background:var(--bg); }
+  #menuTabs button:hover{ color:var(--up); }
+  /* ЦВЕТА 0 И 1 (v0.026, запрос пользователя: «задать цвета для 0 и 1 отдельно»). */
+  .col{ flex:1; display:flex; align-items:center; gap:6px; font:12px Consolas, monospace; color:var(--dim);
+    background:var(--panel); border:1px solid var(--line); border-radius:3px; padding:2px 6px; cursor:pointer; }
+  .col input{ flex:1; min-width:0; height:20px; border:0; padding:0; background:none; cursor:pointer; }
   button{ background:var(--panel); color:var(--fg); border:1px solid var(--line); border-radius:3px;
     padding:4px 9px; font:12px/1.2 inherit; cursor:pointer; text-align:left; letter-spacing:.3px; }
   button:hover{ border-color:var(--up); color:var(--up); }
@@ -57,6 +104,20 @@
   .cap{ font-size:11px; color:var(--dim); letter-spacing:.3px; margin:4px 0 1px; }
   #stepInfo{ font-size:11px; color:var(--dim); letter-spacing:.3px; }
   #stepInfo b{ color:var(--mem); font-weight:600; }
+  /* СВОИ БИТЫ (v0.020). Поле свёрнуто, пока не нажата «✎ Свои биты»: панель и так длинная. Выделение
+     текста запрещено на всей странице (см. выше), а в поле ввода оно нужно — возвращаем только ему. */
+  #myBox{ display:none; }
+  #myBox.on{ display:block; }
+  #myBits{ width:100%; box-sizing:border-box; resize:vertical; min-height:52px; margin:0 0 4px;
+    background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:3px;
+    font:12px/1.35 Consolas, "Cascadia Mono", monospace; padding:4px 5px;
+    user-select:text; -webkit-user-select:text; }
+  #myBits:focus{ outline:none; border-color:var(--up); }
+  /* v0.021: над полем несут файл — поле подсвечивается: вот куда он ляжет. */
+  #myBits.drop{ border-color:var(--up); box-shadow:inset 0 0 0 2px var(--up); }
+  #myInfo{ font-size:11px; color:var(--dim); letter-spacing:.3px; margin-bottom:4px; }
+  #myInfo.bad{ color:var(--mem); }
+  #myBox .row + .row{ margin-top:4px; }
   /* СТРЕЛКИ У ПОЛЗУНКОВ (v0.004, запрос пользователя). Ползунком удобно гнать грубо, но попасть в
      соседнее значение мышью почти невозможно — особенно у «такта» с шагом 20 из 1140. Стрелка
      двигает ровно на ОДИН шаг самого поля, поэтому у каждого ползунка своя цена клика и её не надо
@@ -103,6 +164,10 @@
      не попадает — пишется только холст, — а спрятав её, мы лишили бы возможности остановить
      запись, не выходя из Дзена. */
   body.zen #panel, body.zen #title, body.zen #ver, body.zen #hint, body.zen #gear{ display:none; }
+  /* v0.026: и доки с плавающими разделами, и полоса вкладок — Дзен прячет всё, кроме тела. */
+  body.zen #panelR, body.zen #menuTabs, body.zen .tab-sec.floating{ display:none !important; }
+  /* Значок ⌂ «в Хаб» (v0.019) в Дзене не прячем, как и ⏺, — только приглушаем: выйти должно быть можно. */
+  body.zen #zerkHubBtn:not(:hover){ opacity:.18; }
   /* Кнопка «⚙» — только на узком экране: там панель занимает низ и её прячут, чтобы видеть тело. */
   #gear{ display:none; position:fixed; left:10px; top:10px; z-index:3; padding:7px 10px; }
 
@@ -113,17 +178,25 @@
      высоте и отступ под системную полосу (env(safe-area-inset-bottom) — вырез и «домашняя»
      полоска на iPhone). Кнопки крупнее: палец — не курсор. */
   @media (max-width: 720px){
-    #title{ font-size:20px; letter-spacing:6px; top:10px; }
     #ver{ font-size:10px; top:11px; }
     #hint{ display:none; }
     #gear{ display:block; }
+    /* v0.026: лист снизу — стопка разделов; кнопки внутри раздела по две в ряд, как раньше во всём
+       листе. Правой панели и плавающих окон на телефоне нет: все разделы собираются в лист (см. SECS). */
     #panel{ left:0; right:0; bottom:0; top:auto; width:auto; z-index:2;
-      display:grid; grid-template-columns:1fr 1fr; gap:6px; align-content:start;
+      display:flex; flex-direction:column; gap:6px;
       padding:9px 10px calc(10px + env(safe-area-inset-bottom));
       background:var(--panel); border-top:1px solid var(--line);
       max-height:56vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
     #panel.hidden{ display:none; }
-    #panel > .set, #panel > .cap, #panel > .row, #panel > #stepInfo{ grid-column:1 / -1; }
+    /* ⌂ «в Хаб» (v0.019) — с нижнего угла наверх, рядом с ⚙: внизу лист панели, значок лёг бы на него. */
+    body #zerkHubBtn{ top:8px; bottom:auto; left:58px; }
+    #panelR{ display:none !important; }
+    .tab-sec{ display:grid; grid-template-columns:1fr 1fr; gap:6px; align-content:start; }
+    .tab-sec > .set, .tab-sec > .cap, .tab-sec > .row, .tab-sec > #stepInfo, .tab-sec > .sec-head,
+    .tab-sec > #myBox{ grid-column:1 / -1; }
+    .sec-head{ cursor:default; }
+    #menuTabs{ top:50px; max-width:calc(100vw - 20px); }   /* ниже ⚙ и ⌂ в верхнем левом углу */
     #stepInfo{ text-align:center; padding-bottom:2px; }
     button{ padding:8px 10px; font-size:13px; }
     .arr{ min-width:38px; padding:7px 4px; font-size:13px; }
@@ -137,9 +210,8 @@
 </style>
 </head>
 <body>
-<div id="title">zerkalius</div>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.018</div>
+<div id="ver">v0.030</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -173,22 +245,38 @@
     <tr><td>1 2 3</td><td>действие: ⇄ разворот, ⇅ инв-разв, ↻ Круг Инв</td></tr>
     <tr><td>D · L · V · F</td><td>биты · нити · наведение · забыть память</td></tr>
     <tr><td>N · T</td><td>новая картина · сменить палитру</td></tr>
+    <tr><td>C</td><td>стороны света у углов экватора — показать и спрятать</td></tr>
     <tr><td>Z · колесо</td><td>Дзен: спрятать всё, кроме тела (щелчок колесом мыши — то же)</td></tr>
     <tr><td>R</td><td>запись видео с холста, она же кнопка ⏺ в углу</td></tr>
+    <tr><td>⌂</td><td>значок в левом нижнем углу (на телефоне — вверху, рядом с ⚙): назад в Хаб</td></tr>
     <tr><td>Клик по цифре</td><td>закрепить пару; повторный клик — снять</td></tr>
     <tr><td>Shift+клик</td><td>перевернуть бит — двойник перевернётся сам</td></tr>
     <tr><td>Esc</td><td>снять все закрепления (а в методичке — закрыть её)</td></tr>
+    <tr><td>Esc в поле</td><td>выйти из поля своих бит — снова заработают клавиши прибора</td></tr>
     <tr><td>H · F1</td><td>открыть и закрыть эту методичку</td></tr>
   </table>
   <p class="sub">Буквы работают и в русской раскладке. Если фокус стоит в ползунке, клавиши ему и
   достаются — стрелки двигают бегунок.</p>
 
+  <h3>Разделы панели</h3>
+  <p>Кнопки разложены по разделам: <b>🎲 Картина</b>, <b>👁 Вид</b>, <b>🎨 Цвета</b>, <b>⇄ Реверс</b>,
+  <b>🔗 Связи</b> — так же, как в Layers и в Zerkalius Code. У раздела шапка <b>✥ имя ✕</b>. За шапку
+  раздел можно <b>перетащить</b>. Обе панели — и левая, и правая — <b>магнитят</b>: отпущенный у
+  левого или правого края экрана раздел прилипает к этой панели и встаёт между другими разделами там,
+  где курсор (пустая панель, пока тащат, проступает пунктиром). Отпущенный посередине — висит на холсте
+  плавающим окном. По умолчанию слева стоят Картина, Вид и Цвета, справа — Реверс и Связи. <b>✕</b> прячет раздел, вкладка в полосе сверху показывает его снова. <b>↺</b> в конце
+  полосы возвращает раскладку по умолчанию, <b>📖</b> открывает эту методичку. Раскладка помнится в
+  браузере. На телефоне разделы всегда собраны в лист снизу, а таскать их нельзя.</p>
+
   <h3>Настройки</h3>
   <ul>
-    <li><b>Плотность бит</b> — сколько рядов умещается на грани, от 4 до 26. Меняет число бит, поэтому
+    <li><b>Плотность бит</b> — сколько рядов умещается на грани. Ползунок — от 4 до 32; дальше, до 256, только стрелкой ►
+    (выше 64 — для пробы: на 256 это 32 896 бит на грань, и прибор может заметно тормозить). Пока
+    плотность выше 32, бегунок стоит у правого края, а число рядом показывает настоящую. Меняет число бит, поэтому
     картина пересобирается заново.</li>
-    <li><b>Размер цифр</b> — кегль на ближней грани; дальше он убывает сам.</li>
-    <li><b>Свечение бит</b> — радиус ореола вокруг цифры. Ореол берёт её собственный цвет, поэтому
+    <li><b>Размер цифр</b> — кегль на ближней грани, от 2 до 22; дальше он убывает сам. На 2–4 цифры
+    становятся светящимися точками: на большой плотности так узор читается лучше, чем кашей из цифр.</li>
+    <li><b>Свечение бит</b> — радиус ореола вокруг цифры; по умолчанию выключено. Ореол берёт её собственный цвет, поэтому
     красные биты памяти светятся красным. Ноль гасит свечение совсем — это же и самый быстрый
     режим: тень считается на каждую цифру отдельно, и на большой плотности она дороже всего
     остального вместе взятого. Биты, погасшие памятью, не светятся никогда.</li>
@@ -197,7 +285,7 @@
     <li><b>Нитей: каждая N-я</b> — прореживание занавеса связей.</li>
   </ul>
   <p>У каждого ползунка стрелки <b>◄ ►</b>: клик двигает ровно на один шаг этого поля, удержание
-  гонит быстро. Настройки, палитра и положение тела сохраняются в памяти браузера и переживают
+  гонит быстро и разгоняется — через полсекунды по два шага, потом по четыре и по восемь. Настройки, палитра и положение тела сохраняются в памяти браузера и переживают
   перезагрузку.</p>
 
   <h3>Реверс с памятью</h3>
@@ -248,7 +336,7 @@
   <p class="sub">Клик отличается от поворота по тому, сдвинулась ли рука: дальше четырёх пикселей —
   это поворот, на месте — клик.</p>
   <p> Кнопка <b>🔗 Нити</b> показывает занавес целиком; ползунок рядом
-  прореживает его — при 26 рядах пар больше тысячи, и без прореживания тело превращается в сплошную
+  прореживает его — при 26 рядах пар больше тысячи, при 64 — больше восьми тысяч, и без прореживания тело превращается в сплошную
   штриховку.</p>
   <p>Нить всегда отвесная: отражение идёт через плоскость экватора, у двойников общие две координаты
   из трёх, а третья ровно противоположна.</p>
@@ -259,12 +347,32 @@
 
   <h3>Остальные кнопки</h3>
   <ul>
+    <li><b>🧭 Стороны света</b> (клавиша C) — буквы <b>С В Ю З</b> у четырёх углов экватора, чуть снаружи
+    тела. Крутятся вместе с ним: ближние к вам ярче, дальние приглушены, — так видно, какой стороной тело
+    сейчас повёрнуто и куда оно ушло после вращения.</li>
     <li><b>△ Скрытые рёбра</b> — показывать ли рёбра дальней стороны. Рисуются <b>пунктиром</b>, как
     невидимый контур на чертеже: тело полупрозрачное, и дальние рёбра просвечивают насквозь, а одной
     приглушённостью их от ближних не отличить — на тёмном фоне и четверть яркости читается как
     светящаяся линия. Без них силуэт чище, с ними лучше виден объём.</li>
-    <li><b>🎲 Новая картина</b> — перебросить все биты заново, память при этом снимается.</li>
-    <li><b>🎨</b> — переключение между палитрой приложения и прежней зеленью.</li>
+    <li><b>🎲 Новая картина</b> — перебросить все биты заново, память при этом снимается. Свои биты
+    тоже снимаются: картина снова случайная.</li>
+    <li><b>✎ Свои биты</b> — раскрывает поле, куда можно вписать свою картину. Считаются только 0 и 1,
+    пробелы и переносы строк ставьте как удобно глазу. Биты ложатся по порядку чтения: грань за гранью,
+    в грани ряд за рядом от вершины (в ряду r ровно r+1 бит), в ряду слева направо. Короткая строка
+    идёт по кругу, так что даже «1011» ложится узором на всё тело; лишнее не влезает. Под полем
+    видно, сколько бит вписано и сколько мест. Биты ложатся на грани <b>сразу, по мере ввода</b>;
+    нижняя половина, как всегда, получает ту же картину инвертированной. Пустое поле картину не
+    трогает. <b>⇩ Текущие</b> выписывает в поле то, что сейчас на гранях, ряд на строку: правьте прямо
+    там. <b>Текстовый файл</b>
+    можно бросить прямо в поле, да и в любое место страницы: его текст встанет в поле и сразу ляжет на
+    грани. <b>◇ Грани
+    одинаково</b> — каждая грань начинает строку с начала. Вписанное помнится после перезагрузки и
+    при смене плотности ложится заново на новое число мест.</li>
+    <li><b>🎨</b> (клавиша T) — цветовая схема, по кругу: палитра приложения → прежняя зелень → <b>свои
+    цвета</b> → снова палитра приложения. На кнопке написано, куда переключит следующий щелчок. В схеме
+    «Свои цвета» биты красятся не половиной тела, а значением: все нули одним цветом, все единицы
+    другим, на обеих половинах. Цвета выбираются квадратиками <b>0</b> и <b>1</b> под кнопкой, и выбор
+    цвета сам включает эту схему. Память краснеет от этих же цветов.</li>
     <li><b>⌖ Вид сверху</b> — вернуть камеру в исходное положение.</li>
     <li><b>☯ Дзен</b> — убрать с экрана всё, кроме тела: панель, заголовок, версию, подсказку.
     Вход и выход: кнопка, клавиша Z, щелчок колесом мыши, а из Дзена ещё и Escape. Состояние не
@@ -283,36 +391,55 @@
 </div>
 </div>
 <canvas id="cv"></canvas>
-<div id="panel">
-  <button id="bSpin" class="act" title="Пробел">⟳ Вращение</button>
-  <button id="bDig" class="act" title="D">01 Биты</button>
-  <button id="bEdge" class="act">△ Скрытые рёбра</button>
+<!-- v0.026: полоса вкладок и две панели (левая и правая). Вкладки строит скрипт (SECS) из разделов
+     .tab-sec — в порядке разметки; ↺ и 📖 стоят в полосе сразу и остаются в её конце. -->
+<div id="menuTabs">
+  <span id="title">zerkalius · октаэдр</span>
+  <button id="bLayout" title="Раскладка по умолчанию: все разделы открыты и стоят на своих местах в левой и правой панели">↺</button>
+  <button id="bHelp" title="Методичка — H или F1">📖</button>
+</div>
+<div id="panel" class="dock">
+  <div class="tab-sec" data-tab="pic" data-title="🎲 Картина">
   <button id="bRoll" title="N">🎲 Новая картина</button>
-  <button id="bTheme" title="T">🎨 Зелень</button>
-  <button id="bReset">⌖ Вид сверху</button>
-  <button id="bHelp" title="H или F1">📖 Методичка</button>
-  <button id="bZen" title="Z или щелчок колесом мыши. Прячет всё, кроме тела">☯ Дзен</button>
+  <button id="bMy" title="Вписать свою картину бит">✎ Свои биты</button>
+  <div id="myBox" class="set">
+    <label>Свои биты: считаются только 0 и 1</label>
+    <textarea id="myBits" rows="4" spellcheck="false" placeholder="например 1011 0010&#10;короткая строка повторится по кругу&#10;или бросьте сюда текстовый файл"></textarea>
+    <div id="myInfo"></div>
+    <div class="row">
+      <button id="bTake" title="Картина, что сейчас на гранях, — в поле: ряд на строку, грани через пустую строку">⇩ Текущие</button>
+      <button id="bSame" title="Каждая из четырёх граней начинается с начала строки">◇ Одинаково</button>
+    </div>
+  </div>
   <div class="set">
     <label>Плотность бит: <b id="vRows">13</b> рядов</label>
     <div class="srow">
       <button class="arr" data-for="sRows" data-d="-1" title="На шаг меньше (держать — быстро)">◄</button>
-      <input type="range" id="sRows" min="4" max="26" step="1" value="13">
-      <button class="arr" data-for="sRows" data-d="1" title="На шаг больше (держать — быстро)">►</button>
+      <input type="range" id="sRows" min="4" max="32" step="1" value="13">
+      <button class="arr" data-for="sRows" data-d="1" title="На шаг больше; выше 32 — только так, до 256 (держать — быстро)">►</button>
     </div>
   </div>
+  </div>
+  <div class="tab-sec" data-tab="view" data-title="👁 Вид">
+  <button id="bSpin" class="act" title="Пробел">⟳ Вращение</button>
+  <button id="bDig" class="act" title="D">01 Биты</button>
+  <button id="bEdge" class="act">△ Скрытые рёбра</button>
+  <button id="bDirs" class="act" title="C">🧭 Стороны света</button>
+  <button id="bReset">⌖ Вид сверху</button>
+  <button id="bZen" title="Z или щелчок колесом мыши. Прячет всё, кроме тела">☯ Дзен</button>
   <div class="set">
     <label>Размер цифр: <b id="vSize">13</b></label>
     <div class="srow">
       <button class="arr" data-for="sSize" data-d="-1" title="На шаг меньше (держать — быстро)">◄</button>
-      <input type="range" id="sSize" min="7" max="22" step="1" value="13">
+      <input type="range" id="sSize" min="2" max="22" step="1" value="13">
       <button class="arr" data-for="sSize" data-d="1" title="На шаг больше (держать — быстро)">►</button>
     </div>
   </div>
   <div class="set">
-    <label>Свечение бит: <b id="vGlow">7</b></label>
+    <label>Свечение бит: <b id="vGlow">0</b></label>
     <div class="srow">
       <button class="arr" data-for="sGlow" data-d="-1" title="Слабее (держать — быстро)">◄</button>
-      <input type="range" id="sGlow" min="0" max="20" step="1" value="7">
+      <input type="range" id="sGlow" min="0" max="20" step="1" value="0">
       <button class="arr" data-for="sGlow" data-d="1" title="Ярче (держать — быстро)">►</button>
     </div>
   </div>
@@ -324,7 +451,16 @@
       <button class="arr" data-for="sSpeed" data-d="1" title="На шаг больше (держать — быстро)">►</button>
     </div>
   </div>
-  <div class="cap">Реверс с памятью</div>
+  </div>
+  <div class="tab-sec" data-tab="color" data-title="🎨 Цвета">
+  <button id="bTheme" title="T">🎨 Зелень</button>
+  <div class="row">
+    <label class="col" title="Цвет нулей. Выбор цвета включает схему «Свои цвета»">0 <input type="color" id="c0" value="#4a78ff"></label>
+    <label class="col" title="Цвет единиц. Выбор цвета включает схему «Свои цвета»">1 <input type="color" id="c1" value="#f2f5fa"></label>
+  </div>
+  </div>
+  <!-- v0.030: data-dock="panelR" — дом раздела в правой панели (раскладка по умолчанию) -->
+  <div class="tab-sec" data-tab="rev" data-title="⇄ Реверс" data-dock="panelR">
   <div class="row">
     <button id="opRev" class="act" title="[1] Разворот ряда. Не меняются биты на палиндромных местах">⇄</button>
     <button id="opRevInv" title="[2] Разворот с инверсией — зеркало «инв-разв». Не меняются биты на антипалиндромных местах">⇅</button>
@@ -337,7 +473,17 @@
   <div class="row">
     <button id="bForget" title="F">✕ Забыть</button>
   </div>
-  <div class="cap">Связанные биты</div>
+  <div class="set">
+    <label>Такт цикла: <b id="vTick">420</b> мс</label>
+    <div class="srow">
+      <button class="arr" data-for="sTick" data-d="-1" title="На шаг меньше (держать — быстро)">◄</button>
+      <input type="range" id="sTick" min="60" max="1200" step="20" value="420">
+      <button class="arr" data-for="sTick" data-d="1" title="На шаг больше (держать — быстро)">►</button>
+    </div>
+  </div>
+  <div id="stepInfo">шаг 0 · устояло <b>—</b></div>
+  </div>
+  <div class="tab-sec" data-tab="links" data-title="🔗 Связи" data-dock="panelR">
   <div class="row">
     <button id="bHover" title="V. Пока выключено, наведение мышью ничего не подсвечивает">◎ Наведение</button>
   </div>
@@ -349,20 +495,13 @@
     <label>Нитей: каждая <b id="vLink">3</b>-я</label>
     <div class="srow">
       <button class="arr" data-for="sLink" data-d="-1" title="Чаще">◄</button>
-      <input type="range" id="sLink" min="1" max="12" step="1" value="3">
+      <input type="range" id="sLink" min="1" max="32" step="1" value="3">
       <button class="arr" data-for="sLink" data-d="1" title="Реже">►</button>
     </div>
   </div>
-  <div class="set">
-    <label>Такт цикла: <b id="vTick">420</b> мс</label>
-    <div class="srow">
-      <button class="arr" data-for="sTick" data-d="-1" title="На шаг меньше (держать — быстро)">◄</button>
-      <input type="range" id="sTick" min="60" max="1200" step="20" value="420">
-      <button class="arr" data-for="sTick" data-d="1" title="На шаг больше (держать — быстро)">►</button>
-    </div>
   </div>
-  <div id="stepInfo">шаг 0 · устояло <b>—</b></div>
 </div>
+<div id="panelR" class="dock"></div>
 <script>
 /* ═══ ГЕОМЕТРИЯ ═══════════════════════════════════════════════════════════════════════════════
    Октаэдр — это ровно то, что нарисовано в знаке: пирамида и её зеркало, сложенные основаниями.
@@ -418,8 +557,15 @@ for (let s = 0; s < 4; s++) {
    он сам убывает делением перспективы), SPEED — скорость своего вращения, в тысячных радиана за кадр. */
 /* GLOW — радиус ореола вокруг цифры в пикселях (v0.009, запрос пользователя «свечение бит»).
    0 — без свечения, как было до этого. */
-let ROWS = 13, DIG = 13, SPEED = 42, GLOW = 7;
+let ROWS = 13, DIG = 13, SPEED = 42, GLOW = 0;   // v0.023: свечение по умолчанию выключено (было 7)
 let bits = [];
+/* СВОИ БИТЫ (v0.020, запрос пользователя: «нужна возможность свои биты вписывать»).
+   myBits — вписанная строка из одних 0 и 1; пустая — картина случайная, как было всегда.
+   Раскладка — по порядку чтения: грань за гранью (0…3), в грани ряд за рядом от вершины, в ряду слева
+   направо. Короткая строка идёт по кругу, так что «1011» ложится узором на всё тело; лишнее не влезает.
+   mySame — каждая грань начинает строку с начала, и четыре грани выходят одинаковыми.
+   Объявлено ЗДЕСЬ, до первого вызова rollBits: let, объявленный ниже вызова, бросил бы ошибку. */
+let myBits = "", mySame = false;
 /* ═══ ПАМЯТЬ РЕВЕРСА ══════════════════════════════════════════════════════════════════════════
    Запрос пользователя: «реверс с поиском: одни — неменяющиеся — их красным например, а
    изменяющиеся чёрным, и по циклу чёрные инвертятся».
@@ -440,11 +586,17 @@ let stepNo = 0, stillPct = null;
 let memOn = false;
 function rollBits(){
   bits = []; keep = [];
+  const src = myBits;   // v0.020: вписанные свои биты; пусто — случайные
+  let i = 0;
   for (let s = 0; s < 4; s++) {
     const face = [], mem = [];
+    if (mySame) i = 0;
     for (let r = 0; r < ROWS; r++) {
       const row = [], mrow = [];
-      for (let k = 0; k <= r; k++) { row.push(Math.random() < 0.5 ? 0 : 1); mrow.push(0); }
+      for (let k = 0; k <= r; k++) {
+        row.push(src ? (src.charCodeAt(i++ % src.length) - 48) : (Math.random() < 0.5 ? 0 : 1));
+        mrow.push(0);
+      }
       face.push(row); mem.push(mrow);
     }
     bits.push(face); keep.push(mem);
@@ -498,6 +650,16 @@ let showLinks = false, LINK_EVERY = 3, hoverBit = null;
    На клик это не влияет — и закрепление пары, и Shift+правка бита работают всегда: клик всегда
    намеренный, в отличие от проезда мышью. */
 let hoverOn = false;
+/* ЦВЕТА 0 И 1 (v0.026, запрос пользователя: «задать цвета для 0 и 1 отдельно»). Пока bitCol выключен,
+   цифры красятся половиной тела, как всегда: верх — --up, низ — --dn. Включён — значением: все нули
+   цветом col0, все единицы цветом col1, на обеих половинах. Память краснеет от этих же цветов. */
+let bitCol = false, col0 = "#4a78ff", col1 = "#f2f5fa";
+/* СТОРОНЫ СВЕТА (v0.029, запрос пользователя: «граням добавить север, восток, юг — на углах буквы»).
+   Буквы стоят у четырёх углов экватора, в той же плоскости, чуть снаружи тела (DIR_OUT), и крутятся
+   вместе с ним. Раскладка — как на карте, если смотреть сверху: +X — восток, +Z (к зрителю при yaw 0) —
+   юг, −X — запад, −Z — север. Порядок совпадает с EQ. */
+let showDirs = true;
+const DIRS = ["В", "Ю", "З", "С"], DIR_OUT = 1.16;
 /* ЗАКРЕПЛЁННЫЕ БИТЫ (v0.010, запрос пользователя: «клик по битам выделяет и закрепляет, снимает
    по кнопке или Escape со всех сразу»). Наведение держится ровно пока мышь на месте — отвёл, и
    пара погасла, а тело ещё и само крутится. Клик оставляет пару гореть: можно набрать несколько,
@@ -765,6 +927,10 @@ function draw(){
   if (showDigits) {
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     const rampUp = ramp(cUp, cMem), rampDn = ramp(cDn, cMem);
+    const ramp0 = bitCol ? ramp(col0, cMem) : null, ramp1 = bitCol ? ramp(col1, cMem) : null;   // v0.026
+    // v0.023: шрифт — только при смене размера. Размер округлён до 0,5 px: иначе он другой у каждой цифры, и
+    // браузер разбирал бы строку шрифта заново сотни тысяч раз за кадр — на плотности 256 это главный тормоз.
+    let fontPx = -1;
     pickList = [];
     for (const s of shown) {
       if (!s.front) continue;
@@ -786,10 +952,15 @@ function draw(){
         for (let k = 0; k <= r; k++) {
           const raw = bits[f.slot][r][k];
           const val = f.up ? raw : (raw ^ 1);
+          const rm = bitCol ? (val ? ramp1 : ramp0) : rmp;   // v0.026: цвет по значению или по половине
           const p = project(bitPoint(f, r, k));
-          const size = Math.max(5, DIG * p.k * zoom * (Math.min(W, HGT) / 700));
-          if (size < 5.5) continue;      // мельче — каша, лучше не рисовать вовсе
-          ctx.font = size.toFixed(1) + "px Consolas, monospace";
+          const size = DIG * p.k * zoom * (Math.min(W, HGT) / 700);
+          // v0.023: порог 5,5 -> 1,5 px (запрос «шрифт какой минимальный можно? сделай минимум»). Мельче 1,5 px
+          // холст цифру уже не проявляет вовсе; от 2 до 4 px это не цифра, а светящаяся точка — на плотности
+          // 64 ряда как раз то, что нужно: узор читается, а каши из наползающих цифр нет.
+          if (size < 1.5) continue;
+          const px = Math.round(size * 2) / 2;
+          if (px !== fontPx) { fontPx = px; ctx.font = px + "px Consolas, monospace"; }
           /* ПАМЯТЬ. До первого шага раскрашивать нечем — картина идёт как есть. После шага место,
              которое дрогнуло, уходит почти в фон (то самое «изменяющиеся чёрным»: на тёмном
              полотне гаснуть честнее, чем чернеть), а место, которое держится, разгорается и
@@ -797,12 +968,12 @@ function draw(){
              светиться один скелет — и это не украшение, а симметрия ряда, видимая глазом. */
           const m = keep[f.slot][r][k];
           let lit = true;   // «живая» цифра — светится; погасшая памятью — нет
-          if (memOn && m === 0) { ctx.fillStyle = rmp[0]; ctx.globalAlpha = face * 0.24; lit = false; }
+          if (memOn && m === 0) { ctx.fillStyle = rm[0]; ctx.globalAlpha = face * 0.24; lit = false; }
           else if (memOn) {
             const i = m > MEM_FULL ? MEM_FULL : m;
-            ctx.fillStyle = rmp[i];
+            ctx.fillStyle = rm[i];
             ctx.globalAlpha = face * (0.74 + 0.26 * (i / MEM_FULL));
-          } else { ctx.fillStyle = rmp[0]; ctx.globalAlpha = face; }
+          } else { ctx.fillStyle = rm[0]; ctx.globalAlpha = face; }
           /* СВЕЧЕНИЕ. Ореол берёт цвет самой цифры, поэтому красные биты памяти светятся красным,
              а не голубым — подсветка и накал остаются одним и тем же сообщением.
              Радиус уменьшается с расстоянием (p.k — то же деление перспективы, что у кегля):
@@ -862,6 +1033,21 @@ function draw(){
   }
   ctx.globalAlpha = 1;
   ctx.shadowBlur = 0;
+
+  // 5. Стороны света (v0.029) — поверх всего, иначе рёбра и цифры их перечёркивали бы. Яркость — по
+  //    глубине: ближний угол во всю силу, дальний на треть, между ними плавно, без скачка на повороте.
+  if (showDirs) {
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = cEq;
+    for (let i = 0; i < 4; i++) {
+      const v = EQ[i], p = project([v[0] * DIR_OUT, 0, v[2] * DIR_OUT]);
+      const fs = Math.max(10, 17 * p.k * zoom * (Math.min(W, HGT) / 700));
+      ctx.font = "600 " + fs.toFixed(1) + "px 'Segoe UI', Inter, system-ui, sans-serif";
+      ctx.globalAlpha = 0.33 + 0.62 * Math.max(0, Math.min(1, (p.z / DIR_OUT + 1) / 2));
+      ctx.fillText(DIRS[i], p.x, p.y);
+    }
+    ctx.globalAlpha = 1;
+  }
 }
 
 function frame(){
@@ -985,15 +1171,23 @@ cv.addEventListener("wheel", (e) => {
 
 const bSpin = document.getElementById("bSpin"), bDig = document.getElementById("bDig"),
       bEdge = document.getElementById("bEdge"), bRoll = document.getElementById("bRoll"),
+      bDirs = document.getElementById("bDirs"),
       bTheme = document.getElementById("bTheme"), bReset = document.getElementById("bReset");
 bSpin.onclick = () => { spin = !spin; bSpin.classList.toggle("act", spin); };
 bDig.onclick  = () => { showDigits = !showDigits; bDig.classList.toggle("act", showDigits); };
 bEdge.onclick = () => { showHidden = !showHidden; bEdge.classList.toggle("act", showHidden); };
-bRoll.onclick = () => rollBits();
+bDirs.onclick = () => { showDirs = !showDirs; bDirs.classList.toggle("act", showDirs); };   // v0.029
+bRoll.onclick = () => { myBits = ""; rollBits(); myInfoUpd(); save(); };   // v0.020: и снимает свои биты
+/* v0.027: схем три, по кругу — палитра приложения → зелень → свои цвета → палитра приложения (запрос
+   пользователя: «🎨 оставить как было, а при изменении цветов — это схема „Свои цвета“»). «Свои цвета» —
+   это bitCol: биты по значению, цвета из квадратиков 0 и 1. Рамки и фон при этом остаются той палитры,
+   из которой пришли (зелень), а выход из своих цветов — в палитру приложения, как у круга и положено. */
 bTheme.onclick = () => {
   const green = document.documentElement.getAttribute("data-theme") === "green";
-  document.documentElement.setAttribute("data-theme", green ? "" : "green");
-  bTheme.textContent = green ? "🎨 Зелень" : "🎨 Палитра приложения";
+  if (bitCol) { bitCol = false; document.documentElement.setAttribute("data-theme", ""); }
+  else if (green) bitCol = true;
+  else document.documentElement.setAttribute("data-theme", "green");
+  syncUI();
 };
 bReset.onclick = () => { yaw = 0.6; pitch = -0.42; zoom = 1; save(); };
 
@@ -1010,8 +1204,8 @@ const vRows = document.getElementById("vRows"), vSize = document.getElementById(
 function save(){
   try {
     localStorage.setItem(KEY, JSON.stringify({
-      ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, zoom, yaw, pitch, stepOp, TICK,
-      showLinks, LINK_EVERY, hoverOn,
+      ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, showDirs, zoom, yaw, pitch, stepOp, TICK,
+      showLinks, LINK_EVERY, hoverOn, myBits, mySame, glowV: 1, bitCol, col0, col1,
       theme: document.documentElement.getAttribute("data-theme") || ""
     }));
   } catch (e) {}
@@ -1020,13 +1214,16 @@ function load(){
   let o = null;
   try { o = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) {}
   if (!o) return;
-  if (o.ROWS >= 4 && o.ROWS <= 26) ROWS = o.ROWS | 0;
-  if (o.DIG  >= 7 && o.DIG  <= 22) DIG  = o.DIG  | 0;
+  if (o.ROWS >= 4 && o.ROWS <= 256) ROWS = o.ROWS | 0;   // v0.022: предел 26 -> 64; v0.023: 256 для пробы
+  if (o.DIG  >= 2 && o.DIG  <= 22) DIG  = o.DIG  | 0;   // v0.023: минимум 7 -> 2
   if (o.SPEED >= 0 && o.SPEED <= 160) SPEED = o.SPEED | 0;
-  if (o.GLOW >= 0 && o.GLOW <= 20) GLOW = o.GLOW | 0;
+  // v0.023: свечение по умолчанию выключено. Сохранённое ДО этого (без метки glowV) — это старое умолчание 7,
+  // а не выбор пользователя; его не берём, иначе у всех, кто уже открывал страницу, свечение осталось бы.
+  if (o.glowV && o.GLOW >= 0 && o.GLOW <= 20) GLOW = o.GLOW | 0;
   if (typeof o.spin === "boolean") spin = o.spin;
   if (typeof o.showDigits === "boolean") showDigits = o.showDigits;
   if (typeof o.showHidden === "boolean") showHidden = o.showHidden;
+  if (typeof o.showDirs === "boolean") showDirs = o.showDirs;
   if (o.zoom > 0.4 && o.zoom < 3.1) zoom = o.zoom;
   if (typeof o.yaw === "number") yaw = o.yaw;
   if (typeof o.pitch === "number") pitch = o.pitch;
@@ -1035,9 +1232,15 @@ function load(){
   if (o.TICK >= 60 && o.TICK <= 1200) TICK = o.TICK | 0;
   if (typeof o.showLinks === "boolean") showLinks = o.showLinks;
   if (typeof o.hoverOn === "boolean") hoverOn = o.hoverOn;
-  if (o.LINK_EVERY >= 1 && o.LINK_EVERY <= 12) LINK_EVERY = o.LINK_EVERY | 0;
+  if (o.LINK_EVERY >= 1 && o.LINK_EVERY <= 32) LINK_EVERY = o.LINK_EVERY | 0;   // v0.022: 12 -> 32, под 64 ряда
+  if (typeof o.myBits === "string" && /^[01]{0,200000}$/.test(o.myBits)) myBits = o.myBits;
+  if (typeof o.mySame === "boolean") mySame = o.mySame;
+  if (typeof o.bitCol === "boolean") bitCol = o.bitCol;
+  if (/^#[0-9a-f]{6}$/i.test(o.col0 || "")) col0 = o.col0;
+  if (/^#[0-9a-f]{6}$/i.test(o.col1 || "")) col1 = o.col1;
   // Сама память и номер шага НЕ сохраняются намеренно: картина бит каждый раз новая (rollBits при
-  // открытии), а память, набранная на другой картине, была бы про неё, а не про эту.
+  // открытии), а память, набранная на другой картине, была бы про неё, а не про эту. Свои биты
+  // (v0.020) сохраняются: их вписывали руками, и терять их при перезагрузке обидно.
 }
 function syncUI(){
   sRows.value = ROWS;  vRows.textContent = ROWS;
@@ -1047,8 +1250,10 @@ function syncUI(){
   bSpin.classList.toggle("act", spin);
   bDig.classList.toggle("act", showDigits);
   bEdge.classList.toggle("act", showHidden);
-  bTheme.textContent = document.documentElement.getAttribute("data-theme") === "green"
-    ? "🎨 Палитра приложения" : "🎨 Зелень";
+  bDirs.classList.toggle("act", showDirs);
+  // На кнопке — куда переключит следующий щелчок (так было и до трёх схем, v0.027).
+  bTheme.textContent = bitCol ? "🎨 Палитра приложения"
+    : document.documentElement.getAttribute("data-theme") === "green" ? "🎨 Свои цвета" : "🎨 Зелень";
   sTick.value = TICK; vTick.textContent = TICK;
   opRev.classList.toggle("act", stepOp === "rev");
   opRevInv.classList.toggle("act", stepOp === "revinv");
@@ -1062,15 +1267,29 @@ function syncUI(){
   sLink.value = LINK_EVERY; vLink.textContent = LINK_EVERY;
   bAuto.classList.toggle("act", !!autoTimer);
   bAuto.textContent = autoTimer ? "⏸ Стоп" : "▶ Цикл";
+  // v0.020: по id, а не по константам — те объявлены ниже, у самого поля своих бит
+  document.getElementById("bSame").classList.toggle("act", mySame);
+  document.getElementById("c0").value = col0; document.getElementById("c1").value = col1;
+  document.getElementById("bMy").classList.toggle("act", document.getElementById("myBox").classList.contains("on"));
 }
 // Плотность меняет ЧИСЛО рядов, значит старая картина бит под неё не подходит — пересобираем.
 // Плотность меняет число мест, и прежние закрепления указывали бы в пустоту — снимаем их вместе
 // с картиной бит.
-sRows.oninput  = () => { ROWS = +sRows.value; vRows.textContent = ROWS; rollBits(); unpinAll(); save(); };
+/* v0.024: ползунок плотности — 4…32, а дальше, до ROWS_MAX, только стрелкой ► (запрос пользователя:
+   «ползунок до 32, а после — только по стрелке до 256»). Сам ползунок выше 32 не ходит: на всей длине
+   4…256 грубой протяжкой было бы не попасть в обычные 10–20 рядов, ради которых он и есть. Пока ROWS
+   выше 32, браузер сам держит бегунок у правого края (value выше max он обрезает), а надпись рядом
+   показывает настоящее число. Поэтому setRows ставит value как есть — обрезку делает браузер. */
+const ROWS_SLIDE = 32, ROWS_MAX = 256;
+function setRows(n){
+  ROWS = n; sRows.value = n; vRows.textContent = ROWS;
+  rollBits(); unpinAll(); myInfoUpd(); save();
+}
+sRows.oninput  = () => setRows(+sRows.value);
 sSize.oninput  = () => { DIG = +sSize.value;  vSize.textContent = DIG;  save(); };
 sGlow.oninput  = () => { GLOW = +sGlow.value; vGlow.textContent = GLOW; save(); };
 sSpeed.oninput = () => { SPEED = +sSpeed.value; vSpeed.textContent = SPEED; save(); };
-for (const b of [bSpin, bDig, bEdge, bTheme]) {
+for (const b of [bSpin, bDig, bEdge, bDirs, bTheme]) {
   const prev = b.onclick;
   b.onclick = () => { prev(); save(); };
 }
@@ -1129,8 +1348,15 @@ sTick.oninput = () => {
    мы value напрямую — ползунок двигался бы, а дело за ним не делалось.
    УДЕРЖАНИЕ. Первый шаг — сразу по нажатию, дальше пауза 380 мс (чтобы одиночный клик не
    превращался в очередь) и повтор каждые 70 мс. */
-function nudge(inp, dir){
-  const st = parseFloat(inp.step) || 1, mn = parseFloat(inp.min), mx = parseFloat(inp.max);
+function nudge(inp, dir, mul = 1){
+  const st = (parseFloat(inp.step) || 1) * mul, mn = parseFloat(inp.min), mx = parseFloat(inp.max);
+  // v0.024: плотность стрелкой идёт мимо ползунка — до ROWS_MAX, и считается от самой ROWS, а не от
+  // value (оно выше 32 обрезано браузером).
+  if (inp === sRows) {
+    const v = Math.min(ROWS_MAX, Math.max(4, ROWS + dir * st));
+    if (v !== ROWS) setRows(v);
+    return;
+  }
   const cur = parseFloat(inp.value);
   const v = Math.min(mx, Math.max(mn, cur + dir * st));
   if (v === cur) return;
@@ -1147,7 +1373,13 @@ for (const b of document.querySelectorAll(".arr")) {
     e.preventDefault();          // иначе на телефоне долгое нажатие зовёт своё меню
     holdStop();
     nudge(inp, dir);
-    holdWait = setTimeout(() => { holdRun = setInterval(() => nudge(inp, dir), 70); }, 380);
+    /* v0.024: удержание РАЗГОНЯЕТСЯ — первые полсекунды повтора по одному шагу, дальше по 2, по 4, по 8
+       (запрос: «нажать и удерживать — быстрое увеличение»). По одному от 32 до 256 ехать 15 секунд. */
+    let ticks = 0;
+    holdWait = setTimeout(() => { holdRun = setInterval(() => {
+      ticks++;
+      nudge(inp, dir, ticks < 8 ? 1 : ticks < 20 ? 2 : ticks < 35 ? 4 : 8);
+    }, 70); }, 380);
   });
   for (const ev of ["pointerup", "pointerleave", "pointercancel"]) b.addEventListener(ev, holdStop);
 }
@@ -1184,7 +1416,247 @@ cv.addEventListener("pointerdown", (e) => { if (e.button === 1) { e.preventDefau
 const gear = document.getElementById("gear");
 gear.onclick = () => document.getElementById("panel").classList.toggle("hidden");
 
+/* ═══ СВОИ БИТЫ (v0.020) ═════════════════════════════════════════════════════════════════════
+   Из поля берутся только 0 и 1: пробелы, переносы и прочее — для глаза, их можно ставить как угодно.
+   Поэтому «⇩ Текущие» выписывает картину ряд на строку, грани через пустую строку, — и то же самое,
+   поправленное, ложится обратно ровно на свои места (при выключенном «◇ Одинаково», поэтому
+   «Текущие» его и выключают). v0.025: кнопки «✎ Вписать» больше нет — поле вписывает само, на каждый
+   ввод (запрос пользователя: «при вводе сразу бы вписывать, кнопку убрать»). Вписанное помнится и переживает перезагрузку и смену
+   плотности; 🎲 возвращает случайную картину. Память и шаги сбрасываются, как у новой картины. */
+const bMy = document.getElementById("bMy"), myBox = document.getElementById("myBox"),
+      myArea = document.getElementById("myBits"), myInfo = document.getElementById("myInfo"),
+      bTake = document.getElementById("bTake"),
+      bSame = document.getElementById("bSame");
+const myClean = (t) => t.replace(/[^01]/g, "");
+// v0.021: столько бит, самое большее, помнится в памяти браузера — с запасом на любую плотность. Больше
+// на грани всё равно не лечь, а память браузера у страницы не резиновая.
+const MY_MAX = 200000;
+function myInfoUpd(msg){
+  const n = myClean(myArea.value).length, face = ROWS * (ROWS + 1) / 2, need = mySame ? face : face * 4;
+  const where = mySame ? face + " на каждой грани" : need + " (по " + face + " на грань)";
+  myInfo.classList.toggle("bad", !!msg);
+  myInfo.textContent = msg || (n === 0 ? "мест: " + where
+    : "в поле " + n + " · мест " + where + (n < need ? " — пойдёт по кругу" : n > need ? " — лишние " + (n - need) + " не влезут" : " — ровно"));
+  if (!msg && myBits) myInfo.textContent += " · сейчас на гранях свои";
+}
+function myPut(){
+  const t = myClean(myArea.value);
+  if (!t) { myInfoUpd("в поле нет ни одного 0 или 1"); return; }
+  myBits = t.slice(0, MY_MAX); rollBits(); myInfoUpd(); save();
+}
+bMy.onclick = () => { myBox.classList.toggle("on"); if (myBox.classList.contains("on")) myArea.focus(); syncUI(); };
+bTake.onclick = () => {
+  myArea.value = bits.map(face => face.map(row => row.join("")).join("\n")).join("\n\n");
+  mySame = false; syncUI(); myInfoUpd(); save();
+};
+bSame.onclick = () => { mySame = !mySame; if (myBits) rollBits(); syncUI(); myInfoUpd(); save(); };
+// v0.025: вписываем на каждый ввод. Пустое поле (всё стёрли, чтобы набрать заново) картину не трогает:
+// иначе на полпути она прыгала бы в случайную и обратно.
+myArea.addEventListener("input", () => { if (myClean(myArea.value)) myPut(); else myInfoUpd(); });
+/* ФАЙЛ В ПОЛЕ (v0.021, запрос пользователя: «возможность кидать текст файл прям в поле»).
+   Файл принимается не только полем, а ВСЕЙ страницей: без перехвата браузер, получив файл мимо поля,
+   открыл бы его вместо страницы, и прибор закрылся бы вместе с картиной. Пока файл несут, поле само
+   раскрывается и подсвечивается. Текст файла заменяет поле целиком и сразу вписывается на грани.
+   Огромный файл в поле целиком не кладём: поле с мегабайтами текста тормозит на каждой букве, поэтому
+   от такого остаются одни 0 и 1, не больше MY_MAX. Обычный текст (не файл), перетащенный мышью, поле
+   принимает как всегда — перехват срабатывает только на файлы. */
+const hasFiles = (e) => !!(e.dataTransfer && Array.from(e.dataTransfer.types || []).includes("Files"));
+function myOpen(){ if (!myBox.classList.contains("on")) { myBox.classList.add("on"); syncUI(); } }
+function myFile(file){
+  if (!file) return;
+  myOpen();
+  if (file.size > 20e6) { myInfoUpd("файл больше 20 МБ — не беру"); return; }
+  file.text().then((t) => {
+    myArea.value = t.length > MY_MAX ? myClean(t).slice(0, MY_MAX) : t;
+    if (!myClean(t)) { myInfoUpd("в файле «" + file.name + "» нет ни одного 0 или 1"); return; }
+    myPut();
+    myInfo.textContent = "файл «" + file.name + "» · " + myInfo.textContent;
+  }).catch(() => myInfoUpd("файл «" + file.name + "» не прочитался"));
+}
+// Подсветку гасит таймер, а не dragleave: тот сыплется на каждой границе элементов, и Chrome часто не
+// говорит, куда ушёл курсор, — поле мигало бы. dragover же идёт непрерывно, пока файл над окном.
+let dropOff = null;
+window.addEventListener("dragover", (e) => {
+  if (!hasFiles(e)) return;
+  e.preventDefault(); e.dataTransfer.dropEffect = "copy";
+  myOpen(); myArea.classList.add("drop");
+  clearTimeout(dropOff); dropOff = setTimeout(() => myArea.classList.remove("drop"), 250);
+});
+window.addEventListener("drop", (e) => {
+  if (!hasFiles(e)) return;
+  e.preventDefault(); myArea.classList.remove("drop");
+  myFile(e.dataTransfer.files[0]);
+});
+myArea.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") myArea.blur();   // уйти из поля — чтобы снова заработали клавиши прибора
+});
+
+/* ═══ ЦВЕТА 0 И 1 (v0.026) ═════════════════════════════════════════════════════════════════════
+   Выбор цвета сам включает схему «Свои цвета»: раз цвет трогают — значит, хотят его видеть.
+   v0.027: отдельной кнопки «01 Цвета 0 и 1» больше нет — схема входит в круг кнопки 🎨. */
+const c0In = document.getElementById("c0"), c1In = document.getElementById("c1");
+c0In.addEventListener("input", () => { col0 = c0In.value; bitCol = true; syncUI(); save(); });
+c1In.addEventListener("input", () => { col1 = c1In.value; bitCol = true; syncUI(); save(); });
+
+/* ═══ РАЗДЕЛЫ ПАНЕЛИ (v0.026) ══════════════════════════════════════════════════════════════════
+   Та же механика, что в Zerkalius Code (TABS там же): полоса вкладок из разделов .tab-sec, шапка
+   «✥ имя ✕» у каждого, перетаскивание за шапку. Над панелью (левой или правой) раздел встаёт между
+   другими там, где курсор; мимо панелей — висит на холсте плавающим окном. Какие разделы спрятаны и
+   где какой лежит — помнится в браузере, у каждого своя запись: раскладку можно сбросить, не трогая
+   настроек прибора.
+   ТЕЛЕФОН. Там панель — лист снизу, правой нет, таскать пальцем окна по холсту некуда и незачем.
+   Поэтому на узком экране все разделы собираются в лист в исходном порядке, а раскладка не
+   трогается и не пишется: вернёшься на широкий экран — всё встанет, как было. */
+const SECS = {
+  KEY_OFF: "zerkalius-oktaedr-tabs-off-v1",
+  // v0.030: v1 → v2 — раскладка по умолчанию стала двухпанельной; старая запись (всё слева) иначе
+  // перекрыла бы её у всех, кто уже открывал страницу.
+  KEY_LAY: "zerkalius-oktaedr-layout-v2",
+  narrow: window.matchMedia("(max-width: 720px)"),
+  drag: null,
+  all(){ return Array.from(document.querySelectorAll(".tab-sec")); },
+  docks(){ return [document.getElementById("panel"), document.getElementById("panelR")]; },
+  init(){
+    const bar = document.getElementById("menuTabs"), tail = document.getElementById("bLayout");
+    let off = [];
+    try { off = JSON.parse(localStorage.getItem(this.KEY_OFF) || "[]"); } catch (e) {}
+    if (!Array.isArray(off)) off = [];
+    this.all().forEach((sec, i) => {
+      sec._home = i;   // исходный порядок — по нему раздел возвращается «домой»
+      if (off.includes(sec.dataset.tab)) sec.classList.add("off");
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = sec.dataset.title;
+      b.title = "Показать / спрятать раздел «" + sec.dataset.title + "»";
+      b.onclick = () => { sec.classList.toggle("off"); this.sync(); };
+      sec._tabBtn = b; bar.insertBefore(b, tail);
+      this.addHead(sec);
+    });
+    tail.onclick = () => {
+      if (!confirm("Вернуть раскладку по умолчанию: все разделы открыты и стоят на своих местах в левой и правой панели?")) return;
+      try { localStorage.removeItem(this.KEY_LAY); localStorage.removeItem(this.KEY_OFF); } catch (e) {}
+      this.all().forEach(sec => sec.classList.remove("off"));
+      this.applyMode();   // v0.030: как при открытии — на телефоне всё в лист, на широком по домам
+    };
+    document.addEventListener("pointermove", (e) => this.move(e));
+    document.addEventListener("pointerup", () => this.end());
+    window.addEventListener("resize", () => this.all().filter(f => f.classList.contains("floating"))
+      .forEach(f => this.clamp(f, parseFloat(f.style.left) || 0, parseFloat(f.style.top) || 0)));
+    const onMode = () => this.applyMode();
+    if (this.narrow.addEventListener) this.narrow.addEventListener("change", onMode); else this.narrow.addListener(onMode);
+    this.applyMode();
+  },
+  addHead(sec){
+    const head = document.createElement("div");
+    head.className = "sec-head";
+    head.title = "Потяните, чтобы перенести раздел: в другое место панели, к правому краю или на холст";
+    head.innerHTML = '<span class="grip">✥</span><span class="ttl"></span>' +
+      '<button type="button" class="x" title="Спрятать раздел (вернуть — вкладкой сверху)">✕</button>';
+    head.querySelector(".ttl").textContent = sec.dataset.title;
+    head.querySelector(".x").addEventListener("click", (e) => { e.stopPropagation(); sec.classList.add("off"); this.sync(); });
+    head.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0 || e.target.closest(".x") || this.narrow.matches) return;
+      e.preventDefault();
+      this.drag = { sec, x0: e.clientX, y0: e.clientY, started: false };
+    });
+    sec.insertBefore(head, sec.firstChild);
+  },
+  sync(){
+    const off = [];
+    this.all().forEach(sec => {
+      const isOff = sec.classList.contains("off");
+      if (isOff) off.push(sec.dataset.tab);
+      sec._tabBtn.classList.toggle("act", !isOff);
+    });
+    this.docks().forEach(d => d.classList.toggle("empty", !d.querySelector(".tab-sec:not(.off)")));
+    try { localStorage.setItem(this.KEY_OFF, JSON.stringify(off)); } catch (e) {}
+  },
+  /* МАГНИТ (v0.030, запрос пользователя: «правая панель тоже должна магнитить панели»). Раньше раздел
+     попадал в панель, только если курсор был над её коробкой, а пустая правая была полоской в 120 px —
+     попасть в неё было почти нельзя. Теперь у каждого края экрана своя полоса шириной в панель с запасом
+     (MAG): курсор в ней — раздел прилипает к панели этого края, по высоте не важно где. Плавающим окном
+     раздел становится только посередине. */
+  MAG: 240,
+  dockUnder(x, y){
+    const [L, R] = this.docks();
+    if (x <= this.MAG) return L;
+    if (x >= innerWidth - this.MAG) return R;
+    return null;
+  },
+  // Плавающее окно не уводим за край: шапка должна оставаться на экране, иначе его не за что взять.
+  clamp(f, x, y){
+    const w = f.offsetWidth || 196, KEEP = 60;
+    f.style.left = Math.round(Math.min(innerWidth - KEEP, Math.max(KEEP - w, x))) + "px";
+    f.style.top = Math.round(Math.min(innerHeight - 24, Math.max(0, y))) + "px";
+  },
+  move(e){
+    const d = this.drag; if (!d) return;
+    if (!d.started) {
+      if (Math.abs(e.clientX - d.x0) < 4 && Math.abs(e.clientY - d.y0) < 4) return;   // это был щелчок
+      const r = d.sec.getBoundingClientRect();
+      d.dx = d.x0 - r.left; d.dy = d.y0 - r.top; d.started = true;
+      d.sec.classList.add("dragging"); document.body.classList.add("tab-dragging");
+    }
+    const dock = this.dockUnder(e.clientX, e.clientY);
+    this.docks().forEach(p => p.classList.toggle("drop-hover", p === dock));
+    if (dock) {
+      if (d.sec.classList.contains("floating")) { d.sec.classList.remove("floating"); d.sec.style.left = d.sec.style.top = ""; }
+      const before = Array.from(dock.children).find(c => c !== d.sec && c.classList.contains("tab-sec") && !c.classList.contains("off")
+        && e.clientY < c.getBoundingClientRect().top + c.getBoundingClientRect().height / 2);
+      if (before) { if (d.sec.nextElementSibling !== before) dock.insertBefore(d.sec, before); }
+      else if (dock.lastElementChild !== d.sec) dock.appendChild(d.sec);
+    } else {
+      if (!d.sec.classList.contains("floating")) { d.sec.classList.add("floating"); document.body.appendChild(d.sec); }
+      this.clamp(d.sec, e.clientX - d.dx, e.clientY - d.dy);
+    }
+  },
+  end(){
+    const d = this.drag; this.drag = null;
+    if (!d || !d.started) return;
+    d.sec.classList.remove("dragging"); document.body.classList.remove("tab-dragging");
+    this.docks().forEach(p => p.classList.remove("drop-hover"));
+    this.save(); this.sync();
+  },
+  save(){
+    if (this.narrow.matches) return;
+    const lay = {};
+    this.all().forEach(sec => {
+      if (sec.classList.contains("floating")) lay[sec.dataset.tab] = { z: "float", x: parseInt(sec.style.left, 10) || 0, y: parseInt(sec.style.top, 10) || 0 };
+      else lay[sec.dataset.tab] = { z: sec.parentElement.id, i: Array.from(sec.parentElement.children).indexOf(sec) };
+    });
+    try { localStorage.setItem(this.KEY_LAY, JSON.stringify(lay)); } catch (e) {}
+  },
+  // Разделы — по домам, в порядке разметки: у кого data-dock="panelR" — в правую панель, прочие — в
+  // левую (v0.030). allLeft — всё в левую: на телефоне правой панели нет, там один лист.
+  home(allLeft){
+    const [L, R] = this.docks();
+    this.all().sort((a, b) => a._home - b._home).forEach(sec => {
+      sec.classList.remove("floating"); sec.style.left = sec.style.top = "";
+      (!allLeft && sec.dataset.dock === "panelR" ? R : L).appendChild(sec);
+    });
+  },
+  restore(){
+    this.home();
+    let lay = null;
+    try { lay = JSON.parse(localStorage.getItem(this.KEY_LAY) || "null"); } catch (e) {}
+    if (!lay || typeof lay !== "object") return;
+    const secs = this.all();
+    for (const z of ["panel", "panelR"]) {
+      const zone = document.getElementById(z);
+      secs.filter(sec => lay[sec.dataset.tab] && lay[sec.dataset.tab].z === z)
+        .sort((a, b) => lay[a.dataset.tab].i - lay[b.dataset.tab].i)
+        .forEach(sec => zone.appendChild(sec));
+    }
+    secs.forEach(sec => {
+      const l = lay[sec.dataset.tab];
+      if (l && l.z === "float") { sec.classList.add("floating"); document.body.appendChild(sec); this.clamp(sec, l.x, l.y); }
+    });
+  },
+  applyMode(){ if (this.narrow.matches) this.home(true); else this.restore(); this.sync(); }
+};
+SECS.init();
+
 load(); rollBits(); syncUI();
+myArea.value = myBits; myInfoUpd();
 /* ═══ ГОРЯЧИЕ КЛАВИШИ (v0.006, запрос пользователя) ═══════════════════════════════════════════
    ПРОБЕЛ — вращение, ENTER — цикл шагов, ◄ ► — шаг назад и вперёд, ▲ ▼ — такт цикла.
    Буквы продублированы в русской раскладке: переключать её ради кнопки — отдельная морока.
@@ -1221,6 +1693,7 @@ window.addEventListener("keydown", (e) => {
      страницы неправильно — отступает страница. */
   else if (k === "n" || k === "т") bRoll.onclick();
   else if (k === "z" || k === "я") zenToggle();
+  else if (k === "c" || k === "с") bDirs.onclick();   // v0.029: стороны света
   else if (k === "t" || k === "е") bTheme.onclick();
   else if (k === "l" || k === "д") bLinks.onclick();
   else if (k === "v" || k === "м") bHover.onclick();
@@ -1239,5 +1712,9 @@ frame();
      подсказка в кадр не попадают, даже когда открыты. Куски пишутся в IndexedDB по ходу, поэтому
      закрытая посреди записи вкладка её не уносит. -->
 <script src="../_js/recorder.js"></script>
+<!-- Значок ⌂ «в Хаб» (v0.019, запрос пользователя: «в ней самой нет обратно в хаб»). Общий модуль, как на
+     остальных страницах, но БЕЗ клавиши H: здесь H открывает методичку, и так было раньше модуля. -->
+<script>window.zerkHubNoKey = true;</script>
+<script src="../_js/hub-link.js"></script>
 </body>
 </html>
