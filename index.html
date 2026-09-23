@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.016. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.023. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -19,7 +19,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Control Hub — v0.016</title>
+    <title>Zerkalius Control Hub — v0.023</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -59,15 +59,18 @@
             background: rgba(0,0,0,.78); border: 1px solid rgba(0,255,102,.35); border-radius: 3px; padding: 2px 8px 2px 11px;
         }
 
+        /* v0.017: «тормоза при наведении на кнопку». У кнопок было своё размытие фона (backdrop-filter) поверх
+           живых обоев — браузер размывал их заново на каждом кадре, а у кнопок лаборатории размытие сидело ещё и
+           внутри размытой панели. Наведение добавляло увеличение и переход «всего подряд» на четверть секунды,
+           включая широкое свечение. Теперь у кнопок размытия нет (фон чуть плотнее), плавно меняются только
+           цвет и сдвиг, а свечение включается сразу. Размытие у панелей осталось — оно одно и не вложенное. */
         .menu-btn {
             display: block;
             text-align: center;
             text-decoration: none;
             border-radius: 6px;
-            transition: all 0.25s ease;
+            transition: none;   /* v0.019: наведение — мгновенно; плавный переход казался вялой реакцией */
             box-sizing: border-box;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
         }
 
         /* Флагман */
@@ -79,9 +82,8 @@
             letter-spacing: 4px;
             border: 2px solid #00ff66;
             color: #00ff66;
-            background: rgba(0, 0, 0, 0.55);
+            background: rgba(0, 0, 0, 0.7);
             box-shadow: 0 0 15px rgba(0, 255, 102, 0.35);
-            animation: pulse-glow 2s infinite alternate;
         }
         .menu-btn.main-engine:hover {
             background: #00ff66;
@@ -89,19 +91,15 @@
             box-shadow: 0 0 25px #00ff66;
             transform: scale(1.02);
         }
-        @keyframes pulse-glow {
-            0% { box-shadow: 0 0 12px rgba(0, 255, 102, 0.25); }
-            100% { box-shadow: 0 0 26px rgba(0, 255, 102, 0.65); }
-        }
 
         /* Панели разделов: полупрозрачное стекло поверх обоев */
         .panel {
-            background: rgba(0, 0, 0, 0.55);
+            background: rgba(0, 0, 0, 0.72);
             border: 1px solid rgba(0, 255, 102, 0.18);
             border-radius: 10px;
             padding: 14px 16px 16px;
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
+            /* v0.019: размытие обоев под панелями снято — оно пересчитывалось на каждом кадре обоев;
+               вместо него фон плотнее */
         }
         .panel-title {
             font-size: 11px;
@@ -130,7 +128,7 @@
             font-size: 14px;
             border: 1px solid rgba(0, 255, 102, 0.22);
             color: #9fdcb8;
-            background: rgba(0, 20, 8, 0.45);
+            background: rgba(0, 20, 8, 0.6);
         }
         .row .menu-btn.draft-btn { width: 170px; }
         .menu-btn.draft-btn:hover {
@@ -160,6 +158,22 @@
         .menu-btn.main-engine { animation: hue-main 12s ease-in-out infinite; }
         .menu-btn:hover { animation: none; }
 
+        /* v0.018: сбойные полосы, как в обоях (v0.020 — построчно, через весь экран, см. скрипт внизу): на 3 кадра срываются в сторону
+           горизонтальные полосы. Полоса — копия надписи (data-text, раздаёт скрипт внизу) на фоне кнопки,
+           обрезанная clip-path по высоте и сдвинутая по X. Места и сдвиги на каждом кадре новые — их задаёт
+           скрипт через --g1t/--g1b/--g1x и --g2… Псевдоэлементы живут только на время сбоя. */
+        .menu-btn, .panel-title { position: relative; }
+        .menu-btn.glitch::before, .menu-btn.glitch::after, .panel-title.glitch::before, .panel-title.glitch::after {
+            content: attr(data-text); position: absolute; inset: 0; pointer-events: none;
+            display: flex; align-items: center; justify-content: center;
+            background: inherit; color: inherit; border-radius: inherit; letter-spacing: inherit;
+        }
+        .glitch::before { clip-path: inset(var(--g1t) 0 var(--g1b) 0); transform: translateX(var(--g1x)); }
+        .glitch::after  { clip-path: inset(var(--g2t) 0 var(--g2b) 0); transform: translateX(var(--g2x)); }
+        .panel-title.glitch::before, .panel-title.glitch::after { background: #030805; }   /* v0.023: и названия групп */
+        .menu-btn.main-engine.glitch::before, .menu-btn.main-engine.glitch::after { background: #000; }
+        .menu-btn.draft-btn.glitch::before, .menu-btn.draft-btn.glitch::after { background: #00140a; }
+
         /* Узкий экран: лаборатория в 2 столбца */
         @media (max-width: 960px) {
             .grid { grid-template-columns: repeat(2, 160px); }
@@ -174,34 +188,34 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.016</div>
+        <div class="ver">v0.023</div>
 
         <!-- Флагман — с v0.008 это Zerkalius Code (бывшая «Genezis Code 0»), с v0.011 подписан «Code»; решение пользователя 2026-09-23 -->
-        <a href="Zerkalius-code.html" class="menu-btn main-engine">Code</a>
+        <a href="Zerkalius-code.html" class="menu-btn main-engine" data-en="Code" data-ru="Код">Code</a>
 
-        <!-- Лаборатория (Черновики) — с v0.012 в порядке создания (по первому появлению в git) -->
+        <!-- Черновики (до v0.018 — «Лаборатория (Черновики)») — с v0.012 в порядке создания (по первому появлению в git) -->
         <div class="panel">
-            <div class="panel-title">🔬 Лаборатория (Черновики)</div>
+            <div class="panel-title" data-en="🔬 Drafts" data-ru="🔬 Черновики">🔬 Черновики</div>
             <div class="grid">
-                <a href="Zerkalius-genezis.html" class="menu-btn draft-btn">Genezis</a>
-                <a href="Zerkalius-gpu.html" class="menu-btn draft-btn">GPU Core + Synth</a>
-                <a href="Zerkalius-grid-module.html" class="menu-btn draft-btn">Grid Module</a>
-                <a href="Zerkalius-genezis-webgl.html" class="menu-btn draft-btn">WebGL Engine</a>
-                <a href="Zerkalius-kubits.html" class="menu-btn draft-btn">Кубиты</a>
-                <a href="fold-layers/Zerkalius-layers.html" class="menu-btn draft-btn">Fold Layers</a>
-                <a href="Zerkalius-ascii-art.html" class="menu-btn draft-btn">ASCII-арт</a>
-                <a href="oktaedr/Zerkalius-oktaedr.html" class="menu-btn draft-btn">Октаэдр</a>
-                <a href="zazerkalius/Zerkalius-zazerkalius.html" class="menu-btn draft-btn">Zazerkalius</a>
-                <a href="lively/Zerkalius-lively.html" class="menu-btn draft-btn">Обои Lively</a>
+                <a href="Zerkalius-genezis.html" class="menu-btn draft-btn" data-en="Genezis" data-ru="Генезис">Genezis</a>
+                <a href="Zerkalius-gpu.html" class="menu-btn draft-btn" data-en="GPU Core + Synth" data-ru="Ядро GPU + синт">GPU Core + Synth</a>
+                <a href="Zerkalius-grid-module.html" class="menu-btn draft-btn" data-en="Grid Module" data-ru="Модуль сетки">Grid Module</a>
+                <a href="Zerkalius-genezis-webgl.html" class="menu-btn draft-btn" data-en="WebGL Engine" data-ru="Движок WebGL">WebGL Engine</a>
+                <a href="Zerkalius-kubits.html" class="menu-btn draft-btn" data-en="Kubits" data-ru="Кубиты">Кубиты</a>
+                <a href="fold-layers/Zerkalius-layers.html" class="menu-btn draft-btn" data-en="Fold Layers" data-ru="Слои сгиба">Fold Layers</a>
+                <a href="Zerkalius-ascii-art.html" class="menu-btn draft-btn" data-en="ASCII Art" data-ru="ASCII-арт">ASCII-арт</a>
+                <a href="oktaedr/Zerkalius-oktaedr.html" class="menu-btn draft-btn" data-en="Octahedron" data-ru="Октаэдр">Октаэдр</a>
+                <a href="zazerkalius/Zerkalius-zazerkalius.html" class="menu-btn draft-btn" data-en="Zazerkalius" data-ru="Зазеркалиус">Zazerkalius</a>
+                <a href="lively/Zerkalius-lively.html" class="menu-btn draft-btn" data-en="Lively Wallpaper" data-ru="Обои Lively">Обои Lively</a>
             </div>
         </div>
 
         <!-- Знак и записи (папка oktaedr\), заведено 2026-09-20; обои — 2026-09-21 -->
         <div class="panel">
-            <div class="panel-title">◇ Знак и записи</div>
+            <div class="panel-title" data-en="◇ Sign &amp; Records" data-ru="◇ Знак и записи">◇ Знак и записи</div>
             <div class="row">
-                <a href="Zerkalius-dnevnik.html" class="menu-btn draft-btn">Борт-журнал</a>
-                <a href="oboi/Zerkalius-oboi.html" class="menu-btn draft-btn">Обои</a>
+                <a href="Zerkalius-dnevnik.html" class="menu-btn draft-btn" data-en="Logbook" data-ru="Борт-журнал">Борт-журнал</a>
+                <a href="oboi/Zerkalius-oboi.html" class="menu-btn draft-btn" data-en="Wallpaper" data-ru="Обои">Обои</a>
             </div>
         </div>
 
@@ -211,6 +225,83 @@
         document.querySelectorAll('.menu-btn').forEach(b => {
             b.style.animationDelay = (-Math.random() * 14).toFixed(2) + 's';
         });
+        // v0.023: при открытии все названия — по-английски, чтобы строка меняла язык целиком, а не вперемешку
+        // (в разметке часть кнопок подписана по-русски). data-text — надпись для сбойных полос (v0.018).
+        document.querySelectorAll('.menu-btn, .panel-title').forEach(b => {
+            if (b.dataset.en) { b.textContent = b.dataset.en; b.dataset.lang = 'en'; }
+            b.dataset.text = b.textContent.trim();
+        });
+
+        // v0.018: сбойные полосы у кнопок — как в обоях. v0.020: не по одной кнопке, а ПОСТРОЧНО, как в обоях:
+        // полоса идёт через весь экран на своей высоте и срывает вбок кусок каждой кнопки, которую пересекает.
+        // На кадр — три полосы высотой 3–14 px, у каждой свой сдвиг 6–20 px; у кнопки полос не больше двух
+        // (::before и ::after); сбой длится три кадра. Случайный сбой: раз в ~0,12 с с шансом 30% — в среднем
+        // раз в 0,4 с. «Меньше движения» в системе — ни сбоев, ни смены языка (названия остаются английскими).
+        // v0.022: названия по-английски / по-русски меняются ПОСТРОЧНО И ВМЕСТЕ СО СБОЕМ (вместо v0.021, где у
+        // каждой кнопки была своя фаза): раз в ~2,5 с случайная строка кнопок получает сбой — полосы только в её
+        // высоте, — и на втором кадре сбоя все её кнопки разом переключают язык. v0.023: названия групп
+        // («Черновики», «Знак и записи») — такие же строки и меняются так же.
+        (function () {
+            if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            const btns = Array.from(document.querySelectorAll('.menu-btn, .panel-title'));   // v0.023: и названия групп
+            let busy = false;
+            const rowsNow = () => {   // строки — по верхнему краю кнопок (пересчёт на каждый сбой: окно могли сжать)
+                const m = new Map();
+                btns.forEach(b => { const r = b.getBoundingClientRect(), k = Math.round(r.top / 4);
+                    if (!m.has(k)) m.set(k, { top: r.top, bottom: r.bottom, list: [] });
+                    const row = m.get(k); row.bottom = Math.max(row.bottom, r.bottom); row.list.push(b); });
+                return Array.from(m.values());
+            };
+            const frame = (y0, y1) => {
+                const rects = btns.map(b => b.getBoundingClientRect());
+                const bands = [0, 1, 2].map(() => {
+                    const h = 3 + Math.random() * 11, y = y0 + Math.random() * Math.max(0, y1 - y0 - h);
+                    return { y0: y, y1: y + h, dx: (Math.random() < 0.5 ? -1 : 1) * (6 + Math.random() * 14) };
+                });
+                btns.forEach((b, k) => {
+                    const r = rects[k];
+                    const hit = b.matches(':hover') ? [] : bands.filter(g => g.y1 > r.top && g.y0 < r.bottom).slice(0, 2);
+                    if (!hit.length) { b.classList.remove('glitch'); return; }
+                    hit.forEach((g, n) => {
+                        b.style.setProperty(`--g${n + 1}t`, Math.max(0, g.y0 - r.top).toFixed(1) + 'px');
+                        b.style.setProperty(`--g${n + 1}b`, Math.max(0, r.bottom - g.y1).toFixed(1) + 'px');
+                        b.style.setProperty(`--g${n + 1}x`, g.dx.toFixed(1) + 'px');
+                    });
+                    if (hit.length < 2) b.style.setProperty('--g2t', '100%');   // вторая полоса не нужна — прячем
+                    b.classList.add('glitch');
+                });
+            };
+            const setLang = (b, lang) => {
+                if (!b.dataset.en || !b.dataset.ru) return;
+                const txt = b.dataset[lang]; b.textContent = txt; b.dataset.text = txt; b.dataset.lang = lang;
+            };
+            const glitch = (y0, y1, mid) => {
+                busy = true; let frames = 3;
+                const step = () => {
+                    if (frames-- <= 0) { btns.forEach(b => b.classList.remove('glitch')); busy = false; return; }
+                    if (frames === 1 && mid) mid();   // второй кадр — смена языка прямо «сквозь» сбой
+                    frame(y0, y1);
+                    requestAnimationFrame(() => requestAnimationFrame(step));   // кадр сбоя держится два экранных кадра
+                };
+                step();
+            };
+            let nextFlip = performance.now() + 2500;
+            setInterval(() => {
+                if (busy || document.hidden) return;
+                const now = performance.now();
+                if (now >= nextFlip) {
+                    nextFlip = now + 2000 + Math.random() * 1000;
+                    const rows = rowsNow(); const row = rows[Math.floor(Math.random() * rows.length)];
+                    if (row) {
+                        const lang = row.list[0].dataset.lang === 'ru' ? 'en' : 'ru';   // вся строка — на один язык
+                        return glitch(row.top, row.bottom, () => row.list.forEach(b => setLang(b, lang)));
+                    }
+                }
+                if (Math.random() > 0.30) return;
+                const rs = btns.map(b => b.getBoundingClientRect());
+                glitch(Math.min(...rs.map(r => r.top)), Math.max(...rs.map(r => r.bottom)));
+            }, 120);
+        })();
     </script>
 </body>
 </html>

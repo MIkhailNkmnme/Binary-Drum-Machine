@@ -505,7 +505,13 @@ function updClock(){
 setInterval(updClock,100);
 
 var clk=new THREE.Clock(), acc=0, tt=0;
-function loop(){
+// обои v0.006: фоном хаба (в iframe) — не чаще 30 кадров в секунду. Хаб и обои с одного сайта и живут в одном
+// потоке браузера: рисуя 60 кадров, обои съедали почти весь кадр, и хаб отзывался на мышь с опозданием.
+// Открытые сами по себе обои рисуют, как раньше, на каждом кадре.
+var EMBED=(window.top!==window), lastDraw=0;
+function loop(now){
+  if(EMBED && now && now-lastDraw<31){ requestAnimationFrame(loop); return; }
+  lastDraw=now||0;
   var dt=Math.min(clk.getDelta(),0.1); tt+=dt; acc+=dt;
   if(P.rainbow) hue=(hue+dt*P.rainbowSpeed)%360;
   var c=curRgb(), col=new THREE.Vector3(c[0]/255,c[1]/255,c[2]/255);
