@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Zerkalius Code (до 35.31 — Binary Drum Machine)
-VERSION: Pro 35.54 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопок ⇄ и ⚙ больше нет, 🔎 Поиск убран; пресеты — целые сцены, логическая операция работает; выравнивание по видимому краю; 13 шрифтов, свои, без интернета; ▦ скачки ⇄ 〰 плавно в плеере; файл можно бросить на холст; межсимвольный интервал; крайние панели прозрачные; защита от выделения; ⚓ заморозка — на месте, без прыжка в центр; подсчёт циклов Аниматрицы; ▶ — включить выбранную сцену; F5 не сбрасывает — всё как было; ★ — полный пресет вместе с текстом; ★-сцены файлом для другого компьютера; счётчик Аниматрицы — внизу, среди уведомлений; вкладки в одну строку, плавающие окна целиком на экране; журнал Аниматрицы в файл; ⤒ / Home — к началу текста; Аниматрица целыми циклами: ⏮ ⏭, PageUp/PageDown, плеер по циклам; счёт циклов переживает F5; 🎞 GIF цикла прямо из страницы; ◇ ромбическая сетка)
+VERSION: Pro 35.55 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопок ⇄ и ⚙ больше нет, 🔎 Поиск убран; пресеты — целые сцены, логическая операция работает; выравнивание по видимому краю; 13 шрифтов, свои, без интернета; ▦ скачки ⇄ 〰 плавно в плеере; файл можно бросить на холст; межсимвольный интервал; крайние панели прозрачные; защита от выделения; ⚓ заморозка — на месте, без прыжка в центр; подсчёт циклов Аниматрицы; ▶ — включить выбранную сцену; F5 не сбрасывает — всё как было; ★ — полный пресет вместе с текстом; ★-сцены файлом для другого компьютера; счётчик Аниматрицы — внизу, среди уведомлений; вкладки в одну строку, плавающие окна целиком на экране; журнал Аниматрицы в файл; ⤒ / Home — к началу текста; Аниматрица целыми циклами: ⏮ ⏭, PageUp/PageDown, плеер по циклам; счёт циклов переживает F5; 🎞 GIF цикла прямо из страницы; ◇ ромбическая сетка; ▤ полосы периодов)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Code 35.54</title>
+    <title>Zerkalius Code 35.55</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -329,7 +329,7 @@ VERSION: Pro 35.54 (Стартовый вид: радар, рамка, цвет 
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3>Zerkalius Code 35.54</h3>
+                <h3>Zerkalius Code 35.55</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -578,6 +578,8 @@ VERSION: Pro 35.54 (Стартовый вид: радар, рамка, цвет 
                             <option value="64">шаг 64</option>
                         </select>
                     </div>
+                    <!-- 35.55: полосы периодов — строки по степеням двойки, у каждой полосы свой период волны -->
+                    <label class="checkbox-row" style="margin-top: 4px;" title="Строки текста тонируются полосами: строка 0, 1, 2–3, 4–7, 8–15… В чистой фазе Аниматрицы (без нулей) у полосы строк 2^k…2^(k+1)−1 свой период волны — 2^(k+1) проходов"><input type="checkbox" id="rowBandsCheck"><span style="color:#ffcc00">▤ Полосы периодов</span></label>
                 </div>
                 </div>
                 <div class="tab-sec" data-tab="color" data-title="🎨 Цвет">
@@ -661,7 +663,7 @@ VERSION: Pro 35.54 (Стартовый вид: радар, рамка, цвет 
                     🎞 GIF — анимация цикла прямо из страницы: кадр каждый 1-й, 2-й … 64-й проход, пока картина не
                     вернётся к первому кадру; волна гонится на копии, холст не трогается),
                     Ёлка и Цилиндр (круговой сдвиг), поиск диагоналей, неоновое свечение.</dd>
-                <dt>👁 Вид</dt><dd>◇ Ромбическая сетка — диагонали под 45° от вершины текста через каждые 8 / 16 / 32 / 64 символа: на треугольниках Аниматрицы видно, что картина сложена из почти одинаковых ромбов-«кадров». Масштаб шрифта, «Экран» — сколько строк видно, интервал между строками, межсимвольный интервал (0.5–3: доля ширины символа; меньше 1 — символы наезжают), шрифт (13 на выбор, в том числе Roboto Mono, JetBrains Mono, VT323, Press Start 2P; лежат в самом проекте, работают и без интернета).</dd>
+                <dt>👁 Вид</dt><dd>▤ Полосы периодов — строки тонируются полосами по степеням двойки (0, 1, 2–3, 4–7, 8–15…): в чистой фазе Аниматрицы у каждой полосы свой период волны, вдвое длиннее, чем у полосы над ней. ◇ Ромбическая сетка — диагонали под 45° от вершины текста через каждые 8 / 16 / 32 / 64 символа: на треугольниках Аниматрицы видно, что картина сложена из почти одинаковых ромбов-«кадров». Масштаб шрифта, «Экран» — сколько строк видно, интервал между строками, межсимвольный интервал (0.5–3: доля ширины символа; меньше 1 — символы наезжают), шрифт (13 на выбор, в том числе Roboto Mono, JetBrains Mono, VT323, Press Start 2P; лежат в самом проекте, работают и без интернета).</dd>
                 <dt>🎨 Цвет</dt><dd>🌈 радужный текст, 🎨 цвет как код (подсветка синтаксиса), пресеты палитры, цвет и яркость
                     активных (изменившихся) и фоновых символов.</dd>
             </dl>
@@ -1076,7 +1078,7 @@ VERSION: Pro 35.54 (Стартовый вид: радар, рамка, цвет 
             LOOK_IDS: ['echoModeCheck', 'dualCoreCheck', 'dualMaskCheck', 'freezeLayer1Check', 'dualCoreSpeedInput',
                 'speedMultInput', 'algorithmInput', 'freezeScrollCheck', 'spin3dCheck', 'breathingZoomCheck',
                 'hideStaticCheck', 'deltaModeSelect', 'logicalOpSelect', 'zerkaliusAnimCheck', 'elkaCheck',
-                'cylinderCheck', 'findDiagonalsCheck', 'neonGlowCheck', 'animByPassCheck', 'rhombGridCheck', 'rhombGridStep', 'fontSizeRange', 'lineHeightRange', 'charSpacingRange',
+                'cylinderCheck', 'findDiagonalsCheck', 'neonGlowCheck', 'animByPassCheck', 'rhombGridCheck', 'rhombGridStep', 'rowBandsCheck', 'fontSizeRange', 'lineHeightRange', 'charSpacingRange',
                 'fontSelect', 'rainbowTextCheck', 'syntaxColorCheck', 'trimZerosCheck'],
             resetLook: function() {
                 this.LOOK_IDS.forEach(id => {
@@ -2327,6 +2329,37 @@ VERSION: Pro 35.54 (Стартовый вид: радар, рамка, цвет 
                     glide = (1 - phase) * MODULE_STATE.lastShift;
                 }
                 this.drawGridLayer(ctx, width, height, fontSize, selectedFont, lineSpacing, startY, statRgb, Math.min(1, Math.max(0.15, statAlpha * 0.6)));   // 35.17
+                /* 35.55: ПОЛОСЫ ПЕРИОДОВ (запрос пользователя после разбора сцены «1»). В чистой фазе Аниматрицы у
+                   каждой строки свой период волны — ближайшая степень двойки БОЛЬШЕ её номера: строка 0 стоит, 1 — период
+                   2, 2–3 — 4, 4–7 — 8, … 64–127 — 128 (теорема Лукаса по строке: строке r нужны только строки выше).
+                   Проверено на сцене «1» по всем 128 проходам цикла. Здесь строки тонируются полосами: номер полосы —
+                   число двоичных разрядов номера строки, счёт от первой строки текста. Фон, под символами, поэтому
+                   узор не закрывает; у правого края — подпись в первой видимой строке полосы. Под радаром — нет. */
+                if (!MODULE_STATE.isRadarActive && document.getElementById('rowBandsCheck')?.checked) {
+                    const BAND_COLS = ['#5a5a5a', '#7a3ca0', '#3c5ac8', '#28a0be', '#28aa6e', '#aaaa28', '#d27828', '#c83c3c', '#c83c96', '#8c64dc'];
+                    const n = MODULE_STATE.lines.length;
+                    ctx.save(); ctx.shadowBlur = 0;
+                    ctx.font = `bold ${Math.max(9, Math.min(13, lineSpacing * 0.9))}px monospace`;
+                    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+                    let lastBand = -1;
+                    for (let i = 0; i < visibleHeight; i++) {
+                        if (!visibleLines[i]) continue;
+                        const L = visibleLines[i].globalIndex;
+                        const band = L === 0 ? 0 : Math.floor(Math.log2(L)) + 1;
+                        const col = BAND_COLS[band % BAND_COLS.length];
+                        const y = startY + (i + glide) * lineSpacing;
+                        if (y < -lineSpacing || y > height + lineSpacing) { lastBand = band; continue; }
+                        ctx.globalAlpha = 0.16; ctx.fillStyle = col;
+                        ctx.fillRect(0, y - lineSpacing / 2, width, lineSpacing + 0.5);
+                        if (band !== lastBand && y > 0) {
+                            const a = band === 0 ? 0 : 1 << (band - 1), b = Math.min(n - 1, (1 << band) - 1);
+                            ctx.globalAlpha = 0.95; ctx.fillStyle = col;
+                            ctx.fillText((a === b ? 'строка ' + a : 'строки ' + a + '–' + b) + ' · период ' + (1 << band), width - 8, y + Math.max(6, lineSpacing / 2));
+                        }
+                        lastBand = band;
+                    }
+                    ctx.restore();
+                }
                 let boldMask = findDiagonals ? MODULE_ALGORITHMS.findDiagonals(visibleLines.map(v=>v.data), visibleHeight) : [];
                 const margin = 50; const alignMode = MODULE_STATE.alignMode;
 
@@ -2992,6 +3025,7 @@ VERSION: Pro 35.54 (Стартовый вид: радар, рамка, цвет 
                     UI.cylinderCheck, UI.elkaCheck, UI.hideStaticCheck, UI.deltaModeSelect, UI.neonGlowCheck, 
                     UI.findDiagonalsCheck, UI.logicalOpSelect, UI.dualCoreCheck, UI.dualCoreSpeedInput, UI.dualMaskCheck, UI.freezeLayer1Check,
                     document.getElementById('rhombGridCheck'), document.getElementById('rhombGridStep'),   // 35.54
+                    document.getElementById('rowBandsCheck'),   // 35.55
                     UI.activeColorPicker, UI.activeAlphaRange, UI.staticColorPicker, UI.staticAlphaRange, UI.fontSelect, UI.freezeScrollCheck, UI.spin3dCheck, UI.breathingZoomCheck, UI.autoPilotCheck, UI.speedMultInput, UI.rainbowTextCheck, UI.syntaxColorCheck
                 ];
                 const scheduleRender = () => (window.__zerkScheduleRender || (() => RENDERER.renderFrame()))();
