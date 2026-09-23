@@ -1,23 +1,21 @@
 <!DOCTYPE html>
 <!--
 ===========================================================================
-PROJECT: Binary Drum Machine (Zerkalius: Genesis)
-VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопки ⇄ больше нет; пресеты — целые сцены, логическая операция работает)
+PROJECT: Zerkalius Code (до 35.31 — Binary Drum Machine)
+VERSION: Pro 35.39 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопок ⇄ и ⚙ больше нет, 🔎 Поиск убран; пресеты — целые сцены, логическая операция работает; выравнивание по видимому краю; 13 шрифтов, свои, без интернета; ▦ скачки ⇄ 〰 плавно в плеере; файл можно бросить на холст; межсимвольный интервал)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Binary Drum Machine (Zerkalius 35.26)</title>
+    <title>Zerkalius Code 35.39</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+        /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
+           и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
 
-        /* Шрифт сначала ищется на самой машине, и только потом — файлом рядом со
-           страницей. Файлов RobotoMono*.ttf в проекте нет и не было, поэтому ссылки
-           на них убраны: браузер честно ругался на них в консоль при каждой загрузке.
-           Шрифт всё равно приезжает с Google Fonts строкой @import выше, а local()
-           подхватит его, если он уже установлен в системе. */
+        /* Шрифт панели — Roboto Mono. Сначала ищется установленный в системе (local()), иначе — тот, что
+           приходит из проекта скриптом _fonts/js/roboto-mono.js (35.32; до того — с Google Fonts через @import). */
         @font-face {
             font-family: 'Roboto Mono Local';
             src: local('Roboto Mono'), local('RobotoMono-Regular');
@@ -110,14 +108,19 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
         input[type="color"] { border: none; width: 28px; height: 16px; padding: 0; background: none; cursor: pointer; }
         select { background: #222; color: #fff; border: 1px solid #444; padding: 3px; border-radius: 3px; width: 100%; font-family: inherit; font-size: 11px; outline: none; cursor: pointer;}
         
-        #statusInfo { font-size: 10px; color: #ffcc00; text-align: center; margin-top: 1px; min-height: 11px; }
+        /* 35.35: строка состояния живёт внизу холста; щелчки проходят сквозь неё к холсту. В Дзене гаснет вместе с кнопками. */
+        #statusInfo { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); z-index: 9;
+            font-size: 11px; color: #ffcc00; text-align: center; white-space: nowrap; max-width: 90%; overflow: hidden; text-overflow: ellipsis;
+            background: rgba(0,0,0,.55); padding: 2px 10px; border-radius: 3px; pointer-events: none; }
+        body.zen-mode #statusInfo { opacity: 0; }
+        /* 35.36: файл тащат над холстом — пунктир по краю */
+        #screenContainer.drop-file { outline: 2px dashed #00ff66; outline-offset: -8px; }
         #screenContainer { flex-grow: 1; background: #000000; border: 2px solid #111; border-radius: 5px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
         #screenCanvas { display: block; cursor: grab; } 
         #screenCanvas:active { cursor: grabbing; }
         
         /* ПЛАВАЮЩИЕ КНОПКИ */
         .float-btn { position: absolute; z-index: 10; border: none; cursor: pointer; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: opacity 0.3s, background 0.2s, box-shadow 0.2s; left: 8px;}
-        #toggleMenuBtn { top: 8px; background: #00ff66; color: #000; box-shadow: 0 0 8px rgba(0, 255, 102, 0.5); border-radius: 3px; height: 26px; width: 34px;}
         
         #toggleCenterBtn { top: 50%; transform: translateY(-120px); background: #333; color: #fff; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
         #toggleTrackBtn { top: 50%; transform: translateY(-70px); background: #333; color: #fff; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
@@ -212,7 +215,13 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
         #alignLeftBtn { transform: translateY(132px); }
         #alignCenterBtn { transform: translateY(168px); }
         #alignRightBtn { transform: translateY(204px); }
+        /* 35.29: «>|<» не влезало в 34 px и переносилось на две строки. Под радаром выравнивания нет — кнопки гаснут. */
+        .align-btn { white-space: nowrap; padding: 0; font-size: 12px; letter-spacing: -1px; }
+        body.radar-on .align-btn { opacity: .35; }
         #recBtn { transform: translateY(248px); }
+        /* 35.38: ▦ / 〰 — в строке плеера: скачки по сетке ⇄ плавно */
+        .player-buttons #snapBtn { flex: 0 0 34px; background: #00ff66; color: #000; font-size: 15px; }
+        .player-buttons #snapBtn.smooth { background: #22d3ee; color: #000; }
         /* 35.8: вкладки, как в Layers. Полоса сверху по центру; левая панель — как была, правая —
            зеркально у правого края. Пустая панель прячется целиком. */
         #rightPanel { left: auto; right: 0; }
@@ -296,8 +305,7 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3>Binary Drum Machine (Pro 35.26)</h3>
-                <div id="statusInfo">Двойной клик по холсту — Режим Дзен</div>
+                <h3>Zerkalius Code 35.39</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -352,13 +360,6 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                     </div>
                 </div>
                 </div>
-                <div class="tab-sec" data-tab="search" data-title="🔎 Поиск">
-                <div class="control-group control-group-blue">
-                    <label style="color:#00ccff; font-weight:bold;">Поиск паттерна (Логгер):</label>
-                    <input type="text" id="searchInput" placeholder="Например: 11011 (Сохранит строку)" style="text-align: center; border-color: #00ccff;">
-                    <textarea id="dataInput" readonly placeholder="Здесь появятся найденные строки..."></textarea>
-                </div>
-                </div>
                 <div class="tab-sec" data-tab="gen" data-title="🔺 Формы">
                 <div class="control-group control-group-highlight" style="border-color: #ffcc00;">
                     <label style="color:#ffcc00; text-align:center;">Генератор Форм</label>
@@ -402,6 +403,8 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                     <button id="playBtn" title="Старт / Пауза">▶</button>
                     <button id="stopBtn" title="Стоп и сброс">■</button>
                     <button id="nextBtn" title="Шаг вперед">▶▶</button>
+                    <!-- 35.38: скачки ⇄ плавно (была кнопкой ▦ у холста, 35.33) -->
+                    <button id="snapBtn" title="Скачки: строки прыгают по строкам сетки, перетаскивание — по клеткам. Щёлкните — плавно">▦</button>
                     <!-- 35.12: пока плеер открыт, 🔃 и 🛰️ живут здесь (двойники кнопок у холста, см. PLAYER_DOCK) -->
                     <button id="plRadarBtn" class="pl-extra" data-for="toggleRadarBtn" title="Топологический Радар (Вид сверху / Спираль)">🛰️</button>
                 </div>
@@ -484,6 +487,11 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                         <label>Интервал: <span id="lineHeightVal">1.2</span></label>
                         <input type="range" id="lineHeightRange" min="0.5" max="3.0" step="0.1" value="1.2" style="flex:1; margin-left: 8px;">
                     </div>
+                    <!-- 35.37: межсимвольный интервал — шаг между символами в строке, доля ширины символа -->
+                    <div class="compact-row" style="margin-top: 4px;">
+                        <label>Межсимв.: <span id="charSpacingVal">1.0</span></label>
+                        <input type="range" id="charSpacingRange" min="0.5" max="3.0" step="0.1" value="1.0" style="flex:1; margin-left: 8px;" title="Межсимвольный интервал: 1 — вплотную, как задумано шрифтом; 0.5 — символы наезжают друг на друга; 3 — втрое шире">
+                    </div>
                     
                     <div style="margin-top: 4px;">
                         <select id="fontSelect">
@@ -491,6 +499,15 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                             <option value="'Courier New', Courier, monospace">Шрифт: Courier New (Матрица)</option>
                             <option value="'Impact', sans-serif">Шрифт: Impact (Монолит)</option>
                             <option value="'Comic Sans MS', cursive">Шрифт: Comic Sans (Хаос)</option>
+                            <option value="'Roboto Mono', monospace">Шрифт: Roboto Mono</option>
+                            <option value="'JetBrains Mono', monospace">Шрифт: JetBrains Mono</option>
+                            <option value="'Fira Code', monospace">Шрифт: Fira Code</option>
+                            <option value="'IBM Plex Mono', monospace">Шрифт: IBM Plex Mono</option>
+                            <option value="'Source Code Pro', monospace">Шрифт: Source Code Pro</option>
+                            <option value="'Space Mono', monospace">Шрифт: Space Mono</option>
+                            <option value="'Share Tech Mono', monospace">Шрифт: Share Tech Mono (Терминал)</option>
+                            <option value="'VT323', monospace">Шрифт: VT323 (Старый экран)</option>
+                            <option value="'Press Start 2P', monospace">Шрифт: Press Start 2P (Пиксели)</option>
                         </select>
                     </div>
                 </div>
@@ -552,13 +569,12 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
             по умолчанию (все разделы открыты, плеер окном внизу по центру). Раскладку браузер запоминает.</p>
             <dl>
                 <dt>📂 Файл</dt><dd>🧽 очистка холста; сцены — выбрать из списка (готовая сцена ставит ВСЁ своё: масштаб, интервал, галочки, 🔃 — с чистого листа) и «💾 Сохр.» текущий вид как свою (★, помнит и масштаб, и Экран, и 🔃);
-                    «📂 Текст» — загрузить .txt; «🎵 Трек» — музыкальный файл; «🎤 Звук ПК» — захват звука вкладки/экрана
+                    «📂 Текст» — загрузить .txt (или просто бросить файл на холст; брошенный звуковой файл встаёт треком); «🎵 Трек» — музыкальный файл; «🎤 Звук ПК» — захват звука вкладки/экрана
                     (в окне выбора поставить галочку «звук»); «💾 Сохр.» — выгрузить строки; «📊 в Excel»; «Сетка» — включает и выключает отдельный слой-фон: шахматку 1010
                     на весь холст позади строк, с тем же шагом, что у символов; под 🛰️ радаром — кольцами, по тем же
                     окружностям, что и строки. На мелком масштабе (символ меньше 5 px) — по пикселям: «1» ярко, «0» тускло. Строки и «Экран» она не трогает.</dd>
                 <dt>🔊 Звук</dt><dd>Визуализатор (картинка пульсирует от баса), 🤖 Авто-пилот (сам меняет сцены), Каскадное эхо (шлейф);
                     «Вставить 0 / 1», «Заполнить 1010» — правка строк.</dd>
-                <dt>🔎 Поиск</dt><dd>Введите узор, например 11011: строки, где он встретился, сохраняются в поле ниже.</dd>
                 <dt>🔺 Формы</dt><dd>Генератор: правило клеточного автомата (90, 30, 110, 18, 150) или фигура (Воронка, Зиккурат,
                     Орбитальный конус, Диагональная сетка), сид и число строк → «Создать фигуру». «Вживить в центр» — фигура
                     встаёт внутрь текущей матрицы, а не вместо неё.</dd>
@@ -569,20 +585,20 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                 <dt>Δ Логика</dt><dd>«Скрыть статику» — гасит символы, которые не изменились относительно соседа (сверху, по диагоналям
                     или по Серпинскому). Логическая операция над строкой: NOT, XOR со сдвигом, зеркало. Аниматрица (волна),
                     Ёлка и Цилиндр (круговой сдвиг), поиск диагоналей, неоновое свечение.</dd>
-                <dt>👁 Вид</dt><dd>Масштаб шрифта, «Экран» — сколько строк видно, интервал между строками, шрифт.</dd>
+                <dt>👁 Вид</dt><dd>Масштаб шрифта, «Экран» — сколько строк видно, интервал между строками, межсимвольный интервал (0.5–3: доля ширины символа; меньше 1 — символы наезжают), шрифт (13 на выбор, в том числе Roboto Mono, JetBrains Mono, VT323, Press Start 2P; лежат в самом проекте, работают и без интернета).</dd>
                 <dt>🎨 Цвет</dt><dd>🌈 радужный текст, 🎨 цвет как код (подсветка синтаксиса), пресеты палитры, цвет и яркость
                     активных (изменившихся) и фоновых символов.</dd>
             </dl>
 
             <h3>Кнопки у края холста</h3>
             <dl>
-                <dt>⚙</dt><dd>Спрятать / показать обе панели.</dd>
                 <dt>🎯</dt><dd>Держать активную рамку по центру.</dd>
                 <dt>📌</dt><dd>Прикрепить картинку к текущей строке и следить за ней.</dd>
+                <dt>▦ / 〰</dt><dd>В строке ▶ Плеера. ▦ Скачки (так при открытии): при проигрывании строки прыгают на целую строку за шаг, а холст перетаскивается прыжками по клеткам «Сетки». 〰 Плавно: между шагами строки скользят от строки к строке, перетаскивание плавное.</dd>
                 <dt>🔃</dt><dd>Реверс — движение в обратную сторону. Над ▶ Плеером — их дубли: 🔃 над левым углом, 🛰️ над правым (кнопки у холста остаются).</dd>
                 <dt>🔳</dt><dd>Рамка прицела вокруг активной строки.</dd>
                 <dt>🛰️</dt><dd>Радар: вид сверху, строки ложатся спиралью.</dd>
-                <dt>|&lt; &gt;|&lt; &gt;|</dt><dd>Выравнивание строк: влево, по центру, вправо.</dd>
+                <dt>|&lt; &gt;|&lt; &gt;|</dt><dd>Выравнивание строк: влево и вправо — по видимому краю строки (пробелы по краям не в счёт, треугольник фрактала становится прямоугольным), по центру — как есть. Под 🛰️ радаром не действует, кнопки гаснут. Пресет ставит «по центру».</dd>
                 <dt>⏺</dt><dd>Запись видео холста (вместе с треком). Во время записи мигает и обведена красным.</dd>
             </dl>
             <p>Включённая кнопка обведена кольцом.</p>
@@ -600,8 +616,9 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
 
         <div id="screenContainer">
             <div id="recTimer">● REC 0:00</div>
+            <!-- 35.35: строка состояния — внизу холста по центру (была под названием в шапке левой панели) -->
+            <div id="statusInfo">Двойной клик по холсту — Режим Дзен</div>
             <button id="recBtn" class="float-btn" title="Запись видео с холста (пишется всё, что происходит, вместе с треком)">⏺</button>
-            <button id="toggleMenuBtn" class="float-btn" title="Скрыть/Показать панель">⚙</button>
             
             <button id="toggleCenterBtn" class="float-btn" title="Центрировать активную рамку">🎯</button>
             <button id="toggleTrackBtn" class="float-btn" title="Прикрепить матрицу к конкретной строке (Следить)">📌</button>
@@ -618,7 +635,7 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
     </div>
 
     <script>
-        console.log("%c Binary Drum Machine (Zerkalius) ", "background: #222; color: #00ff66; font-size: 20px; font-weight: bold; border-radius: 5px; padding: 5px;");
+        console.log("%c Zerkalius Code ", "background: #222; color: #00ff66; font-size: 20px; font-weight: bold; border-radius: 5px; padding: 5px;");
         console.log("%c Concept, Vision & Ideas: The Architect (User) \n Code & Logic: AI", "color: #00ccff; font-size: 14px; font-weight: bold;");
 
         const THEMES = {
@@ -849,9 +866,8 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
             isPlaying: false, isPaused: false, rafId: null, lastTickTime: 0,
             algoPointer: 0, alignMode: 'center', globalAngle: 0, breathTime: 0,
             isDragging: false, hasMoved: false, dragStartX: 0, dragStartY: 0, 
-            offsetX: 0, offsetY: 0, startOffsetX: 0, startOffsetY: 0,
+            offsetX: 0, offsetY: 0, startOffsetX: 0, startOffsetY: 0, snapGrid: true, lastShift: 0,   // 35.38: snapGrid — «скачки» (по умолчанию), иначе «плавно»
             bassHistory: [], framesSinceChange: 0, uiDirty: false,
-            foundPatterns: new Set(),
             mutationTracker: [], animatrixRow: 0
         };
 
@@ -931,7 +947,7 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
         const UI = {
             playBtn: document.getElementById('playBtn'), stopBtn: document.getElementById('stopBtn'), 
             prevBtn: document.getElementById('prevBtn'), nextBtn: document.getElementById('nextBtn'),
-            dataInput: document.getElementById('dataInput'), fileLoader: document.getElementById('fileLoader'),
+            fileLoader: document.getElementById('fileLoader'),
             audioLoader: document.getElementById('audioLoader'), micBtn: document.getElementById('micBtn'),
             exportBtn: document.getElementById('exportBtn'), exportExcelBtn: document.getElementById('exportExcelBtn'),
             resetMemoryBtn: document.getElementById('resetMemoryBtn'), generateVacuumBtn: document.getElementById('generateVacuumBtn'),
@@ -941,7 +957,7 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
             zerkCountInput: document.getElementById('zerkCountInput'), zerkRuleSelect: document.getElementById('zerkRuleSelect'),
             trimZerosCheck: document.getElementById('trimZerosCheck'), clearCanvasBtn: document.getElementById('clearCanvasBtn'),
             insertZerosGlobalBtn: document.getElementById('insertZerosGlobalBtn'), insertOnesGlobalBtn: document.getElementById('insertOnesGlobalBtn'),
-            fill1010Btn: document.getElementById('fill1010Btn'), searchInput: document.getElementById('searchInput'),
+            fill1010Btn: document.getElementById('fill1010Btn'),
             implantModeCheck: document.getElementById('implantModeCheck'), echoModeCheck: document.getElementById('echoModeCheck'),
             audioReactCheck: document.getElementById('audioReactCheck'), autoPilotCheck: document.getElementById('autoPilotCheck'),
             recBtn: document.getElementById('recBtn'),
@@ -968,7 +984,6 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
             activeColorPicker: document.getElementById('activeColorPicker'), activeAlphaRange: document.getElementById('activeAlphaRange'),
             staticColorPicker: document.getElementById('staticColorPicker'), staticAlphaRange: document.getElementById('staticAlphaRange'),
             
-            toggleMenuBtn: document.getElementById('toggleMenuBtn'), 
             toggleCenterBtn: document.getElementById('toggleCenterBtn'), toggleTrackBtn: document.getElementById('toggleTrackBtn'), 
             toggleReverseBtn: document.getElementById('toggleReverseBtn'), toggleFrameBtn: document.getElementById('toggleFrameBtn'), toggleRadarBtn: document.getElementById('toggleRadarBtn'),
             alignLeftBtn: document.getElementById('alignLeftBtn'), alignCenterBtn: document.getElementById('alignCenterBtn'), alignRightBtn: document.getElementById('alignRightBtn')
@@ -982,7 +997,7 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
             LOOK_IDS: ['echoModeCheck', 'dualCoreCheck', 'dualMaskCheck', 'freezeLayer1Check', 'dualCoreSpeedInput',
                 'speedMultInput', 'algorithmInput', 'freezeScrollCheck', 'spin3dCheck', 'breathingZoomCheck',
                 'hideStaticCheck', 'deltaModeSelect', 'logicalOpSelect', 'zerkaliusAnimCheck', 'elkaCheck',
-                'cylinderCheck', 'findDiagonalsCheck', 'neonGlowCheck', 'fontSizeRange', 'lineHeightRange',
+                'cylinderCheck', 'findDiagonalsCheck', 'neonGlowCheck', 'fontSizeRange', 'lineHeightRange', 'charSpacingRange',
                 'fontSelect', 'rainbowTextCheck', 'syntaxColorCheck', 'trimZerosCheck'],
             resetLook: function() {
                 this.LOOK_IDS.forEach(id => {
@@ -992,6 +1007,7 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                     else el.value = el.defaultValue;
                 });
                 this.setToggles(false);
+                UI.alignCenterBtn.click();   // 35.29: выравнивание у пресета — по центру
                 MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0; MODULE_STATE.globalAngle = 0; MODULE_STATE.breathTime = 0;
                 this.syncLabels();
             },
@@ -1004,6 +1020,8 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
             syncLabels: function() {
                 if (UI.fontSizeVal) UI.fontSizeVal.textContent = UI.fontSizeRange.value + 'px';
                 if (UI.lineHeightVal) UI.lineHeightVal.textContent = UI.lineHeightRange.value;
+                const csv = document.getElementById('charSpacingVal'), csr = document.getElementById('charSpacingRange');   // 35.37
+                if (csv && csr) csv.textContent = parseFloat(csr.value).toFixed(1);
                 if (UI.heightVal) UI.heightVal.textContent = UI.heightRange.value;
                 const mv = document.getElementById('speedMultVal'); if (mv) mv.textContent = UI.speedMultInput.value;
             },
@@ -1015,6 +1033,7 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                     ui[id] = el.type === 'checkbox' ? el.checked : el.value;
                 });
                 ui.__reverse = MODULE_STATE.isReverse;
+                ui.__align = MODULE_STATE.alignMode;   // 35.29
                 return ui;
             },
             applyUi: function(ui) {
@@ -1028,6 +1047,7 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                     }
                 });
                 this.setToggles(ui.__reverse);
+                if (ui.__align) ({ left: UI.alignLeftBtn, center: UI.alignCenterBtn, right: UI.alignRightBtn })[ui.__align]?.click();   // 35.29
                 this.syncLabels();
                 if (UI.logicalOpSelect.value !== opBefore) MODULE_DATA.precalculateLines(false);
             },
@@ -1215,7 +1235,7 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                 const box = UI.screenContainer;
                 const W = (box && box.clientWidth) || window.innerWidth, H = (box && box.clientHeight) || window.innerHeight;
                 const ctx = UI.ctx; ctx.save(); ctx.font = `normal ${fs}px ${UI.fontSelect?.value || 'monospace'}`;
-                const cw = ctx.measureText('0').width || fs * 0.6; ctx.restore();
+                const cw = (ctx.measureText('0').width || fs * 0.6) * charSpacing(); ctx.restore();   // 35.37
                 const sp = Math.max(1, fs * lh);
                 let h = Math.ceil((MODULE_STATE.isRadarActive ? Math.hypot(W, H) : H) / sp) + 4; if (h % 2) h++;
                 let w = Math.ceil(W / cw) + 4; if (w % 2) w++;
@@ -1371,11 +1391,19 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                 this.precalculateLines(true);
             },
 
+            // 35.39: текст (файл кнопкой «📂 Текст», брошенный на холст, код страницы) всегда ЗАМЕНЯЕТ строки.
+            // «Вживление» — галочка Генератора форм, к тексту она не относится; с ней файл вклеивался в середину
+            // прежних строк, обрезался по их размеру, и казалось, что загрузка не работает. \r из файлов Windows
+            // срезается: иначе он оставался невидимым символом в конце каждой строки.
             processTextData: function(text, sourceName) {
-                const raw = text.split('\n').map(l => l.replace(/\t/g, ' ')).filter(l => l.trim().length > 0);
+                const raw = text.replace(/^﻿/, '').split(/\r?\n|\r/).map(l => l.replace(/\t/g, ' ')).filter(l => l.trim().length > 0);
+                if (raw.length === 0) { UI.statusInfo.textContent = `Пустой файл: ${sourceName}`; return; }
                 const shape = this.normalizeLines(raw);
-                this.implantOrReplace(shape, sourceName);
-                MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0;
+                const implantState = UI.implantModeCheck.checked; UI.implantModeCheck.checked = false;
+                try { this.implantOrReplace(shape, sourceName); } finally { UI.implantModeCheck.checked = implantState; }
+                MODULE_STATE.currentIndex = 0; MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0;
+                UI.statusInfo.textContent = `Загружено: ${sourceName} — строк ${raw.length}`;
+                RENDERER.updateTimeline(); RENDERER.renderFrame();
             },
 
             runAnimatrixGlobal: function() {
@@ -1464,9 +1492,6 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                         if(UI.heightVal) UI.heightVal.textContent = optimalHeight;
                     }
                     MODULE_STATE.echoHistory = [];
-                    MODULE_STATE.foundPatterns.clear();
-                    UI.dataInput.value = "";
-                    UI.dataInput.style.display = 'none';
                     MODULE_STATE.animatrixRow = 0;
                 }
                 RENDERER.updateTimeline(); RENDERER.renderFrame();
@@ -1498,6 +1523,63 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
 
                 const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
                 const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "Zerkalius_Matrix.xls"; link.click(); URL.revokeObjectURL(link.href);
+            }
+        };
+
+        // 35.32: шрифты холста из самого проекта. Chrome не отдаёт странице, открытой с диска (file://), .ttf из
+        // соседней папки — а обычный тег скрипта (src=…) грузит. [35.34: в комментариях скрипта не писать открывающий тег
+        // скрипта буквами — выше в коде есть строка с началом HTML-комментария, и вместе они ломают разбор страницы целиком.] Поэтому каждый шрифт лежит в _fonts/js/<имя>.js как base64
+        // и приходит скриптом, только когда его выбрали (Roboto Mono — сразу: им же написана вся панель).
+        // Скрипт зовёт window.__zerkFont → FontFace → document.fonts, и кадр рисуется заново уже этим шрифтом.
+        const CODE_FONTS = {
+            files: { 'Roboto Mono': 'roboto-mono', 'JetBrains Mono': 'jetbrains-mono', 'Fira Code': 'fira-code',
+                'IBM Plex Mono': 'ibm-plex-mono', 'Source Code Pro': 'source-code-pro', 'Space Mono': 'space-mono',
+                'Share Tech Mono': 'share-tech-mono', 'VT323': 'vt323', 'Press Start 2P': 'press-start-2p' },
+            asked: {}, last: null,
+            ensure: function(value) {
+                if (value === this.last) return; this.last = value;
+                const m = /'([^']+)'/.exec(value || ''); const fam = m && m[1];
+                if (!fam || !this.files[fam] || this.asked[fam]) return;
+                this.asked[fam] = true;
+                const sc = document.createElement('script');
+                sc.src = '_fonts/js/' + this.files[fam] + '.js';
+                sc.onerror = () => { this.asked[fam] = false; };
+                document.head.appendChild(sc);
+            }
+        };
+        window.__zerkFont = function(fam, weight, b64) {
+            try {
+                const bin = atob(b64), buf = new Uint8Array(bin.length);
+                for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+                const face = new FontFace(fam, buf.buffer, { weight: weight });
+                face.load().then(f => {
+                    document.fonts.add(f);
+                    if (typeof MODULE_DATA !== 'undefined') MODULE_DATA.refitVacuum();
+                    if (typeof RENDERER !== 'undefined') RENDERER.renderFrame();
+                }).catch(() => {});
+            } catch (e) {}
+        };
+        CODE_FONTS.ensure("'Roboto Mono'");
+
+        // 35.33: ▦ шаг по сетке. Сдвиг холста округляется до целых клеток: по вертикали — межстрочный шаг,
+        // по горизонтали — ширина символа. Сетка и строки отсчитываются от одного центра, поэтому сдвиг,
+        // кратный клетке, оставляет строки ровно на тех же местах сетки — они прыгают по строкам, а не едут.
+        // 35.37: межсимвольный интервал — множитель ширины символа. Им умножается шаг по строке везде, где
+        // считается раскладка: строки, «Сетка» (и её кольца), подгонка сетки-сцены под экран, ▦ шаг по сетке.
+        function charSpacing() { const v = parseFloat(document.getElementById('charSpacingRange')?.value); return v > 0 ? v : 1; }
+
+        const SNAP = {
+            cell: function() {
+                const fs = parseInt(UI.fontSizeRange?.value || 24, 10);
+                const ls = fs * parseFloat(UI.lineHeightRange?.value || 1.2);
+                const ctx = UI.ctx; ctx.save(); ctx.font = `normal ${fs}px ${UI.fontSelect ? UI.fontSelect.value : 'monospace'}`;
+                const cw = (ctx.measureText('0').width || fs * 0.6) * charSpacing(); ctx.restore();   // 35.37
+                return { cw: Math.max(1, cw), ls: Math.max(1, ls) };
+            },
+            apply: function() {
+                const c = this.cell();
+                MODULE_STATE.offsetX = Math.round(MODULE_STATE.offsetX / c.cw) * c.cw;
+                MODULE_STATE.offsetY = Math.round(MODULE_STATE.offsetY / c.ls) * c.ls;
             }
         };
 
@@ -1593,6 +1675,7 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                 ctx.save(); ctx.font = `normal ${fontSize}px ${font}`;
                 let cw = ctx.measureText('0').width; ctx.restore();
                 if (!(cw > 0)) cw = fontSize * 0.6;
+                cw *= charSpacing();   // 35.37
                 // 35.22: на мелком масштабе символ не прочесть (а при клетке меньше 2 px слой раньше
                 // просто выключался) — сетка рисуется по пикселям: «1» ярко, «0» тускло.
                 if (fontSize < 5 || lineSpacing < 3 || cw < 3) return this.drawGridPixels(ctx, width, height, lineSpacing, cw, startY, rgb, alpha);
@@ -1704,6 +1787,9 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                 return `${r}, ${g}, ${b}`;
             },
             renderFrame: function() {
+                document.body.classList.toggle('radar-on', !!MODULE_STATE.isRadarActive);   // 35.29: гасит |< >|< >| под радаром
+                if (UI.fontSelect) CODE_FONTS.ensure(UI.fontSelect.value);   // 35.32: выбранный шрифт — подгрузить из проекта
+                if (MODULE_STATE.snapGrid) SNAP.apply();   // 35.33: сменили масштаб, интервал или шрифт — холст снова на клетке
                 // Любая перерисовка закрывает отложенный запрос от интерфейса: иначе
                 // во время воспроизведения кадр рисовался дважды — один раз циклом
                 // проигрывателя, второй раз обработчиком ввода, и прокрутка колеса
@@ -1783,12 +1869,22 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                 }
                 
                 ctx.font = `normal ${fontSize}px ${selectedFont}`;
-                const charWidth = ctx.measureText('0').width;
+                const charWidth = ctx.measureText('0').width * charSpacing();   // 35.37: межсимвольный
                 
                 let lh = parseFloat(UI.lineHeightRange?.value || 1.2);
                 let lineSpacing = fontSize * lh;
                 
                 const startY = (height - (visibleHeight - 1) * lineSpacing) / 2 + MODULE_STATE.offsetY;
+                // 35.38: плавно — сразу после шага строки рисуются там, где были (сдвиг на lastShift строк), и за время
+                // до следующего шага доезжают на своё место. Скачки — сдвига нет. Большой прыжок (длиннее экрана)
+                // и замороженный слой не скользят.
+                let glide = 0;
+                if (!MODULE_STATE.snapGrid && MODULE_STATE.isPlaying && !freezeLayer1 && MODULE_STATE.lastShift &&
+                    Math.abs(MODULE_STATE.lastShift) < visibleHeight) {
+                    const spMs = Math.max(1, 1001 - parseInt(UI.speedRange?.value || 920, 10));
+                    const phase = Math.min(1, Math.max(0, (performance.now() - MODULE_STATE.lastTickTime) / spMs));
+                    glide = (1 - phase) * MODULE_STATE.lastShift;
+                }
                 this.drawGridLayer(ctx, width, height, fontSize, selectedFont, lineSpacing, startY, statRgb, Math.min(1, Math.max(0.15, statAlpha * 0.6)));   // 35.17
                 let boldMask = findDiagonals ? MODULE_ALGORITHMS.findDiagonals(visibleLines.map(v=>v.data), visibleHeight) : [];
                 const margin = 50; const alignMode = MODULE_STATE.alignMode;
@@ -1824,7 +1920,8 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                         if (text.length === 0 && dualText.length === 0) continue;
 
                         let renderLen = Math.max(text.length, dualText.length);
-                        let r = (i + 1) * fontSize * lh * 1.25; 
+                        let r = (i + 1 + glide) * fontSize * lh * 1.25;   // 35.38: + glide — плавно
+                        if (r <= 0) continue;
                         if (r > maxVisibleR) break;          // это кольцо и все следующие — за кадром
                         // Разбор синтаксиса — один раз на строку. Вызов на каждый символ стоил
                         // секунд: при мелком кегле на экране десятки тысяч символов.
@@ -1966,10 +2063,22 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                     let renderLen = Math.max(text.length, dualText.length);
                     const totalLineWidth = renderLen * charWidth;
                     let textStartX = (width - totalLineWidth) / 2 + MODULE_STATE.offsetX;
-                    if (alignMode === 'left') textStartX = margin + MODULE_STATE.offsetX;
-                    else if (alignMode === 'right') textStartX = width - margin - totalLineWidth + MODULE_STATE.offsetX;
+                    // 35.29: влево / вправо — по ВИДИМОМУ краю строки. Строки фракталов дополнены пробелами до
+                    // полной ширины, и выравнивание раньше лишь сдвигало треугольник целиком, не меняя формы.
+                    // «По центру» — как было, по всей строке, чтобы фигура не искажалась. Под Цилиндром
+                    // символы едут по кругу, пробелы вместе с ними — там по всей строке, как раньше.
+                    if (alignMode !== 'center') {
+                        const edge = (t, fromEnd) => { let n = 0; if (useCylinder) return 0; for (let k = fromEnd ? t.length - 1 : 0; k >= 0 && k < t.length && t[k] === ' '; k += fromEnd ? -1 : 1) n++; return n; };
+                        if (alignMode === 'left') {
+                            const lead = dualText ? Math.min(edge(text, false), edge(dualText, false)) : edge(text, false);
+                            textStartX = margin - lead * charWidth + MODULE_STATE.offsetX;
+                        } else {
+                            const trail = dualText ? Math.min(edge(text.padEnd(renderLen, ' '), true), edge(dualText.padEnd(renderLen, ' '), true)) : edge(text.padEnd(renderLen, ' '), true);
+                            textStartX = width - margin - (renderLen - trail) * charWidth + MODULE_STATE.offsetX;
+                        }
+                    }
                     
-                    const y = startY + i * lineSpacing;
+                    const y = startY + (i + glide) * lineSpacing;   // 35.38: + glide — плавно
                     if (y < -lineSpacing || y > height + lineSpacing) continue; 
 
                     for (let charIdx = 0; charIdx < renderLen; charIdx++) {
@@ -2102,7 +2211,7 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                 const delta = timestamp - MODULE_STATE.lastTickTime;
                 
                 if (delta < speedMs) {
-                    if (AUDIO_VISUALIZER.isInit || UI.spin3dCheck?.checked || UI.breathingZoomCheck?.checked) {
+                    if (AUDIO_VISUALIZER.isInit || UI.spin3dCheck?.checked || UI.breathingZoomCheck?.checked || !MODULE_STATE.snapGrid) {   // 35.38: плавно — кадр на каждый экранный кадр
                         MODULE_STATE.breathTime += 0.02; 
                         if (UI.spin3dCheck?.checked) MODULE_STATE.globalAngle += 0.5; 
                         RENDERER.renderFrame(); 
@@ -2115,6 +2224,7 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                     let multStep = parseInt(UI.speedMultInput?.value || 1, 10);
                     if (multStep < 1) multStep = 1;
 
+                    let tickShift = 0;   // 35.38: на сколько строк сдвинулись за этот шаг — для плавного режима
                     for (let m = 0; m < multStep; m++) {
                         if (UI.autoPilotCheck?.checked && AUDIO_VISUALIZER.isInit) {
                             if (AUDIO_VISUALIZER.bassLevel < 30) MODULE_STATE.framesSinceChange++;
@@ -2125,21 +2235,7 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                             }
                         }
 
-                        let searchPat = UI.searchInput?.value?.trim();
-                        if (searchPat && MODULE_STATE.originalLines.length > 0) {
-                            let addedToLog = false;
-                            MODULE_STATE.originalLines.forEach(l => {
-                                if (l.text.includes(searchPat) && !MODULE_STATE.foundPatterns.has(l.text)) {
-                                    MODULE_STATE.foundPatterns.add(l.text);
-                                    UI.dataInput.value += l.text + "\n";
-                                    addedToLog = true;
-                                }
-                            });
-                            if (addedToLog) {
-                                UI.dataInput.style.display = 'block';
-                                UI.dataInput.scrollTop = UI.dataInput.scrollHeight;
-                            }
-                        }
+                        // 35.27: 🔎 Поиск (логгер узоров) убран по слову пользователя.
 
                         if (UI.zerkaliusAnimCheck?.checked && MODULE_STATE.originalLines.length > 0) MODULE_DATA.runAnimatrixGlobal();
 
@@ -2188,6 +2284,7 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                         if (UI.freezeScrollCheck && UI.freezeScrollCheck.checked) step = 0; 
 
                         MODULE_STATE.currentIndex = (MODULE_STATE.currentIndex + step + MODULE_STATE.lines.length) % MODULE_STATE.lines.length;
+                        tickShift += step;
                         
                         if (UI.dualCoreCheck?.checked) {
                             let mult = parseInt(UI.dualCoreSpeedInput.value, 10) || 2;
@@ -2196,6 +2293,7 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
 
                         MODULE_STATE.algoPointer++; 
                     }
+                    MODULE_STATE.lastShift = tickShift;
                     RENDERER.renderFrame(); RENDERER.updateTimeline();
                 }
                 MODULE_STATE.rafId = requestAnimationFrame((ts) => this.loop(ts));
@@ -2222,7 +2320,6 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                 if(UI.clearCanvasBtn) UI.clearCanvasBtn.addEventListener('click', () => { 
                     MODULE_STATE.originalLines = []; MODULE_STATE.lines = []; MODULE_STATE.echoHistory = []; MODULE_STATE.currentIndex = 0;
                     if (MODULE_STATE.isPlaying) PLAYER.stop();
-                    UI.dataInput.value = ""; UI.dataInput.style.display = 'none'; MODULE_STATE.foundPatterns.clear();
                     RENDERER.updateTimeline(); RENDERER.renderFrame();
                     UI.statusInfo.textContent = "Холст мгновенно очищен"; MODULE_DATA.saveToLocalStorage([]);
                 });
@@ -2269,7 +2366,7 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                     UI.canvas.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
                     UI.canvas.addEventListener('auxclick', e => { if (e.button === 1) toggleZen(e); });
                     UI.canvas.addEventListener('mousedown', function(e) { MODULE_STATE.isDragging = true; MODULE_STATE.hasMoved = false; MODULE_STATE.dragStartX = e.clientX; MODULE_STATE.dragStartY = e.clientY; MODULE_STATE.startOffsetX = MODULE_STATE.offsetX; MODULE_STATE.startOffsetY = MODULE_STATE.offsetY; });
-                    UI.canvas.addEventListener('mousemove', function(e) { if (MODULE_STATE.isDragging) { const dx = e.clientX - MODULE_STATE.dragStartX; const dy = e.clientY - MODULE_STATE.dragStartY; if (Math.abs(dx) > 3 || Math.abs(dy) > 3) MODULE_STATE.hasMoved = true; MODULE_STATE.offsetX = MODULE_STATE.startOffsetX + dx; MODULE_STATE.offsetY = MODULE_STATE.startOffsetY + dy; RENDERER.renderFrame(); } });
+                    UI.canvas.addEventListener('mousemove', function(e) { if (MODULE_STATE.isDragging) { const dx = e.clientX - MODULE_STATE.dragStartX; const dy = e.clientY - MODULE_STATE.dragStartY; if (Math.abs(dx) > 3 || Math.abs(dy) > 3) MODULE_STATE.hasMoved = true; MODULE_STATE.offsetX = MODULE_STATE.startOffsetX + dx; MODULE_STATE.offsetY = MODULE_STATE.startOffsetY + dy; if (MODULE_STATE.snapGrid) SNAP.apply(); RENDERER.renderFrame(); } });
                     window.addEventListener('mouseup', function(e) { MODULE_STATE.isDragging = false; });
                     UI.canvas.addEventListener('click', function(e) { if (!MODULE_STATE.hasMoved && MODULE_STATE.lines.length > 0) { if (MODULE_STATE.isPlaying) PLAYER.pause(); else PLAYER.start(); }});
                     // Колесо шлёт события пачками, и на каждое шла полная перерисовка —
@@ -2297,16 +2394,30 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                 }
 
                 if(UI.themeSelect) { UI.themeSelect.addEventListener('change', function() { const t = THEMES[this.value]; if(t) { UI.activeColorPicker.value = t.act; UI.activeAlphaRange.value = t.actA; UI.staticColorPicker.value = t.stat; UI.staticAlphaRange.value = t.statA; RENDERER.renderFrame(); } }); }
-                if(UI.toggleMenuBtn) { UI.toggleMenuBtn.addEventListener('click', function() { /* 35.8: прячет/показывает обе панели разом, вкладки остаются */ const off = document.body.classList.toggle('menu-off'); this.style.background = off ? '#222' : '#00ff66'; TABS.sync(); }); }
+                // 35.28: кнопка ⚙ (спрятать обе панели) убрана по слову пользователя — «тоже лишнее». Разделы прячутся вкладками.
                 // 35.24: кнопка ⇄ (поменять панели местами) убрана по слову пользователя — «не нужно больше».
 
                 if(UI.toggleCenterBtn) UI.toggleCenterBtn.addEventListener('click', function() { MODULE_STATE.isCenterActive = !MODULE_STATE.isCenterActive; if(MODULE_STATE.isCenterActive) { this.classList.add('active-yellow'); MODULE_STATE.isTrackRowActive = false; UI.toggleTrackBtn.classList.remove('active-red'); } else this.classList.remove('active-yellow'); RENDERER.renderFrame(); });
                 if(UI.toggleFrameBtn) UI.toggleFrameBtn.addEventListener('click', function() { MODULE_STATE.isFrameActive = !MODULE_STATE.isFrameActive; if(MODULE_STATE.isFrameActive) this.classList.add('active-yellow'); else this.classList.remove('active-yellow'); RENDERER.renderFrame(); });
                 if(UI.toggleRadarBtn) UI.toggleRadarBtn.addEventListener('click', function() { MODULE_STATE.isRadarActive = !MODULE_STATE.isRadarActive; if(MODULE_STATE.isRadarActive) { this.classList.add('active-yellow'); this.style.background = '#00ff66'; } else { this.classList.remove('active-yellow'); this.style.background = '#cc33ff'; MODULE_STATE.globalAngle = 0; } RENDERER.renderFrame(); });
                 if(UI.toggleTrackBtn) UI.toggleTrackBtn.addEventListener('click', function() { MODULE_STATE.isTrackRowActive = !MODULE_STATE.isTrackRowActive; if(MODULE_STATE.isTrackRowActive) { this.classList.add('active-red'); MODULE_STATE.trackedRowIndex = MODULE_STATE.currentIndex; MODULE_STATE.isCenterActive = false; UI.toggleCenterBtn.classList.remove('active-yellow'); } else { this.classList.remove('active-red'); MODULE_STATE.trackedRowIndex = -1; } RENDERER.renderFrame(); });
+                // 35.38: ▦ скачки ⇄ 〰 плавно — в плеере. Скачки: при проигрывании строки прыгают на целую строку за
+                // шаг (так было всегда), перетаскивание — по клеткам сетки (35.33). Плавно: между шагами строки
+                // скользят от строки к строке, перетаскивание тоже плавное. При переходе в скачки холст встаёт на клетку.
+                const snapBtn = document.getElementById('snapBtn');
+                if (snapBtn) snapBtn.addEventListener('click', function() {
+                    MODULE_STATE.snapGrid = !MODULE_STATE.snapGrid;
+                    this.classList.toggle('smooth', !MODULE_STATE.snapGrid);
+                    this.textContent = MODULE_STATE.snapGrid ? '▦' : '〰';
+                    this.title = MODULE_STATE.snapGrid ? 'Скачки: строки прыгают по строкам сетки, перетаскивание — по клеткам. Щёлкните — плавно'
+                                                       : 'Плавно: строки скользят от строки к строке, перетаскивание плавное. Щёлкните — скачки';
+                    if (MODULE_STATE.snapGrid) SNAP.apply();
+                    RENDERER.renderFrame();
+                });
                 if(UI.toggleReverseBtn) UI.toggleReverseBtn.addEventListener('click', function() { MODULE_STATE.isReverse = !MODULE_STATE.isReverse; if(MODULE_STATE.isReverse) this.classList.add('active-green'); else this.classList.remove('active-green'); });
                 // 35.25: «Логическая операция» раньше не работала вовсе — списка не было в UI, и строки
                 // всегда считались как «Оригинал». Теперь смена операции пересчитывает строки.
+                if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => RENDERER.renderFrame());
                 if(UI.logicalOpSelect) UI.logicalOpSelect.addEventListener('change', () => MODULE_DATA.precalculateLines(false));
                 if(UI.timelineRange) UI.timelineRange.addEventListener('input', (e) => { if (MODULE_STATE.isPlaying) PLAYER.stop(); MODULE_STATE.currentIndex = parseInt(e.target.value, 10); scheduleRender(); });
                 if(UI.prevBtn) UI.prevBtn.addEventListener('click', () => { if (MODULE_STATE.isPlaying) PLAYER.stop(); if (MODULE_STATE.lines.length > 0) { MODULE_STATE.currentIndex = (MODULE_STATE.currentIndex - 1 + MODULE_STATE.lines.length) % MODULE_STATE.lines.length; RENDERER.renderFrame(); RENDERER.updateTimeline(); }});
@@ -2316,7 +2427,30 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                 if(UI.exportExcelBtn) UI.exportExcelBtn.addEventListener('click', () => MODULE_DATA.exportToExcel());
                 if(UI.exportBtn) UI.exportBtn.addEventListener('click', async () => { if (MODULE_STATE.originalLines.length === 0) return alert("Нет данных!"); const jsonStr = JSON.stringify(MODULE_STATE.originalLines, null, 2); const blob = new Blob([jsonStr], { type: "text/plain;charset=utf-8" }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "Zerkalius_Data.txt"; link.click(); URL.revokeObjectURL(link.href); });
                 
-                if(UI.fileLoader) UI.fileLoader.addEventListener('change', function(e) { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { MODULE_DATA.processTextData(e.target.result, file.name); }; reader.readAsText(file); });
+                if(UI.fileLoader) UI.fileLoader.addEventListener('change', function(e) { const input = e.target; const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(ev) { MODULE_DATA.processTextData(ev.target.result, file.name); }; reader.readAsText(file); input.value = ''; });   // 35.39: value = '' — чтобы тот же файл можно было выбрать снова
+                // 35.36: текстовый файл можно просто бросить на холст — грузится так же, как кнопкой «📂 Текст»
+                // (с 35.39 — всегда заменяя строки, без «Вживления»). Брошенный звуковой файл встаёт треком, как «🎵 Трек».
+                // Мимо холста брошенный файл браузер не открывает вместо страницы.
+                if (UI.screenContainer) {
+                    const box = UI.screenContainer;
+                    const hasFiles = e => e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+                    box.addEventListener('dragover', e => { if (!hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; box.classList.add('drop-file'); });
+                    box.addEventListener('dragleave', e => { if (!box.contains(e.relatedTarget)) box.classList.remove('drop-file'); });
+                    box.addEventListener('drop', e => {
+                        if (!hasFiles(e)) return;
+                        e.preventDefault(); box.classList.remove('drop-file');
+                        const file = e.dataTransfer.files[0]; if (!file) return;
+                        if (/^audio\//.test(file.type)) { AUDIO_VISUALIZER.initFile(file); UI.statusInfo.textContent = `Трек: ${file.name}`; return; }
+                        if (file.type && !/^text\//.test(file.type) && !/\.(txt|csv|log|md|json|js|html?|css|py|bas)$/i.test(file.name)) {
+                            UI.statusInfo.textContent = `Не текст: ${file.name}`; return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = ev => MODULE_DATA.processTextData(ev.target.result, file.name);
+                        reader.readAsText(file);
+                    });
+                    window.addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
+                    window.addEventListener('drop', e => { if (hasFiles(e)) e.preventDefault(); });
+                }
                 document.addEventListener('paste', function(e) { 
                     const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : ''; 
                     if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') return; 
@@ -2328,6 +2462,8 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
                 if(UI.fontSizeRange) UI.fontSizeRange.addEventListener('input', (e) => { if(UI.fontSizeVal) UI.fontSizeVal.textContent = e.target.value + 'px'; scheduleRender(); });
                 if(UI.heightRange) UI.heightRange.addEventListener('input', (e) => { if(UI.heightVal) UI.heightVal.textContent = e.target.value; scheduleRender(); });
                 if(UI.lineHeightRange) UI.lineHeightRange.addEventListener('input', (e) => { if(UI.lineHeightVal) UI.lineHeightVal.textContent = e.target.value; scheduleRender(); });
+                const csr = document.getElementById('charSpacingRange');   // 35.37
+                if (csr) csr.addEventListener('input', (e) => { const v = document.getElementById('charSpacingVal'); if (v) v.textContent = parseFloat(e.target.value).toFixed(1); scheduleRender(); });
                 if(UI.zerkaliusBtn) UI.zerkaliusBtn.addEventListener('click', () => MODULE_DATA.generateSierpinski());
                 
                 const rerenderEvents = [
@@ -2614,7 +2750,7 @@ VERSION: Pro 35.26 (Стартовый вид: радар, рамка, цвет 
             // 35.16: сетка следит за экраном — перестраивается при смене окна, кегля, интервала, шрифта, радара.
             const refit = () => MODULE_DATA.refitVacuum();
             window.addEventListener('resize', refit);
-            [UI.fontSizeRange, UI.lineHeightRange, UI.fontSelect].forEach(el => { if (el) { el.addEventListener('input', refit); el.addEventListener('change', refit); } });
+            [UI.fontSizeRange, UI.lineHeightRange, document.getElementById('charSpacingRange'), UI.fontSelect].forEach(el => { if (el) { el.addEventListener('input', refit); el.addEventListener('change', refit); } });
             if (UI.toggleRadarBtn) UI.toggleRadarBtn.addEventListener('click', refit);
             if (UI.canvas) UI.canvas.addEventListener('wheel', refit, { passive: true });
             EVENTS.init(); 
