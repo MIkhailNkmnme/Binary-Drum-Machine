@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.030. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Октаэдр — v0.033. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.030</title>
+<title>Zerkalius Октаэдр — v0.033</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -211,7 +211,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.030</div>
+<div id="ver">v0.033</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -245,6 +245,8 @@
     <tr><td>1 2 3</td><td>действие: ⇄ разворот, ⇅ инв-разв, ↻ Круг Инв</td></tr>
     <tr><td>D · L · V · F</td><td>биты · нити · наведение · забыть память</td></tr>
     <tr><td>N · T</td><td>новая картина · сменить палитру</td></tr>
+    <tr><td>E</td><td>все рёбра тела — показать и спрятать</td></tr>
+    <tr><td>P</td><td>режим точек — бит клеткой, для большой плотности</td></tr>
     <tr><td>C</td><td>стороны света у углов экватора — показать и спрятать</td></tr>
     <tr><td>Z · колесо</td><td>Дзен: спрятать всё, кроме тела (щелчок колесом мыши — то же)</td></tr>
     <tr><td>R</td><td>запись видео с холста, она же кнопка ⏺ в углу</td></tr>
@@ -279,7 +281,9 @@
     <li><b>Свечение бит</b> — радиус ореола вокруг цифры; по умолчанию выключено. Ореол берёт её собственный цвет, поэтому
     красные биты памяти светятся красным. Ноль гасит свечение совсем — это же и самый быстрый
     режим: тень считается на каждую цифру отдельно, и на большой плотности она дороже всего
-    остального вместе взятого. Биты, погасшие памятью, не светятся никогда.</li>
+    остального вместе взятого. Биты, погасшие памятью, не светятся никогда. При плотности больше 32
+    свечение выключено само, а ползунок заблокирован; вернётесь к 32 и ниже — оно снова такое, как
+    было выставлено.</li>
     <li><b>Скорость вращения</b> — ноль останавливает.</li>
     <li><b>Такт цикла</b> — от 60 до 1200 мс между шагами.</li>
     <li><b>Нитей: каждая N-я</b> — прореживание занавеса связей.</li>
@@ -347,9 +351,17 @@
 
   <h3>Остальные кнопки</h3>
   <ul>
+    <li><b>⠿ Точки</b> (клавиша P) — отдельный режим для большой плотности, до 256 рядов: бит рисуется
+    не цифрой, а клеткой, и вся грань — одной картинкой. Поэтому не тормозит там, где цифры уже не
+    тянут. Единица горит цветом, ноль тёмный; в схеме «Свои цвета» — ваши цвета 0 и 1. Память краснеет,
+    закреплённые горят своим цветом, клик, Shift+клик и наведение попадают в клетку. Пока клетки
+    крупные, между ними зазор — видно, что это точки; на 256 рядах они идут сплошь. Размер цифр и
+    свечение в этом режиме не участвуют.</li>
     <li><b>🧭 Стороны света</b> (клавиша C) — буквы <b>С В Ю З</b> у четырёх углов экватора, чуть снаружи
-    тела. Крутятся вместе с ним: ближние к вам ярче, дальние приглушены, — так видно, какой стороной тело
+    тела, и <b>Верх</b> / <b>Низ</b> у вершин пирамид. Крутятся вместе с ним: ближние к вам ярче, дальние приглушены, — так видно, какой стороной тело
     сейчас повёрнуто и куда оно ушло после вращения.</li>
+    <li><b>◇ Рёбра</b> (клавиша E) — показать или спрятать все рёбра тела разом, экватор тоже: остаются
+    одни биты. «△ Скрытые рёбра» ниже прячет только дальние.</li>
     <li><b>△ Скрытые рёбра</b> — показывать ли рёбра дальней стороны. Рисуются <b>пунктиром</b>, как
     невидимый контур на чертеже: тело полупрозрачное, и дальние рёбра просвечивают насквозь, а одной
     приглушённостью их от ближних не отличить — на тёмном фоне и четверть яркости читается как
@@ -374,7 +386,7 @@
     другим, на обеих половинах. Цвета выбираются квадратиками <b>0</b> и <b>1</b> под кнопкой, и выбор
     цвета сам включает эту схему. Память краснеет от этих же цветов.</li>
     <li><b>⌖ Вид сверху</b> — вернуть камеру в исходное положение.</li>
-    <li><b>☯ Дзен</b> — убрать с экрана всё, кроме тела: панель, заголовок, версию, подсказку.
+    <li><b>☯ Дзен</b> (первая кнопка в полосе меню сверху) — убрать с экрана всё, кроме тела: панель, заголовок, версию, подсказку.
     Вход и выход: кнопка, клавиша Z, щелчок колесом мыши, а из Дзена ещё и Escape. Состояние не
     запоминается — страница всегда открывается с панелью.</li>
     <li><b>⏺ Запись видео</b> — кружок в правом нижнем углу или клавиша R. Пишется ТОЛЬКО холст:
@@ -394,6 +406,8 @@
 <!-- v0.026: полоса вкладок и две панели (левая и правая). Вкладки строит скрипт (SECS) из разделов
      .tab-sec — в порядке разметки; ↺ и 📖 стоят в полосе сразу и остаются в её конце. -->
 <div id="menuTabs">
+  <!-- v0.033: Дзен — отдельной кнопкой в полосе, слева от названия (запрос пользователя) -->
+  <button id="bZen" title="Z или щелчок колесом мыши. Прячет всё, кроме тела">☯ Дзен</button>
   <span id="title">zerkalius · октаэдр</span>
   <button id="bLayout" title="Раскладка по умолчанию: все разделы открыты и стоят на своих местах в левой и правой панели">↺</button>
   <button id="bHelp" title="Методичка — H или F1">📖</button>
@@ -422,11 +436,21 @@
   </div>
   <div class="tab-sec" data-tab="view" data-title="👁 Вид">
   <button id="bSpin" class="act" title="Пробел">⟳ Вращение</button>
+  <!-- v0.032: скорость — сразу под кнопкой вращения (запрос пользователя) -->
+  <div class="set">
+    <label>Скорость вращения: <b id="vSpeed">42</b></label>
+    <div class="srow">
+      <button class="arr" data-for="sSpeed" data-d="-1" title="На шаг меньше (держать — быстро)">◄</button>
+      <input type="range" id="sSpeed" min="0" max="160" step="2" value="42">
+      <button class="arr" data-for="sSpeed" data-d="1" title="На шаг больше (держать — быстро)">►</button>
+    </div>
+  </div>
   <button id="bDig" class="act" title="D">01 Биты</button>
+  <button id="bDots" title="P. Бит — клетка, грань — картинка: для большой плотности, до 256 рядов">⠿ Точки</button>
+  <button id="bEdges" class="act" title="E. Все рёбра тела, и экватор тоже">◇ Рёбра</button>
   <button id="bEdge" class="act">△ Скрытые рёбра</button>
   <button id="bDirs" class="act" title="C">🧭 Стороны света</button>
   <button id="bReset">⌖ Вид сверху</button>
-  <button id="bZen" title="Z или щелчок колесом мыши. Прячет всё, кроме тела">☯ Дзен</button>
   <div class="set">
     <label>Размер цифр: <b id="vSize">13</b></label>
     <div class="srow">
@@ -441,14 +465,6 @@
       <button class="arr" data-for="sGlow" data-d="-1" title="Слабее (держать — быстро)">◄</button>
       <input type="range" id="sGlow" min="0" max="20" step="1" value="0">
       <button class="arr" data-for="sGlow" data-d="1" title="Ярче (держать — быстро)">►</button>
-    </div>
-  </div>
-  <div class="set">
-    <label>Скорость вращения: <b id="vSpeed">42</b></label>
-    <div class="srow">
-      <button class="arr" data-for="sSpeed" data-d="-1" title="На шаг меньше (держать — быстро)">◄</button>
-      <input type="range" id="sSpeed" min="0" max="160" step="2" value="42">
-      <button class="arr" data-for="sSpeed" data-d="1" title="На шаг больше (держать — быстро)">►</button>
     </div>
   </div>
   </div>
@@ -558,6 +574,10 @@ for (let s = 0; s < 4; s++) {
 /* GLOW — радиус ореола вокруг цифры в пикселях (v0.009, запрос пользователя «свечение бит»).
    0 — без свечения, как было до этого. */
 let ROWS = 13, DIG = 13, SPEED = 42, GLOW = 0;   // v0.023: свечение по умолчанию выключено (было 7)
+/* v0.031: выше GLOW_ROWS рядов свечение выключено само (запрос пользователя: «автоматом заблокировать
+   свечение при плотности больше 32»). Тень считается на каждую цифру отдельно, а цифр там десятки тысяч.
+   Значение ползунка не трогаем: вернулись к 32 и ниже — свечение снова то, что было выставлено. */
+const GLOW_ROWS = 32;
 let bits = [];
 /* СВОИ БИТЫ (v0.020, запрос пользователя: «нужна возможность свои биты вписывать»).
    myBits — вписанная строка из одних 0 и 1; пустая — картина случайная, как было всегда.
@@ -566,6 +586,10 @@ let bits = [];
    mySame — каждая грань начинает строку с начала, и четыре грани выходят одинаковыми.
    Объявлено ЗДЕСЬ, до первого вызова rollBits: let, объявленный ниже вызова, бросил бы ошибку. */
 let myBits = "", mySame = false;
+/* v0.031: счётчик перемен картины для режима точек. Растёт на всём, что меняет вид бит (новая картина,
+   шаг, забыть память, правка бита, закрепления) — по нему картинка грани понимает, что устарела.
+   Объявлен здесь, до первого rollBits, по той же причине, что и myBits. */
+let dotVer = 0;
 /* ═══ ПАМЯТЬ РЕВЕРСА ══════════════════════════════════════════════════════════════════════════
    Запрос пользователя: «реверс с поиском: одни — неменяющиеся — их красным например, а
    изменяющиеся чёрным, и по циклу чёрные инвертятся».
@@ -585,7 +609,7 @@ let stepNo = 0, stillPct = null;
    нулю, счётчик снова покажет 0, но память-то набрана — гасить её в этот момент было бы враньём. */
 let memOn = false;
 function rollBits(){
-  bits = []; keep = [];
+  bits = []; keep = []; dotVer++;
   const src = myBits;   // v0.020: вписанные свои биты; пусто — случайные
   let i = 0;
   for (let s = 0; s < 4; s++) {
@@ -659,7 +683,24 @@ let bitCol = false, col0 = "#4a78ff", col1 = "#f2f5fa";
    вместе с ним. Раскладка — как на карте, если смотреть сверху: +X — восток, +Z (к зрителю при yaw 0) —
    юг, −X — запад, −Z — север. Порядок совпадает с EQ. */
 let showDirs = true;
+/* РЕЖИМ ТОЧЕК (v0.031, запрос пользователя: «сделай режим точек до 256, отдельный режим»).
+   Цифрами на 256 рядах не нарисовать: это 32 896 бит на грань и больше ста тысяч fillText за кадр. Здесь
+   грань рисуется КАРТИНКОЙ: бит — клетка, картинка натягивается на треугольник грани одним drawImage.
+   Восемь drawImage за кадр вместо ста тысяч цифр. Картинка пересобирается только когда устарела (dotVer
+   и цвета, см. dotTexture), а не на каждом кадре вращения.
+   КАК ЛОЖИТСЯ КАРТИНКА. Точка грани P = V0 + a·(V1−V0) + s·(V2−V1), где a — доля от вершины (0…1), s —
+   доля вдоль ряда, 0 ≤ s ≤ a. Это аффинно по (a, s), поэтому треугольник картинки «x ≤ y» ложится на грань
+   одним преобразованием холста. Ряд r — полоса y ∈ [r, r+1) (в долях ROWS), бит k в нём — доля
+   t = s/a ∈ [k/(r+1), (k+1)/(r+1)). Центры клеток совпадают с bitPoint, поэтому нити, наведение и
+   закрепления попадают туда же, где стояли бы цифры.
+   ЦВЕТ. 1 горит цветом своей половины, 0 — тёмный (DOT_DIM): у цифры 0 и 1 различает сам знак, а у
+   клетки — только яркость. В схеме «Свои цвета» — цвета 0 и 1 как есть. Память и закрепления — как у цифр. */
+let dotMode = false;
+const DOT_TEX = 512, DOT_DIM = 0.22, DOT_GAP = 0.12;
+let dotFaces = [];   // грани, нарисованные последним кадром в режиме точек, — для клика и наведения
 const DIRS = ["В", "Ю", "З", "С"], DIR_OUT = 1.16;
+// v0.031: и у вершин пирамид — «Верх» и «Низ». Словами, а не буквой: «В» уже занята востоком.
+const POLES = [[T, "Верх"], [B, "Низ"]];
 /* ЗАКРЕПЛЁННЫЕ БИТЫ (v0.010, запрос пользователя: «клик по битам выделяет и закрепляет, снимает
    по кнопке или Escape со всех сразу»). Наведение держится ровно пока мышь на месте — отвёл, и
    пара погасла, а тело ещё и само крутится. Клик оставляет пару гореть: можно набрать несколько,
@@ -672,7 +713,80 @@ const pinKey = (sl, r, k) => sl + ":" + r + ":" + k;
 // Куда попала каждая нарисованная цифра на последнем кадре — по этому списку и ищется ближайшая
 // к курсору. Список строится самой отрисовкой: она всё равно считает эти точки.
 let pickList = [];
+/* Бит под точкой экрана (v0.031). В режиме цифр — ближайшая нарисованная цифра, как было. В режиме точек
+   цифр нет: точка переводится обратно в (a, s) каждой нарисованной грани, от ближней к дальней, и первая,
+   внутри которой она лежит, отдаёт ряд и место по той же раскладке, что и картинка. */
+function pickAt(mx, my){
+  if (!dotMode) {
+    let best = null, bd = 17 * 17;
+    for (const q of pickList) {
+      const dx = q.x - mx, dy = q.y - my, d = dx * dx + dy * dy;
+      if (d < bd) { bd = d; best = q; }
+    }
+    return best;
+  }
+  for (let i = dotFaces.length - 1; i >= 0; i--) {
+    const { f, P } = dotFaces[i], [p0, p1, p2] = P;
+    const ux = p1.x - p0.x, uy = p1.y - p0.y, vx = p2.x - p1.x, vy = p2.y - p1.y;
+    const det = ux * vy - uy * vx;
+    if (Math.abs(det) < 1e-6) continue;
+    const qx = mx - p0.x, qy = my - p0.y;
+    const a = (qx * vy - qy * vx) / det, sv = (ux * qy - uy * qx) / det;
+    if (a <= 0 || a > 1 || sv < 0 || sv > a) continue;
+    const r = Math.min(ROWS - 1, Math.floor(a * ROWS));
+    const k = Math.min(r, Math.floor((sv / a) * (r + 1)));
+    return { slot: f.slot, r, k };
+  }
+  return null;
+}
+/* Картинка грани для режима точек (v0.031). Хранится на самой грани (f._dot) и пересобирается, только
+   когда поменялась картина (dotVer) или цвета. Размер — около DOT_TEX пикселей: клетка ряда — SS пикселей.
+   Пока клетка крупная (SS ≥ 4), у неё зазор DOT_GAP с каждой стороны — видно, что это точки; на 256 рядах
+   клетка в 2 пикселя, и зазор съел бы картину целиком — там клетки идут сплошь. */
+function dotTexture(f, cUp, cDn, cMem, cPin){
+  const sig = dotVer + "|" + ROWS + "|" + memOn + "|" + bitCol + "|" + col0 + col1 + cUp + cDn + cMem + cPin;
+  if (f._dot && f._dot.sig === sig) return f._dot.cv;
+  const N = ROWS, SS = Math.max(1, Math.floor(DOT_TEX / N)), T = N * SS;
+  const cvT = (f._dot && f._dot.cv) || document.createElement("canvas");
+  if (cvT.width !== T) { cvT.width = T; cvT.height = T; }
+  const cx2 = cvT.getContext("2d"), img = cx2.createImageData(T, T), px = new Uint32Array(img.data.buffer);
+  const CU = hex3(cUp), CD = hex3(cDn), CM = hex3(cMem), CP = hex3(cPin), C0 = hex3(col0), C1 = hex3(col1);
+  const pack = (c, al) => ((al << 24) | (c[2] << 16) | (c[1] << 8) | c[0]) >>> 0;
+  // Цвет каждого бита — один раз, дальше клетки только заливаются им.
+  const col = new Uint32Array(N * (N + 1) / 2);
+  const half = f.up ? CU : CD, face = bits[f.slot], mem = keep[f.slot];
+  for (let r = 0, i = 0; r < N; r++) for (let k = 0; k <= r; k++, i++) {
+    const val = f.up ? face[r][k] : (face[r][k] ^ 1);
+    let c = bitCol ? (val ? C1 : C0) : half;
+    if (!bitCol && !val) c = [c[0] * DOT_DIM | 0, c[1] * DOT_DIM | 0, c[2] * DOT_DIM | 0];
+    let al = 255;
+    if (memOn) {
+      const m = mem[r][k];
+      if (m === 0) al = 70;
+      else { const t = Math.min(m, MEM_FULL) / MEM_FULL; c = [c[0] + (CM[0] - c[0]) * t | 0, c[1] + (CM[1] - c[1]) * t | 0, c[2] + (CM[2] - c[2]) * t | 0]; }
+    }
+    if (pinned.size && pinned.has(pinKey(f.slot, r, k))) { c = CP; al = 255; }
+    col[i] = pack(c, al);
+  }
+  const gap = SS >= 4 ? DOT_GAP : 0;
+  for (let py = 0; py < T; py++) {
+    const Y = (py + 0.5) / SS, r = Math.min(N - 1, Math.floor(Y)), fy = Y - r, base = r * (r + 1) / 2;
+    if (gap && (fy < gap || fy > 1 - gap)) continue;
+    const row = py * T;
+    for (let pxl = 0; pxl < T; pxl++) {
+      const X = (pxl + 0.5) / SS;
+      if (X > Y) break;                                  // правее диагонали — вне треугольника
+      const u = X * (r + 1) / Y, k = Math.min(r, Math.floor(u));
+      if (gap) { const fx = u - k; if (fx < gap || fx > 1 - gap) continue; }
+      px[row + pxl] = col[base + k];
+    }
+  }
+  cx2.putImageData(img, 0, 0);
+  f._dot = { cv: cvT, sig };
+  return cvT;
+}
 function doStep(dir){
+  dotVer++;
   const back = dir < 0;
   const f = (back ? OPS_BACK : OPS)[stepOp] || OPS.rev;
   let still = 0, total = 0;
@@ -695,6 +809,7 @@ function doStep(dir){
   updateStepInfo();
 }
 function forgetMem(){
+  dotVer++;
   for (let s = 0; s < 4; s++) for (let r = 0; r < ROWS; r++) keep[s][r].fill(0);
   stepNo = 0; stillPct = null; memOn = false;
   updateStepInfo();
@@ -722,6 +837,8 @@ function bitPoint(f, r, k){
    зеркала (Y) и pitch вокруг горизонтали. Перспектива простая, в одно деление: чем дальше точка,
    тем меньше её масштаб, — этого хватает, чтобы объём читался, и ничего лишнего считать не надо. */
 let yaw = 0.6, pitch = -0.42, zoom = 1, spin = true, showDigits = true, showHidden = true;
+// v0.031: все рёбра разом (запрос: «кнопку скрытия рёбер»). «△ Скрытые рёбра» прячет только дальние.
+let showEdges = true;
 const CAM = 4.2;
 
 function rot(p){
@@ -845,7 +962,7 @@ function draw(){
     }
     return best;
   };
-  if (showHidden) {
+  if (showHidden && showEdges) {
     /* ПУНКТИРОМ, И ЭТО НЕ УКРАШЕНИЕ (v0.014, баг-репорт «рёбра, которые внутри, всё ещё светятся
        как видимые»). Тело полупрозрачное — в том и смысл, иначе не разглядеть нити между
        двойниками, — поэтому рёбра дальней стороны просвечивают насквозь и оказываются НА картинке
@@ -867,7 +984,7 @@ function draw(){
 
   // Цифры выключены — искать под курсором нечего, и прошлый список надо снять, иначе наведение
   // ловило бы то, чего на экране уже нет.
-  if (!showDigits) { pickList = []; hoverBit = null; }
+  if (!showDigits) { pickList = []; dotFaces = []; hoverBit = null; }
 
   // 2.5. Связанные биты: нити между двойниками. Идут ПОД цифрами — это фон, а не содержание.
   if (showLinks || hoverBit || pinned.size) {
@@ -924,7 +1041,25 @@ function draw(){
   // 3. Биты лицевых граней. Верхняя половина — картина как есть, нижняя — та же, инвертированная:
   //    один и тот же slot, один и тот же (r, k), значение перевёрнуто. Это и есть «инв-разв»
   //    зеркало приложения, только показанное телом, а не строкой.
-  if (showDigits) {
+  // v0.031: режим точек — грань картинкой (см. dotTexture). Гаснет по наклону так же, как цифры.
+  if (showDigits && dotMode) {
+    pickList = []; dotFaces = [];
+    for (const s of shown) {
+      if (!s.front || s.facing < 0.11) continue;
+      const face = 0.88 * Math.sqrt((s.facing - 0.11) / (1 - 0.11));
+      const tex = dotTexture(s.f, cUp, cDn, cMem, cPin), T = tex.width, [p0, p1, p2] = s.P;
+      ctx.save();
+      ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.closePath(); ctx.clip();
+      ctx.globalAlpha = Math.min(1, face / 0.88);
+      ctx.imageSmoothingEnabled = true;
+      ctx.transform((p2.x - p1.x) / T, (p2.y - p1.y) / T, (p1.x - p0.x) / T, (p1.y - p0.y) / T, p0.x, p0.y);
+      ctx.drawImage(tex, 0, 0);
+      ctx.restore();
+      dotFaces.push({ f: s.f, P: s.P });
+    }
+  } else if (showDigits) {
+    dotFaces = [];
+    const G = ROWS > GLOW_ROWS ? 0 : GLOW;   // v0.031: выше 32 рядов свечения нет
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     const rampUp = ramp(cUp, cMem), rampDn = ramp(cDn, cMem);
     const ramp0 = bitCol ? ramp(col0, cMem) : null, ramp1 = bitCol ? ramp(col1, cMem) : null;   // v0.026
@@ -981,9 +1116,9 @@ function draw(){
              ПОГАСШИЕ ПАМЯТЬЮ НЕ СВЕТЯТСЯ ВОВСЕ — и по смыслу (они ушли в фон), и по делу: тень
              считается на каждую букву отдельно, и отключить её там, где она не нужна, дешевле,
              чем рисовать. */
-          if (GLOW && lit) {
+          if (G && lit) {
             ctx.shadowColor = ctx.fillStyle;
-            ctx.shadowBlur = GLOW * p.k * zoom;
+            ctx.shadowBlur = G * p.k * zoom;
           } else ctx.shadowBlur = 0;
           // Бит под курсором и его двойник — поверх любой памяти, самым ярким цветом: сейчас
           // разговор про них, а не про симметрию.
@@ -991,11 +1126,11 @@ function draw(){
           // главнее того, что отложено про запас.
           if (pinned.size && pinned.has(pinKey(f.slot, r, k))) {
             ctx.fillStyle = cPin; ctx.globalAlpha = 1;
-            if (GLOW) { ctx.shadowColor = cPin; ctx.shadowBlur = (GLOW + 4) * p.k * zoom; }
+            if (G) { ctx.shadowColor = cPin; ctx.shadowBlur = (G + 4) * p.k * zoom; }
           }
           if (hoverBit && hoverBit.slot === f.slot && hoverBit.r === r && hoverBit.k === k) {
             ctx.fillStyle = cEq; ctx.globalAlpha = 1;
-            if (GLOW) { ctx.shadowColor = cEq; ctx.shadowBlur = (GLOW + 6) * p.k * zoom; }
+            if (G) { ctx.shadowColor = cEq; ctx.shadowBlur = (G + 6) * p.k * zoom; }
           }
           ctx.fillText(val ? "1" : "0", p.x, p.y);
           pickList.push({ x: p.x, y: p.y, slot: f.slot, r, k });
@@ -1008,7 +1143,7 @@ function draw(){
 
   // 4. Видимые рёбра поверх всего; экватор — последним и толще прочих.
   ctx.lineJoin = "round"; ctx.lineCap = "round";
-  for (const pass of ["side", "eq"]) {
+  for (const pass of (showEdges ? ["side", "eq"] : [])) {   // v0.031: рёбра можно спрятать все
     for (const e of EDGES) {
       if ((pass === "eq") !== (e.kind === "eq")) continue;
       const fa = edgeFacing(e);
@@ -1045,6 +1180,13 @@ function draw(){
       ctx.font = "600 " + fs.toFixed(1) + "px 'Segoe UI', Inter, system-ui, sans-serif";
       ctx.globalAlpha = 0.33 + 0.62 * Math.max(0, Math.min(1, (p.z / DIR_OUT + 1) / 2));
       ctx.fillText(DIRS[i], p.x, p.y);
+    }
+    for (const [v, label] of POLES) {
+      const p = project([0, v[1] * DIR_OUT, 0]);
+      const fs = Math.max(10, 15 * p.k * zoom * (Math.min(W, HGT) / 700));
+      ctx.font = "600 " + fs.toFixed(1) + "px 'Segoe UI', Inter, system-ui, sans-serif";
+      ctx.globalAlpha = 0.33 + 0.62 * Math.max(0, Math.min(1, (p.z / DIR_OUT + 1) / 2));
+      ctx.fillText(label, p.x, p.y);
     }
     ctx.globalAlpha = 1;
   }
@@ -1102,11 +1244,7 @@ cv.addEventListener("pointermove", (e) => {
     // не попали и выбраться не могут.
     const rect = cv.getBoundingClientRect();
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-    let best = null, bd = 17 * 17;
-    for (const q of pickList) {
-      const dx = q.x - mx, dy = q.y - my, d = dx*dx + dy*dy;
-      if (d < bd) { bd = d; best = q; }
-    }
+    const best = pickAt(mx, my);   // v0.031: и в режиме точек
     hoverBit = best ? { slot: best.slot, r: best.r, k: best.k } : null;
     return;
   }
@@ -1127,11 +1265,7 @@ const stopDrag = (e) => {
   if (wasLast && !moved && e) {
     const rect = cv.getBoundingClientRect();
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-    let best = null, bd = 17 * 17;
-    for (const q of pickList) {
-      const dx = q.x - mx, dy = q.y - my, d = dx * dx + dy * dy;
-      if (d < bd) { bd = d; best = q; }
-    }
+    const best = pickAt(mx, my);   // v0.031: и в режиме точек
     if (best) {
       if (e.shiftKey) {
         /* SHIFT+КЛИК — ПРАВКА БИТА (v0.012, запрос пользователя). Меняется ОДНО число в картине,
@@ -1142,11 +1276,12 @@ const stopDrag = (e) => {
            Память места сбрасывается: она считает шаги, а ручная правка — не шаг, и засчитывать
            её как «бит устоял» было бы враньём. */
         bits[best.slot][best.r][best.k] ^= 1;
-        keep[best.slot][best.r][best.k] = 0;
+        keep[best.slot][best.r][best.k] = 0; dotVer++;
       } else {
         const key = pinKey(best.slot, best.r, best.k);
         // Повторный клик по закреплённому снимает его — иначе набранное пришлось бы сбрасывать целиком.
         if (pinned.has(key)) pinned.delete(key); else pinned.add(key);
+        dotVer++;
         syncUI();
       }
     }
@@ -1171,12 +1306,15 @@ cv.addEventListener("wheel", (e) => {
 
 const bSpin = document.getElementById("bSpin"), bDig = document.getElementById("bDig"),
       bEdge = document.getElementById("bEdge"), bRoll = document.getElementById("bRoll"),
-      bDirs = document.getElementById("bDirs"),
+      bDirs = document.getElementById("bDirs"), bDots = document.getElementById("bDots"),
+      bEdges = document.getElementById("bEdges"),
       bTheme = document.getElementById("bTheme"), bReset = document.getElementById("bReset");
 bSpin.onclick = () => { spin = !spin; bSpin.classList.toggle("act", spin); };
 bDig.onclick  = () => { showDigits = !showDigits; bDig.classList.toggle("act", showDigits); };
 bEdge.onclick = () => { showHidden = !showHidden; bEdge.classList.toggle("act", showHidden); };
 bDirs.onclick = () => { showDirs = !showDirs; bDirs.classList.toggle("act", showDirs); };   // v0.029
+bDots.onclick = () => { dotMode = !dotMode; bDots.classList.toggle("act", dotMode); };      // v0.031
+bEdges.onclick = () => { showEdges = !showEdges; bEdges.classList.toggle("act", showEdges); }; // v0.031
 bRoll.onclick = () => { myBits = ""; rollBits(); myInfoUpd(); save(); };   // v0.020: и снимает свои биты
 /* v0.027: схем три, по кругу — палитра приложения → зелень → свои цвета → палитра приложения (запрос
    пользователя: «🎨 оставить как было, а при изменении цветов — это схема „Свои цвета“»). «Свои цвета» —
@@ -1204,7 +1342,7 @@ const vRows = document.getElementById("vRows"), vSize = document.getElementById(
 function save(){
   try {
     localStorage.setItem(KEY, JSON.stringify({
-      ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, showDirs, zoom, yaw, pitch, stepOp, TICK,
+      ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, showEdges, showDirs, dotMode, zoom, yaw, pitch, stepOp, TICK,
       showLinks, LINK_EVERY, hoverOn, myBits, mySame, glowV: 1, bitCol, col0, col1,
       theme: document.documentElement.getAttribute("data-theme") || ""
     }));
@@ -1223,7 +1361,9 @@ function load(){
   if (typeof o.spin === "boolean") spin = o.spin;
   if (typeof o.showDigits === "boolean") showDigits = o.showDigits;
   if (typeof o.showHidden === "boolean") showHidden = o.showHidden;
+  if (typeof o.showEdges === "boolean") showEdges = o.showEdges;
   if (typeof o.showDirs === "boolean") showDirs = o.showDirs;
+  if (typeof o.dotMode === "boolean") dotMode = o.dotMode;
   if (o.zoom > 0.4 && o.zoom < 3.1) zoom = o.zoom;
   if (typeof o.yaw === "number") yaw = o.yaw;
   if (typeof o.pitch === "number") pitch = o.pitch;
@@ -1245,12 +1385,15 @@ function load(){
 function syncUI(){
   sRows.value = ROWS;  vRows.textContent = ROWS;
   sSize.value = DIG;   vSize.textContent = DIG;
-  sGlow.value = GLOW;  vGlow.textContent = GLOW;
+  sGlow.value = GLOW;  vGlow.textContent = ROWS > GLOW_ROWS ? "выкл. — плотность > " + GLOW_ROWS : GLOW;
+  sGlow.disabled = ROWS > GLOW_ROWS;   // v0.031
   sSpeed.value = SPEED; vSpeed.textContent = SPEED;
   bSpin.classList.toggle("act", spin);
   bDig.classList.toggle("act", showDigits);
   bEdge.classList.toggle("act", showHidden);
+  bEdges.classList.toggle("act", showEdges);
   bDirs.classList.toggle("act", showDirs);
+  bDots.classList.toggle("act", dotMode);
   // На кнопке — куда переключит следующий щелчок (так было и до трёх схем, v0.027).
   bTheme.textContent = bitCol ? "🎨 Палитра приложения"
     : document.documentElement.getAttribute("data-theme") === "green" ? "🎨 Свои цвета" : "🎨 Зелень";
@@ -1283,13 +1426,13 @@ function syncUI(){
 const ROWS_SLIDE = 32, ROWS_MAX = 256;
 function setRows(n){
   ROWS = n; sRows.value = n; vRows.textContent = ROWS;
-  rollBits(); unpinAll(); myInfoUpd(); save();
+  rollBits(); unpinAll(); myInfoUpd(); syncUI(); save();   // v0.031: syncUI — подпись и запрет свечения
 }
 sRows.oninput  = () => setRows(+sRows.value);
 sSize.oninput  = () => { DIG = +sSize.value;  vSize.textContent = DIG;  save(); };
 sGlow.oninput  = () => { GLOW = +sGlow.value; vGlow.textContent = GLOW; save(); };
 sSpeed.oninput = () => { SPEED = +sSpeed.value; vSpeed.textContent = SPEED; save(); };
-for (const b of [bSpin, bDig, bEdge, bDirs, bTheme]) {
+for (const b of [bSpin, bDig, bEdge, bEdges, bDirs, bDots, bTheme]) {
   const prev = b.onclick;
   b.onclick = () => { prev(); save(); };
 }
@@ -1330,7 +1473,7 @@ bLinks.onclick = () => { showLinks = !showLinks; syncUI(); save(); };
 const bHover = document.getElementById("bHover");
 bHover.onclick = () => { hoverOn = !hoverOn; if (!hoverOn) hoverBit = null; syncUI(); save(); };
 const bUnpin = document.getElementById("bUnpin");
-function unpinAll(){ if (pinned.size) { pinned.clear(); syncUI(); } }
+function unpinAll(){ if (pinned.size) { pinned.clear(); dotVer++; syncUI(); } }
 bUnpin.onclick = unpinAll;
 sLink.oninput = () => { LINK_EVERY = +sLink.value; vLink.textContent = LINK_EVERY; save(); };
 // Такт меняется на ходу: если цикл идёт, перезаводим его с новой величиной, а не ждём остановки.
@@ -1349,6 +1492,7 @@ sTick.oninput = () => {
    УДЕРЖАНИЕ. Первый шаг — сразу по нажатию, дальше пауза 380 мс (чтобы одиночный клик не
    превращался в очередь) и повтор каждые 70 мс. */
 function nudge(inp, dir, mul = 1){
+  if (inp.disabled) return;   // v0.031: свечение выше 32 рядов заблокировано — стрелки тоже молчат
   const st = (parseFloat(inp.step) || 1) * mul, mn = parseFloat(inp.min), mx = parseFloat(inp.max);
   // v0.024: плотность стрелкой идёт мимо ползунка — до ROWS_MAX, и считается от самой ROWS, а не от
   // value (оно выше 32 обрезано браузером).
@@ -1694,6 +1838,8 @@ window.addEventListener("keydown", (e) => {
   else if (k === "n" || k === "т") bRoll.onclick();
   else if (k === "z" || k === "я") zenToggle();
   else if (k === "c" || k === "с") bDirs.onclick();   // v0.029: стороны света
+  else if (k === "p" || k === "з") bDots.onclick();   // v0.031: режим точек
+  else if (k === "e" || k === "у") bEdges.onclick();  // v0.031: все рёбра
   else if (k === "t" || k === "е") bTheme.onclick();
   else if (k === "l" || k === "д") bLinks.onclick();
   else if (k === "v" || k === "м") bHover.onclick();
