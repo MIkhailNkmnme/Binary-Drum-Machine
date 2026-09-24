@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <!--
 ===========================================================================
-PROJECT: Zerkalius Code (до 35.31 — Binary Drum Machine)
-VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопок ⇄ и ⚙ больше нет, 🔎 Поиск убран; пресеты — целые сцены, логическая операция работает; выравнивание по видимому краю; 13 шрифтов, свои, без интернета; ▦ скачки ⇄ 〰 плавно в плеере; файл можно бросить на холст; межсимвольный интервал; крайние панели прозрачные; защита от выделения; ⚓ заморозка — на месте, без прыжка в центр; подсчёт циклов Аниматрицы; ▶ — включить выбранную сцену; F5 не сбрасывает — всё как было; ★ — полный пресет вместе с текстом; ★-сцены файлом для другого компьютера; счётчик Аниматрицы — внизу, среди уведомлений; вкладки в одну строку, плавающие окна целиком на экране; журнал Аниматрицы в файл; ⤒ / Home — к началу текста; Аниматрица целыми циклами: ⏮ ⏭, PageUp/PageDown, плеер по циклам; счёт циклов переживает F5; 🎞 GIF цикла прямо из страницы; ◇ ромбическая сетка; ▤ полосы периодов; ◇ сетка «авто» по проходу, ⫼ ось симметрии; 🎞 ромбы в кино; ⧖ зеркало через центр с XOR; 🔤 буквы в ромбах; 🎨 цвета 0 / 1; 🎨 цвета сетки; разреженность сетки; щелчок по заголовку — перезагрузка; сетка всегда позади фигуры; строки цветов «Фигура» и «Сетка»: у каждого цвета своя цифра 0 / 1; стрелки у всех ползунков; цвет фона холста; разреженность сетки и по строкам; под фигурой сетка по умолчанию видна — наложение)
+PROJECT: Zerkalius Треугольник — отдельная страница для треугольника (Аниматрица, ромбы, сетка).
+         Заведена 2026-09-24 копией Zerkalius Code 35.74: для начала в ней есть всё, что есть в Code.
+         Память (текст, сцены, вид) — СВОЯ, ключи ztri_*; при первом запуске берёт то, что лежит у Code, и
+         дальше живёт отдельно (ключи Code только читаются, никогда не пишутся).
+VERSION: v0.008 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Code 35.75</title>
+    <title>Zerkalius Треугольник v0.008</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -141,6 +144,10 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
         .float-btn.active-red { outline-color: #ff3333; }
         .float-btn.active-green { outline-color: #00ff66; }
         #toggleRadarBtn.active-yellow { outline-color: #00ff66; }
+        /* Треугольник v0.007: ⤒ закреп — на месте убранного радара (и двойник над плеером, где был 🛰️) */
+        #pinTopBtn { top: 50%; transform: translateY(80px); background: #1a2a50; color: #00ccff; box-shadow: 0 0 6px rgba(0, 204, 255, 0.5); border-radius: 8px; font-weight: bold; }
+        #pinTopBtn.active-yellow { background: #00ccff; color: #000; outline-color: #00ccff; }
+        .tab-sec.floating #plPinTopBtn { right: 0; }
 
         .align-btn { right: 8px; left: auto; background: #0a1128; color: #00ccff; border: 1px solid #1a2a50; border-radius: 4px; height: 28px; width: 34px;}
         #alignLeftBtn { top: 8px; }
@@ -249,6 +256,38 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
         body.panel-right #rightPanel { left: 0; right: auto; }
         .controls.empty, body.menu-off .controls { display: none !important; }
         .tab-sec.off { display: none !important; }
+        /* Треугольник v0.006: радара на этой странице нет; окна «◇ Сводка ромбов», «🔍 Ромб крупно», «📖 Как считается» */
+        #toggleRadarBtn, #plRadarBtn { display: none !important; }
+        .rs-box { font: 11px/1.45 Consolas, monospace; color: #cfd8e3; background: #15171c; border: 1px solid #2c3442; border-radius: 3px;
+            padding: 4px 6px; margin-top: 4px; max-height: 200px; overflow: auto; }
+        .rs-box b { color: #ffcc00; }
+        .rs-box.rs-tall { max-height: 46vh; }
+        .rs-tri { font: bold 11px/1.25 Consolas, monospace; white-space: pre; text-align: center; max-height: 190px; overflow: auto;
+            background: #0a0b0e; border: 1px solid #2c3442; border-radius: 3px; margin-top: 2px; padding: 4px; }
+        .rs-lab { font-size: 10px; color: #8aa; margin-top: 5px; }
+        .rs-btn { flex: 1; margin: 0; padding: 3px 4px; font-size: 10px; background: #2a2412; color: #ffcc00; border: 1px solid #ffcc00; border-radius: 3px; cursor: pointer; }
+        .rs-btn.on { background: #ffcc00; color: #000; }
+        .rs-tab div { white-space: nowrap; }
+        .rs-form { display: flex; gap: 6px; align-items: flex-start; margin: 3px 0; }
+        .rs-form canvas { flex: none; border: 1px solid #2c3442; image-rendering: pixelated; }
+        #rcCanvas { display: block; margin: 4px auto 0; background: #0a0b0e; border: 1px solid #34465e; image-rendering: pixelated; }
+        .rc-strip { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px; max-height: 150px; overflow: auto; }
+        .rc-strip figure { margin: 0; text-align: center; font: 9px Consolas, monospace; color: #9ab; }
+        .rc-strip canvas { display: block; background: #0a0b0e; image-rendering: pixelated; border: 1px solid #2c3442; }
+        .rc-strip canvas.now { border-color: #fff; }
+        .tab-sec.floating[data-tab="rhombsum"] { width: 380px; }
+        .tab-sec.floating[data-tab="rhombcap"] { width: 300px; }
+        .tab-sec.floating[data-tab="howto"] { width: 600px; max-height: 88vh; }
+        .howto { font: 12px/1.5 system-ui, sans-serif; color: #d6dde6; padding: 2px 8px 8px; }
+        .howto h4 { color: #ffcc00; margin: 10px 0 4px; font-size: 13px; }
+        .howto p { margin: 4px 0; }
+        .howto code { color: #9fe8a8; }
+        .howto pre { font: 12px/1.15 Consolas, monospace; background: #0a0b0e; border: 1px solid #2c3442; padding: 6px 8px; color: #9fe8a8; margin: 4px 0; overflow-x: auto; }
+        .howto table { border-collapse: collapse; font: 11px Consolas, monospace; margin: 4px 0; }
+        .howto td, .howto th { border: 1px solid #34465e; padding: 2px 6px; text-align: center; font-weight: normal; }
+        .howto th { color: #8aa; text-align: left; }
+        .howto .pp { display: flex; flex-wrap: wrap; gap: 6px; }
+        .howto .pp pre { margin: 0; }
         /* 35.9: у раздела — шапка (строится скриптом): за неё раздел таскают в другое место панели,
            в соседнюю панель или на холст, где он становится плавающим окном. ✕ — спрятать раздел. */
         .sec-head { display: flex; align-items: center; gap: 5px; font-size: 10px; font-weight: bold;
@@ -329,7 +368,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Code 35.75</h3>
+                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.008</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -442,6 +481,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                     <button id="snapBtn" title="Скачки: строки прыгают по строкам сетки, перетаскивание — по клеткам. Щёлкните — плавно">▦</button>
                     <!-- 35.12: пока плеер открыт, 🔃 и 🛰️ живут здесь (двойники кнопок у холста, см. PLAYER_DOCK) -->
                     <button id="plRadarBtn" class="pl-extra" data-for="toggleRadarBtn" title="Топологический Радар (Вид сверху / Спираль)">🛰️</button>
+                    <button id="plPinTopBtn" class="pl-extra" data-for="pinTopBtn" title="Закреп: первая строка всегда вверху экрана">🔝</button>
                 </div>
                 
                 <div class="control-group" style="border: none; padding: 0;">
@@ -589,6 +629,20 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                             <option value="auto">авто — по проходу</option>
                         </select>
                     </div>
+                    <!-- Треугольник v0.008: ◭ треугольники-копии — сдвинутые копии кадра начала цикла, от вершины до основания -->
+                    <div class="compact-row" style="margin-top: 2px; align-items:center;">
+                        <label class="checkbox-row" style="margin:0; flex:1.4;" title="Кадр через k проходов от начала цикла — XOR копий кадра начала цикла, сдвинутых вниз на d строк, у которых нет общих единиц с k−1 (Лукас). Каждая копия — треугольник: вершина на оси в строке d, стороны под 45° до основания. Это те же ромбы сетки — их общие грани"><input type="checkbox" id="triCopyCheck"><span style="color:#ff66cc">◭ Треугольники-копии</span></label>
+                        <select id="triCopyMin" title="Какие копии показывать: все или только со сдвигом, кратным 8, 16, … (мелкие копии дают частую штриховку)" style="flex:1; margin:0;">
+                            <option value="auto" selected>авто (до 24)</option>
+                            <option value="1">все</option>
+                            <option value="8">сдвиг кратен 8</option>
+                            <option value="16">кратен 16</option>
+                            <option value="32">кратен 32</option>
+                            <option value="64">кратен 64</option>
+                            <option value="128">кратен 128</option>
+                            <option value="256">кратен 256</option>
+                        </select>
+                    </div>
                     <!-- 35.59: буквы в ромбах — одинаковые ромбы одной буквой, зеркальный — строчной -->
                     <label class="checkbox-row" style="margin-top: 2px;" title="Каждый ромб сетки подписан буквой: одинаковые ромбы — одна буква, зеркальный — та же строчной. Буквы по частоте (А — самая частая). Цвет — ряд вдоль боковой стороны: у ряда e от края буквы повторяются словом длиной в степень двойки больше e+1. Размер ромба — шаг сетки (при «авто» — 16)"><input type="checkbox" id="rhombLettersCheck"><span style="color:#ffcc00">🔤 Буквы в ромбах</span></label>
                     <!-- 35.55: полосы периодов — строки по степеням двойки, у каждой полосы свой период волны -->
@@ -665,12 +719,151 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                     </div>
                 </div>
                 </div>
+                <!-- Треугольник v0.006: ◇ сводка ромбов — сколько, какие, на каких кадрах (окном на холсте по умолчанию) -->
+                <div class="tab-sec" data-tab="rhombsum" data-title="◇ Сводка ромбов" data-float="0.555,0.06">
+                <div class="control-group" style="border: none; padding: 0;">
+                    <div class="compact-row" style="align-items:center;">
+                        <label style="flex:1; margin:0;" title="Высота ромба в строках. «Как у сетки» — шаг ◇ Ромбической сетки (при «авто» — 16)">Ромб высотой:</label>
+                        <select id="rsSize" style="flex:1; margin:0;">
+                            <option value="grid">как у сетки</option>
+                            <option value="8">8</option>
+                            <option value="16">16</option>
+                            <option value="32">32</option>
+                            <option value="64">64</option>
+                            <option value="128">128</option>
+                            <option value="256">256</option>
+                            <option value="512">512</option>
+                        </select>
+                    </div>
+                    <div id="rsNow" class="rs-box">—</div>
+                    <div class="rs-lab">Буквы на своих местах (верхняя — вершина треугольника):</div>
+                    <div id="rsTri" class="rs-tri"></div>
+                    <div class="compact-row" style="margin-top:4px;">
+                        <button id="rsCycleBtn" type="button" class="rs-btn" title="Прогнать волну на копии текста через весь цикл и собрать по каждому кадру (проходу): сколько ромбов, какие формы, какие новые; и по каждой форме — на каких кадрах она есть. Холст не трогается. Повторное нажатие — стоп">▶ По кадрам — весь цикл</button>
+                        <button id="rsSaveBtn" type="button" class="rs-btn" style="flex:0.45;" title="Сводку (и прогнанный цикл) — в файл .txt">💾 .txt</button>
+                    </div>
+                    <div id="rsCycle" class="rs-box rs-tall">Цикл не прогнан.</div>
+                </div>
+                </div>
+                <!-- Треугольник v0.006: 🔍 ромб крупно — выбранный щелчком ромб, живьём, с лентой его состояний -->
+                <div class="tab-sec" data-tab="rhombcap" data-title="🔍 Ромб крупно" data-float="0.80,0.30">
+                <div class="control-group" style="border: none; padding: 0;">
+                    <div class="compact-row" style="align-items:center;">
+                        <button id="rcPickBtn" type="button" class="rs-btn" title="Затем щелчок по треугольнику — берётся ромб под курсором (размер — как в сводке). Alt+щелчок по холсту выбирает ромб в любое время">🎯 Выбрать ромб щелчком</button>
+                        <label class="checkbox-row" style="margin:0; flex:0.8;" title="Обвести на холсте все ромбы с тем же рисунком: голубым — такие же, розовым — зеркальные"><input type="checkbox" id="rcSameCheck" checked><span>такие же</span></label>
+                    </div>
+                    <canvas id="rcCanvas" width="264" height="264"></canvas>
+                    <div id="rcInfo" class="rs-box"></div>
+                    <div class="compact-row" style="margin-top:4px;">
+                        <button id="rcGifBtn" type="button" class="rs-btn" title="Этот ромб по проходам — GIF: волна на копии текста, кадр через «каждый N-й» у 🎞 GIF Аниматрицы, пока ромб не вернётся к первому кадру (не больше 256)">🎞 GIF по проходам</button>
+                        <button id="rcPngBtn" type="button" class="rs-btn" style="flex:0.5;" title="Крупную картинку — в PNG">🖼 PNG</button>
+                        <button id="rcClearBtn" type="button" class="rs-btn" style="flex:0.3;" title="Снять выбор">✕</button>
+                    </div>
+                    <div class="rs-lab">Его кадры — разные состояния на границах проходов с момента выбора (белая рамка — сейчас):</div>
+                    <div id="rcStrip" class="rc-strip"></div>
+                </div>
+                </div>
+                <!-- Треугольник v0.006: 📖 как считается — описание с примером (по умолчанию спрятано, вкладка сверху) -->
+                <div class="tab-sec" data-tab="howto" data-title="📖 Как считается" data-float="0.2,0.05" data-off-default="1">
+                <div class="howto">
+                    <h4>1. Начальный Серпинский — «🔺 Формы», Правило 90</h4>
+                    <p>Генератор берёт <b>сид</b> (по умолчанию «1») и <b>число строк N</b>. Поле — N строк шириной
+                    <code>длина сида + 2N</code>, всё залито «0», сид ставится в середину строки 0. Каждая следующая строка считается
+                    из строки над ней: для клетки x смотрятся три соседа сверху — левый, центральный, правый — и по номеру правила
+                    выбирается новый бит. 90 в двоичном виде — <code>01011010</code>:</p>
+                    <table><tr><th>сверху (Л Ц П)</th><td>111</td><td>110</td><td>101</td><td>100</td><td>011</td><td>010</td><td>001</td><td>000</td></tr>
+                    <tr><th>новый бит</th><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td></tr></table>
+                    <p>Видно, что центр не важен: <b>новый = левый XOR правый</b>. Крайние столбцы поля не пересчитываются (остаются «0»).
+                    Пример — сид «1», N = 4, поле шириной 9:</p>
+<pre>строка 0:  0000<b>1</b>0000
+строка 1:  000101000   (x=3: Л=0, П=1 → 1;  x=4: Л=0, П=0 → 0;  x=5: Л=1, П=0 → 1)
+строка 2:  001000100
+строка 3:  010101010</pre>
+                    <p><b>«Обрезать фон»</b> (галка стоит по умолчанию): в каждой строке всё левее первой «1» и правее последней «1»
+                    становится пробелом. Нули ВНУТРИ остаются. Получается треугольник, «висящий в пустоте»:</p>
+<pre>|    1    |
+|   101   |
+|  10001  |
+| 1010101 |</pre>
+                    <p><b>«Вживить в центр»</b>: если на холсте уже есть текст, фигура не заменяет его, а вклеивается в середину —
+                    переносятся только непробельные символы. Без галки (или на пустом холсте) фигура становится всем текстом.
+                    Треугольник на 1024 строки — это N = 1024: ширина 2049, вершина — середина первой строки.</p>
+
+                    <h4>2. Аниматрица — волна сверху вниз</h4>
+                    <p>Строка 0 не меняется никогда. Волна идёт вниз по одной строке за шаг: на шаге k строка k+1 переписывается
+                    по строке k — <b>уже переписанной</b> на прошлом шаге. Клетка за клеткой, в одном столбце, без соседей
+                    (сверху — a, снизу — b):</p>
+                    <table><tr><th>сверху a</th><td>пробел</td><td>символ</td><td>пробел</td><td>символ</td><td>символ</td></tr>
+                    <tr><th>снизу b</th><td>пробел</td><td>пробел</td><td>символ</td><td>тот же</td><td>другой</td></tr>
+                    <tr><th>станет</th><td>пробел</td><td>a</td><td>b</td><td><b>пробел</b></td><td>a (верхний)</td></tr></table>
+                    <p>«0» здесь — тоже символ, пустота — только пробел. Когда волна доходит до низа — это <b>проход</b>
+                    (счёт «пройдено циклов» у Аниматрицы). После каждого прохода весь текст сравнивается по отпечатку со всеми
+                    прежними: совпал — найден <b>🔁 цикл</b>, его период и с какого прохода он начался.</p>
+                    <p>Пример — треугольник выше. Проход 1: строка 1 = f(строка 0, строка 1) и т.д.:</p>
+<pre>  столбец 3:  сверху « », снизу «1» → «1»
+  столбец 4:  сверху «1», снизу «0» → «1» (разные символы — верхний)
+  столбец 5:  сверху « », снизу «1» → «1»      итог строки 1: «   111   »</pre>
+                    <div class="pp">
+<pre>начало
+    1
+   101
+  10001
+ 1010101</pre>
+<pre>проход 1
+    1
+   111
+  11111
+ 11 1 11</pre>
+<pre>проход 2
+    1
+   1 1
+  1 1 1
+ 1     1</pre>
+<pre>проход 3
+    1
+   111
+  11 11
+ 111 111</pre>
+<pre>проход 4
+    1
+   1 1
+  1   1
+ 1 1 1 1</pre>
+<pre>проход 5
+    1
+   111
+  11111
+ 11 1 11</pre>
+                    </div>
+                    <p>В этом примере «0» исчезли уже на проходе 1: у «1» над «0» результат «1», у «0» над «0» — пробел, и нулей не осталось. Пока нули есть, правило — не чистый XOR. Когда в каждом столбце остаётся один символ, правило становится чистым <b>XOR по наличию</b>: клетка есть, если есть ровно одна из двух. Один проход — это «накопленный XOR» сверху вниз по каждому столбцу, столбцы живут независимо. Проход 4 — классический треугольник Серпинского (Паскаль по модулю 2), проход 5 повторил проход 1: <b>период 4, разгон 1</b>. При одном символе в столбце период — всегда степень двойки, не больше ближайшей степени двойки ≥ числа строк (у 1024 строк — до 1024). На больших треугольниках нули живут дольше и разгон длиннее: у правила 90 на 64 строки (проверено здесь, «▶ По кадрам») цикл начинается с прохода 33, период 64. С «0» и «1» вперемешку метки едут поверх того же XOR-узора (разбор — в борт-журнале и на странице «Исследование»).</p>
+
+                    <h4>3. Ромбы — откуда они и как считаются</h4>
+                    <p>◇ Сетка проводит диагонали под 45° от вершины (середины первой строки) через каждые S символов. Ромб высотой S —
+                    клетки между ними: строки r…r+S, в строке r+d — от c−w до c+w, где w растёт до середины и убывает. Вершины
+                    ромбов идут через S/2 строк, в ряду — через S столбцов. Почему кадры собраны из ромбов: кадр через k проходов —
+                    XOR копий начального кадра, сдвинутых на все d, у которых нет общих единиц с k−1 (теорема Лукаса); каждый нулевой
+                    разряд 2^j в k−1 добавляет копию со сдвигом 2^j и ромбы этого размера (◇ «авто» рисует их все).</p>
+                    <p><b>◭ Треугольники-копии</b> (галка в «👁 Вид»): те же ромбы, только видна их общая грань. В чистой фазе проход —
+                    накопленный XOR по столбцу, и кадр через k проходов от начала цикла — XOR копий кадра начала цикла, сдвинутых вниз
+                    на d строк, где d & (k−1) = 0. Каждая копия — треугольник: вершина на оси в строке d, стороны под 45° до основания.
+                    Пример: 1024 строки, k−1 = 1011111111 — нулевой один разряд 256, копия одна: треугольник от строки 256. k−1 = 1001111111 —
+                    разряды 256 и 128: копии 128, 256 и 384 (пунктир — сумма разрядов). Цвет — по старшему разряду сдвига.</p>
+                    <p><b>◇ Сводка ромбов</b>: для текущего кадра — сколько целых ромбов, сколько разных рисунков, сколько букв
+                    (одинаковые — одна буква, зеркальный слева направо — та же строчной; буквы по частоте, А — самая частая) и
+                    буквы на своих местах. «▶ По кадрам — весь цикл» гонит волну на копии до повтора текста и даёт две таблицы:
+                    по кадрам (проход · ромбов · разных · новые формы · состав) и по формам (рисунок · впервые · на каких проходах).
+                    В цикле буквы — по первому появлению, поэтому они не совпадают с буквами кадра.</p>
+                    <p><b>🔍 Ромб крупно</b>: «🎯» и щелчок по треугольнику (или Alt+щелчок) — ромб под курсором, размер как в сводке.
+                    В окне он живьём, крупно; на холсте — белой рамкой, такие же — голубым, зеркальные — розовым. Лента ниже
+                    копит его разные состояния на границах проходов, с номером прохода; 🎞 — GIF этого ромба по проходам.</p>
+                </div>
+                </div>
             </div>
         </div>
 
         <!-- 35.8: текст окна ❓ Помощь. Правится вместе с кодом, чтобы не расходился с ним. -->
         <template id="helpText">
-            <h2>Zerkalius Code — как пользоваться</h2>
+            <h2>Zerkalius Треугольник — как пользоваться</h2>
             <p class="help-lead">Машина берёт текст (по умолчанию — собственный исходный код страницы) или двоичные строки и
             гонит их кадр за кадром по холсту: сдвигает, отражает, сравнивает строку с соседями и подсвечивает то, что
             меняется. Смотреть можно как ленту, как цилиндр, как спираль радара. Всё, что на холсте, можно записать в видео.</p>
@@ -762,6 +955,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
             <button id="toggleReverseBtn" class="float-btn" title="Включить реверс движения">🔃</button>
             <button id="toggleFrameBtn" class="float-btn active-yellow" title="Вкл/Выкл рамку прицела">🔳</button>
             <button id="toggleRadarBtn" class="float-btn" title="Топологический Радар (Вид сверху / Спираль)">🛰️</button>
+            <button id="pinTopBtn" class="float-btn" title="Закреп: первая строка текста всегда у верхнего края экрана — при любом масштабе, интервале и во время игры. Прокрутка и перетаскивание по вертикали при этом стоят">🔝</button>
 
             <button id="alignLeftBtn" class="float-btn align-btn" title="Выровнять влево">|&lt;</button>
             <button id="alignCenterBtn" class="float-btn align-btn" title="По центру">&gt;|&lt;</button>
@@ -772,7 +966,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
     </div>
 
     <script>
-        console.log("%c Zerkalius Code ", "background: #222; color: #00ff66; font-size: 20px; font-weight: bold; border-radius: 5px; padding: 5px;");
+        console.log("%c Zerkalius Треугольник ", "background: #222; color: #00ff66; font-size: 20px; font-weight: bold; border-radius: 5px; padding: 5px;");
         console.log("%c Concept, Vision & Ideas: The Architect (User) \n Code & Logic: AI", "color: #00ccff; font-size: 14px; font-weight: bold;");
 
         const THEMES = {
@@ -1140,7 +1334,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
             LOOK_IDS: ['echoModeCheck', 'dualCoreCheck', 'dualMaskCheck', 'freezeLayer1Check', 'dualCoreSpeedInput',
                 'speedMultInput', 'algorithmInput', 'freezeScrollCheck', 'spin3dCheck', 'breathingZoomCheck',
                 'hideStaticCheck', 'deltaModeSelect', 'logicalOpSelect', 'zerkaliusAnimCheck', 'elkaCheck',
-                'cylinderCheck', 'findDiagonalsCheck', 'neonGlowCheck', 'animByPassCheck', 'rhombGridCheck', 'rhombGridStep', 'rhombLettersCheck', 'rowBandsCheck', 'symAxisCheck', 'fontSizeRange', 'lineHeightRange', 'charSpacingRange',
+                'cylinderCheck', 'findDiagonalsCheck', 'neonGlowCheck', 'animByPassCheck', 'rhombGridCheck', 'rhombGridStep', 'rhombLettersCheck', 'triCopyCheck', 'triCopyMin', 'rowBandsCheck', 'symAxisCheck', 'fontSizeRange', 'lineHeightRange', 'charSpacingRange',
                 'fontSelect', 'rainbowTextCheck', 'syntaxColorCheck', 'trimZerosCheck', 'bitColorsCheck', 'zeroColorPicker', 'oneColorPicker', 'gridColorsCheck', 'gridZeroPicker', 'gridOnePicker', 'gridSparseInput', 'gridSparseRowInput', 'canvasBgPicker', 'gridHideUnderCheck'],
             resetLook: function() {
                 this.LOOK_IDS.forEach(id => {
@@ -1199,7 +1393,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                     let opt = document.createElement('option'); opt.value = key; opt.textContent = PREBUILT_SCENES[key].name;
                     UI.sceneSelect.appendChild(opt);
                 }
-                let saved = localStorage.getItem('saved_scenes_v20');
+                let saved = (localStorage.getItem('ztri_scenes_v1') || localStorage.getItem('saved_scenes_v20'));
                 if (saved) {
                     try {
                         MODULE_STATE.customScenes = JSON.parse(saved);
@@ -1271,7 +1465,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                 MODULE_STATE.isFrameActive = scene.frame !== undefined ? scene.frame : true;
                 if(MODULE_STATE.isFrameActive) UI.toggleFrameBtn.classList.add('active-yellow'); else UI.toggleFrameBtn.classList.remove('active-yellow');
                 
-                MODULE_STATE.isRadarActive = scene.radar !== undefined ? scene.radar : false;
+                MODULE_STATE.isRadarActive = false;   // v0.006: радара на этой странице нет
                 if(MODULE_STATE.isRadarActive) {
                     UI.toggleRadarBtn.classList.add('active-yellow'); UI.toggleRadarBtn.style.background = '#00ff66';
                 } else {
@@ -1338,7 +1532,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                     const opt = document.createElement('option'); opt.value = 'custom_' + key; opt.textContent = '★ ' + sc.name;
                     UI.sceneSelect.appendChild(opt); added++;
                 });
-                try { localStorage.setItem('saved_scenes_v20', JSON.stringify(MODULE_STATE.customScenes)); }
+                try { localStorage.setItem('ztri_scenes_v1', JSON.stringify(MODULE_STATE.customScenes)); }
                 catch (e) { alert('Сцены добавлены в список, но в память браузера не влезли (около 5 МБ на всё): после закрытия страницы их не будет. Удалите лишние сцены и загрузите файл снова.'); }
                 UI.statusInfo.textContent = `Сцены из «${fileName}»: добавлено ${added}` + (added ? '' : ' — все уже были');
                 return true;
@@ -1361,10 +1555,10 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                 MODULE_STATE.customScenes[key] = newScene;
                 // Память браузера у страницы не бездонна (около 5 МБ на всё). Не влезло с текстом — сцена
                 // пишется без текста, и об этом говорится прямо, а не молча.
-                try { localStorage.setItem('saved_scenes_v20', JSON.stringify(MODULE_STATE.customScenes)); }
+                try { localStorage.setItem('ztri_scenes_v1', JSON.stringify(MODULE_STATE.customScenes)); }
                 catch (e) {
                     newScene.full = SESSION.collect(false);
-                    try { localStorage.setItem('saved_scenes_v20', JSON.stringify(MODULE_STATE.customScenes)); } catch (e2) {}
+                    try { localStorage.setItem('ztri_scenes_v1', JSON.stringify(MODULE_STATE.customScenes)); } catch (e2) {}
                     alert('Не хватает места в памяти браузера: сцена «' + name + '» сохранена без текста. Удалите старые сцены или сохраните текст файлом.');
                 }
                 let opt = document.createElement('option'); opt.value = "custom_" + key; opt.textContent = "★ " + name;
@@ -1478,9 +1672,9 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                     return { text: '', color: '' };
                 });
             },
-            saveToLocalStorage: function(data) { try { localStorage.setItem('saved_binary_lines_v24', JSON.stringify(data)); } catch (e) {} },
+            saveToLocalStorage: function(data) { try { localStorage.setItem('ztri_lines_v1', JSON.stringify(data)); } catch (e) {} },
             loadFromLocalStorage: function() {
-                const saved = localStorage.getItem('saved_binary_lines_v24');
+                const saved = (localStorage.getItem('ztri_lines_v1') || localStorage.getItem('saved_binary_lines_v24'));
                 if (saved) {
                     try {
                         const parsed = JSON.parse(saved);
@@ -1694,6 +1888,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
             animReset: function() {
                 MODULE_STATE.animPasses = 0; MODULE_STATE.animSeen = null; MODULE_STATE.animCycle = null;
                 MODULE_STATE.animHist = null; MODULE_STATE.animHistSize = 0;   // 35.51
+                RHOMBS.onReset();   // v0.006
                 if (this.animLogOn) {   // 35.49: в журнале — отметка и новый текст с нуля
                     this.animLog.prev = null;
                     this.animLogAdd('##### ЗАГРУЖЕН НОВЫЙ ТЕКСТ — счёт проходов заново #####\n\n');
@@ -1796,11 +1991,12 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                 st.animHistSize += size;
                 while (st.animHistSize > this.ANIMHIST_MAX && st.animHist.length > 1) st.animHistSize -= st.animHist.shift().size;
             },
-            animPassFull: function() {
+            animPassFull: function(noCalc) {   // v0.002: noCalc — строки пересчитает тик плеера один раз после всех проходов
                 const st = MODULE_STATE, H = st.originalLines.length;
                 if (H < 2) return;
                 const p0 = st.animPasses || 0; let guard = H + 2;
                 do { this.runAnimatrixGlobal(true); } while ((st.animPasses || 0) === p0 && --guard > 0);
+                if (noCalc) return;
                 this.precalculateLines(false); this.animInfoUpd();
             },
             animPassBack: function() {
@@ -2011,7 +2207,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                Повторы отбрасываются, иначе мелкие ромбы дали бы десятки тысяч кадров: в GIF — «алфавит» разных ромбов
                цикла в порядке первого появления. Сравнение — по тому, что видно в кадре: пробел / «0» / прочее. На размер —
                один GIF, скачиваются по очереди (браузер может спросить разрешение на несколько загрузок).
-               35.75 (1024 строки): цикл там ~1500 проходов по ~6 млн клеток ромбов — это десятки секунд.
+               Треугольник v0.002 (1024 строки): цикл там ~1500 проходов по ~6 млн клеток ромбов — это десятки секунд.
                Поэтому работа идёт кусками по ~60 мс с ходом в строке состояния, страница не замирает; повторное нажатие —
                стоп (соберётся то, что успели). Отпечаток ромба — число, не строка: так в разы меньше мусора в памяти. */
             rhombCycle: function() {
@@ -2144,7 +2340,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                 const cx = cv.getContext('2d');
                 const first = hash(), p0 = pass, frames = [];
                 let closed = false;
-                for (let f = 0; f < 256; f++) {
+                for (let f = 0; f < 256 && frames.length * gw * gh < 2e8; f++) {   // v0.002: и не больше ~200 МБ кадров (1024 строки — ~2 МБ на кадр)
                     const ix = new Uint8Array(gw * gh);
                     // подпись: рисуется холстом, а в кадр идёт по яркости — жёлтым (3) или фоном (0)
                     cx.fillStyle = '#000'; cx.fillRect(0, 0, gw, capH);
@@ -2171,7 +2367,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                 a.href = URL.createObjectURL(new Blob([gif], { type: 'image/gif' }));
                 a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
                 UI.statusInfo.textContent = `GIF: ${frames.length} кадров, шаг ${stepPasses}` +
-                    (closed ? ' — круг замкнулся' : ' — до повтора не дошли (предел 256 кадров)') + ` · ${name}`;
+                    (closed ? ' — круг замкнулся' : ' — до повтора не дошли (предел 256 кадров или 200 МБ)') + ` · ${name}`;
             },
             animPassDone: function() {
                 const st = MODULE_STATE, h = this.animHash();
@@ -2182,6 +2378,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                 } else st.animSeen.set(h, st.animPasses);
                 if (st.animHist) this.animHistPush();   // 35.51: текст после цикла — для ⏮
                 if (this.animLogOn) this.animLogSnap('ПРОХОД ' + st.animPasses);   // 35.49: журнал
+                RHOMBS.onPass();   // v0.006: лента состояний 🔍 ромба — ровно на границе прохода
             },
             animInfoUpd: function() {
                 const el = document.getElementById('animInfo');
@@ -2200,7 +2397,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
             },
             // fast (35.51) — без пересчёта строк и счётчика после шага: так идут шаги внутри целого цикла (animPassFull),
             // пересчёт один раз в конце. Иначе 255 пересчётов всего текста подряд.
-            runAnimatrixGlobal: function(fast) {
+            runAnimatrixGlobal: function(fast, quiet) {   // v0.002: quiet — без отрисовки, кадр нарисует тик плеера
                 let lines = MODULE_STATE.originalLines;
                 let H = lines.length;
                 // 35.43: отпечаток исходного текста — проход 0, до первого шага волны
@@ -2219,8 +2416,8 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                 let str1 = lines[row1].text;
                 let str2 = lines[row2].text;
                 
-                let resStr = "";
-                let len = Math.max(str1.length, str2.length);
+                const out = new Array(Math.max(str1.length, str2.length));   // v0.005: без склейки строки по символу
+                let len = out.length;
                 for(let k=0; k<len; k++) {
                     let c1 = str1[k] || ' ';
                     let c2 = str2[k] || ' ';
@@ -2231,24 +2428,44 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                     else if (c2 !== ' ' && c1 === ' ') cNew = c2;
                     else if (c1 !== ' ' && c2 !== ' ') cNew = c1; 
                     
-                    resStr += cNew;
+                    out[k] = cNew;
                 }
-                lines[row2].text = resStr;
+                lines[row2].text = out.join('');
                 MODULE_STATE.animatrixRow++;
                 if (MODULE_STATE.animatrixRow >= H - 1) this.animPassDone();   // 35.43: волна дошла до низа — проход
                 if (fast) return;   // 35.51
-                this.animInfoUpd();
-                
-                this.precalculateLines(false);
+                this.precalcRows(row2, row2 + 2);   // v0.002: только затронутые строки, а не все
+                if (quiet) return;
+                this.animInfoUpd(); RENDERER.updateTimeline(); RENDERER.renderFrame();
             },
 
-            precalculateLines: function(isFirstLoad = false) {
+            /* Треугольник v0.002: ВЫБОРОЧНЫЙ ПЕРЕСЧЁТ (запрос: «проверь, чтобы 1024 строки норм ходили»). Шаг волны меняет
+               одну строку, а precalculateLines пересчитывал ВСЕ — на 1024 строках по 2047 символов это ~2 млн символов
+               и 8 млн записей в массивы на каждый шаг, плюс отрисовка кадра, и так multStep раз за тик. Теперь шаг волны
+               зовёт precalcRows(строка, строка + 2): сама строка, следующая (её Δ считается от изменившейся) и ещё одна —
+               для XOR, где обработанная строка зависит от исходной соседней. Кадр рисует тик плеера один раз в конце.
+               Следствие: счётчик «мутации» теперь растёт только у строк, которые реально пересчитывались, а не у всех
+               строк на каждом шаге. linesVer растёт при полном пересчёте — по нему живут кэши (буквы в ромбах). */
+            linesVer: 0,
+            precalcRows: function(a, b) {
+                const raw = MODULE_STATE.originalLines, processed = MODULE_STATE.lines;
+                if (processed.length !== raw.length) { this.precalculateLines(false, true); return; }
+                const op = UI.logicalOpSelect?.value || 'original';
+                for (let i = Math.max(0, a); i <= Math.min(b, raw.length - 1); i++) processed[i] = this.calcRow(i, raw, processed, op, false);
+            },
+            precalculateLines: function(isFirstLoad = false, quiet = false) {
                 const op = UI.logicalOpSelect?.value || 'original';
                 const raw = MODULE_STATE.originalLines;
+                this.linesVer++;
                 if (raw.length === 0) { MODULE_STATE.lines = []; return; }
                 
                 const processed = [];
-                for (let i = 0; raw.length !== i; i++) {
+                for (let i = 0; raw.length !== i; i++) processed.push(this.calcRow(i, raw, processed, op, isFirstLoad));
+                MODULE_STATE.lines = processed;
+                this.afterPrecalc(isFirstLoad);
+                if (!quiet) { RENDERER.updateTimeline(); RENDERER.renderFrame(); }
+            },
+            calcRow: function(i, raw, processed, op, isFirstLoad) {
                     const line = raw[i];
                     let text = line.text;
                     
@@ -2262,28 +2479,29 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                         }).join('');
                     } else if (op === 'reverse') text = text.split('').reverse().join('');
                     
-                    const diffFlags = []; const diffFlagsLeft = []; const diffFlagsRight = []; const mutFlags = [];
+                    /* v0.005: флаги — в typed arrays (0/1 вместо true/false), сравнение — по кодам символов. Замер на 1024
+                       строках: полный пересчёт шёл 223 мс (push по одному в четыре массива), и «целыми циклами» тянул
+                       340 мс на тик. За краем строки charCodeAt даёт NaN, а NaN не равен ничему — как прежнее undefined. */
+                    const n = text.length;
+                    const diffFlags = new Uint8Array(n), diffFlagsLeft = new Uint8Array(n), diffFlagsRight = new Uint8Array(n), mutFlags = new Uint32Array(n);
                     const prevText = i > 0 ? processed[i - 1].text : "";
                     
                     if (isFirstLoad) MODULE_STATE.mutationTracker[i] = [];
                     if (MODULE_STATE.mutationTracker[i] === undefined) MODULE_STATE.mutationTracker[i] = [];
+                    const tr = MODULE_STATE.mutationTracker[i];
 
-                    for (let charIdx = 0; charIdx < text.length; charIdx++) {
-                        const char = text[charIdx];
-                        let isDiff = char !== (prevText ? prevText[charIdx] : undefined);
-                        diffFlags.push(isDiff);
-                        diffFlagsLeft.push(char !== (prevText ? prevText[charIdx - 1] : undefined));
-                        diffFlagsRight.push(char !== (prevText ? prevText[charIdx + 1] : undefined));
-                        
-                        if (isDiff && !isFirstLoad) {
-                            MODULE_STATE.mutationTracker[i][charIdx] = (MODULE_STATE.mutationTracker[i][charIdx] || 0) + 1;
-                        }
-                        mutFlags.push(MODULE_STATE.mutationTracker[i][charIdx] || 0);
+                    for (let charIdx = 0; charIdx < n; charIdx++) {
+                        const c = text.charCodeAt(charIdx);
+                        const isDiff = c !== prevText.charCodeAt(charIdx);
+                        diffFlags[charIdx] = isDiff;
+                        diffFlagsLeft[charIdx] = c !== prevText.charCodeAt(charIdx - 1);
+                        diffFlagsRight[charIdx] = c !== prevText.charCodeAt(charIdx + 1);
+                        if (isDiff && !isFirstLoad) tr[charIdx] = (tr[charIdx] || 0) + 1;
+                        mutFlags[charIdx] = tr[charIdx] || 0;
                     }
-                    processed.push({ text: text, color: line.color, diffFlags: diffFlags, diffFlagsLeft: diffFlagsLeft, diffFlagsRight: diffFlagsRight, mutFlags: mutFlags });
-                }
-                MODULE_STATE.lines = processed;
-                
+                    return { text: text, color: line.color, diffFlags: diffFlags, diffFlagsLeft: diffFlagsLeft, diffFlagsRight: diffFlagsRight, mutFlags: mutFlags };
+            },
+            afterPrecalc: function(isFirstLoad) {
                 if (isFirstLoad) {
                     MODULE_STATE.isVacuum = !!this._vacuumPending; this._vacuumPending = false;   // 35.16
                     const linesCount = MODULE_STATE.lines.length;
@@ -2296,7 +2514,6 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                     MODULE_STATE.animatrixRow = 0;
                     this.animReset();   // 35.43: новый текст — счёт циклов заново
                 }
-                RENDERER.updateTimeline(); RENDERER.renderFrame();
             },
 
             exportToExcel: function() {
@@ -2703,7 +2920,17 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                 const canvasBg = document.getElementById('canvasBgPicker')?.value || '#000000';   // 35.70: фон холста
                 if (!gridUnder) { ctx.fillStyle = canvasBg; ctx.fillRect(0, 0, width, height); }
                 
-                const visibleHeight = parseInt(UI.heightRange?.value || 15, 10);
+                let visibleHeight = parseInt(UI.heightRange?.value || 15, 10);
+                /* Треугольник v0.007: ⤒ ЗАКРЕП (запрос: «первая строка всегда на самом верху при любом изменении масштаба»).
+                   Строк на экране — не больше, чем в тексте (иначе по кругу сверху снова пришло бы начало), позиция —
+                   ровно с первой строки, верх окна строк — у верхнего края холста. Скольжение и сдвиг перетаскиванием
+                   по вертикали не действуют; шаг плеера двигает счётчик, но кадр всё равно стоит от строки 0. */
+                const pinTop = !!MODULE_STATE.pinTop && MODULE_STATE.lines.length > 0 && !MODULE_STATE.isRadarActive;
+                if (pinTop) {
+                    visibleHeight = Math.max(1, Math.min(visibleHeight, MODULE_STATE.lines.length));
+                    MODULE_STATE.currentIndex = Math.floor(visibleHeight / 2) % MODULE_STATE.lines.length;
+                    MODULE_STATE.frozenIndex = null;
+                }
                 const hideStatic = UI.hideStaticCheck?.checked || false; 
                 const deltaMode = UI.deltaModeSelect?.value || 'top';
                 const findDiagonals = UI.findDiagonalsCheck?.checked || false; 
@@ -2772,12 +2999,12 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                 let lh = parseFloat(UI.lineHeightRange?.value || 1.2);
                 let lineSpacing = fontSize * lh;
                 
-                const startY = (height - (visibleHeight - 1) * lineSpacing) / 2 + MODULE_STATE.offsetY;
+                const startY = pinTop ? lineSpacing / 2 + 2 : (height - (visibleHeight - 1) * lineSpacing) / 2 + MODULE_STATE.offsetY;   // v0.007: закреп — от верхнего края
                 // 35.38: плавно — сразу после шага строки рисуются там, где были (сдвиг на lastShift строк), и за время
                 // до следующего шага доезжают на своё место. Скачки — сдвига нет. Большой прыжок (длиннее экрана)
                 // и замороженный слой не скользят.
                 let glide = 0;
-                if (!MODULE_STATE.snapGrid && MODULE_STATE.isPlaying && !freezeLayer1 && MODULE_STATE.lastShift &&
+                if (!pinTop && !MODULE_STATE.snapGrid && MODULE_STATE.isPlaying && !freezeLayer1 && MODULE_STATE.lastShift &&
                     Math.abs(MODULE_STATE.lastShift) < visibleHeight) {
                     const spMs = Math.max(1, 1001 - parseInt(UI.speedRange?.value || 920, 10));
                     const phase = Math.min(1, Math.max(0, (performance.now() - MODULE_STATE.lastTickTime) / spMs));
@@ -2985,6 +3212,22 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                 const gridHide = gridUnder && !!document.getElementById('gridHideUnderCheck')?.checked;
 
                 const rowX = [];   // 35.54: x начала каждой строки — для ромбической сетки
+                /* v0.002: МЕЛКИЙ СИМВОЛ — ПРЯМОУГОЛЬНИКОМ. На 1024 строках символ меньше 4 px: буквы уже не прочесть, а fillText
+                   на сотни тысяч символов — главная цена кадра. fillRect того же цвета на месте символа в разы дешевле. */
+                const tinyGlyph = fontSize < 4, tgW = Math.max(1, charWidth * 0.8), tgH = Math.max(1, fontSize * 0.8);
+                /* v0.004: и не прямоугольником, а точкой в буфер пикселей. Замер на 1024 строках (весь треугольник на экране,
+                   кегль 1): fillRect давал 600 мс на кадр — миллион смен заливки и строк цвета. Теперь символ пишет свой цвет
+                   прямо в ImageData, а на холст буфер выводится одной картинкой. Несколько символов в одном пикселе —
+                   остаётся самый непрозрачный (изменившиеся по Δ обычно ярче). */
+                let tinyBuf = null, tinyImg = null, TW = 0, TH = 0;
+                const tinyRgb = new Map(), tgw = Math.max(1, Math.round(tgW)), tgh = Math.max(1, Math.round(tgH));
+                if (tinyGlyph) {
+                    TW = Math.max(1, Math.round(width)); TH = Math.max(1, Math.round(height));
+                    const tc = this._tinyCv || (this._tinyCv = document.createElement('canvas'));
+                    if (tc.width !== TW || tc.height !== TH) { tc.width = TW; tc.height = TH; this._tinyImg = null; }
+                    tinyImg = this._tinyImg || (this._tinyImg = tc.getContext('2d').createImageData(TW, TH));
+                    tinyBuf = tinyImg.data; tinyBuf.fill(0);
+                }
                 for (let i = 0; i < visibleHeight; i++) {
                     if (!visibleLines[i]) continue;
                     const lineData = visibleLines[i].data; const dualData = visibleLines[i].dualData;
@@ -3091,6 +3334,18 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                         if (hideStatic && !isChanged && !isCollision) cAlpha = 0.0;
                         if (cAlpha <= 0.01) continue; 
                         if (gridHide) occCells.push(x, y);   // 35.66, 35.72
+                        if (tinyGlyph) {   // v0.004: точка в буфер пикселей
+                            let px = tinyRgb.get(cRgb); if (!px) { px = String(cRgb).split(',').map(Number); tinyRgb.set(cRgb, px); }
+                            const A = Math.min(255, Math.round(cAlpha * 255));
+                            let x0 = Math.round(x - tgW / 2), y0 = Math.round(y - tgH / 2);
+                            const x1 = Math.min(TW, x0 + tgw), y1 = Math.min(TH, y0 + tgh);
+                            if (x0 < 0) x0 = 0; if (y0 < 0) y0 = 0;
+                            for (let yy = y0; yy < y1; yy++) for (let xx = x0, o = (yy * TW + x0) * 4; xx < x1; xx++, o += 4) {
+                                if (tinyBuf[o + 3] > A) continue;
+                                tinyBuf[o] = px[0]; tinyBuf[o + 1] = px[1]; tinyBuf[o + 2] = px[2]; tinyBuf[o + 3] = A;
+                            }
+                            continue;
+                        }
 
                         const rgbaStr = this.rgba(cRgb, cAlpha);
                         if (11 > fontSize) charShadowBlur = 0; 
@@ -3106,6 +3361,10 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                         
                         ctx.fillText(finalChar, x, y);
                     }
+                }
+                if (tinyGlyph) {   // v0.004: буфер мелких символов — на холст одной картинкой
+                    this._tinyCv.getContext('2d').putImageData(tinyImg, 0, 0);
+                    ctx.save(); ctx.shadowBlur = 0; ctx.globalAlpha = 1; ctx.drawImage(this._tinyCv, 0, 0); ctx.restore();
                 }
                 if (gridUnder) {   // 35.66
                     let ax = null;
@@ -3136,13 +3395,13 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                        Поэтому «авто» рисует сразу все включённые размеры, каждый своим цветом, и пишет легенду. k — от
                        начала найденного цикла (🔁), пока цикла нет — от начала текста. k = 0 — начальный кадр, копий нет. */
                     const stepV = document.getElementById('rhombGridStep')?.value || '32';
-                    const SZ_COL = { 8: 'rgba(80,200,255,0.7)', 16: 'rgba(90,230,120,0.7)', 32: 'rgba(255,204,0,0.7)', 64: 'rgba(255,90,90,0.75)', 128: 'rgba(210,120,255,0.75)', 256: 'rgba(255,255,255,0.6)' };
+                    const SZ_COL = { 8: 'rgba(80,200,255,0.7)', 16: 'rgba(90,230,120,0.7)', 32: 'rgba(255,204,0,0.7)', 64: 'rgba(255,90,90,0.75)', 128: 'rgba(210,120,255,0.75)', 256: 'rgba(255,255,255,0.6)', 512: 'rgba(255,150,40,0.75)' };   // v0.002: 512 — для 1024 строк
                     let sizes, legend = null;
                     if (stepV === 'auto') {
                         const st = MODULE_STATE, from = st.animCycle ? st.animCycle.from : 0;
                         const k = Math.max(0, (st.animPasses || 0) - from), km = k - 1;
                         const nL = MODULE_STATE.lines.length;
-                        sizes = k > 0 ? [8, 16, 32, 64, 128, 256].filter(sz => sz < nL && !(km & sz)) : [];
+                        sizes = k > 0 ? [8, 16, 32, 64, 128, 256, 512].filter(sz => sz < nL && !(km & sz)) : [];
                         const bitsW = Math.max(1, Math.ceil(Math.log2(Math.max(2, nL))));
                         legend = { k: k, from: from, bin: k > 0 ? km.toString(2).padStart(bitsW, '0') : '—' };
                     } else sizes = [parseInt(stepV, 10) || 32];
@@ -3182,6 +3441,49 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                     }
                     ctx.restore();
                 }
+                /* Треугольник v0.008: ◭ ТРЕУГОЛЬНИКИ-КОПИИ (запрос: «по аналогии с ромбами вычислить и выделить эти треугольники —
+                   они до основания идут вниз; хотя это те же ромбы, просто общая грань их»). Расчёт — RHOMBS.triCopies. Каждая копия
+                   со сдвигом d — буква V от вершины (строка d, ось) до основания: столбцы c0 ± (строка − d). Рисуется по парам
+                   соседних строк, как ◇ сетка (рвётся на стыке строк по кругу). Цвет — по старшему разряду d; сдвиг не степень
+                   двойки (сумма разрядов) — пунктиром. У вершины — число d. */
+                if (!spin3d && c0 !== null && document.getElementById('triCopyCheck')?.checked) {
+                    const tc = RHOMBS.triCopies();
+                    ctx.save(); ctx.shadowBlur = 0; ctx.globalAlpha = 1; ctx.lineWidth = Math.max(1.2, Math.min(3, charWidth * 0.6));
+                    for (const d of tc.list) {
+                        ctx.strokeStyle = RHOMBS.triColor(d); ctx.setLineDash((d & (d - 1)) ? [6, 4] : []);
+                        ctx.beginPath();
+                        for (let i = 0; i < visibleHeight - 1; i++) {
+                            const va = visibleLines[i], vb = visibleLines[i + 1];
+                            if (!va || !vb || rowX[i] === undefined || rowX[i + 1] === undefined) continue;
+                            const La = va.globalIndex, Lb = vb.globalIndex;
+                            if (Lb !== La + 1 || La < d) continue;
+                            const ya = startY + (i + glide) * lineSpacing, yb = ya + lineSpacing;
+                            if (yb < 0 || ya > height) continue;
+                            for (const dir of [1, -1]) {
+                                ctx.moveTo(rowX[i] + (c0 + dir * (La - d) + 0.5) * charWidth, ya);
+                                ctx.lineTo(rowX[i + 1] + (c0 + dir * (Lb - d) + 0.5) * charWidth, yb);
+                            }
+                        }
+                        ctx.stroke();
+                    }
+                    ctx.setLineDash([]);
+                    // подписи у вершин: число d
+                    ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.lineJoin = 'round';
+                    for (let i = 0; i < visibleHeight; i++) {
+                        const v = visibleLines[i]; if (!v || rowX[i] === undefined || !tc.list.includes(v.globalIndex)) continue;
+                        const x = rowX[i] + (c0 + 0.5) * charWidth, y = startY + (i + glide) * lineSpacing - lineSpacing * 0.6;
+                        if (y < 0 || y > height + 12) continue;
+                        ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.strokeText('' + v.globalIndex, x, y);
+                        ctx.fillStyle = RHOMBS.triColor(v.globalIndex); ctx.fillText('' + v.globalIndex, x, y);
+                    }
+                    // легенда — справа сверху, под легендой сетки и букв
+                    const lab = '◭ ' + RHOMBS.triText(tc) + (tc.list.length < tc.all.length ? ' · показаны кратные ' + tc.M + ': ' + tc.list.length : '');
+                    ctx.font = 'bold 12px monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+                    const shown = lab.length > 150 ? lab.slice(0, 150) + '…' : lab, lw = ctx.measureText(shown).width, lx = Math.max(8, width - lw - 12), ly = 84;
+                    ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(lx - 6, ly - 3, lw + 12, 18);
+                    ctx.fillStyle = '#ff66cc'; ctx.fillText(shown, lx, ly);
+                    ctx.restore();
+                }
                 /* 35.59: БУКВЫ В РОМБАХ (пользователь: «почти надпись»; разбор — «Исследование», раздел 8⅞). Ромбы те же,
                    что режет сетка (и 🎞 Ромбы в кино): вершина — середина первой строки, ромб высотой S, вершины через S/2
                    строк. Ромб — буква: одинаковое содержимое — одна буква, зеркальное — та же строчной (прописная — та из
@@ -3193,37 +3495,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                     const L = MODULE_STATE.lines, nL = L.length;
                     const stepV = document.getElementById('rhombGridStep')?.value || '32';
                     const S = stepV === 'auto' ? 16 : (parseInt(stepV, 10) || 32), half = S / 2;
-                    let cache = MODULE_STATE.rhombLetters;
-                    if (!cache || cache.lines !== L || cache.S !== S) {
-                        cache = MODULE_STATE.rhombLetters = { lines: L, S: S, items: [], n: 0, kinds: 0, letters: 0 };
-                        const tx = (nL && L[0].text) || '', a = tx.search(/\S/);
-                        if (a >= 0) {
-                            let b = tx.length - 1; while (b > a && tx[b] === ' ') b--;
-                            const cc = Math.floor((a + b) / 2), raw = [], cnt = new Map(), kinds = new Set();
-                            for (let r = 0, lev = 0; r + S <= nL - 1; r += half, lev++) {
-                                let j = 0;
-                                for (let c = cc - r; c <= cc + r; c++) {
-                                    if ((((c - cc - r) % S) + S) % S) continue;
-                                    let k = '', km = '';
-                                    for (let dr = 0; dr <= S; dr++) {
-                                        const w = dr <= half ? dr : S - dr, t = L[r + dr].text;
-                                        let seg = '';
-                                        for (let dc = -w; dc <= w; dc++) seg += t[c + dc] || ' ';
-                                        k += seg + '|'; km += seg.split('').reverse().join('') + '|';
-                                    }
-                                    const base = k < km ? k : km;
-                                    cnt.set(base, (cnt.get(base) || 0) + 1); kinds.add(k);
-                                    raw.push({ row: r + half, col: c, base: base, low: k !== base, e: Math.min(j, lev - j) });
-                                    j++;
-                                }
-                            }
-                            const ABC = 'АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЭЮЯ' + 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-                            const order = [...cnt.keys()].map((key, i) => [key, cnt.get(key), i]).sort((x, y) => y[1] - x[1] || x[2] - y[2]);
-                            const name = new Map(order.map(([key], i) => [key, i < ABC.length ? ABC[i] : '#' + (i + 1)]));
-                            cache.items = raw.map(it => ({ row: it.row, col: it.col, e: it.e, ch: it.low ? name.get(it.base).toLowerCase() : name.get(it.base) }));
-                            cache.n = raw.length; cache.kinds = kinds.size; cache.letters = cnt.size;
-                        }
-                    }
+                    const cache = RHOMBS.census(S);   // v0.006: та же перепись ромбов, что у ◇ Сводки и 🔍 Ромба — буквы везде одни
                     const at = new Map();
                     for (let i = 0; i < visibleHeight; i++) { const v = visibleLines[i]; if (v && rowX[i] !== undefined) at.set(v.globalIndex, i); }
                     const EC = ['#ffcc00', '#5adcff', '#78eb78', '#ff8a8a', '#c896ff', '#ffaa50', '#f0f0f0'];
@@ -3245,6 +3517,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                     ctx.fillStyle = '#ffcc00'; ctx.fillText(lab, lx, ly);
                     ctx.restore();
                 }
+                if (!spin3d) RHOMBS.drawMarks(ctx, { visibleLines: visibleLines, rowX: rowX, startY: startY, glide: glide, ls: lineSpacing, cw: charWidth });   // v0.006
                 /* 35.56: ОСЬ СИММЕТРИИ. Разбор цикла сцены «1» показал: каждый кадр Аниматрицы в точности симметричен
                    слева направо (каждый ромб либо симметричен сам, либо у него есть зеркальный близнец на том же проходе).
                    Ось — вертикаль через вершину текста, по строкам (x строки учитывает выравнивание). Рядом — доля
@@ -3357,6 +3630,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                     if (multStep < 1) multStep = 1;
 
                     let tickShift = 0;   // 35.38: на сколько строк сдвинулись за этот шаг — для плавного режима
+                    let animFull = false, animStep = false;   // v0.002: пересчёт и подпись Аниматрицы — один раз за тик
                     for (let m = 0; m < multStep; m++) {
                         if (UI.autoPilotCheck?.checked && AUDIO_VISUALIZER.isInit) {
                             if (AUDIO_VISUALIZER.bassLevel < 30) MODULE_STATE.framesSinceChange++;
@@ -3371,8 +3645,9 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
 
                         if (UI.zerkaliusAnimCheck?.checked && MODULE_STATE.originalLines.length > 0) {
                             // 35.51: «Плеер — целыми циклами» — за шаг весь проход волны
-                            if (document.getElementById('animByPassCheck')?.checked) MODULE_DATA.animPassFull();
-                            else MODULE_DATA.runAnimatrixGlobal();
+                            if (document.getElementById('animByPassCheck')?.checked) { MODULE_DATA.animPassFull(true); animFull = true; }
+                            else MODULE_DATA.runAnimatrixGlobal(false, true);
+                            animStep = true;
                         }
 
                         if (UI.echoModeCheck?.checked && MODULE_STATE.originalLines.length > 0) {
@@ -3429,6 +3704,8 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
 
                         MODULE_STATE.algoPointer++; 
                     }
+                    if (animFull) MODULE_DATA.precalculateLines(false, true);
+                    if (animStep) MODULE_DATA.animInfoUpd();
                     MODULE_STATE.lastShift = tickShift;
                     RENDERER.renderFrame(); RENDERER.updateTimeline();
                 }
@@ -3626,6 +3903,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                     document.getElementById('rhombGridCheck'), document.getElementById('rhombGridStep'),   // 35.54
                     document.getElementById('rowBandsCheck'), document.getElementById('symAxisCheck'),   // 35.55, 35.56
                     document.getElementById('rhombLettersCheck'),   // 35.59
+                    document.getElementById('triCopyCheck'), document.getElementById('triCopyMin'),   // v0.008
                     document.getElementById('bitColorsCheck'), document.getElementById('zeroColorPicker'), document.getElementById('oneColorPicker'),   // 35.60
                     document.getElementById('gridColorsCheck'), document.getElementById('gridZeroPicker'), document.getElementById('gridOnePicker'),   // 35.61
                     document.getElementById('gridSparseInput'), document.getElementById('gridSparseRowInput'),   // 35.62, 35.71
@@ -3758,23 +4036,27 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
         // разметки (сначала левая панель, потом правая). Щелчок — спрятать/показать раздел.
         // Какие спрятаны — помнится в браузере; память может быть недоступна, тогда всё открыто.
         const TABS = {
-            KEY: 'zcode_tabs_off_v2',   // 35.23: v1 → v2, чтобы новое умолчание «всё открыто» дошло и до тех, у кого в памяти «только плеер»
+            KEY: 'ztri_tabs_off_v1', FROM: 'zcode_tabs_off_v2',   // 35.23: v1 → v2, чтобы новое умолчание «всё открыто» дошло и до тех, у кого в памяти «только плеер»
             init: function() {
                 const bar = document.getElementById('menuTabs');
                 let off = [];
                 // 35.23: по умолчанию (ничего не сохранено) открыты ВСЕ разделы (в 35.10–35.22 — только ▶ Плеер).
                 let savedOff = null;
-                try { savedOff = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { savedOff = null; }
+                try { savedOff = JSON.parse(localStorage.getItem(this.KEY) || localStorage.getItem(this.FROM) || 'null'); } catch (e) { savedOff = null; }
                 off = Array.isArray(savedOff) ? savedOff : [];
+                // v0.006: новый раздел с data-off-default при первом появлении спрятан (дальше — как запомнится)
+                let seen = []; try { seen = JSON.parse(localStorage.getItem('ztri_tabs_seen_v1') || '[]') || []; } catch (e) { seen = []; }
                 document.querySelectorAll('.tab-sec').forEach(sec => {
                     const b = document.createElement('button');
                     b.type = 'button'; b.textContent = sec.dataset.title;
                     b.title = 'Показать / спрятать раздел «' + sec.dataset.title + '»';
                     if (off.includes(sec.dataset.tab)) sec.classList.add('off');
+                    if (sec.dataset.offDefault && !seen.includes(sec.dataset.tab)) sec.classList.add('off');
                     b.addEventListener('click', () => { sec.classList.toggle('off'); this.sync(); });
                     sec._tabBtn = b; bar.appendChild(b);
                     this.addHead(sec);
                 });
+                try { localStorage.setItem('ztri_tabs_seen_v1', JSON.stringify(Array.from(document.querySelectorAll('.tab-sec')).map(x => x.dataset.tab))); } catch (e) {}
                 this.restoreLayout();
                 const h = document.createElement('button');
                 h.type = 'button'; h.className = 'help'; h.textContent = '❓ Помощь'; h.title = 'Описание и как пользоваться';
@@ -3817,7 +4099,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
             // 35.9: разделы перемещаются, как меню в Layers. Тащат за шапку: над панелью — встаёт
             // между разделами там, где курсор; мимо панелей — висит на холсте плавающим окном.
             // Раскладка (где какой раздел и в каком порядке) помнится в браузере.
-            LAYOUT_KEY: 'zcode_layout_v1',
+            LAYOUT_KEY: 'ztri_layout_v1', LAYOUT_FROM: 'zcode_layout_v1',
             addHead: function(sec) {
                 const head = document.createElement('div');
                 head.className = 'sec-head';
@@ -3896,7 +4178,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
             },
             restoreLayout: function() {
                 let lay = null;
-                try { lay = JSON.parse(localStorage.getItem(this.LAYOUT_KEY) || 'null'); } catch (e) { lay = null; }
+                try { lay = JSON.parse(localStorage.getItem(this.LAYOUT_KEY) || localStorage.getItem(this.LAYOUT_FROM) || 'null'); } catch (e) { lay = null; }
                 if (!lay) {
                     // 35.10: раскладка по умолчанию — плеер плавающим окном внизу по центру холста.
                     const pl = document.querySelector('.tab-sec[data-tab="player"]');
@@ -3904,6 +4186,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                         pl.classList.add('floating'); document.body.appendChild(pl);
                         this.clamp(pl, (window.innerWidth - pl.offsetWidth) / 2, window.innerHeight * 0.56);
                     }
+                    this.floatDefaults(null);
                     return;
                 }
                 const secs = Array.from(document.querySelectorAll('.tab-sec'));
@@ -3917,10 +4200,20 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                     const l = lay[s.dataset.tab];
                     if (l && l.z === 'float') { s.classList.add('floating'); document.body.appendChild(s); this.clamp(s, l.x, l.y); }
                 });
+                this.floatDefaults(lay);
+            },
+            // v0.006: окна с data-float, которых нет в запомненной раскладке, встают на холст в свою точку (доли экрана)
+            floatDefaults: function(lay) {
+                document.querySelectorAll('.tab-sec[data-float]').forEach(s => {
+                    if (lay && lay[s.dataset.tab]) return;
+                    const [fx, fy] = s.dataset.float.split(',').map(Number);
+                    s.classList.add('floating'); document.body.appendChild(s);
+                    this.clamp(s, window.innerWidth * fx, window.innerHeight * fy);
+                });
             },
             // Вернуть разделы на свои места — на случай, если раскладку запутали.
             resetLayout: function() {
-                try { localStorage.removeItem(this.LAYOUT_KEY); localStorage.removeItem(this.KEY); } catch (e) {}
+                try { localStorage.setItem(this.LAYOUT_KEY, 'null'); localStorage.setItem(this.KEY, 'null'); } catch (e) {}   // не удалять: иначе снова подхватится вид Code
                 location.reload();
             }
         };
@@ -3944,6 +4237,450 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
         };
 
         // 35.8: ❓ Помощь — описание и инструкция в отдельном окне поверх страницы. Esc или ✕ закрывают.
+        /* Треугольник v0.006: ◇ СВОДКА РОМБОВ и 🔍 РОМБ КРУПНО (запрос пользователя: «подробнее по кадрам: сколько ромбов, какие
+           на каких кадрах — всё это есть в Коде или в борт-журнале, перенеси сюда отображение, сводку; также надо отдельное окно
+           для захвата какого-нибудь выбранного ромба»).
+           Ромбы — те же, что режет ◇ сетка и подписывают 🔤 буквы: вершина решётки — середина первой строки (c0), ромб высотой S,
+           вершины через S/2 строк, в конусе от вершины. Ромб с вершиной (r, c) занимает строки r…r+S, в строке r+dr — столбцы
+           c−w…c+w, где w = dr до середины и S−dr после. Рисунок ромба сравнивается с его зеркалом (слева направо): одинаковые
+           ромбы — одна буква, зеркальный — та же строчной; прописная — тот из пары, чья строка символов меньше (как у букв с 35.59).
+           Отпечаток — два 32-битных хэша в одном целом (без строк: на 1024 строках ромбов тысячи). Всё считается по исходному
+           тексту (originalLines): он всегда текущий, даже когда «целыми циклами» гонит проходы без пересчёта строк экрана.
+           Кэш — по версии текста и номеру прохода: посреди прохода сводка и буквы — с того места, где их спросили впервые. */
+        const RHOMBS = {
+            ABC: 'АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЭЮЯ' + 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            EC: ['#ffcc00', '#5adcff', '#78eb78', '#ff8a8a', '#c896ff', '#ffaa50', '#f0f0f0'],
+            sel: null, arm: false, layout: null, _cen: null, _job: null, _cyc: null, _tick: 0, _sumVer: null, _stripN: -1,
+            open: function(tab) {
+                const s = document.querySelector('.tab-sec[data-tab="' + tab + '"]');
+                return !!s && !s.classList.contains('off') && !document.body.classList.contains('zen-mode');
+            },
+            // размер ромба: выбранный в сводке, а «как у сетки» — шаг ◇ сетки (при «авто» — 16, как у букв)
+            size: function() {
+                const v = document.getElementById('rsSize')?.value || 'grid';
+                if (v !== 'grid') return parseInt(v, 10) || 32;
+                const g = document.getElementById('rhombGridStep')?.value || '32';
+                return g === 'auto' ? 16 : (parseInt(g, 10) || 32);
+            },
+            apex: function(t) {
+                const a = (t || '').search(/\S/); if (a < 0) return null;
+                let b = t.length - 1; while (b > a && t[b] === ' ') b--;
+                return Math.floor((a + b) / 2);
+            },
+            rowsOf: function(lines) {
+                const W = lines.reduce((m, l) => Math.max(m, l.text.length), 0);
+                const rows = lines.map(l => { const a = new Uint16Array(W).fill(32), t = l.text; for (let i = 0; i < t.length; i++) a[i] = t.charCodeAt(i); return a; });
+                return { rows: rows, W: W };
+            },
+            // все целые ромбы высоты S: сверху вниз по рядам, в ряду слева направо
+            scan: function(rows, W, c0, S) {
+                const half = S / 2, H = rows.length, items = [];
+                for (let r = 0, lev = 0; r + S <= H - 1; r += half, lev++) {
+                    let j = 0;
+                    for (let c = c0 - r; c <= c0 + r; c += S, j++) {
+                        let f1 = 2166136261, f2 = 7, m1 = 2166136261, m2 = 7, cmp = 0;
+                        for (let dr = 0; dr <= S; dr++) {
+                            const w = dr <= half ? dr : S - dr, row = rows[r + dr];
+                            for (let t = -w; t <= w; t++) {
+                                const kf = c + t, km = c - t;
+                                const a = (kf >= 0 && kf < W) ? row[kf] : 32, b = (km >= 0 && km < W) ? row[km] : 32;
+                                f1 = Math.imul(f1 ^ a, 16777619); f2 = (Math.imul(f2, 31) + a) | 0;
+                                m1 = Math.imul(m1 ^ b, 16777619); m2 = (Math.imul(m2, 31) + b) | 0;
+                                if (cmp === 0 && a !== b) cmp = a < b ? -1 : 1;
+                            }
+                        }
+                        const kF = (f1 >>> 0) * 2097152 + ((f2 >>> 0) & 2097151), kM = (m1 >>> 0) * 2097152 + ((m2 >>> 0) & 2097151);
+                        items.push({ r: r, c: c, row: r + half, col: c, lev: lev, j: j, e: Math.min(j, lev - j), key: cmp <= 0 ? kF : kM, low: cmp > 0, sym: cmp === 0 });
+                    }
+                }
+                return items;
+            },
+            // клетки ромба квадратом (S+1)²: 0 — вне ромба, 1 — пробел, 2 — «0», 3 — прочее; flip — зеркально
+            cellsRows: function(rows, W, r, c, S, flip) {
+                const n = S + 1, half = S / 2, out = new Uint8Array(n * n);
+                for (let dr = 0; dr <= S; dr++) {
+                    const w = dr <= half ? dr : S - dr, row = rows[r + dr];
+                    for (let t = -w; t <= w; t++) {
+                        const k = c + (flip ? -t : t), ch = (row && k >= 0 && k < W) ? row[k] : 32;
+                        out[dr * n + t + half] = ch === 32 ? 1 : (ch === 48 ? 2 : 3);
+                    }
+                }
+                return out;
+            },
+            cellsLines: function(L, r, c, S) {
+                const n = S + 1, half = S / 2, out = new Uint8Array(n * n);
+                for (let dr = 0; dr <= S; dr++) {
+                    const w = dr <= half ? dr : S - dr, t = L[r + dr] ? L[r + dr].text : '';
+                    for (let q = -w; q <= w; q++) { const ch = t.charCodeAt(c + q); out[dr * n + q + half] = (ch !== ch || ch === 32) ? 1 : (ch === 48 ? 2 : 3); }
+                }
+                return out;
+            },
+            cellsKey: function(cells) { let h1 = 2166136261, h2 = 7; for (let i = 0; i < cells.length; i++) { h1 = Math.imul(h1 ^ cells[i], 16777619); h2 = (Math.imul(h2, 31) + cells[i]) | 0; } return (h1 >>> 0) * 2097152 + ((h2 >>> 0) & 2097151); },
+            // буквы кадра — по частоте, при равенстве — по первому появлению (как у 🔤 с 35.59)
+            name: function(items) {
+                const cnt = new Map();
+                items.forEach(it => cnt.set(it.key, (cnt.get(it.key) || 0) + 1));
+                const order = [...cnt.keys()].map((k, i) => [k, cnt.get(k), i]).sort((x, y) => y[1] - x[1] || x[2] - y[2]);
+                const alpha = order.map(([k, n], i) => ({ key: k, ch: i < this.ABC.length ? this.ABC[i] : '#' + (i + 1), count: n, nUp: 0, nLow: 0, first: null }));
+                const by = new Map(alpha.map(x => [x.key, x]));
+                items.forEach(it => { const x = by.get(it.key); it.ch = it.low ? x.ch.toLowerCase() : x.ch; if (it.low) x.nLow++; else x.nUp++; if (!x.first) x.first = it; });
+                return alpha;
+            },
+            census: function(S) {
+                const L = MODULE_STATE.originalLines, H = L.length;
+                const ver = MODULE_DATA.linesVer + ':' + (MODULE_STATE.animPasses || 0) + ':' + H + ':' + S;
+                if (this._cen && this._cen.ver === ver) return this._cen;
+                const cen = this._cen = { ver: ver, S: S, H: H, c0: null, items: [], alpha: [], n: 0, kinds: 0, letters: 0, sym: 0, levels: 0,
+                    pass: MODULE_STATE.animPasses || 0, row: MODULE_STATE.animatrixRow || 0 };
+                if (H < 2) return cen;
+                const c0 = this.apex(L[0].text); if (c0 === null) return cen;
+                const { rows, W } = this.rowsOf(L);
+                cen.c0 = c0; cen.items = this.scan(rows, W, c0, S); cen.n = cen.items.length;
+                cen.alpha = this.name(cen.items); cen.letters = cen.alpha.length;
+                cen.kinds = cen.alpha.reduce((a, x) => a + (x.nUp ? 1 : 0) + (x.nLow ? 1 : 0), 0);
+                cen.sym = cen.items.reduce((a, it) => a + (it.sym ? 1 : 0), 0);
+                cen.levels = cen.n ? cen.items[cen.n - 1].lev + 1 : 0;
+                return cen;
+            },
+            /* v0.008: ◭ ТРЕУГОЛЬНИКИ-КОПИИ. В чистой фазе (в каждом столбце один символ) проход — накопленный XOR сверху вниз,
+               то есть умножение на треугольную матрицу единиц P; P^k в клетке (i, j) — C(k−1+i−j, i−j) mod 2, а это 1 ровно тогда,
+               когда (i−j) & (k−1) = 0 (Лукас). Значит, кадр через k проходов от начала цикла — XOR копий кадра начала цикла,
+               сдвинутых вниз на все d с d & (k−1) = 0. Копия — треугольник с вершиной на оси в строке d и сторонами до основания.
+               d — подмаски нулевых разрядов k−1: каждый нулевой разряд 2^j даёт копию со сдвигом 2^j, суммы разрядов — ещё копии.
+               k считается от начала найденного цикла (🔁); пока цикла нет — от начала текста, и там это лишь приближение. */
+            triCopies: function() {
+                const st = MODULE_STATE, H = st.originalLines.length, from = st.animCycle ? st.animCycle.from : 0;
+                const k = Math.max(0, (st.animPasses || 0) - from) % (st.animCycle && st.animCycle.period ? st.animCycle.period : Infinity), B = Math.max(1, Math.ceil(Math.log2(Math.max(2, H)))), full = (1 << B) - 1;
+                const km = k - 1, res = { k: k, from: from, exact: !!st.animCycle, H: H, bin: k > 0 ? (km & full).toString(2).padStart(B, '0') : '—', all: [], list: [], M: 1, bits: [] };
+                if (k <= 0 || H < 2) return res;
+                const Z = (~km) & full;
+                for (let j = 0; j < B; j++) if ((Z >> j) & 1 && (1 << j) < H) res.bits.push(1 << j);
+                for (let d = Z; d > 0; d = (d - 1) & Z) if (d < H) res.all.push(d);
+                res.all.sort((a, b) => a - b);
+                const mv = document.getElementById('triCopyMin')?.value || 'auto';
+                let M = 1;
+                if (mv === 'auto') { while (M < H && res.all.filter(d => d % M === 0).length > 24) M *= 2; } else M = parseInt(mv, 10) || 1;
+                res.M = M; res.list = res.all.filter(d => d % M === 0);
+                return res;
+            },
+            TRI_COL: ['#ff5a5a', '#ffaa50', '#ffcc00', '#78eb78', '#5adcff', '#3c82ff', '#c896ff', '#ff66cc', '#ffffff', '#ffa028', '#a0ffa0'],
+            triColor: function(d) { return this.TRI_COL[Math.min(this.TRI_COL.length - 1, Math.floor(Math.log2(d)))]; },
+            triText: function(t) {
+                if (t.k <= 0) return 'k = 0 — кадр начала ' + (t.exact ? 'цикла' : 'текста') + ', копий нет';
+                return 'k = ' + t.k + (t.from ? ' от прохода ' + t.from : '') + (t.exact ? '' : ' (цикл не найден — от начала текста, приблизительно)') +
+                    ' · k−1 = ' + t.bin + ' → нулевые разряды: ' + (t.bits.length ? t.bits.join(', ') : 'нет') + ' · копий ' + t.all.length +
+                    (t.all.length ? ': ' + t.all.slice(0, 16).join(', ') + (t.all.length > 16 ? ' …' : '') : '');
+            },
+            // ---------- ◇ СВОДКА: текущий кадр ----------
+            updSummary: function(force) {
+                if (!this.open('rhombsum')) return;
+                const S = this.size(), cen = this.census(S);
+                if (!force && this._sumVer === cen.ver) return;
+                this._sumVer = cen.ver;
+                const box = document.getElementById('rsNow'), tri = document.getElementById('rsTri');
+                if (!box || !tri) return;
+                if (!cen.n) {
+                    box.innerHTML = 'Ромбов высотой ' + S + ' нет: ' + (cen.c0 === null ? 'первая строка пустая — нет вершины' : 'текст ниже ромба (строк ' + cen.H + ')');
+                    tri.textContent = ''; return;
+                }
+                const cyc = MODULE_STATE.animCycle;
+                let h = '<b>Проход ' + cen.pass + '</b>';
+                if (cyc) h += ' · в цикле ' + (((cen.pass - cyc.from) % cyc.period + cyc.period) % cyc.period) + ' из ' + cyc.period;
+                if (cen.row > 0 && cen.row < cen.H - 1) h += ' · <span style="color:#ff8a8a">посреди прохода (волна на строке ' + cen.row + ')</span>';
+                h += '<br>Ромбов ' + S + ': <b>' + cen.n + '</b> в ' + cen.levels + ' рядах · разных рисунков <b>' + cen.kinds + '</b> · букв <b>' + cen.letters +
+                    '</b> · сами себе зеркальны: ' + cen.sym + '<br><span style="color:#8aa">Буквы — по частоте (А — самая частая), зеркальный ромб — та же строчной:</span><br>';
+                h += cen.alpha.slice(0, 120).map(x => '<b>' + x.ch + '</b>×' + x.nUp + (x.nLow ? ' ' + x.ch.toLowerCase() + '×' + x.nLow : '')).join(' · ');
+                if (cen.alpha.length > 120) h += ' · … ещё ' + (cen.alpha.length - 120);
+                h += '<br><span style="color:#ff66cc">◭ Треугольники-копии:</span> ' + this.triText(this.triCopies());   // v0.008
+                box.innerHTML = h;
+                // буквы на своих местах: ряд за рядом, как ромбы в треугольнике; цвет — ряд вдоль боковой стороны (как у 🔤)
+                const maxLev = cen.n > 5000 ? 40 : cen.levels, lines = [];
+                let cur = -1, parts = null;
+                for (const it of cen.items) {
+                    if (it.lev >= maxLev) break;
+                    if (it.lev !== cur) { if (parts) lines.push(parts.join(' ')); parts = []; cur = it.lev; }
+                    parts.push('<span style="color:' + this.EC[Math.min(it.e, this.EC.length - 1)] + '">' + it.ch + '</span>');
+                }
+                if (parts) lines.push(parts.join(' '));
+                if (maxLev < cen.levels) lines.push('… (показаны ' + maxLev + ' рядов из ' + cen.levels + ')');
+                tri.innerHTML = lines.join('\n');
+            },
+            // ---------- ◇ СВОДКА: весь цикл по кадрам (на копии текста, кусками, как 📦) ----------
+            runCycle: function() {
+                if (this._job) { this._job.stop = true; return; }
+                const src = MODULE_STATE.originalLines, H = src.length, S = this.size(), out = document.getElementById('rsCycle');
+                const c0 = H ? this.apex(src[0].text) : null;
+                if (H < 2 || c0 === null) { out.innerHTML = 'Нет текста или первая строка пустая — нет вершины'; return; }
+                if (S > H - 1) { out.innerHTML = 'Текст ниже ромба ' + S + ' — выберите размер меньше'; return; }
+                const { rows, W } = this.rowsOf(src);
+                const stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) { const c1 = a[k], c2 = b[k]; b[k] = c1 === c2 ? 32 : (c1 !== 32 ? c1 : c2); } };
+                const hashAll = () => { let h1 = 2166136261, h2 = 7; for (const a of rows) for (let k = 0; k < W; k++) { h1 = Math.imul(h1 ^ a[k], 16777619); h2 = (Math.imul(h2, 31) + a[k]) | 0; } return (h1 >>> 0) * 2097152 + ((h2 >>> 0) & 2097151); };
+                let pass = MODULE_STATE.animPasses || 0;
+                const r0 = MODULE_STATE.animatrixRow || 0;
+                if (r0 > 0 && r0 < H - 1) { for (let r = r0; r < H - 1; r++) stepRow(r); pass++; }
+                const job = this._job = { stop: false }, btn = document.getElementById('rsCycleBtn'), btnTxt = btn.textContent;
+                btn.textContent = '⏹ Стоп'; btn.classList.add('on');
+                const forms = [], byKey = new Map(), frames = [], states = new Map(), p0 = pass;
+                let closed = false, repeatOf = null, f = 0;
+                const chunk = () => {
+                    const t = performance.now();
+                    while (f < 4096 && !job.stop && performance.now() - t < 60) {
+                        const hk = hashAll();
+                        if (states.has(hk)) { closed = true; repeatOf = states.get(hk); break; }
+                        states.set(hk, pass);
+                        const items = this.scan(rows, W, c0, S), fr = { p: pass, n: items.length, cnt: new Map(), neu: [] };
+                        for (const it of items) {
+                            let fm = byKey.get(it.key);
+                            if (!fm) { fm = { id: forms.length, key: it.key, first: pass, at: it, cells: this.cellsRows(rows, W, it.r, it.c, S, it.low), total: 0, passes: [] }; forms.push(fm); byKey.set(it.key, fm); fr.neu.push(fm.id); }
+                            fm.total++;
+                            let cc = fr.cnt.get(fm.id); if (!cc) { cc = [0, 0]; fr.cnt.set(fm.id, cc); fm.passes.push(pass); }
+                            cc[it.low ? 1 : 0]++;
+                        }
+                        frames.push(fr);
+                        for (let r = 0; r < H - 1; r++) stepRow(r);
+                        pass++; f++;
+                    }
+                    if (closed || job.stop || f >= 4096) {
+                        this._job = null; btn.textContent = btnTxt; btn.classList.remove('on');
+                        forms.forEach(fm => { fm.ch = fm.id < this.ABC.length ? this.ABC[fm.id] : '#' + (fm.id + 1); });
+                        this._cyc = { S: S, p0: p0, pEnd: pass - 1, closed: closed, stopped: job.stop, repeatOf: repeatOf, period: closed ? pass - repeatOf : null, forms: forms, frames: frames };
+                        this.renderCycle();
+                        return;
+                    }
+                    out.innerHTML = 'Считаю: проход ' + pass + ' (пройдено ' + f + ') · форм пока ' + forms.length + ' · нажать ещё раз — стоп';
+                    setTimeout(chunk, 0);
+                };
+                chunk();
+            },
+            spans: function(ps) {   // проходы → «3–7, 12, 20–21» или «с 3 каждый 4-й до 63»
+                if (!ps.length) return '—';
+                if (ps.length > 2) { const d = ps[1] - ps[0]; if (d > 1 && ps.every((p, i) => !i || p - ps[i - 1] === d)) return 'с ' + ps[0] + ' каждый ' + d + '-й до ' + ps[ps.length - 1]; }
+                const seg = []; let a = ps[0], b = ps[0];
+                for (let i = 1; i <= ps.length; i++) { if (ps[i] === b + 1) { b = ps[i]; continue; } seg.push(a === b ? '' + a : a + '–' + b); a = b = ps[i]; }
+                return seg.length > 14 ? seg.slice(0, 14).join(', ') + ' … ещё ' + (seg.length - 14) + ' кусков' : seg.join(', ');
+            },
+            renderCycle: function() {
+                const cy = this._cyc, out = document.getElementById('rsCycle'); if (!cy || !out) return;
+                const nP = cy.frames.length;
+                let h = '<b>Цикл при ромбе ' + cy.S + '</b>: проходы ' + cy.p0 + '–' + cy.pEnd + ' (' + nP + ' кадров) · ' +
+                    (cy.closed ? 'текст повторил проход ' + cy.repeatOf + ' → <b>период ' + cy.period + '</b>' + (cy.repeatOf > cy.p0 ? ', разгон ' + (cy.repeatOf - cy.p0) : '') :
+                        cy.stopped ? 'остановлено до повтора' : 'до повтора не дошли (предел 4096)') +
+                    '<br>Форм ромбов за цикл: <b>' + cy.forms.length + '</b>. <span style="color:#8aa">Здесь буквы — по ПЕРВОМУ появлению в цикле (А — самая ранняя),' +
+                    ' не по частоте в кадре; зеркальный — та же строчной.</span>';
+                h += '<div class="rs-lab">По кадрам — проход · ромбов · разных · новые формы · состав (по убыванию):</div><div class="rs-tab">';
+                const fl = cy.forms;
+                h += cy.frames.map(fr => {
+                    const comp = [];
+                    fr.cnt.forEach((cc, id) => { if (cc[0]) comp.push([fl[id].ch, cc[0]]); if (cc[1]) comp.push([fl[id].ch.toLowerCase(), cc[1]]); });
+                    comp.sort((x, y) => y[1] - x[1]);
+                    return '<div><b>' + fr.p + '</b> · ' + fr.n + ' · ' + comp.length + ' · ' + (fr.neu.length ? '<span style="color:#78eb78">+' + fr.neu.map(id => fl[id].ch).join('') + '</span>' : '—') + ' · ' +
+                        comp.slice(0, 16).map(x => x[0] + x[1]).join(' ') + (comp.length > 16 ? ' …' : '') + '</div>';
+                }).join('') + '</div>';
+                h += '<div class="rs-lab">По формам — на каких кадрах (рисунок — прописная):</div><div id="rsForms"></div>';
+                out.innerHTML = h;
+                const box = document.getElementById('rsForms'), n = cy.S + 1, z = Math.max(1, Math.floor(56 / n));
+                const pal = ['#0a0b0e', '#23232d', document.getElementById('zeroColorPicker')?.value || '#3c82ff', document.getElementById('oneColorPicker')?.value || '#d7e1eb'];
+                fl.slice(0, 300).forEach(fm => {
+                    const row = document.createElement('div'); row.className = 'rs-form';
+                    const cv = document.createElement('canvas'); cv.width = cv.height = n * z; this.paint(cv.getContext('2d'), fm.cells, n, z, pal, 0, 0);
+                    const tx = document.createElement('span');
+                    tx.innerHTML = '<b>' + fm.ch + '</b> · впервые на проходе ' + fm.first + ' (ряд ' + fm.at.lev + ', ' + (fm.at.j + 1) + '-й слева) · всего ' + fm.total +
+                        ' раз · в ' + fm.passes.length + ' кадрах из ' + nP + ': ' + this.spans(fm.passes);
+                    row.appendChild(cv); row.appendChild(tx); box.appendChild(row);
+                });
+                if (fl.length > 300) box.insertAdjacentHTML('beforeend', '<div>… ещё ' + (fl.length - 300) + ' форм — полностью в 💾 .txt</div>');
+            },
+            paint: function(g, cells, n, z, pal, x0, y0) {
+                g.fillStyle = pal[0]; g.fillRect(x0, y0, n * z, n * z);
+                for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const v = cells[y * n + x]; if (!v) continue; g.fillStyle = pal[v]; g.fillRect(x0 + x * z, y0 + y * z, z, z); }
+            },
+            saveTxt: function() {
+                const S = this.size(), cen = this.census(S), cy = this._cyc, L = [];
+                L.push('ZERKALIUS ТРЕУГОЛЬНИК — СВОДКА РОМБОВ · ' + new Date().toLocaleString('ru-RU'));
+                L.push('Строк текста: ' + cen.H + ' · ромб высотой ' + S + ' · вершина — столбец ' + cen.c0 + ' первой строки', '');
+                L.push('ТЕКУЩИЙ КАДР — проход ' + cen.pass + (cen.row > 0 && cen.row < cen.H - 1 ? ' (посреди прохода, волна на строке ' + cen.row + ')' : ''));
+                L.push('ромбов ' + cen.n + ' в ' + cen.levels + ' рядах · разных рисунков ' + cen.kinds + ' · букв ' + cen.letters + ' · сами себе зеркальны ' + cen.sym);
+                L.push('буквы (по частоте): ' + cen.alpha.map(x => x.ch + '×' + x.nUp + (x.nLow ? ' ' + x.ch.toLowerCase() + '×' + x.nLow : '')).join(', '));
+                L.push('буквы на местах, ряд за рядом:');
+                let cur = -1, parts = [];
+                cen.items.forEach(it => { if (it.lev !== cur) { if (parts.length) L.push('  ' + parts.join(' ')); parts = []; cur = it.lev; } parts.push(it.ch); });
+                if (parts.length) L.push('  ' + parts.join(' '));
+                if (cy) {
+                    L.push('', 'ЦИКЛ при ромбе ' + cy.S + ': проходы ' + cy.p0 + '–' + cy.pEnd + (cy.closed ? ', повтор прохода ' + cy.repeatOf + ', период ' + cy.period : ' (до повтора не дошли)'));
+                    L.push('форм за цикл ' + cy.forms.length + ' (буквы — по первому появлению)', '', 'ПО КАДРАМ: проход | ромбов | разных | новые | состав');
+                    cy.frames.forEach(fr => {
+                        const comp = [];
+                        fr.cnt.forEach((cc, id) => { if (cc[0]) comp.push([cy.forms[id].ch, cc[0]]); if (cc[1]) comp.push([cy.forms[id].ch.toLowerCase(), cc[1]]); });
+                        comp.sort((x, y) => y[1] - x[1]);
+                        L.push(fr.p + ' | ' + fr.n + ' | ' + comp.length + ' | ' + (fr.neu.map(id => cy.forms[id].ch).join('') || '—') + ' | ' + comp.map(x => x[0] + x[1]).join(' '));
+                    });
+                    L.push('', 'ПО ФОРМАМ: буква | впервые | всего | кадров | проходы');
+                    cy.forms.forEach(fm => L.push(fm.ch + ' | ' + fm.first + ' | ' + fm.total + ' | ' + fm.passes.length + ' | ' + fm.passes.join(',')));
+                } else L.push('', '(цикл не прогнан — «▶ По кадрам — весь цикл»)');
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([L.join('\n') + '\n'], { type: 'text/plain;charset=utf-8' }));
+                a.download = 'Zerkalius-svodka-rombov-' + S + '-prohod-' + cen.pass + '.txt'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+            },
+            // ---------- 🔍 РОМБ КРУПНО ----------
+            pickAt: function(cx, cy) {
+                const lay = this.layout; if (!lay) return false;
+                const cv = UI.canvas, rc = cv.getBoundingClientRect();
+                const x = (cx - rc.left) * cv.width / rc.width, y = (cy - rc.top) * cv.height / rc.height;
+                const i = Math.round((y - lay.startY) / lay.ls - lay.glide), row = lay.gi[i];
+                if (row === undefined || lay.rowX[i] === undefined) return false;
+                const col = Math.floor((x - lay.rowX[i]) / lay.cw);
+                const L = MODULE_STATE.originalLines, H = L.length, c0 = H ? this.apex(L[0].text) : null;
+                if (c0 === null) return false;
+                const S = this.size(), half = S / 2, d = col - c0;
+                const a = Math.floor((row + d) / S), b = Math.floor((row - d) / S);
+                const r = (a + b) * half, c = c0 + (a - b) * half;
+                if (r < 0 || r + S > H - 1 || Math.abs(c - c0) > r) { UI.statusInfo.textContent = '🔍 Здесь нет целого ромба ' + S + ' (строка ' + row + ')'; return true; }
+                this.sel = { S: S, r: r, c: c, c0: c0, lev: r / half, j: (c - (c0 - r)) / S, hist: [], keys: new Set() };
+                this._stripN = -1;
+                this.snap();
+                const s = document.querySelector('.tab-sec[data-tab="rhombcap"]');
+                if (s && s.classList.contains('off')) { s.classList.remove('off'); TABS.sync(false); }
+                UI.statusInfo.textContent = '🔍 Ромб ' + S + ': строка ' + r + ', сдвиг ' + (c - c0 > 0 ? '+' : '') + (c - c0);
+                this.updCapture(true); RENDERER.renderFrame();
+                return true;
+            },
+            snap: function() {   // новое состояние выбранного ромба — в его ленту кадров
+                const s = this.sel; if (!s) return;
+                const L = MODULE_STATE.originalLines; if (s.r + s.S > L.length - 1) return;
+                const cells = this.cellsLines(L, s.r, s.c, s.S), key = this.cellsKey(cells);
+                if (s.keys.has(key)) { const h = s.hist.find(x => x.key === key); if (h) h.seen++; return; }
+                s.keys.add(key);
+                if (s.hist.length < 128) s.hist.push({ p: MODULE_STATE.animPasses || 0, key: key, cells: cells, seen: 1 });
+            },
+            onPass: function() { if (this.sel) this.snap(); },
+            onReset: function() {
+                if (this.sel) { this.sel.hist = []; this.sel.keys = new Set(); this._stripN = -1; this.snap(); }
+                if (this._cyc) { this._cyc = null; const o = document.getElementById('rsCycle'); if (o) o.innerHTML = 'Текст сменился — прогоните цикл заново'; }
+            },
+            updCapture: function(force) {
+                const s = this.sel, info = document.getElementById('rcInfo'), cv = document.getElementById('rcCanvas');
+                if (!info || !cv || (!force && !this.open('rhombcap'))) return;
+                const g = cv.getContext('2d');
+                if (!s) { g.fillStyle = '#0a0b0e'; g.fillRect(0, 0, cv.width, cv.height); info.innerHTML = 'Ромб не выбран: «🎯 Выбрать ромб щелчком» и щелчок по треугольнику (или Alt+щелчок в любое время). Размер — как в сводке.'; return; }
+                const L = MODULE_STATE.originalLines;
+                if (s.r + s.S > L.length - 1) { info.innerHTML = 'Текст стал короче — ромба больше нет'; return; }
+                const n = s.S + 1, z = Math.max(1, Math.floor(cv.width / n)), off = Math.floor((cv.width - n * z) / 2);
+                const pal = ['#0a0b0e', '#23232d', document.getElementById('zeroColorPicker')?.value || '#3c82ff', document.getElementById('oneColorPicker')?.value || '#d7e1eb'];
+                const cells = this.cellsLines(L, s.r, s.c, s.S), key = this.cellsKey(cells);
+                g.fillStyle = '#0a0b0e'; g.fillRect(0, 0, cv.width, cv.height);
+                this.paint(g, cells, n, z, pal, off, off);
+                const cen = this.census(s.S), it = cen.items.find(x => x.r === s.r && x.c === s.c);
+                const same = it ? cen.items.filter(x => x.key === it.key) : [], mir = same.filter(x => x.low !== it.low).length;
+                const mid = (MODULE_STATE.animatrixRow || 0) > 0 && (MODULE_STATE.animatrixRow || 0) < L.length - 1;
+                info.innerHTML = 'Ромб <b>' + s.S + '</b> · ряд ' + s.lev + ' (строки ' + s.r + '–' + (s.r + s.S) + '), ' + (s.j + 1) + '-й слева из ' + (s.lev + 1) +
+                    ' · вершина: строка ' + s.r + ', сдвиг от оси ' + (s.c - s.c0 > 0 ? '+' : '') + (s.c - s.c0) +
+                    '<br>Проход <b>' + (MODULE_STATE.animPasses || 0) + '</b>' + (mid ? ' <span style="color:#ff8a8a">(посреди прохода — на картинке живой ромб, буква — с начала прохода)</span>' : '') +
+                    ' · буква <b>' + (it ? it.ch : '?') + '</b>' + (it && it.sym ? ' (сам себе зеркален)' : '') +
+                    ' · таких же в кадре ' + same.length + (mir ? ' (из них зеркальных ' + mir + ')' : '') +
+                    '<br>Разных состояний с момента выбора: <b>' + s.hist.length + '</b>' + (s.hist.length >= 128 ? ' (лента держит 128)' : '');
+                if (this._stripN !== s.hist.length || force) {
+                    this._stripN = s.hist.length;
+                    const strip = document.getElementById('rcStrip'); strip.innerHTML = '';
+                    const tz = Math.max(1, Math.floor(40 / n));
+                    s.hist.forEach((h, i) => {
+                        const fg = document.createElement('figure'), c2 = document.createElement('canvas');
+                        c2.width = c2.height = n * tz; this.paint(c2.getContext('2d'), h.cells, n, tz, pal, 0, 0);
+                        c2.dataset.key = h.key; fg.appendChild(c2);
+                        fg.insertAdjacentHTML('beforeend', '<figcaption>' + (i + 1) + ' · п.' + h.p + '</figcaption>');
+                        fg.title = 'Состояние ' + (i + 1) + ': впервые на проходе ' + h.p; strip.appendChild(fg);
+                    });
+                }
+                document.querySelectorAll('#rcStrip canvas').forEach(c2 => c2.classList.toggle('now', +c2.dataset.key === key));
+            },
+            // обводка выбранного ромба и таких же на холсте; заодно запоминается раскладка строк — для щелчка
+            drawMarks: function(ctx, g) {
+                this.layout = { gi: g.visibleLines.map(v => v ? v.globalIndex : undefined), rowX: g.rowX, startY: g.startY, glide: g.glide, ls: g.ls, cw: g.cw };
+                const s = this.sel;
+                if (s) {
+                    const at = new Map();
+                    this.layout.gi.forEach((row, i) => { if (row !== undefined && g.rowX[i] !== undefined) at.set(row, i); });
+                    const poly = (r, c, S, color, lw) => {
+                        const half = S / 2, P = [[r, 0, -0.5, 0], [r + half, half + 0.5, 0, 0], [r + S, 0, 0.5, 0], [r + half, -half - 0.5, 0, 0]].map(([row, dc, dy]) => {
+                            const i = at.get(row); if (i === undefined) return null;
+                            return [g.rowX[i] + (c + dc + 0.5) * g.cw, g.startY + (i + g.glide + dy) * g.ls];
+                        });
+                        if (P.some(p => !p)) return;
+                        ctx.beginPath(); P.forEach((p, k) => k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
+                        ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.stroke();
+                    };
+                    ctx.save(); ctx.shadowBlur = 0; ctx.globalAlpha = 1; ctx.setLineDash([]);
+                    if (document.getElementById('rcSameCheck')?.checked) {
+                        const cen = this.census(s.S), it = cen.items.find(x => x.r === s.r && x.c === s.c);
+                        if (it) cen.items.forEach(x => { if (x.key === it.key && x !== it) poly(x.r, x.c, s.S, x.low === it.low ? 'rgba(34,211,238,0.9)' : 'rgba(255,102,204,0.9)', 1.5); });
+                    }
+                    poly(s.r, s.c, s.S, '#ffffff', 2.5);
+                    ctx.restore();
+                }
+                const now = performance.now();
+                if (now - this._tick > 150) { this._tick = now; this.updSummary(); this.updCapture(); }
+            },
+            gifSel: function() {   // выбранный ромб по проходам — GIF (волна на копии, шаг — «каждый N-й» у 🎞 GIF)
+                const s = this.sel; if (!s) { UI.statusInfo.textContent = '🔍 Сначала выберите ромб'; return; }
+                const src = MODULE_STATE.originalLines, H = src.length; if (s.r + s.S > H - 1) return;
+                const { rows, W } = this.rowsOf(src);
+                const stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) { const c1 = a[k], c2 = b[k]; b[k] = c1 === c2 ? 32 : (c1 !== 32 ? c1 : c2); } };
+                let pass = MODULE_STATE.animPasses || 0;
+                const r0 = MODULE_STATE.animatrixRow || 0;
+                if (r0 > 0 && r0 < H - 1) { for (let r = r0; r < H - 1; r++) stepRow(r); pass++; }
+                const step = Math.max(1, parseInt(document.getElementById('animGifStep')?.value, 10) || 1);
+                const n = s.S + 1, z = Math.max(1, Math.min(12, Math.floor(360 / n))), capH = 18, gw = Math.max(n * z, 260), gh = n * z + capH, x0 = Math.floor((gw - n * z) / 2);
+                const cv = document.createElement('canvas'); cv.width = gw; cv.height = capH; const cx = cv.getContext('2d');
+                const frames = [], p0 = pass; let first = null, closed = false;
+                for (let f = 0; f < 256; f++) {
+                    const cells = this.cellsRows(rows, W, s.r, s.c, s.S, false), key = this.cellsKey(cells);
+                    if (first === null) first = key; else if (key === first) { closed = true; break; }
+                    const ix = new Uint8Array(gw * gh);
+                    cx.fillStyle = '#000'; cx.fillRect(0, 0, gw, capH); cx.fillStyle = '#ffcc00'; cx.font = '12px Consolas, monospace'; cx.textBaseline = 'middle';
+                    cx.fillText('ромб ' + s.S + ' · строка ' + s.r + ' · сдвиг ' + (s.c - s.c0) + ' · проход ' + pass + (step > 1 ? ' · шаг ' + step : ''), 4, capH / 2);
+                    const cd = cx.getImageData(0, 0, gw, capH).data;
+                    for (let i = 0, j = 0; i < gw * capH; i++, j += 4) if (cd[j] + cd[j + 1] > 220) ix[i] = 4;
+                    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const v = cells[y * n + x]; if (!v) continue; for (let yy = 0; yy < z; yy++) { const b = (capH + y * z + yy) * gw + x0 + x * z; for (let xx = 0; xx < z; xx++) ix[b + xx] = v; } }
+                    frames.push(ix);
+                    for (let q = 0; q < step; q++) for (let r = 0; r < H - 1; r++) stepRow(r);
+                    pass += step;
+                }
+                const gif = GIFENC.encode(frames, gw, gh, [[0, 0, 0], [35, 35, 45], bitRgb('zeroColorPicker', '#3c82ff'), bitRgb('oneColorPicker', '#d7e1eb'), [255, 204, 0]], 30);
+                const name = 'Zerkalius-romb-' + s.S + '-stroka' + s.r + '-sdvig' + (s.c - s.c0) + (step > 1 ? '-shag' + step : '') + '-prohody-' + p0 + '-' + (pass - step) + '.gif';
+                const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([gif], { type: 'image/gif' })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+                UI.statusInfo.textContent = '🔍 GIF ромба: ' + frames.length + ' кадров' + (closed ? ' — ромб вернулся к первому кадру' : ' (предел 256)') + ' · ' + name;
+            },
+            pngSel: function() {
+                const s = this.sel, cv = document.getElementById('rcCanvas'); if (!s || !cv) return;
+                cv.toBlob(bl => { const a = document.createElement('a'); a.href = URL.createObjectURL(bl); a.download = 'Zerkalius-romb-' + s.S + '-stroka' + s.r + '-sdvig' + (s.c - s.c0) + '-prohod-' + (MODULE_STATE.animPasses || 0) + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000); }, 'image/png');
+            },
+            init: function() {
+                const $ = id => document.getElementById(id);
+                $('rsSize')?.addEventListener('change', () => { this._sumVer = null; this.updSummary(true); RENDERER.renderFrame(); });
+                $('rsCycleBtn')?.addEventListener('click', () => this.runCycle());
+                $('rsSaveBtn')?.addEventListener('click', () => this.saveTxt());
+                $('rcPickBtn')?.addEventListener('click', () => {
+                    this.arm = !this.arm; $('rcPickBtn').classList.toggle('on', this.arm);
+                    UI.statusInfo.textContent = this.arm ? '🎯 Щёлкните по ромбу на треугольнике' : '';
+                });
+                // до обработчика холста (щелчок там — пауза/пуск): выбор ромба щелчок забирает себе
+                if (UI.canvas) UI.canvas.addEventListener('click', e => {
+                    if (!(this.arm || e.altKey)) return;
+                    e.stopImmediatePropagation(); e.preventDefault();
+                    this.arm = false; $('rcPickBtn')?.classList.remove('on');
+                    if (!this.pickAt(e.clientX, e.clientY)) UI.statusInfo.textContent = '🔍 Мимо текста — щёлкните по треугольнику';
+                }, true);
+                $('rcSameCheck')?.addEventListener('change', () => RENDERER.renderFrame());
+                $('rcGifBtn')?.addEventListener('click', () => { UI.statusInfo.textContent = '🔍 GIF ромба собирается…'; setTimeout(() => this.gifSel(), 30); });
+                $('rcPngBtn')?.addEventListener('click', () => this.pngSel());
+                $('rcClearBtn')?.addEventListener('click', () => { this.sel = null; this._stripN = -1; const st = $('rcStrip'); if (st) st.innerHTML = ''; this.updCapture(true); RENDERER.renderFrame(); });
+                // открыли окно — сразу заполнить, не дожидаясь кадра
+                document.querySelectorAll('.tab-sec[data-tab="rhombsum"], .tab-sec[data-tab="rhombcap"]').forEach(sec => {
+                    if (sec._tabBtn) sec._tabBtn.addEventListener('click', () => setTimeout(() => { this._sumVer = null; this.updSummary(true); this.updCapture(true); }, 0));
+                });
+                this.updCapture(true);
+            }
+        };
+
         const HELP = {
             el: null,
             open: function() {
@@ -3969,7 +4706,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
            вид остаётся только для самого первого открытия, пока запомненного нет. Не влез текст в память
            (очень большой файл) — пишется без текста, а текст берётся как раньше. */
         const SESSION = {
-            KEY: 'zcode_session_v1',
+            KEY: 'ztri_session_v1', FROM: 'zcode_session_v1',
             bind: function() {
                 const save = () => this.save();
                 window.addEventListener('pagehide', save);
@@ -3987,7 +4724,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                     breathing: !!(UI.breathingZoomCheck && UI.breathingZoomCheck.checked),
                     elka: UI.elkaCheck.checked, neon: UI.neonGlowCheck.checked,
                     rainbow: !!(UI.rainbowTextCheck && UI.rainbowTextCheck.checked),
-                    frame: MODULE_STATE.isFrameActive, radar: MODULE_STATE.isRadarActive,
+                    frame: MODULE_STATE.isFrameActive, radar: MODULE_STATE.isRadarActive, pinTop: !!MODULE_STATE.pinTop,   // v0.007
                     grid: !!MODULE_STATE.gridLayer,   // 35.70: слой «Сетка» — тоже переживает F5 и входит в ★-сцену
                     scene: UI.sceneSelect.value, idx: MODULE_STATE.currentIndex,
                     ox: MODULE_STATE.offsetX, oy: MODULE_STATE.offsetY, playing: MODULE_STATE.isPlaying,
@@ -4003,7 +4740,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
             },
             restore: function() {
                 let st = null;
-                try { st = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { st = null; }
+                try { st = JSON.parse(localStorage.getItem(this.KEY) || localStorage.getItem(this.FROM) || 'null'); } catch (e) { st = null; }
                 if (!st || st.v !== 1) return false;
                 this.apply(st, !!st.playing);
                 UI.statusInfo.textContent = 'Продолжено с того же места';
@@ -4030,7 +4767,8 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
                 UI.elkaCheck.checked = !!st.elka; UI.neonGlowCheck.checked = !!st.neon;
                 if (UI.rainbowTextCheck) UI.rainbowTextCheck.checked = !!st.rainbow;
                 MODULE_STATE.isFrameActive = !!st.frame; UI.toggleFrameBtn.classList.toggle('active-yellow', !!st.frame);
-                MODULE_STATE.isRadarActive = !!st.radar;
+                MODULE_STATE.isRadarActive = false;   // v0.006: радара на этой странице нет
+                MODULE_STATE.pinTop = !!st.pinTop; document.getElementById('pinTopBtn')?.classList.toggle('active-yellow', !!st.pinTop);   // v0.007
                 if (st.grid !== undefined) { MODULE_STATE.gridLayer = !!st.grid; UI.generateVacuumBtn?.classList.toggle('grid-on', !!st.grid); }   // 35.70
                 UI.toggleRadarBtn.classList.toggle('active-yellow', !!st.radar);
                 UI.toggleRadarBtn.style.background = st.radar ? '#00ff66' : '#cc33ff';
@@ -4066,6 +4804,15 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
             if (UI.toggleRadarBtn) UI.toggleRadarBtn.addEventListener('click', refit);
             if (UI.canvas) UI.canvas.addEventListener('wheel', refit, { passive: true });
             EVENTS.init(); 
+            RHOMBS.init();   // v0.006
+            // v0.007: ⤒ закреп
+            const pinB = document.getElementById('pinTopBtn');
+            const pinUi = () => { if (pinB) pinB.classList.toggle('active-yellow', !!MODULE_STATE.pinTop); };
+            if (pinB) pinB.addEventListener('click', () => {
+                MODULE_STATE.pinTop = !MODULE_STATE.pinTop; MODULE_STATE.offsetY = 0; pinUi();
+                UI.statusInfo.textContent = MODULE_STATE.pinTop ? '🔝 Закреп: первая строка — у верхнего края' : '🔝 Закреп снят';
+                RENDERER.updateTimeline(); RENDERER.renderFrame();
+            });
             const spVal = parseInt(UI.speedRange.value, 10); UI.speedVal.textContent = (1001 - spVal) + ' мс';
             // 35.44: есть запомненное состояние — продолжаем с него, стартовый вид ниже не ставится
             SESSION.bind();
@@ -4093,7 +4840,7 @@ VERSION: Pro 35.75 (Стартовый вид: радар, рамка, цвет 
             UI.zerkaliusAnimCheck.checked = false; UI.elkaCheck.checked = false; UI.cylinderCheck.checked = false;
             UI.findDiagonalsCheck.checked = false; UI.neonGlowCheck.checked = false;
             MODULE_STATE.isFrameActive = false; UI.toggleFrameBtn.classList.remove('active-yellow'); // 35.12: рамка по умолчанию выключена
-            MODULE_STATE.isRadarActive = true; UI.toggleRadarBtn.classList.add('active-yellow'); UI.toggleRadarBtn.style.background = '#00ff66';
+            MODULE_STATE.isRadarActive = false;   // v0.006: радар убран (в Code стартовый вид — радар)
             MODULE_STATE.isReverse = true; UI.toggleReverseBtn.classList.add('active-green'); // 35.6: 🔃 реверс включён с ходу
             RENDERER.renderFrame();
             if (!MODULE_STATE.isPlaying) PLAYER.start();
