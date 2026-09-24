@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Zerkalius Code (до 35.31 — Binary Drum Machine)
-VERSION: Pro 35.57 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопок ⇄ и ⚙ больше нет, 🔎 Поиск убран; пресеты — целые сцены, логическая операция работает; выравнивание по видимому краю; 13 шрифтов, свои, без интернета; ▦ скачки ⇄ 〰 плавно в плеере; файл можно бросить на холст; межсимвольный интервал; крайние панели прозрачные; защита от выделения; ⚓ заморозка — на месте, без прыжка в центр; подсчёт циклов Аниматрицы; ▶ — включить выбранную сцену; F5 не сбрасывает — всё как было; ★ — полный пресет вместе с текстом; ★-сцены файлом для другого компьютера; счётчик Аниматрицы — внизу, среди уведомлений; вкладки в одну строку, плавающие окна целиком на экране; журнал Аниматрицы в файл; ⤒ / Home — к началу текста; Аниматрица целыми циклами: ⏮ ⏭, PageUp/PageDown, плеер по циклам; счёт циклов переживает F5; 🎞 GIF цикла прямо из страницы; ◇ ромбическая сетка; ▤ полосы периодов; ◇ сетка «авто» по проходу, ⫼ ось симметрии; 🎞 ромбы в кино)
+VERSION: Pro 35.58 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопок ⇄ и ⚙ больше нет, 🔎 Поиск убран; пресеты — целые сцены, логическая операция работает; выравнивание по видимому краю; 13 шрифтов, свои, без интернета; ▦ скачки ⇄ 〰 плавно в плеере; файл можно бросить на холст; межсимвольный интервал; крайние панели прозрачные; защита от выделения; ⚓ заморозка — на месте, без прыжка в центр; подсчёт циклов Аниматрицы; ▶ — включить выбранную сцену; F5 не сбрасывает — всё как было; ★ — полный пресет вместе с текстом; ★-сцены файлом для другого компьютера; счётчик Аниматрицы — внизу, среди уведомлений; вкладки в одну строку, плавающие окна целиком на экране; журнал Аниматрицы в файл; ⤒ / Home — к началу текста; Аниматрица целыми циклами: ⏮ ⏭, PageUp/PageDown, плеер по циклам; счёт циклов переживает F5; 🎞 GIF цикла прямо из страницы; ◇ ромбическая сетка; ▤ полосы периодов; ◇ сетка «авто» по проходу, ⫼ ось симметрии; 🎞 ромбы в кино; ⧖ зеркало через центр с XOR)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Code 35.57</title>
+    <title>Zerkalius Code 35.58</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -329,7 +329,7 @@ VERSION: Pro 35.57 (Стартовый вид: радар, рамка, цвет 
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3>Zerkalius Code 35.57</h3>
+                <h3>Zerkalius Code 35.58</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -524,6 +524,16 @@ VERSION: Pro 35.57 (Стартовый вид: радар, рамка, цвет 
                         </select>
                         <button id="animGifBtn" type="button" title="Собрать GIF: волна гонится на копии текста (холст не трогается), кадр через выбранное число проходов, пока картина не вернётся к первому кадру (не больше 256 кадров)" style="margin:0; flex:1; padding:2px 4px; font-size:10px; background:#2a1212; color:#ff8a8a; border:1px solid #ff3333; border-radius:3px; cursor:pointer;">🎞 GIF</button>
                     </div>
+                    <!-- 35.58: зеркало через центр с XOR — меняет сам текст; ↶ отменяет последнее -->
+                    <div class="compact-row" style="margin:0 0 3px 22px;">
+                        <select id="mirrorXorMode" title="Куда отражать через центр экрана" style="flex:1.6; margin:0; padding:1px 2px; font-size:10px; background:#1a1010; color:#ff8a8a; border:1px solid #ff3333;">
+                            <option value="up">низ → вверх</option>
+                            <option value="down">верх → вниз, в противостороны</option>
+                            <option value="both">оба сразу</option>
+                        </select>
+                        <button id="mirrorXorBtn" type="button" title="Отразить половину текста через центр (строки и столбцы переворачиваются) и сложить XOR с другой половиной. Меняет сам текст" style="margin:0; padding:2px 4px; font-size:10px; background:#2a1212; color:#ff8a8a; border:1px solid #ff3333; border-radius:3px; cursor:pointer; flex:1;">⧖ Зеркало</button>
+                        <button id="mirrorXorUndo" type="button" title="Отменить последнее «⧖ Зеркало»" style="margin:0; padding:2px 4px; font-size:10px; background:#2a1212; color:#ff8a8a; border:1px solid #ff3333; border-radius:3px; cursor:pointer; flex:0 0 26px;">↶</button>
+                    </div>
                     <label class="checkbox-row"><input type="checkbox" id="elkaCheck"><span><b style="color:#00ccff">Круговой сдвиг (Ёлка)</b></span></label>
                     <label class="checkbox-row"><input type="checkbox" id="cylinderCheck"><span>Круговой сдвиг (Цилиндр)</span></label>
                     <label class="checkbox-row"><input type="checkbox" id="findDiagonalsCheck"><span>Искать диагонали макросом</span></label>
@@ -672,6 +682,8 @@ VERSION: Pro 35.57 (Стартовый вид: радар, рамка, цвет 
                     текст при старте и после каждого прохода, с отпечатком, числом изменившихся символов и циклом,
                     «💾 Журнал в файл» отдаёт его файлом .txt — точнее любого видео; ⏮ / ⏭ Цикл (PageUp / PageDown) —
                     назад и вперёд сразу целым проходом волны, «Плеер — целыми циклами» — ▶ идёт цикл за циклом;
+                    ⧖ Зеркало — отразить половину текста через центр экрана (поворот на 180°) и сложить XOR с другой: «низ → вверх»,
+                    «верх → вниз, в противостороны», «оба сразу»; меняет сам текст, ↶ отменяет;
                     🎞 GIF — анимация цикла прямо из страницы: кадр каждый 1-й, 2-й … 64-й проход, пока картина не
                     вернётся к первому кадру; волна гонится на копии, холст не трогается),
                     Ёлка и Цилиндр (круговой сдвиг), поиск диагоналей, неоновое свечение.</dd>
@@ -1784,6 +1796,50 @@ VERSION: Pro 35.57 (Стартовый вид: радар, рамка, цвет 
                time — ВЕРХНИЙ ромб по проходам: волна гонится на копии текста тем же правилом, что в animGif, кадр —
                после каждого прохода, пока ромб не вернётся к первому кадру (у сцены «1» — через 64) или 256 кадров.
                Клетки вне ромба — фон, пустые внутри — тёмно-серые, «0» — синие, остальное — светлое. */
+            /* 35.58: ⧖ ЗЕРКАЛО ЧЕРЕЗ ЦЕНТР С XOR (запрос пользователя; разбор — страница «Исследование», разделы 8¾).
+               На экране строки идут по кругу: снизу — начало текста (треугольник), сверху — конец (трапеция), касаются в
+               центре. Отражение через эту точку — поворот на 180°: строка i ↔ строка n−1−i, столбец k ↔ W−1−k.
+               «низ → вверх» — верхняя половина XOR отражённая нижняя; «верх → вниз» — нижняя XOR отражённая верхняя
+               (левые части уходят вправо, правые влево — «в противостороны»); «оба сразу» — обе половины от ИСХОДНОГО
+               текста, результат симметричен сверху вниз. XOR — по правилу волны: одинаковые → пробел, символ и пробел →
+               символ, два разных → символ из отражения. При нечётном числе строк средняя строка — сама себе отражение,
+               её не трогаем (XOR с собой стёр бы её). На сцене «1»: проход 128 — знак (пирамида и зеркало), «оба сразу» —
+               решётка больших ромбов; проход 155 — шестиугольник. Меняет сам текст, поэтому ↶ хранит прежний; счёт
+               циклов Аниматрицы начинается заново. */
+            mirrorXor: function(mode) {
+                const L = MODULE_STATE.originalLines, n = L.length;
+                if (n < 2) { UI.statusInfo.textContent = 'Зеркало: на холсте нет текста'; return; }
+                const W = L.reduce((m, l) => Math.max(m, l.text.length), 0);
+                const orig = L.map(l => l.text.padEnd(W, ' '));
+                const xr = (t, s2) => t === s2 ? ' ' : (s2 !== ' ' ? s2 : t);
+                const mirrorRow = i => orig[n - 1 - i].split('').reverse();
+                const h = Math.floor(n / 2);
+                MODULE_STATE.mirrorUndo = L.map(l => Object.assign({}, l));
+                const out = orig.slice();
+                for (let i = 0; i < n; i++) {
+                    if (n % 2 === 1 && i === h) continue;
+                    const isLow = i < h;
+                    if ((mode === 'up' && isLow) || (mode === 'down' && !isLow)) continue;
+                    const a = orig[i].split(''), m = mirrorRow(i);
+                    for (let k = 0; k < W; k++) a[k] = xr(a[k], m[k]);
+                    out[i] = a.join('');
+                }
+                out.forEach((t, i) => { L[i].text = t; });
+                this.animReset();
+                this.saveToLocalStorage(L); this.precalculateLines(false);
+                RENDERER.renderFrame();
+                const names = { up: 'низ → вверх', down: 'верх → вниз', both: 'оба сразу' };
+                UI.statusInfo.textContent = `⧖ Зеркало через центр: ${names[mode] || mode} (↶ — отменить)`;
+            },
+            mirrorUndo: function() {
+                const u = MODULE_STATE.mirrorUndo;
+                if (!u) { UI.statusInfo.textContent = 'Зеркало: отменять нечего'; return; }
+                MODULE_STATE.originalLines = u.map(l => Object.assign({}, l)); MODULE_STATE.mirrorUndo = null;
+                this.animReset();
+                this.saveToLocalStorage(MODULE_STATE.originalLines); this.precalculateLines(false);
+                RENDERER.renderFrame();
+                UI.statusInfo.textContent = 'Зеркало: отменено';
+            },
             rhombFilm: function(mode) {
                 const src = MODULE_STATE.originalLines, H = src.length;
                 if (H < 2) { UI.statusInfo.textContent = 'Ромбы: на холсте нет текста'; return; }
@@ -3225,6 +3281,10 @@ VERSION: Pro 35.57 (Стартовый вид: радар, рамка, цвет 
                 if (anB) anB.addEventListener('click', cycNext);
                 // 35.53: 🎞 GIF — сборка тяжёлая (секунды на большом тексте), поэтому сперва сообщение, потом работа
                 const gifB = document.getElementById('animGifBtn'), gifS = document.getElementById('animGifStep');
+                // 35.58: ⧖ Зеркало через центр с XOR и ↶
+                const mxB = document.getElementById('mirrorXorBtn'), mxM = document.getElementById('mirrorXorMode'), mxU = document.getElementById('mirrorXorUndo');
+                if (mxB) mxB.addEventListener('click', () => MODULE_DATA.mirrorXor(mxM ? mxM.value : 'up'));
+                if (mxU) mxU.addEventListener('click', () => MODULE_DATA.mirrorUndo());
                 // 35.57: 🎞 Ромбы в кино
                 const rfB = document.getElementById('rhombFilmBtn'), rfM = document.getElementById('rhombFilmMode');
                 if (rfB) rfB.addEventListener('click', () => {
