@@ -3042,6 +3042,21 @@ function updateSplitPositions(){
     };
     placeCtrl("patCtrlL", "bPatNumL", patLHidden || !patEl, "L");
     placeCtrl("patCtrlR", "bPatNumR", patRHidden || !bitsEl, "R");
+    /* v1.609: цвета паттернов — ПОД своей «№», вплотную снизу. У П1 по левому краю кнопки, у П2 по
+       правому — зеркально, как сами «№» (v1.443). */
+    const placeCol = (cid, numId, hidden, side) => {
+      const box = document.getElementById(cid);
+      const num = document.getElementById(numId);
+      if (!box) return;
+      if (hidden || !num || num.style.display === "none") { box.classList.remove("act"); return; }
+      box.classList.add("act");
+      const nl = parseFloat(num.style.left) || 0;
+      const left = side === "L" ? nl : nl + num.offsetWidth - box.offsetWidth;
+      box.style.left = Math.round(left) + "px";
+      box.style.top = Math.round((parseFloat(num.style.top) || 0) + num.offsetHeight + 2) + "px";
+    };
+    placeCol("patColL", "bPatNumL", patLHidden || !patEl, "L");
+    placeCol("patColR", "bPatNumR", patRHidden || !bitsEl, "R");
   }
   /* ═══ УСТУПАЕТ «П1», А НЕ КНОПКА «№» (v1.328) ═══
      Запрос пользователя: «кнопка не сдвигается никуда, двигаются влево П1, освобождая место».
@@ -4457,8 +4472,13 @@ function hideAxisColBox(){}
        Блок заводится один раз: узлы переносятся вместе с обработчиками (пикеры связаны через
        syncColTwins, кнопка — по id), тем же приёмом, что и «№» выше. Класс .pat-strip даёт вид
        планки целиком: рост, фон, кнопки, пикеры. Место считает updateSplitPositions, сразу после «№». */
-    [["patCtrlL", ["bAlignPatL", "colPat1LAx", "colPat0LAx"]],
-     ["patCtrlR", ["colPat1RAx", "colPat0RAx", "bAlignPatR"]]].forEach(([cid, ids]) => {
+    /* v1.609: «перемести цвета поля паттернов под номера паттернов» — пара цветов уехала из блока
+       у «№» в свой блок #patColL/#patColR, ПОД «№» (место — placeCol в updateSplitPositions).
+       У «№» осталась одна кнопка выравнивания. */
+    [["patCtrlL", ["bAlignPatL"]],
+     ["patCtrlR", ["bAlignPatR"]],
+     ["patColL", ["colPat1LAx", "colPat0LAx"]],
+     ["patColR", ["colPat1RAx", "colPat0RAx"]]].forEach(([cid, ids]) => {
       const chainForCtrl = document.getElementById("chain");
       if (!chainForCtrl || document.getElementById(cid)) return;
       const box = document.createElement("div");
