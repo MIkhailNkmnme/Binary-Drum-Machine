@@ -2018,10 +2018,20 @@ function fieldBtnTitleHead(src, icon){
   }
   return t;
 }
+/* v1.598: «просто Повтор» — вместо «↪ Повтор отменённого шага…». Где голова подсказки длинная и
+   обрезается «…», короткое имя задано здесь руками; остальные берутся из подсказки. */
+const FIELD_BTN_SHORT = {
+  bRedo: "Повтор", bPanelsPopout: "Все вкладки в окне", bPopoutFindLog: "Лог находок в окне",
+  bMaskPopout: "Маски в окне", bgMaskScanListClear: "Очистить список масок",
+  bToggleStepLog: "Окно «Черновик»", bSaveChain: "Сохранить цепочку",
+  bLockResultHeight: "Закрепить высоту", bLockStepLogHeight: "Закрепить высоту",
+  bPatNumL: "Номера П1", bPatNumR: "Номера П2", bMaskColor: "Цвет Маски", pasteOn: "Считать наложение",
+};
 function fieldBtnLabel(src, id){
   const t = ((src && src.textContent) || "").replace(/\s+/g, " ").trim();
   if (!t) return pinSlotIcon(src, id);
   if (/[A-Za-zА-Яа-яЁё0-9]/.test(t)) return t;
+  if (FIELD_BTN_SHORT[id]) return t + " " + FIELD_BTN_SHORT[id];
   const head = fieldBtnTitleHead(src, t);
   return head ? t + " " + head : t;
 }
