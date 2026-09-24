@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.035. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Октаэдр — v0.036. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.035</title>
+<title>Zerkalius Октаэдр — v0.036</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -211,7 +211,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.035</div>
+<div id="ver">v0.036</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -229,6 +229,11 @@
   <p><b>Граней у основания</b> (раздел «🎲 Картина») — 4 даёт октаэдр, <b>3</b> — треугольную бипирамиду: две
   трёхгранные пирамиды под общим треугольником, шесть граней вместо восьми. Есть и 5, и 6. Правило то же: верх — картина,
   низ — она же, отражённая и инвертированная. При смене основания картина собирается заново: у каждой грани своя.</p>
+  <p><b>▼↙ Аниматрица</b> и <b>▼↘</b> (раздел «⇄ Реверс», клавиши 4 и 5) — волна из Code на гранях: проход от вершины вниз,
+  каждый ряд переписан по уже переписанному верхнему; 1 — символ, 0 — пусто, поэтому одинаковые дают 0, разные — 1. Сосед
+  сверху — справа (↙, волна вдоль левой стороны) или слева (↘, вдоль правой). «⇄ Шаг» — один проход, «▶ Цикл» — подряд,
+  назад — точная отмена. Картина возвращается через степень двойки проходов (16 рядов — 16, 32 — 32, 13 — тоже 16), и в
+  строке шага появляется «цикл за N». Треугольник Серпинского за проход съезжает на ряд вдоль стороны.</p>
   <p><b>△ Серпинский</b> (там же) — на каждой грани треугольник Серпинского: бит ряда r на месте k — это C(r, k) по модулю 2,
   треугольник Паскаля по чётности, тот же, что рисует «Правило 90» из одной точки в Code. Держится при смене плотности
   (лучше всего видно на 16, 32, 64 рядах — степенях двойки), снимается «🎲 Новой картиной» или своими битами. Снизу, как
@@ -501,6 +506,11 @@
     <button id="opRevInv" title="[2] Разворот с инверсией — зеркало «инв-разв». Не меняются биты на антипалиндромных местах">⇅</button>
     <button id="opRoll" title="[3] Круг Инв: оборот на один бит с переворотом на шве. Ряд длины n возвращается только через 2n шагов">↻</button>
   </div>
+  <!-- v0.036: Аниматрица, как в Code: волна сверху вниз, 1 — символ, 0 — пусто -->
+  <div class="row">
+    <button id="opAnimL" title="[4] Аниматрица ↙: волна от вершины вниз, ряд за рядом, каждый ряд переписан по уже переписанному верхнему: одинаковые → 0, разные → 1 (XOR). Бит берёт соседа сверху-справа — волна идёт вдоль левой стороны грани">▼↙ Аниматрица</button>
+    <button id="opAnimR" title="[5] Аниматрица ↘: то же, но бит берёт соседа сверху-слева — волна идёт вдоль правой стороны грани">▼↘</button>
+  </div>
   <div class="row">
     <button id="bStep" title="► — шаг вперёд, ◄ — назад">⇄ Шаг</button>
     <button id="bAuto" title="Enter. ▲ ▼ — такт быстрее и медленнее">▶ Цикл</button>
@@ -670,7 +680,7 @@ function rollBits(){
     }
     bits.push(face); keep.push(mem);
   }
-  stepNo = 0; stillPct = null; memOn = false;
+  stepNo = 0; stillPct = null; memOn = false; animKey0 = null; animCycle = 0;   // v0.036
   updateStepInfo();
 }
 /* Три действия над рядом — те же зеркала, что и в самом приложении.
@@ -695,6 +705,32 @@ const OPS_BACK = {
                                    : row.slice(1).concat([row[0] ^ 1]))
 };
 let stepOp = "rev";
+/* v0.036: АНИМАТРИЦА (запрос пользователя: «Аниматрицу туда также»). Правило то же, что в Code (35.43…): проход идёт от
+   вершины вниз, ряд r+1 переписывается по УЖЕ переписанному ряду r. В Code символы бывают «0», «1» и пробел; на гранях бит
+   только 0 или 1, поэтому 1 — символ, 0 — пусто, и правило Code «одинаковые → пусто, символ и пусто → символ» становится
+   ровно XOR (исследование, раздел 9½: после разгона Аниматрица и есть XOR по наличию символа). Над битом (r+1, k) на грани
+   стоят два соседа — (r, k) сверху-справа и (r, k−1) сверху-слева; «столбцом» волны берётся один из них: ↙ — (r, k), волна
+   бежит вдоль левой стороны, ↘ — (r, k−1), вдоль правой. Крайний бит без соседа сверху не меняется. Шаг — целый проход по
+   всем граням; назад — обратный проход снизу вверх (ряд r ^= ряд r−1, пока тот ещё новый) — он точно отменяет прямой.
+   Цикл: картина возвращается к исходной через P проходов — ближайшую степень двойки не меньше числа рядов (Лукас, как в
+   Code); «цикл за N» появляется в строке шага, когда картина вернулась к той, с которой начали. Треугольник Серпинского
+   за проход съезжает на ряд вдоль стороны: C(r, k) → C(r+1, k+1) (сумма «хоккейной клюшки» по модулю 2). */
+let animKey0 = null, animCycle = 0;
+function bitsKey(){ return bits.map(f => f.map(r => r.join("")).join("|")).join("/"); }
+function animPass(face, back){
+  const L = stepOp === "animL";
+  if (!back) {
+    for (let r = 0; r + 1 < face.length; r++) {
+      const up = face[r], dn = face[r + 1];
+      for (let k = 0; k < dn.length; k++) { const q = L ? k : k - 1; if (q >= 0 && q < up.length) dn[k] ^= up[q]; }
+    }
+  } else {
+    for (let r = face.length - 1; r >= 1; r--) {
+      const up = face[r - 1], dn = face[r];
+      for (let k = 0; k < dn.length; k++) { const q = L ? k : k - 1; if (q >= 0 && q < up.length) dn[k] ^= up[q]; }
+    }
+  }
+}
 /* ═══ СВЯЗАННЫЕ БИТЫ (v0.005, запрос пользователя: «связанные показать — биты те что инв, как
    квантово запутанные») ═══════════════════════════════════════════════════════════════════════
    Пара уже существует, её не надо заводить: бит верхней грани и бит нижней грани с ТЕМ ЖЕ
@@ -835,6 +871,24 @@ function dotTexture(f, cUp, cDn, cMem, cPin){
 function doStep(dir){
   dotVer++;
   const back = dir < 0;
+  if (stepOp === "animL" || stepOp === "animR") {   // v0.036: Аниматрица — проход по грани целиком, а не по ряду
+    if (stepNo === 0 && !back) { animKey0 = bitsKey(); animCycle = 0; }
+    let still = 0, total = 0;
+    for (let s = 0; s < NB; s++) {
+      const old = bits[s].map(r => r.slice());
+      animPass(bits[s], back);
+      for (let r = 0; r < ROWS; r++) {
+        const row = bits[s][r], mem = keep[s][r], o = old[r];
+        for (let k = 0; k < row.length; k++) { if (row[k] === o[k]) { mem[k]++; still++; } else mem[k] = 0; total++; }
+      }
+    }
+    stepNo = back ? Math.max(0, stepNo - 1) : stepNo + 1;
+    if (!back && !animCycle && animKey0 && bitsKey() === animKey0) animCycle = stepNo;
+    memOn = true;
+    stillPct = total ? Math.round(still * 100 / total) : 0;
+    updateStepInfo();
+    return;
+  }
   const f = (back ? OPS_BACK : OPS)[stepOp] || OPS.rev;
   let still = 0, total = 0;
   for (let s = 0; s < NB; s++) {
@@ -858,13 +912,14 @@ function doStep(dir){
 function forgetMem(){
   dotVer++;
   for (let s = 0; s < NB; s++) for (let r = 0; r < ROWS; r++) keep[s][r].fill(0);
-  stepNo = 0; stillPct = null; memOn = false;
+  stepNo = 0; stillPct = null; memOn = false; animKey0 = null; animCycle = 0;
   updateStepInfo();
 }
 function updateStepInfo(){
   const el = document.getElementById("stepInfo");
   if (el) el.innerHTML = "шаг " + stepNo + " · устояло <b>" +
-    (stillPct === null ? "—" : stillPct + "%") + "</b>";
+    (stillPct === null ? "—" : stillPct + "%") + "</b>" +
+    (animCycle ? " · цикл за <b>" + animCycle + "</b>" : "");   // v0.036
 }
 rollBits();
 /* Точка бита (r, k) на грани: доля вдоль высоты — (r+0.5)/ROWS от вершины, доля вдоль ряда —
@@ -1424,7 +1479,7 @@ function load(){
   if (typeof o.yaw === "number") yaw = o.yaw;
   if (typeof o.pitch === "number") pitch = o.pitch;
   if (o.theme === "green") document.documentElement.setAttribute("data-theme", "green");
-  if (o.stepOp === "rev" || o.stepOp === "revinv" || o.stepOp === "roll") stepOp = o.stepOp;
+  if (o.stepOp === "rev" || o.stepOp === "revinv" || o.stepOp === "roll" || o.stepOp === "animL" || o.stepOp === "animR") stepOp = o.stepOp;
   if (o.TICK >= 60 && o.TICK <= 1200) TICK = o.TICK | 0;
   if (typeof o.showLinks === "boolean") showLinks = o.showLinks;
   if (typeof o.hoverOn === "boolean") hoverOn = o.hoverOn;
@@ -1463,6 +1518,8 @@ function syncUI(){
   opRev.classList.toggle("act", stepOp === "rev");
   opRevInv.classList.toggle("act", stepOp === "revinv");
   opRoll.classList.toggle("act", stepOp === "roll");
+  document.getElementById("opAnimL")?.classList.toggle("act", stepOp === "animL");   // v0.036
+  document.getElementById("opAnimR")?.classList.toggle("act", stepOp === "animR");
   bHover.classList.toggle("act", hoverOn);
   bLinks.classList.toggle("act", showLinks);
   // На кнопке видно, сколько набрано: закреплённые могут уехать на дальнюю сторону тела, и без
@@ -1516,6 +1573,8 @@ function setOp(op){ stepOp = op; forgetMem(); syncUI(); save(); }
 opRev.onclick    = () => setOp("rev");
 opRevInv.onclick = () => setOp("revinv");
 opRoll.onclick   = () => setOp("roll");
+document.getElementById("opAnimL").onclick = () => setOp("animL");   // v0.036
+document.getElementById("opAnimR").onclick = () => setOp("animR");
 bStep.onclick    = () => { stopAuto(); doStep(1); };
 bForget.onclick  = () => forgetMem();
 function startAuto(){
@@ -1909,6 +1968,8 @@ window.addEventListener("keydown", (e) => {
   else if (k === "1") setOp("rev");
   else if (k === "2") setOp("revinv");
   else if (k === "3") setOp("roll");
+  else if (k === "4") setOp("animL");   // v0.036
+  else if (k === "5") setOp("animR");
 });
 
 resize();
