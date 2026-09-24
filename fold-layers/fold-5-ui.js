@@ -2367,7 +2367,13 @@ function rowZeroCenterTop(lineTop, h){
 }
 function minBitsWidthPx(){
   const g = document.getElementById("alignGrp");
-  if (!g || !g.offsetWidth) return 40;
+  if (!g) return 40;
+  /* v1.611: ширина содержимого полосы уже лежит готовой (dataset.natW, её пишет расстановка меню 2).
+     Раньше сюда первым делом шло чтение offsetWidth — только ради проверки «полоса есть», — и оно
+     заставляло браузер заново раскладывать всю страницу посреди render() (≈70 мс на 300×300). */
+  const natReady = parseFloat(g.dataset.natW);
+  if (natReady > 0) return Math.round(natReady + 24);
+  if (!g.offsetWidth) return 40;
   // v1.562: полоса бывает растянута на всё поле (m2-wide) — упор берём по её СОДЕРЖИМОМУ, а не по
   // коробке, иначе поле нельзя было бы ужать уже его же собственной ширины.
   const nat = parseFloat(g.dataset.natW) || g.offsetWidth;
@@ -3546,13 +3552,11 @@ function fitNumW(numPadW, extraHtml, slotPadW){
   numProbeEl.className = "num num-l2 num-probe";
   numProbeEl.innerHTML = pad + (extraHtml || "");
   const wL = Math.ceil(numProbeEl.getBoundingClientRect().width) + 1;
-  if (wNum > 0) document.documentElement.style.setProperty("--num-w", wNum + "px");
-  if (wL > 0) document.documentElement.style.setProperty("--numl-w", wL + "px");
+  // v1.611: записи — после ВСЕХ замеров (см. «ЗАМЕРЫ, ПОТОМ ЗАПИСИ» в конце функции).
   // Слот — тот же замер, но по самой широкой из возможных подписей (v1.337, см. выше).
   const slotPad = "0".repeat(Math.max(1, (slotPadW | 0) || (numPadW | 0)));
   numProbeEl.innerHTML = slotPad + (extraHtml || "");
   const wSlot = Math.ceil(numProbeEl.getBoundingClientRect().width) + 1;
-  if (wSlot > 0) document.documentElement.style.setProperty("--numl-slot", Math.max(wSlot, wL) + "px");
   /* ═══ ЧЕТВЁРТЫЙ ЗАМЕР: ПОСТОЯННЫЙ СЛОТ НОМЕРА В ЯЧЕЙКЕ (--num-slot, v1.350) ═══
      Баг-репорт: «ещё с прошлой правки снова начали двигаться справа от кнопки „№ цепочек“ при
      включении».
@@ -3573,7 +3577,19 @@ function fitNumW(numPadW, extraHtml, slotPadW){
   numProbeEl.className = "num num-probe";
   numProbeEl.textContent = slotPad;
   const wNumSlot = Math.ceil(numProbeEl.getBoundingClientRect().width) + 1;
-  if (wNumSlot > 0) document.documentElement.style.setProperty("--num-slot", Math.max(wNumSlot, wNum) + "px");
+  /* ═══ ЗАМЕРЫ, ПОТОМ ЗАПИСИ, И ТОЛЬКО ИЗМЕНИВШЕЕСЯ (испр. v1.611) ═══
+     Запрос: «можно ли устранить тормоза при передвижении цепочек за ось». Профиль показал, что
+     главное время render() — принудительные пересчёты раскладки, и здесь их было четыре подряд:
+     каждая запись CSS-переменной в корень документа сбрасывает стили ВСЕЙ страницы, а следующий
+     getBoundingClientRect ждёт полной раскладки. Замеры теперь идут подряд (меняется только
+     болванка), записи — в конце и только если значение другое: в обычном кадре оно то же самое, и
+     страница не пересчитывается вовсе. */
+  const rootSt = document.documentElement.style;
+  const setIf = (name, px) => { const v = px + "px"; if (rootSt.getPropertyValue(name) !== v) rootSt.setProperty(name, v); };
+  if (wNum > 0) setIf("--num-w", wNum);
+  if (wL > 0) setIf("--numl-w", wL);
+  if (wSlot > 0) setIf("--numl-slot", Math.max(wSlot, wL));
+  if (wNumSlot > 0) setIf("--num-slot", Math.max(wNumSlot, wNum));
 }
 
 /* Ручка переноса начала отсчёта столбцов — запрос пользователя "для каждого выравнивания нужна
@@ -6210,8 +6226,21 @@ function startAxisDrag(e){
      НАМЕРЕНИЯ жеста, а не от текущего offset — тот по дороге правит clampAxisOffset, и его правки
      жест не заказывал; иначе блоки поехали бы сами собой. */
   let axisDragApplied = 0;
-  const move = (ev) => {
-    const deltaCols = Math.round((ev.clientX - startX) / chPx);
+  /* ═══ ПРОТЯЖКА ОСИ БЕЗ ТОРМОЗОВ (v1.611) ═══
+     Запрос: «можно ли устранить тормоза при передвижении цепочек за ось». Раньше render() звался на
+     КАЖДОЕ событие мыши — даже когда ось не сдвинулась ни на столбец, — и события копились в очередь
+     быстрее, чем кадры успевали рисоваться (300×300 бит — около 270 мс на кадр). Теперь:
+       • кадр — только когда ось реально сдвинулась на столбец, и не чаще раза за кадр экрана
+         (requestAnimationFrame): сколько бы событий ни пришло, рисуется последнее положение;
+       • пока ось тянут, render() не перемеряет ширины номеров и колонок паттернов (axisDragLite,
+         см. render в fold-2-render.js) — сдвиг оси их не меняет;
+       • в конце жеста — один полный render(), как было. */
+  let lastCols = 0, rafId = 0, pendingCols = 0;
+  const frame = () => {
+    rafId = 0;
+    if (pendingCols === lastCols) return;
+    const deltaCols = pendingCols;
+    lastCols = deltaCols;
     st.axisCenterOffset = startOffset + deltaCols;
     // Ручка — единственный способ ПЕРЕДВИНУТЬ ось; закрепляем за ней новый столбец, иначе
     // ближайший же кадр вернул бы ось на прежнее место (см. holdAxisOnMaxLenChange).
@@ -6220,13 +6249,20 @@ function startAxisDrag(e){
       pasteHoldOnAxisShift(deltaCols - axisDragApplied);
       axisDragApplied = deltaCols;
     }
-    render();
+    axisDragLite = true;
+    try { render(); } finally { axisDragLite = false; }
+  };
+  const move = (ev) => {
+    pendingCols = Math.round((ev.clientX - startX) / chPx);
+    if (pendingCols !== lastCols && !rafId) rafId = requestAnimationFrame(frame);
   };
   const up = () => {
     if (axisSplitEl) axisSplitEl.classList.remove("drag");
     document.body.classList.remove("dragging");
     window.removeEventListener("mousemove", move);
     window.removeEventListener("mouseup", up);
+    if (rafId) { cancelAnimationFrame(rafId); rafId = 0; frame(); }
+    render();   // v1.611: итоговый полный кадр — с замерами, которые во время протяжки пропускались
     saveCache();
   };
   window.addEventListener("mousemove", move);

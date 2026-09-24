@@ -4597,7 +4597,7 @@ function render(){
     Math.abs(rowLabel(Math.max(0, st.rows.length - 1))).toString(2).length,
     Math.abs(rowLabel(0)).toString(2).length
   );
-  fitNumW(numPadW, balanceSampleHtml(balW1, balW0, balB1, balB0), numSlotPadW);
+  if (!axisDragLite) fitNumW(numPadW, balanceSampleHtml(balW1, balW0, balB1, balB0), numSlotPadW);   // v1.611: не на протяжке оси
   /* ═══ ПРОСВЕТ ПОД НОМЕРА — СРАЗУ ЗА ИХ ЗАМЕРОМ (v1.420) ═══
      Запрос пользователя: «при увеличении ширины номеров влево должна сдвигать биты и номера у П1,
      чтобы также было видно правую их часть».
@@ -4610,8 +4610,7 @@ function render(){
   if (typeof syncNumSlot === "function") syncNumSlot();
   // Ширина колонок паттернов — под самый длинный паттерн (см. fitPatW/fitPatW2): считается ПОСЛЕ
   // отрисовки строк, потому что шаг столбца меряется по реальным битам в DOM.
-  fitPatW();
-  fitPatW2();
+  if (!axisDragLite) { fitPatW(); fitPatW2(); }   // v1.611: ширины колонок от сдвига оси не зависят
   // Базовая ширина поля битов (--bits-w, см. .bits в CSS) — от длины САМОЙ ДЛИННОЙ СТРОКИ, а НЕ
   // от renderWidth: тот растёт от выравнивания (Лесенка сдвигает каждую строку), и раскладка
   // прыгала бы при каждом переключении ⇤/↔/⇥/↘ (запрос пользователя). Содержимое, вылезающее за
@@ -4627,8 +4626,10 @@ function render(){
       /* Расчёт упора переехал в minBitsWidthPx() (v1.285): та же ширина сторожит теперь и ручную
          протяжку #vsplit2, и стрелки под замком, а не только автоподбор. Заодно в неё вошла планка
          «П1» — с v1.284 она стоит ВНУТРИ поля цепочки и тоже отнимает у полосы место. */
-      document.documentElement.style.setProperty("--bits-w",
-        Math.max(Math.round(maxLen * stepPx), minBitsWidthPx()) + "px");
+      // v1.611: пишем только изменившееся — запись в корень сбрасывает стили всей страницы.
+      const bitsWv = Math.max(Math.round(maxLen * stepPx), minBitsWidthPx()) + "px";
+      if (document.documentElement.style.getPropertyValue("--bits-w") !== bitsWv)
+        document.documentElement.style.setProperty("--bits-w", bitsWv);
     }
   }
   // Разделители колонок — по реальной геометрии строки (строка может быть шире полотна).
@@ -5091,7 +5092,12 @@ function render(){
     // Раньше тут же (поверх сквозной строки) рисовался блок Гориз.XOR (прогресс + Сквозная/
     // Цель/Результат) — перенесён в "Черновик шага" (см. computeHorizXorInfo()/renderStepLogBox()
     // ниже), тут в режиме horiz_xor теперь просто обычная сквозная строка, как у любого другого режима.
-    if (!fullChainText) {
+    /* v1.611: на протяжке оси окно «Результат» не пересобираем — это самая большая разметка
+       страницы (тысячи узлов на крупной цепочке), и её раскладка съедала большую часть кадра.
+       Итоговый полный render() в конце протяжки (startAxisDrag) обновит его одним разом. */
+    if (axisDragLite) {
+      // ничего: содержимое окна остаётся от кадра до протяжки
+    } else if (!fullChainText) {
       chainTextEl.innerHTML = '<span class="empty">пусто</span>';
     } else if (bgResultHtml != null) {
       chainTextEl.innerHTML = bgResultHtml;
@@ -5100,9 +5106,13 @@ function render(){
       // text-overflow:ellipsis сама рисует "…", но на мелком шрифте среди битов её легко не
       // заметить — меряем по факту (scrollWidth > clientWidth) и вешаем свою явную метку
       // (см. .chain-result-line.truncated в CSS) только на реально обрезанные строки.
+      // v1.611: сначала ВСЕ замеры, потом метки. Раньше класс ставился внутри того же обхода, и
+      // каждый следующий scrollWidth заставлял браузер пересчитать раскладку заново — по разу на строку.
+      const cutLines = [];
       chainTextEl.querySelectorAll(".chain-result-line:not(.expanded) .chain-result-line-bits").forEach(el => {
-        if (el.scrollWidth > el.clientWidth) el.parentElement.classList.add("truncated");
+        if (el.scrollWidth > el.clientWidth) cutLines.push(el.parentElement);
       });
+      cutLines.forEach(ln => ln.classList.add("truncated"));
     } else {
       let html = "";
       for (let k = 0; k < fullChainText.length; k++) {
@@ -5124,9 +5134,11 @@ function render(){
   }
   // Отдельное окно результата живёт своей жизнью, но содержимое обновляется тем же render()
   // (см. openResultPopup): что в панели, то и в окне — только без потолка и с переносом строк.
-  updateResultPopup(popupResultHtml, fullChainText);
-
-  renderStepLogBox(bgInfo);
+  // v1.611: окно результата и «Черновик шага» — тоже только вне протяжки оси (см. выше).
+  if (!axisDragLite) {
+    updateResultPopup(popupResultHtml, fullChainText);
+    renderStepLogBox(bgInfo);
+  }
   // Ярлыки в слотах полосы выравниваний — значок и подсветка берутся у ОРИГИНАЛОВ, поэтому
   // обновляются тем же кадром, что и всё остальное: любое переключение в панелях зовёт render()
   // (см. refreshPinSlotIcons в fold-5-ui.js — она правит по месту, DOM не пересобирает).
