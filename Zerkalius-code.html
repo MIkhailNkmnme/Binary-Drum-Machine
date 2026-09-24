@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Zerkalius Code (до 35.31 — Binary Drum Machine)
-VERSION: Pro 35.59 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопок ⇄ и ⚙ больше нет, 🔎 Поиск убран; пресеты — целые сцены, логическая операция работает; выравнивание по видимому краю; 13 шрифтов, свои, без интернета; ▦ скачки ⇄ 〰 плавно в плеере; файл можно бросить на холст; межсимвольный интервал; крайние панели прозрачные; защита от выделения; ⚓ заморозка — на месте, без прыжка в центр; подсчёт циклов Аниматрицы; ▶ — включить выбранную сцену; F5 не сбрасывает — всё как было; ★ — полный пресет вместе с текстом; ★-сцены файлом для другого компьютера; счётчик Аниматрицы — внизу, среди уведомлений; вкладки в одну строку, плавающие окна целиком на экране; журнал Аниматрицы в файл; ⤒ / Home — к началу текста; Аниматрица целыми циклами: ⏮ ⏭, PageUp/PageDown, плеер по циклам; счёт циклов переживает F5; 🎞 GIF цикла прямо из страницы; ◇ ромбическая сетка; ▤ полосы периодов; ◇ сетка «авто» по проходу, ⫼ ось симметрии; 🎞 ромбы в кино; ⧖ зеркало через центр с XOR; 🔤 буквы в ромбах)
+VERSION: Pro 35.60 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопок ⇄ и ⚙ больше нет, 🔎 Поиск убран; пресеты — целые сцены, логическая операция работает; выравнивание по видимому краю; 13 шрифтов, свои, без интернета; ▦ скачки ⇄ 〰 плавно в плеере; файл можно бросить на холст; межсимвольный интервал; крайние панели прозрачные; защита от выделения; ⚓ заморозка — на месте, без прыжка в центр; подсчёт циклов Аниматрицы; ▶ — включить выбранную сцену; F5 не сбрасывает — всё как было; ★ — полный пресет вместе с текстом; ★-сцены файлом для другого компьютера; счётчик Аниматрицы — внизу, среди уведомлений; вкладки в одну строку, плавающие окна целиком на экране; журнал Аниматрицы в файл; ⤒ / Home — к началу текста; Аниматрица целыми циклами: ⏮ ⏭, PageUp/PageDown, плеер по циклам; счёт циклов переживает F5; 🎞 GIF цикла прямо из страницы; ◇ ромбическая сетка; ▤ полосы периодов; ◇ сетка «авто» по проходу, ⫼ ось симметрии; 🎞 ромбы в кино; ⧖ зеркало через центр с XOR; 🔤 буквы в ромбах; 🎨 цвета 0 / 1)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Code 35.59</title>
+    <title>Zerkalius Code 35.60</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -329,7 +329,7 @@ VERSION: Pro 35.59 (Стартовый вид: радар, рамка, цвет 
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3>Zerkalius Code 35.59</h3>
+                <h3>Zerkalius Code 35.60</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -631,6 +631,12 @@ VERSION: Pro 35.59 (Стартовый вид: радар, рамка, цвет 
                             <input type="color" id="staticColorPicker" value="#00ff66">
                             <input type="range" id="staticAlphaRange" min="0.0" max="1.0" step="0.1" value="0.3">
                         </div>
+                        <!-- 35.60: свои цвета для «0» и «1» — на холсте (по флажку) и всегда в GIF, ромбах в кино и листе ромбов -->
+                        <div class="palette-row" title="«0» и «1» своими цветами поверх Актива и Фона. Яркость по-прежнему от Δ: изменившиеся символы — с прозрачностью Актива, прочие — с прозрачностью Фона. Те же два цвета берут 🎞 GIF, 🎞 Ромбы в кино и лист ромбов (там — всегда)">
+                            <label class="checkbox-row" style="margin:0;"><input type="checkbox" id="bitColorsCheck"><span>0 / 1:</span></label>
+                            <input type="color" id="zeroColorPicker" value="#3c82ff" title="Цвет «0»">
+                            <input type="color" id="oneColorPicker" value="#d7e1eb" title="Цвет «1»">
+                        </div>
                     </div>
                 </div>
                 </div>
@@ -689,7 +695,7 @@ VERSION: Pro 35.59 (Стартовый вид: радар, рамка, цвет 
                     🎞 GIF — анимация цикла прямо из страницы: кадр каждый 1-й, 2-й … 64-й проход, пока картина не
                     вернётся к первому кадру; волна гонится на копии, холст не трогается),
                     Ёлка и Цилиндр (круговой сдвиг), поиск диагоналей, неоновое свечение.</dd>
-                <dt>👁 Вид</dt><dd>◇ Ромбическая сетка, шаг «авто» — сама рисует все размеры ромбов, включённые в текущем проходе (нули в двоичной записи k−1, k — проходов от начала цикла), каждый своим цветом, с легендой справа сверху. ⫼ Ось симметрии — вертикаль через вершину текста и живой процент зеркальности видимых строк. 🔤 Буквы в ромбах — каждый ромб сетки подписан буквой: одинаковые ромбы — одна буква, зеркальный — та же строчной, буквы по частоте; цвет — ряд вдоль боковой стороны (вдоль стороны буквы складываются в повторяющиеся «слова» длиной 2, 4, 8…); справа сверху — сколько ромбов, разных и букв. 🎞 Ромбы в кино — GIF из ромбов сетки (размер — шаг сетки, при «авто» — 32): «ромбы кадра подряд» — все целые ромбы текущего текста по порядку; «верхний ромб по проходам» — один ромб от прохода к проходу, пока не вернётся к себе (волна на копии, холст не трогается); «все ромбы одной картинкой» — PNG, ромбы на своих местах в треугольнике, но раздвинуты с зазорами. ▤ Полосы периодов — строки тонируются полосами по степеням двойки (0, 1, 2–3, 4–7, 8–15…): в чистой фазе Аниматрицы у каждой полосы свой период волны, вдвое длиннее, чем у полосы над ней. ◇ Ромбическая сетка — диагонали под 45° от вершины текста через каждые 8 / 16 / 32 / 64 символа: на треугольниках Аниматрицы видно, что картина сложена из почти одинаковых ромбов-«кадров». Масштаб шрифта, «Экран» — сколько строк видно, интервал между строками, межсимвольный интервал (0.5–3: доля ширины символа; меньше 1 — символы наезжают), шрифт (13 на выбор, в том числе Roboto Mono, JetBrains Mono, VT323, Press Start 2P; лежат в самом проекте, работают и без интернета).</dd>
+                <dt>👁 Вид</dt><dd>◇ Ромбическая сетка, шаг «авто» — сама рисует все размеры ромбов, включённые в текущем проходе (нули в двоичной записи k−1, k — проходов от начала цикла), каждый своим цветом, с легендой справа сверху. ⫼ Ось симметрии — вертикаль через вершину текста и живой процент зеркальности видимых строк. 🎨 0 / 1 (раздел «Цвет») — свои цвета для «0» и «1» на холсте по флажку, яркость остаётся от Δ; эти же цвета всегда берут 🎞 GIF, 🎞 Ромбы в кино и лист ромбов. 🔤 Буквы в ромбах — каждый ромб сетки подписан буквой: одинаковые ромбы — одна буква, зеркальный — та же строчной, буквы по частоте; цвет — ряд вдоль боковой стороны (вдоль стороны буквы складываются в повторяющиеся «слова» длиной 2, 4, 8…); справа сверху — сколько ромбов, разных и букв. 🎞 Ромбы в кино — GIF из ромбов сетки (размер — шаг сетки, при «авто» — 32): «ромбы кадра подряд» — все целые ромбы текущего текста по порядку; «верхний ромб по проходам» — один ромб от прохода к проходу, пока не вернётся к себе (волна на копии, холст не трогается); «все ромбы одной картинкой» — PNG, ромбы на своих местах в треугольнике, но раздвинуты с зазорами. ▤ Полосы периодов — строки тонируются полосами по степеням двойки (0, 1, 2–3, 4–7, 8–15…): в чистой фазе Аниматрицы у каждой полосы свой период волны, вдвое длиннее, чем у полосы над ней. ◇ Ромбическая сетка — диагонали под 45° от вершины текста через каждые 8 / 16 / 32 / 64 символа: на треугольниках Аниматрицы видно, что картина сложена из почти одинаковых ромбов-«кадров». Масштаб шрифта, «Экран» — сколько строк видно, интервал между строками, межсимвольный интервал (0.5–3: доля ширины символа; меньше 1 — символы наезжают), шрифт (13 на выбор, в том числе Roboto Mono, JetBrains Mono, VT323, Press Start 2P; лежат в самом проекте, работают и без интернета).</dd>
                 <dt>🎨 Цвет</dt><dd>🌈 радужный текст, 🎨 цвет как код (подсветка синтаксиса), пресеты палитры, цвет и яркость
                     активных (изменившихся) и фоновых символов.</dd>
             </dl>
@@ -890,6 +896,11 @@ VERSION: Pro 35.59 (Стартовый вид: радар, рамка, цвет 
             text:    '160, 160, 160'    // прочий текст
         };
         const SYNTAX_CACHE = new Map();
+        // 35.60: цвет «0» / «1» из пикеров раздела «Цвет» как [r, g, b] — для GIF и листов ромбов
+        function bitRgb(id, def) {
+            const v = (document.getElementById(id)?.value || def).replace('#', '');
+            return [parseInt(v.slice(0, 2), 16), parseInt(v.slice(2, 4), 16), parseInt(v.slice(4, 6), 16)];
+        }
         function syntaxColorsFor(text) {
             let got = SYNTAX_CACHE.get(text);
             if (got) return got;
@@ -1105,7 +1116,7 @@ VERSION: Pro 35.59 (Стартовый вид: радар, рамка, цвет 
                 'speedMultInput', 'algorithmInput', 'freezeScrollCheck', 'spin3dCheck', 'breathingZoomCheck',
                 'hideStaticCheck', 'deltaModeSelect', 'logicalOpSelect', 'zerkaliusAnimCheck', 'elkaCheck',
                 'cylinderCheck', 'findDiagonalsCheck', 'neonGlowCheck', 'animByPassCheck', 'rhombGridCheck', 'rhombGridStep', 'rhombLettersCheck', 'rowBandsCheck', 'symAxisCheck', 'fontSizeRange', 'lineHeightRange', 'charSpacingRange',
-                'fontSelect', 'rainbowTextCheck', 'syntaxColorCheck', 'trimZerosCheck'],
+                'fontSelect', 'rainbowTextCheck', 'syntaxColorCheck', 'trimZerosCheck', 'bitColorsCheck', 'zeroColorPicker', 'oneColorPicker'],
             resetLook: function() {
                 this.LOOK_IDS.forEach(id => {
                     const el = document.getElementById(id); if (!el) return;
@@ -1857,7 +1868,7 @@ VERSION: Pro 35.59 (Стартовый вид: радар, рамка, цвет 
                 for (let r = 0; r + S <= H - 1; r += half)
                     for (let c = c0 - r; c <= c0 + r; c++) if (((c - c0 - r) % S + S) % S === 0) tops.push([r, c]);
                 if (!tops.length) { UI.statusInfo.textContent = `Ромбы: текст ниже ромба высотой ${S} — выберите шаг сетки меньше`; return; }
-                const COL = ['#000000', '#23232d', '#3c82ff', '#d7e1eb'];
+                const COL = ['#000000', '#23232d', document.getElementById('zeroColorPicker')?.value || '#3c82ff', document.getElementById('oneColorPicker')?.value || '#d7e1eb'];   // 35.60: 0 и 1 — из «Цвета»
                 const cellV = (ch) => ch === 32 ? 1 : (ch === 48 ? 2 : 3);
                 /* 35.57: «все ромбы одной картинкой» (запрос: «также общую картинку со всеми ромбами») — PNG: каждый ромб на
                    своём месте в треугольнике, но позиции раздвинуты в K раз, между ромбами зазоры — разобранная мозаика. */
@@ -1930,7 +1941,7 @@ VERSION: Pro 35.59 (Стартовый вид: радар, рамка, цвет 
                     tops.forEach(([r, c], i) => shot(r, c, 'ромб ' + (i + 1) + '/' + tops.length + ' · строка ' + r + ' · сдвиг ' + (c - c0 > 0 ? '+' : '') + (c - c0)));
                     name = 'Zerkalius-romby-' + S + '-prohod-' + (MODULE_STATE.animPasses || 0) + '.gif';
                 }
-                const pal = [[0, 0, 0], [35, 35, 45], [60, 130, 255], [215, 225, 235], [255, 204, 0]];
+                const pal = [[0, 0, 0], [35, 35, 45], bitRgb('zeroColorPicker', '#3c82ff'), bitRgb('oneColorPicker', '#d7e1eb'), [255, 204, 0]];   // 35.60
                 const gif = GIFENC.encode(frames, gw, gh, pal, mode === 'time' ? 25 : 45);
                 const lnk = document.createElement('a');
                 lnk.href = URL.createObjectURL(new Blob([gif], { type: 'image/gif' }));
@@ -1978,7 +1989,7 @@ VERSION: Pro 35.59 (Стартовый вид: радар, рамка, цвет 
                     pass += stepPasses;
                     if (hash() === first) { closed = true; break; }
                 }
-                const gif = GIFENC.encode(frames, gw, gh, [[0, 0, 0], [60, 130, 255], [215, 225, 235], [255, 204, 0]], stepPasses === 1 ? 12 : 35);
+                const gif = GIFENC.encode(frames, gw, gh, [[0, 0, 0], bitRgb('zeroColorPicker', '#3c82ff'), bitRgb('oneColorPicker', '#d7e1eb'), [255, 204, 0]], stepPasses === 1 ? 12 : 35);
                 const name = 'Zerkalius-аниматрица-шаг' + stepPasses + '-проходы-' + p0 + '-' + (pass - stepPasses) + '.gif';
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(new Blob([gif], { type: 'image/gif' }));
@@ -2455,6 +2466,10 @@ VERSION: Pro 35.59 (Стартовый вид: радар, рамка, цвет 
 
                 const actColor = UI.activeColorPicker.value; const actRgb = this.hexToRgb(actColor); const actAlpha = parseFloat(UI.activeAlphaRange.value);
                 const statColor = UI.staticColorPicker.value; const statRgb = this.hexToRgb(statColor); const statAlpha = parseFloat(UI.staticAlphaRange.value);
+                // 35.60: «0» и «1» своими цветами (флажок в «Цвете»); синтаксис, крипто и мутация — главнее
+                const bitCols = document.getElementById('bitColorsCheck')?.checked && !isSyntax && !isCrypto && activeTheme !== 'mutation';
+                const zeroRgb = bitCols ? this.hexToRgb(document.getElementById('zeroColorPicker').value) : null;
+                const oneRgb = bitCols ? this.hexToRgb(document.getElementById('oneColorPicker').value) : null;
 
                 ctx.textBaseline = 'middle'; ctx.textAlign = 'center'; 
                 let activeLinesSource = MODULE_STATE.lines;
@@ -2637,6 +2652,7 @@ VERSION: Pro 35.59 (Стартовый вид: радар, рамка, цвет 
                                 else { cRgb = statRgb; cAlpha = statAlpha; }
                             }
 
+                            if (bitCols && !isExactMatch) { if (finalChar === '0') cRgb = zeroRgb; else if (finalChar === '1') cRgb = oneRgb; }   // 35.60
                             if (hideStatic && !isChanged && !isCollision) cAlpha = 0.0;
                             if (cAlpha <= 0.01) continue; 
 
@@ -2802,6 +2818,7 @@ VERSION: Pro 35.59 (Стартовый вид: радар, рамка, цвет 
                             else { cRgb = statRgb; cAlpha = statAlpha; }
                         }
 
+                        if (bitCols && !isExactMatch) { if (finalChar === '0') cRgb = zeroRgb; else if (finalChar === '1') cRgb = oneRgb; }   // 35.60
                         if (hideStatic && !isChanged && !isCollision) cAlpha = 0.0;
                         if (cAlpha <= 0.01) continue; 
 
@@ -3327,6 +3344,7 @@ VERSION: Pro 35.59 (Стартовый вид: радар, рамка, цвет 
                     document.getElementById('rhombGridCheck'), document.getElementById('rhombGridStep'),   // 35.54
                     document.getElementById('rowBandsCheck'), document.getElementById('symAxisCheck'),   // 35.55, 35.56
                     document.getElementById('rhombLettersCheck'),   // 35.59
+                    document.getElementById('bitColorsCheck'), document.getElementById('zeroColorPicker'), document.getElementById('oneColorPicker'),   // 35.60
                     UI.activeColorPicker, UI.activeAlphaRange, UI.staticColorPicker, UI.staticAlphaRange, UI.fontSelect, UI.freezeScrollCheck, UI.spin3dCheck, UI.breathingZoomCheck, UI.autoPilotCheck, UI.speedMultInput, UI.rainbowTextCheck, UI.syntaxColorCheck
                 ];
                 const scheduleRender = () => (window.__zerkScheduleRender || (() => RENDERER.renderFrame()))();
