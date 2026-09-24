@@ -1,15 +1,16 @@
-<!-- Zerkalius Исследование — v0.003. Что нашлось в цикле Аниматрицы (Zerkalius Code) на сцене «1»: числа,
+<!-- Zerkalius Исследование — v0.004. Что нашлось в цикле Аниматрицы (Zerkalius Code) на сцене «1»: числа,
      законы и картинки. Страница-отчёт: считается не здесь — картинки собраны вне страницы по журналу Аниматрицы
      (35.49) тем же правилом волны, что в Code; те же выводы кратко записаны в борт-журнале (v0.089).
      v0.001: заведена 2026-09-24 по слову пользователя («картинки — в отдельную папку сайта и в индекс»).
      v0.002: картинки со сглаживанием — ужатые листы без него покрывались белыми квадратами (муар).
-     v0.003: «чётные темнее» — дописано: в чётных проходах нет ни одной единицы над единицей (штрихи ↔ точки). -->
+     v0.003: «чётные темнее» — дописано: в чётных проходах нет ни одной единицы над единицей (штрихи ↔ точки).
+     v0.004: щелчок по картинке — просмотр в полный размер 1:1 и ×2 / ×4 поверх страницы. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Исследование — v0.003</title>
+<title>Zerkalius Исследование — v0.004</title>
 <style>
   :root{ --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598;
     --up:#7cd4ff; --dn:#ffcf6b; --mem:#ff5d5d; --pink:#ff8a8a; --gold:#ffcc00; }
@@ -34,6 +35,20 @@
      браузер УЖИМАЕТ до ширины страницы: без сглаживания он выбрасывает целые ряды пикселей, тонкие линии слипаются
      в белые квадраты-блоки (муар), которых в самой картинке нет. */
   figcaption{ font-size:12px; color:var(--dim); margin-top:5px; }
+  /* v0.004: щелчок по картинке — просмотр в полный размер (1:1) и крупнее (×2, ×4) поверх страницы. При увеличении
+     сглаживание выключено — там оно и нужно: каждый символ виден чётким квадратом. */
+  figure img{ cursor:zoom-in; }
+  #viewer{ position:fixed; inset:0; z-index:50; display:none; background:rgba(5,7,11,.94); overflow:auto; }
+  #viewer.on{ display:block; }
+  #viewer .bar{ position:sticky; top:0; left:0; display:flex; gap:6px; align-items:center; padding:8px 12px;
+    background:rgba(18,20,26,.96); border-bottom:1px solid var(--line); z-index:1; }
+  #viewer .bar button{ background:var(--panel); color:var(--fg); border:1px solid var(--line); border-radius:3px;
+    padding:3px 10px; font:13px Consolas, monospace; cursor:pointer; }
+  #viewer .bar button.act, #viewer .bar button:hover{ border-color:var(--gold); color:var(--gold); }
+  #viewer .bar .nm{ color:var(--dim); font-size:12px; margin-left:8px; }
+  #viewer .img{ padding:14px; }
+  #viewer img{ display:block; max-width:none; }
+  #viewer img.up{ image-rendering:pixelated; }
   .two{ display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
   .key{ background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--gold);
     border-radius:0 4px 4px 0; padding:10px 14px; margin:12px 0; }
@@ -46,7 +61,7 @@
 <body>
 <div class="wrap">
 <h1>zerkalius · исследование</h1>
-<p class="sub">Цикл Аниматрицы в <a href="../Zerkalius-code.html">Zerkalius Code</a> на сцене «1» — что нашлось, 2026-09-24.
+<p class="sub">Щелчок по картинке — в полный размер (и ×2, ×4). Цикл Аниматрицы в <a href="../Zerkalius-code.html">Zerkalius Code</a> на сцене «1» — что нашлось, 2026-09-24.
 Кратко то же — в <a href="../Zerkalius-dnevnik.html">борт-журнале</a> (v0.089, запись после Code 35.55, и словарь).</p>
 
 <div class="key">
@@ -148,6 +163,36 @@ k = 90, k−1 = <code>1011001</code> → сдвиги 0, 2, 4, 6, 32, 34, 36, 38
 <p><b>Осталось:</b> проверить законы на других сценах и на числе строк не степени двойки (100, 200 — предсказание: период
 128 и 256); выяснить, всегда ли вымирают нули и от чего зависит длина разгона.</p>
 </div>
+<div id="viewer"><div class="bar">
+  <button data-z="1" class="act">1:1</button><button data-z="2">×2</button><button data-z="4">×4</button>
+  <button data-close>✕ закрыть</button><span class="nm"></span>
+</div><div class="img"><img alt=""></div></div>
+<script>
+// v0.004: просмотр картинки в полный размер. Щелчок по картинке — 1:1, кнопки ×2 / ×4 — крупнее без сглаживания;
+// Esc, ✕ или щелчок по фону — закрыть. Колесо и полосы прокрутки двигают картинку, если она больше окна.
+(function () {
+  const v = document.getElementById('viewer'), img = v.querySelector('.img img'), nm = v.querySelector('.nm');
+  let z = 1;
+  const apply = () => {
+    if (!img.naturalWidth) return;
+    img.style.width = img.naturalWidth * z + 'px';
+    img.classList.toggle('up', z > 1);
+    v.querySelectorAll('[data-z]').forEach(b => b.classList.toggle('act', +b.dataset.z === z));
+  };
+  const open = (src, alt) => { z = 1; img.src = src; img.alt = alt || ''; nm.textContent = (alt || '') + ' · ' + src.split('/').pop();
+    v.classList.add('on'); v.scrollTop = 0; v.scrollLeft = 0; document.body.style.overflow = 'hidden'; };
+  const close = () => { v.classList.remove('on'); document.body.style.overflow = ''; };
+  img.addEventListener('load', apply);
+  document.querySelectorAll('figure img').forEach(im => im.addEventListener('click', () => open(im.getAttribute('src'), im.alt)));
+  v.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (b && b.dataset.z) { z = +b.dataset.z; apply(); return; }
+    if (b && b.hasAttribute('data-close')) { close(); return; }
+    if (e.target === v || e.target.classList.contains('img')) close();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && v.classList.contains('on')) close(); });
+})();
+</script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
