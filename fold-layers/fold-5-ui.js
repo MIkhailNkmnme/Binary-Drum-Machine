@@ -626,6 +626,7 @@ function applyFieldColors() {
   if (colFieldL) document.documentElement.style.setProperty("--fld-l", colFieldL.value);
   if (colFieldC) document.documentElement.style.setProperty("--fld-c", colFieldC.value);
   if (colFieldR) document.documentElement.style.setProperty("--fld-r", colFieldR.value);
+  syncColTwins();   // v1.610: двойники фона П1/П2 под «№» показывают то же
 }
 if (colFieldL) colFieldL.oninput = () => { applyFieldColors(); saveCacheSoon(); };
 if (colFieldC) colFieldC.oninput = () => { applyFieldColors(); saveCacheSoon(); };
@@ -674,11 +675,17 @@ function patColTwins(){
 function chainColTwins(){
   return [["col1", "colC1Ax"], ["col0", "colC0Ax"]];
 }
+/* v1.610, запрос «и цвет фона поля перенеси сюда же — три цвета друг под другом, шириною одинаковой
+   с №»: у фона П1/П2 тоже двойник, в блоке под «№» (#patColL/#patColR). Оригинал — панельный
+   #colFieldL/#colFieldR в «Виде»: от него считает applyFieldColors(), его пишет кэш. */
+function fieldColTwins(){
+  return [["colFieldL", "colFieldLAx"], ["colFieldR", "colFieldRAx"]];
+}
 /* Обратный ход: цвет изменили в панели — или его положил кэш при загрузке, или пресет цветов, —
    и двойники обязаны показать то же самое. Иначе их квадратики врут о цвете, который сами же и
    правят: щёлкнешь по такому, а палитра откроется на позапрошлом значении. */
 function syncColTwins(){
-  for (const [srcId, dstId] of patColTwins().concat(chainColTwins())) {
+  for (const [srcId, dstId] of patColTwins().concat(chainColTwins(), fieldColTwins())) {
     const src = document.getElementById(srcId), dst = document.getElementById(dstId);
     if (src && dst && dst.value !== src.value) dst.value = src.value;
   }
@@ -695,6 +702,23 @@ for (const [srcId, dstId] of chainColTwins()) {
   const src = document.getElementById(srcId), dst = document.getElementById(dstId);
   if (!src || !dst) continue;
   dst.oninput = () => { src.value = dst.value; markCustomColor(); };
+}
+// v1.610: двойники фона П1/П2 заводятся здесь (в разметке их нет); в блок под «№» их переносит
+// сборка блоков #patColL/#patColR ниже по файлу.
+for (const [srcId, dstId] of fieldColTwins()) {
+  const src = document.getElementById(srcId);
+  if (!src) continue;
+  let dst = document.getElementById(dstId);
+  if (!dst) {
+    dst = document.createElement("input");
+    dst.type = "color";
+    dst.id = dstId;
+    dst.value = src.value;
+    dst.title = "Фон " + (srcId === "colFieldL" ? "левого поля (П1)" : "правого поля (П2)") +
+      ". Тот же цвет, что в «Виде» — правится и оттуда, и отсюда";
+    document.body.appendChild(dst);
+  }
+  dst.oninput = () => { src.value = dst.value; applyFieldColors(); saveCacheSoon(); };
 }
 
 /* ЦВЕТА «1» И «0» В НАЛОЖЕНИИ (v1.111, запрос пользователя: "для наложения надо настройки цвета
@@ -3050,6 +3074,7 @@ function updateSplitPositions(){
       if (!box) return;
       if (hidden || !num || num.style.display === "none") { box.classList.remove("act"); return; }
       box.classList.add("act");
+      box.style.width = num.offsetWidth + "px";   // v1.610: столбик цветов шириной с «№»
       const nl = parseFloat(num.style.left) || 0;
       const left = side === "L" ? nl : nl + num.offsetWidth - box.offsetWidth;
       box.style.left = Math.round(left) + "px";
@@ -4477,8 +4502,8 @@ function hideAxisColBox(){}
        У «№» осталась одна кнопка выравнивания. */
     [["patCtrlL", ["bAlignPatL"]],
      ["patCtrlR", ["bAlignPatR"]],
-     ["patColL", ["colPat1LAx", "colPat0LAx"]],
-     ["patColR", ["colPat1RAx", "colPat0RAx"]]].forEach(([cid, ids]) => {
+     ["patColL", ["colPat1LAx", "colPat0LAx", "colFieldLAx"]],   // v1.610: + фон поля
+     ["patColR", ["colPat1RAx", "colPat0RAx", "colFieldRAx"]]].forEach(([cid, ids]) => {
       const chainForCtrl = document.getElementById("chain");
       if (!chainForCtrl || document.getElementById(cid)) return;
       const box = document.createElement("div");

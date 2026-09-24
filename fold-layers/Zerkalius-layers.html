@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Layers — v1.609</title>
+<title>Zerkalius Layers — v1.610</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -937,7 +937,9 @@
      цепочки и на биты паттернов не садится. Снимаем их. */
   #patCtrlL, #patCtrlR{ gap:3px; }
   /* v1.609: цвета паттернов — свой блок под «№» (#patColL/#patColR, место ставит placeCol). */
-  #patColL, #patColR{ gap:3px; }
+  /* v1.610: три цвета (1, 0, фон поля) — столбиком, каждый шириной с «№» (ширину блоку ставит placeCol). */
+  #patColL, #patColR{ flex-direction:column; align-items:stretch; gap:2px; height:auto !important; }
+  #patColL input[type="color"], #patColR input[type="color"]{ width:100% !important; height:14px !important; flex:0 0 auto; }
   /* ═══ КНОПКИ НА ПОЛЕ ЦЕПОЧЕК (v1.594) ═══ Слой #fieldBtns лежит поверх полотна во всю .main-layout
      и мышь не ловит — ловят только сами значки. Место значка (left/top) ставит renderFieldBtns. Вид —
      как у кнопок меню 2 (--m2-*). В «чисто биты» слоя нет (как и ряда управления, v1.593). */
@@ -5293,7 +5295,7 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
   <!-- Заголовок стоит вплотную слева от вкладок (v1.046), вся связка центрируется полосой — см. #menuBarTitle в CSS. --><div id="menuBarTitle">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.609</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.610</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -6893,11 +6895,11 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
      (видно новый номер версии в заголовке), а fold-*.js берёт из кеша — то есть новый код
      просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
      версией в <title>/<h3>, теми же тремя цифрами. -->
-<script src="fold-1-core.js?v=1609"></script>
-<script src="fold-2-render.js?v=1609"></script>
-<script src="fold-3-ops.js?v=1609"></script>
-<script src="fold-4-tools.js?v=1609"></script>
-<script src="fold-5-ui.js?v=1609"></script>
+<script src="fold-1-core.js?v=1610"></script>
+<script src="fold-2-render.js?v=1610"></script>
+<script src="fold-3-ops.js?v=1610"></script>
+<script src="fold-4-tools.js?v=1610"></script>
+<script src="fold-5-ui.js?v=1610"></script>
 <div id="fieldInfo"></div>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;
