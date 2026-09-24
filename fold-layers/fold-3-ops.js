@@ -6115,7 +6115,9 @@ function insertNextBelow(tag, logName, make, up){
       if (tgt.length) {
         snapshot();
         const L = tgt.length;   // длина ДО — для сообщения «строка выросла»
+        xorChgMap.clear();   // v1.597: красным — только то, что поменял ЭТОТ XOR
         const x = xorIntoRowAligned(tgtIdx, out);   // v1.583: по выравниванию цепочки
+        xorChgBaseRows = st.rows.slice();
         const chg = x.chg;
         st.selectedRows = new Set([tgtIdx]);
         st.hit = null;
@@ -6441,7 +6443,7 @@ if (bNumPrevEl) bNumPrevEl.onclick = () => insertNextBelow("🔢−1", "Номе
    полустолбцах. Разница начал out и цели и есть сдвиг XOR. Нечётная разница бывает только у
    «½»-выравниваний: out стоит тогда между битами цели — берём левый (half:true).
    Вышедшее за края цели удлиняет строку новыми битами (как и раньше справа). Новыми помечаются
-   биты, на которые лёг out (v1.585), — см. ниже. Пишет st.rows[t] и newBitsMap; snapshot/render — на вызывающем.
+   биты, на которые лёг out (v1.585), — см. ниже. Пишет st.rows[t], newBitsMap и xorChgMap (v1.597, красные 0↔1); snapshot/render — на вызывающем.
    Цель обязана быть из одних 0 и 1 — это проверяет вызывающий. */
 function xorIntoRowAligned(t, out){
   const al = st.align;
@@ -6454,6 +6456,7 @@ function xorIntoRowAligned(t, out){
   const d = Math.floor(d2 / 2);                 // где в строке-цели начинается out
   const lo = Math.min(0, d), hi = Math.max(tgt.length, d + out.length);
   const arr = new Array(hi - lo).fill(false);
+  const red = new Array(hi - lo).fill(false);   // v1.597: бит строки-цели, который XOR поменял 0↔1
   let merged = "", chg = 0;
   for (let p = lo; p < hi; p++) {
     const inT = p >= 0 && p < tgt.length;
@@ -6461,6 +6464,7 @@ function xorIntoRowAligned(t, out){
     merged += v;
     const changed = !inT || (v !== bit(tgt, p));
     if (changed) chg++;
+    if (inT && v !== bit(tgt, p)) red[p - lo] = true;
     /* v1.585, запрос «по битно выделял не всю строку, а какой треугольник XOR»: «новыми» в цели
        помечаются ровно биты, на которые лёг out, — форма треугольника, изменились они или нет.
        Прежняя пометка строки (у вставленной «⬇ Вставить» она на всю строку) здесь сбрасывается:
@@ -6469,6 +6473,7 @@ function xorIntoRowAligned(t, out){
   }
   st.rows[t] = merged;
   newBitsMap.set(t, arr);
+  xorChgMap.set(t, red);
   return { chg, half: !!(d2 & 1), grew: merged.length - tgt.length };
 }
 /* ═══ ПАТТЕРНЫ ВСЕГДА С ПЕРВОЙ СТРОКИ (v1.590) ═══
@@ -6540,11 +6545,13 @@ function descentWrite(xor){
     snapshot();
     // v1.583: этаж ложится по выравниванию цепочки, а не с нулевого бита — см. xorIntoRowAligned.
     let chgAll = 0, halfHit = false;
+    xorChgMap.clear();   // v1.597: красным — только то, что поменял ЭТОТ XOR
     targets.forEach((t, k) => {
       const x = xorIntoRowAligned(t, lines[k]);
       chgAll += x.chg;
       if (x.half) halfHit = true;
     });
+    xorChgBaseRows = st.rows.slice();
     // v1.584 → v1.586: после XOR выделение переходит на ОДНУ строку — следующую под источником
     // (запрос «пусть переходит просто на следующую вниз под собой после XOR»; в v1.584 была самая
     // нижняя из строк треугольника). Следующее нажатие пойдёт уже от неё — шаг за шагом вниз.
@@ -6613,6 +6620,7 @@ function descentEdgeAll(){
   if (!todo.length) { say(`${tag}: ${sel ? "в выделенных" : "в цепочке"} нет строк из одних 0 и 1.`); return; }
   snapshot();
   let rowsChanged = 0, bitsChanged = 0;
+  xorChgMap.clear();   // v1.597: «эти также» — поменявшиеся биты красные, как у XOR спуска
   for (const i of todo) {
     const s = st.rows[i], e = descentEdgeOf(s);
     if (e === s) continue;
@@ -6620,8 +6628,10 @@ function descentEdgeAll(){
     for (let k = 0; k < s.length; k++) if (e[k] !== s[k]) { arr[k] = true; bitsChanged++; }
     st.rows[i] = e;
     newBitsMap.set(i, arr);
+    xorChgMap.set(i, arr);
     rowsChanged++;
   }
+  xorChgBaseRows = st.rows.slice();
   st.hit = null;
   render(); saveCache();
   say(`${tag}: ${sel ? "выделенные" : "все"} строки (${todo.length}) переведены в края своих спусков — изменилось строк ${rowsChanged}, бит ${bitsChanged}` +

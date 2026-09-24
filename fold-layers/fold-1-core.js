@@ -64,6 +64,10 @@ var autoSlowT0 = -1;
 var xorProjStep = { target: -1, upto: -1 };
 var maskChangedMap = new Map();
 var maskBaseRows = null;
+// v1.597: биты, которые XOR спуска/построений ПОМЕНЯЛ (0↔1), — красные; правило жизни как у Маски:
+// держатся, пока не изменится любой бит любой строки (сверка с xorChgBaseRows в render).
+var xorChgMap = new Map();
+var xorChgBaseRows = null;
 var chgColorOffRows = null;
 var chgBitsOn = true;
 var maskColorOn = true;

@@ -2303,6 +2303,14 @@ function render(){
     }
     if (!same) { maskChangedMap.clear(); maskBaseRows = null; }
   }
+  // v1.597: красные биты XOR спуска — то же правило жизни, что у Маски выше.
+  if (xorChgMap.size && xorChgBaseRows) {
+    let same = xorChgBaseRows.length === st.rows.length;
+    if (same) for (let r = 0; r < st.rows.length; r++) {
+      if ((st.rows[r] || "") !== (xorChgBaseRows[r] || "")) { same = false; break; }
+    }
+    if (!same) { xorChgMap.clear(); xorChgBaseRows = null; }
+  }
   // "🪞 Карта осей" — то же правило, что и у Маски выше: карта посчитана по конкретным строкам,
   // изменился хоть один бит — она уже про прошлое, и снимается целиком (см. axisMap в fold-1-core).
   if (axisMap.size && axisMapBaseRows) {
@@ -3961,6 +3969,8 @@ function render(){
     // Биты, изменённые "🎭 Маской" (см. maskApply) — красные, пока не тронут любой бит, пока
     // окраска не выключена кнопкой 🎨 (maskColorOn) и пока включён общий выключатель "🔴 Изм. биты".
     const maskFlagsRow = (maskColorOn && chgBitsOn) ? maskChangedMap.get(i) : null;
+    // v1.597: биты, поменянные XOR спуска/построений (см. xorIntoRowAligned) — под общим «🔴 Изм. биты».
+    const xorChgRow = showChgBits ? xorChgMap.get(i) : null;
 
     // Оси симметрии этой строки ("🪞 Карта осей", см. buildAxisMap в fold-1-core): Map(индекс бита
     // → {pal, anti}). Карта выключена или в строке осей нужной длины нет — null, и ветка молчит.
@@ -4029,6 +4039,7 @@ function render(){
       const bit = s[k];
       const patChainHit = patChainHitMap ? patChainHitMap[k] : null;
       const isMaskBit = !!(maskFlagsRow && maskFlagsRow.length === s.length && maskFlagsRow[k]);
+      const isXorChgBit = !!(xorChgRow && xorChgRow.length === s.length && xorChgRow[k]);
       let isXoredBit = false;
       if (isHxTargetRow && hxWin) {
         const globalIdx = hxChainLenAll + k;
@@ -4246,6 +4257,10 @@ function render(){
            Кнопку включают ровно затем, чтобы смотреть на симметрию, поэтому она важнее пометок. */
         emit('<span class="b' + bit + (isRevKeep ? ' hlrk' : ' hlrm') +
              '" title="' + (isRevKeep ? 'Неподвижный: разворот строки оставит тут то же значение' : 'Меняющийся: разворот строки перевернёт этот бит') + '"' + colAttr + '>', bit, mrg);
+      } else if (isXorChgBit && (bit === '0' || bit === '1')) {
+        /* v1.597, запрос «при XOR спуск вниз — пусть красным красит биты изменившиеся, то есть которые
+           изменились от XOR»: выше «Нов» — иначе пометка треугольника (v1.585) их закрывает. */
+        emit('<span class="b' + bit + ' bit-chg" title="Изменён XOR-ом (0↔1)"' + colAttr + '>', bit, mrg);
       } else if (isInvBit && (bit === '0' || bit === '1')) {
         emit('<span class="b' + bit + ' bit-inv" title="Перевёрнут переходом границы строки"' + colAttr + '>', bit, mrg);
       } else if (isInsBit && (bit === '0' || bit === '1')) {
