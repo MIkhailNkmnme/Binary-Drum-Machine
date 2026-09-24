@@ -5,14 +5,14 @@ PROJECT: Zerkalius Треугольник — отдельная страниц�
          Заведена 2026-09-24 копией Zerkalius Code 35.74: для начала в ней есть всё, что есть в Code.
          Память (текст, вид, раскладка) — СВОЯ, ключи ztri_*; с v0.009 у Code ничего не подхватывает (кроме сцен, если
          своих нет): первый запуск — треугольник правила 90 на 50 строк. Ключи Code никогда не пишутся.
-VERSION: v0.015 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
+VERSION: v0.016 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Треугольник v0.015</title>
+    <title>Zerkalius Треугольник v0.016</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -279,6 +279,7 @@ VERSION: v0.015 (копия Zerkalius Code 35.74 целиком — отправ
         .tab-sec.floating[data-tab="rhombcap"] { width: 300px; }
         .tab-sec.floating[data-tab="py3d"] { width: 420px; }
         .tab-sec.floating[data-tab="words"] { width: 360px; }
+        .tab-sec.floating[data-tab="films"] { width: 380px; }
         .wd-it { cursor: pointer; padding: 1px 3px; border-radius: 2px; }
         .wd-it:hover { background: #262a33; }
         .wd-it.on { background: #3a3410; outline: 1px solid #ffe14d; }
@@ -376,7 +377,7 @@ VERSION: v0.015 (копия Zerkalius Code 35.74 целиком — отправ
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.015</h3>
+                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.016</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -838,6 +839,15 @@ VERSION: v0.015 (копия Zerkalius Code 35.74 целиком — отправ
                     <div id="wdOut" class="rs-box rs-tall">Буквы — те же, что у 🔤 и в ◇ Сводке. Нажмите «🔎 Искать»; щелчок по находке — подсветка её фигур на холсте.</div>
                 </div>
                 </div>
+                <!-- Треугольник v0.016: 🎞 фильмы — фильм каждого места за цикл и ходы рисунков (стоит, качели, бег) -->
+                <div class="tab-sec" data-tab="films" data-title="🎞 Фильмы" data-float="0.36,0.08" data-off-default="1">
+                <div class="control-group" style="border: none; padding: 0;">
+                    <div class="compact-row" style="align-items:center; gap:4px;">
+                        <button id="fmGo" type="button" class="rs-btn" title="Прогнать цикл на копии текста: у каждого места — его фильм (период, разные кадры), и ходы — тот же рисунок на следующем проходе в соседнем месте. Единица и размер — как в «👁 Вид» и сводке. Повторное нажатие — стоп">▶ Прогнать цикл</button>
+                    </div>
+                    <div id="fmOut" class="rs-box rs-tall">Фильм места — ряд его рисунков по проходам: сколько разных кадров и через сколько проходов он повторяется. Ходы — рисунок, переехавший в соседнее место.</div>
+                </div>
+                </div>
                 <!-- Треугольник v0.006: 📖 как считается — описание с примером (по умолчанию спрятано, вкладка сверху) -->
                 <div class="tab-sec" data-tab="howto" data-title="📖 Как считается" data-float="0.2,0.05" data-off-default="1">
                 <div class="howto">
@@ -936,6 +946,10 @@ VERSION: v0.015 (копия Zerkalius Code 35.74 целиком — отправ
                     текста, что виден сверху, поэтому «⊙ сверху» даёт тот же рисунок, что на холсте. Можно смотреть и одну пирамиду,
                     выбранную в «🔍 Крупно». <b>⧫ Зеркало</b>: под каждой пирамидой — её отражение вершиной вниз, вместе октаэдр, как знак
                     Zerkalius; снизу та же картина с битами 0 ↔ 1 (как в «Октаэдре»), или пусто ↔ символ, или без инверсии; «⊖ снизу» — заглянуть.</p>
+                    <p><b>🎞 Фильмы</b>: у каждого места треугольника — свой фильм, ряд его рисунков по проходам; окно считает его период
+                    (через сколько проходов место повторяется) и число разных кадров. Ходы — тот же рисунок на следующем проходе в соседнем
+                    месте: «качели» (туда-обратно) и «бег». Бега нет: волна пересчитывает каждый столбец сам по себе, и вбок рисунку
+                    сдвинуться нечем — рисунки стоят или меняются на месте.</p>
                     <p><b>🔎 Слова</b>: буквы фигур читаются строками — ряды, стороны треугольника (у ромбов), по желанию справа налево.
                     Словарь — русские словоформы из строк интерфейса Windows (как Swtchr собирал свои тройки букв); ищутся слова,
                     сочетания (словарные слова встык) и «почти слова» — куски, которые по тройкам букв Swtchr звучат по-русски не хуже
@@ -5270,6 +5284,167 @@ VERSION: v0.015 (копия Zerkalius Code 35.74 целиком — отправ
             }
         };
 
+        /* Треугольник v0.016: 🎞 ФИЛЬМЫ (пользователь: «значит ищем картинки-фильмы» → «бегущие формы» и «фильм одного места»).
+           Цикл прогоняется на копии текста (кусками, как 📦); на каждом проходе — перепись фигур выбранной единицы и размера.
+           МЕСТА: у каждого места — его фильм, ряд рисунков по проходам; считается, сколько в нём разных кадров и его период —
+           наименьший сдвиг d (делитель периода цикла), после которого фильм повторяется. ХОДЫ: тот же рисунок на следующем
+           проходе в соседнем месте решётки (сдвиг (0, ±S), (±S/2, ±S/2), (±S, 0)) или на том же; из ходов собираются цепочки:
+           «стоит», «качели» (туда-обратно) и «бег» (не меньше трёх шагов без возврата). Почти пустые рисунки (меньше трёх
+           символов) не в счёт. Ожидание: бега нет — волна пересчитывает каждый столбец сам по себе, вбок рисунку сдвинуться
+           нечем; проверено расчётом на 64 и 128 строках (стоят сотни, качели — единицы, бега нет). */
+        const FILMS = {
+            job: null, res: null,
+            OFF: null,
+            run: function() {
+                if (this.job) { this.job.stop = true; return; }
+                const out = document.getElementById('fmOut'), src = MODULE_STATE.originalLines, H = src.length, S = RHOMBS.size(), U = RHOMBS.unit();
+                const c0 = H ? RHOMBS.apex(src[0].text) : null;
+                if (H < 2 || c0 === null) { out.textContent = 'Нет текста или первая строка пустая'; return; }
+                const { rows, W } = RHOMBS.rowsOf(src);
+                const stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) { const c1 = a[k], c2 = b[k]; b[k] = c1 === c2 ? 32 : (c1 !== 32 ? c1 : c2); } };
+                const hashAll = () => { let h1 = 2166136261, h2 = 7; for (const a of rows) for (let k = 0; k < W; k++) { h1 = Math.imul(h1 ^ a[k], 16777619); h2 = (Math.imul(h2, 31) + a[k]) | 0; } return (h1 >>> 0) * 2097152 + ((h2 >>> 0) & 2097151); };
+                let pass = MODULE_STATE.animPasses || 0;
+                const r0 = MODULE_STATE.animatrixRow || 0;
+                if (r0 > 0 && r0 < H - 1) { for (let r = r0; r < H - 1; r++) stepRow(r); pass++; }
+                const shapes = RHOMBS.shapes(U, H, c0, S);
+                if (!shapes.length) { out.textContent = 'Фигур этого размера нет'; return; }
+                const job = this.job = { stop: false }, btn = document.getElementById('fmGo'), btnTxt = btn.textContent;
+                btn.textContent = '⏹ Стоп'; btn.classList.add('on');
+                const keys = [], fill = [], states = new Map(), p0 = pass; let f = 0, closed = false, repeatOf = null;
+                const chunk = () => {
+                    const t = performance.now();
+                    while (f < 4096 && !job.stop && performance.now() - t < 60) {
+                        const hk = hashAll();
+                        if (states.has(hk)) { closed = true; repeatOf = states.get(hk); break; }
+                        states.set(hk, pass);
+                        const items = RHOMBS.scan(rows, W, c0, S, U);
+                        keys.push(Float64Array.from(items, it => it.key));
+                        // «почти пустая»: меньше трёх символов в фигуре
+                        fill.push(Uint16Array.from(items, it => { const g = RHOMBS.geo(it.kind, S); let n = 0; for (let i = 0; i < g.n && n < 3; i++) { const row = rows[it.r + g.ro[i]], k = it.c + g.tt[i]; if (row && k >= 0 && k < W && row[k] !== 32) n++; } return n; }));
+                        for (let r = 0; r < H - 1; r++) stepRow(r);
+                        pass++; f++;
+                    }
+                    if (closed || job.stop || f >= 4096) {
+                        this.job = null; btn.textContent = btnTxt; btn.classList.remove('on');
+                        this.res = this.analyse(shapes, keys, fill, { S: S, U: U, c0: c0, p0: p0, repeatOf: repeatOf, closed: closed, H: H });
+                        this.render();
+                        return;
+                    }
+                    out.textContent = 'Считаю: проход ' + pass + ' (пройдено ' + f + ') · нажать ещё раз — стоп';
+                    setTimeout(chunk, 0);
+                };
+                chunk();
+            },
+            analyse: function(shapes, keys, fill, m) {
+                const n = shapes.length, T = keys.length, S = m.S, h = S / 2;
+                // берём только кадры цикла (с прохода repeatOf), если он замкнулся
+                const t0 = m.closed ? m.repeatOf - m.p0 : 0, P = T - t0;
+                const pos = new Map(shapes.map((s, i) => [s.kind + ':' + s.r + ':' + s.c, i]));
+                // места: период и число разных кадров
+                const places = shapes.map((s, i) => {
+                    const seq = []; let empty = true;
+                    for (let t = t0; t < T; t++) { seq.push(keys[t][i]); if (fill[t][i] >= 3) empty = false; }
+                    let per = P;
+                    for (let d = 1; d < P; d++) { if (P % d) continue; let ok = true; for (let t = 0; t < P && ok; t++) if (seq[t] !== seq[(t + d) % P]) ok = false; if (ok) { per = d; break; } }
+                    return { i: i, s: s, per: per, distinct: new Set(seq).size, empty: empty };
+                });
+                // ходы: тот же рисунок на следующем проходе — на месте или в соседнем
+                const OFF = [[0, S], [0, -S], [h, h], [h, -h], [-h, h], [-h, -h], [S, 0], [-S, 0]];
+                let stay = 0, jumps = 0; const link = new Map();   // (t, i) → j
+                for (let t = t0; t + 1 < T; t++) for (let i = 0; i < n; i++) {
+                    if (fill[t][i] < 3) continue;
+                    const k = keys[t][i];
+                    if (keys[t + 1][i] === k) { stay++; continue; }
+                    const s = shapes[i];
+                    for (const [dr, dc] of OFF) {
+                        const j = pos.get(s.kind + ':' + (s.r + dr) + ':' + (s.c + dc));
+                        if (j !== undefined && keys[t + 1][j] === k) { jumps++; link.set(t * n + i, j); break; }
+                    }
+                }
+                // цепочки прыжков: качели (возврат на прежнее место) и бег (без возврата)
+                const chains = [], used = new Set();
+                for (const [ti, j0] of link) {
+                    if (used.has(ti)) continue;
+                    const t = Math.floor(ti / n), i = ti % n;
+                    let path = [[t, i]], ct = t, ci = i;
+                    while (link.has(ct * n + ci)) { used.add(ct * n + ci); ci = link.get(ct * n + ci); ct++; path.push([ct, ci]); if (path.length > P) break; }
+                    if (path.length < 3) continue;
+                    const places2 = new Set(path.map(p => p[1]));
+                    const back = path.some((p, k) => k >= 2 && p[1] === path[k - 2][1]);
+                    chains.push({ path: path, kind: back ? 'качели' : 'бег', span: places2.size });
+                }
+                chains.sort((a, b) => b.path.length - a.path.length);
+                return Object.assign({}, m, { P: P, t0: t0, places: places, stay: stay, jumps: jumps, chains: chains, shapes: shapes });
+            },
+            render: function() {
+                const R = this.res, out = document.getElementById('fmOut'); if (!R || !out) return;
+                const live = R.places.filter(p => !p.empty);
+                const byPer = live.slice().sort((a, b) => a.per - b.per || a.distinct - b.distinct || a.s.lev - b.s.lev);
+                const perHist = new Map(); live.forEach(p => perHist.set(p.per, (perHist.get(p.per) || 0) + 1));
+                const runs = R.chains.filter(c => c.kind === 'бег'), swings = R.chains.filter(c => c.kind === 'качели');
+                const nm = p => RHOMBS.KIND_NAME[p.s.kind] + ' · ряд ' + p.s.lev + ', ' + (p.s.j + 1) + '-й · строка ' + p.s.r + ', сдвиг ' + (p.s.c - R.c0 > 0 ? '+' : '') + (p.s.c - R.c0);
+                let h = '<div class="rs-lab">' + RHOMBS.UNIT_NAME[R.U] + ' ' + R.S + ' · ' + (R.closed ? 'цикл ' + R.P + ' проходов с прохода ' + R.repeatOf : 'цикл не замкнулся — ' + R.P + ' проходов') + ' · мест ' + R.places.length + ', живых ' + live.length + '</div>';
+                h += '<div class="rs-lab">ФИЛЬМЫ МЕСТ — период фильма (через сколько проходов место повторяется): ' + [...perHist.entries()].sort((a, b) => a[0] - b[0]).map(([p, c]) => p + ' — ' + c + ' мест').join(', ') + '. Сначала самые короткие; щелчок — место в «🔍 Крупно» (там лента и 🎞 GIF).</div>';
+                h += byPer.slice(0, 80).map(p => '<div class="wd-it" data-p="' + p.i + '">период <b>' + p.per + '</b> · разных кадров ' + p.distinct + ' · ' + nm(p) + '</div>').join('');
+                h += '<div class="rs-lab">ХОДЫ — тот же рисунок на следующем проходе: на месте ' + R.stay + ' раз, в соседнем месте ' + R.jumps + ' раз. Цепочки из трёх и больше кадров: бег — ' + runs.length + ', качели — ' + swings.length + '. Щелчок — GIF окрестности.</div>';
+                h += R.chains.slice(0, 60).map((c, k) => '<div class="wd-it" data-c="' + k + '"><b>' + c.kind + '</b> · ' + c.path.length + ' кадров, мест ' + c.span + ' · с прохода ' + (R.p0 + c.path[0][0]) + ' · ' + c.path.slice(0, 6).map(([t, i]) => '(' + R.shapes[i].r + ', ' + (R.shapes[i].c - R.c0) + ')').join(' → ') + (c.path.length > 6 ? ' …' : '') + '</div>').join('') ||
+                    '<div class="wd-no">Цепочек нет: рисунки не переезжают — каждый столбец волна пересчитывает сам по себе, вбок сдвинуться нечем.</div>';
+                out.innerHTML = h;
+                out.querySelectorAll('[data-p]').forEach(el => el.addEventListener('click', () => this.pickPlace(+el.dataset.p, el)));
+                out.querySelectorAll('[data-c]').forEach(el => el.addEventListener('click', () => { UI.statusInfo.textContent = '🎞 GIF хода собирается…'; setTimeout(() => this.gifChain(R.chains[+el.dataset.c]), 30); }));
+            },
+            pickPlace: function(i, el) {
+                const R = this.res, s = R.shapes[i];
+                document.querySelectorAll('#fmOut .wd-it.on').forEach(x => x.classList.remove('on')); if (el) el.classList.add('on');
+                RHOMBS.sel = { unit: R.U, kind: s.kind, S: R.S, r: s.r, c: s.c, c0: R.c0, lev: s.lev, j: s.j, hist: [], keys: new Set() };
+                RHOMBS._stripN = -1; RHOMBS.snap();
+                const sec = document.querySelector('.tab-sec[data-tab="rhombcap"]'); if (sec && sec.classList.contains('off')) { sec.classList.remove('off'); TABS.sync(false); }
+                RHOMBS.updCapture(true); RENDERER.renderFrame();
+            },
+            // GIF окрестности хода: прямоугольник, накрывающий все места цепочки, проход за проходом (волна на копии)
+            gifChain: function(ch) {
+                const R = this.res; if (!R || !ch) return;
+                const src = MODULE_STATE.originalLines, H = src.length, { rows, W } = RHOMBS.rowsOf(src);
+                const stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) { const c1 = a[k], c2 = b[k]; b[k] = c1 === c2 ? 32 : (c1 !== 32 ? c1 : c2); } };
+                const full = () => { for (let r = 0; r < H - 1; r++) stepRow(r); };
+                let pass = MODULE_STATE.animPasses || 0; const r0 = MODULE_STATE.animatrixRow || 0;
+                if (r0 > 0 && r0 < H - 1) { for (let r = r0; r < H - 1; r++) stepRow(r); pass++; }
+                const tStart = R.p0 + ch.path[0][0]; while (pass < tStart) { full(); pass++; }
+                let rA = Infinity, rB = -Infinity, cA = Infinity, cB = -Infinity;
+                for (const [, i] of ch.path) { const s = R.shapes[i], g = RHOMBS.geo(s.kind, R.S); rA = Math.min(rA, s.r + g.roMin); rB = Math.max(rB, s.r + g.roMin + g.gh - 1); cA = Math.min(cA, s.c - g.wMax); cB = Math.max(cB, s.c + g.wMax); }
+                rA = Math.max(0, rA - 2); rB = Math.min(H - 1, rB + 2); cA = Math.max(0, cA - 2); cB = Math.min(W - 1, cB + 2);
+                const bw = cB - cA + 1, bh = rB - rA + 1, z = Math.max(1, Math.min(10, Math.floor(420 / Math.max(bw, bh)))), capH = 18, gw = Math.max(bw * z, 300), gh = bh * z + capH, x0 = Math.floor((gw - bw * z) / 2);
+                const cv = document.createElement('canvas'); cv.width = gw; cv.height = capH; const cx = cv.getContext('2d');
+                const frames = [];
+                for (const [t, i] of ch.path) {
+                    const ix = new Uint8Array(gw * gh), s = R.shapes[i], g = RHOMBS.geo(s.kind, R.S);
+                    cx.fillStyle = '#000'; cx.fillRect(0, 0, gw, capH); cx.fillStyle = '#ffcc00'; cx.font = '12px Consolas, monospace'; cx.textBaseline = 'middle';
+                    cx.fillText(ch.kind + ' · проход ' + pass + ' · место (' + s.r + ', ' + (s.c - R.c0) + ')', 4, capH / 2);
+                    const cd = cx.getImageData(0, 0, gw, capH).data;
+                    for (let p = 0, j = 0; p < gw * capH; p++, j += 4) if (cd[j] + cd[j + 1] > 220) ix[p] = 4;
+                    for (let y = 0; y < bh; y++) for (let x = 0; x < bw; x++) {
+                        const ch2 = rows[rA + y][cA + x], v = ch2 === 32 ? 1 : (ch2 === 48 ? 2 : 3);
+                        for (let yy = 0; yy < z; yy++) { const b = (capH + y * z + yy) * gw + x0 + x * z; for (let xx = 0; xx < z; xx++) ix[b + xx] = v; }
+                    }
+                    // рамка места — жёлтым: верхний ряд пикселей у крайних клеток фигуры
+                    const wm = new Map(); for (let q = 0; q < g.n; q++) wm.set(g.ro[q], Math.max(wm.get(g.ro[q]) || 0, Math.abs(g.tt[q])));
+                    for (let q = 0; q < g.n; q++) {
+                        const edge = Math.abs(g.tt[q]) === wm.get(g.ro[q]) || g.ro[q] === g.roMin || g.ro[q] === g.roMin + g.gh - 1;
+                        const y = s.r + g.ro[q] - rA, x = s.c + g.tt[q] - cA;
+                        if (!edge || y < 0 || y >= bh || x < 0 || x >= bw) continue;
+                        const b = (capH + y * z) * gw + x0 + x * z; for (let xx = 0; xx < z; xx++) ix[b + xx] = 4;
+                    }
+                    frames.push(ix);
+                    full(); pass++;
+                }
+                const gif = GIFENC.encode(frames, gw, gh, [[0, 0, 0], [35, 35, 45], bitRgb('zeroColorPicker', '#3c82ff'), bitRgb('oneColorPicker', '#d7e1eb'), [255, 204, 0]], 45);
+                const name = 'Zerkalius-hod-' + (ch.kind === 'бег' ? 'beg' : 'kacheli') + '-' + R.S + '-prohod-' + tStart + '-' + ch.path.length + 'kadrov.gif';
+                const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([gif], { type: 'image/gif' })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+                UI.statusInfo.textContent = '🎞 GIF хода: ' + frames.length + ' кадров · ' + name;
+            },
+            init: function() { document.getElementById('fmGo')?.addEventListener('click', () => this.run()); }
+        };
+
         const HELP = {
             el: null,
             open: function() {
@@ -5396,6 +5571,7 @@ VERSION: v0.015 (копия Zerkalius Code 35.74 целиком — отправ
             RHOMBS.init();   // v0.006
             PY3D.init();   // v0.012: 🗻 3D
             WORDS.init();   // v0.015: 🔎 Слова
+            FILMS.init();   // v0.016: 🎞 Фильмы
             // v0.007: ⤒ закреп
             const pinB = document.getElementById('pinTopBtn');
             const pinUi = () => { if (pinB) pinB.classList.toggle('active-yellow', !!MODULE_STATE.pinTop); };
