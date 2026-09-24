@@ -2817,6 +2817,9 @@ document.getElementById("rows").onclick = e => {
     return;
   }
 
+  // v1.606: строку выделяет только клик ПО БИТАМ — мимо них (пустота строки, отступы выравнивания)
+  // ничего не происходит, в том числе не снимается уже набранное. См. pointOnRowBits.
+  if (!pointOnRowBits(ln, e.clientX, e.clientY)) return;
   resetSeqSearchModes();
   // Новый клик по строке — новая "сессия" кругового сдвига, счётчик "Вар: N/M" начинается заново.
   st.manualShiftTurns = 0;
@@ -2954,6 +2957,7 @@ document.getElementById("rows").addEventListener("mousedown", e => {
     dragOverRowsOn();
     return;
   }
+  if (!pointOnRowBits(ln, e.clientX, e.clientY)) return;   // v1.606: протяжка тоже начинается только с бит
   rowDragAnchor = idx;
   rowDragMoved = false;
   dragOverRowsOn();
@@ -2990,6 +2994,30 @@ window.addEventListener("mouseup", dragOverRowsOff);
    элемент, но и всё, что под ним, так что .ln находится и сквозь накрывшее её окно.
    Дорогой путь (elementsFromPoint) идёт только когда дешёвый не сработал, то есть в норме его нет
    вовсе. */
+/* ═══ ТОЧКА НА БИТАХ СТРОКИ (v1.606) ═══
+   Запрос: «пусть выделять строки можно только в том месте, где лежат биты; клик по строке в том
+   месте, где нет битов, ничего не делает». Коробка .bits шире самих знаков: в ней отступы
+   выравнивания (пробелы) и хвост пустоты до границы поля. Поэтому сверяемся с настоящими
+   прямоугольниками знаков — непробельные куски текста внутри .bits > span, Range.getClientRects.
+   По вертикали берём всю высоту строки, чтобы межстрочный зазор над и под знаком не был дырой. */
+function pointOnRowBits(ln, x, y){
+  if (!ln) return false;
+  const lr = ln.getBoundingClientRect();
+  if (y < lr.top || y > lr.bottom) return false;
+  const rg = document.createRange();
+  for (const el of ln.querySelectorAll(".bits > span")) {
+    const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let t = tw.nextNode(); t; t = tw.nextNode()) {
+      const re = /\S+/g;
+      let m;
+      while ((m = re.exec(t.data))) {
+        rg.setStart(t, m.index); rg.setEnd(t, m.index + m[0].length);
+        for (const q of rg.getClientRects()) if (q.width > 0 && x >= q.left && x <= q.right) return true;
+      }
+    }
+  }
+  return false;
+}
 function lnAtPoint(e){
   const direct = e.target && e.target.closest ? e.target.closest(".ln") : null;
   if (direct) return direct;
