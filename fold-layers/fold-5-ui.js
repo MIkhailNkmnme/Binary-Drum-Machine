@@ -2127,6 +2127,59 @@ function spreadFieldBtns(){
   });
   return moved;
 }
+/* ═══ ЗНАЧОК ТОЛЬКО НА ПУСТОТЕ (v1.602) ═══
+   Запрос: «кнопки переносные не должны лежать на битах! только на пустоте». До этого проверялась одна
+   точка под курсором, и длинная подпись (v1.595) ложилась краем на биты. Теперь сверяется ВЕСЬ
+   прямоугольник значка с настоящими прямоугольниками текста бит (.ln .bits > span) и паттернов
+   (.pat/.pat2) — Range.getClientRects, так что пустые отступы выравнивания битами не считаются.
+   Задевает — ищем ближайшее пустое место кольцами до 240px, внутри полотна. */
+function fieldRectHitsBits(r){
+  const rg = document.createRange();
+  for (const ln of document.querySelectorAll(".canvas .ln")) {
+    const lr = ln.getBoundingClientRect();
+    if (lr.bottom <= r.top || lr.top >= r.bottom) continue;
+    for (const el of ln.querySelectorAll(".bits > span, .pat, .pat2")) {
+      rg.selectNodeContents(el);
+      for (const q of rg.getClientRects())
+        if (q.width > 0 && q.right > r.left && q.left < r.right && q.bottom > r.top && q.top < r.bottom) return true;
+    }
+  }
+  return false;
+}
+// x, y — в координатах слоя #fieldBtns; вернёт {x, y} свободного места или null.
+function fieldFreeSpot(x, y, w, h){
+  const L = document.getElementById("fieldBtns"), canvas = document.querySelector(".canvas");
+  if (!L) return { x, y };
+  const lr = L.getBoundingClientRect();
+  const cr = canvas ? canvas.getBoundingClientRect() : lr;
+  const minX = cr.left - lr.left, maxX = cr.right - lr.left - w, minY = cr.top - lr.top, maxY = cr.bottom - lr.top - h;
+  const free = (px, py) => !fieldRectHitsBits({ left: lr.left + px, top: lr.top + py, right: lr.left + px + w, bottom: lr.top + py + h });
+  const clamp = (v, a, b) => Math.max(a, Math.min(v, b));
+  if (free(x, y)) return { x, y };
+  for (let rad = 6; rad <= 240; rad += 6) {
+    const n = Math.max(8, Math.round(rad / 3));
+    let best = null, bd = Infinity;
+    for (let k = 0; k < n; k++) {
+      const a = 2 * Math.PI * k / n;
+      const px = Math.floor(clamp(x + rad * Math.cos(a), minX, maxX)), py = Math.floor(clamp(y + rad * Math.sin(a), minY, maxY));
+      const d = (px - x) * (px - x) + (py - y) * (py - y);
+      if (d < bd && free(px, py)) { best = { x: px, y: py }; bd = d; }
+    }
+    if (best) return best;
+  }
+  return null;
+}
+// v1.602: значки, что после загрузки легли на биты, — на ближайшую пустоту (нет её — стоят где стояли).
+function fieldBtnsOffBits(){
+  const L = document.getElementById("fieldBtns");
+  if (!L || !Array.isArray(fieldBtns)) return;
+  for (const b of L.children) {
+    const it = fieldBtns[+b.dataset.fieldIdx];
+    if (!it) continue;
+    const spot = fieldFreeSpot(it.x, it.y, b.offsetWidth || 28, b.offsetHeight || 24);
+    if (spot && (spot.x !== it.x || spot.y !== it.y)) { it.x = spot.x; it.y = spot.y; b.style.left = it.x + "px"; b.style.top = it.y + "px"; }
+  }
+}
 function refreshFieldBtnIcons(){
   const L = document.getElementById("fieldBtns");
   if (!L || !Array.isArray(fieldBtns)) return;
@@ -2186,8 +2239,17 @@ function refreshFieldBtnIcons(){
     const w = mr ? Math.ceil(mr.width) : 28, h = mr ? Math.ceil(mr.height) : 24;
     // Новую кнопку держим за левый край (там её знак), а не за середину длинной подписи.
     const dx = d ? d.dx : Math.min(w / 2, 14), dy = d ? d.dy : h / 2;
-    const x = Math.floor(Math.max(cr.left, Math.min(e.clientX - dx, cr.right - w)) - lr.left);
-    const y = Math.floor(Math.max(cr.top, Math.min(e.clientY - dy, cr.bottom - h)) - lr.top);
+    const x0 = Math.floor(Math.max(cr.left, Math.min(e.clientX - dx, cr.right - w)) - lr.left);
+    const y0 = Math.floor(Math.max(cr.top, Math.min(e.clientY - dy, cr.bottom - h)) - lr.top);
+    // v1.602: краем на биты — нельзя; ищем ближайшую пустоту. Нет её — новый не кладём, старый остаётся где был.
+    const spot = fieldFreeSpot(x0, y0, w, h);
+    if (!spot) {
+      if (d) { d.done = true; renderFieldBtns(); }
+      else { fieldBtns.splice(k, 1); renderFieldBtns(); }
+      say("Рядом нет пустого места под кнопку — брось на свободное поле, не на биты.");
+      return;
+    }
+    const x = spot.x, y = spot.y;
     fieldBtns[k].x = x; fieldBtns[k].y = y;
     if (me) { me.style.left = x + "px"; me.style.top = y + "px"; }
     if (d) d.done = true;
@@ -6822,6 +6884,7 @@ function applyUiSettings(u){
     if (typeof renderPinSlots === "function") renderPinSlots();
     if (typeof renderFieldBtns === "function") renderFieldBtns();
     if (typeof spreadFieldBtns === "function") spreadFieldBtns();   // v1.595: с подписями — развести налезшие
+    if (typeof fieldBtnsOffBits === "function") fieldBtnsOffBits();   // v1.602: и снять с бит
   }
   if (u.menuBarBottom !== undefined) setMenuBarBottom(!!u.menuBarBottom, true);
   if (typeof applyMsgPos === "function") applyMsgPos(u.msgPos || "");
