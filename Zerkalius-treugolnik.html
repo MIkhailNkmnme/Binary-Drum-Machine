@@ -5,14 +5,14 @@ PROJECT: Zerkalius Треугольник — отдельная страниц�
          Заведена 2026-09-24 копией Zerkalius Code 35.74: для начала в ней есть всё, что есть в Code.
          Память (текст, вид, раскладка) — СВОЯ, ключи ztri_*; с v0.009 у Code ничего не подхватывает (кроме сцен, если
          своих нет): первый запуск — треугольник правила 90 на 50 строк. Ключи Code никогда не пишутся.
-VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
+VERSION: v0.010 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Треугольник v0.009</title>
+    <title>Zerkalius Треугольник v0.010</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -270,7 +270,7 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
         .rs-tab div { white-space: nowrap; }
         .rs-form { display: flex; gap: 6px; align-items: flex-start; margin: 3px 0; }
         .rs-form canvas { flex: none; border: 1px solid #2c3442; image-rendering: pixelated; }
-        #rcCanvas { display: block; margin: 4px auto 0; background: #0a0b0e; border: 1px solid #34465e; image-rendering: pixelated; }
+        #rcCanvas, #rcXor { display: block; margin: 4px auto 0; background: #0a0b0e; border: 1px solid #34465e; image-rendering: pixelated; }
         .rc-strip { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px; max-height: 150px; overflow: auto; }
         .rc-strip figure { margin: 0; text-align: center; font: 9px Consolas, monospace; color: #9ab; }
         .rc-strip canvas { display: block; background: #0a0b0e; image-rendering: pixelated; border: 1px solid #2c3442; }
@@ -368,7 +368,7 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.009</h3>
+                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.010</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -643,6 +643,15 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
                             <option value="256">кратен 256</option>
                         </select>
                     </div>
+                    <!-- Треугольник v0.010: единица разбора — ромб, ▲▼ треугольник (половинки ромбов) или ⧗ часы -->
+                    <div class="compact-row" style="margin-top: 2px; align-items:center;">
+                        <label style="flex:1.4; margin:0; color:#ffcc00;" title="Чем резать треугольник: ◇ ромбами (как было), ▲▼ треугольниками — ромб разрезан горизонтальной диагональю, края у основания тоже считаются, — или ⧗ часами (▼ над ▲ вершиной к вершине, где сходятся два ромба). Действует на сетку (горизонтали), 🔤 буквы, ◇ Сводку и 🔍 Крупно">Единица разбора:</label>
+                        <select id="rsUnit" style="flex:1; margin:0;">
+                            <option value="rh" selected>◇ ромбы</option>
+                            <option value="tri">▲▼ треугольники</option>
+                            <option value="hg">⧗ часы</option>
+                        </select>
+                    </div>
                     <!-- 35.59: буквы в ромбах — одинаковые ромбы одной буквой, зеркальный — строчной -->
                     <label class="checkbox-row" style="margin-top: 2px;" title="Каждый ромб сетки подписан буквой: одинаковые ромбы — одна буква, зеркальный — та же строчной. Буквы по частоте (А — самая частая). Цвет — ряд вдоль боковой стороны: у ряда e от края буквы повторяются словом длиной в степень двойки больше e+1. Размер ромба — шаг сетки (при «авто» — 16)"><input type="checkbox" id="rhombLettersCheck"><span style="color:#ffcc00">🔤 Буквы в ромбах</span></label>
                     <!-- 35.55: полосы периодов — строки по степеням двойки, у каждой полосы свой период волны -->
@@ -720,7 +729,7 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
                 </div>
                 </div>
                 <!-- Треугольник v0.006: ◇ сводка ромбов — сколько, какие, на каких кадрах (окном на холсте по умолчанию) -->
-                <div class="tab-sec" data-tab="rhombsum" data-title="◇ Сводка ромбов" data-float="0.609,0.048">
+                <div class="tab-sec" data-tab="rhombsum" data-title="◇ Сводка" data-float="0.609,0.048">
                 <div class="control-group" style="border: none; padding: 0;">
                     <div class="compact-row" style="align-items:center;">
                         <label style="flex:1; margin:0;" title="Высота ромба в строках. «Как у сетки» — шаг ◇ Ромбической сетки (при «авто» — 16)">Ромб высотой:</label>
@@ -736,7 +745,7 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
                         </select>
                     </div>
                     <div id="rsNow" class="rs-box">—</div>
-                    <div class="rs-lab">Буквы на своих местах (верхняя — вершина треугольника):</div>
+                    <div class="rs-lab">Буквы на своих местах (верхняя — вершина треугольника; у ▲▼ — ряд за рядом полосы):</div>
                     <div id="rsTri" class="rs-tri"></div>
                     <div class="compact-row" style="margin-top:4px;">
                         <button id="rsCycleBtn" type="button" class="rs-btn" title="Прогнать волну на копии текста через весь цикл и собрать по каждому кадру (проходу): сколько ромбов, какие формы, какие новые; и по каждой форме — на каких кадрах она есть. Холст не трогается. Повторное нажатие — стоп">▶ По кадрам — весь цикл</button>
@@ -746,13 +755,17 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
                 </div>
                 </div>
                 <!-- Треугольник v0.006: 🔍 ромб крупно — выбранный щелчком ромб, живьём, с лентой его состояний -->
-                <div class="tab-sec" data-tab="rhombcap" data-title="🔍 Ромб крупно" data-float="0.714,0.455">
+                <div class="tab-sec" data-tab="rhombcap" data-title="🔍 Крупно" data-float="0.714,0.455">
                 <div class="control-group" style="border: none; padding: 0;">
                     <div class="compact-row" style="align-items:center;">
-                        <button id="rcPickBtn" type="button" class="rs-btn" title="Затем щелчок по треугольнику — берётся ромб под курсором (размер — как в сводке). Alt+щелчок по холсту выбирает ромб в любое время">🎯 Выбрать ромб щелчком</button>
+                        <button id="rcPickBtn" type="button" class="rs-btn" title="Затем щелчок по треугольнику — берётся ромб под курсором (размер — как в сводке). Alt+щелчок по холсту выбирает ромб в любое время">🎯 Выбрать щелчком</button>
                         <label class="checkbox-row" style="margin:0; flex:0.8;" title="Обвести на холсте все ромбы с тем же рисунком: голубым — такие же, розовым — зеркальные"><input type="checkbox" id="rcSameCheck" checked><span>такие же</span></label>
                     </div>
                     <canvas id="rcCanvas" width="264" height="264"></canvas>
+                    <!-- v0.010: ⊕ низ, отражённый по горизонтали на верх, — XOR правилом волны -->
+                    <div class="rs-lab">⊕ Низ, отражённый по горизонтали на верх, XOR (правило волны — верх главнее):</div>
+                    <canvas id="rcXor" width="264" height="140"></canvas>
+                    <div id="rcXorInfo" class="rs-lab" style="color:#cfd8e3;"></div>
                     <div id="rcInfo" class="rs-box"></div>
                     <div class="compact-row" style="margin-top:4px;">
                         <button id="rcGifBtn" type="button" class="rs-btn" title="Этот ромб по проходам — GIF: волна на копии текста, кадр через «каждый N-й» у 🎞 GIF Аниматрицы, пока ромб не вернётся к первому кадру (не больше 256)">🎞 GIF по проходам</button>
@@ -848,6 +861,13 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
                     на d строк, где d & (k−1) = 0. Каждая копия — треугольник: вершина на оси в строке d, стороны под 45° до основания.
                     Пример: 1024 строки, k−1 = 1011111111 — нулевой один разряд 256, копия одна: треугольник от строки 256. k−1 = 1001111111 —
                     разряды 256 и 128: копии 128, 256 и 384 (пунктир — сумма разрядов). Цвет — по старшему разряду сдвига.</p>
+                    <p><b>▲▼ и ⧗</b> («Единица разбора» в «👁 Вид»): ромб, разрезанный горизонтальной диагональю, — это ▲ сверху и ▼ снизу.
+                    Так весь треугольник режется без остатка на полосы высотой S/2: в полосе n — n+1 треугольников ▲ и n треугольников ▼;
+                    ▲ последней полосы — края у основания, у них нет пары ▼ (ромб не целый), и сводка считает, повторяют ли они ▲ выше.
+                    ⧗ часы — ▼ над ▲, склеенные вершиной: ромб склеен из ▲ и ▼ ребром, часы — вершиной, там, где сходятся два ромба.</p>
+                    <p><b>⊕ Отражение по горизонтали</b> (в «🔍 Крупно» и в сводке): нижняя половина ромба ▼ переворачивается через горизонтальную
+                    диагональ и ложится на верхнюю ▲ (у часов — нижний ▲ на верхний ▼), обе складываются правилом волны: одинаковые — пробел,
+                    символ и пробел — символ, разные — верхний. Пустой XOR значит, что фигура симметрична сверху вниз.</p>
                     <p><b>◇ Сводка ромбов</b>: для текущего кадра — сколько целых ромбов, сколько разных рисунков, сколько букв
                     (одинаковые — одна буква, зеркальный слева направо — та же строчной; буквы по частоте, А — самая частая) и
                     буквы на своих местах. «▶ По кадрам — весь цикл» гонит волну на копии до повтора текста и даёт две таблицы:
@@ -1334,7 +1354,7 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
             LOOK_IDS: ['echoModeCheck', 'dualCoreCheck', 'dualMaskCheck', 'freezeLayer1Check', 'dualCoreSpeedInput',
                 'speedMultInput', 'algorithmInput', 'freezeScrollCheck', 'spin3dCheck', 'breathingZoomCheck',
                 'hideStaticCheck', 'deltaModeSelect', 'logicalOpSelect', 'zerkaliusAnimCheck', 'elkaCheck',
-                'cylinderCheck', 'findDiagonalsCheck', 'neonGlowCheck', 'animByPassCheck', 'rhombGridCheck', 'rhombGridStep', 'rhombLettersCheck', 'triCopyCheck', 'triCopyMin', 'rowBandsCheck', 'symAxisCheck', 'fontSizeRange', 'lineHeightRange', 'charSpacingRange',
+                'cylinderCheck', 'findDiagonalsCheck', 'neonGlowCheck', 'animByPassCheck', 'rhombGridCheck', 'rhombGridStep', 'rhombLettersCheck', 'triCopyCheck', 'triCopyMin', 'rsUnit', 'rsSize', 'rowBandsCheck', 'symAxisCheck', 'fontSizeRange', 'lineHeightRange', 'charSpacingRange',
                 'fontSelect', 'rainbowTextCheck', 'syntaxColorCheck', 'trimZerosCheck', 'bitColorsCheck', 'zeroColorPicker', 'oneColorPicker', 'gridColorsCheck', 'gridZeroPicker', 'gridOnePicker', 'gridSparseInput', 'gridSparseRowInput', 'canvasBgPicker', 'gridHideUnderCheck'],
             resetLook: function() {
                 this.LOOK_IDS.forEach(id => {
@@ -3427,6 +3447,15 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
                                 }
                             }
                         }
+                        if (RHOMBS.unit() !== 'rh') {   // v0.010: ▲▼ и ⧗ — горизонтали через каждые S/2 строк, от стороны до стороны
+                            const hS = S / 2;
+                            for (let i = 0; i < visibleHeight; i++) {
+                                const v = visibleLines[i]; if (!v || rowX[i] === undefined) continue;
+                                const Lr = v.globalIndex; if (!Lr || Lr % hS) continue;
+                                const y = startY + (i + glide) * lineSpacing; if (y < 0 || y > height) continue;
+                                ctx.moveTo(rowX[i] + (c0 - Lr + 0.5) * charWidth, y); ctx.lineTo(rowX[i] + (c0 + Lr + 0.5) * charWidth, y);
+                            }
+                        }
                         ctx.stroke();
                     }
                     if (legend) {   // легенда «авто» — справа сверху, размеры своими цветами
@@ -3495,11 +3524,11 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
                     const L = MODULE_STATE.lines, nL = L.length;
                     const stepV = document.getElementById('rhombGridStep')?.value || '32';
                     const S = stepV === 'auto' ? 16 : (parseInt(stepV, 10) || 32), half = S / 2;
-                    const cache = RHOMBS.census(S);   // v0.006: та же перепись ромбов, что у ◇ Сводки и 🔍 Ромба — буквы везде одни
+                    const cache = RHOMBS.census(S, RHOMBS.unit()), LS = cache.unit === 'tri' ? S / 2 : S;   // v0.010: по единице разбора; v0.006: та же перепись ромбов, что у ◇ Сводки и 🔍 Ромба — буквы везде одни
                     const at = new Map();
                     for (let i = 0; i < visibleHeight; i++) { const v = visibleLines[i]; if (v && rowX[i] !== undefined) at.set(v.globalIndex, i); }
                     const EC = ['#ffcc00', '#5adcff', '#78eb78', '#ff8a8a', '#c896ff', '#ffaa50', '#f0f0f0'];
-                    const fs = Math.max(8, Math.min(64, Math.min(S * charWidth * 0.55, S * lineSpacing * 0.45)));
+                    const fs = Math.max(8, Math.min(64, Math.min(LS * charWidth * 0.55, LS * lineSpacing * 0.45)));
                     ctx.save(); ctx.shadowBlur = 0; ctx.globalAlpha = 1;
                     ctx.font = 'bold ' + Math.round(fs) + 'px Consolas, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                     ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(2, fs / 7); ctx.strokeStyle = 'rgba(0,0,0,0.9)';
@@ -3510,7 +3539,7 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
                         ctx.strokeText(it.ch, x, y);
                         ctx.fillStyle = EC[Math.min(it.e, EC.length - 1)]; ctx.fillText(it.ch, x, y);
                     }
-                    const lab = cache.n ? '🔤 ромбы ' + S + ': ' + cache.n + ' шт · разных ' + cache.kinds + ' · букв ' + cache.letters + ' (зеркало — строчная)' : '🔤 ромбов высотой ' + S + ' в тексте нет';
+                    const lab = cache.n ? '🔤 ' + RHOMBS.UNIT_NAME[cache.unit] + ' ' + LS + ': ' + cache.n + ' шт · разных ' + cache.kinds + ' · букв ' + cache.letters + ' (зеркало — строчная)' : '🔤 ромбов высотой ' + S + ' в тексте нет';
                     ctx.font = 'bold 12px monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
                     const lw = ctx.measureText(lab).width, lx = width - lw - 12, ly = 64;
                     ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(lx - 6, ly - 3, lw + 12, 18);
@@ -4272,46 +4301,82 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
                 const rows = lines.map(l => { const a = new Uint16Array(W).fill(32), t = l.text; for (let i = 0; i < t.length; i++) a[i] = t.charCodeAt(i); return a; });
                 return { rows: rows, W: W };
             },
-            // все целые ромбы высоты S: сверху вниз по рядам, в ряду слева направо
-            scan: function(rows, W, c0, S) {
-                const half = S / 2, H = rows.length, items = [];
-                for (let r = 0, lev = 0; r + S <= H - 1; r += half, lev++) {
-                    let j = 0;
-                    for (let c = c0 - r; c <= c0 + r; c += S, j++) {
-                        let f1 = 2166136261, f2 = 7, m1 = 2166136261, m2 = 7, cmp = 0;
-                        for (let dr = 0; dr <= S; dr++) {
-                            const w = dr <= half ? dr : S - dr, row = rows[r + dr];
-                            for (let t = -w; t <= w; t++) {
-                                const kf = c + t, km = c - t;
-                                const a = (kf >= 0 && kf < W) ? row[kf] : 32, b = (km >= 0 && km < W) ? row[km] : 32;
-                                f1 = Math.imul(f1 ^ a, 16777619); f2 = (Math.imul(f2, 31) + a) | 0;
-                                m1 = Math.imul(m1 ^ b, 16777619); m2 = (Math.imul(m2, 31) + b) | 0;
-                                if (cmp === 0 && a !== b) cmp = a < b ? -1 : 1;
-                            }
-                        }
-                        const kF = (f1 >>> 0) * 2097152 + ((f2 >>> 0) & 2097151), kM = (m1 >>> 0) * 2097152 + ((m2 >>> 0) & 2097151);
-                        items.push({ r: r, c: c, row: r + half, col: c, lev: lev, j: j, e: Math.min(j, lev - j), key: cmp <= 0 ? kF : kM, low: cmp > 0, sym: cmp === 0 });
-                    }
-                }
-                return items;
+            /* v0.010: ЕДИНИЦА РАЗБОРА (запрос пользователя по снимку: ромбы не покрывают края у основания, а между ромбами видны
+               треугольники и «песочные часы»). ◇ ромб — как было. ▲▼ — ромб, разрезанный горизонтальной диагональю: весь
+               треугольник текста режется без остатка на полосы высотой S/2, в полосе n — n+1 треугольников ▲ (вершина вверху, строка
+               n·S/2) и n треугольников ▼ между ними; ▲ последней полосы — края у основания, у них нет пары ▼ (ромб не целый).
+               ⧗ часы — ▼ над ▲, склеенные вершиной: там, где сходятся два соседних ромба. Узлы решётки — (n·S/2, c0 + m·S/2) с n ≡ m
+               (mod 2); ▲ — вершиной в узле, ▼ — нижней вершиной в узле, ⧗ — центром в узле. Отпечаток и зеркало — как у ромбов,
+               вид фигуры подмешан в отпечаток (▲ и ▼ одного рисунка не спутать). */
+            unit: function() { return document.getElementById('rsUnit')?.value || 'rh'; },
+            UNIT_NAME: { rh: 'ромбы', tri: 'треугольники ▲▼', hg: 'часы ⧗' },
+            KIND_NAME: { rh: 'ромб', up: 'треугольник ▲', dn: 'треугольник ▼', hg: 'часы ⧗' },
+            KIND_SALT: { rh: 0, up: 0x1f3d5b79, dn: 0x2c4e6a88, hg: 0x3b5d7f91 },
+            geo: function(kind, S) {
+                const key = kind + S; if (!this._geo) this._geo = {};
+                if (this._geo[key]) return this._geo[key];
+                const h = S / 2, ro = [], tt = [];
+                const add = (r, w) => { for (let t = -w; t <= w; t++) { ro.push(r); tt.push(t); } };
+                if (kind === 'rh') for (let d = 0; d <= S; d++) add(d, d <= h ? d : S - d);
+                else if (kind === 'up') for (let d = 0; d <= h; d++) add(d, d);
+                else if (kind === 'dn') for (let q = 0; q <= h; q++) add(q - h, h - q);
+                else for (let q = 0; q <= S; q++) add(q - h, Math.abs(h - q));
+                let roMin = Infinity, roMax = -Infinity, wMax = 0;
+                ro.forEach((r, i) => { if (r < roMin) roMin = r; if (r > roMax) roMax = r; if (tt[i] > wMax) wMax = tt[i]; });
+                return this._geo[key] = { ro: Int32Array.from(ro), tt: Int32Array.from(tt), roMin: roMin, wMax: wMax, gw: 2 * wMax + 1, gh: roMax - roMin + 1, n: ro.length };
             },
-            // клетки ромба квадратом (S+1)²: 0 — вне ромба, 1 — пробел, 2 — «0», 3 — прочее; flip — зеркально
-            cellsRows: function(rows, W, r, c, S, flip) {
-                const n = S + 1, half = S / 2, out = new Uint8Array(n * n);
-                for (let dr = 0; dr <= S; dr++) {
-                    const w = dr <= half ? dr : S - dr, row = rows[r + dr];
-                    for (let t = -w; t <= w; t++) {
-                        const k = c + (flip ? -t : t), ch = (row && k >= 0 && k < W) ? row[k] : 32;
-                        out[dr * n + t + half] = ch === 32 ? 1 : (ch === 48 ? 2 : 3);
-                    }
+            // все фигуры единицы: сверху вниз по рядам (полосам), в ряду слева направо
+            shapes: function(unit, H, c0, S) {
+                const h = S / 2, out = [];
+                if (unit === 'tri') {
+                    for (let n = 0; (n + 1) * h <= H - 1; n++)
+                        for (let m = -n, pos = 0; m <= n; m++, pos++) {
+                            const e = Math.min(pos, 2 * n - pos);
+                            if (((m + n) & 1) === 0) out.push({ kind: 'up', r: n * h, c: c0 + m * h, lev: n, j: pos, e: e, row: n * h + Math.round(h * 2 / 3), col: c0 + m * h });
+                            else out.push({ kind: 'dn', r: (n + 1) * h, c: c0 + m * h, lev: n, j: pos, e: e, row: n * h + Math.round(h / 3), col: c0 + m * h });
+                        }
+                } else if (unit === 'hg') {
+                    for (let n = 2; (n + 1) * h <= H - 1; n++)
+                        for (let m = -(n - 2), j = 0; m <= n - 2; m += 2, j++)
+                            out.push({ kind: 'hg', r: n * h, c: c0 + m * h, lev: n - 2, j: j, e: Math.min(j, n - 2 - j), row: n * h, col: c0 + m * h });
+                } else {
+                    for (let r = 0, lev = 0; r + S <= H - 1; r += h, lev++)
+                        for (let c = c0 - r, j = 0; c <= c0 + r; c += S, j++)
+                            out.push({ kind: 'rh', r: r, c: c, lev: lev, j: j, e: Math.min(j, lev - j), row: r + h, col: c });
                 }
                 return out;
             },
-            cellsLines: function(L, r, c, S) {
-                const n = S + 1, half = S / 2, out = new Uint8Array(n * n);
-                for (let dr = 0; dr <= S; dr++) {
-                    const w = dr <= half ? dr : S - dr, t = L[r + dr] ? L[r + dr].text : '';
-                    for (let q = -w; q <= w; q++) { const ch = t.charCodeAt(c + q); out[dr * n + q + half] = (ch !== ch || ch === 32) ? 1 : (ch === 48 ? 2 : 3); }
+            scan: function(rows, W, c0, S, unit) {
+                const items = this.shapes(unit || 'rh', rows.length, c0, S);
+                for (const it of items) {
+                    const g = this.geo(it.kind, S), ro = g.ro, tt = g.tt, salt = this.KIND_SALT[it.kind];
+                    let f1 = 2166136261 ^ salt, f2 = 7 + salt, m1 = 2166136261 ^ salt, m2 = 7 + salt, cmp = 0;
+                    for (let i = 0; i < g.n; i++) {
+                        const row = rows[it.r + ro[i]], kf = it.c + tt[i], km = it.c - tt[i];
+                        const a = (row && kf >= 0 && kf < W) ? row[kf] : 32, b = (row && km >= 0 && km < W) ? row[km] : 32;
+                        f1 = Math.imul(f1 ^ a, 16777619); f2 = (Math.imul(f2, 31) + a) | 0;
+                        m1 = Math.imul(m1 ^ b, 16777619); m2 = (Math.imul(m2, 31) + b) | 0;
+                        if (cmp === 0 && a !== b) cmp = a < b ? -1 : 1;
+                    }
+                    const kF = (f1 >>> 0) * 2097152 + ((f2 >>> 0) & 2097151), kM = (m1 >>> 0) * 2097152 + ((m2 >>> 0) & 2097151);
+                    it.key = cmp <= 0 ? kF : kM; it.low = cmp > 0; it.sym = cmp === 0;
+                }
+                return items;
+            },
+            // клетки фигуры прямоугольником gw×gh: 0 — вне фигуры, 1 — пробел, 2 — «0», 3 — прочее; flip — зеркально
+            cellsRows: function(rows, W, it, S, flip) {
+                const g = this.geo(it.kind, S), out = new Uint8Array(g.gw * g.gh);
+                for (let i = 0; i < g.n; i++) {
+                    const row = rows[it.r + g.ro[i]], k = it.c + (flip ? -g.tt[i] : g.tt[i]), ch = (row && k >= 0 && k < W) ? row[k] : 32;
+                    out[(g.ro[i] - g.roMin) * g.gw + g.tt[i] + g.wMax] = ch === 32 ? 1 : (ch === 48 ? 2 : 3);
+                }
+                return out;
+            },
+            cellsLines: function(L, it, S) {
+                const g = this.geo(it.kind, S), out = new Uint8Array(g.gw * g.gh);
+                for (let i = 0; i < g.n; i++) {
+                    const ln = L[it.r + g.ro[i]], t = ln ? ln.text : '', ch = t.charCodeAt(it.c + g.tt[i]);
+                    out[(g.ro[i] - g.roMin) * g.gw + g.tt[i] + g.wMax] = (ch !== ch || ch === 32) ? 1 : (ch === 48 ? 2 : 3);
                 }
                 return out;
             },
@@ -4326,20 +4391,29 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
                 items.forEach(it => { const x = by.get(it.key); it.ch = it.low ? x.ch.toLowerCase() : x.ch; if (it.low) x.nLow++; else x.nUp++; if (!x.first) x.first = it; });
                 return alpha;
             },
-            census: function(S) {
+            census: function(S, unit) {
+                unit = unit || this.unit();
                 const L = MODULE_STATE.originalLines, H = L.length;
-                const ver = MODULE_DATA.linesVer + ':' + (MODULE_STATE.animPasses || 0) + ':' + H + ':' + S;
-                if (this._cen && this._cen.ver === ver) return this._cen;
-                const cen = this._cen = { ver: ver, S: S, H: H, c0: null, items: [], alpha: [], n: 0, kinds: 0, letters: 0, sym: 0, levels: 0,
-                    pass: MODULE_STATE.animPasses || 0, row: MODULE_STATE.animatrixRow || 0 };
+                const ver = MODULE_DATA.linesVer + ':' + (MODULE_STATE.animPasses || 0) + ':' + H + ':' + S + ':' + unit;
+                if (!this._cenBy) this._cenBy = {};
+                const old = this._cenBy[unit + S];
+                if (old && old.ver === ver) return old;
+                const cen = this._cenBy[unit + S] = { ver: ver, S: S, unit: unit, H: H, c0: null, items: [], alpha: [], n: 0, kinds: 0, letters: 0, sym: 0, levels: 0,
+                    nUp: 0, nDn: 0, baseUp: 0, baseSame: 0, pass: MODULE_STATE.animPasses || 0, row: MODULE_STATE.animatrixRow || 0 };
                 if (H < 2) return cen;
                 const c0 = this.apex(L[0].text); if (c0 === null) return cen;
                 const { rows, W } = this.rowsOf(L);
-                cen.c0 = c0; cen.items = this.scan(rows, W, c0, S); cen.n = cen.items.length;
+                cen.c0 = c0; cen.items = this.scan(rows, W, c0, S, unit); cen.n = cen.items.length;
                 cen.alpha = this.name(cen.items); cen.letters = cen.alpha.length;
                 cen.kinds = cen.alpha.reduce((a, x) => a + (x.nUp ? 1 : 0) + (x.nLow ? 1 : 0), 0);
                 cen.sym = cen.items.reduce((a, it) => a + (it.sym ? 1 : 0), 0);
                 cen.levels = cen.n ? cen.items[cen.n - 1].lev + 1 : 0;
+                if (unit === 'tri' && cen.n) {   // ▲ у основания (последняя полоса) — повторяют ли они ▲ из середины
+                    const last = cen.levels - 1, inner = new Set();
+                    cen.items.forEach(it => { if (it.kind === 'up') { cen.nUp++; if (it.lev < last) inner.add(it.key); } else cen.nDn++; });
+                    cen.items.forEach(it => { if (it.kind === 'up' && it.lev === last) { cen.baseUp++; if (inner.has(it.key)) cen.baseSame++; } });
+                }
+                this._cen = cen;
                 return cen;
             },
             /* v0.008: ◭ ТРЕУГОЛЬНИКИ-КОПИИ. В чистой фазе (в каждом столбце один символ) проход — накопленный XOR сверху вниз,
@@ -4379,16 +4453,24 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
                 this._sumVer = cen.ver;
                 const box = document.getElementById('rsNow'), tri = document.getElementById('rsTri');
                 if (!box || !tri) return;
+                const U = cen.unit, UN = this.UNIT_NAME[U];
                 if (!cen.n) {
-                    box.innerHTML = 'Ромбов высотой ' + S + ' нет: ' + (cen.c0 === null ? 'первая строка пустая — нет вершины' : 'текст ниже ромба (строк ' + cen.H + ')');
+                    box.innerHTML = 'Нет ни одной фигуры (' + UN + ', S = ' + S + '): ' + (cen.c0 === null ? 'первая строка пустая — нет вершины' : 'текст ниже (строк ' + cen.H + ')');
                     tri.textContent = ''; return;
                 }
                 const cyc = MODULE_STATE.animCycle;
                 let h = '<b>Проход ' + cen.pass + '</b>';
                 if (cyc) h += ' · в цикле ' + (((cen.pass - cyc.from) % cyc.period + cyc.period) % cyc.period) + ' из ' + cyc.period;
                 if (cen.row > 0 && cen.row < cen.H - 1) h += ' · <span style="color:#ff8a8a">посреди прохода (волна на строке ' + cen.row + ')</span>';
-                h += '<br>Ромбов ' + S + ': <b>' + cen.n + '</b> в ' + cen.levels + ' рядах · разных рисунков <b>' + cen.kinds + '</b> · букв <b>' + cen.letters +
-                    '</b> · сами себе зеркальны: ' + cen.sym + '<br><span style="color:#8aa">Буквы — по частоте (А — самая частая), зеркальный ромб — та же строчной:</span><br>';
+                const hh = U === 'tri' ? S / 2 : S;
+                h += '<br>' + UN[0].toUpperCase() + UN.slice(1) + ' высотой ' + hh + ': <b>' + cen.n + '</b>' + (U === 'tri' ? ' (▲ ' + cen.nUp + ', ▼ ' + cen.nDn + ')' : '') +
+                    ' в ' + cen.levels + ' рядах · разных рисунков <b>' + cen.kinds + '</b> · букв <b>' + cen.letters + '</b> · сами себе зеркальны: ' + cen.sym;
+                if (U === 'tri') h += '<br><span style="color:#78eb78">▲ у основания (без пары ▼): ' + cen.baseUp + ', из них рисунок есть и среди ▲ выше: <b>' + cen.baseSame + '</b></span>';
+                const rest = (cen.H - 1) - (U === 'tri' ? cen.levels * S / 2 : 0);
+                if (U === 'tri' && rest > 0) h += ' · нижние ' + rest + ' стр. в полосу не вошли';
+                const vs = this.vsymCount(cen);   // v0.010: ⊕ по горизонтали
+                if (vs !== null) h += '<br><span style="color:#5adcff">⊕ Симметричны сверху вниз (низ, отражённый на верх, даёт пустой XOR): <b>' + vs + '</b> из ' + cen.n + '</span>';
+                h += '<br><span style="color:#8aa">Буквы — по частоте (А — самая частая), зеркальная фигура — та же строчной:</span><br>';
                 h += cen.alpha.slice(0, 120).map(x => '<b>' + x.ch + '</b>×' + x.nUp + (x.nLow ? ' ' + x.ch.toLowerCase() + '×' + x.nLow : '')).join(' · ');
                 if (cen.alpha.length > 120) h += ' · … ещё ' + (cen.alpha.length - 120);
                 h += '<br><span style="color:#ff66cc">◭ Треугольники-копии:</span> ' + this.triText(this.triCopies());   // v0.008
@@ -4408,10 +4490,10 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
             // ---------- ◇ СВОДКА: весь цикл по кадрам (на копии текста, кусками, как 📦) ----------
             runCycle: function() {
                 if (this._job) { this._job.stop = true; return; }
-                const src = MODULE_STATE.originalLines, H = src.length, S = this.size(), out = document.getElementById('rsCycle');
+                const src = MODULE_STATE.originalLines, H = src.length, S = this.size(), U = this.unit(), out = document.getElementById('rsCycle');
                 const c0 = H ? this.apex(src[0].text) : null;
                 if (H < 2 || c0 === null) { out.innerHTML = 'Нет текста или первая строка пустая — нет вершины'; return; }
-                if (S > H - 1) { out.innerHTML = 'Текст ниже ромба ' + S + ' — выберите размер меньше'; return; }
+                if ((U === 'tri' ? S / 2 : S) > H - 1) { out.innerHTML = 'Текст ниже фигуры ' + S + ' — выберите размер меньше'; return; }
                 const { rows, W } = this.rowsOf(src);
                 const stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) { const c1 = a[k], c2 = b[k]; b[k] = c1 === c2 ? 32 : (c1 !== 32 ? c1 : c2); } };
                 const hashAll = () => { let h1 = 2166136261, h2 = 7; for (const a of rows) for (let k = 0; k < W; k++) { h1 = Math.imul(h1 ^ a[k], 16777619); h2 = (Math.imul(h2, 31) + a[k]) | 0; } return (h1 >>> 0) * 2097152 + ((h2 >>> 0) & 2097151); };
@@ -4428,10 +4510,10 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
                         const hk = hashAll();
                         if (states.has(hk)) { closed = true; repeatOf = states.get(hk); break; }
                         states.set(hk, pass);
-                        const items = this.scan(rows, W, c0, S), fr = { p: pass, n: items.length, cnt: new Map(), neu: [] };
+                        const items = this.scan(rows, W, c0, S, U), fr = { p: pass, n: items.length, cnt: new Map(), neu: [] };
                         for (const it of items) {
                             let fm = byKey.get(it.key);
-                            if (!fm) { fm = { id: forms.length, key: it.key, first: pass, at: it, cells: this.cellsRows(rows, W, it.r, it.c, S, it.low), total: 0, passes: [] }; forms.push(fm); byKey.set(it.key, fm); fr.neu.push(fm.id); }
+                            if (!fm) { fm = { id: forms.length, key: it.key, first: pass, at: it, cells: this.cellsRows(rows, W, it, S, it.low), gw: this.geo(it.kind, S).gw, total: 0, passes: [] }; forms.push(fm); byKey.set(it.key, fm); fr.neu.push(fm.id); }
                             fm.total++;
                             let cc = fr.cnt.get(fm.id); if (!cc) { cc = [0, 0]; fr.cnt.set(fm.id, cc); fm.passes.push(pass); }
                             cc[it.low ? 1 : 0]++;
@@ -4443,7 +4525,7 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
                     if (closed || job.stop || f >= 4096) {
                         this._job = null; btn.textContent = btnTxt; btn.classList.remove('on');
                         forms.forEach(fm => { fm.ch = fm.id < this.ABC.length ? this.ABC[fm.id] : '#' + (fm.id + 1); });
-                        this._cyc = { S: S, p0: p0, pEnd: pass - 1, closed: closed, stopped: job.stop, repeatOf: repeatOf, period: closed ? pass - repeatOf : null, forms: forms, frames: frames };
+                        this._cyc = { S: S, U: U, p0: p0, pEnd: pass - 1, closed: closed, stopped: job.stop, repeatOf: repeatOf, period: closed ? pass - repeatOf : null, forms: forms, frames: frames };
                         this.renderCycle();
                         return;
                     }
@@ -4462,12 +4544,12 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
             renderCycle: function() {
                 const cy = this._cyc, out = document.getElementById('rsCycle'); if (!cy || !out) return;
                 const nP = cy.frames.length;
-                let h = '<b>Цикл при ромбе ' + cy.S + '</b>: проходы ' + cy.p0 + '–' + cy.pEnd + ' (' + nP + ' кадров) · ' +
+                let h = '<b>Цикл: ' + this.UNIT_NAME[cy.U || 'rh'] + ', S = ' + cy.S + '</b>: проходы ' + cy.p0 + '–' + cy.pEnd + ' (' + nP + ' кадров) · ' +
                     (cy.closed ? 'текст повторил проход ' + cy.repeatOf + ' → <b>период ' + cy.period + '</b>' + (cy.repeatOf > cy.p0 ? ', разгон ' + (cy.repeatOf - cy.p0) : '') :
                         cy.stopped ? 'остановлено до повтора' : 'до повтора не дошли (предел 4096)') +
-                    '<br>Форм ромбов за цикл: <b>' + cy.forms.length + '</b>. <span style="color:#8aa">Здесь буквы — по ПЕРВОМУ появлению в цикле (А — самая ранняя),' +
+                    '<br>Форм за цикл: <b>' + cy.forms.length + '</b>. <span style="color:#8aa">Здесь буквы — по ПЕРВОМУ появлению в цикле (А — самая ранняя),' +
                     ' не по частоте в кадре; зеркальный — та же строчной.</span>';
-                h += '<div class="rs-lab">По кадрам — проход · ромбов · разных · новые формы · состав (по убыванию):</div><div class="rs-tab">';
+                h += '<div class="rs-lab">По кадрам — проход · фигур · разных · новые формы · состав (по убыванию):</div><div class="rs-tab">';
                 const fl = cy.forms;
                 h += cy.frames.map(fr => {
                     const comp = [];
@@ -4478,36 +4560,38 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
                 }).join('') + '</div>';
                 h += '<div class="rs-lab">По формам — на каких кадрах (рисунок — прописная):</div><div id="rsForms"></div>';
                 out.innerHTML = h;
-                const box = document.getElementById('rsForms'), n = cy.S + 1, z = Math.max(1, Math.floor(56 / n));
+                const box = document.getElementById('rsForms'), z = Math.max(1, Math.floor(56 / (cy.S + 1)));
                 const pal = ['#0a0b0e', '#23232d', document.getElementById('zeroColorPicker')?.value || '#3c82ff', document.getElementById('oneColorPicker')?.value || '#d7e1eb'];
                 fl.slice(0, 300).forEach(fm => {
                     const row = document.createElement('div'); row.className = 'rs-form';
-                    const cv = document.createElement('canvas'); cv.width = cv.height = n * z; this.paint(cv.getContext('2d'), fm.cells, n, z, pal, 0, 0);
+                    const cv = document.createElement('canvas'); cv.width = fm.gw * z; cv.height = (fm.cells.length / fm.gw) * z; this.paint(cv.getContext('2d'), fm.cells, fm.gw, z, pal, 0, 0);
                     const tx = document.createElement('span');
-                    tx.innerHTML = '<b>' + fm.ch + '</b> · впервые на проходе ' + fm.first + ' (ряд ' + fm.at.lev + ', ' + (fm.at.j + 1) + '-й слева) · всего ' + fm.total +
+                    tx.innerHTML = '<b>' + fm.ch + '</b>' + (fm.at.kind === 'up' ? ' ▲' : fm.at.kind === 'dn' ? ' ▼' : '') + ' · впервые на проходе ' + fm.first + ' (ряд ' + fm.at.lev + ', ' + (fm.at.j + 1) + '-й слева) · всего ' + fm.total +
                         ' раз · в ' + fm.passes.length + ' кадрах из ' + nP + ': ' + this.spans(fm.passes);
                     row.appendChild(cv); row.appendChild(tx); box.appendChild(row);
                 });
                 if (fl.length > 300) box.insertAdjacentHTML('beforeend', '<div>… ещё ' + (fl.length - 300) + ' форм — полностью в 💾 .txt</div>');
             },
-            paint: function(g, cells, n, z, pal, x0, y0) {
-                g.fillStyle = pal[0]; g.fillRect(x0, y0, n * z, n * z);
-                for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const v = cells[y * n + x]; if (!v) continue; g.fillStyle = pal[v]; g.fillRect(x0 + x * z, y0 + y * z, z, z); }
+            paint: function(g, cells, gw, z, pal, x0, y0) {   // v0.010: прямоугольник gw × (длина / gw)
+                const gh = cells.length / gw;
+                g.fillStyle = pal[0]; g.fillRect(x0, y0, gw * z, gh * z);
+                for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) { const v = cells[y * gw + x]; if (!v) continue; g.fillStyle = pal[v]; g.fillRect(x0 + x * z, y0 + y * z, z, z); }
             },
             saveTxt: function() {
                 const S = this.size(), cen = this.census(S), cy = this._cyc, L = [];
-                L.push('ZERKALIUS ТРЕУГОЛЬНИК — СВОДКА РОМБОВ · ' + new Date().toLocaleString('ru-RU'));
-                L.push('Строк текста: ' + cen.H + ' · ромб высотой ' + S + ' · вершина — столбец ' + cen.c0 + ' первой строки', '');
+                L.push('ZERKALIUS ТРЕУГОЛЬНИК — СВОДКА: ' + this.UNIT_NAME[cen.unit].toUpperCase() + ' · ' + new Date().toLocaleString('ru-RU'));
+                L.push('Строк текста: ' + cen.H + ' · шаг сетки ' + S + ' · вершина — столбец ' + cen.c0 + ' первой строки', '');
                 L.push('ТЕКУЩИЙ КАДР — проход ' + cen.pass + (cen.row > 0 && cen.row < cen.H - 1 ? ' (посреди прохода, волна на строке ' + cen.row + ')' : ''));
-                L.push('ромбов ' + cen.n + ' в ' + cen.levels + ' рядах · разных рисунков ' + cen.kinds + ' · букв ' + cen.letters + ' · сами себе зеркальны ' + cen.sym);
+                if (cen.unit === 'tri') L.push('▲ ' + cen.nUp + ', ▼ ' + cen.nDn + ' · ▲ у основания ' + cen.baseUp + ', из них рисунок есть среди ▲ выше: ' + cen.baseSame);
+                L.push('фигур ' + cen.n + ' в ' + cen.levels + ' рядах · разных рисунков ' + cen.kinds + ' · букв ' + cen.letters + ' · сами себе зеркальны ' + cen.sym);
                 L.push('буквы (по частоте): ' + cen.alpha.map(x => x.ch + '×' + x.nUp + (x.nLow ? ' ' + x.ch.toLowerCase() + '×' + x.nLow : '')).join(', '));
                 L.push('буквы на местах, ряд за рядом:');
                 let cur = -1, parts = [];
                 cen.items.forEach(it => { if (it.lev !== cur) { if (parts.length) L.push('  ' + parts.join(' ')); parts = []; cur = it.lev; } parts.push(it.ch); });
                 if (parts.length) L.push('  ' + parts.join(' '));
                 if (cy) {
-                    L.push('', 'ЦИКЛ при ромбе ' + cy.S + ': проходы ' + cy.p0 + '–' + cy.pEnd + (cy.closed ? ', повтор прохода ' + cy.repeatOf + ', период ' + cy.period : ' (до повтора не дошли)'));
-                    L.push('форм за цикл ' + cy.forms.length + ' (буквы — по первому появлению)', '', 'ПО КАДРАМ: проход | ромбов | разных | новые | состав');
+                    L.push('', 'ЦИКЛ: ' + this.UNIT_NAME[cy.U || 'rh'] + ', S = ' + cy.S + ': проходы ' + cy.p0 + '–' + cy.pEnd + (cy.closed ? ', повтор прохода ' + cy.repeatOf + ', период ' + cy.period : ' (до повтора не дошли)'));
+                    L.push('форм за цикл ' + cy.forms.length + ' (буквы — по первому появлению)', '', 'ПО КАДРАМ: проход | фигур | разных | новые | состав');
                     cy.frames.forEach(fr => {
                         const comp = [];
                         fr.cnt.forEach((cc, id) => { if (cc[0]) comp.push([cy.forms[id].ch, cc[0]]); if (cc[1]) comp.push([cy.forms[id].ch.toLowerCase(), cc[1]]); });
@@ -4515,13 +4599,71 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
                         L.push(fr.p + ' | ' + fr.n + ' | ' + comp.length + ' | ' + (fr.neu.map(id => cy.forms[id].ch).join('') || '—') + ' | ' + comp.map(x => x[0] + x[1]).join(' '));
                     });
                     L.push('', 'ПО ФОРМАМ: буква | впервые | всего | кадров | проходы');
-                    cy.forms.forEach(fm => L.push(fm.ch + ' | ' + fm.first + ' | ' + fm.total + ' | ' + fm.passes.length + ' | ' + fm.passes.join(',')));
+                    cy.forms.forEach(fm => L.push(fm.ch + (fm.at.kind === 'up' ? '▲' : fm.at.kind === 'dn' ? '▼' : '') + ' | ' + fm.first + ' | ' + fm.total + ' | ' + fm.passes.length + ' | ' + fm.passes.join(',')));
                 } else L.push('', '(цикл не прогнан — «▶ По кадрам — весь цикл»)');
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(new Blob([L.join('\n') + '\n'], { type: 'text/plain;charset=utf-8' }));
-                a.download = 'Zerkalius-svodka-rombov-' + S + '-prohod-' + cen.pass + '.txt'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+                a.download = 'Zerkalius-svodka-' + cen.unit + '-' + S + '-prohod-' + cen.pass + '.txt'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
             },
-            // ---------- 🔍 РОМБ КРУПНО ----------
+            /* v0.010: ⊕ ОТРАЖЕНИЕ ПО ГОРИЗОНТАЛИ (запрос пользователя: «эти ромбы ещё и отражать от горизонтали, нижний треугольник
+               на верх, например XOR»). Ромб = ▲ сверху и ▼ снизу; ▼ переворачивается через горизонтальную диагональ и ложится на ▲:
+               строка r+q (ширина q) — со строкой r+S−q. Часы ⧗ = ▼ сверху и ▲ снизу; ▲ переворачивается через центр вверх: строка
+               r+q — со строкой r−q. Складываются правилом волны (верх главнее): одинаковые → пробел, символ и пробел → символ, два
+               разных → верхний. Пустой XOR — фигура симметрична сверху вниз. У ▲ и ▼ пара — её ромб (если он целый). */
+            vpair: function(s, H) {   // → { top: строка вершины верхней половины или null, kind: 'up' | 'dn', anchor }
+                const S = s.S, h = S / 2;
+                if (s.kind === 'rh') return { mode: 'rh', r: s.r };
+                if (s.kind === 'up') return s.r + S <= H - 1 ? { mode: 'rh', r: s.r } : null;
+                if (s.kind === 'dn') return s.r - S >= 0 ? { mode: 'rh', r: s.r - S } : null;
+                return { mode: 'hg', r: s.r };
+            },
+            vxor: function(L, s) {
+                const pr = this.vpair(s, L.length); if (!pr) return null;
+                const S = s.S, h = S / 2, kind = pr.mode === 'rh' ? 'up' : 'dn', G = this.geo(kind, S), out = new Uint8Array(G.gw * G.gh);
+                const code = ch => (ch !== ch || ch === 32) ? 32 : ch, cls = ch => ch === 32 ? 1 : (ch === 48 ? 2 : 3);
+                let same = 0, tot = 0, filled = 0;
+                for (let q = 0; q <= h; q++) {
+                    const rt = pr.mode === 'rh' ? pr.r + q : pr.r - q, rb = pr.mode === 'rh' ? pr.r + S - q : pr.r + q;
+                    const tt = L[rt] ? L[rt].text : '', tb = L[rb] ? L[rb].text : '';
+                    for (let t = -q; t <= q; t++) {
+                        const a = code(tt.charCodeAt(s.c + t)), b = code(tb.charCodeAt(s.c + t));
+                        const x = a === b ? 32 : (a !== 32 ? a : b);
+                        tot++; if (a === b) same++; if (x !== 32) filled++;
+                        const ro = pr.mode === 'rh' ? q : -q;
+                        out[(ro - G.roMin) * G.gw + t + G.wMax] = cls(x);
+                    }
+                }
+                return { cells: out, gw: G.gw, same: same, tot: tot, filled: filled, mode: pr.mode };
+            },
+            // сколько фигур кадра симметричны сверху вниз (⊕ пусто) — для ромбов и часов
+            vsymCount: function(cen) {
+                if (cen.unit === 'tri' || !cen.n) return null;
+                const L = MODULE_STATE.originalLines; let k = 0;
+                for (const it of cen.items) { const v = this.vxor(L, { kind: it.kind, S: cen.S, r: it.r, c: it.c }); if (v && !v.filled) k++; }
+                return k;
+            },
+            // ---------- 🔍 КРУПНО (v0.010: ромб, ▲, ▼ или ⧗ — по выбранной единице) ----------
+            fits: function(s, H) { const g = this.geo(s.kind, s.S); return s.r + g.roMin >= 0 && s.r + g.roMin + g.gh - 1 <= H - 1; },
+            // фигура под точкой текста (строка row, столбец col) для единицы U
+            shapeAt: function(row, col, c0, H, S, U) {
+                const h = S / 2, d = col - c0;
+                if (U === 'rh') {
+                    const a = Math.floor((row + d) / S), b = Math.floor((row - d) / S);
+                    const r = (a + b) * h, c = c0 + (a - b) * h;
+                    return (r >= 0 && r + S <= H - 1 && Math.abs(c - c0) <= r) ? { kind: 'rh', r: r, c: c } : null;
+                }
+                const n = Math.floor(row / h), q = row - n * h;
+                const m = Math.round((d / h - n) / 2) * 2 + n;
+                let tri;
+                if (Math.abs(d - m * h) <= q) tri = { kind: 'up', n: n, m: m };
+                else { const m2 = d > m * h ? m + 1 : m - 1; tri = { kind: 'dn', n: n + 1, m: m2 }; }
+                if (U === 'tri') {
+                    const ok = (n + 1) * h <= H - 1 && (tri.kind === 'up' ? Math.abs(tri.m) <= n : Math.abs(tri.m) <= n - 1);
+                    return ok ? { kind: tri.kind, r: tri.n * h, c: c0 + tri.m * h } : null;
+                }
+                // ⧗ — узел решётки: у ▲ это вершина, у ▼ — нижняя вершина
+                return (Math.abs(tri.m) <= tri.n - 2 && (tri.n + 1) * h <= H - 1) ? { kind: 'hg', r: tri.n * h, c: c0 + tri.m * h } : null;
+            },
             pickAt: function(cx, cy) {
                 const lay = this.layout; if (!lay) return false;
                 const cv = UI.canvas, rc = cv.getBoundingClientRect();
@@ -4531,23 +4673,22 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
                 const col = Math.floor((x - lay.rowX[i]) / lay.cw);
                 const L = MODULE_STATE.originalLines, H = L.length, c0 = H ? this.apex(L[0].text) : null;
                 if (c0 === null) return false;
-                const S = this.size(), half = S / 2, d = col - c0;
-                const a = Math.floor((row + d) / S), b = Math.floor((row - d) / S);
-                const r = (a + b) * half, c = c0 + (a - b) * half;
-                if (r < 0 || r + S > H - 1 || Math.abs(c - c0) > r) { UI.statusInfo.textContent = '🔍 Здесь нет целого ромба ' + S + ' (строка ' + row + ')'; return true; }
-                this.sel = { S: S, r: r, c: c, c0: c0, lev: r / half, j: (c - (c0 - r)) / S, hist: [], keys: new Set() };
+                const S = this.size(), U = this.unit(), pk = this.shapeAt(row, col, c0, H, S, U);
+                const it = pk ? this.census(S, U).items.find(x => x.kind === pk.kind && x.r === pk.r && x.c === pk.c) : null;
+                if (!it) { UI.statusInfo.textContent = '🔍 Здесь нет целой фигуры (' + this.UNIT_NAME[U] + ', S = ' + S + ', строка ' + row + ')'; return true; }
+                this.sel = { unit: U, kind: it.kind, S: S, r: it.r, c: it.c, c0: c0, lev: it.lev, j: it.j, hist: [], keys: new Set() };
                 this._stripN = -1;
                 this.snap();
                 const s = document.querySelector('.tab-sec[data-tab="rhombcap"]');
                 if (s && s.classList.contains('off')) { s.classList.remove('off'); TABS.sync(false); }
-                UI.statusInfo.textContent = '🔍 Ромб ' + S + ': строка ' + r + ', сдвиг ' + (c - c0 > 0 ? '+' : '') + (c - c0);
+                UI.statusInfo.textContent = '🔍 ' + this.KIND_NAME[it.kind] + ' ' + S + ': строка ' + it.r + ', сдвиг ' + (it.c - c0 > 0 ? '+' : '') + (it.c - c0);
                 this.updCapture(true); RENDERER.renderFrame();
                 return true;
             },
-            snap: function() {   // новое состояние выбранного ромба — в его ленту кадров
+            snap: function() {   // новое состояние выбранной фигуры — в её ленту кадров
                 const s = this.sel; if (!s) return;
-                const L = MODULE_STATE.originalLines; if (s.r + s.S > L.length - 1) return;
-                const cells = this.cellsLines(L, s.r, s.c, s.S), key = this.cellsKey(cells);
+                const L = MODULE_STATE.originalLines; if (!this.fits(s, L.length)) return;
+                const cells = this.cellsLines(L, s, s.S), key = this.cellsKey(cells);
                 if (s.keys.has(key)) { const h = s.hist.find(x => x.key === key); if (h) h.seen++; return; }
                 s.keys.add(key);
                 if (s.hist.length < 128) s.hist.push({ p: MODULE_STATE.animPasses || 0, key: key, cells: cells, seen: 1 });
@@ -4560,47 +4701,70 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
             updCapture: function(force) {
                 const s = this.sel, info = document.getElementById('rcInfo'), cv = document.getElementById('rcCanvas');
                 if (!info || !cv || (!force && !this.open('rhombcap'))) return;
-                const g = cv.getContext('2d');
-                if (!s) { g.fillStyle = '#0a0b0e'; g.fillRect(0, 0, cv.width, cv.height); info.innerHTML = 'Ромб не выбран: «🎯 Выбрать ромб щелчком» и щелчок по треугольнику (или Alt+щелчок в любое время). Размер — как в сводке.'; return; }
+                const g2 = cv.getContext('2d');
+                if (!s) { g2.fillStyle = '#0a0b0e'; g2.fillRect(0, 0, cv.width, cv.height); info.innerHTML = 'Фигура не выбрана: «🎯 Выбрать щелчком» и щелчок по треугольнику (или Alt+щелчок в любое время). Что брать (ромб, ▲▼, ⧗) и размер — как в «👁 Вид» и сводке.'; return; }
                 const L = MODULE_STATE.originalLines;
-                if (s.r + s.S > L.length - 1) { info.innerHTML = 'Текст стал короче — ромба больше нет'; return; }
-                const n = s.S + 1, z = Math.max(1, Math.floor(cv.width / n)), off = Math.floor((cv.width - n * z) / 2);
+                if (!this.fits(s, L.length)) { info.innerHTML = 'Текст стал короче — фигуры больше нет'; return; }
+                const G = this.geo(s.kind, s.S), z = Math.max(1, Math.floor(Math.min(cv.width / G.gw, cv.height / G.gh)));
+                const ox = Math.floor((cv.width - G.gw * z) / 2), oy = Math.floor((cv.height - G.gh * z) / 2);
                 const pal = ['#0a0b0e', '#23232d', document.getElementById('zeroColorPicker')?.value || '#3c82ff', document.getElementById('oneColorPicker')?.value || '#d7e1eb'];
-                const cells = this.cellsLines(L, s.r, s.c, s.S), key = this.cellsKey(cells);
-                g.fillStyle = '#0a0b0e'; g.fillRect(0, 0, cv.width, cv.height);
-                this.paint(g, cells, n, z, pal, off, off);
-                const cen = this.census(s.S), it = cen.items.find(x => x.r === s.r && x.c === s.c);
-                const same = it ? cen.items.filter(x => x.key === it.key) : [], mir = same.filter(x => x.low !== it.low).length;
+                const cells = this.cellsLines(L, s, s.S), key = this.cellsKey(cells);
+                g2.fillStyle = '#0a0b0e'; g2.fillRect(0, 0, cv.width, cv.height);
+                this.paint(g2, cells, G.gw, z, pal, ox, oy);
+                const cen = this.census(s.S, s.unit), it = cen.items.find(x => x.kind === s.kind && x.r === s.r && x.c === s.c);
+                const same = it ? cen.items.filter(x => x.key === it.key) : [], mir = it ? same.filter(x => x.low !== it.low).length : 0;
                 const mid = (MODULE_STATE.animatrixRow || 0) > 0 && (MODULE_STATE.animatrixRow || 0) < L.length - 1;
-                info.innerHTML = 'Ромб <b>' + s.S + '</b> · ряд ' + s.lev + ' (строки ' + s.r + '–' + (s.r + s.S) + '), ' + (s.j + 1) + '-й слева из ' + (s.lev + 1) +
-                    ' · вершина: строка ' + s.r + ', сдвиг от оси ' + (s.c - s.c0 > 0 ? '+' : '') + (s.c - s.c0) +
-                    '<br>Проход <b>' + (MODULE_STATE.animPasses || 0) + '</b>' + (mid ? ' <span style="color:#ff8a8a">(посреди прохода — на картинке живой ромб, буква — с начала прохода)</span>' : '') +
-                    ' · буква <b>' + (it ? it.ch : '?') + '</b>' + (it && it.sym ? ' (сам себе зеркален)' : '') +
+                const anchor = s.kind === 'dn' ? 'нижняя вершина' : s.kind === 'hg' ? 'центр' : 'вершина';
+                info.innerHTML = this.KIND_NAME[s.kind][0].toUpperCase() + this.KIND_NAME[s.kind].slice(1) + ' <b>' + s.S + '</b> · ряд ' + s.lev + ' (строки ' + (s.r + G.roMin) + '–' + (s.r + G.roMin + G.gh - 1) + '), ' +
+                    (s.j + 1) + '-й слева · ' + anchor + ': строка ' + s.r + ', сдвиг от оси ' + (s.c - s.c0 > 0 ? '+' : '') + (s.c - s.c0) +
+                    '<br>Проход <b>' + (MODULE_STATE.animPasses || 0) + '</b>' + (mid ? ' <span style="color:#ff8a8a">(посреди прохода — на картинке живая фигура, буква — с начала прохода)</span>' : '') +
+                    ' · буква <b>' + (it ? it.ch : '?') + '</b>' + (it && it.sym ? ' (сама себе зеркальна)' : '') +
                     ' · таких же в кадре ' + same.length + (mir ? ' (из них зеркальных ' + mir + ')' : '') +
                     '<br>Разных состояний с момента выбора: <b>' + s.hist.length + '</b>' + (s.hist.length >= 128 ? ' (лента держит 128)' : '');
                 if (this._stripN !== s.hist.length || force) {
                     this._stripN = s.hist.length;
                     const strip = document.getElementById('rcStrip'); strip.innerHTML = '';
-                    const tz = Math.max(1, Math.floor(40 / n));
+                    const tz = Math.max(1, Math.floor(40 / Math.max(G.gw, G.gh)));
                     s.hist.forEach((h, i) => {
                         const fg = document.createElement('figure'), c2 = document.createElement('canvas');
-                        c2.width = c2.height = n * tz; this.paint(c2.getContext('2d'), h.cells, n, tz, pal, 0, 0);
+                        c2.width = G.gw * tz; c2.height = G.gh * tz; this.paint(c2.getContext('2d'), h.cells, G.gw, tz, pal, 0, 0);
                         c2.dataset.key = h.key; fg.appendChild(c2);
                         fg.insertAdjacentHTML('beforeend', '<figcaption>' + (i + 1) + ' · п.' + h.p + '</figcaption>');
                         fg.title = 'Состояние ' + (i + 1) + ': впервые на проходе ' + h.p; strip.appendChild(fg);
                     });
                 }
                 document.querySelectorAll('#rcStrip canvas').forEach(c2 => c2.classList.toggle('now', +c2.dataset.key === key));
+                // ⊕ низ, отражённый по горизонтали на верх
+                const xc = document.getElementById('rcXor'), xi = document.getElementById('rcXorInfo');
+                if (xc && xi) {
+                    const v = this.vxor(L, s), g3 = xc.getContext('2d');
+                    g3.fillStyle = '#0a0b0e'; g3.fillRect(0, 0, xc.width, xc.height);
+                    if (!v) xi.innerHTML = 'Пары нет: у этого ' + (s.kind === 'up' ? '▲ ромб не целый (край у основания)' : '▼ ромб не целый') + ' — отражать нечего';
+                    else {
+                        const gh3 = v.cells.length / v.gw, z3 = Math.max(1, Math.floor(Math.min(xc.width / v.gw, xc.height / gh3)));
+                        this.paint(g3, v.cells, v.gw, z3, pal, Math.floor((xc.width - v.gw * z3) / 2), Math.floor((xc.height - gh3 * z3) / 2));
+                        xi.innerHTML = (v.mode === 'rh' ? 'Нижний ▼ ромба перевёрнут на верхний ▲' : 'Нижний ▲ часов перевёрнут на верхний ▼') + ' · совпало ' + v.same + ' из ' + v.tot + ' клеток · ' +
+                            (v.filled ? 'в XOR осталось символов: <b>' + v.filled + '</b>' : '<b style="color:#78eb78">XOR пуст — симметрична сверху вниз</b>');
+                    }
+                }
             },
-            // обводка выбранного ромба и таких же на холсте; заодно запоминается раскладка строк — для щелчка
+            // контур фигуры: вершины [строка, сдвиг столбца от c, сдвиг по вертикали в долях строки]; у ⧗ — «бантик» через центр
+            outline: function(kind, r, S) {
+                const h = S / 2;
+                if (kind === 'rh') return [[r, 0, -0.5], [r + h, h + 0.5, 0], [r + S, 0, 0.5], [r + h, -h - 0.5, 0]];
+                if (kind === 'up') return [[r, 0, -0.5], [r + h, h + 0.5, 0.5], [r + h, -h - 0.5, 0.5]];
+                if (kind === 'dn') return [[r - h, -h - 0.5, -0.5], [r - h, h + 0.5, -0.5], [r, 0, 0.5]];
+                return [[r - h, -h - 0.5, -0.5], [r - h, h + 0.5, -0.5], [r, 0, 0], [r + h, h + 0.5, 0.5], [r + h, -h - 0.5, 0.5], [r, 0, 0]];
+            },
+            // обводка выбранной фигуры и таких же на холсте; заодно запоминается раскладка строк — для щелчка
             drawMarks: function(ctx, g) {
                 this.layout = { gi: g.visibleLines.map(v => v ? v.globalIndex : undefined), rowX: g.rowX, startY: g.startY, glide: g.glide, ls: g.ls, cw: g.cw };
                 const s = this.sel;
                 if (s) {
                     const at = new Map();
                     this.layout.gi.forEach((row, i) => { if (row !== undefined && g.rowX[i] !== undefined) at.set(row, i); });
-                    const poly = (r, c, S, color, lw) => {
-                        const half = S / 2, P = [[r, 0, -0.5, 0], [r + half, half + 0.5, 0, 0], [r + S, 0, 0.5, 0], [r + half, -half - 0.5, 0, 0]].map(([row, dc, dy]) => {
+                    const poly = (kind, r, c, color, lw) => {
+                        const P = this.outline(kind, r, s.S).map(([row, dc, dy]) => {
                             const i = at.get(row); if (i === undefined) return null;
                             return [g.rowX[i] + (c + dc + 0.5) * g.cw, g.startY + (i + g.glide + dy) * g.ls];
                         });
@@ -4610,57 +4774,58 @@ VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправ
                     };
                     ctx.save(); ctx.shadowBlur = 0; ctx.globalAlpha = 1; ctx.setLineDash([]);
                     if (document.getElementById('rcSameCheck')?.checked) {
-                        const cen = this.census(s.S), it = cen.items.find(x => x.r === s.r && x.c === s.c);
-                        if (it) cen.items.forEach(x => { if (x.key === it.key && x !== it) poly(x.r, x.c, s.S, x.low === it.low ? 'rgba(34,211,238,0.9)' : 'rgba(255,102,204,0.9)', 1.5); });
+                        const cen = this.census(s.S, s.unit), it = cen.items.find(x => x.kind === s.kind && x.r === s.r && x.c === s.c);
+                        if (it) cen.items.forEach(x => { if (x.key === it.key && x !== it) poly(x.kind, x.r, x.c, x.low === it.low ? 'rgba(34,211,238,0.9)' : 'rgba(255,102,204,0.9)', 1.5); });
                     }
-                    poly(s.r, s.c, s.S, '#ffffff', 2.5);
+                    poly(s.kind, s.r, s.c, '#ffffff', 2.5);
                     ctx.restore();
                 }
                 const now = performance.now();
                 if (now - this._tick > 150) { this._tick = now; this.updSummary(); this.updCapture(); }
             },
-            gifSel: function() {   // выбранный ромб по проходам — GIF (волна на копии, шаг — «каждый N-й» у 🎞 GIF)
-                const s = this.sel; if (!s) { UI.statusInfo.textContent = '🔍 Сначала выберите ромб'; return; }
-                const src = MODULE_STATE.originalLines, H = src.length; if (s.r + s.S > H - 1) return;
+            gifSel: function() {   // выбранная фигура по проходам — GIF (волна на копии, шаг — «каждый N-й» у 🎞 GIF)
+                const s = this.sel; if (!s) { UI.statusInfo.textContent = '🔍 Сначала выберите фигуру'; return; }
+                const src = MODULE_STATE.originalLines, H = src.length; if (!this.fits(s, H)) return;
                 const { rows, W } = this.rowsOf(src);
                 const stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) { const c1 = a[k], c2 = b[k]; b[k] = c1 === c2 ? 32 : (c1 !== 32 ? c1 : c2); } };
                 let pass = MODULE_STATE.animPasses || 0;
                 const r0 = MODULE_STATE.animatrixRow || 0;
                 if (r0 > 0 && r0 < H - 1) { for (let r = r0; r < H - 1; r++) stepRow(r); pass++; }
                 const step = Math.max(1, parseInt(document.getElementById('animGifStep')?.value, 10) || 1);
-                const n = s.S + 1, z = Math.max(1, Math.min(12, Math.floor(360 / n))), capH = 18, gw = Math.max(n * z, 260), gh = n * z + capH, x0 = Math.floor((gw - n * z) / 2);
+                const G = this.geo(s.kind, s.S), z = Math.max(1, Math.min(12, Math.floor(360 / Math.max(G.gw, G.gh))));
+                const capH = 18, gw = Math.max(G.gw * z, 260), gh = G.gh * z + capH, x0 = Math.floor((gw - G.gw * z) / 2);
                 const cv = document.createElement('canvas'); cv.width = gw; cv.height = capH; const cx = cv.getContext('2d');
                 const frames = [], p0 = pass; let first = null, closed = false;
                 for (let f = 0; f < 256; f++) {
-                    const cells = this.cellsRows(rows, W, s.r, s.c, s.S, false), key = this.cellsKey(cells);
+                    const cells = this.cellsRows(rows, W, s, s.S, false), key = this.cellsKey(cells);
                     if (first === null) first = key; else if (key === first) { closed = true; break; }
                     const ix = new Uint8Array(gw * gh);
                     cx.fillStyle = '#000'; cx.fillRect(0, 0, gw, capH); cx.fillStyle = '#ffcc00'; cx.font = '12px Consolas, monospace'; cx.textBaseline = 'middle';
-                    cx.fillText('ромб ' + s.S + ' · строка ' + s.r + ' · сдвиг ' + (s.c - s.c0) + ' · проход ' + pass + (step > 1 ? ' · шаг ' + step : ''), 4, capH / 2);
+                    cx.fillText(this.KIND_NAME[s.kind] + ' ' + s.S + ' · строка ' + s.r + ' · сдвиг ' + (s.c - s.c0) + ' · проход ' + pass + (step > 1 ? ' · шаг ' + step : ''), 4, capH / 2);
                     const cd = cx.getImageData(0, 0, gw, capH).data;
                     for (let i = 0, j = 0; i < gw * capH; i++, j += 4) if (cd[j] + cd[j + 1] > 220) ix[i] = 4;
-                    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const v = cells[y * n + x]; if (!v) continue; for (let yy = 0; yy < z; yy++) { const b = (capH + y * z + yy) * gw + x0 + x * z; for (let xx = 0; xx < z; xx++) ix[b + xx] = v; } }
+                    for (let y = 0; y < G.gh; y++) for (let x = 0; x < G.gw; x++) { const v = cells[y * G.gw + x]; if (!v) continue; for (let yy = 0; yy < z; yy++) { const b = (capH + y * z + yy) * gw + x0 + x * z; for (let xx = 0; xx < z; xx++) ix[b + xx] = v; } }
                     frames.push(ix);
                     for (let q = 0; q < step; q++) for (let r = 0; r < H - 1; r++) stepRow(r);
                     pass += step;
                 }
                 const gif = GIFENC.encode(frames, gw, gh, [[0, 0, 0], [35, 35, 45], bitRgb('zeroColorPicker', '#3c82ff'), bitRgb('oneColorPicker', '#d7e1eb'), [255, 204, 0]], 30);
-                const name = 'Zerkalius-romb-' + s.S + '-stroka' + s.r + '-sdvig' + (s.c - s.c0) + (step > 1 ? '-shag' + step : '') + '-prohody-' + p0 + '-' + (pass - step) + '.gif';
+                const name = 'Zerkalius-' + s.kind + '-' + s.S + '-stroka' + s.r + '-sdvig' + (s.c - s.c0) + (step > 1 ? '-shag' + step : '') + '-prohody-' + p0 + '-' + (pass - step) + '.gif';
                 const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([gif], { type: 'image/gif' })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
-                UI.statusInfo.textContent = '🔍 GIF ромба: ' + frames.length + ' кадров' + (closed ? ' — ромб вернулся к первому кадру' : ' (предел 256)') + ' · ' + name;
+                UI.statusInfo.textContent = '🔍 GIF: ' + frames.length + ' кадров' + (closed ? ' — фигура вернулась к первому кадру' : ' (предел 256)') + ' · ' + name;
             },
             pngSel: function() {
                 const s = this.sel, cv = document.getElementById('rcCanvas'); if (!s || !cv) return;
-                cv.toBlob(bl => { const a = document.createElement('a'); a.href = URL.createObjectURL(bl); a.download = 'Zerkalius-romb-' + s.S + '-stroka' + s.r + '-sdvig' + (s.c - s.c0) + '-prohod-' + (MODULE_STATE.animPasses || 0) + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000); }, 'image/png');
+                cv.toBlob(bl => { const a = document.createElement('a'); a.href = URL.createObjectURL(bl); a.download = 'Zerkalius-' + s.kind + '-' + s.S + '-stroka' + s.r + '-sdvig' + (s.c - s.c0) + '-prohod-' + (MODULE_STATE.animPasses || 0) + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000); }, 'image/png');
             },
             init: function() {
                 const $ = id => document.getElementById(id);
-                $('rsSize')?.addEventListener('change', () => { this._sumVer = null; this.updSummary(true); RENDERER.renderFrame(); });
+                ['rsSize', 'rsUnit'].forEach(id => $(id)?.addEventListener('change', () => { this._sumVer = null; this.updSummary(true); RENDERER.renderFrame(); }));   // v0.010: и единица
                 $('rsCycleBtn')?.addEventListener('click', () => this.runCycle());
                 $('rsSaveBtn')?.addEventListener('click', () => this.saveTxt());
                 $('rcPickBtn')?.addEventListener('click', () => {
                     this.arm = !this.arm; $('rcPickBtn').classList.toggle('on', this.arm);
-                    UI.statusInfo.textContent = this.arm ? '🎯 Щёлкните по ромбу на треугольнике' : '';
+                    UI.statusInfo.textContent = this.arm ? '🎯 Щёлкните по фигуре на треугольнике (' + this.UNIT_NAME[this.unit()] + ')' : '';
                 });
                 // до обработчика холста (щелчок там — пауза/пуск): выбор ромба щелчок забирает себе
                 if (UI.canvas) UI.canvas.addEventListener('click', e => {
