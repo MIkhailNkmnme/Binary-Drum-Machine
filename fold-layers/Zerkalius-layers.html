@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Layers — v1.611</title>
+<title>Zerkalius Layers — v1.612</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -4472,6 +4472,13 @@ body.vcur-on #vcurBar{display:flex}
   #alignGrp .align-half, #alignGrp .align-pin-slots, #alignGrp .axis-col-box{
     border-radius:0 !important; }
   #alignGrp input[type="color"]::-webkit-color-swatch{ border-radius:0 !important; }
+  /* ═══ ЦВЕТА ЦЕПОЧКИ — СТОЛБИКОМ ПОД «№» (v1.612) ═══ Коробку вынимаем из ряда полосы и ставим под
+     «№» цепочки (left/top/width — positionAxisColBox в fold-5-ui.js). По id, а не по классу: у замка
+     тот же класс .axis-col-box, и он остаётся в ряду. */
+  #alignGrp #axisColBox{ position:absolute !important; display:flex !important; flex-direction:column;
+    align-items:stretch; gap:2px !important; height:auto !important; align-self:auto !important;
+    background:transparent !important; z-index:1; }
+  #alignGrp #axisColBox input[type="color"]{ width:100% !important; height:14px !important; flex:0 0 auto; }
   /* Под рукой — акцентом, той же ширины: полоса под курсором должна становиться заметнее, а не
      тоньше (прежние правила ужимали её до 2px). */
   .vsplit:hover::before, .vsplit.drag::before,
@@ -5295,7 +5302,7 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
   <!-- Заголовок стоит вплотную слева от вкладок (v1.046), вся связка центрируется полосой — см. #menuBarTitle в CSS. --><div id="menuBarTitle">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.611</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.612</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -6895,11 +6902,11 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
      (видно новый номер версии в заголовке), а fold-*.js берёт из кеша — то есть новый код
      просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
      версией в <title>/<h3>, теми же тремя цифрами. -->
-<script src="fold-1-core.js?v=1611"></script>
-<script src="fold-2-render.js?v=1611"></script>
-<script src="fold-3-ops.js?v=1611"></script>
-<script src="fold-4-tools.js?v=1611"></script>
-<script src="fold-5-ui.js?v=1611"></script>
+<script src="fold-1-core.js?v=1612"></script>
+<script src="fold-2-render.js?v=1612"></script>
+<script src="fold-3-ops.js?v=1612"></script>
+<script src="fold-4-tools.js?v=1612"></script>
+<script src="fold-5-ui.js?v=1612"></script>
 <div id="fieldInfo"></div>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;

@@ -679,7 +679,8 @@ function chainColTwins(){
    с №»: у фона П1/П2 тоже двойник, в блоке под «№» (#patColL/#patColR). Оригинал — панельный
    #colFieldL/#colFieldR в «Виде»: от него считает applyFieldColors(), его пишет кэш. */
 function fieldColTwins(){
-  return [["colFieldL", "colFieldLAx"], ["colFieldR", "colFieldRAx"]];
+  // v1.612: + фон поля цепочки — третьим в столбике под «№» цепочки (меню 2, #axisColBox).
+  return [["colFieldL", "colFieldLAx"], ["colFieldR", "colFieldRAx"], ["colFieldC", "colFieldCAx"]];
 }
 /* Обратный ход: цвет изменили в панели — или его положил кэш при загрузке, или пресет цветов, —
    и двойники обязаны показать то же самое. Иначе их квадратики врут о цвете, который сами же и
@@ -714,7 +715,7 @@ for (const [srcId, dstId] of fieldColTwins()) {
     dst.type = "color";
     dst.id = dstId;
     dst.value = src.value;
-    dst.title = "Фон " + (srcId === "colFieldL" ? "левого поля (П1)" : "правого поля (П2)") +
+    dst.title = "Фон " + (srcId === "colFieldL" ? "левого поля (П1)" : srcId === "colFieldC" ? "поля цепочки (Ц)" : "правого поля (П2)") +
       ". Тот же цвет, что в «Виде» — правится и оттуда, и отсюда";
     document.body.appendChild(dst);
   }
@@ -4417,9 +4418,25 @@ function positionStairsAxisBoxes(axisLeftPx, axisTopPx, axisH, minTopPx){
    Заодно стираем left/top, оставшиеся от прежних кадров: в полосе коробки стоят в потоке, и
    старые координаты сдвинули бы их, если бы CSS не перебил position (см. #alignGrp .axis-col-box
    в стилях — там position:static). */
+/* ═══ ЦВЕТА ЦЕПОЧКИ — СТОЛБИКОМ ПОД «№» (v1.612) ═══
+   Запрос: «эти цвета также вниз под № и фон поля цепочек сюда» — как у П1/П2 (v1.609/v1.610).
+   Коробка вынута из ряда полосы (position:absolute в стилях, #alignGrp #axisColBox) и стоит под
+   «№» цепочки, шириной с неё: цвет 1, цвет 0, фон поля Ц. Координаты — в системе полосы, где
+   лежат и «№», и сама коробка. «№» не в полосе — коробка у левого края полосы, под ней.
+   Зовётся дважды за кадр: из positionAxisColBox и в самом конце updateAxisSplitPosition — к тому
+   моменту меню 2 уже разведено по полю и посажено на ось, и «№» стоит на своём итоговом месте. */
+function placeChainColBox(){
+  const box = document.getElementById("axisColBox");
+  if (!box) return;
+  const num = document.getElementById("bAxisRowNum");
+  const inGrp = num && box.parentElement && num.parentElement === box.parentElement && num.offsetWidth > 0;
+  box.style.left = (inGrp ? num.offsetLeft : 0) + "px";
+  box.style.top = ((inGrp ? num.offsetTop + num.offsetHeight : box.parentElement ? box.parentElement.offsetHeight : 24) + 2) + "px";
+  box.style.width = (inGrp ? num.offsetWidth : 36) + "px";
+}
 function positionAxisColBox(axisLeftPx, axisTopPx, axisH, minTopPx){
   const box = document.getElementById("axisColBox");
-  if (box) { box.classList.add("act"); box.style.left = ""; box.style.top = ""; }
+  if (box) { box.classList.add("act"); placeChainColBox(); }
   const lockNow = document.getElementById("axisLockBox");
   if (lockNow) { lockNow.classList.add("act"); lockNow.style.left = ""; lockNow.style.top = ""; }
 }
@@ -4450,6 +4467,9 @@ function hideAxisColBox(){}
   const pinRMove = document.getElementById("alignPinR");
   if (grpMove) {
     if (colBoxMove) grpMove.insertBefore(colBoxMove, grpMove.firstChild);
+    // v1.612: третьим в коробке — фон поля цепочки (двойник заводится в fieldColTwins).
+    const fldCAx = document.getElementById("colFieldCAx");
+    if (colBoxMove && fldCAx) colBoxMove.appendChild(fldCAx);
     if (lockBoxMove) grpMove.insertBefore(lockBoxMove, colBoxMove ? colBoxMove.nextSibling : grpMove.firstChild);
     // Левый слот — к правому: «все слоты вправо».
     if (pinLMove && pinRMove) grpMove.insertBefore(pinLMove, pinRMove);
@@ -5719,6 +5739,7 @@ function updateAxisSplitPosition(maxLen){
       }
     }
   }
+  placeChainColBox();   // v1.612: «№» цепочки уже на итоговом месте — коробка цветов под неё
 }
 /* ДВОЙНОЙ КЛИК ПО ОСИ ЦЕПОЧЕК (v0.903, запрос пользователя: "пусть ставит ось в середину между
    границами паттернов, а границы паттернов раздвигает так, чтобы самая длинная строка поместилась
