@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Zerkalius Code (до 35.31 — Binary Drum Machine)
-VERSION: Pro 35.65 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопок ⇄ и ⚙ больше нет, 🔎 Поиск убран; пресеты — целые сцены, логическая операция работает; выравнивание по видимому краю; 13 шрифтов, свои, без интернета; ▦ скачки ⇄ 〰 плавно в плеере; файл можно бросить на холст; межсимвольный интервал; крайние панели прозрачные; защита от выделения; ⚓ заморозка — на месте, без прыжка в центр; подсчёт циклов Аниматрицы; ▶ — включить выбранную сцену; F5 не сбрасывает — всё как было; ★ — полный пресет вместе с текстом; ★-сцены файлом для другого компьютера; счётчик Аниматрицы — внизу, среди уведомлений; вкладки в одну строку, плавающие окна целиком на экране; журнал Аниматрицы в файл; ⤒ / Home — к началу текста; Аниматрица целыми циклами: ⏮ ⏭, PageUp/PageDown, плеер по циклам; счёт циклов переживает F5; 🎞 GIF цикла прямо из страницы; ◇ ромбическая сетка; ▤ полосы периодов; ◇ сетка «авто» по проходу, ⫼ ось симметрии; 🎞 ромбы в кино; ⧖ зеркало через центр с XOR; 🔤 буквы в ромбах; 🎨 цвета 0 / 1; 🎨 цвета сетки; разреженность сетки; щелчок по заголовку — перезагрузка)
+VERSION: Pro 35.66 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопок ⇄ и ⚙ больше нет, 🔎 Поиск убран; пресеты — целые сцены, логическая операция работает; выравнивание по видимому краю; 13 шрифтов, свои, без интернета; ▦ скачки ⇄ 〰 плавно в плеере; файл можно бросить на холст; межсимвольный интервал; крайние панели прозрачные; защита от выделения; ⚓ заморозка — на месте, без прыжка в центр; подсчёт циклов Аниматрицы; ▶ — включить выбранную сцену; F5 не сбрасывает — всё как было; ★ — полный пресет вместе с текстом; ★-сцены файлом для другого компьютера; счётчик Аниматрицы — внизу, среди уведомлений; вкладки в одну строку, плавающие окна целиком на экране; журнал Аниматрицы в файл; ⤒ / Home — к началу текста; Аниматрица целыми циклами: ⏮ ⏭, PageUp/PageDown, плеер по циклам; счёт циклов переживает F5; 🎞 GIF цикла прямо из страницы; ◇ ромбическая сетка; ▤ полосы периодов; ◇ сетка «авто» по проходу, ⫼ ось симметрии; 🎞 ромбы в кино; ⧖ зеркало через центр с XOR; 🔤 буквы в ромбах; 🎨 цвета 0 / 1; 🎨 цвета сетки; разреженность сетки; щелчок по заголовку — перезагрузка; сетка всегда позади фигуры)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Code 35.65</title>
+    <title>Zerkalius Code 35.66</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -329,7 +329,7 @@ VERSION: Pro 35.65 (Стартовый вид: радар, рамка, цвет 
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Code 35.65</h3>
+                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Code 35.66</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -2307,7 +2307,7 @@ VERSION: Pro 35.65 (Стартовый вид: радар, рамка, цвет 
             // текста (ширина символа и межстрочный), и привязка к тем же строкам и центру, так что
             // сетка лежит ровно под символами и едет вместе с перетаскиванием. Рисуется в отдельный
             // холст и переиспользуется, пока ничего из параметров не поменялось.
-            drawGridLayer: function(ctx, width, height, fontSize, font, lineSpacing, startY, rgb, alpha) {
+            drawGridLayer: function(ctx, width, height, fontSize, font, lineSpacing, startY, rgb, alpha, opts) {
                 if (!MODULE_STATE.gridLayer || !(lineSpacing > 0)) return;
                 const gc = this.gridColors(rgb);   // 35.61
                 ctx.save(); ctx.font = `normal ${fontSize}px ${font}`;
@@ -2316,11 +2316,55 @@ VERSION: Pro 35.65 (Стартовый вид: радар, рамка, цвет 
                 cw *= charSpacing();   // 35.37
                 // 35.22: на мелком масштабе символ не прочесть (а при клетке меньше 2 px слой раньше
                 // просто выключался) — сетка рисуется по пикселям: «1» ярко, «0» тускло.
-                if (fontSize < 5 || lineSpacing < 3 || cw < 3) return this.drawGridPixels(ctx, width, height, lineSpacing, cw, startY, gc, alpha);
+                if (fontSize < 5 || lineSpacing < 3 || cw < 3) {
+                    // 35.66: под фигурой — тем же пиксельным слоем, но под уже нарисованное (клетки в пиксель не вырезаются)
+                    if (!opts) return this.drawGridPixels(ctx, width, height, lineSpacing, cw, startY, gc, alpha);
+                    ctx.save(); ctx.globalCompositeOperation = 'destination-over';
+                    this.drawGridPixels(ctx, width, height, lineSpacing, cw, startY, gc, alpha); ctx.restore(); return;
+                }
                 if (MODULE_STATE.isRadarActive) return this.drawGridRings(ctx, width, height, fontSize, font, lineSpacing, cw, gc, alpha);
-                const x0 = width / 2 + MODULE_STATE.offsetX;
+                const x0 = (opts && opts.xAnchor != null) ? opts.xAnchor : width / 2 + MODULE_STATE.offsetX;   // 35.66: якорь — клетка текста
                 const oy = ((startY % lineSpacing) + lineSpacing) % lineSpacing, ox = ((x0 % cw) + cw) % cw;
                 const ky = Math.round((startY - oy) / lineSpacing), kx = Math.round((x0 - ox) / cw);
+                if (opts && opts.occ) {
+                    // 35.66: каждый кадр заново, под уже нарисованное, без занятых фигурой клеток. Клетка — (строка, столбец)
+                    // от startY и x0; символ фигуры, пока строки скользят, закрывает ближайшую.
+                    const occ = new Set(), o = opts.occ;
+                    for (let t = 0; t < o.length; t += 2) occ.add(Math.round((o[t + 1] - startY) / lineSpacing) * 65536 + Math.round((o[t] - x0) / cw));
+                    if ((width / cw + 2) * (height / lineSpacing + 2) > 6000) {
+                        // Мелкий шрифт — клеток слишком много, чтобы каждый кадр писать их заново: берём готовую сетку из
+                        // кэша (с тем же якорем), на копии вырезаем клетки фигуры и кладём копию под нарисованное.
+                        const tc = this._gridTmp || (this._gridTmp = document.createElement('canvas'));
+                        if (tc.width !== width || tc.height !== height) { tc.width = width; tc.height = height; }
+                        const tg = tc.getContext('2d');
+                        tg.globalCompositeOperation = 'source-over'; tg.clearRect(0, 0, width, height);
+                        this.drawGridLayer(tg, width, height, fontSize, font, lineSpacing, startY, rgb, alpha, { xAnchor: x0 });
+                        tg.globalCompositeOperation = 'destination-out'; tg.fillStyle = '#000';
+                        occ.forEach(k => {
+                            const row = Math.round(k / 65536), col = k - row * 65536;
+                            tg.fillRect(x0 + col * cw - cw / 2, startY + row * lineSpacing - lineSpacing / 2, cw, lineSpacing);
+                        });
+                        tg.globalCompositeOperation = 'source-over';
+                        ctx.save(); ctx.globalCompositeOperation = 'destination-over'; ctx.drawImage(tc, 0, 0); ctx.restore();
+                        return;
+                    }
+                    ctx.save(); ctx.globalCompositeOperation = 'destination-over'; ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+                    ctx.font = `normal ${fontSize}px ${font}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    const f0 = `rgba(${gc.z}, ${alpha})`, f1 = `rgba(${gc.o}, ${alpha})`;
+                    let last = '';
+                    for (let r = -1, y = oy - lineSpacing; y < height + lineSpacing; r++, y += lineSpacing)
+                        for (let q = -1, x = ox - cw; x < width + cw; q++, x += cw) {
+                            const row = r - ky, col = q - kx;
+                            if (occ.has(row * 65536 + col)) continue;
+                            let z;
+                            if (gc.sp === 1) z = (row + col) & 1;
+                            else { if (((col % gc.sp) + gc.sp) % gc.sp) continue; z = (row + col / gc.sp) & 1; }
+                            const f = z ? f0 : f1; if (f !== last) { ctx.fillStyle = f; last = f; }
+                            ctx.fillText(z ? '0' : '1', x, y);
+                        }
+                    ctx.restore();
+                    return;
+                }
                 const key = [width, height, fontSize.toFixed(2), font, lineSpacing.toFixed(2), oy.toFixed(1), ox.toFixed(1), (ky + kx) & 1, ((kx % (2 * gc.sp)) + 2 * gc.sp) % (2 * gc.sp), gc.key, alpha].join('|');
                 if (this._gridKey !== key) {
                     const c = this._gridCanvas || (this._gridCanvas = document.createElement('canvas'));
@@ -2473,7 +2517,16 @@ VERSION: Pro 35.65 (Стартовый вид: радар, рамка, цвет 
                 const ctx = UI.ctx; const width = UI.canvas.width; const height = UI.canvas.height;
                 
                 ctx.globalAlpha = 1.0; ctx.shadowBlur = 0;
-                ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, width, height);
+                /* 35.66: СЕТКА ВСЕГДА ПОЗАДИ ФИГУРЫ (пользователь: «клади сверху биты фигуры, а сетка всегда на заднем
+                   плане»). Сетка рисуется ПОСЛЕ текста, режимом destination-over — под уже нарисованное, а в клетках,
+                   где стоит символ фигуры, её символа нет совсем: клетка фигуры целиком принадлежит фигуре, тусклый «0»
+                   не смешивается с «1» сетки. Решётка сетки для этого встаёт на решётку текста: по x — от начала строк
+                   (строка чётной длины иначе сдвинута на полсимвола), по y — от тех же строк; пока строки скользят
+                   (35.38), закрыта ближайшая клетка. Холст до конца кадра прозрачный, чёрный фон кладётся последним,
+                   тоже под всё. 35.64 закрывала сетку чёрными прямоугольниками поверх — выходили квадраты. */
+                const gridUnder = MODULE_STATE.gridLayer && !MODULE_STATE.isRadarActive && !(UI.spin3dCheck?.checked);
+                if (gridUnder) ctx.clearRect(0, 0, width, height);
+                else { ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, width, height); }
                 
                 const visibleHeight = parseInt(UI.heightRange?.value || 15, 10);
                 const hideStatic = UI.hideStaticCheck?.checked || false; 
@@ -2554,7 +2607,7 @@ VERSION: Pro 35.65 (Стартовый вид: радар, рамка, цвет 
                     const phase = Math.min(1, Math.max(0, (performance.now() - MODULE_STATE.lastTickTime) / spMs));
                     glide = (1 - phase) * MODULE_STATE.lastShift;
                 }
-                this.drawGridLayer(ctx, width, height, fontSize, selectedFont, lineSpacing, startY, statRgb, Math.min(1, Math.max(0.15, statAlpha * 0.6)));   // 35.17
+                if (!gridUnder) this.drawGridLayer(ctx, width, height, fontSize, selectedFont, lineSpacing, startY, statRgb, Math.min(1, Math.max(0.15, statAlpha * 0.6)));   // 35.17; при gridUnder — после текста (35.66)
                 /* 35.55: ПОЛОСЫ ПЕРИОДОВ (запрос пользователя после разбора сцены «1»). В чистой фазе Аниматрицы у
                    каждой строки свой период волны — ближайшая степень двойки БОЛЬШЕ её номера: строка 0 стоит, 1 — период
                    2, 2–3 — 4, 4–7 — 8, … 64–127 — 128 (теорема Лукаса по строке: строке r нужны только строки выше).
@@ -2750,6 +2803,7 @@ VERSION: Pro 35.65 (Стартовый вид: радар, рамка, цвет 
                 const fontNormal = `normal ${fontSize}px ${selectedFont}`;
                 const fontBold = `bold ${fontSize}px ${selectedFont}`;
                 let lastFont = ""; let lastFillStyle = ""; let lastShadowBlur = -1; let lastShadowColor = "";
+                const occCells = [];   // 35.66: x, y нарисованных символов — их клетки сетка пропускает
 
                 const rowX = [];   // 35.54: x начала каждой строки — для ромбической сетки
                 for (let i = 0; i < visibleHeight; i++) {
@@ -2857,6 +2911,7 @@ VERSION: Pro 35.65 (Стартовый вид: радар, рамка, цвет 
                         if (bitCols && !isExactMatch) { if (finalChar === '0') cRgb = zeroRgb; else if (finalChar === '1') cRgb = oneRgb; }   // 35.60
                         if (hideStatic && !isChanged && !isCollision) cAlpha = 0.0;
                         if (cAlpha <= 0.01) continue; 
+                        if (gridUnder) occCells.push(x, y);   // 35.66
 
                         const rgbaStr = this.rgba(cRgb, cAlpha);
                         if (11 > fontSize) charShadowBlur = 0; 
@@ -2872,6 +2927,13 @@ VERSION: Pro 35.65 (Стартовый вид: радар, рамка, цвет 
                         
                         ctx.fillText(finalChar, x, y);
                     }
+                }
+                if (gridUnder) {   // 35.66
+                    let ax = null;
+                    for (let i = 0; i < visibleHeight; i++) if (rowX[i] !== undefined) { ax = rowX[i] + charWidth / 2; break; }
+                    this.drawGridLayer(ctx, width, height, fontSize, selectedFont, lineSpacing, startY, statRgb, Math.min(1, Math.max(0.15, statAlpha * 0.6)), { xAnchor: ax, occ: occCells });
+                    ctx.save(); ctx.globalCompositeOperation = 'destination-over'; ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, width, height); ctx.restore();
                 }
 
                 /* 35.54: РОМБИЧЕСКАЯ СЕТКА (запрос пользователя, «кадры» ромбами на треугольнике Аниматрицы).
