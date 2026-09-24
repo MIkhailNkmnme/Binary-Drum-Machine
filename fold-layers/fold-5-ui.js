@@ -2285,6 +2285,7 @@ function refreshFieldBtnIcons(){
     fieldBtns[k].x = x; fieldBtns[k].y = y;
     if (me) { me.style.left = x + "px"; me.style.top = y + "px"; }
     fieldBtnsMarkOnBits();   // v1.604: краем на битах — сплошной фон
+    if (me) me.focus({ preventScroll: true });   // v1.613: брошенный значок — выделен, Delete его уберёт
     if (d) d.done = true;
     saveCache();
   };
@@ -2301,6 +2302,18 @@ function refreshFieldBtnIcons(){
       fieldBtnDrag = null;
       // Бросили мимо полотна (ни одна цель не приняла) — убираем.
       if (d && !d.done && e.dataTransfer && e.dataTransfer.dropEffect === "none") removeAt(d.idx, "вытащена за поле");
+    });
+    /* v1.613, запрос «пусть выделенная кнопка (после перемещения, например), если нажать Delete —
+       удалится». Выделенный значок — тот, что в фокусе: его ставит бросок (см. drop), клик по нему
+       тоже. Delete гасим здесь, на слое: общие обработчики клавиш висят на document и получили бы
+       его следом — там Delete удаляет выделенные строки. */
+    L.addEventListener("keydown", e => {
+      if (e.key !== "Delete") return;
+      const b = e.target && e.target.closest && e.target.closest("button[data-field-idx]");
+      if (!b || !fieldBtns[+b.dataset.fieldIdx]) return;
+      e.preventDefault();
+      e.stopPropagation();
+      removeAt(+b.dataset.fieldIdx, "по Delete");
     });
     // Бросок на другой значок поля — тоже на поле (значки лежат вне DOM полотна).
     L.addEventListener("dragover", over);
