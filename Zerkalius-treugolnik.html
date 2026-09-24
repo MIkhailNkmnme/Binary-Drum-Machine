@@ -5,14 +5,14 @@ PROJECT: Zerkalius Треугольник — отдельная страниц�
          Заведена 2026-09-24 копией Zerkalius Code 35.74: для начала в ней есть всё, что есть в Code.
          Память (текст, вид, раскладка) — СВОЯ, ключи ztri_*; с v0.009 у Code ничего не подхватывает (кроме сцен, если
          своих нет): первый запуск — треугольник правила 90 на 50 строк. Ключи Code никогда не пишутся.
-VERSION: v0.013 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
+VERSION: v0.014 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Треугольник v0.013</title>
+    <title>Zerkalius Треугольник v0.014</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -371,7 +371,7 @@ VERSION: v0.013 (копия Zerkalius Code 35.74 целиком — отправ
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.013</h3>
+                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.014</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -4614,8 +4614,8 @@ VERSION: v0.013 (копия Zerkalius Code 35.74 целиком — отправ
                     const comp = [];
                     fr.cnt.forEach((cc, id) => { if (cc[0]) comp.push([fl[id].ch, cc[0]]); if (cc[1]) comp.push([fl[id].ch.toLowerCase(), cc[1]]); });
                     comp.sort((x, y) => y[1] - x[1]);
-                    return '<div><b>' + fr.p + '</b> · ' + fr.n + ' · ' + comp.length + ' · ' + (fr.neu.length ? '<span style="color:#78eb78">+' + fr.neu.map(id => fl[id].ch).join('') + '</span>' : '—') + ' · ' +
-                        comp.slice(0, 16).map(x => x[0] + x[1]).join(' ') + (comp.length > 16 ? ' …' : '') + '</div>';
+                    return '<div><b>' + fr.p + '</b> · ' + fr.n + ' · ' + comp.length + ' · ' + (fr.neu.length ? '<span style="color:#78eb78">+' + fr.neu.map(id => fl[id].ch).join(' ') + '</span>' : '—') + ' · ' +
+                        comp.slice(0, 16).map(x => x[0] + '×' + x[1]).join(' ') + (comp.length > 16 ? ' …' : '') + '</div>';
                 }).join('') + '</div>';
                 h += '<div class="rs-lab">По формам — на каких кадрах (рисунок — прописная):</div><div id="rsForms"></div>';
                 out.innerHTML = h;
@@ -4655,7 +4655,7 @@ VERSION: v0.013 (копия Zerkalius Code 35.74 целиком — отправ
                         const comp = [];
                         fr.cnt.forEach((cc, id) => { if (cc[0]) comp.push([cy.forms[id].ch, cc[0]]); if (cc[1]) comp.push([cy.forms[id].ch.toLowerCase(), cc[1]]); });
                         comp.sort((x, y) => y[1] - x[1]);
-                        L.push(fr.p + ' | ' + fr.n + ' | ' + comp.length + ' | ' + (fr.neu.map(id => cy.forms[id].ch).join('') || '—') + ' | ' + comp.map(x => x[0] + x[1]).join(' '));
+                        L.push(fr.p + ' | ' + fr.n + ' | ' + comp.length + ' | ' + (fr.neu.map(id => cy.forms[id].ch).join(' ') || '—') + ' | ' + comp.map(x => x[0] + '×' + x[1]).join(' '));
                     });
                     L.push('', 'ПО ФОРМАМ: буква | впервые | всего | кадров | проходы');
                     cy.forms.forEach(fm => L.push(fm.ch + (fm.at.kind === 'up' ? '▲' : fm.at.kind === 'dn' ? '▼' : '') + ' | ' + fm.first + ' | ' + fm.total + ' | ' + fm.passes.length + ' | ' + fm.passes.join(',')));
