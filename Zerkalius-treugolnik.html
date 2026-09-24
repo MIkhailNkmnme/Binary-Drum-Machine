@@ -5,14 +5,14 @@ PROJECT: Zerkalius Треугольник — отдельная страниц�
          Заведена 2026-09-24 копией Zerkalius Code 35.74: для начала в ней есть всё, что есть в Code.
          Память (текст, вид, раскладка) — СВОЯ, ключи ztri_*; с v0.009 у Code ничего не подхватывает (кроме сцен, если
          своих нет): первый запуск — треугольник правила 90 на 50 строк. Ключи Code никогда не пишутся.
-VERSION: v0.011 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
+VERSION: v0.012 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Треугольник v0.011</title>
+    <title>Zerkalius Треугольник v0.012</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -277,6 +277,9 @@ VERSION: v0.011 (копия Zerkalius Code 35.74 целиком — отправ
         .rc-strip canvas.now { border-color: #fff; }
         .tab-sec.floating[data-tab="rhombsum"] { width: 380px; }
         .tab-sec.floating[data-tab="rhombcap"] { width: 300px; }
+        .tab-sec.floating[data-tab="py3d"] { width: 420px; }
+        #p3Canvas { display: block; margin: 4px auto 0; background: #07080b; border: 1px solid #34465e; cursor: grab; touch-action: none; }
+        #p3Canvas:active { cursor: grabbing; }
         .tab-sec.floating[data-tab="howto"] { width: 600px; max-height: 88vh; }
         .howto { font: 12px/1.5 system-ui, sans-serif; color: #d6dde6; padding: 2px 8px 8px; }
         .howto h4 { color: #ffcc00; margin: 10px 0 4px; font-size: 13px; }
@@ -368,7 +371,7 @@ VERSION: v0.011 (копия Zerkalius Code 35.74 целиком — отправ
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.011</h3>
+                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.012</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -777,6 +780,29 @@ VERSION: v0.011 (копия Zerkalius Code 35.74 целиком — отправ
                     <div id="rcStrip" class="rc-strip"></div>
                 </div>
                 </div>
+                <!-- Треугольник v0.012: 🗻 3D — кадр полем пирамид (вершины — центры часов), или выбранная пирамида -->
+                <div class="tab-sec" data-tab="py3d" data-title="🗻 3D" data-float="0.158,0.36">
+                <div class="control-group" style="border: none; padding: 0;">
+                    <div class="compact-row" style="align-items:center; gap:4px;">
+                        <select id="p3Mode" style="flex:1.3; margin:0;" title="Весь кадр полем пирамид или только пирамида, выбранная в «🔍 Крупно» (единица ◆)">
+                            <option value="all" selected>весь кадр пирамидами</option>
+                            <option value="sel">выбранная пирамида</option>
+                        </select>
+                        <select id="p3Grid" style="flex:1; margin:0;" title="Пирамиды с вершинами в узлах одной чётности ложатся встык. А — вершины в строках 0, S, 2S… (вершина текста — вершина пирамиды), Б — сдвиг на полшага">
+                            <option value="a" selected>решётка А</option>
+                            <option value="b">решётка Б</option>
+                        </select>
+                    </div>
+                    <canvas id="p3Canvas" width="400" height="340" title="Тащите мышью — поворот, колесо — ближе / дальше"></canvas>
+                    <div class="compact-row" style="align-items:center; gap:6px; margin-top:3px;">
+                        <label style="margin:0; flex:none; font-size:10px; color:#8aa;">высота</label>
+                        <input type="range" id="p3Height" min="0.2" max="2.5" step="0.1" value="1" style="flex:1; margin:0;" title="Высота вершин: 1 — скаты под 45°">
+                        <label class="checkbox-row" style="margin:0; flex:none;"><input type="checkbox" id="p3Spin" checked><span>вращать</span></label>
+                        <button id="p3Top" type="button" class="rs-btn" style="flex:none; padding:2px 6px;" title="Вид строго сверху — как на холсте">⊙ сверху</button>
+                    </div>
+                    <div id="p3Info" class="rs-lab"></div>
+                </div>
+                </div>
                 <!-- Треугольник v0.006: 📖 как считается — описание с примером (по умолчанию спрятано, вкладка сверху) -->
                 <div class="tab-sec" data-tab="howto" data-title="📖 Как считается" data-float="0.2,0.05" data-off-default="1">
                 <div class="howto">
@@ -870,6 +896,10 @@ VERSION: v0.011 (копия Zerkalius Code 35.74 целиком — отправ
                     диагонали сетки, четыре грани: сверху ▼ часов, снизу ▲ часов, слева и справа — половинки ромбов остриём к вершине.
                     Соседние пирамиды перекрываются (половинка ромба — грань двух пирамид). Грани сравниваются, как при обходе кругом: каждая
                     повёрнута к верхней стороне; сводка считает пирамиды с четырьмя одинаковыми гранями и с двумя парами.</p>
+                    <p><b>🗻 3D</b>: пирамиды с вершинами в узлах одной чётности (решётка А — вершины в строках 0, S, 2S…, Б — со сдвигом
+                    на полшага) ложатся основаниями встык, и кадр становится полем пирамид. Проекция каждой грани на землю — ровно тот кусок
+                    текста, что виден сверху, поэтому «⊙ сверху» даёт тот же рисунок, что на холсте. Можно смотреть и одну пирамиду,
+                    выбранную в «🔍 Крупно».</p>
                     <p><b>⊕ Отражение по горизонтали</b> (в «🔍 Крупно» и в сводке): нижняя половина ромба ▼ переворачивается через горизонтальную
                     диагональ и ложится на верхнюю ▲ (у часов — нижний ▲ на верхний ▼), обе складываются правилом волны: одинаковые — пробел,
                     символ и пробел — символ, разные — верхний. Пустой XOR значит, что фигура симметрична сверху вниз.</p>
@@ -4922,6 +4952,130 @@ VERSION: v0.011 (копия Zerkalius Code 35.74 целиком — отправ
             }
         };
 
+        /* Треугольник v0.012: 🗻 3D ПИРАМИДЫ (пользователь: «это пирамида», вершина — центр часов; «да» на объёмный вид).
+           Пирамиды с вершинами в узлах одной чётности (А — узлы в строках 0, 2h, 4h…, Б — сдвиг на полшага: h, 3h…) ложатся
+           основаниями встык, без перекрытия, и кадр становится полем пирамид (как ячейки коробки для яиц); другая чётность — то
+           же поле со сдвигом. Грань — плоский треугольник, её вертикальная проекция — ровно тот кусок текста, что виден сверху,
+           поэтому узор натягивается на грань точным аффинным отображением (drawImage под setTransform, с обрезкой по
+           треугольнику). Невидимые грани отбрасываются, остальные рисуются от дальних к ближним, освещение — по нормали.
+           Библиотек нет, как в «Октаэдре». Текстура — кадр 1 клетка = 1 пиксель, обновляется не чаще 5 раз в секунду. */
+        const PY3D = {
+            yaw: -0.55, el: 0.72, zoom: 1, drag: null, dirty: true, _t: 0, _texAt: 0, _texKey: '', tex: null, cv: null,
+            open: function() { return RHOMBS.open('py3d'); },
+            buildTex: function() {
+                const L = MODULE_STATE.originalLines, H = L.length, W = L.reduce((m, l) => Math.max(m, l.text.length), 0);
+                if (!H || !W) return false;
+                if (!this.tex) this.tex = document.createElement('canvas');
+                if (this.tex.width !== W || this.tex.height !== H) { this.tex.width = W; this.tex.height = H; }
+                const g = this.tex.getContext('2d'), img = g.createImageData(W, H), d = img.data;
+                const z = bitRgb('zeroColorPicker', '#3c82ff'), o = bitRgb('oneColorPicker', '#d7e1eb');
+                for (let r = 0; r < H; r++) {
+                    const t = L[r].text;
+                    for (let k = 0, p = r * W * 4; k < W; k++, p += 4) {
+                        const ch = t.charCodeAt(k), col = (ch !== ch || ch === 32) ? null : (ch === 48 ? z : o);
+                        if (col) { d[p] = col[0]; d[p + 1] = col[1]; d[p + 2] = col[2]; } else { d[p] = 20; d[p + 1] = 22; d[p + 2] = 30; }
+                        d[p + 3] = 255;
+                    }
+                }
+                g.putImageData(img, 0, 0);
+                return true;
+            },
+            render: function() {
+                const cv = this.cv, g = cv.getContext('2d'), Wc = cv.width, Hc = cv.height;
+                g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#07080b'; g.fillRect(0, 0, Wc, Hc);
+                const L = MODULE_STATE.originalLines, H = L.length, info = document.getElementById('p3Info');
+                const c0 = H ? RHOMBS.apex(L[0].text) : null;
+                if (H < 2 || c0 === null || !this.tex) { if (info) info.textContent = 'Нет текста'; return; }
+                const mode = document.getElementById('p3Mode')?.value || 'all', kz = parseFloat(document.getElementById('p3Height')?.value || '1');
+                const sel = RHOMBS.sel && RHOMBS.sel.kind === 'py' ? RHOMBS.sel : null;
+                let h, nodes = [], pr, pc, R;
+                if (mode === 'sel') {
+                    if (!sel) { g.fillStyle = '#8aa'; g.font = '13px Consolas, monospace'; g.fillText('Выберите пирамиду: ◆ в «Единице разбора» и Alt+щелчок', 14, 24); if (info) info.textContent = ''; return; }
+                    h = sel.S / 2; nodes.push([sel.r, sel.c]); pr = sel.r; pc = sel.c; R = h * 1.7;
+                } else {
+                    h = RHOMBS.size() / 2;
+                    const B = (document.getElementById('p3Grid')?.value || 'a') === 'b' ? 1 : 0;
+                    for (let n = B; (n - 1) * h <= H - 1; n += 2)
+                        for (let m = -(n + 2); m <= n + 2; m++) if (!((m - n) & 1)) nodes.push([n * h, c0 + m * h]);
+                    pr = (H - 1) / 2; pc = c0; R = H * 0.95;
+                }
+                const sc = Math.min(Wc, Hc) / (2 * R) * this.zoom, cy = Math.cos(this.yaw), sy = Math.sin(this.yaw), ce = Math.cos(this.el), se = Math.sin(this.el);
+                const P = (row, col, z) => {
+                    const x = col - pc, y = row - pr, xr = x * cy - y * sy, yr = x * sy + y * cy;
+                    return [Wc / 2 + xr * sc, Hc / 2 + (yr * se - z * ce) * sc, yr * ce + z * se];
+                };
+                const Lx = -0.45, Ly = -0.6, Lz = 0.66;   // свет — с северо-запада сверху
+                const faces = [];
+                const az = h * kz;
+                for (const [r0, cc] of nodes) {
+                    const V = [[r0 - h, cc - h], [r0 - h, cc + h], [r0 + h, cc + h], [r0 + h, cc - h]];
+                    for (let f = 0; f < 4; f++) {
+                        const a = V[f], b = V[(f + 1) % 4];
+                        // нормаль грани наружу: ребро основания a→b, вершина (r0, cc, az); наружу — от центра основания
+                        const mr = (a[0] + b[0]) / 2 - r0, mc = (a[1] + b[1]) / 2 - cc, len = Math.hypot(mr, mc) || 1;
+                        let nx = mc / len * az, ny = mr / len * az, nz = h;   // (для наклона ребро—вершина: горизонталь · az, вертикаль · h)
+                        const nl = Math.hypot(nx, ny, nz); nx /= nl; ny /= nl; nz /= nl;
+                        const nyr = nx * sy + ny * cy;
+                        if (nyr * ce + nz * se <= 0.001) continue;   // от нас — не видна
+                        const pa = P(a[0], a[1], 0), pb = P(b[0], b[1], 0), pt = P(r0, cc, az);
+                        const light = 0.42 + 0.58 * Math.max(0, nx * Lx + ny * Ly + nz * Lz);
+                        faces.push({ a: a, b: b, t: [r0, cc], pa: pa, pb: pb, pt: pt, depth: (pa[2] + pb[2] + pt[2]) / 3, light: light, sel: sel && sel.r === r0 && sel.c === cc });
+                    }
+                }
+                faces.sort((x, y) => x.depth - y.depth);
+                const TW = this.tex.width, TH = this.tex.height;
+                for (const F of faces) {
+                    g.save();
+                    g.beginPath(); g.moveTo(F.pa[0], F.pa[1]); g.lineTo(F.pb[0], F.pb[1]); g.lineTo(F.pt[0], F.pt[1]); g.closePath();
+                    g.fillStyle = '#14161e'; g.fill(); g.clip();
+                    // текстура: (u, v) = (столбец + ½, строка + ½) → экран
+                    const u0 = F.a[1] + 0.5, v0 = F.a[0] + 0.5, u1 = F.b[1] + 0.5, v1 = F.b[0] + 0.5, u2 = F.t[1] + 0.5, v2 = F.t[0] + 0.5;
+                    const x0 = F.pa[0], y0 = F.pa[1], x1 = F.pb[0], y1 = F.pb[1], x2 = F.pt[0], y2 = F.pt[1];
+                    const den = (u1 - u0) * (v2 - v0) - (u2 - u0) * (v1 - v0);
+                    if (Math.abs(den) > 1e-9) {
+                        const A = ((x1 - x0) * (v2 - v0) - (x2 - x0) * (v1 - v0)) / den, C = ((x2 - x0) * (u1 - u0) - (x1 - x0) * (u2 - u0)) / den;
+                        const Bq = ((y1 - y0) * (v2 - v0) - (y2 - y0) * (v1 - v0)) / den, D = ((y2 - y0) * (u1 - u0) - (y1 - y0) * (u2 - u0)) / den;
+                        const sx = Math.max(0, Math.floor(Math.min(u0, u1, u2)) - 1), sy2 = Math.max(0, Math.floor(Math.min(v0, v1, v2)) - 1);
+                        const ex = Math.min(TW, Math.ceil(Math.max(u0, u1, u2)) + 1), ey = Math.min(TH, Math.ceil(Math.max(v0, v1, v2)) + 1);
+                        if (ex > sx && ey > sy2) {
+                            g.setTransform(A, Bq, C, D, x0 - A * u0 - C * v0, y0 - Bq * u0 - D * v0);
+                            g.imageSmoothingEnabled = false;
+                            g.drawImage(this.tex, sx, sy2, ex - sx, ey - sy2, sx, sy2, ex - sx, ey - sy2);
+                            g.setTransform(1, 0, 0, 1, 0, 0);
+                        }
+                    }
+                    g.fillStyle = 'rgba(0,0,0,' + (1 - F.light).toFixed(3) + ')'; g.fill();
+                    g.restore();
+                    if (F.sel && mode === 'all') { g.strokeStyle = '#ffffff'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(F.pa[0], F.pa[1]); g.lineTo(F.pb[0], F.pb[1]); g.lineTo(F.pt[0], F.pt[1]); g.closePath(); g.stroke(); }
+                }
+                if (info) info.textContent = (mode === 'sel' ? 'пирамида ' + (sel.S) + ' · вершина: строка ' + sel.r + ', сдвиг ' + (sel.c - c0) : 'пирамид ' + nodes.length + ' (решётка ' + ((document.getElementById('p3Grid')?.value || 'a') === 'b' ? 'Б' : 'А') + ', ромб ' + (2 * h) + ')') +
+                    ' · граней видно ' + faces.length + ' · проход ' + (MODULE_STATE.animPasses || 0) + ' · тащите — поворот, колесо — масштаб';
+            },
+            init: function() {
+                const cv = document.getElementById('p3Canvas'); if (!cv) return;
+                this.cv = cv;
+                cv.addEventListener('pointerdown', e => { this.drag = { x: e.clientX, y: e.clientY, yaw: this.yaw, el: this.el }; cv.setPointerCapture(e.pointerId); e.preventDefault(); });
+                cv.addEventListener('pointermove', e => { const d = this.drag; if (!d) return; this.yaw = d.yaw + (e.clientX - d.x) * 0.01; this.el = Math.max(0.05, Math.min(Math.PI / 2, d.el + (e.clientY - d.y) * 0.008)); this.dirty = true; });
+                const up = () => { this.drag = null; };
+                cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+                cv.addEventListener('wheel', e => { e.preventDefault(); this.zoom = Math.max(0.3, Math.min(12, this.zoom * (e.deltaY < 0 ? 1.12 : 1 / 1.12))); this.dirty = true; }, { passive: false });
+                ['p3Mode', 'p3Grid', 'p3Height', 'p3Spin'].forEach(id => { const el = document.getElementById(id); if (el) { el.addEventListener('input', () => { this.dirty = true; }); el.addEventListener('change', () => { this.dirty = true; }); } });
+                document.getElementById('p3Top')?.addEventListener('click', () => { this.yaw = 0; this.el = Math.PI / 2; this.zoom = 1; this.dirty = true; });
+                const loop = ts => {
+                    requestAnimationFrame(loop);
+                    if (!this.open()) return;
+                    if (document.getElementById('p3Spin')?.checked && !this.drag) { this.yaw += 0.005; this.dirty = true; }
+                    const key = MODULE_DATA.linesVer + ':' + (MODULE_STATE.animPasses || 0) + ':' + (MODULE_STATE.animatrixRow || 0) + ':' + MODULE_STATE.originalLines.length +
+                        ':' + (document.getElementById('zeroColorPicker')?.value) + (document.getElementById('oneColorPicker')?.value) + ':' + (RHOMBS.sel ? RHOMBS.sel.r + ',' + RHOMBS.sel.c : '') + ':' + RHOMBS.size();
+                    if (key !== this._texKey && ts - this._texAt > 200) { this._texKey = key; this._texAt = ts; this.buildTex(); this.dirty = true; }
+                    if (!this.dirty || ts - this._t < 40) return;
+                    this._t = ts; this.dirty = false;
+                    this.render();
+                };
+                requestAnimationFrame(loop);
+            }
+        };
+
         const HELP = {
             el: null,
             open: function() {
@@ -5046,6 +5200,7 @@ VERSION: v0.011 (копия Zerkalius Code 35.74 целиком — отправ
             if (UI.canvas) UI.canvas.addEventListener('wheel', refit, { passive: true });
             EVENTS.init(); 
             RHOMBS.init();   // v0.006
+            PY3D.init();   // v0.012: 🗻 3D
             // v0.007: ⤒ закреп
             const pinB = document.getElementById('pinTopBtn');
             const pinUi = () => { if (pinB) pinB.classList.toggle('active-yellow', !!MODULE_STATE.pinTop); };
