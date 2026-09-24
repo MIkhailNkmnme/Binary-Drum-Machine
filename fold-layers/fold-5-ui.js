@@ -2642,7 +2642,15 @@ function updateSplitPositions(){
     const rowEl = bitsEl.closest(".ln");
     const rowRX = rowEl ? rowEl.getBoundingClientRect().right - cr.left : Infinity;
     const bitsRX = bitsEl.getBoundingClientRect().right - cr.left;
-    const wantW2 = Math.max(40, Math.min(edgeRX, rowRX) - bitsRX);
+    /* ═══ ЛЕВЫЙ КРАЙ П2 РОВНЫЙ (испр. v1.608) ═══
+       Баг-репорт: «поправь левую границу П2 — она не доходит до конца, по цвету фона видно».
+       У .ln .pat2 overflow:visible (ради подсветок за краем), а с ним min-width:auto — это ширина
+       содержимого: ячейка с длинным паттерном раздувалась шире --pat-w2 и вылезала ЛЕВЕЕ границы,
+       которая вместе с заливкой поля считается по нулевой строке (пустой, узкой). Край П2 выходил
+       рваным — от строки к строке разный. До v1.605 это заслоняла ползущая ширина П2, пока она не
+       перерастала паттерны. Теперь ширина П2 не меньше той, что нужна самому длинному паттерну
+       (patW2Need, формула fitPatW2), а в CSS ячейке запрещено раздуваться (min-width:0). */
+    const wantW2 = Math.max(40, patW2Need(), Math.min(edgeRX, rowRX) - bitsRX);
     document.documentElement.style.setProperty("--pat-w2", Math.round(wantW2) + "px");
     // Координата в системе .chain ручке больше не ставится (v1.397): она position:fixed и стоит
     // по правому краю окна, см. присваивание right выше.
@@ -3404,6 +3412,18 @@ function fitPatW(){
   if (patWManual) { patWNumReserved = false; patWNumReservedPx = 0; return; }
   patWNumReserved = false;   // автоподбор считает номер сам (numW выше) — прибавке взяться неоткуда
   document.documentElement.style.setProperty("--pat-w", w + "px");
+}
+// v1.608: ширина, которой хватает самому длинному паттерну П2 (0 — паттернов нет). Отдельно от fitPatW2,
+// потому что нужна и как нижняя граница в updateSplitPositions — см. «ЛЕВЫЙ КРАЙ П2 РОВНЫЙ».
+function patW2Need(){
+  let maxLen = 0;
+  for (const p of (st.pats || [])) if (p && p.text && p.text.length > maxLen) maxLen = p.text.length;
+  if (!maxLen) return 0;
+  const step = realColStepPx() || 8;
+  const numW = (st.patNumR === false) ? 0
+    : (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--num-slot")) || 0);
+  const padLeftPx = Math.round(step / 2) + 4;
+  return Math.max(40, Math.min(1200, Math.round(maxLen * step) + 36 + padLeftPx + numW));
 }
 function fitPatW2(){
   if (patW2Manual) return;

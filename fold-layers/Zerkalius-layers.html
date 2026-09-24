@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Layers — v1.607</title>
+<title>Zerkalius Layers — v1.608</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -4759,6 +4759,10 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
   .ln .pat{ overflow:visible !important; min-width:0 !important;
             clip-path: inset(-1em 0 -1em calc(-1 * var(--pat-spill, 0px))); }
   .ln .pat2{ overflow:visible !important; }
+  /* v1.608: с overflow:visible у флекс-элемента min-width:auto = ширина содержимого, и ячейка с длинным
+     паттерном раздувалась шире колонки, вылезая левее границы П2 (рваный край). Ширину колонки под
+     самый длинный паттерн держит updateSplitPositions (patW2Need), ячейке раздуваться незачем. */
+  .ln .pat2{ min-width:0; }
   .ln .pat, .ln .pat2, .ln .bits{ z-index:auto !important; position:relative;
                                   background:transparent !important; }
   .ln .pat::before, .ln .pat2::before, .ln .bits::before{
@@ -5286,7 +5290,7 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
   <!-- Заголовок стоит вплотную слева от вкладок (v1.046), вся связка центрируется полосой — см. #menuBarTitle в CSS. --><div id="menuBarTitle">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.607</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.608</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -6886,11 +6890,11 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
      (видно новый номер версии в заголовке), а fold-*.js берёт из кеша — то есть новый код
      просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
      версией в <title>/<h3>, теми же тремя цифрами. -->
-<script src="fold-1-core.js?v=1607"></script>
-<script src="fold-2-render.js?v=1607"></script>
-<script src="fold-3-ops.js?v=1607"></script>
-<script src="fold-4-tools.js?v=1607"></script>
-<script src="fold-5-ui.js?v=1607"></script>
+<script src="fold-1-core.js?v=1608"></script>
+<script src="fold-2-render.js?v=1608"></script>
+<script src="fold-3-ops.js?v=1608"></script>
+<script src="fold-4-tools.js?v=1608"></script>
+<script src="fold-5-ui.js?v=1608"></script>
 <div id="fieldInfo"></div>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;
