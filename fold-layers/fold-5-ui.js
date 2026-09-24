@@ -307,6 +307,21 @@ function applyRowNumMode(){
 /* Маятник (rowNumDir, v1.319) удалён в v1.417 вместе с третьим положением: между двумя режимами
    разворачиваться негде, и «туда-сюда» это просто переключение. */
 function cycleRowNumMode(){
+  /* ═══ НОМЕРА СПРЯТАНЫ ОКНОМ «ℹ Поле» — ПЕРВЫЙ КЛИК ИХ ВОЗВРАЩАЕТ (v1.571) ═══
+     Баг-репорт: «нет номеров» — кнопка «№» в меню 2 (v1.570) переключала 10/01, а колонки не было.
+     Её прятало окно «ℹ Поле»: пока оно включено, номера убраны из полей в любом режиме (см.
+     applyFieldInfo). Кнопка меняла систему счисления невидимых номеров — на экране не происходило
+     ничего, кроме сообщения.
+     Теперь нажатие на «№» при спрятанных номерах сперва возвращает их: окно «ℹ Поле» гасится тем же
+     путём, что и его собственной кнопкой, а система счисления остаётся прежней — человек видит ровно
+     то, что было выбрано. Дальше кнопка работает как всегда. */
+  if (fieldInfoOn) {
+    fieldInfoOn = false;
+    applyFieldInfo();
+    render(); render(); saveCache();   // два прохода — см. разбор v1.420 ниже
+    say("Номера строк возвращены в поле (окно «ℹ Поле» выключено). " + ROW_NUM_NOTE[st.rowNumMode || "dec"]);
+    return;
+  }
   const i = ROW_NUM_ORDER.indexOf(st.rowNumMode || "dec");
   st.rowNumMode = ROW_NUM_ORDER[(i < 0 ? 0 : i + 1) % ROW_NUM_ORDER.length];
   applyRowNumMode();
@@ -1975,10 +1990,26 @@ function refreshPinSlotIcons(){
    левого края. Место внутри поля ей не нужно и никогда не было нужно — в v1.288 её записали сюда
    заодно с «П1», которая тогда действительно стояла внутри.
    Остаётся полоса выравниваний: она и правда стоит над полем и ужимать поле уже её ширины нельзя. */
+/* ═══ ВСЁ В НУЛЕВОЙ СТРОКЕ — ПО ЕЁ ЦЕНТРУ, КАК МЕНЮ 2 (v1.562) ═══
+   Баг-репорт: «№ — выровняй по высоте кнопку» и «эти три отступи, чтобы на биты не налезали».
+   С v1.526 меню 2 центруется по нулевой строке (positionAlignGrpTop в fold-3-ops.js): оно выше
+   строки, и излишек делится поровну вверх и вниз. Планки П1/П2, планка «№» над номерами цепочки
+   и плавающие «№» у границ остались на прежней формуле «верх = черта горизонта», то есть на верх
+   нулевой строки. Они на 6px ниже меню, весь излишек уходит у них ВНИЗ — на первую строку, и
+   кнопки садятся прямо на её биты.
+   Одна формула на всех: lineTop — черта (верх нулевой строки), h — рост самого элемента.
+   Элемент ниже строки встаёт ровно так же посередине. */
+function rowZeroCenterTop(lineTop, h){
+  const rowH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--row-h")) || 0;
+  return lineTop + (rowH - (h || 0)) / 2;
+}
 function minBitsWidthPx(){
   const g = document.getElementById("alignGrp");
   if (!g || !g.offsetWidth) return 40;
-  return Math.round(g.offsetWidth + 24);
+  // v1.562: полоса бывает растянута на всё поле (m2-wide) — упор берём по её СОДЕРЖИМОМУ, а не по
+  // коробке, иначе поле нельзя было бы ужать уже его же собственной ширины.
+  const nat = parseFloat(g.dataset.natW) || g.offsetWidth;
+  return Math.round(nat + 24);
 }
 /* ═══ ВЕРХНИЙ УПОР ШИРИНЫ ПОЛЯ ЦЕПОЧКИ (v1.368) ═══
    Запрос пользователя: «ширину Ц не позволять делать шире, чем самая широкая строка» — и не менее
@@ -2050,7 +2081,8 @@ function syncNumSlot(){
   /* Кнопка «№» с v1.419 скрыта, но ширину ей по-прежнему ставим: правило display:none снимается
      одной строкой, и вернувшаяся кнопка должна сразу встать в свой просвет, а не в старое число. */
   const numBtnSlot = document.getElementById("bAxisRowNum");
-  if (numBtnSlot) {
+  // v1.570: кнопка переехала в меню 2 — там ширина своя, под колонку её не подгоняем.
+  if (numBtnSlot && numBtnSlot.parentElement && numBtnSlot.parentElement.id === "axisStrip") {
     numBtnSlot.style.width = wantSpace.toFixed(2) + "px";
     numBtnSlot.style.minWidth = wantSpace.toFixed(2) + "px";
   }
@@ -2321,7 +2353,7 @@ function updateSplitPositions(){
     if (!edgeEl) { strip.classList.remove("act"); return; }
     strip.classList.add("act");
     const edge = edgeEl.getBoundingClientRect().right - cr.left;
-    strip.style.top = (alignBarTop !== null ? alignBarTop
+    strip.style.top = (alignBarTop !== null ? rowZeroCenterTop(alignBarTop, strip.offsetHeight)   /* v1.562: по центру строки, как меню 2 */
                        : (rowsTopForStrips - (strip.offsetHeight || 22) - 3)) + "px";
     /* ОБЕ ПЛАНКИ — ОТ КРАЯ СВОЕЙ КОЛОНКИ, ВПРАВО (v1.272, запрос пользователя «поставь так же, как
        П2»). «П2» всегда так и стояла: начинается у границы поля цепочки и идёт вправо, вглубь
@@ -2611,13 +2643,44 @@ function updateSplitPositions(){
       if (!b || b.parentElement !== chainEl) return;
       if (hidden) { b.style.display = "none"; return; }
       b.style.display = "";
-      b.style.top = topNum + "px";
+      // v1.562: ростом в планку (см. .num-btn-float) и по центру нулевой строки, как меню 2.
+      b.style.top = (alignBarTop !== null ? rowZeroCenterTop(alignBarTop, b.offsetHeight) : topNum) + "px";
       b.style.left = Math.round(leftPx) + "px";
     };
-    putNumBtn("bPatNumL", patLHidden || !patEl, patLineX + halfSplitNum);
+    /* ═══ ПРИ ПОКАЗАННЫХ НОМЕРАХ — ПРАВЕЕ ИХ КОЛОНКИ (v1.577) ═══
+       Запрос пользователя: «убери вправо от столба с номерами, когда они есть, кнопки эти» — «№» П1
+       и блок её цветов с выравниванием (v1.567) садились сразу за линию П1|Ц, то есть ровно над
+       колонкой номеров строк, и накрывали номера нулевой и первых строк.
+       Колонка видна — «№» встаёт за её правый край (плюс зазор); блок едет следом сам, он считается
+       от «№». Колонки нет (номера скрыты окном «ℹ Поле» или её ширина нулевая) — место прежнее, у
+       линии. Замер по живой ячейке .num-l2 любой строки: колонка у всех строк одной ширины. */
+    let numLeftL = patLineX + halfSplitNum;
+    if (!document.body.classList.contains("hide-rownums")) {
+      const numCell = document.querySelector("#rows .ln .num-l2");
+      const ncR = numCell ? numCell.getBoundingClientRect() : null;
+      if (ncR && ncR.width > 0) numLeftL = Math.max(numLeftL, ncR.right - cr.left + 3);
+    }
+    putNumBtn("bPatNumL", patLHidden || !patEl, numLeftL);
     const bR = document.getElementById("bPatNumR");
     const wR = bR ? (bR.offsetWidth || 0) : 0;
     putNumBtn("bPatNumR", patRHidden || !bitsEl, bitsLineX - halfSplitNum - wR);
+    /* v1.567: блоки цветов и выравнивания колонок — вплотную к своей «№», в зазоре планки. У П1
+       справа от неё, у П2 слева. «№» спрятана (колонка скрыта) — прячем и блок. */
+    const GAP_CTRL = 3;
+    const placeCtrl = (cid, numId, hidden, side) => {
+      const box = document.getElementById(cid);
+      const num = document.getElementById(numId);
+      if (!box) return;
+      if (hidden || !num || num.style.display === "none") { box.classList.remove("act"); return; }
+      box.classList.add("act");
+      const nl = parseFloat(num.style.left) || 0;
+      const left = side === "L" ? nl + num.offsetWidth + GAP_CTRL : nl - GAP_CTRL - box.offsetWidth;
+      box.style.left = Math.round(left) + "px";
+      box.style.top = (alignBarTop !== null ? rowZeroCenterTop(alignBarTop, box.offsetHeight)
+                                            : (parseFloat(num.style.top) || 0)) + "px";
+    };
+    placeCtrl("patCtrlL", "bPatNumL", patLHidden || !patEl, "L");
+    placeCtrl("patCtrlR", "bPatNumR", patRHidden || !bitsEl, "R");
   }
   /* ═══ УСТУПАЕТ «П1», А НЕ КНОПКА «№» (v1.328) ═══
      Запрос пользователя: «кнопка не сдвигается никуда, двигаются влево П1, освобождая место».
@@ -2645,7 +2708,8 @@ function updateSplitPositions(){
     const numStripEl = document.getElementById("axisStrip");
     const numBtnEl = document.getElementById("bAxisRowNum");
     if (stripLEl && stripLEl.classList.contains("act") && bitsEl &&
-        numStripEl && numStripEl.classList.contains("act") && numBtnEl && numBtnEl.offsetWidth) {
+        numStripEl && numStripEl.classList.contains("act") && numBtnEl && numBtnEl.offsetWidth &&
+        numBtnEl.parentElement === numStripEl) {   // v1.570: в меню 2 кнопка планке «П1» не соседка
       /* ЛЕВЫЙ КРАЙ КНОПКИ = ЛЕВЫЙ КРАЙ ПОЛЯ (v1.329). До этой версии кнопка была прижата ПРАВЫМ
          краем к битам и росла влево, поэтому её левый край считался как «биты минус её ширина».
          Теперь она садится левым краем на край поля и растёт вправо — та же формула, что у заливки
@@ -3666,9 +3730,11 @@ function updateTopHorizon(){
     if (chainForHorizon) {
       const CTRL_SEL = "button, input, select, textarea, .align-pin-slot, .align-pin-slots," +
                        " .pat-strip-lab, .axis-col-box, .axis-strip, .pat-strip, .stairs-axis," +
-                       " .vsplit, .vsplit2, .vsplit3, #vsplitL0, .axis-split, .paste-bar, .hsplit-top";
-      chainForHorizon.addEventListener("mousedown", (e) => {
+                       " .vsplit, .vsplit2, .vsplit3, #vsplitL0, .axis-split, .paste-bar, .hsplit-top, #m2HzGrip";
+      const zeroRowGrab = (e) => {
         if (e.button !== 0) return;
+        if (e.zeroRowGrabbed) return;   // v1.580: вход двойной (.chain и меню 2) — взводим один раз
+        e.zeroRowGrabbed = true;
         if (e.target && e.target.closest && e.target.closest(CTRL_SEL)) return;
         const grpH = document.getElementById("alignGrp");
         if (!grpH || !grpH.offsetHeight) return;
@@ -3680,8 +3746,60 @@ function updateTopHorizon(){
           if (bR.height > 0) { top = Math.min(top, bR.top); bottom = Math.max(bottom, bR.bottom); }
         }
         if (e.clientY < top || e.clientY > bottom) return;
-        startHorizonDrag(e);
-      }, true);
+        /* ═══ ПРОТЯЖКА — ТОЛЬКО ПОСЛЕ ДВИЖЕНИЯ, ЩЕЛЧОК ОСТАЁТСЯ ВЫДЕЛЕНИЮ (v1.573) ═══
+           Баг-репорт: «всё так же не выделить 0». Этот хват (v1.441) запускал протяжку горизонта
+           прямо на нажатии: гасил событие, а на отпускании перерисовывал строки. Строка, на которой
+           нажали, пропадала из документа раньше, чем браузер выдаёт click, — и клик не приходил
+           вовсе. Пока нулевую выделять было нельзя (v1.406), это никому не мешало; с v1.569 можно, и
+           два жеста заспорили за одно нажатие.
+           Теперь на нажатии только взводим: протяжка начинается, когда мышь с зажатой кнопкой ушла
+           по вертикали на 4px. Тогда же гасим выделение протяжкой, которое строки начали на том же
+           нажатии (rowDragAnchor, fold-3-ops.js), — жест один, и это горизонт. Отпустили без
+           движения — это щелчок, он идёт дальше и выделяет нулевую. */
+        const y0 = e.clientY, x0 = e.clientX;
+        const armMove = (ev) => {
+          if (!(ev.buttons & 1)) { disarm(); return; }
+          if (Math.abs(ev.clientY - y0) < 4) return;
+          disarm();
+          if (typeof rowDragAnchor !== "undefined") rowDragAnchor = null;
+          startHorizonDrag({ button: 0, clientX: x0, clientY: y0,
+                             preventDefault(){}, stopPropagation(){} });
+        };
+        const disarm = () => {
+          window.removeEventListener("mousemove", armMove);
+          window.removeEventListener("mouseup", disarm);
+        };
+        window.addEventListener("mousemove", armMove);
+        window.addEventListener("mouseup", disarm);
+      };
+      chainForHorizon.addEventListener("mousedown", zeroRowGrab, true);
+      /* ═══ ХВАТ И В ПРОМЕЖУТКАХ МЕЖДУ КНОПКАМИ МЕНЮ 2 (v1.580) ═══
+         Баг-репорт: «захвата нет горизонта там между кнопками, не работает». Меню 2 скрипт
+         переносит из .chain в .main-layout (МАРКЕР 10.2b), и нажатие на него до .chain не доходит.
+         Пустое место раздвинутой полосы мышь пропускает насквозь (v1.566) и попадает в строку, а
+         промежутки между кнопками ловят сами группы (.align-half) — там хвата не было. Вешаем тот
+         же обработчик и на полосу. Кнопки, поля и слоты закреплённых значков он пропускает по тому
+         же списку исключений, так что их жесты прежние. */
+      const grpForHorizon = document.getElementById("alignGrp");
+      if (grpForHorizon) grpForHorizon.addEventListener("mousedown", zeroRowGrab, true);
+      /* v1.581: толстый хват черты в промежутке под осью (#m2HzGrip, см. m2HzGripEl). Жест тот же,
+         что у самой черты, — startHorizonDrag сразу на нажатии: в промежутке выделять нечего, взводить
+         по 4px (как zeroRowGrab) незачем. Двойной клик передаём черте — у неё своё правило (v1.428). */
+      const gripH = m2HzGripEl();
+      if (gripH) {
+        gripH.addEventListener("mousedown", (e) => {
+          if (e.button !== 0) return;
+          gripH.classList.add("drag");
+          const off = () => { gripH.classList.remove("drag"); window.removeEventListener("mouseup", off); };
+          window.addEventListener("mouseup", off);
+          startHorizonDrag(e);
+        });
+        gripH.addEventListener("dblclick", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          el.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }));
+        });
+      }
     }
     /* ═══ ДВОЙНОЙ КЛИК ВЕРНУЛСЯ, НО С ДРУГИМ ПРАВИЛОМ (v1.428) ═══
        Запрос пользователя: «пусть двойной клик по границе горизонта перемещает его в самый низ,
@@ -3946,6 +4064,42 @@ function hideAxisColBox(){}
       btnNum.classList.add("num-btn-float");
       chainForNum.appendChild(btnNum);
     });
+    /* ═══ ЦВЕТА И ВЫРАВНИВАНИЕ П1/П2 — В ПОЛЕ ЦЕПОЧКИ, ЗА «№» (v1.567) ═══
+       Запрос пользователя: «это перемести справа от № П1» (пара цветов и кнопка выравнивания) и
+       «и также для П2».
+       В планках у линий остаются одни подписи «П»/«Л». Тройка каждой колонки уезжает в поле
+       цепочки, к своей «№»: у П1 справа от неё, у П2 слева — зеркально, как и сами «№» (v1.443).
+       Порядок в блоке: кнопка выравнивания ближе к «№», цвета с краю — по правилу v1.321 «пикеры на
+       внешнем краю».
+       Блок заводится один раз: узлы переносятся вместе с обработчиками (пикеры связаны через
+       syncColTwins, кнопка — по id), тем же приёмом, что и «№» выше. Класс .pat-strip даёт вид
+       планки целиком: рост, фон, кнопки, пикеры. Место считает updateSplitPositions, сразу после «№». */
+    [["patCtrlL", ["bAlignPatL", "colPat1LAx", "colPat0LAx"]],
+     ["patCtrlR", ["colPat1RAx", "colPat0RAx", "bAlignPatR"]]].forEach(([cid, ids]) => {
+      const chainForCtrl = document.getElementById("chain");
+      if (!chainForCtrl || document.getElementById(cid)) return;
+      const box = document.createElement("div");
+      box.id = cid;
+      box.className = "pat-strip pat-ctrl";
+      ids.forEach(id => { const el = document.getElementById(id); if (el) box.appendChild(el); });
+      chainForCtrl.appendChild(box);
+    });
+    /* ═══ «№» НОМЕРОВ ЦЕПОЧКИ ВЕРНУЛАСЬ — В МЕНЮ 2 (v1.570) ═══
+       Вопрос пользователя: «куда-то подевалась кнопка номеров цепочек». Её убрали с экрана в
+       v1.419 («№ Ц вообще кнопку убери»); вернуть решили в меню 2, первой в левой группе, перед
+       цветами цепочки (выбор пользователя из двух мест). Над колонкой номеров ей теперь не место:
+       там стоят «№» П1 и блок её цветов (v1.567).
+       Переносим узел: обработчик (cycleRowNumMode) навешан по id и переезд переживает. Расчёты,
+       которые подгоняли кнопку под колонку и отодвигали от неё планку «П1», теперь срабатывают только
+       пока она в старой планке #axisStrip. */
+    {
+      const grpNum = document.getElementById("alignGrp");
+      const btnRowNum = document.getElementById("bAxisRowNum");
+      if (grpNum && btnRowNum && btnRowNum.parentElement !== grpNum) {
+        btnRowNum.style.width = ""; btnRowNum.style.minWidth = "";
+        grpNum.insertBefore(btnRowNum, grpNum.firstChild);
+      }
+    }
     /* ═══ ПЛАНКИ «П1»/«П2» СЮДА НЕ ПЕРЕЕЗЖАЮТ (v1.357 → отменено в v1.365) ═══
        Уточнение пользователя: «кнопки, которые были у П1 и П2, держи на своих полях, но на той же
        высоте, что и меню выравниваний».
@@ -4131,6 +4285,20 @@ function wrapXorColFixedPx(chainRect){
   const chPx = realColStepPx();
   if (!chPx) return null;
   return (bitsEl.getBoundingClientRect().left - chainRect.left) + col * chPx;
+}
+/* ХВАТ ЧЕРТЫ ГОРИЗОНТА В МЕНЮ 2 (v1.581) — один элемент на всё приложение, живёт внутри #alignGrp.
+   Заводится при первом обращении: его ставит updateAxisSplitPosition, а жест вешает блок протяжки
+   черты, и кто из них сработает раньше, зависит от порядка загрузки. */
+function m2HzGripEl(){
+  let g = document.getElementById("m2HzGrip");
+  if (g) return g;
+  const bar = document.getElementById("alignGrp");
+  if (!bar) return null;
+  g = document.createElement("div");
+  g.id = "m2HzGrip";
+  g.title = "Черта горизонта — тяни вверх-вниз (то же, что сама черта). Двойной клик — открыть или закрыть поле наложений";
+  bar.appendChild(g);
+  return g;
 }
 function updateAxisSplitPosition(maxLen){
   const axisSplitEl = document.getElementById("axisSplit");
@@ -4438,8 +4606,15 @@ function updateAxisSplitPosition(maxLen){
      окна или низ последней строки, что ниже. Над горизонтом ось идёт и через поле наложений.
      axisTopPx остаётся прежним и дальше уходит КОРОБКАМ у оси (лесенки, пикеры, замок): они
      центруются по своему отрезку у нулевой строки, и тянуть их на середину экрана не просили. */
-  const axisLineTopPx = Math.round(Math.max(axisMinTop, 0));
+  /* v1.579, запрос пользователя: «ось верт надо с 2 строки показывать вниз только и всё, и
+     пунктирной». Верх — кромка строки 2: черта горизонта (axisLineBottom) — верх нулевой строки,
+     дальше два шага строки. Над ней оси больше нет ни в поле наложений, ни в строках 0 и 1; ручка
+     начинается там же, где линия. Упор под меню 1 (axisMinTop) остаётся: при прокрутке ось не
+     уходит за верх окна. Пунктир — в стилях (.axis-split::before). */
+  const axisLineTopPx = Math.round(Math.max(axisMinTop, 0, axisLineBottom + axisLinePitch * 2));
   axisSplitEl.style.top = axisLineTopPx + "px";
+  // v1.580, «потоньше»: толщина линии оси — одна точка экрана при любом масштабе (см. .axis-split::before).
+  document.documentElement.style.setProperty("--px1", (1 / (window.devicePixelRatio || 1)).toFixed(4) + "px");
   /* ═══ НИЗ ОСИ — ПО СЕРЕДИНЕ ПЕРВОЙ СТРОКИ, ПОД ЕЁ БИТАМИ (v1.528) ═══
      Запрос пользователя: «сделай ось по середине первого бита первой строки, но под битами».
      Было три полных шага (−1, 0, 1) без двух пикселей — ось проходила через всю первую строку и
@@ -4853,7 +5028,7 @@ function updateAxisSplitPosition(maxLen){
       const hLineForStrip2 = document.getElementById("hsplitTop");
       const alignBarTop2 = (hLineForStrip2 && hLineForStrip2.classList.contains("act"))
         ? ((parseFloat(hLineForStrip2.style.top) || 0) + 0) : null;   /* v1.403: см. ту же правку у планок полей выше. */
-      strip.style.top = (alignBarTop2 !== null ? alignBarTop2
+      strip.style.top = (alignBarTop2 !== null ? rowZeroCenterTop(alignBarTop2, strip.offsetHeight)   /* v1.562: по центру строки, как меню 2 */
                          : (rowsTopPx - (strip.offsetHeight || 24) - 3)) + "px";
       /* Планки «⧉ Кнопки» здесь больше нет (v1.231): кнопка переехала в полосу выравниваний, к её
          правому краю, и позицию себе больше не считает — едет вместе с полосой. */
@@ -4952,16 +5127,151 @@ function updateAxisSplitPosition(maxLen){
        нормальной ширине поля он не срабатывает вовсе — минимальная ширина (minBitsWidthPx) заведена
        как раз с запасом под обе планки, — а на узком поле лучше сместить полосу вправо, чем закрыть
        ею кнопку номеров. */
-    const wantLeft = bitsBox
+    /* ═══ МЕНЮ 2 РАЗДВИНУТО ОТ ГРАНИЦЫ ДО ГРАНИЦЫ ПОЛЯ Ц (v1.562) ═══
+       Запрос пользователя: «раздвинь меню влево-вправо к границам».
+       Полоса больше не кучка кнопок посередине поля, а ряд во всю его ширину: левая группа (цвета,
+       замок, «⧉») уходит к левой границе, закреплённые значки — к правой, выравнивания остаются
+       между ними. Раскладку по краям делают auto-поля (класс m2-wide, см. стили), а здесь только
+       ширина и левый край.
+       Края поля — не голые границы: у левой в нулевой строке может стоять планка «№» над номерами
+       цепочки, у правой — плавающая «№» П2 (она внутри поля, v1.443). Упираемся в них, а не в линию:
+       полоса не должна их накрывать, та же забота, что numStripW выше, только с двух сторон.
+       ЕСТЕСТВЕННАЯ ШИРИНА. Сперва сбрасываем width и меряем полосу «как есть» — это ширина её
+       содержимого. Она нужна дважды: поле уже неё — растягивать нечего, работает прежнее
+       центрирование; и её же читает minBitsWidthPx (через data-nat-w) — иначе нижний упор поля
+       равнялся бы ширине растянутой полосы, то есть самому полю, и ужать его стало бы нельзя. */
+    alignGrpEl.style.width = "";
+    const natW = alignGrpEl.offsetWidth;
+    alignGrpEl.dataset.natW = String(natW);
+    let wantLeft = bitsBox
       ? Math.max((bitsBox.left - mainRect.left) + numStripW,
-                 (bitsBox.left - mainRect.left) + (bitsBox.width - alignGrpEl.offsetWidth) / 2)
+                 (bitsBox.left - mainRect.left) + (bitsBox.width - natW) / 2)
       : 2;
+    let wideW = 0;
+    if (bitsBox) {
+      const GAP_M2 = 4;
+      const outside = el => el && el.offsetParent && !alignGrpEl.contains(el);
+      const leftRes = ["axisStrip", "bPatNumL", "patCtrlL"].reduce((m, id) => {   /* v1.567: + блоки колонок */
+        const el = document.getElementById(id);
+        return outside(el) ? Math.max(m, el.getBoundingClientRect().right - bitsBox.left) : m;
+      }, 0);
+      const rightRes = ["bPatNumR", "patCtrlR"].reduce((m, id) => {
+        const el = document.getElementById(id);
+        return outside(el) ? Math.max(m, bitsBox.right - el.getBoundingClientRect().left) : m;
+      }, 0);
+      const l = bitsBox.left + Math.max(0, leftRes) + GAP_M2;
+      const r = bitsBox.right - Math.max(0, rightRes) - GAP_M2;
+      if (r - l > natW) { wantLeft = l - mainRect.left; wideW = r - l; }
+    }
+    alignGrpEl.classList.toggle("m2-wide", wideW > 0);
+    if (wideW > 0) alignGrpEl.style.width = Math.floor(wideW) + "px";
     alignGrpEl.style.left = Math.max(2, Math.round(wantLeft)) + "px";
+    /* ═══ ВЫРАВНИВАНИЯ СТОЯТ НА ОСИ: ОСЬ ИДЁТ МЕЖДУ КНОПКАМИ (v1.562) ═══
+       Запрос пользователя: «пусть ось будет всегда между кнопками, и там, где ось, расстояние —
+       как будто там прозрачная кнопка».
+       В выравниваниях между «↔» и «↘» оставлен промежуток шириной в кнопку (правило в стилях,
+       .align-half с «↘»). Здесь группа выравниваний сдвигается так, чтобы середина этого
+       промежутка пришлась на ось цепочки: ось проходит по пустому месту и ни одной кнопки не
+       режет. Оси нет — середина промежутка встаёт на центр поля Ц (правило v1.367 «в Ц по центру»).
+       КАК ДВИГАЕМ. В раздвинутой полосе (m2-wide) свободное место забирает auto-поле слева от
+       закреплённых значков, а левая группа с v1.568 прижата к выравниваниям. Связку «левая группа +
+       выравнивания» сдвигаем левым отступом первого элемента полосы — ровно так, чтобы промежуток сел
+       на ось; остаток забирает auto-поле. В узкой полосе auto-полей нет, и сдвигаем всю полосу (её
+       left), в пределах поля.
+       Упоры — по 6px до соседних групп: на ось, ушедшую к краю поля, выравнивания не наползут на
+       чужие кнопки, а встанут вплотную к ним, насколько пускает место. */
+    const pasteEl = document.getElementById("bPasteBars");
+    const pinLEl = document.getElementById("alignPinL");
+    /* v1.568: левая группа (цвета, замок, «⧉») прижата к выравниваниям. Сдвигаем теперь всю связку
+       левым отступом ПЕРВОГО элемента полосы; отступ «⧉» остаётся своими 6px из стилей. */
+    const firstEl = alignGrpEl.firstElementChild;
+    if (firstEl) firstEl.style.removeProperty("margin-left");
+    const holeL = alignGrpEl.querySelector(':scope > .align-half:has(> button[data-val="center"])');
+    const holeR = alignGrpEl.querySelector(':scope > .align-half:has(> button[data-val="stairs"])');
+    if (bitsBox && holeL && holeR && holeL.offsetWidth && holeR.offsetWidth) {
+      const axisOn = axisSplitEl.classList.contains("act");
+      const axR = axisSplitEl.getBoundingClientRect();
+      const axisX = axisOn ? (axR.left + axR.right) / 2 : (bitsBox.left + bitsBox.right) / 2;
+      const holeX = (holeL.getBoundingClientRect().right + holeR.getBoundingClientRect().left) / 2;
+      const d = axisX - holeX;                                // на сколько сдвинуть выравнивания
+      if (wideW > 0 && firstEl && pinLEl) {
+        /* Связка «левая группа + выравнивания» сейчас прижата к левому краю полосы (всё свободное
+           место забрало auto-поле у закреплённых значков). Двигаем её вправо на d левым отступом
+           первого элемента: не левее края полосы и не ближе 6px к закреплённым справа. Правый
+           край связки — самый правый видимый элемент левее закреплённых (порядок в разметке тут
+           не годится: #alignPinL стоит в ней сразу за «⧉», направо его уводит CSS order). */
+        const rightStart = pinLEl.getBoundingClientRect().left;
+        const packR = Math.max(...[...alignGrpEl.children]
+          .filter(k => k.offsetWidth && k.getBoundingClientRect().right <= rightStart + 0.5)
+          .map(k => k.getBoundingClientRect().right));
+        const gapIn = parseFloat(getComputedStyle(alignGrpEl).columnGap) || 0;
+        const room = Math.max(0, rightStart - 6 - gapIn - packR);
+        const ml = Math.min(Math.max(0, d), room);
+        if (ml > 0.5) firstEl.style.setProperty("margin-left", ml.toFixed(1) + "px", "important");
+      } else if (Math.abs(d) > 0.5) {
+        const minL = (bitsBox.left - mainRect.left) + numStripW;
+        const maxL = (bitsBox.right - mainRect.left) - natW;
+        const cur = parseFloat(alignGrpEl.style.left) || 0;
+        const nl = Math.min(Math.max(cur + d, minL), Math.max(minL, maxL));
+        alignGrpEl.style.left = Math.max(2, Math.round(nl)) + "px";
+      }
+    }
     // ВЫСОТА: полоса стоит не под верхним меню, а СРАЗУ НАД первой строкой цепочки (v0.839,
     // запрос пользователя). Сам расчёт — в positionAlignGrpTop() (fold-3): его же зовёт
     // layoutOverlayBoxes(), чтобы полоса ехала вместе со строками, пока тянут высоту
     // "Результата", а не догоняла их следующей перерисовкой.
     positionAlignGrpTop();
+    /* ═══ В НУЛЕВОЙ СТРОКЕ: ОСИ НЕТ, ГОРИЗОНТ ВИДЕН МЕЖДУ КНОПКАМИ (v1.578) ═══
+       Запрос пользователя: «тут, на 0 строке, убери ось и отобрази горизонт между кнопок».
+       Две величины для стилей, обе в пикселях от верха своих коробок:
+       --ax-cut-a/--ax-cut-b — где у линии оси начинается и кончается полоса меню 2; маска в стилях
+         гасит линию ровно на этом отрезке (выше и ниже ось та же, хвататься за неё можно как раньше);
+       --m2-hz-y — на какой высоте полосы идёт черта горизонта (#hsplitTop, верхняя кромка нулевой
+         строки); по ней полоса рисует свою линию под кнопками, видную только в промежутках.
+       Меряем после positionAlignGrpTop: полоса уже на месте. Полосы нет — снимаем обе, маска
+       тогда ничего не режет. */
+    const barR = alignGrpEl.offsetHeight ? alignGrpEl.getBoundingClientRect() : null;
+    const axR2 = axisSplitEl.getBoundingClientRect();
+    if (barR && axisSplitEl.classList.contains("act")) {
+      axisSplitEl.style.setProperty("--ax-cut-a", (barR.top - axR2.top).toFixed(1) + "px");
+      axisSplitEl.style.setProperty("--ax-cut-b", (barR.bottom - axR2.top).toFixed(1) + "px");
+    } else {
+      axisSplitEl.style.removeProperty("--ax-cut-a");
+      axisSplitEl.style.removeProperty("--ax-cut-b");
+    }
+    /* v1.579, баг-репорт «не видно»: полоса бывает НИЖЕ черты — её не пускает выше низ меню 1
+       (positionAlignGrpTop, v1.450), и черта идёт тогда над кнопками. Проверка «черта внутри полосы»
+       в этом случае снимала линию совсем, а саму черту на ширине полосы что-то перекрывает. Рисуем
+       всегда, где бы черта ни шла: отрицательный y — линия над полосой, но всё равно в её слое
+       (z-index 100), то есть поверх всего, что закрывало черту. Пунктир — как у самой черты, когда
+       раскладка сдвинута по вертикали (.on). */
+    const hzEl = document.getElementById("hsplitTop");
+    if (barR && hzEl && hzEl.classList.contains("act")) {
+      /* Черта — псевдоэлемент на 8px ниже верха зоны (v1.569), то есть на пиксель выше кромки строки. */
+      const lineY = hzEl.getBoundingClientRect().top + 8;
+      alignGrpEl.style.setProperty("--m2-hz-y", (lineY - barR.top).toFixed(1) + "px");
+      alignGrpEl.classList.toggle("hz-on", hzEl.classList.contains("on"));
+    } else {
+      alignGrpEl.style.removeProperty("--m2-hz-y");
+      alignGrpEl.classList.remove("hz-on");
+    }
+    /* v1.581: хват черты — во весь промежуток под осью (между группами «↔» и «↘»), серединой на
+       высоте черты. Зона 11px, середина — 5,5px от её верха. Черты нет или промежуток не найден —
+       ручку прячем. */
+    const grip = m2HzGripEl();
+    if (grip) {
+      const hzY = parseFloat(alignGrpEl.style.getPropertyValue("--m2-hz-y"));
+      if (barR && holeL && holeR && holeL.offsetWidth && holeR.offsetWidth && isFinite(hzY)) {
+        const gl = holeL.getBoundingClientRect().right - barR.left;
+        const gw = holeR.getBoundingClientRect().left - barR.left - gl;
+        grip.style.left = gl.toFixed(1) + "px";
+        grip.style.width = Math.max(0, gw).toFixed(1) + "px";
+        grip.style.top = (hzY - 5.5).toFixed(1) + "px";
+        grip.classList.toggle("act", gw > 2);
+      } else {
+        grip.classList.remove("act");
+      }
+    }
   }
 }
 /* ДВОЙНОЙ КЛИК ПО ОСИ ЦЕПОЧЕК (v0.903, запрос пользователя: "пусть ставит ось в середину между

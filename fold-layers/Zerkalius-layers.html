@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Layers — v1.561</title>
+<title>Zerkalius Layers — v1.581</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -468,11 +468,19 @@
     /* v1.436: своей заливки и тени у выпавшего этажа больше нет — фон ему даёт то же правило,
        что и всем кнопкам полосы (#alignGrp button ниже), а тень гасит общий запрет линий. */
     align-self:start; height:var(--align-h2-h,20px); visibility:hidden}
-  #alignGrp:hover .align-half > button[data-val="halfcenter"],
-  #alignGrp:hover .align-half > button[data-val="halfstairs"],
-  #alignGrp:hover .align-half > button[data-val="rhalfstairs"],
-  #alignGrp:hover .align-half > button[data-val="axis12"],
-  #alignGrp:hover .align-half > button[data-val="axisbit12"]{visibility:visible}
+  /* ═══ ½-ЭТАЖ ВЫПАДАЕТ ТОЛЬКО НАД САМИМИ ВЫРАВНИВАНИЯМИ (v1.565) ═══
+     Запрос пользователя: «второй ряд должен показываться только на кнопках выравнивания, когда
+     навести». Условием был курсор над ВСЕЙ полосой. С v1.563 она растянута на всё поле Ц, и этаж
+     выпадал от любого касания ряда, хоть у «⧉», хоть у закреплённых значков. Теперь условие —
+     курсор (или фокус) над одной из групп выравниваний (.align-half). Выпавшие кнопки лежат внутри
+     тех же групп, поэтому, спускаясь к ним, курсор этажа не теряет.
+     :where() держит специфичность прежней. Так скрытие после выбора (.half-picked ниже по файлу)
+     по-прежнему побеждает показ. */
+  #alignGrp:where(:has(> .align-half:hover)) .align-half > button[data-val="halfcenter"],
+  #alignGrp:where(:has(> .align-half:hover)) .align-half > button[data-val="halfstairs"],
+  #alignGrp:where(:has(> .align-half:hover)) .align-half > button[data-val="rhalfstairs"],
+  #alignGrp:where(:has(> .align-half:hover)) .align-half > button[data-val="axis12"],
+  #alignGrp:where(:has(> .align-half:hover)) .align-half > button[data-val="axisbit12"]{visibility:visible}
   /* СЧЁТЧИКИ ЛЕСЕНОК — ТУДА ЖЕ, В ВЫПАДАЮЩИЙ РЯД (v1.242, запрос пользователя «2 и 3 им кнопкой
      выпадающие — 1 и 2 сделать»). Два поля у каждой лесенки (по сколько строк на ступень и на
      сколько колонок она сдвигает) — настройка редкая, а места в полосе занимали как две кнопки.
@@ -512,11 +520,11 @@
      У левой группы отсчитываем от ПРАВОГО края: её лесенка — последняя колонка, и столбик встаёт
      ровно под ней. Группу узнаём по её же кнопке (:has), чтобы не заводить лишний класс в
      разметке. */
-  #alignGrp:focus-within .align-half > button[data-val="halfcenter"],
-  #alignGrp:focus-within .align-half > button[data-val="halfstairs"],
-  #alignGrp:focus-within .align-half > button[data-val="rhalfstairs"],
-  #alignGrp:focus-within .align-half > button[data-val="axis12"],
-  #alignGrp:focus-within .align-half > button[data-val="axisbit12"]{visibility:visible}
+  #alignGrp:where(:has(> .align-half:focus-within)) .align-half > button[data-val="halfcenter"],
+  #alignGrp:where(:has(> .align-half:focus-within)) .align-half > button[data-val="halfstairs"],
+  #alignGrp:where(:has(> .align-half:focus-within)) .align-half > button[data-val="rhalfstairs"],
+  #alignGrp:where(:has(> .align-half:focus-within)) .align-half > button[data-val="axis12"],
+  #alignGrp:where(:has(> .align-half:focus-within)) .align-half > button[data-val="axisbit12"]{visibility:visible}
   /* ═══ ВЫБРАЛ ½ — РЯД ЗАКРЫЛСЯ СРАЗУ (v1.286) ═══
      Запрос пользователя: «после нажатия на 1.2 выравнивания скрывай сразу кнопки 1.2».
      Ряд держат два правила выше — :hover и :focus-within. После клика по ½-кнопке верны ОБА:
@@ -842,6 +850,97 @@
   #alignGrp .align-half + .align-half{ margin-left:0; }
   #alignGrp .align-pin-slots{ margin-left:6px; }
   #alignGrp > #bPasteBars{ margin-right:6px !important; }
+  /* ═══ РАЗДВИНУТАЯ ПОЛОСА: ЛЕВОЕ — К ЛЕВОЙ ГРАНИЦЕ, ПРАВОЕ — К ПРАВОЙ (v1.562) ═══
+     Запрос пользователя: «раздвинь меню влево-вправо к границам».
+     Ширину во всё поле цепочки ставит updateSplitPositions (fold-5-ui.js) и вешает класс m2-wide,
+     только когда поле шире содержимого полосы. Свободное место делят два auto-поля: справа от «⧉»
+     (конец левой группы — цвета, замок, «⧉») и слева от первых закреплённых значков. Выравнивания
+     оказываются между ними, посередине свободного места.
+     Без класса (узкое поле) поля прежние 6px: auto при нулевом свободном месте схлопнулся бы в ноль
+     и слепил группы. */
+  /* v1.568, запрос «эти прижми к выравниваниям кнопкам» (цвета, замок, «⧉»): левая группа больше
+     не у левой границы, а вплотную к выравниваниям — прежние 6px. Auto-поле справа от «⧉» снято;
+     сдвиг всей связки «левая группа + выравнивания» под ось делает левый отступ первой группы,
+     его ставит JS (updateAxisSplitPosition). Закреплённые значки по-прежнему у правой границы. */
+  #alignGrp.m2-wide > #bPasteBars{ margin-right:6px !important; }
+  #alignGrp.m2-wide > #alignPinL{ margin-left:auto !important; }
+  /* ═══ ПУСТОЕ МЕСТО РАЗДВИНУТОЙ ПОЛОСЫ МЫШЬ НЕ ЛОВИТ (v1.566) ═══
+     Баг-репорт: «какая-то полоса там ещё лишняя, не даёт выделить 0 строку».
+     Полоса растянута на всё поле Ц и лежит поверх нулевой строки (z-index 100). С v1.564 она
+     прозрачная, но клики забирала вся её коробка, и до строки под ней не доходило ничего: ни
+     выделение, ни наведение. Пока полоса была кучкой кнопок посередине, это касалось только её самой.
+     Коробка теперь проницаема, мышь ловят только сами группы кнопок. Бросок закреплённого значка
+     в пустое место ряда от этого не теряется: его и так ловит сама нулевая строка
+     (wireRowZeroAsPinTarget, v1.437). */
+  /* ═══ ПОДЛОЖКИ ГРУПП МЕНЮ 2 СНЯТЫ — МЕЖДУ КНОПКАМИ ПРОЗРАЧНО (v1.574) ═══
+     Запрос пользователя: «у меню выравниваний убери фон, пусть прозрачным будет, где нет кнопок».
+     Подложки групп (v1.433: синеватая у выравниваний, светлая у закреплённых, оранжеватая у цветов
+     и замка) заводились, чтобы различать группы в сплошном ряду. С v1.563 группы разведены по
+     полосе и видны местом, а подложки проступали полосками в зазорах между кнопками. Гасим все три;
+     фон у самих кнопок свой (v1.562) и остаётся. */
+  #alignGrp.align-grp .align-half, #alignGrp.align-grp .align-pin-slots,
+  #alignGrp.align-grp .axis-col-box{ background:transparent !important; }
+  /* v1.575, «также»: светлым прямоугольником проступала не подложка, а ТЕНЬ самой полосы из её
+     первого правила (box-shadow 0 4px 14px, заведена, когда полоса висела плашкой над холстом).
+     Внешняя тень кладётся вокруг коробки, но не под ней: пока у полосы был сплошной фон, этого не
+     было видно; прозрачная полоса (v1.564) проступила светлым окном в затемнённом ряду. */
+  #alignGrp.align-grp{ box-shadow:none !important; }
+  /* ═══ НУЛЕВАЯ СТРОКА: ОСЬ ГАСИМ, ГОРИЗОНТ ПОКАЗЫВАЕМ МЕЖДУ КНОПКАМИ (v1.578) ═══
+     Запрос пользователя: «тут, на 0 строке, убери ось и отобрази горизонт между кнопок».
+     ОСЬ. Линия оси — ::before у .axis-split во всю высоту. Маской вырезаем из неё отрезок высотой в
+     полосу меню 2 (--ax-cut-a…--ax-cut-b ставит updateAxisSplitPosition). Сама ручка остаётся целой:
+     маска меняет только то, что видно, так что тянуть ось по-прежнему можно и там.
+     ГОРИЗОНТ. Своя черта (#hsplitTop) идёт по кромке нулевой строки, но её тон (.30 сиреневого) на
+     тёмном ряду между кнопками неразличим. Полоса рисует на той же высоте (--m2-hz-y) свою линию
+     оттенком оси: псевдоэлемент с z-index:-1 внутри полосы (у неё свой контекст, z-index:100)
+     ложится ПОД кнопки, и видна линия ровно в промежутках — «между кнопок». Высоты нет — линии нет. */
+  .axis-split::before, .axis-split:hover::before, .axis-split.drag::before{
+    -webkit-mask-image:linear-gradient(to bottom, #000 0px, #000 var(--ax-cut-a, -2px),
+      transparent var(--ax-cut-a, -2px), transparent var(--ax-cut-b, -1px), #000 var(--ax-cut-b, -1px));
+    mask-image:linear-gradient(to bottom, #000 0px, #000 var(--ax-cut-a, -2px),
+      transparent var(--ax-cut-a, -2px), transparent var(--ax-cut-b, -1px), #000 var(--ax-cut-b, -1px)); }
+  #alignGrp.align-grp::before{ content:""; position:absolute; left:0; right:0; height:1px;
+    top:var(--m2-hz-y, -9999px); background:rgba(186,124,240,.55); z-index:-1; pointer-events:none; }
+  /* v1.579: линия рисуется и тогда, когда черта идёт НАД полосой (y отрицательный, полосу не пускает
+     выше меню 1), — см. updateAxisSplitPosition. Раскладка сдвинута по вертикали — пунктир, как у
+     самой черты (.hsplit-top.on). */
+  #alignGrp.align-grp.hz-on::before{ height:0; background:none; border-top:1px dashed #b07ce0; }
+  /* ═══ ОСЬ — ПУНКТИРОМ, ОТ СТРОКИ 2 ВНИЗ (v1.579) ═══
+     Запрос пользователя: «ось верт надо с 2 строки показывать вниз только и всё, и пунктирной».
+     Где начинается — ставит JS (updateAxisSplitPosition). Пунктир — повтором градиента по высоте:
+     у ::before нет рамки, а ширина его 1px (3px под курсором), так что dashed-рамка дала бы разную
+     длину штриха в двух состояниях. Штрих 4px, просвет 4px. Цвета прежние (v1.545 и наведение). Селектор с id: правила
+     v1.545 стоят ниже по файлу и при равном весе перебили бы эти. */
+  #axisSplit.axis-split::before{ background:repeating-linear-gradient(to bottom,
+    rgba(186,124,240,.38) 0 4px, transparent 4px 8px);
+    /* «потоньше» (v1.580): ровно ОДИН ТОЧЕЧНЫЙ пиксель экрана. --px1 = 1px / devicePixelRatio,
+       ставит updateAxisSplitPosition. 1px CSS при масштабе 125% — это 1,25 точки, и линия
+       размазывалась на две. Середина — там же, на 6px от края ручки (центр бита, v1.530). */
+    width:var(--px1, 1px); left:calc(6px - var(--px1, 1px) / 2); }
+  /* v1.581, «пусть захватывает также, как сейчас, толстые линии, но показывает тонкую верт»: под
+     курсором и при протяжке линия остаётся в точку толщиной и без свечения, только ярче. Ручка
+     (сам .axis-split, 13px) не менялась — хватается так же широко. */
+  #axisSplit.axis-split:hover::before, #axisSplit.axis-split.drag::before{ background:repeating-linear-gradient(to bottom,
+    #d9b8f2 0 4px, transparent 4px 8px); width:var(--px1, 1px); left:calc(6px - var(--px1, 1px) / 2);
+    box-shadow:none; }
+  #alignGrp.m2-wide{ pointer-events:none; }
+  #alignGrp.m2-wide > *{ pointer-events:auto; }
+  /* ═══ БЛОКИ ЦВЕТОВ И ВЫРАВНИВАНИЯ П1/П2 У «№» (v1.567) ═══
+     Запрос пользователя: «это перемести справа от № П1» и «также для П2». Блоки заводит и ставит
+     fold-5-ui.js (#patCtrlL/#patCtrlR, класс .pat-strip — вид планки). Зазор между кнопками тот
+     же, что был в планках (v1.375). Отступы кнопки выравнивания от подписи (v1.445 — под номер в
+     ячейке, v1.562 — ещё два бита) здесь теряют смысл: подписи в блоке нет, блок стоит в поле
+     цепочки и на биты паттернов не садится. Снимаем их. */
+  #patCtrlL, #patCtrlR{ gap:3px; }
+  /* ═══ «№» НОМЕРОВ ЦЕПОЧКИ — ПЕРВОЙ В ЛЕВОЙ ГРУППЕ МЕНЮ 2 (v1.570) ═══
+     Вернули по выбору пользователя (вариант «в меню 2»), перенос узла — в fold-5-ui.js. Правила
+     кнопки из её прежней жизни над колонкой номеров (ширина под колонку, прижатие подписи вправо,
+     отступ под зазор строки) здесь не к месту: в полосе она обычная кнопка. Ширина по подписи —
+     «№10/№01/№—» разной длины, поэтому min-width держит её постоянной и полоса не дёргается при
+     переключении (та же забота, что в v1.334). Кегль — полотна, как у «№» П1/П2 (v1.434). */
+  #alignGrp > #bAxisRowNum{ width:auto !important; min-width:4ch !important;
+    padding:0 5px !important; justify-content:center; margin-right:3px; }
+  #patCtrlL #bAlignPatL, #patCtrlR #bAlignPatR{ margin:0 !important; }   /* !important: ниже по файлу у групп полосы «margin:0 !important» */
   #alignGrp .align-balance{ margin:0 6px; }
   #alignGrp button{ background:rgba(255,255,255,.06) !important; border-radius:2px; }
   #alignGrp button:hover{ background:rgba(255,255,255,.16) !important; }
@@ -864,7 +963,7 @@
   #alignGrp .align-half > button[data-val="axisbit12"]{
     /* v1.436: пиксель сверху убран — он показывал полосу под кнопкой (запрос «у 1.2 кнопок всё
        проще должно быть, без лишних»). Этаж идёт вплотную к своему верхнему напарнику. */
-    height:max(var(--row-h, 12px), 14px) !important; margin-top:0; }
+    height:var(--m2-h, 24px) !important; margin-top:0; }   /* v1.562: рост ВЕРХНЕГО ряда (--m2-h), см. разбор ниже */
   /* ═══ ВЫБРАНА ½ — ОНА ПОДНИМАЕТСЯ НА МЕСТО ПОЛНОГО ШАГА (v1.432) ═══
      Запрос пользователя: «когда выбрано 1.2 выравнивание, перемести вверх её на место 1, и
      наоборот».
@@ -912,13 +1011,19 @@
   #alignGrp .align-half:has(> button[data-val="rhalfstairs"].act) > button[data-val="rstairs"],
   #alignGrp .align-half:has(> button[data-val="axis12"].act) > button[data-val="axis"],
   #alignGrp .align-half:has(> button[data-val="axisbit12"].act) > button[data-val="axisbit"]{
-    align-self:start !important; height:max(var(--row-h, 12px), 14px) !important;
+    align-self:start !important; height:var(--m2-h, 24px) !important;   /* v1.562: как у ½ выше */
     margin-top:0 !important; visibility:hidden; }
-  #alignGrp:is(:hover, :focus-within) .align-half:has(> button[data-val="halfcenter"].act) > button[data-val="center"],
-  #alignGrp:is(:hover, :focus-within) .align-half:has(> button[data-val="halfstairs"].act) > button[data-val="stairs"],
-  #alignGrp:is(:hover, :focus-within) .align-half:has(> button[data-val="rhalfstairs"].act) > button[data-val="rstairs"],
-  #alignGrp:is(:hover, :focus-within) .align-half:has(> button[data-val="axis12"].act) > button[data-val="axis"],
-  #alignGrp:is(:hover, :focus-within) .align-half:has(> button[data-val="axisbit12"].act) > button[data-val="axisbit"]{
+  /* ═══ ВТОРОЙ РЯД — РОСТОМ В ПЕРВЫЙ (v1.562) ═══
+     Запрос пользователя: «выровняй по высоте 2 ряд».
+     Рост выпадающего этажа (и ½-кнопок, и опустившегося на их место полного шага, v1.432) был
+     задан от строки цепочки — max(--row-h, 14px). В v1.523 верхний ряд получил свою постоянную
+     высоту --m2-h, а про нижний забыли: при 12px строки он выходил 14px против 24px сверху, и
+     кнопки двух этажей стояли разного роста. Теперь оба этажа из одной переменной. */
+  #alignGrp:where(:has(> .align-half:is(:hover, :focus-within))) .align-half:has(> button[data-val="halfcenter"].act) > button[data-val="center"],
+  #alignGrp:where(:has(> .align-half:is(:hover, :focus-within))) .align-half:has(> button[data-val="halfstairs"].act) > button[data-val="stairs"],
+  #alignGrp:where(:has(> .align-half:is(:hover, :focus-within))) .align-half:has(> button[data-val="rhalfstairs"].act) > button[data-val="rstairs"],
+  #alignGrp:where(:has(> .align-half:is(:hover, :focus-within))) .align-half:has(> button[data-val="axis12"].act) > button[data-val="axis"],
+  #alignGrp:where(:has(> .align-half:is(:hover, :focus-within))) .align-half:has(> button[data-val="axisbit12"].act) > button[data-val="axisbit"]{
     visibility:visible; }
   #alignGrp.half-picked .align-half:has(> button[data-val="halfcenter"].act) > button[data-val="center"],
   #alignGrp.half-picked .align-half:has(> button[data-val="halfstairs"].act) > button[data-val="stairs"],
@@ -1768,17 +1873,27 @@
      под подсветкой оказался бы холст.
      Наведение подняли с 3%% до 6%%: на плотной картинке трёхпроцентная плёнка была неразличима, а
      теперь она к тому же не единственный слой — под ней цвет поля. */
+  /* ═══ ПОДРЕЗАН И НИЖНИЙ СЛОЙ — ЦВЕТ ПОЛЯ (v1.576) ═══
+     Баг-репорт: «выделение залазит на фон границы Л» — «не только у нулевой, у любой».
+     Подсветку подрезали на полполосы ещё в v1.380, но под ней в том же шорткате лежал СПЛОШНОЙ
+     var(--fld-c) (v1.401: шорткат обнуляет цвет, и его вернули сюда). Он кроет коробку целиком,
+     включая ту самую половину полосы границы внутри поля. У невыделенной строки под полосой лежит
+     холст — заливка поля #fieldBgC кончается на полполосы раньше, — а у выделенной там оказывался
+     цвет поля: полупрозрачная полоса ложилась на более светлое, и в этой строке граница выглядела
+     залитой, «выделение залезало».
+     Цвет поля теперь тоже градиент с тем же стопом: подложка кончается там же, где подсветка и где
+     заливка #fieldBgC, — все три слоя обрезаны по одной вертикали. */
   .ln:hover .bits {
     box-shadow: none;
-    background: linear-gradient(to right, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) calc(100% - var(--split-w, 5px) / 2), transparent calc(100% - var(--split-w, 5px) / 2)), var(--fld-c) !important;
+    background: linear-gradient(to right, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) calc(100% - var(--split-w, 5px) / 2), transparent calc(100% - var(--split-w, 5px) / 2)), linear-gradient(to right, var(--fld-c) 0px, var(--fld-c) calc(100% - var(--split-w, 5px) / 2), transparent calc(100% - var(--split-w, 5px) / 2)) !important;   /* v1.576: и цвет поля подрезан — см. разбор ниже */
   }
   .ln.selected .bits {
     box-shadow: none;
-    background: linear-gradient(to right, var(--rowbg-sel) 0px, var(--rowbg-sel) calc(100% - var(--split-w, 5px) / 2), transparent calc(100% - var(--split-w, 5px) / 2)), var(--fld-c) !important;
+    background: linear-gradient(to right, var(--rowbg-sel) 0px, var(--rowbg-sel) calc(100% - var(--split-w, 5px) / 2), transparent calc(100% - var(--split-w, 5px) / 2)), linear-gradient(to right, var(--fld-c) 0px, var(--fld-c) calc(100% - var(--split-w, 5px) / 2), transparent calc(100% - var(--split-w, 5px) / 2)) !important;   /* v1.576: и цвет поля подрезан — см. разбор ниже */
   }
   .ln.selected:hover .bits {
     box-shadow: none;
-    background: linear-gradient(to right, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) calc(100% - var(--split-w, 5px) / 2), transparent calc(100% - var(--split-w, 5px) / 2)), linear-gradient(to right, var(--rowbg-sel) 0px, var(--rowbg-sel) calc(100% - var(--split-w, 5px) / 2), transparent calc(100% - var(--split-w, 5px) / 2)), var(--fld-c) !important;
+    background: linear-gradient(to right, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) calc(100% - var(--split-w, 5px) / 2), transparent calc(100% - var(--split-w, 5px) / 2)), linear-gradient(to right, var(--rowbg-sel) 0px, var(--rowbg-sel) calc(100% - var(--split-w, 5px) / 2), transparent calc(100% - var(--split-w, 5px) / 2)), linear-gradient(to right, var(--fld-c) 0px, var(--fld-c) calc(100% - var(--split-w, 5px) / 2), transparent calc(100% - var(--split-w, 5px) / 2)) !important;   /* v1.576: и цвет поля подрезан — см. разбор ниже */
   }
   /* ═══ НУЛЕВАЯ СТРОКА НЕ ПОДСВЕЧИВАЕТСЯ ВОВСЕ (v1.407) ═══
      Баг-репорт: «но она выделяется визуально фоном — убери».
@@ -1791,11 +1906,16 @@
      индекс вроде 61, и правило било мимо. Класс вешает render() той строке, чей НОМЕР равен нулю.
      Колонку номеров гасим тем же заходом: у неё своя заливка выделения (ниже), и без этого нулевая
      подсвечивалась бы половиной себя. */
+  /* ═══ СНЯТО В v1.572: НУЛЕВАЯ СНОВА ПОДСВЕЧИВАЕТСЯ, КАК ВСЕ ═══
+     Баг-репорт: «всё так же не выделить 0». С v1.569 запрет выделения снят, и строка в набор
+     попадала, но это правило гасило её подсветку — выбранная нулевая выглядела невыбранной.
+     Правила оставлены закомментированными: вернуть — снять обёртку комментария.
   #rows .ln.row-zero:hover .bits,
   #rows .ln.row-zero.selected .bits,
   #rows .ln.row-zero.selected:hover .bits{ background:var(--fld-c) !important; }
   #rows .ln.row-zero.selected .num,
   #rows .ln.row-zero.selected .num-l2{ background:var(--numcol-bg) !important; }
+  */
   /* У номера выделенной строки БЫЛ жёлтый текст (#ffcf6b) — v0.899, запрос пользователя
      "выделенный номер пусть будет просто подсвечен фоном, не надо жёлтым". Жёлтым в этой палитре
      помечены цель фон-поиска и «баланс поровну», номер с ними спорил. Своего цвета у номера
@@ -2204,7 +2324,16 @@
 
   /* Пропущенный 1-й символ паттерна подсвечивается тусклым серым */
   .pat-skip{color:var(--dim); opacity:0.5}
-  
+  /* ═══ ПЕРВЫЙ СИМВОЛ — НА ТОЙ ЖЕ ВЫСОТЕ, ЧТО И ОСТАЛЬНЫЕ (v1.562) ═══
+     Баг-репорт: «символы паттернов… не выровнены с первым символом, разная высота нижней границы».
+     Отрезанный первый символ стоит СНАРУЖИ .pat-txt (v0.905: заливка находки не должна его
+     красить). А .pat-txt с v1.395 — inline-block со своим line-height и vertical-align:middle, то
+     есть центрирован по строке; символ снаружи остался на базовой линии строчного бокса высотой в
+     межстрочный. При узком межстрочном это разные высоты — первый знак сидел выше или ниже
+     соседей. Ставим ему те же три свойства, что и у .pat-txt: коробка той же высоты и та же
+     середина. */
+  .pat .pat-skip, .pat2 .pat-skip{display:inline-block;line-height:1.15;vertical-align:middle}
+
   /* Левая граница разделителя. Позиция = padding-left у .chain (3px) + ширина .num (2em, но
      .num сам на font-size:.85em, значит фактически 2*.85=1.7em в масштабе .chain) + gap
      .num→.pat (8px) + ширина .pat (var(--pat-w)) + gap .pat→.bits (8px). Раньше тут стояло
@@ -2555,6 +2684,17 @@
      состоянии — на глаз это читалось как другая, «жирная» черта поверх строк. */
   .hsplit-top.on::before{height:0;border-top:1px dashed #b07ce0;
     box-shadow:0 0 10px rgba(186,124,240,.45)}
+  /* ═══ ЗОНА ЗАХВАТА ЧЕРТЫ — ЦЕЛИКОМ НАД НУЛЕВОЙ СТРОКОЙ (v1.569) ═══
+     Баг-репорт: «какая-то полоса остаётся и не даёт выделить 0 строку».
+     Ручка шириной во всё полотно и высотой 9px сидела СЕРЕДИНОЙ на своей черте, а черта — на
+     верхней кромке нулевой строки. Нижние пять пикселей зоны лежали на самой строке и ловили мышь
+     (курсор «тянуть вверх-вниз», z-index 15): клик туда тянул раскладку, а не выделял строку.
+     Сдвигаем зону вверх на полную высоту, а линию внутри — к её нижнему краю. Черта на экране
+     остаётся там же, где была (на пиксель выше кромки строки), место ручки для JS не меняется
+     (style.top), а строка под ней свободна целиком. */
+  .hsplit-top{ margin-top:-9px; }
+  .hsplit-top::before{ top:8px; }
+  .hsplit-top:hover::before, .hsplit-top.drag::before{ top:7.5px; }
   /* Толщина линии — в 1,5 раза больше прежней (v0.839, запрос пользователя): 1px → 1.5px,
      под курсором/при перетаскивании 2px → 3px. Зона захвата (13px) при этом та же. */
   /* РУЧКА ОСИ ЦЕПОЧКИ — ОБЫЧНАЯ ЛИНИЯ (испр. v1.083, баг-репорт пользователя: "потерялась ручка
@@ -2779,7 +2919,7 @@
      getElementById), а сам элемент ничего не стоит. Вернуть кнопку — снять эту строку.
      Планка #axisStrip остаётся: в ней живёт ещё «▤ Показать панели», единственный способ вернуть
      доки, когда те скрыты. */
-  #bAxisRowNum{ display:none !important; }
+  /* #bAxisRowNum{ display:none !important; }   — снято в v1.570, кнопка вернулась в меню 2 (см. ниже) */
   #bAxisRowNum{font-family:var(--chain-ff);font-size:var(--chain-fs, 12px);
     letter-spacing:var(--chain-ls);line-height:1;box-sizing:border-box;
     padding-left:0;padding-right:var(--row-gap, 8px);
@@ -4563,8 +4703,18 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
      сжималась свободно; стоило открыть левый край наружу — минимальной шириной стал самый длинный
      паттерн, и колонка перестала слушаться --pat-w вовсе. Ручка при этом исправно меняла
      переменную и уводила цепочку (fieldKey «L»), отчего и выглядело, будто двигаются одни биты. */
+  /* ═══ ВЕРХ И НИЗ ЗНАКОВ БОЛЬШЕ НЕ СРЕЗАЮТСЯ (v1.562) ═══
+     Баг-репорт: «символы паттернов каким-то фоном обрезаются… разная высота нижней границы».
+     Фона там не было — резал этот самый clip-path. inset(0 …) держит верх и низ ровно по коробке
+     строки, а коробка высотой в межстрочный (--row-h), который легко бывает меньше кегля (12px
+     строки при 19px знака). Всё, что у глифа выше и ниже коробки, срезалось — и срезалось на
+     разной высоте у знаков, стоящих по-разному по вертикали (см. .pat-skip ниже).
+     Обрезка нужна была только по горизонтали (справа — граница с цепочкой, слева — край свободного
+     места), поэтому сверху и снизу область расширена на кегль: знак целиком помещается при любом
+     межстрочном. Фона у ячеек строк нет (он на #fieldBgL, одной колонкой на всё поле), так что
+     соседняя строка вылезший край ничем не закрывает. */
   .ln .pat{ overflow:visible !important; min-width:0 !important;
-            clip-path: inset(0 0 0 calc(-1 * var(--pat-spill, 0px))); }
+            clip-path: inset(-1em 0 -1em calc(-1 * var(--pat-spill, 0px))); }
   .ln .pat2{ overflow:visible !important; }
   .ln .pat, .ln .pat2, .ln .bits{ z-index:auto !important; position:relative;
                                   background:transparent !important; }
@@ -4923,6 +5073,13 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
     pointer-events:auto; cursor:pointer; }
   .num-btn-float:hover{ background:rgba(255,255,255,.16) !important; }
   .num-btn-float.on{ color:var(--acc) !important; }
+  /* ═══ «№» РОСТОМ В ПЛАНКУ (v1.562) ═══
+     Запрос пользователя: «№ — выровняй по высоте кнопку».
+     Рост был в нулевую строку (--row-h, не ниже 14px), а соседние планки П1/П2 и меню 2 с v1.523 —
+     своей постоянной высоты (--strip-h = --m2-h). «№» выходила на треть ниже соседей и висела у их
+     верхнего края. Берём ту же --strip-h; по вертикали её центрует updateSplitPositions
+     (rowZeroCenterTop), как и планки. Переменной ещё нет (первый кадр) — прежняя высота. */
+  .num-btn-float{ height:var(--strip-h, max(var(--row-h, 12px), 14px)); }
   /* ═══ ПЛАНКИ УСТУПАЮТ МЕСТО НОМЕРАМ В ЯЧЕЙКАХ (v1.445) ═══
      Уточнение пользователя: «я о самих номерах появляющихся, чтобы не накладывались на них»
      (к просьбе «выравнивания в П1 и П2 отодвинь, и отступ от её номера 0»).
@@ -4939,6 +5096,19 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
      вплотную к подписи, как стояла. */
   body.patnum-l #bAlignPatL{ margin-right:var(--num-slot, 0px); }
   body.patnum-r #bAlignPatR{ margin-left:var(--num-slot, 0px); }
+  /* ═══ ЕЩЁ ДВА БИТА ОТ ГРАНИЦЫ — ЦВЕТА И ВЫРАВНИВАНИЕ НЕ САДЯТСЯ НА БИТЫ (v1.562) ═══
+     Запрос пользователя: «эти три отступи влево немного, чтобы на биты не налезали; и в правых
+     паттернах также».
+     Три — это пара цветов «1»/«0» и кнопка выравнивания; подпись «П»/«Л» стоит на самой линии и не
+     двигается (v1.413). Планка выше нулевой строки и половиной излишка заходит на первую, а у первой
+     строки паттерн стоит как раз у границы (при выравнивании к ней) — кнопка ложилась на его
+     крайние биты. Отодвигаем тройку вглубь колонки ещё на два бита: у П1 влево, у П2 вправо —
+     зеркально, как и сами планки. Шаг — --col-step, та же ширина бита, какой набраны строки,
+     поэтому отступ едет за кеглем. С номерами в ячейках — поверх их резерва (правило выше). */
+  #bAlignPatL{ margin-right:calc(var(--col-step, 8px) * 2); }
+  #bAlignPatR{ margin-left:calc(var(--col-step, 8px) * 2); }
+  body.patnum-l #bAlignPatL{ margin-right:calc(var(--num-slot, 0px) + var(--col-step, 8px) * 2); }
+  body.patnum-r #bAlignPatR{ margin-left:calc(var(--num-slot, 0px) + var(--col-step, 8px) * 2); }
   /* ═══ П1 ПРИ ВЫРАВНИВАНИИ ВПРАВО ПРИЖИМАЕТСЯ БРАУЗЕРОМ, А НЕ АРИФМЕТИКОЙ (v1.446) ═══
      Баг-репорт: «П1, когда вкл номера при выравнивании вправо — также не видит их».
      Правое выравнивание до сих пор набиралось так же, как все прочие: отступ печатается
@@ -4956,15 +5126,33 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
      Остальные выравнивания не трогаем: там отступ и есть смысл раскладки (лесенки, центр,
      полушаги), и заменить его на text-align нечем.
      Правый отступ ячейки заодно вырастает на полполосы границы: содержимое кончается там, где
-     начинается граница, и под неё не заходит — та же арифметика, что у заливок полей. */
+     начинается граница, и под неё не заходит — та же арифметика, что у заливок полей.
      ЕЩЁ ПОЛБИТА ЗАПАСА (v1.447, «пол бита при этом всё же на границе»): полполосы границы
      содержимое от неё не отодвинули — последний знак по-прежнему доставал до линии половиной
      своей ширины. Добавляем половину столбца: отступ теперь считается в тех же битах, которыми
      набрана строка (--col-step пишет render тем же числом, каким раскладывает знаки), и знак
      кончается заведомо раньше линии при любом кегле. */
-  body.pat-ta-right #rows .ln .pat{ text-align:right;
-    padding-right:calc(4px + var(--split-w, 5px) / 2 + var(--col-step, 8px) / 2); }
-  body.pat-ta-right #rows .ln .pat .pat-shift{ transform:none !important; }
+  /* ═══ ПРАВИЛО ВЫШЕ НЕ РАБОТАЛО С v1.447 — ЧИНИМ (v1.562) ═══
+     Баг-репорт: «граница П1 — при её перемещении биты паттернов должны сдвигаться, а не
+     скрываться за ней, если её влево тянуть; обрезаться должны слева».
+     ПРИЧИНА 1 — РАЗОРВАННЫЙ КОММЕНТАРИЙ. Вставка v1.447 легла ПОСЛЕ закрывающего маркера
+     комментария v1.446, и абзац «ЕЩЁ ПОЛБИТА ЗАПАСА…» оказался голым текстом в CSS. Разборщик
+     принял его за начало селектора и съел вместе с ним следующее правило — то самое, с
+     text-align:right. Выжило только гашение сдвига (.pat-shift transform:none). Итог: при
+     выравнивании вправо паттерны стояли от ЛЕВОГО края, с отступом на всю сетку самого длинного
+     паттерна, и, как только колонка становилась уже этой сетки, уходили за границу целиком.
+     Ровно та же беда, что описана у номеров в v0.879, — маркеры в тексте закрывают комментарий.
+     ПРИЧИНА 2 — text-align:right ПЕРЕПОЛНЕНИЕ ВЛЕВО НЕ УВОДИТ. Даже живое правило помогло бы лишь
+     пока содержимое уже колонки: строка шире своего бокса в письме слева направо вылезает ВПРАВО
+     при любом text-align. А вылезать она обязана влево — к границе прижат конец паттерна, срезается
+     начало (правило v1.194). direction:rtl у ячейки переводит переполнение на левую сторону, а
+     direction:ltr у обёртки возвращает внутри неё обычный порядок знаков — биты не переворачиваются.
+     ПРИЧИНА 3 — ОТСТУП v1.446/v1.447 НЕ ДОХОДИЛ НИКОГДА: его перебивало безусловное
+     «.ln .pat{padding-right:0 !important}» (обнуление полей ячейки). Поэтому здесь тоже !important:
+     специфичность у правила выше, и из двух !important побеждает оно. */
+  body.pat-ta-right #rows .ln .pat{ text-align:right; direction:rtl;
+    padding-right:calc(4px + var(--split-w, 5px) / 2 + var(--col-step, 8px) / 2) !important; }
+  body.pat-ta-right #rows .ln .pat .pat-shift{ transform:none !important; direction:ltr; }
   /* ═══ ПАНЕЛИ КНОПОК В НУЛЕВОЙ СТРОКЕ — СВОИМ ФОНОМ (v1.448) ═══
      Запрос пользователя: «добавь фон панелей кнопки для П1, П2 и Ц в 0 строке».
      В меню 2 группы кнопок различаются подложкой (v1.433), а планки полей и переехавшие в поле
@@ -4979,13 +5167,71 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
   .pat-strip{ background:rgba(255,255,255,.07); }
   .num-btn-float{ background:rgba(255,255,255,.07) !important; }
   .num-btn-float:hover{ background:rgba(255,255,255,.16) !important; }
+  /* ═══ НУЛЕВАЯ СТРОКА — ОДНИМ ФОНОМ, КНОПКИ ПОВЕРХ НЕЁ (v1.562) ═══
+     Запросы пользователя: «у 0 строки фон различается — пусть одинаковый будет» и «пусть кнопки
+     будут перед выделения фоном строки».
+     В строке лежало три разных фона: меню 2 — сплошной --bg (v1.526, закрывал черту горизонта),
+     планки П1/П2 — своя светлая подложка (v1.448 выше), а между ними — полоса нулевой строки
+     (#bandBg) поверх заливок полей. Плашка меню к тому же закрывала и выделение строки под собой.
+     Подложки у полосы и планок сняты: под кнопками теперь просвечивает сама строка — один и тот же
+     фон по всей длине, а выделенная строка видна и под меню. Непрозрачными стали сами КНОПКИ:
+     прежний полупрозрачный тон кнопки лежит слоем поверх --bg. Черта горизонта по-прежнему идёт
+     ЗА кнопками, а не поверх (ради этого и заводили сплошной фон в v1.526); видна она только в
+     промежутках между ними. У всех кнопок строки — меню, планок, «№» — один и тот же вид.
+     Пикеры цвета не трогаем: их фон и есть цвет. Подписи «П»/«Л» тоже — они метка линии (v1.294). */
+  #alignGrp.align-grp{ background:transparent !important; }
+  .pat-strip{ background:transparent !important; }
+  /* ═══ И У САМОЙ НУЛЕВОЙ СТРОКИ СВОЕЙ ЗАЛИВКИ БОЛЬШЕ НЕТ (v1.564) ═══
+     Уточнение пользователя: «фон 0 строки также выделяется от остальных».
+     Это #bandBg — полупрозрачная светлая полоса «между двумя нулями» (v1.384): служебный ряд тогда
+     хотели отделить от цепочки. Теперь строка должна быть как все, и отделяют её сами кнопки.
+     Элемент НЕ прячем, только делаем прозрачным: по его коробке ловится бросок значков в нулевую
+     строку и считается её место (fold-5-ui.js), а display:none обнулил бы коробку. */
+  #bandBg.band-bg{ background:transparent !important; }
+  /* ═══ «П» И «Л» — КЕГЛЕМ ПОЛОТНА, КАК «№» И БИТЫ (v1.565) ═══
+     Запрос пользователя: «П и Л буквы тоже по высоте поправь со всеми».
+     Подписи планок набирались шрифтом интерфейса (13px, font у .pat-strip), а соседи по строке —
+     «№» (v1.434) и сами биты — кеглем полотна. Рядом с ними буква читалась мелкой и сидела ниже.
+     Даём тот же --chain-fs и то же начертание. По ширине знак полотна и есть ширина бита, а полоса
+     границы шириной в бит (--split-w), так что буква встаёт в неё без обрезки. Высота строки — рост
+     планки, буква по центру. */
+  #patStripL .pat-strip-lab, #patStripR .pat-strip-lab{
+    font-family:var(--chain-ff); font-size:var(--chain-fs, 12px); letter-spacing:var(--chain-ls);
+    line-height:var(--strip-h, 22px); }
+  #alignGrp.align-grp button, .pat-strip button, .axis-strip button, .num-btn-float{
+    background:linear-gradient(rgba(255,255,255,.06), rgba(255,255,255,.06)), var(--bg) !important; }
+  #alignGrp.align-grp button:hover, .pat-strip button:hover, .axis-strip button:hover, .num-btn-float:hover{
+    background:linear-gradient(rgba(255,255,255,.16), rgba(255,255,255,.16)), var(--bg) !important; }
+  #alignGrp.align-grp button.act{
+    background:linear-gradient(rgba(77,163,255,.28), rgba(77,163,255,.28)), var(--bg) !important; }
+  /* ═══ ПРОМЕЖУТОК ПОД ОСЬ — «ПРОЗРАЧНАЯ КНОПКА» (v1.562) ═══
+     Запрос пользователя: «пусть ось будет всегда между кнопками, и там, где ось, расстояние — как
+     будто там прозрачная кнопка».
+     Между «↔» и «↘» пусто ровно на кнопку: её ширина плюс обычный пиксель зазора. Встаёт этот
+     промежуток на ось JS (updateAxisSplitPosition, блок «выравнивания стоят на оси»). Промежуток
+     общий для обоих этажей: ½-ряд живёт в тех же колонках. */
+  #alignGrp > .align-half:has(> button[data-val="stairs"]){ margin-left:calc(var(--m2-w, 28px) + 1px) !important; }
+  /* ═══ ПРОМЕЖУТОК ПОД ОСЬ — ТРИ КНОПКИ, В НЁМ ТОЛСТЫЙ ХВАТ ГОРИЗОНТА (v1.581) ═══
+     Запрос пользователя: «горизонт не хватается там, потому что выделение строк ему не даёт; сделай
+     там линию толще посередине и кнопки ещё на 2 ширины раздвинь от центра».
+     Промежуток шире на две кнопки. На ось его по-прежнему ставит JS: он меряет сами группы по краям
+     промежутка, поэтому ширина из этого правила подхватывается сама.
+     В промежутке — #m2HzGrip: ручка черты горизонта в слое меню 2 (z-index 100), то есть выше строк,
+     которые забирали нажатие под выделение. Место и ширину ставит updateAxisSplitPosition: во весь
+     промежуток, серединой на высоте черты. Зона 11px, линия в ней 3px тоном горизонта, под курсором ярче. */
+  #alignGrp > .align-half:has(> button[data-val="stairs"]){ margin-left:calc(var(--m2-w, 28px) * 3 + 1px) !important; }
+  #m2HzGrip{ position:absolute; display:none; height:11px; cursor:row-resize; z-index:1; }
+  #m2HzGrip.act{ display:block; }
+  #m2HzGrip::before{ content:""; position:absolute; left:0; right:0; top:4px; height:3px;
+    background:rgba(176,124,224,.85); pointer-events:none; }
+  #m2HzGrip:hover::before, #m2HzGrip.drag::before{ background:#d9b8f2; box-shadow:0 0 8px rgba(186,124,240,.7); }
 </style>
 <!-- === МАРКЕР 03: HEADER_UI === -->
 <div id="menuBar">
   <!-- Заголовок стоит вплотную слева от вкладок (v1.046), вся связка центрируется полосой — см. #menuBarTitle в CSS. --><div id="menuBarTitle">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.561</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.581</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -6578,11 +6824,11 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
      (видно новый номер версии в заголовке), а fold-*.js берёт из кеша — то есть новый код
      просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
      версией в <title>/<h3>, теми же тремя цифрами. -->
-<script src="fold-1-core.js?v=1561"></script>
-<script src="fold-2-render.js?v=1561"></script>
-<script src="fold-3-ops.js?v=1561"></script>
-<script src="fold-4-tools.js?v=1561"></script>
-<script src="fold-5-ui.js?v=1561"></script>
+<script src="fold-1-core.js?v=1581"></script>
+<script src="fold-2-render.js?v=1581"></script>
+<script src="fold-3-ops.js?v=1581"></script>
+<script src="fold-4-tools.js?v=1581"></script>
+<script src="fold-5-ui.js?v=1581"></script>
 <div id="fieldInfo"></div>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;

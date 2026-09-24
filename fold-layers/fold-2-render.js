@@ -3183,9 +3183,11 @@ function render(){
      Ищем по НОМЕРУ, а не по индексу (испр. v1.408): индекс нулевой строки зависит от высоты поля
      наложений, и прежнее delete(0) вычищало совсем другую строку — ту, что стоит первой в массиве.
      Перебор идёт только когда набор непуст, и по копии: удалять из Set во время обхода нельзя. */
-  if (st.selectedRows && st.selectedRows.size && typeof rowLabel === "function") {
-    for (const r of Array.from(st.selectedRows)) if (rowLabel(r) === 0) st.selectedRows.delete(r);
-  }
+  /* v1.569: чистка выключена вместе с запретом (см. клик по строке в fold-3-ops.js) — нулевая
+     теперь законно бывает в наборе. */
+  // if (st.selectedRows && st.selectedRows.size && typeof rowLabel === "function") {
+  //   for (const r of Array.from(st.selectedRows)) if (rowLabel(r) === 0) st.selectedRows.delete(r);
+  // }
   // Ширина номера строки — ОДНА на все строки (см. numTxtL ниже). Кандидатов ровно два: самый
   // нижний номер (самый длинный положительный) и самый верхний (у построений он отрицательный,
   // и минус добавляет символ).
