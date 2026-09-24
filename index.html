@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.027. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.028. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -19,7 +19,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Control Hub — v0.027</title>
+    <title>Zerkalius Control Hub — v0.028</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -188,7 +188,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.027</div>
+        <div class="ver">v0.028</div>
 
         <!-- Флагман — с v0.008 это Zerkalius Code (бывшая «Genezis Code 0»), с v0.011 подписан «Code»; решение пользователя 2026-09-23 -->
         <a href="Zerkalius-code.html" class="menu-btn main-engine" data-en="Code" data-ru="Код">Code</a>
@@ -237,13 +237,16 @@
         // полоса идёт через весь экран на своей высоте и срывает вбок кусок каждой кнопки, которую пересекает.
         // На кадр — три полосы высотой 3–14 px, у каждой свой сдвиг 6–20 px; у кнопки полос не больше двух
         // (::before и ::after); сбой длится три кадра. Случайный сбой: раз в ~0,12 с с шансом 30% — в среднем
-        // раз в 0,4 с. «Меньше движения» в системе — ни сбоев, ни смены языка (названия остаются английскими).
+        // раз в 0,4 с. v0.028: «меньше движения» в системе гасит только полосы; язык меняется по-прежнему.
         // v0.022: названия по-английски / по-русски меняются ПОСТРОЧНО И ВМЕСТЕ СО СБОЕМ (вместо v0.021, где у
         // каждой кнопки была своя фаза): раз в ~2,5 с случайная строка кнопок получает сбой — полосы только в её
         // высоте, — и на втором кадре сбоя все её кнопки разом переключают язык. v0.023: названия групп
         // («Черновики», «Знак и записи») — такие же строки и меняются так же.
         (function () {
-            if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            // v0.028: прежде «меньше движения» выключало весь этот блок разом — и полосы, и смену языка, и
+            // надпись обоев; на Windows Server визуальные эффекты выключены по умолчанию, и хаб там стоял
+            // молча английским. Теперь тихий режим гасит только полосы: язык по строкам меняется всегда.
+            const CALM = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
             const btns = Array.from(document.querySelectorAll('.menu-btn, .panel-title'));   // v0.023: и названия групп
             let busy = false;
             const rowsNow = () => {   // строки — по верхнему краю кнопок (пересчёт на каждый сбой: окно могли сжать)
@@ -291,6 +294,7 @@
             window.addEventListener('message', e => { if (bg && e.source === bg.contentWindow && e.data && e.data.zerkReady) titleStart(); });
             if (bg) { bg.addEventListener('load', () => setTimeout(titleStart, 300)); setTimeout(titleStart, 1500); }   // запасной путь
             const glitch = (y0, y1, mid) => {
+                if (CALM) { if (mid) mid(); return; }   // v0.028: тихий режим — язык меняется сразу, без полос
                 busy = true; let frames = 3;
                 const step = () => {
                     if (frames-- <= 0) { btns.forEach(b => b.classList.remove('glitch')); busy = false; return; }
@@ -315,7 +319,7 @@
                         return glitch(row.top, row.bottom, () => row.list.forEach(b => setLang(b, lang)));
                     }
                 }
-                if (Math.random() > 0.30) return;
+                if (CALM || Math.random() > 0.30) return;   // v0.028: в тихом режиме случайных сбоев нет
                 const rs = btns.map(b => b.getBoundingClientRect());
                 glitch(Math.min(...rs.map(r => r.top)), Math.max(...rs.map(r => r.bottom)));
             }, 120);
