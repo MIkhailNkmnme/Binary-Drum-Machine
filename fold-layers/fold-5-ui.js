@@ -6062,6 +6062,7 @@ function fieldGlyphsHit(e){
        return, а флаг: над глифами жест умеет ТОЛЬКО шрифт, без прокрутки и без сноса якорей. */
     const overGlyphs = !!fieldGlyphsHit(e);
     panScroll = { x0: e.clientX, base: canvasPanEl.scrollLeft, moved: false, overGlyphs: overGlyphs,
+                  shift0: chainShiftCols || 0, step: realColStepPx() || 8,   // v1.607: сдвиг раскладки
                   lhDrag: makeLhVDrag(e.clientY), lsDrag: makeLsHDrag(e.clientX) };
   });
   window.addEventListener("mousemove", e => {
@@ -6094,16 +6095,32 @@ function fieldGlyphsHit(e){
       patDragAnchor = null;
       document.body.classList.add("field-panning");
     }
-    // Минус: тянем полотно ВПРАВО — содержимое едет вправо, значит окно обзора уезжает ВЛЕВО.
-    // Это "схватил лист и подвинул", а не "подвинул ползунок", — так же ведёт себя рука на тачпаде.
-    canvasPanEl.scrollLeft = panScroll.base - dx;
+    /* ═══ ЗА ПУСТОЕ ПОЛЕ ЕДУТ ВСЕ ПОЛЯ ВМЕСТЕ С БИТАМИ (v1.607) ═══
+       Запрос: «пусть зацеп за пустое поле, где нет битов, двигает все поля влево-вправо вместе с
+       битами». Раньше жест только прокручивал полотно, а когда всё влезает в окно, прокручивать
+       некуда — не двигалось ничего. Теперь это та же рука, что у ручки #vsplitL0: весь ряд П1 +
+       цепочка + П2 сдвигается сдвигом раскладки (chainShiftCols → margin-left у .chain), по целым
+       столбцам, как там. Положение ряда на экране — «сдвиг − прокрутка»; жест прибавляет к нему dx.
+       Пока оно не меньше нуля — это сдвиг раскладки при непрокрученном полотне; ушло левее нуля
+       (раскладка упёрлась в левый край) — дальше прокрутка, как раньше, чтобы длинные строки
+       по-прежнему можно было довести до экрана. */
+    const P = panScroll.shift0 * panScroll.step - panScroll.base + dx;
+    if (P >= 0) {
+      const cols = Math.round(P / panScroll.step);
+      if (chainShiftCols !== cols) { chainShiftCols = cols; applyPatOffsets(); panScroll.shifted = true; }
+      if (canvasPanEl.scrollLeft !== 0) canvasPanEl.scrollLeft = 0;
+    } else {
+      if (chainShiftCols !== 0) { chainShiftCols = 0; applyPatOffsets(); panScroll.shifted = true; }
+      canvasPanEl.scrollLeft = -P;
+    }
   });
   window.addEventListener("mouseup", () => {
     if (!panScroll) return;
-    const moved = panScroll.moved;
+    const moved = panScroll.moved, shifted = panScroll.shifted;
     panScroll = null;
     document.body.classList.remove("field-panning");
     if (!moved) return;
+    if (shifted) saveCache();   // v1.607: сдвиг раскладки хранится, как у #vsplitL0
     // Сброс через setTimeout — click браузер шлёт ПОСЛЕ mouseup, и он должен успеть увидеть флаг.
     setTimeout(() => { fieldPanMoved = false; }, 0);
   });
