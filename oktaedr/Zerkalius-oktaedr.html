@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.041. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Октаэдр — v0.042. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.041</title>
+<title>Zerkalius Октаэдр — v0.042</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -216,7 +216,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.041</div>
+<div id="ver">v0.042</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -1972,6 +1972,23 @@ const SECS = {
 SECS.init();
 
 load(); rollBits(); syncUI();
+/* v0.042: КАРТИНА ИЗ ТРЕУГОЛЬНИКА (запрос пользователя: «открыть выбранную пирамиду прямо здесь, большим знаком»).
+   Треугольник (кнопка «◆ Октаэдр» в «🔍 Крупно») открывает страницу с адресом …#treug=R.БИТЫ: R — рядов на грани
+   (высота пирамиды + 1), БИТЫ — 0/1 грань за гранью (слоты 0…3 — восточная, южная, западная, северная грани пирамиды:
+   тот же обход по часовой, октаэдр лишь повёрнут на 45°), в грани ряд за рядом от вершины, в ряду — как видит смотрящий
+   снаружи, слева направо. Картина встаёт как «свои биты» при основании 4 (Серпинский снят); низ, как всегда, — она же
+   инвертированная. Адрес после этого чистится: F5 не затрёт того, что поправили руками. */
+(function fromTreug(){
+  const m = /^#treug=(\d+)\.([01]+)$/.exec(location.hash || "");
+  if (!m) return;
+  const R = +m[1], B = m[2];
+  if (R < 2 || R > ROWS_MAX || B.length !== 4 * R * (R + 1) / 2) return;
+  if (NB !== 4) buildBody(4);
+  ROWS = R; sRows.value = R; vRows.textContent = R;
+  myBits = B; mySame = false; sierp = false;
+  rollBits(); if (typeof unpinAll === "function") unpinAll(); syncUI(); save();
+  try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+})();
 myArea.value = myBits; myInfoUpd();
 /* ═══ ГОРЯЧИЕ КЛАВИШИ (v0.006, запрос пользователя) ═══════════════════════════════════════════
    ПРОБЕЛ — вращение, ENTER — цикл шагов, ◄ ► — шаг назад и вперёд, ▲ ▼ — такт цикла.
