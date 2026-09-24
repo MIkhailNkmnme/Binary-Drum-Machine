@@ -13,7 +13,7 @@
     const depth = location.pathname.replace(/\/[^/]*$/, '').split('/').filter(Boolean).length;
     // На GitHub Pages проект лежит в корне домена, поэтому считаем от текущей папки:
     // в корне это index.html, во вложенной папке — на уровень выше.
-    const href = depth > 0 && /\/(fold|fold-layers|oktaedr|zazerkalius|lively|oboi)\//.test(location.pathname)
+    const href = depth > 0 && /\/(fold|fold-layers|oktaedr|zazerkalius|lively|oboi|issledovanie)\//.test(location.pathname)
         ? '../index.html' : 'index.html';
 
     function build() {
