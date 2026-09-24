@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Layers — v1.602</title>
+<title>Zerkalius Layers — v1.603</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -72,8 +72,12 @@
        Запрос пользователя: «затемняй или осветли фон границ даже не при наведении, чтобы видно их
        было; также номера цепочек фон — сильнее различие». Прежние 5% и 7% задумывались как «чуть
        заметно» и на деле не читались вовсе: колонка сливалась с полем, а границу было видно только
-       под курсором. 12% и 16% — та же полупрозрачная подсветка, просто различимая без наведения. */
-    --numcol-bg:rgba(255,255,255,.12);
+       под курсором. 12% и 16% — та же полупрозрачная подсветка, просто различимая без наведения.
+       ═══ НОМЕРА — НА ФОНЕ САМОГО ПОЛЯ Ц (v1.603) ═══
+       Запрос пользователя: «цвет фона номеров цепочек — такой же, как у поля Ц». Колонка лежит на
+       заливке цепочки (#fieldBgC, v1.328), своя подсветка поверх гасится — под номерами ровно --fld-c.
+       Вернуть отличие — снова полупрозрачный белый, например rgba(255,255,255,.12). */
+    --numcol-bg:transparent;
     --splitzone-bg:rgba(255,255,255,.16);
     /* ═══ ШИРИНА ПОЛОСЫ ГРАНИЦЫ — ОДИН БИТ (v1.354) ═══
        Запрос пользователя: «пусть границы будут шириною в один бит… как шрифт чтоб».
@@ -5273,7 +5277,7 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
   <!-- Заголовок стоит вплотную слева от вкладок (v1.046), вся связка центрируется полосой — см. #menuBarTitle в CSS. --><div id="menuBarTitle">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.602</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.603</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -6873,11 +6877,11 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
      (видно новый номер версии в заголовке), а fold-*.js берёт из кеша — то есть новый код
      просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
      версией в <title>/<h3>, теми же тремя цифрами. -->
-<script src="fold-1-core.js?v=1602"></script>
-<script src="fold-2-render.js?v=1602"></script>
-<script src="fold-3-ops.js?v=1602"></script>
-<script src="fold-4-tools.js?v=1602"></script>
-<script src="fold-5-ui.js?v=1602"></script>
+<script src="fold-1-core.js?v=1603"></script>
+<script src="fold-2-render.js?v=1603"></script>
+<script src="fold-3-ops.js?v=1603"></script>
+<script src="fold-4-tools.js?v=1603"></script>
+<script src="fold-5-ui.js?v=1603"></script>
 <div id="fieldInfo"></div>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;
