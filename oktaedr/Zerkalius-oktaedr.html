@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.034. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Октаэдр — v0.035. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.034</title>
+<title>Zerkalius Октаэдр — v0.035</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -211,7 +211,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.034</div>
+<div id="ver">v0.035</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -229,6 +229,10 @@
   <p><b>Граней у основания</b> (раздел «🎲 Картина») — 4 даёт октаэдр, <b>3</b> — треугольную бипирамиду: две
   трёхгранные пирамиды под общим треугольником, шесть граней вместо восьми. Есть и 5, и 6. Правило то же: верх — картина,
   низ — она же, отражённая и инвертированная. При смене основания картина собирается заново: у каждой грани своя.</p>
+  <p><b>△ Серпинский</b> (там же) — на каждой грани треугольник Серпинского: бит ряда r на месте k — это C(r, k) по модулю 2,
+  треугольник Паскаля по чётности, тот же, что рисует «Правило 90» из одной точки в Code. Держится при смене плотности
+  (лучше всего видно на 16, 32, 64 рядах — степенях двойки), снимается «🎲 Новой картиной» или своими битами. Снизу, как
+  всегда, — он же, инвертированный.</p>
   <p>Биты идут рядами, параллельными экватору: ряд у вершины — один бит, каждый следующий на бит
   длиннее. Цифры живут в объёме вместе с телом, а не наклеены картинкой: размер убывает с
   расстоянием, яркость — по тому, насколько грань отвёрнута от взгляда.</p>
@@ -428,6 +432,8 @@
     </div>
   </div>
   <button id="bRoll" title="N">🎲 Новая картина</button>
+  <!-- v0.035: треугольник Серпинского на каждой грани -->
+  <button id="bSierp" title="На каждой грани — треугольник Серпинского: ряд r, место k — C(r, k) по модулю 2 (треугольник Паскаля, «Правило 90» от одной точки). Держится при смене плотности; снимается новой картиной или своими битами">△ Серпинский</button>
   <button id="bMy" title="Вписать свою картину бит">✎ Свои биты</button>
   <div id="myBox" class="set">
     <label>Свои биты: считаются только 0 и 1</label>
@@ -619,6 +625,11 @@ let bits = [];
    mySame — каждая грань начинает строку с начала, и четыре грани выходят одинаковыми.
    Объявлено ЗДЕСЬ, до первого вызова rollBits: let, объявленный ниже вызова, бросил бы ошибку. */
 let myBits = "", mySame = false;
+/* v0.035: СЕРПИНСКИЙ (запрос пользователя: «тут возможность Серпинского»). Грань — ровно треугольник Паскаля: ряд r от
+   вершины, место k от края; бит — C(r, k) по модулю 2, а он равен 1 тогда и только тогда, когда у k и r−k нет общих
+   единиц в двоичной записи (теорема Лукаса). Это тот же треугольник, что рисует «Правило 90» из одной точки в Code.
+   Режим держится, как свои биты: меняется плотность — треугольник строится заново на новое число рядов. */
+let sierp = false;
 /* v0.031: счётчик перемен картины для режима точек. Растёт на всём, что меняет вид бит (новая картина,
    шаг, забыть память, правка бита, закрепления) — по нему картинка грани понимает, что устарела.
    Объявлен здесь, до первого rollBits, по той же причине, что и myBits. */
@@ -651,7 +662,8 @@ function rollBits(){
     for (let r = 0; r < ROWS; r++) {
       const row = [], mrow = [];
       for (let k = 0; k <= r; k++) {
-        row.push(src ? (src.charCodeAt(i++ % src.length) - 48) : (Math.random() < 0.5 ? 0 : 1));
+        row.push(sierp ? ((k & (r - k)) === 0 ? 1 : 0)   // v0.035: C(r, k) mod 2
+          : src ? (src.charCodeAt(i++ % src.length) - 48) : (Math.random() < 0.5 ? 0 : 1));
         mrow.push(0);
       }
       face.push(row); mem.push(mrow);
@@ -1350,7 +1362,9 @@ bEdge.onclick = () => { showHidden = !showHidden; bEdge.classList.toggle("act", 
 bDirs.onclick = () => { showDirs = !showDirs; bDirs.classList.toggle("act", showDirs); };   // v0.029
 bDots.onclick = () => { dotMode = !dotMode; bDots.classList.toggle("act", dotMode); };      // v0.031
 bEdges.onclick = () => { showEdges = !showEdges; bEdges.classList.toggle("act", showEdges); }; // v0.031
-bRoll.onclick = () => { myBits = ""; rollBits(); myInfoUpd(); save(); };
+bRoll.onclick = () => { myBits = ""; sierp = false; rollBits(); myInfoUpd(); syncUI(); save(); };
+// v0.035: Серпинский — вкл/выкл; включение снимает свои биты (картина одна), выключение даёт новую случайную
+document.getElementById("bSierp").onclick = () => { sierp = !sierp; if (sierp) myBits = ""; rollBits(); unpinAll(); myInfoUpd(); syncUI(); save(); };
 // v0.034: смена основания — новое тело и новая картина (биты заведены по слотам, а слотов стало другое число);
 // закрепления и наведение снимаются — они адресованы слотам прежнего тела. Свои биты ложатся заново.
 document.querySelectorAll("#baseRow button").forEach(b => b.onclick = () => {
@@ -1384,7 +1398,7 @@ function save(){
   try {
     localStorage.setItem(KEY, JSON.stringify({
       ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, showEdges, showDirs, dotMode, zoom, yaw, pitch, stepOp, TICK,
-      showLinks, LINK_EVERY, hoverOn, myBits, mySame, glowV: 1, bitCol, col0, col1, NB,
+      showLinks, LINK_EVERY, hoverOn, myBits, mySame, glowV: 1, bitCol, col0, col1, NB, sierp,
       theme: document.documentElement.getAttribute("data-theme") || ""
     }));
   } catch (e) {}
@@ -1417,6 +1431,7 @@ function load(){
   if (o.LINK_EVERY >= 1 && o.LINK_EVERY <= 32) LINK_EVERY = o.LINK_EVERY | 0;   // v0.022: 12 -> 32, под 64 ряда
   if (typeof o.myBits === "string" && /^[01]{0,200000}$/.test(o.myBits)) myBits = o.myBits;
   if (typeof o.mySame === "boolean") mySame = o.mySame;
+  if (typeof o.sierp === "boolean") sierp = o.sierp;   // v0.035
   if (typeof o.bitCol === "boolean") bitCol = o.bitCol;
   if (/^#[0-9a-f]{6}$/i.test(o.col0 || "")) col0 = o.col0;
   if (/^#[0-9a-f]{6}$/i.test(o.col1 || "")) col1 = o.col1;
@@ -1440,6 +1455,7 @@ function syncUI(){
   bEdges.classList.toggle("act", showEdges);
   bDirs.classList.toggle("act", showDirs);
   bDots.classList.toggle("act", dotMode);
+  document.getElementById("bSierp")?.classList.toggle("act", sierp);   // v0.035
   // На кнопке — куда переключит следующий щелчок (так было и до трёх схем, v0.027).
   bTheme.textContent = bitCol ? "🎨 Палитра приложения"
     : document.documentElement.getAttribute("data-theme") === "green" ? "🎨 Свои цвета" : "🎨 Зелень";
@@ -1632,7 +1648,7 @@ function myInfoUpd(msg){
 function myPut(){
   const t = myClean(myArea.value);
   if (!t) { myInfoUpd("в поле нет ни одного 0 или 1"); return; }
-  myBits = t.slice(0, MY_MAX); rollBits(); myInfoUpd(); save();
+  myBits = t.slice(0, MY_MAX); sierp = false; rollBits(); myInfoUpd(); syncUI(); save();   // v0.035: свои биты снимают Серпинского
 }
 bMy.onclick = () => { myBox.classList.toggle("on"); if (myBox.classList.contains("on")) myArea.focus(); syncUI(); };
 bTake.onclick = () => {
