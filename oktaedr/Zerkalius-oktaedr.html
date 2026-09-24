@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.033. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Октаэдр — v0.034. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.033</title>
+<title>Zerkalius Октаэдр — v0.034</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -211,7 +211,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.033</div>
+<div id="ver">v0.034</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -226,6 +226,9 @@
   картину, отражённую и инвертированную. Сравните любой ряд сверху с тем же рядом снизу: это не
   похожая картинка, это одна и та же, увиденная с другой стороны зеркала. В терминах самого
   приложения — зеркало «инв-разв».</p>
+  <p><b>Граней у основания</b> (раздел «🎲 Картина») — 4 даёт октаэдр, <b>3</b> — треугольную бипирамиду: две
+  трёхгранные пирамиды под общим треугольником, шесть граней вместо восьми. Есть и 5, и 6. Правило то же: верх — картина,
+  низ — она же, отражённая и инвертированная. При смене основания картина собирается заново: у каждой грани своя.</p>
   <p>Биты идут рядами, параллельными экватору: ряд у вершины — один бит, каждый следующий на бит
   длиннее. Цифры живут в объёме вместе с телом, а не наклеены картинкой: размер убывает с
   расстоянием, яркость — по тому, насколько грань отвёрнута от взгляда.</p>
@@ -357,7 +360,7 @@
     закреплённые горят своим цветом, клик, Shift+клик и наведение попадают в клетку. Пока клетки
     крупные, между ними зазор — видно, что это точки; на 256 рядах они идут сплошь. Размер цифр и
     свечение в этом режиме не участвуют.</li>
-    <li><b>🧭 Стороны света</b> (клавиша C) — буквы <b>С В Ю З</b> у четырёх углов экватора, чуть снаружи
+    <li><b>🧭 Стороны света</b> (клавиша C) — буквы <b>С В Ю З</b> по компасу вокруг экватора (у октаэдра — ровно у его углов), чуть снаружи
     тела, и <b>Верх</b> / <b>Низ</b> у вершин пирамид. Крутятся вместе с ним: ближние к вам ярче, дальние приглушены, — так видно, какой стороной тело
     сейчас повёрнуто и куда оно ушло после вращения.</li>
     <li><b>◇ Рёбра</b> (клавиша E) — показать или спрятать все рёбра тела разом, экватор тоже: остаются
@@ -414,6 +417,16 @@
 </div>
 <div id="panel" class="dock">
   <div class="tab-sec" data-tab="pic" data-title="🎲 Картина">
+  <!-- v0.034: сколько граней у основания: 4 — октаэдр, 3 — треугольная бипирамида -->
+  <div class="set">
+    <label>Граней у основания: <b id="vBase">4</b></label>
+    <div class="row" id="baseRow">
+      <button data-nb="3" title="Треугольная бипирамида: две трёхгранные пирамиды под общим треугольником">△ 3</button>
+      <button data-nb="4" title="Октаэдр: две четырёхгранные пирамиды под общим квадратом">◇ 4</button>
+      <button data-nb="5" title="Пятигранная бипирамида">⬠ 5</button>
+      <button data-nb="6" title="Шестигранная бипирамида">⬡ 6</button>
+    </div>
+  </div>
   <button id="bRoll" title="N">🎲 Новая картина</button>
   <button id="bMy" title="Вписать свою картину бит">✎ Свои биты</button>
   <div id="myBox" class="set">
@@ -422,7 +435,7 @@
     <div id="myInfo"></div>
     <div class="row">
       <button id="bTake" title="Картина, что сейчас на гранях, — в поле: ряд на строку, грани через пустую строку">⇩ Текущие</button>
-      <button id="bSame" title="Каждая из четырёх граней начинается с начала строки">◇ Одинаково</button>
+      <button id="bSame" title="Каждая грань половины начинается с начала строки">◇ Одинаково</button>
     </div>
   </div>
   <div class="set">
@@ -524,16 +537,24 @@
    Шесть вершин: две вершины пирамид по оси Y и четыре угла общего квадрата в плоскости Y=0.
    Эта плоскость и есть зеркало, поэтому вся арифметика ниже строится от неё. */
 const T = [0, 1, 0], B = [0, -1, 0];
-const EQ = [[1, 0, 0], [0, 0, 1], [-1, 0, 0], [0, 0, -1]];
+/* v0.034: ОСНОВАНИЕ ИЗ NB ГРАНЕЙ (запрос пользователя: «а что если такую же, но 3 грани основания?»). Октаэдр — частный
+   случай, NB = 4: две четырёхгранные пирамиды. При NB = 3 выходит треугольная бипирамида, 5 и 6 — пяти- и шестигранные.
+   Углы основания — по кругу радиуса 1 в плоскости зеркала Y = 0, первый на +X; при NB = 4 это ровно прежние четыре
+   точки. Всё, что было «на четыре», теперь «на NB»: грани, рёбра, картины бит по слотам, нити, свои биты. */
+let NB = 4;
+const EQ = [];
+const NB_NAME = { 3: "треугольная бипирамида", 4: "октаэдр", 5: "пятигранная бипирамида", 6: "шестигранная бипирамида" };
 
 /* Восемь граней, по четыре на половину. slot — номер грани ВОКРУГ оси (0..3): у верхней и нижней
    грани с одним slot общее ребро на экваторе, и они зеркальны друг другу. Поэтому картину бит
    достаточно завести ОДНУ на slot: верхняя грань показывает её как есть, нижняя — инвертированной,
    и на том же месте, потому что отсчёт в обеих идёт от своей вершины. */
 const FACES = [];
-for (let s = 0; s < 4; s++) {
-  FACES.push({ v: [T, EQ[s], EQ[(s + 1) % 4]], slot: s, up: true });
-  FACES.push({ v: [B, EQ[s], EQ[(s + 1) % 4]], slot: s, up: false });
+function buildFaces(){
+FACES.length = 0;
+for (let s = 0; s < NB; s++) {
+  FACES.push({ v: [T, EQ[s], EQ[(s + 1) % NB]], slot: s, up: true });
+  FACES.push({ v: [B, EQ[s], EQ[(s + 1) % NB]], slot: s, up: false });
 }
 /* Обход вершин выправляется по факту, а не подбирается руками: нормаль грани у выпуклого тела с
    центром в нуле обязана смотреть НАРУЖУ, то есть в ту же сторону, что и её собственный центр.
@@ -548,9 +569,11 @@ for (const f of FACES) {
   // Перестановка вершин её не меняет, поэтому считаем один раз здесь и больше не пересчитываем.
   f.c = c;
 }
+FTOP.length = 0; FBOT.length = 0;
+for (const f of FACES) (f.up ? FTOP : FBOT)[f.slot] = f;
+}
 /* Грани по номеру вокруг оси — чтобы по слоту сразу достать ОБЕ половины пары. */
 const FTOP = [], FBOT = [];
-for (const f of FACES) (f.up ? FTOP : FBOT)[f.slot] = f;
 function sub(a, b){ return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
 function cross(a, b){ return [a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0]]; }
 function dot(a, b){ return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
@@ -558,11 +581,21 @@ function dot(a, b){ return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
 /* Двенадцать рёбер: четыре верхних, четыре нижних и четыре экваторных. Экватор помечен отдельно —
    он рисуется ярче всех: это линия зеркала. */
 const EDGES = [];
-for (let s = 0; s < 4; s++) {
-  EDGES.push({ a: T, b: EQ[s], kind: "up" });
-  EDGES.push({ a: B, b: EQ[s], kind: "dn" });
-  EDGES.push({ a: EQ[s], b: EQ[(s + 1) % 4], kind: "eq" });
+/* v0.034: тело собирается целиком заново при смене NB — углы основания, грани, пары граней, рёбра. Массивы те же
+   (очищаются и заполняются), поэтому всё, что держит на них ссылку, видит новое тело сразу. */
+function buildBody(n){
+  NB = n;
+  EQ.length = 0;
+  for (let s = 0; s < NB; s++) { const a = 2 * Math.PI * s / NB; EQ.push([Math.round(Math.cos(a) * 1e9) / 1e9, 0, Math.round(Math.sin(a) * 1e9) / 1e9]); }
+  buildFaces();
+  EDGES.length = 0;
+  for (let s = 0; s < NB; s++) {
+    EDGES.push({ a: T, b: EQ[s], kind: "up" });
+    EDGES.push({ a: B, b: EQ[s], kind: "dn" });
+    EDGES.push({ a: EQ[s], b: EQ[(s + 1) % NB], kind: "eq" });
+  }
 }
+buildBody(4);
 
 /* ═══ КАРТИНА БИТ ═════════════════════════════════════════════════════════════════════════════
    Биты лежат рядами, ПАРАЛЛЕЛЬНЫМИ экватору: ряд 0 — у самой вершины (один бит), ряд r — r+1 бит.
@@ -612,7 +645,7 @@ function rollBits(){
   bits = []; keep = []; dotVer++;
   const src = myBits;   // v0.020: вписанные свои биты; пусто — случайные
   let i = 0;
-  for (let s = 0; s < 4; s++) {
+  for (let s = 0; s < NB; s++) {   // v0.034: слотов столько, сколько граней у основания
     const face = [], mem = [];
     if (mySame) i = 0;
     for (let r = 0; r < ROWS; r++) {
@@ -699,6 +732,8 @@ let dotMode = false;
 const DOT_TEX = 512, DOT_DIM = 0.22, DOT_GAP = 0.12;
 let dotFaces = [];   // грани, нарисованные последним кадром в режиме точек, — для клика и наведения
 const DIRS = ["В", "Ю", "З", "С"], DIR_OUT = 1.16;
+// v0.034: буквы стоят по компасу (+X — восток, +Z — юг, …), а не на углах основания: у 3, 5, 6 граней углы не на сторонах света
+const CARD = [[1, 0, 0], [0, 0, 1], [-1, 0, 0], [0, 0, -1]];
 // v0.031: и у вершин пирамид — «Верх» и «Низ». Словами, а не буквой: «В» уже занята востоком.
 const POLES = [[T, "Верх"], [B, "Низ"]];
 /* ЗАКРЕПЛЁННЫЕ БИТЫ (v0.010, запрос пользователя: «клик по битам выделяет и закрепляет, снимает
@@ -790,7 +825,7 @@ function doStep(dir){
   const back = dir < 0;
   const f = (back ? OPS_BACK : OPS)[stepOp] || OPS.rev;
   let still = 0, total = 0;
-  for (let s = 0; s < 4; s++) {
+  for (let s = 0; s < NB; s++) {
     for (let r = 0; r < ROWS; r++) {
       const row = bits[s][r], next = f(row), mem = keep[s][r];
       for (let k = 0; k < row.length; k++) {
@@ -810,7 +845,7 @@ function doStep(dir){
 }
 function forgetMem(){
   dotVer++;
-  for (let s = 0; s < 4; s++) for (let r = 0; r < ROWS; r++) keep[s][r].fill(0);
+  for (let s = 0; s < NB; s++) for (let r = 0; r < ROWS; r++) keep[s][r].fill(0);
   stepNo = 0; stillPct = null; memOn = false;
   updateStepInfo();
 }
@@ -993,7 +1028,7 @@ function draw(){
     if (showLinks) {
       ctx.strokeStyle = cLink; ctx.globalAlpha = 0.17;
       ctx.beginPath();
-      for (let sl = 0; sl < 4; sl++) {
+      for (let sl = 0; sl < NB; sl++) {
         let idx = -1;
         for (let r = 0; r < ROWS; r++) {
           for (let k = 0; k <= r; k++) {
@@ -1175,7 +1210,7 @@ function draw(){
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillStyle = cEq;
     for (let i = 0; i < 4; i++) {
-      const v = EQ[i], p = project([v[0] * DIR_OUT, 0, v[2] * DIR_OUT]);
+      const v = CARD[i], p = project([v[0] * DIR_OUT, 0, v[2] * DIR_OUT]);
       const fs = Math.max(10, 17 * p.k * zoom * (Math.min(W, HGT) / 700));
       ctx.font = "600 " + fs.toFixed(1) + "px 'Segoe UI', Inter, system-ui, sans-serif";
       ctx.globalAlpha = 0.33 + 0.62 * Math.max(0, Math.min(1, (p.z / DIR_OUT + 1) / 2));
@@ -1315,7 +1350,13 @@ bEdge.onclick = () => { showHidden = !showHidden; bEdge.classList.toggle("act", 
 bDirs.onclick = () => { showDirs = !showDirs; bDirs.classList.toggle("act", showDirs); };   // v0.029
 bDots.onclick = () => { dotMode = !dotMode; bDots.classList.toggle("act", dotMode); };      // v0.031
 bEdges.onclick = () => { showEdges = !showEdges; bEdges.classList.toggle("act", showEdges); }; // v0.031
-bRoll.onclick = () => { myBits = ""; rollBits(); myInfoUpd(); save(); };   // v0.020: и снимает свои биты
+bRoll.onclick = () => { myBits = ""; rollBits(); myInfoUpd(); save(); };
+// v0.034: смена основания — новое тело и новая картина (биты заведены по слотам, а слотов стало другое число);
+// закрепления и наведение снимаются — они адресованы слотам прежнего тела. Свои биты ложатся заново.
+document.querySelectorAll("#baseRow button").forEach(b => b.onclick = () => {
+  const n = +b.dataset.nb; if (n === NB) return;
+  buildBody(n); hoverBit = null; pinned.clear(); rollBits(); myInfoUpd(); syncUI(); save();
+});   // v0.020: и снимает свои биты
 /* v0.027: схем три, по кругу — палитра приложения → зелень → свои цвета → палитра приложения (запрос
    пользователя: «🎨 оставить как было, а при изменении цветов — это схема „Свои цвета“»). «Свои цвета» —
    это bitCol: биты по значению, цвета из квадратиков 0 и 1. Рамки и фон при этом остаются той палитры,
@@ -1343,7 +1384,7 @@ function save(){
   try {
     localStorage.setItem(KEY, JSON.stringify({
       ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, showEdges, showDirs, dotMode, zoom, yaw, pitch, stepOp, TICK,
-      showLinks, LINK_EVERY, hoverOn, myBits, mySame, glowV: 1, bitCol, col0, col1,
+      showLinks, LINK_EVERY, hoverOn, myBits, mySame, glowV: 1, bitCol, col0, col1, NB,
       theme: document.documentElement.getAttribute("data-theme") || ""
     }));
   } catch (e) {}
@@ -1352,6 +1393,7 @@ function load(){
   let o = null;
   try { o = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) {}
   if (!o) return;
+  if (o.NB >= 3 && o.NB <= 6 && (o.NB | 0) !== NB) buildBody(o.NB | 0);   // v0.034: картина соберётся следом (rollBits после load)
   if (o.ROWS >= 4 && o.ROWS <= 256) ROWS = o.ROWS | 0;   // v0.022: предел 26 -> 64; v0.023: 256 для пробы
   if (o.DIG  >= 2 && o.DIG  <= 22) DIG  = o.DIG  | 0;   // v0.023: минимум 7 -> 2
   if (o.SPEED >= 0 && o.SPEED <= 160) SPEED = o.SPEED | 0;
@@ -1383,6 +1425,10 @@ function load(){
   // (v0.020) сохраняются: их вписывали руками, и терять их при перезагрузке обидно.
 }
 function syncUI(){
+  // v0.034: основание — нажатая кнопка, число и название в полосе меню
+  document.querySelectorAll("#baseRow button").forEach(b => b.classList.toggle("act", +b.dataset.nb === NB));
+  const vBase = document.getElementById("vBase"); if (vBase) vBase.textContent = NB + " · " + (NB_NAME[NB] || NB + "-гранная бипирамида");
+  const ttl = document.getElementById("title"); if (ttl) ttl.textContent = "zerkalius · " + (NB_NAME[NB] || "бипирамида");
   sRows.value = ROWS;  vRows.textContent = ROWS;
   sSize.value = DIG;   vSize.textContent = DIG;
   sGlow.value = GLOW;  vGlow.textContent = ROWS > GLOW_ROWS ? "выкл. — плотность > " + GLOW_ROWS : GLOW;
@@ -1576,7 +1622,7 @@ const myClean = (t) => t.replace(/[^01]/g, "");
 // на грани всё равно не лечь, а память браузера у страницы не резиновая.
 const MY_MAX = 200000;
 function myInfoUpd(msg){
-  const n = myClean(myArea.value).length, face = ROWS * (ROWS + 1) / 2, need = mySame ? face : face * 4;
+  const n = myClean(myArea.value).length, face = ROWS * (ROWS + 1) / 2, need = mySame ? face : face * NB;
   const where = mySame ? face + " на каждой грани" : need + " (по " + face + " на грань)";
   myInfo.classList.toggle("bad", !!msg);
   myInfo.textContent = msg || (n === 0 ? "мест: " + where
