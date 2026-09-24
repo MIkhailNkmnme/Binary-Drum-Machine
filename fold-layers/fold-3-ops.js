@@ -1643,6 +1643,11 @@ function scrollToBit(r, p){
   const s = st.rows[r] || "";
   const col = rowShiftFor(maxLen, r, s, st.align) + (st.axisCenterOffset || 0) + p;
   const x = (bitsEl.getBoundingClientRect().left - sc.getBoundingClientRect().left) + sc.scrollLeft + col * chPx;
+  /* v1.605, запрос «пусть когда паттерн выделяется и находится — не двигается ничего»: бит уже на
+     экране — экран не трогаем (по вертикали scrollToRow и так двигает только к невидимой строке).
+     Раньше найденное всегда ставилось в середину, и клик по паттерну уводил всё полотно вбок. */
+  const pad = 2 * chPx;
+  if (x >= sc.scrollLeft + pad && x + chPx <= sc.scrollLeft + sc.clientWidth - pad) return;
   const max = Math.max(0, sc.scrollWidth - sc.clientWidth);
   sc.scrollLeft = Math.max(0, Math.min(max, x - sc.clientWidth / 2));
 }
