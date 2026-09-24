@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Layers — v1.581</title>
+<title>Zerkalius Layers — v1.594</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -932,6 +932,18 @@
      ячейке, v1.562 — ещё два бита) здесь теряют смысл: подписи в блоке нет, блок стоит в поле
      цепочки и на биты паттернов не садится. Снимаем их. */
   #patCtrlL, #patCtrlR{ gap:3px; }
+  /* ═══ КНОПКИ НА ПОЛЕ ЦЕПОЧЕК (v1.594) ═══ Слой #fieldBtns лежит поверх полотна во всю .main-layout
+     и мышь не ловит — ловят только сами значки. Место значка (left/top) ставит renderFieldBtns. Вид —
+     как у кнопок меню 2 (--m2-*). В «чисто биты» слоя нет (как и ряда управления, v1.593). */
+  #fieldBtns{ position:absolute; inset:0; pointer-events:none; z-index:97; }
+  #fieldBtns > button{ position:absolute; pointer-events:auto; width:var(--m2-w, 28px); height:var(--m2-h, 24px);
+    min-height:0; padding:0 !important; font-size:var(--m2-fs, 15px); line-height:1;
+    display:flex; align-items:center; justify-content:center; cursor:grab; border:none !important;
+    border-radius:2px; background:linear-gradient(rgba(255,255,255,.06), rgba(255,255,255,.06)), var(--bg) !important; }
+  #fieldBtns > button:hover{ background:linear-gradient(rgba(255,255,255,.16), rgba(255,255,255,.16)), var(--bg) !important; }
+  #fieldBtns > button.pin-on{ background:linear-gradient(rgba(77,163,255,.28), rgba(77,163,255,.28)), var(--bg) !important; }
+  #fieldBtns > button.gone{ opacity:.35; }
+  body.all-hidden #fieldBtns{ display:none; }
   /* ═══ «№» НОМЕРОВ ЦЕПОЧКИ — ПЕРВОЙ В ЛЕВОЙ ГРУППЕ МЕНЮ 2 (v1.570) ═══
      Вернули по выбору пользователя (вариант «в меню 2»), перенос узла — в fold-5-ui.js. Правила
      кнопки из её прежней жизни над колонкой номеров (ширина под колонку, прижатие подписи вправо,
@@ -4611,6 +4623,16 @@ body.menubar-bottom .floating-panel.menu-panel{ padding:4px 4px 0; }
    fold-3-ops.js). Само меню и так прозрачное и pointer-events:none (см. правило выше) — но его
    дети (кнопки, вкладки) ловят клики, и их надо выключить полностью, не только визуально. */
 body.all-hidden #menuBar{ display:none; }
+/* ═══ «ЧИСТО БИТЫ» — БЕЗ РЯДА УПРАВЛЕНИЯ (v1.593) ═══
+   Запрос пользователя: «в режиме дзен это всё убрать, оставить только цепочки» — про ряд у нулевой
+   строки: меню 2 (выравнивания, «№», цвета, замок, «⧉», толстый хват горизонта), планки П1/П2 («П»,
+   «Л», «№», цвета, выравнивание), счётчики лесенок и сама черта горизонта. visibility, а не
+   display:none: расчёты раскладки меряют эти коробки (меню 2 садит выравнивания на ось по своим
+   группам), и с нулевой коробкой они бы поехали. Мышь тоже не ловят. */
+body.all-hidden #alignGrp, body.all-hidden #alignGrp *, body.all-hidden .pat-strip,
+body.all-hidden #patCtrlL, body.all-hidden #patCtrlR, body.all-hidden #axisStrip,
+body.all-hidden .stairs-axis, body.all-hidden .axis-col-box, body.all-hidden .hsplit-top,
+body.all-hidden .num-btn-float{ visibility:hidden !important; pointer-events:none !important; }
 /* Боковые доки — от самого верха и на всю высоту (внизу по-прежнему оставлена полоса под
    горизонтальный скролл полотна, см. --hscroll-h). */
 .controls{ top:0; max-height:calc(100% - var(--hscroll-h) - 3px); }
@@ -5225,13 +5247,25 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
   #m2HzGrip::before{ content:""; position:absolute; left:0; right:0; top:4px; height:3px;
     background:rgba(176,124,224,.85); pointer-events:none; }
   #m2HzGrip:hover::before, #m2HzGrip.drag::before{ background:#d9b8f2; box-shadow:0 0 8px rgba(186,124,240,.7); }
+  /* ═══ ЗНАКИ П1/П2 — НА ОДНОЙ ЛИНИИ С БИТАМИ ЦЕПОЧКИ (v1.582) ═══
+     Запрос пользователя: «выровняй верт положения цепочек и паттернов» — внутри строки.
+     Текст ячейки (.pat-txt и вынесенный первый знак .pat-skip) с v1.395 — inline-block высотой в
+     знаки (ради заливки) и vertical-align:middle. Но middle ставит середину коробки не на середину
+     строки, а на «базовая линия + половина высоты строчной буквы», и знаки паттерна сидели на
+     пиксель-два ниже или выше бит (те центруются честно — флексом по высоте строки).
+     Шрифт у них один и тот же, поэтому общая БАЗОВАЯ ЛИНИЯ даёт ровно то же место, что у бит:
+     в строке высотой --row-h базовая линия у обоих — (--row-h − высота знака)/2 + верхний выносной.
+     Заливка по-прежнему по знакам: высота коробки — те же 1.15em. min(…, --row-h) — на тесном
+     межстрочном коробка выше строки раздула бы строчный бокс и снова сдвинула бы знаки вниз. */
+  .ln .pat .pat-txt, .ln .pat2 .pat-txt, .ln .pat .pat-skip, .ln .pat2 .pat-skip{
+    vertical-align:baseline; line-height:min(1.15em, var(--row-h, 12px)); }
 </style>
 <!-- === МАРКЕР 03: HEADER_UI === -->
 <div id="menuBar">
   <!-- Заголовок стоит вплотную слева от вкладок (v1.046), вся связка центрируется полосой — см. #menuBarTitle в CSS. --><div id="menuBarTitle">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.581</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.594</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -5930,6 +5964,8 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
   </div>
   <button data-proxy="bDescentIns"></button>
   <button data-proxy="bDescentXor"></button>
+  <button data-proxy="bAscent" style="grid-column:1 / -1;"></button>
+  <button data-proxy="bDescentEdgeAll" style="grid-column:1 / -1;"></button>
   <div class="sess-lab">Разворот и память</div>
   <button data-proxy="bReverseKeep"></button>
   <button data-proxy="bRevMoveFlip"></button>
@@ -5981,6 +6017,11 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
     </select>
     <button id="bDescentIns" style="flex:1;" title="ВСТАВИТЬ новыми строками: этажи спуска (или край) встают рядом с исходной строкой, всё остальное сдвигается, ничего не затирается. ↩ вернёт">⬇ Вставить</button>
     <button id="bDescentXor" style="flex:1;" title="ПОЛОЖИТЬ XOR-ом в уже стоящие строки: этаж k ложится в строку, отстоящую от исходной на k, бит к биту слева направо. Строки не двигаются. Если какой-то строки нет или в ней не только 0 и 1 — ничего не делается и говорится, где споткнулось. ↩ вернёт">⊕ XOR-ом</button>
+    <!-- v1.587, запрос «у каждой строки есть край — можно кнопку, которая переведёт все строки
+         выделенные или все, если нет выделения, в такие». Код — descentEdgeAll в fold-3-ops.js. -->
+    <!-- v1.588, запрос «а подъём есть?» → «да» (кнопка, что строит весь подъём до вершины). Код — ascentBuild в fold-3-ops.js. -->
+    <button id="bAscent" style="flex:1 1 100%;" title="△ ПОДЪЁМ ДО ВЕРШИНЫ: над ВЫДЕЛЕННОЙ строкой (ничего не выделено — над последней) встают все её предки по Паскалю разом — то же, что жать «🔻−1 Строка выше» раз за разом: каждая строка на бит короче, сверху вершина. Подъём останавливается, когда у очередной строки нет родителя (последний бит не сошёлся — так у половины строк) или осталась строка в один бит. Строки ниже сдвигаются, ничего не затирается. ↩ вернёт">△ Подъём до вершины</button>
+    <button id="bDescentEdgeAll" style="flex:1 1 100%;" title="КАЖДУЮ строку — В ЕЁ КРАЙ, на месте: выделенные строки (ничего не выделено — все) заменяются краем своего треугольника спуска — первыми битами этажей сверху вниз. Длина та же, строки не двигаются. Это биномиальное преобразование над GF(2), оно само себе обратное: нажми ещё раз — строки вернутся. Строки не только из 0 и 1 пропускаются. ↩ вернёт">▽⇄ Строки → края</button>
   </div>
   <div id="descentView" class="descent-view"></div>
 </div>
@@ -6824,11 +6865,11 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
      (видно новый номер версии в заголовке), а fold-*.js берёт из кеша — то есть новый код
      просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
      версией в <title>/<h3>, теми же тремя цифрами. -->
-<script src="fold-1-core.js?v=1581"></script>
-<script src="fold-2-render.js?v=1581"></script>
-<script src="fold-3-ops.js?v=1581"></script>
-<script src="fold-4-tools.js?v=1581"></script>
-<script src="fold-5-ui.js?v=1581"></script>
+<script src="fold-1-core.js?v=1594"></script>
+<script src="fold-2-render.js?v=1594"></script>
+<script src="fold-3-ops.js?v=1594"></script>
+<script src="fold-4-tools.js?v=1594"></script>
+<script src="fold-5-ui.js?v=1594"></script>
 <div id="fieldInfo"></div>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;

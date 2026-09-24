@@ -6502,6 +6502,9 @@ function isOverPatternColumn(e) {
 const canvasEl = document.querySelector(".canvas");
 if (canvasEl) {
   canvasEl.addEventListener("dragover", e => {
+    // v1.594: тащат не файл (кнопку на поле цепочек) — это не наш жест, подсветку колонок не зажигаем.
+    const tps = e.dataTransfer && e.dataTransfer.types;
+    if (tps && !Array.from(tps).includes("Files")) return;
     e.preventDefault();
     if (isOverPatternColumn(e)) {
       canvasEl.classList.add("drop-pats");
@@ -7050,7 +7053,18 @@ function patBankToPats(){
 function patBankToRows(){
   const bank = (st.patBank || []).filter(t => t);
   if (!bank.length) { say("Кэш паттернов пуст — сначала отложи туда текущие кнопкой «💾 Паттерны в кэш»."); return; }
-  textsToChainRows(bank, "Паттерны из кэша");
+  /* ═══ С ПЕРВОЙ СТРОКИ, А НЕ С НУЛЕВОЙ (v1.591) ═══
+     Баг-репорт: «вот тут неправильно делает» (кнопка «🧩⬇ В цепочку»). Кэш ложился с индекса 0:
+     первая запись вставала в нулевую строку (или в построения сверху), textsToChainRows сбрасывал
+     topBuilt, а ensureZeroRow, найдя нулевую строку занятой, вставлял новую пустую и сдвигал вниз
+     и цепочку, и колонку паттернов — паттерны уезжали на вторую строку. Та же беда, от которой в
+     v0.829 лечили patBankToPats (кэш → паттерны).
+     Теперь запись №1 кэша ложится в строку №1 — ровно туда, откуда patBankToPats начинает паттерны,
+     так что строка и её паттерн из кэша стоят напротив. Всё, что выше (нулевая строка, построения
+     сверху), остаётся как было: для этих мест записи пусты, а пустая запись строку не трогает
+     (v1.475). topBuilt при этом не сбрасываем (keepTop). */
+  const lead = (st.topBuilt || 0) + 1;
+  textsToChainRows(new Array(lead).fill("").concat(bank), "Паттерны из кэша", true);
 }
 
 const bAddTabEl = document.getElementById("bAddTab");

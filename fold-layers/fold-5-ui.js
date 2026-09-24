@@ -1617,10 +1617,15 @@ var PIN_SLOTS_N = 5;   // столько пустых ячеек с каждой
    тело читает pinSlots/PIN_SLOTS_N — у let/const это временная мёртвая зона, то есть исключение.
    Та же причина и то же лекарство, что у patW2Manual/numProbeEl и прочих глобалов, к которым
    render() дотягивается до их строки: объявляем var — оно всплывает вместе с функцией. */
+/* v1.592: ЗАКРЕПЛЕНИЯ В МЕНЮ 2 БОЛЬШЕ НЕТ (запрос пользователя «закрепление значков в меню 2 —
+   это удали»). Кнопки теперь кладут на полку «🧰 Кнопки» (блок ПОЛКА ниже). Стартовый набор пуст,
+   приёмники в меню 2 не подключаются (см. конец блока перетаскивания), а то, что лежало в слотах из
+   прежних сессий, applyUiSettings переносит на полку и слоты очищает. Сами контейнеры #alignPinL/R
+   в разметке остаются пустыми: по #alignPinL раскладка меню 2 считает правый край связки
+   выравниваний (updateAxisSplitPosition) — без него выравнивания перестали бы садиться на ось. */
 var pinSlots = {
-  // "bLayerFocus" убран из слотов в v1.066 вместе с самой кнопкой «◑ Слои».
-  L: ["bResetFields", "bMenuBarBottom", "bUndo", "bRedo", null],
-  R: ["bToggleResultBox", "bToggleStepLog", "bToggleSelect", "bToggleFieldInfo", null]
+  L: [null, null, null, null, null],
+  R: [null, null, null, null, null]
 };
 /* ТОЛЬКО ЗНАЧОК, БЕЗ ТЕКСТА (запрос пользователя: "в слотах надо значки без текста"). Раньше в
    слот копировался innerHTML оригинала целиком — вместе с подписью ("🔒 Выделение", "⌖ Поля на
@@ -1724,6 +1729,8 @@ function refreshPinSlotIcons(){
       btn.classList.toggle("pin-on", on);
     }
   }
+  // v1.594: кнопки на поле цепочек — те же ярлыки-прокси, обновляются тем же проходом.
+  if (typeof refreshFieldBtnIcons === "function") refreshFieldBtnIcons();
 }
 {
   /* CAPTURE, А НЕ BUBBLE (испр. v1.015, баг-репорт "не работает вставка значков") — очень многие
@@ -1946,10 +1953,154 @@ function refreshPinSlotIcons(){
     });
   };
   renderPinSlots();
-  wireSlotContainer(document.getElementById("alignPinL"), "L");
-  wireSlotContainer(document.getElementById("alignPinR"), "R");
-  wireBarAsPinTarget();
-  wireRowZeroAsPinTarget();
+  /* v1.592: приёмники меню 2 (слоты, вся полоса, нулевая строка) больше не подключаются —
+     закрепления в меню 2 нет, кнопки кладут на полку «🧰 Кнопки». dragstart выше остаётся: он
+     кладёт id кнопки в перетаскивание, и полка берёт его оттуда. Функции не удалены — вернуть
+     закрепление можно этими четырьмя вызовами. */
+  void wireSlotContainer; void wireBarAsPinTarget; void wireRowZeroAsPinTarget;
+}
+
+/* ═══ КНОПКИ НА ПОЛЕ ЦЕПОЧЕК — СВОБОДНАЯ РАСКЛАДКА (v1.594) ═══
+   Запрос пользователя (вместо полки-окна v1.592): «лучше сделай всё поле цепочек полем для этих
+   кнопок, и где их кинуть — пусть там крепятся, и перетаскивать можно, а если вытащить за пределы
+   поля или на биты, например, — то убрать». Закрепления в меню 2 нет с v1.592.
+   СЛОЙ #fieldBtns — поверх полотна во всю .main-layout, мышь пропускает насквозь; ловят только
+   значки. Значок — {id, x, y}, координаты от левого верхнего угла .main-layout (с полотном они
+   совпадают), так что стоит он на экране там, куда его бросили, и при прокрутке строк не едет.
+   ЗНАЧОК — ПРОКСИ, как прежние ярлыки: клик ищет оригинал по id и жмёт его; значок и состояние
+   (.mode-act/.act/.overlay-on) берутся у оригинала. Своего id у значка нет — ленивый draggable и
+   dragstart кнопок приложения (блок выше) его не трогают.
+   ЖЕСТЫ. Любую кнопку приложения — на полотно: встаёт под курсор (копия, оригинал на месте); та же
+   кнопка уже на поле — не дублируется, а переезжает. Значок по полотну — переезжает. Значок за
+   полотно (меню, доки, края окна) или на БИТЫ (цепочки или паттерна) — убирается. Новую кнопку на
+   биты не кладём. Файлы по-прежнему бросают на полотно как раньше: их жест мы не трогаем.
+   Хранится в настройках вида (fieldBtns); var — та же история с ранним render(), что у pinSlots. */
+var fieldBtns = [];
+var fieldBtnDrag = null;   // { idx, dx, dy, done } — тащат значок с самого поля
+function fieldBtnLayer(){
+  let L = document.getElementById("fieldBtns");
+  if (L) return L;
+  const host = document.querySelector(".main-layout");
+  if (!host) return null;
+  L = document.createElement("div");
+  L.id = "fieldBtns";
+  host.appendChild(L);
+  return L;
+}
+function fieldBtnTitle(src){
+  const t = src ? (src.title || src.textContent || "").replace(/\s+/g, " ").trim() : "кнопка сейчас недоступна";
+  return t + " — тащи по полю, чтобы переставить; за поле или на биты — уберётся.";
+}
+function renderFieldBtns(){
+  const L = fieldBtnLayer();
+  if (!L || !Array.isArray(fieldBtns)) return;
+  L.innerHTML = "";
+  fieldBtns.forEach((it, k) => {
+    const src = document.getElementById(it.id);
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = src ? pinSlotIcon(src, it.id) : "?";
+    b.style.left = (it.x | 0) + "px";
+    b.style.top = (it.y | 0) + "px";
+    b.draggable = true;
+    b.dataset.fieldIdx = String(k);
+    b.title = fieldBtnTitle(src);
+    b.addEventListener("click", e => {
+      e.stopPropagation();
+      const live = document.getElementById(it.id);
+      if (!live) { say("Кнопка сейчас недоступна — открой панель, где она живёт, и попробуй снова."); return; }
+      live.click();
+      refreshFieldBtnIcons();
+      setTimeout(refreshFieldBtnIcons, 0);
+    });
+    L.appendChild(b);
+  });
+  refreshFieldBtnIcons();
+}
+function refreshFieldBtnIcons(){
+  const L = document.getElementById("fieldBtns");
+  if (!L || !Array.isArray(fieldBtns)) return;
+  for (const b of L.children) {
+    const it = fieldBtns[+b.dataset.fieldIdx];
+    if (!it) continue;
+    const src = document.getElementById(it.id);
+    b.classList.toggle("gone", !src);
+    if (!src) continue;
+    const icon = pinSlotIcon(src, it.id);
+    if (b.textContent !== icon) b.textContent = icon;
+    b.classList.toggle("pin-on", ["mode-act", "act", "overlay-on"].some(cl => src.classList.contains(cl)));
+  }
+}
+{
+  const L = fieldBtnLayer();
+  const canvas = document.querySelector(".canvas");
+  const isFileDrag = (e) => { const t = e.dataTransfer && e.dataTransfer.types; return !!t && Array.from(t).includes("Files"); };
+  // Точка на бите цепочки или паттерна? Слой мышь не ловит, поэтому под точкой видно само полотно.
+  const onBits = (x, y) => document.elementsFromPoint(x, y)
+    .some(el => el.matches && el.matches(".b0, .b1, .pb0, .pb1"));
+  const removeAt = (idx, why) => {
+    if (!fieldBtns[idx]) return;
+    fieldBtns.splice(idx, 1);
+    renderFieldBtns();
+    saveCache();
+    say("Кнопка убрана с поля" + (why ? " — " + why : "") + ".");
+  };
+  const over = (e) => {
+    if (isFileDrag(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = fieldBtnDrag ? "move" : "copy";
+  };
+  const drop = (e) => {
+    if (isFileDrag(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const d = fieldBtnDrag;
+    const id = d ? (fieldBtns[d.idx] || {}).id : e.dataTransfer.getData("text/plain");
+    const src = id ? document.getElementById(id) : null;
+    if (!src || src.tagName !== "BUTTON") return;
+    if (onBits(e.clientX, e.clientY)) {
+      if (d) { d.done = true; removeAt(d.idx, "брошена на биты"); }
+      else say("На биты кнопку не кладу — брось на свободное место поля.");
+      return;
+    }
+    const lr = L.getBoundingClientRect();
+    const cr = canvas ? canvas.getBoundingClientRect() : lr;
+    const probe = L.querySelector("button");
+    const w = probe ? probe.offsetWidth : 28, h = probe ? probe.offsetHeight : 24;
+    const dx = d ? d.dx : w / 2, dy = d ? d.dy : h / 2;
+    const x = Math.round(Math.min(Math.max(cr.left, e.clientX - dx), cr.right - w) - lr.left);
+    const y = Math.round(Math.min(Math.max(cr.top, e.clientY - dy), cr.bottom - h) - lr.top);
+    const k = d ? d.idx : fieldBtns.findIndex(t => t.id === id);
+    if (k >= 0) { fieldBtns[k].x = x; fieldBtns[k].y = y; }
+    else fieldBtns.push({ id, x, y });
+    if (d) d.done = true;
+    renderFieldBtns();
+    saveCache();
+  };
+  if (L) {
+    L.addEventListener("dragstart", e => {
+      const b = e.target.closest && e.target.closest("button[data-field-idx]");
+      if (!b || !fieldBtns[+b.dataset.fieldIdx]) return;
+      fieldBtnDrag = { idx: +b.dataset.fieldIdx, dx: e.offsetX, dy: e.offsetY, done: false };
+      e.dataTransfer.setData("text/plain", fieldBtns[fieldBtnDrag.idx].id);
+      e.dataTransfer.effectAllowed = "move";
+    });
+    L.addEventListener("dragend", e => {
+      const d = fieldBtnDrag;
+      fieldBtnDrag = null;
+      // Бросили мимо полотна (ни одна цель не приняла) — убираем.
+      if (d && !d.done && e.dataTransfer && e.dataTransfer.dropEffect === "none") removeAt(d.idx, "вытащена за поле");
+    });
+    // Бросок на другой значок поля — тоже на поле (значки лежат вне DOM полотна).
+    L.addEventListener("dragover", over);
+    L.addEventListener("drop", drop);
+  }
+  if (canvas) {
+    canvas.addEventListener("dragover", over, true);
+    canvas.addEventListener("drop", drop, true);
+  }
+  renderFieldBtns();
 }
 
 /* Ширина ПРАВОЙ колонки паттернов — по самому длинному паттерну, чтобы он влезал целиком, а не
@@ -3583,8 +3734,13 @@ function updateTopHorizon(){
   if (h <= 0 && !document.body.classList.contains("menubar-bottom")) {
     const barLiveH = document.getElementById("menuBar");
     if (barLiveH && barLiveH.offsetHeight) {
+      /* v1.593, запрос «меню 2 должны уезжать за верх экрана вместе с первой строкой»: упор считаем
+         для НЕПРОКРУЧЕННОГО полотна (минус scrollTop холста). В покое черта стоит, где стояла (на
+         3px ниже меню 1), а при прокрутке уезжает вверх вместе со строками — и меню 2 с планками
+         П1/П2, которые висят на ней, тоже. Раньше упор держал её под меню 1, и весь ряд липнул. */
+      const scH = chainEl.closest(".canvas") || document.querySelector(".canvas");
       const minTopH = barLiveH.getBoundingClientRect().bottom
-                    - chainEl.getBoundingClientRect().top + 3;
+                    - chainEl.getBoundingClientRect().top + 3 - (scH ? scH.scrollTop : 0);
       if (horizonTopPx < minTopH) horizonTopPx = minTopH;
     }
   }
@@ -3772,7 +3928,13 @@ function updateTopHorizon(){
         window.addEventListener("mousemove", armMove);
         window.addEventListener("mouseup", disarm);
       };
-      chainForHorizon.addEventListener("mousedown", zeroRowGrab, true);
+      /* ═══ ХВАТ ЗА СТРОКУ СНЯТ — ТОЛЬКО ЗА САМУ ЧЕРТУ (v1.589) ═══
+         Запрос пользователя: «убери цепляние горизонта за первую строку, только за саму линию».
+         zeroRowGrab (v1.441, в v1.580 — и на меню 2) больше не вешается ни на .chain, ни на полосу:
+         нажатие в строке снова только выделяет. Тянуть горизонт — за черту (#hsplitTop) и за её
+         толстый отрезок в промежутке под осью (#m2HzGrip, v1.581). Функцию не удаляю: вернуть —
+         две строки addEventListener. */
+      void zeroRowGrab;
       /* ═══ ХВАТ И В ПРОМЕЖУТКАХ МЕЖДУ КНОПКАМИ МЕНЮ 2 (v1.580) ═══
          Баг-репорт: «захвата нет горизонта там между кнопками, не работает». Меню 2 скрипт
          переносит из .chain в .main-layout (МАРКЕР 10.2b), и нажатие на него до .chain не доходит.
@@ -3780,8 +3942,7 @@ function updateTopHorizon(){
          промежутки между кнопками ловят сами группы (.align-half) — там хвата не было. Вешаем тот
          же обработчик и на полосу. Кнопки, поля и слоты закреплённых значков он пропускает по тому
          же списку исключений, так что их жесты прежние. */
-      const grpForHorizon = document.getElementById("alignGrp");
-      if (grpForHorizon) grpForHorizon.addEventListener("mousedown", zeroRowGrab, true);
+      // v1.589: хват за строку снят (см. выше) — на полосу обработчик тоже не вешается.
       /* v1.581: толстый хват черты в промежутке под осью (#m2HzGrip, см. m2HzGripEl). Жест тот же,
          что у самой черты, — startHorizonDrag сразу на нажатии: в промежутке выделять нечего, взводить
          по 4px (как zeroRowGrab) незачем. Двойной клик передаём черте — у неё своё правило (v1.428). */
@@ -4598,7 +4759,9 @@ function updateAxisSplitPosition(maxLen){
       if (underBar > axisMinTop) axisMinTop = underBar;
     }
   }
-  const axisTopPx = Math.round(Math.max(axisMinTop, 0, axisLineBottom - axisLinePitch));
+  // v1.593: коробки у оси (счётчики лесенок) стоят у нулевой строки и уезжают вверх вместе с ней,
+  // как меню 2, — упор под меню 1 (axisMinTop) остаётся только у самой линии оси ниже.
+  const axisTopPx = Math.round(Math.max(0, axisLineBottom - axisLinePitch));
   const axisLineHFull = Math.max(1, axisLinePitch * 3 - AXIS_ROW_GAP_PX);
   /* ═══ ОСЬ ВО ВСЮ ВЫСОТУ ОКНА (v1.538) ═══
      Запрос пользователя: «сделай ось по всей высоте браузера в поле». Верх линии — самый верх
@@ -6109,6 +6272,7 @@ function captureUiSettings(){
     chainShiftCols: chainShiftCols || 0,
     chainShiftRows: chainShiftRows || 0,   // вертикальный сдвиг всей раскладки, ручка #hsplitTop (v1.045)
     pinSlots: pinSlots,
+    fieldBtns: (typeof fieldBtns !== "undefined" && Array.isArray(fieldBtns)) ? fieldBtns : [],   // v1.594, кнопки на поле цепочек
     menuBarBottom: document.body.classList.contains("menubar-bottom"),
     msgPos: msgPos || "",
     c1: col1.value, c0: col0.value, cBg: colBg.value, preset: currentPreset,
@@ -6517,6 +6681,30 @@ function applyUiSettings(u){
       pinSlots[side] = arr;
     });
     if (typeof renderPinSlots === "function") renderPinSlots();
+  }
+  /* v1.594: кнопки на поле цепочек. Откуда брать: свой список fieldBtns; нет его — то, что лежало
+     на полке v1.592 (u.shelf) и в слотах меню 2 (до v1.592), — рядком у верхнего левого угла поля,
+     под рядом управления, дальше расставишь сам. Слоты при этом очищаются. */
+  if (typeof fieldBtns !== "undefined") {
+    let list = null;
+    if (Array.isArray(u.fieldBtns)) {
+      list = u.fieldBtns.filter(t => t && typeof t.id === "string").map(t => ({ id: t.id, x: +t.x || 0, y: +t.y || 0 }));
+    }
+    const legacy = [];
+    if (!list && u.shelf && Array.isArray(u.shelf.items)) u.shelf.items.forEach(t => { if (t && typeof t.id === "string") legacy.push(t.id); });
+    if (pinSlots) ["L", "R"].forEach(side => {
+      (pinSlots[side] || []).forEach(id => { if (id) legacy.push(id); });
+      pinSlots[side] = new Array(PIN_SLOTS_N).fill(null);
+    });
+    if (list) fieldBtns = list;
+    let n = fieldBtns.length;
+    for (const id of legacy) {
+      if (fieldBtns.some(t => t.id === id)) continue;
+      fieldBtns.push({ id, x: 24 + n * 32, y: 72 });
+      n++;
+    }
+    if (typeof renderPinSlots === "function") renderPinSlots();
+    if (typeof renderFieldBtns === "function") renderFieldBtns();
   }
   if (u.menuBarBottom !== undefined) setMenuBarBottom(!!u.menuBarBottom, true);
   if (typeof applyMsgPos === "function") applyMsgPos(u.msgPos || "");

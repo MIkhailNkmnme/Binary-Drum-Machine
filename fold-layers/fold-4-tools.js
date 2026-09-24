@@ -5192,7 +5192,7 @@ if (bParityViewEl) bParityViewEl.onclick = () => setParityView((st.parityView | 
    (st.patBank, кнопка "🧩⬇ В цепочку" в подвале списка цепочек) — логика "положить тексты в
    строки" у них одна на двоих, дублировать её вторым экземпляром незачем.
    texts — готовый список текстов, srcLabel — как называть источник в сообщении и в логе шагов. */
-function textsToChainRows(texts, srcLabel) {
+function textsToChainRows(texts, srcLabel, keepTop) {
   texts = texts.slice();
   if (!texts.some(t => t.length)) { say(srcLabel + " в цепочку: вставлять нечего — список пуст."); return; }
   snapshot();
@@ -5225,8 +5225,12 @@ function textsToChainRows(texts, srcLabel) {
              : { text: "", ord: i, found: false, kind: null, step: null };
   });
   // Строки заменены целиком — всё, что привязано к их прежним позициям, больше не про них.
-  st.topBuilt = 0;
-  topBaseCapture();
+  // keepTop (v1.591, кэш → цепочка): записи начинаются с первой строки, верх не тронут —
+  // построения сверху и нулевая строка остаются, и счётчик их не сбрасываем.
+  if (!keepTop) {
+    st.topBuilt = 0;
+    topBaseCapture();
+  }
   invFlagsMap.clear();
   insertedFlagsMap.clear();
   axisOffsetMap.clear();

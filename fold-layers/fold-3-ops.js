@@ -1521,6 +1521,7 @@ const MENUS = {
   menuDescent:{ title: '▽ Спуск',      zone: 'rightSlot', pin: false, ids: ['descentGroup'], floatable: true },
   // «🪞 Крест» (v1.548): зеркальный крест и указатели симметрии, см. crossPaint ниже по файлу.
   menuCross:  { title: '🪞 Крест',      zone: 'rightSlot', pin: false, ids: ['crossGroup'], floatable: true }
+  // «🧰 Кнопки» (v1.592) снята в v1.594: полем для кнопок стало само поле цепочек (fold-5-ui.js).
 };
 const LAYOUT_KEY = 'zerk_fold_layout';
 /* Порядок стековых overlay-баров сверху вниз (см. МАРКЕР 10.2b OVERLAY_STACK ниже) —
@@ -2484,6 +2485,7 @@ function positionAlignGrpTop(){
   const ceil = overlayTopBase() - 4; // низ шапки меню + 2px (или 2px, если меню внизу)
   const stackTop = Math.max(ceil, top);
   let shownTop = stackTop;
+  let agScroll = 0;   // v1.593: прокрутка холста — упоры считаются без неё, см. ниже
   if (el) {
     const rowsEl = document.getElementById("rows");
     const host = el.offsetParent;
@@ -2524,7 +2526,13 @@ function positionAlignGrpTop(){
         ? hLineTop + (rowHpx - (el.offsetHeight || 0)) / 2
         : (rowsRect.top - hostRect.top - (el.offsetHeight || 0) - 2);
       // Выше стопки баров не пускаем: там она перекрыла бы «Результат»/«Черновик».
-      if (want > stackTop) shownTop = want;
+      /* v1.593, запрос «меню 2 должны уезжать за верх экрана вместе с первой строкой»: упоры
+         (этот и под меню 1 ниже) сравниваем с местом полосы на НЕПРОКРУЧЕННОМ полотне — в покое
+         всё как было, а прокрутка уносит полосу вверх вместе со строками, не прижимая её к меню 1. */
+      const scAG = document.getElementById("screenCanvas");
+      agScroll = scAG ? scAG.scrollTop : 0;
+      if (want + agScroll > stackTop) shownTop = want;
+      else shownTop = stackTop - agScroll;
     }
     /* ═══ МЕНЮ 2 НЕ ЗАЕЗЖАЕТ ПОД МЕНЮ 1 (испр. v1.450) ═══
        Баг-репорт: «меню 2 отступ от меню 1 — наложились, 2 хотя бы».
@@ -2541,7 +2549,7 @@ function positionAlignGrpTop(){
       if (barLive && barLive.offsetHeight) {
         const barBottomInHost = barLive.getBoundingClientRect().bottom
                               - host.getBoundingClientRect().top + 2;
-        if (shownTop < barBottomInHost) shownTop = barBottomInHost;
+        if (shownTop + agScroll < barBottomInHost) shownTop = barBottomInHost - agScroll;
       }
     }
     el.style.top = Math.round(shownTop) + "px";
@@ -6106,26 +6114,15 @@ function insertNextBelow(tag, logName, make, up){
       }
       if (tgt.length) {
         snapshot();
-        const L = Math.max(tgt.length, out.length);
-        const bit = (s, i) => (i < s.length && s[i] === "1") ? 1 : 0;
-        let merged = "";
-        const arr = new Array(L).fill(false);
-        const prevNew = newBitsMap.get(tgtIdx);
-        let chg = 0;
-        for (let i = 0; i < L; i++) {
-          const v = bit(tgt, i) ^ bit(out, i);
-          merged += v;
-          const changed = (i >= tgt.length) || (v !== bit(tgt, i));
-          if (changed) chg++;
-          arr[i] = changed || !!(prevNew && prevNew[i]);
-        }
-        st.rows[tgtIdx] = merged;
-        newBitsMap.set(tgtIdx, arr);
+        const L = tgt.length;   // длина ДО — для сообщения «строка выросла»
+        const x = xorIntoRowAligned(tgtIdx, out);   // v1.583: по выравниванию цепочки
+        const chg = x.chg;
         st.selectedRows = new Set([tgtIdx]);
         st.hit = null;
         render(); saveCache();
         say(`${tag} ⊕: результат от строки ${srcLabel} положен XOR-ом в строку ${rowLabel(tgtIdx)} — изменено бит ${chg}` +
-            (out.length > tgt.length ? `, строка выросла с ${tgt.length} до ${L} бит` : "") +
+            (x.grew > 0 ? `, строка выросла с ${L} до ${L + x.grew} бит` : "") +
+            (x.half ? ", где результат стоит между битами — к левому" : "") +
             ". Строки не сдвигались; ↩ вернёт. Выделена та, в которую легло.");
         logStep(logName + " ⊕", rowLabel(tgtIdx), "", `${out.length} бит в строку из ${tgt.length}`);
         return;
@@ -6156,8 +6153,8 @@ function insertNextBelow(tag, logName, make, up){
     /* v1.553: при вставке ВВЕРХ новая строка встаёт на место источника, и если это место было
        на нулевой строке или выше неё, построений сверху стало на одно больше — иначе нумерация
        настоящих строк (rowLabel = i − topBuilt) съехала бы на единицу. */
-    if (up) { if (idx <= (st.topBuilt || 0)) st.topBuilt++; }
-    else if (idx <= (st.topBuilt || 0) && last < (st.topBuilt || 0)) st.topBuilt++;
+    if (up) { if (idx <= (st.topBuilt || 0)) { st.topBuilt++; patsFollowTopInsert(idx, 1); } }
+    else if (idx <= (st.topBuilt || 0) && last < (st.topBuilt || 0)) { st.topBuilt++; patsFollowTopInsert(idx, 1); }
     if (typeof st.aIdx === "number" && st.aIdx >= idx) st.aIdx++;
     if (typeof st.bIdx === "number" && st.bIdx >= idx) st.bIdx++;
     st.hit = null;
@@ -6434,6 +6431,68 @@ if (bNumPrevEl) bNumPrevEl.onclick = () => insertNextBelow("🔢−1", "Номе
    Вставка двигает строки и переносит все построчные привязки, как «🔺+1»; XOR не двигает ничего и
    требует, чтобы строки уже стояли и были из одних 0 и 1 — иначе не делает НИЧЕГО и говорит, где
    споткнулось (половинчатая запись хуже отказа: откатывать пришлось бы руками). */
+/* ═══ XOR В СТРОКУ ПО ВЫРАВНИВАНИЮ ЦЕПОЧКИ, А НЕ С НУЛЕВОГО БИТА (v1.583) ═══
+   Баг-репорт: «не правильно вставляет XOR, пусть учитывает выравнивание» (окно «▽ Спуск», «⊕ XOR-ом»).
+   Строка ложилась в строку-цель бит в бит от начала — то есть всегда «по левому краю», хотя цепочка
+   показывает строки по своему выравниванию: у «↔» этаж спуска короче строки и стоит посередине под
+   ней, а XOR шёл со сдвигом. Тем же страдал режим построений «⊕ класть XOR-ом» (v1.549).
+   Теперь out кладётся туда, где он стоял бы НА ЭКРАНЕ, будь он сам строкой на месте цели t, — тем же
+   rowShiftFor/rowHalf2x, которыми рисуются строки и считается XOR по столбцам (xorRowsFiltered), в
+   полустолбцах. Разница начал out и цели и есть сдвиг XOR. Нечётная разница бывает только у
+   «½»-выравниваний: out стоит тогда между битами цели — берём левый (half:true).
+   Вышедшее за края цели удлиняет строку новыми битами (как и раньше справа). Новыми помечаются
+   биты, на которые лёг out (v1.585), — см. ниже. Пишет st.rows[t] и newBitsMap; snapshot/render — на вызывающем.
+   Цель обязана быть из одних 0 и 1 — это проверяет вызывающий. */
+function xorIntoRowAligned(t, out){
+  const al = st.align;
+  let maxLen = 0;
+  for (const s of st.rows) if (s && s.length > maxLen) maxLen = s.length;
+  const at2x = (s) => 2 * rowShiftFor(maxLen, t, s, al) + rowHalf2x(t, s, al, maxLen);
+  const bit = (s, i) => (i >= 0 && i < s.length && s[i] === "1") ? 1 : 0;
+  const tgt = st.rows[t] || "";
+  const d2 = at2x(out) - at2x(tgt);
+  const d = Math.floor(d2 / 2);                 // где в строке-цели начинается out
+  const lo = Math.min(0, d), hi = Math.max(tgt.length, d + out.length);
+  const arr = new Array(hi - lo).fill(false);
+  let merged = "", chg = 0;
+  for (let p = lo; p < hi; p++) {
+    const inT = p >= 0 && p < tgt.length;
+    const v = bit(tgt, p) ^ bit(out, p - d);
+    merged += v;
+    const changed = !inT || (v !== bit(tgt, p));
+    if (changed) chg++;
+    /* v1.585, запрос «по битно выделял не всю строку, а какой треугольник XOR»: «новыми» в цели
+       помечаются ровно биты, на которые лёг out, — форма треугольника, изменились они или нет.
+       Прежняя пометка строки (у вставленной «⬇ Вставить» она на всю строку) здесь сбрасывается:
+       с ней треугольник терялся в сплошь окрашенной строке. */
+    arr[p - lo] = p >= d && p < d + out.length;
+  }
+  st.rows[t] = merged;
+  newBitsMap.set(t, arr);
+  return { chg, half: !!(d2 & 1), grew: merged.length - tgt.length };
+}
+/* ═══ ПАТТЕРНЫ ВСЕГДА С ПЕРВОЙ СТРОКИ (v1.590) ═══
+   Запрос пользователя: «паттерны всегда должны начинаться с 1 строки».
+   Вставка строк на нулевую строку или выше («🔻−1», «△ Подъём», спуск «вверх», «🔺+1» из построений
+   сверху) поднимает st.topBuilt, чтобы номера настоящих строк не съехали (rowLabel = i − topBuilt).
+   Строки и нумерация сдвигались, а список паттернов — нет: паттерны стоят по индексам, и после
+   вставки над началом первый из них оказывался на построенной строке с минусовым номером. Вставляем
+   в список столько же пустых ячеек на том же месте — паттерны едут вместе со строками и начинаются
+   там же, где начинались. Выделение паттернов переносим так же. Лишний хвост пустых ячеек снимаем,
+   чтобы список не рос длиннее строк. Зовётся ровно там, где растёт topBuilt при вставке. */
+function patsFollowTopInsert(idx, k){
+  if (!(k > 0) || !Array.isArray(st.pats)) return;
+  const blanks = [];
+  for (let i = 0; i < k; i++) blanks.push({ text: "", ord: -1, found: false, kind: null, step: null });
+  st.pats.splice(idx, 0, ...blanks);
+  while (st.pats.length > st.rows.length) {
+    const t = st.pats[st.pats.length - 1];
+    if (t && t.text) break;
+    st.pats.pop();
+  }
+  if (st.selectedPats && st.selectedPats.size)
+    st.selectedPats = new Set(Array.from(st.selectedPats).map(r => r >= idx ? r + k : r));
+}
 function descentPick(tag){
   const sel = (st.selectedRows && st.selectedRows.size) ? Array.from(st.selectedRows).sort((a, b) => a - b) : st.rows.map((_, i) => i);
   let r = -1;
@@ -6470,7 +6529,6 @@ function descentWrite(xor){
   const lines = (what === "edge") ? [pick.edge] : pick.levels.slice(1);
   if (!lines.length) { say(`${tag}: строка в один бит — спускаться некуда.`); return; }
   const r = pick.r;
-  const bit = (s, i) => (i < s.length && s[i] === "1") ? 1 : 0;
   if (xor) {
     // Сперва проверяем ВСЕ строки-цели, и только потом пишем: отказ целиком честнее полуправки.
     const targets = lines.map((_, k) => up ? r - 1 - k : r + 1 + k);
@@ -6480,27 +6538,20 @@ function descentWrite(xor){
       if (!/^[01]+$/.test(row)) { say(`${tag}: в строке ${rowLabel(t)} не только 0 и 1 — XOR туда не кладу.`); return; }
     }
     snapshot();
-    let chgAll = 0;
+    // v1.583: этаж ложится по выравниванию цепочки, а не с нулевого бита — см. xorIntoRowAligned.
+    let chgAll = 0, halfHit = false;
     targets.forEach((t, k) => {
-      const tgt = st.rows[t], out = lines[k];
-      const L = Math.max(tgt.length, out.length);
-      const prevNew = newBitsMap.get(t);
-      const arr = new Array(L).fill(false);
-      let merged = "";
-      for (let i = 0; i < L; i++) {
-        const v = bit(tgt, i) ^ bit(out, i);
-        merged += v;
-        const changed = (i >= tgt.length) || (v !== bit(tgt, i));
-        if (changed) chgAll++;
-        arr[i] = changed || !!(prevNew && prevNew[i]);
-      }
-      st.rows[t] = merged;
-      newBitsMap.set(t, arr);
+      const x = xorIntoRowAligned(t, lines[k]);
+      chgAll += x.chg;
+      if (x.half) halfHit = true;
     });
-    st.selectedRows = new Set(targets);
+    // v1.584 → v1.586: после XOR выделение переходит на ОДНУ строку — следующую под источником
+    // (запрос «пусть переходит просто на следующую вниз под собой после XOR»; в v1.584 была самая
+    // нижняя из строк треугольника). Следующее нажатие пойдёт уже от неё — шаг за шагом вниз.
+    st.selectedRows = new Set([r + 1 < st.rows.length ? r + 1 : r]);
     st.hit = null;
     render(); saveCache();
-    say(`${tag}: ${what === "edge" ? "край" : "треугольник"} от строки ${rowLabel(r)} лёг XOR-ом в ${targets.length} стр. ${up ? "выше" : "ниже"} — изменено бит ${chgAll}. Строки не двигались; ↩ вернёт.`);
+    say(`${tag}: ${what === "edge" ? "край" : "треугольник"} от строки ${rowLabel(r)} лёг XOR-ом в ${targets.length} стр. ${up ? "выше" : "ниже"} — изменено бит ${chgAll}, по выравниванию цепочки${halfHit ? " (где этаж стоит между битами — к левому)" : ""}. Строки не двигались; ↩ вернёт.`);
     logStep("Спуск ⊕", rowLabel(r), "", `${lines.length} стр., ${chgAll} бит`);
     return;
   }
@@ -6513,7 +6564,7 @@ function descentWrite(xor){
   while (st.pats.length < st.rows.length)
     st.pats.push({ text: "", ord: st.pats.length, found: false, kind: null, step: null });
   descentShiftMaps(idx, put.length);
-  if (up && idx <= (st.topBuilt || 0)) st.topBuilt += put.length;
+  if (up && idx <= (st.topBuilt || 0)) { st.topBuilt += put.length; patsFollowTopInsert(idx, put.length); }
   put.forEach((l, i) => newBitsWhole(idx + i, l.length));
   st.selectedRows = new Set(put.map((_, i) => idx + i));
   st.hit = null;
@@ -6525,6 +6576,125 @@ function descentWrite(xor){
   const a = document.getElementById("bDescentIns"), b = document.getElementById("bDescentXor");
   if (a) a.onclick = () => descentWrite(false);
   if (b) b.onclick = () => descentWrite(true);
+}
+/* ═══ «▽⇄ СТРОКИ → КРАЯ» — КАЖДУЮ СТРОКУ В КРАЙ ЕЁ СПУСКА, НА МЕСТЕ (v1.587) ═══
+   Запрос пользователя: «у каждой строки есть край — можно кнопку, которая переведёт все строки
+   выделенные или все, если нет выделения, в такие».
+   Край — первые биты этажей спуска сверху вниз. Считать сам треугольник незачем (n² на строку):
+   бит края k = XOR тех s[j], у которых C(k, j) нечётно, а по Лукасу это ровно «j ⊆ k» по двоичным
+   разрядам. Значит край — подмножественная сумма (зета-преобразование) над GF(2): по разу на
+   каждый разряд, n·log n. Длина та же, строки не двигаются, выравнивание их не меняет.
+   Преобразование само себе обратное — второе нажатие возвращает строки. Новыми помечаются
+   изменившиеся биты. Строки не из одних 0 и 1 пропускаются (у точек и пустот нет значения). */
+function descentEdgeOf(s){
+  const n = s.length;
+  let N = 1;
+  while (N < n) N <<= 1;
+  const a = new Uint8Array(N);
+  for (let i = 0; i < n; i++) a[i] = s.charCodeAt(i) === 49 ? 1 : 0;
+  for (let b = 1; b < N; b <<= 1)
+    for (let m = 0; m < N; m++) if (m & b) a[m] ^= a[m ^ b];
+  let out = "";
+  for (let k = 0; k < n; k++) out += a[k];
+  return out;
+}
+function descentEdgeAll(){
+  const tag = "▽⇄ Края";
+  const sel = (st.selectedRows && st.selectedRows.size);
+  const idxs = sel ? Array.from(st.selectedRows).sort((x, y) => x - y) : st.rows.map((_, i) => i);
+  const todo = [];
+  let skipped = 0;
+  for (const i of idxs) {
+    const s = st.rows[i] || "";
+    if (!s.length) continue;
+    if (!/^[01]+$/.test(s)) { skipped++; continue; }
+    todo.push(i);
+  }
+  if (!todo.length) { say(`${tag}: ${sel ? "в выделенных" : "в цепочке"} нет строк из одних 0 и 1.`); return; }
+  snapshot();
+  let rowsChanged = 0, bitsChanged = 0;
+  for (const i of todo) {
+    const s = st.rows[i], e = descentEdgeOf(s);
+    if (e === s) continue;
+    const arr = new Array(s.length).fill(false);
+    for (let k = 0; k < s.length; k++) if (e[k] !== s[k]) { arr[k] = true; bitsChanged++; }
+    st.rows[i] = e;
+    newBitsMap.set(i, arr);
+    rowsChanged++;
+  }
+  st.hit = null;
+  render(); saveCache();
+  say(`${tag}: ${sel ? "выделенные" : "все"} строки (${todo.length}) переведены в края своих спусков — изменилось строк ${rowsChanged}, бит ${bitsChanged}` +
+      (skipped ? `; пропущено не из 0/1: ${skipped}` : "") +
+      ". Нажми ещё раз — вернутся (преобразование само себе обратное); ↩ тоже вернёт.");
+  logStep("Строки → края", sel ? "выделенные" : "все", "", `${todo.length} стр., ${bitsChanged} бит`);
+}
+{
+  const c = document.getElementById("bDescentEdgeAll");
+  if (c) c.onclick = descentEdgeAll;
+}
+/* ═══ «△ ПОДЪЁМ ДО ВЕРШИНЫ» — ВСЕ ПРЕДКИ ПО ПАСКАЛЮ РАЗОМ (v1.588) ═══
+   Запрос пользователя: «а подъём есть? или только спуск?» → «да» на предложение кнопки, которая
+   строит весь подъём одним нажатием. Это «🔻−1 Строка выше», повторённая до упора: родитель
+   (pascalParentOf — та же формула, что у −1) на бит короче, от него снова родитель, и так до строки
+   в один бит или до первой строки без родителя. Предки встают НАД исходной, вершина сверху, —
+   вставкой со сдвигом, с переносом построчных привязок, как вставка спуска вверх (descentWrite).
+   Строка — выделенная (первая из одних 0 и 1 среди выделенных), иначе последняя непустая, — как у −1. */
+function pascalParentOf(src){
+  if (!/^[01]+$/.test(src) || src.length < 2) return null;
+  let out = "", prev = 0;
+  for (let j = 0; j + 1 < src.length; j++) { const v = (src[j] === "1" ? 1 : 0) ^ prev; out += v; prev = v; }
+  return ((src[src.length - 1] === "1" ? 1 : 0) === prev) ? out : null;
+}
+function ascentBuild(){
+  const tag = "△ Подъём";
+  let r = -1;
+  if (st.selectedRows && st.selectedRows.size) {
+    for (const i of Array.from(st.selectedRows).sort((a, b) => a - b)) {
+      const s = st.rows[i] || "";
+      if (s.length && /^[01]+$/.test(s)) { r = i; break; }
+    }
+  } else {
+    for (let i = st.rows.length - 1; i >= 0; i--) if ((st.rows[i] || "").length) { r = i; break; }
+    if (r >= 0 && !/^[01]+$/.test(st.rows[r])) r = -1;
+  }
+  if (r < 0) { say(`${tag}: нужна строка из одних 0 и 1 — выделите её (без точек и пустот).`); return; }
+  const src = st.rows[r];
+  if (src.length < 2) { say(`${tag}: строка в один бит — это уже вершина.`); return; }
+  const chain = [];
+  let cur = src;
+  while (cur.length >= 2) {
+    const p = pascalParentOf(cur);
+    if (p === null) break;
+    chain.push(p);
+    cur = p;
+  }
+  if (!chain.length) { say(`${tag}: у строки ${rowLabel(r)} нет родителя — шагом «🔺+1» её не получить (последний бит не сошёлся; так у половины всех строк). Подниматься некуда.`); return; }
+  const top = chain[chain.length - 1];
+  const reached = top.length === 1;
+  const srcLabel = rowLabel(r);
+  snapshot();
+  rowCountMarkInsert();
+  const put = chain.slice().reverse();   // сверху вершина, ближе всего к исходной — её родитель
+  const idx = r;
+  st.rows.splice(idx, 0, ...put);
+  st.used.splice(idx, 0, ...put.map(() => false));
+  while (st.pats.length < st.rows.length)
+    st.pats.push({ text: "", ord: st.pats.length, found: false, kind: null, step: null });
+  descentShiftMaps(idx, put.length);
+  if (idx <= (st.topBuilt || 0)) { st.topBuilt += put.length; patsFollowTopInsert(idx, put.length); }
+  put.forEach((l, i) => newBitsWhole(idx + i, l.length));
+  st.selectedRows = new Set(put.map((_, i) => idx + i));
+  st.hit = null;
+  render(); saveCache();
+  say(`${tag}: над строкой ${srcLabel} встало предков ${put.length}` +
+      (reached ? " — дошёл до вершины в один бит." : ` — дальше строка ${top} (${top.length} бит) родителя не имеет, подъём остановлен.`) +
+      " Строки ниже сдвинуты; ↩ вернёт.");
+  logStep("Подъём", srcLabel, top, `${put.length} стр.` + (reached ? ", до вершины" : ", остановлен"));
+}
+{
+  const c = document.getElementById("bAscent");
+  if (c) c.onclick = ascentBuild;
 }
 
 const bGenNumbersEl = document.getElementById("bGenNumbers");
