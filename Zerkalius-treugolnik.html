@@ -3,16 +3,16 @@
 ===========================================================================
 PROJECT: Zerkalius Треугольник — отдельная страница для треугольника (Аниматрица, ромбы, сетка).
          Заведена 2026-09-24 копией Zerkalius Code 35.74: для начала в ней есть всё, что есть в Code.
-         Память (текст, сцены, вид) — СВОЯ, ключи ztri_*; при первом запуске берёт то, что лежит у Code, и
-         дальше живёт отдельно (ключи Code только читаются, никогда не пишутся).
-VERSION: v0.008 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
+         Память (текст, вид, раскладка) — СВОЯ, ключи ztri_*; с v0.009 у Code ничего не подхватывает (кроме сцен, если
+         своих нет): первый запуск — треугольник правила 90 на 50 строк. Ключи Code никогда не пишутся.
+VERSION: v0.009 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Треугольник v0.008</title>
+    <title>Zerkalius Треугольник v0.009</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -368,7 +368,7 @@ VERSION: v0.008 (копия Zerkalius Code 35.74 целиком — отправ
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.008</h3>
+                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.009</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -720,7 +720,7 @@ VERSION: v0.008 (копия Zerkalius Code 35.74 целиком — отправ
                 </div>
                 </div>
                 <!-- Треугольник v0.006: ◇ сводка ромбов — сколько, какие, на каких кадрах (окном на холсте по умолчанию) -->
-                <div class="tab-sec" data-tab="rhombsum" data-title="◇ Сводка ромбов" data-float="0.555,0.06">
+                <div class="tab-sec" data-tab="rhombsum" data-title="◇ Сводка ромбов" data-float="0.609,0.048">
                 <div class="control-group" style="border: none; padding: 0;">
                     <div class="compact-row" style="align-items:center;">
                         <label style="flex:1; margin:0;" title="Высота ромба в строках. «Как у сетки» — шаг ◇ Ромбической сетки (при «авто» — 16)">Ромб высотой:</label>
@@ -746,7 +746,7 @@ VERSION: v0.008 (копия Zerkalius Code 35.74 целиком — отправ
                 </div>
                 </div>
                 <!-- Треугольник v0.006: 🔍 ромб крупно — выбранный щелчком ромб, живьём, с лентой его состояний -->
-                <div class="tab-sec" data-tab="rhombcap" data-title="🔍 Ромб крупно" data-float="0.80,0.30">
+                <div class="tab-sec" data-tab="rhombcap" data-title="🔍 Ромб крупно" data-float="0.714,0.455">
                 <div class="control-group" style="border: none; padding: 0;">
                     <div class="compact-row" style="align-items:center;">
                         <button id="rcPickBtn" type="button" class="rs-btn" title="Затем щелчок по треугольнику — берётся ромб под курсором (размер — как в сводке). Alt+щелчок по холсту выбирает ромб в любое время">🎯 Выбрать ромб щелчком</button>
@@ -1674,7 +1674,7 @@ VERSION: v0.008 (копия Zerkalius Code 35.74 целиком — отправ
             },
             saveToLocalStorage: function(data) { try { localStorage.setItem('ztri_lines_v1', JSON.stringify(data)); } catch (e) {} },
             loadFromLocalStorage: function() {
-                const saved = (localStorage.getItem('ztri_lines_v1') || localStorage.getItem('saved_binary_lines_v24'));
+                const saved = localStorage.getItem('ztri_lines_v1');
                 if (saved) {
                     try {
                         const parsed = JSON.parse(saved);
@@ -4042,7 +4042,7 @@ VERSION: v0.008 (копия Zerkalius Code 35.74 целиком — отправ
                 let off = [];
                 // 35.23: по умолчанию (ничего не сохранено) открыты ВСЕ разделы (в 35.10–35.22 — только ▶ Плеер).
                 let savedOff = null;
-                try { savedOff = JSON.parse(localStorage.getItem(this.KEY) || localStorage.getItem(this.FROM) || 'null'); } catch (e) { savedOff = null; }
+                try { savedOff = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { savedOff = null; }
                 off = Array.isArray(savedOff) ? savedOff : [];
                 // v0.006: новый раздел с data-off-default при первом появлении спрятан (дальше — как запомнится)
                 let seen = []; try { seen = JSON.parse(localStorage.getItem('ztri_tabs_seen_v1') || '[]') || []; } catch (e) { seen = []; }
@@ -4178,13 +4178,13 @@ VERSION: v0.008 (копия Zerkalius Code 35.74 целиком — отправ
             },
             restoreLayout: function() {
                 let lay = null;
-                try { lay = JSON.parse(localStorage.getItem(this.LAYOUT_KEY) || localStorage.getItem(this.LAYOUT_FROM) || 'null'); } catch (e) { lay = null; }
+                try { lay = JSON.parse(localStorage.getItem(this.LAYOUT_KEY) || 'null'); } catch (e) { lay = null; }
                 if (!lay) {
                     // 35.10: раскладка по умолчанию — плеер плавающим окном внизу по центру холста.
                     const pl = document.querySelector('.tab-sec[data-tab="player"]');
                     if (pl) {
                         pl.classList.add('floating'); document.body.appendChild(pl);
-                        this.clamp(pl, (window.innerWidth - pl.offsetWidth) / 2, window.innerHeight * 0.56);
+                        this.clamp(pl, window.innerWidth * 0.497, window.innerHeight * 0.553);   // v0.009: под треугольником, правее центра — как на снимке пользователя
                     }
                     this.floatDefaults(null);
                     return;
@@ -4740,7 +4740,7 @@ VERSION: v0.008 (копия Zerkalius Code 35.74 целиком — отправ
             },
             restore: function() {
                 let st = null;
-                try { st = JSON.parse(localStorage.getItem(this.KEY) || localStorage.getItem(this.FROM) || 'null'); } catch (e) { st = null; }
+                try { st = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) { st = null; }
                 if (!st || st.v !== 1) return false;
                 this.apply(st, !!st.playing);
                 UI.statusInfo.textContent = 'Продолжено с того же места';
@@ -4818,16 +4818,20 @@ VERSION: v0.008 (копия Zerkalius Code 35.74 целиком — отправ
             SESSION.bind();
             if (SESSION.restore()) return;
             if(!MODULE_DATA.loadFromLocalStorage()) {
-                SCENE_MANAGER.loadScene("sourcecode", true);
+                // v0.009: первый запуск (в браузере ничего не запомнено) — сразу треугольник: правило 90, сид 1, 50 строк, фон обрезан
+                UI.zerkRuleSelect.value = '90'; UI.zerkSeedInput.value = '1'; UI.zerkCountInput.value = '50';
+                UI.trimZerosCheck.checked = true; UI.implantModeCheck.checked = false;
+                MODULE_DATA.generateSierpinski();
             }
 
             // 35.3–35.4: стартовый вид по просьбе пользователя (два скриншота) — радар и рамка включены,
             // свечение выключено, 60 мс на шаг, x1, масштаб 19px, экран 350, интервал 0.7, цвет как код,
             // Матрица с фоном 0.8, Серпинский / Оригинал, анимации сдвига сняты, и сразу Play.
             // Ставится ПОСЛЕ сцены: сцена "sourcecode" включает неон и гасит радар.
-            UI.speedRange.value = 941; UI.speedVal.textContent = (1001 - 941) + ' мс';
-            UI.fontSizeRange.value = 19; UI.fontSizeVal.textContent = '19px';
-            UI.heightRange.max = Math.max(parseInt(UI.heightRange.max, 10), 350); UI.heightRange.value = 350; UI.heightVal.textContent = '350';
+            // v0.009: стартовый вид треугольника (снимок пользователя): 1 мс на шаг, масштаб 11px, экран — по числу строк,
+            // Аниматрица включена, 🔝 закреп первой строки включён; остальное — как у Code ниже.
+            UI.speedRange.value = 1000; UI.speedVal.textContent = '1 мс';
+            UI.fontSizeRange.value = 11; UI.fontSizeVal.textContent = '11px';
             UI.lineHeightRange.value = 0.7; UI.lineHeightVal.textContent = '0.7';
             UI.fontSelect.value = 'monospace';
             UI.rainbowTextCheck.checked = false; UI.syntaxColorCheck.checked = true;
@@ -4837,10 +4841,11 @@ VERSION: v0.008 (копия Zerkalius Code 35.74 целиком — отправ
             UI.speedMultInput.value = 1; const multVal = document.getElementById('speedMultVal'); if (multVal) multVal.textContent = '1';
             UI.deltaModeSelect.value = 'serpinski';
             const logicalOp = document.getElementById('logicalOpSelect'); if (logicalOp) logicalOp.value = 'original';
-            UI.zerkaliusAnimCheck.checked = false; UI.elkaCheck.checked = false; UI.cylinderCheck.checked = false;
+            UI.zerkaliusAnimCheck.checked = true; UI.elkaCheck.checked = false; UI.cylinderCheck.checked = false;   // v0.009: Аниматрица — сразу
             UI.findDiagonalsCheck.checked = false; UI.neonGlowCheck.checked = false;
             MODULE_STATE.isFrameActive = false; UI.toggleFrameBtn.classList.remove('active-yellow'); // 35.12: рамка по умолчанию выключена
             MODULE_STATE.isRadarActive = false;   // v0.006: радар убран (в Code стартовый вид — радар)
+            MODULE_STATE.pinTop = true; document.getElementById('pinTopBtn')?.classList.add('active-yellow');   // v0.009: 🔝 закреп — сразу
             MODULE_STATE.isReverse = true; UI.toggleReverseBtn.classList.add('active-green'); // 35.6: 🔃 реверс включён с ходу
             RENDERER.renderFrame();
             if (!MODULE_STATE.isPlaying) PLAYER.start();
