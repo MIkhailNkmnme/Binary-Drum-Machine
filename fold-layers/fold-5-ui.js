@@ -1995,9 +1995,35 @@ function fieldBtnTitle(src){
   return t + " — тащи по полю, чтобы переставить; за поле или на биты — уберётся.";
 }
 // v1.595: подпись значка на поле — вся подпись оригинала; пустая — прежний короткий значок.
+// v1.596: «также без подписей» — у кнопки-значка (△, ↩, 🗗, «+», «−»…) слов на ней нет, они в
+// подсказке. Тогда к знаку дописываем голову подсказки: до первого « — », «: », «. » или «; »,
+// без повтора самого знака в начале, длинную — по слову до ~32 знаков с «…».
+function fieldBtnTitleHead(src, icon){
+  let t = ((src && src.title) || "").replace(/\s+/g, " ").trim();
+  if (icon && t.startsWith(icon)) t = t.slice(icon.length).trim();
+  if (!t) return "";
+  let cut = t.length;
+  for (const sep of [" — ", ": ", ". ", "; "]) { const i = t.indexOf(sep); if (i > 0 && i < cut) cut = i; }
+  t = t.slice(0, cut).trim();
+  const MAX = 32;
+  if (t.length > MAX) {
+    const sp = t.lastIndexOf(" ", MAX);
+    t = t.slice(0, sp > 12 ? sp : MAX);
+    // Обрезка внутри скобки или «кавычек» — скобку/кавычку с хвостом отрезаем целиком.
+    for (const [o, c] of [["(", ")"], ["«", "»"]]) {
+      const i = t.lastIndexOf(o);
+      if (i > 12 && t.indexOf(c, i) < 0) t = t.slice(0, i);
+    }
+    t = t.replace(/[\s,;:—–-]+$/, "") + "…";
+  }
+  return t;
+}
 function fieldBtnLabel(src, id){
   const t = ((src && src.textContent) || "").replace(/\s+/g, " ").trim();
-  return t || pinSlotIcon(src, id);
+  if (!t) return pinSlotIcon(src, id);
+  if (/[A-Za-zА-Яа-яЁё0-9]/.test(t)) return t;
+  const head = fieldBtnTitleHead(src, t);
+  return head ? t + " " + head : t;
 }
 function renderFieldBtns(){
   const L = fieldBtnLayer();
