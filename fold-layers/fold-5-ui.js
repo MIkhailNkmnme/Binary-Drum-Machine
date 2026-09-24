@@ -2127,21 +2127,35 @@ function spreadFieldBtns(){
   });
   return moved;
 }
-/* ═══ ЗНАЧОК ТОЛЬКО НА ПУСТОТЕ (v1.602) ═══
-   Запрос: «кнопки переносные не должны лежать на битах! только на пустоте». До этого проверялась одна
-   точка под курсором, и длинная подпись (v1.595) ложилась краем на биты. Теперь сверяется ВЕСЬ
-   прямоугольник значка с настоящими прямоугольниками текста бит (.ln .bits > span) и паттернов
-   (.pat/.pat2) — Range.getClientRects, так что пустые отступы выравнивания битами не считаются.
-   Задевает — ищем ближайшее пустое место кольцами до 240px, внутри полотна. */
+/* ═══ ЗНАЧОК НА БИТАХ — НЕПРОЗРАЧНЫЙ (v1.602 → v1.604) ═══
+   v1.602: «кнопки переносные не должны лежать на битах! только на пустоте» — значок, задевший биты,
+   переезжал на ближайшую пустоту. v1.604: «нет, так не получится, пусть просто меняют фон на
+   непрозрачный, чтобы на битах их видно было, если они на битах» — прокрутка всё равно подводит
+   строки под значок, стоящий на экране. Сдвига больше нет (fieldFreeSpot оставлена, не зовётся):
+   значок, который хоть краем лежит на битах или паттернах, получает класс .on-bits — сплошной фон
+   своего оттенка. Проверка — весь прямоугольник значка против настоящих прямоугольников текста бит
+   (.ln .bits > span) и паттернов (.pat/.pat2), Range.getClientRects: пустые отступы выравнивания
+   битами не считаются. Зовётся после каждой отрисовки (через refreshFieldBtnIcons) и при прокрутке. */
 function fieldRectHitsBits(r){
   const rg = document.createRange();
   for (const ln of document.querySelectorAll(".canvas .ln")) {
     const lr = ln.getBoundingClientRect();
     if (lr.bottom <= r.top || lr.top >= r.bottom) continue;
     for (const el of ln.querySelectorAll(".bits > span, .pat, .pat2")) {
-      rg.selectNodeContents(el);
-      for (const q of rg.getClientRects())
-        if (q.width > 0 && q.right > r.left && q.left < r.right && q.bottom > r.top && q.top < r.bottom) return true;
+      const er = el.getBoundingClientRect();
+      if (er.right <= r.left || er.left >= r.right) continue;
+      // Только НЕПРОБЕЛЬНЫЕ знаки: пустые строки добиты пробелами, и прямоугольник всего текста
+      // считал бы «битами» пустоту (найдено проверкой v1.604).
+      const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      for (let t = tw.nextNode(); t; t = tw.nextNode()) {
+        const re = /\S+/g;
+        let m;
+        while ((m = re.exec(t.data))) {
+          rg.setStart(t, m.index); rg.setEnd(t, m.index + m[0].length);
+          for (const q of rg.getClientRects())
+            if (q.width > 0 && q.right > r.left && q.left < r.right && q.bottom > r.top && q.top < r.bottom) return true;
+        }
+      }
     }
   }
   return false;
@@ -2169,16 +2183,17 @@ function fieldFreeSpot(x, y, w, h){
   }
   return null;
 }
-// v1.602: значки, что после загрузки легли на биты, — на ближайшую пустоту (нет её — стоят где стояли).
-function fieldBtnsOffBits(){
+function fieldBtnsMarkOnBits(){
   const L = document.getElementById("fieldBtns");
-  if (!L || !Array.isArray(fieldBtns)) return;
-  for (const b of L.children) {
-    const it = fieldBtns[+b.dataset.fieldIdx];
-    if (!it) continue;
-    const spot = fieldFreeSpot(it.x, it.y, b.offsetWidth || 28, b.offsetHeight || 24);
-    if (spot && (spot.x !== it.x || spot.y !== it.y)) { it.x = spot.x; it.y = spot.y; b.style.left = it.x + "px"; b.style.top = it.y + "px"; }
-  }
+  if (!L || !L.children.length) return;
+  for (const b of L.children) b.classList.toggle("on-bits", fieldRectHitsBits(b.getBoundingClientRect()));
+}
+// После отрисовки строк раскладка уже готова, но прокрутка и виртуализация доставляют строки кадром
+// позже — отметку ставим на ближайшем кадре, не чаще раза за кадр.
+var fieldBtnsMarkRaf = 0;
+function fieldBtnsMarkSoon(){
+  if (fieldBtnsMarkRaf) return;
+  fieldBtnsMarkRaf = requestAnimationFrame(() => { fieldBtnsMarkRaf = 0; fieldBtnsMarkOnBits(); });
 }
 function refreshFieldBtnIcons(){
   const L = document.getElementById("fieldBtns");
@@ -2194,6 +2209,7 @@ function refreshFieldBtnIcons(){
     if (b.textContent !== icon) b.textContent = icon;
     b.classList.toggle("pin-on", ["mode-act", "act", "overlay-on"].some(cl => src.classList.contains(cl)));
   }
+  fieldBtnsMarkSoon();   // v1.604
 }
 {
   const L = fieldBtnLayer();
@@ -2239,19 +2255,11 @@ function refreshFieldBtnIcons(){
     const w = mr ? Math.ceil(mr.width) : 28, h = mr ? Math.ceil(mr.height) : 24;
     // Новую кнопку держим за левый край (там её знак), а не за середину длинной подписи.
     const dx = d ? d.dx : Math.min(w / 2, 14), dy = d ? d.dy : h / 2;
-    const x0 = Math.floor(Math.max(cr.left, Math.min(e.clientX - dx, cr.right - w)) - lr.left);
-    const y0 = Math.floor(Math.max(cr.top, Math.min(e.clientY - dy, cr.bottom - h)) - lr.top);
-    // v1.602: краем на биты — нельзя; ищем ближайшую пустоту. Нет её — новый не кладём, старый остаётся где был.
-    const spot = fieldFreeSpot(x0, y0, w, h);
-    if (!spot) {
-      if (d) { d.done = true; renderFieldBtns(); }
-      else { fieldBtns.splice(k, 1); renderFieldBtns(); }
-      say("Рядом нет пустого места под кнопку — брось на свободное поле, не на биты.");
-      return;
-    }
-    const x = spot.x, y = spot.y;
+    const x = Math.floor(Math.max(cr.left, Math.min(e.clientX - dx, cr.right - w)) - lr.left);
+    const y = Math.floor(Math.max(cr.top, Math.min(e.clientY - dy, cr.bottom - h)) - lr.top);
     fieldBtns[k].x = x; fieldBtns[k].y = y;
     if (me) { me.style.left = x + "px"; me.style.top = y + "px"; }
+    fieldBtnsMarkOnBits();   // v1.604: краем на битах — сплошной фон
     if (d) d.done = true;
     saveCache();
   };
@@ -2276,7 +2284,9 @@ function refreshFieldBtnIcons(){
   if (canvas) {
     canvas.addEventListener("dragover", over, true);
     canvas.addEventListener("drop", drop, true);
+    canvas.addEventListener("scroll", fieldBtnsMarkSoon, { passive: true });   // v1.604: строки едут под значки
   }
+  window.addEventListener("resize", fieldBtnsMarkSoon);
   renderFieldBtns();
 }
 
@@ -6884,7 +6894,7 @@ function applyUiSettings(u){
     if (typeof renderPinSlots === "function") renderPinSlots();
     if (typeof renderFieldBtns === "function") renderFieldBtns();
     if (typeof spreadFieldBtns === "function") spreadFieldBtns();   // v1.595: с подписями — развести налезшие
-    if (typeof fieldBtnsOffBits === "function") fieldBtnsOffBits();   // v1.602: и снять с бит
+
   }
   if (u.menuBarBottom !== undefined) setMenuBarBottom(!!u.menuBarBottom, true);
   if (typeof applyMsgPos === "function") applyMsgPos(u.msgPos || "");
