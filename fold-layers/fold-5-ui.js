@@ -1990,6 +1990,47 @@ function fieldBtnLayer(){
   host.appendChild(L);
   return L;
 }
+/* v1.601, запрос «кнопки, которые перетащил, пусть будут каждая своего оттенка из своей вкладки, разные
+   цвета у каждой группы, и прозрачные». Группа — вкладка (.menu-panel#panelWrap_<ключ MENUS>), где живёт
+   оригинал; вне вкладок — верхняя полоса меню (menuBar) или само поле (canvas). Оттенок — из таблицы
+   FIELD_BTN_HUE (ниже), у каждой вкладки свой. Группа запоминается
+   в значке (it.g) — оригинал вкладки, унесённой в отдельное окно, в этом документе не найти, а цвет
+   должен остаться. */
+function fieldBtnGroupOf(src){
+  if (!src || !src.closest) return "";
+  const w = src.closest(".menu-panel");
+  if (w && w.id) return w.id.replace("panelWrap_", "");
+  if (src.closest("#menuBar")) return "menuBar";
+  if (src.closest(".canvas")) return "canvas";
+  return "other";
+}
+function fieldBtnGroupList(){
+  return (typeof MENUS !== "undefined" ? Object.keys(MENUS) : []).concat(["menuBar", "canvas", "other"]);
+}
+// Золотой угол на 16 групп давал соседей в 20° («Строки» и полоса меню — оба бирюзовые), поэтому
+// оттенки розданы руками: частые вкладки — самые далёкие цвета. Новой вкладки в таблице нет —
+// тогда золотой угол по её номеру.
+const FIELD_BTN_HUE = {
+  menuBar: 212, menuEdit: 135, menuDescent: 282, menuView: 32, menuTopBuild: 352, menuOps: 55,
+  menuSearch: 185, canvas: 318, menuColEdit: 245, menuMask: 300, menuSeq: 95, menuWrap: 15,
+  menuSess: 160, menuCross: 265, menuFindLog: 72, other: 0,
+};
+function fieldBtnHue(g){
+  if (FIELD_BTN_HUE[g] !== undefined) return FIELD_BTN_HUE[g];
+  const i = fieldBtnGroupList().indexOf(g);
+  return i < 0 ? 0 : Math.round((i * 137.508 + 200) % 360);
+}
+function fieldBtnGroupName(g){
+  if (typeof MENUS !== "undefined" && MENUS[g]) return "вкладка «" + MENUS[g].title + "»";
+  return g === "menuBar" ? "верхняя полоса меню" : g === "canvas" ? "поле цепочек" : "";
+}
+function fieldBtnTint(b, it, src){
+  const g = fieldBtnGroupOf(src) || it.g || "";
+  if (g && it.g !== g) it.g = g;
+  b.style.setProperty("--fb-h", String(fieldBtnHue(g)));
+  b.classList.toggle("fb-tint", !!g);
+  return g;
+}
 function fieldBtnTitle(src){
   const t = src ? (src.title || src.textContent || "").replace(/\s+/g, " ").trim() : "кнопка сейчас недоступна";
   return t + " — тащи по полю, чтобы переставить; за поле или на биты — уберётся.";
@@ -2048,7 +2089,9 @@ function renderFieldBtns(){
     b.style.top = (it.y | 0) + "px";
     b.draggable = true;
     b.dataset.fieldIdx = String(k);
-    b.title = fieldBtnTitle(src);
+    const g = fieldBtnTint(b, it, src);   // v1.601: оттенок своей вкладки
+    const gn = fieldBtnGroupName(g);
+    b.title = (gn ? "[" + gn + "] " : "") + fieldBtnTitle(src);
     b.addEventListener("click", e => {
       e.stopPropagation();
       const live = document.getElementById(it.id);
@@ -2093,6 +2136,7 @@ function refreshFieldBtnIcons(){
     const src = document.getElementById(it.id);
     b.classList.toggle("gone", !src);
     if (!src) continue;
+    fieldBtnTint(b, it, src);
     const icon = fieldBtnLabel(src, it.id);
     if (b.textContent !== icon) b.textContent = icon;
     b.classList.toggle("pin-on", ["mode-act", "act", "overlay-on"].some(cl => src.classList.contains(cl)));
@@ -6759,7 +6803,8 @@ function applyUiSettings(u){
   if (typeof fieldBtns !== "undefined") {
     let list = null;
     if (Array.isArray(u.fieldBtns)) {
-      list = u.fieldBtns.filter(t => t && typeof t.id === "string").map(t => ({ id: t.id, x: +t.x || 0, y: +t.y || 0 }));
+      list = u.fieldBtns.filter(t => t && typeof t.id === "string")
+        .map(t => ({ id: t.id, x: +t.x || 0, y: +t.y || 0, g: typeof t.g === "string" ? t.g : "" }));   // g — v1.601
     }
     const legacy = [];
     if (!list && u.shelf && Array.isArray(u.shelf.items)) u.shelf.items.forEach(t => { if (t && typeof t.id === "string") legacy.push(t.id); });
