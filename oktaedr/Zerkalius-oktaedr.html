@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.036. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Октаэдр — v0.037. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.036</title>
+<title>Zerkalius Октаэдр — v0.037</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -103,6 +103,11 @@
   .row button{ flex:1; text-align:center; padding:4px 2px; }
   .cap{ font-size:11px; color:var(--dim); letter-spacing:.3px; margin:4px 0 1px; }
   #stepInfo{ font-size:11px; color:var(--dim); letter-spacing:.3px; }
+  /* v0.037: строка шага — прямо под полосой меню, по центру, в одну строку (запрос пользователя). Высоту полосы
+     (она переносится на узком экране) меряет скрипт и ставит top. */
+  #stepInfo.under-menu{ position:fixed; left:50%; transform:translateX(-50%); z-index:4; white-space:nowrap;
+    font-size:12px; padding:2px 10px; background:rgba(18,20,26,.72); border-radius:3px; pointer-events:none; }
+  body.zen #stepInfo{ display:none; }
   #stepInfo b{ color:var(--mem); font-weight:600; }
   /* СВОИ БИТЫ (v0.020). Поле свёрнуто, пока не нажата «✎ Свои биты»: панель и так длинная. Выделение
      текста запрещено на всей странице (см. выше), а в поле ввода оно нужно — возвращаем только ему. */
@@ -211,7 +216,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.036</div>
+<div id="ver">v0.037</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -915,6 +920,16 @@ function forgetMem(){
   stepNo = 0; stillPct = null; memOn = false; animKey0 = null; animCycle = 0;
   updateStepInfo();
 }
+/* v0.037: строка шага живёт под полосой меню, а не в разделе «⇄ Реверс»: её видно, какой бы раздел ни был открыт или
+   спрятан. top — нижний край полосы + 4 px; полоса меняет высоту (перенос вкладок), поэтому следим за ней. */
+(function(){
+  const si = document.getElementById("stepInfo"), m = document.getElementById("menuTabs");
+  if (!si || !m) return;
+  document.body.appendChild(si); si.classList.add("under-menu");
+  const place = () => { si.style.top = (m.getBoundingClientRect().bottom + 4) + "px"; };
+  place(); window.addEventListener("resize", place);
+  if (window.ResizeObserver) new ResizeObserver(place).observe(m);
+})();
 function updateStepInfo(){
   const el = document.getElementById("stepInfo");
   if (el) el.innerHTML = "шаг " + stepNo + " · устояло <b>" +
