@@ -6120,6 +6120,7 @@ function insertNextBelow(tag, logName, make, up){
         xorChgBaseRows = st.rows.slice();
         const chg = x.chg;
         st.selectedRows = new Set([tgtIdx]);
+        xorNewArm([x.newArr]);   // v1.600: сменят выделение — зелёное слетит
         st.hit = null;
         render(); saveCache();
         say(`${tag} ⊕: результат от строки ${srcLabel} положен XOR-ом в строку ${rowLabel(tgtIdx)} — изменено бит ${chg}` +
@@ -6474,7 +6475,7 @@ function xorIntoRowAligned(t, out){
   st.rows[t] = merged;
   newBitsMap.set(t, arr);
   xorChgMap.set(t, red);
-  return { chg, half: !!(d2 & 1), grew: merged.length - tgt.length };
+  return { newArr: arr, chg, half: !!(d2 & 1), grew: merged.length - tgt.length };
 }
 /* ═══ ПАТТЕРНЫ ВСЕГДА С ПЕРВОЙ СТРОКИ (v1.590) ═══
    Запрос пользователя: «паттерны всегда должны начинаться с 1 строки».
@@ -6545,9 +6546,11 @@ function descentWrite(xor){
     snapshot();
     // v1.583: этаж ложится по выравниванию цепочки, а не с нулевого бита — см. xorIntoRowAligned.
     let chgAll = 0, halfHit = false;
+    const newArrs = [];
     xorChgMap.clear();   // v1.597: красным — только то, что поменял ЭТОТ XOR
     targets.forEach((t, k) => {
       const x = xorIntoRowAligned(t, lines[k]);
+      newArrs.push(x.newArr);
       chgAll += x.chg;
       if (x.half) halfHit = true;
     });
@@ -6556,6 +6559,7 @@ function descentWrite(xor){
     // (запрос «пусть переходит просто на следующую вниз под собой после XOR»; в v1.584 была самая
     // нижняя из строк треугольника). Следующее нажатие пойдёт уже от неё — шаг за шагом вниз.
     st.selectedRows = new Set([r + 1 < st.rows.length ? r + 1 : r]);
+    xorNewArm(newArrs);   // v1.600: сменят выделение — зелёное слетит
     st.hit = null;
     render(); saveCache();
     say(`${tag}: ${what === "edge" ? "край" : "треугольник"} от строки ${rowLabel(r)} лёг XOR-ом в ${targets.length} стр. ${up ? "выше" : "ниже"} — изменено бит ${chgAll}, по выравниванию цепочки${halfHit ? " (где этаж стоит между битами — к левому)" : ""}. Строки не двигались; ↩ вернёт.`);
@@ -6632,6 +6636,7 @@ function descentEdgeAll(){
     rowsChanged++;
   }
   xorChgBaseRows = st.rows.slice();
+  xorNewArm(Array.from(xorChgMap.values()));   // v1.600: те же массивы лежат и в newBitsMap
   st.hit = null;
   render(); saveCache();
   say(`${tag}: ${sel ? "выделенные" : "все"} строки (${todo.length}) переведены в края своих спусков — изменилось строк ${rowsChanged}, бит ${bitsChanged}` +

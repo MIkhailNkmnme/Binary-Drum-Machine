@@ -68,6 +68,13 @@ var maskBaseRows = null;
 // держатся, пока не изменится любой бит любой строки (сверка с xorChgBaseRows в render).
 var xorChgMap = new Map();
 var xorChgBaseRows = null;
+// v1.600: «зелёный должен слетать при изменении вручную выделения». Зелёные («Нов») пометки, которые
+// поставили XOR спуска/построений и «Строки → края», запоминаются самими массивами флагов из newBitsMap,
+// а рядом — выделение строк сразу после операции. Выделение сменили — эти пометки снимаются (см. render).
+var xorNewArrs = null;
+var xorNewSelKey = "";
+function selRowsKey(){ return Array.from(st.selectedRows || []).sort((a, b) => a - b).join(","); }
+function xorNewArm(arrs){ xorNewArrs = new Set(arrs); xorNewSelKey = selRowsKey(); }
 var chgColorOffRows = null;
 var chgBitsOn = true;
 var maskColorOn = true;

@@ -2311,6 +2311,11 @@ function render(){
     }
     if (!same) { xorChgMap.clear(); xorChgBaseRows = null; }
   }
+  // v1.600: зелёное от XOR снимается, как только выделение строк сменили (см. xorNewArm).
+  if (xorNewArrs && selRowsKey() !== xorNewSelKey) {
+    for (const [k, v] of newBitsMap) if (xorNewArrs.has(v)) newBitsMap.delete(k);
+    xorNewArrs = null;
+  }
   // "🪞 Карта осей" — то же правило, что и у Маски выше: карта посчитана по конкретным строкам,
   // изменился хоть один бит — она уже про прошлое, и снимается целиком (см. axisMap в fold-1-core).
   if (axisMap.size && axisMapBaseRows) {
