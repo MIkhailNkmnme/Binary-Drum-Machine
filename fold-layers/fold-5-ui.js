@@ -1974,7 +1974,10 @@ function refreshPinSlotIcons(){
    кнопка уже на поле — не дублируется, а переезжает. Значок по полотну — переезжает. Значок за
    полотно (меню, доки, края окна) или на БИТЫ (цепочки или паттерна) — убирается. Новую кнопку на
    биты не кладём. Файлы по-прежнему бросают на полотно как раньше: их жест мы не трогаем.
-   Хранится в настройках вида (fieldBtns); var — та же история с ранним render(), что у pinSlots. */
+   Хранится в настройках вида (fieldBtns); var — та же история с ранним render(), что у pinSlots.
+   v1.595 — С ТЕКСТОМ: «надо их также с текстом». Значок на поле несёт всю подпись оригинала
+   (знак + слова), а не только первый знак, как ярлыки меню 2 (pinSlotIcon). Ширина — по подписи;
+   при броске и переносе значок целиком держится внутри полотна по своей настоящей ширине. */
 var fieldBtns = [];
 var fieldBtnDrag = null;   // { idx, dx, dy, done } — тащат значок с самого поля
 function fieldBtnLayer(){
@@ -1991,6 +1994,11 @@ function fieldBtnTitle(src){
   const t = src ? (src.title || src.textContent || "").replace(/\s+/g, " ").trim() : "кнопка сейчас недоступна";
   return t + " — тащи по полю, чтобы переставить; за поле или на биты — уберётся.";
 }
+// v1.595: подпись значка на поле — вся подпись оригинала; пустая — прежний короткий значок.
+function fieldBtnLabel(src, id){
+  const t = ((src && src.textContent) || "").replace(/\s+/g, " ").trim();
+  return t || pinSlotIcon(src, id);
+}
 function renderFieldBtns(){
   const L = fieldBtnLayer();
   if (!L || !Array.isArray(fieldBtns)) return;
@@ -1999,7 +2007,7 @@ function renderFieldBtns(){
     const src = document.getElementById(it.id);
     const b = document.createElement("button");
     b.type = "button";
-    b.textContent = src ? pinSlotIcon(src, it.id) : "?";
+    b.textContent = src ? fieldBtnLabel(src, it.id) : "?";
     b.style.left = (it.x | 0) + "px";
     b.style.top = (it.y | 0) + "px";
     b.draggable = true;
@@ -2017,6 +2025,29 @@ function renderFieldBtns(){
   });
   refreshFieldBtnIcons();
 }
+/* v1.595: раньше значки были в одну клетку, и стоявшие рядом (через 32 px, как их раскладывала
+   миграция v1.594) с подписями налезли бы друг на друга. Разводим только налезающие: в одной
+   полосе по высоте левый остаётся, правый отодвигается вправо впритык с зазором. Кто не налезает —
+   стоит где стоял. Вызывается при загрузке вида. Вернёт true, если кого-то сдвинули. */
+function spreadFieldBtns(){
+  const L = document.getElementById("fieldBtns");
+  if (!L || !Array.isArray(fieldBtns)) return false;
+  const box = Array.from(L.children).map(b => ({ it: fieldBtns[+b.dataset.fieldIdx], b }))
+    .filter(o => o.it).sort((a, c) => (a.it.x - c.it.x) || (a.it.y - c.it.y));
+  let moved = false;
+  box.forEach((o, i) => {
+    const h = o.b.offsetHeight || 24;
+    for (let j = 0; j < i; j++) {
+      const p = box[j], pw = p.b.offsetWidth || 28, ph = p.b.offsetHeight || 24;
+      if (o.it.y >= p.it.y + ph || p.it.y >= o.it.y + h) continue;
+      if (o.it.x >= p.it.x + pw + 3 || o.it.x < p.it.x) continue;
+      o.it.x = p.it.x + pw + 3;
+      moved = true;
+    }
+    o.b.style.left = (o.it.x | 0) + "px";
+  });
+  return moved;
+}
 function refreshFieldBtnIcons(){
   const L = document.getElementById("fieldBtns");
   if (!L || !Array.isArray(fieldBtns)) return;
@@ -2026,7 +2057,7 @@ function refreshFieldBtnIcons(){
     const src = document.getElementById(it.id);
     b.classList.toggle("gone", !src);
     if (!src) continue;
-    const icon = pinSlotIcon(src, it.id);
+    const icon = fieldBtnLabel(src, it.id);
     if (b.textContent !== icon) b.textContent = icon;
     b.classList.toggle("pin-on", ["mode-act", "act", "overlay-on"].some(cl => src.classList.contains(cl)));
   }
@@ -2066,16 +2097,20 @@ function refreshFieldBtnIcons(){
     }
     const lr = L.getBoundingClientRect();
     const cr = canvas ? canvas.getBoundingClientRect() : lr;
-    const probe = L.querySelector("button");
-    const w = probe ? probe.offsetWidth : 28, h = probe ? probe.offsetHeight : 24;
-    const dx = d ? d.dx : w / 2, dy = d ? d.dy : h / 2;
-    const x = Math.round(Math.min(Math.max(cr.left, e.clientX - dx), cr.right - w) - lr.left);
-    const y = Math.round(Math.min(Math.max(cr.top, e.clientY - dy), cr.bottom - h) - lr.top);
-    const k = d ? d.idx : fieldBtns.findIndex(t => t.id === id);
-    if (k >= 0) { fieldBtns[k].x = x; fieldBtns[k].y = y; }
-    else fieldBtns.push({ id, x, y });
-    if (d) d.done = true;
+    let k = d ? d.idx : fieldBtns.findIndex(t => t.id === id);
+    if (k < 0) { fieldBtns.push({ id, x: 0, y: 0 }); k = fieldBtns.length - 1; }
     renderFieldBtns();
+    // v1.595: значок с подписью — ширина у каждого своя; меряем уже нарисованный.
+    const me = L.children[k];
+    const mr = me ? me.getBoundingClientRect() : null;
+    const w = mr ? Math.ceil(mr.width) : 28, h = mr ? Math.ceil(mr.height) : 24;
+    // Новую кнопку держим за левый край (там её знак), а не за середину длинной подписи.
+    const dx = d ? d.dx : Math.min(w / 2, 14), dy = d ? d.dy : h / 2;
+    const x = Math.floor(Math.max(cr.left, Math.min(e.clientX - dx, cr.right - w)) - lr.left);
+    const y = Math.floor(Math.max(cr.top, Math.min(e.clientY - dy, cr.bottom - h)) - lr.top);
+    fieldBtns[k].x = x; fieldBtns[k].y = y;
+    if (me) { me.style.left = x + "px"; me.style.top = y + "px"; }
+    if (d) d.done = true;
     saveCache();
   };
   if (L) {
@@ -6705,6 +6740,7 @@ function applyUiSettings(u){
     }
     if (typeof renderPinSlots === "function") renderPinSlots();
     if (typeof renderFieldBtns === "function") renderFieldBtns();
+    if (typeof spreadFieldBtns === "function") spreadFieldBtns();   // v1.595: с подписями — развести налезшие
   }
   if (u.menuBarBottom !== undefined) setMenuBarBottom(!!u.menuBarBottom, true);
   if (typeof applyMsgPos === "function") applyMsgPos(u.msgPos || "");
