@@ -257,7 +257,13 @@ function applyFieldInfo(){
    Само значение "off" из состояния не выпалывается: старый кэш мог сохранить его, и applyUiSettings
    ниже приведёт такое к "dec" сам — indexOf в новом списке его не найдёт. Подпись для него в
    ROW_NUM_LABEL тоже оставлена: она достаётся окну «ℹ Поле», когда колонка скрыта им. */
-const ROW_NUM_ORDER = ["dec", "bin"];
+/* ═══ ТРЕТЬЕ ПОЛОЖЕНИЕ ВОЗВРАЩЕНО (v1.621) ═══
+   Запрос пользователя: «номер цепочек — третье положение: нет, когда номеров». Кнопка снова ходит
+   по трём положениям, и маятником, как он просил в v1.319: 10 → 01 → нет → 01 → 10 → … (см.
+   rowNumDir и cycleRowNumMode). Двойной клик по самой колонке (v1.419) по-прежнему меняет только
+   10 ⇄ 2 — прятать колонку двойным щелчком по ней же незачем. */
+const ROW_NUM_ORDER = ["dec", "bin", "off"];
+let rowNumDir = 1;   // куда шагает маятник; в кэш не пишется — на краях разворачивается сам
 /* Подписи обычные, словами (v1.081): «{10}/{01}/{—}» были частью ASCII-оформления планки,
    которого больше нет — кнопки стали обычными. */
 /* Без пробела после «№» (v1.322) — см. PAT_NUM_LABEL в fold-4-tools.js, подписи парные. */
@@ -306,7 +312,7 @@ function applyRowNumMode(){
    было видно, почему кольцо тогда не годилось. */
 /* Маятник (rowNumDir, v1.319) удалён в v1.417 вместе с третьим положением: между двумя режимами
    разворачиваться негде, и «туда-сюда» это просто переключение. */
-function cycleRowNumMode(){
+function cycleRowNumMode(baseOnly){
   /* ═══ НОМЕРА СПРЯТАНЫ ОКНОМ «ℹ Поле» — ПЕРВЫЙ КЛИК ИХ ВОЗВРАЩАЕТ (v1.571) ═══
      Баг-репорт: «нет номеров» — кнопка «№» в меню 2 (v1.570) переключала 10/01, а колонки не было.
      Её прятало окно «ℹ Поле»: пока оно включено, номера убраны из полей в любом режиме (см.
@@ -323,7 +329,15 @@ function cycleRowNumMode(){
     return;
   }
   const i = ROW_NUM_ORDER.indexOf(st.rowNumMode || "dec");
-  st.rowNumMode = ROW_NUM_ORDER[(i < 0 ? 0 : i + 1) % ROW_NUM_ORDER.length];
+  if (baseOnly) {
+    // Двойной клик по колонке — только система счисления (v1.419).
+    st.rowNumMode = (st.rowNumMode === "bin") ? "dec" : "bin";
+  } else {
+    // Маятник: упёрлись в край — разворачиваемся (v1.319, возвращено в v1.621).
+    const cur = i < 0 ? 0 : i;
+    if (cur + rowNumDir < 0 || cur + rowNumDir >= ROW_NUM_ORDER.length) rowNumDir = -rowNumDir;
+    st.rowNumMode = ROW_NUM_ORDER[cur + rowNumDir];
+  }
   applyRowNumMode();
   /* ═══ ДВА ПРОХОДА, И ЭТО НЕ ЗАПАС «НА ВСЯКИЙ СЛУЧАЙ» (v1.420) ═══
      Запрос пользователя: «при увеличении ширины номеров влево должна сдвигать биты и номера у П1».
@@ -359,7 +373,7 @@ function cycleRowNumMode(){
     if (!numCell || !numCell.closest(".ln")) return;
     e.preventDefault();
     e.stopPropagation();
-    cycleRowNumMode();
+    cycleRowNumMode(true);
   });
 }
 
@@ -481,7 +495,18 @@ function applyFont(){
   document.getElementById("fsVal").textContent = v;
   updateRowHeight();
 }
-fs.oninput = () => { applyFont(); saveCacheSoon(); };
+/* ПЕРЕРИСОВКА ПОСЛЕ ПОЛЗУНКОВ ВИДА (v1.620, жалоба: «при изменении размера шрифта, выравнивание
+   центр ½ — потом при клике любом восстанавливается»). Ползунки кегля, межстрочного и межсимвольного
+   меняли только CSS-переменные и render() не звали. Но часть раскладки считается при отрисовке
+   В ПИКСЕЛЯХ по текущему шагу столбца (сдвиг строк на полстолбца в «½», ширины полей, оси) — она
+   оставалась от прежнего кегля, и строки разъезжались, пока любой щелчок не перерисовывал поле.
+   Один render() на кадр: ползунок шлёт input на каждый шаг протяжки. */
+let viewRenderRaf = 0;
+function viewRenderSoon(){
+  if (viewRenderRaf) return;
+  viewRenderRaf = requestAnimationFrame(() => { viewRenderRaf = 0; render(); });
+}
+fs.oninput = () => { applyFont(); viewRenderSoon(); saveCacheSoon(); };
 
 function applyLh(){
   const v = +lh.value;
@@ -489,7 +514,7 @@ function applyLh(){
   document.getElementById("lhVal").textContent = v;
   updateRowHeight();
 }
-lh.oninput = () => { applyLh(); saveCacheSoon(); };
+lh.oninput = () => { applyLh(); viewRenderSoon(); saveCacheSoon(); };
 /* ДВОЙНОЙ КЛИК ПО ЗНАЧКУ "↕" (v0.908, запрос пользователя "пусть двойной щелчок по значку делает
    такую высоту междустрочных отступов, чтобы все строки поместились в экран — если это возможно").
    Считаем, сколько вертикали реально доступно строкам: от верхней кромки #rows до низа
@@ -534,12 +559,20 @@ function fitLhToScreen(){
   });
 }
 
+/* ТОЧНЫЙ ИНТЕРВАЛ ПОВЕРХ ПОЛЗУНКА (v1.623, жалоба «📐90° — нет угла 90»). У ползунка шаг 0.5px, а
+   ширина цифры дробная (11.4px и т.п.): округлённый до 0.5 интервал давал ошибку до 0.25px на
+   столбец, на сотне столбцов — десятки пикселей, и лесенка заметно уходила от 45°. Шаг самого
+   ползунка не мельчим: по нему же шагают стрелки ◂ ▸ (общий _js/slider-arrows.js) и протяжка с
+   Shift. lsExact — точное значение (до сотых), которое ставит «📐90°»; ползунок при этом стоит на
+   ближайшем делении. Любое движение ползунком (мышь, стрелки, протяжка) снимает lsExact. */
+let lsExact = null;
+function lsCurrent(){ return lsExact !== null ? lsExact : +ls.value; }
 function applyLs(){
-  const v = +ls.value;
+  const v = lsCurrent();
   document.documentElement.style.setProperty("--chain-ls", v + "px");
-  document.getElementById("lsVal").textContent = v;
+  document.getElementById("lsVal").textContent = String(+v.toFixed(2));
 }
-ls.oninput = () => { applyLs(); saveCacheSoon(); };
+ls.oninput = () => { lsExact = null; applyLs(); viewRenderSoon(); saveCacheSoon(); };
 
 /* "📐90°" — подбирает межсимвольный интервал (ls) так, чтобы ячейка символа стала КВАДРАТНОЙ
    (ширина = высоте строки --row-h) при текущих fs/lh — тогда любая "лестница" (1,11,111...)
@@ -552,21 +585,72 @@ function applySquareCellLs(){
   const fsPx = +fs.value;
   const lhVal = +lh.value;
   const rowH = Math.round(fsPx * lhVal); // та же формула, что и updateRowHeight()/--row-h
-  const ff = getComputedStyle(document.documentElement).getPropertyValue("--chain-ff").trim() || '"Roboto Mono", Consolas, monospace';
-  const measureCanvas = document.createElement("canvas");
-  const ctx = measureCanvas.getContext("2d");
-  ctx.font = fsPx + "px " + ff;
-  const naturalW = ctx.measureText("0").width;
-  let target = Math.round((rowH - naturalW) * 2) / 2; // шаг ползунка ls — 0.5
+  /* ШИРИНА ЦИФРЫ — ЗАМЕРОМ ПО ПОЛЮ (v1.623). Раньше её брали из canvas.measureText, а он может
+     разойтись с тем, как браузер на деле раскладывает строку. Теперь основной путь — настоящий шаг
+     столбца (realColStepPx: расстояние между крайними битами строки / число столбцов) минус
+     текущий интервал. Высота строки меряется тоже по полю (между соседними строками): если
+     полотно отмасштабировано, оба замера масштабированы одинаково, и отношение остаётся честным.
+     canvas — только запасной путь, когда строк на экране нет. */
+  let naturalW = 0;
+  const curLs = lsCurrent();
+  const step = (typeof realColStepPx === "function") ? realColStepPx() : 0;
+  let scale = 1;
+  const rowsEl = document.getElementById("rows");
+  const lns = rowsEl ? rowsEl.querySelectorAll(".ln") : [];
+  if (lns.length >= 2) {
+    const dy = lns[1].getBoundingClientRect().top - lns[0].getBoundingClientRect().top;
+    if (dy > 0 && rowH > 0) scale = dy / rowH;
+  }
+  if (step > 0 && scale > 0) naturalW = step / scale - curLs;
+  if (!(naturalW > 0)) {
+    const ff = getComputedStyle(document.documentElement).getPropertyValue("--chain-ff").trim() || '"Roboto Mono", Consolas, monospace';
+    const ctx = document.createElement("canvas").getContext("2d");
+    ctx.font = fsPx + "px " + ff;
+    naturalW = ctx.measureText("0").width;
+  }
+  /* ПРЯМОЙ УГОЛ ТРЕУГОЛЬНИКА, А НЕ ПРОСТО КВАДРАТНАЯ ЯЧЕЙКА (v1.624). Замер пользователя на v1.623:
+     ячейка квадратная, лесенка 45.06°, — а треугольник в «центр ½» всё равно острый (≈53° у
+     вершины). Причина в выравнивании: строка длиннее предыдущей на g бит, и при выравнивании по
+     ЦЕНТРУ каждый её край уходит на g/2 столбца за строку, а влево/вправо — на целых g. Угол 90°
+     у треугольника — это 45° у каждого края, то есть сдвиг края за строку = высоте строки:
+       по центру (центр, центр ½, оси)  → ширина столбца = 2·высота / g;
+       влево / вправо                   → ширина столбца = высота / g.
+     g — самый частый прирост длины между соседними непустыми строками (у Серпинского и «Номеров»
+     это 1). Лесенки (stairs…) двигают строки своим шагом, для них остаётся квадратная ячейка. */
+  const CENTER_ALIGNS = ["center", "halfcenter", "axis", "axis12"];
+  const SIDE_ALIGNS = ["left", "right"];
+  const al = st.align || "center";
+  let grow = 1;
+  {
+    const cnt = new Map();
+    let prev = -1;
+    const lim = Math.min(st.rows.length, 5000);
+    for (let r = 0; r < lim; r++) {
+      const L = (st.rows[r] || "").length;
+      if (!L) continue;
+      if (prev > 0 && L > prev) cnt.set(L - prev, (cnt.get(L - prev) || 0) + 1);
+      prev = L;
+    }
+    let best = 0;
+    cnt.forEach((n, d) => { if (n > best) { best = n; grow = d; } });
+  }
+  let colW = rowH, how = "квадратная ячейка";
+  if (CENTER_ALIGNS.includes(al)) { colW = 2 * rowH / grow; how = "по центру: край уходит на " + (grow / 2) + " столбца за строку"; }
+  else if (SIDE_ALIGNS.includes(al)) { colW = rowH / grow; how = (al === "left" ? "влево" : "вправо") + ": край уходит на " + grow + " столбц. за строку"; }
+  let target = Math.round((colW - naturalW) * 100) / 100;   // до сотых — см. lsExact
   const min = +ls.min, max = +ls.max;
   const clamped = Math.max(min, Math.min(max, target));
-  ls.value = clamped;
+  ls.value = clamped;          // ползунок встанет на ближайшее деление
+  lsExact = clamped;           // а поле получит точное значение
   applyLs();
+  // v1.622: та же беда, что у ползунков в v1.620 — без перерисовки сдвиги «½» оставались от
+  // прежнего интервала, и строки разъезжались до первого щелчка.
+  viewRenderSoon();
   saveCache();
   if (clamped !== target) {
-    say(`📐 Квадратная ячейка требует ls=${target}, но ползунок ограничен [${min}; ${max}] — поставлено ближайшее ${clamped}, идеального 90° не будет.`);
+    say(`📐 Для 90° нужен интервал ${target}, но ползунок ограничен [${min}; ${max}] — поставлено ближайшее ${clamped}, идеального 90° не будет.`);
   } else {
-    say(`📐 Ячейка символа теперь квадратная (${rowH}×${rowH}px) — лестница идёт ровно по 45°.`);
+    say(`📐 90°: ячейка ${+colW.toFixed(2)}×${rowH}px (${how}, строки растут на ${grow} бит), интервал ${clamped}.`);
   }
 }
 const rightTriangle90BtnEl = document.getElementById("rightTriangle90Btn");
@@ -577,7 +661,7 @@ const chainFontSelEl = document.getElementById("chainFontSel");
 function applyChainFont(){
   if (chainFontSelEl) document.documentElement.style.setProperty("--chain-ff", chainFontSelEl.value);
 }
-if (chainFontSelEl) chainFontSelEl.onchange = () => { applyChainFont(); saveCache(); };
+if (chainFontSelEl) chainFontSelEl.onchange = () => { applyChainFont(); viewRenderSoon(); saveCache(); };
 
 /* Ползунок яркости будущих строк */
 const dimEl = document.getElementById("dim");
@@ -1281,7 +1365,7 @@ function makeLhVDrag(y0){
     const steps = Math.round((y - anchorY) / 6);
     if (!steps) return;
     const v = Math.min(hiV, Math.max(loV, +(anchorVal + steps * stepV).toFixed(2)));
-    if (v !== +lh.value) { lh.value = v; applyLh(); }
+    if (v !== +lh.value) { lh.value = v; applyLh(); viewRenderSoon(); }   // v1.622: см. viewRenderSoon
   };
 }
 /* ГОРИЗОНТАЛЬ = МЕЖСИМВОЛЬНЫЙ ИНТЕРВАЛ, ПОКА ЗАЖАТ SHIFT (v0.983, запрос пользователя: "при
@@ -1303,7 +1387,7 @@ function makeLsHDrag(x0){
     const steps = Math.round((x - anchorX) / 6);
     if (!steps) return;
     const v = Math.min(hiV, Math.max(loV, +(anchorVal + steps * stepV).toFixed(2)));
-    if (v !== +ls.value) { ls.value = v; applyLs(); }
+    if (v !== +ls.value) { ls.value = v; lsExact = null; applyLs(); viewRenderSoon(); }   // v1.622: см. viewRenderSoon; v1.623: протяжка снимает точный интервал
   };
 }
 /* fieldKey ("L"/"C"/"R", v1.055, запрос пользователя: "вместе с границами полей двигай и
@@ -6608,7 +6692,7 @@ function captureUiSettings(){
     stairsGroupL: st.stairsGroupL || 1, stairsGroupR: st.stairsGroupR || 1,
     stairsStepL: st.stairsStepL || 1, stairsStepR: st.stairsStepR || 1,
     chgBitsOn: chgBitsOn,
-    fs: fs.value, lh: lh.value, ls: ls.value, dim: dimEl.value,
+    fs: fs.value, lh: lh.value, ls: String(lsCurrent()), dim: dimEl.value,
     chainFont: chainFontSelEl ? chainFontSelEl.value : undefined,
     sideW: cssVar("--side-w"), layoutV: LAYOUT_V, patW: cssVar("--pat-w"), patW2: cssVar("--pat-w2"),
     patWManual: patWManual, patW2Manual: patW2Manual,
@@ -6974,7 +7058,12 @@ function applyUiSettings(u){
   if (u.fs){ fs.value = u.fs; applyFont(); }
   if (u.chainFont && chainFontSelEl) { chainFontSelEl.value = u.chainFont; applyChainFont(); }
   if (u.lh){ lh.value = u.lh; applyLh(); }
-  if (u.ls !== undefined){ ls.value = u.ls; applyLs(); }
+  if (u.ls !== undefined){
+    ls.value = u.ls;
+    // v1.623: сохранено точное значение от «📐90°», которого нет среди делений ползунка, — держим его.
+    lsExact = (Math.abs(+ls.value - +u.ls) > 1e-6) ? +u.ls : null;
+    applyLs();
+  }
   if (u.dim){ dimEl.value = u.dim; applyDim(); }
 
   // Ширина боковых доков. ВАЖНО: значение отсюда ложится ИНЛАЙНОМ на documentElement, а инлайн
@@ -7682,7 +7771,7 @@ const TIPS = {
   t40: "Выключить СРАЗУ ВСЁ в этой панели — «🖱 По выделению», «✋ Вручную: только при находке», «🎯 При находке», «◀ Зеркало влево», «▶ Зеркало вправо» — и заодно убрать все достроенные сверху строки. Одно нажатие возвращает цепочку к обычному виду",
   t41: "Выделить ВСЕ строки цепочки разом. Если все строки уже выделены — клик снимает выделение. Сами биты не меняются, работает только выделение",
   t42: "Заливка одним значением: первое нажатие ставит ВСЕ биты в 0, следующее — ВСЕ в 1, дальше снова 0, и так по кругу. Работает по выделенным строкам, а если ничего не выделено — по всем. Длины строк не меняются",
-  t43: "Режим выбора ЯЧЕЕК: клик по биту — выбрать одну, протяжка мышью — прямоугольник, Ctrl+клик — добавить/снять по одной, клик по пустому месту — снять всё. Пока режим включён, клик по строке её не выделяет. Кнопки ниже работают ровно по выбранным ячейкам",
+  t43: "Режим выбора ЯЧЕЕК: щелчок по биту и протяжка ДОБАВЛЯЮТ к выбору (прежнее не снимается), Ctrl+щелчок или Ctrl+протяжка с выбранного бита — снять, Shift+щелчок — прямоугольник от последнего выбранного бита, Esc — снять всё разом. Выбор по порядку нажатий виден в «🧾 Черновике»; «📍 Зафиксировать» откладывает его группой, которую Esc не снимает. Пока режим включён, клик по строке её не выделяет. Кнопки ниже работают ровно по выбранным ячейкам",
   t44: "Повернуть выбранный прямоугольник на 90° ПО ЧАСОВОЙ прямо на месте: биты внутри рамки выделения переставляются, за её пределы ничего не выходит. Считается по габаритной рамке выделения; ячейки, для которых в строке нет бита, пропускаются",
   t45: "Сдвинуть биты выбранных ячеек ВЛЕВО по кругу — внутри каждой строки выделения отдельно, только по выбранным позициям",
   t46: "Сдвинуть биты выбранных ячеек ВПРАВО по кругу — внутри каждой строки выделения отдельно, только по выбранным позициям",
@@ -7757,8 +7846,8 @@ const TIPS = {
   t115: "Заменить сами биты 0/1 их пробегами со знаком, напр. «111001» -> «+3-2+1» (то же выравнивание, что у обычных битов). Посимвольные подсветки в этом режиме не действуют",
   t116: "Скопировать строки цепочки в буфер обмена — каждая своей строкой, с ведущими пробелами по текущему выравниванию (как они стоят в таблице). Выделены строки — копируются только они, ничего не выделено — вся цепочка. То же самое делает Ctrl+C по выделенным строкам",
   t117: "Свои цвета: последние вручную выбранные (col1/col0/colBg) — как только меняешь цвет вручную при любом активном пресете, сам пресет не трогается, а изменение уходит сюда и сохраняется в кэше. Пока своих цветов ещё не было — по умолчанию как Ч/Б",
-  t118: "Красная подсветка изменённых бит: и «изменён последним шагом» (по стеку отката), и та, что оставляет «🎭 Маска». Нажатие — выключить совсем, повторное — вернуть. Состояние сохраняется в настройках вида",
-  t119: "Подгоняет межсимвольный интервал (ls) так, чтобы ячейка символа стала квадратной (ширина = высоте строки --row-h) при текущих размере шрифта/межстрочном интервале. Любая 'лестница' (например 1,11,111...) в таблице строк получит ровно 45° диагональ и 90° угол. Содержимое строк не меняется — только геометрия символа",
+  t118: "Красная подсветка бит, которые ОТЛИЧАЮТСЯ ОТ ОРИГИНАЛА — от цепочки, сохранённой 💾 (без сохранения — от шаблона). Сохранили цепочку — она стала оригиналом, красное снято. Бит вернули как был — красное гаснет. Нажатие — выключить совсем, повторное — вернуть. Состояние сохраняется в настройках вида",
+  t119: "Подгоняет межсимвольный интервал (ls) так, чтобы у треугольника из строк был ПРЯМОЙ угол. Учитывает выравнивание и прирост строк: по центру (центр, центр ½, оси) ширина столбца = 2 × высота строки / прирост, влево-вправо — высота / прирост; у лесенок — квадратная ячейка. Ширина цифры и высота строки замеряются по самому полю. Любая 'лестница' (например 1,11,111...) в таблице строк получит ровно 45° диагональ и 90° угол. Содержимое строк не меняется — только геометрия символа",
   t120: "Круговой сдвиг (◄/►Круг/Круг Инв) под «Авто»: текущий вариант из общего числа (НОК длин выделенных строк, ×2 у Круг Инв) и номера строк, которые сейчас крутятся",
   t121: "⚖ Суммарный баланс единиц/нулей по ВСЕМ выделенным строкам вместе (виден, пока включено «⚖ Показать балансы») — подсвечивается акцентным, если единиц и нулей поровну",
   t122: "Закрепить высоту панели на текущем размере — дальше не растёт/не сжимается сама при смене содержимого (списка режимов/находок), просто скроллится внутри",

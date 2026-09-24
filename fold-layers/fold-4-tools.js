@@ -13,6 +13,7 @@
 var cellSel = new Set();
 var cellSelMode = false;
 var cellDragAnchor = null; // {r, col} — с какой ячейки начали протяжку прямоугольника
+var cellSelAnchor = null;  // {r, col} — «активная ячейка» как в Excel: от неё тянется Shift+щелчок (v1.614)
 
 /* Ключ ячейки и разбор обратно. */
 function cellKey(r, col){ return r + "|" + col; }
@@ -95,6 +96,132 @@ function cellSelUpdateBtns(){
   if (b) b.classList.toggle("mode-act", cellSelMode);
   document.body.classList.toggle("cell-mode", cellSelMode);
 }
+
+/* ═══ ПОРЯДОК ЩЕЛЧКОВ И ЗАФИКСИРОВАННОЕ ВЫДЕЛЕНИЕ (v1.617) ═══
+   Запрос пользователя: «нужна кнопка зафиксировать выделение; все выделения писать в черновик —
+   поочерёдно, по нажатию бит; зафиксированное не снимается Escape, только кнопкой „снять“, которая
+   рисуется крестиком рядом с последним битом».
+
+   ПОРЯДОК. cellSel — множество, порядка в нём нет, а Черновику нужен именно порядок нажатий.
+   cellSelOrder — список ключей в том порядке, в каком биты попадали в выбор: "c" + ключ бита строки
+   или "p" + ключ бита паттерна (у них разные системы координат, см. patCellSel). Сверяется с
+   наборами лениво (cellSelOrderSync): снятые выпадают, новые дописываются в хвост. Щелчки идут
+   по одному, и после каждого render() зовёт синхронизацию — так порядок и копится. Прямоугольник
+   протяжки попадает в хвост целиком, в порядке чтения: сверху вниз, слева направо.
+
+   ФИКСАЦИЯ. «📍 Зафиксировать» переносит биты СТРОК из текущего выбора в новую группу
+   cellFixGroups[g] = { keys: [...] } (в порядке нажатий) и снимает их с выбора: выбирать можно
+   дальше, группа держится сама. Escape (clearAllSelections) и «✕ Очистить биты» групп не касаются;
+   снимает группу только её крестик × за её последним битом (последним по порядку нажатий).
+   Биты паттернов не фиксируются: подсветка групп нарисована только в полотне цепочки.
+   Группы, как и сам выбор, живут до перезагрузки страницы. */
+var cellSelOrder = [];
+var cellFixGroups = [];
+const CELL_FIX_COLORS = 4;   // сколько цветов групп (.cell-fix0…3 в Zerkalius-layers.html)
+function cellSelOrderSync(){
+  const live = new Set();
+  for (const k of cellSel) live.add("c" + k);
+  for (const k of patCellSel) live.add("p" + k);
+  cellSelOrder = cellSelOrder.filter(k => live.has(k));
+  if (cellSelOrder.length === live.size) return cellSelOrder;
+  const have = new Set(cellSelOrder);
+  const fresh = [];
+  for (const k of live) if (!have.has(k)) fresh.push(k);
+  fresh.sort((a, b) => {
+    if (a[0] !== b[0]) return a[0] < b[0] ? -1 : 1;
+    const pa = a.slice(1).split("|"), pb = b.slice(1).split("|");
+    return (+pa[0] - +pb[0]) || (+pa[1] - +pb[1]);
+  });
+  for (const k of fresh) cellSelOrder.push(k);
+  return cellSelOrder;
+}
+/* Значение бита по ключу порядка: "c r|col" — бит строки (col — столбец полотна), "p r|k" — символ
+   паттерна. Бита там уже нет (строку укоротили) — пустая строка. */
+function cellOrderBit(okey, maxLen){
+  const p = okey.slice(1).split("|"), r = +p[0], c = +p[1];
+  if (okey[0] === "p") {
+    const t = (st.pats[r] && st.pats[r].text) || "";
+    return (c >= 0 && c < t.length) ? t[c] : "";
+  }
+  const j = cellBitIdx(r, c, maxLen);
+  return j >= 0 ? (st.rows[r] || "")[j] : "";
+}
+function cellFixAdd(){
+  const order = cellSelOrderSync().filter(k => k[0] === "c");
+  if (!order.length) {
+    say(patCellSel.size
+      ? "📍 Фиксируются только биты цепочки, а выбраны биты паттерна."
+      : "📍 Сначала выберите биты (режим «▭ Выбор ячеек»).");
+    return;
+  }
+  const keys = order.map(k => k.slice(1));
+  cellFixGroups.push({ keys });
+  for (const k of keys) cellSel.delete(k);
+  cellSelOrderSync();
+  say(`📍 Зафиксировано бит: ${keys.length} (группа №${cellFixGroups.length}). Escape её не снимет — только крестик × за последним битом.`);
+  render();
+}
+function cellFixRemove(g){
+  if (!(g >= 0 && g < cellFixGroups.length)) return;
+  cellFixGroups.splice(g, 1);
+  say(`📍 Зафиксированное выделение №${g + 1} снято.` + (cellFixGroups.length ? ` Осталось групп: ${cellFixGroups.length}.` : ""));
+  render();
+}
+/* Карты для render(): Map(строка → { cols: Map(столбец → группа), last: Map(столбец → группа) }).
+   Считается один раз на кадр, чтобы на каждом бите не разбирать строковые ключи. Бит, попавший в
+   две группы, красится последней. */
+function cellFixRowMaps(){
+  if (!cellFixGroups.length) return null;
+  const m = new Map();
+  const slot = (r) => { let o = m.get(r); if (!o) { o = { cols: new Map(), last: new Map() }; m.set(r, o); } return o; };
+  cellFixGroups.forEach((grp, g) => {
+    for (const key of grp.keys) {
+      const p = key.split("|");
+      slot(+p[0]).cols.set(+p[1], g);
+    }
+    const lk = grp.keys[grp.keys.length - 1];
+    if (lk) { const p = lk.split("|"); slot(+p[0]).last.set(+p[1], g); }
+  });
+  return m;
+}
+/* Живой блок Черновика: текущий выбор по порядку нажатий и каждая зафиксированная группа. */
+function cellSelDraftHtml(){
+  const order = cellSelOrderSync();
+  if (!order.length && !cellFixGroups.length) return "";
+  const maxLen = cellSelMaxLen();
+  const line = (name, cls, bitsStr, n) =>
+    '<div class="step-log-input-row"><span class="step-log-input-name' + cls + '">' + name + '</span>' +
+    '<span class="step-log-input-text">' + (bitsStr.length ? bitsHtml(bitsStr) : '<span class="empty">пусто</span>') +
+    ' <span class="empty">· ' + n + ' бит</span></span></div>';
+  let html = '<div class="step-log-inputs-container cell-draft">';
+  if (order.length) {
+    let s = "";
+    for (const k of order) s += cellOrderBit(k, maxLen);
+    html += line("▭ Выбор", "", s, s.length);
+  }
+  cellFixGroups.forEach((grp, g) => {
+    let s = "";
+    for (const k of grp.keys) s += cellOrderBit("c" + k, maxLen);
+    html += line("📍 " + (g + 1), " cell-fix" + (g % CELL_FIX_COLORS), s, s.length);
+  });
+  return html + '</div>';
+}
+const bCellFixEl = document.getElementById("bCellFix");
+if (bCellFixEl) bCellFixEl.onclick = cellFixAdd;
+/* Крестик × группы (.fix-x) лежит внутри битов строки, где мышь ловят и выбор ячеек, и выделение
+   строк, и протяжка поля. Поэтому ловим его на window в фазе ПЕРЕХВАТА — раньше всех: mousedown
+   просто гасим, а снимаем группу по click (если убрать крестик уже на mousedown, click уйдёт на
+   строку под ним и выделит её). */
+window.addEventListener("mousedown", (e) => {
+  if (!(e.target && e.target.closest && e.target.closest(".fix-x"))) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+}, true);
+window.addEventListener("click", (e) => {
+  const x = e.target && e.target.closest && e.target.closest(".fix-x");
+  if (!x) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  cellFixRemove(+x.getAttribute("data-fixg"));
+}, true);
 
 /* ═══ НАЛОЖЕНИЕ: БУФЕР, ПАНЕЛЬ И ЖЕСТЫ (v1.104) ═══
    Сама механика и смысл — в mergePasteIntoRow() (fold-1-core.js). Здесь три части: как снимается
@@ -1041,7 +1168,7 @@ if (bCellModeEl) {
     // живут, пока включены оси по битам (запрос пользователя).
     cellSelUpdateBtns();
     say(cellSelMode
-      ? "Выбор ячеек: клик — одна, протяжка — прямоугольник, Ctrl+клик — по одной."
+      ? "Выбор ячеек: щелчок и протяжка добавляют, Ctrl+щелчок снимает бит, Shift+щелчок — от последнего до этого, Esc снимает всё."
       : "Выбор ячеек выключен.");
     render();
   };
@@ -1272,6 +1399,7 @@ if (bColSelClearFloatEl) bColSelClearFloatEl.onclick = clearAxisGroupOnce;
     };
     // Протяжка по битам паттерна — своим якорем: диапазон внутри ОДНОГО паттерна.
     let patCellDrag = null;
+    let patCellAnchor = null;   // {r, k} — от него тянется Shift+щелчок по битам паттерна (v1.614)
     const patCellRange = (r, k0, k1, base, del) => {
       patCellSel = new Set(base || patCellSel);
       const lo = Math.min(k0, k1), hi = Math.max(k0, k1);
@@ -1290,63 +1418,75 @@ if (bColSelClearFloatEl) bColSelClearFloatEl.onclick = clearAxisGroupOnce;
       if (pcell) {
         e.preventDefault();
         e.stopPropagation();
+        /* ТОТ ЖЕ УКЛАД, ЧТО У БИТ СТРОК (v1.616, см. ниже): щелчок и протяжка только ДОБАВЛЯЮТ,
+           Ctrl+щелчок снимает бит, Shift — диапазон от последнего выбранного бита этого паттерна.
+           Снимает всё разом только Escape. */
+        const ctrl = e.ctrlKey || e.metaKey;
         const cur = patCellSelRow();
         // ПОСТРОЧНО (требование пользователя): пока набор не снят, чужие строки не трогаем.
         if (cur >= 0 && cur !== pcell.r) {
-          say(`Биты паттерна выбираются только в ОДНОЙ строке — сейчас идёт выбор в строке №${cur + 1}. Снимите его (клик по выбранным или «✕ Очистить биты»), потом выбирайте в другой.`);
+          say(`Биты паттерна выбираются только в ОДНОЙ строке — сейчас выбор в строке №${cur + 1}. Esc снимет его, потом выбирайте здесь.`);
           return;
         }
         const key = pcell.r + "|" + pcell.k;
-        const del = patCellSel.has(key);
-        patCellDrag = { r: pcell.r, k: pcell.k, base: new Set(patCellSel), del };
-        patCellRange(pcell.r, pcell.k, pcell.k, patCellDrag.base, del);
+        const del = ctrl && !e.shiftKey && patCellSel.has(key);
+        const k0 = (e.shiftKey && patCellAnchor && patCellAnchor.r === pcell.r) ? patCellAnchor.k : pcell.k;
+        if (!e.shiftKey || k0 === pcell.k) patCellAnchor = { r: pcell.r, k: pcell.k };
+        patCellDrag = { r: pcell.r, k: k0, base: new Set(patCellSel), del, last: pcell.k };
+        patCellRange(pcell.r, k0, pcell.k, patCellDrag.base, del);
         render(); saveCache();
         return;
       }
       const cell = cellAtEvent(e);
       e.preventDefault();
       e.stopPropagation(); // не даём клику выделить строку
-      /* КЛИК МИМО БИТА — СНЯТЬ ВЕСЬ НАБОР (v0.941, запрос пользователя "мимо битов не снимает
-         выделение ячеек"). Это возврат к поведению, которое когда-то убрали (боялись потерять
-         набор от случайного промаха), и снова просят вернуть. Делать это надо ИМЕННО ЗДЕСЬ:
-         обработчик висит на #rows в фазе ПЕРЕХВАТА и глушит событие stopPropagation'ом, так что
-         общий сброс на холсте (см. #screenCanvas в fold-2) при включённом режиме выбора ячеек
-         не получает клик вообще — он работает только когда режим выключен. */
-      if (!cell) {
-        if (cellSel.size || patCellSel.size) {
-          cellSel.clear();
-          patCellSel.clear();   // биты паттерна снимаются тем же кликом мимо (v0.950)
-          render(); saveCache();
-          say("Выделения битов сняты (клик мимо битов).");
-        }
-        return;
-      }
+      /* КЛИК МИМО БИТА НИЧЕГО НЕ СНИМАЕТ (v1.616, запрос пользователя: «выделение снимать только
+         по Escape, сразу всех»). С v0.941 промах стирал весь набор — и набор, собранный щелчками по
+         одному, терялся от одного неточного щелчка. Снимает всё разом только Escape
+         (clearAllSelections в fold-1-core). Событие по-прежнему глушим: щелчок в режиме выбора
+         ячеек не должен выделять строку. */
+      if (!cell) return;
       const key = cellKey(cell.r, cell.col);
-      // Любой клик по биту — ПЕРЕКЛЮЧАТЕЛЬ (был выбран — снялся, не был — добавился), Ctrl больше
-      // не нужен: выделение накапливается, а не перепрыгивает на новый бит. Протяжка от этого же
-      // бита продолжает то же действие: с невыбранного — добавляет рамку, с выбранного — снимает.
-      const del = cellSel.has(key);
-      cellDragAnchor = { r: cell.r, col: cell.col, base: new Set(cellSel), del };
-      cellSelectRect(cell.r, cell.col, cell.r, cell.col, cellDragAnchor.base, del);
+      /* ВЫБОР НАКАПЛИВАЕТСЯ, СНИМАЕТ ЕГО ТОЛЬКО ESCAPE (v1.616, запрос пользователя: «если по одной
+         щёлкать — не снимать выделение, выделение снимать только по Escape, сразу всех»). В v1.614
+         было как в Excel: простой щелчок начинал выбор заново. Оказалось неудобно: биты собирают по
+         одному, и каждый щелчок без Ctrl стирал собранное. Теперь:
+           щелчок / протяжка          — ДОБАВИТЬ бит / прямоугольник (выбранный бит так и остаётся);
+           Ctrl+щелчок / Ctrl+протяжка — СНЯТЬ бит / прямоугольник, если начали с выбранного бита;
+           Shift+щелчок               — добавить прямоугольник от последнего выбранного бита до этого;
+           Escape                     — снять ВСЁ разом (и в строках, и в паттернах).
+         Якорь (cellSelAnchor) — бит последнего щелчка без Shift, от него и тянется Shift. */
+      const ctrl = e.ctrlKey || e.metaKey;
+      const del = ctrl && !e.shiftKey && cellSel.has(key);
+      const from = (e.shiftKey && cellSelAnchor) ? cellSelAnchor : { r: cell.r, col: cell.col };
+      if (!e.shiftKey || !cellSelAnchor) cellSelAnchor = { r: cell.r, col: cell.col };
+      cellDragAnchor = { r: from.r, col: from.col, base: new Set(cellSel), del,
+                         lastR: cell.r, lastC: cell.col };
+      cellSelectRect(from.r, from.col, cell.r, cell.col, cellDragAnchor.base, del);
       render();
     }, true);
     rowsEl.addEventListener("mousemove", (e) => {
       if (!cellSelMode || !patCellDrag || e.buttons !== 1) return;
       const pcell = patCellAtEvent(e);
       if (!pcell || pcell.r !== patCellDrag.r) return;   // за пределы своего паттерна не выходим
+      if (pcell.k === patCellDrag.last) return;          // тот же бит — перерисовывать нечего
+      patCellDrag.last = pcell.k;
       patCellRange(patCellDrag.r, patCellDrag.k, pcell.k, patCellDrag.base, patCellDrag.del);
       render();
     });
-    window.addEventListener("mouseup", () => { patCellDrag = null; });
+    window.addEventListener("mouseup", () => { if (patCellDrag) saveCache(); patCellDrag = null; });
     rowsEl.addEventListener("mousemove", (e) => {
       if (!cellSelMode || !cellDragAnchor || e.buttons !== 1) return;
       const cell = cellAtEvent(e);
       if (!cell) return;
+      // Рамка меняется только при переходе на другой бит — иначе render() на каждое движение мыши.
+      if (cell.r === cellDragAnchor.lastR && cell.col === cellDragAnchor.lastC) return;
+      cellDragAnchor.lastR = cell.r; cellDragAnchor.lastC = cell.col;
       cellSelectRect(cellDragAnchor.r, cellDragAnchor.col, cell.r, cell.col,
                      cellDragAnchor.base, cellDragAnchor.del);
       render();
     });
-    window.addEventListener("mouseup", () => { cellDragAnchor = null; });
+    window.addEventListener("mouseup", () => { if (cellDragAnchor) saveCache(); cellDragAnchor = null; });
   }
 }
 

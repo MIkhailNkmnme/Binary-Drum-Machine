@@ -75,6 +75,12 @@ var xorNewArrs = null;
 var xorNewSelKey = "";
 function selRowsKey(){ return Array.from(st.selectedRows || []).sort((a, b) => a - b).join(","); }
 function xorNewArm(arrs){ xorNewArrs = new Set(arrs); xorNewSelKey = selRowsKey(); }
+// v1.618: то же правило — на ВСЕ «Новые» биты, откуда бы они ни взялись (построения, зеркала, XOR).
+// newBitsSeen — снимок newBitsMap (строка → массив флагов) на прошлом кадре: по нему render() видит,
+// что появились свежие пометки, и запоминает при них выделение строк (newBitsSelKey). Сменили
+// выделение — зелёное снимается целиком (см. render).
+var newBitsSeen = null;
+var newBitsSelKey = "";
 var chgColorOffRows = null;
 var chgBitsOn = true;
 var maskColorOn = true;

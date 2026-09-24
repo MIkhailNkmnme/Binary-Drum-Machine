@@ -2311,6 +2311,17 @@ function render(){
     }
     if (!same) { xorChgMap.clear(); xorChgBaseRows = null; }
   }
+  /* v1.618: «Новые после смены выделения должны терять цвет» — ВСЕ, а не только от XOR (v1.600 ниже).
+     Свежие пометки узнаём по снимку newBitsSeen: другая строка или другой массив флагов — значит
+     операция только что дописала биты, и при них запоминается текущее выделение строк (операция
+     могла сама его поменять — такое выделение считается исходным). Дальше выделение сменили —
+     newBitsMap очищается целиком. Отдельная кнопка «✕» у цвета «Нов» по-прежнему снимает сразу. */
+  if (newBitsMap.size) {
+    let fresh = !newBitsSeen || newBitsSeen.size !== newBitsMap.size;
+    if (!fresh) for (const [k, v] of newBitsMap) if (newBitsSeen.get(k) !== v) { fresh = true; break; }
+    if (fresh) { newBitsSeen = new Map(newBitsMap); newBitsSelKey = selRowsKey(); }
+    else if (selRowsKey() !== newBitsSelKey) { newBitsMap.clear(); newBitsSeen = null; xorNewArrs = null; }
+  } else newBitsSeen = null;
   // v1.600: зелёное от XOR снимается, как только выделение строк сменили (см. xorNewArm).
   if (xorNewArrs && selRowsKey() !== xorNewSelKey) {
     for (const [k, v] of newBitsMap) if (xorNewArrs.has(v)) newBitsMap.delete(k);
@@ -2938,9 +2949,16 @@ function render(){
   // хотя сравнивать их больше не с чем (шаблон-то остался старым).
   const activeTabObj = st.tabs && st.tabs[st.activeTab];
   const changedBase = (activeTabObj && activeTabObj.savedChain) ? activeTabObj.savedChain.rows : st.tplRows;
-  // Строки ДО последнего шага (верхушка стека отката) — по ним красим биты, которые этот шаг
-  // реально перевернул: 0→1 или 1→0. Длина должна совпадать, иначе позиции не сопоставимы.
-  const prevRows = (st.undo && st.undo.length) ? (st.undo[st.undo.length - 1].rows || null) : null;
+  /* «Изм» СРАВНИВАЕТ С ОРИГИНАЛОМ (v1.615, запрос пользователя: «должна показывать изменения
+     сравнивания только с оригинальной цепочкой, если цепочку сохранить — она становится
+     оригинальной»). Оригинал — та же база, что у синих номеров выше: 💾-сохранёнка вкладки, а без
+     неё шаблон. Раньше красным шли биты, перевёрнутые ПОСЛЕДНИМ шагом (верхушка стека отката), и
+     следующий же шаг стирал память о прежних правках. Теперь красное копится, пока бит отличается
+     от оригинала, гаснет, если бит вернули, и снимается целиком по 💾. Длина строки должна
+     совпадать с оригиналом, иначе позиции не сопоставимы. */
+  const origRows = changedBase || null;
+  // v1.617: зафиксированные группы выбора (📍, см. cellFixRowMaps в fold-4) — одна карта на кадр.
+  const fixRowMaps = (typeof cellFixRowMaps === "function") ? cellFixRowMaps() : null;
 
   // Подсветка "1 под 1" (см. #bHighlightVert1) — считается ОДИН РАЗ на весь рендер (сравнивает
   // соседние строки между собой), не на отдельную строку, как compute01HighlightMask.
@@ -4014,10 +4032,11 @@ function render(){
     // Совпадения с образцом из выбранных ячеек — см. cellSampleRows выше.
     const sampleRow = cellSampleRows ? cellSampleRows.get(i) : null;
     const pinRow = cellPinRows ? cellPinRows.get(i) : null;   // зафиксированные биты этой строки
+    const fixRow = fixRowMaps ? fixRowMaps.get(i) : null;     // 📍 группы выбора в этой строке (v1.617)
     // «Новые» биты этой строки (дописанные построением/зеркалом) — см. newBitsMap.
     const newFlagsRow = newBitsMap.get(i);
     const envRow = envPreview ? envPreview.cells.get(i) : null;
-    const prevRow = prevRows ? prevRows[i] : null;
+    const origRow = origRows ? origRows[i] : null;
     const allPatRow = allPatRows ? allPatRows.get(i) : null; // "🌈 Все паттерны", см. выше
     // Красные пометки предпросмотра "✂ Переноса" (v1.472): что уже перенесено и что уйдёт
     // следующим. Считается один раз на строку и только пока идёт режим — см. wrapBitMarks()
@@ -4134,10 +4153,10 @@ function render(){
       const isEnvDiag = !!(envRow && envRow.has(k) && (bit === '0' || bit === '1'));
       // Номер паттерна, накрывшего этот бит в режиме "🌈 Все паттерны" (см. allPatRows).
       const allPatBit = allPatRow ? allPatRow[k] : undefined;
-      // Бит, перевёрнутый ПОСЛЕДНИМ шагом (см. prevRows). Только настоящая смена значения:
+      // Бит, отличающийся от ОРИГИНАЛА (см. origRows, v1.615). Только настоящая смена значения:
       // 1→1 и 0→0 не считаются.
-      const isChgBit = showChgBits && !!(prevRow && prevRow.length === s.length && (bit === '0' || bit === '1') &&
-        (prevRow[k] === '0' || prevRow[k] === '1') && prevRow[k] !== bit);
+      const isChgBit = showChgBits && !!(origRow && origRow.length === s.length && (bit === '0' || bit === '1') &&
+        (origRow[k] === '0' || origRow[k] === '1') && origRow[k] !== bit);
 
       // mrg — можно ли приклеить этот бит к предыдущему (см. emit/flushRun выше): нельзя, когда у
       // бита свой data-col.
@@ -4205,6 +4224,12 @@ function render(){
         // Выбранная курсором ячейка — поверх любых других подсветок: это то, с чем сейчас работают
         // кнопки «Инв. ячеек»/«90° ячеек»/«Сдвиг».
         emit('<span class="b' + bit + ' cell-sel"' + colAttr + '>', bit, mrg);
+      } else if (fixRow && fixRow.cols.has(shift + k) && (bit === '0' || bit === '1')) {
+        // 📍 Зафиксированное выделение (v1.617) — сразу под текущим выбором: Escape его не снимает,
+        // и видно оно всегда, в режиме выбора ячеек и без него. Цвет — по номеру группы.
+        const fg = fixRow.cols.get(shift + k);
+        emit('<span class="b' + bit + ' cell-fix cell-fix' + (fg % 4) + '" title="Зафиксированное выделение №' + (fg + 1) +
+             ' — снять крестиком × за его последним битом"' + colAttr + '>', bit, mrg);
       } else if (pinRow && pinRow.has(k) && (bit === '0' || bit === '1')) {
         // Накопитель "📌 Зафиксировать" — ВЫШЕ свежей находки: смысл набора в том, что он держится,
         // когда образец сменили и подсветка находки уже про другое место.
@@ -4220,7 +4245,7 @@ function render(){
         emit('<span class="env-diag" title="Линия сгиба «Конверта» — нажмите кнопку ещё раз, чтобы сложить"' + colAttr + '>', bit, mrg);
       } else if (marks && marks.has(k)) {
         emit('<span class="' + hitCls + '"' + colAttr + '>', bit, mrg);
-      } else if (isMaskBit && (bit === '0' || bit === '1')) {
+      } else if (isMaskBit && isChgBit) {   // v1.615: красное — только отличие от оригинала
         emit('<span class="b' + bit + ' bit-chg" title="Изменён «Маской»"' + colAttr + '>', bit, mrg);
       } else if (patChainHit && (bit === '0' || bit === '1')) {
         // Найденный "🧩 Паттерн-цепочкой" паттерн — теми же цветами, что и в окне "Результат"
@@ -4262,7 +4287,7 @@ function render(){
            Кнопку включают ровно затем, чтобы смотреть на симметрию, поэтому она важнее пометок. */
         emit('<span class="b' + bit + (isRevKeep ? ' hlrk' : ' hlrm') +
              '" title="' + (isRevKeep ? 'Неподвижный: разворот строки оставит тут то же значение' : 'Меняющийся: разворот строки перевернёт этот бит') + '"' + colAttr + '>', bit, mrg);
-      } else if (isXorChgBit && (bit === '0' || bit === '1')) {
+      } else if (isXorChgBit && isChgBit) {   // v1.615: красное — только отличие от оригинала
         /* v1.597, запрос «при XOR спуск вниз — пусть красным красит биты изменившиеся, то есть которые
            изменились от XOR»: выше «Нов» — иначе пометка треугольника (v1.585) их закрывает. */
         emit('<span class="b' + bit + ' bit-chg" title="Изменён XOR-ом (0↔1)"' + colAttr + '>', bit, mrg);
@@ -4270,10 +4295,13 @@ function render(){
         emit('<span class="b' + bit + ' bit-inv" title="Перевёрнут переходом границы строки"' + colAttr + '>', bit, mrg);
       } else if (isInsBit && (bit === '0' || bit === '1')) {
         emit('<span class="b' + bit + ' bit-ins" title="Вставлен кнопкой «Инверсия между символами»"' + colAttr + '>', bit, mrg);
-      } else if (isNewBit && (bit === '0' || bit === '1')) {
+      } else if (isNewBit && !isChgBit && (bit === '0' || bit === '1')) {
+        /* v1.619, жалоба «изменённые потом зелёные перекрашивают — хотя они красные и должны быть»:
+           бит, который отличается от оригинала (красный «Изм», ветка isChgBit ниже), зелёным «Нов»
+           не перекрашивается. Зелёным остаётся только новое, чему в оригинале нет пары. */
         emit('<span class="b' + bit + ' bit-new" title="Новый бит — дописан построением или зеркалом"' + colAttr + '>', bit, mrg);
       } else if (isChgBit) {
-        emit('<span class="b' + bit + ' bit-chg" title="Изменён последним шагом"' + colAttr + '>', bit, mrg);
+        emit('<span class="b' + bit + ' bit-chg" title="Отличается от оригинала (💾-сохранённой цепочки или шаблона)"' + colAttr + '>', bit, mrg);
       } else if (isAxisColBit && (bit === '0' || bit === '1')) {
         emit('<span class="axis-col-bit ' + (AXIS_GROUP_CLS[axisGroupIdx % AXIS_GROUP_CLS.length]) + ' b' + bit + '" title="Ось для Круга, группа №' + (axisGroupIdx + 1) + ' («⊙ Ось сюда» / «⊙ Оси по «1» строки»)"' + colAttr + '>', bit, mrg);
       } else if (isColSelBit && (bit === '0' || bit === '1')) {
@@ -4330,6 +4358,15 @@ function render(){
         emit('<span' + colAttr + '>', esc(bit), false);
       } else {
         emit("", esc(bit), true);
+      }
+      /* Крестик × за ПОСЛЕДНИМ битом зафиксированной группы (v1.617) — ею и снимается группа.
+         Позиционирован absolute без координат: стоит ровно там, где встал бы следующим символом,
+         но места в строке не занимает, и биты не сдвигаются ни на пиксель. */
+      if (fixRow && fixRow.last.has(shift + k)) {
+        const fg = fixRow.last.get(shift + k);
+        flushRun();
+        bits += '<span class="fix-x cell-fix' + (fg % 4) + '" data-fixg="' + fg +
+                '" title="Снять зафиксированное выделение №' + (fg + 1) + '"></span>';   // знак × — из CSS (::after): у узла не должно быть текста, столбцы строки считаются по длине текста
       }
     }
     flushRun(); // хвост последнего пробега
@@ -5615,6 +5652,15 @@ function renderStepLogBoxInner(bgInfo){
 
   const rowsHeadEl = document.getElementById("stepLogRowsHead");
 
+  // «▭ Выбор» по порядку нажатий и 📍 зафиксированные группы (v1.617, см. cellSelDraftHtml в fold-4):
+  // живой блок, как и подпаттерны, — но САМЫМ ПЕРВЫМ, чтобы щелчок по биту было видно сразу.
+  let cellDraft = "";
+  try {
+    if (typeof cellSelDraftHtml === "function") cellDraft = cellSelDraftHtml();
+  } catch (err) {
+    cellDraft = '<div class="empty">▭ Выбор: ошибка — ' + esc(String(err && err.message || err)) + '</div>';
+  }
+
   // Гориз.XOR: прогресс + Сквозная/Цель/Результат — раньше рисовалось поверх окна "Результат",
   // теперь тут; показывается независимо от того, был ли уже реальный шаг (op), т.к. это живое
   // состояние поиска, не история последнего шага. Сам прогресс ("Поиск · шаг X/Y") — в шапке
@@ -5666,7 +5712,7 @@ function renderStepLogBoxInner(bgInfo){
         }
       }
     }
-    bodyEl.innerHTML = horizHtml + previewHtml + '<span class="step-log-empty">шагов ещё не было</span>' + subHtml;
+    bodyEl.innerHTML = cellDraft + horizHtml + previewHtml + '<span class="step-log-empty">шагов ещё не было</span>' + subHtml;
     markHorizTruncated(bodyEl);
     applyStepLogBodyHeight(bodyEl);
     return;
@@ -5729,7 +5775,7 @@ function renderStepLogBoxInner(bgInfo){
   // Находка паттерна (op.pattern) больше не дублируется тут текстом — см. say() в doStep()
   // (уведомление снизу экрана), сработавший ровно в момент реальной находки.
 
-  bodyEl.innerHTML = html + subHtml;
+  bodyEl.innerHTML = cellDraft + html + subHtml;
 
   const resultEl = bodyEl.querySelector(".step-log-result:not(.expanded)");
   if (resultEl && resultEl.scrollWidth > resultEl.clientWidth) resultEl.classList.add("truncated");
