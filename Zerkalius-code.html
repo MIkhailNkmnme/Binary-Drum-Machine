@@ -2,14 +2,14 @@
 <!--
 ===========================================================================
 PROJECT: Zerkalius Code (до 35.31 — Binary Drum Machine)
-VERSION: Pro 35.56 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопок ⇄ и ⚙ больше нет, 🔎 Поиск убран; пресеты — целые сцены, логическая операция работает; выравнивание по видимому краю; 13 шрифтов, свои, без интернета; ▦ скачки ⇄ 〰 плавно в плеере; файл можно бросить на холст; межсимвольный интервал; крайние панели прозрачные; защита от выделения; ⚓ заморозка — на месте, без прыжка в центр; подсчёт циклов Аниматрицы; ▶ — включить выбранную сцену; F5 не сбрасывает — всё как было; ★ — полный пресет вместе с текстом; ★-сцены файлом для другого компьютера; счётчик Аниматрицы — внизу, среди уведомлений; вкладки в одну строку, плавающие окна целиком на экране; журнал Аниматрицы в файл; ⤒ / Home — к началу текста; Аниматрица целыми циклами: ⏮ ⏭, PageUp/PageDown, плеер по циклам; счёт циклов переживает F5; 🎞 GIF цикла прямо из страницы; ◇ ромбическая сетка; ▤ полосы периодов; ◇ сетка «авто» по проходу, ⫼ ось симметрии)
+VERSION: Pro 35.57 (Стартовый вид: радар, рамка, цвет как код, 60 мс, сразу Play; Play мигает; обводка у включённых кнопок, столбец кнопок, реверс с ходу; запись мигает и обведена; вкладки слева/справа, ❓ Помощь; разделы перетаскиваются и плавают; по умолчанию все разделы открыты, панели светлее; разделы в панели — карточками; рамка выкл., 🔃 🛰️ дублями над плеером; курсор ✥ на шапке; Сетка — отдельный слой-фон, под радаром кольцами, на мелком масштабе — пикселями; ↺ — все разделы ⇄ только плеер; кнопок ⇄ и ⚙ больше нет, 🔎 Поиск убран; пресеты — целые сцены, логическая операция работает; выравнивание по видимому краю; 13 шрифтов, свои, без интернета; ▦ скачки ⇄ 〰 плавно в плеере; файл можно бросить на холст; межсимвольный интервал; крайние панели прозрачные; защита от выделения; ⚓ заморозка — на месте, без прыжка в центр; подсчёт циклов Аниматрицы; ▶ — включить выбранную сцену; F5 не сбрасывает — всё как было; ★ — полный пресет вместе с текстом; ★-сцены файлом для другого компьютера; счётчик Аниматрицы — внизу, среди уведомлений; вкладки в одну строку, плавающие окна целиком на экране; журнал Аниматрицы в файл; ⤒ / Home — к началу текста; Аниматрица целыми циклами: ⏮ ⏭, PageUp/PageDown, плеер по циклам; счёт циклов переживает F5; 🎞 GIF цикла прямо из страницы; ◇ ромбическая сетка; ▤ полосы периодов; ◇ сетка «авто» по проходу, ⫼ ось симметрии; 🎞 ромбы в кино)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Code 35.56</title>
+    <title>Zerkalius Code 35.57</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -329,7 +329,7 @@ VERSION: Pro 35.56 (Стартовый вид: радар, рамка, цвет 
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3>Zerkalius Code 35.56</h3>
+                <h3>Zerkalius Code 35.57</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -583,6 +583,15 @@ VERSION: Pro 35.56 (Стартовый вид: радар, рамка, цвет 
                     <label class="checkbox-row" style="margin-top: 4px;" title="Строки текста тонируются полосами: строка 0, 1, 2–3, 4–7, 8–15… В чистой фазе Аниматрицы (без нулей) у полосы строк 2^k…2^(k+1)−1 свой период волны — 2^(k+1) проходов"><input type="checkbox" id="rowBandsCheck"><span style="color:#ffcc00">▤ Полосы периодов</span></label>
                     <!-- 35.56: ось зеркальной симметрии и живой процент зеркальности видимых строк -->
                     <label class="checkbox-row" style="margin-top: 2px;" title="Вертикальная ось через вершину текста и доля непустых пар символов, одинаковых слева и справа от неё, по видимым строкам"><input type="checkbox" id="symAxisCheck"><span style="color:#ff66cc">⫼ Ось симметрии</span></label>
+                    <!-- 35.57: ромбы сетки — в кино (GIF): ромбы кадра подряд или верхний ромб по проходам -->
+                    <div class="compact-row" style="margin-top: 4px;">
+                        <select id="rhombFilmMode" title="Что снимать" style="flex:1.5; margin:0;">
+                            <option value="frame">ромбы кадра подряд</option>
+                            <option value="time">верхний ромб по проходам</option>
+                            <option value="sheet">все ромбы одной картинкой</option>
+                        </select>
+                        <button id="rhombFilmBtn" type="button" title="Собрать из ромбов ромбической сетки GIF (подряд или по проходам) или общую картинку PNG (размер — шаг сетки; при «авто» — 32)" style="flex:1; margin:0; padding:2px 4px; font-size:10px; background:#2a2412; color:#ffcc00; border:1px solid #ffcc00; border-radius:3px; cursor:pointer;">🎞 Ромбы в кино</button>
+                    </div>
                 </div>
                 </div>
                 <div class="tab-sec" data-tab="color" data-title="🎨 Цвет">
@@ -666,7 +675,7 @@ VERSION: Pro 35.56 (Стартовый вид: радар, рамка, цвет 
                     🎞 GIF — анимация цикла прямо из страницы: кадр каждый 1-й, 2-й … 64-й проход, пока картина не
                     вернётся к первому кадру; волна гонится на копии, холст не трогается),
                     Ёлка и Цилиндр (круговой сдвиг), поиск диагоналей, неоновое свечение.</dd>
-                <dt>👁 Вид</dt><dd>◇ Ромбическая сетка, шаг «авто» — сама рисует все размеры ромбов, включённые в текущем проходе (нули в двоичной записи k−1, k — проходов от начала цикла), каждый своим цветом, с легендой справа сверху. ⫼ Ось симметрии — вертикаль через вершину текста и живой процент зеркальности видимых строк. ▤ Полосы периодов — строки тонируются полосами по степеням двойки (0, 1, 2–3, 4–7, 8–15…): в чистой фазе Аниматрицы у каждой полосы свой период волны, вдвое длиннее, чем у полосы над ней. ◇ Ромбическая сетка — диагонали под 45° от вершины текста через каждые 8 / 16 / 32 / 64 символа: на треугольниках Аниматрицы видно, что картина сложена из почти одинаковых ромбов-«кадров». Масштаб шрифта, «Экран» — сколько строк видно, интервал между строками, межсимвольный интервал (0.5–3: доля ширины символа; меньше 1 — символы наезжают), шрифт (13 на выбор, в том числе Roboto Mono, JetBrains Mono, VT323, Press Start 2P; лежат в самом проекте, работают и без интернета).</dd>
+                <dt>👁 Вид</dt><dd>◇ Ромбическая сетка, шаг «авто» — сама рисует все размеры ромбов, включённые в текущем проходе (нули в двоичной записи k−1, k — проходов от начала цикла), каждый своим цветом, с легендой справа сверху. ⫼ Ось симметрии — вертикаль через вершину текста и живой процент зеркальности видимых строк. 🎞 Ромбы в кино — GIF из ромбов сетки (размер — шаг сетки, при «авто» — 32): «ромбы кадра подряд» — все целые ромбы текущего текста по порядку; «верхний ромб по проходам» — один ромб от прохода к проходу, пока не вернётся к себе (волна на копии, холст не трогается); «все ромбы одной картинкой» — PNG, ромбы на своих местах в треугольнике, но раздвинуты с зазорами. ▤ Полосы периодов — строки тонируются полосами по степеням двойки (0, 1, 2–3, 4–7, 8–15…): в чистой фазе Аниматрицы у каждой полосы свой период волны, вдвое длиннее, чем у полосы над ней. ◇ Ромбическая сетка — диагонали под 45° от вершины текста через каждые 8 / 16 / 32 / 64 символа: на треугольниках Аниматрицы видно, что картина сложена из почти одинаковых ромбов-«кадров». Масштаб шрифта, «Экран» — сколько строк видно, интервал между строками, межсимвольный интервал (0.5–3: доля ширины символа; меньше 1 — символы наезжают), шрифт (13 на выбор, в том числе Roboto Mono, JetBrains Mono, VT323, Press Start 2P; лежат в самом проекте, работают и без интернета).</dd>
                 <dt>🎨 Цвет</dt><dd>🌈 радужный текст, 🎨 цвет как код (подсветка синтаксиса), пресеты палитры, цвет и яркость
                     активных (изменившихся) и фоновых символов.</dd>
             </dl>
@@ -1368,14 +1377,16 @@ VERSION: Pro 35.56 (Стартовый вид: радар, рамка, цвет 
                 const w16 = v => { out.push(v & 255, (v >> 8) & 255); };
                 const str = t => { for (let i = 0; i < t.length; i++) out.push(t.charCodeAt(i)); };
                 str('GIF89a'); w16(w); w16(h);
-                out.push(0x80 | (1 << 4) | 1, 0, 0);   // глобальная палитра, 4 цвета
-                for (let i = 0; i < 4; i++) { const c = palette[i] || [0, 0, 0]; out.push(c[0], c[1], c[2]); }
+                // 35.57: палитра 4 или 8 цветов (2 или 3 бита) — по длине переданной
+                const bits = palette.length > 4 ? 3 : 2, nCol = 1 << bits;
+                out.push(0x80 | ((bits - 1) << 4) | (bits - 1), 0, 0);   // глобальная палитра
+                for (let i = 0; i < nCol; i++) { const c = palette[i] || [0, 0, 0]; out.push(c[0], c[1], c[2]); }
                 out.push(0x21, 0xFF, 0x0B); str('NETSCAPE2.0'); out.push(0x03, 0x01, 0, 0, 0);   // по кругу без конца
                 for (const fr of frames) {
                     out.push(0x21, 0xF9, 0x04, 0x04); w16(delay); out.push(0, 0);
                     out.push(0x2C); w16(0); w16(0); w16(w); w16(h); out.push(0);
-                    out.push(2);   // минимальный размер кода LZW для 4 цветов
-                    const data = this.lzw(fr, 2);
+                    out.push(bits);   // минимальный размер кода LZW: 2 для 4 цветов, 3 для 8
+                    const data = this.lzw(fr, bits);
                     for (let i = 0; i < data.length; i += 255) {
                         const n = Math.min(255, data.length - i);
                         out.push(n);
@@ -1765,6 +1776,109 @@ VERSION: Pro 35.56 (Стартовый вид: радар, рамка, цвет 
                циклов. Дальше кадр каждые step проходов, пока картина не вернётся к первому кадру (круг замкнулся)
                или не наберётся 256 кадров. Шаг 1 — весь цикл и «густо–редко» через проход, 8 — родственники
                через 8, 64 — вложенный треугольник (см. словарь борт-журнала: «Период — степень двойки»). */
+            /* 35.57: РОМБЫ В КИНО (запрос пользователя: «разбитые сеткой ромбы собирать в кино»). Ромбы — те же, что режет
+               ◇ Ромбическая сетка: вершина решётки — середина первой строки, ромб высотой S (шаг сетки; при «авто» — 32),
+               вершины ромбов через S/2 строк, в конусе от вершины текста. Два фильма:
+               frame — все целые ромбы ТЕКУЩЕГО текста подряд, сверху вниз и слева направо (на сцене «1», проход 155,
+               их 21, и с верхним они совпадают на 83–97% — видно, чем кадры отличаются);
+               time — ВЕРХНИЙ ромб по проходам: волна гонится на копии текста тем же правилом, что в animGif, кадр —
+               после каждого прохода, пока ромб не вернётся к первому кадру (у сцены «1» — через 64) или 256 кадров.
+               Клетки вне ромба — фон, пустые внутри — тёмно-серые, «0» — синие, остальное — светлое. */
+            rhombFilm: function(mode) {
+                const src = MODULE_STATE.originalLines, H = src.length;
+                if (H < 2) { UI.statusInfo.textContent = 'Ромбы: на холсте нет текста'; return; }
+                const stepV = document.getElementById('rhombGridStep')?.value || '32';
+                const S = stepV === 'auto' ? 32 : (parseInt(stepV, 10) || 32), half = S / 2;
+                const W = src.reduce((m, l) => Math.max(m, l.text.length), 0);
+                const rows = src.map(l => { const a = new Uint16Array(W).fill(32); for (let i = 0; i < l.text.length; i++) a[i] = l.text.charCodeAt(i); return a; });
+                const t0 = src[0].text, a0 = t0.search(/\S/);
+                if (a0 < 0) { UI.statusInfo.textContent = 'Ромбы: первая строка пустая — нет вершины'; return; }
+                let b0 = t0.length - 1; while (b0 > a0 && t0[b0] === ' ') b0--;
+                const c0 = Math.floor((a0 + b0) / 2);
+                const tops = [];
+                for (let r = 0; r + S <= H - 1; r += half)
+                    for (let c = c0 - r; c <= c0 + r; c++) if (((c - c0 - r) % S + S) % S === 0) tops.push([r, c]);
+                if (!tops.length) { UI.statusInfo.textContent = `Ромбы: текст ниже ромба высотой ${S} — выберите шаг сетки меньше`; return; }
+                const COL = ['#000000', '#23232d', '#3c82ff', '#d7e1eb'];
+                const cellV = (ch) => ch === 32 ? 1 : (ch === 48 ? 2 : 3);
+                /* 35.57: «все ромбы одной картинкой» (запрос: «также общую картинку со всеми ромбами») — PNG: каждый ромб на
+                   своём месте в треугольнике, но позиции раздвинуты в K раз, между ромбами зазоры — разобранная мозаика. */
+                if (mode === 'sheet') {
+                    const K = 1.22, rMax = tops[tops.length - 1][0];
+                    const spanC = 2 * rMax + S + 1, spanR = rMax + S + 1;
+                    const cs = Math.max(1, Math.min(10, Math.floor(1600 / (spanC * K))));
+                    const pad = 16, top = 34;
+                    const cw = Math.ceil(spanC * K * cs) + 2 * pad, ch = Math.ceil(spanR * K * cs) + top + pad;
+                    const sh = document.createElement('canvas'); sh.width = cw; sh.height = ch;
+                    const g = sh.getContext('2d');
+                    g.fillStyle = '#0a0b0e'; g.fillRect(0, 0, cw, ch);
+                    g.fillStyle = '#ff8a8a'; g.font = '14px Consolas, monospace'; g.textBaseline = 'top';
+                    g.fillText('Все ромбы сетки: ' + tops.length + ' шт., высота ' + S + ' строк · проход ' + (MODULE_STATE.animPasses || 0) + ' · раздвинуты, чтобы был виден каждый', pad, 10);
+                    const ox = pad + (spanC * K * cs) / 2;   // вершина треугольника — по центру листа
+                    tops.forEach(([r, c]) => {
+                        const bx = ox + ((c - c0) * K - half) * cs, by = top + r * K * cs;
+                        for (let dr = 0; dr <= S; dr++) {
+                            const w = dr <= half ? dr : S - dr, row = rows[r + dr];
+                            for (let dc = -w; dc <= w; dc++) {
+                                g.fillStyle = COL[cellV(row[c + dc])];
+                                g.fillRect(Math.round(bx + (dc + half) * cs), Math.round(by + dr * cs), cs, cs);
+                            }
+                        }
+                    });
+                    const fname = 'Zerkalius-romby-' + S + '-list-prohod-' + (MODULE_STATE.animPasses || 0) + '.png';
+                    sh.toBlob(bl => {
+                        const l2 = document.createElement('a'); l2.href = URL.createObjectURL(bl); l2.download = fname; l2.click();
+                        setTimeout(() => URL.revokeObjectURL(l2.href), 3000);
+                    }, 'image/png');
+                    UI.statusInfo.textContent = `🎞 Ромбы: лист из ${tops.length} ромбов · ${fname}`;
+                    return;
+                }
+                const s = Math.max(2, Math.min(12, Math.floor(360 / (S + 1)))), capH = 18, gw = (S + 1) * s, gh = (S + 1) * s + capH;
+                const cv = document.createElement('canvas'); cv.width = gw; cv.height = capH;
+                const cx = cv.getContext('2d');
+                const frames = [];
+                const shot = (r, c, caption) => {
+                    const ix = new Uint8Array(gw * gh);
+                    cx.fillStyle = '#000'; cx.fillRect(0, 0, gw, capH);
+                    cx.fillStyle = '#ffcc00'; cx.font = '12px Consolas, monospace'; cx.textBaseline = 'middle';
+                    cx.fillText(caption, 4, capH / 2);
+                    const cd = cx.getImageData(0, 0, gw, capH).data;
+                    for (let i = 0, j = 0; i < gw * capH; i++, j += 4) if (cd[j] + cd[j + 1] > 220) ix[i] = 4;
+                    for (let dr = 0; dr <= S; dr++) {
+                        const w = dr <= half ? dr : S - dr, row = rows[r + dr];
+                        for (let dc = -w; dc <= w; dc++) {
+                            const ch = row[c + dc], v = ch === 32 ? 1 : (ch === 48 ? 2 : 3);
+                            for (let yy = 0; yy < s; yy++) { const base = (capH + dr * s + yy) * gw + (dc + half) * s; for (let xx = 0; xx < s; xx++) ix[base + xx] = v; }
+                        }
+                    }
+                    frames.push(ix);
+                };
+                let name;
+                if (mode === 'time') {
+                    const stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) { const c1 = a[k], c2 = b[k]; b[k] = c1 === c2 ? 32 : (c1 !== 32 ? c1 : c2); } };
+                    let pass = MODULE_STATE.animPasses || 0;
+                    const r0 = MODULE_STATE.animatrixRow || 0;
+                    if (r0 > 0 && r0 < H - 1) { for (let r = r0; r < H - 1; r++) stepRow(r); pass++; }
+                    const key = () => { let h = 2166136261; for (let dr = 0; dr <= S; dr++) for (let k = c0 - S; k <= c0 + S; k++) { h ^= rows[dr][k]; h = Math.imul(h, 16777619); } return h >>> 0; };
+                    const first = key(), p0 = pass;
+                    for (let f = 0; f < 256; f++) {
+                        shot(0, c0, 'верхний ромб · проход ' + pass + ' · кадр ' + (f + 1));
+                        for (let r = 0; r < H - 1; r++) stepRow(r);
+                        pass++;
+                        if (key() === first) break;
+                    }
+                    name = 'Zerkalius-romb-verhniy-' + S + '-prohody-' + p0 + '-' + (pass - 1) + '.gif';
+                } else {
+                    tops.forEach(([r, c], i) => shot(r, c, 'ромб ' + (i + 1) + '/' + tops.length + ' · строка ' + r + ' · сдвиг ' + (c - c0 > 0 ? '+' : '') + (c - c0)));
+                    name = 'Zerkalius-romby-' + S + '-prohod-' + (MODULE_STATE.animPasses || 0) + '.gif';
+                }
+                const pal = [[0, 0, 0], [35, 35, 45], [60, 130, 255], [215, 225, 235], [255, 204, 0]];
+                const gif = GIFENC.encode(frames, gw, gh, pal, mode === 'time' ? 25 : 45);
+                const lnk = document.createElement('a');
+                lnk.href = URL.createObjectURL(new Blob([gif], { type: 'image/gif' }));
+                lnk.download = name; lnk.click(); setTimeout(() => URL.revokeObjectURL(lnk.href), 3000);
+                UI.statusInfo.textContent = `🎞 Ромбы: ${frames.length} кадров, ромб ${S} строк · ${name}`;
+            },
             animGif: function(stepPasses) {
                 const src = MODULE_STATE.originalLines, H = src.length;
                 if (H < 2) { UI.statusInfo.textContent = 'GIF: на холсте нет текста'; return; }
@@ -3111,6 +3225,12 @@ VERSION: Pro 35.56 (Стартовый вид: радар, рамка, цвет 
                 if (anB) anB.addEventListener('click', cycNext);
                 // 35.53: 🎞 GIF — сборка тяжёлая (секунды на большом тексте), поэтому сперва сообщение, потом работа
                 const gifB = document.getElementById('animGifBtn'), gifS = document.getElementById('animGifStep');
+                // 35.57: 🎞 Ромбы в кино
+                const rfB = document.getElementById('rhombFilmBtn'), rfM = document.getElementById('rhombFilmMode');
+                if (rfB) rfB.addEventListener('click', () => {
+                    UI.statusInfo.textContent = 'Ромбы собираются в кино…';
+                    setTimeout(() => MODULE_DATA.rhombFilm(rfM ? rfM.value : 'frame'), 30);
+                });
                 if (gifB) gifB.addEventListener('click', () => {
                     UI.statusInfo.textContent = 'GIF собирается…';
                     setTimeout(() => MODULE_DATA.animGif(parseInt(gifS ? gifS.value : '1', 10) || 1), 30);
