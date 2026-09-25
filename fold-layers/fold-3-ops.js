@@ -7320,7 +7320,8 @@ function afterShiftBgCheck(isShiftInv){
   st.manualShiftTurns = wasReset ? 0 : (st.manualShiftTurns || 0) + 1;   // v1.645: после сброса всё по новой — счёт с нуля
   st.stepStale = false; // ручной ◄/► — это тоже настоящий шаг, номер живой (см. finishAuto)
   const idxs = st.selectedRows ? Array.from(st.selectedRows) : [];
-  st.shiftVariantTotal = computeShiftTotalTurns(idxs, isShiftInv);
+  const halfMode = /^half/.test(st.lastDirMode || "");   // v1.646: ручной ½ Круг / ½ ИнвКруг — предел в прыжках, как в «Авто»
+  st.shiftVariantTotal = halfMode ? halfTurnTotal(idxs, st.lastDirMode.indexOf("halfPlain") === 0) : computeShiftTotalTurns(idxs, isShiftInv);
   st.shiftVariantTurns = st.manualShiftTurns;
   st.shiftVariantRows = idxs;
   updateVariantCounter();
@@ -7965,8 +7966,9 @@ function halfTurnClick(dir, plain){
   if (!res) { say("Полуоборот: в выделении нет ни одной непустой строки."); return; }
   const side = dir > 0 ? "►" : "◄", name = side + (plain ? " ½ Круг" : " ½ ИнвКруг"), kind = plain ? "Круга" : "ИнвКруга";
   if (!res.k) { say(`${name}: нижняя выделенная строка — из одного бита, половины оборота у неё нет.`); return; }
-  // Счётчик «Вар: N/M» — в тактах Круга / ИнвКруга: прыжок — это k тактов; afterShiftBgCheck() добавит ещё один.
-  st.manualShiftTurns = (st.manualShiftTurns || 0) + res.k - 1;
+  // Счётчик «Вар: N/M» — в ПРЫЖКАХ, как в «Авто» (v1.646): одно нажатие — один ход, его добавит afterShiftBgCheck(),
+  // а предел там же берётся из halfTurnTotal(). До v1.646 здесь считались такты Круга / ИнвКруга, и ручной счётчик
+  // расходился с «Авто» в k раз (пользователь: «правильно считает общее количество?»).
   afterShiftBgCheck(!plain);
   const bottom = res.rows[res.rows.length - 1];
   say(res.rows.length === 1
