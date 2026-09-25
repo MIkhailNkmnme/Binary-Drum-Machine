@@ -978,10 +978,12 @@ function renderTabs() {
     '<button type="button" class="chain-dd-file chain-dd-rh" id="bDdRhAll" data-act="rhall" title="Ромбы и треугольники ТЕКУЩЕЙ цепочки ВНАХЛЁСТ — то же, что «◇ Ромбы: сетка», но берётся КАЖДОЕ положение, где фигура помещается, строка за строкой, бит за битом. Что скачать — выбор в ряду ниже (отчёт .txt или таблица .tsv). На большом треугольнике фигур очень много — ограничьте размер полем «до» в ряду ниже">◇ Внахлёст</button>' +
     '</div>' +
     '<div class="chain-dd-frow chain-dd-rhset">' +
-    '<label class="chain-dd-rhlab" title="До какого размера искать фигуры у «◇ Ромбы: сетка» и «◇ Внахлёст»: у треугольника — число строк, у ромба — сторона. 0 — все размеры. 17 — чтобы попали ромбы и треугольники Треугольника высотой 32 (у них 17 строк Паскаля). На больших треугольниках «внахлёст» без ограничения даёт сотни миллионов клеток — тогда счёт сам остановится и скажет об этом">до <input type="number" id="rhMax" min="0" max="4096" step="1" value="' + (typeof rhDdMax === "number" ? rhDdMax : 17) + '" style="width:48px"></label>' +
-    '<select id="rhFmt" title="Что скачивают «◇ Ромбы: сетка» и «◇ Внахлёст». «отчёт .txt» — для чтения: сводка по размерам, рисунки по частоте, все места. «таблица .tsv» — общий формат фигур Zerkalius (тот же пишет ◇ Сводка Треугольника → 📐 .tsv): одна строка на разный рисунок. Её открывает страница «Сравнение» (кнопка Compare в хабе) — там ищутся одинаковые с Аниматрицей">' +
-      '<option value="txt"' + ((typeof rhDdFmt === "string" ? rhDdFmt : "txt") === "txt" ? ' selected' : '') + '>отчёт .txt</option>' +
-      '<option value="tsv"' + ((typeof rhDdFmt === "string" ? rhDdFmt : "txt") === "tsv" ? ' selected' : '') + '>таблица .tsv</option>' +
+    '<label class="chain-dd-rhlab" title="До какого размера искать фигуры у «◇ Ромбы: сетка» и «◇ Внахлёст»: у треугольника — число строк, у ромба — сторона. 0 — все размеры. 17 — чтобы попали ромбы и треугольники Треугольника высотой 32 (у них 17 строк Паскаля). На больших треугольниках «внахлёст» без ограничения даёт сотни миллионов клеток — тогда счёт сам остановится и скажет об этом">до <input type="number" id="rhMax" min="0" max="4096" step="1" value="' + (typeof rhDdMax === "number" ? rhDdMax : 256) + '" style="width:48px"></label>' +
+    '<select id="rhFmt" title="Что скачивают «◇ Ромбы: сетка» и «◇ Внахлёст». «отчёт .txt» — для чтения: сводка по размерам, рисунки по частоте, все места. «таблица .tsv» — общий формат фигур Zerkalius (тот же пишет ◇ Сводка Треугольника → 📐 .tsv): «разные» — одна строка на разный рисунок (сколько раз и где впервые), «все места по порядку» — строка на каждое место фигуры, сверху вниз и слева направо: из неё «Сравнение» делает GIF, где идут все места поочерёдно. Её открывает страница «Сравнение» (кнопка Compare в хабе) — там ищутся одинаковые с Аниматрицей">' +
+      '<option value="txt"' + ((typeof rhDdFmt === "string" ? rhDdFmt : "tsv") === "txt" ? ' selected' : '') + '>отчёт .txt</option>' +
+      '<option value="tsv"' + ((typeof rhDdFmt === "string" ? rhDdFmt : "tsv") === "tsv" ? ' selected' : '') + '>таблица .tsv — разные</option>' +
+      // v1.638: и все места по порядку — строка на каждое место (пользователь: «два вида выгрузки — только индивидуальные, и все поочерёдно»)
+      '<option value="tsvall"' + ((typeof rhDdFmt === "string" ? rhDdFmt : "tsv") === "tsvall" ? ' selected' : '') + '>таблица .tsv — все места по порядку</option>' +
     '</select>' +
     '<label class="chain-dd-rhlab" title="Таблицу .tsv сразу открыть на странице «Сравнение» отдельным окном: сводка, картина цепочки и её части. Уже открытое окно переиспользуется: первая таблица — в набор А, следующие — в Б. Для отчёта .txt не действует"><input type="checkbox" id="rhView"' + ((typeof rhDdView === "boolean" ? rhDdView : true) ? ' checked' : '') + '>👁</label>' +
     '</div>' +
@@ -6673,7 +6675,7 @@ const chainDdListEl = document.getElementById("chainDdList");
 let chainDdItemClickTimer = null;
 // v1.632: значения поля «до» и формата у ◇ Ромбов в подвале списка — переживают его перерисовку. var, а не let:
 // renderTabs может нарисовать подвал раньше, чем исполнится эта строка, и typeof там честно отдаст умолчание.
-var rhDdMax = 17, rhDdFmt = "txt", rhDdView = true;   // rhDdView — галка «👁 сразу в «Сравнение»» (v1.635)
+var rhDdMax = 256, rhDdFmt = "tsv", rhDdView = true;   // rhDdView — галка «👁 сразу в «Сравнение»» (v1.635); v1.638: умолчания «до 256» и «таблица .tsv» — по снимку пользователя
 if (chainDdToggleEl && chainDdListEl) {
   chainDdToggleEl.onclick = (e) => {
     e.stopPropagation();
@@ -6702,7 +6704,7 @@ if (chainDdToggleEl && chainDdListEl) {
       else if (act === "xlsx") exportChainToExcelXml();
       else if (act === "rhgrid" || act === "rhall") {   // v1.632: ◇ ромбы — сюда из «Строк»
         // v1.635–1.636: «👁» — только отметка; окно «Сравнения» откроет ZFIG.save, когда таблица готова
-        if (window.ZFIG) ZFIG.viewOn = !!rhDdView && rhDdFmt === "tsv";   // v1.636: окно откроет ZFIG.save, когда таблица готова
+        if (window.ZFIG) ZFIG.viewOn = !!rhDdView && /^tsv/.test(rhDdFmt);   // v1.636: окно откроет ZFIG.save, когда таблица готова; v1.638: и у «все места»
         rhombsFind(act === "rhall");
       }
       // Явная ветка вместо прежнего "else importAllTabs()": с ростом числа кнопок молчаливый

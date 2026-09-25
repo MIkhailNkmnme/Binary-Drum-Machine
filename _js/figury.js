@@ -27,11 +27,16 @@
    только клетки Паскаля. Поэтому фигура Layers шага 1 сравнивается со столбцами «чёт»/«нечёт» Треугольника,
    а фигура шага 2 — с его рисунком напрямую. Размеры при этом сходятся так: ◇ и ▲ Треугольника высотой S
    (S + 1 строк у ромба, S/2 + 1 у ▲▼) — это в Layers ◇ и ▲ размера S/2 + 1 (для S = 32 — 17).
-   Вершина фигуры: у ▲ ◇ — верхняя клетка, у ▼ — нижняя, у ⧗ ◆ — середина. */
+   Вершина фигуры: у ▲ ◇ — верхняя клетка, у ▼ — нижняя, у ⧗ ◆ — середина.
+   ВСЕ МЕСТА (2026-09-25, пользователь: «надо, чтобы там два вида выгрузки было — только индивидуальные, и все поочерёдно»).
+   Строка шапки «# порядок: все места» значит: строка таблицы — не разный рисунок, а одно МЕСТО фигуры, в том порядке, в каком
+   их нашли (у Layers — строки сверху вниз, в строке слева направо); «сколько» — сколько всего раз встречается этот рисунок,
+   «где» — где стоит именно это место. parse() тогда отдаёт places: true. Кто читает старым способом, увидит рисунок
+   столько раз, сколько у него мест, — поэтому «Сравнение» такие строки для сводки сводит к разным рисункам. */
 (function(){
   if (window.ZFIG) return;
   const Z = window.ZFIG = {
-    FORMAT: "ZERKALIUS-ФИГУРЫ v1",
+    FORMAT: "ZERKALIUS-ФИГУРЫ v1", PLACES: "порядок: все места",
     COLS: ["вид", "шаг", "строк", "клеток", "рисунок", "ключ", "чёт", "нечёт", "сколько", "где"],
     mirror: function(pat){ return pat.split("/").map(r => r.split("").reverse().join("")).join("/"); },
     key: function(pat){ const m = Z.mirror(pat); return m < pat ? m : pat; },
@@ -71,13 +76,14 @@
       return L;
     },
     /* Чтение таблицы. Возвращает { source, rows: [{ kind, step, rowsN, cells, pat, key, even, odd, count, where }],
-       pic: { step, first, rows: [{ a, s }] } или null }. */
+       pic: { step, first, rows: [{ a, s }] } или null, places: строки — все места по порядку (см. «ВСЕ МЕСТА» выше) }. */
     parse: function(text){
-      const out = { source: "", rows: [], pic: null };
+      const out = { source: "", rows: [], pic: null, places: false };
       String(text || "").split(/\r?\n/).forEach(l => {
         if (!l) return;
         if (l[0] === "#") {
           const m = l.match(/^# откуда: (.*)$/); if (m) { out.source = m[1]; return; }
+          if (l === "# " + Z.PLACES) { out.places = true; return; }
           const p = l.match(/^# картина: шаг (\d+)(?:.*первая (-?\d+))?/);
           if (p) { out.pic = { step: +p[1], first: p[2] !== undefined ? +p[2] : 0, rows: [] }; return; }
           if (l.startsWith("#| ") && out.pic) { const sp = l.indexOf(" ", 3); out.pic.rows.push({ a: +l.slice(3, sp), s: l.slice(sp + 1) }); }

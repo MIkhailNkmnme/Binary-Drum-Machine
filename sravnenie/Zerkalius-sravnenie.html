@@ -1,4 +1,4 @@
-<!-- Zerkalius Сравнение — v0.006. Одинаковые фигуры в двух наборах таблиц .tsv общего формата (_js/figury.js):
+<!-- Zerkalius Сравнение — v0.007. Одинаковые фигуры в двух наборах таблиц .tsv общего формата (_js/figury.js):
      например, ◇ Ромбы Layers против форм цикла Аниматрицы из ◇ Сводки Треугольника.
      v0.001: заведена 2026-09-25 по слову пользователя («мне как также потом сделать» — про сравнение ромбов Layers
              с таблицами Аниматрицы, которое Claude делал скриптом). Выбрать файлы в два набора, «Сравнить».
@@ -13,13 +13,15 @@
      v0.004: подпись модуля ?v=4 — окно «Сравнения» теперь открывается, когда таблица готова (ZFIG.showInViewer).
      v0.005: «пусть сверху картинка и потом ниже таблица» — в наборе сначала картина с частями, под ней сводная таблица.
      v0.006: картина вписывается, если не влезает; колесо мыши — масштаб, «⤢ вписать» — обратно. «🎞 GIF по размерам» —
-             по GIF на каждый вид и высоту (кадры — все разные рисунки по порядку появления), все в одном .zip со списком. -->
+             по GIF на каждый вид и высоту (кадры — все разные рисунки по порядку появления), все в одном .zip со списком.
+     v0.007: «гиф должна все кадры поочерёдно» — таблица Layers «все места по порядку» (ZFIG.PLACES) читается: сводка и
+             сравнение — по разным рисункам, а GIF — кадр на каждое место по порядку; «только разные рисунки» — прежний вариант. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Сравнение — v0.006</title>
+<title>Zerkalius Сравнение — v0.007</title>
 <style>
   :root{ --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598; --up:#7cd4ff; --gold:#ffcc00; --ok:#78eb78; --a:#5adcff; --b:#ff8a8a; }
   html,body{ margin:0; background:var(--bg); color:var(--fg); font-family:"Segoe UI", Inter, system-ui, sans-serif; }
@@ -104,7 +106,7 @@
 <div id="out"></div>
 </div>
 
-<script src="../_js/figury.js?v=4"></script>
+<script src="../_js/figury.js?v=5"></script>
 <script src="../_js/hub-link.js"></script>
 <script>
 (function(){
@@ -116,14 +118,22 @@
   const mono = p => /^[0\/.]*$/.test(p) || /^[1\/.]*$/.test(p);
 
   function showFiles(k){
-    $('l' + k).innerHTML = sets[k].map((f, i) => '<div>' + esc(f.name) + ' — ' + f.rows.length + ' рисунков' + (f.pic ? ' · 🖼 картина' : '') +
+    $('l' + k).innerHTML = sets[k].map((f, i) => '<div>' + esc(f.name) + ' — ' + f.rows.length + ' рисунков' + (f.places ? ' · ' + f.places.length + ' мест по порядку' : '') + (f.pic ? ' · 🖼 картина' : '') +
       '<span class="x" data-k="' + k + '" data-i="' + i + '" title="убрать">✕</span></div>').join('');
     renderStat(k);
   }
   function addText(k, name, text){
     if (!/ZERKALIUS-ФИГУРЫ/.test(text.slice(0, 200))) { $('status').textContent = name + ' — не таблица фигур Zerkalius (нет строки «# ZERKALIUS-ФИГУРЫ v1»)'; return false; }
     const p = ZFIG.parse(text);
-    sets[k].push({ name: name, source: p.source, rows: p.rows, pic: p.pic && p.pic.rows.length ? p.pic : null });
+    /* v0.007: таблица «все места по порядку» — строка на место. Места хранятся как есть (для GIF), а сводке и сравнению
+       отдаются разные рисунки: первое место каждого, «сколько» у всех его строк одно и то же. */
+    let rows = p.rows, places = null;
+    if (p.places) {
+      places = p.rows; const seen = new Map();
+      for (const r of places) { const key = r.kind + '|' + r.step + '|' + r.pat; if (!seen.has(key)) seen.set(key, r); }
+      rows = Array.from(seen.values());
+    }
+    sets[k].push({ name: name, source: p.source, rows: rows, places: places, pic: p.pic && p.pic.rows.length ? p.pic : null });
     return true;
   }
   async function addFiles(k, list){
@@ -184,8 +194,9 @@
         '<div class="cvw"><canvas></canvas></div><div class="info">Щёлкни рисунок ниже — его места загорятся; щёлкни по картине — возьмётся фигура с вершиной там.</div><div class="parts"></div></div>';
     } else h += '<div class="pic"><div class="info">Картины в файле нет' + (sets[k].some(f => /цикл/.test(f.source)) ? ' — это цикл Аниматрицы, кадров много' : ' — выгрузка старая или не из одной цепочки') + '.</div></div>';
     // v0.006: GIF на каждый вид и высоту — все в один .zip
-    const gifs = '<div class="gifs"><button class="small" data-r="gifs" type="button" title="По GIF на каждый вид и высоту: кадры — все разные рисунки этого размера по порядку появления, с подписью. Все GIF и список — одним архивом .zip (открывается и WinRAR, и самой Windows)">🎞 GIF по размерам (.zip)</button>' +
-      'кадр <select data-r="gdelay"><option value="20">0,2 с</option><option value="40" selected>0,4 с</option><option value="80">0,8 с</option><option value="150">1,5 с</option></select><span class="st"></span></div>';
+    const gifs = '<div class="gifs"><button class="small" data-r="gifs" type="button" title="По GIF на каждый вид и высоту: кадры — все места фигур по порядку (или только разные рисунки), с подписью. Все GIF и список — одним архивом .zip (открывается и WinRAR, и самой Windows)">🎞 GIF по размерам (.zip)</button>' +
+      '<select data-r="gmode" title="Кадры GIF: каждое место фигуры по порядку (есть в таблице Layers «все места по порядку»; в таблице «разные» — только разные рисунки) или только разные рисунки"><option value="places" selected>все места по порядку</option><option value="distinct">только разные рисунки</option></select>' +
+      ' кадр <select data-r="gdelay"><option value="5">0,05 с</option><option value="10" selected>0,1 с</option><option value="20">0,2 с</option><option value="40">0,4 с</option><option value="80">0,8 с</option><option value="150">1,5 с</option></select><span class="st"></span></div>';
     box.innerHTML = src + gifs + h + tbl;
     box.querySelector('button[data-r="gifs"]').onclick = () => gifsZip(k);
     view[k] = null;
@@ -331,46 +342,47 @@
      несколько»). Группа — как строка сводки: вид, шаг, высота. Кадр — один рисунок группы (по порядку появления, как в файле) крупными клетками
      тех же цветов, что части, сверху подпись «◇ 5 стр. · 3/15 · ×10». Все GIF и spisok.txt — одним .zip без сжатия (GIF и так
      сжат): RAR браузер писать не умеет, а .zip открывают и WinRAR, и сама Windows. Больше GIF_MAX кадров в одном GIF не кладём. */
+  /* Кодировщик GIF — как GIFENC Треугольника (тот же LZW и порядок роста кода), но v0.007 пишет кадр за кадром в растущий буфер:
+     мест бывают десятки тысяч, держать их кадры в памяти разом нельзя. Таблица LZW не чистится на каждый кадр (миллион ячеек),
+     а помечается номером поколения — на тысячах мелких кадров это главное время. */
   const GIFENC = {
-      encode: function(frames, w, h, palette, delay) {
-          const out = [];
-          const w16 = v => { out.push(v & 255, (v >> 8) & 255); };
-          const str = t => { for (let i = 0; i < t.length; i++) out.push(t.charCodeAt(i)); };
+      writer: function(w, h, palette, delay) {
+          let buf = new Uint8Array(1 << 16), n = 0;
+          const put = v => { if (n === buf.length) { const b = new Uint8Array(buf.length * 2); b.set(buf); buf = b; } buf[n++] = v; };
+          const w16 = v => { put(v & 255); put((v >> 8) & 255); };
+          const str = t => { for (let i = 0; i < t.length; i++) put(t.charCodeAt(i)); };
           str('GIF89a'); w16(w); w16(h);
-          // 35.57: палитра 4 или 8 цветов (2 или 3 бита) — по длине переданной; v0.018: и до 256 (8 бит) — для 🗻 3D
           const bits = palette.length > 16 ? 8 : palette.length > 8 ? 4 : palette.length > 4 ? 3 : 2, nCol = 1 << bits;
-          out.push(0x80 | ((bits - 1) << 4) | (bits - 1), 0, 0);   // глобальная палитра
-          for (let i = 0; i < nCol; i++) { const c = palette[i] || [0, 0, 0]; out.push(c[0], c[1], c[2]); }
-          out.push(0x21, 0xFF, 0x0B); str('NETSCAPE2.0'); out.push(0x03, 0x01, 0, 0, 0);   // по кругу без конца
-          for (const fr of frames) {
-              out.push(0x21, 0xF9, 0x04, 0x04); w16(delay); out.push(0, 0);
-              out.push(0x2C); w16(0); w16(0); w16(w); w16(h); out.push(0);
-              out.push(bits);   // минимальный размер кода LZW: 2 для 4 цветов, 3 для 8
-              const data = this.lzw(fr, bits);
-              for (let i = 0; i < data.length; i += 255) {
-                  const n = Math.min(255, data.length - i);
-                  out.push(n);
-                  for (let k = 0; k < n; k++) out.push(data[i + k]);
-              }
-              out.push(0);
-          }
-          out.push(0x3B);
-          return new Uint8Array(out);
+          put(0x80 | ((bits - 1) << 4) | (bits - 1)); put(0); put(0);   // глобальная палитра
+          for (let i = 0; i < nCol; i++) { const c = palette[i] || [0, 0, 0]; put(c[0]); put(c[1]); put(c[2]); }
+          put(0x21); put(0xFF); put(0x0B); str('NETSCAPE2.0'); put(3); put(1); put(0); put(0); put(0);   // по кругу без конца
+          return {
+              add: (ix) => {
+                  put(0x21); put(0xF9); put(4); put(4); w16(delay); put(0); put(0);
+                  put(0x2C); w16(0); w16(0); w16(w); w16(h); put(0);
+                  put(bits);
+                  const data = GIFENC.lzw(ix, bits);
+                  for (let i = 0; i < data.length; i += 255) { const m = Math.min(255, data.length - i); put(m); for (let k = 0; k < m; k++) put(data[i + k]); }
+                  put(0);
+              },
+              done: () => { put(0x3B); return buf.slice(0, n); }
+          };
       },
       lzw: function(ix, minSize) {
           const clear = 1 << minSize, eoi = clear + 1, bytes = [];
           const tab = this._tab || (this._tab = new Int32Array(1 << 20));   // ключ: (префикс << 8) | цвет
-          tab.fill(-1);
+          const stp = this._stp || (this._stp = new Uint32Array(1 << 20));  // поколение записи: чужое — значит пусто
+          let gen = this._gen = (this._gen || 0) + 1;
           let size = minSize + 1, next = eoi + 1, cur = 0, bits = 0;
           const emit = c => { cur |= c << bits; bits += size; while (bits >= 8) { bytes.push(cur & 255); cur >>>= 8; bits -= 8; } };
           emit(clear);
           let pre = ix[0];
           for (let i = 1; i < ix.length; i++) {
-              const k = ix[i], key = (pre << 8) | k, code = tab[key];
-              if (code !== -1) { pre = code; continue; }
+              const k = ix[i], key = (pre << 8) | k;
+              if (stp[key] === gen) { pre = tab[key]; continue; }
               emit(pre);
-              if (next === 4096) { emit(clear); tab.fill(-1); next = eoi + 1; size = minSize + 1; }
-              else { if (next >= (1 << size)) size++; tab[key] = next++; }
+              if (next === 4096) { emit(clear); gen = this._gen = this._gen + 1; next = eoi + 1; size = minSize + 1; }
+              else { if (next >= (1 << size)) size++; tab[key] = next++; stp[key] = gen; }
               pre = k;
           }
           emit(pre); emit(eoi);
@@ -378,37 +390,41 @@
           return bytes;
       }
   };
-  const GIF_MAX = 3000, KN = { '▲': 'tri-up', '▼': 'tri-down', '◇': 'romb', '⧗': 'chasy', '◆': 'piramida' };
+  const GIF_MAX = 3000, PLACES_MAX = 20000, KN = { '▲': 'tri-up', '▼': 'tri-down', '◇': 'romb', '⧗': 'chasy', '◆': 'piramida' };
   const PAL = [[10, 11, 14], [60, 90, 140], [215, 225, 235], [255, 204, 0]];   // фон, «0», «1», подпись
-  function gifOfGroup(e, delay){
-    const list = e.list.slice(0, GIF_MAX);   // по порядку появления, как в файле (пользователь: «нет, по порядку»)
+  /* Кадры группы: items — [{ pat, cap }] в нужном порядке. Возвращает работу: step() кодирует порцию кадров, true — готово. */
+  function gifJob(e, items, delay){
     const rowsOf = r => r.pat.split('/');
-    const W = Math.max(...list.map(r => Math.max(...rowsOf(r).map(x => x.length)))), T = e.rowsN;
+    const W = Math.max(...items.map(r => Math.max(...rowsOf(r).map(x => x.length)))), T = e.rowsN;
     const z = Math.max(3, Math.min(24, Math.floor(240 / Math.max(W, T)))), pad = 10, capH = 18;
-    const cap = i => e.kind + (e.step === 2 ? ' ·2' : '') + ' ' + T + ' стр. · ' + (i + 1) + '/' + list.length + ' · ×' + (list[i].count || 1) + (list[i].where ? ' · ' + String(list[i].where).slice(0, 28) : '');
     const tc = document.createElement('canvas'), tg = tc.getContext('2d'); tg.font = '12px Consolas, monospace';
-    const fw = Math.max(W * z + 2 * pad, Math.ceil(Math.max(...list.map((r, i) => tg.measureText(cap(i)).width))) + 12, 120) | 0, fh = T * z + capH + pad;
-    const w = fw + (fw & 1), h = fh;
+    let tw = 0; for (const r of items) tw = Math.max(tw, tg.measureText(r.cap).width);
+    const fw = Math.max(W * z + 2 * pad, Math.ceil(tw) + 12, 120) | 0, w = fw + (fw & 1), h = T * z + capH + pad;
     tc.width = w; tc.height = capH;
-    const frames = [];
-    list.forEach((r, i) => {
-      const ix = new Uint8Array(w * h);   // 0 — фон
-      tg.fillStyle = '#000'; tg.fillRect(0, 0, w, capH); tg.fillStyle = '#fff'; tg.font = '12px Consolas, monospace'; tg.textBaseline = 'middle';
-      tg.fillText(cap(i), 6, capH / 2);
-      const td = tg.getImageData(0, 0, w, capH).data;
-      for (let q = 0, j = 0; q < w * capH; q++, j += 4) if (td[j] > 110) ix[q] = 3;
-      const rows = rowsOf(r), x0 = (w - W * z) / 2, gap = z > 3 ? 1 : 0;
-      rows.forEach((row, t) => {
-        const off = Math.round(x0 + (W - row.length) * z / 2);
-        for (let c = 0; c < row.length; c++) {
-          const ch = row[c]; if (ch !== '0' && ch !== '1') continue;
-          const col = ch === '1' ? 2 : 1, px = off + c * z, py = capH + t * z;
-          for (let yy = 0; yy < z - gap; yy++) ix.fill(col, (py + yy) * w + px, (py + yy) * w + px + z - gap);
-        }
-      });
-      frames.push(ix);
-    });
-    return { bytes: GIFENC.encode(frames, w, h, PAL, delay), n: list.length, cut: e.list.length > GIF_MAX, w, h };
+    const gw = GIFENC.writer(w, h, PAL, delay), x0 = (w - W * z) / 2, gap = z > 3 ? 1 : 0;
+    const job = { i: 0, n: items.length, w, h, bytes: null };
+    job.step = (budget) => {
+      const end = Math.min(items.length, job.i + budget);
+      for (; job.i < end; job.i++) {
+        const r = items[job.i], ix = new Uint8Array(w * h);   // 0 — фон
+        tg.fillStyle = '#000'; tg.fillRect(0, 0, w, capH); tg.fillStyle = '#fff'; tg.font = '12px Consolas, monospace'; tg.textBaseline = 'middle';
+        tg.fillText(r.cap, 6, capH / 2);
+        const td = tg.getImageData(0, 0, w, capH).data;
+        for (let q = 0, j = 0; q < w * capH; q++, j += 4) if (td[j] > 110) ix[q] = 3;
+        rowsOf(r).forEach((row, t) => {
+          const off = Math.round(x0 + (W - row.length) * z / 2);
+          for (let c = 0; c < row.length; c++) {
+            const ch = row[c]; if (ch !== '0' && ch !== '1') continue;
+            const col = ch === '1' ? 2 : 1, px = off + c * z, py = capH + t * z;
+            for (let yy = 0; yy < z - gap; yy++) ix.fill(col, (py + yy) * w + px, (py + yy) * w + px + z - gap);
+          }
+        });
+        gw.add(ix);
+      }
+      if (job.i >= items.length) { job.bytes = gw.done(); return true; }
+      return false;
+    };
+    return job;
   }
   const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
   function zipStore(files){   // [{ name, bytes }] → .zip без сжатия
@@ -437,34 +453,71 @@
   function gifsZip(k){
     const box = $('s' + k), st = box.querySelector('.gifs .st'), btn = box.querySelector('button[data-r="gifs"]');
     if (!sets[k].length || btn.disabled) return;
-    const delay = +box.querySelector('select[data-r="gdelay"]').value || 40;
-    const g = new Map();
-    for (const f of sets[k]) for (const r of f.rows) {
-      const key = r.kind + '|' + r.step + '|' + r.rowsN;
-      let e = g.get(key); if (!e) { e = { kind: r.kind, step: r.step, rowsN: r.rowsN, list: [], seen: new Set() }; g.set(key, e); }
-      if (!e.seen.has(r.pat)) { e.seen.add(r.pat); e.list.push(r); }   // несколько файлов в наборе — один и тот же рисунок один раз
-    }
-    const groups = Array.from(g.values()).sort((a, b) => a.rowsN - b.rowsN || a.kind.localeCompare(b.kind) || a.step - b.step);
-    const out = [], lines = ['ZERKALIUS · GIF по размерам · набор ' + (k === 'A' ? 'А' : 'Б'), sets[k].map(f => f.source || f.name).join(' · '),
-      'кадр ' + delay / 100 + ' с; кадры — разные рисунки группы по порядку появления', '', 'файл\tвид\tшаг\tстрок\tкадров\tразмер'];
-    btn.disabled = true;
-    let i = 0;
-    const next = () => {
-      if (i >= groups.length) {
-        out.push({ name: 'spisok.txt', bytes: new TextEncoder().encode('\ufeff' + lines.join('\r\n') + '\r\n') });
-        const name = 'zerkalius-figury-gif-' + k + '-' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.zip';
-        const a = document.createElement('a'); a.href = URL.createObjectURL(zipStore(out)); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-        st.textContent = 'Готово: ' + groups.length + ' GIF в ' + name; btn.disabled = false; return;
+    const delay = +box.querySelector('select[data-r="gdelay"]').value || 10;
+    const places = box.querySelector('select[data-r="gmode"]').value === 'places';
+    const gname = e => String(e.rowsN).padStart(3, '0') + '-' + (KN[e.kind] || 'vid' + e.kind.codePointAt(0)) + (e.step === 2 ? '-shag2' : '');
+    const head = e => e.kind + (e.step === 2 ? ' ·2' : '') + ' ' + e.rowsN + ' стр.';
+    const groupsOf = (files) => {
+      const g = new Map();
+      for (const f of files) for (const r of f.rows) {
+        const key = r.kind + '|' + r.step + '|' + r.rowsN;
+        let e = g.get(key); if (!e) { e = { kind: r.kind, step: r.step, rowsN: r.rowsN, list: [], seen: new Set() }; g.set(key, e); }
+        if (!e.seen.has(r.pat)) { e.seen.add(r.pat); e.list.push(r); }   // несколько файлов — один и тот же рисунок один раз
       }
-      const e = groups[i++], r = gifOfGroup(e, delay);
-      const fn = String(e.rowsN).padStart(3, '0') + '-' + (KN[e.kind] || 'vid' + e.kind.codePointAt(0)) + (e.step === 2 ? '-shag2' : '') + '.gif';
-      out.push({ name: fn, bytes: r.bytes });
-      lines.push(fn + '\t' + e.kind + '\t' + e.step + '\t' + e.rowsN + '\t' + r.n + (r.cut ? ' (из ' + e.list.length + ')' : '') + '\t' + r.w + '×' + r.h);
-      st.textContent = 'GIF ' + i + ' из ' + groups.length + '…';
-      setTimeout(next, 0);
+      return Array.from(g.values()).sort((a, b) => a.rowsN - b.rowsN || a.kind.localeCompare(b.kind) || a.step - b.step);
     };
-    st.textContent = 'GIF 0 из ' + groups.length + '…';
-    setTimeout(next, 20);
+    // задания: { name, e, items() → { items: [{ pat, cap }], note } } — кадры готовятся, только когда до задания дошла очередь
+    const tasks = [], lines = ['ZERKALIUS · GIF по размерам · набор ' + (k === 'A' ? 'А' : 'Б'), sets[k].map(f => f.source || f.name).join(' · '), ''];
+    const distinct = (files, pre) => groupsOf(files).forEach(e => tasks.push({ name: pre + gname(e) + '.gif', e, items: () => {
+      const L = e.list.slice(0, GIF_MAX);
+      return { items: L.map((r, i) => ({ pat: r.pat, cap: head(e) + ' · ' + (i + 1) + '/' + L.length + ' · ×' + (r.count || 1) + (r.where ? ' · ' + String(r.where).slice(0, 28) : '') })),
+        note: 'разных рисунков ' + e.list.length + (e.list.length > GIF_MAX ? ', в GIF первые ' + GIF_MAX : '') };
+    } }));
+    /* v0.007: ВСЕ МЕСТА ПО ПОРЯДКУ (пользователь: «гиф должна все кадры поочерёдно»). Места пишет сам Layers — формат «таблица .tsv —
+       все места по порядку» (ZFIG.PLACES): строка на место, сверху вниз и слева направо. Кадр — одно место, по тому же порядку. */
+    if (places) {
+      const withP = sets[k].filter(f => f.places), noP = sets[k].filter(f => !f.places);
+      if (withP.length) lines.push('кадры — ВСЕ МЕСТА фигур по порядку, как их записал Layers: строки сверху вниз, в строке слева направо');
+      withP.forEach((f, fi) => {
+        const pre = withP.length > 1 ? 'f' + (fi + 1) + '-' : '';
+        const g = new Map();
+        for (const r of f.places) { const key = r.kind + '|' + r.step + '|' + r.rowsN; let e = g.get(key); if (!e) { e = { kind: r.kind, step: r.step, rowsN: r.rowsN, list: [] }; g.set(key, e); } e.list.push(r); }
+        Array.from(g.values()).sort((a, b) => a.rowsN - b.rowsN || a.kind.localeCompare(b.kind) || a.step - b.step).forEach(e => tasks.push({ name: pre + gname(e) + '.gif', e, items: () => {
+          const ids = new Map(); for (const r of e.list) if (!ids.has(r.pat)) ids.set(r.pat, ids.size + 1);
+          const L = e.list.slice(0, PLACES_MAX);
+          return { items: L.map((r, i) => ({ pat: r.pat, cap: head(e) + ' · место ' + (i + 1) + '/' + e.list.length + ' · рис. ' + ids.get(r.pat) + '/' + ids.size + ' ×' + (r.count || 1) + (r.where ? ' · ' + String(r.where).slice(0, 24) : '') })),
+            note: 'мест ' + e.list.length + (e.list.length > PLACES_MAX ? ', в GIF первые ' + PLACES_MAX : '') + ', разных ' + ids.size };
+        } }));
+      });
+      if (noP.length) { lines.push('в ' + noP.map(f => f.name).join(', ') + ' мест нет (таблица «разные») — там кадры — разные рисунки. Все места пишет Layers: формат «таблица .tsv — все места по порядку»'); distinct(noP, withP.length ? 'raznye-' : ''); }
+    } else { lines.push('кадры — разные рисунки группы по порядку появления'); distinct(sets[k], ''); }
+    lines.push('кадр ' + delay / 100 + ' с', '', 'файл\tвид\tшаг\tстрок\tкадров\tразмер\tзаметка');
+    const out = [];
+    btn.disabled = true;
+    let ti = 0, job = null, cur = null;
+    const tick = () => {
+      if (!job) {
+        if (ti >= tasks.length) {
+          out.push({ name: 'spisok.txt', bytes: new TextEncoder().encode('﻿' + lines.join('\r\n') + '\r\n') });
+          const name = 'zerkalius-figury-gif-' + k + '-' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.zip';
+          const a = document.createElement('a'); a.href = URL.createObjectURL(zipStore(out)); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+          st.textContent = 'Готово: ' + tasks.length + ' GIF в ' + name; btn.disabled = false; return;
+        }
+        cur = tasks[ti++]; const it = cur.items(); cur.note = it.note;
+        job = gifJob(cur.e, it.items, delay);
+      }
+      const t = performance.now();
+      while (performance.now() - t < 40) if (job.step(50)) break;   // порция ~40 мс — страница не замирает
+      st.textContent = 'GIF ' + ti + ' из ' + tasks.length + ' · кадр ' + job.i + ' из ' + job.n + '…';
+      if (job.bytes) {
+        out.push({ name: cur.name, bytes: job.bytes });
+        lines.push(cur.name + '\t' + cur.e.kind + '\t' + cur.e.step + '\t' + cur.e.rowsN + '\t' + job.n + '\t' + job.w + '×' + job.h + '\t' + cur.note);
+        job = null;
+      }
+      setTimeout(tick, 0);
+    };
+    st.textContent = 'Готовлю…';
+    setTimeout(tick, 20);
   }
 
   /* ─── СРАВНЕНИЕ ДВУХ НАБОРОВ ─── */

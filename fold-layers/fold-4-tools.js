@@ -1943,16 +1943,24 @@ function rhombsFind(overlap){
      форматы надо подготовить»). Общий формат — _js/figury.js (ZFIG), тот же пишет ◇ Сводка Треугольника. Одна
      строка на разный рисунок: вид, шаг решётки d, рисунок, ключ без зеркала, подрешётки (у шага 2), сколько, где. */
   const fmtEl = document.getElementById("rhFmt");
-  if (fmtEl && fmtEl.value === "tsv") {
+  if (fmtEl && (fmtEl.value === "tsv" || fmtEl.value === "tsvall")) {
+    const all = fmtEl.value === "tsvall";   // v1.638: все места по порядку — строка на место (ZFIG.PLACES)
     if (!window.ZFIG) { say("◇ Ромбы: не загрузился общий модуль _js/figury.js — обновите страницу (Ctrl+F5)."); return; }
     const L = ZFIG.header(`Layers ${modeTxt}, строки ${rowLabel(lo)}…${rowLabel(hi)} (${H}), выравнивание «${st.align}»`,
-      [`размеры 2…${stoppedAt || sTop}${stoppedAt ? " — остановлено: слишком много клеток" : ""}; «где» — номер строки и бит (с нуля)`]);
+      [`размеры 2…${stoppedAt || sTop}${stoppedAt ? " — остановлено: слишком много клеток" : ""}; «где» — номер строки и бит (с нуля)`]
+        .concat(all ? [ZFIG.PLACES, "строка — одно место фигуры, по порядку: строки сверху вниз, в строке слева направо; «сколько» — всего раз у этого рисунка, «где» — это место"] : []));
     L.splice(L.length - 1, 0, ...ZFIG.picture(d, R, rowLabel(lo)));   // картина — для «Сравнения»: целиком и части
     let nPat = 0;
-    for (const e of res) for (const [pat, pe] of e.pats) { L.push(ZFIG.line({ kind: e.kind, step: d, pat, count: pe[0], where: `стр ${rowLabel(lo + pe[2])} бит ${pe[3]}` })); nPat++; }
-    const nameT = "zerkalius-layers-figury-" + (overlap ? "vse" : "setka") + "-" + new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-") + ".tsv";
+    let nPlaces = 0;
+    if (all) for (const e of res) {
+      const byId = []; for (const [pat, pe] of e.pats) byId[pe[1]] = [pat, pe[0]];
+      for (let j = 0; j < e.inst.length; j += 3) { const [pat, cnt] = byId[e.inst[j + 2]]; L.push(ZFIG.line({ kind: e.kind, step: d, pat, count: cnt, where: `стр ${rowLabel(lo + e.inst[j])} бит ${e.inst[j + 1]}` })); nPlaces++; }
+      nPat += e.pats.size;
+    }
+    else for (const e of res) for (const [pat, pe] of e.pats) { L.push(ZFIG.line({ kind: e.kind, step: d, pat, count: pe[0], where: `стр ${rowLabel(lo + pe[2])} бит ${pe[3]}` })); nPat++; }
+    const nameT = "zerkalius-layers-figury-" + (overlap ? "vse" : "setka") + (all ? "-mesta" : "") + "-" + new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-") + ".tsv";
     ZFIG.save(nameT, L);
-    say(`◇ Таблица фигур (${modeTxt}): ${nPat} разных рисунков, шаг решётки ${d}` + (stoppedAt ? `, остановлено на размере ${stoppedAt}` : "") + `. Файл ${nameT}.` + (nPat ? "" : halfHint));
+    say(`◇ Таблица фигур (${modeTxt}): ${nPat} разных рисунков${all ? `, ${nPlaces} мест по порядку` : ""}, шаг решётки ${d}` + (stoppedAt ? `, остановлено на размере ${stoppedAt}` : "") + `. Файл ${nameT}.` + (nPat ? "" : halfHint));
     return;
   }
   // Отчёт
