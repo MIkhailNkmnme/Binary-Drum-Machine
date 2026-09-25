@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Layers — v1.644</title>
+<title>Zerkalius Layers — v1.645</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -5368,7 +5368,7 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
   <!-- Заголовок стоит вплотную слева от вкладок (v1.046), вся связка центрируется полосой — см. #menuBarTitle в CSS. --><div id="menuBarTitle">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.644</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.645</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -5506,7 +5506,7 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
 
 <div id="flowGroup" class="control-group control-group-player">
   <div class="psec"><div class="psec-h">Ход</div>
-    <button id="bAuto" title="Автоматический прогон по выбранному режиму (Enter) / повторный клик — остановить">🚀 Авто</button><button id="bResetFlow" title="Сбросить к шаблону — то же, что «↺ Сброс» в верхнем меню. Escape к шаблону больше не сбрасывает (v1.014) — только снимает выделения и останавливает прогоны">↺ Сброс</button>
+    <button id="bAuto" title="Автоматический прогон по выбранному режиму (Enter) / повторный клик — остановить">🚀 Авто</button><button id="bResetFlow" title="↺ Сброс при находке — вкл/выкл (подсвечена — включено, запоминается). Когда находка захватывает строку, все уже накрученные строки возвращаются к виду до начала кручения (биты, перевёрнутые, новые), найденная добавляется, и весь набор крутится заново — счётчик вариантов с нуля. Работает в «Авто», на кнопках Круга и в «▶ Шаг». Сброс цепочки к шаблону — «↺ Сброс» в верхнем меню">↺ Сброс при находке</button>
     <label class="chk" data-tip="t7"><input type="checkbox" id="cTurboAuto">⏩ Турбо</label><button id="bSlowAuto" title="Замедление: Авто делает ровно один шаг за раз и держит каждый кадр столько кадров, сколько выставлено ползунком — видно каждый шаг. Отменяет пакетную прокрутку (и «⏩ Турбо» на время замедления).">🐢 Медленно</button>
     <div class="pr pw"><label class="chk" title="Сколько кадров экрана держится каждый шаг замедления (1 ≈ 60 шагов в секунду, 60 ≈ один шаг в секунду)">
       <input type="range" id="slowFrames" min="1" max="60" step="1" value="10" style="flex:1 1 auto;min-width:40px;accent-color:#4da3ff">
@@ -6198,11 +6198,11 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
      (видно новый номер версии в заголовке), а fold-*.js берёт из кеша — то есть новый код
      просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
      версией в <title>/<h3>, теми же тремя цифрами. -->
-<script src="fold-1-core.js?v=1644"></script>
-<script src="fold-2-render.js?v=1644"></script>
-<script src="fold-3-ops.js?v=1644"></script>
-<script src="fold-4-tools.js?v=1644"></script>
-<script src="fold-5-ui.js?v=1644"></script>
+<script src="fold-1-core.js?v=1645"></script>
+<script src="fold-2-render.js?v=1645"></script>
+<script src="fold-3-ops.js?v=1645"></script>
+<script src="fold-4-tools.js?v=1645"></script>
+<script src="fold-5-ui.js?v=1645"></script>
 <div id="fieldInfo"></div>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;

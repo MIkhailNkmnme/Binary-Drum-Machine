@@ -3024,7 +3024,7 @@ function topBaseRestore(){
    Ключи, ушедшие в минус (строки, которых больше нет), выбрасываем. */
 function shiftRowMaps(delta){
   if (!delta) return;
-  const maps = [insertedFlagsMap, invFlagsMap, newBitsMap, maskChangedMap, axisOffsetMap, axisBitShiftMap, axisBitDirMap, rowRotOffMap, mirrorsRowDone];
+  const maps = [insertedFlagsMap, invFlagsMap, newBitsMap, maskChangedMap, axisOffsetMap, axisBitShiftMap, axisBitDirMap, rowRotOffMap, mirrorsRowDone, typeof rotBase !== "undefined" ? rotBase : null];   // v1.645: и исходный вид крутящихся строк
   for (const m of maps) {
     if (!m || !m.size) continue;
     const moved = [];
@@ -3902,7 +3902,13 @@ function padZerosToRows(silent){
   }
   return true;
 }
+/* v1.645: перед КАЖДЫМ сдвигом (ручным и в «Авто») — ещё и запомнить исходный вид выделенных строк для «↺ Сброс при находке»
+   (rotBaseNote в fold-3-ops.js). Уже после зеркал и нулей: они могли удлинить строки, а исходным считается то, что поедет по кругу. */
 function mirrorsBeforeShift(){
+  mirrorsBeforeShiftInner();
+  if (st.resetOnFind && typeof rotBaseNote === "function") rotBaseNote((st.selectedRows && st.selectedRows.size) ? st.selectedRows : st.rows.map((_, i) => i));
+}
+function mirrorsBeforeShiftInner(){
   // "0️⃣→ Нули в сами строки" — та же идея, что и у зеркал: перед сдвигом добиваем строки
   // настоящими нулями, чтобы Круг крутил ВСЁ, что видно, а не только исходные биты.
   padZerosToRows(true);
@@ -4117,6 +4123,7 @@ if (bSelectAllRowsEl) {
     if (!st.selectedRows) st.selectedRows = new Set();
     const allSelected = st.selectedRows.size === n;
     st.manualShiftTurns = 0;
+    if (typeof rotBase !== "undefined") rotBase.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
     st.shiftVariantTotal = null;
     st.shiftVariantRows = null;
     st.captureGrown = false;

@@ -171,6 +171,7 @@ if (chainTextEl2) {
         st.selectedRows = new Set([idx]);
         st.captureGrown = false;
         st.manualShiftTurns = 0;
+        if (typeof rotBase !== "undefined") rotBase.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
         render(); saveCache();
         scrollToRow(idx); // по номеру, а не по элементу — строки может не быть в DOM, см. scrollToRow
         say("Паттерн №" + (idx + 1) + ": выделена строка " + idx + ".");
@@ -1440,6 +1441,7 @@ function setMode(modeName){
   st.shiftVariantTotal = null;
   st.shiftVariantRows = null;
   st.manualShiftTurns = 0;
+  if (typeof rotBase !== "undefined") rotBase.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
   // Смена режима — то же самое, что и новый клик по строке: выделение снова "своё" (см.
   // captureFoundRow/st.captureGrown).
   st.captureGrown = false;
@@ -2823,6 +2825,7 @@ document.getElementById("rows").onclick = e => {
   resetSeqSearchModes();
   // Новый клик по строке — новая "сессия" кругового сдвига, счётчик "Вар: N/M" начинается заново.
   st.manualShiftTurns = 0;
+  if (typeof rotBase !== "undefined") rotBase.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
   st.shiftVariantTotal = null;
   st.shiftVariantRows = null;
   // ...и выделение снова считается набранным ВРУЧНУЮ: выросло оно до этого захватом или нет —
@@ -5252,10 +5255,11 @@ function autoRun(){
             // убираем и из набора вращаемых, иначе она продолжала бы крутиться, уже не будучи
             // выделенной (см. captureFoundRow).
             const had = rotIdxs.has(bgInfo.targetIdx);
+            const wasReset = st.resetOnFind && rotBaseReset() >= 0;   // v1.645: накрученные — к исходному виду, до захвата
             const dropped = captureFoundRow(bgInfo.targetIdx, st.growDownOnFind);
             rotIdxs.add(bgInfo.targetIdx);
-            if (dropped >= 0) rotIdxs.delete(dropped);
-            let changed = !had || dropped >= 0;
+            if (dropped >= 0) { rotIdxs.delete(dropped); rotBase.delete(dropped); }
+            let changed = !had || dropped >= 0 || wasReset;
             // ...и дальше по подряд идущим строкам, помеченным "🔽 Все ниже" (см. captureBelowRun).
             for (const [idx, dr] of captureBelowRun(st.growDownOnFind)) {
               rotIdxs.add(idx);
@@ -5267,6 +5271,7 @@ function autoRun(){
                перебрано, — не дав найтись следующей строке. Это било по «🚀 Авто» Круга (оно на находке не стоит) и по общей
                «🚀 Авто» без «🛑 Стоп». Теперь набор строк поменялся — цикл вариантов пересчитывается для нового набора и
                начинается заново с текущего положения. */
+            if (st.resetOnFind) rotBaseNote(rotIdxs);   // захваченные ещё не крутились — их исходный вид такой, как сейчас
             if (changed) {
               totalTurns = isHalf ? halfTurnTotal(rotIdxs, isHalfPlain) : computeShiftTotalTurns(rotIdxs, isShiftInv);
               turns = 0;
@@ -5676,9 +5681,14 @@ document.getElementById("bReset").onclick = () => {
   if (typeof axisCenterInFieldAndScreen === "function") axisCenterInFieldAndScreen();
   saveCache();
 };
-// Копия "↺ Сброс" в блоке "Авто" — своей логики не имеет, кликает по оригиналу выше.
+// v1.645: рядом с «🚀 Авто» — уже не копия «↺ Сброс» верхнего меню, а переключатель «↺ Сброс при находке» (см. rotBase).
 const bResetFlowEl = document.getElementById("bResetFlow");
-if (bResetFlowEl) bResetFlowEl.onclick = () => document.getElementById("bReset").click();
+if (bResetFlowEl) bResetFlowEl.onclick = () => {
+  st.resetOnFind = !st.resetOnFind; rotBase.clear(); updateResetOnFindBtn(); saveCache();
+  say(st.resetOnFind ? "↺ Сброс при находке — включён: при захвате находки накрученные строки вернутся к исходному виду, и набор закрутится заново."
+                     : "↺ Сброс при находке — выключен: находка добавляется, накрутка остальных строк сохраняется.");
+};
+updateResetOnFindBtn();
 // Клик по заголовку в шапке — перезагрузка страницы (запрос пользователя). saveCache()
 // вызывается на каждое действие, так что терять нечего; специально НЕ сохраняем тут повторно —
 // иначе в аварийном режиме (#safe) клик записал бы пустую сессию поверх сохранённых цепочек.
@@ -7171,6 +7181,37 @@ if (colHeaderEl) {
 // накапливается по кликам подряд, а не по тикам — запрос пользователя ("при ручном тоже надо
 // это показывать"). st.manualShiftTurns копится, пока не сменится выделение кликом по строке
 // или режим (см. reset в rows.onclick / setMode()).
+/* ═══ ↺ СБРОС ПРИ НАХОДКЕ (v1.645) ═══ Пользователь: «сейчас при находке не сбрасывает накрученные строки — надо кнопку: если вкл,
+   то сбрасывает» (выбран вариант «вернуть биты»), и «счётчик пересчитать, потому что всё по новой». Галка «↺ Сброс при находке» в
+   группе «Круг». rotBase — исходный вид каждой крутящейся строки: биты, флаги «перевёрнут» и пометка «новый», снятые перед её
+   ПЕРВЫМ сдвигом в серии (rotBaseNote зовёт mirrorsBeforeShift). Серия кончается там же, где обнуляется счётчик ручных сдвигов, —
+   при ручной смене выделения, смене режима, сбросе. Когда находка захватывает строку, все накрученные строки (и та, что окно
+   выбросит сверху) возвращаются к исходному виду, найденная добавляется, и дальше весь набор крутится заново — счётчик вариантов
+   с нуля. Строка, у которой длина с тех пор поменялась (её правили), не трогается — её исходный вид уже не тот. */
+var rotBase = new Map();
+function rotBaseNote(rows){
+  for (const r of rows) {
+    const s = st.rows[r]; if (!s) continue;
+    const b = rotBase.get(r); if (b && b.bits.length === s.length) continue;
+    const nb = newBitsMap.get(r);
+    rotBase.set(r, { bits: s, flags: getInvFlags(r, s.length).slice(), nb: nb && nb.length === s.length ? nb.slice() : null });
+  }
+}
+function rotBaseReset(){
+  let n = 0;
+  for (const [r, b] of rotBase) {
+    const s = st.rows[r];
+    if (!s || s.length !== b.bits.length) { rotBase.delete(r); continue; }
+    if (s !== b.bits) n++;
+    st.rows[r] = b.bits; invFlagsMap.set(r, b.flags.slice());
+    if (b.nb) newBitsMap.set(r, b.nb.slice()); else newBitsMap.delete(r);
+  }
+  return n;
+}
+ // Переключатель — кнопка «↺ Сброс при находке» рядом с «🚀 Авто» (bResetFlow, ниже по файлу): пользователь, по снимку «↺ Сброс»:
+ // «последнее нажатие запоминать для Авто — то есть я про эту». Там раньше стояла копия «↺ Сброс» верхнего меню.
+function updateResetOnFindBtn(){ const b = document.getElementById("bResetFlow"); if (b) b.classList.toggle("mode-act", !!st.resetOnFind); }
+
 /* Захват найденной строки в выделение — общий и для "Авто", и для ручных ◄/►Круг.
    Выделена ОДНА строка — просто добавляем найденную, выделение растёт: прежнее поведение,
    оставлено как есть (запрос пользователя).
@@ -7268,12 +7309,15 @@ function afterShiftBgCheck(isShiftInv){
   /* ЗАХВАТ НЕ РАБОТАЕТ, ПОКА ИЩЕМ ВЫДЕЛЕННЫЙ ПАТТЕРН (v1.090, см. patSelMode в
      computeBgSearchTarget): захват тянет выделение СТРОК к цели, а цель сейчас — паттерн, выбранный
      руками, а не строка под выделением. Утаскивать за ним выделение строк было бы самоуправством. */
+  let wasReset = false;
   if ((st.captureOnFind || st.growDownOnFind) && hit && !bgInfo.patSelMode) {
-    captureFoundRow(bgInfo.targetIdx, st.growDownOnFind);
+    if (st.resetOnFind) { rotBaseReset(); wasReset = true; }   // v1.645: накрученные — к исходному виду, до захвата
+    const dropped = captureFoundRow(bgInfo.targetIdx, st.growDownOnFind);
+    if (dropped >= 0) rotBase.delete(dropped);
     captureBelowRun(st.growDownOnFind);
   }
   if (hit) { mirrorsAutoStep(); topBuildOnHitStep(); }
-  st.manualShiftTurns = (st.manualShiftTurns || 0) + 1;
+  st.manualShiftTurns = wasReset ? 0 : (st.manualShiftTurns || 0) + 1;   // v1.645: после сброса всё по новой — счёт с нуля
   st.stepStale = false; // ручной ◄/► — это тоже настоящий шаг, номер живой (см. finishAuto)
   const idxs = st.selectedRows ? Array.from(st.selectedRows) : [];
   st.shiftVariantTotal = computeShiftTotalTurns(idxs, isShiftInv);

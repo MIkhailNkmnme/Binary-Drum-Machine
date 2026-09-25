@@ -6666,6 +6666,7 @@ function captureUiSettings(){
     topBuildNeedHit: !!st.topBuildNeedHit,
     topBuildOnSelect: !!st.topBuildOnSelect,
     growDownOnFind: !!st.growDownOnFind,
+    resetOnFind: !!st.resetOnFind,   // «↺ Сброс при находке» (v1.645)
     parityView: st.parityView | 0,
     leftMirror: !!st.leftMirror,
     rightMirror: !!st.rightMirror,
@@ -6909,6 +6910,7 @@ function applyUiSettings(u){
   if (u.topBuildNeedHit !== undefined) setTopBuildNeedHit(u.topBuildNeedHit, true);
   if (u.topBuildOnSelect !== undefined) setTopBuildOnSelect(u.topBuildOnSelect, true);
   if (u.growDownOnFind !== undefined) setGrowDownOnFind(u.growDownOnFind, true);
+  if (u.resetOnFind !== undefined) { st.resetOnFind = !!u.resetOnFind; if (typeof updateResetOnFindBtn === "function") updateResetOnFindBtn(); }
   if (u.parityView !== undefined) setParityView(u.parityView, true);
   if (u.leftMirror !== undefined) setLeftMirror(u.leftMirror, true);
   if (u.rightMirror !== undefined) setRightMirror(u.rightMirror, true);
@@ -7269,6 +7271,7 @@ const DEFAULT_UI_SETTINGS = {
   interleavePadEven: false,
   axisSnapAny: false,
   growDownOnFind: false,
+  resetOnFind: false,
   parityView: 0,
   colNew: "#00e5a0",
   buildPlace: "clear",
