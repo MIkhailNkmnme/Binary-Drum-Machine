@@ -3,7 +3,9 @@
    Подключается одной строкой:  <script src="_js/recorder.js"></script>
 
    Пишет то, что нарисовано на холсте, а не экран: панели и кнопки в кадр не
-   попадают, даже когда они открыты. Если на странице несколько холстов
+   попадают, даже когда они открыты. Правый щелчок по ⏺ — «что писать»: можно
+   переключить на запись ВКЛАДКИ целиком, с панелями (захват вкладки браузером,
+   Chrome спросит разрешение; значок ▣ на кнопке). Если на странице несколько холстов
    (например, Canvas2D снизу и WebGL сверху), они складываются в том же
    порядке, в каком лежат на странице.
 
@@ -168,7 +170,13 @@
 
     const REC = {
         rec: null, startedAt: 0, timer: null, mime: '', raf: 0, mix: null, noticeTo: null,
-        sid: 0, sink: null,
+        sid: 0, sink: null, busy: false, onEnded: null,
+
+        /* Что писать: 'canvas' — холсты (как всегда), 'page' — вкладку целиком, с панелями. Панели — не холст,
+           captureStream их не видит, поэтому вкладку пишет сам браузер (getDisplayMedia, «эта вкладка»): Chrome
+           один раз спрашивает разрешение, его кнопка «Закрыть доступ» — тоже стоп. Выбор общий для всех страниц. */
+        mode() { try { return localStorage.getItem('zerk_rec_mode') === 'page' ? 'page' : 'canvas'; } catch (e) { return 'canvas'; } },
+        setMode(m) { try { localStorage.setItem('zerk_rec_mode', m); } catch (e) {} },
 
         pickMime() {
             const want = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4',
@@ -232,7 +240,28 @@
             if (!this.mime) { this.notify('ЗАПИСЬ НЕ ПОДДЕРЖИВАЕТСЯ'); return false; }
             this.mix = this.makeSource(fps || 60);
             if (!this.mix) { this.notify('ХОЛСТ НЕ НАЙДЕН'); return false; }
-            const at = this.audioTrack();
+            return this.begin();
+        },
+
+        async startPage() {
+            this.mime = this.pickMime();
+            if (!this.mime || !navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) { this.notify('ЗАПИСЬ ВКЛАДКИ НЕ ПОДДЕРЖИВАЕТСЯ'); return false; }
+            let ds;
+            try {
+                ds = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 60, displaySurface: 'browser' }, audio: true,
+                    preferCurrentTab: true, selfBrowserSurface: 'include', surfaceSwitching: 'exclude', systemAudio: 'exclude' });
+            } catch (e) { this.notify('ЗАПИСЬ ОТМЕНЕНА'); return false; }
+            const vt = ds.getVideoTracks()[0];
+            if (vt) vt.addEventListener('ended', () => { if (this.rec && this.onEnded) this.onEnded(); });
+            const stream = new MediaStream(ds.getVideoTracks());
+            const ta = ds.getAudioTracks()[0]; if (ta) stream.addTrack(ta);
+            // Останавливаем только захват вкладки: трек визуализатора общий и нужен дальше.
+            this.mix = { stream, stop() { ds.getTracks().forEach(t => t.stop()); } };
+            return this.begin();
+        },
+
+        begin() {
+            const at = this.mix.stream.getAudioTracks().length ? null : this.audioTrack();
             if (at) this.mix.stream.addTrack(at);
             this.sid = Date.now();
             this.sink = VAULT.sink(this.sid, { mime: this.mime, startedAt: this.sid, name: this.fileBase(this.sid) });
@@ -254,7 +283,7 @@
         stop() {
             if (this.rec && this.rec.state !== 'inactive') this.rec.stop();
             this.rec = null;
-            if (this.mix) { this.mix.stop(); this.mix = null; }
+            if (this.mix) { this.mix.stop(); this.mix = null; }   // у записи вкладки — и сам захват
             window.removeEventListener('beforeunload', guardUnload);
         },
 
@@ -406,25 +435,68 @@
                 padding: 6px 10px; border-radius: 3px; }
             #zerkRecRescue button { font: bold 11px 'Courier New', monospace; cursor: pointer;
                 background: #222; color: #ffcc00; border: 1px solid #665500; padding: 3px 8px; border-radius: 2px; }
-            #zerkRecRescue button:hover { background: #443300; color: #fff; }`;
+            #zerkRecRescue button:hover { background: #443300; color: #fff; }
+            #zerkRecBtn.page::after { content: '▣'; position: absolute; right: -3px; bottom: -5px; font-size: 11px;
+                line-height: 1; color: #ffcc00; text-shadow: 0 0 2px #000; pointer-events: none; }
+            #zerkRecBtn.recpage { opacity: 1; background: #1a0000; color: #ff3333; border-color: #ff3333; }
+            #zerkRecMode { position: fixed; z-index: 100000; display: none; background: #111; border: 1px solid #552222;
+                border-radius: 4px; padding: 6px 10px; font: 12px Consolas, monospace; color: #ddd;
+                box-shadow: 0 2px 10px rgba(0,0,0,.6); }
+            #zerkRecMode b { display: block; color: #ff8888; margin-bottom: 4px; font-weight: 600; }
+            #zerkRecMode label { display: flex; gap: 6px; align-items: center; cursor: pointer; margin: 3px 0; white-space: nowrap; }
+            #zerkRecMode .hint { color: #889; font-size: 11px; margin-top: 5px; max-width: 280px; }`;
         document.head.appendChild(css);
 
         const timer = document.createElement('div');
         timer.id = 'zerkRecTimer';
         const btn = document.createElement('button');
         btn.id = 'zerkRecBtn'; btn.type = 'button'; btn.textContent = '⏺';
-        btn.title = 'Запись видео с холста (R). Пишется только холст — панели в кадр не попадают';
         document.body.appendChild(timer); document.body.appendChild(btn);
 
-        const toggle = () => {
-            if (REC.rec) {
-                REC.stop(); clearInterval(REC.timer);
-                btn.classList.remove('rec'); REC.notify('● СОХРАНЕНО');
-                return;
-            }
-            if (!REC.start(60)) return;
-            btn.classList.add('rec');
-            timer.style.display = 'block';
+        // Правый щелчок по ⏺ — что писать; выбор помнится
+        const setTitle = () => {
+            const page = REC.mode() === 'page';
+            btn.classList.toggle('page', page);
+            btn.title = (page ? 'Запись видео ВКЛАДКИ целиком, с панелями (R; Chrome спросит разрешение)'
+                              : 'Запись видео с холста (R). Пишется только холст — панели в кадр не попадают') + ' · правый щелчок — что писать';
+        };
+        const menu = document.createElement('div');
+        menu.id = 'zerkRecMode';
+        menu.innerHTML = '<b>⏺ Что писать</b>' +
+            '<label><input type="radio" name="zerkRecMode" value="canvas"> только холст</label>' +
+            '<label><input type="radio" name="zerkRecMode" value="page"> вкладку целиком, с панелями</label>' +
+            '<div class="hint">С панелями пишется то, что видно во вкладке, как есть. Chrome спросит «Поделиться этой вкладкой» — ' +
+            'согласиться; остановить можно и его кнопкой «Закрыть доступ». Звук — звук вкладки, если отмечен в том окне.</div>';
+        document.body.appendChild(menu);
+        menu.addEventListener('change', e => { if (e.target.name === 'zerkRecMode') { REC.setMode(e.target.value); setTitle(); menu.style.display = 'none'; } });
+        btn.addEventListener('contextmenu', e => {
+            e.preventDefault();
+            if (REC.rec) return;
+            menu.querySelectorAll('input').forEach(r => { r.checked = r.value === REC.mode(); });
+            menu.style.display = 'block';
+            const b = btn.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
+            const left = b.left + b.width / 2 > innerWidth / 2 ? b.left - mw - 8 : b.right + 8;
+            menu.style.left = Math.max(4, Math.min(innerWidth - mw - 4, left)) + 'px';
+            menu.style.top = Math.max(4, Math.min(innerHeight - mh - 4, b.top)) + 'px';
+        });
+        document.addEventListener('mousedown', e => { if (menu.style.display === 'block' && !menu.contains(e.target)) menu.style.display = 'none'; });
+        setTitle();
+
+        const stopUi = () => {
+            REC.stop(); clearInterval(REC.timer);
+            btn.classList.remove('rec', 'recpage'); REC.notify('● СОХРАНЕНО');
+        };
+        REC.onEnded = stopUi;   // «Закрыть доступ» в Chrome
+        const toggle = async () => {
+            if (REC.rec) { stopUi(); return; }
+            if (REC.busy) return;
+            const page = REC.mode() === 'page';
+            REC.busy = true;
+            const ok = page ? await REC.startPage() : REC.start(60);
+            REC.busy = false;
+            if (!ok) return;
+            btn.classList.add(page ? 'recpage' : 'rec');   // с панелями — без мигания: кнопка сама в кадре
+            if (!page) timer.style.display = 'block';      // и счётчик тоже попал бы в кадр
             REC.timer = setInterval(() => {
                 const s = Math.floor((Date.now() - REC.startedAt) / 1000);
                 timer.textContent = `● REC ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
