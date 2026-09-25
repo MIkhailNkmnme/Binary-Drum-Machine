@@ -3343,7 +3343,7 @@ const st = {
      [{ rows:[индексы, по возрастанию], align:"center" }, ...]. Нижняя строка каждой группы — её
      рамка. Живёт вместе с цепочкой: пишется во вкладку, в снимки отката и в кэш. */
   rowGroups: [], rowGroupsL: [], rowGroupsR: [],
-  pull: true, keepOrder: true, stopOnHit: true, stopOnBalance: false, turboAuto: false, slowAuto: false, slowFrames: 10, captureOnFind: true, axisSnap: true, axisBitBounce: false, axisCenterOffset: 0,
+  pull: false, keepOrder: true, stopOnHit: true, stopOnBalance: false, turboAuto: false, slowAuto: false, slowFrames: 10, captureOnFind: true, axisSnap: true, axisBitBounce: false, axisCenterOffset: 0,
   undo: [], redo: [], running: false, msg: "",
   horizBitIdx: 0, horizXoredLength: 0, lastHorizRow: null, lastHorizDir: null, horizFoundInPass: false, horizChainLen: 0,
   horizBigChain: "", horizBigOrig: "", horizBigRow: "", horizChainRow: -1, horizBigTargetIdx: -1, horizRotations: 0, horizNeedRebuild: false,

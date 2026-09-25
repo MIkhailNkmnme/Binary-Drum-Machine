@@ -6594,7 +6594,7 @@ function togglePasteBars(){
 
 function captureUiSettings(){
   return {
-    pull: cPullEl.checked, order: cOrderEl.checked, nextOnly: cNextOnlyEl.checked,
+    pull: false, order: cOrderEl.checked, nextOnly: cNextOnlyEl.checked,
     stageXor: cStageXorEl ? cStageXorEl.checked : false, invPass: cInvPassEl ? cInvPassEl.checked : false,
     autoShift: cAutoShiftEl ? cAutoShiftEl.checked : false, stopOnHit: cStopOnHitEl ? cStopOnHitEl.checked : true,
     stopOnBalance: cStopOnBalanceEl ? cStopOnBalanceEl.checked : false,
@@ -6759,7 +6759,6 @@ function captureUiSettings(){
 
 function applyUiSettings(u){
   if (!u) return;
-  if (u.pull      !== undefined) cPullEl.checked      = u.pull;
   if (u.order     !== undefined) cOrderEl.checked     = u.order;
   if (u.nextOnly  !== undefined) cNextOnlyEl.checked  = u.nextOnly;
   if (u.stageXor  !== undefined) cStageXorEl.checked  = u.stageXor;
@@ -7258,7 +7257,7 @@ function applyUiSettings(u){
    всегда ведёт на жёстко зашитые значения по умолчанию (совпадают с исходными checked/value
    в самом HTML), а не на то, что было сохранено кнопкой "Сохр. настройки". */
 const DEFAULT_UI_SETTINGS = {
-  pull: true, order: true, nextOnly: false, stageXor: false, invPass: false,
+  pull: false, order: true, nextOnly: false, stageXor: false, invPass: false,
   autoShift: false, stopOnHit: true, stopOnBalance: false, turboAuto: false, captureOnFind: true, vert: false, pad: false, kindsMode: "", cellSampleOn: false, cellSampleSeq: false, skip1: true,
   ringInvert: false, ringReverse: false, ringOff: false,
   chainCutBelow: false, chainCutTail: false, chainTileMode: "none",

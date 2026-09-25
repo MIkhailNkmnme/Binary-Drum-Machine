@@ -6341,7 +6341,7 @@ const cAxisSnapAnyEl = document.getElementById("cAxisSnapAny");
 const rowCountEl   = document.getElementById("rowCount");
 
 function readToggles(){
-  st.pull      = cPullEl.checked;
+  st.pull      = false;   // v1.647: «🧲 Подтянуть» удалена — найденные паттерны наверх не подтягиваются
   st.keepOrder = cOrderEl.checked;
   st.nextOnly  = cNextOnlyEl ? cNextOnlyEl.checked : false;
   st.stageXor  = cStageXorEl ? cStageXorEl.checked : false;

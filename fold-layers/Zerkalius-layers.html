@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Layers — v1.646</title>
+<title>Zerkalius Layers — v1.647</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -5368,7 +5368,7 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
   <!-- Заголовок стоит вплотную слева от вкладок (v1.046), вся связка центрируется полосой — см. #menuBarTitle в CSS. --><div id="menuBarTitle">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.646</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.647</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -5874,7 +5874,7 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
   </div>
   <div class="psec"><div class="psec-h">Находка</div>
     <label class="chk" title="Остановить автоматический прогон (Авто), если найдено совпадение с паттерном"><input type="checkbox" id="cStopOnHit" checked>🛑 Стоп</label><label class="chk" data-tip="t80"><input type="checkbox" id="cStopOnBalance">🛑 При балансе</label>
-    <label class="chk" title="Подтягивать находки наверх"><input type="checkbox" id="cPull" checked>🧲 Подтянуть</label><label class="chk" title="Держать изначальный порядок паттернов"><input type="checkbox" id="cOrder" checked>🔒 Порядок</label>
+    <!-- v1.647: «🧲 Подтянуть» (cPull) удалена по просьбе пользователя — подтягивание найденных паттернов наверх выключено насовсем (st.pull = false) --><label class="chk" title="Держать изначальный порядок паттернов"><input type="checkbox" id="cOrder" checked>🔒 Порядок</label>
     <label class="chk" title="Искать строго только один следующий паттерн по порядку (не засчитывать другие раньше времени)"><input type="checkbox" id="cNextOnly">🎯 Только 1-й</label><label class="chk" data-tip="t81"><input type="checkbox" id="cAutoShift">🔀 Сдвиг снизу</label>
     <label class="chk" title="Разбивать XOR на два отдельных визуальных шага: 1) Дополнение нулями 2) Вычисление XOR"><input type="checkbox" id="cStageXor">2️⃣ XOR в 2 этапа</label><label class="chk" title="При повторном заходе с 1-й строки читать биты инверсно (0↔1)"><input type="checkbox" id="cInvPass">🔄 Инв заход</label>
     <label class="chk" title="Сквозная цепочка по вертикалям"><input type="checkbox" id="cVert">↕ Верт.</label><label class="chk" title="В режиме Интерливинга: делать XOR результата с нижней строкой пары"><input type="checkbox" id="cInterleaveXor">⧬+⨁ Интерл.XOR</label>
@@ -6198,11 +6198,11 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
      (видно новый номер версии в заголовке), а fold-*.js берёт из кеша — то есть новый код
      просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
      версией в <title>/<h3>, теми же тремя цифрами. -->
-<script src="fold-1-core.js?v=1646"></script>
-<script src="fold-2-render.js?v=1646"></script>
-<script src="fold-3-ops.js?v=1646"></script>
-<script src="fold-4-tools.js?v=1646"></script>
-<script src="fold-5-ui.js?v=1646"></script>
+<script src="fold-1-core.js?v=1647"></script>
+<script src="fold-2-render.js?v=1647"></script>
+<script src="fold-3-ops.js?v=1647"></script>
+<script src="fold-4-tools.js?v=1647"></script>
+<script src="fold-5-ui.js?v=1647"></script>
 <div id="fieldInfo"></div>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;
