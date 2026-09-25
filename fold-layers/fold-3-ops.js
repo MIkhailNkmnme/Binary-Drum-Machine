@@ -1394,7 +1394,7 @@ function getModeParams(mode){
    должно гасить подсветку другого. Явный выбор обычного режима (setMode() ниже) гасит эту, и
    наоборот — эта гасит подсветку обычных режимов (но не трогает сам st.mode: если потом опять
    нажать Шаг/XOR/и т.п., они возьмут её как есть). */
-const DIR_MODE_BTN = { shiftL: "bShiftL", shiftR: "bShiftR", shiftLInv: "bShiftLInv", shiftRInv: "bShiftRInv", spiralUp: "bSpiralUp", spiralDown: "bSpiralDown" };
+const DIR_MODE_BTN = { shiftL: "bShiftL", shiftR: "bShiftR", shiftLInv: "bShiftLInv", shiftRInv: "bShiftRInv", halfTurnL: "bShiftHalfTurnL", halfTurnR: "bShiftHalfTurn", spiralUp: "bSpiralUp", spiralDown: "bSpiralDown" };   // v1.640: и ◄/► Полуоборот
 const STEP_MODE_BTN_IDS = ["bStep", "bStep2", "bStepXor", "bStep2Xor", "bStepHorizXor", "bStepHorizXorLeft", "bStepXorProj", "bStepScan"];
 // "⧬ Интерлив сквозной"/"⨁ XOR сквозной" — тоже полноценные "режимы для Авто" (см.
 // st.interleaveSeqMode/st.xorSeqMode), гасятся/гасят наравне с остальными.
@@ -5124,9 +5124,12 @@ function autoRun(){
   // пользователь не нажмёт ⏹ Стоп. snapshot() один раз ДО цикла — Undo одним кликом откатывает
   // весь прогон целиком, а не по шагу.
   if (st.lastDirMode) {
-    const isShift = st.lastDirMode === "shiftL" || st.lastDirMode === "shiftR" || st.lastDirMode === "shiftLInv" || st.lastDirMode === "shiftRInv";
+    // v1.640: ◄/► Полуоборот — тоже «сдвиг»: крутит выделенные строки, только ход — целый прыжок (halfTurnJump), а вариантов —
+    // сколько полуоборотов до повтора набора (halfTurnTotal).
+    const isHalf = st.lastDirMode === "halfTurnL" || st.lastDirMode === "halfTurnR";
+    const isShift = isHalf || st.lastDirMode === "shiftL" || st.lastDirMode === "shiftR" || st.lastDirMode === "shiftLInv" || st.lastDirMode === "shiftRInv";
     const isShiftInv = st.lastDirMode === "shiftLInv" || st.lastDirMode === "shiftRInv";
-    const dirLabel = { shiftL: "◄", shiftR: "►", shiftLInv: "◄ Инв", shiftRInv: "► Инв", spiralUp: "▲ Спираль", spiralDown: "▼ Спираль" }[st.lastDirMode];
+    const dirLabel = { shiftL: "◄", shiftR: "►", shiftLInv: "◄ ИнвКруг", shiftRInv: "► ИнвКруг", halfTurnL: "◄ Полуоборот", halfTurnR: "► Полуоборот", spiralUp: "▲ Спираль", spiralDown: "▼ Спираль" }[st.lastDirMode];
     snapshot();
 
     // Общее число вариантов ДО старта: круговой сдвиг строки длины L возвращает её к исходному
@@ -5155,7 +5158,7 @@ function autoRun(){
     if (isShift) {
       // Тот же принцип, что и у ручного сдвига: прогон крутит всё, что видно.
       mirrorsBeforeShift();
-      totalTurns = computeShiftTotalTurns(rotIdxs, isShiftInv);
+      totalTurns = isHalf ? halfTurnTotal(rotIdxs) : computeShiftTotalTurns(rotIdxs, isShiftInv);
     } else {
       const range = colSelectRowRange();
       const lo = Math.max(0, range.lo);
@@ -5200,7 +5203,8 @@ function autoRun(){
         if (totalTurns > 0 && turns >= totalTurns) { cycleDone = true; break; }
         if (isShift) {
           if (rotIdxs.size === 0 || ![...rotIdxs].some(i => st.rows[i])) { moved = false; break; }
-          for (const i of rotIdxs) if (st.rows[i]) {
+          if (isHalf) halfTurnJump(rotIdxs, st.lastDirMode === "halfTurnR" ? 1 : -1);   // весь набор одним прыжком
+          else for (const i of rotIdxs) if (st.rows[i]) {
             // "⊙ Ось" — см. shiftOneRowAxisAware(): под Авто крутит только картинку, не данные.
             if (st.lastDirMode === "shiftL") shiftOneRowAxisAware(i, 1, rotateStrLeft, rotateInvFlagsLeft);
             else if (st.lastDirMode === "shiftR") shiftOneRowAxisAware(i, -1, rotateStrRight, rotateInvFlagsRight);
@@ -5333,7 +5337,7 @@ function autoRun(){
         turns = 0;
         if (isShift) {
           mirrorsBeforeShift();
-          totalTurns = computeShiftTotalTurns(rotIdxs, isShiftInv);
+          totalTurns = isHalf ? halfTurnTotal(rotIdxs) : computeShiftTotalTurns(rotIdxs, isShiftInv);
           st.shiftVariantTotal = totalTurns;
           st.shiftVariantRows = Array.from(rotIdxs);
         }
@@ -7818,38 +7822,72 @@ if (bShiftRInvEl) {
    счётчик и двигается. Длины разные — общего числа тактов у прыжка нет, у каждой строки свой
    полуоборот; берём наибольшую длину (N не убежит за M, ведь M = 2·НОК длин ≥ 2·max), а в
    сообщении честно говорим, что каждая строка прыгнула на свою величину. */
-const bShiftHalfTurnEl = document.getElementById("bShiftHalfTurn");
-if (bShiftHalfTurnEl) {
-  bShiftHalfTurnEl.onclick = () => {
-    if (!shiftAllowed()) return; // 🔒 замок — Круг бит не двигает (см. shiftAllowed в fold-1-core)
-    if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
-    // Режим Inv-семейства: от него зависит общее число вариантов в счётчике (2·НОК длин).
-    setLastDirMode("shiftRInv");
-    mirrorsBeforeShift();
-    snapshot();
-    const lens = [];
-    for (const r of st.selectedRows) {
-      const s = st.rows[r];
-      const len = s ? s.length : 0;
-      if (!len) continue;
-      lens.push(len);
-      invFlagsMap.set(r, getInvFlags(r, len).map(f => !f));
-      st.rows[r] = invertBits(s);
+/* v1.640, «Полуоборот — как галка, запоминать последнее нажатие (как Круг)… и работать в шаге; если несколько строк выделено —
+   нижняя выделенная делает свой полуоборот, а верхние — этот же её полуоборот своей длины, то есть больше сделают: строка в
+   2 раза уже сделает полный оборот»; следом «и в другую сторону также». ПРАВИЛО: k = длина НИЖНЕЙ выделенной строки, и КАЖДАЯ
+   выделенная строка делает k тактов ИнвКруга в свою сторону. У строки длины L это m = k mod 2L тактов: q = m mod L бит уходят
+   через шов (перевёрнутыми), а если m ≥ L — вся строка ещё и стоит изнанкой. Нижняя: m = L — чистая изнанка, как было. На бит
+   короче: m = L + 1 — изнанка и сдвиг на бит. Вдвое короче: m = 2L — полный оборот, строка дома. Одна выделенная строка — то же,
+   что прежний полуоборот. Считается сразу, за O(L), без k поворотов, и вместе с пометками: флаги «перевёрнут» едут и
+   переключаются, как у k тактов ИнвКруга, пометка «новый» едет обычным поворотом (см. NEW_BITS_ROT). От выравнивания и галок
+   положения не зависит — прыгают сами биты. dir: +1 вправо, −1 влево. */
+function halfTurnJump(idxs, dir){
+  const rows = Array.from(idxs).filter(r => st.rows[r] && st.rows[r].length).sort((a, b) => a - b);
+  if (!rows.length) return null;
+  const k = st.rows[rows[rows.length - 1]].length, lens = [];
+  for (const r of rows) {
+    const s = st.rows[r], L = s.length, m = k % (2 * L), q = m % L, odd = m >= L;
+    lens.push(L);
+    let f = getInvFlags(r, L).slice(), nb = newBitsMap.get(r), t;
+    if (!(nb && nb.length === L)) nb = null;
+    if (dir > 0) {   // вправо: q хвостовых бит через шов в начало, перевёрнутыми (как q раз rotateStrRightInv)
+      t = invertBits(s.slice(L - q)) + s.slice(0, L - q);
+      f = f.slice(L - q).map(x => !x).concat(f.slice(0, L - q));
+      if (nb) nb = nb.slice(L - q).concat(nb.slice(0, L - q));
+    } else {         // влево: q головных бит через шов в конец, перевёрнутыми (как q раз rotateStrLeftInv)
+      t = s.slice(q) + invertBits(s.slice(0, q));
+      f = f.slice(q).concat(f.slice(0, q).map(x => !x));
+      if (nb) nb = nb.slice(q).concat(nb.slice(0, q));
     }
-    if (!lens.length) { say("Полуоборот: в выделении нет ни одной непустой строки."); return; }
-    const same = lens.every(l => l === lens[0]);
-    const step = same ? lens[0] : Math.max.apply(null, lens);
-    // afterShiftBgCheck() добавит к счётчику ещё один такт — остальные докладываем здесь.
-    st.manualShiftTurns = (st.manualShiftTurns || 0) + step - 1;
-    afterShiftBgCheck(true);
-    const uniq = Array.from(new Set(lens)).sort((a, b) => a - b).join("/");
-    say(same
-      ? `Полуоборот: ${lens.length} стр. по ${step} бит — прыжок на ${step} тактов «Круга Инв», строки стоят изнанкой. Ещё один полуоборот вернёт их домой.`
-      : `Полуоборот: строки разной длины (${uniq}) — каждая прыгнула на свою и стоит изнанкой. Счётчик вариантов двинут на ${step}.`);
-    logStep("Полуоборот", Array.from(st.selectedRows).map(r => r + 1).join(", "), "", `Инверсия ${lens.length} стр.: ${step} тактов «Круга Инв» одним прыжком`);
-    render(); saveCache();
-  };
+    if (odd) { t = invertBits(t); f = f.map(x => !x); }
+    st.rows[r] = t; invFlagsMap.set(r, f); if (nb) newBitsMap.set(r, nb);
+  }
+  return { k, rows, lens };
 }
+/* Сколько полуоборотов до повтора всего набора (для «🚀 Авто»): у строки длины L k-тактовый прыжок возвращается через
+   2L / НОД(k, 2L) прыжков, у набора — НОК этих чисел. 0 — предел неизвестен (НОК слишком велик). */
+function halfTurnTotal(idxs){
+  const rows = Array.from(idxs).filter(r => st.rows[r] && st.rows[r].length).sort((a, b) => a - b);
+  if (!rows.length) return 0;
+  const k = st.rows[rows[rows.length - 1]].length;
+  let total = 1;
+  for (const r of rows) { const P = 2 * st.rows[r].length, per = P / gcdInt(k, P); const nx = lcmSafe(total, per); if (nx === null) return 0; total = nx; }
+  return total;
+}
+function halfTurnClick(dir){
+  if (!shiftAllowed()) return; // 🔒 замок — Круг бит не двигает (см. shiftAllowed в fold-1-core)
+  if (!st.selectedRows || st.selectedRows.size === 0) { say("Выделите строку кликом."); return; }
+  // Запоминается, как ◄/►Круг: кнопка подсвечена, «🚀 Авто» повторяет полуобороты этой стороны.
+  setLastDirMode(dir > 0 ? "halfTurnR" : "halfTurnL");
+  mirrorsBeforeShift();
+  snapshot();
+  const res = halfTurnJump(st.selectedRows, dir);
+  if (!res) { say("Полуоборот: в выделении нет ни одной непустой строки."); return; }
+  // Счётчик «Вар: N/M» — в тактах ИнвКруга: прыжок — это k тактов; afterShiftBgCheck() добавит ещё один.
+  st.manualShiftTurns = (st.manualShiftTurns || 0) + res.k - 1;
+  afterShiftBgCheck(true);
+  const side = dir > 0 ? "►" : "◄";
+  say(res.rows.length === 1
+    ? `${side} Полуоборот: строка ${rowLabel(res.rows[0])} (${res.k} бит) стоит изнанкой. Ещё один полуоборот вернёт её домой.`
+    : `${side} Полуоборот: ${res.rows.length} стр. — по ${res.k} тактов ИнвКруга (длина нижней, ${rowLabel(res.rows[res.rows.length - 1])}); ` +
+      `длины ${Array.from(new Set(res.lens)).sort((a, b) => a - b).join("/")}: каждая прокрутилась по своему кругу.`);
+  logStep(side + " Полуоборот", res.rows.map(r => r + 1).join(", "), "", `${res.k} тактов ${side} ИнвКруга одним прыжком (длина нижней выделенной)`);
+  render(); saveCache();
+}
+const bShiftHalfTurnEl = document.getElementById("bShiftHalfTurn");
+if (bShiftHalfTurnEl) bShiftHalfTurnEl.onclick = () => halfTurnClick(1);
+const bShiftHalfTurnLEl = document.getElementById("bShiftHalfTurnL");
+if (bShiftHalfTurnLEl) bShiftHalfTurnLEl.onclick = () => halfTurnClick(-1);
 
 /* "🎭 Маска" — накладывает ПАТТЕРН КАЖДОЙ СТРОКИ на саму эту строку (XOR), столбец в столбец по
    ТЕКУЩЕМУ выравниванию цепочек: и строка, и паттерн получают свой alignShift() по общей ширине,

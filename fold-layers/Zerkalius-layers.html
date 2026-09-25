@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Layers — v1.639</title>
+<title>Zerkalius Layers — v1.640</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -5368,7 +5368,7 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
   <!-- Заголовок стоит вплотную слева от вкладок (v1.046), вся связка центрируется полосой — см. #menuBarTitle в CSS. --><div id="menuBarTitle">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.639</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.640</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -5515,8 +5515,9 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
   </div>
   <div class="psec"><div class="psec-h">Круг</div>
     <button id="bShiftL" title="Круговой сдвиг влево выбранных строк (◄ или Ctrl+Клик)">◄ Круг</button><button id="bShiftR" title="Круговой сдвиг вправо выбранных строк (► или Ctrl+Клик)">► Круг</button>
-    <button id="bShiftLInv" title="Круговой сдвиг влево с инверсией бита при переходе границы строки">◄ Инв</button><button id="bShiftRInv" title="Круговой сдвиг вправо с инверсией бита при переходе границы строки">► Инв</button>
-    <button id="bShiftHalfTurn" title="Полуоборот «Круга Инв»: прыжок сразу на длину строки — все биты переворачиваются, порядок не меняется. Ещё раз — возврат">⟲½ Полуоборот</button><label class="chk" data-tip="t14"><input type="checkbox" id="cAxisSnap" checked>⊙ На «1»</label>
+    <button id="bShiftLInv" title="Круговой сдвиг влево с инверсией бита при переходе границы строки">◄ ИнвКруг</button><button id="bShiftRInv" title="Круговой сдвиг вправо с инверсией бита при переходе границы строки">► ИнвКруг</button>
+    <button id="bShiftHalfTurnL" title="◄ Полуоборот «ИнвКруга» влево: прыжок сразу на длину НИЖНЕЙ выделенной строки. Одна строка — встаёт изнанкой (биты перевёрнуты, порядок тот же), ещё раз — домой. Несколько — все делают столько же шагов ◄ ИнвКруга, каждая по своему кругу: строка на бит короче встаёт изнанкой и уезжает на бит влево, вдвое короче — делает полный оборот. Запоминается, как ◄/►Круг: «🚀 Авто» повторяет полуобороты">◄ Полуоборот</button><button id="bShiftHalfTurn" title="► Полуоборот «ИнвКруга» вправо: прыжок сразу на длину НИЖНЕЙ выделенной строки. Одна строка — встаёт изнанкой (биты перевёрнуты, порядок тот же), ещё раз — домой. Несколько — все делают столько же шагов ► ИнвКруга, каждая по своему кругу: строка на бит короче встаёт изнанкой и уезжает на бит вправо, вдвое короче — делает полный оборот. Запоминается, как ◄/►Круг: «🚀 Авто» повторяет полуобороты">► Полуоборот</button>
+    <label class="chk" data-tip="t14"><input type="checkbox" id="cAxisSnap" checked>⊙ На «1»</label>
     <label class="chk" data-tip="t15"><input type="checkbox" id="cAxisBitBounce">↩ От края</label><label class="chk" data-tip="t15b"><input type="checkbox" id="cEdgeOnes">⇔ Крайние «1»</label>
     <label class="pw chk" data-tip="t15c"><input type="checkbox" id="cNoSplitOnes">🔗 Не рвать «1»</label>
   </div>
@@ -6194,11 +6195,11 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
      (видно новый номер версии в заголовке), а fold-*.js берёт из кеша — то есть новый код
      просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
      версией в <title>/<h3>, теми же тремя цифрами. -->
-<script src="fold-1-core.js?v=1639"></script>
-<script src="fold-2-render.js?v=1639"></script>
-<script src="fold-3-ops.js?v=1639"></script>
-<script src="fold-4-tools.js?v=1639"></script>
-<script src="fold-5-ui.js?v=1639"></script>
+<script src="fold-1-core.js?v=1640"></script>
+<script src="fold-2-render.js?v=1640"></script>
+<script src="fold-3-ops.js?v=1640"></script>
+<script src="fold-4-tools.js?v=1640"></script>
+<script src="fold-5-ui.js?v=1640"></script>
 <div id="fieldInfo"></div>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;
