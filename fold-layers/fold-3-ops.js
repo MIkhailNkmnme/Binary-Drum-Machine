@@ -5167,6 +5167,7 @@ function autoRun(){
       for (let i = lo; i <= hi; i++) totalTurns += (st.rows[i] || "").length;
     }
     let turns = 0;
+    let hitCount = 0;   // v1.642: находок за прогон — «🚀 Авто» Круга на них не стоит, итог говорит, сколько их было
     /* "🔻 Полный проход" (v0.963): находки за текущий цикл вариантов КОПЯТСЯ здесь, а захват
        строк делается один раз — когда цикл пройден целиком (запрос пользователя: "захват новой
        строки там только по завершению всех вариантов текущей строки"). Обычный режим захватывает
@@ -5227,7 +5228,7 @@ function autoRun(){
 
         const bgInfo = computeBgSearchTarget();
         if (bgInfo && bgInfo.matched) {
-          hadHit = true;
+          hadHit = true; hitCount++;
           // Находка СРАЗУ добавляется к выделению (не заменяет его — запрос пользователя), если
           // включена "🧲 Захват находки" (st.captureOnFind) — работает для ЛЮБОГО выделения, в
           // т.ч. одной строки (раньше — только если исходно было выделено несколько). Найденная
@@ -5275,7 +5276,7 @@ function autoRun(){
           // При "🔻 Полном проходе" "🛑 Стоп на находке" НЕ рвёт перебор: смысл режима как раз в
           // том, чтобы досмотреть все варианты текущей строки. Остановка (если она включена)
           // случится на cycleDone, уже после захвата.
-          if (st.stopOnHit && !st.fullPassMode) { bgHit = bgInfo; break; }
+          if (st.stopOnHit && !st.fullPassMode && !krugAutoNoStop) { bgHit = bgInfo; break; }   // v1.642: «🚀 Авто» Круга на находке не стоит
         }
 
         // "🛑 Стоп при балансе" — суммарно по ВСЕМ выделенным строкам единиц и нулей стало
@@ -5346,14 +5347,14 @@ function autoRun(){
         updateVariantCounter();
         render(); saveCache();
         const takenTxt = taken.length ? taken.map(r => rowLabel(r)).join(", ") : "—";
-        if (st.stopOnHit) {
+        if (st.stopOnHit && !krugAutoNoStop) {
           return finishAuto(`🔻 Полный проход (${dirLabel}): цикл вариантов пройден, захвачены строки ${takenTxt}. Остановлено по «🛑 Стоп на находке».`);
         }
         say(`🔻 Полный проход (${dirLabel}): цикл вариантов пройден, захвачены строки ${takenTxt} — пошёл новый круг.`);
         autoFrame(tick);
         return;
       }
-      if (cycleDone) return finishAuto(`Авто (${dirLabel}) остановлен: полный цикл вариантов (${turns} из ${totalTurns}) пройден, совпадений не найдено.`);
+      if (cycleDone) return finishAuto(`Авто (${dirLabel}) остановлен: полный цикл вариантов (${turns} из ${totalTurns}) пройден, ` + (hitCount ? `находок за прогон: ${hitCount}.` : `совпадений не найдено.`));
       if (!moved) return finishAuto(`Авто (${dirLabel}) остановлен: больше нечего сдвигать.`);
       autoFrame(tick);
     };
@@ -5516,6 +5517,7 @@ function slowAutoSync(){
 
 function finishAuto(m){
   st.running = false;
+  krugAutoNoStop = false;
   setAutoBtnState(false);
   // Прогон кончился — счётчик шагов больше не живой. Дальше находки могут появляться от чего
   // угодно (клик по строке, правка, смена режима), и штамповать их последним номером прогона
@@ -5618,6 +5620,25 @@ const bPlainCheckEl = document.getElementById("bPlainCheck");
 if (bPlainCheckEl) bPlainCheckEl.onclick = () => doPlainCheck();
 
 document.getElementById("bAuto").onclick  = () => { if (st.running) st.running = false; else autoRun(); };
+/* v1.642, «сделай им отдельную кнопку Шаг и Авто — которые при находке продолжают нажимать, а Шаг — это вручную» (про группу
+   «Круг»). «▶ Шаг» — один раз нажать запомненную кнопку Круга; «🚀 Авто» — тот же autoRun(), что у общей «🚀 Авто», но с
+   krugAutoNoStop: находка захватывается как обычно, а «🛑 Стоп на находке» прогон не рвёт — он идёт до конца цикла вариантов
+   или до повторного нажатия. Работает только с кнопками Круга (◄/► Круг, ½ Круг, ИнвКруг, ½ ИнвКруг), Спираль сюда не входит. */
+var krugAutoNoStop = false;
+const KRUG_MODES = ["shiftL", "shiftR", "halfPlainL", "halfPlainR", "shiftLInv", "shiftRInv", "halfTurnL", "halfTurnR"];
+const bKrugStepEl = document.getElementById("bKrugStep");
+if (bKrugStepEl) bKrugStepEl.onclick = () => {
+  if (st.running) { say("▶ Шаг: сейчас идёт Авто — сначала остановите."); return; }
+  if (!KRUG_MODES.includes(st.lastDirMode)) { say("▶ Шаг Круга: нажмите сначала одну из кнопок Круга — Шаг повторяет её."); return; }
+  const b = document.getElementById(DIR_MODE_BTN[st.lastDirMode]); if (b) b.click();
+};
+const bKrugAutoEl = document.getElementById("bKrugAuto");
+if (bKrugAutoEl) bKrugAutoEl.onclick = () => {
+  if (st.running) { st.running = false; return; }
+  if (!KRUG_MODES.includes(st.lastDirMode)) { say("🚀 Авто Круга: нажмите сначала одну из кнопок Круга — Авто повторяет её."); return; }
+  krugAutoNoStop = true;
+  autoRun();
+};
 document.getElementById("bUndo").onclick  = () => {
   if (!restore()) say("Откатывать нечего.");
   render(); saveCache();

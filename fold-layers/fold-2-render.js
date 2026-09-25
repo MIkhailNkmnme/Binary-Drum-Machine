@@ -197,6 +197,9 @@ function setAutoBtnState(running){
   b.classList.toggle("stop", running);
   b.textContent = running ? "⏹ Стоп" : "🚀 Авто";
   b.title = running ? "Остановить" : "Автоматический прогон по выбранному режиму (Enter) / повторный клик — остановить";
+  // v1.642: «🚀 Авто» группы «Круг» — свой прогон без остановки на находке (krugAutoNoStop в fold-3-ops.js)
+  const k = document.getElementById("bKrugAuto");
+  if (k) { const on = running && typeof krugAutoNoStop !== "undefined" && krugAutoNoStop; k.classList.toggle("stop", on); k.textContent = on ? "⏹ Стоп" : "🚀 Авто"; }
 }
 
 /* Счётчик "Вар: N/M (строки ...)" в шапке — текущий вариант / общее число вариантов кругового
