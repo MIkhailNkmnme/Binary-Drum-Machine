@@ -5251,13 +5251,27 @@ function autoRun(){
             // При МУЛЬТИвыделении окно едет с постоянным размером — выброшенную сверху строку
             // убираем и из набора вращаемых, иначе она продолжала бы крутиться, уже не будучи
             // выделенной (см. captureFoundRow).
+            const had = rotIdxs.has(bgInfo.targetIdx);
             const dropped = captureFoundRow(bgInfo.targetIdx, st.growDownOnFind);
             rotIdxs.add(bgInfo.targetIdx);
             if (dropped >= 0) rotIdxs.delete(dropped);
+            let changed = !had || dropped >= 0;
             // ...и дальше по подряд идущим строкам, помеченным "🔽 Все ниже" (см. captureBelowRun).
             for (const [idx, dr] of captureBelowRun(st.growDownOnFind)) {
               rotIdxs.add(idx);
               if (dr >= 0) rotIdxs.delete(dr);
+              changed = true;
+            }
+            /* v1.643, «почему не включил следующую строку, нашёл же её паттерн». Число вариантов считалось ОДИН раз на старте,
+               по прежнему выделению (у строк 1–2 — 2 хода), и после захвата прогон вставал на этом старом пределе — будто всё
+               перебрано, — не дав найтись следующей строке. Это било по «🚀 Авто» Круга (оно на находке не стоит) и по общей
+               «🚀 Авто» без «🛑 Стоп». Теперь набор строк поменялся — цикл вариантов пересчитывается для нового набора и
+               начинается заново с текущего положения. */
+            if (changed) {
+              totalTurns = isHalf ? halfTurnTotal(rotIdxs, isHalfPlain) : computeShiftTotalTurns(rotIdxs, isShiftInv);
+              turns = 0;
+              st.shiftVariantTotal = totalTurns;
+              st.shiftVariantTurns = 0;
             }
           }
           // "🎯 При находке: достраивать" — верх достраивается сам, ровно как по кнопке. Строки при
