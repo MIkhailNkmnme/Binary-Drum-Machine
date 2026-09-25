@@ -5,14 +5,14 @@ PROJECT: Zerkalius Треугольник — отдельная страниц�
          Заведена 2026-09-24 копией Zerkalius Code 35.74: для начала в ней есть всё, что есть в Code.
          Память (текст, вид, раскладка) — СВОЯ, ключи ztri_*; с v0.009 у Code ничего не подхватывает (кроме сцен, если
          своих нет): первый запуск — треугольник правила 90 на 50 строк. Ключи Code никогда не пишутся.
-VERSION: v0.019 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
+VERSION: v0.020 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Треугольник v0.019</title>
+    <title>Zerkalius Треугольник v0.020</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -377,7 +377,7 @@ VERSION: v0.019 (копия Zerkalius Code 35.74 целиком — отправ
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.019</h3>
+                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.020</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -716,6 +716,11 @@ VERSION: v0.019 (копия Zerkalius Code 35.74 целиком — отправ
                         <div class="palette-row" title="Биты САМОЙ ФИГУРЫ (текста): «0» и «1» своими цветами поверх Актива и Фона. Для фона-шахматки — строка «Сетка» ниже. Чёрный «0» фигуры на чёрном фоне не виден, а клетку у сетки всё равно занимает — там будет чёрная дыра. Яркость по-прежнему от Δ: изменившиеся символы — с прозрачностью Актива, прочие — с прозрачностью Фона. Те же два цвета берут 🎞 GIF, 🎞 Ромбы в кино и лист ромбов (там — всегда)">
                             <label class="checkbox-row" style="margin:0;"><input type="checkbox" id="bitColorsCheck"><span style="width:auto;">Фигура:</span></label>
                             <span style="display:flex; align-items:center; gap:3px; width:auto;"><b style="font-size:11px; color:#ddd; width:auto; margin-left:6px;">0</b><input type="color" id="zeroColorPicker" value="#3c82ff" title="Цвет «0» фигуры"><b style="font-size:11px; color:#ddd; width:auto; margin-left:6px;">1</b><input type="color" id="oneColorPicker" value="#d7e1eb" title="Цвет «1» фигуры"></span>
+                        </div>
+                        <!-- Треугольник v0.020: биты — знаками, квадратами или ромбами (цвета «0» и «1» — строкой выше) -->
+                        <div class="palette-row" title="Чем рисовать биты фигуры. «■ квадраты» — клетка текста заливается цветом своего бита, «◆ ромбы» — ромб, вписанный в клетку. Цвета — «0» и «1» строки «Фигура» выше (в этих режимах они берутся всегда, даже без галки), яркость полная; «Скрыть статику» по-прежнему прячет неизменившиеся. Клетка вытянута по высоте — подровнять «Интервалом» и «Разрядкой»">
+                            <span style="width:auto;">Биты:</span>
+                            <select id="glyphShapeSelect" style="width:auto; margin:0;"><option value="text" selected>1 0 знаками</option><option value="sq">■ квадраты</option><option value="rh">◆ ромбы</option></select>
                         </div>
                         <!-- 35.61: цвета слоя «Сетка» (кнопка в «Файле»): «0» и «1» шахматки отдельно -->
                         <div class="palette-row" title="Слой «Сетка» (шахматка 1010 за строками) своими цветами: «0» и «1» отдельно. Без флажка сетка, как прежде, цвета Фона. Выбор цвета сам ставит флажок. Прозрачность — от Фона">
@@ -1460,7 +1465,7 @@ VERSION: v0.019 (копия Zerkalius Code 35.74 целиком — отправ
                 'speedMultInput', 'algorithmInput', 'freezeScrollCheck', 'spin3dCheck', 'breathingZoomCheck',
                 'hideStaticCheck', 'deltaModeSelect', 'logicalOpSelect', 'zerkaliusAnimCheck', 'elkaCheck',
                 'cylinderCheck', 'findDiagonalsCheck', 'neonGlowCheck', 'animByPassCheck', 'rhombGridCheck', 'rhombGridStep', 'rhombLettersCheck', 'triCopyCheck', 'triCopyMin', 'rsUnit', 'rsSize', 'rowBandsCheck', 'symAxisCheck', 'fontSizeRange', 'lineHeightRange', 'charSpacingRange',
-                'fontSelect', 'rainbowTextCheck', 'syntaxColorCheck', 'trimZerosCheck', 'bitColorsCheck', 'zeroColorPicker', 'oneColorPicker', 'gridColorsCheck', 'gridZeroPicker', 'gridOnePicker', 'gridSparseInput', 'gridSparseRowInput', 'canvasBgPicker', 'gridHideUnderCheck'],
+                'fontSelect', 'rainbowTextCheck', 'syntaxColorCheck', 'trimZerosCheck', 'bitColorsCheck', 'zeroColorPicker', 'oneColorPicker', 'glyphShapeSelect', 'gridColorsCheck', 'gridZeroPicker', 'gridOnePicker', 'gridSparseInput', 'gridSparseRowInput', 'canvasBgPicker', 'gridHideUnderCheck'],
             resetLook: function() {
                 this.LOOK_IDS.forEach(id => {
                     const el = document.getElementById(id); if (!el) return;
@@ -3084,7 +3089,13 @@ VERSION: v0.019 (копия Zerkalius Code 35.74 целиком — отправ
                 const statColor = UI.staticColorPicker.value; const statRgb = this.hexToRgb(statColor); const statAlpha = parseFloat(UI.staticAlphaRange.value);
                 // 35.60: «0» и «1» своими цветами (флажок в «Цвете»); крипто и мутация — главнее.
                 // 35.70: синтаксис — нет: «Цвет как код» включён в стартовом виде, и флажок «Фигура» молча не работал
-                const bitCols = document.getElementById('bitColorsCheck')?.checked && !isCrypto && activeTheme !== 'mutation';
+                /* v0.020: БИТЫ ФИГУРОЙ (пользователь: «режим отображения, где вместо 1 и 0 квадраты цветом отличить», «а с ромбами
+                   вместо квадратов»). «■» — клетка текста (ширина символа × интервал) заливается цветом бита, «◆» — вписанный в неё
+                   ромб. Цвета — «0» и «1» строки «Фигура» (здесь всегда), яркость полная. Фигуры копятся в Path2D по цвету и
+                   заливаются разом в конце кадра; мелкий кегль (< 4 px) пишет их прямо в буфер пикселей. */
+                const glyphShape = document.getElementById('glyphShapeSelect')?.value || 'text', shapeMode = glyphShape === 'sq' || glyphShape === 'rh';
+                const shapePaths = new Map();
+                const bitCols = (document.getElementById('bitColorsCheck')?.checked || shapeMode) && !isCrypto && activeTheme !== 'mutation';
                 const zeroRgb = bitCols ? this.hexToRgb(document.getElementById('zeroColorPicker').value) : null;
                 const oneRgb = bitCols ? this.hexToRgb(document.getElementById('oneColorPicker').value) : null;
 
@@ -3288,7 +3299,13 @@ VERSION: v0.019 (копия Zerkalius Code 35.74 целиком — отправ
                                     : (isRainbow && isExactMatch ? '#ff3333' : (isChanged ? actColor : statColor));
                                 if (shCol !== lastShadowCol) { ctx.shadowColor = shCol; lastShadowCol = shCol; }
                             }
-                            if (tinyGlyph) {
+                            if (shapeMode && !tinyGlyph) {   // v0.020: квадрат или ромб, повёрнутый вдоль кольца
+                                const q = ((Math.round(a / ANG_Q.st) % ANG_Q.Q) + ANG_Q.Q) % ANG_Q.Q;
+                                ctx.setTransform(-ANG_Q.SIN[q], ANG_Q.COS[q], -ANG_Q.COS[q], -ANG_Q.SIN[q], cx, cy);
+                                const hw = charWidth / 2, hh = lineSpacing / 2;
+                                if (glyphShape === 'sq') ctx.fillRect(-hw, -hh, 2 * hw, 2 * hh);
+                                else { ctx.beginPath(); ctx.moveTo(0, -hh); ctx.lineTo(hw, 0); ctx.lineTo(0, hh); ctx.lineTo(-hw, 0); ctx.closePath(); ctx.fill(); }
+                            } else if (tinyGlyph) {
                                 // При кегле в несколько пикселей символ неразличим, а стоит он
                                 // дороже точки: отрисовка текста требует раскладки глифа.
                                 ctx.fillRect(cx - tinyHalf, cy - tinyHalf, tinySize, tinySize);
@@ -3459,6 +3476,25 @@ VERSION: v0.019 (копия Zerkalius Code 35.74 целиком — отправ
                         if (hideStatic && !isChanged && !isCollision) cAlpha = 0.0;
                         if (cAlpha <= 0.01) continue; 
                         if (gridHide) occCells.push(x, y);   // 35.66, 35.72
+                        if (shapeMode) cAlpha = 1;   // v0.020: фигурой — полная яркость
+                        if (tinyGlyph && shapeMode) {   // v0.020: мелкая клетка — фигурой прямо в буфер пикселей
+                            let px = tinyRgb.get(cRgb); if (!px) { px = String(cRgb).split(',').map(Number); tinyRgb.set(cRgb, px); }
+                            const hw = charW / 2, hh = lineSpacing / 2, yA = Math.max(0, Math.floor(y - hh)), yB = Math.min(TH, Math.ceil(y + hh));
+                            for (let yy = yA; yy < yB; yy++) {
+                                const k = glyphShape === 'rh' ? Math.max(0, 1 - Math.abs(yy + 0.5 - y) / hh) : 1;
+                                const xA = Math.max(0, Math.round(x - hw * k)), xB = Math.min(TW, Math.max(Math.round(x + hw * k), Math.round(x - hw * k) + 1));
+                                for (let xx = xA, o = (yy * TW + xA) * 4; xx < xB; xx++, o += 4) { tinyBuf[o] = px[0]; tinyBuf[o + 1] = px[1]; tinyBuf[o + 2] = px[2]; tinyBuf[o + 3] = 255; }
+                            }
+                            continue;
+                        }
+                        if (shapeMode) {   // v0.020: фигура в путь своего цвета; зазор 1 px, когда клетка крупная
+                            const col = this.rgba(cRgb, 1);
+                            let pth = shapePaths.get(col); if (!pth) { pth = new Path2D(); shapePaths.set(col, pth); }
+                            const gap = Math.min(charW, lineSpacing) >= 6 ? 0.5 : 0, hw = charW / 2 - gap, hh = lineSpacing / 2 - gap;
+                            if (glyphShape === 'sq') pth.rect(x - hw, y - hh, 2 * hw, 2 * hh);
+                            else { pth.moveTo(x, y - hh); pth.lineTo(x + hw, y); pth.lineTo(x, y + hh); pth.lineTo(x - hw, y); pth.closePath(); }
+                            continue;
+                        }
                         if (tinyGlyph) {   // v0.004: точка в буфер пикселей
                             let px = tinyRgb.get(cRgb); if (!px) { px = String(cRgb).split(',').map(Number); tinyRgb.set(cRgb, px); }
                             const A = Math.min(255, Math.round(cAlpha * 255));
@@ -3486,6 +3522,11 @@ VERSION: v0.019 (копия Zerkalius Code 35.74 целиком — отправ
                         
                         ctx.fillText(finalChar, x, y);
                     }
+                }
+                if (shapePaths.size) {   // v0.020: фигуры — по одной заливке на цвет
+                    ctx.save(); ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+                    shapePaths.forEach((pth, col) => { ctx.fillStyle = col; ctx.fill(pth); });
+                    ctx.restore(); lastFillStyle = '';
                 }
                 if (tinyGlyph) {   // v0.004: буфер мелких символов — на холст одной картинкой
                     this._tinyCv.getContext('2d').putImageData(tinyImg, 0, 0);
@@ -4048,6 +4089,7 @@ VERSION: v0.019 (копия Zerkalius Code 35.74 целиком — отправ
                     document.getElementById('rhombLettersCheck'),   // 35.59
                     document.getElementById('triCopyCheck'), document.getElementById('triCopyMin'),   // v0.008
                     document.getElementById('bitColorsCheck'), document.getElementById('zeroColorPicker'), document.getElementById('oneColorPicker'),   // 35.60
+                    document.getElementById('glyphShapeSelect'),   // v0.020
                     document.getElementById('gridColorsCheck'), document.getElementById('gridZeroPicker'), document.getElementById('gridOnePicker'),   // 35.61
                     document.getElementById('gridSparseInput'), document.getElementById('gridSparseRowInput'),   // 35.62, 35.71
                     document.getElementById('gridHideUnderCheck'),   // 35.72
