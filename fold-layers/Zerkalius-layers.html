@@ -5404,8 +5404,10 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
     <span style="width:1px;align-self:stretch;background:var(--line);margin:0 4px;"></span>
     <!-- Цепочка/+/💾/🧹/Сброс/Файл-Файл — объединены в одну рамку (запрос пользователя). -->
     <div style="display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:3px;padding:2px 4px;">
-      <div class="chain-dd" id="chainDd" title="Переключить вкладку цепочки">
-        <button type="button" class="chain-dd-toggle" id="chainDdToggle">Цепочка <span class="chain-dd-arrow">⌄</span></button>
+      <!-- title — на самой кнопке, НЕ на обёртке: подсказки ищут closest("[title]"), и с обёртки
+           «Переключить вкладку цепочки» всплывала над любой строкой выпадающего списка без своего title. -->
+      <div class="chain-dd" id="chainDd">
+        <button type="button" class="chain-dd-toggle" id="chainDdToggle" title="Переключить вкладку цепочки">Цепочка <span class="chain-dd-arrow">⌄</span></button>
         <div class="chain-dd-list" id="chainDdList"></div>
       </div>
       <button id="bAddTab" style="font-size:12px;padding:3px 6px;" title="Создать новую вкладку цепочки">+</button>
