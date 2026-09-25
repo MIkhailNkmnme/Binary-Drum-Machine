@@ -1,0 +1,199 @@
+<!-- Zerkalius Результаты — v0.001. Витрина: что получилось у треугольника Аниматрицы, готовым к просмотру — анимации и
+     картинки с короткой подписью, у каждой ссылка на разбор в «Исследовании». Считается не здесь: всё собрано заранее
+     (Python по тем же правилам, что в Треугольнике), страница только показывает.
+     v0.001: заведена 2026-09-25 по слову пользователя («это в методичку, может и в хаб? все результаты — очень интересное
+             получилось»; «надо отдельной, не в ресёрч — это же как бы результаты»; «нечто, что можно готовым смотреть»).
+             Новое: весь цикл 1024 строк одной анимацией (cikl-1024.gif) и «все ромбы цикла» 1024 строк по семи размерам —
+             первые 300 разных рисунков каждого (полные, по 1500, — в локальном архиве: 3–21 МБ, для сайта тяжело; видео
+             на таких кадрах выходило ещё тяжелее GIF). Прочие картинки берутся из папки «Исследования», не копируются. -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zerkalius Результаты — v0.001</title>
+<style>
+  :root{ --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598;
+    --up:#7cd4ff; --gold:#ffcc00; }
+  html,body{ margin:0; background:var(--bg); color:var(--fg); font-family:"Segoe UI", Inter, system-ui, sans-serif; }
+  .wrap{ max-width:1240px; margin:0 auto; padding:30px 22px 80px; }
+  h1{ margin:0 0 4px; font-size:26px; font-weight:300; letter-spacing:6px; }
+  .sub{ font-size:12.5px; color:var(--dim); margin:0 0 20px; }
+  a{ color:var(--up); }
+  h2{ margin:36px 0 4px; font-size:18px; font-weight:600; color:var(--gold); border-top:1px solid var(--line); padding-top:20px; }
+  .lead{ font-size:14px; color:var(--dim); margin:0 0 12px; max-width:900px; line-height:1.55; }
+  b{ color:#fff; font-weight:600; }
+  code{ font-family:Consolas, monospace; font-size:12.5px; color:var(--up); background:var(--panel);
+    border:1px solid var(--line); border-radius:3px; padding:1px 5px; }
+  .hero{ display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:22px; align-items:center; }
+  .hero img{ width:100%; }
+  .facts{ list-style:none; margin:0; padding:0; }
+  .facts li{ font-size:14px; line-height:1.55; padding:7px 0 7px 12px; border-left:3px solid var(--gold); margin:0 0 8px;
+    background:var(--panel); border-radius:0 4px 4px 0; }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(330px, 1fr)); gap:16px; }
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px; display:flex; flex-direction:column; }
+  .card img{ display:block; width:100%; height:auto; background:#000; border-radius:3px; cursor:zoom-in; }
+  .card h3{ margin:9px 0 3px; font-size:14.5px; font-weight:600; color:#fff; }
+  .card p{ margin:0; font-size:12.5px; line-height:1.5; color:var(--dim); flex:1; }
+  .card .more{ margin-top:6px; font-size:12px; }
+  .num{ color:var(--gold); font-family:Consolas, monospace; }
+  figure{ margin:0; }
+  figcaption{ font-size:12px; color:var(--dim); margin-top:5px; }
+  #viewer{ position:fixed; inset:0; z-index:50; display:none; background:rgba(5,7,11,.94); overflow:auto; }
+  #viewer.on{ display:block; }
+  #viewer .bar{ position:sticky; top:0; left:0; display:flex; gap:6px; align-items:center; padding:8px 12px;
+    background:rgba(18,20,26,.96); border-bottom:1px solid var(--line); z-index:1; }
+  #viewer .bar button{ background:var(--panel); color:var(--fg); border:1px solid var(--line); border-radius:3px;
+    padding:3px 10px; font:13px Consolas, monospace; cursor:pointer; }
+  #viewer .bar button.act, #viewer .bar button:hover{ border-color:var(--gold); color:var(--gold); }
+  #viewer .bar .nm{ color:var(--dim); font-size:12px; margin-left:8px; }
+  #viewer .img{ padding:14px; }
+  #viewer img{ display:block; max-width:none; }
+  #viewer img.up{ image-rendering:pixelated; }
+  @media (max-width:800px){ .hero{ grid-template-columns:1fr; } h1{ font-size:21px; letter-spacing:3px; }
+    .grid{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>zerkalius · результаты</h1>
+<p class="sub">Что получилось у треугольника Аниматрицы — готовым к просмотру. Щелчок по картинке — в полный размер (и ×2, ×4).
+Разбор каждого пункта — в <a href="../issledovanie/Zerkalius-issledovanie.html">«Исследовании»</a>, сделать то же самому — в
+<a href="../Zerkalius-treugolnik.html">«Треугольнике»</a>.</p>
+
+<div class="hero">
+  <figure><img src="cikl-1024.gif" alt="Весь цикл треугольника 1024 строк" loading="lazy">
+    <figcaption>1024 строки, весь цикл — 1024 прохода (показан каждый 4-й). Цвет — густота единиц. Внутри «дышат»
+    треугольники-копии и пустые перевёрнутые треугольники.</figcaption></figure>
+  <ul class="facts">
+    <li><b>Правило одно:</b> волна сверху вниз, клетка смотрит только на соседа над собой. Одинаковые гасят друг друга,
+      символ протекает в пустоту, из двух разных остаётся верхний.</li>
+    <li><b>Период — степень двойки:</b> ближайшая ≥ числа строк. 1024 строки — цикл ровно 1024 прохода.</li>
+    <li><b>Разгон:</b> цикл начинается с прохода <span class="num">2<sup>m</sup>+1</span>, где 2<sup>m</sup> ≤ 2(N−2)/3 —
+      ровно тогда, когда гибнет последний «0». Проверено для всех N до 1024.</li>
+    <li><b>Кадр — XOR копий:</b> через k проходов кадр — сумма копий, сдвинутых вниз на d, где <code>d &amp; (k−1) = 0</code>.</li>
+    <li><b>Ромбы:</b> картинка режется на ромбы; их <span class="num">(q−1)(2q−1)</span> при q = N / высоту ромба, и при
+      одном q картина одна и та же на любом N.</li>
+    <li><b>Родник:</b> верхняя «1» каждого столбца вечна; одна «1» через k проходов стоит на глубине d ⇔
+      <code>d &amp; (k−1) = 0</code> — отсюда слои толщиной 2<sup>m</sup>.</li>
+  </ul>
+</div>
+
+<h2>Все ромбы цикла — 1024 строки, семь размеров</h2>
+<p class="lead">Кадры цикла, разрезанные на ромбы, и все РАЗНЫЕ рисунки ромбов в порядке появления — первые 300 каждого размера
+(первые — ещё разгон, с нулями). Крупные ромбы не повторяются никогда, мелкие — повторяются чаще. Число рядом —
+сколько разных рисунков набирается за весь цикл.</p>
+<div class="grid">
+  <div class="card"><img src="romby-1024-512.gif" alt="Ромбы 512" loading="lazy"><h3>Ромб 512 · 3 в кадре</h3>
+    <p>Вершина и два боковых. За цикл <span class="num">3 072</span> разных = ровно 3·P: каждый кадр даёт три новых, боковые
+    всегда зеркальны друг другу.</p><div class="more"><a href="../issledovanie/Zerkalius-issledovanie.html">§11</a></div></div>
+  <div class="card"><img src="romby-1024-256.gif" alt="Ромбы 256" loading="lazy"><h3>Ромб 256 · 21 в кадре</h3>
+    <p>За цикл <span class="num">12 517</span> разных ≈ 12·P — столько же на 64, 128, 256 и 512 строках (подобие по q = 4).</p>
+    <div class="more"><a href="../issledovanie/Zerkalius-issledovanie.html">§11</a></div></div>
+  <div class="card"><img src="romby-1024-128.gif" alt="Ромбы 128" loading="lazy"><h3>Ромб 128 · 105 в кадре</h3>
+    <p>За цикл <span class="num">37 385</span> разных, в кадре 43–59.</p></div>
+  <div class="card"><img src="romby-1024-64.gif" alt="Ромбы 64" loading="lazy"><h3>Ромб 64 · 465 в кадре</h3>
+    <p>За цикл <span class="num">101 628</span> разных, в кадре 130–223.</p></div>
+  <div class="card"><img src="romby-1024-32.gif" alt="Ромбы 32" loading="lazy"><h3>Ромб 32 · 1 953 в кадре</h3>
+    <p>За цикл <span class="num">265 104</span> разных. Чем больше нулевых разрядов у k−1 (копий), тем пестрее кадр:
+    475 → 572 → 648 рисунков.</p></div>
+  <div class="card"><img src="romby-1024-16.gif" alt="Ромбы 16" loading="lazy"><h3>Ромб 16 · 8 001 в кадре</h3>
+    <p>За цикл <span class="num">582 778</span> разных — рекорд по разнообразию.</p></div>
+  <div class="card"><img src="romby-1024-8.gif" alt="Ромбы 8" loading="lazy"><h3>Ромб 8 · 32 385 в кадре</h3>
+    <p>За цикл <span class="num">436 864</span> — меньше, чем у 16: у мелкого ромба просто меньше клеток, и рисунки
+    начинают повторяться.</p></div>
+</div>
+
+<h2>Цикл и его законы</h2>
+<div class="grid">
+  <div class="card"><img src="../issledovanie/cikl.gif" alt="Цикл 128" loading="lazy"><h3>Цикл 128 строк</h3>
+    <p>Все 128 проходов по кругу: контур не меняется, внутри дышит вложенный треугольник.</p>
+    <div class="more"><a href="../issledovanie/Zerkalius-issledovanie.html">§1</a></div></div>
+  <div class="card"><img src="../issledovanie/cikl-128.png" alt="Все 128 проходов" loading="lazy"><h3>Все 128 кадров листом</h3>
+    <p>Ряды по 8 держат свой мотив — след копий-треугольников.</p><div class="more"><a href="../issledovanie/Zerkalius-issledovanie.html">§3</a></div></div>
+  <div class="card"><img src="../issledovanie/polosy-periodov.png" alt="Периоды строк" loading="lazy"><h3>У каждой строки свой период</h3>
+    <p>Строки окрашены по своему периоду — полосы степеней двойки.</p><div class="more"><a href="../issledovanie/Zerkalius-issledovanie.html">§4</a></div></div>
+  <div class="card"><img src="../issledovanie/razgon-tau-128.png" alt="Время жизни нуля" loading="lazy"><h3>Разгон: кто живёт дольше всех</h3>
+    <p>Цвет — сколько проходов держится «0». Рекордсмен — строка 3·2<sup>k−1</sup>+1, отступ ±2<sup>k−1</sup>: он и назначает начало цикла.</p>
+    <div class="more"><a href="../issledovanie/Zerkalius-issledovanie.html">§12</a></div></div>
+  <div class="card"><img src="../issledovanie/rodnik-128.png" alt="Родник" loading="lazy"><h3>Протекание: родник</h3>
+    <p>Одна «1» по проходам (слева) и настоящая ось треугольника (справа) — клетка в клетку, Серпинский по глубине и времени.</p>
+    <div class="more"><a href="../issledovanie/Zerkalius-issledovanie.html">§13</a></div></div>
+</div>
+
+<h2>Ромбы изнутри</h2>
+<div class="grid">
+  <div class="card"><img src="../issledovanie/romby-film.gif" alt="Ромбы как кадры" loading="lazy"><h3>Ромбы как кадры</h3>
+    <p>21 ромб одного прохода подряд — как плёнка.</p><div class="more"><a href="../issledovanie/Zerkalius-issledovanie.html">§7</a></div></div>
+  <div class="card"><img src="../issledovanie/romb-verhniy-64.gif" alt="Верхний ромб" loading="lazy"><h3>Верхний ромб за свой цикл</h3>
+    <p>64 прохода одного места — фильм места.</p><div class="more"><a href="../issledovanie/Zerkalius-issledovanie.html">§7</a></div></div>
+  <div class="card"><img src="../issledovanie/romby-bity.gif" alt="Ромбы как биты" loading="lazy"><h3>Каждый ромб — один бит</h3>
+    <p>Слева кадр, справа он же из ромбов-битов: картина сворачивается сама в себя.</p>
+    <div class="more"><a href="../issledovanie/Zerkalius-issledovanie.html">§8½</a></div></div>
+  <div class="card"><img src="../issledovanie/nadpis-155.png" alt="Надпись" loading="lazy"><h3>Надпись: ромбы как буквы</h3>
+    <p>Каждый рисунок — своя буква; вдоль сторон читаются «слова» с периодом-степенью двойки.</p>
+    <div class="more"><a href="../issledovanie/Zerkalius-issledovanie.html">§8⅞</a></div></div>
+  <div class="card"><img src="../issledovanie/romby-nalozhenie.png" alt="Наложение" loading="lazy"><h3>Все ромбы кадра наложены</h3>
+    <p>Жёлтое — единица во всех, тёмное — пусто во всех, фиолетовое — разнится.</p></div>
+</div>
+
+<h2>Зеркало</h2>
+<div class="grid">
+  <div class="card"><img src="../issledovanie/mirror-xor-cycle.gif" alt="Зеркало XOR" loading="lazy"><h3>Зеркало через центр с XOR</h3>
+    <p>Нижняя половина, отражённая на верхнюю, на каждом кадре цикла.</p><div class="more"><a href="../issledovanie/Zerkalius-issledovanie.html">§8¾</a></div></div>
+  <div class="card"><img src="../issledovanie/shestiugolnik-155.png" alt="Шестиугольник" loading="lazy"><h3>Шестиугольник</h3>
+    <p>«Оба сразу»: фигура, симметричная сверху вниз и слева направо.</p><div class="more"><a href="../issledovanie/Zerkalius-issledovanie.html">§8¾</a></div></div>
+</div>
+
+<h2>Другие треугольники</h2>
+<p class="lead">Тот же закон держится не только у Серпинского: другие правила дают другой разгон, но цикл — снова степень двойки.</p>
+<div class="grid">
+  <div class="card"><img src="../issledovanie/pravilo30.gif" alt="Правило 30" loading="lazy"><h3>Правило 30</h3>
+    <p>11 проходов разгона, затем цикл 128.</p><div class="more"><a href="../issledovanie/Zerkalius-issledovanie.html">§9</a></div></div>
+  <div class="card"><img src="../issledovanie/pravilo110.gif" alt="Правило 110" loading="lazy"><h3>Правило 110</h3>
+    <p>8 проходов разгона, затем цикл 128.</p><div class="more"><a href="../issledovanie/Zerkalius-issledovanie.html">§9</a></div></div>
+  <div class="card"><img src="../issledovanie/pravilo150.gif" alt="Правило 150" loading="lazy"><h3>Правило 150</h3>
+    <p>80 проходов разгона, затем цикл 128.</p><div class="more"><a href="../issledovanie/Zerkalius-issledovanie.html">§9</a></div></div>
+  <div class="card"><img src="../issledovanie/bez-obrezki.gif" alt="Без обрезки" loading="lazy"><h3>Без обрезки фона</h3>
+    <p>Треугольник на сплошном «0»: у каждого столбца своя метка, синие нули живут и в цикле.</p>
+    <div class="more"><a href="../issledovanie/Zerkalius-issledovanie.html">§9½</a></div></div>
+</div>
+
+<p class="sub" style="margin-top:34px;">Полные «все ромбы цикла» (по 1500 рисунков на размер, 3–21 МБ), таблица по всем N и скрипты
+расчёта лежат в локальном архиве проекта, <code>archive\_issledovanie-treugolnik-1024\</code>. Октаэдры по циклу, 3D пирамид
+и фильмы мест собираются кнопками прямо в <a href="../Zerkalius-treugolnik.html">«Треугольнике»</a>.</p>
+</div>
+
+<div id="viewer"><div class="bar">
+  <button data-z="1" class="act">1:1</button><button data-z="2">×2</button><button data-z="4">×4</button>
+  <button data-close>✕ закрыть</button><span class="nm"></span>
+</div><div class="img"><img alt=""></div></div>
+<script>
+// Просмотр картинки в полный размер (как в «Исследовании»): щелчок — 1:1, ×2 / ×4 — крупнее без сглаживания;
+// Esc, ✕ или щелчок по фону — закрыть.
+(function () {
+  const v = document.getElementById('viewer'), img = v.querySelector('.img img'), nm = v.querySelector('.nm');
+  let z = 1;
+  const apply = () => {
+    if (!img.naturalWidth) return;
+    img.style.width = img.naturalWidth * z + 'px';
+    img.classList.toggle('up', z > 1);
+    v.querySelectorAll('[data-z]').forEach(b => b.classList.toggle('act', +b.dataset.z === z));
+  };
+  const open = (src, alt) => { z = 1; img.src = src; img.alt = alt || ''; nm.textContent = (alt || '') + ' · ' + src.split('/').pop();
+    v.classList.add('on'); v.scrollTop = 0; v.scrollLeft = 0; document.body.style.overflow = 'hidden'; };
+  const close = () => { v.classList.remove('on'); document.body.style.overflow = ''; };
+  img.addEventListener('load', apply);
+  document.querySelectorAll('.card img, figure img').forEach(im => im.addEventListener('click', () => open(im.getAttribute('src'), im.alt)));
+  v.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (b && b.dataset.z) { z = +b.dataset.z; apply(); return; }
+    if (b && b.hasAttribute('data-close')) { close(); return; }
+    if (e.target === v || e.target.classList.contains('img')) close();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && v.classList.contains('on')) close(); });
+})();
+</script>
+<script src="../_js/hub-link.js"></script>
+</body>
+</html>

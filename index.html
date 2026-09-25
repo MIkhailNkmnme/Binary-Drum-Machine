@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.030. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.031. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -16,12 +16,13 @@
      v0.015: панель «Архив» снята, а сами страницы (Zerkalius-fold.html и папка fold\) вынесены из сайта в archive\_retired\.
      v0.016: XOR Engine снят туда же — кнопка убрана, Zerkalius-xor-engine.html в archive\_retired\.
      v0.029: в Черновиках — «Triangle» (Zerkalius-treugolnik.html), отдельная страница треугольника, заведена 2026-09-24.
-     v0.030: «Triangle» — из Черновиков во вторую главную кнопку, под Code. -->
+     v0.030: «Triangle» — из Черновиков во вторую главную кнопку, под Code.
+     v0.031: «Results» (rezultaty/Zerkalius-rezultaty.html) — третья главная кнопка, под Triangle: витрина результатов. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Control Hub — v0.030</title>
+    <title>Zerkalius Control Hub — v0.031</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -190,12 +191,14 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.030</div>
+        <div class="ver">v0.031</div>
 
         <!-- Флагман — с v0.008 это Zerkalius Code (бывшая «Genezis Code 0»), с v0.011 подписан «Code»; решение пользователя 2026-09-23 -->
         <a href="Zerkalius-code.html" class="menu-btn main-engine" data-en="Code" data-ru="Код">Code</a>
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб») -->
         <a href="Zerkalius-treugolnik.html" class="menu-btn main-engine" data-en="Triangle" data-ru="Треугольник" style="margin-top: 10px;">Triangle</a>
+        <!-- v0.031: Результаты — третья главная кнопка, под Треугольником (слово пользователя «все результаты — очень интересное получилось», «отдельной, не в ресёрч») -->
+        <a href="rezultaty/Zerkalius-rezultaty.html" class="menu-btn main-engine" data-en="Results" data-ru="Результаты" style="margin-top: 10px;">Results</a>
 
         <!-- Черновики (до v0.018 — «Лаборатория (Черновики)») — с v0.012 в порядке создания (по первому появлению в git) -->
         <div class="panel">
