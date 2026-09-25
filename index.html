@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.034. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.035. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -20,12 +20,13 @@
      v0.031: «Results» (rezultaty/Zerkalius-rezultaty.html) — третья главная кнопка, под Triangle: витрина результатов.
      v0.032: «Compare» (sravnenie/Zerkalius-sravnenie.html) в «Знаке и записях» — одинаковые фигуры в двух наборах таблиц .tsv.
      v0.033: «Code» — из главных кнопок первым в Черновики; главные теперь Triangle и Results.
-     v0.034: «WebGL Engine» (Zerkalius-genezis-webgl.html) снят — мёртвая ветка Genezis, страница в archive\_retired\. -->
+     v0.034: «WebGL Engine» (Zerkalius-genezis-webgl.html) снят — мёртвая ветка Genezis, страница в archive\_retired\.
+     v0.035: «Results» переименован в «Битмультфильмы» (Bit Cartoons); между Triangle и ним — бегущие вниз стрелки. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Control Hub — v0.034</title>
+    <title>Zerkalius Control Hub — v0.035</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -160,6 +161,30 @@
             50%      { color: #d24dff; border-color: #d24dff; box-shadow: 0 0 18px rgba(204, 51, 255, 0.5); }
             75%      { color: #4d8dff; border-color: #4d8dff; box-shadow: 0 0 18px rgba(64, 128, 255, 0.55); }
         }
+        /* v0.035: стрелки от Треугольника к Битмультфильмам (слово пользователя «сделай стрелки от Треуг — к Результатам»):
+           три дорожки во всю ширину главной кнопки, по каждой вниз бегут шевроны; цвет переливается, как у кнопок.
+           Отрицательные поля съедают общий зазор .hub, иначе между кнопками стало бы вдвое просторнее. */
+        .flow {
+            width: 340px; height: 40px; margin: -12px 0; position: relative;
+            display: flex; justify-content: space-around; pointer-events: none;
+            animation: hue-flow 12s ease-in-out infinite;
+        }
+        .flow svg { width: 22px; height: 40px; overflow: visible; filter: drop-shadow(0 0 4px currentColor); }
+        .flow line { stroke: currentColor; stroke-width: 1.5; opacity: .35; }
+        .flow path { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+                     animation: flow-run 1.4s linear infinite; }
+        .flow path:nth-of-type(2) { animation-delay: -.7s; }
+        .flow svg:nth-child(2) path { animation-duration: 1.2s; }
+        @keyframes flow-run {
+            0%   { transform: translateY(-4px); opacity: 0; }
+            25%  { opacity: 1; }
+            75%  { opacity: 1; }
+            100% { transform: translateY(30px); opacity: 0; }
+        }
+        @keyframes hue-flow {
+            0%, 100% { color: #00ff66; } 25% { color: #ffcc00; } 50% { color: #d24dff; } 75% { color: #4d8dff; }
+        }
+        @media (prefers-reduced-motion: reduce) { .flow path { animation: none; opacity: 1; transform: translateY(13px); } }
         .menu-btn.draft-btn { animation: hue-draft 14s ease-in-out infinite; }
         .menu-btn.main-engine { animation: hue-main 12s ease-in-out infinite; }
         .menu-btn:hover { animation: none; }
@@ -194,13 +219,15 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.034</div>
+        <div class="ver">v0.035</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
         <a href="Zerkalius-treugolnik.html" class="menu-btn main-engine" data-en="Triangle" data-ru="Треугольник">Triangle</a>
         <!-- v0.031: Результаты — третья главная кнопка, под Треугольником (слово пользователя «все результаты — очень интересное получилось», «отдельной, не в ресёрч») -->
-        <a href="rezultaty/Zerkalius-rezultaty.html" class="menu-btn main-engine" data-en="Results" data-ru="Результаты" style="margin-top: 10px;">Results</a>
+        <!-- v0.035: стрелки Треугольник → Битмультфильмы (CSS .flow); кнопка переименована из «Results / Результаты» -->
+        <div class="flow" aria-hidden="true"><svg viewBox="0 0 22 40"><line x1="11" y1="0" x2="11" y2="40"/><path d="M4 2 L11 9 L18 2"/><path d="M4 2 L11 9 L18 2"/></svg><svg viewBox="0 0 22 40"><line x1="11" y1="0" x2="11" y2="40"/><path d="M4 2 L11 9 L18 2"/><path d="M4 2 L11 9 L18 2"/></svg><svg viewBox="0 0 22 40"><line x1="11" y1="0" x2="11" y2="40"/><path d="M4 2 L11 9 L18 2"/><path d="M4 2 L11 9 L18 2"/></svg></div>
+        <a href="rezultaty/Zerkalius-rezultaty.html" class="menu-btn main-engine" data-en="Bit Cartoons" data-ru="Битмультфильмы">Bit Cartoons</a>
 
         <!-- Черновики (до v0.018 — «Лаборатория (Черновики)») — с v0.012 в порядке создания (по первому появлению в git) -->
         <div class="panel">
