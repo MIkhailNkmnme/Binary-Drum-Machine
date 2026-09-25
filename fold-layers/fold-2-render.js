@@ -261,7 +261,7 @@ function resetAll(){
   st.shiftVariantTotal = null;
   st.shiftVariantRows = null;
   st.manualShiftTurns = 0;
-  if (typeof rotBase !== "undefined") rotBase.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
+  if (typeof rotBase !== "undefined") rotBase.clear(); if (typeof fixedPos !== "undefined") fixedPos.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
   // Сброс — выделение снова считается набранным вручную, а не выросшим захватом (см.
   // captureFoundRow/st.captureGrown).
   st.captureGrown = false;

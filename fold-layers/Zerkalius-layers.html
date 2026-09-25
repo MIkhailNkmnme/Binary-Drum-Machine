@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Layers — v1.649</title>
+<title>Zerkalius Layers — v1.650</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -99,7 +99,7 @@
                   поиском»: s[k] === s[len-1-k]);
        --cdl-hl — бит ОТЛИЧАЕТСЯ ОТ СОСЕДА СЛЕВА в той же строке;
        --cdu-hl — бит ОТЛИЧАЕТСЯ ОТ БИТА СВЕРХУ (тот же экранный столбец, строка выше). */
-    --crk-hl:#ffd166; --cdl-hl:#4dd0e1; --cdu-hl:#ff8fa3;
+    --crk-hl:#ff3333; --cdl-hl:#4dd0e1; --cdu-hl:#ff8fa3;
     --cdf-hl:#ff5ecb; /* цвет подсветки "диагонали склейки" (см. #bHighlightDiagFold/#colDiagFold) —
                           показывает САМИ ЛИНИИ, по которым режимы "⧅ Диаг. ↘/↙" собирают результат
                           (и нули тоже, не только единицы — это линия, а не находка) */
@@ -5370,7 +5370,7 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
   <!-- Заголовок стоит вплотную слева от вкладок (v1.046), вся связка центрируется полосой — см. #menuBarTitle в CSS. --><div id="menuBarTitle">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.649</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.650</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -5522,6 +5522,7 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
     <button id="bShiftHalfTurnL" title="◄ ½ ИнвКруг — полуоборот «ИнвКруга» влево: прыжок сразу на длину НИЖНЕЙ выделенной строки. Одна строка — встаёт изнанкой (биты перевёрнуты, порядок тот же), ещё раз — домой. Несколько — все делают столько же шагов ◄ ИнвКруга, каждая по своему кругу: строка на бит короче встаёт изнанкой и уезжает на бит влево, вдвое короче — делает полный оборот. Запоминается, как ◄/►Круг: «🚀 Авто» повторяет полуобороты">◄ ½ ИнвКруг</button><button id="bShiftHalfTurn" title="► ½ ИнвКруг — полуоборот «ИнвКруга» вправо: прыжок сразу на длину НИЖНЕЙ выделенной строки. Одна строка — встаёт изнанкой (биты перевёрнуты, порядок тот же), ещё раз — домой. Несколько — все делают столько же шагов ► ИнвКруга, каждая по своему кругу: строка на бит короче встаёт изнанкой и уезжает на бит вправо, вдвое короче — делает полный оборот. Запоминается, как ◄/►Круг: «🚀 Авто» повторяет полуобороты">► ½ ИнвКруг</button>
     <!-- v1.644: «🧲 Захват» — сюда, третьим в ряд к ▶ Шаг и 🚀 Авто (пользователь: «перемести поближе к Авто, третьей в ряду»); был в «Поиске», в «Совпадении» -->
     <div class="pr pw"><button id="bKrugStep" title="▶ Шаг Круга — один раз нажать ЗАПОМНЕННУЮ кнопку Круга (подсвечена: ◄/► Круг, ½ Круг, ИнвКруг, ½ ИнвКруг) и захватить находку, даже если «🧲 Захват» выключен. Вручную, по нажатию">▶ Шаг</button><button id="bKrugAuto" title="Дубль общей «🚀 Авто» (раздел «Ход»): повторяет запомненную кнопку Круга, при «🛑 Стоп» встаёт на находке. Ещё раз — стоп">🚀 Авто</button><label class="chk" data-tip="t79" style="flex:1 1 0;min-width:0"><input type="checkbox" id="cCaptureOnFind" checked>🧲 Захват</label></div>
+    <button id="bKeepFixed" class="pw" title="📌 Не менять неизменные — вкл/выкл (подсвечена — включено, запоминается). При ◄/► Круге, ИнвКруге, ½ Круге и ½ ИнвКруге биты, которые не меняются при развороте строки (палиндромные позиции, их красит «⇄=» в «Подсветках»), стоят на месте — по кругу едут только остальные, между собой. Какие неизменные — запоминается перед первым сдвигом строки и держится, пока вы сами не смените выделение. Счётчик вариантов и полуобороты считают только подвижные биты">📌 Не менять неизменные</button>
     <button id="bKrugAnalyze" class="pw" title="🔬 Анализ — крутит запомненную кнопку Круга, как «🚀 Авто», весь цикл вариантов, но ничего не захватывает и на находках не стоит. На каждом ходу запоминает, какие строки нашлись (под выделением и все ниже) и каким поиском. В конце — или при остановке повторным нажатием — пишет в «Лог находок» для каждой строки, на каких шагах она нашлась и по какому поиску, и сводку сообщением">🔬 Анализ</button>
     <label class="chk" data-tip="t14"><input type="checkbox" id="cAxisSnap" checked>⊙ На «1»</label>
     <label class="chk" data-tip="t15"><input type="checkbox" id="cAxisBitBounce">↩ От края</label><label class="chk" data-tip="t15b"><input type="checkbox" id="cEdgeOnes">⇔ Крайние «1»</label>
@@ -6104,6 +6105,11 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
       <button id="bDiffUp" title="Подсветка «Δ сверху»: красит бит, который НЕ РАВЕН биту НАД ним — в том же ЭКРАННОМ столбце, с учётом выравнивания. Верхняя строка не красится, как и места, где над битом пусто">Δ▲</button>
       <input type="color" id="colDiffUp" value="#ff8fa3" title="Цвет подсветки «Δ сверху»">
     </span>
+    <!-- v1.650: «⇄=» — неизменные при развороте строки (палиндромные позиции), двойник «⇄🔎 Реверс: неподвижные», цвет по умолчанию красный -->
+    <span class="hl-combo">
+      <button id="bRevKeepHl" title="Подсветка «⇄=»: биты, которые НЕ изменятся при развороте строки (бит №k равен биту №«длина−1−k», палиндромные позиции) — горят этим цветом, остальные бледнеют. То же, что «⇄🔎 Реверс: неподвижные». Эти же биты держит на месте «📌 Не менять неизменные» в «Круге»">⇄=</button>
+      <input type="color" id="colRevKeep" value="#ff3333" title="Цвет подсветки «⇄=» — неизменные при развороте">
+    </span>
     <span class="hl-combo">
       <button id="bHighlightDiagFold" data-tip="t112">⧅⧄</button>
       <input type="color" id="colDiagFold" value="#ff5ecb" title="Цвет подсветки «диагонали склейки»">
@@ -6201,11 +6207,11 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
      (видно новый номер версии в заголовке), а fold-*.js берёт из кеша — то есть новый код
      просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
      версией в <title>/<h3>, теми же тремя цифрами. -->
-<script src="fold-1-core.js?v=1649"></script>
-<script src="fold-2-render.js?v=1649"></script>
-<script src="fold-3-ops.js?v=1649"></script>
-<script src="fold-4-tools.js?v=1649"></script>
-<script src="fold-5-ui.js?v=1649"></script>
+<script src="fold-1-core.js?v=1650"></script>
+<script src="fold-2-render.js?v=1650"></script>
+<script src="fold-3-ops.js?v=1650"></script>
+<script src="fold-4-tools.js?v=1650"></script>
+<script src="fold-5-ui.js?v=1650"></script>
 <div id="fieldInfo"></div>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;

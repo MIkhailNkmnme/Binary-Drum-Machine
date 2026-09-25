@@ -260,7 +260,9 @@ function lcmSafe(a, b) {
 function computeShiftTotalTurns(idxs, isShiftInv){
   let total = 0;
   for (const i of idxs) {
-    const len = st.rows[i] ? st.rows[i].length : 0;
+    let len = st.rows[i] ? st.rows[i].length : 0;
+    // v1.650: при «📌 Не менять неизменные» круг у строки — только её подвижные биты
+    if (len && st.keepFixed && typeof fixedMovable === "function") { const mv = fixedMovable(i, len); if (mv) len = mv.length; }
     if (len === 0) continue;
     if (total === 0) { total = len; continue; }
     const next = lcmSafe(total, len);
@@ -3415,6 +3417,7 @@ const st = {
   topBuildOnSelect: false,
   // Расширять выделение ВНИЗ на каждой находке, ничего не снимая сверху (см. #bGrowDownOnFind).
   growDownOnFind: false,
+  keepFixed: false,   // «📌 Не менять неизменные» (v1.650): при Круге/ИнвКруге палиндромные биты стоят на месте
   resetOnFind: false,   // «↺ Сброс при находке» (v1.645): при захвате находки накрученные строки возвращаются к исходному виду
   // Показывать слева от строк их зеркало (инверсия, от первого бита, серым) — см. #bLeftMirror.
   // Показ через один бит: 0 выкл, 1 чёт в строке, 2 нечёт в строке, 3 чёт по сквозной,
@@ -3951,6 +3954,23 @@ const NEW_BITS_ROT = new Map([
 function rotateRowWithFlags(r, realRotateFn, invFlagsRotateFn){
   const len = st.rows[r] ? st.rows[r].length : 0;
   if (!len) return;
+  /* v1.650, «📌 Не менять неизменные» (st.keepFixed): биты, не меняющиеся при развороте строки (палиндромные позиции),
+     запомненные перед первым сдвигом серии (fixedPos в fold-3-ops.js), стоят на месте — по кругу едут только остальные,
+     между собой, как отдельная строка покороче; у ИнвКруга бит, прошедший её шов, переворачивается как обычно. */
+  const mv = (st.keepFixed && typeof fixedMovable === "function") ? fixedMovable(r, len) : null;
+  if (mv) {
+    if (!mv.length) return;
+    const s = st.rows[r], f = getInvFlags(r, len), nb = newBitsMap.get(r);
+    const sub = realRotateFn(mv.map(i => s[i]).join("")), fsub = invFlagsRotateFn(mv.map(i => f[i]));
+    const out = s.split(""), f2 = f.slice();
+    mv.forEach((i, j) => { out[i] = sub[j]; f2[i] = fsub[j]; });
+    st.rows[r] = out.join(""); invFlagsMap.set(r, f2);
+    if (nb && nb.length === len) {
+      const nsub = (NEW_BITS_ROT.get(invFlagsRotateFn) || rotateInvFlagsLeft)(mv.map(i => nb[i])), n2 = nb.slice();
+      mv.forEach((i, j) => { n2[i] = nsub[j]; }); newBitsMap.set(r, n2);
+    }
+    return;
+  }
   invFlagsMap.set(r, invFlagsRotateFn(getInvFlags(r, len)));
   const nb = newBitsMap.get(r);
   if (nb && nb.length === len) newBitsMap.set(r, (NEW_BITS_ROT.get(invFlagsRotateFn) || rotateInvFlagsLeft)(nb));

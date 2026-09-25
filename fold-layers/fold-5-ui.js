@@ -904,7 +904,8 @@ function captureColors(){
     c11r: typeof col1RightEl !== "undefined" && col1RightEl ? col1RightEl.value : "#a78bfa",
     cdf: typeof colDiagFoldEl !== "undefined" && colDiagFoldEl ? colDiagFoldEl.value : "#ff5ecb",
     cdl: typeof colDiffLeftEl !== "undefined" && colDiffLeftEl ? colDiffLeftEl.value : "#4dd0e1",
-    cdu: typeof colDiffUpEl !== "undefined" && colDiffUpEl ? colDiffUpEl.value : "#ff8fa3"
+    cdu: typeof colDiffUpEl !== "undefined" && colDiffUpEl ? colDiffUpEl.value : "#ff8fa3",
+    crk: typeof colRevKeepEl !== "undefined" && colRevKeepEl ? colRevKeepEl.value : "#ff3333"   // «⇄=» (v1.650)
   };
 }
 
@@ -965,6 +966,20 @@ function applyColorDiffLeft(){
 }
 if (colDiffLeftEl) colDiffLeftEl.oninput = () => { applyColorDiffLeft(); saveCacheSoon(); };
 
+/* «⇄=» (v1.650, пользователь: «сюда нужна подсветка неизменных символов при реверсе КРАСНЫМ») — в «Подсветках» двойник кнопки
+   «⇄🔎 Реверс: неподвижные» (#bReverseKeep): жмёт её (сообщение со счётом — её же) и повторяет её подсветку; свой пикер цвета
+   (--crk-hl), по умолчанию красный. Те же биты держит на месте «📌 Не менять неизменные» в «Круге». */
+const colRevKeepEl = document.getElementById("colRevKeep");
+function applyColorRevKeep(){ if (colRevKeepEl) document.documentElement.style.setProperty("--crk-hl", colRevKeepEl.value); }
+if (colRevKeepEl) colRevKeepEl.oninput = () => { applyColorRevKeep(); saveCacheSoon(); };
+applyColorRevKeep();
+const bRevKeepHlEl = document.getElementById("bRevKeepHl"), bRevKeepOrigEl = document.getElementById("bReverseKeep");
+if (bRevKeepHlEl && bRevKeepOrigEl) {
+  bRevKeepHlEl.onclick = () => bRevKeepOrigEl.click();
+  const sync = () => bRevKeepHlEl.classList.toggle("mode-act", bRevKeepOrigEl.classList.contains("mode-act"));
+  new MutationObserver(sync).observe(bRevKeepOrigEl, { attributes: true, attributeFilter: ["class"] });
+  sync();
+}
 const bDiffUpEl = document.getElementById("bDiffUp");
 if (bDiffUpEl) {
   bDiffUpEl.onclick = () => {
@@ -6667,6 +6682,7 @@ function captureUiSettings(){
     topBuildOnSelect: !!st.topBuildOnSelect,
     growDownOnFind: !!st.growDownOnFind,
     resetOnFind: !!st.resetOnFind,   // «↺ Сброс при находке» (v1.645)
+    keepFixed: !!st.keepFixed,   // «📌 Не менять неизменные» (v1.650)
     parityView: st.parityView | 0,
     leftMirror: !!st.leftMirror,
     rightMirror: !!st.rightMirror,
@@ -6909,6 +6925,7 @@ function applyUiSettings(u){
   if (u.topBuildNeedHit !== undefined) setTopBuildNeedHit(u.topBuildNeedHit, true);
   if (u.topBuildOnSelect !== undefined) setTopBuildOnSelect(u.topBuildOnSelect, true);
   if (u.growDownOnFind !== undefined) setGrowDownOnFind(u.growDownOnFind, true);
+  if (u.keepFixed !== undefined) { st.keepFixed = !!u.keepFixed; if (typeof updateKeepFixedBtn === "function") updateKeepFixedBtn(); }
   if (u.resetOnFind !== undefined) { st.resetOnFind = !!u.resetOnFind; if (typeof updateResetOnFindBtn === "function") updateResetOnFindBtn(); }
   if (u.parityView !== undefined) setParityView(u.parityView, true);
   if (u.leftMirror !== undefined) setLeftMirror(u.leftMirror, true);
@@ -7243,6 +7260,8 @@ function applyUiSettings(u){
   applyColorDiffLeft();
   if (u.cdu && colDiffUpEl) colDiffUpEl.value = u.cdu;
   applyColorDiffUp();
+  if (u.crk && typeof colRevKeepEl !== "undefined" && colRevKeepEl) colRevKeepEl.value = u.crk;
+  if (typeof applyColorRevKeep === "function") applyColorRevKeep();
 
   if (u.rowCount && rowCountEl) {
     rowCountEl.value = u.rowCount;
@@ -7271,6 +7290,7 @@ const DEFAULT_UI_SETTINGS = {
   axisSnapAny: false,
   growDownOnFind: false,
   resetOnFind: false,
+  keepFixed: false,
   parityView: 0,
   colNew: "#00e5a0",
   buildPlace: "clear",

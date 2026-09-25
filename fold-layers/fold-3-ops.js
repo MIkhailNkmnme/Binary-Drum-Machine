@@ -171,7 +171,7 @@ if (chainTextEl2) {
         st.selectedRows = new Set([idx]);
         st.captureGrown = false;
         st.manualShiftTurns = 0;
-        if (typeof rotBase !== "undefined") rotBase.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
+        if (typeof rotBase !== "undefined") rotBase.clear(); if (typeof fixedPos !== "undefined") fixedPos.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
         render(); saveCache();
         scrollToRow(idx); // по номеру, а не по элементу — строки может не быть в DOM, см. scrollToRow
         say("Паттерн №" + (idx + 1) + ": выделена строка " + idx + ".");
@@ -1441,7 +1441,7 @@ function setMode(modeName){
   st.shiftVariantTotal = null;
   st.shiftVariantRows = null;
   st.manualShiftTurns = 0;
-  if (typeof rotBase !== "undefined") rotBase.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
+  if (typeof rotBase !== "undefined") rotBase.clear(); if (typeof fixedPos !== "undefined") fixedPos.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
   // Смена режима — то же самое, что и новый клик по строке: выделение снова "своё" (см.
   // captureFoundRow/st.captureGrown).
   st.captureGrown = false;
@@ -2825,7 +2825,7 @@ document.getElementById("rows").onclick = e => {
   resetSeqSearchModes();
   // Новый клик по строке — новая "сессия" кругового сдвига, счётчик "Вар: N/M" начинается заново.
   st.manualShiftTurns = 0;
-  if (typeof rotBase !== "undefined") rotBase.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
+  if (typeof rotBase !== "undefined") rotBase.clear(); if (typeof fixedPos !== "undefined") fixedPos.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
   st.shiftVariantTotal = null;
   st.shiftVariantRows = null;
   // ...и выделение снова считается набранным ВРУЧНУЮ: выросло оно до этого захватом или нет —
@@ -5283,6 +5283,7 @@ function autoRun(){
                «🚀 Авто» без «🛑 Стоп». Теперь набор строк поменялся — цикл вариантов пересчитывается для нового набора и
                начинается заново с текущего положения. */
             if (st.resetOnFind) rotBaseNote(rotIdxs);   // захваченные ещё не крутились — их исходный вид такой, как сейчас
+            if (st.keepFixed) fixedPosNote(rotIdxs);   // v1.650: и их неизменные — по нынешнему виду
             if (changed) {
               totalTurns = isHalf ? halfTurnTotal(rotIdxs, isHalfPlain) : computeShiftTotalTurns(rotIdxs, isShiftInv);
               turns = 0;
@@ -5714,6 +5715,14 @@ if (bKrugAnalyzeEl) bKrugAnalyzeEl.onclick = () => {
   analysisRun = { hits: [], rows: new Set(), tool: st.lastDirMode };
   autoRun();
 };
+function updateKeepFixedBtn(){ const b = document.getElementById("bKeepFixed"); if (b) b.classList.toggle("mode-act", !!st.keepFixed); }
+const bKeepFixedEl = document.getElementById("bKeepFixed");
+if (bKeepFixedEl) bKeepFixedEl.onclick = () => {
+  st.keepFixed = !st.keepFixed; fixedPos.clear(); updateKeepFixedBtn(); saveCache();
+  say(st.keepFixed ? "📌 Неизменные на месте: при Круге и ИнвКруге биты, которые не меняются при развороте строки, стоят; крутятся только остальные. Какие неизменные — запоминается перед первым сдвигом (подсветить их — «⇄=» в «Подсветках»)."
+                   : "📌 Выключено: Круг и ИнвКруг снова крутят всю строку.");
+};
+updateKeepFixedBtn();
 const bKrugAutoEl = document.getElementById("bKrugAuto");
 if (bKrugAutoEl) bKrugAutoEl.onclick = () => document.getElementById("bAuto").click();   // дубль общей «🚀 Авто»
 document.getElementById("bUndo").onclick  = () => {
@@ -7250,6 +7259,22 @@ if (colHeaderEl) {
    выбросит сверху) возвращаются к исходному виду, найденная добавляется, и дальше весь набор крутится заново — счётчик вариантов
    с нуля. Строка, у которой длина с тех пор поменялась (её правили), не трогается — её исходный вид уже не тот. */
 var rotBase = new Map();
+/* ═══ 📌 НЕ МЕНЯТЬ НЕИЗМЕННЫЕ (v1.650) ═══ Пользователь: «кнопку не менять неизменные для Круг — ИнвКруг» (выбран вариант «запомнить
+   на старте»). fixedPos: строка → { len, mv } — подвижные позиции, снятые перед ПЕРВЫМ сдвигом строки в серии: это те, где бит НЕ равен
+   своему зеркальному (s[k] ≠ s[L−1−k]); палиндромные позиции (их красит «⇄=» в «Подсветках») стоят на месте весь прогон.
+   Серия та же, что у «↺ Сброса при находке» (rotBase): кончается при ручной смене выделения, смене режима, сбросе. Сам поворот —
+   в rotateRowWithFlags (fold-1-core.js), прыжки ½ — в halfTurnJump, круги счётчика — computeShiftTotalTurns / halfTurnTotal:
+   все они берут подвижные позиции отсюда. Строка, у которой длина с тех пор поменялась, снимается заново. */
+var fixedPos = new Map();
+function fixedPosNote(rows){
+  for (const r of rows) {
+    const s = st.rows[r]; if (!s) continue;
+    const e = fixedPos.get(r); if (e && e.len === s.length) continue;
+    const mv = []; for (let k = 0; k < s.length; k++) if (s[k] !== s[s.length - 1 - k]) mv.push(k);
+    fixedPos.set(r, { len: s.length, mv });
+  }
+}
+function fixedMovable(r, len){ const e = fixedPos.get(r); return (e && e.len === len) ? e.mv : null; }
 function rotBaseNote(rows){
   for (const r of rows) {
     const s = st.rows[r]; if (!s) continue;
@@ -7976,33 +8001,44 @@ if (bShiftRInvEl) {
 function halfTurnJump(idxs, dir, plain){
   const rows = Array.from(idxs).filter(r => st.rows[r] && st.rows[r].length).sort((a, b) => a - b);
   if (!rows.length) return null;
-  const Lb = st.rows[rows[rows.length - 1]].length, k = plain ? Lb >> 1 : Lb, lens = [];
+  // v1.650: при «📌 Не менять неизменные» прыгает только подвижная часть строки (fixedMovable), неизменные стоят; длина нижней —
+  // тоже её подвижная часть. Без галки mv = null — вся строка, как было.
+  const mvOf = r => (st.keepFixed ? fixedMovable(r, st.rows[r].length) : null);
+  const effLen = r => { const mv = mvOf(r); return mv ? mv.length : st.rows[r].length; };
+  const Lb = effLen(rows[rows.length - 1]), k = plain ? Lb >> 1 : Lb, lens = [];
   for (const r of rows) {
-    const s = st.rows[r], L = s.length;
-    if (plain) {
-      const q = k % L; lens.push(L); if (!q) continue;
-      const cut = dir > 0 ? L - q : q;   // вправо: хвост из q бит встаёт в начало; влево: голова из q бит уходит в конец
-      const f = getInvFlags(r, L), nb = newBitsMap.get(r);
-      st.rows[r] = s.slice(cut) + s.slice(0, cut);
-      invFlagsMap.set(r, f.slice(cut).concat(f.slice(0, cut)));
-      if (nb && nb.length === L) newBitsMap.set(r, nb.slice(cut).concat(nb.slice(0, cut)));
-      continue;
-    }
-    const m = k % (2 * L), q = m % L, odd = m >= L;
+    const full = st.rows[r], Lf = full.length, mv = mvOf(r);
+    const s = mv ? mv.map(i => full[i]).join("") : full, L = s.length;
+    const fFull = getInvFlags(r, Lf), nbFull = newBitsMap.get(r);
+    let f = mv ? mv.map(i => fFull[i]) : fFull.slice();
+    let nb = (nbFull && nbFull.length === Lf) ? (mv ? mv.map(i => nbFull[i]) : nbFull.slice()) : null;
     lens.push(L);
-    let f = getInvFlags(r, L).slice(), nb = newBitsMap.get(r), t;
-    if (!(nb && nb.length === L)) nb = null;
-    if (dir > 0) {   // вправо: q хвостовых бит через шов в начало, перевёрнутыми (как q раз rotateStrRightInv)
-      t = invertBits(s.slice(L - q)) + s.slice(0, L - q);
-      f = f.slice(L - q).map(x => !x).concat(f.slice(0, L - q));
-      if (nb) nb = nb.slice(L - q).concat(nb.slice(0, L - q));
-    } else {         // влево: q головных бит через шов в конец, перевёрнутыми (как q раз rotateStrLeftInv)
-      t = s.slice(q) + invertBits(s.slice(0, q));
-      f = f.slice(q).concat(f.slice(0, q).map(x => !x));
-      if (nb) nb = nb.slice(q).concat(nb.slice(0, q));
+    if (!L) continue;
+    let t;
+    if (plain) {
+      const q = k % L; if (!q) continue;
+      const cut = dir > 0 ? L - q : q;   // вправо: хвост из q бит встаёт в начало; влево: голова из q бит уходит в конец
+      t = s.slice(cut) + s.slice(0, cut);
+      f = f.slice(cut).concat(f.slice(0, cut));
+      if (nb) nb = nb.slice(cut).concat(nb.slice(0, cut));
+    } else {
+      const m = k % (2 * L), q = m % L, odd = m >= L;
+      if (dir > 0) {   // вправо: q хвостовых бит через шов в начало, перевёрнутыми (как q раз rotateStrRightInv)
+        t = invertBits(s.slice(L - q)) + s.slice(0, L - q);
+        f = f.slice(L - q).map(x => !x).concat(f.slice(0, L - q));
+        if (nb) nb = nb.slice(L - q).concat(nb.slice(0, L - q));
+      } else {         // влево: q головных бит через шов в конец, перевёрнутыми (как q раз rotateStrLeftInv)
+        t = s.slice(q) + invertBits(s.slice(0, q));
+        f = f.slice(q).concat(f.slice(0, q).map(x => !x));
+        if (nb) nb = nb.slice(q).concat(nb.slice(0, q));
+      }
+      if (odd) { t = invertBits(t); f = f.map(x => !x); }
     }
-    if (odd) { t = invertBits(t); f = f.map(x => !x); }
-    st.rows[r] = t; invFlagsMap.set(r, f); if (nb) newBitsMap.set(r, nb);
+    if (mv) {
+      const out = full.split(""), f2 = fFull.slice(), n2 = nb ? nbFull.slice() : null;
+      mv.forEach((i, j) => { out[i] = t[j]; f2[i] = f[j]; if (n2) n2[i] = nb[j]; });
+      st.rows[r] = out.join(""); invFlagsMap.set(r, f2); if (n2) newBitsMap.set(r, n2);
+    } else { st.rows[r] = t; invFlagsMap.set(r, f); if (nb) newBitsMap.set(r, nb); }
   }
   return { k, rows, lens };
 }
@@ -8011,9 +8047,10 @@ function halfTurnJump(idxs, dir, plain){
 function halfTurnTotal(idxs, plain){
   const rows = Array.from(idxs).filter(r => st.rows[r] && st.rows[r].length).sort((a, b) => a - b);
   if (!rows.length) return 0;
-  const Lb = st.rows[rows[rows.length - 1]].length, k = plain ? Lb >> 1 : Lb;   // у ½ Круга период строки — L, у ½ ИнвКруга — 2L
+  const effLen = r => { const mv = st.keepFixed ? fixedMovable(r, st.rows[r].length) : null; return mv ? mv.length : st.rows[r].length; };   // v1.650
+  const Lb = effLen(rows[rows.length - 1]), k = plain ? Lb >> 1 : Lb;   // у ½ Круга период строки — L, у ½ ИнвКруга — 2L
   let total = 1;
-  for (const r of rows) { const P = (plain ? 1 : 2) * st.rows[r].length, per = P / gcdInt(k, P); const nx = lcmSafe(total, per); if (nx === null) return 0; total = nx; }
+  for (const r of rows) { const L = effLen(r); if (!L) continue; const P = (plain ? 1 : 2) * L, per = k ? P / gcdInt(k, P) : 1; const nx = lcmSafe(total, per); if (nx === null) return 0; total = nx; }
   return total;
 }
 function halfTurnClick(dir, plain){
