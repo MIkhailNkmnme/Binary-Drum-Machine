@@ -5006,6 +5006,7 @@ function tetrisLayPlan(falling, floor, offset){
 function tetrisRotateFns(stripInv){
   let mode = st.lastDirMode || "shiftRInv";
   if (mode === "halfTurnL") mode = "shiftLInv"; else if (mode === "halfTurnR") mode = "shiftRInv";   // v1.640: полуоборот — это ИнвКруг той же стороны
+  else if (mode === "halfPlainL") mode = "shiftL"; else if (mode === "halfPlainR") mode = "shiftR";   // v1.641: ½ Круг — обычный Круг той же стороны
   if (stripInv) mode = mode === "shiftLInv" ? "shiftL" : (mode === "shiftRInv" ? "shiftR" : mode);
   if (mode === "shiftL") return { rotate: rotateStrLeft, rotateFlags: rotateInvFlagsLeft, label: "◄ Круг" };
   if (mode === "shiftR") return { rotate: rotateStrRight, rotateFlags: rotateInvFlagsRight, label: "► Круг" };
