@@ -200,6 +200,9 @@ function setAutoBtnState(running){
   // «🚀 Авто» группы «Круг» — дубль этой кнопки (v1.644), показывает то же состояние
   const k = document.getElementById("bKrugAuto");
   if (k) { k.classList.toggle("stop", running); k.textContent = running ? "⏹ Стоп" : "🚀 Авто"; }
+  // «🔬 Анализ» (v1.649) — пока идёт его прогон, на нём «⏹ Стоп»
+  const an = document.getElementById("bKrugAnalyze"), anOn = running && typeof analysisRun !== "undefined" && !!analysisRun;
+  if (an) { an.classList.toggle("stop", anOn); an.textContent = anOn ? "⏹ Стоп анализа" : "🔬 Анализ"; }
 }
 
 /* Счётчик "Вар: N/M (строки ...)" в шапке — текущий вариант / общее число вариантов кругового
@@ -1581,6 +1584,12 @@ function renderFindLogPanel(){
 
   const el = document.getElementById("findLogList");
   if (!el) return;
+  /* v1.649: таблицу пересобираем, только если лог изменился — render() зовёт нас на каждом кадре, а в логе теперь бывает до
+     BG_FIND_LOG_MAX записей. Лог растёт сверху (unshift) и обрезается снизу, так что длины, первой и последней записи и
+     сортировки хватает, чтобы заметить любое изменение. */
+  const flSig = bgFindLog.length + "|" + (findLogSort.key || "") + "|" + findLogSort.dir;
+  if (el._flSig === flSig && el._flFirst === bgFindLog[0] && el._flLast === bgFindLog[bgFindLog.length - 1]) return;
+  el._flSig = flSig; el._flFirst = bgFindLog[0]; el._flLast = bgFindLog[bgFindLog.length - 1];
   if (!bgFindLog.length) { el.innerHTML = '<span class="empty">находок пока нет</span>'; return; }
 
   const modesUsed = [];
@@ -2897,7 +2906,7 @@ function render(){
     const hitNow = bgMatched
       ? ((bgHitSet && bgHitSet.size) ? Math.min(...bgHitSet) : bgTargetIdx)
       : ((bgBelowNow && bgBelowNow.length) ? bgBelowNow[0] : null);
-    if (hitNow !== st.bgSearchLastHit) {
+    if (hitNow !== st.bgSearchLastHit && !(typeof analysisRun !== "undefined" && analysisRun)) {   // v1.649: во время «🔬 Анализа» лог пишет только его итог
       if (hitNow != null) {
         // 🧮 Суммы длин не даёт kind'ов на весь результат (у неё МНОЖЕСТВО комбинаций сразу) —
         // записываем в лог ВСЕ совпавшие варианты сумм целиком (не просто отметку "нашлось") —

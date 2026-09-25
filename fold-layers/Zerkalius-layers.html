@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Layers — v1.648</title>
+<title>Zerkalius Layers — v1.649</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -5370,7 +5370,7 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
   <!-- Заголовок стоит вплотную слева от вкладок (v1.046), вся связка центрируется полосой — см. #menuBarTitle в CSS. --><div id="menuBarTitle">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.648</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.649</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -5522,6 +5522,7 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
     <button id="bShiftHalfTurnL" title="◄ ½ ИнвКруг — полуоборот «ИнвКруга» влево: прыжок сразу на длину НИЖНЕЙ выделенной строки. Одна строка — встаёт изнанкой (биты перевёрнуты, порядок тот же), ещё раз — домой. Несколько — все делают столько же шагов ◄ ИнвКруга, каждая по своему кругу: строка на бит короче встаёт изнанкой и уезжает на бит влево, вдвое короче — делает полный оборот. Запоминается, как ◄/►Круг: «🚀 Авто» повторяет полуобороты">◄ ½ ИнвКруг</button><button id="bShiftHalfTurn" title="► ½ ИнвКруг — полуоборот «ИнвКруга» вправо: прыжок сразу на длину НИЖНЕЙ выделенной строки. Одна строка — встаёт изнанкой (биты перевёрнуты, порядок тот же), ещё раз — домой. Несколько — все делают столько же шагов ► ИнвКруга, каждая по своему кругу: строка на бит короче встаёт изнанкой и уезжает на бит вправо, вдвое короче — делает полный оборот. Запоминается, как ◄/►Круг: «🚀 Авто» повторяет полуобороты">► ½ ИнвКруг</button>
     <!-- v1.644: «🧲 Захват» — сюда, третьим в ряд к ▶ Шаг и 🚀 Авто (пользователь: «перемести поближе к Авто, третьей в ряду»); был в «Поиске», в «Совпадении» -->
     <div class="pr pw"><button id="bKrugStep" title="▶ Шаг Круга — один раз нажать ЗАПОМНЕННУЮ кнопку Круга (подсвечена: ◄/► Круг, ½ Круг, ИнвКруг, ½ ИнвКруг) и захватить находку, даже если «🧲 Захват» выключен. Вручную, по нажатию">▶ Шаг</button><button id="bKrugAuto" title="Дубль общей «🚀 Авто» (раздел «Ход»): повторяет запомненную кнопку Круга, при «🛑 Стоп» встаёт на находке. Ещё раз — стоп">🚀 Авто</button><label class="chk" data-tip="t79" style="flex:1 1 0;min-width:0"><input type="checkbox" id="cCaptureOnFind" checked>🧲 Захват</label></div>
+    <button id="bKrugAnalyze" class="pw" title="🔬 Анализ — крутит запомненную кнопку Круга, как «🚀 Авто», весь цикл вариантов, но ничего не захватывает и на находках не стоит. На каждом ходу запоминает, какие строки нашлись (под выделением и все ниже) и каким поиском. В конце — или при остановке повторным нажатием — пишет в «Лог находок» для каждой строки, на каких шагах она нашлась и по какому поиску, и сводку сообщением">🔬 Анализ</button>
     <label class="chk" data-tip="t14"><input type="checkbox" id="cAxisSnap" checked>⊙ На «1»</label>
     <label class="chk" data-tip="t15"><input type="checkbox" id="cAxisBitBounce">↩ От края</label><label class="chk" data-tip="t15b"><input type="checkbox" id="cEdgeOnes">⇔ Крайние «1»</label>
     <label class="pw chk" data-tip="t15c"><input type="checkbox" id="cNoSplitOnes">🔗 Не рвать «1»</label>
@@ -6200,11 +6201,11 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
      (видно новый номер версии в заголовке), а fold-*.js берёт из кеша — то есть новый код
      просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
      версией в <title>/<h3>, теми же тремя цифрами. -->
-<script src="fold-1-core.js?v=1648"></script>
-<script src="fold-2-render.js?v=1648"></script>
-<script src="fold-3-ops.js?v=1648"></script>
-<script src="fold-4-tools.js?v=1648"></script>
-<script src="fold-5-ui.js?v=1648"></script>
+<script src="fold-1-core.js?v=1649"></script>
+<script src="fold-2-render.js?v=1649"></script>
+<script src="fold-3-ops.js?v=1649"></script>
+<script src="fold-4-tools.js?v=1649"></script>
+<script src="fold-5-ui.js?v=1649"></script>
 <div id="fieldInfo"></div>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;

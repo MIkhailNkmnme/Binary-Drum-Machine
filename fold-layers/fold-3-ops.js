@@ -4915,7 +4915,10 @@ function computeBgSearchTarget(){
      в том числе при обычном РУЧНОМ выделении строки, без всякого "Авто" (запрос пользователя).
      ВТОРАЯ половина режима (отложенный до конца цикла вариантов захват) — в autoRun(). */
   const belowHits = [];
-  const belowOn = st.fullPassMode;   // «🔽 Все ниже» удалена в v1.090, остался только Полный проход
+  // v1.649: «🔬 Анализ» тоже смотрит все строки ниже выделенной — ему нужно знать, какая где нашлась (belowModes: строка → режимы)
+  const anaOn = typeof analysisRun !== "undefined" && !!analysisRun;
+  const belowModes = anaOn ? {} : null;
+  const belowOn = st.fullPassMode || anaOn;   // «🔽 Все ниже» удалена в v1.090, остался только Полный проход
   // ⛔ «Паттерны выше выделенной — не искать» (v1.100) обрезает и "Полный проход": без неё он берёт
   // список от самого верха (0), в этом его смысл. Отсечка выключена — patSearchFloorIdx() даёт −1,
   // и старт остаётся прежним нулём.
@@ -4939,6 +4942,11 @@ function computeBgSearchTarget(){
         if (!hay) continue;
         const kk = findPatternKinds(hay, t);
         if (!kk.length) continue;
+        if (belowModes) {   // анализ: все режимы, где строка нашлась, а не только первый
+          if (!belowModes[r]) { belowModes[r] = {}; belowHits.push(r); }
+          belowModes[r][res.mode] = kk;
+          continue;
+        }
         belowHits.push(r);
         /* ПОДСВЕТКА ЧУЖОЙ НАХОДКИ (v0.965). Обычный фон-поиск красит в результате только kinds —
            а это совпадения ИСКОМОГО паттерна (строки targetIdx). Находка любого другого паттерна
@@ -4971,7 +4979,7 @@ function computeBgSearchTarget(){
     for (const k of res.kinds) hitPatIdxs.add(k.patIdx !== undefined ? k.patIdx : patTargetIdx);
   }
   return {
-    targetIdx: patTargetIdx, patSelMode, results, belowHits, primaryMatched,
+    targetIdx: patTargetIdx, patSelMode, results, belowHits, belowModes, primaryMatched,
     // Все ячейки-цели (при выделенных паттернах их несколько) и те из них, что реально нашлись.
     targetIdxs: searchPats.map(sp => sp.idx), hitPatIdxs,
     matched: primaryMatched || (st.fullPassMode && belowHits.length > 0),
@@ -5163,6 +5171,7 @@ function autoRun(){
       // Тот же принцип, что и у ручного сдвига: прогон крутит всё, что видно.
       mirrorsBeforeShift();
       totalTurns = isHalf ? halfTurnTotal(rotIdxs, isHalfPlain) : computeShiftTotalTurns(rotIdxs, isShiftInv);
+      if (analysisRun && !totalTurns) { analysisRun.noEnd = true; return finishAuto(); }
     } else {
       const range = colSelectRowRange();
       const lo = Math.max(0, range.lo);
@@ -5230,8 +5239,9 @@ function autoRun(){
         st.shiftVariantTurns = turns;
 
         const bgInfo = computeBgSearchTarget();
-        bgFindLogHit(bgInfo, turns);   // v1.648: находка — в «Лог находок» сразу, на своём ходу, а не только при перерисовке
-        if (bgInfo && bgInfo.matched) {
+        if (analysisRun) analysisRecord(bgInfo, turns);   // v1.649: анализ — только запоминает, ничего не захватывает
+        else bgFindLogHit(bgInfo, turns);   // v1.648: находка — в «Лог находок» сразу, на своём ходу, а не только при перерисовке
+        if (!analysisRun && bgInfo && bgInfo.matched) {
           hadHit = true; hitCount++;
           // Находка СРАЗУ добавляется к выделению (не заменяет его — запрос пользователя), если
           // включена "🧲 Захват находки" (st.captureOnFind) — работает для ЛЮБОГО выделения, в
@@ -5303,7 +5313,7 @@ function autoRun(){
         // поровну. У обычного Круга (без Инв) сумма 1/0 внутри строки не меняется вращением
         // вообще (только порядок бит) — эта остановка реально полезна для Круг Инв, где каждый
         // ход переворачивает ровно один бит и баланс сдвигается — запрос пользователя.
-        if (isShift && st.stopOnBalance) {
+        if (isShift && st.stopOnBalance && !analysisRun) {
           const { total1, total0 } = computeSelBalance();
           if (total1 === total0) { balanceHit = true; break; }
         }
@@ -5537,6 +5547,7 @@ function slowAutoSync(){
 
 function finishAuto(m){
   st.running = false;
+  if (analysisRun) m = analysisFinish(m);   // v1.649: итог «🔬 Анализа» — в «Лог находок» и сообщением
   setAutoBtnState(false);
   // Прогон кончился — счётчик шагов больше не живой. Дальше находки могут появляться от чего
   // угодно (клик по строке, правка, смена режима), и штамповать их последним номером прогона
@@ -5653,6 +5664,55 @@ if (bKrugStepEl) bKrugStepEl.onclick = () => {
   const cap = st.captureOnFind;
   st.captureOnFind = true;   // обработчики Круга синхронны: захват сработает внутри click(), в afterShiftBgCheck()
   try { b.click(); } finally { st.captureOnFind = cap; }
+};
+/* v1.649, «🔬 Анализ»: «нужен анализ — кнопка, которая так же, как Авто, будет находить, но не захватывать, пока весь цикл не
+   пройдёт, и запишет потом для каждой строки, в каком шаге нашлась и по какому поиску». Тот же autoRun() по запомненной кнопке
+   Круга, но с analysisRun: захвата, «🛑 Стоп», «⚖ Стоп при балансе» и записи в лог по ходу нет; на каждом ходу запоминается,
+   какие строки нашлись (строка под выделением и все ниже — см. belowModes в computeBgSearchTarget) и какими поисками. Когда
+   цикл пройден — или остановлен повторным нажатием — в «Лог находок» ложится запись на каждую пару «строка — шаг» (по строкам,
+   внутри по шагам), с поисками по столбцам и инструментом в «чем», а сообщением — сводка. Цикл больше 10 млн вариантов
+   (предел неизвестен) анализ не начинает: конца у него не было бы. */
+var analysisRun = null;
+const ANALYSIS_MAX = 2000;   // записей в лог за один анализ (как и весь лог, BG_FIND_LOG_MAX)
+function analysisRecord(bgInfo, step){
+  if (!bgInfo) return;
+  const rows = new Map();   // строка → { режим: kinds }
+  if (bgInfo.primaryMatched) {
+    const m = {}; for (const r of (bgInfo.results || [])) if (r.matched) m[r.mode] = r.kinds;
+    const hit = (bgInfo.hitPatIdxs && bgInfo.hitPatIdxs.size) ? Array.from(bgInfo.hitPatIdxs) : [bgInfo.targetIdx];
+    for (const r of hit) rows.set(r, Object.assign({}, m));
+  }
+  if (bgInfo.belowModes) for (const k in bgInfo.belowModes) { const r = +k; rows.set(r, Object.assign(rows.get(r) || {}, bgInfo.belowModes[k])); }
+  for (const [row, matches] of rows) { analysisRun.hits.push({ row, step, matches }); analysisRun.rows.add(row); }
+}
+function analysisFinish(m){
+  const a = analysisRun; analysisRun = null;
+  const tool = FIND_TOOL[a.tool] ? FIND_TOOL[a.tool][1] : "";
+  if (a.noEnd) return `🔬 Анализ (${tool}): цикл вариантов больше 10 млн — предел неизвестен, у анализа не было бы конца. Выделите меньше строк.`;
+  const turns = st.shiftVariantTurns || 0, total = st.shiftVariantTotal || 0;
+  const done = total && turns >= total;
+  const list = a.hits.slice().sort((x, y) => x.row - y.row || x.step - y.step);
+  const cut = list.length > ANALYSIS_MAX;
+  const put = list.slice(0, ANALYSIS_MAX);
+  for (let i = put.length - 1; i >= 0; i--) bgFindLog.unshift({ row: put[i].row, step: put[i].step, matches: put[i].matches, tool: a.tool });
+  if (bgFindLog.length > BG_FIND_LOG_MAX) bgFindLog.length = BG_FIND_LOG_MAX;
+  // Положение, на котором анализ кончился, уже учтено в итоге — render() не должен записать его ещё раз отдельной находкой
+  // (с шагом 0): отмечаем его как «уже показанное» тем же правилом, каким render() выбирает строку находки.
+  { const bi = computeBgSearchTarget();
+    st.bgSearchLastHit = (bi && bi.matched) ? ((bi.hitPatIdxs && bi.hitPatIdxs.size) ? Math.min(...bi.hitPatIdxs) : bi.targetIdx)
+                                             : ((bi && bi.belowHits && bi.belowHits.length) ? bi.belowHits[0] : null); }
+  const byRow = new Map(); for (const h of list) { if (!byRow.has(h.row)) byRow.set(h.row, []); byRow.get(h.row).push(h.step); }
+  const brief = Array.from(byRow.entries()).slice(0, 6).map(([r, s]) => `стр ${r + 1}: ${s.length > 4 ? s.slice(0, 4).join(", ") + "… (" + s.length + ")" : s.join(", ")}`).join("; ");
+  return `🔬 Анализ (${tool}): ${done ? "весь цикл пройден" : "остановлен"} — ${turns} из ${total} вариантов. ` +
+    (list.length ? `Нашлось строк: ${byRow.size}, находок: ${list.length}${cut ? ` (в лог — первые ${ANALYSIS_MAX})` : ""}. ${brief}${byRow.size > 6 ? "; …" : ""}. Подробно — в «Логе находок».`
+                 : "Ни одна строка не нашлась.");
+}
+const bKrugAnalyzeEl = document.getElementById("bKrugAnalyze");
+if (bKrugAnalyzeEl) bKrugAnalyzeEl.onclick = () => {
+  if (st.running) { st.running = false; return; }
+  if (!KRUG_MODES.includes(st.lastDirMode)) { say("🔬 Анализ: нажмите сначала одну из кнопок Круга — анализ крутит её."); return; }
+  analysisRun = { hits: [], rows: new Set(), tool: st.lastDirMode };
+  autoRun();
 };
 const bKrugAutoEl = document.getElementById("bKrugAuto");
 if (bKrugAutoEl) bKrugAutoEl.onclick = () => document.getElementById("bAuto").click();   // дубль общей «🚀 Авто»
