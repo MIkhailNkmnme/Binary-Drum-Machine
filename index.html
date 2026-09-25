@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.031. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.034. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -17,12 +17,15 @@
      v0.016: XOR Engine снят туда же — кнопка убрана, Zerkalius-xor-engine.html в archive\_retired\.
      v0.029: в Черновиках — «Triangle» (Zerkalius-treugolnik.html), отдельная страница треугольника, заведена 2026-09-24.
      v0.030: «Triangle» — из Черновиков во вторую главную кнопку, под Code.
-     v0.031: «Results» (rezultaty/Zerkalius-rezultaty.html) — третья главная кнопка, под Triangle: витрина результатов. -->
+     v0.031: «Results» (rezultaty/Zerkalius-rezultaty.html) — третья главная кнопка, под Triangle: витрина результатов.
+     v0.032: «Compare» (sravnenie/Zerkalius-sravnenie.html) в «Знаке и записях» — одинаковые фигуры в двух наборах таблиц .tsv.
+     v0.033: «Code» — из главных кнопок первым в Черновики; главные теперь Triangle и Results.
+     v0.034: «WebGL Engine» (Zerkalius-genezis-webgl.html) снят — мёртвая ветка Genezis, страница в archive\_retired\. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Control Hub — v0.031</title>
+    <title>Zerkalius Control Hub — v0.034</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -191,12 +194,11 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.031</div>
+        <div class="ver">v0.034</div>
 
-        <!-- Флагман — с v0.008 это Zerkalius Code (бывшая «Genezis Code 0»), с v0.011 подписан «Code»; решение пользователя 2026-09-23 -->
-        <a href="Zerkalius-code.html" class="menu-btn main-engine" data-en="Code" data-ru="Код">Code</a>
-        <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб») -->
-        <a href="Zerkalius-treugolnik.html" class="menu-btn main-engine" data-en="Triangle" data-ru="Треугольник" style="margin-top: 10px;">Triangle</a>
+        <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
+             v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
+        <a href="Zerkalius-treugolnik.html" class="menu-btn main-engine" data-en="Triangle" data-ru="Треугольник">Triangle</a>
         <!-- v0.031: Результаты — третья главная кнопка, под Треугольником (слово пользователя «все результаты — очень интересное получилось», «отдельной, не в ресёрч») -->
         <a href="rezultaty/Zerkalius-rezultaty.html" class="menu-btn main-engine" data-en="Results" data-ru="Результаты" style="margin-top: 10px;">Results</a>
 
@@ -204,10 +206,11 @@
         <div class="panel">
             <div class="panel-title" data-en="🔬 Drafts" data-ru="🔬 Черновики">🔬 Drafts</div>
             <div class="grid">
+                <!-- v0.033: Code — первым в Черновиках (до этого флагман хаба, v0.008–0.032); остальные — по порядку создания -->
+                <a href="Zerkalius-code.html" class="menu-btn draft-btn" data-en="Code" data-ru="Код">Code</a>
                 <a href="Zerkalius-genezis.html" class="menu-btn draft-btn" data-en="Genezis" data-ru="Генезис">Genezis</a>
                 <a href="Zerkalius-gpu.html" class="menu-btn draft-btn" data-en="GPU Core + Synth" data-ru="Ядро GPU + синт">GPU Core + Synth</a>
                 <a href="Zerkalius-grid-module.html" class="menu-btn draft-btn" data-en="Grid Module" data-ru="Модуль сетки">Grid Module</a>
-                <a href="Zerkalius-genezis-webgl.html" class="menu-btn draft-btn" data-en="WebGL Engine" data-ru="Движок WebGL">WebGL Engine</a>
                 <a href="Zerkalius-kubits.html" class="menu-btn draft-btn" data-en="Kubits" data-ru="Кубиты">Kubits</a>
                 <a href="fold-layers/Zerkalius-layers.html" class="menu-btn draft-btn" data-en="Fold Layers" data-ru="Слои сгиба">Fold Layers</a>
                 <a href="Zerkalius-ascii-art.html" class="menu-btn draft-btn" data-en="ASCII Art" data-ru="ASCII-арт">ASCII Art</a>
@@ -225,6 +228,8 @@
                 <a href="oboi/Zerkalius-oboi.html" class="menu-btn draft-btn" data-en="Wallpaper" data-ru="Обои">Wallpaper</a>
                 <!-- v0.027: исследование цикла Аниматрицы (папка issledovanie\), 2026-09-24 -->
                 <a href="issledovanie/Zerkalius-issledovanie.html" class="menu-btn draft-btn" data-en="Research" data-ru="Исследование">Research</a>
+                <!-- v0.032: сравнение таблиц фигур .tsv (папка sravnenie\), 2026-09-25 -->
+                <a href="sravnenie/Zerkalius-sravnenie.html" class="menu-btn draft-btn" data-en="Compare" data-ru="Сравнение">Compare</a>
             </div>
         </div>
 

@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.005. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.037. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.005</title>
+<title>Zazerkalius — v0.037</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -38,6 +38,12 @@
     --b1:#1c2130; --b0:#a3aabb; --fix:#b07a00; --mov:#c2327a; --pal:#7b4fc4; --anti:#0e8aa0;
   }
 }
+/* v0.009: светлый фон кнопкой ☀ — тот же набор, что у системной светлой темы */
+:root[data-theme="light"]{
+  --bg:#f4f5f8; --panel:#ffffff; --panel2:#eef0f5; --line:#d5d9e3; --txt:#1c2130; --dim:#6a7285;
+  --acc:#7b4fc4; --acc2:#0e8aa0; --gold:#b07a00; --red:#c53030; --green:#1f8a4c;
+  --b1:#1c2130; --b0:#a3aabb; --fix:#b07a00; --mov:#c2327a; --pal:#7b4fc4; --anti:#0e8aa0;
+}
 :root[data-theme="dark"]{
   --bg:#0b0d12; --panel:#121620; --panel2:#171c28; --line:#262d3d; --txt:#d8dde8; --dim:#7d8699;
   --acc:#b98cf0; --acc2:#22d3ee; --gold:#ffd166; --red:#ff6b6b; --green:#6ee7a0;
@@ -60,8 +66,61 @@ code{font-family:var(--ff);font-size:.95em}
 #top h1{margin:0;font-size:15px;font-weight:600;letter-spacing:.04em}
 #top .ver{color:var(--dim);font-size:12px}
 #top .sp{flex:1}
-#main{position:absolute;top:40px;left:0;right:0;bottom:0;display:grid;grid-template-columns:260px 1fr}
+/* v0.010: три колонки — слева кнопки и шаблоны, В ЦЕНТРЕ поле строк, справа окна; между полем и окнами
+   разделитель, его тянут (ширина поля — --rowsW, запоминается). */
+#main{position:absolute;top:40px;left:0;right:0;bottom:0;display:grid;grid-template-columns:250px var(--rowsW, 44%) 6px 1fr}
 #rowsPane{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--panel)}
+/* v0.035: панель значками в один столбик — кнопка ◂/▸ в углу, узкая колонка, у кнопок только значки */
+#rowsPane{position:relative}
+#bPaneIcons{position:absolute;top:4px;right:8px;padding:0 7px;font-size:12px;line-height:18px;z-index:2}
+body.pane-icons #main{grid-template-columns:48px var(--rowsW, 44%) 6px 1fr}
+body.pane-icons #rowsPane{overflow-y:auto;overflow-x:hidden}
+body.pane-icons #bPaneIcons{position:static;margin:6px 4px;font-size:13px}
+body.pane-icons #rowsPane .pane-head,body.pane-icons #maskBar,body.pane-icons #maskBar2 select,
+body.pane-icons #tplList .tpl-sep,body.pane-icons #tplList .tx,body.pane-icons #tplList input{display:none}
+body.pane-icons #rowBtns,body.pane-icons #maskBar2,body.pane-icons #tplBar,body.pane-icons #tplList{display:flex;flex-direction:column;gap:4px;padding:6px 4px;border-top:1px solid var(--line)}
+body.pane-icons #tplList{flex:0 0 auto;overflow:visible;min-height:0}
+body.pane-icons #tplList .tpl{display:block}
+body.pane-icons #rowsPane button{width:100%;padding:4px 0;text-align:center;font-size:15px;white-space:nowrap;overflow:hidden}
+body.pane-icons #rowsPane #bPaneIcons{width:auto;padding:2px 0}
+#field{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg)}
+#fieldBar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);background:var(--panel);font-size:12px}
+#fieldBar .sp{flex:1}
+#split{cursor:col-resize;background:var(--line);opacity:.6}
+/* v0.025: окна под полем строк. Тащишь окно за шапку — оно едет поверх всего (.dragging, position:fixed);
+   отпустил над полем строк — встаёт в #fieldDock на всю ширину колонки (.docked); вытащил — снова на столе. */
+#field{position:relative}
+/* v0.026, запрос «пусть вниз прокручивается и удлинять можно все окна»: когда под строками есть окна
+   (.has-dock), средняя колонка прокручивается целиком; у строк — своя высота (тянется за нижний угол),
+   пристыкованные окна растут вниз без потолка; шапка поля с вводом липнет сверху. */
+#fieldHead{position:sticky;top:0;z-index:6}
+#field.has-dock{overflow-y:auto}
+#field.has-dock #rowList{flex:0 0 auto;resize:vertical;min-height:120px;border-bottom:2px solid var(--line)}
+#field.has-dock #fieldDock{max-height:none;overflow:visible;flex:0 0 auto}
+#fieldDock{flex:0 1 auto;max-height:72%;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:0 8px 8px;border-top:1px solid var(--line);background:var(--panel)}
+#fieldDock:empty{display:none}
+#field.dock-hint{box-shadow:inset 0 0 0 2px var(--acc)}
+#field.dock-hint::after{content:"отпусти — окно встанет под строками";position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:var(--acc);color:#fff;padding:4px 10px;border-radius:4px;font-size:12px;z-index:60;pointer-events:none}
+.win.docked{position:relative !important;left:auto !important;top:auto !important;width:auto !important;flex:0 0 auto;resize:vertical;margin-top:8px}
+.win.dragging{position:fixed !important;z-index:1000 !important;opacity:.93}
+/* v0.025: 🧊 Вид — все строки карточками */
+#viewGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.vcard{background:var(--panel2);border-radius:4px;border:1px solid var(--line);position:relative}
+.vcard.cur{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+#w-view .wbody{display:flex;flex-direction:column}
+#w-view .wbody > *{flex:0 0 auto}
+#w-view .wbody > #viewCvWrap{flex:1 1 auto}
+/* v0.029: холст в обёртке, стрелки поворота — в правом верхнем углу картинки */
+#viewCvWrap{position:relative;display:flex;flex-direction:column;min-height:220px}
+#viewCvWrap canvas{outline:none}
+#viewCvWrap canvas:focus{box-shadow:0 0 0 2px var(--acc)}
+#viewArrows{position:absolute;top:6px;right:6px;display:grid;grid-template-columns:repeat(3,26px);gap:2px;opacity:.85}
+#viewArrows button{padding:0;height:24px;font-size:12px;line-height:1}
+#viewArrows:hover{opacity:1}
+#viewArrows .vpan{cursor:move;touch-action:none;font-size:14px}   /* v0.033: крест — двигать, как с Ctrl */
+.vcard canvas{width:100%;height:130px;display:block;cursor:grab;touch-action:none}
+.vcard .vl{position:absolute;left:5px;top:3px;font-size:10.5px;color:var(--dim);pointer-events:none}
+#split:hover,#split.drag{background:var(--acc);opacity:1}
 #desk{position:relative;overflow:auto;min-width:0}
 
 /* ─── столбик строк ─── */
@@ -72,16 +131,85 @@ code{font-family:var(--ff);font-size:.95em}
 body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 #rowBtns{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 10px 8px}
 #rowBtns .wide{grid-column:1 / -1}
-#rowList{flex:1;overflow:auto;padding:4px 0 10px;border-top:1px solid var(--line)}
-.rw{display:flex;gap:6px;align-items:baseline;padding:1px 10px;cursor:pointer;white-space:nowrap}
-.rw:hover{background:var(--panel2)}
-.rw.cur{background:rgba(185,140,240,.14);box-shadow:inset 3px 0 0 var(--acc)}
-.rw .no{width:26px;flex:0 0 auto;text-align:right;color:var(--dim);font-size:11px}
-.rw .bits{font-family:var(--ff);font-size:13px;overflow:hidden;text-overflow:ellipsis}
+/* Поле строк (v0.010): цифры кеглем и шрифтом страницы; внутренний блок шириной в самую длинную строку,
+   поэтому выравнивание по центру держится и при прокрутке вбок (треугольник остаётся треугольником). */
+#rowList{flex:1;overflow:auto;padding:0 0 14px}
+/* v0.015: одна сетка на всё поле — колонка номеров + 1…4 поля строк. Строка (.rw) — display:contents,
+   поэтому поля стоят ровными колонками, а у каждого своя ось: выравнивание — внутри своей колонки. */
+#rowList .rl-inner{display:inline-grid;min-width:100%;grid-template-columns:minmax(3.2em, max-content) repeat(var(--lanes, 1), minmax(max-content, 1fr));padding-top:6px}
+.rw{display:contents;cursor:pointer}
+.rw > span{white-space:pre;padding:0 8px}
+.rw:hover > span{background:var(--panel2)}
+.rw.cur > span{background:rgba(185,140,240,.14)}
+.rw .no{text-align:right;color:var(--dim);font-size:11px;position:sticky;left:0;z-index:1;background:var(--bg);display:flex;align-items:center;justify-content:flex-end}
+.rw.cur > .no{background:var(--bg);box-shadow:inset 3px 0 0 var(--acc)}
+.rw .bits{font-family:var(--ff);font-size:var(--fs);line-height:1.25}
+#rowList.multi .rw .bits{border-left:1px dashed var(--line)}
+#rowList.multi .rw .bits.la{background:rgba(185,140,240,.05)}
+#rowList.multi .rw.cur .bits.la{background:rgba(185,140,240,.22)}
+.lhrow .lh{position:sticky;top:0;z-index:2;background:var(--panel);font-size:11px;color:var(--dim);text-align:center;padding:3px 8px;border-bottom:1px solid var(--line);border-left:1px dashed var(--line);cursor:pointer}
+.lhrow .lh.act{color:var(--acc);font-weight:700;border-bottom:2px solid var(--acc)}
+.lhrow > .no{top:0;z-index:3;background:var(--panel);border-bottom:1px solid var(--line)}
+/* v0.018: поля НАЛОЖЕНИЕМ — одно пространство, у каждого поля своя ось (вертикальная черта). Позиции — в
+   полуклетках (ch/2): строка по центру начинается на полклетки раньше, и треугольник остаётся ровным;
+   совпавшие места сводятся (XOR / OR / AND / рабочее поверх). */
+.ov-inner{display:inline-block;min-width:100%;padding-top:0}
+.ovr{display:flex;align-items:stretch}
+.rw.ovr{display:flex}
+.ovr .no{min-width:3.2em;width:auto;flex:0 0 auto;position:sticky;left:0;z-index:1;background:var(--bg);text-align:right;color:var(--dim);font-size:11px;display:flex;align-items:center;justify-content:flex-end;padding:0 8px}
+.ovr .trk{position:relative;display:block;flex:0 0 auto;font-family:var(--ff);font-size:var(--fs);line-height:1.25;height:1.25em;padding:0}
+.axrow{position:sticky;top:0;z-index:4;background:var(--panel);border-bottom:1px solid var(--line)}
+.axrow .no{background:var(--panel)}
+.axrow .trk{height:1.3em}   /* кегль — тот же, что у строк: места осей заданы в ch, и ручки должны стоять над своими чертами */
+.l0{--lc:var(--acc)} .l1{--lc:var(--acc2)} .l2{--lc:var(--gold)} .l3{--lc:var(--green)}
+.ob{position:absolute;top:0;width:1ch;text-align:center;color:var(--lc)}
+.ob.b0{opacity:.42}
+.ob.la{font-weight:700}
+.ob.mix{background:rgba(255,209,102,.38);border-radius:2px;color:var(--txt);opacity:1;font-weight:700}
+.ob.mix.b0{color:var(--dim)}
+.axl{position:absolute;top:0;bottom:0;width:0;border-left:1px dashed var(--lc);opacity:.55;pointer-events:none}
+.axp{position:absolute;top:1px;width:0;height:0}   /* v0.020: точка оси в шрифте цифр — от неё ch верный */
+.axh{position:absolute;top:0;left:0;transform:translateX(-50%);cursor:ew-resize;background:var(--lc);color:#fff;border-radius:3px;font:700 10px/1.5 system-ui,sans-serif;padding:0 5px;user-select:none;touch-action:none;z-index:2}
+.axh.act{box-shadow:0 0 0 2px var(--txt)}
+.axh.sel{box-shadow:0 0 0 2px var(--red),0 0 8px var(--red)}   /* v0.022: выделенная ось — Del удалит её с полем */
+#rowList.al-center .rw .bits{text-align:center}
+#rowList.al-left .rw .bits{text-align:left}
+#rowList.al-right .rw .bits{text-align:right}
+.rw .bits input{font-family:var(--ff);font-size:var(--fs);padding:0 2px;border-color:var(--acc);max-width:100%}
+.rw .more{font-size:11px;color:var(--dim);font-family:system-ui,sans-serif}
+/* Треугольник по маске (v0.011) */
+#maskBar,#maskBar2{display:flex;gap:4px;align-items:center;padding:0 10px 6px}
+#maskBar2 select{flex:1;min-width:0}
+/* v0.012: ввод строки — над полем строк */
+#field #rowInputBar{padding:6px 10px;border-bottom:1px solid var(--line);background:var(--panel)}
+#field #rowInput{font-size:14px}
+/* v0.012: выделение — строки по номеру (.sel), символы мышью; номера в выделение текста не попадают */
+.rw .no{user-select:none;-webkit-user-select:none;cursor:pointer}
+.rw.sel > span{background:rgba(34,211,238,.16)}
+/* v0.036: у номера — числа строки; красные неподвижные биты в строках */
+/* v0.037: номер строки, отличающейся от сохранённого столбика-эталона (⚑ в своих шаблонах) */
+.rw .no.chg, .ovr .no.chg{color:var(--gold);font-weight:700;box-shadow:inset -3px 0 0 var(--gold)}
+.tpl .tref{padding:0 6px;color:var(--dim)}
+.tpl .tref.on{color:var(--gold);border-color:var(--gold)}
+.no .rc{margin-left:5px;font-size:10px;letter-spacing:0;opacity:.95;white-space:nowrap}
+.no .rcf{color:var(--red)} .no .rcm{color:var(--dim)}
+.fxr{color:var(--red) !important;font-weight:700}
+.ob.fxr{opacity:1}
+.rw.sel .no{color:var(--acc2);font-weight:700}
+#rowList ::selection{background:rgba(185,140,240,.5)}
+/* Шаблоны (v0.010) */
+#tplBar{display:flex;gap:4px;padding:0 10px 6px}
+#tplBar button{flex:1;padding:2px 4px}
+#tplList{flex:1;overflow:auto;padding:0 10px 10px;display:flex;flex-direction:column;gap:3px;min-height:60px}
+.tpl{display:flex;gap:3px}
+.tpl .tb{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis}
+.tpl .tx{padding:0 6px;color:var(--dim)}
+.tpl.mine .tb{border-color:var(--acc)}
+.tpl-sep{font-size:10.5px;color:var(--dim);margin:4px 0 0}
 
 /* ─── биты ─── */
-.bits .b1,.bit.b1{color:var(--b1)}
-.bits .b0,.bit.b0{color:var(--b0)}
+.b1,.bits .b1,.bit.b1{color:var(--b1)}   /* v0.014: раскраска 0/1 — во всех окнах, не только в строках и кресте */
+.b0,.bits .b0,.bit.b0{color:var(--b0)}
 .bitrow{font-family:var(--ff);font-size:var(--fs);line-height:1.2;white-space:pre;display:inline-flex}
 .bitrow .bit{display:inline-block;width:var(--cw);text-align:center}
 .showfix .bit.fx{color:var(--fix);text-shadow:0 0 6px rgba(255,209,102,.45)}
@@ -133,6 +261,12 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 .ptr{color:var(--pal)}
 .ptr.anti{color:var(--anti)}
 .ptr:hover{opacity:1;filter:drop-shadow(0 0 4px currentColor)}
+/* v0.035 (запрос «различай оси на бите и междубитные»): ось ПО БИТУ (нечётный палиндром) — сплошная черта
+   и точка над ней; ось В ШВЕ МЕЖДУ БИТАМИ (чётная длина; у антипалиндрома — всегда) — пунктир. При наведении
+   бит, через который идёт ось, обведён. */
+.ptr.seam::after{background:none;width:0;margin-left:0;border-left:2px dashed currentColor;transform:translateX(-1px)}
+.ptr.onbit::before{content:"";position:absolute;left:var(--ax);top:-6px;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:currentColor}
+.bit.hlc{outline:1.5px solid var(--pal);outline-offset:-1px}
 #ptrLegend{font-size:11.5px;color:var(--dim);margin-top:4px}
 #ptrLegend .p{color:var(--pal)} #ptrLegend .a{color:var(--anti)}
 
@@ -142,6 +276,13 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 .dgrid .dr{font-family:var(--ff);font-size:var(--fs);line-height:1.15;white-space:pre}
 .dgrid.al-left .dr{text-align:left} .dgrid.al-center .dr{text-align:center} .dgrid.al-right .dr{text-align:right}
 .dgrid .edgebit{background:rgba(255,209,102,.28);outline:1px solid rgba(255,209,102,.55)}
+/* v0.014: 🔍 проверка треугольника — бит краснеет по числу сломанных проверок, найденный обведён */
+.chk .dr span{cursor:pointer;border-radius:2px}
+.chk .dr span:hover{outline:1px solid var(--acc)}
+.chk .k1{background:rgba(255,209,102,.30)} .chk .k2{background:rgba(255,159,67,.42)} .chk .k3{background:rgba(255,107,107,.55)}
+.chk .cand{outline:2px solid var(--red);outline-offset:0}
+.dgrid .der{opacity:.35}                 /* v0.008: живой ⊿ — выведенное из предыдущей строки */
+.dgrid .nb{color:var(--gold)}              /* v0.008: новые биты строки «предыдущая + бит» */
 .dgrid .dr.edge-row{border-top:1px solid var(--line);margin-top:3px;padding-top:2px}
 
 /* ─── цикл: накал памяти ─── */
@@ -150,6 +291,7 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 .cyc .loop{background:rgba(110,231,160,.10)}
 .hit{cursor:pointer;border-radius:3px;padding:0 3px}
 .hit:hover{background:var(--panel2);color:var(--acc)}
+.cyc .lastc{color:var(--gold);font-weight:600;margin-left:.15em}   /* v0.006: последний столбец сортировки сдвигов */
 .cyc .lno{color:var(--dim);display:inline-block;width:3.5em;text-align:right;margin-right:.6em;font-size:.85em}
 
 /* ─── подсказки ─── */
@@ -165,6 +307,8 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
   body{overflow:auto}
   #main{position:static;display:block}
   #rowsPane{border-right:none;border-bottom:1px solid var(--line);max-height:45vh}
+  #field{max-height:55vh;border-bottom:1px solid var(--line)}
+  #split{display:none}
   #desk{overflow:visible}
   .win{position:relative !important;left:auto !important;top:auto !important;width:auto !important;height:auto !important;margin:8px 16px;resize:none}
 }
@@ -172,7 +316,7 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.005</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.037</span>
   <span class="sp"></span>
   <label class="dim" title="Шрифт цифр — тот же набор, что в Layers">🔤
     <select id="fontSel">
@@ -184,6 +328,8 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
       <option value='monospace'>Системный</option>
     </select></label>
   <label class="dim" title="Размер цифр">A <input type="range" id="fsRange" min="11" max="30" value="18" style="width:90px;vertical-align:middle"></label>
+  <button id="bTheme" title="Светлый или тёмный фон всей страницы. Выбор запоминается; пока не выбран — как в системе">☀ Светлый</button>
+  <button id="bPack" title="Окна сами прижимаются к верху: свернул, растянул или перетащил окно — нижние поднимаются и занимают место. Щелчок — выключить / включить">⤒ К верху</button>
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bLayout" title="Разложить окна заново по местам по умолчанию">📐 Разложить</button>
   <button id="bHelp" title="Окно подсказок: что здесь что и почему">📖 Подсказки</button>
@@ -191,13 +337,9 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 
 <div id="main">
   <aside id="rowsPane">
-    <div class="pane-head">Строки</div>
-    <div id="rowInputBar">
-      <input type="text" id="rowInput" placeholder="0 и 1, Enter — добавить" title="Впиши строку из 0 и 1. Enter — добавить под текущей; Shift+Enter — заменить текущую. Вставка (Ctrl+V) текста из нескольких строк добавит их все">
-      <button id="bLoad" title="📂 Загрузить текстовый файл со строками (.txt) — каждая строка файла становится строкой столбика, всё кроме 0 и 1 выбрасывается, пустые строки пропускаются. Столбик заменяется целиком (↩ вернёт). Файл можно и просто перетащить на страницу">📂</button>
-      <button id="bSaveTxt" title="💾 Сохранить столбик в текстовый файл — строка на строку, тот же вид, что читает 📂">💾</button>
-      <input type="file" id="fileIn" accept=".txt,.csv,.dat,text/plain" hidden>
-    </div>
+    <!-- v0.035: свернуть панель в столбик значков и обратно (applyPaneIcons в zz-ui.js) -->
+    <button id="bPaneIcons" type="button" title="Свернуть панель в столбик значков (подписи — во всплывающих подсказках)">◂</button>
+    <div class="pane-head">Построения</div>
     <div id="rowBtns">
       <button id="bSierpNext" title="🔺+1 — под текущей строкой новая, длиной на 1 больше: строку обкладывают нулями по краям и под каждой парой соседей пишут их XOR. Это треугольник Паскаля по модулю 2; от «1» — ровно Серпинский. Нижние строки сдвигаются, ничего не затирается; текущей становится новая — жми подряд">🔺+1 Ещё строка</button>
       <button id="bNumNext" title="🔢+1 — под текущей строкой следующий номер: строка читается как двоичное число, новая — на единицу больше. Ведущие нули сохраняются: 0011 → 0100">🔢+1 След. номер</button>
@@ -207,9 +349,73 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
       <button id="bVMirrorCur" title="⇅ ВОКРУГ ТЕКУЩЕЙ — зеркало проходит ЧЕРЕЗ текущую строку: она стоит на месте, соседние меняются парами (выше на k ↔ ниже на k). Куда отражению не хватает строк — остаётся как было. Сама себе обратная">⇅ Вокруг текущей</button>
       <button id="bDelRow" title="Удалить текущую строку">✕ Удалить</button>
       <button id="bClear" title="Очистить весь столбик">🧹 Очистить</button>
+      <!-- v0.007: манчестерский код одной кнопкой; правый щелчок — режим по кругу -->
+      <button id="bMan" class="wide" title="МАНЧЕСТЕРСКИЙ КОД. Левый щелчок — сделать; правый — сменить режим по кругу (⇉ код ↔ ⇇ раскод). ⇉ Код: каждый бит текущей строки становится парой, 1 → 10, 0 → 01; строка удваивается, новая встаёт под текущей. Жми подряд от «0» — выйдет Туэ–Морс. ⇇ Раскод: от каждой пары берётся первый бит, строка вдвое короче; пары 00 и 11 в коде не бывают — если есть, это ошибка, и она показывается, а раскод не делается">⇉ Код 1→10, 0→01</button>
     </div>
-    <div id="rowList"></div>
+    <!-- v0.011: треугольник по маске — строки 1…N, каждая заполнена маской -->
+    <div class="pane-head">△ Треугольник из строки</div>
+    <div id="maskBar">
+      <input type="text" id="maskIn" value="10" placeholder="строка или маска" title="Строка из 0 и 1 — сюда её можно вписать или вставить (Ctrl+V). По режиму: маской заполняются строки 1…N, или от неё строится Паскаль 🔺+1, или спуск ▽" style="flex:1;min-width:0;font-family:var(--ff)">
+      <label class="dim" title="Длина треугольника — числом строк: строка k — k бит">строк <input type="number" id="maskN" min="1" max="512" value="16" style="width:54px"></label>
+    </div>
+    <div id="maskBar2">
+      <select id="maskMode" title="«с начала» — каждая строка начинает маску заново: 1, 10, 101, 1010…; «лентой» — маска идёт подряд через все строки, фаза сдвигается от строки к строке">
+        <option value="pascal">🔺 Паскаль от строки</option><option value="descent">▽ спуск от строки</option>
+        <option value="start">маской, каждая с начала</option><option value="tape">маской, сплошной лентой</option>
+      </select>
+      <button id="bMaskTri" title="Построить треугольник из N строк по маске и вставить под текущей строкой (↩ вернёт)">△ Построить</button>
+    </div>
+    <!-- v0.010: шаблоны — по щелчку вставляются под текущей строкой; свои — «＋ Строку» / «＋ Столбик» -->
+    <div class="pane-head">Шаблоны</div>
+    <div id="tplBar">
+      <button id="bTplRow" title="Сохранить ТЕКУЩУЮ строку своим шаблоном (запоминается). Щелчок по шаблону вставит её под текущей">＋ Строку</button>
+      <button id="bTplAll" title="Сохранить ВЕСЬ столбик одним шаблоном (запоминается). Щелчок вставит все его строки под текущей">＋ Столбик</button>
+    </div>
+    <div id="tplList"></div>
   </aside>
+
+  <!-- v0.010: поле строк — в центре, как в других машинах. Щелчок — текущая строка; двойной щелчок —
+       править строку прямо на месте (Enter — сохранить, Esc — отменить). -->
+  <section id="field">
+    <!-- v0.026: шапка поля и ввод — липкие, когда колонка прокручивается -->
+    <div id="fieldHead">
+    <div id="fieldBar">
+      <b>Строки</b><span id="fieldInfo" class="dim"></span>
+      <span class="sp"></span>
+      <span class="dim" title="Щелчок по НОМЕРУ — выделить строку (Ctrl — добавить, Shift — диапазон), Ctrl+A — все. Мышью по битам — выделить символы. Del — удалить выделенное (строки или символы). Ctrl+C / Ctrl+V — копировать и вставить. Двойной щелчок — править строку на месте">№ — выделить · Del · Ctrl+C/V · двойной щелчок — править</span>
+      <!-- v0.036: у номеров — неподвижные·меняющиеся и 0·1; красным — неподвижные биты прямо в строках -->
+      <button id="bShowFM" title="У номера строки — сколько в ней НЕПОДВИЖНЫХ бит (разворот ⇄ их не трогает, красным) и МЕНЯЮЩИХСЯ (серым): 2·6">⇄ н·м</button>
+      <button id="bShow01" title="У номера строки — сколько в ней НУЛЕЙ и ЕДИНИЦ: 3:5">0·1</button>
+      <button id="bShowFix" title="Прямо в строках красным — неподвижные биты: те, что равны своему зеркальному (бит k и бит «длина−1−k»), разворот их не трогает">🔴 неподв.</button>
+      <select id="laneCount" title="Сколько полей строк рядом — до 4, у каждого своя ось. Рабочее поле (с ним работают окна и кнопки) — щелчок по нему, по его заголовку или ← / →">
+        <option value="1">1 поле</option><option value="2">2 поля</option><option value="3">3 поля</option><option value="4">4 поля</option>
+      </select>
+      <!-- v0.018: поля колонками или наложением, с осями -->
+      <select id="laneView" title="Как стоят поля: колонками — рядом, у каждого своя колонка; наложением — в одном пространстве, у каждого своя ось, оси тащатся за ручки и проходят друг через друга, совпавшие биты сводятся">
+        <option value="cols">колонками</option><option value="over">наложением</option>
+      </select>
+      <select id="ovOp" title="Как сводятся биты, совпавшие при наложении">
+        <option value="xor">⊕ XOR</option><option value="or">OR</option><option value="and">AND</option><option value="top">рабочее поверх</option>
+      </select>
+      <button id="bOvReset" title="Разложить оси заново — поля рядом, не накладываясь">↔ оси</button>
+      <button id="bOvOut" title="Итог наложения — в свободное поле (если все 4 заняты — в рабочее, ↩ вернёт): по каждой строке — сведённые биты слева направо">⤓ итог</button>
+      <select id="rowsAlign" title="Выравнивание строк в поле">
+        <option value="center">◫ по центру</option><option value="left">◧ влево</option><option value="right">◨ вправо</option>
+      </select>
+    </div>
+    <!-- v0.012: ввод строки — здесь, над полем: «окно для вставки строки ненашёл» -->
+    <div id="rowInputBar">
+      <input type="text" id="rowInput" placeholder="впиши или вставь строку из 0 и 1 — Enter: под текущей, Shift+Enter: заменить текущую" title="Впиши строку из 0 и 1. Enter — добавить под текущей; Shift+Enter — заменить текущую. Вставка (Ctrl+V) текста из нескольких строк добавит их все">
+      <button id="bLoad" title="📂 Загрузить текстовый файл со строками (.txt) — каждая строка файла становится строкой столбика, всё кроме 0 и 1 выбрасывается, пустые строки пропускаются. Столбик заменяется целиком (↩ вернёт). Файл можно и просто перетащить на страницу">📂</button>
+      <button id="bSaveTxt" title="💾 Сохранить столбик в текстовый файл — строка на строку, тот же вид, что читает 📂">💾</button>
+      <input type="file" id="fileIn" accept=".txt,.csv,.dat,text/plain" hidden>
+    </div>
+    </div>
+    <div id="rowList" class="al-center"></div>
+    <!-- v0.025: сюда пристыковываются окна, перетащенные за шапку под поле строк -->
+    <div id="fieldDock"></div>
+  </section>
+  <div id="split" title="Потяни — шире или уже поле строк. Двойной щелчок — как было"></div>
 
   <main id="desk">
     <!-- ЗЕРКАЛО -->
@@ -342,6 +548,185 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
       </div>
     </section>
 
+    <!-- ⇋ ПОПРАВКА ЗЕРКАЛА (v0.006, из Layers v1.625–1.626) -->
+    <section class="win" id="w-fix" data-title="⇋ Поправка зеркала">
+      <div class="whint">
+        <p>Строка делится пополам: левая половина <b>L</b>, правая <b>R</b> (при нечётной длине средний бит отдельно). Правую можно попробовать достроить из левой четырьмя способами: зеркало ⇄, зеркало с инверсией ⇄🔁, повтор ⧉, повтор с инверсией ⧉🔁. <b>Поправка D</b> — по биту на каждый бит L: 1 там, где пара не сошлась. На самой L такие <b>несимметричные</b> биты подсвечены золотом.</p>
+        <p>L + D — снова n бит: зеркало не сжимает, а раскладывает строку на «что похоже на отражение» и «где отличается». Зеркальных строк длины n всего 2^(n/2). Выигрыш — только когда D пустая или редкая: тогда хранятся половина и номера несимметричных бит. Если симметрична и сама половина, строка складывается раз за разом (Туэ–Морс — ⧉🔁 до самого низа).</p>
+        <p><b>△ От центра.</b> Тот же разбор, построенный треугольником из середины строки: вершина — средний бит (при чётной длине — средняя пара), каждый этаж добавляет по биту слева и справа. Пара либо симметрична, либо нет — это та же поправка D, прочитанная от центра наружу. Сколько этажей подряд без золота — такой длины палиндром стоит в центре.</p>
+        <p><b>Цена</b> — грубая мерка: на этаже 1 бит «сложено ли», 2 бита «каким зеркалом», средний бит, поправка (сырьём или номерами единиц). Случайная строка выходит в n+1 — честное «короче нет».</p>
+        <p><b>⇋ Поправки → столбик</b> — поправки всех строк одним столбиком вместо строк (↩ вернёт). Поодиночке поправка не сжимает, но у разных строк поправки бывают одинаковыми: одна D на всю пачку. Вид зеркала «общий» стоит 2 бита на всю пачку; «у каждой свой» — 2 бита в начале каждой строки (00 ⇄, 01 ⇄🔁, 10 ⧉, 11 ⧉🔁), вид тоже становится битами. Столбик потом можно разбирать всеми окнами — поправки поправок.</p>
+      </div>
+      <div class="wbody">
+        <div class="tools">
+          <span id="fixHead" class="dim"></span>
+        </div>
+        <div id="fixView" class="dgrid al-left"></div>
+        <div id="fixOut" class="out" style="margin-top:6px"></div>
+        <div class="tools" style="margin-top:8px">
+          <span style="font-weight:600">△ От центра</span>
+          <span id="fixCenterHead" class="dim"></span>
+        </div>
+        <div id="fixCenter" class="dgrid al-center"></div>
+        <div class="tools" style="margin-top:8px">
+          <button id="bFixLayer" title="⇋ ПОПРАВКИ → СТОЛБИК: каждая строка столбика заменяется своей поправкой D (строки в 1 бит пропускаются — у них нет половин). ↩ вернёт прежний столбик">⇋ Поправки → столбик</button>
+          <select id="fixKind" title="Вид зеркала для столбика: общий — один на все строки (у которого единиц меньше всего), 2 бита на пачку; у каждой свой — 2 бита вида в начале каждой строки">
+            <option value="common">вид общий</option><option value="own">у каждой свой</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- ⊿ СЛОЖИТЬ В ФОРМУ (v0.006, из Layers v1.627) -->
+    <section class="win" id="w-fold" data-title="⊿ Сложить в форму">
+      <div class="whint">
+        <p>Лента (текущая строка или все строки подряд) режется на куски длиной «первая», первая+шаг, первая+2·шаг…: при 1 и 1 — треугольник 1, 2, 3, 4… бита, при шаге 0 — прямоугольник ширины «первая». Куски встают столбиком вместо строк (↩ вернёт).</p>
+        <p><b>Живой показ.</b> Треугольник из текущей строки (или из всех подряд) перестраивается сам, стоит строке измениться любым инструментом — кодом ⇉, 🔺+1, поправкой, вводом. Строка, которая выводится из предыдущей (🔺+1 от неё или повтор), — тусклая: в ней нового нет. У строки «предыдущая + бит» тусклое начало, новые биты — золотом. Яркие строки целиком — это и есть новые сведения. «⊿ Сложить» кладёт то же самое в столбик.</p>
+        <p><b>Форма бесплатна</b> — её знают обе стороны, хранить надо только длину. Но порядка она не добавляет: это линза, в ней порядок либо виден, либо нет. Строк, где каждая строка треугольника — предыдущая плюс 1 бит, из 10 бит всего 16 из 1024. Зато правильная форма вскрывает спрятанный порядок: Серпинский, выписанный подряд, в строке — мусор, а в треугольнике каждая строка — 🔺+1 от предыдущей, нового ноль бит. Картинка, вытянутая в строку, оживает в прямоугольнике своей ширины. Формы можно перебирать — выбор формы стоит всего нескольких бит.</p>
+      </div>
+      <div class="wbody">
+        <div class="tools">
+          <select id="foldSrc" title="Что складывать"><option value="cur">текущая строка</option><option value="all">все строки подряд</option></select>
+          <label class="dim" title="Длина первой строки; при шаге 0 — ширина прямоугольника">первая <input type="number" id="foldFirst" min="1" max="100000" value="1" style="width:56px"></label>
+          <label class="dim" title="На сколько бит каждая следующая строка длиннее: 1 — треугольник, 0 — прямоугольник">шаг <input type="number" id="foldStep" min="0" max="1000" value="1" style="width:48px"></label>
+          <button id="bFold" title="Разрезать ленту и поставить куски столбиком вместо строк (↩ вернёт)">⊿ Сложить</button>
+          <select id="foldAlign" title="Выравнивание строк треугольника в окне">
+            <option value="center">◫ по центру</option><option value="left">◧ влево</option><option value="right">◨ вправо</option>
+          </select>
+        </div>
+        <div id="foldOut" class="out"></div>
+        <!-- v0.008: живой треугольник — перестраивается сам при каждой смене строки -->
+        <div id="foldView" class="dgrid al-center" style="margin-top:6px"></div>
+      </div>
+    </section>
+
+    <!-- ⇅ СОРТИРОВКА СДВИГОВ (v0.006, только здесь) -->
+    <section class="win" id="w-bwt" data-title="⇅ Сортировка сдвигов">
+      <div class="whint">
+        <p>Под строкой пишутся все её циклические сдвиги — квадратная таблица. Таблица <b>сортируется</b>, и хранится только <b>последний столбец</b> и номер строки, где встал оригинал. Это преобразование Барроуза — Уилера, на нём построен архиватор bzip2.</p>
+        <p>Порядок сортировки бесплатен — отсортировать может любой, — и он кодирует порядок в строке: по последнему столбцу и номеру строка восстанавливается целиком. Отсортируй последний столбец — получишь первый; пары «последний → первый» — соседние биты исходной строки, и по ним таблица собирается обратно.</p>
+        <p>Счёт честный: n бит столбца + номер (log₂n бит) — чуть больше исходного. Выигрыш в другом: сортировка сводит похожие биты вместе, в длинные серии, а серии записываются короче. Почти периодическая <code>011011011011010011</code> — 12 серий, после сортировки <code>111111001111100000</code> — 4. У случайной строки серии остаются короткими, выигрыша нет.</p>
+      </div>
+      <div class="wbody">
+        <div class="tools">
+          <button id="bBwt" title="Отсортировать сдвиги текущей строки: таблица, последний столбец, номер, серии до и после, проверка обратного хода">⇅ Сортировать</button>
+          <button id="bBwtPut" title="Поставить последний столбец под текущей строкой (номер запомнится для обратного хода)">⤓ Столбец под текущей</button>
+          <label class="dim" title="Номер строки оригинала в отсортированной таблице — нужен для обратного хода">№ <input type="number" id="bwtIdx" min="0" value="0" style="width:64px"></label>
+          <button id="bUnbwt" title="ОБРАТНЫЙ ХОД: текущая строка читается как последний столбец, по номеру № восстанавливается исходная и встаёт под текущей">↶ Обратный ход</button>
+        </div>
+        <div id="bwtOut" class="out"></div>
+        <div id="bwtView" class="cyc" style="margin-top:6px"></div>
+      </div>
+    </section>
+
+    <!-- 📡 СИГНАЛ ПО БАЗЕ (v0.013) -->
+    <section class="win" id="w-sig" data-title="📡 Сигнал по базе">
+      <div class="whint">
+        <p>Каждый бит сообщения — <b>одна строка</b>. 0 — строка <b>базы</b> (маска, повторённая на длину строки: <code>10</code> → 1, 10, 101, 1010…), 1 — <b>отступ</b> от базы: её инверсия или сплошные единицы (как в вопросе: 11, 111…). Строки идут треугольником (строка j на бит длиннее предыдущей) или все одной длины.</p>
+        <p>Это <b>расширение спектра</b> — так передают GPS и сотовая связь CDMA: один бит растягивается на k «чипов». Сведений в строке 1 бит, остальное — запас прочности. Читается строка по тому, к чему она ближе — к базе или к отступу (расстояние Хэмминга: сколько бит не совпало). Между базой и отступом d несовпадающих бит, и строка переживает до ⌊(d−1)/2⌋ испорченных.</p>
+        <p>У инверсии d — вся длина строки, у «сплошных единиц» при базе 10 — только нули базы, примерно половина: запас вдвое меньше. Поэтому настоящие системы шлют ± — базу и её инверсию. Попробуй шум 20–30 % и сравни.</p>
+        <p>«📡 В столбик» кладёт строки сигнала под текущей и выделяет их; «📡 Прочитать» читает выделенные строки (ничего не выделено — все) и сверяет с последним отправленным. Строки можно и испортить руками — двойным щелчком.</p>
+      </div>
+      <div class="wbody">
+        <div class="tools">
+          <label class="dim" title="Сообщение — биты, которые передаём, по строке на бит">сообщение <input type="text" id="sigMsg" value="1101" style="width:140px;font-family:var(--ff)"></label>
+          <button id="bSigTake" title="Взять текущую строку сообщением">⤓ из текущей</button>
+        </div>
+        <div class="tools">
+          <label class="dim" title="База — маска, повторённая на длину строки">база <input type="text" id="sigBase" value="10" style="width:64px;font-family:var(--ff)"></label>
+          <select id="sigDev" title="Как пишется 1: инверсией базы (запас — вся длина) или сплошными единицами (запас — только нули базы)">
+            <option value="inv">1 → инверсия базы</option><option value="ones">1 → сплошные единицы</option>
+          </select>
+        </div>
+        <div class="tools">
+          <select id="sigShape" title="Длины строк: треугольник — каждая на бит длиннее; или все одной длины">
+            <option value="tri">треугольником</option><option value="const">одной длины</option>
+          </select>
+          <label class="dim" title="Длина первой строки (треугольник) или всех строк">длина <input type="number" id="sigLen" min="1" max="4096" value="8" style="width:58px"></label>
+          <label class="dim" title="Шум: сколько процентов бит перевернуть случайно при отправке">шум % <input type="number" id="sigNoise" min="0" max="100" value="0" style="width:52px"></label>
+        </div>
+        <div class="tools">
+          <button id="bSigSend" title="Сделать строки сигнала (с шумом, если задан) и поставить под текущей; они станут выделенными">📡 В столбик</button>
+          <button id="bSigRead" title="Прочитать выделенные строки (ничего не выделено — все): у каждой — к чему ближе, к базе или к отступу">📡 Прочитать</button>
+        </div>
+        <div id="sigOut" class="out"></div>
+        <div id="sigView" class="cyc" style="margin-top:6px"></div>
+      </div>
+    </section>
+
+    <!-- 🔍 ПРОВЕРКА ТРЕУГОЛЬНИКА (v0.014) -->
+    <section class="win" id="w-chk" data-title="🔍 Проверка треугольника">
+      <div class="whint">
+        <p>Треугольник XOR — это код, исправляющий ошибки. Каждая тройка «два бита сверху, один под ними» — <b>проверка</b>: a ⊕ b ⊕ c = 0. Внутренний бит входит в <b>три</b> проверки сразу — снизу в одну и сверху в две, — то есть принадлежит нескольким линиям треугольника. Испорченный бит ломает ровно свои проверки, и общий у сломанных — только он: место находится, бит переворачивается обратно. Так устроены и сетки с чётностями по строкам и столбцам (RAID, QR-код).</p>
+        <p>Треугольник берётся из выделенных строк (ничего не выделено — все) и узнаётся по длинам: строки короче на бит — <b>▽ спуск</b>, длиннее на бит — <b>🔺 Паскаль</b> (у него за краями нули, и у крайних бит проверка из двух). Чем больше у бита сломанных проверок, тем он краснее; найденный — обведён.</p>
+        <p><b>Щелчок по биту в окне переворачивает его</b> — так можно испортить треугольник и посмотреть, найдёт ли. «🩹 Исправить» переворачивает бит, у которого сломанных проверок больше, чем целых, и повторяет, пока есть выгода: так работают декодеры LDPC (Галлагер, 1962). Одну ошибку находит всегда, несколько — часто, но не всегда. Окно живое: после правок строк пересчитывается само. ↩ возвращает.</p>
+        <p>Попробуй: «△ Треугольник из строки» → ▽ спуск от строки, выдели его строки по номерам (Shift), «🔍 Проверить» — ноль сломанных; щёлкни бит — найдётся; «🩹 Исправить».</p>
+      </div>
+      <div class="wbody">
+        <div class="tools">
+          <select id="chkMode" title="Вид треугольника: узнать по длинам строк, или задать самому">
+            <option value="auto">вид — по длинам</option><option value="descent">▽ спуск</option><option value="pascal">🔺 Паскаль</option>
+          </select>
+          <button id="bChk" title="Взять выделенные строки (ничего не выделено — все) и проверить все тройки">🔍 Проверить</button>
+          <button id="bChkFix" title="Исправить: переворачивать самый выгодный бит, пока сломанные проверки убывают (↩ вернёт)">🩹 Исправить</button>
+        </div>
+        <div id="chkOut" class="out"></div>
+        <div id="chkView" class="dgrid al-center chk" style="margin-top:6px"></div>
+      </div>
+    </section>
+
+    <!-- 🧊 ВИД — СТРОКА КАК ЛЕСЕНКА (v0.024) -->
+    <section class="win" id="w-view" data-title="🧊 Вид">   <!-- v0.026: холст растёт вместе с окном (#w-view .wbody — колонкой); режим «все вместе» -->
+      <div class="whint">
+        <p>Из отвлечения пользователя: «1 — вид сбоку на линию, 0 — вид на неё сверху: 0 — линия от экрана ко мне, 1 — линия лежит на экране». Каждый бит — отрезок: <b>1</b> лежит на экране и идёт вправо, <b>0</b> идёт от экрана к тебе. Строка — лесенка из таких отрезков. Взгляд крутится мышью (тащи по картинке) или кнопками.</p>
+        <p><b>Спереди</b> единицы — чёрточки, нули — точки: это азбука Морзе. Честная проекция, правда, сливает точки с концами чёрточек, и видна только сплошная черта длиной в число единиц — порядок пропадает. <b>Обойти лесенку кругом — это крест зеркал</b>: спереди — сама строка, слева — 🔁 инверсия (чёрточки — нули), сзади — ⇄ разворот, справа — ⇄🔁 инв-разворот.</p>
+        <p><b>Крутится от текущего вида</b>: мышь и стрелки поворачивают вокруг осей экрана — как картинка стоит сейчас, а не вокруг осей мира. <b>Ctrl + перетаскивание</b> — просто передвинуть, без кручения: на схваченной строке — двигается она, на пустом месте — вся картинка. <b>Ось и плоскость</b> (галка): полупрозрачная плоскость строки (у стопки — текущей) и вертикальная ось — видно, как всё повёрнуто.</p>
+        <p><b>Кольца-плоскости, как в 3D-программах</b> (галка «оси и плоскости»): вокруг сцены — три полупрозрачных кольца: <span style="color:var(--red)">X</span>, <span style="color:var(--green)">Y</span>, <span style="color:#4d8cff">Z</span>, и их оси. Наведи на кольцо — оно подсветится; <b>тяни за кольцо — крутится только вокруг его оси</b>, остальные стоят на месте. Тянешь внутри колец — свободный поворот, как раньше.</p>
+        <p><b>Закреплённая ось</b>: потянул за кольцо — его ось закрепляется (кольцо остаётся ярким), и стрелки ▲ ▼ ◀ ▶ / клавиши крутят по 15° только вокруг неё. Снять — свободный поворот мышью внутри колец или Esc. <b>✥ крест</b> в центре стрелок: нажми и тяни — картинка (или схваченная строка) двигается, как с Ctrl, а крест стоит на месте.</p>
+        <p><b>Крутить по отдельности</b> — галка, по умолчанию выключена: тогда щелчок по лесенке только выбирает строку (делает её текущей), а мышь крутит всю стопку. <b>⟲ сброс строк</b> возвращает все накрученные строки на место (и масштаб).</p>
+        <p><b>Схватить одну строку</b> («все вместе», с галкой «крутить по отдельности»): щелчок по её лесенке — строка схвачена (становится текущей и ярче); тянешь её — крутится только она, вокруг своего центра, стопка стоит. Щелчок по пустому месту — отпустить; тогда тянется вся стопка. <b>Стрелки ▲ ▼ ◀ ▶</b> в правом верхнем углу картинки и стрелки клавиатуры (щёлкни по картинке, чтобы она взяла клавиши) крутят на 15° от текущего вида: в «все вместе» — всю стопку, в «все строки» — карточку текущей строки, иначе — картинку. ⟲ сбрасывает поворот схваченной строки или масштаб. Esc — отпустить.</p>
+        <p><b>Масштаб</b> — колесом мыши, к точке под курсором; <b>сдвинуть</b> картинку — Shift + перетаскивание или правой кнопкой; <b>двойной щелчок</b> — масштаб и место как было. На карточках «все строки» колесо увеличивает свою карточку.</p>
+        <p><b>Гребёнка</b> (выбор «лесенка / гребёнка»): каждый бит стоит на своём месте в ряд, как буквы, — 1 палочкой вверх, 0 палочкой к тебе. Спереди это штрихкод «| | · |», и порядок виден целиком. Сверху (поворот на 90° вокруг оси ряда) стоячие палочки становятся точками, лежащие встают — это 🔁 инверсия; ещё 90° — палочки вернутся, у палочки нет верха и низа. Сзади — ⇄ разворот. Сбоку, вдоль ряда, все палочки встают одна за другой — остаётся крестик. «Все вместе» для гребёнок — объёмный штрихкод всего столбика.</p>
+        <p><b>Все вместе</b>: все строки в одной сцене, лесенки одна под другой — как треугольник в поле строк, — и крутится вся стопка разом, мышью или кнопками. Текущая строка ярче и толще.</p>
+        <p><b>Все строки</b> (выбор вверху окна): каждая строка — своя карточка, и <b>каждую можно крутить отдельно</b>, таща по ней мышью. Щелчок по карточке без поворота делает строку текущей. Кнопки видов разворачивают сразу все карточки.</p>
+        <p><b>Сверху</b> виден весь путь — полная запись строки: путь по решётке из k шагов вправо и n−k к себе. Таких путей в ту же точку — C(n, k), число из треугольника Паскаля; Серпинский (Паскаль по модулю 2) говорит, чётно ли оно: нечётно ровно тогда, когда k AND (n−k) = 0 (теорема Люка). <b>Наискосок</b> единицы и нули — отрезки разных направлений, и строка снова читается целиком.</p>
+      </div>
+      <div class="wbody">
+        <div class="tools">
+          <select id="viewMode" title="Одна текущая строка крупно или все строки карточками — каждую можно крутить отдельно">
+            <option value="one">одна строка</option><option value="all">все строки</option><option value="stack">все вместе</option>
+          </select>
+          <select id="viewShape" title="Лесенка — отрезки друг за другом (1 вправо, 0 к тебе); гребёнка — каждый бит на своём месте в ряд (1 — палочка вверх, 0 — палочка к тебе): спереди штрихкод «| | · |»">
+            <option value="stair">лесенка</option><option value="comb">гребёнка</option>
+          </select>
+          <label class="dim" title="Полупрозрачные плоскость строки (у стопки — текущей) и гизмо поворота: кольца-плоскости X, Y, Z — схватил кольцо, крутится только вокруг его оси"><input type="checkbox" id="viewGuides" checked> оси и плоскости</label>
+          <!-- v0.031: крутить строки по отдельности — только с галкой; сброс накрученного -->
+          <label class="dim" title="«Все вместе»: схватить лесенку и крутить / двигать (Ctrl) только её. Выключено — щелчок по лесенке только выбирает строку, а мышь крутит всю стопку"><input type="checkbox" id="viewSolo"> крутить по отдельности</label>
+          <button id="bViewReset" title="Вернуть все отдельно накрученные строки на место: их повороты и сдвиги, повороты карточек, а заодно масштаб и сдвиг картинки. Направление взгляда не трогается">⟲ сброс строк</button>
+          <span class="dim" id="viewModeHint"></span>
+        </div>
+        <div class="tools" id="viewBtns">
+          <button data-v="top" title="Сверху: весь путь по решётке">⬇ сверху</button>
+          <button data-v="front" title="Спереди: единицы — чёрточки, нули — точки (сама строка)">спереди</button>
+          <button data-v="left" title="Слева: чёрточки — нули, по порядку (🔁 инверсия)">слева</button>
+          <button data-v="back" title="Сзади: единицы, задом наперёд (⇄ разворот)">сзади</button>
+          <button data-v="right" title="Справа: нули, задом наперёд (⇄🔁 инв-разворот)">справа</button>
+          <button data-v="iso" title="Наискосок: объём, всё видно">◇ наискосок</button>
+        </div>
+        <!-- v0.029: стрелки поворота в правом верхнем углу картинки; холст берёт фокус — стрелки клавиатуры тоже крутят -->
+        <div id="viewCvWrap">
+          <canvas id="viewCv" tabindex="0" style="width:100%;flex:1 1 auto;min-height:220px;height:auto;display:block;cursor:grab;background:var(--panel2);border-radius:4px;touch-action:none" title="Тащи мышью — повернуть взгляд"></canvas>
+          <div id="viewArrows" title="Повернуть на 15°: схваченную строку («все вместе»), карточку текущей строки («все строки») или картинку">
+            <span></span><button data-t="0,15" title="Наклонить к виду сверху (↑); если ось закреплена (потянул за кольцо) — вокруг неё">▲</button><button data-t="reset" title="Сбросить: у схваченной строки — её поворот и сдвиг, иначе — масштаб и сдвиг">⟲</button>
+            <button data-t="-15,0" title="Повернуть влево (←); если ось закреплена — вокруг неё">◀</button><button data-t="pan" class="vpan" title="Крест: нажми и тяни — двигает, как с Ctrl (картинку или схваченную строку), а сам стоит на месте">✥</button><button data-t="15,0" title="Повернуть вправо (→); если ось закреплена — вокруг неё">▶</button>
+            <span></span><button data-t="0,-15" title="Наклонить вниз (↓); если ось закреплена — вокруг неё">▼</button><span></span>
+          </div>
+        </div>
+        <div id="viewGrid" style="display:none"></div>
+        <div id="viewOut" class="out" style="margin-top:6px"></div>
+      </div>
+    </section>
+
     <!-- ПОДСКАЗКИ -->
     <section class="win" id="w-help" data-title="📖 Подсказки">
       <div class="wbody" id="helpBody">
@@ -355,16 +740,38 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
         <p>Строку Серпинского с любым номером можно получить сразу, без треугольника: бит k строки n равен 1, когда k AND n = k (теорема Люка). У строки 1 000 000 таких бит 128. «Любую по номеру» — да; «любую по содержанию» — нет: адрес такой строки не короче её самой.</p>
         <h4>🔺+1 и ▽ — два разных правила</h4>
         <p>🔺+1 обкладывает строку нулями по краям — Паскаль, строка растёт: 1 → 11 → 101 → 1111 → 10001. ▽ берёт только внутренние пары — строка сжимается: 1111 → 000 → 00 → 0. Вверх от 1111 однозначно: край всегда 1, и из него восстанавливаются все биты строки выше.</p>
+        <h4>⇉ Код 1 → 10, 0 → 01</h4>
+        <p>Манчестерский код (старый Ethernet, RFID-метки): каждый бит становится парой. Строка удваивается, а сведений в ней столько же — второй бит пары всегда инверсия первого. Это не сжатие, а избыточность ради надёжности: трёх одинаковых бит подряд не бывает, пары 00 и 11 запрещены (ошибка видна), единиц ровно половина. Правило, повторённое k раз от «0», даёт Туэ–Морса: 0 → 01 → 0110 → 01101001… Поэтому Туэ–Морс складывается в ⇋ Поправке ⧉🔁 до самого низа. Кнопка одна: правый щелчок меняет режим — код или раскод.</p>
+        <h4>Поле строк и шаблоны</h4>
+        <p>Строки — в центре, крупно, шрифтом и кеглем страницы (🔤 и A в шапке). Щелчок — сделать строку текущей, ↑/↓ — ходить по ним. <b>Двойной щелчок — править строку прямо на месте</b>: Enter сохраняет (всё, кроме 0 и 1, выбрасывается), Esc отменяет; ↩ вернёт. Выравнивание — своё у поля. Разделитель между строками и окнами тянется.</p>
+        <p><b>Шаблоны</b> слева: щелчок вставляет шаблон под текущей строкой. Встроенные — зерно, Серпинский, Туэ–Морс, номера, палиндромы, периодические. Свои: «＋ Строку» сохраняет текущую строку, «＋ Столбик» — весь столбик; они запоминаются. ✕ — удалить свой, двойной щелчок — переименовать.</p>
+        <h4>Изменённые строки — номер золотом</h4>
+        <p>Номер строки подсвечивается золотом, если строка отличается от <b>сохранённой версии</b> — своего шаблона-столбика, отмеченного <b>⚑</b> в списке шаблонов (по умолчанию — последний сохранённый «＋ Столбик»). Вернул строку как было — подсветка гаснет сама. Сравнение — строка в строку по номеру, в рабочем поле; строки, которых в эталоне нет, тоже подсвечиваются. Над полем — сколько строк изменено. ⚑ на другом шаблоне — сравнивать с ним, ⚑ ещё раз — выключить сравнение.</p>
+        <h4>Числа у номеров и неподвижные биты</h4>
+        <p>Над строками три переключателя. <b>⇄ н·м</b> — у номера строки мелко: сколько в ней неподвижных бит (красным) и меняющихся (серым), например 2·6. Неподвижный бит равен своему зеркальному — бит k и бит «длина−1−k», — и разворот ⇄ его не трогает. <b>0·1</b> — сколько нулей и единиц, например 3:5. <b>🔴 неподв.</b> — неподвижные биты прямо в строках красным, во всех полях и в наложении. Числа у номеров — по рабочему полю.</p>
+        <h4>До 4 полей строк</h4>
+        <p>Над строками — «1 поле … 4 поля»: поле строк делится на колонки, у каждой свои строки и <b>своя ось</b> — треугольник в каждой выравнивается по своему центру; номер строки общий. <b>Рабочее поле</b> одно: с ним работают все окна, кнопки, шаблоны, ввод, выделение, Del и Ctrl+C/V. Сделать рабочим другое — щелчок по нему, по его заголовку или ← / →. Поле, которое стало лишним при уменьшении их числа, не стирается — вернётся, когда полей снова станет больше.</p>
+        <h4>Поля наложением — оси</h4>
+        <p>При 2–4 полях выбери «наложением»: поля встают в одно пространство, и у каждого своя <b>ось</b> — вертикальная черта своего цвета, с ручкой-номером наверху. Строки поля выравниваются по его оси (по центру, влево или вправо — тем же выбором выравнивания). <b>Ручку тащи мышью</b>: оси проходят друг через друга, треугольники наезжают один на другой, и совпавшие биты сводятся — ⊕ XOR, OR, AND или «рабочее поверх»; сведённый бит подсвечен, подсказка на нём говорит, из чего он. «↔ оси» разводит поля рядом, «⤓ итог» кладёт наложение в свободное поле для дальнейшей работы. <b>Щелчок по ручке</b> (без перетаскивания) выделяет ось — она обводится красным, — и <b>Del удаляет её вместе с полем</b>; ↩ вернёт, Esc или щелчок по полю снимает выделение. Щелчок по биту поля делает его рабочим. Править строку на месте и выделять символы — в виде «колонками».</p>
+        <h4>Окна под полем строк</h4>
+        <p>Любое окно можно утащить за шапку в среднюю колонку: пока тащишь, оно едет поверх всего, над полем строк появляется подсказка «отпусти — окно встанет под строками». Пристыкованное окно стоит под строками на всю ширину колонки; тянется вниз за угол, сворачивается как обычно. Вытащил за шапку на стол — снова плавает. «📐 Разложить» возвращает все окна на стол.</p>
+        <h4>⤒ К верху</h4>
+        <p>Кнопка в шапке: окна сами прижимаются к верху. Свернул окно, растянул, перетащил — нижние поднимаются и занимают место, дыр не остаётся. Выключишь — окна стоят там, где их поставили.</p>
+        <h4>Выделение, Del, Ctrl+C / Ctrl+V</h4>
+        <p>Щелчок по <b>номеру</b> строки выделяет её (Ctrl — добавить к выделению, Shift — диапазон), Ctrl+A — все строки, Esc — снять. Мышью по битам выделяются отдельные символы, номера в выделение не попадают. <b>Del</b> удаляет выделенное: символы — из строк, строки — целиком; ничего не выделено — текущую строку. <b>Ctrl+C</b> копирует только биты, строка на строку. <b>Ctrl+V</b> вставляет строки из буфера под текущей, а если в одной строке выделены символы и в буфере одна строка — заменяет выделенное. ↩ возвращает всё.</p>
+        <h4>△ Треугольник по маске</h4>
+        <p>Слева, над шаблонами: маска из 0 и 1 (любая) и число строк N. Строка k длиной k заполняется маской. «Каждая с начала» — маска у каждой строки начинается заново: от <code>10</code> выйдет 1, 10, 101, 1010… «Сплошной лентой» — маска идёт подряд через все строки, как лента, свёрнутая в ⊿: если длина маски не делит длины строк, фаза сдвигается, и в треугольнике проступают косые полосы. Треугольник встаёт под текущей строкой; ↩ вернёт.</p>
         <h4>Окна</h4>
-        <p>Каждое окно тащится за шапку, тянется за правый нижний угол, «–» сворачивает, «?» открывает подсказку. «📐 Разложить» возвращает всё на места.</p>
+        <p><b>⧉ в шапке</b> — вынести окно в отдельное окно браузера (например, на второй монитор): оно продолжает жить — пересчитывается, крутится, следит за строками. Закрыл то окно или нажал ⧉ ещё раз — окно вернулось на своё место. Если браузер не открыл окно — разреши всплывающие окна для этой страницы.</p>
+        <p>Каждое окно тащится за шапку, тянется за правый нижний угол, «–» или <b>двойной щелчок по шапке</b> сворачивает и разворачивает, «?» открывает подсказку. «📐 Разложить» возвращает всё на места.</p>
       </div>
     </section>
   </main>
 </div>
 <div id="msg"></div>
 
-<script src="zz-core.js?v=0005"></script>
-<script src="zz-ui.js?v=0005"></script>
+<script src="zz-core.js?v=0037"></script>
+<script src="zz-ui.js?v=0037"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>

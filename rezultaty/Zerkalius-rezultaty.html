@@ -1,4 +1,4 @@
-<!-- Zerkalius Результаты — v0.001. Витрина: что получилось у треугольника Аниматрицы, готовым к просмотру — анимации и
+<!-- Zerkalius Результаты — v0.003. Витрина: что получилось у треугольника Аниматрицы, готовым к просмотру — анимации и
      картинки с короткой подписью, у каждой ссылка на разбор в «Исследовании». Считается не здесь: всё собрано заранее
      (Python по тем же правилам, что в Треугольнике), страница только показывает.
      v0.001: заведена 2026-09-25 по слову пользователя («это в методичку, может и в хаб? все результаты — очень интересное
@@ -11,7 +11,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Результаты — v0.001</title>
+<title>Zerkalius Результаты — v0.003</title>
 <style>
   :root{ --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598;
     --up:#7cd4ff; --gold:#ffcc00; }
@@ -36,6 +36,9 @@
   .card h3{ margin:9px 0 3px; font-size:14.5px; font-weight:600; color:#fff; }
   .card p{ margin:0; font-size:12.5px; line-height:1.5; color:var(--dim); flex:1; }
   .card .more{ margin-top:6px; font-size:12px; }
+  /* v0.002: ▶ в Треугольнике — открыть этот случай с заготовкой и запущенной Аниматрицей */
+  a.go{ display:inline-block; margin-left:8px; padding:1px 8px; border:1px solid currentColor; border-radius:4px; text-decoration:none; font-weight:600; }
+  a.go:hover{ filter:brightness(1.3); }
   .num{ color:var(--gold); font-family:Consolas, monospace; }
   figure{ margin:0; }
   figcaption{ font-size:12px; color:var(--dim); margin-top:5px; }
@@ -59,7 +62,8 @@
 <h1>zerkalius · результаты</h1>
 <p class="sub">Что получилось у треугольника Аниматрицы — готовым к просмотру. Щелчок по картинке — в полный размер (и ×2, ×4).
 Разбор каждого пункта — в <a href="../issledovanie/Zerkalius-issledovanie.html">«Исследовании»</a>, сделать то же самому — в
-<a href="../Zerkalius-treugolnik.html">«Треугольнике»</a>.</p>
+<a href="../Zerkalius-treugolnik.html">«Треугольнике»</a>. У каждого случая — <b>▶ в Треугольнике</b>: откроет Треугольник
+с этой заготовкой и уже запущенной Аниматрицей (твоё состояние Треугольника при этом не трогается).</p>
 
 <div class="hero">
   <figure><img src="cikl-1024.gif" alt="Весь цикл треугольника 1024 строк" loading="lazy">
@@ -79,8 +83,10 @@
   </ul>
 </div>
 
-<h2>Все ромбы цикла — 1024 строки, семь размеров</h2>
-<p class="lead">Кадры цикла, разрезанные на ромбы, и все РАЗНЫЕ рисунки ромбов в порядке появления — первые 300 каждого размера
+<h2>Уникальные ромбы цикла — 1024 строки, семь размеров</h2>
+<p class="lead"><b>Только уникальные: повторы отброшены — это словарь рисунков (сжатие), а не ход волны, волна здесь порвана.</b>
+Подряд, с повторами и номером рисунка у каждого кадра — кнопка «🎞 Все ромбы цикла подряд» в Треугольнике (v0.029).
+Кадры цикла, разрезанные на ромбы, и все РАЗНЫЕ рисунки ромбов в порядке появления — первые 300 каждого размера
 (первые — ещё разгон, с нулями). Крупные ромбы не повторяются никогда, мелкие — повторяются чаще. Число рядом —
 сколько разных рисунков набирается за весь цикл.</p>
 <div class="grid">
@@ -192,6 +198,42 @@
     if (e.target === v || e.target.classList.contains('img')) close();
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && v.classList.contains('on')) close(); });
+})();
+</script>
+<script>
+/* v0.002, запрос пользователя: «ссылки на переход с заготовкой и нажатым плеером Аниматрицы для каждого случая
+   разобранного». По картинке карточки — заготовка для Треугольника (?n=строк, r=правило, rh=шаг ромбов, let=1 —
+   буквы, bands=1 — полосы периодов, axis=1 — ось, trim=0 — без обрезки фона); Треугольник v0.027 читает её из
+   адреса, ставит правило 90 / сид 1 / обрезку, если не сказано иное, включает Аниматрицу и плеер целыми циклами. */
+(function () {
+  const GO = {
+    "cikl-1024.gif": "n=1024",
+    "romby-1024-512.gif": "n=1024&rh=512", "romby-1024-256.gif": "n=1024&rh=256", "romby-1024-128.gif": "n=1024&rh=128",
+    "romby-1024-64.gif": "n=1024&rh=64", "romby-1024-32.gif": "n=1024&rh=32", "romby-1024-16.gif": "n=1024&rh=16",
+    "romby-1024-8.gif": "n=1024&rh=8",
+    "../issledovanie/cikl.gif": "n=128", "../issledovanie/cikl-128.png": "n=128",
+    "../issledovanie/polosy-periodov.png": "n=128&bands=1", "../issledovanie/razgon-tau-128.png": "n=128",
+    "../issledovanie/rodnik-128.png": "n=128",
+    "../issledovanie/romby-film.gif": "n=128&rh=32", "../issledovanie/romb-verhniy-64.gif": "n=128&rh=32",
+    "../issledovanie/romby-bity.gif": "n=128&rh=32", "../issledovanie/nadpis-155.png": "n=128&rh=32&let=1",
+    "../issledovanie/romby-nalozhenie.png": "n=128&rh=32",
+    "../issledovanie/mirror-xor-cycle.gif": "n=128&axis=1", "../issledovanie/shestiugolnik-155.png": "n=128&axis=1",
+    "../issledovanie/pravilo30.gif": "r=30&n=128", "../issledovanie/pravilo110.gif": "r=110&n=128",
+    "../issledovanie/pravilo150.gif": "r=150&n=128", "../issledovanie/bez-obrezki.gif": "n=128&trim=0"
+  };
+  const say = (q) => { const u = new URLSearchParams(q); return "правило " + (u.get("r") || "90") + ", " + u.get("n") + " строк" +
+    (u.get("rh") ? ", ромбы " + u.get("rh") : "") + (u.get("trim") === "0" ? ", без обрезки фона" : "") +
+    (u.get("bands") ? ", полосы периодов" : "") + (u.get("axis") ? ", ось симметрии" : "") + (u.get("let") ? ", буквы в ромбах" : ""); };
+  document.querySelectorAll(".card, figure").forEach(box => {
+    const img = box.querySelector("img"); if (!img) return;
+    const q = GO[img.getAttribute("src")]; if (!q) return;
+    const a = document.createElement("a");
+    a.className = "go"; a.href = "../Zerkalius-treugolnik.html?" + q; a.target = "_blank";
+    a.textContent = "▶ в Треугольнике";
+    a.title = "Открыть в Треугольнике: " + say(q) + " — с запущенной Аниматрицей. Своё состояние Треугольника не тронется";
+    const more = box.querySelector(".more") || box.querySelector("figcaption") || box;
+    more.appendChild(a);
+  });
 })();
 </script>
 <script src="../_js/hub-link.js"></script>

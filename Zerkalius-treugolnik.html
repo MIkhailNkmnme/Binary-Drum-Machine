@@ -5,14 +5,14 @@ PROJECT: Zerkalius Треугольник — отдельная страниц�
          Заведена 2026-09-24 копией Zerkalius Code 35.74: для начала в ней есть всё, что есть в Code.
          Память (текст, вид, раскладка) — СВОЯ, ключи ztri_*; с v0.009 у Code ничего не подхватывает (кроме сцен, если
          своих нет): первый запуск — треугольник правила 90 на 50 строк. Ключи Code никогда не пишутся.
-VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
+VERSION: v0.031 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Треугольник v0.022</title>
+    <title>Zerkalius Треугольник v0.031</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -386,7 +386,7 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.022</h3>
+                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.031</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -559,6 +559,17 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
 
                 <div class="control-group">
                     <label class="checkbox-row"><input type="checkbox" id="zerkaliusAnimCheck"><span><b style="color:#ff3333">Аниматрица (Волна Сверху-Вниз)</b></span></label>
+                    <!-- v0.023: операция волны — XOR прежний; смена обнуляет счёт циклов, текст остаётся -->
+                    <div class="compact-row" style="margin:0 0 3px 22px;">
+                        <select id="animOpSelect" title="Логическая операция волны: клетка сверху (уже переписанная) и клетка снизу. Цикл дают только XOR и XNOR. XNOR, NAND и NOR из двух пробелов делают «1» — фон вокруг треугольника зажигается. Смена операции начинает счёт циклов заново, текст не трогает" style="flex:1; margin:0; padding:1px 2px; font-size:10px; background:#1a1010; color:#ff8a8a; border:1px solid #ff3333;">
+                            <option value="xor" selected>⊕ XOR — цикл</option>
+                            <option value="xnor">XNOR — цикл, фон зажигается</option>
+                            <option value="nand">NAND — разгон, потом мигает</option>
+                            <option value="nor">NOR — разгон, потом мигает</option>
+                            <option value="and">AND — замрёт за проход</option>
+                            <option value="or">OR — зальёт за проход</option>
+                        </select>
+                    </div>
                     <!-- 35.49: журнал Аниматрицы — весь текст после каждого прохода волны, в файл .txt -->
                     <div class="compact-row" style="margin:0 0 3px 22px;">
                         <button id="animLogBtn" type="button" title="Начать / остановить запись журнала: весь текст в момент старта и после каждого прохода волны" style="margin:0; flex:1; padding:2px 4px; font-size:10px; background:#2a1212; color:#ff8a8a; border:1px solid #ff3333; border-radius:3px; cursor:pointer;">⏺ Журнал</button>
@@ -644,6 +655,9 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                             <option value="16">шаг 16</option>
                             <option value="32" selected>шаг 32</option>
                             <option value="64">шаг 64</option>
+                            <option value="128">шаг 128</option>
+                            <option value="256">шаг 256</option>
+                            <option value="512">шаг 512</option>
                             <option value="auto">авто — по проходу</option>
                         </select>
                     </div>
@@ -687,8 +701,12 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                         </select>
                         <button id="rhombFilmBtn" type="button" title="Собрать из ромбов ромбической сетки GIF (подряд или по проходам) или общую картинку PNG (размер — шаг сетки; при «авто» — 32). По проходам кадр берётся через столько проходов, сколько выбрано в «каждый N-й» у 🎞 GIF Аниматрицы" style="flex:1; margin:0; padding:2px 4px; font-size:10px; background:#2a2412; color:#ffcc00; border:1px solid #ffcc00; border-radius:3px; cursor:pointer;">🎞 Ромбы в кино</button>
                     </div>
-                    <!-- 35.74: 📦 все ромбы цикла — каждый размер в свой GIF, только разные ромбы -->
-                    <button id="rhombCycleBtn" type="button" title="Прогнать весь цикл волны (на копии текста) и собрать ромбы каждого размера — 8, 16, 32, 64… — каждый размер в свой GIF. В GIF только разные ромбы, в порядке первого появления; повторы отброшены" style="width:100%; margin-top:3px; padding:2px 4px; font-size:10px; background:#2a2412; color:#ffcc00; border:1px solid #ffcc00; border-radius:3px; cursor:pointer;">📦 Все ромбы цикла — по GIF на размер</button>
+                    <!-- 35.74: 📦 все ромбы цикла — каждый размер в свой GIF, только разные ромбы.
+                         v0.029: два режима, чётко разные — 📦 уникальные (словарь рисунков) и 🎞 подряд (ход волны с повторами) -->
+                    <div style="display:flex; gap:3px; margin-top:3px;">
+                        <button id="rhombCycleBtn" type="button" title="УНИКАЛЬНЫЕ. Прогнать весь цикл волны (на копии текста) и собрать ромбы каждого размера — 8, 16, 32, 64… — каждый размер в свой GIF. В GIF только РАЗНЫЕ ромбы, в порядке первого появления; повторы отброшены. Это словарь рисунков (сжатие), а не ход волны — волна здесь порвана. В подписи: «уникальный №i» из всех разных" style="flex:1; margin:0; padding:2px 4px; font-size:10px; border-radius:3px; cursor:pointer; background:#2a2412; color:#ffcc00; border:1px solid #ffcc00;">📦 Уникальные ромбы цикла</button>
+                        <button id="rhombCycleAllBtn" type="button" title="ПОДРЯД, с повторами. Каждый ромб каждого прохода — в порядке волны, ни один не пропущен: волна не рвётся. Каждый размер в свой GIF. В подписи: проход, место ромба в кадре и №рисунка из того же словаря, что у «Уникальных» — «новый» или «повтор (впервые — проход q)». Кадров — сколько влезет (~120 МБ на размер, до 3000): у крупных ромбов это сотни проходов, у мелких — меньше одного" style="flex:1; margin:0; padding:2px 4px; font-size:10px; border-radius:3px; cursor:pointer; background:#12242a; color:#66ddff; border:1px solid #66ddff;">🎞 Все ромбы цикла подряд</button>
+                    </div>
                 </div>
                 </div>
                 <div class="tab-sec" data-tab="color" data-title="🎨 Цвет">
@@ -771,9 +789,39 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                     <div id="rsNow" class="rs-box">—</div>
                     <div class="rs-lab">Буквы на своих местах (верхняя — вершина треугольника; у ▲▼ — ряд за рядом полосы):</div>
                     <div id="rsTri" class="rs-tri"></div>
-                    <div class="compact-row" style="margin-top:4px;">
-                        <button id="rsCycleBtn" type="button" class="rs-btn" title="Прогнать волну на копии текста через весь цикл и собрать по каждому кадру (проходу): сколько ромбов, какие формы, какие новые; и по каждой форме — на каких кадрах она есть. Холст не трогается. Повторное нажатие — стоп">▶ По кадрам — весь цикл</button>
-                        <button id="rsSaveBtn" type="button" class="rs-btn" style="flex:0.45;" title="Сводку (и прогнанный цикл) — в файл .txt">💾 .txt</button>
+                    <!-- v0.030: ДВЕ ГРУППЫ (запрос пользователя: «надо как-то сгруппировать — непонятно ничего, что как, и знать, что
+                         скачаю; отдельные кнопки, не зависящие от текущего прогона: По циклу · Участки (ромб) · Все размеры — чтобы так
+                         писала итоговая кнопка; и Всё»). «Смотреть» — на экран и отчёт; «Скачать таблицу» — три выбора и итоговая
+                         кнопка, которая сама пишет, что скачает; «📐 Всё» — цикл, все виды, все размеры. Код — rsxGo в RHOMBS. -->
+                    <div class="rs-lab" style="margin-top:6px;">Смотреть</div>
+                    <div class="compact-row">
+                        <button id="rsCycleBtn" type="button" class="rs-btn" title="Прогнать волну на копии текста через весь цикл и собрать по каждому кадру (проходу): сколько ромбов, какие формы, какие новые; и по каждой форме — на каких кадрах она есть. Холст не трогается. Повторное нажатие — стоп">▶ Цикл по кадрам — на экран</button>
+                        <button id="rsSaveBtn" type="button" class="rs-btn" style="flex:0.6;" title="Сводку (и прогнанный цикл) — в файл .txt">💾 Отчёт .txt</button>
+                    </div>
+                    <div class="rs-lab" style="margin-top:6px;">Скачать таблицу .tsv — для «Сравнения»; прогон каждый раз свой, на копии текста</div>
+                    <div class="compact-row">
+                        <select id="rsxSrc" style="flex:0.8; margin:0;" title="Откуда фигуры. «кадр» — текущий текст как есть, с картиной (в «Сравнении» её видно целиком и по частям). «цикл» — все формы за весь цикл волны Аниматрицы: волна гонится на копии текста до повтора, холст и счёт не трогаются; картины нет — кадров сотни">
+                            <option value="cycle" selected>цикл</option>
+                            <option value="frame">кадр</option>
+                        </select>
+                        <select id="rsxUnit" style="flex:1.2; margin:0;" title="Какие участки: ромбы ◇, треугольники ▲▼ (полосы высотой S/2), часы ⧗, пирамиды ◆ — или все виды сразу">
+                            <option value="rh" selected>◇ ромбы</option>
+                            <option value="tri">▲▼ треугольники</option>
+                            <option value="hg">⧗ часы</option>
+                            <option value="py">◆ пирамиды</option>
+                            <option value="all">все виды</option>
+                        </select>
+                        <select id="rsxSize" style="flex:1; margin:0;" title="Какой размер: «этот» — выбранный выше в «Ромб высотой»; «все» — 8, 16, 32… всё, что помещается в текст (у ▲▼ высота S/2)">
+                            <option value="all" selected>все размеры</option>
+                            <option value="one">этот размер</option>
+                        </select>
+                    </div>
+                    <div class="compact-row">
+                        <button id="rsxBtn" type="button" class="rs-btn" title="Скачать ОДНИМ файлом ровно то, что написано на кнопке. Прогон свой, на копии текста; холст, счёт циклов и открытый «▶ Цикл по кадрам» не трогаются и на результат не влияют. Нажать ещё раз во время прогона — стоп, файл тогда не пишется">📐 Скачать: Цикл · Ромбы · Все размеры</button>
+                    </div>
+                    <label class="checkbox-row" style="margin:2px 0 0;" title="Сразу открыть скачанную таблицу на странице «Сравнение» — отдельным окном: сводка, а у кадра ещё и картина с частями. Окно откроется, когда таблица будет готова; если браузер не даст открыть его сам (после долгого прогона так обычно и бывает), в углу появится кнопка «👁 Открыть в «Сравнении»». Уже открытое окно «Сравнения» переиспользуется: первая таблица — в набор А, следующие — в Б"><input type="checkbox" id="rsxView" checked><span>👁 сразу открыть в «Сравнении»</span></label>
+                    <div class="compact-row">
+                        <button id="rsxAllBtn" type="button" class="rs-btn" title="ВСЁ одним файлом: цикл волны, все четыре вида участков, все размеры, что помещаются. Долго — это полтора-два десятка прогонов цикла подряд. Нажать ещё раз — стоп, файл не пишется">📐 Всё: цикл · все виды · все размеры</button>
                     </div>
                     <div id="rsCycle" class="rs-box rs-tall">Цикл не прогнан.</div>
                 </div>
@@ -904,6 +952,12 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                     <p>«0» здесь — тоже символ, пустота — только пробел. Когда волна доходит до низа — это <b>проход</b>
                     (счёт «пройдено циклов» у Аниматрицы). После каждого прохода весь текст сравнивается по отпечатку со всеми
                     прежними: совпал — найден <b>🔁 цикл</b>, его период и с какого прохода он начался.</p>
+                    <p><b>Операция волны</b> (выбор под галкой, v0.023). Таблица выше — XOR по «символ есть / пусто». Можно взять
+                    другую: <b>XNOR</b> — тоже цикл, но из двух пробелов делает «1», и фон вокруг треугольника зажигается через
+                    проход; <b>NAND</b> и <b>NOR</b> — долгий разгон (до сотни проходов), потом мигание с периодом 2; <b>AND</b> —
+                    строка становится AND всех строк над ней и за один проход замирает (на сцене «1» остаётся один центральный
+                    столбец); <b>OR</b> — то же, но заливает. Цикл дают только XOR и XNOR: только у них по верхней клетке и новой
+                    нижней восстанавливается старая, остальные стирают сведения. Смена операции начинает счёт циклов заново.</p>
                     <p>Пример — треугольник выше. Проход 1: строка 1 = f(строка 0, строка 1) и т.д.:</p>
 <pre>  столбец 3:  сверху « », снизу «1» → «1»
   столбец 4:  сверху «1», снизу «0» → «1» (разные символы — верхний)
@@ -974,7 +1028,7 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                     на полшага) ложатся основаниями встык, и кадр становится полем пирамид. Проекция каждой грани на землю — ровно тот кусок
                     текста, что виден сверху, поэтому «⊙ сверху» даёт тот же рисунок, что на холсте. Можно смотреть и одну пирамиду,
                     выбранную в «🔍 Крупно». <b>⧫ Зеркало</b>: под каждой пирамидой — её отражение вершиной вниз, вместе октаэдр, как знак
-                    Zerkalius; снизу та же картина с битами 0 ↔ 1 (как в «Октаэдре»), или пусто ↔ символ, или без инверсии; «⊖ снизу» — заглянуть.
+                    Zerkalius; снизу та же картина с битами 0 ↔ 1 (как в «Октаэдре»), или пусто ↔ символ, или без инверсии; «⊖ снизу» — заглянуть.
                     <b>🎞 GIF цикла / ⏺ Видео цикла</b> — поле «дышит» весь период: кадр за проходом (шаг — «каждый N-й» у 🎞 GIF), при «вращать» — один оборот.</p>
                     <p><b>◆ Октаэдр</b> (кнопка в «🔍 Крупно»): выбранная пирамида уходит в «Октаэдр» большим знаком. На грани берутся клетки
                     одной чётности — в ряду r от вершины их r+1, как у грани «Октаэдра» (треугольник Паскаля); «1» — единица, прочее — ноль.
@@ -1055,7 +1109,7 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                     🎞 GIF — анимация цикла прямо из страницы: кадр каждый 1-й, 2-й … 64-й проход, пока картина не
                     вернётся к первому кадру; волна гонится на копии, холст не трогается),
                     Ёлка и Цилиндр (круговой сдвиг), поиск диагоналей, неоновое свечение.</dd>
-                <dt>👁 Вид</dt><dd>◇ Ромбическая сетка, шаг «авто» — сама рисует все размеры ромбов, включённые в текущем проходе (нули в двоичной записи k−1, k — проходов от начала цикла), каждый своим цветом, с легендой справа сверху. ⫼ Ось симметрии — вертикаль через вершину текста и живой процент зеркальности видимых строк. 🎨 Фон холста (раздел «Цвет») — цвет под текстом и сеткой, был всегда чёрный; прежняя строка «Фон» — цвет неизменившихся символов — теперь зовётся «Статика». 🎨 Сетка 0 / 1 — свои цвета «0» и «1» для слоя «Сетка» (шахматка за строками), во всех её видах: символами, пикселями на мелком масштабе и кольцами под радаром; без флажка — цвет Фона, как прежде; выбор цвета сам ставит флажок. Сетка всегда позади фигуры и на той же решётке, что текст; где бит фигуры лёг на символ сетки, они накладываются (что видно — решают цвета), а галка «Сетку под битами фигуры не рисовать» оставляет такую клетку фигуре целиком. «Сетка реже» — разреженность: ↔ пробелы между символами в строке (1 — «1 0 1 0»), ↕ пустые строки между строками сетки (1 — через строку); оставшиеся символы чередуются 1 и 0 шахматкой. 🎨 Фигура 0 / 1 — цвета битов самой фигуры (текста), не сетки; свои цвета для «0» и «1» на холсте по флажку, яркость остаётся от Δ; эти же цвета всегда берут 🎞 GIF, 🎞 Ромбы в кино и лист ромбов. 🔤 Буквы в ромбах — каждый ромб сетки подписан буквой: одинаковые ромбы — одна буква, зеркальный — та же строчной, буквы по частоте; цвет — ряд вдоль боковой стороны (вдоль стороны буквы складываются в повторяющиеся «слова» длиной 2, 4, 8…); справа сверху — сколько ромбов, разных и букв. 🎞 Ромбы в кино — GIF из ромбов сетки (размер — шаг сетки, при «авто» — 32): «ромбы кадра подряд» — все целые ромбы текущего текста по порядку; «верхний ромб по проходам» — один ромб от прохода к проходу, пока не вернётся к себе (волна на копии, холст не трогается); «все ромбы по проходам» — все ромбы сразу, разложенные на своих местах с зазорами, кадр за кадром, пока весь текст не вернётся к первому кадру (не больше 256 кадров); оба фильма по проходам берут шаг из «каждый N-й» у 🎞 GIF Аниматрицы; «все ромбы одной картинкой» — PNG, ромбы на своих местах в треугольнике, но раздвинуты с зазорами. 📦 Все ромбы цикла — весь цикл волны на копии текста, ромбы каждого размера (8, 16, 32, 64…) — каждый размер в свой GIF; в GIF только разные ромбы, в порядке первого появления, файлы скачиваются по очереди. ▤ Полосы периодов — строки тонируются полосами по степеням двойки (0, 1, 2–3, 4–7, 8–15…): в чистой фазе Аниматрицы у каждой полосы свой период волны, вдвое длиннее, чем у полосы над ней. ◇ Ромбическая сетка — диагонали под 45° от вершины текста через каждые 8 / 16 / 32 / 64 символа: на треугольниках Аниматрицы видно, что картина сложена из почти одинаковых ромбов-«кадров». Масштаб шрифта, «Экран» — сколько строк видно, интервал между строками, межсимвольный интервал (0.5–3: доля ширины символа; меньше 1 — символы наезжают), шрифт (13 на выбор, в том числе Roboto Mono, JetBrains Mono, VT323, Press Start 2P; лежат в самом проекте, работают и без интернета).</dd>
+                <dt>👁 Вид</dt><dd>◇ Ромбическая сетка, шаг «авто» — сама рисует все размеры ромбов, включённые в текущем проходе (нули в двоичной записи k−1, k — проходов от начала цикла), каждый своим цветом, с легендой справа сверху. ⫼ Ось симметрии — вертикаль через вершину текста и живой процент зеркальности видимых строк. 🎨 Фон холста (раздел «Цвет») — цвет под текстом и сеткой, был всегда чёрный; прежняя строка «Фон» — цвет неизменившихся символов — теперь зовётся «Статика». 🎨 Сетка 0 / 1 — свои цвета «0» и «1» для слоя «Сетка» (шахматка за строками), во всех её видах: символами, пикселями на мелком масштабе и кольцами под радаром; без флажка — цвет Фона, как прежде; выбор цвета сам ставит флажок. Сетка всегда позади фигуры и на той же решётке, что текст; где бит фигуры лёг на символ сетки, они накладываются (что видно — решают цвета), а галка «Сетку под битами фигуры не рисовать» оставляет такую клетку фигуре целиком. «Сетка реже» — разреженность: ↔ пробелы между символами в строке (1 — «1 0 1 0»), ↕ пустые строки между строками сетки (1 — через строку); оставшиеся символы чередуются 1 и 0 шахматкой. 🎨 Фигура 0 / 1 — цвета битов самой фигуры (текста), не сетки; свои цвета для «0» и «1» на холсте по флажку, яркость остаётся от Δ; эти же цвета всегда берут 🎞 GIF, 🎞 Ромбы в кино и лист ромбов. 🔤 Буквы в ромбах — каждый ромб сетки подписан буквой: одинаковые ромбы — одна буква, зеркальный — та же строчной, буквы по частоте; цвет — ряд вдоль боковой стороны (вдоль стороны буквы складываются в повторяющиеся «слова» длиной 2, 4, 8…); справа сверху — сколько ромбов, разных и букв. 🎞 Ромбы в кино — GIF из ромбов сетки (размер — шаг сетки, при «авто» — 32): «ромбы кадра подряд» — все целые ромбы текущего текста по порядку; «верхний ромб по проходам» — один ромб от прохода к проходу, пока не вернётся к себе (волна на копии, холст не трогается); «все ромбы по проходам» — все ромбы сразу, разложенные на своих местах с зазорами, кадр за кадром, пока весь текст не вернётся к первому кадру (не больше 256 кадров); оба фильма по проходам берут шаг из «каждый N-й» у 🎞 GIF Аниматрицы; «все ромбы одной картинкой» — PNG, ромбы на своих местах в треугольнике, но раздвинуты с зазорами. 📦 Уникальные ромбы цикла — весь цикл волны на копии текста, ромбы каждого размера (8, 16, 32, 64…) — каждый размер в свой GIF; в GIF только разные ромбы, в порядке первого появления (словарь рисунков, сжатие — волна порвана), файлы скачиваются по очереди. 🎞 Все ромбы цикла подряд — то же, но с повторами: каждый ромб каждого прохода в порядке волны, в подписи — №рисунка из того же словаря, «новый» или «повтор» и проход, где он был впервые; кадров — сколько влезет (~120 МБ на размер, до 3000). ▤ Полосы периодов — строки тонируются полосами по степеням двойки (0, 1, 2–3, 4–7, 8–15…): в чистой фазе Аниматрицы у каждой полосы свой период волны, вдвое длиннее, чем у полосы над ней. ◇ Ромбическая сетка — диагонали под 45° от вершины текста через каждые 8 / 16 / 32 / 64 символа: на треугольниках Аниматрицы видно, что картина сложена из почти одинаковых ромбов-«кадров». Масштаб шрифта, «Экран» — сколько строк видно, интервал между строками, межсимвольный интервал (0.5–3: доля ширины символа; меньше 1 — символы наезжают), шрифт (13 на выбор, в том числе Roboto Mono, JetBrains Mono, VT323, Press Start 2P; лежат в самом проекте, работают и без интернета).</dd>
                 <dt>🎨 Цвет</dt><dd>🌈 радужный текст, 🎨 цвет как код (подсветка синтаксиса), пресеты палитры, цвет и яркость
                     активных (изменившихся) и фоновых символов.</dd>
             </dl>
@@ -1499,7 +1553,7 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
             // пресетом эти настройки возвращаются к значениям из разметки страницы, потом ставится сцена.
             LOOK_IDS: ['echoModeCheck', 'dualCoreCheck', 'dualMaskCheck', 'freezeLayer1Check', 'dualCoreSpeedInput',
                 'speedMultInput', 'algorithmInput', 'freezeScrollCheck', 'spin3dCheck', 'breathingZoomCheck',
-                'hideStaticCheck', 'deltaModeSelect', 'logicalOpSelect', 'zerkaliusAnimCheck', 'elkaCheck',
+                'hideStaticCheck', 'deltaModeSelect', 'logicalOpSelect', 'zerkaliusAnimCheck', 'animOpSelect', 'elkaCheck',
                 'cylinderCheck', 'findDiagonalsCheck', 'neonGlowCheck', 'animByPassCheck', 'rhombGridCheck', 'rhombGridStep', 'rhombLettersCheck', 'triCopyCheck', 'triCopyMin', 'rsUnit', 'rsSize', 'rowBandsCheck', 'symAxisCheck', 'fontSizeRange', 'lineHeightRange', 'charSpacingRange',
                 'fontSelect', 'rainbowTextCheck', 'syntaxColorCheck', 'trimZerosCheck', 'bitColorsCheck', 'zeroColorPicker', 'oneColorPicker', 'glyphShapeSelect', 'gridColorsCheck', 'gridZeroPicker', 'gridOnePicker', 'gridSparseInput', 'gridSparseRowInput', 'canvasBgPicker', 'gridHideUnderCheck'],
             resetLook: function() {
@@ -1829,6 +1883,24 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
             }
         };
 
+        /* Треугольник v0.023: ОПЕРАЦИЯ ВОЛНЫ (запрос пользователя: «а если вместо XOR Аниматрицу AND» → «какие ещё
+           логические операции не обнулятся» → «да»). Волна везде — в самой Аниматрице, GIF, ромбах в кино, окнах ромба и
+           поля — берёт клетку через waveCell(): a — клетка сверху (уже переписанная), b — снизу, коды символов, 32 — пробел.
+           Считается только «символ есть / пусто»; какой символ писать, решает то же правило, что у XOR: из двух — верхний.
+           Перебор всех 16 операций на столбце 128 строк: цикл дают только XOR и XNOR — только у них по верхней клетке и
+           новой нижней однозначно восстанавливается старая; NAND и NOR долго разгоняются (до 127 проходов) и потом мигают
+           с периодом 2; AND и OR замирают после первого прохода (строка становится AND/OR всех строк над ней).
+           XNOR, NAND и NOR из двух пробелов делают символ — пишут «1» (49), фон вокруг треугольника зажигается. */
+        const WAVE_OPS = {
+            xor:  (a, b) => a === b ? 32 : (a !== 32 ? a : b),
+            xnor: (a, b) => a === b ? (a === 32 ? 49 : a) : 32,
+            nand: (a, b) => (a !== 32 && b !== 32) ? 32 : (a !== 32 ? a : (b !== 32 ? b : 49)),
+            nor:  (a, b) => (a === 32 && b === 32) ? 49 : 32,
+            and:  (a, b) => (a !== 32 && b !== 32) ? a : 32,
+            or:   (a, b) => a !== 32 ? a : b
+        };
+        function waveCell() { const el = document.getElementById('animOpSelect'); return WAVE_OPS[el && el.value] || WAVE_OPS.xor; }
+
         const MODULE_DATA = {
             normalizeLines: function(rawLines) {
                 if (!Array.isArray(rawLines)) return [];
@@ -1838,7 +1910,7 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                     return { text: '', color: '' };
                 });
             },
-            saveToLocalStorage: function(data) { try { localStorage.setItem('ztri_lines_v1', JSON.stringify(data)); } catch (e) {} },
+            saveToLocalStorage: function(data) { if (MODULE_STATE.linkMode) return; try { localStorage.setItem('ztri_lines_v1', JSON.stringify(data)); } catch (e) {} },   // v0.027: по ссылке — не писать
             loadFromLocalStorage: function() {
                 const saved = localStorage.getItem('ztri_lines_v1');
                 if (saved) {
@@ -2332,7 +2404,7 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                 };
                 let name, closed = false;
                 if (timed) {
-                    const stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) { const c1 = a[k], c2 = b[k]; b[k] = c1 === c2 ? 32 : (c1 !== 32 ? c1 : c2); } };
+                    const wc = waveCell(), stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) b[k] = wc(a[k], b[k]); };   // v0.023: операция волны — из выбора
                     const fullPass = () => { for (let r = 0; r < H - 1; r++) stepRow(r); };
                     let pass = MODULE_STATE.animPasses || 0;
                     const r0 = MODULE_STATE.animatrixRow || 0;
@@ -2376,7 +2448,7 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                Треугольник v0.002 (1024 строки): цикл там ~1500 проходов по ~6 млн клеток ромбов — это десятки секунд.
                Поэтому работа идёт кусками по ~60 мс с ходом в строке состояния, страница не замирает; повторное нажатие —
                стоп (соберётся то, что успели). Отпечаток ромба — число, не строка: так в разы меньше мусора в памяти. */
-            rhombCycle: function() {
+            rhombCycle: function(mode) {
                 if (this._rcJob) { this._rcJob.stop = true; return; }
                 const src = MODULE_STATE.originalLines, H = src.length;
                 if (H < 2) { UI.statusInfo.textContent = 'Ромбы цикла: на холсте нет текста'; return; }
@@ -2391,68 +2463,95 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                     const half = S / 2, tops = [];
                     for (let r = 0; r + S <= H - 1; r += half)
                         for (let c = c0 - r; c <= c0 + r; c++) if (((c - c0 - r) % S + S) % S === 0) tops.push([r, c]);
-                    return { S: S, half: half, tops: tops, seen: new Set(), items: [], total: 0 };
+                    return { S: S, half: half, tops: tops, seen: new Map(), items: [], pics: new Map(), total: 0, full: false };
                 });
                 if (!sizes.length) { UI.statusInfo.textContent = 'Ромбы цикла: текст ниже ромба высотой 8'; return; }
                 const MAXF = 1500;   // кадров на один GIF — дальше кодирование тянется минутами
+                /* v0.029 — ДВА РЕЖИМА (запрос пользователя: «структуру не ломаем волны! так можно только для сжатия, но когда
+                   записывать GIF или ещё что — надо нумерацию-повторения учитывать, а то получим рваную волну; но, возможно,
+                   так и надо — только уникальные собрать, поэтому этот вариант оставим, но чётко различим; добавь вариант со
+                   всеми кадрами»). 📦 «Уникальные» — как было: только разные ромбы в порядке первого появления (словарь,
+                   сжатие), в подписи — «уникальный №i». 🎞 «Подряд» (mode 'all') — каждый ромб каждого прохода в порядке
+                   волны, повторы тоже; у кадра — номер его рисунка в том же словаре: «новый» или «повтор (впервые — проход q)».
+                   Картинка хранится по разу на рисунок (pics), кадр — только ссылка на номер. Кадров подряд — сколько влезет
+                   в ~120 МБ на размер, не больше 3000: у крупных ромбов это сотни проходов, у мелких — меньше прохода; когда
+                   предел набран у всех размеров, волна дальше не гонится. */
+                const ALL = mode === 'all', capH = 18, TAG = ALL ? '🎞 Ромбы цикла подряд' : '📦 Уникальные ромбы цикла';
+                sizes.forEach(z => {
+                    const n = z.S + 1, s = Math.max(1, Math.min(12, Math.floor(360 / n))), rw = n * s;
+                    Object.assign(z, { s: s, rw: rw, gw: Math.max(rw, ALL ? 520 : 360), gh: rw + capH });
+                    z.cap = ALL ? Math.max(1, Math.min(3000, Math.floor(1.2e8 / (z.gw * z.gh)))) : MAXF;
+                });
+                const cellsOf = (z, r, c) => {
+                    const { S, half } = z, n = S + 1, a = new Uint8Array(n * n);   // квадрат ромба: 0 — вне ромба
+                    for (let dr = 0; dr <= S; dr++) {
+                        const w = dr <= half ? dr : S - dr, row = rows[r + dr];
+                        for (let dc = -w; dc <= w; dc++) a[dr * n + dc + half] = cellV(row[c + dc]);
+                    }
+                    return a;
+                };
                 const cut = (z, pass) => {
-                    const { S, half } = z, n = S + 1;
+                    if (z.full) return;
+                    const { S, half } = z;
+                    let j = 0;
                     for (const [r, c] of z.tops) {
-                        z.total++;
+                        j++; z.total++;
                         let h1 = 2166136261, h2 = 7;
                         for (let dr = 0; dr <= S; dr++) {
                             const w = dr <= half ? dr : S - dr, row = rows[r + dr];
                             for (let dc = -w; dc <= w; dc++) { const v = cellV(row[c + dc]); h1 ^= v; h1 = Math.imul(h1, 16777619); h2 = (Math.imul(h2, 31) + v) | 0; }
                         }
                         const key = (h1 >>> 0) * 2097152 + ((h2 >>> 0) & 2097151);   // 32 + 21 бит — целое без потерь
-                        if (z.seen.has(key)) continue;
-                        z.seen.add(key);
-                        if (z.items.length >= MAXF) continue;
-                        const cells = new Uint8Array(n * n);   // квадрат ромба: 0 — вне ромба
-                        for (let dr = 0; dr <= S; dr++) {
-                            const w = dr <= half ? dr : S - dr, row = rows[r + dr];
-                            for (let dc = -w; dc <= w; dc++) cells[dr * n + dc + half] = cellV(row[c + dc]);
-                        }
-                        z.items.push({ cells: cells, pass: pass, r: r, c: c });
+                        let u = z.seen.get(key);
+                        const isNew = u === undefined;
+                        if (isNew) { u = [z.seen.size + 1, pass]; z.seen.set(key, u); }   // [№ рисунка, проход, где впервые]
+                        if (ALL) {
+                            if (z.items.length >= z.cap) { z.full = true; return; }
+                            if (isNew) z.pics.set(u[0], cellsOf(z, r, c));
+                            z.items.push({ u: u[0], first: u[1], isNew: isNew, pass: pass, r: r, c: c, j: j });
+                        } else if (isNew && z.items.length < MAXF) z.items.push({ u: u[0], cells: cellsOf(z, r, c), pass: pass, r: r, c: c });
                     }
                 };
-                const stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) { const c1 = a[k], c2 = b[k]; b[k] = c1 === c2 ? 32 : (c1 !== 32 ? c1 : c2); } };
+                const wc = waveCell(), stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) b[k] = wc(a[k], b[k]); };   // v0.023: операция волны — из выбора
                 const hashAll = () => { let h1 = 2166136261, h2 = 7; for (const a of rows) for (let k = 0; k < W; k++) { h1 ^= a[k]; h1 = Math.imul(h1, 16777619); h2 = (Math.imul(h2, 31) + a[k]) | 0; } return (h1 >>> 0) * 2097152 + ((h2 >>> 0) & 2097151); };
                 let pass = MODULE_STATE.animPasses || 0;
                 const r0 = MODULE_STATE.animatrixRow || 0;
                 if (r0 > 0 && r0 < H - 1) { for (let r = r0; r < H - 1; r++) stepRow(r); pass++; }
                 const p0 = pass, states = new Set(), job = this._rcJob = { stop: false };
-                const btn = document.getElementById('rhombCycleBtn'), btnTxt = btn ? btn.textContent : '';
+                const btn = document.getElementById(ALL ? 'rhombCycleAllBtn' : 'rhombCycleBtn'), btnTxt = btn ? btn.textContent : '';
                 if (btn) btn.textContent = '⏹ Стоп — собрать, что есть';
-                let closed = false, f = 0;
+                let closed = false, filled = false, f = 0;
                 const finish = () => {
                     this._rcJob = null;
                     if (btn) btn.textContent = btnTxt;
                     const pEnd = pass - 1;
                     const pal = [[0, 0, 0], [35, 35, 45], bitRgb('zeroColorPicker', '#3c82ff'), bitRgb('oneColorPicker', '#d7e1eb'), [255, 204, 0]];   // как у 🎞 Ромбы в кино
-                    const capH = 18, files = [];
+                    const files = [];
                     const cv = document.createElement('canvas'), cx = cv.getContext('2d');
                     for (const z of sizes) {
                         if (!z.items.length) continue;
-                        const { S } = z, n = S + 1;
-                        const s = Math.max(1, Math.min(12, Math.floor(360 / n))), rw = n * s;
-                        const gw = Math.max(rw, 300), gh = rw + capH, x0 = Math.floor((gw - rw) / 2);
+                        const { S, s, rw, gw, gh } = z, n = S + 1, x0 = Math.floor((gw - rw) / 2);
                         cv.width = gw; cv.height = capH;
-                        const frames = z.items.map((it, i) => {
+                        const frames = z.items.map(it => {
                             const ix = new Uint8Array(gw * gh);
                             cx.fillStyle = '#000'; cx.fillRect(0, 0, gw, capH);
                             cx.fillStyle = '#ffcc00'; cx.font = '12px Consolas, monospace'; cx.textBaseline = 'middle';
-                            cx.fillText('ромб ' + S + ' · ' + (i + 1) + '/' + z.items.length + ' · проход ' + it.pass + ' · строка ' + it.r + ' · сдвиг ' + (it.c - c0 > 0 ? '+' : '') + (it.c - c0), 4, capH / 2);
+                            cx.fillText(ALL
+                                ? 'ромб ' + S + ' · проход ' + it.pass + ' · место ' + it.j + '/' + z.tops.length + ' · №' + it.u + (it.isNew ? ' · новый' : ' · повтор (впервые — пр. ' + it.first + ')')
+                                : 'ромб ' + S + ' · уникальный №' + it.u + '/' + z.seen.size + ' · проход ' + it.pass + ' · строка ' + it.r + ' · сдвиг ' + (it.c - c0 > 0 ? '+' : '') + (it.c - c0), 4, capH / 2);
                             const cd = cx.getImageData(0, 0, gw, capH).data;
                             for (let p = 0, j = 0; p < gw * capH; p++, j += 4) if (cd[j] + cd[j + 1] > 220) ix[p] = 4;
+                            const pic = ALL ? z.pics.get(it.u) : it.cells;
                             for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
-                                const v = it.cells[y * n + x]; if (!v) continue;
+                                const v = pic[y * n + x]; if (!v) continue;
                                 for (let yy = 0; yy < s; yy++) { const base = (capH + y * s + yy) * gw + x0 + x * s; for (let xx = 0; xx < s; xx++) ix[base + xx] = v; }
                             }
                             return ix;
                         });
                         const gif = GIFENC.encode(frames, gw, gh, pal, 30);
-                        files.push({ name: 'Zerkalius-romby-cikla-' + S + '-' + z.items.length + 'sht-prohody-' + p0 + '-' + pEnd + '.gif', gif: gif });
+                        const pA = z.items[0].pass, pB = z.items[z.items.length - 1].pass;
+                        files.push({ name: ALL ? 'Zerkalius-romby-cikla-podryad-' + S + '-' + z.items.length + 'kadrov-prohody-' + pA + '-' + pB + '.gif'
+                                               : 'Zerkalius-romby-cikla-unikalnye-' + S + '-' + z.items.length + 'sht-prohody-' + p0 + '-' + pEnd + '.gif', gif: gif });
                         z.more = z.seen.size - z.items.length;
                     }
                     files.forEach((fl, i) => setTimeout(() => {
@@ -2460,14 +2559,18 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                         a.href = URL.createObjectURL(new Blob([fl.gif], { type: 'image/gif' }));
                         a.download = fl.name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
                     }, i * 600));
-                    UI.statusInfo.textContent = `📦 Ромбы цикла: проходы ${p0}–${pEnd}` +
-                        (closed ? ' (круг замкнулся)' : job.stop ? ' (остановлено)' : ' (до повтора не дошли — предел 4096)') + ' · ' +
-                        sizes.filter(z => z.items.length).map(z => `${z.S}: ${z.seen.size} разных из ${z.total}` + (z.more ? ` (в GIF первые ${MAXF})` : '')).join(' · ') +
-                        ` · файлов ${files.length}`;
+                    UI.statusInfo.textContent = ALL
+                        ? `${TAG}: ` + sizes.filter(z => z.items.length).map(z => `${z.S}: ${z.items.length} кадров, проходы ${z.items[0].pass}–${z.items[z.items.length - 1].pass}, из них разных ${z.pics.size}`).join(' · ') +
+                          (filled ? ' (предел кадров GIF)' : closed ? ' (круг замкнулся)' : job.stop ? ' (остановлено)' : '') + ` · файлов ${files.length}`
+                        : `${TAG}: проходы ${p0}–${pEnd}` +
+                          (closed ? ' (круг замкнулся)' : job.stop ? ' (остановлено)' : ' (до повтора не дошли — предел 4096)') + ' · ' +
+                          sizes.filter(z => z.items.length).map(z => `${z.S}: ${z.seen.size} разных из ${z.total}` + (z.more ? ` (в GIF первые ${MAXF})` : '')).join(' · ') +
+                          ` · файлов ${files.length}`;
                 };
                 const chunk = () => {
                     const t = performance.now();
                     while (f < 4096 && !job.stop && performance.now() - t < 60) {
+                        if (ALL && sizes.every(z => z.full)) { filled = true; break; }
                         const hk = hashAll();
                         if (states.has(hk)) { closed = true; break; }
                         states.add(hk);
@@ -2475,13 +2578,13 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                         for (let r = 0; r < H - 1; r++) stepRow(r);
                         pass++; f++;
                     }
-                    if (closed || job.stop || f >= 4096) {
-                        UI.statusInfo.textContent = '📦 Ромбы цикла: проходов ' + f + ' — собираю GIF…';
+                    if (closed || filled || job.stop || f >= 4096) {
+                        UI.statusInfo.textContent = TAG + ': проходов ' + f + ' — собираю GIF…';
                         setTimeout(finish, 30);
                         return;
                     }
-                    UI.statusInfo.textContent = '📦 Ромбы цикла: проход ' + pass + ' (пройдено ' + f + ') · разных: ' +
-                        sizes.map(z => z.S + '→' + z.seen.size).join(', ') + ' · нажать ещё раз — стоп';
+                    UI.statusInfo.textContent = TAG + ': проход ' + pass + ' (пройдено ' + f + ') · ' + (ALL ? 'кадров: ' : 'разных: ') +
+                        sizes.map(z => z.S + '→' + (ALL ? z.items.length : z.seen.size)).join(', ') + ' · нажать ещё раз — стоп';
                     setTimeout(chunk, 0);
                 };
                 chunk();
@@ -2491,9 +2594,10 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                 if (H < 2) { UI.statusInfo.textContent = 'GIF: на холсте нет текста'; return; }
                 const W = src.reduce((m, l) => Math.max(m, l.text.length), 0);
                 const rows = src.map(l => { const a = new Uint16Array(W).fill(32); for (let i = 0; i < l.text.length; i++) a[i] = l.text.charCodeAt(i); return a; });
+                const wc = waveCell();   // v0.023: операция волны — из выбора
                 const stepRow = r => {
                     const a = rows[r], b = rows[r + 1];
-                    for (let k = 0; k < W; k++) { const c1 = a[k], c2 = b[k]; b[k] = c1 === c2 ? 32 : (c1 !== 32 ? c1 : c2); }
+                    for (let k = 0; k < W; k++) b[k] = wc(a[k], b[k]);
                 };
                 const fullPass = () => { for (let r = 0; r < H - 1; r++) stepRow(r); };
                 const hash = () => { let h = 2166136261; for (const a of rows) for (let k = 0; k < W; k++) { h ^= a[k]; h = Math.imul(h, 16777619); } return h >>> 0; };
@@ -2584,17 +2688,11 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                 
                 const out = new Array(Math.max(str1.length, str2.length));   // v0.005: без склейки строки по символу
                 let len = out.length;
+                const wc = waveCell();   // v0.023: операция волны — из выбора (XOR — прежнее правило)
                 for(let k=0; k<len; k++) {
-                    let c1 = str1[k] || ' ';
-                    let c2 = str2[k] || ' ';
-                    
-                    let cNew = c2;
-                    if (c1 === c2 && c1 !== ' ') cNew = ' ';
-                    else if (c1 !== ' ' && c2 === ' ') cNew = c1;
-                    else if (c2 !== ' ' && c1 === ' ') cNew = c2;
-                    else if (c1 !== ' ' && c2 !== ' ') cNew = c1; 
-                    
-                    out[k] = cNew;
+                    const c1 = k < str1.length ? str1.charCodeAt(k) : 32;
+                    const c2 = k < str2.length ? str2.charCodeAt(k) : 32;
+                    out[k] = String.fromCharCode(wc(c1, c2));
                 }
                 lines[row2].text = out.join('');
                 MODULE_STATE.animatrixRow++;
@@ -4138,6 +4236,9 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                 // а не с того места, куда за это время ушёл счётчик кадров. Скачка нет ни в ту, ни в другую сторону.
                 // 35.43: счётчик циклов Аниматрицы виден, пока она включена
                 if (UI.zerkaliusAnimCheck) UI.zerkaliusAnimCheck.addEventListener('change', () => MODULE_DATA.animInfoUpd());
+                // v0.023: другая операция волны — прежние отпечатки проходов к ней не относятся, счёт циклов заново
+                const aop = document.getElementById('animOpSelect');
+                if (aop) aop.addEventListener('change', () => { MODULE_DATA.animReset(); UI.statusInfo.textContent = 'Аниматрица: операция ' + aop.options[aop.selectedIndex].text + ' · счёт циклов заново'; });
                 // 35.49: журнал Аниматрицы
                 const alB = document.getElementById('animLogBtn'), alS = document.getElementById('animLogSaveBtn');
                 if (alB) alB.addEventListener('click', () => MODULE_DATA.animLogToggle());
@@ -4159,6 +4260,12 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                 if (rcB) rcB.addEventListener('click', () => {
                     UI.statusInfo.textContent = 'Ромбы цикла собираются… (на большом тексте — до минуты)';
                     setTimeout(() => MODULE_DATA.rhombCycle(), 30);
+                });
+                // v0.029: 🎞 Все ромбы цикла подряд — с повторами, в порядке волны
+                const rcA = document.getElementById('rhombCycleAllBtn');
+                if (rcA) rcA.addEventListener('click', () => {
+                    UI.statusInfo.textContent = 'Ромбы цикла подряд собираются… (на большом тексте — до минуты)';
+                    setTimeout(() => MODULE_DATA.rhombCycle('all'), 30);
                 });
                 // 35.57: 🎞 Ромбы в кино
                 const rfB = document.getElementById('rhombFilmBtn'), rfM = document.getElementById('rhombFilmMode');
@@ -4719,14 +4826,15 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                 tri.innerHTML = lines.join('\n');
             },
             // ---------- ◇ СВОДКА: весь цикл по кадрам (на копии текста, кусками, как 📦) ----------
-            runCycle: function() {
+            runCycle: function(done) {   // v0.025: done — позвать, когда цикл собран до конца (не остановлен)
+                if (this._allJob && !done) { UI.statusInfo.textContent = '📐 Идёт прогон всех размеров — остановить можно его кнопкой'; return; }   // v0.026
                 if (this._job) { this._job.stop = true; return; }
                 const src = MODULE_STATE.originalLines, H = src.length, S = this.size(), U = this.unit(), out = document.getElementById('rsCycle');
                 const c0 = H ? this.apex(src[0].text) : null;
                 if (H < 2 || c0 === null) { out.innerHTML = 'Нет текста или первая строка пустая — нет вершины'; return; }
                 if ((U === 'tri' ? S / 2 : S) > H - 1) { out.innerHTML = 'Текст ниже фигуры ' + S + ' — выберите размер меньше'; return; }
                 const { rows, W } = this.rowsOf(src);
-                const stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) { const c1 = a[k], c2 = b[k]; b[k] = c1 === c2 ? 32 : (c1 !== 32 ? c1 : c2); } };
+                const wc = waveCell(), stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) b[k] = wc(a[k], b[k]); };   // v0.023: операция волны — из выбора
                 const hashAll = () => { let h1 = 2166136261, h2 = 7; for (const a of rows) for (let k = 0; k < W; k++) { h1 = Math.imul(h1 ^ a[k], 16777619); h2 = (Math.imul(h2, 31) + a[k]) | 0; } return (h1 >>> 0) * 2097152 + ((h2 >>> 0) & 2097151); };
                 let pass = MODULE_STATE.animPasses || 0;
                 const r0 = MODULE_STATE.animatrixRow || 0;
@@ -4758,12 +4866,21 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                         forms.forEach(fm => { fm.ch = fm.id < this.ABC.length ? this.ABC[fm.id] : '#' + (fm.id + 1); });
                         this._cyc = { S: S, U: U, p0: p0, pEnd: pass - 1, closed: closed, stopped: job.stop, repeatOf: repeatOf, period: closed ? pass - repeatOf : null, forms: forms, frames: frames };
                         this.renderCycle();
+                        if (done) { if (job.stop) UI.statusInfo.textContent = '📐 Цикл остановлен — таблица не записана'; else done(); }   // v0.025
                         return;
                     }
                     out.innerHTML = 'Считаю: проход ' + pass + ' (пройдено ' + f + ') · форм пока ' + forms.length + ' · нажать ещё раз — стоп';
-                    setTimeout(chunk, 0);
+                    this.soon(chunk);   // v0.026: не setTimeout — в скрытой вкладке тот раз в секунду
                 };
                 chunk();
+            },
+            /* v0.026: СЛЕДУЮЩИЙ КУСОК БЕЗ ТОРМОЗА ФОНОВОЙ ВКЛАДКИ. Проверка 2026-09-25 (прогон 256 строк): пока вкладка скрыта,
+               браузер пускает setTimeout(…, 0) не чаще раза в секунду, и цикл, который на виду идёт 8 с, тянулся минутами.
+               Сообщение через MessageChannel так не тормозится, а между кусками браузер всё равно успевает рисовать и
+               принимать щелчки (кусок — до 60 мс). */
+            soon: function(fn) {
+                if (!this._mc) { this._mcQ = []; this._mc = new MessageChannel(); this._mc.port1.onmessage = () => { const f = this._mcQ.shift(); if (f) f(); }; }
+                this._mcQ.push(fn); this._mc.port2.postMessage(0);
             },
             spans: function(ps) {   // проходы → «3–7, 12, 20–21» или «с 3 каждый 4-й до 63»
                 if (!ps.length) return '—';
@@ -4807,6 +4924,158 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                 const gh = cells.length / gw;
                 g.fillStyle = pal[0]; g.fillRect(x0, y0, gw * z, gh * z);
                 for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) { const v = cells[y * gw + x]; if (!v) continue; g.fillStyle = pal[v]; g.fillRect(x0 + x * z, y0 + y * z, z, z); }
+            },
+            /* v0.024: 📐 ФИГУРЫ ТАБЛИЦЕЙ .tsv (запрос пользователя: «нужно потом сравнить и найти одинаковые с найденными в
+               Аниматрице, форматы надо подготовить» — после ◇ Ромбов в Layers). Общий формат — _js/figury.js (ZFIG), его же
+               пишет Layers. Сетка здесь полная — шаг 2; столбцы «чёт»/«нечёт» — подрешётки, сравнимые с Паскалем Layers на «½».
+               Прогнан цикл — пишутся все формы цикла (у формы зеркальные близнецы уже слиты — рисунок в той ориентации, что
+               хранит цикл, «сколько» — оба вида вместе); нет — фигуры текущего кадра, каждый рисунок как есть. */
+            KIND_SYM: { rh: '◇', up: '▲', dn: '▼', hg: '⧗', py: '◆' },
+            cellsPat: function(cells, gw) {   // клетки фигуры (0 — вне, 1 — пробел, 2 — «0», 3 — прочее) → строки через «/»
+                const gh = cells.length / gw, out = [];
+                for (let y = 0; y < gh; y++) { let r = ''; for (let x = 0; x < gw; x++) { const v = cells[y * gw + x]; if (v) r += v === 1 ? '.' : v === 2 ? '0' : '1'; } if (r) out.push(r); }
+                return out.join('/');
+            },
+            cycleHead: function(cy) {   // v0.026: одна строка о прогнанном цикле
+                return this.UNIT_NAME[cy.U || 'rh'] + ', S = ' + cy.S + ', проходы ' + cy.p0 + '–' + cy.pEnd +
+                    (cy.closed ? ', период ' + cy.period + ', повтор прохода ' + cy.repeatOf : ', до повтора не дошли') + ', форм ' + cy.forms.length;
+            },
+            cycleLines: function(cy, withS) {   // v0.026: формы цикла строками ZFIG; withS — вид и S в «где» (в общем файле всех размеров)
+                const pre = withS ? this.UNIT_NAME[cy.U || 'rh'] + ' S=' + cy.S + ' · ' : '';
+                return cy.forms.map(fm => ZFIG.line({ kind: this.KIND_SYM[fm.at.kind] || fm.at.kind, step: 2, pat: this.cellsPat(fm.cells, fm.gw), count: fm.total,
+                    where: pre + 'проход ' + fm.first + ', ряд ' + fm.at.lev + ', ' + (fm.at.j + 1) + '-й слева · в ' + fm.passes.length + ' кадрах' }));
+            },
+            /* v0.026: 📐 ВСЕ РАЗМЕРЫ → ОДИН .tsv (запрос пользователя после проверки 2026-09-25: браузер пропускает с одной
+               страницы только первое из автоматических скачиваний подряд, остальные молча глотает — 11 таблиц по кнопке
+               «весь цикл» так не сохранить). Для каждого вида и размера по очереди — тот же прогон, что у ▶, а в конце ОДНО
+               скачивание: шапка ZFIG со сводкой всех прогонов, дальше блоки «# --- вид, S = …» (строки с «#» ZFIG.parse
+               пропускает) и формы; в «где» — вид и S. Размеры — все из списка «Ромб высотой», что помещаются в текст
+               (у ▲▼ высота S/2). Виды — из выбора рядом: ромбы и ▲▼ / все четыре / выбранный. Повторное нажатие — стоп,
+               файл тогда не пишется. Выбор вида и размера в окне после прогона возвращается прежний. */
+            /* v0.030: 📐 СКАЧАТЬ ТАБЛИЦУ — ТРИ ВЫБОРА И ИТОГОВАЯ КНОПКА (запрос пользователя: «надо как-то сгруппировать —
+               непонятно ничего… знать, что скачаю; отдельные кнопки, не зависящие от текущего прогона: По циклу · Участки (ромб) ·
+               Все размеры — чтобы так писала итоговая кнопка; и Всё»). Откуда (кадр / цикл) × участки (вид или все) × размер
+               (выбранный в «Ромб высотой» или все, что помещаются). Прогон каждый раз свой, на копии текста: открытый
+               «▶ Цикл по кадрам» (this._cyc) на результат не влияет. Кадр пишется с картиной (для «Сравнения»), цикл — без. */
+            RSX_UNIT_LBL: { rh: 'Ромбы', tri: 'Треугольники ▲▼', hg: 'Часы ⧗', py: 'Пирамиды ◆', all: 'Все виды' },
+            rsxPlan: function(all) {
+                const $ = id => document.getElementById(id);
+                const src = all ? 'cycle' : ($('rsxSrc')?.value || 'cycle');
+                const u = all ? 'all' : ($('rsxUnit')?.value || 'rh');
+                const sz = all ? 'all' : ($('rsxSize')?.value || 'all');
+                const units = u === 'all' ? ['rh', 'tri', 'hg', 'py'] : [u];
+                const sizes = sz === 'all' ? Array.from($('rsSize').options).map(o => parseInt(o.value, 10)).filter(v => v > 0) : [this.size()];
+                const label = (src === 'cycle' ? 'Цикл' : 'Кадр') + ' · ' + this.RSX_UNIT_LBL[u] + ' · ' + (sz === 'all' ? 'Все размеры' : 'S = ' + this.size());
+                return { src, units, sizes, label };
+            },
+            rsxLabel: function() {
+                const b = document.getElementById('rsxBtn');
+                if (b && !(this._allJob && this._allJob.btnId === 'rsxBtn')) b.textContent = '📐 Скачать: ' + this.rsxPlan(false).label;
+            },
+            rsxGo: function(all) {
+                if (this._allJob) { this.saveAllSizes(); return; }   // идёт прогон — это «стоп»
+                // v0.031: «👁» — только отметка; окно «Сравнения» откроет ZFIG.save, когда таблица готова
+                const vw = document.getElementById('rsxView');
+                if (window.ZFIG) ZFIG.viewOn = !!(vw && vw.checked);   // v0.031: окно откроет сам ZFIG.save, когда таблица готова
+                const p = this.rsxPlan(all);
+                if (p.src === 'frame') this.saveFrameSizes(p.units, p.sizes, p.label);
+                else this.saveAllSizes(p.units, p.sizes, all ? 'rsxAllBtn' : 'rsxBtn', p.label);
+            },
+            saveFrameSizes: function(units, sizes, label) {
+                if (!window.ZFIG) { UI.statusInfo.textContent = '📐 Не загрузился общий модуль _js/figury.js — обновите страницу (Ctrl+F5)'; return; }
+                const L = MODULE_STATE.originalLines, H = L.length, pass = MODULE_STATE.animPasses || 0;
+                const plan = [];
+                units.forEach(U => sizes.forEach(S => { if ((U === 'tri' ? S / 2 : S) <= H - 1) plan.push([U, S]); }));
+                if (H < 2 || !plan.length) { UI.statusInfo.textContent = '📐 ' + label + ': нет текста или он ниже самой маленькой фигуры'; return; }
+                const { rows, W } = this.rowsOf(L), body = [], sum = [];
+                let nAll = 0;
+                for (const [U, S] of plan) {
+                    const cen = this.census(S, U), by = new Map();
+                    for (const it of cen.items) {
+                        const g = this.geo(it.kind, S), pat = this.cellsPat(this.cellsRows(rows, W, it, S, false), g.gw), k = it.kind + '|' + pat;
+                        const e = by.get(k); if (e) { e.count++; continue; }
+                        by.set(k, { kind: this.KIND_SYM[it.kind] || it.kind, pat: pat, count: 1, where: this.UNIT_NAME[U] + ' S=' + S + ' · ряд ' + it.lev + ', ' + (it.j + 1) + '-й слева' });
+                    }
+                    const head = this.UNIT_NAME[U] + ', S = ' + S + ': фигур ' + cen.n + ', разных ' + by.size;
+                    sum.push(head); body.push('# --- ' + head);
+                    by.forEach(e => { body.push(ZFIG.line({ kind: e.kind, step: 2, pat: e.pat, count: e.count, where: e.where })); nAll++; });
+                }
+                const head = ZFIG.header('Треугольник, ' + label + ' (проход ' + pass + ')',
+                    ['строк текста ' + H + ', операция волны ' + (document.getElementById('animOpSelect')?.value || 'xor').toUpperCase() + '; в «где» — вид, S, ряд фигур сверху (с нуля) и место в ряду']
+                        .concat(sum.map(x => 'участки: ' + x)));
+                head.splice(head.length - 1, 0, ...ZFIG.picture(2, L.map(l => ({ a: 0, s: l.text })), 0));
+                const name = 'Zerkalius-figury-kadr-' + pass + '-' + units.join('-') + '-' + (sizes.length > 1 ? 'vse-razmery' : 'S' + sizes[0]) + '.tsv';
+                ZFIG.save(name, head.concat(body));
+                UI.statusInfo.textContent = '📐 ' + label + ': ' + plan.length + ' размеров, ' + nAll + ' разных рисунков · ' + name;
+            },
+            saveAllSizes: function(units, sizes, btnId, label) {   // v0.030: всё — параметрами (см. rsxGo)
+                if (this._allJob) { this._allJob.stop = true; if (this._job) this._job.stop = true; this._allJob.finish(false); return; }
+                if (this._job) { UI.statusInfo.textContent = '📐 Сейчас идёт другой прогон цикла — дождитесь или остановите его'; return; }
+                if (!window.ZFIG) { UI.statusInfo.textContent = '📐 Не загрузился общий модуль _js/figury.js — обновите страницу (Ctrl+F5)'; return; }
+                const H = MODULE_STATE.originalLines.length, $ = id => document.getElementById(id);
+                const plan = [];
+                units.forEach(U => sizes.forEach(S => { if ((U === 'tri' ? S / 2 : S) <= H - 1) plan.push([U, S]); }));
+                if (H < 2 || !plan.length) { UI.statusInfo.textContent = '📐 Все размеры: нет текста или он ниже самой маленькой фигуры'; return; }
+                const uEl = $('rsUnit'), sEl = $('rsSize'), keepU = uEl.value, keepS = sEl.value, btn = $(btnId), btnTxt = btn.textContent;
+                const body = [], sum = [];
+                let i = 0;
+                const job = this._allJob = { stop: false, btnId: btnId };
+                job.finish = (ok) => {
+                    if (job.done) return; job.done = true;
+                    this._allJob = null; btn.textContent = btnTxt; btn.classList.remove('on'); this.rsxLabel();
+                    uEl.value = keepU; sEl.value = keepS; this._sumVer = null; this.updSummary(true);
+                    if (!ok) { UI.statusInfo.textContent = '📐 ' + label + ': остановлено на ' + i + ' из ' + plan.length + ' — файл не записан'; return; }
+                    const name = 'Zerkalius-figury-cikl-' + units.join('-') + '-' + (sizes.length > 1 ? 'vse-razmery' : 'S' + sizes[0]) + '-strok-' + H + '.tsv';
+                    ZFIG.save(name, ZFIG.header('Треугольник, Аниматрица — ' + label + ' (все формы цикла)',
+                        ['строк текста ' + H + ', операция волны ' + ($('animOpSelect')?.value || 'xor').toUpperCase() + '; в «где» — вид, S, первый проход и место']
+                            .concat(sum.map(s => 'прогон: ' + s))).concat(body));
+                    UI.statusInfo.textContent = '📐 ' + label + ': ' + plan.length + ' прогонов, ' + body.filter(l => l[0] !== '#').length + ' форм · ' + name;
+                };
+                btn.textContent = '⏹ Стоп'; btn.classList.add('on');
+                const next = () => {
+                    if (job.stop) return;
+                    if (i >= plan.length) return job.finish(true);
+                    const [U, S] = plan[i++];
+                    uEl.value = U; sEl.value = String(S);
+                    UI.statusInfo.textContent = '📐 ' + label + ': прогон ' + i + ' из ' + plan.length + ' — ' + this.UNIT_NAME[U] + ', S = ' + S + ' · нажать ещё раз — стоп';
+                    let called = false;
+                    this.runCycle(() => {
+                        called = true;
+                        const cy = this._cyc, head = this.cycleHead(cy);
+                        sum.push(head); body.push('# --- ' + head);
+                        for (const l of this.cycleLines(cy, true)) body.push(l);
+                        this.soon(next);
+                    });
+                    if (!called && !this._job) job.finish(false);   // runCycle не начал прогон (нет вершины) — дальше не идём
+                };
+                next();
+            },
+            saveTsv: function() {
+                if (!window.ZFIG) { UI.statusInfo.textContent = '📐 Не загрузился общий модуль _js/figury.js — обновите страницу (Ctrl+F5)'; return; }
+                const S = this.size(), cy = this._cyc, U = cy ? (cy.U || 'rh') : this.unit(), lines = [];
+                let src, n = 0;
+                if (cy) {
+                    src = 'Треугольник, Аниматрица — все формы цикла: ' + this.cycleHead(cy);
+                    for (const l of this.cycleLines(cy, false)) { lines.push(l); n++; }
+                } else {
+                    const cen = this.census(S);
+                    if (!cen.n) { UI.statusInfo.textContent = '📐 Нет ни одной фигуры в кадре — нечего писать'; return; }
+                    const { rows, W } = this.rowsOf(MODULE_STATE.originalLines), by = new Map();
+                    src = 'Треугольник, текущий кадр: ' + this.UNIT_NAME[U] + ', S = ' + S + ', проход ' + cen.pass;
+                    for (const it of cen.items) {
+                        const g = this.geo(it.kind, S), pat = this.cellsPat(this.cellsRows(rows, W, it, S, false), g.gw), k = it.kind + '|' + pat;
+                        const e = by.get(k); if (e) { e.count++; continue; }
+                        by.set(k, { kind: this.KIND_SYM[it.kind] || it.kind, pat: pat, count: 1, where: 'ряд ' + it.lev + ', ' + (it.j + 1) + '-й слева' });
+                    }
+                    by.forEach(e => { lines.push(ZFIG.line({ kind: e.kind, step: 2, pat: e.pat, count: e.count, where: e.where })); n++; });
+                }
+                const head = ZFIG.header(src, ['строк текста ' + MODULE_STATE.originalLines.length + ', операция волны ' + (document.getElementById('animOpSelect')?.value || 'xor').toUpperCase() +
+                    '; «где» — ряд фигур сверху (с нуля) и место в ряду']);
+                // v0.028: у текущего кадра — картина (для «Сравнения»: целиком и части); у цикла её нет — кадров много
+                if (!cy) head.splice(head.length - 1, 0, ...ZFIG.picture(2, MODULE_STATE.originalLines.map(l => ({ a: 0, s: l.text })), 0));
+                const name = 'Zerkalius-figury-' + U + '-' + (cy ? cy.S + '-cikl-' + cy.p0 + '-' + cy.pEnd : S + '-prohod-' + (MODULE_STATE.animPasses || 0)) + '.tsv';
+                ZFIG.save(name, head.concat(lines));
+                UI.statusInfo.textContent = '📐 Таблица фигур: ' + n + ' разных рисунков' + (cy ? ' за цикл' : ' в кадре') + ' · ' + name;
             },
             saveTxt: function() {
                 const S = this.size(), cen = this.census(S), cy = this._cyc, L = [];
@@ -5087,7 +5356,7 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                 const s = this.sel; if (!s) { UI.statusInfo.textContent = '🔍 Сначала выберите фигуру'; return; }
                 const src = MODULE_STATE.originalLines, H = src.length; if (!this.fits(s, H)) return;
                 const { rows, W } = this.rowsOf(src);
-                const stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) { const c1 = a[k], c2 = b[k]; b[k] = c1 === c2 ? 32 : (c1 !== 32 ? c1 : c2); } };
+                const wc = waveCell(), stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) b[k] = wc(a[k], b[k]); };   // v0.023: операция волны — из выбора
                 let pass = MODULE_STATE.animPasses || 0;
                 const r0 = MODULE_STATE.animatrixRow || 0;
                 if (r0 > 0 && r0 < H - 1) { for (let r = r0; r < H - 1; r++) stepRow(r); pass++; }
@@ -5140,6 +5409,12 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                 ['rsSize', 'rsUnit'].forEach(id => $(id)?.addEventListener('change', () => { this._sumVer = null; this.updSummary(true); RENDERER.renderFrame(); }));   // v0.010: и единица
                 $('rsCycleBtn')?.addEventListener('click', () => this.runCycle());
                 $('rsSaveBtn')?.addEventListener('click', () => this.saveTxt());
+                // v0.030: скачать таблицу — три выбора и итоговая кнопка, и «📐 Всё»
+                $('rsxBtn')?.addEventListener('click', () => this.rsxGo(false));
+                $('rsxAllBtn')?.addEventListener('click', () => this.rsxGo(true));
+                ['rsxSrc', 'rsxUnit', 'rsxSize', 'rsSize'].forEach(id => $(id)?.addEventListener('change', () => this.rsxLabel()));
+                this.rsxLabel();
+                // v0.025 «📐 Весь цикл → .tsv» снята в v0.030: её делает «📐 Скачать» с выбором «цикл · этот размер»
                 $('rcPickBtn')?.addEventListener('click', () => {
                     this.arm = !this.arm; $('rcPickBtn').classList.toggle('on', this.arm);
                     UI.statusInfo.textContent = this.arm ? '🎯 Щёлкните по фигуре на треугольнике (' + this.UNIT_NAME[this.unit()] + ')' : '';
@@ -5286,7 +5561,7 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                 if (H < 2 || !this.cv) return;
                 if (kind === 'webm' && !(window.MediaRecorder && this.cv.captureStream)) { UI.statusInfo.textContent = '🗻 Этот браузер не умеет писать видео с холста'; return; }
                 const { rows, W } = RHOMBS.rowsOf(src);
-                const stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) { const c1 = a[k], c2 = b[k]; b[k] = c1 === c2 ? 32 : (c1 !== 32 ? c1 : c2); } };
+                const wc = waveCell(), stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) b[k] = wc(a[k], b[k]); };   // v0.023: операция волны — из выбора
                 const full = () => { for (let r = 0; r < H - 1; r++) stepRow(r); };
                 const hashAll = () => { let h1 = 2166136261, h2 = 7; for (const a of rows) for (let k = 0; k < W; k++) { h1 = Math.imul(h1 ^ a[k], 16777619); h2 = (Math.imul(h2, 31) + a[k]) | 0; } return (h1 >>> 0) * 2097152 + ((h2 >>> 0) & 2097151); };
                 let pass = MODULE_STATE.animPasses || 0;
@@ -5522,7 +5797,7 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                 const c0 = H ? RHOMBS.apex(src[0].text) : null;
                 if (H < 2 || c0 === null) { out.textContent = 'Нет текста или первая строка пустая'; return; }
                 const { rows, W } = RHOMBS.rowsOf(src);
-                const stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) { const c1 = a[k], c2 = b[k]; b[k] = c1 === c2 ? 32 : (c1 !== 32 ? c1 : c2); } };
+                const wc = waveCell(), stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) b[k] = wc(a[k], b[k]); };   // v0.023: операция волны — из выбора
                 const hashAll = () => { let h1 = 2166136261, h2 = 7; for (const a of rows) for (let k = 0; k < W; k++) { h1 = Math.imul(h1 ^ a[k], 16777619); h2 = (Math.imul(h2, 31) + a[k]) | 0; } return (h1 >>> 0) * 2097152 + ((h2 >>> 0) & 2097151); };
                 let pass = MODULE_STATE.animPasses || 0;
                 const r0 = MODULE_STATE.animatrixRow || 0;
@@ -5626,7 +5901,7 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
             gifChain: function(ch) {
                 const R = this.res; if (!R || !ch) return;
                 const src = MODULE_STATE.originalLines, H = src.length, { rows, W } = RHOMBS.rowsOf(src);
-                const stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) { const c1 = a[k], c2 = b[k]; b[k] = c1 === c2 ? 32 : (c1 !== 32 ? c1 : c2); } };
+                const wc = waveCell(), stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) b[k] = wc(a[k], b[k]); };   // v0.023: операция волны — из выбора
                 const full = () => { for (let r = 0; r < H - 1; r++) stepRow(r); };
                 let pass = MODULE_STATE.animPasses || 0; const r0 = MODULE_STATE.animatrixRow || 0;
                 if (r0 > 0 && r0 < H - 1) { for (let r = r0; r < H - 1; r++) stepRow(r); pass++; }
@@ -5720,6 +5995,7 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
                 };
             },
             save: function() {
+                if (MODULE_STATE.linkMode) return;   // v0.027: открыто по ссылке — своё состояние пользователя не затираем
                 try { localStorage.setItem(this.KEY, JSON.stringify(this.collect(true))); }
                 catch (e) { try { localStorage.setItem(this.KEY, JSON.stringify(this.collect(false))); } catch (e2) {} }
             },
@@ -5803,9 +6079,25 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
             });
             const spVal = parseInt(UI.speedRange.value, 10); UI.speedVal.textContent = (1001 - spVal) + ' мс';
             // 35.44: есть запомненное состояние — продолжаем с него, стартовый вид ниже не ставится
+            /* v0.027, запрос пользователя по «Результатам»: «ссылки на переход с заготовкой и нажатым плеером Аниматрицы
+               для каждого разобранного случая». Адрес вида ?n=1024&r=90&rh=512 ставит заготовку: r — правило (90),
+               s — сид (1), n — строк, trim=0 — без обрезки фона, rh — ромбическая сетка с этим шагом, let=1 — буквы в
+               ромбах, bands=1 — полосы периодов, axis=1 — ось симметрии, pass=0 — плеер по шагам, а не целыми циклами.
+               Пока страница открыта так, её память не пишется (MODULE_STATE.linkMode): своё состояние пользователя
+               не затирается. Адрес потом очищается — F5 вернёт обычный Треугольник. */
+            let LINK = null;
+            try { const q = new URLSearchParams(location.search); if (q.has('n') || q.has('r')) LINK = q; } catch (e) {}
+            if (LINK) MODULE_STATE.linkMode = true;
             SESSION.bind();
-            if (SESSION.restore()) return;
-            if(!MODULE_DATA.loadFromLocalStorage()) {
+            if (!LINK && SESSION.restore()) return;
+            if (LINK) {
+                const ruleOk = Array.from(UI.zerkRuleSelect.options).some(o => o.value === LINK.get('r'));
+                UI.zerkRuleSelect.value = ruleOk ? LINK.get('r') : '90';
+                UI.zerkSeedInput.value = (LINK.get('s') || '1').replace(/[^01]/g, '') || '1';
+                UI.zerkCountInput.value = Math.max(2, Math.min(4096, parseInt(LINK.get('n'), 10) || 128));
+                UI.trimZerosCheck.checked = LINK.get('trim') !== '0'; UI.implantModeCheck.checked = false;
+                MODULE_DATA.generateSierpinski();
+            } else if(!MODULE_DATA.loadFromLocalStorage()) {
                 // v0.009: первый запуск (в браузере ничего не запомнено) — сразу треугольник: правило 90, сид 1, 50 строк, фон обрезан
                 UI.zerkRuleSelect.value = '90'; UI.zerkSeedInput.value = '1'; UI.zerkCountInput.value = '50';
                 UI.trimZerosCheck.checked = true; UI.implantModeCheck.checked = false;
@@ -5835,11 +6127,27 @@ VERSION: v0.022 (копия Zerkalius Code 35.74 целиком — отправ
             MODULE_STATE.isRadarActive = false;   // v0.006: радар убран (в Code стартовый вид — радар)
             MODULE_STATE.pinTop = true; document.getElementById('pinTopBtn')?.classList.add('active-yellow');   // v0.009: 🔝 закреп — сразу
             MODULE_STATE.isReverse = true; UI.toggleReverseBtn.classList.add('active-green'); // 35.6: 🔃 реверс включён с ходу
+            if (LINK) {   // v0.027: заготовка из ссылки — сетка, буквы, полосы, ось, плеер целыми циклами
+                const setChk = (id, on) => { const el = document.getElementById(id); if (el && el.checked !== on) { el.checked = on; el.dispatchEvent(new Event('change', { bubbles: true })); } };
+                setChk('zerkaliusAnimCheck', LINK.get('anim') !== '0');
+                setChk('animByPassCheck', LINK.get('pass') !== '0');
+                const rh = parseInt(LINK.get('rh'), 10);
+                if (rh > 0) { const st = document.getElementById('rhombGridStep'); if (st) { st.value = String(rh); st.dispatchEvent(new Event('change', { bubbles: true })); } }
+                setChk('rhombGridCheck', rh > 0);
+                setChk('rhombLettersCheck', LINK.get('let') === '1');
+                setChk('rowBandsCheck', LINK.get('bands') === '1');
+                setChk('symAxisCheck', LINK.get('axis') === '1');
+                MODULE_DATA.animInfoUpd?.();
+                try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}
+                UI.statusInfo.textContent = `Заготовка из «Результатов»: правило ${UI.zerkRuleSelect.value}, ${UI.zerkCountInput.value} строк` +
+                    (rh > 0 ? `, ромбы ${rh}` : '') + ` — Аниматрица запущена. Своё состояние Треугольника не тронуто: F5 — вернуться к нему.`;
+            }
             RENDERER.renderFrame();
             if (!MODULE_STATE.isPlaying) PLAYER.start();
         };
     </script>
     <script src="_js/recorder.js"></script>
     <script src="_js/hub-link.js"></script>
+    <script src="_js/figury.js?v=4"></script>
 </body>
 </html>

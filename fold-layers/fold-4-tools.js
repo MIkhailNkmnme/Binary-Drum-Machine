@@ -151,7 +151,7 @@ function cellFixAdd(){
   if (!order.length) {
     say(patCellSel.size
       ? "📍 Фиксируются только биты цепочки, а выбраны биты паттерна."
-      : "📍 Сначала выберите биты (режим «▭ Выбор ячеек»).");
+      : "📍 Сначала выберите биты (режим «▭ Ячейки»).");
     return;
   }
   const keys = order.map(k => k.slice(1));
@@ -1493,7 +1493,7 @@ if (bColSelClearFloatEl) bColSelClearFloatEl.onclick = clearAxisGroupOnce;
 /* Общая обёртка операций над выбранными ячейками: снимок для отката, проверка "есть ли выбор",
    перерисовка и запись кэша. fn получает Map(строка → колонки) и общую ширину полотна. */
 function cellSelApply(name, fn){
-  if (!cellSel.size) { say("Сначала выберите ячейки (режим «▭ Выбор ячеек»)."); return; }
+  if (!cellSel.size) { say("Сначала выберите ячейки (режим «▭ Ячейки»)."); return; }
   const byRow = cellSelByRow();
   const maxLen = cellSelMaxLen();
   snapshot();
@@ -1844,6 +1844,164 @@ if (bLinCompEl) bLinCompEl.onclick = () => {
       (ok ? "" : " ВНИМАНИЕ: правило не воспроизвело ленту — это ошибка, покажите это сообщение.") +
       " Правило, зерно и 64 следующих бита — в «🧾 Черновике шага».");
 };
+
+/* ═══ «◇ РОМБЫ И ТРЕУГОЛЬНИКИ В СТРОКАХ» (v1.628) ═══
+   Запрос пользователя: «в текущих строках — там тоже треугольник — найти все ромбы-треугольники по
+   размерам, записать и также сортировать по размерам, и также отдельно все, с наложениями, то есть
+   вообще все возможные, строка за строкой, бит за битом» → «там нет Аниматрицы, просто статику».
+   Данные не трогает — только отчёт .txt и сводка в плашке.
+   Геометрия ЭКРАННАЯ: где строка начинается в полустолбцах, считает rowColStart2x (выравнивание, «½»,
+   зеркала), биты — getRowBits (с зеркалами и наложением блока, как во всех расчётах). Наклон стороны
+   d — полустолбцов на строку: 1 на «½»-выравниваниях (биты следующей строки стоят через полсимвола, как
+   у Паскаля), 2 на остальных (сторона под 45° по целым столбцам).
+   Фигуры, размер s:
+     ▲ — вершина сверху, s строк, строка t занимает от −t·d до +t·d вокруг вершины;
+     ▼ — то же вверх ногами (вершина снизу), отсчёт от левого бита верхней строки;
+     ◇ — ▲ размера s и под ним ▼ размера s−1, высота 2s−1 строк.
+   Фигура засчитывается, только если КАЖДАЯ её клетка — бит 0 или 1: пустота, точка, край строки или
+   чужая подсетка «½» — фигуры нет. Размер 1 (один бит) не считается.
+   «Сетка» — без наложений: для каждого вида и размера строки идут сверху вниз, биты слева направо, и
+   фигура берётся, если не задевает клеток, уже взятых тем же видом и размером. На чистом треугольнике
+   Паскаля это ровно регулярная нарезка. «Все» — каждое положение, где фигура помещается, внахлёст.
+   Диапазон строк как везде: выделено несколько — от первой из них до последней, одна — от первой строки
+   до неё, ничего — все. Рисунок фигуры — её строки через «/». В отчёте размеры по возрастанию, внутри
+   ▲ ▼ ◇; у каждого — сколько штук, сколько разных рисунков, рисунки по частоте и все положения по
+   порядку. Потолки: RH_CELLS_MAX прочитанных клеток (дальше размеры не считаются — сказано в отчёте) и
+   RH_TEXT_MAX символов отчёта (дальше положения не перечисляются, счёт остаётся). */
+const RH_CELLS_MAX = 120e6, RH_TEXT_MAX = 40e6;
+function rhombsFind(overlap){
+  const n = st.rows.length;
+  if (!n) { say("◇ Ромбы: строк нет."); return; }
+  const sel = st.selectedRows && st.selectedRows.size ? Array.from(st.selectedRows).sort((a, b) => a - b) : [];
+  const lo = sel.length >= 2 ? sel[0] : 0;
+  const hi = sel.length >= 2 ? sel[sel.length - 1] : (sel.length === 1 ? sel[0] : n - 1);
+  let maxLen = 0; for (const s of st.rows) if (s && s.length > maxLen) maxLen = s.length;
+  const d = alignIsHalf(st.align) ? 1 : 2;
+  const R = [];
+  for (let i = lo; i <= hi; i++) {
+    const s = getRowBits(st, i) || "";
+    R.push({ s, a: s.length ? rowColStart2x(st, i, s, mirrorPadsOf(st, i), maxLen, st.align) : 0 });
+  }
+  const H = R.length;
+  let cells = 0;
+  const bitAt = (r, p) => {
+    cells++;
+    const o = R[r]; if (!o || !o.s.length) return "";
+    const q = p - o.a; if (q < 0 || (q & 1)) return "";
+    const ch = o.s[q >> 1]; return (ch === "0" || ch === "1") ? ch : "";
+  };
+  const maxEl = document.getElementById("rhMax");
+  const want = maxEl ? Math.max(0, parseInt(maxEl.value, 10) || 0) : 0;
+  const sTop = want ? Math.min(want, H) : H;
+  // Пролёты строк фигуры относительно опорного бита p: [смещение строки, левый край, правый край] в полустолбцах.
+  const spans = (kind, s) => {
+    const out = [];
+    if (kind === "▲") for (let t = 0; t < s; t++) out.push([t, -t * d, t * d]);
+    else if (kind === "▼") { const h = (s - 1) * d; for (let t = 0; t < s; t++) out.push([t, t * d, 2 * h - t * d]); }
+    else for (let t = 0; t <= 2 * s - 2; t++) { const w = Math.min(t, 2 * s - 2 - t) * d; out.push([t, -w, w]); }
+    return out;
+  };
+  const KINDS = ["▲", "▼", "◇"];
+  const res = [];   // { kind, s, h, cells, count, pats: Map рисунок → [сколько, номер], inst: [r, k, номер] }
+  let stoppedAt = 0;
+  for (let s = 2; s <= sTop && !stoppedAt; s++) {
+    for (const kind of KINDS) {
+      const sp = spans(kind, s), h = sp.length;
+      if (h > H) continue;
+      const occ = overlap ? null : new Set();
+      const e = { kind, s, h, cells: sp.reduce((a, x) => a + (x[2] - x[1]) / 2 + 1, 0), count: 0, pats: new Map(), inst: [] };
+      for (let r = 0; r + h <= H; r++) {
+        const o = R[r];
+        for (let k = 0; k < o.s.length; k++) {
+          const c0 = o.s[k]; if (c0 !== "0" && c0 !== "1") continue;
+          const p = o.a + 2 * k;
+          let pat = "", ok = true;
+          for (const [t, L, Rr] of sp) {
+            if (t) pat += "/";
+            for (let x = p + L; x <= p + Rr; x += 2) {
+              const ch = bitAt(r + t, x);
+              if (!ch || (occ && occ.has((r + t) * 4194304 + x + 2097152))) { ok = false; break; }
+              pat += ch;
+            }
+            if (!ok) break;
+          }
+          if (!ok) continue;
+          if (occ) for (const [t, L, Rr] of sp) for (let x = p + L; x <= p + Rr; x += 2) occ.add((r + t) * 4194304 + x + 2097152);
+          let pe = e.pats.get(pat);
+          if (!pe) { pe = [0, e.pats.size, r, k]; e.pats.set(pat, pe); }   // v1.629: и первое место — для таблицы .tsv
+          pe[0]++; e.count++;
+          e.inst.push(r, k, pe[1]);
+        }
+      }
+      if (e.count) res.push(e);
+      if (cells > RH_CELLS_MAX) { stoppedAt = s; break; }
+    }
+  }
+  const modeTxt = overlap ? "все положения, внахлёст" : "сетка без наложений";
+  /* v1.629: ТАБЛИЦА ДЛЯ СРАВНЕНИЯ (запрос: «нужно потом сравнить и найти одинаковые с найденными в Аниматрице,
+     форматы надо подготовить»). Общий формат — _js/figury.js (ZFIG), тот же пишет ◇ Сводка Треугольника. Одна
+     строка на разный рисунок: вид, шаг решётки d, рисунок, ключ без зеркала, подрешётки (у шага 2), сколько, где. */
+  const fmtEl = document.getElementById("rhFmt");
+  if (fmtEl && fmtEl.value === "tsv") {
+    if (!window.ZFIG) { say("◇ Ромбы: не загрузился общий модуль _js/figury.js — обновите страницу (Ctrl+F5)."); return; }
+    const L = ZFIG.header(`Layers ${modeTxt}, строки ${rowLabel(lo)}…${rowLabel(hi)} (${H}), выравнивание «${st.align}»`,
+      [`размеры 2…${stoppedAt || sTop}${stoppedAt ? " — остановлено: слишком много клеток" : ""}; «где» — номер строки и бит (с нуля)`]);
+    L.splice(L.length - 1, 0, ...ZFIG.picture(d, R, rowLabel(lo)));   // картина — для «Сравнения»: целиком и части
+    let nPat = 0;
+    for (const e of res) for (const [pat, pe] of e.pats) { L.push(ZFIG.line({ kind: e.kind, step: d, pat, count: pe[0], where: `стр ${rowLabel(lo + pe[2])} бит ${pe[3]}` })); nPat++; }
+    const nameT = "zerkalius-layers-figury-" + (overlap ? "vse" : "setka") + "-" + new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-") + ".tsv";
+    ZFIG.save(nameT, L);
+    say(`◇ Таблица фигур (${modeTxt}): ${nPat} разных рисунков, шаг решётки ${d}` + (stoppedAt ? `, остановлено на размере ${stoppedAt}` : "") + `. Файл ${nameT}.`);
+    return;
+  }
+  // Отчёт
+  const out = [];
+  let len = 0, cut = false;
+  const put = (t) => { out.push(t); len += t.length + 1; };
+  put("ZERKALIUS LAYERS — ТРЕУГОЛЬНИКИ И РОМБЫ В СТРОКАХ");
+  put(`режим: ${modeTxt}`);
+  put(`строки ${rowLabel(lo)}…${rowLabel(hi)} (${H}), выравнивание «${st.align}», наклон стороны — ${d === 1 ? "полсимвола" : "символ"} на строку`);
+  put(`размеры 2…${stoppedAt || sTop}${want ? ` (ограничено «до ${want}»)` : ""}${stoppedAt ? ` — ОСТАНОВЛЕНО на размере ${stoppedAt}: прочитано больше ${RH_CELLS_MAX / 1e6} млн клеток, поставьте «до» меньше` : ""}`);
+  put("▲ — вершина сверху, ▼ — вершина снизу (место — левый бит верхней строки), ◇ — ромб: ▲ размера s и ▼ размера s−1 под ним.");
+  put("Рисунок — строки фигуры сверху вниз через «/». Место — номер строки и номер бита в ней, с нуля.");
+  put("");
+  put("СВОДКА (размер · вид · строк · бит · штук · разных рисунков)");
+  const tot = { "▲": 0, "▼": 0, "◇": 0 };
+  let totPats = 0;
+  for (const e of res) { tot[e.kind] += e.count; totPats += e.pats.size; put(`  ${String(e.s).padStart(4)} ${e.kind}  строк ${e.h}, бит ${e.cells}: ${e.count} шт., разных ${e.pats.size}`); }
+  if (!res.length) put("  ни одной фигуры: в диапазоне нет подряд идущих строк с битами друг под другом");
+  put("");
+  for (const e of res) {
+    put(`═══ ${e.kind} размер ${e.s} — строк ${e.h}, бит ${e.cells} — ${e.count} шт., разных рисунков ${e.pats.size} ═══`);
+    const byId = new Array(e.pats.size);
+    const list = Array.from(e.pats.entries());
+    for (const [pat, pe] of list) byId[pe[1]] = pat;
+    put("  рисунки по частоте:");
+    list.sort((a, b) => b[1][0] - a[1][0] || (a[0] < b[0] ? -1 : 1));
+    for (const [pat, pe] of list) { if (len > RH_TEXT_MAX) { cut = true; break; } put(`    ×${pe[0]}  ${pat}`); }
+    put("  все по порядку (строка : бит — рисунок):");
+    for (let j = 0; j < e.inst.length; j += 3) {
+      if (len > RH_TEXT_MAX) { cut = true; put("    … дальше не записано: отчёт упёрся в потолок размера"); break; }
+      put(`    ${rowLabel(lo + e.inst[j])} : ${e.inst[j + 1]} — ${byId[e.inst[j + 2]]}`);
+    }
+    put("");
+  }
+  if (cut) put(`ВНИМАНИЕ: отчёт больше ${RH_TEXT_MAX / 1e6} млн символов — часть положений не перечислена, счёт в сводке полный.`);
+  const name = "zerkalius-layers-romby-" + (overlap ? "vse" : "setka") + "-" + new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-") + ".txt";
+  const blob = new Blob([out.join("\n")], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  say(`◇ ${overlap ? "Все, внахлёст" : "Сетка"}: ▲ ${tot["▲"]}, ▼ ${tot["▼"]}, ◇ ${tot["◇"]} фигур размеров 2…${stoppedAt || sTop}, разных рисунков ${totPats}` +
+      (stoppedAt ? ` — остановлено на размере ${stoppedAt}, слишком много клеток` : "") + (cut ? " — отчёт урезан по размеру" : "") +
+      `. Отчёт — файл ${name}.`);
+}
+const bRhGridEl = document.getElementById("bRhGrid");
+if (bRhGridEl) bRhGridEl.onclick = () => rhombsFind(false);
+const bRhAllEl = document.getElementById("bRhAll");
+if (bRhAllEl) bRhAllEl.onclick = () => rhombsFind(true);
 
 const bGf2El = document.getElementById("bGf2");
 if (bGf2El) bGf2El.onclick = gf2Analyze;
@@ -2324,7 +2482,7 @@ function updateNumGlueBtn(){
   const b = document.getElementById("bNumToPat");
   if (!b) return;
   const side = st.numGlue || "";
-  b.textContent = "🔢 Номер к паттерну: " + (side === "right" ? "справа" : side === "left" ? "слева" : "выкл");
+  b.textContent = "🔢 → паттерн: " + (side === "right" ? "справа" : side === "left" ? "слева" : "выкл");
   b.classList.toggle("mode-act", !!side);
 }
 
@@ -2372,7 +2530,7 @@ function updateNumGlueRowsBtn(){
   const b = document.getElementById("bNumToRow");
   if (!b) return;
   const side = st.numGlueRows || "";
-  b.textContent = "🔢 Номер к строке: " + (side === "right" ? "справа" : side === "left" ? "слева" : "выкл");
+  b.textContent = "🔢 → строка: " + (side === "right" ? "справа" : side === "left" ? "слева" : "выкл");
   b.classList.toggle("mode-act", !!side);
 }
 
@@ -2553,7 +2711,7 @@ function patInsertCellHere(){
     st.selectedPats = new Set(Array.from(st.selectedPats).map(i => i >= at ? i + 1 : i));
   }
   render(); saveCache();
-  say(`➕ Пустая ячейка паттернов вставлена на место ${rowLabel(at)}: колонка ниже съехала вниз. Цепочка не тронута. Вернуть — Undo или «🗑🧩 Удалить ячейки паттернов».`);
+  say(`➕ Пустая ячейка паттернов вставлена на место ${rowLabel(at)}: колонка ниже съехала вниз. Цепочка не тронута. Вернуть — Undo или «🗑🧩 Ячейки».`);
   logStep("Вставить ячейку паттернов", String(rowLabel(at)), "", "+1");
 }
 
@@ -3207,7 +3365,7 @@ function setTopBuildMode(m, quiet){
   const b = document.getElementById("bTopBuildMode");
   if (b) {
     b.classList.toggle("mode-act", m === "append");
-    b.textContent = m === "append" ? "↕ Верх: дописывать" : "↕ Верх: переписывать";
+    b.textContent = m === "append" ? "↕ Дописать" : "↕ Переписать";
   }
   if (!quiet) say(m === "append"
     ? "Достроение вверх будет ДОПИСЫВАТЬ по одной строке, не трогая уже построенные."
@@ -3236,7 +3394,7 @@ function setTopBuildOnHit(on, quiet){
   const b = document.getElementById("bTopBuildOnHit");
   if (b) {
     b.classList.toggle("mode-act", st.topBuildOnHit);
-    b.textContent = st.topBuildOnHit ? "🎯 При находке: достраивать" : "🎯 При находке: не трогать";
+    b.textContent = st.topBuildOnHit ? "🎯 Находка: да" : "🎯 Находка: нет";
   }
   if (!quiet) {
     say(st.topBuildOnHit
@@ -3256,12 +3414,12 @@ function setTopBuildNeedHit(on, quiet){
   const b = document.getElementById("bTopBuildNeedHit");
   if (b) {
     b.classList.toggle("mode-act", st.topBuildNeedHit);
-    b.textContent = st.topBuildNeedHit ? "✋ Вручную: только при находке" : "✋ Вручную: всегда";
+    b.textContent = st.topBuildNeedHit ? "✋ При находке" : "✋ Всегда";
   }
   if (!quiet) {
     say(st.topBuildNeedHit
-      ? "«⬆ Достроить вверх» теперь сработает только когда фон-поиск нашёл паттерн."
-      : "«⬆ Достроить вверх» снова строит по нажатию в любом случае.");
+      ? "«⬆ Вверх» теперь сработает только когда фон-поиск нашёл паттерн."
+      : "«⬆ Вверх» снова строит по нажатию в любом случае.");
     saveCache();
   }
 }
@@ -3272,7 +3430,7 @@ function setTopBuildOnSelect(on, quiet){
   const b = document.getElementById("bTopBuildOnSelect");
   if (b) {
     b.classList.toggle("mode-act", st.topBuildOnSelect);
-    b.textContent = st.topBuildOnSelect ? "🖱 По выделению: достраивать" : "🖱 По выделению: не трогать";
+    b.textContent = st.topBuildOnSelect ? "🖱 Выдел: да" : "🖱 Выдел: нет";
   }
   if (!quiet) {
     say(st.topBuildOnSelect
@@ -3290,7 +3448,7 @@ function setGrowDownOnFind(on, quiet){
   const b = document.getElementById("bGrowDownOnFind");
   if (b) {
     b.classList.toggle("mode-act", st.growDownOnFind);
-    b.textContent = st.growDownOnFind ? "⬇ Расширять вниз: вкл" : "⬇ Расширять вниз: выкл";
+    b.textContent = st.growDownOnFind ? "⬇ Вниз: вкл" : "⬇ Вниз: выкл";
   }
   if (!quiet) {
     say(st.growDownOnFind
@@ -3309,9 +3467,9 @@ function setTopBuildKind(k, quiet){
   const b = document.getElementById("bTopBuildKind");
   if (b) {
     b.classList.toggle("mode-act", st.topBuildKind !== "inv");
-    b.textContent = st.topBuildKind === "revinv" ? "⇅ Вид: реверс+инв"
-      : st.topBuildKind === "rev" ? "⇅ Вид: реверс"
-      : "⇅ Вид: инверсия";
+    b.textContent = st.topBuildKind === "revinv" ? "⇅ Рев+Инв"
+      : st.topBuildKind === "rev" ? "⇅ Реверс"
+      : "⇅ Инверсия";
   }
   if (!quiet) {
     say(st.topBuildKind === "revinv" ? "Вверх достраивается ИНВЕРСИЯ + РЕВЕРС строки-источника."
@@ -3333,10 +3491,10 @@ function setAxisDiagCols(m, quiet){
   const slope = axisDiagSlope2x(st.align);
   if (b) {
     b.classList.toggle("mode-act", !!st.axisDiagCols);
-    b.textContent = !st.axisDiagCols ? "⤡ Диагональ осей: выкл"
-      : slope > 0 ? "⤡ Диагональ осей: ↘"
-      : slope < 0 ? "⤡ Диагональ осей: ↙"
-      : "⤡ Диагональ осей: не на этом выравн.";
+    b.textContent = !st.axisDiagCols ? "⤡ Диаг: выкл"
+      : slope > 0 ? "⤡ Диаг: ↘"
+      : slope < 0 ? "⤡ Диаг: ↙"
+      : "⤡ Диаг: нет";
   }
   if (!quiet) {
     say(!st.axisDiagCols
@@ -3512,8 +3670,8 @@ function setMirrorKind(side, k, quiet){
   const b = document.getElementById(right ? "bMirrorKindR" : "bMirrorKindL");
   if (b) {
     b.classList.toggle("mode-act", val !== "revinv");
-    b.textContent = "⇔ Вид " + (right ? "▶" : "◀") + ": " + (val === "rev" ? "реверс"
-      : val === "inv" ? "инверсия" : val === "none" ? "копия" : "реверс+инв");
+    b.textContent = "⇔" + (right ? "▶ " : "◀ ") + (val === "rev" ? "Реверс"
+      : val === "inv" ? "Инверсия" : val === "none" ? "Копия" : "Рев+Инв");   // v1.630: короче
   }
   if (!quiet) {
     const who = right ? "Правое" : "Левое";
@@ -3538,7 +3696,7 @@ function setMirrorCutAxis(side, on, quiet){
   const b = document.getElementById(right ? "bMirrorCutR" : "bMirrorCutL");
   if (b) {
     b.classList.toggle("mode-act", val);
-    b.textContent = "⊘ Ось " + (right ? "▶" : "◀") + ": " + (val ? "убрать" : "оставить");
+    b.textContent = "⊘" + (right ? "▶ " : "◀ ") + (val ? "без оси" : "с осью");   // v1.630: короче
   }
   if (!quiet) {
     const who = right ? "правого" : "левого";
@@ -3579,7 +3737,7 @@ function applyMirrorsToRows(keepShow, sides, silent){
   if (!useLeft && !useRight) {
     say(sides
       ? "Авто-зеркала: не выбрана сторона."
-      : "Вписать зеркала: сначала включите «◀ Зеркало влево» и/или «▶ Зеркало вправо».");
+      : "Вписать зеркала: сначала включите «◀ Зеркало» и/или «▶ Зеркало».");
     return;
   }
   // Та же граница, что и у показа: нужна выделенная строка, и вписываем по неё включительно, сверху
@@ -3764,10 +3922,10 @@ function setMirrorsAuto(m, quiet){
   st.mirrorsAutoSide = MIRROR_AUTO_SIDES.indexOf(m) >= 0 ? m : "off";
   mirrorsRowDone.clear(); // новая настройка — счёт вписываний с нуля
   const b = document.getElementById("bMirrorsAuto");
-  const lbl = { off: "выкл", left: "влево", right: "вправо", both: "обе стороны" };
+  const lbl = { off: "выкл", left: "◀", right: "▶", both: "◀▶" };
   if (b) {
     b.classList.toggle("mode-act", st.mirrorsAutoSide !== "off");
-    b.textContent = "⇔ Авто-зеркала: " + lbl[st.mirrorsAutoSide];
+    b.textContent = "⇔ Авто: " + lbl[st.mirrorsAutoSide];   // v1.630: короче
   }
   if (!quiet) {
     say(st.mirrorsAutoSide === "off"
@@ -3781,7 +3939,7 @@ function setMirrorShiftAsIf(on, quiet){
   const b = document.getElementById("bMirrorShiftAsIf");
   if (b) {
     b.classList.toggle("mode-act", st.mirrorShiftAsIf);
-    b.textContent = st.mirrorShiftAsIf ? "⇔ Место под зеркала: вкл" : "⇔ Место под зеркала: выкл";
+    b.textContent = st.mirrorShiftAsIf ? "⇔ Место: вкл" : "⇔ Место: выкл";
   }
   if (!quiet) {
     say(st.mirrorShiftAsIf
@@ -3855,7 +4013,7 @@ function mirrorStepBits(selIdx){
   return out;
 }
 function mirrorStepUp(){
-  if (!st.leftMirror && !st.rightMirror) { say("Зеркало шагами: сначала включите «◀ Зеркало влево» и/или «▶ Зеркало вправо»."); return; }
+  if (!st.leftMirror && !st.rightMirror) { say("Зеркало шагами: сначала включите «◀ Зеркало» и/или «▶ Зеркало»."); return; }
   if (!st.selectedRows || st.selectedRows.size !== 1) { say("Зеркало шагами: выделите ровно одну строку — её зеркало и разбирается."); return; }
   const selIdx = Array.from(st.selectedRows)[0];
 
@@ -3865,7 +4023,7 @@ function mirrorStepUp(){
   // над выделенной, столько бит и уместится.
   const canPlace = Math.min(bits.length, selIdx);
   if (canPlace <= 0) {
-    say("Зеркало шагами: над выделенной строкой нет строк — класть некуда. Достройте вверх («⬆ Достроить вверх») или начните ниже.");
+    say("Зеркало шагами: над выделенной строкой нет строк — класть некуда. Достройте вверх («⬆ Вверх») или начните ниже.");
     return;
   }
   snapshot();
@@ -4069,7 +4227,7 @@ if (bReverseKeepEl) {
 const bMemModeEl = document.getElementById("bMemMode");
 function memModeLabel(){
   if (!bMemModeEl) return;
-  bMemModeEl.textContent = st.memMode === "period" ? "🔥 Накал: повторяется" : "🔥 Накал: держит значение";
+  bMemModeEl.textContent = st.memMode === "period" ? "🔥 Накал: повтор" : "🔥 Накал: держит";
   bMemModeEl.classList.toggle("mode-act", st.memMode === "period");
 }
 if (bMemModeEl) {
@@ -5859,7 +6017,7 @@ function doMaskGrowCheck(){
   const source = list.length ? list
                : (continuing ? [base] : (field ? [field] : (seqBase ? [seqBase] : [])));
   if (!source.length) {
-    say("📈 Наращивать нечего: список масок и поле «🎭 Маска (прореж.)» пусты, а строка не выделена — сквозную собрать не из чего.");
+    say("📈 Наращивать нечего: список масок и поле «🎭 Прореж.» пусты, а строка не выделена — сквозную собрать не из чего.");
     return false;
   }
   let idx = st.maskGrowIdx | 0;
@@ -6019,7 +6177,7 @@ if (bMaskGrowResetEl) bMaskGrowResetEl.onclick = () => {
   if (typeof maskGrowAutoStop === "function") maskGrowAutoStop();   // сброс на ходу — сначала стоп
   st.maskGrowBase = ""; st.maskGrowLen = 0; st.maskGrowIdx = 0;
   saveCache();
-  say("📈 Наращивание сброшено: следующий клик по «Проверка маской +1 бит» начнёт с первой маски списка (а если список пуст — с той, что стоит в поле).");
+  say("📈 Наращивание сброшено: следующий клик по «📈 +1 бит» начнёт с первой маски списка (а если список пуст — с той, что стоит в поле).");
 };
 
 function doInterleaveStep() {
@@ -6451,7 +6609,7 @@ function doFieldNudge(key){
   if (!dCols || typeof nudgeAxis !== "function") return;
   nudgeAxis(dCols);
   saveCache();
-  say(`Ось цепочки: сдвиг на столбец ${dCols > 0 ? "вправо" : "влево"}. «⌖ Всё на место» во вкладке «Вид» вернёт раскладку к предустановкам.`);
+  say(`Ось цепочки: сдвиг на столбец ${dCols > 0 ? "вправо" : "влево"}. «⌖ На место» во вкладке «Вид» вернёт раскладку к предустановкам.`);
 }
 
 /* Двойной Escape = "↺ Сброс" (v1.098). Окно между нажатиями — примерно то же, что у системного
@@ -7091,7 +7249,7 @@ function updateMaskShiftFreezeBtn(){
   const b = elById("bMaskShiftFreeze");
   if (!b) return;
   const f = maskShiftFreeze();
-  b.textContent = "❄ Заморозить: " + MASK_FREEZE_LABELS[f];
+  b.textContent = "❄ Замороз.: " + MASK_FREEZE_LABELS[f];   // v1.630: короче
   b.classList.toggle("mode-act", f !== "");
 }
 const bMaskShiftFreezeEl = document.getElementById("bMaskShiftFreeze");
@@ -7860,8 +8018,8 @@ function updateWrapUi(){
      mode-act горит на «по столбцам»: подсвечивается отличие от привычного. */
   const ab = document.getElementById("bWrapByAlign");
   if (ab) {
-    ab.textContent = st.wrapByAlign ? "📐 Рез: по столбцам поля"
-                                    : "✂ Рез: по символам от края строки";
+    ab.textContent = st.wrapByAlign ? "📐 Рез: столбцы"
+                                    : "✂ Рез: от края";   // v1.630: короче
     ab.classList.toggle("mode-act", !!st.wrapByAlign);
   }
   const cm = document.getElementById("bWrapCommit");
@@ -7897,13 +8055,13 @@ function updateWrapUi(){
   /* Разрядка (v1.483) — подпись тоже показывает текущее состояние, по образцу соседней кнопки. */
   const sb = document.getElementById("bWrapSpread");
   if (sb) {
-    sb.textContent = st.wrapSpread ? "↕ Строки раздвинуты под куски" : "≡ Строки вплотную";
+    sb.textContent = st.wrapSpread ? "↕ Раздвинуты" : "≡ Вплотную";
     sb.classList.toggle("mode-act", !!st.wrapSpread);
   }
   const db = document.getElementById("bWrapDown");
   if (db) {
-    db.textContent = st.wrapDown ? "⬇ Кусок вниз — выделение за ним"
-                                 : "⬆ Кусок вверх — выделение на строке";
+    db.textContent = st.wrapDown ? "⬇ Кусок вниз"
+                                 : "⬆ Кусок вверх";   // v1.630: короче
     db.classList.toggle("mode-act", !!st.wrapDown);
   }
   /* РЯД «− + ВКЛ + −» ВИДЕН ВСЕГДА (v1.473, запрос пользователя: «пусть сразу показывает кнопки
