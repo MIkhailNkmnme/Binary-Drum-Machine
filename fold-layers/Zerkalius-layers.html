@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Layers — v1.638</title>
+<title>Zerkalius Layers — v1.639</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -5355,13 +5355,20 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
   .bf-row .bf-pan{ font-size:9.5px; color:var(--dim); white-space:nowrap; }
   .bf-row .bf-tip{ grid-column:2 / -1; font-size:9.5px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .bf-flash{ outline:2px solid #ffcc00 !important; outline-offset:1px; box-shadow:0 0 10px #ffcc00 !important; }
+/* ═══ ☀ СВЕТЛЫЙ ФОН (v1.639) ═══ Запрос пользователя: «светлый фон нужен, вкл/выкл». Кнопка во вкладке «Вид», st.lightBg.
+   Интерфейс тёмный насквозь (сотни цветов прописаны прямо в правилах, наборы цветов полотна — тоже тёмные), поэтому не
+   вторая палитра, а переворот яркости у всей страницы: invert делает тёмное светлым, hue-rotate на пол-оборота возвращает
+   оттенки — красная «1» остаётся красной (темнее), белая становится чёрной, серый «0» — светло-серым, фон полотна — белым.
+   Картинки переворачиваются обратно, чтобы остались как есть. Окна панелей получают тот же класс (см. applyLightBg). */
+html.light-bg{ filter: invert(1) hue-rotate(180deg); }
+html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
 </style>
 <!-- === МАРКЕР 03: HEADER_UI === -->
 <div id="menuBar">
   <!-- Заголовок стоит вплотную слева от вкладок (v1.046), вся связка центрируется полосой — см. #menuBarTitle в CSS. --><div id="menuBarTitle">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.638</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.639</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -5959,7 +5966,8 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
        Прежняя разметка с комментариями — в archive\Zerkalius-fold1629. -->
   <div class="psec"><div class="psec-h">Показ</div>
     <button id="bResetFields" title="ОДНА КНОПКА, ВОЗВРАЩАЮЩАЯ ВЕСЬ ВИД. Обнуляются сдвиг всей раскладки (ручка внешней границы слева и горизонтальная ручка над строками) и сдвиг оси цепочки. Ширины: П1 и П2 по 20% холста, цепочка — остальное, так что обе границы на виду. Выравнивания сводятся к предустановке: П1 по правому краю, цепочка по центру, П2 по левому. Экран доводится прокруткой так, чтобы цепочка встала ровно посередине. Сами строки, паттерны и группы строк НЕ трогаются">⌖ На место</button><button id="bMenuBarBottom" title="Перенести верхнюю плавающую полосу меню (Вид/Шаг/Строк/.../← Хаб/📌) вниз экрана. Повторный клик возвращает её наверх. Ничего в раскладке полотна при этом не пересчитывается — только сама полоса меняет край">⬇ Меню вниз</button>
-    <button id="bTipsOn" title="Показывать ли подсказки при наведении — ВСЕ разом, у любой кнопки, поля и значка приложения. Выключено (так стоит по умолчанию): наведение не показывает ничего — ни этой коробки, ни нативной подсказки браузера. Включено: подсказка появляется у элемента, как обычно. Сами тексты никуда не деваются, их просто не показывают, так что вернуть можно в любой момент — состояние переживает перезагрузку вместе с остальными настройками вида">💬 Подсказки: выкл</button><div class="pr"><button id="bBoldBits" title="Жирность символов «0»/«1» — вкл/выкл">Жирность</button><button id="rightTriangle90Btn" style="color:#ffd500; border-color:#ffd500;" data-tip="t119">📐90°</button></div>
+    <button id="bTipsOn" title="Показывать ли подсказки при наведении — ВСЕ разом, у любой кнопки, поля и значка приложения. Выключено (так стоит по умолчанию): наведение не показывает ничего — ни этой коробки, ни нативной подсказки браузера. Включено: подсказка появляется у элемента, как обычно. Сами тексты никуда не деваются, их просто не показывают, так что вернуть можно в любой момент — состояние переживает перезагрузку вместе с остальными настройками вида">💬 Подсказки: выкл</button>
+    <button id="bLightBg" title="Светлый фон — вкл/выкл: вся страница светлая (тёмное становится светлым, оттенки те же: красная «1» остаётся красной, белая — чёрной). Запоминается вместе с настройками вида">☀ Светлый фон: выкл</button><div class="pr"><button id="bBoldBits" title="Жирность символов «0»/«1» — вкл/выкл">Жирность</button><button id="rightTriangle90Btn" style="color:#ffd500; border-color:#ffd500;" data-tip="t119">📐90°</button></div>
     <div class="pr pw"><span class="view-slider-icon">🔤</span><select id="chainFontSel" title="Шрифт цифр 0/1 на полотне — если текущий выглядит слишком жирным/тонким, попробуй другой">
       <option value='&quot;Roboto Mono&quot;, Consolas, monospace'>Roboto Mono</option>
       <option value='Consolas, monospace'>Consolas</option>
@@ -6186,11 +6194,11 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
      (видно новый номер версии в заголовке), а fold-*.js берёт из кеша — то есть новый код
      просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
      версией в <title>/<h3>, теми же тремя цифрами. -->
-<script src="fold-1-core.js?v=1638"></script>
-<script src="fold-2-render.js?v=1638"></script>
-<script src="fold-3-ops.js?v=1638"></script>
-<script src="fold-4-tools.js?v=1638"></script>
-<script src="fold-5-ui.js?v=1638"></script>
+<script src="fold-1-core.js?v=1639"></script>
+<script src="fold-2-render.js?v=1639"></script>
+<script src="fold-3-ops.js?v=1639"></script>
+<script src="fold-4-tools.js?v=1639"></script>
+<script src="fold-5-ui.js?v=1639"></script>
 <div id="fieldInfo"></div>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;

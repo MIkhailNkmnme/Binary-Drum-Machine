@@ -1069,6 +1069,22 @@ if (bTipsOnEl) {
 }
 updateTipsBtn();
 
+/* «☀ Светлый фон» (v1.639) — класс light-bg на <html> у самой страницы и у всех открытых окон панелей (их документы
+   собираются из тех же <style>, а новые окна берут класс сразу при открытии, см. fold-3-ops.js). */
+function applyLightBg(){
+  const on = !!st.lightBg, docs = [document];
+  const wins = [typeof panelsPopupWin !== "undefined" ? panelsPopupWin : null, typeof maskPopupWin !== "undefined" ? maskPopupWin : null,
+    typeof resultPopupWin !== "undefined" ? resultPopupWin : null, typeof stepLogPopupWin !== "undefined" ? stepLogPopupWin : null,
+    typeof findLogPopupWin !== "undefined" ? findLogPopupWin : null];
+  for (const w of wins) { try { if (w && !w.closed && w.document) docs.push(w.document); } catch (e) {} }
+  docs.forEach(d => d.documentElement.classList.toggle("light-bg", on));
+  const b = document.getElementById("bLightBg");
+  if (b) { b.textContent = on ? "☀ Светлый фон: вкл" : "☀ Светлый фон: выкл"; b.classList.toggle("mode-act", on); }
+}
+const bLightBgEl = document.getElementById("bLightBg");
+if (bLightBgEl) bLightBgEl.onclick = () => { st.lightBg = !st.lightBg; applyLightBg(); saveCache(); };
+applyLightBg();
+
 /* "🔴 Изм. биты" — общий выключатель красной подсветки изменённых бит (см. chgBitsOn): гасит и
    штатную "изменён последним шагом", и ту, что оставляет "🎭 Маска". Чисто визуальный тумблер,
    состояние живёт в настройках вида. */
@@ -6678,6 +6694,7 @@ function captureUiSettings(){
     runsAsBits: !!st.runsAsBits,
     binRowNums: !!st.binRowNums,
     tipsOn: !!st.tipsOn,   // «💬 Подсказки» (v1.505) — настройка вида, живёт вместе с остальными
+    lightBg: !!st.lightBg,   // «☀ Светлый фон» (v1.639)
     rowNumMode: st.rowNumMode || "dec",
     // Какой стороной сейчас приклеены номера к паттернам ("", "right", "left") — см. numGlueToggle():
     // по нему же они отрываются обратно, поэтому состояние обязано пережить перезагрузку.
@@ -6995,6 +7012,10 @@ function applyUiSettings(u){
     st.tipsOn = !!u.tipsOn;
     if (typeof updateTipsBtn === "function") updateTipsBtn();
   }
+  if (u.lightBg !== undefined) {
+    st.lightBg = !!u.lightBg;
+    if (typeof applyLightBg === "function") applyLightBg();
+  }
   if (u.rowNumMode !== undefined) {
     st.rowNumMode = ROW_NUM_ORDER.indexOf(u.rowNumMode) >= 0 ? u.rowNumMode : "dec";
     applyRowNumMode();
@@ -7293,6 +7314,7 @@ const DEFAULT_UI_SETTINGS = {
   showBalances: false,
   runsAsBits: false,
   binRowNums: false,
+  lightBg: false,   // «☀ Светлый фон» (v1.639): сброс — снова тёмный
   tipsOn: false,   // «💬 Подсказки» (v1.505): сброс настроек возвращает их ВЫКЛЮЧЕННЫМИ
   rowNumMode: "dec",
   numGlue: "",

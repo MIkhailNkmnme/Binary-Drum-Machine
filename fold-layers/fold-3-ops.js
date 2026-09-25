@@ -473,7 +473,7 @@ function openPanelsPopup(){
   const styles = Array.from(document.querySelectorAll("style")).map(s => s.innerHTML).join("\n");
   const doc = win.document;
   doc.open();
-  doc.write('<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Панели — Zerkalius Fold</title>' +
+  doc.write('<!doctype html><html lang="ru"' + (st.lightBg ? ' class="light-bg"' : '') + '><head><meta charset="utf-8"><title>Панели — Zerkalius Fold</title>' +
     '<style>' + styles + '</style>' +
     '<style>' +
       /* Тот же сброс, что и в окне результата: скопированные стили основной страницы делают body
@@ -630,7 +630,7 @@ function openMaskPopup(){
   const styles = Array.from(document.querySelectorAll("style")).map(s => s.innerHTML).join("\n");
   const doc = win.document;
   doc.open();
-  doc.write('<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Маски — Zerkalius Fold</title>' +
+  doc.write('<!doctype html><html lang="ru"' + (st.lightBg ? ' class="light-bg"' : '') + '><head><meta charset="utf-8"><title>Маски — Zerkalius Fold</title>' +
     '<style>' + styles + '</style>' +
     '<style>' +
       // Тот же сброс, что и у окна панелей: копия стилей основной страницы делает body flex-колонкой
@@ -824,7 +824,7 @@ function openResultPopup(){
   const styles = Array.from(document.querySelectorAll("style")).map(s => s.innerHTML).join("\n");
   const doc = resultPopupWin.document;
   doc.open();
-  doc.write('<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Результат — Zerkalius Fold</title>' +
+  doc.write('<!doctype html><html lang="ru"' + (st.lightBg ? ' class="light-bg"' : '') + '><head><meta charset="utf-8"><title>Результат — Zerkalius Fold</title>' +
     '<style>' + styles + '</style>' +
     '<style>' +
       /* Полос прокрутки в окне НЕ рисуем (запрос пользователя "убери скрол"): содержимое занимает
@@ -1075,7 +1075,7 @@ function openStepLogPopup(){
   const styles = Array.from(document.querySelectorAll("style")).map(s => s.innerHTML).join("\n");
   const doc = stepLogPopupWin.document;
   doc.open();
-  doc.write('<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Черновик шага — Zerkalius Fold</title>' +
+  doc.write('<!doctype html><html lang="ru"' + (st.lightBg ? ' class="light-bg"' : '') + '><head><meta charset="utf-8"><title>Черновик шага — Zerkalius Fold</title>' +
     '<style>' + styles + '</style>' +
     '<style>' +
       // Те же сбросы, что и у окна "Результата": в основном документе body — flex-колонка на
@@ -1137,7 +1137,7 @@ function openFindLogPopup(){
   const styles = Array.from(document.querySelectorAll("style")).map(s => s.innerHTML).join("\n");
   const doc = findLogPopupWin.document;
   doc.open();
-  doc.write('<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Лог находок — Zerkalius Fold</title>' +
+  doc.write('<!doctype html><html lang="ru"' + (st.lightBg ? ' class="light-bg"' : '') + '><head><meta charset="utf-8"><title>Лог находок — Zerkalius Fold</title>' +
     '<style>' + styles + '</style>' +
     '<style>' +
       // Тот же сброс, что и у прочих окон: копия стилей делает body flex-колонкой в 100vh с
