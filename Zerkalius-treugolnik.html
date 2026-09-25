@@ -5,14 +5,14 @@ PROJECT: Zerkalius Треугольник — отдельная страниц�
          Заведена 2026-09-24 копией Zerkalius Code 35.74: для начала в ней есть всё, что есть в Code.
          Память (текст, вид, раскладка) — СВОЯ, ключи ztri_*; с v0.009 у Code ничего не подхватывает (кроме сцен, если
          своих нет): первый запуск — треугольник правила 90 на 50 строк. Ключи Code никогда не пишутся.
-VERSION: v0.017 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
+VERSION: v0.018 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Треугольник v0.017</title>
+    <title>Zerkalius Треугольник v0.018</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -377,7 +377,7 @@ VERSION: v0.017 (копия Zerkalius Code 35.74 целиком — отправ
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.017</h3>
+                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.018</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -817,6 +817,11 @@ VERSION: v0.017 (копия Zerkalius Code 35.74 целиком — отправ
                         </select>
                         <button id="p3Under" type="button" class="rs-btn" style="flex:none; padding:2px 6px;" title="Заглянуть под основание">⊖ снизу</button>
                     </div>
+                    <!-- v0.018: весь цикл поля — GIF или видео -->
+                    <div class="compact-row" style="align-items:center; gap:6px; margin-top:3px;">
+                        <button id="p3Gif" type="button" class="rs-btn" title="Весь цикл поля — GIF: волна на копии текста, кадр через «каждый N-й» у 🎞 GIF Аниматрицы, пока текст не вернётся к первому кадру. Вид — как в окне; при «вращать» — один оборот за цикл">🎞 GIF цикла</button>
+                        <button id="p3Rec" type="button" class="rs-btn" title="То же — видео WebM прямо с холста, в полных цветах">⏺ Видео цикла</button>
+                    </div>
                     <div id="p3Info" class="rs-lab"></div>
                 </div>
                 </div>
@@ -946,7 +951,8 @@ VERSION: v0.017 (копия Zerkalius Code 35.74 целиком — отправ
                     на полшага) ложатся основаниями встык, и кадр становится полем пирамид. Проекция каждой грани на землю — ровно тот кусок
                     текста, что виден сверху, поэтому «⊙ сверху» даёт тот же рисунок, что на холсте. Можно смотреть и одну пирамиду,
                     выбранную в «🔍 Крупно». <b>⧫ Зеркало</b>: под каждой пирамидой — её отражение вершиной вниз, вместе октаэдр, как знак
-                    Zerkalius; снизу та же картина с битами 0 ↔ 1 (как в «Октаэдре»), или пусто ↔ символ, или без инверсии; «⊖ снизу» — заглянуть.</p>
+                    Zerkalius; снизу та же картина с битами 0 ↔ 1 (как в «Октаэдре»), или пусто ↔ символ, или без инверсии; «⊖ снизу» — заглянуть.
+                    <b>🎞 GIF цикла / ⏺ Видео цикла</b> — поле «дышит» весь период: кадр за проходом (шаг — «каждый N-й» у 🎞 GIF), при «вращать» — один оборот.</p>
                     <p><b>◆ Октаэдр</b> (кнопка в «🔍 Крупно»): выбранная пирамида уходит в «Октаэдр» большим знаком. На грани берутся клетки
                     одной чётности — в ряду r от вершины их r+1, как у грани «Октаэдра» (треугольник Паскаля); «1» — единица, прочее — ноль.
                     Восточная, южная, западная и северная грани встают по кругу; низ октаэдра — та же картина инвертированная.</p>
@@ -1734,8 +1740,8 @@ VERSION: v0.017 (копия Zerkalius Code 35.74 целиком — отправ
                 const w16 = v => { out.push(v & 255, (v >> 8) & 255); };
                 const str = t => { for (let i = 0; i < t.length; i++) out.push(t.charCodeAt(i)); };
                 str('GIF89a'); w16(w); w16(h);
-                // 35.57: палитра 4 или 8 цветов (2 или 3 бита) — по длине переданной
-                const bits = palette.length > 4 ? 3 : 2, nCol = 1 << bits;
+                // 35.57: палитра 4 или 8 цветов (2 или 3 бита) — по длине переданной; v0.018: и до 256 (8 бит) — для 🗻 3D
+                const bits = palette.length > 16 ? 8 : palette.length > 8 ? 4 : palette.length > 4 ? 3 : 2, nCol = 1 << bits;
                 out.push(0x80 | ((bits - 1) << 4) | (bits - 1), 0, 0);   // глобальная палитра
                 for (let i = 0; i < nCol; i++) { const c = palette[i] || [0, 0, 0]; out.push(c[0], c[1], c[2]); }
                 out.push(0x21, 0xFF, 0x0B); str('NETSCAPE2.0'); out.push(0x03, 0x01, 0, 0, 0);   // по кругу без конца
@@ -5054,8 +5060,8 @@ VERSION: v0.017 (копия Zerkalius Code 35.74 целиком — отправ
                инверсии. Камеру можно опустить под основание — заглянуть снизу. */
             mirror: function() { return !!document.getElementById('p3Mirror')?.checked; },
             open: function() { return RHOMBS.open('py3d'); },
-            buildTex: function() {
-                const L = MODULE_STATE.originalLines, H = L.length, W = L.reduce((m, l) => Math.max(m, l.text.length), 0);
+            buildTex: function(src) {   // v0.018: src = { rows, W } — копия текста (запись цикла); без него — сам текст
+                const L = MODULE_STATE.originalLines, H = src ? src.rows.length : L.length, W = src ? src.W : L.reduce((m, l) => Math.max(m, l.text.length), 0);
                 if (!H || !W) return false;
                 const z = bitRgb('zeroColorPicker', '#3c82ff'), o = bitRgb('oneColorPicker', '#d7e1eb'), bg = [20, 22, 30];
                 const mm = document.getElementById('p3MirrorMode')?.value || 'bits', c0 = RHOMBS.apex(L[0].text);
@@ -5066,9 +5072,9 @@ VERSION: v0.017 (копия Zerkalius Code 35.74 целиком — отправ
                     const T = this[key]; if (T.width !== W || T.height !== H) { T.width = W; T.height = H; }
                     const g = T.getContext('2d'), img = g.createImageData(W, H), d = img.data;
                     for (let r = 0; r < H; r++) {
-                        const t = L[r].text;
+                        const t = src ? null : L[r].text, sr = src ? src.rows[r] : null;
                         for (let k = 0, p = r * W * 4; k < W; k++, p += 4) {
-                            const ch = t.charCodeAt(k), v0 = (ch !== ch || ch === 32) ? 0 : (ch === 48 ? 1 : 2), v = (c0 === null || Math.abs(k - c0) <= r) ? f(v0) : v0, col = v === 0 ? bg : v === 1 ? z : o;   // инверсия — только внутри треугольника
+                            const ch = sr ? sr[k] : t.charCodeAt(k), v0 = (ch !== ch || ch === 32) ? 0 : (ch === 48 ? 1 : 2), v = (c0 === null || Math.abs(k - c0) <= r) ? f(v0) : v0, col = v === 0 ? bg : v === 1 ? z : o;   // инверсия — только внутри треугольника
                             d[p] = col[0]; d[p + 1] = col[1]; d[p + 2] = col[2]; d[p + 3] = 255;
                         }
                     }
@@ -5150,8 +5156,82 @@ VERSION: v0.017 (копия Zerkalius Code 35.74 целиком — отправ
                 if (info) info.textContent = (mode === 'sel' ? 'пирамида ' + (sel.S) + ' · вершина: строка ' + sel.r + ', сдвиг ' + (sel.c - c0) : 'пирамид ' + nodes.length + ' (решётка ' + ((document.getElementById('p3Grid')?.value || 'a') === 'b' ? 'Б' : 'А') + ', ромб ' + (2 * h) + ')') +
                     (this.mirror() ? ' · октаэдры: низ — ' + ({ bits: '0 ↔ 1', fill: 'пусто ↔ символ', same: 'без инверсии' })[document.getElementById('p3MirrorMode')?.value || 'bits'] : '') + ' · граней видно ' + faces.length + ' · проход ' + (MODULE_STATE.animPasses || 0) + ' · тащите — поворот, колесо — масштаб';
             },
+            /* v0.018: 🎞 ЦИКЛ ПОЛЯ ОКТАЭДРОВ (пользователь: «октаэдры по циклу: GIF или запись того, как поле „дышит“ за весь
+               период»). Волна гонится на копии текста (холст и счёт не трогаются), шаг — «каждый N-й» у 🎞 GIF Аниматрицы, пока весь
+               текст не вернётся к первому кадру (не больше 512 кадров). Каждый кадр — то же 3D, что в окне (вид, высота, зеркало,
+               решётка), с подписью прохода; при «вращать» за цикл — ровно один оборот. GIF — палитра 6×6×6 (216 цветов; кодировщик
+               с v0.018 берёт до 256), видео — WebM прямо с холста (MediaRecorder), в полных цветах. Повторное нажатие — стоп. */
+            filmCycle: function(kind) {
+                if (this.filming) { this._stop = true; return; }
+                const src = MODULE_STATE.originalLines, H = src.length;
+                if (H < 2 || !this.cv) return;
+                if (kind === 'webm' && !(window.MediaRecorder && this.cv.captureStream)) { UI.statusInfo.textContent = '🗻 Этот браузер не умеет писать видео с холста'; return; }
+                const { rows, W } = RHOMBS.rowsOf(src);
+                const stepRow = r => { const a = rows[r], b = rows[r + 1]; for (let k = 0; k < W; k++) { const c1 = a[k], c2 = b[k]; b[k] = c1 === c2 ? 32 : (c1 !== 32 ? c1 : c2); } };
+                const full = () => { for (let r = 0; r < H - 1; r++) stepRow(r); };
+                const hashAll = () => { let h1 = 2166136261, h2 = 7; for (const a of rows) for (let k = 0; k < W; k++) { h1 = Math.imul(h1 ^ a[k], 16777619); h2 = (Math.imul(h2, 31) + a[k]) | 0; } return (h1 >>> 0) * 2097152 + ((h2 >>> 0) & 2097151); };
+                let pass = MODULE_STATE.animPasses || 0;
+                const r0 = MODULE_STATE.animatrixRow || 0;
+                if (r0 > 0 && r0 < H - 1) { for (let r = r0; r < H - 1; r++) stepRow(r); pass++; }
+                const step = Math.max(1, parseInt(document.getElementById('animGifStep')?.value, 10) || 1);
+                const cyc = MODULE_STATE.animCycle, P = cyc ? cyc.period : 2 ** Math.ceil(Math.log2(Math.max(2, H))), est = Math.max(1, Math.ceil(P / step));
+                const spin = !!document.getElementById('p3Spin')?.checked, yaw0 = this.yaw, cv = this.cv, g = cv.getContext('2d'), Wc = cv.width, Hc = cv.height;
+                const first = hashAll(), p0 = pass, btn = document.getElementById(kind === 'gif' ? 'p3Gif' : 'p3Rec'), btnTxt = btn ? btn.textContent : '';
+                this.filming = true; this._stop = false; if (btn) { btn.textContent = '⏹ Стоп'; btn.classList.add('on'); }
+                const frames = [], chunks = [];
+                let rec = null, track = null;
+                if (kind === 'webm') {
+                    const stream = cv.captureStream(0); track = stream.getVideoTracks()[0];
+                    const mime = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m)) || '';
+                    rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 6e6 } : undefined);
+                    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+                    rec.start();
+                }
+                let f = 0, closed = false;
+                const quant = () => {   // кадр холста → номера цветов куба 6×6×6
+                    const d = g.getImageData(0, 0, Wc, Hc).data, ix = new Uint8Array(Wc * Hc);
+                    for (let i = 0, j = 0; i < ix.length; i++, j += 4) ix[i] = Math.round(d[j] / 51) * 36 + Math.round(d[j + 1] / 51) * 6 + Math.round(d[j + 2] / 51);
+                    return ix;
+                };
+                const finish = () => {
+                    this.filming = false; if (btn) { btn.textContent = btnTxt; btn.classList.remove('on'); }
+                    this.yaw = yaw0; this.buildTex(); this._texKey = ''; this.dirty = true;
+                    const tail = (closed ? ' — круг замкнулся' : this._stop ? ' — остановлено' : ' (предел 512)');
+                    const name = 'Zerkalius-oktaedry-' + RHOMBS.size() + (step > 1 ? '-shag' + step : '') + '-prohody-' + p0 + '-' + (pass - step);
+                    const save = (blob, ext) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name + ext; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); };
+                    if (kind === 'gif') {
+                        if (!frames.length) return;
+                        UI.statusInfo.textContent = '🗻 GIF: кодирую ' + frames.length + ' кадров…';
+                        setTimeout(() => {
+                            const pal = []; for (let r = 0; r < 6; r++) for (let gg = 0; gg < 6; gg++) for (let b = 0; b < 6; b++) pal.push([r * 51, gg * 51, b * 51]);
+                            save(new Blob([GIFENC.encode(frames, Wc, Hc, pal, 12)], { type: 'image/gif' }), '.gif');
+                            UI.statusInfo.textContent = '🗻 GIF цикла: ' + frames.length + ' кадров' + tail;
+                        }, 30);
+                    } else {
+                        rec.onstop = () => { save(new Blob(chunks, { type: 'video/webm' }), '.webm'); UI.statusInfo.textContent = '🗻 Видео цикла: ' + f + ' кадров' + tail; };
+                        rec.stop();
+                    }
+                };
+                const tick = () => {
+                    if (this._stop || f >= 512) return finish();
+                    if (spin) this.yaw = yaw0 + 2 * Math.PI * f / est;
+                    this.buildTex({ rows: rows, W: W }); this.render();
+                    g.setTransform(1, 0, 0, 1, 0, 0); g.font = '12px Consolas, monospace'; g.textBaseline = 'top';
+                    const cap = 'проход ' + pass + (step > 1 ? ' · шаг ' + step : '') + ' · кадр ' + (f + 1) + (est ? ' из ~' + est : '');
+                    g.fillStyle = 'rgba(0,0,0,0.6)'; g.fillRect(4, 4, g.measureText(cap).width + 10, 18); g.fillStyle = '#ffcc00'; g.fillText(cap, 9, 7);
+                    if (kind === 'gif') frames.push(quant()); else if (track && track.requestFrame) track.requestFrame();
+                    for (let q = 0; q < step; q++) full();
+                    pass += step; f++;
+                    if (hashAll() === first) { closed = true; setTimeout(finish, kind === 'webm' ? 120 : 0); return; }
+                    UI.statusInfo.textContent = '🗻 ' + (kind === 'gif' ? 'GIF' : 'Видео') + ' цикла: кадр ' + f + ' из ~' + est + ' · нажать ещё раз — стоп';
+                    setTimeout(tick, kind === 'webm' ? 90 : 0);
+                };
+                tick();
+            },
             init: function() {
                 const cv = document.getElementById('p3Canvas'); if (!cv) return;
+                document.getElementById('p3Gif')?.addEventListener('click', () => this.filmCycle('gif'));   // v0.018
+                document.getElementById('p3Rec')?.addEventListener('click', () => this.filmCycle('webm'));
                 this.cv = cv;
                 cv.addEventListener('pointerdown', e => { this.drag = { x: e.clientX, y: e.clientY, yaw: this.yaw, el: this.el }; cv.setPointerCapture(e.pointerId); e.preventDefault(); });
                 cv.addEventListener('pointermove', e => { const d = this.drag; if (!d) return; this.yaw = d.yaw + (e.clientX - d.x) * 0.01; this.el = Math.max(this.mirror() ? -Math.PI / 2 : 0.05, Math.min(Math.PI / 2, d.el + (e.clientY - d.y) * 0.008)); this.dirty = true; });
@@ -5164,7 +5244,7 @@ VERSION: v0.017 (копия Zerkalius Code 35.74 целиком — отправ
                 document.getElementById('p3Top')?.addEventListener('click', () => { this.yaw = 0; this.el = Math.PI / 2; this.zoom = 1; this.dirty = true; });
                 const loop = ts => {
                     requestAnimationFrame(loop);
-                    if (!this.open()) return;
+                    if (!this.open() || this.filming) return;
                     if (document.getElementById('p3Spin')?.checked && !this.drag) { this.yaw += 0.005; this.dirty = true; }
                     const key = MODULE_DATA.linesVer + ':' + (MODULE_STATE.animPasses || 0) + ':' + (MODULE_STATE.animatrixRow || 0) + ':' + MODULE_STATE.originalLines.length +
                         ':' + (document.getElementById('zeroColorPicker')?.value) + (document.getElementById('oneColorPicker')?.value) + ':' + (RHOMBS.sel ? RHOMBS.sel.r + ',' + RHOMBS.sel.c : '') + ':' + RHOMBS.size() + ':' + this.mirror() + (document.getElementById('p3MirrorMode')?.value || '');
