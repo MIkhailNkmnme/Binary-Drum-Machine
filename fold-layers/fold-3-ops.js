@@ -5290,7 +5290,7 @@ function autoRun(){
           // При "🔻 Полном проходе" "🛑 Стоп на находке" НЕ рвёт перебор: смысл режима как раз в
           // том, чтобы досмотреть все варианты текущей строки. Остановка (если она включена)
           // случится на cycleDone, уже после захвата.
-          if (st.stopOnHit && !st.fullPassMode && !krugAutoNoStop) { bgHit = bgInfo; break; }   // v1.642: «🚀 Авто» Круга на находке не стоит
+          if (st.stopOnHit && !st.fullPassMode) { bgHit = bgInfo; break; }
         }
 
         // "🛑 Стоп при балансе" — суммарно по ВСЕМ выделенным строкам единиц и нулей стало
@@ -5361,7 +5361,7 @@ function autoRun(){
         updateVariantCounter();
         render(); saveCache();
         const takenTxt = taken.length ? taken.map(r => rowLabel(r)).join(", ") : "—";
-        if (st.stopOnHit && !krugAutoNoStop) {
+        if (st.stopOnHit) {
           return finishAuto(`🔻 Полный проход (${dirLabel}): цикл вариантов пройден, захвачены строки ${takenTxt}. Остановлено по «🛑 Стоп на находке».`);
         }
         say(`🔻 Полный проход (${dirLabel}): цикл вариантов пройден, захвачены строки ${takenTxt} — пошёл новый круг.`);
@@ -5531,7 +5531,6 @@ function slowAutoSync(){
 
 function finishAuto(m){
   st.running = false;
-  krugAutoNoStop = false;
   setAutoBtnState(false);
   // Прогон кончился — счётчик шагов больше не живой. Дальше находки могут появляться от чего
   // угодно (клик по строке, правка, смена режима), и штамповать их последним номером прогона
@@ -5634,25 +5633,23 @@ const bPlainCheckEl = document.getElementById("bPlainCheck");
 if (bPlainCheckEl) bPlainCheckEl.onclick = () => doPlainCheck();
 
 document.getElementById("bAuto").onclick  = () => { if (st.running) st.running = false; else autoRun(); };
-/* v1.642, «сделай им отдельную кнопку Шаг и Авто — которые при находке продолжают нажимать, а Шаг — это вручную» (про группу
-   «Круг»). «▶ Шаг» — один раз нажать запомненную кнопку Круга; «🚀 Авто» — тот же autoRun(), что у общей «🚀 Авто», но с
-   krugAutoNoStop: находка захватывается как обычно, а «🛑 Стоп на находке» прогон не рвёт — он идёт до конца цикла вариантов
-   или до повторного нажатия. Работает только с кнопками Круга (◄/► Круг, ½ Круг, ИнвКруг, ½ ИнвКруг), Спираль сюда не входит. */
-var krugAutoNoStop = false;
+/* Кнопки «▶ Шаг» и «🚀 Авто» в группе «Круг» (v1.642). v1.644, уточнение пользователя: «при Шаге должен работать автозахват,
+   а при Круге он безразличен; Авто — сделай просто дублем старой версии». «▶ Шаг» — один раз нажать запомненную кнопку Круга
+   (◄/► Круг, ½ Круг, ИнвКруг, ½ ИнвКруг) и ПРИ ЭТОМ захватить находку, даже если «🧲 Захват» выключен: на время нажатия захват
+   включается и сразу возвращается как был. Сами кнопки Круга захватывают по галке, как всегда. «🚀 Авто» — ровно общая «🚀 Авто»
+   (тот же обработчик, и «🛑 Стоп» на находке так же останавливает). */
 const KRUG_MODES = ["shiftL", "shiftR", "halfPlainL", "halfPlainR", "shiftLInv", "shiftRInv", "halfTurnL", "halfTurnR"];
 const bKrugStepEl = document.getElementById("bKrugStep");
 if (bKrugStepEl) bKrugStepEl.onclick = () => {
   if (st.running) { say("▶ Шаг: сейчас идёт Авто — сначала остановите."); return; }
   if (!KRUG_MODES.includes(st.lastDirMode)) { say("▶ Шаг Круга: нажмите сначала одну из кнопок Круга — Шаг повторяет её."); return; }
-  const b = document.getElementById(DIR_MODE_BTN[st.lastDirMode]); if (b) b.click();
+  const b = document.getElementById(DIR_MODE_BTN[st.lastDirMode]); if (!b) return;
+  const cap = st.captureOnFind;
+  st.captureOnFind = true;   // обработчики Круга синхронны: захват сработает внутри click(), в afterShiftBgCheck()
+  try { b.click(); } finally { st.captureOnFind = cap; }
 };
 const bKrugAutoEl = document.getElementById("bKrugAuto");
-if (bKrugAutoEl) bKrugAutoEl.onclick = () => {
-  if (st.running) { st.running = false; return; }
-  if (!KRUG_MODES.includes(st.lastDirMode)) { say("🚀 Авто Круга: нажмите сначала одну из кнопок Круга — Авто повторяет её."); return; }
-  krugAutoNoStop = true;
-  autoRun();
-};
+if (bKrugAutoEl) bKrugAutoEl.onclick = () => document.getElementById("bAuto").click();   // дубль общей «🚀 Авто»
 document.getElementById("bUndo").onclick  = () => {
   if (!restore()) say("Откатывать нечего.");
   render(); saveCache();
