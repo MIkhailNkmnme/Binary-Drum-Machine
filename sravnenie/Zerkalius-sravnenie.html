@@ -1,4 +1,4 @@
-<!-- Zerkalius Сравнение — v0.004. Одинаковые фигуры в двух наборах таблиц .tsv общего формата (_js/figury.js):
+<!-- Zerkalius Сравнение — v0.005. Одинаковые фигуры в двух наборах таблиц .tsv общего формата (_js/figury.js):
      например, ◇ Ромбы Layers против форм цикла Аниматрицы из ◇ Сводки Треугольника.
      v0.001: заведена 2026-09-25 по слову пользователя («мне как также потом сделать» — про сравнение ромбов Layers
              с таблицами Аниматрицы, которое Claude делал скриптом). Выбрать файлы в два набора, «Сравнить».
@@ -10,13 +10,14 @@
              подсвечивает на картине все его места; щелчок по картине берёт фигуру с вершиной в этой клетке. Щелчок
              по строке сравнения подсвечивает фигуру на обеих картинах. Файлы читаются здесь же, никуда не уходят.
      v0.003: «открывать сразу в окне для просмотра» — таблица из Layers и Треугольника (галка «👁») приезжает сама.
-     v0.004: подпись модуля ?v=4 — окно «Сравнения» теперь открывается, когда таблица готова (ZFIG.showInViewer). -->
+     v0.004: подпись модуля ?v=4 — окно «Сравнения» теперь открывается, когда таблица готова (ZFIG.showInViewer).
+     v0.005: «пусть сверху картинка и потом ниже таблица» — в наборе сначала картина с частями, под ней сводная таблица. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Сравнение — v0.004</title>
+<title>Zerkalius Сравнение — v0.005</title>
 <style>
   :root{ --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598; --up:#7cd4ff; --gold:#ffcc00; --ok:#78eb78; --a:#5adcff; --b:#ff8a8a; }
   html,body{ margin:0; background:var(--bg); color:var(--fg); font-family:"Segoe UI", Inter, system-ui, sans-serif; }
@@ -53,7 +54,7 @@
   .stat{ margin-top:10px; font-size:12px; }
   .stat table{ font-size:12px; } .stat th, .stat td{ padding:2px 6px; }
   .stat .src{ color:var(--dim); font-size:11.5px; margin:0 0 6px; }
-  .pic{ margin-top:10px; border-top:1px solid var(--line); padding-top:8px; }
+  .pic{ margin:0 0 10px; border-bottom:1px solid var(--line); padding-bottom:8px; }   /* v0.005: картина — над таблицей */
   .pic .ctl{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:12px; margin-bottom:6px; }
   .pic .cvw{ overflow:auto; max-height:520px; background:#0a0b0e; border:1px solid var(--line); border-radius:4px; }
   .pic canvas{ display:block; cursor:crosshair; image-rendering:pixelated; }
@@ -72,7 +73,7 @@
 <h1>zerkalius · сравнение</h1>
 <p class="sub">Таблицы фигур — файлы <code>.tsv</code> общего формата: их пишут Layers (меню цепочки ▾ → ◇ Ромбы, «таблица .tsv»)
   и Треугольник (◇ Сводка → 📐 .tsv, «Весь цикл», «Все размеры»). <b>Один набор</b> — его сводка: сколько фигур каждого вида и
-  высоты, сколько разных; если выгрузка статичная (одна цепочка, один кадр), под сводкой — <b>сама картина и её части</b>:
+  высоты, сколько разных; если выгрузка статичная (одна цепочка, один кадр), над сводкой — <b>сама картина и её части</b>:
   выбери вид и высоту, щёлкни рисунок — все его места загорятся на картине; щёлкни по картине — возьмётся фигура с вершиной в этой
   клетке. У цикла Аниматрицы картины нет — кадров много. <b>Два набора</b> — ещё и одинаковые фигуры: по виду и рисунку, где бы они
   ни стояли; у фигур шага 2 (полная сетка Треугольника) — и по подрешёткам «чёт»/«нечёт», чтобы сравнивать с Паскалем Layers на «½».
@@ -163,18 +164,20 @@
     }
     const list = Array.from(g.values()).sort((a, b) => a.rowsN - b.rowsN || a.kind.localeCompare(b.kind));
     const tot = list.reduce((a, e) => ({ n: a.n + e.n, occ: a.occ + e.occ }), { n: 0, occ: 0 });
-    let h = '<div class="src">' + sets[k].map(f => esc(f.source || f.name)).join(' · ') + '</div>';
-    h += '<table><thead><tr><th>вид</th><th>строк</th><th>клеток</th><th>разных</th><th>встреч</th><th>чаще всех</th></tr></thead><tbody>';
+    const src = '<div class="src">' + sets[k].map(f => esc(f.source || f.name)).join(' · ') + '</div>';
+    let h = '<table><thead><tr><th>вид</th><th>строк</th><th>клеток</th><th>разных</th><th>встреч</th><th>чаще всех</th></tr></thead><tbody>';
     for (const e of list) h += '<tr><td>' + e.kind + (e.step === 2 ? ' ·2' : '') + '</td><td class="n">' + e.rowsN + '</td><td class="n">' + e.cells + '</td><td class="n">' + e.n +
       '</td><td class="n">' + e.occ + '</td><td class="w">×' + (e.top.count || 1) + ' <code>' + esc(e.top.pat.length > 40 ? e.top.pat.slice(0, 40) + '…' : e.top.pat) + '</code></td></tr>';
     h += '<tr><td colspan="3"><b>всего</b></td><td class="n">' + tot.n + '</td><td class="n">' + tot.occ + '</td><td></td></tr></tbody></table>';
+    const tbl = h;   // v0.005: «сверху картинка и потом ниже таблица» — картина идёт первой, сводка под ней
+    h = '';
     const withPic = sets[k].filter(f => f.pic);
     if (withPic.length) {
       h += '<div class="pic"><div class="ctl">🖼 Картина' + (withPic.length > 1 ? ' <select data-r="file">' + withPic.map((f, i) => '<option value="' + i + '">' + esc(f.name) + '</option>').join('') + '</select>' : '') +
         ' · части: <select data-r="kind"></select> <select data-r="rows"></select> <button class="small" data-r="clear" type="button">снять</button></div>' +
         '<div class="cvw"><canvas></canvas></div><div class="info">Щёлкни рисунок ниже — его места загорятся; щёлкни по картине — возьмётся фигура с вершиной там.</div><div class="parts"></div></div>';
     } else h += '<div class="pic"><div class="info">Картины в файле нет' + (sets[k].some(f => /цикл/.test(f.source)) ? ' — это цикл Аниматрицы, кадров много' : ' — выгрузка старая или не из одной цепочки') + '.</div></div>';
-    box.innerHTML = h;
+    box.innerHTML = src + h + tbl;
     view[k] = null;
     if (withPic.length) setupPic(k, withPic, 0);
   }
