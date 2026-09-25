@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.035. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.036. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -21,12 +21,13 @@
      v0.032: «Compare» (sravnenie/Zerkalius-sravnenie.html) в «Знаке и записях» — одинаковые фигуры в двух наборах таблиц .tsv.
      v0.033: «Code» — из главных кнопок первым в Черновики; главные теперь Triangle и Results.
      v0.034: «WebGL Engine» (Zerkalius-genezis-webgl.html) снят — мёртвая ветка Genezis, страница в archive\_retired\.
-     v0.035: «Results» переименован в «Битмультфильмы» (Bit Cartoons); между Triangle и ним — бегущие вниз стрелки. -->
+     v0.035: «Results» переименован в «Битмультфильмы» (Bit Cartoons); между Triangle и ним — бегущие вниз стрелки.
+     v0.036: стрелки дёргаются вниз-вверх рывками, и при «меньше движения» тоже. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Control Hub — v0.035</title>
+    <title>Zerkalius Control Hub — v0.036</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -171,20 +172,33 @@
         }
         .flow svg { width: 22px; height: 40px; overflow: visible; filter: drop-shadow(0 0 4px currentColor); }
         .flow line { stroke: currentColor; stroke-width: 1.5; opacity: .35; }
+        /* v0.036: «оживи вниз-вверх, пусть дёргаются». Вместо плавного бега вниз — рывки: пара шевронов разом
+           прыгает вниз и отскакивает вверх, с короткими замираниями; у каждой дорожки свой темп и фаза, чтобы не
+           дёргались хором. «Меньше движения» стрелки больше не останавливает — как и смену языка (v0.028): на Windows
+           Server оно включено по умолчанию, и стрелки там стояли мёртвыми. */
         .flow path { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
-                     animation: flow-run 1.4s linear infinite; }
-        .flow path:nth-of-type(2) { animation-delay: -.7s; }
-        .flow svg:nth-child(2) path { animation-duration: 1.2s; }
-        @keyframes flow-run {
-            0%   { transform: translateY(-4px); opacity: 0; }
-            25%  { opacity: 1; }
-            75%  { opacity: 1; }
-            100% { transform: translateY(30px); opacity: 0; }
+                     animation: flow-jerk 1.25s cubic-bezier(.2, 1.7, .45, 1) infinite; }
+        .flow path:nth-of-type(2) { translate: 0 9px; opacity: .55; }
+        .flow svg:nth-child(1) path { animation-duration: 1.1s; animation-delay: -.35s; }
+        .flow svg:nth-child(2) path { animation-duration: 1.35s; }
+        .flow svg:nth-child(3) path { animation-duration: .95s; animation-delay: -.6s; }
+        @keyframes flow-jerk {
+            0%   { transform: translateY(0); }
+            9%   { transform: translateY(20px); }
+            16%  { transform: translateY(5px); }
+            24%  { transform: translateY(18px); }
+            33%  { transform: translateY(0); }
+            45%  { transform: translateY(0); }
+            51%  { transform: translateY(22px); }
+            57%  { transform: translateY(11px); }
+            63%  { transform: translateY(22px); }
+            74%  { transform: translateY(2px); }
+            82%  { transform: translateY(15px); }
+            100% { transform: translateY(0); }
         }
         @keyframes hue-flow {
             0%, 100% { color: #00ff66; } 25% { color: #ffcc00; } 50% { color: #d24dff; } 75% { color: #4d8dff; }
         }
-        @media (prefers-reduced-motion: reduce) { .flow path { animation: none; opacity: 1; transform: translateY(13px); } }
         .menu-btn.draft-btn { animation: hue-draft 14s ease-in-out infinite; }
         .menu-btn.main-engine { animation: hue-main 12s ease-in-out infinite; }
         .menu-btn:hover { animation: none; }
@@ -219,7 +233,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.035</div>
+        <div class="ver">v0.036</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
