@@ -5,14 +5,14 @@ PROJECT: Zerkalius Треугольник — отдельная страниц�
          Заведена 2026-09-24 копией Zerkalius Code 35.74: для начала в ней есть всё, что есть в Code.
          Память (текст, вид, раскладка) — СВОЯ, ключи ztri_*; с v0.009 у Code ничего не подхватывает (кроме сцен, если
          своих нет): первый запуск — треугольник правила 90 на 50 строк. Ключи Code никогда не пишутся.
-VERSION: v0.032 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
+VERSION: v0.033 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Треугольник v0.032</title>
+    <title>Zerkalius Треугольник v0.033</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -296,6 +296,13 @@ VERSION: v0.032 (копия Zerkalius Code 35.74 целиком — отправ
         #p3Canvas { display: block; margin: 4px auto 0; background: #07080b; border: 1px solid #34465e; cursor: grab; touch-action: none; }
         #p3Canvas:active { cursor: grabbing; }
         .tab-sec.floating[data-tab="howto"] { width: 600px; max-height: 88vh; }
+        /* v0.033: ⧉ в шапке — раздел в отдельном окне браузера (там же ↩ — вернуть). Окно получает эти же стили,
+           тело помечено ztri-pop: обычное тело страницы — без прокрутки и ровно в экран, окну раздела это не годится. */
+        .sec-head .pop { background: none; border: none; color: #6a8; cursor: pointer; font-size: 12px; padding: 0 2px; line-height: 1; }
+        .sec-head .pop:hover { color: #22d3ee; }
+        body.ztri-pop { margin: 0; padding: 8px; height: auto; min-height: 100vh; box-sizing: border-box; overflow: auto; background: #1c1e24; }
+        body.ztri-pop .tab-sec { margin: 0; }
+        body.ztri-pop .sec-head { cursor: default; }
         .howto { font: 12px/1.5 system-ui, sans-serif; color: #d6dde6; padding: 2px 8px 8px; }
         .howto h4 { color: #ffcc00; margin: 10px 0 4px; font-size: 13px; }
         .howto p { margin: 4px 0; }
@@ -386,7 +393,7 @@ VERSION: v0.032 (копия Zerkalius Code 35.74 целиком — отправ
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.032</h3>
+                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.033</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -1079,7 +1086,9 @@ VERSION: v0.032 (копия Zerkalius Code 35.74 целиком — отправ
             Какие вкладки закрыты, браузер запоминает.</p>
             <p><b>Разделы перемещаются.</b> Возьмите раздел за шапку (значок ✥ и название) и тащите: над панелью он встанет
             между другими разделами, там где курсор, — можно и в соседнюю панель; мимо панелей — повиснет на холсте
-            отдельным окном, которое тоже двигается за шапку. ✕ в шапке прячет раздел. <b>↺</b> на полосе вкладок
+            отдельным окном, которое тоже двигается за шапку. <b>⧉</b> в шапке открывает раздел в отдельном окне браузера — его можно
+            унести на другой монитор; 🗻 3D там растягивается на всё окно. Вернуть — <b>↩</b> в шапке или просто закрыть окно.
+            ✕ в шапке прячет раздел. <b>↺</b> на полосе вкладок
             поочерёдно открывает все разделы и оставляет только ▶ Плеер; <b>Shift+↺</b> возвращает раскладку
             по умолчанию (все разделы открыты, плеер окном внизу по центру). Раскладку браузер запоминает.</p>
             <dl>
@@ -4395,6 +4404,79 @@ VERSION: v0.032 (копия Zerkalius Code 35.74 целиком — отправ
             }
         };
 
+        /* v0.033: ⧉ РАЗДЕЛ В ОТДЕЛЬНОМ ОКНЕ (пользователь, по снимку окна «🗻 3D»: «это в новом окне — возможность открывать»).
+           Раздел переезжает в окно браузера ЖИВЫМ узлом (adoptNode, как «🗗 Панели в окно» в Layers): обработчики висят на
+           самих элементах и продолжают работать, рисует его по-прежнему эта страница. Остальной код ищет элементы через
+           document.getElementById / querySelector — поиск ниже подменён: не нашлось здесь — ищет в открытых окнах разделов
+           (пока ни одного нет, это одна проверка). Где раздел жил — помнится; ↩ в шапке или закрытие окна возвращает его
+           туда же (и в раскладку пишется это место, а не окно). Размер и место каждого окна браузер запоминает.
+           🗻 3D в окне растягивает холст на всё окно. */
+        const POPOUT = {
+            wins: new Set(),
+            isOut: function(sec) { return !!(sec && sec._popWin && !sec._popWin.closed); },
+            patch: function() {
+                if (this._patched) return; this._patched = true;
+                const self = this, D = Document.prototype, byId = D.getElementById, qs = D.querySelector, qsa = D.querySelectorAll;
+                const others = () => Array.from(self.wins).filter(w => !w.closed).map(w => w.document);
+                document.getElementById = function(id) { const el = byId.call(document, id); if (el || !self.wins.size) return el;
+                    for (const d of others()) { const x = byId.call(d, id); if (x) return x; } return null; };
+                document.querySelector = function(q) { const el = qs.call(document, q); if (el || !self.wins.size) return el;
+                    for (const d of others()) { const x = qs.call(d, q); if (x) return x; } return null; };
+                document.querySelectorAll = function(q) { const l = qsa.call(document, q); if (!self.wins.size) return l;
+                    let a = null; for (const d of others()) { const x = qsa.call(d, q); if (x.length) (a = a || Array.from(l)).push(...x); } return a || l; };
+            },
+            key: function(sec) { return 'ztri_pop_' + sec.dataset.tab; },
+            out: function(sec) {
+                this.patch();
+                let g = null; try { g = JSON.parse(localStorage.getItem(this.key(sec)) || 'null'); } catch (e) { g = null; }
+                const big = sec.dataset.tab === 'py3d';
+                const w0 = g ? g.w : (big ? 760 : Math.max(320, sec.offsetWidth + 40)), h0 = g ? g.h : (big ? 720 : Math.min(screen.availHeight - 80, Math.max(240, sec.offsetHeight + 80)));
+                const pos = g ? ',left=' + g.x + ',top=' + g.y : '';
+                const w = window.open('', 'ztri_pop_' + sec.dataset.tab, 'popup,width=' + w0 + ',height=' + h0 + pos);
+                if (!w) { UI.statusInfo.textContent = '⧉ Браузер не дал открыть окно — разрешите всплывающие окна для этой страницы'; return; }
+                const d = w.document;
+                d.open();
+                d.write('<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><base href="' + location.href.replace(/"/g, '&quot;') + '"><title>Zerkalius Треугольник — ' +
+                    sec.dataset.title.replace(/</g, '&lt;') + '</title>' + Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map(x => x.outerHTML).join('') +
+                    '</head><body class="ztri-pop"></body></html>');
+                d.close();
+                sec._popHome = { parent: sec.parentNode, next: sec.nextSibling, floating: sec.classList.contains('floating'), left: sec.style.left, top: sec.style.top };
+                sec.classList.remove('floating', 'off', 'dragging'); sec.style.left = ''; sec.style.top = '';
+                d.adoptNode(sec); d.body.appendChild(sec);
+                sec._popWin = w; this.wins.add(w);
+                const btn = sec.querySelector('.sec-head .pop'); if (btn) { btn.textContent = '↩'; btn.title = 'Вернуть раздел в основное окно'; }
+                const save = () => { try { localStorage.setItem(this.key(sec), JSON.stringify({ x: w.screenX, y: w.screenY, w: w.outerWidth, h: w.outerHeight })); } catch (e) {} };
+                w.addEventListener('resize', () => { this.fit(sec); save(); });
+                w.addEventListener('pagehide', () => { save(); if (sec._popWin === w) this.back(sec, true); });
+                sec._popPoll = setInterval(() => { if (w.closed && sec._popWin === w) this.back(sec, true); }, 700);   // запасной путь: pagehide бывает не всегда
+                this.fit(sec);
+                TABS.sync();
+            },
+            back: function(sec, closing) {
+                const w = sec._popWin; if (!w) return;
+                clearInterval(sec._popPoll); sec._popWin = null; this.wins.delete(w);
+                const hm = sec._popHome; sec._popHome = null;
+                try { document.adoptNode(sec); } catch (e) {}
+                const btn = sec.querySelector('.sec-head .pop'); if (btn) { btn.textContent = '⧉'; btn.title = 'Открыть раздел в отдельном окне браузера'; }
+                if (hm && hm.floating) { sec.classList.add('floating'); document.body.appendChild(sec); TABS.clamp(sec, parseFloat(hm.left) || 0, parseFloat(hm.top) || 0); }
+                else if (hm && hm.parent && hm.parent.isConnected) hm.parent.insertBefore(sec, hm.next && hm.next.parentNode === hm.parent ? hm.next : null);
+                else { sec.classList.add('floating'); document.body.appendChild(sec); TABS.clamp(sec, 40, 60); }
+                this.fit(sec);
+                if (!closing) try { w.close(); } catch (e) {}
+                TABS.sync();
+            },
+            // 🗻 3D: в своём окне холст — во всё окно (за вычетом ручек под ним), дома — прежние 400×340
+            fit: function(sec) {
+                if (sec.dataset.tab !== 'py3d') return;
+                const cv = sec.querySelector('#p3Canvas'); if (!cv) return;
+                let W = 400, H = 340;
+                if (this.isOut(sec)) { const w = sec._popWin, rest = sec.offsetHeight - cv.offsetHeight;
+                    W = Math.max(300, w.innerWidth - 20); H = Math.max(220, w.innerHeight - rest - 22); }
+                if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; PY3D.dirty = true; }
+            }
+        };
+        window.addEventListener('pagehide', () => { POPOUT.wins.forEach(w => { try { w.close(); } catch (e) {} }); });   // страница уходит — окна разделов с ней
+
         // 35.8: вкладки, как в Layers. Полоса #menuTabs строится из разделов .tab-sec в порядке
         // разметки (сначала левая панель, потом правая). Щелчок — спрятать/показать раздел.
         // Какие спрятаны — помнится в браузере; память может быть недоступна, тогда всё открыто.
@@ -4415,7 +4497,10 @@ VERSION: v0.032 (копия Zerkalius Code 35.74 целиком — отправ
                     b.title = 'Показать / спрятать раздел «' + sec.dataset.title + '»';
                     if (off.includes(sec.dataset.tab)) sec.classList.add('off');
                     if (sec.dataset.offDefault && !seen.includes(sec.dataset.tab)) sec.classList.add('off');
-                    b.addEventListener('click', () => { sec.classList.toggle('off'); this.sync(); });
+                    b.addEventListener('click', () => {
+                        if (POPOUT.isOut(sec)) { try { sec._popWin.focus(); } catch (e) {} return; }   // v0.033: раздел в своём окне — поднять его
+                        sec.classList.toggle('off'); this.sync();
+                    });
                     sec._tabBtn = b; bar.appendChild(b);
                     this.addHead(sec);
                 });
@@ -4467,11 +4552,12 @@ VERSION: v0.032 (копия Zerkalius Code 35.74 целиком — отправ
                 const head = document.createElement('div');
                 head.className = 'sec-head';
                 head.title = 'Потяните, чтобы перенести раздел: в другое место, в соседнюю панель или на холст';
-                head.innerHTML = '<span class="grip">✥</span><span class="ttl"></span><button type="button" class="x" title="Спрятать раздел (вернуть — вкладкой сверху)">✕</button>';
+                head.innerHTML = '<span class="grip">✥</span><span class="ttl"></span><button type="button" class="pop" title="Открыть раздел в отдельном окне браузера">⧉</button><button type="button" class="x" title="Спрятать раздел (вернуть — вкладкой сверху)">✕</button>';
                 head.querySelector('.ttl').textContent = sec.dataset.title;
-                head.querySelector('.x').addEventListener('click', e => { e.stopPropagation(); sec.classList.add('off'); this.sync(); });
+                head.querySelector('.x').addEventListener('click', e => { e.stopPropagation(); if (POPOUT.isOut(sec)) POPOUT.back(sec); sec.classList.add('off'); this.sync(); });
+                head.querySelector('.pop').addEventListener('click', e => { e.stopPropagation(); POPOUT.isOut(sec) ? POPOUT.back(sec) : POPOUT.out(sec); });   // v0.033
                 head.addEventListener('pointerdown', e => {
-                    if (e.button !== 0 || e.target.closest('.x')) return;
+                    if (e.button !== 0 || e.target.closest('.x, .pop') || POPOUT.isOut(sec)) return;   // в своём окне раздел не таскают
                     e.preventDefault();
                     this.drag = { sec: sec, x0: e.clientX, y0: e.clientY, started: false };
                 });
@@ -4534,6 +4620,9 @@ VERSION: v0.032 (копия Zerkalius Code 35.74 целиком — отправ
             saveLayout: function() {
                 const lay = {};
                 document.querySelectorAll('.tab-sec').forEach(sec => {
+                    const hm = POPOUT.isOut(sec) && sec._popHome;   // v0.033: раздел в своём окне — помним, где он жил до того
+                    if (hm) { lay[sec.dataset.tab] = hm.floating ? { z: 'float', x: parseInt(hm.left, 10) || 0, y: parseInt(hm.top, 10) || 0 }
+                        : { z: hm.parent.id, i: hm.next && hm.next.parentNode === hm.parent ? Array.from(hm.parent.children).indexOf(hm.next) : hm.parent.children.length }; return; }
                     if (sec.classList.contains('floating')) lay[sec.dataset.tab] = { z: 'float', x: parseInt(sec.style.left, 10) || 0, y: parseInt(sec.style.top, 10) || 0 };
                     else if (sec.parentElement && sec.parentElement.id) lay[sec.dataset.tab] = { z: sec.parentElement.id, i: Array.from(sec.parentElement.children).indexOf(sec) };
                 });
@@ -4616,7 +4705,7 @@ VERSION: v0.032 (копия Zerkalius Code 35.74 целиком — отправ
             sel: null, arm: false, layout: null, _cen: null, _job: null, _cyc: null, _tick: 0, _sumVer: null, _stripN: -1,
             open: function(tab) {
                 const s = document.querySelector('.tab-sec[data-tab="' + tab + '"]');
-                return !!s && !s.classList.contains('off') && !document.body.classList.contains('zen-mode');
+                return !!s && !s.classList.contains('off') && (POPOUT.isOut(s) || !document.body.classList.contains('zen-mode'));   // v0.033: в своём окне дзен не прячет
             },
             // размер ромба: выбранный в сводке, а «как у сетки» — шаг ◇ сетки (при «авто» — 16, как у букв)
             size: function() {
