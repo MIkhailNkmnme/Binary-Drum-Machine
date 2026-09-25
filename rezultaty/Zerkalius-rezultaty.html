@@ -1,4 +1,4 @@
-<!-- Zerkalius Битмультфильмы — v0.004 (до v0.004 — «Результаты»). Витрина: что получилось у треугольника Аниматрицы, готовым к просмотру — анимации и
+<!-- Zerkalius Битмультфильмы — v0.005 (до v0.004 — «Результаты»). Витрина: что получилось у треугольника Аниматрицы, готовым к просмотру — анимации и
      картинки с короткой подписью, у каждой ссылка на разбор в «Исследовании». Считается не здесь: всё собрано заранее
      (Python по тем же правилам, что в Треугольнике), страница только показывает.
      v0.001: заведена 2026-09-25 по слову пользователя («это в методичку, может и в хаб? все результаты — очень интересное
@@ -6,13 +6,14 @@
              Новое: весь цикл 1024 строк одной анимацией (cikl-1024.gif) и «все ромбы цикла» 1024 строк по семи размерам —
              первые 300 разных рисунков каждого (полные, по 1500, — в локальном архиве: 3–21 МБ, для сайта тяжело; видео
              на таких кадрах выходило ещё тяжелее GIF). Прочие картинки берутся из папки «Исследования», не копируются.
-     v0.004: переименована в «Битмультфильмы» (слово пользователя «переименуй Битмультфильмы»), так же и кнопка в хабе. -->
+     v0.004: переименована в «Битмультфильмы» (слово пользователя «переименуй Битмультфильмы»), так же и кнопка в хабе.
+     v0.005: в просмотре GIF — «◀ назад», «⏸ пауза / ▶ плей», «вперёд ▶», ползунок и номер кадра (пробел, ← →); картинка — в центре экрана. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Битмультфильмы — v0.004</title>
+<title>Zerkalius Битмультфильмы — v0.005</title>
 <style>
   :root{ --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598;
     --up:#7cd4ff; --gold:#ffcc00; }
@@ -51,9 +52,17 @@
     padding:3px 10px; font:13px Consolas, monospace; cursor:pointer; }
   #viewer .bar button.act, #viewer .bar button:hover{ border-color:var(--gold); color:var(--gold); }
   #viewer .bar .nm{ color:var(--dim); font-size:12px; margin-left:8px; }
-  #viewer .img{ padding:14px; }
-  #viewer img{ display:block; max-width:none; }
-  #viewer img.up{ image-rendering:pixelated; }
+  /* v0.005: картинка — в центре экрана. margin:auto во flex, а не justify/align-content: крупная (×4) картинка
+     тогда не срезается слева и сверху, а просто прокручивается. */
+  #viewer .img{ padding:14px; box-sizing:border-box; display:flex; min-width:100%; width:max-content; min-height:calc(100vh - 46px); }
+  #viewer .img > *{ margin:auto; }
+  #viewer img, #viewer canvas{ display:block; max-width:none; }
+  #viewer img.up, #viewer canvas.up{ image-rendering:pixelated; }
+  #viewer .img > [hidden]{ display:none; }   /* display:block выше иначе перебил бы hidden — и скрытое место занимало бы */
+  #viewer .gifc{ display:none; gap:6px; align-items:center; margin-left:10px; padding-left:10px; border-left:1px solid var(--line); }
+  #viewer .gifc.on{ display:flex; }
+  #viewer .gifc input{ width:180px; accent-color:var(--gold); }
+  #viewer .gifc .fr{ font:12px Consolas, monospace; color:var(--dim); min-width:70px; }
   @media (max-width:800px){ .hero{ grid-template-columns:1fr; } h1{ font-size:21px; letter-spacing:3px; }
     .grid{ grid-template-columns:1fr; } }
 </style>
@@ -173,32 +182,172 @@
 
 <div id="viewer"><div class="bar">
   <button data-z="1" class="act">1:1</button><button data-z="2">×2</button><button data-z="4">×4</button>
-  <button data-close>✕ закрыть</button><span class="nm"></span>
-</div><div class="img"><img alt=""></div></div>
+  <button data-close>✕ закрыть</button>
+  <span class="gifc"><button data-g="prev" title="Кадр назад (←)">◀ назад</button><button data-g="play" title="Пауза / плей (пробел)">⏸ пауза</button><button data-g="next" title="Кадр вперёд (→)">вперёд ▶</button><input type="range" min="0" value="0" title="Перейти к кадру"><span class="fr"></span></span>
+  <span class="nm"></span>
+</div><div class="img"><img alt=""><canvas hidden></canvas></div></div>
 <script>
 // Просмотр картинки в полный размер (как в «Исследовании»): щелчок — 1:1, ×2 / ×4 — крупнее без сглаживания;
 // Esc, ✕ или щелчок по фону — закрыть.
+// v0.005, «там кнопки вперёд-назад, плей-пауза»: GIF браузер на паузу не ставит и кадров не отдаёт, поэтому файл
+// читается целиком и раскладывается на кадры здесь (свой разбор GIF, ниже), а показывается на холсте. Все кадры в памяти
+// не держатся — у 513×531 × 300 кадров это ~330 МБ: хранится снимок каждого SNAP-го кадра, шаг назад собирается от
+// ближайшего снимка вперёд. С диска (file://) браузер файл читать не даёт — тогда GIF просто крутится, как раньше.
 (function () {
-  const v = document.getElementById('viewer'), img = v.querySelector('.img img'), nm = v.querySelector('.nm');
-  let z = 1;
+  const v = document.getElementById('viewer'), img = v.querySelector('.img img'), cv = v.querySelector('.img canvas'),
+        nm = v.querySelector('.nm'), gc = v.querySelector('.gifc'), rng = gc.querySelector('input'),
+        fr = gc.querySelector('.fr'), bPlay = gc.querySelector('[data-g="play"]');
+  let z = 1, G = null, token = 0;
   const apply = () => {
-    if (!img.naturalWidth) return;
-    img.style.width = img.naturalWidth * z + 'px';
-    img.classList.toggle('up', z > 1);
+    const el = G ? cv : img, w = G ? G.W : img.naturalWidth;
+    if (!w) return;
+    el.style.width = w * z + 'px';
+    el.classList.toggle('up', z > 1);
     v.querySelectorAll('[data-z]').forEach(b => b.classList.toggle('act', +b.dataset.z === z));
   };
-  const open = (src, alt) => { z = 1; img.src = src; img.alt = alt || ''; nm.textContent = (alt || '') + ' · ' + src.split('/').pop();
-    v.classList.add('on'); v.scrollTop = 0; v.scrollLeft = 0; document.body.style.overflow = 'hidden'; };
-  const close = () => { v.classList.remove('on'); document.body.style.overflow = ''; };
+
+  /* ── разбор GIF: кадры с палитрой, прозрачностью, чересстрочностью и способом сноса (disposal) ── */
+  function parseGif(b) {
+    const u16 = (p) => b[p] | (b[p + 1] << 8);
+    if (String.fromCharCode(b[0], b[1], b[2]) !== 'GIF') return null;
+    const W = u16(6), H = u16(8), fl = b[10];
+    let p = 13, gct = null;
+    const pal = (n) => { const t = b.subarray(p, p + 3 * n); p += 3 * n; return t; };
+    if (fl & 0x80) gct = pal(2 << (fl & 7));
+    const F = []; let gce = null;
+    const blocks = () => { const parts = []; let len = 0;
+      while (b[p]) { parts.push(b.subarray(p + 1, p + 1 + b[p])); len += b[p]; p += b[p] + 1; }
+      p++; const d = new Uint8Array(len); let o = 0; for (const x of parts) { d.set(x, o); o += x.length; } return d; };
+    while (p < b.length) {
+      const c = b[p];
+      if (c === 0x3B) break;
+      if (c === 0x21) {
+        const lab = b[p + 1]; p += 2;
+        if (lab === 0xF9) gce = { disp: (b[p + 1] >> 2) & 7, trans: (b[p + 1] & 1) ? b[p + 4] : -1, delay: u16(p + 2) };
+        blocks();
+      } else if (c === 0x2C) {
+        const f = { x: u16(p + 1), y: u16(p + 3), w: u16(p + 5), h: u16(p + 7) }, lf = b[p + 9]; p += 10;
+        f.pal = (lf & 0x80) ? pal(2 << (lf & 7)) : gct; f.il = !!(lf & 0x40);
+        f.min = b[p++]; f.data = blocks();
+        f.disp = gce ? gce.disp : 0; f.trans = gce ? gce.trans : -1;
+        f.delay = gce && gce.delay >= 2 ? gce.delay * 10 : 100;   // как у браузеров: 0 и 1 — это 0,1 с
+        gce = null; F.push(f);
+      } else break;
+    }
+    return F.length ? { W, H, F } : null;
+  }
+  function lzw(min, d, n) {
+    const out = new Uint8Array(n), clear = 1 << min, eoi = clear + 1;
+    const pre = new Int16Array(4096), suf = new Uint8Array(4096), stk = new Uint8Array(4097);
+    for (let i = 0; i < clear; i++) suf[i] = i;
+    let size = min + 1, mask = (1 << size) - 1, next = eoi + 1, old = -1, first = 0, bits = 0, acc = 0, op = 0, p = 0;
+    while (op < n) {
+      while (bits < size) { if (p >= d.length) return out; acc |= d[p++] << bits; bits += 8; }
+      const code = acc & mask; acc >>>= size; bits -= size;
+      if (code === clear) { size = min + 1; mask = (1 << size) - 1; next = eoi + 1; old = -1; continue; }
+      if (code === eoi) break;
+      if (old < 0) { out[op++] = suf[code]; old = first = code; continue; }
+      let c = code, sp = 0;
+      if (code >= next) { stk[sp++] = first; c = old; }
+      while (c >= clear) { stk[sp++] = suf[c]; c = pre[c]; }
+      first = c; stk[sp++] = c;
+      if (next < 4096) { pre[next] = old; suf[next] = first; next++; if (!(next & mask) && next < 4096) { size++; mask = (1 << size) - 1; } }
+      old = code;
+      while (sp && op < n) out[op++] = stk[--sp];
+    }
+    return out;
+  }
+  const SNAP = 25;
+  function makePlayer(g) {
+    const { W, H, F } = g, buf = new Uint8ClampedArray(W * H * 4), snaps = new Map();
+    let prev = null, cur = -1;
+    const rect = (f, fn) => { for (let y = 0; y < f.h; y++) { const yy = f.y + y; if (yy >= H) break;
+      for (let x = 0; x < f.w; x++) { const xx = f.x + x; if (xx < W) fn((yy * W + xx) * 4, y * f.w + x); } } };
+    const draw = (f) => {
+      let px = lzw(f.min, f.data, f.w * f.h);
+      if (f.il) { const t = new Uint8Array(px.length); let r = 0;
+        for (const [s0, st] of [[0, 8], [4, 8], [2, 4], [1, 2]]) for (let y = s0; y < f.h; y += st, r++) t.set(px.subarray(r * f.w, r * f.w + f.w), y * f.w);
+        px = t; }
+      const pl = f.pal; if (!pl) return;
+      rect(f, (o, k) => { const i = px[k]; if (i === f.trans) return; const q = i * 3;
+        buf[o] = pl[q]; buf[o + 1] = pl[q + 1]; buf[o + 2] = pl[q + 2]; buf[o + 3] = 255; });
+    };
+    const step = (i) => {
+      if (i === 0) { buf.fill(0); prev = null; }
+      else { const f = F[i - 1];
+        if (f.disp === 2) rect(f, (o) => { buf[o] = buf[o + 1] = buf[o + 2] = buf[o + 3] = 0; });
+        else if (f.disp === 3 && prev) buf.set(prev); }
+      if (F[i].disp === 3) prev = buf.slice();
+      draw(F[i]); cur = i;
+      if (i % SNAP === 0 && !snaps.has(i)) snaps.set(i, { buf: buf.slice(), prev: prev && prev.slice() });
+    };
+    const ctx = cv.getContext('2d'), idata = new ImageData(buf, W, H);
+    return {
+      n: F.length, get cur() { return cur; }, delay: (i) => F[i].delay,
+      go(t) {
+        t = ((t % F.length) + F.length) % F.length;
+        if (t !== cur + 1) {   // не следующий — от ближайшего снимка не дальше t
+          const k = Math.floor(t / SNAP) * SNAP;
+          if (t > cur && Math.floor(cur / SNAP) * SNAP === k) { /* тот же отрезок — просто вперёд от текущего */ }
+          else if (snaps.has(k)) { const s = snaps.get(k); buf.set(s.buf); prev = s.prev && s.prev.slice(); cur = k; }
+          else if (t < cur || cur < 0) cur = -1;
+        }
+        while (cur < t) step(cur + 1);
+        ctx.putImageData(idata, 0, 0);
+      }
+    };
+  }
+
+  let timer = 0, playing = false;
+  const show = () => { fr.textContent = (G.p.cur + 1) + ' / ' + G.p.n; rng.value = G.p.cur; };
+  const setPlay = (on) => {
+    playing = on; clearTimeout(timer);
+    bPlay.textContent = on ? '⏸ пауза' : '▶ плей';
+    if (!on || !G) return;
+    const tick = () => { if (!G || !playing) return; G.p.go(G.p.cur + 1); show(); timer = setTimeout(tick, G.p.delay(G.p.cur)); };
+    timer = setTimeout(tick, G.p.delay(G.p.cur));
+  };
+  const frameTo = (t) => { if (!G) return; setPlay(false); G.p.go(t); show(); };
+  const stopGif = () => { token++; setPlay(false); G = null; cv.hidden = true; img.hidden = false; gc.classList.remove('on'); };
+
+  const open = (src, alt) => {
+    stopGif(); z = 1; img.src = src; img.alt = alt || ''; nm.textContent = (alt || '') + ' · ' + src.split('/').pop();
+    v.classList.add('on'); v.scrollTop = 0; v.scrollLeft = 0; document.body.style.overflow = 'hidden';
+    if (!/\.gif$/i.test(src)) return;
+    const my = token;
+    fetch(src).then(r => r.ok ? r.arrayBuffer() : Promise.reject()).then(ab => {
+      if (my !== token) return;
+      const g = parseGif(new Uint8Array(ab)); if (!g || g.F.length < 2) return;
+      cv.width = g.W; cv.height = g.H;
+      G = g; G.p = makePlayer(g); G.p.go(0);
+      rng.max = g.F.length - 1; show();
+      img.hidden = true; img.removeAttribute('src'); cv.hidden = false; gc.classList.add('on');
+      apply(); setPlay(true);
+    }).catch(() => { /* с диска файл не прочитать — остаётся обычная GIF */ });
+  };
+  const close = () => { stopGif(); v.classList.remove('on'); document.body.style.overflow = ''; };
   img.addEventListener('load', apply);
   document.querySelectorAll('.card img, figure img').forEach(im => im.addEventListener('click', () => open(im.getAttribute('src'), im.alt)));
+  rng.addEventListener('input', () => frameTo(+rng.value));
   v.addEventListener('click', e => {
     const b = e.target.closest('button');
     if (b && b.dataset.z) { z = +b.dataset.z; apply(); return; }
     if (b && b.hasAttribute('data-close')) { close(); return; }
+    if (b && b.dataset.g && G) {
+      if (b.dataset.g === 'play') setPlay(!playing);
+      else frameTo(G.p.cur + (b.dataset.g === 'next' ? 1 : -1));
+      return;
+    }
     if (e.target === v || e.target.classList.contains('img')) close();
   });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && v.classList.contains('on')) close(); });
+  document.addEventListener('keydown', e => {
+    if (!v.classList.contains('on')) return;
+    if (e.key === 'Escape') { close(); return; }
+    if (!G) return;
+    if (e.key === ' ') { e.preventDefault(); setPlay(!playing); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); frameTo(G.p.cur + 1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); frameTo(G.p.cur - 1); }
+  });
 })();
 </script>
 <script>
