@@ -1,4 +1,4 @@
-<!-- Zerkalius Сравнение — v0.005. Одинаковые фигуры в двух наборах таблиц .tsv общего формата (_js/figury.js):
+<!-- Zerkalius Сравнение — v0.006. Одинаковые фигуры в двух наборах таблиц .tsv общего формата (_js/figury.js):
      например, ◇ Ромбы Layers против форм цикла Аниматрицы из ◇ Сводки Треугольника.
      v0.001: заведена 2026-09-25 по слову пользователя («мне как также потом сделать» — про сравнение ромбов Layers
              с таблицами Аниматрицы, которое Claude делал скриптом). Выбрать файлы в два набора, «Сравнить».
@@ -11,13 +11,15 @@
              по строке сравнения подсвечивает фигуру на обеих картинах. Файлы читаются здесь же, никуда не уходят.
      v0.003: «открывать сразу в окне для просмотра» — таблица из Layers и Треугольника (галка «👁») приезжает сама.
      v0.004: подпись модуля ?v=4 — окно «Сравнения» теперь открывается, когда таблица готова (ZFIG.showInViewer).
-     v0.005: «пусть сверху картинка и потом ниже таблица» — в наборе сначала картина с частями, под ней сводная таблица. -->
+     v0.005: «пусть сверху картинка и потом ниже таблица» — в наборе сначала картина с частями, под ней сводная таблица.
+     v0.006: картина вписывается, если не влезает; колесо мыши — масштаб, «⤢ вписать» — обратно. «🎞 GIF по размерам» —
+             по GIF на каждый вид и высоту (кадры — все разные рисунки по порядку появления), все в одном .zip со списком. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Сравнение — v0.005</title>
+<title>Zerkalius Сравнение — v0.006</title>
 <style>
   :root{ --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598; --up:#7cd4ff; --gold:#ffcc00; --ok:#78eb78; --a:#5adcff; --b:#ff8a8a; }
   html,body{ margin:0; background:var(--bg); color:var(--fg); font-family:"Segoe UI", Inter, system-ui, sans-serif; }
@@ -56,7 +58,10 @@
   .stat .src{ color:var(--dim); font-size:11.5px; margin:0 0 6px; }
   .pic{ margin:0 0 10px; border-bottom:1px solid var(--line); padding-bottom:8px; }   /* v0.005: картина — над таблицей */
   .pic .ctl{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:12px; margin-bottom:6px; }
-  .pic .cvw{ overflow:auto; max-height:520px; background:#0a0b0e; border:1px solid var(--line); border-radius:4px; }
+  .pic .cvw{ overflow:auto; max-height:75vh; background:#0a0b0e; border:1px solid var(--line); border-radius:4px; }   /* v0.006: было 520px */
+  .pic .zm{ font:12px Consolas, monospace; color:var(--dim); min-width:44px; text-align:right; }
+  .gifs{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:12px; margin:0 0 8px; }
+  .gifs .st{ color:var(--dim); }
   .pic canvas{ display:block; cursor:crosshair; image-rendering:pixelated; }
   .pic .info{ font-size:12px; color:var(--dim); margin:5px 0; min-height:16px; }
   .pic .info b{ color:var(--gold); }
@@ -174,10 +179,15 @@
     const withPic = sets[k].filter(f => f.pic);
     if (withPic.length) {
       h += '<div class="pic"><div class="ctl">🖼 Картина' + (withPic.length > 1 ? ' <select data-r="file">' + withPic.map((f, i) => '<option value="' + i + '">' + esc(f.name) + '</option>').join('') + '</select>' : '') +
-        ' · части: <select data-r="kind"></select> <select data-r="rows"></select> <button class="small" data-r="clear" type="button">снять</button></div>' +
+        ' · части: <select data-r="kind"></select> <select data-r="rows"></select> <button class="small" data-r="clear" type="button">снять</button>' +
+        ' <button class="small" data-r="fit" type="button" title="Вписать картину в окно (колесо мыши над картиной — крупнее / мельче)">⤢ вписать</button><span class="zm"></span></div>' +
         '<div class="cvw"><canvas></canvas></div><div class="info">Щёлкни рисунок ниже — его места загорятся; щёлкни по картине — возьмётся фигура с вершиной там.</div><div class="parts"></div></div>';
     } else h += '<div class="pic"><div class="info">Картины в файле нет' + (sets[k].some(f => /цикл/.test(f.source)) ? ' — это цикл Аниматрицы, кадров много' : ' — выгрузка старая или не из одной цепочки') + '.</div></div>';
-    box.innerHTML = src + h + tbl;
+    // v0.006: GIF на каждый вид и высоту — все в один .zip
+    const gifs = '<div class="gifs"><button class="small" data-r="gifs" type="button" title="По GIF на каждый вид и высоту: кадры — все разные рисунки этого размера по порядку появления, с подписью. Все GIF и список — одним архивом .zip (открывается и WinRAR, и самой Windows)">🎞 GIF по размерам (.zip)</button>' +
+      'кадр <select data-r="gdelay"><option value="20">0,2 с</option><option value="40" selected>0,4 с</option><option value="80">0,8 с</option><option value="150">1,5 с</option></select><span class="st"></span></div>';
+    box.innerHTML = src + gifs + h + tbl;
+    box.querySelector('button[data-r="gifs"]').onclick = () => gifsZip(k);
     view[k] = null;
     if (withPic.length) setupPic(k, withPic, 0);
   }
@@ -192,7 +202,23 @@
     const cell = Math.max(2, Math.min(12, Math.floor(1200 / Math.max(1, halfW / 2)), Math.floor(900 / H)));
     const cv = box.querySelector('canvas');
     cv.width = Math.ceil(halfW * cell / 2); cv.height = H * cell;
-    const v = view[k] = { f, files, pic, x0, cell, cv, hi: [], H };
+    const v = view[k] = { f, files, pic, x0, cell, cv, hi: [], H, z: 1, userZoom: false };
+    /* v0.006: МАСШТАБ. Холст рисуется в прежнем разрешении (cell), на экране — в масштабе v.z (CSS-размер). Не влезает в ширину
+       набора или по высоте в 75% окна — вписывается; колесо над картиной — крупнее / мельче вокруг курсора; «⤢ вписать» — обратно.
+       Щелчок по картине пересчитывается через getBoundingClientRect и масштаба не замечает. */
+    const wrapEl = cv.parentElement, zmEl = box.querySelector('.zm');
+    const applyZ = () => { cv.style.width = Math.round(cv.width * v.z) + 'px'; cv.style.height = Math.round(cv.height * v.z) + 'px'; if (zmEl) zmEl.textContent = Math.round(v.z * 100) + '%'; };
+    v.fitZ = () => Math.min(1, (wrapEl.clientWidth || cv.width) / cv.width, (window.innerHeight * 0.75 - 2) / cv.height);
+    v.fit = () => { v.z = v.fitZ(); v.userZoom = false; applyZ(); };
+    wrapEl.onwheel = e => {
+      e.preventDefault();
+      const rc = wrapEl.getBoundingClientRect(), mx = e.clientX - rc.left, my = e.clientY - rc.top, old = v.z;
+      v.z = Math.max(Math.min(0.5, v.fitZ()) * 0.5, Math.min(16, old * (e.deltaY < 0 ? 1.2 : 1 / 1.2)));
+      v.userZoom = true; applyZ();
+      wrapEl.scrollLeft = (wrapEl.scrollLeft + mx) * v.z / old - mx; wrapEl.scrollTop = (wrapEl.scrollTop + my) * v.z / old - my;
+    };
+    box.querySelector('button[data-r="fit"]').onclick = () => v.fit();
+    v.fit();
     const kinds = Array.from(new Set(f.rows.map(r => r.kind)));
     const kSel = box.querySelector('select[data-r="kind"]'), rSel = box.querySelector('select[data-r="rows"]');
     kSel.innerHTML = kinds.map(x => '<option>' + x + '</option>').join('');
@@ -243,7 +269,7 @@
     const occ = occurrences(v, pat, $('mir').checked);
     v.hi = occ; v.sel = pat; draw(k);
     info(k, occ.length ? '<b>' + occ.length + '</b> мест · ' + kind + ' <code>' + esc(pat.length > 60 ? pat.slice(0, 60) + '…' : pat) + '</code>' + (occ[0] ? ' · первое: стр ' + (occ[0].top + (v.pic.first || 0)) : '') : 'на этой картине такого рисунка нет');
-    if (occ[0]) { const c = v.cv.parentElement; c.scrollTop = Math.max(0, occ[0].top * v.cell - 60); c.scrollLeft = Math.max(0, (occ[0].x - v.x0) * v.cell / 2 - 120); }
+    if (occ[0]) { const c = v.cv.parentElement; c.scrollTop = Math.max(0, occ[0].top * v.cell * v.z - 60); c.scrollLeft = Math.max(0, (occ[0].x - v.x0) * v.cell / 2 * v.z - 120); }
     v.cv.closest('.pic').querySelectorAll('.part').forEach(el => el.classList.toggle('on', el.dataset.p === pat));
     return occ.length;
   }
@@ -297,6 +323,148 @@
     cv.width = Math.ceil(W * z); cv.height = rows.length * z;
     const g = cv.getContext('2d');
     rows.forEach((r, t) => { const off = (W - r.length) * z / 2; for (let i = 0; i < r.length; i++) { const ch = r[i]; if (ch !== '0' && ch !== '1') continue; g.fillStyle = ch === '1' ? '#d7e1eb' : '#3c5a8c'; g.fillRect(off + i * z, t * z, z - (z > 3 ? 1 : 0), z - (z > 3 ? 1 : 0)); } });
+  }
+
+  window.addEventListener('resize', () => { for (const k of ['A', 'B']) { const v = view[k]; if (v && v.fit && !v.userZoom) v.fit(); } });   // v0.006
+
+  /* ─── v0.006: 🎞 GIF ПО РАЗМЕРАМ ─── (пользователь: «создать гифы на каждый размер для фигур всех в один файл, можно рар или
+     несколько»). Группа — как строка сводки: вид, шаг, высота. Кадр — один рисунок группы (по порядку появления, как в файле) крупными клетками
+     тех же цветов, что части, сверху подпись «◇ 5 стр. · 3/15 · ×10». Все GIF и spisok.txt — одним .zip без сжатия (GIF и так
+     сжат): RAR браузер писать не умеет, а .zip открывают и WinRAR, и сама Windows. Больше GIF_MAX кадров в одном GIF не кладём. */
+  const GIFENC = {
+      encode: function(frames, w, h, palette, delay) {
+          const out = [];
+          const w16 = v => { out.push(v & 255, (v >> 8) & 255); };
+          const str = t => { for (let i = 0; i < t.length; i++) out.push(t.charCodeAt(i)); };
+          str('GIF89a'); w16(w); w16(h);
+          // 35.57: палитра 4 или 8 цветов (2 или 3 бита) — по длине переданной; v0.018: и до 256 (8 бит) — для 🗻 3D
+          const bits = palette.length > 16 ? 8 : palette.length > 8 ? 4 : palette.length > 4 ? 3 : 2, nCol = 1 << bits;
+          out.push(0x80 | ((bits - 1) << 4) | (bits - 1), 0, 0);   // глобальная палитра
+          for (let i = 0; i < nCol; i++) { const c = palette[i] || [0, 0, 0]; out.push(c[0], c[1], c[2]); }
+          out.push(0x21, 0xFF, 0x0B); str('NETSCAPE2.0'); out.push(0x03, 0x01, 0, 0, 0);   // по кругу без конца
+          for (const fr of frames) {
+              out.push(0x21, 0xF9, 0x04, 0x04); w16(delay); out.push(0, 0);
+              out.push(0x2C); w16(0); w16(0); w16(w); w16(h); out.push(0);
+              out.push(bits);   // минимальный размер кода LZW: 2 для 4 цветов, 3 для 8
+              const data = this.lzw(fr, bits);
+              for (let i = 0; i < data.length; i += 255) {
+                  const n = Math.min(255, data.length - i);
+                  out.push(n);
+                  for (let k = 0; k < n; k++) out.push(data[i + k]);
+              }
+              out.push(0);
+          }
+          out.push(0x3B);
+          return new Uint8Array(out);
+      },
+      lzw: function(ix, minSize) {
+          const clear = 1 << minSize, eoi = clear + 1, bytes = [];
+          const tab = this._tab || (this._tab = new Int32Array(1 << 20));   // ключ: (префикс << 8) | цвет
+          tab.fill(-1);
+          let size = minSize + 1, next = eoi + 1, cur = 0, bits = 0;
+          const emit = c => { cur |= c << bits; bits += size; while (bits >= 8) { bytes.push(cur & 255); cur >>>= 8; bits -= 8; } };
+          emit(clear);
+          let pre = ix[0];
+          for (let i = 1; i < ix.length; i++) {
+              const k = ix[i], key = (pre << 8) | k, code = tab[key];
+              if (code !== -1) { pre = code; continue; }
+              emit(pre);
+              if (next === 4096) { emit(clear); tab.fill(-1); next = eoi + 1; size = minSize + 1; }
+              else { if (next >= (1 << size)) size++; tab[key] = next++; }
+              pre = k;
+          }
+          emit(pre); emit(eoi);
+          if (bits > 0) bytes.push(cur & 255);
+          return bytes;
+      }
+  };
+  const GIF_MAX = 3000, KN = { '▲': 'tri-up', '▼': 'tri-down', '◇': 'romb', '⧗': 'chasy', '◆': 'piramida' };
+  const PAL = [[10, 11, 14], [60, 90, 140], [215, 225, 235], [255, 204, 0]];   // фон, «0», «1», подпись
+  function gifOfGroup(e, delay){
+    const list = e.list.slice(0, GIF_MAX);   // по порядку появления, как в файле (пользователь: «нет, по порядку»)
+    const rowsOf = r => r.pat.split('/');
+    const W = Math.max(...list.map(r => Math.max(...rowsOf(r).map(x => x.length)))), T = e.rowsN;
+    const z = Math.max(3, Math.min(24, Math.floor(240 / Math.max(W, T)))), pad = 10, capH = 18;
+    const cap = i => e.kind + (e.step === 2 ? ' ·2' : '') + ' ' + T + ' стр. · ' + (i + 1) + '/' + list.length + ' · ×' + (list[i].count || 1) + (list[i].where ? ' · ' + String(list[i].where).slice(0, 28) : '');
+    const tc = document.createElement('canvas'), tg = tc.getContext('2d'); tg.font = '12px Consolas, monospace';
+    const fw = Math.max(W * z + 2 * pad, Math.ceil(Math.max(...list.map((r, i) => tg.measureText(cap(i)).width))) + 12, 120) | 0, fh = T * z + capH + pad;
+    const w = fw + (fw & 1), h = fh;
+    tc.width = w; tc.height = capH;
+    const frames = [];
+    list.forEach((r, i) => {
+      const ix = new Uint8Array(w * h);   // 0 — фон
+      tg.fillStyle = '#000'; tg.fillRect(0, 0, w, capH); tg.fillStyle = '#fff'; tg.font = '12px Consolas, monospace'; tg.textBaseline = 'middle';
+      tg.fillText(cap(i), 6, capH / 2);
+      const td = tg.getImageData(0, 0, w, capH).data;
+      for (let q = 0, j = 0; q < w * capH; q++, j += 4) if (td[j] > 110) ix[q] = 3;
+      const rows = rowsOf(r), x0 = (w - W * z) / 2, gap = z > 3 ? 1 : 0;
+      rows.forEach((row, t) => {
+        const off = Math.round(x0 + (W - row.length) * z / 2);
+        for (let c = 0; c < row.length; c++) {
+          const ch = row[c]; if (ch !== '0' && ch !== '1') continue;
+          const col = ch === '1' ? 2 : 1, px = off + c * z, py = capH + t * z;
+          for (let yy = 0; yy < z - gap; yy++) ix.fill(col, (py + yy) * w + px, (py + yy) * w + px + z - gap);
+        }
+      });
+      frames.push(ix);
+    });
+    return { bytes: GIFENC.encode(frames, w, h, PAL, delay), n: list.length, cut: e.list.length > GIF_MAX, w, h };
+  }
+  const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function zipStore(files){   // [{ name, bytes }] → .zip без сжатия
+    const enc = new TextEncoder(), parts = [], cen = [];
+    const d = new Date(), dt = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate(), tm = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+    let off = 0;
+    for (const f of files) {
+      const nm = enc.encode(f.name), b = f.bytes; let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); c = (c ^ 0xFFFFFFFF) >>> 0;
+      const hd = new DataView(new ArrayBuffer(30));
+      hd.setUint32(0, 0x04034b50, true); hd.setUint16(4, 20, true); hd.setUint16(6, 0x0800, true); hd.setUint16(8, 0, true);
+      hd.setUint16(10, tm, true); hd.setUint16(12, dt, true); hd.setUint32(14, c, true); hd.setUint32(18, b.length, true); hd.setUint32(22, b.length, true);
+      hd.setUint16(26, nm.length, true); hd.setUint16(28, 0, true);
+      parts.push(hd, nm, b);
+      const ce = new DataView(new ArrayBuffer(46));
+      ce.setUint32(0, 0x02014b50, true); ce.setUint16(4, 20, true); ce.setUint16(6, 20, true); ce.setUint16(8, 0x0800, true); ce.setUint16(10, 0, true);
+      ce.setUint16(12, tm, true); ce.setUint16(14, dt, true); ce.setUint32(16, c, true); ce.setUint32(20, b.length, true); ce.setUint32(24, b.length, true);
+      ce.setUint16(28, nm.length, true); ce.setUint32(42, off, true);
+      cen.push(ce, nm);
+      off += 30 + nm.length + b.length;
+    }
+    const cenLen = cen.reduce((a, x) => a + x.byteLength, 0), end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+    end.setUint32(12, cenLen, true); end.setUint32(16, off, true);
+    return new Blob([...parts, ...cen, end], { type: 'application/zip' });
+  }
+  function gifsZip(k){
+    const box = $('s' + k), st = box.querySelector('.gifs .st'), btn = box.querySelector('button[data-r="gifs"]');
+    if (!sets[k].length || btn.disabled) return;
+    const delay = +box.querySelector('select[data-r="gdelay"]').value || 40;
+    const g = new Map();
+    for (const f of sets[k]) for (const r of f.rows) {
+      const key = r.kind + '|' + r.step + '|' + r.rowsN;
+      let e = g.get(key); if (!e) { e = { kind: r.kind, step: r.step, rowsN: r.rowsN, list: [], seen: new Set() }; g.set(key, e); }
+      if (!e.seen.has(r.pat)) { e.seen.add(r.pat); e.list.push(r); }   // несколько файлов в наборе — один и тот же рисунок один раз
+    }
+    const groups = Array.from(g.values()).sort((a, b) => a.rowsN - b.rowsN || a.kind.localeCompare(b.kind) || a.step - b.step);
+    const out = [], lines = ['ZERKALIUS · GIF по размерам · набор ' + (k === 'A' ? 'А' : 'Б'), sets[k].map(f => f.source || f.name).join(' · '),
+      'кадр ' + delay / 100 + ' с; кадры — разные рисунки группы по порядку появления', '', 'файл\tвид\tшаг\tстрок\tкадров\tразмер'];
+    btn.disabled = true;
+    let i = 0;
+    const next = () => {
+      if (i >= groups.length) {
+        out.push({ name: 'spisok.txt', bytes: new TextEncoder().encode('\ufeff' + lines.join('\r\n') + '\r\n') });
+        const name = 'zerkalius-figury-gif-' + k + '-' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.zip';
+        const a = document.createElement('a'); a.href = URL.createObjectURL(zipStore(out)); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+        st.textContent = 'Готово: ' + groups.length + ' GIF в ' + name; btn.disabled = false; return;
+      }
+      const e = groups[i++], r = gifOfGroup(e, delay);
+      const fn = String(e.rowsN).padStart(3, '0') + '-' + (KN[e.kind] || 'vid' + e.kind.codePointAt(0)) + (e.step === 2 ? '-shag2' : '') + '.gif';
+      out.push({ name: fn, bytes: r.bytes });
+      lines.push(fn + '\t' + e.kind + '\t' + e.step + '\t' + e.rowsN + '\t' + r.n + (r.cut ? ' (из ' + e.list.length + ')' : '') + '\t' + r.w + '×' + r.h);
+      st.textContent = 'GIF ' + i + ' из ' + groups.length + '…';
+      setTimeout(next, 0);
+    };
+    st.textContent = 'GIF 0 из ' + groups.length + '…';
+    setTimeout(next, 20);
   }
 
   /* ─── СРАВНЕНИЕ ДВУХ НАБОРОВ ─── */
