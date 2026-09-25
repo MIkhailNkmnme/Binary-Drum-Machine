@@ -5230,6 +5230,7 @@ function autoRun(){
         st.shiftVariantTurns = turns;
 
         const bgInfo = computeBgSearchTarget();
+        bgFindLogHit(bgInfo, turns);   // v1.648: находка — в «Лог находок» сразу, на своём ходу, а не только при перерисовке
         if (bgInfo && bgInfo.matched) {
           hadHit = true; hitCount++;
           // Находка СРАЗУ добавляется к выделению (не заменяет его — запрос пользователя), если

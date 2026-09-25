@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Layers — v1.647</title>
+<title>Zerkalius Layers — v1.648</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -3616,20 +3616,22 @@
 /* СТОЛБЦЫ ЯВНЫЕ (запрос пользователя "чтобы столбцы были и названия ясны"): у каждой ячейки своя
    правая граница, поэтому колонки видно как в таблице, а не как набор плавающих подписей.
    Шапка — липкая (не уезжает при прокрутке лога) и чуть плотнее по шрифту. */
-.find-log-row{display:flex;font-size:11px;border-bottom:1px solid var(--line)}
+.find-log-row{display:flex;font-size:10.5px;line-height:1.25;border-bottom:1px solid var(--line)}   /* v1.648: плотнее */
 .find-log-row:last-child{border-bottom:none}
 .find-log-head{color:var(--fg);font-weight:700;border-bottom:1px solid var(--acc);
   position:sticky;top:0;z-index:2;background:var(--panel)}
-.find-log-cell{flex:0 0 auto;width:3.2em;padding:2px 3px;text-align:center;overflow:hidden;
+.find-log-cell{flex:0 0 auto;width:3.2em;padding:1px 2px;text-align:center;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;border-right:1px solid var(--line)}
 .find-log-row > .find-log-cell:last-child{border-right:none}
-.find-log-row-no{width:4.5em;text-align:left;color:var(--dim)}
+.find-log-row-no{width:2.8em;text-align:right;color:var(--dim)}
 /* Номер шага (варианта прокрутки), на котором случилась находка — своя колонка рядом с номером
    строки (см. bgFindLog: в записи лежит step). */
-.find-log-step{width:4.5em;text-align:left;color:var(--dim)}
+.find-log-step{width:3.4em;text-align:right;color:var(--dim)}
+/* v1.648: «чем» — инструмент Круга, которым нашлось (◄/►, и — ИнвКруг, ½ — полуоборот), см. FIND_TOOL */
+.find-log-tool{width:3.1em;color:var(--acc)}
 /* Шире прежнего: в шапке короткие, но РАЗЛИЧИМЫЕ подписи ("Скв→и", "ВЗ←", "↘#12", см.
    BG_MODE_SHORT) — они должны помещаться целиком, иначе столбцы снова сливаются в "Сквозн…". */
-.find-log-mode{width:6.2em}
+.find-log-mode{width:4.8em}
 .find-log-head .find-log-mode{font-size:10.5px;letter-spacing:0}
 /* УЗКИЙ СТОЛБЕЦ ФАЗЫ (v0.955, запрос пользователя "имена столбцов как-то в ширину одного символа
    надо"): при маске столбцов становится десятки (режим × фаза), а в ячейке всего "+". Имя режима
@@ -5368,7 +5370,7 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
   <!-- Заголовок стоит вплотную слева от вкладок (v1.046), вся связка центрируется полосой — см. #menuBarTitle в CSS. --><div id="menuBarTitle">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.647</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.648</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -6198,11 +6200,11 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
      (видно новый номер версии в заголовке), а fold-*.js берёт из кеша — то есть новый код
      просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
      версией в <title>/<h3>, теми же тремя цифрами. -->
-<script src="fold-1-core.js?v=1647"></script>
-<script src="fold-2-render.js?v=1647"></script>
-<script src="fold-3-ops.js?v=1647"></script>
-<script src="fold-4-tools.js?v=1647"></script>
-<script src="fold-5-ui.js?v=1647"></script>
+<script src="fold-1-core.js?v=1648"></script>
+<script src="fold-2-render.js?v=1648"></script>
+<script src="fold-3-ops.js?v=1648"></script>
+<script src="fold-4-tools.js?v=1648"></script>
+<script src="fold-5-ui.js?v=1648"></script>
 <div id="fieldInfo"></div>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;

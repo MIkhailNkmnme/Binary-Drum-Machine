@@ -1540,6 +1540,28 @@ function dimMaskedBits(root, doc, cut){
    шага) или ключ режима (столбец с "+"); dir 1/-1. key=null — исходный порядок, новые сверху.
    Состояние окна, в кэш не пишется — как и сам лог. */
 let findLogSort = { key: null, dir: 1 };
+/* v1.648, «лог лагает, не показывает после 13 находки, хотя они только что были». Запись в лог делал только render(), а «Авто»
+   (тем более с «⏩ Турбо») за кадр делает целую пачку ходов и рисует один раз, в конце: из нескольких находок одной пачки в лог
+   попадала лишь последняя, — а с «🧲 Захватом» без «🛑 Стоп» находки идут одна за другой. Теперь прогон пишет находку сам, на
+   том ходу, где она случилась (bgFindLogHit), с номером этого хода; render() её не повторит — он сверяет st.bgSearchLastHit.
+   Повтор той же строки подряд, ход за ходом, как и прежде, не пишется: только появление находки. */
+/* v1.648, «также туда запиши, каким инструментом — Круг, Инв… — найдено, и компактнее всё»: у записи лога — tool, инструмент,
+   которым крутили (st.lastDirMode на момент находки). В таблице — столбец «чем» коротким знаком, полное имя — в подсказке. */
+const FIND_TOOL = { shiftL: ["◄", "◄ Круг"], shiftR: ["►", "► Круг"], shiftLInv: ["◄и", "◄ ИнвКруг"], shiftRInv: ["►и", "► ИнвКруг"],
+  halfPlainL: ["◄½", "◄ ½ Круг"], halfPlainR: ["►½", "► ½ Круг"], halfTurnL: ["◄½и", "◄ ½ ИнвКруг"], halfTurnR: ["►½и", "► ½ ИнвКруг"],
+  spiralUp: ["▲", "▲ Спираль"], spiralDown: ["▼", "▼ Спираль"] };
+function bgFindLogHit(bgInfo, step){
+  const hitNow = (bgInfo && bgInfo.matched)
+    ? ((bgInfo.hitPatIdxs && bgInfo.hitPatIdxs.size) ? Math.min(...bgInfo.hitPatIdxs) : bgInfo.targetIdx) : null;
+  if (hitNow !== st.bgSearchLastHit && hitNow != null) {
+    const matches = {};
+    for (const r of (bgInfo.results || [])) if (r.matched) matches[r.mode] = r.kinds;
+    if (bgInfo.lengthSumsMatched) { const ls = lengthSumsMatchedCombos(st, bgInfo.anchorIdx); if (ls.length) matches.lengthSums = ls; }
+    bgFindLog.unshift({ row: hitNow, step: step || 0, matches, tool: st.lastDirMode || "" });
+    if (bgFindLog.length > BG_FIND_LOG_MAX) bgFindLog.length = BG_FIND_LOG_MAX;
+  }
+  st.bgSearchLastHit = hitNow;
+}
 
 function renderFindLogPanel(){
   // Отдельное окно лога (v0.953) наполняется тем же содержимым — вызов в самом начале, чтобы не
@@ -1586,7 +1608,7 @@ function renderFindLogPanel(){
     // Верхний ярус: подряд идущие столбцы одного режима сливаются в одну ячейку. Ширину задаём
     // инлайном через ту же переменную --flw, что и ширину узкого столбца, — иначе ярусы разъедутся.
     let grp = '<div class="find-log-row find-log-head find-log-grp-row">' +
-      '<span class="find-log-cell find-log-row-no"></span><span class="find-log-cell find-log-step"></span>';
+      '<span class="find-log-cell find-log-row-no"></span><span class="find-log-cell find-log-step"></span><span class="find-log-cell find-log-tool"></span>';
     for (let i = 0; i < parsed.length; ) {
       let n = 1;
       while (i + n < parsed.length && parsed[i + n].base === parsed[i].base) n++;
@@ -1597,8 +1619,9 @@ function renderFindLogPanel(){
     head = grp + '</div>';
   }
   head += '<div class="find-log-row find-log-head">' +
-    '<span class="find-log-cell find-log-row-no" data-sort="row" title="Сортировать по номеру строки">стр.' + sortMark("row") + '</span>' +
+    '<span class="find-log-cell find-log-row-no" data-sort="row" title="Номер найденной строки — клик: сортировать">стр' + sortMark("row") + '</span>' +
     '<span class="find-log-cell find-log-step" data-sort="step" title="Номер шага (варианта прокрутки), на котором нашлось. Под «Авто» это тот же счётчик «Вар: N/M», при ручных ◄/► — сколько кликов подряд сделано с момента смены выделения; пусто — находка появилась вне прокрутки. Клик — сортировать по шагу">шаг' + sortMark("step") + '</span>' +
+    '<span class="find-log-cell find-log-tool" data-sort="tool" title="Чем крутили, когда нашлось: ◄/► — Круг, и — ИнвКруг, ½ — полуоборот. Клик: сортировать">чем' + sortMark("tool") + '</span>' +
     parsed.map(x => '<span class="find-log-cell find-log-mode' + nw + '" data-sort="' + esc(x.m) + '" title="' +
       esc(bgModeLabel(x.m)) + ' — клик: сначала находки этого режима">' +
       esc(x.num || x.base) + sortMark(x.m) + '</span>').join("") +
@@ -1612,6 +1635,7 @@ function renderFindLogPanel(){
       let va, vb;
       if (k === "row") { va = a.row; vb = b.row; }
       else if (k === "step") { va = a.step || 0; vb = b.step || 0; }
+      else if (k === "tool") { va = a.tool || ""; vb = b.tool || ""; return va === vb ? 0 : (va < vb ? -d : d); }
       else { va = a.matches[k] ? 1 : 0; vb = b.matches[k] ? 1 : 0; } // столбец режима: есть "+" или нет
       return va === vb ? 0 : (va - vb) * d;
     });
@@ -1632,8 +1656,10 @@ function renderFindLogPanel(){
       ).join(", ");
       return '<span class="find-log-cell find-log-mode find-log-plus' + nw + '" title="' + esc(tip) + '">+</span>';
     }).join("");
-    return '<div class="find-log-row"><span class="find-log-cell find-log-row-no">Стр. ' + (e.row + 1) + '</span>' +
-      '<span class="find-log-cell find-log-step">' + (e.step ? "№" + e.step : "") + '</span>' + cells + '</div>';
+    const tl = FIND_TOOL[e.tool];
+    return '<div class="find-log-row"><span class="find-log-cell find-log-row-no">' + (e.row + 1) + '</span>' +
+      '<span class="find-log-cell find-log-step">' + (e.step ? e.step : "") + '</span>' +
+      '<span class="find-log-cell find-log-tool"' + (tl ? ' title="' + esc(tl[1]) + '"' : '') + '>' + (tl ? esc(tl[0]) : "") + '</span>' + cells + '</div>';
   }).join("");
 
   el.innerHTML = head + rows;
@@ -2896,7 +2922,7 @@ function render(){
         // 0 (пустая клетка в логе) — находка появилась ВНЕ прокрутки: прогон уже кончился, а
         // строки изменились кликом/правкой/сменой режима. Иначе такие записи получали последний
         // номер прогона, и колонка вырождалась в столбик одинаковых чисел.
-        bgFindLog.unshift({ row: hitNow, step: st.stepStale ? 0 : (st.shiftVariantTurns || 0), matches });
+        bgFindLog.unshift({ row: hitNow, step: st.stepStale ? 0 : (st.shiftVariantTurns || 0), matches, tool: st.lastDirMode || "" });
         if (bgFindLog.length > BG_FIND_LOG_MAX) bgFindLog.length = BG_FIND_LOG_MAX;
       }
       st.bgSearchLastHit = hitNow;
