@@ -5,14 +5,14 @@ PROJECT: Zerkalius Треугольник — отдельная страниц�
          Заведена 2026-09-24 копией Zerkalius Code 35.74: для начала в ней есть всё, что есть в Code.
          Память (текст, вид, раскладка) — СВОЯ, ключи ztri_*; с v0.009 у Code ничего не подхватывает (кроме сцен, если
          своих нет): первый запуск — треугольник правила 90 на 50 строк. Ключи Code никогда не пишутся.
-VERSION: v0.020 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
+VERSION: v0.021 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Треугольник v0.020</title>
+    <title>Zerkalius Треугольник v0.021</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -205,6 +205,15 @@ VERSION: v0.020 (копия Zerkalius Code 35.74 целиком — отправ
             animation: recBlink 1s ease-in-out infinite; outline: 2px solid #ff3333; outline-offset: 3px; }
         /* 35.7: запись мигает цветом (не прозрачностью — в Дзене прозрачность у ⏺ прибита !important) и обведена кольцом. */
         @keyframes recBlink { 0%, 100% { background: #cc0000; box-shadow: 0 0 12px #ff3333; } 50% { background: #330000; box-shadow: 0 0 2px #ff3333; } }
+        /* v0.021: запись вкладки целиком (с панелями) — значок ▣ на ⏺; во время такой записи кнопка не мигает (она сама в кадре) */
+        #recBtn.rec-page-mode::after { content: '▣'; position: absolute; right: -3px; bottom: -5px; font-size: 11px; line-height: 1;
+            color: #ffcc00; text-shadow: 0 0 2px #000; pointer-events: none; }
+        #recBtn.recording-page { color: #ff3333; border-color: #ff3333; background: #1a0000; }
+        #recModeMenu { position: fixed; z-index: 100000; display: none; background: #111; border: 1px solid #552222; border-radius: 4px;
+            padding: 6px 10px; font: 12px Consolas, monospace; color: #ddd; box-shadow: 0 2px 10px rgba(0,0,0,.6); }
+        #recModeMenu b { display: block; color: #ff8888; margin-bottom: 4px; font-weight: 600; }
+        #recModeMenu label { display: flex; gap: 6px; align-items: center; cursor: pointer; margin: 3px 0; white-space: nowrap; }
+        #recModeMenu .hint { color: #889; font-size: 11px; margin-top: 5px; max-width: 280px; white-space: normal; }
         #recTimer { position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
             font: bold 12px 'Courier New', monospace; color: #ff5555; background: rgba(0,0,0,.6);
             padding: 2px 8px; border-radius: 3px; z-index: 50; display: none; }
@@ -377,7 +386,7 @@ VERSION: v0.020 (копия Zerkalius Code 35.74 целиком — отправ
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.020</h3>
+                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.021</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -1145,8 +1154,31 @@ VERSION: v0.020 (копия Zerkalius Code 35.74 целиком — отправ
                 const canvas = document.getElementById('screenCanvas');
                 this.mime = this.pickMime();
                 if (!canvas || !this.mime) { this.notify('ЗАПИСЬ НЕ ПОДДЕРЖИВАЕТСЯ'); return false; }
-                const stream = canvas.captureStream(fps || 60);
-                const at = this.audioTrack();
+                return this.begin(canvas.captureStream(fps || 60));
+            },
+            /* v0.021: ЗАПИСЬ С ПАНЕЛЯМИ (пользователь: «тут настройку, чтобы видео с панелями запись»). Панели — не холст,
+               их в captureStream нет; пишется сама вкладка через захват экрана браузера (getDisplayMedia, «эта вкладка»).
+               Chrome один раз спрашивает разрешение («Поделиться этой вкладкой»); его же кнопка «Закрыть доступ» — тоже стоп.
+               Звук — звук вкладки, если в диалоге он отмечен, иначе тот же трек визуализатора, что и у записи холста. */
+            mode() { try { return localStorage.getItem('ztri_rec_mode') === 'page' ? 'page' : 'canvas'; } catch (e) { return 'canvas'; } },
+            setMode(m) { try { localStorage.setItem('ztri_rec_mode', m); } catch (e) {} },
+            async startPage() {
+                this.mime = this.pickMime();
+                if (!this.mime || !navigator.mediaDevices?.getDisplayMedia) { this.notify('ЗАПИСЬ ВКЛАДКИ НЕ ПОДДЕРЖИВАЕТСЯ'); return false; }
+                let ds;
+                try {
+                    ds = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 60, displaySurface: 'browser' }, audio: true,
+                        preferCurrentTab: true, selfBrowserSurface: 'include', surfaceSwitching: 'exclude', systemAudio: 'exclude' });
+                } catch (e) { this.notify('ЗАПИСЬ ОТМЕНЕНА'); return false; }
+                this.display = ds;
+                const vt = ds.getVideoTracks()[0];
+                if (vt) vt.addEventListener('ended', () => { if (this.rec && this.onEnded) this.onEnded(); });
+                const stream = new MediaStream(ds.getVideoTracks());
+                const ta = ds.getAudioTracks()[0]; if (ta) stream.addTrack(ta);
+                return this.begin(stream);
+            },
+            begin(stream) {
+                const at = stream.getAudioTracks().length ? null : this.audioTrack();
                 if (at) stream.addTrack(at);
                 this.sid = Date.now();
                 // Куски уходят на диск по ходу записи, а не копятся в памяти вкладки:
@@ -1187,6 +1219,7 @@ VERSION: v0.020 (копия Zerkalius Code 35.74 целиком — отправ
                 cancelAnimationFrame(this.pumpRaf); this.pumpRaf = 0;
                 if (this.rec && this.rec.state !== 'inactive') this.rec.stop();
                 this.rec = null;
+                if (this.display) { this.display.getTracks().forEach(t => t.stop()); this.display = null; }   // v0.021
                 window.__zerkRecGuard?.off();
             },
             fileBase(at) {
@@ -4148,19 +4181,54 @@ VERSION: v0.020 (копия Zerkalius Code 35.74 целиком — отправ
                 });
                 // Запись: одна кнопка на старт и стоп, рядом счётчик времени.
                 if (UI.recBtn) {
-                    UI.recBtn.addEventListener('click', () => {
+                    // v0.021: что писать — правый щелчок по ⏺ (меню); ▣ на кнопке — пишется вкладка с панелями
+                    const recTitle = () => {
+                        const page = RECORDER.mode() === 'page';
+                        UI.recBtn.classList.toggle('rec-page-mode', page);
+                        UI.recBtn.title = (page ? 'Запись видео ВКЛАДКИ целиком — с панелями и окнами (Chrome спросит разрешение)'
+                                                : 'Запись видео с холста (пишется всё, что происходит, вместе с треком)') + ' · правый щелчок — что писать';
+                    };
+                    const menu = document.createElement('div');
+                    menu.id = 'recModeMenu';
+                    menu.innerHTML = '<b>⏺ Что писать</b>' +
+                        '<label><input type="radio" name="recMode" value="canvas"> только холст</label>' +
+                        '<label><input type="radio" name="recMode" value="page"> вкладку целиком, с панелями</label>' +
+                        '<div class="hint">С панелями пишется то, что видно во вкладке, как есть. Chrome спросит «Поделиться этой вкладкой» — ' +
+                        'согласиться; остановить можно и его кнопкой «Закрыть доступ». Звук — звук вкладки, если отмечен в том окне.</div>';
+                    document.body.appendChild(menu);
+                    menu.addEventListener('change', e => { if (e.target.name === 'recMode') { RECORDER.setMode(e.target.value); recTitle(); menu.style.display = 'none'; } });
+                    UI.recBtn.addEventListener('contextmenu', e => {
+                        e.preventDefault();
+                        if (RECORDER.rec) return;
+                        menu.querySelectorAll('input').forEach(r => { r.checked = r.value === RECORDER.mode(); });
+                        menu.style.display = 'block';
+                        const b = UI.recBtn.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
+                        const left = b.left + b.width / 2 > innerWidth / 2 ? b.left - mw - 8 : b.right + 8;
+                        menu.style.left = Math.max(4, Math.min(innerWidth - mw - 4, left)) + 'px';
+                        menu.style.top = Math.max(4, Math.min(innerHeight - mh - 4, b.top)) + 'px';
+                    });
+                    document.addEventListener('mousedown', e => { if (menu.style.display === 'block' && !menu.contains(e.target)) menu.style.display = 'none'; });
+                    recTitle();
+                    const recStopUi = () => {
                         const timer = document.getElementById('recTimer');
-                        if (RECORDER.rec) {
-                            RECORDER.stop();
-                            clearInterval(RECORDER.timer);
-                            UI.recBtn.classList.remove('recording');
-                            if (timer) timer.style.display = 'none';
-                            RECORDER.notify('● СОХРАНЕНО');
-                            return;
-                        }
-                        if (!RECORDER.start(60)) return;
-                        UI.recBtn.classList.add('recording');
-                        if (timer) timer.style.display = 'block';
+                        RECORDER.stop();
+                        clearInterval(RECORDER.timer);
+                        UI.recBtn.classList.remove('recording', 'recording-page');
+                        if (timer) timer.style.display = 'none';
+                        RECORDER.notify('● СОХРАНЕНО');
+                    };
+                    RECORDER.onEnded = recStopUi;   // «Закрыть доступ» в Chrome
+                    UI.recBtn.addEventListener('click', async () => {
+                        const timer = document.getElementById('recTimer');
+                        if (RECORDER.rec) { recStopUi(); return; }
+                        if (RECORDER.busy) return;
+                        const page = RECORDER.mode() === 'page';
+                        RECORDER.busy = true;
+                        const ok = page ? await RECORDER.startPage() : RECORDER.start(60);
+                        RECORDER.busy = false;
+                        if (!ok) return;
+                        UI.recBtn.classList.add(page ? 'recording-page' : 'recording');
+                        if (timer && !page) timer.style.display = 'block';   // с панелями счётчик попал бы в кадр
                         RECORDER.timer = setInterval(() => {
                             const sec = Math.floor((Date.now() - RECORDER.startedAt) / 1000);
                             if (timer) timer.textContent = `● REC ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
