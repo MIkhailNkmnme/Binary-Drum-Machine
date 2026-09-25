@@ -359,3 +359,308 @@ function zzMemoryHeat(states){
   delete heat.prev;
   return heat;
 }
+
+/* ─── ⇋ Поправка зеркала (v0.006, из Layers v1.625–1.626) ────────────────────────────────── */
+/* Строка = левая половина L + поправка D (+ средний бит при нечётной длине). Для каждого из
+   четырёх способов достроить правую половину из L — зеркало ⇄, зеркало с инверсией ⇄🔁, повтор ⧉,
+   повтор с инверсией ⧉🔁 — D по биту на бит L: 1 там, где пара не сошлась («несимметричный бит»).
+   L + D — снова n бит: зеркало не сжимает, а раскладывает; выигрыш — когда D пустая или редкая. */
+const ZZ_MIRROR_KINDS = [
+  { sign: "⇄",   name: "зеркало",             rev: true,  inv: false, code: "00" },
+  { sign: "⇄🔁", name: "зеркало с инверсией", rev: true,  inv: true,  code: "01" },
+  { sign: "⧉",   name: "повтор",              rev: false, inv: false, code: "10" },
+  { sign: "⧉🔁", name: "повтор с инверсией",  rev: false, inv: true,  code: "11" },
+];
+function zzMirrorMask(x, k){
+  const m = x.length, h = m >> 1;
+  let d = "";
+  for (let i = 0; i < h; i++) {
+    const p = k.rev ? x[m - 1 - i] : x[m - h + i];
+    d += ((x[i] !== p) !== k.inv) ? "1" : "0";
+  }
+  return d;
+}
+/* Все четыре поправки и лучшая (меньше всего единиц; при равенстве — раньше в списке). */
+function zzMirrorAll(s){
+  const all = ZZ_MIRROR_KINDS.map(k => { const D = zzMirrorMask(s, k); return { k, D, ones: zzOnes(D) }; });
+  let best = all[0];
+  for (const a of all) if (a.ones < best.ones) best = a;
+  return { all, best };
+}
+/* Складывания подряд без единой поправки. Ниже 4 бит не складываем: строку в 2–3 бита складывает
+   любая пара ⇄ / ⇄🔁, это не находка. */
+function zzMirrorFolds(s){
+  const folds = [];
+  let cur = s;
+  while (cur.length >= 4) {
+    const k = ZZ_MIRROR_KINDS.find(k => zzMirrorMask(cur, k).indexOf("1") < 0);
+    if (!k) break;
+    folds.push({ m: cur.length, sign: k.sign, mid: cur.length & 1 });
+    cur = cur.slice(0, cur.length >> 1);
+  }
+  return { folds, seed: cur };
+}
+/* Грубая цена строки «в мире зеркал» — не доказательство. На каждом этаже: 1 бит «сложено или
+   нет», 2 бита «каким зеркалом», средний бит, поправка сырьём или номерами позиций единиц, что
+   короче (+1 бит, каким видом). Половина разбирается так же. Случайная строка выходит в n+1. */
+function zzMirrorPlan(x){
+  const m = x.length, raw = 1 + m;
+  if (m < 4) return { cost: raw, steps: [], seed: x };
+  const h = m >> 1, mid = m & 1;
+  const sub = zzMirrorPlan(x.slice(0, h));
+  const best = zzMirrorAll(x).best;
+  const posBits = Math.max(1, Math.ceil(Math.log2(h)));
+  const dCost = 1 + (best.ones ? Math.min(h, best.ones * posBits) : 0);
+  const folded = 1 + 2 + mid + sub.cost + dCost;
+  if (folded >= raw) return { cost: raw, steps: [], seed: x };
+  return { cost: folded, steps: [{ m, sign: best.k.sign, ones: best.ones, mid }].concat(sub.steps), seed: sub.seed };
+}
+/* Поправки многих строк одним столбиком. common — один вид на все строки (тот, у которого единиц во
+   всех D вместе меньше), иначе у каждой свой, и тогда его 2 бита стоят в начале её строки. Строки
+   короче 2 бит половин не имеют — в столбик не идут. */
+function zzMirrorLayer(rows, common){
+  const idx = [];
+  rows.forEach((s, i) => { if (s.length >= 2) idx.push(i); });
+  const masks = idx.map(i => ZZ_MIRROR_KINDS.map(k => { const D = zzMirrorMask(rows[i], k); return { D, ones: zzOnes(D) }; }));
+  const totals = ZZ_MIRROR_KINDS.map((_, j) => masks.reduce((a, m) => a + m[j].ones, 0));
+  let cj = 0;
+  for (let j = 1; j < totals.length; j++) if (totals[j] < totals[cj]) cj = j;
+  const use = [0, 0, 0, 0];
+  let ones = 0;
+  const out = idx.map((i, n) => {
+    let j = cj;
+    if (!common) { j = 0; for (let q = 1; q < 4; q++) if (masks[n][q].ones < masks[n][j].ones) j = q; }
+    use[j]++; ones += masks[n][j].ones;
+    return (common ? "" : ZZ_MIRROR_KINDS[j].code) + masks[n][j].D;
+  });
+  const halfBits = idx.reduce((a, i) => a + (rows[i].length >> 1), 0);
+  return { out, idx, totals, common: cj, use, ones, halfBits, distinct: new Set(out).size, skipped: rows.length - idx.length };
+}
+
+/* ─── ⊿ Сложить лентой в форму (v0.006, из Layers v1.627) ─────────────────────────────────── */
+/* Лента режется на куски длиной first, first+step, first+2·step…: 1 и 1 — треугольник, шаг 0 —
+   прямоугольник ширины first. Форма бесплатна (её знают обе стороны), но порядка не добавляет —
+   это линза. Сразу считается, что в форме видно: строка = предыдущая + бит (нового 1 бит), строка =
+   🔺+1 от предыдущей (0 бит: Паскаль, a, a⊕b, …, b), строка повторяет предыдущую (0 бит). */
+function zzFoldShape(tape, first, step){
+  const pieces = [];
+  for (let p = 0, len = first; p < tape.length; p += len, len += step) pieces.push(tape.slice(p, p + len));
+  // 🔺+1 без обкладки нулями сверху: a0, a0⊕a1, …, a(n−2)⊕a(n−1), a(n−1) — то же, что zzPascalNext.
+  let plusBit = 0, pascal = 0, same = 0, fresh = pieces.length ? pieces[0].length : 0;
+  const kinds = pieces.length ? ["fresh"] : [];   // v0.008: вид каждой строки — для живого показа
+  for (let k = 1; k < pieces.length; k++) {
+    const a = pieces[k - 1], b = pieces[k];
+    const nx = zzPascalNext(a);
+    const isPascal = b.length <= nx.length && b.length >= a.length && nx.startsWith(b) && b.length > 0;
+    const isPlus = !isPascal && b.length > a.length && b.startsWith(a);
+    const isSame = !isPascal && !isPlus && b.length > 0 && a.startsWith(b);
+    if (isPascal) { pascal++; kinds.push("pascal"); }
+    else if (isPlus) { plusBit++; fresh += b.length - a.length; kinds.push("plus"); }
+    else if (isSame) { same++; kinds.push("same"); }
+    else { fresh += b.length; kinds.push("fresh"); }
+  }
+  const lastFull = pieces.length ? pieces[pieces.length - 1].length === first + (pieces.length - 1) * step : true;
+  return { pieces, kinds, plusBit, pascal, same, fresh, tail: lastFull ? 0 : pieces[pieces.length - 1].length };
+}
+
+/* ─── ⇅ Сортировка сдвигов — преобразование Барроуза — Уилера (v0.006) ────────────────────── */
+/* Все циклические сдвиги строки — строки квадратной таблицы; таблица сортируется; хранится только
+   ПОСЛЕДНИЙ столбец и номер строки, где встал оригинал. Порядок сортировки бесплатен (отсортировать
+   может любой), и он кодирует порядок в строке: по столбцу и номеру строка восстанавливается целиком.
+   Счёт честный — n бит + номер; выигрыш в том, что сортировка сводит похожие биты в длинные серии.
+   Сортировка — удвоением префиксов (n·log²n), ничьи (у периодических строк сдвиги совпадают) — по
+   номеру сдвига; обратный ход — через соответствие «последний столбец → первый». */
+const ZZ_BWT_MAX = 65536;
+function zzBwt(s){
+  const n = s.length;
+  let rank = new Int32Array(n);
+  for (let i = 0; i < n; i++) rank[i] = s[i] === "1" ? 1 : 0;
+  const idx = []; for (let i = 0; i < n; i++) idx.push(i);
+  const tmp = new Int32Array(n);
+  for (let k = 1; ; k *= 2) {
+    const r = rank, kk = k;
+    const key2 = (i) => r[(i + kk) % n];
+    idx.sort((a, b) => (r[a] - r[b]) || (key2(a) - key2(b)));
+    tmp[idx[0]] = 0;
+    for (let j = 1; j < n; j++) {
+      const a = idx[j - 1], b = idx[j];
+      tmp[b] = tmp[a] + ((r[a] !== r[b] || key2(a) !== key2(b)) ? 1 : 0);
+    }
+    rank = Int32Array.from(tmp);
+    if (n < 2 || tmp[idx[n - 1]] === n - 1 || 2 * k >= n) break;
+  }
+  const rk = rank;
+  idx.sort((a, b) => (rk[a] - rk[b]) || (a - b));
+  let last = "";
+  for (let j = 0; j < n; j++) last += s[(idx[j] - 1 + n) % n];
+  return { order: idx, last, index: idx.indexOf(0) };
+}
+function zzUnbwt(last, index){
+  const n = last.length;
+  if (!n || index < 0 || index >= n) return null;
+  let c0 = 0; for (let i = 0; i < n; i++) if (last[i] === "0") c0++;
+  const lf = new Int32Array(n);
+  let s0 = 0, s1 = 0;
+  for (let i = 0; i < n; i++) lf[i] = last[i] === "0" ? s0++ : c0 + s1++;
+  const out = new Array(n);
+  for (let k = n - 1, r = index; k >= 0; k--) { out[k] = last[r]; r = lf[r]; }
+  return out.join("");
+}
+/* Число серий одинаковых бит: «0011101» — 4. */
+function zzRuns(s){ let r = s.length ? 1 : 0; for (let i = 1; i < s.length; i++) if (s[i] !== s[i - 1]) r++; return r; }
+
+/* ─── ⇉ Манчестерский код: 1 → 10, 0 → 01 (v0.007) ───────────────────────────────────────── */
+/* Запрос пользователя: «что если 1 это 10, а 0 это 01 из исходной строки, по очерёдности слева».
+   Строка удваивается, сведений в ней столько же: второй бит пары — инверсия первого. Избыточность
+   ради надёжности: трёх одинаковых подряд не бывает (самосинхронизация), пары 00 и 11 запрещены
+   (ошибка видна), единиц ровно столько же, сколько нулей. Правило, применённое k раз к «0», даёт
+   Туэ–Морса длины 2^k. Раскод — первый бит каждой пары; bad — номера пар 00/11 (с нуля). */
+function zzManchester(s){ let o = ""; for (let i = 0; i < s.length; i++) o += s[i] === "1" ? "10" : "01"; return o; }
+function zzUnmanchester(s){
+  const bad = []; let o = "";
+  for (let i = 0; i + 1 < s.length; i += 2) {
+    if (s[i] === s[i + 1]) bad.push(i >> 1);
+    o += s[i];
+  }
+  return { out: o, bad, odd: (s.length & 1) === 1 };
+}
+/* Туэ–Морс: бит i — чётность числа единиц в двоичной записи i. Проверка, не он ли (или его
+   инверсия) вышел после очередного шага кода. */
+function zzIsThueMorse(s){
+  let a = true, b = true;
+  for (let i = 0; i < s.length && (a || b); i++) {
+    let x = i, p = 0; while (x) { p ^= x & 1; x >>>= 1; }
+    const c = p ? "1" : "0";
+    if (s[i] !== c) a = false;
+    if (s[i] === c) b = false;
+  }
+  return a ? 1 : b ? -1 : 0;
+}
+
+/* ─── △ Треугольник по маске (v0.011) ─────────────────────────────────────────────────────── */
+/* Запрос пользователя: «построить треугольник по маске 10 — любой маске, длина задаётся». Строка k
+   (k = 1…n) длиной k заполняется маской. mode "start" — каждая строка начинает маску с начала:
+   1, 10, 101, 1010…; "tape" — маска идёт сплошной лентой через все строки (лента свёрнута
+   треугольником, как в ⊿), и если длина маски не делит длины строк, фаза сдвигается от строки к
+   строке — проступают косые полосы. */
+function zzMaskTriangle(mask, n, mode){
+  // v0.012: треугольник ОТ строки — Паскаль вниз (n строк, каждая на бит длиннее) или спуск (не больше длины).
+  if (mode === "pascal") { const r = [mask]; while (r.length < n) r.push(zzPascalNext(r[r.length - 1])); return r; }
+  if (mode === "descent") return zzDescent(mask).slice(0, n);
+  const rows = [];
+  if (mode === "tape") {
+    let p = 0;
+    for (let k = 1; k <= n; k++) {
+      let r = "";
+      for (let i = 0; i < k; i++) { r += mask[p % mask.length]; p++; }
+      rows.push(r);
+    }
+  } else {
+    for (let k = 1; k <= n; k++) {
+      let r = "";
+      for (let i = 0; i < k; i++) r += mask[i % mask.length];
+      rows.push(r);
+    }
+  }
+  return rows;
+}
+
+/* ─── 📡 Сигнал по базе (v0.013) ──────────────────────────────────────────────────────────── */
+/* Разговор пользователя: «сигнал: база 10101…, 11 — это первый бит = 1, так как вторая строка; второй
+   бит 111 на третьей строке = 1» → «да, сделай Сигнал по базе». Каждый бит сообщения — ОДНА строка:
+   0 — строка базы (маска, повторённая на длину строки), 1 — отступ от базы: её инверсия или сплошные
+   единицы. Это расширение спектра (GPS, CDMA): бит растянут на k «чипов», сведений в строке 1 бит,
+   остальное — запас прочности. Читается строка по тому, к чему она ближе по Хэммингу: к базе или к
+   отступу. Между базой и отступом d несовпадающих бит — строка переживает до ⌊(d−1)/2⌋ испорченных.
+   У инверсии d = k (вся длина), у «сплошных единиц» при базе 10 — только число нулей базы, ≈ k/2:
+   поэтому настоящие системы шлют ±, то есть инверсию. */
+function zzBaseRow(mask, k){ let r = ""; for (let i = 0; i < k; i++) r += mask[i % mask.length]; return r; }
+function zzDevRow(mask, k, dev){ return dev === "ones" ? "1".repeat(k) : zzInv(zzBaseRow(mask, k)); }
+function zzHam(a, b){ let d = 0; const n = Math.min(a.length, b.length); for (let i = 0; i < n; i++) if (a[i] !== b[i]) d++; return d + Math.abs(a.length - b.length); }
+/* shape "tri" — строка j длиной len + j (треугольник), "const" — все длиной len. */
+function zzSignalEncode(msg, mask, dev, shape, len){
+  const rows = [];
+  for (let j = 0; j < msg.length; j++) {
+    const k = shape === "const" ? len : len + j;
+    rows.push(msg[j] === "1" ? zzDevRow(mask, k, dev) : zzBaseRow(mask, k));
+  }
+  return rows;
+}
+function zzSignalDecode(rows, mask, dev){
+  return rows.map(r => {
+    const k = r.length, B = zzBaseRow(mask, k), D = zzDevRow(mask, k, dev);
+    const d0 = zzHam(r, B), d1 = zzHam(r, D), d = zzHam(B, D);
+    return { bit: d === 0 ? "?" : d0 < d1 ? "0" : d1 < d0 ? "1" : "?", d0, d1, d, k, spare: Math.max(0, Math.floor((d - 1) / 2)) };
+  });
+}
+/* Шум: каждый бит переворачивается с вероятностью p (0…1). */
+function zzNoise(s, p){ let o = ""; for (let i = 0; i < s.length; i++) o += Math.random() < p ? (s[i] === "1" ? "0" : "1") : s[i]; return o; }
+
+/* ─── 🔍 Проверка треугольника (v0.014) ───────────────────────────────────────────────────── */
+/* Разговор пользователя: «как объединить биты правок так, чтобы одни и те же биты принадлежали двум
+   разным строкам» → «да, сделай Проверку треугольника». Треугольник XOR — код, исправляющий ошибки:
+   каждая тройка «два сверху, один под ними» даёт a ⊕ b ⊕ c = 0, и внутренний бит входит в ТРИ такие
+   проверки (снизу в одну, сверху в две). Испорченный бит ломает ровно свои проверки, и общий у них —
+   только он. Два вида треугольника:
+     • ▽ спуск — строки короче на бит: низ[i] = верх[i] ⊕ верх[i+1];
+     • 🔺 Паскаль — строки длиннее на бит: низ[i] = верх[i−1] ⊕ верх[i], за краями нули (у крайних
+       бит проверка из двух).
+   Проверка — список клеток [строка, место]; сломана, если XOR её бит = 1. */
+function zzTriChecks(rows, mode){
+  const n = rows.length;
+  if (n < 2) return { err: "нужно хотя бы две строки" };
+  let m = mode;
+  const stepOk = (d) => rows.every((r, k) => k === 0 || r.length === rows[k - 1].length + d);
+  if (m === "auto") m = stepOk(-1) ? "descent" : stepOk(1) ? "pascal" : null;
+  if (!m) return { err: "длины строк не идут ни на бит короче (▽ спуск), ни на бит длиннее (🔺 Паскаль)" };
+  const d = m === "descent" ? -1 : 1;
+  for (let k = 1; k < n; k++)
+    if (rows[k].length !== rows[k - 1].length + d)
+      return { err: `строка ${k} длиной ${rows[k].length}, а для ${m === "descent" ? "▽ спуска" : "🔺 Паскаля"} нужна ${rows[k - 1].length + d}` };
+  const checks = [];
+  for (let k = 0; k + 1 < n; k++) {
+    const L = rows[k].length;
+    if (m === "descent") for (let i = 0; i + 1 < L; i++) checks.push([[k, i], [k, i + 1], [k + 1, i]]);
+    else for (let i = 0; i <= L; i++) {
+      const c = [];
+      if (i - 1 >= 0) c.push([k, i - 1]);
+      if (i < L) c.push([k, i]);
+      c.push([k + 1, i]);
+      checks.push(c);
+    }
+  }
+  return { mode: m, checks };
+}
+function zzTriBroken(rows, checks){
+  return checks.map(c => { let x = 0; for (const [r, i] of c) if (rows[r][i] === "1") x ^= 1; return x === 1; });
+}
+/* По каждой клетке: сколько у неё проверок (deg) и сколько из них сломано (bad). Кандидат в
+   испорченные — клетка, у которой сломаны ВСЕ её проверки и которая одна покрывает все сломанные. */
+function zzTriLocate(rows, checks, broken){
+  const deg = rows.map(r => new Int32Array(r.length)), bad = rows.map(r => new Int32Array(r.length));
+  let nb = 0;
+  checks.forEach((c, j) => { if (broken[j]) nb++; for (const [r, i] of c) { deg[r][i]++; if (broken[j]) bad[r][i]++; } });
+  const cand = [];
+  if (nb) rows.forEach((r, k) => { for (let i = 0; i < r.length; i++) if (bad[k][i] === nb && deg[k][i] === nb) cand.push([k, i]); });
+  return { deg, bad, nb, cand };
+}
+/* Исправление переворотом бит (как у декодеров LDPC, Галлагер, 1962): переворачиваем бит, у которого
+   сломанных проверок больше, чем целых, — самый выгодный, — и повторяем, пока выгода есть. */
+function zzTriBitFlip(rows, checks, maxIter){
+  const R = rows.map(r => r.split(""));
+  const flips = [];
+  for (let it = 0; it < (maxIter || 500); it++) {
+    const cur = R.map(a => a.join(""));
+    const br = zzTriBroken(cur, checks);
+    if (!br.some(Boolean)) break;
+    const { deg, bad } = zzTriLocate(cur, checks, br);
+    let best = null, gain = 0;
+    R.forEach((a, k) => { for (let i = 0; i < a.length; i++) { const g = 2 * bad[k][i] - deg[k][i]; if (g > gain) { gain = g; best = [k, i]; } } });
+    if (!best) break;
+    const [k, i] = best;
+    R[k][i] = R[k][i] === "1" ? "0" : "1";
+    flips.push(best);
+  }
+  const out = R.map(a => a.join(""));
+  return { rows: out, flips, left: zzTriBroken(out, checks).filter(Boolean).length };
+}

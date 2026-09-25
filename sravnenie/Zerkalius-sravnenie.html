@@ -1,0 +1,375 @@
+<!-- Zerkalius Сравнение — v0.004. Одинаковые фигуры в двух наборах таблиц .tsv общего формата (_js/figury.js):
+     например, ◇ Ромбы Layers против форм цикла Аниматрицы из ◇ Сводки Треугольника.
+     v0.001: заведена 2026-09-25 по слову пользователя («мне как также потом сделать» — про сравнение ромбов Layers
+             с таблицами Аниматрицы, которое Claude делал скриптом). Выбрать файлы в два набора, «Сравнить».
+     v0.002: «тут бы ещё показать статистику по отдельности для каждого, не обязательно оба файла загружать, и в них
+             показать целый и его части, желательно интерактив — не Аниматрицу, а только если статика». У каждого набора
+             своя сводка (вид × высота: разных рисунков, встреч) — хватает одного файла. Если в файле есть картина
+             (блок «# картина» — его пишут Layers и Треугольник для одного кадра, у цикла Аниматрицы его нет), она
+             рисуется целиком, а рядом — её части: выбрал вид и высоту — список рисунков по частоте; щелчок по рисунку
+             подсвечивает на картине все его места; щелчок по картине берёт фигуру с вершиной в этой клетке. Щелчок
+             по строке сравнения подсвечивает фигуру на обеих картинах. Файлы читаются здесь же, никуда не уходят.
+     v0.003: «открывать сразу в окне для просмотра» — таблица из Layers и Треугольника (галка «👁») приезжает сама.
+     v0.004: подпись модуля ?v=4 — окно «Сравнения» теперь открывается, когда таблица готова (ZFIG.showInViewer). -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zerkalius Сравнение — v0.004</title>
+<style>
+  :root{ --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598; --up:#7cd4ff; --gold:#ffcc00; --ok:#78eb78; --a:#5adcff; --b:#ff8a8a; }
+  html,body{ margin:0; background:var(--bg); color:var(--fg); font-family:"Segoe UI", Inter, system-ui, sans-serif; }
+  .wrap{ max-width:1400px; margin:0 auto; padding:30px 22px 80px; }
+  h1{ margin:0 0 4px; font-size:26px; font-weight:300; letter-spacing:6px; }
+  .sub{ font-size:12.5px; color:var(--dim); margin:0 0 18px; max-width:980px; line-height:1.55; }
+  b{ color:#fff; font-weight:600; }
+  code{ font-family:Consolas, monospace; font-size:12.5px; color:var(--up); background:var(--panel); border:1px solid var(--line); border-radius:3px; padding:1px 5px; }
+  .sets{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; }
+  .set{ background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:12px; min-width:0; }
+  .set h2{ margin:0 0 6px; font-size:15px; font-weight:600; }
+  .set.A h2{ color:var(--a); } .set.B h2{ color:var(--b); }
+  .set .hint{ font-size:12px; color:var(--dim); margin:0 0 8px; }
+  .files{ font-size:12px; font-family:Consolas, monospace; margin-top:8px; line-height:1.6; max-height:120px; overflow:auto; }
+  .files .x{ color:var(--b); cursor:pointer; margin-left:6px; }
+  .bar{ display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin:16px 0; font-size:13px; }
+  button{ background:var(--panel); color:var(--fg); border:1px solid var(--gold); border-radius:4px; padding:6px 16px; font-size:14px; cursor:pointer; }
+  button:hover{ background:#262a36; }
+  button.small{ font-size:12px; padding:3px 10px; border-color:var(--line); }
+  select{ background:#232735; color:var(--fg); border:1px solid var(--line); border-radius:3px; font-size:12px; padding:1px 4px; }
+  label{ cursor:pointer; }
+  #status{ font-size:13px; color:var(--dim); margin:0 0 10px; min-height:18px; }
+  table{ border-collapse:collapse; width:100%; font-size:12.5px; }
+  th, td{ border-bottom:1px solid var(--line); padding:4px 8px; text-align:left; vertical-align:top; }
+  th{ color:var(--dim); font-weight:600; position:sticky; top:0; background:var(--bg); }
+  td.n{ font-family:Consolas, monospace; color:var(--gold); text-align:right; }
+  td.w{ color:var(--dim); font-size:12px; }
+  td .va{ color:var(--a); } td .vb{ color:var(--b); }
+  tr.pick{ cursor:pointer; } tr.pick:hover td{ background:#1e2230; }
+  pre.fig{ margin:0; font:11px/1.05 Consolas, monospace; color:#fff; }
+  .sum{ background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px 12px; margin:0 0 14px; font-size:13px; line-height:1.6; }
+  .sum .ok{ color:var(--ok); }
+  /* сводка и картина набора */
+  .stat{ margin-top:10px; font-size:12px; }
+  .stat table{ font-size:12px; } .stat th, .stat td{ padding:2px 6px; }
+  .stat .src{ color:var(--dim); font-size:11.5px; margin:0 0 6px; }
+  .pic{ margin-top:10px; border-top:1px solid var(--line); padding-top:8px; }
+  .pic .ctl{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:12px; margin-bottom:6px; }
+  .pic .cvw{ overflow:auto; max-height:520px; background:#0a0b0e; border:1px solid var(--line); border-radius:4px; }
+  .pic canvas{ display:block; cursor:crosshair; image-rendering:pixelated; }
+  .pic .info{ font-size:12px; color:var(--dim); margin:5px 0; min-height:16px; }
+  .pic .info b{ color:var(--gold); }
+  .parts{ display:flex; flex-wrap:wrap; gap:6px; max-height:260px; overflow:auto; margin-top:6px; }
+  .part{ background:#0f1117; border:1px solid var(--line); border-radius:4px; padding:3px 5px; cursor:pointer; text-align:center; }
+  .part:hover{ border-color:var(--up); } .part.on{ border-color:var(--gold); box-shadow:0 0 0 1px var(--gold); }
+  .part canvas{ display:block; margin:0 auto; image-rendering:pixelated; }
+  .part span{ font-size:10.5px; color:var(--dim); font-family:Consolas, monospace; }
+  @media (max-width:900px){ .sets{ grid-template-columns:1fr; } h1{ font-size:21px; letter-spacing:3px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>zerkalius · сравнение</h1>
+<p class="sub">Таблицы фигур — файлы <code>.tsv</code> общего формата: их пишут Layers (меню цепочки ▾ → ◇ Ромбы, «таблица .tsv»)
+  и Треугольник (◇ Сводка → 📐 .tsv, «Весь цикл», «Все размеры»). <b>Один набор</b> — его сводка: сколько фигур каждого вида и
+  высоты, сколько разных; если выгрузка статичная (одна цепочка, один кадр), под сводкой — <b>сама картина и её части</b>:
+  выбери вид и высоту, щёлкни рисунок — все его места загорятся на картине; щёлкни по картине — возьмётся фигура с вершиной в этой
+  клетке. У цикла Аниматрицы картины нет — кадров много. <b>Два набора</b> — ещё и одинаковые фигуры: по виду и рисунку, где бы они
+  ни стояли; у фигур шага 2 (полная сетка Треугольника) — и по подрешёткам «чёт»/«нечёт», чтобы сравнивать с Паскалем Layers на «½».
+  Ромб Треугольника высотой S — это ромб Layers со стороной S/2 + 1 (S = 32 → 17). Файлы читаются здесь же, никуда не отправляются.</p>
+
+<div class="sets">
+  <div class="set A"><h2>Набор А</h2><p class="hint">Один или несколько файлов .tsv — например, из Layers</p>
+    <input type="file" id="fA" accept=".tsv,.txt" multiple> <button class="small" id="clrA" type="button">очистить</button><div class="files" id="lA"></div>
+    <div class="stat" id="sA"></div></div>
+  <div class="set B"><h2>Набор Б</h2><p class="hint">Один или несколько файлов .tsv — например, из Треугольника (Аниматрица)</p>
+    <input type="file" id="fB" accept=".tsv,.txt" multiple> <button class="small" id="clrB" type="button">очистить</button><div class="files" id="lB"></div>
+    <div class="stat" id="sB"></div></div>
+</div>
+
+<div class="bar">
+  <button id="go" type="button">Сравнить А и Б</button>
+  <label title="Фигура и её отражение слева направо считаются одной (сравнение по столбцу «ключ»)"><input type="checkbox" id="mir" checked> зеркальные — одинаковы</label>
+  <label title="Подрешётки фигур шага 2 («чёт», «нечёт») тоже сравнивать — нужно, чтобы сравнить Треугольник с Layers на «½»"><input type="checkbox" id="sub" checked> с подрешётками</label>
+  <label title="Не показывать фигуры из одних нулей или одних единиц — они совпадают почти всегда и заслоняют остальное"><input type="checkbox" id="mono" checked> без однотонных</label>
+  <button class="small" id="save" type="button" title="Все совпадения — таблицей .tsv (на экране — первые 500)">💾 совпадения .tsv</button>
+</div>
+<div id="status">Выберите файлы — хватит и одного набора.</div>
+<div id="out"></div>
+</div>
+
+<script src="../_js/figury.js?v=4"></script>
+<script src="../_js/hub-link.js"></script>
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const sets = { A: [], B: [] };
+  const view = { A: null, B: null };   // картина набора: { file, pic, geo, cv, scale, hi: [ячейки], kind, rows }
+  let last = null;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const mono = p => /^[0\/.]*$/.test(p) || /^[1\/.]*$/.test(p);
+
+  function showFiles(k){
+    $('l' + k).innerHTML = sets[k].map((f, i) => '<div>' + esc(f.name) + ' — ' + f.rows.length + ' рисунков' + (f.pic ? ' · 🖼 картина' : '') +
+      '<span class="x" data-k="' + k + '" data-i="' + i + '" title="убрать">✕</span></div>').join('');
+    renderStat(k);
+  }
+  function addText(k, name, text){
+    if (!/ZERKALIUS-ФИГУРЫ/.test(text.slice(0, 200))) { $('status').textContent = name + ' — не таблица фигур Zerkalius (нет строки «# ZERKALIUS-ФИГУРЫ v1»)'; return false; }
+    const p = ZFIG.parse(text);
+    sets[k].push({ name: name, source: p.source, rows: p.rows, pic: p.pic && p.pic.rows.length ? p.pic : null });
+    return true;
+  }
+  async function addFiles(k, list){
+    for (const file of list) {
+      $('status').textContent = 'Читаю ' + file.name + '…';
+      addText(k, file.name, await file.text());
+    }
+    showFiles(k);
+    $('status').textContent = 'А: ' + count('A') + ' рисунков в ' + sets.A.length + ' файлах · Б: ' + count('B') + ' рисунков в ' + sets.B.length + ' файлах';
+  }
+  const count = k => sets[k].reduce((a, f) => a + f.rows.length, 0);
+  ['A', 'B'].forEach(k => {
+    $('f' + k).addEventListener('change', e => { addFiles(k, Array.from(e.target.files)); e.target.value = ''; });
+    $('clr' + k).addEventListener('click', () => { sets[k] = []; showFiles(k); });
+    $('l' + k).addEventListener('click', e => { const x = e.target.closest('.x'); if (!x) return; sets[k].splice(+x.dataset.i, 1); showFiles(k); });
+  });
+
+  /* v0.003: ТАБЛИЦА ПРИЕЗЖАЕТ САМА (запрос «ещё надо открывать сразу в окне для просмотра»): Layers и Треугольник с
+     галкой «👁» открывают эту страницу окном zerkSravnenie и шлют таблицу сообщением (ZFIG.sendToViewer) — повторяют,
+     пока не придёт ответ «zfig-ack»; повтор с тем же id второй раз не кладём. Первая — в набор А, дальше — в Б. */
+  const gotIds = new Set();
+  window.addEventListener('message', e => {
+    const d = e.data; if (!d || d.type !== 'zfig-file' || typeof d.text !== 'string') return;
+    try { if (e.source) e.source.postMessage({ type: 'zfig-ack', id: d.id }, '*'); } catch (x) {}
+    if (gotIds.has(d.id)) return; gotIds.add(d.id);
+    const k = sets.A.length ? 'B' : 'A';
+    if (addText(k, d.name || 'таблица.tsv', d.text)) {
+      showFiles(k);
+      $('status').textContent = 'Приехала таблица «' + (d.name || '') + '» — в набор ' + (k === 'A' ? 'А' : 'Б') + '.';
+      $('s' + k).scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+  });
+
+  /* ─── СВОДКА НАБОРА ─── вид × высота: разных рисунков, всего встреч, самый частый */
+  function renderStat(k){
+    const box = $('s' + k);
+    if (!sets[k].length) { box.innerHTML = ''; view[k] = null; return; }
+    const g = new Map();
+    for (const f of sets[k]) for (const r of f.rows) {
+      const key = r.kind + '|' + r.step + '|' + r.rowsN;
+      let e = g.get(key); if (!e) { e = { kind: r.kind, step: r.step, rowsN: r.rowsN, cells: r.cells, n: 0, occ: 0, top: null }; g.set(key, e); }
+      e.n++; e.occ += r.count || 1; if (!e.top || (r.count || 1) > e.top.count) e.top = r;
+    }
+    const list = Array.from(g.values()).sort((a, b) => a.rowsN - b.rowsN || a.kind.localeCompare(b.kind));
+    const tot = list.reduce((a, e) => ({ n: a.n + e.n, occ: a.occ + e.occ }), { n: 0, occ: 0 });
+    let h = '<div class="src">' + sets[k].map(f => esc(f.source || f.name)).join(' · ') + '</div>';
+    h += '<table><thead><tr><th>вид</th><th>строк</th><th>клеток</th><th>разных</th><th>встреч</th><th>чаще всех</th></tr></thead><tbody>';
+    for (const e of list) h += '<tr><td>' + e.kind + (e.step === 2 ? ' ·2' : '') + '</td><td class="n">' + e.rowsN + '</td><td class="n">' + e.cells + '</td><td class="n">' + e.n +
+      '</td><td class="n">' + e.occ + '</td><td class="w">×' + (e.top.count || 1) + ' <code>' + esc(e.top.pat.length > 40 ? e.top.pat.slice(0, 40) + '…' : e.top.pat) + '</code></td></tr>';
+    h += '<tr><td colspan="3"><b>всего</b></td><td class="n">' + tot.n + '</td><td class="n">' + tot.occ + '</td><td></td></tr></tbody></table>';
+    const withPic = sets[k].filter(f => f.pic);
+    if (withPic.length) {
+      h += '<div class="pic"><div class="ctl">🖼 Картина' + (withPic.length > 1 ? ' <select data-r="file">' + withPic.map((f, i) => '<option value="' + i + '">' + esc(f.name) + '</option>').join('') + '</select>' : '') +
+        ' · части: <select data-r="kind"></select> <select data-r="rows"></select> <button class="small" data-r="clear" type="button">снять</button></div>' +
+        '<div class="cvw"><canvas></canvas></div><div class="info">Щёлкни рисунок ниже — его места загорятся; щёлкни по картине — возьмётся фигура с вершиной там.</div><div class="parts"></div></div>';
+    } else h += '<div class="pic"><div class="info">Картины в файле нет' + (sets[k].some(f => /цикл/.test(f.source)) ? ' — это цикл Аниматрицы, кадров много' : ' — выгрузка старая или не из одной цепочки') + '.</div></div>';
+    box.innerHTML = h;
+    view[k] = null;
+    if (withPic.length) setupPic(k, withPic, 0);
+  }
+
+  /* ─── КАРТИНА ─── строки «a биты» в полустолбцах; клетка бита — 2 полустолбца шириной */
+  function setupPic(k, files, fi){
+    const box = $('s' + k), f = files[fi], pic = f.pic, H = pic.rows.length;
+    let x0 = Infinity, x1 = -Infinity;
+    pic.rows.forEach(r => { if (!r.s.length) return; x0 = Math.min(x0, r.a); x1 = Math.max(x1, r.a + 2 * r.s.length); });
+    if (x0 === Infinity) { x0 = 0; x1 = 2; }
+    const halfW = x1 - x0;
+    const cell = Math.max(2, Math.min(12, Math.floor(1200 / Math.max(1, halfW / 2)), Math.floor(900 / H)));
+    const cv = box.querySelector('canvas');
+    cv.width = Math.ceil(halfW * cell / 2); cv.height = H * cell;
+    const v = view[k] = { f, files, pic, x0, cell, cv, hi: [], H };
+    const kinds = Array.from(new Set(f.rows.map(r => r.kind)));
+    const kSel = box.querySelector('select[data-r="kind"]'), rSel = box.querySelector('select[data-r="rows"]');
+    kSel.innerHTML = kinds.map(x => '<option>' + x + '</option>').join('');
+    const fillRows = () => {
+      const hs = Array.from(new Set(f.rows.filter(r => r.kind === kSel.value).map(r => r.rowsN))).sort((a, b) => a - b);
+      rSel.innerHTML = hs.map(x => '<option value="' + x + '">' + x + ' стр.</option>').join('');
+    };
+    fillRows();
+    kSel.onchange = () => { fillRows(); v.hi = []; draw(k); renderParts(k); };
+    rSel.onchange = () => { v.hi = []; draw(k); renderParts(k); };
+    const fSel = box.querySelector('select[data-r="file"]'); if (fSel) { fSel.value = String(fi); fSel.onchange = () => setupPic(k, files, +fSel.value); }
+    box.querySelector('button[data-r="clear"]').onclick = () => { v.hi = []; v.sel = null; draw(k); renderParts(k); info(k, ''); };
+    cv.onclick = e => {
+      const rc = cv.getBoundingClientRect();
+      const px = (e.clientX - rc.left) * cv.width / rc.width, py = (e.clientY - rc.top) * cv.height / rc.height;
+      pickAt(k, Math.floor(py / cell), Math.floor(px * 2 / cell) + x0);
+    };
+    draw(k); renderParts(k);
+  }
+  function cellAt(v, r, x){
+    const row = v.pic.rows[r]; if (!row) return null;
+    const q = x - row.a; if (q < 0 || (q & 1)) return null;
+    const ch = row.s[q >> 1]; return ch === undefined ? null : ch;
+  }
+  // места рисунка: вершинная строка и ось; клетки строки t — от оси −(w−1) до +(w−1) через 2 полустолбца
+  function occurrences(v, pat, mir){
+    const pats = [pat]; if (mir) { const m = ZFIG.mirror(pat); if (m !== pat) pats.push(m); }
+    const out = [];
+    for (const p of pats) {
+      const rows = p.split('/'), T = rows.length;
+      for (let top = 0; top + T <= v.H; top++) {
+        const r0 = v.pic.rows[top]; if (!r0 || !r0.s.length) continue;
+        const w0 = rows[0].length;
+        for (let x = r0.a + (w0 - 1); x <= r0.a + 2 * (r0.s.length - 1) - (w0 - 1); x++) {
+          let ok = true;
+          for (let t = 0; t < T && ok; t++) {
+            const w = rows[t].length, xs = x - (w - 1);
+            for (let i = 0; i < w; i++) if (cellAt(v, top + t, xs + 2 * i) !== rows[t][i]) { ok = false; break; }
+          }
+          if (ok) out.push({ top, x, rows });
+        }
+      }
+    }
+    return out;
+  }
+  function highlight(k, pat, kind){
+    const v = view[k]; if (!v) return 0;
+    const occ = occurrences(v, pat, $('mir').checked);
+    v.hi = occ; v.sel = pat; draw(k);
+    info(k, occ.length ? '<b>' + occ.length + '</b> мест · ' + kind + ' <code>' + esc(pat.length > 60 ? pat.slice(0, 60) + '…' : pat) + '</code>' + (occ[0] ? ' · первое: стр ' + (occ[0].top + (v.pic.first || 0)) : '') : 'на этой картине такого рисунка нет');
+    if (occ[0]) { const c = v.cv.parentElement; c.scrollTop = Math.max(0, occ[0].top * v.cell - 60); c.scrollLeft = Math.max(0, (occ[0].x - v.x0) * v.cell / 2 - 120); }
+    v.cv.closest('.pic').querySelectorAll('.part').forEach(el => el.classList.toggle('on', el.dataset.p === pat));
+    return occ.length;
+  }
+  function info(k, h){ const el = $('s' + k).querySelector('.pic .info'); if (el) el.innerHTML = h; }
+  // щелчок по картине: фигура выбранного вида и высоты с вершиной в этой клетке
+  function pickAt(k, r, x){
+    const v = view[k]; if (!v) return;
+    const box = $('s' + k), kind = box.querySelector('select[data-r="kind"]').value, T = +box.querySelector('select[data-r="rows"]').value;
+    const tpl = v.f.rows.find(q => q.kind === kind && q.rowsN === T); if (!tpl) return;
+    const widths = tpl.pat.split('/').map(s => s.length), vr = ZFIG.vertexRow(kind, T);
+    if (cellAt(v, r, x) === null) { x -= 1; if (cellAt(v, r, x) === null) { info(k, 'тут нет бита'); return; } }   // щёлкнули по правой половине клетки
+    const top = r - vr, rows = [];
+    for (let t = 0; t < T; t++) {
+      let s = ''; const w = widths[t], xs = x - (w - 1);
+      for (let i = 0; i < w; i++) { const c = cellAt(v, top + t, xs + 2 * i); if (c === null) { info(k, 'фигура ' + kind + ' в ' + T + ' стр. с вершиной здесь не помещается'); return; } s += c; }
+      rows.push(s);
+    }
+    highlight(k, rows.join('/'), kind);
+  }
+  function draw(k){
+    const v = view[k]; if (!v) return;
+    const g = v.cv.getContext('2d'), c = v.cell, hw = c / 2;
+    g.fillStyle = '#0a0b0e'; g.fillRect(0, 0, v.cv.width, v.cv.height);
+    v.pic.rows.forEach((row, r) => {
+      for (let i = 0; i < row.s.length; i++) {
+        const ch = row.s[i]; if (ch !== '0' && ch !== '1') continue;
+        g.fillStyle = ch === '1' ? '#d7e1eb' : '#27324a';
+        g.fillRect((row.a + 2 * i - v.x0) * hw, r * c, c - (c > 3 ? 1 : 0), c - (c > 3 ? 1 : 0));
+      }
+    });
+    g.fillStyle = 'rgba(255,204,0,.55)';
+    for (const o of v.hi) for (let t = 0; t < o.rows.length; t++) {
+      const w = o.rows[t].length, xs = o.x - (w - 1);
+      for (let i = 0; i < w; i++) g.fillRect((xs + 2 * i - v.x0) * hw, (o.top + t) * c, c, c);
+    }
+  }
+  // части: рисунки выбранного вида и высоты, по частоте; маленькой картинкой
+  function renderParts(k){
+    const v = view[k]; if (!v) return;
+    const box = $('s' + k), kind = box.querySelector('select[data-r="kind"]').value, T = +box.querySelector('select[data-r="rows"]').value;
+    const list = v.f.rows.filter(r => r.kind === kind && r.rowsN === T).sort((a, b) => (b.count || 1) - (a.count || 1));
+    const wrap = box.querySelector('.parts');
+    wrap.innerHTML = list.slice(0, 200).map((r, i) => '<div class="part" data-p="' + esc(r.pat) + '" title="' + esc(r.where) + '"><canvas data-i="' + i + '"></canvas><span>×' + (r.count || 1) + '</span></div>').join('') +
+      (list.length > 200 ? '<div class="info">… ещё ' + (list.length - 200) + '</div>' : '');
+    wrap.querySelectorAll('canvas').forEach(cv => { const r = list[+cv.dataset.i]; miniFig(cv, r.pat, r.step); });
+    wrap.onclick = e => { const p = e.target.closest('.part'); if (p) highlight(k, p.dataset.p, kind); };
+  }
+  function miniFig(cv, pat, step){
+    const rows = pat.split('/'), W = Math.max(...rows.map(r => r.length)), z = Math.max(2, Math.min(6, Math.floor(60 / Math.max(W, rows.length))));
+    const hw = step === 1 ? z / 2 : z;   // у шага 1 строки встают полусдвигом, как в Layers
+    cv.width = Math.ceil(W * z); cv.height = rows.length * z;
+    const g = cv.getContext('2d');
+    rows.forEach((r, t) => { const off = (W - r.length) * z / 2; for (let i = 0; i < r.length; i++) { const ch = r[i]; if (ch !== '0' && ch !== '1') continue; g.fillStyle = ch === '1' ? '#d7e1eb' : '#3c5a8c'; g.fillRect(off + i * z, t * z, z - (z > 3 ? 1 : 0), z - (z > 3 ? 1 : 0)); } });
+  }
+
+  /* ─── СРАВНЕНИЕ ДВУХ НАБОРОВ ─── */
+  function views(r, withSub){
+    const v = [{ step: r.step, pat: r.pat, via: 'целиком' }];
+    if (withSub && r.step === 2) {
+      if (r.even && r.even !== '-') v.push({ step: 1, pat: r.even, via: 'чёт' });
+      if (r.odd && r.odd !== '-') v.push({ step: 1, pat: r.odd, via: 'нечёт' });
+    }
+    return v;
+  }
+  function compare(){
+    if (!sets.A.length || !sets.B.length) { $('status').textContent = 'Для сравнения нужны файлы в обоих наборах (сводка и картина — и с одним).'; return; }
+    const mir = $('mir').checked, sub = $('sub').checked, noMono = $('mono').checked;
+    const keyOf = (kind, step, pat) => kind + '|' + step + '|' + (mir ? ZFIG.key(pat) : pat);
+    const idx = new Map();
+    for (const f of sets.B) for (const r of f.rows) for (const v of views(r, sub)) {
+      const k = keyOf(r.kind, v.step, v.pat);
+      let e = idx.get(k); if (!e) { e = { n: 0, occ: 0, first: { r, v, file: f.name } }; idx.set(k, e); }
+      e.n++; e.occ += r.count || 1;
+    }
+    const seen = new Set(), res = [], per = new Map();
+    for (const f of sets.A) for (const r of f.rows) for (const v of views(r, sub)) {
+      const k = keyOf(r.kind, v.step, v.pat);
+      if (seen.has(k)) continue; seen.add(k);
+      const g = r.kind + ' шаг ' + v.step + ', строк ' + v.pat.split('/').length;
+      let s = per.get(g); if (!s) { s = { a: 0, m: 0 }; per.set(g, s); }
+      if (noMono && mono(v.pat)) continue;
+      s.a++;
+      const e = idx.get(k); if (!e) continue;
+      s.m++;
+      res.push({ kind: r.kind, step: v.step, pat: v.pat, cells: ZFIG.cellCount(v.pat), aVia: v.via, aWhere: r.where, aCount: r.count, aFile: f.name, aPat: r.pat,
+        bVia: e.first.v.via, bWhere: e.first.r.where, bN: e.n, bOcc: e.occ, bFile: e.first.file, bPat: e.first.r.pat });
+    }
+    res.sort((x, y) => y.cells - x.cells || (x.kind < y.kind ? -1 : x.kind > y.kind ? 1 : 0));
+    last = { res, mir, sub, noMono };
+    const groups = Array.from(per.entries()).filter(([, s]) => s.a).sort((x, y) => x[0].localeCompare(y[0], 'ru', { numeric: true }));
+    let h = '<div class="sum"><b>Совпало ' + res.length + '</b> разных рисунков А из ' + groups.reduce((a, [, s]) => a + s.a, 0) +
+      (noMono ? ' (однотонные не в счёт)' : '') + (mir ? ', зеркальные — одинаковы' : ', с учётом зеркала') + (sub ? ', с подрешётками' : ', без подрешёток') + '. Щёлкни строку — фигура загорится на картинах наборов.<br>';
+    h += groups.map(([g, s]) => g + ': <span class="' + (s.m ? 'ok' : '') + '">' + s.m + '</span> из ' + s.a).join(' · ') + '</div>';
+    h += '<table><thead><tr><th>фигура</th><th>вид · клеток</th><th>в А</th><th>в Б</th></tr></thead><tbody>';
+    res.slice(0, 500).forEach((x, i) => {
+      h += '<tr class="pick" data-i="' + i + '"><td>' + figure(x.pat, x.step) + '</td><td>' + x.kind + ' шаг ' + x.step + '<br><span class="n">' + x.cells + '</span> клеток</td>' +
+        '<td class="w"><span class="va">' + esc(x.aVia) + '</span> · ×' + x.aCount + '<br>' + esc(x.aWhere) + '<br>' + esc(x.aFile) + '</td>' +
+        '<td class="w"><span class="vb">' + esc(x.bVia) + '</span> · у ' + x.bN + ' форм, встреч ' + x.bOcc + '<br>впервые: ' + esc(x.bWhere) + '<br>' + esc(x.bFile) + '</td></tr>';
+    });
+    h += '</tbody></table>';
+    if (res.length > 500) h += '<p class="sub">… показаны первые 500 (крупные первыми), все — в «💾 совпадения .tsv».</p>';
+    $('out').innerHTML = h;
+    $('status').textContent = 'Готово: совпало ' + res.length + '.';
+  }
+  $('out').addEventListener('click', e => {
+    const tr = e.target.closest('tr.pick'); if (!tr || !last) return;
+    const x = last.res[+tr.dataset.i]; if (!x) return;
+    // на картине А — рисунок как он есть в А; на картине Б — так, как он лежит в Б целиком (у подрешёток — та же форма шага 1)
+    if (view.A) highlight('A', x.aVia === 'целиком' ? x.pat : x.aPat, x.kind);
+    if (view.B) highlight('B', x.bVia === 'целиком' ? x.pat : x.bPat, x.kind);
+  });
+  function figure(pat, step){
+    const rows = pat.split('/');
+    if (rows.length > 40) return '<span class="w">' + rows.length + ' строк — в файле</span>';
+    const lines = rows.map(r => step === 1 ? r.split('').join(' ') : r);
+    const W = Math.max(...lines.map(l => l.length));
+    return '<pre class="fig">' + esc(lines.map(l => ' '.repeat((W - l.length) >> 1) + l).join('\n')) + '</pre>';
+  }
+  $('go').addEventListener('click', () => { $('status').textContent = 'Сравниваю…'; setTimeout(compare, 20); });
+  $('save').addEventListener('click', () => {
+    if (!last || !last.res.length) { $('status').textContent = 'Сначала «Сравнить» — сохранять пока нечего.'; return; }
+    const L = ['# ZERKALIUS — СОВПАДЕНИЯ ФИГУР', '# записано: ' + new Date().toLocaleString('ru-RU'),
+      '# А: ' + sets.A.map(f => f.name).join(', '), '# Б: ' + sets.B.map(f => f.name).join(', '),
+      '# ' + (last.mir ? 'зеркальные — одинаковы' : 'с учётом зеркала') + '; ' + (last.sub ? 'с подрешётками' : 'без подрешёток') + '; ' + (last.noMono ? 'без однотонных' : 'с однотонными'),
+      '# вид\tшаг\tстрок\tклеток\tрисунок\tв А как\tгде в А\tсколько в А\tфайл А\tв Б как\tгде в Б (впервые)\tформ в Б\tвстреч в Б\tфайл Б'];
+    for (const x of last.res) L.push([x.kind, x.step, x.pat.split('/').length, x.cells, x.pat, x.aVia, x.aWhere, x.aCount, x.aFile, x.bVia, x.bWhere, x.bN, x.bOcc, x.bFile].join('\t'));
+    ZFIG.save('Zerkalius-sovpadeniya-' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.tsv', L);
+  });
+})();
+</script>
+</body>
+</html>

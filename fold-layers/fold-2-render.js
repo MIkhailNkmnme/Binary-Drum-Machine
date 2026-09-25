@@ -967,7 +967,23 @@ function renderTabs() {
     '</div>' +
     '<div class="chain-dd-frow">' +
     '<button type="button" class="chain-dd-file chain-dd-bank" id="bDdBankPats" data-act="bankpats"' + (patBankCount ? '' : ' disabled') + ' title="Разложить паттерны ИЗ КЭША в колонку паттернов: паттерн №N = строка файла №N. Прежние паттерны заменяются целиком, строки цепочки не трогаются. Отменяется через Undo">🧩→ В паттерны</button>' +
-    '<button type="button" class="chain-dd-file chain-dd-bank" id="bDdBankRows" data-act="bankrows"' + (patBankCount ? '' : ' disabled') + ' title="Разложить паттерны ИЗ КЭША в саму цепочку: строка №N = строка файла №N. Пустая строка файла свою строку цепочки НЕ трогает — она остаётся как была (как и у «🧩⬇ Паттерны в цепочку», v1.475). Отменяется через Undo">🧩⬇ В цепочку</button>' +
+    '<button type="button" class="chain-dd-file chain-dd-bank" id="bDdBankRows" data-act="bankrows"' + (patBankCount ? '' : ' disabled') + ' title="Разложить паттерны ИЗ КЭША в саму цепочку: строка №N = строка файла №N. Пустая строка файла свою строку цепочки НЕ трогает — она остаётся как была (как и у «🧩⬇ В цепочку», v1.475). Отменяется через Undo">🧩⬇ В цепочку</button>' +
+    '</div>' +
+  // ◇ РОМБЫ (v1.632, запрос пользователя «сюда перемести сохранение ромбов»; кнопки жили в «Строках»): отчёт или
+  // таблица ромбов и треугольников ТЕКУЩЕЙ цепочки файлом — см. rhombsFind в fold-4-tools.js. Поле «до» и формат
+  // рисуются здесь же, с id rhMax/rhFmt, которые читает rhombsFind; значения держат rhDdMax/rhDdFmt (объявлены у
+  // обработчика списка), иначе каждая перерисовка списка сбрасывала бы их к умолчанию.
+    '<div class="chain-dd-frow">' +
+    '<button type="button" class="chain-dd-file chain-dd-rh" id="bDdRhGrid" data-act="rhgrid" title="Ромбы и треугольники ТЕКУЩЕЙ цепочки СЕТКОЙ, без наложений — данные не трогает, скачивается файл. Ищутся ▲ (вершина сверху), ▼ (вершина снизу) и ◇ (ромб) всех размеров от 2 до «до» (ряд ниже), так, как стоят на экране: сторона идёт на полсимвола за строку на «½»-выравниваниях и на символ на остальных. Фигура засчитывается, только если все её клетки — биты 0/1. Строка за строкой, бит за битом берётся фигура, не задевающая уже взятых того же вида и размера (на треугольнике Паскаля — ровная нарезка). Что скачать — выбор в ряду ниже: отчёт .txt или таблица .tsv. Строки: выделено несколько — от первой до последней, одна — от начала до неё, ничего — все">◇ Ромбы: сетка</button>' +
+    '<button type="button" class="chain-dd-file chain-dd-rh" id="bDdRhAll" data-act="rhall" title="Ромбы и треугольники ТЕКУЩЕЙ цепочки ВНАХЛЁСТ — то же, что «◇ Ромбы: сетка», но берётся КАЖДОЕ положение, где фигура помещается, строка за строкой, бит за битом. Что скачать — выбор в ряду ниже (отчёт .txt или таблица .tsv). На большом треугольнике фигур очень много — ограничьте размер полем «до» в ряду ниже">◇ Внахлёст</button>' +
+    '</div>' +
+    '<div class="chain-dd-frow chain-dd-rhset">' +
+    '<label class="chain-dd-rhlab" title="До какого размера искать фигуры у «◇ Ромбы: сетка» и «◇ Внахлёст»: у треугольника — число строк, у ромба — сторона. 0 — все размеры. 17 — чтобы попали ромбы и треугольники Треугольника высотой 32 (у них 17 строк Паскаля). На больших треугольниках «внахлёст» без ограничения даёт сотни миллионов клеток — тогда счёт сам остановится и скажет об этом">до <input type="number" id="rhMax" min="0" max="4096" step="1" value="' + (typeof rhDdMax === "number" ? rhDdMax : 17) + '" style="width:48px"></label>' +
+    '<select id="rhFmt" title="Что скачивают «◇ Ромбы: сетка» и «◇ Внахлёст». «отчёт .txt» — для чтения: сводка по размерам, рисунки по частоте, все места. «таблица .tsv» — общий формат фигур Zerkalius (тот же пишет ◇ Сводка Треугольника → 📐 .tsv): одна строка на разный рисунок. Её открывает страница «Сравнение» (кнопка Compare в хабе) — там ищутся одинаковые с Аниматрицей">' +
+      '<option value="txt"' + ((typeof rhDdFmt === "string" ? rhDdFmt : "txt") === "txt" ? ' selected' : '') + '>отчёт .txt</option>' +
+      '<option value="tsv"' + ((typeof rhDdFmt === "string" ? rhDdFmt : "txt") === "tsv" ? ' selected' : '') + '>таблица .tsv</option>' +
+    '</select>' +
+    '<label class="chain-dd-rhlab" title="Таблицу .tsv сразу открыть на странице «Сравнение» отдельным окном: сводка, картина цепочки и её части. Уже открытое окно переиспользуется: первая таблица — в набор А, следующие — в Б. Для отчёта .txt не действует"><input type="checkbox" id="rhView"' + ((typeof rhDdView === "boolean" ? rhDdView : true) ? ' checked' : '') + '>👁</label>' +
     '</div>' +
   // ПОСЛЕДНИЙ РЯД — НАСТРОЙКИ ВИДА (v0.834): переехали сюда из вкладки "Вид" по запросу
   // пользователя. Данных цепочек не трогают вообще — сохраняют/сбрасывают только вид и поиск
@@ -1322,7 +1338,7 @@ function axisToColumn(col){
   st.selectedCol = col; // жёлтое выделение — просто чтобы столбец был виден и в линейке
   const list = st.axisSnapCols.slice().sort((a, b) => a - b).map(c => c + 1).join(", ");
   say(had
-    ? `Столбец ${col + 1} и так среди осей (${list}). Снять все — кнопкой «✕ Снять столбец».`
+    ? `Столбец ${col + 1} и так среди осей (${list}). Снять все — кнопкой «✕ Ось».`
     : (st.axisSnapCols.length > 1
         ? `Оси для Круга: столбцы ${list}. Сдвиги ◄/► ставят «1» СРАЗУ НА ВСЕ; нет такого положения — строка стоит на месте.`
         : `Столбец ${col + 1} назначен осью для Круга: сдвиги ◄/► ставят на него «1», нули пропускаются. Сейчас ничего не сдвинуто.`));
@@ -6190,7 +6206,7 @@ if (bCellSampleEl) bCellSampleEl.onclick = () => {
   if (!st.cellSampleOn) { say("Показ совпадений с выбранными ячейками выключен."); return; }
   const sample = (typeof cellSelSampleText === "function") ? cellSelSampleText() : "";
   say(!cellSel.size
-    ? "Показать выделенное: сначала выберите ячейки («▭ Выбор ячеек» во вкладке «Выделить»)."
+    ? "Показать выделенное: сначала выберите ячейки («▭ Ячейки» во вкладке «Выделить»)."
     : sample.length < 2
       ? `Показать выделенное: образец «${sample}» короче двух бит — такой есть в каждой строке, искать нечего.`
       : `Показать выделенное: ищу «${sample}» во всех строках (${KINDS_MODE_LABELS[st.kindsMode || ""].replace("⇌ ", "")}).`);
@@ -6208,7 +6224,7 @@ setCellSampleOn(st.cellSampleOn, true);
 function updateCellSampleFixBtn(){
   const b = elById("bCellSampleFix");
   if (!b) return;
-  b.textContent = "📌 Зафиксировать: " + cellPin.size;
+  b.textContent = "📌 Фикс: " + cellPin.size;   // v1.630: короче
   b.classList.toggle("mode-act", cellPin.size > 0);
 }
 function clearCellPin(quiet){
@@ -6255,7 +6271,7 @@ const bCellSampleSeqEl = document.getElementById("bCellSampleSeq");
 function updateCellSampleSeqBtn(){
   const b = elById("bCellSampleSeq");
   if (!b) return;
-  b.textContent = "⛓ сквозно: " + (st.cellSampleSeq ? "вкл" : "выкл");
+  b.textContent = "⛓ Скв: " + (st.cellSampleSeq ? "вкл" : "выкл");   // v1.630: короче
   b.classList.toggle("mode-act", !!st.cellSampleSeq);
 }
 if (bCellSampleSeqEl) bCellSampleSeqEl.onclick = () => {
@@ -6655,11 +6671,16 @@ const chainDdListEl = document.getElementById("chainDdList");
 // Таймер отложенного переключения вкладки по клику на .chain-dd-item (см. ниже) — общий для
 // click/dblclick обработчиков.
 let chainDdItemClickTimer = null;
+// v1.632: значения поля «до» и формата у ◇ Ромбов в подвале списка — переживают его перерисовку. var, а не let:
+// renderTabs может нарисовать подвал раньше, чем исполнится эта строка, и typeof там честно отдаст умолчание.
+var rhDdMax = 17, rhDdFmt = "txt", rhDdView = true;   // rhDdView — галка «👁 сразу в «Сравнение»» (v1.635)
 if (chainDdToggleEl && chainDdListEl) {
   chainDdToggleEl.onclick = (e) => {
     e.stopPropagation();
     chainDdListEl.classList.toggle("open");
   };
+  chainDdListEl.addEventListener("input", e => { if (e.target && e.target.id === "rhMax") rhDdMax = Math.max(0, parseInt(e.target.value, 10) || 0); });
+  chainDdListEl.addEventListener("change", e => { if (e.target && e.target.id === "rhFmt") rhDdFmt = e.target.value; if (e.target && e.target.id === "rhView") rhDdView = e.target.checked; });
   chainDdListEl.addEventListener("click", e => {
     // Подвал списка — экспорт/импорт ВСЕХ вкладок (см. .chain-dd-footer в renderTabs()).
     // Проверяем ПЕРВЫМ: эти кнопки не относятся ни к какой конкретной вкладке, у них нет
@@ -6679,6 +6700,11 @@ if (chainDdToggleEl && chainDdListEl) {
       else if (act === "uireset") resetUiSettingsNow();
       else if (act === "copychain") copySelectedRows(true);
       else if (act === "xlsx") exportChainToExcelXml();
+      else if (act === "rhgrid" || act === "rhall") {   // v1.632: ◇ ромбы — сюда из «Строк»
+        // v1.635–1.636: «👁» — только отметка; окно «Сравнения» откроет ZFIG.save, когда таблица готова
+        if (window.ZFIG) ZFIG.viewOn = !!rhDdView && rhDdFmt === "tsv";   // v1.636: окно откроет ZFIG.save, когда таблица готова
+        rhombsFind(act === "rhall");
+      }
       // Явная ветка вместо прежнего "else importAllTabs()": с ростом числа кнопок молчаливый
       // fallback означал бы, что любая новая кнопка без своей ветки внезапно грузит файл.
       else if (act === "import") importAllTabs();

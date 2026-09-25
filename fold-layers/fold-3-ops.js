@@ -1515,12 +1515,12 @@ const MENUS = {
   // вынесен из «Строк» в свою вкладку. pin:false — по умолчанию выпадающим окном, не занимая
   // место в доке: перенос нужен не в каждом сеансе, как и «Маски».
   menuWrap:   { title: 'Перенос',      zone: 'rightSlot', pin: false, ids: ['wrapGroup'], floatable: true },
-  // «Новое» (v1.542): дубли-пульты кнопок сессии 2026-09-21/22, см. sessProxyInit в fold-5-ui.js.
-  menuSess:   { title: 'Новое',        zone: 'rightSlot', pin: false, ids: ['sessGroup'], floatable: true },
+  // «Новое» (v1.542, дубли-пульты) распущено в v1.630 — все его кнопки живут на своих панелях.
   // «▽ Спуск» (v1.546): своё окно треугольника, см. descentPaint ниже по файлу.
   menuDescent:{ title: '▽ Спуск',      zone: 'rightSlot', pin: false, ids: ['descentGroup'], floatable: true },
-  // «🪞 Крест» (v1.548): зеркальный крест и указатели симметрии, см. crossPaint ниже по файлу.
-  menuCross:  { title: '🪞 Крест',      zone: 'rightSlot', pin: false, ids: ['crossGroup'], floatable: true }
+  // «🪞 Крест» (v1.548) снят в v1.632 — он есть в Zazerkalius («🪞 Зеркало»).
+  // «🔎 Кнопки» (v1.631): поиск кнопок по всем панелям, см. btnFindInit в конце fold-5-ui.js.
+  menuFind:   { title: '🔎 Кнопки',    zone: 'rightSlot', pin: false, ids: ['btnFindGroup'], floatable: true }
   // «🧰 Кнопки» (v1.592) снята в v1.594: полем для кнопок стало само поле цепочек (fold-5-ui.js).
 };
 const LAYOUT_KEY = 'zerk_fold_layout';
@@ -3508,7 +3508,7 @@ function setChainSrcRows(on, quiet){
   const b = document.getElementById("bChainSrcRows");
   if (b) {
     b.classList.toggle("mode-act", st.chainSrcRows);
-    b.textContent = st.chainSrcRows ? "🧩 Кладёт: строки" : "🧩 Кладёт: паттерны";
+    b.textContent = st.chainSrcRows ? "🧩 Из строк" : "🧩 Из паттернов";
   }
   if (!quiet) {
     say(st.chainSrcRows
@@ -4001,8 +4001,8 @@ function applyNoPatsAboveBtn(){
   const on = !!st.noPatsAbove;
   bNoPatsAboveEl.classList.toggle("mode-act", on);
   bNoPatsAboveEl.textContent = on
-    ? "⛔ Паттерны выше отсечки — НЕ ИЩЕТ"
-    : "🔎 Паттерны выше отсечки — ИЩЕТ";
+    ? "⛔ Выше отсечки: нет"
+    : "🔎 Выше отсечки: да";   // v1.630: короче
 }
 if (bNoPatsAboveEl) {
   bNoPatsAboveEl.onclick = () => {
@@ -5668,11 +5668,11 @@ function updateBgMaskOnBtn(){
   /* Значок ОДИН И ТОТ ЖЕ во всех состояниях (v0.832 — в v0.831 он менялся на 🚫/➖, пользователь
      попросил вернуть): "🎭" это имя контрола, а не индикатор. Включённость видно по рамке
      .mode-act на самой кнопке. */
-  const label = "🎭 По маске: " + (!has ? "нет маски" : (on ? "ВКЛ" : "ВЫКЛ"));
+  const label = "🎭 Маска: " + (!has ? "нет" : (on ? "вкл" : "выкл"));   // v1.630: короче
   const title = has
     ? (on ? `Маска «${maskBitsRaw()}» применяется: поиск идёт по прорежённым ею результатам. Клик — выключить, поле при этом не чистится`
           : `Маска «${maskBitsRaw()}» в поле есть, но не применяется. Клик — включить`)
-    : "Впиши маску в поле «🎭 Маска (прореж.)» во вкладке «Маски» — нужны и «1», и «0»";
+    : "Впиши маску в поле «🎭 Прореж.» во вкладке «Маски» — нужны и «1», и «0»";
   for (const id of BG_MASK_ON_BTN_IDS) {
     const b = elById(id);   // одна из двух кнопок может жить в окне вкладки «Маски»
     if (!b) continue;
@@ -5694,11 +5694,11 @@ function updateBgMaskPhaseBtn(){
   const m = maskBits();
   const N = m.length;
   b.disabled = !N;
-  if (!N) { b.textContent = "🎭 Фаза маски: —"; b.classList.remove("mode-act"); return; }
+  if (!N) { b.textContent = "🎭 Фаза: —"; b.classList.remove("mode-act"); return; }
   const ph = ((st.maskDraftPhase | 0) % N + N) % N;
   // Как выглядит маска в этой фазе — то же, что показано в Черновике: маска, прокрученная на ph.
   const view = m.slice(ph) + m.slice(0, ph);
-  b.textContent = "🎭 Фаза маски: " + (ph + 1) + "/" + N + " · " + view;
+  b.textContent = "🎭 Фаза: " + (ph + 1) + "/" + N + " · " + view;
   b.classList.toggle("mode-act", ph > 0);
 }
 function toggleBgMaskPhase(){
@@ -5882,7 +5882,7 @@ const BUILD_PLACE_MODES = ["clear", "right", "left", "center"];
 const BUILD_PLACE_LABELS = { clear: "стереть", right: "вправо", left: "влево", center: "по центру" };
 function updateBuildPlaceBtn(){
   const b = document.getElementById("bBuildPlace");
-  if (b) b.textContent = "⟳ Текущие: " + (BUILD_PLACE_LABELS[st.buildPlace] || BUILD_PLACE_LABELS.clear);
+  if (b) b.textContent = "⟳ " + (BUILD_PLACE_LABELS[st.buildPlace] || BUILD_PLACE_LABELS.clear);   // v1.630: короче
 }
 const bBuildPlaceEl = document.getElementById("bBuildPlace");
 if (bBuildPlaceEl) {
@@ -6142,7 +6142,7 @@ function insertNextBelow(tag, logName, make, up){
     if (bmEl && bmEl.value === "xor") {
       const tgt = (tgtIdx >= 0 && tgtIdx < st.rows.length) ? (st.rows[tgtIdx] || "") : "";
       if (tgt.length && !/^[01]+$/.test(tgt)) {
-        say(`${tag} ⊕: в строке ${rowLabel(tgtIdx)} не только 0 и 1 — XOR туда не кладу. Переключи на «⬇ вставлять» или очисти её.`);
+        say(`${tag} ⊕: в строке ${rowLabel(tgtIdx)} не только 0 и 1 — XOR туда не кладу. Переключи на «⬇ новой строкой» или очисти её.`);
         return;
       }
       if (tgt.length) {
@@ -6328,6 +6328,246 @@ function descentShow(){
   const sel = document.getElementById("descentAlign");
   if (sel) sel.addEventListener("change", () => descentPaint(true));
 }
+
+/* ═══ «⇋ ПОПРАВКА» — СТРОКА КАК ПОЛОВИНА + ПОПРАВКА ЗЕРКАЛА (v1.625) ═══
+   Вырос из того же разговора про «суперархиватор»: «а что если отзеркалить строку, то половины
+   данных достаточно» → «но если мы половину обозначим на симметричные и несимметричные биты».
+   Строка делится на левую половину L и правую R (при нечётной длине средний бит отдельно). Для
+   каждого из четырёх способов достроить R из L — зеркало ⇄, зеркало с инверсией ⇄🔁, повтор ⧉,
+   повтор с инверсией ⧉🔁 — считается ПОПРАВКА D: по биту на каждый бит L, 1 там, где пара не
+   сошлась («несимметричный бит»). L + D = снова n бит: зеркало не сжимает, а раскладывает.
+   Выигрыш есть, только когда D пустая или почти пустая. Потом та же проверка идёт по L, по её
+   половине и дальше: сколько раз строка складывается подряд без единой поправки.
+   Цена в «мире зеркал» — ГРУБАЯ мерка, не доказательство: на каждом этаже 1 бит «сложено или
+   нет», 2 бита «каким зеркалом», средний бит, поправка — сырьём или номерами позиций единиц,
+   что короче (+1 бит, каким видом). Случайная строка выходит в n+1 — честное «короче нет».
+   Показ, данные не трогает: всё — в «🧾 Черновик шага», лучшая поправка — в «Итог». */
+const MIRROR_FIX_KINDS = [
+  { sign: "⇄",   name: "зеркало",              rev: true,  inv: false },
+  { sign: "⇄🔁", name: "зеркало с инверсией",  rev: true,  inv: true  },
+  { sign: "⧉",   name: "повтор",               rev: false, inv: false },
+  { sign: "⧉🔁", name: "повтор с инверсией",   rev: false, inv: true  }
+];
+// Поправка D вдоль L: бит i — 1, если L[i] и его пара справа не сошлись по правилу k.
+function mirrorFixMask(x, k){
+  const m = x.length, h = m >> 1;
+  let d = "";
+  for (let i = 0; i < h; i++) {
+    const p = k.rev ? x[m - 1 - i] : x[m - h + i];
+    d += ((x[i] !== p) !== k.inv) ? "1" : "0";
+  }
+  return d;
+}
+function mirrorFixOnes(x){ let c = 0; for (const ch of x) if (ch === "1") c++; return c; }
+// Лучший разбор строки: либо сырьём (1 + m бит), либо «половина + зеркало + поправка», где
+// половина разбирается так же. Возвращает цену и этажи сверху вниз.
+function mirrorFixPlan(x){
+  const m = x.length, raw = 1 + m;
+  if (m < 4) return { cost: raw, steps: [], seed: x };
+  const h = m >> 1, mid = m & 1;
+  const sub = mirrorFixPlan(x.slice(0, h));
+  let best = null;
+  for (const k of MIRROR_FIX_KINDS) {
+    const ones = mirrorFixOnes(mirrorFixMask(x, k));
+    if (!best || ones < best.ones) best = { k, ones };
+  }
+  const posBits = Math.max(1, Math.ceil(Math.log2(h)));
+  const dCost = 1 + (best.ones ? Math.min(h, best.ones * posBits) : 0);
+  const folded = 1 + 2 + mid + sub.cost + dCost;
+  if (folded >= raw) return { cost: raw, steps: [], seed: x };
+  return { cost: folded, steps: [{ m, sign: best.k.sign, ones: best.ones, mid }].concat(sub.steps), seed: sub.seed };
+}
+const bMirrorFixEl = document.getElementById("bMirrorFix");
+if (bMirrorFixEl) bMirrorFixEl.onclick = () => {
+  const sel = (st.selectedRows && st.selectedRows.size) ? Array.from(st.selectedRows).sort((a, b) => a - b) : st.rows.map((_, i) => i);
+  let r = -1;
+  for (const i of sel) { const s = st.rows[i] || ""; if (s.length >= 2 && /^[01]+$/.test(s)) { r = i; break; } }
+  if (r < 0) { say("⇋ Поправка: нужна строка из одних 0 и 1, не короче 2 бит — выделите её (без точек и пустот)."); return; }
+  const s = st.rows[r], n = s.length, h = n >> 1, odd = n & 1;
+  const L = s.slice(0, h), R = s.slice(n - h);
+  const all = MIRROR_FIX_KINDS.map(k => { const D = mirrorFixMask(s, k); return { k, D, ones: mirrorFixOnes(D) }; });
+  let best = all[0];
+  for (const a of all) if (a.ones < best.ones) best = a;
+  // Пометки на самой половине: несимметричные биты L — золотом (тем же, что край в «▽ Спуске»).
+  const markHtml = (bits, D) => {
+    let t = "";
+    for (let i = 0; i < bits.length; i++)
+      t += D[i] === "1" ? '<span class="descent-edge b' + bits[i] + '" title="Несимметричный: пара справа не сошлась">' + bits[i] + '</span>' : '<span class="b' + bits[i] + '">' + bits[i] + '</span>';
+    return t;
+  };
+  const inputs = [
+    { name: "строка", html: bitsHtml(s) },
+    { name: "L", html: markHtml(L, best.D) + ' <span class="empty">— золотом несимметричные для ' + best.k.sign + '</span>' },
+    { name: "R", html: bitsHtml(R) }
+  ];
+  if (odd) inputs.push({ name: "середина", html: bitsHtml(s[h]) });
+  for (const a of all)
+    inputs.push({ name: "D " + a.k.sign + (a === best ? " ★" : ""),
+                  html: markHtml(a.D, a.D) + ' <span class="empty">— ' + a.k.name + ', несимметричных ' + a.ones + ' из ' + h + '</span>' });
+  // Складывания подряд без поправки: идём по этажам, пока хоть одно зеркало даёт пустую D.
+  // Ниже 4 бит не складываем: строку в 2–3 бита складывает ЛЮБАЯ пара ⇄ / ⇄🔁, это не находка.
+  const folds = [];
+  let cur = s;
+  while (cur.length >= 4) {
+    const k = MIRROR_FIX_KINDS.find(k => !mirrorFixMask(cur, k).includes("1"));
+    if (!k) break;
+    folds.push({ m: cur.length, sign: k.sign, mid: cur.length & 1 });
+    cur = cur.slice(0, cur.length >> 1);
+  }
+  const foldTxt = folds.length
+    ? folds.map(f => f.m + " " + f.sign + (f.mid ? "(+ср.)" : "")).join(" → ") + " → " + cur.length
+    : "не складывается ни разу";
+  inputs.push({ name: "складывания", html: '<span class="empty">' + esc(foldTxt) + '</span>' });
+  inputs.push({ name: "зерно", html: bitsHtml(cur) });
+  const plan = mirrorFixPlan(s);
+  const planTxt = plan.steps.length
+    ? plan.steps.map(p => p.m + " " + p.sign + (p.ones ? " попр." + p.ones : "")).join(" → ") + " → зерно " + plan.seed.length
+    : "сырьём: зеркала не окупаются";
+  inputs.push({ name: "цена", html: '<span class="empty">' + esc(`≈ ${plan.cost} бит вместо ${n} · ${planTxt} (грубая мерка)`) + '</span>' });
+  const verdict = best.ones === 0 && plan.cost * 4 <= n ? "строка симметрична на многих этажах — хранится в разы короче"
+    : best.ones === 0 ? "половины хватает: поправка пустая"
+    : plan.cost < n ? "поправка редкая — строка «почти " + best.k.name + "», сжимается"
+    : "поправка — мусор: зеркала тут не помогают";
+  logStep("⇋ Поправка", rowLabel(r), best.D, `${n} бит = L ${h} + D ${h}${odd ? " + середина" : ""}; лучше всех ${best.k.sign}: несимметричных ${best.ones}; складываний подряд ${folds.length}; ≈${plan.cost} бит`, [], inputs);
+  render();
+  say(`⇋ Поправка строки ${rowLabel(r)}: ${n} бит = половина ${h} + поправка ${h}${odd ? " + средний бит" : ""}. Лучше всех — ${best.k.name} ${best.k.sign}: несимметричных бит ${best.ones} из ${h}. Складывается подряд без поправки: ${folds.length} раз. Цена в мире зеркал ≈ ${plan.cost} бит вместо ${n}: ${verdict}. Подробно — в «🧾 Черновике шага».`);
+};
+
+/* ═══ «⇋ ПОПРАВКИ → СЛОЙ» — ПОПРАВКИ ВСЕХ СТРОК ОДНОЙ ЦЕПОЧКОЙ (v1.626) ═══
+   Запрос пользователя: «а что если поправку и, возможно, симметрию нескольких строк записать
+   битами для всех них» → «общими». Поодиночке поправка строку не сжимает (L + D = N), но поправки
+   РАЗНЫХ строк бывают похожи: одинаковый сбой в одном месте у всех, повтор, симметрия по вертикали.
+   Чтобы это увидеть, D всех строк кладутся в НОВУЮ цепочку, строка в строку (строка №N слоя —
+   поправка строки №N источника), и к ней применимы все кнопки: ⇋ Поправка, ▽ Спуск, 🧮 Лин.
+   сложность, зеркала.
+   Вид зеркала (#mfLayerKind): «общий» (по умолчанию, слово пользователя) — один на все строки,
+   тот, у которого единиц во всех D вместе меньше всего; стоит 2 бита на всю пачку. «У каждой свой» —
+   лучший для каждой строки, и тогда 2 бита вида пишутся В НАЧАЛО её строки слоя (00 ⇄, 01 ⇄🔁,
+   10 ⧉, 11 ⧉🔁): вид тоже становится битами, столбиком слева. Источник не трогается; строки не из
+   0 и 1 (и короче 2 бит) в слое пустые. */
+const MIRROR_FIX_CODE = ["00", "01", "10", "11"];   // по порядку MIRROR_FIX_KINDS
+const bMirrorLayerEl = document.getElementById("bMirrorLayer");
+if (bMirrorLayerEl) bMirrorLayerEl.onclick = () => {
+  const modeEl = document.getElementById("mfLayerKind");
+  const own = !!(modeEl && modeEl.value === "own");
+  const pick = (st.selectedRows && st.selectedRows.size) ? Array.from(st.selectedRows).sort((a, b) => a - b) : st.rows.map((_, i) => i);
+  const idx = pick.filter(i => { const s = st.rows[i] || ""; return s.length >= 2 && /^[01]+$/.test(s); });
+  if (!idx.length) { say("⇋ Поправки → слой: нет ни одной строки из одних 0 и 1 длиной от 2 бит."); return; }
+  // Все четыре поправки для каждой строки — считаем один раз.
+  const masks = idx.map(i => MIRROR_FIX_KINDS.map(k => { const D = mirrorFixMask(st.rows[i], k); return { D, ones: mirrorFixOnes(D) }; }));
+  const totals = MIRROR_FIX_KINDS.map((_, j) => masks.reduce((a, m) => a + m[j].ones, 0));
+  let common = 0;
+  for (let j = 1; j < totals.length; j++) if (totals[j] < totals[common]) common = j;
+  const halfBits = idx.reduce((a, i) => a + (st.rows[i].length >> 1), 0);
+  const layer = st.rows.map(() => "");
+  const kindUse = [0, 0, 0, 0];
+  let ownOnes = 0;
+  idx.forEach((i, n) => {
+    let j = common;
+    if (own) { j = 0; for (let q = 1; q < 4; q++) if (masks[n][q].ones < masks[n][j].ones) j = q; }
+    kindUse[j]++;
+    ownOnes += masks[n][j].ones;
+    layer[i] = (own ? MIRROR_FIX_CODE[j] : "") + masks[n][j].D;
+  });
+  const onesNow = own ? ownOnes : totals[common];
+  const distinct = new Set(idx.map(i => layer[i])).size;
+  const srcTab = st.tabs[st.activeTab];
+  const srcName = srcTab ? srcTab.name : "цепочка";
+  const kc = MIRROR_FIX_KINDS[common];
+  // Новая цепочка — тем же путём, что «+» в списке цепочек, затем строки слоя. st.rows обнуляем
+  // перед textsToChainRows: пустая запись там оставляет прежнюю строку, а прежних быть не должно.
+  saveActiveTabState();
+  const newIdx = st.tabs.length;
+  const tab = createDefaultTabState("⇋ " + (own ? "свой вид" : kc.sign) + " · " + srcName);
+  st.tabs.push(tab);
+  loadTabState(newIdx);
+  st.rows = [];
+  textsToChainRows(layer, "Поправки ⇋", true);
+  st.undo = []; if (st.redo) st.redo.length = 0;   // слой начинается с чистой истории
+  if (typeof renderTabs === "function") renderTabs();
+  const inputs = MIRROR_FIX_KINDS.map((k, j) => ({
+    name: k.sign + (!own && j === common ? " ★" : ""),
+    html: '<span class="empty">' + esc(k.name + ": несимметричных во всех строках " + totals[j] + " из " + halfBits + (own ? ", выбран у строк: " + kindUse[j] : "")) + '</span>' }));
+  inputs.push({ name: "слой", html: '<span class="empty">' + esc(`${idx.length} стр. → цепочка «${tab.name}»; разных поправок ${distinct} из ${idx.length}`) + '</span>' });
+  logStep("⇋ Поправки → слой", "", "", `${idx.length} стр., вид ${own ? "у каждой свой (+2 бита в начале строки)" : "общий " + kc.sign}, единиц ${onesNow} из ${halfBits}, разных ${distinct}`, [], inputs);
+  render(); saveCache();
+  const kindTxt = own
+    ? `вид у каждой свой — первые 2 бита строки (00 ⇄, 01 ⇄🔁, 10 ⧉, 11 ⧉🔁), это ${2 * idx.length} бит на пачку`
+    : `вид общий — ${kc.name} ${kc.sign}, 2 бита на всю пачку`;
+  say(`⇋ Поправки ${idx.length} стр. → новая цепочка «${tab.name}», строка в строку. ${kindTxt}. Несимметричных бит ${onesNow} из ${halfBits}; разных поправок ${distinct} из ${idx.length}${distinct === 1 && idx.length > 1 ? " — у всех одна и та же, хватит одной строки" : ""}. Дальше к слою годятся те же кнопки: ⇋ Поправка, ▽ Спуск, 🧮 Лин. сложность. Источник не тронут.`);
+};
+
+/* ═══ «⊿ СЛОЖИТЬ ТРЕУГОЛЬНИКОМ» — ЛЕНТА, РАЗРЕЗАННАЯ НА СТРОКИ 1, 2, 3… (v1.627) ═══
+   Запрос пользователя: «а если сложить строку в несколько строк по определённому порядку, например
+   треугольник — у нас появится бесплатная упорядоченность: 1 2 3 4 бита на строку, +1 бит всегда».
+   Форма действительно бесплатна (её знают обе стороны, хранить нужно только длину), но порядка она
+   не добавляет — она линза: в ней порядок либо виден, либо нет. Лента — выделенные строки из 0 и 1,
+   склеенные по порядку (одна выделенная — она сама). Режется на куски длиной «первая», первая+шаг,
+   первая+2·шаг…: 1 и 1 — треугольник, шаг 0 — прямоугольник ширины «первая» (так можно перебирать
+   формы). Последний кусок может выйти короче — хвост. Куски ложатся в НОВУЮ цепочку с первой строки,
+   источник не трогается.
+   Сразу считается, что видно в форме (при шаге 1): сколько строк — это предыдущая + 1 бит (нового
+   1 бит), сколько — «🔺+1» от предыдущей (нового 0 бит: a, a⊕b, …, b), и сколько повторяют предыдущую
+   (0 бит; это для прямоугольника). Отсюда грубое «новых бит»
+   против длины ленты. */
+const bFoldTriEl = document.getElementById("bFoldTri");
+if (bFoldTriEl) bFoldTriEl.onclick = () => {
+  const pick = (st.selectedRows && st.selectedRows.size) ? Array.from(st.selectedRows).sort((a, b) => a - b) : st.rows.map((_, i) => i);
+  const src = pick.filter(i => { const s = st.rows[i] || ""; return s.length && /^[01]+$/.test(s); });
+  if (!src.length) { say("⊿ Сложить: нужна строка из одних 0 и 1 — выделите её (несколько выделенных склеятся по порядку)."); return; }
+  const tape = src.map(i => st.rows[i]).join("");
+  const numVal = (id, def, min) => { const el = document.getElementById(id); const v = el ? parseInt(el.value, 10) : NaN; return isFinite(v) && v >= min ? v : def; };
+  const first = numVal("foldTriFirst", 1, 1), step = numVal("foldTriStep", 1, 0);
+  const pieces = [];
+  for (let p = 0, len = first; p < tape.length; p += len, len += step) pieces.push(tape.slice(p, p + len));
+  if (pieces.length > 20000) { say(`⊿ Сложить: вышло бы ${pieces.length} строк — слишком много, возьмите шаг или первую длину побольше.`); return; }
+  const full = (k) => pieces[k].length === first + k * step;   // не хвост
+  // Что видно в форме: строка k = строка k−1 + бит, или строка k = «🔺+1» от строки k−1.
+  let plusBit = 0, pascal = 0, same = 0, fresh = pieces[0].length;
+  for (let k = 1; k < pieces.length; k++) {
+    const a = pieces[k - 1], b = pieces[k];
+    let isPascal = false;
+    if (b.length === a.length + 1) {
+      let nx = a[0];
+      for (let i = 1; i < a.length; i++) nx += (a[i - 1] === a[i]) ? "0" : "1";
+      nx += a[a.length - 1];
+      isPascal = nx === b;
+    } else if (b.length <= a.length + 1 && !full(k) && a.length >= 1) {
+      // хвост: сравниваем с началом того, что дало бы правило
+      let nx = a[0];
+      for (let i = 1; i < a.length; i++) nx += (a[i - 1] === a[i]) ? "0" : "1";
+      nx += a[a.length - 1];
+      isPascal = nx.startsWith(b);
+    }
+    const isPlus = !isPascal && b.length > a.length && b.startsWith(a);
+    const isSame = !isPascal && !isPlus && b.length && a.startsWith(b);   // повтор (для прямоугольника)
+    if (isPascal) pascal++;
+    else if (isSame) same++;
+    else if (isPlus) { plusBit++; fresh += b.length - a.length; }
+    else fresh += b.length;
+  }
+  const srcTab = st.tabs[st.activeTab];
+  const srcName = srcTab ? srcTab.name : "цепочка";
+  const shape = step === 1 && first === 1 ? "⊿" : step === 0 ? "▭" + first : "⊿" + first + "+" + step;
+  saveActiveTabState();
+  const newIdx = st.tabs.length;
+  const tab = createDefaultTabState(shape + " · " + srcName);
+  st.tabs.push(tab);
+  loadTabState(newIdx);
+  // Чистая цепочка: без прежних строк, паттернов и построений сверху; куски — с первой строки.
+  st.rows = []; st.pats = []; st.topBuilt = 0;
+  textsToChainRows([""].concat(pieces), "Треугольник ⊿", false);
+  st.undo = []; if (st.redo) st.redo.length = 0;
+  if (typeof renderTabs === "function") renderTabs();
+  const tail = full(pieces.length - 1) ? "" : `, последняя — хвост ${pieces[pieces.length - 1].length} бит`;
+  const shapeTxt = step === 0 ? `прямоугольник шириной ${first}` : `строки ${first}, ${first + step}, ${first + 2 * step}…`;
+  logStep("⊿ Сложить", src.map(rowLabel).join(","), "", `${tape.length} бит → ${pieces.length} стр. (${shapeTxt})${tail}; «+1 бит» ${plusBit}, «🔺+1» ${pascal}, повторов ${same}; новых ≈${fresh}`);
+  render(); saveCache();
+  const verdict = fresh * 4 <= tape.length ? "в этой форме лента почти вся выводится из себя — порядок виден"
+    : fresh < tape.length ? "кое-где строки выводятся из предыдущих"
+    : "строки друг из друга не выводятся — в этой форме порядка не видно";
+  say(`⊿ Лента ${tape.length} бит (строк склеено: ${src.length}) → новая цепочка «${tab.name}»: ${pieces.length} стр., ${shapeTxt}${tail}. Строк «предыдущая + 1 бит»: ${plusBit}, строк «🔺+1 от предыдущей»: ${pascal}, повторов предыдущей: ${same}. Новых бит ≈ ${fresh} из ${tape.length}: ${verdict}. Источник не тронут.`);
+};
 
 /* ═══ ОКНО «🪞 КРЕСТ» (v1.548) — перенесено из Zazerkalius ═══
    Строка — выделенная (первая из выделенных), иначе первая из одних 0 и 1. Перерисовка из render(),
