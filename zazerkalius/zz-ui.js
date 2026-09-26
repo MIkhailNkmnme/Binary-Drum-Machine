@@ -2352,12 +2352,12 @@ function setupCone(){
       const d = new Date(), p2 = (x) => String(x).padStart(2, "0");
       a.href = URL.createObjectURL(blob); a.download = `Zerkalius-konus-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.webm`;
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-      rec = null; b.classList.remove("on"); b.textContent = "⏺ видео";
+      rec = null; b.classList.remove("on"); b.textContent = "⏺"; b.title = b.dataset.tip0 || b.title;   // v0.155: кнопка квадратная — только значок
       say(`⏺ Видео сохранено: ${a.download} (${(blob.size / 1048576).toFixed(1)} МБ).`);
     };
     rec.start(1000);
-    const t0 = Date.now(); b.classList.add("on");
-    const tick = () => { const s = Math.floor((Date.now() - t0) / 1000); b.textContent = `⏹ ${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`; };
+    const t0 = Date.now(); b.classList.add("on"); b.dataset.tip0 = b.title; b.textContent = "⏹";
+    const tick = () => { const s = Math.floor((Date.now() - t0) / 1000); b.title = `⏹ Идёт запись ${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")} — щелчок: стоп и сохранить`; };   // v0.155: время — в подсказке, на квадратной кнопке только ⏹
     tick(); recT = setInterval(tick, 500);
     renderCone();
     say("⏺ Пишу конус… Ещё раз ⏺ — стоп и сохранить. Холст пишется, только когда меняется, — включи «▶ крутить» или крути сам.");

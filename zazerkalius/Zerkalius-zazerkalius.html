@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.154. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.155. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.154</title>
+<title>Zazerkalius — v0.155</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -296,6 +296,7 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 .cutln:hover::before,body.cutdrag .cutln::before{opacity:1;box-shadow:0 0 6px var(--acc)}
 .cuth{position:sticky;left:6px;z-index:2;display:inline-block;margin-left:6px;padding:0 6px;border-radius:3px;background:var(--bg);color:var(--dim);font:10px/14px system-ui,sans-serif;white-space:nowrap}
 .cutln.on .cuth,.cutln:hover .cuth{color:var(--acc)}
+.cuth{display:none !important}   /* v0.155, по снимку «⎯ граница» — «убери надпись»: у черты-границы подписи нет (сама черта тянется, как была; сколько строк за ней — в строке сведений поля и в подсказке) */
 body.cutdrag,body.cutdrag *{cursor:ns-resize !important}
 .rw.hid{cursor:default}
 .rw.hid > .bits,.rw.hid > .trk{color:var(--dim) !important;opacity:.3}
@@ -338,6 +339,9 @@ body.pane-icons #paneWins{padding:4px}
    шапка, кнопки и текст — поверх него, полупрозрачно */
 #w-cone .wbody{position:static;padding:0}
 #w-cone #coneMain{position:absolute;inset:0;z-index:0;min-height:0}
+#w-cone #bConeRec{position:absolute;left:8px;bottom:8px;z-index:2;width:32px;height:32px;padding:0;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center}   /* v0.155: квадратная, внизу холста слева */
+#w-cone #bConeRec.on{color:var(--red);border-color:var(--red)}
+body.zen #w-cone #bConeRec{display:none !important}
 #w-cone #coneCv{border-radius:6px}
 #w-cone:not(.collapsed) .whead{position:absolute;top:0;left:0;right:0;z-index:4;background:color-mix(in srgb, var(--panel) 72%, transparent);border-bottom:none}
 #w-cone .wbody > .tools{position:relative;z-index:3;margin-top:34px;padding:4px 8px;background:none}   /* v0.154, «div tools — убери фон» — полоса кнопок конуса без подложки */
@@ -350,7 +354,7 @@ body.pane-icons #paneWins{padding:4px}
 #w-cone .cgrp.cg-spin{background:rgba(255,209,102,.13);border-color:rgba(255,209,102,.5)}
 #w-cone .cgrp.cg-spin > .glab{color:var(--gold)}
 #w-cone #coneCycle{flex:1 0 100%;margin:0 2px !important;height:1.35em;line-height:1.35em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#bConeAuto{min-width:7.2em} #bConeDir{min-width:8.4em} #bConeRec{min-width:6.4em} #coneSlitV{display:inline-block;min-width:2.8em}
+#bConeAuto{min-width:7.2em} #bConeDir{min-width:8.4em} #bConeRec{min-width:0} #coneSlitV{display:inline-block;min-width:2.8em}
 #w-cone .wbody > #coneBot{position:absolute;right:0;left:auto;top:40%;bottom:0;width:min(380px,44%);z-index:3;padding:4px 8px;background:color-mix(in srgb, var(--panel) 80%, transparent);display:flex;flex-direction:column;gap:2px;overflow:hidden;border-left:1px solid var(--line)}   /* v0.140: текст + лог лазера — колонкой справа */
 #w-cone #coneOut{flex:0 1 auto;max-height:42%;overflow:auto;font-size:11px;line-height:1.3;margin:0}
 #coneLogBox{flex:1 1 auto;min-height:0;flex-direction:column}
@@ -527,6 +531,8 @@ body.solo #w-cone .tools input[type=checkbox]{width:12px;height:12px;margin:0 2p
 body.solo #w-cone .tools input[type=range]{height:12px}
 body.solo #w-cone .cgrp{padding:1px 5px 1px 3px;gap:2px 4px}
 body.solo #w-cone #coneCycle{height:1.25em;line-height:1.25em;font-size:11px}
+/* v0.155, по снимку строки «⟳ круг 0 · цикл — 1 круг (360°)… · проходов лазера 0» — «текст удали»: строки счёта кругов на полосе конуса нет (сам счёт работает: цикл пройден — сообщение «⟳ Цикл пройден» внизу, как было) */
+#w-cone #coneCycle{display:none !important}
 /* v0.143: тёмная палитра страницы конуса — светлее и контрастнее: фон не чёрный, подписи, рамки и нули видны */
 @media (prefers-color-scheme: dark){
   html.solo:not([data-theme="light"]){--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --line:#414b62; --txt:#eef1f6; --dim:#b0b9cc; --b0:#8f99ae}
@@ -536,11 +542,13 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.154</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.155</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
   <span class="sp"></span>
+  <!-- v0.155, «эту наверх перед Сохр.»: 🧘 дзен — в шапке, перед «💾 Всё» (прежде — в группе «Запись» у конуса) -->
+  <button id="bConeZen" title="🧘 Дзен: только конус, на весь экран — без кнопок, панелей и строк. Кручение, свет, 3D — как настроены. Выйти — Esc">🧘 дзен</button>
   <!-- v0.115: «надо сохр настройки и все биты в файл, чтобы на другом компе» -->
   <button id="bSaveAll" title="💾 Сохранить ВСЁ в файл .json: все поля строк, строки за чертой, строку для заполнения, свои шаблоны, окна, конус и все настройки. Файл переносится на другой компьютер и открывается там кнопкой «📂 Всё» или перетаскиванием на страницу">💾 Всё</button>
   <button id="bLoadAll" title="📂 Открыть файл .json, сохранённый кнопкой «💾 Всё», — страница целиком станет как в нём (спросит перед заменой). Можно и просто перетащить файл на страницу">📂 Всё</button>
@@ -1087,14 +1095,12 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
             <button id="bConeAimR" title="⌖▷ (v0.139: лазер неподвижный, вверх — ⌖▷ крутит строку 1 по часовой, пока вырез не встанет на лазер; открыт — закрыть) Довернуть строку 1 (только её) так, чтобы луч встал в следующую щель кольца 2 — по часовой. Правый щелчок — довод снят">⌖▷</button>
             <button id="bConeClockStop" title="⏸ На проходе: как только лазер (⌖ луч-часы) пройдёт все кольца до края, кручение встаёт — ровно в этом положении. Дальше — ▶ крутить. Включает и луч-часы">⏸ на проходе</button>
           </div>
-          <div class="cgrp" title="Видео холста и дзен"><span class="glab">Запись</span>
-            <button id="bConeRec" title="⏺ Видео: запись холста конуса (только сам конус, без кнопок) в файл .webm. Ещё раз — стоп и сохранить. Удобно вместе с «▶ крутить»">⏺ видео</button>
-            <button id="bConeZen" title="🧘 Дзен: только конус, на весь экран — без кнопок, панелей и строк. Кручение, свет, 3D — как настроены. Выйти — Esc">🧘 дзен</button>
-          </div>
           <span id="coneCycle" class="dim" style="margin:0 6px;font-variant-numeric:tabular-nums" title="Цикл кручения: круг — оборот стрелки (строки 1); сколько кругов, пока все кольца (и кольцо для заполнения) разом не встанут на свои места; сколько раз лазер прошёл до края. Правый щелчок по ▶ — счёт с нуля"></span>
         </div>
         <div id="coneMain">
           <canvas id="coneCv" style="flex:1 1 auto;min-width:0;width:0;min-height:260px;display:block;cursor:grab;background:var(--panel2);border-radius:4px;touch-action:none"></canvas>
+          <!-- v0.155, «в одну квадратную кнопку внизу холста слева»: группа «Запись» — одна кнопка ⏺ в левом нижнем углу холста -->
+          <button id="bConeRec" title="⏺ Видео: запись холста конуса (только сам конус, без кнопок) в файл .webm. Ещё раз — стоп и сохранить. Удобно вместе с «▶ крутить»">⏺</button>
           <div id="coneList" title="Строки — как в поле: щелчок — текущая, Ctrl + щелчок — выделить; 🔒/🔓 — замок этого кольца"></div>
         </div>
         <div id="coneBot">   <!-- v0.134: текст конуса и лог лазера; v0.140 — колонкой справа -->
