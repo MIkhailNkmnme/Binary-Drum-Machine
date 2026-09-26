@@ -1185,13 +1185,15 @@ function renderCone(){
          сплошная, у нулей — заметная), символ поверх единицы — цветом фона (контраст на плотной заливке), у нуля — своим
          цветом; между битами — тёмные черты, по краям кольца — контур. */
       const strong = blank || s[j] === "1" || fix || !!(MI && MI.odd);
-      g.globalAlpha = blank ? 0.95 : strong ? (glyph ? 0.8 : 0.95) : (glyph ? 0.28 : 0.4); g.fillStyle = col;
+      /* v0.152, «поправь отображение битов в конусе: раньше цвет символа в строках был фоном сектора в кольце, сектор — бит»:
+         сектор заливается сплошь ровно тем цветом, каким его символ стоит в поле строк — и у 1, и у 0 (прежде нули — на 28%). */
+      g.globalAlpha = 0.95; g.fillStyle = col;
       if (glow && strong) { g.shadowColor = col; g.shadowBlur = Math.max(6 * dpr, Math.min(dr * 0.9, 30 * dpr)); }
       g.fill(); g.globalAlpha = 1; if (glow && strong) g.shadowBlur = 0;
       if (glyph && !blank) {
         const am = a + step / 2, rm = (rin + rout) / 2 * coneRho(i, am);
         g.save(); g.translate(cx + rm * Math.cos(am), cy + rm * Math.sin(am)); g.rotate(am + Math.PI / 2);
-        g.fillStyle = strong ? cBg : col; g.font = `700 ${Math.round(fsz)}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle";
+        g.fillStyle = cBg; g.font = `700 ${Math.round(fsz)}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle";   // v0.152: цифра — тёмным поверх сплошной заливки
         g.fillText(s[j], 0, 0); g.restore();
       }
     }
@@ -1883,7 +1885,7 @@ function cone3DDraw(g, o){
       if (tiny && n === 1) pts.push(at(i, a, 0));
       else if (tiny) pts.push(at(i, a + step / 4, r), at(i, a, 0), at(i, a + step * 3 / 4, r));   // v0.111: Г углом в центре
       else for (let q = 0; q <= K; q++) pts.push(at(i, a + gap + (step - 2 * gap) * q / K, r));
-      items.push({ pts, col, dot: tiny && n === 1, a: strong ? 0.95 : 0.45, near: tiny ? (pts[0][2] + pts[pts.length - 1][2]) / 2 : at(i, a + step / 2, r)[2], cur: i === Z.cur && !document.body.classList.contains("nocur"), sel: rowSel.has(i) });   // v0.107
+      items.push({ pts, col, dot: tiny && n === 1, a: 0.95, near: tiny ? (pts[0][2] + pts[pts.length - 1][2]) / 2 : at(i, a + step / 2, r)[2], cur: i === Z.cur && !document.body.classList.contains("nocur"), sel: rowSel.has(i) });   // v0.107
     }
   }
   // v0.090: границы бит в объёме — там, где биты разные: 0→1 сиреневая, 1→0 бирюзовая
