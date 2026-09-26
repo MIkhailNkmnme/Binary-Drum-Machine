@@ -1360,7 +1360,7 @@ function renderCone(){
     };
     g.save(); g.lineCap = "round";
     {   // v0.119 / v0.121: вырез в кольце строки 1 — прорезь цветом фона шириной в щель (v0.124), края золотые
-      const ri = r0 - dpr, ro = r0 + Math.max(1, dr * band) + dpr, a = coneAimAngle(), h = Math.max(hs, 1.5 * dpr / Math.max(1, ri));
+      const ri = r0 - dpr, ro = r0 + Math.max(1, dr * band) + dpr, a = coneCutAngle(), h = Math.max(hs, 1.5 * dpr / Math.max(1, ri));   // v0.139: вырез — отдельно от лазера
       g.fillStyle = cBg; g.beginPath(); g.arc(cx, cy, ro, a - h, a + h); g.arc(cx, cy, Math.max(0, ri), a + h, a - h, true); g.closePath(); g.fill();
       g.strokeStyle = cg; g.lineWidth = Math.max(1.5 * dpr, dpr); g.lineCap = "butt"; g.beginPath();
       for (const e of [a - h, a + h]) { g.moveTo(cx + ri * Math.cos(e), cy + ri * Math.sin(e)); g.lineTo(cx + ro * Math.cos(e), cy + ro * Math.sin(e)); }
@@ -1368,7 +1368,7 @@ function renderCone(){
     }
     for (const R of clockRays) {
       const rs = R.pass ? (R.vstop < coneRingsTotal(N) ? r0 + R.vstop * dr + dr * band / 2 : rEnd) : (r0 + R.stop * dr) * coneRho(R.stop, R.a), px = cx + rs * Math.cos(R.a), py = cy + rs * Math.sin(R.a);   // v0.129: пойман пустым кольцом — до его ячейки
-      const holes = [[r0 - dpr, r0 + Math.max(1, dr * band) + dpr]];   // v0.134: вырез строки 1 и щели, пройденные лучом
+      const holes = R.stop > 0 || R.pass ? [[r0 - dpr, r0 + Math.max(1, dr * band) + dpr]] : [];   // v0.134: вырез строки 1 (v0.139: если открыт) и щели, пройденные лучом
       for (let q = 0; q < R.g.length; q += 2) { const ri = r0 + R.g[q] * dr; holes.push([ri - dpr, ri + Math.max(1, dr * band) + dpr]); }
       beam(R.a, rs, R.pass ? 1 : 0.9, R.pass, holes);
       if (R.pass) { g.fillStyle = cCore; g.shadowColor = cg; g.shadowBlur = 16 * dpr; g.beginPath(); g.arc(px, py, Math.max(4 * dpr, dr * 0.15), 0, 2 * Math.PI); g.fill(); g.shadowBlur = 0; }
@@ -1415,7 +1415,7 @@ function renderCone(){
     (clockRays && clockRays.length ? (() => { const p = clockRays.filter(R => R.pass);   // v0.116
       const dv = Z.coneAimRot ? ` (строка 1 довёрнута на ${Math.round(Z.coneAimRot * 10) / 10}°)` : "";
       const hv = Object.values(coneVoidHits()), vt = hv.length ? ` Пустые кольца: помечено ячеек ${hv.length}, проходов через них ${hv.reduce((s, x) => s + x, 0)}, больше всех — ${Math.max(...hv)} раз.` : "";   // v0.127
-      if (clockRays.length === 1) return (p.length ? `⌖ Луч из выреза${dv} проходит все строки` + (p[0].cell >= 0 ? ` — в строке для заполнения ячейка ${p[0].cell + 1}` : " — в строке для заполнения между ячейками") + (p[0].cell < 0 ? (p[0].vstop < coneRingsTotal(Math.min(Z.rows.length, CONE_MAX)) ? `, ловит пустое кольцо ${p[0].vstop + 1} (ячейка ${p[0].cells[0][1] + 1})` : ", и через щели всех пустых колец — за край") : "") + "." : `⌖ Луч из выреза${dv} держит стена кольца ${clockRays[0].stop + 1}.`) + vt + "\n";
+      if (clockRays.length === 1) return (p.length ? `⌖ Лазер (вверх) через вырез${dv} проходит все строки` + (p[0].cell >= 0 ? ` — в строке для заполнения ячейка ${p[0].cell + 1}` : " — в строке для заполнения между ячейками") + (p[0].cell < 0 ? (p[0].vstop < coneRingsTotal(Math.min(Z.rows.length, CONE_MAX)) ? `, ловит пустое кольцо ${p[0].vstop + 1} (ячейка ${p[0].cells[0][1] + 1})` : ", и через щели всех пустых колец — за край") : "") + "." : (clockRays[0].stop ? `⌖ Лазер (вверх) через вырез${dv} — луч держит стена кольца ${clockRays[0].stop + 1}.` : `⌖ Лазер стоит вверх, вырез строки 1 в стороне${dv} — выход закрыт, луч упирается в строку 1. Крути (▶, рукой, ⌖◁ ⌖▷) — откроется, когда вырез пройдёт мимо лазера.`)) + vt + "\n";
       return `⌖ Лучей из строки 1 — ${clockRays.length}: до края доходят ${p.length}${p.length ? " (ячейки " + p.map(R => R.cell + 1).join(", ") + ")" : ""}, остальные держат стены.\n`; })() : "") +
     `${coneLocked(i) ? "🔒" : "🔓"} Кольцо ${i + 1} ${coneLocked(i) ? "заперто" : "открыто"}${Z.coneLocks && Z.coneLocks[i] !== undefined ? " (свой замок)" : " (по общей галке)"}` + ((coneRot[i] || 0) ? `, повёрнуто на вид на ${Math.round(coneRot[i])}` : "") + `.\n` +
     `Строка ${i + 1}: ${s.length} бит — кольцо встаёт в <b>${k.orbit}</b> ${k.orbit === 1 ? "положение (как ни крути — то же)" : "разных положений"}; ` +
@@ -1491,6 +1491,15 @@ let coneClockFlash = [];                      // вспышки лучей, пр
    направление луча задаётся доводом кольца (тянуть мышью, ⌖◁ ⌖▷). Прежний выбор выреза (Z.coneAim) при запуске переводится в довод. */
 function coneAim(){ return 0; }
 function coneAimAngle(q){ const n0 = (Z.rows[0] || "1").length || 1; return -Math.PI / 2 + (q === undefined ? coneAim() : q) * Math.PI / 2 - coneRotOf(0) * 2 * Math.PI / n0; }
+/* v0.139, «а в самом начале, когда лазер из центра идёт в 1 строку, то его положение относительно выхода из 1 кольца, где одна щель,
+   установи в противоположной стороне, сам лазер пусть стоит неподвижно», «и направлен вверх»: лазер — неподвижный, всегда вверх.
+   Вырез строки 1 в начале — внизу, напротив него, и крутится вместе с кольцом строки 1 (кручением ▶, рукой, ⌖◁ ⌖▷). Выход открыт,
+   только когда вырез проходит мимо лазера (в пределах щели), — тогда луч идёт наружу; иначе упирается в кольцо строки 1 изнутри.
+   Строка 1 так и остаётся затвором: остановка колец её не трогает. */
+function coneLaserAngle(){ return -Math.PI / 2; }
+function coneCutAngle(){ return coneAimAngle() + Math.PI; }
+function coneAngDiff(x, y){ let d = (x - y) % (2 * Math.PI); if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI; return d; }
+function coneCutOpen(){ return Math.abs(coneAngDiff(coneCutAngle(), coneLaserAngle())) <= coneSlitHalf(); }
 /* v0.120, «дай возможность ось соединять вручную со следующим кольцом в щели, при этом крутя внутреннее кольцо, а не внешнее».
    Кольцо строки 1 (с вырезами) при луч-часах крутится мышью само по себе и плавно — не целыми битами (у строки из одного бита
    целый бит — это полный оборот), — на Z.coneAimRot градусов; остальные кольца стоят. Когда луч подходит к щели кольца 2 (границе
@@ -1527,26 +1536,23 @@ function coneAimDeep(a){
   }
   return (lo + hi) / 2;
 }
-function coneAimSnap(){
-  const R1 = coneRingNR(1); if (!R1 || !coneGeom) return false;
-  const st1 = 2 * Math.PI / R1.n, a = coneAimAngle(), u = (a + Math.PI / 2) / st1 + R1.rot, d0 = (u - Math.round(u)) * st1;
-  const tol = Math.min(st1 * 0.45, 10 * coneGeom.dpr / Math.max(1, coneGeom.r0 + coneGeom.dr));
-  if (Math.abs(d0) > tol) return false;
-  Z.coneAimRot = (Z.coneAimRot || 0) - (a - coneAimDeep(a)) * 180 / Math.PI;   // v0.131: в середину общего прохода, не щели кольца 2
+function coneAimSnap(){   // v0.139: тянешь строку 1 — вырез защёлкивается на лазере (ближе ~10 пикселей)
+  if (!coneGeom) return false;
+  const d = coneAngDiff(coneCutAngle(), coneLaserAngle()), tol = 10 * coneGeom.dpr / Math.max(1, coneGeom.r0 + coneGeom.dr);
+  if (Math.abs(d) > tol) return false;
+  Z.coneAimRot = (Z.coneAimRot || 0) - d * 180 / Math.PI;
   return true;
 }
 function coneAimSettle(){
   Z.coneAimRot = (((Z.coneAimRot || 0) % 360) + 540) % 360 - 180;
   save(); renderCone();   // v0.127: довёл до щели вручную — это проход, его засчитает renderCone
-  const R = coneClockTrace()[0], deg = Math.round(Z.coneAimRot * 10) / 10;
-  say(`⌖ Строка 1 довёрнута на ${deg}°` + (!R ? "." : R.pass ? (R.vstop < coneRingsTotal(Math.min(Z.rows.length, CONE_MAX)) ? ` — луч проходит все строки, ловит кольцо ${R.vstop + 1}.` : " — луч проходит все кольца.") : R.stop > 1 ? ` — луч в щели, дальше держит стена кольца ${R.stop + 1}.` : " — луч упирается в кольцо 2 (до щели не довёл)."));
+  const R = coneClockTrace()[0], deg = Math.round(Z.coneAimRot * 10) / 10, N = Math.min(Z.rows.length, CONE_MAX);
+  say(`⌖ Строка 1 довёрнута на ${deg}°` + (!R ? "." : !R.stop && !R.pass ? " — вырез в стороне, выход закрыт: лазер упирается в строку 1." : R.pass ? (R.vstop < coneRingsTotal(N) ? ` — вырез на лазере, луч проходит все строки, ловит кольцо ${R.vstop + 1}.` : " — вырез на лазере, луч проходит все кольца.") : ` — вырез на лазере, луч держит стена кольца ${R.stop + 1}.`));
 }
-function coneAimStep(d){
-  const R1 = coneRingNR(1); if (!R1) { say("⌖ Кольца 2 нет — щелей для луча нет."); return; }   // v0.133: и строка для заполнения
-  const st1 = 2 * Math.PI / R1.n, u = (coneAimAngle() + Math.PI / 2) / st1 + R1.rot;
-  const k = d > 0 ? Math.floor(u + 1e-6) + 1 : Math.ceil(u - 1e-6) - 1;
-  Z.coneAimRot = (Z.coneAimRot || 0) + (k - u) * st1 * 180 / Math.PI;
-  const a = coneAimAngle(); Z.coneAimRot += (coneAimDeep(a) - a) * 180 / Math.PI;   // v0.131: в середину общего прохода
+function coneAimStep(d){   // v0.139: ⌖▷ / ⌖◁ — крутить строку 1 по / против часовой, пока вырез не встанет на лазер (открыт → закрыть: напротив)
+  const TAU = 2 * Math.PI, x = coneAngDiff(coneLaserAngle(), coneCutAngle());
+  let t = coneCutOpen() ? (d > 0 ? Math.PI : -Math.PI) : d > 0 ? ((x % TAU) + TAU) % TAU : -((((-x) % TAU) + TAU) % TAU);
+  Z.coneAimRot = (Z.coneAimRot || 0) + t * 180 / Math.PI;
   coneAimSettle();
 }
 /* v0.127, «хотя не так (выход с остановкой): дострой до 256 строк после последней — пустые, можно еле заметными показать, но если
@@ -1571,15 +1577,22 @@ function coneVoidRot(j, n){
 }
 /* v0.138, «в тот момент, когда первая ячейка строки покрасится битом, этот диск (кольцо) останавливай — то есть все внутренние не
    будут крутиться»: лазер впервые закрасил ячейку кольца b (стена, строка для заполнения или пустое) — кольцо b и все внутри него
-   (2…b) встают на фазе этого мига и больше не крутятся; внешние крутятся дальше. Строка 1 — источник луча — крутится всегда:
-   встань и она, луч упёрся бы в только что закрашенную ячейку навсегда. Фазы остановленных —
+   (2…b) встают на фазе этого мига и больше не крутятся; внешние крутятся дальше. (v0.139: правило другое — см. coneFreezeRing.) Фазы остановленных —
    Z.voidHits.fz { кольцо: фаза }; стираются вместе с краской (✕ у строки для заполнения, смена строк) и «⟲ всё на места». */
 function coneFrozen(){ const V = Z.voidHits; if (!V) return null; if (!V.fz || typeof V.fz !== "object") V.fz = {}; return V.fz; }
 function coneRingPh(i){ const fz = Z.voidHits && Z.voidHits.fz; return fz && fz[i] !== undefined ? fz[i] : (Z.coneSpinPh || 0); }
-function coneFreezeTo(b){
-  const fz = coneFrozen() || (coneVoidHits(), coneFrozen()), ph = Z.coneSpinPh || 0; let k = 0;
-  for (let i = 1; i <= b; i++) if (fz[i] === undefined) { fz[i] = ph; k++; }   // строка 1 — источник луча — крутится всегда, иначе луч встал бы навсегда
-  return k;
+/* v0.139, «то есть кольцо останавливается только в момент выхода лазера из него наружу»: встаёт кольцо, из которого луч вышел —
+   строка 1, когда вырез прошёл мимо лазера, дальше — каждое кольцо, чью щель луч прошёл. Краска остановки не вызывает. */
+function coneFreezeRing(i){
+  const fz = coneFrozen() || (coneVoidHits(), coneFrozen());
+  if (fz[i] !== undefined) return false;
+  fz[i] = Z.coneSpinPh || 0; return true;
+}
+function coneFreezePassed(R){   // кольца, из которых луч вышел: строка 1 (вырез открыт) и все с пройденными щелями; → новые остановленные
+  if (!R || !(Z.coneSpinMode === "bit" || Z.coneSpinMode === "opp") || (!R.stop && !R.pass)) return [];
+  const got = []; if (coneFreezeRing(0)) got.push(0);
+  for (let q = 0; q < R.g.length; q += 2) if (coneFreezeRing(R.g[q])) got.push(R.g[q]);
+  return got;
 }
 function coneFillRot(){ const N = Math.min(Z.rows.length, CONE_MAX); return coneVoidRot(N, fillLen()); }
 function coneVoidHits(){
@@ -1590,7 +1603,8 @@ function coneVoidHits(){
 function coneClockTrace(){
   const N = Math.min(Z.rows.length, CONE_MAX), s0 = Z.rows[0]; if (!N || !s0) return [];
   const TAU = 2 * Math.PI, T = coneRingsTotal(N), out = [];
-  for (const a of [coneAimAngle()]) {   // v0.119: луч — из выреза строки 1
+  for (const a of [coneLaserAngle()]) {   // v0.139: лазер неподвижный, вверх; выход — вырез строки 1
+    if (!coneCutOpen()) { out.push({ a, stop: 0, pass: false, cell: -1, cells: [], vstop: T, wall: null, g: [] }); continue; }   // вырез в стороне — выход закрыт
     let b = 1, wall = null; const g = [];   // v0.134: g — щели, сквозь которые прошёл: кольцо, граница (перед ячейкой), подряд
     for (; b < N; b++) {
       const n = Z.rows[b].length; if (!n) break;
@@ -1626,17 +1640,15 @@ let coneWallWas;   // куда луч пришёл на прошлом шаге 
    сменился (упёрся в другую ячейку, пойман другим кольцом, ушёл за край), — запись в «📜 Лог лазера»: номер, угол луча, где он
    кончился и что стало в ячейке (1, 11, 111…), и сквозь какие щели прошёл по пути («стр 2: 2|1» — между ячейками 2 и 1). */
 function coneWallPaint(tr){
-  const R = tr[0], N = Math.min(Z.rows.length, CONE_MAX);
+  const R = tr[0], N = Math.min(Z.rows.length, CONE_MAX), fzNew = coneFreezePassed(R);   // v0.139: вышел из кольца — оно встаёт
   const k = !R ? null : R.wall ? "w" + R.wall : R.pass ? (R.cells.length ? "v" + R.cells[0] : "e") : "s" + R.stop, first = coneWallWas === undefined;
-  if (k === coneWallWas) return false;
+  if (k === coneWallWas) return fzNew.length > 0;
   coneWallWas = k;
   if (!k || first) return false;   // загрузка страницы попаданием не считается
   const h = coneVoidHits(); let cnt = 0;
-  const ring = R.wall ? R.wall[0] : R.cells.length ? R.cells[0][0] : -1;
-  const fzk = ring >= 0 && (Z.coneSpinMode === "bit" || Z.coneSpinMode === "opp") && !Object.keys(h).some(k => k.startsWith(ring + ":")) ? coneFreezeTo(ring) : 0;   // v0.138: первая краска кольца — оно и внутренние встают
   if (R.wall) { const hk = R.wall[0] + ":" + R.wall[1]; cnt = h[hk] = (h[hk] | 0) + 1; }
   else if (R.cells.length) { const hk = R.cells[0][0] + ":" + R.cells[0][1]; cnt = h[hk] = (h[hk] | 0) + 1; }   // пойман пустым кольцом
-  coneLogAdd(R, cnt, N, fzk ? ring : -1);
+  coneLogAdd(R, cnt, N, fzNew);
   return true;
 }
 function coneLogAdd(R, cnt, N, froze){
@@ -1650,7 +1662,7 @@ function coneLogAdd(R, cnt, N, froze){
     : R.pass && R.cells.length ? `пойман: стр ${R.cells[0][0] + 1}${fillNm(R.cells[0][0])}, яч ${R.cells[0][1] + 1}` + (cnt ? ` → ${ones(cnt)}` : "")
     : R.pass ? "за край" : `стоп: стр ${R.stop + 1}`;
   const deg = Math.round((((R.a * 180 / Math.PI + 90) % 360) + 360) % 360 * 10) / 10;
-  L.list.push({ n: L.n, t: `№${L.n} · ${String(deg).replace(".", ",")}° · ${end}` + (froze >= 0 ? ` · ⏹ встали кольца 2–${froze + 1}` : "") + (gt ? ` · сквозь щели: ${gt}` : "") });
+  L.list.push({ n: L.n, t: `№${L.n} · ${String(deg).replace(".", ",")}° · ${end}` + (froze && froze.length ? ` · ⏹ встал${froze.length > 1 ? "и кольца " + (froze.length > 6 ? froze.slice(0, 5).map(x => x + 1).join(", ") + ` … ${froze[froze.length - 1] + 1} (${froze.length})` : froze.map(x => x + 1).join(", ")) : "о кольцо " + (froze[0] + 1)}` : "") + (gt ? ` · сквозь щели: ${gt}` : "") });
   if (L.list.length > 1000) L.list.splice(0, L.list.length - 1000);
   coneLogDirty();
 }
@@ -2158,6 +2170,8 @@ function setupCone(){
       }
       Z.coneSpinPh = ph0 + dph;   // v0.119: без обрезки по 100 оборотов — иначе сбивался счёт кругов
       coneCycleCheck(ph0, Z.coneSpinPh, m);
+      if (Z.coneClock) { const R = coneClockTrace()[0];   // v0.139, «и так все кольца пройдёт наружу»: вышел за край — все кольца на пути встали, пауза
+        if (R && R.pass && !R.cells.length && coneRingPh(0) !== Z.coneSpinPh) { autoSet(false); renderCone(); say("⏹ Лазер вышел наружу — все кольца на его пути встали. Заново — ✕ у строки для заполнения или ⟲ всё на места."); return; } }
     }
     renderCone();
     autoRaf = requestAnimationFrame(autoTick);
@@ -2185,7 +2199,8 @@ function setupCone(){
     const ph0 = Z.coneSpinPh || 0, k0 = key(coneClockTrace()[0]);
     let ph = ph0, s = 0;
     for (; s < 20000; s++) { ph += d; Z.coneSpinPh = ph; if (key(coneClockTrace()[0]) !== k0) break; }
-    if (s >= 20000) { Z.coneSpinPh = ph0; say("◀ ▶: за 20 000 мелких шагов конец луча не сменился — крути ▶ или сдвинь строку 1."); return; }
+    if (s >= 20000) { Z.coneSpinPh = ph0; const R = coneClockTrace()[0];
+      say(R && R.pass && !R.cells.length ? "⏹ Лазер вышел наружу — все кольца на его пути встали. Заново — ✕ у строки для заполнения или ⟲ всё на места." : "◀ ▶: за 20 000 мелких шагов конец луча не сменился — крути ▶ или сдвинь строку 1."); return; }
     save(); renderCone();
     const L = Z.coneLog && Z.coneLog.list, last = L && L[L.length - 1];
     say((dir > 0 ? "▶ Шаг вперёд" : "◀ Шаг назад") + (last ? ": " + last.t : "."));
