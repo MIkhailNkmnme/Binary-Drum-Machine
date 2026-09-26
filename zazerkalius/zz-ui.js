@@ -1621,9 +1621,13 @@ function coneVoidLen(j, N){ const s = Z.rows[N - 1]; return (s ? s.length : 0) +
 function coneVoidRot(j, n){
   const m = Z.coneSpinMode || "all", ph = coneRingPh(j);   // v0.138
   if (m === "bit") return -ph;
+  if (m === "obit") return -(j % 2 ? -1 : 1) * ph;   // v0.161
   if (m === "opp") return -(j % 2 ? -1 : 1) * ph / 360 * n;
   return 0;
 }
+/* v0.161, «Встреч Бит — так же, как Каждое, но через строку в одну сторону»: режим obit — каждое кольцо на бит за шаг, как «bit», но
+   нечётные (строки 2, 4, …) — в обратную сторону. Всё, что зависит от шага «по биту» (скорость, шаги ◀ ▶, лазер, цикл), — как у «bit». */
+function coneBitMode(m){ return m === "bit" || m === "obit"; }
 /* v0.138, «в тот момент, когда первая ячейка строки покрасится битом, этот диск (кольцо) останавливай — то есть все внутренние не
    будут крутиться»: лазер впервые закрасил ячейку кольца b (стена, строка для заполнения или пустое) — кольцо b и все внутри него
    (2…b) встают на фазе этого мига и больше не крутятся; внешние крутятся дальше. (v0.139: правило другое — см. coneFreezeRing.) Фазы остановленных —
@@ -1638,7 +1642,7 @@ function coneFreezeRing(i){
   fz[i] = Z.coneSpinPh || 0; return true;
 }
 function coneFreezePassed(R){   // кольца, из которых луч вышел: строка 1 (вырез открыт) и все с пройденными щелями; → новые остановленные
-  if (!R || !(Z.coneSpinMode === "bit" || Z.coneSpinMode === "opp") || (!R.stop && !R.pass)) return [];
+  if (!R || !(coneBitMode(Z.coneSpinMode) || Z.coneSpinMode === "opp") || (!R.stop && !R.pass)) return [];
   const got = []; if (coneFreezeRing(0)) got.push(0);
   for (let q = 0; q < R.g.length; q += 2) if (coneFreezeRing(R.g[q])) got.push(R.g[q]);
   return got;
@@ -1753,7 +1757,7 @@ function coneClockSweep(ph0, dph, m){
   if (!dph || !coneGeom || !coneGeom.fill) return null;   // нет кольца для заполнения (3D, слишком много строк) — не метим
   const N = Math.min(Z.rows.length, CONE_MAX); if (!N) return null;
   let maxDeg = 0;   // быстрее всех поворачивается за кадр — отсюда число шагов (относительная скорость двух колец — до двух таких)
-  for (let i = 0; i < N; i++) maxDeg = Math.max(maxDeg, m === "bit" ? Math.abs(dph) * 360 / (Z.rows[i].length || 1) : Math.abs(dph));
+  for (let i = 0; i < N; i++) maxDeg = Math.max(maxDeg, coneBitMode(m) ? Math.abs(dph) * 360 / (Z.rows[i].length || 1) : Math.abs(dph));
   let tolDeg = coneSlitHalf() * 180 / Math.PI; const n0 = Z.rows[0].length || 1;
   for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);   // самая узкая щель — шаг не шире её
   const K = Math.max(1, Math.min(Math.ceil(maxDeg / tolDeg), Math.floor(200000 / (N * n0)), 2000));
@@ -1791,7 +1795,7 @@ function coneBigFmt(b){ const s = b.toString(); return s.length <= 15 ? Number(b
 function coneCycleText(){
   const m = Z.coneSpinMode || "all", ph = Math.abs(Z.coneSpinPh || 0), n0 = (Z.rows[0] || "1").length || 1;
   const pass = Z.coneClock ? ` · проходов лазера ${Z.coneClockN | 0}` : "";
-  if (m === "bit") {
+  if (coneBitMode(m)) {
     const L = coneCycleBits(), tot = L / BigInt(n0), Ln = Number(L);
     const inCyc = Ln <= 1e15 ? (ph % Ln) / n0 : ph / n0, cyc = Ln <= 1e15 ? Math.floor(ph / Ln) : 0;
     return `⟳ круг ${Math.floor(inCyc).toLocaleString("ru-RU")} из ${coneBigFmt(tot)}` + (cyc ? ` · цикл ${cyc + 1}` : "") + pass;
@@ -1801,9 +1805,9 @@ function coneCycleText(){
 }
 function coneCycleCheck(ph0, ph1, m){
   let L = 0, n0 = (Z.rows[0] || "1").length || 1;
-  if (m === "bit") { const b = coneCycleBits(); if (b > 1000000000000000n) return; L = Number(b); } else if (m === "opp") L = 360; else return;
+  if (coneBitMode(m)) { const b = coneCycleBits(); if (b > 1000000000000000n) return; L = Number(b); } else if (m === "opp") L = 360; else return;   // v0.161: навстречу по биту — кольцо из n бит на месте через n бит в любую сторону, цикл тот же
   if (Math.floor(Math.abs(ph0) / L) !== Math.floor(Math.abs(ph1) / L))
-    say(`⟳ Цикл пройден — все кольца снова на своих местах (${m === "bit" ? coneBigFmt(BigInt(L / n0)) + " кругов" : "360°"}${Z.coneClock ? `, проходов лазера ${Z.coneClockN | 0}` : ""}).`);
+    say(`⟳ Цикл пройден — все кольца снова на своих местах (${coneBitMode(m) ? coneBigFmt(BigInt(L / n0)) + " кругов" : "360°"}${Z.coneClock ? `, проходов лазера ${Z.coneClockN | 0}` : ""}).`);
 }
 /* v0.109, «этажи-многоугольники вместо колец» (было предложено: «строка из n бит — не круг, а правильный n-угольник:
    3 бита — треугольник, 4 — квадрат; конус станет ступенчатой пирамидой»). Галка «⬡ многоугольники»: кольцо из n бит (n ≥ 3)
@@ -2045,6 +2049,7 @@ function coneRotOf(i){
   let base = coneRot[i] || 0; const m = Z.coneSpinMode || "all", ph = coneRingPh(i);   // v0.138: остановленное кольцо — на своей фазе
   if (i === 0 && Z.coneAimRot) base -= Z.coneAimRot / 360 * ((Z.rows[0] || "").length || 1);   // v0.120: строка 1 довёрнута вручную (градусы, по часовой)
   if (m === "bit") return base - ph;
+  if (m === "obit") return base - (i % 2 ? -1 : 1) * ph;   // v0.161
   if (m === "opp") { const n = (Z.rows[i] || "").length || 1; return base - (i % 2 ? -1 : 1) * ph / 360 * n; }
   return base;
 }
@@ -2220,7 +2225,7 @@ function setupCone(){
     const sp = Z.coneAutoSp ?? 30, m = Z.coneSpinMode || "all";   // v0.104: режимы кручения
     if (m === "all") Z.coneSpin = ((Z.coneSpin || 0) + sp * dt) % 360;
     else {
-      const dph = m === "bit" ? sp / 10 * dt : sp * dt;   // бит в секунду = скорость / 10
+      const dph = coneBitMode(m) ? sp / 10 * dt : sp * dt;   // бит в секунду = скорость / 10
       const ph0 = Z.coneSpinPh || 0;
       const st = Z.coneClock ? coneClockSweep(ph0, dph, m) : null;   // v0.116: луч-часы — миг, когда щели сошлись, между кадрами
       if (st) {   // v0.119: «⏸ на проходе» — встать ровно там, где лазер прошёл
@@ -2253,11 +2258,11 @@ function setupCone(){
   const coneStep = (dir) => {
     autoSet(false);
     const m = Z.coneSpinMode || "all";
-    if (m === "all") { say("◀ ▶ шагают кручением «каждое по биту» или «навстречу» — «всё целиком» не сдвигает кольца друг относительно друга. Выбери режим рядом с ▶."); return; }
+    if (m === "all") { say("◀ ▶ шагают кручением «Каждое», «Встреч Стр» или «Встреч Бит» — «всё целиком» не сдвигает кольца друг относительно друга. Выбери режим рядом с ▶."); return; }
     if (!Z.coneClock) { Z.coneClock = true; $("coneClock").checked = true; }
     const N = Math.min(Z.rows.length, CONE_MAX); if (!N) return;
     let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
-    const perUnit = m === "bit" ? 360 / Math.max(1, Math.min(...Z.rows.slice(0, N).map(s => s.length || 1))) : 1;   // градусов за единицу фазы у самого быстрого кольца
+    const perUnit = coneBitMode(m) ? 360 / Math.max(1, Math.min(...Z.rows.slice(0, N).map(s => s.length || 1))) : 1;   // градусов за единицу фазы у самого быстрого кольца
     const d = dir * (Z.coneAutoSp < 0 ? -1 : 1) * tolDeg / perUnit / 2, key = (R) => !R ? "" : R.wall ? "w" + R.wall : R.pass ? (R.cells.length ? "v" + R.cells[0] : "e") : "s" + R.stop;   // v0.136: вперёд — в выбранном направлении
     const ph0 = Z.coneSpinPh || 0, k0 = key(coneClockTrace()[0]);
     let ph = ph0, s = 0;
@@ -2348,7 +2353,7 @@ function setupCone(){
     say(Z.coneClockStop ? "⏸ На проходе: как только лазер пройдёт все кольца, кручение встанет. Дальше — ▶ крутить." : "⏸ Без остановок: лазер метит ячейки на ходу.");
   };
   $("coneSpinMode").onchange = (e) => { Z.coneSpinMode = e.target.value; Z.coneSpinPh = 0; Z.coneClockN = 0; save(); renderCone();
-    say({ all: "▶ Всё целиком: весь конус одним поворотом.", bit: "▶ Каждое по биту: маленькие кольца вертятся быстрее — рисунок закручивается спиралью.", opp: "▶ Навстречу: чётные кольца по часовой, нечётные против." }[Z.coneSpinMode] + " Правый щелчок по ▶ — всё на места."); };
+    say({ all: "▶ Всё целиком: весь конус одним поворотом.", bit: "▶ Каждое по биту: маленькие кольца вертятся быстрее — рисунок закручивается спиралью.", obit: "▶ Навстречу по биту: каждое кольцо на бит за шаг, через строку — в обратную сторону.", opp: "▶ Навстречу по строкам: чётные кольца по часовой, нечётные против, с одной скоростью." }[Z.coneSpinMode] + " Правый щелчок по ▶ — всё на места."); };
   /* v0.136, «эта скорость непонятная — раздели: одна только скорость, а направление задавать другой кнопкой; слева-справа — стрелки
      шаг»: ползунок — величина (5…120), знак Z.coneAutoSp — направление, его переключает «↻ по часовой / ↺ против». */
   coneDirUi();
