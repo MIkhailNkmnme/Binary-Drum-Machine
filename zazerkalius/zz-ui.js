@@ -1046,12 +1046,17 @@ function renderCone(){
     for (const i of secRows) {
       const s = Z.rows[i], n = s && s.length; if (!n) continue;
       const rin = r0 + i * dr, step = 2 * Math.PI / n, rot = coneRotOf(i);
-      for (let j = 0; j < n; j++) {
-        const a = -Math.PI / 2 + (j - rot) * step, fix = Z.showFix && fixAt(s, j), strong = s[j] === "1" || fix;
-        const col = fix ? (Z.showFix === "ir" ? coneCss("--green", "#6ee7a0") : cR) : s[j] === "1" ? c1 : c0;
+      const bitCol = (j) => { const fix = Z.showFix && fixAt(s, j); return { col: fix ? (Z.showFix === "ir" ? coneCss("--green", "#6ee7a0") : cR) : s[j] === "1" ? c1 : c0, strong: s[j] === "1" || fix }; };
+      // v0.113, «из центра — что за синие полосы идут»: клин на каждый бит давал на каждой границе бит шов — сглаживание двух
+      // полупрозрачных клиньев на общей кромке пропускает фон, и из центра шла тонкая светлая / синяя черта. Теперь подряд идущие
+      // биты одного цвета — один клин (coneSectRuns), черта остаётся только там, где цвет и правда меняется.
+      for (const run of coneSectRuns(n, bitCol)) {
+        const a = -Math.PI / 2 + (run.j - rot) * step, { col, strong } = run.c;
         const gr = g.createRadialGradient(cx, cy, 0, cx, cy, rin);
         gr.addColorStop(0, rgba(col, 0)); gr.addColorStop(1, rgba(col, strong ? 0.5 : 0.22));
-        g.beginPath(); g.moveTo(cx, cy); coneArc(g, cx, cy, i, rin, a, a + step); g.closePath(); g.fillStyle = gr; g.fill();
+        g.beginPath();
+        if (run.len < n) g.moveTo(cx, cy);   // всё кольцо одним цветом — круг (многоугольник) целиком, без кромки от центра
+        coneArc(g, cx, cy, i, rin, a, a + run.len * step); g.closePath(); g.fillStyle = gr; g.fill();
       }
     }
   }
@@ -1287,6 +1292,20 @@ function coneRho(i, t){
   const step = 2 * Math.PI / n, rot = coneRotOf(i), u = (t + Math.PI / 2) / step + rot, m = -Math.PI / 2 + (Math.floor(u) + 0.5 - rot) * step;
   return Math.cos(step / 2) / Math.cos(t - m);
 }
+/* v0.113: биты кольца из n бит — отрезками подряд одного цвета (по кругу: последний отрезок может перейти через бит 0).
+   c(j) — цвет бита: строка, число или объект — сравниваются по JSON. Отрезок: { j — первый бит, len — сколько бит, c — цвет }. */
+function coneSectRuns(n, c){
+  const cs = [], ks = [];
+  for (let j = 0; j < n; j++) { cs.push(c(j)); ks.push(JSON.stringify(cs[j])); }
+  let st = 0; while (st < n && ks[st] === ks[(st + n - 1) % n]) st++;
+  if (st === n) return [{ j: 0, len: n, c: cs[0] }];
+  const out = [];
+  for (let k = 0; k < n; k++) {
+    const j = (st + k) % n;
+    if (k && ks[j] === ks[(j + n - 1) % n]) out[out.length - 1].len++; else out.push({ j, len: 1, c: cs[j] });
+  }
+  return out;
+}
 // путь по кольцу i радиуса r от угла a0 до a1 (ccw — в обратную сторону): у круга — дуга, у многоугольника — ломаная через вершины
 function coneArc(g, cx, cy, i, r, a0, a1, ccw){
   const n = conePoly(i); if (!n) { g.arc(cx, cy, r, a0, a1, !!ccw); return; }
@@ -1354,10 +1373,11 @@ function cone3DDraw(g, o){
     for (const i of secRows) {
       const s = Z.rows[i], n = s && s.length; if (!n) continue;
       const step = 2 * Math.PI / n, rot = coneRotOf(i), c = P(0, 0, ringZ(i)), r = ringR(i);
-      for (let j = 0; j < n; j++) {
-        const a = -Math.PI / 2 + (j - rot) * step, strong = s[j] === "1";
-        g.beginPath(); g.moveTo(c[0], c[1]);
-        for (let q = 0; q <= 6; q++) { const p = at(i, a + step * q / 6, r); g.lineTo(p[0], p[1]); }
+      for (const run of coneSectRuns(n, (j) => s[j] === "1")) {   // v0.113: подряд одинаковые биты — один клин, без швов
+        const a = -Math.PI / 2 + (run.j - rot) * step, strong = run.c, K = Math.max(6, Math.ceil(run.len * 6));
+        g.beginPath();
+        if (run.len < n) g.moveTo(c[0], c[1]);
+        for (let q = 0; q <= K; q++) { const p = at(i, a + run.len * step * q / K, r); if (q || run.len < n) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); }
         g.closePath(); g.globalAlpha = strong ? 0.28 : 0.1; g.fillStyle = strong ? c1 : c0; g.fill();
       }
     }
