@@ -1969,7 +1969,7 @@ function cone3DDraw(g, o){
   const m1 = at(Math.max(0, N - 1), -Math.PI / 2, ringR(Math.max(0, N - 1)) + 0.1), m2 = at(Math.max(0, N - 1), -Math.PI / 2, ringR(Math.max(0, N - 1)) + 0.6);
   g.strokeStyle = cg; g.globalAlpha = 0.35; g.lineWidth = dpr; g.beginPath(); g.moveTo(m1[0], m1[1]); g.lineTo(m2[0], m2[1]); g.stroke(); g.globalAlpha = 1;
   g.fillStyle = cT; g.globalAlpha = 0.7; g.font = `${Math.round(11 * dpr)}px system-ui, sans-serif`;
-  if (!document.body.classList.contains("zen")) g.fillText(`3D · поворот ${Math.round((Z.cone3Yaw ?? 30) % 360)}° · наклон ${Math.round(Z.cone3El ?? 50)}° · высота ×${(hk).toFixed(1)} — тяни: вращать, Ctrl: сдвиг, колесо: масштаб, двойной щелчок: как было`, 8 * dpr, 16 * dpr);
+  if (!document.body.classList.contains("zen")) g.fillText(`3D · поворот ${Math.round((Z.cone3Yaw ?? 30) % 360)}° · наклон ${Math.round(Z.cone3El ?? 50)}° · высота ×${(hk).toFixed(1)}`, 8 * dpr, 16 * dpr);
   g.globalAlpha = 1;
 }
 function coneRing(e){
@@ -2503,7 +2503,7 @@ function renderPyr(force){
     if (round) { g.beginPath(); g.arc(sx[q], sy[q], rad, 0, 2 * Math.PI); g.fill(); } else g.fillRect(sx[q] - rad, sy[q] - rad, 2 * rad, 2 * rad);
   }
   g.globalAlpha = 0.7; g.fillStyle = cT; g.font = `${Math.round(11 * dpr)}px system-ui, sans-serif`;
-  g.fillText(`поворот ${Math.round(((yawD % 360) + 360) % 360)}° · наклон ${Math.round(elD)}° — тяни: вращать, Ctrl: сдвиг, колесо: масштаб, двойной щелчок: как было`, 8 * dpr, 16 * dpr);
+  g.fillText(`поворот ${Math.round(((yawD % 360) + 360) % 360)}° · наклон ${Math.round(elD)}°`, 8 * dpr, 16 * dpr);
   g.globalAlpha = 1;
   // текст
   const kShow = D.K0 + show - 1, onesK = D.perLayer[show - 1], pc = kShow.toString(2).split("").filter(x => x === "1").length;
@@ -3621,6 +3621,16 @@ function layInit(){
   const dim = () => ({ W: Math.max(1, desk.clientWidth), H: Math.max(1, desk.clientHeight) });
   const snap = (v) => Math.round(v / G) * G;
   const snapI = (v) => Math.round(v / STD) * STD;   // v0.149: кнопки — по сетке 32 px, как их стандартная ширина
+  /* v0.150, по снимку раскладки после ⇶ (кнопки торчат из полей влево и вверх): у поля своя сетка — от его угла, с отступом
+     PX слева и PY сверху (под имя поля); кнопка в поле встаёт в клетку этой сетки и не выходит за его левый и верхний край,
+     а по возможности — и за правый и нижний. Свободные кнопки — по сетке стола, как было. */
+  const PX = 8, PY = 24;
+  function gridAt(zone, x, y, w, h){
+    if (!zone) { const { W, H } = dim(); return { x: Math.max(0, Math.min(W - w, snapI(x))), y: Math.max(0, Math.min(H - h, snapI(y))) }; }
+    const r = toPx(zone), x0 = r.x + PX, y0 = r.y + PY;
+    const cx = Math.max(0, Math.floor((r.x + r.w - 4 - w - x0) / STD)), cy = Math.max(0, Math.floor((r.y + r.h - 4 - h - y0) / STD));
+    return { x: x0 + STD * Math.max(0, Math.min(cx, Math.round((x - x0) / STD))), y: y0 + STD * Math.max(0, Math.min(cy, Math.round((y - y0) / STD))) };
+  }
   const pc = (v, T) => +(v / T * 100).toFixed(3);
   const toPx = (z) => { const { W, H } = dim(); return { x: z.x * W / 100, y: z.y * H / 100, w: z.w * W / 100, h: z.h * H / 100 }; };
   const setPx = (z, r) => { const { W, H } = dim(); z.x = pc(r.x, W); z.y = pc(r.y, H); z.w = pc(r.w, W); z.h = pc(r.h, H); };
@@ -3655,6 +3665,7 @@ function layInit(){
     const a = absOf(p), z = p.z && zoneById(p.z);
     el.style.left = Math.round(a.x) + "px"; el.style.top = Math.round(a.y) + "px";
     el.classList.toggle("att", !!z); if (z) el.style.setProperty("--zc", z.c); else el.style.removeProperty("--zc");
+    el.classList.toggle("lhid", !!p.hid);   // v0.150: убрана (Del в раскладке); вернуть — «↺ Кнопки на место»
   }
   const placeAll = () => { if (freed) litEls().forEach(placeItem); };
   function stdSize(el){
@@ -3676,20 +3687,21 @@ function layInit(){
       groups.get(k).push({ el, p, a: absOf(p), w: el.offsetWidth });
     });
     groups.forEach((list, k) => {
-      const zone = k ? zoneById(k) : null;
+      const zone = k ? zoneById(k) : null, zr = zone ? toPx(zone) : null;
+      const X0 = zr ? zr.x + PX : 0, Y0 = zr ? zr.y + PY : 0, right = zr ? zr.x + zr.w - 4 : W;   // v0.150: в поле — от его угла
+      const gx = (v) => X0 + Math.max(0, snapI(v - X0)), gy = (v) => Y0 + Math.max(0, snapI(v - Y0));
       list.sort((u, v) => u.a.y - v.a.y || u.a.x - v.a.x);
       const rows = [];
       list.forEach(b => { const r = rows[rows.length - 1]; if (r && Math.abs(b.a.y - r.y0) <= 12) r.items.push(b); else rows.push({ y0: b.a.y, items: [b] }); });
       let yPrev = -Infinity;
       rows.forEach((r, ri) => {
-        let y = compact && ri ? yPrev + STD : snapI(r.y0);
+        let y = compact && ri ? yPrev + STD : gy(r.y0);
         if (y <= yPrev) y = yPrev + STD;
         yPrev = y;
         let end = -Infinity;
-        const zr = zone ? toPx(zone) : null, right = zr ? zr.x + zr.w : W;
-        const items = r.items.sort((u, v) => u.a.x - v.a.x), x0 = snapI(items[0].a.x);
+        const items = r.items.sort((u, v) => u.a.x - v.a.x), x0 = zr ? X0 : gx(items[0].a.x);
         items.forEach(b => {
-          let x = Math.max(snapI(b.a.x), end);
+          let x = Math.max(gx(b.a.x), end);
           if (x + b.w > right && end > -Infinity) { y += STD; yPrev = y; x = x0; }   // не влезла — перенос на новую строку
           end = x + b.w + 4;
           setAbs(b.p, { x, y }, zone);
@@ -3754,7 +3766,7 @@ function layInit(){
   btn.onclick = () => setOn(!on);
   if (add) add.onclick = () => { const { W, H } = dim(); newZone(clampR({ x: snap(W / 2 - 80), y: snap(H / 2 - 48), w: 160, h: 96 })); draw(); save(); };
   if (rst) rst.onclick = () => {
-    if (!confirm("Вернуть все кнопки на полосу кнопок, как было? Поля останутся.")) return;
+    if (!confirm("Вернуть все кнопки на полосу кнопок, как было (и убранные тоже)? Поля останутся.")) return;
     Z.lay.items = {}; save(); location.reload();
   };
 
@@ -3765,21 +3777,22 @@ function layInit(){
     e.preventDefault(); e.stopPropagation();
     if (selItem) selItem.classList.remove("lsel");
     selItem = el; el.classList.add("lsel");
+    if (sel >= 0) { sel = -1; draw(); }   // v0.150: выбрана кнопка — поле не выбрано, Del уберёт кнопку
     drag = { mode: "item", el, x0: e.clientX, y0: e.clientY, l0: el.offsetLeft, t0: el.offsetTop, hot: null };
     el.setPointerCapture(e.pointerId);   // захват — на саму кнопку: у контейнера pointer-events: none
   }, true);
   itemsBox.addEventListener("pointermove", (e) => {
     if (!drag || drag.mode !== "item") return;
-    const { W, H } = dim(), el = drag.el;
-    const x = Math.max(0, Math.min(W - el.offsetWidth, snapI(drag.l0 + e.clientX - drag.x0)));
-    const y = Math.max(0, Math.min(H - el.offsetHeight, snapI(drag.t0 + e.clientY - drag.y0)));
-    el.style.left = x + "px"; el.style.top = y + "px";
-    const hot = zoneAt(x + el.offsetWidth / 2, y + el.offsetHeight / 2);
+    const el = drag.el, w = el.offsetWidth, h = el.offsetHeight;
+    const rx = drag.l0 + e.clientX - drag.x0, ry = drag.t0 + e.clientY - drag.y0;
+    const hot = zoneAt(rx + w / 2, ry + h / 2), g = gridAt(hot, rx, ry, w, h);   // v0.150: клетка того поля, над которым кнопка
+    el.style.left = g.x + "px"; el.style.top = g.y + "px";
+    drag.zone = hot;
     if (hot !== drag.hot) { drag.hot = hot; draw(hot); }
   });
   const itemUp = () => {
     if (!drag || drag.mode !== "item") return;
-    const el = drag.el, zone = zoneAt(el.offsetLeft + el.offsetWidth / 2, el.offsetTop + el.offsetHeight / 2);
+    const el = drag.el, zone = drag.zone !== undefined ? drag.zone : zoneAt(el.offsetLeft + el.offsetWidth / 2, el.offsetTop + el.offsetHeight / 2);
     const p = IT[el.dataset.lk] || (IT[el.dataset.lk] = {}), was = p.z;
     setAbs(p, { x: el.offsetLeft, y: el.offsetTop }, zone);
     drag = null; placeItem(el); draw(); save();
@@ -3795,6 +3808,7 @@ function layInit(){
     e.preventDefault();
     const d = desk.getBoundingClientRect(), px = e.clientX - d.left, py = e.clientY - d.top;
     const h = e.target.closest(".lzh"), zEl = e.target.closest(".lz");
+    if (selItem) { selItem.classList.remove("lsel"); selItem = null; }
     if (zEl) {
       sel = +zEl.dataset.i;
       // двойной щелчок ловится здесь: слой держит мышь (setPointerCapture), и dblclick пришёл бы в слой, а не в поле
@@ -3848,6 +3862,15 @@ function layInit(){
     if (!on) return;
     if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) && !e.target.closest(".lit")) return;
     if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); setOn(false); return; }
+    /* v0.150, «поле 4 — это то, что удалить» (туда сложены подписи групп и «весь:», которые на столе не нужны): Del у
+       выбранной кнопки или подписи — убрать её со стола (IT[k].hid); всё убранное возвращает «↺ Кнопки на место». */
+    if ((e.key === "Delete" || e.key === "Backspace") && selItem) {
+      e.preventDefault(); e.stopImmediatePropagation();
+      const el = selItem, p = IT[el.dataset.lk] || (IT[el.dataset.lk] = {});
+      p.hid = true; el.classList.remove("lsel"); selItem = null; placeItem(el); draw(); save();
+      say(`🗑 «${(el.textContent || el.id).trim().slice(0, 30) || el.id}» убрана со стола. Вернуть всё — «↺ Кнопки на место».`);
+      return;
+    }
     if ((e.key === "Delete" || e.key === "Backspace") && sel >= 0) {
       e.preventDefault(); e.stopImmediatePropagation();
       const z = Zs()[sel];
