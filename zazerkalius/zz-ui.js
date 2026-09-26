@@ -3599,6 +3599,114 @@ function soloApply(){
   document.title = t.replace(/^[^\p{L}\d]+/u, "Zerkalius ") + " — " + ((document.title.match(/v[\d.]+/) || [""])[0]);
   $("desk").scrollTop = 0;
 }
+/* ─── ▦ Раскладка (v0.145) ───────────────────────────────────────────────────────────────────
+   Запрос пользователя (после трёх переделок полосы кнопок конуса вслепую): «сделай в самой странице режим раскладки…
+   сначала чисто поля, просто прямоугольные, чтобы мог создавать я руками». Пока только на странице «◯ Конус»: «▦ Раскладка»
+   кладёт поверх стола сетку, на ней — поля-прямоугольники: тянешь по пустому — новое поле, тянешь поле — двигается, за край
+   или угол — размер (шаг сетки 8 px), двойной щелчок — имя, правый — цвет, Del — удалить, Esc или «✓ Готово» — выйти.
+   Поля хранятся в Z.lay в процентах стола (на другом экране — те же доли) и едут в «💾 Всё». Кнопки в поля — следующий шаг. */
+function layInit(){
+  const desk = $("desk"), btn = $("bLay"), add = $("bLayAdd");
+  if (!desk || !btn) return;
+  if (!Z.lay || !Array.isArray(Z.lay.zones)) Z.lay = { zones: [] };
+  const Zs = () => Z.lay.zones;
+  const G = 8, MIN = 24, COLS = ["#b98cf0", "#38bdf8", "#4ade80", "#fb7c5b", "#fbbf24", "#f472b6", "#94a3b8"];
+  const HANDLES = ["n", "s", "e", "w", "ne", "nw", "se", "sw"].map(d => `<i class="lzh lzh-${d}" data-d="${d}"></i>`).join("");
+  const layer = document.createElement("div");
+  layer.id = "layLayer";
+  desk.appendChild(layer);
+  let on = false, sel = -1, drag = null, lastDown = {};
+  const dim = () => ({ W: Math.max(1, desk.clientWidth), H: Math.max(1, desk.clientHeight) });
+  const snap = (v) => Math.round(v / G) * G;
+  const toPx = (z) => { const { W, H } = dim(); return { x: z.x * W / 100, y: z.y * H / 100, w: z.w * W / 100, h: z.h * H / 100 }; };
+  const setPx = (z, r) => { const { W, H } = dim(); z.x = +(r.x / W * 100).toFixed(3); z.y = +(r.y / H * 100).toFixed(3); z.w = +(r.w / W * 100).toFixed(3); z.h = +(r.h / H * 100).toFixed(3); };
+  const clampR = (r) => { const { W, H } = dim(); r.w = Math.max(MIN, Math.min(r.w, W)); r.h = Math.max(MIN, Math.min(r.h, H)); r.x = Math.max(0, Math.min(r.x, W - r.w)); r.y = Math.max(0, Math.min(r.y, H - r.h)); return r; };
+  function draw(){
+    layer.innerHTML = Zs().map((z, i) => {
+      const r = toPx(z);
+      return `<div class="lz${i === sel ? " sel" : ""}" data-i="${i}" style="left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;--zc:${z.c}">` +
+        `<span class="lzn">${esc(z.name)}</span><span class="lzs">${Math.round(r.w)} × ${Math.round(r.h)}</span>${HANDLES}</div>`;
+    }).join("") +
+      `<div id="layHint">▦ Тяни по пустому — новое поле · тяни поле — двигать · за край или угол — размер · двойной щелчок — имя · правый щелчок — цвет · Del — удалить · Esc — готово</div>`;
+  }
+  function newZone(r){
+    const k = Zs().length, z = { name: "Поле " + (k + 1), c: COLS[k % COLS.length], x: 0, y: 0, w: 0, h: 0 };
+    setPx(z, r); Zs().push(z); sel = Zs().length - 1; return z;
+  }
+  function setOn(v){
+    on = !!v; sel = on ? sel : -1;
+    document.body.classList.toggle("lay", on);
+    btn.textContent = on ? "✓ Готово" : "▦ Раскладка"; btn.classList.toggle("on", on);
+    if (on) { draw(); say("▦ Раскладка: тяни по пустому месту — новое поле. Esc или «✓ Готово» — выйти."); }
+    else save();
+  }
+  btn.onclick = () => setOn(!on);
+  if (add) add.onclick = () => { const { W, H } = dim(); newZone(clampR({ x: snap(W / 2 - 80), y: snap(H / 2 - 48), w: 160, h: 96 })); draw(); save(); };
+  layer.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const d = desk.getBoundingClientRect(), px = e.clientX - d.left, py = e.clientY - d.top;
+    const h = e.target.closest(".lzh"), zEl = e.target.closest(".lz");
+    if (zEl) {
+      sel = +zEl.dataset.i;
+      // двойной щелчок ловится здесь: слой держит мышь (setPointerCapture), и dblclick пришёл бы в слой, а не в поле
+      const t = performance.now();
+      if (!h && lastDown.i === sel && t - lastDown.t < 400) { lastDown = {}; drag = null; rename(sel); return; }
+      lastDown = { i: sel, t };
+      drag = { mode: h ? h.dataset.d : "move", z: Zs()[sel], r0: toPx(Zs()[sel]), x0: px, y0: py };
+    } else {
+      const x = snap(px), y = snap(py);
+      drag = { mode: "new", x0: x, y0: y, z: null };
+      sel = -1;
+    }
+    layer.setPointerCapture(e.pointerId);
+    draw();
+  });
+  layer.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const d = desk.getBoundingClientRect(), px = e.clientX - d.left, py = e.clientY - d.top;
+    if (drag.mode === "new") {
+      const x1 = snap(px), y1 = snap(py);
+      if (!drag.z && Math.abs(x1 - drag.x0) < MIN && Math.abs(y1 - drag.y0) < MIN) return;
+      const r = clampR({ x: Math.min(drag.x0, x1), y: Math.min(drag.y0, y1), w: Math.abs(x1 - drag.x0), h: Math.abs(y1 - drag.y0) });
+      if (!drag.z) drag.z = newZone(r); else setPx(drag.z, r);
+      draw(); return;
+    }
+    const dx = snap(px - drag.x0), dy = snap(py - drag.y0), r = Object.assign({}, drag.r0), m = drag.mode;
+    if (m === "move") { r.x = snap(r.x + dx); r.y = snap(r.y + dy); }
+    else {
+      if (m.includes("e")) r.w = snap(drag.r0.w + dx);
+      if (m.includes("s")) r.h = snap(drag.r0.h + dy);
+      if (m.includes("w")) { const x = snap(drag.r0.x + dx); r.w = drag.r0.x + drag.r0.w - x; r.x = x; }
+      if (m.includes("n")) { const y = snap(drag.r0.y + dy); r.h = drag.r0.y + drag.r0.h - y; r.y = y; }
+      if (r.w < MIN) { if (m.includes("w")) r.x -= MIN - r.w; r.w = MIN; }
+      if (r.h < MIN) { if (m.includes("n")) r.y -= MIN - r.h; r.h = MIN; }
+    }
+    setPx(drag.z, clampR(r)); draw();
+  });
+  const up = () => { if (!drag) return; drag = null; draw(); save(); };
+  layer.addEventListener("pointerup", up); layer.addEventListener("pointercancel", up);
+  function rename(i){
+    const z = Zs()[i], v = prompt("Имя поля:", z.name);
+    if (v !== null && v.trim()) { z.name = v.trim().slice(0, 40); save(); }
+    draw();
+  }
+  layer.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    const zEl = e.target.closest(".lz"); if (!zEl) return;
+    const z = Zs()[+zEl.dataset.i]; z.c = COLS[(COLS.indexOf(z.c) + 1) % COLS.length]; sel = +zEl.dataset.i; draw(); save();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (!on) return;
+    if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); setOn(false); return; }
+    if ((e.key === "Delete" || e.key === "Backspace") && sel >= 0) {
+      e.preventDefault(); e.stopImmediatePropagation();
+      const z = Zs().splice(sel, 1)[0]; sel = -1; draw(); save(); say(`▦ Поле «${z.name}» удалено.`);
+    }
+  }, true);
+  if (window.ResizeObserver) new ResizeObserver(() => { if (on) draw(); }).observe(desk);
+}
 function layoutAll(reset){
   const def = defaultLayout();
   if (reset) document.querySelectorAll(".win.docked").forEach(undockWin);   // v0.025: «📐 Разложить» — все окна на стол
@@ -3957,7 +4065,7 @@ function init(){
   if ((Z.layoutVer | 0) < 10) { layoutAll(true); Z.layoutVer = 10; save(); }
   else layoutAll(false);
   dockRestore();   // v0.025: окна, пристыкованные под полем строк
-  if (ZZ_SOLO) soloApply();   // v0.141
+  if (ZZ_SOLO) { soloApply(); layInit(); }   // v0.141; v0.145 — ▦ раскладка
   // v0.026: высоту поля строк, растянутую за угол, запоминаем (только когда под ним окна).
   if (window.ResizeObserver) {
     let th = 0;
