@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.152. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.153. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.152</title>
+<title>Zazerkalius — v0.153</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -68,7 +68,7 @@ code{font-family:var(--ff);font-size:.95em}
 #top .ver{color:var(--dim);font-size:12px}
 #top .sp{flex:1}
 /* v0.059: шрифт и размер — в левой панели */
-#fontBar{display:flex;flex-direction:column;gap:4px;padding:0 10px 6px}
+#fontBar{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px;padding:0 10px 6px}   /* v0.153: шрифт и размер — в один ряд */
 #fontBar label{display:flex;align-items:center;gap:6px}
 #fontBar select,#fontBar input[type=range]{flex:1;min-width:0;width:auto !important}
 body.pane-icons #fontBar{display:none}
@@ -188,7 +188,7 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 .rw.cur > span{background:rgba(185,140,240,.14)}
 .rw .no{text-align:right;color:var(--dim);font-size:11px;position:sticky;left:0;z-index:1;background:var(--bg);display:flex;align-items:center;justify-content:flex-end}
 .rw.cur > .no{background:var(--bg);box-shadow:inset 3px 0 0 var(--acc)}
-.rw .bits{font-family:var(--ff);font-size:var(--fs);line-height:1.25}
+.rw .bits{font-family:var(--ff);font-size:var(--fs);line-height:var(--rlh, 1.25)}   /* v0.153: --rlh — межстрочный, rowsFit ужимает его до 0.7, когда строки не влезают по высоте */
 /* v0.071: ◸ 90° — межсимвольный под прямой угол при вершине (--ls90 считает tri90Apply); слева тот же отступ — центр не съезжает */
 #rowList.tri90 .rw .bits{letter-spacing:var(--ls90, 0px);padding-left:var(--ls90, 0px)}
 #rowList.multi .rw .bits{border-left:1px dashed var(--line)}
@@ -204,7 +204,7 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 .ovr{display:flex;align-items:stretch}
 .rw.ovr{display:flex}
 .ovr .no{min-width:3.2em;width:auto;flex:0 0 auto;position:sticky;left:0;z-index:1;background:var(--bg);text-align:right;color:var(--dim);font-size:11px;display:flex;align-items:center;justify-content:flex-end;padding:0 8px}
-.ovr .trk{position:relative;display:block;flex:0 0 auto;font-family:var(--ff);font-size:var(--fs);line-height:1.25;height:1.25em;padding:0}
+.ovr .trk{position:relative;display:block;flex:0 0 auto;font-family:var(--ff);font-size:var(--fs);line-height:var(--rlh, 1.25);height:calc(var(--rlh, 1.25) * 1em);padding:0}
 .axrow{position:sticky;top:0;z-index:4;background:var(--panel);border-bottom:1px solid var(--line)}
 .axrow .no{background:var(--panel)}
 .axrow .trk{height:1.3em}   /* кегль — тот же, что у строк: места осей заданы в ch, и ручки должны стоять над своими чертами */
@@ -227,6 +227,8 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 /* Треугольник по маске (v0.011) */
 #maskBar,#maskBar2{display:flex;gap:4px;align-items:center;padding:0 10px 6px}
 #maskBar2 select{flex:1;min-width:0}
+#maskBar2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}   /* v0.153: список и кнопка — пополам */
+#maskBar2 > button{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* v0.012: ввод строки — над полем строк */
 #field #rowInputBar{padding:6px 10px;border-bottom:1px solid var(--line);background:var(--panel)}
 #field #rowInput{font-size:14px}
@@ -301,6 +303,14 @@ body.cutdrag,body.cutdrag *{cursor:ns-resize !important}
 .rw.hid > .no{color:var(--dim);opacity:.6;cursor:default}
 .rw.hid:hover > span{background:transparent}
 #rowList.multi .rw.hid .bits.la{background:transparent}
+/* v0.153, «в строках уменьши межстрочный отступ до 0.7 минимум, когда не все строки помещаются по высоте»: поле ужато (.rlsq) —
+   колонка номеров (замок, поворот, номер, числа) не выше строки бит: её значки и цифры мельчают вместе с шагом строк */
+#rowList.rlsq{--rlpx:calc(var(--fs) * var(--rlh, 1.25))}
+#rowList.rlsq .rw > .no{height:var(--rlpx);overflow:hidden;font-size:min(13px, calc(var(--rlpx) * .82))}
+#rowList.rlsq .rw > .no > *{line-height:1;padding-top:0;padding-bottom:0}
+#rowList.rlsq .rw > .no > .rlk{font-size:min(14px, calc(var(--rlpx) * .82));border-width:0}
+#rowList.rlsq .rw > .no > .rc,#rowList.rlsq .rw.fillrw > .no > span{font-size:min(12px, calc(var(--rlpx) * .8))}
+#rowList.rlsq .rw .more{font-size:min(11px, calc(var(--rlpx) * .8));line-height:1}
 /* v0.114: строка для заполнения под чертой — пустые ячейки пунктиром; щелчок — пусто → 1 → 0; «＋» — в строки */
 .rw.fillrw > span{background:transparent !important}
 .fcs{display:inline-block;white-space:nowrap}
@@ -316,7 +326,10 @@ body.cutdrag,body.cutdrag *{cursor:ns-resize !important}
 /* Шаблоны (v0.010) */
 #tplBar{display:flex;gap:4px;padding:0 10px 6px}
 #tplBar button{flex:1;padding:2px 4px}
-#tplList{flex:1;overflow:auto;padding:0 10px 10px;display:flex;flex-direction:column;gap:3px;min-height:60px}
+#tplList{flex:1;overflow:auto;padding:0 10px 10px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-content:start;gap:3px 4px;min-height:60px}   /* v0.153: шаблоны — по два в ряд; свои (с ⚑ и ✕) — во всю ширину */
+#tplList .tpl-sep,#tplList .tpl.mine{grid-column:1 / -1}
+#tplList .tpl{min-width:0}
+#tplList .tb{min-width:0;white-space:nowrap}
 /* v0.094: свёрнутые окна в левой панели (при «⇆ поле справа») */
 #paneWins{display:flex;flex-direction:column;gap:3px;padding:0 10px 10px;overflow:auto;max-height:45%}
 #paneWins button{text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -333,6 +346,9 @@ body.pane-icons #paneWins{padding:4px}
 #w-cone .cgrp{display:inline-flex;flex-wrap:wrap;align-items:center;gap:3px 4px;padding:2px 6px 2px 4px;border:1px solid var(--line);border-radius:6px}
 #w-cone .cgrp > .glab{font-size:10.5px;letter-spacing:.3px;text-transform:uppercase;color:var(--acc);margin-right:2px;white-space:nowrap}
 #w-cone .cgrp > .glab2{font-size:11px;color:var(--dim);margin-left:4px}
+/* v0.153, «этой группе кнопок задай свой цвет полупрозрачный»: «Кручение» — своим, золотистым полупрозрачным фоном и рамкой */
+#w-cone .cgrp.cg-spin{background:rgba(255,209,102,.13);border-color:rgba(255,209,102,.5)}
+#w-cone .cgrp.cg-spin > .glab{color:var(--gold)}
 #w-cone #coneCycle{flex:1 0 100%;margin:0 2px !important;height:1.35em;line-height:1.35em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #bConeAuto{min-width:7.2em} #bConeDir{min-width:8.4em} #bConeRec{min-width:6.4em} #coneSlitV{display:inline-block;min-width:2.8em}
 #w-cone .wbody > #coneBot{position:absolute;right:0;left:auto;top:40%;bottom:0;width:min(380px,44%);z-index:3;padding:4px 8px;background:color-mix(in srgb, var(--panel) 80%, transparent);display:flex;flex-direction:column;gap:2px;overflow:hidden;border-left:1px solid var(--line)}   /* v0.140: текст + лог лазера — колонкой справа */
@@ -520,7 +536,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.152</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.153</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
@@ -547,32 +563,32 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
     <button id="bPaneIcons" type="button" title="Свернуть панель в столбик значков (подписи — во всплывающих подсказках)">◂</button>
     <div class="pane-head">Построения</div>
     <div id="rowBtns">
-      <button id="bSierpNext" title="🔺+1 — под текущей строкой новая, длиной на 1 больше: строку обкладывают нулями по краям и под каждой парой соседей пишут их XOR. Это треугольник Паскаля по модулю 2; от «1» — ровно Серпинский. Нижние строки сдвигаются, ничего не затирается; текущей становится новая — жми подряд">🔺+1 Строка</button>
-      <button id="bNumNext" title="🔢+1 — под текущей строкой следующий номер: строка читается как двоичное число, новая — на единицу больше. Ведущие нули сохраняются: 0011 → 0100">🔢+1 Номер</button>
-      <button id="bRandom" title="Случайная строка той же длины, что текущая (или 16 бит) — под текущей">🎲 Случайная</button>
-      <button id="bSeed" title="Начать с «1» — зерно Серпинского; дальше 🔺+1">● Зерно «1»</button>
-      <button id="bVMirror" title="⇅ ЗЕРКАЛО ПО ГОРИЗОНТУ — весь столбик: первая ↔ последняя, вторая ↔ предпоследняя. Биты внутри строк не трогаются. Сама себе обратная; вместе с разворотом ⇄ и инверсией 🔁 даёт двумерное зазеркалье">⇅ Весь столбик</button>
-      <button id="bVMirrorCur" title="⇅ ВОКРУГ ТЕКУЩЕЙ — зеркало проходит ЧЕРЕЗ текущую строку: она стоит на месте, соседние меняются парами (выше на k ↔ ниже на k). Куда отражению не хватает строк — остаётся как было. Сама себе обратная">⇅ Вокруг тек.</button>
+      <button id="bSierpNext" title="🔺+1 — под текущей строкой новая, длиной на 1 больше: строку обкладывают нулями по краям и под каждой парой соседей пишут их XOR. Это треугольник Паскаля по модулю 2; от «1» — ровно Серпинский. Нижние строки сдвигаются, ничего не затирается; текущей становится новая — жми подряд">🔺 +1 стр.</button>
+      <button id="bNumNext" title="🔢+1 — под текущей строкой следующий номер: строка читается как двоичное число, новая — на единицу больше. Ведущие нули сохраняются: 0011 → 0100">🔢 +1 ном.</button>
+      <button id="bRandom" title="Случайная строка той же длины, что текущая (или 16 бит) — под текущей">🎲 Случ.</button>
+      <button id="bSeed" title="Начать с «1» — зерно Серпинского; дальше 🔺+1">● Зерно</button>
+      <button id="bVMirror" title="⇅ ЗЕРКАЛО ПО ГОРИЗОНТУ — весь столбик: первая ↔ последняя, вторая ↔ предпоследняя. Биты внутри строк не трогаются. Сама себе обратная; вместе с разворотом ⇄ и инверсией 🔁 даёт двумерное зазеркалье">⇅ Столбик</button>
+      <button id="bVMirrorCur" title="⇅ ВОКРУГ ТЕКУЩЕЙ — зеркало проходит ЧЕРЕЗ текущую строку: она стоит на месте, соседние меняются парами (выше на k ↔ ниже на k). Куда отражению не хватает строк — остаётся как было. Сама себе обратная">⇅ Вокруг</button>
       <!-- v0.065: «добавь кнопки: инверсия и реверс» — над выделенными строками (ничего не выделено — над текущей) -->
-      <button id="bRowInv" title="🔁 Инверсия: каждый бит наоборот (0 ↔ 1) — у выделенных строк, ничего не выделено — у текущей (↩ вернёт)">🔁 Инверсия</button>
+      <button id="bRowInv" title="🔁 Инверсия: каждый бит наоборот (0 ↔ 1) — у выделенных строк, ничего не выделено — у текущей (↩ вернёт)">🔁 Инв.</button>
       <button id="bRowInvFix" title="🔁* Инверсия только неподвижных: переворачиваются только биты, равные своему зеркальному (бит k и бит «длина−1−k»; при «🟢 неподв. ⇄🔁» — неподвижные при реверс-инверсии), остальные на месте. У выделенных строк, ничего не выделено — у текущей (↩ вернёт)">🔁* Неподв.</button>
-      <button id="bRowInvHalf" title="🔁½ Инверсия второй половины строки: биты правой половины наоборот, левая на месте (у нечётной длины средний бит тоже на месте). Палиндром чётной длины от этого становится антипалиндромом и обратно. У выделенных строк, ничего не выделено — у текущей (↩ вернёт)">🔁½ Инв ½</button>
+      <button id="bRowInvHalf" title="🔁½ Инверсия второй половины строки: биты правой половины наоборот, левая на месте (у нечётной длины средний бит тоже на месте). Палиндром чётной длины от этого становится антипалиндромом и обратно. У выделенных строк, ничего не выделено — у текущей (↩ вернёт)">🔁½ Полов.</button>
       <button id="bRowRev" title="⇄ Реверс: строка задом наперёд — у выделенных строк, ничего не выделено — у текущей (↩ вернёт)">⇄ Реверс</button>
       <button id="bDelRow" title="Удалить текущую строку">✕ Удалить</button>
-      <button id="bClear" title="Очистить весь столбик">🧹 Очистить</button>
-      <button id="bRowsStart" title="↺ Начальные строки: столбик — снова тот, с которого страница начинается: 1, 11, 101, 1111, 10001, 110011, 1010101, 11111111, 100000001. Строки за чертой рабочего поля тоже убираются. Другие поля не трогаются (↩ вернёт)">↺ Начальные</button>
+      <button id="bClear" title="Очистить весь столбик">🧹 Очист.</button>
+      <button id="bRowsStart" title="↺ Начальные строки: столбик — снова тот, с которого страница начинается: 1, 11, 101, 1111, 10001, 110011, 1010101, 11111111, 100000001. Строки за чертой рабочего поля тоже убираются. Другие поля не трогаются (↩ вернёт)">↺ Начало</button>
       <!-- v0.007: манчестерский код одной кнопкой; правый щелчок — режим по кругу -->
-      <button id="bMan" class="wide" title="МАНЧЕСТЕРСКИЙ КОД. Левый щелчок — сделать; правый — сменить режим по кругу (⇉ код ↔ ⇇ раскод). ⇉ Код: каждый бит текущей строки становится парой, 1 → 10, 0 → 01; строка удваивается, новая встаёт под текущей. Жми подряд от «0» — выйдет Туэ–Морс. ⇇ Раскод: от каждой пары берётся первый бит, строка вдвое короче; пары 00 и 11 в коде не бывают — если есть, это ошибка, и она показывается, а раскод не делается">⇉ Код 1→10, 0→01</button>
+      <button id="bMan" title="МАНЧЕСТЕРСКИЙ КОД. Левый щелчок — сделать; правый — сменить режим по кругу (⇉ код ↔ ⇇ раскод). ⇉ Код: каждый бит текущей строки становится парой, 1 → 10, 0 → 01; строка удваивается, новая встаёт под текущей. Жми подряд от «0» — выйдет Туэ–Морс. ⇇ Раскод: от каждой пары берётся первый бит, строка вдвое короче; пары 00 и 11 в коде не бывают — если есть, это ошибка, и она показывается, а раскод не делается">⇉ Код</button>
     </div>
     <!-- v0.011: треугольник по маске — строки 1…N, каждая заполнена маской -->
     <div class="pane-head">△ Треугольник из строки</div>
     <!-- v0.047: «пусть строится от выделенной, поля рядом с кнопкой удали» — строка и число строк больше не вписываются -->
     <div id="maskBar2">
       <select id="maskMode" title="«с начала» — каждая строка начинает маску заново: 1, 10, 101, 1010…; «лентой» — маска идёт подряд через все строки, фаза сдвигается от строки к строке">
-        <option value="pascal">🔺 Паскаль от строки</option><option value="descent">▽ спуск от строки</option><option value="ring">◯ кольцом от строки (цилиндр)</option>
-        <option value="start">маской, каждая с начала</option><option value="tape">маской, сплошной лентой</option>
+        <option value="pascal" title="Паскаль от строки">🔺 Паскаль</option><option value="descent" title="спуск от строки">▽ Спуск</option><option value="ring" title="кольцом от строки (цилиндр)">◯ Кольцо</option>
+        <option value="start" title="маской, каждая строка с начала">▦ Маска</option><option value="tape" title="маской, сплошной лентой">〰 Лента</option>
       </select>
-      <button id="bMaskTri" title="Построить от текущей (выделенной) строки и вставить под ней (↩ вернёт). Строк: 🔺 Паскаль и маской — по длине строки, но не меньше 16; ▽ спуск — до одного бита; ◯ кольцом — пока строка не повторится">△ Построить</button>
+      <button id="bMaskTri" title="Построить от текущей (выделенной) строки и вставить под ней (↩ вернёт). Строк: 🔺 Паскаль и маской — по длине строки, но не меньше 16; ▽ спуск — до одного бита; ◯ кольцом — пока строка не повторится">△ Строить</button>
     </div>
     <!-- v0.010: шаблоны — по щелчку вставляются под текущей строкой; свои — «＋ Строку» / «＋ Столбик» -->
     <!-- v0.059: «в левое меню» — шрифт и размер цифр перенесены из шапки сюда -->
@@ -591,7 +607,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
     </div>
     <div class="pane-head">Шаблоны</div>
     <div id="tplBar">
-      <button id="bTplRow" title="Сохранить ТЕКУЩУЮ строку своим шаблоном (запоминается). Щелчок по шаблону вставит её под текущей">＋ Строку</button>
+      <button id="bTplRow" title="Сохранить ТЕКУЩУЮ строку своим шаблоном (запоминается). Щелчок по шаблону вставит её под текущей">＋ Строка</button>
       <button id="bTplAll" title="Сохранить ВЕСЬ столбик одним шаблоном (запоминается). Щелчок вставит все его строки под текущей">＋ Столбик</button>
     </div>
     <div id="tplList"></div>
@@ -1050,7 +1066,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
             <button id="bConeMirApply" title="⇄ по оси: отразить строки выделенных колец (или текущего) по их оси — это «реверс» кольца; при «180°» — повернуть на полкруга (↩ вернёт)">⇄ по оси</button>
             <button id="bConeRotClear" title="↺ Снять накрутку «на вид» (↻) — у выделенных колец, ничего не выделено — у всех. Строки не меняются. Одно кольцо — щелчком по его «↻k» у номера строки">↺ снять ↻</button>
           </div>
-          <div class="cgrp" title="Весь конус и кручение колец: режим, ▶ / ⏸, шаг ◀ ▶|, скорость, всё на места"><span class="glab">Кручение</span>
+          <div class="cgrp cg-spin" title="Весь конус и кручение колец: режим, ▶ / ⏸, шаг ◀ ▶|, скорость, всё на места"><span class="glab">Кручение</span>
             <span class="glab2">весь:</span>
             <button id="bConeSpinL" title="Крутить весь конус против часовой — щелчок 15°, держишь — крутится. Правый щелчок — вернуть к началу (0°)">⟲</button>
             <button id="bConeSpinR" title="Крутить весь конус по часовой — щелчок 15°, держишь — крутится. Правый щелчок — вернуть к началу (0°)">⟳</button>

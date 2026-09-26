@@ -319,6 +319,7 @@ function renderRowsOver(){
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
   $("fieldInfo").textContent = `наложение ${N} полей · рабочее ${Z.lane + 1} · ${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1}` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "");
   $("fieldInfo").title = $("fieldInfo").textContent;   // v0.077: целиком — в подсказке
+  rowsFit();   // v0.153
   const c = L.querySelector(".rw.cur > .no");
   if (c) c.scrollIntoView({ block: "nearest" });
 }
@@ -455,6 +456,28 @@ function fillRowHtml(N){
   return h + "</div>";
 }
 function hidRowHtml(i, cells){ return '<div class="rw hid" data-h="' + i + '"><span class="no" title="за границей — строки как будто нет"><span></span><span></span><span class="rn">' + (i + 1) + "</span></span>" + cells + "</div>"; }
+/* v0.153, «в строках уменьши межстрочный отступ до 0.7 минимум, когда не все строки помещаются по высоте»: после отрисовки поле
+   меряется; влезают — межстрочный обычный (1.25), нет — сжимается ровно настолько, чтобы влезли, но не ниже 0.7 (дальше — прокрутка).
+   Ужатое поле (.rlsq) держит и колонку номеров в высоту строки, иначе замок 🔒 не дал бы строке стать ниже. */
+const RL_MAX = 1.25, RL_MIN = 0.7;
+function rowsFit(){
+  const L = $("rowList"); if (!L || !L.clientHeight) return;
+  const was = L.style.getPropertyValue("--rlh");
+  L.classList.remove("rlsq"); L.style.removeProperty("--rlh");
+  if (L.scrollHeight <= L.clientHeight + 1) { if (was) rowsFitDone(); return; }
+  const n = L.querySelectorAll(".rw:not(.lhrow)").length, fs = Z.fs || 16; if (!n) return;
+  L.classList.add("rlsq");
+  let rl = RL_MAX;
+  for (let k = 0; k < 3; k++) {   // шаг строки округляется до пикселя — две-три поправки
+    const over = L.scrollHeight - L.clientHeight; if (over <= 0) break;
+    const nx = Math.max(RL_MIN, rl - over / n / fs - (k ? 0.5 / fs : 0));
+    if (nx >= rl) break;
+    rl = nx; L.style.setProperty("--rlh", rl.toFixed(3));
+    if (rl <= RL_MIN) break;
+  }
+  if (L.style.getPropertyValue("--rlh") !== was) rowsFitDone();
+}
+function rowsFitDone(){ if (Z.tri90) tri90Apply(); }   // ◸ 90° считает межсимвольный от шага строк
 function renderRows(){
   if (rowEditing >= 0) return;
   syncLane();
@@ -502,6 +525,7 @@ function renderRows(){
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
   $("fieldInfo").textContent = (N > 1 ? `поле ${Z.lane + 1} из ${N} · ` : "") + `${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1} (${cur().length} бит)` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowChgInfo();
   $("fieldInfo").title = $("fieldInfo").textContent;   // v0.077: целиком — в подсказке
+  rowsFit();   // v0.153
   const c = L.querySelector(".rw.cur > .bits.la") || L.querySelector(".rw.cur > .no");
   if (c) c.scrollIntoView({ block: "nearest", inline: "nearest" });
 }
@@ -612,14 +636,14 @@ function editRowInPlace(i){
 function zzThueMorse(n){ let o = ""; for (let i = 0; i < n; i++) { let x = i, p = 0; while (x) { p ^= x & 1; x >>>= 1; } o += p ? "1" : "0"; } return o; }
 const TPL_BUILTIN = [
   { name: "● 1", title: "Зерно Серпинского — дальше 🔺+1", rows: () => ["1"] },
-  { name: "🔺 Серпинский ×16", title: "16 строк треугольника Паскаля по модулю 2 от «1»", rows: () => { const r = ["1"]; while (r.length < 16) r.push(zzPascalNext(r[r.length - 1])); return r; } },
-  { name: "Туэ–Морс 32", title: "0110100110010110… — 1→10, 0→01, пять раз от «0»", rows: () => [zzThueMorse(32)] },
+  { name: "🔺 Серп. ×16", title: "16 строк треугольника Паскаля по модулю 2 от «1»", rows: () => { const r = ["1"]; while (r.length < 16) r.push(zzPascalNext(r[r.length - 1])); return r; } },
+  { name: "⇉ Туэ–Морс", title: "0110100110010110… — 1→10, 0→01, пять раз от «0»", rows: () => [zzThueMorse(32)] },
   { name: "🔢 0…15", title: "Номера 0…15 по 4 бита", rows: () => Array.from({ length: 16 }, (_, i) => i.toString(2).padStart(4, "0")) },
-  { name: "Палиндром 16", title: "Случайная половина + её отражение ⇄", rows: () => { const h = randomBits(8); return [h + zzRev(h)]; } },
-  { name: "Антипалиндром 16", title: "Случайная половина + её инв-отражение ⇄🔁", rows: () => { const h = randomBits(8); return [h + zzInvRev(h)]; } },
-  { name: "0101… 16", title: "Период 2", rows: () => ["01".repeat(8)] },
-  { name: "011011…010011", title: "Почти периодическая с одним сбоем — пример к ⇅ Сортировке сдвигов", rows: () => ["011011011011010011"] },
-  { name: "🎲 16", title: "Случайная строка из 16 бит", rows: () => [randomBits(16)] },
+  { name: "🪞 Палиндр.", title: "Случайная половина + её отражение ⇄", rows: () => { const h = randomBits(8); return [h + zzRev(h)]; } },
+  { name: "🔁 Антипал.", title: "Случайная половина + её инв-отражение ⇄🔁", rows: () => { const h = randomBits(8); return [h + zzInvRev(h)]; } },
+  { name: "〰 0101…", title: "Период 2", rows: () => ["01".repeat(8)] },
+  { name: "⚠ Сбой 011…", title: "Почти периодическая с одним сбоем — пример к ⇅ Сортировке сдвигов", rows: () => ["011011011011010011"] },
+  { name: "🎲 Случ. 16", title: "Случайная строка из 16 бит", rows: () => [randomBits(16)] },
 ];
 function tplInsert(rows, name){
   if (!rows || !rows.length) return;
@@ -3967,6 +3991,8 @@ function init(){
       const h = Math.round($("rowList").offsetHeight);
       if (h > 0 && h !== Z.rowsH) { Z.rowsH = h; clearTimeout(th); th = setTimeout(save, 300); }
     }).observe($("rowList"));
+    let rf = 0;   // v0.153: поле стало ниже / выше (окно, разделитель, окна под строками) — межстрочный подгоняется заново
+    new ResizeObserver(() => { cancelAnimationFrame(rf); rf = requestAnimationFrame(rowsFit); }).observe($("rowList"));
   }
 
   const opEntries = Object.entries(ZZ_OPS).map(([k, o]) => [k, o.lab]);
@@ -4826,7 +4852,7 @@ function init(){
   const MAN_CAP = 1 << 20;
   const manLabel = () => {
     const b = $("bMan");
-    b.textContent = Z.manMode === "dec" ? "⇇ Раскод 10→1, 01→0" : "⇉ Код 1→10, 0→01";
+    b.textContent = Z.manMode === "dec" ? "⇇ Раскод" : "⇉ Код";   // v0.153: коротко, правило (1→10, 0→01) — в подсказке
     b.classList.toggle("on", Z.manMode === "dec");
   };
   manLabel();
