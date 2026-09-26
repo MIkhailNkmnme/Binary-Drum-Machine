@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.143. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.144. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.143</title>
+<title>Zazerkalius — v0.144</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -250,7 +250,7 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 .no .rrot:not(:empty){cursor:pointer} .no .rrot:not(:empty):hover{color:var(--red);text-decoration:line-through}   /* v0.101: щелчок по ↻k — снять накрутку */
 /* v0.093, «тут шрифт и значки покрупнее, и выровняй всё, может, столбики — границы между ними тонкие»: у номера строки —
    ровные столбики: замок | поворот ↻ | номер | неподв.·меняющ. | 0:1; между столбиками тонкие черты; шрифт крупнее */
-.rw > .no{display:grid !important;grid-template-columns:1.9em 2.6em 2.3em 4.6em 4.6em;justify-content:start;align-items:stretch;font-size:13px;padding:0}
+.rw > .no{display:grid !important;grid-template-columns:1.9em 2.6em 2.3em;grid-auto-flow:column;grid-auto-columns:4.6em;justify-content:start;align-items:stretch;font-size:13px;padding:0}   /* v0.144, «тут слева отступ ненужный»: колонки счётчиков (н·м, 0·1) — только когда они включены, прежде 2 × 4.6em пустовали всегда */
 /* v0.096, «номера гуляют при выделениях»: столбики чисел были «auto» и выравнивались по правому краю — у выделенной (жирной)
    строки числа шире, и весь ряд уезжал влево. Теперь у каждого столбика своя постоянная ширина и ряд прижат влево. */
 .rw > .no > .rc{overflow:hidden}
@@ -503,6 +503,14 @@ body.solo #field > #coneBot #coneOut{flex:0 1 auto;min-height:0;overflow:auto;fo
   body.solo #w-cone #coneMain{position:relative;inset:auto;flex:1 1 auto;min-height:0}
   body.solo #w-cone #coneCv{border-radius:0}
 }
+/* v0.144, «кнопки слишком высокие, сделай компактнее»: на странице конуса кнопки, списки и группы — ниже и плотнее */
+body.solo #w-cone .wbody > .tools{padding:3px 8px;gap:3px 6px}
+body.solo #w-cone .tools button,body.solo #w-cone .tools select{padding:0 5px;font-size:12px;line-height:1.35;min-height:0}
+body.solo #w-cone .tools label{font-size:12px;line-height:1.35}
+body.solo #w-cone .tools input[type=checkbox]{width:12px;height:12px;margin:0 2px 0 0;vertical-align:-2px}
+body.solo #w-cone .tools input[type=range]{height:12px}
+body.solo #w-cone .cgrp{padding:1px 5px 1px 3px;gap:2px 4px}
+body.solo #w-cone #coneCycle{height:1.25em;line-height:1.25em;font-size:11px}
 /* v0.143: тёмная палитра страницы конуса — светлее и контрастнее: фон не чёрный, подписи, рамки и нули видны */
 @media (prefers-color-scheme: dark){
   html.solo:not([data-theme="light"]){--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --line:#414b62; --txt:#eef1f6; --dim:#b0b9cc; --b0:#8f99ae}
@@ -512,7 +520,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.143</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.144</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
@@ -1186,8 +1194,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 <div id="msg"></div>
 <div id="zenHint">🧘 дзен · Esc — выйти</div>
 
-<script src="zz-core.js?v=0143"></script>
-<script src="zz-ui.js?v=0143"></script>
+<script src="zz-core.js?v=0144"></script>
+<script src="zz-ui.js?v=0144"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
