@@ -6964,7 +6964,7 @@ document.addEventListener("keydown", e => {
   } else if (e.code === "Numpad6") {
     e.preventDefault();
     if (bShiftRInvEl) bShiftRInvEl.click();
-  } else if (e.key === "1" && e.code !== "Numpad1" && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+  } else if ((e.key === "1" || e.code === "Numpad1") && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {   // и «1» цифрового блока — по e.code, при любом NumLock
     // v1.653, «гор. клавиша 1 — переход на 1 строку выделения»: выделение — строка №1 (как её подписывает колонка номеров, с учётом
     // достроенных сверху), будто по ней щёлкнули: прежнее выделение и серия сдвигов сбрасываются, экран едет к строке.
     e.preventDefault();
