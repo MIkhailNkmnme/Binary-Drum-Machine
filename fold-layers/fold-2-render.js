@@ -1552,7 +1552,7 @@ let findLogSort = { key: null, dir: 1 };
    которым крутили (st.lastDirMode на момент находки). В таблице — столбец «чем» коротким знаком, полное имя — в подсказке. */
 const FIND_TOOL = { shiftL: ["◄", "◄ Круг"], shiftR: ["►", "► Круг"], shiftLInv: ["◄и", "◄ ИнвКруг"], shiftRInv: ["►и", "► ИнвКруг"],
   halfPlainL: ["◄½", "◄ ½ Круг"], halfPlainR: ["►½", "► ½ Круг"], halfTurnL: ["◄½и", "◄ ½ ИнвКруг"], halfTurnR: ["►½и", "► ½ ИнвКруг"],
-  spiralUp: ["▲", "▲ Спираль"], spiralDown: ["▼", "▼ Спираль"] };
+  spiralUp: ["▲", "▲ Спираль"], spiralDown: ["▼", "▼ Спираль"], reverse: ["⇄", "⇄ Реверс"] };
 function bgFindLogHit(bgInfo, step){
   const hitNow = (bgInfo && bgInfo.matched)
     ? ((bgInfo.hitPatIdxs && bgInfo.hitPatIdxs.size) ? Math.min(...bgInfo.hitPatIdxs) : bgInfo.targetIdx) : null;
