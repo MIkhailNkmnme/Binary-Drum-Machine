@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.158. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.159. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.158</title>
+<title>Zazerkalius — v0.159</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -543,6 +543,7 @@ body.solo #field > #coneBot #coneOut{flex:0 1 auto;min-height:0;overflow:auto;fo
   body.solo #w-cone .wbody > .tools{flex:0 0 auto;margin-top:0;padding:6px 10px;background:none;border-bottom:1px solid var(--line)}   /* v0.154: без фона */
   body.solo #w-cone #coneMain{position:relative;inset:auto;flex:1 1 auto;min-height:0}
   body.solo #w-cone #coneCv{border-radius:0}
+  body.solo #w-cone.win{background:transparent}   /* v0.159, снова «div tools — убери фон»: у самой полосы фона нет с v0.154, цвет давала подложка окна конуса (цвет панели) — на странице конуса окна не видно, под кнопками фон страницы */
 }
 /* v0.144, «кнопки слишком высокие, сделай компактнее»: на странице конуса кнопки, списки и группы — ниже и плотнее */
 body.solo #w-cone .wbody > .tools{padding:3px 8px;gap:3px 6px}
@@ -563,7 +564,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.158</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.159</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
