@@ -333,7 +333,7 @@ function renderRowsOver(){
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
   $("fieldInfo").textContent = `наложение ${N} полей · рабочее ${Z.lane + 1} · ${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1}` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "");
   $("fieldInfo").title = $("fieldInfo").textContent;   // v0.077: целиком — в подсказке
-  rowsFit();   // v0.153
+  rowsFit(); rowsLockAllPlace();   // v0.153, v0.167
   const c = L.querySelector(".rw.cur > .no");
   if (c) c.scrollIntoView({ block: "nearest" });
 }
@@ -492,6 +492,17 @@ function rowsFit(){
   if (L.style.getPropertyValue("--rlh") !== was) rowsFitDone();
 }
 function rowsFitDone(){ if (Z.tri90) tri90Apply(); }   // ◸ 90° считает межсимвольный от шага строк
+/* v0.167, «надпись вправо, над замками — центральный замок (общий)»: над столбиком замков у строк — общий замок колец (галка «запрет
+   сдвига строк» в «Кольцах»): щелчок — как по галке. Место по горизонтали — по замку первой строки (столбик номера стоит на месте
+   при прокрутке вбок, а ширина его колонок в em — и мельчает в ужатом поле). */
+function rowsLockAllPlace(){
+  const A = $("coneLockAll"), bar = $("fieldInfoBar"); if (!A || !bar) return;
+  const on = Z.coneLock !== false; A.textContent = on ? "🔒" : "🔓"; A.classList.toggle("off", !on);
+  const lk = $("rowList").querySelector(".rw > .no > .rlk");
+  A.style.visibility = lk ? "" : "hidden"; if (!lk) return;
+  const r = lk.getBoundingClientRect(), b = bar.getBoundingClientRect();
+  bar.style.setProperty("--lkx", Math.round(r.left + r.width / 2 - b.left) + "px");
+}
 function renderRows(){
   if (rowEditing >= 0) return;
   syncLane();
@@ -539,7 +550,7 @@ function renderRows(){
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
   $("fieldInfo").textContent = (N > 1 ? `поле ${Z.lane + 1} из ${N} · ` : "") + `${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1} (${cur().length} бит)` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowChgInfo();
   $("fieldInfo").title = $("fieldInfo").textContent;   // v0.077: целиком — в подсказке
-  rowsFit();   // v0.153
+  rowsFit(); rowsLockAllPlace();   // v0.153, v0.167
   const c = L.querySelector(".rw.cur > .bits.la") || L.querySelector(".rw.cur > .no");
   if (c) c.scrollIntoView({ block: "nearest", inline: "nearest" });
 }
@@ -4071,6 +4082,7 @@ function init(){
   dockRestore();   // v0.025: окна, пристыкованные под полем строк
   if (ZZ_SOLO) soloApply();   // v0.141
   ctwInit();   // v0.158
+  $("coneLockAll").onclick = () => $("coneLock").click();   // v0.167: общий замок над столбиком замков — та же галка
   { const h1 = document.querySelector("#top h1"); if (h1) { h1.title = "Щелчок — перезагрузить страницу"; h1.style.cursor = "pointer"; h1.onclick = () => location.reload(); } }   // v0.162, «клик — перезагрузка» (по названию в шапке)
   // v0.026: высоту поля строк, растянутую за угол, запоминаем (только когда под ним окна).
   if (window.ResizeObserver) {
