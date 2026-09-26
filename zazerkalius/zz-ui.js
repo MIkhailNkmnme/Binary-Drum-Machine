@@ -966,7 +966,7 @@ function renderCone(){
   const band = 0.72;   // доля кольца под биты; остальное — зазор до следующего
   // v0.076, «галку — скрыть все, кроме выделенных; выделение нескольких — по Ctrl»: видны выделенные (rowSel — то же
   // выделение, что в поле строк) и текущее; выделенные обведены голубым.
-  const only = !!Z.coneOnlySel, shown = (i) => !only || rowSel.has(i) || i === Z.cur, cS = coneCss("--acc2", "#22d3ee");
+  const focus = coneFocus(), only = !!Z.coneOnlySel && focus.length > 0, shown = (i) => !only || focus.includes(i), cS = coneCss("--acc2", "#22d3ee");
   // v0.098: весь конус повёрнут на Z.coneSpin градусов (⟲ ⟳) — плоский вид поворачивается целиком вокруг центра
   const spin2d = !Z.cone3d && Z.coneSpin ? Z.coneSpin * Math.PI / 180 : 0;
   if (spin2d) { g.save(); g.translate(cx, cy); g.rotate(spin2d); g.translate(-cx, -cy); }
@@ -974,7 +974,7 @@ function renderCone(){
      одна выделена или несколько, но не все». Галка «сектора к центру»: у выделенных колец (ничего не выделено — у текущего)
      каждый бит закрашивает свой клин от кольца до центра своим цветом, к центру бледнея. Рисуется до колец — кольца поверх. */
   if (Z.coneSect && !Z.cone3d) {
-    const secRows = rowSel.size ? [...rowSel].filter(i => i < N && shown(i)) : [Z.cur];
+    const secRows = coneFocus().filter(i => i < N && shown(i));
     const rgba = (col, a) => { g.fillStyle = col; const c = g.fillStyle; if (c[0] === "#") { const v = parseInt(c.slice(1), 16); return `rgba(${v >> 16 & 255},${v >> 8 & 255},${v & 255},${a})`; } return c.replace(/rgba?\(([^)]+)\)/, (m, p) => `rgba(${p.split(",").slice(0, 3).join(",")},${a})`); };
     for (const i of secRows) {
       const s = Z.rows[i], n = s && s.length; if (!n) continue;
@@ -990,7 +990,7 @@ function renderCone(){
   }
   // v0.080: зеркало кольца — у выделенных колец (или текущего) свои неподвижные
   const mirMode = Z.coneMir || "off", mirMap = new Map();
-  if (mirMode !== "off") for (const i of (rowSel.size ? [...rowSel] : [Z.cur])) if (i < N && Z.rows[i]) { const mi = coneMirInfo(Z.rows[i], mirMode, i); if (mi) mirMap.set(i, mi); }
+  if (mirMode !== "off") for (const i of coneFocus()) if (i < N && Z.rows[i]) { const mi = coneMirInfo(Z.rows[i], mirMode, i); if (mi) mirMap.set(i, mi); }
   if (Z.cone3d) { coneGeom = null; cone3DDraw(g, { W, H, dpr, N, shown, mirMap, c1, c0, cR, cg, cA, cT, cS }); } else {   // v0.082: объём
   for (let i = 0; i < N; i++) {
     const s = Z.rows[i], n = s.length; if (!n || !shown(i)) continue;
@@ -1041,7 +1041,7 @@ function renderCone(){
     // v0.057, «выделение колец золотым — непонятно, какую-то черту поперёк кольца делает, путает»: обе окружности были одним
     // контуром, и canvas соединял их отрезком (справа, на угле 0). Теперь — каждая своим контуром, без перемычки.
     if (rowSel.has(i)) { g.strokeStyle = cS; g.lineWidth = Math.max(1.5 * dpr, dr * 0.12); g.beginPath(); g.arc(cx, cy, (rin + rout) / 2, 0, 2 * Math.PI); g.globalAlpha = 0.35; g.stroke(); g.globalAlpha = 1; }
-    if (i === Z.cur) {   // v0.087: текущее — те же цвета краёв, толще (внутри голубой, снаружи оранжевый)
+    if (i === Z.cur && !document.body.classList.contains("nocur")) {   // v0.107: Esc гасит и в конусе; v0.087: текущее — те же цвета краёв, толще (внутри голубой, снаружи оранжевый)
       g.lineWidth = Math.max(2 * dpr, dr * 0.12);
       g.strokeStyle = cIn; g.beginPath(); g.arc(cx, cy, rin - dr * 0.04, 0, 2 * Math.PI); g.stroke();
       g.strokeStyle = cOut; g.beginPath(); g.arc(cx, cy, rout + dr * 0.04, 0, 2 * Math.PI); g.stroke();
@@ -1086,7 +1086,8 @@ function renderCone(){
   if (rays !== "off") {
     g.strokeStyle = cA; g.lineWidth = Math.max(0.6, dpr * (rays === "cur" ? 0.9 : 0.5)); g.globalAlpha = rays === "cur" ? 0.6 : 0.2;
     g.beginPath();
-    for (let i = rays === "cur" ? Z.cur : 0; i < (rays === "cur" ? Math.min(Z.cur + 1, N) : N); i++) {
+    const rayRows = rays === "cur" ? coneFocus().filter(i => i < N) : [...Array(N).keys()];   // v0.108: «текущего» — те, что в фокусе
+    for (const i of rayRows) {
       const s = Z.rows[i], n = s.length; if (n < 2 || !shown(i)) continue;   // v0.086: у одного бита лучей нет
       const rout = r0 + i * dr + Math.max(1, dr * band), step = 2 * Math.PI / n, rot = coneRotOf(i);
       // v0.089, «есть лучи от центров бит, а есть от границ — от границ, похоже, не надо; оставь только границы на кольце, чтобы туда
@@ -1214,7 +1215,7 @@ function cone3DDraw(g, o){
   const green = coneCss("--green", "#6ee7a0");
   // сектора к центру своего кольца
   if (Z.coneSect) {
-    const secRows = rowSel.size ? [...rowSel].filter(i => i < N && shown(i)) : [Z.cur];
+    const secRows = coneFocus().filter(i => i < N && shown(i));
     for (const i of secRows) {
       const s = Z.rows[i], n = s && s.length; if (!n) continue;
       const step = 2 * Math.PI / n, rot = coneRotOf(i), c = P(0, 0, ringZ(i)), r = ringR(i);
@@ -1241,7 +1242,7 @@ function cone3DDraw(g, o){
       const strong = s[j] === "1" || fix || !!(MI && MI.odd), pts = [];
       const gap = n > 1 ? step * 0.06 : 0;
       for (let q = 0; q <= K; q++) pts.push(at(i, a + gap + (step - 2 * gap) * q / K, r));
-      items.push({ pts, col, a: strong ? 0.95 : 0.45, near: at(i, a + step / 2, r)[2], cur: i === Z.cur, sel: rowSel.has(i) });
+      items.push({ pts, col, a: strong ? 0.95 : 0.45, near: at(i, a + step / 2, r)[2], cur: i === Z.cur && !document.body.classList.contains("nocur"), sel: rowSel.has(i) });   // v0.107
     }
   }
   // v0.090: границы бит в объёме — там, где биты разные: 0→1 сиреневая, 1→0 бирюзовая
@@ -1312,7 +1313,8 @@ function cone3DDraw(g, o){
   if (rays !== "off") {
     g.strokeStyle = cA; g.lineWidth = Math.max(0.6, dpr * (rays === "cur" ? 0.9 : 0.5)); g.globalAlpha = rays === "cur" ? 0.6 : 0.2;
     g.beginPath();
-    for (let i = rays === "cur" ? Z.cur : 0; i < (rays === "cur" ? Math.min(Z.cur + 1, N) : N); i++) {
+    const rayRows = rays === "cur" ? coneFocus().filter(i => i < N) : [...Array(N).keys()];   // v0.108: «текущего» — те, что в фокусе
+    for (const i of rayRows) {
       const s = Z.rows[i], n = s.length; if (n < 2 || !shown(i)) continue;   // v0.086: у одного бита лучей нет
       const step = 2 * Math.PI / n, rot = coneRotOf(i), c = P(0, 0, ringZ(i));
       for (let j = 0; j < n; j++) { const e = at(i, -Math.PI / 2 + (j - rot + 0.5) * step, ringR(i) + 0.4); g.moveTo(c[0], c[1]); g.lineTo(e[0], e[1]); }   // v0.089: от центров бит
@@ -1342,6 +1344,10 @@ function coneLocked(i){ const L = Z.coneLocks; return L && L[i] !== undefined ? 
    свой поворот «на вид» (coneRot) + поворот кручения: «каждое по биту» — все кольца на одно и то же число бит (угол у
    маленьких больше — они вертятся быстрее), «навстречу» — одинаковый угол, чётные по часовой, нечётные против. «Всё
    целиком» — прежнее: весь конус одним углом (Z.coneSpin). Z.coneSpinPh — фаза кручения: бит (по биту) или градусы. */
+/* v0.108, «не снимается» (после Esc в конусе оставалось текущее кольцо — с осью зеркала, хордами, при «только выделенные» — одно
+   оно): кольца «в фокусе» — выделенные; нет выделения — текущее, а после Esc — никакое. При «только выделенные» и пустом фокусе
+   видны все кольца. */
+function coneFocus(){ return rowSel.size ? [...rowSel] : (document.body.classList.contains("nocur") ? [] : [Z.cur]); }
 function coneRotOf(i){
   const base = coneRot[i] || 0, m = Z.coneSpinMode || "all", ph = Z.coneSpinPh || 0;
   if (m === "bit") return base - ph;
@@ -2957,6 +2963,9 @@ function init(){
     e.preventDefault(); e.stopPropagation(); const i = +b.dataset.lk; if (Z.coneLocks) delete Z.coneLocks[i]; save(); renderRows(); renderCone();
     say(`◯ Кольцо ${i + 1} — снова по общей галке «запрет сдвига строк».`);
   }, true);
+  $("rowList").addEventListener("pointerdown", () => document.body.classList.remove("nocur"));
+  $("coneCv").addEventListener("pointerdown", () => { if (document.body.classList.contains("nocur") && !Z.cone3d) { document.body.classList.remove("nocur"); } });   // v0.107: щелчок по кольцам — подсветка текущего снова   // v0.106: действие со строками — подсветка текущей снова видна
+  document.addEventListener("keydown", (e) => { if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "PageUp" || e.key === "PageDown" || e.key === "Home" || e.key === "End") document.body.classList.remove("nocur"); }, true);
   $("rowList").onclick = (e) => {
     if (rowEditing >= 0) return;
     delAtEnd = false;   // v0.021
@@ -3822,7 +3831,10 @@ function init(){
       rowSel.clear(); Z.rows.forEach((_, k) => rowSel.add(k)); rowSelAnchor = 0;
       renderRows(); say(`Выделены все строки — ${Z.rows.length}. Del удалит, Ctrl+C скопирует, Esc снимет.`); return;
     }
-    if (e.key === "Escape" && (rowSel.size || textSelInRows())) { const n = rowSel.size; rowSel.clear(); clearTextSel(); renderRows(); if (n) say(`Выделение снято со всех строк (${n}).`); return; }
+    if (e.key === "Escape") {   // v0.106: снять выделение строк и погасить подсветку текущей
+      const n = rowSel.size; rowSel.clear(); clearTextSel(); document.body.classList.add("nocur"); renderRows();
+      if (n) say(`Выделение снято со всех строк (${n}).`); return;
+    }
     if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && Z.laneCount > 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
       e.preventDefault(); switchLane((Z.lane + (e.key === "ArrowRight" ? 1 : Z.laneCount - 1)) % Z.laneCount); return;
     }
