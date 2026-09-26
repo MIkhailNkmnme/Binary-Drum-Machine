@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.136. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.137. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.136</title>
+<title>Zazerkalius — v0.137</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -334,7 +334,7 @@ body.pane-icons #paneWins{padding:4px}
 #w-cone .cgrp > .glab{font-size:10.5px;letter-spacing:.3px;text-transform:uppercase;color:var(--acc);margin-right:2px;white-space:nowrap}
 #w-cone .cgrp > .glab2{font-size:11px;color:var(--dim);margin-left:4px}
 #w-cone #coneCycle{flex:1 0 100%;margin:0 2px !important;height:1.35em;line-height:1.35em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#bConeAuto{min-width:7.2em} #bConeRec{min-width:6.4em} #coneSlitV{display:inline-block;min-width:2.8em}
+#bConeAuto{min-width:7.2em} #bConeDir{min-width:8.4em} #bConeRec{min-width:6.4em} #coneSlitV{display:inline-block;min-width:2.8em}
 #w-cone .wbody > #coneBot{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:4px 8px;background:color-mix(in srgb, var(--panel) 72%, transparent);max-height:45%;overflow:auto}   /* v0.134: текст + лог лазера */
 #coneLog{max-height:140px;overflow:auto;font-size:11.5px;line-height:1.35;font-variant-numeric:tabular-nums;white-space:normal}
 #coneLog > div{border-bottom:1px solid var(--line);padding:1px 0}
@@ -484,7 +484,7 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.136</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.137</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
@@ -1019,9 +1019,11 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
             <button id="bConeSpinR" title="Крутить весь конус по часовой — щелчок 15°, держишь — крутится. Правый щелчок — вернуть к началу (0°)">⟳</button>
             <select id="coneSpinMode" title="Как крутить: всё целиком — весь конус одним поворотом; каждое по биту — каждое кольцо на бит за шаг (маленькие вертятся быстрее, рисунок закручивается спиралью и раз в какое-то время все возвращаются); навстречу — чётные кольца по часовой, нечётные против, с одной скоростью"><option value="all">всё целиком</option><option value="bit">каждое по биту</option><option value="opp">навстречу через одно</option></select>
             <button id="bConeAuto" title="▶ Крутить весь конус само, без остановки (скорость — ползунок рядом; минус — в другую сторону). Ещё раз — стоп">▶ крутить</button>
-            <button id="bConeStepB" title="◀ Шаг назад: крутить назад (режимом рядом — по биту / навстречу) до прошлого события лазера — пока конец луча не сменится. Каждое событие — в лог лазера">◀</button>
-            <button id="bConeStepF" title="▶ Шаг вперёд: крутить (режимом рядом — по биту / навстречу) до следующего события лазера — луч упёрся в другую ячейку, пойман другим кольцом или прошёл. Каждое событие — в лог лазера">▶|</button>
-            <label class="dim" title="Скорость кручения, градусов в секунду; минус — против часовой"> <input type="range" id="coneAutoSp" min="-120" max="120" step="5" value="30" style="width:70px;vertical-align:middle"></label>
+            <button id="bConeDir" title="Направление кручения: ↻ по часовой / ↺ против часовой — щелчок переключает. ▶ крутить и шаги ◀ ▶| идут в эту сторону">↻ по часовой</button>
+            <span class="cstep" style="display:inline-flex;align-items:center;gap:3px;white-space:nowrap"><button id="bConeStepB" title="◀ Шаг назад (против выбранного направления): крутить назад (режимом рядом — по биту / навстречу) до прошлого события лазера — пока конец луча не сменится. Каждое событие — в лог лазера">◀</button><label class="dim" title="Скорость кручения — только величина (градусов в секунду; «по биту» — десятые бита в секунду). Направление — кнопкой ↻ / ↺ рядом"><input type="range" id="coneAutoSp" min="5" max="120" step="5" value="30" style="width:70px;vertical-align:middle"></label><button id="bConeStepF" title="▶| Шаг вперёд (в выбранном направлении): крутить (режимом рядом — по биту / навстречу) до следующего события лазера — луч упёрся в другую ячейку, пойман другим кольцом или прошёл. Каждое событие — в лог лазера">▶|</button></span>
+            
+            
+            
             <button id="bConeAllHome" title="⟲ Всё на места: у ВСЕХ колец сразу — снять накрутку «на вид» (↻), остановить и сбросить кручение (со счётом кругов и проходов), снять довод строки 1 (луч-часы). Биты строк не меняются; если строку сдвигали открытым кольцом — это вернёт только ↩">⟲ всё на места</button>
           </div>
           <div class="cgrp" title="⌖ Луч-часы: пустые кольца до 256, ширина щели, довод строки 1, пауза на проходе"><span class="glab">Лазер</span>
@@ -1156,8 +1158,8 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
 <div id="msg"></div>
 <div id="zenHint">🧘 дзен · Esc — выйти</div>
 
-<script src="zz-core.js?v=0136"></script>
-<script src="zz-ui.js?v=0136"></script>
+<script src="zz-core.js?v=0137"></script>
+<script src="zz-ui.js?v=0137"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>

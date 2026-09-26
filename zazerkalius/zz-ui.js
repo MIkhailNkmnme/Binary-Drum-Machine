@@ -1509,6 +1509,10 @@ function coneRingNR(b){   // кольцо b ≥ 1 на пути луча: { n �
   if (Z.cone3d || Z.rows.length > CONE_MAX || b >= coneRingsTotal(N)) return null;
   const n = coneVoidLen(b, N); return { n, rot: coneVoidRot(b, n) };
 }
+function coneDirUi(){   // v0.136: ползунок — величина скорости, кнопка — направление
+  const sp = Z.coneAutoSp ?? 30; if (!sp) Z.coneAutoSp = 30;
+  $("coneAutoSp").value = Math.max(5, Math.abs(sp || 30)); $("bConeDir").textContent = sp < 0 ? "↺ против" : "↻ по часовой";
+}
 function coneAimDeep(a){
   const gapAt = (R, x) => {   // щель кольца, ближайшая к углу x: [от, до]
     const st = 2 * Math.PI / R.n, c = -Math.PI / 2 + (Math.round((x + Math.PI / 2) / st + R.rot) - R.rot) * st, h = coneSlitHalf(R.n);
@@ -2163,7 +2167,7 @@ function setupCone(){
     const N = Math.min(Z.rows.length, CONE_MAX); if (!N) return;
     let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
     const perUnit = m === "bit" ? 360 / Math.max(1, Math.min(...Z.rows.slice(0, N).map(s => s.length || 1))) : 1;   // градусов за единицу фазы у самого быстрого кольца
-    const d = dir * tolDeg / perUnit / 2, key = (R) => !R ? "" : R.wall ? "w" + R.wall : R.pass ? (R.cells.length ? "v" + R.cells[0] : "e") : "s" + R.stop;
+    const d = dir * (Z.coneAutoSp < 0 ? -1 : 1) * tolDeg / perUnit / 2, key = (R) => !R ? "" : R.wall ? "w" + R.wall : R.pass ? (R.cells.length ? "v" + R.cells[0] : "e") : "s" + R.stop;   // v0.136: вперёд — в выбранном направлении
     const ph0 = Z.coneSpinPh || 0, k0 = key(coneClockTrace()[0]);
     let ph = ph0, s = 0;
     for (; s < 20000; s++) { ph += d; Z.coneSpinPh = ph; if (key(coneClockTrace()[0]) !== k0) break; }
@@ -2196,7 +2200,7 @@ function setupCone(){
       for (const k of ["coneClock", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta"]) { const el = $(k); if (el) el.checked = !!Z[k]; }
       $("coneLock").checked = Z.coneLock !== false; $("coneVoid").checked = Z.coneVoid !== false;
       $("coneRays").value = Z.coneRays || "off"; $("coneMir").value = Z.coneMir || "off"; $("coneSpinMode").value = Z.coneSpinMode || "all";
-      $("coneAutoSp").value = Z.coneAutoSp ?? 30; $("cone3H").value = Z.cone3H ?? 1;
+      coneDirUi(); $("cone3H").value = Z.cone3H ?? 1;
       $("coneSlit").value = +Z.coneSlit || 2; $("coneSlitV").textContent = (+Z.coneSlit || 2).toFixed(1).replace(".", ",") + "°";
       $("bConeClockStop").classList.toggle("on", !!Z.coneClockStop);
       coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass);
@@ -2247,9 +2251,12 @@ function setupCone(){
   };
   $("coneSpinMode").onchange = (e) => { Z.coneSpinMode = e.target.value; Z.coneSpinPh = 0; Z.coneClockN = 0; save(); renderCone();
     say({ all: "▶ Всё целиком: весь конус одним поворотом.", bit: "▶ Каждое по биту: маленькие кольца вертятся быстрее — рисунок закручивается спиралью.", opp: "▶ Навстречу: чётные кольца по часовой, нечётные против." }[Z.coneSpinMode] + " Правый щелчок по ▶ — всё на места."); };
-  $("coneAutoSp").value = Z.coneAutoSp ?? 30;
-  $("coneAutoSp").oninput = (e) => { Z.coneAutoSp = +e.target.value; };
+  /* v0.136, «эта скорость непонятная — раздели: одна только скорость, а направление задавать другой кнопкой; слева-справа — стрелки
+     шаг»: ползунок — величина (5…120), знак Z.coneAutoSp — направление, его переключает «↻ по часовой / ↺ против». */
+  coneDirUi();
+  $("coneAutoSp").oninput = (e) => { Z.coneAutoSp = (Z.coneAutoSp < 0 ? -1 : 1) * +e.target.value; };
   $("coneAutoSp").onchange = () => save();
+  $("bConeDir").onclick = () => { Z.coneAutoSp = -(Z.coneAutoSp || 30); coneDirUi(); save(); say(Z.coneAutoSp < 0 ? "↺ Кручение — против часовой." : "↻ Кручение — по часовой."); };
   let rec = null, recT = 0;
   $("bConeRec").onclick = () => {
     const b = $("bConeRec"), cvx = $("coneCv");
