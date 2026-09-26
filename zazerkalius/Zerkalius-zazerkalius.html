@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.180. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.181. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.180</title>
+<title>Zazerkalius — v0.181</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -406,6 +406,13 @@ body.zen #coneTxtWin{display:none !important}
 #w-cone .cgrp > .glab{cursor:move;touch-action:none;user-select:none}
 #w-cone .cgrp.cfloat{position:absolute;z-index:10;margin:0;background:var(--panel);box-shadow:0 6px 20px rgba(0,0,0,.45)}
 #w-cone .cgrp.cg-spin.cfloat{background:color-mix(in srgb, rgb(255,209,102) 13%, var(--panel))}
+/* v0.181, по снимку галок группы «Вид» — «все галки в кнопки»: галки на полосе конуса — кнопками-переключателями: сама галка спрятана
+   (щелчок по кнопке переключает её, как раньше), включённая — как нажатая кнопка (золотая рамка, как у button.on) */
+#w-cone .tools label:has(> input[type=checkbox]){display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border:1px solid var(--line);border-radius:4px;background:var(--panel2);color:var(--txt);cursor:pointer;white-space:nowrap}
+#w-cone .tools label:has(> input[type=checkbox]):hover{border-color:var(--acc)}
+#w-cone .tools label:has(> input[type=checkbox]:checked){border-color:var(--gold);color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+#w-cone .tools label > input[type=checkbox]{position:absolute !important;opacity:0 !important;width:0 !important;height:0 !important;margin:0 !important;pointer-events:none}
+body.solo #w-cone .tools label:has(> input[type=checkbox]){padding:0 5px;font-size:12px;line-height:1.35}
 body.solo #w-cone .wbody > .tools{position:relative;z-index:4}
 #w-cone #coneCycle{flex:1 0 100%;margin:0 2px !important;height:1.35em;line-height:1.35em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #bConeAuto{min-width:7.2em} #bConeDir{min-width:8.4em} #bConeRec{min-width:0} #coneSlitV{display:inline-block;min-width:2.8em}
@@ -597,7 +604,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.180</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.181</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
