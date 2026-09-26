@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.113. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.114. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.113</title>
+<title>Zazerkalius — v0.114</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -301,6 +301,16 @@ body.cutdrag,body.cutdrag *{cursor:ns-resize !important}
 .rw.hid > .no{color:var(--dim);opacity:.6;cursor:default}
 .rw.hid:hover > span{background:transparent}
 #rowList.multi .rw.hid .bits.la{background:transparent}
+/* v0.114: строка для заполнения под чертой — пустые ячейки пунктиром; щелчок — пусто → 1 → 0; «＋» — в строки */
+.rw.fillrw > span{background:transparent !important}
+.fcs{display:inline-block;white-space:nowrap}
+.fc{display:inline-block;vertical-align:top;width:1ch;text-align:center;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(185,140,240,.55);border-radius:2px}
+#rowList.tri90 .fc{width:calc(1ch + var(--ls90, 0px));letter-spacing:0}
+.fc.fe{box-shadow:inset 0 0 0 1px var(--acc);opacity:.6;background-image:repeating-linear-gradient(135deg,transparent 0 3px,rgba(185,140,240,.12) 3px 5px)}
+.fc:hover{box-shadow:inset 0 0 0 2px var(--acc);opacity:1}
+.rw.fillrw > .no > .fadd{cursor:pointer;color:var(--acc);font-weight:700;font-size:15px}
+.rw.fillrw > .no > .fadd:hover{color:var(--txt);background:rgba(185,140,240,.25)}
+.rw.fillrw > .no{color:var(--acc)}
 /* Шаблоны (v0.010) */
 #tplBar{display:flex;gap:4px;padding:0 10px 6px}
 #tplBar button{flex:1;padding:2px 4px}
@@ -462,7 +472,7 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.113</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.114</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
@@ -1097,8 +1107,8 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
 <div id="msg"></div>
 <div id="zenHint">🧘 дзен · Esc — выйти</div>
 
-<script src="zz-core.js?v=0113"></script>
-<script src="zz-ui.js?v=0113"></script>
+<script src="zz-core.js?v=0114"></script>
+<script src="zz-ui.js?v=0114"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>

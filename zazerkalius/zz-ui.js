@@ -29,6 +29,7 @@ const Z = {
   theme: "",             // v0.009: "" — как в системе, "light" / "dark" — выбрано кнопкой
   lanes: null, lane: 0, laneCount: 1,   // v0.015: до 4 полей строк; Z.rows — всегда рабочее поле (lanes[lane])
   lanesHid: null,                        // v0.112: строки за границей (ниже черты) — у каждого поля свой хвост
+  fillCells: null,                       // v0.114: строка для заполнения под чертой — «.» пусто, «0» / «1»
   laneView: "cols", axisPos: [], ovOp: "xor",   // v0.018: поля колонками / наложением; оси — в полуклетках
   pack: true,                            // v0.015: окна прижимаются к верху
   viewYaw: 30, viewPitch: 35,            // v0.024: 🧊 Вид — поворот взгляда, в градусах
@@ -400,6 +401,37 @@ function cutMove(k, pre){
   const n = hidCount();
   say(n ? `⎯ За границей ${n} стр. — бесцветные, и их как будто нет: окна и кнопки видят ${Z.rows.length} стр. Тяни черту вниз или двойной щелчок по ней — вернуть. ↩ отменит.` : "⎯ Все строки снова над границей.");
 }
+/* v0.114, «после нижней черты сделай как бы строку для заполнения из пустых ячеек по числу +1» и «одну из них заполни 1».
+   Под чертой — строка пустых ячеек: на одну больше, чем в нижней строке над чертой; первая сразу «1». Щелчок по ячейке —
+   пусто → 1 → 0 → пусто; «＋» у номера — строка уходит в поле под нижнюю (пустые ячейки — нулями), ↩ вернёт; под чертой
+   появляется следующая, снова +1. В конусе она же — пунктирное кольцо снаружи, ячейки щёлкаются так же. Черновик запоминается;
+   сменилась длина нижней строки — строка для заполнения начинается заново. */
+function fillLen(){ const s = Z.rows[Z.rows.length - 1]; return (s ? s.length : 0) + 1; }
+function fillDraft(){
+  const L = fillLen();
+  if (typeof Z.fillCells !== "string" || Z.fillCells.length !== L || !/^[.01]*$/.test(Z.fillCells)) Z.fillCells = "1" + ".".repeat(L - 1);
+  return Z.fillCells;
+}
+function fillCycle(k){
+  const f = fillDraft(); if (k < 0 || k >= f.length) return;
+  const nx = { ".": "1", "1": "0", "0": "." }[f[k]];
+  Z.fillCells = f.slice(0, k) + nx + f.slice(k + 1);
+  renderRows(); save();
+}
+function fillCommit(){
+  const f = fillDraft(), row = f.replace(/\./g, "0"), empty = (f.match(/\./g) || []).length;
+  try { snapshot(); } catch (err) { if (err.message === "ZZ_LOCK") return; throw err; }
+  Z.rows.push(row); Z.cur = Z.rows.length - 1; Z.fillCells = null;
+  renderAll(); save();
+  say(`＋ Строка ${Z.rows.length} (${row.length} бит) — в поле${empty ? `, пустые ячейки (${empty}) — нулями` : ""}. Под чертой — следующая, ${fillLen()} ячеек. ↩ вернёт.`);
+}
+function fillRowHtml(N){
+  const f = fillDraft(); let c = "";
+  for (let k = 0; k < f.length; k++) c += '<span class="fc' + (f[k] === "." ? " fe" : " b" + f[k]) + '" data-k="' + k + '">' + (f[k] === "." ? "&nbsp;" : f[k]) + "</span>";
+  let h = '<div class="rw fillrw"><span class="no" title="Строка для заполнения — ' + f.length + ' ячеек, на одну больше нижней строки"><span class="fadd" title="＋ В строки: встанет под нижней строкой (пустые ячейки — нулями), ↩ вернёт">＋</span><span></span><span class="rn">' + (Z.rows.length + 1) + "</span></span>";
+  for (let l = 0; l < N; l++) h += '<span class="bits' + (l === Z.lane ? " la" : "") + '" data-l="' + l + '">' + (l === Z.lane ? '<span class="fcs" title="Щелчок по ячейке: пусто → 1 → 0 → пусто. ＋ слева — в строки">' + c + "</span>" : "") + "</span>";
+  return h + "</div>";
+}
 function hidRowHtml(i, cells){ return '<div class="rw hid" data-h="' + i + '"><span class="no" title="за границей — строки как будто нет"><span></span><span></span><span class="rn">' + (i + 1) + "</span></span>" + cells + "</div>"; }
 function renderRows(){
   if (rowEditing >= 0) return;
@@ -433,7 +465,7 @@ function renderRows(){
     h += "</div>";
   }
   // v0.112: черта-граница под нижней строкой, под ней — строки за границей, бесцветные
-  h += cutLine();
+  h += cutLine() + fillRowHtml(N);   // v0.114: сразу под чертой — строка для заполнения
   let HH = 0; for (let l = 0; l < N; l++) HH = Math.max(HH, hidRows(l).length);
   for (let j = 0; j < HH; j++) {
     let t = "";
@@ -1023,8 +1055,9 @@ function renderCone(){
   const N = Math.min(Z.rows.length, CONE_MAX);
   while (coneRot.length < Z.rows.length) coneRot.push(0);
   coneRot.length = Z.rows.length;
-  const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, r0 = rMax * 0.05, dr = (rMax - r0) / Math.max(1, N);
-  coneGeom = { cx, cy, r0, dr, N, dpr };
+  const fillOn = !Z.cone3d && Z.rows.length <= CONE_MAX;   // v0.114: снаружи — пунктирное кольцо для заполнения (в плоском виде)
+  const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, r0 = rMax * 0.05, dr = (rMax - r0) / Math.max(1, N + (fillOn ? 1 : 0));
+  coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
   const { nk, groups } = coneInfo();
   const HUES = [200, 30, 120, 290, 0, 60, 170, 330, 90, 250];
   const gcol = new Map(); let gi = 0;
@@ -1157,6 +1190,25 @@ function renderCone(){
       g.strokeStyle = cOut; g.beginPath(); coneArc(g, cx, cy, i, rout + dr * 0.04, 0, 2 * Math.PI); g.stroke();
     }
     if (i === coneHover) { g.strokeStyle = cA; g.lineWidth = Math.max(2 * dpr, dr * 0.14); g.globalAlpha = 0.85; g.beginPath(); coneArc(g, cx, cy, i, rin - dr * 0.06, 0, 2 * Math.PI); g.stroke(); g.beginPath(); coneArc(g, cx, cy, i, rout + dr * 0.06, 0, 2 * Math.PI); g.stroke(); g.globalAlpha = 1; }
+  }
+  if (fillOn) {   // v0.114: кольцо для заполнения — ячейки пунктиром, заполненные — цветом бита; бит 0 — сверху, как у всех
+    const f = fillDraft(), n = f.length, rin = r0 + N * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n;
+    const gp = n > 1 ? Math.min(step * 0.1, 1.5 * dpr / Math.max(1, rin)) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);
+    g.lineWidth = dpr; g.setLineDash([3 * dpr, 3 * dpr]);
+    for (let k = 0; k < n; k++) {
+      const a = -Math.PI / 2 + k * step;
+      g.beginPath();
+      if (n > 1) { g.arc(cx, cy, rout, a + gp, a + step - gp); g.arc(cx, cy, rin, a + step - gp, a + gp, true); g.closePath(); }
+      else { g.arc(cx, cy, rout, 0, 2 * Math.PI); g.moveTo(cx + rin, cy); g.arc(cx, cy, rin, 0, 2 * Math.PI, true); }
+      if (f[k] !== ".") { g.fillStyle = f[k] === "1" ? c1 : c0; g.globalAlpha = f[k] === "1" ? 0.95 : 0.55; g.fill("evenodd"); }
+      g.strokeStyle = cA; g.globalAlpha = 0.75; g.stroke(); g.globalAlpha = 1;
+      if (f[k] !== "." && fsz >= 8 * dpr) {
+        const am = a + step / 2, rm = (rin + rout) / 2;
+        g.save(); g.translate(cx + rm * Math.cos(am), cy + rm * Math.sin(am)); g.rotate(am + Math.PI / 2);
+        g.fillStyle = cBg; g.font = `${Math.round(fsz)}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(f[k], 0, 0); g.restore();
+      }
+    }
+    g.setLineDash([]);
   }
   for (const d of coneDots) {   // v0.111: точка — в самом центре, поверх Г
     g.beginPath(); g.arc(cx, cy, d.r, 0, 2 * Math.PI); g.fillStyle = d.col; g.globalAlpha = d.strong ? 1 : 0.6;
@@ -1497,6 +1549,10 @@ function coneRing(e){
     const t = Math.atan2(y, x) - (Z.coneSpin || 0) * Math.PI / 180; i = -1;
     for (let k = 0; k < G.N; k++) { const q = rr / coneRho(k, t); if (q >= G.r0 + k * G.dr && q < G.r0 + (k + 1) * G.dr) { i = k; break; } }
   }
+  if (G.fill && Math.floor((rr - G.r0) / G.dr) === G.N && (i === -1 || i >= G.N)) {   // v0.114: кольцо для заполнения — какая ячейка
+    const n = fillLen(), t = Math.atan2(y, x) - (Z.coneSpin || 0) * Math.PI / 180, u = (((t + Math.PI / 2) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+    return { i: G.N, a: Math.atan2(y, x), fill: Math.min(n - 1, Math.floor(u / (2 * Math.PI / n))) };
+  }
   return i >= 0 && i < G.N ? { i, a: Math.atan2(y, x) } : -1;
 }
 /* v0.085, «надо сохранять положение, изменённое вручную, для каждого кольца», «замок может индивидуальный». Замок у каждого
@@ -1536,6 +1592,7 @@ function setupCone(){
       return;
     }
     const h = coneRing(e);
+    if (h !== -1 && h.fill !== undefined && !e.ctrlKey) { e.preventDefault(); fillCycle(h.fill); return; }   // v0.114: ячейка кольца для заполнения
     // v0.085: запертое кольцо (своим замком или общей галкой) крутится только на вид; сдвиг вида — мимо колец или с Ctrl
     if (h === -1 || e.ctrlKey) {   // v0.049: мимо колец или с Ctrl — сдвиг всего вида
       e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "move";
@@ -1562,7 +1619,7 @@ function setupCone(){
   });
   cv.addEventListener("pointermove", (e) => {
     if (!coneDrag) {   // наведение: обвести кольцо и его строку в поле
-      const h = coneRing(e), i = h === -1 ? -1 : h.i;
+      const h = coneRing(e), i = h === -1 || h.fill !== undefined ? -1 : h.i;
       if (i !== coneHover) { coneHover = i; coneHoverRow(i); renderCone(); }
       return;
     }
@@ -3311,7 +3368,9 @@ function init(){
     const lh = e.target.closest(".lh"); if (lh) { switchLane(+lh.dataset.l); return; }
     if (e.target.closest(".axrow")) return;   // v0.018: ручки осей тащат, а не выбирают
     if (axSel >= 0) { axSel = -1; renderRows(); }   // v0.022: щелчок по полю снимает выделение оси
-    const r = e.target.closest(".rw"); if (!r || r.classList.contains("lhrow") || r.classList.contains("hid")) return;   // v0.112: за границей — строк нет
+    const fc = e.target.closest(".fillrw .fc"); if (fc) { fillCycle(+fc.dataset.k); return; }   // v0.114: строка для заполнения
+    if (e.target.closest(".fillrw .fadd")) { fillCommit(); return; }
+    const r = e.target.closest(".rw"); if (!r || r.classList.contains("lhrow") || r.classList.contains("hid") || r.classList.contains("fillrw")) return;   // v0.112: за границей — строк нет
     const cell = e.target.closest(".bits, .ob");
     if (cell && +cell.dataset.l !== Z.lane && !textSelInRows()) { switchLane(+cell.dataset.l, +r.dataset.r); return; }
     const i = Math.min(+r.dataset.r, Z.rows.length - 1);
@@ -3342,7 +3401,7 @@ function init(){
     // v0.112: двойной щелчок по черте — вернуть все строки (черту тащат с захватом указателя — щелчок приходит полю, смотрим, что под ним)
     const pt = document.elementFromPoint(e.clientX, e.clientY);
     if (pt && pt.closest(".cutln")) { cutMove(Infinity); return; }
-    const r = e.target.closest(".rw"); if (!r || r.classList.contains("lhrow") || r.classList.contains("hid")) return;
+    const r = e.target.closest(".rw"); if (!r || r.classList.contains("lhrow") || r.classList.contains("hid") || r.classList.contains("fillrw")) return;
     e.preventDefault();
     const sel = window.getSelection && window.getSelection(); if (sel) sel.removeAllRanges();
     if (Z.laneCount > 1 && Z.laneView === "over") {   // v0.018
@@ -3392,7 +3451,7 @@ function init(){
     document.body.classList.add("cutdrag");
     const at = (y) => {   // сколько строк над курсором: середина строки выше него
       let k = 0;
-      list.querySelectorAll(".rw:not(.lhrow) > .no").forEach(no => { const r = no.getBoundingClientRect(); if ((r.top + r.bottom) / 2 < y) k++; });
+      list.querySelectorAll(".rw:not(.lhrow):not(.fillrw) > .no").forEach(no => { const r = no.getBoundingClientRect(); if ((r.top + r.bottom) / 2 < y) k++; });
       return Math.max(1, k);
     };
     const step = () => {
