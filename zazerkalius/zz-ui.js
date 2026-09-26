@@ -28,6 +28,7 @@ const Z = {
   foldAlign: "center",   // v0.008: выравнивание живого ⊿
   theme: "",             // v0.009: "" — как в системе, "light" / "dark" — выбрано кнопкой
   lanes: null, lane: 0, laneCount: 1,   // v0.015: до 4 полей строк; Z.rows — всегда рабочее поле (lanes[lane])
+  lanesHid: null,                        // v0.112: строки за границей (ниже черты) — у каждого поля свой хвост
   laneView: "cols", axisPos: [], ovOp: "xor",   // v0.018: поля колонками / наложением; оси — в полуклетках
   pack: true,                            // v0.015: окна прижимаются к верху
   viewYaw: 30, viewPitch: 35,            // v0.024: 🧊 Вид — поворот взгляда, в градусах
@@ -88,6 +89,8 @@ function laneInit(){
   Z.lane = Math.max(0, Math.min(Z.laneCount - 1, Z.lane | 0));
   Z.rows = Z.lanes[Z.lane];
   Z.cur = Math.max(0, Math.min(Z.rows.length - 1, Z.cur | 0));
+  if (!Array.isArray(Z.lanesHid) || !Z.lanesHid.every(l => Array.isArray(l) && l.every(zzIsBits))) Z.lanesHid = [];   // v0.112
+  Z.lanesHid = Z.lanesHid.slice(0, 4); while (Z.lanesHid.length < 4) Z.lanesHid.push([]);
 }
 /* v0.061, «замок на изменение строк» (снимок кнопок над полем). Почти каждая правка строк начинается со snapshot() — точки
    отмены; при закрытом замке он прерывает правку до изменения (ZZ_LOCK — тихо, без «⚠ ошибки»). Правка на месте и ↩ —
@@ -95,12 +98,16 @@ function laneInit(){
 function rowsLocked(){ if (!Z.rowLock) return false; say("🔒 Строки заперты — открой замок над полем строк, чтобы менять."); return true; }
 function snapshot(){
   if (rowsLocked()) throw new Error("ZZ_LOCK");
-  syncLane();
-  undoStack.push({ rows: Z.rows.slice(), cur: Z.cur, lane: Z.lane, lanes: Array.isArray(Z.lanes) ? Z.lanes.map(l => l.slice()) : null,
-                   laneCount: Z.laneCount, axisPos: Array.isArray(Z.axisPos) ? Z.axisPos.slice() : [] });   // v0.022: и поля, и оси
-  if (undoStack.length > 200) undoStack.shift();
+  undoPush(undoState());
   if (typeof rowSel !== "undefined") rowSel.clear();
 }
+function undoState(){
+  syncLane();
+  return { rows: Z.rows.slice(), cur: Z.cur, lane: Z.lane, lanes: Array.isArray(Z.lanes) ? Z.lanes.map(l => l.slice()) : null,
+           laneCount: Z.laneCount, axisPos: Array.isArray(Z.axisPos) ? Z.axisPos.slice() : [],   // v0.022: и поля, и оси
+           lanesHid: hidCopy() };   // v0.112: и строки за границей — иначе ↩ задвоил бы спрятанные
+}
+function undoPush(u){ undoStack.push(u); if (undoStack.length > 200) undoStack.shift(); }
 function undo(){
   if (rowsLocked()) return;   // v0.061
   const u = undoStack.pop();
@@ -108,6 +115,7 @@ function undo(){
   if (u.laneCount) { Z.laneCount = u.laneCount; Z.axisPos = u.axisPos; const lc = document.getElementById("laneCount"); if (lc) lc.value = String(Z.laneCount); }
   if (u.lanes) { Z.lanes = u.lanes; Z.lane = Math.max(0, Math.min(Z.laneCount - 1, u.lane | 0)); Z.rows = Z.lanes[Z.lane]; }
   else Z.rows = u.rows;
+  if (u.lanesHid) Z.lanesHid = u.lanesHid;   // v0.112
   Z.cur = Math.max(0, Math.min(Z.rows.length - 1, u.cur));
   renderAll(); save(); say("↩ Отменено.");
 }
@@ -212,6 +220,7 @@ function deleteLane(k){
   snapshot();
   syncLane();
   Z.lanes.splice(k, 1); Z.lanes.push(["1"]);
+  Z.lanesHid.splice(k, 1); Z.lanesHid.push([]);   // v0.112
   if (Array.isArray(Z.axisPos)) Z.axisPos.splice(k, 1);
   Z.laneCount--;
   if (Z.lane > k) Z.lane--; else if (Z.lane === k) Z.lane = Math.max(0, k - 1);
@@ -248,10 +257,10 @@ function ovCombine(list){
   return a.b;
 }
 /* Места строки i: Map полуклетка → [{ l, b }], по всем полям. cap — сколько бит строки брать. */
-function ovRowMap(i, A, cap){
+function ovRowMap(i, A, cap, hid){   // v0.112: hid — строка i из-за границы
   const m = new Map();
   for (let l = 0; l < Z.laneCount; l++) {
-    const s = laneRows(l)[i]; if (s === undefined) continue;
+    const s = (hid ? hidRows(l) : laneRows(l))[i]; if (s === undefined) continue;
     const Lc = Math.min(s.length, cap), st = ovStart(A[l], Lc);
     for (let j = 0; j < Lc; j++) { const p = st + 2 * j; let e = m.get(p); if (!e) { e = []; m.set(p, e); } e.push({ l, b: s[j], fx: fixAt(s, j) }); }
   }
@@ -286,9 +295,16 @@ function renderRowsOver(){
     h += '<div class="rw ovr' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? " — изменена против эталона ⚑" : "") + ' · щелчок — выделить">' + rowLockBadge(i) + '<span class="rn">' + (i + 1) + '</span>' + rowCounts(Z.rows[i]) +
          '</span><span class="trk" style="width:' + W + '">' + lines + t + "</span></div>";
   }
+  h += cutLine();   // v0.112
+  let HH = 0; for (let l = 0; l < N; l++) HH = Math.max(HH, hidRows(l).length);
+  for (let j = 0; j < HH; j++) {
+    let t = "";
+    for (const [p, list] of ovRowMap(j, A, OV_SHOW, true)) t += '<span class="ob" style="left:' + (p / 2) + 'ch">' + (list.length === 1 ? list[0].b : ovCombine(list)) + "</span>";
+    h += hidRowHtml(H + j, '<span class="trk" style="width:' + W + '">' + lines + t + "</span>").replace('class="rw hid"', 'class="rw ovr hid"');
+  }
   L.innerHTML = h + "</div>";
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
-  $("fieldInfo").textContent = `наложение ${N} полей · рабочее ${Z.lane + 1} · ${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1}`;
+  $("fieldInfo").textContent = `наложение ${N} полей · рабочее ${Z.lane + 1} · ${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1}` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "");
   $("fieldInfo").title = $("fieldInfo").textContent;   // v0.077: целиком — в подсказке
   const c = L.querySelector(".rw.cur > .no");
   if (c) c.scrollIntoView({ block: "nearest" });
@@ -346,6 +362,45 @@ function rowLockBadge(i){
   return '<span class="rlk' + (lk ? " on" : "") + (own ? " own" : "") + '" data-lk="' + i + '" title="Кольцо ' + (i + 1) + ' в конусе: ' + (lk ? "заперто — крутится только на вид" : "открыто — крутит саму строку") +
     (own ? " (свой замок)" : " (по общей галке)") + ' · щелчок — ' + (lk ? "отпереть" : "запереть") + ', правый — по общей галке">' + (lk ? "🔒" : "🔓") + "</span>" + '<span class="rrot"' + (rr ? ' data-rr="' + i + '" title="Кольцо повёрнуто на вид на ' + rr + ' — щелчок: снять накрутку"' : "") + '>' + (rr ? "↻" + rr : "") + "</span>";   // v0.101: щелчок — снять   // v0.093: столбик поворота есть всегда — столбики ровные
 }
+/* v0.112, «под нижней строкой последней поставь линию-границу; если за неё вверх — пусть скрывает строки ниже неё, делая их
+   бесцветными, и этих строк как будто нет». Строки за границей лежат отдельно — хвост Z.lanesHid[l] у поля l, а в Z.rows / Z.lanes
+   только строки над чертой; поэтому окна, конус, кнопки, счёт и шаблоны их просто не видят — как будто их нет. Граница одна на
+   все поля и стоит под нижней строкой; тянешь её вверх — у каждого поля над ней остаётся не больше k строк (хотя бы одна), вниз —
+   строки возвращаются на свои места. Двойной щелчок по черте — вернуть все. Перенос черты — правка: ↩ вернёт. */
+function hidRows(l){ return (Z.lanesHid && Z.lanesHid[l]) || []; }
+function hidCopy(){ return Array.isArray(Z.lanesHid) ? Z.lanesHid.map(l => l.slice()) : null; }
+function hidCount(){ let c = 0; for (let l = 0; l < (Z.laneCount || 1); l++) c += hidRows(l).length; return c; }
+function cutHeight(){ let H = 0; for (let l = 0; l < (Z.laneCount || 1); l++) H = Math.max(H, laneRows(l).length); return H; }
+function cutAt(k){
+  syncLane();
+  k = Math.max(1, k | 0);
+  for (let l = 0; l < (Z.laneCount || 1); l++) {
+    const all = Z.lanes[l].concat(hidRows(l)), v = Math.max(1, Math.min(all.length, k));
+    Z.lanes[l] = all.slice(0, v); Z.lanesHid[l] = all.slice(v);
+  }
+  Z.rows = Z.lanes[Z.lane];
+  Z.cur = Math.min(Z.cur, Z.rows.length - 1);
+  for (const i of [...rowSel]) if (i >= Z.rows.length) rowSel.delete(i);
+}
+function cutLine(){
+  const n = hidCount();
+  return '<div class="cutln' + (n ? " on" : "") + '" title="Граница строк — тяни вверх: строки ниже черты бесцветные, и их как будто нет — окна, конус и кнопки их не видят; вниз — вернуть. Двойной щелчок — вернуть все. ↩ отменит">' +
+    '<span class="cuth">' + (n ? "⎯ за границей " + n + " стр." : "⎯ граница") + "</span></div>";
+}
+/* Перенос черты на k строк (Infinity — вниз до конца): точка отмены — состояние до переноса (pre, когда черту тащат). Замок строк
+   перенос не держит: биты не меняются, строки только уходят за черту и возвращаются. */
+function cutMove(k, pre){
+  pre = pre || undoState();
+  if (k !== null) cutAt(k === Infinity ? 1e9 : k);
+  let same = true;   // строк у поля всего столько же — состояние задаёт число строк за чертой
+  for (let l = 0; l < (Z.laneCount || 1); l++) if (((pre.lanesHid && pre.lanesHid[l]) || []).length !== hidRows(l).length) same = false;
+  if (same) { renderRows(); if (!hidCount()) say("⎯ Граница под нижней строкой — строк за ней нет. Тяни черту вверх, чтобы спрятать строки ниже неё."); return; }
+  undoPush(pre);
+  renderAll(); save();
+  const n = hidCount();
+  say(n ? `⎯ За границей ${n} стр. — бесцветные, и их как будто нет: окна и кнопки видят ${Z.rows.length} стр. Тяни черту вниз или двойной щелчок по ней — вернуть. ↩ отменит.` : "⎯ Все строки снова над границей.");
+}
+function hidRowHtml(i, cells){ return '<div class="rw hid" data-h="' + i + '"><span class="no" title="за границей — строки как будто нет"><span></span><span></span><span class="rn">' + (i + 1) + "</span></span>" + cells + "</div>"; }
 function renderRows(){
   if (rowEditing >= 0) return;
   syncLane();
@@ -377,9 +432,21 @@ function renderRows(){
     }
     h += "</div>";
   }
+  // v0.112: черта-граница под нижней строкой, под ней — строки за границей, бесцветные
+  h += cutLine();
+  let HH = 0; for (let l = 0; l < N; l++) HH = Math.max(HH, hidRows(l).length);
+  for (let j = 0; j < HH; j++) {
+    let t = "";
+    for (let l = 0; l < N; l++) {
+      const s = hidRows(l)[j];
+      t += '<span class="bits' + (l === Z.lane ? " la" : "") + '" data-l="' + l + '">' + (s === undefined ? "" : '<span class="bxh">' + (s.length > ROW_SHOW ? s.slice(0, ROW_SHOW) : s) + "</span>" +
+           (s.length > ROW_SHOW ? '<span class="more"> … ещё ' + (s.length - ROW_SHOW) + " бит</span>" : "")) + "</span>";
+    }
+    h += hidRowHtml(H + j, t);
+  }
   L.innerHTML = h + "</div>";
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
-  $("fieldInfo").textContent = (N > 1 ? `поле ${Z.lane + 1} из ${N} · ` : "") + `${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1} (${cur().length} бит)` + rowChgInfo();
+  $("fieldInfo").textContent = (N > 1 ? `поле ${Z.lane + 1} из ${N} · ` : "") + `${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1} (${cur().length} бит)` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowChgInfo();
   $("fieldInfo").title = $("fieldInfo").textContent;   // v0.077: целиком — в подсказке
   const c = L.querySelector(".rw.cur > .bits.la") || L.querySelector(".rw.cur > .no");
   if (c) c.scrollIntoView({ block: "nearest", inline: "nearest" });
@@ -3224,7 +3291,7 @@ function init(){
     const lh = e.target.closest(".lh"); if (lh) { switchLane(+lh.dataset.l); return; }
     if (e.target.closest(".axrow")) return;   // v0.018: ручки осей тащат, а не выбирают
     if (axSel >= 0) { axSel = -1; renderRows(); }   // v0.022: щелчок по полю снимает выделение оси
-    const r = e.target.closest(".rw"); if (!r || r.classList.contains("lhrow")) return;
+    const r = e.target.closest(".rw"); if (!r || r.classList.contains("lhrow") || r.classList.contains("hid")) return;   // v0.112: за границей — строк нет
     const cell = e.target.closest(".bits, .ob");
     if (cell && +cell.dataset.l !== Z.lane && !textSelInRows()) { switchLane(+cell.dataset.l, +r.dataset.r); return; }
     const i = Math.min(+r.dataset.r, Z.rows.length - 1);
@@ -3252,7 +3319,10 @@ function init(){
   // v0.010: двойной щелчок — правка строки на месте.
   $("rowList").ondblclick = (e) => {
     if (rowEditing >= 0) return;
-    const r = e.target.closest(".rw"); if (!r || r.classList.contains("lhrow")) return;
+    // v0.112: двойной щелчок по черте — вернуть все строки (черту тащат с захватом указателя — щелчок приходит полю, смотрим, что под ним)
+    const pt = document.elementFromPoint(e.clientX, e.clientY);
+    if (pt && pt.closest(".cutln")) { cutMove(Infinity); return; }
+    const r = e.target.closest(".rw"); if (!r || r.classList.contains("lhrow") || r.classList.contains("hid")) return;
     e.preventDefault();
     const sel = window.getSelection && window.getSelection(); if (sel) sel.removeAllRanges();
     if (Z.laneCount > 1 && Z.laneView === "over") {   // v0.018
@@ -3282,7 +3352,7 @@ function init(){
     const op = $("ovOp").selectedOptions[0].textContent;
     if (Z.laneCount < 4) {
       const k = Z.laneCount;
-      Z.laneCount++; Z.lanes[k] = res; Z.axisPos[k] = undefined;
+      Z.laneCount++; Z.lanes[k] = res; Z.lanesHid[k] = []; Z.axisPos[k] = undefined;
       $("laneCount").value = String(Z.laneCount);
       switchLane(k, 0, true);
       say(`⤓ Итог наложения (${op}) — ${res.length} строк в поле ${k + 1}, оно теперь рабочее. ↩ вернёт.`);
@@ -3292,6 +3362,41 @@ function init(){
       say(`⤓ Все 4 поля заняты — итог наложения (${op}) записан в рабочее поле ${Z.lane + 1}. ↩ вернёт.`);
     }
   };
+  // v0.112: черта-граница под нижней строкой — тащится вверх / вниз; строки ниже неё уходят за границу
+  $("rowList").addEventListener("pointerdown", (e) => {
+    const ln = e.target.closest(".cutln"); if (!ln || e.button !== 0 || rowEditing >= 0) return;
+    e.preventDefault(); e.stopPropagation();
+    const list = $("rowList"), pre = undoState();
+    let raf = 0, moved = false, lastY = e.clientY;
+    list.setPointerCapture(e.pointerId);
+    document.body.classList.add("cutdrag");
+    const at = (y) => {   // сколько строк над курсором: середина строки выше него
+      let k = 0;
+      list.querySelectorAll(".rw:not(.lhrow) > .no").forEach(no => { const r = no.getBoundingClientRect(); if ((r.top + r.bottom) / 2 < y) k++; });
+      return Math.max(1, k);
+    };
+    const step = () => {
+      raf = 0;
+      const k = at(lastY);
+      if (k === cutHeight()) return;
+      cutAt(k); moved = true; renderRows();
+    };
+    const move = (ev) => {
+      lastY = ev.clientY;
+      const lr = list.getBoundingClientRect();   // у края поля — прокрутка, чтобы дотянуть черту до строк за краем
+      if (lastY < lr.top + 24) list.scrollTop -= 12; else if (lastY > lr.bottom - 24) list.scrollTop += 12;
+      if (!raf) raf = requestAnimationFrame(step);
+    };
+    const up = () => {
+      list.removeEventListener("pointermove", move); list.removeEventListener("pointerup", up); list.removeEventListener("pointercancel", up);
+      document.body.classList.remove("cutdrag");
+      if (raf) { cancelAnimationFrame(raf); step(); }
+      if (moved) cutMove(null, pre);
+    };
+    list.addEventListener("pointermove", move);
+    list.addEventListener("pointerup", up);
+    list.addEventListener("pointercancel", up);
+  });
   $("rowList").addEventListener("pointerdown", (e) => {
     const hd = e.target.closest(".axh"); if (!hd || e.button !== 0) return;
     e.preventDefault(); e.stopPropagation();

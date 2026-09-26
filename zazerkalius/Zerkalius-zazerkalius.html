@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.111. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.112. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.111</title>
+<title>Zazerkalius — v0.112</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -287,6 +287,20 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 .ob.fxr{opacity:1}
 .rw.sel .no{color:var(--acc2);font-weight:700}
 #rowList ::selection{background:rgba(185,140,240,.5)}
+/* v0.112, «под нижней строкой — линия-граница; за неё вверх — строки ниже неё бесцветные, и их как будто нет»: черта тащится
+   вверх / вниз (cutAt в zz-ui.js), строки за ней — серые, не выбираются и не правятся */
+.cutln{grid-column:1 / -1;position:relative;height:14px;cursor:ns-resize;touch-action:none;user-select:none;-webkit-user-select:none}
+.cutln::before{content:"";position:absolute;left:0;right:0;top:6px;border-top:2px solid var(--acc);opacity:.5}
+.cutln:hover::before,body.cutdrag .cutln::before{opacity:1;box-shadow:0 0 6px var(--acc)}
+.cuth{position:sticky;left:6px;z-index:2;display:inline-block;margin-left:6px;padding:0 6px;border-radius:3px;background:var(--bg);color:var(--dim);font:10px/14px system-ui,sans-serif;white-space:nowrap}
+.cutln.on .cuth,.cutln:hover .cuth{color:var(--acc)}
+body.cutdrag,body.cutdrag *{cursor:ns-resize !important}
+.rw.hid{cursor:default}
+.rw.hid > .bits,.rw.hid > .trk{color:var(--dim) !important;opacity:.3}
+.rw.hid .ob{color:var(--dim);opacity:1}
+.rw.hid > .no{color:var(--dim);opacity:.6;cursor:default}
+.rw.hid:hover > span{background:transparent}
+#rowList.multi .rw.hid .bits.la{background:transparent}
 /* Шаблоны (v0.010) */
 #tplBar{display:flex;gap:4px;padding:0 10px 6px}
 #tplBar button{flex:1;padding:2px 4px}
@@ -448,7 +462,7 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.111</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.112</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
@@ -1083,8 +1097,8 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
 <div id="msg"></div>
 <div id="zenHint">🧘 дзен · Esc — выйти</div>
 
-<script src="zz-core.js?v=0111"></script>
-<script src="zz-ui.js?v=0111"></script>
+<script src="zz-core.js?v=0112"></script>
+<script src="zz-ui.js?v=0112"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
