@@ -1071,7 +1071,7 @@ function renderCone(){
   const fillOn = !Z.cone3d && Z.rows.length <= CONE_MAX;   // v0.114: снаружи — пунктирное кольцо для заполнения (в плоском виде)
   const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, r0 = rMax * 0.05, dr = (rMax - r0) / Math.max(1, fillOn ? coneRingsTotal(N) : N);   // v0.127: и пустые кольца до 256
   coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
-  const clockRays = Z.coneClock && fillOn ? coneClockTrace() : null;   // v0.116: луч-часы — прошёл все кольца: «1» в ячейку под ним
+  const clockRays = Z.coneClock && fillOn ? coneClockTrace() : null, cE = "#1c2130";   // v0.131: пустая ячейка — чёрная (в обеих темах)   // v0.116: луч-часы — прошёл все кольца: «1» в ячейку под ним
   if (clockRays) {
     const hits = clockRays.filter(R => R.pass && R.cell >= 0); if (hits.length) coneClockMark(hits);
     // v0.127: стоим (крутят мышью, довод, щель) — луч дошёл до края: проход, единицы ячейкам пустых колец; во время ▶ это делает sweep
@@ -1124,7 +1124,7 @@ function renderCone(){
     const s = Z.rows[i], n = s.length; if (!n || !shown(i)) continue;
     const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, rot = coneRotOf(i);
     if (rout < 0 || rin > Math.hypot(W, H) + Math.hypot(cx - W / 2, cy - H / 2)) continue;
-    const MI = mirMap.get(i);
+    const MI = mirMap.get(i), blank = !!clockRays;   // v0.131: при луч-часах ячейки колец строк пустые — чёрные, 1 ставит лазер
     const gap = clockRays && n > 1 ? coneSlitHalf(n)   // v0.124: при луч-часах щель между битами — та, что в расчёте (ползунок «щель»)
       : n > 1 && step * rin > 3 * dpr ? Math.min(step * 0.12, 1.5 * dpr / Math.max(1, rin)) : 0;
     const arcLen = step * (rin + rout) / 2, fsz = Math.min(dr * band * 0.8, arcLen * 0.85);
@@ -1141,6 +1141,7 @@ function renderCone(){
       const colOf = (j) => { const fix = MI ? MI.fix[j] : Z.showFix && fixAt(s, j);
         let col = fix ? (MI ? (MI.c180 ? green : cR) : Z.showFix === "ir" ? green : cR) : s[j] === "1" ? c1 : c0;
         if (MI && MI.odd) col = MI.cls[j] === 2 ? green : MI.cls[j] === 1 ? cg : cR;
+        if (blank) return [cE, true];   // v0.131: при луч-часах ячейки пустые
         return [col, s[j] === "1" || !!fix || !!(MI && MI.odd)]; };
       const w = Math.max(2 * dpr, Math.min(dr * band * 0.4, 14 * dpr * Math.max(1, coneZoom)));
       if (n === 1) { const [col, strong] = colOf(0); coneDots.push({ i, col, strong, r: Math.max(3 * dpr, w * 0.9), ch: s[0] }); }
@@ -1153,12 +1154,12 @@ function renderCone(){
           g.beginPath(); g.moveTo(cx + rout * Math.cos(a1), cy + rout * Math.sin(a1)); g.lineTo(cx, cy); g.lineTo(cx + rout * Math.cos(a2), cy + rout * Math.sin(a2)); g.stroke();
           g.globalAlpha = 1; g.shadowBlur = 0;
           const am = a + step / 2, rm = rout * 0.5, fsz = Math.min(dr * band * 0.8, rout * 0.3);
-          if (fsz >= 8 * dpr) { g.save(); g.translate(cx + rm * Math.cos(am), cy + rm * Math.sin(am)); g.rotate(am + Math.PI / 2); g.fillStyle = col;
+          if (fsz >= 8 * dpr && !blank) { g.save(); g.translate(cx + rm * Math.cos(am), cy + rm * Math.sin(am)); g.rotate(am + Math.PI / 2); g.fillStyle = col;
             g.font = `700 ${Math.round(fsz)}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(s[j], 0, 0); g.restore(); }
         }
         g.lineJoin = "round";
         for (let j = 0; j < 2; j++) {   // граница перед битом j — в щели между Г, у края
-          const a = -Math.PI / 2 + (j - rot) * step, pv = s[(j + 1) % 2], diff = pv !== s[j];
+          const a = -Math.PI / 2 + (j - rot) * step, pv = s[(j + 1) % 2], diff = !blank && pv !== s[j];
           g.strokeStyle = diff ? (pv === "0" ? cUp : cDn) : cT; g.globalAlpha = diff ? 0.95 : 0.3; g.lineWidth = diff ? Math.max(1.5 * dpr, w * 0.5) : Math.max(1, dpr);
           g.beginPath(); g.moveTo(cx + rout * 0.6 * Math.cos(a), cy + rout * 0.6 * Math.sin(a)); g.lineTo(cx + rout * Math.cos(a), cy + rout * Math.sin(a)); g.stroke();
         }
@@ -1169,15 +1170,16 @@ function renderCone(){
       const a = -Math.PI / 2 + (j - rot) * step, fix = MI ? MI.fix[j] : Z.showFix && fixAt(s, j);
       let col = fix ? (MI ? (MI.c180 ? coneCss("--green", "#6ee7a0") : cR) : Z.showFix === "ir" ? coneCss("--green", "#6ee7a0") : cR) : s[j] === "1" ? c1 : c0;
       if (MI && MI.odd) col = MI.cls[j] === 2 ? coneCss("--green", "#6ee7a0") : MI.cls[j] === 1 ? cg : cR;   // v0.081: против пары — сколько совпало
+      if (blank) col = cE;   // v0.131: при луч-часах ячейка пустая — чёрная, без 0/1
       g.beginPath(); coneArc(g, cx, cy, i, rout, a + gap, a + step - gap); coneArc(g, cx, cy, i, rin, a + step - gap, a + gap, true); g.closePath();   // v0.109: у многоугольника — сторона
       /* v0.078, «чётче границы внутри кольца и цвета ярче — сливаются»: заливка плотнее (у единиц и неподвижных — почти
          сплошная, у нулей — заметная), символ поверх единицы — цветом фона (контраст на плотной заливке), у нуля — своим
          цветом; между битами — тёмные черты, по краям кольца — контур. */
-      const strong = s[j] === "1" || fix || !!(MI && MI.odd);
-      g.globalAlpha = strong ? (glyph ? 0.8 : 0.95) : (glyph ? 0.28 : 0.4); g.fillStyle = col;
+      const strong = blank || s[j] === "1" || fix || !!(MI && MI.odd);
+      g.globalAlpha = blank ? 0.95 : strong ? (glyph ? 0.8 : 0.95) : (glyph ? 0.28 : 0.4); g.fillStyle = col;
       if (glow && strong) { g.shadowColor = col; g.shadowBlur = Math.max(6 * dpr, Math.min(dr * 0.9, 30 * dpr)); }
       g.fill(); g.globalAlpha = 1; if (glow && strong) g.shadowBlur = 0;
-      if (glyph) {
+      if (glyph && !blank) {
         const am = a + step / 2, rm = (rin + rout) / 2 * coneRho(i, am);
         g.save(); g.translate(cx + rm * Math.cos(am), cy + rm * Math.sin(am)); g.rotate(am + Math.PI / 2);
         g.fillStyle = strong ? cBg : col; g.font = `700 ${Math.round(fsz)}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle";
@@ -1188,7 +1190,7 @@ function renderCone(){
        0→1 (по часовой) — сиреневая, 1→0 — бирюзовая; одинаковые — тонкая бледная. Края серий видны сразу, узор проступает. */
     if (n > 1 && step * rin > 3 * dpr) {
       for (let j = 0; j < n; j++) {
-        const a = -Math.PI / 2 + (j - rot) * step, pv = s[(j - 1 + n) % n], nx = s[j], diff = pv !== nx;
+        const a = -Math.PI / 2 + (j - rot) * step, pv = s[(j - 1 + n) % n], nx = s[j], diff = !blank && pv !== nx;
         g.strokeStyle = diff ? (pv === "0" ? cUp : cDn) : cT; g.globalAlpha = diff ? 0.95 : 0.3; g.lineWidth = diff && !clockRays ? Math.max(1.5 * dpr, Math.min(dr * 0.1, 4 * dpr)) : Math.max(1, dpr * 0.8);   // v0.124: при луч-часах черта тонкая — щель видна пустой
         g.beginPath(); g.moveTo(cx + rin * Math.cos(a), cy + rin * Math.sin(a)); g.lineTo(cx + rout * Math.cos(a), cy + rout * Math.sin(a)); g.stroke();
       }
