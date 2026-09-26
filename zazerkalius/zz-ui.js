@@ -1650,6 +1650,7 @@ function coneClockMark(hits){
   let f = fillDraft(); const ch = [];
   for (const h of hits) if (h.cell >= 0 && h.cell < f.length && f[h.cell] !== "1") { f = f.slice(0, h.cell) + "1" + f.slice(h.cell + 1); ch.push(h.cell + 1); }
   if (!ch.length) return;
+  f = f.replace(/\./g, "0");   // v0.136, «когда бит покрасил в строке — покажи остальные нулями, заполни»: лазер поставил «1» — пустые ячейки строки становятся 0
   Z.fillCells = f; renderRows(); save();
   say(`⌖ Луч прошёл все кольца — в строке для заполнения «1» в ячейке ${ch.join(", ")}.`);
 }
