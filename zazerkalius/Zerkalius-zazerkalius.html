@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.142. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.143. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.142</title>
+<title>Zazerkalius — v0.143</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -495,12 +495,24 @@ body.solo #field > #coneBot #coneOut{flex:0 1 auto;min-height:0;overflow:auto;fo
 @media (min-width:761px){
   body.solo #desk{overflow:hidden}
   body.solo .win.solo-win{position:absolute !important;left:0 !important;top:0 !important;width:100% !important;height:100% !important;resize:none;border:none;border-radius:0;box-shadow:none}
+  /* v0.143, «исправь дизайн: слишком черно, ничего не видно, режет» (кнопки полупрозрачно лежали поверх конуса и резали его):
+     на странице конуса кнопки — сплошной полосой сверху, конус — под ними на всё оставшееся место, шапка окна не нужна */
+  body.solo #w-cone .whead{display:none !important}
+  body.solo #w-cone .wbody{position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+  body.solo #w-cone .wbody > .tools{flex:0 0 auto;margin-top:0;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
+  body.solo #w-cone #coneMain{position:relative;inset:auto;flex:1 1 auto;min-height:0}
+  body.solo #w-cone #coneCv{border-radius:0}
 }
+/* v0.143: тёмная палитра страницы конуса — светлее и контрастнее: фон не чёрный, подписи, рамки и нули видны */
+@media (prefers-color-scheme: dark){
+  html.solo:not([data-theme="light"]){--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --line:#414b62; --txt:#eef1f6; --dim:#b0b9cc; --b0:#8f99ae}
+}
+html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --line:#414b62; --txt:#eef1f6; --dim:#b0b9cc; --b0:#8f99ae}
 </style>
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.142</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.143</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
@@ -1174,8 +1186,8 @@ body.solo #field > #coneBot #coneOut{flex:0 1 auto;min-height:0;overflow:auto;fo
 <div id="msg"></div>
 <div id="zenHint">🧘 дзен · Esc — выйти</div>
 
-<script src="zz-core.js?v=0142"></script>
-<script src="zz-ui.js?v=0142"></script>
+<script src="zz-core.js?v=0143"></script>
+<script src="zz-ui.js?v=0143"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>

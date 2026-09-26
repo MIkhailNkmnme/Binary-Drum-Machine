@@ -3585,6 +3585,7 @@ window.addEventListener("beforeunload", () => { for (const w of popups.values())
 function soloApply(){
   const el = $(ZZ_SOLO); if (!el) return;
   document.body.classList.add("solo");
+  document.documentElement.classList.add("solo");   // v0.143: своя, посветлее, тёмная палитра — её читает и холст конуса
   el.classList.add("solo-win");
   document.querySelectorAll(".win").forEach(o => { if (o !== el) o.style.display = "none"; });
   if (el.classList.contains("docked")) undockWin(el);
