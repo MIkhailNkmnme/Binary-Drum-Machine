@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.146. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.147. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.146</title>
+<title>Zazerkalius — v0.147</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -545,11 +545,13 @@ body.lay #layItems{z-index:100001}
 body.layfree #w-cone .wbody > .tools{display:none}
 #layZones .lzp{position:absolute;box-sizing:border-box;border:1px solid color-mix(in srgb, var(--zc) 55%, var(--line));border-top:3px solid var(--zc);border-radius:0;background:color-mix(in srgb, var(--zc) 10%, var(--panel))}
 #layZones .lzn{position:absolute;left:6px;top:2px;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--zc);white-space:nowrap}
-#layItems .lit{position:absolute;pointer-events:auto;margin:0 !important;white-space:nowrap}
+#layItems .lit{position:absolute;pointer-events:auto;margin:0 !important;white-space:nowrap;box-sizing:border-box;justify-content:center;text-align:center;overflow:hidden}   /* v0.147: ширина — по стандарту, из JS */
 #layItems #coneCycle.lit{width:360px;height:18px;line-height:18px;font-size:11px;overflow:hidden;text-overflow:ellipsis;color:var(--dim)}
 body.lay #layItems .lit{cursor:grab;outline:1px dashed color-mix(in srgb, var(--txt) 45%, transparent);outline-offset:1px}
 body.lay #layItems .lit *{pointer-events:none}
+body.lay #layItems .lit.att{outline:1px solid var(--zc)}   /* v0.147: прилипла к полю — рамка цветом поля */
 body.lay #layItems .lit.lsel{outline:2px solid var(--gold)}
+#layLayer .lz.hot{background:color-mix(in srgb, var(--zc) 38%, transparent);border-style:dashed}   /* v0.147: сюда прилипнет брошенная кнопка */
 /* v0.143: тёмная палитра страницы конуса — светлее и контрастнее: фон не чёрный, подписи, рамки и нули видны */
 @media (prefers-color-scheme: dark){
   html.solo:not([data-theme="light"]){--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --line:#414b62; --txt:#eef1f6; --dim:#b0b9cc; --b0:#8f99ae}
@@ -559,7 +561,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.146</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.147</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
@@ -1237,8 +1239,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 <div id="msg"></div>
 <div id="zenHint">🧘 дзен · Esc — выйти</div>
 
-<script src="zz-core.js?v=0146"></script>
-<script src="zz-ui.js?v=0146"></script>
+<script src="zz-core.js?v=0147"></script>
+<script src="zz-ui.js?v=0147"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>

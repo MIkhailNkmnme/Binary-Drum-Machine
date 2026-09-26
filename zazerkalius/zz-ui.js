@@ -3611,7 +3611,10 @@ function layInit(){
   if (!Z.lay || !Array.isArray(Z.lay.zones)) Z.lay = { zones: [] };
   if (!Z.lay.items || typeof Z.lay.items !== "object") Z.lay.items = {};
   const Zs = () => Z.lay.zones, IT = Z.lay.items;
-  const G = 8, MIN = 24, COLS = ["#b98cf0", "#38bdf8", "#4ade80", "#fb7c5b", "#fbbf24", "#f472b6", "#94a3b8"];
+  let uid = 0;
+  const zid = () => "z" + Date.now().toString(36) + (uid++);
+  Zs().forEach(z => { if (!z.id) z.id = zid(); });   // v0.147: у поля свой id — к нему привязываются кнопки
+  const G = 8, MIN = 24, STD = 32, COLS = ["#b98cf0", "#38bdf8", "#4ade80", "#fb7c5b", "#fbbf24", "#f472b6", "#94a3b8"];
   const HANDLES = ["n", "s", "e", "w", "ne", "nw", "se", "sw"].map(d => `<i class="lzh lzh-${d}" data-d="${d}"></i>`).join("");
   const mk = (id) => { const d = document.createElement("div"); d.id = id; desk.appendChild(d); return d; };
   const zonesBox = mk("layZones"), itemsBox = mk("layItems"), layer = mk("layLayer");
@@ -3622,20 +3625,43 @@ function layInit(){
   const toPx = (z) => { const { W, H } = dim(); return { x: z.x * W / 100, y: z.y * H / 100, w: z.w * W / 100, h: z.h * H / 100 }; };
   const setPx = (z, r) => { const { W, H } = dim(); z.x = pc(r.x, W); z.y = pc(r.y, H); z.w = pc(r.w, W); z.h = pc(r.h, H); };
   const clampR = (r) => { const { W, H } = dim(); r.w = Math.max(MIN, Math.min(r.w, W)); r.h = Math.max(MIN, Math.min(r.h, H)); r.x = Math.max(0, Math.min(r.x, W - r.w)); r.y = Math.max(0, Math.min(r.y, H - r.h)); return r; };
+  const zoneById = (id) => Zs().find(z => z.id === id);
 
   /* v0.146, «все кнопки стандартизируй и дай мне перемещать»: каждая кнопка, галка, список и ползунок конуса — отдельный
      предмет. Первый вход в раскладку снимает их с полосы кнопок ровно там, где они стояли, и дальше они живут на столе сами
-     по себе (Z.lay.items: ключ → место в долях стола). Ключ — id элемента или id того, что у него внутри. */
+     по себе (Z.lay.items: ключ → место). Ключ — id элемента или id того, что у него внутри.
+     v0.147, «дай прикреплять к полям сразу кнопки и двигать вместе, и размеры кнопок выровни стандарт»: кнопка, брошенная
+     центром на поле, привязывается к нему ({ z: id поля, ox, oy } — сдвиг от угла поля в px) и ездит вместе с полем; брошенная
+     мимо полей — свободная ({ x, y } — доли стола). Ширина кнопок — по стандарту: кратна 32 px без зазора 4 px (28, 60, 92…),
+     высота 24 — в шаге 32 кнопки встают ровными рядами и колонками. */
   const itemKey = (el) => el.id || (el.querySelector("[id]") ? "in:" + el.querySelector("[id]").id : "tx:" + el.textContent.trim().slice(0, 24));
   const itemEls = () => {
     const a = Array.from(document.querySelectorAll("#w-cone .tools > .cgrp > *"));
     const cyc = $("coneCycle"); if (cyc && !a.includes(cyc)) a.push(cyc);
     return a;
   };
+  const litEls = () => Array.from(itemsBox.querySelectorAll(".lit"));
+  function absOf(p){   // место кнопки на столе, px
+    const z = p.z && zoneById(p.z);
+    if (z) { const r = toPx(z); return { x: r.x + p.ox, y: r.y + p.oy }; }
+    const { W, H } = dim(); return { x: (p.x || 0) * W / 100, y: (p.y || 0) * H / 100 };
+  }
+  function setAbs(p, a, zone){   // запомнить место: к полю (сдвиг от его угла) или свободно (доли стола)
+    if (zone) { const r = toPx(zone); p.z = zone.id; p.ox = Math.round(a.x - r.x); p.oy = Math.round(a.y - r.y); delete p.x; delete p.y; }
+    else { const { W, H } = dim(); delete p.z; delete p.ox; delete p.oy; p.x = pc(a.x, W); p.y = pc(a.y, H); }
+  }
   function placeItem(el){
     const p = IT[el.dataset.lk]; if (!p) return;
-    const { W, H } = dim();
-    el.style.left = Math.round(p.x * W / 100) + "px"; el.style.top = Math.round(p.y * H / 100) + "px";
+    const a = absOf(p), z = p.z && zoneById(p.z);
+    el.style.left = Math.round(a.x) + "px"; el.style.top = Math.round(a.y) + "px";
+    el.classList.toggle("att", !!z); if (z) el.style.setProperty("--zc", z.c); else el.style.removeProperty("--zc");
+  }
+  const placeAll = () => { if (freed) litEls().forEach(placeItem); };
+  function stdSize(el){
+    if (el.id === "coneCycle") { el.style.width = (11 * STD - 4) + "px"; return; }
+    el.style.width = "";
+    const w = el.offsetWidth; if (!w) return;   // спрятанная сейчас — мерить нечего
+    el.style.width = (Math.ceil((w + 4) / STD) * STD - 4) + "px";
   }
   function free(capture){
     if (freed) return;
@@ -3646,12 +3672,16 @@ function layInit(){
       const k = itemKey(el); el.dataset.lk = k;
       if (!IT[k]) {
         if (capture) { const r = el.getBoundingClientRect(); IT[k] = { x: pc(snap(r.left - d.left), W), y: pc(snap(r.top - d.top), H) }; }
-        else { IT[k] = { x: pc(8, W), y: pc(ny, H) }; ny += 32; }   // новый элемент, которого не было в сохранённой раскладке
+        else { IT[k] = { x: pc(8, W), y: pc(ny, H) }; ny += STD; }   // новый элемент, которого не было в сохранённой раскладке
       }
     });
-    els.forEach(el => { el.classList.add("lit"); itemsBox.appendChild(el); placeItem(el); });
+    els.forEach(el => { el.classList.add("lit"); itemsBox.appendChild(el); stdSize(el); placeItem(el); });
     document.body.classList.add("layfree");
     freed = true;
+  }
+  function zoneAt(cx, cy){   // верхнее поле под точкой
+    for (let i = Zs().length - 1; i >= 0; i--) { const r = toPx(Zs()[i]); if (cx >= r.x && cx <= r.x + r.w && cy >= r.y && cy <= r.y + r.h) return Zs()[i]; }
+    return null;
   }
   function drawZones(){
     zonesBox.innerHTML = Zs().map(z => {
@@ -3659,17 +3689,17 @@ function layInit(){
       return `<div class="lzp" style="left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;--zc:${z.c}"><span class="lzn">${esc(z.name)}</span></div>`;
     }).join("");
   }
-  function draw(){
+  function draw(hot){
     layer.innerHTML = Zs().map((z, i) => {
-      const r = toPx(z);
-      return `<div class="lz${i === sel ? " sel" : ""}" data-i="${i}" style="left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;--zc:${z.c}">` +
-        `<span class="lzn">${esc(z.name)}</span><span class="lzs">${Math.round(r.w)} × ${Math.round(r.h)}</span>${HANDLES}</div>`;
+      const r = toPx(z), n = litEls().filter(el => (IT[el.dataset.lk] || {}).z === z.id).length;
+      return `<div class="lz${i === sel ? " sel" : ""}${z === hot ? " hot" : ""}" data-i="${i}" style="left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;--zc:${z.c}">` +
+        `<span class="lzn">${esc(z.name)}${n ? " · 📎" + n : ""}</span><span class="lzs">${Math.round(r.w)} × ${Math.round(r.h)}</span>${HANDLES}</div>`;
     }).join("") +
-      `<div id="layHint">▦ Кнопки — тяни куда угодно · по пустому — новое поле · тяни поле — двигать · за край или угол — размер · двойной щелчок — имя · правый щелчок — цвет · Del — удалить поле · Esc — готово</div>`;
+      `<div id="layHint">▦ Кнопку — тяни; брошенная на поле прилипает к нему (📎) и ездит с ним · по пустому — новое поле · тяни поле — двигать вместе с кнопками · за край или угол — размер · двойной щелчок — имя · правый — цвет · Del — удалить поле · Esc — готово</div>`;
     drawZones();
   }
   function newZone(r){
-    const k = Zs().length, z = { name: "Поле " + (k + 1), c: COLS[k % COLS.length], x: 0, y: 0, w: 0, h: 0 };
+    const k = Zs().length, z = { id: zid(), name: "Поле " + (k + 1), c: COLS[k % COLS.length], x: 0, y: 0, w: 0, h: 0 };
     setPx(z, r); Zs().push(z); sel = Zs().length - 1; return z;
   }
   function rename(i){
@@ -3679,11 +3709,11 @@ function layInit(){
   }
   function setOn(v){
     on = !!v; if (!on) { sel = -1; if (selItem) selItem.classList.remove("lsel"); selItem = null; }
-    if (on) free(true);
+    if (on) { free(true); litEls().forEach(stdSize); }
     document.body.classList.toggle("lay", on);
     btn.textContent = on ? "✓ Готово" : "▦ Раскладка"; btn.classList.toggle("on", on);
-    draw();
-    if (on) say("▦ Раскладка: кнопки тяни куда угодно; по пустому месту — новое поле. Esc или «✓ Готово» — выйти.");
+    draw(); placeAll();
+    if (on) say("▦ Раскладка: кнопку брось на поле — прилипнет и поедет вместе с ним. Esc или «✓ Готово» — выйти.");
     save();
   }
   btn.onclick = () => setOn(!on);
@@ -3700,7 +3730,7 @@ function layInit(){
     e.preventDefault(); e.stopPropagation();
     if (selItem) selItem.classList.remove("lsel");
     selItem = el; el.classList.add("lsel");
-    drag = { mode: "item", el, x0: e.clientX, y0: e.clientY, l0: el.offsetLeft, t0: el.offsetTop };
+    drag = { mode: "item", el, x0: e.clientX, y0: e.clientY, l0: el.offsetLeft, t0: el.offsetTop, hot: null };
     el.setPointerCapture(e.pointerId);   // захват — на саму кнопку: у контейнера pointer-events: none
   }, true);
   itemsBox.addEventListener("pointermove", (e) => {
@@ -3709,12 +3739,17 @@ function layInit(){
     const x = Math.max(0, Math.min(W - el.offsetWidth, snap(drag.l0 + e.clientX - drag.x0)));
     const y = Math.max(0, Math.min(H - el.offsetHeight, snap(drag.t0 + e.clientY - drag.y0)));
     el.style.left = x + "px"; el.style.top = y + "px";
+    const hot = zoneAt(x + el.offsetWidth / 2, y + el.offsetHeight / 2);
+    if (hot !== drag.hot) { drag.hot = hot; draw(hot); }
   });
   const itemUp = () => {
     if (!drag || drag.mode !== "item") return;
-    const { W, H } = dim(), el = drag.el;
-    IT[el.dataset.lk] = { x: pc(el.offsetLeft, W), y: pc(el.offsetTop, H) };
-    drag = null; save();
+    const el = drag.el, zone = zoneAt(el.offsetLeft + el.offsetWidth / 2, el.offsetTop + el.offsetHeight / 2);
+    const p = IT[el.dataset.lk] || (IT[el.dataset.lk] = {}), was = p.z;
+    setAbs(p, { x: el.offsetLeft, y: el.offsetTop }, zone);
+    drag = null; placeItem(el); draw(); save();
+    if (zone && was !== zone.id) say(`📎 Прилипла к полю «${zone.name}» — поедет вместе с ним.`);
+    else if (!zone && was) say("📎 Отлипла от поля — теперь сама по себе.");
   };
   itemsBox.addEventListener("pointerup", itemUp); itemsBox.addEventListener("pointercancel", itemUp);
   ["click", "mousedown", "input", "change"].forEach(t => itemsBox.addEventListener(t, (e) => { if (on) { e.preventDefault(); e.stopPropagation(); } }, true));
@@ -3731,7 +3766,10 @@ function layInit(){
       const t = performance.now();
       if (!h && lastDown.i === sel && t - lastDown.t < 400) { lastDown = {}; drag = null; rename(sel); return; }
       lastDown = { i: sel, t };
-      drag = { mode: h ? h.dataset.d : "move", z: Zs()[sel], r0: toPx(Zs()[sel]), x0: px, y0: py };
+      const z = Zs()[sel];
+      // при размере кнопки поля стоят на месте: запомним их места на столе, чтобы пересчитать сдвиги от нового угла
+      const att = litEls().filter(el => (IT[el.dataset.lk] || {}).z === z.id).map(el => ({ p: IT[el.dataset.lk], a: absOf(IT[el.dataset.lk]) }));
+      drag = { mode: h ? h.dataset.d : "move", z, r0: toPx(z), x0: px, y0: py, att };
     } else {
       drag = { mode: "new", x0: snap(px), y0: snap(py), z: null };
       sel = -1;
@@ -3759,14 +3797,17 @@ function layInit(){
       if (r.w < MIN) { if (m.includes("w")) r.x -= MIN - r.w; r.w = MIN; }
       if (r.h < MIN) { if (m.includes("n")) r.y -= MIN - r.h; r.h = MIN; }
     }
-    setPx(drag.z, clampR(r)); draw();
+    const rr = clampR(r);
+    setPx(drag.z, rr);
+    if (m !== "move") drag.att.forEach(o => { o.p.ox = Math.round(o.a.x - rr.x); o.p.oy = Math.round(o.a.y - rr.y); });
+    draw(); placeAll();
   });
-  const up = () => { if (!drag || drag.mode === "item") return; drag = null; draw(); save(); };
+  const up = () => { if (!drag || drag.mode === "item") return; drag = null; draw(); placeAll(); save(); };
   layer.addEventListener("pointerup", up); layer.addEventListener("pointercancel", up);
   layer.addEventListener("contextmenu", (e) => {
     e.preventDefault();
     const zEl = e.target.closest(".lz"); if (!zEl) return;
-    const z = Zs()[+zEl.dataset.i]; z.c = COLS[(COLS.indexOf(z.c) + 1) % COLS.length]; sel = +zEl.dataset.i; draw(); save();
+    const z = Zs()[+zEl.dataset.i]; z.c = COLS[(COLS.indexOf(z.c) + 1) % COLS.length]; sel = +zEl.dataset.i; draw(); placeAll(); save();
   });
   document.addEventListener("keydown", (e) => {
     if (!on) return;
@@ -3774,12 +3815,14 @@ function layInit(){
     if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); setOn(false); return; }
     if ((e.key === "Delete" || e.key === "Backspace") && sel >= 0) {
       e.preventDefault(); e.stopImmediatePropagation();
-      const z = Zs().splice(sel, 1)[0]; sel = -1; draw(); save(); say(`▦ Поле «${z.name}» удалено.`);
+      const z = Zs()[sel];
+      litEls().forEach(el => { const p = IT[el.dataset.lk]; if (p && p.z === z.id) setAbs(p, absOf(p), null); });   // кнопки поля остаются на месте, свободными
+      Zs().splice(sel, 1); sel = -1; draw(); placeAll(); save(); say(`▦ Поле «${z.name}» удалено, его кнопки остались на местах.`);
     }
   }, true);
   if (Object.keys(IT).length) free(false);
   drawZones();
-  if (window.ResizeObserver) new ResizeObserver(() => { if (on) draw(); else drawZones(); if (freed) itemEls().forEach(placeItem); }).observe(desk);
+  if (window.ResizeObserver) new ResizeObserver(() => { if (on) draw(); else drawZones(); placeAll(); }).observe(desk);
 }
 function layoutAll(reset){
   const def = defaultLayout();
