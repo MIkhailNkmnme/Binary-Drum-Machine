@@ -319,7 +319,7 @@ function renderRowsOver(){
              list.map(e => "поле " + (e.l + 1) + ": " + e.b).join(", ") + " → " + v + '">' + v + "</span>";
       }
     }
-    h += '<div class="rw ovr' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? " — изменена против эталона ⚑" : "") + ' · щелчок — выделить">' + rowLockBadge(i) + '<span class="rn">' + (i + 1) + '</span>' + rowCounts(Z.rows[i]) +
+    h += '<div class="rw ovr' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? " — изменена против эталона ⚑" : "") + ' · щелчок — выделить">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) +
          '</span><span class="trk" style="width:' + W + '">' + lines + t + "</span></div>";
   }
   h += cutLine();   // v0.112
@@ -465,11 +465,11 @@ function fillReset(){
 function fillRowHtml(N){
   const f = fillDraft(); let c = "";
   for (let k = 0; k < f.length; k++) c += '<span class="fc' + (f[k] === "." ? " fe" : " b" + f[k]) + '" data-k="' + k + '">' + (f[k] === "." ? "&nbsp;" : f[k]) + "</span>";
-  let h = '<div class="rw fillrw"><span class="no" title="Строка для заполнения — ' + f.length + ' ячеек, на одну больше нижней строки"><span class="fadd" title="＋ В строки: встанет под нижней строкой (пустые ячейки — нулями), ↩ вернёт">＋</span><span class="fdel" title="✕ Заново: стереть строку для заполнения — снова все ячейки пустые, и метки лазера в пустых кольцах тоже стираются. В конусе — правый щелчок по её кольцу">✕</span><span class="rn">' + (Z.rows.length + 1) + "</span></span>";
+  let h = '<div class="rw fillrw"><span class="no" title="Строка для заполнения — ' + f.length + ' ячеек, на одну больше нижней строки"><span class="rn">' + (Z.rows.length + 1) + '</span><span class="fadd" title="＋ В строки: встанет под нижней строкой (пустые ячейки — нулями), ↩ вернёт">＋</span><span class="fdel" title="✕ Заново: стереть строку для заполнения — снова все ячейки пустые, и метки лазера в пустых кольцах тоже стираются. В конусе — правый щелчок по её кольцу">✕</span></span>';
   for (let l = 0; l < N; l++) h += '<span class="bits' + (l === Z.lane ? " la" : "") + '" data-l="' + l + '">' + (l === Z.lane ? '<span class="fcs" title="Щелчок по ячейке: пусто → 1 → 0 → пусто. ＋ слева — в строки">' + c + "</span>" : "") + "</span>";
   return h + "</div>";
 }
-function hidRowHtml(i, cells){ return '<div class="rw hid" data-h="' + i + '"><span class="no" title="за границей — строки как будто нет"><span></span><span></span><span class="rn">' + (i + 1) + "</span></span>" + cells + "</div>"; }
+function hidRowHtml(i, cells){ return '<div class="rw hid" data-h="' + i + '"><span class="no" title="за границей — строки как будто нет"><span class="rn">' + (i + 1) + "</span><span></span><span></span></span>" + cells + "</div>"; }
 /* v0.153, «в строках уменьши межстрочный отступ до 0.7 минимум, когда не все строки помещаются по высоте»: после отрисовки поле
    меряется; влезают — межстрочный обычный (1.25), нет — сжимается ровно настолько, чтобы влезли, но не ниже 0.7 (дальше — прокрутка).
    Ужатое поле (.rlsq) держит и колонку номеров в высоту строки, иначе замок 🔒 не дал бы строке стать ниже. */
@@ -511,7 +511,7 @@ function renderRows(){
     h += "</div>";
   }
   for (let i = 0; i < H; i++) {
-    h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? " — изменена против эталона ⚑" : "") + ' · щелчок — выделить">' + rowLockBadge(i) + '<span class="rn">' + (i + 1) + '</span>' + rowCounts(Z.rows[i]) + "</span>";
+    h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? " — изменена против эталона ⚑" : "") + ' · щелчок — выделить">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) + "</span>";
     for (let l = 0; l < N; l++) {
       const s = lanes[l][i], act = l === Z.lane;
       if (s === undefined) { h += '<span class="bits' + (act ? " la" : "") + '" data-l="' + l + '"></span>'; continue; }

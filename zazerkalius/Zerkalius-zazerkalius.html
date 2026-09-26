@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.159. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.160. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.159</title>
+<title>Zazerkalius — v0.160</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -252,7 +252,7 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 .no .rrot:not(:empty){cursor:pointer} .no .rrot:not(:empty):hover{color:var(--red);text-decoration:line-through}   /* v0.101: щелчок по ↻k — снять накрутку */
 /* v0.093, «тут шрифт и значки покрупнее, и выровняй всё, может, столбики — границы между ними тонкие»: у номера строки —
    ровные столбики: замок | поворот ↻ | номер | неподв.·меняющ. | 0:1; между столбиками тонкие черты; шрифт крупнее */
-.rw > .no{display:grid !important;grid-template-columns:1.9em 2.6em 2.3em;grid-auto-flow:column;grid-auto-columns:4.6em;justify-content:start;align-items:stretch;font-size:13px;padding:0}   /* v0.144, «тут слева отступ ненужный»: колонки счётчиков (н·м, 0·1) — только когда они включены, прежде 2 × 4.6em пустовали всегда */
+.rw > .no{display:grid !important;grid-template-columns:2.3em 1.9em 2.6em;grid-auto-flow:column;grid-auto-columns:4.6em;justify-content:start;align-items:stretch;font-size:13px;padding:0}   /* v0.144, «тут слева отступ ненужный»: колонки счётчиков (н·м, 0·1) — только когда они включены, прежде 2 × 4.6em пустовали всегда */
 /* v0.096, «номера гуляют при выделениях»: столбики чисел были «auto» и выравнивались по правому краю — у выделенной (жирной)
    строки числа шире, и весь ряд уезжал влево. Теперь у каждого столбика своя постоянная ширина и ряд прижат влево. */
 .rw > .no > .rc{overflow:hidden}
@@ -260,6 +260,9 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 .rw > .no > span:first-child{border-left:none;justify-content:center}
 .rw > .no > .rrot{justify-content:flex-end;font-size:11px;color:var(--dim)}
 .rw > .no > .rn{justify-content:flex-end;min-width:0}
+/* v0.160, «сначала номера, потом замки, потом кручение»: столбики у строки — номер | замок | поворот ↻ | счётчики (прежде замок | ↻ | номер) */
+.rw > .no > .rn:first-child{justify-content:flex-end}
+.rw > .no > .rlk{justify-content:center}
 .rw > .no > .rlk{font-size:14px;line-height:1.1;border-radius:3px;padding:0 3px}
 .rw > .no > .rlk.own{box-shadow:inset 0 0 0 1px var(--gold);border-color:transparent}
 .rw > .no > .rc{font-size:12px;margin:0;display:inline-grid !important}
@@ -564,7 +567,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.159</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.160</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
