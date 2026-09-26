@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.177. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.178. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.177</title>
+<title>Zazerkalius — v0.178</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -384,7 +384,8 @@ body.zen #w-cone #bConeRec{display:none !important}
 #coneTxtWin .ctwHead button{padding:0 6px;height:20px;line-height:1;cursor:pointer}
 #coneTxtWin .ctwBody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
 #coneTxtWin #coneBot{position:static !important;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:2px;overflow:hidden;padding:4px 8px}
-#coneTxtWin #coneOut{flex:0 1 auto;max-height:60%;min-height:0;overflow:auto;font-size:11px;line-height:1.3;margin:0}
+#coneTxtWin #coneOut{flex:1 1 0;max-height:none;min-height:0;overflow:auto;font-size:11px;line-height:1.3;margin:0}   /* v0.178, «скролл — места много внизу»: текст — на всё свободное место окна (прежде до 60%), с логом лазера — пополам */
+#coneTxtWin #coneLogBox{flex:1 1 0}
 #bConeTxt.on{border-color:var(--acc);color:var(--acc)}
 body.zen #coneTxtWin{display:none !important}
 #w-cone #coneCv{border-radius:6px}
@@ -593,7 +594,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.177</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.178</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
