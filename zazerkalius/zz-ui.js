@@ -1340,7 +1340,7 @@ function renderCone(){
       g.stroke(); g.lineCap = "round";
     }
     for (const R of clockRays) {
-      const rs = R.pass ? (R.vstop < coneRingsTotal(N) ? r0 + R.vstop * dr + dr * band / 2 : rEnd) : (r0 + R.stop * dr) * coneRho(R.stop, R.a), px   // v0.129: пойман пустым кольцом — до его ячейки = cx + rs * Math.cos(R.a), py = cy + rs * Math.sin(R.a);
+      const rs = R.pass ? (R.vstop < coneRingsTotal(N) ? r0 + R.vstop * dr + dr * band / 2 : rEnd) : (r0 + R.stop * dr) * coneRho(R.stop, R.a), px = cx + rs * Math.cos(R.a), py = cy + rs * Math.sin(R.a);   // v0.129: пойман пустым кольцом — до его ячейки
       beam(R.a, rs, R.pass ? 1 : 0.9, R.pass);
       if (R.pass) { g.fillStyle = cCore; g.shadowColor = cg; g.shadowBlur = 16 * dpr; g.beginPath(); g.arc(px, py, Math.max(4 * dpr, dr * 0.15), 0, 2 * Math.PI); g.fill(); g.shadowBlur = 0; }
       else {   // стена — красная дуга поперёк клина (чуть шире его)
