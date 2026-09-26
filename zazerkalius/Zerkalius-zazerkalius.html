@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.104. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.105. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.104</title>
+<title>Zazerkalius — v0.105</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -319,6 +319,13 @@ body.pane-icons #paneWins{padding:4px}
   box-shadow:0 8px 24px rgba(0,0,0,.35);display:flex;flex-direction:column;min-width:200px;min-height:60px;
   resize:both;overflow:hidden}
 .win.front{z-index:5}
+/* v0.105, «режим дзен»: только конус на весь экран — всё остальное прячется; выход — Esc */
+body.zen #top,body.zen #rowsPane,body.zen #field,body.zen #split,body.zen .win:not(#w-cone),body.zen #fieldDock{display:none !important}
+body.zen #w-cone{position:fixed !important;inset:0 !important;left:0 !important;top:0 !important;width:auto !important;height:auto !important;z-index:1000 !important;border:none;border-radius:0;box-shadow:none}
+body.zen #w-cone .whead,body.zen #w-cone .wbody > .tools,body.zen #w-cone #coneOut,body.zen #w-cone .whint,body.zen .wgrip{display:none !important}
+body.zen #w-cone #coneCv{border-radius:0;cursor:grab}
+#zenHint{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:1001;font:13px system-ui,sans-serif;color:var(--dim);background:color-mix(in srgb, var(--panel) 70%, transparent);padding:4px 12px;border-radius:12px;pointer-events:none;transition:opacity 1.2s;opacity:0}
+body.zen #zenHint{opacity:1} body.zen.zen-quiet #zenHint{opacity:0}
 /* v0.075, «убери выделения текста» (снимок: вся полоса кнопок «◯ Конуса» залита синим выделением — от щелчков и
    перетаскивания рядом). Кнопки, подписи, выборы, полосы инструментов, шапки окон и панелей, холсты — не выделяются;
    тексты-итоги окон (.out), строки и поля ввода выделяются и копируются, как прежде. */
@@ -430,7 +437,7 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.104</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.105</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
@@ -945,7 +952,7 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
           <button id="bConeMirApply" title="⇄ по оси: отразить строки выделенных колец (или текущего) по их оси — это «реверс» кольца; при «180°» — повернуть на полкруга (↩ вернёт)">⇄ по оси</button>
           <!-- v0.098: крутить весь конус и кольца по отдельности -->
           <span class="dim" style="margin-left:6px">весь:</span><button id="bConeSpinL" title="Крутить весь конус против часовой — щелчок 15°, держишь — крутится. Правый щелчок — вернуть к началу (0°)">⟲</button><button id="bConeSpinR" title="Крутить весь конус по часовой — щелчок 15°, держишь — крутится. Правый щелчок — вернуть к началу (0°)">⟳</button>
-          <span class="dim" style="margin-left:6px">кольца:</span><button id="bConeRingL" title="Повернуть выделенные кольца (или текущее) на бит против часовой. Запертое — только на вид, открытое — сама строка (↩ вернёт)">◁</button><button id="bConeRingR" title="Повернуть выделенные кольца (или текущее) на бит по часовой. Запертое — только на вид, открытое — сама строка (↩ вернёт)">▷</button><select id="coneSpinMode" title="Как крутить: всё целиком — весь конус одним поворотом; каждое по биту — каждое кольцо на бит за шаг (маленькие вертятся быстрее, рисунок закручивается спиралью и раз в какое-то время все возвращаются); навстречу — чётные кольца по часовой, нечётные против, с одной скоростью"><option value="all">всё целиком</option><option value="bit">каждое по биту</option><option value="opp">навстречу через одно</option></select><button id="bConeAuto" title="▶ Крутить весь конус само, без остановки (скорость — ползунок рядом; минус — в другую сторону). Ещё раз — стоп">▶ крутить</button><label class="dim" title="Скорость кручения, градусов в секунду; минус — против часовой"> <input type="range" id="coneAutoSp" min="-120" max="120" step="5" value="30" style="width:70px;vertical-align:middle"></label><button id="bConeRec" title="⏺ Видео: запись холста конуса (только сам конус, без кнопок) в файл .webm. Ещё раз — стоп и сохранить. Удобно вместе с «▶ крутить»">⏺ видео</button>
+          <span class="dim" style="margin-left:6px">кольца:</span><button id="bConeRingL" title="Повернуть выделенные кольца (или текущее) на бит против часовой. Запертое — только на вид, открытое — сама строка (↩ вернёт)">◁</button><button id="bConeRingR" title="Повернуть выделенные кольца (или текущее) на бит по часовой. Запертое — только на вид, открытое — сама строка (↩ вернёт)">▷</button><select id="coneSpinMode" title="Как крутить: всё целиком — весь конус одним поворотом; каждое по биту — каждое кольцо на бит за шаг (маленькие вертятся быстрее, рисунок закручивается спиралью и раз в какое-то время все возвращаются); навстречу — чётные кольца по часовой, нечётные против, с одной скоростью"><option value="all">всё целиком</option><option value="bit">каждое по биту</option><option value="opp">навстречу через одно</option></select><button id="bConeAuto" title="▶ Крутить весь конус само, без остановки (скорость — ползунок рядом; минус — в другую сторону). Ещё раз — стоп">▶ крутить</button><label class="dim" title="Скорость кручения, градусов в секунду; минус — против часовой"> <input type="range" id="coneAutoSp" min="-120" max="120" step="5" value="30" style="width:70px;vertical-align:middle"></label><button id="bConeRec" title="⏺ Видео: запись холста конуса (только сам конус, без кнопок) в файл .webm. Ещё раз — стоп и сохранить. Удобно вместе с «▶ крутить»">⏺ видео</button><button id="bConeZen" title="🧘 Дзен: только конус, на весь экран — без кнопок, панелей и строк. Кручение, свет, 3D — как настроены. Выйти — Esc">🧘 дзен</button>
           <button id="bConeRotClear" title="↺ Снять накрутку «на вид» (↻) — у выделенных колец, ничего не выделено — у всех. Строки не меняются. Одно кольцо — щелчком по его «↻k» у номера строки">↺ снять ↻</button>
           <select id="coneRays" title="Лучи к центру от ЦЕНТРОВ бит (не от границ): видно, какие биты соседних колец стоят на одном луче и в какую границу или бит внутреннего кольца луч попадает. Границы бит — черты на самом кольце"><option value="off">без лучей</option><option value="cur">лучи от бит текущего кольца</option><option value="all">лучи от бит всех колец</option></select>
         </div>
@@ -1035,9 +1042,10 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
   </main>
 </div>
 <div id="msg"></div>
+<div id="zenHint">🧘 дзен · Esc — выйти</div>
 
-<script src="zz-core.js?v=0104"></script>
-<script src="zz-ui.js?v=0104"></script>
+<script src="zz-core.js?v=0105"></script>
+<script src="zz-ui.js?v=0105"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>

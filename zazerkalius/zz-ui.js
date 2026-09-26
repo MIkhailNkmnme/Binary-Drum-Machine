@@ -1323,7 +1323,7 @@ function cone3DDraw(g, o){
   const m1 = at(Math.max(0, N - 1), -Math.PI / 2, ringR(Math.max(0, N - 1)) + 0.1), m2 = at(Math.max(0, N - 1), -Math.PI / 2, ringR(Math.max(0, N - 1)) + 0.6);
   g.strokeStyle = cg; g.globalAlpha = 0.35; g.lineWidth = dpr; g.beginPath(); g.moveTo(m1[0], m1[1]); g.lineTo(m2[0], m2[1]); g.stroke(); g.globalAlpha = 1;
   g.fillStyle = cT; g.globalAlpha = 0.7; g.font = `${Math.round(11 * dpr)}px system-ui, sans-serif`;
-  g.fillText(`3D · поворот ${Math.round((Z.cone3Yaw ?? 30) % 360)}° · наклон ${Math.round(Z.cone3El ?? 50)}° · высота ×${(hk).toFixed(1)} — тяни: вращать, Ctrl: сдвиг, колесо: масштаб, двойной щелчок: как было`, 8 * dpr, 16 * dpr);
+  if (!document.body.classList.contains("zen")) g.fillText(`3D · поворот ${Math.round((Z.cone3Yaw ?? 30) % 360)}° · наклон ${Math.round(Z.cone3El ?? 50)}° · высота ×${(hk).toFixed(1)} — тяни: вращать, Ctrl: сдвиг, колесо: масштаб, двойной щелчок: как было`, 8 * dpr, 16 * dpr);
   g.globalAlpha = 1;
 }
 function coneRing(e){
@@ -1510,6 +1510,19 @@ function setupCone(){
     $("bConeAuto").classList.toggle("on", on); $("bConeAuto").textContent = on ? "⏸ стоп" : "▶ крутить";
   };
   $("bConeAuto").onclick = () => autoSet(!autoRaf);
+  /* v0.105, «режим дзен»: только конус на весь экран (и во весь экран браузера, если можно); всё остальное спрятано.
+     Выход — Esc (или выход из полноэкранного). Подсказка внизу гаснет через три секунды. */
+  let zenT = 0;
+  window.zenSet = (on) => {
+    const w = $("w-cone");
+    if (on && w.classList.contains("collapsed")) w.querySelector(".bc").click();
+    document.body.classList.toggle("zen", on); document.body.classList.remove("zen-quiet");
+    clearTimeout(zenT); if (on) zenT = setTimeout(() => document.body.classList.add("zen-quiet"), 3000);
+    try { if (on && !document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); else if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch (e) {}
+    requestAnimationFrame(() => { renderCone(); if (!on) { packWins(); renderAll(); } });
+  };
+  $("bConeZen").onclick = () => zenSet(true);
+  document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && document.body.classList.contains("zen")) zenSet(false); });
   $("bConeAuto").oncontextmenu = (e) => { e.preventDefault(); Z.coneSpin = 0; Z.coneSpinPh = 0; save(); renderCone(); say("◯ Кручение сброшено — всё на своих местах."); };   // v0.104
   $("coneSpinMode").value = Z.coneSpinMode || "all";
   $("coneSpinMode").onchange = (e) => { Z.coneSpinMode = e.target.value; Z.coneSpinPh = 0; save(); renderCone();
@@ -3795,6 +3808,7 @@ function init(){
   // v0.012: Del/Backspace — удалить выделенное, Ctrl+A — выделить все строки, Esc — снять выделение.
   document.addEventListener("keydown", (e) => {
     const t = e.target;
+    if (e.key === "Escape" && document.body.classList.contains("zen")) { e.preventDefault(); zenSet(false); return; }   // v0.105: выйти из дзена
     /* v0.099, «Esc — снять выделение со строк всех»: Esc работает и тогда, когда фокус на галке, выборе или кнопке (после щелчка
        в окнах клавиша прежде пропускалась); из поля ввода Esc сперва уводит фокус. */
     if (e.key === "Escape" && t && t.closest && t.closest("input, select, textarea")) { if (t.matches("input[type=text], input[type=number], input:not([type]), textarea")) t.blur(); }
