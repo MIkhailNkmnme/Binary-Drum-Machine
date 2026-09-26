@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.175. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.176. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.175</title>
+<title>Zazerkalius — v0.176</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -375,7 +375,7 @@ body.zen #w-cone #bConeRec{display:none !important}
 #cone3Pad{padding:4px;border:1px solid rgba(34,211,238,.5);border-radius:6px;background:rgba(34,211,238,.13)}
 #cone3Pad.flat{border-color:transparent;background:none}
 #cone3Pad button{width:28px;height:28px;padding:0;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;background:var(--panel)}
-body.zen #cone3Pad{display:none !important}
+/* v0.176, «режим дзен с показом кнопок пульта»: в дзене пульт у холста (кнопки 3D и ↺) — виден */
 /* v0.158: плавающее окно текста конуса и лога лазера — поверх всего */
 #coneTxtWin{position:fixed;z-index:900;left:0;top:0;width:420px;height:260px;min-width:220px;min-height:110px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:0 8px 28px rgba(0,0,0,.45);resize:both;overflow:hidden}
 #coneTxtWin[hidden]{display:none}
@@ -588,7 +588,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.175</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.176</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -598,7 +598,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <span class="sp"></span>
   <!-- v0.155, «эту наверх перед Сохр.»: 🧘 дзен — в шапке, перед «💾 Всё» (прежде — в группе «Запись» у конуса) -->
   <button id="bConeTxt" title="📝 Текст конуса и лог лазера — плавающим окном поверх всего. Ещё раз — закрыть">📝 Текст</button>
-  <button id="bConeZen" title="🧘 Дзен: только конус, на весь экран — без кнопок, панелей и строк. Кручение, свет, 3D — как настроены. Выйти — Esc">🧘 дзен</button>
+  <button id="bConeZen" title="🧘 Дзен: только конус и пульт у холста, на весь экран — без панелей и строк. Кручение, свет, 3D — как настроены. Щелчок колесом по конусу — войти и выйти, Esc — выйти. Колесо или + − — масштаб, тянуть с зажатым колесом или стрелки (Shift — крупнее шаг) — сдвиг">🧘 дзен</button>
   <!-- v0.115: «надо сохр настройки и все биты в файл, чтобы на другом компе» -->
   <button id="bSaveAll" title="💾 Сохранить ВСЁ в файл .json: все поля строк, строки за чертой, строку для заполнения, свои шаблоны, окна, конус и все настройки. Файл переносится на другой компьютер и открывается там кнопкой «📂 Всё» или перетаскиванием на страницу">💾 Всё</button>
   <button id="bLoadAll" title="📂 Открыть файл .json, сохранённый кнопкой «💾 Всё», — страница целиком станет как в нём (спросит перед заменой). Можно и просто перетащить файл на страницу">📂 Всё</button>
@@ -1272,7 +1272,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   </main>
 </div>
 <div id="msg"></div>
-<div id="zenHint">🧘 дзен · Esc — выйти</div>
+<div id="zenHint">🧘 дзен · Esc или щелчок колесом — выйти</div>
 <!-- v0.158, по снимку текста конуса и лога лазера — «это всё в отдельное окно с полным закрытием, плавающим везде, кнопку в верхнее меню»:
      своё окно поверх всего (и на странице «◯ Конус», и в Zazerkalius), тянется за шапку, растягивается за угол; ✕ — закрыть совсем,
      открыть — «📝 Текст» в шапке страницы. Место, размер и открыто ли — запоминаются (Z.ctw). -->

@@ -2385,6 +2385,21 @@ function setupCone(){
   /* v0.105, «режим дзен»: только конус на весь экран (и во весь экран браузера, если можно); всё остальное спрятано.
      Выход — Esc (или выход из полноэкранного). Подсказка внизу гаснет через три секунды. */
   let zenT = 0;
+  /* v0.176, «режим дзен с показом кнопок пульта, по колесику-щелчку вкл/выкл, масштаб, перемещение — всё мышкой»: средняя кнопка
+     (колесо) над конусом: щёлкнул, не сдвинув, — дзен вкл/выкл; тянешь — сдвиг вида (и в плоском, и в 3D). Колесо — масштаб, как было. */
+  { const cvz = $("coneCv");
+    cvz.addEventListener("pointerdown", (e) => {
+      if (e.button !== 1) return;
+      e.preventDefault(); e.stopPropagation(); try { cvz.setPointerCapture(e.pointerId); } catch (err) { /* указатель уже отпущен */ }
+      const x0 = e.clientX, y0 = e.clientY, p0 = conePan.slice(), dpr = window.devicePixelRatio || 1; let moved = false;
+      const mv = (ev) => { if (Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) > 4) { moved = true; cvz.style.cursor = "move"; } if (moved) { conePan = [p0[0] + (ev.clientX - x0) * dpr, p0[1] + (ev.clientY - y0) * dpr]; renderCone(); } };
+      const up = () => { cvz.removeEventListener("pointermove", mv); cvz.removeEventListener("pointerup", up); cvz.removeEventListener("pointercancel", up); cvz.style.cursor = "grab";
+        if (!moved) zenSet(!document.body.classList.contains("zen")); };
+      cvz.addEventListener("pointermove", mv); cvz.addEventListener("pointerup", up); cvz.addEventListener("pointercancel", up);
+    }, true);
+    cvz.addEventListener("auxclick", (e) => { if (e.button === 1) e.preventDefault(); });
+    cvz.addEventListener("mousedown", (e) => { if (e.button === 1) e.preventDefault(); });   // без автопрокрутки браузера
+  }
   window.zenSet = (on) => {
     const w = $("w-cone");
     if (on && w.classList.contains("collapsed")) w.querySelector(".bc").click();
@@ -5098,6 +5113,12 @@ function init(){
   document.addEventListener("keydown", (e) => {
     const t = e.target;
     if (e.key === "Escape" && document.body.classList.contains("zen")) { e.preventDefault(); zenSet(false); return; }   // v0.105: выйти из дзена
+    if (document.body.classList.contains("zen") && !e.ctrlKey && !e.altKey && !e.metaKey) {   // v0.176, «кнопками стрелки»: в дзене стрелки двигают вид, + − — масштаб к центру
+      const d = 40 * (window.devicePixelRatio || 1) * (e.shiftKey ? 4 : 1), mvK = { ArrowLeft: [d, 0], ArrowRight: [-d, 0], ArrowUp: [0, d], ArrowDown: [0, -d] }[e.key];
+      if (mvK) { e.preventDefault(); conePan = [conePan[0] + mvK[0], conePan[1] + mvK[1]]; renderCone(); return; }
+      const zk = { "+": 1.2, "=": 1.2, "-": 1 / 1.2, "_": 1 / 1.2 }[e.key];
+      if (zk) { e.preventDefault(); const z1 = Math.max(0.3, Math.min(60, coneZoom * zk)), q = z1 / coneZoom; conePan = [conePan[0] * q, conePan[1] * q]; coneZoom = z1; renderCone(); return; }
+    }
     /* v0.099, «Esc — снять выделение со строк всех»: Esc работает и тогда, когда фокус на галке, выборе или кнопке (после щелчка
        в окнах клавиша прежде пропускалась); из поля ввода Esc сперва уводит фокус. */
     if (e.key === "Escape" && t && t.closest && t.closest("input, select, textarea")) { if (t.matches("input[type=text], input[type=number], input:not([type]), textarea")) t.blur(); }
