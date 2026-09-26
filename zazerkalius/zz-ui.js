@@ -55,6 +55,7 @@ const Z = {
   helpOn: true,
   z: 10,
 };
+const ZZ_ROWS0 = Z.rows.slice();   // v0.123: начальный столбик — до того, как load() положит сохранённый
 const undoStack = [];
 let gf2Last = null;
 
@@ -68,8 +69,10 @@ function load(){
   if (!Z.rows.length) Z.rows = ["1"];
   Z.cur = Math.max(0, Math.min(Z.rows.length - 1, Z.cur | 0));
 }
+let sessLoading = false;   // v0.115: файл сессии уже лёг в хранилище, страница перезагружается — ничего поверх не писать
 function save(){
   syncLane();
+  if (sessLoading) return;
   try { localStorage.setItem(ZZ_KEY, JSON.stringify(Z)); } catch (e) { /* нет хранилища — не беда */ }
 }
 let msgTimer = 0;
@@ -409,7 +412,10 @@ function cutMove(k, pre){
 function fillLen(){ const s = Z.rows[Z.rows.length - 1]; return (s ? s.length : 0) + 1; }
 function fillDraft(){
   const L = fillLen();
-  if (typeof Z.fillCells !== "string" || Z.fillCells.length !== L || !/^[.01]*$/.test(Z.fillCells)) Z.fillCells = "1" + ".".repeat(L - 1);
+  // v0.128, «все пустые строки — 0, без 1 начальной»: строка для заполнения начинается пустой (было — «1» в первой ячейке, v0.114).
+  // Черновик, оставшийся от прежнего начала («1» и пусто), один раз очищается: эту «1» ставила страница, а не лазер и не рука.
+  if (!Z.fillV128) { Z.fillV128 = true; if (typeof Z.fillCells === "string" && Z.fillCells === "1" + ".".repeat(L - 1)) Z.fillCells = null; }
+  if (typeof Z.fillCells !== "string" || Z.fillCells.length !== L || !/^[.01]*$/.test(Z.fillCells)) Z.fillCells = ".".repeat(L);
   return Z.fillCells;
 }
 function fillCycle(k){
@@ -425,10 +431,17 @@ function fillCommit(){
   renderAll(); save();
   say(`＋ Строка ${Z.rows.length} (${row.length} бит) — в поле${empty ? `, пустые ячейки (${empty}) — нулями` : ""}. Под чертой — следующая, ${fillLen()} ячеек. ↩ вернёт.`);
 }
+/* v0.118, «как удалить нижнюю строку — пустую — и заново»: «✕» у номера строки для заполнения (или правый щелчок по её кольцу
+   в конусе) — черновик стирается, строка снова пустая (v0.128: без «1» в первой ячейке). Строки поля не трогает. */
+function fillReset(){
+  const f = fillDraft(), was = f.replace(/\./g, "").length, hv = Z.voidHits && Z.voidHits.h ? Object.keys(Z.voidHits.h).length : 0;
+  Z.fillCells = null; if (Z.voidHits) Z.voidHits.h = {}; renderRows(); save();   // v0.127: и счёт проходов в пустых кольцах
+  say(was || hv ? `✕ Строка для заполнения — заново: ${fillLen()} пустых ячеек` + (hv ? `; пустые кольца до 256 — тоже без меток (было ${hv}).` : ".") : "✕ Строка для заполнения и так пустая.");   // v0.128: без начальной «1»
+}
 function fillRowHtml(N){
   const f = fillDraft(); let c = "";
   for (let k = 0; k < f.length; k++) c += '<span class="fc' + (f[k] === "." ? " fe" : " b" + f[k]) + '" data-k="' + k + '">' + (f[k] === "." ? "&nbsp;" : f[k]) + "</span>";
-  let h = '<div class="rw fillrw"><span class="no" title="Строка для заполнения — ' + f.length + ' ячеек, на одну больше нижней строки"><span class="fadd" title="＋ В строки: встанет под нижней строкой (пустые ячейки — нулями), ↩ вернёт">＋</span><span></span><span class="rn">' + (Z.rows.length + 1) + "</span></span>";
+  let h = '<div class="rw fillrw"><span class="no" title="Строка для заполнения — ' + f.length + ' ячеек, на одну больше нижней строки"><span class="fadd" title="＋ В строки: встанет под нижней строкой (пустые ячейки — нулями), ↩ вернёт">＋</span><span class="fdel" title="✕ Заново: стереть строку для заполнения — снова все ячейки пустые, и метки лазера в пустых кольцах тоже стираются. В конусе — правый щелчок по её кольцу">✕</span><span class="rn">' + (Z.rows.length + 1) + "</span></span>";
   for (let l = 0; l < N; l++) h += '<span class="bits' + (l === Z.lane ? " la" : "") + '" data-l="' + l + '">' + (l === Z.lane ? '<span class="fcs" title="Щелчок по ячейке: пусто → 1 → 0 → пусто. ＋ слева — в строки">' + c + "</span>" : "") + "</span>";
   return h + "</div>";
 }
@@ -1056,8 +1069,16 @@ function renderCone(){
   while (coneRot.length < Z.rows.length) coneRot.push(0);
   coneRot.length = Z.rows.length;
   const fillOn = !Z.cone3d && Z.rows.length <= CONE_MAX;   // v0.114: снаружи — пунктирное кольцо для заполнения (в плоском виде)
-  const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, r0 = rMax * 0.05, dr = (rMax - r0) / Math.max(1, N + (fillOn ? 1 : 0));
+  const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, r0 = rMax * 0.05, dr = (rMax - r0) / Math.max(1, fillOn ? coneRingsTotal(N) : N);   // v0.127: и пустые кольца до 256
   coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
+  const clockRays = Z.coneClock && fillOn ? coneClockTrace() : null;   // v0.116: луч-часы — прошёл все кольца: «1» в ячейку под ним
+  if (clockRays) {
+    const hits = clockRays.filter(R => R.pass && R.cell >= 0); if (hits.length) coneClockMark(hits);
+    // v0.127: стоим (крутят мышью, довод, щель) — луч дошёл до края: проход, единицы ячейкам пустых колец; во время ▶ это делает sweep
+    const any = clockRays.some(R => R.pass);
+    if (!coneSpinning) { if (any && coneClockWas === false) { clockRays.forEach(R => { if (R.pass) coneClockRecord(R); }); save(); } coneClockWas = any; }
+  }
+  { const cc = $("coneCycle"); if (cc) { const t = coneCycleText(); if (cc.textContent !== t) cc.textContent = t; } }   // v0.119: счёт кругов
   const { nk, groups } = coneInfo();
   const HUES = [200, 30, 120, 290, 0, 60, 170, 330, 90, 250];
   const gcol = new Map(); let gi = 0;
@@ -1103,7 +1124,8 @@ function renderCone(){
     const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, rot = coneRotOf(i);
     if (rout < 0 || rin > Math.hypot(W, H) + Math.hypot(cx - W / 2, cy - H / 2)) continue;
     const MI = mirMap.get(i);
-    const gap = n > 1 && step * rin > 3 * dpr ? Math.min(step * 0.12, 1.5 * dpr / Math.max(1, rin)) : 0;
+    const gap = clockRays && n > 1 ? coneSlitHalf(n)   // v0.124: при луч-часах щель между битами — та, что в расчёте (ползунок «щель»)
+      : n > 1 && step * rin > 3 * dpr ? Math.min(step * 0.12, 1.5 * dpr / Math.max(1, rin)) : 0;
     const arcLen = step * (rin + rout) / 2, fsz = Math.min(dr * band * 0.8, arcLen * 0.85);
     const glyph = fsz >= 8 * dpr;   // дуга крупная — рисуем символ, как в поле
     /* v0.110, «почему так? может, надо крест и точку?» — на «строки из 1 и 2 бит остаются кругами»: у одного бита многоугольника
@@ -1166,7 +1188,7 @@ function renderCone(){
     if (n > 1 && step * rin > 3 * dpr) {
       for (let j = 0; j < n; j++) {
         const a = -Math.PI / 2 + (j - rot) * step, pv = s[(j - 1 + n) % n], nx = s[j], diff = pv !== nx;
-        g.strokeStyle = diff ? (pv === "0" ? cUp : cDn) : cT; g.globalAlpha = diff ? 0.95 : 0.3; g.lineWidth = diff ? Math.max(1.5 * dpr, Math.min(dr * 0.1, 4 * dpr)) : Math.max(1, dpr * 0.8);
+        g.strokeStyle = diff ? (pv === "0" ? cUp : cDn) : cT; g.globalAlpha = diff ? 0.95 : 0.3; g.lineWidth = diff && !clockRays ? Math.max(1.5 * dpr, Math.min(dr * 0.1, 4 * dpr)) : Math.max(1, dpr * 0.8);   // v0.124: при луч-часах черта тонкая — щель видна пустой
         g.beginPath(); g.moveTo(cx + rin * Math.cos(a), cy + rin * Math.sin(a)); g.lineTo(cx + rout * Math.cos(a), cy + rout * Math.sin(a)); g.stroke();
       }
       g.globalAlpha = 1;
@@ -1192,23 +1214,53 @@ function renderCone(){
     if (i === coneHover) { g.strokeStyle = cA; g.lineWidth = Math.max(2 * dpr, dr * 0.14); g.globalAlpha = 0.85; g.beginPath(); coneArc(g, cx, cy, i, rin - dr * 0.06, 0, 2 * Math.PI); g.stroke(); g.beginPath(); coneArc(g, cx, cy, i, rout + dr * 0.06, 0, 2 * Math.PI); g.stroke(); g.globalAlpha = 1; }
   }
   if (fillOn) {   // v0.114: кольцо для заполнения — ячейки пунктиром, заполненные — цветом бита; бит 0 — сверху, как у всех
-    const f = fillDraft(), n = f.length, rin = r0 + N * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n;
+    const f = fillDraft(), n = f.length, rin = r0 + N * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, rotF = coneFillRot();   // v0.117: крутится со всеми
     const gp = n > 1 ? Math.min(step * 0.1, 1.5 * dpr / Math.max(1, rin)) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);
     g.lineWidth = dpr; g.setLineDash([3 * dpr, 3 * dpr]);
     for (let k = 0; k < n; k++) {
-      const a = -Math.PI / 2 + k * step;
+      const a = -Math.PI / 2 + (k - rotF) * step;
       g.beginPath();
       if (n > 1) { g.arc(cx, cy, rout, a + gp, a + step - gp); g.arc(cx, cy, rin, a + step - gp, a + gp, true); g.closePath(); }
       else { g.arc(cx, cy, rout, 0, 2 * Math.PI); g.moveTo(cx + rin, cy); g.arc(cx, cy, rin, 0, 2 * Math.PI, true); }
       if (f[k] !== ".") { g.fillStyle = f[k] === "1" ? c1 : c0; g.globalAlpha = f[k] === "1" ? 0.95 : 0.55; g.fill("evenodd"); }
       g.strokeStyle = cA; g.globalAlpha = 0.75; g.stroke(); g.globalAlpha = 1;
       if (f[k] !== "." && fsz >= 8 * dpr) {
-        const am = a + step / 2, rm = (rin + rout) / 2;
+        const am = a + step / 2, rm = (rin + rout) / 2, hc = f[k] === "1" ? (coneVoidHits()[N + ":" + k] | 0) : 0, tx = hc > 1 ? "1".repeat(hc) : f[k];   // v0.127: прошёл 2+ раз — 11, 111…
         g.save(); g.translate(cx + rm * Math.cos(am), cy + rm * Math.sin(am)); g.rotate(am + Math.PI / 2);
-        g.fillStyle = cBg; g.font = `${Math.round(fsz)}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(f[k], 0, 0); g.restore();
+        g.fillStyle = cBg; g.font = `${Math.round(tx.length > 1 ? fsz / Math.min(3, tx.length) * 1.4 : fsz)}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(tx, 0, 0); g.restore();
       }
     }
     g.setLineDash([]);
+    /* v0.127: пустые кольца до строки 256 — еле заметные: контур кольца и черты ячеек (где черта шире 3 пикселей); ячейки, через
+       которые прошёл луч, — закрашены (чем больше проходов, тем плотнее), с «1», «11», «111»… если влезает. */
+    const T = coneRingsTotal(N), VH = coneVoidHits(), marks = new Map();
+    for (const k in VH) { const [j, c] = k.split(":").map(Number); if (j > N && j < T) { if (!marks.has(j)) marks.set(j, []); marks.get(j).push([c, VH[k]]); } }
+    // v0.129, «совсем не видно граней у пустых — сделай хотя бы у ближайших более заметными»: ближнее пустое кольцо — ярко, дальше
+    // гаснет (×0,88 на кольцо, не бледнее 0,12); у ближних — и внешний край, и черта толще.
+    g.strokeStyle = cA;
+    for (let j = N + 1; j < T; j++) {
+      const d = j - N - 1, r1 = r0 + j * dr, r2 = r1 + dr * band, n = coneVoidLen(j, N), st = 2 * Math.PI / n, rt = coneVoidRot(j, n);
+      g.globalAlpha = Math.max(0.12, 0.75 * Math.pow(0.88, d)); g.lineWidth = d < 6 ? Math.max(1, dpr) : Math.max(0.6, dpr * 0.6);
+      g.beginPath(); g.moveTo(cx + r1, cy); g.arc(cx, cy, r1, 0, 2 * Math.PI);
+      if (d < 6) { g.moveTo(cx + r2, cy); g.arc(cx, cy, r2, 0, 2 * Math.PI); }
+      if (st * r1 > 3 * dpr) for (let k = 0; k < n; k++) { const a = -Math.PI / 2 + (k - rt) * st, c = Math.cos(a), s = Math.sin(a); g.moveTo(cx + r1 * c, cy + r1 * s); g.lineTo(cx + r2 * c, cy + r2 * s); }
+      g.stroke();
+    }
+    g.globalAlpha = 1;
+    for (const [j, list] of marks) {
+      const rin = r0 + j * dr, rout = rin + Math.max(1, dr * band), n = coneVoidLen(j, N), st = 2 * Math.PI / n, rt = coneVoidRot(j, n);
+      const fsz = Math.min(dr * band * 0.8, st * (rin + rout) / 2 * 0.85);
+      for (const [k, cnt] of list) {
+        const a = -Math.PI / 2 + (k - rt) * st;
+        g.beginPath(); g.arc(cx, cy, rout, a, a + st); g.arc(cx, cy, rin, a + st, a, true); g.closePath();
+        g.fillStyle = c1; g.globalAlpha = Math.min(0.95, 0.45 + 0.2 * cnt); g.fill(); g.globalAlpha = 1;
+        if (fsz >= 7 * dpr) {
+          const tx = "1".repeat(Math.min(cnt, 9)), am = a + st / 2, rm = (rin + rout) / 2;
+          g.save(); g.translate(cx + rm * Math.cos(am), cy + rm * Math.sin(am)); g.rotate(am + Math.PI / 2);
+          g.fillStyle = cBg; g.font = `${Math.round(tx.length > 1 ? fsz / Math.min(3, tx.length) * 1.4 : fsz)}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(tx, 0, 0); g.restore();
+        }
+      }
+    }
   }
   for (const d of coneDots) {   // v0.111: точка — в самом центре, поверх Г
     g.beginPath(); g.arc(cx, cy, d.r, 0, 2 * Math.PI); g.fillStyle = d.col; g.globalAlpha = d.strong ? 1 : 0.6;
@@ -1265,6 +1317,41 @@ function renderCone(){
     }
     g.stroke(); g.globalAlpha = 1;
   }
+  if (clockRays) {   // v0.116: луч-часы — золотой луч из центра до стены (красная черта поперёк) или до кольца для заполнения (точка)
+    const tNow = performance.now(), rEnd = r0 + coneRingsTotal(N) * dr, hw = Math.max(3 * dpr, dr * 0.18);   // v0.127: прошедший — сквозь пустые кольца до края
+    coneClockFlash = coneClockFlash.filter(F => tNow - F.t < 900);
+    /* v0.124, «чем задана ширина лазера и междубитья?» → «да» на «сделать ползунок ширины щели»: лазер — клин той же угловой
+       ширины, что щель (Z.coneSlit, градусы): у центра узкий, к краю шире — ровно как щели в кольцах, которые тоже по углу. Проходит
+       кольцо, если середина луча в щели, то есть луч хотя бы наполовину в ней. Светлая сердцевина — середина, по ней и считается. */
+    const hs = coneSlitHalf(), cCore = "#fff7d6";
+    const beam = (a, r1, alpha, bold) => {
+      const h = Math.max(hs, 1.5 * dpr / Math.max(1, r1));   // совсем узкую щель клин не тоньше 3 пикселей на конце — иначе не видно
+      g.globalAlpha = alpha * (bold ? 0.75 : 0.55); g.fillStyle = cg; g.shadowColor = cg; g.shadowBlur = bold ? 16 * dpr : 10 * dpr;
+      g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, r1, a - h, a + h); g.closePath(); g.fill(); g.shadowBlur = 0;
+      g.globalAlpha = alpha; g.strokeStyle = cCore; g.lineWidth = (bold ? 2 : 1.5) * dpr;
+      g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + r1 * Math.cos(a), cy + r1 * Math.sin(a)); g.stroke(); g.globalAlpha = 1;
+    };
+    g.save(); g.lineCap = "round";
+    {   // v0.119 / v0.121: вырез в кольце строки 1 — прорезь цветом фона шириной в щель (v0.124), края золотые
+      const ri = r0 - dpr, ro = r0 + Math.max(1, dr * band) + dpr, a = coneAimAngle(), h = Math.max(hs, 1.5 * dpr / Math.max(1, ri));
+      g.fillStyle = cBg; g.beginPath(); g.arc(cx, cy, ro, a - h, a + h); g.arc(cx, cy, Math.max(0, ri), a + h, a - h, true); g.closePath(); g.fill();
+      g.strokeStyle = cg; g.lineWidth = Math.max(1.5 * dpr, dpr); g.lineCap = "butt"; g.beginPath();
+      for (const e of [a - h, a + h]) { g.moveTo(cx + ri * Math.cos(e), cy + ri * Math.sin(e)); g.lineTo(cx + ro * Math.cos(e), cy + ro * Math.sin(e)); }
+      g.stroke(); g.lineCap = "round";
+    }
+    for (const R of clockRays) {
+      const rs = R.pass ? (R.vstop < coneRingsTotal(N) ? r0 + R.vstop * dr + dr * band / 2 : rEnd) : (r0 + R.stop * dr) * coneRho(R.stop, R.a), px   // v0.129: пойман пустым кольцом — до его ячейки = cx + rs * Math.cos(R.a), py = cy + rs * Math.sin(R.a);
+      beam(R.a, rs, R.pass ? 1 : 0.9, R.pass);
+      if (R.pass) { g.fillStyle = cCore; g.shadowColor = cg; g.shadowBlur = 16 * dpr; g.beginPath(); g.arc(px, py, Math.max(4 * dpr, dr * 0.15), 0, 2 * Math.PI); g.fill(); g.shadowBlur = 0; }
+      else {   // стена — красная дуга поперёк клина (чуть шире его)
+        const h = Math.max(hs, 1.5 * dpr / Math.max(1, rs)) + Math.max(hw * 0.5, 3 * dpr) / Math.max(1, rs);
+        g.strokeStyle = cR; g.lineWidth = Math.max(3 * dpr, dr * 0.08); g.beginPath(); g.arc(cx, cy, rs, R.a - h, R.a + h); g.stroke();
+      }
+    }
+    for (const F of coneClockFlash)   // прошёл между кадрами — вспышка, гаснет за 0,9 с
+      beam(F.a, F.j !== undefined && F.j < coneRingsTotal(N) ? r0 + F.j * dr + dr * band / 2 : rEnd, Math.max(0, 1 - (tNow - F.t) / 900), true);
+    g.restore();
+  }
   // метка «начала» строк — сверху: сюда встаёт бит 0
   g.strokeStyle = cg; g.lineWidth = 1 * dpr; g.beginPath(); g.moveTo(cx, cy - rMax + 2 * dpr); g.lineTo(cx, cy - rMax - 14 * dpr);   /* v0.086: метка начала — короткий штрих снаружи колец, а не черта от центра (её принимали за луч) */ g.globalAlpha = 0.5; g.stroke(); g.globalAlpha = 1;
   }   // v0.082: конец плоского вида
@@ -1281,6 +1368,11 @@ function renderCone(){
         return ` Дальше лучи уходят во внешнее кольцо ${i + 1} (${Z.rows[i + 1].length} бит): в единицу <b>${o}</b>, в ноль <b>${z}</b>` + (b ? `, в границу ${b}` : "") + `; в такой же бит, как исходный, — ${same}.\n`; })()
       : MI.c180 ? `Через центр 180°: пар «бит — бит напротив» ${s.length / 2}, равных ${MI.f / 2} (зелёные), разных ${(s.length - MI.f) / 2}.\n`
       : `Ось кольца №${MI.m}${MI.m === s.length - 1 ? " (как у строки ⇄)" : ""}: неподвижных <b>${MI.f}</b> из ${s.length} (красные), лучшая ось даёт ${MI.bestF}` + (MI.bestF === s.length ? " — кольцо зеркально само себе" : "") + `.\n`; })() : "") +
+    (clockRays && clockRays.length ? (() => { const p = clockRays.filter(R => R.pass);   // v0.116
+      const dv = Z.coneAimRot ? ` (строка 1 довёрнута на ${Math.round(Z.coneAimRot * 10) / 10}°)` : "";
+      const hv = Object.values(coneVoidHits()), vt = hv.length ? ` Пустые кольца: помечено ячеек ${hv.length}, проходов через них ${hv.reduce((s, x) => s + x, 0)}, больше всех — ${Math.max(...hv)} раз.` : "";   // v0.127
+      if (clockRays.length === 1) return (p.length ? `⌖ Луч из выреза${dv} проходит все строки` + (p[0].cell >= 0 ? ` — в строке для заполнения ячейка ${p[0].cell + 1}` : " — в строке для заполнения между ячейками") + (p[0].cell < 0 ? (p[0].vstop < coneRingsTotal(Math.min(Z.rows.length, CONE_MAX)) ? `, ловит пустое кольцо ${p[0].vstop + 1} (ячейка ${p[0].cells[0][1] + 1})` : ", и через щели всех пустых колец — за край") : "") + "." : `⌖ Луч из выреза${dv} держит стена кольца ${clockRays[0].stop + 1}.`) + vt + "\n";
+      return `⌖ Лучей из строки 1 — ${clockRays.length}: до края доходят ${p.length}${p.length ? " (ячейки " + p.map(R => R.cell + 1).join(", ") + ")" : ""}, остальные держат стены.\n`; })() : "") +
     `${coneLocked(i) ? "🔒" : "🔓"} Кольцо ${i + 1} ${coneLocked(i) ? "заперто" : "открыто"}${Z.coneLocks && Z.coneLocks[i] !== undefined ? " (свой замок)" : " (по общей галке)"}` + ((coneRot[i] || 0) ? `, повёрнуто на вид на ${Math.round(coneRot[i])}` : "") + `.\n` +
     `Строка ${i + 1}: ${s.length} бит — кольцо встаёт в <b>${k.orbit}</b> ${k.orbit === 1 ? "положение (как ни крути — то же)" : "разных положений"}; ` +
     `наименьший вид <span class="mono">${bitsPlain(k.canon.length > 80 ? k.canon.slice(0, 80) + "…" : k.canon)}</span> — до него повернуть на ${k.shift}.\n` +
@@ -1331,6 +1423,178 @@ function coneOuterHit(i, a){
   const u = (a + Math.PI / 2) / st2 + rot2, fl = Math.floor(u + 1e-9), fr = u - fl;
   const j = ((fl % n2) + n2) % n2;
   return { j, bit: s2[j], boundary: fr < 1e-6 || fr > 1 - 1e-6, pair: s2[((j - 1) % n2 + n2) % n2] + s2[j] };
+}
+/* v0.116, «пусть с центра через все кольца в стороны проходит луч, который проходит между границами битов, и когда он дойдёт
+   моментом хоть до нижней строки — то место, куда он упадёт, пометить 1; как часы, между зубьями; а так луч держится стенами
+   колец; в 1 строке». Галка «⌖ луч-часы»: луч выходит из центра через каждую границу строки 1 (у строки из одного бита граница
+   одна — стрелка часов). Кольцо он проходит только в щель — там, где у кольца граница бит (шириной щели — coneSlitHalf, v0.124); попал на
+   бит — стена, луч там и стоит. Прошёл все кольца (до нижней строки над чертой включительно) — ячейка строки для заполнения
+   под ним становится «1». Кольца стоят — считается один раз; крутятся (▶ по биту / навстречу) — между кадрами по мелким шагам
+   (coneClockSweep), чтобы миг, когда щели сошлись, не проскочил между кадрами. */
+/* v0.124: щель — ползунок «щель» (Z.coneSlit, градусов во всю ширину, по умолчанию 2). Луч проходит кольцо, если граница его бит не
+   дальше половины щели от середины луча. У кольца с мелкими битами щель не шире 0,9 бита — иначе в щель превратилось бы всё кольцо.
+   Та же половина щели — прорезь между битами на рисунке и полуширина клина лазера. */
+function coneSlitHalf(n){
+  const w = Math.max(0.1, Math.min(20, +Z.coneSlit || 2)) * Math.PI / 360;
+  return n ? Math.min(w, Math.PI / n * 0.9) : w;
+}
+let coneClockFlash = [];                      // вспышки лучей, прошедших между кадрами: { a, t }
+/* v0.119, «в 1 строке сделай 4 выреза для направления луча — там я вручную сначала его направлю». В кольце строки 1 — четыре
+   выреза: вверх, вправо, вниз, влево (↑ → ↓ ←); они вырезаны в самом кольце и крутятся вместе с ним. Щелчок по кольцу строки 1
+   (при ⌖ луч-часах) — луч пойдёт через ближайший вырез (Z.coneAim = 0…3). Прежде луч шёл через границы строки 1 — у строки из
+   одного бита это и был единственный «вырез» сверху; теперь направление выбирается. */
+/* v0.121, «убери из 1 строки 4 выреза, оставь один»: вырез один — там, где бит 0 строки 1 (сверху, пока кольцо не довёрнуто);
+   направление луча задаётся доводом кольца (тянуть мышью, ⌖◁ ⌖▷). Прежний выбор выреза (Z.coneAim) при запуске переводится в довод. */
+function coneAim(){ return 0; }
+function coneAimAngle(q){ const n0 = (Z.rows[0] || "1").length || 1; return -Math.PI / 2 + (q === undefined ? coneAim() : q) * Math.PI / 2 - coneRotOf(0) * 2 * Math.PI / n0; }
+/* v0.120, «дай возможность ось соединять вручную со следующим кольцом в щели, при этом крутя внутреннее кольцо, а не внешнее».
+   Кольцо строки 1 (с вырезами) при луч-часах крутится мышью само по себе и плавно — не целыми битами (у строки из одного бита
+   целый бит — это полный оборот), — на Z.coneAimRot градусов; остальные кольца стоят. Когда луч подходит к щели кольца 2 (границе
+   его бит) ближе ~10 пикселей, кольцо защёлкивается — луч ровно в щели. «⌖◁ ⌖▷» — луч в соседнюю щель кольца 2, правый щелчок —
+   довод снят. */
+function coneAimSnap(){
+  const s1 = Z.rows[1]; if (!s1 || !coneGeom) return false;
+  const n1 = s1.length, st1 = 2 * Math.PI / n1, u = (coneAimAngle() + Math.PI / 2) / st1 + coneRotOf(1), d = (u - Math.round(u)) * st1;
+  const tol = Math.min(st1 * 0.45, 10 * coneGeom.dpr / Math.max(1, coneGeom.r0 + coneGeom.dr));
+  if (Math.abs(d) > tol) return false;
+  Z.coneAimRot = (Z.coneAimRot || 0) - d * 180 / Math.PI;
+  return true;
+}
+function coneAimSettle(){
+  Z.coneAimRot = (((Z.coneAimRot || 0) % 360) + 540) % 360 - 180;
+  save(); renderCone();   // v0.127: довёл до щели вручную — это проход, его засчитает renderCone
+  const R = coneClockTrace()[0], deg = Math.round(Z.coneAimRot * 10) / 10;
+  say(`⌖ Строка 1 довёрнута на ${deg}°` + (!R ? "." : R.pass ? " — луч проходит все кольца." : R.stop > 1 ? ` — луч в щели, дальше держит стена кольца ${R.stop + 1}.` : " — луч упирается в кольцо 2 (до щели не довёл)."));
+}
+function coneAimStep(d){
+  const s1 = Z.rows[1]; if (!s1) { say("⌖ Кольца 2 нет — щелей для луча нет."); return; }
+  const n1 = s1.length, st1 = 2 * Math.PI / n1, u = (coneAimAngle() + Math.PI / 2) / st1 + coneRotOf(1);
+  const k = d > 0 ? Math.floor(u + 1e-6) + 1 : Math.ceil(u - 1e-6) - 1;
+  Z.coneAimRot = (Z.coneAimRot || 0) + (k - u) * st1 * 180 / Math.PI;
+  coneAimSettle();
+}
+/* v0.127, «хотя не так (выход с остановкой): дострой до 256 строк после последней — пустые, можно еле заметными показать, но если
+   луч пройдёт — помечать 1, если 2 и более раз — всё записать в бит, пусть там будет хоть три 111 в одном бите». Снаружи кольца
+   для заполнения — пустые кольца до строки 256 (галка «до 256»): каждое на ячейку длиннее предыдущего, как строка для заполнения,
+   и крутятся по тем же правилам. Стен у них нет — луч, прошедший строки, идёт сквозь все пустые кольца до края и в каждом
+   помечает ячейку, через которую прошёл (попал в границу ячеек в пределах щели — прошёл между ними, ничего не метит). Проход луча
+   засчитывается один раз (пока щели держатся вместе — это один проход); каждый проход прибавляет ячейке единицу: 1, 11, 111…
+   Счёт — Z.voidHits: { sig, h: { "кольцо:ячейка": сколько } }; сменилось число строк или длина нижней — счёт начинается заново. */
+const CONE_VOID_TO = 256;
+function coneVoidOn(){ return Z.coneVoid !== false && !!Z.coneClock; }   // только при луч-часах — без луча они лишь сжимали бы кольца строк
+// сколько колец всего в плоском конусе: строки + кольцо для заполнения (+ пустые до 256)
+function coneRingsTotal(N){ return coneVoidOn() ? Math.max(N + 1, CONE_VOID_TO) : N + 1; }
+function coneVoidLen(j, N){ const s = Z.rows[N - 1]; return (s ? s.length : 0) + (j - N + 1); }   // кольцо j ≥ N: на ячейку длиннее предыдущего
+/* v0.117: кольцо для заполнения (и v0.127: пустые за ним) — как следующие за нижним кольца: «каждое по биту» — на тот же бит, что
+   все; «навстречу» — по своей чётности. Ручной накрутки у них нет. */
+function coneVoidRot(j, n){
+  const m = Z.coneSpinMode || "all", ph = Z.coneSpinPh || 0;
+  if (m === "bit") return -ph;
+  if (m === "opp") return -(j % 2 ? -1 : 1) * ph / 360 * n;
+  return 0;
+}
+function coneFillRot(){ const N = Math.min(Z.rows.length, CONE_MAX); return coneVoidRot(N, fillLen()); }
+function coneVoidHits(){
+  const N = Math.min(Z.rows.length, CONE_MAX), s = Z.rows[N - 1], sig = N + ":" + (s ? s.length : 0);
+  if (!Z.voidHits || Z.voidHits.sig !== sig || typeof Z.voidHits.h !== "object") Z.voidHits = { sig, h: {} };
+  return Z.voidHits.h;
+}
+function coneClockTrace(){
+  const N = Math.min(Z.rows.length, CONE_MAX), s0 = Z.rows[0]; if (!N || !s0) return [];
+  const TAU = 2 * Math.PI, T = coneRingsTotal(N), out = [];
+  for (const a of [coneAimAngle()]) {   // v0.119: луч — из выреза строки 1
+    let b = 1;
+    for (; b < N; b++) {
+      const n = Z.rows[b].length; if (!n) break;
+      const st = TAU / n, u = (a + Math.PI / 2) / st + coneRotOf(b);
+      if (Math.abs(u - Math.round(u)) * st > coneSlitHalf(n)) break;   // на бит — стена (v0.124: щель с ползунка)
+    }
+    const pass = b >= N, cells = [];   // cells: [кольцо, ячейка] — где луч поймали (кольцо N — для заполнения)
+    let cell = -1, vstop = T;
+    /* v0.129, «после того как прошли через какое-то кольцо — ловить лазер следующим кольцом, его битами, и т. д.»: пустые кольца —
+       тоже стены. Луч идёт дальше только в щель между ячейками; первое пустое кольцо, где он попал в ячейку, его ловит — там луч
+       и стоит, и эта ячейка получает единицу. Прошёл щели всех пустых колец — уходит за край, ничего не метит. */
+    if (pass) for (let j = N; j < T; j++) {
+      const n = coneVoidLen(j, N), st = TAU / n, q = ((((a + Math.PI / 2) % TAU) + TAU) % TAU) / st + coneVoidRot(j, n);
+      if (Math.abs(q - Math.round(q)) * st <= coneSlitHalf(n)) continue;   // в щель между ячейками — дальше
+      const c = ((Math.floor(q) % n) + n) % n;
+      cells.push([j, c]); if (j === N) cell = c; vstop = j; break;   // поймало это кольцо
+    }
+    out.push({ a, stop: b, pass, cell, cells, vstop });
+  }
+  return out;
+}
+// проход луча: ячейкам, через которые он прошёл, — по единице; в строке для заполнения ещё и «1» (как было)
+function coneClockRecord(R){
+  const h = coneVoidHits();
+  for (const [j, c] of R.cells) { const k = j + ":" + c; h[k] = (h[k] | 0) + 1; }
+}
+function coneClockMark(hits){
+  let f = fillDraft(); const ch = [];
+  for (const h of hits) if (h.cell >= 0 && h.cell < f.length && f[h.cell] !== "1") { f = f.slice(0, h.cell) + "1" + f.slice(h.cell + 1); ch.push(h.cell + 1); }
+  if (!ch.length) return;
+  Z.fillCells = f; renderRows(); save();
+  say(`⌖ Луч прошёл все кольца — в строке для заполнения «1» в ячейке ${ch.join(", ")}.`);
+}
+/* v0.119, «сделай кнопку остановка по проходу лазера, пауза, потом вручную продолжить, и показывай цикл — сколько прошло кругов
+   и сколько их всего». Проход — миг, когда лазер дошёл до края; пока щели держатся вместе (несколько шагов подряд), это ОДИН
+   проход (coneClockWas — был ли проход на прошлом шаге). Z.coneClockN — счёт проходов. С «⏸ на проходе» sweep возвращает фазу
+   первого прохода — там кручение и встаёт. Возвращает null, если вставать не надо. */
+let coneClockWas = null, coneSpinning = false;   // v0.127: null — ещё не смотрели (загрузка страницы проходом не считается)
+function coneClockSweep(ph0, dph, m){
+  if (!dph || !coneGeom || !coneGeom.fill) return null;   // нет кольца для заполнения (3D, слишком много строк) — не метим
+  const N = Math.min(Z.rows.length, CONE_MAX); if (!N) return null;
+  let maxDeg = 0;   // быстрее всех поворачивается за кадр — отсюда число шагов (относительная скорость двух колец — до двух таких)
+  for (let i = 0; i < N; i++) maxDeg = Math.max(maxDeg, m === "bit" ? Math.abs(dph) * 360 / (Z.rows[i].length || 1) : Math.abs(dph));
+  let tolDeg = coneSlitHalf() * 180 / Math.PI; const n0 = Z.rows[0].length || 1;
+  for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);   // самая узкая щель — шаг не шире её
+  const K = Math.max(1, Math.min(Math.ceil(maxDeg / tolDeg), Math.floor(200000 / (N * n0)), 2000));
+  const hits = [], seen = new Set(), t = performance.now();
+  let stopPh = null, rec = 0;
+  for (let s = 1; s <= K; s++) {
+    Z.coneSpinPh = ph0 + dph * s / K;
+    let any = false;
+    const tr = coneClockTrace();
+    for (const R of tr) if (R.pass) { any = true; if (R.cell >= 0 && !seen.has(R.cell)) { seen.add(R.cell); hits.push(R); } }
+    if (any && !coneClockWas) {
+      Z.coneClockN = (Z.coneClockN | 0) + 1; if (Z.coneClockStop) stopPh = Z.coneSpinPh;
+      for (const R of tr) if (R.pass) { coneClockRecord(R); rec++; coneClockFlash.push({ a: R.a, t, j: R.vstop }); }   // v0.127: проход — единица ячейке, что поймала (v0.129)
+    }
+    coneClockWas = any;
+    if (stopPh !== null) break;
+  }
+  Z.coneSpinPh = ph0;
+  if (hits.length) coneClockMark(hits); else if (rec) save();
+  return stopPh === null ? null : { ph: stopPh };
+}
+/* Цикл кручения — через сколько все кольца (и кольцо для заполнения) разом встают на свои места. «Каждое по биту»: кольцо из n бит
+   возвращается через n бит, все вместе — через НОК длин (BigInt: у сотни разных длин он астрономический). «Навстречу»: все кольца
+   поворачиваются на один угол — все на местах через 360°. Круг — оборот стрелки (строки 1). */
+function coneCycleBits(){
+  const N = Math.min(Z.rows.length, CONE_MAX), g = (a, b) => { while (b) [a, b] = [b, a % b]; return a; };
+  let L = 1n;
+  const add = (n) => { if (n > 0) { const b = BigInt(n); L = L / g(L, b) * b; } };
+  for (let i = 0; i < N; i++) add(Z.rows[i].length);
+  if (coneGeom && coneGeom.fill) add(fillLen());
+  return L;
+}
+function coneBigFmt(b){ const s = b.toString(); return s.length <= 15 ? Number(b).toLocaleString("ru-RU") : `${s[0]},${s.slice(1, 3)}·10^${s.length - 1}`; }
+function coneCycleText(){
+  const m = Z.coneSpinMode || "all", ph = Math.abs(Z.coneSpinPh || 0), n0 = (Z.rows[0] || "1").length || 1;
+  const pass = Z.coneClock ? ` · проходов лазера ${Z.coneClockN | 0}` : "";
+  if (m === "bit") {
+    const L = coneCycleBits(), tot = L / BigInt(n0), Ln = Number(L);
+    const inCyc = Ln <= 1e15 ? (ph % Ln) / n0 : ph / n0, cyc = Ln <= 1e15 ? Math.floor(ph / Ln) : 0;
+    return `⟳ круг ${Math.floor(inCyc).toLocaleString("ru-RU")} из ${coneBigFmt(tot)}` + (cyc ? ` · цикл ${cyc + 1}` : "") + pass;
+  }
+  if (m === "opp") return `⟳ круг ${Math.floor(ph / 360).toLocaleString("ru-RU")} · цикл — 1 круг (360°), каждый круг все кольца на местах` + pass;
+  return Z.coneClock ? `⟳ всё целиком — кольца друг относительно друга не сдвигаются${pass}` : "";
+}
+function coneCycleCheck(ph0, ph1, m){
+  let L = 0, n0 = (Z.rows[0] || "1").length || 1;
+  if (m === "bit") { const b = coneCycleBits(); if (b > 1000000000000000n) return; L = Number(b); } else if (m === "opp") L = 360; else return;
+  if (Math.floor(Math.abs(ph0) / L) !== Math.floor(Math.abs(ph1) / L))
+    say(`⟳ Цикл пройден — все кольца снова на своих местах (${m === "bit" ? coneBigFmt(BigInt(L / n0)) + " кругов" : "360°"}${Z.coneClock ? `, проходов лазера ${Z.coneClockN | 0}` : ""}).`);
 }
 /* v0.109, «этажи-многоугольники вместо колец» (было предложено: «строка из n бит — не круг, а правильный n-угольник:
    3 бита — треугольник, 4 — квадрат; конус станет ступенчатой пирамидой»). Галка «⬡ многоугольники»: кольцо из n бит (n ≥ 3)
@@ -1551,7 +1815,7 @@ function coneRing(e){
   }
   if (G.fill && Math.floor((rr - G.r0) / G.dr) === G.N && (i === -1 || i >= G.N)) {   // v0.114: кольцо для заполнения — какая ячейка
     const n = fillLen(), t = Math.atan2(y, x) - (Z.coneSpin || 0) * Math.PI / 180, u = (((t + Math.PI / 2) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-    return { i: G.N, a: Math.atan2(y, x), fill: Math.min(n - 1, Math.floor(u / (2 * Math.PI / n))) };
+    return { i: G.N, a: Math.atan2(y, x), fill: ((Math.floor(u / (2 * Math.PI / n) + coneFillRot()) % n) + n) % n };   // v0.117: кольцо повёрнуто кручением
   }
   return i >= 0 && i < G.N ? { i, a: Math.atan2(y, x) } : -1;
 }
@@ -1569,7 +1833,8 @@ function coneLocked(i){ const L = Z.coneLocks; return L && L[i] !== undefined ? 
    видны все кольца. */
 function coneFocus(){ return rowSel.size ? [...rowSel] : (document.body.classList.contains("nocur") ? [] : [Z.cur]); }
 function coneRotOf(i){
-  const base = coneRot[i] || 0, m = Z.coneSpinMode || "all", ph = Z.coneSpinPh || 0;
+  let base = coneRot[i] || 0; const m = Z.coneSpinMode || "all", ph = Z.coneSpinPh || 0;
+  if (i === 0 && Z.coneAimRot) base -= Z.coneAimRot / 360 * ((Z.rows[0] || "").length || 1);   // v0.120: строка 1 довёрнута вручную (градусы, по часовой)
   if (m === "bit") return base - ph;
   if (m === "opp") { const n = (Z.rows[i] || "").length || 1; return base - (i % 2 ? -1 : 1) * ph / 360 * n; }
   return base;
@@ -1593,6 +1858,25 @@ function setupCone(){
     }
     const h = coneRing(e);
     if (h !== -1 && h.fill !== undefined && !e.ctrlKey) { e.preventDefault(); fillCycle(h.fill); return; }   // v0.114: ячейка кольца для заполнения
+    if (h !== -1 && h.i === 0 && Z.coneClock && !e.ctrlKey) {   // v0.119: кольцо строки 1 при луч-часах — щелчок: вырез; v0.120: тянешь — крутится только оно
+      e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing";
+      const x0 = e.clientX, y0 = e.clientY, r0v = Z.coneAimRot || 0;
+      const ang = (ev) => { const cvr = cv.getBoundingClientRect(), G = coneGeom || { dpr: 1, cx: 0, cy: 0 }; return Math.atan2((ev.clientY - cvr.top) * G.dpr - G.cy, (ev.clientX - cvr.left) * G.dpr - G.cx); };
+      let last = ang(e), turn = 0, moved = false;
+      const mv = (ev) => {
+        if (Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) > 3) moved = true;
+        if (!moved) return;
+        const a = ang(ev); let da = a - last; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI; turn += da; last = a;
+        Z.coneAimRot = r0v + turn * 180 / Math.PI; coneAimSnap(); renderCone();
+      };
+      const up = () => {
+        cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", up); cv.removeEventListener("pointercancel", up); cv.style.cursor = "grab";
+        if (moved) { coneAimSettle(); return; }
+        say("⌖ Тяни кольцо строки 1 — оно крутится одно, вместе с вырезом, и защёлкивается лучом в щели кольца 2. Или ⌖◁ ⌖▷.");
+      };
+      cv.addEventListener("pointermove", mv); cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+      return;
+    }
     // v0.085: запертое кольцо (своим замком или общей галкой) крутится только на вид; сдвиг вида — мимо колец или с Ctrl
     if (h === -1 || e.ctrlKey) {   // v0.049: мимо колец или с Ctrl — сдвиг всего вида
       e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "move";
@@ -1726,17 +2010,57 @@ function setupCone(){
     const dt = autoT0 ? Math.min(0.1, (ts - autoT0) / 1000) : 0; autoT0 = ts;
     const sp = Z.coneAutoSp ?? 30, m = Z.coneSpinMode || "all";   // v0.104: режимы кручения
     if (m === "all") Z.coneSpin = ((Z.coneSpin || 0) + sp * dt) % 360;
-    else if (m === "bit") Z.coneSpinPh = (Z.coneSpinPh || 0) + sp / 10 * dt;   // бит в секунду = скорость / 10
-    else Z.coneSpinPh = ((Z.coneSpinPh || 0) + sp * dt) % 36000;
+    else {
+      const dph = m === "bit" ? sp / 10 * dt : sp * dt;   // бит в секунду = скорость / 10
+      const ph0 = Z.coneSpinPh || 0;
+      const st = Z.coneClock ? coneClockSweep(ph0, dph, m) : null;   // v0.116: луч-часы — миг, когда щели сошлись, между кадрами
+      if (st) {   // v0.119: «⏸ на проходе» — встать ровно там, где лазер прошёл
+        Z.coneSpinPh = st.ph; autoSet(false); renderCone();
+        say(`⏸ Лазер прошёл все кольца (проход ${Z.coneClockN | 0}) — пауза. ▶ крутить — дальше.`);
+        return;
+      }
+      Z.coneSpinPh = ph0 + dph;   // v0.119: без обрезки по 100 оборотов — иначе сбивался счёт кругов
+      coneCycleCheck(ph0, Z.coneSpinPh, m);
+    }
     renderCone();
     autoRaf = requestAnimationFrame(autoTick);
   };
   const autoSet = (on) => {
-    if (on && !autoRaf) { autoT0 = 0; autoRaf = requestAnimationFrame(autoTick); }
-    if (!on && autoRaf) { cancelAnimationFrame(autoRaf); autoRaf = 0; save(); }
+    if (on && !autoRaf) { autoT0 = 0; coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass); coneSpinning = true; autoRaf = requestAnimationFrame(autoTick); }   // v0.119: стоим на проходе — он уже засчитан
+    if (!on && autoRaf) { cancelAnimationFrame(autoRaf); autoRaf = 0; coneSpinning = false; save(); }
     $("bConeAuto").classList.toggle("on", on); $("bConeAuto").textContent = on ? "⏸ стоп" : "▶ крутить";
   };
   $("bConeAuto").onclick = () => autoSet(!autoRaf);
+  /* v0.122, «нужна кнопка, которая сбрасывает биты всех строк» (после «как сбрасывать накрученные биты, чтобы по умолчанию
+     вернулось»; до неё сброс был в трёх местах): «⟲ всё на места» — разом у всех колец накрутка «на вид», кручение (и счёт кругов
+     и проходов), довод строки 1. Строки не трогает: сдвиг строки открытым кольцом — настоящая правка, её возвращает ↩. */
+  $("bConeAllHome").onclick = () => {
+    autoSet(false);
+    const H = Z.home;
+    if (H) {   // v0.125: своё умолчание (⭐) — положения колец и настройки конуса, как запомнены
+      coneRot.length = 0; (Array.isArray(H.coneRot) ? H.coneRot : []).forEach(x => coneRot.push(Math.round(x || 0))); Z.coneRot = coneRot.slice();
+      Z.coneSpin = H.coneSpin || 0; Z.coneSpinPh = H.coneSpinPh || 0; Z.coneAimRot = H.coneAimRot || 0; Z.coneClockN = 0; coneClockFlash = [];
+      const keys = ["coneClock", "coneClockStop", "coneVoid", "coneSlit", "coneSpinMode", "coneAutoSp", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3H",
+                    "coneRays", "coneMir", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs"];
+      for (const k of keys) { if (k in H) Z[k] = JSON.parse(JSON.stringify(H[k])); else delete Z[k]; }
+      for (const k of ["coneClock", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta"]) { const el = $(k); if (el) el.checked = !!Z[k]; }
+      $("coneLock").checked = Z.coneLock !== false; $("coneVoid").checked = Z.coneVoid !== false;
+      $("coneRays").value = Z.coneRays || "off"; $("coneMir").value = Z.coneMir || "off"; $("coneSpinMode").value = Z.coneSpinMode || "all";
+      $("coneAutoSp").value = Z.coneAutoSp ?? 30; $("cone3H").value = Z.cone3H ?? 1;
+      $("coneSlit").value = +Z.coneSlit || 2; $("coneSlitV").textContent = (+Z.coneSlit || 2).toFixed(1).replace(".", ",") + "°";
+      $("bConeClockStop").classList.toggle("on", !!Z.coneClockStop);
+      coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass);
+      save(); renderRows(); renderCone();
+      say("⟲ Всё на местах — из умолчания ⭐: положения колец, кручение, довод строки 1 и настройки конуса. Счёт проходов — с нуля. Биты строк не менялись.");
+      return;
+    }
+    const k = coneRot.filter(x => Math.round(x || 0)).length;
+    coneRot.fill(0); Z.coneRot = coneRot.slice();
+    Z.coneSpin = 0; Z.coneSpinPh = 0; Z.coneClockN = 0; Z.coneAimRot = 0; coneClockFlash = [];
+    coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass);
+    save(); renderRows(); renderCone();
+    say(`⟲ Всё на местах: накрутка снята${k ? ` (у колец: ${k})` : ""}, кручение и счёт — с нуля, строка 1 без довода. Биты строк не менялись.`);
+  };
   /* v0.105, «режим дзен»: только конус на весь экран (и во весь экран браузера, если можно); всё остальное спрятано.
      Выход — Esc (или выход из полноэкранного). Подсказка внизу гаснет через три секунды. */
   let zenT = 0;
@@ -1750,9 +2074,28 @@ function setupCone(){
   };
   $("bConeZen").onclick = () => zenSet(true);
   document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && document.body.classList.contains("zen")) zenSet(false); });
-  $("bConeAuto").oncontextmenu = (e) => { e.preventDefault(); Z.coneSpin = 0; Z.coneSpinPh = 0; save(); renderCone(); say("◯ Кручение сброшено — всё на своих местах."); };   // v0.104
+  $("bConeAuto").oncontextmenu = (e) => { e.preventDefault(); Z.coneSpin = 0; Z.coneSpinPh = 0; Z.coneClockN = 0; save(); renderCone(); say("◯ Кручение сброшено — всё на своих местах."); };   // v0.104
   $("coneSpinMode").value = Z.coneSpinMode || "all";
-  $("coneSpinMode").onchange = (e) => { Z.coneSpinMode = e.target.value; Z.coneSpinPh = 0; save(); renderCone();
+  {   // v0.124: ползунок ширины щели — один для расчёта и рисунка
+    const sl = $("coneSlit"), sv = $("coneSlitV"), show = () => { sv.textContent = (+Z.coneSlit || 2).toFixed(1).replace(".", ",") + "°"; };
+    sl.value = +Z.coneSlit || 2; show();
+    sl.oninput = () => { Z.coneSlit = +sl.value; show(); renderCone(); };
+    sl.onchange = () => save();
+    sl.ondblclick = () => { Z.coneSlit = 2; sl.value = 2; show(); save(); renderCone(); };
+  }
+  if (Z.coneAim) { Z.coneAimRot =(Z.coneAimRot || 0) + 90 * (Z.coneAim | 0); Z.coneAim = 0; }   // v0.121: был выбран вырез → луч туда же, доводом
+  for (const [id, d] of [["bConeAimL", -1], ["bConeAimR", 1]]) {   // v0.120: луч — в соседнюю щель кольца 2, крутится только строка 1
+    $(id).onclick = () => { if (!Z.coneClock) { Z.coneClock = true; $("coneClock").checked = true; } coneAimStep(d); };
+    $(id).oncontextmenu = (e) => { e.preventDefault(); Z.coneAimRot = 0; coneClockWas = coneClockTrace().some(R => R.pass); save(); renderCone(); say("⌖ Довод строки 1 снят — она снова на своём месте."); };
+  }
+  $("bConeClockStop").classList.toggle("on", !!Z.coneClockStop);   // v0.119
+  $("bConeClockStop").onclick = () => {
+    Z.coneClockStop = !Z.coneClockStop; $("bConeClockStop").classList.toggle("on", Z.coneClockStop);
+    if (Z.coneClockStop && !Z.coneClock) { Z.coneClock = true; $("coneClock").checked = true; }
+    save(); renderCone();
+    say(Z.coneClockStop ? "⏸ На проходе: как только лазер пройдёт все кольца, кручение встанет. Дальше — ▶ крутить." : "⏸ Без остановок: лазер метит ячейки на ходу.");
+  };
+  $("coneSpinMode").onchange = (e) => { Z.coneSpinMode = e.target.value; Z.coneSpinPh = 0; Z.coneClockN = 0; save(); renderCone();
     say({ all: "▶ Всё целиком: весь конус одним поворотом.", bit: "▶ Каждое по биту: маленькие кольца вертятся быстрее — рисунок закручивается спиралью.", opp: "▶ Навстречу: чётные кольца по часовой, нечётные против." }[Z.coneSpinMode] + " Правый щелчок по ▶ — всё на места."); };
   $("coneAutoSp").value = Z.coneAutoSp ?? 30;
   $("coneAutoSp").oninput = (e) => { Z.coneAutoSp = +e.target.value; };
@@ -1822,6 +2165,12 @@ function setupCone(){
   $("coneOcta").checked = !!Z.coneOcta;   // v0.100
   $("coneOcta").onchange = (e) => { Z.coneOcta = e.target.checked; if (Z.coneOcta && !Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } save(); renderCone();
     if (Z.coneOcta) say("⧗ Октаэдр: под основанием — та же пирамида вниз, отражённая и инвертированная (0 ↔ 1), как в знаке Zerkalius. Крути мышью."); };
+  $("coneVoid").checked = Z.coneVoid !== false;   // v0.127: пустые кольца до 256 (видны при луч-часах)
+  $("coneVoid").onchange = (e) => { Z.coneVoid = e.target.checked; save(); renderCone();
+    say(Z.coneVoid ? "▦ До 256: за строкой для заполнения — пустые кольца до строки 256, луч идёт сквозь них и метит ячейки на пути: 1, 11, 111… Кольца строк стали тоньше — колесо мыши приближает." : "▦ Пустые кольца скрыты — только строки и строка для заполнения. Счёт в них сохранён."); };
+  $("coneClock").checked = !!Z.coneClock;   // v0.116
+  $("coneClock").onchange = (e) => { Z.coneClock = e.target.checked; coneClockFlash = []; coneClockWas = null; save(); renderCone();   // v0.127: включение — не проход
+    if (Z.coneClock) say("⌖ Луч-часы: луч из центра через границы строки 1 проходит кольцо только в щель между битами, на бит — упирается в стену. Дошёл до края — «1» в ячейку строки для заполнения. Крути кольца (▶ по биту / навстречу или мышью) — щели будут сходиться."); };
   $("conePoly").checked = !!Z.conePoly;   // v0.109
   $("conePoly").onchange = (e) => { Z.conePoly = e.target.checked; save(); renderCone();
     if (Z.conePoly) say("⬡ Этажи-многоугольники: строка из n бит — n-угольник, бит — сторона. 1 бит — точка в центре, 2 — две Г углом в центре (крест), 3 — треугольник, 4 — квадрат."); };
@@ -1837,6 +2186,7 @@ function setupCone(){
   $("coneOnlySel").onchange = (e) => { Z.coneOnlySel = e.target.checked; save(); renderCone(); if (Z.coneOnlySel && !rowSel.size) say("◯ Выделенных колец нет — видно только текущее. Ctrl + щелчок по кольцу — выделить."); };
   $("coneLock").checked = Z.coneLock !== false;   // v0.055: по умолчанию включён
   $("coneLock").onchange = (e) => { Z.coneLock = e.target.checked; save(); renderRows(); say(Z.coneLock ? "◯ Запрет сдвига строк: кольца не крутятся, тянешь — двигается вид." : "◯ Запрет снят: тянешь кольцо — крутится и сама строка в поле."); };
+  cv.addEventListener("contextmenu", (e) => { const h = coneRing(e); if (h !== -1 && h.fill !== undefined) { e.preventDefault(); fillReset(); } });   // v0.118: правый щелчок по кольцу для заполнения — заново
   $("coneRays").value = Z.coneRays || "off";
   $("coneRays").onchange = (e) => { Z.coneRays = e.target.value; save(); renderCone(); };
   // v0.049: колесо — масштаб вокруг курсора (точка под курсором остаётся на месте); двойной щелчок мимо колец — как было
@@ -3290,7 +3640,7 @@ function loadRowsText(text, name){
 function readFile(f){
   if (!f) return;
   const rd = new FileReader();
-  rd.onload = () => loadRowsText(rd.result, f.name);
+  rd.onload = () => { if (!loadSession(rd.result, f.name)) loadRowsText(rd.result, f.name); };   // v0.115: файл сессии узнаётся сам
   rd.onerror = () => say(`📂 Не удалось прочитать ${f.name}.`);
   rd.readAsText(f);
 }
@@ -3301,6 +3651,66 @@ function saveRowsTxt(){
   a.download = "zazerkalius-stroki.txt";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+/* ─── Сессия целиком в файл (v0.115) ─────────────────────────────────────────────────────────
+   Запрос пользователя: «надо сохр настройки и все биты в файл, чтобы на другом компе». Всё состояние и так
+   живёт в одном объекте Z (его же пишет save() в localStorage), поэтому файл — это Z целиком в JSON-обёртке:
+   все 4 поля строк, строки за чертой, черновик строки для заполнения, свои шаблоны, окна, конус, вид, тема.
+   Чтение кладёт Z из файла в хранилище и перезагружает страницу: init() сам разложит всё по полям и
+   выпадающим спискам — вручную переносить сотню настроек значило бы что-то забыть. Прежнее состояние
+   остаётся в хранилище под ключом ZZ_KEY + "_pered_failom" — на случай, если открыли не тот файл. */
+const ZZ_SESS_FMT = "ZAZERKALIUS-SESSIYA";
+function saveSession(){
+  save();
+  const d = new Date(), p2 = (n) => String(n).padStart(2, "0");
+  const ver = (document.querySelector("#top .ver") || {}).textContent || "";
+  const data = { format: ZZ_SESS_FMT, v: 1, page: ver, saved: d.toISOString(), state: Z };
+  const blob = new Blob([JSON.stringify(data, null, 1)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `zazerkalius-vse-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  const nb = (Array.isArray(Z.lanes) ? Z.lanes.slice(0, Z.laneCount) : [Z.rows]).reduce((s, l) => s + l.length, 0);
+  say(`💾 Всё сохранено в ${a.download}: строк ${nb}, поля, окна и настройки. На другом компьютере — «📂 Всё» или перетащи файл на страницу.`);
+}
+/* v0.125, «сделай кнопку сохранения настроек и битов всех полей, чтобы при сбросе и Начальные — это применял, и когда файл загружен
+   с другого компа — то тоже он становится умолчанием». ⭐ Умолчание — снимок Z в Z.home (без раскладки окон: она своя у каждого
+   экрана). «↺ Начальные» берёт из него биты всех полей, «⟲ всё на места» — положения колец и настройки конуса. Открытый файл
+   сессии сам становится умолчанием. Правый щелчок по ⭐ — забыть: снова встроенный столбик 1, 11, 101… и нулевые положения. */
+const ZZ_HOME_SKIP = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW"];
+function homeOf(o){ const h = {}; for (const k of Object.keys(o)) if (!ZZ_HOME_SKIP.includes(k)) h[k] = o[k]; return JSON.parse(JSON.stringify(h)); }
+function homeSave(){
+  save(); Z.home = homeOf(Z); save(); homeBtn();
+  const L = Array.isArray(Z.home.lanes) ? Z.home.lanes.slice(0, Z.home.laneCount || 1) : [Z.home.rows];
+  say(`⭐ Умолчание запомнено: полей ${L.length}, строк ${L.reduce((s, l) => s + l.length, 0)}, положения колец и настройки. «↺ Начальные» и «⟲ всё на места» теперь возвращают это. Правый щелчок по ⭐ — забыть.`);
+}
+function homeForget(){
+  if (!Z.home) { say("⭐ Своего умолчания нет — и так встроенное."); return; }
+  delete Z.home; save(); homeBtn();
+  say("⭐ Умолчание забыто: «↺ Начальные» — снова 1, 11, 101…, «⟲ всё на места» — нулевые положения.");
+}
+function homeBtn(){ const b = $("bHome"); if (b) b.classList.toggle("on", !!Z.home); }
+/* Возвращает false, если текст — не файл сессии (тогда readFile читает его как строки). */
+function loadSession(text, name){
+  const t = String(text).trim();
+  if (t[0] !== "{") return false;
+  let data;
+  try { data = JSON.parse(t); } catch (e) { return false; }
+  if (!data || data.format !== ZZ_SESS_FMT) return false;
+  const u = data.state;
+  if (!u || !Array.isArray(u.rows) || !u.rows.every(zzIsBits)) { say(`📂 ${name}: файл сессии испорчен — строк из 0 и 1 в нём нет.`); return true; }
+  if (!confirm(`Открыть «${name}»?\n\nВсе строки, поля и настройки страницы заменятся сохранёнными${data.saved ? " " + new Date(data.saved).toLocaleString() : ""}${data.page ? " (Zazerkalius " + data.page + ")" : ""}. Они же станут умолчанием для «↺ Начальные» и «⟲ всё на места».`)) { say("📂 Не открыто — всё как было."); return true; }
+  try {
+    const old = localStorage.getItem(ZZ_KEY);
+    if (old) localStorage.setItem(ZZ_KEY + "_pered_failom", old);
+    u.home = homeOf(u);   // v0.125: открытый файл становится умолчанием
+    localStorage.setItem(ZZ_KEY, JSON.stringify(u));
+    try { sessionStorage.setItem("zz_sess_loaded", name); } catch (e) {}
+  } catch (e) { say(`📂 Не удалось записать в хранилище браузера (${e.message}) — в приватном окне так бывает.`); return true; }
+  sessLoading = true;
+  location.reload();
+  return true;
 }
 function randomBits(n){ let o = ""; for (let i = 0; i < n; i++) o += Math.random() < 0.5 ? "0" : "1"; return o; }
 
@@ -3370,6 +3780,7 @@ function init(){
     if (axSel >= 0) { axSel = -1; renderRows(); }   // v0.022: щелчок по полю снимает выделение оси
     const fc = e.target.closest(".fillrw .fc"); if (fc) { fillCycle(+fc.dataset.k); return; }   // v0.114: строка для заполнения
     if (e.target.closest(".fillrw .fadd")) { fillCommit(); return; }
+    if (e.target.closest(".fillrw .fdel")) { fillReset(); return; }   // v0.118
     const r = e.target.closest(".rw"); if (!r || r.classList.contains("lhrow") || r.classList.contains("hid") || r.classList.contains("fillrw")) return;   // v0.112: за границей — строк нет
     const cell = e.target.closest(".bits, .ob");
     if (cell && +cell.dataset.l !== Z.lane && !textSelInRows()) { switchLane(+cell.dataset.l, +r.dataset.r); return; }
@@ -4004,6 +4415,10 @@ function init(){
   $("bLoad").onclick = () => $("fileIn").click();
   $("fileIn").onchange = (e) => { readFile(e.target.files[0]); e.target.value = ""; };
   $("bSaveTxt").onclick = saveRowsTxt;
+  $("bSaveAll").onclick = saveSession;   // v0.115
+  $("bHome").onclick = homeSave; $("bHome").oncontextmenu = (e) => { e.preventDefault(); homeForget(); }; homeBtn();   // v0.125
+  $("bLoadAll").onclick = () => $("fileAll").click();
+  $("fileAll").onchange = (e) => { readFile(e.target.files[0]); e.target.value = ""; };
   document.addEventListener("dragover", (e) => { if (e.dataTransfer && Array.from(e.dataTransfer.types || []).includes("Files")) { e.preventDefault(); document.body.classList.add("dragover"); } });
   document.addEventListener("dragleave", (e) => { if (!e.relatedTarget) document.body.classList.remove("dragover"); });
   document.addEventListener("drop", (e) => {
@@ -4108,6 +4523,30 @@ function init(){
     snapshot(); Z.rows.splice(Z.cur, 1); Z.cur = Math.min(Z.cur, Z.rows.length - 1); renderAll(); save();
   };
   $("bClear").onclick = () => { snapshot(); Z.rows = ["1"]; Z.cur = 0; renderAll(); save(); say("🧹 Столбик очищен (↩ Ctrl+Z вернёт)."); };
+  // v0.123, «вернуть сами биты всех строк к начальному набору (1, 11, 101…)» — «это»: столбик — снова начальный; хвост за чертой
+  // рабочего поля тоже убирается (иначе черта вернула бы прежние строки под начальными).
+  $("bRowsStart").onclick = () => {
+    try { snapshot(); } catch (err) { if (err.message === "ZZ_LOCK") return; throw err; }
+    const H = Z.home;
+    if (H) {   // v0.125: своё умолчание (⭐) — биты всех полей, как запомнены
+      if (Array.isArray(H.lanes) && H.lanes.length) {
+        Z.lanes = H.lanes.map(l => l.slice()); Z.laneCount = H.laneCount || 1; Z.lane = H.lane | 0;
+        Z.lanesHid = Array.isArray(H.lanesHid) ? H.lanesHid.map(l => l.slice()) : [];
+        Z.axisPos = Array.isArray(H.axisPos) ? H.axisPos.slice() : [];
+      } else { Z.lanes = [H.rows.slice()]; Z.laneCount = 1; Z.lane = 0; Z.lanesHid = []; }
+      Z.cur = H.cur | 0; Z.fillCells = H.fillCells ?? null;
+      laneInit();
+      const lc = document.getElementById("laneCount"); if (lc) lc.value = String(Z.laneCount);
+      renderAll(); save();
+      const L = Z.lanes.slice(0, Z.laneCount);
+      say(`↺ Начальные — из умолчания ⭐: полей ${L.length}, строк ${L.reduce((s, l) => s + l.length, 0)}. ↩ вернёт прежние.`);
+      return;
+    }
+    Z.rows = ZZ_ROWS0.slice(); Z.cur = 0;
+    if (Array.isArray(Z.lanesHid)) Z.lanesHid[Z.lane] = [];
+    renderAll(); save();
+    say(`↺ Начальные строки: ${ZZ_ROWS0.length} — от «1» до «${ZZ_ROWS0[ZZ_ROWS0.length - 1]}». ↩ вернёт прежние. Своё умолчание — ⭐ в шапке.`);
+  };
 
   // Зеркало
   $("bFixShow").onclick = () => { Z.fixShow = !Z.fixShow; renderAll(); save(); };
@@ -4292,6 +4731,10 @@ function init(){
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => renderPointers());
   // v0.017: ширина стола известна только теперь (разделитель поставлен) — окна под неё; и при смене размера окна браузера.
   packWins(); save();
+  try {   // v0.115: страница перезагрузилась после открытия файла сессии
+    const sn = sessionStorage.getItem("zz_sess_loaded");
+    if (sn) { sessionStorage.removeItem("zz_sess_loaded"); say(`📂 Открыто «${sn}»: строки, поля и настройки — из файла; они же теперь умолчание (⭐).`); }
+  } catch (e) {}
   let rsz = 0;
   window.addEventListener("resize", () => { clearTimeout(rsz); rsz = setTimeout(() => { packWins(); save(); }, 200); });
 }
