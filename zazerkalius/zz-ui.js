@@ -1095,7 +1095,7 @@ function coneHoverRow(i){
 }
 function renderCone(){
   if (!winOpen("w-cone")) return;
-  { const p3 = $("cone3Pad"); if (p3) p3.hidden = !Z.cone3d; }   // v0.157: кнопки 3D — только в 3D
+  { const p3 = $("cone3Pad"); if (p3) p3.classList.toggle("flat", !Z.cone3d); }   // v0.157: кнопки 3D — только в 3D; v0.164: в 2D — одна зелёная «всё на места»
   const cv = $("coneCv"); if (!cv) return;
   const R = cv.getBoundingClientRect(); if (R.width < 20 || R.height < 20) return;
   const dpr = window.devicePixelRatio || 1, W = Math.round(R.width * dpr), H = Math.round(R.height * dpr);
@@ -2462,7 +2462,9 @@ function setupCone(){
   };
   $("cone3Pad").addEventListener("pointerdown", (e) => {
     const b = e.target.closest("button[data-c3]"); if (!b) return;
-    e.preventDefault(); const k = b.dataset.c3; c3Do(k);
+    e.preventDefault(); const k = b.dataset.c3;
+    if (k === "allhome") { $("bConeAllHome").click(); return; }   // v0.164, «сюда же «Всё на места» — значком, зелёным»
+    c3Do(k);
     if (k === "home") { save(); return; }
     let t = setTimeout(function rep(){ c3Do(k); t = setTimeout(rep, 90); }, 400);
     const up = () => { clearTimeout(t); save(); removeEventListener("pointerup", up); removeEventListener("pointercancel", up); };

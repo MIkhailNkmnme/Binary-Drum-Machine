@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.163. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.164. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.163</title>
+<title>Zazerkalius — v0.164</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -359,7 +359,8 @@ body.pane-icons #paneWins{padding:4px}
 #w-cone #bConeRec.on{color:var(--red);border-color:var(--red)}
 body.zen #w-cone #bConeRec{display:none !important}
 #cone3Pad{position:absolute;right:8px;bottom:8px;z-index:2;display:grid;grid-template-columns:repeat(3,28px);grid-auto-rows:28px;gap:3px}   /* v0.157: кнопки 3D на холсте */
-#cone3Pad[hidden]{display:none}
+#cone3Pad.flat > button:not(.c3home){visibility:hidden}   /* v0.164: в плоском виде на панели — только зелёная «всё на места» */
+#cone3Pad .c3home{color:var(--green);border-color:var(--green);font-weight:700}
 #cone3Pad button{width:28px;height:28px;padding:0;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb, var(--panel) 80%, transparent)}
 body.zen #cone3Pad{display:none !important}
 /* v0.158: плавающее окно текста конуса и лога лазера — поверх всего */
@@ -574,7 +575,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.163</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.164</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1139,10 +1140,10 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
           <!-- v0.155, «в одну квадратную кнопку внизу холста слева»: группа «Запись» — одна кнопка ⏺ в левом нижнем углу холста -->
           <button id="bConeRec" title="⏺ Видео: запись холста конуса (только сам конус, без кнопок) в файл .webm. Ещё раз — стоп и сохранить. Удобно вместе с «▶ крутить»">⏺</button>
           <!-- v0.157, «в поле конуса кнопки управления для 3D»: в правом нижнем углу холста, только в 3D -->
-          <div id="cone3Pad" hidden>
+          <div id="cone3Pad" class="flat">
             <button data-c3="yaw-" title="Повернуть влево на 15° (держи — дальше)">⟲</button><button data-c3="el+" title="Наклон: смотреть сверху круче на 10°">▲</button><button data-c3="yaw+" title="Повернуть вправо на 15° (держи — дальше)">⟳</button>
             <button data-c3="z-" title="Мельче">−</button><button data-c3="home" title="Вид по умолчанию: поворот 30°, наклон 50°, масштаб 1, без сдвига (то же — Ctrl + двойной щелчок)">⌂</button><button data-c3="z+" title="Крупнее">＋</button>
-            <span></span><button data-c3="el-" title="Наклон: смотреть сбоку положе на 10°">▼</button><span></span>
+            <button data-c3="allhome" class="c3home" title="⟲ Всё на места — как кнопка «⟲ всё на места» у кручения: накрутка колец, кручение, счёт, довод строки 1">↺</button><button data-c3="el-" title="Наклон: смотреть сбоку положе на 10°">▼</button><span></span>
           </div>
           <div id="coneList" title="Строки — как в поле: щелчок — текущая, Ctrl + щелчок — выделить; 🔒/🔓 — замок этого кольца"></div>
         </div>
