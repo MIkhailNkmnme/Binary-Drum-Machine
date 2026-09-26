@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.171. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.172. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.171</title>
+<title>Zazerkalius — v0.172</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -111,8 +111,8 @@ body.pane-icons #rowsPane #bPaneIcons{width:auto;padding:2px 0}
 #fieldBar .sp{flex:1}
 /* v0.077, «текст дёргает поле»: строка «70 стр. · 2485 бит · текущая … · против …» меняла длину и переносилась — полоса над
    полем росла и сжималась, строки прыгали. Теперь она в одну строку: не влезает — многоточие, целиком — в подсказке. */
-#fieldInfoBar{position:relative;flex:0 0 auto;display:flex;align-items:center;min-height:17px;padding:2px 0 0;background:var(--bg)}   /* v0.167; v0.169 — замок ушёл в полосу ввода, здесь только сведения (серым, справа) */
-#fieldInfo{display:block;flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;padding:0 10px;font-size:11px;line-height:14px;color:var(--dim);text-align:right}   /* v0.167: вправо */
+#fieldInfoBar{position:relative;z-index:3;flex:0 0 auto;height:0;overflow:visible;pointer-events:none}   /* v0.172, «текст ниже — пустое устранит»: своей полоски у сведений нет — они лежат поверх поля строк в правом верхнем углу (над вершиной треугольника пусто) */
+#fieldInfo{position:absolute;top:3px;right:14px;max-width:calc(100% - 90px);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px;border-radius:3px;font-size:11px;line-height:14px;color:var(--dim);text-align:right;background:color-mix(in srgb, var(--bg) 75%, transparent)}   /* v0.167: вправо */
 #coneLockAll{font-size:13px}   /* v0.169: общий замок — кнопкой в полосе ввода */
 #coneLockAll.off{opacity:.6}
 #split{cursor:col-resize;background:var(--line);opacity:.6}
@@ -584,7 +584,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.171</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.172</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
