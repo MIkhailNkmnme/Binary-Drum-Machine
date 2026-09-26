@@ -1475,23 +1475,32 @@ function coneAimAngle(q){ const n0 = (Z.rows[0] || "1").length || 1; return -Mat
    (после ▶ с паузой кольца стоят не на целых битах) могла лежать чуть в стороне — щели перекрываются, проход есть, а середина
    луча уже мимо, и он упирался в стену. Теперь луч встаёт в середину общего прохода: берём щель кольца 2, пересекаем со щелью
    кольца 3, 4… пока пересечение не пусто — луч в его середину, так он проходит все кольца, через которые проход вообще есть. */
+/* v0.133, «не идёт дальше 2» (одна строка «1»): довод искал щели только в кольце строки 2 — а когда строка одна, следующее
+   кольцо — строка для заполнения, за ней пустые; довода не было, рукой в щель шириной 2° не попасть, и луч упирался в строку для
+   заполнения. Теперь кольца для довода — все подряд: строки, строка для заполнения, пустые до 256 (как их видит луч). */
+function coneRingNR(b){   // кольцо b ≥ 1 на пути луча: { n — ячеек, rot — поворот в ячейках } или null — колец больше нет
+  const N = Math.min(Z.rows.length, CONE_MAX);
+  if (b < N) { const n = Z.rows[b].length; return n ? { n, rot: coneRotOf(b) } : null; }
+  if (Z.cone3d || Z.rows.length > CONE_MAX || b >= coneRingsTotal(N)) return null;
+  const n = coneVoidLen(b, N); return { n, rot: coneVoidRot(b, n) };
+}
 function coneAimDeep(a){
-  const N = Math.min(Z.rows.length, CONE_MAX), gapAt = (b, x) => {   // щель кольца b, ближайшая к углу x: [от, до]
-    const n = Z.rows[b].length, st = 2 * Math.PI / n, c = -Math.PI / 2 + (Math.round((x + Math.PI / 2) / st + coneRotOf(b)) - coneRotOf(b)) * st, h = coneSlitHalf(n);
+  const gapAt = (R, x) => {   // щель кольца, ближайшая к углу x: [от, до]
+    const st = 2 * Math.PI / R.n, c = -Math.PI / 2 + (Math.round((x + Math.PI / 2) / st + R.rot) - R.rot) * st, h = coneSlitHalf(R.n);
     return [c - h, c + h];
   };
-  let [lo, hi] = gapAt(1, a);
-  for (let b = 2; b < N; b++) {
-    if (!Z.rows[b].length) break;
-    const [l, r] = gapAt(b, (lo + hi) / 2), L = Math.max(lo, l), R = Math.min(hi, r);
-    if (R - L < 1e-9) break;   // дальше прохода нет — луч в середину того, что прошёл
-    lo = L; hi = R;
+  const R1 = coneRingNR(1); if (!R1) return a;
+  let [lo, hi] = gapAt(R1, a);
+  for (let b = 2, R; (R = coneRingNR(b)); b++) {
+    const [l, r] = gapAt(R, (lo + hi) / 2), L = Math.max(lo, l), H = Math.min(hi, r);
+    if (H - L < 1e-9) break;   // дальше прохода нет — луч в середину того, что прошёл
+    lo = L; hi = H;
   }
   return (lo + hi) / 2;
 }
 function coneAimSnap(){
-  const s1 = Z.rows[1]; if (!s1 || !coneGeom) return false;
-  const n1 = s1.length, st1 = 2 * Math.PI / n1, a = coneAimAngle(), u = (a + Math.PI / 2) / st1 + coneRotOf(1), d0 = (u - Math.round(u)) * st1;
+  const R1 = coneRingNR(1); if (!R1 || !coneGeom) return false;
+  const st1 = 2 * Math.PI / R1.n, a = coneAimAngle(), u = (a + Math.PI / 2) / st1 + R1.rot, d0 = (u - Math.round(u)) * st1;
   const tol = Math.min(st1 * 0.45, 10 * coneGeom.dpr / Math.max(1, coneGeom.r0 + coneGeom.dr));
   if (Math.abs(d0) > tol) return false;
   Z.coneAimRot = (Z.coneAimRot || 0) - (a - coneAimDeep(a)) * 180 / Math.PI;   // v0.131: в середину общего прохода, не щели кольца 2
@@ -1501,11 +1510,11 @@ function coneAimSettle(){
   Z.coneAimRot = (((Z.coneAimRot || 0) % 360) + 540) % 360 - 180;
   save(); renderCone();   // v0.127: довёл до щели вручную — это проход, его засчитает renderCone
   const R = coneClockTrace()[0], deg = Math.round(Z.coneAimRot * 10) / 10;
-  say(`⌖ Строка 1 довёрнута на ${deg}°` + (!R ? "." : R.pass ? " — луч проходит все кольца." : R.stop > 1 ? ` — луч в щели, дальше держит стена кольца ${R.stop + 1}.` : " — луч упирается в кольцо 2 (до щели не довёл)."));
+  say(`⌖ Строка 1 довёрнута на ${deg}°` + (!R ? "." : R.pass ? (R.vstop < coneRingsTotal(Math.min(Z.rows.length, CONE_MAX)) ? ` — луч проходит все строки, ловит кольцо ${R.vstop + 1}.` : " — луч проходит все кольца.") : R.stop > 1 ? ` — луч в щели, дальше держит стена кольца ${R.stop + 1}.` : " — луч упирается в кольцо 2 (до щели не довёл)."));
 }
 function coneAimStep(d){
-  const s1 = Z.rows[1]; if (!s1) { say("⌖ Кольца 2 нет — щелей для луча нет."); return; }
-  const n1 = s1.length, st1 = 2 * Math.PI / n1, u = (coneAimAngle() + Math.PI / 2) / st1 + coneRotOf(1);
+  const R1 = coneRingNR(1); if (!R1) { say("⌖ Кольца 2 нет — щелей для луча нет."); return; }   // v0.133: и строка для заполнения
+  const st1 = 2 * Math.PI / R1.n, u = (coneAimAngle() + Math.PI / 2) / st1 + R1.rot;
   const k = d > 0 ? Math.floor(u + 1e-6) + 1 : Math.ceil(u - 1e-6) - 1;
   Z.coneAimRot = (Z.coneAimRot || 0) + (k - u) * st1 * 180 / Math.PI;
   const a = coneAimAngle(); Z.coneAimRot += (coneAimDeep(a) - a) * 180 / Math.PI;   // v0.131: в середину общего прохода
