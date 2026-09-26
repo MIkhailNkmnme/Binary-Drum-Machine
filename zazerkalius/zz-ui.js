@@ -2527,6 +2527,27 @@ function setupCone(){
     else if (k === "home") { Z.cone3Yaw = 30; Z.cone3El = 50; coneZoom = 1; conePan = [0, 0]; }
     renderCone();
   };
+  /* v0.179, по снимку пульта — «перемещаемым»: пульт тянут за ручку ⠿ (или за фон между кнопками) куда угодно по холсту; двойной
+     щелчок по ручке — обратно в правый нижний угол. Место — Z.padPos { x, y } в пикселях от угла холста; меняет только перетаскивание. */
+  { const P = $("cone3Pad"), host = P.parentElement;
+    const place = () => {
+      const p = Z.padPos; P.classList.toggle("moved", !!p);
+      if (!p) { P.style.left = P.style.top = ""; return; }
+      const x = Math.max(0, Math.min(p.x, host.clientWidth - P.offsetWidth)), y = Math.max(0, Math.min(p.y, host.clientHeight - P.offsetHeight));
+      P.style.left = Math.round(x) + "px"; P.style.top = Math.round(y) + "px";
+    };
+    P.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0 || e.target.closest("button")) return;
+      e.preventDefault(); e.stopPropagation(); try { P.setPointerCapture(e.pointerId); } catch (err) { /* уже отпущен */ }
+      const r = P.getBoundingClientRect(), hr = host.getBoundingClientRect(), p0 = Z.padPos || { x: r.left - hr.left, y: r.top - hr.top }, x0 = e.clientX, y0 = e.clientY; let moved = false;
+      const mv = (ev) => { if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return; moved = true; Z.padPos = { x: p0.x + ev.clientX - x0, y: p0.y + ev.clientY - y0 }; place(); };
+      const up = () => { P.removeEventListener("pointermove", mv); P.removeEventListener("pointerup", up); P.removeEventListener("pointercancel", up); if (moved) save(); };
+      P.addEventListener("pointermove", mv); P.addEventListener("pointerup", up); P.addEventListener("pointercancel", up);
+    });
+    P.querySelector(".c3grip").addEventListener("dblclick", (e) => { e.stopPropagation(); if (!Z.padPos) return; delete Z.padPos; place(); save(); });
+    place();
+    if (window.ResizeObserver) new ResizeObserver(place).observe(host);
+  }
   $("cone3Pad").addEventListener("pointerdown", (e) => {
     const b = e.target.closest("button[data-c3]"); if (!b) return;
     e.preventDefault(); const k = b.dataset.c3;
