@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.184. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.185. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.184</title>
+<title>Zazerkalius — v0.185</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -467,6 +467,8 @@ body.zen #w-cone #coneCv{border-radius:0;cursor:grab}
 body.bgmode #cone3Pad,body.bgmode #bConeRec,body.bgmode #zenHint,body.bgmode #msg,body.bgmode #coneTxtWin,body.bgmode #zerkHubBtn{display:none !important}
 body.bgmode,body.bgmode #w-cone,body.bgmode #coneCv{background:#050505 !important}
 body.bgmode #coneCv{cursor:default}
+body.zen #w-cone{margin:0 !important}   /* v0.185: на узком экране у окон отступ 8/16 px — в дзене (и в карточке пресета) конус без рамки */
+html:has(body.bgmode),body.bgmode{overflow:hidden !important}
 body.zen #zenHint{opacity:1} body.zen.zen-quiet #zenHint{opacity:0}
 /* v0.075, «убери выделения текста» (снимок: вся полоса кнопок «◯ Конуса» залита синим выделением — от щелчков и
    перетаскивания рядом). Кнопки, подписи, выборы, полосы инструментов, шапки окон и панелей, холсты — не выделяются;
@@ -612,10 +614,14 @@ body.solo #w-cone #coneCycle{height:1.25em;line-height:1.25em;font-size:11px}
 }
 html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --line:#414b62; --txt:#eef1f6; --dim:#b0b9cc; --b0:#8f99ae}
 </style>
+<script>
+/* v0.185: ?preset=<имя> — подключить пресет presety/<имя>.js до скрипта страницы (document.write — синхронно, и с диска тоже) */
+(function(){ try { var n = new URLSearchParams(location.search).get("preset"); if (n && /^[a-z0-9-]+$/.test(n)) document.write('<script src="presety/' + n + '.js"><\/script>'); } catch (e) {} })();
+</script>
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.184</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.185</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>

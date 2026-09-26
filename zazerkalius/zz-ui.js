@@ -13,7 +13,11 @@ const ZZ_SOLO = (() => {
 /* v0.184, «на обои вместо — в index поставим?» (по снимку конуса-октаэдра в дзене): ?solo=cone&bg=1 — живой фон хаба. Только конус
    (3D, зеркало вниз, свет, медленно крутится целиком), без кнопок и подсказок; строки — Серпинский на 64; память не читается и
    не пишется — фон не трогает настройки и строки страницы «◯ Конус». */
-const ZZ_BG = (() => { try { return !!ZZ_SOLO && new URLSearchParams(location.search).get("bg") === "1"; } catch (e) { return false; } })();
+/* v0.185, «сохранил пресет — как его дальше, например в Мультфильмы?»: ?solo=cone&preset=<имя> — показ пресета из presety/<имя>.js
+   (его пишет presety/dobavit.py из файла «💾 Всё»; страница подключает файл сама, до этого скрипта). Как фон хаба: только конус и
+   кручение, память не читается и не пишется; состояние — из пресета. */
+const ZZ_PRESET = (window.ZZ_PRESET_DATA && window.ZZ_PRESET_DATA.state && Array.isArray(window.ZZ_PRESET_DATA.state.rows)) ? window.ZZ_PRESET_DATA : null;
+const ZZ_BG = (() => { try { return !!ZZ_SOLO && (new URLSearchParams(location.search).get("bg") === "1" || !!ZZ_PRESET); } catch (e) { return false; } })();
 const ZZ_KEY = ZZ_BG ? "zazerkalius_bg" : ZZ_SOLO ? "zazerkalius_solo_" + ZZ_SOLO.slice(2) : "zazerkalius_v1";
 /* v0.030: окна можно вынести в отдельное окно браузера (⧉); их элементы живут уже в чужом документе,
    поэтому поиск по id смотрит и туда — иначе вынесенное окно перестало бы обновляться. */
@@ -71,6 +75,7 @@ const undoStack = [];
 let gf2Last = null;
 
 function load(){
+  if (ZZ_PRESET) { const u = JSON.parse(JSON.stringify(ZZ_PRESET.state)); if (u.rows.every(zzIsBits)) Object.assign(Z, u); return; }   // v0.185: пресет
   if (ZZ_BG) return;   // v0.184: фон хаба — всегда по умолчанию
   try {
     let raw = localStorage.getItem(ZZ_KEY), first = false;
@@ -5259,6 +5264,12 @@ function init(){
 }
 function bgApply(){   // v0.184: живой фон хаба (?solo=cone&bg=1)
   document.body.classList.add("zen", "zen-quiet", "bgmode", "nocur");
+  if (ZZ_PRESET) {   // v0.185: пресет — как сохранён, только крутится
+    rowSel.clear(); renderAll();
+    if (!document.getElementById("bConeAuto").classList.contains("on")) $("bConeAuto").click();
+    document.title = "Zerkalius Конус — " + (ZZ_PRESET.title || ZZ_PRESET.name || "пресет");
+    return;
+  }
   const r = ["1"]; while (r.length < 64) r.push(zzPascalNext(r[r.length - 1]));
   Z.rows = r; Z.cur = 0; rowSel.clear(); syncLane();
   Object.assign(Z, { cone3d: true, coneOcta: true, coneGlow: true, cone3H: 2.6, cone3El: 12, cone3Yaw: 30, coneSpin: 0, coneSpinMode: "all", coneAutoSp: 10,
