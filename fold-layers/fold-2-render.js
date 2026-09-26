@@ -261,7 +261,7 @@ function resetAll(){
   st.shiftVariantTotal = null;
   st.shiftVariantRows = null;
   st.manualShiftTurns = 0;
-  if (typeof rotBase !== "undefined") rotBase.clear(); if (typeof fixedPos !== "undefined") fixedPos.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
+  if (typeof rotBase !== "undefined") rotBase.clear(); if (typeof fixedPos !== "undefined") fixedPos.clear(); if (typeof revInvPhase !== "undefined") revInvPhase.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
   // Сброс — выделение снова считается набранным вручную, а не выросшим захватом (см.
   // captureFoundRow/st.captureGrown).
   st.captureGrown = false;
@@ -1552,7 +1552,7 @@ let findLogSort = { key: null, dir: 1 };
    которым крутили (st.lastDirMode на момент находки). В таблице — столбец «чем» коротким знаком, полное имя — в подсказке. */
 const FIND_TOOL = { shiftL: ["◄", "◄ Круг"], shiftR: ["►", "► Круг"], shiftLInv: ["◄и", "◄ ИнвКруг"], shiftRInv: ["►и", "► ИнвКруг"],
   halfPlainL: ["◄½", "◄ ½ Круг"], halfPlainR: ["►½", "► ½ Круг"], halfTurnL: ["◄½и", "◄ ½ ИнвКруг"], halfTurnR: ["►½и", "► ½ ИнвКруг"],
-  spiralUp: ["▲", "▲ Спираль"], spiralDown: ["▼", "▼ Спираль"], reverse: ["⇄", "⇄ Реверс"] };
+  spiralUp: ["▲", "▲ Спираль"], spiralDown: ["▼", "▼ Спираль"], reverse: ["⇄", "⇄ Реверс"], revInv: ["⇄и", "⇄🔁 Реверс+Инверсия"] };
 function bgFindLogHit(bgInfo, step){
   const hitNow = (bgInfo && bgInfo.matched)
     ? ((bgInfo.hitPatIdxs && bgInfo.hitPatIdxs.size) ? Math.min(...bgInfo.hitPatIdxs) : bgInfo.targetIdx) : null;

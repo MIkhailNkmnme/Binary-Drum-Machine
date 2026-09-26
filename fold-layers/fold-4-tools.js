@@ -4125,7 +4125,7 @@ if (bSelectAllRowsEl) {
     if (!st.selectedRows) st.selectedRows = new Set();
     const allSelected = st.selectedRows.size === n;
     st.manualShiftTurns = 0;
-    if (typeof rotBase !== "undefined") rotBase.clear(); if (typeof fixedPos !== "undefined") fixedPos.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
+    if (typeof rotBase !== "undefined") rotBase.clear(); if (typeof fixedPos !== "undefined") fixedPos.clear(); if (typeof revInvPhase !== "undefined") revInvPhase.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
     st.shiftVariantTotal = null;
     st.shiftVariantRows = null;
     st.captureGrown = false;
@@ -5016,7 +5016,7 @@ function tetrisRotateFns(stripInv){
   let mode = st.lastDirMode || "shiftRInv";
   if (mode === "halfTurnL") mode = "shiftLInv"; else if (mode === "halfTurnR") mode = "shiftRInv";   // v1.640: полуоборот — это ИнвКруг той же стороны
   else if (mode === "halfPlainL") mode = "shiftL"; else if (mode === "halfPlainR") mode = "shiftR";
-  else if (mode === "reverse") mode = "shiftRInv";   // v1.651: у Тетриса разворота нет — как по умолчанию   // v1.641: ½ Круг — обычный Круг той же стороны
+  else if (mode === "reverse" || mode === "revInv") mode = "shiftRInv";   // v1.651: у Тетриса разворота нет — как по умолчанию   // v1.641: ½ Круг — обычный Круг той же стороны
   if (stripInv) mode = mode === "shiftLInv" ? "shiftL" : (mode === "shiftRInv" ? "shiftR" : mode);
   if (mode === "shiftL") return { rotate: rotateStrLeft, rotateFlags: rotateInvFlagsLeft, label: "◄ Круг" };
   if (mode === "shiftR") return { rotate: rotateStrRight, rotateFlags: rotateInvFlagsRight, label: "► Круг" };

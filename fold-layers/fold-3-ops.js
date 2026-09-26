@@ -171,7 +171,7 @@ if (chainTextEl2) {
         st.selectedRows = new Set([idx]);
         st.captureGrown = false;
         st.manualShiftTurns = 0;
-        if (typeof rotBase !== "undefined") rotBase.clear(); if (typeof fixedPos !== "undefined") fixedPos.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
+        if (typeof rotBase !== "undefined") rotBase.clear(); if (typeof fixedPos !== "undefined") fixedPos.clear(); if (typeof revInvPhase !== "undefined") revInvPhase.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
         render(); saveCache();
         scrollToRow(idx); // по номеру, а не по элементу — строки может не быть в DOM, см. scrollToRow
         say("Паттерн №" + (idx + 1) + ": выделена строка " + idx + ".");
@@ -1395,7 +1395,7 @@ function getModeParams(mode){
    должно гасить подсветку другого. Явный выбор обычного режима (setMode() ниже) гасит эту, и
    наоборот — эта гасит подсветку обычных режимов (но не трогает сам st.mode: если потом опять
    нажать Шаг/XOR/и т.п., они возьмут её как есть). */
-const DIR_MODE_BTN = { shiftL: "bShiftL", shiftR: "bShiftR", shiftLInv: "bShiftLInv", shiftRInv: "bShiftRInv", halfTurnL: "bShiftHalfTurnL", halfTurnR: "bShiftHalfTurn", halfPlainL: "bShiftHalfPlainL", halfPlainR: "bShiftHalfPlain", reverse: "bKrugReverse", spiralUp: "bSpiralUp", spiralDown: "bSpiralDown" };   // v1.640: и ◄/► Полуоборот
+const DIR_MODE_BTN = { shiftL: "bShiftL", shiftR: "bShiftR", shiftLInv: "bShiftLInv", shiftRInv: "bShiftRInv", halfTurnL: "bShiftHalfTurnL", halfTurnR: "bShiftHalfTurn", halfPlainL: "bShiftHalfPlainL", halfPlainR: "bShiftHalfPlain", reverse: "bKrugReverse", revInv: "bKrugRevInv", spiralUp: "bSpiralUp", spiralDown: "bSpiralDown" };   // v1.640: и ◄/► Полуоборот
 const STEP_MODE_BTN_IDS = ["bStep", "bStep2", "bStepXor", "bStep2Xor", "bStepHorizXor", "bStepHorizXorLeft", "bStepXorProj", "bStepScan"];
 // "⧬ Интерлив сквозной"/"⨁ XOR сквозной" — тоже полноценные "режимы для Авто" (см.
 // st.interleaveSeqMode/st.xorSeqMode), гасятся/гасят наравне с остальными.
@@ -1441,7 +1441,7 @@ function setMode(modeName){
   st.shiftVariantTotal = null;
   st.shiftVariantRows = null;
   st.manualShiftTurns = 0;
-  if (typeof rotBase !== "undefined") rotBase.clear(); if (typeof fixedPos !== "undefined") fixedPos.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
+  if (typeof rotBase !== "undefined") rotBase.clear(); if (typeof fixedPos !== "undefined") fixedPos.clear(); if (typeof revInvPhase !== "undefined") revInvPhase.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
   // Смена режима — то же самое, что и новый клик по строке: выделение снова "своё" (см.
   // captureFoundRow/st.captureGrown).
   st.captureGrown = false;
@@ -2825,7 +2825,7 @@ document.getElementById("rows").onclick = e => {
   resetSeqSearchModes();
   // Новый клик по строке — новая "сессия" кругового сдвига, счётчик "Вар: N/M" начинается заново.
   st.manualShiftTurns = 0;
-  if (typeof rotBase !== "undefined") rotBase.clear(); if (typeof fixedPos !== "undefined") fixedPos.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
+  if (typeof rotBase !== "undefined") rotBase.clear(); if (typeof fixedPos !== "undefined") fixedPos.clear(); if (typeof revInvPhase !== "undefined") revInvPhase.clear();   // v1.645: новая серия сдвигов — исходный вид строк запоминается заново
   st.shiftVariantTotal = null;
   st.shiftVariantRows = null;
   // ...и выделение снова считается набранным ВРУЧНУЮ: выросло оно до этого захватом или нет —
@@ -5140,9 +5140,10 @@ function autoRun(){
     const isHalfPlain = st.lastDirMode === "halfPlainL" || st.lastDirMode === "halfPlainR";   // v1.641: ½ Круг
     const isHalf = isHalfPlain || st.lastDirMode === "halfTurnL" || st.lastDirMode === "halfTurnR";
     const isRev = st.lastDirMode === "reverse";   // v1.651: ⇄ Реверс — тоже «сдвиг» для Авто/Шага: ход — разворот набора
-    const isShift = isRev || isHalf || st.lastDirMode === "shiftL" || st.lastDirMode === "shiftR" || st.lastDirMode === "shiftLInv" || st.lastDirMode === "shiftRInv";
+    const isRevInv = st.lastDirMode === "revInv";   // v1.652: ⇄🔁 Реверс+Инв — ход по очереди: разворот, инверсия (у каждой строки своя очередь)
+    const isShift = isRev || isRevInv || isHalf || st.lastDirMode === "shiftL" || st.lastDirMode === "shiftR" || st.lastDirMode === "shiftLInv" || st.lastDirMode === "shiftRInv";
     const isShiftInv = st.lastDirMode === "shiftLInv" || st.lastDirMode === "shiftRInv";
-    const dirLabel = { shiftL: "◄", shiftR: "►", shiftLInv: "◄ ИнвКруг", shiftRInv: "► ИнвКруг", halfTurnL: "◄ ½ ИнвКруг", halfTurnR: "► ½ ИнвКруг", halfPlainL: "◄ ½ Круг", halfPlainR: "► ½ Круг", reverse: "⇄ Реверс", spiralUp: "▲ Спираль", spiralDown: "▼ Спираль" }[st.lastDirMode];
+    const dirLabel = { shiftL: "◄", shiftR: "►", shiftLInv: "◄ ИнвКруг", shiftRInv: "► ИнвКруг", halfTurnL: "◄ ½ ИнвКруг", halfTurnR: "► ½ ИнвКруг", halfPlainL: "◄ ½ Круг", halfPlainR: "► ½ Круг", reverse: "⇄ Реверс", revInv: "⇄🔁 Реверс+Инв", spiralUp: "▲ Спираль", spiralDown: "▼ Спираль" }[st.lastDirMode];
     snapshot();
 
     // Общее число вариантов ДО старта: круговой сдвиг строки длины L возвращает её к исходному
@@ -5219,6 +5220,7 @@ function autoRun(){
         if (isShift) {
           if (rotIdxs.size === 0 || ![...rotIdxs].some(i => st.rows[i])) { moved = false; break; }
           if (isRev) reverseRows(rotIdxs);   // v1.651: весь набор — задом наперёд
+          else if (isRevInv) revInvStep(rotIdxs);   // v1.652: каждая строка — свой очередной ход: разворот или инверсия
           else if (isHalf) halfTurnJump(rotIdxs, (st.lastDirMode === "halfTurnR" || st.lastDirMode === "halfPlainR") ? 1 : -1, isHalfPlain);   // весь набор одним прыжком
           else for (const i of rotIdxs) if (st.rows[i]) {
             // "⊙ Ось" — см. shiftOneRowAxisAware(): под Авто крутит только картинку, не данные.
@@ -5658,7 +5660,7 @@ document.getElementById("bAuto").onclick  = () => { if (st.running) st.running =
    (◄/► Круг, ½ Круг, ИнвКруг, ½ ИнвКруг) и ПРИ ЭТОМ захватить находку, даже если «🧲 Захват» выключен: на время нажатия захват
    включается и сразу возвращается как был. Сами кнопки Круга захватывают по галке, как всегда. «🚀 Авто» — ровно общая «🚀 Авто»
    (тот же обработчик, и «🛑 Стоп» на находке так же останавливает). */
-const KRUG_MODES = ["shiftL", "shiftR", "halfPlainL", "halfPlainR", "shiftLInv", "shiftRInv", "halfTurnL", "halfTurnR", "reverse"];
+const KRUG_MODES = ["shiftL", "shiftR", "halfPlainL", "halfPlainR", "shiftLInv", "shiftRInv", "halfTurnL", "halfTurnR", "reverse", "revInv"];
 const bKrugStepEl = document.getElementById("bKrugStep");
 if (bKrugStepEl) bKrugStepEl.onclick = () => {
   if (st.running) { say("▶ Шаг: сейчас идёт Авто — сначала остановите."); return; }
@@ -7293,6 +7295,7 @@ function rotBaseReset(){
     if (!s || s.length !== b.bits.length) { rotBase.delete(r); continue; }
     if (s !== b.bits) n++;
     st.rows[r] = b.bits; invFlagsMap.set(r, b.flags.slice());
+    if (typeof revInvPhase !== "undefined") revInvPhase.delete(r);   // v1.652: строка снова в исходном виде — и её очередь Реверс+Инв с начала
     if (b.nb) newBitsMap.set(r, b.nb.slice()); else newBitsMap.delete(r);
   }
   return n;
@@ -7410,7 +7413,7 @@ function afterShiftBgCheck(isShiftInv){
   st.stepStale = false; // ручной ◄/► — это тоже настоящий шаг, номер живой (см. finishAuto)
   const idxs = st.selectedRows ? Array.from(st.selectedRows) : [];
   // v1.646: ручной ½ Круг / ½ ИнвКруг — предел в прыжках, как в «Авто»; v1.651: ⇄ Реверс — 2 хода (см. shiftModeTotal)
-  st.shiftVariantTotal = /^half|^reverse$/.test(st.lastDirMode || "") ? shiftModeTotal(idxs) : computeShiftTotalTurns(idxs, isShiftInv);
+  st.shiftVariantTotal = /^half|^reverse$|^revInv$/.test(st.lastDirMode || "") ? shiftModeTotal(idxs) : computeShiftTotalTurns(idxs, isShiftInv);
   st.shiftVariantTurns = st.manualShiftTurns;
   st.shiftVariantRows = idxs;
   updateVariantCounter();
@@ -8079,9 +8082,49 @@ function reverseTotal(idxs){
 function shiftModeTotal(idxs){
   const m = st.lastDirMode || "";
   if (m === "reverse") return reverseTotal(idxs);
+  if (m === "revInv") return revInvTotal(idxs);
   if (/^half/.test(m)) return halfTurnTotal(idxs, m.indexOf("halfPlain") === 0);
   return computeShiftTotalTurns(idxs, m === "shiftLInv" || m === "shiftRInv");
 }
+/* v1.652, «добавь кнопку реверс+инверс — по кругу сначала реверс, потом инверс этой строки — цикл свой для каждой строки, и также с
+   Авто». Ход «⇄🔁 Реверс+Инв» у строки — по очереди: разворот, инверсия, разворот, инверсия… Очередь у КАЖДОЙ строки своя
+   (revInvPhase: 0 — следующий ход разворот, 1 — инверсия): строка, захваченная посреди прогона, начинает со своего разворота. Цикл
+   строки — 4 хода (s → R·s → I·R·s → I·s → s), а у строки, чей разворот равен её инверсии (1100, 1010…), — 2; у набора — НОК, то есть
+   4 или 2. Очередь забывается там же, где кончается серия сдвигов (ручная смена выделения, режима, сброс) и при «↺ Сбросе при
+   находке». Разворот везёт пометки вместе с битами, инверсия переключает «перевёрнут». */
+var revInvPhase = new Map();
+function revInvStep(idxs){
+  for (const r of idxs) {
+    const s = st.rows[r]; if (!s) continue;
+    const L = s.length, ph = revInvPhase.get(r) || 0, f = getInvFlags(r, L);
+    if (ph === 0) {
+      st.rows[r] = reverseStr(s); invFlagsMap.set(r, f.slice().reverse());
+      const nb = newBitsMap.get(r); if (nb && nb.length === L) newBitsMap.set(r, nb.slice().reverse());
+    } else { st.rows[r] = invertBits(s); invFlagsMap.set(r, f.map(x => !x)); }
+    revInvPhase.set(r, 1 - ph);
+  }
+}
+function revInvTotal(idxs){
+  let live = false, total = 1;
+  for (const r of idxs) { const s = st.rows[r]; if (!s) continue; live = true; if (reverseStr(s) !== invertBits(s)) total = 4; else if (total < 2) total = 2; }
+  return live ? total : 0;
+}
+const bKrugRevInvEl = document.getElementById("bKrugRevInv");
+if (bKrugRevInvEl) bKrugRevInvEl.onclick = () => {
+  if (!shiftAllowed()) return;
+  const idxs = (st.selectedRows && st.selectedRows.size) ? Array.from(st.selectedRows) : st.rows.map((_, i) => i);
+  const live = idxs.filter(r => st.rows[r]);
+  if (!live.length) { say("⇄🔁 Реверс+Инв: нет непустых строк."); return; }
+  setLastDirMode("revInv");
+  mirrorsBeforeShift();
+  snapshot();
+  const rev = live.filter(r => !(revInvPhase.get(r) || 0)).length;
+  revInvStep(live);
+  afterShiftBgCheck(false);
+  say(`⇄🔁 Реверс+Инв: ${rev ? "развёрнуто " + rev : ""}${rev && rev < live.length ? ", " : ""}${live.length - rev ? "инвертировано " + (live.length - rev) : ""} стр. — у каждой строки своя очередь. Запомнен для «▶ Шаг» / «🚀 Авто» / «🔬 Анализ».`);
+  logStep("⇄🔁 Реверс+Инв", live.map(r => r + 1).join(", "), "", "Очередной ход: разворот или инверсия");
+  render(); saveCache();
+};
 const bKrugReverseEl = document.getElementById("bKrugReverse");
 if (bKrugReverseEl) bKrugReverseEl.onclick = () => {
   if (!shiftAllowed()) return;
