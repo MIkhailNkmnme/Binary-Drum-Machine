@@ -1161,6 +1161,18 @@ function renderCone(){
         if (run.len < n) g.moveTo(cx, cy);   // всё кольцо одним цветом — круг (многоугольник) целиком, без кромки от центра
         coneArc(g, cx, cy, i, rin, a, a + run.len * step); g.closePath(); g.fillStyle = gr; g.fill();
       }
+      /* v0.162, по снимку клиньев — «в секторах пиши биты 0 и 1, к центру низом»: в каждом клине — его бит, повёрнутый так, что низ
+         цифры смотрит в центр (верх — наружу, к кольцу). Кегль — по ширине клина на этой высоте; слишком узкий клин — без цифры. */
+      const rt = rin * 0.8, fz = Math.min(rt * step * 0.7, rin * 0.16, 64 * dpr);
+      if (fz >= 5 * dpr) {
+        g.save(); g.font = `700 ${Math.round(fz)}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle";
+        for (let j = 0; j < n; j++) {
+          const m = -Math.PI / 2 + (j + 0.5 - rot) * step;
+          g.save(); g.translate(cx + rt * Math.cos(m), cy + rt * Math.sin(m)); g.rotate(m + Math.PI / 2);   // поверх поворота всего конуса (spin2d)
+          g.globalAlpha = s[j] === "1" ? 0.95 : 0.7; g.fillStyle = cT; g.fillText(s[j], 0, 0); g.restore();
+        }
+        g.restore();
+      }
     }
   }
   // v0.080: зеркало кольца — у выделенных колец (или текущего) свои неподвижные
@@ -1175,8 +1187,8 @@ function renderCone(){
     const MI = mirMap.get(i), blank = !!clockRays;   // v0.131: при луч-часах ячейки колец строк пустые — чёрные, 1 ставит лазер
     const gap = clockRays && n > 1 ? coneSlitHalf(n)   // v0.124: при луч-часах щель между битами — та, что в расчёте (ползунок «щель»)
       : n > 1 && step * rin > 3 * dpr ? Math.min(step * 0.12, 1.5 * dpr / Math.max(1, rin)) : 0;
-    const arcLen = step * (rin + rout) / 2, fsz = Math.min(dr * band * 0.8, arcLen * 0.85);
-    const glyph = fsz >= 8 * dpr;   // дуга крупная — рисуем символ, как в поле
+    const arcLen = step * (rin + rout) / 2, fsz = Math.min(dr * band * 0.95, arcLen * 0.85);
+    const glyph = fsz >= 5 * dpr;   // v0.162, «вид сверху на все — пиши 1 и 0 на секторах»: символ — почти во всю ширину кольца и с 5 px (прежде 0.8 ширины и с 8 px — у узких колец цифр не было)
     /* v0.110, «почему так? может, надо крест и точку?» — на «строки из 1 и 2 бит остаются кругами»: у одного бита многоугольника
        нет, у двух бит «стороны» легли бы на один отрезок и слились. v0.111, по снимку «всё равно круг» (точка была диском во всё
        нулевое кольцо) и «давай сделаем 2 бита двумя Г в разные стороны на одной плоскости — сверху будет крест», «углами по
@@ -4052,6 +4064,7 @@ function init(){
   dockRestore();   // v0.025: окна, пристыкованные под полем строк
   if (ZZ_SOLO) soloApply();   // v0.141
   ctwInit();   // v0.158
+  { const h1 = document.querySelector("#top h1"); if (h1) { h1.title = "Щелчок — перезагрузить страницу"; h1.style.cursor = "pointer"; h1.onclick = () => location.reload(); } }   // v0.162, «клик — перезагрузка» (по названию в шапке)
   // v0.026: высоту поля строк, растянутую за угол, запоминаем (только когда под ним окна).
   if (window.ResizeObserver) {
     let th = 0;
