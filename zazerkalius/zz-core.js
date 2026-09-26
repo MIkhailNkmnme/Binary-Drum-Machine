@@ -664,3 +664,233 @@ function zzTriBitFlip(rows, checks, maxIter){
   const out = R.map(a => a.join(""));
   return { rows: out, flips, left: zzTriBroken(out, checks).filter(Boolean).length };
 }
+
+/* ─── 🔎 АДРЕС СТРОКИ (v0.041) ─────────────────────────────────────────────────────────────────
+   Запрос пользователя: «давай» — на предложение «собрать операции Zerkalius (зеркала, XOR, круг, спуск) в одно
+   семейство и спросить у строки, какой у неё самый короткий адрес в этом мире». Адрес — цепочка операций от
+   короткого «зерна» до строки. Цена честная, в битах:
+     • номер операции — 4 бита (операций 11, мест 16);
+     • числа (период, шаги, сдвиг) — кодом Элиаса γ: 2·⌊log₂ n⌋ + 1 бит, сам показывает, где кончается;
+       сдвиг круга — ⌈log₂ N⌉ бит (он меньше N);
+     • длина всей строки считается известной (это размер файла), длины вложенных частей из неё выводятся.
+   «Как есть» — всегда есть: 4 + N бит, поэтому у случайной строки адрес на 4 бита длиннее её самой — плата
+   за мир. Поиск — перебор с отсечением (ветку бросаем, как только она не может стать дешевле найденного) и
+   памятью; глубина и время ограничены, и если время вышло — ответ «лучшее из найденного», а не «кратчайший».
+   Каждый найденный адрес собирается обратно (zzAddrBuild) и сверяется со строкой. */
+const ZZ_ADDR_NAMES = { lit: "как есть", tm: "Туэ–Морс", rep: "повтор", mir: "зеркало", anti: "антизеркало", inv: "инверсия",
+  rev: "разворот", man: "код 1→10, 0→01", pas: "🔺 Паскаль", des: "▽ спуск (край)", rot: "круг" };
+const ZZ_ADDR_OP = 4, ZZ_ADDR_MAX = 256;
+function zzGamma(n){ return 2 * Math.floor(Math.log2(n)) + 1; }
+function zzRot(s, k){ k %= s.length; return s.slice(k) + s.slice(0, k); }
+/* s = 🔺+1 от какой-то y (на бит короче)? Вернуть y или null. Первый бит s — первый бит y, дальше y
+   восстанавливается накопленным XOR, последний бит s обязан совпасть с последним битом y. */
+function zzUnPascal(s){
+  if (s.length < 2) return null;
+  let y = s[0], prev = s[0];
+  for (let i = 1; i < s.length - 1; i++) { const b = s[i] === prev ? "0" : "1"; y += b; prev = b; }
+  return prev === s[s.length - 1] ? y : null;
+}
+function zzTmPrefix(n, inv){
+  let o = "";
+  for (let i = 0; i < n; i++) { let x = i, p = inv ? 1 : 0; while (x) { p ^= x & 1; x >>>= 1; } o += p ? "1" : "0"; }
+  return o;
+}
+function zzAddrBuild(nd){
+  const N = nd.n;
+  switch (nd.op) {
+    case "lit": return nd.arg;
+    case "tm": return zzTmPrefix(N, nd.arg === "1");
+    case "rep": { const k = zzAddrBuild(nd.kid); let o = ""; while (o.length < N) o += k; return o.slice(0, N); }
+    case "mir": { const h = zzAddrBuild(nd.kid); return N % 2 ? h + zzRev(h.slice(0, -1)) : h + zzRev(h); }
+    case "anti": { const h = zzAddrBuild(nd.kid); return h + zzInvRev(h); }
+    case "inv": return zzInv(zzAddrBuild(nd.kid));
+    case "rev": return zzRev(zzAddrBuild(nd.kid));
+    case "man": return zzManchester(zzAddrBuild(nd.kid));
+    case "pas": { let y = zzAddrBuild(nd.kid); for (let i = 0; i < nd.arg; i++) y = zzPascalNext(y); return y; }
+    case "des": return zzEdge(zzDescent(zzAddrBuild(nd.kid)));
+    case "rot": return zzRot(zzAddrBuild(nd.kid), nd.arg);
+  }
+  return "";
+}
+function zzAddress(s, depth, ms){
+  const deadline = performance.now() + (ms || 300);
+  const memo = new Map(), perOp = {};
+  let cut = false, nodes = 0;
+  function best(x, dep, last){
+    const N = x.length, top = last === "top";
+    const key = x + "|" + dep + "|" + last;
+    const had = memo.get(key); if (had) return had;
+    nodes++;
+    let b = { op: "lit", arg: x, cost: ZZ_ADDR_OP + N, n: N };
+    const put = (nd) => { if (top && (!perOp[nd.op] || nd.cost < perOp[nd.op].cost)) perOp[nd.op] = nd; if (nd.cost < b.cost) b = nd; };
+    put(b);
+    const tm = N > 1 ? zzIsThueMorse(x) : 0;
+    if (tm) put({ op: "tm", arg: tm > 0 ? "0" : "1", cost: ZZ_ADDR_OP + 1, n: N });
+    const sub = (op, arg, argBits, kidStr, kidDep) => {
+      if (cut || (cut = performance.now() > deadline)) return;
+      const lo = ZZ_ADDR_OP + argBits;
+      if (!top && lo + ZZ_ADDR_OP >= b.cost) return;   // отсечение: дешевле найденного не станет
+      const k = best(kidStr, kidDep === undefined ? dep - 1 : kidDep, op);
+      put({ op, arg, cost: lo + k.cost, n: N, kid: k });
+    };
+    if (dep > 0 && N > 1) {
+      for (let p = 1; p < N; p++) {   // повтор: строка — начало бесконечного повтора своих первых p бит
+        let ok = true; for (let i = p; i < N; i++) if (x[i] !== x[i - p]) { ok = false; break; }
+        if (ok) sub("rep", p, zzGamma(p), x.slice(0, p));
+      }
+      const h = x.slice(0, (N + 1) >> 1);
+      if (x === (N % 2 ? h + zzRev(h.slice(0, -1)) : h + zzRev(h))) sub("mir", null, 0, h);
+      if (N % 2 === 0 && x === h + zzInvRev(h)) sub("anti", null, 0, h);
+      if (N % 2 === 0) { let ok = true; for (let i = 0; i < N; i += 2) if (x[i] === x[i + 1]) { ok = false; break; } if (ok) sub("man", null, 0, zzUnmanchester(x).out); }
+      let y = x;
+      for (let k = 1; y.length > 1; k++) { y = zzUnPascal(y); if (!y) break; sub("pas", k, zzGamma(k), y); }
+      if (last !== "inv") sub("inv", null, 0, zzInv(x));
+      if (last !== "rev") sub("rev", null, 0, zzRev(x));
+      if (last !== "des") sub("des", null, 0, zzEdge(zzDescent(x)));
+      if (top && N <= 128) { const kb = Math.ceil(Math.log2(N)); for (let k = 1; k < N; k++) sub("rot", k, kb, zzRot(x, N - k), Math.min(dep - 1, 2)); }
+    }
+    if (!cut) memo.set(key, b);
+    return b;
+  }
+  const full = s.length;
+  if (s.length > ZZ_ADDR_MAX) s = s.slice(0, ZZ_ADDR_MAX);
+  const res = best(s, depth || 4, "top");
+  return { best: res, perOp, cut, nodes, N: s.length, full, ok: zzAddrBuild(res) === s };
+}
+
+/* ─── 🧪 ПОИСК СТРУКТУРЫ (v0.042) ─────────────────────────────────────────────────────────────
+   Запрос пользователя: «прогнал — на 4 длиннее строки, структуры нет (всегда); давай искать структуру другими
+   методами», затем «может, исходить из номеров ряда — длина строки и её номер, как пишутся в битах, сравнить со
+   строкой». «🔎 Адрес» ищет ТОЧНУЮ сборку операциями; здесь — методы, которые видят структуру и там, где точной
+   сборки нет: перекос единиц, длинные серии, предсказуемость по соседям (контекст), повторы кусков (LZ), почти-
+   зеркало / почти-период / почти-Туэ–Морс с поправками, линейное правило, связь с номером и длиной строки, связь с
+   соседней строкой столбика. Цена каждого — честная длина записи в битах (как у архиватора: сколько бит уйдёт на
+   параметры + на сами данные этим способом), плюс 4 бита на номер метода; «как есть» = N + 4. Поправки «k ошибок в
+   n битах» стоят γ(k+1) + log₂ C(n, k) — сколько ошибок и где они. */
+const ZZ_STRUCT_SEL = 4;
+function zzLog2C(n, k){ if (k < 0 || k > n) return Infinity; k = Math.min(k, n - k); let s = 0; for (let i = 1; i <= k; i++) s += Math.log2((n - k + i) / i); return s; }
+function zzFixCost(n, e){ return zzGamma(e + 1) + zzLog2C(n, e); }
+function zzHamEq(a, b){ let e = 0; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) e++; return e; }
+function zzBin(n){ return n > 0 ? n.toString(2) : "0"; }
+function zzPadL(b, N){ return b.length > N ? null : "0".repeat(N - b.length) + b; }
+function zzCycleTo(b, N){ let o = ""; while (o.length < N) o += b; return o.slice(0, N); }
+function zzPascalRow(n){ let o = ""; for (let k = 0; k <= n; k++) o += (k & n) === k ? "1" : "0"; return o; }
+/* Кандидаты «из номера и длины строки»: номер i и длина N известны даром (это место строки в столбике и её
+   размер), и строка сравнивается с тем, что из них выходит. */
+function zzFromNumCands(i, N){
+  return [
+    ["номер двоичным, нули слева", zzPadL(zzBin(i), N)],
+    ["номер двоичным по кругу", zzCycleTo(zzBin(i), N)],
+    ["номер задом наперёд, нули справа", zzPadL(zzBin(i), N) && zzRev(zzPadL(zzBin(i), N))],
+    ["код Грея номера, нули слева", zzPadL(zzBin(i ^ (i >> 1)), N)],
+    ["длина двоичным, нули слева", zzPadL(zzBin(N), N)],
+    ["длина двоичным по кругу", zzCycleTo(zzBin(N), N)],
+    ["номер XOR длина, нули слева", zzPadL(zzBin(i ^ N), N)],
+    ["строка Паскаля длины N (номер N−1)", zzPascalRow(N - 1)],
+    ["Туэ–Морс со сдвигом на номер", zzTmPrefix(i + N).slice(i)],
+  ].filter(c => c[1]);
+}
+function zzFromNum(s, i){
+  const N = s.length; let b = null;
+  for (const [name, c] of zzFromNumCands(i, N)) {
+    const e = zzHamEq(s, c), raw = 4 + zzFixCost(N, e);   // 4 бита — какой кандидат (их 9)
+    if (!b || raw < b.raw) b = { raw, name, e, c };
+  }
+  return b;
+}
+/* Из соседней строки: строка = шаг от строки выше (или XOR двух выше) + поправки. */
+function zzFromPrev(s, p, p2){
+  const N = s.length; let b = null;
+  const c = [["как строка выше", p], ["инверсия строки выше", p && zzInv(p)], ["разворот строки выше", p && zzRev(p)],
+    ["🔺+1 от строки выше", p && zzPascalNext(p)], ["▽ шаг спуска от строки выше", p && p.length > 1 && zzDescent(p)[1]],
+    ["строка выше, сдвиг по кругу ←", p && zzRot(p, 1)], ["строка выше, сдвиг по кругу →", p && zzRot(p, p.length - 1)],
+    ["строка выше +1 как число", p && zzBinInc(p)]];
+  if (p && p2 && p.length === p2.length) { let x = ""; for (let k = 0; k < p.length; k++) x += p[k] === p2[k] ? "0" : "1"; c.push(["XOR двух строк выше", x]); }
+  for (const [name, t] of c) {
+    if (!t || t.length !== N) continue;
+    const e = zzHamEq(s, t), raw = 4 + zzFixCost(N, e);
+    if (!b || raw < b.raw) b = { raw, name, e };
+  }
+  return b;
+}
+function zzMarkov(s, kmax){
+  let best = null;
+  for (let k = 0; k <= kmax; k++) {
+    const sz = 1 << k, c0 = new Float64Array(sz), c1 = new Float64Array(sz), mask = sz - 1;
+    let ctx = 0, bits = 0;
+    for (let i = 0; i < s.length; i++) {
+      const b = s[i] === "1" ? 1 : 0, n0 = c0[ctx], n1 = c1[ctx];
+      bits -= Math.log2(((b ? n1 : n0) + 0.5) / (n0 + n1 + 1));   // оценка Кричевского — Трофимова: честный адаптивный код
+      if (b) c1[ctx]++; else c0[ctx]++;
+      ctx = ((ctx << 1) | b) & mask;
+    }
+    const raw = bits + zzGamma(k + 1);
+    if (!best || raw < best.raw) best = { k, raw };
+  }
+  return best;
+}
+function zzLZ(s){
+  const N = s.length; let i = 0, raw = 0, lit = 0, mt = 0;
+  while (i < N) {
+    let bl = 0, bo = 0;
+    for (let j = Math.max(0, i - 4096); j < i; j++) { let l = 0; while (i + l < N && s[j + l] === s[i + l]) l++; if (l > bl) { bl = l; bo = i - j; } }
+    const mc = 1 + zzGamma(bo) + zzGamma(bl);
+    if (bl > 0 && mc < 2 * bl) { raw += mc; i += bl; mt++; } else { raw += 2; i++; lit++; }
+  }
+  return { raw, lit, mt };
+}
+function zzApprox(s){
+  const N = s.length, out = [];
+  if (N >= 4) {
+    const hl = N >> 1, h = s.slice(0, N - hl), tail = s.slice(N - hl), rh = zzRev(s.slice(0, hl));
+    const em = zzHamEq(tail, rh);
+    out.push({ name: "≈ зеркало + поправки", raw: (N - hl) + zzFixCost(hl, em), note: `половина + ${em} ошиб. во второй` });
+    let ea = 0; for (let k = 0; k < hl; k++) if (tail[k] === rh[k]) ea++;
+    out.push({ name: "≈ антизеркало + поправки", raw: (N - hl) + zzFixCost(hl, ea), note: `половина + ${ea} ошиб.` });
+  }
+  let bp = null;
+  for (let p = 1; p <= Math.min(64, N >> 1); p++) {
+    let e = 0;
+    for (let r = 0; r < p; r++) { let o = 0, n = 0; for (let k = r; k < N; k += p) { n++; if (s[k] === "1") o++; } e += Math.min(o, n - o); }
+    const raw = zzGamma(p) + p + zzFixCost(N, e);
+    if (!bp || raw < bp.raw) bp = { name: "≈ период + поправки", raw, note: `период ${p}, ${e} ошиб.` };
+  }
+  if (bp) out.push(bp);
+  const t0 = zzTmPrefix(N, false), e0 = zzHamEq(s, t0), e1 = N - e0, et = Math.min(e0, e1);
+  out.push({ name: "≈ Туэ–Морс + поправки", raw: 1 + zzFixCost(N, et), note: `${et} ошиб.` });
+  return out;
+}
+/* ctx: { all } — лента «все строки подряд»; иначе { rows, cur } для текущей строки. */
+function zzStructure(tape, ctx){
+  const N = tape.length, M = [];
+  const add = (name, raw, note) => { if (isFinite(raw)) M.push({ name, cost: Math.ceil(ZZ_STRUCT_SEL + raw), note }); };
+  add("как есть", N, `${N} бит без обработки`);
+  const k1 = zzOnes(tape);
+  add("счёт единиц", Math.log2(N + 1) + zzLog2C(N, k1), `единиц ${k1} из ${N}`);
+  let rr = 1, run = 1, rn = 0, rmax = 0;
+  for (let i = 1; i <= N; i++) { if (i < N && tape[i] === tape[i - 1]) run++; else { rr += zzGamma(run); rn++; rmax = Math.max(rmax, run); run = 1; } }
+  add("серии одинаковых", rr, `серий ${rn}, длиннейшая ${rmax}`);
+  const mk = zzMarkov(tape, Math.min(16, Math.floor(Math.log2(Math.max(2, N)))));
+  add("контекст (бит по предыдущим)", mk.raw, mk.k ? `бит угадывается по ${mk.k} предыдущим` : "соседи не помогают — только перекос единиц");
+  const lz = zzLZ(tape);
+  add("повторы кусков (LZ)", lz.raw, `ссылок на уже бывшее ${lz.mt}, одиночных бит ${lz.lit}`);
+  zzApprox(tape).forEach(a => add(a.name, a.raw, a.note));
+  const T = tape.length > ZZ_LINCOMP_MAX ? tape.slice(0, ZZ_LINCOMP_MAX) : tape;
+  if (T.length === N) { const bits = new Uint8Array(N); for (let i = 0; i < N; i++) bits[i] = tape[i] === "1" ? 1 : 0; const { L } = zzBerlekampMassey(bits); add("линейное правило (XOR)", 2 * L + zzGamma(L + 1), `L = ${L}: зерно ${L} + отводы ${L}`); }
+  if (!ctx.all) {
+    const fn = zzFromNum(tape, ctx.cur);
+    if (fn) add("из номера и длины строки", fn.raw, `${fn.name}: ${fn.e ? fn.e + " ошиб." : "точно"}`);
+    if (ctx.cur > 0) { const fp = zzFromPrev(tape, ctx.rows[ctx.cur - 1], ctx.cur > 1 ? ctx.rows[ctx.cur - 2] : null); if (fp) add("из соседней строки", fp.raw, `${fp.name}: ${fp.e ? fp.e + " ошиб." : "точно"}`); }
+    if (N <= 256) { const a = zzAddress(tape, 4, 150); if (a.best.op !== "lit") { const ch = []; for (let nd = a.best; nd; nd = nd.kid) ch.push(ZZ_ADDR_NAMES[nd.op]); add("адрес (🔎, точная сборка)", a.best.cost - ZZ_STRUCT_SEL, ch.join(" ∘ ")); } }
+  } else {
+    let sum = 0, nNum = 0, nPrev = 0, nLit = 0;
+    ctx.rows.forEach((r, i) => {
+      const lit = r.length, fn = zzFromNum(r, i), fp = i > 0 ? zzFromPrev(r, ctx.rows[i - 1], i > 1 ? ctx.rows[i - 2] : null) : null;
+      const a = fn ? fn.raw : Infinity, b = fp ? fp.raw : Infinity, m = Math.min(lit, a, b);
+      sum += 2 + m; if (m === lit) nLit++; else if (m === a) nNum++; else nPrev++;
+    });
+    add("построчно: из номера / соседней / как есть", sum, `из номера ${nNum}, из соседней ${nPrev}, как есть ${nLit} стр. (длины строк известны)`);
+  }
+  M.sort((a, b) => a.cost - b.cost);
+  return { N, methods: M, raw: N + ZZ_STRUCT_SEL };
+}

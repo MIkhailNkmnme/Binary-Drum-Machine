@@ -5,14 +5,14 @@ PROJECT: Zerkalius Треугольник — отдельная страниц�
          Заведена 2026-09-24 копией Zerkalius Code 35.74: для начала в ней есть всё, что есть в Code.
          Память (текст, вид, раскладка) — СВОЯ, ключи ztri_*; с v0.009 у Code ничего не подхватывает (кроме сцен, если
          своих нет): первый запуск — треугольник правила 90 на 50 строк. Ключи Code никогда не пишутся.
-VERSION: v0.034 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
+VERSION: v0.035 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Треугольник v0.034</title>
+    <title>Zerkalius Треугольник v0.035</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -393,7 +393,7 @@ VERSION: v0.034 (копия Zerkalius Code 35.74 целиком — отправ
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.034</h3>
+                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.035</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -6229,7 +6229,12 @@ VERSION: v0.034 (копия Zerkalius Code 35.74 целиком — отправ
                 MODULE_DATA.animInfoUpd?.();
                 try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}
                 UI.statusInfo.textContent = `Заготовка из «Битмультфильмов»: правило ${UI.zerkRuleSelect.value}, ${UI.zerkCountInput.value} строк` +
-                    (rh > 0 ? `, ромбы ${rh}` : '') + ` — Аниматрица запущена. Своё состояние Треугольника не тронуто: F5 — вернуться к нему.`;
+                    (rh > 0 ? `, ромбы ${rh}` : '') +
+                    // v0.035: «поправь» — строка писала «Аниматрица запущена» и при anim=0; теперь — по самой галке и режиму плеера
+                    (UI.zerkaliusAnimCheck.checked
+                        ? ` — Аниматрица запущена, плеер ${document.getElementById('animByPassCheck')?.checked ? 'целыми циклами' : 'по шагам'}.`
+                        : ' — Аниматрица выключена.') +
+                    ` Своё состояние Треугольника не тронуто: F5 — вернуться к нему.`;
             }
             RENDERER.renderFrame();
             if (!MODULE_STATE.isPlaying) PLAYER.start();

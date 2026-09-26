@@ -23,7 +23,7 @@ const Z = {
   descentAlign: "center",
   cycOp: "rotLI", cycHeat: true,
   gf2Op: "rotLI", gf2T: 1,
-  linSrc: "cur", thruMode: "concatR",
+  linSrc: "cur", structSrc: "cur", thruMode: "concatR",   // v0.042: structSrc — лента «🧪 Структуры»
   fixKind: "common", foldSrc: "cur", foldFirst: 1, foldStep: 1, bwtIdx: 0,   // v0.006
   foldAlign: "center",   // v0.008: выравнивание живого ⊿
   theme: "",             // v0.009: "" — как в системе, "light" / "dark" — выбрано кнопкой
@@ -653,6 +653,92 @@ function runLin(){
     `Зерно: <span class="mono">${r.seed ? bitsPlain(cut(r.seed)) : "—"}</span>\n` +
     `Дальше по правилу: <span class="mono">${bitsPlain(r.next)}</span>\n` +
     `${verdict}.` + (r.ok ? "" : "\n⚠ Правило не воспроизвело ленту — так быть не должно, сообщи.");
+}
+
+/* v0.040, запрос пользователя: «при смене выделения строки вживую бы обновлять сразу результаты». Окно считает само
+   при каждой отрисовке (смена текущей строки, правка, новые строки) — если оно не свёрнуто; свёрнутое не считает. */
+function renderLinLive(){
+  const w = $("w-lin");
+  if (!w || w.classList.contains("collapsed") || w.style.display === "none") return;
+  runLin();
+}
+
+/* ─── 🔎 Адрес строки (v0.041) ────────────────────────────────────────────────────────────────
+   Живой пересчёт — коротко (глубина 4, 250 мс), чтобы щелчки по строкам не тормозили; «Искать глубже» —
+   глубина 6 и до 4 с. Результат запоминается по строке: пока строка та же, глубокий ответ не затирается. */
+let addrLast = null;
+function addrShort(x){ return x.length > 48 ? x.slice(0, 48) + "…" : x; }
+function addrArg(nd){
+  switch (nd.op) {
+    case "lit": return "«" + addrShort(nd.arg) + "»";
+    case "tm": return "от " + nd.arg;
+    case "rep": return "период " + nd.arg;
+    case "pas": return nd.arg + " шаг.";
+    case "rot": return "на " + nd.arg;
+  }
+  return "";
+}
+function addrExpr(nd){
+  const a = addrArg(nd), nm = ZZ_ADDR_NAMES[nd.op];
+  return nd.kid ? nm + (a ? " [" + a + "]" : "") + " ( " + addrExpr(nd.kid) + " )" : nm + (a ? " " + a : "");
+}
+function runAddr(deep){
+  const s = cur();
+  if (!deep && addrLast && addrLast.s === s) { $("addrOut").innerHTML = addrLast.html; return; }
+  const r = zzAddress(s, deep ? 6 : 4, deep ? 4000 : 250);
+  const b = r.best, N = r.N;
+  const chain = []; for (let nd = b; nd; nd = nd.kid) chain.push(nd);
+  const steps = chain.slice().reverse().map((nd, i) => {
+    const own = nd.cost - (nd.kid ? nd.kid.cost : 0);
+    return `${i + 1}. ${ZZ_ADDR_NAMES[nd.op]}${addrArg(nd) ? " " + addrArg(nd) : ""} → <span class="mono">${bitsPlain(addrShort(zzAddrBuild(nd)))}</span> · ${own} бит`;
+  }).join("\n");
+  const gain = N - b.cost;
+  const per = Object.values(r.perOp).sort((a, c) => a.cost - c.cost).map(nd => `${ZZ_ADDR_NAMES[nd.op]} ${nd.cost}`).join(" · ");
+  const html =
+    `Строка ${N} бит${r.full > N ? ` (взяты первые ${N} из ${r.full})` : ""}. Самый короткий найденный адрес: <b>${b.cost} бит</b> — ` +
+    (gain > 0 ? `короче строки на <b>${gain}</b>.` : gain === 0 ? "столько же, сколько строка." : `на ${-gain} длиннее строки: структуры, которую видит этот мир, нет — адрес «как есть» и плата за мир.`) +
+    `\nАдрес: ${esc(addrExpr(b))}\n` + steps +
+    `\nПо первой операции: ${per}.` +
+    `\n${r.cut ? "⏱ Время вышло — это лучшее из найденного, короче может быть. «🔎 Искать глубже» — дольше и глубже." : `Перебрано ${r.nodes} вариантов, глубина ${deep ? 6 : 4}${deep ? "" : " («🔎 Искать глубже» — до 6)"}.`}` +
+    (r.ok ? " Адрес собран обратно — совпало ✓" : "\n⚠ Адрес не собрался обратно в строку — так быть не должно, сообщи.");
+  addrLast = { s, html, deep: !!deep };
+  $("addrOut").innerHTML = html;
+}
+function renderAddrLive(){
+  const w = $("w-addr");
+  if (!w || w.classList.contains("collapsed") || w.style.display === "none") return;
+  runAddr(false);
+}
+
+/* ─── 🧪 Поиск структуры (v0.042) ─────────────────────────────────────────────────────────────
+   Живое окно: считает при каждой отрисовке, если не свёрнуто; результат запоминается по ленте и номеру строки. */
+let structLast = null;
+function structCmp(s, name, c){
+  // строка против кандидата бит в бит: совпавшие — тускло, несовпавшие — красным
+  let h = ""; const n = Math.min(s.length, 160);
+  for (let k = 0; k < n; k++) h += s[k] === c[k] ? '<span class="b0">' + c[k] + "</span>" : '<span class="dif">' + c[k] + "</span>";
+  return `<span class="mono">${h}${s.length > n ? "…" : ""}</span> — ${name}: совпало ${s.length - zzHamEq(s, c)} из ${s.length}`;
+}
+function renderStructLive(){
+  const w = $("w-struct");
+  if (!w || w.classList.contains("collapsed") || w.style.display === "none") return;
+  const all = Z.structSrc === "all", s = all ? Z.rows.join("") : cur();
+  const key = (all ? "A" : "C" + Z.cur + ":") + s;
+  if (structLast && structLast.key === key) { $("structOut").innerHTML = structLast.html; return; }
+  if (s.length < 2) { $("structOut").textContent = "Меньше двух бит — искать нечего."; return; }
+  const r = zzStructure(s, all ? { all: true, rows: Z.rows } : { rows: Z.rows, cur: Z.cur });
+  const best = r.methods[0], gain = r.raw - best.cost;
+  let html = `${all ? `Все строки подряд: ${Z.rows.length} стр., ` : `Строка ${Z.cur}: `}${r.N} бит. «Как есть» — ${r.raw} бит (N + 4 на номер метода).\n` +
+    (gain > 0 ? `<b>Структура есть:</b> лучший — «${best.name}», <b>${best.cost} бит</b>, короче на <b>${gain}</b>.`
+              : "Ни один метод не короче «как есть» — структуры, которую видят эти методы, нет.") +
+    '\n<table class="stbl">' + r.methods.map(m => `<tr class="${m === best && gain > 0 ? "best" : m.name === "как есть" ? "raw" : ""}"><td>${esc(m.name)}</td><td class="n">${m.cost}</td><td class="n">${r.raw - m.cost > 0 ? "−" + (r.raw - m.cost) : ""}</td><td>${esc(m.note)}</td></tr>`).join("") + "</table>";
+  if (!all) {
+    const N = s.length, i = Z.cur;
+    html += `\nНомер ${i} = <span class="mono">${zzBin(i)}</span> (${zzBin(i).length} бит) · длина ${N} = <span class="mono">${zzBin(N)}</span> (${zzBin(N).length} бит). Строка: <span class="mono">${bitsPlain(N > 160 ? s.slice(0, 160) + "…" : s)}</span>\n` +
+      zzFromNumCands(i, N).map(([name, c]) => structCmp(s, name, c)).join("\n");
+  }
+  structLast = { key, html };
+  $("structOut").innerHTML = html;
 }
 
 /* ─── 🧬 Лента: оси и ядро ───────────────────────────────────────────────────────────────── */
@@ -1342,7 +1428,7 @@ function defaultLayout(){
   // v0.010: стол стал правой колонкой; если он уже 900, окна идут одной колонкой, по важности.
   if (W0 < 900) {
     const w = Math.max(320, W0 - 2 * g);
-    const order = [["w-mirror", 430], ["w-fix", 520], ["w-fold", 380], ["w-descent", 330], ["w-bwt", 460], ["w-sig", 460], ["w-chk", 460], ["w-view", 460], ["w-lin", 240],
+    const order = [["w-mirror", 430], ["w-fix", 520], ["w-fold", 380], ["w-descent", 330], ["w-bwt", 460], ["w-sig", 460], ["w-chk", 460], ["w-view", 460], ["w-lin", 240], ["w-addr", 400], ["w-struct", 520],
                    ["w-gf2", 240], ["w-cycle", 330], ["w-tape", 260], ["w-orbit", 240], ["w-help", 300]];
     const out = {}; let y = g;
     for (const [id, h] of order) { out[id] = { x: g, y, w, h }; y += h + g; }
@@ -1368,6 +1454,8 @@ function defaultLayout(){
     "w-sig":     { x: g, y: 1680 + 6 * g, w: mw, h: 460 },   // v0.013
     "w-chk":     { x: mw + 2 * g, y: 1680 + 6 * g, w: cw, h: 460 },   // v0.014
     "w-view":    { x: g, y: 2140 + 7 * g, w: mw, h: 460 },   // v0.024
+    "w-addr":    { x: mw + 2 * g, y: 2140 + 7 * g, w: cw, h: 460 },
+    "w-struct":  { x: g, y: 2600 + 8 * g, w: mw, h: 520 },   // v0.042   // v0.041
   };
 }
 function applyWin(el){
@@ -1547,6 +1635,10 @@ function setupWin(el){
     el.classList.toggle("collapsed", w.collapsed);
     if (!w.collapsed) el.style.height = w.h + "px";
     packWins();   // v0.015: свернул — нижние поднимаются
+    if (!w.collapsed && el.id === "w-view") renderView();   // v0.039: свёрнутый «Вид» не рисуется — развернул, рисуем сразу
+    if (!w.collapsed && el.id === "w-lin") renderLinLive();   // v0.040: и «Лин. сложность» так же
+    if (!w.collapsed && el.id === "w-addr") renderAddrLive();
+    if (!w.collapsed && el.id === "w-struct") renderStructLive();   // v0.042   // v0.041
     save();
   };
   // v0.016, запрос пользователя «двойной щелчок по заголовку»: свернуть / развернуть, как «–».
@@ -1683,7 +1775,7 @@ function applyView(){
    а ошибка с именем окна показывается внизу — её текст и нужен, чтобы починить. */
 function renderAll(){
   const parts = [["вид страницы", applyView], ["поле строк", renderRows], ["крест", renderCross], ["указатели", renderPointers],
-    ["спуск", renderDescent], ["поправка", renderFix], ["сложить", renderFoldLive], ["проверка", renderCheck], ["вид 🧊", renderView]];
+    ["спуск", renderDescent], ["поправка", renderFix], ["сложить", renderFoldLive], ["проверка", renderCheck], ["вид 🧊", renderView], ["лин. сложность", renderLinLive], ["адрес 🔎", renderAddrLive], ["структура 🧪", renderStructLive]];
   if (!renderAll.tplDone) parts.splice(2, 0, ["шаблоны", () => { renderTpl(); renderAll.tplDone = true; }]);
   for (const [name, f] of parts) {
     try { f(); }
@@ -2180,7 +2272,7 @@ function init(){
     if (n && n.trim()) { t.name = n.trim().slice(0, 60); renderTpl(); save(); }
   };
   $("bTplRow").onclick = () => { const rows = [cur()]; Z.tpl.push({ name: tplName(rows), rows }); renderTpl(); save(); say(`Строка ${Z.cur} (${cur().length} бит) сохранена шаблоном. Щелчок по нему — вставить под текущей.`); };
-  $("bTplAll").onclick = () => { const rows = Z.rows.slice(); Z.tpl.push({ name: tplName(rows), rows }); Z.tplRef = Z.tpl.length - 1; renderTpl(); renderRows(); save();   // v0.037: сохранённый столбик — новый эталон say(`Столбик (${rows.length} стр.) сохранён шаблоном.`); };
+  $("bTplAll").onclick = () => { const rows = Z.rows.slice(); Z.tpl.push({ name: tplName(rows), rows }); Z.tplRef = Z.tpl.length - 1; renderTpl(); renderRows(); save(); say(`Столбик (${rows.length} стр.) сохранён шаблоном.`); };   // v0.037: сохранённый столбик — новый эталон; v0.038: комментарий съедал конец строки — страница не запускалась
   // Разделитель поля и окон: ширина поля в пикселях, двойной щелчок — по умолчанию.
   const applyRowsW = () => { if (Z.rowsW > 0) $("main").style.setProperty("--rowsW", Z.rowsW + "px"); else $("main").style.removeProperty("--rowsW"); };
   applyRowsW();
@@ -2322,8 +2414,11 @@ function init(){
     replaceCur(gf2Last.x, "⤓ Текущая строка заменена ближайшим решением (↩ Ctrl+Z вернёт).");
   };
   // Лин. сложность, лента
-  $("linSrc").onchange = (e) => { Z.linSrc = e.target.value; save(); };
+  $("linSrc").onchange = (e) => { Z.linSrc = e.target.value; save(); renderLinLive(); };   // v0.040: сразу пересчитать
   $("bLin").onclick = runLin;
+  $("structSrc").value = Z.structSrc || "cur";   // v0.042
+  $("structSrc").onchange = (e) => { Z.structSrc = e.target.value; save(); renderStructLive(); };
+  $("bAddr").onclick = () => { $("addrOut").textContent = "🔎 Ищу глубже…"; setTimeout(() => runAddr(true), 20); };   // v0.041
   $("thruMode").onchange = (e) => { Z.thruMode = e.target.value; save(); };
   $("bThru").onclick = runThru;
   $("bDecim").onclick = runDecim;
