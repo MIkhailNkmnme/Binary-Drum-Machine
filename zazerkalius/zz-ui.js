@@ -1413,8 +1413,7 @@ function renderCone(){
   const i = Z.cur, s = cur(), k = nk[i], key = s.length + ":" + k.canon, mates = (groups.get(key) || []).filter(j => j !== i);
   const multi = [...groups.values()].filter(v => v.length > 1);
   $("coneOut").innerHTML =
-    // v0.052: строка «под мышью» есть всегда — иначе текст то появлялся, то пропадал, и холст над ним прыгал
-    (coneHover >= 0 && coneHover < Z.rows.length ? `Под мышью — строка ${coneHover + 1} (${Z.rows[coneHover].length} бит).\n` : "Наведи на кольцо — подсветится его строка в поле.\n") +
+    // v0.148: строки «под мышью» / «наведи на кольцо» больше нет — видимых подсказок не делаем (слово пользователя)
     (mirMap.has(i) ? (() => { const MI = mirMap.get(i); return MI.odd ? `Через центр 180° (кольцо ${s.length} бит — нечётное): напротив каждого бита граница, то есть пара бит. Совпал с обоими <b>${MI.both}</b> (зелёные), с одним <b>${MI.one}</b> (золотые), ни с одним <b>${MI.none}</b> (красные).` +
       (() => { if (!Z.rows[i + 1]) return "\n"; let o = 0, z = 0, b = 0, same = 0; const n = s.length, rot = coneRotOf(i), step = 2 * Math.PI / n;
         for (let j = 0; j < n; j++) { const h = coneOuterHit(i, -Math.PI / 2 + (j + MI.k + 1 - rot) * step); if (!h) continue; if (h.boundary) b++; else { if (h.bit === "1") o++; else z++; if (h.bit === s[j]) same++; } }
@@ -1432,7 +1431,7 @@ function renderCone(){
     (mates.length ? `То же кольцо, что у строк: ${mates.slice(0, 20).map(j => j + 1).join(", ")}${mates.length > 20 ? "…" : ""}.\n` : "") +
     `Разных колец <b>${groups.size}</b> на ${Z.rows.length} строк` + (multi.length ? `; совпадающих групп ${multi.length}: ` + multi.slice(0, 8).map(v => v.slice(0, 6).map(j => j + 1).join("=") + (v.length > 6 ? "…" : "")).join(" · ") : "") +
     (Z.rows.length > CONE_MAX ? `.\nНарисованы первые ${CONE_MAX} колец из ${Z.rows.length}.` : ".") +
-    (coneZoom !== 1 ? ` Масштаб ×${coneZoom.toFixed(coneZoom < 10 ? 1 : 0)} (двойной щелчок мимо колец — как было).` : "");
+    (coneZoom !== 1 ? ` Масштаб ×${coneZoom.toFixed(coneZoom < 10 ? 1 : 0)}.` : "");
   // v0.092: таблица строк у конуса убрана — замки у номеров строк в поле
 }
 /* v0.088, «справа сделай таблицу с номерами строк — замков, строк, как в поле строк; теперь его свернём, а это — на первое
@@ -3694,8 +3693,7 @@ function layInit(){
       const r = toPx(z), n = litEls().filter(el => (IT[el.dataset.lk] || {}).z === z.id).length;
       return `<div class="lz${i === sel ? " sel" : ""}${z === hot ? " hot" : ""}" data-i="${i}" style="left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;--zc:${z.c}">` +
         `<span class="lzn">${esc(z.name)}${n ? " · 📎" + n : ""}</span><span class="lzs">${Math.round(r.w)} × ${Math.round(r.h)}</span>${HANDLES}</div>`;
-    }).join("") +
-      `<div id="layHint">▦ Кнопку — тяни; брошенная на поле прилипает к нему (📎) и ездит с ним · по пустому — новое поле · тяни поле — двигать вместе с кнопками · за край или угол — размер · двойной щелчок — имя · правый — цвет · Del — удалить поле · Esc — готово</div>`;
+    }).join("");
     drawZones();
   }
   function newZone(r){

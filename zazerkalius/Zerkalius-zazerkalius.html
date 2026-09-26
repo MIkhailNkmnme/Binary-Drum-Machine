@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.147. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.148. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.147</title>
+<title>Zazerkalius — v0.148</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -520,7 +520,6 @@ body.lay #layLayer{display:block}
 #layLayer .lzh-e{left:100%;top:50%;cursor:ew-resize} #layLayer .lzh-w{left:0;top:50%;cursor:ew-resize}
 #layLayer .lzh-ne{left:100%;top:0;cursor:nesw-resize} #layLayer .lzh-sw{left:0;top:100%;cursor:nesw-resize}
 #layLayer .lzh-nw{left:0;top:0;cursor:nwse-resize} #layLayer .lzh-se{left:100%;top:100%;cursor:nwse-resize}
-#layHint{position:absolute;left:8px;right:8px;bottom:6px;font-size:11px;color:var(--txt);background:var(--panel);border:1px solid var(--line);padding:3px 8px;border-radius:4px;pointer-events:none}
 /* v0.144, «кнопки слишком высокие, сделай компактнее»; v0.146, «все кнопки стандартизируй»: на странице конуса каждая кнопка,
    галка, список и ползунок — одинаковая плашка высотой 24 px; галка — кнопка-переключатель (включена — голубая рамка и фон) */
 body.solo #w-cone .wbody > .tools{padding:4px 8px;gap:4px 6px}
@@ -561,7 +560,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.147</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.148</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
@@ -651,9 +650,10 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
     <!-- v0.026: шапка поля и ввод — липкие, когда колонка прокручивается -->
     <div id="fieldHead">
     <div id="fieldBar">
-      <b>Строки</b><span id="fieldInfo" class="dim"></span>
+      <!-- v0.148, «текстовые подсказки на странице не делаем, если не попрошу — из-за текста двигаются панели»: «№ — выделить · Del ·
+           Ctrl+C/V · двойной щелчок — править» — теперь только всплывающей подсказкой у слова «Строки» -->
+      <b title="Щелчок по НОМЕРУ — выделить строку (Ctrl — добавить, Shift — диапазон), Ctrl+A — все. Мышью по битам — выделить символы. Del — удалить выделенное (строки или символы). Ctrl+C / Ctrl+V — копировать и вставить. Двойной щелчок — править строку на месте">Строки</b><span id="fieldInfo" class="dim"></span>
       <span class="sp"></span>
-      <span class="dim" title="Щелчок по НОМЕРУ — выделить строку (Ctrl — добавить, Shift — диапазон), Ctrl+A — все. Мышью по битам — выделить символы. Del — удалить выделенное (строки или символы). Ctrl+C / Ctrl+V — копировать и вставить. Двойной щелчок — править строку на месте">№ — выделить · Del · Ctrl+C/V · двойной щелчок — править</span>
       <!-- v0.036: у номеров — неподвижные·меняющиеся и 0·1; красным — неподвижные биты прямо в строках -->
       <button id="bShowFM" title="У номера строки — сколько в ней НЕПОДВИЖНЫХ бит (разворот ⇄ их не трогает, красным) и МЕНЯЮЩИХСЯ (серым): 2·6">⇄ н·м</button>
       <button id="bTri90" title="◸ 90°: межсимвольный интервал подбирается сам так, чтобы треугольник в поле был прямоугольным при вершине — стороны под 45°: каждая строка сдвигается на полсимвола ровно на высоту строки. Считается от шрифта и размера; ещё раз — как было. В наложении полей не действует">◸ 90°</button>
@@ -1239,8 +1239,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 <div id="msg"></div>
 <div id="zenHint">🧘 дзен · Esc — выйти</div>
 
-<script src="zz-core.js?v=0147"></script>
-<script src="zz-ui.js?v=0147"></script>
+<script src="zz-core.js?v=0148"></script>
+<script src="zz-ui.js?v=0148"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
