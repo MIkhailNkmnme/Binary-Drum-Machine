@@ -120,17 +120,31 @@ function undoState(){
            laneCount: Z.laneCount, axisPos: Array.isArray(Z.axisPos) ? Z.axisPos.slice() : [],   // v0.022: и поля, и оси
            lanesHid: hidCopy() };   // v0.112: и строки за границей — иначе ↩ задвоил бы спрятанные
 }
-function undoPush(u){ undoStack.push(u); if (undoStack.length > 200) undoStack.shift(); }
-function undo(){
-  if (rowsLocked()) return;   // v0.061
-  const u = undoStack.pop();
-  if (!u) { say("↩ Отменять нечего."); return; }
+function undoPush(u){ undoStack.push(u); if (undoStack.length > 200) undoStack.shift(); redoStack.length = 0; }   // v0.158: новая правка — повторять больше нечего
+/* v0.158, «и повтор — слева от всех кнопок»: ↪ Повторить — то, что отменил ↩. Отмена кладёт состояние до себя в redoStack,
+   повтор — обратно в undoStack; любая новая правка (undoPush) повторы стирает. */
+const redoStack = [];
+function undoApply(u){
   if (u.laneCount) { Z.laneCount = u.laneCount; Z.axisPos = u.axisPos; const lc = document.getElementById("laneCount"); if (lc) lc.value = String(Z.laneCount); }
   if (u.lanes) { Z.lanes = u.lanes; Z.lane = Math.max(0, Math.min(Z.laneCount - 1, u.lane | 0)); Z.rows = Z.lanes[Z.lane]; }
   else Z.rows = u.rows;
   if (u.lanesHid) Z.lanesHid = u.lanesHid;   // v0.112
   Z.cur = Math.max(0, Math.min(Z.rows.length - 1, u.cur));
-  renderAll(); save(); say("↩ Отменено.");
+  renderAll(); save();
+}
+function undo(){
+  if (rowsLocked()) return;   // v0.061
+  const u = undoStack.pop();
+  if (!u) { say("↩ Отменять нечего."); return; }
+  redoStack.push(undoState()); if (redoStack.length > 200) redoStack.shift();
+  undoApply(u); say("↩ Отменено. ↪ — повторить.");
+}
+function redo(){
+  if (rowsLocked()) return;
+  const u = redoStack.pop();
+  if (!u) { say("↪ Повторять нечего."); return; }
+  undoStack.push(undoState()); if (undoStack.length > 200) undoStack.shift();
+  undoApply(u); say("↪ Повторено.");
 }
 /* Сделать рабочим поле k (и строку row, если задана). */
 function switchLane(k, row, quiet){
@@ -2265,7 +2279,7 @@ function setupCone(){
   coneLogRender();
   {   // v0.140: панель текста и лога — справа, от низа кнопок до низа окна
     const tl = document.querySelector("#w-cone .wbody > .tools"), cb = $("coneBot");
-    const place = () => { if (tl && cb) cb.style.top = (tl.offsetTop + tl.offsetHeight + 4) + "px"; };
+    const place = () => { if (tl && cb && cb.parentElement === tl.parentElement) cb.style.top = (tl.offsetTop + tl.offsetHeight + 4) + "px"; };
     if (tl && cb && window.ResizeObserver) new ResizeObserver(place).observe(tl);
     place();
   }
@@ -3628,6 +3642,34 @@ function popIn(id){
 window.addEventListener("beforeunload", () => { for (const w of popups.values()) { try { w.close(); } catch (err) {} } });
 /* v0.141: страница одного окна (?solo=…) — остальные окна скрыты через style.display, поэтому winOpen их не считает и
    они ничего не пересчитывают; своё окно — развёрнуто, не пристыковано, во весь стол (стили body.solo). */
+/* v0.158, «это всё (текст конуса и лог лазера) в отдельное окно с полным закрытием, плавающим везде, кнопку в верхнее меню»:
+   #coneBot переезжает в #coneTxtWin — окно position:fixed поверх всего, тянется за шапку (не за край экрана), размер — за угол.
+   ✕ закрывает совсем, «📝 Текст» в шапке открывает и закрывает. Z.ctw = { open, x, y, w, h } — в пикселях окна браузера. */
+function ctwInit(){
+  const W = $("coneTxtWin"), cb = $("coneBot"); if (!W || !cb) return;
+  W.querySelector(".ctwBody").appendChild(cb); cb.style.top = "";
+  if (!Z.ctw || typeof Z.ctw !== "object") Z.ctw = { open: true, w: 420, h: 260, x: innerWidth - 440, y: innerHeight - 290 };
+  const clamp = () => {
+    const c = Z.ctw; c.w = Math.max(220, Math.min(c.w | 0 || 420, innerWidth)); c.h = Math.max(110, Math.min(c.h | 0 || 260, innerHeight));
+    c.x = Math.max(0, Math.min(c.x | 0, innerWidth - 80)); c.y = Math.max(0, Math.min(c.y | 0, innerHeight - 28));
+    Object.assign(W.style, { left: c.x + "px", top: c.y + "px", width: c.w + "px", height: c.h + "px" });
+  };
+  const show = (on) => { Z.ctw.open = !!on; W.hidden = !on; $("bConeTxt").classList.toggle("on", !!on); if (on) clamp(); };
+  show(Z.ctw.open !== false);
+  $("bConeTxt").onclick = () => { show(W.hidden); save(); };
+  $("bCtwClose").onclick = () => { show(false); save(); };
+  const head = W.querySelector(".ctwHead");
+  head.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0 || e.target.closest("button")) return;
+    e.preventDefault(); head.setPointerCapture(e.pointerId);
+    const x0 = e.clientX - Z.ctw.x, y0 = e.clientY - Z.ctw.y;
+    const mv = (ev) => { Z.ctw.x = ev.clientX - x0; Z.ctw.y = ev.clientY - y0; clamp(); };
+    const up = () => { head.removeEventListener("pointermove", mv); head.removeEventListener("pointerup", up); head.removeEventListener("pointercancel", up); save(); };
+    head.addEventListener("pointermove", mv); head.addEventListener("pointerup", up); head.addEventListener("pointercancel", up);
+  });
+  if (window.ResizeObserver) { let t = 0; new ResizeObserver(() => { if (W.hidden) return; const w = W.offsetWidth, h = W.offsetHeight; if (w !== Z.ctw.w || h !== Z.ctw.h) { Z.ctw.w = w; Z.ctw.h = h; clearTimeout(t); t = setTimeout(save, 300); } }).observe(W); }
+  addEventListener("resize", () => { if (!W.hidden) clamp(); });
+}
 function soloApply(){
   const el = $(ZZ_SOLO); if (!el) return;
   document.body.classList.add("solo");
@@ -3639,7 +3681,7 @@ function soloApply(){
   const w = Z.win[ZZ_SOLO]; if (w) { w.collapsed = false; w.dock = false; delete w.max0; }
   /* v0.142, по снимку текста конуса справа («Наведи на кольцо…», «Кольцо 4 заперто…») — «это всё вообще под строки»:
      на странице конуса текст и лог лазера — в поле строк, под строками; конусу — весь стол. */
-  const cb = $("coneBot"); if (ZZ_SOLO === "w-cone" && cb) $("field").insertBefore(cb, $("fieldDock"));
+  // v0.158: текст и лог — больше не под строками, а в своём плавающем окне (ctwInit)
   const t = el.dataset.title || ZZ_SOLO, h = document.querySelector("#top h1");
   if (h) h.textContent = t;
   document.title = t.replace(/^[^\p{L}\d]+/u, "Zerkalius ") + " — " + ((document.title.match(/v[\d.]+/) || [""])[0]);
@@ -4004,6 +4046,7 @@ function init(){
   else layoutAll(false);
   dockRestore();   // v0.025: окна, пристыкованные под полем строк
   if (ZZ_SOLO) soloApply();   // v0.141
+  ctwInit();   // v0.158
   // v0.026: высоту поля строк, растянутую за угол, запоминаем (только когда под ним окна).
   if (window.ResizeObserver) {
     let th = 0;
@@ -4966,6 +5009,7 @@ function init(){
     say(open ? "▭ Все окна свёрнуты — развернуть: двойной щелчок по шапке, ▭ ещё раз — все." : "▭ Все окна развёрнуты.");
   };
   $("bUndo").onclick = undo;
+  $("bRedo").onclick = redo;   // v0.158
   // v0.015: ⤒ окна к верху — вкл/выкл
   const packLabel = () => $("bPack").classList.toggle("on", !!Z.pack);
   packLabel();
@@ -4985,6 +5029,7 @@ function init(){
        в окнах клавиша прежде пропускалась); из поля ввода Esc сперва уводит фокус. */
     if (e.key === "Escape" && t && t.closest && t.closest("input, select, textarea")) { if (t.matches("input[type=text], input[type=number], input:not([type]), textarea")) t.blur(); }
     else if (t && t.closest && t.closest("input, select, textarea")) return;
+    if ((e.ctrlKey || e.metaKey) && (e.key === "y" || e.key === "н" || (e.shiftKey && (e.key === "Z" || e.key === "Я" || e.code === "KeyZ")))) { e.preventDefault(); redo(); return; }   // v0.158: ↪
     if ((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "я")) { e.preventDefault(); undo(); return; }
     if ((e.key === "Delete" || e.key === "Backspace") && axSel >= 0 && Z.laneCount > 1 && Z.laneView === "over") { e.preventDefault(); deleteLane(axSel); return; }   // v0.022
     if (e.key === "Escape" && axSel >= 0) { axSel = -1; renderRows(); say("Выделение оси снято."); return; }
