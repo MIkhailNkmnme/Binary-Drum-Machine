@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.145. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.146. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.145</title>
+<title>Zazerkalius — v0.146</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -504,7 +504,7 @@ body.solo #field > #coneBot #coneOut{flex:0 1 auto;min-height:0;overflow:auto;fo
   body.solo #w-cone #coneCv{border-radius:0}
 }
 /* v0.145: ▦ раскладка — кнопки только на странице конуса; слой с сеткой и полями поверх стола */
-body:not(.solo) #bLay,body:not(.solo) #bLayAdd,body:not(.lay) #bLayAdd{display:none}
+body:not(.solo) #bLay,body:not(.solo) #bLayAdd,body:not(.lay) #bLayAdd,body:not(.lay) #bLayReset{display:none}
 #layLayer{display:none;position:absolute;inset:0;z-index:100000;cursor:crosshair;touch-action:none;user-select:none;-webkit-user-select:none;
   background-color:color-mix(in srgb, var(--bg) 60%, transparent);
   background-image:linear-gradient(color-mix(in srgb, var(--line) 80%, transparent) 1px, transparent 1px),linear-gradient(90deg, color-mix(in srgb, var(--line) 80%, transparent) 1px, transparent 1px);
@@ -521,14 +521,35 @@ body.lay #layLayer{display:block}
 #layLayer .lzh-ne{left:100%;top:0;cursor:nesw-resize} #layLayer .lzh-sw{left:0;top:100%;cursor:nesw-resize}
 #layLayer .lzh-nw{left:0;top:0;cursor:nwse-resize} #layLayer .lzh-se{left:100%;top:100%;cursor:nwse-resize}
 #layHint{position:absolute;left:8px;right:8px;bottom:6px;font-size:11px;color:var(--txt);background:var(--panel);border:1px solid var(--line);padding:3px 8px;border-radius:4px;pointer-events:none}
-/* v0.144, «кнопки слишком высокие, сделай компактнее»: на странице конуса кнопки, списки и группы — ниже и плотнее */
-body.solo #w-cone .wbody > .tools{padding:3px 8px;gap:3px 6px}
-body.solo #w-cone .tools button,body.solo #w-cone .tools select{padding:0 5px;font-size:12px;line-height:1.35;min-height:0}
-body.solo #w-cone .tools label{font-size:12px;line-height:1.35}
-body.solo #w-cone .tools input[type=checkbox]{width:12px;height:12px;margin:0 2px 0 0;vertical-align:-2px}
-body.solo #w-cone .tools input[type=range]{height:12px}
-body.solo #w-cone .cgrp{padding:1px 5px 1px 3px;gap:2px 4px}
+/* v0.144, «кнопки слишком высокие, сделай компактнее»; v0.146, «все кнопки стандартизируй»: на странице конуса каждая кнопка,
+   галка, список и ползунок — одинаковая плашка высотой 24 px; галка — кнопка-переключатель (включена — голубая рамка и фон) */
+body.solo #w-cone .wbody > .tools{padding:4px 8px;gap:4px 6px}
+body.solo #w-cone .cgrp{padding:2px 5px 2px 3px;gap:4px}
+body.solo :is(#w-cone .tools, #layItems) :is(button, select){height:24px;min-height:0;padding:0 8px;font-size:12px;line-height:22px;border-radius:5px}
+body.solo :is(#w-cone .tools, #layItems) label{height:24px;display:inline-flex;align-items:center;gap:5px;padding:0 8px;font-size:12px;line-height:1;color:var(--txt);background:var(--panel2);border:1px solid var(--line);border-radius:5px;cursor:pointer;white-space:nowrap}
+body.solo :is(#w-cone .tools, #layItems) label:hover{border-color:var(--acc)}
+body.solo :is(#w-cone .tools, #layItems) label:has(input[type=checkbox]:checked){border-color:var(--acc2);background:color-mix(in srgb, var(--acc2) 20%, var(--panel2))}
+body.solo :is(#w-cone .tools, #layItems) input[type=checkbox]{width:13px;height:13px;margin:0;accent-color:var(--acc2)}
+body.solo :is(#w-cone .tools, #layItems) input[type=range]{height:12px;margin:0}
+body.solo :is(#w-cone .tools, #layItems) .cstep{height:24px;gap:4px !important}
+body.solo :is(#w-cone .tools, #layItems) .cstep label{padding:0 6px}
+body.solo :is(#w-cone .tools, #layItems) .glab{height:24px;display:inline-flex;align-items:center;padding:0 4px;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--acc)}
+body.solo :is(#w-cone .tools, #layItems) .glab2{height:24px;display:inline-flex;align-items:center;font-size:12px;color:var(--dim)}
 body.solo #w-cone #coneCycle{height:1.25em;line-height:1.25em;font-size:11px}
+/* v0.146: кнопки на столе сами по себе (после первой раскладки) — полоса кнопок пуста и спрятана, конус на весь стол;
+   поля — цветными панелями под кнопками; в раскладке кнопки поверх сетки и тянутся */
+#layZones,#layItems{position:absolute;inset:0;pointer-events:none}
+body.solo #layZones{z-index:99990} body.solo #layItems{z-index:99991}
+body.lay #layZones{display:none}
+body.lay #layItems{z-index:100001}
+body.layfree #w-cone .wbody > .tools{display:none}
+#layZones .lzp{position:absolute;box-sizing:border-box;border:1px solid color-mix(in srgb, var(--zc) 55%, var(--line));border-top:3px solid var(--zc);border-radius:0;background:color-mix(in srgb, var(--zc) 10%, var(--panel))}
+#layZones .lzn{position:absolute;left:6px;top:2px;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--zc);white-space:nowrap}
+#layItems .lit{position:absolute;pointer-events:auto;margin:0 !important;white-space:nowrap}
+#layItems #coneCycle.lit{width:360px;height:18px;line-height:18px;font-size:11px;overflow:hidden;text-overflow:ellipsis;color:var(--dim)}
+body.lay #layItems .lit{cursor:grab;outline:1px dashed color-mix(in srgb, var(--txt) 45%, transparent);outline-offset:1px}
+body.lay #layItems .lit *{pointer-events:none}
+body.lay #layItems .lit.lsel{outline:2px solid var(--gold)}
 /* v0.143: тёмная палитра страницы конуса — светлее и контрастнее: фон не чёрный, подписи, рамки и нули видны */
 @media (prefers-color-scheme: dark){
   html.solo:not([data-theme="light"]){--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --line:#414b62; --txt:#eef1f6; --dim:#b0b9cc; --b0:#8f99ae}
@@ -538,7 +559,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.145</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.146</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
@@ -546,6 +567,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <!-- v0.145: ▦ раскладка — поля-прямоугольники руками (только на странице «◯ Конус») -->
   <button id="bLay" title="▦ Раскладка: поверх конуса — сетка, на ней поля-прямоугольники. Тянешь по пустому — новое поле, тянешь поле — двигается, за край или угол — размер, двойной щелчок — имя, правый — цвет, Del — удалить. Esc или ещё раз — готово. Поля запоминаются и едут в «💾 Всё»">▦ Раскладка</button>
   <button id="bLayAdd" title="＋ Новое поле посреди стола (или просто тяни мышью по пустому месту)">＋ Поле</button>
+  <button id="bLayReset" title="↺ Вернуть все кнопки на полосу кнопок, как было (поля останутся)">↺ Кнопки на место</button>
   <!-- v0.115: «надо сохр настройки и все биты в файл, чтобы на другом компе» -->
   <button id="bSaveAll" title="💾 Сохранить ВСЁ в файл .json: все поля строк, строки за чертой, строку для заполнения, свои шаблоны, окна, конус и все настройки. Файл переносится на другой компьютер и открывается там кнопкой «📂 Всё» или перетаскиванием на страницу">💾 Всё</button>
   <button id="bLoadAll" title="📂 Открыть файл .json, сохранённый кнопкой «💾 Всё», — страница целиком станет как в нём (спросит перед заменой). Можно и просто перетащить файл на страницу">📂 Всё</button>
@@ -1215,8 +1237,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 <div id="msg"></div>
 <div id="zenHint">🧘 дзен · Esc — выйти</div>
 
-<script src="zz-core.js?v=0145"></script>
-<script src="zz-ui.js?v=0145"></script>
+<script src="zz-core.js?v=0146"></script>
+<script src="zz-ui.js?v=0146"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>

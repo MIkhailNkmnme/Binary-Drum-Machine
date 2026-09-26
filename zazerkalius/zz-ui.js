@@ -3604,44 +3604,122 @@ function soloApply(){
    сначала чисто поля, просто прямоугольные, чтобы мог создавать я руками». Пока только на странице «◯ Конус»: «▦ Раскладка»
    кладёт поверх стола сетку, на ней — поля-прямоугольники: тянешь по пустому — новое поле, тянешь поле — двигается, за край
    или угол — размер (шаг сетки 8 px), двойной щелчок — имя, правый — цвет, Del — удалить, Esc или «✓ Готово» — выйти.
-   Поля хранятся в Z.lay в процентах стола (на другом экране — те же доли) и едут в «💾 Всё». Кнопки в поля — следующий шаг. */
+   Поля хранятся в Z.lay в процентах стола (на другом экране — те же доли) и едут в «💾 Всё». v0.146: и кнопки — см. ниже. */
 function layInit(){
-  const desk = $("desk"), btn = $("bLay"), add = $("bLayAdd");
+  const desk = $("desk"), btn = $("bLay"), add = $("bLayAdd"), rst = $("bLayReset");
   if (!desk || !btn) return;
   if (!Z.lay || !Array.isArray(Z.lay.zones)) Z.lay = { zones: [] };
-  const Zs = () => Z.lay.zones;
+  if (!Z.lay.items || typeof Z.lay.items !== "object") Z.lay.items = {};
+  const Zs = () => Z.lay.zones, IT = Z.lay.items;
   const G = 8, MIN = 24, COLS = ["#b98cf0", "#38bdf8", "#4ade80", "#fb7c5b", "#fbbf24", "#f472b6", "#94a3b8"];
   const HANDLES = ["n", "s", "e", "w", "ne", "nw", "se", "sw"].map(d => `<i class="lzh lzh-${d}" data-d="${d}"></i>`).join("");
-  const layer = document.createElement("div");
-  layer.id = "layLayer";
-  desk.appendChild(layer);
-  let on = false, sel = -1, drag = null, lastDown = {};
+  const mk = (id) => { const d = document.createElement("div"); d.id = id; desk.appendChild(d); return d; };
+  const zonesBox = mk("layZones"), itemsBox = mk("layItems"), layer = mk("layLayer");
+  let on = false, sel = -1, drag = null, lastDown = {}, freed = false, selItem = null;
   const dim = () => ({ W: Math.max(1, desk.clientWidth), H: Math.max(1, desk.clientHeight) });
   const snap = (v) => Math.round(v / G) * G;
+  const pc = (v, T) => +(v / T * 100).toFixed(3);
   const toPx = (z) => { const { W, H } = dim(); return { x: z.x * W / 100, y: z.y * H / 100, w: z.w * W / 100, h: z.h * H / 100 }; };
-  const setPx = (z, r) => { const { W, H } = dim(); z.x = +(r.x / W * 100).toFixed(3); z.y = +(r.y / H * 100).toFixed(3); z.w = +(r.w / W * 100).toFixed(3); z.h = +(r.h / H * 100).toFixed(3); };
+  const setPx = (z, r) => { const { W, H } = dim(); z.x = pc(r.x, W); z.y = pc(r.y, H); z.w = pc(r.w, W); z.h = pc(r.h, H); };
   const clampR = (r) => { const { W, H } = dim(); r.w = Math.max(MIN, Math.min(r.w, W)); r.h = Math.max(MIN, Math.min(r.h, H)); r.x = Math.max(0, Math.min(r.x, W - r.w)); r.y = Math.max(0, Math.min(r.y, H - r.h)); return r; };
+
+  /* v0.146, «все кнопки стандартизируй и дай мне перемещать»: каждая кнопка, галка, список и ползунок конуса — отдельный
+     предмет. Первый вход в раскладку снимает их с полосы кнопок ровно там, где они стояли, и дальше они живут на столе сами
+     по себе (Z.lay.items: ключ → место в долях стола). Ключ — id элемента или id того, что у него внутри. */
+  const itemKey = (el) => el.id || (el.querySelector("[id]") ? "in:" + el.querySelector("[id]").id : "tx:" + el.textContent.trim().slice(0, 24));
+  const itemEls = () => {
+    const a = Array.from(document.querySelectorAll("#w-cone .tools > .cgrp > *"));
+    const cyc = $("coneCycle"); if (cyc && !a.includes(cyc)) a.push(cyc);
+    return a;
+  };
+  function placeItem(el){
+    const p = IT[el.dataset.lk]; if (!p) return;
+    const { W, H } = dim();
+    el.style.left = Math.round(p.x * W / 100) + "px"; el.style.top = Math.round(p.y * H / 100) + "px";
+  }
+  function free(capture){
+    if (freed) return;
+    const d = desk.getBoundingClientRect(), { W, H } = dim();
+    const els = itemEls();
+    let ny = 8;
+    els.forEach(el => {
+      const k = itemKey(el); el.dataset.lk = k;
+      if (!IT[k]) {
+        if (capture) { const r = el.getBoundingClientRect(); IT[k] = { x: pc(snap(r.left - d.left), W), y: pc(snap(r.top - d.top), H) }; }
+        else { IT[k] = { x: pc(8, W), y: pc(ny, H) }; ny += 32; }   // новый элемент, которого не было в сохранённой раскладке
+      }
+    });
+    els.forEach(el => { el.classList.add("lit"); itemsBox.appendChild(el); placeItem(el); });
+    document.body.classList.add("layfree");
+    freed = true;
+  }
+  function drawZones(){
+    zonesBox.innerHTML = Zs().map(z => {
+      const r = toPx(z);
+      return `<div class="lzp" style="left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;--zc:${z.c}"><span class="lzn">${esc(z.name)}</span></div>`;
+    }).join("");
+  }
   function draw(){
     layer.innerHTML = Zs().map((z, i) => {
       const r = toPx(z);
       return `<div class="lz${i === sel ? " sel" : ""}" data-i="${i}" style="left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;--zc:${z.c}">` +
         `<span class="lzn">${esc(z.name)}</span><span class="lzs">${Math.round(r.w)} × ${Math.round(r.h)}</span>${HANDLES}</div>`;
     }).join("") +
-      `<div id="layHint">▦ Тяни по пустому — новое поле · тяни поле — двигать · за край или угол — размер · двойной щелчок — имя · правый щелчок — цвет · Del — удалить · Esc — готово</div>`;
+      `<div id="layHint">▦ Кнопки — тяни куда угодно · по пустому — новое поле · тяни поле — двигать · за край или угол — размер · двойной щелчок — имя · правый щелчок — цвет · Del — удалить поле · Esc — готово</div>`;
+    drawZones();
   }
   function newZone(r){
     const k = Zs().length, z = { name: "Поле " + (k + 1), c: COLS[k % COLS.length], x: 0, y: 0, w: 0, h: 0 };
     setPx(z, r); Zs().push(z); sel = Zs().length - 1; return z;
   }
+  function rename(i){
+    const z = Zs()[i], v = prompt("Имя поля:", z.name);
+    if (v !== null && v.trim()) { z.name = v.trim().slice(0, 40); save(); }
+    draw();
+  }
   function setOn(v){
-    on = !!v; sel = on ? sel : -1;
+    on = !!v; if (!on) { sel = -1; if (selItem) selItem.classList.remove("lsel"); selItem = null; }
+    if (on) free(true);
     document.body.classList.toggle("lay", on);
     btn.textContent = on ? "✓ Готово" : "▦ Раскладка"; btn.classList.toggle("on", on);
-    if (on) { draw(); say("▦ Раскладка: тяни по пустому месту — новое поле. Esc или «✓ Готово» — выйти."); }
-    else save();
+    draw();
+    if (on) say("▦ Раскладка: кнопки тяни куда угодно; по пустому месту — новое поле. Esc или «✓ Готово» — выйти.");
+    save();
   }
   btn.onclick = () => setOn(!on);
   if (add) add.onclick = () => { const { W, H } = dim(); newZone(clampR({ x: snap(W / 2 - 80), y: snap(H / 2 - 48), w: 160, h: 96 })); draw(); save(); };
+  if (rst) rst.onclick = () => {
+    if (!confirm("Вернуть все кнопки на полосу кнопок, как было? Поля останутся.")) return;
+    Z.lay.items = {}; save(); location.reload();
+  };
+
+  // ── кнопки: в раскладке тянутся, а не нажимаются ──
+  itemsBox.addEventListener("pointerdown", (e) => {
+    if (!on || e.button !== 0) return;
+    const el = e.target.closest(".lit"); if (!el) return;
+    e.preventDefault(); e.stopPropagation();
+    if (selItem) selItem.classList.remove("lsel");
+    selItem = el; el.classList.add("lsel");
+    drag = { mode: "item", el, x0: e.clientX, y0: e.clientY, l0: el.offsetLeft, t0: el.offsetTop };
+    el.setPointerCapture(e.pointerId);   // захват — на саму кнопку: у контейнера pointer-events: none
+  }, true);
+  itemsBox.addEventListener("pointermove", (e) => {
+    if (!drag || drag.mode !== "item") return;
+    const { W, H } = dim(), el = drag.el;
+    const x = Math.max(0, Math.min(W - el.offsetWidth, snap(drag.l0 + e.clientX - drag.x0)));
+    const y = Math.max(0, Math.min(H - el.offsetHeight, snap(drag.t0 + e.clientY - drag.y0)));
+    el.style.left = x + "px"; el.style.top = y + "px";
+  });
+  const itemUp = () => {
+    if (!drag || drag.mode !== "item") return;
+    const { W, H } = dim(), el = drag.el;
+    IT[el.dataset.lk] = { x: pc(el.offsetLeft, W), y: pc(el.offsetTop, H) };
+    drag = null; save();
+  };
+  itemsBox.addEventListener("pointerup", itemUp); itemsBox.addEventListener("pointercancel", itemUp);
+  ["click", "mousedown", "input", "change"].forEach(t => itemsBox.addEventListener(t, (e) => { if (on) { e.preventDefault(); e.stopPropagation(); } }, true));
+
+  // ── поля ──
   layer.addEventListener("pointerdown", (e) => {
     if (e.button !== 0) return;
     e.preventDefault();
@@ -3655,15 +3733,14 @@ function layInit(){
       lastDown = { i: sel, t };
       drag = { mode: h ? h.dataset.d : "move", z: Zs()[sel], r0: toPx(Zs()[sel]), x0: px, y0: py };
     } else {
-      const x = snap(px), y = snap(py);
-      drag = { mode: "new", x0: x, y0: y, z: null };
+      drag = { mode: "new", x0: snap(px), y0: snap(py), z: null };
       sel = -1;
     }
     layer.setPointerCapture(e.pointerId);
     draw();
   });
   layer.addEventListener("pointermove", (e) => {
-    if (!drag) return;
+    if (!drag || drag.mode === "item") return;
     const d = desk.getBoundingClientRect(), px = e.clientX - d.left, py = e.clientY - d.top;
     if (drag.mode === "new") {
       const x1 = snap(px), y1 = snap(py);
@@ -3684,13 +3761,8 @@ function layInit(){
     }
     setPx(drag.z, clampR(r)); draw();
   });
-  const up = () => { if (!drag) return; drag = null; draw(); save(); };
+  const up = () => { if (!drag || drag.mode === "item") return; drag = null; draw(); save(); };
   layer.addEventListener("pointerup", up); layer.addEventListener("pointercancel", up);
-  function rename(i){
-    const z = Zs()[i], v = prompt("Имя поля:", z.name);
-    if (v !== null && v.trim()) { z.name = v.trim().slice(0, 40); save(); }
-    draw();
-  }
   layer.addEventListener("contextmenu", (e) => {
     e.preventDefault();
     const zEl = e.target.closest(".lz"); if (!zEl) return;
@@ -3698,14 +3770,16 @@ function layInit(){
   });
   document.addEventListener("keydown", (e) => {
     if (!on) return;
-    if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) && !e.target.closest(".lit")) return;
     if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); setOn(false); return; }
     if ((e.key === "Delete" || e.key === "Backspace") && sel >= 0) {
       e.preventDefault(); e.stopImmediatePropagation();
       const z = Zs().splice(sel, 1)[0]; sel = -1; draw(); save(); say(`▦ Поле «${z.name}» удалено.`);
     }
   }, true);
-  if (window.ResizeObserver) new ResizeObserver(() => { if (on) draw(); }).observe(desk);
+  if (Object.keys(IT).length) free(false);
+  drawZones();
+  if (window.ResizeObserver) new ResizeObserver(() => { if (on) draw(); else drawZones(); if (freed) itemEls().forEach(placeItem); }).observe(desk);
 }
 function layoutAll(reset){
   const def = defaultLayout();
