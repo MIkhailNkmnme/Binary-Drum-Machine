@@ -4759,7 +4759,7 @@ function init(){
   hideUi();
   $("bFieldHide").onclick = () => { Z.fieldHidden = !Z.fieldHidden; hideUi(); save(); requestAnimationFrame(() => { packWins(); renderAll(); renderPointers(); });
     say(Z.fieldHidden ? "▭ Поле строк свёрнуто — окна на всю ширину. Строки те же; вернуть — ещё раз «▭ поле строк»." : "▭ Поле строк снова на месте."); };
-  $("rowInput").addEventListener("keydown", (e) => {
+  if ($("rowInput")) $("rowInput").addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
     const v = e.target.value.replace(/[^01]/g, "");
@@ -4825,7 +4825,7 @@ function init(){
     clearTextSel(); renderAll(); save();
     say(`Ctrl+V: вставлено строк — ${rows.length}, под текущей. ↩ вернёт.`);
   });
-  $("rowInput").addEventListener("paste", (e) => {
+  if ($("rowInput")) $("rowInput").addEventListener("paste", (e) => {
     const t = (e.clipboardData || window.clipboardData).getData("text");
     if (!/\n/.test(t)) return;                 // одна строка — обычная вставка в поле
     e.preventDefault();

@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.169. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.170. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.169</title>
+<title>Zazerkalius — v0.170</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -582,7 +582,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.169</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.170</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -690,7 +690,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
       <select id="rowsAlign" title="Выравнивание строк в поле">
         <option value="center">◫ по центру</option><option value="left">◧ влево</option><option value="right">◨ вправо</option>
       </select>
-      <input type="text" id="rowInput" placeholder="впиши или вставь строку из 0 и 1 — Enter: под текущей, Shift+Enter: заменить текущую" title="Впиши строку из 0 и 1. Enter — добавить под текущей; Shift+Enter — заменить текущую. Вставка (Ctrl+V) текста из нескольких строк добавит их все">
+      <!-- v0.170, по снимку «впиши или вставь строку из 0 и 1» — «удали это поле»: поля ввода строки нет; строки — Ctrl+V прямо в поле строк, 📂 из файла, двойной щелчок по строке — править -->
       <button id="bLoad" title="📂 Загрузить текстовый файл со строками (.txt) — каждая строка файла становится строкой столбика, всё кроме 0 и 1 выбрасывается, пустые строки пропускаются. Столбик заменяется целиком (↩ вернёт). Файл можно и просто перетащить на страницу">📂</button>
       <button id="bSaveTxt" title="💾 Сохранить столбик в текстовый файл — строка на строку, тот же вид, что читает 📂">💾</button>
       <input type="file" id="fileIn" accept=".txt,.csv,.dat,text/plain" hidden>
