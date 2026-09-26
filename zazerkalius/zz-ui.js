@@ -2211,8 +2211,13 @@ function setupCone(){
   const spinGo = (dir) => (e) => {
     if (e.button !== 0) return;
     e.preventDefault();
-    Z.coneSpin = ((Z.coneSpin || 0) + dir * 15) % 360; renderCone();
-    spinT = setTimeout(() => { spinI = setInterval(() => { Z.coneSpin = ((Z.coneSpin || 0) + dir * 2) % 360; renderCone(); }, 30); }, 350);
+    /* v0.166, «крутить по длине 1 бита нижней строки или выделенной — нижней самой, если несколько»: шаг — один бит (360° / длина)
+       самой нижней из выделенных строк, ничего не выделено — нижней строки конуса. Держишь — дальше тем же шагом. */
+    const sel = [...rowSel].filter(i => i < Math.min(Z.rows.length, CONE_MAX)), k = sel.length ? Math.max(...sel) : Math.min(Z.rows.length, CONE_MAX) - 1;
+    const deg = 360 / Math.max(1, (Z.rows[k] || "").length || 1);
+    const go = () => { Z.coneSpin = ((Z.coneSpin || 0) + dir * deg) % 360; renderCone(); };
+    go(); say(`◯ Весь конус на бит строки ${k + 1} (${(Z.rows[k] || "").length} бит) — ${+deg.toFixed(2)}°.`);
+    spinT = setTimeout(() => { spinI = setInterval(go, 140); }, 350);
   };
   for (const [id, dir] of [["bConeSpinL", -1], ["bConeSpinR", 1]]) {
     const b = $(id);
