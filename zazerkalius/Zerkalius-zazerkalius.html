@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.183. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.184. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.183</title>
+<title>Zazerkalius — v0.184</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -463,6 +463,10 @@ body.zen #w-cone{position:fixed !important;inset:0 !important;left:0 !important;
 body.zen #w-cone .whead,body.zen #w-cone .wbody > .tools,body.zen #w-cone #coneBot,body.zen #w-cone .whint,body.zen .wgrip{display:none !important}
 body.zen #w-cone #coneCv{border-radius:0;cursor:grab}
 #zenHint{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:1001;font:13px system-ui,sans-serif;color:var(--dim);background:color-mix(in srgb, var(--panel) 70%, transparent);padding:4px 12px;border-radius:12px;pointer-events:none;transition:opacity 1.2s;opacity:0}
+/* v0.184: живой фон хаба (?bg=1) — только конус, на тёмном; ни кнопок, ни подсказок, ни сообщений */
+body.bgmode #cone3Pad,body.bgmode #bConeRec,body.bgmode #zenHint,body.bgmode #msg,body.bgmode #coneTxtWin,body.bgmode #zerkHubBtn{display:none !important}
+body.bgmode,body.bgmode #w-cone,body.bgmode #coneCv{background:#050505 !important}
+body.bgmode #coneCv{cursor:default}
 body.zen #zenHint{opacity:1} body.zen.zen-quiet #zenHint{opacity:0}
 /* v0.075, «убери выделения текста» (снимок: вся полоса кнопок «◯ Конуса» залита синим выделением — от щелчков и
    перетаскивания рядом). Кнопки, подписи, выборы, полосы инструментов, шапки окон и панелей, холсты — не выделяются;
@@ -611,7 +615,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.183</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.184</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>

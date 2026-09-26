@@ -10,7 +10,11 @@ const ZZ_SOLO = (() => {
   try { const s = new URLSearchParams(location.search).get("solo"); return s && /^[a-z0-9-]+$/.test(s) && document.getElementById("w-" + s) ? "w-" + s : ""; }
   catch (e) { return ""; }
 })();
-const ZZ_KEY = ZZ_SOLO ? "zazerkalius_solo_" + ZZ_SOLO.slice(2) : "zazerkalius_v1";
+/* v0.184, «на обои вместо — в index поставим?» (по снимку конуса-октаэдра в дзене): ?solo=cone&bg=1 — живой фон хаба. Только конус
+   (3D, зеркало вниз, свет, медленно крутится целиком), без кнопок и подсказок; строки — Серпинский на 64; память не читается и
+   не пишется — фон не трогает настройки и строки страницы «◯ Конус». */
+const ZZ_BG = (() => { try { return !!ZZ_SOLO && new URLSearchParams(location.search).get("bg") === "1"; } catch (e) { return false; } })();
+const ZZ_KEY = ZZ_BG ? "zazerkalius_bg" : ZZ_SOLO ? "zazerkalius_solo_" + ZZ_SOLO.slice(2) : "zazerkalius_v1";
 /* v0.030: окна можно вынести в отдельное окно браузера (⧉); их элементы живут уже в чужом документе,
    поэтому поиск по id смотрит и туда — иначе вынесенное окно перестало бы обновляться. */
 const popups = new Map();   // id окна → window
@@ -67,6 +71,7 @@ const undoStack = [];
 let gf2Last = null;
 
 function load(){
+  if (ZZ_BG) return;   // v0.184: фон хаба — всегда по умолчанию
   try {
     let raw = localStorage.getItem(ZZ_KEY), first = false;
     if (!raw && ZZ_SOLO) { raw = localStorage.getItem("zazerkalius_v1"); first = true; }   // v0.141: первый запуск отдельной страницы
@@ -81,6 +86,7 @@ function load(){
 let sessLoading = false;   // v0.115: файл сессии уже лёг в хранилище, страница перезагружается — ничего поверх не писать
 function save(){
   syncLane();
+  if (ZZ_BG) return;   // v0.184: фон хаба ничего не запоминает
   if (sessLoading) return;
   try { localStorage.setItem(ZZ_KEY, JSON.stringify(Z)); } catch (e) { /* нет хранилища — не беда */ }
 }
@@ -2285,6 +2291,7 @@ function setupCone(){
   let autoRaf = 0, autoT0 = 0;
   const autoTick = (ts) => {
     if (!autoRaf) return;
+    if (ZZ_BG && autoT0 && ts - autoT0 < 48) { autoRaf = requestAnimationFrame(autoTick); return; }   // v0.184: фоном хаба — не чаще 20 кадров в секунду (кадр ~20 мс, кручение медленное)
     const dt = autoT0 ? Math.min(0.1, (ts - autoT0) / 1000) : 0; autoT0 = ts;
     const sp = Z.coneAutoSp ?? 30, m = Z.coneSpinMode || "all";   // v0.104: режимы кручения
     if (m === "all") Z.coneSpin = ((Z.coneSpin || 0) + sp * dt) % 360;
@@ -5250,4 +5257,17 @@ function init(){
   let rsz = 0;
   window.addEventListener("resize", () => { clearTimeout(rsz); rsz = setTimeout(() => { packWins(); save(); }, 200); });
 }
+function bgApply(){   // v0.184: живой фон хаба (?solo=cone&bg=1)
+  document.body.classList.add("zen", "zen-quiet", "bgmode", "nocur");
+  const r = ["1"]; while (r.length < 64) r.push(zzPascalNext(r[r.length - 1]));
+  Z.rows = r; Z.cur = 0; rowSel.clear(); syncLane();
+  Object.assign(Z, { cone3d: true, coneOcta: true, coneGlow: true, cone3H: 2.6, cone3El: 12, cone3Yaw: 30, coneSpin: 0, coneSpinMode: "all", coneAutoSp: 10,
+    coneClock: false, coneSect: false, coneOnlySel: false, conePoly: false, coneRays: "off", coneMir: "off", coneLock: true });
+  for (const [id, v] of [["cone3d", true], ["coneOcta", true], ["coneGlow", true], ["coneClock", false], ["coneSect", false], ["coneOnlySel", false], ["conePoly", false], ["coneSame", false]]) { const el = $(id); if (el) el.checked = v; }
+  coneZoom = 1; conePan = [0, 0];
+  renderAll();
+  if (!document.getElementById("bConeAuto").classList.contains("on")) $("bConeAuto").click();
+  try { if (window.parent !== window) window.parent.postMessage({ zerkReady: true }, "*"); } catch (e) { /* хаб с другого адреса */ }
+}
 init();
+if (ZZ_BG) bgApply();

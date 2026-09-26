@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.037. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.038. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -23,12 +23,14 @@
      v0.034: «WebGL Engine» (Zerkalius-genezis-webgl.html) снят — мёртвая ветка Genezis, страница в archive\_retired\.
      v0.035: «Results» переименован в «Битмультфильмы» (Bit Cartoons); между Triangle и ним — бегущие вниз стрелки.
      v0.036: стрелки дёргаются вниз-вверх рывками, и при «меньше движения» тоже.
-     v0.037: «Cone» (zazerkalius/Zerkalius-konus.html) в Черновиках, сразу за Zazerkalius — ◯ Конус отдельной страницей. -->
+     v0.037: «Cone» (zazerkalius/Zerkalius-konus.html) в Черновиках, сразу за Zazerkalius — ◯ Конус отдельной страницей.
+     v0.038: живой фон — крутящийся конус-октаэдр Zazerkalius (zazerkalius/…?solo=cone&bg=1) вместо обоев Серпинского; старые обои —
+             по кнопке «Обои»; надпись Zerkalius ⇄ Зеркалиус рисует теперь сам хаб (#hubTitle), обои её больше не дают. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Control Hub — v0.037</title>
+    <title>Zerkalius Control Hub — v0.038</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
 
@@ -61,6 +63,17 @@
             position: absolute; width: 1px; height: 1px; overflow: hidden;
             clip: rect(0 0 0 0); white-space: nowrap; margin: 0;
         }
+        /* v0.038: надпись сверху — прежде её рисовали обои; теперь фон — конус, надпись даёт хаб. Переливается, как кнопки */
+        #hubTitle {
+            position: fixed; left: 0; right: 0; top: 5vh; z-index: 1; pointer-events: none; text-align: center;
+            font: bold clamp(44px, 10vw, 150px)/1 Consolas, "Roboto Mono", monospace; letter-spacing: .04em;
+            color: transparent; background: linear-gradient(90deg, #ff5f6d, #ffc371, #6ee7a0, #22d3ee, #b98cf0, #ff5f6d);
+            background-size: 300% 100%; -webkit-background-clip: text; background-clip: text;
+            filter: drop-shadow(0 0 3px #000) drop-shadow(0 0 18px rgba(255, 209, 102, .35));
+            animation: hubTitleHue 14s linear infinite;
+        }
+        @keyframes hubTitleHue { to { background-position: 300% 0; } }
+        @media (prefers-reduced-motion: reduce) { #hubTitle { animation: none; } }
         .ver {
             font-size: 11px; letter-spacing: 3px; color: #9fffc8;
             text-shadow: 0 0 6px #000;
@@ -230,11 +243,13 @@
 </head>
 <body>
     <!-- Живой фон: обои Zerkalius (папка oboi\, заведено 2026-09-21) -->
-    <iframe id="bg" src="oboi/Zerkalius-oboi.html" title="Обои Zerkalius" tabindex="-1" aria-hidden="true"></iframe>
+    <!-- v0.038: живой фон — конус Zazerkalius (3D, зеркало вниз, свет, крутится); прежние обои — кнопка «Обои» -->
+    <iframe id="bg" src="zazerkalius/Zerkalius-zazerkalius.html?solo=cone&amp;bg=1" title="Конус Zerkalius" tabindex="-1" aria-hidden="true"></iframe>
+    <div id="hubTitle" aria-hidden="true">Zerkalius</div>
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.037</div>
+        <div class="ver">v0.038</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -340,7 +355,8 @@
             const bg = document.getElementById('bg');
             // v0.026: не прямой вызов, а сообщение — с диска (file://) хаб и обои для браузера разные сайты, прямой
             // вызов запрещён, и надпись не менялась. Обои сами шлют zerkReady, когда загрузились целиком.
-            const TITLE = { lang: 'en', set(lang) { this.lang = lang;
+            const hubTitle = document.getElementById('hubTitle');   // v0.038: надпись теперь в самом хабе
+            const TITLE = { lang: 'en', set(lang) { this.lang = lang; if (hubTitle) hubTitle.textContent = lang === 'ru' ? 'Зеркалиус' : 'Zerkalius';
                 try { if (bg && bg.contentWindow) bg.contentWindow.postMessage({ zerkTitle: lang === 'ru' ? 'Зеркалиус' : 'Zerkalius' }, '*'); } catch (e) {} } };
             // старт: строки сверху вниз и надпись обоев — поочерёдно en / ru, со случайного начала
             const r0 = Math.random() < 0.5 ? 0 : 1;
