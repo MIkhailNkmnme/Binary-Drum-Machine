@@ -495,13 +495,9 @@ function rowsFitDone(){ if (Z.tri90) tri90Apply(); }   // ◸ 90° считае�
 /* v0.167, «надпись вправо, над замками — центральный замок (общий)»: над столбиком замков у строк — общий замок колец (галка «запрет
    сдвига строк» в «Кольцах»): щелчок — как по галке. Место по горизонтали — по замку первой строки (столбик номера стоит на месте
    при прокрутке вбок, а ширина его колонок в em — и мельчает в ужатом поле). */
-function rowsLockAllPlace(){
-  const A = $("coneLockAll"), bar = $("fieldInfoBar"); if (!A || !bar) return;
+function rowsLockAllPlace(){   // v0.169: общий замок — кнопкой в начале полосы ввода; здесь только его значок
+  const A = $("coneLockAll"); if (!A) return;
   const on = Z.coneLock !== false; A.textContent = on ? "🔒" : "🔓"; A.classList.toggle("off", !on);
-  const lk = $("rowList").querySelector(".rw > .no > .rlk");
-  A.style.visibility = lk ? "" : "hidden"; if (!lk) return;
-  const r = lk.getBoundingClientRect(), b = bar.getBoundingClientRect();
-  bar.style.setProperty("--lkx", Math.round(r.left + r.width / 2 - b.left) + "px");
 }
 function renderRows(){
   if (rowEditing >= 0) return;

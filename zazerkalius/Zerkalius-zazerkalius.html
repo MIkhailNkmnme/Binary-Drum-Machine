@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.168. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.169. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.168</title>
+<title>Zazerkalius — v0.169</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -109,11 +109,10 @@ body.pane-icons #rowsPane #bPaneIcons{width:auto;padding:2px 0}
 #fieldBar .sp{flex:1}
 /* v0.077, «текст дёргает поле»: строка «70 стр. · 2485 бит · текущая … · против …» меняла длину и переносилась — полоса над
    полем росла и сжималась, строки прыгали. Теперь она в одну строку: не влезает — многоточие, целиком — в подсказке. */
-#fieldInfoBar{position:relative;flex:0 0 auto;display:flex;align-items:center;min-height:20px;padding:2px 0 0;background:var(--bg)}   /* v0.167 */
-#fieldInfo{display:block;flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;padding:0 10px 0 64px;font-size:11px;line-height:14px;color:var(--dim);text-align:right}   /* v0.167: вправо */
-#coneLockAll{position:absolute;top:1px;left:var(--lkx, 34px);transform:translateX(-50%);font-size:14px;line-height:18px;padding:0 3px;border-radius:3px;cursor:pointer;user-select:none}
-#coneLockAll:hover{background:var(--panel2)}
-#coneLockAll.off{opacity:.55}   /* v0.156: серым, в поле строк сверху слева */
+#fieldInfoBar{position:relative;flex:0 0 auto;display:flex;align-items:center;min-height:17px;padding:2px 0 0;background:var(--bg)}   /* v0.167; v0.169 — замок ушёл в полосу ввода, здесь только сведения (серым, справа) */
+#fieldInfo{display:block;flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;padding:0 10px;font-size:11px;line-height:14px;color:var(--dim);text-align:right}   /* v0.167: вправо */
+#coneLockAll{font-size:13px}   /* v0.169: общий замок — кнопкой в полосе ввода */
+#coneLockAll.off{opacity:.6}
 #split{cursor:col-resize;background:var(--line);opacity:.6}
 /* v0.025: окна под полем строк. Тащишь окно за шапку — оно едет поверх всего (.dragging, position:fixed);
    отпустил над полем строк — встаёт в #fieldDock на всю ширину колонки (.docked); вытащил — снова на столе. */
@@ -583,7 +582,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.168</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.169</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -677,9 +676,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
     <!-- v0.012: ввод строки — здесь, над полем: «окно для вставки строки ненашёл» -->
     <div id="rowInputBar">
       <!-- v0.063: «это — слева от поля ввода строки, а поле сузить»: поля, наложение и выравнивание — здесь -->
-      <select id="laneCount" title="Сколько полей строк рядом — до 4, у каждого своя ось. Рабочее поле (с ним работают окна и кнопки) — щелчок по нему, по его заголовку или ← / →">
-        <option value="1">1 поле</option><option value="2">2 поля</option><option value="3">3 поля</option><option value="4">4 поля</option>
-      </select>
+      <!-- v0.169, «замок общий — на место «1 поле», его — вправо»: общий замок колец — первым в полосе, «1 поле» — в её конце -->
+      <button id="coneLockAll" title="Общий замок колец — галка «запрет сдвига строк»: 🔒 все кольца без своего замка заперты (крутятся только на вид), 🔓 открыты (крутят саму строку). Свои замки у строк — как были"></button>
       <!-- v0.018: поля колонками или наложением, с осями -->
       <select id="laneView" title="Как стоят поля: колонками — рядом, у каждого своя колонка; наложением — в одном пространстве, у каждого своя ось, оси тащатся за ручки и проходят друг через друга, совпавшие биты сводятся">
         <option value="cols">колонками</option><option value="over">наложением</option>
@@ -701,12 +699,15 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
       <button id="bTri90" title="◸ 90°: межсимвольный интервал подбирается сам так, чтобы треугольник в поле был прямоугольным при вершине — стороны под 45°: каждая строка сдвигается на полсимвола ровно на высоту строки. Считается от шрифта и размера; ещё раз — как было. В наложении полей не действует">◸ 90°</button>
       <button id="bShow01" title="У номера строки — сколько в ней НУЛЕЙ и ЕДИНИЦ: 3:5">0·1</button>
       <button id="bRowLock" title="🔒 Замок на изменение строк: пока закрыт, строки не меняются ничем — ни кнопками построений, ни правкой, вставкой, удалением, поворотом в конусе, исправлением, ни ↩. Смотреть, выделять, крутить виды — можно. Щелчок — закрыть / открыть">🔓</button>
+      <select id="laneCount" title="Сколько полей строк рядом — до 4, у каждого своя ось. Рабочее поле (с ним работают окна и кнопки) — щелчок по нему, по его заголовку или ← / →">
+        <option value="1">1 поле</option><option value="2">2 поля</option><option value="3">3 поля</option><option value="4">4 поля</option>
+      </select>
     </div>
     </div>
     <!-- v0.156, «эту надпись (сведения поля: стр., бит, текущая) серым текстом — в поле строк, сверху слева» (прежде — в полосе «Строки») -->
     <!-- v0.167, «надпись вправо, над замками — центральный замок (общий)»: полоска над строками — слева общий замок колец (над столбиком
          замков, ставит rowsLockAllPlace), справа сведения поля -->
-    <div id="fieldInfoBar"><span id="coneLockAll" title="Общий замок колец — галка «запрет сдвига строк»: 🔒 все кольца без своего замка заперты (крутятся только на вид), 🔓 открыты (крутят саму строку). Свои замки у строк — как были"></span><span id="fieldInfo" class="dim"></span></div>
+    <div id="fieldInfoBar"><span id="fieldInfo" class="dim"></span></div>
     <div id="rowList" class="al-center"></div>
     <!-- v0.025: сюда пристыковываются окна, перетащенные за шапку под поле строк -->
     <div id="fieldDock"></div>
