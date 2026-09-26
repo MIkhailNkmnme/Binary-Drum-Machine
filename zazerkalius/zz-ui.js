@@ -1651,18 +1651,29 @@ function coneWallPaint(tr){
   coneLogAdd(R, cnt, N, fzNew);
   return true;
 }
+/* v0.140, «это всё записывай справа и компактнее»: запись короткая — без угла (лазер всегда вверх), щели и остановленные кольца —
+   диапазонами номеров строк («‖2–256»); полная запись (ячейки у каждой щели) — в подсказке при наведении и в копии ⧉. */
+function coneRanges(a){
+  const v = [...new Set(a)].sort((x, y) => x - y), out = [];
+  for (let i = 0; i < v.length; i++) { let j = i; while (j + 1 < v.length && v[j + 1] === v[j] + 1) j++; out.push(j > i ? `${v[i]}–${v[j]}` : `${v[i]}`); i = j; }
+  return out.join(",");
+}
 function coneLogAdd(R, cnt, N, froze){
   const L = Z.coneLog && Array.isArray(Z.coneLog.list) ? Z.coneLog : (Z.coneLog = { n: 0, list: [] });
   L.n = (L.n | 0) + 1;
-  const len = (b) => b < N ? Z.rows[b].length : coneVoidLen(b, N), ones = (c) => "1".repeat(Math.min(c, 9)) + (c > 9 ? " (" + c + ")" : "");
-  const gs = []; for (let q = 0; q < R.g.length; q += 2) { const b = R.g[q], n = len(R.g[q]) || 1, kb = R.g[q + 1]; gs.push(`${b + 1}: ${((kb - 1 + n) % n) + 1}|${kb + 1}`); }
-  const gt = gs.length > 12 ? gs.slice(0, 10).join(", ") + ` … ещё ${gs.length - 10} (до стр ${R.g[R.g.length - 2] + 1})` : gs.join(", ");
-  const fillNm = (b) => b === N ? " (для заполнения)" : b > N ? " (пустая)" : "";
-  const end = R.wall ? `упёрся: стр ${R.wall[0] + 1}, яч ${R.wall[1] + 1} → ${ones(cnt)}`
-    : R.pass && R.cells.length ? `пойман: стр ${R.cells[0][0] + 1}${fillNm(R.cells[0][0])}, яч ${R.cells[0][1] + 1}` + (cnt ? ` → ${ones(cnt)}` : "")
-    : R.pass ? "за край" : `стоп: стр ${R.stop + 1}`;
-  const deg = Math.round((((R.a * 180 / Math.PI + 90) % 360) + 360) % 360 * 10) / 10;
-  L.list.push({ n: L.n, t: `№${L.n} · ${String(deg).replace(".", ",")}° · ${end}` + (froze && froze.length ? ` · ⏹ встал${froze.length > 1 ? "и кольца " + (froze.length > 6 ? froze.slice(0, 5).map(x => x + 1).join(", ") + ` … ${froze[froze.length - 1] + 1} (${froze.length})` : froze.map(x => x + 1).join(", ")) : "о кольцо " + (froze[0] + 1)}` : "") + (gt ? ` · сквозь щели: ${gt}` : "") });
+  const len = (b) => b < N ? Z.rows[b].length : coneVoidLen(b, N), ones = (c) => "1".repeat(Math.min(c, 9)) + (c > 9 ? "(" + c + ")" : "");
+  const gs = [], gr = []; for (let q = 0; q < R.g.length; q += 2) { const b = R.g[q], n = len(R.g[q]) || 1, kb = R.g[q + 1]; gr.push(b + 1); gs.push(`${b + 1}: ${((kb - 1 + n) % n) + 1}|${kb + 1}`); }
+  const fz = froze && froze.length ? froze.map(x => x + 1) : [];
+  const tag = (b) => b === N ? "з" : b > N ? "п" : "";   // з — строка для заполнения, п — пустая
+  const short = R.wall ? `▮ ${R.wall[0] + 1}:${R.wall[1] + 1}→${ones(cnt)}`
+    : R.pass && R.cells.length ? `◎ ${R.cells[0][0] + 1}${tag(R.cells[0][0])}:${R.cells[0][1] + 1}` + (cnt ? `→${ones(cnt)}` : "")
+    : R.pass ? "↗ край" : R.stop ? `■ ${R.stop + 1}` : "■ закрыт";
+  const full = R.wall ? `упёрся: стр ${R.wall[0] + 1}, яч ${R.wall[1] + 1} → ${ones(cnt)}`
+    : R.pass && R.cells.length ? `пойман: стр ${R.cells[0][0] + 1}${R.cells[0][0] === N ? " (для заполнения)" : R.cells[0][0] > N ? " (пустая)" : ""}, яч ${R.cells[0][1] + 1}` + (cnt ? ` → ${ones(cnt)}` : "")
+    : R.pass ? "за край" : R.stop ? `стоп: стр ${R.stop + 1}` : "стоп: выход строки 1 закрыт";
+  L.list.push({ n: L.n,
+    t: `${L.n} ${short}` + (fz.length ? ` ⏹${coneRanges(fz)}` : "") + (gr.length ? ` ‖${coneRanges(gr)}` : ""),
+    f: `№${L.n} · ${full}` + (fz.length ? ` · встали кольца ${coneRanges(fz)}` : "") + (gs.length ? ` · сквозь щели: ${gs.join(", ")}` : "") });
   if (L.list.length > 1000) L.list.splice(0, L.list.length - 1000);
   coneLogDirty();
 }
@@ -1670,10 +1681,10 @@ let coneLogRaf = 0;
 function coneLogDirty(){ if (!coneLogRaf) coneLogRaf = requestAnimationFrame(() => { coneLogRaf = 0; coneLogRender(); }); }
 function coneLogRender(){
   const box = $("coneLogBox"); if (!box) return;
-  box.style.display = Z.coneClock ? "" : "none";
+  box.style.display = Z.coneClock ? "flex" : "none";
   const list = Z.coneLog && Array.isArray(Z.coneLog.list) ? Z.coneLog.list : [];
   $("coneLogN").textContent = list.length ? `(${list.length}${list.length >= 1000 ? ", последние" : ""})` : "— пока пусто: тяни строку 1, ⌖◁ ⌖▷, ◀ ▶ или ▶ крутить";
-  let h = ""; for (let i = list.length - 1, m = 0; i >= 0 && m < 300; i--, m++) h += "<div>" + esc(list[i].t) + "</div>";
+  let h = ""; for (let i = list.length - 1, m = 0; i >= 0 && m < 300; i--, m++) h += '<div title="' + esc(list[i].f || list[i].t) + '">' + esc(list[i].t) + "</div>";
   $("coneLog").innerHTML = h;
 }
 function coneClockMark(hits){
@@ -2209,11 +2220,17 @@ function setupCone(){
   $("bConeStepF").onclick = () => coneStep(1);
   $("bConeLogClr").onclick = () => { Z.coneLog = { n: 0, list: [] }; save(); coneLogRender(); say("📜 Лог лазера очищен."); };
   $("bConeLogCopy").onclick = () => {
-    const t = (Z.coneLog && Z.coneLog.list || []).map(e => e.t).join("\n");
+    const t = (Z.coneLog && Z.coneLog.list || []).map(e => e.f || e.t).join("\n");   // v0.140: в копию — полные записи
     if (!t) { say("📜 Лог пуст."); return; }
     (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => say("📜 Лог скопирован — " + Z.coneLog.list.length + " записей."), () => say("📜 Не вышло скопировать — выдели текст лога мышью."));
   };
   coneLogRender();
+  {   // v0.140: панель текста и лога — справа, от низа кнопок до низа окна
+    const tl = document.querySelector("#w-cone .wbody > .tools"), cb = $("coneBot");
+    const place = () => { if (tl && cb) cb.style.top = (tl.offsetTop + tl.offsetHeight + 4) + "px"; };
+    if (tl && cb && window.ResizeObserver) new ResizeObserver(place).observe(tl);
+    place();
+  }
   /* v0.122, «нужна кнопка, которая сбрасывает биты всех строк» (после «как сбрасывать накрученные биты, чтобы по умолчанию
      вернулось»; до неё сброс был в трёх местах): «⟲ всё на места» — разом у всех колец накрутка «на вид», кручение (и счёт кругов
      и проходов), довод строки 1. Строки не трогает: сдвиг строки открытым кольцом — настоящая правка, её возвращает ↩. */
