@@ -3590,6 +3590,9 @@ function soloApply(){
   if (el.classList.contains("docked")) undockWin(el);
   el.classList.remove("collapsed", "maxed");
   const w = Z.win[ZZ_SOLO]; if (w) { w.collapsed = false; w.dock = false; delete w.max0; }
+  /* v0.142, по снимку текста конуса справа («Наведи на кольцо…», «Кольцо 4 заперто…») — «это всё вообще под строки»:
+     на странице конуса текст и лог лазера — в поле строк, под строками; конусу — весь стол. */
+  const cb = $("coneBot"); if (ZZ_SOLO === "w-cone" && cb) $("field").insertBefore(cb, $("fieldDock"));
   const t = el.dataset.title || ZZ_SOLO, h = document.querySelector("#top h1");
   if (h) h.textContent = t;
   document.title = t.replace(/^[^\p{L}\d]+/u, "Zerkalius ") + " — " + ((document.title.match(/v[\d.]+/) || [""])[0]);
