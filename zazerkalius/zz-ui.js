@@ -3,7 +3,14 @@
    Всё состояние — в объекте Z; сохраняется в localStorage (обёрнуто в try: в приватном окне
    хранилища может не быть, и страница обязана работать без него). Математика — в zz-core.js.
    ═══════════════════════════════════════════════════════════════════════════════════════════ */
-const ZZ_KEY = "zazerkalius_v1";
+/* v0.141, «нужна своя html для этого (◯ Конус) с полем строк, вообще всё без других вкладок»: адрес с ?solo=cone
+   (его открывает Zerkalius-konus.html) — страница из поля строк и одного окна на весь стол. Память у неё своя, чтобы
+   раскладка окон Zazerkalius не портилась; при первом запуске строки и настройки берутся из Zazerkalius. */
+const ZZ_SOLO = (() => {
+  try { const s = new URLSearchParams(location.search).get("solo"); return s && /^[a-z0-9-]+$/.test(s) && document.getElementById("w-" + s) ? "w-" + s : ""; }
+  catch (e) { return ""; }
+})();
+const ZZ_KEY = ZZ_SOLO ? "zazerkalius_solo_" + ZZ_SOLO.slice(2) : "zazerkalius_v1";
 /* v0.030: окна можно вынести в отдельное окно браузера (⧉); их элементы живут уже в чужом документе,
    поэтому поиск по id смотрит и туда — иначе вынесенное окно перестало бы обновляться. */
 const popups = new Map();   // id окна → window
@@ -61,9 +68,11 @@ let gf2Last = null;
 
 function load(){
   try {
-    const raw = localStorage.getItem(ZZ_KEY);
+    let raw = localStorage.getItem(ZZ_KEY), first = false;
+    if (!raw && ZZ_SOLO) { raw = localStorage.getItem("zazerkalius_v1"); first = true; }   // v0.141: первый запуск отдельной страницы
     if (!raw) return;
     const u = JSON.parse(raw);
+    if (first && u) { delete u.win; delete u.dockOrder; delete u.pins; }   // окна Zazerkalius ей ни к чему
     if (u && Array.isArray(u.rows) && u.rows.every(zzIsBits)) Object.assign(Z, u);
   } catch (e) { /* хранилища нет — работаем с тем, что по умолчанию */ }
   if (!Z.rows.length) Z.rows = ["1"];
@@ -3571,6 +3580,21 @@ function popIn(id){
   renderAll(); packWins(); save();
 }
 window.addEventListener("beforeunload", () => { for (const w of popups.values()) { try { w.close(); } catch (err) {} } });
+/* v0.141: страница одного окна (?solo=…) — остальные окна скрыты через style.display, поэтому winOpen их не считает и
+   они ничего не пересчитывают; своё окно — развёрнуто, не пристыковано, во весь стол (стили body.solo). */
+function soloApply(){
+  const el = $(ZZ_SOLO); if (!el) return;
+  document.body.classList.add("solo");
+  el.classList.add("solo-win");
+  document.querySelectorAll(".win").forEach(o => { if (o !== el) o.style.display = "none"; });
+  if (el.classList.contains("docked")) undockWin(el);
+  el.classList.remove("collapsed", "maxed");
+  const w = Z.win[ZZ_SOLO]; if (w) { w.collapsed = false; w.dock = false; delete w.max0; }
+  const t = el.dataset.title || ZZ_SOLO, h = document.querySelector("#top h1");
+  if (h) h.textContent = t;
+  document.title = t.replace(/^[^\p{L}\d]+/u, "Zerkalius ") + " — " + ((document.title.match(/v[\d.]+/) || [""])[0]);
+  $("desk").scrollTop = 0;
+}
 function layoutAll(reset){
   const def = defaultLayout();
   if (reset) document.querySelectorAll(".win.docked").forEach(undockWin);   // v0.025: «📐 Разложить» — все окна на стол
@@ -3672,7 +3696,7 @@ function setupWin(el){
   };
   // v0.016, запрос пользователя «двойной щелчок по заголовку»: свернуть / развернуть, как «–».
   head.addEventListener("dblclick", (e) => {
-    if (e.target.closest("button")) return;
+    if (e.target.closest("button") || ZZ_SOLO) return;
     e.preventDefault();
     const s = window.getSelection && window.getSelection(); if (s) s.removeAllRanges();
     head.querySelector(".bc").click();
@@ -3681,6 +3705,7 @@ function setupWin(el){
   el.addEventListener("pointerdown", front);
   head.addEventListener("pointerdown", (e) => {
     if (e.target.closest("button") || e.button !== 0) return;
+    if (ZZ_SOLO) return;   // v0.141: на странице одного окна оно стоит на месте
     if (el.classList.contains("popped")) return;   // v0.030: в отдельном окне окно стоит на всё окно
     if (window.matchMedia && window.matchMedia("(max-width:760px)").matches) return;   // узкий экран: окна стоят стопкой
     e.preventDefault();
@@ -3928,6 +3953,7 @@ function init(){
   if ((Z.layoutVer | 0) < 10) { layoutAll(true); Z.layoutVer = 10; save(); }
   else layoutAll(false);
   dockRestore();   // v0.025: окна, пристыкованные под полем строк
+  if (ZZ_SOLO) soloApply();   // v0.141
   // v0.026: высоту поля строк, растянутую за угол, запоминаем (только когда под ним окна).
   if (window.ResizeObserver) {
     let th = 0;

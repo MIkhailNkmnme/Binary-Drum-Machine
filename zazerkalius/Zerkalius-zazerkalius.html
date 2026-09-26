@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.140. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.141. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.140</title>
+<title>Zazerkalius — v0.141</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -483,11 +483,21 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
   #desk{overflow:visible}
   .win{position:relative !important;left:auto !important;top:auto !important;width:auto !important;height:auto !important;margin:8px 16px;resize:none}
 }
+/* v0.141: ?solo=cone — отдельная страница «◯ Конус» (Zerkalius-konus.html): поле строк и одно окно на весь стол;
+   всё, что про остальные окна (раскладка, свернуть, закрепить, подсказки), спрятано. Узкий экран — стопкой, как везде. */
+body.solo .win:not(.solo-win){display:none !important}
+body.solo #bPinMode,body.solo #pinBar,body.solo #bPack,body.solo #bLayout,body.solo #bCollapseAll,body.solo #bHelp,body.solo #paneWinsHead,body.solo #paneWins{display:none !important}
+body.solo .solo-win .whead .bm,body.solo .solo-win .whead .bp,body.solo .solo-win .whead .bc,body.solo .solo-win .wgrip{display:none !important}
+body.solo .solo-win .whead{cursor:default}
+@media (min-width:761px){
+  body.solo #desk{overflow:hidden}
+  body.solo .win.solo-win{position:absolute !important;left:0 !important;top:0 !important;width:100% !important;height:100% !important;resize:none;border:none;border-radius:0;box-shadow:none}
+}
 </style>
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.140</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.141</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
@@ -1161,8 +1171,8 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
 <div id="msg"></div>
 <div id="zenHint">🧘 дзен · Esc — выйти</div>
 
-<script src="zz-core.js?v=0140"></script>
-<script src="zz-ui.js?v=0140"></script>
+<script src="zz-core.js?v=0141"></script>
+<script src="zz-ui.js?v=0141"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
