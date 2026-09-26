@@ -1081,6 +1081,7 @@ function coneHoverRow(i){
 }
 function renderCone(){
   if (!winOpen("w-cone")) return;
+  { const p3 = $("cone3Pad"); if (p3) p3.hidden = !Z.cone3d; }   // v0.157: кнопки 3D — только в 3D
   const cv = $("coneCv"); if (!cv) return;
   const R = cv.getBoundingClientRect(); if (R.width < 20 || R.height < 20) return;
   const dpr = window.devicePixelRatio || 1, W = Math.round(R.width * dpr), H = Math.round(R.height * dpr);
@@ -2229,7 +2230,10 @@ function setupCone(){
   $("bConeAuto").onclick = () => autoSet(!autoRaf);
   /* v0.135, «сделай паузу при клике на поле, а плей — только по кнопке»: щелчок по конусу или по полю строк, пока кольца крутятся, —
      пауза (до любого другого действия щелчка); дальше — только ▶ крутить. */
-  for (const id of ["coneCv", "field"]) { const el = $(id); if (el) el.addEventListener("pointerdown", () => { if (autoRaf) { autoSet(false); say("⏸ Пауза — щелчок по полю. Дальше — ▶ крутить."); } }, true); }
+  for (const id of ["coneCv", "field"]) { const el = $(id); if (el) el.addEventListener("pointerdown", () => { if (autoRaf) { autoSet(false); say("⏸ Пауза — щелчок по полю. Дальше — двойной щелчок по конусу или ▶ крутить."); } }, true); }
+  /* v0.157, «пауза и двойной щелчок — воспроизведение по полю»: щелчок по конусу — пауза (v0.135), двойной щелчок — ▶ крутить.
+     Сброс вида (масштаб, сдвиг, поворот 3D), что прежде был на двойном щелчке, — теперь Ctrl + двойной щелчок. */
+  $("coneCv").addEventListener("dblclick", (e) => { if (e.ctrlKey || autoRaf) return; autoSet(true); say("▶ Кручу — двойной щелчок по конусу. Пауза — щелчок."); });
   /* v0.134, «нужна кнопка вперёд-назад для Плея, вручную, чтобы смотреть»: ◀ ▶ — кручение (тем же режимом, что ▶ крутить) до
      следующего события лазера: конец луча сменился — упёрся в другую ячейку, пойман другим кольцом, прошёл. Каждый шаг — в лог. */
   const coneStep = (dir) => {
@@ -2416,7 +2420,24 @@ function setupCone(){
   $("cone3H").value = Z.cone3H ?? 1;
   $("cone3H").oninput = (e) => { Z.cone3H = +e.target.value; if (!Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } renderCone(); };
   $("cone3H").onchange = () => save();
-  cv.addEventListener("dblclick", () => { if (!Z.cone3d) return; Z.cone3Yaw = 30; Z.cone3El = 50; coneZoom = 1; conePan = [0, 0]; save(); renderCone(); });
+  /* v0.157, «в поле конуса кнопки управления для 3D»: ⟲ ⟳ поворот по 15°, ▲ ▼ наклон по 10° (0…90, как мышью), − ＋ масштаб к центру,
+     ⌂ — вид по умолчанию. Держишь кнопку — повторяется. Видны только в 3D (renderCone прячет). */
+  const c3Do = (k) => {
+    if (k === "yaw-" || k === "yaw+") Z.cone3Yaw = (Z.cone3Yaw ?? 30) + (k === "yaw+" ? 15 : -15);
+    else if (k === "el+" || k === "el-") Z.cone3El = Math.max(0, Math.min(90, (Z.cone3El ?? 50) + (k === "el+" ? 10 : -10)));
+    else if (k === "z+" || k === "z-") { const z1 = Math.max(0.3, Math.min(60, coneZoom * (k === "z+" ? 1.25 : 0.8))), q = z1 / coneZoom; conePan = [conePan[0] * q, conePan[1] * q]; coneZoom = z1; }
+    else if (k === "home") { Z.cone3Yaw = 30; Z.cone3El = 50; coneZoom = 1; conePan = [0, 0]; }
+    renderCone();
+  };
+  $("cone3Pad").addEventListener("pointerdown", (e) => {
+    const b = e.target.closest("button[data-c3]"); if (!b) return;
+    e.preventDefault(); const k = b.dataset.c3; c3Do(k);
+    if (k === "home") { save(); return; }
+    let t = setTimeout(function rep(){ c3Do(k); t = setTimeout(rep, 90); }, 400);
+    const up = () => { clearTimeout(t); save(); removeEventListener("pointerup", up); removeEventListener("pointercancel", up); };
+    addEventListener("pointerup", up); addEventListener("pointercancel", up);
+  });
+  cv.addEventListener("dblclick", (e) => { if (!Z.cone3d || !e.ctrlKey) return; Z.cone3Yaw = 30; Z.cone3El = 50; coneZoom = 1; conePan = [0, 0]; save(); renderCone(); });
   $("coneSect").checked = !!Z.coneSect;   // v0.079
   $("coneSect").onchange = (e) => { Z.coneSect = e.target.checked; save(); renderCone(); };
   $("coneOnlySel").checked = !!Z.coneOnlySel;   // v0.076
@@ -2436,7 +2457,7 @@ function setupCone(){
     conePan = [mx - (mx - conePan[0]) * k, my - (my - conePan[1]) * k];
     coneZoom = z1; renderCone();
   }, { passive: false });
-  cv.addEventListener("dblclick", (e) => { if (coneRing(e) !== -1 && !e.ctrlKey) return; coneZoom = 1; conePan = [0, 0]; renderCone(); });
+  cv.addEventListener("dblclick", (e) => { if (!e.ctrlKey) return; coneZoom = 1; conePan = [0, 0]; renderCone(); });
   if (window.ResizeObserver) new ResizeObserver(() => renderCone()).observe(cv);
 }
 
