@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.176. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.177. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.176</title>
+<title>Zazerkalius — v0.177</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -398,6 +398,11 @@ body.zen #coneTxtWin{display:none !important}
 /* v0.153, «этой группе кнопок задай свой цвет полупрозрачный»: «Кручение» — своим, золотистым полупрозрачным фоном и рамкой */
 #w-cone .cgrp.cg-spin{background:rgba(255,209,102,.13);border-color:rgba(255,209,102,.5)}
 #w-cone .cgrp.cg-spin > .glab{color:var(--gold)}
+/* v0.177: группу тянут за подпись; вынесенная — поверх холста и всего ниже, на непрозрачной подложке */
+#w-cone .cgrp > .glab{cursor:move;touch-action:none;user-select:none}
+#w-cone .cgrp.cfloat{position:absolute;z-index:10;margin:0;background:var(--panel);box-shadow:0 6px 20px rgba(0,0,0,.45)}
+#w-cone .cgrp.cg-spin.cfloat{background:color-mix(in srgb, rgb(255,209,102) 13%, var(--panel))}
+body.solo #w-cone .wbody > .tools{position:relative;z-index:4}
 #w-cone #coneCycle{flex:1 0 100%;margin:0 2px !important;height:1.35em;line-height:1.35em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #bConeAuto{min-width:7.2em} #bConeDir{min-width:8.4em} #bConeRec{min-width:0} #coneSlitV{display:inline-block;min-width:2.8em}
 #w-cone .wbody > #coneBot{position:absolute;right:0;left:auto;top:40%;bottom:0;width:min(380px,44%);z-index:3;padding:4px 8px;background:color-mix(in srgb, var(--panel) 80%, transparent);display:flex;flex-direction:column;gap:2px;overflow:hidden;border-left:1px solid var(--line)}   /* v0.140: текст + лог лазера — колонкой справа */
@@ -588,7 +593,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.176</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.177</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>

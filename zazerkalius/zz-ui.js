@@ -3756,6 +3756,44 @@ function ctwInit(){
   if (window.ResizeObserver) { let t = 0; new ResizeObserver(() => { if (W.hidden) return; const w = W.offsetWidth, h = W.offsetHeight; if (w !== Z.ctw.w || h !== Z.ctw.h) { Z.ctw.w = w; Z.ctw.h = h; clearTimeout(t); t = setTimeout(save, 300); } }).observe(W); }
   addEventListener("resize", () => { if (!W.hidden) clamp(); });
 }
+/* v0.177, по снимку полосы групп конуса — «возможность перетаскивать каждую группу в любое место, с фоновым перекрытием всех ниже»:
+   группу (Вид, Кольца, Кручение, Лазер) тянут за её подпись — она выходит из полосы и висит поверх холста на непрозрачной подложке,
+   последняя тронутая — сверху. Двойной щелчок по подписи — обратно на полосу. Места — Z.cgrpPos { имя: { x, y } } в пикселях от
+   угла полосы; меняет их только перетаскивание (сами не выравниваются и не переставляются). */
+function cgrpInit(){
+  const tl = document.querySelector("#w-cone .wbody > .tools"); if (!tl) return;
+  if (!Z.cgrpPos || typeof Z.cgrpPos !== "object") Z.cgrpPos = {};
+  const wb = tl.parentElement; let zTop = 10;
+  const groups = [...tl.querySelectorAll(":scope > .cgrp")];
+  const place = (g) => {
+    const p = Z.cgrpPos[g.dataset.g]; g.classList.toggle("cfloat", !!p);
+    if (!p) { g.style.left = g.style.top = ""; return; }
+    const tr = tl.getBoundingClientRect(), br = wb.getBoundingClientRect(), gw = g.offsetWidth, gh = g.offsetHeight;
+    const x = Math.max(br.left - tr.left, Math.min(p.x, br.right - tr.left - gw)), y = Math.max(br.top - tr.top, Math.min(p.y, br.bottom - tr.top - gh));
+    g.style.left = Math.round(x) + "px"; g.style.top = Math.round(y) + "px";
+  };
+  groups.forEach((g) => {
+    const lab = g.querySelector(".glab"); if (!lab) return;
+    g.dataset.g = lab.textContent.trim().toLowerCase();
+    lab.title = "Тяни — перенести группу куда угодно (поверх холста); двойной щелчок — обратно на полосу";
+    lab.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault(); try { lab.setPointerCapture(e.pointerId); } catch (err) { /* уже отпущен */ }
+      const r = g.getBoundingClientRect(), tr = tl.getBoundingClientRect(), key = g.dataset.g;
+      const p0 = Z.cgrpPos[key] || { x: r.left - tr.left, y: r.top - tr.top }, x0 = e.clientX, y0 = e.clientY; let moved = false;
+      g.style.zIndex = ++zTop;
+      const mv = (ev) => {
+        if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return;
+        moved = true; Z.cgrpPos[key] = { x: p0.x + ev.clientX - x0, y: p0.y + ev.clientY - y0 }; place(g);
+      };
+      const up = () => { lab.removeEventListener("pointermove", mv); lab.removeEventListener("pointerup", up); lab.removeEventListener("pointercancel", up); if (moved) save(); };
+      lab.addEventListener("pointermove", mv); lab.addEventListener("pointerup", up); lab.addEventListener("pointercancel", up);
+    });
+    lab.addEventListener("dblclick", () => { if (!Z.cgrpPos[g.dataset.g]) return; delete Z.cgrpPos[g.dataset.g]; place(g); save(); });
+    place(g);
+  });
+  addEventListener("resize", () => groups.forEach(place));
+}
 function soloApply(){
   const el = $(ZZ_SOLO); if (!el) return;
   document.body.classList.add("solo");
@@ -4133,6 +4171,7 @@ function init(){
   dockRestore();   // v0.025: окна, пристыкованные под полем строк
   if (ZZ_SOLO) soloApply();   // v0.141
   ctwInit();   // v0.158
+  cgrpInit();   // v0.177
   $("coneLockAll").onclick = () => $("coneLock").click();   // v0.167: общий замок над столбиком замков — та же галка
   { const h1 = document.querySelector("#top h1"); if (h1) { h1.title = "Щелчок — перезагрузить страницу"; h1.style.cursor = "pointer"; h1.onclick = () => location.reload(); } }   // v0.162, «клик — перезагрузка» (по названию в шапке)
   // v0.026: высоту поля строк, растянутую за угол, запоминаем (только когда под ним окна).
