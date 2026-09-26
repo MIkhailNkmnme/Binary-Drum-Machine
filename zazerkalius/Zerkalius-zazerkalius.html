@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.133. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.134. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.133</title>
+<title>Zazerkalius — v0.134</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -328,7 +328,10 @@ body.pane-icons #paneWins{padding:4px}
 #w-cone #coneCv{border-radius:6px}
 #w-cone:not(.collapsed) .whead{position:absolute;top:0;left:0;right:0;z-index:4;background:color-mix(in srgb, var(--panel) 72%, transparent);border-bottom:none}
 #w-cone .wbody > .tools{position:relative;z-index:3;margin-top:34px;padding:4px 8px;background:color-mix(in srgb, var(--panel) 72%, transparent)}
-#w-cone .wbody > #coneOut{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:4px 8px;background:color-mix(in srgb, var(--panel) 72%, transparent);max-height:40%;overflow:auto}
+#w-cone .wbody > #coneBot{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:4px 8px;background:color-mix(in srgb, var(--panel) 72%, transparent);max-height:45%;overflow:auto}   /* v0.134: текст + лог лазера */
+#coneLog{max-height:140px;overflow:auto;font-size:11.5px;line-height:1.35;font-variant-numeric:tabular-nums;white-space:normal}
+#coneLog > div{border-bottom:1px solid var(--line);padding:1px 0}
+#coneLogBox button{padding:0 6px;margin-left:4px}
 #w-cone .whint{position:relative;z-index:3;background:var(--panel)}
 .tpl{display:flex;gap:3px}
 .tpl .tb{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis}
@@ -359,7 +362,7 @@ body.nocur #rowList.multi .rw.cur .bits.la{background:transparent !important}
 /* v0.105, «режим дзен»: только конус на весь экран — всё остальное прячется; выход — Esc */
 body.zen #top,body.zen #rowsPane,body.zen #field,body.zen #split,body.zen .win:not(#w-cone),body.zen #fieldDock{display:none !important}
 body.zen #w-cone{position:fixed !important;inset:0 !important;left:0 !important;top:0 !important;width:auto !important;height:auto !important;z-index:1000 !important;border:none;border-radius:0;box-shadow:none}
-body.zen #w-cone .whead,body.zen #w-cone .wbody > .tools,body.zen #w-cone #coneOut,body.zen #w-cone .whint,body.zen .wgrip{display:none !important}
+body.zen #w-cone .whead,body.zen #w-cone .wbody > .tools,body.zen #w-cone #coneBot,body.zen #w-cone .whint,body.zen .wgrip{display:none !important}
 body.zen #w-cone #coneCv{border-radius:0;cursor:grab}
 #zenHint{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:1001;font:13px system-ui,sans-serif;color:var(--dim);background:color-mix(in srgb, var(--panel) 70%, transparent);padding:4px 12px;border-radius:12px;pointer-events:none;transition:opacity 1.2s;opacity:0}
 body.zen #zenHint{opacity:1} body.zen.zen-quiet #zenHint{opacity:0}
@@ -474,7 +477,7 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.133</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.134</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
@@ -1002,7 +1005,7 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
           <button id="bConeMirApply" title="⇄ по оси: отразить строки выделенных колец (или текущего) по их оси — это «реверс» кольца; при «180°» — повернуть на полкруга (↩ вернёт)">⇄ по оси</button>
           <!-- v0.098: крутить весь конус и кольца по отдельности -->
           <span class="dim" style="margin-left:6px">весь:</span><button id="bConeSpinL" title="Крутить весь конус против часовой — щелчок 15°, держишь — крутится. Правый щелчок — вернуть к началу (0°)">⟲</button><button id="bConeSpinR" title="Крутить весь конус по часовой — щелчок 15°, держишь — крутится. Правый щелчок — вернуть к началу (0°)">⟳</button>
-          <span class="dim" style="margin-left:6px">кольца:</span><button id="bConeRingL" title="Повернуть выделенные кольца (или текущее) на бит против часовой. Запертое — только на вид, открытое — сама строка (↩ вернёт)">◁</button><button id="bConeRingR" title="Повернуть выделенные кольца (или текущее) на бит по часовой. Запертое — только на вид, открытое — сама строка (↩ вернёт)">▷</button><select id="coneSpinMode" title="Как крутить: всё целиком — весь конус одним поворотом; каждое по биту — каждое кольцо на бит за шаг (маленькие вертятся быстрее, рисунок закручивается спиралью и раз в какое-то время все возвращаются); навстречу — чётные кольца по часовой, нечётные против, с одной скоростью"><option value="all">всё целиком</option><option value="bit">каждое по биту</option><option value="opp">навстречу через одно</option></select><button id="bConeAuto" title="▶ Крутить весь конус само, без остановки (скорость — ползунок рядом; минус — в другую сторону). Ещё раз — стоп">▶ крутить</button><label class="dim" title="Скорость кручения, градусов в секунду; минус — против часовой"> <input type="range" id="coneAutoSp" min="-120" max="120" step="5" value="30" style="width:70px;vertical-align:middle"></label><button id="bConeAimL" title="⌖◁ Довернуть строку 1 (только её, остальные кольца стоят) так, чтобы луч встал в предыдущую щель кольца 2 — против часовой. Можно и тянуть кольцо строки 1 мышью: оно защёлкнется в щели само. Правый щелчок — довод снят">⌖◁</button><button id="bConeAimR" title="⌖▷ Довернуть строку 1 (только её) так, чтобы луч встал в следующую щель кольца 2 — по часовой. Правый щелчок — довод снят">⌖▷</button><button id="bConeClockStop" title="⏸ На проходе: как только лазер (⌖ луч-часы) пройдёт все кольца до края, кручение встаёт — ровно в этом положении. Дальше — ▶ крутить. Включает и луч-часы">⏸ на проходе</button><span id="coneCycle" class="dim" style="margin:0 6px;font-variant-numeric:tabular-nums" title="Цикл кручения: круг — оборот стрелки (строки 1); сколько кругов, пока все кольца (и кольцо для заполнения) разом не встанут на свои места; сколько раз лазер прошёл до края. Правый щелчок по ▶ — счёт с нуля"></span><button id="bConeRec" title="⏺ Видео: запись холста конуса (только сам конус, без кнопок) в файл .webm. Ещё раз — стоп и сохранить. Удобно вместе с «▶ крутить»">⏺ видео</button><button id="bConeZen" title="🧘 Дзен: только конус, на весь экран — без кнопок, панелей и строк. Кручение, свет, 3D — как настроены. Выйти — Esc">🧘 дзен</button>
+          <span class="dim" style="margin-left:6px">кольца:</span><button id="bConeRingL" title="Повернуть выделенные кольца (или текущее) на бит против часовой. Запертое — только на вид, открытое — сама строка (↩ вернёт)">◁</button><button id="bConeRingR" title="Повернуть выделенные кольца (или текущее) на бит по часовой. Запертое — только на вид, открытое — сама строка (↩ вернёт)">▷</button><select id="coneSpinMode" title="Как крутить: всё целиком — весь конус одним поворотом; каждое по биту — каждое кольцо на бит за шаг (маленькие вертятся быстрее, рисунок закручивается спиралью и раз в какое-то время все возвращаются); навстречу — чётные кольца по часовой, нечётные против, с одной скоростью"><option value="all">всё целиком</option><option value="bit">каждое по биту</option><option value="opp">навстречу через одно</option></select><button id="bConeAuto" title="▶ Крутить весь конус само, без остановки (скорость — ползунок рядом; минус — в другую сторону). Ещё раз — стоп">▶ крутить</button><button id="bConeStepB" title="◀ Шаг назад: крутить назад (режимом рядом — по биту / навстречу) до прошлого события лазера — пока конец луча не сменится. Каждое событие — в лог лазера">◀</button><button id="bConeStepF" title="▶ Шаг вперёд: крутить (режимом рядом — по биту / навстречу) до следующего события лазера — луч упёрся в другую ячейку, пойман другим кольцом или прошёл. Каждое событие — в лог лазера">▶|</button><label class="dim" title="Скорость кручения, градусов в секунду; минус — против часовой"> <input type="range" id="coneAutoSp" min="-120" max="120" step="5" value="30" style="width:70px;vertical-align:middle"></label><button id="bConeAimL" title="⌖◁ Довернуть строку 1 (только её, остальные кольца стоят) так, чтобы луч встал в предыдущую щель кольца 2 — против часовой. Можно и тянуть кольцо строки 1 мышью: оно защёлкнется в щели само. Правый щелчок — довод снят">⌖◁</button><button id="bConeAimR" title="⌖▷ Довернуть строку 1 (только её) так, чтобы луч встал в следующую щель кольца 2 — по часовой. Правый щелчок — довод снят">⌖▷</button><button id="bConeClockStop" title="⏸ На проходе: как только лазер (⌖ луч-часы) пройдёт все кольца до края, кручение встаёт — ровно в этом положении. Дальше — ▶ крутить. Включает и луч-часы">⏸ на проходе</button><span id="coneCycle" class="dim" style="margin:0 6px;font-variant-numeric:tabular-nums" title="Цикл кручения: круг — оборот стрелки (строки 1); сколько кругов, пока все кольца (и кольцо для заполнения) разом не встанут на свои места; сколько раз лазер прошёл до края. Правый щелчок по ▶ — счёт с нуля"></span><button id="bConeRec" title="⏺ Видео: запись холста конуса (только сам конус, без кнопок) в файл .webm. Ещё раз — стоп и сохранить. Удобно вместе с «▶ крутить»">⏺ видео</button><button id="bConeZen" title="🧘 Дзен: только конус, на весь экран — без кнопок, панелей и строк. Кручение, свет, 3D — как настроены. Выйти — Esc">🧘 дзен</button>
           <button id="bConeAllHome" title="⟲ Всё на места: у ВСЕХ колец сразу — снять накрутку «на вид» (↻), остановить и сбросить кручение (со счётом кругов и проходов), снять довод строки 1 (луч-часы). Биты строк не меняются; если строку сдвигали открытым кольцом — это вернёт только ↩">⟲ всё на места</button><button id="bConeRotClear" title="↺ Снять накрутку «на вид» (↻) — у выделенных колец, ничего не выделено — у всех. Строки не меняются. Одно кольцо — щелчком по его «↻k» у номера строки">↺ снять ↻</button>
           <select id="coneRays" title="Лучи к центру от ЦЕНТРОВ бит (не от границ): видно, какие биты соседних колец стоят на одном луче и в какую границу или бит внутреннего кольца луч попадает. Границы бит — черты на самом кольце"><option value="off">без лучей</option><option value="cur">лучи от бит выделенных (текущего)</option><option value="all">лучи от бит всех колец</option></select>
         </div>
@@ -1011,7 +1014,13 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
           <canvas id="coneCv" style="flex:1 1 auto;min-width:0;width:0;min-height:260px;display:block;cursor:grab;background:var(--panel2);border-radius:4px;touch-action:none"></canvas>
           <div id="coneList" title="Строки — как в поле: щелчок — текущая, Ctrl + щелчок — выделить; 🔒/🔓 — замок этого кольца"></div>
         </div>
-        <div id="coneOut" class="out" style="margin-top:6px"></div>
+        <div id="coneBot">   <!-- v0.134: текст конуса и лог лазера — одной панелью внизу -->
+          <div id="coneOut" class="out"></div>
+          <div id="coneLogBox" style="display:none">
+            <div class="dim" style="margin-top:4px">📜 Лог лазера <span id="coneLogN"></span> <button id="bConeLogCopy" title="Скопировать весь лог (до 1000 записей), по порядку">⧉</button><button id="bConeLogClr" title="Очистить лог лазера (краска в ячейках остаётся — её стирает ✕ у строки для заполнения)">✕</button></div>
+            <div id="coneLog" class="out" title="Новые сверху. «стр 2: 2|1» — луч прошёл щель строки 2 между ячейками 2 и 1"></div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1119,8 +1128,8 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
 <div id="msg"></div>
 <div id="zenHint">🧘 дзен · Esc — выйти</div>
 
-<script src="zz-core.js?v=0133"></script>
-<script src="zz-ui.js?v=0133"></script>
+<script src="zz-core.js?v=0134"></script>
+<script src="zz-ui.js?v=0134"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
