@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.170. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.171. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.170</title>
+<title>Zazerkalius — v0.171</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -73,6 +73,8 @@ code{font-family:var(--ff);font-size:.95em}
 #fontBar select,#fontBar input[type=range]{flex:1;min-width:0;width:auto !important}
 body.pane-icons #fontBar{display:none}
 /* v0.054: закреплённые кнопки в шапке */
+/* v0.171, по снимку светлых толстых полос прокрутки — «нормальные скролы: чёрные, тонкие»: везде тонкие, ползунок цвета линий, дорожка прозрачная */
+*{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
 #pinBar{display:flex;gap:4px;align-items:center;min-width:0;flex:0 1 auto;overflow-x:auto;scrollbar-width:thin}
 #pinBar button{font-size:12px;padding:2px 8px;white-space:nowrap;max-width:190px;overflow:hidden;text-overflow:ellipsis;flex:0 0 auto}
 #pinBar button.pinw{border-style:dashed}
@@ -582,7 +584,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.170</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.171</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
