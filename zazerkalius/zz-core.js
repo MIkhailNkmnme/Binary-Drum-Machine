@@ -972,3 +972,32 @@ function zzTriBlock(rows){
   for (let i = 1; i < rows.length; i++) if (rows[i].length !== rows[i - 1].length + 1) return { ok: false, at: i };
   return { ok: rows.length >= 2, at: -1 };
 }
+/* ─── ▲ Пирамида Паскаля по модулю 2 (v0.109) ─────────────────────────────────────────────────
+   Этаж k — треугольник клеток (a, b, c) с a + b + c = k; клетка = XOR трёх соседей этажом выше: (a−1, b, c), (a, b−1, c),
+   (a, b, c−1). Этаж хранится строками: строка r = a + b (0…k), в ней a = 0…r, а c = k − r. Тогда новая клетка (r, a) =
+   старая (r, a) ⊕ старая (r−1, a−1) ⊕ старая (r−1, a) — сама клетка плюс «🔺+1» строки над ней. От «1» выходит тетраэдр
+   Серпинского: на этаже k единица там, где a + b + c = k складывается без переносов, и единиц на этаже 3^(единиц в k).
+   Грань c = 0 (последняя строка этажа) живёт сама по себе и растёт ровно как треугольник Паскаля от своей верхней строки.
+   zzPyrStep: этаж k−1 (k строк) → этаж k (k + 1 строк). */
+function zzPyrStep(L){
+  const k = L.length, out = [];
+  for (let r = 0; r <= k; r++) {
+    const row = new Uint8Array(r + 1), up = L[r - 1], same = L[r];
+    for (let a = 0; a <= r; a++) row[a] = (same ? same[a] : 0) ^ (up && a >= 1 ? up[a - 1] : 0) ^ (up && a < r ? up[a] : 0);
+    out.push(row);
+  }
+  return out;
+}
+// seed — этаж-затравка (массив Uint8Array, строка r длиной r + 1); n — сколько этажей всего, считая затравку; maxOnes — остановиться,
+// когда единиц станет больше (иначе рисовать нечем). Возвращает этажи и сколько их вышло.
+function zzPyramid(seed, n, maxOnes){
+  const layers = [seed]; let ones = 0;
+  const cnt = (L) => { let c = 0; for (const row of L) for (let a = 0; a < row.length; a++) c += row[a]; return c; };
+  ones = cnt(seed);
+  while (layers.length < n) {
+    const nx = zzPyrStep(layers[layers.length - 1]), c = cnt(nx);
+    if (maxOnes && ones + c > maxOnes) return { layers, ones, cut: true };
+    layers.push(nx); ones += c;
+  }
+  return { layers, ones, cut: false };
+}

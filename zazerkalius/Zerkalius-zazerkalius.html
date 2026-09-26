@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.108. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.111. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.108</title>
+<title>Zazerkalius — v0.111</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -91,6 +91,10 @@ body.pane-icons #main{grid-template-columns:48px var(--rowsW, 44%) 6px 1fr}
 body.field-right #main{grid-template-columns:250px 1fr 6px var(--rowsW, 44%)}
 body.field-right.pane-icons #main{grid-template-columns:48px 1fr 6px var(--rowsW, 44%)}
 body.field-right #rowsPane{order:0} body.field-right #desk{order:1} body.field-right #split{order:2} body.field-right #field{order:3}
+/* v0.109, «кнопка свернуть поле строк»: поле и разделитель спрятаны, в сетке остаются две колонки — панель и окна */
+body.field-hidden #field,body.field-hidden #split{display:none}
+body.field-hidden #main,body.field-hidden.field-right #main{grid-template-columns:250px 1fr}
+body.field-hidden.pane-icons #main,body.field-hidden.field-right.pane-icons #main{grid-template-columns:48px 1fr}
 body.pane-icons #rowsPane{overflow-y:auto;overflow-x:hidden}
 body.pane-icons #bPaneIcons{position:static;margin:6px 4px;font-size:13px}
 body.pane-icons #rowsPane .pane-head,body.pane-icons #maskBar,body.pane-icons #maskBar2 select,
@@ -261,6 +265,9 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 .no .rc{display:inline-grid;grid-template-columns:minmax(3ch,auto) auto minmax(3ch,auto);align-items:baseline}
 .no .rc > :first-child{text-align:right} .no .rc > :last-child{text-align:left}
 #w-bal .wbody,#w-steps .wbody{display:flex;flex-direction:column}
+#w-pyr .wbody{display:flex;flex-direction:column}   /* v0.109: холст пирамиды растёт с окном */
+#w-pyr .wbody > *{flex:0 0 auto}
+#w-pyr .wbody > #pyrCv{flex:1 1 0;min-height:260px}   /* основа 0: размер холста в пикселях не раздувает окно */
 /* v0.070: галерея фигур разложения */
 #tilesGal{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;align-items:flex-end}
 .tfig{border:1px solid var(--line);border-radius:4px;padding:4px 6px;background:var(--panel2);text-align:center}
@@ -441,7 +448,7 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.108</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.111</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
@@ -450,6 +457,7 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
   <button id="bPack" title="Окна сами прижимаются к верху: свернул, растянул или перетащил окно — нижние поднимаются и занимают место. Щелчок — выключить / включить">⤒ К верху</button>
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bFieldSide" title="⇆ Поле строк справа: окна (конус и остальные) — слева, поле строк — справа; ещё раз — как было. Ширина поля тянется разделителем, как прежде">⇆ поле справа</button>
+  <button id="bFieldHide" title="▭ Свернуть поле строк: оно прячется целиком вместе с разделителем, окна (конус и остальные) занимают его место. Строки при этом не меняются, кнопки слева и окна работают с ними как прежде. Окна, прикреплённые под полем, прячутся вместе с ним. Ещё раз — поле на месте">▭ поле строк</button>
   <button id="bLayout" title="Разложить окна заново по местам по умолчанию — все развёрнуты">📐 Разложить</button>
   <button id="bCollapseAll" title="Свернуть все окна — видны одни шапки (места не меняются). Если все уже свёрнуты — развернуть все">▭ Свернуть</button>
   <button id="bHelp" title="Окно подсказок: что здесь что и почему">📖 Подсказки</button>
@@ -943,6 +951,8 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
           <button id="bConeRingLock" title="🔒 Замок кольца — свой у каждого: выделенные кольца (или текущее) запереть / отпереть. Запертое кольцо крутится мышью только на вид — строка не меняется, а положение запоминается у этого кольца; незапертое крутит саму строку. Правый щелчок — снять свой замок (кольцо снова по общей галке «запрет сдвига строк»)">🔒 кольца</button>
           <label class="dim" title="Скрыть все кольца, кроме выделенных (и текущего). Выделить несколько — Ctrl + щелчок по кольцу (или по номерам строк в поле: Ctrl — добавить, Shift — диапазон)"><input type="checkbox" id="coneOnlySel"> только выделенные</label>
           <label class="dim" title="Сектора к центру: каждый бит выделенных колец (ничего не выделено — текущего) закрашивает свой сектор до центра своим цветом, полупрозрачно, к центру бледнея. Выделить несколько — Ctrl + щелчок по кольцу"><input type="checkbox" id="coneSect"> сектора к центру</label>
+          <!-- v0.109: этажи-многоугольники -->
+          <label class="dim" title="⬡ Многоугольники: строка из n бит — правильный n-угольник вместо кольца (3 бита — треугольник, 4 — квадрат…), бит — сторона, границы бит — вершины. Конус становится ступенчатой пирамидой; в 3D — тоже. Строка из 1 бита — точка в центре, из 2 бит — две Г углом в центре, в разные стороны (вместе — крест); граница между битами — черта в щели между Г. Всё остальное — лучи, оси, хорды, кручение — работает так же"><input type="checkbox" id="conePoly"> ⬡ многоугольники</label>
           <!-- v0.082: конус в объёме -->
           <label class="dim" title="3D: кольца на своих высотах — конус поднят, видно нити, лучи, хорды. Тяни — вращать, Ctrl — сдвиг, колесо — масштаб, двойной щелчок — вид по умолчанию. Крутить кольца и выделять щелчком — в плоском виде"><input type="checkbox" id="cone3d"> 3D</label>
           <label class="dim" title="⧗ Зеркало вниз — октаэдр, как в знаке Zerkalius: под основанием (последним кольцом) — та же пирамида вниз, отражённая и инвертированная (0 ↔ 1). Видно в 3D — галка его включит"><input type="checkbox" id="coneOcta"> ⧗ зеркало вниз</label>
@@ -966,6 +976,31 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
           <div id="coneList" title="Строки — как в поле: щелчок — текущая, Ctrl + щелчок — выделить; 🔒/🔓 — замок этого кольца"></div>
         </div>
         <div id="coneOut" class="out" style="margin-top:6px"></div>
+      </div>
+    </section>
+
+    <!-- ▲ ПИРАМИДА ПАСКАЛЯ (v0.109) -->
+    <section class="win" id="w-pyr" data-title="▲ Пирамида Паскаля">
+      <div class="whint">
+        <p>Треугольник Паскаля в объёме. Каждый <b>этаж</b> — треугольник клеток; клетка нового этажа — <b>XOR трёх соседей</b> этажом выше (в обычном треугольнике — XOR двух). От «1» выходит <b>тетраэдр Серпинского</b>: на этаже k единиц ровно 3<sup>m</sup>, где m — сколько единиц в двоичной записи k; этажи 2<sup>j</sup> — три точки в углах.</p>
+        <p>Каждая боковая <b>грань</b> пирамиды — обычный треугольник Паскаля по модулю 2, то же, что строит 🔺+1. Затравка «от строки» кладёт текущую строку нижним краем верхнего этажа: грань под ней — ровно треугольник от этой строки, а внутрь уходит то, чего в плоском треугольнике нет. «От строк поля» — весь столбик (или выделенные) становится верхним этажом целиком: так в пирамиду можно вернуть этаж, выгруженный «⤓ этаж в строки».</p>
+        <p>Тяни — вращать, Ctrl — сдвиг, колесо — масштаб, двойной щелчок — вид по умолчанию. «Этаж» — показать этажи до него; «только он» — один этаж плоским треугольником. «▶ расти» — этажи появляются по одному. Штрихом — каркас тетраэдра от его вершины.</p>
+      </div>
+      <div class="wbody">
+        <div class="tools">
+          <select id="pyrSeed" title="С чего начать: «1» — тетраэдр Серпинского; текущая строка — нижним краем верхнего этажа (грань под ней растёт, как 🔺+1 от строки); строки поля — верхним этажом целиком (выделенные, если их ≥ 2; строка i встаёт на место «длина первой − 1 + i»)">
+            <option value="one">от «1» — Серпинский</option><option value="row">от текущей строки</option><option value="tri">от строк поля — этажом</option>
+          </select>
+          <label class="dim" title="Сколько этажей строить, считая затравку. Больше 120 000 единиц не рисуется — тогда этажей будет меньше, об этом скажет строка внизу">этажей <input type="range" id="pyrN" min="1" max="160" step="1" value="32" style="width:90px;vertical-align:middle"> <span id="pyrNv"></span></label>
+          <label class="dim" title="Показать этажи до этого (с галкой «только он» — один этот этаж)">этаж <input type="range" id="pyrShow" min="1" max="32" step="1" value="32" style="width:90px;vertical-align:middle"></label>
+          <label class="dim" title="Показать только выбранный этаж — плоский треугольник внутри пирамиды"><input type="checkbox" id="pyrOne"> только он</label>
+          <label class="dim" title="Цвет по этажу — от голубого вверху через сиреневый к оранжевому внизу"><input type="checkbox" id="pyrHue"> цвет по этажу</label>
+          <button id="bPyrGrow" title="Этажи появляются по одному, сверху вниз. Ещё раз — стоп">▶ расти</button>
+          <button id="bPyrSpin" title="Крутить пирамиду вокруг оси. Ещё раз — стоп">⟳ крутить</button>
+          <button id="bPyrOut" title="⤓ Выбранный этаж (ползунок «этаж») — в поле строк, под текущей: строки длиной 1, 2, …, k + 1; последняя — грань пирамиды (↩ вернёт)">⤓ этаж в строки</button>
+        </div>
+        <canvas id="pyrCv" style="width:100%;min-height:260px;display:block;cursor:grab;background:var(--panel2);border-radius:4px;touch-action:none"></canvas>
+        <div id="pyrOut" class="out" style="margin-top:6px"></div>
       </div>
     </section>
 
@@ -1048,8 +1083,8 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
 <div id="msg"></div>
 <div id="zenHint">🧘 дзен · Esc — выйти</div>
 
-<script src="zz-core.js?v=0108"></script>
-<script src="zz-ui.js?v=0108"></script>
+<script src="zz-core.js?v=0111"></script>
+<script src="zz-ui.js?v=0111"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
