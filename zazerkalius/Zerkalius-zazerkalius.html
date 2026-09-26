@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.075. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.104. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.075</title>
+<title>Zazerkalius — v0.104</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -86,6 +86,11 @@ body.pinmode button:not(#bPinMode):not(#top button):not(#pinBar button),body.pin
 #rowsPane{position:relative}
 #bPaneIcons{position:absolute;top:4px;right:8px;padding:0 7px;font-size:12px;line-height:18px;z-index:2}
 body.pane-icons #main{grid-template-columns:48px var(--rowsW, 44%) 6px 1fr}
+/* v0.091, «строки перемести с их меню туда — справа от конуса, или просто конус дай располагать слева от поля строк»: колонки
+   меняются местами — окна слева, поле строк справа */
+body.field-right #main{grid-template-columns:250px 1fr 6px var(--rowsW, 44%)}
+body.field-right.pane-icons #main{grid-template-columns:48px 1fr 6px var(--rowsW, 44%)}
+body.field-right #rowsPane{order:0} body.field-right #desk{order:1} body.field-right #split{order:2} body.field-right #field{order:3}
 body.pane-icons #rowsPane{overflow-y:auto;overflow-x:hidden}
 body.pane-icons #bPaneIcons{position:static;margin:6px 4px;font-size:13px}
 body.pane-icons #rowsPane .pane-head,body.pane-icons #maskBar,body.pane-icons #maskBar2 select,
@@ -98,6 +103,9 @@ body.pane-icons #rowsPane #bPaneIcons{width:auto;padding:2px 0}
 #field{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg)}
 #fieldBar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);background:var(--panel);font-size:12px}
 #fieldBar .sp{flex:1}
+/* v0.077, «текст дёргает поле»: строка «70 стр. · 2485 бит · текущая … · против …» меняла длину и переносилась — полоса над
+   полем росла и сжималась, строки прыгали. Теперь она в одну строку: не влезает — многоточие, целиком — в подсказке. */
+#fieldInfo{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 0}
 #split{cursor:col-resize;background:var(--line);opacity:.6}
 /* v0.025: окна под полем строк. Тащишь окно за шапку — оно едет поверх всего (.dragging, position:fixed);
    отпустил над полем строк — встаёт в #fieldDock на всю ширину колонки (.docked); вытащил — снова на столе. */
@@ -122,7 +130,18 @@ body.pane-icons #rowsPane #bPaneIcons{width:auto;padding:2px 0}
 #w-view .wbody{display:flex;flex-direction:column}
 #w-cone .wbody{display:flex;flex-direction:column}   /* v0.048: холст конуса растёт с окном */
 #w-cone .wbody > *{flex:0 0 auto}
-#w-cone .wbody > #coneCv{flex:1 1 auto}
+#w-cone .wbody > #coneMain{flex:1 1 auto;display:flex;gap:6px;min-height:260px}
+/* v0.088: таблица строк конуса */
+#coneList{flex:0 0 38%;overflow:auto;border:1px solid var(--line);border-radius:4px;background:var(--bg);font-family:var(--ff);font-size:calc(var(--fs) * .75);line-height:1.3;user-select:none}
+#coneList .cl{display:flex;align-items:center;gap:6px;padding:0 6px;white-space:pre;cursor:pointer}
+#coneList .cl:hover{background:var(--panel2)}
+#coneList .cl.cur{background:var(--panel2);box-shadow:inset 3px 0 0 var(--gold)}
+#coneList .cl.sel .cn{color:var(--acc2);font-weight:700}
+#coneList .cl.hid{opacity:.35}
+#coneList .cn{flex:0 0 3ch;text-align:right;color:var(--dim);font-family:system-ui,sans-serif;font-size:11px}
+#coneList .clk{flex:0 0 auto;padding:0 3px;font-size:11px;line-height:1.2;border:1px solid transparent;background:none;cursor:pointer}
+#coneList .clk.own{border-color:var(--gold)}
+#coneList .cr{flex:0 0 auto;color:var(--dim);font-family:system-ui,sans-serif;font-size:10px}
 #w-view .wbody > *{flex:0 0 auto}
 #w-view .wbody > #viewCvWrap{flex:1 1 auto}
 /* v0.029: холст в обёртке, стрелки поворота — в правом верхнем углу картинки */
@@ -156,7 +175,9 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 #rowList{flex:1;overflow:auto;padding:0 0 14px}
 /* v0.015: одна сетка на всё поле — колонка номеров + 1…4 поля строк. Строка (.rw) — display:contents,
    поэтому поля стоят ровными колонками, а у каждого своя ось: выравнивание — внутри своей колонки. */
-#rowList .rl-inner{display:inline-grid;min-width:100%;grid-template-columns:minmax(3.2em, max-content) repeat(var(--lanes, 1), minmax(max-content, 1fr));padding-top:6px}
+#rowList .rl-inner{display:inline-grid;min-width:100%;grid-template-columns:max-content repeat(var(--lanes, 1), minmax(max-content, 1fr));padding-top:6px}
+/* v0.092: колонка номеров — всегда по содержимому (замок + номер + числа); прежде при широких строках она ужималась до 3.2em, и лишнее уезжало за левый край */
+.rw > .no{min-width:3.2em}
 .rw{display:contents;cursor:pointer}
 .rw > span{white-space:pre;padding:0 8px}
 .rw:hover > span{background:var(--panel2)}
@@ -217,6 +238,26 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 /* v0.050: «выровняй номера и числа» — номер и числа у номеров в колонках постоянной ширины, цифры одной ширины */
 .no{font-variant-numeric:tabular-nums}
 .no .rn{display:inline-block;min-width:3ch;text-align:right}
+/* v0.092, «это (таблица у конуса) тогда не нужно — прямо на строках расположи, у номеров, перед номерами замки (значки)»:
+   замок кольца — перед номером строки в поле; таблица справа от конуса убрана */
+.no .rlk{display:inline-block;margin-right:3px;font-size:10px;line-height:1;cursor:pointer;opacity:.3;border:1px solid transparent;border-radius:3px;padding:0 1px}
+.no .rlk.on{opacity:1} .no .rlk.own{border-color:var(--gold)} .no .rlk:hover{opacity:1}
+.no .rrot{font-size:9px;color:var(--dim);margin-left:2px}
+.no .rrot:not(:empty){cursor:pointer} .no .rrot:not(:empty):hover{color:var(--red);text-decoration:line-through}   /* v0.101: щелчок по ↻k — снять накрутку */
+/* v0.093, «тут шрифт и значки покрупнее, и выровняй всё, может, столбики — границы между ними тонкие»: у номера строки —
+   ровные столбики: замок | поворот ↻ | номер | неподв.·меняющ. | 0:1; между столбиками тонкие черты; шрифт крупнее */
+.rw > .no{display:grid !important;grid-template-columns:1.9em 2.6em 2.3em 4.6em 4.6em;justify-content:start;align-items:stretch;font-size:13px;padding:0}
+/* v0.096, «номера гуляют при выделениях»: столбики чисел были «auto» и выравнивались по правому краю — у выделенной (жирной)
+   строки числа шире, и весь ряд уезжал влево. Теперь у каждого столбика своя постоянная ширина и ряд прижат влево. */
+.rw > .no > .rc{overflow:hidden}
+.rw > .no > span{display:flex;align-items:center;padding:0 5px;border-left:1px solid var(--line);margin:0}
+.rw > .no > span:first-child{border-left:none;justify-content:center}
+.rw > .no > .rrot{justify-content:flex-end;font-size:11px;color:var(--dim)}
+.rw > .no > .rn{justify-content:flex-end;min-width:0}
+.rw > .no > .rlk{font-size:14px;line-height:1.1;border-radius:3px;padding:0 3px}
+.rw > .no > .rlk.own{box-shadow:inset 0 0 0 1px var(--gold);border-color:transparent}
+.rw > .no > .rc{font-size:12px;margin:0;display:inline-grid !important}
+#coneList{display:none !important}
 .no .rc{display:inline-grid;grid-template-columns:minmax(3ch,auto) auto minmax(3ch,auto);align-items:baseline}
 .no .rc > :first-child{text-align:right} .no .rc > :last-child{text-align:left}
 #w-bal .wbody,#w-steps .wbody{display:flex;flex-direction:column}
@@ -243,6 +284,19 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 #tplBar{display:flex;gap:4px;padding:0 10px 6px}
 #tplBar button{flex:1;padding:2px 4px}
 #tplList{flex:1;overflow:auto;padding:0 10px 10px;display:flex;flex-direction:column;gap:3px;min-height:60px}
+/* v0.094: свёрнутые окна в левой панели (при «⇆ поле справа») */
+#paneWins{display:flex;flex-direction:column;gap:3px;padding:0 10px 10px;overflow:auto;max-height:45%}
+#paneWins button{text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.pane-icons #paneWins{padding:4px}
+/* v0.094, «верхняя граница поля конуса — до конца, заголовок — внутрь поля»: холст конуса — на всё окно, от верхнего края;
+   шапка, кнопки и текст — поверх него, полупрозрачно */
+#w-cone .wbody{position:static;padding:0}
+#w-cone #coneMain{position:absolute;inset:0;z-index:0;min-height:0}
+#w-cone #coneCv{border-radius:6px}
+#w-cone:not(.collapsed) .whead{position:absolute;top:0;left:0;right:0;z-index:4;background:color-mix(in srgb, var(--panel) 72%, transparent);border-bottom:none}
+#w-cone .wbody > .tools{position:relative;z-index:3;margin-top:34px;padding:4px 8px;background:color-mix(in srgb, var(--panel) 72%, transparent)}
+#w-cone .wbody > #coneOut{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:4px 8px;background:color-mix(in srgb, var(--panel) 72%, transparent);max-height:40%;overflow:auto}
+#w-cone .whint{position:relative;z-index:3;background:var(--panel)}
 .tpl{display:flex;gap:3px}
 .tpl .tb{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis}
 .tpl .tx{padding:0 6px;color:var(--dim)}
@@ -270,7 +324,8 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
    тексты-итоги окон (.out), строки и поля ввода выделяются и копируются, как прежде. */
 button,label,select,.tools,.whead,#top,.pane-head,#fieldBar,#rowInputBar,#rowBtns,#maskBar2,#fontBar,#tplBar,#tplList,canvas,.btbl th,#viewArrows{user-select:none;-webkit-user-select:none}
 input,textarea,.out{user-select:text;-webkit-user-select:text}
-.win.maxed .whead .bm{color:var(--gold);border-color:var(--gold)}   /* v0.060: окно на всю половину */
+.win.maxed .whead .bm{color:var(--gold);border-color:var(--gold)}
+.win.maxed{border-radius:0;border-top:none;border-left:none;border-right:none;box-shadow:none}   /* v0.095: развёрнутое — вплотную к краям стола */   /* v0.060: окно на всю половину */
 /* v0.043: «за край всей нижней границы — цепление для изменения размера» — полоса вдоль всего низа окна тянет высоту */
 .wgrip{position:absolute;left:0;right:18px;bottom:0;height:7px;cursor:ns-resize;z-index:3;touch-action:none}
 .wgrip:hover,.wgrip.on{background:linear-gradient(transparent 3px,var(--acc) 3px,var(--acc) 5px,transparent 5px);opacity:.7}
@@ -375,7 +430,7 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.075</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.104</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
@@ -383,6 +438,7 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
   <button id="bTheme" title="Светлый или тёмный фон всей страницы. Выбор запоминается; пока не выбран — как в системе">☀ Светлый</button>
   <button id="bPack" title="Окна сами прижимаются к верху: свернул, растянул или перетащил окно — нижние поднимаются и занимают место. Щелчок — выключить / включить">⤒ К верху</button>
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
+  <button id="bFieldSide" title="⇆ Поле строк справа: окна (конус и остальные) — слева, поле строк — справа; ещё раз — как было. Ширина поля тянется разделителем, как прежде">⇆ поле справа</button>
   <button id="bLayout" title="Разложить окна заново по местам по умолчанию — все развёрнуты">📐 Разложить</button>
   <button id="bCollapseAll" title="Свернуть все окна — видны одни шапки (места не меняются). Если все уже свёрнуты — развернуть все">▭ Свернуть</button>
   <button id="bHelp" title="Окно подсказок: что здесь что и почему">📖 Подсказки</button>
@@ -441,6 +497,9 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
       <button id="bTplAll" title="Сохранить ВЕСЬ столбик одним шаблоном (запоминается). Щелчок вставит все его строки под текущей">＋ Столбик</button>
     </div>
     <div id="tplList"></div>
+    <!-- v0.094: при «⇆ поле справа» свёрнутые окна — здесь, кнопками -->
+    <div class="pane-head" id="paneWinsHead" style="display:none">Окна</div>
+    <div id="paneWins"></div>
   </aside>
 
   <!-- v0.010: поле строк — в центре, как в других машинах. Щелчок — текущая строка; двойной щелчок —
@@ -861,7 +920,7 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
     <section class="win" id="w-cone" data-title="◯ Конус">
       <div class="whint">
         <p>Каждая строка свёрнута в <b>кольцо</b>, вид сверху: строка 0 — в центре, дальше кольца расходятся наружу, каждое на бит длиннее — треугольник, свёрнутый в конус. На кольце нет начала, поэтому все повороты строки — одно и то же: <code>111</code> как ни крути — <code>111</code>, <code>1000</code> — это и <code>0100</code>, и <code>0010</code>. Такое кольцо — <b>ожерелье</b>.</p>
-        <p><b>Запрет сдвига строк</b> (включён сразу): кольца мышью не крутятся, строки не меняются — тянешь, двигается весь вид, щелчок — выбрать строку. <b>Лучи</b> — от границ бит текущего кольца (или всех) к центру: видно, какие биты соседних колец лежат на одном луче. Сними запрет — и: <b>тяни по кольцу</b> — крутится оно и <b>сама строка в поле</b>, на каждом целом бите (↩ вернёт весь поворот разом); <b>щелчок</b> без поворота — строка становится текущей (обведена золотом); <b>наведение</b> — кольцо обводится, его строка в поле подсвечивается. Правка строк в поле — кольца меняются сразу. Цвета — как у бит в поле (неподвижные красным, если там включено «неподв.»); крупно — видны и сами символы 0 / 1. Жёлтая черта сверху — где стоит бит 0 неповёрнутой строки. <b>Колесо</b> — масштаб вокруг курсора, тянешь мимо колец (или с Ctrl) — сдвиг, двойной щелчок — как было. </p>
+        <p><b>Запрет сдвига строк</b> (включён сразу): кольца мышью не крутятся, строки не меняются — тянешь, двигается весь вид, щелчок — выбрать строку. <b>Лучи</b> — от границ бит текущего кольца (или всех) к центру: видно, какие биты соседних колец лежат на одном луче. Сними запрет — и: <b>тяни по кольцу</b> — крутится оно и <b>сама строка в поле</b>, на каждом целом бите (↩ вернёт весь поворот разом); <b>щелчок</b> без поворота — строка становится текущей (обведена золотом); <b>наведение</b> — кольцо обводится, его строка в поле подсвечивается. Правка строк в поле — кольца меняются сразу. Цвета — как у бит в поле (неподвижные красным, если там включено «неподв.»); крупно — видны и сами символы 0 / 1. Жёлтый штрих сверху — где стоит бит 0 неповёрнутой строки. Границы бит на кольце — цветом там, где биты разные: <b>0→1 — сиреневая</b>, <b>1→0 — бирюзовая</b> (по часовой); между одинаковыми — тонкая бледная. Края колец разного цвета: <b>внутренний — голубой</b>, <b>внешний — оранжевый</b>; у текущего кольца оба толще. <b>Колесо</b> — масштаб вокруг курсора, тянешь мимо колец (или с Ctrl) — сдвиг, двойной щелчок — как было. </p>
         <p>«◯ к наименьшему» — каждая строка поворачивается в свой наименьший вид: одинаковые кольца становятся одинаковыми на глаз и в поле. Одинаковые кольца — одной цветной обводкой. Внизу: в сколько разных положений встаёт текущее кольцо (у <code>111</code> — 1, у <code>1010</code> — 2, у <code>1000</code> — 4), его наименьший вид и строки с тем же кольцом. Разных колец длины n примерно в n раз меньше, чем строк: если начало не важно, строка как кольцо стоит на log₂ n бит меньше; если важно — эти биты уходят на номер поворота.</p>
       </div>
       <div class="wbody">
@@ -870,9 +929,31 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
           <label class="dim" title="Кольца с одним ожерельем — одной цветной обводкой"><input type="checkbox" id="coneSame" checked> одинаковые — цветом</label>
           <!-- v0.055: запрет сдвига строк (по умолчанию включён) и лучи к центру -->
           <label class="dim" title="Кольца не крутятся мышью, и строки в поле не сдвигаются: тянешь — двигается весь вид, щелчок — выбрать строку. Снять — и кольца снова крутят сами строки"><input type="checkbox" id="coneLock"> запрет сдвига строк</label>
-          <select id="coneRays" title="Лучи к центру от границ бит: видно, какие биты соседних колец стоят на одном луче"><option value="off">без лучей</option><option value="cur">лучи от текущего кольца</option><option value="all">лучи от всех колец</option></select>
+          <button id="bConeRingLock" title="🔒 Замок кольца — свой у каждого: выделенные кольца (или текущее) запереть / отпереть. Запертое кольцо крутится мышью только на вид — строка не меняется, а положение запоминается у этого кольца; незапертое крутит саму строку. Правый щелчок — снять свой замок (кольцо снова по общей галке «запрет сдвига строк»)">🔒 кольца</button>
+          <label class="dim" title="Скрыть все кольца, кроме выделенных (и текущего). Выделить несколько — Ctrl + щелчок по кольцу (или по номерам строк в поле: Ctrl — добавить, Shift — диапазон)"><input type="checkbox" id="coneOnlySel"> только выделенные</label>
+          <label class="dim" title="Сектора к центру: каждый бит выделенных колец (ничего не выделено — текущего) закрашивает свой сектор до центра своим цветом, полупрозрачно, к центру бледнея. Выделить несколько — Ctrl + щелчок по кольцу"><input type="checkbox" id="coneSect"> сектора к центру</label>
+          <!-- v0.082: конус в объёме -->
+          <label class="dim" title="3D: кольца на своих высотах — конус поднят, видно нити, лучи, хорды. Тяни — вращать, Ctrl — сдвиг, колесо — масштаб, двойной щелчок — вид по умолчанию. Крутить кольца и выделять щелчком — в плоском виде"><input type="checkbox" id="cone3d"> 3D</label>
+          <label class="dim" title="⧗ Зеркало вниз — октаэдр, как в знаке Zerkalius: под основанием (последним кольцом) — та же пирамида вниз, отражённая и инвертированная (0 ↔ 1). Видно в 3D — галка его включит"><input type="checkbox" id="coneOcta"> ⧗ зеркало вниз</label>
+          <label class="dim" title="✨ Свет: единицы и неподвижные биты светятся своим цветом, из центра (в 3D — от оси) идёт свет, в 3D ближнее ярче дальнего. На тёмном фоне — лампа горит. Тяжелее для отрисовки — на больших столбиках кручение может идти медленнее"><input type="checkbox" id="coneGlow"> ✨ свет</label>
+          <label class="dim" title="Высота конуса: насколько кольца разнесены по высоте (0 — плоско)">высота <input type="range" id="cone3H" min="0" max="4" step="0.1" value="1" style="width:80px;vertical-align:middle"></label>
+          <!-- v0.080: зеркало кольца — ось через центр -->
+          <select id="coneMir" title="Зеркало КОЛЬЦА: ось через центр. На кольце нет начала — осей зеркала столько, сколько бит; «как у строки» — та, что даёт обычный ⇄. Неподвижные биты (равные своему отражению) — красным, пары бит через ось соединены хордами: золотом — равные, серым — разные. «Через центр 180°» — пары диаметрально напротив; у нечётного кольца напротив бита — граница, то есть пара бит (00, 01, 10, 11): зелёный — бит совпал с обоими, золотой — с одним, красный — ни с одним. Для выделенных колец, ничего не выделено — для текущего">
+            <option value="off">без оси</option><option value="best">ось: лучшая</option><option value="lin">ось: как у строки ⇄</option><option value="man">ось: вручную ◀ ▶</option><option value="c180">через центр 180°</option>
+          </select>
+          <button id="bConeAxL" title="Повернуть ось на полбита против часовой — у выделенных колец (или текущего); у каждого кольца своя ось, запоминается. Правый щелчок — вернуть оси этих колец к оси строки">◀</button><button id="bConeAxR" title="Повернуть ось на полбита по часовой — у выделенных колец (или текущего); у каждого кольца своя ось, запоминается. Правый щелчок — вернуть оси этих колец к оси строки">▶</button>
+          <button id="bConeMirApply" title="⇄ по оси: отразить строки выделенных колец (или текущего) по их оси — это «реверс» кольца; при «180°» — повернуть на полкруга (↩ вернёт)">⇄ по оси</button>
+          <!-- v0.098: крутить весь конус и кольца по отдельности -->
+          <span class="dim" style="margin-left:6px">весь:</span><button id="bConeSpinL" title="Крутить весь конус против часовой — щелчок 15°, держишь — крутится. Правый щелчок — вернуть к началу (0°)">⟲</button><button id="bConeSpinR" title="Крутить весь конус по часовой — щелчок 15°, держишь — крутится. Правый щелчок — вернуть к началу (0°)">⟳</button>
+          <span class="dim" style="margin-left:6px">кольца:</span><button id="bConeRingL" title="Повернуть выделенные кольца (или текущее) на бит против часовой. Запертое — только на вид, открытое — сама строка (↩ вернёт)">◁</button><button id="bConeRingR" title="Повернуть выделенные кольца (или текущее) на бит по часовой. Запертое — только на вид, открытое — сама строка (↩ вернёт)">▷</button><select id="coneSpinMode" title="Как крутить: всё целиком — весь конус одним поворотом; каждое по биту — каждое кольцо на бит за шаг (маленькие вертятся быстрее, рисунок закручивается спиралью и раз в какое-то время все возвращаются); навстречу — чётные кольца по часовой, нечётные против, с одной скоростью"><option value="all">всё целиком</option><option value="bit">каждое по биту</option><option value="opp">навстречу через одно</option></select><button id="bConeAuto" title="▶ Крутить весь конус само, без остановки (скорость — ползунок рядом; минус — в другую сторону). Ещё раз — стоп">▶ крутить</button><label class="dim" title="Скорость кручения, градусов в секунду; минус — против часовой"> <input type="range" id="coneAutoSp" min="-120" max="120" step="5" value="30" style="width:70px;vertical-align:middle"></label><button id="bConeRec" title="⏺ Видео: запись холста конуса (только сам конус, без кнопок) в файл .webm. Ещё раз — стоп и сохранить. Удобно вместе с «▶ крутить»">⏺ видео</button>
+          <button id="bConeRotClear" title="↺ Снять накрутку «на вид» (↻) — у выделенных колец, ничего не выделено — у всех. Строки не меняются. Одно кольцо — щелчком по его «↻k» у номера строки">↺ снять ↻</button>
+          <select id="coneRays" title="Лучи к центру от ЦЕНТРОВ бит (не от границ): видно, какие биты соседних колец стоят на одном луче и в какую границу или бит внутреннего кольца луч попадает. Границы бит — черты на самом кольце"><option value="off">без лучей</option><option value="cur">лучи от бит текущего кольца</option><option value="all">лучи от бит всех колец</option></select>
         </div>
-        <canvas id="coneCv" style="width:100%;flex:1 1 auto;min-height:260px;display:block;cursor:grab;background:var(--panel2);border-radius:4px;touch-action:none"></canvas>
+        <!-- v0.088: справа от конуса — таблица строк: номер, замок кольца, сама строка (дубль поля строк) -->
+        <div id="coneMain">
+          <canvas id="coneCv" style="flex:1 1 auto;min-width:0;width:0;min-height:260px;display:block;cursor:grab;background:var(--panel2);border-radius:4px;touch-action:none"></canvas>
+          <div id="coneList" title="Строки — как в поле: щелчок — текущая, Ctrl + щелчок — выделить; 🔒/🔓 — замок этого кольца"></div>
+        </div>
         <div id="coneOut" class="out" style="margin-top:6px"></div>
       </div>
     </section>
@@ -935,7 +1016,7 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
         <h4>⚖ Балансы</h4>
         <p>Окно «⚖ Балансы»: у каждой строки вживую — нулей:единиц и перевес, то же нарастающим итогом до неё, неподвижные при развороте биты и их итог, и неподвижные у ленты из строк 0…эта. Щелчок по строке таблицы — она текущая.</p>
         <h4>◯ Конус</h4>
-        <p>Окно «◯ Конус»: каждая строка — кольцо, вид сверху, кольца расходятся от центра. Кольцо крутится мышью — и строка в поле вместе с ним; щелчок по кольцу — строка текущая, наведение — подсвечивает её в поле. Цвета и символы — как в поле. Одинаковые кольца (те же биты по кругу) — одной обводкой; «◯ к наименьшему» поворачивает все строки в наименьший вид.</p>
+        <p>Окно «◯ Конус»: каждая строка — кольцо, вид сверху, кольца расходятся от центра. <b>Ctrl + щелчок</b> по кольцу — выделить его (ещё раз — снять), несколько — по очереди; выделенные обведены голубым и выделены в поле строк; галка «только выделенные» скрывает остальные кольца. Кольцо крутится мышью — и строка в поле вместе с ним; щелчок по кольцу — строка текущая, наведение — подсвечивает её в поле. Цвета и символы — как в поле. Одинаковые кольца (те же биты по кругу) — одной обводкой; «◯ к наименьшему» поворачивает все строки в наименьший вид.</p>
         <h4>🧪 Структура</h4>
         <p>Окно «🧪 Структура» пробует разные способы записать строку (или весь столбик) и показывает цену каждого в битах: перекос единиц, серии, контекст, повторы кусков, почти-зеркало и почти-период с поправками, линейное правило, адрес, связь с номером и длиной строки, связь с соседней строкой. Лучший способ короче «как есть» — структура есть и видно, какая. Внизу — строка бит в бит против двоичной записи своего номера и длины.</p>
         <h4>🔎 Адрес строки</h4>
@@ -955,8 +1036,8 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
 </div>
 <div id="msg"></div>
 
-<script src="zz-core.js?v=0075"></script>
-<script src="zz-ui.js?v=0075"></script>
+<script src="zz-core.js?v=0104"></script>
+<script src="zz-ui.js?v=0104"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
