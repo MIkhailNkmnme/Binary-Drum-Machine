@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.153. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.154. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.153</title>
+<title>Zazerkalius — v0.154</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -340,7 +340,7 @@ body.pane-icons #paneWins{padding:4px}
 #w-cone #coneMain{position:absolute;inset:0;z-index:0;min-height:0}
 #w-cone #coneCv{border-radius:6px}
 #w-cone:not(.collapsed) .whead{position:absolute;top:0;left:0;right:0;z-index:4;background:color-mix(in srgb, var(--panel) 72%, transparent);border-bottom:none}
-#w-cone .wbody > .tools{position:relative;z-index:3;margin-top:34px;padding:4px 8px;background:color-mix(in srgb, var(--panel) 72%, transparent)}
+#w-cone .wbody > .tools{position:relative;z-index:3;margin-top:34px;padding:4px 8px;background:none}   /* v0.154, «div tools — убери фон» — полоса кнопок конуса без подложки */
 /* v0.135: группы кнопок конуса — рамкой с подписью; всё, что меняет текст, — постоянной ширины, чтобы ряды не дёргались */
 #w-cone .tools{gap:4px 8px}
 #w-cone .cgrp{display:inline-flex;flex-wrap:wrap;align-items:center;gap:3px 4px;padding:2px 6px 2px 4px;border:1px solid var(--line);border-radius:6px}
@@ -515,7 +515,7 @@ body.solo #field > #coneBot #coneOut{flex:0 1 auto;min-height:0;overflow:auto;fo
      на странице конуса кнопки — сплошной полосой сверху, конус — под ними на всё оставшееся место, шапка окна не нужна */
   body.solo #w-cone .whead{display:none !important}
   body.solo #w-cone .wbody{position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
-  body.solo #w-cone .wbody > .tools{flex:0 0 auto;margin-top:0;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
+  body.solo #w-cone .wbody > .tools{flex:0 0 auto;margin-top:0;padding:6px 10px;background:none;border-bottom:1px solid var(--line)}   /* v0.154: без фона */
   body.solo #w-cone #coneMain{position:relative;inset:auto;flex:1 1 auto;min-height:0}
   body.solo #w-cone #coneCv{border-radius:0}
 }
@@ -536,7 +536,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.153</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.154</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
