@@ -3605,7 +3605,7 @@ function soloApply(){
    или угол — размер (шаг сетки 8 px), двойной щелчок — имя, правый — цвет, Del — удалить, Esc или «✓ Готово» — выйти.
    Поля хранятся в Z.lay в процентах стола (на другом экране — те же доли) и едут в «💾 Всё». v0.146: и кнопки — см. ниже. */
 function layInit(){
-  const desk = $("desk"), btn = $("bLay"), add = $("bLayAdd"), rst = $("bLayReset");
+  const desk = $("desk"), btn = $("bLay"), add = $("bLayAdd"), rst = $("bLayReset"), tdy = $("bLayTidy");
   if (!desk || !btn) return;
   if (!Z.lay || !Array.isArray(Z.lay.zones)) Z.lay = { zones: [] };
   if (!Z.lay.items || typeof Z.lay.items !== "object") Z.lay.items = {};
@@ -3620,6 +3620,7 @@ function layInit(){
   let on = false, sel = -1, drag = null, lastDown = {}, freed = false, selItem = null;
   const dim = () => ({ W: Math.max(1, desk.clientWidth), H: Math.max(1, desk.clientHeight) });
   const snap = (v) => Math.round(v / G) * G;
+  const snapI = (v) => Math.round(v / STD) * STD;   // v0.149: кнопки — по сетке 32 px, как их стандартная ширина
   const pc = (v, T) => +(v / T * 100).toFixed(3);
   const toPx = (z) => { const { W, H } = dim(); return { x: z.x * W / 100, y: z.y * H / 100, w: z.w * W / 100, h: z.h * H / 100 }; };
   const setPx = (z, r) => { const { W, H } = dim(); z.x = pc(r.x, W); z.y = pc(r.y, H); z.w = pc(r.w, W); z.h = pc(r.h, H); };
@@ -3662,6 +3663,41 @@ function layInit(){
     const w = el.offsetWidth; if (!w) return;   // спрятанная сейчас — мерить нечего
     el.style.width = (Math.ceil((w + 4) / STD) * STD - 4) + "px";
   }
+  /* v0.149, «проверь, там все кнопки съехали»: стандартная ширина (v0.147) сделала кнопки шире, а места у них остались
+     прежние — соседи в ряду наехали друг на друга. ⇶ Выровнять: кнопки каждого поля (и свободные) делятся на ряды по высоте,
+     ряд встаёт на сетку 32 px, кнопки в ряду — слева направо, каждая не ближе 4 px к соседу (с шириной 32k − 4 это ровно
+     следующая клетка). compact — ряды подряд через 32 px (когда кнопки только что сняты с полосы кнопок). */
+  function tidy(compact){
+    const { W } = dim(), groups = new Map();
+    litEls().forEach(el => {
+      const p = IT[el.dataset.lk]; if (!p || !el.offsetWidth) return;
+      const k = (p.z && zoneById(p.z)) ? p.z : "";
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push({ el, p, a: absOf(p), w: el.offsetWidth });
+    });
+    groups.forEach((list, k) => {
+      const zone = k ? zoneById(k) : null;
+      list.sort((u, v) => u.a.y - v.a.y || u.a.x - v.a.x);
+      const rows = [];
+      list.forEach(b => { const r = rows[rows.length - 1]; if (r && Math.abs(b.a.y - r.y0) <= 12) r.items.push(b); else rows.push({ y0: b.a.y, items: [b] }); });
+      let yPrev = -Infinity;
+      rows.forEach((r, ri) => {
+        let y = compact && ri ? yPrev + STD : snapI(r.y0);
+        if (y <= yPrev) y = yPrev + STD;
+        yPrev = y;
+        let end = -Infinity;
+        const zr = zone ? toPx(zone) : null, right = zr ? zr.x + zr.w : W;
+        const items = r.items.sort((u, v) => u.a.x - v.a.x), x0 = snapI(items[0].a.x);
+        items.forEach(b => {
+          let x = Math.max(snapI(b.a.x), end);
+          if (x + b.w > right && end > -Infinity) { y += STD; yPrev = y; x = x0; }   // не влезла — перенос на новую строку
+          end = x + b.w + 4;
+          setAbs(b.p, { x, y }, zone);
+        });
+      });
+    });
+    placeAll();
+  }
   function free(capture){
     if (freed) return;
     const d = desk.getBoundingClientRect(), { W, H } = dim();
@@ -3677,6 +3713,7 @@ function layInit(){
     els.forEach(el => { el.classList.add("lit"); itemsBox.appendChild(el); stdSize(el); placeItem(el); });
     document.body.classList.add("layfree");
     freed = true;
+    if (capture) tidy(true);   // v0.149: сняли с полосы — сразу ровными рядами, без наложений
   }
   function zoneAt(cx, cy){   // верхнее поле под точкой
     for (let i = Zs().length - 1; i >= 0; i--) { const r = toPx(Zs()[i]); if (cx >= r.x && cx <= r.x + r.w && cy >= r.y && cy <= r.y + r.h) return Zs()[i]; }
@@ -3734,8 +3771,8 @@ function layInit(){
   itemsBox.addEventListener("pointermove", (e) => {
     if (!drag || drag.mode !== "item") return;
     const { W, H } = dim(), el = drag.el;
-    const x = Math.max(0, Math.min(W - el.offsetWidth, snap(drag.l0 + e.clientX - drag.x0)));
-    const y = Math.max(0, Math.min(H - el.offsetHeight, snap(drag.t0 + e.clientY - drag.y0)));
+    const x = Math.max(0, Math.min(W - el.offsetWidth, snapI(drag.l0 + e.clientX - drag.x0)));
+    const y = Math.max(0, Math.min(H - el.offsetHeight, snapI(drag.t0 + e.clientY - drag.y0)));
     el.style.left = x + "px"; el.style.top = y + "px";
     const hot = zoneAt(x + el.offsetWidth / 2, y + el.offsetHeight / 2);
     if (hot !== drag.hot) { drag.hot = hot; draw(hot); }
@@ -3818,7 +3855,11 @@ function layInit(){
       Zs().splice(sel, 1); sel = -1; draw(); placeAll(); save(); say(`▦ Поле «${z.name}» удалено, его кнопки остались на местах.`);
     }
   }, true);
-  if (Object.keys(IT).length) free(false);
+  if (tdy) tdy.onclick = () => { if (!freed) free(true); litEls().forEach(stdSize); tidy(false); if (on) draw(); save(); say("⇶ Кнопки выровнены: ряды по сетке, без наложений."); };
+  if (Object.keys(IT).length) {
+    free(false);
+    if ((Z.lay.v | 0) < 149) requestAnimationFrame(() => { litEls().forEach(stdSize); tidy(false); Z.lay.v = 149; save(); });   // v0.149: раскладку v0.146–0.148 — раз выровнять
+  }
   drawZones();
   if (window.ResizeObserver) new ResizeObserver(() => { if (on) draw(); else drawZones(); placeAll(); }).observe(desk);
 }

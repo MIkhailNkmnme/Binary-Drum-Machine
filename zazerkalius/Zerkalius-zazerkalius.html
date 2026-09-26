@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.148. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.149. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.148</title>
+<title>Zazerkalius — v0.149</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -504,7 +504,7 @@ body.solo #field > #coneBot #coneOut{flex:0 1 auto;min-height:0;overflow:auto;fo
   body.solo #w-cone #coneCv{border-radius:0}
 }
 /* v0.145: ▦ раскладка — кнопки только на странице конуса; слой с сеткой и полями поверх стола */
-body:not(.solo) #bLay,body:not(.solo) #bLayAdd,body:not(.lay) #bLayAdd,body:not(.lay) #bLayReset{display:none}
+body:not(.solo) #bLay,body:not(.solo) #bLayAdd,body:not(.lay) #bLayAdd,body:not(.lay) #bLayReset,body:not(.solo) #bLayTidy,body:not(.lay) #bLayTidy{display:none}
 #layLayer{display:none;position:absolute;inset:0;z-index:100000;cursor:crosshair;touch-action:none;user-select:none;-webkit-user-select:none;
   background-color:color-mix(in srgb, var(--bg) 60%, transparent);
   background-image:linear-gradient(color-mix(in srgb, var(--line) 80%, transparent) 1px, transparent 1px),linear-gradient(90deg, color-mix(in srgb, var(--line) 80%, transparent) 1px, transparent 1px);
@@ -560,7 +560,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.148</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.149</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
@@ -568,6 +568,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <!-- v0.145: ▦ раскладка — поля-прямоугольники руками (только на странице «◯ Конус») -->
   <button id="bLay" title="▦ Раскладка: поверх конуса — сетка, на ней поля-прямоугольники. Тянешь по пустому — новое поле, тянешь поле — двигается, за край или угол — размер, двойной щелчок — имя, правый — цвет, Del — удалить. Esc или ещё раз — готово. Поля запоминаются и едут в «💾 Всё»">▦ Раскладка</button>
   <button id="bLayAdd" title="＋ Новое поле посреди стола (или просто тяни мышью по пустому месту)">＋ Поле</button>
+  <button id="bLayTidy" title="⇶ Выровнять: кнопки каждого поля и свободные — ровными рядами по сетке 32 px, без наложений (порядок в ряду сохраняется)">⇶ Выровнять</button>
   <button id="bLayReset" title="↺ Вернуть все кнопки на полосу кнопок, как было (поля останутся)">↺ Кнопки на место</button>
   <!-- v0.115: «надо сохр настройки и все биты в файл, чтобы на другом компе» -->
   <button id="bSaveAll" title="💾 Сохранить ВСЁ в файл .json: все поля строк, строки за чертой, строку для заполнения, свои шаблоны, окна, конус и все настройки. Файл переносится на другой компьютер и открывается там кнопкой «📂 Всё» или перетаскиванием на страницу">💾 Всё</button>
@@ -1239,8 +1240,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 <div id="msg"></div>
 <div id="zenHint">🧘 дзен · Esc — выйти</div>
 
-<script src="zz-core.js?v=0148"></script>
-<script src="zz-ui.js?v=0148"></script>
+<script src="zz-core.js?v=0149"></script>
+<script src="zz-ui.js?v=0149"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
