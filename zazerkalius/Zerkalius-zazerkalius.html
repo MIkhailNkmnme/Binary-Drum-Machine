@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.162. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.163. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.162</title>
+<title>Zazerkalius — v0.163</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -291,6 +291,13 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 .fxi{color:var(--green) !important;font-weight:700} .ob.fxi{opacity:1}   /* v0.058: неподвижные при реверс-инверсии */
 .ob.fxr{opacity:1}
 .rw.sel .no{color:var(--acc2);font-weight:700}
+/* v0.163, по снимку текущей строки (подсвечены только биты) — «выделяй всё со значками»: у столбика номера (номер, замок, ↻, счётчики)
+   подложка непрозрачная (он стоит на месте при прокрутке вбок), и у текущей / выделенной строки она была цвета фона. Теперь — тот же
+   цвет, что у бит, только непрозрачный: подсвечена вся строка. */
+.rw.cur > .no{background:color-mix(in srgb, rgb(185,140,240) 14%, var(--bg))}
+.rw.sel > .no{background:color-mix(in srgb, rgb(34,211,238) 16%, var(--bg))}
+.rw:hover > .no{background:var(--panel2)}
+body.nocur .rw.cur:not(.sel):not(:hover) > .no{background:var(--bg) !important}
 #rowList ::selection{background:rgba(185,140,240,.5)}
 /* v0.157, по снимку выделенного треугольника — «выделения символов поправь»: полоса выделения — во всю высоту шрифта (~1.32 кегля),
    а шаг строк 1.25, в ужатом поле до 0.7 — полупрозрачные полосы соседних строк налезали друг на друга ступенями. Ячейка бит режет
@@ -567,7 +574,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.162</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.163</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
