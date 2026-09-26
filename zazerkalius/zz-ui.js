@@ -333,7 +333,7 @@ function renderRowsOver(){
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
   $("fieldInfo").textContent = `наложение ${N} полей · рабочее ${Z.lane + 1} · ${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1}` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "");
   $("fieldInfo").title = $("fieldInfo").textContent;   // v0.077: целиком — в подсказке
-  rowsFit(); rowsLockAllPlace();   // v0.153, v0.167
+  rowsFit(); rowsLockAllPlace(); rowBitMark();   // v0.153, v0.167, v0.173
   const c = L.querySelector(".rw.cur > .no");
   if (c) c.scrollIntoView({ block: "nearest" });
 }
@@ -499,6 +499,38 @@ function rowsLockAllPlace(){   // v0.169: общий замок — кнопко
   const A = $("coneLockAll"); if (!A) return;
   const on = Z.coneLock !== false; A.textContent = on ? "🔒" : "🔓"; A.classList.toggle("off", !on);
 }
+/* v0.173, на вопрос о правиле «биты на конусе ↔ строки» — «покажи бит, щелчок с Ctrl — смена бита». В плоском конусе бит под мышью
+   обведён золотом, и тот же бит подсвечен в его строке в поле (Highlight API — без перерисовки строк); Ctrl + щелчок по сектору
+   меняет этот бит 0 ↔ 1 в самой строке (↩ вернёт; замок строк ⛔ не пускает). Бит — по углу с учётом поворота всего конуса и кольца. */
+let coneBitHover = null;
+function coneBitAt(e){
+  if (Z.cone3d || !coneGeom) return null;
+  const h = coneRing(e); if (h === -1 || h.fill !== undefined) return null;
+  const s = Z.rows[h.i], n = s && s.length; if (!n) return null;
+  const step = 2 * Math.PI / n, t = h.a - (Z.coneSpin || 0) * Math.PI / 180, u = (((t + Math.PI / 2) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  return { i: h.i, j: ((Math.floor(u / step + coneRotOf(h.i)) % n) + n) % n };
+}
+function rowBitMark(){
+  if (!window.CSS || !CSS.highlights || typeof Highlight === "undefined") return;
+  CSS.highlights.delete("conebit");
+  const b = coneBitHover; if (!b) return;
+  const bx = $("rowList").querySelector('.rw[data-r="' + b.i + '"] .bx'); if (!bx) return;
+  const w = document.createTreeWalker(bx, NodeFilter.SHOW_TEXT); let k = 0, nd;
+  while ((nd = w.nextNode())) {
+    const t = nd.textContent;
+    for (let q = 0; q < t.length; q++) if (t[q] === "0" || t[q] === "1") {
+      if (k === b.j) { const r = document.createRange(); r.setStart(nd, q); r.setEnd(nd, q + 1); CSS.highlights.set("conebit", new Highlight(r)); return; }
+      k++;
+    }
+  }
+}
+function coneBitFlip(b){
+  const s = Z.rows[b.i]; if (!s || b.j >= s.length) return;
+  try { snapshot(); } catch (err) { if (err.message === "ZZ_LOCK") return; throw err; }
+  const v = s[b.j] === "1" ? "0" : "1";
+  Z.rows[b.i] = s.slice(0, b.j) + v + s.slice(b.j + 1); syncLane();
+  renderAll(); save(); say(`◯ Строка ${b.i + 1}, бит ${b.j + 1}: ${s[b.j]} → ${v} — и в поле строк. ↩ вернёт.`);
+}
 function renderRows(){
   if (rowEditing >= 0) return;
   syncLane();
@@ -546,7 +578,7 @@ function renderRows(){
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
   $("fieldInfo").textContent = (N > 1 ? `поле ${Z.lane + 1} из ${N} · ` : "") + `${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1} (${cur().length} бит)` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowChgInfo();
   $("fieldInfo").title = $("fieldInfo").textContent;   // v0.077: целиком — в подсказке
-  rowsFit(); rowsLockAllPlace();   // v0.153, v0.167
+  rowsFit(); rowsLockAllPlace(); rowBitMark();   // v0.153, v0.167, v0.173
   const c = L.querySelector(".rw.cur > .bits.la") || L.querySelector(".rw.cur > .no");
   if (c) c.scrollIntoView({ block: "nearest", inline: "nearest" });
 }
@@ -1467,6 +1499,11 @@ function renderCone(){
   }
   // метка «начала» строк — сверху: сюда встаёт бит 0
   g.strokeStyle = cg; g.lineWidth = 1 * dpr; g.beginPath(); g.moveTo(cx, cy - rMax + 2 * dpr); g.lineTo(cx, cy - rMax - 14 * dpr);   /* v0.086: метка начала — короткий штрих снаружи колец, а не черта от центра (её принимали за луч) */ g.globalAlpha = 0.5; g.stroke(); g.globalAlpha = 1;
+  if (coneBitHover && coneBitHover.i < N && Z.rows[coneBitHover.i] && shown(coneBitHover.i)) {   // v0.173: бит под мышью — золотой рамкой
+    const { i, j } = coneBitHover, n = Z.rows[i].length, rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, a = -Math.PI / 2 + (j - coneRotOf(i)) * step;
+    g.beginPath(); coneArc(g, cx, cy, i, rout, a, a + step); coneArc(g, cx, cy, i, rin, a + step, a, true); g.closePath();
+    g.strokeStyle = cg; g.lineWidth = 2 * dpr; g.globalAlpha = 1; g.stroke();
+  }
   }   // v0.082: конец плоского вида
   if (spin2d) g.restore();
   // текст
@@ -2111,15 +2148,16 @@ function setupCone(){
       return;
     }
     // v0.085: запертое кольцо (своим замком или общей галкой) крутится только на вид; сдвиг вида — мимо колец или с Ctrl
-    if (h === -1 || e.ctrlKey) {   // v0.049: мимо колец или с Ctrl — сдвиг всего вида
+    if (h === -1 || e.ctrlKey || e.shiftKey) {   // v0.049: мимо колец или с Ctrl — сдвиг всего вида; v0.173: и с Shift
       e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "move";
       const x0 = e.clientX, y0 = e.clientY, p0 = conePan.slice(), dpr = window.devicePixelRatio || 1;
       let movedP = false;
       const mv = (ev) => { if (Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) > 3) movedP = true; conePan = [p0[0] + (ev.clientX - x0) * dpr, p0[1] + (ev.clientY - y0) * dpr]; renderCone(); };
-      const ctrl = e.ctrlKey || e.metaKey;
+      const ctrl = e.ctrlKey || e.metaKey, shift = e.shiftKey, bit = ctrl ? coneBitAt(e) : null;
       const upP = () => {
         cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", upP); cv.removeEventListener("pointercancel", upP); cv.style.cursor = "grab";
-        if (!movedP && h !== -1 && ctrl) {   // v0.076: Ctrl + щелчок по кольцу — выделить / снять (то же выделение, что в поле)
+        if (!movedP && bit) { conePan = p0; coneBitFlip(bit); return; }   // v0.173: Ctrl + щелчок по сектору — сменить бит
+        if (!movedP && h !== -1 && shift) {   // v0.076: щелчок по кольцу — выделить / снять (то же выделение, что в поле); v0.173 — с Shift (Ctrl — смена бита)
           conePan = p0;
           if (rowSel.has(h.i)) rowSel.delete(h.i); else rowSel.add(h.i);
           renderRows(); renderCone();
@@ -2137,7 +2175,9 @@ function setupCone(){
   cv.addEventListener("pointermove", (e) => {
     if (!coneDrag) {   // наведение: обвести кольцо и его строку в поле
       const h = coneRing(e), i = h === -1 || h.fill !== undefined ? -1 : h.i;
-      if (i !== coneHover) { coneHover = i; coneHoverRow(i); renderCone(); }
+      const b = coneBitAt(e), bc = (b ? b.i + ":" + b.j : "") !== (coneBitHover ? coneBitHover.i + ":" + coneBitHover.j : "");   // v0.173
+      if (bc) { coneBitHover = b; rowBitMark(); cv.title = b ? `Строка ${b.i + 1}, бит ${b.j + 1}: ${Z.rows[b.i][b.j]} · Ctrl + щелчок — сменить · Shift + щелчок — выделить кольцо` : ""; }
+      if (i !== coneHover) { coneHover = i; coneHoverRow(i); renderCone(); } else if (bc) renderCone();
       return;
     }
     const cvr = cv.getBoundingClientRect(), G = coneGeom, D = coneDrag;
@@ -2154,7 +2194,7 @@ function setupCone(){
     coneRot[D.i] = D.v0 + rot - D.applied;   // остаток до целого бита — плавность под мышью (поверх своего вида кольца)
     renderCone();
   });
-  cv.addEventListener("pointerleave", () => { if (!coneDrag && coneHover !== -1) { coneHover = -1; coneHoverRow(-1); renderCone(); } });
+  cv.addEventListener("pointerleave", () => { if (coneBitHover) { coneBitHover = null; rowBitMark(); cv.title = ""; if (coneHover === -1) renderCone(); } if (!coneDrag && coneHover !== -1) { coneHover = -1; coneHoverRow(-1); renderCone(); } });
   const up = () => {
     if (!coneDrag) return;
     const D = coneDrag; coneDrag = null; cv.style.cursor = "grab";
@@ -2276,7 +2316,7 @@ function setupCone(){
   for (const id of ["coneCv", "field"]) { const el = $(id); if (el) el.addEventListener("pointerdown", () => { if (autoRaf) { autoSet(false); say("⏸ Пауза — щелчок по полю. Дальше — двойной щелчок по конусу или ▶ крутить."); } }, true); }
   /* v0.157, «пауза и двойной щелчок — воспроизведение по полю»: щелчок по конусу — пауза (v0.135), двойной щелчок — ▶ крутить.
      Сброс вида (масштаб, сдвиг, поворот 3D), что прежде был на двойном щелчке, — теперь Ctrl + двойной щелчок. */
-  $("coneCv").addEventListener("dblclick", (e) => { if (e.ctrlKey || autoRaf) return; autoSet(true); say("▶ Кручу — двойной щелчок по конусу. Пауза — щелчок."); });
+  $("coneCv").addEventListener("dblclick", (e) => { if (e.ctrlKey || e.altKey || e.shiftKey || autoRaf) return; autoSet(true); say("▶ Кручу — двойной щелчок по конусу. Пауза — щелчок."); });
   /* v0.134, «нужна кнопка вперёд-назад для Плея, вручную, чтобы смотреть»: ◀ ▶ — кручение (тем же режимом, что ▶ крутить) до
      следующего события лазера: конец луча сменился — упёрся в другую ячейку, пойман другим кольцом, прошёл. Каждый шаг — в лог. */
   const coneStep = (dir) => {
@@ -2482,7 +2522,7 @@ function setupCone(){
     const up = () => { clearTimeout(t); save(); removeEventListener("pointerup", up); removeEventListener("pointercancel", up); };
     addEventListener("pointerup", up); addEventListener("pointercancel", up);
   });
-  cv.addEventListener("dblclick", (e) => { if (!Z.cone3d || !e.ctrlKey) return; Z.cone3Yaw = 30; Z.cone3El = 50; coneZoom = 1; conePan = [0, 0]; save(); renderCone(); });
+  cv.addEventListener("dblclick", (e) => { if (!Z.cone3d || !e.altKey) return; Z.cone3Yaw = 30; Z.cone3El = 50; coneZoom = 1; conePan = [0, 0]; save(); renderCone(); });
   $("coneSect").checked = !!Z.coneSect;   // v0.079
   $("coneSect").onchange = (e) => { Z.coneSect = e.target.checked; save(); renderCone(); };
   $("coneOnlySel").checked = !!Z.coneOnlySel;   // v0.076
@@ -2502,7 +2542,7 @@ function setupCone(){
     conePan = [mx - (mx - conePan[0]) * k, my - (my - conePan[1]) * k];
     coneZoom = z1; renderCone();
   }, { passive: false });
-  cv.addEventListener("dblclick", (e) => { if (!e.ctrlKey) return; coneZoom = 1; conePan = [0, 0]; renderCone(); });
+  cv.addEventListener("dblclick", (e) => { if (!e.altKey) return; coneZoom = 1;   /* v0.173: сброс вида — Alt + двойной щелчок (Ctrl + щелчок меняет бит) */ conePan = [0, 0]; renderCone(); });
   if (window.ResizeObserver) new ResizeObserver(() => renderCone()).observe(cv);
 }
 
@@ -4297,7 +4337,7 @@ function init(){
     say(Z.tri90 ? (ovControls() ? "◸ 90° включится, когда поля не наложением." : `◸ 90°: межсимвольный ${Z.tri90Ls} px — стороны треугольника под 45°, угол при вершине прямой. Сменишь шрифт или размер — подберётся заново.`) : "◸ 90° выключен — обычный интервал.");
   };
   $("bShow01").onclick = () => { Z.show01 = !Z.show01; fmLabel(); renderRows(); save(); };
-  const lockUi = () => { $("bRowLock").textContent = Z.rowLock ? "🔒" : "🔓"; $("bRowLock").classList.toggle("on", !!Z.rowLock); document.body.classList.toggle("rowlock", !!Z.rowLock); };
+  const lockUi = () => { $("bRowLock").textContent = Z.rowLock ? "⛔" : "✎";   /* v0.173: свой значок — не путать с общим замком колец 🔒 */ $("bRowLock").classList.toggle("on", !!Z.rowLock); document.body.classList.toggle("rowlock", !!Z.rowLock); };
   lockUi();
   $("bRowLock").onclick = () => { Z.rowLock = !Z.rowLock; lockUi(); save(); say(Z.rowLock ? "🔒 Строки заперты: менять нельзя ничем, смотреть — сколько угодно." : "🔓 Строки открыты для правки."); };   // v0.061
   $("bShowFix").onclick = () => {   // v0.058: выкл → ⇄ разворот → ⇄🔁 реверс-инверсия → выкл
