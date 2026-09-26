@@ -6964,6 +6964,19 @@ document.addEventListener("keydown", e => {
   } else if (e.code === "Numpad6") {
     e.preventDefault();
     if (bShiftRInvEl) bShiftRInvEl.click();
+  } else if (e.key === "1" && e.code !== "Numpad1" && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+    // v1.653, «гор. клавиша 1 — переход на 1 строку выделения»: выделение — строка №1 (как её подписывает колонка номеров, с учётом
+    // достроенных сверху), будто по ней щёлкнули: прежнее выделение и серия сдвигов сбрасываются, экран едет к строке.
+    e.preventDefault();
+    const idx = (st.topBuilt || 0) + 1;
+    if (idx >= Math.max(st.rows.length, st.pats.length)) return;
+    st.selectedRows = new Set([idx]);
+    st.manualShiftTurns = 0;
+    if (typeof rotBase !== "undefined") rotBase.clear(); if (typeof fixedPos !== "undefined") fixedPos.clear(); if (typeof revInvPhase !== "undefined") revInvPhase.clear();
+    st.shiftVariantTotal = null; st.shiftVariantRows = null; st.captureGrown = false;
+    updateVariantCounter();
+    render(); saveCache();
+    scrollToRow(idx);
   } else if (e.code === "Numpad0") {
     // Нумпад 0 — переключить разделитель-границу снизу выделенной строки (см. toggleRowDivider).
     e.preventDefault();
