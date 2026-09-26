@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.182. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.183. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.182</title>
+<title>Zazerkalius — v0.183</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -406,6 +406,13 @@ body.zen #coneTxtWin{display:none !important}
 #w-cone .cgrp > .glab{cursor:move;touch-action:none;user-select:none}
 #w-cone .cgrp.cfloat{position:absolute;z-index:10;margin:0;background:var(--panel);box-shadow:0 6px 20px rgba(0,0,0,.45)}
 #w-cone .cgrp.cg-spin.cfloat{background:color-mix(in srgb, rgb(255,209,102) 13%, var(--panel))}
+/* v0.183, по снимку группы «Вид» — «в каждой полоске подели длину пополам, расположи в 2 ряда, кнопки ровно друг под другом»:
+   группа — сетка в два ряда: подпись слева на оба ряда, дальше столбцы (их число --cols = половина кнопок, ставит cgrpCols);
+   кнопки одного столбца — одной ширины, ровно одна под другой */
+#w-cone .tools > .cgrp{display:inline-grid !important;grid-template-columns:auto repeat(var(--cols, 4), auto);grid-template-rows:auto auto;grid-auto-flow:row;align-items:center;justify-items:stretch}
+#w-cone .tools > .cgrp > .glab{grid-row:1 / span 2;grid-column:1;align-self:center}
+#w-cone .tools > .cgrp > button,#w-cone .tools > .cgrp > label,#w-cone .tools > .cgrp > select{justify-content:center;text-align:center}
+#w-cone .tools > .cgrp > .glab2{text-align:right;white-space:nowrap}
 /* v0.181, по снимку галок группы «Вид» — «все галки в кнопки»: галки на полосе конуса — кнопками-переключателями: сама галка спрятана
    (щелчок по кнопке переключает её, как раньше), включённая — как нажатая кнопка (золотая рамка, как у button.on) */
 #w-cone .tools label:has(> input[type=checkbox]){display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border:1px solid var(--line);border-radius:4px;background:var(--panel2);color:var(--txt);cursor:pointer;white-space:nowrap}
@@ -604,7 +611,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.182</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.183</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>

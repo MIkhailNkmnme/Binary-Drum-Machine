@@ -3814,6 +3814,13 @@ function cgrpInit(){
     place(g);
   });
   addEventListener("resize", () => groups.forEach(place));
+  cgrpCols();
+}
+function cgrpCols(){   // v0.183: у каждой группы — столбцов на половину её видимых кнопок (два ряда)
+  document.querySelectorAll("#w-cone .tools > .cgrp").forEach((g) => {
+    const n = [...g.children].filter(c => !c.classList.contains("glab") && getComputedStyle(c).display !== "none").length;
+    g.style.setProperty("--cols", Math.max(1, Math.ceil(n / 2)));
+  });
 }
 function soloApply(){
   const el = $(ZZ_SOLO); if (!el) return;
