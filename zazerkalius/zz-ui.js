@@ -89,7 +89,12 @@ function laneInit(){
   Z.rows = Z.lanes[Z.lane];
   Z.cur = Math.max(0, Math.min(Z.rows.length - 1, Z.cur | 0));
 }
+/* v0.061, «замок на изменение строк» (снимок кнопок над полем). Почти каждая правка строк начинается со snapshot() — точки
+   отмены; при закрытом замке он прерывает правку до изменения (ZZ_LOCK — тихо, без «⚠ ошибки»). Правка на месте и ↩ —
+   проверяют замок сами. */
+function rowsLocked(){ if (!Z.rowLock) return false; say("🔒 Строки заперты — открой замок над полем строк, чтобы менять."); return true; }
 function snapshot(){
+  if (rowsLocked()) throw new Error("ZZ_LOCK");
   syncLane();
   undoStack.push({ rows: Z.rows.slice(), cur: Z.cur, lane: Z.lane, lanes: Array.isArray(Z.lanes) ? Z.lanes.map(l => l.slice()) : null,
                    laneCount: Z.laneCount, axisPos: Array.isArray(Z.axisPos) ? Z.axisPos.slice() : [] });   // v0.022: и поля, и оси
@@ -97,6 +102,7 @@ function snapshot(){
   if (typeof rowSel !== "undefined") rowSel.clear();
 }
 function undo(){
+  if (rowsLocked()) return;   // v0.061
   const u = undoStack.pop();
   if (!u) { say("↩ Отменять нечего."); return; }
   if (u.laneCount) { Z.laneCount = u.laneCount; Z.axisPos = u.axisPos; const lc = document.getElementById("laneCount"); if (lc) lc.value = String(Z.laneCount); }
@@ -165,21 +171,25 @@ function rowCounts(s){
   if (s === undefined || (!Z.showFM && !Z.show01)) return "";
   let h = "";
   if (Z.showFM) {
-    let fx = 0; const n = s.length;
-    for (let i = 0; i < n; i++) if (s[i] === s[n - 1 - i]) fx++;
-    h += '<span class="rc" title="неподвижных бит ' + fx + " (разворот их не трогает), меняющихся " + (n - fx) + '"><span class="rcf">' + fx + '</span>·<span class="rcm">' + (n - fx) + "</span></span>";
+    let fx = 0; const n = s.length, ir = Z.showFix === "ir";   // v0.058: в режиме реверс-инверсии — её неподвижные
+    for (let i = 0; i < n; i++) if (ir ? s[i] !== s[n - 1 - i] : s[i] === s[n - 1 - i]) fx++;
+    h += '<span class="rc" title="неподвижных бит ' + fx + (ir ? " (реверс-инверсия их не трогает)" : " (разворот их не трогает)") + ", меняющихся " + (n - fx) + '"><span class="rcf">' + fx + '</span><span>·</span><span class="rcm">' + (n - fx) + "</span></span>";   // v0.050: колонками
   }
   if (Z.show01) {
     const k = zzOnes(s);
-    h += '<span class="rc" title="нулей ' + (s.length - k) + ", единиц " + k + '"><span class="b0">' + (s.length - k) + '</span>:<span class="b1">' + k + "</span></span>";
+    h += '<span class="rc" title="нулей ' + (s.length - k) + ", единиц " + k + '"><span class="b0">' + (s.length - k) + '</span><span>:</span><span class="b1">' + k + "</span></span>";
   }
   return h;
 }
+/* v0.058, «сюда же реверс-инверс» (по кнопке «🔴 неподв.»): режим неподвижных бит — true: при развороте (бит = зеркальному,
+   красным), "ir": при реверс-инверсии (бит ≠ зеркальному — разворот с инверсией кладёт его на то же место, зелёным). */
+function fixAt(s, i){ const n = s.length; return Z.showFix === "ir" ? s[i] !== s[n - 1 - i] : s[i] === s[n - 1 - i]; }
+function fixCls(){ return Z.showFix === "ir" ? " fxi" : " fxr"; }
 function bitsShow(s){
   const x = s.length > ROW_SHOW ? s.slice(0, ROW_SHOW) : s;
   if (!Z.showFix) return bitsPlain(x);
-  const n = s.length; let h = "";
-  for (let i = 0; i < x.length; i++) h += '<span class="b' + x[i] + (x[i] === s[n - 1 - i] ? " fxr" : "") + '">' + x[i] + "</span>";
+  const c = fixCls(); let h = "";
+  for (let i = 0; i < x.length; i++) h += '<span class="b' + x[i] + (fixAt(s, i) ? c : "") + '">' + x[i] + "</span>";
   return h;
 }
 let rowEditing = -1;
@@ -243,7 +253,7 @@ function ovRowMap(i, A, cap){
   for (let l = 0; l < Z.laneCount; l++) {
     const s = laneRows(l)[i]; if (s === undefined) continue;
     const Lc = Math.min(s.length, cap), st = ovStart(A[l], Lc);
-    for (let j = 0; j < Lc; j++) { const p = st + 2 * j; let e = m.get(p); if (!e) { e = []; m.set(p, e); } e.push({ l, b: s[j], fx: s[j] === s[s.length - 1 - j] }); }
+    for (let j = 0; j < Lc; j++) { const p = st + 2 * j; let e = m.get(p); if (!e) { e = []; m.set(p, e); } e.push({ l, b: s[j], fx: fixAt(s, j) }); }
   }
   return m;
 }
@@ -266,14 +276,14 @@ function renderRowsOver(){
     for (const [p, list] of ovRowMap(i, A, OV_SHOW)) {
       if (list.length === 1) {
         const e = list[0];
-        t += '<span class="ob l' + e.l + " b" + e.b + (e.l === Z.lane ? " la" : "") + (Z.showFix && e.fx ? " fxr" : "") + '" data-l="' + e.l + '" style="left:' + (p / 2) + 'ch">' + e.b + "</span>";
+        t += '<span class="ob l' + e.l + " b" + e.b + (e.l === Z.lane ? " la" : "") + (Z.showFix && e.fx ? fixCls() : "") + '" data-l="' + e.l + '" style="left:' + (p / 2) + 'ch">' + e.b + "</span>";
       } else {
         const v = ovCombine(list), top = list.find(e => e.l === Z.lane) || list[list.length - 1];
         t += '<span class="ob mix b' + v + '" data-l="' + top.l + '" style="left:' + (p / 2) + 'ch" title="' +
              list.map(e => "поле " + (e.l + 1) + ": " + e.b).join(", ") + " → " + v + '">' + v + "</span>";
       }
     }
-    h += '<div class="rw ovr' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + i + (rowChanged(i) ? " — изменена против эталона ⚑" : "") + ' · щелчок — выделить">' + i + rowCounts(Z.rows[i]) +
+    h += '<div class="rw ovr' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + i + (rowChanged(i) ? " — изменена против эталона ⚑" : "") + ' · щелчок — выделить"><span class="rn">' + i + '</span>' + rowCounts(Z.rows[i]) +
          '</span><span class="trk" style="width:' + W + '">' + lines + t + "</span></div>";
   }
   L.innerHTML = h + "</div>";
@@ -304,6 +314,27 @@ function ovControls(){
   ["ovOp", "bOvReset", "bOvOut"].forEach(id => { $(id).style.display = ov ? "" : "none"; });
   return ov;
 }
+/* v0.071, по снимку поля с треугольником «1 / 11 / 111»: «кнопку — треугольник в 90°», «подобрать межсимвольный». Строка
+   k+1 шире строки k на один символ и по центру сдвинута на полсимвола; чтобы стороны шли под 45° (угол при вершине 90°),
+   полсимвола должно равняться шагу строк: шаг символа = 2 × шаг строк, т. е. межсимвольный = 2·шаг строк − ширина цифры.
+   Ширина — по пробе шрифтом поля, шаг строк — по настоящей строке поля. */
+function tri90Apply(){
+  const L = $("rowList"); if (!L) return;
+  const on = !!Z.tri90 && !ovControls();
+  L.classList.toggle("tri90", on);
+  if (!on) return;
+  // v0.074, «нет 90»: .rw — не блок (номер и биты стоят прямо в сетке поля), его высота 0 — шаг строк меряем по битам
+  // двух соседних строк (или по высоте самих бит, если строка одна)
+  const bl = L.querySelectorAll(".rw .bits"), bits = bl[0]; if (!bits) return;
+  const pr = document.createElement("span");
+  pr.style.cssText = "position:absolute;visibility:hidden;white-space:pre;letter-spacing:0;font-family:var(--ff);font-size:var(--fs)";
+  pr.textContent = "0101010101"; bits.appendChild(pr);
+  const cw = pr.getBoundingClientRect().width / 10; pr.remove();
+  const pitch = bl.length > 1 ? Math.abs(bl[1].getBoundingClientRect().top - bl[0].getBoundingClientRect().top) || bits.getBoundingClientRect().height : bits.getBoundingClientRect().height;
+  const ls = Math.max(0, 2 * pitch - cw);
+  L.style.setProperty("--ls90", ls.toFixed(2) + "px");
+  Z.tri90Ls = Math.round(ls * 10) / 10;
+}
 function renderRows(){
   if (rowEditing >= 0) return;
   syncLane();
@@ -322,7 +353,7 @@ function renderRows(){
     h += "</div>";
   }
   for (let i = 0; i < H; i++) {
-    h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + i + (rowChanged(i) ? " — изменена против эталона ⚑" : "") + ' · щелчок — выделить">' + i + rowCounts(Z.rows[i]) + "</span>";
+    h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + i + (rowChanged(i) ? " — изменена против эталона ⚑" : "") + ' · щелчок — выделить"><span class="rn">' + i + '</span>' + rowCounts(Z.rows[i]) + "</span>";
     for (let l = 0; l < N; l++) {
       const s = lanes[l][i], act = l === Z.lane;
       if (s === undefined) { h += '<span class="bits' + (act ? " la" : "") + '" data-l="' + l + '"></span>'; continue; }
@@ -409,6 +440,7 @@ function deleteSelection(){
 
 /* Правка на месте: строка превращается в поле ввода той же гарнитуры. */
 function editRowInPlace(i){
+  if (rowsLocked()) return;   // v0.061
   const L = $("rowList");
   const rw = L.querySelector('.rw[data-r="' + i + '"]');
   if (!rw) return;
@@ -463,6 +495,16 @@ function tplInsert(rows, name){
   renderAll(); save();
   say(`Шаблон «${name}»: ${rows.length === 1 ? "строка " + rows[0].length + " бит" : rows.length + " стр."} под текущей. ↩ вернёт.`);
 }
+/* v0.066, по снимку своего шаблона «Столбик · 70 стр.»: «при клике заменять текущие, а не достраивать вниз». Свой шаблон
+   щелчком ЗАМЕНЯЕТ: столбик — весь столбик, строка — текущую строку. Shift + щелчок — как раньше, вставить под текущей. */
+function tplReplace(rows, name){
+  if (!rows || !rows.length) return;
+  snapshot();
+  if (rows.length > 1) { Z.rows = rows; syncLane(); Z.cur = Math.min(Z.cur, rows.length - 1); }
+  else Z.rows[Z.cur] = rows[0];
+  renderAll(); save();
+  say(`Шаблон «${name}»: ${rows.length > 1 ? "столбик заменён — " + rows.length + " стр." : "строка " + Z.cur + " заменена"}. Shift + щелчок — вставить под текущей. ↩ вернёт.`);
+}
 function renderTpl(){
   let h = "";
   TPL_BUILTIN.forEach((t, k) => {
@@ -471,7 +513,7 @@ function renderTpl(){
   if (Z.tpl.length) h += '<div class="tpl-sep">свои</div>';
   Z.tpl.forEach((t, k) => {
     const tip = t.rows.length === 1 ? t.rows[0].slice(0, 200) : t.rows.length + " стр.: " + t.rows.slice(0, 6).map(r => r.slice(0, 40)).join(" / ");
-    h += '<div class="tpl mine"><button class="tb" data-u="' + k + '" title="' + esc(tip) + ' · двойной щелчок — переименовать">' + esc(t.name) + "</button>" +
+    h += '<div class="tpl mine"><button class="tb" data-u="' + k + '" title="' + esc(tip) + ' · щелчок — заменить (столбик — весь столбик, строка — текущую), Shift + щелчок — вставить под текущей · двойной щелчок — переименовать">' + esc(t.name) + "</button>" +
          '<button class="tref' + (Z.tplRef === k ? " on" : "") + '" data-r="' + k + '" title="' + (Z.tplRef === k ? "Эталон: номера строк, отличающихся от этого шаблона, — золотом. Щелчок — выключить сравнение" : "Сравнивать строки с этим шаблоном: номера изменённых — золотом") + '">⚑</button>' +
          '<button class="tx" data-x="' + k + '" title="Удалить этот шаблон">✕</button></div>';
   });
@@ -657,10 +699,29 @@ function runLin(){
 
 /* v0.040, запрос пользователя: «при смене выделения строки вживую бы обновлять сразу результаты». Окно считает само
    при каждой отрисовке (смена текущей строки, правка, новые строки) — если оно не свёрнуто; свёрнутое не считает. */
+/* v0.045, запрос пользователя по снимку «Цикла и памяти»: «это тоже живое изменение, вообще всё живым надо сделать».
+   Каждое окно-расчёт считает само при отрисовке, если открыто, — но только когда изменилось то, от чего оно зависит
+   (ключ: строка, её номер, настройки окна, для ленточных — весь столбик). Иначе любое действие на странице гоняло бы
+   все расчёты заново. Кнопки остались — пересчитать вручную. Тяжёлое на длинных строках — по кнопке. */
+const liveKeys = {};
+function winOpen(id){ const w = $(id); return !!w && !w.classList.contains("collapsed") && w.style.display !== "none"; }
+function liveRun(id, key, fn){ if (!winOpen(id) || liveKeys[id] === key) return; liveKeys[id] = key; fn(); }
 function renderLinLive(){
-  const w = $("w-lin");
-  if (!w || w.classList.contains("collapsed") || w.style.display === "none") return;
-  runLin();
+  liveRun("w-lin", Z.linSrc + "|" + (Z.linSrc === "all" ? Z.rows.join("|") : cur()), runLin);
+}
+function renderLiveRest(){
+  const s = cur(), rk = Z.rows.join("|");
+  liveRun("w-cycle", Z.cycOp + "|" + Z.cycHeat + "|" + s, runCycle);
+  liveRun("w-gf2", Z.gf2Op + "|" + Z.gf2T + "|" + Z.cur + "|" + s, () => {
+    if (s.length <= 256) runGf2();
+    else { gf2Last = null; $("gf2Out").textContent = `Строка ${s.length} бит — сама не считаю: алгебра матриц ${s.length}×${s.length} тяжела на каждый щелчок. «🧮 Решить» — по кнопке.`; }
+  });
+  liveRun("w-tape", (Z.tapeMode || "thru") + "|" + Z.thruMode + "|" + rk, Z.tapeMode === "decim" ? runDecim : runThru);
+  liveRun("w-orbit", Z.cur + "|" + $("orbitSub").checked + "|" + rk, runOrbit);
+  liveRun("w-bwt", Z.cur + "|" + s, () => {
+    if (s.length <= 4096) runBwt(true);
+    else $("bwtOut").textContent = `Строка ${s.length} бит — сортировку сдвигов делаю только по кнопке «⇅».`;
+  });
 }
 
 /* ─── 🔎 Адрес строки (v0.041) ────────────────────────────────────────────────────────────────
@@ -708,6 +769,322 @@ function renderAddrLive(){
   const w = $("w-addr");
   if (!w || w.classList.contains("collapsed") || w.style.display === "none") return;
   runAddr(false);
+}
+
+/* ─── ⚖ Балансы (v0.050) ───────────────────────────────────────────────────────────────────────
+   Запрос пользователя: «окно, где каждой строке вживую будет сопоставляться баланс, общий баланс до текущей строки
+   по всем; также и по числу неменяющихся с общим; и также неменяющиеся лентой до текущей». Для каждой строки:
+   нулей : единиц и перевес (1 − 0); то же нарастающим итогом от строки 0 до неё; неподвижные при развороте биты
+   (· меняющиеся) и их нарастающий итог; и неподвижные у ЛЕНТЫ — строк 0…i, выписанных подряд одной строкой и
+   развёрнутых целиком. Лента считается до 400 строк или 200 000 бит — дальше «—». */
+const BAL_ROWS = 400, BAL_TAPE = 200000;
+function renderBal(){
+  liveRun("w-bal", Z.cur + "|" + Z.rows.join("|"), () => {
+    let z = 0, o = 0, fxs = 0, tape = "", h = "", curTxt = "";
+    const N = Z.rows.length;
+    for (let i = 0; i < N; i++) {
+      const s = Z.rows[i], n = s.length, k = zzOnes(s);
+      let fx = 0; for (let j = 0; j < n; j++) if (s[j] === s[n - 1 - j]) fx++;
+      z += n - k; o += k; fxs += fx;
+      let tfx = null;
+      if (i < BAL_ROWS && tape.length + n <= BAL_TAPE) { tape += s; const L = tape.length; tfx = 0; for (let j = 0; j < L; j++) if (tape[j] === tape[L - 1 - j]) tfx++; }
+      const sg = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x);
+      if (i === Z.cur) curTxt = `Строка ${i}: ${n - k}:${k} (перевес ${sg(k - (n - k))}); до неё всего ${z}:${o} (${sg(o - z)}); ` +
+        `неподвижных ${fx} из ${n}, до неё всего ${fxs} из ${z + o}` + (tfx !== null ? `; лентой 0…${i} (${tape.length} бит) неподвижных ${tfx}` : "") + ".";
+      if (i < BAL_ROWS) h += `<tr data-r="${i}"${i === Z.cur ? ' class="cur"' : ""}><td class="n">${i}</td><td class="n">${n}</td>` +
+        `<td class="n"><span class="b0">${n - k}</span>:<span class="b1">${k}</span></td><td class="n">${sg(k - (n - k))}</td>` +
+        `<td class="n"><span class="b0">${z}</span>:<span class="b1">${o}</span></td><td class="n">${sg(o - z)}</td>` +
+        `<td class="n"><span class="rcf">${fx}</span>·<span class="rcm">${n - fx}</span></td><td class="n">${fxs}</td>` +
+        `<td class="n">${tfx === null ? "—" : `<span class="rcf">${tfx}</span>·<span class="rcm">${tape.length - tfx}</span>`}</td></tr>`;
+    }
+    $("balOut").textContent = curTxt;
+    $("balTbl").innerHTML = '<table class="btbl"><thead><tr><th>№</th><th>бит</th><th title="нулей : единиц в строке">0:1</th><th title="единиц минус нулей">±</th>' +
+      '<th title="нулей : единиц — всего от строки 0 до этой">Σ 0:1</th><th title="перевес нарастающим итогом">Σ ±</th>' +
+      '<th title="неподвижных при развороте · меняющихся">неподв.</th><th title="неподвижных — всего от строки 0 до этой">Σ неподв.</th>' +
+      '<th title="строки 0…этой, выписанные подряд одной лентой и развёрнутые целиком: неподвижных · меняющихся">лентой</th></tr></thead><tbody>' + h + "</tbody></table>" +
+      (N > BAL_ROWS ? `<div class="dim">… ещё ${N - BAL_ROWS} строк — итоги наверху считаются по всем</div>` : "");
+    const tr = $("balTbl").querySelector("tr.cur");
+    if (tr) { const box = $("balTbl"), top = tr.offsetTop - box.clientHeight / 2; if (tr.offsetTop < box.scrollTop + 24 || tr.offsetTop > box.scrollTop + box.clientHeight - 24) box.scrollTop = Math.max(0, top); }
+  });
+}
+
+/* ─── △ Разложить на ▲ ▼ ◇ (v0.070) ─────────────────────────────────────────────────────────────
+   Таблица по размерам (2…64 и степени двойки до высоты треугольника): сколько ▲, ▼, ◇ и сколько среди них разных
+   рисунков (и форм — с точностью до зеркала). Щелчок по размеру — ниже галерея разных фигур этого размера, самые частые
+   первыми, с числом повторов. Живое: строки поменялись — пересчитано. */
+const TILES_GAL = 60;
+function tilesFig(rows, S){
+  // фигура как в поле: строки по центру, бит через пробел — полшага на строку
+  return rows.map(r => " ".repeat(Math.max(0, S - r.length)) + r.split("").map(c => '<span class="b' + c + '">' + c + "</span>").join(" ")).join("\n");
+}
+function renderTiles(){
+  const src = rowSel.size >= 2 ? Array.from(rowSel).sort((a, b) => a - b) : Z.rows.map((_, i) => i);
+  liveRun("w-tiles", (Z.tilesS || 0) + "|" + (Z.tilesKind || "rh") + "|" + src.join(",") + "|" + src.map(i => Z.rows[i]).join("|"), () => {
+    const rows = src.map(i => Z.rows[i]), blk = zzTriBlock(rows);
+    if (!blk.ok) {
+      $("tilesOut").innerHTML = rows.length < 2 ? "Нужен треугольник — хотя бы две строки." :
+        `Это не треугольник: у строки ${src[blk.at]} длина ${rows[blk.at].length}, а должна быть на 1 больше предыдущей (${rows[blk.at - 1].length + 1}). ` +
+        "Выдели строки треугольника (щелчок по номеру, Shift — диапазон) или построй его: «△ Треугольник из строки».";
+      $("tilesTbl").innerHTML = ""; $("tilesGal").innerHTML = ""; return;
+    }
+    const H = rows[0].length - 1 + rows.length, sizes = [];
+    for (let S = 2; S <= Math.min(64, H); S++) sizes.push(S);
+    for (let S = 128; S <= H; S *= 2) sizes.push(S);
+    let S0 = Z.tilesS && sizes.includes(Z.tilesS) ? Z.tilesS : sizes.find(S => S >= 4 && (S & (S - 1)) === 0 && S * 2 <= H) || sizes[0];
+    let h = "";
+    for (const S of sizes) {
+      const T = zzTiles(rows, S);
+      if (!T.up.length) continue;
+      const cu = zzTileCensus(T.up), cd = zzTileCensus(T.down), cr = zzTileCensus(T.rh), pw = (S & (S - 1)) === 0;
+      h += `<tr data-s="${S}"${S === S0 ? ' class="cur"' : ""}><td class="n">${pw ? "<b>" + S + "</b>" : S}</td>` +
+        `<td class="n">${T.up.length}</td><td class="n">${cu.distinct} <span class="dim">/ ${cu.forms}</span></td>` +
+        `<td class="n">${T.down.length}</td><td class="n">${cd.distinct} <span class="dim">/ ${cd.forms}</span></td>` +
+        `<td class="n">${T.rh.length}</td><td class="n">${cr.distinct} <span class="dim">/ ${cr.forms}</span></td></tr>`;
+    }
+    $("tilesTbl").innerHTML = '<table class="btbl"><thead><tr><th title="размер: сторона ▲ в строках (степени двойки — жирным)">S</th>' +
+      '<th title="треугольников вершиной вверх">▲</th><th title="разных рисунков / форм (зеркальные — одна форма)">разных</th>' +
+      '<th title="треугольников вершиной вниз (сторона S−1)">▼</th><th title="разных рисунков / форм">разных</th>' +
+      '<th title="ромбов: ▲ и ▼ под ним">◇</th><th title="разных рисунков / форм">разных</th></tr></thead><tbody>' + h + "</tbody></table>";
+    const T = zzTiles(rows, S0), kind = Z.tilesKind || "rh", list = kind === "up" ? T.up : kind === "down" ? T.down : T.rh, C = zzTileCensus(list);
+    const nm = { up: "▲ вершиной вверх", down: "▼ вершиной вниз", rh: "◇ ромбов" }[kind];
+    $("tilesOut").innerHTML = `Треугольник: ${rows.length} строк (${rows[0].length}…${rows[rows.length - 1].length} бит)` + (rowSel.size >= 2 ? ", выделенные" : "") +
+      `. Размер <b>${S0}</b>: ${nm} ${list.length}, разных рисунков <b>${C.distinct}</b>, форм ${C.forms}.` +
+      (list.length ? ` Ниже — разные, самые частые первыми${C.items.length > TILES_GAL ? ` (первые ${TILES_GAL})` : ""}.` : " Такой фигуры этого размера здесь нет.");
+    $("tilesGal").innerHTML = C.items.slice(0, TILES_GAL).map((it, i) =>
+      `<div class="tfig" title="полоса ${it.b}, место ${it.k}${it.n > 1 ? " (первая из " + it.n + ")" : ""}"><pre>${tilesFig(it.rows, S0)}</pre><div class="dim">№${i + 1} · ×${it.n}</div></div>`).join("");
+  });
+}
+
+/* ─── 📐 Лесенки — таблица (v0.062) ────────────────────────────────────────────────────────────
+   Запрос пользователя по тексту «🧊 Вида» (сверху, хорда, площади, описанные): «всё это в табличном виде по каждой
+   строке». У каждой строки: единиц X и нулей Z (точка, куда приходит лесенка), число лесенок в ту же точку C(n, X) и его
+   чётность (нечётно ⇔ X AND Z = 0 — Серпинский), пересечения и касания хорды концов, площади под / над лесенкой,
+   между лесенкой и хордой (и перевес), описанные прямоугольник, квадрат и круг. Живое, как «⚖ Балансы». */
+const STEPS_ROWS = 400;
+function stepsNum(x){ return Number.isInteger(x) ? String(x) : x.toFixed(1); }
+function stepsBinom(n, k){
+  const b = binomBig(n, k), s = b.toString();
+  return s.length <= 12 ? s : s.slice(0, 3).replace(/^(\d)(\d+)/, "$1,$2") + "·10^" + (s.length - 1);
+}
+function renderSteps(){
+  liveRun("w-steps", Z.cur + "|" + Z.rows.join("|"), () => {
+    const N = Z.rows.length; let h = "", tot = { cross: 0, touch: 0, under: 0, over: 0, between: 0 };
+    for (let i = 0; i < N; i++) {
+      const st = viewChordStats(Z.rows[i]);
+      tot.cross += st.cross; tot.touch += st.touch; tot.under += st.under; tot.over += st.over; tot.between += st.between;
+      if (i >= STEPS_ROWS) continue;
+      const odd = (st.X & st.Z) === 0;
+      h += `<tr data-r="${i}"${i === Z.cur ? ' class="cur"' : ""}><td class="n">${i}</td><td class="n"><span class="b1">${st.X}</span></td><td class="n"><span class="b0">${st.Z}</span></td>` +
+        `<td class="n" title="${binomBig(st.X + st.Z, st.X)}">${stepsBinom(st.X + st.Z, st.X)}</td><td class="n">${odd ? "нечёт" : '<span class="dim">чёт</span>'}</td>` +
+        `<td class="n">${st.cross ? `<span class="rcf">${st.cross}</span>` : 0}</td><td class="n">${st.touch}</td>` +
+        `<td class="n">${st.under}</td><td class="n">${st.over}</td><td class="n">${stepsNum(st.between)}</td><td class="n">${st.signed ? (st.signed > 0 ? "над " : "под ") + stepsNum(Math.abs(st.signed)) : "—"}</td>` +
+        `<td class="n">${st.rect}</td><td class="n">${st.sq}</td><td class="n">${stepsNum(st.circ)}</td></tr>`;
+    }
+    $("stepsOut").textContent = `Всего по ${N} строкам: пересечений хорды ${tot.cross}, касаний ${tot.touch}; площадь под лесенками ${tot.under}, над ${tot.over}, между лесенкой и хордой ${stepsNum(tot.between)}.`;
+    $("stepsTbl").innerHTML = '<table class="btbl"><thead><tr><th>№</th><th title="единиц — шагов вправо">1</th><th title="нулей — шагов к себе">0</th>' +
+      '<th title="лесенок в ту же точку — C(n, единиц), число из треугольника Паскаля; наведи — полностью">C(n,k)</th><th title="чётность C(n,k): нечётно, когда единиц AND нулей = 0 (Серпинский)">Серп.</th>' +
+      '<th title="пересечений хорды концов с лесенкой">⟋ пер.</th><th title="касаний хорды (вершина на хорде без перехода на другую сторону)">кас.</th>' +
+      '<th title="площадь под лесенкой: прямоугольники «1 × нулей до неё» — пар «0 раньше 1»">под</th><th title="над лесенкой: X·Z минус «под» — пар «1 раньше 0»">над</th>' +
+      '<th title="площадь между лесенкой и хордой">между</th><th title="с какой стороны хорды площади больше и на сколько">перевес</th>' +
+      '<th title="описанный прямоугольник X·Z">□ X·Z</th><th title="описанный квадрат max(X,Z)²">■ max²</th><th title="круг вокруг прямоугольника π(X²+Z²)/4">○ круг</th></tr></thead><tbody>' + h + "</tbody></table>" +
+      (N > STEPS_ROWS ? `<div class="dim">… ещё ${N - STEPS_ROWS} строк — итоги наверху считаются по всем</div>` : "");
+    const tr = $("stepsTbl").querySelector("tr.cur");
+    if (tr) { const box = $("stepsTbl"); if (tr.offsetTop < box.scrollTop + 24 || tr.offsetTop > box.scrollTop + box.clientHeight - 24) box.scrollTop = Math.max(0, tr.offsetTop - box.clientHeight / 2); }
+  });
+}
+
+/* ─── ◯ Конус (v0.048) ───────────────────────────────────────────────────────────────────────
+   Запрос пользователя: «◯ конус — да, но его нужно видом сверху: кольца расходящиеся, и чтоб крутить можно было
+   руками каждое» (к разговору «каждую строку в треугольнике считать кольцевой: 111 как ни крути — 111, а 1000 — это
+   0100…»). Строка k — кольцо k, от центра наружу; бит — дуга своего кольца, 1 ярко, 0 тускло. Тянешь по кольцу —
+   оно крутится (отпустил — встаёт на целый бит); щелчок без поворота — строка становится текущей. Поворот — только
+   вид, строки не меняются, пока не нажато «⤓ в строки». Одинаковые кольца (одно ожерелье: те же биты по кругу) —
+   одним цветом обводки. */
+const CONE_MAX = 160;
+/* v0.051, «конус — супер; надо ещё чётче разграничить кольца, и выделять при наведении; цвета брать из поля строк, в том
+   числе и символов; и если меняется там — то и здесь, и если крутить тут — то там». Кольца — с явным зазором и тонкой
+   чертой между ними; наведённое кольцо обводится и подсвечивает свою строку в поле; цвета — те же, что у бит в поле
+   (--b1 / --b0, неподвижные красным, если в поле включено «неподв.»), а когда дуга крупная — рисуется и сам символ 0 / 1
+   шрифтом поля. Поворот кольца теперь поворачивает САМУ строку: пока тянешь — строка в поле крутится вместе (на
+   каждом целом бите), отпустил — записано (↩ вернёт весь поворот разом). Поле строк меняется — конус перерисован. */
+let coneRot = [], coneGeom = null, coneDrag = null, coneHover = -1;
+let coneZoom = 1, conePan = [0, 0];   // v0.049: масштаб вокруг курсора и сдвиг (в пикселях холста)
+function coneCss(v, dflt){ try { return getComputedStyle(document.documentElement).getPropertyValue(v).trim() || dflt; } catch (e) { return dflt; } }
+function coneInfo(){
+  const nk = Z.rows.map(zzNecklace), groups = new Map();
+  nk.forEach((k, i) => { const key = Z.rows[i].length + ":" + k.canon; if (!groups.has(key)) groups.set(key, []); groups.get(key).push(i); });
+  return { nk, groups };
+}
+function coneHoverRow(i){
+  // подсветка строки в поле под наведённым кольцом
+  const L = $("rowList"); if (!L) return;
+  L.querySelectorAll(".rw.hov").forEach(el => el.classList.remove("hov"));
+  if (i >= 0) { const el = L.querySelector('.rw[data-r="' + i + '"]'); if (el) el.classList.add("hov"); }
+}
+function renderCone(){
+  if (!winOpen("w-cone")) return;
+  const cv = $("coneCv"); if (!cv) return;
+  const R = cv.getBoundingClientRect(); if (R.width < 20 || R.height < 20) return;
+  const dpr = window.devicePixelRatio || 1, W = Math.round(R.width * dpr), H = Math.round(R.height * dpr);
+  if (cv.width !== W) cv.width = W; if (cv.height !== H) cv.height = H;
+  const g = cv.getContext("2d");
+  const cBg = coneCss("--bg", "#0b0d12"), c1 = coneCss("--b1", "#22d3ee"), c0 = coneCss("--b0", "#7d8699"), cR = coneCss("--red", "#ff6b6b"),
+        cg = coneCss("--gold", "#ffd166"), cA = coneCss("--acc", "#b98cf0"), cL = coneCss("--line", "#262d3d"), ff = coneCss("--ff", "monospace");
+  g.fillStyle = cBg; g.fillRect(0, 0, W, H);
+  const N = Math.min(Z.rows.length, CONE_MAX);
+  while (coneRot.length < Z.rows.length) coneRot.push(0);
+  coneRot.length = Z.rows.length;
+  const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, r0 = rMax * 0.05, dr = (rMax - r0) / Math.max(1, N);
+  coneGeom = { cx, cy, r0, dr, N, dpr };
+  const { nk, groups } = coneInfo();
+  const HUES = [200, 30, 120, 290, 0, 60, 170, 330, 90, 250];
+  const gcol = new Map(); let gi = 0;
+  for (const [key, ids] of groups) if (ids.length > 1) gcol.set(key, `hsl(${HUES[gi++ % HUES.length]} 80% 60%)`);
+  const same = $("coneSame") ? $("coneSame").checked : true;
+  const band = 0.72;   // доля кольца под биты; остальное — зазор до следующего
+  for (let i = 0; i < N; i++) {
+    const s = Z.rows[i], n = s.length; if (!n) continue;
+    const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, rot = coneRot[i] || 0;
+    if (rout < 0 || rin > Math.hypot(W, H) + Math.hypot(cx - W / 2, cy - H / 2)) continue;
+    const gap = n > 1 && step * rin > 3 * dpr ? Math.min(step * 0.12, 1.5 * dpr / Math.max(1, rin)) : 0;
+    const arcLen = step * (rin + rout) / 2, fsz = Math.min(dr * band * 0.8, arcLen * 0.85);
+    const glyph = fsz >= 8 * dpr;   // дуга крупная — рисуем символ, как в поле
+    for (let j = 0; j < n; j++) {
+      const a = -Math.PI / 2 + (j - rot) * step, fix = Z.showFix && fixAt(s, j);
+      const col = fix ? (Z.showFix === "ir" ? coneCss("--green", "#6ee7a0") : cR) : s[j] === "1" ? c1 : c0;
+      g.beginPath(); g.arc(cx, cy, rout, a + gap, a + step - gap); g.arc(cx, cy, rin, a + step - gap, a + gap, true); g.closePath();
+      g.globalAlpha = glyph ? 0.16 : s[j] === "1" || fix ? 0.95 : 0.38; g.fillStyle = col; g.fill(); g.globalAlpha = 1;
+      if (glyph) {
+        const am = a + step / 2, rm = (rin + rout) / 2;
+        g.save(); g.translate(cx + rm * Math.cos(am), cy + rm * Math.sin(am)); g.rotate(am + Math.PI / 2);
+        g.fillStyle = col; g.font = `${fix || s[j] === "1" ? 700 : 400} ${Math.round(fsz)}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle";
+        g.fillText(s[j], 0, 0); g.restore();
+      }
+    }
+    // черта между кольцами — чтобы кольца читались раздельно
+    g.strokeStyle = cL; g.lineWidth = Math.max(1, dpr * 0.8); g.beginPath(); g.arc(cx, cy, rout + dr * (1 - band) / 2, 0, 2 * Math.PI); g.stroke();
+    const key = n + ":" + nk[i].canon;
+    if (same && gcol.has(key)) { g.strokeStyle = gcol.get(key); g.lineWidth = Math.max(1, dr * 0.12); g.beginPath(); g.arc(cx, cy, rout + dr * (1 - band) / 2, 0, 2 * Math.PI); g.stroke(); }
+    // v0.057, «выделение колец золотым — непонятно, какую-то черту поперёк кольца делает, путает»: обе окружности были одним
+    // контуром, и canvas соединял их отрезком (справа, на угле 0). Теперь — каждая своим контуром, без перемычки.
+    if (i === Z.cur) {
+      g.strokeStyle = cg; g.lineWidth = Math.max(1.5 * dpr, dr * 0.1);
+      g.beginPath(); g.arc(cx, cy, rin - dr * 0.04, 0, 2 * Math.PI); g.stroke();
+      g.beginPath(); g.arc(cx, cy, rout + dr * 0.04, 0, 2 * Math.PI); g.stroke();
+    }
+    if (i === coneHover) { g.strokeStyle = cA; g.lineWidth = Math.max(2 * dpr, dr * 0.14); g.globalAlpha = 0.85; g.beginPath(); g.arc(cx, cy, rin - dr * 0.06, 0, 2 * Math.PI); g.stroke(); g.beginPath(); g.arc(cx, cy, rout + dr * 0.06, 0, 2 * Math.PI); g.stroke(); g.globalAlpha = 1; }
+  }
+  // v0.055: лучи к центру от границ бит — текущего кольца или всех
+  const rays = Z.coneRays || "off";
+  if (rays !== "off") {
+    g.strokeStyle = cA; g.lineWidth = Math.max(0.6, dpr * (rays === "cur" ? 0.9 : 0.5)); g.globalAlpha = rays === "cur" ? 0.6 : 0.2;
+    g.beginPath();
+    for (let i = rays === "cur" ? Z.cur : 0; i < (rays === "cur" ? Math.min(Z.cur + 1, N) : N); i++) {
+      const s = Z.rows[i], n = s.length; if (!n) continue;
+      const rout = r0 + i * dr + Math.max(1, dr * band), step = 2 * Math.PI / n, rot = coneRot[i] || 0;
+      for (let j = 0; j < n; j++) { const a = -Math.PI / 2 + (j - rot) * step; g.moveTo(cx, cy); g.lineTo(cx + rout * Math.cos(a), cy + rout * Math.sin(a)); }
+    }
+    g.stroke(); g.globalAlpha = 1;
+  }
+  // метка «начала» строк — сверху: сюда встаёт бит 0
+  g.strokeStyle = cg; g.lineWidth = 1 * dpr; g.beginPath(); g.moveTo(cx, cy - r0); g.lineTo(cx, cy - rMax - 4 * dpr); g.globalAlpha = 0.5; g.stroke(); g.globalAlpha = 1;
+  // текст
+  const i = Z.cur, s = cur(), k = nk[i], key = s.length + ":" + k.canon, mates = (groups.get(key) || []).filter(j => j !== i);
+  const multi = [...groups.values()].filter(v => v.length > 1);
+  $("coneOut").innerHTML =
+    // v0.052: строка «под мышью» есть всегда — иначе текст то появлялся, то пропадал, и холст над ним прыгал
+    (coneHover >= 0 && coneHover < Z.rows.length ? `Под мышью — строка ${coneHover} (${Z.rows[coneHover].length} бит).\n` : "Наведи на кольцо — подсветится его строка в поле.\n") +
+    `Строка ${i}: ${s.length} бит — кольцо встаёт в <b>${k.orbit}</b> ${k.orbit === 1 ? "положение (как ни крути — то же)" : "разных положений"}; ` +
+    `наименьший вид <span class="mono">${bitsPlain(k.canon.length > 80 ? k.canon.slice(0, 80) + "…" : k.canon)}</span> — до него повернуть на ${k.shift}.\n` +
+    (mates.length ? `То же кольцо, что у строк: ${mates.slice(0, 20).join(", ")}${mates.length > 20 ? "…" : ""}.\n` : "") +
+    `Разных колец <b>${groups.size}</b> на ${Z.rows.length} строк` + (multi.length ? `; совпадающих групп ${multi.length}: ` + multi.slice(0, 8).map(v => v.slice(0, 6).join("=") + (v.length > 6 ? "…" : "")).join(" · ") : "") +
+    (Z.rows.length > CONE_MAX ? `.\nНарисованы первые ${CONE_MAX} колец из ${Z.rows.length}.` : ".") +
+    (coneZoom !== 1 ? ` Масштаб ×${coneZoom.toFixed(coneZoom < 10 ? 1 : 0)} (двойной щелчок мимо колец — как было).` : "");
+}
+function coneRing(e){
+  if (!coneGeom) return -1;
+  const cv = $("coneCv"), r = cv.getBoundingClientRect(), G = coneGeom;
+  const x = (e.clientX - r.left) * G.dpr - G.cx, y = (e.clientY - r.top) * G.dpr - G.cy, rr = Math.hypot(x, y);
+  const i = Math.floor((rr - G.r0) / G.dr);
+  return i >= 0 && i < G.N ? { i, a: Math.atan2(y, x) } : -1;
+}
+function coneRotStr(s, k){ const n = s.length; k = ((k % n) + n) % n; return k ? s.slice(k) + s.slice(0, k) : s; }
+function setupCone(){
+  const cv = $("coneCv");
+  cv.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return;
+    const h = coneRing(e);
+    const locked = Z.coneLock !== false;   // v0.055: запрет сдвига строк — кольцо не крутится, тянешь весь вид
+    if (h === -1 || e.ctrlKey || locked) {   // v0.049: мимо колец или с Ctrl — сдвиг всего вида
+      e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "move";
+      const x0 = e.clientX, y0 = e.clientY, p0 = conePan.slice(), dpr = window.devicePixelRatio || 1;
+      let movedP = false;
+      const mv = (ev) => { if (Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) > 3) movedP = true; conePan = [p0[0] + (ev.clientX - x0) * dpr, p0[1] + (ev.clientY - y0) * dpr]; renderCone(); };
+      const upP = () => {
+        cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", upP); cv.removeEventListener("pointercancel", upP); cv.style.cursor = "grab";
+        if (!movedP && h !== -1 && h.i !== Z.cur) { conePan = p0; Z.cur = h.i; renderAll(); save(); }   // щелчок по кольцу — выбрать строку
+      };
+      cv.addEventListener("pointermove", mv); cv.addEventListener("pointerup", upP); cv.addEventListener("pointercancel", upP);
+      return;
+    }
+    e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing";
+    coneDrag = { i: h.i, last: h.a, turn: 0, base: Z.rows[h.i], applied: 0, snap: false };
+  });
+  cv.addEventListener("pointermove", (e) => {
+    if (!coneDrag) {   // наведение: обвести кольцо и его строку в поле
+      const h = coneRing(e), i = h === -1 ? -1 : h.i;
+      if (i !== coneHover) { coneHover = i; coneHoverRow(i); renderCone(); }
+      return;
+    }
+    const cvr = cv.getBoundingClientRect(), G = coneGeom, D = coneDrag;
+    const a = Math.atan2((e.clientY - cvr.top) * G.dpr - G.cy, (e.clientX - cvr.left) * G.dpr - G.cx);
+    let da = a - D.last; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
+    D.turn += da; D.last = a;
+    const n = D.base.length, rot = -D.turn / (2 * Math.PI / n), k = Math.round(rot);
+    if (k !== D.applied) {   // целый бит — крутим саму строку, поле видит сразу
+      if (!D.snap) { snapshot(); D.snap = true; }
+      Z.rows[D.i] = coneRotStr(D.base, k); D.applied = k;
+      renderRows(); coneHoverRow(coneHover);
+    }
+    coneRot[D.i] = rot - D.applied;   // остаток до целого бита — плавность под мышью
+    renderCone();
+  });
+  cv.addEventListener("pointerleave", () => { if (!coneDrag && coneHover !== -1) { coneHover = -1; coneHoverRow(-1); renderCone(); } });
+  const up = () => {
+    if (!coneDrag) return;
+    const D = coneDrag; coneDrag = null; cv.style.cursor = "grab";
+    coneRot[D.i] = 0;
+    const n = D.base.length, k = ((D.applied % n) + n) % n;
+    if (Math.abs(D.turn) < 0.02) { if (Z.cur !== D.i) { Z.cur = D.i; renderAll(); save(); } else renderCone(); return; }
+    if (Z.cur !== D.i) Z.cur = D.i;
+    renderAll(); save();
+    if (k) say(`◯ Строка ${D.i} повёрнута на ${k} (влево по кругу) — и в поле строк. ↩ вернёт.`);
+  };
+  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+  $("bConeCanon").onclick = () => {
+    if (Z.coneLock !== false) { say("◯ Включён «запрет сдвига строк» — сними галку, чтобы повернуть строки к наименьшему виду."); return; }   // v0.055
+    let k = 0; const out = Z.rows.map(s => { const r = zzNecklace(s); if (r.shift) k++; return r.canon; });
+    if (!k) { say("◯ Все строки уже в наименьшем виде."); return; }
+    snapshot(); Z.rows = out; syncLane(); renderAll(); save();
+    say(`◯ Строки повёрнуты к наименьшему виду: ${k}. Одинаковые кольца теперь и в поле одинаковые. ↩ вернёт.`);
+  };
+  $("coneSame").onchange = () => renderCone();
+  $("coneLock").checked = Z.coneLock !== false;   // v0.055: по умолчанию включён
+  $("coneLock").onchange = (e) => { Z.coneLock = e.target.checked; save(); say(Z.coneLock ? "◯ Запрет сдвига строк: кольца не крутятся, тянешь — двигается вид." : "◯ Запрет снят: тянешь кольцо — крутится и сама строка в поле."); };
+  $("coneRays").value = Z.coneRays || "off";
+  $("coneRays").onchange = (e) => { Z.coneRays = e.target.value; save(); renderCone(); };
+  // v0.049: колесо — масштаб вокруг курсора (точка под курсором остаётся на месте); двойной щелчок мимо колец — как было
+  cv.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    const mx = (e.clientX - r.left) * dpr - cv.width / 2, my = (e.clientY - r.top) * dpr - cv.height / 2;
+    const z1 = Math.max(0.3, Math.min(60, coneZoom * Math.exp(-e.deltaY * 0.0015)));
+    const k = z1 / coneZoom;
+    conePan = [mx - (mx - conePan[0]) * k, my - (my - conePan[1]) * k];
+    coneZoom = z1; renderCone();
+  }, { passive: false });
+  cv.addEventListener("dblclick", (e) => { if (coneRing(e) !== -1 && !e.ctrlKey) return; coneZoom = 1; conePan = [0, 0]; renderCone(); });
+  if (window.ResizeObserver) new ResizeObserver(() => renderCone()).observe(cv);
 }
 
 /* ─── 🧪 Поиск структуры (v0.042) ─────────────────────────────────────────────────────────────
@@ -945,12 +1322,12 @@ function runFold(){
    строке». Не считается сама на каждую строку — сортировка длинной строки заметна; по кнопке. */
 const BWT_ROWS = 48, BWT_COLS = 96;
 let bwtLast = null;
-function runBwt(){
+function runBwt(live){   // v0.045: live — из живого пересчёта: поле «№ для обратного хода» не трогать
   const s = cur(), n = s.length;
   if (n > ZZ_BWT_MAX) { say(`⇅ Строка ${n} бит — длиннее ${ZZ_BWT_MAX}.`); return null; }
   const r = zzBwt(s);
   bwtLast = { src: s, row: Z.cur, last: r.last, index: r.index };
-  Z.bwtIdx = r.index; $("bwtIdx").value = r.index; save();
+  if (!live) { Z.bwtIdx = r.index; $("bwtIdx").value = r.index; save(); }
   const back = zzUnbwt(r.last, r.index);
   const ru0 = zzRuns(s), ru1 = zzRuns(r.last);
   const cut = (x) => bitsPlain(x.length > 400 ? x.slice(0, 400) + "…" : x);
@@ -1000,9 +1377,9 @@ function sigSend(){
   const clean = zzSignalEncode(msg, P.mask, P.dev, P.shape, P.len);
   const sent = P.noise > 0 ? clean.map(r => zzNoise(r, P.noise / 100)) : clean.slice();
   let flipped = 0; sent.forEach((r, j) => flipped += zzHam(r, clean[j]));
-  sigLast = { msg, clean, mask: P.mask, dev: P.dev };
   snapshot();
   const at = Z.cur + 1;
+  sigLast = { msg, clean, mask: P.mask, dev: P.dev, at, lens: sent.map(r => r.length) };   // v0.044: где лежит — чтобы читать его и без выделения
   Z.rows.splice(at, 0, ...sent);
   Z.cur = at;
   rowSel.clear(); for (let j = 0; j < sent.length; j++) rowSel.add(at + j); rowSelAnchor = at;
@@ -1016,9 +1393,18 @@ function sigSend(){
 }
 function sigRead(){
   const P = sigParams();
-  const idx = rowSel.size ? Array.from(rowSel).sort((a, b) => a - b) : Z.rows.map((_, i) => i);
+  /* v0.044, «проверь или объясни» по снимку: 71 строка «(все)» — выделение сигнала сбросилось, и весь столбик (строки
+     треугольника) читался как сигнал: каша и «?». Теперь без выделения читается последний отправленный сигнал, если
+     его строки на месте (там же и той же длины); иначе — весь столбик, но с предупреждением, и строки, далёкие и от
+     базы, и от отступа (порча больше запаса), считаются «не похожими на сигнал». */
+  let idx, src;
+  const lastOk = sigLast && sigLast.at !== undefined && sigLast.lens.every((n, j) => Z.rows[sigLast.at + j] !== undefined && Z.rows[sigLast.at + j].length === n);
+  if (rowSel.size) { idx = Array.from(rowSel).sort((a, b) => a - b); src = "выделенные"; }
+  else if (lastOk) { idx = sigLast.lens.map((_, j) => sigLast.at + j); src = `последний отправленный сигнал: строки ${idx[0]}…${idx[idx.length - 1]}`; }
+  else { idx = Z.rows.map((_, i) => i); src = "ничего не выделено и отправленного сигнала в столбике нет — прочитан ВЕСЬ столбик; строки, которые не сигнал, дают мусор"; }
   const rows = idx.map(i => Z.rows[i]);
   const dec = zzSignalDecode(rows, P.mask, P.dev);
+  const alien = dec.filter(d => d.bit !== "?" && Math.min(d.d0, d.d1) > d.spare).length;
   const got = dec.map(d => d.bit).join("");
   const unsure = dec.filter(d => d.bit === "?").length;
   let cmp = "";
@@ -1034,7 +1420,8 @@ function sigRead(){
           (broke ? `; испорчено бит ${broke}, строк, прочитанных верно несмотря на порчу, — <b>${saved}</b>` : "") +
           (ok === rows.length ? " — сообщение дошло целиком." : " — часть бит потеряна: шум больше запаса.");
   }
-  $("sigOut").innerHTML = `Прочитано строк: ${rows.length} (${rowSel.size ? "выделенные" : "все"}). База ${P.mask}, 1 — ${P.dev === "ones" ? "сплошные единицы" : "инверсия базы"}.\n` +
+  $("sigOut").innerHTML = `Прочитано строк: ${rows.length} (${src}). База ${P.mask}, 1 — ${P.dev === "ones" ? "сплошные единицы" : "инверсия базы"}.\n` +
+    (alien ? `⚠ Строк, не похожих на сигнал (далеко и от базы, и от отступа — дальше запаса): <b>${alien}</b> из ${rows.length}. Их биты — гадание. Выдели строки сигнала или «📡 В столбик» заново.\n` : "") +
     `Сообщение: <span class="mono">${bitsPlain(got.length > 120 ? got.slice(0, 120) + "…" : got)}</span>` +
     (unsure ? `\nНе решено строк: <b>${unsure}</b> — строка ровно посередине между базой и отступом (или база и отступ совпадают).` : "") + cmp;
   let h = "";
@@ -1278,6 +1665,74 @@ function drawSegs(cv, groups, yawD, pitD, small, caption, shape, cam){
   if (shape === "comb") { ax([1, 0, 0], cd, "ряд"); ax([0, 1, 0], c1, "1"); ax([0, 0, 1], c0, "0"); }
   else { ax([1, 0, 0], c1, "1"); ax([0, 0, 1], c0, "0"); ax([0, 1, 0], cd, "↑"); }
   if (caption) { ctx.fillStyle = cd; ctx.font = "11px system-ui, sans-serif"; ctx.fillText(caption, 8, 14); }
+  if (cam && cam.overlay) cam.overlay(pr, ctx, V);   // v0.056: поверх — хорда и её точки
+}
+/* v0.056, «кнопку: линия соединяет концы, с подсчётом пересечений об себя же; площадь прямоугольников, площадь описанного
+   квадрата или круга». Лесенка лежит в плоскости: «1» — шаг по X, «0» — по Z; X — единиц, Z — нулей. Хорда — прямая от
+   начала до конца. С какой стороны хорды вершина k — знак f = x·Z − z·X; смена знака — пересечение (на отрезке или в
+   вершине), ноль без смены — касание. Площади: под лесенкой — сумма прямоугольников «шаг 1 × сколько нулей было до него»
+   (это число пар «0 раньше 1»), над ней — X·Z минус это; между лесенкой и хордой — ∫|z(x) − Z/X·x| dx; описанный
+   прямоугольник X·Z, квадрат max(X, Z)², круг вокруг прямоугольника π(X² + Z²)/4. */
+function viewChordStats(s){
+  const n = Math.min(s.length, VIEW_MAX), P = [[0, 0]];
+  let x = 0, z = 0, under = 0;
+  for (let i = 0; i < n; i++) { if (s[i] === "1") { under += z; x++; } else z++; P.push([x, z]); }
+  const X = x, Z = z, f = (p) => p[0] * Z - p[1] * X;
+  let cross = 0, touch = 0, last = 0, zeros = [];
+  const pts = [], tp = [];
+  for (let k = 1; k < P.length; k++) {
+    const v = k === P.length - 1 ? null : f(P[k]);
+    if (v === 0) { zeros.push(P[k]); continue; }
+    if (v === null) break;
+    const sg = Math.sign(v);
+    if (last && sg !== last) {
+      cross++;
+      if (zeros.length) pts.push(zeros[0]);
+      else { const a = P[k - 1], b = P[k], fa = f(a), fb = f(b), t = fa / (fa - fb); pts.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); }
+      for (const q of zeros.slice(1)) tp.push(q);
+    } else for (const q of zeros) { touch++; tp.push(q); }
+    zeros = []; last = sg;
+  }
+  if (!last) touch += zeros.length, zeros.forEach(q => tp.push(q));
+  let between = 0, signed = 0;
+  if (X && Z) {
+    const m = Z / X;
+    let xx = 0, zz = 0;
+    for (let i = 0; i < n; i++) {
+      if (s[i] !== "1") { zz++; continue; }
+      const a = xx, c = zz, t0 = c / m;   // на [a, a+1] лесенка на высоте c, хорда — m·t
+      signed += c - m * (a + 0.5);
+      if (t0 <= a || t0 >= a + 1) between += Math.abs(c - m * (a + 0.5));
+      else between += (c * (t0 - a) - m * (t0 * t0 - a * a) / 2) + (m * ((a + 1) * (a + 1) - t0 * t0) / 2 - c * (a + 1 - t0));
+      xx++;
+    }
+  }
+  return { X, Z, cross, touch, pts, tp, under, over: X * Z - under, between, signed, rect: X * Z, sq: Math.max(X, Z) ** 2, circ: Math.PI * (X * X + Z * Z) / 4 };
+}
+function viewChordOverlay(st){
+  // точки лесенки в мире: как у viewPath — сдвинуты к центру
+  const w = (p) => [p[0] - st.X / 2, 0, p[1] - st.Z / 2];
+  return (pr, ctx, V) => {
+    const a = pr(w([0, 0])), b = pr(w([st.X, st.Z]));
+    ctx.save(); ctx.globalAlpha = 0.9; ctx.strokeStyle = V("--gold"); ctx.lineWidth = 2; ctx.setLineDash([7, 5]);
+    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = V("--red"); for (const p of st.pts) { const q = pr(w(p)); ctx.beginPath(); ctx.arc(q[0], q[1], 5, 0, 7); ctx.fill(); }
+    ctx.strokeStyle = V("--red"); ctx.lineWidth = 1.5; for (const p of st.tp) { const q = pr(w(p)); ctx.beginPath(); ctx.arc(q[0], q[1], 5, 0, 7); ctx.stroke(); }
+    ctx.restore();
+  };
+}
+function viewChordTxt(st){
+  const f = (x) => Number.isInteger(x) ? String(x) : x.toFixed(2);
+  return `\n⟋ Хорда от начала до конца: пересечений с лесенкой <b>${st.cross}</b>` + (st.touch ? `, касаний ${st.touch}` : "") + ` (красные точки; касания — кружки).` +
+    `\nПлощадь: под лесенкой (прямоугольники «1 × нулей до неё») <b>${st.under}</b>, над ней ${st.over}; между лесенкой и хордой <b>${f(st.between)}</b>` +
+    (st.signed ? ` (перевес ${st.signed > 0 ? "над" : "под"} хордой ${f(Math.abs(st.signed))})` : "") + `.` +
+    `\nОписанные: прямоугольник ${st.X}×${st.Z} = <b>${st.rect}</b>, квадрат ${Math.max(st.X, st.Z)}² = <b>${st.sq}</b>, круг π(X²+Z²)/4 ≈ <b>${f(st.circ)}</b>.`;
+}
+/* v0.056, «кнопку сохранения вида — до 3 пресетов»: вид = камера, масштаб, сдвиг. Пустой ① — щелчок запоминает;
+   занятый — щелчок возвращает, правый щелчок перезаписывает, Shift + щелчок стирает. */
+function viewPresetsUi(){
+  const P = Z.viewPresets || [];
+  document.querySelectorAll("#viewBtns button[data-p]").forEach(b => { const k = +b.dataset.p; b.classList.toggle("on", !!P[k]); });
 }
 /* Одна строка (крупно или карточкой). */
 function drawStair(cv, s, yawD, pitD, small, caption, cam){
@@ -1362,9 +1817,22 @@ function mRotW(ax, aD){
 /* v0.033, «пусть стрелки крутят, как будто последняя выделенная ось закреплена»: потянул за кольцо — его ось
    закреплена (viewLockAx), стрелки крутят только вокруг неё. Снимается свободным поворотом мышью или Esc. */
 let viewLockAx = null;
+/* v0.053, «когда выделена плоскость — с Ctrl и ещё кнопкой — сделай, чтобы по этой плоскости перпендикулярно
+   вставать»: камера смотрит прямо на плоскость — к зрителю её ось (со стороны, с которой уже смотрели), а «вправо»
+   экрана — ближайшая к нынешнему «вправо» ось мира в этой плоскости (как в 3D-программах, без лишнего вращения). */
+function viewFacePlane(ax){
+  const M = viewCamM(), a = ax === "x" ? [1, 0, 0] : ax === "y" ? [0, 1, 0] : [0, 0, 1];
+  const dep = M[6] * a[0] + M[7] * a[1] + M[8] * a[2], v = a.map(c => dep < 0 ? -c : c);
+  let r = null, best = -Infinity;
+  for (let k = 0; k < 3; k++) if (!a[k]) for (const sg of [1, -1]) { const e = [0, 0, 0]; e[k] = sg; const dot = e[0] * M[0] + e[1] * M[1] + e[2] * M[2]; if (dot > best) { best = dot; r = e; } }
+  const u = [v[1] * r[2] - v[2] * r[1], v[2] * r[0] - v[0] * r[2], v[0] * r[1] - v[1] * r[0]];   // вверх = к зрителю × вправо
+  Z.viewM = [r[0], r[1], r[2], u[0], u[1], u[2], v[0], v[1], v[2]];
+}
 function viewTurn(dYaw, dPit){
-  if (Z.viewMode !== "all" && viewLockAx) {   // v0.033: вокруг закреплённой оси; ▶ ▲ — плюс, ◀ ▼ — минус
-    Z.viewM = mMul(viewCamM(), mRotW(viewLockAx, dYaw || dPit));
+  if (Z.viewMode !== "all" && viewLockAx) {
+    // v0.053, «и стрелки сейчас вверх-вниз перпендикулярно — пусть лево-право»: ◀ ▶ — вращать в выделенной плоскости
+    // (вокруг её оси), ▲ ▼ — наклон поперёк (вокруг горизонтали экрана); плоскость остаётся выделенной.
+    Z.viewM = dYaw ? mMul(viewCamM(), mRotW(viewLockAx, dYaw)) : mMul(mRxS(dPit), viewCamM());
     renderView(); save(); return;
   }
   // v0.029, «вся стопка»: стрелки в «все вместе» крутят всю стопку, схваченную строку — только мышь.
@@ -1389,17 +1857,19 @@ function renderView(){
     const N = Math.min(Z.rows.length, VIEW_STACK);
     drawStack($("viewCv"), Z.rows, viewCamM(), 0, Z.cur < N ? Z.cur : -1,
       `все вместе: ${N} строк` + (Z.rows.length > N ? ` из ${Z.rows.length}` : "") + ` · ${viewName(viewCamM())}` + viewZoomTxt(), viewCam());
-    $("viewModeHint").textContent = (viewLockAx ? `🔒 ось ${viewLockAx.toUpperCase()} закреплена — стрелки крутят вокруг неё (Esc — снять) · ` : "") + (!Z.viewSolo ? "щелчок по лесенке — выбрать строку · тянешь — вся стопка, с Ctrl — сдвиг · колесо — масштаб"
+    $("viewModeHint").textContent = (viewLockAx ? `🔒 плоскость вокруг ${viewLockAx.toUpperCase()} выделена — ◀ ▶ вращают в ней, ▲ ▼ наклоняют, ⊥ — встать к ней (Esc — снять) · ` : "") + (!Z.viewSolo ? "щелчок по лесенке — выбрать строку · тянешь — вся стопка, с Ctrl — сдвиг · колесо — масштаб"
       : viewSel >= 0 && viewSel < N ? `✋ строка ${viewSel} схвачена — тянешь её мышью: крутится она, с Ctrl — двигается; стрелки — вся стопка · щелчок по пустому — отпустить`
       : "щелчок по лесенке — схватить одну · тянешь пустое — вся стопка, с Ctrl — сдвиг · колесо — масштаб");
     $("viewOut").innerHTML = `Текущая строка ${Z.cur} (ярче): ` + viewReading(s, viewCamM());
     return;
   }
   if (!all) {
+    const camO = viewCam(), chord = Z.viewChord && Z.viewShape !== "comb" ? viewChordStats(s) : null;   // v0.056
+    if (chord) camO.overlay = viewChordOverlay(chord);
     drawStair($("viewCv"), s, viewCamM(), 0, false,
-      `строка ${Z.cur} · ${s.length} бит` + (s.length > VIEW_MAX ? ` (нарисованы первые ${VIEW_MAX})` : "") + ` · ${viewName(viewCamM())}` + viewZoomTxt(), viewCam());
-    $("viewModeHint").textContent = (viewLockAx ? `🔒 ось ${viewLockAx.toUpperCase()} закреплена — стрелки крутят вокруг неё (Esc — снять) · ` : "") + "колесо — масштаб · Ctrl + тянуть — сдвиг";
-    $("viewOut").innerHTML = viewReading(s, viewCamM());
+      `строка ${Z.cur} · ${s.length} бит` + (s.length > VIEW_MAX ? ` (нарисованы первые ${VIEW_MAX})` : "") + ` · ${viewName(viewCamM())}` + viewZoomTxt(), camO);
+    $("viewModeHint").textContent = (viewLockAx ? `🔒 плоскость вокруг ${viewLockAx.toUpperCase()} выделена — ◀ ▶ вращают в ней, ▲ ▼ наклоняют, ⊥ — встать к ней (Esc — снять) · ` : "") + "колесо — масштаб · Ctrl + тянуть — сдвиг";
+    $("viewOut").innerHTML = viewReading(s, viewCamM()) + (chord ? viewChordTxt(chord) : Z.viewChord && Z.viewShape === "comb" ? "\n⟋ Хорда — у лесенки; у гребёнки концов для неё нет." : "");
     return;
   }
   const N = Math.min(Z.rows.length, VIEW_CARDS), G = $("viewGrid");
@@ -1428,7 +1898,7 @@ function defaultLayout(){
   // v0.010: стол стал правой колонкой; если он уже 900, окна идут одной колонкой, по важности.
   if (W0 < 900) {
     const w = Math.max(320, W0 - 2 * g);
-    const order = [["w-mirror", 430], ["w-fix", 520], ["w-fold", 380], ["w-descent", 330], ["w-bwt", 460], ["w-sig", 460], ["w-chk", 460], ["w-view", 460], ["w-lin", 240], ["w-addr", 400], ["w-struct", 520],
+    const order = [["w-mirror", 430], ["w-fix", 520], ["w-fold", 380], ["w-descent", 330], ["w-bwt", 460], ["w-sig", 460], ["w-chk", 460], ["w-view", 460], ["w-lin", 240], ["w-addr", 400], ["w-struct", 520], ["w-cone", 560], ["w-bal", 460], ["w-steps", 460], ["w-tiles", 560],
                    ["w-gf2", 240], ["w-cycle", 330], ["w-tape", 260], ["w-orbit", 240], ["w-help", 300]];
     const out = {}; let y = g;
     for (const [id, h] of order) { out[id] = { x: g, y, w, h }; y += h + g; }
@@ -1455,7 +1925,11 @@ function defaultLayout(){
     "w-chk":     { x: mw + 2 * g, y: 1680 + 6 * g, w: cw, h: 460 },   // v0.014
     "w-view":    { x: g, y: 2140 + 7 * g, w: mw, h: 460 },   // v0.024
     "w-addr":    { x: mw + 2 * g, y: 2140 + 7 * g, w: cw, h: 460 },
-    "w-struct":  { x: g, y: 2600 + 8 * g, w: mw, h: 520 },   // v0.042   // v0.041
+    "w-struct":  { x: g, y: 2600 + 8 * g, w: mw, h: 520 },   // v0.042
+    "w-cone":    { x: mw + 2 * g, y: 2600 + 8 * g, w: cw, h: 560 },   // v0.048
+    "w-bal":     { x: g, y: 3140 + 9 * g, w: mw, h: 460 },   // v0.050
+    "w-steps":   { x: mw + 2 * g, y: 3140 + 9 * g, w: cw, h: 460 },   // v0.062
+    "w-tiles":   { x: g, y: 3600 + 10 * g, w: mw, h: 560 },   // v0.070
   };
 }
 function applyWin(el){
@@ -1622,10 +2096,62 @@ function setupWin(el){
   head.className = "whead";
   head.innerHTML = '<span class="wt">' + esc(el.dataset.title || el.id) + "</span>" +
     (el.querySelector(".whint") ? '<button class="bh" title="Подсказка: что это и почему">?</button>' : "") +
+    '<button class="bm" title="⛶ На всю правую половину: окно встаёт наверх во всю ширину и высоту места справа от поля строк, остальные — под ним. Ещё раз — вернуть, как было">⛶</button>' +   // v0.060
     '<button class="bp" title="В отдельное окно браузера — например, на второй монитор. Ещё раз ⧉ или закрыть то окно — вернуть">⧉</button>' +
     '<button class="bc" title="Свернуть / развернуть">–</button>';
   el.insertBefore(head, el.firstChild);
+  // v0.043: полоса вдоль всего нижнего края — тянешь, меняется высота (угол справа внизу остаётся — ширина и высота)
+  const grip = document.createElement("div");
+  grip.className = "wgrip"; grip.title = "Тяни — высота окна";
+  el.appendChild(grip);
+  grip.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault(); e.stopPropagation();
+    Z.z++; el.style.zIndex = Z.z;
+    const y0 = e.clientY, h0 = el.offsetHeight;
+    grip.setPointerCapture(e.pointerId); grip.classList.add("on");
+    el._userResize = true;
+    const move = (ev) => { el.style.height = Math.max(60, Math.round(h0 + ev.clientY - y0)) + "px"; };
+    const up = () => {
+      grip.removeEventListener("pointermove", move); grip.removeEventListener("pointerup", up); grip.removeEventListener("pointercancel", up);
+      grip.classList.remove("on");
+      const w = st(); w.h = el.offsetHeight;
+      setTimeout(() => { el._userResize = false; }, 350);
+      packWins(); save();
+    };
+    grip.addEventListener("pointermove", move); grip.addEventListener("pointerup", up); grip.addEventListener("pointercancel", up);
+  });
   head.querySelector(".bp").onclick = () => { if (popups.has(el.id)) popIn(el.id); else popOut(el); };   // v0.030
+  /* v0.060, «сюда кнопку — на всю оставшуюся половину окна после поля строк, а все остальные под ним»: ⛶ ставит окно
+     на верх стола во всю его ширину и видимую высоту, прежнее место запоминается (w.max0); остальные сдвигаются ниже —
+     при «⤒ К верху» их укладывает packWins, без него — сдвигаются на высоту окна. Ещё раз ⛶ — место назад. */
+  head.querySelector(".bm").onclick = () => {
+    if (popups.has(el.id)) return;
+    if (el.classList.contains("docked")) undockWin(el);
+    const w = st(), g = 12, desk = $("desk");
+    // v0.068: окно «развёрнуто», но узкое (так выходило до v0.068) — ⛶ не возвращает, а разворачивает как надо
+    const full = el.offsetWidth >= desk.clientWidth - 3 * g - 4;
+    if (w.max0 && full) {
+      Object.assign(w, w.max0); delete w.max0;
+      el.classList.remove("maxed");
+      applyWin(el); packWins(); save(); return;
+    }
+    if (!w.max0) w.max0 = { x: w.x, y: w.y, w: w.w, h: w.h, pw: w.pw, px: w.px, collapsed: !!w.collapsed };
+    const W = Math.max(320, desk.clientWidth - 2 * g), H = Math.max(200, desk.clientHeight - 2 * g);
+    if (w.collapsed) { w.collapsed = false; el.classList.remove("collapsed"); }
+    /* v0.068, «эта кнопка — на всю ширину, оставшуюся после поля строк, а все остальные вверх или вниз» (снимок: ⛶ горит,
+       а «◯ Конус» узкий). Раньше соседи уезжали вниз только без «⤒ К верху»; с ним раскладка сперва ужимала окно по
+       соседям справа (fitWins) и потом, видя окно узким, оставляла соседей рядом. Теперь соседи ВСЕГДА сначала уходят ниже
+       окна, и только потом раскладка — окно на всю ширину, остальные под ним. */
+    document.querySelectorAll(".win").forEach(o => { const ow = Z.win[o.id]; if (o !== el && ow && !o.classList.contains("docked") && !o.classList.contains("popped")) { ow.y = Math.max(ow.y, 0) + H + 2 * g; o.style.top = ow.y + "px"; } });
+    Object.assign(w, { x: g, y: 0, w: W, h: H, pw: W, px: g });
+    el.classList.add("maxed");
+    applyWin(el); el.style.height = H + "px";
+    Z.z++; el.style.zIndex = Z.z;
+    packWins(); packWins(); save(); renderAll();   // второй проход: соседи уже ниже — ширина окна не ужата
+    desk.scrollTop = 0;
+  };
+  if (Z.win[el.id] && Z.win[el.id].max0) el.classList.add("maxed");
   const st = () => (Z.win[el.id] = Z.win[el.id] || { x: 20, y: 20, w: 320, h: 240 });
   const bh = head.querySelector(".bh");
   if (bh) bh.onclick = () => { const w = st(); w.hint = !w.hint; el.classList.toggle("hint", w.hint); bh.classList.toggle("on", w.hint); save(); };
@@ -1637,8 +2163,13 @@ function setupWin(el){
     packWins();   // v0.015: свернул — нижние поднимаются
     if (!w.collapsed && el.id === "w-view") renderView();   // v0.039: свёрнутый «Вид» не рисуется — развернул, рисуем сразу
     if (!w.collapsed && el.id === "w-lin") renderLinLive();   // v0.040: и «Лин. сложность» так же
-    if (!w.collapsed && el.id === "w-addr") renderAddrLive();
-    if (!w.collapsed && el.id === "w-struct") renderStructLive();   // v0.042   // v0.041
+    if (!w.collapsed && el.id === "w-addr") renderAddrLive();   // v0.041
+    if (!w.collapsed && el.id === "w-struct") renderStructLive();   // v0.042
+    if (!w.collapsed) renderLiveRest();   // v0.045: и остальные живые окна
+    if (!w.collapsed && el.id === "w-cone") renderCone();   // v0.048
+    if (!w.collapsed && el.id === "w-bal") renderBal();   // v0.050
+    if (!w.collapsed && el.id === "w-steps") renderSteps();   // v0.062
+    if (!w.collapsed && el.id === "w-tiles") renderTiles();   // v0.070
     save();
   };
   // v0.016, запрос пользователя «двойной щелчок по заголовку»: свернуть / развернуть, как «–».
@@ -1705,7 +2236,7 @@ function setupWin(el){
       if (el.classList.contains("docked")) { w.h = Math.round(el.offsetHeight); clearTimeout(t); t = setTimeout(save, 300); if (el.id === "w-mirror") renderPointers(); return; }   // v0.025
       if (getComputedStyle(el).position !== "absolute") return;
       w.w = Math.round(el.offsetWidth); w.h = Math.round(el.offsetHeight);
-      if (el._userResize) { w.pw = w.w; w.px = w.x; }
+      if (el._userResize) { w.pw = w.w; w.px = w.x; el.querySelectorAll(".out").forEach(o => { o._hmax = 0; o.style.minHeight = ""; }); }   // v0.052: растянул окно — тексты мерятся заново
       clearTimeout(t); t = setTimeout(() => { packWins(); save(); }, 300);   // v0.015: растянул — соседи подстраиваются
       if (el.id === "w-mirror") renderPointers();
     }).observe(el);
@@ -1774,8 +2305,8 @@ function applyView(){
    данных пользователя, до «Вида» дело не доходило. Теперь каждое окно — в своём try: упавшее не гасит остальные,
    а ошибка с именем окна показывается внизу — её текст и нужен, чтобы починить. */
 function renderAll(){
-  const parts = [["вид страницы", applyView], ["поле строк", renderRows], ["крест", renderCross], ["указатели", renderPointers],
-    ["спуск", renderDescent], ["поправка", renderFix], ["сложить", renderFoldLive], ["проверка", renderCheck], ["вид 🧊", renderView], ["лин. сложность", renderLinLive], ["адрес 🔎", renderAddrLive], ["структура 🧪", renderStructLive]];
+  const parts = [["вид страницы", applyView], ["поле строк", renderRows], ["90°", tri90Apply], ["крест", renderCross], ["указатели", renderPointers],
+    ["спуск", renderDescent], ["поправка", renderFix], ["сложить", renderFoldLive], ["проверка", renderCheck], ["вид 🧊", renderView], ["лин. сложность", renderLinLive], ["адрес 🔎", renderAddrLive], ["структура 🧪", renderStructLive], ["цикл, GF(2), лента, орбита, ⇅", renderLiveRest], ["конус ◯", renderCone], ["балансы ⚖", renderBal], ["лесенки 📐", renderSteps], ["разложить △", renderTiles]];
   if (!renderAll.tplDone) parts.splice(2, 0, ["шаблоны", () => { renderTpl(); renderAll.tplDone = true; }]);
   for (const [name, f] of parts) {
     try { f(); }
@@ -1786,7 +2317,7 @@ function renderAll(){
   }
 }
 // v0.034: любая ошибка страницы — внизу сообщением, с местом в коде.
-window.addEventListener("error", (e) => { try { say(`⚠ Ошибка: ${e.message} · ${String(e.filename || "").split("/").pop()}:${e.lineno} — пришли этот текст.`); } catch (err) {} });
+window.addEventListener("error", (e) => { if (String(e.message).includes("ZZ_LOCK")) { e.preventDefault(); return; } try { say(`⚠ Ошибка: ${e.message} · ${String(e.filename || "").split("/").pop()}:${e.lineno} — пришли этот текст.`); } catch (err) {} });
 
 /* ─── Подключение ────────────────────────────────────────────────────────────────────────── */
 function fillSelect(id, entries, val){
@@ -1978,14 +2509,50 @@ function init(){
     say(Z.laneCount > 1 ? `Полей строк — ${Z.laneCount}, у каждого своя ось. Рабочее — поле ${Z.lane + 1}; сменить — щелчок по полю или ← / →.` : "Одно поле строк. Остальные поля не стёрты — вернутся, если полей снова станет больше.");
   };
   // v0.036: переключатели чисел у номеров и красных неподвижных бит
-  const fmLabel = () => { $("bShowFM").classList.toggle("on", !!Z.showFM); $("bShow01").classList.toggle("on", !!Z.show01); $("bShowFix").classList.toggle("on", !!Z.showFix); };
+  const fmLabel = () => {
+    $("bShowFM").classList.toggle("on", !!Z.showFM); $("bShow01").classList.toggle("on", !!Z.show01); $("bShowFix").classList.toggle("on", !!Z.showFix);
+    $("bShowFix").textContent = Z.showFix === "ir" ? "🟢 неподв. ⇄🔁" : Z.showFix ? "🔴 неподв. ⇄" : "🔴 неподв.";   // v0.058
+  };
   fmLabel();
   $("bShowFM").onclick = () => { Z.showFM = !Z.showFM; fmLabel(); renderRows(); save(); };
+  $("bTri90").classList.toggle("on", !!Z.tri90);   // v0.071
+  $("bTri90").onclick = () => {
+    Z.tri90 = !Z.tri90; $("bTri90").classList.toggle("on", Z.tri90); tri90Apply(); save();
+    if (Z.tri90) { const L = $("rowList"); requestAnimationFrame(() => { L.scrollLeft = Math.max(0, (L.scrollWidth - L.clientWidth) / 2); }); }   // v0.074: широкий треугольник — сразу к его середине
+    say(Z.tri90 ? (ovControls() ? "◸ 90° включится, когда поля не наложением." : `◸ 90°: межсимвольный ${Z.tri90Ls} px — стороны треугольника под 45°, угол при вершине прямой. Сменишь шрифт или размер — подберётся заново.`) : "◸ 90° выключен — обычный интервал.");
+  };
   $("bShow01").onclick = () => { Z.show01 = !Z.show01; fmLabel(); renderRows(); save(); };
-  $("bShowFix").onclick = () => { Z.showFix = !Z.showFix; fmLabel(); renderRows(); save(); };
+  const lockUi = () => { $("bRowLock").textContent = Z.rowLock ? "🔒" : "🔓"; $("bRowLock").classList.toggle("on", !!Z.rowLock); document.body.classList.toggle("rowlock", !!Z.rowLock); };
+  lockUi();
+  $("bRowLock").onclick = () => { Z.rowLock = !Z.rowLock; lockUi(); save(); say(Z.rowLock ? "🔒 Строки заперты: менять нельзя ничем, смотреть — сколько угодно." : "🔓 Строки открыты для правки."); };   // v0.061
+  $("bShowFix").onclick = () => {   // v0.058: выкл → ⇄ разворот → ⇄🔁 реверс-инверсия → выкл
+    Z.showFix = !Z.showFix ? true : Z.showFix === true ? "ir" : false;
+    fmLabel(); renderAll(); save();
+    say(Z.showFix === "ir" ? "🟢 Неподвижные при реверс-инверсии: бит не равен зеркальному — разворот с инверсией кладёт его на то же место."
+      : Z.showFix ? "🔴 Неподвижные при развороте: бит равен зеркальному." : "Неподвижные не подсвечиваются.");
+  };
   $("rowsAlign").value = Z.rowsAlign || "center";
   $("rowsAlign").onchange = (e) => { Z.rowsAlign = e.target.value; renderRows(); save(); };
   // 🧊 Вид (v0.024): кнопки, перетаскивание мышью, перерисовка при смене размера окна
+  // v0.056: ① ② ③ — сохранённые виды, ⟋ — хорда концов
+  const presetGo = (k, e, save_) => {
+    if (!Array.isArray(Z.viewPresets)) Z.viewPresets = [null, null, null];
+    const P = Z.viewPresets;
+    if (e && e.shiftKey && P[k]) { P[k] = null; viewPresetsUi(); save(); say(`Вид ${"①②③"[k]} стёрт.`); return; }
+    if (save_ || !P[k]) {
+      P[k] = { M: viewCamM().slice(), zoom: Z.viewZoom || 1, pan: Array.isArray(Z.viewPan) ? Z.viewPan.slice() : [0, 0], mode: Z.viewMode };
+      viewPresetsUi(); save(); say(`Вид ${"①②③"[k]} запомнен: ${viewName(P[k].M)}, масштаб ×${(P[k].zoom).toFixed(1)}. Щелчок — вернуть, правый — перезаписать, Shift — стереть.`); return;
+    }
+    Z.viewM = P[k].M.slice(); Z.viewZoom = P[k].zoom; Z.viewPan = P[k].pan.slice(); viewLockAx = null;
+    renderView(); save();
+  };
+  document.querySelectorAll("#viewBtns button[data-p]").forEach(b => {
+    b.addEventListener("click", (e) => presetGo(+b.dataset.p, e, false));
+    b.addEventListener("contextmenu", (e) => { e.preventDefault(); presetGo(+b.dataset.p, null, true); });
+  });
+  viewPresetsUi();
+  $("bViewChord").classList.toggle("on", !!Z.viewChord);
+  $("bViewChord").onclick = () => { Z.viewChord = !Z.viewChord; $("bViewChord").classList.toggle("on", Z.viewChord); renderView(); save(); };
   $("viewBtns").onclick = (e) => {
     const b = e.target.closest("button[data-v]"); if (!b) return;
     const v = VIEWS[b.dataset.v]; Z.viewYaw = v[0]; Z.viewPitch = v[1]; Z.viewM = viewMYP(v[0], v[1]);   // v0.029
@@ -1997,7 +2564,13 @@ function init(){
     // v0.028: Shift или правая кнопка — сдвинуть картинку; v0.029: и Ctrl — «просто передвижение, без кручения».
     const moveMode = e.ctrlKey || e.metaKey;
     const panMode = e.shiftKey || e.button === 2 || moveMode;
-    const cv = $("viewCv"); cv.setPointerCapture(e.pointerId); cv.style.cursor = panMode ? "move" : "grabbing";
+    const cv = $("viewCv");
+    // v0.053: Ctrl + щелчок по кольцу — выделить его плоскость и сразу встать к ней перпендикулярно
+    if (moveMode && e.button === 0 && Z.viewGuides !== false && Z.viewMode !== "all") {
+      const r = cv.getBoundingClientRect(), ax = viewRingAt(cv, e.clientX - r.left, e.clientY - r.top);
+      if (ax) { e.preventDefault(); viewLockAx = ax; viewFacePlane(ax); renderView(); save(); cv.focus({ preventScroll: true }); return; }
+    }
+    cv.setPointerCapture(e.pointerId); cv.style.cursor = panMode ? "move" : "grabbing";
     cv.focus({ preventScroll: true });   // v0.029: чтобы стрелки клавиатуры крутили картинку
     const x0 = e.clientX, y0 = e.clientY, a0 = Z.viewYaw, b0 = Z.viewPitch;
     const p0 = Array.isArray(Z.viewPan) ? Z.viewPan.slice() : [0, 0];
@@ -2068,6 +2641,87 @@ function init(){
     cv.addEventListener("pointermove", move); cv.addEventListener("pointerup", up);
   });
   if (window.ResizeObserver) { const ro = new ResizeObserver(() => renderView()); ro.observe($("viewCv")); ro.observe($("viewGrid")); }
+  setupCone();   // v0.048
+  /* v0.054, «сюда — возможность закреплять кнопки для вывода вверх панелей» (снимок пустой шапки). 📌 — режим: щелчок по
+     любой кнопке с именем (id) кладёт её копию в шапку, щелчок по шапке окна — кнопку этого окна (развернуть, поднять,
+     показать). Копия жмёт оригинал ($ находит его и в вынесенном окне). Правый щелчок — открепить. Z.pins запоминается. */
+  if (!Array.isArray(Z.pins)) Z.pins = [];
+  let pinMode = false;
+  const pinLabel = (p) => {
+    const el = $(p.id); if (!el) return null;
+    if (p.t === "w") return el.dataset.title || p.id;
+    const t = (el.textContent || "").trim().replace(/\s+/g, " ");
+    return t ? (t.length > 24 ? t.slice(0, 23) + "…" : t) : p.id;
+  };
+  const renderPins = () => {
+    let h = "";
+    Z.pins.forEach((p, k) => {
+      const lab = pinLabel(p); if (!lab) return;
+      const tip = p.t === "w" ? `Окно «${lab}»: развернуть, поднять, показать` : (($(p.id) || {}).title || lab);
+      h += `<button data-k="${k}"${p.t === "w" ? ' class="pinw"' : ""} title="${esc(tip + " · правый щелчок — открепить")}">${esc(lab)}</button>`;
+    });
+    $("pinBar").innerHTML = h;
+  };
+  const pinToggle = (p) => {
+    const k = Z.pins.findIndex(q => q.t === p.t && q.id === p.id);
+    if (k >= 0) Z.pins.splice(k, 1); else Z.pins.push(p);
+    renderPins(); save();
+    say(k >= 0 ? `📌 «${pinLabel(p) || p.id}» откреплено.` : `📌 «${pinLabel(p) || p.id}» — вверху. Ещё кнопки — щёлкай дальше; выход — 📌 или Esc.`);
+  };
+  const winShow = (id) => {
+    const el = $(id); if (!el) return;
+    if (id === "w-help" && !Z.helpOn) { $("bHelp").click(); }
+    if (el.classList.contains("collapsed")) el.querySelector(".bc").click();
+    Z.z++; el.style.zIndex = Z.z;
+    el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 800);
+  };
+  $("pinBar").onclick = (e) => {
+    const b = e.target.closest("button[data-k]"); if (!b) return;
+    const p = Z.pins[+b.dataset.k]; if (!p) return;
+    if (p.t === "w") winShow(p.id); else { const src = $(p.id); if (src) src.click(); else say("📌 Этой кнопки больше нет."); }
+  };
+  $("pinBar").oncontextmenu = (e) => {
+    const b = e.target.closest("button[data-k]"); if (!b) return;
+    e.preventDefault(); const p = Z.pins[+b.dataset.k]; if (p) pinToggle(p);
+  };
+  $("bPinMode").onclick = () => {
+    pinMode = !pinMode;
+    document.body.classList.toggle("pinmode", pinMode); $("bPinMode").classList.toggle("on", pinMode);
+    say(pinMode ? "📌 Закрепление: щёлкни любую кнопку — она встанет в шапку; шапку окна — встанет кнопка окна. Выход — 📌 или Esc."
+                : "📌 Закрепление выключено.");
+  };
+  const pinCatch = (e) => {
+    if (!pinMode || e.target.closest("#top")) return;
+    const head = e.target.closest(".whead"), b = e.target.closest("button");
+    if (b && !head) {
+      e.preventDefault(); e.stopPropagation();
+      if (e.type !== "click") return;
+      if (!b.id) { say("📌 У этой кнопки нет имени — её закрепить нельзя. Скажи какую — дам имя."); return; }
+      pinToggle({ t: "b", id: b.id }); return;
+    }
+    if (head && !b) { e.preventDefault(); e.stopPropagation(); if (e.type === "click") pinToggle({ t: "w", id: head.parentElement.id }); }
+  };
+  document.addEventListener("click", pinCatch, true);
+  document.addEventListener("dblclick", pinCatch, true);
+  document.addEventListener("pointerdown", (e) => { if (pinMode && e.target.closest(".whead") && !e.target.closest("button")) e.stopPropagation(); }, true);   // шапку не таскать
+  document.addEventListener("keydown", (e) => { if (pinMode && e.key === "Escape") { e.preventDefault(); $("bPinMode").click(); } }, true);
+  renderPins();
+  /* v0.052, «при изменении текста всё дёргается, на многих меню так же»: живые тексты окон меняют число строк
+     (другая строка, наведение) — и всё, что под ними (холст конуса, таблицы, виды), прыгает вверх-вниз. Текст окна теперь
+     не сжимается: высота запоминается наибольшей, только растёт (один раз) и не прыгает назад. Растянул окно — мерится
+     заново. */
+  document.querySelectorAll(".win .out").forEach(el => {
+    new MutationObserver(() => {
+      const h = el.offsetHeight;
+      if (h > (el._hmax || 0)) { el._hmax = h; el.style.minHeight = h + "px"; }
+    }).observe(el, { childList: true, characterData: true, subtree: true });
+  });
+  $("tilesKind").value = Z.tilesKind || "rh";   // v0.070
+  $("tilesKind").onchange = (e) => { Z.tilesKind = e.target.value; save(); renderTiles(); };
+  $("tilesTbl").addEventListener("click", (e) => { const tr = e.target.closest("tr[data-s]"); if (!tr) return; Z.tilesS = +tr.dataset.s; save(); renderTiles(); });
+  $("stepsTbl").addEventListener("click", (e) => { const tr = e.target.closest("tr[data-r]"); if (!tr) return; const i = +tr.dataset.r; if (i !== Z.cur && i < Z.rows.length) { Z.cur = i; renderAll(); save(); } });   // v0.062
+  $("balTbl").addEventListener("click", (e) => { const tr = e.target.closest("tr[data-r]"); if (!tr) return; const i = +tr.dataset.r; if (i !== Z.cur && i < Z.rows.length) { Z.cur = i; renderAll(); save(); } });   // v0.050
   // v0.028: колесо — масштаб к точке под курсором; двойной щелчок — масштаб и место как было; правая кнопка — сдвиг.
   let zt = 0;
   $("viewCv").addEventListener("wheel", (e) => {
@@ -2119,6 +2773,11 @@ function init(){
       else if (Z.viewMode === "all") { if (Z.viewAng) delete Z.viewAng[Z.cur]; }
       else { Z.viewZoom = 1; Z.viewPan = [0, 0]; }
       renderView(); save(); return;
+    }
+    if (b.dataset.t === "face") {   // v0.053: ⊥ — встать перпендикулярно выделенной плоскости
+      if (Z.viewMode === "all") { say("⊥ В «все строки» у каждой карточки свой поворот — встать к плоскости можно в «одна строка» и «все вместе»."); return; }
+      if (!viewLockAx) { say("⊥ Сначала выдели плоскость: потяни за её кольцо или Ctrl + щелчок по кольцу (тогда встанет сразу)."); return; }
+      viewFacePlane(viewLockAx); renderView(); save(); return;
     }
     const [dy, dp] = b.dataset.t.split(",").map(Number);
     viewTurn(dy, dp);
@@ -2228,32 +2887,37 @@ function init(){
   $("bSigSend").onclick = () => { sigKeep(); sigSend(); };
   $("bSigRead").onclick = () => { sigKeep(); sigRead(); };
   // △ Треугольник по маске (v0.011)
-  $("maskIn").value = Z.maskStr; $("maskN").value = Z.maskN; $("maskMode").value = Z.maskMode;
-  $("maskIn").addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") { e.preventDefault(); $("bMaskTri").click(); } });
-  $("maskIn").onchange = (e) => { const v = e.target.value.replace(/[^01]/g, ""); if (v) Z.maskStr = v; e.target.value = Z.maskStr; save(); };
-  $("maskN").onchange = (e) => { Z.maskN = Math.max(1, Math.min(512, Math.floor(+e.target.value || 16))); e.target.value = Z.maskN; save(); };
+  $("maskMode").value = Z.maskMode;
   $("maskMode").onchange = (e) => { Z.maskMode = e.target.value; save(); };
   $("bMaskTri").onclick = () => {
-    const m = $("maskIn").value.replace(/[^01]/g, "");
-    if (!m) { say("△ Впиши маску из 0 и 1 — например 10 или 110."); return; }
-    Z.maskStr = m; $("maskIn").value = m;
-    const n = Math.max(1, Math.min(512, Math.floor(+$("maskN").value || 16)));
-    Z.maskN = n; $("maskN").value = n;
+    /* v0.047, «пусть строится от выделенной, поля рядом с кнопкой удали»: строка — текущая, число строк — само:
+       Паскаль и маской — длина строки (не меньше 16), спуск — до одного бита, кольцо — пока строка не повторится. */
+    const m = cur();
+    if (!m) { say("△ Текущая строка пустая — строить не от чего."); return; }
+    let n = Math.min(512, Math.max(16, m.length));
+    if (Z.maskMode === "descent") n = m.length;
+    if (Z.maskMode === "ring") { const c = zzCycle(m, "xorNb"); n = c.lam > 0 ? Math.min(256, c.mu + c.lam + 1) : 256; }
     const rows = zzMaskTriangle(m, n, Z.maskMode);
     snapshot();
     Z.rows.splice(Z.cur + 1, 0, ...rows);
     Z.cur += 1;   // текущей становится вершина — от неё и смотреть
     renderAll(); save();
-    const modeTxt = { pascal: "🔺 Паскаль от строки", descent: "▽ спуск от строки", start: "маской, каждая с начала", tape: "маской, сплошной лентой" }[Z.maskMode] || "";
+    const modeTxt = { pascal: "🔺 Паскаль от строки", descent: "▽ спуск от строки", ring: "◯ кольцом от строки", start: "маской, каждая с начала", tape: "маской, сплошной лентой" }[Z.maskMode] || "";
+    let ringTxt = "";   // v0.046: у цилиндра — где вход, где петля, умер ли в ноль
+    if (Z.maskMode === "ring") {
+      const c = zzCycle(m, "xorNb"), z = rows.findIndex(r => !/1/.test(r));
+      ringTxt = c.lam < 0 ? " Петля длиннее потолка." : ` Кольцо ${m.length} бит: вход μ = ${c.mu}, петля λ = ${c.lam}` +
+        (z >= 0 ? `, всё умерло в ноль на строке ${z}` + ((m.length & (m.length - 1)) === 0 ? " (длина — степень двойки)" : "") : "") + ".";
+    }
     const bits = rows.reduce((a, r) => a + r.length, 0);
     say(`△ ${modeTxt} ${m.length > 24 ? m.slice(0, 24) + "…" : m}: ${rows.length} строк, всего ${bits} бит — под бывшей текущей.` +
-        (Z.maskMode === "descent" && rows.length < n ? ` Спуск кончается на одном бите — строк не больше длины строки (${m.length}).` : "") + " ↩ вернёт.");
+        (Z.maskMode === "descent" && rows.length < n ? ` Спуск кончается на одном бите — строк не больше длины строки (${m.length}).` : "") + ringTxt + " ↩ вернёт.");
   };
   // Шаблоны
   $("tplList").onclick = (e) => {
     const b = e.target.closest("button"); if (!b) return;
     if (b.dataset.b !== undefined) { const t = TPL_BUILTIN[+b.dataset.b]; tplInsert(t.rows(), t.name); }
-    else if (b.dataset.u !== undefined) { const t = Z.tpl[+b.dataset.u]; if (t) tplInsert(t.rows.slice(), t.name); }
+    else if (b.dataset.u !== undefined) { const t = Z.tpl[+b.dataset.u]; if (t) (e.shiftKey ? tplInsert : tplReplace)(t.rows.slice(), t.name); }   // v0.066
     else if (b.dataset.r !== undefined) {   // v0.037: ⚑ — эталон для сравнения
       const k = +b.dataset.r; Z.tplRef = Z.tplRef === k ? -1 : k;
       renderTpl(); renderRows(); save();
@@ -2376,7 +3040,28 @@ function init(){
     say(`⇅ Вокруг строки ${c}: переставлено пар — ${k}` + (n - 1 - 2 * k > 0 ? `, ещё ${n - 1 - 2 * k} строк без пары остались на месте` : "") + ". Ещё раз — вернёт.");
   };
   $("bOrbit").onclick = runOrbit;
+  $("orbitSub").addEventListener("change", () => renderLiveRest());   // v0.045
   $("orbitOut").onclick = (e) => { const h = e.target.closest(".hit"); if (!h) return; Z.cur = +h.dataset.r; renderAll(); save(); };
+  // v0.065: 🔁 Инверсия и ⇄ Реверс — над выделенными строками, ничего не выделено — над текущей
+  const rowsOp = (f, name) => {
+    const idx = rowSel.size ? Array.from(rowSel).filter(i => i < Z.rows.length) : [Z.cur];
+    const sel = idx.slice();
+    snapshot();
+    idx.forEach(i => { Z.rows[i] = f(Z.rows[i]); });
+    sel.forEach(i => rowSel.add(i));   // выделение остаётся — можно жать дальше
+    renderAll(); save();
+    say(idx.length > 1 ? `${name}: строк ${idx.length}. ↩ вернёт.` : `${name}: строка ${idx[0]}. ↩ вернёт.`);
+  };
+  $("bRowInv").onclick = () => rowsOp(zzInv, "🔁 Инверсия");
+  $("bRowRev").onclick = () => rowsOp(zzRev, "⇄ Реверс");
+  // v0.072, «инверсия второй половины строки»: правая половина наоборот; у нечётной длины средний бит на месте
+  $("bRowInvHalf").onclick = () => rowsOp(s => { const h = Math.ceil(s.length / 2); return s.slice(0, h) + zzInv(s.slice(h)); }, "🔁½ Инверсия второй половины");
+  /* v0.069, «Инверсия * только неподвижных»: переворачиваются только неподвижные биты — по тому режиму, что выбран у
+     «неподв.» (выкл и 🔴 — неподвижные при развороте, 🟢 — при реверс-инверсии). Заметь: инверсия неподвижных при
+     развороте даёт ровно реверс-инверсию строки (пара «a a» → «ā ā», пара «a ā» стоит — это и есть ⇄🔁), так же как
+     «Инв меняющихся» в зеркале даёт разворот. */
+  $("bRowInvFix").onclick = () => rowsOp(s => { let o = ""; for (let i = 0; i < s.length; i++) o += fixAt(s, i) ? (s[i] === "1" ? "0" : "1") : s[i]; return o; },
+    Z.showFix === "ir" ? "🔁* Инверсия неподвижных при реверс-инверсии" : "🔁* Инверсия неподвижных (вышла реверс-инверсия строки)");
   $("bDelRow").onclick = () => {
     if (Z.rows.length <= 1) { say("Последнюю строку не удаляю — впиши другую через Shift+Enter."); return; }
     snapshot(); Z.rows.splice(Z.cur, 1); Z.cur = Math.min(Z.cur, Z.rows.length - 1); renderAll(); save();
@@ -2401,12 +3086,12 @@ function init(){
   // Спуск
   $("descentAlign").onchange = (e) => { Z.descentAlign = e.target.value; renderDescent(); save(); };
   // Цикл
-  $("cycOp").onchange = (e) => { Z.cycOp = e.target.value; save(); };
+  $("cycOp").onchange = (e) => { Z.cycOp = e.target.value; save(); renderLiveRest(); };   // v0.045: живое
   $("cycHeat").onchange = (e) => { Z.cycHeat = e.target.checked; save(); if ($("cycView").innerHTML) runCycle(); };
   $("bCycle").onclick = runCycle;
   // GF(2)
-  $("gf2Op").onchange = (e) => { Z.gf2Op = e.target.value; save(); };
-  $("gf2T").onchange = (e) => { Z.gf2T = Math.max(1, Math.floor(+e.target.value || 1)); save(); };
+  $("gf2Op").onchange = (e) => { Z.gf2Op = e.target.value; save(); renderLiveRest(); };
+  $("gf2T").onchange = (e) => { Z.gf2T = Math.max(1, Math.floor(+e.target.value || 1)); save(); renderLiveRest(); };
   $("bGf2").onclick = runGf2;
   $("bGf2Take").onclick = () => {
     if (!gf2Last) { say("⤓ Сначала «🧮 Решить»."); return; }
@@ -2419,9 +3104,9 @@ function init(){
   $("structSrc").value = Z.structSrc || "cur";   // v0.042
   $("structSrc").onchange = (e) => { Z.structSrc = e.target.value; save(); renderStructLive(); };
   $("bAddr").onclick = () => { $("addrOut").textContent = "🔎 Ищу глубже…"; setTimeout(() => runAddr(true), 20); };   // v0.041
-  $("thruMode").onchange = (e) => { Z.thruMode = e.target.value; save(); };
-  $("bThru").onclick = runThru;
-  $("bDecim").onclick = runDecim;
+  $("thruMode").onchange = (e) => { Z.thruMode = e.target.value; Z.tapeMode = "thru"; save(); renderLiveRest(); };
+  $("bThru").onclick = () => { Z.tapeMode = "thru"; save(); runThru(); };   // v0.045: окно ленты живёт в последнем выбранном режиме
+  $("bDecim").onclick = () => { Z.tapeMode = "decim"; save(); runDecim(); };
 
   // ⇉ Манчестерский код (v0.007): одна кнопка, левый щелчок — сделать, правый — режим по кругу.
   const MAN_CAP = 1 << 20;
@@ -2483,7 +3168,7 @@ function init(){
   $("bFold").onclick = runFold;
   // ⇅ Сортировка сдвигов (v0.006)
   $("bwtIdx").onchange = (e) => { Z.bwtIdx = Math.max(0, Math.floor(+e.target.value || 0)); e.target.value = Z.bwtIdx; save(); };
-  $("bBwt").onclick = runBwt;
+  $("bBwt").onclick = () => runBwt();
   $("bBwtPut").onclick = () => {
     const r = (bwtLast && bwtLast.row === Z.cur && bwtLast.src === cur()) ? bwtLast : runBwt();
     if (!r) return;
@@ -2505,7 +3190,20 @@ function init(){
   // Шапка
   $("fontSel").onchange = (e) => { Z.ff = e.target.value; renderAll(); save(); };
   $("fsRange").oninput = (e) => { Z.fs = +e.target.value; renderAll(); save(); };
-  $("bLayout").onclick = () => { layoutAll(true); save(); renderPointers(); };
+  /* v0.067, «Разложить не раскрывает окна; надо ещё кнопку Свернуть»: 📐 снова раскладывает и разворачивает все окна
+     (как до v0.058), а сворачивание — отдельной кнопкой ▭: свернуть все; если все уже свёрнуты — развернуть все. */
+  $("bLayout").onclick = () => {
+    layoutAll(true); document.querySelectorAll(".win.maxed").forEach(el => el.classList.remove("maxed"));   // v0.060: ⛶ сбрасывается раскладкой
+    packWins(); save(); renderPointers(); renderAll();
+    say("📐 Окна разложены по местам и развёрнуты. ▭ — свернуть все.");
+  };
+  $("bCollapseAll").onclick = () => {
+    const wins = Array.from(document.querySelectorAll(".win")).filter(el => el.id !== "w-help" && !el.classList.contains("popped") && el.style.display !== "none" && Z.win[el.id]);
+    const open = wins.some(el => !el.classList.contains("collapsed"));
+    wins.forEach(el => { const w = Z.win[el.id]; w.collapsed = open; el.classList.toggle("collapsed", open); if (!open) el.style.height = w.h + "px"; });
+    packWins(); save(); if (!open) renderAll();
+    say(open ? "▭ Все окна свёрнуты — развернуть: двойной щелчок по шапке, ▭ ещё раз — все." : "▭ Все окна развёрнуты.");
+  };
   $("bUndo").onclick = undo;
   // v0.015: ⤒ окна к верху — вкл/выкл
   const packLabel = () => $("bPack").classList.toggle("on", !!Z.pack);

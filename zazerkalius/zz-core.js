@@ -547,6 +547,8 @@ function zzMaskTriangle(mask, n, mode){
   // v0.012: треугольник ОТ строки — Паскаль вниз (n строк, каждая на бит длиннее) или спуск (не больше длины).
   if (mode === "pascal") { const r = [mask]; while (r.length < n) r.push(zzPascalNext(r[r.length - 1])); return r; }
   if (mode === "descent") return zzDescent(mask).slice(0, n);
+  // v0.046: ◯ кольцом — строка кольцевая, следующая = XOR с соседом справа по кругу; длина не падает — цилиндр
+  if (mode === "ring") { const r = [mask]; while (r.length < n) r.push(ZZ_OPS.xorNb.step(r[r.length - 1])); return r; }
   const rows = [];
   if (mode === "tape") {
     let p = 0;
@@ -860,6 +862,25 @@ function zzApprox(s){
   out.push({ name: "≈ Туэ–Морс + поправки", raw: 1 + zzFixCost(N, et), note: `${et} ошиб.` });
   return out;
 }
+/* v0.064, «да» — на «добавлю в 🧪 Структуру способ „горы Дика“» (разговор о строке 0010010011011011). Строка — горный хребет:
+   0 — шаг вверх, 1 — вниз (или наоборот — 1 бит), не ниже земли и в конце на земле (путь Дика, правильные скобки). Таких
+   строк длины 2n — число Каталана Cₙ; одна гора (касается земли только в концах) — Cₙ₋₁; симметричных (реверс-инверсия
+   = сама) — C(n, ⌊n/2⌋); симметричная одна гора — C(n−1, ⌊(n−1)/2⌋). Проверено перебором для 16 бит: 1430, 429, 70, 35.
+   Цена: 1 бит (что вверх) + 2 бита (какой из четырёх видов) + log₂ числа таких гор — номер строки среди них. */
+function zzDyck(s){
+  const N = s.length; if (N < 2 || N % 2) return null;
+  const n = N / 2, log2Cat = (m) => m < 1 ? 0 : zzLog2C(2 * m, m) - Math.log2(m + 1);
+  for (const up of ["0", "1"]) {
+    let h = 0, ok = true, prim = true;
+    for (let i = 0; i < N && ok; i++) { h += s[i] === up ? 1 : -1; if (h < 0) ok = false; else if (h === 0 && i < N - 1) prim = false; }
+    if (!ok || h !== 0) continue;
+    const sym = zzInvRev(s) === s;
+    const bits = sym && prim ? zzLog2C(n - 1, (n - 1) >> 1) : sym ? zzLog2C(n, n >> 1) : prim ? log2Cat(n - 1) : log2Cat(n);
+    const kind = sym ? (prim ? "симметричная одна гора" : "симметричные горы") : (prim ? "одна гора" : "горы");
+    return { raw: 3 + bits, note: `${kind} (${up} — вверх): номер среди ${Math.round(2 ** bits) > 1e12 ? "≈2^" + bits.toFixed(0) : Math.round(2 ** bits)} таких гор, ${bits.toFixed(1)} бит` };
+  }
+  return null;
+}
 /* ctx: { all } — лента «все строки подряд»; иначе { rows, cur } для текущей строки. */
 function zzStructure(tape, ctx){
   const N = tape.length, M = [];
@@ -875,6 +896,7 @@ function zzStructure(tape, ctx){
   const lz = zzLZ(tape);
   add("повторы кусков (LZ)", lz.raw, `ссылок на уже бывшее ${lz.mt}, одиночных бит ${lz.lit}`);
   zzApprox(tape).forEach(a => add(a.name, a.raw, a.note));
+  const dy = zzDyck(tape); if (dy) add("горы Дика", dy.raw, dy.note);   // v0.064
   const T = tape.length > ZZ_LINCOMP_MAX ? tape.slice(0, ZZ_LINCOMP_MAX) : tape;
   if (T.length === N) { const bits = new Uint8Array(N); for (let i = 0; i < N; i++) bits[i] = tape[i] === "1" ? 1 : 0; const { L } = zzBerlekampMassey(bits); add("линейное правило (XOR)", 2 * L + zzGamma(L + 1), `L = ${L}: зерно ${L} + отводы ${L}`); }
   if (!ctx.all) {
@@ -893,4 +915,60 @@ function zzStructure(tape, ctx){
   }
   M.sort((a, b) => a.cost - b.cost);
   return { N, methods: M, raw: N + ZZ_STRUCT_SEL };
+}
+
+/* ─── ◯ Ожерелье (v0.048) ────────────────────────────────────────────────────────────────────
+   Строка, свёрнутая в кольцо, без начала: все её повороты — одно и то же. canon — наименьший поворот (вид
+   ожерелья), shift — на сколько повернуть влево, чтобы его получить, orbit — сколько разных поворотов (период:
+   у 111 — 1, у 1010 — 2, у 1000 — 4). */
+function zzNecklace(s){
+  const n = s.length;
+  let p = n;
+  for (let d = 1; d < n; d++) if (n % d === 0 && s.slice(d) + s.slice(0, d) === s) { p = d; break; }
+  let best = s, k0 = 0;
+  for (let k = 1; k < p; k++) { const r = s.slice(k) + s.slice(0, k); if (r < best) { best = r; k0 = k; } }
+  return { canon: best, shift: k0, orbit: p };
+}
+
+/* ─── △ Разложить треугольник на ▲ ▼ ◇ (v0.070) ─────────────────────────────────────────────────
+   Запрос пользователя: «меню — разложить треугольник на треугольники и ромбы по размерам». Треугольник — строки, у
+   которых длина растёт на 1 (строка R — R+1 бит, выровнены по центру: решётка Паскаля). Размер S режет его на полосы
+   по S строк. В полосе b (строки bS…bS+S−1) — треугольники вершиной вверх ▲(b,k), k = 0…b: строка i полосы — биты
+   kS…kS+i; между ними — вершиной вниз ▼(b,k), k = 0…b−1: строка i — биты kS+i+1…(k+1)S−1 (сторона S−1). Ромб ◇ —
+   ▲(b,k) и под ним ▼(b+1,k): строки 1, 2 … S, S−1 … 1. Все ◇ плюс нижний ряд ▲ — это весь треугольник.
+   rows — строки треугольника подряд; off — номер первой из них в решётке (длина первой − 1): если треугольник начат не
+   с вершины, фигуры, которые задевают отсутствующие строки, не считаются. */
+function zzTiles(rows, S){
+  const L0 = rows[0].length, off = L0 - 1, Rmax = off + rows.length - 1;
+  const cell = (R, j) => rows[R - off][j];
+  const out = { up: [], down: [], rh: [] };
+  const upRows = (b, k) => { const a = []; for (let i = 0; i < S; i++) { let s = ""; for (let t = 0; t <= i; t++) s += cell(b * S + i, k * S + t); a.push(s); } return a; };
+  const dnRows = (b, k) => { const a = []; for (let i = 0; i < S - 1; i++) { let s = ""; for (let t = 0; t <= S - 2 - i; t++) s += cell(b * S + i, k * S + i + 1 + t); a.push(s); } return a; };
+  for (let b = 0; b * S + S - 1 <= Rmax; b++) {
+    if (b * S < off) continue;
+    for (let k = 0; k <= b; k++) out.up.push({ b, k, rows: upRows(b, k) });
+    if (S > 1) for (let k = 0; k < b; k++) out.down.push({ b, k, rows: dnRows(b, k) });
+  }
+  if (S > 1) for (const u of out.up) {
+    const b1 = u.b + 1;
+    if (b1 * S + S - 2 > Rmax || b1 * S < off) continue;
+    out.rh.push({ b: u.b, k: u.k, rows: u.rows.concat(dnRows(b1, u.k)) });
+  }
+  return out;
+}
+/* Разные рисунки: сколько раз встречается каждый; зеркальные (разворот каждой строки) считаются одной формой. */
+function zzTileCensus(list){
+  const m = new Map(), forms = new Set();
+  for (const f of list) {
+    const key = f.rows.join("|");
+    const e = m.get(key); if (e) e.n++; else m.set(key, { rows: f.rows, n: 1, b: f.b, k: f.k });
+    const mir = f.rows.map(r => r.split("").reverse().join("")).join("|");
+    forms.add(key < mir ? key : mir);
+  }
+  return { distinct: m.size, forms: forms.size, items: [...m.values()].sort((a, c) => c.n - a.n) };
+}
+/* Какие строки поля — треугольник: выделенные (если их ≥ 2), иначе все; длины обязаны расти ровно на 1. */
+function zzTriBlock(rows){
+  for (let i = 1; i < rows.length; i++) if (rows[i].length !== rows[i - 1].length + 1) return { ok: false, at: i };
+  return { ok: rows.length >= 2, at: -1 };
 }
