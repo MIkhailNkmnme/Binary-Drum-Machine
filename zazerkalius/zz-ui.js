@@ -4016,6 +4016,28 @@ function applyTheme(){
   else document.documentElement.removeAttribute("data-theme");
   const b = $("bTheme");
   if (b) b.textContent = themeIsLight() ? "🌙 Тёмный" : "☀ Светлый";
+  palApply();   // v0.182: у гаммы свои цвета для светлой и тёмной темы
+}
+/* v0.182, «кнопка пресетов цветовой гаммы»: 🎨 в шапке — готовые гаммы по кругу (правый щелчок — назад). Гамма задаёт цвет единиц
+   (--b1), нулей (--b0) и акцент (--acc) — ими красятся и строки, и конус, и окна; у каждой — свой набор для тёмной и светлой темы.
+   «Исходная» — цвета страницы как были. Выбор — Z.pal (номер), едет и в «💾 Всё». */
+const ZZ_PALS = [
+  { name: "Исходная" },
+  { name: "Янтарь", dark: ["#ffd166", "#94804f", "#ffb347"], light: ["#8a5a00", "#d8c7a0", "#b86e00"] },
+  { name: "Океан", dark: ["#38bdf8", "#40709a", "#22d3ee"], light: ["#0369a1", "#a5c8e0", "#0e7490"] },
+  { name: "Лес", dark: ["#6ee7a0", "#4f8466", "#4ade80"], light: ["#166534", "#a7c7b0", "#15803d"] },
+  { name: "Роза", dark: ["#ff7ab6", "#935a76", "#f472b6"], light: ["#be185d", "#e3b3c8", "#db2777"] },
+  { name: "Огонь", dark: ["#ff7a45", "#8a5443", "#fb923c"], light: ["#c2410c", "#e7bfae", "#ea580c"] },
+  { name: "Контраст", dark: ["#ffffff", "#5a6272", "#e8ecf4"], light: ["#000000", "#cfd3db", "#1c2130"] },
+];
+function palApply(){
+  const P = ZZ_PALS[(Z.pal | 0) % ZZ_PALS.length] || ZZ_PALS[0], st = document.documentElement.style, v = P.dark ? (themeIsLight() ? P.light : P.dark) : null;
+  ["--b1", "--b0", "--acc"].forEach((k, i) => { if (v) st.setProperty(k, v[i]); else st.removeProperty(k); });
+  const b = $("bPal"); if (b) b.textContent = "🎨 " + P.name;
+}
+function palStep(d){
+  Z.pal = (((Z.pal | 0) + d) % ZZ_PALS.length + ZZ_PALS.length) % ZZ_PALS.length; palApply(); save(); renderAll();
+  say(`🎨 Гамма «${ZZ_PALS[Z.pal].name}» — ${Z.pal + 1} из ${ZZ_PALS.length}. Щелчок — следующая, правый — предыдущая.`);
 }
 
 /* ─── v0.035: ЛЕВАЯ ПАНЕЛЬ ЗНАЧКАМИ (запрос по снимку панели: «возможность скрывать в значки в один столбик»).
@@ -5162,7 +5184,10 @@ function init(){
   const packLabel = () => $("bPack").classList.toggle("on", !!Z.pack);
   packLabel();
   $("bPack").onclick = () => { Z.pack = !Z.pack; packLabel(); packWins(); save(); say(Z.pack ? "⤒ Окна прижимаются к верху." : "⤒ Выключено: окна стоят там, где их поставили."); };
-  $("bTheme").onclick = () => { Z.theme = themeIsLight() ? "dark" : "light"; applyTheme(); save(); };
+  $("bTheme").onclick = () => { Z.theme = themeIsLight() ? "dark" : "light"; applyTheme(); save(); renderAll(); };
+  $("bPal").onclick = () => palStep(1);   // v0.182
+  $("bPal").oncontextmenu = (e) => { e.preventDefault(); palStep(-1); };
+  if (window.matchMedia) matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => { if (!Z.theme) { palApply(); renderAll(); } });
   // v0.035: левая панель значками — переключатель и слежение за перерисованными кнопками
   $("bPaneIcons").onclick = () => { Z.paneIcons = !Z.paneIcons; applyPaneIcons(); save(); packWins(); };
   new MutationObserver(() => { if (Z.paneIcons) iconizePane(); }).observe($("rowsPane"), { childList: true, subtree: true, characterData: true });
