@@ -435,7 +435,7 @@ function fillCommit(){
    в конусе) — черновик стирается, строка снова пустая (v0.128: без «1» в первой ячейке). Строки поля не трогает. */
 function fillReset(){
   const f = fillDraft(), was = f.replace(/\./g, "").length, hv = Z.voidHits && Z.voidHits.h ? Object.keys(Z.voidHits.h).length : 0;
-  Z.fillCells = null; if (Z.voidHits) Z.voidHits.h = {}; renderRows(); save();   // v0.127: и счёт проходов в пустых кольцах
+  Z.fillCells = null; if (Z.voidHits) { Z.voidHits.h = {}; Z.voidHits.fz = {}; } renderRows(); save();   // v0.138: и остановленные кольца снова крутятся   // v0.127: и счёт проходов в пустых кольцах
   say(was || hv ? `✕ Строка для заполнения — заново: ${fillLen()} пустых ячеек` + (hv ? `; пустые кольца до 256 — тоже без меток (было ${hv}).` : ".") : "✕ Строка для заполнения и так пустая.");   // v0.128: без начальной «1»
 }
 function fillRowHtml(N){
@@ -1564,10 +1564,22 @@ function coneVoidLen(j, N){ const s = Z.rows[N - 1]; return (s ? s.length : 0) +
 /* v0.117: кольцо для заполнения (и v0.127: пустые за ним) — как следующие за нижним кольца: «каждое по биту» — на тот же бит, что
    все; «навстречу» — по своей чётности. Ручной накрутки у них нет. */
 function coneVoidRot(j, n){
-  const m = Z.coneSpinMode || "all", ph = Z.coneSpinPh || 0;
+  const m = Z.coneSpinMode || "all", ph = coneRingPh(j);   // v0.138
   if (m === "bit") return -ph;
   if (m === "opp") return -(j % 2 ? -1 : 1) * ph / 360 * n;
   return 0;
+}
+/* v0.138, «в тот момент, когда первая ячейка строки покрасится битом, этот диск (кольцо) останавливай — то есть все внутренние не
+   будут крутиться»: лазер впервые закрасил ячейку кольца b (стена, строка для заполнения или пустое) — кольцо b и все внутри него
+   (2…b) встают на фазе этого мига и больше не крутятся; внешние крутятся дальше. Строка 1 — источник луча — крутится всегда:
+   встань и она, луч упёрся бы в только что закрашенную ячейку навсегда. Фазы остановленных —
+   Z.voidHits.fz { кольцо: фаза }; стираются вместе с краской (✕ у строки для заполнения, смена строк) и «⟲ всё на места». */
+function coneFrozen(){ const V = Z.voidHits; if (!V) return null; if (!V.fz || typeof V.fz !== "object") V.fz = {}; return V.fz; }
+function coneRingPh(i){ const fz = Z.voidHits && Z.voidHits.fz; return fz && fz[i] !== undefined ? fz[i] : (Z.coneSpinPh || 0); }
+function coneFreezeTo(b){
+  const fz = coneFrozen() || (coneVoidHits(), coneFrozen()), ph = Z.coneSpinPh || 0; let k = 0;
+  for (let i = 1; i <= b; i++) if (fz[i] === undefined) { fz[i] = ph; k++; }   // строка 1 — источник луча — крутится всегда, иначе луч встал бы навсегда
+  return k;
 }
 function coneFillRot(){ const N = Math.min(Z.rows.length, CONE_MAX); return coneVoidRot(N, fillLen()); }
 function coneVoidHits(){
@@ -1620,12 +1632,14 @@ function coneWallPaint(tr){
   coneWallWas = k;
   if (!k || first) return false;   // загрузка страницы попаданием не считается
   const h = coneVoidHits(); let cnt = 0;
+  const ring = R.wall ? R.wall[0] : R.cells.length ? R.cells[0][0] : -1;
+  const fzk = ring >= 0 && (Z.coneSpinMode === "bit" || Z.coneSpinMode === "opp") && !Object.keys(h).some(k => k.startsWith(ring + ":")) ? coneFreezeTo(ring) : 0;   // v0.138: первая краска кольца — оно и внутренние встают
   if (R.wall) { const hk = R.wall[0] + ":" + R.wall[1]; cnt = h[hk] = (h[hk] | 0) + 1; }
   else if (R.cells.length) { const hk = R.cells[0][0] + ":" + R.cells[0][1]; cnt = h[hk] = (h[hk] | 0) + 1; }   // пойман пустым кольцом
-  coneLogAdd(R, cnt, N);
+  coneLogAdd(R, cnt, N, fzk ? ring : -1);
   return true;
 }
-function coneLogAdd(R, cnt, N){
+function coneLogAdd(R, cnt, N, froze){
   const L = Z.coneLog && Array.isArray(Z.coneLog.list) ? Z.coneLog : (Z.coneLog = { n: 0, list: [] });
   L.n = (L.n | 0) + 1;
   const len = (b) => b < N ? Z.rows[b].length : coneVoidLen(b, N), ones = (c) => "1".repeat(Math.min(c, 9)) + (c > 9 ? " (" + c + ")" : "");
@@ -1636,7 +1650,7 @@ function coneLogAdd(R, cnt, N){
     : R.pass && R.cells.length ? `пойман: стр ${R.cells[0][0] + 1}${fillNm(R.cells[0][0])}, яч ${R.cells[0][1] + 1}` + (cnt ? ` → ${ones(cnt)}` : "")
     : R.pass ? "за край" : `стоп: стр ${R.stop + 1}`;
   const deg = Math.round((((R.a * 180 / Math.PI + 90) % 360) + 360) % 360 * 10) / 10;
-  L.list.push({ n: L.n, t: `№${L.n} · ${String(deg).replace(".", ",")}° · ${end}` + (gt ? ` · сквозь щели: ${gt}` : "") });
+  L.list.push({ n: L.n, t: `№${L.n} · ${String(deg).replace(".", ",")}° · ${end}` + (froze >= 0 ? ` · ⏹ встали кольца 2–${froze + 1}` : "") + (gt ? ` · сквозь щели: ${gt}` : "") });
   if (L.list.length > 1000) L.list.splice(0, L.list.length - 1000);
   coneLogDirty();
 }
@@ -1956,7 +1970,7 @@ function coneLocked(i){ const L = Z.coneLocks; return L && L[i] !== undefined ? 
    видны все кольца. */
 function coneFocus(){ return rowSel.size ? [...rowSel] : (document.body.classList.contains("nocur") ? [] : [Z.cur]); }
 function coneRotOf(i){
-  let base = coneRot[i] || 0; const m = Z.coneSpinMode || "all", ph = Z.coneSpinPh || 0;
+  let base = coneRot[i] || 0; const m = Z.coneSpinMode || "all", ph = coneRingPh(i);   // v0.138: остановленное кольцо — на своей фазе
   if (i === 0 && Z.coneAimRot) base -= Z.coneAimRot / 360 * ((Z.rows[0] || "").length || 1);   // v0.120: строка 1 довёрнута вручную (градусы, по часовой)
   if (m === "bit") return base - ph;
   if (m === "opp") { const n = (Z.rows[i] || "").length || 1; return base - (i % 2 ? -1 : 1) * ph / 360 * n; }
@@ -2193,7 +2207,7 @@ function setupCone(){
     const H = Z.home;
     if (H) {   // v0.125: своё умолчание (⭐) — положения колец и настройки конуса, как запомнены
       coneRot.length = 0; (Array.isArray(H.coneRot) ? H.coneRot : []).forEach(x => coneRot.push(Math.round(x || 0))); Z.coneRot = coneRot.slice();
-      Z.coneSpin = H.coneSpin || 0; Z.coneSpinPh = H.coneSpinPh || 0; Z.coneAimRot = H.coneAimRot || 0; Z.coneClockN = 0; coneClockFlash = [];
+      Z.coneSpin = H.coneSpin || 0; Z.coneSpinPh = H.coneSpinPh || 0; Z.coneAimRot = H.coneAimRot || 0; Z.coneClockN = 0; coneClockFlash = []; if (Z.voidHits) Z.voidHits.fz = {};   // v0.138
       const keys = ["coneClock", "coneClockStop", "coneVoid", "coneSlit", "coneSpinMode", "coneAutoSp", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3H",
                     "coneRays", "coneMir", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs"];
       for (const k of keys) { if (k in H) Z[k] = JSON.parse(JSON.stringify(H[k])); else delete Z[k]; }
@@ -2210,7 +2224,7 @@ function setupCone(){
     }
     const k = coneRot.filter(x => Math.round(x || 0)).length;
     coneRot.fill(0); Z.coneRot = coneRot.slice();
-    Z.coneSpin = 0; Z.coneSpinPh = 0; Z.coneClockN = 0; Z.coneAimRot = 0; coneClockFlash = [];
+    Z.coneSpin = 0; Z.coneSpinPh = 0; Z.coneClockN = 0; Z.coneAimRot = 0; coneClockFlash = []; if (Z.voidHits) Z.voidHits.fz = {};   // v0.138
     coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass);
     save(); renderRows(); renderCone();
     say(`⟲ Всё на местах: накрутка снята${k ? ` (у колец: ${k})` : ""}, кручение и счёт — с нуля, строка 1 без довода. Биты строк не менялись.`);
@@ -2228,7 +2242,7 @@ function setupCone(){
   };
   $("bConeZen").onclick = () => zenSet(true);
   document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && document.body.classList.contains("zen")) zenSet(false); });
-  $("bConeAuto").oncontextmenu = (e) => { e.preventDefault(); Z.coneSpin = 0; Z.coneSpinPh = 0; Z.coneClockN = 0; save(); renderCone(); say("◯ Кручение сброшено — всё на своих местах."); };   // v0.104
+  $("bConeAuto").oncontextmenu = (e) => { e.preventDefault(); Z.coneSpin = 0; Z.coneSpinPh = 0; Z.coneClockN = 0; if (Z.voidHits) Z.voidHits.fz = {}; save(); renderCone(); say("◯ Кручение сброшено — всё на своих местах."); };   // v0.104
   $("coneSpinMode").value = Z.coneSpinMode || "all";
   {   // v0.124: ползунок ширины щели — один для расчёта и рисунка
     const sl = $("coneSlit"), sv = $("coneSlitV"), show = () => { sv.textContent = (+Z.coneSlit || 2).toFixed(1).replace(".", ",") + "°"; };
