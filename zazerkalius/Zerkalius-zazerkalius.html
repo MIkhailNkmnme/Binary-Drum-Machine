@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.155. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.156. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.155</title>
+<title>Zazerkalius — v0.156</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -109,7 +109,7 @@ body.pane-icons #rowsPane #bPaneIcons{width:auto;padding:2px 0}
 #fieldBar .sp{flex:1}
 /* v0.077, «текст дёргает поле»: строка «70 стр. · 2485 бит · текущая … · против …» меняла длину и переносилась — полоса над
    полем росла и сжималась, строки прыгали. Теперь она в одну строку: не влезает — многоточие, целиком — в подсказке. */
-#fieldInfo{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 0}
+#fieldInfo{display:block;flex:0 0 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;padding:3px 10px 0;font-size:11px;line-height:14px;color:var(--dim);background:var(--bg)}   /* v0.156: серым, в поле строк сверху слева */
 #split{cursor:col-resize;background:var(--line);opacity:.6}
 /* v0.025: окна под полем строк. Тащишь окно за шапку — оно едет поверх всего (.dragging, position:fixed);
    отпустил над полем строк — встаёт в #fieldDock на всю ширину колонки (.docked); вытащил — снова на столе. */
@@ -331,6 +331,8 @@ body.cutdrag,body.cutdrag *{cursor:ns-resize !important}
 #tplList .tpl-sep,#tplList .tpl.mine{grid-column:1 / -1}
 #tplList .tpl{min-width:0}
 #tplList .tb{min-width:0;white-space:nowrap}
+/* v0.156, «в один размер все, минимальный который»: кнопки и списки левой панели — одной высоты по самой низкой (24 px, как «＋ Строка») и с одними отступами */
+body:not(.pane-icons) #rowsPane button:not(#bPaneIcons),body:not(.pane-icons) #rowsPane select{box-sizing:border-box;height:24px;min-height:0;padding:2px 4px;line-height:1;font-size:13px}
 /* v0.094: свёрнутые окна в левой панели (при «⇆ поле справа») */
 #paneWins{display:flex;flex-direction:column;gap:3px;padding:0 10px 10px;overflow:auto;max-height:45%}
 #paneWins button{text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -542,7 +544,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.155</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.156</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
@@ -632,7 +634,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
     <div id="fieldBar">
       <!-- v0.148, «текстовые подсказки на странице не делаем, если не попрошу — из-за текста двигаются панели»: «№ — выделить · Del ·
            Ctrl+C/V · двойной щелчок — править» — теперь только всплывающей подсказкой у слова «Строки» -->
-      <b title="Щелчок по НОМЕРУ — выделить строку (Ctrl — добавить, Shift — диапазон), Ctrl+A — все. Мышью по битам — выделить символы. Del — удалить выделенное (строки или символы). Ctrl+C / Ctrl+V — копировать и вставить. Двойной щелчок — править строку на месте">Строки</b><span id="fieldInfo" class="dim"></span>
+      <b title="Щелчок по НОМЕРУ — выделить строку (Ctrl — добавить, Shift — диапазон), Ctrl+A — все. Мышью по битам — выделить символы. Del — удалить выделенное (строки или символы). Ctrl+C / Ctrl+V — копировать и вставить. Двойной щелчок — править строку на месте">Строки</b>
       <span class="sp"></span>
       <!-- v0.036: у номеров — неподвижные·меняющиеся и 0·1; красным — неподвижные биты прямо в строках -->
       <button id="bShowFM" title="У номера строки — сколько в ней НЕПОДВИЖНЫХ бит (разворот ⇄ их не трогает, красным) и МЕНЯЮЩИХСЯ (серым): 2·6">⇄ н·м</button>
@@ -665,6 +667,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
       <input type="file" id="fileIn" accept=".txt,.csv,.dat,text/plain" hidden>
     </div>
     </div>
+    <!-- v0.156, «эту надпись (сведения поля: стр., бит, текущая) серым текстом — в поле строк, сверху слева» (прежде — в полосе «Строки») -->
+    <span id="fieldInfo" class="dim"></span>
     <div id="rowList" class="al-center"></div>
     <!-- v0.025: сюда пристыковываются окна, перетащенные за шапку под поле строк -->
     <div id="fieldDock"></div>
