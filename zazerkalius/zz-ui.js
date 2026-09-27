@@ -430,6 +430,7 @@ const FIELD_INFO = document.getElementById("fieldInfo");   // v0.237, «эту �
 function cutPanelMount(){
   const s = document.getElementById("cutSlot"); if (s && CUT_PANEL && CUT_PANEL.parentNode !== s) s.appendChild(CUT_PANEL);
   const f = document.getElementById("infoSlot"); if (f && FIELD_INFO && FIELD_INFO.parentNode !== f) f.appendChild(FIELD_INFO);
+  const b = document.getElementById("bCutClr"); if (b) b.disabled = !hidCount();   // v0.245: 🗑 — только когда под чертой что-то есть
 }
 function hidRows(l){ return (Z.lanesHid && Z.lanesHid[l]) || []; }
 function hidCopy(){ return Array.isArray(Z.lanesHid) ? Z.lanesHid.map(l => l.slice()) : null; }
@@ -6044,6 +6045,11 @@ function init(){
     say(`▮ Стенка — столбец ${barOffV()} от вершины (${barOffV() < 0 ? "левее" : barOffV() > 0 ? "правее" : "по центру"}).`); };
   $("bCutHid").onclick = () => { Z.cutHidMode = Z.cutHidMode === "keep" ? "del" : "keep"; cutUi(); save();
     say(Z.cutHidMode === "keep" ? "⎯ Заменить — выкл: строки под чертой при достройке сдвигаются вниз, ниже новых." : "⎯ Заменить — вкл: строки под чертой при достройке заменяются новыми."); };
+  $("bCutClr").onclick = () => {   // v0.245, «и кнопку — стереть всё под линией»: строки за чертой — насовсем, во всех полях; ↩ вернёт
+    const n = hidCount(); if (!n) { say("🗑 Под чертой и так пусто."); return; }
+    const pre = undoState(); Z.lanesHid = []; undoPush(pre); renderAll(); save();
+    say(`🗑 Стёрто ${n} стр. под чертой. ↩ вернёт.`);
+  };
   cutUi();
   const TRI_ORD = TRI_ORDERS;   // v0.234: ✂ нарезка; v0.237: все фигуры и порядки, щелчок — дальше, правый — назад
   const triUi = () => { $("bTriOrd").textContent = TRI_ORD[Z.triOrd] || TRI_ORD.rows; $("bTriUnit").textContent = TRI_UNITS[Z.triUnit] || TRI_UNITS.up; $("bTriEmpty").classList.toggle("on", Z.triSkip !== false); $("triH").value = Z.triH || 16; };
