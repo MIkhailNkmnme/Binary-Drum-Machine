@@ -3380,28 +3380,45 @@ function setupCone(){
   };
   const sndBitHz = (s, i) => s[i] === "1" ? sndHz(parseInt((s + s + s).substr(i, 3), 2) + sndSc().length) : 0;   // 1 — нота (высота — три бита с этого места), 0 — пауза
   const sndList = (allIfNone) => rowSel.size ? [...rowSel].filter(i => i < Z.rows.length).sort((a, b) => a - b) : allIfNone ? Z.rows.map((_, i) => i) : [Z.cur];
+  /* v0.260, «покажи, какой бит сейчас играется в строках (кнопку, по умолчанию вкл)»: ◉ бит — в строках поля подсвечен бит, на котором
+     сейчас каждая звучащая строка (Highlight API, строки не перерисовываются). Z.sndMark, по умолчанию вкл. */
+  const sndMark = (P) => {
+    if (!window.CSS || !CSS.highlights || typeof Highlight === "undefined") return;
+    if (Z.sndMark === false || !P || !P.length) { CSS.highlights.delete("sndbit"); return; }
+    const Lr = $("rowList"), rs = [];
+    for (const [r, j] of P) {
+      const bx = Lr.querySelector('.rw[data-r="' + r + '"] .bx'); if (!bx) continue;
+      const w = document.createTreeWalker(bx, NodeFilter.SHOW_TEXT); let k = 0, nd;
+      while ((nd = w.nextNode())) { const n = nd.textContent.length; if (k + n <= j) { k += n; continue; } const rg = document.createRange(); rg.setStart(nd, j - k); rg.setEnd(nd, j - k + 1); rs.push(rg); break; }   // в .bx только 0 и 1
+    }
+    if (rs.length) CSS.highlights.set("sndbit", new Highlight(...rs)); else CSS.highlights.delete("sndbit");
+  };
   const sndTick = () => {
+    const P = []; sndTick1(P); sndMark(P);
+  };
+  const sndTick1 = (P) => {
     const sp = Z.sndSp || 6, len = Math.min(0.6, 1.6 / sp), t = snd.ctx.currentTime + 0.01, sc = sndSc(), m = Z.sndMode || "row";
     if (m === "row") {
       const s = cur(); if (!s) return;
-      const i = sndStep % s.length; sndStep = i + 1;
+      const i = sndStep % s.length; sndStep = i + 1; P.push([Z.cur, i]);
       const hz = sndBitHz(s, i); if (hz) sndNote(hz, t, len, 0.35, 0);
     } else if (m === "sel") {   // v0.257: выделенные строки (нет выделения — текущая) звучат разом, каждая своим голосом и в своём такте
       const L = sndList(false).slice(0, 8), k = sndStep++;
-      const on = []; L.forEach((r, v) => { const s = Z.rows[r]; if (s) { const hz = sndBitHz(s, k % s.length); if (hz) on.push([hz, v]); } });
+      const on = []; L.forEach((r, v) => { const s = Z.rows[r]; if (s) { P.push([r, k % s.length]); const hz = sndBitHz(s, k % s.length); if (hz) on.push([hz, v]); } });
       on.forEach(([hz, v]) => sndNote(hz, t, len, 0.32 / Math.sqrt(on.length), v));
     } else if (m === "seq" || m === "pair") {   // v0.257: чтение — строки одна за другой (по 2 — парами разом), выделенные или всё поле
       const L = sndList(true), G = m === "pair" ? 2 : 1, groups = [];
       for (let j = 0; j < L.length; j += G) groups.push(L.slice(j, j + G));
       const lens = groups.map(g => Math.max(...g.map(r => (Z.rows[r] || "").length), 1)), tot = lens.reduce((a, b) => a + b, 0); if (!tot) return;
       let k = sndStep % tot; sndStep = k + 1; let gi = 0; while (k >= lens[gi]) { k -= lens[gi]; gi++; }
-      const on = []; groups[gi].forEach((r, v) => { const s = Z.rows[r]; if (s && k < s.length) { const hz = sndBitHz(s, k); if (hz) on.push([hz, L.indexOf(r) % 12]); } });
+      const on = []; groups[gi].forEach((r, v) => { const s = Z.rows[r]; if (s && k < s.length) { P.push([r, k]); const hz = sndBitHz(s, k); if (hz) on.push([hz, L.indexOf(r) % 12]); } });
       on.forEach(([hz, v]) => sndNote(hz, t, len, 0.33 / Math.sqrt(on.length), v));
       if (k === 0) sndShow(groups[gi]);   // строка (пара) началась — сказать, какая
     } else {
       const W = Z.rows.reduce((a, r) => Math.max(a, r.length), 0); if (!W) return;
       const k = sndStep % W; sndStep = k + 1;
       const on = []; for (let r = 0; r < Z.rows.length && on.length < 8; r++) if (Z.rows[r][k] === "1") on.push(r);
+      on.forEach(r => P.push([r, k]));
       const n = sc.length * 3;
       on.forEach(r => sndNote(sndHz(n - 1 - (r % n)), t, len, 0.3 / Math.sqrt(on.length), r));   // v0.257: и тембр — по строке
     }
@@ -3410,12 +3427,16 @@ function setupCone(){
   const sndShow = (g) => { if (!document.body.classList.contains("zen")) say(`♫ Звучит ${g.length > 1 ? "пара строк" : "строка"} ${g.map(r => r + 1).join(" + ")}`); };
   const sndLoop = () => { if (!sndT) return; sndTick(); sndT = setTimeout(sndLoop, 1000 / (Z.sndSp || 6)); };
   const sndSet = (on) => {
-    if (on) { sndCtx(); sndStep = 0; sndT = setTimeout(sndLoop, 0); } else { clearTimeout(sndT); sndT = 0; }
+    if (on) { sndCtx(); sndStep = 0; sndT = setTimeout(sndLoop, 0); } else { clearTimeout(sndT); sndT = 0; sndMark(null); }
     const b = $("bSnd"); b.classList.toggle("on", on); b.textContent = on ? "■ звук" : "♫ звук";
   };
   $("bSnd").onclick = () => sndSet(!sndT);
   $("sndMode").value = Z.sndMode || "row";
   $("sndMode").onchange = (e) => { Z.sndMode = e.target.value; sndStep = 0; save(); };
+  const sndMarkUi = () => $("bSndMark").classList.toggle("on", Z.sndMark !== false);   // v0.260
+  sndMarkUi();
+  $("bSndMark").onclick = () => { Z.sndMark = Z.sndMark === false; sndMarkUi(); save(); if (Z.sndMark === false) sndMark(null);
+    say(Z.sndMark !== false ? "◉ Звучащий бит подсвечен в строках." : "◉ Звучащий бит не подсвечивается."); };
   $("sndWave").value = Z.sndWave || "mix";   // v0.257: тембр
   $("sndWave").onchange = (e) => { Z.sndWave = e.target.value; save(); };
   $("sndScale").value = Z.sndScale || "penta";

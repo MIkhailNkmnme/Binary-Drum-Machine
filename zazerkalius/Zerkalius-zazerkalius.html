@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.259. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.260. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.259</title>
+<title>Zazerkalius — v0.260</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -340,6 +340,7 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 .rw:hover > .no{background:var(--panel2)}
 body.nocur .rw.cur:not(.sel):not(:hover) > .no{background:var(--bg) !important}
 #rowList ::selection{background:rgba(185,140,240,.5)}
+::highlight(sndbit){background-color:#22d3ee;color:#111}   /* v0.260: бит, который сейчас звучит (♫ звук, ◉ бит) */
 ::highlight(conebit){background-color:var(--gold);color:#111}   /* v0.173: бит под мышью на конусе — в своей строке */
 /* v0.157, по снимку выделенного треугольника — «выделения символов поправь»: полоса выделения — во всю высоту шрифта (~1.32 кегля),
    а шаг строк 1.25, в ужатом поле до 0.7 — полупрозрачные полосы соседних строк налезали друг на друга ступенями. Ячейка бит режет
@@ -789,7 +790,7 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.259</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.260</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1416,6 +1417,7 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
             <select id="sndWave" title="Тембр. Разные — у каждой строки (голоса) свой: треугольник, квадрат, пила, синус, дальше — октавой выше и ниже. Или один на всех">
               <option value="mix">🎨 разные</option><option value="triangle">△ треугольник</option><option value="sine">∿ синус</option><option value="square">▢ квадрат</option><option value="sawtooth">⩘ пила</option><option value="bell">🔔 колокол</option>
             </select>
+            <button id="bSndMark" class="on" title="◉ Показывать, какой бит сейчас звучит: в строках поля он подсвечен (по умолчанию вкл)">◉ бит</button>
             <select id="sndScale" title="Лад: из каких нот берётся высота">
               <option value="penta">пентатоника</option><option value="minor">минор</option><option value="major">мажор</option><option value="chrom">хроматика</option>
             </select>
@@ -1581,9 +1583,11 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0259"></script>
-<script src="zz-ui.js?v=0259"></script>
+<script src="zz-core.js?v=0260"></script>
+<script src="zz-ui.js?v=0260"></script>
 <script src="../_js/hub-link.js"></script>
+<!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
+<script src="../_js/slider-arrows.js"></script>
 <script src="../_js/recorder.js" data-bez-knopki></script>
 </body>
 </html>
