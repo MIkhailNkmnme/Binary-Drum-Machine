@@ -4622,6 +4622,14 @@ function cgrpInit(){
   if (!Z.cgrpMin || typeof Z.cgrpMin !== "object") Z.cgrpMin = {};   // v0.204: свёрнутые до заголовка
   const wb = tl.parentElement; let zTop = 10;
   const groups = [...tl.querySelectorAll(":scope > .cgrp")];
+  /* v0.238, по снимку групп «Аниматрица», «Лазер», «Кручение» — «все кнопки разъехались — компактными, и размер стандартизируй»: кнопки
+     группы — в своём блоке .cgb рядом с подписью (подпись — хват во всю высоту, как было), блок переносится компактно; размеры — в CSS. */
+  groups.forEach((g) => {
+    if (g.querySelector(":scope > .cgb")) return;
+    const b = document.createElement("div"); b.className = "cgb";
+    [...g.childNodes].forEach((c) => { if (!(c.nodeType === 1 && c.classList.contains("glab"))) b.appendChild(c); });
+    g.appendChild(b);
+  });
   const place = (g) => {
     const p = Z.cgrpPos[g.dataset.g]; g.classList.toggle("cfloat", !!p);
     if (!p) { g.style.left = g.style.top = ""; return; }
