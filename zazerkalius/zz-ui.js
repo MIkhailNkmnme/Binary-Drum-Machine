@@ -4874,12 +4874,34 @@ function coneBtnsInit(){
   const L = document.createElement("div"); L.id = "coneBtns"; host.appendChild(L);
   const TYPE = "text/zz-btn";
   let drag = null;   // тащат копию с холста: { k, dx, dy, done }
-  const lab = (src) => (src.textContent || "").replace(/\s+/g, " ").trim() || (src.title || "").split(/ — |: |\. /)[0].slice(0, 24) || src.id;
+  /* v0.249, по снимку «одинак.» и «3D» — «любые кнопки сделай переносимыми на поле, а не только те, что сейчас»: кроме кнопок с именем (id)
+     на холст тянутся и галки (метка с флажком: копия щёлкает флажок и горит, когда он стоит), и кнопки без имени, но с меткой data-…
+     в окне с именем (шаблоны, ⟲ ▲ ⌂ у 3D, виды «сверху / спереди»…) — такая запоминается селектором { sel }. */
+  const CHK = "input[type=checkbox],input[type=radio]";
+  const srcOf = (it) => !it ? null : it.sel ? document.querySelector(it.sel) : $(it.id);
+  const refKey = (it) => it.sel || "#" + it.id;
+  const refOf = (el) => {   // кнопка или флажок → { id } или { sel }
+    if (el.id) return { id: el.id };
+    const d = Object.entries(el.dataset || {})[0], box = el.parentElement && el.parentElement.closest("[id]"); if (!d || !box) return null;
+    const sel = `#${CSS.escape(box.id)} ${el.tagName.toLowerCase()}[data-${d[0].replace(/[A-Z]/g, c => "-" + c.toLowerCase())}="${CSS.escape(d[1])}"]`;
+    return document.querySelectorAll(sel).length === 1 ? { sel } : null;
+  };
+  const grabOf = (t) => {   // что тянут: кнопка (не копия на холсте) или метка с флажком
+    if (!t || !t.closest) return null;
+    const b = t.closest("button"); if (b) return b.closest("#coneBtns") ? null : b;
+    const l = t.closest("label"); return l && l.querySelector(CHK) ? l : null;
+  };
+  const ctlOf = (g) => g.tagName === "LABEL" ? g.querySelector(CHK) : g;
+  const isChk = (src) => src.tagName === "INPUT" && (src.type === "checkbox" || src.type === "radio");
+  const lab = (src) => {
+    if (src.tagName === "INPUT") { const l = src.closest("label"); return (l ? l.textContent : "").replace(/\s+/g, " ").trim() || (src.title || src.id || "").slice(0, 24); }
+    return (src.textContent || "").replace(/\s+/g, " ").trim() || (src.title || "").split(/ — |: |\. /)[0].slice(0, 24) || src.id;
+  };
   const refresh = () => {
     for (const b of L.children) {
-      const it = Z.coneBtns[+b.dataset.k], src = it && $(it.id);
+      const it = Z.coneBtns[+b.dataset.k], src = srcOf(it);
       b.classList.toggle("gone", !src); if (!src) continue;
-      b.classList.toggle("on", src.classList.contains("on")); b.disabled = !!src.disabled;   // v0.208: неактивна оригинал — неактивна и копия
+      b.classList.toggle("on", src.classList.contains("on") || (isChk(src) && src.checked)); b.disabled = !!src.disabled;   // v0.249: галка — горит, когда стоит   // v0.208: неактивна оригинал — неактивна и копия
       const t = lab(src); if (b.textContent !== t) b.textContent = t;
     }
   };
@@ -4887,10 +4909,10 @@ function coneBtnsInit(){
     L.innerHTML = "";
     const W = host.clientWidth, H = host.clientHeight;
     Z.coneBtns.forEach((it, k) => {
-      const src = $(it.id), b = document.createElement("button");
+      const src = srcOf(it), b = document.createElement("button");
       b.type = "button"; b.draggable = true; b.dataset.k = k;
       b.textContent = src ? lab(src) : "?";
-      b.title = (src ? (src.title || lab(src)) : "Этой кнопки сейчас нет") + " · тащи по холсту — переставить; за холст, правый щелчок или Delete — убрать";
+      b.title = (src ? (src.title || (src.closest("label") || {}).title || lab(src)) : "Этой кнопки сейчас нет") + " · тащи по холсту — переставить; за холст, правый щелчок или Delete — убрать";
       L.appendChild(b);
       const w = b.offsetWidth, h = b.offsetHeight;
       b.style.left = Math.round(Math.max(0, Math.min(it.x * W, W - w))) + "px";
@@ -4900,15 +4922,24 @@ function coneBtnsInit(){
   };
   const remove = (k, why) => {
     const it = Z.coneBtns[k]; if (!it) return;
-    const src = $(it.id); Z.coneBtns.splice(k, 1); render(); save();
-    say(`Кнопка «${src ? lab(src) : it.id}» убрана с холста${why ? " — " + why : ""}.`);
+    const src = srcOf(it); Z.coneBtns.splice(k, 1); render(); save();
+    say(`Кнопка «${src ? lab(src) : refKey(it)}» убрана с холста${why ? " — " + why : ""}.`);
   };
   L.addEventListener("click", (e) => {
     const b = e.target.closest("button[data-k]"); if (!b) return;
     e.stopPropagation();
-    const it = Z.coneBtns[+b.dataset.k], src = it && $(it.id);
+    const it = Z.coneBtns[+b.dataset.k], src = srcOf(it);
     if (!src) { say("Этой кнопки сейчас нет — она появится, когда вернётся её окно."); return; }
+    if (b._pd) { b._pd = false; refresh(); setTimeout(refresh, 0); return; }   // v0.249: уже сработала на нажатие
     src.click(); refresh(); setTimeout(refresh, 0);
+  });
+  /* v0.249: есть кнопки, что действуют на нажатие, а не на щелчок (⟲ ▲ ⌂ у 3D — держишь, повторяется): нажатие на копии передаётся
+     оригиналу; оригинал его взял (preventDefault) — щелчок копии больше не жмёт его второй раз. */
+  L.addEventListener("pointerdown", (e) => {
+    const b = e.target.closest("button[data-k]"); if (!b || e.button !== 0) return;
+    const src = srcOf(Z.coneBtns[+b.dataset.k]); b._pd = false; if (!src || src.tagName === "INPUT") return;
+    const ev = new PointerEvent("pointerdown", { bubbles: true, cancelable: true, button: 0, pointerId: e.pointerId, clientX: e.clientX, clientY: e.clientY });
+    src.dispatchEvent(ev); b._pd = ev.defaultPrevented;
   });
   L.addEventListener("contextmenu", (e) => { const b = e.target.closest("button[data-k]"); if (!b) return; e.preventDefault(); remove(+b.dataset.k); });
   L.addEventListener("keydown", (e) => { const b = e.target.closest("button[data-k]"); if (b && (e.key === "Delete" || e.key === "Backspace")) { e.preventDefault(); remove(+b.dataset.k); } });
@@ -4916,31 +4947,33 @@ function coneBtnsInit(){
     const b = e.target.closest && e.target.closest("button[data-k]"); if (!b || !Z.coneBtns[+b.dataset.k]) return;
     e.stopPropagation();
     drag = { k: +b.dataset.k, dx: e.offsetX, dy: e.offsetY, done: false };
-    e.dataTransfer.setData(TYPE, Z.coneBtns[drag.k].id); e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData(TYPE, JSON.stringify(Z.coneBtns[drag.k])); e.dataTransfer.effectAllowed = "move";
   });
   L.addEventListener("dragend", (e) => {
     const d = drag; drag = null;
     if (d && !d.done && e.dataTransfer && e.dataTransfer.dropEffect === "none") remove(d.k, "вытащена за холст");
   });
-  // любую кнопку с именем можно потянуть: draggable ставится в миг нажатия (кнопки бывают и новые)
+  // любую кнопку (v0.249: и галку) можно потянуть: draggable ставится в миг нажатия (кнопки бывают и новые)
   document.addEventListener("pointerdown", (e) => {
-    const b = e.target.closest && e.target.closest("button[id]");
-    if (b && !b.draggable && !b.closest("#coneBtns")) b.draggable = true;
+    const g = grabOf(e.target);
+    if (g && !g.draggable && refOf(ctlOf(g))) g.draggable = true;
   }, true);
   document.addEventListener("dragstart", (e) => {
-    const b = e.target.closest && e.target.closest("button[id]"); if (!b || b.closest("#coneBtns")) return;
-    e.dataTransfer.setData(TYPE, b.id); e.dataTransfer.effectAllowed = "copyMove";
+    const g = grabOf(e.target), r = g && refOf(ctlOf(g)); if (!r) return;
+    e.dataTransfer.setData(TYPE, JSON.stringify(r)); e.dataTransfer.effectAllowed = "copyMove";
   });
   const isBtn = (e) => !!e.dataTransfer && [...e.dataTransfer.types].includes(TYPE);
   host.addEventListener("dragover", (e) => { if (!isBtn(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = drag ? "move" : "copy"; });
   host.addEventListener("drop", (e) => {
     if (!isBtn(e)) return;
     e.preventDefault();
-    const d = drag, id = d ? (Z.coneBtns[d.k] || {}).id : e.dataTransfer.getData(TYPE), src = id && $(id);
+    const d = drag;
+    let r = null; try { r = d ? Z.coneBtns[d.k] : JSON.parse(e.dataTransfer.getData(TYPE)); } catch (err) { r = { id: e.dataTransfer.getData(TYPE) }; }   // v0.249: { id } или { sel }
+    const src = srcOf(r);
     if (!src) return;
-    let k = d ? d.k : Z.coneBtns.findIndex(t => t.id === id);
+    let k = d ? d.k : Z.coneBtns.findIndex(t => refKey(t) === refKey(r));
     const fresh = k < 0;
-    if (fresh) { Z.coneBtns.push({ id, x: 0, y: 0 }); k = Z.coneBtns.length - 1; }
+    if (fresh) { Z.coneBtns.push(Object.assign(r.sel ? { sel: r.sel } : { id: r.id }, { x: 0, y: 0 })); k = Z.coneBtns.length - 1; }
     render();
     const me = L.children[k], hr = host.getBoundingClientRect(), W = host.clientWidth || 1, H = host.clientHeight || 1;
     const w = me ? me.offsetWidth : 28, h = me ? me.offsetHeight : 24;
