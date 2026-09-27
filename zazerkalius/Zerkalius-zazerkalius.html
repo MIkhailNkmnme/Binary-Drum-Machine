@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.190. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.191. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.190</title>
+<title>Zazerkalius — v0.191</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -430,6 +430,7 @@ body.solo #w-cone .wbody > .tools{position:relative;z-index:4}
 #coneLog > div{padding:0;overflow:hidden;text-overflow:ellipsis}
 #coneEx{flex:0 1 auto;max-height:40%;min-height:0;overflow:auto;font-size:11px;line-height:1.25;font-family:var(--ff);white-space:nowrap}   /* v0.186 */
 #coneEx b{display:inline-block;min-width:2.6em;text-align:right;margin-right:6px;color:var(--dim);font-weight:400}
+#coneEx .lh{color:var(--gold);margin-top:3px}   /* v0.191: заголовок лазера */
 #conePred{flex:0 1 auto;max-height:40%;min-height:0;overflow:auto;font-size:11px;line-height:1.25;font-family:var(--ff);white-space:nowrap}   /* v0.187 */
 #conePred b{display:inline-block;min-width:2.6em;text-align:right;margin-right:6px;color:var(--dim);font-weight:400}
 #conePred i{display:inline-block;min-width:5.5em;margin-right:6px;color:var(--acc2);font-style:normal}
@@ -627,7 +628,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.190</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.191</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1331,8 +1332,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0190"></script>
-<script src="zz-ui.js?v=0190"></script>
+<script src="zz-core.js?v=0191"></script>
+<script src="zz-ui.js?v=0191"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
