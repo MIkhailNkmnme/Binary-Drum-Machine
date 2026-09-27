@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.263. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.264. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.263</title>
+<title>Zazerkalius — v0.264</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -355,6 +355,10 @@ body.nocur .rw.cur:not(.sel):not(:hover) > .no{background:var(--bg) !important}
 .cutln.on .cuth,.cutln:hover .cuth{color:var(--acc)}
 .cuth{display:none !important}   /* v0.155, по снимку «⎯ граница» — «убери надпись»: у черты-границы подписи нет (сама черта тянется, как была; сколько строк за ней — в строке сведений поля и в подсказке) */
 body.cutdrag,body.cutdrag *{cursor:ns-resize !important}
+#rowList,#rowList .rw > .bits{cursor:grab}   /* v0.264: мимо бит — тянешь поле, как рукой; на битах — выделение */
+#rowList .bx,#rowList .bxo,#rowList .ob{cursor:text}
+#rowList .rw.hid > .bits{cursor:pointer}
+body.fpan,body.fpan *{cursor:grabbing !important;user-select:none !important}
 body.rowdrag #rowList,body.rowdrag #rowList *{user-select:none !important;-webkit-user-select:none !important;cursor:row-resize !important}   /* v0.254: протяжка через строки — выделяются строки, не символы */
 .rw.hid{cursor:default}
 .rw.hid > .bits,.rw.hid > .trk{color:var(--dim) !important;opacity:.3}
@@ -790,7 +794,7 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.263</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.264</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1583,8 +1587,8 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0263"></script>
-<script src="zz-ui.js?v=0263"></script>
+<script src="zz-core.js?v=0264"></script>
+<script src="zz-ui.js?v=0264"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>

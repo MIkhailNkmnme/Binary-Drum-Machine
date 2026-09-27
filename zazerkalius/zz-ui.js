@@ -5719,7 +5719,8 @@ function init(){
      строки протяжка по-прежнему выделяет символы (Del, Ctrl+C). Править строку на месте — F2 или Enter (прежде — двойной щелчок).
      Номера строк — как были: щелчок выделяет, двойной — ширина поля по умолчанию. */
   $("rowList").addEventListener("pointerdown", (e) => {
-    const b = e.target.closest(".rw[data-r] > .bits"); if (!b || e.button !== 0 || rowEditing >= 0 || e.detail > 1) return;
+    // v0.264: выделение протяжкой — только с самих бит (цифр), мимо них протяжка двигает поле (ниже)
+    const b = e.target.closest(".bx") && e.target.closest(".rw[data-r] > .bits"); if (!b || e.button !== 0 || rowEditing >= 0 || e.detail > 1) return;
     const r0 = b.parentElement, i0 = +r0.dataset.r; if (!(i0 < Z.rows.length) || +b.dataset.l !== Z.lane) return;
     const ctrl = e.ctrlKey || e.metaKey, base = ctrl ? new Set(rowSel) : new Set();
     let last = i0, rows = false, raf = 0;
@@ -5741,6 +5742,30 @@ function init(){
       document.body.classList.remove("rowdrag"); if (raf) { cancelAnimationFrame(raf); raf = 0; }
       clearTextSel(); renderAll(); save();
       say(`▤ Выделено строк: ${rowSel.size}. Del удалит, Ctrl+C скопирует, Esc снимет.`);
+    };
+    addEventListener("pointermove", mv); addEventListener("pointerup", up); addEventListener("pointercancel", up);
+  });
+  /* v0.264, «сделай перемещение вне клика бит в поле строк, а не выделение, оно — только на битах» (+ «но подсветка всей строки» — как
+     была): протяжка по полю мимо самих бит (цифр) — двигает поле, как рукой (прокрутка вбок и вверх-вниз), выделение символов не
+     начинается. Номера, замки, черта, кнопки под чертой, строка для заполнения, ручки осей — как были. Сдвинул — щелчок не срабатывает. */
+  $("rowList").addEventListener("pointerdown", (e) => {
+    if (e.button !== 0 || rowEditing >= 0 || e.pointerType === "touch") return;
+    const t = e.target;
+    if (t.closest(".bx, .bxo, .ob, .no, .cutln, #cutPanel, #infoSlot, .fillrw, .lh, .axh, .axrow, button, input, select, textarea, label, a")) return;
+    const L = $("rowList"), x0 = e.clientX, y0 = e.clientY, sl = L.scrollLeft, st = L.scrollTop; let moved = false;
+    e.preventDefault();   // без выделения символов
+    const mv = (ev) => {
+      const dx = ev.clientX - x0, dy = ev.clientY - y0;
+      if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return;
+      if (!moved) { moved = true; document.body.classList.add("fpan"); clearTextSel(); }
+      L.scrollLeft = sl - dx; L.scrollTop = st - dy;
+    };
+    const up = () => {
+      removeEventListener("pointermove", mv); removeEventListener("pointerup", up); removeEventListener("pointercancel", up);
+      if (!moved) return;
+      document.body.classList.remove("fpan");
+      const eat = (ev) => { ev.stopPropagation(); ev.preventDefault(); };   // щелчок после сдвига — не щелчок
+      addEventListener("click", eat, true); setTimeout(() => removeEventListener("click", eat, true), 0);
     };
     addEventListener("pointermove", mv); addEventListener("pointerup", up); addEventListener("pointercancel", up);
   });
