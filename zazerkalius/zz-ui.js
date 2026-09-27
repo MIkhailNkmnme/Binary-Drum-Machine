@@ -3361,26 +3361,53 @@ function setupCone(){
     snd.out.gain.value = (Z.sndVol ?? 50) / 100;
     return snd;
   };
-  const sndNote = (hz, t, len, g) => {
+  /* v0.257, «Звук — добавь, чтобы несколько строк выделенных — разными звуками на строку, и режим чтения строк, и по 2 строки, и разные
+     варианты с музыкой; если её вкл — то также на видео»: тембр (Z.sndWave) — «разные» (у каждого голоса свой: треугольник, квадрат, пила,
+     синус, и октавой ниже / выше) или один на всех (треугольник, синус, квадрат, пила, колокол). Новые режимы чтения — ниже, в sndTick. */
+  const SND_WAVES = ["triangle", "square", "sawtooth", "sine"];
+  const sndVoice = (v) => { const w = Z.sndWave || "mix"; return w === "mix" ? { type: SND_WAVES[v % 4], oct: [0, 1, -1][Math.floor(v / 4) % 3] } : { type: w, oct: 0 }; };
+  const sndNote = (hz, t, len, g, v = 0) => {
+    const vc = sndVoice(v), f = hz * Math.pow(2, vc.oct), bell = vc.type === "bell";
     const o = snd.ctx.createOscillator(), a = snd.ctx.createGain();
-    o.type = "triangle"; o.frequency.value = hz;
-    a.gain.setValueAtTime(0, t); a.gain.linearRampToValueAtTime(g, t + 0.005); a.gain.exponentialRampToValueAtTime(0.0001, t + len);
-    o.connect(a); a.connect(snd.out); o.start(t); o.stop(t + len + 0.02);
+    o.type = bell ? "sine" : vc.type; o.frequency.value = f;
+    if (vc.type === "square" || vc.type === "sawtooth") g *= 0.45;   // жёсткие тембры тише — чтобы голоса были ровнее
+    const L = bell ? Math.min(1.6, len * 3) : len;
+    a.gain.setValueAtTime(0, t); a.gain.linearRampToValueAtTime(g, t + 0.005); a.gain.exponentialRampToValueAtTime(0.0001, t + L);
+    o.connect(a); a.connect(snd.out); o.start(t); o.stop(t + L + 0.02);
+    if (bell) { const o2 = snd.ctx.createOscillator(), a2 = snd.ctx.createGain(); o2.type = "sine"; o2.frequency.value = f * 2.76;   // колокол — второй, негармонический обертон
+      a2.gain.setValueAtTime(0, t); a2.gain.linearRampToValueAtTime(g * 0.4, t + 0.003); a2.gain.exponentialRampToValueAtTime(0.0001, t + L * 0.5);
+      o2.connect(a2); a2.connect(snd.out); o2.start(t); o2.stop(t + L * 0.5 + 0.02); }
   };
+  const sndBitHz = (s, i) => s[i] === "1" ? sndHz(parseInt((s + s + s).substr(i, 3), 2) + sndSc().length) : 0;   // 1 — нота (высота — три бита с этого места), 0 — пауза
+  const sndList = (allIfNone) => rowSel.size ? [...rowSel].filter(i => i < Z.rows.length).sort((a, b) => a - b) : allIfNone ? Z.rows.map((_, i) => i) : [Z.cur];
   const sndTick = () => {
-    const sp = Z.sndSp || 6, len = Math.min(0.6, 1.6 / sp), t = snd.ctx.currentTime + 0.01, sc = sndSc();
-    if ((Z.sndMode || "row") === "row") {
+    const sp = Z.sndSp || 6, len = Math.min(0.6, 1.6 / sp), t = snd.ctx.currentTime + 0.01, sc = sndSc(), m = Z.sndMode || "row";
+    if (m === "row") {
       const s = cur(); if (!s) return;
       const i = sndStep % s.length; sndStep = i + 1;
-      if (s[i] === "1") sndNote(sndHz(parseInt((s + s + s).substr(i, 3), 2) + sc.length), t, len, 0.35);
+      const hz = sndBitHz(s, i); if (hz) sndNote(hz, t, len, 0.35, 0);
+    } else if (m === "sel") {   // v0.257: выделенные строки (нет выделения — текущая) звучат разом, каждая своим голосом и в своём такте
+      const L = sndList(false).slice(0, 8), k = sndStep++;
+      const on = []; L.forEach((r, v) => { const s = Z.rows[r]; if (s) { const hz = sndBitHz(s, k % s.length); if (hz) on.push([hz, v]); } });
+      on.forEach(([hz, v]) => sndNote(hz, t, len, 0.32 / Math.sqrt(on.length), v));
+    } else if (m === "seq" || m === "pair") {   // v0.257: чтение — строки одна за другой (по 2 — парами разом), выделенные или всё поле
+      const L = sndList(true), G = m === "pair" ? 2 : 1, groups = [];
+      for (let j = 0; j < L.length; j += G) groups.push(L.slice(j, j + G));
+      const lens = groups.map(g => Math.max(...g.map(r => (Z.rows[r] || "").length), 1)), tot = lens.reduce((a, b) => a + b, 0); if (!tot) return;
+      let k = sndStep % tot; sndStep = k + 1; let gi = 0; while (k >= lens[gi]) { k -= lens[gi]; gi++; }
+      const on = []; groups[gi].forEach((r, v) => { const s = Z.rows[r]; if (s && k < s.length) { const hz = sndBitHz(s, k); if (hz) on.push([hz, L.indexOf(r) % 12]); } });
+      on.forEach(([hz, v]) => sndNote(hz, t, len, 0.33 / Math.sqrt(on.length), v));
+      if (k === 0) sndShow(groups[gi]);   // строка (пара) началась — сказать, какая
     } else {
       const W = Z.rows.reduce((a, r) => Math.max(a, r.length), 0); if (!W) return;
       const k = sndStep % W; sndStep = k + 1;
       const on = []; for (let r = 0; r < Z.rows.length && on.length < 8; r++) if (Z.rows[r][k] === "1") on.push(r);
       const n = sc.length * 3;
-      on.forEach(r => sndNote(sndHz(n - 1 - (r % n)), t, len, 0.3 / Math.sqrt(on.length)));
+      on.forEach(r => sndNote(sndHz(n - 1 - (r % n)), t, len, 0.3 / Math.sqrt(on.length), r));   // v0.257: и тембр — по строке
     }
   };
+  // v0.257: в чтении по очереди / парами — какие строки звучат, видно сообщением (строки поля не трогаем — выделение остаётся твоим)
+  const sndShow = (g) => { if (!document.body.classList.contains("zen")) say(`♫ Звучит ${g.length > 1 ? "пара строк" : "строка"} ${g.map(r => r + 1).join(" + ")}`); };
   const sndLoop = () => { if (!sndT) return; sndTick(); sndT = setTimeout(sndLoop, 1000 / (Z.sndSp || 6)); };
   const sndSet = (on) => {
     if (on) { sndCtx(); sndStep = 0; sndT = setTimeout(sndLoop, 0); } else { clearTimeout(sndT); sndT = 0; }
@@ -3389,6 +3416,8 @@ function setupCone(){
   $("bSnd").onclick = () => sndSet(!sndT);
   $("sndMode").value = Z.sndMode || "row";
   $("sndMode").onchange = (e) => { Z.sndMode = e.target.value; sndStep = 0; save(); };
+  $("sndWave").value = Z.sndWave || "mix";   // v0.257: тембр
+  $("sndWave").onchange = (e) => { Z.sndWave = e.target.value; save(); };
   $("sndScale").value = Z.sndScale || "penta";
   $("sndScale").onchange = (e) => { Z.sndScale = e.target.value; save(); };
   $("sndSp").value = Z.sndSp || 6;
@@ -3476,7 +3505,10 @@ function setupCone(){
     }
     // v0.240: звучит «♫ звук» — его дорожка идёт в запись напрямую (копией: стоп записи не должен глушить звук)
     if (!at && snd && sndT) at = (snd.rec.stream.getAudioTracks()[0] || null) && snd.rec.stream.getAudioTracks()[0].clone();
-    const sndLab = cap ? " со звуком ПК" : at ? " со звуком ♫" : "";
+    /* v0.257, «если её вкл — то также на видео»: дорожка «♫ Звук» идёт в запись всегда (без звука ПК) — включил музыку посреди записи,
+       она тоже в файле; молчит — в файле тишина */
+    if (!at && !cap && (window.AudioContext || window.webkitAudioContext)) { try { sndCtx(); at = snd.rec.stream.getAudioTracks()[0].clone(); } catch (err) { at = null; } }
+    const sndLab = cap ? " со звуком ПК" : at && sndT ? " со звуком ♫" : "";
     const want = mp4 ? (at ? ["video/mp4;codecs=avc1.42E01E,mp4a.40.2", "video/mp4;codecs=avc1,mp4a.40.2", "video/mp4"] : ["video/mp4;codecs=avc1.42E01E", "video/mp4;codecs=avc1", "video/mp4"])
       : at ? ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"] : ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
     const mime = want.find(m => MediaRecorder.isTypeSupported(m)) || "";
