@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.196. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.197. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.196</title>
+<title>Zazerkalius — v0.197</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -632,7 +632,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.196</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.197</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1155,6 +1155,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
             <label class="dim" title="3D: кольца на своих высотах — конус поднят, видно нити, лучи, хорды. Тяни — вращать, Ctrl — сдвиг, колесо — масштаб, Alt + двойной щелчок — вид по умолчанию. Крутить кольца и выделять щелчком — в плоском виде"><input type="checkbox" id="cone3d"> 🧊 3D</label>
             <label class="dim" title="⧗ Зеркало вниз — октаэдр, как в знаке Zerkalius: под основанием (последним кольцом) — та же пирамида вниз, отражённая и инвертированная (0 ↔ 1). Видно в 3D — галка его включит"><input type="checkbox" id="coneOcta"> ⧗ зеркало</label>
             <label class="dim" title="Высота конуса: насколько кольца разнесены по высоте (0 — плоско)">↕ <input type="range" id="cone3H" min="0" max="4" step="0.1" value="1" style="width:80px;vertical-align:middle"></label>
+            <label class="dim" title="▬ Толщина бит в 3D: ×0,2 — тонкие нити, ×4 — толстые полосы (сбоку — высота бит). Двойной щелчок — ×1">▬ <input type="range" id="cone3Bw" min="0.2" max="4" step="0.1" value="1" style="width:70px;vertical-align:middle"></label>
             <label class="dim" title="✨ Свет: единицы и неподвижные биты светятся своим цветом, из центра (в 3D — от оси) идёт свет, в 3D ближнее ярче дальнего. На тёмном фоне — лампа горит. Тяжелее для отрисовки — на больших столбиках кручение может идти медленнее"><input type="checkbox" id="coneGlow"> ✨ свет</label>
             <select id="coneRays" title="Лучи к центру от ЦЕНТРОВ бит (не от границ): видно, какие биты соседних колец стоят на одном луче и в какую границу или бит внутреннего кольца луч попадает. Границы бит — черты на самом кольце"><option value="off" title="без лучей">✳ нет</option><option value="cur" title="лучи от бит выделенных колец (текущего)">✳ выдел.</option><option value="all" title="лучи от бит всех колец">✳ все</option></select>
           </div>
@@ -1338,8 +1339,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0196"></script>
-<script src="zz-ui.js?v=0196"></script>
+<script src="zz-core.js?v=0197"></script>
+<script src="zz-ui.js?v=0197"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>

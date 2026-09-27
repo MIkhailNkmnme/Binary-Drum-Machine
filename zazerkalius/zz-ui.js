@@ -2168,7 +2168,7 @@ function cone3DDraw(g, o){
   }
   // биты — дугами на своей высоте, по глубине
   const items = [];
-  const lw = Math.max(1.2 * dpr, Math.min(sc * 0.6, 26 * dpr));
+  const lw = Math.max(1.2 * dpr, Math.min(sc * 0.6, 26 * dpr) * (Z.cone3Bw ?? 1));   // v0.197, «регулировать высоту 3D битов»: ▬ — множитель толщины
   for (let i = 0; i < N; i++) {
     const s = Z.rows[i], n = s.length; if (!n || !shown(i)) continue;
     const step = 2 * Math.PI / n, rot = coneRotOf(i), r = ringR(i), MI = mirMap.get(i);
@@ -2679,13 +2679,13 @@ function setupCone(){
     if (H) {   // v0.125: своё умолчание (⭐) — положения колец и настройки конуса, как запомнены
       coneRot.length = 0; (Array.isArray(H.coneRot) ? H.coneRot : []).forEach(x => coneRot.push(Math.round(x || 0))); Z.coneRot = coneRot.slice();
       Z.coneSpin = H.coneSpin || 0; Z.coneSpinPh = H.coneSpinPh || 0; Z.coneAimRot = H.coneAimRot || 0; Z.coneClockN = 0; coneClockFlash = []; coneLaserResetAll();   // v0.138
-      const keys = ["coneClock", "coneClockStop", "coneVoid", "coneSlit", "coneSpinMode", "coneAutoSp", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3H",
+      const keys = ["coneClock", "coneClockStop", "coneVoid", "coneSlit", "coneSpinMode", "coneAutoSp", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3H", "cone3Bw",
                     "coneRays", "coneMir", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs"];
       for (const k of keys) { if (k in H) Z[k] = JSON.parse(JSON.stringify(H[k])); else delete Z[k]; }
       for (const k of ["coneClock", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta"]) { const el = $(k); if (el) el.checked = !!Z[k]; }
       $("coneLock").checked = Z.coneLock !== false; $("coneVoid").checked = Z.coneVoid !== false;
       $("coneRays").value = Z.coneRays || "off"; $("coneMir").value = Z.coneMir || "off"; $("coneSpinMode").value = Z.coneSpinMode || "all";
-      coneDirUi(); $("cone3H").value = Z.cone3H ?? 1;
+      coneDirUi(); $("cone3H").value = Z.cone3H ?? 1; $("cone3Bw").value = Z.cone3Bw ?? 1;
       $("coneSlit").value = +Z.coneSlit || 2; $("coneSlitV").textContent = (+Z.coneSlit || 2).toFixed(1).replace(".", ",") + "°";
       $("bConeClockStop").classList.toggle("on", !!Z.coneClockStop);
       coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass);
@@ -2839,6 +2839,10 @@ function setupCone(){
   $("cone3H").value = Z.cone3H ?? 1;
   $("cone3H").oninput = (e) => { Z.cone3H = +e.target.value; if (!Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } renderCone(); };
   $("cone3H").onchange = () => save();
+  $("cone3Bw").value = Z.cone3Bw ?? 1;   // v0.197
+  $("cone3Bw").oninput = (e) => { Z.cone3Bw = +e.target.value; if (!Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } renderCone(); };
+  $("cone3Bw").onchange = () => save();
+  $("cone3Bw").ondblclick = () => { Z.cone3Bw = 1; $("cone3Bw").value = 1; save(); renderCone(); };
   /* v0.157, «в поле конуса кнопки управления для 3D»: ⟲ ⟳ поворот по 15°, ▲ ▼ наклон по 10° (0…90, как мышью), − ＋ масштаб к центру,
      ⌂ — вид по умолчанию. Держишь кнопку — повторяется. Видны только в 3D (renderCone прячет). */
   const c3Do = (k) => {
