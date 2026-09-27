@@ -490,7 +490,7 @@ function fillReset(){
 function fillRowHtml(N){
   const f = fillDraft(); let c = "";
   for (let k = 0; k < f.length; k++) c += '<span class="fc' + (f[k] === "." ? " fe" : " b" + f[k]) + '" data-k="' + k + '">' + (f[k] === "." ? "&nbsp;" : f[k]) + "</span>";
-  let h = '<div class="rw fillrw"><span class="no" title="Строка для заполнения — ' + f.length + ' ячеек, на одну больше нижней строки"><span class="rn">' + (Z.rows.length + 1) + '</span><span class="fadd" title="＋ В строки: встанет под нижней строкой (пустые ячейки — нулями), ↩ вернёт">＋</span><span class="fdel" title="✕ Заново: стереть строку для заполнения — снова все ячейки пустые, и метки лазера в пустых кольцах тоже стираются. В конусе — правый щелчок по её кольцу">✕</span></span>';
+  let h = '<div class="rw fillrw"><span class="no" title="Строка для заполнения — ' + f.length + ' ячеек, на одну больше нижней строки"><span class="rn"><b>' + (Z.rows.length + 1) + '</b><span class="fctl"><span class="fadd" title="＋ В строки: встанет под нижней строкой (пустые ячейки — нулями), ↩ вернёт">＋</span><span class="fdel" title="✕ Заново: стереть строку для заполнения — снова все ячейки пустые, и метки лазера в пустых кольцах тоже стираются. В конусе — правый щелчок по её кольцу">✕</span></span></span><span></span><span></span></span>';   // v0.224: ＋ ✕ — мелко под номером
   for (let l = 0; l < N; l++) h += '<span class="bits' + (l === Z.lane ? " la" : "") + '" data-l="' + l + '">' + (l === Z.lane ? '<span class="fcs" title="Щелчок по ячейке: пусто → 1 → 0 → пусто. ＋ слева — в строки">' + c + "</span>" : "") + "</span>";
   return h + "</div>";
 }
@@ -5697,14 +5697,14 @@ function init(){
   /* v0.218, по снимку подсказки разделителя «Потяни — шире или уже…» — «границу для перетаскивания убери, функцию будет выполнять столбик
      номеров, подсвечивать немного при наведении»: разделителя нет; ширину поля строк меняет столбик номеров — тянешь его по горизонтали
      (дальше 6 px и больше вбок, чем вверх-вниз), короткий щелчок по номеру, замку, кручению — как был. */
-  $("rowList").addEventListener("pointerdown", (e) => {
-    const no = e.target.closest(".rw > .no > .rn"); if (!no || e.button !== 0 || rowEditing >= 0) return;   // v0.219: «хват только у номеров, не дальше»
-    const list = $("rowList"), x0 = e.clientX, y0 = e.clientY, w0 = $("field").getBoundingClientRect().width;
+  /* v0.224, «за саму границу тоже надо перетаскивать»: тот же жест — у невидимой полосы #fieldEdge (6 px у края поля со стороны стола). */
+  const rowsWDrag = (e, list, strict) => {
+    const x0 = e.clientX, y0 = e.clientY, w0 = $("field").getBoundingClientRect().width;
     const sg = document.body.classList.contains("field-right") ? -1 : 1;   // v0.091: поле справа — тянешь влево, поле шире
     let on = false;
     const move = (ev) => {
       const dx = ev.clientX - x0;
-      if (!on) { if (Math.abs(dx) < 6 || Math.abs(dx) < Math.abs(ev.clientY - y0)) return; on = true; try { list.setPointerCapture(ev.pointerId); } catch (er) { /* отпущен */ } document.body.classList.add("wdrag"); }
+      if (!on) { if (strict && (Math.abs(dx) < 6 || Math.abs(dx) < Math.abs(ev.clientY - y0))) return; on = true; try { list.setPointerCapture(ev.pointerId); } catch (er) { /* отпущен */ } document.body.classList.add("wdrag"); }
       Z.rowsW = Math.max(220, Math.min(window.innerWidth - 520, Math.round(w0 + sg * dx))); applyRowsW();
     };
     const up = () => {
@@ -5715,7 +5715,12 @@ function init(){
       window.addEventListener("click", kill, { capture: true, once: true }); setTimeout(() => window.removeEventListener("click", kill, true), 0);
     };
     list.addEventListener("pointermove", move); list.addEventListener("pointerup", up); list.addEventListener("pointercancel", up);
+  };
+  $("rowList").addEventListener("pointerdown", (e) => {
+    const no = e.target.closest(".rw > .no > .rn"); if (!no || e.target.closest(".fctl") || e.button !== 0 || rowEditing >= 0) return;   // v0.219: «хват только у номеров, не дальше»
+    rowsWDrag(e, $("rowList"), true);
   });
+  $("fieldEdge").addEventListener("pointerdown", (e) => { if (e.button !== 0) return; e.preventDefault(); rowsWDrag(e, $("fieldEdge"), false); });
   // v0.091: ⇆ поле строк справа — окна слева
   /* v0.094, «и все остальные кнопки в левом режиме убрать под меню левое» (снимок: стопка свёрнутых шапок окон): при «⇆ поле
      справа» свёрнутые окна не стоят на столе, а кнопками — в левой панели под шаблонами; щелчок — развернуть окно на стол. */
