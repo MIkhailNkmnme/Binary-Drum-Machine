@@ -19,6 +19,9 @@
    =========================================================================== */
 (function () {
     if (window.__zerkRecorder) return;
+    // <script src="…/recorder.js" data-bez-knopki> — только модуль, без плавающей ⏺ и клавиши R:
+    // для страниц со своей кнопкой записи, которым нужен доводчик webm (Zazerkalius).
+    const BEZ_KNOPKI = !!(document.currentScript && document.currentScript.hasAttribute('data-bez-knopki'));
 
     /* ---------------------------------------------------------------------
        Хранилище кусков.
@@ -163,7 +166,82 @@
         }
     };
 
-    const visibleCanvases = () => [...document.querySelectorAll('canvas')].filter(c => {
+    /* ---------------------------------------------------------------------
+       Длительность в заголовок webm (2026-09-27).
+
+       MediaRecorder пишет webm «потоком»: в заголовке нет длительности, потому
+       что в начале записи она ещё неизвестна. Проигрыватель такого файла не знает
+       его длины — PotPlayer пишет длину 0, не строит эскиз и плохо мотает.
+       Здесь, когда запись уже кончилась, в блок Info дописывается элемент
+       Duration. Всё остальное в файле остаётся байт в байт: сегмент у такой
+       записи «неизвестного размера», а таблицы с адресами внутри файла нет,
+       поэтому сдвиг хвоста на несколько байт ничего не ломает. Не разобрался
+       в заголовке — возвращаем файл как был: запись важнее длительности.
+       --------------------------------------------------------------------- */
+    const WEBM = {
+        // Элемент EBML: номер, размер, где начинаются данные, где конец.
+        el(b, p) {
+            if (p >= b.length) return null;
+            const vint = (q) => {
+                const f = b[q]; let len = 1, mask = 0x80;
+                while (len <= 8 && !(f & mask)) { len++; mask >>= 1; }
+                if (len > 8 || q + len > b.length) return null;
+                let v = f & (mask - 1), all = v === mask - 1;
+                for (let i = 1; i < len; i++) { v = v * 256 + b[q + i]; all = all && b[q + i] === 255; }
+                return { raw: f, len, v, unknown: all };
+            };
+            const id = vint(p); if (!id) return null;
+            let idv = id.raw; for (let i = 1; i < id.len; i++) idv = idv * 256 + b[p + i];
+            const sz = vint(p + id.len); if (!sz) return null;
+            const data = p + id.len + sz.len;
+            return { id: idv, start: p, idLen: id.len, data, size: sz.v, end: sz.unknown ? Infinity : data + sz.v };
+        },
+
+        async fix(blob, ms) {
+            if (!blob || !(ms > 0)) return blob;
+            try {
+                const headLen = Math.min(blob.size, 256 * 1024);
+                const b = new Uint8Array(await blob.slice(0, headLen).arrayBuffer());
+                let e = this.el(b, 0);
+                if (!e || e.id !== 0x1A45DFA3 || e.end > b.length) return blob;          // EBML-заголовок
+                const seg = this.el(b, e.end);
+                if (!seg || seg.id !== 0x18538067) return blob;                          // Segment
+                let info = null;
+                for (let p = seg.data; p < b.length; ) {
+                    const c = this.el(b, p);
+                    if (!c || c.id === 0x1F43B675 || c.end === Infinity) return blob;    // дошли до кадров — Info нет
+                    if (c.id === 0x1549A966) { info = c; break; }
+                    p = c.end;
+                }
+                if (!info || info.end > b.length) return blob;
+                let scale = 1e6, dur = null;                                             // TimecodeScale: по умолчанию миллисекунды
+                for (let p = info.data; p < info.end; ) {
+                    const c = this.el(b, p);
+                    if (!c || c.end > info.end) return blob;
+                    if (c.id === 0x2AD7B1) { scale = 0; for (let i = c.data; i < c.end; i++) scale = scale * 256 + b[i]; }
+                    if (c.id === 0x4489) dur = c;
+                    p = c.end;
+                }
+                if (!scale) return blob;
+                const value = ms * 1e6 / scale;
+                const rest = blob.slice(headLen), type = blob.type || 'video/webm';
+                if (dur && (dur.size === 8 || dur.size === 4)) {                        // Duration уже есть — переписываем на месте
+                    const dv = new DataView(b.buffer, b.byteOffset + dur.data, dur.size);
+                    dur.size === 8 ? dv.setFloat64(0, value) : dv.setFloat32(0, value);
+                    return new Blob([b, rest], { type });
+                }
+                if (dur) return blob;
+                const add = new Uint8Array(11);                                          // 44 89 | размер 8 | float64
+                add.set([0x44, 0x89, 0x88]); new DataView(add.buffer).setFloat64(3, value);
+                const sz = new Uint8Array(8); sz[0] = 0x01;                              // новый размер Info — всегда 8-байтным числом
+                for (let i = 7, n = info.size + add.length; i >= 1; i--) { sz[i] = n % 256; n = Math.floor(n / 256); }
+                return new Blob([b.subarray(0, info.start + info.idLen), sz, b.subarray(info.data, info.end),
+                                 add, b.subarray(info.end), rest], { type });
+            } catch (err) { return blob; }
+        }
+    };
+
+    const visibleCanvases = () =>[...document.querySelectorAll('canvas')].filter(c => {
         const st = getComputedStyle(c);
         return c.width > 16 && c.height > 16 && st.display !== 'none' && st.visibility !== 'hidden' && +st.opacity > 0.01;
     });
@@ -281,6 +359,7 @@
         },
 
         stop() {
+            this.stoppedAt = Date.now();
             if (this.rec && this.rec.state !== 'inactive') this.rec.stop();
             this.rec = null;
             if (this.mix) { this.mix.stop(); this.mix = null; }   // у записи вкладки — и сам захват
@@ -318,12 +397,17 @@
             } catch (e) { return true; }
         },
 
-        download(parts, mime, base) {
+        // Для страниц со своей записью: webm с длительностью в заголовке.
+        fixWebm(blob, ms) { return WEBM.fix(blob, ms); },
+
+        async download(parts, mime, base, ms) {
             if (!parts.length) return false;
             const ext = (mime || '').startsWith('video/mp4') ? 'mp4' : 'webm';
+            let blob = new Blob(parts, { type: mime });
+            if (ext === 'webm') blob = await WEBM.fix(blob, ms);
             const a = document.createElement('a');
             a.download = `${base}.${ext}`;
-            a.href = URL.createObjectURL(new Blob(parts, { type: mime }));
+            a.href = URL.createObjectURL(blob);
             a.click();
             setTimeout(() => URL.revokeObjectURL(a.href), 30000);
             return true;
@@ -336,7 +420,8 @@
             const parts = await sink.finish();
             if (!parts.length) { this.notify('ЗАПИСЬ ПУСТА'); return; }
             const ok = await this.hasHeader(parts);
-            if (this.download(parts, this.mime, this.fileBase(sid) + (ok ? '' : '-BEZ-ZAGOLOVKA'))) await sink.drop();
+            const ms = (this.stoppedAt > this.startedAt ? this.stoppedAt : Date.now()) - this.startedAt;
+            if (await this.download(parts, this.mime, this.fileBase(sid) + (ok ? '' : '-BEZ-ZAGOLOVKA'), ms)) await sink.drop();
             if (!ok) this.notify('ЗАПИСЬ БЕЗ ЗАГОЛОВКА — НЕ ОТКРОЕТСЯ');
         },
 
@@ -351,7 +436,7 @@
         async recoverOne(sess) {
             const parts = await VAULT.assemble(sess.sid);
             const base = (sess.name || this.fileBase(sess.startedAt)) + '-vosstanovleno';
-            const ok = this.download(parts, sess.mime, base);
+            const ok = await this.download(parts, sess.mime, base, sess.ms);   // длина — по времени последнего куска
             await VAULT.drop(sess.sid);
             return ok;
         },
@@ -413,7 +498,7 @@
         // На страницах со своей кнопкой записи (у них она вписана в панель) вторую
         // плавающую не добавляем — хранилище и полоса восстановления общие, а
         // управление остаётся тамошнее.
-        if (document.getElementById('zerkRecBtn') || document.getElementById('recBtn')) return;
+        if (BEZ_KNOPKI || document.getElementById('zerkRecBtn') || document.getElementById('recBtn')) return;
         const css = document.createElement('style');
         css.textContent = `
             #zerkRecBtn { position: fixed; right: 10px; bottom: 10px; z-index: 99999;

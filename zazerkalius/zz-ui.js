@@ -3164,30 +3164,71 @@ function setupCone(){
     say(`🌊 Заготовка «${lab.trim()}»: ${rows.length} стр., последняя — ${rows[rows.length - 1].length} бит. ↩ вернёт.`);
   };
   animUi();
-  let rec = null, recT = 0;
-  $("bConeRec").onclick = () => {
+  /* v0.234, «подключать надо настройку — звук с компа»: правый щелчок по ⏺ — писать ли вместе с конусом звук ПК (Z.coneRecSnd,
+     на кнопке значок ♪). Звук берётся захватом экрана — браузер при старте спросит, что показать: на Windows системный звук
+     отдаётся только с «Весь экран» и галкой «Поделиться системным звуком», у вкладки — «звук вкладки». Картинка захвата в
+     файл не идёт — только его звук. Захват закрыли кнопкой браузера — запись останавливается и сохраняется. */
+  let rec = null, recT = 0, recBusy = false;
+  const recUi = () => {
+    const b = $("bConeRec");
+    b.classList.toggle("snd", !!Z.coneRecSnd);
+    if (!rec) b.title = (Z.coneRecSnd ? "⏺♪ Видео со звуком ПК" : "⏺ Видео") + ": запись холста конуса (только сам конус, без кнопок) в файл .webm. Ещё раз — стоп и сохранить. Правый щелчок — звук ПК вкл/выкл. Удобно вместе с «▶ крутить»";
+  };
+  recUi();
+  $("bConeRec").oncontextmenu = (e) => {
+    e.preventDefault();
+    if (rec || recBusy) return;
+    Z.coneRecSnd = !Z.coneRecSnd; save(); recUi();
+    say(Z.coneRecSnd ? "⏺♪ Запись конуса — со звуком ПК. При старте браузер спросит, откуда звук: «Весь экран» + галка «Поделиться системным звуком»." : "⏺ Запись конуса — без звука.");
+  };
+  $("bConeRec").onclick = async () => {
     const b = $("bConeRec"), cvx = $("coneCv");
     if (rec) { rec.stop(); return; }
+    if (recBusy) return;
     if (!cvx.captureStream || typeof MediaRecorder === "undefined") { say("⏺ Этот браузер не умеет записывать холст."); return; }
-    const mime = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"].find(m => MediaRecorder.isTypeSupported(m)) || "";
+    let cap = null, at = null;
+    if (Z.coneRecSnd) {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) { say("⏺♪ Этот браузер не умеет брать звук ПК."); return; }
+      recBusy = true;
+      try { cap = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true, systemAudio: "include" }); }
+      catch (err) { cap = null; }
+      recBusy = false;
+      if (!cap) { say("⏺♪ Захват звука отменён — запись не начата."); return; }
+      at = cap.getAudioTracks()[0] || null;
+      if (!at) {
+        cap.getTracks().forEach(t => t.stop());
+        say("⏺♪ Звук не выбран — запись не начата. В окне выбора: «Весь экран» и галка «Поделиться системным звуком» (или вкладка с галкой «звук вкладки»).");
+        return;
+      }
+    }
+    const want = at ? ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"] : ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
+    const mime = want.find(m => MediaRecorder.isTypeSupported(m)) || "";
     const chunks = [], stream = cvx.captureStream(30);
+    if (at) stream.addTrack(at);
     rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 12e6 } : undefined);
     rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
-    rec.onstop = () => {
+    rec.onstop = async () => {
       clearInterval(recT); stream.getTracks().forEach(t => t.stop());
-      const blob = new Blob(chunks, { type: "video/webm" }), a = document.createElement("a");
+      if (cap) cap.getTracks().forEach(t => t.stop());
+      let blob = new Blob(chunks, { type: "video/webm" });
+      // v0.234, «нет эскизов в плейлисте»: у webm из MediaRecorder в заголовке нет длительности — плеер пишет 0, эскиза не строит.
+      // Дописывает её общий recorder.js (подключён без своей кнопки); нет модуля — файл уходит как раньше.
+      const R = window.__zerkRecorder;
+      if (R && R.fixWebm) blob = await R.fixWebm(blob, Date.now() - t0);
+      const a = document.createElement("a");
       const d = new Date(), p2 = (x) => String(x).padStart(2, "0");
       a.href = URL.createObjectURL(blob); a.download = `Zerkalius-konus-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.webm`;
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-      rec = null; b.classList.remove("on"); b.textContent = "⏺"; b.title = b.dataset.tip0 || b.title;   // v0.155: кнопка квадратная — только значок
-      say(`⏺ Видео сохранено: ${a.download} (${(blob.size / 1048576).toFixed(1)} МБ).`);
+      rec = null; b.classList.remove("on"); b.textContent = "⏺"; recUi();   // v0.155: кнопка квадратная — только значок
+      say(`⏺ Видео сохранено: ${a.download} (${(blob.size / 1048576).toFixed(1)} МБ${at ? ", со звуком ПК" : ""}).`);
     };
+    if (at) { const r = rec; at.addEventListener("ended", () => { if (r.state !== "inactive") r.stop(); }); }
     rec.start(1000);
-    const t0 = Date.now(); b.classList.add("on"); b.dataset.tip0 = b.title; b.textContent = "⏹";
-    const tick = () => { const s = Math.floor((Date.now() - t0) / 1000); b.title = `⏹ Идёт запись ${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")} — щелчок: стоп и сохранить`; };   // v0.155: время — в подсказке, на квадратной кнопке только ⏹
+    const t0 = Date.now(); b.classList.add("on"); b.textContent = "⏹";
+    const tick = () => { const s = Math.floor((Date.now() - t0) / 1000); b.title = `⏹ Идёт запись${at ? " со звуком ПК" : ""} ${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")} — щелчок: стоп и сохранить`; };   // v0.155: время — в подсказке, на квадратной кнопке только ⏹
     tick(); recT = setInterval(tick, 500);
     renderCone();
-    say("⏺ Пишу конус… Ещё раз ⏺ — стоп и сохранить. Холст пишется, только когда меняется, — включи «▶ крутить» или крути сам.");
+    say(`⏺ Пишу конус${at ? " со звуком ПК" : ""}… Ещё раз ⏺ — стоп и сохранить. Холст пишется, только когда меняется, — включи «▶ крутить» или крути сам.`);
   };
   $("bConeRotClear").onclick = () => {   // v0.101: «как это снять — накрутку?»
     const T = rowSel.size ? [...rowSel] : Z.rows.map((_, i) => i);
