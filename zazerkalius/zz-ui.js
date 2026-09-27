@@ -2676,8 +2676,12 @@ function setupCone(){
       return;
     }
     const h = coneRing(e);
-    if (h !== -1 && h.fill !== undefined && !e.ctrlKey) { e.preventDefault(); fillCycle(h.fill); return; }   // v0.114: ячейка кольца для заполнения
-    if (h !== -1 && h.i === 0 && Z.coneClock && !e.ctrlKey) {   // v0.119: кольцо строки 1 при луч-часах — щелчок: вырез; v0.120: тянешь — крутится только оно
+    /* v0.248, «в конусах курсором двигать круги — только через Ctrl», «в поле конуса»: кольцо на холсте конуса крутится, только если
+       тянуть его с Ctrl; без Ctrl тянешь — сдвигается весь вид (как мимо колец), щелчок — выбрать строку. Ctrl + щелчок без движения —
+       выделить / снять, как прежде. */
+    const ctrlK = e.ctrlKey || e.metaKey;
+    if (h !== -1 && h.fill !== undefined && !ctrlK) { e.preventDefault(); fillCycle(h.fill); return; }   // v0.114: ячейка кольца для заполнения
+    if (h !== -1 && h.i === 0 && Z.coneClock && ctrlK && !e.shiftKey) {   // v0.119: кольцо строки 1 при луч-часах — щелчок: вырез; v0.120: тянешь — крутится только оно; v0.248: с Ctrl
       e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing";
       const x0 = e.clientX, y0 = e.clientY, r0v = Z.coneAimRot || 0;
       const ang = (ev) => { const cvr = cv.getBoundingClientRect(), G = coneGeom || { dpr: 1, cx: 0, cy: 0 }; return Math.atan2((ev.clientY - cvr.top) * G.dpr - G.cy, (ev.clientX - cvr.left) * G.dpr - G.cx); };
@@ -2691,13 +2695,14 @@ function setupCone(){
       const up = () => {
         cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", up); cv.removeEventListener("pointercancel", up); cv.style.cursor = "grab";
         if (moved) { coneAimSettle(); return; }
-        say("⌖ Тяни кольцо строки 1 — оно крутится одно, вместе с вырезом, и защёлкивается лучом в щели кольца 2. Или ⌖◁ ⌖▷.");
+        if (rowSel.has(0)) rowSel.delete(0); else rowSel.add(0);   // v0.248: Ctrl + щелчок — выделить / снять, как у остальных колец
+        renderRows(); renderCone(); say(`◯ Выделено колец: ${rowSel.size}. Кольцо строки 1 при луч-часах крутится с Ctrl — вместе с вырезом, защёлкивается лучом в щели кольца 2.`);
       };
       cv.addEventListener("pointermove", mv); cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
       return;
     }
     // v0.085: запертое кольцо (своим замком или общей галкой) крутится только на вид; сдвиг вида — мимо колец или с Ctrl
-    if (h === -1 || e.ctrlKey || e.shiftKey) {   // v0.049: мимо колец или с Ctrl — сдвиг всего вида; v0.173: и с Shift
+    if (h === -1 || !ctrlK || e.shiftKey) {   // v0.049: мимо колец — сдвиг всего вида; v0.173: и с Shift; v0.248: и без Ctrl (кольцо крутит только Ctrl)
       e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "move";
       const x0 = e.clientX, y0 = e.clientY, p0 = conePan.slice(), dpr = window.devicePixelRatio || 1;
       let movedP = false;
@@ -2727,7 +2732,7 @@ function setupCone(){
     if (!coneDrag) {   // наведение: обвести кольцо и его строку в поле
       const h = coneRing(e), i = h === -1 || h.fill !== undefined ? -1 : h.i;
       const b = coneBitAt(e), bc = (b ? b.i + ":" + b.j : "") !== (coneBitHover ? coneBitHover.i + ":" + coneBitHover.j : "");   // v0.173
-      if (bc) { coneBitHover = b; rowBitMark(); cv.title = b ? `Строка ${b.i + 1}, бит ${b.j + 1}: ${Z.rows[b.i][b.j]} · Shift + щелчок — сменить · Ctrl + щелчок — выделить кольцо` : ""; }
+      if (bc) { coneBitHover = b; rowBitMark(); cv.title = b ? `Строка ${b.i + 1}, бит ${b.j + 1}: ${Z.rows[b.i][b.j]} · Shift + щелчок — сменить · Ctrl + щелчок — выделить кольцо · Ctrl + тянуть — крутить кольцо` : ""; }
       if (i !== coneHover) { coneHover = i; coneHoverRow(i); renderCone(); } else if (bc) renderCone();
       return;
     }
@@ -2750,7 +2755,10 @@ function setupCone(){
     if (!coneDrag) return;
     const D = coneDrag; coneDrag = null; cv.style.cursor = "grab";
     const n = D.base.length, k = ((D.applied % n) + n) % n;
-    if (Math.abs(D.turn) < 0.02) { coneRot[D.i] = D.v0; if (Z.cur !== D.i) { Z.cur = D.i; renderAll(); save(); } else renderCone(); return; }
+    if (Math.abs(D.turn) < 0.02) {   // v0.248: кольцо берётся только с Ctrl — не повернул, значит Ctrl + щелчок: выделить / снять
+      coneRot[D.i] = D.v0; if (rowSel.has(D.i)) rowSel.delete(D.i); else rowSel.add(D.i); renderRows(); renderCone();
+      say(`◯ Выделено колец: ${rowSel.size}` + (Z.coneOnlySel ? " — видны только они и текущее." : ". Галка «только выделенные» скроет остальные.")); return;
+    }
     if (D.view) {   // запертое кольцо: поворот вида — целым битом, запомнить у кольца
       coneRot[D.i] = ((Math.round(coneRot[D.i]) % n) + n) % n; Z.coneRot = coneRot.map(x => Math.round(x || 0));
       if (Z.cur !== D.i) Z.cur = D.i;
