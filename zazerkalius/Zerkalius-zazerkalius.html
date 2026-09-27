@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.232. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.233. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.232</title>
+<title>Zazerkalius — v0.233</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -271,6 +271,7 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 /* v0.223, по снимку выбранной строки 110011 на лиловой подложке — «фон при выделении не добавлять, а гасить невыделенное»: у выбранной
    строки подложки нет, остальные строки затемнены целиком — фон и биты, brightness 0.5 (прежде биты были прозрачнее, v0.213 / v0.221). */
 #rowList.dimsel .rw:not(.sel):not(.fillrw):not(.hid) > .bits,#rowList.dimcur .rw:not(.cur):not(.fillrw):not(.hid) > .bits{background:var(--bg);filter:brightness(.5)}
+#rowList.dimsel .rw:not(.sel):not(.fillrw):not(.hid) > .no,#rowList.dimcur .rw:not(.cur):not(.fillrw):not(.hid) > .no{filter:brightness(.5)}   /* v0.233, «номера тоже затемнять при выделении» */
 #rowList.dimcur .rw.cur > span,#rowList.dimsel .rw.sel > span{background:transparent}
 #rowList.dimcur .rw.cur > .no,#rowList.dimsel .rw.sel > .no{background:var(--bg)}
 #rowList.dimcur .rw.cur .bits > .bx,#rowList.dimcur .rw.cur .bits > .bxo,#rowList.dimsel .rw.sel .bits > .bx,#rowList.dimsel .rw.sel .bits > .bxo{background:var(--bg)}
@@ -701,7 +702,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.232</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.233</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1464,8 +1465,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0232"></script>
-<script src="zz-ui.js?v=0232"></script>
+<script src="zz-core.js?v=0233"></script>
+<script src="zz-ui.js?v=0233"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
