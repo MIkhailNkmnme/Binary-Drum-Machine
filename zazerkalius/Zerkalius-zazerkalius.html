@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.205. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.206. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.205</title>
+<title>Zazerkalius — v0.206</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -655,7 +655,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.205</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.206</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1259,6 +1259,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
             <button id="bConePred" title="🔮 Просчитать: прогнать лазер от нынешнего положения до конца — мгновенно, без анимации, конус не меняется. Итог — в окне «📝 Текст»: у каждой строки угол (бит) вылета и строка от щели вылета, чем кончится, поймает ли что-нибудь строка для заполнения">🔮 просчитать</button>
             <span style="white-space:nowrap" title="🎯 До строки N: крутить (выбранным режимом, как ◀ ▶) до мига, когда луч проходит строку N, — и встать там. По пути кольца, которые луч прошёл, встают, как при ▶. Номер строки — в поле"><button id="bConeGo">🎯 до строки</button><input type="number" id="coneGoN" min="1" max="256" value="10" style="width:44px;margin-left:2px"></span>
             <span style="white-space:nowrap" title="⌖ Лазеры: сколько их (шаг — 360° / число) и угол первого — градусы по часовой от верха. Луч вышел за край — включается следующий, если нажато «⌖→ след.»"><label class="dim">⌖× <input type="number" id="coneLasersN" min="1" max="72" value="8" style="width:40px"></label> <label class="dim">от <input type="number" id="coneLaser0" min="0" max="359.9999" step="any" value="0" style="width:48px">°</label></span>
+            <span style="white-space:nowrap" title="☀ Солнце: строка 1 светит всегда и во все стороны. Пропуск: «щели» — свет проходит кольца в щелях между битами (ширина — ползунок «щель»), у «11» — два луча; «1 — вырез» — щелей нет, каждая «1» — окно шириной 360° / число единиц строки, «0» — стена. Свет красит стены, на которые упал"><button id="bConeSun">☀ солнце</button><select id="coneSunCut"><option value="gaps">щели</option><option value="ones">1 — вырез</option></select></span>
             <button id="bLaserChain" title="⌖→ Следующий лазер: включено — когда луч вышел за край, включается следующий лазер (шаг — 360° / число из поля ⌖×), и так до последнего; выключено — луч вышел, и пауза">⌖→ след.</button>
             <button id="bLaserFix" title="📌 Лазер стоит на месте: конус («Всё», ⟲ ⟳) крутится под ним, а не вместе с ним. Ещё раз — лазер крутится с конусом, как прежде">📌 лазер</button>
             <span style="white-space:nowrap" title="↻ Повернуть лазер (и все лучи ✺) на шаг по часовой, правый щелчок — против. Шаг — 45°, 1/T круга (T — бит в самой длинной строке) или 1/(1+2+…+T) круга"><button id="bLaserTurn">↻</button><select id="coneLaserStepK"><option value="45">45°</option><option value="T">1/T</option><option value="S">1/(1+…+T)</option></select></span>
@@ -1406,8 +1407,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0205"></script>
-<script src="zz-ui.js?v=0205"></script>
+<script src="zz-core.js?v=0206"></script>
+<script src="zz-ui.js?v=0206"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
