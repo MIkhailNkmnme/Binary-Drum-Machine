@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.211. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.212. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.211</title>
+<title>Zazerkalius — v0.212</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -127,6 +127,7 @@ body.nocur .rw.cur .bits > .bx,body.nocur .rw.cur .bits > .bxo{background:var(--
 .rw.hid .bits > .bx,.rw.hid .bits > .bxo,.rw.fillrw .bits > .bx,.rw.fillrw .bits > .bxo{background:transparent}
 #coneLockAll{font-size:13px}   /* v0.169: общий замок — кнопкой в полосе ввода */
 #coneLockAll.off{opacity:.6}
+#rowInputBar #bRowsStartTop,#rowInputBar #coneLockAll{padding:1px 3px;min-width:0;line-height:1.2}   /* v0.212: узкие — встают над узкими колонками номеров и замков */
 #split{cursor:col-resize;background:var(--line);opacity:.6}
 /* v0.025: окна под полем строк. Тащишь окно за шапку — оно едет поверх всего (.dragging, position:fixed);
    отпустил над полем строк — встаёт в #fieldDock на всю ширину колонки (.docked); вытащил — снова на столе. */
@@ -657,7 +658,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.211</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.212</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -754,7 +755,9 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
     <div id="rowInputBar">
       <!-- v0.063: «это — слева от поля ввода строки, а поле сузить»: поля, наложение и выравнивание — здесь -->
       <!-- v0.169, «замок общий — на место «1 поле», его — вправо»: общий замок колец — первым в полосе, «1 поле» — в её конце -->
-      <button id="coneLockAll" title="Общий замок колец — галка «запрет сдвига строк»: 🔒 все кольца без своего замка заперты (крутятся только на вид), 🔓 открыты (крутят саму строку). Свои замки у строк — как были"></button>
+      <!-- v0.212, «над номерами — сброс строк, кнопку на начальные»: «↺» над колонкой номеров — жмёт «↺ Начало» -->
+      <button id="bRowsStartTop" title="↺ Начальные строки — то же, что «↺ Начало» в «Построении»: столбик — снова тот, с которого страница начинается (↩ вернёт). Стоит над колонкой номеров">↺</button>
+      <button id="coneLockAll" title="Общий замок колец (стоит над столбиком замков строк): 🔒 все кольца без своего замка заперты (крутятся только на вид), 🔓 открыты (крутят саму строку). Свои замки у строк — как были"></button>
       <!-- v0.018: поля колонками или наложением, с осями -->
       <select id="laneView" title="Как стоят поля: колонками — рядом, у каждого своя колонка; наложением — в одном пространстве, у каждого своя ось, оси тащатся за ручки и проходят друг через друга, совпавшие биты сводятся">
         <option value="cols">колонками</option><option value="over">наложением</option>
@@ -1185,7 +1188,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
             <select id="coneRays" title="Лучи к центру от ЦЕНТРОВ бит (не от границ): видно, какие биты соседних колец стоят на одном луче и в какую границу или бит внутреннего кольца луч попадает. Границы бит — черты на самом кольце"><option value="off" title="без лучей">✳ нет</option><option value="cur" title="лучи от бит выделенных колец (текущего)">✳ выдел.</option><option value="all" title="лучи от бит всех колец">✳ все</option></select>
           </div>
           <div class="cgrp" title="Строки-кольца: запрет сдвига, замки, поворот по биту, зеркало по оси"><span class="glab">Кольца</span>
-            <label class="dim" title="Кольца не крутятся мышью, и строки в поле не сдвигаются: тянешь — двигается весь вид, щелчок — выбрать строку. Снять — и кольца снова крутят сами строки"><input type="checkbox" id="coneLock"> запрет сдвига строк</label>
+            <label class="dim" style="display:none" title="v0.212: скрыта — это общий замок над столбиком замков строк. Кольца не крутятся мышью, и строки в поле не сдвигаются: тянешь — двигается весь вид, щелчок — выбрать строку. Снять — и кольца снова крутят сами строки"><input type="checkbox" id="coneLock"> запрет сдвига строк</label>
             <span class="glab2">по биту:</span>
             <button id="bConeRingL" title="Повернуть выделенные кольца (или текущее) на бит против часовой. Запертое — только на вид, открытое — сама строка (↩ вернёт)">◁</button>
             <button id="bConeRingR" title="Повернуть выделенные кольца (или текущее) на бит по часовой. Запертое — только на вид, открытое — сама строка (↩ вернёт)">▷</button>
@@ -1408,8 +1411,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0211"></script>
-<script src="zz-ui.js?v=0211"></script>
+<script src="zz-core.js?v=0212"></script>
+<script src="zz-ui.js?v=0212"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>

@@ -525,6 +525,19 @@ function fieldInfoFit(){
   const fi = $("fieldInfo"), bar = $("fieldInfoBar"); if (!fi || !bar) return;
   const no = document.querySelector("#rowList .rw > .no"), w = no ? no.getBoundingClientRect().right - bar.getBoundingClientRect().left : 90;
   fi.style.maxWidth = Math.max(40, Math.round(bar.clientWidth - Math.max(0, w) - 14 - 6)) + "px";
+  /* v0.212, «запрет сдвига строк — не дубль замка?» → «да (убрать), но общий замок всегда над столбиком должен стоять»: галки в «Кольцах»
+     не видно (она осталась скрытой — на ней держится общий замок), а общий замок в полосе ввода сдвигается так, что его середина —
+     ровно над столбиком замков строк. */
+  /* v0.212, «а над номерами — сброс строк, кнопку на начальные»: «↺» (жмёт «↺ Начальные») — над колонкой номеров, общий замок — над
+     столбиком замков; сначала левая, потом правая (её место зависит от левой). */
+  const nr = document.querySelector("#rowList .rw:not(.hid):not(.fillrw) > .no");
+  const over = (B, cell) => {
+    if (!B || !cell) return;
+    B.style.marginLeft = "0px";
+    const a = B.getBoundingClientRect(), k = cell.getBoundingClientRect();
+    if (k.width) B.style.marginLeft = Math.round((k.left + k.width / 2) - (a.left + a.width / 2)) + "px";   // и влево — в отступ полосы
+  };
+  if (nr) { over($("bRowsStartTop"), nr.querySelector(".rn")); over($("coneLockAll"), nr.querySelector(".rlk")); }
 }
 function rowsLockAllPlace(){   // v0.169: общий замок — кнопкой в начале полосы ввода; здесь только его значок
   const A = $("coneLockAll"); if (!A) return;
@@ -5015,6 +5028,8 @@ function init(){
   cgrpInit();   // v0.177
   coneBtnsInit();   // v0.203
   if (window.ResizeObserver && $("fieldInfoBar")) new ResizeObserver(() => fieldInfoFit()).observe($("fieldInfoBar"));   // v0.209: поле шире/уже — сведения по месту
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fieldInfoFit());   // v0.212: шрифт догрузился — кнопки над колонками ещё раз по месту
+  $("bRowsStartTop").onclick = () => $("bRowsStart").click();   // v0.212: «↺» над номерами — то же, что «↺ Начало»
   $("coneLockAll").onclick = () => $("coneLock").click();   // v0.167: общий замок над столбиком замков — та же галка
   { const h1 = document.querySelector("#top h1"); if (h1) { h1.title = "Щелчок — перезагрузить страницу"; h1.style.cursor = "pointer"; h1.onclick = () => location.reload(); } }   // v0.162, «клик — перезагрузка» (по названию в шапке)
   // v0.026: высоту поля строк, растянутую за угол, запоминаем (только когда под ним окна).
