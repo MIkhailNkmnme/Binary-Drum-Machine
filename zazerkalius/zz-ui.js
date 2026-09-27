@@ -550,7 +550,7 @@ function fieldInfoFit(){
   const fi = $("fieldInfo"), bar = $("fieldInfoBar"); if (!fi || !bar) return;
   const no = document.querySelector("#rowList .rw > .no"), w = no ? no.getBoundingClientRect().right - bar.getBoundingClientRect().left : 90;
   fi.style.maxWidth = Math.max(40, Math.round(bar.clientWidth - Math.max(0, w) - 14 - 6)) + "px";
-  if (CUT_PANEL && $("rowList")) CUT_PANEL.style.maxWidth = Math.max(160, $("rowList").clientWidth - 12) + "px";   // v0.230: кнопки под чертой — в ширину видимого поля, с переносом
+  if (CUT_PANEL && $("rowList")) CUT_PANEL.style.maxWidth = Math.max(60, $("rowList").clientWidth - 12) + "px";   // v0.230: кнопки под чертой — в ширину видимого поля, с переносом
   /* v0.212, «запрет сдвига строк — не дубль замка?» → «да (убрать), но общий замок всегда над столбиком должен стоять»: галки в «Кольцах»
      не видно (она осталась скрытой — на ней держится общий замок), а общий замок в полосе ввода сдвигается так, что его середина —
      ровно над столбиком замков строк. */
@@ -5745,12 +5745,16 @@ function init(){
   /* v0.224, «за саму границу тоже надо перетаскивать»: тот же жест — у невидимой полосы #fieldEdge (6 px у края поля со стороны стола). */
   const rowsWDrag = (e, list, strict) => {
     const x0 = e.clientX, y0 = e.clientY, w0 = $("field").getBoundingClientRect().width;
+    /* v0.232, «после максимального уменьшения поле должно уезжать вправо и оставлять только немного — размер кнопок»: самое узкое поле —
+       колонка номеров с кнопками ↺ 🔒 ⟲ над ней (прежде упор — 220 px); остальное уходит за край. */
+    const nr = document.querySelector("#rowList .rw[data-r] > .no"), fl = $("field").getBoundingClientRect().left;
+    const minW = nr ? Math.max(60, Math.ceil(nr.getBoundingClientRect().right - fl) + 8) : 100;
     const sg = document.body.classList.contains("field-right") ? -1 : 1;   // v0.091: поле справа — тянешь влево, поле шире
     let on = false;
     const move = (ev) => {
       const dx = ev.clientX - x0;
       if (!on) { if (strict && (Math.abs(dx) < 6 || Math.abs(dx) < Math.abs(ev.clientY - y0))) return; on = true; try { list.setPointerCapture(ev.pointerId); } catch (er) { /* отпущен */ } document.body.classList.add("wdrag"); }
-      Z.rowsW = Math.max(220, Math.min(window.innerWidth - 520, Math.round(w0 + sg * dx))); applyRowsW();
+      Z.rowsW = Math.max(minW, Math.min(window.innerWidth - 520, Math.round(w0 + sg * dx))); applyRowsW();
     };
     const up = () => {
       list.removeEventListener("pointermove", move); list.removeEventListener("pointerup", up); list.removeEventListener("pointercancel", up);
