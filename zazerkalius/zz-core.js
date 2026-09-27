@@ -1049,3 +1049,27 @@ function zzSeqRows(name, H){
   if (name === "rnd") return Array.from({ length: H }, (_, i) => zzSeqBits("rnd", i + 1));
   const s = zzSeqBits(name, H); return Array.from({ length: H }, (_, i) => s.slice(0, i + 1));
 }
+
+/* ─── Метрики строки (v0.239) ────────────────────────────────────────────────────────────────────────────────────
+   Запрос: «как в Cellcosmos — энтропия и симметрия». Энтропия — по тройкам соседних бит (какие «слова» длины 3
+   встречаются и насколько поровну), делённая на 3: 0 — один рисунок повторяется, 1 — все восемь троек поровну (шум);
+   строка короче 8 бит — по одиночным битам. Зеркальность — доля пар «бит и его отражение с другого конца», которые
+   совпадают: 100% — палиндром (⇄ оставляет строку собой), 0% — антипалиндром (⇄ даёт её инверсию); средний бит
+   нечётной строки пары не имеет и не считается. zzRowsStats — средние по набору строк и доля единиц. */
+function zzRowEntropy(s){
+  const n = s.length; if (!n) return 0;
+  const k = n >= 8 ? 3 : 1, cnt = new Map(); let tot = 0;
+  for (let i = 0; i + k <= n; i++) { const w = s.substr(i, k); cnt.set(w, (cnt.get(w) || 0) + 1); tot++; }
+  let h = 0; for (const c of cnt.values()) { const q = c / tot; h -= q * Math.log2(q); }
+  return h / k;
+}
+function zzRowMirror(s){
+  const n = s.length, m = n >> 1; if (!m) return 1;
+  let e = 0; for (let i = 0; i < m; i++) if (s[i] === s[n - 1 - i]) e++;
+  return e / m;
+}
+function zzRowsStats(rows){
+  let h = 0, m = 0, ones = 0, bits = 0;
+  for (const s of rows) { h += zzRowEntropy(s); m += zzRowMirror(s); for (let i = 0; i < s.length; i++) if (s[i] === "1") ones++; bits += s.length; }
+  const n = rows.length || 1; return { h: h / n, m: m / n, d: bits ? ones / bits : 0 };
+}

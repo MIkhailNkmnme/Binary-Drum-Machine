@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.238. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.239. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.238</title>
+<title>Zazerkalius — v0.239</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -422,6 +422,12 @@ body.pane-icons #paneWins{padding:4px}
 #w-cone #bConeRec{position:absolute;left:8px;bottom:8px;z-index:2;width:32px;height:32px;padding:0;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center}   /* v0.155: квадратная, внизу холста слева */
 #w-cone #bConeRec.on{color:var(--red);border-color:var(--red)}
 #w-cone #bConeRec.snd::after{content:"♪";position:absolute;right:2px;top:0;font-size:10px;line-height:1;color:var(--gold)}   /* v0.235: запись со звуком ПК (правый щелчок) */
+#ecaMap{position:fixed;z-index:100000;width:min(96vw,1040px);max-height:90vh;overflow:auto;box-sizing:border-box;padding:6px;background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:0 8px 28px rgba(0,0,0,.55)}   /* v0.239: карта 256 правил */
+#ecaMap .ecaGrid{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:3px}
+#ecaMap .ecaC{position:relative;cursor:pointer;line-height:0;background:var(--panel2);border:1px solid transparent;border-radius:3px}
+#ecaMap .ecaC:hover{border-color:var(--acc2)} #ecaMap .ecaC.on{border-color:var(--gold)}
+#ecaMap canvas{display:block;width:100%;height:auto;image-rendering:pixelated}
+#ecaMap .ecaC span{position:absolute;left:2px;top:2px;font:9px/1 monospace;color:var(--dim);pointer-events:none}
 #coneRecFrame{position:absolute;z-index:1;display:none;pointer-events:none;box-sizing:border-box;border:2px dashed var(--red);border-radius:4px}   /* v0.236: кадр видео при записи конуса */
 #coneRecFrame span{position:absolute;top:4px;left:50%;transform:translateX(-50%);font:11px/1.3 monospace;color:var(--red);background:rgba(0,0,0,.6);padding:1px 6px;border-radius:3px;white-space:nowrap}
 body.zen #w-cone #bConeRec{display:none !important}
@@ -719,7 +725,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.238</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.239</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1324,6 +1330,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
                 <option value="s:cnt">Двоичный счёт 1, 10, 11…</option><option value="s:rnd">🎲 Случайные</option>
               </optgroup>
             </select>
+            <button id="bEcaMap" title="▦ Карта всех 256 правил сеткой 16×16 (из нынешнего сида): наведение — правило и его энтропия, зеркальность, доля единиц; щелчок — правило строками в поле, как заготовка (↩ вернёт). Закрыть — ▦ ещё раз, Esc или щелчок мимо">▦ 256</button>
             <label class="dim" title="Строк в заготовке (2…1024)"><input type="number" id="animRowsN" min="2" max="1024" step="1" value="256" style="width:4.2em"> стр.</label>
             <label class="dim" title="Сид — начальная строка из 0 и 1 для правил и Паскаля (по умолчанию 1)">сид <input type="text" id="animSeed" value="1" style="width:4em;font-family:var(--ff)"></label>
             <span id="animInfo" class="dim" style="font-variant-numeric:tabular-nums;white-space:nowrap" title="Сколько проходов волна сделала, на какой строке она сейчас и длина цикла (когда картина повторилась)"></span>
@@ -1486,8 +1493,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0238"></script>
-<script src="zz-ui.js?v=0238"></script>
+<script src="zz-core.js?v=0239"></script>
+<script src="zz-ui.js?v=0239"></script>
 <script src="../_js/hub-link.js"></script>
 <script src="../_js/recorder.js" data-bez-knopki></script>
 </body>

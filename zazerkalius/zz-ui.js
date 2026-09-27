@@ -219,6 +219,11 @@ const ROW_SHOW = 4096;
    поэтому краска снимается сама, как только строка снова равна эталону. */
 function tplRefRows(){ const t = typeof Z.tplRef === "number" && Z.tpl[Z.tplRef]; return t ? t.rows : null; }
 function rowChanged(i){ const R = tplRefRows(); return !!R && (i >= R.length || Z.rows[i] !== R[i]); }
+/* v0.239, «как в Cellcosmos — энтропия и симметрия»: у текущей строки в сведениях поля — H (энтропия по тройкам бит) и ⇄
+   (зеркальность); что это — в подсказке сведений. Счёт — zzRowEntropy / zzRowMirror в ядре. */
+const ROW_METR_TIP = "\nH — энтропия текущей строки по тройкам бит: 0 — один рисунок повторяется, 1 — шум (все восемь троек поровну)." +
+  "\n⇄ — зеркальность: сколько бит совпадает со своим отражением с другого конца. 100% — палиндром, 0% — антипалиндром (⇄ = инверсия).";
+function rowMetr(){ const s = cur(); return s.length < 2 ? "" : ` · H ${zzRowEntropy(s).toFixed(2)} · ⇄ ${Math.round(zzRowMirror(s) * 100)}%`; }
 function rowChgInfo(){
   const R = tplRefRows(); if (!R) return "";
   let n = 0; for (let i = 0; i < Z.rows.length; i++) if (i >= R.length || Z.rows[i] !== R[i]) n++;
@@ -354,8 +359,8 @@ function renderRowsOver(){
   }
   L.innerHTML = h + "</div>"; cutPanelMount();   // v0.225
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
-  $("fieldInfo").textContent = `наложение ${N} полей · рабочее ${Z.lane + 1} · ${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1}` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "");
-  $("fieldInfo").title = $("fieldInfo").textContent;   // v0.077: целиком — в подсказке
+  $("fieldInfo").textContent = `наложение ${N} полей · рабочее ${Z.lane + 1} · ${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1}` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowMetr();
+  $("fieldInfo").title = $("fieldInfo").textContent + ROW_METR_TIP;   // v0.077: целиком — в подсказке
   fieldInfoFit();   // v0.209
   $("rowList").classList.toggle("dimsel", rowSel.size > 0); $("rowList").classList.toggle("dimcur", !rowSel.size && !document.body.classList.contains("nocur"));   // v0.213 / v0.221: выделение (или выбранная строка) — остальные строки гаснут
   rowsFit(); rowsLockAllPlace(); rowBitMark();   // v0.153, v0.167, v0.173
@@ -691,8 +696,8 @@ function renderRows(){
   }
   L.innerHTML = h + "</div>"; cutPanelMount();   // v0.225
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
-  $("fieldInfo").textContent = (N > 1 ? `поле ${Z.lane + 1} из ${N} · ` : "") + `${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1} (${cur().length} бит)` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowChgInfo();
-  $("fieldInfo").title = $("fieldInfo").textContent;   // v0.077: целиком — в подсказке
+  $("fieldInfo").textContent = (N > 1 ? `поле ${Z.lane + 1} из ${N} · ` : "") + `${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1} (${cur().length} бит)` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowMetr() + rowChgInfo();
+  $("fieldInfo").title = $("fieldInfo").textContent + ROW_METR_TIP;   // v0.077: целиком — в подсказке
   fieldInfoFit();   // v0.209
   $("rowList").classList.toggle("dimsel", rowSel.size > 0); $("rowList").classList.toggle("dimcur", !rowSel.size && !document.body.classList.contains("nocur"));   // v0.213 / v0.221: выделение (или выбранная строка) — остальные строки гаснут
   rowsFit(); rowsLockAllPlace(); rowBitMark();   // v0.153, v0.167, v0.173
@@ -3200,13 +3205,59 @@ function setupCone(){
     const v = e.target.value, lab = e.target.selectedOptions[0] ? e.target.selectedOptions[0].textContent : v; e.target.value = "";
     if (!v) return;
     const H = Z.animRowsN || 256, seed = Z.animSeed || "1";
-    const rows = v === "pascal" ? zzPascalRows(seed, H) : v.startsWith("r") ? zzEcaRows(+v.slice(1), seed, H) : zzSeqRows(v.slice(2), H);
+    animApply(v === "pascal" ? zzPascalRows(seed, H) : v.startsWith("r") ? zzEcaRows(+v.slice(1), seed, H) : zzSeqRows(v.slice(2), H), lab);
+  };
+  function animApply(rows, lab){   // v0.239: общее у списка заготовок и карты правил ▦
     animSet(false);
     try { snapshot(); } catch (err) { return; }
     Z.rows = rows; syncLane(); Z.cur = 0;
     animSig = null; animSync();
     renderAll(); save(); animUi();
     say(`🌊 Заготовка «${lab.trim()}»: ${rows.length} стр., последняя — ${rows[rows.length - 1].length} бит. ↩ вернёт.`);
+  }
+  /* v0.239, «как в Cellcosmos — карта всех 256 правил сеткой 16×16»: ▦ рядом со списком заготовок — все элементарные
+     автоматы миниатюрами (32 строки из нынешнего сида), номер в углу. Наведение — правило и его средние метрики по
+     миниатюре (энтропия, зеркальность, доля единиц); щелчок — правило строками в поле, как заготовка (строк — сколько
+     в поле рядом, ↩ вернёт); выбранное обведено золотым, карта остаётся открытой — можно перебирать подряд.
+     Закрыть — ▦ ещё раз, Esc или щелчок мимо. */
+  const ecaMapClose = () => {
+    const m = $("ecaMap"); if (m) m.remove();
+    document.removeEventListener("pointerdown", ecaMapOut, true); document.removeEventListener("keydown", ecaMapKey, true);
+  };
+  const ecaMapOut = (e) => { const m = $("ecaMap"); if (m && !m.contains(e.target) && !$("bEcaMap").contains(e.target)) ecaMapClose(); };
+  const ecaMapKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); ecaMapClose(); } };
+  $("bEcaMap").onclick = () => {
+    if ($("ecaMap")) { ecaMapClose(); return; }
+    const seed = Z.animSeed || "1", T = 32;
+    const rgb = (c, d) => { const m = /^#([0-9a-f]{6})$/i.exec(c) || /^#([0-9a-f]{6})$/i.exec(d); const v = parseInt(m[1], 16); return [v >> 16, (v >> 8) & 255, v & 255]; };
+    const C1 = rgb(coneCss("--b1", "#e8ecf4"), "#e8ecf4"), C0 = rgb(coneCss("--b0", "#5d6678"), "#5d6678");
+    const m = document.createElement("div"), box = document.createElement("div");
+    m.id = "ecaMap"; box.className = "ecaGrid";
+    for (let r = 0; r < 256; r++) {
+      const rows = zzEcaRows(r, seed, T), W = rows[T - 1].length, cv = document.createElement("canvas");
+      cv.width = W; cv.height = T;
+      const g = cv.getContext("2d"), im = g.createImageData(W, T);
+      rows.forEach((s, y) => {
+        const x0 = (W - s.length) >> 1;
+        for (let x = 0; x < s.length; x++) { const k = (y * W + x0 + x) * 4, on = s[x] === "1", c = on ? C1 : C0; im.data[k] = c[0]; im.data[k + 1] = c[1]; im.data[k + 2] = c[2]; im.data[k + 3] = on ? 255 : 70; }
+      });
+      g.putImageData(im, 0, 0);
+      const st = zzRowsStats(rows), cell = document.createElement("div"), nb = document.createElement("span");
+      cell.className = "ecaC"; cell.dataset.r = r; nb.textContent = r;
+      cell.title = `Правило ${r} — щелчок: строками в поле (${Z.animRowsN || 256} стр., сид ${seed}; ↩ вернёт)\n` +
+        `энтропия ${st.h.toFixed(2)} · зеркальность ${Math.round(st.m * 100)}% · единиц ${Math.round(st.d * 100)}% (средние по миниатюре)`;
+      cell.append(cv, nb); box.appendChild(cell);
+    }
+    box.onclick = (e) => {
+      const c = e.target.closest(".ecaC"); if (!c) return;
+      box.querySelectorAll(".ecaC.on").forEach(x => x.classList.remove("on")); c.classList.add("on");
+      animApply(zzEcaRows(+c.dataset.r, seed, Z.animRowsN || 256), `Правило ${c.dataset.r}`);
+    };
+    m.appendChild(box); document.body.appendChild(m);
+    const b = $("bEcaMap").getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
+    m.style.left = Math.max(8, Math.min(innerWidth - mw - 8, b.left)) + "px";
+    m.style.top = Math.max(8, b.bottom + 4 + mh > innerHeight ? b.top - mh - 4 : b.bottom + 4) + "px";
+    document.addEventListener("pointerdown", ecaMapOut, true); document.addEventListener("keydown", ecaMapKey, true);
   };
   animUi();
   /* v0.235, «подключать надо настройку — звук с компа»: правый щелчок по ⏺ — писать ли вместе с конусом звук ПК (Z.coneRecSnd,
