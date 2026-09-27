@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.226. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.227. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.226</title>
+<title>Zazerkalius — v0.227</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -387,7 +387,8 @@ body.field-right #fieldEdge{right:auto;left:0}
 body.field-hidden #fieldEdge,body.zen #fieldEdge{display:none}
 .rw.fillrw > .no{color:var(--acc)}
 /* Шаблоны (v0.010) */
-#cutPanel{grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 8px 10px;font-size:12px}   /* v0.225: под чертой поля */
+#cutSlot{grid-column:1 / -1;contain:inline-size;min-width:0}   /* v0.227: ячейка панели — во всю ширину и не раздувает колонки (в v0.225 растянула колонку номеров) */
+#cutPanel{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 8px 10px;font-size:12px}   /* v0.225: под чертой поля */
 #cutPanel .cpl{color:var(--dim)}
 #cutPanel button{padding:2px 6px}
 #cutPanel #tplBar{flex:1 1 100%;padding:0}
@@ -693,7 +694,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.226</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.227</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1456,8 +1457,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0226"></script>
-<script src="zz-ui.js?v=0226"></script>
+<script src="zz-core.js?v=0227"></script>
+<script src="zz-ui.js?v=0227"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
