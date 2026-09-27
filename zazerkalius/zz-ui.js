@@ -357,6 +357,7 @@ function renderRowsOver(){
   $("fieldInfo").textContent = `наложение ${N} полей · рабочее ${Z.lane + 1} · ${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1}` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "");
   $("fieldInfo").title = $("fieldInfo").textContent;   // v0.077: целиком — в подсказке
   fieldInfoFit();   // v0.209
+  $("rowList").classList.toggle("dimsel", rowSel.size > 0);   // v0.213: есть выделение — остальные строки чуть гаснут
   rowsFit(); rowsLockAllPlace(); rowBitMark();   // v0.153, v0.167, v0.173
   const c = L.querySelector(".rw.cur > .no");
   if (c) c.scrollIntoView({ block: "nearest" });
@@ -623,6 +624,7 @@ function renderRows(){
   $("fieldInfo").textContent = (N > 1 ? `поле ${Z.lane + 1} из ${N} · ` : "") + `${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1} (${cur().length} бит)` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowChgInfo();
   $("fieldInfo").title = $("fieldInfo").textContent;   // v0.077: целиком — в подсказке
   fieldInfoFit();   // v0.209
+  $("rowList").classList.toggle("dimsel", rowSel.size > 0);   // v0.213: есть выделение — остальные строки чуть гаснут
   rowsFit(); rowsLockAllPlace(); rowBitMark();   // v0.153, v0.167, v0.173
   const c = L.querySelector(".rw.cur > .bits.la") || L.querySelector(".rw.cur > .no");
   if (c) c.scrollIntoView({ block: "nearest", inline: "nearest" });
@@ -1185,6 +1187,7 @@ function renderCone(){
   const dpr = window.devicePixelRatio || 1, W = Math.round(R.width * dpr), H = Math.round(R.height * dpr);
   if (cv.width !== W) cv.width = W; if (cv.height !== H) cv.height = H;
   const g = cv.getContext("2d");
+  coneVeil = "";   // v0.213: цвет вуали — фон холста, берётся раз за кадр
   const cBg = coneCss("--bg", "#0b0d12"), c1 = coneCss("--b1", "#22d3ee"), c0 = coneCss("--b0", "#7d8699"), cR = coneCss("--red", "#ff6b6b"),
         cg = coneCss("--gold", "#ffd166"), cA = coneCss("--acc", "#b98cf0"), cL = coneCss("--line", "#262d3d"), ff = coneCss("--ff", "monospace"), cT = coneCss("--txt", "#d8dde8"), cIn = "#38bdf8", cOut = "#fb923c", cUp = "#d946ef", cDn = "#14b8a6";   // v0.090: границы 0→1 / 1→0   // v0.087: края колец — внутренний / внешний
   g.fillStyle = cBg; g.fillRect(0, 0, W, H);
@@ -1354,6 +1357,12 @@ function renderCone(){
     if (same && gcol.has(key)) { g.strokeStyle = gcol.get(key); g.lineWidth = Math.max(1, dr * 0.12); g.beginPath(); coneArc(g, cx, cy, i, rout + dr * (1 - band) / 2, 0, 2 * Math.PI); g.stroke(); }
     // v0.057, «выделение колец золотым — непонятно, какую-то черту поперёк кольца делает, путает»: обе окружности были одним
     // контуром, и canvas соединял их отрезком (справа, на угле 0). Теперь — каждая своим контуром, без перемычки.
+    /* v0.213, «выделять кольцо или строку — синхронно, и остальные при этом гаснут немного»: есть выделение (Shift + щелчок по кольцу,
+       Ctrl + щелчок по строке — оно общее у колец и строк) — невыделенные кольца под полупрозрачной вуалью цвета холста. */
+    if (rowSel.size && !rowSel.has(i)) {
+      if (!coneVeil) coneVeil = getComputedStyle(g.canvas).backgroundColor || cBg;
+      g.strokeStyle = coneVeil; g.lineWidth = Math.max(1, rout - rin + dpr); g.globalAlpha = 0.55; g.beginPath(); coneArc(g, cx, cy, i, (rin + rout) / 2, 0, 2 * Math.PI); g.stroke(); g.globalAlpha = 1;
+    }
     if (rowSel.has(i)) { g.strokeStyle = cS; g.lineWidth = Math.max(1.5 * dpr, dr * 0.12); g.beginPath(); coneArc(g, cx, cy, i, (rin + rout) / 2, 0, 2 * Math.PI); g.globalAlpha = 0.35; g.stroke(); g.globalAlpha = 1; }
     if (i === Z.cur && !document.body.classList.contains("nocur")) {   // v0.107: Esc гасит и в конусе; v0.087: текущее — те же цвета краёв, толще (внутри голубой, снаружи оранжевый)
       g.lineWidth = Math.max(2 * dpr, dr * 0.12);
@@ -2494,6 +2503,7 @@ function coneLocked(i){ const L = Z.coneLocks; return L && L[i] !== undefined ? 
 /* v0.108, «не снимается» (после Esc в конусе оставалось текущее кольцо — с осью зеркала, хордами, при «только выделенные» — одно
    оно): кольца «в фокусе» — выделенные; нет выделения — текущее, а после Esc — никакое. При «только выделенные» и пустом фокусе
    видны все кольца. */
+let coneVeil = "";   // v0.213
 function coneFocus(){ return rowSel.size ? [...rowSel] : (document.body.classList.contains("nocur") ? [] : [Z.cur]); }
 function coneRotOf(i){
   let base = coneRot[i] || 0; const m = Z.coneSpinMode || "all", ph = coneRingPh(i);   // v0.138: остановленное кольцо — на своей фазе
