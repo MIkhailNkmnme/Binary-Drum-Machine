@@ -1874,7 +1874,27 @@ function coneLogAdd(R, cnt, N, froze){
 }
 let coneLogRaf = 0;
 function coneLogDirty(){ if (!coneLogRaf) coneLogRaf = requestAnimationFrame(() => { coneLogRaf = 0; coneLogRender(); }); }
+/* v0.195, «сразу надо в строки писать биты, заполнив сначала нулями строки соответствующей длины» (выбрано: в поле 2, «1» — куда упал луч):
+   кнопка «✎ в поле 2» в «Лазере». Включена — в соседнем поле строк (поле 2; если рабочее — поле 2, то поле 3) столько же строк из нулей
+   той же длины, что строки конуса, и ещё строка для заполнения; ячейка, в которую упал луч (стена в строке, поимка строкой для заполнения),
+   становится «1» — от всех лазеров вместе, как краска на конусе. Конус и рабочее поле не меняются. Прежнее содержимое того поля при
+   включении откладывается (Z.coneOutBak), правый щелчок по кнопке возвращает его. Пишется после каждого события луча (с логом). */
+function coneOutLane(){ return Z.lane === 1 ? 2 : 1; }
+function coneOutRows(){
+  const N = Math.min(Z.rows.length, CONE_MAX), h = (Z.voidHits && Z.voidHits.h) || {}, out = [];
+  const row = (b, n) => { let t = ""; for (let c = 0; c < n; c++) t += h[b + ":" + c] > 0 ? "1" : "0"; return t; };
+  for (let b = 0; b < N; b++) out.push(row(b, (Z.rows[b] || "").length));
+  out.push(row(N, fillLen()));   // строка для заполнения
+  return out;
+}
+function coneOutSync(){
+  if (!Z.coneOutOn || !Array.isArray(Z.lanes)) return;
+  const t = coneOutLane(), rows = coneOutRows(), was = Z.lanes[t];
+  if (Array.isArray(was) && was.length === rows.length && was.every((x, i) => x === rows[i])) return;
+  Z.lanes[t] = rows; renderRows(); save();
+}
 function coneLogRender(){
+  coneOutSync();   // v0.195
   const box = $("coneLogBox"); if (!box) return;
   box.style.display = Z.coneClock ? "flex" : "none";
   const list = Z.coneLog && Array.isArray(Z.coneLog.list) ? Z.coneLog.list : [];
@@ -2520,6 +2540,27 @@ function setupCone(){
      не меняется. */
   const goN = $("coneGoN"); goN.value = Z.coneGoN || 10;
   goN.onchange = () => { Z.coneGoN = Math.max(1, Math.round(+goN.value) || 1); goN.value = Z.coneGoN; save(); };
+  const outLab = () => { const b = $("bConeOut"); b.classList.toggle("on", !!Z.coneOutOn); b.textContent = `✎ в поле ${coneOutLane() + 1}`; };   // v0.195
+  outLab();
+  $("bConeOut").onclick = () => {
+    if (!Array.isArray(Z.lanes)) { say("✎ Полей строк нет — писать некуда."); return; }
+    Z.coneOutOn = !Z.coneOutOn;
+    const t = coneOutLane();
+    if (Z.coneOutOn) {
+      Z.coneOutBak = { t, rows: (Z.lanes[t] || []).slice() };   // что было в поле — в запас
+      if (!Z.coneClock) { Z.coneClock = true; $("coneClock").checked = true; }
+      if ((Z.laneCount | 0) < t + 1) { $("laneCount").value = String(t + 1); $("laneCount").onchange({ target: $("laneCount") }); }
+      coneOutSync(); renderRows();
+      say(`✎ Пишу в поле ${t + 1}: строки из нулей той же длины (+ строка для заполнения); куда упадёт луч — там «1». Прежнее поле ${t + 1} — в запасе, правый щелчок по ✎ вернёт.`);
+    } else say(`✎ Больше не пишу в поле ${t + 1} — что там есть, остаётся.`);
+    outLab(); save();
+  };
+  $("bConeOut").oncontextmenu = (e) => {
+    e.preventDefault(); const B = Z.coneOutBak;
+    if (!B || !Array.isArray(B.rows) || !Array.isArray(Z.lanes)) { say("✎ Запаса нет — возвращать нечего."); return; }
+    Z.coneOutOn = false; Z.lanes[B.t] = B.rows.length ? B.rows.slice() : ["1"]; delete Z.coneOutBak; outLab(); renderRows(); save();
+    say(`✎ Поле ${B.t + 1} вернулось как было до записи лазера.`);
+  };
   const lzN = $("coneLasersN"), lz0 = $("coneLaser0");   // v0.194: сколько лазеров и угол первого
   lzN.value = coneLasersN(); lz0.value = +Z.coneLaser0 || 0;
   lzN.onchange = () => { Z.coneLasers = Math.max(1, Math.min(72, Math.round(+lzN.value) || 8)); lzN.value = Z.coneLasers; save(); renderCone(); coneLogRender();
