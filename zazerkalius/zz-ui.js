@@ -5606,6 +5606,14 @@ function randomBits(n){ let o = ""; for (let i = 0; i < n; i++) o += Math.random
 
 function init(){
   load();
+  /* v0.262, «после перезагрузки — выделенная строка почему-то, хотя я снял выделение»: снятая подсветка текущей строки (body.nocur)
+     теперь помнится (Z.noCur) — следим за классом и пишем, когда он меняется */
+  if (Z.noCur) document.body.classList.add("nocur");
+  new MutationObserver(() => {
+    const on = document.body.classList.contains("nocur");
+    if (!!Z.noCur === on || document.body.classList.contains("bgmode")) return;
+    Z.noCur = on; clearTimeout(init._nc); init._nc = setTimeout(save, 300);
+  }).observe(document.body, { attributes: true, attributeFilter: ["class"] });
   laneInit();   // v0.015
   if (typeof Z.tplRef !== "number") { Z.tplRef = -1; for (let k = Z.tpl.length - 1; k >= 0; k--) if (Z.tpl[k].rows.length > 1) { Z.tplRef = k; break; } }   // v0.037
   applyTheme();   // v0.009: до первой отрисовки — без вспышки тёмного
