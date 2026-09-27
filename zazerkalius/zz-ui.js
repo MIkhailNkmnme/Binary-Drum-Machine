@@ -2585,11 +2585,13 @@ function setupCone(){
       const x0 = e.clientX, y0 = e.clientY, p0 = conePan.slice(), dpr = window.devicePixelRatio || 1;
       let movedP = false;
       const mv = (ev) => { if (Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) > 3) movedP = true; conePan = [p0[0] + (ev.clientX - x0) * dpr, p0[1] + (ev.clientY - y0) * dpr]; renderCone(); };
-      const ctrl = e.ctrlKey || e.metaKey, shift = e.shiftKey, bit = ctrl ? coneBitAt(e) : null;
+      /* v0.231, «выделение нескольких — через Ctrl, а не Shift» (как строки в поле): Ctrl + щелчок по кольцу — выделить / снять,
+         Shift + щелчок по сектору — сменить бит (в v0.173 было наоборот). */
+      const ctrl = e.ctrlKey || e.metaKey, shift = e.shiftKey, bit = shift && !ctrl ? coneBitAt(e) : null;
       const upP = () => {
         cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", upP); cv.removeEventListener("pointercancel", upP); cv.style.cursor = "grab";
-        if (!movedP && bit) { conePan = p0; coneBitFlip(bit); return; }   // v0.173: Ctrl + щелчок по сектору — сменить бит
-        if (!movedP && h !== -1 && shift) {   // v0.076: щелчок по кольцу — выделить / снять (то же выделение, что в поле); v0.173 — с Shift (Ctrl — смена бита)
+        if (!movedP && bit) { conePan = p0; coneBitFlip(bit); return; }   // v0.231: Shift + щелчок по сектору — сменить бит (v0.173 — Ctrl)
+        if (!movedP && h !== -1 && ctrl) {   // v0.231: с Ctrl; v0.076: щелчок по кольцу — выделить / снять (то же выделение, что в поле); v0.173 — с Shift (Ctrl — смена бита)
           conePan = p0;
           if (rowSel.has(h.i)) rowSel.delete(h.i); else rowSel.add(h.i);
           renderRows(); renderCone();
@@ -2608,7 +2610,7 @@ function setupCone(){
     if (!coneDrag) {   // наведение: обвести кольцо и его строку в поле
       const h = coneRing(e), i = h === -1 || h.fill !== undefined ? -1 : h.i;
       const b = coneBitAt(e), bc = (b ? b.i + ":" + b.j : "") !== (coneBitHover ? coneBitHover.i + ":" + coneBitHover.j : "");   // v0.173
-      if (bc) { coneBitHover = b; rowBitMark(); cv.title = b ? `Строка ${b.i + 1}, бит ${b.j + 1}: ${Z.rows[b.i][b.j]} · Ctrl + щелчок — сменить · Shift + щелчок — выделить кольцо` : ""; }
+      if (bc) { coneBitHover = b; rowBitMark(); cv.title = b ? `Строка ${b.i + 1}, бит ${b.j + 1}: ${Z.rows[b.i][b.j]} · Shift + щелчок — сменить · Ctrl + щелчок — выделить кольцо` : ""; }
       if (i !== coneHover) { coneHover = i; coneHoverRow(i); renderCone(); } else if (bc) renderCone();
       return;
     }
