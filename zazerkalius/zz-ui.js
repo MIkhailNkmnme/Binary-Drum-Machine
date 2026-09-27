@@ -735,6 +735,8 @@ function renderRows(){
   fieldInfoFit();   // v0.209
   $("rowList").classList.toggle("dimsel", rowSel.size > 0); $("rowList").classList.toggle("dimcur", !rowSel.size && !document.body.classList.contains("nocur"));   // v0.213 / v0.221: выделение (или выбранная строка) — остальные строки гаснут
   rowsFit(); rowsLockAllPlace(); rowBitMark();   // v0.153, v0.167, v0.173
+  // v0.242, «черту тяну вниз — прыгает всё вверх»: пока черту тащат, поле не прокручивается к текущей строке
+  if (document.body.classList.contains("cutdrag")) return;
   const c = L.querySelector(".rw.cur > .bits.la") || L.querySelector(".rw.cur > .no");
   if (c) c.scrollIntoView({ block: "nearest", inline: "nearest" });
 }
@@ -5491,17 +5493,28 @@ function init(){
       if (k === cutHeight()) return;
       cutAt(k, !Z.rowLock); moved = true; renderRows();   // v0.225: вниз — достраивать (если строки не заперты)
     };
+    /* v0.242: у края поля (или окна) — прокрутка, пока курсор там, даже если мышь стоит: черта дотягивается до строк за краем */
+    let edge = 0;
+    const edgeTick = () => {
+      edge = 0;
+      const lr = list.getBoundingClientRect(), top = Math.max(lr.top, 0), bot = Math.min(lr.bottom, innerHeight);
+      const d = lastY < top + 24 ? -12 : lastY > bot - 24 ? 12 : 0;
+      if (!d) return;
+      const st = list.scrollTop; list.scrollTop += d;
+      if (list.scrollTop !== st && !raf) raf = requestAnimationFrame(step);
+      edge = requestAnimationFrame(edgeTick);
+    };
     const move = (ev) => {
       lastY = ev.clientY;
-      const lr = list.getBoundingClientRect();   // у края поля — прокрутка, чтобы дотянуть черту до строк за краем
-      if (lastY < lr.top + 24) list.scrollTop -= 12; else if (lastY > lr.bottom - 24) list.scrollTop += 12;
+      if (!edge) edge = requestAnimationFrame(edgeTick);
       if (!raf) raf = requestAnimationFrame(step);
     };
     const up = () => {
       list.removeEventListener("pointermove", move); list.removeEventListener("pointerup", up); list.removeEventListener("pointercancel", up);
-      document.body.classList.remove("cutdrag");
+      if (edge) { cancelAnimationFrame(edge); edge = 0; }
       if (raf) { cancelAnimationFrame(raf); step(); }
       if (moved) cutMove(null, pre);
+      document.body.classList.remove("cutdrag");   // v0.242: после итоговой перерисовки — поле остаётся там, где отпустили
     };
     list.addEventListener("pointermove", move);
     list.addEventListener("pointerup", up);
