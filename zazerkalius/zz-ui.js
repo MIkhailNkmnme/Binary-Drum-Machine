@@ -5093,7 +5093,11 @@ function init(){
     e.preventDefault(); e.stopPropagation(); const i = +b.dataset.lk; if (Z.coneLocks) delete Z.coneLocks[i]; save(); renderRows(); renderCone();
     say(`◯ Кольцо ${i + 1} — снова по общей галке «запрет сдвига строк».`);
   }, true);
-  $("rowList").addEventListener("pointerdown", () => document.body.classList.remove("nocur"));
+  let rowNocurWas = false;   // v0.220: была ли строка «снята» до этого нажатия
+  $("rowList").addEventListener("pointerdown", () => { rowNocurWas = document.body.classList.contains("nocur"); document.body.classList.remove("nocur"); });
+  /* v0.220, по снимку выделенной строки 110011 — «клик по выделенной строке — снять выделение»: щелчок по текущей (или единственной
+     выделенной) строке — как Esc: выделение снято, текущей нет; ещё щелчок — снова выбрана. */
+  const rowUnselect = () => { rowSel.clear(); rowSelAnchor = -1; clearTextSel(); document.body.classList.add("nocur"); renderRows(); renderCone(); };
   $("coneCv").addEventListener("pointerdown", () => { if (document.body.classList.contains("nocur") && !Z.cone3d) { document.body.classList.remove("nocur"); } });   // v0.107: щелчок по кольцам — подсветка текущего снова   // v0.106: действие со строками — подсветка текущей снова видна
   document.addEventListener("keydown", (e) => { if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "PageUp" || e.key === "PageDown" || e.key === "Home" || e.key === "End") document.body.classList.remove("nocur"); }, true);
   $("rowList").onclick = (e) => {
@@ -5119,6 +5123,7 @@ function init(){
         if (rowSel.has(i)) rowSel.delete(i); else rowSel.add(i);
         rowSelAnchor = i;
       } else {
+        if (Z.cur === i && !rowNocurWas && (!rowSel.size || (rowSel.size === 1 && rowSel.has(i)))) { rowUnselect(); return; }   // v0.220
         rowSel.clear(); rowSel.add(i); rowSelAnchor = i;
       }
       clearTextSel();
@@ -5127,8 +5132,9 @@ function init(){
     }
     // По битам: если мышью выделены символы — не перерисовываем (иначе выделение пропадёт).
     if (textSelInRows()) return;
+    if (Z.cur === i && !rowNocurWas && (!rowSel.size || (rowSel.size === 1 && rowSel.has(i)))) { rowUnselect(); return; }   // v0.220
     if (rowSel.size) { rowSel.clear(); rowSelAnchor = -1; }
-    if (Z.cur === i) { renderRows(); return; }
+    if (Z.cur === i) { renderRows(); renderCone(); return; }
     Z.cur = i; renderAll(); save();
   };
   // v0.010: двойной щелчок — правка строки на месте.
