@@ -3153,6 +3153,7 @@ function setupCone(){
   window.zenSet = (on) => {
     const w = $("w-cone");
     if (on && w.classList.contains("collapsed")) w.querySelector(".bc").click();
+    if (window.cgrpZenMove) cgrpZenMove(on);   // v0.256: отмеченные 🧘 группы с левой панели — на время дзена к конусу
     document.body.classList.toggle("zen", on); document.body.classList.remove("zen-quiet");
     clearTimeout(zenT); if (on) zenT = setTimeout(() => document.body.classList.add("zen-quiet"), 3000);
     try { if (on && !document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); else if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch (e) {}
@@ -3401,6 +3402,7 @@ function setupCone(){
      отдаётся только с «Весь экран» и галкой «Поделиться системным звуком», у вкладки — «звук вкладки». Картинка захвата в
      файл не идёт — только его звук. Захват закрыли кнопкой браузера — запись останавливается и сохраняется. */
   let rec = null, recT = 0, recBusy = false;
+  let recPause = 0, recPausedAt = 0, frameOn = false;   // v0.256: сколько мс стояли на паузе, с какого мига пауза; ▣ кадр включён
   const recUi = () => {
     const b = $("bConeRec");
     b.classList.toggle("snd", !!Z.coneRecSnd);
@@ -3417,10 +3419,33 @@ function setupCone(){
     if (!on) { if (f) f.style.display = "none"; return; }
     if (!f) { f = document.createElement("div"); f.id = "coneRecFrame"; f.appendChild(document.createElement("span")); cv.parentNode.appendChild(f); }
     f.style.cssText = `display:block;left:${cv.offsetLeft}px;top:${cv.offsetTop}px;width:${cv.offsetWidth}px;height:${cv.offsetHeight}px`;
-    f.firstChild.textContent = `${cv.width}×${cv.height}`;
+    f.classList.toggle("paused", !!recPausedAt); f.classList.toggle("preview", !rec);   // v0.256: пауза — жёлтая, без записи (▣ кадр) — бледная
+    f.firstChild.textContent = `${cv.width}×${cv.height}` + (recPausedAt ? " · ⏸ пауза" : "");
+  };
+  if (window.ResizeObserver) new ResizeObserver(() => { if (rec || frameOn) recFrame(true); }).observe($("coneCv"));   // v0.256: и в дзене, и при смене размера окна
+  /* v0.256, «видео — когда запись, на паузу можно?» → «да»: ⏸ (видна, пока идёт запись) — запись встаёт, конус можно крутить и
+     настраивать, в файл это не идёт; ещё раз — дальше в тот же файл. Рамка кадра на паузе — жёлтая. */
+  const pauseUi = () => {
+    const p = $("bConeRecPause"); if (!p) return;
+    p.classList.toggle("on", !!recPausedAt); p.textContent = recPausedAt ? "▶" : "⏸";
+    p.title = recPausedAt ? "▶ Дальше — запись продолжается в тот же файл" : "⏸ Пауза записи: конус можно крутить и настраивать — в файл это не пойдёт; ещё раз — дальше";
+  };
+  $("bConeRecPause").onclick = () => {
+    if (!rec) return;
+    if (rec.state === "recording") { rec.pause(); recPausedAt = Date.now(); say("⏸ Запись на паузе — крути и настраивай, в файл не идёт. ▶ — дальше."); }
+    else if (rec.state === "paused") { rec.resume(); recPause += Date.now() - recPausedAt; recPausedAt = 0; say("▶ Запись идёт дальше — в тот же файл."); }
+    pauseUi(); recFrame(true);
+  };
+  /* v0.256, «кнопку рядом с видео — ставит расположение, как будет на видео»: ▣ кадр — конус в середину кадра (как при старте записи:
+     сдвиг сброшен, масштаб тот же) и рамка кадра на холсте, пока не нажмёшь ещё раз. В файл рамка не идёт. */
+  $("bConeFrame").onclick = () => {
+    frameOn = !frameOn; $("bConeFrame").classList.toggle("on", frameOn);
+    if (frameOn) { conePan = [0, 0]; renderCone(); }
+    recFrame(frameOn || !!rec);
+    say(frameOn ? "▣ Кадр видео: конус — в середине, рамка — то, что попадёт в файл (размер — вверху рамки). Ещё раз ▣ — убрать рамку." : "▣ Рамка кадра убрана.");
   };
   $("bConeRec").onmouseenter = $("bConeRecMp4").onmouseenter = () => recFrame(true);
-  $("bConeRec").onmouseleave = $("bConeRecMp4").onmouseleave = () => { if (!rec) recFrame(false); };
+  $("bConeRec").onmouseleave = $("bConeRecMp4").onmouseleave = () => { if (!rec && !frameOn) recFrame(false); };
   $("bConeRec").oncontextmenu = $("bConeRecMp4").oncontextmenu = (e) => {
     e.preventDefault();
     if (rec || recBusy) return;
@@ -3461,24 +3486,28 @@ function setupCone(){
     rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 12e6 } : undefined);
     rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
     rec.onstop = async () => {
-      clearInterval(recT); stream.getTracks().forEach(t => t.stop()); recFrame(false);
+      clearInterval(recT); stream.getTracks().forEach(t => t.stop());
+      if (recPausedAt) { recPause += Date.now() - recPausedAt; recPausedAt = 0; }   // v0.256: остановили с паузы
+      const pausedMs = recPause; recPause = 0; document.body.classList.remove("conerec"); pauseUi();
       if (cap) cap.getTracks().forEach(t => t.stop());
       let blob = new Blob(chunks, { type: mp4 ? "video/mp4" : "video/webm" });
       // v0.235, «нет эскизов в плейлисте»: у webm из MediaRecorder в заголовке нет длительности — плеер пишет 0, эскиза не строит.
       // Дописывает её общий recorder.js (подключён без своей кнопки); нет модуля — файл уходит как раньше.
       const R = window.__zerkRecorder;
-      if (!mp4 && R && R.fixWebm) blob = await R.fixWebm(blob, Date.now() - t0);   // v0.250: у mp4 длительность в заголовке и так есть
+      if (!mp4 && R && R.fixWebm) blob = await R.fixWebm(blob, Date.now() - t0 - pausedMs);   // v0.250: у mp4 длительность в заголовке и так есть; v0.256: без пауз
       const a = document.createElement("a");
       const d = new Date(), p2 = (x) => String(x).padStart(2, "0");
       a.href = URL.createObjectURL(blob); a.download = `Zerkalius-konus-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.${mp4 ? "mp4" : "webm"}`;
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
       rec = null; b.classList.remove("on"); b.textContent = mp4 ? "mp4" : "⏺"; recUi();   // v0.155: кнопка квадратная — только значок
+      recFrame(frameOn);   // v0.256: ▣ включён — рамка остаётся
       say(`⏺ Видео сохранено: ${a.download} (${(blob.size / 1048576).toFixed(1)} МБ${sndLab ? "," + sndLab : ""}).`);
     };
     if (at) { const r = rec; at.addEventListener("ended", () => { if (r.state !== "inactive") r.stop(); }); }
     rec.start(1000);
     const t0 = Date.now(); b.classList.add("on"); b.textContent = "⏹";
-    const tick = () => { recFrame(true); const s = Math.floor((Date.now() - t0) / 1000); b.title = `⏹ Идёт запись${sndLab} ${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")} — щелчок: стоп и сохранить`; };   // v0.155: время — в подсказке, на квадратной кнопке только ⏹
+    recPause = 0; recPausedAt = 0; document.body.classList.add("conerec"); pauseUi();   // v0.256: ⏸ — видна, пока идёт запись
+    const tick = () => { recFrame(true); const s = Math.floor((Date.now() - t0 - recPause - (recPausedAt ? Date.now() - recPausedAt : 0)) / 1000); b.title = `⏹ ${recPausedAt ? "Пауза" : "Идёт запись"}${sndLab} ${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")} — щелчок: стоп и сохранить`; };   // v0.155: время — в подсказке, на квадратной кнопке только ⏹
     conePan = [0, 0];   // v0.236: конус — в середину кадра
     renderCone(); tick(); recT = setInterval(tick, 500);
     say(`⏺ Пишу конус${mp4 ? " в mp4" : ""}${sndLab}… Ещё раз ${mp4 ? "⏹" : "⏺"} — стоп и сохранить. Холст пишется, только когда меняется, — включи «▶ крутить» или крути сам.`);
@@ -4844,6 +4873,15 @@ function cgrpInit(){
   groups.forEach((g) => {
     const lab = g.querySelector(".glab"); if (!lab) return;
     g.dataset.g = lab.textContent.trim().toLowerCase();
+    /* v0.256, «в режиме дзен показывать все кнопки и группы вкладок, которые отмечу (надо у них кнопку сделать)»: 🧘 в заголовке группы —
+       отметить; отмеченные группы видны и в дзене (поверх конуса, где стоят; с левой панели — на время дзена у верхнего края). Z.cgrpZen. */
+    if (!Z.cgrpZen || typeof Z.cgrpZen !== "object") Z.cgrpZen = {};
+    const zb = document.createElement("span"); zb.className = "gzen"; lab.appendChild(zb);
+    const zUi = () => { const on = !!Z.cgrpZen[g.dataset.g]; g.classList.toggle("zenon", on); zb.textContent = "🧘"; zb.title = on ? "🧘 Видна в дзене — щелчок: не показывать" : "🧘 Показывать эту группу и в дзене"; };
+    zUi();
+    zb.addEventListener("pointerdown", (e) => { e.stopPropagation(); e.preventDefault(); if (e.button !== 0) return; const k = g.dataset.g; if (Z.cgrpZen[k]) delete Z.cgrpZen[k]; else Z.cgrpZen[k] = true; zUi(); save();
+      say(Z.cgrpZen[k] ? `🧘 Группа «${k}» — видна и в дзене.` : `🧘 Группа «${k}» в дзене не видна.`); });
+    zb.addEventListener("dblclick", (e) => e.stopPropagation());
     lab.title = "Тяни — перенести группу куда угодно (поверх холста); двойной щелчок по группе — свернуть до заголовка и обратно; правый щелчок по заголовку — обратно на полосу";
     g.classList.toggle("cmin", !!Z.cgrpMin[g.dataset.g]);
     g.style.minHeight = Z.cgrpMin[g.dataset.g] > 0 ? Z.cgrpMin[g.dataset.g] + "px" : "";   // v0.207: свёрнутая — прежней высоты
@@ -4859,7 +4897,7 @@ function cgrpInit(){
         if (!moved) { moved = true; g.style.width = r.width + "px"; g.classList.add("cdrag"); document.body.classList.add("cgdrag"); }
         lx = ev.clientX; ly = ev.clientY;
         g.style.left = Math.round(lx - dx) + "px"; g.style.top = Math.round(ly - dy) + "px";
-        const P = $("rowsPane"); if (P) P.classList.toggle("cgover", paneHit(lx, ly));
+        const P = $("rowsPane"); if (P) P.classList.toggle("cgover", paneHit(lx, ly));   // (в дзене панели нет — paneHit ложь)
       };
       const up = () => {
         lab.removeEventListener("pointermove", mv); lab.removeEventListener("pointerup", up); lab.removeEventListener("pointercancel", up);
@@ -4876,7 +4914,7 @@ function cgrpInit(){
        пустому месту группы (не по кнопке, полю, списку) — свернуть до заголовка, ещё раз — развернуть; Z.cgrpMin { имя: true }. Возврат
        вынесенной группы на полосу, что был на двойном щелчке по заголовку (v0.177), — теперь правый щелчок по заголовку. */
     g.addEventListener("dblclick", (e) => {
-      if (e.target.closest("button, input, select, textarea, label")) return;
+      if (e.target.closest("button, input, select, textarea, label, .gzen")) return;
       e.preventDefault(); e.stopPropagation();
       /* v0.207, «высота остаётся как была — нужно»: свёрнутая группа сужается до заголовка, а высоту держит прежнюю (Z.cgrpMin — её пиксели),
          чтобы соседние группы и полоса не прыгали. */
@@ -4935,6 +4973,13 @@ function cgrpInit(){
       edge.addEventListener("dblclick", () => { delete Z.paneWUser; paneWApply(true); save(); renderAll(); });
     }
   }
+  // v0.256: дзен — отмеченные 🧘 группы с левой панели (её в дзене нет) на это время переезжают на полосу конуса, потом обратно
+  window.cgrpZenMove = (on) => {
+    if (on) { if (box) [...box.children].forEach(g => { if (g.classList.contains("zenon")) { g.classList.add("zentmp"); tl.appendChild(g); } }); return; }
+    const back = groups.filter(g => g.classList.contains("zentmp"));
+    back.forEach(g => { g.classList.remove("zentmp"); delete Z.cgrpPos[g.dataset.g]; if (box) box.appendChild(g); place(g); });
+    if (box && back.length) { for (const k of Z.cgrpDock) { const g = groups.find(c => c.dataset.g === k); if (g && g.parentElement === box) box.appendChild(g); } }
+  };
   addEventListener("resize", () => groups.forEach(place));
   cgrpCols();
 }
