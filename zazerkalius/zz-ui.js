@@ -270,7 +270,7 @@ const OV_SHOW = 1024;
    выделяет ось (и делает её поле рабочим); Del удаляет выделенную ось вместе с её полем, ↩ вернёт.
    Выделение снимает любой другой щелчок по полю и Esc — чтобы Del, нажатый ради строки, не снёс поле. */
 let axSel = -1;
-function deleteLane(k){
+function deleteLane(k, how){
   if (Z.laneCount <= 1) { say("Это единственное поле — удалять нечего."); axSel = -1; renderRows(); return; }
   snapshot();
   syncLane();
@@ -285,7 +285,7 @@ function deleteLane(k){
   axSel = -1;
   $("laneCount").value = String(Z.laneCount);
   renderAll(); save();
-  say(`Del: ось ${k + 1} удалена вместе с её полем. Полей — ${Z.laneCount}, рабочее — ${Z.lane + 1}. ↩ вернёт.`);
+  say((how ? `${how} ${k + 1} удалено со всеми строками` : `Del: ось ${k + 1} удалена вместе с её полем`) + `. Полей — ${Z.laneCount}, рабочее — ${Z.lane + 1}. ↩ вернёт.`);
 }   // бит на строку в показе; в «⤓ итог» идут все
 function ovAl(){ return Z.rowsAlign || "center"; }
 function ovStart(A, L){ const al = ovAl(); return al === "left" ? A : al === "right" ? A - 2 * L : A - L; }
@@ -709,7 +709,8 @@ function renderRows(){
   if (N > 1) {
     h += '<div class="rw lhrow"><span class="no"></span>';
     for (let l = 0; l < N; l++)
-      h += '<span class="lh' + (l === Z.lane ? " act" : "") + '" data-l="' + l + '" title="Поле ' + (l + 1) + (l === Z.lane ? " — рабочее" : " — щелчок: сделать рабочим") + '">поле ' + (l + 1) + " · " + lanes[l].length + " стр.</span>";
+      h += '<span class="lh' + (l === Z.lane ? " act" : "") + '" data-l="' + l + '" title="Поле ' + (l + 1) + (l === Z.lane ? " — рабочее" : " — щелчок: сделать рабочим") + '">поле ' + (l + 1) + " · " + lanes[l].length + " стр." +
+        '<span class="lhx" data-lx="' + l + '" title="✕ Удалить поле ' + (l + 1) + ' со всеми строками (↩ вернёт)">✕</span></span>';   // v0.247
     h += "</div>";
   }
   for (let i = 0; i < H; i++) {
@@ -5444,6 +5445,9 @@ function init(){
     if (rowEditing >= 0) return;
     delAtEnd = false;   // v0.021
     // v0.015: заголовок поля или ячейка чужого поля — сделать то поле рабочим.
+    // v0.247, по снимку заголовка «поле 1 · 250 стр.» — «надо кнопку удалить поле»: ✕ в заголовке — поле уходит со всеми строками, ↩ вернёт
+    const lx = e.target.closest(".lhx");
+    if (lx) { try { deleteLane(+lx.dataset.lx, "✕ Поле"); } catch (err) { if (err.message === "ZZ_LOCK") say("⛔ Строки заперты — поле не удалить."); else throw err; } return; }
     const lh = e.target.closest(".lh"); if (lh) { switchLane(+lh.dataset.l); return; }
     if (e.target.closest(".axrow")) return;   // v0.018: ручки осей тащат, а не выбирают
     if (axSel >= 0) { axSel = -1; renderRows(); }   // v0.022: щелчок по полю снимает выделение оси

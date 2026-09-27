@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.246. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.247. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.246</title>
+<title>Zazerkalius — v0.247</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -229,6 +229,8 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 #rowList.multi .rw.cur .bits.la{background:rgba(185,140,240,.22)}
 .lhrow .lh{position:sticky;top:0;z-index:2;background:var(--panel);font-size:11px;color:var(--dim);text-align:center;padding:3px 8px;border-bottom:1px solid var(--line);border-left:1px dashed var(--line);cursor:pointer}
 .lhrow .lh.act{color:var(--acc);font-weight:700;border-bottom:2px solid var(--acc)}
+.lhrow .lh .lhx{margin-left:8px;padding:0 4px;border-radius:3px;color:var(--dim);font-weight:400;cursor:pointer}   /* v0.247: ✕ удалить поле */
+.lhrow .lh .lhx:hover{color:#f87171;background:color-mix(in srgb, #f87171 15%, transparent)}
 .lhrow > .no{top:0;z-index:3;background:var(--panel);border-bottom:1px solid var(--line)}
 /* v0.018: поля НАЛОЖЕНИЕМ — одно пространство, у каждого поля своя ось (вертикальная черта). Позиции — в
    полуклетках (ch/2): строка по центру начинается на полклетки раньше, и треугольник остаётся ровным;
@@ -729,7 +731,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.246</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.247</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1511,8 +1513,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0246"></script>
-<script src="zz-ui.js?v=0246"></script>
+<script src="zz-core.js?v=0247"></script>
+<script src="zz-ui.js?v=0247"></script>
 <script src="../_js/hub-link.js"></script>
 <script src="../_js/recorder.js" data-bez-knopki></script>
 </body>
