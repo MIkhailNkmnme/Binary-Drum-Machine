@@ -22,7 +22,7 @@ const ZZ_BG = (() => { try { return !!ZZ_SOLO && (new URLSearchParams(location.s
    весь Zazerkalius в состоянии пресета: окна, конус, лазер, поля строк. Память не читается и не пишется: гость крутит и гоняет
    лазер, его собственные строки и раскладка не тронуты, а ссылка при каждом открытии снова даёт пресет как есть. */
 const ZZ_PRESET_FULL = !!ZZ_PRESET && !ZZ_SOLO;
-const ZZ_PRESET_LAYOUT = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "ctw", "cgrpPos", "padPos", "tpl", "tplRef", "pins"];   // конусу одному (?solo=cone) — ни к чему
+const ZZ_PRESET_LAYOUT = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "ctw", "cgrpPos", "padPos", "tpl", "tplRef", "pins", "coneBtns"];   // конусу одному (?solo=cone) — ни к чему
 const ZZ_KEY = ZZ_BG ? "zazerkalius_bg" : ZZ_SOLO ? "zazerkalius_solo_" + ZZ_SOLO.slice(2) : "zazerkalius_v1";
 /* v0.030: окна можно вынести в отдельное окно браузера (⧉); их элементы живут уже в чужом документе,
    поэтому поиск по id смотрит и туда — иначе вынесенное окно перестало бы обновляться. */
@@ -4381,6 +4381,99 @@ function cgrpInit(){
   addEventListener("resize", () => groups.forEach(place));
   cgrpCols();
 }
+/* v0.203, «сделай как в Zerkalius-layers.html, чтобы кнопки можно было на холст в любое место» (там — «кнопки на поле цепочек», v1.594):
+   любую кнопку с именем (id) тянешь мышью на холст конуса — там, куда бросил, встаёт её копия с той же подписью (оригинал на месте); та же
+   кнопка уже на холсте — не удваивается, а переезжает. Копия жмёт оригинал ($ находит его и в вынесенном окне) и горит, как он (.on).
+   Копию тянешь по холсту — переезжает; вытащил за холст, правый щелчок или Delete — убрана. Места — Z.coneBtns [{ id, x, y }], x и y —
+   доли ширины и высоты холста (растянул окно — кнопки остаются на своих местах холста). Фон хаба и показ пресета их не рисуют. */
+function coneBtnsInit(){
+  const host = $("coneMain"); if (!host || ZZ_BG) return;
+  if (!Array.isArray(Z.coneBtns)) Z.coneBtns = [];
+  const L = document.createElement("div"); L.id = "coneBtns"; host.appendChild(L);
+  const TYPE = "text/zz-btn";
+  let drag = null;   // тащат копию с холста: { k, dx, dy, done }
+  const lab = (src) => (src.textContent || "").replace(/\s+/g, " ").trim() || (src.title || "").split(/ — |: |\. /)[0].slice(0, 24) || src.id;
+  const refresh = () => {
+    for (const b of L.children) {
+      const it = Z.coneBtns[+b.dataset.k], src = it && $(it.id);
+      b.classList.toggle("gone", !src); if (!src) continue;
+      b.classList.toggle("on", src.classList.contains("on"));
+      const t = lab(src); if (b.textContent !== t) b.textContent = t;
+    }
+  };
+  const render = () => {
+    L.innerHTML = "";
+    const W = host.clientWidth, H = host.clientHeight;
+    Z.coneBtns.forEach((it, k) => {
+      const src = $(it.id), b = document.createElement("button");
+      b.type = "button"; b.draggable = true; b.dataset.k = k;
+      b.textContent = src ? lab(src) : "?";
+      b.title = (src ? (src.title || lab(src)) : "Этой кнопки сейчас нет") + " · тащи по холсту — переставить; за холст, правый щелчок или Delete — убрать";
+      L.appendChild(b);
+      const w = b.offsetWidth, h = b.offsetHeight;
+      b.style.left = Math.round(Math.max(0, Math.min(it.x * W, W - w))) + "px";
+      b.style.top = Math.round(Math.max(0, Math.min(it.y * H, H - h))) + "px";
+    });
+    refresh();
+  };
+  const remove = (k, why) => {
+    const it = Z.coneBtns[k]; if (!it) return;
+    const src = $(it.id); Z.coneBtns.splice(k, 1); render(); save();
+    say(`Кнопка «${src ? lab(src) : it.id}» убрана с холста${why ? " — " + why : ""}.`);
+  };
+  L.addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-k]"); if (!b) return;
+    e.stopPropagation();
+    const it = Z.coneBtns[+b.dataset.k], src = it && $(it.id);
+    if (!src) { say("Этой кнопки сейчас нет — она появится, когда вернётся её окно."); return; }
+    src.click(); refresh(); setTimeout(refresh, 0);
+  });
+  L.addEventListener("contextmenu", (e) => { const b = e.target.closest("button[data-k]"); if (!b) return; e.preventDefault(); remove(+b.dataset.k); });
+  L.addEventListener("keydown", (e) => { const b = e.target.closest("button[data-k]"); if (b && (e.key === "Delete" || e.key === "Backspace")) { e.preventDefault(); remove(+b.dataset.k); } });
+  L.addEventListener("dragstart", (e) => {
+    const b = e.target.closest && e.target.closest("button[data-k]"); if (!b || !Z.coneBtns[+b.dataset.k]) return;
+    e.stopPropagation();
+    drag = { k: +b.dataset.k, dx: e.offsetX, dy: e.offsetY, done: false };
+    e.dataTransfer.setData(TYPE, Z.coneBtns[drag.k].id); e.dataTransfer.effectAllowed = "move";
+  });
+  L.addEventListener("dragend", (e) => {
+    const d = drag; drag = null;
+    if (d && !d.done && e.dataTransfer && e.dataTransfer.dropEffect === "none") remove(d.k, "вытащена за холст");
+  });
+  // любую кнопку с именем можно потянуть: draggable ставится в миг нажатия (кнопки бывают и новые)
+  document.addEventListener("pointerdown", (e) => {
+    const b = e.target.closest && e.target.closest("button[id]");
+    if (b && !b.draggable && !b.closest("#coneBtns")) b.draggable = true;
+  }, true);
+  document.addEventListener("dragstart", (e) => {
+    const b = e.target.closest && e.target.closest("button[id]"); if (!b || b.closest("#coneBtns")) return;
+    e.dataTransfer.setData(TYPE, b.id); e.dataTransfer.effectAllowed = "copyMove";
+  });
+  const isBtn = (e) => !!e.dataTransfer && [...e.dataTransfer.types].includes(TYPE);
+  host.addEventListener("dragover", (e) => { if (!isBtn(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = drag ? "move" : "copy"; });
+  host.addEventListener("drop", (e) => {
+    if (!isBtn(e)) return;
+    e.preventDefault();
+    const d = drag, id = d ? (Z.coneBtns[d.k] || {}).id : e.dataTransfer.getData(TYPE), src = id && $(id);
+    if (!src) return;
+    let k = d ? d.k : Z.coneBtns.findIndex(t => t.id === id);
+    const fresh = k < 0;
+    if (fresh) { Z.coneBtns.push({ id, x: 0, y: 0 }); k = Z.coneBtns.length - 1; }
+    render();
+    const me = L.children[k], hr = host.getBoundingClientRect(), W = host.clientWidth || 1, H = host.clientHeight || 1;
+    const w = me ? me.offsetWidth : 28, h = me ? me.offsetHeight : 24;
+    const dx = d ? d.dx : Math.min(w / 2, 14), dy = d ? d.dy : h / 2;   // новую — держим за левый край, где её знак
+    const x = Math.max(0, Math.min(e.clientX - dx - hr.left, W - w)), y = Math.max(0, Math.min(e.clientY - dy - hr.top, H - h));
+    Z.coneBtns[k].x = x / W; Z.coneBtns[k].y = y / H;
+    if (me) { me.style.left = Math.round(x) + "px"; me.style.top = Math.round(y) + "px"; me.focus({ preventScroll: true }); }
+    if (d) d.done = true;
+    save();
+    if (fresh) say(`«${lab(src)}» — на холсте. Тащи — переставить; за холст, правый щелчок или Delete — убрать.`);
+  });
+  if (window.ResizeObserver) new ResizeObserver(() => { if (Z.coneBtns.length) render(); }).observe(host);
+  setInterval(() => { if (L.children.length) refresh(); }, 400);   // кнопки меняют вид и сами (▶ крутить → ⏸ стоп)
+  render();
+}
 function cgrpCols(){   // v0.183: у каждой группы — столбцов на половину её видимых кнопок (два ряда)
   document.querySelectorAll("#w-cone .tools > .cgrp").forEach((g) => {
     const n = [...g.children].filter(c => !c.classList.contains("glab") && getComputedStyle(c).display !== "none").length;
@@ -4737,7 +4830,7 @@ function saveSession(){
    с другого компа — то тоже он становится умолчанием». ⭐ Умолчание — снимок Z в Z.home (без раскладки окон: она своя у каждого
    экрана). «↺ Начальные» берёт из него биты всех полей, «⟲ всё на места» — положения колец и настройки конуса. Открытый файл
    сессии сам становится умолчанием. Правый щелчок по ⭐ — забыть: снова встроенный столбик 1, 11, 101… и нулевые положения. */
-const ZZ_HOME_SKIP = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW"];
+const ZZ_HOME_SKIP = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "coneBtns"];   // v0.203: и кнопки на холсте — это раскладка
 function homeOf(o){ const h = {}; for (const k of Object.keys(o)) if (!ZZ_HOME_SKIP.includes(k)) h[k] = o[k]; return JSON.parse(JSON.stringify(h)); }
 function homeSave(){
   save(); Z.home = homeOf(Z); save(); homeBtn();
@@ -4790,6 +4883,7 @@ function init(){
   if (ZZ_SOLO) soloApply();   // v0.141
   ctwInit();   // v0.158
   cgrpInit();   // v0.177
+  coneBtnsInit();   // v0.203
   $("coneLockAll").onclick = () => $("coneLock").click();   // v0.167: общий замок над столбиком замков — та же галка
   { const h1 = document.querySelector("#top h1"); if (h1) { h1.title = "Щелчок — перезагрузить страницу"; h1.style.cursor = "pointer"; h1.onclick = () => location.reload(); } }   // v0.162, «клик — перезагрузка» (по названию в шапке)
   // v0.026: высоту поля строк, растянутую за угол, запоминаем (только когда под ним окна).
