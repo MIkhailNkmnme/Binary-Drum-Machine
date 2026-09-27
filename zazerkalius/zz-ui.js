@@ -1621,8 +1621,11 @@ function coneAimAngle(q){ const n0 = (Z.rows[0] || "1").length || 1; return -Mat
    включается следующий, а кольца, которые встали, отпускаются там, где стоят (coneReleaseRings): рисунок бит тот же, дальше крутятся
    с него. После восьмого — пауза. Сброс — вместе с остановленными кольцами (⟲ всё на места, ✕, правый щелчок по ▶, смена режима). */
 function coneLaserK(){ return (Z.voidHits && Z.voidHits.lk) | 0; }
-function coneLaserAngle(k){ return -Math.PI / 2 + (k === undefined ? coneLaserK() : k) * Math.PI / 4; }
-const CONE_LASERS = 8;
+/* v0.194, «где задать количество и начальный угол?» (выбрано: просто угол от верха): лазеров N (Z.coneLasers, 1…72, по умолчанию 8),
+   шаг — 360°/N; первый — на угле Z.coneLaser0 (градусы по часовой от верха, по умолчанию 0). Поля — в «Лазере», рядом с 🎯. */
+function coneLasersN(){ return Math.max(1, Math.min(72, Math.round(+Z.coneLasers) || 8)); }
+function coneLaserDeg(k){ k = k === undefined ? coneLaserK() : k; return Math.round(((((+Z.coneLaser0 || 0) + k * 360 / coneLasersN()) % 360) + 360) % 360 * 10) / 10; }
+function coneLaserAngle(k){ return -Math.PI / 2 + coneLaserDeg(k) * Math.PI / 180; }
 function coneCutAngle(){ return coneAimAngle() + Math.PI; }
 function coneAngDiff(x, y){ let d = (x - y) % (2 * Math.PI); if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI; return d; }
 function coneCutOpen(){ return Math.abs(coneAngDiff(coneCutAngle(), coneLaserAngle())) <= coneSlitHalf(); }
@@ -1723,7 +1726,7 @@ function coneReleaseRings(){   // v0.191: остановленные кольц�
 }
 function coneLaserNext(){   // v0.191: следующий лазер (+45°); → false, если все восемь уже были
   coneVoidHits(); const V = Z.voidHits, k = V.lk | 0;
-  if (k + 1 >= CONE_LASERS) return false;
+  if (k + 1 >= coneLasersN()) return false;
   coneExArchive(false); V.ex = {}; V.exI = {};   // v0.193: вылеты прежнего лазера — в постоянную статистику
   coneReleaseRings(); V.lk = k + 1; V.lph = Z.coneSpinPh || 0; coneWallWas = undefined; coneClockWas = null; coneLogDirty();
   return true;
@@ -1740,7 +1743,7 @@ function coneExArchive(endRun){
   const L = Array.isArray(Z.coneExLog) ? Z.coneExLog : (Z.coneExLog = []), run = Z.coneExRun | 0;
   if (keys.length) {
     const I = V.exI || {};
-    L.push({ run, k: V.lk | 0, lph: V.lph || 0, m: V.lm || Z.coneSpinMode || "all", N: parseInt(V.sig, 10) || 0,
+    L.push({ run, k: V.lk | 0, ang: coneLaserDeg(V.lk | 0), lph: V.lph || 0, m: V.lm || Z.coneSpinMode || "all", N: parseInt(V.sig, 10) || 0,
              rows: keys.map(Number).sort((x, y) => x - y).map(b => [b, ex[b], I[b] || {}]) });
     if (L.length > CONE_EXLOG_MAX) L.splice(0, L.length - CONE_EXLOG_MAX);
   }
@@ -1883,7 +1886,7 @@ function coneLogRender(){
      от включения лазера. Нынешний лазер — сверху. */
   conePredRender();   // v0.193
   const Ls = coneExitLasers(), N = Math.min(Z.rows.length, CONE_MAX), cur = Ls[Ls.length - 1];
-  $("coneExN").textContent = (cur.rows.length ? `(лазер ${cur.k + 1} из ${CONE_LASERS}: ${cur.rows.length} из ${N} строк)` : `— лазер ${cur.k + 1}: ещё ни из одной строки`) + (Ls.length > 1 ? ` · в статистике ${Ls.length - 1}` : "");
+  $("coneExN").textContent = (cur.rows.length ? `(лазер ${cur.k + 1} из ${coneLasersN()}: ${cur.rows.length} из ${N} строк)` : `— лазер ${cur.k + 1}: ещё ни из одной строки`) + (Ls.length > 1 ? ` · в статистике ${Ls.length - 1}` : "");
   $("coneEx").innerHTML = Ls.slice().reverse().filter(L => L.rows.length || L === cur).map(L =>
     '<div class="lh">' + esc(coneExitHead(L, N)) + "</div>" + (L.rows.length ? '<table><tr><th>стр</th><th>биты от щели</th><th>щель</th><th>кольцо</th><th>через</th></tr>' +
     L.rows.map(([b, t, I]) => "<tr><td>" + (b + 1) + "</td><td>" + esc(t) + "</td><td>" + esc(I.s || "") + "</td><td>" + (I.a !== undefined ? I.a + "°" : "") + "</td><td>" + (I.d !== undefined ? conePredFmt(I.d, coneBitMode(L.m || Z.coneSpinMode)) : "") + "</td></tr>").join("") + "</table>" : "")).join("");
@@ -1891,12 +1894,12 @@ function coneLogRender(){
 function coneExitLasers(){   // v0.192: все лазеры — [{ k, lph, rows: [[строка, биты, { s щель, a поворот°, d через }]] }], нынешний последним
   const V = Z.voidHits || {}, rowsOf = (ex, I) => Object.keys(ex || {}).map(Number).sort((x, y) => x - y).map(b => [b, ex[b], (I && I[b]) || {}]);
   const out = (Array.isArray(Z.coneExLog) ? Z.coneExLog : []).slice();   // v0.193: постоянная статистика
-  out.push({ run: Z.coneExRun | 0, k: coneLaserK(), lph: V.lph || 0, m: V.lm || Z.coneSpinMode || "all", N: Math.min(Z.rows.length, CONE_MAX), rows: rowsOf(V.ex, V.exI), live: true });
+  out.push({ run: Z.coneExRun | 0, k: coneLaserK(), ang: coneLaserDeg(), lph: V.lph || 0, m: V.lm || Z.coneSpinMode || "all", N: Math.min(Z.rows.length, CONE_MAX), rows: rowsOf(V.ex, V.exI), live: true });
   return out;
 }
 function coneExitHead(L, N){
   const mm = L.m || Z.coneSpinMode || "all", bitm = coneBitMode(mm), m = ({ bit: "Каждое", obit: "Встреч Бит", opp: "Встреч Стр", all: "Всё" })[mm];
-  return `прогон ${(L.run | 0) + 1} · ⌖${L.k + 1} · лазер ${L.k * 45}° · старт с фазы ${conePredFmt(L.lph, bitm)} · ${m} · вышел из ${L.rows.length} из ${L.N || N} строк` + (L.live ? " · сейчас" : "");
+  return `прогон ${(L.run | 0) + 1} · ⌖${L.k + 1} · лазер ${L.ang !== undefined ? L.ang : L.k * 45}° · старт с фазы ${conePredFmt(L.lph, bitm)} · ${m} · вышел из ${L.rows.length} из ${L.N || N} строк` + (L.live ? " · сейчас" : "");
 }
 function coneExitHist(){   // v0.191: прежние лазеры — [[номер лазера, [[строка, биты]]]]
   const H = Z.voidHits && Array.isArray(Z.voidHits.exH) ? Z.voidHits.exH : [];
@@ -2465,8 +2468,8 @@ function setupCone(){
       coneCycleCheck(ph0, Z.coneSpinPh, m);
       if (Z.coneClock) { const R = coneClockTrace()[0];   // v0.139, «и так все кольца пройдёт наружу»: вышел за край — все кольца на пути встали, пауза
         if (R && R.pass && !R.cells.length && coneRingFrozen(0)) {
-          if (coneLaserNext()) { const k = coneLaserK(); save(); coneLogRender(); say(`⌖ Луч вышел наружу — лазер ${k + 1} из ${CONE_LASERS}, ${k * 45}°: кольца крутятся дальше с того же рисунка.`); }   // v0.191
-          else { autoSet(false); renderCone(); say(`⏹ Все ${CONE_LASERS} лазеров прошли — пауза. Заново — ✕ у строки для заполнения или ⟲ всё на места.`); return; }
+          if (coneLaserNext()) { const k = coneLaserK(); save(); coneLogRender(); say(`⌖ Луч вышел наружу — лазер ${k + 1} из ${coneLasersN()}, ${coneLaserDeg(k)}°: кольца крутятся дальше с того же рисунка.`); }   // v0.191
+          else { autoSet(false); renderCone(); say(`⏹ Все ${coneLasersN()} лазеров прошли — пауза. Заново — ✕ у строки для заполнения или ⟲ всё на места.`); return; }
         } }
     }
     renderCone();
@@ -2503,7 +2506,7 @@ function setupCone(){
     let ph = ph0, s = 0;
     for (; s < 20000; s++) { ph += d; Z.coneSpinPh = ph; if (key(coneClockTrace()[0]) !== k0) break; }
     if (s >= 20000) { Z.coneSpinPh = ph0; const R = coneClockTrace()[0];
-      if (R && R.pass && !R.cells.length && coneRingFrozen(0) && coneLaserNext()) { const k = coneLaserK(); save(); renderCone(); coneLogRender(); say(`⌖ Лазер ${k + 1} из ${CONE_LASERS}, ${k * 45}° — прежний вышел наружу. ◀ ▶ — шагать дальше.`); return; }   // v0.191
+      if (R && R.pass && !R.cells.length && coneRingFrozen(0) && coneLaserNext()) { const k = coneLaserK(); save(); renderCone(); coneLogRender(); say(`⌖ Лазер ${k + 1} из ${coneLasersN()}, ${coneLaserDeg(k)}° — прежний вышел наружу. ◀ ▶ — шагать дальше.`); return; }   // v0.191
       say(R && R.pass && !R.cells.length ? "⏹ Лазер вышел наружу — все кольца на его пути встали. Заново — ✕ у строки для заполнения или ⟲ всё на места." : "◀ ▶: за 20 000 мелких шагов конец луча не сменился — крути ▶ или сдвинь строку 1."); return; }
     save(); renderCone();
     const L = Z.coneLog && Z.coneLog.list, last = L && L[L.length - 1];
@@ -2517,6 +2520,12 @@ function setupCone(){
      не меняется. */
   const goN = $("coneGoN"); goN.value = Z.coneGoN || 10;
   goN.onchange = () => { Z.coneGoN = Math.max(1, Math.round(+goN.value) || 1); goN.value = Z.coneGoN; save(); };
+  const lzN = $("coneLasersN"), lz0 = $("coneLaser0");   // v0.194: сколько лазеров и угол первого
+  lzN.value = coneLasersN(); lz0.value = +Z.coneLaser0 || 0;
+  lzN.onchange = () => { Z.coneLasers = Math.max(1, Math.min(72, Math.round(+lzN.value) || 8)); lzN.value = Z.coneLasers; save(); renderCone(); coneLogRender();
+    say(`⌖ Лазеров ${Z.coneLasers}, шаг ${Math.round(3600 / Z.coneLasers) / 10}°` + (coneLaserK() + 1 > Z.coneLasers ? ` — нынешний (${coneLaserK() + 1}) уже за последним: дальше пауза.` : ".")); };
+  lz0.onchange = () => { let v = +lz0.value || 0; v = Math.round((((v % 360) + 360) % 360) * 10) / 10; Z.coneLaser0 = v; lz0.value = v; save(); renderCone(); coneLogRender();
+    say(`⌖ Первый лазер — ${v}° от верха по часовой; нынешний (${coneLaserK() + 1}) — ${coneLaserDeg()}°.`); };
   $("bConeGo").onclick = () => {
     autoSet(false);
     /* v0.190, снимок «что не так?» (режим «Всё», лог «1 закрыт»): во «Всё» конус крутится целиком, вырез строки 1 относительно лазера не
