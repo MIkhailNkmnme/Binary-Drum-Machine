@@ -357,7 +357,7 @@ function renderRowsOver(){
   $("fieldInfo").textContent = `наложение ${N} полей · рабочее ${Z.lane + 1} · ${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1}` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "");
   $("fieldInfo").title = $("fieldInfo").textContent;   // v0.077: целиком — в подсказке
   fieldInfoFit();   // v0.209
-  $("rowList").classList.toggle("dimsel", rowSel.size > 0);   // v0.213: есть выделение — остальные строки чуть гаснут
+  $("rowList").classList.toggle("dimsel", rowSel.size > 0); $("rowList").classList.toggle("dimcur", !rowSel.size && !document.body.classList.contains("nocur"));   // v0.213 / v0.221: выделение (или выбранная строка) — остальные строки гаснут
   rowsFit(); rowsLockAllPlace(); rowBitMark();   // v0.153, v0.167, v0.173
   const c = L.querySelector(".rw.cur > .no");
   if (c) c.scrollIntoView({ block: "nearest" });
@@ -624,7 +624,7 @@ function renderRows(){
   $("fieldInfo").textContent = (N > 1 ? `поле ${Z.lane + 1} из ${N} · ` : "") + `${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1} (${cur().length} бит)` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowChgInfo();
   $("fieldInfo").title = $("fieldInfo").textContent;   // v0.077: целиком — в подсказке
   fieldInfoFit();   // v0.209
-  $("rowList").classList.toggle("dimsel", rowSel.size > 0);   // v0.213: есть выделение — остальные строки чуть гаснут
+  $("rowList").classList.toggle("dimsel", rowSel.size > 0); $("rowList").classList.toggle("dimcur", !rowSel.size && !document.body.classList.contains("nocur"));   // v0.213 / v0.221: выделение (или выбранная строка) — остальные строки гаснут
   rowsFit(); rowsLockAllPlace(); rowBitMark();   // v0.153, v0.167, v0.173
   const c = L.querySelector(".rw.cur > .bits.la") || L.querySelector(".rw.cur > .no");
   if (c) c.scrollIntoView({ block: "nearest", inline: "nearest" });
@@ -1359,7 +1359,7 @@ function renderCone(){
     // контуром, и canvas соединял их отрезком (справа, на угле 0). Теперь — каждая своим контуром, без перемычки.
     /* v0.213, «выделять кольцо или строку — синхронно, и остальные при этом гаснут немного»: есть выделение (Shift + щелчок по кольцу,
        Ctrl + щелчок по строке — оно общее у колец и строк) — невыделенные кольца под полупрозрачной вуалью цвета холста. */
-    if (rowSel.size && !rowSel.has(i)) {
+    if (focus.length && !focus.includes(i)) {   // v0.221: «выделение строки — это когда все остальные тушатся светом» — и у выбранной строки
       if (!coneVeil) coneVeil = getComputedStyle(g.canvas).backgroundColor || cBg;
       g.strokeStyle = coneVeil; g.lineWidth = Math.max(1, rout - rin + dpr); g.globalAlpha = 0.55; g.beginPath(); coneArc(g, cx, cy, i, (rin + rout) / 2, 0, 2 * Math.PI); g.stroke(); g.globalAlpha = 1;
     }
