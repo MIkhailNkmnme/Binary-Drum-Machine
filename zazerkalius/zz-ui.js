@@ -345,7 +345,7 @@ function renderRowsOver(){
     h += '<div class="rw ovr' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? " — изменена против эталона ⚑" : "") + ' · щелчок — выделить">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) +
          '</span><span class="trk" style="width:' + W + '">' + lines + t + "</span></div>";
   }
-  h += cutLine() + '<div id="cutSlot"></div>';   // v0.112; v0.225: под чертой — кнопки достройки и шаблоны
+  h += '<div id="infoSlot"></div>' + cutLine() + '<div id="cutSlot"></div>';   // v0.237: сведения — под последней строкой; v0.112; v0.225: под чертой — кнопки достройки и шаблоны
   let HH = 0; for (let l = 0; l < N; l++) HH = Math.max(HH, hidRows(l).length);
   for (let j = 0; j < HH; j++) {
     let t = "";
@@ -421,7 +421,11 @@ function rowLockBadge(i){
    все поля и стоит под нижней строкой; тянешь её вверх — у каждого поля над ней остаётся не больше k строк (хотя бы одна), вниз —
    строки возвращаются на свои места. Двойной щелчок по черте — вернуть все. Перенос черты — правка: ↩ вернёт. */
 const CUT_PANEL = document.getElementById("cutPanel");   // v0.225: кнопки достройки и шаблоны — живут под чертой, переносятся при каждой отрисовке поля
-function cutPanelMount(){ const s = document.getElementById("cutSlot"); if (s && CUT_PANEL && CUT_PANEL.parentNode !== s) s.appendChild(CUT_PANEL); }
+const FIELD_INFO = document.getElementById("fieldInfo");   // v0.237, «эту надпись вниз, под последнюю строку»: сведения поля — строкой под последней строкой
+function cutPanelMount(){
+  const s = document.getElementById("cutSlot"); if (s && CUT_PANEL && CUT_PANEL.parentNode !== s) s.appendChild(CUT_PANEL);
+  const f = document.getElementById("infoSlot"); if (f && FIELD_INFO && FIELD_INFO.parentNode !== f) f.appendChild(FIELD_INFO);
+}
 function hidRows(l){ return (Z.lanesHid && Z.lanesHid[l]) || []; }
 function hidCopy(){ return Array.isArray(Z.lanesHid) ? Z.lanesHid.map(l => l.slice()) : null; }
 function hidCount(){ let c = 0; for (let l = 0; l < (Z.laneCount || 1); l++) c += hidRows(l).length; return c; }
@@ -437,7 +441,14 @@ function cutHeight(){ let H = 0; for (let l = 0; l < (Z.laneCount || 1); l++) H 
    остатка на полосы высотой h, в полосе n — n + 1 треугольников ▲ (вершина вверху). Строки ▲: строка t полосы — кусок строки
    n·h + t с позиции g·h·j длиной g·t + 1, где g — на сколько растёт строка (1 — Паскаль, 2 — правила 90, 30…). Куски ставятся
    друг под другом в выбранном порядке: по рядам (→), вдоль левой стороны (↘), вдоль правой (↙); «без пустых» — без ▲ из одних нулей. */
-function triCut(rows, h, order, skipEmpty){
+/* v0.237, «нужны ▼, и вообще все вариации настроек — по размерам, по порядку…» (как в Треугольнике): фигуры — ▲, ▼ (как есть: строки
+   убывают), ▼ перевёрнутые (строки растут), ▲▼ (обе, по порядку), ◇ ромбы (▲ и ▼ под ним — ромб, разрезанный горизонтальной
+   диагональю), ⧗ часы (▼ над ▲, склеенные вершиной); порядок — по рядам, вдоль левой стороны, вдоль правой, каждый в обе стороны.
+   ▼ полосы n между ▲ j и j + 1: строка t — кусок строки n·h + t с позиции g·h·j + g·t + 1 длиной g·(h − t) − 1 (строка нулевой длины
+   отбрасывается). */
+const TRI_UNITS = { up: "▲", dn: "▼", dnf: "▼ перевёрнутые", both: "▲▼", rh: "◇ ромбы", hg: "⧗ часы" };
+const TRI_ORDERS = { rows: "по рядам →", rowsR: "по рядам ←", left: "вдоль левой ↘", leftR: "вдоль левой ↖", right: "вдоль правой ↙", rightR: "вдоль правой ↗" };
+function triCut(rows, h, order, skipEmpty, unit){
   const n = rows.length;
   if (n < 2) return { err: "✂ Нечего резать — нужен треугольник хотя бы из двух строк." };
   if (rows[0].length !== 1) return { err: "✂ Режу треугольник от вершины в один бит — первая строка должна быть из одного бита." };
@@ -446,16 +457,21 @@ function triCut(rows, h, order, skipEmpty){
   for (let i = 0; i < n; i++) if (rows[i].length !== g * i + 1) return { err: `✂ Строка ${i + 1} — ${rows[i].length} бит, а в треугольнике (+${g}) должно быть ${g * i + 1}.` };
   const bands = Math.floor(n / h);
   if (!bands) return { err: `✂ Строк ${n} — меньше одной полосы высотой ${h}.` };
-  const items = [];
+  const up = (lev, j) => { const rs = []; for (let t = 0; t < h; t++) { const a = g * h * j; rs.push(rows[lev * h + t].slice(a, a + g * t + 1)); } return rs; };
+  const dn = (lev, j) => { const rs = []; for (let t = 0; t < h; t++) { const a = g * h * j + g * t + 1, L = g * (h - t) - 1; if (L > 0) rs.push(rows[lev * h + t].slice(a, a + L)); } return rs; };
+  const u = TRI_UNITS[unit] ? unit : "up", items = [];
   for (let lev = 0; lev < bands; lev++) for (let j = 0; j <= lev; j++) {
-    const rs = [];
-    for (let t = 0; t < h; t++) { const a = g * h * j; rs.push(rows[lev * h + t].slice(a, a + g * t + 1)); }
-    if (skipEmpty && rs.every(r => r.indexOf("1") < 0)) continue;
-    items.push({ lev, j, rs });
+    if (u === "up" || u === "both") items.push({ lev, j, k: 0, rs: up(lev, j) });
+    if ((u === "dn" || u === "both") && j < lev) items.push({ lev, j, k: 1, rs: dn(lev, j) });
+    if (u === "dnf" && j < lev) items.push({ lev, j, k: 1, rs: dn(lev, j).reverse() });
+    if (u === "rh" && lev + 1 < bands) items.push({ lev, j, k: 0, rs: up(lev, j).concat(dn(lev + 1, j)) });
+    if (u === "hg" && j < lev && lev + 1 < bands) items.push({ lev, j, k: 1, rs: dn(lev, j).concat(up(lev + 1, j + 1)) });
   }
-  if (order === "left") items.sort((x, y) => x.j - y.j || x.lev - y.lev);
-  else if (order === "right") items.sort((x, y) => (x.lev - x.j) - (y.lev - y.j) || x.lev - y.lev);
-  return { g, bands, items, rows: [].concat(...items.map(it => it.rs)) };
+  const kept = skipEmpty ? items.filter(it => it.rs.some(r => r.indexOf("1") >= 0)) : items;
+  const o = TRI_ORDERS[order] ? order : "rows", d = /R$/.test(o) ? -1 : 1, base = o.replace(/R$/, "");
+  const key = base === "left" ? (it) => [it.j, d * it.lev, it.k] : base === "right" ? (it) => [it.lev - it.j, d * it.lev, it.k] : (it) => [it.lev, d * it.j, d * it.k];
+  kept.sort((x, y) => { const a = key(x), b = key(y); return a[0] - b[0] || a[1] - b[1] || a[2] - b[2]; });
+  return { g, bands, items: kept, rows: [].concat(...kept.map(it => it.rs)) };
 }
 const CUT_GEN_MAX = 1024;
 function cutEcaNext(rule, s){
@@ -463,8 +479,11 @@ function cutEcaNext(rule, s){
   for (let x = -1; x <= L; x++) o += (rule >> (b(x - 1) * 4 + b(x) * 2 + b(x + 1))) & 1 ? "1" : "0";
   return o;
 }
-function cutGenNext(s){
+function cutGenNext(s, prev){
   const m = Z.cutGen || "r90";
+  // v0.237, «при построении учитывай: если стоит Серпинский — строит не с 1, а с 11»: треугольник +1 (или строка одна) — Паскаль, +1 бит;
+  // треугольник +2 — правило 90, +2 бита (как заготовки Аниматрицы)
+  if (m === "r90" && (!prev || s.length - prev.length !== 2)) return zzPascalNext(s || "1");
   if (m === "mask") { const mk = zzIsBits(Z.cutMask) ? Z.cutMask : "01"; let o = ""; for (let i = 0; i <= (s || "").length; i++) o += mk[i % mk.length]; return o; }
   return cutEcaNext(m === "r30" ? 30 : 90, s || "1");
 }
@@ -473,7 +492,7 @@ function cutAt(k, gen){
   k = Math.max(1, k | 0);
   for (let l = 0; l < (Z.laneCount || 1); l++) {
     if (gen && k > Z.lanes[l].length) {   // v0.225: вниз за нижнюю — достроить от верхней
-      const vis = Z.lanes[l].slice(); while (vis.length < k && vis.length < CUT_GEN_MAX) vis.push(cutGenNext(vis[vis.length - 1]));
+      const vis = Z.lanes[l].slice(); while (vis.length < k && vis.length < CUT_GEN_MAX) vis.push(cutGenNext(vis[vis.length - 1], vis[vis.length - 2]));
       Z.lanes[l] = vis; if (Z.cutHidMode !== "keep") Z.lanesHid[l] = [];
       continue;
     }
@@ -574,7 +593,7 @@ function rowsFitDone(){ if (Z.tri90) tri90Apply(); }   // ◸ 90° считае�
 function fieldInfoFit(){
   const fi = $("fieldInfo"), bar = $("fieldInfoBar"); if (!fi || !bar) return;
   const no = document.querySelector("#rowList .rw > .no"), w = no ? no.getBoundingClientRect().right - bar.getBoundingClientRect().left : 90;
-  fi.style.maxWidth = Math.max(40, Math.round(bar.clientWidth - Math.max(0, w) - 14 - 6)) + "px";
+  fi.style.maxWidth = (fi.parentNode && fi.parentNode.id === "infoSlot" ? Math.max(40, ($("rowList").clientWidth || 200) - 16) : Math.max(40, Math.round(bar.clientWidth - Math.max(0, w) - 14 - 6))) + "px";   // v0.237: под строками — во всю ширину поля
   if (CUT_PANEL && $("rowList")) CUT_PANEL.style.maxWidth = Math.max(60, $("rowList").clientWidth - 12) + "px";   // v0.230: кнопки под чертой — в ширину видимого поля, с переносом
   /* v0.212, «запрет сдвига строк — не дубль замка?» → «да (убрать), но общий замок всегда над столбиком должен стоять»: галки в «Кольцах»
      не видно (она осталась скрытой — на ней держится общий замок), а общий замок в полосе ввода сдвигается так, что его середина —
@@ -658,7 +677,8 @@ function renderRows(){
     h += "</div>";
   }
   // v0.112: черта-граница под нижней строкой, под ней — строки за границей, бесцветные
-  h += cutLine() + fillRowHtml(N) + '<div id="cutSlot"></div>';   // v0.114: сразу под чертой — строка для заполнения; v0.225: под ней — кнопки достройки и шаблоны
+  h += '<div id="infoSlot"></div>' + cutLine() + fillRowHtml(N) + '<div id="cutSlot"></div>';   // v0.237: сведения — под последней строкой
+  //   // v0.114: сразу под чертой — строка для заполнения; v0.225: под ней — кнопки достройки и шаблоны
   let HH = 0; for (let l = 0; l < N; l++) HH = Math.max(HH, hidRows(l).length);
   for (let j = 0; j < HH; j++) {
     let t = "";
@@ -5249,6 +5269,9 @@ function init(){
   // v0.010: двойной щелчок — правка строки на месте.
   $("rowList").ondblclick = (e) => {
     if (rowEditing >= 0) return;
+    if (e.target.closest(".rw > .no > .rn") && !e.target.closest(".fctl")) {   // v0.237, сброс ширины — «по номерам»: двойной щелчок по номеру — ширина поля по умолчанию
+      Z.rowsW = 0; $("main").style.removeProperty("--rowsW"); save(); packWins(); renderPointers(); fieldInfoFit(); say("↔ Ширина поля строк — по умолчанию."); return;
+    }
     // v0.112: двойной щелчок по черте — вернуть все строки (черту тащат с захватом указателя — щелчок приходит полю, смотрим, что под ним)
     const pt = document.elementFromPoint(e.clientX, e.clientY);
     if (pt && pt.closest(".cutln")) { cutMove(Infinity); return; }
@@ -5812,19 +5835,23 @@ function init(){
   $("bCutHid").onclick = () => { Z.cutHidMode = Z.cutHidMode === "keep" ? "del" : "keep"; cutUi(); save();
     say(Z.cutHidMode === "keep" ? "⎯ Заменить — выкл: строки под чертой при достройке сдвигаются вниз, ниже новых." : "⎯ Заменить — вкл: строки под чертой при достройке заменяются новыми."); };
   cutUi();
-  const TRI_ORD = { rows: "по рядам →", left: "вдоль левой ↘", right: "вдоль правой ↙" };   // v0.234: ✂ нарезка на ▲
-  const triUi = () => { $("bTriOrd").textContent = TRI_ORD[Z.triOrd] || TRI_ORD.rows; $("bTriEmpty").classList.toggle("on", Z.triSkip !== false); $("triH").value = Z.triH || 16; };
+  const TRI_ORD = TRI_ORDERS;   // v0.234: ✂ нарезка; v0.237: все фигуры и порядки, щелчок — дальше, правый — назад
+  const triUi = () => { $("bTriOrd").textContent = TRI_ORD[Z.triOrd] || TRI_ORD.rows; $("bTriUnit").textContent = TRI_UNITS[Z.triUnit] || TRI_UNITS.up; $("bTriEmpty").classList.toggle("on", Z.triSkip !== false); $("triH").value = Z.triH || 16; };
   triUi();
-  $("bTriOrd").onclick = () => { const k = Object.keys(TRI_ORD); Z.triOrd = k[(k.indexOf(Z.triOrd || "rows") + 1) % k.length]; triUi(); save(); };
+  const triCycle = (key, dict, def, dir) => { const k = Object.keys(dict); Z[key] = k[(k.indexOf(Z[key] || def) + dir + k.length) % k.length]; triUi(); save(); };
+  $("bTriOrd").onclick = () => triCycle("triOrd", TRI_ORD, "rows", 1);
+  $("bTriOrd").oncontextmenu = (e) => { e.preventDefault(); triCycle("triOrd", TRI_ORD, "rows", -1); };
+  $("bTriUnit").onclick = () => triCycle("triUnit", TRI_UNITS, "up", 1);
+  $("bTriUnit").oncontextmenu = (e) => { e.preventDefault(); triCycle("triUnit", TRI_UNITS, "up", -1); };
   $("bTriEmpty").onclick = () => { Z.triSkip = Z.triSkip === false; triUi(); save(); };
   $("triH").onchange = (e) => { Z.triH = Math.max(2, Math.min(256, Math.round(+e.target.value) || 16)); triUi(); save(); };
   $("bTriCut").onclick = () => {
-    syncLane(); const h = Z.triH || 16, R = triCut(Z.rows.slice(), h, Z.triOrd || "rows", Z.triSkip !== false);
+    syncLane(); const h = Z.triH || 16, U = TRI_UNITS[Z.triUnit] || TRI_UNITS.up, R = triCut(Z.rows.slice(), h, Z.triOrd || "rows", Z.triSkip !== false, Z.triUnit || "up");
     if (R.err) { say(R.err); return; }
-    if (!R.rows.length) { say(`✂ Все ▲ высотой ${h} — из одних нулей; выключи «без пустых», чтобы поставить и их.`); return; }
+    if (!R.rows.length) { say(`✂ ${U}: при высоте ${h} кусков нет или все из одних нулей (выключи «без пустых»).`); return; }
     try { snapshot(); } catch (err) { return; }
     Z.rows = R.rows; syncLane(); Z.cur = 0; renderAll(); save();
-    say(`✂ Нарезано: ${R.items.length} ▲ по ${h} строк (${R.bands} полос, строки +${R.g}), ${TRI_ORD[Z.triOrd || "rows"]} — друг под другом, ${R.rows.length} стр. ↩ вернёт.`);
+    say(`✂ Нарезано: ${U} — ${R.items.length} шт., высота ${h} (${R.bands} полос, строки +${R.g}), ${TRI_ORD[Z.triOrd || "rows"]} — друг под другом, ${R.rows.length} стр. ↩ вернёт.`);
   };
   $("bTplRow").onclick = () => { const rows = [cur()]; Z.tpl.push({ name: tplName(rows), rows }); renderTpl(); save(); say(`Строка ${Z.cur + 1} (${cur().length} бит) сохранена шаблоном. Щелчок по нему — вставить под текущей.`); };
   $("bTplAll").onclick = () => { const rows = Z.rows.slice(); Z.tpl.push({ name: tplName(rows), rows }); Z.tplRef = Z.tpl.length - 1; renderTpl(); renderRows(); save(); say(`Столбик (${rows.length} стр.) сохранён шаблоном.`); };   // v0.037: сохранённый столбик — новый эталон; v0.038: комментарий съедал конец строки — страница не запускалась

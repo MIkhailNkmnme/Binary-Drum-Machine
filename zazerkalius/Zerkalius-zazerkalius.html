@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.236. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.237. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.236</title>
+<title>Zazerkalius — v0.237</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -388,7 +388,9 @@ body.field-right #fieldEdge{right:auto;left:0}
 body.field-hidden #fieldEdge,body.zen #fieldEdge{display:none}
 .rw.fillrw > .no{color:var(--acc)}
 /* Шаблоны (v0.010) */
-#cutSlot{grid-column:1 / -1;contain:inline-size;min-width:0}   /* v0.227: ячейка панели — во всю ширину и не раздувает колонки (в v0.225 растянула колонку номеров) */
+#cutSlot{grid-column:1 / -1;contain:inline-size;min-width:0}
+#infoSlot{grid-column:1 / -1;contain:inline-size;min-width:0}   /* v0.237: сведения поля — строкой под последней строкой */
+#infoSlot > #fieldInfo{position:sticky;left:0;top:auto;right:auto;display:block;width:max-content;text-align:left;background:none;padding:1px 8px 2px}   /* v0.227: ячейка панели — во всю ширину и не раздувает колонки (в v0.225 растянула колонку номеров) */
 #cutPanel{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 8px 10px;font-size:12px}   /* v0.225: под чертой поля */
 #cutPanel .cpl{color:var(--dim)}
 /* v0.230, по снимку растянутых шаблонов под чертой — «тут жесть какая-то! без фона надо, это не поле, а кнопки под чертой, не растягивать»:
@@ -705,7 +707,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.236</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.237</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -834,12 +836,12 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
     <!-- v0.225: под чертой поля — достройка строк (тянешь черту вниз) и свои шаблоны; при отрисовке поля переносится в #cutSlot -->
     <div id="cutPanel">
       <span class="cpl" title="Тянешь черту под строками вниз — новые строки достраиваются от строки над ней">достроить:</span>
-      <button id="bCutR90" title="🔺 Серп 90: правило 90 — строка на 2 бита длиннее (как заготовки Аниматрицы); от «1» — треугольник Серпинского">🔺 Серп 90</button>
+      <button id="bCutR90" title="🔺 Серп 90 — Серпинский по треугольнику: строки растут на 1 бит (или над чертой одна строка) — Паскаль, на бит длиннее (1 → 11 → 101…); растут на 2 — правило 90, на 2 бита">🔺 Серп 90</button>
       <button id="bCutR30" title="Правило 30 — строка на 2 бита длиннее, хаос">30</button>
       <button id="bCutMask" title="Маска: следующая строка — маска подряд, на бит длиннее">маска</button><input id="cutMask" value="01" title="Маска из 0 и 1 (по умолчанию 01)" style="width:52px">
       <span class="cpl" title="✂ Нарезать треугольник строк на маленькие ▲ высотой h (как в Треугольнике) и поставить их друг под другом">нарезать:</span>
-      <button id="bTriCut" title="✂ Нарезать треугольник строк на ▲ высотой h и поставить их друг под другом (↩ вернёт)">✂ ▲</button><input id="triH" type="number" min="2" max="256" value="16" title="Высота ▲ — строк в каждом" style="width:46px">
-      <button id="bTriOrd" title="Порядок ▲: по рядам, вдоль левой стороны, вдоль правой — щелчок меняет">по рядам →</button>
+      <button id="bTriCut" title="✂ Нарезать треугольник строк на фигуры высотой h и поставить их друг под другом (↩ вернёт)">✂</button><button id="bTriUnit" title="Фигуры: ▲, ▼, ▼ перевёрнутые, ▲▼, ◇ ромбы, ⧗ часы — щелчок дальше, правый назад">▲</button><input id="triH" type="number" min="2" max="256" value="16" title="Высота ▲ — строк в каждом" style="width:46px">
+      <button id="bTriOrd" title="Порядок: по рядам, вдоль левой стороны, вдоль правой — каждый в обе стороны; щелчок дальше, правый назад">по рядам →</button>
       <button id="bTriEmpty" class="on" title="Без пустых: ▲ из одних нулей не ставить">без пустых</button>
       <button id="bCutHid" title="Заменить: включено — строки, что были под чертой, заменяются новыми (удаляются); выключено — сдвигаются вниз и остаются под чертой, ниже новых">Заменить</button>
       <div id="tplBar">
@@ -1472,8 +1474,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0236"></script>
-<script src="zz-ui.js?v=0236"></script>
+<script src="zz-core.js?v=0237"></script>
+<script src="zz-ui.js?v=0237"></script>
 <script src="../_js/hub-link.js"></script>
 <script src="../_js/recorder.js" data-bez-knopki></script>
 </body>
