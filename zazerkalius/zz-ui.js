@@ -538,7 +538,7 @@ function fieldInfoFit(){
     const a = B.getBoundingClientRect(), k = cell.getBoundingClientRect();
     if (k.width) B.style.marginLeft = Math.round((k.left + k.width / 2) - (a.left + a.width / 2)) + "px";   // и влево — в отступ полосы
   };
-  if (nr) { over($("bRowsStartTop"), nr.querySelector(".rn")); over($("coneLockAll"), nr.querySelector(".rlk")); }
+  if (nr) { over($("bRowsStartTop"), nr.querySelector(".rn")); over($("coneLockAll"), nr.querySelector(".rlk")); over($("bConeAllHome"), nr.querySelector(".rrot")); }   // v0.214: и ⟲ — над кручениями
 }
 function rowsLockAllPlace(){   // v0.169: общий замок — кнопкой в начале полосы ввода; здесь только его значок
   const A = $("coneLockAll"); if (!A) return;
