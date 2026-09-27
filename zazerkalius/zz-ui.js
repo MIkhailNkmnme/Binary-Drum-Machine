@@ -5064,7 +5064,7 @@ function init(){
   fillSelect("cycOp", opEntries, Z.cycOp);
   fillSelect("gf2Op", opEntries, Z.gf2Op);
   fillSelect("thruMode", Object.entries(ZZ_THRU_MODES), Z.thruMode);
-  $("fontSel").value = Z.ff; $("fsRange").value = Z.fs;
+  $("fontSel").value = Z.ff; $("fsVal").textContent = Z.fs;   // v0.217: размер — числом между ◀ ▶
   $("descentAlign").value = Z.descentAlign;
   $("cycHeat").checked = Z.cycHeat;
   $("gf2T").value = Z.gf2T;
@@ -5994,7 +5994,8 @@ function init(){
 
   // Шапка
   $("fontSel").onchange = (e) => { Z.ff = e.target.value; renderAll(); save(); };
-  $("fsRange").oninput = (e) => { Z.fs = +e.target.value; renderAll(); save(); };
+  const fsStep = (d) => { Z.fs = Math.max(11, Math.min(40, (Z.fs | 0 || 18) + d)); $("fsVal").textContent = Z.fs; renderAll(); save(); };   // v0.217: ◀ ▶ вместо ползунка
+  $("fsDn").onclick = () => fsStep(-1); $("fsUp").onclick = () => fsStep(1);
   /* v0.067, «Разложить не раскрывает окна; надо ещё кнопку Свернуть»: 📐 снова раскладывает и разворачивает все окна
      (как до v0.058), а сворачивание — отдельной кнопкой ▭: свернуть все; если все уже свёрнуты — развернуть все. */
   $("bLayout").onclick = () => {

@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.216. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.217. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.216</title>
+<title>Zazerkalius — v0.217</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -69,6 +69,13 @@ code{font-family:var(--ff);font-size:.95em}
 #top .sp{flex:1}
 /* v0.059: шрифт и размер — в левой панели */
 #fontBar{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px;padding:0 10px 6px}   /* v0.153: шрифт и размер — в один ряд */
+#rowInputBar #fontSel{width:74px;min-width:0;padding-right:0}   /* v0.217: шрифт — в полосе над строками, узкий */
+#fsBox{display:inline-flex;align-items:center;gap:1px;flex:0 0 auto}
+#fsBox button{padding:1px 4px}
+#fsVal{min-width:2.1em;text-align:center;font-size:12px;font-variant-numeric:tabular-nums}
+#field #rowInputBar{flex-wrap:nowrap !important;overflow-x:auto;scrollbar-width:none}   /* v0.217, «здесь не делай 2 строки — одна, остальное уезжает вправо за край» */
+#field #rowInputBar::-webkit-scrollbar{display:none}
+#field #rowInputBar > *{flex:0 0 auto}
 #fontBar label{display:flex;align-items:center;gap:6px}
 #fontBar select,#fontBar input[type=range]{flex:1;min-width:0;width:auto !important}
 body.pane-icons #fontBar{display:none}
@@ -660,7 +667,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.216</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.217</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -723,19 +730,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
     </div>
     <!-- v0.010: шаблоны — по щелчку вставляются под текущей строкой; свои — «＋ Строку» / «＋ Столбик» -->
     <!-- v0.059: «в левое меню» — шрифт и размер цифр перенесены из шапки сюда -->
-    <div class="pane-head">Шрифт</div>
-    <div id="fontBar">
-      <label class="dim" title="Шрифт цифр — тот же набор, что в Layers">🔤
-      <select id="fontSel">
-      <option value='"Roboto Mono", Consolas, monospace'>Roboto Mono</option>
-      <option value='Consolas, monospace'>Consolas</option>
-      <option value='"Courier New", monospace'>Courier New</option>
-      <option value='"Cascadia Mono", Consolas, monospace'>Cascadia Mono</option>
-      <option value='"Lucida Console", Consolas, monospace'>Lucida Console</option>
-      <option value='monospace'>Системный</option>
-      </select></label>
-      <label class="dim" title="Размер цифр">A <input type="range" id="fsRange" min="11" max="30" value="18" style="width:90px;vertical-align:middle"></label>
-    </div>
+    <!-- v0.217: блок «Шрифт» переехал в полосу над строками -->
     <div class="pane-head">Шаблоны</div>
     <div id="tplBar">
       <button id="bTplRow" title="Сохранить ТЕКУЩУЮ строку своим шаблоном (запоминается). Щелчок по шаблону вставит её под текущей">＋ Строка</button>
@@ -762,6 +757,16 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
       <button id="coneLockAll" title="Общий замок колец (стоит над столбиком замков строк): 🔒 все кольца без своего замка заперты (крутятся только на вид), 🔓 открыты (крутят саму строку). Свои замки у строк — как были"></button>
       <!-- v0.214, «всё на места — эту кнопку перемести также над столбиком кручений»: из группы «Кручение» — сюда, узкой «⟲» -->
       <button id="bConeAllHome" title="⟲ Всё на места (стоит над столбиком кручений строк): у ВСЕХ колец сразу — снять накрутку «на вид» (↻), остановить и сбросить кручение (со счётом кругов и проходов), снять довод строки 1 (луч-часы). Биты строк не меняются; если строку сдвигали открытым кольцом — это вернёт только ↩">⟲</button>
+      <!-- v0.217, «шрифт — перемести над строки, вместо ползунка две стрелки и число между, не удлинять, окно шрифтов ещё короче» -->
+      <select id="fontSel" title="Шрифт цифр — тот же набор, что в Layers">
+      <option value='"Roboto Mono", Consolas, monospace'>Roboto Mono</option>
+      <option value='Consolas, monospace'>Consolas</option>
+      <option value='"Courier New", monospace'>Courier New</option>
+      <option value='"Cascadia Mono", Consolas, monospace'>Cascadia Mono</option>
+      <option value='"Lucida Console", Consolas, monospace'>Lucida Console</option>
+      <option value='monospace'>Системный</option>
+      </select>
+      <span id="fsBox" title="Размер цифр: ◀ меньше, ▶ больше (11…40)"><button id="fsDn">◀</button><span id="fsVal">18</span><button id="fsUp">▶</button></span>
       <!-- v0.018: поля колонками или наложением, с осями -->
       <select id="laneView" title="Как стоят поля: колонками — рядом, у каждого своя колонка; наложением — в одном пространстве, у каждого своя ось, оси тащатся за ручки и проходят друг через друга, совпавшие биты сводятся">
         <option value="cols">колонками</option><option value="over">наложением</option>
@@ -1414,8 +1419,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0216"></script>
-<script src="zz-ui.js?v=0216"></script>
+<script src="zz-core.js?v=0217"></script>
+<script src="zz-ui.js?v=0217"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
