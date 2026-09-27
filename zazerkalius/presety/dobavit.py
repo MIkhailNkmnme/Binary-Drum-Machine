@@ -1,11 +1,13 @@
-# Zerkalius — добавить пресет конуса (v0.001, 2026-09-27).
+# Zerkalius — добавить пресет конуса (v0.002, 2026-09-27).
 # Слово пользователя: «сохранил пресет — как его дальше, например в Мультфильмы? тебе прислать или скрипт сделаем?»
 #
 # Берёт файл «💾 Всё» из Zazerkalius (zazerkalius-vse-….json) и кладёт его сюда пресетом:
 #   <имя>.js   — состояние страницы (window.ZZ_PRESET_DATA = {...}); .js, а не .json — чтобы открывалось и с диска (file://),
 #                где браузер не даёт читать .json;
 #   spisok.js  — список пресетов (window.ZZ_PRESETY = [...]); по нему «Битмультфильмы» сами строят живые карточки.
-# Посмотреть пресет: zazerkalius/Zerkalius-zazerkalius.html?solo=cone&preset=<имя> — только смотрит и крутит, память не трогает.
+# Ссылки (память гостя не трогают ни та, ни другая):
+#   zazerkalius/Zerkalius-zazerkalius.html?preset=<имя>           — вся страница как сохранена: окна, лазер, поля (с v0.002);
+#   zazerkalius/Zerkalius-zazerkalius.html?solo=cone&preset=<имя> — только конус крутится (для Битмультфильмов).
 #
 #   python dobavit.py <файл.json> <имя> "Название" ["подпись"]
 #   python dobavit.py --del <имя>          — убрать пресет из списка и его файл
@@ -15,8 +17,9 @@ import json, os, re, sys, datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SPISOK = os.path.join(HERE, "spisok.js")
-# раскладка экрана, свои шаблоны и копия умолчания для показа не нужны — только утяжеляют файл
-SKIP = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "ctw", "cgrpPos", "padPos", "tpl", "tplRef", "pins"]
+# v0.002: раскладка окон теперь остаётся — её показывает ?preset=<имя> (всю страницу); конус один её выкидывает сам.
+# Копия умолчания не нужна: страница делает её из самого пресета.
+SKIP = ["home"]
 
 
 def read_list():
@@ -70,7 +73,8 @@ def main(a):
         lst.append(item)
     write_list(lst)
     print(f"пресет {name}: {len(rows)} строк, {os.path.getsize(out) // 1024} КБ · в списке {len(lst)}")
-    print(f"смотреть: zazerkalius/Zerkalius-zazerkalius.html?solo=cone&preset={name}")
+    print(f"вся страница: https://1001100.online/zazerkalius/Zerkalius-zazerkalius.html?preset={name}")
+    print(f"только конус: https://1001100.online/zazerkalius/Zerkalius-zazerkalius.html?solo=cone&preset={name}")
 
 
 if __name__ == "__main__":

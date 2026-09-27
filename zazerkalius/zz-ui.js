@@ -18,6 +18,11 @@ const ZZ_SOLO = (() => {
    кручение, память не читается и не пишется; состояние — из пресета. */
 const ZZ_PRESET = (window.ZZ_PRESET_DATA && window.ZZ_PRESET_DATA.state && Array.isArray(window.ZZ_PRESET_DATA.state.rows)) ? window.ZZ_PRESET_DATA : null;
 const ZZ_BG = (() => { try { return !!ZZ_SOLO && (new URLSearchParams(location.search).get("bg") === "1" || !!ZZ_PRESET); } catch (e) { return false; } })();
+/* v0.196, «как сохранять, чтобы по ссылке открывали прямо там» → «да» (вся страница, а не только конус): ?preset=<имя> без solo —
+   весь Zazerkalius в состоянии пресета: окна, конус, лазер, поля строк. Память не читается и не пишется: гость крутит и гоняет
+   лазер, его собственные строки и раскладка не тронуты, а ссылка при каждом открытии снова даёт пресет как есть. */
+const ZZ_PRESET_FULL = !!ZZ_PRESET && !ZZ_SOLO;
+const ZZ_PRESET_LAYOUT = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "ctw", "cgrpPos", "padPos", "tpl", "tplRef", "pins"];   // конусу одному (?solo=cone) — ни к чему
 const ZZ_KEY = ZZ_BG ? "zazerkalius_bg" : ZZ_SOLO ? "zazerkalius_solo_" + ZZ_SOLO.slice(2) : "zazerkalius_v1";
 /* v0.030: окна можно вынести в отдельное окно браузера (⧉); их элементы живут уже в чужом документе,
    поэтому поиск по id смотрит и туда — иначе вынесенное окно перестало бы обновляться. */
@@ -75,7 +80,13 @@ const undoStack = [];
 let gf2Last = null;
 
 function load(){
-  if (ZZ_PRESET) { const u = JSON.parse(JSON.stringify(ZZ_PRESET.state)); if (u.rows.every(zzIsBits)) Object.assign(Z, u); return; }   // v0.185: пресет
+  if (ZZ_PRESET) {   // v0.185: пресет
+    const u = JSON.parse(JSON.stringify(ZZ_PRESET.state));
+    if (ZZ_SOLO) for (const k of ZZ_PRESET_LAYOUT) delete u[k];   // v0.196: в пресете теперь и раскладка — для всей страницы
+    if (u.rows.every(zzIsBits)) Object.assign(Z, u);
+    if (ZZ_PRESET_FULL && !Z.home) Z.home = homeOf(Z);   // v0.196: «↺ Начальные» и «⟲ всё на места» — к пресету
+    return;
+  }
   if (ZZ_BG) return;   // v0.184: фон хаба — всегда по умолчанию
   try {
     let raw = localStorage.getItem(ZZ_KEY), first = false;
@@ -92,6 +103,7 @@ let sessLoading = false;   // v0.115: файл сессии уже лёг в х�
 function save(){
   syncLane();
   if (ZZ_BG) return;   // v0.184: фон хаба ничего не запоминает
+  if (ZZ_PRESET_FULL) return;   // v0.196: пресет по ссылке — тоже
   if (sessLoading) return;
   try { localStorage.setItem(ZZ_KEY, JSON.stringify(Z)); } catch (e) { /* нет хранилища — не беда */ }
 }
@@ -4512,7 +4524,10 @@ function loadSession(text, name){
     try { sessionStorage.setItem("zz_sess_loaded", name); } catch (e) {}
   } catch (e) { say(`📂 Не удалось записать в хранилище браузера (${e.message}) — в приватном окне так бывает.`); return true; }
   sessLoading = true;
-  location.reload();
+  if (ZZ_PRESET_FULL) {   // v0.196: с пресета файл ложится в свою память — туда, на адрес без ?preset (иначе снова открылся бы пресет)
+    const q = new URLSearchParams(location.search); q.delete("preset");
+    location.replace(location.pathname + (q.toString() ? "?" + q : "") + location.hash);
+  } else location.reload();
   return true;
 }
 function randomBits(n){ let o = ""; for (let i = 0; i < n; i++) o += Math.random() < 0.5 ? "0" : "1"; return o; }
@@ -5554,6 +5569,11 @@ function init(){
   packWins(); save();
   try {   // v0.115: страница перезагрузилась после открытия файла сессии
     const sn = sessionStorage.getItem("zz_sess_loaded");
+    if (ZZ_PRESET_FULL) {   // v0.196
+      const t = ZZ_PRESET.title || ZZ_PRESET.name || "пресет";
+      document.title = "Zazerkalius — " + t;
+      say(`👁 Пресет «${t}»: крути и запускай — правки не запоминаются, по ссылке он всегда такой. Забрать себе — «💾 Всё», потом «📂 Всё» на своей странице.`);
+    }
     if (sn) { sessionStorage.removeItem("zz_sess_loaded"); say(`📂 Открыто «${sn}»: строки, поля и настройки — из файла; они же теперь умолчание (⭐).`); }
   } catch (e) {}
   let rsz = 0;
