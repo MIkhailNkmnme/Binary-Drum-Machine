@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.239. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.240. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.239</title>
+<title>Zazerkalius — v0.240</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -725,7 +725,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.239</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.240</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1335,6 +1335,18 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
             <label class="dim" title="Сид — начальная строка из 0 и 1 для правил и Паскаля (по умолчанию 1)">сид <input type="text" id="animSeed" value="1" style="width:4em;font-family:var(--ff)"></label>
             <span id="animInfo" class="dim" style="font-variant-numeric:tabular-nums;white-space:nowrap" title="Сколько проходов волна сделала, на какой строке она сейчас и длина цикла (когда картина повторилась)"></span>
           </div>
+          <!-- v0.240, «звук из бит»: поле звучит — строка тактом или столбцы аккордами -->
+          <div class="cgrp" title="♫ Звук из бит: строка тактом (1 — нота, высота — по трём битам) или столбцы поля аккордами (высота — по номеру строки)"><span class="glab">Звук</span>
+            <button id="bSnd" title="♫ Звук: поле звучит, пока не нажато ещё раз. Строки меняются на ходу — звучит уже новое. Идёт и в запись ⏺ конуса">♫ звук</button>
+            <select id="sndMode" title="Что звучит. Строка — текущая строка тактом слева направо: 1 — нота, 0 — пауза, высота — число из трёх бит с этого места. Столбцы — шаг — столбец поля: звучат строки, у которых в нём 1 (не больше 8 разом), высота — по номеру строки, сверху выше">
+              <option value="row">строка</option><option value="col">столбцы</option>
+            </select>
+            <select id="sndScale" title="Лад: из каких нот берётся высота">
+              <option value="penta">пентатоника</option><option value="minor">минор</option><option value="major">мажор</option><option value="chrom">хроматика</option>
+            </select>
+            <label class="dim" title="Темп: шагов в секунду (1…30)">♩ <input type="range" id="sndSp" min="1" max="30" step="1" value="6" style="width:70px;vertical-align:middle"></label>
+            <label class="dim" title="Громкость">🔊 <input type="range" id="sndVol" min="0" max="100" step="1" value="50" style="width:60px;vertical-align:middle"></label>
+          </div>
           <div class="cgrp" title="⌖ Луч-часы: пустые кольца до 256, ширина щели, довод строки 1, пауза на проходе"><span class="glab">Лазер</span>
             <label class="dim" title="⌖ Луч-часы: из центра через вырез в кольце строки 1 идёт луч наружу. Вырез один (золотой), крутится вместе с кольцом: тяни кольцо строки 1 мышью — крутится только оно и защёлкивается лучом в щели кольца 2; или ⌖◁ ⌖▷. Кольцо он проходит только в щель — там, где у кольца граница между битами; попал на бит — упирается в стену (красная черта), и этот бит красится золотом с «1» (упал ещё раз — «11», «111»…). Пока включены луч-часы, ячейки колец строк пустые — чёрные, без 0/1: единицы в них ставит лазер (биты строк в поле не меняются). Прошёл все кольца — падает в строку для заполнения, и её ячейка под лучом становится «1». Как зубья часов: крути кольца (▶ каждое по биту / навстречу, или мышью) — щели то сходятся, то расходятся; миг, когда сошлись, ловится и между кадрами (вспышка). Видно в плоском виде"><input type="checkbox" id="coneClock"> ⌖ луч-часы</label>
             <label class="dim" title="▦ До 256 (при ⌖ луч-часах): за строкой для заполнения — пустые кольца до строки 256, еле заметные; каждое на ячейку длиннее предыдущего и крутится, как все. Стен у них нет: луч, прошедший строки, идёт сквозь все до края и в каждом кольце метит ячейку, через которую прошёл. Каждый проход — ещё единица: 1, 11, 111… Попал в границу ячеек — прошёл между ними, не метит. ✕ у строки для заполнения стирает и эти метки. Кольца строк при этом тоньше — колесо мыши приближает"><input type="checkbox" id="coneVoid"> ▦ до 256</label>
@@ -1493,8 +1505,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0239"></script>
-<script src="zz-ui.js?v=0239"></script>
+<script src="zz-core.js?v=0240"></script>
+<script src="zz-ui.js?v=0240"></script>
 <script src="../_js/hub-link.js"></script>
 <script src="../_js/recorder.js" data-bez-knopki></script>
 </body>

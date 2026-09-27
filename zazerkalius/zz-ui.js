@@ -3260,6 +3260,63 @@ function setupCone(){
     document.addEventListener("pointerdown", ecaMapOut, true); document.addEventListener("keydown", ecaMapKey, true);
   };
   animUi();
+  /* v0.240, «звук из бит» (третья идея Cellcosmos): группа «Звук» — поле звучит. ♫ — пуск / стоп. Режимы:
+     «строка» — текущая строка идёт тактом слева направо, шаг — бит: 1 — нота, 0 — пауза; высота — число из трёх бит с этого
+     места (0…7) — ступень лада, так что одинаковые рисунки в строке и звучат одинаково; строка кончилась — сначала.
+     «столбцы» — шаг — столбец поля: звучат строки, у которых в нём 1, высота — по номеру строки (сверху — выше, через три
+     октавы по кругу), не больше 8 голосов разом (первые сверху). Лад, темп (шагов в секунду) и громкость — рядом, всё
+     помнится. Строки меняются на ходу (волна, правка, другая текущая) — звучит уже новое. Звук идёт и в запись ⏺ конуса
+     напрямую, без захвата экрана; с включённым «звуком ПК» — из захвата: он и так слышит всё, иначе было бы дважды. */
+  const SND_SCALES = { penta: [0, 2, 4, 7, 9], minor: [0, 2, 3, 5, 7, 8, 10], major: [0, 2, 4, 5, 7, 9, 11], chrom: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] };
+  let snd = null, sndT = 0, sndStep = 0;
+  const sndSc = () => SND_SCALES[Z.sndScale] || SND_SCALES.penta;
+  const sndHz = (deg) => { const sc = sndSc(), o = Math.floor(deg / sc.length); return 110 * Math.pow(2, (sc[deg % sc.length] + 12 * o) / 12); };
+  const sndCtx = () => {
+    if (!snd) {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)(), out = ctx.createGain(), rec = ctx.createMediaStreamDestination();
+      out.connect(ctx.destination); out.connect(rec);
+      snd = { ctx, out, rec };
+    }
+    if (snd.ctx.state === "suspended") snd.ctx.resume();
+    snd.out.gain.value = (Z.sndVol ?? 50) / 100;
+    return snd;
+  };
+  const sndNote = (hz, t, len, g) => {
+    const o = snd.ctx.createOscillator(), a = snd.ctx.createGain();
+    o.type = "triangle"; o.frequency.value = hz;
+    a.gain.setValueAtTime(0, t); a.gain.linearRampToValueAtTime(g, t + 0.005); a.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    o.connect(a); a.connect(snd.out); o.start(t); o.stop(t + len + 0.02);
+  };
+  const sndTick = () => {
+    const sp = Z.sndSp || 6, len = Math.min(0.6, 1.6 / sp), t = snd.ctx.currentTime + 0.01, sc = sndSc();
+    if ((Z.sndMode || "row") === "row") {
+      const s = cur(); if (!s) return;
+      const i = sndStep % s.length; sndStep = i + 1;
+      if (s[i] === "1") sndNote(sndHz(parseInt((s + s + s).substr(i, 3), 2) + sc.length), t, len, 0.35);
+    } else {
+      const W = Z.rows.reduce((a, r) => Math.max(a, r.length), 0); if (!W) return;
+      const k = sndStep % W; sndStep = k + 1;
+      const on = []; for (let r = 0; r < Z.rows.length && on.length < 8; r++) if (Z.rows[r][k] === "1") on.push(r);
+      const n = sc.length * 3;
+      on.forEach(r => sndNote(sndHz(n - 1 - (r % n)), t, len, 0.3 / Math.sqrt(on.length)));
+    }
+  };
+  const sndLoop = () => { if (!sndT) return; sndTick(); sndT = setTimeout(sndLoop, 1000 / (Z.sndSp || 6)); };
+  const sndSet = (on) => {
+    if (on) { sndCtx(); sndStep = 0; sndT = setTimeout(sndLoop, 0); } else { clearTimeout(sndT); sndT = 0; }
+    const b = $("bSnd"); b.classList.toggle("on", on); b.textContent = on ? "■ звук" : "♫ звук";
+  };
+  $("bSnd").onclick = () => sndSet(!sndT);
+  $("sndMode").value = Z.sndMode || "row";
+  $("sndMode").onchange = (e) => { Z.sndMode = e.target.value; sndStep = 0; save(); };
+  $("sndScale").value = Z.sndScale || "penta";
+  $("sndScale").onchange = (e) => { Z.sndScale = e.target.value; save(); };
+  $("sndSp").value = Z.sndSp || 6;
+  $("sndSp").oninput = (e) => { Z.sndSp = +e.target.value; };
+  $("sndSp").onchange = () => save();
+  $("sndVol").value = Z.sndVol ?? 50;
+  $("sndVol").oninput = (e) => { Z.sndVol = +e.target.value; if (snd) snd.out.gain.value = Z.sndVol / 100; };
+  $("sndVol").onchange = () => save();
   /* v0.235, «подключать надо настройку — звук с компа»: правый щелчок по ⏺ — писать ли вместе с конусом звук ПК (Z.coneRecSnd,
      на кнопке значок ♪). Звук берётся захватом экрана — браузер при старте спросит, что показать: на Windows системный звук
      отдаётся только с «Весь экран» и галкой «Поделиться системным звуком», у вкладки — «звук вкладки». Картинка захвата в
@@ -3309,6 +3366,9 @@ function setupCone(){
         return;
       }
     }
+    // v0.240: звучит «♫ звук» — его дорожка идёт в запись напрямую (копией: стоп записи не должен глушить звук)
+    if (!at && snd && sndT) at = (snd.rec.stream.getAudioTracks()[0] || null) && snd.rec.stream.getAudioTracks()[0].clone();
+    const sndLab = cap ? " со звуком ПК" : at ? " со звуком ♫" : "";
     const want = at ? ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"] : ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
     const mime = want.find(m => MediaRecorder.isTypeSupported(m)) || "";
     const chunks = [], stream = cvx.captureStream(30);
@@ -3328,15 +3388,15 @@ function setupCone(){
       a.href = URL.createObjectURL(blob); a.download = `Zerkalius-konus-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.webm`;
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
       rec = null; b.classList.remove("on"); b.textContent = "⏺"; recUi();   // v0.155: кнопка квадратная — только значок
-      say(`⏺ Видео сохранено: ${a.download} (${(blob.size / 1048576).toFixed(1)} МБ${at ? ", со звуком ПК" : ""}).`);
+      say(`⏺ Видео сохранено: ${a.download} (${(blob.size / 1048576).toFixed(1)} МБ${sndLab ? "," + sndLab : ""}).`);
     };
     if (at) { const r = rec; at.addEventListener("ended", () => { if (r.state !== "inactive") r.stop(); }); }
     rec.start(1000);
     const t0 = Date.now(); b.classList.add("on"); b.textContent = "⏹";
-    const tick = () => { recFrame(true); const s = Math.floor((Date.now() - t0) / 1000); b.title = `⏹ Идёт запись${at ? " со звуком ПК" : ""} ${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")} — щелчок: стоп и сохранить`; };   // v0.155: время — в подсказке, на квадратной кнопке только ⏹
+    const tick = () => { recFrame(true); const s = Math.floor((Date.now() - t0) / 1000); b.title = `⏹ Идёт запись${sndLab} ${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")} — щелчок: стоп и сохранить`; };   // v0.155: время — в подсказке, на квадратной кнопке только ⏹
     conePan = [0, 0];   // v0.236: конус — в середину кадра
     renderCone(); tick(); recT = setInterval(tick, 500);
-    say(`⏺ Пишу конус${at ? " со звуком ПК" : ""}… Ещё раз ⏺ — стоп и сохранить. Холст пишется, только когда меняется, — включи «▶ крутить» или крути сам.`);
+    say(`⏺ Пишу конус${sndLab}… Ещё раз ⏺ — стоп и сохранить. Холст пишется, только когда меняется, — включи «▶ крутить» или крути сам.`);
   };
   $("bConeRotClear").onclick = () => {   // v0.101: «как это снять — накрутку?»
     const T = rowSel.size ? [...rowSel] : Z.rows.map((_, i) => i);
