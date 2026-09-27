@@ -3401,6 +3401,8 @@ function setupCone(){
     const b = $("bConeRec");
     b.classList.toggle("snd", !!Z.coneRecSnd);
     if (!rec) b.title = (Z.coneRecSnd ? "⏺♪ Видео со звуком ПК" : "⏺ Видео") + ": запись холста конуса (только сам конус, без кнопок) в файл .webm. Ещё раз — стоп и сохранить. Правый щелчок — звук ПК вкл/выкл. Удобно вместе с «▶ крутить»";
+    const m = $("bConeRecMp4");   // v0.250
+    if (m) { m.classList.toggle("snd", !!Z.coneRecSnd); if (!rec) m.title = (Z.coneRecSnd ? "⏺♪ mp4 со звуком ПК" : "⏺ mp4") + ": запись холста конуса в файл .mp4 (H.264) — открывается везде: телефон, Телеграм, YouTube. Ещё раз — стоп и сохранить. Правый щелчок — звук ПК вкл/выкл"; }
   };
   recUi();
   /* v0.236, «рамкой показать размер видео при записи конуса и расположить его изначально посередине»: пока идёт запись (и пока
@@ -3413,16 +3415,18 @@ function setupCone(){
     f.style.cssText = `display:block;left:${cv.offsetLeft}px;top:${cv.offsetTop}px;width:${cv.offsetWidth}px;height:${cv.offsetHeight}px`;
     f.firstChild.textContent = `${cv.width}×${cv.height}`;
   };
-  $("bConeRec").onmouseenter = () => recFrame(true);
-  $("bConeRec").onmouseleave = () => { if (!rec) recFrame(false); };
-  $("bConeRec").oncontextmenu = (e) => {
+  $("bConeRec").onmouseenter = $("bConeRecMp4").onmouseenter = () => recFrame(true);
+  $("bConeRec").onmouseleave = $("bConeRecMp4").onmouseleave = () => { if (!rec) recFrame(false); };
+  $("bConeRec").oncontextmenu = $("bConeRecMp4").oncontextmenu = (e) => {
     e.preventDefault();
     if (rec || recBusy) return;
     Z.coneRecSnd = !Z.coneRecSnd; save(); recUi();
     say(Z.coneRecSnd ? "⏺♪ Запись конуса — со звуком ПК. При старте браузер спросит, откуда звук: «Весь экран» + галка «Поделиться системным звуком»." : "⏺ Запись конуса — без звука.");
   };
-  $("bConeRec").onclick = async () => {
-    const b = $("bConeRec"), cvx = $("coneCv");
+  /* v0.250, «что с кнопкой видео? mp4 пишет?» → «добавь кнопку туда рядом с имеющейся»: ⏺ пишет .webm, рядом — «mp4» пишет .mp4 (H.264,
+     со звуком — AAC): его открывает любой плеер и телефон без перекодировки. Идёт запись любой из двух — щелчок по любой её останавливает. */
+  const recGo = async (fmt) => {
+    const mp4 = fmt === "mp4", b = $(mp4 ? "bConeRecMp4" : "bConeRec"), cvx = $("coneCv");
     if (rec) { rec.stop(); return; }
     if (recBusy) return;
     if (!cvx.captureStream || typeof MediaRecorder === "undefined") { say("⏺ Этот браузер не умеет записывать холст."); return; }
@@ -3444,8 +3448,10 @@ function setupCone(){
     // v0.240: звучит «♫ звук» — его дорожка идёт в запись напрямую (копией: стоп записи не должен глушить звук)
     if (!at && snd && sndT) at = (snd.rec.stream.getAudioTracks()[0] || null) && snd.rec.stream.getAudioTracks()[0].clone();
     const sndLab = cap ? " со звуком ПК" : at ? " со звуком ♫" : "";
-    const want = at ? ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"] : ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
+    const want = mp4 ? (at ? ["video/mp4;codecs=avc1.42E01E,mp4a.40.2", "video/mp4;codecs=avc1,mp4a.40.2", "video/mp4"] : ["video/mp4;codecs=avc1.42E01E", "video/mp4;codecs=avc1", "video/mp4"])
+      : at ? ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"] : ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
     const mime = want.find(m => MediaRecorder.isTypeSupported(m)) || "";
+    if (mp4 && !mime) { if (cap) cap.getTracks().forEach(t => t.stop()); say("⏺ Этот браузер не пишет mp4 — жми ⏺ (webm). В Chrome и Edge mp4 есть с весны 2024."); return; }
     const chunks = [], stream = cvx.captureStream(30);
     if (at) stream.addTrack(at);
     rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 12e6 } : undefined);
@@ -3453,16 +3459,16 @@ function setupCone(){
     rec.onstop = async () => {
       clearInterval(recT); stream.getTracks().forEach(t => t.stop()); recFrame(false);
       if (cap) cap.getTracks().forEach(t => t.stop());
-      let blob = new Blob(chunks, { type: "video/webm" });
+      let blob = new Blob(chunks, { type: mp4 ? "video/mp4" : "video/webm" });
       // v0.235, «нет эскизов в плейлисте»: у webm из MediaRecorder в заголовке нет длительности — плеер пишет 0, эскиза не строит.
       // Дописывает её общий recorder.js (подключён без своей кнопки); нет модуля — файл уходит как раньше.
       const R = window.__zerkRecorder;
-      if (R && R.fixWebm) blob = await R.fixWebm(blob, Date.now() - t0);
+      if (!mp4 && R && R.fixWebm) blob = await R.fixWebm(blob, Date.now() - t0);   // v0.250: у mp4 длительность в заголовке и так есть
       const a = document.createElement("a");
       const d = new Date(), p2 = (x) => String(x).padStart(2, "0");
-      a.href = URL.createObjectURL(blob); a.download = `Zerkalius-konus-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.webm`;
+      a.href = URL.createObjectURL(blob); a.download = `Zerkalius-konus-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.${mp4 ? "mp4" : "webm"}`;
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-      rec = null; b.classList.remove("on"); b.textContent = "⏺"; recUi();   // v0.155: кнопка квадратная — только значок
+      rec = null; b.classList.remove("on"); b.textContent = mp4 ? "mp4" : "⏺"; recUi();   // v0.155: кнопка квадратная — только значок
       say(`⏺ Видео сохранено: ${a.download} (${(blob.size / 1048576).toFixed(1)} МБ${sndLab ? "," + sndLab : ""}).`);
     };
     if (at) { const r = rec; at.addEventListener("ended", () => { if (r.state !== "inactive") r.stop(); }); }
@@ -3471,8 +3477,10 @@ function setupCone(){
     const tick = () => { recFrame(true); const s = Math.floor((Date.now() - t0) / 1000); b.title = `⏹ Идёт запись${sndLab} ${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")} — щелчок: стоп и сохранить`; };   // v0.155: время — в подсказке, на квадратной кнопке только ⏹
     conePan = [0, 0];   // v0.236: конус — в середину кадра
     renderCone(); tick(); recT = setInterval(tick, 500);
-    say(`⏺ Пишу конус${sndLab}… Ещё раз ⏺ — стоп и сохранить. Холст пишется, только когда меняется, — включи «▶ крутить» или крути сам.`);
+    say(`⏺ Пишу конус${mp4 ? " в mp4" : ""}${sndLab}… Ещё раз ${mp4 ? "⏹" : "⏺"} — стоп и сохранить. Холст пишется, только когда меняется, — включи «▶ крутить» или крути сам.`);
   };
+  $("bConeRec").onclick = () => recGo("webm");
+  $("bConeRecMp4").onclick = () => recGo("mp4");   // v0.250
   $("bConeRotClear").onclick = () => {   // v0.101: «как это снять — накрутку?»
     const T = rowSel.size ? [...rowSel] : Z.rows.map((_, i) => i);
     let k = 0; T.forEach(i => { if (Math.round(coneRot[i] || 0)) k++; coneRot[i] = 0; });

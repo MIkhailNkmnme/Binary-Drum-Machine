@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.249. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.250. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.249</title>
+<title>Zazerkalius — v0.250</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -731,7 +731,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.249</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.250</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1377,7 +1377,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
         <div id="coneMain">
           <canvas id="coneCv" style="flex:1 1 auto;min-width:0;width:0;min-height:260px;display:block;cursor:grab;background:var(--panel2);border-radius:4px;touch-action:none"></canvas>
           <!-- v0.155, «в одну квадратную кнопку внизу холста слева»: группа «Запись» — одна кнопка ⏺ в левом нижнем углу холста -->
-          <button id="bConeRec" title="⏺ Видео: запись холста конуса (только сам конус, без кнопок) в файл .webm. Ещё раз — стоп и сохранить. Правый щелчок — звук ПК вкл/выкл. Удобно вместе с «▶ крутить»">⏺</button>
+          <button id="bConeRec" title="⏺ Видео: запись холста конуса (только сам конус, без кнопок) в файл .webm. Ещё раз — стоп и сохранить. Правый щелчок — звук ПК вкл/выкл. Удобно вместе с «▶ крутить»">⏺</button><button id="bConeRecMp4" title="⏺ mp4: запись холста конуса в файл .mp4 (H.264). Ещё раз — стоп и сохранить. Правый щелчок — звук ПК вкл/выкл">mp4</button>
           <!-- v0.157, «в поле конуса кнопки управления для 3D»: в правом нижнем углу холста, только в 3D -->
           <div id="cone3Pad" class="flat">
             <button data-c3="yaw-" title="Повернуть влево на 15° (держи — дальше)">⟲</button><button data-c3="el+" title="Наклон: смотреть сверху круче на 10°">▲</button><button data-c3="yaw+" title="Повернуть вправо на 15° (держи — дальше)">⟳</button>
@@ -1513,8 +1513,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0249"></script>
-<script src="zz-ui.js?v=0249"></script>
+<script src="zz-core.js?v=0250"></script>
+<script src="zz-ui.js?v=0250"></script>
 <script src="../_js/hub-link.js"></script>
 <script src="../_js/recorder.js" data-bez-knopki></script>
 </body>
