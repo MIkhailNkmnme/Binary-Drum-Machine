@@ -22,7 +22,7 @@ const ZZ_BG = (() => { try { return !!ZZ_SOLO && (new URLSearchParams(location.s
    весь Zazerkalius в состоянии пресета: окна, конус, лазер, поля строк. Память не читается и не пишется: гость крутит и гоняет
    лазер, его собственные строки и раскладка не тронуты, а ссылка при каждом открытии снова даёт пресет как есть. */
 const ZZ_PRESET_FULL = !!ZZ_PRESET && !ZZ_SOLO;
-const ZZ_PRESET_LAYOUT = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "ctw", "cgrpPos", "cgrpDock", "paneW", "paneWUser", "padPos", "tpl", "tplRef", "pins", "coneBtns"];   // конусу одному (?solo=cone) — ни к чему
+const ZZ_PRESET_LAYOUT = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "ctw", "cgrpPos", "cgrpDock", "cgrpMove", "paneW", "paneWUser", "padPos", "tpl", "tplRef", "pins", "coneBtns"];   // конусу одному (?solo=cone) — ни к чему
 const ZZ_KEY = ZZ_BG ? "zazerkalius_bg" : ZZ_SOLO ? "zazerkalius_solo_" + ZZ_SOLO.slice(2) : "zazerkalius_v1";
 /* v0.030: окна можно вынести в отдельное окно браузера (⧉); их элементы живут уже в чужом документе,
    поэтому поиск по id смотрит и туда — иначе вынесенное окно перестало бы обновляться. */
@@ -4878,6 +4878,9 @@ function ctwInit(){
    группу (Вид, Кольца, Кручение, Лазер) тянут за её подпись — она выходит из полосы и висит поверх холста на непрозрачной подложке,
    последняя тронутая — сверху. Двойной щелчок по подписи — обратно на полосу. Места — Z.cgrpPos { имя: { x, y } } в пикселях от
    угла полосы; меняет их только перетаскивание (сами не выравниваются и не переставляются). */
+// v0.258: кнопка или галка (метка с флажком), которая переезжает между группами конуса, и её место по ссылке ("#id" или селектор)
+function cgrpMoveEl(src){ return src && src.tagName === "INPUT" ? src.closest("label") : src; }
+function cgrpRefEl(k){ try { return k ? (k[0] === "#" ? document.getElementById(k.slice(1)) : document.querySelector(k)) : null; } catch (err) { return null; } }
 function cgrpInit(){
   const tl = document.querySelector("#w-cone .wbody > .tools"); if (!tl) return;
   if (!Z.cgrpPos || typeof Z.cgrpPos !== "object") Z.cgrpPos = {};
@@ -5012,6 +5015,13 @@ function cgrpInit(){
     back.forEach(g => { g.classList.remove("zentmp"); delete Z.cgrpPos[g.dataset.g]; if (box) box.appendChild(g); place(g); });
     if (box && back.length) { for (const k of Z.cgrpDock) { const g = groups.find(c => c.dataset.g === k); if (g && g.parentElement === box) box.appendChild(g); } }
   };
+  // v0.258: у каждой кнопки группы — её «дом» (куда вернуть); перенесённые между группами — на свои места
+  groups.forEach(g => { const b = g.querySelector(":scope > .cgb"); if (b) b.querySelectorAll("button, label, select, input").forEach(el => { if (!el.dataset.home) el.dataset.home = g.dataset.g; }); });
+  if (Z.cgrpMove && typeof Z.cgrpMove === "object") for (const [k, m] of Object.entries(Z.cgrpMove)) {
+    const el = cgrpMoveEl(cgrpRefEl(k)), g = groups.find(c => c.dataset.g === m.g), cgb = g && g.querySelector(":scope > .cgb");
+    if (!el || !cgb || el.contains(g)) continue;
+    const bf = cgrpMoveEl(cgrpRefEl(m.before)); cgb.insertBefore(el, bf && bf.parentElement === cgb ? bf : null);
+  }
   addEventListener("resize", () => groups.forEach(place));
   cgrpCols();
 }
@@ -5106,6 +5116,12 @@ function coneBtnsInit(){
     if (d && !d.done && e.dataTransfer && e.dataTransfer.dropEffect === "none") remove(d.k, "вытащена за холст");
   });
   // любую кнопку (v0.249: и галку) можно потянуть: draggable ставится в миг нажатия (кнопки бывают и новые)
+  /* v0.258, «не переносится на холст» (по снимку «⧗ зеркало»): у метки с флажком браузер решает, тащить ли, раньше, чем доходит
+     нажатие, — с первого раза галка не тянулась. Теперь draggable ставится уже при наведении мыши. */
+  document.addEventListener("pointerover", (e) => {
+    const g = grabOf(e.target);
+    if (g && !g.draggable && refOf(ctlOf(g))) g.draggable = true;
+  }, true);
   document.addEventListener("pointerdown", (e) => {
     const g = grabOf(e.target);
     if (g && !g.draggable && refOf(ctlOf(g))) g.draggable = true;
@@ -5115,6 +5131,34 @@ function coneBtnsInit(){
     e.dataTransfer.setData(TYPE, JSON.stringify(r)); e.dataTransfer.effectAllowed = "copyMove";
   });
   const isBtn = (e) => !!e.dataTransfer && [...e.dataTransfer.types].includes(TYPE);
+  /* v0.258, «надо у всех вкладок, чтобы могли — и между вкладками»: кнопку или галку любой группы конуса можно перетащить в другую
+     группу — она (сама, не копия) переезжает туда, перед той кнопкой, над которой отпустил (над правой половиной — после неё). Место
+     помнится (Z.cgrpMove { ссылка: { g: группа, before: ссылка | null } }); вернуть — перетащить обратно в свою группу. */
+  const grpAt = (e) => { const g = e.target && e.target.closest && e.target.closest(".cgrp"); return g && g.dataset.g && !e.target.closest("#coneMain") ? g : null; };
+  const clearDrop = () => document.querySelectorAll(".cgrp.cgdrop").forEach(x => x.classList.remove("cgdrop"));
+  document.addEventListener("dragover", (e) => {
+    if (!isBtn(e) || drag) return; const g = grpAt(e); clearDrop(); if (!g) return;
+    e.preventDefault(); e.dataTransfer.dropEffect = "move"; g.classList.add("cgdrop");
+  });
+  document.addEventListener("dragend", clearDrop, true);
+  document.addEventListener("drop", (e) => {
+    if (!isBtn(e) || drag) return; const g = grpAt(e); clearDrop(); if (!g) return;
+    e.preventDefault();
+    let r = null; try { r = JSON.parse(e.dataTransfer.getData(TYPE)); } catch (err) { r = null; }
+    const src = srcOf(r), el = src && cgrpMoveEl(src); if (!el || !el.dataset.home || el.contains(g)) return;   // только кнопки групп конуса
+    const cgb = g.querySelector(".cgb") || g, over = e.target.closest && e.target.closest(".cgb > *");
+    let before = null;
+    if (over && over !== el && over.parentElement === cgb) { const q = over.getBoundingClientRect(); before = e.clientX < q.left + q.width / 2 ? over : over.nextElementSibling; }
+    if (before === el) before = el.nextElementSibling;
+    cgb.insertBefore(el, before);
+    if (!Z.cgrpMove || typeof Z.cgrpMove !== "object") Z.cgrpMove = {};
+    const bref = before ? refOf(ctlOf(before)) : null;
+    const k = refKey(r);
+    if (el.dataset.home === g.dataset.g && !bref) delete Z.cgrpMove[k];   // вернулась в свою группу — забыть
+    else Z.cgrpMove[k] = { g: g.dataset.g, before: bref ? refKey(bref) : null };
+    save(); cgrpCols();
+    say(el.dataset.home === g.dataset.g ? `«${lab(src)}» — снова в своей группе.` : `«${lab(src)}» — теперь в группе «${g.dataset.g}». Вернуть — перетащи обратно в «${el.dataset.home}».`);
+  });
   host.addEventListener("dragover", (e) => { if (!isBtn(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = drag ? "move" : "copy"; });
   host.addEventListener("drop", (e) => {
     if (!isBtn(e)) return;
@@ -5498,7 +5542,7 @@ function saveSession(){
    с другого компа — то тоже он становится умолчанием». ⭐ Умолчание — снимок Z в Z.home (без раскладки окон: она своя у каждого
    экрана). «↺ Начальные» берёт из него биты всех полей, «⟲ всё на места» — положения колец и настройки конуса. Открытый файл
    сессии сам становится умолчанием. Правый щелчок по ⭐ — забыть: снова встроенный столбик 1, 11, 101… и нулевые положения. */
-const ZZ_HOME_SKIP = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "coneBtns", "cgrpDock", "paneW", "paneWUser"];   // v0.252: и группы на левой панели   // v0.203: и кнопки на холсте — это раскладка
+const ZZ_HOME_SKIP = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "coneBtns", "cgrpDock", "cgrpMove", "paneW", "paneWUser"];   // v0.252: и группы на левой панели   // v0.203: и кнопки на холсте — это раскладка
 function homeOf(o){ const h = {}; for (const k of Object.keys(o)) if (!ZZ_HOME_SKIP.includes(k)) h[k] = o[k]; return JSON.parse(JSON.stringify(h)); }
 function homeSave(){
   save(); Z.home = homeOf(Z); save(); homeBtn();
