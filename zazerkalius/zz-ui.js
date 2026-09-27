@@ -4349,6 +4349,7 @@ function ctwInit(){
 function cgrpInit(){
   const tl = document.querySelector("#w-cone .wbody > .tools"); if (!tl) return;
   if (!Z.cgrpPos || typeof Z.cgrpPos !== "object") Z.cgrpPos = {};
+  if (!Z.cgrpMin || typeof Z.cgrpMin !== "object") Z.cgrpMin = {};   // v0.204: свёрнутые до заголовка
   const wb = tl.parentElement; let zTop = 10;
   const groups = [...tl.querySelectorAll(":scope > .cgrp")];
   const place = (g) => {
@@ -4361,7 +4362,8 @@ function cgrpInit(){
   groups.forEach((g) => {
     const lab = g.querySelector(".glab"); if (!lab) return;
     g.dataset.g = lab.textContent.trim().toLowerCase();
-    lab.title = "Тяни — перенести группу куда угодно (поверх холста); двойной щелчок — обратно на полосу";
+    lab.title = "Тяни — перенести группу куда угодно (поверх холста); двойной щелчок по группе — свернуть до заголовка и обратно; правый щелчок по заголовку — обратно на полосу";
+    g.classList.toggle("cmin", !!Z.cgrpMin[g.dataset.g]);
     lab.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return;
       e.preventDefault(); try { lab.setPointerCapture(e.pointerId); } catch (err) { /* уже отпущен */ }
@@ -4375,7 +4377,17 @@ function cgrpInit(){
       const up = () => { lab.removeEventListener("pointermove", mv); lab.removeEventListener("pointerup", up); lab.removeEventListener("pointercancel", up); if (moved) save(); };
       lab.addEventListener("pointermove", mv); lab.addEventListener("pointerup", up); lab.addEventListener("pointercancel", up);
     });
-    lab.addEventListener("dblclick", () => { if (!Z.cgrpPos[g.dataset.g]) return; delete Z.cgrpPos[g.dataset.g]; place(g); save(); });
+    /* v0.204, по снимку группы «Аниматрица» — «двойной клик по группе сворачивает её до заголовка»: двойной щелчок по заголовку или
+       пустому месту группы (не по кнопке, полю, списку) — свернуть до заголовка, ещё раз — развернуть; Z.cgrpMin { имя: true }. Возврат
+       вынесенной группы на полосу, что был на двойном щелчке по заголовку (v0.177), — теперь правый щелчок по заголовку. */
+    g.addEventListener("dblclick", (e) => {
+      if (e.target.closest("button, input, select, textarea, label")) return;
+      e.preventDefault(); e.stopPropagation();
+      const key = g.dataset.g, on = !Z.cgrpMin[key];
+      if (on) Z.cgrpMin[key] = true; else delete Z.cgrpMin[key];
+      g.classList.toggle("cmin", on); cgrpCols(); place(g); save();
+    });
+    lab.addEventListener("contextmenu", (e) => { e.preventDefault(); if (!Z.cgrpPos[g.dataset.g]) return; delete Z.cgrpPos[g.dataset.g]; place(g); save(); });
     place(g);
   });
   addEventListener("resize", () => groups.forEach(place));
