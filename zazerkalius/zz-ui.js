@@ -2501,7 +2501,8 @@ function cone3DDraw(g, o){
       if (tiny && n === 1) pts.push(at(i, a, 0));
       else if (tiny) pts.push(at(i, a + step / 4, r), at(i, a, 0), at(i, a + step * 3 / 4, r));   // v0.111: Г углом в центре
       else for (let q = 0; q <= K; q++) pts.push(at(i, a + gap + (step - 2 * gap) * q / K, r));
-      items.push({ pts, col, dot: tiny && n === 1, a: 0.95, near: tiny ? (pts[0][2] + pts[pts.length - 1][2]) / 2 : at(i, a + step / 2, r)[2], cur: i === Z.cur && !document.body.classList.contains("nocur"), sel: rowSel.has(i) });   // v0.107
+      items.push({ pts, col, dot: tiny && n === 1, a: 0.95, near: tiny ? (pts[0][2] + pts[pts.length - 1][2]) / 2 : at(i, a + step / 2, r)[2], cur: i === Z.cur && !document.body.classList.contains("nocur"), sel: rowSel.has(i),   // v0.107
+        ch: s[j], pc: tiny ? pts[0] : at(i, a + step / 2, r), w: tiny ? 0 : n === 1 ? 2 * r * sc : Math.hypot(pts[0][0] - pts[K][0], pts[0][1] - pts[K][1]), cd: P(0, 0, ringZ(i))[2], m: false });   // v0.243: цифра бита
     }
   }
   // v0.090: границы бит в объёме — там, где биты разные: 0→1 сиреневая, 1→0 бирюзовая
@@ -2523,7 +2524,8 @@ function cone3DDraw(g, o){
       const col = fix ? (Z.showFix === "ir" ? green : cR) : inv === "1" ? c1 : c0, pts = [];
       if (tiny && n === 1) pts.push(atM(a, 0)); else if (tiny) pts.push(atM(a + step / 4), atM(a, 0), atM(a + step * 3 / 4));
       else for (let q = 0; q <= K; q++) pts.push(atM(a + gap + (step - 2 * gap) * q / K));
-      items.push({ pts, col, dot: tiny && n === 1, a: (inv === "1" || fix) ? 0.9 : 0.4, near: tiny ? (pts[0][2] + pts[pts.length - 1][2]) / 2 : atM(a + step / 2)[2], cur: false, sel: false });
+      items.push({ pts, col, dot: tiny && n === 1, a: (inv === "1" || fix) ? 0.9 : 0.4, near: tiny ? (pts[0][2] + pts[pts.length - 1][2]) / 2 : atM(a + step / 2)[2], cur: false, sel: false,
+        ch: inv, pc: tiny ? pts[0] : atM(a + step / 2), w: tiny ? 0 : n === 1 ? 2 * r * sc : Math.hypot(pts[0][0] - pts[K][0], pts[0][1] - pts[K][1]), cd: P(0, 0, zm)[2], m: true });   // v0.243: цифра бита
     }
   }
   items.sort((p, q) => p.near - q.near);
@@ -2543,6 +2545,24 @@ function cone3DDraw(g, o){
   g.globalAlpha = 1;
   g.lineWidth = Math.max(1.5 * dpr, Math.min(sc * 0.08, 4 * dpr));
   for (const t of ticks) { g.strokeStyle = t.col; g.beginPath(); g.moveTo(t.p[0], t.p[1]); g.lineTo(t.q[0], t.q[1]); g.stroke(); }
+  /* v0.243, «3D-режим — при виде сбоку и сверху, когда ровно, показывает биты»: наклон ровно 0° (сбоку) или 90° (сверху) — на
+     каждом бите его цифра. Сбоку — только ближняя половина кольца (дальняя за ней); сверху зеркало под основанием не подписывается
+     (лежит ровно под верхним). Цифра — по ширине бита на экране: у краёв сбоку, где биты сжаты, мелкие не пишутся. */
+  { const elD = Z.cone3El ?? 50, side = Math.abs(elD) < 1, top = Math.abs(elD - 90) < 1;
+    if (side || top) {
+      const fnt = coneCss("--ff", "monospace");
+      g.textAlign = "center"; g.textBaseline = "middle"; g.lineJoin = "round"; g.globalAlpha = 1;
+      for (const it of items) {
+        if (top ? it.m : it.near < it.cd - 1e-6) continue;
+        const fs = Math.min(lw * 0.95, (it.w || lw) * 0.95, 30 * dpr);
+        if (fs < 7 * dpr) continue;
+        g.font = `bold ${Math.round(fs)}px ${fnt}`;
+        g.lineWidth = Math.max(2, fs * 0.22); g.strokeStyle = "rgba(0,0,0,.85)"; g.strokeText(it.ch, it.pc[0], it.pc[1]);
+        g.fillStyle = it.ch === "1" ? "#fff" : "rgba(255,255,255,.7)"; g.fillText(it.ch, it.pc[0], it.pc[1]);
+      }
+      g.textAlign = "start"; g.textBaseline = "alphabetic";
+    }
+  }
   // ось конуса
   const top = P(0, 0, ringZ(0) + hk), bot = P(0, 0, octa ? -(N - 1) * hk - hk : ringZ(N - 1) - hk);
   g.save(); g.strokeStyle = cg; g.globalAlpha = 0.5; g.lineWidth = Math.max(1, dpr); g.setLineDash([6 * dpr, 5 * dpr]);
