@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.254. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.255. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.254</title>
+<title>Zazerkalius — v0.255</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -750,6 +750,15 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 #paneGrp .cgrp.cmin > .cgb{display:none !important}
 #paneGrp .cgrp.cmin > .glab::after{content:" ▸";color:var(--dim)}
 .cgrp.cdrag{position:fixed !important;z-index:2000 !important;margin:0 !important;box-shadow:0 8px 24px rgba(0,0,0,.5);opacity:.92}
+/* v0.255, по снимку группы «Звук» на левой панели — «заголовки вверх, и проверь, чтобы все легли; ширину самого поля не менять»: на панели
+   заголовок группы — сверху, кнопки под ним во всю ширину панели; панель не расширяется, ничего не вылезает вбок */
+#paneGrp{overflow-x:hidden}
+#paneGrp .cgrp{flex-direction:column;gap:2px 0;max-width:100%;min-width:0;padding:3px 6px 5px}
+#paneGrp .cgrp > .glab{margin:0;padding:0 0 1px;justify-content:flex-start}
+#paneGrp .cgb{max-width:100%;min-width:0}
+#paneGrp .cgb input[type=range]{width:70px}
+#paneGrp .cgb select{max-width:100%}
+#paneGrp .cgrp.cmin{min-height:0 !important}
 #rowsPane.cgover{box-shadow:inset 0 0 0 2px var(--acc)}
 body.pane-icons #paneGrp,body.pane-icons #paneGrpHead,body.pane-icons #paneEdge{display:none !important}
 #paneEdge{position:absolute;top:0;right:-3px;bottom:0;width:6px;cursor:ew-resize;z-index:5}
@@ -762,7 +771,7 @@ body.pane-icons #paneGrp,body.pane-icons #paneGrpHead,body.pane-icons #paneEdge{
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.254</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.255</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1550,8 +1559,8 @@ body.pane-icons #paneGrp,body.pane-icons #paneGrpHead,body.pane-icons #paneEdge{
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0254"></script>
-<script src="zz-ui.js?v=0254"></script>
+<script src="zz-core.js?v=0255"></script>
+<script src="zz-ui.js?v=0255"></script>
 <script src="../_js/hub-link.js"></script>
 <script src="../_js/recorder.js" data-bez-knopki></script>
 </body>

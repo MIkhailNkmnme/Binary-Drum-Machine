@@ -4893,7 +4893,7 @@ function cgrpInit(){
   });
   /* v0.252, «а сами панели вкладок — переносить на левую панель, чтоб там по 2–3 в ряду вставали» (группы конуса): группу тянут за
      заголовок на левую панель — она встаёт внизу панели в ряд с другими (сколько влезет в ширину — 2–3), перед той, над которой
-     отпустили. Панель при первой группе расширяется под две в ряд; её край тянется мышью (двойной щелчок по краю — снова сама).
+     отпустили. Её край тянется мышью (двойной щелчок по краю — снова 250); v0.255: сама панель не расширяется, заголовок группы — сверху.
      Назад — вытащить за заголовок на холст или правый щелчок по заголовку (на полосу). Порядок — Z.cgrpDock, ширина — Z.paneW. */
   if (!Array.isArray(Z.cgrpDock)) Z.cgrpDock = [];
   const box = $("paneGrp"), head = $("paneGrpHead");
@@ -4916,11 +4916,8 @@ function cgrpInit(){
   };
   const paneWApply = (auto) => {
     const R = document.documentElement.style;
-    if (auto && !Z.paneWUser) {   // сама: под две самые широкие группы в ряд
-      const ws = box ? [...box.children].map(c => c.offsetWidth).sort((a, b) => b - a) : [];
-      if (!ws.length) delete Z.paneW;
-      else Z.paneW = Math.round(Math.max(250, Math.min(innerWidth * 0.5, Math.min(2, ws.length) * (ws[0] || 0) + 6 * 3 + 4)));   // две самые широкие — в ряд (одна — под одну)
-    }
+    // v0.255, «ширину самого поля не менять, левого»: панель сама больше не расширяется — только если край тянули рукой
+    if (auto && !Z.paneWUser) delete Z.paneW;
     if (Z.paneW) R.setProperty("--paneW", Z.paneW + "px"); else R.removeProperty("--paneW");
   };
   if (box) {
