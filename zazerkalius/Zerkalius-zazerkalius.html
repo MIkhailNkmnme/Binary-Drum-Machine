@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.187. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.188. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.187</title>
+<title>Zazerkalius — v0.188</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -627,7 +627,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.187</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.188</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1188,6 +1188,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
             <button id="bConeAimR" title="⌖▷ (v0.139: лазер неподвижный, вверх — ⌖▷ крутит строку 1 по часовой, пока вырез не встанет на лазер; открыт — закрыть) Довернуть строку 1 (только её) так, чтобы луч встал в следующую щель кольца 2 — по часовой. Правый щелчок — довод снят">⌖▷</button>
             <button id="bConeClockStop" title="⏸ На проходе: как только лазер (⌖ луч-часы) пройдёт все кольца до края, кручение встаёт — ровно в этом положении. Дальше — ▶ крутить. Включает и луч-часы">⏸ на проходе</button>
             <button id="bConePred" title="🔮 Просчитать: прогнать лазер от нынешнего положения до конца — мгновенно, без анимации, конус не меняется. Итог — в окне «📝 Текст»: у каждой строки угол (бит) вылета и строка от щели вылета, чем кончится, поймает ли что-нибудь строка для заполнения">🔮 просчитать</button>
+            <span style="white-space:nowrap" title="🎯 До строки N: крутить (выбранным режимом, как ◀ ▶) до мига, когда луч проходит строку N, — и встать там. По пути кольца, которые луч прошёл, встают, как при ▶. Номер строки — в поле"><button id="bConeGo">🎯 до строки</button><input type="number" id="coneGoN" min="1" max="256" value="10" style="width:44px;margin-left:2px"></span>
           </div>
           <span id="coneCycle" class="dim" style="margin:0 6px;font-variant-numeric:tabular-nums" title="Цикл кручения: круг — оборот стрелки (строки 1); сколько кругов, пока все кольца (и кольцо для заполнения) разом не встанут на свои места; сколько раз лазер прошёл до края. Правый щелчок по ▶ — счёт с нуля"></span>
         </div>
@@ -1330,8 +1331,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0152"></script>
-<script src="zz-ui.js?v=0152"></script>
+<script src="zz-core.js?v=0188"></script>
+<script src="zz-ui.js?v=0188"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>

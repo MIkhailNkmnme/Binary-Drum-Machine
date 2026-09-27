@@ -2429,6 +2429,45 @@ function setupCone(){
   };
   $("bConeStepB").onclick = () => coneStep(-1);
   $("bConeStepF").onclick = () => coneStep(1);
+  /* v0.188, «как сделать, чтобы луч дошёл до 10 строки» → «да» на «🎯 до строки N»: крутить (тем же режимом и шагом, что ◀ ▶) до мига,
+     когда луч проходит строку N — выходит из её кольца через щель; там и встать. По пути всё как при ▶: кольца, которые луч прошёл,
+     встают, стены красятся, лог пишется. Номер — в поле рядом (Z.coneGoN). Строка уже пройдена или до неё не дойти за круг — ничего
+     не меняется. */
+  const goN = $("coneGoN"); goN.value = Z.coneGoN || 10;
+  goN.onchange = () => { Z.coneGoN = Math.max(1, Math.round(+goN.value) || 1); goN.value = Z.coneGoN; save(); };
+  $("bConeGo").onclick = () => {
+    autoSet(false);
+    const m = Z.coneSpinMode || "all", N = Math.min(Z.rows.length, CONE_MAX);
+    if (m === "all") { say("🎯 Во «Всё» кольца друг относительно друга не сдвигаются — луч дальше не пойдёт. Выбери Каждое, Встреч Стр или Встреч Бит."); return; }
+    if (!N) return;
+    if (!Z.coneClock) { Z.coneClock = true; $("coneClock").checked = true; }
+    const t = Math.min(N, Math.max(1, Math.round(+goN.value) || 1)) - 1; goN.value = Z.coneGoN = t + 1;
+    const passed = (R) => !!R && (t === 0 ? (R.stop > 0 || R.pass) : R.g.some((v, q) => q % 2 === 0 && v === t));
+    if (passed(coneClockTrace()[0])) { say(`🎯 Луч уже проходит строку ${t + 1}. Заново — ⟲ всё на места или ✕ у строки для заполнения.`); return; }
+    const bitm = coneBitMode(m), dir = (Z.coneAutoSp ?? 30) < 0 ? -1 : 1;
+    let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
+    const perUnit = bitm ? 360 / Math.max(1, Math.min(...Z.rows.slice(0, N).map(s => s.length || 1))) : 1;
+    const d = dir * tolDeg / perUnit / 2, span = bitm ? Math.max(...Z.rows.slice(0, N).map(s => s.length || 1)) : 360;
+    const steps = Math.min(200000, Math.ceil(span / Math.abs(d)) + 2);
+    const bak = { ph: Z.coneSpinPh, vh: JSON.stringify(Z.voidHits || null), log: JSON.stringify(Z.coneLog || null), n: Z.coneClockN, wall: coneWallWas };
+    const ph0 = Z.coneSpinPh || 0;
+    let R = null, ok = false;
+    for (let st = 1; st <= steps; st++) {
+      Z.coneSpinPh = ph0 + d * st;
+      const tr = coneClockTrace(); R = tr[0]; coneWallPaint(tr);
+      if (passed(R)) { ok = true; break; }
+      if (R && R.pass && !R.cells.length) break;   // ушёл за край раньше
+    }
+    if (!ok) {
+      Z.coneSpinPh = bak.ph; Z.voidHits = JSON.parse(bak.vh); if (!Z.voidHits) delete Z.voidHits;
+      Z.coneLog = JSON.parse(bak.log); if (!Z.coneLog) delete Z.coneLog; Z.coneClockN = bak.n; coneWallWas = bak.wall;
+      renderCone(); say(`🎯 До строки ${t + 1} луч за круг не доходит — ничего не менял. Посмотри 🔮 прогноз или ⟲ всё на места.`); return;
+    }
+    save(); renderCone(); coneLogRender();
+    const turned = conePredFmt(Z.coneSpinPh - ph0, bitm), ex = Z.voidHits && Z.voidHits.ex && Z.voidHits.ex[t];
+    say(`🎯 Луч прошёл строку ${t + 1} — повернул на ${turned}` + (ex ? `; строка от щели вылета: ${ex}` : "") +
+        (R.wall ? `. Дальше упирается в строку ${R.wall[0] + 1}.` : R.pass ? (R.cells.length ? ". Прошёл все строки — пойман строкой для заполнения." : ". Прошёл все строки и ушёл за край.") : "."));
+  };
   $("bConeLogClr").onclick = () => { Z.coneLog = { n: 0, list: [] }; save(); coneLogRender(); say("📜 Лог лазера очищен."); };
   $("bConePred").onclick = () => {   // v0.187
     const P = conePredict();
