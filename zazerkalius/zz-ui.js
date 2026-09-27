@@ -1834,6 +1834,57 @@ function coneExitRows(){   // [[номер строки с 0, биты от ще
   const ex = Z.voidHits && Z.voidHits.ex && typeof Z.voidHits.ex === "object" ? Z.voidHits.ex : {};
   return Object.keys(ex).map(Number).sort((x, y) => x - y).map(b => [b, ex[b]]);
 }
+/* v0.187, «мы же можем заранее просчитать, что получится на 10 строке?» → «да» на кнопку «🔮 просчитать»: прогон лазера от нынешнего
+   положения до конца — без анимации, на копии: тем же шагом, что ◀ ▶ (не шире самой узкой щели), тем же счётом (coneWallPaint —
+   остановка колец, краска, вылет из строк). Конец — луч ушёл за край (при ▶ там пауза) или прошёл целый круг (во «Встреч Стр» —
+   360°, по биту — длина самой длинной строки). После прогона всё возвращается как было: фаза, краска, лог, остановленные кольца.
+   Итог — conePred: у каждой строки угол (бит) вылета и биты от щели, пойманные строкой для заполнения ячейки, чем кончилось. */
+let conePred = null;
+function conePredict(){
+  const m = Z.coneSpinMode || "all", N = Math.min(Z.rows.length, CONE_MAX);
+  if (!Z.coneClock) return { err: "⌖ Прогноз — для лазера: включи «луч-часы»." };
+  if (m === "all") return { err: "🔮 Во «Всё» кольца друг относительно друга не сдвигаются — луч никуда не продвинется. Выбери Каждое, Встреч Стр или Встреч Бит." };
+  if (!N) return { err: "Строк нет." };
+  const bak = { ph: Z.coneSpinPh, vh: JSON.stringify(Z.voidHits || null), log: JSON.stringify(Z.coneLog || null), fill: Z.fillCells, n: Z.coneClockN, wall: coneWallWas };
+  const bitm = coneBitMode(m), dir = (Z.coneAutoSp ?? 30) < 0 ? -1 : 1;
+  let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
+  const maxLen = Math.max(...Z.rows.slice(0, N).map(s => s.length || 1));
+  const perUnit = bitm ? 360 / Math.max(1, Math.min(...Z.rows.slice(0, N).map(s => s.length || 1))) : 1;
+  const d = dir * tolDeg / perUnit / 2, span = bitm ? maxLen : 360, steps = Math.min(200000, Math.ceil(span / Math.abs(d)) + 2);
+  const ph0 = Z.coneSpinPh || 0, rows = [], fill = [];
+  let end = "", endPh = null;
+  try {
+    coneVoidHits(); Z.voidHits.ex = {};
+    coneWallWas = undefined; coneWallPaint(coneClockTrace());   // нынешний конец луча — отправная точка, не попадание
+    const seen = new Set();
+    const snap = (ph) => { for (const [b, t] of coneExitRows()) if (!seen.has(b)) { seen.add(b); rows.push([b, ph - ph0, t]); } };
+    snap(ph0);
+    for (let st = 1; st <= steps; st++) {
+      const ph = ph0 + d * st; Z.coneSpinPh = ph;
+      const tr = coneClockTrace(), R = tr[0];
+      coneWallPaint(tr); snap(ph);
+      if (R && R.pass && R.cells.length && R.cells[0][0] === N && !fill.includes(R.cells[0][1])) fill.push(R.cells[0][1]);
+      if (R && R.pass && !R.cells.length) { end = "edge"; endPh = ph - ph0; break; }
+    }
+    if (!end) { end = "cycle"; endPh = d * steps; }
+  } finally {
+    Z.coneSpinPh = bak.ph; Z.voidHits = JSON.parse(bak.vh); if (!Z.voidHits) delete Z.voidHits;
+    Z.coneLog = JSON.parse(bak.log); if (!Z.coneLog) delete Z.coneLog;
+    Z.fillCells = bak.fill; Z.coneClockN = bak.n; coneWallWas = bak.wall;
+  }
+  return { m, bitm, rows, fill, end, endPh, N };
+}
+function conePredFmt(v, bitm){ return bitm ? (Math.round(Math.abs(v) * 100) / 100) + " бит" : (Math.round(Math.abs(v) * 10) / 10) + "°"; }
+function conePredRender(){
+  const box = $("conePred"); if (!box) return;
+  const P = conePred;
+  if (!P) { $("conePredN").textContent = "— 🔮 просчитать в «Лазере»"; box.innerHTML = ""; return; }
+  $("conePredN").textContent = `(${({ bit: "Каждое", obit: "Встреч Бит", opp: "Встреч Стр" })[P.m] || P.m}: вылетит строк ${P.rows.length} из ${P.N})`;
+  let h = P.rows.map(([b, v, t]) => '<div><b>' + (b + 1) + '</b> <i>' + conePredFmt(v, P.bitm) + '</i> ' + esc(t) + "</div>").join("");
+  h += '<div class="pend">' + (P.end === "edge" ? "↗ за край через " + conePredFmt(P.endPh, P.bitm) : "за круг (" + conePredFmt(P.endPh, P.bitm) + ") за край не вышел") +
+       " · строка для заполнения: " + (P.fill.length ? "«1» в ячейках " + P.fill.map(c => c + 1).join(", ") : "ничего не поймала") + "</div>";
+  box.innerHTML = h;
+}
 function coneClockMark(hits){
   let f = fillDraft(); const ch = [];
   for (const h of hits) if (h.cell >= 0 && h.cell < f.length && f[h.cell] !== "1") { f = f.slice(0, h.cell) + "1" + f.slice(h.cell + 1); ch.push(h.cell + 1); }
@@ -2379,6 +2430,20 @@ function setupCone(){
   $("bConeStepB").onclick = () => coneStep(-1);
   $("bConeStepF").onclick = () => coneStep(1);
   $("bConeLogClr").onclick = () => { Z.coneLog = { n: 0, list: [] }; save(); coneLogRender(); say("📜 Лог лазера очищен."); };
+  $("bConePred").onclick = () => {   // v0.187
+    const P = conePredict();
+    if (P.err) { say(P.err); return; }
+    conePred = P; conePredRender(); renderCone(); coneLogRender();
+    const W = $("coneTxtWin"); if (W && W.hidden) $("bConeTxt").click();
+    say(`🔮 Прогноз: вылетит строк ${P.rows.length} из ${P.N}; ` + (P.end === "edge" ? "луч уйдёт за край через " + conePredFmt(P.endPh, P.bitm) : "за круг за край не выйдет") +
+        (P.fill.length ? `; строка для заполнения поймает ячейки ${P.fill.map(c => c + 1).join(", ")}.` : "; строка для заполнения ничего не поймает.") + " Конус не менялся.");
+  };
+  $("bConePredCopy").onclick = () => {
+    if (!conePred || !conePred.rows.length) { say("🔮 Прогноза нет — 🔮 просчитать в «Лазере»."); return; }
+    const t = conePred.rows.map(([, , b]) => b).join("\n");
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => say(`🔮 Скопировано строк прогноза: ${conePred.rows.length}. Ctrl+V в поле строк вставит их столбиком.`), () => say("🔮 Не вышло скопировать."));
+  };
+  conePredRender();
   $("bConeExCopy").onclick = () => {   // v0.186: столбик строк от щели вылета — строка на строку, вставляется в поле Ctrl+V
     const ex = coneExitRows(); if (!ex.length) { say("🚪 Луч ещё ни из одной строки не вышел."); return; }
     const t = ex.map(([, b]) => b).join("\n");
