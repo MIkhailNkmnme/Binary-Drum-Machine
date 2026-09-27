@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.229. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.230. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.229</title>
+<title>Zazerkalius — v0.230</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -390,9 +390,16 @@ body.field-hidden #fieldEdge,body.zen #fieldEdge{display:none}
 #cutSlot{grid-column:1 / -1;contain:inline-size;min-width:0}   /* v0.227: ячейка панели — во всю ширину и не раздувает колонки (в v0.225 растянула колонку номеров) */
 #cutPanel{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 8px 10px;font-size:12px}   /* v0.225: под чертой поля */
 #cutPanel .cpl{color:var(--dim)}
-#cutPanel button{padding:2px 6px}
-#cutPanel #tplBar{flex:1 1 100%;padding:0}
-#cutPanel #tplList{flex:1 1 100%;overflow:visible;padding:0;min-height:0}
+/* v0.230, по снимку растянутых шаблонов под чертой — «тут жесть какая-то! без фона надо, это не поле, а кнопки под чертой, не растягивать»:
+   под чертой — компактные кнопки своей ширины, без фона, в ряд с переносом; панель прижата к левому краю поля (не уезжает с широкими строками). */
+#cutPanel{position:sticky;left:0;width:max-content;max-width:400px;background:none}
+#cutPanel button{padding:1px 6px;background:transparent;flex:0 0 auto;width:auto}
+#cutPanel button.on{background:transparent}
+#cutPanel #tplBar{display:contents}
+#cutPanel #tplList{display:contents}
+#cutPanel .tpl{display:inline-flex;gap:2px;flex:0 0 auto;min-width:0}
+#cutPanel .tpl .tb{flex:0 0 auto;max-width:200px;text-align:left}
+#cutPanel .tpl-sep{margin:0 0 0 6px;align-self:center}
 #tplBar{display:flex;gap:4px;padding:0 10px 6px}
 #tplBar button{flex:1;padding:2px 4px}
 #tplList{flex:1;overflow:auto;padding:0 10px 10px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-content:start;gap:3px 4px;min-height:60px}   /* v0.153: шаблоны — по два в ряд; свои (с ⚑ и ✕) — во всю ширину */
@@ -694,7 +701,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.229</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.230</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1457,8 +1464,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0229"></script>
-<script src="zz-ui.js?v=0229"></script>
+<script src="zz-core.js?v=0230"></script>
+<script src="zz-ui.js?v=0230"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>

@@ -550,6 +550,7 @@ function fieldInfoFit(){
   const fi = $("fieldInfo"), bar = $("fieldInfoBar"); if (!fi || !bar) return;
   const no = document.querySelector("#rowList .rw > .no"), w = no ? no.getBoundingClientRect().right - bar.getBoundingClientRect().left : 90;
   fi.style.maxWidth = Math.max(40, Math.round(bar.clientWidth - Math.max(0, w) - 14 - 6)) + "px";
+  if (CUT_PANEL && $("rowList")) CUT_PANEL.style.maxWidth = Math.max(160, $("rowList").clientWidth - 12) + "px";   // v0.230: кнопки под чертой — в ширину видимого поля, с переносом
   /* v0.212, «запрет сдвига строк — не дубль замка?» → «да (убрать), но общий замок всегда над столбиком должен стоять»: галки в «Кольцах»
      не видно (она осталась скрытой — на ней держится общий замок), а общий замок в полосе ввода сдвигается так, что его середина —
      ровно над столбиком замков строк. */
