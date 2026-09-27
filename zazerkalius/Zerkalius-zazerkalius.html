@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.240. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.241. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.240</title>
+<title>Zazerkalius — v0.241</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -725,7 +725,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.240</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.241</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -857,6 +857,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
       <button id="bCutR90" title="🔺 Серп 90 — Серпинский по треугольнику: строки растут на 1 бит (или над чертой одна строка) — Паскаль, на бит длиннее (1 → 11 → 101…); растут на 2 — правило 90, на 2 бита">🔺 Серп 90</button>
       <button id="bCutR30" title="Правило 30 — строка на 2 бита длиннее, хаос">30</button>
       <button id="bCutMask" title="Маска: следующая строка — маска подряд, на бит длиннее">маска</button><input id="cutMask" value="01" title="Маска из 0 и 1 (по умолчанию 01)" style="width:52px">
+      <button id="bBar" title="▮ Стенка: одна клетка заморожена — не обновляется и держит начальное значение, сигнал на ней отражается или гаснет (как в статье «Barriers in Cellular Automata»). Действует на достройку Серп 90 / 30, заготовки Аниматрицы и карту ▦ 256">▮ стенка</button><input id="barOff" type="number" value="-8" min="-512" max="512" title="Столбец стенки от вершины треугольника: 0 — по центру, минус — влево, плюс — вправо" style="width:50px">
       <span class="cpl" title="✂ Нарезать треугольник строк на маленькие ▲ высотой h (как в Треугольнике) и поставить их друг под другом">нарезать:</span>
       <button id="bTriCut" title="✂ Нарезать треугольник строк на фигуры высотой h и поставить их друг под другом (↩ вернёт)">✂</button><button id="bTriUnit" title="Фигуры: ▲, ▼, ▼ перевёрнутые, ▲▼, ◇ ромбы, ⧗ часы — щелчок дальше, правый назад">▲</button><input id="triH" type="number" min="2" max="256" value="16" title="Высота ▲ — строк в каждом" style="width:46px">
       <button id="bTriOrd" title="Порядок: по рядам, вдоль левой стороны, вдоль правой — каждый в обе стороны; щелчок дальше, правый назад">по рядам →</button>
@@ -1505,8 +1506,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0240"></script>
-<script src="zz-ui.js?v=0240"></script>
+<script src="zz-core.js?v=0241"></script>
+<script src="zz-ui.js?v=0241"></script>
 <script src="../_js/hub-link.js"></script>
 <script src="../_js/recorder.js" data-bez-knopki></script>
 </body>

@@ -478,6 +478,40 @@ function triCut(rows, h, order, skipEmpty, unit){
   kept.sort((x, y) => { const a = key(x), b = key(y); return a[0] - b[0] || a[1] - b[1] || a[2] - b[2]; });
   return { g, bands, items: kept, rows: [].concat(...kept.map(it => it.rs)) };
 }
+/* v0.241, по статье «When Information Hits a Wall: Barriers in Cellular Automata» (dev.to) — «да» на «стенку в правилах»: одна клетка
+   поля заморожена — не обновляется и держит своё начальное значение; сигнал на ней отражается, делится или гаснет. Столбец стенки —
+   от вершины треугольника (Z.barOff: 0 — по центру, минус — влево, плюс — вправо; по умолчанию −8). Действует на заготовки
+   Аниматрицы, карту ▦ 256 и достройку под чертой (Серп 90 / 30), когда нажата «стенка» (Z.barOn). */
+function barOffV(){ const v = Math.round(+Z.barOff); return Number.isFinite(v) ? v : -8; }
+function barApply(next, prev){   // новая строка: клетка столбца стенки — как в строке над ней (заморожена)
+  if (!Z.barOn) return next;
+  const off = barOffV(), kn = Math.floor((next.length - 1) / 2) + off, kp = Math.floor((prev.length - 1) / 2) + off;
+  if (kn < 0 || kn >= next.length) return next;
+  const v = kp >= 0 && kp < prev.length ? prev[kp] : "0";
+  return next.slice(0, kn) + v + next.slice(kn + 1);
+}
+function ecaRowsBar(rule, seed, H){   // как zzEcaRows (фон за краем — как делает правило), но со стенкой
+  if (!Z.barOn) return zzEcaRows(rule, seed, H);
+  seed = zzIsBits(seed) ? seed : "1";
+  const L = seed.length, W = L + 2 * H + 2, c = H + 1, bc = c + Math.floor((L - 1) / 2) + barOffV();
+  let row = new Uint8Array(W); for (let i = 0; i < L; i++) row[c + i] = seed[i] === "1" ? 1 : 0;
+  const has = bc >= 0 && bc < W, bv = has ? row[bc] : 0, out = [];
+  for (let y = 0; y < H; y++) {
+    let s = ""; for (let x = c - y; x < c + L + y; x++) s += row[x] ? "1" : "0";
+    out.push(s);
+    const n = new Uint8Array(W);
+    for (let x = 0; x < W; x++) { const l = x ? row[x - 1] : row[0], m = row[x], r = x < W - 1 ? row[x + 1] : row[W - 1]; n[x] = (rule >> (l * 4 + m * 2 + r)) & 1; }
+    if (has) n[bc] = bv;
+    row = n;
+  }
+  return out;
+}
+function pascalRowsBar(seed, H){
+  if (!Z.barOn) return zzPascalRows(seed, H);
+  const r = [zzIsBits(seed) ? seed : "1"];
+  while (r.length < H) { const p = r[r.length - 1]; r.push(barApply(zzPascalNext(p), p)); }
+  return r;
+}
 const CUT_GEN_MAX = 1024;
 function cutEcaNext(rule, s){
   const L = s.length, b = (x) => (x >= 0 && x < L && s[x] === "1" ? 1 : 0); let o = "";
@@ -488,9 +522,9 @@ function cutGenNext(s, prev){
   const m = Z.cutGen || "r90";
   // v0.237, «при построении учитывай: если стоит Серпинский — строит не с 1, а с 11»: треугольник +1 (или строка одна) — Паскаль, +1 бит;
   // треугольник +2 — правило 90, +2 бита (как заготовки Аниматрицы)
-  if (m === "r90" && (!prev || s.length - prev.length !== 2)) return zzPascalNext(s || "1");
+  if (m === "r90" && (!prev || s.length - prev.length !== 2)) return barApply(zzPascalNext(s || "1"), s || "1");   // v0.241: и стенка
   if (m === "mask") { const mk = zzIsBits(Z.cutMask) ? Z.cutMask : "01"; let o = ""; for (let i = 0; i <= (s || "").length; i++) o += mk[i % mk.length]; return o; }
-  return cutEcaNext(m === "r30" ? 30 : 90, s || "1");
+  return barApply(cutEcaNext(m === "r30" ? 30 : 90, s || "1"), s || "1");   // v0.241: и стенка
 }
 function cutAt(k, gen){
   syncLane();
@@ -3205,7 +3239,7 @@ function setupCone(){
     const v = e.target.value, lab = e.target.selectedOptions[0] ? e.target.selectedOptions[0].textContent : v; e.target.value = "";
     if (!v) return;
     const H = Z.animRowsN || 256, seed = Z.animSeed || "1";
-    animApply(v === "pascal" ? zzPascalRows(seed, H) : v.startsWith("r") ? zzEcaRows(+v.slice(1), seed, H) : zzSeqRows(v.slice(2), H), lab);
+    animApply(v === "pascal" ? pascalRowsBar(seed, H) : v.startsWith("r") ? ecaRowsBar(+v.slice(1), seed, H) : zzSeqRows(v.slice(2), H), Z.barOn && v[0] !== "s" ? lab + " + стенка " + barOffV() : lab);   // v0.241: стенка
   };
   function animApply(rows, lab){   // v0.239: общее у списка заготовок и карты правил ▦
     animSet(false);
@@ -3234,7 +3268,7 @@ function setupCone(){
     const m = document.createElement("div"), box = document.createElement("div");
     m.id = "ecaMap"; box.className = "ecaGrid";
     for (let r = 0; r < 256; r++) {
-      const rows = zzEcaRows(r, seed, T), W = rows[T - 1].length, cv = document.createElement("canvas");
+      const rows = ecaRowsBar(r, seed, T), W = rows[T - 1].length, cv = document.createElement("canvas");   // v0.241: со стенкой, если она нажата
       cv.width = W; cv.height = T;
       const g = cv.getContext("2d"), im = g.createImageData(W, T);
       rows.forEach((s, y) => {
@@ -3251,7 +3285,7 @@ function setupCone(){
     box.onclick = (e) => {
       const c = e.target.closest(".ecaC"); if (!c) return;
       box.querySelectorAll(".ecaC.on").forEach(x => x.classList.remove("on")); c.classList.add("on");
-      animApply(zzEcaRows(+c.dataset.r, seed, Z.animRowsN || 256), `Правило ${c.dataset.r}`);
+      animApply(ecaRowsBar(+c.dataset.r, seed, Z.animRowsN || 256), `Правило ${c.dataset.r}` + (Z.barOn ? " + стенка " + barOffV() : ""));   // v0.241: стенка
     };
     m.appendChild(box); document.body.appendChild(m);
     const b = $("bEcaMap").getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
@@ -5944,6 +5978,7 @@ function init(){
     const m = Z.cutGen || "r90";
     $("bCutR90").classList.toggle("on", m === "r90"); $("bCutR30").classList.toggle("on", m === "r30"); $("bCutMask").classList.toggle("on", m === "mask");
     $("cutMask").value = Z.cutMask || "01";
+    $("bBar").classList.toggle("on", !!Z.barOn); $("barOff").value = barOffV();   // v0.241: стенка
     $("bCutHid").classList.toggle("on", Z.cutHidMode !== "keep");   // v0.229: «Заменить» — вкл / выкл, надпись одна
   };
   const cutPick = (m, what) => { Z.cutGen = m; cutUi(); save(); say(`⎯ Тянешь черту вниз — строки достраиваются от верхней: ${what}.`); };
@@ -5951,6 +5986,10 @@ function init(){
   $("bCutR30").onclick = () => cutPick("r30", "правило 30 (на 2 бита длиннее)");
   $("bCutMask").onclick = () => cutPick("mask", `маска ${Z.cutMask || "01"} подряд (на бит длиннее)`);
   $("cutMask").onchange = (e) => { const v = e.target.value.replace(/[^01]/g, ""); Z.cutMask = v || "01"; e.target.value = Z.cutMask; Z.cutGen = "mask"; cutUi(); save(); say(`⎯ Маска достройки — ${Z.cutMask}.`); };
+  $("bBar").onclick = () => { Z.barOn = !Z.barOn; cutUi(); save();
+    say(Z.barOn ? `▮ Стенка: столбец ${barOffV()} от вершины заморожен — держит начальное значение; достройка и заготовки Аниматрицы строятся с ней.` : "▮ Стенки нет — правила как есть."); };
+  $("barOff").onchange = (e) => { const v = Math.round(+e.target.value); Z.barOff = Number.isFinite(v) ? Math.max(-512, Math.min(512, v)) : -8; cutUi(); save();
+    say(`▮ Стенка — столбец ${barOffV()} от вершины (${barOffV() < 0 ? "левее" : barOffV() > 0 ? "правее" : "по центру"}).`); };
   $("bCutHid").onclick = () => { Z.cutHidMode = Z.cutHidMode === "keep" ? "del" : "keep"; cutUi(); save();
     say(Z.cutHidMode === "keep" ? "⎯ Заменить — выкл: строки под чертой при достройке сдвигаются вниз, ниже новых." : "⎯ Заменить — вкл: строки под чертой при достройке заменяются новыми."); };
   cutUi();
