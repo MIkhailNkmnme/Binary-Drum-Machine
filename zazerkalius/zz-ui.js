@@ -432,6 +432,31 @@ function cutHeight(){ let H = 0; for (let l = 0; l < (Z.laneCount || 1); l++) H 
    длиннее, как заготовки Аниматрицы), 30 — правило 30, маска — маска Z.cutMask подряд на бит длиннее. Строки, что были под чертой:
    🗑 удалить (Z.cutHidMode = "del", по умолчанию) или ⤓ сдвинуть вниз ("keep") — остаются под чертой ниже новых. Замок строк (⛔)
    достраивать не даёт — тогда черта, как прежде, только возвращает строки из-под себя. */
+/* v0.234, «объединить с тем html, где нарезка треугольника на мелкие и строится анимация (Треугольник): взять их и расположить
+   друг под другом в Зазеркалиусе» (по снимку столбика из треугольников по 16 строк). Как в Треугольнике: треугольник строк режется без
+   остатка на полосы высотой h, в полосе n — n + 1 треугольников ▲ (вершина вверху). Строки ▲: строка t полосы — кусок строки
+   n·h + t с позиции g·h·j длиной g·t + 1, где g — на сколько растёт строка (1 — Паскаль, 2 — правила 90, 30…). Куски ставятся
+   друг под другом в выбранном порядке: по рядам (→), вдоль левой стороны (↘), вдоль правой (↙); «без пустых» — без ▲ из одних нулей. */
+function triCut(rows, h, order, skipEmpty){
+  const n = rows.length;
+  if (n < 2) return { err: "✂ Нечего резать — нужен треугольник хотя бы из двух строк." };
+  if (rows[0].length !== 1) return { err: "✂ Режу треугольник от вершины в один бит — первая строка должна быть из одного бита." };
+  const g = rows[1].length - rows[0].length;
+  if (g !== 1 && g !== 2) return { err: "✂ Строки должны расти на 1 бит (Паскаль) или на 2 (правила 90, 30…) — здесь не так." };
+  for (let i = 0; i < n; i++) if (rows[i].length !== g * i + 1) return { err: `✂ Строка ${i + 1} — ${rows[i].length} бит, а в треугольнике (+${g}) должно быть ${g * i + 1}.` };
+  const bands = Math.floor(n / h);
+  if (!bands) return { err: `✂ Строк ${n} — меньше одной полосы высотой ${h}.` };
+  const items = [];
+  for (let lev = 0; lev < bands; lev++) for (let j = 0; j <= lev; j++) {
+    const rs = [];
+    for (let t = 0; t < h; t++) { const a = g * h * j; rs.push(rows[lev * h + t].slice(a, a + g * t + 1)); }
+    if (skipEmpty && rs.every(r => r.indexOf("1") < 0)) continue;
+    items.push({ lev, j, rs });
+  }
+  if (order === "left") items.sort((x, y) => x.j - y.j || x.lev - y.lev);
+  else if (order === "right") items.sort((x, y) => (x.lev - x.j) - (y.lev - y.j) || x.lev - y.lev);
+  return { g, bands, items, rows: [].concat(...items.map(it => it.rs)) };
+}
 const CUT_GEN_MAX = 1024;
 function cutEcaNext(rule, s){
   const L = s.length, b = (x) => (x >= 0 && x < L && s[x] === "1" ? 1 : 0); let o = "";
@@ -3164,7 +3189,7 @@ function setupCone(){
     say(`🌊 Заготовка «${lab.trim()}»: ${rows.length} стр., последняя — ${rows[rows.length - 1].length} бит. ↩ вернёт.`);
   };
   animUi();
-  /* v0.234, «подключать надо настройку — звук с компа»: правый щелчок по ⏺ — писать ли вместе с конусом звук ПК (Z.coneRecSnd,
+  /* v0.235, «подключать надо настройку — звук с компа»: правый щелчок по ⏺ — писать ли вместе с конусом звук ПК (Z.coneRecSnd,
      на кнопке значок ♪). Звук берётся захватом экрана — браузер при старте спросит, что показать: на Windows системный звук
      отдаётся только с «Весь экран» и галкой «Поделиться системным звуком», у вкладки — «звук вкладки». Картинка захвата в
      файл не идёт — только его звук. Захват закрыли кнопкой браузера — запись останавливается и сохраняется. */
@@ -3211,7 +3236,7 @@ function setupCone(){
       clearInterval(recT); stream.getTracks().forEach(t => t.stop());
       if (cap) cap.getTracks().forEach(t => t.stop());
       let blob = new Blob(chunks, { type: "video/webm" });
-      // v0.234, «нет эскизов в плейлисте»: у webm из MediaRecorder в заголовке нет длительности — плеер пишет 0, эскиза не строит.
+      // v0.235, «нет эскизов в плейлисте»: у webm из MediaRecorder в заголовке нет длительности — плеер пишет 0, эскиза не строит.
       // Дописывает её общий recorder.js (подключён без своей кнопки); нет модуля — файл уходит как раньше.
       const R = window.__zerkRecorder;
       if (R && R.fixWebm) blob = await R.fixWebm(blob, Date.now() - t0);
@@ -5775,6 +5800,20 @@ function init(){
   $("bCutHid").onclick = () => { Z.cutHidMode = Z.cutHidMode === "keep" ? "del" : "keep"; cutUi(); save();
     say(Z.cutHidMode === "keep" ? "⎯ Заменить — выкл: строки под чертой при достройке сдвигаются вниз, ниже новых." : "⎯ Заменить — вкл: строки под чертой при достройке заменяются новыми."); };
   cutUi();
+  const TRI_ORD = { rows: "по рядам →", left: "вдоль левой ↘", right: "вдоль правой ↙" };   // v0.234: ✂ нарезка на ▲
+  const triUi = () => { $("bTriOrd").textContent = TRI_ORD[Z.triOrd] || TRI_ORD.rows; $("bTriEmpty").classList.toggle("on", Z.triSkip !== false); $("triH").value = Z.triH || 16; };
+  triUi();
+  $("bTriOrd").onclick = () => { const k = Object.keys(TRI_ORD); Z.triOrd = k[(k.indexOf(Z.triOrd || "rows") + 1) % k.length]; triUi(); save(); };
+  $("bTriEmpty").onclick = () => { Z.triSkip = Z.triSkip === false; triUi(); save(); };
+  $("triH").onchange = (e) => { Z.triH = Math.max(2, Math.min(256, Math.round(+e.target.value) || 16)); triUi(); save(); };
+  $("bTriCut").onclick = () => {
+    syncLane(); const h = Z.triH || 16, R = triCut(Z.rows.slice(), h, Z.triOrd || "rows", Z.triSkip !== false);
+    if (R.err) { say(R.err); return; }
+    if (!R.rows.length) { say(`✂ Все ▲ высотой ${h} — из одних нулей; выключи «без пустых», чтобы поставить и их.`); return; }
+    try { snapshot(); } catch (err) { return; }
+    Z.rows = R.rows; syncLane(); Z.cur = 0; renderAll(); save();
+    say(`✂ Нарезано: ${R.items.length} ▲ по ${h} строк (${R.bands} полос, строки +${R.g}), ${TRI_ORD[Z.triOrd || "rows"]} — друг под другом, ${R.rows.length} стр. ↩ вернёт.`);
+  };
   $("bTplRow").onclick = () => { const rows = [cur()]; Z.tpl.push({ name: tplName(rows), rows }); renderTpl(); save(); say(`Строка ${Z.cur + 1} (${cur().length} бит) сохранена шаблоном. Щелчок по нему — вставить под текущей.`); };
   $("bTplAll").onclick = () => { const rows = Z.rows.slice(); Z.tpl.push({ name: tplName(rows), rows }); Z.tplRef = Z.tpl.length - 1; renderTpl(); renderRows(); save(); say(`Столбик (${rows.length} стр.) сохранён шаблоном.`); };   // v0.037: сохранённый столбик — новый эталон; v0.038: комментарий съедал конец строки — страница не запускалась
   // Разделитель поля и окон: ширина поля в пикселях, двойной щелчок — по умолчанию.
