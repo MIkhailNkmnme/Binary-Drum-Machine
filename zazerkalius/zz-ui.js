@@ -5688,7 +5688,7 @@ function init(){
      номеров, подсвечивать немного при наведении»: разделителя нет; ширину поля строк меняет столбик номеров — тянешь его по горизонтали
      (дальше 6 px и больше вбок, чем вверх-вниз), короткий щелчок по номеру, замку, кручению — как был. */
   $("rowList").addEventListener("pointerdown", (e) => {
-    const no = e.target.closest(".rw > .no"); if (!no || e.button !== 0 || rowEditing >= 0) return;
+    const no = e.target.closest(".rw > .no > .rn"); if (!no || e.button !== 0 || rowEditing >= 0) return;   // v0.219: «хват только у номеров, не дальше»
     const list = $("rowList"), x0 = e.clientX, y0 = e.clientY, w0 = $("field").getBoundingClientRect().width;
     const sg = document.body.classList.contains("field-right") ? -1 : 1;   // v0.091: поле справа — тянешь влево, поле шире
     let on = false;
