@@ -1272,7 +1272,7 @@ function renderCone(){
     const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, rot = coneRotOf(i);
     if (rout < 0 || rin > Math.hypot(W, H) + Math.hypot(cx - W / 2, cy - H / 2)) continue;
     const MI = mirMap.get(i), blank = !!clockRays;   // v0.131: при луч-часах ячейки колец строк пустые — чёрные, 1 ставит лазер
-    const gap = clockRays && n > 1 ? (coneSunOn() && coneSunCut() === "zero" ? 0 : coneSlitHalf(n))   // v0.208: ☀ «0 — проход» — без прорезей; v0.124: при луч-часах щель между битами — та, что в расчёте (ползунок «щель»)
+    const gap = clockRays && n > 1 ? (coneNoGap() ? 0 : coneSlitHalf(n))   // v0.208: ☀ «0 — проход» — без прорезей; v0.124: при луч-часах щель между битами — та, что в расчёте (ползунок «щель»)
       : n > 1 && step * rin > 3 * dpr ? Math.min(step * 0.12, 1.5 * dpr / Math.max(1, rin)) : 0;
     const arcLen = step * (rin + rout) / 2, fsz = Math.min(dr * band * 0.95, arcLen * 0.85);
     const glyph = fsz >= 5 * dpr;   // v0.162, «вид сверху на все — пиши 1 и 0 на секторах»: символ — почти во всю ширину кольца и с 5 px (прежде 0.8 ширины и с 8 px — у узких колец цифр не было)
@@ -1377,7 +1377,7 @@ function renderCone(){
       const [i, j] = k.split(":").map(Number); if (i >= N || !shown(i)) continue;
       const n = Z.rows[i].length, cnt = VH[k] | 0; if (!n || j >= n || !cnt) continue;
       const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, a = -Math.PI / 2 + (j - coneRotOf(i)) * step;
-      const gp = n > 1 ? coneSlitHalf(n) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);
+      const gp = n > 1 && !coneNoGap() ? coneSlitHalf(n) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216: «Без щелей» — краска сплошная
       g.beginPath(); coneArc(g, cx, cy, i, rout, a + gp, a + step - gp); coneArc(g, cx, cy, i, rin, a + step - gp, a + gp, true); g.closePath();
       g.fillStyle = cg; g.globalAlpha = Math.min(0.95, 0.6 + 0.12 * cnt); g.fill(); g.globalAlpha = 1;
       if (fsz >= 7 * dpr) {
@@ -1389,7 +1389,7 @@ function renderCone(){
   }
   if (fillOn) {   // v0.114: кольцо для заполнения — ячейки пунктиром, заполненные — цветом бита; бит 0 — сверху, как у всех
     const f = fillDraft(), n = f.length, rin = r0 + N * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, rotF = coneFillRot();   // v0.117: крутится со всеми
-    const gp = n > 1 ? Math.min(step * 0.1, 1.5 * dpr / Math.max(1, rin)) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);
+    const gp = n > 1 && !coneNoGap() ? Math.min(step * 0.1, 1.5 * dpr / Math.max(1, rin)) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216
     g.lineWidth = dpr; g.setLineDash([3 * dpr, 3 * dpr]);
     for (let k = 0; k < n; k++) {
       const a = -Math.PI / 2 + (k - rotF) * step;
@@ -1741,6 +1741,9 @@ function coneSunOn(){ return !!Z.coneSun && !!Z.coneClock; }
    второй пропуск теперь «0 — проход, 1 — стена» ("zero"; прежнее "ones" читается так же): щелей между битами нет, каждый «0» пропускает
    свет во всю ширину своей ячейки, «1» — стена; на рисунке у колец нет прорезей между битами. Окно «360° / число единиц» (v0.206) убрано. */
 function coneSunCut(){ return Z.coneSunCut === "zero" || Z.coneSunCut === "ones" ? "zero" : "gaps"; }
+/* v0.216, по снимку краски с чёрными прорезями — «щелей не должно быть, назови «Без щелей»»: пропуск «zero» зовётся «Без щелей»; в нём нет
+   прорезей ни у колец строк, ни у закрашенных светом ячеек, ни у строки для заполнения. */
+function coneNoGap(){ return coneSunOn() && coneSunCut() === "zero"; }
 const TAU2 = 2 * Math.PI;
 function ivNorm(lo, hi, out){   // [lo, hi] → в [0, 2π), с разрезом через 0
   const w = hi - lo; if (w <= 0) return;
@@ -1878,7 +1881,7 @@ function coneAimStep(d){   // v0.139: ⌖▷ / ⌖◁ — крутить стр�
    засчитывается один раз (пока щели держатся вместе — это один проход); каждый проход прибавляет ячейке единицу: 1, 11, 111…
    Счёт — Z.voidHits: { sig, h: { "кольцо:ячейка": сколько } }; сменилось число строк или длина нижней — счёт начинается заново. */
 const CONE_VOID_TO = 256;
-function coneVoidOn(){ return Z.coneVoid !== false && !!Z.coneClock; }   // только при луч-часах — без луча они лишь сжимали бы кольца строк
+function coneVoidOn(){ return Z.coneVoid !== false && !!Z.coneClock && !coneNoGap(); }   // v0.216: «Без щелей» — свет ловит строка для заполнения, пустые кольца не нужны   // только при луч-часах — без луча они лишь сжимали бы кольца строк
 // сколько колец всего в плоском конусе: строки + кольцо для заполнения (+ пустые до 256)
 function coneRingsTotal(N){ return coneVoidOn() ? Math.max(N + 1, CONE_VOID_TO) : N + 1; }
 function coneVoidLen(j, N){ const s = Z.rows[N - 1]; return (s ? s.length : 0) + (j - N + 1); }   // кольцо j ≥ N: на ячейку длиннее предыдущего
@@ -2817,10 +2820,10 @@ function setupCone(){
     if (Z.coneSun) { if (Z.coneFan) { Z.coneFan = false; fanLab(); } if (!Z.coneClock) { Z.coneClock = true; $("coneClock").checked = true; } }
     coneLaserResetAll(); coneWallWas = undefined; coneSunWas = undefined; coneClockWas = null;
     sunLab(); save(); renderCone(); coneLogRender();
-    say(Z.coneSun ? (coneSunCut() === "zero" ? "☀ Солнце: строка 1 светит всегда; «0» — проход во всю ячейку, «1» — стена, щелей между битами нет. ▶ крутить — свет красит стены." : "☀ Солнце: строка 1 светит всегда; свет проходит кольца только в щелях между битами (ширина — «щель»): у «11» — два луча. ▶ крутить — свет красит стены.") : "☀ Солнце выключено — снова лазер.");
+    say(Z.coneSun ? (coneSunCut() === "zero" ? "☀ Солнце, без щелей: строка 1 светит всегда; «0» — проход во всю ячейку, «1» — стена. ▶ крутить — свет красит стены." : "☀ Солнце: строка 1 светит всегда; свет проходит кольца только в щелях между битами (ширина — «щель»): у «11» — два луча. ▶ крутить — свет красит стены.") : "☀ Солнце выключено — снова лазер.");
   };
   $("coneSunCut").onchange = (e) => { Z.coneSunCut = e.target.value; coneSunWas = undefined; coneSunUi(); save(); renderCone(); coneLogRender();
-    say(coneSunCut() === "zero" ? "☀ Пропуск — «0 — проход, 1 — стена»: «0» пропускает свет во всю свою ширину, «1» держит, щелей между битами нет." : "☀ Пропуск — щели между битами, ширина — ползунок «щель»."); };
+    say(coneSunCut() === "zero" ? "☀ Без щелей: «0» пропускает свет во всю свою ширину, «1» — стена." : "☀ Пропуск — щели между битами, ширина — ползунок «щель»."); };
   const lzN = $("coneLasersN"), lz0 = $("coneLaser0");   // v0.194: сколько лазеров и угол первого
   lzN.value = coneLasersN(); lz0.value = +Z.coneLaser0 || 0;
   lzN.onchange = () => { Z.coneLasers = Math.max(1, Math.min(72, Math.round(+lzN.value) || 8)); lzN.value = Z.coneLasers; save(); renderCone(); coneLogRender();
