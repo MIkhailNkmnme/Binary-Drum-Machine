@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.253. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.254. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.253</title>
+<title>Zazerkalius — v0.254</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -355,6 +355,7 @@ body.nocur .rw.cur:not(.sel):not(:hover) > .no{background:var(--bg) !important}
 .cutln.on .cuth,.cutln:hover .cuth{color:var(--acc)}
 .cuth{display:none !important}   /* v0.155, по снимку «⎯ граница» — «убери надпись»: у черты-границы подписи нет (сама черта тянется, как была; сколько строк за ней — в строке сведений поля и в подсказке) */
 body.cutdrag,body.cutdrag *{cursor:ns-resize !important}
+body.rowdrag #rowList,body.rowdrag #rowList *{user-select:none !important;-webkit-user-select:none !important;cursor:row-resize !important}   /* v0.254: протяжка через строки — выделяются строки, не символы */
 .rw.hid{cursor:default}
 .rw.hid > .bits,.rw.hid > .trk{color:var(--dim) !important;opacity:.3}
 .rw.hid .ob{color:var(--dim);opacity:1}
@@ -761,7 +762,7 @@ body.pane-icons #paneGrp,body.pane-icons #paneGrpHead,body.pane-icons #paneEdge{
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.253</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.254</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1549,8 +1550,8 @@ body.pane-icons #paneGrp,body.pane-icons #paneGrpHead,body.pane-icons #paneEdge{
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0253"></script>
-<script src="zz-ui.js?v=0253"></script>
+<script src="zz-core.js?v=0254"></script>
+<script src="zz-ui.js?v=0254"></script>
 <script src="../_js/hub-link.js"></script>
 <script src="../_js/recorder.js" data-bez-knopki></script>
 </body>
