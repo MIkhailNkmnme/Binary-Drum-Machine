@@ -2396,6 +2396,10 @@ function setupCone(){
     autoRaf = requestAnimationFrame(autoTick);
   };
   const autoSet = (on) => {
+    if (on && !autoRaf && Z.coneClock && (Z.coneSpinMode || "all") !== "all") {   // v0.189: все кольца строк стоят — крутить нечего, сказать
+      const fz = Z.voidHits && Z.voidHits.fz, N = Math.min(Z.rows.length, CONE_MAX);
+      if (fz && N && Z.rows.slice(0, N).every((_, i) => fz[i] !== undefined)) { say("⏹ Все кольца строк стоят — луч уже прошёл их. Отпустить — 🎯 до строки, ⟲ всё на места или ✕ у строки для заполнения."); on = false; }
+    }
     if (on && !autoRaf) { autoT0 = 0; coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass); coneSpinning = true; autoRaf = requestAnimationFrame(autoTick); }   // v0.119: стоим на проходе — он уже засчитан
     if (!on && autoRaf) { cancelAnimationFrame(autoRaf); autoRaf = 0; coneSpinning = false; save(); }
     $("bConeAuto").classList.toggle("on", on); $("bConeAuto").textContent = on ? "⏸ стоп" : "▶ крутить";
@@ -2451,12 +2455,26 @@ function setupCone(){
     const steps = Math.min(200000, Math.ceil(span / Math.abs(d)) + 2);
     const bak = { ph: Z.coneSpinPh, vh: JSON.stringify(Z.voidHits || null), log: JSON.stringify(Z.coneLog || null), n: Z.coneClockN, wall: coneWallWas };
     const ph0 = Z.coneSpinPh || 0;
-    let R = null, ok = false;
-    for (let st = 1; st <= steps; st++) {
-      Z.coneSpinPh = ph0 + d * st;
-      const tr = coneClockTrace(); R = tr[0]; coneWallPaint(tr);
-      if (passed(R)) { ok = true; break; }
-      if (R && R.pass && !R.cells.length) break;   // ушёл за край раньше
+    let R = null, ok = false, freed = 0;
+    const run = () => {
+      for (let st = 1; st <= steps; st++) {
+        Z.coneSpinPh = ph0 + d * st;
+        const tr = coneClockTrace(); R = tr[0]; coneWallPaint(tr);
+        if (passed(R)) return true;
+        if (R && R.pass && !R.cells.length) return false;   // ушёл за край раньше
+      }
+      return false;
+    };
+    ok = run();
+    /* v0.189: не дошёл, а кольца стоят с прошлого прохода (или остались от другого режима) — отпустить их и ещё раз с этого места.
+       Краска и лог остаются; не выйдет и так — всё назад, как было. */
+    const fz0 = JSON.parse(bak.vh || "null"), nfz = fz0 && fz0.fz ? Object.keys(fz0.fz).length : 0;
+    if (!ok && nfz) {
+      Z.coneSpinPh = bak.ph; Z.voidHits = JSON.parse(bak.vh); Z.voidHits.fz = {}; Z.voidHits.ex = {};
+      Z.coneLog = JSON.parse(bak.log); if (!Z.coneLog) delete Z.coneLog; Z.coneClockN = bak.n; coneWallWas = undefined;
+      coneWallPaint(coneClockTrace());   // нынешний конец луча — отправная точка
+      if (passed(coneClockTrace()[0])) { save(); renderCone(); coneLogRender(); say(`🎯 Отпустил остановленные кольца (${nfz}) — луч сразу проходит строку ${t + 1}.`); return; }
+      ok = run(); if (ok) freed = nfz;
     }
     if (!ok) {
       Z.coneSpinPh = bak.ph; Z.voidHits = JSON.parse(bak.vh); if (!Z.voidHits) delete Z.voidHits;
@@ -2465,7 +2483,7 @@ function setupCone(){
     }
     save(); renderCone(); coneLogRender();
     const turned = conePredFmt(Z.coneSpinPh - ph0, bitm), ex = Z.voidHits && Z.voidHits.ex && Z.voidHits.ex[t];
-    say(`🎯 Луч прошёл строку ${t + 1} — повернул на ${turned}` + (ex ? `; строка от щели вылета: ${ex}` : "") +
+    say((freed ? `🎯 Отпустил остановленные кольца (${freed}). ` : "🎯 ") + `Луч прошёл строку ${t + 1} — повернул на ${turned}` + (ex ? `; строка от щели вылета: ${ex}` : "") +
         (R.wall ? `. Дальше упирается в строку ${R.wall[0] + 1}.` : R.pass ? (R.cells.length ? ". Прошёл все строки — пойман строкой для заполнения." : ". Прошёл все строки и ушёл за край.") : "."));
   };
   $("bConeLogClr").onclick = () => { Z.coneLog = { n: 0, list: [] }; save(); coneLogRender(); say("📜 Лог лазера очищен."); };
@@ -2579,7 +2597,10 @@ function setupCone(){
     save(); renderCone();
     say(Z.coneClockStop ? "⏸ На проходе: как только лазер пройдёт все кольца, кручение встанет. Дальше — ▶ крутить." : "⏸ Без остановок: лазер метит ячейки на ходу.");
   };
-  $("coneSpinMode").onchange = (e) => { Z.coneSpinMode = e.target.value; Z.coneSpinPh = 0; Z.coneClockN = 0; save(); renderCone();
+  /* v0.189, «и ничего не крутит» (снимок: Встреч Бит, одна строка, вырез закрыт): остановленные кольца (Z.voidHits.fz) хранят фазу в
+     единицах своего режима — во «Встреч Стр» в градусах, в Каждое / Встреч Бит в битах. После смены режима 179° читались как 179 бит,
+     вырез строки 1 вставал закрытым навсегда, и крутить было нечего. Теперь смена режима отпускает кольца (краска и лог остаются). */
+  $("coneSpinMode").onchange = (e) => { Z.coneSpinMode = e.target.value; Z.coneSpinPh = 0; Z.coneClockN = 0; if (Z.voidHits) { Z.voidHits.fz = {}; Z.voidHits.ex = {}; } coneWallWas = undefined; save(); renderCone(); coneLogRender();
     say({ all: "▶ Всё целиком: весь конус одним поворотом.", bit: "▶ Каждое по биту: маленькие кольца вертятся быстрее — рисунок закручивается спиралью.", obit: "▶ Навстречу по биту: каждое кольцо на бит за шаг, через строку — в обратную сторону.", opp: "▶ Навстречу по строкам: чётные кольца по часовой, нечётные против, с одной скоростью." }[Z.coneSpinMode] + " Правый щелчок по ▶ — всё на места."); };
   /* v0.136, «эта скорость непонятная — раздели: одна только скорость, а направление задавать другой кнопкой; слева-справа — стрелки
      шаг»: ползунок — величина (5…120), знак Z.coneAutoSp — направление, его переключает «↻ по часовой / ↺ против». */
