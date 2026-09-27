@@ -532,8 +532,12 @@ function cutAt(k, gen){
   k = Math.max(1, k | 0);
   for (let l = 0; l < (Z.laneCount || 1); l++) {
     if (gen && k > Z.lanes[l].length) {   // v0.225: вниз за нижнюю — достроить от верхней
-      const vis = Z.lanes[l].slice(); while (vis.length < k && vis.length < CUT_GEN_MAX) vis.push(cutGenNext(vis[vis.length - 1], vis[vis.length - 2]));
-      Z.lanes[l] = vis; if (Z.cutHidMode !== "keep") Z.lanesHid[l] = [];
+      /* v0.253, «когда под линией у строк есть биты — кнопку, чтобы их включать, когда вниз тянуть; она по умолчанию»: «⤒ из-под черты»
+         (Z.cutTake, по умолчанию вкл) — черта вниз сперва возвращает строки, что лежат под ней, и только когда они кончились — достраивает. */
+      const vis = Z.lanes[l].slice(); let hid = hidRows(l).slice();
+      if (Z.cutTake !== false) while (vis.length < k && hid.length) vis.push(hid.shift());
+      if (vis.length < k) { while (vis.length < k && vis.length < CUT_GEN_MAX) vis.push(cutGenNext(vis[vis.length - 1], vis[vis.length - 2])); if (Z.cutHidMode !== "keep") hid = []; }
+      Z.lanes[l] = vis; Z.lanesHid[l] = hid;
       continue;
     }
     const all = Z.lanes[l].concat(hidRows(l)), v = Math.max(1, Math.min(all.length, k));
@@ -6168,6 +6172,7 @@ function init(){
     $("cutMask").value = Z.cutMask || "01";
     $("bBar").classList.toggle("on", !!Z.barOn); $("barOff").value = barOffV();   // v0.241: стенка
     $("bCutHid").classList.toggle("on", Z.cutHidMode !== "keep");   // v0.229: «Заменить» — вкл / выкл, надпись одна
+    $("bCutTake").classList.toggle("on", Z.cutTake !== false);   // v0.253
   };
   const cutPick = (m, what) => { Z.cutGen = m; cutUi(); save(); say(`⎯ Тянешь черту вниз — строки достраиваются от верхней: ${what}.`); };
   $("bCutR90").onclick = () => cutPick("r90", "🔺 Серп 90 (правило 90, на 2 бита длиннее)");
@@ -6180,6 +6185,8 @@ function init(){
     say(`▮ Стенка — столбец ${barOffV()} от вершины (${barOffV() < 0 ? "левее" : barOffV() > 0 ? "правее" : "по центру"}).`); };
   $("bCutHid").onclick = () => { Z.cutHidMode = Z.cutHidMode === "keep" ? "del" : "keep"; cutUi(); save();
     say(Z.cutHidMode === "keep" ? "⎯ Заменить — выкл: строки под чертой при достройке сдвигаются вниз, ниже новых." : "⎯ Заменить — вкл: строки под чертой при достройке заменяются новыми."); };
+  $("bCutTake").onclick = () => { Z.cutTake = Z.cutTake === false; cutUi(); save();   // v0.253
+    say(Z.cutTake !== false ? "⤒ Из-под черты — вкл: тянешь черту вниз — сперва возвращаются строки, что под ней, потом достраиваются новые." : "⤒ Из-под черты — выкл: черта вниз сразу достраивает новые строки (что под чертой — по «Заменить»)."); };
   $("bCutClr").onclick = () => {   // v0.245, «и кнопку — стереть всё под линией»: строки за чертой — насовсем, во всех полях; ↩ вернёт
     const n = hidCount(); if (!n) { say("🗑 Под чертой и так пусто."); return; }
     const pre = undoState(); Z.lanesHid = []; undoPush(pre); renderAll(); save();
