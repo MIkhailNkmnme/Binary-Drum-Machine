@@ -5721,7 +5721,7 @@ function init(){
     const m = Z.cutGen || "r90";
     $("bCutR90").classList.toggle("on", m === "r90"); $("bCutR30").classList.toggle("on", m === "r30"); $("bCutMask").classList.toggle("on", m === "mask");
     $("cutMask").value = Z.cutMask || "01";
-    $("bCutHid").textContent = Z.cutHidMode === "keep" ? "⤓ сдвинуть" : "🗑 удалить";
+    $("bCutHid").classList.toggle("on", Z.cutHidMode !== "keep");   // v0.229: «Заменить» — вкл / выкл, надпись одна
   };
   const cutPick = (m, what) => { Z.cutGen = m; cutUi(); save(); say(`⎯ Тянешь черту вниз — строки достраиваются от верхней: ${what}.`); };
   $("bCutR90").onclick = () => cutPick("r90", "🔺 Серп 90 (правило 90, на 2 бита длиннее)");
@@ -5729,7 +5729,7 @@ function init(){
   $("bCutMask").onclick = () => cutPick("mask", `маска ${Z.cutMask || "01"} подряд (на бит длиннее)`);
   $("cutMask").onchange = (e) => { const v = e.target.value.replace(/[^01]/g, ""); Z.cutMask = v || "01"; e.target.value = Z.cutMask; Z.cutGen = "mask"; cutUi(); save(); say(`⎯ Маска достройки — ${Z.cutMask}.`); };
   $("bCutHid").onclick = () => { Z.cutHidMode = Z.cutHidMode === "keep" ? "del" : "keep"; cutUi(); save();
-    say(Z.cutHidMode === "keep" ? "⎯ Строки под чертой при достройке сдвигаются вниз — остаются под чертой, ниже новых." : "⎯ Строки под чертой при достройке удаляются."); };
+    say(Z.cutHidMode === "keep" ? "⎯ Заменить — выкл: строки под чертой при достройке сдвигаются вниз, ниже новых." : "⎯ Заменить — вкл: строки под чертой при достройке заменяются новыми."); };
   cutUi();
   $("bTplRow").onclick = () => { const rows = [cur()]; Z.tpl.push({ name: tplName(rows), rows }); renderTpl(); save(); say(`Строка ${Z.cur + 1} (${cur().length} бит) сохранена шаблоном. Щелчок по нему — вставить под текущей.`); };
   $("bTplAll").onclick = () => { const rows = Z.rows.slice(); Z.tpl.push({ name: tplName(rows), rows }); Z.tplRef = Z.tpl.length - 1; renderTpl(); renderRows(); save(); say(`Столбик (${rows.length} стр.) сохранён шаблоном.`); };   // v0.037: сохранённый столбик — новый эталон; v0.038: комментарий съедал конец строки — страница не запускалась

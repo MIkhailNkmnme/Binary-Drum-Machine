@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.228. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.229. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.228</title>
+<title>Zazerkalius — v0.229</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -694,7 +694,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.228</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.229</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -826,7 +826,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
       <button id="bCutR90" title="🔺 Серп 90: правило 90 — строка на 2 бита длиннее (как заготовки Аниматрицы); от «1» — треугольник Серпинского">🔺 Серп 90</button>
       <button id="bCutR30" title="Правило 30 — строка на 2 бита длиннее, хаос">30</button>
       <button id="bCutMask" title="Маска: следующая строка — маска подряд, на бит длиннее">маска</button><input id="cutMask" value="01" title="Маска из 0 и 1 (по умолчанию 01)" style="width:52px">
-      <button id="bCutHid" title="Что делать со строками, которые были под чертой, когда достраиваешь: удалить или сдвинуть вниз (останутся под чертой, ниже новых)">🗑 удалить</button>
+      <button id="bCutHid" title="Заменить: включено — строки, что были под чертой, заменяются новыми (удаляются); выключено — сдвигаются вниз и остаются под чертой, ниже новых">Заменить</button>
       <div id="tplBar">
       <button id="bTplRow" title="Сохранить ТЕКУЩУЮ строку своим шаблоном (запоминается). Щелчок по шаблону вставит её под текущей">＋ Строка</button>
       <button id="bTplAll" title="Сохранить ВЕСЬ столбик одним шаблоном (запоминается). Щелчок вставит все его строки под текущей">＋ Столбик</button>
@@ -1457,8 +1457,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0228"></script>
-<script src="zz-ui.js?v=0228"></script>
+<script src="zz-core.js?v=0229"></script>
+<script src="zz-ui.js?v=0229"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
