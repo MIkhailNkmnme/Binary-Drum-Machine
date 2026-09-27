@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.251. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.252. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.251</title>
+<title>Zazerkalius — v0.252</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -89,7 +89,7 @@ body.pinmode button:not(#bPinMode):not(#top button):not(#pinBar button),body.pin
 .win.flash{box-shadow:0 0 0 2px var(--gold),0 8px 24px rgba(0,0,0,.35)}
 /* v0.010: три колонки — слева кнопки и шаблоны, В ЦЕНТРЕ поле строк, справа окна; между полем и окнами
    разделитель, его тянут (ширина поля — --rowsW, запоминается). */
-#main{position:absolute;top:40px;left:0;right:0;bottom:0;display:grid;grid-template-columns:250px var(--rowsW, 44%) 1fr}   /* v0.218: без разделителя (6px) — ширину меняет столбик номеров */
+#main{position:absolute;top:40px;left:0;right:0;bottom:0;display:grid;grid-template-columns:var(--paneW, 250px) var(--rowsW, 44%) 1fr}   /* v0.218: без разделителя (6px) — ширину меняет столбик номеров */
 #rowsPane{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--panel)}
 /* v0.035: панель значками в один столбик — кнопка ◂/▸ в углу, узкая колонка, у кнопок только значки */
 #rowsPane{position:relative}
@@ -97,12 +97,12 @@ body.pinmode button:not(#bPinMode):not(#top button):not(#pinBar button),body.pin
 body.pane-icons #main{grid-template-columns:48px var(--rowsW, 44%) 1fr}
 /* v0.091, «строки перемести с их меню туда — справа от конуса, или просто конус дай располагать слева от поля строк»: колонки
    меняются местами — окна слева, поле строк справа */
-body.field-right #main{grid-template-columns:250px 1fr var(--rowsW, 44%)}
+body.field-right #main{grid-template-columns:var(--paneW, 250px) 1fr var(--rowsW, 44%)}
 body.field-right.pane-icons #main{grid-template-columns:48px 1fr var(--rowsW, 44%)}
 body.field-right #rowsPane{order:0} body.field-right #desk{order:1} body.field-right #split{order:2} body.field-right #field{order:3}
 /* v0.109, «кнопка свернуть поле строк»: поле и разделитель спрятаны, в сетке остаются две колонки — панель и окна */
 body.field-hidden #field,body.field-hidden #split{display:none}
-body.field-hidden #main,body.field-hidden.field-right #main{grid-template-columns:250px 1fr}
+body.field-hidden #main,body.field-hidden.field-right #main{grid-template-columns:var(--paneW, 250px) 1fr}
 body.field-hidden.pane-icons #main,body.field-hidden.field-right.pane-icons #main{grid-template-columns:48px 1fr}
 body.pane-icons #rowsPane{overflow-y:auto;overflow-x:hidden}
 body.pane-icons #bPaneIcons{position:static;margin:6px 4px;font-size:13px}
@@ -416,7 +416,7 @@ body.field-hidden #fieldEdge,body.zen #fieldEdge{display:none}
 #tplList .tpl{min-width:0}
 #tplList .tb{min-width:0;white-space:nowrap}
 /* v0.156, «в один размер все, минимальный который»: кнопки и списки левой панели — одной высоты по самой низкой (24 px, как «＋ Строка») и с одними отступами */
-body:not(.pane-icons) #rowsPane button:not(#bPaneIcons),body:not(.pane-icons) #rowsPane select{box-sizing:border-box;height:24px;min-height:0;padding:2px 4px;line-height:1;font-size:13px}
+body:not(.pane-icons) #rowsPane button:not(#bPaneIcons):not(#paneGrp *),body:not(.pane-icons) #rowsPane select:not(#paneGrp *){box-sizing:border-box;height:24px;min-height:0;padding:2px 4px;line-height:1;font-size:13px}
 /* v0.094: свёрнутые окна в левой панели (при «⇆ поле справа») */
 #paneWins{display:flex;flex-direction:column;gap:3px;padding:0 10px 10px;overflow:auto;max-height:45%}
 #paneWins button{text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -723,6 +723,36 @@ body.solo #w-cone #coneCycle{height:1.25em;line-height:1.25em;font-size:11px}
   html.solo:not([data-theme="light"]){--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --line:#414b62; --txt:#eef1f6; --dim:#b0b9cc; --b0:#8f99ae}
 }
 html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --line:#414b62; --txt:#eef1f6; --dim:#b0b9cc; --b0:#8f99ae}
+
+/* v0.252, «панели вкладок — переносить на левую панель, чтоб там по 2–3 в ряду вставали»: группы конуса на левой панели (#paneGrp) —
+   тот же вид, что на полосе конуса; тянутся за заголовок; пока тащат — висят над страницей (.cdrag) */
+#paneGrp{display:flex;flex-wrap:wrap;gap:6px;padding:6px;align-items:flex-start;align-content:flex-start;overflow:auto;min-height:0}
+#paneGrp:empty{display:none}
+#paneGrp .cgrp{flex:0 0 auto}
+#paneGrp .cgrp,.cgrp.cdrag{display:inline-flex !important;align-items:stretch;gap:0 6px;padding:2px 6px 2px 4px;border:1px solid var(--line);border-radius:6px;background:var(--panel);box-sizing:border-box}
+#paneGrp .cgrp > .glab,.cgrp.cdrag > .glab{font-size:10.5px;letter-spacing:.3px;text-transform:uppercase;color:var(--acc);white-space:nowrap;cursor:move;touch-action:none;user-select:none;display:flex;align-items:center;margin:-2px 2px -2px -4px;padding:2px 0 2px 4px}
+#paneGrp .cgrp.cg-spin{background:color-mix(in srgb, rgb(255,209,102) 13%, var(--panel));border-color:rgba(255,209,102,.5)}
+#paneGrp .cgrp.cg-spin > .glab{color:var(--gold)}
+#paneGrp .cgb{display:flex;flex-wrap:wrap;align-items:center;gap:3px;max-width:var(--cgbW, 210px);padding:1px 0}   /* узкие — чтобы вставали по 2–3 в ряд */
+#paneGrp .cgb > button,#paneGrp .cgb > select,#paneGrp .cgb > label,#paneGrp .cgb > span > button,#paneGrp .cgb > span > select,#paneGrp .cgb > span > label{height:24px;box-sizing:border-box;font-size:12px;line-height:1;padding:0 7px;margin:0;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;width:auto}
+#paneGrp .cgb input[type=number]{height:24px;box-sizing:border-box;font-size:12px;padding:0 3px}
+#paneGrp .cgb input[type=range]{width:84px;margin:0}
+#paneGrp .cgb select{max-width:130px}
+#paneGrp .cgb > span{display:inline-flex;align-items:center;gap:3px}
+#paneGrp .cgb .glab2{font-size:11px;color:var(--dim)}
+#paneGrp label:has(> input[type=checkbox]){display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border:1px solid var(--line);border-radius:4px;background:var(--panel2);color:var(--txt);cursor:pointer;white-space:nowrap}
+#paneGrp label:has(> input[type=checkbox]):hover{border-color:var(--acc)}
+#paneGrp label:has(> input[type=checkbox]:checked){border-color:var(--gold);color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+#paneGrp label.sunmode:has(> input[type=checkbox]:checked){border-color:var(--line);color:var(--txt);box-shadow:none}
+#paneGrp label > input[type=checkbox]{position:absolute !important;opacity:0 !important;width:0 !important;height:0 !important;margin:0 !important;pointer-events:none}
+#paneGrp .cgrp :disabled,#paneGrp .cgrp label.dis{opacity:.35;cursor:default}
+#paneGrp .cgrp.cmin > .cgb{display:none !important}
+#paneGrp .cgrp.cmin > .glab::after{content:" ▸";color:var(--dim)}
+.cgrp.cdrag{position:fixed !important;z-index:2000 !important;margin:0 !important;box-shadow:0 8px 24px rgba(0,0,0,.5);opacity:.92}
+#rowsPane.cgover{box-shadow:inset 0 0 0 2px var(--acc)}
+body.pane-icons #paneGrp,body.pane-icons #paneGrpHead,body.pane-icons #paneEdge{display:none !important}
+#paneEdge{position:absolute;top:0;right:-3px;bottom:0;width:6px;cursor:ew-resize;z-index:5}
+#paneEdge:hover,body.wdrag #paneEdge{background:color-mix(in srgb, var(--acc) 35%, transparent)}
 </style>
 <script>
 /* v0.185: ?preset=<имя> — подключить пресет presety/<имя>.js до скрипта страницы (document.write — синхронно, и с диска тоже) */
@@ -731,7 +761,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.251</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.252</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -797,6 +827,10 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
     <!-- v0.217: блок «Шрифт» переехал в полосу над строками -->
     <!-- v0.225: шаблоны переехали под черту поля строк (#cutPanel) -->
     <!-- v0.094: при «⇆ поле справа» свёрнутые окна — здесь, кнопками -->
+    <!-- v0.252: группы конуса, перенесённые на левую панель (тянуть за заголовок группы) -->
+    <div class="pane-head" id="paneGrpHead" style="display:none">◯ Группы конуса</div>
+    <div id="paneGrp"></div>
+    <div id="paneEdge" title="Тяни — ширина левой панели; двойной щелчок — снова сама (под две группы конуса в ряд)"></div>
     <div class="pane-head" id="paneWinsHead" style="display:none">Окна</div>
     <div id="paneWins"></div>
   </aside>
@@ -1514,8 +1548,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0251"></script>
-<script src="zz-ui.js?v=0251"></script>
+<script src="zz-core.js?v=0252"></script>
+<script src="zz-ui.js?v=0252"></script>
 <script src="../_js/hub-link.js"></script>
 <script src="../_js/recorder.js" data-bez-knopki></script>
 </body>

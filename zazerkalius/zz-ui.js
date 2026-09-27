@@ -22,7 +22,7 @@ const ZZ_BG = (() => { try { return !!ZZ_SOLO && (new URLSearchParams(location.s
    весь Zazerkalius в состоянии пресета: окна, конус, лазер, поля строк. Память не читается и не пишется: гость крутит и гоняет
    лазер, его собственные строки и раскладка не тронуты, а ссылка при каждом открытии снова даёт пресет как есть. */
 const ZZ_PRESET_FULL = !!ZZ_PRESET && !ZZ_SOLO;
-const ZZ_PRESET_LAYOUT = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "ctw", "cgrpPos", "padPos", "tpl", "tplRef", "pins", "coneBtns"];   // конусу одному (?solo=cone) — ни к чему
+const ZZ_PRESET_LAYOUT = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "ctw", "cgrpPos", "cgrpDock", "paneW", "paneWUser", "padPos", "tpl", "tplRef", "pins", "coneBtns"];   // конусу одному (?solo=cone) — ни к чему
 const ZZ_KEY = ZZ_BG ? "zazerkalius_bg" : ZZ_SOLO ? "zazerkalius_solo_" + ZZ_SOLO.slice(2) : "zazerkalius_v1";
 /* v0.030: окна можно вынести в отдельное окно браузера (⧉); их элементы живут уже в чужом документе,
    поэтому поиск по id смотрит и туда — иначе вынесенное окно перестало бы обновляться. */
@@ -4846,14 +4846,26 @@ function cgrpInit(){
     lab.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return;
       e.preventDefault(); try { lab.setPointerCapture(e.pointerId); } catch (err) { /* уже отпущен */ }
-      const r = g.getBoundingClientRect(), tr = tl.getBoundingClientRect(), key = g.dataset.g;
-      const p0 = Z.cgrpPos[key] || { x: r.left - tr.left, y: r.top - tr.top }, x0 = e.clientX, y0 = e.clientY; let moved = false;
+      /* v0.252: пока тащат — группа висит над всей страницей (.cdrag, position: fixed), отпустил — решается, куда: над левой панелью —
+         встаёт туда (в ряд с другими, перед той, над которой отпустил), иначе — висит поверх холста, как прежде (Z.cgrpPos). */
+      const r = g.getBoundingClientRect(), x0 = e.clientX, y0 = e.clientY, dx = x0 - r.left, dy = y0 - r.top; let moved = false, lx = x0, ly = y0;
       g.style.zIndex = ++zTop;
       const mv = (ev) => {
         if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return;
-        moved = true; Z.cgrpPos[key] = { x: p0.x + ev.clientX - x0, y: p0.y + ev.clientY - y0 }; place(g);
+        if (!moved) { moved = true; g.style.width = r.width + "px"; g.classList.add("cdrag"); document.body.classList.add("cgdrag"); }
+        lx = ev.clientX; ly = ev.clientY;
+        g.style.left = Math.round(lx - dx) + "px"; g.style.top = Math.round(ly - dy) + "px";
+        const P = $("rowsPane"); if (P) P.classList.toggle("cgover", paneHit(lx, ly));
       };
-      const up = () => { lab.removeEventListener("pointermove", mv); lab.removeEventListener("pointerup", up); lab.removeEventListener("pointercancel", up); if (moved) save(); };
+      const up = () => {
+        lab.removeEventListener("pointermove", mv); lab.removeEventListener("pointerup", up); lab.removeEventListener("pointercancel", up);
+        if (!moved) return;
+        const gr = g.getBoundingClientRect();
+        g.classList.remove("cdrag"); document.body.classList.remove("cgdrag"); g.style.width = ""; const P = $("rowsPane"); if (P) P.classList.remove("cgover");
+        if (paneHit(lx, ly)) { dock(g, lx, ly); save(); return; }
+        if (g.parentElement !== tl) undock(g);
+        const tr = tl.getBoundingClientRect(); Z.cgrpPos[g.dataset.g] = { x: gr.left - tr.left, y: gr.top - tr.top }; place(g); save();
+      };
       lab.addEventListener("pointermove", mv); lab.addEventListener("pointerup", up); lab.addEventListener("pointercancel", up);
     });
     /* v0.204, по снимку группы «Аниматрица» — «двойной клик по группе сворачивает её до заголовка»: двойной щелчок по заголовку или
@@ -4868,9 +4880,60 @@ function cgrpInit(){
       if (on) Z.cgrpMin[key] = g.offsetHeight; else delete Z.cgrpMin[key];
       g.classList.toggle("cmin", on); g.style.minHeight = on ? Z.cgrpMin[key] + "px" : ""; cgrpCols(); place(g); save();
     });
-    lab.addEventListener("contextmenu", (e) => { e.preventDefault(); if (!Z.cgrpPos[g.dataset.g]) return; delete Z.cgrpPos[g.dataset.g]; place(g); save(); });
+    lab.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      if (g.parentElement !== tl) { undock(g); place(g); save(); return; }   // v0.252: с левой панели — обратно на полосу
+      if (!Z.cgrpPos[g.dataset.g]) return; delete Z.cgrpPos[g.dataset.g]; place(g); save();
+    });
     place(g);
   });
+  /* v0.252, «а сами панели вкладок — переносить на левую панель, чтоб там по 2–3 в ряду вставали» (группы конуса): группу тянут за
+     заголовок на левую панель — она встаёт внизу панели в ряд с другими (сколько влезет в ширину — 2–3), перед той, над которой
+     отпустили. Панель при первой группе расширяется под две в ряд; её край тянется мышью (двойной щелчок по краю — снова сама).
+     Назад — вытащить за заголовок на холст или правый щелчок по заголовку (на полосу). Порядок — Z.cgrpDock, ширина — Z.paneW. */
+  if (!Array.isArray(Z.cgrpDock)) Z.cgrpDock = [];
+  const box = $("paneGrp"), head = $("paneGrpHead");
+  const paneHit = (x, y) => { const P = $("rowsPane"); if (!P || !box || document.body.classList.contains("pane-icons")) return false; const q = P.getBoundingClientRect(); return x >= q.left && x <= q.right && y >= q.top && y <= q.bottom; };
+  const dockSync = () => {
+    Z.cgrpDock = box ? [...box.children].map(c => c.dataset.g) : [];
+    if (head) head.style.display = Z.cgrpDock.length ? "" : "none";
+    paneWApply(true);
+  };
+  const dock = (g, x, y) => {
+    if (!box) return;
+    delete Z.cgrpPos[g.dataset.g]; g.classList.remove("cfloat"); g.style.left = g.style.top = "";
+    let before = null;
+    for (const c of box.children) { if (c === g) continue; const q = c.getBoundingClientRect(); if (y < q.top || (y <= q.bottom && x < q.left + q.width / 2)) { before = c; break; } }
+    box.insertBefore(g, before); dockSync();
+  };
+  const undock = (g) => {   // обратно на полосу — на своё место среди остальных
+    const i = groups.indexOf(g), next = groups.slice(i + 1).find(c => c.parentElement === tl) || null;
+    tl.insertBefore(g, next); dockSync();
+  };
+  const paneWApply = (auto) => {
+    const R = document.documentElement.style;
+    if (auto && !Z.paneWUser) {   // сама: под две самые широкие группы в ряд
+      const ws = box ? [...box.children].map(c => c.offsetWidth).sort((a, b) => b - a) : [];
+      if (!ws.length) delete Z.paneW;
+      else Z.paneW = Math.round(Math.max(250, Math.min(innerWidth * 0.5, Math.min(2, ws.length) * (ws[0] || 0) + 6 * 3 + 4)));   // две самые широкие — в ряд (одна — под одну)
+    }
+    if (Z.paneW) R.setProperty("--paneW", Z.paneW + "px"); else R.removeProperty("--paneW");
+  };
+  if (box) {
+    for (const k of Z.cgrpDock) { const g = groups.find(c => c.dataset.g === k); if (g) box.appendChild(g); }
+    dockSync();
+    const edge = $("paneEdge");
+    if (edge) {
+      edge.addEventListener("pointerdown", (e) => {
+        if (e.button !== 0) return; e.preventDefault(); try { edge.setPointerCapture(e.pointerId); } catch (err) {}
+        const P = $("rowsPane"), w0 = P.getBoundingClientRect().width, x0 = e.clientX; document.body.classList.add("wdrag");
+        const mv = (ev) => { Z.paneW = Math.round(Math.max(180, Math.min(innerWidth * 0.7, w0 + ev.clientX - x0))); Z.paneWUser = true; paneWApply(false); };
+        const up = () => { edge.removeEventListener("pointermove", mv); edge.removeEventListener("pointerup", up); edge.removeEventListener("pointercancel", up); document.body.classList.remove("wdrag"); save(); requestAnimationFrame(() => { if (typeof packWins === "function") packWins(); renderAll(); }); };
+        edge.addEventListener("pointermove", mv); edge.addEventListener("pointerup", up); edge.addEventListener("pointercancel", up);
+      });
+      edge.addEventListener("dblclick", () => { delete Z.paneWUser; paneWApply(true); save(); renderAll(); });
+    }
+  }
   addEventListener("resize", () => groups.forEach(place));
   cgrpCols();
 }
@@ -5357,7 +5420,7 @@ function saveSession(){
    с другого компа — то тоже он становится умолчанием». ⭐ Умолчание — снимок Z в Z.home (без раскладки окон: она своя у каждого
    экрана). «↺ Начальные» берёт из него биты всех полей, «⟲ всё на места» — положения колец и настройки конуса. Открытый файл
    сессии сам становится умолчанием. Правый щелчок по ⭐ — забыть: снова встроенный столбик 1, 11, 101… и нулевые положения. */
-const ZZ_HOME_SKIP = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "coneBtns"];   // v0.203: и кнопки на холсте — это раскладка
+const ZZ_HOME_SKIP = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "coneBtns", "cgrpDock", "paneW", "paneWUser"];   // v0.252: и группы на левой панели   // v0.203: и кнопки на холсте — это раскладка
 function homeOf(o){ const h = {}; for (const k of Object.keys(o)) if (!ZZ_HOME_SKIP.includes(k)) h[k] = o[k]; return JSON.parse(JSON.stringify(h)); }
 function homeSave(){
   save(); Z.home = homeOf(Z); save(); homeBtn();
