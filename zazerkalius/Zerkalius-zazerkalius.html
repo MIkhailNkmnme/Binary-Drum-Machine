@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.198. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.199. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.198</title>
+<title>Zazerkalius — v0.199</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -632,7 +632,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.198</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.199</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1195,7 +1195,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
             <select id="animOp" title="Операция волны: бит сверху (уже переписанный) и бит снизу. Цикл дают XOR и XNOR; NAND и NOR разгоняются и мигают; AND и OR замирают за проход">
               <option value="xor">⊕ XOR</option><option value="xnor">XNOR</option><option value="nand">NAND</option><option value="nor">NOR</option><option value="and">AND</option><option value="or">OR</option>
             </select>
-            <label class="dim" title="Скорость волны, по логарифму: 0,5…5000 строк в секунду">⚡ <input type="range" id="animSp" min="0" max="100" step="1" value="40" style="width:90px;vertical-align:middle"> <span id="animSpV" style="display:inline-block;min-width:5em;font-variant-numeric:tabular-nums"></span></label>
+            <label class="dim" title="⟳ Циклами: ▶ волна идёт целыми циклами — за шаг весь проход волны от верха до низа, конус показывает только готовые циклы (как «Плеер — целыми циклами» в Треугольнике). Скорость — циклов в секунду"><input type="checkbox" id="animByPass"> ⟳ циклами</label>
+            <label class="dim" title="Скорость волны, по логарифму: 0,5…5000 строк в секунду (с ⟳ циклами — циклов в секунду)">⚡ <input type="range" id="animSp" min="0" max="100" step="1" value="40" style="width:90px;vertical-align:middle"> <span id="animSpV" style="display:inline-block;min-width:5em;font-variant-numeric:tabular-nums"></span></label>
             <span id="animInfo" class="dim" style="font-variant-numeric:tabular-nums;white-space:nowrap" title="Сколько проходов волна сделала, на какой строке она сейчас и длина цикла (когда картина повторилась)"></span>
           </div>
           <div class="cgrp" title="⌖ Луч-часы: пустые кольца до 256, ширина щели, довод строки 1, пауза на проходе"><span class="glab">Лазер</span>
@@ -1351,8 +1352,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0198"></script>
-<script src="zz-ui.js?v=0198"></script>
+<script src="zz-core.js?v=0199"></script>
+<script src="zz-ui.js?v=0199"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>

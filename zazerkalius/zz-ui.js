@@ -2687,13 +2687,13 @@ function setupCone(){
     if (H) {   // v0.125: своё умолчание (⭐) — положения колец и настройки конуса, как запомнены
       coneRot.length = 0; (Array.isArray(H.coneRot) ? H.coneRot : []).forEach(x => coneRot.push(Math.round(x || 0))); Z.coneRot = coneRot.slice();
       Z.coneSpin = H.coneSpin || 0; Z.coneSpinPh = H.coneSpinPh || 0; Z.coneAimRot = H.coneAimRot || 0; Z.coneClockN = 0; coneClockFlash = []; coneLaserResetAll();   // v0.138
-      const keys = ["coneClock", "coneClockStop", "coneVoid", "coneSlit", "coneSpinMode", "coneAutoSp", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3H", "cone3Bw", "animOp", "animSp",
+      const keys = ["coneClock", "coneClockStop", "coneVoid", "coneSlit", "coneSpinMode", "coneAutoSp", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3H", "cone3Bw", "animOp", "animSp", "animByPass",
                     "coneRays", "coneMir", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs"];
       for (const k of keys) { if (k in H) Z[k] = JSON.parse(JSON.stringify(H[k])); else delete Z[k]; }
       for (const k of ["coneClock", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta"]) { const el = $(k); if (el) el.checked = !!Z[k]; }
       $("coneLock").checked = Z.coneLock !== false; $("coneVoid").checked = Z.coneVoid !== false;
       $("coneRays").value = Z.coneRays || "off"; $("coneMir").value = Z.coneMir || "off"; $("coneSpinMode").value = Z.coneSpinMode || "all";
-      coneDirUi(); $("cone3H").value = Z.cone3H ?? 1; $("cone3Bw").value = Z.cone3Bw ?? 1; $("animOp").value = Z.animOp || "xor"; $("animSp").value = Z.animSp ?? 40;
+      coneDirUi(); $("cone3H").value = Z.cone3H ?? 1; $("cone3Bw").value = Z.cone3Bw ?? 1; $("animOp").value = Z.animOp || "xor"; $("animSp").value = Z.animSp ?? 40; $("animByPass").checked = !!Z.animByPass;
       $("coneSlit").value = +Z.coneSlit || 2; $("coneSlitV").textContent = (+Z.coneSlit || 2).toFixed(1).replace(".", ",") + "°";
       $("bConeClockStop").classList.toggle("on", !!Z.coneClockStop);
       coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass);
@@ -2804,7 +2804,7 @@ function setupCone(){
   const animUi = () => {
     const N = Z.rows.length;
     $("animInfo").textContent = `проход ${aPass} · волна ${aRow}/${Math.max(0, N - 1)}` + (aPer ? ` · цикл ${aPer}` : "");
-    const sp = animSpOf(Z.animSp ?? 40); $("animSpV").textContent = (sp < 10 ? sp.toFixed(1).replace(".", ",") : Math.round(sp)) + " стр/с";
+    const sp = animSpOf(Z.animSp ?? 40); $("animSpV").textContent = (sp < 10 ? sp.toFixed(1).replace(".", ",") : Math.round(sp)) + (Z.animByPass ? " цикл/с" : " стр/с");
   };
   const animDone = () => { animSig = animKey(); renderAll(); save(); animUi(); };
   const animGuard = () => { if (rowsLocked()) return false; if (Z.rows.length < 2) { say("🌊 Аниматрице нужно хотя бы две строки."); return false; } return true; };
@@ -2815,7 +2815,10 @@ function setupCone(){
     let n = Math.floor(animAcc); animAcc -= n;
     if (n) {
       animSync(); const t0 = performance.now();
-      while (n-- > 0) { animStep1(); if ((n & 63) === 0 && performance.now() - t0 > 30) { animAcc = 0; break; } }   // не успевает — не копить долг
+      /* v0.199, «по циклу аниматрицы»: ⟳ циклами — за шаг плеера весь проход волны (как «Плеер — целыми циклами» в Треугольнике);
+         начат посреди прохода — сперва дойти до его конца. На экране — только картины на границе циклов. */
+      if (Z.animByPass) while (n-- > 0) { const p = aPass; let g = Z.rows.length + 1; do animStep1(); while (aPass === p && --g > 0); if (performance.now() - t0 > 30) { animAcc = 0; break; } }
+      else while (n-- > 0) { animStep1(); if ((n & 63) === 0 && performance.now() - t0 > 30) { animAcc = 0; break; } }   // не успевает — не копить долг
       animSig = animKey(); renderRows(); animUi();
     }
     animRaf = requestAnimationFrame(animTick);
@@ -2842,6 +2845,8 @@ function setupCone(){
   };
   $("animOp").value = Z.animOp || "xor";
   $("animOp").onchange = (e) => { Z.animOp = e.target.value; save(); };
+  $("animByPass").checked = !!Z.animByPass;   // v0.199
+  $("animByPass").onchange = (e) => { Z.animByPass = e.target.checked; animAcc = 0; save(); animUi(); };
   $("animSp").value = Z.animSp ?? 40;
   $("animSp").oninput = (e) => { Z.animSp = +e.target.value; animUi(); };
   $("animSp").onchange = () => save();
