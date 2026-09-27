@@ -5398,6 +5398,25 @@ function init(){
     say(`◯ Кольцо ${i + 1} — снова по общей галке «запрет сдвига строк».`);
   }, true);
   let rowNocurWas = false;   // v0.220: была ли строка «снята» до этого нажатия
+  /* v0.244, по снимку строк за чертой — «чтобы можно было кликнуть на нижние биты и удалить всё сразу до линии»: щелчок по строке
+     за чертой (по битам, не по номеру) — она и все строки между ней и чертой удаляются насовсем, во всех полях; строки ниже неё
+     поднимаются к черте. Наведёшь — то, что уйдёт, красное. ↩ вернёт. */
+  const hidAt = (e) => { const r = e.target.closest(".rw.hid"); return r && !e.target.closest(".no") ? r : null; };
+  const hidMark = (r) => { const all = [...$("rowList").querySelectorAll(".rw.hid")], j = r ? all.indexOf(r) : -1; all.forEach((x, q) => x.classList.toggle("hdel", q <= j)); };
+  $("rowList").addEventListener("mouseover", (e) => { if (!document.body.classList.contains("cutdrag")) hidMark(hidAt(e)); });
+  $("rowList").addEventListener("mouseleave", () => hidMark(null));
+  $("rowList").addEventListener("click", (e) => {
+    const r = hidAt(e); if (!r || rowEditing >= 0) return;
+    e.stopPropagation(); e.preventDefault();
+    const j = [...$("rowList").querySelectorAll(".rw.hid")].indexOf(r); if (j < 0) return;
+    const pre = undoState(); let n = 0;
+    if (!Array.isArray(Z.lanesHid)) Z.lanesHid = [];
+    for (let l = 0; l < (Z.laneCount || 1); l++) { const h = hidRows(l); n = Math.max(n, Math.min(h.length, j + 1)); Z.lanesHid[l] = h.slice(j + 1); }
+    if (!n) return;
+    undoPush(pre); renderAll(); save();
+    const left = hidCount();
+    say(`🗑 Удалено ${n} стр. за чертой` + (left ? ` — ещё ${left} стр. поднялись к черте.` : " — под чертой пусто.") + " ↩ вернёт.");
+  });
   $("rowList").addEventListener("pointerdown", (e) => { if (e.target.closest("#cutPanel")) return; rowNocurWas = document.body.classList.contains("nocur"); document.body.classList.remove("nocur"); });
   /* v0.220, по снимку выделенной строки 110011 — «клик по выделенной строке — снять выделение»: щелчок по текущей (или единственной
      выделенной) строке — как Esc: выделение снято, текущей нет; ещё щелчок — снова выбрана. */

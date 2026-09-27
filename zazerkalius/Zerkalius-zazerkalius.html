@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.243. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.244. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.243</title>
+<title>Zazerkalius — v0.244</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -359,6 +359,10 @@ body.cutdrag,body.cutdrag *{cursor:ns-resize !important}
 .rw.hid > .no{color:var(--dim);opacity:.6;cursor:default}
 .rw.hid:hover > span{background:transparent}
 #rowList.multi .rw.hid .bits.la{background:transparent}
+/* v0.244: щелчок по строке за чертой — удалить её и всё до черты; наведёшь — что уйдёт, красное */
+.rw.hid > .bits,.rw.hid > .trk{cursor:pointer}
+.rw.hid.hdel > .bits,.rw.hid.hdel > .trk,.rw.hid.hdel .ob{color:#f87171 !important;opacity:.75}
+.rw.hid.hdel > .no{color:#f87171;opacity:.9}
 /* v0.153, «в строках уменьши межстрочный отступ до 0.7 минимум, когда не все строки помещаются по высоте»: поле ужато (.rlsq) —
    колонка номеров (замок, поворот, номер, числа) не выше строки бит: её значки и цифры мельчают вместе с шагом строк */
 #rowList.rlsq{--rlpx:calc(var(--fs) * var(--rlh, 1.25))}
@@ -725,7 +729,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.243</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.244</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1506,8 +1510,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0243"></script>
-<script src="zz-ui.js?v=0243"></script>
+<script src="zz-core.js?v=0244"></script>
+<script src="zz-ui.js?v=0244"></script>
 <script src="../_js/hub-link.js"></script>
 <script src="../_js/recorder.js" data-bez-knopki></script>
 </body>
