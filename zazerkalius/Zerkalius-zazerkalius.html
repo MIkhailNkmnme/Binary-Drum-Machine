@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.210. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.211. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.210</title>
+<title>Zazerkalius — v0.211</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -428,14 +428,14 @@ body.zen #coneTxtWin{display:none !important}
    группа — сетка в два ряда: подпись слева на оба ряда, дальше столбцы (их число --cols = половина кнопок, ставит cgrpCols);
    кнопки одного столбца — одной ширины, ровно одна под другой */
 #w-cone .tools > .cgrp{display:inline-grid !important;grid-template-columns:auto repeat(var(--cols, 4), auto);grid-template-rows:auto auto;grid-auto-flow:row;align-items:center;justify-items:stretch}
-#w-cone .tools > .cgrp > .glab{grid-row:1 / span 2;grid-column:1;align-self:center}
+#w-cone .tools > .cgrp > .glab{grid-row:1 / span 2;grid-column:1;align-self:stretch;display:flex;align-items:center;margin:-2px 2px -2px -4px;padding:2px 0 2px 4px}   /* v0.211: хват — во всю высоту и ширину заголовка, до рамки */
 #w-cone .tools > .cgrp > button,#w-cone .tools > .cgrp > label,#w-cone .tools > .cgrp > select{justify-content:center;text-align:center}
 #w-cone .tools > .cgrp > .glab2{text-align:right;white-space:nowrap}
 #w-cone .cgrp :disabled,#w-cone .cgrp label.dis{opacity:.35;cursor:default}   /* v0.208: не влияют в нынешнем режиме (☀) */
 /* v0.204: группа, свёрнутая до заголовка двойным щелчком */
 #w-cone .tools > .cgrp.cmin{grid-template-rows:auto;grid-template-columns:auto}
 #w-cone .tools > .cgrp.cmin > :not(.glab){display:none !important}
-#w-cone .tools > .cgrp.cmin > .glab{grid-row:auto;margin-right:0;align-self:center}   /* v0.207: высота — прежняя, заголовок посередине */
+#w-cone .tools > .cgrp.cmin > .glab{grid-row:auto;align-self:stretch;justify-self:stretch;margin:-2px -6px -2px -4px;padding:2px 6px 2px 4px}   /* v0.211: у свёрнутой хват — вся группа; v0.207: высота прежняя, заголовок посередине */   /* v0.207: высота — прежняя, заголовок посередине */
 #w-cone .tools > .cgrp.cmin > .glab::after{content:" ▸";color:var(--dim)}
 /* v0.181, по снимку галок группы «Вид» — «все галки в кнопки»: галки на полосе конуса — кнопками-переключателями: сама галка спрятана
    (щелчок по кнопке переключает её, как раньше), включённая — как нажатая кнопка (золотая рамка, как у button.on) */
@@ -657,7 +657,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.210</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.211</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1408,8 +1408,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0210"></script>
-<script src="zz-ui.js?v=0210"></script>
+<script src="zz-core.js?v=0211"></script>
+<script src="zz-ui.js?v=0211"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
