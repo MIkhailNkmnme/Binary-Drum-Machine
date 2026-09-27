@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.214. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.215. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.214</title>
+<title>Zazerkalius — v0.215</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -425,6 +425,7 @@ body.zen #coneTxtWin{display:none !important}
 /* v0.177: группу тянут за подпись; вынесенная — поверх холста и всего ниже, на непрозрачной подложке */
 #w-cone .cgrp > .glab{cursor:move;touch-action:none;user-select:none}
 #w-cone .cgrp.cfloat{position:absolute;z-index:10;margin:0;background:var(--panel);box-shadow:0 6px 20px rgba(0,0,0,.45)}
+#w-cone > .wbody{overflow-x:hidden}   /* v0.215: группа, задвинутая за край окна (под поле строк), обрезается краем — без полосы прокрутки */
 #w-cone .cgrp.cg-spin.cfloat{background:color-mix(in srgb, rgb(255,209,102) 13%, var(--panel))}
 /* v0.183, по снимку группы «Вид» — «в каждой полоске подели длину пополам, расположи в 2 ряда, кнопки ровно друг под другом»:
    группа — сетка в два ряда: подпись слева на оба ряда, дальше столбцы (их число --cols = половина кнопок, ставит cgrpCols);
@@ -659,7 +660,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.214</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.215</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1413,8 +1414,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0214"></script>
-<script src="zz-ui.js?v=0214"></script>
+<script src="zz-core.js?v=0215"></script>
+<script src="zz-ui.js?v=0215"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>

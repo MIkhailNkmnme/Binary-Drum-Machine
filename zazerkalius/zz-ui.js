@@ -4494,7 +4494,10 @@ function cgrpInit(){
     const p = Z.cgrpPos[g.dataset.g]; g.classList.toggle("cfloat", !!p);
     if (!p) { g.style.left = g.style.top = ""; return; }
     const tr = tl.getBoundingClientRect(), br = wb.getBoundingClientRect(), gw = g.offsetWidth, gh = g.offsetHeight;
-    const x = Math.max(br.left - tr.left, Math.min(p.x, br.right - tr.left - gw)), y = Math.max(br.top - tr.top, Math.min(p.y, br.bottom - tr.top - gh));
+    /* v0.215, «пусть вкладки уезжают за поле строк, но не заголовком»: вправо группа может уйти за край окна (под поле строк), а край держит
+       только её заголовок — он всегда виден, за него и вытаскивают обратно. Влево заголовок первым, поэтому там — как было. */
+    const lb = g.querySelector(".glab"), keep = lb ? Math.min(gw, Math.ceil(lb.getBoundingClientRect().right - g.getBoundingClientRect().left) + 2) : gw;
+    const x = Math.max(br.left - tr.left, Math.min(p.x, br.right - tr.left - keep)), y = Math.max(br.top - tr.top, Math.min(p.y, br.bottom - tr.top - gh));
     g.style.left = Math.round(x) + "px"; g.style.top = Math.round(y) + "px";
   };
   groups.forEach((g) => {
