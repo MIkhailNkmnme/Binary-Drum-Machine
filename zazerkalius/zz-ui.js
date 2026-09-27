@@ -356,6 +356,7 @@ function renderRowsOver(){
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
   $("fieldInfo").textContent = `наложение ${N} полей · рабочее ${Z.lane + 1} · ${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1}` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "");
   $("fieldInfo").title = $("fieldInfo").textContent;   // v0.077: целиком — в подсказке
+  fieldInfoFit();   // v0.209
   rowsFit(); rowsLockAllPlace(); rowBitMark();   // v0.153, v0.167, v0.173
   const c = L.querySelector(".rw.cur > .no");
   if (c) c.scrollIntoView({ block: "nearest" });
@@ -518,6 +519,13 @@ function rowsFitDone(){ if (Z.tri90) tri90Apply(); }   // ◸ 90° считае�
 /* v0.167, «надпись вправо, над замками — центральный замок (общий)»: над столбиком замков у строк — общий замок колец (галка «запрет
    сдвига строк» в «Кольцах»): щелчок — как по галке. Место по горизонтали — по замку первой строки (столбик номера стоит на месте
    при прокрутке вбок, а ширина его колонок в em — и мельчает в ужатом поле). */
+/* v0.209, по снимку «i3 стр. · 934 бит…» (начало сведений ушло под колонку номеров и замков) — «подвинь надпись»: сведения не заходят
+   под левую колонку — начинаются сразу за ней, не влезли — многоточие в конце (целиком — в подсказке). */
+function fieldInfoFit(){
+  const fi = $("fieldInfo"), bar = $("fieldInfoBar"); if (!fi || !bar) return;
+  const no = document.querySelector("#rowList .rw > .no"), w = no ? no.getBoundingClientRect().right - bar.getBoundingClientRect().left : 90;
+  fi.style.maxWidth = Math.max(40, Math.round(bar.clientWidth - Math.max(0, w) - 14 - 6)) + "px";
+}
 function rowsLockAllPlace(){   // v0.169: общий замок — кнопкой в начале полосы ввода; здесь только его значок
   const A = $("coneLockAll"); if (!A) return;
   const on = Z.coneLock !== false; A.textContent = on ? "🔒" : "🔓"; A.classList.toggle("off", !on);
@@ -601,6 +609,7 @@ function renderRows(){
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
   $("fieldInfo").textContent = (N > 1 ? `поле ${Z.lane + 1} из ${N} · ` : "") + `${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1} (${cur().length} бит)` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowChgInfo();
   $("fieldInfo").title = $("fieldInfo").textContent;   // v0.077: целиком — в подсказке
+  fieldInfoFit();   // v0.209
   rowsFit(); rowsLockAllPlace(); rowBitMark();   // v0.153, v0.167, v0.173
   const c = L.querySelector(".rw.cur > .bits.la") || L.querySelector(".rw.cur > .no");
   if (c) c.scrollIntoView({ block: "nearest", inline: "nearest" });
@@ -5011,6 +5020,7 @@ function init(){
   ctwInit();   // v0.158
   cgrpInit();   // v0.177
   coneBtnsInit();   // v0.203
+  if (window.ResizeObserver && $("fieldInfoBar")) new ResizeObserver(() => fieldInfoFit()).observe($("fieldInfoBar"));   // v0.209: поле шире/уже — сведения по месту
   $("coneLockAll").onclick = () => $("coneLock").click();   // v0.167: общий замок над столбиком замков — та же галка
   { const h1 = document.querySelector("#top h1"); if (h1) { h1.title = "Щелчок — перезагрузить страницу"; h1.style.cursor = "pointer"; h1.onclick = () => location.reload(); } }   // v0.162, «клик — перезагрузка» (по названию в шапке)
   // v0.026: высоту поля строк, растянутую за угол, запоминаем (только когда под ним окна).
