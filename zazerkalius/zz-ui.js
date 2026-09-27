@@ -1220,7 +1220,7 @@ function renderCone(){
   const gcol = new Map(); let gi = 0;
   for (const [key, ids] of groups) if (ids.length > 1) gcol.set(key, `hsl(${HUES[gi++ % HUES.length]} 80% 60%)`);
   const same = $("coneSame") ? $("coneSame").checked : true;
-  const band = 0.72;   // доля кольца под биты; остальное — зазор до следующего
+  const band = Z.coneClean ? 1 : 0.72;   // доля кольца под биты; остальное — зазор до следующего (v0.222: у чистых колец зазора нет — кольца сомкнуты)
   // v0.076, «галку — скрыть все, кроме выделенных; выделение нескольких — по Ctrl»: видны выделенные (rowSel — то же
   // выделение, что в поле строк) и текущее; выделенные обведены голубым.
   const focus = coneFocus(), only = !!Z.coneOnlySel && focus.length > 0, shown = (i) => !only || focus.includes(i), cS = coneCss("--acc2", "#22d3ee");
@@ -1272,7 +1272,7 @@ function renderCone(){
     const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, rot = coneRotOf(i);
     if (rout < 0 || rin > Math.hypot(W, H) + Math.hypot(cx - W / 2, cy - H / 2)) continue;
     const MI = mirMap.get(i), blank = !!clockRays;   // v0.131: при луч-часах ячейки колец строк пустые — чёрные, 1 ставит лазер
-    const gap = clockRays && n > 1 ? (coneNoGap() ? 0 : coneSlitHalf(n))   // v0.208: ☀ «0 — проход» — без прорезей; v0.124: при луч-часах щель между битами — та, что в расчёте (ползунок «щель»)
+    const gap = Z.coneClean ? 0 : clockRays && n > 1 ? (coneNoGap() ? 0 : coneSlitHalf(n))   // v0.222: «чистые кольца» — без прорезей   // v0.208: ☀ «0 — проход» — без прорезей; v0.124: при луч-часах щель между битами — та, что в расчёте (ползунок «щель»)
       : n > 1 && step * rin > 3 * dpr ? Math.min(step * 0.12, 1.5 * dpr / Math.max(1, rin)) : 0;
     const arcLen = step * (rin + rout) / 2, fsz = Math.min(dr * band * 0.95, arcLen * 0.85);
     const glyph = fsz >= 5 * dpr;   // v0.162, «вид сверху на все — пиши 1 и 0 на секторах»: символ — почти во всю ширину кольца и с 5 px (прежде 0.8 ширины и с 8 px — у узких колец цифр не было)
@@ -1345,7 +1345,7 @@ function renderCone(){
       }
       g.globalAlpha = 1;
     }
-    if (dr > 4 * dpr) {   // контур кольца — v0.087, «границу внутреннюю и внешнюю кольца надо как-то различать, цветом»: внутренняя голубая, внешняя оранжевая
+    if (dr > 4 * dpr && !Z.coneClean) {   // v0.222: «чистые кольца» — без контура; контур кольца — v0.087, «границу внутреннюю и внешнюю кольца надо как-то различать, цветом»: внутренняя голубая, внешняя оранжевая
       g.lineWidth = Math.max(1, dpr * 1.1);
       g.strokeStyle = cIn; g.globalAlpha = 0.75; g.beginPath(); coneArc(g, cx, cy, i, rin, 0, 2 * Math.PI); g.stroke();
       g.strokeStyle = cOut; g.globalAlpha = 0.75; g.beginPath(); coneArc(g, cx, cy, i, rout, 0, 2 * Math.PI); g.stroke(); g.globalAlpha = 1;
@@ -1364,7 +1364,7 @@ function renderCone(){
       g.strokeStyle = coneVeil; g.lineWidth = Math.max(1, rout - rin + dpr); g.globalAlpha = 0.55; g.beginPath(); coneArc(g, cx, cy, i, (rin + rout) / 2, 0, 2 * Math.PI); g.stroke(); g.globalAlpha = 1;
     }
     if (rowSel.has(i)) { g.strokeStyle = cS; g.lineWidth = Math.max(1.5 * dpr, dr * 0.12); g.beginPath(); coneArc(g, cx, cy, i, (rin + rout) / 2, 0, 2 * Math.PI); g.globalAlpha = 0.35; g.stroke(); g.globalAlpha = 1; }
-    if (i === Z.cur && !document.body.classList.contains("nocur")) {   // v0.107: Esc гасит и в конусе; v0.087: текущее — те же цвета краёв, толще (внутри голубой, снаружи оранжевый)
+    if (i === Z.cur && !document.body.classList.contains("nocur") && !Z.coneClean) {   // v0.222: у чистых колец текущее видно по яркости (остальные гаснут); v0.107: Esc гасит и в конусе; v0.087: текущее — те же цвета краёв, толще (внутри голубой, снаружи оранжевый)
       g.lineWidth = Math.max(2 * dpr, dr * 0.12);
       g.strokeStyle = cIn; g.beginPath(); coneArc(g, cx, cy, i, rin - dr * 0.04, 0, 2 * Math.PI); g.stroke();
       g.strokeStyle = cOut; g.beginPath(); coneArc(g, cx, cy, i, rout + dr * 0.04, 0, 2 * Math.PI); g.stroke();
@@ -1377,7 +1377,7 @@ function renderCone(){
       const [i, j] = k.split(":").map(Number); if (i >= N || !shown(i)) continue;
       const n = Z.rows[i].length, cnt = VH[k] | 0; if (!n || j >= n || !cnt) continue;
       const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, a = -Math.PI / 2 + (j - coneRotOf(i)) * step;
-      const gp = n > 1 && !coneNoGap() ? coneSlitHalf(n) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216: «Без щелей» — краска сплошная
+      const gp = n > 1 && !coneNoGap() && !Z.coneClean ? coneSlitHalf(n) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216: «Без щелей» — краска сплошная
       g.beginPath(); coneArc(g, cx, cy, i, rout, a + gp, a + step - gp); coneArc(g, cx, cy, i, rin, a + step - gp, a + gp, true); g.closePath();
       g.fillStyle = cg; g.globalAlpha = Math.min(0.95, 0.6 + 0.12 * cnt); g.fill(); g.globalAlpha = 1;
       if (fsz >= 7 * dpr) {
@@ -1389,7 +1389,7 @@ function renderCone(){
   }
   if (fillOn) {   // v0.114: кольцо для заполнения — ячейки пунктиром, заполненные — цветом бита; бит 0 — сверху, как у всех
     const f = fillDraft(), n = f.length, rin = r0 + N * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, rotF = coneFillRot();   // v0.117: крутится со всеми
-    const gp = n > 1 && !coneNoGap() ? Math.min(step * 0.1, 1.5 * dpr / Math.max(1, rin)) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216
+    const gp = n > 1 && !coneNoGap() && !Z.coneClean ? Math.min(step * 0.1, 1.5 * dpr / Math.max(1, rin)) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216
     g.lineWidth = dpr; g.setLineDash([3 * dpr, 3 * dpr]);
     for (let k = 0; k < n; k++) {
       const a = -Math.PI / 2 + (k - rotF) * step;
@@ -3212,6 +3212,10 @@ function setupCone(){
     if (Z.coneSun && !e.target.checked) { e.target.checked = true; $("bConeSun").click(); return; }
     Z.coneClock = e.target.checked; coneClockFlash = []; coneClockWas = null; coneSunUi(); save(); renderCone(); coneLogRender();   // v0.127: включение — не проход
     if (Z.coneClock) say("⌖ Луч-часы: луч из центра через границы строки 1 проходит кольцо только в щель между битами, на бит — упирается в стену. Дошёл до края — «1» в ячейку строки для заполнения. Крути кольца (▶ по биту / навстречу или мышью) — щели будут сходиться."); };
+  /* v0.222, «сделай кнопку — чистые кольца, без границ»: галка «◯ чистые» в «Виде» (Z.coneClean) — у колец нет контура (голубой внутри,
+     оранжевый снаружи), нет прорезей между битами — ни у колец, ни у краски, ни у строки для заполнения; текущее кольцо — без обводки. */
+  $("coneClean").checked = !!Z.coneClean;
+  $("coneClean").onchange = (e) => { Z.coneClean = e.target.checked; save(); renderCone(); say(Z.coneClean ? "◯ Чистые кольца: без контура и прорезей между битами." : "◯ Кольца — снова с контуром и прорезями."); };
   $("conePoly").checked = !!Z.conePoly;   // v0.109
   $("conePoly").onchange = (e) => { Z.conePoly = e.target.checked; save(); renderCone();
     if (Z.conePoly) say("⬡ Этажи-многоугольники: строка из n бит — n-угольник, бит — сторона. 1 бит — точка в центре, 2 — две Г углом в центре (крест), 3 — треугольник, 4 — квадрат."); };
