@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.192. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.193. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.192</title>
+<title>Zazerkalius — v0.193</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -388,7 +388,7 @@ body.zen #w-cone #bConeRec{display:none !important}
 #coneTxtWin .ctwBody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
 #coneTxtWin #coneBot{position:static !important;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:2px;overflow:hidden;padding:4px 8px}
 #coneTxtWin #coneOut{flex:1 1 0;max-height:none;min-height:0;overflow:auto;font-size:11px;line-height:1.3;margin:0}   /* v0.178, «скролл — места много внизу»: текст — на всё свободное место окна (прежде до 60%), с логом лазера — пополам */
-#coneTxtWin #coneLogBox{flex:1 1 0}
+#coneTxtWin #coneLogBox{flex:2 1 0;overflow:auto}   /* v0.193: лазеру — две трети окна; тесно — прокрутка всего блока, а не сжатие до нуля */
 #bConeTxt.on{border-color:var(--acc);color:var(--acc)}
 body.zen #coneTxtWin{display:none !important}
 #w-cone #coneCv{border-radius:6px}
@@ -426,16 +426,16 @@ body.solo #w-cone .wbody > .tools{position:relative;z-index:4}
 #w-cone .wbody > #coneBot{position:absolute;right:0;left:auto;top:40%;bottom:0;width:min(380px,44%);z-index:3;padding:4px 8px;background:color-mix(in srgb, var(--panel) 80%, transparent);display:flex;flex-direction:column;gap:2px;overflow:hidden;border-left:1px solid var(--line)}   /* v0.140: текст + лог лазера — колонкой справа */
 #w-cone #coneOut{flex:0 1 auto;max-height:42%;overflow:auto;font-size:11px;line-height:1.3;margin:0}
 #coneLogBox{flex:1 1 auto;min-height:0;flex-direction:column}
-#coneLog{flex:1 1 auto;min-height:0;overflow:auto;font-size:11px;line-height:1.25;font-family:var(--ff);font-variant-numeric:tabular-nums;white-space:nowrap}
+#coneLog{flex:1 1 auto;min-height:4.2em;overflow:auto;font-size:11px;line-height:1.25;font-family:var(--ff);font-variant-numeric:tabular-nums;white-space:nowrap}
 #coneLog > div{padding:0;overflow:hidden;text-overflow:ellipsis}
-#coneEx{flex:0 1 auto;max-height:55%;min-height:0;overflow:auto;font-size:11px;line-height:1.25;font-family:var(--ff);white-space:nowrap}   /* v0.186 */
+#coneEx{flex:0 0 auto;max-height:55%;min-height:0;overflow:auto;font-size:11px;line-height:1.25;font-family:var(--ff);white-space:nowrap}   /* v0.186 */
 #coneEx b{display:inline-block;min-width:2.6em;text-align:right;margin-right:6px;color:var(--dim);font-weight:400}
 #coneEx .lh{color:var(--gold);margin-top:4px;white-space:normal}   /* v0.191: заголовок лазера */
 #coneEx table{border-collapse:collapse;font-size:11px;margin:1px 0 2px}   /* v0.192: статистика вылета таблицей */
 #coneEx th{font-weight:400;color:var(--dim);text-align:left;padding:0 8px 0 0;border-bottom:1px solid var(--line,#333)}
 #coneEx td{padding:0 8px 0 0;vertical-align:top}
 #coneEx td:first-child,#coneEx th:first-child{text-align:right;color:var(--dim)}
-#conePred{flex:0 1 auto;max-height:40%;min-height:0;overflow:auto;font-size:11px;line-height:1.25;font-family:var(--ff);white-space:nowrap}   /* v0.187 */
+#conePred{flex:0 0 auto;max-height:35%;min-height:0;overflow:auto;font-size:11px;line-height:1.25;font-family:var(--ff);white-space:nowrap}   /* v0.187 */
 #conePred b{display:inline-block;min-width:2.6em;text-align:right;margin-right:6px;color:var(--dim);font-weight:400}
 #conePred i{display:inline-block;min-width:5.5em;margin-right:6px;color:var(--acc2);font-style:normal}
 #conePred .pend{color:var(--gold);white-space:normal;margin-top:2px}
@@ -632,7 +632,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.192</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.193</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1213,7 +1213,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
           <div id="coneOut" class="out"></div>
           <div id="coneLogBox" style="display:none">
             <!-- v0.186: строки на момент вылета луча — от щели вылета -->
-            <div class="dim" style="margin-top:4px" title="Каждая строка — в тот миг, когда луч впервые из неё вылетел: прочитана от щели вылета, с ячейки сразу за щелью по часовой. Одна запись на строку; стирается вместе с краской (✕ у строки для заполнения)">🚪 Вылет из строк <span id="coneExN"></span> <button id="bConeExCopy" title="Скопировать статистику вылета: у каждого лазера — заголовок и таблица (строка, биты от щели, щель, поворот кольца, через сколько) через табуляцию — в Excel ляжет по столбцам">⧉</button></div>
+            <div class="dim" style="margin-top:4px" title="Каждая строка — в тот миг, когда луч впервые из неё вылетел: прочитана от щели вылета, с ячейки сразу за щелью по часовой. Одна запись на строку у каждого лазера. Сбросы (⟲, ✕ у строки для заполнения, смена режима или строк) статистику не стирают — начинается новый прогон; стирает только ✕ здесь">🚪 Вылет из строк <span id="coneExN"></span> <button id="bConeExCopy" title="Скопировать статистику вылета: у каждого лазера — заголовок и таблица (строка, биты от щели, щель, поворот кольца, через сколько) через табуляцию — в Excel ляжет по столбцам">⧉</button> <button id="bConeExClr" title="Стереть статистику вылетов (все прогоны и лазеры). Кольца, краска и лог лазера не трогаются">✕</button></div>
             <div id="coneEx" class="out"></div>
             <!-- v0.187: прогноз лазера -->
             <div class="dim" style="margin-top:4px" title="Прогноз: что будет, если лазер крутить от нынешнего положения до конца. Угол (бит) — сколько повернуться до вылета из строки">🔮 Прогноз <span id="conePredN"></span> <button id="bConePredCopy" title="Скопировать строки прогноза столбиком — Ctrl+V в поле строк вставит их">⧉</button></div>
@@ -1336,8 +1336,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0192"></script>
-<script src="zz-ui.js?v=0192"></script>
+<script src="zz-core.js?v=0193"></script>
+<script src="zz-ui.js?v=0193"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>

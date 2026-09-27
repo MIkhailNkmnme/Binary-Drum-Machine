@@ -1724,12 +1724,29 @@ function coneReleaseRings(){   // v0.191: остановленные кольц�
 function coneLaserNext(){   // v0.191: следующий лазер (+45°); → false, если все восемь уже были
   coneVoidHits(); const V = Z.voidHits, k = V.lk | 0;
   if (k + 1 >= CONE_LASERS) return false;
-  if (!Array.isArray(V.exH)) V.exH = [];
-  V.exH.push([k, V.ex && typeof V.ex === "object" ? V.ex : {}, V.exI || {}, V.lph || 0]); V.ex = {}; V.exI = {};   // v0.192: и статистика
+  coneExArchive(false); V.ex = {}; V.exI = {};   // v0.193: вылеты прежнего лазера — в постоянную статистику
   coneReleaseRings(); V.lk = k + 1; V.lph = Z.coneSpinPh || 0; coneWallWas = undefined; coneClockWas = null; coneLogDirty();
   return true;
 }
-function coneLaserResetAll(){ const V = Z.voidHits; if (V) { V.fz = {}; V.ex = {}; V.exI = {}; V.off = {}; V.lk = 0; V.exH = []; V.lph = Z.coneSpinPh || 0; } }
+function coneLaserResetAll(){ coneExArchive(true); const V = Z.voidHits; if (V) { V.fz = {}; V.ex = {}; V.exI = {}; V.off = {}; V.lk = 0; V.exH = []; V.lph = Z.coneSpinPh || 0; } }
+/* v0.193, «всё съело» (после сброса «🚪 Вылет из строк» пуст, а прогноз — от старого набора): вылеты хранились вместе с краской и стирались
+   любым сбросом — ⟲, ✕, правым щелчком по ▶, сменой режима или строк. Теперь вылет каждого лазера по окончании (следующий лазер, сброс,
+   смена строк) переезжает в постоянную статистику Z.coneExLog — прогон, лазер, старт, режим, строки; стирает её только ✕ в самом блоке.
+   Прогон — от сброса до сброса. Хранятся последние 64 лазера. */
+const CONE_EXLOG_MAX = 64;
+function coneExArchive(endRun){
+  const V = Z.voidHits; if (!V) return;
+  const ex = V.ex && typeof V.ex === "object" ? V.ex : {}, keys = Object.keys(ex);
+  const L = Array.isArray(Z.coneExLog) ? Z.coneExLog : (Z.coneExLog = []), run = Z.coneExRun | 0;
+  if (keys.length) {
+    const I = V.exI || {};
+    L.push({ run, k: V.lk | 0, lph: V.lph || 0, m: V.lm || Z.coneSpinMode || "all", N: parseInt(V.sig, 10) || 0,
+             rows: keys.map(Number).sort((x, y) => x - y).map(b => [b, ex[b], I[b] || {}]) });
+    if (L.length > CONE_EXLOG_MAX) L.splice(0, L.length - CONE_EXLOG_MAX);
+  }
+  if (endRun && L.length && L[L.length - 1].run === run) Z.coneExRun = run + 1;
+  coneLogDirty();
+}
 /* v0.139, «то есть кольцо останавливается только в момент выхода лазера из него наружу»: встаёт кольцо, из которого луч вышел —
    строка 1, когда вырез прошёл мимо лазера, дальше — каждое кольцо, чью щель луч прошёл. Краска остановки не вызывает. */
 function coneFreezeRing(i){
@@ -1746,7 +1763,7 @@ function coneFreezePassed(R){   // кольца, из которых луч вы
 function coneFillRot(){ const N = Math.min(Z.rows.length, CONE_MAX); return coneVoidRot(N, fillLen()); }
 function coneVoidHits(){
   const N = Math.min(Z.rows.length, CONE_MAX), s = Z.rows[N - 1], sig = N + ":" + (s ? s.length : 0);
-  if (!Z.voidHits || Z.voidHits.sig !== sig || typeof Z.voidHits.h !== "object") Z.voidHits = { sig, h: {} };
+  if (!Z.voidHits || Z.voidHits.sig !== sig || typeof Z.voidHits.h !== "object") { if (Z.voidHits && Z.voidHits.ex) coneExArchive(true); Z.voidHits = { sig, h: {}, lph: Z.coneSpinPh || 0 }; }   // v0.193: вылеты — в статистику
   return Z.voidHits.h;
 }
 function coneClockTrace(){
@@ -1805,6 +1822,7 @@ function coneExitNote(R){
     ex[b] = s.slice(k) + s.slice(0, k); added = true;
     /* v0.192, «покажи номер, статистику: на каком угле начальное положение, из какой вылетел и т. д.»: щель вылета (ячейки слева|справа,
        с 1; у строки 1 — вырез), поворот кольца по часовой от его начала (°) и сколько повернули с включения лазера (фаза). */
+    Z.voidHits.lm = Z.coneSpinMode || "all";   // v0.193: режим, в котором вылетал
     exI[b] = { s: b === 0 ? "вырез" : `${((k - 1 + n) % n) + 1}|${k + 1}`, a: Math.round(((((-coneRotOf(b) * 360 / n) % 360) + 360) % 360) * 10) / 10,
                d: (Z.coneSpinPh || 0) - ((Z.voidHits.lph) || 0) };
   };
@@ -1863,21 +1881,22 @@ function coneLogRender(){
   /* v0.192, «окно поправь» (видно было только ⌖2 — первый лазер уезжал вверх) и «покажи номер, статистику»: у каждого лазера — заголовок
      (номер, угол лазера, откуда начал, сколько строк прошёл) и таблица: строка, биты от щели, щель вылета, поворот кольца, через сколько
      от включения лазера. Нынешний лазер — сверху. */
+  conePredRender();   // v0.193
   const Ls = coneExitLasers(), N = Math.min(Z.rows.length, CONE_MAX), cur = Ls[Ls.length - 1];
-  $("coneExN").textContent = cur.rows.length || Ls.length > 1 ? `(лазер ${cur.k + 1} из ${CONE_LASERS}: ${cur.rows.length} из ${N} строк)` : "— луч ещё ни из одной строки не вышел";
+  $("coneExN").textContent = (cur.rows.length ? `(лазер ${cur.k + 1} из ${CONE_LASERS}: ${cur.rows.length} из ${N} строк)` : `— лазер ${cur.k + 1}: ещё ни из одной строки`) + (Ls.length > 1 ? ` · в статистике ${Ls.length - 1}` : "");
   $("coneEx").innerHTML = Ls.slice().reverse().filter(L => L.rows.length || L === cur).map(L =>
     '<div class="lh">' + esc(coneExitHead(L, N)) + "</div>" + (L.rows.length ? '<table><tr><th>стр</th><th>биты от щели</th><th>щель</th><th>кольцо</th><th>через</th></tr>' +
-    L.rows.map(([b, t, I]) => "<tr><td>" + (b + 1) + "</td><td>" + esc(t) + "</td><td>" + esc(I.s || "") + "</td><td>" + (I.a !== undefined ? I.a + "°" : "") + "</td><td>" + (I.d !== undefined ? conePredFmt(I.d, coneBitMode(Z.coneSpinMode)) : "") + "</td></tr>").join("") + "</table>" : "")).join("");
+    L.rows.map(([b, t, I]) => "<tr><td>" + (b + 1) + "</td><td>" + esc(t) + "</td><td>" + esc(I.s || "") + "</td><td>" + (I.a !== undefined ? I.a + "°" : "") + "</td><td>" + (I.d !== undefined ? conePredFmt(I.d, coneBitMode(L.m || Z.coneSpinMode)) : "") + "</td></tr>").join("") + "</table>" : "")).join("");
 }
 function coneExitLasers(){   // v0.192: все лазеры — [{ k, lph, rows: [[строка, биты, { s щель, a поворот°, d через }]] }], нынешний последним
   const V = Z.voidHits || {}, rowsOf = (ex, I) => Object.keys(ex || {}).map(Number).sort((x, y) => x - y).map(b => [b, ex[b], (I && I[b]) || {}]);
-  const out = (Array.isArray(V.exH) ? V.exH : []).map(([k, ex, I, lph]) => ({ k, lph: lph || 0, rows: rowsOf(ex, I) }));
-  out.push({ k: coneLaserK(), lph: V.lph || 0, rows: rowsOf(V.ex, V.exI) });
+  const out = (Array.isArray(Z.coneExLog) ? Z.coneExLog : []).slice();   // v0.193: постоянная статистика
+  out.push({ run: Z.coneExRun | 0, k: coneLaserK(), lph: V.lph || 0, m: V.lm || Z.coneSpinMode || "all", N: Math.min(Z.rows.length, CONE_MAX), rows: rowsOf(V.ex, V.exI), live: true });
   return out;
 }
 function coneExitHead(L, N){
-  const bitm = coneBitMode(Z.coneSpinMode), m = ({ bit: "Каждое", obit: "Встреч Бит", opp: "Встреч Стр", all: "Всё" })[Z.coneSpinMode || "all"];
-  return `⌖${L.k + 1} · лазер ${L.k * 45}° · старт с фазы ${conePredFmt(L.lph, bitm)} · ${m} · вышел из ${L.rows.length} из ${N} строк`;
+  const mm = L.m || Z.coneSpinMode || "all", bitm = coneBitMode(mm), m = ({ bit: "Каждое", obit: "Встреч Бит", opp: "Встреч Стр", all: "Всё" })[mm];
+  return `прогон ${(L.run | 0) + 1} · ⌖${L.k + 1} · лазер ${L.k * 45}° · старт с фазы ${conePredFmt(L.lph, bitm)} · ${m} · вышел из ${L.rows.length} из ${L.N || N} строк` + (L.live ? " · сейчас" : "");
 }
 function coneExitHist(){   // v0.191: прежние лазеры — [[номер лазера, [[строка, биты]]]]
   const H = Z.voidHits && Array.isArray(Z.voidHits.exH) ? Z.voidHits.exH : [];
@@ -1925,11 +1944,13 @@ function conePredict(){
     Z.coneLog = JSON.parse(bak.log); if (!Z.coneLog) delete Z.coneLog;
     Z.fillCells = bak.fill; Z.coneClockN = bak.n; coneWallWas = bak.wall;
   }
-  return { m, bitm, rows, fill, end, endPh, N };
+  return { m, bitm, rows, fill, end, endPh, N, sig: conePredSig() };
 }
 function conePredFmt(v, bitm){ return bitm ? (Math.round(Math.abs(v) * 100) / 100) + " бит" : (Math.round(Math.abs(v) * 10) / 10) + "°"; }
+function conePredSig(){ return (Z.coneSpinMode || "all") + "|" + Z.rows.slice(0, CONE_MAX).join(","); }   // v0.193: прогноз — для этих строк и режима
 function conePredRender(){
   const box = $("conePred"); if (!box) return;
+  if (conePred && conePred.sig !== conePredSig()) conePred = null;   // v0.193: строки или режим сменились — прежний прогноз не показывать
   const P = conePred;
   if (!P) { $("conePredN").textContent = "— 🔮 просчитать в «Лазере»"; box.innerHTML = ""; return; }
   $("conePredN").textContent = `(${({ bit: "Каждое", obit: "Встреч Бит", opp: "Встреч Стр" })[P.m] || P.m}: вылетит строк ${P.rows.length} из ${P.N})`;
@@ -2513,7 +2534,7 @@ function setupCone(){
     const perUnit = bitm ? 360 / Math.max(1, Math.min(...Z.rows.slice(0, N).map(s => s.length || 1))) : 1;
     const d = dir * tolDeg / perUnit / 2, span = bitm ? Math.max(...Z.rows.slice(0, N).map(s => s.length || 1)) : 360;
     const steps = Math.min(200000, Math.ceil(span / Math.abs(d)) + 2);
-    const bak = { ph: Z.coneSpinPh, vh: JSON.stringify(Z.voidHits || null), log: JSON.stringify(Z.coneLog || null), n: Z.coneClockN, wall: coneWallWas };
+    const bak = { ph: Z.coneSpinPh, vh: JSON.stringify(Z.voidHits || null), log: JSON.stringify(Z.coneLog || null), n: Z.coneClockN, wall: coneWallWas, xl: JSON.stringify(Z.coneExLog || null), xr: Z.coneExRun };
     const ph0 = Z.coneSpinPh || 0;
     let R = null, ok = false, freed = 0;
     const run = () => {
@@ -2530,7 +2551,7 @@ function setupCone(){
        Краска и лог остаются; не выйдет и так — всё назад, как было. */
     const fz0 = JSON.parse(bak.vh || "null"), nfz = fz0 && fz0.fz ? Object.keys(fz0.fz).length : 0;
     if (!ok && nfz) {
-      Z.coneSpinPh = bak.ph; Z.voidHits = JSON.parse(bak.vh); coneReleaseRings(); Z.voidHits.ex = {}; Z.voidHits.exI = {}; Z.voidHits.lph = Z.coneSpinPh || 0;   // v0.191: отпустить на месте
+      Z.coneSpinPh = bak.ph; Z.voidHits = JSON.parse(bak.vh); coneReleaseRings(); coneExArchive(false); Z.voidHits.ex = {}; Z.voidHits.exI = {}; Z.voidHits.lph = Z.coneSpinPh || 0;   // v0.191: отпустить на месте
       Z.coneLog = JSON.parse(bak.log); if (!Z.coneLog) delete Z.coneLog; Z.coneClockN = bak.n; coneWallWas = undefined;
       coneWallPaint(coneClockTrace());   // нынешний конец луча — отправная точка
       if (passed(coneClockTrace()[0])) { save(); renderCone(); coneLogRender(); say(`🎯 Отпустил остановленные кольца (${nfz}) — луч сразу проходит строку ${t + 1}.`); return; }
@@ -2539,6 +2560,7 @@ function setupCone(){
     if (!ok) {
       Z.coneSpinPh = bak.ph; Z.voidHits = JSON.parse(bak.vh); if (!Z.voidHits) delete Z.voidHits;
       Z.coneLog = JSON.parse(bak.log); if (!Z.coneLog) delete Z.coneLog; Z.coneClockN = bak.n; coneWallWas = bak.wall;
+      Z.coneExLog = JSON.parse(bak.xl); if (!Z.coneExLog) delete Z.coneExLog; Z.coneExRun = bak.xr;   // v0.193
       renderCone(); say(`🎯 До строки ${t + 1} луч за круг не доходит — ничего не менял. Посмотри 🔮 прогноз или ⟲ всё на места.`); return;
     }
     save(); renderCone(); coneLogRender();
@@ -2561,12 +2583,17 @@ function setupCone(){
     (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => say(`🔮 Скопировано строк прогноза: ${conePred.rows.length}. Ctrl+V в поле строк вставит их столбиком.`), () => say("🔮 Не вышло скопировать."));
   };
   conePredRender();
+  $("bConeExClr").onclick = () => {   // v0.193: стереть статистику вылетов (и вылеты нынешнего лазера)
+    const n = (Array.isArray(Z.coneExLog) ? Z.coneExLog.length : 0); Z.coneExLog = []; Z.coneExRun = 0;
+    if (Z.voidHits) { Z.voidHits.ex = {}; Z.voidHits.exI = {}; }
+    save(); coneLogRender(); say(`🚪 Статистика вылетов стёрта (лазеров было ${n}). Кольца и краска не тронуты.`);
+  };
   $("bConeExCopy").onclick = () => {   // v0.186: столбик строк от щели вылета — строка на строку, вставляется в поле Ctrl+V
     const N = Math.min(Z.rows.length, CONE_MAX), bitm = coneBitMode(Z.coneSpinMode), Ls = coneExitLasers().filter(L => L.rows.length);
     if (!Ls.length) { say("🚪 Луч ещё ни из одной строки не вышел."); return; }
     const ex = Ls.reduce((c, L) => c + L.rows.length, 0);   // v0.192: со статистикой — таблицей через табуляцию, лазеры через пустую строку
     const t = Ls.map(L => coneExitHead(L, N) + "\nстр\tбиты от щели\tщель\tкольцо\tчерез\n" +
-      L.rows.map(([b, x, I]) => [b + 1, x, I.s || "", I.a !== undefined ? I.a + "°" : "", I.d !== undefined ? conePredFmt(I.d, bitm) : ""].join("\t")).join("\n")).join("\n\n");
+      L.rows.map(([b, x, I]) => [b + 1, x, I.s || "", I.a !== undefined ? I.a + "°" : "", I.d !== undefined ? conePredFmt(I.d, coneBitMode(L.m || Z.coneSpinMode)) : ""].join("\t")).join("\n")).join("\n\n");
     (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => say(`🚪 Скопировано: лазеров ${Ls.length}, строк ${ex} — со статистикой, таблицей (вставляется в Excel по столбцам).`), () => say("🚪 Не вышло скопировать."));
   };
   $("bConeLogCopy").onclick = () => {
