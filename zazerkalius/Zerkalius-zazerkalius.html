@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.209. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.210. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.209</title>
+<title>Zazerkalius — v0.210</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -657,7 +657,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.209</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.210</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1186,7 +1186,6 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
           </div>
           <div class="cgrp" title="Строки-кольца: запрет сдвига, замки, поворот по биту, зеркало по оси"><span class="glab">Кольца</span>
             <label class="dim" title="Кольца не крутятся мышью, и строки в поле не сдвигаются: тянешь — двигается весь вид, щелчок — выбрать строку. Снять — и кольца снова крутят сами строки"><input type="checkbox" id="coneLock"> запрет сдвига строк</label>
-            <button id="bConeRingLock" title="🔒 Замок кольца — свой у каждого: выделенные кольца (или текущее) запереть / отпереть. Запертое кольцо крутится мышью только на вид — строка не меняется, а положение запоминается у этого кольца; незапертое крутит саму строку. Правый щелчок — снять свой замок (кольцо снова по общей галке «запрет сдвига строк»)">🔒 кольца</button>
             <span class="glab2">по биту:</span>
             <button id="bConeRingL" title="Повернуть выделенные кольца (или текущее) на бит против часовой. Запертое — только на вид, открытое — сама строка (↩ вернёт)">◁</button>
             <button id="bConeRingR" title="Повернуть выделенные кольца (или текущее) на бит по часовой. Запертое — только на вид, открытое — сама строка (↩ вернёт)">▷</button>
@@ -1409,8 +1408,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0209"></script>
-<script src="zz-ui.js?v=0209"></script>
+<script src="zz-core.js?v=0210"></script>
+<script src="zz-ui.js?v=0210"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>

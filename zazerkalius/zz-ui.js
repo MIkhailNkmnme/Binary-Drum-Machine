@@ -2623,14 +2623,8 @@ function setupCone(){
     const lk = e.target.closest(".clk"); if (!lk) return;
     e.preventDefault(); const i = +lk.dataset.l; if (Z.coneLocks) delete Z.coneLocks[i]; save(); renderCone(); say(`◯ Кольцо ${i + 1} — снова по общей галке «запрет сдвига строк».`);
   });   // v0.085: сохранённые положения колец
-  const lockTargets = () => rowSel.size ? [...rowSel].filter(i => i < Z.rows.length) : [Z.cur];
-  $("bConeRingLock").onclick = () => {
-    if (!Z.coneLocks || typeof Z.coneLocks !== "object") Z.coneLocks = {};
-    const T = lockTargets(), all = T.every(i => coneLocked(i));
-    T.forEach(i => { Z.coneLocks[i] = !all; });
-    save(); renderRows(); renderCone(); say(all ? `◯ Отперто колец: ${T.length} — крутят саму строку.` : `◯ Заперто колец: ${T.length} — крутятся только на вид, положение запоминается.`);
-  };
-  $("bConeRingLock").oncontextmenu = (e) => { e.preventDefault(); if (Z.coneLocks) lockTargets().forEach(i => delete Z.coneLocks[i]); save(); renderRows(); renderCone(); say("◯ Свой замок снят — кольца по общей галке «запрет сдвига строк»."); };
+  // v0.210, по снимку «🔒 кольца» — «эту кнопку удали, замки есть у каждой строки»: кнопки замка выделенных колец больше нет — свой замок
+  // у каждой строки в столбике замков (и правый щелчок по замку кольца в списке колец снимает его, как прежде).
   /* v0.098, «3D — это, конечно, нечто шедевральное», «поставь кнопку крутить вправо-влево — всю, потом, похоже, каждое по
      отдельности». ⟲ ⟳ — весь конус (плоский — вокруг центра, 3D — вокруг оси): щелчок 15°, держишь — крутится; правый — к 0°.
      ◁ ▷ — выделенные кольца (или текущее) на бит: запертое — на вид, открытое — сама строка. */
