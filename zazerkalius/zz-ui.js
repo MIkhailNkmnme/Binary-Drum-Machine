@@ -4680,8 +4680,8 @@ function soloApply(){
      на странице конуса текст и лог лазера — в поле строк, под строками; конусу — весь стол. */
   // v0.158: текст и лог — больше не под строками, а в своём плавающем окне (ctwInit)
   const t = el.dataset.title || ZZ_SOLO, h = document.querySelector("#top h1");
-  if (h) h.textContent = t;
-  document.title = t.replace(/^[^\p{L}\d]+/u, "Zerkalius ") + " — " + ((document.title.match(/v[\d.]+/) || [""])[0]);
+  if (h) h.textContent = "Zazerkalius " + t;   // v0.226, «тут название — после Zazerkalius, а не вместо»: «Zazerkalius ◯ Конус»
+  document.title = "Zazerkalius " + t + " — " + ((document.title.match(/v[\d.]+/) || [""])[0]);
   $("desk").scrollTop = 0;
 }
 function layoutAll(reset){
