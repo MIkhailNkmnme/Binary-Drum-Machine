@@ -1659,9 +1659,17 @@ function coneRingNR(b){   // кольцо b ≥ 1 на пути луча: { n �
   if (Z.cone3d || Z.rows.length > CONE_MAX || b >= coneRingsTotal(N)) return null;
   const n = coneVoidLen(b, N); return { n, rot: coneVoidRot(b, n) };
 }
+/* v0.198, «скорость надо больше возможностей»: ползунок кручения — по логарифму, 1…3600 (было 5…120 ровным шагом), рядом — число. */
+function spinSpOf(p){ const v = Math.pow(3600, p / 100); return v < 10 ? Math.round(v * 10) / 10 : Math.round(v); }
+function spinPosOf(sp){ return Math.max(0, Math.min(100, Math.round(100 * Math.log(Math.max(1, sp)) / Math.log(3600)))); }
+function spinSpUi(){
+  const v = Math.abs(Z.coneAutoSp ?? 30), el = $("coneAutoSpV"); if (!el) return;
+  const f = (x) => x < 10 ? (Math.round(x * 10) / 10).toString().replace(".", ",") : Math.round(x);
+  el.textContent = coneBitMode(Z.coneSpinMode || "all") ? f(v / 10) + " бит/с" : f(v) + "°/с";
+}
 function coneDirUi(){   // v0.136: ползунок — величина скорости, кнопка — направление
   const sp = Z.coneAutoSp ?? 30; if (!sp) Z.coneAutoSp = 30;
-  $("coneAutoSp").value = Math.max(5, Math.abs(sp || 30)); $("bConeDir").textContent = sp < 0 ? "↺ против" : "↻ по часовой";
+  $("coneAutoSp").value = spinPosOf(Math.abs(sp || 30)); $("bConeDir").textContent = sp < 0 ? "↺ против" : "↻ по часовой"; spinSpUi();
 }
 function coneAimDeep(a){
   const gapAt = (R, x) => {   // щель кольца, ближайшая к углу x: [от, до]
@@ -2679,13 +2687,13 @@ function setupCone(){
     if (H) {   // v0.125: своё умолчание (⭐) — положения колец и настройки конуса, как запомнены
       coneRot.length = 0; (Array.isArray(H.coneRot) ? H.coneRot : []).forEach(x => coneRot.push(Math.round(x || 0))); Z.coneRot = coneRot.slice();
       Z.coneSpin = H.coneSpin || 0; Z.coneSpinPh = H.coneSpinPh || 0; Z.coneAimRot = H.coneAimRot || 0; Z.coneClockN = 0; coneClockFlash = []; coneLaserResetAll();   // v0.138
-      const keys = ["coneClock", "coneClockStop", "coneVoid", "coneSlit", "coneSpinMode", "coneAutoSp", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3H", "cone3Bw",
+      const keys = ["coneClock", "coneClockStop", "coneVoid", "coneSlit", "coneSpinMode", "coneAutoSp", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3H", "cone3Bw", "animOp", "animSp",
                     "coneRays", "coneMir", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs"];
       for (const k of keys) { if (k in H) Z[k] = JSON.parse(JSON.stringify(H[k])); else delete Z[k]; }
       for (const k of ["coneClock", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta"]) { const el = $(k); if (el) el.checked = !!Z[k]; }
       $("coneLock").checked = Z.coneLock !== false; $("coneVoid").checked = Z.coneVoid !== false;
       $("coneRays").value = Z.coneRays || "off"; $("coneMir").value = Z.coneMir || "off"; $("coneSpinMode").value = Z.coneSpinMode || "all";
-      coneDirUi(); $("cone3H").value = Z.cone3H ?? 1; $("cone3Bw").value = Z.cone3Bw ?? 1;
+      coneDirUi(); $("cone3H").value = Z.cone3H ?? 1; $("cone3Bw").value = Z.cone3Bw ?? 1; $("animOp").value = Z.animOp || "xor"; $("animSp").value = Z.animSp ?? 40;
       $("coneSlit").value = +Z.coneSlit || 2; $("coneSlitV").textContent = (+Z.coneSlit || 2).toFixed(1).replace(".", ",") + "°";
       $("bConeClockStop").classList.toggle("on", !!Z.coneClockStop);
       coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass);
@@ -2752,14 +2760,92 @@ function setupCone(){
   /* v0.189, «и ничего не крутит» (снимок: Встреч Бит, одна строка, вырез закрыт): остановленные кольца (Z.voidHits.fz) хранят фазу в
      единицах своего режима — во «Встреч Стр» в градусах, в Каждое / Встреч Бит в битах. После смены режима 179° читались как 179 бит,
      вырез строки 1 вставал закрытым навсегда, и крутить было нечего. Теперь смена режима отпускает кольца (краска и лог остаются). */
-  $("coneSpinMode").onchange = (e) => { Z.coneSpinMode = e.target.value; Z.coneSpinPh = 0; Z.coneClockN = 0; coneLaserResetAll(); coneWallWas = undefined; save(); renderCone(); coneLogRender();
+  $("coneSpinMode").onchange = (e) => { Z.coneSpinMode = e.target.value; spinSpUi(); Z.coneSpinPh = 0; Z.coneClockN = 0; coneLaserResetAll(); coneWallWas = undefined; save(); renderCone(); coneLogRender();
     say({ all: "▶ Всё целиком: весь конус одним поворотом.", bit: "▶ Каждое по биту: маленькие кольца вертятся быстрее — рисунок закручивается спиралью.", obit: "▶ Навстречу по биту: каждое кольцо на бит за шаг, через строку — в обратную сторону.", opp: "▶ Навстречу по строкам: чётные кольца по часовой, нечётные против, с одной скоростью." }[Z.coneSpinMode] + " Правый щелчок по ▶ — всё на места."); };
   /* v0.136, «эта скорость непонятная — раздели: одна только скорость, а направление задавать другой кнопкой; слева-справа — стрелки
      шаг»: ползунок — величина (5…120), знак Z.coneAutoSp — направление, его переключает «↻ по часовой / ↺ против». */
   coneDirUi();
-  $("coneAutoSp").oninput = (e) => { Z.coneAutoSp = (Z.coneAutoSp < 0 ? -1 : 1) * +e.target.value; };
+  $("coneAutoSp").oninput = (e) => { Z.coneAutoSp = (Z.coneAutoSp < 0 ? -1 : 1) * spinSpOf(+e.target.value); spinSpUi(); };   // v0.198: по логарифму
   $("coneAutoSp").onchange = () => save();
   $("bConeDir").onclick = () => { Z.coneAutoSp = -(Z.coneAutoSp || 30); coneDirUi(); save(); say(Z.coneAutoSp < 0 ? "↺ Кручение — против часовой." : "↻ Кручение — по часовой."); };
+  /* v0.198, «аниматрицу надо ещё сюда» (из Треугольника) и «скорость — больше возможностей». 🌊 Волна сверху вниз: строка r+1
+     переписывается операцией с уже переписанной строкой r; дошла до низа — проход. Строки разной длины складываются ПО УГЛУ
+     на конусе (выбор пользователя): бит j нижнего кольца берёт бит верхнего кольца, лежащий на луче через середину бита j, с
+     учётом поворота колец (coneRotOf — накрутка, кручение). Счёт проходов; картина повторилась — цикл (сравнение по отпечатку).
+     ⏮ — к началу прохода, ещё раз — на проход назад. Строки правили не волной (руками, ↩, шаблон) — счёт заново.
+     Скорость — строк в секунду, 0,5…5000 по логарифму. */
+  const ANIM_OPS = { xor: (a, b) => a ^ b, xnor: (a, b) => 1 - (a ^ b), nand: (a, b) => 1 - (a & b), nor: (a, b) => 1 - (a | b), and: (a, b) => a & b, or: (a, b) => a | b };
+  const animSpOf = (p) => 0.5 * Math.pow(10000, p / 100);
+  const animHash = (s) => { let h1 = 0xdeadbeef, h2 = 0x41c6ce57; for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909); h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return (h2 >>> 0).toString(36) + ":" + (h1 >>> 0).toString(36) + ":" + s.length; };
+  let animRaf = 0, animT0 = 0, animAcc = 0, animSig = null, aRow = 0, aPass = 0, aPer = 0, aPer0 = 0, animSeen = new Map(), animHist = [];
+  const animKey = () => Z.rows.join(",");
+  const animSync = () => {
+    const k = animKey(); if (animSig === k) return;
+    animSig = k; aRow = 0; aPass = 0; aPer = 0; aPer0 = 0; animSeen = new Map([[animHash(k), 0]]); animHist = [{ p: 0, rows: Z.rows.slice() }];
+  };
+  const animStep1 = () => {   // одна строка волны
+    const R = Z.rows, N = R.length; if (N < 2) return;
+    if (aRow >= N - 1) aRow = 0;
+    const A = R[aRow], B = R[aRow + 1], nA = A.length, nB = B.length, rA = coneRotOf(aRow), rB = coneRotOf(aRow + 1), f = ANIM_OPS[Z.animOp] || ANIM_OPS.xor;
+    let o = "";
+    for (let j = 0; j < nB; j++) { let k = Math.floor((j + 0.5 - rB) / nB * nA + rA) % nA; if (k < 0) k += nA; o += f(A.charCodeAt(k) & 1, B.charCodeAt(j) & 1) ? "1" : "0"; }
+    R[aRow + 1] = o;
+    if (++aRow < N - 1) return;
+    aRow = 0; aPass++;
+    const k = animKey(), h = animHash(k);
+    if (animSeen.has(h)) { if (!aPer) { aPer0 = animSeen.get(h); aPer = aPass - aPer0; say(`🔁 Аниматрица: проход ${aPass} повторяет проход ${aPer0} — цикл ${aPer} ${aPer === 1 ? "проход" : "прох."}`); } }
+    else if (animSeen.size < 500000) animSeen.set(h, aPass);
+    animHist.push({ p: aPass, rows: R.slice() });
+    const lim = Math.max(8, Math.floor(2e7 / Math.max(1, k.length)));   // история ⏮ — не больше ~20 млн бит
+    if (animHist.length > lim) animHist.splice(0, animHist.length - lim);
+  };
+  const animUi = () => {
+    const N = Z.rows.length;
+    $("animInfo").textContent = `проход ${aPass} · волна ${aRow}/${Math.max(0, N - 1)}` + (aPer ? ` · цикл ${aPer}` : "");
+    const sp = animSpOf(Z.animSp ?? 40); $("animSpV").textContent = (sp < 10 ? sp.toFixed(1).replace(".", ",") : Math.round(sp)) + " стр/с";
+  };
+  const animDone = () => { animSig = animKey(); renderAll(); save(); animUi(); };
+  const animGuard = () => { if (rowsLocked()) return false; if (Z.rows.length < 2) { say("🌊 Аниматрице нужно хотя бы две строки."); return false; } return true; };
+  const animTick = (ts) => {
+    if (!animRaf) return;
+    const dt = animT0 ? Math.min(0.1, (ts - animT0) / 1000) : 0; animT0 = ts;
+    animAcc += animSpOf(Z.animSp ?? 40) * dt;
+    let n = Math.floor(animAcc); animAcc -= n;
+    if (n) {
+      animSync(); const t0 = performance.now();
+      while (n-- > 0) { animStep1(); if ((n & 63) === 0 && performance.now() - t0 > 30) { animAcc = 0; break; } }   // не успевает — не копить долг
+      animSig = animKey(); renderRows(); animUi();
+    }
+    animRaf = requestAnimationFrame(animTick);
+  };
+  const animSet = (on) => {
+    if (on && !animRaf) { if (!animGuard()) return; undoPush(undoState()); animSync(); animT0 = 0; animAcc = 0; animRaf = requestAnimationFrame(animTick); }
+    if (!on && animRaf) { cancelAnimationFrame(animRaf); animRaf = 0; animDone(); }
+    $("bAnimPlay").classList.toggle("on", !!animRaf); $("bAnimPlay").textContent = animRaf ? "⏸ волна" : "▶ волна";
+  };
+  $("bAnimPlay").onclick = () => animSet(!animRaf);
+  $("bAnimStep").onclick = () => { animSet(false); if (!animGuard()) return; undoPush(undoState()); animSync(); animStep1(); animDone(); };
+  $("bAnimPass").onclick = () => { animSet(false); if (!animGuard()) return; undoPush(undoState()); animSync(); const p = aPass; let g = Z.rows.length + 1; do animStep1(); while (aPass === p && --g > 0); animDone(); };
+  $("bAnimBack").onclick = () => {
+    animSet(false); if (!animGuard()) return; animSync();
+    let want = aRow > 0 ? aPass : aPass - 1;
+    while (animHist.length && animHist[animHist.length - 1].p > want) animHist.pop();
+    const e = animHist[animHist.length - 1];
+    if (!e || e.p !== want) { say(want < 0 ? "⏮ Это начало — раньше прохода 0 некуда." : "⏮ Дальше назад истории нет."); animUi(); return; }
+    undoPush(undoState());
+    const R = Z.rows; R.length = 0; e.rows.forEach(s => R.push(s));
+    aPass = e.p; aRow = 0; if (aPer && aPer0 + aPer > aPass) { aPer = 0; aPer0 = 0; }
+    for (const [h, p] of animSeen) if (p > aPass) animSeen.delete(h);
+    animDone(); say(`⏮ К началу прохода ${aPass}.`);
+  };
+  $("animOp").value = Z.animOp || "xor";
+  $("animOp").onchange = (e) => { Z.animOp = e.target.value; save(); };
+  $("animSp").value = Z.animSp ?? 40;
+  $("animSp").oninput = (e) => { Z.animSp = +e.target.value; animUi(); };
+  $("animSp").onchange = () => save();
+  animUi();
   let rec = null, recT = 0;
   $("bConeRec").onclick = () => {
     const b = $("bConeRec"), cvx = $("coneCv");
