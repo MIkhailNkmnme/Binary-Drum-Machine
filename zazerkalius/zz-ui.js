@@ -2837,7 +2837,7 @@ function setupCone(){
     fanLab(); save(); renderCone(); coneLogRender();
     say(Z.coneFan ? `✺ Все лучи: ${coneFanN()} из центра через ${Math.round(36000 / coneFanN()) / 100}°, первый — ${+Z.coneLaser0 || 0}°. Светят разом, вылетевший гаснет. ▶ крутить — до последнего.` : `⌖ Снова по одному лазеру: ${coneLasersN()} через ${Math.round(3600 / coneLasersN()) / 10}°.`);
   };
-  const sunLab = () => { $("bConeSun").classList.toggle("on", !!Z.coneSun); $("coneSunCut").value = coneSunCut(); coneSunUi(); };   // v0.206: ☀ солнце
+  const sunLab = () => { $("bConeSun").classList.toggle("on", !!Z.coneSun); { const b = $("coneSunCut"), z = coneSunCut() === "zero"; b.textContent = z ? "Без щелей" : "щели"; b.classList.toggle("on", z); } coneSunUi(); };   // v0.228: пропуск — одна кнопка-переключатель   // v0.206: ☀ солнце
   sunLab();
   $("bConeSun").onclick = () => {
     Z.coneSun = !Z.coneSun;
@@ -2846,7 +2846,7 @@ function setupCone(){
     sunLab(); save(); renderCone(); coneLogRender();
     say(Z.coneSun ? (coneSunCut() === "zero" ? "☀ Солнце, без щелей: строка 1 светит всегда; «0» — проход во всю ячейку, «1» — стена. ▶ крутить — свет красит стены." : "☀ Солнце: строка 1 светит всегда; свет проходит кольца только в щелях между битами (ширина — «щель»): у «11» — два луча. ▶ крутить — свет красит стены.") : "☀ Солнце выключено — снова лазер.");
   };
-  $("coneSunCut").onchange = (e) => { Z.coneSunCut = e.target.value; coneSunWas = undefined; coneSunUi(); save(); renderCone(); coneLogRender();
+  $("coneSunCut").onclick = () => { Z.coneSunCut = coneSunCut() === "zero" ? "gaps" : "zero"; coneSunWas = undefined; sunLab(); save(); renderCone(); coneLogRender();   // v0.228: щелчок — щели ↔ Без щелей
     say(coneSunCut() === "zero" ? "☀ Без щелей: «0» пропускает свет во всю свою ширину, «1» — стена." : "☀ Пропуск — щели между битами, ширина — ползунок «щель»."); };
   const lzN = $("coneLasersN"), lz0 = $("coneLaser0");   // v0.194: сколько лазеров и угол первого
   lzN.value = coneLasersN(); lz0.value = +Z.coneLaser0 || 0;
