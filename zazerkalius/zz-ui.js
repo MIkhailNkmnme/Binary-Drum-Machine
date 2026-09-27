@@ -610,9 +610,15 @@ const RL_MAX = 1.25, RL_MIN = 0.7;
 function rowsFit(){
   const L = $("rowList"); if (!L || !L.clientHeight) return;
   const was = L.style.getPropertyValue("--rlh");
+  /* v0.246, «почему всё тормозит»: каждая подгонка — 4–5 полных раскладок поля (на 260 строках — по 0,1 с). Строк, шрифта и размера
+     поля столько же, сколько в прошлый раз, и всё помещается — шаг строки прежний, раскладка одна. */
+  const n = L.querySelectorAll(".rw:not(.lhrow)").length, fs = Z.fs || 16;
+  const key = [n, fs, Z.ff, Z.laneCount, L.clientHeight, L.clientWidth].join("|");
+  if (rowsFit.key === key && (+was && +was <= RL_MIN + 1e-6 || L.scrollHeight <= L.clientHeight + 1)) return;   // и когда ужато до предела — теснее всё равно некуда
+  rowsFit.key = key;
   L.classList.remove("rlsq"); L.style.removeProperty("--rlh");
   if (L.scrollHeight <= L.clientHeight + 1) { if (was) rowsFitDone(); return; }
-  const n = L.querySelectorAll(".rw:not(.lhrow)").length, fs = Z.fs || 16; if (!n) return;
+  if (!n) return;
   L.classList.add("rlsq");
   let rl = RL_MAX;
   for (let k = 0; k < 3; k++) {   // шаг строки округляется до пикселя — две-три поправки
@@ -633,8 +639,9 @@ function rowsFitDone(){ if (Z.tri90) tri90Apply(); }   // ◸ 90° считае�
 function fieldInfoFit(){
   const fi = $("fieldInfo"), bar = $("fieldInfoBar"); if (!fi || !bar) return;
   const no = document.querySelector("#rowList .rw > .no"), w = no ? no.getBoundingClientRect().right - bar.getBoundingClientRect().left : 90;
-  fi.style.maxWidth = (fi.parentNode && fi.parentNode.id === "infoSlot" ? Math.max(40, ($("rowList").clientWidth || 200) - 16) : Math.max(40, Math.round(bar.clientWidth - Math.max(0, w) - 14 - 6))) + "px";   // v0.237: под строками — во всю ширину поля
-  if (CUT_PANEL && $("rowList")) CUT_PANEL.style.maxWidth = Math.max(60, $("rowList").clientWidth - 12) + "px";   // v0.230: кнопки под чертой — в ширину видимого поля, с переносом
+  const setMW = (el, v) => { if (el.style.maxWidth !== v) el.style.maxWidth = v; };   // v0.246: то же значение — не трогать (иначе лишняя раскладка всего поля)
+  setMW(fi, (fi.parentNode && fi.parentNode.id === "infoSlot" ? Math.max(40, ($("rowList").clientWidth || 200) - 16) : Math.max(40, Math.round(bar.clientWidth - Math.max(0, w) - 14 - 6))) + "px");   // v0.237: под строками — во всю ширину поля
+  if (CUT_PANEL && $("rowList")) setMW(CUT_PANEL, Math.max(60, $("rowList").clientWidth - 12) + "px");   // v0.230: кнопки под чертой — в ширину видимого поля, с переносом
   /* v0.212, «запрет сдвига строк — не дубль замка?» → «да (убрать), но общий замок всегда над столбиком должен стоять»: галки в «Кольцах»
      не видно (она осталась скрытой — на ней держится общий замок), а общий замок в полосе ввода сдвигается так, что его середина —
      ровно над столбиком замков строк. */
@@ -643,9 +650,11 @@ function fieldInfoFit(){
   const nr = document.querySelector("#rowList .rw:not(.hid):not(.fillrw) > .no");
   const over = (B, cell) => {
     if (!B || !cell) return;
-    B.style.marginLeft = "0px";
-    const a = B.getBoundingClientRect(), k = cell.getBoundingClientRect();
-    if (k.width) B.style.marginLeft = Math.round((k.left + k.width / 2) - (a.left + a.width / 2)) + "px";   // и влево — в отступ полосы
+    // v0.246: без сброса в 0 — поправка к нынешнему сдвигу; то же значение не пишется (каждая запись — ещё одна раскладка поля)
+    const a = B.getBoundingClientRect(), k = cell.getBoundingClientRect(), m0 = parseFloat(B.style.marginLeft) || 0;
+    if (!k.width) return;
+    const v = Math.round(m0 + (k.left + k.width / 2) - (a.left + a.width / 2)) + "px";   // и влево — в отступ полосы
+    if (B.style.marginLeft !== v) B.style.marginLeft = v;
   };
   if (nr) { over($("bRowsStartTop"), nr.querySelector(".rn")); over($("coneLockAll"), nr.querySelector(".rlk")); over($("bConeAllHome"), nr.querySelector(".rrot")); }   // v0.214: и ⟲ — над кручениями
 }
@@ -691,7 +700,7 @@ function renderRows(){
   if (typeof renderCone === "function") { clearTimeout(renderRows._cone); renderRows._cone = setTimeout(renderCone, 0); }   // v0.076: выделение в поле — и в конусе
   if (ovControls()) { renderRowsOver(); return; }   // v0.018
   const L = $("rowList"), N = Z.laneCount || 1;
-  L.className = "al-" + (Z.rowsAlign || "center") + (N > 1 ? " multi" : "");
+  L.className = "al-" + (Z.rowsAlign || "center") + (N > 1 ? " multi" : "") + ["rlsq", "tri90", "rnhov"].map(c => L.classList.contains(c) ? " " + c : "").join("");   // v0.246: ужатость, 90° и подсветка номеров — не сбрасывать
   L.style.setProperty("--lanes", N);
   const lanes = []; for (let l = 0; l < N; l++) lanes.push(l === Z.lane ? Z.rows : Z.lanes[l]);
   const H = Math.max(...lanes.map(x => x.length));
@@ -5207,8 +5216,9 @@ function applyPaneIcons(){
 
 /* ─── Всё разом ──────────────────────────────────────────────────────────────────────────── */
 function applyView(){
-  document.documentElement.style.setProperty("--ff", Z.ff);
-  document.documentElement.style.setProperty("--fs", Z.fs + "px");
+  const R = document.documentElement.style;   // v0.246: только когда поменялись — иначе пересчёт стилей всей страницы на каждой перерисовке
+  if (R.getPropertyValue("--ff") !== String(Z.ff)) R.setProperty("--ff", Z.ff);
+  if (R.getPropertyValue("--fs") !== Z.fs + "px") R.setProperty("--fs", Z.fs + "px");
   $("bFixShow").classList.toggle("on", Z.fixShow);
 }
 /* v0.034, баг-репорт «сломалось» (снимок: «🧊 Вид» в режиме «все строки» — холст со стрелками есть, карточек нет;
@@ -5403,9 +5413,15 @@ function init(){
      за чертой (по битам, не по номеру) — она и все строки между ней и чертой удаляются насовсем, во всех полях; строки ниже неё
      поднимаются к черте. Наведёшь — то, что уйдёт, красное. ↩ вернёт. */
   const hidAt = (e) => { const r = e.target.closest(".rw.hid"); return r && !e.target.closest(".no") ? r : null; };
-  const hidMark = (r) => { const all = [...$("rowList").querySelectorAll(".rw.hid")], j = r ? all.indexOf(r) : -1; all.forEach((x, q) => x.classList.toggle("hdel", q <= j)); };
-  $("rowList").addEventListener("mouseover", (e) => { if (!document.body.classList.contains("cutdrag")) hidMark(hidAt(e)); });
-  $("rowList").addEventListener("mouseleave", () => hidMark(null));
+  let hidLast = null;
+  const hidMark = (r) => { if (r === hidLast) return; hidLast = r; const all = [...$("rowList").querySelectorAll(".rw.hid")], j = r ? all.indexOf(r) : -1; all.forEach((x, q) => x.classList.toggle("hdel", q <= j)); };
+  /* v0.246: подсветка столбика номеров при наведении — классом (.rnhov), а не :has(:hover) в CSS: тот пересчитывал стили всего поля
+     на каждое движение мыши по строкам */
+  $("rowList").addEventListener("mouseover", (e) => {
+    if (!document.body.classList.contains("cutdrag")) hidMark(hidAt(e));
+    const L = $("rowList"), on = !!e.target.closest(".rw > .no > .rn"); if (L.classList.contains("rnhov") !== on) L.classList.toggle("rnhov", on);
+  });
+  $("rowList").addEventListener("mouseleave", () => { hidMark(null); $("rowList").classList.remove("rnhov"); });
   $("rowList").addEventListener("click", (e) => {
     const r = hidAt(e); if (!r || rowEditing >= 0) return;
     e.stopPropagation(); e.preventDefault();

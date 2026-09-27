@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.245. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.246. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.245</title>
+<title>Zazerkalius — v0.246</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -141,7 +141,7 @@ body.nocur .rw.cur .bits > .bx,body.nocur .rw.cur .bits > .bxo{background:var(--
 #rowInputBar #bRowsStartTop,#rowInputBar #coneLockAll,#rowInputBar #bConeAllHome{padding:1px 3px;min-width:0;line-height:1.2}   /* v0.212: узкие — встают над узкими колонками номеров и замков */
 #split{display:none !important}   /* v0.218: разделителя нет — ширину поля тянут за столбик номеров */
 #rowList .rw > .no > .rn{cursor:ew-resize}   /* v0.219: хват — только номера */
-#rowList:has(.rw > .no > .rn:hover) .rw > .no > .rn,body.wdrag #rowList .rw > .no > .rn{filter:brightness(1.35);background:color-mix(in srgb, var(--acc) 10%, transparent)}   /* v0.218: наведён — весь столбик чуть светлее */
+#rowList.rnhov .rw > .no > .rn,body.wdrag #rowList .rw > .no > .rn{filter:brightness(1.35);background:color-mix(in srgb, var(--acc) 10%, transparent)}   /* v0.218: наведён — весь столбик чуть светлее */
 body.wdrag,body.wdrag *{cursor:ew-resize !important;user-select:none}
 /* v0.025: окна под полем строк. Тащишь окно за шапку — оно едет поверх всего (.dragging, position:fixed);
    отпустил над полем строк — встаёт в #fieldDock на всю ширину колонки (.docked); вытащил — снова на столе. */
@@ -729,7 +729,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.245</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.246</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1511,8 +1511,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0245"></script>
-<script src="zz-ui.js?v=0245"></script>
+<script src="zz-core.js?v=0246"></script>
+<script src="zz-ui.js?v=0246"></script>
 <script src="../_js/hub-link.js"></script>
 <script src="../_js/recorder.js" data-bez-knopki></script>
 </body>
