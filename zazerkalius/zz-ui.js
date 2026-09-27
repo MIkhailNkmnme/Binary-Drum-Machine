@@ -2441,8 +2441,11 @@ function setupCone(){
   goN.onchange = () => { Z.coneGoN = Math.max(1, Math.round(+goN.value) || 1); goN.value = Z.coneGoN; save(); };
   $("bConeGo").onclick = () => {
     autoSet(false);
+    /* v0.190, снимок «что не так?» (режим «Всё», лог «1 закрыт»): во «Всё» конус крутится целиком, вырез строки 1 относительно лазера не
+       сдвигается — луч не выйдет никогда. 🎯 теперь сам переключает на «Встреч Стр» (как выбрать его рядом с ▶) и крутит дальше. */
+    let switched = false;
+    if ((Z.coneSpinMode || "all") === "all") { const sel = $("coneSpinMode"); sel.value = "opp"; sel.onchange({ target: sel }); switched = true; }
     const m = Z.coneSpinMode || "all", N = Math.min(Z.rows.length, CONE_MAX);
-    if (m === "all") { say("🎯 Во «Всё» кольца друг относительно друга не сдвигаются — луч дальше не пойдёт. Выбери Каждое, Встреч Стр или Встреч Бит."); return; }
     if (!N) return;
     if (!Z.coneClock) { Z.coneClock = true; $("coneClock").checked = true; }
     const t = Math.min(N, Math.max(1, Math.round(+goN.value) || 1)) - 1; goN.value = Z.coneGoN = t + 1;
@@ -2483,7 +2486,7 @@ function setupCone(){
     }
     save(); renderCone(); coneLogRender();
     const turned = conePredFmt(Z.coneSpinPh - ph0, bitm), ex = Z.voidHits && Z.voidHits.ex && Z.voidHits.ex[t];
-    say((freed ? `🎯 Отпустил остановленные кольца (${freed}). ` : "🎯 ") + `Луч прошёл строку ${t + 1} — повернул на ${turned}` + (ex ? `; строка от щели вылета: ${ex}` : "") +
+    say("🎯 " + (switched ? "Во «Всё» луч не выходит — переключил на «Встреч Стр». " : "") + (freed ? `Отпустил остановленные кольца (${freed}). ` : "") + `Луч прошёл строку ${t + 1} — повернул на ${turned}` + (ex ? `; строка от щели вылета: ${ex}` : "") +
         (R.wall ? `. Дальше упирается в строку ${R.wall[0] + 1}.` : R.pass ? (R.cells.length ? ". Прошёл все строки — пойман строкой для заполнения." : ". Прошёл все строки и ушёл за край.") : "."));
   };
   $("bConeLogClr").onclick = () => { Z.coneLog = { n: 0, list: [] }; save(); coneLogRender(); say("📜 Лог лазера очищен."); };
