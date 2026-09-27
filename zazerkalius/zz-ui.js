@@ -2560,7 +2560,7 @@ function cone3DDraw(g, o){
      каждом бите его цифра. Сбоку — только ближняя половина кольца (дальняя за ней); сверху зеркало под основанием не подписывается
      (лежит ровно под верхним). Цифра — по ширине бита на экране: у краёв сбоку, где биты сжаты, мелкие не пишутся. */
   { const elD = Z.cone3El ?? 50, side = Math.abs(elD) < 1, top = Math.abs(elD - 90) < 1;
-    if (side || top) {
+    if (Z.cone3Dig && (side || top)) {   // v0.251: только когда включено «01» (по умолчанию выкл)
       const fnt = coneCss("--ff", "monospace");
       g.textAlign = "center"; g.textBaseline = "middle"; g.lineJoin = "round"; g.globalAlpha = 1;
       for (const it of items) {
@@ -3107,10 +3107,10 @@ function setupCone(){
     if (H) {   // v0.125: своё умолчание (⭐) — положения колец и настройки конуса, как запомнены
       coneRot.length = 0; (Array.isArray(H.coneRot) ? H.coneRot : []).forEach(x => coneRot.push(Math.round(x || 0))); Z.coneRot = coneRot.slice();
       Z.coneSpin = H.coneSpin || 0; Z.coneSpinPh = H.coneSpinPh || 0; Z.coneAimRot = H.coneAimRot || 0; Z.coneClockN = 0; coneClockFlash = []; coneLaserResetAll();   // v0.138
-      const keys = ["coneClock", "coneClockStop", "coneVoid", "coneSlit", "coneSpinMode", "coneAutoSp", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3H", "cone3Bw", "animOp", "animSp", "animByPass", "animRowsN", "animSeed",
+      const keys = ["coneClock", "coneClockStop", "coneVoid", "coneSlit", "coneSpinMode", "coneAutoSp", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3Dig", "cone3H", "cone3Bw", "animOp", "animSp", "animByPass", "animRowsN", "animSeed",
                     "coneRays", "coneMir", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs"];
       for (const k of keys) { if (k in H) Z[k] = JSON.parse(JSON.stringify(H[k])); else delete Z[k]; }
-      for (const k of ["coneClock", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta"]) { const el = $(k); if (el) el.checked = !!Z[k]; }
+      for (const k of ["coneClock", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3Dig"]) { const el = $(k); if (el) el.checked = !!Z[k]; }
       $("coneLock").checked = Z.coneLock !== false; $("coneVoid").checked = Z.coneVoid !== false;
       $("coneRays").value = Z.coneRays || "off"; $("coneMir").value = Z.coneMir || "off"; $("coneSpinMode").value = Z.coneSpinMode || "all";
       coneDirUi(); $("cone3H").value = Z.cone3H ?? 1; $("cone3Bw").value = Z.cone3Bw ?? 1; $("animOp").value = Z.animOp || "xor"; $("animSp").value = Z.animSp ?? 40; $("animByPass").checked = !!Z.animByPass;
@@ -3540,6 +3540,9 @@ function setupCone(){
     if (Z.conePoly) say("⬡ Этажи-многоугольники: строка из n бит — n-угольник, бит — сторона. 1 бит — точка в центре, 2 — две Г углом в центре (крест), 3 — треугольник, 4 — квадрат."); };
   $("cone3d").checked = !!Z.cone3d;   // v0.082
   $("cone3d").onchange = (e) => { Z.cone3d = e.target.checked; save(); renderCone(); };
+  $("cone3Dig").checked = !!Z.cone3Dig;   // v0.251: цифры бит сбоку / сверху — вкл / выкл, по умолчанию выкл
+  $("cone3Dig").onchange = (e) => { Z.cone3Dig = e.target.checked; save(); renderCone();
+    say(Z.cone3Dig ? "01 В 3D при наклоне ровно 0° (сбоку) или 90° (сверху) на битах — их цифры." : "01 Цифры бит в 3D — выкл."); };
   $("cone3H").value = Z.cone3H ?? 1;
   $("cone3H").oninput = (e) => { Z.cone3H = +e.target.value; if (!Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } renderCone(); };
   $("cone3H").onchange = () => save();
