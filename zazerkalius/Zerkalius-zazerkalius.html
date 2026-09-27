@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.204. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.205. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.204</title>
+<title>Zazerkalius — v0.205</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -113,6 +113,18 @@ body.pane-icons #rowsPane #bPaneIcons{width:auto;padding:2px 0}
    полем росла и сжималась, строки прыгали. Теперь она в одну строку: не влезает — многоточие, целиком — в подсказке. */
 #fieldInfoBar{position:relative;z-index:3;flex:0 0 auto;height:0;overflow:visible;pointer-events:none}   /* v0.172, «текст ниже — пустое устранит»: своей полоски у сведений нет — они лежат поверх поля строк в правом верхнем углу (над вершиной треугольника пусто) */
 #fieldInfo{position:absolute;top:3px;right:14px;max-width:calc(100% - 90px);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px;border-radius:3px;font-size:11px;line-height:14px;color:var(--dim);text-align:right;background:color-mix(in srgb, var(--bg) 75%, transparent)}   /* v0.167: вправо */
+/* v0.205, «пусть надпись скрывается за битами» (сведения поля лежали поверх строки 1): сведения — под полем строк (z-index −1 в своей
+   изоляции, над фоном поля), а у самих бит — подложка цвета поля в том же состоянии строки. Сведения видны только в пустоте. */
+#field{isolation:isolate}
+#fieldInfoBar{z-index:-1}
+.rw .bits > .bx,.rw .bits > .bxo{background:var(--bg)}
+.rw:hover .bits > .bx,.rw:hover .bits > .bxo{background:var(--panel2)}
+.rw.cur .bits > .bx,.rw.cur .bits > .bxo{background:color-mix(in srgb, rgb(185,140,240) 14%, var(--bg))}
+.rw.sel .bits > .bx,.rw.sel .bits > .bxo{background:color-mix(in srgb, rgb(34,211,238) 16%, var(--bg))}
+#rowList.multi .rw .bits.la > .bx{background:color-mix(in srgb, rgb(185,140,240) 5%, var(--bg))}
+#rowList.multi .rw.cur .bits.la > .bx{background:color-mix(in srgb, rgb(185,140,240) 22%, var(--bg))}
+body.nocur .rw.cur .bits > .bx,body.nocur .rw.cur .bits > .bxo{background:var(--bg)}
+.rw.hid .bits > .bx,.rw.hid .bits > .bxo,.rw.fillrw .bits > .bx,.rw.fillrw .bits > .bxo{background:transparent}
 #coneLockAll{font-size:13px}   /* v0.169: общий замок — кнопкой в полосе ввода */
 #coneLockAll.off{opacity:.6}
 #split{cursor:col-resize;background:var(--line);opacity:.6}
@@ -643,7 +655,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.204</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.205</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1394,8 +1406,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0204"></script>
-<script src="zz-ui.js?v=0204"></script>
+<script src="zz-core.js?v=0205"></script>
+<script src="zz-ui.js?v=0205"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>

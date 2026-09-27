@@ -2692,7 +2692,7 @@ function setupCone(){
   lzN.value = coneLasersN(); lz0.value = +Z.coneLaser0 || 0;
   lzN.onchange = () => { Z.coneLasers = Math.max(1, Math.min(72, Math.round(+lzN.value) || 8)); lzN.value = Z.coneLasers; save(); renderCone(); coneLogRender();
     say(`⌖ Лазеров ${Z.coneLasers}, шаг ${Math.round(3600 / Z.coneLasers) / 10}°` + (coneLaserK() + 1 > Z.coneLasers ? ` — нынешний (${coneLaserK() + 1}) уже за последним: дальше пауза.` : ".")); };
-  lz0.onchange = () => { let v = +lz0.value || 0; v = Math.round((((v % 360) + 360) % 360) * 1e4) / 1e4;   // v0.202: и доли градуса Z.coneLaser0 = v; lz0.value = v; save(); renderCone(); coneLogRender();
+  lz0.onchange = () => { let v = +lz0.value || 0; v = Math.round((((v % 360) + 360) % 360) * 1e4) / 1e4; Z.coneLaser0 = v; lz0.value = v; save(); renderCone(); coneLogRender();   // v0.202: и доли градуса (v0.205: комментарий глотал хвост строки)
     say(`⌖ Первый лазер — ${v}° от верха по часовой; нынешний (${coneLaserK() + 1}) — ${coneLaserDeg()}°.`); };
   const fixLab = () => $("bLaserFix").classList.toggle("on", coneLaserFixed());   // v0.202: 📌 лазер, ↻ шаг
   const chainLab = () => $("bLaserChain").classList.toggle("on", !!Z.coneLaserChain);   // v0.202: ⌖→ след.
