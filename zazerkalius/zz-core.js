@@ -1001,3 +1001,51 @@ function zzPyramid(seed, n, maxOnes){
   }
   return { layers, ones, cut: false };
 }
+
+/* ─── Заготовки Аниматрицы (v0.200) ─────────────────────────────────────────────────────────
+   Запрос: «заготовки-пресеты, по умолчанию 256 строк: все серпинские правила и какие-нибудь последовательности».
+   zzEcaRows — элементарный клеточный автомат (правило 0…255) из сида в середине пустой полосы; строка y — только
+   световой конус: от сида на y клеток влево и вправо, длина 2y + длина сида. Поле достаточно широкое, края не мешают.
+   Проверено перебором всех 256 правил из одной «1»: ровно треугольник правила 90 дают 18, 26, 82, 90, 146, 154, 210, 218 —
+   из одной точки (и из 101) они совпадают, разные — с сида, где единицы стоят рядом (11, 1101…).
+   zzPascalRows — Паскаль по модулю 2 (🔺+1): строка на бит длиннее, от сида.
+   zzSeqBits — первые n членов последовательности 0/1; в заготовке строка i — первые i + 1 членов (треугольник префиксов). */
+function zzEcaRows(rule, seed, H){
+  seed = zzIsBits(seed) ? seed : "1";
+  const L = seed.length, W = L + 2 * H + 2, c = H + 1;
+  let row = new Uint8Array(W); for (let i = 0; i < L; i++) row[c + i] = seed[i] === "1" ? 1 : 0;
+  const out = [];
+  for (let y = 0; y < H; y++) {
+    let s = ""; for (let x = c - y; x < c + L + y; x++) s += row[x] ? "1" : "0";
+    out.push(s);
+    const n = new Uint8Array(W);   // за краем полосы — та же крайняя клетка: фон, каким его делает правило
+    for (let x = 0; x < W; x++) { const l = x ? row[x - 1] : row[0], m = row[x], r = x < W - 1 ? row[x + 1] : row[W - 1]; n[x] = (rule >> (l * 4 + m * 2 + r)) & 1; }
+    row = n;
+  }
+  return out;
+}
+function zzPascalRows(seed, H){ const r = [zzIsBits(seed) ? seed : "1"]; while (r.length < H) r.push(zzPascalNext(r[r.length - 1])); return r; }
+function zzSeqBits(name, n){
+  const isPrime = (k) => { if (k < 2) return false; for (let d = 2; d * d <= k; d++) if (k % d === 0) return false; return true; };
+  let o = "";
+  if (name === "fib") { let a = "0", b = "01"; while (b.length < n) { const t = b + a; a = b; b = t; } return b.slice(0, n); }   // 0→01, 1→0
+  if (name === "kol") { const s = [1, 2, 2]; for (let i = 2; s.length < n; i++) { const v = i % 2 ? 2 : 1; for (let k = 0; k < s[i]; k++) s.push(v); } return s.slice(0, n).map(v => v === 1 ? "1" : "0").join(""); }
+  for (let i = 0; i < n; i++) {
+    let b = 0;
+    if (name === "tm") { let x = i, p = 0; while (x) { p ^= x & 1; x >>>= 1; } b = p; }
+    else if (name === "rs") { let x = i, p = 0; while (x) { if ((x & 3) === 3) p ^= 1; x >>>= 1; } b = p; }   // Рудин — Шапиро: чётность пар «11»
+    else if (name === "fold") { let k = i + 1; while (!(k & 1)) k >>>= 1; b = (k & 3) === 1 ? 1 : 0; }   // складывание бумаги (кривая дракона)
+    else if (name === "pd") { let k = i + 1, v = 0; while (!(k & 1)) { k >>>= 1; v++; } b = v % 2 ? 0 : 1; }   // удвоение периода: 1→10, 0→11
+    else if (name === "bs") { const t = i.toString(2).split("1").filter(z => z.length); b = i === 0 || t.every(z => z.length % 2 === 0) ? 1 : 0; }   // Баум — Свит
+    else if (name === "prime") b = isPrime(i + 1) ? 1 : 0;
+    else if (name === "sq") { const r = Math.round(Math.sqrt(i + 1)); b = r * r === i + 1 ? 1 : 0; }
+    else if (name === "rnd") b = Math.random() < 0.5 ? 1 : 0;
+    o += b ? "1" : "0";
+  }
+  return o;
+}
+function zzSeqRows(name, H){
+  if (name === "cnt") return Array.from({ length: H }, (_, i) => (i + 1).toString(2));   // двоичный счёт 1, 10, 11, 100…
+  if (name === "rnd") return Array.from({ length: H }, (_, i) => zzSeqBits("rnd", i + 1));
+  const s = zzSeqBits(name, H); return Array.from({ length: H }, (_, i) => s.slice(0, i + 1));
+}

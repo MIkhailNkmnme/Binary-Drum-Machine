@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.199. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.200. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.199</title>
+<title>Zazerkalius — v0.200</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -632,7 +632,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.199</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.200</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1197,6 +1197,33 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
             </select>
             <label class="dim" title="⟳ Циклами: ▶ волна идёт целыми циклами — за шаг весь проход волны от верха до низа, конус показывает только готовые циклы (как «Плеер — целыми циклами» в Треугольнике). Скорость — циклов в секунду"><input type="checkbox" id="animByPass"> ⟳ циклами</label>
             <label class="dim" title="Скорость волны, по логарифму: 0,5…5000 строк в секунду (с ⟳ циклами — циклов в секунду)">⚡ <input type="range" id="animSp" min="0" max="100" step="1" value="40" style="width:90px;vertical-align:middle"> <span id="animSpV" style="display:inline-block;min-width:5em;font-variant-numeric:tabular-nums"></span></label>
+            <select id="animPreset" title="Заготовка: поле строк заменяется целиком (↩ вернёт), строк — сколько в поле рядом (по умолчанию 256), сид — начальная строка. Правила — элементарные автоматы из сида, строка — световой конус (на 2 бита длиннее предыдущей); из одной «1» правила группы «Серпинский» дают один и тот же треугольник, различаются с сида, где единицы стоят рядом (11, 1101…). Последовательности — строка i из первых i + 1 членов">
+              <option value="">📋 заготовка…</option>
+              <optgroup label="Серпинский">
+                <option value="pascal">🔺 Паскаль mod 2 (+1 бит)</option>
+                <option value="r90">Правило 90</option>
+                <option value="r18">Правило 18</option>
+                <option value="r26">Правило 26</option>
+                <option value="r82">Правило 82</option>
+                <option value="r146">Правило 146</option>
+                <option value="r154">Правило 154</option>
+                <option value="r210">Правило 210</option>
+                <option value="r218">Правило 218</option>
+              </optgroup>
+              <optgroup label="Родственные">
+                <option value="r22">Правило 22</option><option value="r126">Правило 126 — толстый</option><option value="r150">Правило 150 — XOR трёх</option>
+                <option value="r60">Правило 60 — Паскаль влево</option><option value="r102">Правило 102 — Паскаль вправо</option>
+                <option value="r182">Правило 182</option><option value="r195">Правило 195 — инверсия 60</option><option value="r30">Правило 30 — хаос</option><option value="r110">Правило 110</option>
+              </optgroup>
+              <optgroup label="Последовательности">
+                <option value="s:tm">Туэ — Морс</option><option value="s:fib">Слово Фибоначчи</option><option value="s:rs">Рудин — Шапиро</option>
+                <option value="s:fold">Складывание бумаги (дракон)</option><option value="s:pd">Удвоение периода</option><option value="s:bs">Баум — Свит</option>
+                <option value="s:kol">Колакоски</option><option value="s:prime">Простые числа</option><option value="s:sq">Квадраты</option>
+                <option value="s:cnt">Двоичный счёт 1, 10, 11…</option><option value="s:rnd">🎲 Случайные</option>
+              </optgroup>
+            </select>
+            <label class="dim" title="Строк в заготовке (2…1024)"><input type="number" id="animRowsN" min="2" max="1024" step="1" value="256" style="width:4.2em"> стр.</label>
+            <label class="dim" title="Сид — начальная строка из 0 и 1 для правил и Паскаля (по умолчанию 1)">сид <input type="text" id="animSeed" value="1" style="width:4em;font-family:var(--ff)"></label>
             <span id="animInfo" class="dim" style="font-variant-numeric:tabular-nums;white-space:nowrap" title="Сколько проходов волна сделала, на какой строке она сейчас и длина цикла (когда картина повторилась)"></span>
           </div>
           <div class="cgrp" title="⌖ Луч-часы: пустые кольца до 256, ширина щели, довод строки 1, пауза на проходе"><span class="glab">Лазер</span>
@@ -1352,8 +1379,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0199"></script>
-<script src="zz-ui.js?v=0199"></script>
+<script src="zz-core.js?v=0200"></script>
+<script src="zz-ui.js?v=0200"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>

@@ -1134,7 +1134,7 @@ function renderSteps(){
    оно крутится (отпустил — встаёт на целый бит); щелчок без поворота — строка становится текущей. Поворот — только
    вид, строки не меняются, пока не нажато «⤓ в строки». Одинаковые кольца (одно ожерелье: те же биты по кругу) —
    одним цветом обводки. */
-const CONE_MAX = 160;
+const CONE_MAX = 256;   // v0.200: было 160 — заготовки Аниматрицы по 256 строк
 /* v0.051, «конус — супер; надо ещё чётче разграничить кольца, и выделять при наведении; цвета брать из поля строк, в том
    числе и символов; и если меняется там — то и здесь, и если крутить тут — то там». Кольца — с явным зазором и тонкой
    чертой между ними; наведённое кольцо обводится и подсвечивает свою строку в поле; цвета — те же, что у бит в поле
@@ -2687,7 +2687,7 @@ function setupCone(){
     if (H) {   // v0.125: своё умолчание (⭐) — положения колец и настройки конуса, как запомнены
       coneRot.length = 0; (Array.isArray(H.coneRot) ? H.coneRot : []).forEach(x => coneRot.push(Math.round(x || 0))); Z.coneRot = coneRot.slice();
       Z.coneSpin = H.coneSpin || 0; Z.coneSpinPh = H.coneSpinPh || 0; Z.coneAimRot = H.coneAimRot || 0; Z.coneClockN = 0; coneClockFlash = []; coneLaserResetAll();   // v0.138
-      const keys = ["coneClock", "coneClockStop", "coneVoid", "coneSlit", "coneSpinMode", "coneAutoSp", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3H", "cone3Bw", "animOp", "animSp", "animByPass",
+      const keys = ["coneClock", "coneClockStop", "coneVoid", "coneSlit", "coneSpinMode", "coneAutoSp", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3H", "cone3Bw", "animOp", "animSp", "animByPass", "animRowsN", "animSeed",
                     "coneRays", "coneMir", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs"];
       for (const k of keys) { if (k in H) Z[k] = JSON.parse(JSON.stringify(H[k])); else delete Z[k]; }
       for (const k of ["coneClock", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta"]) { const el = $(k); if (el) el.checked = !!Z[k]; }
@@ -2850,6 +2850,24 @@ function setupCone(){
   $("animSp").value = Z.animSp ?? 40;
   $("animSp").oninput = (e) => { Z.animSp = +e.target.value; animUi(); };
   $("animSp").onchange = () => save();
+  /* v0.200, «заготовки, по умолчанию 256 строк: все серпинские правила и последовательности»: выбор в списке — поле строк
+     заменяется целиком (↩ вернёт), счёт волны — заново. */
+  $("animRowsN").value = Z.animRowsN || 256;
+  $("animRowsN").onchange = (e) => { Z.animRowsN = Math.max(2, Math.min(1024, Math.round(+e.target.value) || 256)); e.target.value = Z.animRowsN; save(); };
+  $("animSeed").value = Z.animSeed || "1";
+  $("animSeed").onchange = (e) => { const v = e.target.value.replace(/[^01]/g, ""); Z.animSeed = v || "1"; e.target.value = Z.animSeed; save(); };
+  $("animPreset").onchange = (e) => {
+    const v = e.target.value, lab = e.target.selectedOptions[0] ? e.target.selectedOptions[0].textContent : v; e.target.value = "";
+    if (!v) return;
+    const H = Z.animRowsN || 256, seed = Z.animSeed || "1";
+    const rows = v === "pascal" ? zzPascalRows(seed, H) : v.startsWith("r") ? zzEcaRows(+v.slice(1), seed, H) : zzSeqRows(v.slice(2), H);
+    animSet(false);
+    try { snapshot(); } catch (err) { return; }
+    Z.rows = rows; syncLane(); Z.cur = 0;
+    animSig = null; animSync();
+    renderAll(); save(); animUi();
+    say(`🌊 Заготовка «${lab.trim()}»: ${rows.length} стр., последняя — ${rows[rows.length - 1].length} бит. ↩ вернёт.`);
+  };
   animUi();
   let rec = null, recT = 0;
   $("bConeRec").onclick = () => {
