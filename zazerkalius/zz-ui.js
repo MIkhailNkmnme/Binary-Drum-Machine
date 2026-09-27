@@ -1636,8 +1636,18 @@ function coneLaserK(){ return (Z.voidHits && Z.voidHits.lk) | 0; }
 /* v0.194, «где задать количество и начальный угол?» (выбрано: просто угол от верха): лазеров N (Z.coneLasers, 1…72, по умолчанию 8),
    шаг — 360°/N; первый — на угле Z.coneLaser0 (градусы по часовой от верха, по умолчанию 0). Поля — в «Лазере», рядом с 🎯. */
 function coneLasersN(){ return Math.max(1, Math.min(72, Math.round(+Z.coneLasers) || 8)); }
-function coneLaserDeg(k){ k = k === undefined ? coneLaserK() : k; return Math.round(((((+Z.coneLaser0 || 0) + k * 360 / coneLasersN()) % 360) + 360) % 360 * 10) / 10; }
-function coneLaserAngle(k){ return -Math.PI / 2 + coneLaserDeg(k) * Math.PI / 180; }
+function coneLaserDegRaw(k){ k = k === undefined ? coneLaserK() : k; return ((((+Z.coneLaser0 || 0) + k * 360 / coneLasersN()) % 360) + 360) % 360; }
+function coneLaserDeg(k){ return Math.round(coneLaserDegRaw(k) * 1000) / 1000; }   // v0.202: до тысячных — шаг 1/(1+…+T) круга бывает сотыми долями градуса
+/* v0.202, «почему лазер крутится? надо кнопку фикс лазера и стрелку крутить на заданное частей круга, по умолчанию 45» и «ещё на число самой
+   длинной, когда все, а все — это 1+2+3+…+T». Лазер крутился вместе со всем конусом («Всё», ⟲ ⟳ — поворот Z.coneSpin): он был нарисован и
+   считался в системе конуса. «📌 лазер» (Z.coneLaserFix, по умолчанию включено) — лазер стоит на экране, конус едет под ним: в системе
+   конуса угол лазера минус поворот конуса. «↻» поворачивает лазер (и все лучи ✺) на шаг, правый щелчок — назад; шаг — 45°, 1/T круга
+   (T — бит в самой длинной строке) или 1/(1+2+…+T) круга (Z.coneLaserStepK: "45" | "T" | "S"). */
+function coneLaserFixed(){ return Z.coneLaserFix !== false; }
+function coneLaserSpinOff(){ return coneLaserFixed() && !Z.cone3d ? (Z.coneSpin || 0) * Math.PI / 180 : 0; }
+function coneMaxLen(){ const N = Math.min(Z.rows.length, CONE_MAX); let m = 1; for (let i = 0; i < N; i++) m = Math.max(m, (Z.rows[i] || "").length); return m; }
+function coneLaserStepDeg(){ const k = Z.coneLaserStepK || "45", T = coneMaxLen(); return k === "T" ? 360 / T : k === "S" ? 720 / (T * (T + 1)) : 45; }
+function coneLaserAngle(k){ return -Math.PI / 2 + coneLaserDegRaw(k) * Math.PI / 180 - coneLaserSpinOff(); }
 /* v0.201, «сделай, чтобы в лазере лучей было сколько бит в строках — до 256, по кругу из центра; вылетел — его больше нет в круге, и так
    гонять до последнего» (выбрано: все сразу, кольца общие). Кнопка «✺ все лучи» в «Лазере»: лучей столько, сколько бит в самой длинной
    строке конуса (не больше 256), шаг — 360° / число, первый — на угле «от …°». Светят все сразу. Кольца общие: встаёт кольцо, из которого
@@ -1646,7 +1656,7 @@ function coneLaserAngle(k){ return -Math.PI / 2 + coneLaserDeg(k) * Math.PI / 18
    Погасшие — Z.voidHits.fd { номер: 1 }, отпуск без остановки — Z.voidHits.nf { from — фаза, span }. */
 function coneFanOn(){ return !!Z.coneFan && !!Z.coneClock; }
 function coneFanN(){ const N = Math.min(Z.rows.length, CONE_MAX); let m = 1; for (let i = 0; i < N; i++) m = Math.max(m, (Z.rows[i] || "").length); return Math.min(256, m); }
-function coneFanAngle(k){ return -Math.PI / 2 + ((+Z.coneLaser0 || 0) + k * 360 / coneFanN()) * Math.PI / 180; }
+function coneFanAngle(k){ return -Math.PI / 2 + ((+Z.coneLaser0 || 0) + k * 360 / coneFanN()) * Math.PI / 180 - coneLaserSpinOff(); }   // v0.202: 📌 — на экране стоит
 function coneFanDead(){ const V = Z.voidHits; if (!V) return {}; if (!V.fd || typeof V.fd !== "object") V.fd = {}; return V.fd; }
 function coneFanAlive(){ const fd = coneFanDead(), M = coneFanN(), out = []; for (let k = 0; k < M; k++) if (!fd[k]) out.push(k); return out; }
 function coneFanStuck(R){   // луч упёрся в стоящее кольцо — сам не сдвинется
@@ -1783,6 +1793,9 @@ function coneReleaseRings(){   // v0.191: остановленные кольц�
   for (const k of Object.keys(V.fz)) { off[k] = V.fz[k] - ph; n++; }
   V.fz = {}; return n;
 }
+/* v0.202, «убери то, что по умолчанию сейчас лазер, когда уходит, — до 8 лазеров, потом следующие; это надо вкл/выкл»: переход к следующему
+   лазеру после вылета — кнопка «⌖→ след.» (Z.coneLaserChain, по умолчанию выключено). Выключено — луч вышел за край, и пауза, как до v0.191. */
+function coneLaserNextIf(){ return !!Z.coneLaserChain && coneLaserNext(); }
 function coneLaserNext(){   // v0.191: следующий лазер (+45°); → false, если все восемь уже были
   coneVoidHits(); const V = Z.voidHits, k = V.lk | 0;
   if (k + 1 >= coneLasersN()) return false;
@@ -2558,7 +2571,16 @@ function setupCone(){
     if (ZZ_BG && autoT0 && ts - autoT0 < 48) { autoRaf = requestAnimationFrame(autoTick); return; }   // v0.184: фоном хаба — не чаще 20 кадров в секунду (кадр ~20 мс, кручение медленное)
     const dt = autoT0 ? Math.min(0.1, (ts - autoT0) / 1000) : 0; autoT0 = ts;
     const sp = Z.coneAutoSp ?? 30, m = Z.coneSpinMode || "all";   // v0.104: режимы кручения
-    if (m === "all") Z.coneSpin = ((Z.coneSpin || 0) + sp * dt) % 360;
+    if (m === "all") {
+      const s0 = Z.coneSpin || 0, ds = sp * dt;
+      if (Z.coneClock && coneLaserFixed() && !Z.cone3d && ds) {   // v0.202: 📌 — конус едет под стоящим лазером: попадания между кадрами, мелкими шагами
+        const N = Math.min(Z.rows.length, CONE_MAX); let tolDeg = coneSlitHalf() * 180 / Math.PI;
+        for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
+        const K = Math.max(1, Math.min(Math.ceil(Math.abs(ds) / tolDeg * 2), 2000)), t = performance.now(); let rec = 0;
+        for (let s = 1; s <= K; s++) { Z.coneSpin = s0 + ds * s / K; if (coneWallPaint(coneClockTrace())) rec++; if (s < K && performance.now() - t > 12) break; }
+        Z.coneSpin %= 360; if (rec) save();
+      } else Z.coneSpin = (s0 + ds) % 360;
+    }
     else {
       let dph = coneBitMode(m) ? sp / 10 * dt : sp * dt;   // бит в секунду = скорость / 10
       if (coneFanOn()) dph = coneFanClampDph(dph, m);   // v0.201: ✺ — не быстрее, чем успеваем считать
@@ -2577,8 +2599,8 @@ function setupCone(){
         if (!F.left) { autoSet(false); renderCone(); say(`⏹ Все ${coneFanN()} лучей вылетели — пауза. Заново — ✕ у строки для заполнения или ⟲ всё на места.`); return; }
       } else if (Z.coneClock) { const R = coneClockTrace()[0];   // v0.139, «и так все кольца пройдёт наружу»: вышел за край — все кольца на пути встали, пауза
         if (R && R.pass && !R.cells.length && coneRingFrozen(0)) {
-          if (coneLaserNext()) { const k = coneLaserK(); save(); coneLogRender(); say(`⌖ Луч вышел наружу — лазер ${k + 1} из ${coneLasersN()}, ${coneLaserDeg(k)}°: кольца крутятся дальше с того же рисунка.`); }   // v0.191
-          else { autoSet(false); renderCone(); say(`⏹ Все ${coneLasersN()} лазеров прошли — пауза. Заново — ✕ у строки для заполнения или ⟲ всё на места.`); return; }
+          if (coneLaserNextIf()) { const k = coneLaserK(); save(); coneLogRender(); say(`⌖ Луч вышел наружу — лазер ${k + 1} из ${coneLasersN()}, ${coneLaserDeg(k)}°: кольца крутятся дальше с того же рисунка.`); }   // v0.191
+          else { autoSet(false); renderCone(); say(!Z.coneLaserChain ? `⏹ Луч вышел наружу — пауза (следующий лазер не включается: «⌖→ след.» выключено).` : `⏹ Все ${coneLasersN()} лазеров прошли — пауза. Заново — ✕ у строки для заполнения или ⟲ всё на места.`); return; }
         } }
     }
     renderCone();
@@ -2588,7 +2610,7 @@ function setupCone(){
     if (on && !autoRaf && Z.coneClock && (Z.coneSpinMode || "all") !== "all") {   // v0.189: все кольца строк стоят — крутить нечего, сказать
       const fz = Z.voidHits && Z.voidHits.fz, N = Math.min(Z.rows.length, CONE_MAX);
       if (coneFanOn() && !coneFanAlive().length) { say(`⏹ Все ${coneFanN()} лучей уже вылетели. Заново — ✕ у строки для заполнения или ⟲ всё на места.`); on = false; }   // v0.201
-      else if (fz && N && Z.rows.slice(0, N).every((_, i) => fz[i] !== undefined) && !(coneFanOn() ? coneReleaseRings() > 0 : coneLaserNext())) { say("⏹ Все кольца строк стоят — луч уже прошёл их. Отпустить — 🎯 до строки, ⟲ всё на места или ✕ у строки для заполнения."); on = false; }
+      else if (fz && N && Z.rows.slice(0, N).every((_, i) => fz[i] !== undefined) && !(coneFanOn() ? coneReleaseRings() > 0 : coneLaserNextIf())) { say("⏹ Все кольца строк стоят — луч уже прошёл их. Отпустить — 🎯 до строки, ⟲ всё на места или ✕ у строки для заполнения."); on = false; }
     }
     if (on && !autoRaf) { autoT0 = 0; coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass); coneSpinning = true; autoRaf = requestAnimationFrame(autoTick); }   // v0.119: стоим на проходе — он уже засчитан
     if (!on && autoRaf) { cancelAnimationFrame(autoRaf); autoRaf = 0; coneSpinning = false; save(); }
@@ -2619,7 +2641,7 @@ function setupCone(){
     if (s >= 20000 && coneFanOn()) { Z.coneSpinPh = ph0; const F = coneFanStep(coneClockTrace()); save(); renderCone(); coneLogRender();
       say(F.freed ? "✺ Все живые лучи упёрлись в стоящие кольца — кольца отпущены. ◀ ▶ — дальше." : `✺ За 20 000 мелких шагов ни один луч не сдвинулся (живых ${F.left}).`); return; }
     if (s >= 20000) { Z.coneSpinPh = ph0; const R = coneClockTrace()[0];
-      if (R && R.pass && !R.cells.length && coneRingFrozen(0) && coneLaserNext()) { const k = coneLaserK(); save(); renderCone(); coneLogRender(); say(`⌖ Лазер ${k + 1} из ${coneLasersN()}, ${coneLaserDeg(k)}° — прежний вышел наружу. ◀ ▶ — шагать дальше.`); return; }   // v0.191
+      if (R && R.pass && !R.cells.length && coneRingFrozen(0) && coneLaserNextIf()) { const k = coneLaserK(); save(); renderCone(); coneLogRender(); say(`⌖ Лазер ${k + 1} из ${coneLasersN()}, ${coneLaserDeg(k)}° — прежний вышел наружу. ◀ ▶ — шагать дальше.`); return; }   // v0.191
       say(R && R.pass && !R.cells.length ? "⏹ Лазер вышел наружу — все кольца на его пути встали. Заново — ✕ у строки для заполнения или ⟲ всё на места." : "◀ ▶: за 20 000 мелких шагов конец луча не сменился — крути ▶ или сдвинь строку 1."); return; }
     save(); renderCone();
     if (coneFanOn()) {   // v0.201: ✺ — вылетевшие гаснут
@@ -2670,8 +2692,32 @@ function setupCone(){
   lzN.value = coneLasersN(); lz0.value = +Z.coneLaser0 || 0;
   lzN.onchange = () => { Z.coneLasers = Math.max(1, Math.min(72, Math.round(+lzN.value) || 8)); lzN.value = Z.coneLasers; save(); renderCone(); coneLogRender();
     say(`⌖ Лазеров ${Z.coneLasers}, шаг ${Math.round(3600 / Z.coneLasers) / 10}°` + (coneLaserK() + 1 > Z.coneLasers ? ` — нынешний (${coneLaserK() + 1}) уже за последним: дальше пауза.` : ".")); };
-  lz0.onchange = () => { let v = +lz0.value || 0; v = Math.round((((v % 360) + 360) % 360) * 10) / 10; Z.coneLaser0 = v; lz0.value = v; save(); renderCone(); coneLogRender();
+  lz0.onchange = () => { let v = +lz0.value || 0; v = Math.round((((v % 360) + 360) % 360) * 1e4) / 1e4;   // v0.202: и доли градуса Z.coneLaser0 = v; lz0.value = v; save(); renderCone(); coneLogRender();
     say(`⌖ Первый лазер — ${v}° от верха по часовой; нынешний (${coneLaserK() + 1}) — ${coneLaserDeg()}°.`); };
+  const fixLab = () => $("bLaserFix").classList.toggle("on", coneLaserFixed());   // v0.202: 📌 лазер, ↻ шаг
+  const chainLab = () => $("bLaserChain").classList.toggle("on", !!Z.coneLaserChain);   // v0.202: ⌖→ след.
+  chainLab();
+  $("bLaserChain").onclick = () => {
+    Z.coneLaserChain = !Z.coneLaserChain; chainLab(); save();
+    say(Z.coneLaserChain ? `⌖→ Луч вышел за край — включается следующий лазер (+${Math.round(3600 / coneLasersN()) / 10}°), до ${coneLasersN()}.` : "⌖→ Выключено: луч вышел за край — пауза, следующий лазер не включается.");
+  };
+  fixLab();
+  $("bLaserFix").onclick = () => {
+    Z.coneLaserFix = !coneLaserFixed(); fixLab(); coneWallWas = undefined; save(); renderCone(); coneLogRender();
+    say(coneLaserFixed() ? "📌 Лазер стоит на месте — конус («Всё», ⟲ ⟳) крутится под ним." : "📌 Лазер снят с места — крутится вместе со всем конусом, как прежде.");
+  };
+  const stepSel = $("coneLaserStepK"), f4 = (x) => +x.toFixed(x < 1 ? 4 : 2);
+  const stepLab = () => { const T = coneMaxLen(), S = T * (T + 1) / 2; stepSel.options[1].text = `1/${T} = ${f4(360 / T)}°`; stepSel.options[2].text = `1/(1+…+${T}) = 1/${S} = ${f4(360 / S)}°`; };
+  stepSel.value = ["45", "T", "S"].includes(Z.coneLaserStepK) ? Z.coneLaserStepK : "45"; stepLab();
+  stepSel.onfocus = stepSel.onmousedown = stepLab;
+  stepSel.onchange = () => { Z.coneLaserStepK = stepSel.value; save(); say(`↻ Шаг лазера — ${f4(coneLaserStepDeg())}°.`); };
+  const laserTurn = (dir) => {
+    const d = coneLaserStepDeg(); let v = ((((+Z.coneLaser0 || 0) + dir * d) % 360) + 360) % 360; v = Math.round(v * 1e6) / 1e6;
+    Z.coneLaser0 = v; lz0.value = f4(v); coneWallWas = undefined; save(); renderCone(); coneLogRender();
+    say(`${dir > 0 ? "↻" : "↺"} Лазер повёрнут на ${dir > 0 ? "+" : "−"}${f4(d)}° — теперь ${f4(v)}° от верха по часовой.`);
+  };
+  $("bLaserTurn").onclick = () => laserTurn(1);
+  $("bLaserTurn").oncontextmenu = (e) => { e.preventDefault(); laserTurn(-1); };
   $("bConeGo").onclick = () => {
     autoSet(false);
     /* v0.190, снимок «что не так?» (режим «Всё», лог «1 закрыт»): во «Всё» конус крутится целиком, вырез строки 1 относительно лазера не
