@@ -3200,6 +3200,18 @@ function setupCone(){
     if (!rec) b.title = (Z.coneRecSnd ? "⏺♪ Видео со звуком ПК" : "⏺ Видео") + ": запись холста конуса (только сам конус, без кнопок) в файл .webm. Ещё раз — стоп и сохранить. Правый щелчок — звук ПК вкл/выкл. Удобно вместе с «▶ крутить»";
   };
   recUi();
+  /* v0.236, «рамкой показать размер видео при записи конуса и расположить его изначально посередине»: пока идёт запись (и пока
+     мышь над ⏺) холст обведён пунктиром — это и есть кадр видео, вверху его размер в пикселях. Рамка лежит поверх холста, а не
+     на нём, — в файл не попадает. Со стартом записи конус встаёт в середину кадра: сдвиг сброшен, масштаб тот же. */
+  const recFrame = (on) => {
+    const cv = $("coneCv"); let f = $("coneRecFrame");
+    if (!on) { if (f) f.style.display = "none"; return; }
+    if (!f) { f = document.createElement("div"); f.id = "coneRecFrame"; f.appendChild(document.createElement("span")); cv.parentNode.appendChild(f); }
+    f.style.cssText = `display:block;left:${cv.offsetLeft}px;top:${cv.offsetTop}px;width:${cv.offsetWidth}px;height:${cv.offsetHeight}px`;
+    f.firstChild.textContent = `${cv.width}×${cv.height}`;
+  };
+  $("bConeRec").onmouseenter = () => recFrame(true);
+  $("bConeRec").onmouseleave = () => { if (!rec) recFrame(false); };
   $("bConeRec").oncontextmenu = (e) => {
     e.preventDefault();
     if (rec || recBusy) return;
@@ -3233,7 +3245,7 @@ function setupCone(){
     rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 12e6 } : undefined);
     rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
     rec.onstop = async () => {
-      clearInterval(recT); stream.getTracks().forEach(t => t.stop());
+      clearInterval(recT); stream.getTracks().forEach(t => t.stop()); recFrame(false);
       if (cap) cap.getTracks().forEach(t => t.stop());
       let blob = new Blob(chunks, { type: "video/webm" });
       // v0.235, «нет эскизов в плейлисте»: у webm из MediaRecorder в заголовке нет длительности — плеер пишет 0, эскиза не строит.
@@ -3250,9 +3262,9 @@ function setupCone(){
     if (at) { const r = rec; at.addEventListener("ended", () => { if (r.state !== "inactive") r.stop(); }); }
     rec.start(1000);
     const t0 = Date.now(); b.classList.add("on"); b.textContent = "⏹";
-    const tick = () => { const s = Math.floor((Date.now() - t0) / 1000); b.title = `⏹ Идёт запись${at ? " со звуком ПК" : ""} ${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")} — щелчок: стоп и сохранить`; };   // v0.155: время — в подсказке, на квадратной кнопке только ⏹
-    tick(); recT = setInterval(tick, 500);
-    renderCone();
+    const tick = () => { recFrame(true); const s = Math.floor((Date.now() - t0) / 1000); b.title = `⏹ Идёт запись${at ? " со звуком ПК" : ""} ${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")} — щелчок: стоп и сохранить`; };   // v0.155: время — в подсказке, на квадратной кнопке только ⏹
+    conePan = [0, 0];   // v0.236: конус — в середину кадра
+    renderCone(); tick(); recT = setInterval(tick, 500);
     say(`⏺ Пишу конус${at ? " со звуком ПК" : ""}… Ещё раз ⏺ — стоп и сохранить. Холст пишется, только когда меняется, — включи «▶ крутить» или крути сам.`);
   };
   $("bConeRotClear").onclick = () => {   // v0.101: «как это снять — накрутку?»
