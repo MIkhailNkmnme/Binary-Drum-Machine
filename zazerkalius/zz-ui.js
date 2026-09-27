@@ -5699,6 +5699,7 @@ function init(){
     if (e.target.closest("#cutPanel")) return;
     rowNocurWas = document.body.classList.contains("nocur");
     if (e.target.closest(".rw[data-r] > .bits")) return;   // v0.254: по битам одиночный щелчок ничего не выбирает — подсветку не трогаем
+    if (e.target.closest(".rlk, .rrot")) return;   // v0.261, «нажимаю на 6 замок, а выделяется строка 21»: замок и ↻ — не выбор строки, подсветку текущей не зажигают
     document.body.classList.remove("nocur");
   });
   /* v0.254, «выделение в поле строк — по двойному щелчку или протяжкой» → «протяжкой по битам» и «вместо одного щелчка выделения —
