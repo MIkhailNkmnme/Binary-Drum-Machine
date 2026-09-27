@@ -418,7 +418,7 @@ function rowLockBadge(i){
   if (typeof coneLocked !== "function") return "";
   const lk = coneLocked(i), own = Z.coneLocks && Z.coneLocks[i] !== undefined, rr = Math.round((typeof coneRot !== "undefined" && coneRot[i]) || 0);
   return '<span class="rlk' + (lk ? " on" : "") + (own ? " own" : "") + '" data-lk="' + i + '" title="Кольцо ' + (i + 1) + ' в конусе: ' + (lk ? "заперто — крутится только на вид" : "открыто — крутит саму строку") +
-    (own ? " (свой замок)" : " (по общей галке)") + ' · щелчок — ' + (lk ? "отпереть" : "запереть") + ', правый — по общей галке">' + (lk ? "🔒" : "🔓") + "</span>" + '<span class="rrot"' + (rr ? ' data-rr="' + i + '" title="Кольцо повёрнуто на вид на ' + rr + ' — щелчок: снять накрутку"' : "") + '>' + (rr ? "↻" + rr : "") + "</span>";   // v0.101: щелчок — снять   // v0.093: столбик поворота есть всегда — столбики ровные
+    ' · щелчок — ' + (lk ? "отпереть" : "запереть") + ' (общий замок над столбиком — все разом)">' + (lk ? "🔒" : "🔓") + "</span>" + '<span class="rrot"' + (rr ? ' data-rr="' + i + '" title="Кольцо повёрнуто на вид на ' + rr + ' — щелчок: снять накрутку"' : "") + '>' + (rr ? "↻" + rr : "") + "</span>";   // v0.101: щелчок — снять   // v0.093: столбик поворота есть всегда — столбики ровные
 }
 /* v0.112, «под нижней строкой последней поставь линию-границу; если за неё вверх — пусть скрывает строки ниже неё, делая их
    бесцветными, и этих строк как будто нет». Строки за границей лежат отдельно — хвост Z.lanesHid[l] у поля l, а в Z.rows / Z.lanes
@@ -3661,7 +3661,9 @@ function setupCone(){
   $("coneOnlySel").checked = !!Z.coneOnlySel;   // v0.076
   $("coneOnlySel").onchange = (e) => { Z.coneOnlySel = e.target.checked; save(); renderCone(); if (Z.coneOnlySel && !rowSel.size) say("◯ Выделенных колец нет — видно только текущее. Ctrl + щелчок по кольцу — выделить."); };
   $("coneLock").checked = Z.coneLock !== false;   // v0.055: по умолчанию включён
-  $("coneLock").onchange = (e) => { Z.coneLock = e.target.checked; save(); renderRows(); say(Z.coneLock ? "◯ Запрет сдвига строк: кольца не крутятся, тянешь — двигается вид." : "◯ Запрет снят: тянешь кольцо — крутится и сама строка в поле."); };
+  // v0.259, «не должно быть разницы, по какому — общий сразу все открывает и снимает, стирая различие»: общий замок запирает / отпирает
+  // все кольца разом — свои замки колец стираются (прежде кольцо со своим замком общий не слушал и было в золотой рамке)
+  $("coneLock").onchange = (e) => { Z.coneLock = e.target.checked; Z.coneLocks = {}; save(); renderRows(); renderCone(); say(Z.coneLock ? "🔒 Все кольца заперты: крутятся только на вид, строки не сдвигаются." : "🔓 Все кольца открыты: тянешь кольцо (с Ctrl) — крутится и сама строка в поле."); };
   cv.addEventListener("contextmenu", (e) => { const h = coneRing(e); if (h !== -1 && h.fill !== undefined) { e.preventDefault(); fillReset(); } });   // v0.118: правый щелчок по кольцу для заполнения — заново
   $("coneRays").value = Z.coneRays || "off";
   $("coneRays").onchange = (e) => { Z.coneRays = e.target.value; save(); renderCone(); };
