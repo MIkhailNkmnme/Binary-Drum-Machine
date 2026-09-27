@@ -345,14 +345,14 @@ function renderRowsOver(){
     h += '<div class="rw ovr' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? " — изменена против эталона ⚑" : "") + ' · щелчок — выделить">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) +
          '</span><span class="trk" style="width:' + W + '">' + lines + t + "</span></div>";
   }
-  h += cutLine();   // v0.112
+  h += cutLine() + '<div id="cutSlot"></div>';   // v0.112; v0.225: под чертой — кнопки достройки и шаблоны
   let HH = 0; for (let l = 0; l < N; l++) HH = Math.max(HH, hidRows(l).length);
   for (let j = 0; j < HH; j++) {
     let t = "";
     for (const [p, list] of ovRowMap(j, A, OV_SHOW, true)) t += '<span class="ob" style="left:' + (p / 2) + 'ch">' + (list.length === 1 ? list[0].b : ovCombine(list)) + "</span>";
     h += hidRowHtml(H + j, '<span class="trk" style="width:' + W + '">' + lines + t + "</span>").replace('class="rw hid"', 'class="rw ovr hid"');
   }
-  L.innerHTML = h + "</div>";
+  L.innerHTML = h + "</div>"; cutPanelMount();   // v0.225
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
   $("fieldInfo").textContent = `наложение ${N} полей · рабочее ${Z.lane + 1} · ${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1}` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "");
   $("fieldInfo").title = $("fieldInfo").textContent;   // v0.077: целиком — в подсказке
@@ -420,14 +420,38 @@ function rowLockBadge(i){
    только строки над чертой; поэтому окна, конус, кнопки, счёт и шаблоны их просто не видят — как будто их нет. Граница одна на
    все поля и стоит под нижней строкой; тянешь её вверх — у каждого поля над ней остаётся не больше k строк (хотя бы одна), вниз —
    строки возвращаются на свои места. Двойной щелчок по черте — вернуть все. Перенос черты — правка: ↩ вернёт. */
+const CUT_PANEL = document.getElementById("cutPanel");   // v0.225: кнопки достройки и шаблоны — живут под чертой, переносятся при каждой отрисовке поля
+function cutPanelMount(){ const s = document.getElementById("cutSlot"); if (s && CUT_PANEL && CUT_PANEL.parentNode !== s) s.appendChild(CUT_PANEL); }
 function hidRows(l){ return (Z.lanesHid && Z.lanesHid[l]) || []; }
 function hidCopy(){ return Array.isArray(Z.lanesHid) ? Z.lanesHid.map(l => l.slice()) : null; }
 function hidCount(){ let c = 0; for (let l = 0; l < (Z.laneCount || 1); l++) c += hidRows(l).length; return c; }
 function cutHeight(){ let H = 0; for (let l = 0; l < (Z.laneCount || 1); l++) H = Math.max(H, laneRows(l).length); return H; }
-function cutAt(k){
+/* v0.225, «когда тянуть за линию вниз — строки достраиваются от верхней», «под линией — кнопки Серп 90, 30, маска (умолч. 01 и поле
+   для неё)», «если под полосой есть другие — их удалить» → «кнопку: удалить или сдвинуть вниз», «туда же свои сохранённые пресеты».
+   Черту тянут вниз за нижнюю строку — каждая новая строка достраивается от строки над ней: 🔺 Серп 90 — правило 90 (строка на 2 бита
+   длиннее, как заготовки Аниматрицы), 30 — правило 30, маска — маска Z.cutMask подряд на бит длиннее. Строки, что были под чертой:
+   🗑 удалить (Z.cutHidMode = "del", по умолчанию) или ⤓ сдвинуть вниз ("keep") — остаются под чертой ниже новых. Замок строк (⛔)
+   достраивать не даёт — тогда черта, как прежде, только возвращает строки из-под себя. */
+const CUT_GEN_MAX = 1024;
+function cutEcaNext(rule, s){
+  const L = s.length, b = (x) => (x >= 0 && x < L && s[x] === "1" ? 1 : 0); let o = "";
+  for (let x = -1; x <= L; x++) o += (rule >> (b(x - 1) * 4 + b(x) * 2 + b(x + 1))) & 1 ? "1" : "0";
+  return o;
+}
+function cutGenNext(s){
+  const m = Z.cutGen || "r90";
+  if (m === "mask") { const mk = zzIsBits(Z.cutMask) ? Z.cutMask : "01"; let o = ""; for (let i = 0; i <= (s || "").length; i++) o += mk[i % mk.length]; return o; }
+  return cutEcaNext(m === "r30" ? 30 : 90, s || "1");
+}
+function cutAt(k, gen){
   syncLane();
   k = Math.max(1, k | 0);
   for (let l = 0; l < (Z.laneCount || 1); l++) {
+    if (gen && k > Z.lanes[l].length) {   // v0.225: вниз за нижнюю — достроить от верхней
+      const vis = Z.lanes[l].slice(); while (vis.length < k && vis.length < CUT_GEN_MAX) vis.push(cutGenNext(vis[vis.length - 1]));
+      Z.lanes[l] = vis; if (Z.cutHidMode !== "keep") Z.lanesHid[l] = [];
+      continue;
+    }
     const all = Z.lanes[l].concat(hidRows(l)), v = Math.max(1, Math.min(all.length, k));
     Z.lanes[l] = all.slice(0, v); Z.lanesHid[l] = all.slice(v);
   }
@@ -446,7 +470,7 @@ function cutMove(k, pre){
   pre = pre || undoState();
   if (k !== null) cutAt(k === Infinity ? 1e9 : k);
   let same = true;   // строк у поля всего столько же — состояние задаёт число строк за чертой
-  for (let l = 0; l < (Z.laneCount || 1); l++) if (((pre.lanesHid && pre.lanesHid[l]) || []).length !== hidRows(l).length) same = false;
+  for (let l = 0; l < (Z.laneCount || 1); l++) if (((pre.lanesHid && pre.lanesHid[l]) || []).length !== hidRows(l).length || ((pre.lanes && pre.lanes[l]) || []).length !== (Z.lanes[l] || []).length) same = false;   // v0.225: и достроенные строки
   if (same) { renderRows(); if (!hidCount()) say("⎯ Граница под нижней строкой — строк за ней нет. Тяни черту вверх, чтобы спрятать строки ниже неё."); return; }
   undoPush(pre);
   renderAll(); save();
@@ -608,7 +632,7 @@ function renderRows(){
     h += "</div>";
   }
   // v0.112: черта-граница под нижней строкой, под ней — строки за границей, бесцветные
-  h += cutLine() + fillRowHtml(N);   // v0.114: сразу под чертой — строка для заполнения
+  h += cutLine() + fillRowHtml(N) + '<div id="cutSlot"></div>';   // v0.114: сразу под чертой — строка для заполнения; v0.225: под ней — кнопки достройки и шаблоны
   let HH = 0; for (let l = 0; l < N; l++) HH = Math.max(HH, hidRows(l).length);
   for (let j = 0; j < HH; j++) {
     let t = "";
@@ -619,7 +643,7 @@ function renderRows(){
     }
     h += hidRowHtml(H + j, t);
   }
-  L.innerHTML = h + "</div>";
+  L.innerHTML = h + "</div>"; cutPanelMount();   // v0.225
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
   $("fieldInfo").textContent = (N > 1 ? `поле ${Z.lane + 1} из ${N} · ` : "") + `${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1} (${cur().length} бит)` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowChgInfo();
   $("fieldInfo").title = $("fieldInfo").textContent;   // v0.077: целиком — в подсказке
@@ -5098,7 +5122,7 @@ function init(){
     say(`◯ Кольцо ${i + 1} — снова по общей галке «запрет сдвига строк».`);
   }, true);
   let rowNocurWas = false;   // v0.220: была ли строка «снята» до этого нажатия
-  $("rowList").addEventListener("pointerdown", () => { rowNocurWas = document.body.classList.contains("nocur"); document.body.classList.remove("nocur"); });
+  $("rowList").addEventListener("pointerdown", (e) => { if (e.target.closest("#cutPanel")) return; rowNocurWas = document.body.classList.contains("nocur"); document.body.classList.remove("nocur"); });
   /* v0.220, по снимку выделенной строки 110011 — «клик по выделенной строке — снять выделение»: щелчок по текущей (или единственной
      выделенной) строке — как Esc: выделение снято, текущей нет; ещё щелчок — снова выбрана. */
   const rowUnselect = () => { rowSel.clear(); rowSelAnchor = -1; clearTextSel(); document.body.classList.add("nocur"); renderRows(); renderCone(); };
@@ -5196,15 +5220,19 @@ function init(){
     list.setPointerCapture(e.pointerId);
     document.body.classList.add("cutdrag");
     const at = (y) => {   // сколько строк над курсором: середина строки выше него
-      let k = 0;
-      list.querySelectorAll(".rw:not(.lhrow):not(.fillrw) > .no").forEach(no => { const r = no.getBoundingClientRect(); if ((r.top + r.bottom) / 2 < y) k++; });
+      let k = 0, rh = 20; const vis = list.querySelectorAll(".rw[data-r]:not(.hid):not(.lhrow) > .no");
+      vis.forEach(no => { const r = no.getBoundingClientRect(); if ((r.top + r.bottom) / 2 < y) k++; rh = r.height || rh; });
+      /* v0.225: ниже черты — столько строк, сколько их помещается от черты до курсора (строка для заполнения, кнопки и строки
+         под чертой не мешают): вниз — достроить (или вернуть из-под черты, если строки заперты). */
+      const ln = list.querySelector(".cutln"), lb = ln ? ln.getBoundingClientRect().bottom : Infinity;
+      if (k === vis.length && y > lb) k += Math.max(0, Math.round((y - lb) / rh));
       return Math.max(1, k);
     };
     const step = () => {
       raf = 0;
       const k = at(lastY);
       if (k === cutHeight()) return;
-      cutAt(k); moved = true; renderRows();
+      cutAt(k, !Z.rowLock); moved = true; renderRows();   // v0.225: вниз — достраивать (если строки не заперты)
     };
     const move = (ev) => {
       lastY = ev.clientY;
@@ -5689,6 +5717,20 @@ function init(){
     const n = window.prompt("Имя шаблона", t.name);
     if (n && n.trim()) { t.name = n.trim().slice(0, 60); renderTpl(); save(); }
   };
+  const cutUi = () => {   // v0.225: кнопки достройки под чертой
+    const m = Z.cutGen || "r90";
+    $("bCutR90").classList.toggle("on", m === "r90"); $("bCutR30").classList.toggle("on", m === "r30"); $("bCutMask").classList.toggle("on", m === "mask");
+    $("cutMask").value = Z.cutMask || "01";
+    $("bCutHid").textContent = Z.cutHidMode === "keep" ? "⤓ сдвинуть" : "🗑 удалить";
+  };
+  const cutPick = (m, what) => { Z.cutGen = m; cutUi(); save(); say(`⎯ Тянешь черту вниз — строки достраиваются от верхней: ${what}.`); };
+  $("bCutR90").onclick = () => cutPick("r90", "🔺 Серп 90 (правило 90, на 2 бита длиннее)");
+  $("bCutR30").onclick = () => cutPick("r30", "правило 30 (на 2 бита длиннее)");
+  $("bCutMask").onclick = () => cutPick("mask", `маска ${Z.cutMask || "01"} подряд (на бит длиннее)`);
+  $("cutMask").onchange = (e) => { const v = e.target.value.replace(/[^01]/g, ""); Z.cutMask = v || "01"; e.target.value = Z.cutMask; Z.cutGen = "mask"; cutUi(); save(); say(`⎯ Маска достройки — ${Z.cutMask}.`); };
+  $("bCutHid").onclick = () => { Z.cutHidMode = Z.cutHidMode === "keep" ? "del" : "keep"; cutUi(); save();
+    say(Z.cutHidMode === "keep" ? "⎯ Строки под чертой при достройке сдвигаются вниз — остаются под чертой, ниже новых." : "⎯ Строки под чертой при достройке удаляются."); };
+  cutUi();
   $("bTplRow").onclick = () => { const rows = [cur()]; Z.tpl.push({ name: tplName(rows), rows }); renderTpl(); save(); say(`Строка ${Z.cur + 1} (${cur().length} бит) сохранена шаблоном. Щелчок по нему — вставить под текущей.`); };
   $("bTplAll").onclick = () => { const rows = Z.rows.slice(); Z.tpl.push({ name: tplName(rows), rows }); Z.tplRef = Z.tpl.length - 1; renderTpl(); renderRows(); save(); say(`Столбик (${rows.length} стр.) сохранён шаблоном.`); };   // v0.037: сохранённый столбик — новый эталон; v0.038: комментарий съедал конец строки — страница не запускалась
   // Разделитель поля и окон: ширина поля в пикселях, двойной щелчок — по умолчанию.

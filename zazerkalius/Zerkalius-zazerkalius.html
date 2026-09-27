@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.224. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.225. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.224</title>
+<title>Zazerkalius — v0.225</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -107,10 +107,10 @@ body.field-hidden.pane-icons #main,body.field-hidden.field-right.pane-icons #mai
 body.pane-icons #rowsPane{overflow-y:auto;overflow-x:hidden}
 body.pane-icons #bPaneIcons{position:static;margin:6px 4px;font-size:13px}
 body.pane-icons #rowsPane .pane-head,body.pane-icons #maskBar,body.pane-icons #maskBar2 select,
-body.pane-icons #tplList .tpl-sep,body.pane-icons #tplList .tx,body.pane-icons #tplList input{display:none}
-body.pane-icons #rowBtns,body.pane-icons #maskBar2,body.pane-icons #tplBar,body.pane-icons #tplList{display:flex;flex-direction:column;gap:4px;padding:6px 4px;border-top:1px solid var(--line)}
-body.pane-icons #tplList{flex:0 0 auto;overflow:visible;min-height:0}
-body.pane-icons #tplList .tpl{display:block}
+body.pane-icons #rowsPane #tplList .tpl-sep,body.pane-icons #rowsPane #tplList .tx,body.pane-icons #rowsPane #tplList input{display:none}
+body.pane-icons #rowBtns,body.pane-icons #maskBar2,body.pane-icons #rowsPane #tplBar,body.pane-icons #rowsPane #tplList{display:flex;flex-direction:column;gap:4px;padding:6px 4px;border-top:1px solid var(--line)}
+body.pane-icons #rowsPane #tplList{flex:0 0 auto;overflow:visible;min-height:0}
+body.pane-icons #rowsPane #tplList .tpl{display:block}
 body.pane-icons #rowsPane button{width:100%;padding:4px 0;text-align:center;font-size:15px;white-space:nowrap;overflow:hidden}
 body.pane-icons #rowsPane #bPaneIcons{width:auto;padding:2px 0}
 #field{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg)}
@@ -387,6 +387,11 @@ body.field-right #fieldEdge{right:auto;left:0}
 body.field-hidden #fieldEdge,body.zen #fieldEdge{display:none}
 .rw.fillrw > .no{color:var(--acc)}
 /* Шаблоны (v0.010) */
+#cutPanel{grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 8px 10px;font-size:12px}   /* v0.225: под чертой поля */
+#cutPanel .cpl{color:var(--dim)}
+#cutPanel button{padding:2px 6px}
+#cutPanel #tplBar{flex:1 1 100%;padding:0}
+#cutPanel #tplList{flex:1 1 100%;overflow:visible;padding:0;min-height:0}
 #tplBar{display:flex;gap:4px;padding:0 10px 6px}
 #tplBar button{flex:1;padding:2px 4px}
 #tplList{flex:1;overflow:auto;padding:0 10px 10px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-content:start;gap:3px 4px;min-height:60px}   /* v0.153: шаблоны — по два в ряд; свои (с ⚑ и ✕) — во всю ширину */
@@ -688,7 +693,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.224</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.225</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -752,12 +757,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
     <!-- v0.010: шаблоны — по щелчку вставляются под текущей строкой; свои — «＋ Строку» / «＋ Столбик» -->
     <!-- v0.059: «в левое меню» — шрифт и размер цифр перенесены из шапки сюда -->
     <!-- v0.217: блок «Шрифт» переехал в полосу над строками -->
-    <div class="pane-head">Шаблоны</div>
-    <div id="tplBar">
-      <button id="bTplRow" title="Сохранить ТЕКУЩУЮ строку своим шаблоном (запоминается). Щелчок по шаблону вставит её под текущей">＋ Строка</button>
-      <button id="bTplAll" title="Сохранить ВЕСЬ столбик одним шаблоном (запоминается). Щелчок вставит все его строки под текущей">＋ Столбик</button>
-    </div>
-    <div id="tplList"></div>
+    <!-- v0.225: шаблоны переехали под черту поля строк (#cutPanel) -->
     <!-- v0.094: при «⇆ поле справа» свёрнутые окна — здесь, кнопками -->
     <div class="pane-head" id="paneWinsHead" style="display:none">Окна</div>
     <div id="paneWins"></div>
@@ -819,6 +819,19 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
          замков, ставит rowsLockAllPlace), справа сведения поля -->
     <div id="fieldInfoBar"><span id="fieldInfo" class="dim"></span></div>
     <div id="rowList" class="al-center"></div>
+    <!-- v0.225: под чертой поля — достройка строк (тянешь черту вниз) и свои шаблоны; при отрисовке поля переносится в #cutSlot -->
+    <div id="cutPanel">
+      <span class="cpl" title="Тянешь черту под строками вниз — новые строки достраиваются от строки над ней">достроить:</span>
+      <button id="bCutR90" title="🔺 Серп 90: правило 90 — строка на 2 бита длиннее (как заготовки Аниматрицы); от «1» — треугольник Серпинского">🔺 Серп 90</button>
+      <button id="bCutR30" title="Правило 30 — строка на 2 бита длиннее, хаос">30</button>
+      <button id="bCutMask" title="Маска: следующая строка — маска подряд, на бит длиннее">маска</button><input id="cutMask" value="01" title="Маска из 0 и 1 (по умолчанию 01)" style="width:52px">
+      <button id="bCutHid" title="Что делать со строками, которые были под чертой, когда достраиваешь: удалить или сдвинуть вниз (останутся под чертой, ниже новых)">🗑 удалить</button>
+      <div id="tplBar">
+      <button id="bTplRow" title="Сохранить ТЕКУЩУЮ строку своим шаблоном (запоминается). Щелчок по шаблону вставит её под текущей">＋ Строка</button>
+      <button id="bTplAll" title="Сохранить ВЕСЬ столбик одним шаблоном (запоминается). Щелчок вставит все его строки под текущей">＋ Столбик</button>
+      </div>
+      <div id="tplList"></div>
+    </div>
     <!-- v0.025: сюда пристыковываются окна, перетащенные за шапку под поле строк -->
     <div id="fieldDock"></div>
     <!-- v0.224, «за саму границу тоже надо перетаскивать»: невидимая полоса-хват у края поля со стороны стола -->
@@ -1389,7 +1402,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
         <p>Манчестерский код (старый Ethernet, RFID-метки): каждый бит становится парой. Строка удваивается, а сведений в ней столько же — второй бит пары всегда инверсия первого. Это не сжатие, а избыточность ради надёжности: трёх одинаковых бит подряд не бывает, пары 00 и 11 запрещены (ошибка видна), единиц ровно половина. Правило, повторённое k раз от «0», даёт Туэ–Морса: 0 → 01 → 0110 → 01101001… Поэтому Туэ–Морс складывается в ⇋ Поправке ⧉🔁 до самого низа. Кнопка одна: правый щелчок меняет режим — код или раскод.</p>
         <h4>Поле строк и шаблоны</h4>
         <p>Строки — в центре, крупно, шрифтом и кеглем страницы (🔤 и A в шапке). Щелчок — сделать строку текущей, ↑/↓ — ходить по ним. <b>Двойной щелчок — править строку прямо на месте</b>: Enter сохраняет (всё, кроме 0 и 1, выбрасывается), Esc отменяет; ↩ вернёт. Выравнивание — своё у поля. Разделитель между строками и окнами тянется.</p>
-        <p><b>Шаблоны</b> слева: щелчок вставляет шаблон под текущей строкой. Встроенные — зерно, Серпинский, Туэ–Морс, номера, палиндромы, периодические. Свои: «＋ Строку» сохраняет текущую строку, «＋ Столбик» — весь столбик; они запоминаются. ✕ — удалить свой, двойной щелчок — переименовать.</p>
+        <p><b>Шаблоны</b> под чертой поля строк: щелчок вставляет шаблон под текущей строкой. Встроенные — зерно, Серпинский, Туэ–Морс, номера, палиндромы, периодические. Свои: «＋ Строку» сохраняет текущую строку, «＋ Столбик» — весь столбик; они запоминаются. ✕ — удалить свой, двойной щелчок — переименовать.</p>
         <h4>Изменённые строки — номер золотом</h4>
         <p>Номер строки подсвечивается золотом, если строка отличается от <b>сохранённой версии</b> — своего шаблона-столбика, отмеченного <b>⚑</b> в списке шаблонов (по умолчанию — последний сохранённый «＋ Столбик»). Вернул строку как было — подсветка гаснет сама. Сравнение — строка в строку по номеру, в рабочем поле; строки, которых в эталоне нет, тоже подсвечиваются. Над полем — сколько строк изменено. ⚑ на другом шаблоне — сравнивать с ним, ⚑ ещё раз — выключить сравнение.</p>
         <h4>Числа у номеров и неподвижные биты</h4>
@@ -1443,8 +1456,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0224"></script>
-<script src="zz-ui.js?v=0224"></script>
+<script src="zz-core.js?v=0225"></script>
+<script src="zz-ui.js?v=0225"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
