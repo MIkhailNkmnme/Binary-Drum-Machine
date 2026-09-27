@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.200. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.201. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.200</title>
+<title>Zazerkalius — v0.201</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -632,7 +632,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.200</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.201</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1236,6 +1236,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
             <button id="bConePred" title="🔮 Просчитать: прогнать лазер от нынешнего положения до конца — мгновенно, без анимации, конус не меняется. Итог — в окне «📝 Текст»: у каждой строки угол (бит) вылета и строка от щели вылета, чем кончится, поймает ли что-нибудь строка для заполнения">🔮 просчитать</button>
             <span style="white-space:nowrap" title="🎯 До строки N: крутить (выбранным режимом, как ◀ ▶) до мига, когда луч проходит строку N, — и встать там. По пути кольца, которые луч прошёл, встают, как при ▶. Номер строки — в поле"><button id="bConeGo">🎯 до строки</button><input type="number" id="coneGoN" min="1" max="256" value="10" style="width:44px;margin-left:2px"></span>
             <span style="white-space:nowrap" title="⌖ Лазеры: сколько их (шаг — 360° / число) и угол первого — градусы по часовой от верха. Луч вышел за край — включается следующий"><label class="dim">⌖× <input type="number" id="coneLasersN" min="1" max="72" value="8" style="width:40px"></label> <label class="dim">от <input type="number" id="coneLaser0" min="0" max="359.9" step="1" value="0" style="width:48px">°</label></span>
+            <button id="bConeFan" title="✺ Все лучи сразу: из центра по кругу столько лучей, сколько бит в самой длинной строке (до 256), шаг — 360° / число, первый — на угле «от …°». Кольца общие: встаёт кольцо, из которого вышел любой луч; вылетевший за край луч гаснет и отпускает кольца; все живые упёрлись в стоящие кольца — кольца отпускаются. ▶ крутить — пока не вылетят все. Ещё раз — снова по одному лазеру">✺ все лучи</button>
             <button id="bConeOut" title="✎ В поле 2: в соседнем поле строк — столько же строк из нулей той же длины (и строка для заполнения); ячейка, в которую упал луч, становится «1» — от всех лазеров. Конус и твои строки не меняются. Ещё раз — перестать писать; правый щелчок — вернуть поле, как было до записи">✎ в поле 2</button>
           </div>
           <span id="coneCycle" class="dim" style="margin:0 6px;font-variant-numeric:tabular-nums" title="Цикл кручения: круг — оборот стрелки (строки 1); сколько кругов, пока все кольца (и кольцо для заполнения) разом не встанут на свои места; сколько раз лазер прошёл до края. Правый щелчок по ▶ — счёт с нуля"></span>
@@ -1379,8 +1380,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0200"></script>
-<script src="zz-ui.js?v=0200"></script>
+<script src="zz-core.js?v=0201"></script>
+<script src="zz-ui.js?v=0201"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
