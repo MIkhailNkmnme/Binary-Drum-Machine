@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.206. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.207. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.206</title>
+<title>Zazerkalius — v0.207</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -434,7 +434,7 @@ body.zen #coneTxtWin{display:none !important}
 /* v0.204: группа, свёрнутая до заголовка двойным щелчком */
 #w-cone .tools > .cgrp.cmin{grid-template-rows:auto;grid-template-columns:auto}
 #w-cone .tools > .cgrp.cmin > :not(.glab){display:none !important}
-#w-cone .tools > .cgrp.cmin > .glab{grid-row:auto;margin-right:0}
+#w-cone .tools > .cgrp.cmin > .glab{grid-row:auto;margin-right:0;align-self:center}   /* v0.207: высота — прежняя, заголовок посередине */
 #w-cone .tools > .cgrp.cmin > .glab::after{content:" ▸";color:var(--dim)}
 /* v0.181, по снимку галок группы «Вид» — «все галки в кнопки»: галки на полосе конуса — кнопками-переключателями: сама галка спрятана
    (щелчок по кнопке переключает её, как раньше), включённая — как нажатая кнопка (золотая рамка, как у button.on) */
@@ -655,7 +655,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.206</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.207</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1407,8 +1407,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0206"></script>
-<script src="zz-ui.js?v=0206"></script>
+<script src="zz-core.js?v=0207"></script>
+<script src="zz-ui.js?v=0207"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>

@@ -4460,6 +4460,7 @@ function cgrpInit(){
     g.dataset.g = lab.textContent.trim().toLowerCase();
     lab.title = "Тяни — перенести группу куда угодно (поверх холста); двойной щелчок по группе — свернуть до заголовка и обратно; правый щелчок по заголовку — обратно на полосу";
     g.classList.toggle("cmin", !!Z.cgrpMin[g.dataset.g]);
+    g.style.minHeight = Z.cgrpMin[g.dataset.g] > 0 ? Z.cgrpMin[g.dataset.g] + "px" : "";   // v0.207: свёрнутая — прежней высоты
     lab.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return;
       e.preventDefault(); try { lab.setPointerCapture(e.pointerId); } catch (err) { /* уже отпущен */ }
@@ -4479,9 +4480,11 @@ function cgrpInit(){
     g.addEventListener("dblclick", (e) => {
       if (e.target.closest("button, input, select, textarea, label")) return;
       e.preventDefault(); e.stopPropagation();
+      /* v0.207, «высота остаётся как была — нужно»: свёрнутая группа сужается до заголовка, а высоту держит прежнюю (Z.cgrpMin — её пиксели),
+         чтобы соседние группы и полоса не прыгали. */
       const key = g.dataset.g, on = !Z.cgrpMin[key];
-      if (on) Z.cgrpMin[key] = true; else delete Z.cgrpMin[key];
-      g.classList.toggle("cmin", on); cgrpCols(); place(g); save();
+      if (on) Z.cgrpMin[key] = g.offsetHeight; else delete Z.cgrpMin[key];
+      g.classList.toggle("cmin", on); g.style.minHeight = on ? Z.cgrpMin[key] + "px" : ""; cgrpCols(); place(g); save();
     });
     lab.addEventListener("contextmenu", (e) => { e.preventDefault(); if (!Z.cgrpPos[g.dataset.g]) return; delete Z.cgrpPos[g.dataset.g]; place(g); save(); });
     place(g);
