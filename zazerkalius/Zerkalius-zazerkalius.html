@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.185. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.186. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.185</title>
+<title>Zazerkalius — v0.186</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -428,6 +428,8 @@ body.solo #w-cone .wbody > .tools{position:relative;z-index:4}
 #coneLogBox{flex:1 1 auto;min-height:0;flex-direction:column}
 #coneLog{flex:1 1 auto;min-height:0;overflow:auto;font-size:11px;line-height:1.25;font-family:var(--ff);font-variant-numeric:tabular-nums;white-space:nowrap}
 #coneLog > div{padding:0;overflow:hidden;text-overflow:ellipsis}
+#coneEx{flex:0 1 auto;max-height:40%;min-height:0;overflow:auto;font-size:11px;line-height:1.25;font-family:var(--ff);white-space:nowrap}   /* v0.186 */
+#coneEx b{display:inline-block;min-width:2.6em;text-align:right;margin-right:6px;color:var(--dim);font-weight:400}
 #coneLog > div:nth-child(odd){background:color-mix(in srgb, var(--panel2) 60%, transparent)}
 #coneLogBox button{padding:0 6px;margin-left:4px}
 #w-cone .whint{position:relative;z-index:3;background:var(--panel)}
@@ -621,7 +623,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.185</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.186</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1199,6 +1201,9 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
         <div id="coneBot">   <!-- v0.134: текст конуса и лог лазера; v0.140 — колонкой справа -->
           <div id="coneOut" class="out"></div>
           <div id="coneLogBox" style="display:none">
+            <!-- v0.186: строки на момент вылета луча — от щели вылета -->
+            <div class="dim" style="margin-top:4px" title="Каждая строка — в тот миг, когда луч впервые из неё вылетел: прочитана от щели вылета, с ячейки сразу за щелью по часовой. Одна запись на строку; стирается вместе с краской (✕ у строки для заполнения)">🚪 Вылет из строк <span id="coneExN"></span> <button id="bConeExCopy" title="Скопировать столбик — строка на строку, от щели вылета; Ctrl+V в поле строк вставит его">⧉</button></div>
+            <div id="coneEx" class="out"></div>
             <div class="dim" style="margin-top:4px">📜 Лог лазера <span id="coneLogN"></span> <button id="bConeLogCopy" title="Скопировать весь лог (до 1000 записей), по порядку">⧉</button><button id="bConeLogClr" title="Очистить лог лазера (краска в ячейках остаётся — её стирает ✕ у строки для заполнения)">✕</button></div>
             <div id="coneLog" class="out" title="Новые сверху. ▮ 3:2→11 — упёрся в строку 3, ячейку 2, в ней стало 11 · ◎ 164п:1→1 — пойман пустым кольцом 164 (з — строкой для заполнения) · ↗ край — вышел наружу · ■ закрыт — вырез строки 1 в стороне · ⏹2–5 — встали кольца · ‖2–256 — прошёл щели этих строк. Наведи на запись — полностью, с ячейками у щелей"></div>
           </div>

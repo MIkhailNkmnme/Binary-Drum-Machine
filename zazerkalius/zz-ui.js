@@ -470,7 +470,7 @@ function fillCommit(){
    в конусе) — черновик стирается, строка снова пустая (v0.128: без «1» в первой ячейке). Строки поля не трогает. */
 function fillReset(){
   const f = fillDraft(), was = f.replace(/\./g, "").length, hv = Z.voidHits && Z.voidHits.h ? Object.keys(Z.voidHits.h).length : 0;
-  Z.fillCells = null; if (Z.voidHits) { Z.voidHits.h = {}; Z.voidHits.fz = {}; } renderRows(); save();   // v0.138: и остановленные кольца снова крутятся   // v0.127: и счёт проходов в пустых кольцах
+  Z.fillCells = null; if (Z.voidHits) { Z.voidHits.h = {}; Z.voidHits.fz = {}; Z.voidHits.ex = {}; } renderRows(); save();   // v0.138: и остановленные кольца снова крутятся   // v0.127: и счёт проходов в пустых кольцах
   say(was || hv ? `✕ Строка для заполнения — заново: ${fillLen()} пустых ячеек` + (hv ? `; пустые кольца до 256 — тоже без меток (было ${hv}).` : ".") : "✕ Строка для заполнения и так пустая.");   // v0.128: без начальной «1»
 }
 function fillRowHtml(N){
@@ -1759,8 +1759,28 @@ let coneWallWas;   // куда луч пришёл на прошлом шаге 
 /* v0.134, «тут надо лог вести: на каком проходе какая ячейка какой строки, и также переход сквозь щель»: всякий раз, когда конец луча
    сменился (упёрся в другую ячейку, пойман другим кольцом, ушёл за край), — запись в «📜 Лог лазера»: номер, угол луча, где он
    кончился и что стало в ячейке (1, 11, 111…), и сквозь какие щели прошёл по пути («стр 2: 2|1» — между ячейками 2 и 1). */
+/* v0.186, по логу лазера — «напиши биты на момент вылета из строки каждой» (выбрано: вся строка от щели): когда луч впервые выходит
+   из кольца строки, записывается сама строка, прочитанная от щели вылета — с ячейки сразу за щелью, по часовой. Строка 1 — от точки под
+   лучом (выход — её вырез). Одна запись на строку, первая; стирается вместе с краской (✕ у строки для заполнения, «⟲ всё на места»,
+   правый щелчок по ▶, смена строк). Z.voidHits.ex { номер строки с 0: биты }. */
+function coneExitNote(R){
+  if (!R || (!R.stop && !R.pass)) return;   // вырез закрыт — луч из строки 1 не вышел
+  const N = Math.min(Z.rows.length, CONE_MAX); coneVoidHits();
+  const ex = Z.voidHits.ex && typeof Z.voidHits.ex === "object" ? Z.voidHits.ex : (Z.voidHits.ex = {});
+  let added = false;
+  const note = (b, kb) => {
+    if (b >= N || ex[b] !== undefined) return;
+    const s = Z.rows[b]; if (!s) return;
+    const n = s.length, k = ((Math.round(kb) % n) + n) % n;
+    ex[b] = s.slice(k) + s.slice(0, k); added = true;
+  };
+  { const s0 = Z.rows[0] || "", n0 = s0.length || 1; note(0, (R.a + Math.PI / 2) / (2 * Math.PI / n0) + coneRotOf(0)); }
+  for (let q = 0; q < R.g.length; q += 2) note(R.g[q], R.g[q + 1]);
+  if (added) coneLogDirty();
+}
 function coneWallPaint(tr){
   const R = tr[0], N = Math.min(Z.rows.length, CONE_MAX), fzNew = coneFreezePassed(R);   // v0.139: вышел из кольца — оно встаёт
+  coneExitNote(R);   // v0.186
   const k = !R ? null : R.wall ? "w" + R.wall : R.pass ? (R.cells.length ? "v" + R.cells[0] : "e") : "s" + R.stop, first = coneWallWas === undefined;
   if (k === coneWallWas) return fzNew.length > 0;
   coneWallWas = k;
@@ -1806,6 +1826,13 @@ function coneLogRender(){
   $("coneLogN").textContent = list.length ? `(${list.length}${list.length >= 1000 ? ", последние" : ""})` : "— пока пусто: тяни строку 1, ⌖◁ ⌖▷, ◀ ▶ или ▶ крутить";
   let h = ""; for (let i = list.length - 1, m = 0; i >= 0 && m < 300; i--, m++) h += '<div title="' + esc(list[i].f || list[i].t) + '">' + esc(list[i].t) + "</div>";
   $("coneLog").innerHTML = h;
+  const ex = coneExitRows();   // v0.186: строки на момент вылета луча
+  $("coneExN").textContent = ex.length ? `(${ex.length} из ${Math.min(Z.rows.length, CONE_MAX)})` : "— луч ещё ни из одной строки не вышел";
+  $("coneEx").innerHTML = ex.map(([b, t]) => '<div><b>' + (b + 1) + '</b> ' + esc(t) + "</div>").join("");
+}
+function coneExitRows(){   // [[номер строки с 0, биты от щели]] по порядку строк
+  const ex = Z.voidHits && Z.voidHits.ex && typeof Z.voidHits.ex === "object" ? Z.voidHits.ex : {};
+  return Object.keys(ex).map(Number).sort((x, y) => x - y).map(b => [b, ex[b]]);
 }
 function coneClockMark(hits){
   let f = fillDraft(); const ch = [];
@@ -2352,6 +2379,11 @@ function setupCone(){
   $("bConeStepB").onclick = () => coneStep(-1);
   $("bConeStepF").onclick = () => coneStep(1);
   $("bConeLogClr").onclick = () => { Z.coneLog = { n: 0, list: [] }; save(); coneLogRender(); say("📜 Лог лазера очищен."); };
+  $("bConeExCopy").onclick = () => {   // v0.186: столбик строк от щели вылета — строка на строку, вставляется в поле Ctrl+V
+    const ex = coneExitRows(); if (!ex.length) { say("🚪 Луч ещё ни из одной строки не вышел."); return; }
+    const t = ex.map(([, b]) => b).join("\n");
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => say(`🚪 Скопировано строк: ${ex.length} — от щели вылета луча. Ctrl+V в поле строк вставит их столбиком.`), () => say("🚪 Не вышло скопировать."));
+  };
   $("bConeLogCopy").onclick = () => {
     const t = (Z.coneLog && Z.coneLog.list || []).map(e => e.f || e.t).join("\n");   // v0.140: в копию — полные записи
     if (!t) { say("📜 Лог пуст."); return; }
@@ -2372,7 +2404,7 @@ function setupCone(){
     const H = Z.home;
     if (H) {   // v0.125: своё умолчание (⭐) — положения колец и настройки конуса, как запомнены
       coneRot.length = 0; (Array.isArray(H.coneRot) ? H.coneRot : []).forEach(x => coneRot.push(Math.round(x || 0))); Z.coneRot = coneRot.slice();
-      Z.coneSpin = H.coneSpin || 0; Z.coneSpinPh = H.coneSpinPh || 0; Z.coneAimRot = H.coneAimRot || 0; Z.coneClockN = 0; coneClockFlash = []; if (Z.voidHits) Z.voidHits.fz = {};   // v0.138
+      Z.coneSpin = H.coneSpin || 0; Z.coneSpinPh = H.coneSpinPh || 0; Z.coneAimRot = H.coneAimRot || 0; Z.coneClockN = 0; coneClockFlash = []; if (Z.voidHits) Z.voidHits.fz = {}; Z.voidHits.ex = {};   // v0.138
       const keys = ["coneClock", "coneClockStop", "coneVoid", "coneSlit", "coneSpinMode", "coneAutoSp", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3H",
                     "coneRays", "coneMir", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs"];
       for (const k of keys) { if (k in H) Z[k] = JSON.parse(JSON.stringify(H[k])); else delete Z[k]; }
@@ -2389,7 +2421,7 @@ function setupCone(){
     }
     const k = coneRot.filter(x => Math.round(x || 0)).length;
     coneRot.fill(0); Z.coneRot = coneRot.slice();
-    Z.coneSpin = 0; Z.coneSpinPh = 0; Z.coneClockN = 0; Z.coneAimRot = 0; coneClockFlash = []; if (Z.voidHits) Z.voidHits.fz = {};   // v0.138
+    Z.coneSpin = 0; Z.coneSpinPh = 0; Z.coneClockN = 0; Z.coneAimRot = 0; coneClockFlash = []; if (Z.voidHits) Z.voidHits.fz = {}; Z.voidHits.ex = {};   // v0.138
     coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass);
     save(); renderRows(); renderCone();
     say(`⟲ Всё на местах: накрутка снята${k ? ` (у колец: ${k})` : ""}, кручение и счёт — с нуля, строка 1 без довода. Биты строк не менялись.`);
@@ -2422,7 +2454,7 @@ function setupCone(){
   };
   $("bConeZen").onclick = () => zenSet(true);
   document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && document.body.classList.contains("zen")) zenSet(false); });
-  $("bConeAuto").oncontextmenu = (e) => { e.preventDefault(); Z.coneSpin = 0; Z.coneSpinPh = 0; Z.coneClockN = 0; if (Z.voidHits) Z.voidHits.fz = {}; save(); renderCone(); say("◯ Кручение сброшено — всё на своих местах."); };   // v0.104
+  $("bConeAuto").oncontextmenu = (e) => { e.preventDefault(); Z.coneSpin = 0; Z.coneSpinPh = 0; Z.coneClockN = 0; if (Z.voidHits) Z.voidHits.fz = {}; Z.voidHits.ex = {}; save(); renderCone(); say("◯ Кручение сброшено — всё на своих местах."); };   // v0.104
   $("coneSpinMode").value = Z.coneSpinMode || "all";
   {   // v0.124: ползунок ширины щели — один для расчёта и рисунка
     const sl = $("coneSlit"), sv = $("coneSlitV"), show = () => { sv.textContent = (+Z.coneSlit || 2).toFixed(1).replace(".", ",") + "°"; };
