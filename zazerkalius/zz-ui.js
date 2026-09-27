@@ -5684,17 +5684,28 @@ function init(){
   // Разделитель поля и окон: ширина поля в пикселях, двойной щелчок — по умолчанию.
   const applyRowsW = () => { if (Z.rowsW > 0) $("main").style.setProperty("--rowsW", Z.rowsW + "px"); else $("main").style.removeProperty("--rowsW"); };
   applyRowsW();
-  $("split").addEventListener("pointerdown", (e) => {
-    if (e.button !== 0) return;
-    e.preventDefault();
-    const sp = $("split"), start = e.clientX, w0 = $("field").getBoundingClientRect().width;
-    sp.classList.add("drag"); sp.setPointerCapture(e.pointerId);
+  /* v0.218, по снимку подсказки разделителя «Потяни — шире или уже…» — «границу для перетаскивания убери, функцию будет выполнять столбик
+     номеров, подсвечивать немного при наведении»: разделителя нет; ширину поля строк меняет столбик номеров — тянешь его по горизонтали
+     (дальше 6 px и больше вбок, чем вверх-вниз), короткий щелчок по номеру, замку, кручению — как был. */
+  $("rowList").addEventListener("pointerdown", (e) => {
+    const no = e.target.closest(".rw > .no"); if (!no || e.button !== 0 || rowEditing >= 0) return;
+    const list = $("rowList"), x0 = e.clientX, y0 = e.clientY, w0 = $("field").getBoundingClientRect().width;
     const sg = document.body.classList.contains("field-right") ? -1 : 1;   // v0.091: поле справа — тянешь влево, поле шире
-    const move = (ev) => { Z.rowsW = Math.max(220, Math.min(window.innerWidth - 520, Math.round(w0 + sg * (ev.clientX - start)))); applyRowsW(); };
-    const up = () => { sp.classList.remove("drag"); sp.removeEventListener("pointermove", move); sp.removeEventListener("pointerup", up); packWins(); save(); renderPointers(); };
-    sp.addEventListener("pointermove", move); sp.addEventListener("pointerup", up);
+    let on = false;
+    const move = (ev) => {
+      const dx = ev.clientX - x0;
+      if (!on) { if (Math.abs(dx) < 6 || Math.abs(dx) < Math.abs(ev.clientY - y0)) return; on = true; try { list.setPointerCapture(ev.pointerId); } catch (er) { /* отпущен */ } document.body.classList.add("wdrag"); }
+      Z.rowsW = Math.max(220, Math.min(window.innerWidth - 520, Math.round(w0 + sg * dx))); applyRowsW();
+    };
+    const up = () => {
+      list.removeEventListener("pointermove", move); list.removeEventListener("pointerup", up); list.removeEventListener("pointercancel", up);
+      if (!on) return;
+      document.body.classList.remove("wdrag"); packWins(); save(); renderPointers(); fieldInfoFit();
+      const kill = (ev) => { ev.stopPropagation(); ev.preventDefault(); };   // тянули — это не щелчок по номеру
+      window.addEventListener("click", kill, { capture: true, once: true }); setTimeout(() => window.removeEventListener("click", kill, true), 0);
+    };
+    list.addEventListener("pointermove", move); list.addEventListener("pointerup", up); list.addEventListener("pointercancel", up);
   });
-  $("split").ondblclick = () => { Z.rowsW = 0; applyRowsW(); save(); };
   // v0.091: ⇆ поле строк справа — окна слева
   /* v0.094, «и все остальные кнопки в левом режиме убрать под меню левое» (снимок: стопка свёрнутых шапок окон): при «⇆ поле
      справа» свёрнутые окна не стоят на столе, а кнопками — в левой панели под шаблонами; щелчок — развернуть окно на стол. */

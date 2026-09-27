@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.217. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.218. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.217</title>
+<title>Zazerkalius — v0.218</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -89,16 +89,16 @@ body.pinmode button:not(#bPinMode):not(#top button):not(#pinBar button),body.pin
 .win.flash{box-shadow:0 0 0 2px var(--gold),0 8px 24px rgba(0,0,0,.35)}
 /* v0.010: три колонки — слева кнопки и шаблоны, В ЦЕНТРЕ поле строк, справа окна; между полем и окнами
    разделитель, его тянут (ширина поля — --rowsW, запоминается). */
-#main{position:absolute;top:40px;left:0;right:0;bottom:0;display:grid;grid-template-columns:250px var(--rowsW, 44%) 6px 1fr}
+#main{position:absolute;top:40px;left:0;right:0;bottom:0;display:grid;grid-template-columns:250px var(--rowsW, 44%) 1fr}   /* v0.218: без разделителя (6px) — ширину меняет столбик номеров */
 #rowsPane{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--panel)}
 /* v0.035: панель значками в один столбик — кнопка ◂/▸ в углу, узкая колонка, у кнопок только значки */
 #rowsPane{position:relative}
 #bPaneIcons{position:absolute;top:4px;right:8px;padding:0 7px;font-size:12px;line-height:18px;z-index:2}
-body.pane-icons #main{grid-template-columns:48px var(--rowsW, 44%) 6px 1fr}
+body.pane-icons #main{grid-template-columns:48px var(--rowsW, 44%) 1fr}
 /* v0.091, «строки перемести с их меню туда — справа от конуса, или просто конус дай располагать слева от поля строк»: колонки
    меняются местами — окна слева, поле строк справа */
-body.field-right #main{grid-template-columns:250px 1fr 6px var(--rowsW, 44%)}
-body.field-right.pane-icons #main{grid-template-columns:48px 1fr 6px var(--rowsW, 44%)}
+body.field-right #main{grid-template-columns:250px 1fr var(--rowsW, 44%)}
+body.field-right.pane-icons #main{grid-template-columns:48px 1fr var(--rowsW, 44%)}
 body.field-right #rowsPane{order:0} body.field-right #desk{order:1} body.field-right #split{order:2} body.field-right #field{order:3}
 /* v0.109, «кнопка свернуть поле строк»: поле и разделитель спрятаны, в сетке остаются две колонки — панель и окна */
 body.field-hidden #field,body.field-hidden #split{display:none}
@@ -135,7 +135,10 @@ body.nocur .rw.cur .bits > .bx,body.nocur .rw.cur .bits > .bxo{background:var(--
 #coneLockAll{font-size:13px}   /* v0.169: общий замок — кнопкой в полосе ввода */
 #coneLockAll.off{opacity:.6}
 #rowInputBar #bRowsStartTop,#rowInputBar #coneLockAll,#rowInputBar #bConeAllHome{padding:1px 3px;min-width:0;line-height:1.2}   /* v0.212: узкие — встают над узкими колонками номеров и замков */
-#split{cursor:col-resize;background:var(--line);opacity:.6}
+#split{display:none !important}   /* v0.218: разделителя нет — ширину поля тянут за столбик номеров */
+#rowList .rw > .no{cursor:ew-resize}
+#rowList:has(.rw > .no:hover) .rw > .no,body.wdrag #rowList .rw > .no{filter:brightness(1.35)}   /* v0.218: наведён — весь столбик чуть светлее */
+body.wdrag,body.wdrag *{cursor:ew-resize !important;user-select:none}
 /* v0.025: окна под полем строк. Тащишь окно за шапку — оно едет поверх всего (.dragging, position:fixed);
    отпустил над полем строк — встаёт в #fieldDock на всю ширину колонки (.docked); вытащил — снова на столе. */
 #field{position:relative}
@@ -667,7 +670,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.217</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.218</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1419,8 +1422,8 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0217"></script>
-<script src="zz-ui.js?v=0217"></script>
+<script src="zz-core.js?v=0218"></script>
+<script src="zz-ui.js?v=0218"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
