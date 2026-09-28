@@ -4008,13 +4008,39 @@ function setupCone(){
   /* v0.236, «рамкой показать размер видео при записи конуса и расположить его изначально посередине»: пока идёт запись (и пока
      мышь над ⏺) холст обведён пунктиром — это и есть кадр видео, вверху его размер в пикселях. Рамка лежит поверх холста, а не
      на нём, — в файл не попадает. Со стартом записи конус встаёт в середину кадра: сдвиг сброшен, масштаб тот же. */
+  /* v0.393, «запись видео нужна в формат мобильника или компа — по определению»: ролик теперь не размером холста (он какой угодно — как
+     окно), а стандартного кадра по устройству: телефон — вертикальный 1080×1920, компьютер — горизонтальный 1920×1080. Из холста берётся
+     область этого формата вокруг середины, по короткой стороне холста (конус в середине её и заполняет); чего в холсте нет — фон страницы.
+     Кадр собирается на отдельном холсте recCv (recDraw) — его и пишут все три записи: ⏺ / mp4, ↻1 и 🎞. Рамка ▣ показывает эту область */
+  const recFmt = () => {
+    let mob = false;
+    try { mob = (navigator.userAgentData && navigator.userAgentData.mobile) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+      || (matchMedia("(pointer: coarse)").matches && Math.min(screen.width, screen.height) < 900); } catch (e) { mob = false; }
+    return mob ? { W: 1080, H: 1920, mob: true } : { W: 1920, H: 1080, mob: false };
+  };
+  const recRect = (cv, F) => {   // область кадра в пикселях холста: формат F вокруг центрального квадрата (короткая сторона холста)
+    const S = Math.min(cv.width, cv.height), a = F.W / F.H, w = a >= 1 ? S * a : S, h = a >= 1 ? S : S / a;
+    return { x: (cv.width - w) / 2, y: (cv.height - h) / 2, w, h };
+  };
+  const recBg = (el) => { for (let e = el; e && e !== document.documentElement; e = e.parentElement) { const c = getComputedStyle(e).backgroundColor; if (c && !/rgba\(\s*0,\s*0,\s*0,\s*0\s*\)|transparent/.test(c)) return c; } return "#000"; };
+  let recCv = null;
+  const recDraw = (F) => {
+    const cv = $("coneCv"); if (!recCv) recCv = document.createElement("canvas");
+    if (recCv.width !== F.W) recCv.width = F.W; if (recCv.height !== F.H) recCv.height = F.H;
+    const g = recCv.getContext("2d"), R = recRect(cv, F), s = F.W / R.w;
+    g.fillStyle = recBg(cv); g.fillRect(0, 0, F.W, F.H);
+    g.drawImage(cv, -R.x * s, -R.y * s, cv.width * s, cv.height * s);
+    return recCv;
+  };
   const recFrame = (on) => {
     const cv = $("coneCv"); let f = $("coneRecFrame");
     if (!on) { if (f) f.style.display = "none"; return; }
     if (!f) { f = document.createElement("div"); f.id = "coneRecFrame"; f.appendChild(document.createElement("span")); cv.parentNode.appendChild(f); }
-    f.style.cssText = `display:block;left:${cv.offsetLeft}px;top:${cv.offsetTop}px;width:${cv.offsetWidth}px;height:${cv.offsetHeight}px`;
+    const F = recFmt(), R = recRect(cv, F), k = cv.offsetWidth / (cv.width || 1);   // v0.393: рамка — область кадра, видимая часть холста
+    const x0 = Math.max(0, R.x) * k, y0 = Math.max(0, R.y) * k, x1 = Math.min(cv.width, R.x + R.w) * k, y1 = Math.min(cv.height, R.y + R.h) * k;
+    f.style.cssText = `display:block;left:${cv.offsetLeft + x0}px;top:${cv.offsetTop + y0}px;width:${x1 - x0}px;height:${y1 - y0}px`;
     f.classList.toggle("paused", !!recPausedAt); f.classList.toggle("preview", !rec);   // v0.256: пауза — жёлтая, без записи (▣ кадр) — бледная
-    f.firstChild.textContent = `${cv.width}×${cv.height}` + (recPausedAt ? " · ⏸ пауза" : "");
+    f.firstChild.textContent = `${F.W}×${F.H} ${F.mob ? "📱" : "🖥"}` + (recPausedAt ? " · ⏸ пауза" : "");
   };
   if (window.ResizeObserver) new ResizeObserver(() => { if (rec || frameOn) recFrame(true); }).observe($("coneCv"));   // v0.256: и в дзене, и при смене размера окна
   /* v0.256, «видео — когда запись, на паузу можно?» → «да»: ⏸ (видна, пока идёт запись) — запись встаёт, конус можно крутить и
@@ -4078,7 +4104,8 @@ function setupCone(){
       : at ? ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"] : ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
     const mime = want.find(m => MediaRecorder.isTypeSupported(m)) || "";
     if (mp4 && !mime) { if (cap) cap.getTracks().forEach(t => t.stop()); say("⏺ Этот браузер не пишет mp4 — жми ⏺ (webm). В Chrome и Edge mp4 есть с весны 2024."); return; }
-    const chunks = [], stream = cvx.captureStream(30);
+    const F = recFmt(); recDraw(F);   // v0.393: пишется кадр формата устройства, собранный из холста
+    const chunks = [], stream = recCv.captureStream(30);
     if (at) stream.addTrack(at);
     rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 12e6 } : undefined);
     rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
@@ -4102,6 +4129,7 @@ function setupCone(){
     };
     if (at) { const r = rec; at.addEventListener("ended", () => { if (r.state !== "inactive") r.stop(); }); }
     rec.start(1000);
+    { const r0 = rec, loop = () => { if (rec !== r0) return; if (!recPausedAt) recDraw(F); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }   // v0.393: кадр — каждый кадр экрана, пока идёт эта запись
     const t0 = Date.now(); b.classList.add("on"); b.textContent = "⏹";
     recPause = 0; recPausedAt = 0; document.body.classList.add("conerec"); pauseUi();   // v0.256: ⏸ — видна, пока идёт запись
     const tick = () => { recFrame(true); const s = Math.floor((Date.now() - t0 - recPause - (recPausedAt ? Date.now() - recPausedAt : 0)) / 1000); b.title = `⏹ ${recPausedAt ? "Пауза" : "Идёт запись"}${sndLab} ${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")} — щелчок: стоп и сохранить`; };   // v0.155: время — в подсказке, на квадратной кнопке только ⏹
@@ -4223,7 +4251,7 @@ function setupCone(){
     const fps = Z.coneRecFps === 30 ? 30 : 60, N = Math.max(2, Math.round(D * fps));
     const cvx = $("coneCv"), b = $("bConeRecTurn");
     conePan = [0, 0]; renderCone();
-    const W = cvx.width & ~1, H = cvx.height & ~1;
+    const F = recFmt(), W = F.W, H = F.H;   // v0.393: кадр — формат устройства
     offRun = { stop: false }; const run = offRun;
     b.classList.add("on"); b.textContent = "…";
     const E = await offOpen(W, H, fps);
@@ -4244,7 +4272,7 @@ function setupCone(){
         const ph = s0 + dir * P * k / N;
         Z[key] = m === "all" ? ((ph % 360) + 360) % 360 : ph;
         coneHover = -1; renderCone();
-        await E.add(cvx, k);
+        await E.add(recDraw(F), k);
         const now = performance.now();
         if (now - lastUi > 300) {
           lastUi = now; const pc = Math.floor(k * 100 / N), left = k ? (now - T0) / k * (N - k) / 1000 : 0;
@@ -4274,7 +4302,7 @@ function setupCone(){
     if (rec || recBusy || turnOn || offRun) return;
     const fps = Z.coneRecFps === 30 ? 30 : 60, cvx = $("coneCv"), b = $("bConeRecOff");
     conePan = [0, 0]; renderCone();
-    const W = cvx.width & ~1, H = cvx.height & ~1;
+    const F = recFmt(), W = F.W, H = F.H;   // v0.393: кадр — формат устройства
     offRec = { stop: false }; const run = offRec;
     b.classList.add("on"); b.textContent = "…";
     const E = await offOpen(W, H, fps);
@@ -4288,7 +4316,7 @@ function setupCone(){
         if (!autoRaf) { await new Promise(r => setTimeout(r, 60)); continue; }   // кручение стоит — в файл ничего, ждём ▶
         autoStep(1 / fps);
         coneHover = -1; renderCone();
-        await E.add(cvx, k); k++;
+        await E.add(recDraw(F), k); k++;
         const now = performance.now();
         if (now - lastUi > 300) { lastUi = now; b.textContent = tFmt(k / fps).replace(" мин", "").replace(" с", "с"); b.title = `🎞 Идёт покадровая запись: в ролике ${tFmt(k / fps)} (${k} кадров, ${fps} к/с), пишется ${tFmt((now - T0) / 1000)}. Щелчок — стоп и сохранить`; }
         await offYield();
