@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.344. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.345. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.344</title>
+<title>Zazerkalius — v0.345</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -961,7 +961,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.344</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.345</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1615,7 +1615,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
           </div>
           <!-- v0.240, «звук из бит»: поле звучит — строка тактом или столбцы аккордами -->
           <div class="cgrp gc cg-snd" title="♫ Звук из бит: строка тактом (1 — нота, высота — по трём битам) или столбцы поля аккордами (высота — по номеру строки)"><span class="glab">Звук</span>
-            <button id="bSnd" title="♫ Звук: поле звучит, пока не нажато ещё раз. Строки меняются на ходу — звучит уже новое. Идёт и в запись ⏺ / mp4 конуса — даже если включить посреди записи">♫ звук</button>
+            <!-- v0.345, «пауза и шаг вперёд-назад, стрелки справа-слева»: ◀ ♫ звук ▶ — один блок; ⏸ рядом --><span class="cunit"><button id="bSndB" title="◀ Шаг назад: звучит предыдущий шаг, звук — на паузе">◀</button><button id="bSnd" title="♫ Звук: поле звучит, пока не нажато ещё раз. Строки меняются на ходу — звучит уже новое. Идёт и в запись ⏺ / mp4 конуса — даже если включить посреди записи">♫ звук</button><button id="bSndF" title="▶ Шаг вперёд: звучит следующий шаг, звук — на паузе">▶</button></span><button id="bSndP" title="⏸ Пауза: звук встаёт, место и подсветка бита остаются">⏸</button>
             <select id="sndMode" title="Что звучит (1 — нота, 0 — пауза, высота — число из трёх бит с этого места). Строка — текущая тактом слева направо. Разом — все выделенные строки (до 8) одновременно, каждая своим голосом. Подряд — чтение: строки одна за другой, как текст (выделенные, нет выделения — всё поле). По 2 — пары строк разом, потом следующая пара. Столбцы — шаг — столбец поля: звучат строки с 1 в нём (до 8), высота — по номеру строки">
               <!-- v0.341, «сократи, чтобы в размер 1 уместились»: было «выделенные разом», «по очереди», «по 2 строки» — список шёл в 2 кнопки -->
               <option value="row">строка</option><option value="sel" title="Все выделенные строки разом, каждая своим голосом">разом</option><option value="seq" title="По очереди: строки одна за другой, как текст">подряд</option><option value="pair" title="По 2 строки: пара разом, потом следующая">по 2</option><option value="col">столбцы</option>
@@ -1796,8 +1796,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0344"></script>
-<script src="zz-ui.js?v=0344"></script>
+<script src="zz-core.js?v=0345"></script>
+<script src="zz-ui.js?v=0345"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
