@@ -5453,7 +5453,16 @@ function cgrpInit(){
   if (!Z.cgrpMin || typeof Z.cgrpMin !== "object") Z.cgrpMin = {};   // v0.204: свёрнутые до заголовка
   if (!Z.cgrpSize || typeof Z.cgrpSize !== "object") Z.cgrpSize = {};   // v0.315: размер, заданный уголком { имя: { w, h } }
   // v0.315: размер группы — уголком; у свёрнутой (cmin) — свой, до заголовка
-  const sizeApply = (g) => { const s = !g.classList.contains("cmin") && Z.cgrpSize[g.dataset.g]; g.classList.toggle("csz", !!s); g.style.width = s ? s.w + "px" : ""; g.style.height = s ? s.h + "px" : ""; };
+  /* v0.332, по снимку группы «Вид», сжатой уголком до одной подписи, — «кнопки, если не помещаются в группе, — не давать размера»: группа
+     не уже самой широкой кнопки и не ниже, чем нужно её кнопкам при этой ширине. Сохранённый размер не переписывается — меньший просто
+     показывается нужным, а запоминается то, что видно, когда уголок отпустили. */
+  const sizeApply = (g) => {
+    const s = !g.classList.contains("cmin") && Z.cgrpSize[g.dataset.g]; g.classList.toggle("csz", !!s);
+    if (!s) { g.style.width = g.style.height = ""; return; }
+    g.style.width = s.w + "px"; g.style.height = "";   // высота — сперва по содержимому
+    const b = g.querySelector(":scope > .cgb"); if (b && b.scrollWidth > b.clientWidth + 1) g.style.width = (s.w + b.scrollWidth - b.clientWidth) + "px";
+    g.style.height = Math.max(s.h, g.offsetHeight) + "px";
+  };
   const NOGRAB = "button, input, select, textarea, label, a, canvas, .gzen, .cgsz";   // v0.315: всё остальное в группе — хват
   const wb = tl.parentElement; let zTop = 10;
   const groups = [...tl.querySelectorAll(":scope > .cgrp")];
@@ -5515,7 +5524,8 @@ function cgrpInit(){
         e.preventDefault(); e.stopPropagation(); try { sz.setPointerCapture(e.pointerId); } catch (err) { /* уже отпущен */ }
         const r = g.getBoundingClientRect(), x0 = e.clientX, y0 = e.clientY; let moved = false;
         const mv = (ev) => { moved = true; Z.cgrpSize[g.dataset.g] = { w: Math.max(60, Math.round(r.width + ev.clientX - x0)), h: Math.max(24, Math.round(r.height + ev.clientY - y0)) }; sizeApply(g); };
-        const up = () => { sz.removeEventListener("pointermove", mv); sz.removeEventListener("pointerup", up); sz.removeEventListener("pointercancel", up); if (moved) { place(g); save(); } };
+        const up = () => { sz.removeEventListener("pointermove", mv); sz.removeEventListener("pointerup", up); sz.removeEventListener("pointercancel", up);
+          if (moved) { Z.cgrpSize[g.dataset.g] = { w: g.offsetWidth, h: g.offsetHeight }; place(g); save(); } };   // v0.332: помнится то, что видно
         sz.addEventListener("pointermove", mv); sz.addEventListener("pointerup", up); sz.addEventListener("pointercancel", up);
       });
       sz.addEventListener("dblclick", (e) => { e.preventDefault(); e.stopPropagation(); if (!Z.cgrpSize[g.dataset.g]) return; delete Z.cgrpSize[g.dataset.g]; sizeApply(g); place(g); save(); });
