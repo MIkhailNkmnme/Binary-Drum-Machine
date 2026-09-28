@@ -1,4 +1,4 @@
-<!-- Zerkalius Гранидус — v0.060. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Гранидус — v0.061. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Гранидус — v0.060</title>
+<title>Zerkalius Гранидус — v0.061</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -296,7 +296,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.060</div>
+<div id="ver">v0.061</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -493,6 +493,8 @@
     своей грани (ряд за рядом от вершины; 1 — звучит, 0 — пауза, высота — по трём битам с этого места) и звучит от своей ноты, поэтому
     несколько включённых дают созвучие. Нота, у которой грани нет, читает экватор — нижние ряды верхних граней по кругу (у бипирамиды
     из 3 граней это Си, внутреннее основание). Бит, который сейчас звучит, горит на теле цветом своей ноты. Темп — ползунком.</li>
+    <li><b>□ △ ▷ Клетки</b> (v0.061) — форма бита в режиме «⠿ Точки»: квадрат, треугольник с горизонтальным основанием (остриё к вершине
+    грани), треугольник с вертикальным основанием (остриё вдоль ряда). У нижних граней — зеркально. Включает и сам режим точек.</li>
     <li><b>Склейка разделов</b> (v0.059) — плавающие разделы, прилипшие один под другим, едут вместе, если тянуть верхний; нижний — отрывается.</li>
     <li><b>Совпадения</b> (v0.058) — строка под видами, на ходу: вершины, рёбра, грани — всего → различимо в нынешнем виде (рёбра торцом —
     точкой, грани ребром — линией), и оси — сколько видно торцом и сколько легло на ребро. Считается по линии взгляда, без перспективы.</li>
@@ -592,6 +594,7 @@
   <div class="tab-sec" data-tab="view" data-title="👁 Вид">
   <button id="bDig" class="act" title="D">01 Биты</button>
   <button id="bDots" title="P. Бит — клетка, грань — картинка: для большой плотности, до 256 рядов">⠿ Точки</button>
+  <button id="bDotShape" title="Форма клетки бита в режиме «⠿ Точки», по кругу: □ квадрат → △ треугольник с горизонтальным основанием (остриё к вершине грани) → ▷ треугольник с вертикальным основанием (остриё вдоль ряда). У нижних граней — зеркально">□ Клетки</button>
   <button id="bEdges" class="act" title="E. Все рёбра тела, и экватор тоже">◇ Рёбра</button>
   <button id="bEdge" class="act">△ Скрытые рёбра</button>
   <button id="bDirs" class="act" title="C">🧭 Стороны света</button>
@@ -950,6 +953,12 @@ let showDirs = true;
    ЦВЕТ. 1 горит цветом своей половины, 0 — тёмный (DOT_DIM): у цифры 0 и 1 различает сам знак, а у
    клетки — только яркость. В схеме «Свои цвета» — цвета 0 и 1 как есть. Память и закрепления — как у цифр. */
 let dotMode = false;
+/* v0.061, по снимку режима точек — «из треугольников тоже — 2 версии, гориз и верт основания»: форма клетки бита — dotShape: 0 — квадрат
+   (как было), 1 — треугольник с горизонтальным основанием, остриём к вершине грани (у нижней половины — зеркально, остриём к низу),
+   2 — с вертикальным основанием, остриём вдоль ряда. Сетка та же: клетка ряда r, бита k — прежний прямоугольник (u ∈ [k, k+1), ряд ∈ [r,
+   r+1)), треугольник вписан в него; центры и выбор бита — прежние. */
+let dotShape = 0;
+const DOT_SHAPE_TXT = ["□ Клетки", "△ Клетки", "▷ Клетки"];
 const DOT_TEX = 512, DOT_DIM = 0.22, DOT_GAP = 0.12;
 let dotFaces = [];   // грани, нарисованные последним кадром в режиме точек, — для клика и наведения
 const DIRS = ["В", "Ю", "З", "С"], DIR_OUT = 1.16;
@@ -1000,7 +1009,7 @@ function pickAt(mx, my){
    Пока клетка крупная (SS ≥ 4), у неё зазор DOT_GAP с каждой стороны — видно, что это точки; на 256 рядах
    клетка в 2 пикселя, и зазор съел бы картину целиком — там клетки идут сплошь. */
 function dotTexture(f, cUp, cDn, cMem, cPin){
-  const sig = dotVer + "|" + ROWS + "|" + memOn + "|" + bitCol + "|" + col0 + col1 + cUp + cDn + cMem + cPin;
+  const sig = dotVer + "|" + ROWS + "|" + memOn + "|" + bitCol + "|" + col0 + col1 + cUp + cDn + cMem + cPin + "|" + dotShape;   // v0.061: и форма клетки
   if (f._dot && f._dot.sig === sig) return f._dot.cv;
   const N = ROWS, SS = Math.max(1, Math.floor(DOT_TEX / N)), T = N * SS;
   const cvT = (f._dot && f._dot.cv) || document.createElement("canvas");
@@ -1033,7 +1042,12 @@ function dotTexture(f, cUp, cDn, cMem, cPin){
       const X = (pxl + 0.5) / SS;
       if (X > Y) break;                                  // правее диагонали — вне треугольника
       const u = X * (r + 1) / Y, k = Math.min(r, Math.floor(u));
-      if (gap) { const fx = u - k; if (fx < gap || fx > 1 - gap) continue; }
+      if (dotShape) {   // v0.061: треугольник, вписанный в клетку (fx — поперёк ряда по биту, fy — от вершины грани)
+        const fx = u - k, g = gap, a = dotShape === 1 ? fy : 1 - fx, b = dotShape === 1 ? fx : fy;
+        if (a < g || a > 1 - g) continue;
+        const t = (a - g) / (1 - 2 * g);
+        if (Math.abs(b - 0.5) > 0.5 * t - g * 0.5) continue;
+      } else if (gap) { const fx = u - k; if (fx < gap || fx > 1 - gap) continue; }
       px[row + pxl] = col[base + k];
     }
   }
@@ -1715,6 +1729,8 @@ bDig.onclick  = () => { showDigits = !showDigits; bDig.classList.toggle("act", s
 bEdge.onclick = () => { showHidden = !showHidden; bEdge.classList.toggle("act", showHidden); };
 bDirs.onclick = () => { showDirs = !showDirs; bDirs.classList.toggle("act", showDirs); };   // v0.029
 bDots.onclick = () => { dotMode = !dotMode; bDots.classList.toggle("act", dotMode); };      // v0.031
+const bDotShape = document.getElementById("bDotShape");   // v0.061
+bDotShape.onclick = () => { dotShape = (dotShape + 1) % 3; bDotShape.textContent = DOT_SHAPE_TXT[dotShape]; bDotShape.classList.toggle("act", dotShape > 0); if (!dotMode) bDots.onclick(); save(); };
 bEdges.onclick = () => { showEdges = !showEdges; bEdges.classList.toggle("act", showEdges); }; // v0.031
 bRoll.onclick = () => { myBits = ""; sierp = false; rollBits(); myInfoUpd(); syncUI(); save(); };
 // v0.035: Серпинский — вкл/выкл; включение снимает свои биты (картина одна), выключение даёт новую случайную
@@ -1751,7 +1767,7 @@ const vRows = document.getElementById("vRows"), vSize = document.getElementById(
 function save(){
   try {
     localStorage.setItem(KEY, JSON.stringify({
-      ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, showEdges, showDirs, dotMode, zoom, yaw, pitch, roll, showAxes, stepOp, TICK,
+      ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, showEdges, showDirs, dotMode, dotShape, zoom, yaw, pitch, roll, showAxes, stepOp, TICK,
       showLinks, LINK_EVERY, hoverOn, myBits, mySame, glowV: 1, bitCol, col0, col1, NB, sierp, faceMode, TEMPO,
       theme: document.documentElement.getAttribute("data-theme") || ""
     }));
@@ -1774,6 +1790,7 @@ function load(){
   if (typeof o.showEdges === "boolean") showEdges = o.showEdges;
   if (typeof o.showDirs === "boolean") showDirs = o.showDirs;
   if (typeof o.dotMode === "boolean") dotMode = o.dotMode;
+  if (o.dotShape >= 0 && o.dotShape <= 2) dotShape = o.dotShape | 0;   // v0.061
   if (o.zoom > 0.4 && o.zoom < 3.1) zoom = o.zoom;
   if (typeof o.yaw === "number") yaw = o.yaw;
   if (typeof o.pitch === "number") pitch = o.pitch;
@@ -2535,7 +2552,7 @@ function drawAxes(){
 { const draw1 = draw; draw = function(){ draw1.apply(this, arguments); drawAxes(); }; }
 const bAxes = document.getElementById("bAxes");
 bAxes.onclick = () => { showAxes = !showAxes; bAxes.classList.toggle("act", showAxes); save(); };
-{ const syncUI1 = syncUI; syncUI = function(){ syncUI1.apply(this, arguments); faceUi(); if (typeof bAxes !== "undefined") bAxes.classList.toggle("act", showAxes); }; }
+{ const syncUI1 = syncUI; syncUI = function(){ syncUI1.apply(this, arguments); faceUi(); bDotShape.textContent = DOT_SHAPE_TXT[dotShape]; bDotShape.classList.toggle("act", dotShape > 0); if (typeof bAxes !== "undefined") bAxes.classList.toggle("act", showAxes); }; }
 faceUi();
 { const syncUI0 = syncUI; syncUI = function(){ syncUI0.apply(this, arguments); viewThumbs(); }; }
 viewThumbs();
