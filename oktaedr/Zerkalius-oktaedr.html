@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.047. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Октаэдр — v0.048. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.047</title>
+<title>Zerkalius Октаэдр — v0.048</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -276,7 +276,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.047</div>
+<div id="ver">v0.048</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -476,7 +476,8 @@
     <li><b>⌖ Вид сверху</b> — вернуть камеру в исходное положение.</li>
     <li><b>Виды</b> (v0.047) — шесть картинок под «⌖»: сверху, снизу, спереди, сзади, слева, справа. На каждой — тело с этой стороны
     (верхние рёбра цветом верха, нижние — низа, экватор — ярче). Щелчок — тело плавно поворачивается так и вращение останавливается,
-    чтобы вид держался; «⟳ Вращение» — снова крутить.</li>
+    чтобы вид держался; «⟳ Вращение» — снова крутить. Сбоку (v0.048) взгляд — в середину ребра экватора: переднее ребро ложится на заднее.</li>
+    <li><b>Shift + тянуть</b> (v0.048) — крутить только по горизонтали, наклон стоит. Shift + щелчок без сдвига — по-прежнему правка бита.</li>
     <li><b>☯ Дзен</b> (первая кнопка в полосе меню сверху) — убрать с экрана всё, кроме тела: панель, заголовок, версию, подсказку.
     Вход и выход: кнопка, клавиша Z, щелчок колесом мыши, а из Дзена ещё и Escape. Состояние не
     запоминается — страница всегда открывается с панелью.</li>
@@ -1581,7 +1582,9 @@ cv.addEventListener("pointermove", (e) => {
   yaw += (e.clientX - lastX) * 0.008;
   // Наклон зажат чуть меньше прямого угла: ровно с ребра октаэдр вырождается в линию, и
   // смотреть там не на что.
-  pitch = Math.max(-1.45, Math.min(1.45, pitch - (e.clientY - lastY) * 0.008));
+  // v0.048, «с зажатым Shift — кручение по горизонтали только»: с Shift наклон не трогается (Shift + щелчок без сдвига — по-прежнему правка
+  // бита). Предел — не меньше нынешнего наклона: после вида ровно сверху / снизу (90°) тело больше не прыгает на 83° при первом движении.
+  if (!e.shiftKey) { const lim = Math.max(1.45, Math.abs(pitch)); pitch = Math.max(-lim, Math.min(lim, pitch - (e.clientY - lastY) * 0.008)); }
   lastX = e.clientX; lastY = e.clientY;
 });
 // Положение тела запоминается тоже — вернувшись на страницу, застаёшь её той же стороной.
@@ -2205,6 +2208,11 @@ myArea.value = myBits; myInfoUpd();
    снизу — −90°; спереди yaw 0, справа −90°, сзади 180°, слева +90°. Картинки перерисовываются вместе с syncUI (смена основания, цветов). */
 const VIEWS = [["top", "сверху", 0, Math.PI / 2], ["bot", "снизу", 0, -Math.PI / 2], ["front", "спереди", 0, 0],
                ["back", "сзади", Math.PI, 0], ["left", "слева", Math.PI / 2, 0], ["right", "справа", -Math.PI / 2, 0]];
+/* v0.048, «у вида справа, слева, спереди и сзади — поправить, чтобы рёбра друг на друга, к нам»: прежде (yaw 0) взгляд шёл прямо на вершину
+   экватора и совпадали только средние рёбра. Теперь — в середину ребра экватора между первыми двумя вершинами: у октаэдра (4 грани) каждое
+   переднее ребро ложится ровно на заднее. Поворот — от основания: середина ребра на угле π / NB, к зрителю — yaw = π / NB − π / 2; сверху и
+   снизу — тем же поворотом, чтобы переднее ребро и там было внизу картинки. */
+const viewYaw = (v) => Math.PI / Math.max(1, NB) - Math.PI / 2 + v[2];
 const viewRow = document.getElementById("viewRow");
 viewRow.innerHTML = VIEWS.map(([k, t]) => `<button type="button" class="vw" data-v="${k}" title="Вид ${t}: тело плавно встаёт так, вращение останавливается"><canvas></canvas><span>${t}</span></button>`).join("");
 function viewThumbs(){
@@ -2213,7 +2221,7 @@ function viewThumbs(){
     const v = VIEWS.find(x => x[0] === b.dataset.v), c = b.querySelector("canvas"), w = c.clientWidth || 52, h = c.clientHeight || 40;
     if (c.width !== Math.round(w * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
     const g = c.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
-    const cy = Math.cos(v[2]), sy = Math.sin(v[2]), cx = Math.cos(v[3]), sx = Math.sin(v[3]), S = Math.min(w, h) * 0.42;
+    const vy = viewYaw(v), cy = Math.cos(vy), sy = Math.sin(vy), cx = Math.cos(v[3]), sx = Math.sin(v[3]), S = Math.min(w, h) * 0.42;
     const P = (p) => { const x = p[0] * cy + p[2] * sy, z = -p[0] * sy + p[2] * cy, y = p[1] * cx - z * sx, z2 = p[1] * sx + z * cx; return [w / 2 + x * S, h / 2 - y * S, z2]; };
     const E = EDGES.map(e => { const a = P(e.a), q = P(e.b); return { a, q, z: (a[2] + q[2]) / 2, kind: e.kind }; }).sort((m, n) => m.z - n.z);
     for (const e of E) {
@@ -2231,7 +2239,7 @@ viewRow.addEventListener("click", (e) => {
   const v = VIEWS.find(x => x[0] === b.dataset.v); if (!v) return;
   spin = false; bSpin.classList.remove("act");
   const y0 = yaw, p0 = pitch, TAU = 2 * Math.PI;
-  let dy = ((v[2] - y0) % TAU + TAU) % TAU; if (dy > Math.PI) dy -= TAU;   // кратчайшим путём
+  let dy = ((viewYaw(v) - y0) % TAU + TAU) % TAU; if (dy > Math.PI) dy -= TAU;   // кратчайшим путём
   const t0 = performance.now(), D = 350, id = ++viewAnim;
   const step = (t) => {
     if (id !== viewAnim) return;
