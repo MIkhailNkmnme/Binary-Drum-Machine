@@ -6912,8 +6912,7 @@ function init(){
   };
   // v0.036: переключатели чисел у номеров и красных неподвижных бит
   const fmLabel = () => {
-    $("bShowFM").classList.toggle("on", !!Z.showFM); $("bShow01").classList.toggle("on", !!Z.show01); $("bShowFix").classList.toggle("on", !!Z.showFix);
-    $("bShowFix").textContent = Z.showFix === "ir" ? "🟢 неподв. ⇄🔁" : Z.showFix ? "🔴 неподв. ⇄" : "🔴 неподв.";   // v0.058
+    $("bShowFM").classList.toggle("on", !!Z.showFM); $("bShow01").classList.toggle("on", !!Z.show01); $("bShowFix").classList.toggle("on", Z.showFix === true); $("bShowFixIr").classList.toggle("on", Z.showFix === "ir");   // v0.340: две кнопки, горит одна или ни одной
   };
   fmLabel();
   $("bShowFM").onclick = () => { Z.showFM = !Z.showFM; fmLabel(); renderRows(); save(); };
@@ -6927,12 +6926,14 @@ function init(){
   const lockUi = () => { $("bRowLock").textContent = Z.rowLock ? "⛔" : "✎";   /* v0.173: свой значок — не путать с общим замком колец 🔒 */ $("bRowLock").classList.toggle("on", !!Z.rowLock); document.body.classList.toggle("rowlock", !!Z.rowLock); };
   lockUi();
   $("bRowLock").onclick = () => { Z.rowLock = !Z.rowLock; lockUi(); save(); say(Z.rowLock ? "🔒 Строки заперты: менять нельзя ничем, смотреть — сколько угодно." : "🔓 Строки открыты для правки."); };   // v0.061
-  $("bShowFix").onclick = () => {   // v0.058: выкл → ⇄ разворот → ⇄🔁 реверс-инверсия → выкл
-    Z.showFix = !Z.showFix ? true : Z.showFix === true ? "ir" : false;
+  const showFixSet = (m) => {   // v0.058 — одна кнопка по кругу; v0.340, «раздели на 2 кнопки, вкл либо либо»: 🔴 ⇄ и 🟢 ⇄🔁, включённая гасит другую
+    Z.showFix = Z.showFix === m ? false : m;
     fmLabel(); renderAll(); save();
     say(Z.showFix === "ir" ? "🟢 Неподвижные при реверс-инверсии: бит не равен зеркальному — разворот с инверсией кладёт его на то же место."
       : Z.showFix ? "🔴 Неподвижные при развороте: бит равен зеркальному." : "Неподвижные не подсвечиваются.");
   };
+  $("bShowFix").onclick = () => showFixSet(true);
+  $("bShowFixIr").onclick = () => showFixSet("ir");
   $("rowsAlign").value = Z.rowsAlign || "center";
   $("rowsAlign").onchange = (e) => { Z.rowsAlign = e.target.value; renderRows(); save(); };
   // 🧊 Вид (v0.024): кнопки, перетаскивание мышью, перерисовка при смене размера окна
