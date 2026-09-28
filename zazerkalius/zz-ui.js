@@ -3733,6 +3733,9 @@ function setupCone(){
      под 1111 — 10001: два бита через 4). Строк из одних 1 выше нет — как прежде, два бита через ↔. Считается на каждом шаге — читаешь
      дальше вниз, прошёл следующую строку из 1 — шаблон сменился сам; что звучит сейчас — на кнопке. */
   let snd2Last = null, sndRC = null;   // v0.383: sndRC — разметка столбцов для «стр+стл»
+  /* v0.387, «2 и более значков, каждый отдельно вкл/выкл»: у «стр+стл» головки включаются по отдельности — sndHR строчная, sndHC столбцовая.
+     Их переключает фон хаба (сообщение { zerkSndHead: "r" | "c", on }); в самой странице обе всегда включены */
+  let sndHR = true, sndHC = true;
   const sndAuto = (r) => {
     if (!(r >= 0)) return null;
     for (let i = Math.min(r, Z.rows.length - 2); i >= 0; i--) {
@@ -3775,8 +3778,8 @@ function setupCone(){
       const k = sndStep % tot; sndStep = k + 1;
       let gi = 0, kk = k; while (kk >= lens[gi]) { kk -= lens[gi]; gi++; }
       const on = [], r1 = L[gi], s1 = Z.rows[r1];
-      sndOffs(s1.length, r1).forEach((o) => { const j = (kk + o) % s1.length; P.push([r1, j]); const hz = sndBitHz(s1, j); if (hz) on.push([hz, gi % 4]); });
-      if (kk === 0) sndShow([r1]);
+      if (sndHR) sndOffs(s1.length, r1).forEach((o) => { const j = (kk + o) % s1.length; P.push([r1, j]); const hz = sndBitHz(s1, j); if (hz) on.push([hz, gi % 4]); });
+      if (kk === 0 && sndHR) sndShow([r1]);
       const key = L.length + ":" + tot + ":" + L[0] + ":" + L[L.length - 1];
       if (!sndRC || sndRC.key !== key) {   // сколько строк доходит до каждого столбца — один раз на поле
         const W = Math.max(...lens), cnt = new Array(W).fill(0); lens.forEach(x => { for (let c = 0; c < x; c++) cnt[c]++; });
@@ -3785,7 +3788,7 @@ function setupCone(){
       }
       let lo = 0, hi = sndRC.cum.length - 1; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (sndRC.cum[mid] <= k) lo = mid; else hi = mid - 1; }
       let rem = k - sndRC.cum[lo];
-      for (let q = 0; q < L.length; q++) if (lens[q] > lo) { if (rem-- === 0) { const r2 = L[q], s2 = Z.rows[r2]; P.push([r2, lo, 1]); const hz = sndBitHz(s2, lo); if (hz) on.push([hz / 2, 8]); break; } }
+      if (sndHC) for (let q = 0; q < L.length; q++) if (lens[q] > lo) { if (rem-- === 0) { const r2 = L[q], s2 = Z.rows[r2]; P.push([r2, lo, 1]); const hz = sndBitHz(s2, lo); if (hz) on.push([hz / 2, 8]); break; } }
       on.forEach(([hz, v]) => sndNote(hz, t, len, 0.32 / Math.sqrt(on.length), v));
     } else if (m === "seq" || m === "pair") {   // v0.257: чтение — строки одна за другой (по 2 — парами разом), выделенные или всё поле
       const L = sndList(true), G = m === "pair" ? 2 : 1, groups = [];
@@ -3858,10 +3861,14 @@ function setupCone(){
   /* v0.381: фон хаба — звук по кнопке «♫ Звук» хаба (сообщение { zerkSnd: true | false }): строки подряд, головки видны на конусе и в обеих
      пирамидах; хабу — ответ { zerkSndOn }, чтобы кнопка горела */
   if (ZZ_BG) addEventListener("message", (e) => {
-    const d = e.data; if (!d || typeof d !== "object" || d.zerkSnd === undefined) return;
+    const d = e.data; if (!d || typeof d !== "object" || (d.zerkSnd === undefined && d.zerkSndHead === undefined)) return;
     Z.sndMode = "rc"; Z.sndMark = true; rowSel.clear();   // v0.383: в фоне — две головки, строки и столбцы
-    if (d.zerkSnd) { if (!sndT) sndSet(true); } else sndSet(false);
-    try { if (e.source) e.source.postMessage({ zerkSndOn: !!sndT }, "*"); } catch (err) { /* хаб с другого адреса */ }
+    if (d.zerkSndHead) {   // v0.387: одна головка — вкл / выкл; звук молчал — включается только она; обе выключены — звук встаёт
+      const h = d.zerkSndHead === "c" ? "c" : "r", on = !!d.on;
+      if (!sndT) { if (!on) return; sndHR = h === "r"; sndHC = h === "c"; sndSet(true); }
+      else { if (h === "r") sndHR = on; else sndHC = on; if (!sndHR && !sndHC) { sndSet(false); sndHR = sndHC = true; } }
+    } else if (d.zerkSnd) { sndHR = sndHC = true; if (!sndT) sndSet(true); } else { sndSet(false); sndHR = sndHC = true; }
+    try { if (e.source) e.source.postMessage({ zerkSndOn: !!sndT, zerkSndR: !!sndT && sndHR, zerkSndC: !!sndT && sndHC }, "*"); } catch (err) { /* хаб с другого адреса */ }
   });
   if ($("bSndP")) $("bSndP").onclick = () => { if (sndT || sndPaused) sndSet(false); };   // v0.371: ■ стоп
   const sndDirSet = (d) => { const was = Z.sndDir < 0 ? -1 : 1; Z.sndDir = d; save(); if (sndT) { sndUi(); if (was !== d) say(d < 0 ? "◀ Звук — назад." : "▶ Звук — вперёд."); } else sndStepBy(d); };   // v0.374
