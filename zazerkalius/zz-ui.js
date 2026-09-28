@@ -132,7 +132,9 @@ document.addEventListener("mouseover", (e) => {
   tipTimer = setTimeout(() => { const m = $("msg"); clearTimeout(msgTimer); m.textContent = t; m.classList.add("show"); tipShown = true; }, 250);
 }, true);
 document.addEventListener("mouseout", (e) => { if (tipEl && !(e.relatedTarget && tipEl.contains(e.relatedTarget))) tipOff(); }, true);
-document.addEventListener("pointerdown", () => tipOff(true), true);   // нажали — title на место до обработчиков; подсказку сменит их сообщение
+/* v0.295, по снимку висящего сообщения после выбора «Серп 90» — «убирай уведомления, которые после нажатия, — при любом следующем
+   клике»: любое нажатие сперва гасит висящее уведомление (и подсказку); если сам щелчок что-то скажет — его сообщение встанет следом. */
+document.addEventListener("pointerdown", () => { tipOff(); clearTimeout(msgTimer); $("msg").classList.remove("show"); }, true);   // v0.294: и title на место до обработчиков
 function cur(){ return Z.rows[Z.cur] || ""; }
 /* v0.015: поля строк. Z.rows — ссылка на рабочее поле; кнопки по-прежнему могут присвоить Z.rows новый
    массив — syncLane() (в save, snapshot, renderRows) кладёт его обратно в Z.lanes. */
