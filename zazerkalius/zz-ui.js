@@ -619,7 +619,9 @@ function rowsFit(){
   /* v0.246, «почему всё тормозит»: каждая подгонка — 4–5 полных раскладок поля (на 260 строках — по 0,1 с). Строк, шрифта и размера
      поля столько же, сколько в прошлый раз, и всё помещается — шаг строки прежний, раскладка одна. */
   const n = L.querySelectorAll(".rw:not(.lhrow)").length, fs = Z.fs || 16;
-  const base = [fs, Z.ff, Z.laneCount, L.clientHeight, L.clientWidth].join("|"), key = n + "|" + base;
+  /* v0.280, «граница — всё равно тормоза»: ширину из ключа убрали — строки не переносятся (white-space:pre), высота поля от ширины не
+     зависит; полоса прокрутки вбок меняет clientHeight, он в ключе. Прежде каждое отпускание границы — 4–5 раскладок поля (0,13 с на 66 строках). */
+  const base = [fs, Z.ff, Z.laneCount, L.clientHeight].join("|"), key = n + "|" + base;
   if (rowsFit.key === key && (+was && +was <= RL_MIN + 1e-6 || L.scrollHeight <= L.clientHeight + 1)) return;   // и когда ужато до предела — теснее всё равно некуда
   /* v0.265, «зависание у границы перетаскивания строк поля»: пока тянут черту, строк на каждом шаге другое число — и подгонка каждый
      раз заново раскладывала поле 4–5 раз (на 400 строках — 0,6 с на шаг). Теперь: пока черту тянут — шаг строк прежний (подгонка —
@@ -639,6 +641,10 @@ function rowsFit(){
     if (rl <= RL_MIN) break;
   }
   if (L.style.getPropertyValue("--rlh") !== was) rowsFitDone();
+}
+function wShield(on){   // v0.280: накладка с курсором ↔ на время протяжки границы (вместо курсора у каждого элемента страницы)
+  let s = document.getElementById("wShield");
+  if (on && !s) { s = document.createElement("div"); s.id = "wShield"; document.body.appendChild(s); } else if (!on && s) s.remove();
 }
 function rowsFitDone(){ if (Z.tri90) tri90Apply(); }   // ◸ 90° считает межсимвольный от шага строк
 /* v0.167, «надпись вправо, над замками — центральный замок (общий)»: над столбиком замков у строк — общий замок колец (галка «запрет
@@ -5255,7 +5261,7 @@ function cgrpInit(){
     if (edge) {
       edge.addEventListener("pointerdown", (e) => {
         if (e.button !== 0) return; e.preventDefault(); try { edge.setPointerCapture(e.pointerId); } catch (err) {}
-        const P = $("rowsPane"), w0 = P.getBoundingClientRect().width, x0 = e.clientX; document.body.classList.add("wdrag");
+        const P = $("rowsPane"), w0 = P.getBoundingClientRect().width, x0 = e.clientX; document.body.classList.add("wdrag"); wShield(true);
         // v0.271: как у ширины поля — пока тянут, за мышью тонкая черта, ширина панели встаёт, когда отпустили (живая перекладка тормозила)
         const pr = P.getBoundingClientRect(); let lx = x0, raf = 0, done = false; const g = document.createElement("div"); g.id = "wGhost"; document.body.appendChild(g);
         const wAt = () => Math.round(Math.max(180, Math.min(innerWidth * 0.7, w0 + lx - x0)));
@@ -5265,7 +5271,7 @@ function cgrpInit(){
         const up = () => {
           if (done) return; done = true;
           edge.removeEventListener("pointermove", mv); edge.removeEventListener("pointerup", up); edge.removeEventListener("pointercancel", up); removeEventListener("pointerup", up, true); removeEventListener("blur", up);
-          if (raf) cancelAnimationFrame(raf); g.remove();
+          if (raf) cancelAnimationFrame(raf); g.remove(); wShield(false);
           if (wAt() !== Math.round(w0)) { Z.paneW = wAt(); Z.paneWUser = true; paneWApply(false); }
           document.body.classList.remove("wdrag"); save(); requestAnimationFrame(() => { if (typeof packWins === "function") packWins(); renderAll(); });
         };
@@ -6732,7 +6738,7 @@ function init(){
     const move = (ev) => {
       if (!(ev.buttons & 1)) { up(); return; }   // кнопку уже отпустили — протяжки нет
       const dx = ev.clientX - x0;
-      if (!on) { if (strict && (Math.abs(dx) < 6 || Math.abs(dx) < Math.abs(ev.clientY - y0))) return; on = true; try { list.setPointerCapture(ev.pointerId); } catch (er) { /* отпущен */ } document.body.classList.add("wdrag"); }
+      if (!on) { if (strict && (Math.abs(dx) < 6 || Math.abs(dx) < Math.abs(ev.clientY - y0))) return; on = true; try { list.setPointerCapture(ev.pointerId); } catch (er) { /* отпущен */ } document.body.classList.add("wdrag"); wShield(true); }
       lastX = ev.clientX;
       if (!raf) raf = requestAnimationFrame(ghostAt);
     };
@@ -6743,7 +6749,7 @@ function init(){
       if (raf) { cancelAnimationFrame(raf); raf = 0; }
       if (ghost) { ghost.remove(); ghost = null; }
       if (!on) return;
-      on = false;
+      on = false; wShield(false);
       Z.rowsW = wAt(); applyRowsW();
       document.body.classList.remove("wdrag"); packWins(); save(); renderPointers(); rowsFit(); fieldInfoFit();
       const kill = (ev) => { ev.stopPropagation(); ev.preventDefault(); };   // тянули — это не щелчок по номеру
