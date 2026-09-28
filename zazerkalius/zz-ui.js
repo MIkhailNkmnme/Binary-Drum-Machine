@@ -1716,7 +1716,7 @@ function renderCone(){
   if (window.zzSndHeads) {   // v0.376: ◉ головки звука — обводка сектора звучащего бита
     g.lineWidth = Math.max(2 * dpr, Math.min(dr * 0.14, 5 * dpr)); g.shadowBlur = 8 * dpr;
     for (const [i, j, kd] of window.zzSndHeads) {
-      g.strokeStyle = g.shadowColor = kd === 1 ? "#ffd166" : "#22d3ee";   // v0.382: столбцовая — золотом
+      g.strokeStyle = g.shadowColor = kd === 1 ? "#ffd166" : "#22d3ee";   // v0.383: столбцовая — золотом
       if (i >= N || !shown(i)) continue; const n = (Z.rows[i] || "").length; if (!n || j >= n) continue;
       const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, a = -Math.PI / 2 + (j - coneRotOf(i)) * step;
       g.beginPath(); if (n > 1) { coneArc(g, cx, cy, i, rout, a, a + step); coneArc(g, cx, cy, i, rin, a + step, a, true); g.closePath(); } else { g.arc(cx, cy, rout, 0, 2 * Math.PI); } g.stroke();
@@ -2781,7 +2781,7 @@ function cone3DDraw(g, o){
   if (window.zzSndHeads) {   // v0.376: ◉ головки звука — точка на звучащем бите
     g.shadowBlur = 10 * dpr;
     for (const [i, j, kd] of window.zzSndHeads) {
-      g.fillStyle = g.shadowColor = kd === 1 ? "#ffd166" : "#22d3ee";   // v0.382: столбцовая — золотом
+      g.fillStyle = g.shadowColor = kd === 1 ? "#ffd166" : "#22d3ee";   // v0.383: столбцовая — золотом
       if (i >= N || !shown(i)) continue; const n = (Z.rows[i] || "").length; if (!n || j >= n) continue;
       const q = at(i, -Math.PI / 2 + (j - coneRotOf(i) + 0.5) * 2 * Math.PI / n, ringR(i));
       g.beginPath(); g.arc(q[0], q[1], Math.max(3 * dpr, Math.min(sc * 0.18, 9 * dpr)), 0, 2 * Math.PI); g.fill();
@@ -2863,7 +2863,7 @@ function cone3DDraw(g, o){
       let xl = Infinity, xr = -Infinity;
       for (let q = 0; q < 72; q++) { const p = at(N - 1, q / 72 * 2 * Math.PI, ringR(N - 1) + 0.4); xl = Math.min(xl, p[0]); xr = Math.max(xr, p[0]); }
       const RN = N, cell = hpx / RN, gap = Math.max(2 * dpr, cell * 1.2), s1 = cell * 0.78, s0 = cell * 0.34;
-      const heads = new Map((window.zzSndHeads || []).map(([r, j, kd]) => [r + ":" + j, kd === 1 ? "#ffd166" : "#22d3ee"]));   // v0.382: столбцовая — золотом
+      const heads = new Map((window.zzSndHeads || []).map(([r, j, kd]) => [r + ":" + j, kd === 1 ? "#ffd166" : "#22d3ee"]));   // v0.383: столбцовая — золотом
       for (let r = 0; r < RN; r++) {
         const s = Z.rows[r] || "", y = apex[1] + r * cell;
         for (let j = 0; j < s.length; j++) {
@@ -3714,7 +3714,7 @@ function setupCone(){
     sndMarkCone(P);   // v0.376
     if (!window.CSS || !CSS.highlights || typeof Highlight === "undefined") return;
     if (Z.sndMark === false || !P || !P.length) { CSS.highlights.delete("sndbit"); CSS.highlights.delete("sndbit2"); return; }
-    const Lr = $("rowList"), rs = [], rs2 = [];   // v0.382: rs2 — столбцовая головка (третий элемент 1) — золотом
+    const Lr = $("rowList"), rs = [], rs2 = [];   // v0.383: rs2 — столбцовая головка (третий элемент 1) — золотом
     for (const [r, j, kd] of P) {
       const bx = Lr.querySelector('.rw[data-r="' + r + '"] .bx'); if (!bx) continue;
       const w = document.createTreeWalker(bx, NodeFilter.SHOW_TEXT); let k = 0, nd;
@@ -3732,7 +3732,7 @@ function setupCone(){
      шаблон головок: сколько в ней 1 — столько бит звучит разом (до 8), где они стоят — на таком расстоянии от читаемого (у Серпинского
      под 1111 — 10001: два бита через 4). Строк из одних 1 выше нет — как прежде, два бита через ↔. Считается на каждом шаге — читаешь
      дальше вниз, прошёл следующую строку из 1 — шаблон сменился сам; что звучит сейчас — на кнопке. */
-  let snd2Last = null, sndRC = null;   // v0.382: sndRC — разметка столбцов для «стр+стл»
+  let snd2Last = null, sndRC = null;   // v0.383: sndRC — разметка столбцов для «стр+стл»
   const sndAuto = (r) => {
     if (!(r >= 0)) return null;
     for (let i = Math.min(r, Z.rows.length - 2); i >= 0; i--) {
@@ -3767,7 +3767,7 @@ function setupCone(){
       const on = []; L.forEach((r, v) => { const s = Z.rows[r]; if (s) sndOffs(s.length, r).forEach((o) => { const j = (k + o) % s.length; P.push([r, j]); const hz = sndBitHz(s, j); if (hz) on.push([hz, v]); }); });
       on.forEach(([hz, v]) => sndNote(hz, t, len, 0.32 / Math.sqrt(on.length), v));
     } else if (m === "rc") {
-      /* v0.382, «а что если добавить головку, идущую по столбцам» → «да» (и в Зазеркалиусе, и в фоне хаба, скорость одна): стр+стл — две
+      /* v0.383, «а что если добавить головку, идущую по столбцам» → «да» (и в Зазеркалиусе, и в фоне хаба, скорость одна): стр+стл — две
          головки разом. Строчная — как «подряд»: строки одна за другой слева направо (бирюза, ⁑ авто — к ней). Столбцовая — по столбцам: столбец
          сверху вниз (только строки, где он есть), потом следующий (золото, звучит октавой ниже — бас). Обе — на одном счёте шагов */
       const L = sndList(true); if (!L.length) return;
@@ -3838,7 +3838,7 @@ function setupCone(){
     const m = Z.sndMode || "row", len = (r) => (Z.rows[r] || "").length;
     if (m === "row") return (cur() || "").length;
     if (m === "sel") return Math.max(0, ...sndList(false).slice(0, 8).map(len));
-    if (m === "rc") return sndList(true).reduce((a, r) => a + (Z.rows[r] || "").length, 0);   // v0.382
+    if (m === "rc") return sndList(true).reduce((a, r) => a + (Z.rows[r] || "").length, 0);   // v0.383
     if (m === "seq" || m === "pair") { const L = sndList(true), G = m === "pair" ? 2 : 1; let t = 0; for (let j = 0; j < L.length; j += G) t += Math.max(1, ...L.slice(j, j + G).map(len)); return t; }
     return Z.rows.reduce((a, r) => Math.max(a, r.length), 0);
   };
@@ -3859,7 +3859,7 @@ function setupCone(){
      пирамидах; хабу — ответ { zerkSndOn }, чтобы кнопка горела */
   if (ZZ_BG) addEventListener("message", (e) => {
     const d = e.data; if (!d || typeof d !== "object" || d.zerkSnd === undefined) return;
-    Z.sndMode = "rc"; Z.sndMark = true; rowSel.clear();   // v0.382: в фоне — две головки, строки и столбцы
+    Z.sndMode = "rc"; Z.sndMark = true; rowSel.clear();   // v0.383: в фоне — две головки, строки и столбцы
     if (d.zerkSnd) { if (!sndT) sndSet(true); } else sndSet(false);
     try { if (e.source) e.source.postMessage({ zerkSndOn: !!sndT }, "*"); } catch (err) { /* хаб с другого адреса */ }
   });
