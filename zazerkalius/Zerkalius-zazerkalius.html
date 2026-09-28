@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.289. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.290. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.289</title>
+<title>Zazerkalius — v0.290</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -423,7 +423,10 @@ body.field-hidden #fieldEdge,body.zen #fieldEdge{display:none}
 #cutPanel{position:sticky;left:0;width:max-content;max-width:400px;background:none}
 #cutPanel button{padding:1px 6px;background:transparent;flex:0 0 auto;width:auto}
 #cutPanel button.on{background:transparent}
-#cutPanel #bCutClr{order:1;margin-left:auto;font-size:18px;line-height:1;padding:0 4px}   /* v0.289, «значок удалить побольше и прижми вниз вправо»: 🗑 — последним, в правый нижний угол панели */
+/* v0.290, по снимку поля — «вот тут в нижний угол всегда»: 🗑 — не в панели под чертой, а в правом нижнем углу видимой части поля строк,
+   поверх; при прокрутке и при коротком поле стоит там же (место считает clrPlace в zz-ui.js). v0.289 — в конце панели. */
+#bCutClr{position:absolute;z-index:5;font-size:18px;line-height:1;padding:2px 4px;background:var(--panel);border:1px solid var(--line);border-radius:4px}
+#bCutClr:disabled{opacity:.35;cursor:default}
 #cutPanel #tplBar{display:contents}
 #cutPanel #tplList{display:contents}
 #cutPanel .tpl{display:inline-flex;gap:2px;flex:0 0 auto;min-width:0}
@@ -844,7 +847,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.289</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.290</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -977,6 +980,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
          замков, ставит rowsLockAllPlace), справа сведения поля -->
     <div id="fieldInfoBar"><span id="fieldInfo" class="dim"></span></div>
     <div id="rowList" class="al-center"></div>
+    <button id="bCutClr" title="🗑 Стереть все строки под чертой — насовсем, во всех полях (↩ вернёт). Одну строку и всё над ней до черты — щелчок по её битам">🗑</button>   <!-- v0.290: в правом нижнем углу поля строк -->
     <!-- v0.225: под чертой поля — достройка строк (тянешь черту вниз) и свои шаблоны; при отрисовке поля переносится в #cutSlot -->
     <div id="cutPanel">
       <span class="cpl" title="Тянешь черту под строками вниз — новые строки достраиваются от строки над ней">достроить:</span>
@@ -991,7 +995,6 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
       <span class="cpl" title="Что делать со строками, которые уже лежат под чертой, когда тянешь её вниз. Подсветка — только когда там что-то есть">под чертой:</span>
       <button id="bCutHid" title="Заменить: включено — строки, что были под чертой, заменяются новыми (удаляются); выключено — сдвигаются вниз и остаются под чертой, ниже новых. Вместе с «⤒ из-под черты» не бывает: включил одну — другая гаснет">Заменить</button>
       <button id="bCutTake" class="on" title="⤒ Из-под черты (по умолчанию вкл): тянешь черту вниз — сперва возвращаются строки, что лежат под чертой, и только когда они кончились — достраиваются новые. Выкл — сразу достраиваются новые. Вместе с «Заменить» не бывает: включил одну — другая гаснет">⤒ из-под черты</button>
-      <button id="bCutClr" title="🗑 Стереть все строки под чертой — насовсем, во всех полях (↩ вернёт). Одну строку и всё над ней до черты — щелчок по её битам">🗑</button>
       <div id="tplBar">
       <button id="bTplRow" title="Сохранить ТЕКУЩУЮ строку своим шаблоном (запоминается). Щелчок по шаблону вставит её под текущей">＋ Строка</button>
       <button id="bTplAll" title="Сохранить ВЕСЬ столбик одним шаблоном (запоминается). Щелчок вставит все его строки под текущей">＋ Столбик</button>
@@ -1648,8 +1651,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0289"></script>
-<script src="zz-ui.js?v=0289"></script>
+<script src="zz-core.js?v=0290"></script>
+<script src="zz-ui.js?v=0290"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>

@@ -432,7 +432,17 @@ function cutPanelMount(){
   const f = document.getElementById("infoSlot"); if (f && FIELD_INFO && FIELD_INFO.parentNode !== f) f.appendChild(FIELD_INFO);
   const b = document.getElementById("bCutClr"); if (b) b.disabled = !hidCount();   // v0.245: 🗑 — только когда под чертой что-то есть
   cutHidUi();   // v0.288
+  clrPlace();   // v0.290
 }
+/* v0.290, «вот тут в нижний угол всегда»: 🗑 лежит в #field поверх поля строк — в правом нижнем углу его видимой части, левее и выше
+   полос прокрутки. Место пересчитывается при каждой отрисовке поля и при смене размеров поля (ResizeObserver). */
+const CLR_BTN = document.getElementById("bCutClr");
+function clrPlace(){
+  const L = document.getElementById("rowList"), F = document.getElementById("field"); if (!CLR_BTN || !L || !F) return;
+  CLR_BTN.style.right = (F.clientWidth - (L.offsetLeft + L.clientWidth) + 6) + "px";
+  CLR_BTN.style.bottom = (F.clientHeight - (L.offsetTop + L.clientHeight) + 4) + "px";
+}
+if (window.ResizeObserver) { const ro = new ResizeObserver(() => clrPlace()); ["rowList", "field"].forEach(id => { const e = document.getElementById(id); if (e) ro.observe(e); }); }
 /* v0.288, «убери выделение, когда нет внизу ничего»: «Заменить» и «⤒ из-под черты» — про строки, что уже лежат под чертой; когда там
    пусто, обе ничего не делают, и подсветка не горит. Сохранённый выбор не меняется — подсветится, как только под чертой появятся строки. */
 function cutHidUi(){
