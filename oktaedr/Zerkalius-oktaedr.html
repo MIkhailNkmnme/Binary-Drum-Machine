@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.045. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Октаэдр — v0.046. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.045</title>
+<title>Zerkalius Октаэдр — v0.046</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -52,7 +52,9 @@
   /* v0.030: пустая панель во время перетаскивания проступает на всю высоту — это и есть полоса магнита
      (см. SECS.dockUnder): видно, куда раздел прилипнет. */
   body.tab-dragging .dock.empty{ display:flex; min-height:calc(100vh - 120px); border:1px dashed var(--line); border-radius:4px; }
-  .dock.drop-hover{ outline:2px solid var(--up); outline-offset:2px; border-radius:4px; }
+  .dock.drop-hover{ outline:2px solid var(--up); outline-offset:2px; border-radius:4px; box-shadow:0 0 16px var(--up); }
+  /* v0.046, «такое же примагничивание надо»: плавающий раздел прилипает к краям соседних разделов, панелей и окна — тот, к кому прилип, светится */
+  .tab-sec.snap, .dock.snap{ box-shadow:0 0 0 1px var(--up), 0 0 14px var(--up) !important; }
   /* РАЗДЕЛЫ (v0.026, запрос пользователя: «всё это меню распредели на группы кнопок, как в Layers и у
      остальных, чтобы можно передвигать»). Устроено как в Zerkalius Code: у раздела шапка «✥ имя ✕»,
      за неё раздел таскают — над панелью он встаёт между разделами там, где курсор, мимо панелей висит
@@ -251,17 +253,26 @@
   html.zzemb .cap, html.zzemb #stepInfo, html.zzemb #myInfo{ color:var(--zd); }
   html.zzemb #myBits{ background:var(--zbg); border-color:var(--zl); border-radius:4px; }
   html.zzemb #myBits:focus{ border-color:var(--zacc); }
-  html.zzemb #menuTabs{ background:var(--zp); border-color:var(--zl); border-radius:6px; }
-  html.zzemb #menuTabs button{ border:0; border-right:1px solid var(--zl); border-radius:0; background:none; box-shadow:none;
-    color:var(--zd); font-size:12px; padding:3px 9px; }
-  html.zzemb #menuTabs button:last-child{ border-right:0; }
-  html.zzemb #menuTabs button.act{ color:var(--zgold); background:var(--zp2); }
-  html.zzemb #menuTabs button:hover{ color:var(--zt); }
+  /* v0.046, «меню кнопки тоже надо ромбами делать» (как ноты в Хабе): вкладки в окне — ромбы зигзагом, ребро к ребру: каждый следующий
+     заходит на полромба влево и чередуется вверх-вниз на полвысоты. В ромбе — значок, имя — в подсказке. Ромб — clip-path, нажимается
+     только он; рамка — фон кнопки, середина — тёмный ::before. Включённая вкладка — золотая, наведение — сиреневое. */
+  html.zzemb #menuTabs{ --rw:46px; --rh:32px; background:none; border:0; border-radius:0; overflow:visible; flex-wrap:nowrap; gap:0;
+    min-width:0; max-width:none; padding-bottom:calc(var(--rh) / 2); top:4px; }
+  html.zzemb #menuTabs button{ position:relative; isolation:isolate; width:var(--rw); height:var(--rh); padding:0; margin:0 0 0 calc(var(--rw) / -2);
+    border:0; border-radius:0; box-shadow:none; background:#3a4256; color:var(--zd); font-size:15px; line-height:1; text-align:center;
+    clip-path:polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+  html.zzemb #menuTabs button:first-child{ margin-left:0; }
+  html.zzemb #menuTabs button:nth-of-type(even){ transform:translateY(calc(var(--rh) / 2)); }
+  html.zzemb #menuTabs button::before{ content:""; position:absolute; inset:1.5px; z-index:-1; background:var(--zp);
+    clip-path:polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+  html.zzemb #menuTabs button:hover{ background:var(--zacc); color:var(--zt); }
+  html.zzemb #menuTabs button.act{ background:var(--zgold); color:var(--zgold); }
+  html.zzemb #menuTabs button.act::before{ background:color-mix(in srgb, var(--zgold) 14%, var(--zp)); }
 </style>
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.045</div>
+<div id="ver">v0.046</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -1883,6 +1894,7 @@ function zenToggle(on){
   bZen.classList.toggle("act", now);
 }
 const bZen = document.getElementById("bZen");
+if (ZZ_EMB) { bZen.title = "☯ Дзен — " + bZen.title; bZen.textContent = "☯"; }   // v0.046: вкладка-ромб — значком
 bZen.onclick = () => zenToggle();
 cv.addEventListener("pointerdown", (e) => { if (e.button === 1) { e.preventDefault(); zenToggle(); } });
 
@@ -2001,6 +2013,7 @@ const SECS = {
       const b = document.createElement("button");
       b.type = "button"; b.textContent = sec.dataset.title;
       b.title = "Показать / спрятать раздел «" + sec.dataset.title + "»";
+      if (ZZ_EMB) { const t = sec.dataset.title, sp = t.indexOf(" "); if (sp > 0) b.textContent = t.slice(0, sp); }   // v0.046: в ромбе — значок
       b.onclick = () => { sec.classList.toggle("off"); this.sync(); };
       sec._tabBtn = b; bar.insertBefore(b, tail);
       this.addHead(sec);
@@ -2049,7 +2062,28 @@ const SECS = {
      попасть в неё было почти нельзя. Теперь у каждого края экрана своя полоса шириной в панель с запасом
      (MAG): курсор в ней — раздел прилипает к панели этого края, по высоте не важно где. Плавающим окном
      раздел становится только посередине. */
-  MAG: 240,
+  /* v0.046: полоса магнита — не шире 22 % окна: в узком окне Zazerkalius 240 px с двух сторон съедали почти всю ширину */
+  get MAG(){ return Math.min(240, Math.round(innerWidth * 0.22)); },
+  /* v0.046, «такое же примагничивание надо»: плавающий раздел — край ближе SNAP px к краю другого плавающего раздела, панели или окна —
+     встаёт на него (по горизонтали и вертикали отдельно); тот, к кому прилип, светится (.snap) */
+  SNAP: 10,
+  snapTo(sec, x, y){
+    const w = sec.offsetWidth, h = sec.offsetHeight, S = this.SNAP, T = [];
+    this.all().forEach(o => { if (o !== sec && o.classList.contains("floating") && !o.classList.contains("off")) T.push([o, o.getBoundingClientRect()]); });
+    this.docks().forEach(p => { if (!p.classList.contains("empty")) T.push([p, p.getBoundingClientRect()]); });
+    T.push([null, { left: 0, right: innerWidth, top: 0, bottom: innerHeight }]);
+    let dx = S + 1, dy = S + 1, ex = null, ey = null;
+    for (const [el, q] of T) {
+      for (const t of [q.left, q.right]) for (const v of [x, x + w]) if (Math.abs(t - v) < Math.abs(dx)) { dx = t - v; ex = el; }
+      for (const t of [q.top, q.bottom]) for (const v of [y, y + h]) if (Math.abs(t - v) < Math.abs(dy)) { dy = t - v; ey = el; }
+    }
+    const hit = new Set();
+    if (Math.abs(dx) <= S) { x += dx; if (ex) hit.add(ex); }
+    if (Math.abs(dy) <= S) { y += dy; if (ey) hit.add(ey); }
+    this.snapGlow(hit);
+    return [x, y];
+  },
+  snapGlow(hit){ document.querySelectorAll(".tab-sec.snap, .dock.snap").forEach(o => { if (!hit || !hit.has(o)) o.classList.remove("snap"); }); if (hit) hit.forEach(o => o.classList.add("snap")); },
   dockUnder(x, y){
     const [L, R] = this.docks();
     if (x <= this.MAG) return L;
@@ -2080,14 +2114,17 @@ const SECS = {
       else if (dock.lastElementChild !== d.sec) dock.appendChild(d.sec);
     } else {
       if (!d.sec.classList.contains("floating")) { d.sec.classList.add("floating"); document.body.appendChild(d.sec); }
-      this.clamp(d.sec, e.clientX - d.dx, e.clientY - d.dy);
+      const [sx, sy] = this.snapTo(d.sec, e.clientX - d.dx, e.clientY - d.dy);   // v0.046: магнит
+      this.clamp(d.sec, sx, sy);
     }
+    if (dock) this.snapGlow(null);
   },
   end(){
     const d = this.drag; this.drag = null;
     if (!d || !d.started) return;
     d.sec.classList.remove("dragging"); document.body.classList.remove("tab-dragging");
     this.docks().forEach(p => p.classList.remove("drop-hover"));
+    this.snapGlow(null);   // v0.046
     this.save(); this.sync();
   },
   save(){

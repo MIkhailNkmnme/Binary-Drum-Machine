@@ -6003,6 +6003,24 @@ function ctwInit(){
    последняя тронутая — сверху. Двойной щелчок по подписи — обратно на полосу. Места — Z.cgrpPos { имя: { x, y } } в пикселях от
    угла полосы; меняет их только перетаскивание (сами не выравниваются и не переставляются). */
 // v0.258: кнопка или галка (метка с флажком), которая переезжает между группами конуса, и её место по ссылке ("#id" или селектор)
+/* v0.400, по снимку магнита Октаэдра — «такое же примагничивание надо» (группы конуса, окна): край ближе snap px к краю цели — встаёт на него,
+   по горизонтали и вертикали отдельно, ближайший; цели — [элемент, прямоугольник], экранные координаты. Те, к кому прилипли, светятся (.zsnap). */
+let zSnapOn = [];
+function zSnapGlow(els){
+  zSnapOn.forEach(e => { if (!els.includes(e)) e.classList.remove("zsnap"); });
+  els.forEach(e => e.classList.add("zsnap")); zSnapOn = els.slice();
+}
+function zSnapTo(x, y, w, h, targets, snap){
+  let dx = snap + 1, dy = snap + 1, ex = null, ey = null;
+  for (const [el, q] of targets) {
+    for (const t of [q.left, q.right]) for (const v of [x, x + w]) if (Math.abs(t - v) < Math.abs(dx)) { dx = t - v; ex = el; }
+    for (const t of [q.top, q.bottom]) for (const v of [y, y + h]) if (Math.abs(t - v) < Math.abs(dy)) { dy = t - v; ey = el; }
+  }
+  const hit = [];
+  if (Math.abs(dx) <= snap) { x += dx; if (ex) hit.push(ex); }
+  if (Math.abs(dy) <= snap) { y += dy; if (ey && !hit.includes(ey)) hit.push(ey); }
+  return [x, y, hit];
+}
 function cgrpMoveEl(src){   // v0.320: кнопка из блока .cunit (◀ [ось] ▶) переезжает вместе со всем блоком
   const u = src && src.closest && src.closest(".cunit"); if (u) return u;
   return src && src.tagName === "INPUT" ? src.closest("label") : src;
@@ -6070,13 +6088,10 @@ function cgrpInit(){
   /* v0.366: магнит — край тащимой группы ближе SNAP px к краю окна конуса, поля строк или другой группы (любой стороной: вплотную или вровень) —
      встаёт ровно на него; по горизонтали и вертикали — отдельно, ближайший край. Координаты — экранные */
   const SNAP = 10;
-  const snapXY = (g, x, y, w, h) => {
-    const xs = [], ys = [], add = (q) => { if (q && q.width > 4 && q.height > 4) { xs.push(q.left, q.right); ys.push(q.top, q.bottom); } };
-    add(wb.getBoundingClientRect());
-    const F = $("field"); if (F && F.getClientRects().length) add(F.getBoundingClientRect());
-    groups.forEach(o => { if (o !== g && o.getClientRects().length) add(o.getBoundingClientRect()); });
-    const best = (v, len, list) => { let d = SNAP + 1; for (const t of list) for (const e of [v, v + len]) if (Math.abs(t - e) < Math.abs(d)) d = t - e; return Math.abs(d) <= SNAP ? v + d : v; };
-    return [best(x, w, xs), best(y, h, ys)];
+  const snapXY = (g, x, y, w, h) => {   // v0.400: через zSnapTo — и с подсветкой того, к чему прилипла
+    const T = [], add = (el) => { if (!el || !el.getClientRects().length) return; const q = el.getBoundingClientRect(); if (q.width > 4 && q.height > 4) T.push([el, q]); };
+    add(wb); add($("field")); groups.forEach(o => { if (o !== g) add(o); });
+    const [sx, sy, hit] = zSnapTo(x, y, w, h, T, SNAP); zSnapGlow(hit); return [sx, sy];
   };
   const place = (g) => {
     const f = !FLD_NO[g.dataset.g] && g.parentElement === tl && Z.cgrpFld[g.dataset.g], fr = f && fldRect();   // v0.348: на поле строк
@@ -6163,7 +6178,7 @@ function cgrpInit(){
         g.removeEventListener("pointermove", mv); g.removeEventListener("pointerup", up); g.removeEventListener("pointercancel", up);
         if (!moved) return;
         const gr = g.getBoundingClientRect(), onF = !paneHit(lx, ly) && fldFits(g, gr), F = $("field"); if (F) F.classList.remove("cgover");   // v0.348
-        g.classList.remove("cdrag"); document.body.classList.remove("cgdrag"); sizeApply(g); const P = $("rowsPane"); if (P) P.classList.remove("cgover");
+        g.classList.remove("cdrag"); document.body.classList.remove("cgdrag"); sizeApply(g); const P = $("rowsPane"); if (P) P.classList.remove("cgover"); zSnapGlow([]);   // v0.400
         if (paneHit(lx, ly)) { delete Z.cgrpFld[g.dataset.g]; dock(g, lx, ly); save(); return; }
         if (g.parentElement !== tl) undock(g);
         if (onF) { const fr = fldRect(); Z.cgrpFld[g.dataset.g] = { x: Math.round(gr.left - fr.left), y: Math.round(gr.top - fr.top) }; delete Z.cgrpPos[g.dataset.g]; place(g); save(); return; }   // v0.348: целиком на поле строк
@@ -6198,7 +6213,8 @@ function cgrpInit(){
      Назад — вытащить за заголовок на холст или правый щелчок по заголовку (на полосу). Порядок — Z.cgrpDock, ширина — Z.paneW. */
   if (!Array.isArray(Z.cgrpDock)) Z.cgrpDock = [];
   const box = $("paneGrp"), head = $("paneGrpHead");
-  const paneHit = (x, y) => { const P = $("rowsPane"); if (!P || !box || document.body.classList.contains("pane-icons")) return false; const q = P.getBoundingClientRect(); return x >= q.left && x <= q.right && y >= q.top && y <= q.bottom; };
+  // v0.400: магнит левой панели — ловит и в 40 px правее её края (как полоса магнита у Октаэдра)
+  const paneHit = (x, y) => { const P = $("rowsPane"); if (!P || !box || document.body.classList.contains("pane-icons")) return false; const q = P.getBoundingClientRect(); return x >= q.left && x <= q.right + 40 && y >= q.top && y <= q.bottom; };
   const dockSync = () => {
     Z.cgrpDock = box ? [...box.children].map(c => c.dataset.g) : [];
     if (head) head.style.display = Z.cgrpDock.length ? "" : "none";
@@ -6832,13 +6848,21 @@ function setupWin(el){
     head.setPointerCapture(e.pointerId);
     const field = $("field");
     const overField = (ev) => { const f = field.getBoundingClientRect(); return ev.clientX >= f.left && ev.clientX <= f.right && ev.clientY >= f.top && ev.clientY <= f.bottom; };
+    /* v0.400, «такое же примагничивание надо» — окна: край окна ближе 10 px к краю другого окна, стола или поля строк — встаёт на него; сосед светится */
+    const wt = [], wadd = (o) => { if (!o || o === el || !o.getClientRects().length) return; const q = o.getBoundingClientRect(); if (q.width > 4 && q.height > 4) wt.push([o, q]); };
+    document.querySelectorAll(".win").forEach(o => { if (!o.classList.contains("docked") && o.style.display !== "none") wadd(o); });
+    wadd($("desk")); wadd(field);
     const move = (ev) => {
-      el.style.left = (ev.clientX - offX) + "px"; el.style.top = (ev.clientY - offY) + "px";
-      field.classList.toggle("dock-hint", overField(ev));
+      const of = overField(ev);
+      const [nx, ny, hit] = of ? [ev.clientX - offX, ev.clientY - offY, []] : zSnapTo(ev.clientX - offX, ev.clientY - offY, el.offsetWidth, el.offsetHeight, wt, 10);
+      zSnapGlow(hit);
+      el.style.left = nx + "px"; el.style.top = ny + "px";
+      field.classList.toggle("dock-hint", of);
     };
     const up = (ev) => {
       head.removeEventListener("pointermove", move); head.removeEventListener("pointerup", up);
-      field.classList.remove("dock-hint");
+      field.classList.remove("dock-hint"); zSnapGlow([]);   // v0.400
+      const rs = el.getBoundingClientRect();   // v0.400: место — с учётом магнита, а не голой мыши
       el.classList.remove("dragging");
       if (overField(ev)) {
         dockWin(el, ev.clientY);
@@ -6846,8 +6870,8 @@ function setupWin(el){
       } else {
         if (wasDocked) undockWin(el);
         const desk = $("desk"), d = desk.getBoundingClientRect();
-        w.x = Math.max(0, Math.round(ev.clientX - offX - d.left + desk.scrollLeft));
-        w.y = Math.max(0, Math.round(ev.clientY - offY - d.top + desk.scrollTop));
+        w.x = Math.max(0, Math.round(rs.left - d.left + desk.scrollLeft));
+        w.y = Math.max(0, Math.round(rs.top - d.top + desk.scrollTop));
         el.style.left = w.x + "px"; el.style.top = w.y + "px"; el.style.width = w.w + "px";
         w.px = w.x;   // v0.023: поставил — это желаемое место
       }
