@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.372. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.373. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.372</title>
+<title>Zazerkalius — v0.373</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -966,6 +966,7 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 #paneGrp label.sunmode:has(> input[type=checkbox]:checked){border-color:var(--line);color:var(--txt);box-shadow:none}
 #paneGrp label > input[type=checkbox]{position:absolute !important;opacity:0 !important;width:0 !important;height:0 !important;margin:0 !important;pointer-events:none}
 #paneGrp .cgrp :disabled,#paneGrp .cgrp label.dis{opacity:.35;cursor:default}
+.cgrp label.dis3{opacity:.35;cursor:default;pointer-events:none}   /* v0.373: «Лазер» в 3D — неактивен */
 #paneGrp .cgrp.cmin > .cgb{display:none !important}
 #paneGrp .cgrp.cmin > .glab::after{content:" ▸";color:var(--dim)}
 .cgrp.cdrag{position:fixed !important;z-index:2000 !important;margin:0 !important;box-shadow:0 8px 24px rgba(0,0,0,.5);opacity:.92}
@@ -1021,7 +1022,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.372</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.373</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1867,8 +1868,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0372"></script>
-<script src="zz-ui.js?v=0372"></script>
+<script src="zz-core.js?v=0373"></script>
+<script src="zz-ui.js?v=0373"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

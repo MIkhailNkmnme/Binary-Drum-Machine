@@ -1483,7 +1483,21 @@ function coneHoverRow(i){
   L.querySelectorAll(".rw.hov").forEach(el => el.classList.remove("hov"));
   if (i >= 0) { const el = L.querySelector('.rw[data-r="' + i + '"]'); if (el) el.classList.add("hov"); }
 }
+/* v0.373, по снимку группы «Лазер» в 3D — «в 3D лазер: все кнопки пока что неактивные нужно»: в 3D лазер не рисуется и не считается,
+   поэтому все кнопки, поля и списки группы «Лазер» в 3D неактивны (бледные, не жмутся, подсказка — почему); группу можно двигать.
+   Вышел из 3D — возвращаются, как были (то, что было неактивно само по себе, — таким и остаётся). Метка — data-d3 / .dis3 */
+function lasUi3d(){
+  const G = document.querySelector(".cgrp.cg-las"); if (!G) return;
+  const on = !!Z.cone3d;
+  G.querySelectorAll("button, input, select").forEach(el => {
+    if (on) { if (!el.dataset.d3) el.dataset.d3 = el.disabled ? "was" : "1"; if (!el.disabled) el.disabled = true; }   // и если что-то включило его заново
+    else if (el.dataset.d3) { if (el.dataset.d3 === "1") el.disabled = false; delete el.dataset.d3; }
+  });
+  G.querySelectorAll("label").forEach(l => l.classList.toggle("dis3", on));
+  if (G.classList.contains("las3d") !== on) { G.classList.toggle("las3d", on); if (on) { G.dataset.tip0 = G.title; G.title = "⌖ Лазер в 3D пока не работает — кнопки неактивны. Выйди из 3D (🧊), чтобы включить лазер"; } else if (G.dataset.tip0 !== undefined) { G.title = G.dataset.tip0; delete G.dataset.tip0; } }
+}
 function renderCone(){
+  lasUi3d();   // v0.373
   if (!winOpen("w-cone")) return;
   { const b3 = $("bC3d"), bo = $("bC3Octa"); if (b3) b3.classList.toggle("on", !!Z.cone3d); if (bo) bo.classList.toggle("on", !!Z.coneOcta); }   // v0.270: кнопки над пультом — как галки
   { const p3 = $("cone3Pad"); if (p3) p3.classList.toggle("flat", !Z.cone3d); }   // v0.157: кнопки 3D — только в 3D; v0.164: в 2D — одна зелёная «всё на места»
