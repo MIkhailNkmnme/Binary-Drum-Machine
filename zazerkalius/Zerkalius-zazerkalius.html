@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.278. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.279. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.278</title>
+<title>Zazerkalius — v0.279</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -475,6 +475,16 @@ body.bgmode #coneBtns{display:none}
 #cone3Pad .c3top{position:absolute;left:-1px;right:-1px;bottom:calc(100% + 4px);display:flex;gap:4px}   /* v0.270: 🧊 3D и ⧗ зеркало над пультом; v0.273 — ровно по ширине пульта */
 #cone3Pad .c3top button{flex:1 1 0;min-width:0;width:auto;height:26px;padding:0 2px;font-size:11px;white-space:nowrap;overflow:hidden;background:var(--panel)}
 #cone3Pad .c3top button.on{color:var(--gold);border-color:var(--gold)}
+#cone3Pad .c3bot{grid-column:1 / -1;display:flex;gap:3px}   /* v0.279: ▶ крутить и направление — нижней строкой пульта, видны и в плоском виде */
+#cone3Pad .c3bot button{height:26px;padding:0 2px;font-size:11px;white-space:nowrap;overflow:hidden}
+#cone3Pad .c3bot #bC3Auto{flex:1 1 0;min-width:0;width:auto}
+#cone3Pad .c3bot #bC3Dir{flex:0 0 28px;width:28px;font-size:14px}
+#cone3Pad .c3bot button.on{color:var(--gold);border-color:var(--gold)}
+#w-cone .tools .cgb > span.smb{gap:0}   /* v0.279: режимы кручения — кнопками, слитной полоской */
+#w-cone .tools .cgb > span.smb > button{padding:0 6px;border-radius:0;margin-left:-1px}
+#w-cone .tools .cgb > span.smb > button:first-child{border-radius:4px 0 0 4px;margin-left:0}
+#w-cone .tools .cgb > span.smb > button:last-child{border-radius:0 4px 4px 0}
+#w-cone .tools .cgb > span.smb > button.on{position:relative;z-index:1}
 #cone3Pad .c3home{color:var(--green);border-color:var(--green);font-weight:700}
 #cone3Pad .c3grip{display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:16px;cursor:move;touch-action:none;user-select:none;border-radius:4px}   /* v0.179: ручка пульта */
 #cone3Pad .c3grip:hover{color:var(--acc2);background:rgba(34,211,238,.15)}
@@ -813,7 +823,7 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.278</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.279</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1384,7 +1394,7 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
             <span class="glab2">весь:</span>
             <button id="bConeSpinL" title="Крутить весь конус против часовой на один бит нижней строки (выделены строки — самой нижней из выделенных); держишь — дальше тем же шагом. Правый щелчок — вернуть к началу (0°)">⟲</button>
             <button id="bConeSpinR" title="Крутить весь конус по часовой на один бит нижней строки (выделены строки — самой нижней из выделенных); держишь — дальше тем же шагом. Правый щелчок — вернуть к началу (0°)">⟳</button>
-            <select id="coneSpinMode" title="Как крутить. Всё — весь конус одним поворотом. Каждое — каждое кольцо на бит за шаг (маленькие вертятся быстрее, рисунок закручивается спиралью и раз в какое-то время все возвращаются). Встреч Стр — чётные кольца по часовой, нечётные против, с одной скоростью. Встреч Бит — как Каждое, на бит за шаг, но через строку в обратную сторону"><option value="all">Всё</option><option value="bit">Каждое</option><option value="opp">Встреч Стр</option><option value="obit">Встреч Бит</option></select>
+            <select id="coneSpinMode" hidden style="display:none" title="Как крутить. Всё — весь конус одним поворотом. Каждое — каждое кольцо на бит за шаг (маленькие вертятся быстрее, рисунок закручивается спиралью и раз в какое-то время все возвращаются). Встреч Стр — чётные кольца по часовой, нечётные против, с одной скоростью. Встреч Бит — как Каждое, на бит за шаг, но через строку в обратную сторону"><option value="all">Всё</option><option value="bit">Каждое</option><option value="opp">Встреч Стр</option><option value="obit">Встреч Бит</option></select><span id="coneSpinModeB" class="smb" title="Как крутить — щелчок выбирает режим (v0.279: кнопками вместо списка)"><button data-sm="all" title="Всё — весь конус одним поворотом">Всё</button><button data-sm="bit" title="Каждое — каждое кольцо на бит за шаг: маленькие вертятся быстрее, рисунок закручивается спиралью и раз в какое-то время все возвращаются">Каждое</button><button data-sm="opp" title="Встреч Стр — чётные кольца по часовой, нечётные против, с одной скоростью">Встреч Стр</button><button data-sm="obit" title="Встреч Бит — как Каждое, на бит за шаг, но через строку в обратную сторону">Встреч Бит</button></span>
             <button id="bConeAuto" title="▶ Крутить весь конус само, без остановки (скорость — ползунок рядом; минус — в другую сторону). Ещё раз — стоп">▶ крутить</button>
             <button id="bConeDir" title="Направление кручения: ↻ по часовой / ↺ против часовой — щелчок переключает. ▶ крутить и шаги ◀ ▶| идут в эту сторону">↻ по часовой</button>
             <span class="cstep" style="display:inline-flex;align-items:center;gap:3px;white-space:nowrap"><button id="bConeStepB" title="◀ Шаг назад (против выбранного направления): крутить назад (режимом рядом — по биту / навстречу) до прошлого события лазера — пока конец луча не сменится. Каждое событие — в лог лазера">◀</button><label class="dim" title="Скорость кручения — только величина, по логарифму: 1…3600 градусов в секунду («по биту» — 0,1…360 бит в секунду). Направление — кнопкой ↻ / ↺ рядом"><input type="range" id="coneAutoSp" min="0" max="100" step="1" value="42" style="width:90px;vertical-align:middle"> <span id="coneAutoSpV" style="display:inline-block;min-width:4.6em;font-variant-numeric:tabular-nums"></span></label><button id="bConeStepF" title="▶| Шаг вперёд (в выбранном направлении): крутить (режимом рядом — по биту / навстречу) до следующего события лазера — луч упёрся в другую ячейку, пойман другим кольцом или прошёл. Каждое событие — в лог лазера">▶|</button></span>
@@ -1480,6 +1490,8 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
             <button data-c3="yaw-" title="Повернуть влево на 15° (держи — дальше)">⟲</button><button data-c3="el+" title="Наклон: смотреть сверху круче на 10°">▲</button><button data-c3="yaw+" title="Повернуть вправо на 15° (держи — дальше)">⟳</button>
             <button data-c3="z-" title="Мельче">−</button><button data-c3="home" title="Вид по умолчанию: поворот 30°, наклон 50°, масштаб 1, без сдвига (то же — Alt + двойной щелчок)">⌂</button><button data-c3="z+" title="Крупнее">＋</button>
             <button data-c3="allhome" class="c3home" title="⟲ Всё на места — как кнопка «⟲ всё на места» у кручения: накрутка колец, кручение, счёт, довод строки 1">↺</button><button data-c3="el-" title="Наклон: смотреть сбоку положе на 10°">▼</button><span class="c3grip" title="Тяни — перенести пульт куда угодно по холсту; двойной щелчок — обратно в угол">⠿</span>
+            <!-- v0.279, «кнопку Крутить копируй в квадрат этот кнопок … вместе с направлением»: те же ▶ крутить и ↻ / ↺, что в «Кручении» -->
+            <div class="c3bot"><button id="bC3Auto" title="▶ Крутить весь конус само — то же, что «▶ крутить» в «Кручении». Ещё раз — стоп. Правый щелчок — всё кручение на места">▶ крутить</button><button id="bC3Dir" title="Направление кручения — то же, что кнопка рядом с «▶ крутить»: ↻ по часовой / ↺ против">↻</button></div>
           </div>
           <div id="coneList" title="Строки — как в поле: щелчок — текущая, Ctrl + щелчок — выделить; 🔒/🔓 — замок этого кольца"></div>
         </div>
@@ -1610,8 +1622,8 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0278"></script>
-<script src="zz-ui.js?v=0278"></script>
+<script src="zz-core.js?v=0279"></script>
+<script src="zz-ui.js?v=0279"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>

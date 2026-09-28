@@ -1986,6 +1986,11 @@ function spinSpUi(){
 function coneDirUi(){   // v0.136: ползунок — величина скорости, кнопка — направление
   const sp = Z.coneAutoSp ?? 30; if (!sp) Z.coneAutoSp = 30;
   $("coneAutoSp").value = spinPosOf(Math.abs(sp || 30)); $("bConeDir").textContent = sp < 0 ? "↺ против" : "↻ по часовой"; spinSpUi();
+  const d3 = $("bC3Dir"); if (d3) d3.textContent = sp < 0 ? "↺" : "↻";   // v0.279: направление и в пульте
+  coneSpinModeUi();
+}
+function coneSpinModeUi(){   // v0.279, «это вынеси в кнопки»: режим кручения — кнопками, горит выбранный (список coneSpinMode — скрытый, держит значение)
+  const m = Z.coneSpinMode || "all"; document.querySelectorAll("#coneSpinModeB > button").forEach(b => b.classList.toggle("on", b.dataset.sm === m));
 }
 function coneAimDeep(a){
   const gapAt = (R, x) => {   // щель кольца, ближайшая к углу x: [от, до]
@@ -2910,6 +2915,7 @@ function setupCone(){
     if (on && !autoRaf) { autoT0 = 0; coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass); coneSpinning = true; autoRaf = requestAnimationFrame(autoTick); }   // v0.119: стоим на проходе — он уже засчитан
     if (!on && autoRaf) { cancelAnimationFrame(autoRaf); autoRaf = 0; coneSpinning = false; save(); }
     $("bConeAuto").classList.toggle("on", on); $("bConeAuto").textContent = on ? "⏸ стоп" : "▶ крутить";
+    const a3 = $("bC3Auto"); if (a3) { a3.classList.toggle("on", on); a3.textContent = on ? "⏸ стоп" : "▶ крутить"; }   // v0.279: копия в пульте
   };
   $("bConeAuto").onclick = () => autoSet(!autoRaf);
   /* v0.135, «сделай паузу при клике на поле, а плей — только по кнопке»: щелчок по конусу или по полю строк, пока кольца крутятся, —
@@ -3206,7 +3212,11 @@ function setupCone(){
   /* v0.189, «и ничего не крутит» (снимок: Встреч Бит, одна строка, вырез закрыт): остановленные кольца (Z.voidHits.fz) хранят фазу в
      единицах своего режима — во «Встреч Стр» в градусах, в Каждое / Встреч Бит в битах. После смены режима 179° читались как 179 бит,
      вырез строки 1 вставал закрытым навсегда, и крутить было нечего. Теперь смена режима отпускает кольца (краска и лог остаются). */
-  $("coneSpinMode").onchange = (e) => { Z.coneSpinMode = e.target.value; spinSpUi(); Z.coneSpinPh = 0; Z.coneClockN = 0; coneLaserResetAll(); coneWallWas = undefined; save(); renderCone(); coneLogRender();
+  $("coneSpinModeB").onclick = (e) => { const b = e.target.closest("button[data-sm]"); if (!b) return; const sel = $("coneSpinMode"); sel.value = b.dataset.sm; sel.onchange({ target: sel }); };   // v0.279
+  $("bC3Auto").onclick = () => $("bConeAuto").click();   // v0.279: пульт жмёт те же кнопки «Кручения»
+  $("bC3Auto").oncontextmenu = (e) => $("bConeAuto").oncontextmenu(e);
+  $("bC3Dir").onclick = () => $("bConeDir").click();
+  $("coneSpinMode").onchange = (e) => { Z.coneSpinMode = e.target.value; spinSpUi(); coneSpinModeUi(); Z.coneSpinPh = 0; Z.coneClockN = 0; coneLaserResetAll(); coneWallWas = undefined; save(); renderCone(); coneLogRender();
     say({ all: "▶ Всё целиком: весь конус одним поворотом.", bit: "▶ Каждое по биту: маленькие кольца вертятся быстрее — рисунок закручивается спиралью.", obit: "▶ Навстречу по биту: каждое кольцо на бит за шаг, через строку — в обратную сторону.", opp: "▶ Навстречу по строкам: чётные кольца по часовой, нечётные против, с одной скоростью." }[Z.coneSpinMode] + " Правый щелчок по ▶ — всё на места."); };
   /* v0.136, «эта скорость непонятная — раздели: одна только скорость, а направление задавать другой кнопкой; слева-справа — стрелки
      шаг»: ползунок — величина (5…120), знак Z.coneAutoSp — направление, его переключает «↻ по часовой / ↺ против». */
