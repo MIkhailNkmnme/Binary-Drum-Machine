@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.343. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.344. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.343</title>
+<title>Zazerkalius — v0.344</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -961,7 +961,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.343</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.344</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1582,29 +1582,30 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
             </select>
             <label class="dim" title="⟳ Проходами: ▶ волна идёт целыми проходами — за шаг весь проход волны от верха до низа, конус показывает только готовые проходы (в Треугольнике это «Плеер — целыми циклами»). Скорость — проходов в секунду. Цикл — другое: число проходов, через которое картина повторяется (пишется справа, когда найден)"><input type="checkbox" id="animByPass"> ⟳ проходами</label>
             <label class="dim" title="Скорость волны, по логарифму: 0,5…5000 строк в секунду (с ⟳ проходами — проходов в секунду)">⚡ <input type="range" id="animSp" min="0" max="100" step="1" value="40" style="width:90px;vertical-align:middle"> <span id="animSpV" style="display:inline-block;min-width:5em;font-variant-numeric:tabular-nums"></span></label>
-            <select id="animPreset" title="Заготовка: поле строк заменяется целиком (↩ вернёт), строк — сколько в поле рядом (по умолчанию 256), сид — начальная строка. Правила — элементарные автоматы из сида, строка — световой конус (на 2 бита длиннее предыдущей); из одной «1» правила группы «Серпинский» дают один и тот же треугольник, различаются с сида, где единицы стоят рядом (11, 1101…). Последовательности — строка i из первых i + 1 членов">
+            <!-- v0.344, по снимку «📋 заготовка…» — «размер 2, внутри сократи „Правило“ — слишком часто слово»: «Правило 90» → «R90», длинные названия короче -->
+            <select id="animPreset" title="Заготовка (R — правило элементарного автомата, R90 — правило 90; Паскаль — +1 бит на строку; дракон — складывание бумаги): поле строк заменяется целиком (↩ вернёт), строк — сколько в поле рядом (по умолчанию 256), сид — начальная строка. Правила — элементарные автоматы из сида, строка — световой конус (на 2 бита длиннее предыдущей); из одной «1» правила группы «Серпинский» дают один и тот же треугольник, различаются с сида, где единицы стоят рядом (11, 1101…). Последовательности — строка i из первых i + 1 членов">
               <option value="">📋 заготовка…</option>
               <optgroup label="Серпинский">
-                <option value="pascal">🔺 Паскаль mod 2 (+1 бит)</option>
-                <option value="r90">Правило 90</option>
-                <option value="r18">Правило 18</option>
-                <option value="r26">Правило 26</option>
-                <option value="r82">Правило 82</option>
-                <option value="r146">Правило 146</option>
-                <option value="r154">Правило 154</option>
-                <option value="r210">Правило 210</option>
-                <option value="r218">Правило 218</option>
+                <option value="pascal">🔺 Паскаль mod 2</option>
+                <option value="r90">R90</option>
+                <option value="r18">R18</option>
+                <option value="r26">R26</option>
+                <option value="r82">R82</option>
+                <option value="r146">R146</option>
+                <option value="r154">R154</option>
+                <option value="r210">R210</option>
+                <option value="r218">R218</option>
               </optgroup>
               <optgroup label="Родственные">
-                <option value="r22">Правило 22</option><option value="r126">Правило 126 — толстый</option><option value="r150">Правило 150 — XOR трёх</option>
-                <option value="r60">Правило 60 — Паскаль влево</option><option value="r102">Правило 102 — Паскаль вправо</option>
-                <option value="r182">Правило 182</option><option value="r195">Правило 195 — инверсия 60</option><option value="r30">Правило 30 — хаос</option><option value="r110">Правило 110</option>
+                <option value="r22">R22</option><option value="r126">R126 — толстый</option><option value="r150">R150 — XOR трёх</option>
+                <option value="r60">R60 — Паскаль ←</option><option value="r102">R102 — Паскаль →</option>
+                <option value="r182">R182</option><option value="r195">R195 — инверсия R60</option><option value="r30">R30 — хаос</option><option value="r110">R110</option>
               </optgroup>
               <optgroup label="Последовательности">
                 <option value="s:tm">Туэ — Морс</option><option value="s:fib">Слово Фибоначчи</option><option value="s:rs">Рудин — Шапиро</option>
-                <option value="s:fold">Складывание бумаги (дракон)</option><option value="s:pd">Удвоение периода</option><option value="s:bs">Баум — Свит</option>
+                <option value="s:fold">Дракон (сгибы)</option><option value="s:pd">Удвоение периода</option><option value="s:bs">Баум — Свит</option>
                 <option value="s:kol">Колакоски</option><option value="s:prime">Простые числа</option><option value="s:sq">Квадраты</option>
-                <option value="s:cnt">Двоичный счёт 1, 10, 11…</option><option value="s:rnd">🎲 Случайные</option>
+                <option value="s:cnt">Счёт 1, 10, 11…</option><option value="s:rnd">🎲 Случайные</option>
               </optgroup>
             </select>
             <button id="bEcaMap" title="▦ Карта всех 256 правил сеткой 16×16 (из нынешнего сида): наведение — правило и его энтропия, зеркальность, доля единиц; щелчок — правило строками в поле, как заготовка (↩ вернёт). Закрыть — ▦ ещё раз, Esc или щелчок мимо">▦ 256</button>
@@ -1795,8 +1796,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0343"></script>
-<script src="zz-ui.js?v=0343"></script>
+<script src="zz-core.js?v=0344"></script>
+<script src="zz-ui.js?v=0344"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
