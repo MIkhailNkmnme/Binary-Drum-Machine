@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.297. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.298. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.297</title>
+<title>Zazerkalius — v0.298</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -110,7 +110,7 @@ body.field-hidden.pane-icons #main,body.field-hidden.field-right.pane-icons #mai
 body.pane-icons #rowsPane{overflow-y:auto;overflow-x:hidden}
 body.pane-icons #bPaneIcons{position:static;margin:6px 4px;font-size:13px}
 body.pane-icons #rowsPane .pane-head,body.pane-icons #maskBar,body.pane-icons #maskBar2 select,
-body.pane-icons #rowsPane #tplList .tpl-sep,body.pane-icons #rowsPane #tplList .tx,body.pane-icons #rowsPane #tplList input,body.pane-icons #tplMine .tref,body.pane-icons #tplMine .tx{display:none}
+body.pane-icons #rowsPane #tplList .tpl-sep,body.pane-icons #rowsPane #tplList .tx,body.pane-icons #rowsPane #tplList input,body.pane-icons #tplMine .tref,body.pane-icons #tplMine .tx,body.pane-icons #tplMine .tsv{display:none}
 body.pane-icons #rowBtns,body.pane-icons #saveBtns,body.pane-icons #maskBar2,body.pane-icons #rowsPane #tplBar,body.pane-icons #rowsPane #tplList{display:flex;flex-direction:column;gap:4px;padding:6px 4px;border-top:1px solid var(--line)}
 body.pane-icons #rowsPane #tplList{flex:0 0 auto;overflow:visible;min-height:0}
 body.pane-icons #rowsPane #tplList .tpl{display:block}
@@ -286,6 +286,7 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 /* v0.037: номер строки, отличающейся от сохранённого столбика-эталона (⚑ в своих шаблонах) */
 .rw .no.chg, .ovr .no.chg{color:var(--gold);font-weight:700;box-shadow:inset -3px 0 0 var(--gold)}
 .tpl .tref{padding:0 6px;color:var(--dim)}
+.tpl .tsv{padding:0 6px}   /* v0.298: 💾 у шаблона-эталона — записать в него нынешние биты */
 .tpl .tref.on{color:var(--gold);border-color:var(--gold)}
 .no .rc{margin-left:5px;font-size:10px;letter-spacing:0;opacity:.95;white-space:nowrap}
 /* v0.050: «выровняй номера и числа» — номер и числа у номеров в колонках постоянной ширины, цифры одной ширины */
@@ -853,7 +854,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.297</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.298</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1663,8 +1664,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0297"></script>
-<script src="zz-ui.js?v=0297"></script>
+<script src="zz-core.js?v=0298"></script>
+<script src="zz-ui.js?v=0298"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>

@@ -972,6 +972,7 @@ function renderTpl(){
   Z.tpl.forEach((t, k) => {
     const tip = t.rows.length === 1 ? t.rows[0].slice(0, 200) : t.rows.length + " стр.: " + t.rows.slice(0, 6).map(r => r.slice(0, 40)).join(" / ");
     h += '<div class="tpl mine"><button class="tb" data-u="' + k + '" title="' + esc(tip) + ' · щелчок — заменить (столбик — весь столбик, строка — текущую), Shift + щелчок — вставить под текущей · двойной щелчок — переименовать">' + esc(t.name) + "</button>" +
+         (Z.tplRef === k ? '<button class="tsv" data-s="' + k + '" title="💾 Записать в этот шаблон нынешние биты: столбик — весь столбик рабочего поля, строка — текущую строку. Шаблон меняется сам (прежние биты не сохраняются), номера строк перестают гореть золотом">💾</button>' : "") +   // v0.298
          '<button class="tref' + (Z.tplRef === k ? " on" : "") + '" data-r="' + k + '" title="' + (Z.tplRef === k ? "Эталон: номера строк, отличающихся от этого шаблона, — золотом. Щелчок — выключить сравнение" : "Сравнивать строки с этим шаблоном: номера изменённых — золотом") + '">⚑</button>' +
          '<button class="tx" data-x="' + k + '" title="Удалить этот шаблон">✕</button></div>';
   });
@@ -7082,6 +7083,18 @@ function init(){
     const b = e.target.closest("button"); if (!b) return;
     if (b.dataset.b !== undefined) { const t = TPL_BUILTIN[+b.dataset.b]; tplInsert(t.rows(), t.name); }
     else if (b.dataset.u !== undefined) { const t = Z.tpl[+b.dataset.u]; if (t) (e.shiftKey ? tplInsert : tplReplace)(t.rows.slice(), t.name); }   // v0.066
+    /* v0.298, «у текущего шаблона — кнопку, которая изменённые биты сохранит, то есть изменит сам шаблон»: 💾 у шаблона-эталона (⚑) —
+       записать в него нынешние биты. Столбик — весь столбик рабочего поля, строка — текущую строку. Имя, данное самой страницей
+       («Столбик · 27 стр.»), обновляется под новый размер; своё имя пользователя не трогается. */
+    else if (b.dataset.s !== undefined) {
+      const t = Z.tpl[+b.dataset.s]; if (!t) return;
+      const rows = t.rows.length > 1 ? Z.rows.slice() : [cur()];
+      if (rows.length === t.rows.length && rows.every((r, i) => r === t.rows[i])) { say(`💾 «${t.name}» — и так такой же, менять нечего.`); return; }
+      const n = rows.reduce((a, r, i) => a + (r !== t.rows[i] ? 1 : 0), 0) + Math.max(0, t.rows.length - rows.length);
+      if (t.name === tplName(t.rows)) t.name = tplName(rows);
+      t.rows = rows; renderTpl(); renderRows(); save();
+      say(`💾 Шаблон «${t.name}» перезаписан: ${rows.length > 1 ? rows.length + " стр., изменено " + n : "строка " + rows[0].length + " бит"}.`);
+    }
     else if (b.dataset.r !== undefined) {   // v0.037: ⚑ — эталон для сравнения
       const k = +b.dataset.r; Z.tplRef = Z.tplRef === k ? -1 : k;
       renderTpl(); renderRows(); save();
