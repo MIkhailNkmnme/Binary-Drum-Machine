@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.276. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.277. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.276</title>
+<title>Zazerkalius — v0.277</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -140,6 +140,7 @@ body.nocur .rw.cur .bits > .bx,body.nocur .rw.cur .bits > .bxo{background:var(--
 #coneLockAll.off{opacity:.6}
 #rowInputBar #bRowsStartTop,#rowInputBar #coneLockAll,#rowInputBar #bConeAllHome{padding:1px 3px;min-width:0;line-height:1.2}   /* v0.212: узкие — встают над узкими колонками номеров и замков */
 #split{display:none !important}   /* v0.218: разделителя нет — ширину поля тянут за столбик номеров */
+#rowList .rw > .no{cursor:default} #rowList .rw > .no .rlk,#rowList .rw > .no .rrot{cursor:pointer}   /* v0.277: счётчики — не хват */
 #rowList .rw > .no > .rn{cursor:pointer}   /* v0.274: номера — выбор строки; ширину тянут за границу поля (v0.219–0.273 — за номера) */
 body.wdrag,body.wdrag *{cursor:ew-resize !important;user-select:none}
 /* v0.025: окна под полем строк. Тащишь окно за шапку — оно едет поверх всего (.dragging, position:fixed);
@@ -811,7 +812,7 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.276</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.277</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1608,8 +1609,8 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0276"></script>
-<script src="zz-ui.js?v=0276"></script>
+<script src="zz-core.js?v=0277"></script>
+<script src="zz-ui.js?v=0277"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>

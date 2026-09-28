@@ -5944,7 +5944,7 @@ function init(){
     if (e.target.closest(".rlk, .rrot")) return;   // v0.261, «нажимаю на 6 замок, а выделяется строка 21»: замок и ↻ — не выбор строки, подсветку текущей не зажигают
     // v0.263, «когда скролл двинул нижний — выделение само пришло в 17 строку»: полоса прокрутки, пустое место поля, строки под чертой,
     // кнопки под чертой — не выбор строки; подсветку текущей зажигает только нажатие на номер строки
-    if (!e.target.closest(".rw[data-r] > .no")) return;
+    if (!e.target.closest(".rw[data-r] > .no > .rn")) return;   // v0.277: только сам номер (счётчики рядом — нет)
     document.body.classList.remove("nocur");
   });
   /* v0.254, «выделение в поле строк — по двойному щелчку или протяжкой» → «протяжкой по битам» и «вместо одного щелчка выделения —
@@ -5954,8 +5954,10 @@ function init(){
      Номера строк — как были: щелчок выделяет, двойной — ширина поля по умолчанию. */
   $("rowList").addEventListener("pointerdown", (e) => {
     // v0.264: выделение протяжкой — только с самих бит (цифр), мимо них протяжка двигает поле (ниже)
-    const b = e.target.closest(".bx") && e.target.closest(".rw[data-r] > .bits"); if (!b || e.button !== 0 || rowEditing >= 0 || e.detail > 1) return;
-    const r0 = b.parentElement, i0 = +r0.dataset.r; if (!(i0 < Z.rows.length) || +b.dataset.l !== Z.lane) return;
+    // v0.277, «выделять тут только за номера — всю строку»: и с номера — протяжка через строки выделяет их целиком (как по битам)
+    const rn = e.target.closest(".rw[data-r] > .no > .rn");
+    const b = rn ? rn.parentElement : e.target.closest(".bx") && e.target.closest(".rw[data-r] > .bits"); if (!b || e.button !== 0 || rowEditing >= 0 || e.detail > 1) return;
+    const r0 = b.parentElement, i0 = +r0.dataset.r; if (!(i0 < Z.rows.length) || (!rn && +b.dataset.l !== Z.lane)) return;
     const ctrl = e.ctrlKey || e.metaKey, base = ctrl ? new Set(rowSel) : new Set();
     let last = i0, rows = false, raf = 0;
     const at = (ev) => { const el = document.elementFromPoint(ev.clientX, ev.clientY), rw = el && el.closest && el.closest("#rowList .rw[data-r]"); return rw ? Math.min(+rw.dataset.r, Z.rows.length - 1) : last; };
@@ -6035,6 +6037,7 @@ function init(){
     if (cell && +cell.dataset.l !== Z.lane && !textSelInRows()) { switchLane(+cell.dataset.l, +r.dataset.r); return; }
     const i = Math.min(+r.dataset.r, Z.rows.length - 1);
     // v0.012: щелчок по НОМЕРУ — выделение строк: просто — только эта, Ctrl — добавить/убрать, Shift — диапазон.
+    if (e.target.closest(".no") && !e.target.closest(".rn")) return;   // v0.277, «выделять тут только за номера — всю строку»: счётчики н·м и 0·1 строку не выбирают
     if (e.target.closest(".no")) {
       if (e.shiftKey && rowSelAnchor >= 0) {
         if (!(e.ctrlKey || e.metaKey)) rowSel.clear();
