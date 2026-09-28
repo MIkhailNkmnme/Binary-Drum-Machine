@@ -731,7 +731,7 @@ function renderRows(){
       if (s === undefined) { h += '<span class="bits' + (act ? " la" : "") + '" data-l="' + l + '"></span>'; continue; }
       // v0.012: биты — в своём .bx (только 0 и 1: по нему считаются места выделенных символов), «ещё N бит» — снаружи.
       // v0.015: .bx — только у рабочего поля; выделение и Del работают с ним.
-      h += '<span class="bits' + (act ? " la" : "") + '" data-l="' + l + '" title="' + (N > 1 ? "поле " + (l + 1) + ", " : "") + "строка " + i + ", " + s.length + ' бит · двойной щелчок — выделить, протяжка — выделить строки, F2 / Enter — править">' +
+      h += '<span class="bits' + (act ? " la" : "") + '" data-l="' + l + '" title="' + (N > 1 ? "поле " + (l + 1) + ", " : "") + "строка " + i + ", " + s.length + ' бит · щелчок по биту — выделить, протяжка — выделить строки, F2 / Enter — править">' +
            '<span class="' + (act ? "bx" : "bxo") + '">' + bitsShow(s) + "</span>" +
            (s.length > ROW_SHOW ? '<span class="more"> … ещё ' + (s.length - ROW_SHOW) + " бит</span>" : "") + "</span>";
     }
@@ -3574,6 +3574,71 @@ function setupCone(){
   };
   $("bConeRec").onclick = () => recGo("webm");
   $("bConeRecMp4").onclick = () => recGo("mp4");   // v0.250
+  /* v0.267, «как записывать видео в области строк?» → вариант 1: поле строк — не холст, captureStream у него нет. Пишем саму вкладку
+     (браузер один раз спрашивает «Поделиться этой вкладкой?») и обрезаем кадр по полю строк (CropTarget, Chrome / Edge) — в файле
+     ровно то, что на экране: подсветка, звучащий бит, черта, прокрутка. Звук — дорожка «♫ Звук», как у записи конуса. Пока идёт
+     запись — поле обведено красным пунктиром снаружи (в файл не идёт), ⏸ — пауза (рамка жёлтая). Формат — mp4, если браузер умеет. */
+  let rrec = null, rrT = 0, rrPause = 0, rrPausedAt = 0;
+  const rrUi = () => {
+    const b = $("bRowsRec"), p = $("bRowsRecPause");
+    b.classList.toggle("on", !!rrec); b.textContent = rrec ? "⏹" : "⏺";
+    p.classList.toggle("on", !!rrPausedAt); p.textContent = rrPausedAt ? "▶" : "⏸";
+    document.body.classList.toggle("rowsrec", !!rrec); document.body.classList.toggle("rowsrecp", !!rrPausedAt);
+  };
+  $("bRowsRecPause").onclick = () => {
+    if (!rrec) return;
+    if (rrec.state === "recording") { rrec.pause(); rrPausedAt = Date.now(); say("⏸ Запись поля строк на паузе — в файл не идёт. ▶ — дальше."); }
+    else if (rrec.state === "paused") { rrec.resume(); rrPause += Date.now() - rrPausedAt; rrPausedAt = 0; say("▶ Запись поля строк идёт дальше — в тот же файл."); }
+    rrUi();
+  };
+  $("bRowsRec").onclick = async () => {
+    if (rrec) { rrec.stop(); return; }
+    const md = navigator.mediaDevices, L = $("rowList");
+    if (!md || !md.getDisplayMedia || typeof MediaRecorder === "undefined") { say("⏺ Этот браузер не умеет записывать вкладку — нужен Chrome или Edge."); return; }
+    let cap = null;
+    try { cap = await md.getDisplayMedia({ video: { frameRate: 30 }, audio: false, preferCurrentTab: true, selfBrowserSurface: "include", surfaceSwitching: "exclude", monitorTypeSurfaces: "exclude" }); }
+    catch (err) { cap = null; }
+    if (!cap) { say("⏺ Запись поля строк отменена — вкладку не дали."); return; }
+    const vt = cap.getVideoTracks()[0], ss = vt.getSettings ? vt.getSettings() : {};
+    let cropped = false;
+    if (ss.displaySurface === "browser" || ss.displaySurface === undefined) {
+      try { if (window.CropTarget && vt.cropTo) { await vt.cropTo(await CropTarget.fromElement(L)); cropped = true; } } catch (err) { cropped = false; }
+    }
+    if (!cropped) {
+      cap.getTracks().forEach(t => t.stop());
+      say(ss.displaySurface && ss.displaySurface !== "browser" ? "⏺ Выбрано не эта вкладка — поле строк так не вырезать. Ещё раз ⏺ и в окне выбора — «Эта вкладка»." : "⏺ Этот браузер не умеет вырезать кусок вкладки — нужен Chrome или Edge (с 2022 года).");
+      return;
+    }
+    let at = null;
+    if (window.AudioContext || window.webkitAudioContext) { try { sndCtx(); at = snd.rec.stream.getAudioTracks()[0].clone(); } catch (err) { at = null; } }
+    const want = at ? ["video/mp4;codecs=avc1.42E01E,mp4a.40.2", "video/mp4;codecs=avc1,mp4a.40.2", "video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"]
+      : ["video/mp4;codecs=avc1.42E01E", "video/mp4;codecs=avc1", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
+    const mime = want.find(m => MediaRecorder.isTypeSupported(m)) || "", mp4 = mime.startsWith("video/mp4");
+    const stream = new MediaStream([vt].concat(at ? [at] : [])), chunks = [];
+    const r = rrec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 8e6 } : undefined);
+    r.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    r.onstop = async () => {
+      clearInterval(rrT); stream.getTracks().forEach(t => t.stop()); cap.getTracks().forEach(t => t.stop());
+      if (rrPausedAt) { rrPause += Date.now() - rrPausedAt; rrPausedAt = 0; }
+      const pausedMs = rrPause; rrPause = 0; rrec = null; rrUi();
+      let blob = new Blob(chunks, { type: mp4 ? "video/mp4" : "video/webm" });
+      const R = window.__zerkRecorder;
+      if (!mp4 && R && R.fixWebm) blob = await R.fixWebm(blob, Date.now() - t0 - pausedMs);   // длительность в заголовок webm (как у конуса)
+      const a = document.createElement("a"), d = new Date(), p2 = (x) => String(x).padStart(2, "0");
+      a.href = URL.createObjectURL(blob); a.download = `Zerkalius-stroki-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.${mp4 ? "mp4" : "webm"}`;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      $("bRowsRec").title = $("bRowsRec").dataset.t || $("bRowsRec").title;
+      say(`⏺ Видео поля строк сохранено: ${a.download} (${(blob.size / 1048576).toFixed(1)} МБ).`);
+    };
+    vt.addEventListener("ended", () => { if (r.state !== "inactive") r.stop(); });   // «Остановить показ» в браузере — стоп и сохранить
+    r.start(1000);
+    const t0 = Date.now(), b = $("bRowsRec"); b.dataset.t = b.dataset.t || b.title;
+    rrPause = 0; rrPausedAt = 0; rrUi();
+    const tick = () => { const s = Math.floor((Date.now() - t0 - rrPause - (rrPausedAt ? Date.now() - rrPausedAt : 0)) / 1000); b.title = `⏹ ${rrPausedAt ? "Пауза" : "Идёт запись поля строк"} ${p2s(Math.floor(s / 60))}:${p2s(s % 60)} — щелчок: стоп и сохранить`; };
+    const p2s = (x) => String(x).padStart(2, "0");
+    tick(); rrT = setInterval(tick, 500);
+    say(`⏺ Пишу поле строк${mp4 ? " в mp4" : ""} — всё, что в красной рамке. Ещё раз ⏹ — стоп и сохранить, ⏸ — пауза.`);
+  };
   $("bConeRotClear").onclick = () => {   // v0.101: «как это снять — накрутку?»
     const T = rowSel.size ? [...rowSel] : Z.rows.map((_, i) => i);
     let k = 0; T.forEach(i => { if (Math.round(coneRot[i] || 0)) k++; coneRot[i] = 0; });
