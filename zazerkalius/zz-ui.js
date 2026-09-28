@@ -4832,8 +4832,24 @@ const RAZV_V = [
   [[["U0","U1"],["U0","U3"],["U0","D0"],["U1","D1"],["D1","D2"],["D2","D3"],["D2","U2"]], ["f", "U0"]],
   [[["U0","D0"],["D0","D1"],["D1","U1"],["U1","U2"],["U2","D2"],["D2","D3"],["D3","U3"]], ["e", "U1", "T", "E2"]],
 ];
-function razvUnfold(tree){
-  const F = {}; for (let i = 0; i < 4; i++) { const a = "E" + i, b = "E" + ((i + 1) % 4); F["U" + i] = ["T", a, b]; F["D" + i] = ["B", a, b]; }
+/* v0.408, «и развёртку Зеркалидуса»: тело развёртки — Зеркалидус (3 грани у половины, 6 всего; знак Zerkalius) или октаэдр (4, 8) —
+   кнопки «△ Зеркалидус» / «◇ Октаэдр» (Z.razvNB, по умолчанию 3). Грань Ui = (T, Ei, Ei+1), Di = (B, Ei, Ei+1) при своём числе Ei; у
+   каждого тела — свой набор вариантов (RAZV_SETS). Оси — пары вершин с серединой в центре: у Зеркалидуса одна, Верх–Низ (углы
+   экватора все соседние), у октаэдра три. Вершина без оси — серая точка. */
+const RAZV_V3 = [
+  [[["U0","U1"],["U1","U2"],["U0","D0"],["U1","D1"],["U2","D2"]], ["v", "U0", "T"]],
+  [[["U0","U1"],["U1","D1"],["U0","D0"],["U1","U2"],["D1","D2"]], ["v", "U0", "E1"]],
+  [[["U0","D0"],["U0","U1"],["U0","U2"],["D0","D1"],["D0","D2"]], ["e", "U0", "E0", "E1"]],
+  [[["U0","U1"],["U0","D0"],["U1","D1"],["U1","U2"],["U2","D2"]], ["e", "U0", "T", "E1"]],
+  [[["U0","U1"],["U0","U2"],["U0","D0"],["U1","D1"],["U2","D2"]], ["f", "U0"]],
+  [[["U0","D0"],["D0","D1"],["D1","U1"],["U1","U2"],["U2","D2"]], ["e", "U1", "T", "E2"]],
+];
+const RAZV_NAME3 = ["А · центр — вершина T (веер из трёх)", "Б · центр — вершина экватора", "В · центр — ребро экватора (зеркало)", "Г · центр — боковое ребро",
+  "Д · центр — грань U0 (большой треугольник и два)", "Е · лента из 6 граней"];
+const razvSet = () => (Z.razvNB === 4 ? { nb: 4, V: RAZV_V, N: RAZV_NAME } : { nb: 3, V: RAZV_V3, N: RAZV_NAME3 });
+function razvUnfold(tree, nb){
+  nb = nb || 4;
+  const F = {}; for (let i = 0; i < nb; i++) { const a = "E" + i, b = "E" + ((i + 1) % nb); F["U" + i] = ["T", a, b]; F["D" + i] = ["B", a, b]; }
   const s3 = Math.sqrt(3) / 2, pos = { U0: { T: [0, 0], E0: [-0.5, s3], E1: [0.5, s3] } }, todo = tree.slice();
   while (todo.length) {
     const i = todo.findIndex(([p, c]) => pos[p] && !pos[c]); if (i < 0) break;
@@ -4855,7 +4871,7 @@ function razvDraw(cv, vi, big){
   const dpr = window.devicePixelRatio || 1, W = Math.max(20, cv.clientWidth), H = Math.max(20, cv.clientHeight);
   if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
   const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
-  const [tree, C] = RAZV_V[vi] || RAZV_V[0], { F, pos } = razvUnfold(tree);
+  const RS = razvSet(), [tree, C] = RS.V[vi] || RS.V[0], { F, pos } = razvUnfold(tree, RS.nb);   // v0.408: тело — Зеркалидус или октаэдр
   let cx, cy;
   if (C[0] === "v") [cx, cy] = pos[C[1]][C[2]];
   else if (C[0] === "e") { const a = pos[C[1]][C[2]], b = pos[C[1]][C[3]]; cx = (a[0] + b[0]) / 2; cy = (a[1] + b[1]) / 2; }
@@ -4896,8 +4912,11 @@ function razvDraw(cv, vi, big){
      Через каждую склейку дерева развёртки — штрих между ними цветом оси: Верх–Низ светлая, E0–E2 розовая, E1–E3 зелёная; все вершины
      развёртки — точки цвета своей оси (одна вершина тела на развёртке бывает в нескольких местах). Только на крупной, кнопка «✛ оси». */
   if (big && Z.razvAx !== false) {
-    const AXC = { T: "#e8edf5", B: "#e8edf5", E0: "#ff7ab6", E2: "#ff7ab6", E1: "#6ee7a0", E3: "#6ee7a0" };
-    const opp = (a, b) => (a === "T" && b === "B") || (a === "B" && b === "T") || (a[0] === "E" && b[0] === "E" && Math.abs(+a[1] - +b[1]) === 2);
+    // v0.408: ось — пара вершин с серединой в центре тела (у Зеркалидуса только Верх–Низ); вершина без оси — серая
+    const P3 = { T: [0, 1, 0], B: [0, -1, 0] }; for (let i = 0; i < RS.nb; i++) P3["E" + i] = [Math.cos(2 * Math.PI * i / RS.nb), 0, Math.sin(2 * Math.PI * i / RS.nb)];
+    const opp = (a, b) => Math.hypot(P3[a][0] + P3[b][0], P3[a][1] + P3[b][1], P3[a][2] + P3[b][2]) < 1e-6;
+    const AXC0 = { T: "#e8edf5", B: "#e8edf5", E0: "#ff7ab6", E2: "#ff7ab6", E1: "#6ee7a0", E3: "#6ee7a0" };
+    const AXC = {}; for (const k of Object.keys(P3)) AXC[k] = Object.keys(P3).some(o => o !== k && opp(k, o)) ? AXC0[k] : "#8b949e";
     g.save(); g.lineCap = "round"; g.lineWidth = 1.8; g.setLineDash([7, 5]); g.globalAlpha = 0.9;
     for (const [p, c] of tree) {
       const sh = F[p].filter(v => F[c].includes(v)), o = F[p].find(v => !sh.includes(v)), n = F[c].find(v => !sh.includes(v));
@@ -4917,8 +4936,10 @@ function renderRazv(){
   const cv = $("razvCv"), tb = $("razvThumbs"); if (!cv || !tb) return;
   $("bRazvLbl").classList.toggle("on", Z.razvLbl !== false);   // v0.399: галка → кнопка
   $("bRazvAx").classList.toggle("on", Z.razvAx !== false);   // v0.406
-  if (!tb.children.length) tb.innerHTML = RAZV_V.map((_, i) => `<canvas data-v="${i}" title="${RAZV_NAME[i]} — щелчок: крупно"></canvas>`).join("");
-  const vi = Math.min(RAZV_V.length - 1, Math.max(0, Z.razvV | 0));
+  const RS = razvSet();
+  if (tb.dataset.nb !== String(RS.nb)) { tb.dataset.nb = RS.nb; tb.innerHTML = RS.V.map((_, i) => `<canvas data-v="${i}" title="${RS.N[i]} — щелчок: крупно"></canvas>`).join(""); razvThumbKey = ""; }
+  $("bRazv3").classList.toggle("on", RS.nb === 3); $("bRazv4").classList.toggle("on", RS.nb === 4);   // v0.408
+  const vi = Math.min(RS.V.length - 1, Math.max(0, Z.razvV | 0));
   [...tb.children].forEach(c => c.classList.toggle("on", +c.dataset.v === vi));
   if (!winOpen("w-razv")) return;
   razvDraw(cv, vi, true);
@@ -4927,6 +4948,8 @@ function renderRazv(){
 }
 if ($("razvThumbs")) $("razvThumbs").onclick = (e) => { const c = e.target.closest("canvas[data-v]"); if (!c) return; Z.razvV = +c.dataset.v; save(); renderRazv(); };
 if ($("bRazvLbl")) $("bRazvLbl").onclick = () => { Z.razvLbl = Z.razvLbl === false; save(); renderRazv(); };
+if ($("bRazv3")) $("bRazv3").onclick = () => { Z.razvNB = 3; save(); renderRazv(); };   // v0.408
+if ($("bRazv4")) $("bRazv4").onclick = () => { Z.razvNB = 4; save(); renderRazv(); };
 if ($("bRazvAx")) $("bRazvAx").onclick = () => { Z.razvAx = Z.razvAx === false; save(); renderRazv(); };   // v0.406
 if ($("razvCv") && window.ResizeObserver) new ResizeObserver(() => renderRazv()).observe($("razvCv"));
 
