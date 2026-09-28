@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.412. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.413. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.412</title>
+<title>Zazerkalius — v0.413</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1024,6 +1024,10 @@ body.solo #field > #coneBot #coneOut{flex:0 1 auto;min-height:0;overflow:auto;fo
 }
 /* v0.144, «кнопки слишком высокие, сделай компактнее»: на странице конуса кнопки, списки и группы — ниже и плотнее */
 body.solo #w-cone .wbody > .tools{padding:3px 8px;gap:3px 6px}
+/* v0.413, по снимку страницы конуса — «у конуса убери вверху отдельное какое-то поле»: полосы кнопок со своей чертой больше нет — холст на
+   всю страницу от самого верха, группы лежат поверх него (как в окне конуса, v0.094); пустые места полосы мышь пропускают к конусу */
+body.solo #w-cone .wbody > .tools{position:absolute;top:0;left:0;right:0;z-index:4;border-bottom:none;pointer-events:none}
+body.solo #w-cone .wbody > .tools > *{pointer-events:auto}
 body.solo #w-cone .tools button,body.solo #w-cone .tools select{padding:0 5px;font-size:12px;line-height:1.35;min-height:0}
 body.solo #w-cone .tools label{font-size:12px;line-height:1.35}
 body.solo #w-cone .tools input[type=checkbox]{width:12px;height:12px;margin:0 2px 0 0;vertical-align:-2px}
@@ -1119,7 +1123,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.412</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.413</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1993,8 +1997,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0412"></script>
-<script src="zz-ui.js?v=0412"></script>
+<script src="zz-core.js?v=0413"></script>
+<script src="zz-ui.js?v=0413"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
