@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.316. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.317. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.316</title>
+<title>Zazerkalius — v0.317</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -575,6 +575,15 @@ body.zen #coneTxtWin{display:none !important}
   background:linear-gradient(135deg, transparent 45%, var(--gc, var(--dim)) 45% 55%, transparent 55% 70%, var(--gc, var(--dim)) 70% 80%, transparent 80%)}
 .cgrp > .cgsz:hover{opacity:1}
 .cgrp.cmin > .cgsz,.cgrp.cdrag > .cgsz{display:none}
+/* v0.317, по снимку группы «Звук» — «всем кнопкам и спискам — стандарт длины кнопок, если в строку более чем 1 помещается, то туда»:
+   у кнопок, кнопок-галок и списков в группах одна ширина --bu (80 px); кнопка-значок (не больше двух знаков: ◀ ▶| ↻ ⏮ 01 — класс .ib,
+   ставит cgbIcons) — в полширины, две такие = одна обычная. Сколько влезает в строку, столько и встаёт, столбцы ровные. Длинная
+   подпись обрезается (целиком — во всплывающей подсказке у кнопки) */
+:root{--bu:80px}
+#w-cone .tools .cgb button:not(.zerk-arrow),#w-cone .tools .cgb select,#w-cone .tools .cgb label:has(> input[type=checkbox]),#paneGrp .cgb button:not(.zerk-arrow),#paneGrp .cgb select,#paneGrp .cgb label:has(> input[type=checkbox]){width:var(--bu) !important;min-width:0 !important;max-width:none !important;flex:0 0 auto !important;box-sizing:border-box;overflow:hidden}
+#w-cone .tools .cgb button.ib:not(.zerk-arrow),#paneGrp .cgb button.ib:not(.zerk-arrow){width:calc((var(--bu) - 3px) / 2) !important;padding:0 !important}
+#w-cone .tools .cgb select,#paneGrp .cgb select{padding-left:3px !important;padding-right:0 !important}
+#w-cone .tools .cgb > span,#paneGrp .cgb > span{flex-wrap:wrap}
 /* v0.316, «ползунки, если не в строке, то все друг под другом, и выровняй»: ползунки, что стоят подряд (↕ и ▬ в «Виде», ♩ и 🔊 в «Звуке»), —
    каждый своей строкой во всю ширину группы, один под другим; значок слева — в столбце одной ширины, дорожки начинаются от одного края.
    Одиночный ползунок среди кнопок (скорость кручения, щель лазера, ⚡ волны) — в ряду, как был */
@@ -893,7 +902,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.316</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.317</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1712,8 +1721,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0316"></script>
-<script src="zz-ui.js?v=0316"></script>
+<script src="zz-core.js?v=0317"></script>
+<script src="zz-ui.js?v=0317"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>

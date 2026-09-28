@@ -5542,6 +5542,13 @@ function cgrpInit(){
   }
   addEventListener("resize", () => groups.forEach(place));
   cgrpCols();
+  cgbIcons();   // v0.317: подписи кнопок меняются (▶ / ⏸, «только значки») — пересчёт, кто значок
+  { let t = 0; const mo = new MutationObserver(() => { if (!t) t = requestAnimationFrame(() => { t = 0; cgbIcons(); }); });
+    groups.forEach(g => mo.observe(g, { childList: true, characterData: true, subtree: true })); }
+}
+// v0.317, «всем кнопкам и спискам — стандарт длины»: кнопка в группе, где не больше двух знаков (◀ ▶| ↻ ⏮ 01), — значок, в полширины (.ib)
+function cgbIcons(){
+  document.querySelectorAll(".cgrp > .cgb button:not(.zerk-arrow)").forEach((b) => { const on = [...b.textContent.trim()].length <= 2; if (b.classList.contains("ib") !== on) b.classList.toggle("ib", on); });
 }
 /* v0.203, «сделай как в Zerkalius-layers.html, чтобы кнопки можно было на холст в любое место» (там — «кнопки на поле цепочек», v1.594):
    любую кнопку с именем (id) тянешь мышью на холст конуса — там, куда бросил, встаёт её копия с той же подписью (оригинал на месте); та же
