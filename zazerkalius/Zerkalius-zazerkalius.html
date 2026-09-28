@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.342. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.343. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.342</title>
+<title>Zazerkalius — v0.343</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -961,7 +961,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.342</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.343</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1630,7 +1630,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
               <option value="penta">пентатоника</option><option value="minor">минор</option><option value="major">мажор</option><option value="chrom">хроматика</option>
             </select>
             <label class="dim" title="Темп: шагов в секунду (1…30)">♩ <input type="range" id="sndSp" min="1" max="30" step="1" value="6" style="width:70px;vertical-align:middle"></label>
-            <label class="dim" title="Громкость">🔊 <input type="range" id="sndVol" min="0" max="100" step="1" value="50" style="width:60px;vertical-align:middle"></label>
+            <label class="dim" title="Громкость">🔊 <input type="range" id="sndVol" min="0" max="100" step="1" value="50" data-unit="%" style="width:60px;vertical-align:middle"></label>
           </div>
           <div class="cgrp gc cg-las" title="⌖ Луч-часы: пустые кольца до 256, ширина щели, довод строки 1, пауза на проходе"><span class="glab">Лазер</span>
             <label class="dim" title="⌖ Луч-часы: из центра через вырез в кольце строки 1 идёт луч наружу. Вырез один (золотой), крутится вместе с кольцом: тяни кольцо строки 1 мышью — крутится только оно и защёлкивается лучом в щели кольца 2; или ⌖◁ ⌖▷. Кольцо он проходит только в щель — там, где у кольца граница между битами; попал на бит — упирается в стену (красная черта), и этот бит красится золотом с «1» (упал ещё раз — «11», «111»…). Пока включены луч-часы, ячейки колец строк пустые — чёрные, без 0/1: единицы в них ставит лазер (биты строк в поле не меняются). Прошёл все кольца — падает в строку для заполнения, и её ячейка под лучом становится «1». Как зубья часов: крути кольца (▶ каждое по биту / навстречу, или мышью) — щели то сходятся, то расходятся; миг, когда сошлись, ловится и между кадрами (вспышка). Видно в плоском виде"><input type="checkbox" id="coneClock"> ⌖ луч-часы</label>
@@ -1795,15 +1795,15 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0342"></script>
-<script src="zz-ui.js?v=0342"></script>
+<script src="zz-core.js?v=0343"></script>
+<script src="zz-ui.js?v=0343"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>
 <!-- v0.333: число ползунка (соседний span) — внутрь его обёртки ◂ ▸, поверх дорожки (стрелки ставит модуль выше, в DOMContentLoaded; это — следом) -->
-<script>document.addEventListener("DOMContentLoaded", () => document.querySelectorAll(".zerk-range-wrap > input[type=range]").forEach((r) => { const w = r.parentElement; let n = w.nextSibling; while (n && n.nodeType === 3 && !n.textContent.trim()) n = n.nextSibling; if (n && n.nodeType === 1 && n.tagName === "SPAN" && !n.querySelector("input, button, select")) { n.classList.add("rv"); w.appendChild(n); } }));</script>
+<script>document.addEventListener("DOMContentLoaded", () => document.querySelectorAll(".zerk-range-wrap > input[type=range]").forEach((r) => { const w = r.parentElement; let n = w.nextSibling; while (n && n.nodeType === 3 && !n.textContent.trim()) n = n.nextSibling; if (n && n.nodeType === 1 && n.tagName === "SPAN" && !n.querySelector("input, button, select")) { n.classList.add("rv"); w.appendChild(n); return; } /* v0.343, «всем ползункам численное значение»: у кого своего числа нет (♩, 🔊, ↕, ▬, этаж) — оно ставится здесь и следит за ползунком: и за мышью, и за значением, выставленным из кода (загрузка, сброс, пресет) */ const v = document.createElement("span"); v.className = "rv"; w.appendChild(v); const u = r.dataset.unit || "", st = String(r.step || ""), dp = st.includes(".") ? st.split(".")[1].length : 0; const upd = () => { const x = parseFloat(r.value); v.textContent = (isFinite(x) ? x.toFixed(dp) : r.value) + u; }; const d = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value"); try { Object.defineProperty(r, "value", { configurable: true, get() { return d.get.call(this); }, set(x) { d.set.call(this, x); upd(); } }); } catch (err) { /* не вышло — хватит событий */ } r.addEventListener("input", upd); r.addEventListener("change", upd); upd(); }));</script>
 <script src="../_js/recorder.js" data-bez-knopki></script>
 </body>
 </html>
