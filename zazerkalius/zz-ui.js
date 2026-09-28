@@ -5385,7 +5385,10 @@ function ctwInit(){
    последняя тронутая — сверху. Двойной щелчок по подписи — обратно на полосу. Места — Z.cgrpPos { имя: { x, y } } в пикселях от
    угла полосы; меняет их только перетаскивание (сами не выравниваются и не переставляются). */
 // v0.258: кнопка или галка (метка с флажком), которая переезжает между группами конуса, и её место по ссылке ("#id" или селектор)
-function cgrpMoveEl(src){ return src && src.tagName === "INPUT" ? src.closest("label") : src; }
+function cgrpMoveEl(src){   // v0.320: кнопка из блока .cunit (◀ [ось] ▶) переезжает вместе со всем блоком
+  const u = src && src.closest && src.closest(".cunit"); if (u) return u;
+  return src && src.tagName === "INPUT" ? src.closest("label") : src;
+}
 function cgrpRefEl(k){ try { return k ? (k[0] === "#" ? document.getElementById(k.slice(1)) : document.querySelector(k)) : null; } catch (err) { return null; } }
 function cgrpInit(){
   const tl = document.querySelector("#w-cone .wbody > .tools"); if (!tl) return;
@@ -5405,6 +5408,12 @@ function cgrpInit(){
     [...g.childNodes].forEach((c) => { if (!(c.nodeType === 1 && c.classList.contains("glab"))) b.appendChild(c); });
     g.appendChild(b);
   });
+  // v0.320: значок ползунка (текст перед ним в метке: ↕ ▬ ♩ 🔊 щель) — в свой span.sli, чтобы встать столбцом одной ширины
+  groups.forEach((g) => g.querySelectorAll("label").forEach((l) => {
+    if (!l.querySelector("input[type=range]")) return;
+    const f = l.firstChild; if (!f || f.nodeType !== 3 || !f.textContent.trim()) return;
+    const sp = document.createElement("span"); sp.className = "sli"; sp.textContent = f.textContent.trim(); l.replaceChild(sp, f);
+  }));
   const place = (g) => {
     const p = Z.cgrpPos[g.dataset.g]; g.classList.toggle("cfloat", !!p);
     if (!p) { g.style.left = g.style.top = ""; return; }
@@ -5550,7 +5559,7 @@ function cgrpInit(){
     if (box && back.length) { for (const k of Z.cgrpDock) { const g = groups.find(c => c.dataset.g === k); if (g && g.parentElement === box) box.appendChild(g); } }
   };
   // v0.258: у каждой кнопки группы — её «дом» (куда вернуть); перенесённые между группами — на свои места
-  groups.forEach(g => { const b = g.querySelector(":scope > .cgb"); if (b) b.querySelectorAll("button, label, select, input").forEach(el => { if (!el.dataset.home) el.dataset.home = g.dataset.g; }); });
+  groups.forEach(g => { const b = g.querySelector(":scope > .cgb"); if (b) b.querySelectorAll("button, label, select, input, .cunit").forEach(el => { if (!el.dataset.home) el.dataset.home = g.dataset.g; }); });
   // v0.281: и исходный сосед справа (ссылкой, "" — последней): перенос в конец своей же группы теперь запоминается (прежде забывался)
   groups.forEach(g => { const b = g.querySelector(":scope > .cgb"); if (b) [...b.children].forEach(el => { const n = el.nextElementSibling, c = n && (n.tagName === "LABEL" ? n.querySelector("input") : n); el.dataset.home0 = c ? btnKey(c) : ""; }); });
   if (Z.cgrpMove && typeof Z.cgrpMove === "object") for (const [k, m] of Object.entries(Z.cgrpMove)) {
@@ -5631,7 +5640,7 @@ function panelHomes(){   // у каждой кнопки панели — её �
     if (p.querySelector(":scope > .cgrp")) return;
     const k = panelKey(p); if (!k) return;
     p.classList.add("pnl");
-    p.querySelectorAll("button, label, select, input").forEach(el => { if (!el.dataset.home) el.dataset.home = k; });
+    p.querySelectorAll("button, label, select, input, .cunit").forEach(el => { if (!el.dataset.home) el.dataset.home = k; });   // v0.320: и блоки .cunit
     [...p.children].forEach(el => { if (el.dataset.home0 === undefined) { const n = el.nextElementSibling, c = n && (n.tagName === "LABEL" ? n.querySelector("input") : n); el.dataset.home0 = c ? btnKey(c) : ""; } });
   });
   if (Z.btnMove && typeof Z.btnMove === "object") for (const [k, m] of Object.entries(Z.btnMove)) {
