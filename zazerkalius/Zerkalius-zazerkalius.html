@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.356. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.357. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.356</title>
+<title>Zazerkalius — v0.357</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -642,6 +642,7 @@ body.zen #w-cone #coneMain{bottom:0}
 /* v0.327, «текст убрать в поля»: поле с подписью (стр., сид, от … °, ↔, ⌖×) — шириной в кнопку, подпись — мелко внутри поля (cgrpInit),
    слева или справа, мышь сквозь неё; стрелок-вертушек у числа нет (колесо и ↑ ↓ меняют число, как прежде) */
 #w-cone .tools .cgb > label.fin,#paneGrp .cgb > label.fin{position:relative;width:var(--bu) !important;flex:0 0 auto !important;padding:0 !important;justify-content:flex-start !important}
+#w-cone .tools .cgb > label.fin.fh,#paneGrp .cgb > label.fin.fh{width:calc((var(--bu) - 3px) / 2) !important}   /* v0.357: поле в полкнопки (▮ Столб: слева | справа) */
 #w-cone .tools .cgb > label.fin > input,#paneGrp .cgb > label.fin > input{width:100% !important;height:24px;margin:0 !important;box-sizing:border-box;text-align:center;line-height:22px;-moz-appearance:textfield;appearance:textfield}
 #w-cone .tools .cgb > label.fin > input::-webkit-inner-spin-button,#w-cone .tools .cgb > label.fin > input::-webkit-outer-spin-button,#paneGrp .cgb > label.fin > input::-webkit-inner-spin-button,#paneGrp .cgb > label.fin > input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 #w-cone .tools .cgb > label.fin > .fpre,#w-cone .tools .cgb > label.fin > .fpost,#paneGrp .cgb > label.fin > .fpre,#paneGrp .cgb > label.fin > .fpost{position:absolute;top:0;bottom:0;display:flex;align-items:center;font-size:10px;color:var(--dim);pointer-events:none;white-space:nowrap}
@@ -994,7 +995,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.356</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.357</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1650,7 +1651,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
                  видимость замороженных»: ▮ Столб (прежняя ▮ стенка, v0.241) и 🧱 Бит (прежняя 🧱 стенка, v0.347) — вместе -->
             <span class="glab2 fzlab" title="❄ Заморозка: клетки, которые не меняются. ▮ Столб — один столбец от вершины, при построении строк по правилу (заготовки, ▦ 256, достройка). 🧱 Бит — выделенные биты, при волне. 👁 — показывать их подсветкой в строках">❄ Заморозка</span>
             <button id="bBar" title="▮ Столб: один столбец заморожен — клетка не обновляется и держит начальное значение, сигнал на ней отражается или гаснет (как в статье «Barriers in Cellular Automata»). Действует, когда строки строятся по правилу: заготовки Аниматрицы, карта ▦ 256, достройка Серп 90 / 30. В строках — голубым">▮ Столб</button>
-            <label class="dim" title="Столбец от вершины треугольника: 0 — по центру, минус — влево, плюс — вправо">от <input id="barOff" type="number" value="-8" min="-512" max="512" style="width:50px"></label>
+            <!-- v0.357, «убери „от“, 2 окна: слева 8, справа 0 — по 2 столба»: сколько бит влево и вправо от вершины; 0 — столба с той стороны нет -->
+            <label class="dim fin fh" title="◀ Столб слева: на сколько бит левее вершины треугольника (0 — слева столба нет)"><input id="barL" type="number" value="8" min="0" max="512"></label><label class="dim fin fh" title="Столб справа ▶: на сколько бит правее вершины треугольника (0 — справа столба нет)"><input id="barR" type="number" value="0" min="0" max="512"></label>
             <button id="bWall" title="🧱 Бит: выдели биты мышью в строках и нажми — они заморожены, волна их не меняет. Выделил биты, которые уже заморожены, — снимаются. Правый щелчок — снять все. В строках — кирпичным">🧱 Бит</button>
             <button id="bFzShow" class="on" title="👁 Вид: показывать замороженные клетки подсветкой в строках (▮ Столб — голубым, 🧱 Бит — кирпичным). По умолчанию вкл">👁 вид</button>
             <span id="animInfo" class="dim" style="font-variant-numeric:tabular-nums;white-space:nowrap" title="Проход — сколько раз волна прошла поле сверху донизу; волна — до какой строки дошла в этом проходе; цикл — через сколько проходов картина повторилась (и с какого прохода), пишется, когда найден"></span>
@@ -1838,8 +1840,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0356"></script>
-<script src="zz-ui.js?v=0356"></script>
+<script src="zz-core.js?v=0357"></script>
+<script src="zz-ui.js?v=0357"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
