@@ -5326,9 +5326,11 @@ function btnRef(el){   // кнопка или флажок → { id } или { s
 }
 function btnKey(el){ const r = btnRef(el); return r ? (r.sel || "#" + r.id) : ""; }
 function btnIcon(raw){ const f = (raw || "").trim().split(/\s+/)[0] || ""; return f && !/[\p{L}\p{N}]/u.test(f) ? f : ""; }
+function labCtl(el){ return el && el.tagName === "LABEL" ? el.querySelector("input[type=checkbox],input[type=radio]") : null; }   // v0.282: галка — метка с флажком
+function labKey(el){ return !el ? "" : el.tagName === "LABEL" ? (labCtl(el) ? btnKey(labCtl(el)) : "") : btnKey(el); }   // галку помнят по её флажку
 function btnLabApply(el){
-  if (!el || el.tagName !== "BUTTON") return;
-  const c = Z.btnLab && Z.btnLab[btnKey(el)], raw = (el.textContent || "").replace(/\s+/g, " ").trim(), ic = btnIcon(raw);
+  if (!el || !(el.tagName === "BUTTON" || labCtl(el))) return;   // v0.282: и галки
+  const c = Z.btnLab && Z.btnLab[labKey(el)], raw = (el.textContent || "").replace(/\s+/g, " ").trim(), ic = btnIcon(raw);
   let t = raw;
   if (c && c.m === "ico" && ic) t = ic;
   else if (c && c.t) t = (ic && !btnIcon(c.t) ? ic + " " : "") + c.t;
@@ -5380,21 +5382,21 @@ function panelEditInit(){
   if (ZZ_BG) return;
   if (!Z.btnLab || typeof Z.btnLab !== "object") Z.btnLab = {};
   panelHomes();
-  const all = () => [...document.querySelectorAll(".pnl button")].filter(b => panelOf(b) && !b.closest("#zenBtns"));
+  const all = () => [...document.querySelectorAll(".pnl button, .pnl label")].filter(b => panelOf(b) && !b.closest("#zenBtns") && (b.tagName === "BUTTON" || labCtl(b)));
   all().forEach(btnLabApply);
   // код меняет текст кнопок сам (▶ крутить → ⏸ стоп) — подпись следом; свои перемены (data-lab) — атрибуты, их наблюдатель не видит
-  const mo = new MutationObserver((ms) => { const s = new Set(); for (const m of ms) { const b = (m.target.nodeType === 1 ? m.target : m.target.parentElement); const x = b && b.closest && b.closest("button"); if (x) s.add(x); } s.forEach(btnLabApply); });
+  const mo = new MutationObserver((ms) => { const s = new Set(); for (const m of ms) { const b = (m.target.nodeType === 1 ? m.target : m.target.parentElement); const x = b && b.closest && b.closest("button, label"); if (x) s.add(x); } s.forEach(btnLabApply); });
   document.querySelectorAll(".cgrp, .pnl").forEach(g => mo.observe(g, { childList: true, characterData: true, subtree: true }));
   let ed = null, cur = null;
   const close = () => { if (ed) ed.remove(); ed = null; if (cur) cur.classList.remove("bsel"); cur = null; };
   const set = (el, c) => {
-    const k = btnKey(el); if (!k) return;
+    const k = labKey(el); if (!k) return;
     if (c && (c.t || c.m)) Z.btnLab[k] = c; else delete Z.btnLab[k];
     btnLabApply(el); save(); cgrpCols();
   };
   const open = (b) => {
     close();
-    const k = btnKey(b);
+    const k = labKey(b);
     if (!k) { say("✎ У этой кнопки нет своего имени — её название не запомнится. Перетащить можно."); return; }
     cur = b; b.classList.add("bsel");
     const c = Z.btnLab[k] || {}, raw = (b.textContent || "").replace(/\s+/g, " ").trim(), ic = btnIcon(raw), g = panelOf(b) || b.parentElement;
@@ -5402,7 +5404,7 @@ function panelEditInit(){
     ed.innerHTML = '<span class="bedraw"></span><input type="text" spellcheck="false"><button data-e="ok" title="Готово (Enter)">✓</button>' +
       '<button data-e="ico" title="Только значок (' + (ic || "у этой кнопки значка нет") + ')">◉ значок</button><button data-e="def" title="Как было: исходная подпись, своё название стёрто">↺ как было</button>' +
       '<button data-e="gico" title="Всем кнопкам этой панели, у которых есть значок, — только значок">◉ вся панель</button><button data-e="gdef" title="Всей панели — исходные подписи">↺ вся панель</button>';
-    ed.querySelector(".bedraw").textContent = "Кнопка: " + raw + (b.title ? " — " + b.title.split(/ — |\. /)[0] : "");
+    ed.querySelector(".bedraw").textContent = (b.tagName === "LABEL" ? "Галка: " : "Кнопка: ") + raw + (b.title ? " — " + b.title.split(/ — |\. /)[0] : "");
     const inp = ed.querySelector("input"); inp.value = c.t || ""; inp.placeholder = raw + " — своё название";
     if (!ic) ed.querySelector('[data-e="ico"]').disabled = true;
     document.body.appendChild(ed);
@@ -5419,7 +5421,7 @@ function panelEditInit(){
       else if (w === "def") { inp.value = ""; set(b, null); }
       else if (w === "gico" || w === "gdef") {
         let n = 0;
-        g.querySelectorAll("button").forEach(y => { const k2 = btnKey(y); if (!k2) return; const c2 = Z.btnLab[k2] || {};
+        g.querySelectorAll("button, label").forEach(y => { if (y.closest("#zenBtns")) return; const k2 = labKey(y); if (!k2) return; const c2 = Z.btnLab[k2] || {};
           if (w === "gico") { if (!btnIcon((y.textContent || "").trim())) return; Z.btnLab[k2] = Object.assign({}, c2, { m: "ico" }); }
           else delete Z.btnLab[k2];
           btnLabApply(y); n++; });
@@ -5445,7 +5447,8 @@ function panelEditInit(){
   document.addEventListener("click", (e) => {
     const x = hit(e); if (!x) { if (ed && !e.target.closest("#btnEd")) close(); return; }
     e.stopPropagation(); e.preventDefault();
-    const b = x.closest("button"); if (b) open(b); else say("✎ Галки, списки и ползунки пока не переименовываются — только переставляются перетаскиванием.");
+    const l = x.closest("label"), b = x.closest("button") || (labCtl(l) ? l : null);   // v0.282: и галка
+    if (b) open(b); else say("✎ Списки и ползунки пока не переименовываются — только переставляются перетаскиванием.");
   }, true);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("cedit")) { if (ed) close(); else on(false); } }, true);
 }
@@ -5470,7 +5473,7 @@ function coneBtnsInit(){
   const ctlOf = (g) => g.tagName === "LABEL" ? g.querySelector(CHK) : g;
   const isChk = (src) => src.tagName === "INPUT" && (src.type === "checkbox" || src.type === "radio");
   const lab = (src) => {
-    if (src.tagName === "INPUT") { const l = src.closest("label"); return (l ? l.textContent : "").replace(/\s+/g, " ").trim() || (src.title || src.id || "").slice(0, 24); }
+    if (src.tagName === "INPUT") { const l = src.closest("label"); return (l && l.dataset.lab) || (l ? l.textContent : "").replace(/\s+/g, " ").trim() || (src.title || src.id || "").slice(0, 24); }
     return (src.dataset && src.dataset.lab) || (src.textContent || "").replace(/\s+/g, " ").trim() || (src.title || "").split(/ — |: |\. /)[0].slice(0, 24) || src.id;   // v0.281: своё название (✎) — и у копии
   };
   const refresh = () => {

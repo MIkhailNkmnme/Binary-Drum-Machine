@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.281. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.282. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.281</title>
+<title>Zazerkalius — v0.282</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -818,9 +818,11 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
 /* v0.281, «режим редактирования панелей — переставлять кнопки и давать им названия или оставлять только значки» */
 button.blab{font-size:0 !important}
 button.blab::before{content:attr(data-lab);font-size:12px;line-height:1;white-space:nowrap}
+label.blab{font-size:0 !important}   /* v0.282: и галки — свой текст после флажка */
+label.blab::after{content:attr(data-lab);font-size:12px;line-height:1;white-space:nowrap;margin-left:3px}
 body.cedit .pnl button:not(#bEdit){outline:1px dashed color-mix(in srgb, var(--acc) 70%, transparent);outline-offset:-1px;cursor:grab}
 body.cedit .pnl label,body.cedit .pnl select,body.cedit .pnl input{cursor:grab}
-body.cedit .pnl button.bsel{outline:2px solid var(--gold)}
+body.cedit .pnl button.bsel,body.cedit .pnl label.bsel{outline:2px solid var(--gold)}
 #btnEd{position:fixed;z-index:70;display:flex;flex-wrap:wrap;align-items:center;gap:4px;max-width:340px;padding:6px;border:1px solid var(--acc);border-radius:6px;background:var(--panel);box-shadow:0 4px 16px rgba(0,0,0,.45);font-size:12px}
 #btnEd input{width:170px;height:24px;box-sizing:border-box;font-size:12px;padding:0 5px}
 #btnEd button{height:24px;padding:0 7px;font-size:12px}
@@ -838,7 +840,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.281</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.282</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1641,8 +1643,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0281"></script>
-<script src="zz-ui.js?v=0281"></script>
+<script src="zz-core.js?v=0282"></script>
+<script src="zz-ui.js?v=0282"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>
