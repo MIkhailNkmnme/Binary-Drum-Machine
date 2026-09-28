@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.288. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.289. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.288</title>
+<title>Zazerkalius — v0.289</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -423,6 +423,7 @@ body.field-hidden #fieldEdge,body.zen #fieldEdge{display:none}
 #cutPanel{position:sticky;left:0;width:max-content;max-width:400px;background:none}
 #cutPanel button{padding:1px 6px;background:transparent;flex:0 0 auto;width:auto}
 #cutPanel button.on{background:transparent}
+#cutPanel #bCutClr{order:1;margin-left:auto;font-size:18px;line-height:1;padding:0 4px}   /* v0.289, «значок удалить побольше и прижми вниз вправо»: 🗑 — последним, в правый нижний угол панели */
 #cutPanel #tplBar{display:contents}
 #cutPanel #tplList{display:contents}
 #cutPanel .tpl{display:inline-flex;gap:2px;flex:0 0 auto;min-width:0}
@@ -843,7 +844,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.288</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.289</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1647,8 +1648,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0288"></script>
-<script src="zz-ui.js?v=0288"></script>
+<script src="zz-core.js?v=0289"></script>
+<script src="zz-ui.js?v=0289"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>
