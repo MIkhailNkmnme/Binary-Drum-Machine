@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.381. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.382. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.381</title>
+<title>Zazerkalius — v0.382</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -173,7 +173,11 @@ body.pane-icons #rowsPane #bPaneIcons{width:auto;padding:2px 0}
 body.nocur .rw.cur .bits > .bx,body.nocur .rw.cur .bits > .bxo{background:var(--bg)}
 .rw.hid .bits > .bx,.rw.hid .bits > .bxo,.rw.fillrw .bits > .bx,.rw.fillrw .bits > .bxo{background:transparent}
 #coneLockAll{font-size:13px}   /* v0.169: общий замок — кнопкой в полосе ввода */
-#coneLockAll.off{opacity:.6}
+/* v0.382, «покажи другими значками, просто полоской»: замки колец (у строк и общий над ними) — полоской вместо 🔒 / 🔓:
+   заперто (не крутит строку) — сплошная серая, открыто — пустая золотая */
+#coneLockAll::before,.rw > .no > .rlk::before{content:"";display:inline-block;vertical-align:middle;width:.9em;height:.3em;min-height:3px;box-sizing:border-box;border-radius:2px;background:var(--dim);border:1px solid var(--dim)}
+#coneLockAll.off::before,.rw > .no > .rlk:not(.on)::before{background:transparent;border-color:var(--gold)}
+.rw > .no > .rlk{opacity:.85} .rw > .no > .rlk:hover{opacity:1}
 #rowInputBar #bRowsStartTop,#rowInputBar #coneLockAll,#rowInputBar #bConeAllHome{padding:1px 3px;min-width:0;line-height:1.2}   /* v0.212: узкие — встают над узкими колонками номеров и замков */
 #split{display:none !important}   /* v0.218: разделителя нет — ширину поля тянут за столбик номеров */
 #rowList .rw > .no{cursor:default} #rowList .rw > .no .rlk,#rowList .rw > .no .rrot{cursor:pointer}   /* v0.277: счётчики — не хват */
@@ -1022,7 +1026,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.381</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.382</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1129,8 +1133,9 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
       <!-- v0.063: «это — слева от поля ввода строки, а поле сузить»: поля, наложение и выравнивание — здесь -->
       <!-- v0.169, «замок общий — на место «1 поле», его — вправо»: общий замок колец — первым в полосе, «1 поле» — в её конце -->
       <!-- v0.212, «над номерами — сброс строк, кнопку на начальные»: «↺» над колонкой номеров — жмёт «↺ Начало» -->
-      <button id="bRowsStartTop" title="↺ Начальные строки — то же, что «↺ Начало» в «Шаблонах»: столбик — снова тот, с которого страница начинается (↩ вернёт). Стоит над колонкой номеров">↺</button>
-      <button id="coneLockAll" title="Общий замок колец (стоит над столбиком замков строк): 🔒 все кольца без своего замка заперты (крутятся только на вид), 🔓 открыты (крутят саму строку). Свои замки у строк — как были"></button>
+      <!-- v0.382, «поменяй значок над номерами — он похож на кручение»: ↺ → ⇤ -->
+      <button id="bRowsStartTop" title="⇤ Начальные строки — то же, что «↺ Начало» в «Шаблонах»: столбик — снова тот, с которого страница начинается (↩ вернёт). Стоит над колонкой номеров">⇤</button>
+      <button id="coneLockAll" title="Общий замок колец (стоит над столбиком замков строк): сплошная полоска — все кольца без своего замка заперты (крутятся только на вид), пустая золотая — открыты (крутят саму строку). Свои замки у строк — как были"></button>
       <!-- v0.214, «всё на места — эту кнопку перемести также над столбиком кручений»: из группы «Кручение» — сюда, узкой «⟲» -->
       <button id="bConeAllHome" title="⟲ Всё на места (стоит над столбиком кручений строк): у ВСЕХ колец сразу — снять накрутку «на вид» (↻), остановить и сбросить кручение (со счётом кругов и проходов), снять довод строки 1 (луч-часы). Биты строк не меняются; если строку сдвигали открытым кольцом — это вернёт только ↩">⟲</button>
       <!-- v0.217, «шрифт — перемести над строки, вместо ползунка две стрелки и число между, не удлинять, окно шрифтов ещё короче» -->
@@ -1868,8 +1873,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0381"></script>
-<script src="zz-ui.js?v=0381"></script>
+<script src="zz-core.js?v=0382"></script>
+<script src="zz-ui.js?v=0382"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
