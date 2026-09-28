@@ -1,5 +1,8 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.064. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Хаб с конусом — ЗАМОРОЖЕННАЯ копия хаба v0.058 (index.html из git, 6168563), заведена 2026-09-28 по слову пользователя
+     «сюда [в Черновики] прошлую версию Хаба, где крутящийся есть, с нотами»: конус-фон виден, семь нот в ряд. Не правится и не версионируется —
+     это снимок; живой хаб — index.html. Ниже — история хаба до v0.058 как была.
+     Zerkalius Hub (index) — v0.058. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -59,28 +62,12 @@
              по-английски буквами C D E F G A B.
      v0.058: «адаптировать к телефону нажатие кнопок нот»: касание — сразу (touch-action: manipulation — без ожидания двойного касания),
              без синей вспышки и без «залипшего» наведения (подсветка при наведении — только где есть мышь); палец — не меньше 44 px;
-             долгое нажатие не зовёт меню и выделение; на узком экране ноты мельче — в одну строку.
-     v0.059: по снимку треугольника бит — «расположи ноты стрелкой вверх; при смене англ/рус все должны стоять на местах; крутящийся конус
-             пока отключи»: ноты — треугольником 1 + 2 + 4 (До; Ре Ми; Фа Соль Ля Си — как дерево длительностей), у каждой постоянная
-             ширина (Соль ↔ G ничего не сдвигает); фон-конус спрятан (visibility: hidden) — звук играет в нём же, поэтому он загружен.
-     v0.060: «1-2-3-1 — такой треугольник-стрелка»: ряды 1, 2, 3 и древко 1 — До; Ре Ми; Фа Соль Ля; Си (под Соль).
-     v0.061: «на хаб надо видеозапись»: ⏺ в правом верхнем углу — ролик кадра формата устройства (телефон 1080×1920, компьютер
-             1920×1080): стрелка нот, как горят и мигают, и конус, если он виден; звук нот — прямо из фона (Zazerkalius v0.394).
-             И meta viewport: без неё телефон рисовал хаб шириной 980 px, уменьшенным (ноты мелкие, правила узкого экрана спали).
-     v0.062: по снимку «D» — «D = Ре?» → «да» на «писать слогами»: по-английски ноты — не буквами C D E F G A B, а слогами латиницей:
-             Do Re Mi Fa Sol La Si.
-     v0.063: «ноты обрамить каждую ромбом, чтобы в общем получилась [стрелка]» — каждая нота в ромбе, ромбы стыкуются рёбрами (ряд заходит
-             в ряд наполовину), нажимается сам ромб. И телефон: «все кнопки в столбик по 1 или по 2 и вниз, чтобы их не видно было, внизу
-             стрелки двигаются вниз, мигают; на экране по центру ноты и Серпинский (один — по центру); телефон по горизонту — кнопки тоже
-             за экраном, два Серпинских прижаты к своим сторонам» — первый экран телефона: #hubSier (свой холст) + ноты, ниже — меню.
-     v0.064: по снимку «Черновиков» у Kubits — «сюда прошлую версию Хаба, где крутящийся есть, с нотами»: кнопка «Хаб с конусом» последней в
-             Черновиках → Zerkalius-hub-konus.html, замороженная копия хаба v0.058 (конус виден, семь нот в ряд). -->
+             долгое нажатие не зовёт меню и выделение; на узком экране ноты мельче — в одну строку. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.064</title>
+    <title>Zerkalius Хаб с конусом — v0.058</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -99,7 +86,6 @@
         #bg {
             position: fixed; inset: 0; width: 100%; height: 100%;
             border: 0; z-index: 0; pointer-events: none;
-            visibility: hidden;   /* v0.059, «крутящийся конус пока отключи»: не виден, но работает — звук нот играет в нём */
         }
 
         /* Всё содержимое — поверх фона. Надпись Zerkalius рисуют сами обои, сверху */
@@ -196,30 +182,17 @@
         /* v0.051, «значки нот пониже и побольше»: под надписью Zerkalius (она сверху, 5vh, высотой в clamp ниже), 40 px */
         /* v0.054: семь нот словами (До…Си) — 30 px, в строку, на узком экране переносятся; выключенная — серая, включённая — своим цветом --c */
         #hubSndBox { position: fixed; left: 50%; top: calc(5vh + clamp(44px, 10vw, 150px) + 12px); transform: translateX(-50%); z-index: 5;
-                     display: flex; flex-direction: column; align-items: center; width: max-content; max-width: calc(100vw - 32px); font-size: 30px; }
-        /* v0.060, «1-2-3-1 — такой треугольник-стрелка»: ряды 1, 2, 3 — наконечник, четвёртый — древко под серединой.
-           v0.063, «ноты обрамить каждую ромбом, чтобы в общем получилась»: каждая нота — в ромбе (--dw × --dh), ромбы в ряду касаются боковыми
-           вершинами, ряд заходит в ряд на полромба — наконечник складывается из ромбов ребро к ребру; Си — древко, касается Соль вершиной.
-           Ромб — clip-path, поэтому и нажимается только ромб (углы соседних не мешают). Рамка — фон кнопки, середина — тёмный ::before */
-        #hubSndBox .nrow { display: flex; justify-content: center; gap: 0; font-size: .7em; --dw: 4.9em; --dh: 3.1em; }
-        #hubSndBox .nrow.n2, #hubSndBox .nrow.n3 { margin-top: calc(var(--dh) / -2); }
-        .hubSnd { position: relative; isolation: isolate; width: var(--dw); height: var(--dh); padding: 0; text-align: center; white-space: nowrap;
-                  font: bold 1em/1 system-ui, sans-serif; cursor: pointer; color: #7d8388; border: none; background: #4a5056;
-                  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); text-shadow: 0 0 6px #000, 0 0 3px #000; }   /* v0.054 — серая, пока выключена */
-        .hubSnd::before { content: ''; position: absolute; inset: 2px; z-index: -1; background: rgba(6, 8, 10, .92); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
-        @media (hover: hover) { .hubSnd:hover { color: #c9ced2; background: #7d8388; } }   /* v0.058: на пальце наведение «залипало» */
+                     display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 8px; width: max-content; max-width: calc(100vw - 32px); }
+        .hubSnd { padding: 2px 6px; font: bold 30px/1 system-ui, sans-serif; cursor: pointer;
+                  color: #7d8388; background: none; border: none; text-shadow: 0 0 6px #000, 0 0 3px #000; }   /* v0.046: без рамки; v0.054 — серая, пока выключена */
+        @media (hover: hover) { .hubSnd:hover { color: #c9ced2; text-shadow: 0 0 10px var(--c), 0 0 3px #000; } }   /* v0.058: на пальце наведение «залипало» */
         /* v0.058: касание — сразу, без вспышки, без меню долгого нажатия и выделения текста */
         .hubSnd { touch-action: manipulation; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
-        @media (pointer: coarse) {   /* v0.058: палец; v0.063 — ромбы по ширине экрана */
-            #hubSndBox { font-size: clamp(20px, 6.4vw, 30px); max-width: calc(100vw - 16px); }
+        @media (pointer: coarse) {   /* v0.058: палец — место не меньше 44 px, ноты по ширине экрана */
+            .hubSnd { min-width: 44px; min-height: 44px; padding: 6px 4px; font-size: clamp(20px, 6.2vw, 30px); }
+            #hubSndBox { gap: 2px 2px; max-width: calc(100vw - 16px); }
         }
-        .hubSnd.on { color: var(--c); background: var(--c); animation: hub-snd-blink 1.1s ease-in-out infinite; }
-        /* v0.061: ⏺ видеозапись хаба — правый верхний угол; идёт запись — красная, мигает */
-        #hubRec { position: fixed; right: 10px; top: 6px; z-index: 6; font: 22px/1 system-ui, sans-serif; padding: 4px 8px; cursor: pointer; color: #7d8388;
-                  background: none; border: none; text-shadow: 0 0 6px #000; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-        @media (hover: hover) { #hubRec:hover { color: #ff6b7a; } }
-        #hubRec.on { color: #ff4d5e; animation: hub-rec-blink 1s ease-in-out infinite; }
-        @keyframes hub-rec-blink { 50% { opacity: .4; } }
+        .hubSnd.on { color: var(--c); animation: hub-snd-blink 1.1s ease-in-out infinite; }
         #hubSndBox.paused .hubSnd.on { animation: none; opacity: .8; }   /* v0.056: пауза — ноты горят, но не мигают */
         /* v0.055: щелчок по запертому меню — серые ноты вспыхивают своим цветом (включи нас) */
         #hubSndBox.nudge .hubSnd:not(.on) { animation: hub-snd-nudge .42s ease-in-out 3; }
@@ -335,28 +308,6 @@
             .hub { justify-content: center; overflow-y: auto; padding-top: 28vh; }
             body { overflow: auto; }
         }
-        /* v0.063, телефон: первый экран — ноты и Серпинский по центру (#hubSier — свой холст хаба), кнопки меню — ниже, за краем экрана, в столбик
-           по 1–2; внизу первого экрана — стрелки вниз, бегут и мигают (щелчок — к меню). По горизонту — так же, два Серпинских у своих краёв */
-        #hubSier, #hubDown { display: none; }
-        @media (pointer: coarse) and (max-width: 960px) {
-            html, body { height: auto; }
-            body { overflow-x: hidden; overflow-y: auto; }
-            #hubSier { display: block; position: absolute; left: 0; top: 0; width: 100vw; height: 100svh; z-index: 1; pointer-events: none; }
-            #hubSndBox { position: absolute; top: 55svh; }
-            .hub { height: auto; margin-top: 100svh; justify-content: flex-start; overflow: visible; padding: 28px 12px 64px; }
-            .mainrow { flex-direction: column; align-items: center; gap: 14px; }
-            .menu-btn.main-engine { width: min(340px, 86vw); }
-            .grid { grid-template-columns: repeat(2, minmax(0, 44vw)); }
-            .row { flex-wrap: wrap; justify-content: center; }
-            .row .menu-btn { flex: 0 0 44vw; }
-            #hubDown { display: block; position: absolute; left: 50%; top: calc(100svh - 64px); transform: translateX(-50%); z-index: 6; background: none; border: none;
-                       color: #9fffc8; font: 30px/0.55 system-ui, sans-serif; padding: 6px 16px; cursor: pointer; text-shadow: 0 0 8px rgba(0, 255, 102, .6);
-                       animation: hub-down 1.3s ease-in-out infinite; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-        }
-        @media (pointer: coarse) and (max-width: 960px) and (orientation: landscape) {
-            #hubSndBox { top: 50svh; transform: translate(-50%, -50%); }
-        }
-        @keyframes hub-down { 0% { transform: translate(-50%, -6px); opacity: .25; } 50% { opacity: 1; } 100% { transform: translate(-50%, 10px); opacity: .25; } }
     </style>
 </head>
 <body>
@@ -366,32 +317,19 @@
     <!-- v0.043: ♫ Звук живого фона -->
     <!-- v0.050, «2 и более значков, каждый отдельно вкл/выкл»: ♫ — строчная головка (бирюза), ♪ — столбцовая (бас, золото) -->
     <!-- v0.054: семь нот — До…Си; у каждой своя головка звука фона и свой цвет (--c) -->
-    <!-- v0.063: телефон — Серпинский первого экрана и стрелки вниз к меню -->
-    <canvas id="hubSier" aria-hidden="true"></canvas>
-    <button id="hubDown" type="button" title="Вниз — к кнопкам">⌄<br>⌄</button>
-    <!-- v0.061: ⏺ видеозапись хаба -->
-    <button id="hubRec" type="button" title="⏺ Видео хаба: ролик в формате устройства (телефон — 1080×1920, компьютер — 1920×1080) — ноты, как горят, и их звук; конус — если он виден. Ещё щелчок — стоп, файл скачивается">⏺</button>
     <div id="hubSndBox">
-        <div class="nrow n1">
-            <button class="hubSnd" data-h="r" type="button" data-ru="До" data-en="Do" style="--c:#ff5f6d" title="До: головка звука фона — строки подряд, слева направо; звучит от ноты до. Щелчок — вкл / выкл, отдельно от остальных">До</button>
-        </div>
-        <div class="nrow n2">
-            <button class="hubSnd" data-h="c" type="button" data-ru="Ре" data-en="Re" style="--c:#ff9f43" title="Ре: головка звука фона — столбцы сверху вниз, октавой ниже — бас; звучит от ноты ре. Щелчок — вкл / выкл, отдельно от остальных">Ре</button>
-            <button class="hubSnd" data-h="mi" type="button" data-ru="Ми" data-en="Mi" style="--c:#ffe066" title="Ми: головка звука фона — строки задом наперёд — с конца поля, справа налево; звучит от ноты ми. Щелчок — вкл / выкл, отдельно от остальных">Ми</button>
-        </div>
-        <div class="nrow n3">
-            <button class="hubSnd" data-h="fa" type="button" data-ru="Фа" data-en="Fa" style="--c:#7ee787" title="Фа: головка звука фона — столбцы снизу вверх; звучит от ноты фа. Щелчок — вкл / выкл, отдельно от остальных">Фа</button>
-            <button class="hubSnd" data-h="sol" type="button" data-ru="Соль" data-en="Sol" style="--c:#4dd4ff" title="Соль: головка звука фона — диагональ ↘ — каждый шаг следующая строка и следующий бит; звучит от ноты соль. Щелчок — вкл / выкл, отдельно от остальных">Соль</button>
-            <button class="hubSnd" data-h="la" type="button" data-ru="Ля" data-en="La" style="--c:#6b8cff" title="Ля: головка звука фона — диагональ ↙ — строки снизу вверх; звучит от ноты ля. Щелчок — вкл / выкл, отдельно от остальных">Ля</button>
-        </div>
-        <div class="nrow n4">
-            <button class="hubSnd" data-h="si" type="button" data-ru="Си" data-en="Si" style="--c:#c38cf5" title="Си: головка звука фона — случайный бит поля; звучит от ноты си. Щелчок — вкл / выкл, отдельно от остальных">Си</button>
-        </div>
+        <button class="hubSnd" data-h="r" type="button" data-ru="До" data-en="C" style="--c:#ff5f6d" title="До: головка звука фона — строки подряд, слева направо; звучит от ноты до. Щелчок — вкл / выкл, отдельно от остальных">До</button>
+        <button class="hubSnd" data-h="c" type="button" data-ru="Ре" data-en="D" style="--c:#ff9f43" title="Ре: головка звука фона — столбцы сверху вниз, октавой ниже — бас; звучит от ноты ре. Щелчок — вкл / выкл, отдельно от остальных">Ре</button>
+        <button class="hubSnd" data-h="mi" type="button" data-ru="Ми" data-en="E" style="--c:#ffe066" title="Ми: головка звука фона — строки задом наперёд — с конца поля, справа налево; звучит от ноты ми. Щелчок — вкл / выкл, отдельно от остальных">Ми</button>
+        <button class="hubSnd" data-h="fa" type="button" data-ru="Фа" data-en="F" style="--c:#7ee787" title="Фа: головка звука фона — столбцы снизу вверх; звучит от ноты фа. Щелчок — вкл / выкл, отдельно от остальных">Фа</button>
+        <button class="hubSnd" data-h="sol" type="button" data-ru="Соль" data-en="G" style="--c:#4dd4ff" title="Соль: головка звука фона — диагональ ↘ — каждый шаг следующая строка и следующий бит; звучит от ноты соль. Щелчок — вкл / выкл, отдельно от остальных">Соль</button>
+        <button class="hubSnd" data-h="la" type="button" data-ru="Ля" data-en="A" style="--c:#6b8cff" title="Ля: головка звука фона — диагональ ↙ — строки снизу вверх; звучит от ноты ля. Щелчок — вкл / выкл, отдельно от остальных">Ля</button>
+        <button class="hubSnd" data-h="si" type="button" data-ru="Си" data-en="B" style="--c:#c38cf5" title="Си: головка звука фона — случайный бит поля; звучит от ноты си. Щелчок — вкл / выкл, отдельно от остальных">Си</button>
     </div>
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.064</div>
+        <div class="ver">v0.058 · с конусом</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -433,8 +371,6 @@
                 <a href="oktaedr/Zerkalius-oktaedr.html" class="menu-btn draft-btn" data-en="Octahedron" data-ru="Октаэдр">Octahedron</a>
                 <!-- v0.042: Зазеркалиус — в главные; Cone (zazerkalius/Zerkalius-konus.html) убран из Черновиков, сама страница жива -->
                 <a href="lively/Zerkalius-lively.html" class="menu-btn draft-btn" data-en="Lively Wallpaper" data-ru="Обои Lively">Lively Wallpaper</a>
-                <!-- v0.064: прошлый хаб — с крутящимся конусом и нотами (замороженная копия v0.058) -->
-                <a href="Zerkalius-hub-konus.html" class="menu-btn draft-btn" data-en="Hub + Cone" data-ru="Хаб с конусом">Hub + Cone</a>
             </div>
         </div>
 
@@ -464,7 +400,7 @@
             // надпись обоев; на Windows Server визуальные эффекты выключены по умолчанию, и хаб там стоял
             // молча английским. Теперь тихий режим гасит только полосы: язык по строкам меняется всегда.
             const CALM = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-            const btns = Array.from(document.querySelectorAll('.menu-btn, .panel-title, .hubSnd'));   // v0.023: и названия групп; v0.057 — и ноты (v0.062: Do Re Mi… / До Ре Ми…)
+            const btns = Array.from(document.querySelectorAll('.menu-btn, .panel-title, .hubSnd'));   // v0.023: и названия групп; v0.057 — и ноты (C D E F G A B / До…Си)
             let busy = false;
             const rowsNow = () => {   // строки — по верхнему краю кнопок (пересчёт на каждый сбой: окно могли сжать)
                 const m = new Map();
@@ -536,8 +472,6 @@
             const post = (m) => { try { bg.contentWindow.postMessage(m, '*'); } catch (e) {} };
             document.addEventListener('click', e => {
                 const t = e.target, note = t.closest && t.closest('.hubSnd'), link = t.closest && t.closest('a, button');
-                if (!e.isTrusted) return;   // v0.061: щелчки из кода (скачивание файла записи) замок не трогает
-                if (t.closest && t.closest('#hubRec, #hubDown')) return;   // v0.061: ⏺ работает и при запертом меню; v0.063 — и стрелки вниз
                 if (note) { if (!started) { started = true; fallback(); } return; }
                 if (link) {
                     if (unlocked) return;
@@ -589,98 +523,6 @@
                 const rs = btns.map(b => b.getBoundingClientRect());
                 glitch(Math.min(...rs.map(r => r.top)), Math.max(...rs.map(r => r.bottom)));
             }, 120);
-
-            /* v0.061, «на хаб надо видеозапись»: страницу хаба (кнопки — не холст) браузер снять не даёт, поэтому кадр рисуется заново на
-               своём холсте — формата устройства, как у конуса в Zazerkalius v0.393: телефон — 1080×1920, компьютер — 1920×1080. В кадре —
-               стрелка нот (их места, цвет, мигание и свечение — как на экране, по getComputedStyle), под ней — конус, если он виден
-               (#bg не спрятан). Звук — дорожка «♫ Звука» фона напрямую (zzSndStream, Zazerkalius v0.394): без захвата экрана и вопросов.
-               Файл — .mp4, если браузер пишет mp4, иначе .webm */
-            /* v0.063: Серпинский первого экрана телефона — свой холст #hubSier (фон-конус спрятан). Строки — Паскаль по модулю 2, 64 штуки, как в
-               фоне, поэтому головки звука фона (zzSndHeads: [строка, бит, номер ноты]) ложатся на те же биты и горят цветом своей ноты.
-               Стоя — один треугольник по центру (строки по середине — равнобедренный), в верхней половине; лёжа — два прямоугольных у своих
-               краёв, гипотенузой к нотам (как пирамиды у конуса, Zazerkalius v0.395). Рисуется, только пока холст виден (телефон) */
-            const sier = document.getElementById('hubSier'), sg = sier && sier.getContext('2d');
-            const PR = ['1']; while (PR.length < 64) { const q = PR[PR.length - 1]; let nx = '1'; for (let i = 1; i < q.length; i++) nx += q[i - 1] !== q[i] ? '1' : '0'; PR.push(nx + '1'); }
-            const noteCol = Array.from(document.querySelectorAll('.hubSnd')).map(b => b.style.getPropertyValue('--c'));
-            const sierDraw = () => {
-                if (!sier || getComputedStyle(sier).display === "none") return false;
-                const dpr = window.devicePixelRatio || 1, W = sier.clientWidth, H = sier.clientHeight; if (!W || !H) return false;
-                if (sier.width !== Math.round(W * dpr) || sier.height !== Math.round(H * dpr)) { sier.width = Math.round(W * dpr); sier.height = Math.round(H * dpr); }
-                sg.setTransform(dpr, 0, 0, dpr, 0, 0); sg.clearRect(0, 0, W, H);
-                let hd = null; try { hd = bg && bg.contentWindow && bg.contentWindow.zzSndHeads; } catch (e) {}
-                const heads = new Map((hd || []).map(([r, j, kd]) => [r + ':' + j, noteCol[kd | 0] || '#22d3ee']));
-                const N = PR.length, land = W > H, bw = document.getElementById('hubSndBox').getBoundingClientRect().width;
-                let cell, spots;
-                if (!land) { const top = H * 0.07, hMax = H * 0.42; cell = Math.min(hMax / N, W * 0.94 / N); const cx = W / 2, y0 = top + (hMax - N * cell) / 2;
-                    spots = [(r, j) => [cx - (r + 1) * cell / 2 + j * cell, y0 + r * cell]]; }
-                else { cell = Math.min(H * 0.84 / N, Math.max(2, (W - bw - 40) / 2 / N)); const m = 6, y0 = (H - N * cell) / 2;
-                    spots = [(r, j) => [m + j * cell, y0 + r * cell], (r, j) => [W - m - (j + 1) * cell, y0 + r * cell]]; }
-                for (let r = 0; r < N; r++) { const row = PR[r];
-                    for (let j = 0; j < row.length; j++) { const hc = heads.get(r + ':' + j), on = row[j] === '1', sz = cell * (hc || on ? 0.8 : 0.34);
-                        sg.fillStyle = hc || '#9fffc8'; sg.globalAlpha = hc ? 1 : on ? 0.78 : 0.14;
-                        if (hc) { sg.shadowColor = hc; sg.shadowBlur = 8; }
-                        for (const f of spots) { const [x, y] = f(r, j); sg.fillRect(x + (cell - sz) / 2, y + (cell - sz) / 2, sz, sz); }
-                        if (hc) sg.shadowBlur = 0; } }
-                sg.globalAlpha = 1; return true;
-            };
-            { let last = 0; const loop = (t) => { if (t - last > 33 && window.scrollY < innerHeight) { last = t; sierDraw(); } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-            { const dn = document.getElementById('hubDown'); if (dn) dn.onclick = () => document.querySelector('.hub').scrollIntoView({ behavior: 'smooth' }); }
-
-            { const rb = document.getElementById('hubRec'), box = document.getElementById('hubSndBox');
-              let hrec = null, hT = 0;
-              const mob = () => { try { return (navigator.userAgentData && navigator.userAgentData.mobile) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
-                || (matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 900); } catch (e) { return false; } };
-              const cv = document.createElement('canvas'), g = cv.getContext('2d');
-              const draw = () => {
-                const W = cv.width, H = cv.height;
-                g.globalAlpha = 1; g.shadowBlur = 0; g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
-                if (bg && getComputedStyle(bg).visibility !== 'hidden') {   // конус — если его видно на странице
-                  try { const c = bg.contentDocument && bg.contentDocument.getElementById('coneCv');
-                    if (c && c.width) { const s = Math.max(W / c.width, H / c.height); g.drawImage(c, (W - c.width * s) / 2, (H - c.height * s) / 2, c.width * s, c.height * s); } } catch (e) {}
-                }
-                const n = box.getBoundingClientRect(); if (!n.width) return;
-                let k = Math.min(W * 0.8 / n.width, H * 0.6 / n.height), ox = W / 2 - (n.left + n.width / 2) * k, oy = H / 2 - (n.top + n.height / 2) * k;
-                if (sier && getComputedStyle(sier).display !== 'none' && sier.width) {   // v0.063: телефон — весь первый экран (Серпинский и ноты) в кадр
-                  const sw = sier.clientWidth, sh = sier.clientHeight, sy = window.scrollY; k = Math.min(W / sw, H / sh); ox = (W - sw * k) / 2; oy = (H - sh * k) / 2 + sy * k;
-                  g.drawImage(sier, ox, oy - sy * k, sw * k, sh * k);
-                }
-                g.textAlign = 'center'; g.textBaseline = 'middle';
-                box.querySelectorAll('.hubSnd').forEach(b => {
-                  const r = b.getBoundingClientRect(), cs = getComputedStyle(b), on = b.classList.contains('on');
-                  g.globalAlpha = +cs.opacity || 1;
-                  { const x = r.left * k + ox, y = r.top * k + oy, w = r.width * k, h = r.height * k;   // v0.063: ромб ноты
-                    g.shadowBlur = 0; g.strokeStyle = cs.backgroundColor; g.lineWidth = 2 * k; g.beginPath(); g.moveTo(x + w / 2, y); g.lineTo(x + w, y + h / 2); g.lineTo(x + w / 2, y + h); g.lineTo(x, y + h / 2); g.closePath(); g.stroke(); }
-                  g.fillStyle = cs.color;
-                  g.shadowColor = on ? b.style.getPropertyValue('--c') : '#000'; g.shadowBlur = (on ? 16 : 6) * k;
-                  g.font = `bold ${parseFloat(cs.fontSize) * k}px system-ui, sans-serif`;
-                  g.fillText(b.textContent, (r.left + r.width / 2) * k + ox, (r.top + r.height / 2) * k + oy);
-                });
-                g.globalAlpha = 1; g.shadowBlur = 0;
-              };
-              const idle = 'Видео хаба: ролик в формате устройства (телефон — 1080×1920, компьютер — 1920×1080) — ноты, как горят, и их звук; конус — если он виден. Ещё щелчок — стоп, файл скачивается';
-              if (rb) rb.onclick = () => {
-                if (hrec) { hrec.stop(); return; }
-                if (!cv.captureStream || typeof MediaRecorder === 'undefined') { rb.title = '⏺ Этот браузер не умеет записывать видео'; return; }
-                const m = mob(); cv.width = m ? 1080 : 1920; cv.height = m ? 1920 : 1080; draw();
-                const stream = cv.captureStream(30);
-                try { const st = bg && bg.contentWindow.zzSndStream && bg.contentWindow.zzSndStream(), at = st && st.getAudioTracks()[0]; if (at) stream.addTrack(at.clone()); } catch (e) {}
-                const aud = stream.getAudioTracks().length > 0;
-                const mime = (aud ? ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
-                  : ['video/mp4;codecs=avc1.42E01E', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm']).find(x => MediaRecorder.isTypeSupported(x)) || '';
-                const mp4 = mime.startsWith('video/mp4'), chunks = [], r = hrec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 8e6 } : undefined), t0 = Date.now();
-                r.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
-                r.onstop = () => {
-                  clearInterval(hT); stream.getTracks().forEach(tr => tr.stop()); hrec = null; rb.classList.remove('on'); rb.textContent = '⏺'; rb.title = '⏺ ' + idle;
-                  const blob = new Blob(chunks, { type: mp4 ? 'video/mp4' : 'video/webm' }), a = document.createElement('a'), d = new Date(), p2 = (x) => String(x).padStart(2, '0');
-                  a.href = URL.createObjectURL(blob); a.download = `Zerkalius-hub-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.${mp4 ? 'mp4' : 'webm'}`;
-                  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-                };
-                r.start(1000); rb.classList.add('on'); rb.textContent = '⏹';
-                const loop = () => { if (hrec !== r) return; draw(); requestAnimationFrame(loop); }; requestAnimationFrame(loop);
-                const tick = () => { const s = Math.floor((Date.now() - t0) / 1000); rb.title = `⏹ Идёт запись${aud ? ' со звуком' : ''} ${cv.width}×${cv.height} — ${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}. Щелчок — стоп и файл`; };
-                tick(); hT = setInterval(tick, 1000);
-              };
-            }
         })();
     </script>
 </body>
