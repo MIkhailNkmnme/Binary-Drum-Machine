@@ -4975,6 +4975,19 @@ window.addEventListener("message", (e) => {
 });
 if ($("bOktSync")) $("bOktSync").onclick = () => { Z.oktSync = Z.oktSync === false; oktSent = null; save(); renderOkt(); };
 if ($("bOktOpen")) $("bOktOpen").onclick = () => window.open("../oktaedr/Zerkalius-oktaedr.html", "_blank");
+/* v0.409, «клик вне поля окна — скролл листает окна». Активное окно — то, в котором последний раз нажали мышь (zActiveWin); нажали вне
+   окон — активного нет. Колесо над НЕактивным окном до его холстов и групп не доходит (перехват на входе, stopPropagation) — работает
+   обычная прокрутка, стол листается. Над активным — как было (масштаб конуса, пирамиды…). Окно Гранидуса — чужая страница в рамке, колесо
+   она забирает сама, поэтому пока оно не активно, над рамкой прозрачная крышка #oktShield (body без .okt-live): колесо над ней листает стол,
+   щелчок — окно активно, крышка снята. На странице одного окна (?solo=…) и в фоне Хаба — как прежде, колесо сразу окну. */
+let zActiveWin = null;
+function zActiveSet(w){ zActiveWin = w || null; document.body.classList.toggle("okt-live", !!w && w.id === "w-okt"); }
+document.addEventListener("pointerdown", (e) => { if (!ZZ_SOLO) zActiveSet(e.target.closest && e.target.closest(".win")); }, true);
+window.addEventListener("wheel", (e) => {
+  if (ZZ_SOLO || e.ctrlKey) return;
+  const w = e.target.closest && e.target.closest(".win");
+  if (w && w !== zActiveWin) e.stopPropagation();   // неактивное окно — колесо листает стол
+}, { capture: true, passive: true });
 /* v0.407, «развёртку не найду»: новое окно встало в самый низ стола. «✦ развёртка» в окне Гранидуса — показать её: из списка окон слева
    (при «⇆ поле справа») — тем же щелчком, свёрнутую — развернуть; поднять наверх, прокрутить к ней, мигнуть рамкой. */
 if ($("bRazvShow")) $("bRazvShow").onclick = () => {

@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.408. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.409. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.408</title>
+<title>Zazerkalius — v0.409</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -374,7 +374,12 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
    (../oktaedr/Zerkalius-oktaedr.html?zz, своя память), холст растёт с окном, как у пирамиды */
 #w-okt .wbody{display:flex;flex-direction:column}
 #w-okt .wbody > *{flex:0 0 auto}
-#w-okt .wbody > #oktFr{flex:1 1 0;min-height:320px;width:100%;border:0;border-radius:4px;background:#000;display:block}
+#w-okt .wbody > #oktBox{flex:1 1 0;min-height:320px;position:relative}
+#oktBox > #oktFr{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:4px;background:#000;display:block}
+/* v0.409, «клик вне поля окна — скролл листает окна»: пока окно Гранидуса не активно (не щёлкнули в нём), поверх рамки — прозрачная крышка:
+   колесо над ней листает стол, щелчок — снимает её (окно активно), дальше колесо и мышь — Гранидусу */
+#oktShield{position:absolute;inset:0;display:none;cursor:pointer}
+body:not(.okt-live) #oktShield{display:block}
 /* v0.398, «развёртку добавь в Зазеркалье»: окно «✦ Развёртка» — октаэдр на плоскости из строк поля, холст растёт с окном */
 #w-razv .wbody{display:flex;flex-direction:column}
 #w-razv .wbody > *{flex:0 0 auto}
@@ -1111,7 +1116,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.408</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.409</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1857,7 +1862,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
           <button id="bOktOpen" title="↗ Гранидус отдельной страницей, в новой вкладке (там своя память, строк поля нет)">↗</button>
           <button id="bRazvShow" title="✦ Развёртка — показать окно развёртки: развернуть, поднять наверх, прокрутить к нему (и из списка окон слева)">✦ развёртка</button>
         </div>
-        <iframe id="oktFr" title="Гранидус" allow="autoplay; fullscreen"></iframe>
+        <div id="oktBox"><iframe id="oktFr" title="Гранидус" allow="autoplay; fullscreen"></iframe><div id="oktShield" title="Щелчок — управлять Гранидусом (мышь, колесо); пока не щёлкнул, колесо листает окна"></div></div>
       </div>
     </section>
 
@@ -1986,8 +1991,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0408"></script>
-<script src="zz-ui.js?v=0408"></script>
+<script src="zz-core.js?v=0409"></script>
+<script src="zz-ui.js?v=0409"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
