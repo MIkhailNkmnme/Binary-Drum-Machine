@@ -5514,38 +5514,77 @@ window.addEventListener("beforeunload", () => { for (const w of popups.values())
    поверх всего — оно пристёгнуто к низу окна конуса полосой во всю его ширину, холст конуса кончается над ним (--ctwH). Тянешь заголовок
    вверх / вниз — высота; ▾ в заголовке (или двойной щелчок по нему) — скрыть текст, остаётся одна полоса-заголовок, ▴ — вернуть.
    «📝 Текст» в шапке и ✕ — убрать совсем, как прежде. Z.ctw = { open, h, min } (x, y, w прежнего плавающего окна больше не нужны). */
+/* v0.349, по снимку полосы «📝 Текст конуса и лог лазера» поверх холста — «сделай как было: отдельная вкладка, но она привязана к Конусу
+   ниже, либо отдельным окном в любое место, чтоб двигать»: окно текста снова своё (не внутри конуса, холст — во всё окно конуса), и у него
+   два положения. 📌 приколото (по умолчанию) — стоит вплотную под окном конуса, той же ширины, ходит за ним; высота — за нижний край.
+   Потянул за заголовок — открепилось и едет за мышью: свободное окно в любом месте, размер — за угол. 📌 — снова под конус. ▾ — свернуть до
+   заголовка, ✕ — убрать (вернуть — «📝 Текст» в шапке). Z.ctw = { open, min, pin, h, x, y, w, fh } — fh: высота свободного окна */
 function ctwInit(){
   const W = $("coneTxtWin"), cb = $("coneBot"), C = $("w-cone"); if (!W || !cb || !C) return;
   W.querySelector(".ctwBody").appendChild(cb); cb.style.top = "";
-  C.appendChild(W);
+  document.body.appendChild(W);
+  C.style.setProperty("--ctwH", "0px");   // холст конуса — до низа окна
   if (!Z.ctw || typeof Z.ctw !== "object") Z.ctw = { open: true };
-  const head = W.querySelector(".ctwHead"), bMin = document.createElement("button");
+  if (Z.ctw.pin === undefined) Z.ctw.pin = true;
+  const head = W.querySelector(".ctwHead"), bMin = document.createElement("button"), bPin = document.createElement("button");
+  bPin.id = "bCtwPin"; bPin.type = "button"; head.insertBefore(bPin, $("bCtwClose"));
   bMin.id = "bCtwMin"; bMin.type = "button"; head.insertBefore(bMin, $("bCtwClose"));
-  let lastH = null;
+  let raf = 0, last = "";
+  const coneBox = () => { if (!C.isConnected || C.classList.contains("collapsed") || getComputedStyle(C).display === "none") return null; const r = C.getBoundingClientRect(); return r.width > 20 ? r : null; };
+  const place = () => {   // приколотое — под конусом; свободное — где поставили, но в пределах экрана
+    const c = Z.ctw, min = !!c.min, vw = innerWidth, vh = innerHeight;
+    if (c.pin) {
+      const r = coneBox(); W.style.visibility = r ? "" : "hidden"; if (!r) return;
+      const h = min ? head.offsetHeight + 2 : c.h, top = Math.min(Math.round(r.bottom + 2), vh - h);
+      const k = [r.left, top, r.width, h, min].join(); if (k === last) return; last = k;
+      W.style.left = Math.round(r.left) + "px"; W.style.top = Math.max(0, top) + "px"; W.style.width = Math.round(r.width) + "px";
+      W.style.height = min ? "" : c.h + "px";
+    } else {
+      W.style.visibility = ""; last = "";
+      const w = Math.max(220, Math.min(c.w || 420, vw)), h = min ? head.offsetHeight + 2 : Math.max(110, Math.min(c.fh || 260, vh));
+      c.x = Math.max(0, Math.min(Math.round(c.x ?? 40), vw - 120)); c.y = Math.max(0, Math.min(Math.round(c.y ?? 80), vh - 30));
+      W.style.left = c.x + "px"; W.style.top = c.y + "px"; W.style.width = w + "px"; W.style.height = min ? "" : h + "px";
+    }
+  };
+  const loop = () => { raf = 0; if (Z.ctw.open === false || !Z.ctw.pin) return; place(); raf = requestAnimationFrame(loop); };   // за окном конуса — каждый кадр (его тащат, растягивают, прокручивают стол)
   const lay = () => {
     const c = Z.ctw, open = c.open !== false, min = !!c.min;
-    W.hidden = !open; W.classList.toggle("min", min);
+    c.h = Math.max(60, Math.min(Math.round(c.h) || 180, innerHeight - 40));
+    W.hidden = !open; W.classList.toggle("min", min); W.classList.toggle("pin", !!c.pin); W.classList.toggle("free", !c.pin);
     $("bConeTxt").classList.toggle("on", open);
-    bMin.textContent = min ? "▴" : "▾"; bMin.title = min ? "Показать текст конуса и лог лазера" : "Скрыть текст — останется одна полоса-заголовок (двойной щелчок по заголовку — то же)";
-    c.h = Math.max(60, Math.min(Math.round(c.h) || 180, Math.max(60, C.clientHeight - 80)));
-    W.style.height = min ? "" : c.h + "px";
-    const H = open && !min ? c.h + "px" : "0px";   // v0.336: скрыт — холст до самого низа, прозрачный заголовок лежит поверх
-    if (H !== lastH) { lastH = H; C.style.setProperty("--ctwH", H); renderCone(); }
+    bMin.textContent = min ? "▴" : "▾"; bMin.title = min ? "Показать текст конуса и лог лазера" : "Свернуть до заголовка (двойной щелчок по заголовку — то же)";
+    bPin.classList.toggle("on", !!c.pin);
+    bPin.title = c.pin ? "📌 Приколото под конусом — ходит за ним. Потяни за заголовок — открепить и поставить куда угодно" : "📌 Приколоть под окно конуса";
+    bPin.textContent = "📌";
+    last = ""; place();
+    if (open && c.pin && !raf) raf = requestAnimationFrame(loop);
   };
   const flip = () => { Z.ctw.min = !Z.ctw.min; lay(); save(); };
   bMin.onclick = flip;
+  bPin.onclick = () => { Z.ctw.pin = !Z.ctw.pin; lay(); save(); };
   head.addEventListener("dblclick", (e) => { if (!e.target.closest("button")) flip(); });
   $("bConeTxt").onclick = () => { Z.ctw.open = Z.ctw.open === false; lay(); save(); };
   $("bCtwClose").onclick = () => { Z.ctw.open = false; lay(); save(); };
-  head.addEventListener("pointerdown", (e) => {   // заголовок — хват высоты
-    if (e.button !== 0 || e.target.closest("button") || Z.ctw.min) return;
+  head.addEventListener("pointerdown", (e) => {   // заголовок — хват: тянешь — окно открепляется и едет за мышью
+    if (e.button !== 0 || e.target.closest("button")) return;
     e.preventDefault(); head.setPointerCapture(e.pointerId);
-    const y0 = e.clientY, h0 = W.offsetHeight;
-    const mv = (ev) => { Z.ctw.h = h0 - (ev.clientY - y0); lay(); };
-    const up = () => { head.removeEventListener("pointermove", mv); head.removeEventListener("pointerup", up); head.removeEventListener("pointercancel", up); save(); };
+    const r = W.getBoundingClientRect(), x0 = e.clientX, y0 = e.clientY; let moved = false;
+    const mv = (ev) => {
+      if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return;
+      if (!moved) { moved = true; const c = Z.ctw; if (c.pin) { c.pin = false; c.w = Math.round(r.width); if (!c.min) c.fh = Math.round(r.height); } }
+      Z.ctw.x = Math.round(r.left + ev.clientX - x0); Z.ctw.y = Math.round(r.top + ev.clientY - y0); lay();
+    };
+    const up = () => { head.removeEventListener("pointermove", mv); head.removeEventListener("pointerup", up); head.removeEventListener("pointercancel", up); if (moved) save(); };
     head.addEventListener("pointermove", mv); head.addEventListener("pointerup", up); head.addEventListener("pointercancel", up);
   });
-  if (window.ResizeObserver) new ResizeObserver(() => lay()).observe(C);
+  // размер рукой (угол свободного окна, нижний край приколотого) — запомнить
+  if (window.ResizeObserver) new ResizeObserver(() => {
+    const c = Z.ctw; if (W.hidden || c.min) return;
+    const w = Math.round(W.offsetWidth), h = Math.round(W.offsetHeight);
+    if (c.pin) { if (Math.abs(h - c.h) > 1) { c.h = h; last = ""; save(); } }
+    else if (Math.abs(w - (c.w || 0)) > 1 || Math.abs(h - (c.fh || 0)) > 1) { c.w = w; c.fh = h; save(); }
+  }).observe(W);
+  addEventListener("resize", () => { last = ""; place(); });
   lay();
 }
 /* v0.177, по снимку полосы групп конуса — «возможность перетаскивать каждую группу в любое место, с фоновым перекрытием всех ниже»:

@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.348. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.349. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.348</title>
+<title>Zazerkalius — v0.349</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -574,6 +574,16 @@ body.zen #coneTxtWin{display:none !important}
 #w-cone > #coneTxtWin.min .ctwBody{display:none}
 #w-cone #coneMain{bottom:var(--ctwH, 0px)}
 .win.collapsed > #coneTxtWin{display:none !important}
+/* v0.349, «как было: отдельная вкладка, привязана к Конусу ниже, либо отдельным окном в любое место»: окно текста — снова своё (в body),
+   .pin — вплотную под окном конуса (ctwInit ставит место каждый кадр), высота — за нижний край; .free — где поставили, размер — за угол */
+#coneTxtWin{box-sizing:border-box}
+#coneTxtWin.pin{resize:vertical;border-radius:0 0 6px 6px}
+#coneTxtWin.free{resize:both}
+#coneTxtWin.min{resize:none;height:auto !important}
+#coneTxtWin.min .ctwBody{display:none}
+#coneTxtWin.min .ctwHead{border-bottom:none}
+#bCtwPin{font-size:11px}
+#bCtwPin.on{border-color:var(--acc);color:var(--acc)}
 body.solo #w-cone .wbody{padding-bottom:var(--ctwH, 0px);box-sizing:border-box}   /* страница одного конуса — холст над полосой */
 body.zen #w-cone #coneMain{bottom:0}
 #w-cone #coneCv{border-radius:6px}
@@ -972,7 +982,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.348</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.349</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1803,12 +1813,12 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
      своё окно поверх всего (и на странице «◯ Конус», и в Zazerkalius), тянется за шапку, растягивается за угол; ✕ — закрыть совсем,
      открыть — «📝 Текст» в шапке страницы. Место, размер и открыто ли — запоминаются (Z.ctw). -->
 <div id="coneTxtWin" hidden>
-  <div class="ctwHead" title="Тяни вверх / вниз — высота; двойной щелчок — скрыть / показать текст"><b>📝 Текст конуса и лог лазера</b><span class="sp"></span><button id="bCtwClose" title="Убрать полосу текста. Вернуть — «📝 Текст» в шапке">✕</button></div>
+  <div class="ctwHead" title="Тяни — открепить от конуса и поставить куда угодно (📌 — снова под конус); двойной щелчок — свернуть / развернуть"><b>📝 Текст конуса и лог лазера</b><span class="sp"></span><button id="bCtwClose" title="Убрать полосу текста. Вернуть — «📝 Текст» в шапке">✕</button></div>
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0348"></script>
-<script src="zz-ui.js?v=0348"></script>
+<script src="zz-core.js?v=0349"></script>
+<script src="zz-ui.js?v=0349"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
