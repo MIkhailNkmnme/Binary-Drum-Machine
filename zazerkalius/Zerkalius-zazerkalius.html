@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.287. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.288. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.287</title>
+<title>Zazerkalius — v0.288</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -417,6 +417,7 @@ body.field-hidden #fieldEdge,body.zen #fieldEdge{display:none}
 #infoSlot > #fieldInfo{position:sticky;left:0;top:auto;right:auto;display:block;width:max-content;text-align:left;background:none;padding:1px 8px 2px}   /* v0.227: ячейка панели — во всю ширину и не раздувает колонки (в v0.225 растянула колонку номеров) */
 #cutPanel{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 8px 10px;font-size:12px}   /* v0.225: под чертой поля */
 #cutPanel .cpl{color:var(--dim)}
+#cutPanel .cpl ~ .cpl{margin-left:8px}   /* v0.288: группы кнопок под чертой — отступ перед каждой подписью, кроме первой */
 /* v0.230, по снимку растянутых шаблонов под чертой — «тут жесть какая-то! без фона надо, это не поле, а кнопки под чертой, не растягивать»:
    под чертой — компактные кнопки своей ширины, без фона, в ряд с переносом; панель прижата к левому краю поля (не уезжает с широкими строками). */
 #cutPanel{position:sticky;left:0;width:max-content;max-width:400px;background:none}
@@ -842,7 +843,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.287</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.288</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -986,6 +987,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
       <button id="bTriCut" title="✂ Нарезать треугольник строк на фигуры высотой h и поставить их друг под другом (↩ вернёт)">✂</button><button id="bTriUnit" title="Фигуры: ▲, ▼, ▼ перевёрнутые, ▲▼, ◇ ромбы, ⧗ часы — щелчок дальше, правый назад">▲</button><input id="triH" type="number" min="2" max="256" value="16" title="Высота ▲ — строк в каждом" style="width:46px">
       <button id="bTriOrd" title="Порядок: по рядам, вдоль левой стороны, вдоль правой — каждый в обе стороны; щелчок дальше, правый назад">по рядам →</button>
       <button id="bTriEmpty" class="on" title="Без пустых: ▲ из одних нулей не ставить">без пустых</button>
+      <span class="cpl" title="Что делать со строками, которые уже лежат под чертой, когда тянешь её вниз. Подсветка — только когда там что-то есть">под чертой:</span>
       <button id="bCutHid" title="Заменить: включено — строки, что были под чертой, заменяются новыми (удаляются); выключено — сдвигаются вниз и остаются под чертой, ниже новых. Вместе с «⤒ из-под черты» не бывает: включил одну — другая гаснет">Заменить</button>
       <button id="bCutTake" class="on" title="⤒ Из-под черты (по умолчанию вкл): тянешь черту вниз — сперва возвращаются строки, что лежат под чертой, и только когда они кончились — достраиваются новые. Выкл — сразу достраиваются новые. Вместе с «Заменить» не бывает: включил одну — другая гаснет">⤒ из-под черты</button>
       <button id="bCutClr" title="🗑 Стереть все строки под чертой — насовсем, во всех полях (↩ вернёт). Одну строку и всё над ней до черты — щелчок по её битам">🗑</button>
@@ -1645,8 +1647,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0287"></script>
-<script src="zz-ui.js?v=0287"></script>
+<script src="zz-core.js?v=0288"></script>
+<script src="zz-ui.js?v=0288"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>

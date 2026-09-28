@@ -431,6 +431,15 @@ function cutPanelMount(){
   const s = document.getElementById("cutSlot"); if (s && CUT_PANEL && CUT_PANEL.parentNode !== s) s.appendChild(CUT_PANEL);
   const f = document.getElementById("infoSlot"); if (f && FIELD_INFO && FIELD_INFO.parentNode !== f) f.appendChild(FIELD_INFO);
   const b = document.getElementById("bCutClr"); if (b) b.disabled = !hidCount();   // v0.245: 🗑 — только когда под чертой что-то есть
+  cutHidUi();   // v0.288
+}
+/* v0.288, «убери выделение, когда нет внизу ничего»: «Заменить» и «⤒ из-под черты» — про строки, что уже лежат под чертой; когда там
+   пусто, обе ничего не делают, и подсветка не горит. Сохранённый выбор не меняется — подсветится, как только под чертой появятся строки. */
+function cutHidUi(){
+  const h = document.getElementById("bCutHid"), t = document.getElementById("bCutTake"); if (!h || !t) return;
+  const any = hidCount() > 0;
+  h.classList.toggle("on", any && Z.cutHidMode !== "keep" && Z.cutTake === false);   // v0.229: «Заменить» — вкл / выкл, надпись одна
+  t.classList.toggle("on", any && Z.cutTake !== false);   // v0.253
 }
 function hidRows(l){ return (Z.lanesHid && Z.lanesHid[l]) || []; }
 function hidCopy(){ return Array.isArray(Z.lanesHid) ? Z.lanesHid.map(l => l.slice()) : null; }
@@ -7042,8 +7051,7 @@ function init(){
     /* v0.286, по снимку «Заменить» и «⤒ из-под черты», горящих вместе, — «они вместе не могут быть включены, нелогично»: при «из-под черты»
        строки под чертой сперва возвращаются, и к достройке под чертой пусто — заменять нечего. Теперь одна или другая: включил одну —
        другая гаснет. Сохранённое не переписывается: при «из-под черты» «Заменить» показана выключенной (так она и работает). */
-    $("bCutHid").classList.toggle("on", Z.cutHidMode !== "keep" && Z.cutTake === false);   // v0.229: «Заменить» — вкл / выкл, надпись одна
-    $("bCutTake").classList.toggle("on", Z.cutTake !== false);   // v0.253
+    cutHidUi();   // v0.288: подсветка — только когда под чертой что-то есть
   };
   const cutPick = (m, what) => { Z.cutGen = m; cutUi(); save(); say(`⎯ Тянешь черту вниз — строки достраиваются от верхней: ${what}.`); };
   $("bCutR90").onclick = () => cutPick("r90", "🔺 Серп 90 (правило 90, на 2 бита длиннее)");
@@ -7055,9 +7063,10 @@ function init(){
   $("barOff").onchange = (e) => { const v = Math.round(+e.target.value); Z.barOff = Number.isFinite(v) ? Math.max(-512, Math.min(512, v)) : -8; cutUi(); save();
     say(`▮ Стенка — столбец ${barOffV()} от вершины (${barOffV() < 0 ? "левее" : barOffV() > 0 ? "правее" : "по центру"}).`); };
   $("bCutHid").onclick = () => { const on = !(Z.cutHidMode !== "keep" && Z.cutTake === false); Z.cutHidMode = on ? "del" : "keep"; if (on) Z.cutTake = false; cutUi(); save();   // v0.286: вкл — «из-под черты» гаснет
-    say(Z.cutHidMode === "keep" ? "⎯ Заменить — выкл: строки под чертой при достройке сдвигаются вниз, ниже новых." : "⎯ Заменить — вкл: строки под чертой при достройке заменяются новыми. «⤒ Из-под черты» выключено — вместе они не работают."); };
+    say((Z.cutHidMode === "keep" ? "⎯ Заменить — выкл: строки под чертой при достройке сдвигаются вниз, ниже новых." : "⎯ Заменить — вкл: строки под чертой при достройке заменяются новыми. «⤒ Из-под черты» выключено — вместе они не работают.") + cutHidEmpty()); };
   $("bCutTake").onclick = () => { Z.cutTake = Z.cutTake === false; if (Z.cutTake) Z.cutHidMode = "keep"; cutUi(); save();   // v0.253; v0.286: вкл — «Заменить» гаснет
-    say(Z.cutTake !== false ? "⤒ Из-под черты — вкл: тянешь черту вниз — сперва возвращаются строки, что под ней, потом достраиваются новые." : "⤒ Из-под черты — выкл: черта вниз сразу достраивает новые строки (что под чертой — по «Заменить»)."); };
+    say((Z.cutTake !== false ? "⤒ Из-под черты — вкл: тянешь черту вниз — сперва возвращаются строки, что под ней, потом достраиваются новые." : "⤒ Из-под черты — выкл: черта вниз сразу достраивает новые строки (что под чертой — по «Заменить»).") + cutHidEmpty()); };
+  const cutHidEmpty = () => hidCount() ? "" : " Под чертой сейчас пусто — подсветится, когда там будут строки.";   // v0.288
   $("bCutClr").onclick = () => {   // v0.245, «и кнопку — стереть всё под линией»: строки за чертой — насовсем, во всех полях; ↩ вернёт
     const n = hidCount(); if (!n) { say("🗑 Под чертой и так пусто."); return; }
     const pre = undoState(); Z.lanesHid = []; undoPush(pre); renderAll(); save();
