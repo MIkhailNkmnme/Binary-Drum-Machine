@@ -943,7 +943,7 @@ const TPL_BUILTIN = [
   { name: "🔁 Антипал.", title: "Случайная половина + её инв-отражение ⇄🔁", rows: () => { const h = randomBits(8); return [h + zzInvRev(h)]; } },
   { name: "〰 0101…", title: "Период 2", rows: () => ["01".repeat(8)] },
   { name: "⚠ Сбой 011…", title: "Почти периодическая с одним сбоем — пример к ⇅ Сортировке сдвигов", rows: () => ["011011011011010011"] },
-  { name: "🎲 Случ. 16", title: "Случайная строка из 16 бит", rows: () => [randomBits(16)] },
+  { name: "🎲 Случ.", title: "Случайная строка длиной как текущая (нет строк — 16 бит)", rows: () => [randomBits(cur().length || 16)] },   // v0.308: как снятая кнопка «🎲 Случ.»
 ];
 function tplInsert(rows, name){
   if (!rows || !rows.length) return;
@@ -7351,8 +7351,7 @@ function init(){
   });
   $("bSierpNext").onclick = () => insertBelow(zzPascalNext(cur()), "🔺+1: под каждой парой — XOR, по краям нули; строка выросла на бит.");
   $("bNumNext").onclick = () => insertBelow(zzBinInc(cur()), "🔢+1: следующий номер.");
-  $("bRandom").onclick = () => insertBelow(randomBits(cur().length || 16), "🎲 Случайная строка той же длины.");
-  $("bSeed").onclick = () => insertBelow("1", "● Зерно «1» — дальше 🔺+1 даст Серпинского.");
+  // v0.308, «отсюда удали дубли»: 🎲 Случ. и ● Зерно в «Построениях» сняты — их делают заготовки 🎲 Случ. и ● 1
   $("bVMirror").onclick = () => { snapshot(); Z.rows.reverse(); Z.cur = Z.rows.length - 1 - Z.cur; renderAll(); save(); say("⇅ Столбик перевёрнут: первая ↔ последняя. Ещё раз — вернёт."); };
   // v0.004: ⇅ через текущую строку — она на месте, соседи парами (cur−k ↔ cur+k).
   $("bVMirrorCur").onclick = () => {
