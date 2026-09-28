@@ -5923,6 +5923,10 @@ function init(){
   $("rowList").addEventListener("mouseover", (e) => {
     if (!document.body.classList.contains("cutdrag")) hidMark(hidAt(e));
     const L = $("rowList"), on = !!e.target.closest(".rw > .no > .rn"); if (L.classList.contains("rnhov") !== on) L.classList.toggle("rnhov", on);
+    // v0.278, по снимку строки «66 стр. · 2211 бит · текущая 32 … · H 0.99 · ⇄ 56%» — «эту надпись убери здесь и помести её в подсказку
+    // для номеров»: под строками её нет, она — в подсказке номера (вторым абзацем, свежая на каждое наведение)
+    const no = e.target.closest(".rw[data-r] > .no");
+    if (no && FIELD_INFO) { if (no.dataset.t0 === undefined) no.dataset.t0 = no.title; no.title = no.dataset.t0 + "\n\n" + (FIELD_INFO.title || FIELD_INFO.textContent); }
   });
   $("rowList").addEventListener("mouseleave", () => { hidMark(null); $("rowList").classList.remove("rnhov"); });
   $("rowList").addEventListener("click", (e) => {
