@@ -3670,7 +3670,10 @@ function setupCone(){
       o2.connect(a2); a2.connect(snd.out); o2.start(t); o2.stop(t + L * 0.5 + 0.02); }
   };
   const sndBitHz = (s, i) => s[i] === "1" ? sndHz(parseInt((s + s + s).substr(i, 3), 2) + sndSc().length) : 0;   // 1 — нота (высота — три бита с этого места), 0 — пауза
-  const sndList = (allIfNone) => rowSel.size ? [...rowSel].filter(i => i < Z.rows.length).sort((a, b) => a - b) : allIfNone ? Z.rows.map((_, i) => i) : [Z.cur];
+  /* v0.380, по снимку двух головок рядом — выбрано «оставить по кругу» и «строки, где все 1-цы, пропускать, кроме той, где длина 1»: в режимах
+     из нескольких строк (разом, подряд, по 2, столбцы) строки из одних единиц длиннее одного бита не звучат — их пропускают; «1» звучит */
+  const sndAll1 = (r) => { const s = Z.rows[r] || ""; return s.length > 1 && s.indexOf("0") < 0; };
+  const sndList = (allIfNone) => rowSel.size ? [...rowSel].filter(i => i < Z.rows.length && !sndAll1(i)).sort((a, b) => a - b) : allIfNone ? Z.rows.map((_, i) => i).filter(i => !sndAll1(i)) : [Z.cur];
   /* v0.260, «покажи, какой бит сейчас играется в строках (кнопку, по умолчанию вкл)»: ◉ бит — в строках поля подсвечен бит, на котором
      сейчас каждая звучащая строка (Highlight API, строки не перерисовываются). Z.sndMark, по умолчанию вкл. */
   /* v0.376, по снимку «Звука» — «кнопку показать головки на битах строк и в конусе»: «◉ головки» (была «◉ бит») — звучащие биты видны и
@@ -3746,7 +3749,8 @@ function setupCone(){
       const k = sndStep % W; sndStep = k + 1;
       const on = [];
       for (const o of sndOffs(W)) { const kk = (k + o) % W; let c = 0;   // v0.318: при ⁑ — два столбца разом, в каждом до 8 строк
-        for (let r = 0; r < Z.rows.length && c < 8; r++) if (Z.rows[r][kk] === "1") { c++; P.push([r, kk]); if (!on.includes(r)) on.push(r); } }
+        for (let r = 0; r < Z.rows.length && c < 8; r++) if (Z.rows[r][kk] === "1" && !sndAll1(r)) {   // v0.380: строки из одних 1 — мимо
+         c++; P.push([r, kk]); if (!on.includes(r)) on.push(r); } }
       const n = sc.length * 3;
       on.forEach(r => sndNote(sndHz(n - 1 - (r % n)), t, len, 0.3 / Math.sqrt(on.length), r));   // v0.257: и тембр — по строке
     }
