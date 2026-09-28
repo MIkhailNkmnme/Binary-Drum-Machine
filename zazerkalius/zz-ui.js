@@ -1571,6 +1571,11 @@ function renderCone(){
       g.strokeStyle = cOut; g.beginPath(); coneArc(g, cx, cy, i, rout + dr * 0.04, 0, 2 * Math.PI); g.stroke();
     }
     if (i === coneHover) { g.strokeStyle = cA; g.lineWidth = Math.max(2 * dpr, dr * 0.14); g.globalAlpha = 0.85; g.beginPath(); coneArc(g, cx, cy, i, rin - dr * 0.06, 0, 2 * Math.PI); g.stroke(); g.beginPath(); coneArc(g, cx, cy, i, rout + dr * 0.06, 0, 2 * Math.PI); g.stroke(); g.globalAlpha = 1; }
+    if (Z.coneBit1 && !(Z.conePoly && n <= 2)) {   // v0.318, «подсветить 1 бит каждой строки»: бит 0 — золотой обводкой
+      const a = -Math.PI / 2 - rot * step;
+      g.strokeStyle = cg; g.globalAlpha = 1; g.lineJoin = "round"; g.lineWidth = Math.max(1.5 * dpr, Math.min(dr * 0.12, 4 * dpr));
+      g.beginPath(); coneArc(g, cx, cy, i, rout, a, a + step); coneArc(g, cx, cy, i, rin, a + step, a, true); g.closePath(); g.stroke();
+    }
   }
   if (clockRays) {   // v0.131: биты строк, в которые упирался луч, — закрашены золотом, с «1», «11», «111»…
     const VH = coneVoidHits();
@@ -2597,7 +2602,7 @@ function cone3DDraw(g, o){
       else if (tiny) pts.push(at(i, a + step / 4, r), at(i, a, 0), at(i, a + step * 3 / 4, r));   // v0.111: Г углом в центре
       else for (let q = 0; q <= K; q++) pts.push(at(i, a + gap + (step - 2 * gap) * q / K, r));
       items.push({ pts, col, dot: tiny && n === 1, a: 0.95, near: tiny ? (pts[0][2] + pts[pts.length - 1][2]) / 2 : at(i, a + step / 2, r)[2], cur: i === Z.cur && !document.body.classList.contains("nocur"), sel: rowSel.has(i),   // v0.107
-        ch: s[j], pc: tiny ? pts[0] : at(i, a + step / 2, r), w: tiny ? 0 : n === 1 ? 2 * r * sc : Math.hypot(pts[0][0] - pts[K][0], pts[0][1] - pts[K][1]), cd: P(0, 0, ringZ(i))[2], m: false });   // v0.243: цифра бита
+        ch: s[j], pc: tiny ? pts[0] : at(i, a + step / 2, r), w: tiny ? 0 : n === 1 ? 2 * r * sc : Math.hypot(pts[0][0] - pts[K][0], pts[0][1] - pts[K][1]), cd: P(0, 0, ringZ(i))[2], m: false, first: j === 0 });   // v0.243: цифра бита; v0.318: first — бит 0
     }
   }
   // v0.090: границы бит в объёме — там, где биты разные: 0→1 сиреневая, 1→0 бирюзовая
@@ -2636,6 +2641,7 @@ function cone3DDraw(g, o){
     g.strokeStyle = it.col; g.globalAlpha = it.a * lit; g.lineWidth = lw; if (it.dot) { g.fillStyle = it.col; g.fill(); } else g.stroke();
     if (Z.coneGlow) g.shadowBlur = 0;
     if (it.cur || it.sel) { g.strokeStyle = it.cur ? cg : cS; g.globalAlpha = 0.9; g.lineWidth = Math.max(1, dpr * 1.2); g.stroke(); }
+    if (Z.coneBit1 && it.first) { g.strokeStyle = cg; g.globalAlpha = 1; g.lineWidth = Math.max(2 * dpr, lw * 0.4); g.stroke(); }   // v0.318: ① 1-й бит — золотой чертой
   }
   g.globalAlpha = 1;
   g.lineWidth = Math.max(1.5 * dpr, Math.min(sc * 0.08, 4 * dpr));
@@ -3501,29 +3507,33 @@ function setupCone(){
   const sndTick = () => {
     const P = []; sndTick1(P); sndMark(P);
   };
+  // v0.318: ⁑ 2 бита — смещения читающих «головок» в строке длины n: [0] или [0, ↔] (по кругу; совпали — одна)
+  const sndOffs = (n) => { if (!Z.snd2 || n < 2) return [0]; const d = (Math.round(Z.snd2d || 4) % n + n) % n; return d ? [0, d] : [0]; };
   const sndTick1 = (P) => {
     const sp = Z.sndSp || 6, len = Math.min(0.6, 1.6 / sp), t = snd.ctx.currentTime + 0.01, sc = sndSc(), m = Z.sndMode || "row";
     if (m === "row") {
       const s = cur(); if (!s) return;
-      const i = sndStep % s.length; sndStep = i + 1; P.push([Z.cur, i]);
-      const hz = sndBitHz(s, i); if (hz) sndNote(hz, t, len, 0.35, 0);
+      const i = sndStep % s.length; sndStep = i + 1;
+      const on = []; sndOffs(s.length).forEach((o, h) => { const j = (i + o) % s.length; P.push([Z.cur, j]); const hz = sndBitHz(s, j); if (hz) on.push([hz, h]); });
+      on.forEach(([hz, v]) => sndNote(hz, t, len, 0.35 / Math.sqrt(on.length), v));   // v0.318: при ⁑ — два голоса
     } else if (m === "sel") {   // v0.257: выделенные строки (нет выделения — текущая) звучат разом, каждая своим голосом и в своём такте
       const L = sndList(false).slice(0, 8), k = sndStep++;
-      const on = []; L.forEach((r, v) => { const s = Z.rows[r]; if (s) { P.push([r, k % s.length]); const hz = sndBitHz(s, k % s.length); if (hz) on.push([hz, v]); } });
+      const on = []; L.forEach((r, v) => { const s = Z.rows[r]; if (s) sndOffs(s.length).forEach((o) => { const j = (k + o) % s.length; P.push([r, j]); const hz = sndBitHz(s, j); if (hz) on.push([hz, v]); }); });
       on.forEach(([hz, v]) => sndNote(hz, t, len, 0.32 / Math.sqrt(on.length), v));
     } else if (m === "seq" || m === "pair") {   // v0.257: чтение — строки одна за другой (по 2 — парами разом), выделенные или всё поле
       const L = sndList(true), G = m === "pair" ? 2 : 1, groups = [];
       for (let j = 0; j < L.length; j += G) groups.push(L.slice(j, j + G));
       const lens = groups.map(g => Math.max(...g.map(r => (Z.rows[r] || "").length), 1)), tot = lens.reduce((a, b) => a + b, 0); if (!tot) return;
       let k = sndStep % tot; sndStep = k + 1; let gi = 0; while (k >= lens[gi]) { k -= lens[gi]; gi++; }
-      const on = []; groups[gi].forEach((r, v) => { const s = Z.rows[r]; if (s && k < s.length) { P.push([r, k]); const hz = sndBitHz(s, k); if (hz) on.push([hz, L.indexOf(r) % 12]); } });
+      const on = []; groups[gi].forEach((r, v) => { const s = Z.rows[r]; if (s && k < s.length) sndOffs(s.length).forEach((o) => { const j = (k + o) % s.length; P.push([r, j]); const hz = sndBitHz(s, j); if (hz) on.push([hz, L.indexOf(r) % 12]); }); });
       on.forEach(([hz, v]) => sndNote(hz, t, len, 0.33 / Math.sqrt(on.length), v));
       if (k === 0) sndShow(groups[gi]);   // строка (пара) началась — сказать, какая
     } else {
       const W = Z.rows.reduce((a, r) => Math.max(a, r.length), 0); if (!W) return;
       const k = sndStep % W; sndStep = k + 1;
-      const on = []; for (let r = 0; r < Z.rows.length && on.length < 8; r++) if (Z.rows[r][k] === "1") on.push(r);
-      on.forEach(r => P.push([r, k]));
+      const on = [];
+      for (const o of sndOffs(W)) { const kk = (k + o) % W; let c = 0;   // v0.318: при ⁑ — два столбца разом, в каждом до 8 строк
+        for (let r = 0; r < Z.rows.length && c < 8; r++) if (Z.rows[r][kk] === "1") { c++; P.push([r, kk]); if (!on.includes(r)) on.push(r); } }
       const n = sc.length * 3;
       on.forEach(r => sndNote(sndHz(n - 1 - (r % n)), t, len, 0.3 / Math.sqrt(on.length), r));   // v0.257: и тембр — по строке
     }
@@ -3542,6 +3552,12 @@ function setupCone(){
   sndMarkUi();
   $("bSndMark").onclick = () => { Z.sndMark = Z.sndMark === false; sndMarkUi(); save(); if (Z.sndMark === false) sndMark(null);
     say(Z.sndMark !== false ? "◉ Звучащий бит подсвечен в строках." : "◉ Звучащий бит не подсвечивается."); };
+  const snd2Ui = () => { $("bSnd2").classList.toggle("on", !!Z.snd2); $("snd2d").disabled = !Z.snd2; };   // v0.318: ⁑ 2 бита и ↔
+  snd2Ui();
+  $("bSnd2").onclick = () => { Z.snd2 = !Z.snd2; snd2Ui(); save(); say(Z.snd2 ? `⁑ Звучат два бита разом: где идёт чтение и через ${Z.snd2d || 4} впереди.` : "⁑ Звучит один бит."); };
+  $("snd2d").value = Z.snd2d || 4;
+  $("snd2d").oninput = (e) => { const v = Math.round(+e.target.value); if (v >= 1) Z.snd2d = v; };
+  $("snd2d").onchange = (e) => { e.target.value = Z.snd2d || 4; save(); };
   $("sndWave").value = Z.sndWave || "mix";   // v0.257: тембр
   $("sndWave").onchange = (e) => { Z.sndWave = e.target.value; save(); };
   $("sndScale").value = Z.sndScale || "penta";
@@ -4042,6 +4058,8 @@ function setupCone(){
     if (Z.conePoly) say("⬡ Этажи-многоугольники: строка из n бит — n-угольник, бит — сторона. 1 бит — точка в центре, 2 — две Г углом в центре (крест), 3 — треугольник, 4 — квадрат."); };
   $("cone3d").checked = !!Z.cone3d;   // v0.082
   $("cone3d").onchange = (e) => { Z.cone3d = e.target.checked; save(); renderCone(); };
+  $("coneBit1").checked = !!Z.coneBit1;   // v0.318: ① 1-й бит каждой строки
+  $("coneBit1").onchange = (e) => { Z.coneBit1 = e.target.checked; save(); renderCone(); say(Z.coneBit1 ? "① Первый бит каждой строки — в золотой обводке." : "① Первый бит больше не подсвечен."); };
   $("cone3Dig").checked = !!Z.cone3Dig;   // v0.251: цифры бит сбоку / сверху — вкл / выкл, по умолчанию выкл
   $("cone3Dig").onchange = (e) => { Z.cone3Dig = e.target.checked; save(); renderCone();
     say(Z.cone3Dig ? "01 В 3D при наклоне ровно 0° (сбоку) или 90° (сверху) на битах — их цифры." : "01 Цифры бит в 3D — выкл."); };
