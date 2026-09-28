@@ -4818,6 +4818,29 @@ function setupPyr(){
   requestAnimationFrame(cutUi);
 }
 
+/* ─── ◆ Октаэдр (v0.396) ─────────────────────────────────────────────────────────────────────
+   «Весь Октаэдр в Зазеркалье, как одно из окон, наравне с Конусом»: в окне — страница Октаэдра целиком (?zz — своя память,
+   без значка Хаба). Грузится, когда окно впервые открыто; готова — шлёт zz-okt-ready, и ей уходит столбик строк (zz-rows).
+   Дальше строки уходят только при перемене и только с галкой «строки → грани» (Z.oktSync, по умолчанию вкл). */
+let oktSent = null, oktReady = false;
+function renderOkt(){
+  const fr = $("oktFr"); if (!fr) return;
+  $("oktSync").checked = Z.oktSync !== false;
+  if (!winOpen("w-okt")) return;
+  if (!fr.getAttribute("src")) { fr.src = "../oktaedr/Zerkalius-oktaedr.html?zz"; return; }
+  if (!oktReady || Z.oktSync === false) return;
+  const k = Z.rows.join("|"); if (k === oktSent) return;
+  oktSent = k;
+  try { fr.contentWindow.postMessage({ type: "zz-rows", rows: Z.rows.slice() }, "*"); } catch (e) {}
+}
+window.addEventListener("message", (e) => {
+  const fr = $("oktFr");
+  if (!fr || e.source !== fr.contentWindow || !e.data || e.data.type !== "zz-okt-ready") return;
+  oktReady = true; oktSent = null; renderOkt();
+});
+if ($("oktSync")) $("oktSync").onchange = (e) => { Z.oktSync = e.target.checked; oktSent = null; save(); renderOkt(); };
+if ($("bOktOpen")) $("bOktOpen").onclick = () => window.open("../oktaedr/Zerkalius-oktaedr.html", "_blank");
+
 /* ─── 🧪 Поиск структуры (v0.042) ─────────────────────────────────────────────────────────────
    Живое окно: считает при каждой отрисовке, если не свёрнуто; результат запоминается по ленте и номеру строки. */
 let structLast = null;
@@ -5629,7 +5652,7 @@ function defaultLayout(){
   // v0.010: стол стал правой колонкой; если он уже 900, окна идут одной колонкой, по важности.
   if (W0 < 900) {
     const w = Math.max(320, W0 - 2 * g);
-    const order = [["w-mirror", 430], ["w-fix", 520], ["w-fold", 380], ["w-descent", 330], ["w-bwt", 460], ["w-sig", 460], ["w-chk", 460], ["w-view", 460], ["w-lin", 240], ["w-addr", 400], ["w-struct", 520], ["w-cone", 560], ["w-bal", 460], ["w-steps", 460], ["w-tiles", 560], ["w-pyr", 560],
+    const order = [["w-mirror", 430], ["w-fix", 520], ["w-fold", 380], ["w-descent", 330], ["w-bwt", 460], ["w-sig", 460], ["w-chk", 460], ["w-view", 460], ["w-lin", 240], ["w-addr", 400], ["w-struct", 520], ["w-cone", 560], ["w-bal", 460], ["w-steps", 460], ["w-tiles", 560], ["w-pyr", 560], ["w-okt", 560],
                    ["w-gf2", 240], ["w-cycle", 330], ["w-tape", 260], ["w-orbit", 240], ["w-help", 300]];
     const out = {}; let y = g;
     for (const [id, h] of order) { out[id] = { x: g, y, w, h }; y += h + g; }
@@ -5662,6 +5685,7 @@ function defaultLayout(){
     "w-steps":   { x: mw + 2 * g, y: 3140 + 9 * g, w: cw, h: 460 },   // v0.062
     "w-tiles":   { x: g, y: 3600 + 10 * g, w: mw, h: 560 },   // v0.070
     "w-pyr":     { x: mw + 2 * g, y: 3600 + 10 * g, w: cw, h: 560 },   // v0.109
+    "w-okt":     { x: g, y: 4160 + 11 * g, w: mw, h: 560 },   // v0.396
   };
 }
 function applyWin(el){
@@ -6703,6 +6727,7 @@ function setupWin(el){
     if (!w.collapsed && el.id === "w-steps") renderSteps();   // v0.062
     if (!w.collapsed && el.id === "w-tiles") renderTiles();   // v0.070
     if (!w.collapsed && el.id === "w-pyr") renderPyr(true);   // v0.109
+    if (!w.collapsed && el.id === "w-okt") renderOkt();   // v0.396
     save();
   };
   // v0.016, запрос пользователя «двойной щелчок по заголовку»: свернуть / развернуть, как «–».
@@ -6937,7 +6962,7 @@ function applyView(){
    а ошибка с именем окна показывается внизу — её текст и нужен, чтобы починить. */
 function renderAll(){
   const parts = [["вид страницы", applyView], ["поле строк", renderRows], ["90°", tri90Apply], ["крест", renderCross], ["указатели", renderPointers],
-    ["спуск", renderDescent], ["поправка", renderFix], ["сложить", renderFoldLive], ["проверка", renderCheck], ["вид 🧊", renderView], ["лин. сложность", renderLinLive], ["адрес 🔎", renderAddrLive], ["структура 🧪", renderStructLive], ["цикл, GF(2), лента, орбита, ⇅", renderLiveRest], ["конус ◯", renderCone], ["балансы ⚖", renderBal], ["лесенки 📐", renderSteps], ["разложить △", renderTiles], ["пирамида ▲", renderPyr]];
+    ["спуск", renderDescent], ["поправка", renderFix], ["сложить", renderFoldLive], ["проверка", renderCheck], ["вид 🧊", renderView], ["лин. сложность", renderLinLive], ["адрес 🔎", renderAddrLive], ["структура 🧪", renderStructLive], ["цикл, GF(2), лента, орбита, ⇅", renderLiveRest], ["конус ◯", renderCone], ["балансы ⚖", renderBal], ["лесенки 📐", renderSteps], ["разложить △", renderTiles], ["пирамида ▲", renderPyr], ["октаэдр ◆", renderOkt]];
   if (!renderAll.tplDone) parts.splice(2, 0, ["шаблоны", () => { renderTpl(); renderAll.tplDone = true; }]);
   for (const [name, f] of parts) {
     try { f(); }

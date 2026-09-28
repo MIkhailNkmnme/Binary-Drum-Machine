@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.043. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Октаэдр — v0.044. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.043</title>
+<title>Zerkalius Октаэдр — v0.044</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -217,11 +217,13 @@
       padding:16px 16px calc(24px + env(safe-area-inset-bottom)); }
     #help td:first-child{ width:104px; }
   }
+  /* v0.044: окно «◆ Октаэдр» в Zazerkalius (адрес ?zz) — значок «в Хаб» внутри окна не нужен, Хаб — у самой страницы */
+  html.zzemb #zerkHubBtn{ display:none !important; }
 </style>
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.043</div>
+<div id="ver">v0.044</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -598,6 +600,11 @@ const T = [0, 1, 0], B = [0, -1, 0];
    точки. Всё, что было «на четыре», теперь «на NB»: грани, рёбра, картины бит по слотам, нити, свои биты. */
 let NB = 4;
 const EQ = [];
+/* v0.044, «весь Октаэдр в Зазеркалье, как одно из окон, наравне с Конусом»: страница с ?zz открыта окном внутри Zazerkalius.
+   Своя память (ключи с «-zz»): настройки окна не трогают отдельную страницу Октаэдра, и наоборот. Строки поля Zazerkalius
+   приходят сообщением zz-rows и ложатся гранью (см. zzRows в конце). */
+const ZZ_EMB = /[?&]zz(=|&|$)/.test(location.search);
+if (ZZ_EMB) document.documentElement.classList.add("zzemb");
 const NB_NAME = { 1: "одна грань", 2: "крест из двух ромбов", 3: "треугольная бипирамида", 4: "октаэдр", 5: "пятигранная бипирамида", 6: "шестигранная бипирамида" };
 /* v0.038: 2 и 1 грань (запрос пользователя «также надо 2 и 1 грань»). Тела уже нет — плоский ромб: верхний треугольник и
    его зеркало вниз, в плоскости Z = 0. Основание — отрезок из двух точек (±X). 1 грань — одна картина, и она
@@ -1606,7 +1613,7 @@ bReset.onclick = () => { yaw = 0.6; pitch = -0.42; zoom = 1; save(); };
    сервера нет вовсе. Ключ один на всю страницу: набор маленький, дробить его не на что.
    Чтение обёрнуто в try: в приватном окне и при запрете на данные сайта localStorage бросает
    исключение, и без обёртки страница не поднялась бы вообще. */
-const KEY = "zerkalius-oktaedr-v1";
+const KEY = "zerkalius-oktaedr-v1" + (ZZ_EMB ? "-zz" : "");   // v0.044: у окна в Zazerkalius — своя
 const sRows = document.getElementById("sRows"), sSize = document.getElementById("sSize"),
       sSpeed = document.getElementById("sSpeed"), sGlow = document.getElementById("sGlow");
 const vRows = document.getElementById("vRows"), vSize = document.getElementById("vSize"),
@@ -1937,10 +1944,10 @@ c1In.addEventListener("input", () => { col1 = c1In.value; bitCol = true; syncUI(
    Поэтому на узком экране все разделы собираются в лист в исходном порядке, а раскладка не
    трогается и не пишется: вернёшься на широкий экран — всё встанет, как было. */
 const SECS = {
-  KEY_OFF: "zerkalius-oktaedr-tabs-off-v1",
+  KEY_OFF: "zerkalius-oktaedr-tabs-off-v1" + (ZZ_EMB ? "-zz" : ""),
   // v0.030: v1 → v2 — раскладка по умолчанию стала двухпанельной; старая запись (всё слева) иначе
   // перекрыла бы её у всех, кто уже открывал страницу.
-  KEY_LAY: "zerkalius-oktaedr-layout-v2",
+  KEY_LAY: "zerkalius-oktaedr-layout-v2" + (ZZ_EMB ? "-zz" : ""),
   narrow: window.matchMedia("(max-width: 720px)"),
   drag: null,
   all(){ return Array.from(document.querySelectorAll(".tab-sec")); },
@@ -2108,6 +2115,24 @@ noteUi();
   try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
 })();
 myArea.value = myBits; myInfoUpd();
+/* v0.044: СТРОКИ ИЗ ZAZERKALIUS. Окно «◆ Октаэдр» шлёт столбик строк поля ({ type: "zz-rows", rows }) при открытии и при каждой
+   его перемене. Строка k (с нуля) — ряд k грани от вершины, в нём k + 1 бит: короче — добивается нулями справа, длиннее — лишнее
+   не влезает (у начального столбика 1, 11, 101, … длины как раз такие). Рядов — сколько строк (не меньше 2, не больше ROWS_MAX).
+   Все грани одинаковые (mySame), низ, как всегда, — та же картина, отражённая и инвертированная. Строки видны и в «Своих битах». */
+function zzRows(rows){
+  if (!Array.isArray(rows)) return;
+  const L = rows.map(r => String(r).replace(/[^01]/g, "")), R = Math.max(2, Math.min(ROWS_MAX, L.length));
+  let face = "";
+  for (let r = 0; r < R; r++) face += ((L[r] || "") + "0".repeat(r + 1)).slice(0, r + 1);
+  ROWS = R; sRows.value = R; vRows.textContent = R;
+  myBits = face; mySame = true; sierp = false;
+  rollBits(); if (typeof unpinAll === "function") unpinAll(); syncUI();
+  myArea.value = L.slice(0, R).join("\n"); myInfoUpd(); save();
+}
+if (ZZ_EMB) {
+  window.addEventListener("message", (e) => { if (e.source === window.parent && e.data && e.data.type === "zz-rows") zzRows(e.data.rows); });
+  try { window.parent.postMessage({ type: "zz-okt-ready" }, "*"); } catch (e) {}
+}
 /* ═══ ГОРЯЧИЕ КЛАВИШИ (v0.006, запрос пользователя) ═══════════════════════════════════════════
    ПРОБЕЛ — вращение, ENTER — цикл шагов, ◄ ► — шаг назад и вперёд, ▲ ▼ — такт цикла.
    Буквы продублированы в русской раскладке: переключать её ради кнопки — отдельная морока.
