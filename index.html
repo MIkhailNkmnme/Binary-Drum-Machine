@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.042. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.043. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -29,12 +29,14 @@
      v0.039: «может, название не нужно? … мешает — лучше убери» — большой надписи над конусом нет (для поисковиков — скрытый h1, как был).
      v0.040: «сюда напиши Зеркалиус» — кнопка Zerkalius-code.html в Черновиках подписана Zerkalius / Зеркалиус (была Code / Код).
      v0.042: «Зазеркалиус — под Треугольник, Битмультфильмы — в Записи, из Черновиков убрать Конус»: главные — Треугольник и Зазеркалиус,
-             стрелки Треугольник → Битмультфильмы сняты (вели к уехавшей кнопке); Битмультфильмы — в «Знак и записи»; Cone — из Черновиков. -->
+             стрелки Треугольник → Битмультфильмы сняты (вели к уехавшей кнопке); Битмультфильмы — в «Знак и записи»; Cone — из Черновиков.
+     v0.043: «добавить кнопку в Хаб — Звук»: ♫ Звук в правом нижнем углу — звучит живой фон (строки подряд), головки видны на конусе и
+             в двух пирамидах Серпинского по бокам (Zazerkalius v0.381); фон получил allow="autoplay", иначе звук в нём не пускают. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Control Hub — v0.042</title>
+    <title>Zerkalius Control Hub — v0.043</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -140,6 +142,11 @@
             user-select: none;
         }
 
+        /* v0.043: ♫ Звук живого фона — в правом нижнем углу, горит, пока звучит */
+        #hubSnd { position: fixed; right: 14px; bottom: 14px; z-index: 5; padding: 7px 14px; font: 14px system-ui, sans-serif; cursor: pointer;
+                  color: #9fdcb8; background: rgba(0, 20, 8, 0.7); border: 1px solid rgba(0, 255, 102, 0.35); border-radius: 6px; }
+        #hubSnd:hover { color: #00ff66; border-color: #00ff66; box-shadow: 0 0 12px rgba(0, 255, 102, 0.35); }
+        #hubSnd.on { color: #22d3ee; border-color: #22d3ee; box-shadow: 0 0 14px rgba(34, 211, 238, 0.55); }
         /* Лаборатория — сетка карточек */
         .grid {
             display: grid;
@@ -250,11 +257,13 @@
 <body>
     <!-- Живой фон: обои Zerkalius (папка oboi\, заведено 2026-09-21) -->
     <!-- v0.038: живой фон — конус Zazerkalius (3D, зеркало вниз, свет, крутится); прежние обои — кнопка «Обои» -->
-    <iframe id="bg" src="zazerkalius/Zerkalius-zazerkalius.html?solo=cone&amp;bg=1" title="Конус Zerkalius" tabindex="-1" aria-hidden="true"></iframe>
+    <iframe id="bg" src="zazerkalius/Zerkalius-zazerkalius.html?solo=cone&amp;bg=1" title="Конус Zerkalius" tabindex="-1" aria-hidden="true" allow="autoplay"></iframe>
+    <!-- v0.043: ♫ Звук живого фона -->
+    <button id="hubSnd" type="button" title="♫ Звук фона: строки звучат подряд, звучащие биты (головки) видны на конусе и в обеих пирамидах. Ещё щелчок — тише">♫ Звук</button>
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.042</div>
+        <div class="ver">v0.043</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -367,6 +376,10 @@
             TITLE.lang = r0 ? 'en' : 'ru';
             const titleStart = () => TITLE.set(TITLE.lang);
             window.addEventListener('message', e => { if (bg && e.source === bg.contentWindow && e.data && e.data.zerkReady) titleStart(); });
+            // v0.043: ♫ Звук живого фона — сообщение в фон; фон отвечает, звучит ли (zerkSndOn), — по нему горит кнопка
+            { const sb = document.getElementById('hubSnd');
+              if (sb && bg) { sb.onclick = () => { try { bg.contentWindow.postMessage({ zerkSnd: !sb.classList.contains('on') }, '*'); } catch (e) {} };
+                window.addEventListener('message', e => { if (e.source === bg.contentWindow && e.data && e.data.zerkSndOn !== undefined) { sb.classList.toggle('on', !!e.data.zerkSndOn); sb.textContent = e.data.zerkSndOn ? '♫ Звук ■' : '♫ Звук'; } }); } }
             if (bg) { bg.addEventListener('load', () => setTimeout(titleStart, 300)); setTimeout(titleStart, 1500); }   // запасной путь
             const glitch = (y0, y1, mid) => {
                 if (CALM) { if (mid) mid(); return; }   // v0.028: тихий режим — язык меняется сразу, без полос

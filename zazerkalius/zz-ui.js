@@ -2849,6 +2849,32 @@ function cone3DDraw(g, o){
     }
     g.stroke(); g.globalAlpha = 1;
   }
+  /* v0.381, «обои доработать всё как есть, но добавить по горизонту зеркального конуса две пирамиды Серпинского высотой до вершины конуса,
+     справа и слева, чтобы соприкасались почти катетами» (выбрано: прямоугольные, катетом к конусу), «звук пустить по обеим пирамидам сразу
+     и показать биты-головки»: только фон хаба (без пресета). Строки поля (Паскаль mod 2, строка r — r + 1 бит) — прямоугольным треугольником:
+     вершина — на высоте вершины конуса, основание — на горизонте (плоскость зеркала), вертикальный катет — у самого широкого места конуса,
+     гипотенуза — наружу; левый — зеркальный. Единицы — цветом единиц, нули — бледно; головки звука (zzSndHeads) — бирюзой в обоих */
+  if (ZZ_BG && !ZZ_PRESET && Z.coneOcta && N > 1) {
+    const base = P(0, 0, 0), apex = P(0, 0, (N - 1) * hk + hk), hpx = base[1] - apex[1];
+    if (hpx > 20) {
+      let xl = Infinity, xr = -Infinity;
+      for (let q = 0; q < 72; q++) { const p = at(N - 1, q / 72 * 2 * Math.PI, ringR(N - 1) + 0.4); xl = Math.min(xl, p[0]); xr = Math.max(xr, p[0]); }
+      const RN = N, cell = hpx / RN, gap = Math.max(2 * dpr, cell * 1.2), s1 = cell * 0.78, s0 = cell * 0.34;
+      const heads = new Set((window.zzSndHeads || []).map(([r, j]) => r + ":" + j));
+      for (let r = 0; r < RN; r++) {
+        const s = Z.rows[r] || "", y = apex[1] + r * cell;
+        for (let j = 0; j < s.length; j++) {
+          const hd = heads.has(r + ":" + j), on = s[j] === "1", sz = hd || on ? s1 : s0;
+          g.fillStyle = hd ? "#22d3ee" : on ? c1 : c0; g.globalAlpha = hd ? 1 : on ? 0.85 : 0.3;
+          if (hd) { g.shadowColor = "#22d3ee"; g.shadowBlur = 10 * dpr; }
+          const xR = xr + gap + j * cell, xL = xl - gap - (j + 1) * cell, o2 = (cell - sz) / 2;
+          g.fillRect(xR + o2, y + o2, sz, sz); g.fillRect(xL + o2, y + o2, sz, sz);
+          if (hd) g.shadowBlur = 0;
+        }
+      }
+      g.globalAlpha = 1;
+    }
+  }
   // метка «начала» — вертикаль бит 0 у вершины
   const m1 = at(Math.max(0, N - 1), -Math.PI / 2, ringR(Math.max(0, N - 1)) + 0.1), m2 = at(Math.max(0, N - 1), -Math.PI / 2, ringR(Math.max(0, N - 1)) + 0.6);
   g.strokeStyle = cg; g.globalAlpha = 0.35; g.lineWidth = dpr; g.beginPath(); g.moveTo(m1[0], m1[1]); g.lineTo(m2[0], m2[1]); g.stroke(); g.globalAlpha = 1;
@@ -3803,6 +3829,14 @@ function setupCone(){
     sndTick(); sndUi();
   };
   $("bSnd").onclick = () => { if (sndT) sndPause(true); else if (sndPaused) sndPause(false); else sndSet(true); };   // v0.371: пуск / пауза / дальше
+  /* v0.381: фон хаба — звук по кнопке «♫ Звук» хаба (сообщение { zerkSnd: true | false }): строки подряд, головки видны на конусе и в обеих
+     пирамидах; хабу — ответ { zerkSndOn }, чтобы кнопка горела */
+  if (ZZ_BG) addEventListener("message", (e) => {
+    const d = e.data; if (!d || typeof d !== "object" || d.zerkSnd === undefined) return;
+    Z.sndMode = "seq"; Z.sndMark = true; rowSel.clear();
+    if (d.zerkSnd) { if (!sndT) sndSet(true); } else sndSet(false);
+    try { if (e.source) e.source.postMessage({ zerkSndOn: !!sndT }, "*"); } catch (err) { /* хаб с другого адреса */ }
+  });
   if ($("bSndP")) $("bSndP").onclick = () => { if (sndT || sndPaused) sndSet(false); };   // v0.371: ■ стоп
   const sndDirSet = (d) => { const was = Z.sndDir < 0 ? -1 : 1; Z.sndDir = d; save(); if (sndT) { sndUi(); if (was !== d) say(d < 0 ? "◀ Звук — назад." : "▶ Звук — вперёд."); } else sndStepBy(d); };   // v0.374
   if ($("bSndB")) $("bSndB").onclick = () => sndDirSet(-1);
