@@ -4818,6 +4818,81 @@ function setupPyr(){
   requestAnimationFrame(cutUi);
 }
 
+/* ─── ✦ Развёртка октаэдра (v0.398) ──────────────────────────────────────────────────────────────
+   «Разложи октаэдр на плоскость, разные варианты центровки вершин и рёбер» → «развёртку добавь в Зазеркалье». Октаэдр — как в окне
+   «◆ Октаэдр»: T — верх, B — низ, E0…E3 — экватор; грань Ui = (T, Ei, Ei+1), Di = (B, Ei, Ei+1). Развёртка — дерево склеек граней:
+   первая (U0) кладётся вершиной вверх, каждая следующая — отражением соседней через общее ребро. Строка k поля — ряд k грани от её
+   вершины (T или B), в нём k + 1 бит (короче — нули, длиннее — лишнее не влезает); у нижних граней биты инвертированы, а зеркальность
+   выходит сама — нижняя грань ложится отражением верхней. Центр варианта (вершина, середина ребра, середина грани) — в центре холста. */
+const RAZV_V = [
+  [[["U0","U1"],["U1","U2"],["U2","U3"],["U0","D0"],["U1","D1"],["U2","D2"],["U3","D3"]], ["v", "U0", "T"]],
+  [[["U0","U1"],["U1","D1"],["U0","D0"],["U1","U2"],["U0","U3"],["D1","D2"],["D0","D3"]], ["v", "U0", "E1"]],
+  [[["U0","D0"],["U0","U1"],["U0","U3"],["D0","D1"],["D0","D3"],["U1","U2"],["D3","D2"]], ["e", "U0", "E0", "E1"]],
+  [[["U0","U1"],["U0","D0"],["U1","D1"],["U1","U2"],["U0","U3"],["U2","D2"],["U3","D3"]], ["e", "U0", "T", "E1"]],
+  [[["U0","U1"],["U0","U3"],["U0","D0"],["U1","D1"],["D1","D2"],["D2","D3"],["D2","U2"]], ["f", "U0"]],
+  [[["U0","D0"],["D0","D1"],["D1","U1"],["U1","U2"],["U2","D2"],["D2","D3"],["D3","U3"]], ["e", "U1", "T", "E2"]],
+];
+function razvUnfold(tree){
+  const F = {}; for (let i = 0; i < 4; i++) { const a = "E" + i, b = "E" + ((i + 1) % 4); F["U" + i] = ["T", a, b]; F["D" + i] = ["B", a, b]; }
+  const s3 = Math.sqrt(3) / 2, pos = { U0: { T: [0, 0], E0: [-0.5, s3], E1: [0.5, s3] } }, todo = tree.slice();
+  while (todo.length) {
+    const i = todo.findIndex(([p, c]) => pos[p] && !pos[c]); if (i < 0) break;
+    const [p, c] = todo.splice(i, 1)[0], sh = F[p].filter(v => F[c].includes(v)), P = pos[p];
+    const o = F[p].find(v => !sh.includes(v)), n = F[c].find(v => !sh.includes(v));
+    const [x1, y1] = P[sh[0]], [x2, y2] = P[sh[1]], [ox, oy] = P[o], dx = x2 - x1, dy = y2 - y1;
+    const t = ((ox - x1) * dx + (oy - y1) * dy) / (dx * dx + dy * dy), fx = x1 + t * dx, fy = y1 + t * dy;
+    pos[c] = { [sh[0]]: P[sh[0]], [sh[1]]: P[sh[1]], [n]: [2 * fx - ox, 2 * fy - oy] };
+  }
+  return { F, pos };
+}
+function renderRazv(){
+  const cv = $("razvCv"); if (!cv) return;
+  $("razvV").value = String(Z.razvV | 0); $("razvLbl").checked = Z.razvLbl !== false;
+  if (!winOpen("w-razv")) return;
+  const dpr = window.devicePixelRatio || 1, W = Math.max(50, cv.clientWidth), H = Math.max(50, cv.clientHeight);
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+  const [tree, C] = RAZV_V[Z.razvV | 0] || RAZV_V[0], { F, pos } = razvUnfold(tree);
+  let cx, cy;
+  if (C[0] === "v") [cx, cy] = pos[C[1]][C[2]];
+  else if (C[0] === "e") { const a = pos[C[1]][C[2]], b = pos[C[1]][C[3]]; cx = (a[0] + b[0]) / 2; cy = (a[1] + b[1]) / 2; }
+  else { const P = Object.values(pos[C[1]]); cx = (P[0][0] + P[1][0] + P[2][0]) / 3; cy = (P[0][1] + P[1][1] + P[2][1]) / 3; }
+  let ex = 0.01, ey = 0.01;
+  for (const P of Object.values(pos)) for (const [x, y] of Object.values(P)) { ex = Math.max(ex, Math.abs(x - cx)); ey = Math.max(ey, Math.abs(y - cy)); }
+  const pad = 14, k = Math.min((W / 2 - pad) / ex, (H / 2 - pad) / ey), T = ([x, y]) => [W / 2 + (x - cx) * k, H / 2 + (y - cy) * k];
+  const cs = getComputedStyle(document.documentElement), cU = cs.getPropertyValue("--acc2").trim() || "#4dd4ff", cD = cs.getPropertyValue("--gold").trim() || "#e8b64a";
+  const L = Z.rows.map(s => String(s).replace(/[^01]/g, "")), R = Math.max(2, Math.min(160, L.length));
+  const cell = k / R, rad1 = Math.max(0.7, cell * 0.3), rad0 = cell * 0.12, lbl = Z.razvLbl !== false;
+  for (const f of Object.keys(pos)) {
+    const up = f[0] === "U", col = up ? cU : cD, [A, Lv, Rv] = F[f].map(v => T(pos[f][v]));
+    g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(Lv[0], Lv[1]); g.lineTo(Rv[0], Rv[1]); g.closePath();
+    g.globalAlpha = 0.1; g.fillStyle = col; g.fill(); g.globalAlpha = 1; g.strokeStyle = col; g.lineWidth = 1.4; g.stroke();
+    g.fillStyle = col;
+    for (let r = 0; r < R; r++) {
+      const row = L[r] || "";
+      for (let q = 0; q <= r; q++) {
+        const v = (row[q] === "1" ? 1 : 0) ^ (up ? 0 : 1);
+        if (!v && rad0 < 0.8) continue;
+        const a = (r - q + 1 / 3) / R, b = (q + 1 / 3) / R, x = A[0] + a * (Lv[0] - A[0]) + b * (Rv[0] - A[0]), y = A[1] + a * (Lv[1] - A[1]) + b * (Rv[1] - A[1]);
+        g.globalAlpha = v ? 1 : 0.3;
+        const rd = v ? rad1 : rad0;
+        if (rd < 1.6) g.fillRect(x - rd, y - rd, 2 * rd, 2 * rd); else { g.beginPath(); g.arc(x, y, rd, 0, 2 * Math.PI); g.fill(); }
+      }
+    }
+    g.globalAlpha = 1;
+    if (lbl) {
+      const mx = (A[0] + Lv[0] + Rv[0]) / 3 + (Lv[0] + Rv[0] - 2 * A[0]) / 6 * 0.55, my = (A[1] + Lv[1] + Rv[1]) / 3 + (Lv[1] + Rv[1] - 2 * A[1]) / 6 * 0.55;
+      g.font = "bold 12px system-ui, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+      g.lineWidth = 3; g.strokeStyle = "rgba(0,0,0,.75)"; g.strokeText(f, mx, my); g.fillStyle = "#e6edf3"; g.fillText(f, mx, my);
+      g.textAlign = "left"; g.font = "11px system-ui, sans-serif"; g.strokeText(F[f][0], A[0] + 4, A[1] - 5); g.fillStyle = "#ff9a9a"; g.fillText(F[f][0], A[0] + 4, A[1] - 5);
+    }
+  }
+  g.strokeStyle = "#ff3b3b"; g.lineWidth = 2.5; g.beginPath(); g.moveTo(W / 2 - 9, H / 2); g.lineTo(W / 2 + 9, H / 2); g.moveTo(W / 2, H / 2 - 9); g.lineTo(W / 2, H / 2 + 9); g.stroke();
+}
+if ($("razvV")) $("razvV").onchange = (e) => { Z.razvV = +e.target.value; save(); renderRazv(); };
+if ($("razvLbl")) $("razvLbl").onchange = (e) => { Z.razvLbl = e.target.checked; save(); renderRazv(); };
+if ($("razvCv") && window.ResizeObserver) new ResizeObserver(() => renderRazv()).observe($("razvCv"));
+
 /* ─── ◆ Октаэдр (v0.396) ─────────────────────────────────────────────────────────────────────
    «Весь Октаэдр в Зазеркалье, как одно из окон, наравне с Конусом»: в окне — страница Октаэдра целиком (?zz — своя память,
    без значка Хаба). Грузится, когда окно впервые открыто; готова — шлёт zz-okt-ready, и ей уходит столбик строк (zz-rows).
@@ -5652,7 +5727,7 @@ function defaultLayout(){
   // v0.010: стол стал правой колонкой; если он уже 900, окна идут одной колонкой, по важности.
   if (W0 < 900) {
     const w = Math.max(320, W0 - 2 * g);
-    const order = [["w-mirror", 430], ["w-fix", 520], ["w-fold", 380], ["w-descent", 330], ["w-bwt", 460], ["w-sig", 460], ["w-chk", 460], ["w-view", 460], ["w-lin", 240], ["w-addr", 400], ["w-struct", 520], ["w-cone", 560], ["w-bal", 460], ["w-steps", 460], ["w-tiles", 560], ["w-pyr", 560], ["w-okt", 560],
+    const order = [["w-mirror", 430], ["w-fix", 520], ["w-fold", 380], ["w-descent", 330], ["w-bwt", 460], ["w-sig", 460], ["w-chk", 460], ["w-view", 460], ["w-lin", 240], ["w-addr", 400], ["w-struct", 520], ["w-cone", 560], ["w-bal", 460], ["w-steps", 460], ["w-tiles", 560], ["w-pyr", 560], ["w-okt", 560], ["w-razv", 520],
                    ["w-gf2", 240], ["w-cycle", 330], ["w-tape", 260], ["w-orbit", 240], ["w-help", 300]];
     const out = {}; let y = g;
     for (const [id, h] of order) { out[id] = { x: g, y, w, h }; y += h + g; }
@@ -5686,6 +5761,7 @@ function defaultLayout(){
     "w-tiles":   { x: g, y: 3600 + 10 * g, w: mw, h: 560 },   // v0.070
     "w-pyr":     { x: mw + 2 * g, y: 3600 + 10 * g, w: cw, h: 560 },   // v0.109
     "w-okt":     { x: g, y: 4160 + 11 * g, w: mw, h: 560 },   // v0.396
+    "w-razv":    { x: mw + 2 * g, y: 4160 + 11 * g, w: cw, h: 560 },   // v0.398
   };
 }
 function applyWin(el){
@@ -6728,6 +6804,7 @@ function setupWin(el){
     if (!w.collapsed && el.id === "w-tiles") renderTiles();   // v0.070
     if (!w.collapsed && el.id === "w-pyr") renderPyr(true);   // v0.109
     if (!w.collapsed && el.id === "w-okt") renderOkt();   // v0.396
+    if (!w.collapsed && el.id === "w-razv") renderRazv();   // v0.398
     save();
   };
   // v0.016, запрос пользователя «двойной щелчок по заголовку»: свернуть / развернуть, как «–».
@@ -6962,7 +7039,7 @@ function applyView(){
    а ошибка с именем окна показывается внизу — её текст и нужен, чтобы починить. */
 function renderAll(){
   const parts = [["вид страницы", applyView], ["поле строк", renderRows], ["90°", tri90Apply], ["крест", renderCross], ["указатели", renderPointers],
-    ["спуск", renderDescent], ["поправка", renderFix], ["сложить", renderFoldLive], ["проверка", renderCheck], ["вид 🧊", renderView], ["лин. сложность", renderLinLive], ["адрес 🔎", renderAddrLive], ["структура 🧪", renderStructLive], ["цикл, GF(2), лента, орбита, ⇅", renderLiveRest], ["конус ◯", renderCone], ["балансы ⚖", renderBal], ["лесенки 📐", renderSteps], ["разложить △", renderTiles], ["пирамида ▲", renderPyr], ["октаэдр ◆", renderOkt]];
+    ["спуск", renderDescent], ["поправка", renderFix], ["сложить", renderFoldLive], ["проверка", renderCheck], ["вид 🧊", renderView], ["лин. сложность", renderLinLive], ["адрес 🔎", renderAddrLive], ["структура 🧪", renderStructLive], ["цикл, GF(2), лента, орбита, ⇅", renderLiveRest], ["конус ◯", renderCone], ["балансы ⚖", renderBal], ["лесенки 📐", renderSteps], ["разложить △", renderTiles], ["пирамида ▲", renderPyr], ["октаэдр ◆", renderOkt], ["развёртка ✦", renderRazv]];
   if (!renderAll.tplDone) parts.splice(2, 0, ["шаблоны", () => { renderTpl(); renderAll.tplDone = true; }]);
   for (const [name, f] of parts) {
     try { f(); }

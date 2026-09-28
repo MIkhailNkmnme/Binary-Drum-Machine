@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.397. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.398. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.397</title>
+<title>Zazerkalius — v0.398</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -373,6 +373,10 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 #w-okt .wbody{display:flex;flex-direction:column}
 #w-okt .wbody > *{flex:0 0 auto}
 #w-okt .wbody > #oktFr{flex:1 1 0;min-height:320px;width:100%;border:0;border-radius:4px;background:#000;display:block}
+/* v0.398, «развёртку добавь в Зазеркалье»: окно «✦ Развёртка» — октаэдр на плоскости из строк поля, холст растёт с окном */
+#w-razv .wbody{display:flex;flex-direction:column}
+#w-razv .wbody > *{flex:0 0 auto}
+#w-razv .wbody > #razvCv{flex:1 1 0;min-height:260px;width:100%;display:block;background:var(--panel2);border-radius:4px}
 #w-pyr .wbody{display:flex;flex-direction:column}   /* v0.109: холст пирамиды растёт с окном */
 #w-pyr .wbody > *{flex:0 0 auto}
 #w-pyr .wbody > #pyrCv{flex:1 1 0;min-height:260px}   /* основа 0: размер холста в пикселях не раздувает окно */
@@ -1068,7 +1072,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.397</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.398</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1817,6 +1821,20 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
       </div>
     </section>
 
+    <!-- ✦ РАЗВЁРТКА ОКТАЭДРА (v0.398) — 8 граней на плоскости, строки поля гранью; шесть вариантов центра -->
+    <section class="win" id="w-razv" data-title="✦ Развёртка">
+      <div class="wbody">
+        <div class="tools">
+          <select id="razvV" title="Как разложить октаэдр на плоскость и что поставить в центр (красный ✚). Голубые — верхние грани U0–U3 (вершина T), золотые — нижние D0–D3 (вершина B): та же картина, отражённая и инвертированная. Строка k поля — ряд k грани от вершины">
+            <option value="0">А · центр — вершина T</option><option value="1">Б · центр — вершина экватора</option><option value="2">В · центр — ребро экватора (зеркало)</option>
+            <option value="3">Г · центр — боковое ребро</option><option value="4">Д · два больших треугольника</option><option value="5">Е · лента из 8 граней</option>
+          </select>
+          <label class="dim" title="Подписи граней (U0–U3, D0–D3) и вершин T, B"><input type="checkbox" id="razvLbl" checked> подписи</label>
+        </div>
+        <canvas id="razvCv"></canvas>
+      </div>
+    </section>
+
     <!-- ▲ ПИРАМИДА ПАСКАЛЯ (v0.109) -->
     <section class="win" id="w-pyr" data-title="▲ Пирамида Паскаля">
       <div class="whint">
@@ -1928,8 +1946,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0397"></script>
-<script src="zz-ui.js?v=0397"></script>
+<script src="zz-core.js?v=0398"></script>
+<script src="zz-ui.js?v=0398"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
