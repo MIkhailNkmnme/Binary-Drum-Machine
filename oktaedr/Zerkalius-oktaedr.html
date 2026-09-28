@@ -1,4 +1,4 @@
-<!-- Zerkalius Гранидус — v0.063. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Гранидус — v0.064. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Гранидус — v0.063</title>
+<title>Zerkalius Гранидус — v0.064</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -298,7 +298,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.063</div>
+<div id="ver">v0.064</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -1538,7 +1538,9 @@ function draw(){
     for (const [n, h] of headPos) {
       if (!h || h.r >= ROWS) continue;
       const q = project(bitPoint(h.f, h.r, h.k)), rad = Math.max(3, DIG * 0.55 * q.k * zoom * (Math.min(W, HGT) / 700));
-      ctx.globalAlpha = fr.get(h.f) ? 1 : 0.35; ctx.fillStyle = NOTE_COL[n]; ctx.shadowColor = NOTE_COL[n]; ctx.shadowBlur = 12;
+      // v0.064, по снимку головки на нуле — «пусть на нулях не светится, а бледным будет»: на 1 — горит со свечением, на 0 — бледная, без свечения
+      const on = !!h.val;
+      ctx.globalAlpha = (fr.get(h.f) ? 1 : 0.35) * (on ? 1 : 0.28); ctx.fillStyle = NOTE_COL[n]; ctx.shadowColor = NOTE_COL[n]; ctx.shadowBlur = on ? 12 : 0;
       ctx.beginPath(); ctx.arc(q.x, q.y, rad, 0, 6.2832); ctx.fill();
     }
     ctx.globalAlpha = 1; ctx.shadowBlur = 0;
