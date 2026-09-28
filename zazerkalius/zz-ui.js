@@ -8045,7 +8045,20 @@ function init(){
     });
     $("paneWinsHead").style.display = list.length ? "" : "none";
     $("paneWins").innerHTML = list.map(el => `<button data-w="${el.id}" title="Развернуть окно «${esc(el.dataset.title || el.id)}» на стол">${esc(el.dataset.title || el.id)}</button>`).join("");
+    pwArrows();
   };
+  /* v0.397: светящиеся ▲ ▼ у списка окон — горят, пока выше / ниже есть кнопки за краем; щелчок листает на ¾ видимого */
+  function pwArrows(){
+    const P = $("paneWins"), bx = $("paneWinsBox"); if (!P || !bx) return;
+    const top = P.scrollTop > 2, bot = P.scrollTop + P.clientHeight < P.scrollHeight - 2;
+    bx.querySelector(".pwArr.up").classList.toggle("on", top);
+    bx.querySelector(".pwArr.dn").classList.toggle("on", bot);
+  }
+  $("paneWins").addEventListener("scroll", pwArrows, { passive: true });
+  if (window.ResizeObserver) new ResizeObserver(pwArrows).observe($("paneWins"));
+  document.querySelectorAll("#paneWinsBox .pwArr").forEach(a => a.addEventListener("click", () => {
+    const P = $("paneWins"); P.scrollBy({ top: (a.classList.contains("up") ? -1 : 1) * Math.max(40, P.clientHeight * 0.75), behavior: "smooth" });
+  }));
   $("paneWins").onclick = (e) => {
     const b = e.target.closest("button[data-w]"); if (!b) return;
     const el = $(b.dataset.w), w = Z.win[b.dataset.w]; if (!el || !w) return;

@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.396. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.397. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.396</title>
+<title>Zazerkalius — v0.397</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -510,8 +510,21 @@ body.zen #bCutClr,body.bgmode #bCutClr{display:none !important}
 /* v0.156, «в один размер все, минимальный который»: кнопки и списки левой панели — одной высоты по самой низкой (24 px, как «＋ Строка») и с одними отступами */
 body:not(.pane-icons) #rowsPane button:not(#bPaneIcons):not(#paneGrp *),body:not(.pane-icons) #rowsPane select:not(#paneGrp *){box-sizing:border-box;height:24px;min-height:0;padding:2px 4px;line-height:1;font-size:13px}
 /* v0.094: свёрнутые окна в левой панели (при «⇆ поле справа») */
-#paneWins{display:flex;flex-direction:column;gap:3px;padding:0 10px 10px;overflow:auto;max-height:45%}
+#paneWins{display:flex;flex-direction:column;gap:3px;padding:0 10px 10px;overflow:auto;flex:1 1 0;min-height:0;scrollbar-width:none}
+#paneWins::-webkit-scrollbar{display:none}
 #paneWins button{text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* v0.397, по снимку сплющенного списка «Окна» — «вниз клади окна за экран и покажи стрелками светящимися, что там что-то есть»: кнопки
+   держат свою высоту (прежде сжимались и налезали друг на друга), лишние уходят за нижний край; список — на всё место панели до низа.
+   Есть что-то ниже / выше — светится ▼ / ▲; щелчок по стрелке листает, колесо — как обычно */
+#paneWinsBox{position:relative;flex:1 1 auto;min-height:64px;display:flex;flex-direction:column}
+#paneWins > button{flex:0 0 auto}
+#paneWinsBox .pwArr{position:absolute;left:0;right:0;height:22px;display:none;align-items:center;justify-content:center;z-index:2;cursor:pointer;user-select:none;
+  color:var(--acc2);font-size:15px;line-height:1;text-shadow:0 0 5px var(--acc2),0 0 12px var(--acc2);animation:pwGlow 1.1s ease-in-out infinite alternate}
+#paneWinsBox .pwArr.up{top:0;background:linear-gradient(var(--panel) 35%,transparent)}
+#paneWinsBox .pwArr.dn{bottom:0;background:linear-gradient(transparent,var(--panel) 65%)}
+#paneWinsBox .pwArr.on{display:flex}
+#paneWinsBox .pwArr:hover{color:var(--gold);text-shadow:0 0 6px var(--gold),0 0 14px var(--gold)}
+@keyframes pwGlow{from{opacity:.5}to{opacity:1}}
 body.pane-icons #paneWins{padding:4px}
 /* v0.094, «верхняя граница поля конуса — до конца, заголовок — внутрь поля»: холст конуса — на всё окно, от верхнего края;
    шапка, кнопки и текст — поверх него, полупрозрачно */
@@ -943,7 +956,7 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
 /* v0.141: ?solo=cone — отдельная страница «◯ Конус» (Zerkalius-konus.html): поле строк и одно окно на весь стол;
    всё, что про остальные окна (раскладка, свернуть, закрепить, подсказки), спрятано. Узкий экран — стопкой, как везде. */
 body.solo .win:not(.solo-win){display:none !important}
-body.solo #bPinMode,body.solo #pinBar,body.solo #bPack,body.solo #bLayout,body.solo #bCollapseAll,body.solo #bHelp,body.solo #paneWinsHead,body.solo #paneWins{display:none !important}
+body.solo #bPinMode,body.solo #pinBar,body.solo #bPack,body.solo #bLayout,body.solo #bCollapseAll,body.solo #bHelp,body.solo #paneWinsHead,body.solo #paneWins,body.solo #paneWinsBox{display:none !important}
 body.solo .solo-win .whead .bm,body.solo .solo-win .whead .bp,body.solo .solo-win .whead .bc,body.solo .solo-win .wgrip{display:none !important}
 body.solo .solo-win .whead{cursor:default}
 /* v0.142: текст конуса и лог лазера — под строками, в поле (soloApply переносит #coneBot туда) */
@@ -1055,7 +1068,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.396</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.397</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1148,7 +1161,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
     <div id="paneGrp"></div>
     <div id="paneEdge" title="Тяни — ширина левой панели; двойной щелчок — ширина по умолчанию"></div>
     <div class="pane-head" id="paneWinsHead" style="display:none">Окна</div>
-    <div id="paneWins"></div>
+    <div id="paneWinsBox"><div class="pwArr up" title="Выше есть ещё окна — щелчок: листать вверх">▲</div><div id="paneWins"></div><div class="pwArr dn" title="Ниже есть ещё окна — щелчок: листать вниз">▼</div></div>
   </aside>
 
   <!-- v0.010: поле строк — в центре, как в других машинах. Щелчок — текущая строка; двойной щелчок —
@@ -1915,8 +1928,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0396"></script>
-<script src="zz-ui.js?v=0396"></script>
+<script src="zz-core.js?v=0397"></script>
+<script src="zz-ui.js?v=0397"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
