@@ -916,7 +916,7 @@ function wallToggle(parts){   // выделение целиком в стенк
 }
 function wallMark(){   // подсветка стенки в строках (Highlight API — строки не перерисовываются)
   if (!window.CSS || !CSS.highlights || typeof Highlight === "undefined") return;
-  const L = $("rowList"), rs = [], W = Z.walls || {};
+  const L = $("rowList"), rs = [], W = Z.fzShow === false ? {} : (Z.walls || {});   // v0.353: 👁 вид выключен — не показывать
   for (const k in W) {
     const bx = L && L.querySelector('.rw[data-r="' + k + '"] .bx'); if (!bx) continue;
     const at = (j) => { const w = document.createTreeWalker(bx, NodeFilter.SHOW_TEXT); let c = 0, nd, last = null;
@@ -925,6 +925,18 @@ function wallMark(){   // подсветка стенки в строках (Hig
     for (const [x, y] of W[k]) { const p = at(x), q = at(y); if (!p || !q) continue; const rg = document.createRange(); try { rg.setStart(p[0], p[1]); rg.setEnd(q[0], q[1]); if (!rg.collapsed) rs.push(rg); } catch (e) { /* строка короче стенки */ } }
   }
   if (rs.length) CSS.highlights.set("zwall", new Highlight(...rs)); else CSS.highlights.delete("zwall");
+  // v0.353: ▮ Столб — клетка floor((длина − 1) / 2) + сдвиг в каждой строке (там, где её держит построение по правилу)
+  const rb = [];
+  if (Z.barOn && Z.fzShow !== false && L) {
+    const off = barOffV();
+    L.querySelectorAll(".rw[data-r] .bx").forEach((bx) => {
+      const r = +bx.closest(".rw").dataset.r, s = Z.rows[r]; if (!s) return;
+      const j = Math.floor((s.length - 1) / 2) + off; if (j < 0 || j >= s.length) return;
+      const w = document.createTreeWalker(bx, NodeFilter.SHOW_TEXT); let c = 0, nd;
+      while ((nd = w.nextNode())) { const n = nd.textContent.length; if (c + n > j) { const rg = document.createRange(); rg.setStart(nd, j - c); rg.setEnd(nd, j - c + 1); rb.push(rg); break; } c += n; }
+    });
+  }
+  if (rb.length) CSS.highlights.set("zbar", new Highlight(...rb)); else CSS.highlights.delete("zbar");
 }
 /* Del: выделенные символы → из строк; иначе выделенные строки → целиком; иначе — текущая строка. */
 let delAtEnd = false;   // v0.021: последний Del снёс нижнюю строку — вверх не идём
@@ -3463,18 +3475,21 @@ function setupCone(){
     animDone(); say("⤺ Все биты — какие были до волны (проход 0). ↩ вернёт.");
   };
   {   // v0.347: 🧱 стенка — выделение берётся в момент нажатия (щелчок по кнопке выделение не сбрасывает)
-    const b = $("bWall"), ui = () => { const n = wallCount(); b.classList.toggle("on", n > 0); b.textContent = n ? "🧱 " + n : "🧱 стенка"; };
+    const b = $("bWall"), ui = () => { const n = wallCount(); b.classList.toggle("on", n > 0); b.textContent = n ? "🧱 Бит " + n : "🧱 Бит"; };
     let got = null;
     b.addEventListener("mousedown", (e) => { got = textSelInRows(); e.preventDefault(); });
     b.onclick = () => {
       const parts = got || textSelInRows(); got = null;
-      if (!parts) { say(wallCount() ? `🧱 В стенке ${wallCount()} бит. Выдели биты мышью — добавить (или снять, если они уже в стенке); правый щелчок — снять всю.` : "🧱 Выдели биты мышью в строках — и нажми: они станут стенкой (волна их не меняет)."); return; }
+      if (!parts) { say(wallCount() ? `🧱 Заморожено ${wallCount()} бит. Выдели биты мышью — заморозить (или разморозить, если уже заморожены); правый щелчок — разморозить все.` : "🧱 Выдели биты мышью в строках — и нажми: они заморозятся (волна их не меняет)."); return; }
       const on = wallToggle(parts), n = parts.reduce((a, p) => a + p.b - p.a, 0);
       clearTextSel(); save(); wallMark(); ui();
-      say(on ? `🧱 Стенка: ${n} бит заморожено — волна их не меняет. Всего в стенке ${wallCount()}.` : `🧱 Снято со стенки ${n} бит. Осталось ${wallCount()}.`);
+      say(on ? `🧱 Бит: ${n} заморожено — волна их не меняет. Всего замороженных ${wallCount()}.` : `🧱 Разморожено ${n} бит. Осталось ${wallCount()}.`);
     };
-    b.oncontextmenu = (e) => { e.preventDefault(); if (!wallCount()) return; Z.walls = {}; save(); wallMark(); ui(); say("🧱 Стенка снята целиком."); };
+    b.oncontextmenu = (e) => { e.preventDefault(); if (!wallCount()) return; Z.walls = {}; save(); wallMark(); ui(); say("🧱 Все биты разморожены."); };
     ui();
+    // v0.353: 👁 вид — показывать замороженные (Столб и Бит) подсветкой в строках; по умолчанию вкл
+    const v = $("bFzShow"), vUi = () => v.classList.toggle("on", Z.fzShow !== false);
+    if (v) { vUi(); v.onclick = () => { Z.fzShow = Z.fzShow === false; vUi(); save(); wallMark(); say(Z.fzShow !== false ? "👁 Замороженные видны: ▮ Столб — голубым, 🧱 Бит — кирпичным." : "👁 Замороженные не подсвечены (заморозка при этом действует)."); }; }
   }
   $("animOp").value = Z.animOp || "xor";
   $("animOp").onchange = (e) => { Z.animOp = e.target.value; save(); };
@@ -3493,7 +3508,7 @@ function setupCone(){
     const v = e.target.value, lab = e.target.selectedOptions[0] ? e.target.selectedOptions[0].textContent : v; e.target.value = "";
     if (!v) return;
     const H = Z.animRowsN || 256, seed = Z.animSeed || "1";
-    animApply(v === "pascal" ? pascalRowsBar(seed, H) : v.startsWith("r") ? ecaRowsBar(+v.slice(1), seed, H) : zzSeqRows(v.slice(2), H), Z.barOn && v[0] !== "s" ? lab + " + стенка " + barOffV() : lab);   // v0.241: стенка
+    animApply(v === "pascal" ? pascalRowsBar(seed, H) : v.startsWith("r") ? ecaRowsBar(+v.slice(1), seed, H) : zzSeqRows(v.slice(2), H), Z.barOn && v[0] !== "s" ? lab + " + столб " + barOffV() : lab);   // v0.241: стенка
   };
   function animApply(rows, lab){   // v0.239: общее у списка заготовок и карты правил ▦
     animSet(false);
@@ -3539,7 +3554,7 @@ function setupCone(){
     box.onclick = (e) => {
       const c = e.target.closest(".ecaC"); if (!c) return;
       box.querySelectorAll(".ecaC.on").forEach(x => x.classList.remove("on")); c.classList.add("on");
-      animApply(ecaRowsBar(+c.dataset.r, seed, Z.animRowsN || 256), `Правило ${c.dataset.r}` + (Z.barOn ? " + стенка " + barOffV() : ""));   // v0.241: стенка
+      animApply(ecaRowsBar(+c.dataset.r, seed, Z.animRowsN || 256), `Правило ${c.dataset.r}` + (Z.barOn ? " + столб " + barOffV() : ""));   // v0.241: стенка
     };
     m.appendChild(box); document.body.appendChild(m);
     const b = $("bEcaMap").getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
@@ -7529,10 +7544,10 @@ function init(){
   $("bCutR30").onclick = () => cutPick("r30", "правило 30 (на 2 бита длиннее)");
   $("bCutMask").onclick = () => cutPick("mask", `маска ${Z.cutMask || "01"} подряд (на бит длиннее)`);
   $("cutMask").onchange = (e) => { const v = e.target.value.replace(/[^01]/g, ""); Z.cutMask = v || "01"; e.target.value = Z.cutMask; Z.cutGen = "mask"; cutUi(); save(); say(`⎯ Маска достройки — ${Z.cutMask}.`); };
-  $("bBar").onclick = () => { Z.barOn = !Z.barOn; cutUi(); save();
-    say(Z.barOn ? `▮ Стенка: столбец ${barOffV()} от вершины заморожен — держит начальное значение; достройка и заготовки Аниматрицы строятся с ней.` : "▮ Стенки нет — правила как есть."); };
-  $("barOff").onchange = (e) => { const v = Math.round(+e.target.value); Z.barOff = Number.isFinite(v) ? Math.max(-512, Math.min(512, v)) : -8; cutUi(); save();
-    say(`▮ Стенка — столбец ${barOffV()} от вершины (${barOffV() < 0 ? "левее" : barOffV() > 0 ? "правее" : "по центру"}).`); };
+  $("bBar").onclick = () => { Z.barOn = !Z.barOn; cutUi(); save(); wallMark();   // v0.353: ▮ Столб — и подсветка в строках
+    say(Z.barOn ? `▮ Столб: столбец ${barOffV()} от вершины заморожен — держит начальное значение; достройка и заготовки Аниматрицы строятся с ним.` : "▮ Столб снят — правила как есть."); };
+  $("barOff").onchange = (e) => { const v = Math.round(+e.target.value); Z.barOff = Number.isFinite(v) ? Math.max(-512, Math.min(512, v)) : -8; cutUi(); save(); wallMark();
+    say(`▮ Столб — столбец ${barOffV()} от вершины (${barOffV() < 0 ? "левее" : barOffV() > 0 ? "правее" : "по центру"}).`); };
   $("bCutHid").onclick = () => { const on = !(Z.cutHidMode !== "keep" && Z.cutTake === false); Z.cutHidMode = on ? "del" : "keep"; if (on) Z.cutTake = false; cutUi(); save();   // v0.286: вкл — «из-под черты» гаснет
     say((Z.cutHidMode === "keep" ? "⎯ Заменить — выкл: строки под чертой при достройке сдвигаются вниз, ниже новых." : "⎯ Заменить — вкл: строки под чертой при достройке заменяются новыми. «⤒ Из-под черты» выключено — вместе они не работают.") + cutHidEmpty()); };
   $("bCutTake").onclick = () => { Z.cutTake = Z.cutTake === false; if (Z.cutTake) Z.cutHidMode = "keep"; cutUi(); save();   // v0.253; v0.286: вкл — «Заменить» гаснет
