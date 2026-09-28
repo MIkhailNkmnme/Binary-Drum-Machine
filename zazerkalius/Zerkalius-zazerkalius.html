@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.301. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.302. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.301</title>
+<title>Zazerkalius — v0.302</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -111,7 +111,7 @@ body.pane-icons #rowsPane{overflow-y:auto;overflow-x:hidden}
 body.pane-icons #bPaneIcons{position:static;margin:6px 4px;font-size:13px}
 body.pane-icons #rowsPane .pane-head,body.pane-icons #maskBar,body.pane-icons #maskBar2 select,
 body.pane-icons #rowsPane #tplList .tpl-sep,body.pane-icons #rowsPane #tplList .tx,body.pane-icons #rowsPane #tplList input,body.pane-icons #tplMine .tref,body.pane-icons #tplMine .tx,body.pane-icons #tplMine .tsv{display:none}
-body.pane-icons #rowBtns,body.pane-icons #saveBtns,body.pane-icons #maskBar2,body.pane-icons #rowsPane #tplBar,body.pane-icons #rowsPane #tplList{display:flex;flex-direction:column;gap:4px;padding:6px 4px;border-top:1px solid var(--line)}
+body.pane-icons #rowBtns,body.pane-icons #fileBtns,body.pane-icons #saveBtns,body.pane-icons #maskBar2,body.pane-icons #rowsPane #tplBar,body.pane-icons #rowsPane #tplList{display:flex;flex-direction:column;gap:4px;padding:6px 4px;border-top:1px solid var(--line)}
 body.pane-icons #rowsPane #tplList{flex:0 0 auto;overflow:visible;min-height:0}
 body.pane-icons #rowsPane #tplList .tpl{display:block}
 body.pane-icons #rowsPane button{width:100%;padding:4px 0;text-align:center;font-size:15px;white-space:nowrap;overflow:hidden}
@@ -206,10 +206,10 @@ body.nocur .rw.cur .bits > .bx,body.nocur .rw.cur .bits > .bxo{background:var(--
 #rowInputBar select,#rowInputBar button{font-size:12px}   /* как было в верхней полосе поля */
 #rowInputBar button{padding:2px 6px}
 body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
-#rowBtns,#saveBtns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px;padding:0 10px 8px}
+#rowBtns,#fileBtns,#saveBtns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px;padding:0 10px 8px}
 /* v0.073, «поправь» (снимок: правый столбец кнопок уехал за край панели): колонки не шире половины, длинная подпись —
    с многоточием (целиком — во всплывающей подсказке) */
-#rowBtns > button,#saveBtns > button{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#rowBtns > button,#fileBtns > button,#saveBtns > button{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #rowBtns .wide{grid-column:1 / -1}
 /* Поле строк (v0.010): цифры кеглем и шрифтом страницы; внутренний блок шириной в самую длинную строку,
    поэтому выравнивание по центру держится и при прокрутке вбок (треугольник остаётся треугольником). */
@@ -855,7 +855,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.301</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.302</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -888,12 +888,16 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
     <button id="bPaneIcons" type="button" title="Свернуть панель в столбик значков (подписи — во всплывающих подсказках)">◂</button>
     <!-- v0.297, по снимку «💾 Сохр» и своего шаблона в шапке — «убери их в левую, в самый верх, сделай там группу, и туда все кнопки
          сохранения настроек и пресетов»: 💾 Сохр и свои шаблоны (v0.296 — в шапке), ⭐ Умолчание (v0.125), 💾 Всё / 📂 Всё (v0.115) -->
-    <div class="pane-head">💾 Сохранение</div>
+    <!-- v0.302, просьба пользователя (переслана из другой сессии): «переименовать 💾 Всё и 📂 Всё и отделить их группу от Шаблонов» -->
+    <div class="pane-head">💾 Страница целиком</div>
+    <div id="fileBtns">
+      <button id="bSaveAll" title="💾 Сохранить ВСЁ в файл .json: все поля строк, строки за чертой, строку для заполнения, свои шаблоны, окна, конус и все настройки. Файл переносится на другой компьютер и открывается там кнопкой «📂 Из файла» или перетаскиванием на страницу">💾 В файл</button>
+      <button id="bLoadAll" title="📂 Открыть файл .json, сохранённый кнопкой «💾 В файл», — страница целиком станет как в нём (спросит перед заменой). Можно и просто перетащить файл на страницу">📂 Из файла</button>
+      <button id="bHome" title="⭐ Умолчание: запомнить нынешние биты ВСЕХ полей, положения колец и настройки. Потом «↺ Начальные» возвращает эти биты, «⟲ всё на места» — эти положения колец и настройки конуса. Файл, открытый «📂 Из файла», сам становится умолчанием. Горит — своё умолчание есть. Правый щелчок — забыть (снова встроенное 1, 11, 101…)">⭐ Умолчание</button>
+    </div>
+    <div class="pane-head">Шаблоны</div>
     <div id="saveBtns">
       <button id="bTplSave" title="💾 Сохр: записать все биты рабочего поля (весь столбик) в ТЕКУЩИЙ шаблон — тот, что горит жёлтым; он меняется сам. Текущего нет — сохранится новым. Правый щелчок — вернуть прежние биты текущего шаблона (ещё раз — снова записанные). Новый шаблон — «＋ новый»">💾 Сохр</button>
-      <button id="bHome" title="⭐ Умолчание: запомнить нынешние биты ВСЕХ полей, положения колец и настройки. Потом «↺ Начальные» возвращает эти биты, «⟲ всё на места» — эти положения колец и настройки конуса. Файл, открытый «📂 Всё», сам становится умолчанием. Горит — своё умолчание есть. Правый щелчок — забыть (снова встроенное 1, 11, 101…)">⭐ Умолчание</button>
-      <button id="bSaveAll" title="💾 Сохранить ВСЁ в файл .json: все поля строк, строки за чертой, строку для заполнения, свои шаблоны, окна, конус и все настройки. Файл переносится на другой компьютер и открывается там кнопкой «📂 Всё» или перетаскиванием на страницу">💾 Всё</button>
-      <button id="bLoadAll" title="📂 Открыть файл .json, сохранённый кнопкой «💾 Всё», — страница целиком станет как в нём (спросит перед заменой). Можно и просто перетащить файл на страницу">📂 Всё</button>
       <button id="bTplNew" title="＋ Новый шаблон: все биты рабочего поля (весь столбик) — новым своим шаблоном; он сразу становится текущим (жёлтым)">＋ новый</button>   <!-- v0.301 -->
       <div id="tplMine"></div>
     </div>
@@ -1666,8 +1670,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0301"></script>
-<script src="zz-ui.js?v=0301"></script>
+<script src="zz-core.js?v=0302"></script>
+<script src="zz-ui.js?v=0302"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>
