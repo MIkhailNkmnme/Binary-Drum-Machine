@@ -2806,6 +2806,12 @@ function cone3DDraw(g, o){
       const s = Z.rows[i], n = s.length; if (n < 2 || !shown(i)) continue;   // v0.086: у одного бита лучей нет
       const step = 2 * Math.PI / n, rot = coneRotOf(i), c = P(0, 0, ringZ(i));
       for (let j = 0; j < n; j++) { const e = at(i, -Math.PI / 2 + (j - rot + 0.5) * step, ringR(i) + 0.4); g.moveTo(c[0], c[1]); g.lineTo(e[0], e[1]); }   // v0.089: от центров бит
+      /* v0.372, по снимку «✳ все» — «проверь — работает для зеркала?» — не работало: лучи были только у верхнего конуса. Теперь и у
+         отражённых вниз колец (⧗ зеркало; при «⧗ выдел.» — только у отражённых), на их высоте; основание не повторяется */
+      if (octa && i < N - 1 && (!octaSet || octaSet.has(i))) {
+        const zm = -(N - 1 - i) * hk, cm = P(0, 0, zm);
+        for (let j = 0; j < n; j++) { const a = -Math.PI / 2 + (j - rot + 0.5) * step, q = (ringR(i) + 0.4) * coneRho(i, a), e = P(q * Math.cos(a), -q * Math.sin(a), zm); g.moveTo(cm[0], cm[1]); g.lineTo(e[0], e[1]); }
+      }
     }
     g.stroke(); g.globalAlpha = 1;
   }
