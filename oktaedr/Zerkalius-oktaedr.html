@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.050. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Октаэдр — v0.051. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.050</title>
+<title>Zerkalius Октаэдр — v0.051</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -280,7 +280,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.050</div>
+<div id="ver">v0.051</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -482,6 +482,9 @@
     юге. С С, В, Ю, З взгляд — на вершину, с СВ, ЮВ, ЮЗ, СЗ — на ребро; сверху — север наверху. На каждой — тело с этой стороны
     (верхние рёбра цветом верха, нижние — низа, экватор — ярче). Щелчок — тело плавно поворачивается так и вращение останавливается,
     чтобы вид держался; «⟳ Вращение» — снова крутить. С рёбер (СВ, ЮВ, ЮЗ, СЗ) переднее ребро ложится на заднее.
+    <b>◭ Грань</b> (v0.051) — выбери грань (кнопка и щелчок по грани или Alt + щелчок), и каждое нажатие: 1-е — прямо на неё, она ближе
+    всех; 2-е — с обратной стороны, она дальше всех, за другими гранями. Выбранная обведена светом, у задней — пунктир. Правый щелчок по
+    кнопке — выбрать другую.
     По бокам от «снизу» — <b>↶ ↷ кувырок</b> (v0.050): картинка поворачивается на 90° вокруг взгляда, наверх встаёт соседняя вершина — так
     получаются все положения (Ю посередине и В наверху, и т.д.). Вид из розы крен снимает, «⌖» — тоже.</li>
     <li><b>Shift + тянуть</b> (v0.048) — крутить только по горизонтали, наклон стоит. Shift + щелчок без сдвига — по-прежнему правка бита.</li>
@@ -568,6 +571,8 @@
   <div class="row" id="viewRow"></div>
   <!-- v0.050, «три ребра к нам»: виды прямо на грань — ▲ верхние слева, ▼ нижние справа, по сторонам света -->
   <div class="row" id="faceRow"></div>
+  <!-- v0.051, «кнопку: выделяю грань — первое нажатие — вид, она ближе, второе — она дальше, за другими гранями» -->
+  <button id="bFaceGo" title="Грань к себе / от себя. Выбрать грань: нажми кнопку и щёлкни грань на теле (или Alt + щелчок по грани в любой момент). Потом каждое нажатие: 1-е — прямо на неё, она ближе всех; 2-е — с обратной стороны, она дальше всех, за другими гранями; и так по кругу. Правый щелчок — выбрать другую">◭ Грань…</button>
   <div class="set">
     <label>Размер цифр: <b id="vSize">13</b></label>
     <div class="srow">
@@ -1612,7 +1617,11 @@ const stopDrag = (e) => {
   if (pts.size < 2) pinchD = 0;
   // Отпустили единственный палец, не сдвинув, — это клик по биту. Ищем ближайшую цифру там же,
   // где её ищет наведение, и по тому же списку: что нарисовано, то и берётся.
-  if (wasLast && !moved && e) {
+  if (wasLast && !moved && e && (faceArm || e.altKey)) {   // v0.051: выбор грани для «◭ Грань»
+    const r0 = cv.getBoundingClientRect(), fh = faceAt(e.clientX - r0.left, e.clientY - r0.top);
+    if (fh) { selFace = { slot: fh.slot, up: fh.up }; faceNext = 0; }
+    faceArm = false; faceUi();
+  } else if (wasLast && !moved && e) {
     const rect = cv.getBoundingClientRect();
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
     const best = pickAt(mx, my);   // v0.031: и в режиме точек
@@ -2287,6 +2296,52 @@ const viewClick = (e) => {
   viewGo(viewYaw(v), v[3], 0);   // вид из розы и на грань — без крена
 };
 viewRow.addEventListener("click", viewClick); faceRow.addEventListener("click", viewClick);
+/* v0.051, «кнопку: выделяю грань — первое нажатие на неё — вид, она ближе, второе — она дальше, за другими гранями от меня». Выбранная
+   грань — { slot, up } (переживает смену основания, пока такая грань есть), обведена светящейся рамкой цвета закрепления, у отвёрнутой —
+   пунктир. Выбрать: «◭ Грань…» и щелчок по грани (или Alt + щелчок в любой момент) — берётся ближайшая к глазу грань под курсором.
+   Нажатие: взгляд вдоль наружной нормали грани — к себе (yaw = atan2(−nx, nz), наклон = atan2(ny, √(nx² + nz²))), следующее — вдоль
+   обратной: грань дальше всех. Крен снимается, вращение останавливается (viewGo). Подпись кнопки — что сделает следующее нажатие. */
+let selFace = null, faceArm = false, faceNext = 0;
+const bFaceGo = document.getElementById("bFaceGo");
+const selFaceObj = () => selFace && FACES.find(f => f.slot === selFace.slot && f.up === selFace.up);
+function faceName(f){ return (NB === 4 ? ["ЮВ", "ЮЗ", "СЗ", "СВ"][f.slot] : String(f.slot + 1)) + (f.up ? "▲" : "▼"); }
+function faceUi(){
+  const f = selFaceObj(); if (!f) selFace = null;
+  bFaceGo.classList.toggle("act", faceArm || !!f);
+  bFaceGo.textContent = faceArm ? "◭ Грань: выбор" : f ? `◭ ${faceName(f)} — ${faceNext ? "от себя" : "к себе"}` : "◭ Грань…";
+}
+function faceAt(mx, my){
+  let best = null, bz = -Infinity;
+  for (const f of FACES) {
+    const [a, b, c] = f.v.map(project);
+    const s1 = (b.x - a.x) * (my - a.y) - (b.y - a.y) * (mx - a.x), s2 = (c.x - b.x) * (my - b.y) - (c.y - b.y) * (mx - b.x), s3 = (a.x - c.x) * (my - c.y) - (a.y - c.y) * (mx - c.x);
+    if (!((s1 >= 0 && s2 >= 0 && s3 >= 0) || (s1 <= 0 && s2 <= 0 && s3 <= 0))) continue;
+    const z = (a.z + b.z + c.z) / 3; if (z > bz) { bz = z; best = f; }   // ближайшая к глазу
+  }
+  return best;
+}
+bFaceGo.addEventListener("click", () => {
+  const f = selFaceObj();
+  if (!f) { faceArm = !faceArm; faceUi(); return; }
+  const n = cross(sub(f.v[1], f.v[0]), sub(f.v[2], f.v[0])), L = Math.hypot(n[0], n[1], n[2]) || 1, sg = faceNext ? -1 : 1;
+  const nx = sg * n[0] / L, ny = sg * n[1] / L, nz = sg * n[2] / L;
+  viewGo(Math.atan2(-nx, nz), Math.atan2(ny, Math.hypot(nx, nz)), 0);
+  faceNext ^= 1; faceUi();
+});
+bFaceGo.addEventListener("contextmenu", (e) => { e.preventDefault(); selFace = null; faceArm = true; faceUi(); });
+function drawSelFace(){
+  const f = selFaceObj(); if (!f) return;
+  const P = f.v.map(project), n = rot(cross(sub(f.v[1], f.v[0]), sub(f.v[2], f.v[0]))), c3 = rot(f.c);
+  const front = f.two || dot(n, [-c3[0], -c3[1], CAM - c3[2]]) > 0, col = css("--pin");
+  ctx.save();
+  ctx.beginPath(); ctx.moveTo(P[0].x, P[0].y); ctx.lineTo(P[1].x, P[1].y); ctx.lineTo(P[2].x, P[2].y); ctx.closePath();
+  if (front) { ctx.globalAlpha = 0.14; ctx.fillStyle = col; ctx.fill(); ctx.globalAlpha = 1; }
+  ctx.setLineDash(front ? [] : [6, 5]); ctx.lineWidth = front ? 3 : 2; ctx.strokeStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 12; ctx.stroke();
+  ctx.restore();
+}
+{ const draw0 = draw; draw = function(){ draw0.apply(this, arguments); drawSelFace(); }; }
+{ const syncUI1 = syncUI; syncUI = function(){ syncUI1.apply(this, arguments); faceUi(); }; }
+faceUi();
 { const syncUI0 = syncUI; syncUI = function(){ syncUI0.apply(this, arguments); viewThumbs(); }; }
 viewThumbs();
 /* v0.044: СТРОКИ ИЗ ZAZERKALIUS. Окно «◆ Октаэдр» шлёт столбик строк поля ({ type: "zz-rows", rows }) при открытии и при каждой
