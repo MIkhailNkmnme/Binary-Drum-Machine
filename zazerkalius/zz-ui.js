@@ -924,8 +924,9 @@ function wallMask(r, n){   // замороженные биты строки r �
   const m = new Uint8Array(n); for (const [x, y] of w) for (let j = Math.max(0, x); j < Math.min(n, y); j++) m[j] = 1; return m;
 }
 function wallCount(){ let c = 0; for (const k in (Z.walls || {})) for (const [x, y] of Z.walls[k]) c += y - x; return c; }
-function wallToggle(parts){   // выделение целиком в стенке — снять его из стенки; иначе — добавить
-  const W = wallRows(), off = parts.every(p => wallCovers(p.i, p.a, p.b));
+function wallHits(r, a, b){ const w = Z.walls && Z.walls[r]; return !!w && w.some(([x, y]) => x < b && y > a); }   // v0.363: задевает ли отрезок замороженное
+function wallToggle(parts){   // v0.363: выделение задевает замороженное — разморозить выделенное; иначе — заморозить (прежде снимало, только если целиком внутри)
+  const W = wallRows(), off = parts.some(p => wallHits(p.i, p.a, p.b));
   for (const p of parts) {
     const cur = W[p.i] || [];
     if (!off) W[p.i] = wallNorm(cur.concat([[p.a, p.b]]));
@@ -3504,7 +3505,10 @@ function setupCone(){
     b.addEventListener("mousedown", (e) => { got = textSelInRows(); e.preventDefault(); });
     b.onclick = () => {
       const parts = got || textSelInRows(); got = null;
-      if (!parts) { say(wallCount() ? `🧱 Заморожено ${wallCount()} бит. Выдели биты мышью — заморозить (или разморозить, если уже заморожены); правый щелчок — разморозить все.` : "🧱 Выдели биты мышью в строках — и нажми: они заморозятся (волна их не меняет)."); return; }
+      /* v0.363, по снимку «🧱 Бит 7» — «не снимает выделение, заморозку»: без выделения горящая кнопка размораживает все (↩ не нужен —
+         заморозить заново: выдели и нажми) */
+      if (!parts) { if (wallCount()) { const n = wallCount(); Z.walls = {}; save(); wallMark(); ui(); say(`🧱 Разморожено всё — ${n} бит. Заморозить: выдели биты мышью и нажми «🧱 Бит».`); }
+        else say("🧱 Выдели биты мышью в строках — и нажми: они заморозятся (волна их не меняет)."); return; }
       const on = wallToggle(parts), n = parts.reduce((a, p) => a + p.b - p.a, 0);
       clearTextSel(); save(); wallMark(); ui();
       say(on ? `🧱 Бит: ${n} заморожено — волна их не меняет. Всего замороженных ${wallCount()}.` : `🧱 Разморожено ${n} бит. Осталось ${wallCount()}.`);

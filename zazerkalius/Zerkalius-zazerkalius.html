@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.362. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.363. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.362</title>
+<title>Zazerkalius — v0.363</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1005,7 +1005,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.362</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.363</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1661,7 +1661,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
             <button id="bBar" title="▮ Столб: один столбец заморожен — клетка не обновляется и держит начальное значение, сигнал на ней отражается или гаснет (как в статье «Barriers in Cellular Automata»). Действует, когда строки строятся по правилу: заготовки Аниматрицы, карта ▦ 256, достройка Серп 90 / 30. В строках — голубым">▮ Столб</button>
             <!-- v0.357, «убери „от“, 2 окна: слева 8, справа 0 — по 2 столба»: сколько бит влево и вправо от вершины; 0 — столба с той стороны нет -->
             <label class="dim fin fh" title="◀ Столб слева: на сколько бит левее вершины треугольника (0 — слева столба нет)"><input id="barL" type="number" value="8" min="0" max="512"></label><label class="dim fin fh" title="Столб справа ▶: на сколько бит правее вершины треугольника (0 — справа столба нет)"><input id="barR" type="number" value="0" min="0" max="512"></label>
-            <button id="bWall" title="🧱 Бит: выдели биты мышью в строках и нажми — они заморожены, волна их не меняет. Выделил биты, которые уже заморожены, — снимаются. Правый щелчок — снять все. В строках — кирпичным">🧱 Бит</button>
+            <button id="bWall" title="🧱 Бит: выдели биты мышью в строках и нажми — они заморожены, волна их не меняет. Выделение задело замороженные — они размораживаются. Без выделения — разморозить все (и правый щелчок — то же). В строках — кирпичным">🧱 Бит</button>
             <button id="bFzShow" class="on" title="👁 Вид: показывать замороженные клетки подсветкой в строках (▮ Столб — голубым, 🧱 Бит — кирпичным). По умолчанию вкл">👁 вид</button>
           </div>
           <!-- v0.240, «звук из бит»: поле звучит — строка тактом или столбцы аккордами -->
@@ -1847,8 +1847,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0362"></script>
-<script src="zz-ui.js?v=0362"></script>
+<script src="zz-core.js?v=0363"></script>
+<script src="zz-ui.js?v=0363"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
