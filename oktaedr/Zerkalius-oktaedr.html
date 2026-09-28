@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.044. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Октаэдр — v0.045. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.044</title>
+<title>Zerkalius Октаэдр — v0.045</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -219,11 +219,49 @@
   }
   /* v0.044: окно «◆ Октаэдр» в Zazerkalius (адрес ?zz) — значок «в Хаб» внутри окна не нужен, Хаб — у самой страницы */
   html.zzemb #zerkHubBtn{ display:none !important; }
+  /* v0.045, по снимку окна «◆ Октаэдр» — «приведи группы кнопок и кнопки в стандарты кнопок Зазеркалиуса». Только в окне (?zz);
+     своя страница Октаэдра — как была. Кнопки — как в Zazerkalius: фон панели, скругление 4, шрифт 13 px системный, наведение — рамка
+     сиреневая, включённая — золотая рамка и надпись. Разделы — как группы конуса: рамка и фон своего цвета (13 % / 50 %), заголовок
+     прописными своим цветом. Надпись, версия и подсказка внизу в окне не показываются: имя — в шапке окна, подсказок на страницах не
+     делаем. Цвета тела (--up, --dn, …) не трогаются. */
+  html.zzemb{ --zbg:#0b0d12; --zp:#121620; --zp2:#171c28; --zl:#262d3d; --zt:#d8dde8; --zd:#7d8699; --zacc:#b98cf0; --zgold:#ffd166; }
+  html.zzemb body{ font:13px/1.4 system-ui, "Segoe UI", sans-serif; }
+  html.zzemb #title, html.zzemb #ver, html.zzemb #hint{ display:none !important; }
+  html.zzemb button{ background:var(--zp2); color:var(--zt); border:1px solid var(--zl); border-radius:4px; padding:3px 8px;
+    font:13px/1.25 system-ui, "Segoe UI", sans-serif; letter-spacing:0; text-align:center; white-space:nowrap; }
+  html.zzemb button:hover{ border-color:var(--zacc); color:var(--zt); }
+  html.zzemb button.act{ border-color:var(--zgold); color:var(--zgold); box-shadow:inset 0 0 0 1px var(--zgold); }
+  html.zzemb .row button{ padding:3px 2px; }
+  html.zzemb .arr{ padding:2px 5px; font-size:11px; color:var(--zd); }
+  html.zzemb .arr:active{ border-color:var(--zgold); color:var(--zgold); }
+  html.zzemb .tab-sec{ --gc:#6cb4ff; background:color-mix(in srgb, var(--gc) 13%, var(--zp)); border:1px solid color-mix(in srgb, var(--gc) 50%, transparent);
+    border-radius:6px; padding:3px 6px 6px; gap:4px; }
+  html.zzemb .tab-sec:hover, html.zzemb .tab-sec.floating{ border-color:var(--gc); }
+  html.zzemb .tab-sec[data-tab="pic"]{ --gc:#4fd1a0; }   html.zzemb .tab-sec[data-tab="view"]{ --gc:#6cb4ff; }
+  html.zzemb .tab-sec[data-tab="color"]{ --gc:#f0abfc; } html.zzemb .tab-sec[data-tab="notes"]{ --gc:#b98cff; }
+  html.zzemb .tab-sec[data-tab="rev"]{ --gc:#ff9a52; }   html.zzemb .tab-sec[data-tab="links"]{ --gc:#ff6b8e; }
+  html.zzemb .sec-head{ color:var(--gc); font-size:10.5px; letter-spacing:.3px; text-transform:uppercase;
+    border-bottom-color:color-mix(in srgb, var(--gc) 35%, transparent); }
+  html.zzemb .set{ background:var(--zp2); border-color:var(--zl); border-radius:4px; padding:4px 7px 6px; }
+  html.zzemb .set label{ color:var(--zd); }
+  html.zzemb .set label b{ color:var(--zt); }
+  html.zzemb .set input[type=range]{ accent-color:var(--zacc); }
+  html.zzemb .set input[type=range]::-webkit-slider-thumb{ background:var(--zacc); }
+  html.zzemb .col{ background:var(--zp2); border-color:var(--zl); border-radius:4px; font:12px system-ui, "Segoe UI", sans-serif; }
+  html.zzemb .cap, html.zzemb #stepInfo, html.zzemb #myInfo{ color:var(--zd); }
+  html.zzemb #myBits{ background:var(--zbg); border-color:var(--zl); border-radius:4px; }
+  html.zzemb #myBits:focus{ border-color:var(--zacc); }
+  html.zzemb #menuTabs{ background:var(--zp); border-color:var(--zl); border-radius:6px; }
+  html.zzemb #menuTabs button{ border:0; border-right:1px solid var(--zl); border-radius:0; background:none; box-shadow:none;
+    color:var(--zd); font-size:12px; padding:3px 9px; }
+  html.zzemb #menuTabs button:last-child{ border-right:0; }
+  html.zzemb #menuTabs button.act{ color:var(--zgold); background:var(--zp2); }
+  html.zzemb #menuTabs button:hover{ color:var(--zt); }
 </style>
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.044</div>
+<div id="ver">v0.045</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>

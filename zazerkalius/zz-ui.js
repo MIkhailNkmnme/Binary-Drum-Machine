@@ -4847,7 +4847,7 @@ function razvUnfold(tree){
 }
 function renderRazv(){
   const cv = $("razvCv"); if (!cv) return;
-  $("razvV").value = String(Z.razvV | 0); $("razvLbl").checked = Z.razvLbl !== false;
+  $("razvV").value = String(Z.razvV | 0); $("bRazvLbl").classList.toggle("on", Z.razvLbl !== false);   // v0.399: галка → кнопка
   if (!winOpen("w-razv")) return;
   const dpr = window.devicePixelRatio || 1, W = Math.max(50, cv.clientWidth), H = Math.max(50, cv.clientHeight);
   if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
@@ -4890,17 +4890,17 @@ function renderRazv(){
   g.strokeStyle = "#ff3b3b"; g.lineWidth = 2.5; g.beginPath(); g.moveTo(W / 2 - 9, H / 2); g.lineTo(W / 2 + 9, H / 2); g.moveTo(W / 2, H / 2 - 9); g.lineTo(W / 2, H / 2 + 9); g.stroke();
 }
 if ($("razvV")) $("razvV").onchange = (e) => { Z.razvV = +e.target.value; save(); renderRazv(); };
-if ($("razvLbl")) $("razvLbl").onchange = (e) => { Z.razvLbl = e.target.checked; save(); renderRazv(); };
+if ($("bRazvLbl")) $("bRazvLbl").onclick = () => { Z.razvLbl = Z.razvLbl === false; save(); renderRazv(); };
 if ($("razvCv") && window.ResizeObserver) new ResizeObserver(() => renderRazv()).observe($("razvCv"));
 
 /* ─── ◆ Октаэдр (v0.396) ─────────────────────────────────────────────────────────────────────
    «Весь Октаэдр в Зазеркалье, как одно из окон, наравне с Конусом»: в окне — страница Октаэдра целиком (?zz — своя память,
    без значка Хаба). Грузится, когда окно впервые открыто; готова — шлёт zz-okt-ready, и ей уходит столбик строк (zz-rows).
-   Дальше строки уходят только при перемене и только с галкой «строки → грани» (Z.oktSync, по умолчанию вкл). */
+   Дальше строки уходят только при перемене и только с кнопкой «⇄ строки → грани» (Z.oktSync, по умолчанию вкл). */
 let oktSent = null, oktReady = false;
 function renderOkt(){
   const fr = $("oktFr"); if (!fr) return;
-  $("oktSync").checked = Z.oktSync !== false;
+  $("bOktSync").classList.toggle("on", Z.oktSync !== false);   // v0.399: галка → кнопка
   if (!winOpen("w-okt")) return;
   if (!fr.getAttribute("src")) { fr.src = "../oktaedr/Zerkalius-oktaedr.html?zz"; return; }
   if (!oktReady || Z.oktSync === false) return;
@@ -4913,7 +4913,7 @@ window.addEventListener("message", (e) => {
   if (!fr || e.source !== fr.contentWindow || !e.data || e.data.type !== "zz-okt-ready") return;
   oktReady = true; oktSent = null; renderOkt();
 });
-if ($("oktSync")) $("oktSync").onchange = (e) => { Z.oktSync = e.target.checked; oktSent = null; save(); renderOkt(); };
+if ($("bOktSync")) $("bOktSync").onclick = () => { Z.oktSync = Z.oktSync === false; oktSent = null; save(); renderOkt(); };
 if ($("bOktOpen")) $("bOktOpen").onclick = () => window.open("../oktaedr/Zerkalius-oktaedr.html", "_blank");
 
 /* ─── 🧪 Поиск структуры (v0.042) ─────────────────────────────────────────────────────────────

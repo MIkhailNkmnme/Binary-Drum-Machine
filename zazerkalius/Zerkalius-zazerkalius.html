@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.398. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.399. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.398</title>
+<title>Zazerkalius — v0.399</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1072,7 +1072,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.398</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.399</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1814,7 +1814,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
     <section class="win" id="w-okt" data-title="◆ Октаэдр">
       <div class="wbody">
         <div class="tools">
-          <label class="dim" title="Строки поля — гранью октаэдра: строка k — ряд k от вершины (k бит, короче — нулями, длиннее — лишнее не влезает), все грани одинаковые, низ — отражённый и инвертированный. Меняются строки — меняется октаэдр. Снять галку — октаэдр живёт сам по себе"><input type="checkbox" id="oktSync" checked> строки → грани</label>
+          <button id="bOktSync" title="Строки поля — гранью октаэдра: строка k — ряд k от вершины (k бит, короче — нулями, длиннее — лишнее не влезает), все грани одинаковые, низ — отражённый и инвертированный. Горит — меняются строки, меняется октаэдр; выключить — октаэдр живёт сам по себе">⇄ строки → грани</button>
           <button id="bOktOpen" title="↗ Октаэдр отдельной страницей, в новой вкладке (там своя память, строк поля нет)">↗</button>
         </div>
         <iframe id="oktFr" title="Октаэдр" allow="autoplay; fullscreen"></iframe>
@@ -1829,7 +1829,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
             <option value="0">А · центр — вершина T</option><option value="1">Б · центр — вершина экватора</option><option value="2">В · центр — ребро экватора (зеркало)</option>
             <option value="3">Г · центр — боковое ребро</option><option value="4">Д · два больших треугольника</option><option value="5">Е · лента из 8 граней</option>
           </select>
-          <label class="dim" title="Подписи граней (U0–U3, D0–D3) и вершин T, B"><input type="checkbox" id="razvLbl" checked> подписи</label>
+          <button id="bRazvLbl" title="Подписи граней (U0–U3, D0–D3) и вершин T, B. Горит — видны">🏷 подписи</button>
         </div>
         <canvas id="razvCv"></canvas>
       </div>
@@ -1946,8 +1946,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0398"></script>
-<script src="zz-ui.js?v=0398"></script>
+<script src="zz-core.js?v=0399"></script>
+<script src="zz-ui.js?v=0399"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
