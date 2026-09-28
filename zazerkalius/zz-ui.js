@@ -2715,8 +2715,9 @@ function cone3DDraw(g, o){
   /* v0.100, «3» — на «зеркало под основанием, как в знаке»: под последним кольцом (общим основанием) — та же пирамида вниз:
      кольцо i отражено через основание (высота −(N−1−i)), биты инвертированы (0 ↔ 1), как в «Октаэдре». Неподвижные при
      развороте у инверсии те же — красятся так же. */
+  const octaSet = octa && Z.coneOctaSel === "cur" ? new Set(coneFocus()) : null;   // v0.359: ⧗ выдел. — только кольца в фокусе
   if (octa) for (let i = 0; i < N - 1; i++) {
-    const s = Z.rows[i], n = s.length; if (!n || !shown(i)) continue;
+    const s = Z.rows[i], n = s.length; if (!n || !shown(i) || (octaSet && !octaSet.has(i))) continue;
     const step = 2 * Math.PI / n, rot = coneRotOf(i), r = ringR(i), zm = -(N - 1 - i) * hk, K = Math.max(2, Math.ceil(step / 0.12)), gap = n > 1 ? step * 0.06 : 0;
     const atM = (a, rr = r) => { const q = rr * coneRho(i, a); return P(q * Math.cos(a), -q * Math.sin(a), zm); }, tiny = Z.conePoly && n <= 2;
     for (let j = 0; j < n; j++) {
@@ -3319,11 +3320,12 @@ function setupCone(){
       coneRot.length = 0; (Array.isArray(H.coneRot) ? H.coneRot : []).forEach(x => coneRot.push(Math.round(x || 0))); Z.coneRot = coneRot.slice();
       Z.coneSpin = H.coneSpin || 0; Z.coneSpinPh = H.coneSpinPh || 0; Z.coneAimRot = H.coneAimRot || 0; Z.coneClockN = 0; coneClockFlash = []; coneLaserResetAll();   // v0.138
       const keys = ["coneClock", "coneClockStop", "coneVoid", "coneSlit", "coneSpinMode", "coneAutoSp", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3Dig", "cone3H", "cone3Bw", "animOp", "animSp", "animByPass", "animRowsN", "animSeed",
-                    "coneRays", "coneMir", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs"];
+                    "coneRays", "coneMir", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs", "coneOctaSel"];   // v0.359: и что отражает зеркало
       for (const k of keys) { if (k in H) Z[k] = JSON.parse(JSON.stringify(H[k])); else delete Z[k]; }
       for (const k of ["coneClock", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3Dig"]) { const el = $(k); if (el) el.checked = !!Z[k]; }
       $("coneLock").checked = Z.coneLock !== false; $("coneVoid").checked = Z.coneVoid !== false;
       $("coneRays").value = Z.coneRays || "off"; $("coneMir").value = Z.coneMir || "off"; $("coneSpinMode").value = Z.coneSpinMode || "all";
+      { const os = $("coneOctaSel"); if (os) os.value = Z.coneOcta ? (Z.coneOctaSel === "cur" ? "cur" : "all") : "off"; }   // v0.359
       coneDirUi(); $("cone3H").value = Z.cone3H ?? 1; $("cone3Bw").value = Z.cone3Bw ?? 1; $("animOp").value = Z.animOp || "xor"; $("animSp").value = Z.animSp ?? 40; $("animByPass").checked = !!Z.animByPass;
       $("coneSlit").value = +Z.coneSlit || 2; $("coneSlitV").textContent = (+Z.coneSlit || 2).toFixed(1).replace(".", ",") + "°";
       $("bConeClockStop").classList.toggle("on", !!Z.coneClockStop);
@@ -4228,7 +4230,16 @@ function setupCone(){
   $("coneGlow").onchange = (e) => { Z.coneGlow = e.target.checked; save(); renderCone(); if (Z.coneGlow) say("✨ Лампа горит. На тёмном фоне («☾ Тёмный» в шапке) — ярче всего."); };
   $("coneOcta").checked = !!Z.coneOcta;   // v0.100
   $("coneOcta").onchange = (e) => { Z.coneOcta = e.target.checked; if (Z.coneOcta && !Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } save(); renderCone();
-    if (Z.coneOcta) say("⧗ Октаэдр: под основанием — та же пирамида вниз, отражённая и инвертированная (0 ↔ 1), как в знаке Zerkalius. Крути мышью."); };
+    if (Z.coneOcta) say("⧗ Октаэдр: под основанием — та же пирамида вниз, отражённая и инвертированная (0 ↔ 1), как в знаке Zerkalius. Крути мышью.");
+    const os = $("coneOctaSel"); if (os) os.value = Z.coneOcta ? (Z.coneOctaSel === "cur" ? "cur" : "all") : "off"; };
+  /* v0.359, по снимкам «✳ все» и «⧗ зерк.» — «у зеркала тоже надо»: зеркало вниз — списком, как лучи: ⧗ нет / ⧗ выдел. / ⧗ все.
+     «Выдел.» — отражены только кольца строк в фокусе (выделенные, нет выделения — текущая). Галка coneOcta — прежняя (спрятана): её жмут
+     пульт (⧗ над 🧊) и пресеты, список за ней следит; Z.coneOctaSel — что отражать при включённом */
+  { const os = $("coneOctaSel");
+    if (os) { os.value = Z.coneOcta ? (Z.coneOctaSel === "cur" ? "cur" : "all") : "off";
+      os.onchange = () => { const v = os.value; if (v !== "off") Z.coneOctaSel = v; const c = $("coneOcta"), on = v !== "off";
+        if (c.checked !== on) { c.checked = on; c.onchange({ target: c }); } else { save(); renderCone(); }
+        if (on) say(v === "cur" ? "⧗ Зеркало вниз — только у колец выделенных строк (нет выделения — у текущей)." : "⧗ Зеркало вниз — у всех колец."); }; } }
   $("coneVoid").checked = Z.coneVoid !== false;   // v0.127: пустые кольца до 256 (видны при луч-часах)
   $("coneVoid").onchange = (e) => { Z.coneVoid = e.target.checked; save(); renderCone();
     say(Z.coneVoid ? "▦ До 256: за строкой для заполнения — пустые кольца до строки 256, луч идёт сквозь них и метит ячейки на пути: 1, 11, 111… Кольца строк стали тоньше — колесо мыши приближает." : "▦ Пустые кольца скрыты — только строки и строка для заполнения. Счёт в них сохранён."); };
