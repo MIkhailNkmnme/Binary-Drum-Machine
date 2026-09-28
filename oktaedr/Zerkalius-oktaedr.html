@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.042. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Октаэдр — v0.043. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.042</title>
+<title>Zerkalius Октаэдр — v0.043</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -100,6 +100,11 @@
   .set input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:11px; height:11px;
     border-radius:50%; background:var(--up); }
   .row{ display:flex; gap:4px; }
+  /* v0.043: ноты До…Си — выключенная серая, включённая горит цветом своей ноты (--c), как в хабе */
+  #noteRow{ flex-wrap:wrap; }
+  #noteRow .note{ flex:1 0 40px; padding:5px 2px; font-weight:700; color:#7d8388; border-color:#4a5056; }
+  #noteRow .note.on{ color:var(--c); border-color:var(--c); box-shadow:0 0 6px var(--c); }
+  #noteRow .note:disabled{ opacity:.3; cursor:default; }
   .row button{ flex:1; text-align:center; padding:4px 2px; }
   .cap{ font-size:11px; color:var(--dim); letter-spacing:.3px; margin:4px 0 1px; }
   #stepInfo{ font-size:11px; color:var(--dim); letter-spacing:.3px; }
@@ -216,7 +221,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.042</div>
+<div id="ver">v0.043</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -406,6 +411,13 @@
     «Свои цвета» биты красятся не половиной тела, а значением: все нули одним цветом, все единицы
     другим, на обеих половинах. Цвета выбираются квадратиками <b>0</b> и <b>1</b> под кнопкой, и выбор
     цвета сам включает эту схему. Память краснеет от этих же цветов.</li>
+    <li><b>🎵 Ноты</b> (v0.043). <b>🎨 Грани</b> — раскраска по кругу: <b>половинами</b> (как было: верх одним цветом, низ другим) →
+    <b>каждая грань своим цветом</b> нот радугой (До красная … Си фиолетовая: сначала верхние грани по кругу, потом нижние; внутреннее
+    основание — полупрозрачное — следующим цветом, у треугольной бипирамиды это как раз седьмая, Си) → <b>парами</b> (верхняя грань и её
+    зеркало снизу одним цветом). Цвет берут и заливка грани, и её биты. Кнопки <b>До Ре Ми Фа Соль Ля Си</b> — звук: каждая нота читает биты
+    своей грани (ряд за рядом от вершины; 1 — звучит, 0 — пауза, высота — по трём битам с этого места) и звучит от своей ноты, поэтому
+    несколько включённых дают созвучие. Нота, у которой грани нет, читает экватор — нижние ряды верхних граней по кругу (у бипирамиды
+    из 3 граней это Си, внутреннее основание). Бит, который сейчас звучит, горит на теле цветом своей ноты. Темп — ползунком.</li>
     <li><b>⌖ Вид сверху</b> — вернуть камеру в исходное положение.</li>
     <li><b>☯ Дзен</b> (первая кнопка в полосе меню сверху) — убрать с экрана всё, кроме тела: панель, заголовок, версию, подсказку.
     Вход и выход: кнопка, клавиша Z, щелчок колесом мыши, а из Дзена ещё и Escape. Состояние не
@@ -508,6 +520,22 @@
   <div class="row">
     <label class="col" title="Цвет нулей. Выбор цвета включает схему «Свои цвета»">0 <input type="color" id="c0" value="#4a78ff"></label>
     <label class="col" title="Цвет единиц. Выбор цвета включает схему «Свои цвета»">1 <input type="color" id="c1" value="#f2f5fa"></label>
+  </div>
+  </div>
+  <!-- v0.043, «каждую грань в свой цвет — 7-я внутренняя, варианты раскраски», «и ноты», «туда внедрить звук» -->
+  <div class="tab-sec" data-tab="notes" data-title="🎵 Ноты">
+  <button id="bFaceCol" title="Раскраска граней по кругу: половинами (как было) → каждая грань своим цветом нот, внутреннее основание — седьмой → парами (верх и его зеркало снизу одним цветом)">🎨 Грани: половинами</button>
+  <div class="row" id="noteRow">
+    <button class="note" data-n="0" style="--c:#ff5f6d">До</button><button class="note" data-n="1" style="--c:#ff9f43">Ре</button><button class="note" data-n="2" style="--c:#ffe066">Ми</button><button class="note" data-n="3" style="--c:#7ee787">Фа</button>
+    <button class="note" data-n="4" style="--c:#4dd4ff">Соль</button><button class="note" data-n="5" style="--c:#6b8cff">Ля</button><button class="note" data-n="6" style="--c:#c38cf5">Си</button>
+  </div>
+  <div class="set">
+    <label>Темп нот: <b id="vTempo">6</b> шагов в секунду</label>
+    <div class="srow">
+      <button class="arr" data-for="sTempo" data-d="-1" title="Медленнее (держать — быстро)">◄</button>
+      <input type="range" id="sTempo" min="1" max="24" step="1" value="6">
+      <button class="arr" data-for="sTempo" data-d="1" title="Быстрее (держать — быстро)">►</button>
+    </div>
   </div>
   </div>
   <!-- v0.030: data-dock="panelR" — дом раздела в правой панели (раскладка по умолчанию) -->
@@ -1026,6 +1054,71 @@ function ramp(base, mem){
   return out;
 }
 
+/* ═══ v0.043: ГРАНИ В СВОЙ ЦВЕТ И НОТЫ ═══════════════════════════════════════════════════════════════════════
+   Запрос: «каждую грань в свой цвет — 7-я внутренняя, варианты раскраски такую надо», «и ноты», «туда внедрить звук».
+   faceMode: 0 — половинами (как было), 1 — каждая грань своим цветом нот (верхние по кругу, потом нижние, внутреннее основание —
+   следующим; у треугольной бипирамиды 3 + 3 + 1 = 7, как нот), 2 — парами (верх и его зеркало снизу одним цветом).
+   Ноты До…Си (цвета — как в хабе) — головки звука: нота n читает биты грани n (в том же порядке: верхние, потом нижние), ряд за
+   рядом от вершины; 1 — звучит, 0 — пауза; высота — число из трёх бит с этого места по пентатонике, и у каждой ноты своя тоника
+   (база — ля, 110 Гц; До выше на 3 полутона, Ре на 5…), поэтому включённые вместе дают созвучие. Ноте без своей грани достаётся
+   экватор — нижние ряды верхних граней по кругу (у бипирамиды из 3 граней это Си — внутреннее основание). */
+let faceMode = 0, TEMPO = 6;
+const NOTE_COL = ["#ff5f6d", "#ff9f43", "#ffe066", "#7ee787", "#4dd4ff", "#6b8cff", "#c38cf5"], NOTE_SEMI = [3, 5, 7, 8, 10, 0, 2];
+const FACE_MODE_NAME = ["половинами", "каждая своим", "парами"];
+const faceIdx = (f) => faceMode === 2 ? f.slot : (f.up ? f.slot : NB + f.slot);
+const faceCol = (f) => NOTE_COL[faceIdx(f) % 7];
+const innerCol = () => NOTE_COL[(faceMode === 2 ? NB : 2 * NB) % 7];
+const noteFaces = () => FTOP.slice(0, NB).concat(FBOT.slice(0, NB)).filter(Boolean);
+let actx = null, sndTimer = 0, sndStep = 0;
+const sndOn = new Set(), headPos = new Map();
+const sndHz = (deg) => { const P = [0, 2, 4, 7, 9], o = Math.floor(deg / 5); return 110 * Math.pow(2, (P[deg % 5] + 12 * o) / 12); };
+function noteSeq(n){   // что читает нота n: { len, at(i) → { f, r, k, val } }
+  const FL = noteFaces(), T = ROWS * (ROWS + 1) / 2;
+  const valOf = (f, r, k) => { const raw = bits[f.slot] && bits[f.slot][r] ? bits[f.slot][r][k] : 0; return f.up ? raw : (raw ^ 1); };
+  if (n < FL.length) { const f = FL[n];
+    return { len: T, at: (i) => { i = ((i % T) + T) % T; const r = Math.floor((Math.sqrt(8 * i + 1) - 1) / 2), k = i - r * (r + 1) / 2; return { f, r, k, val: valOf(f, r, k) }; } }; }
+  const tops = FTOP.slice(0, NB).filter(Boolean), L = tops.length * ROWS;
+  if (!L) return null;
+  return { len: L, at: (i) => { i = ((i % L) + L) % L; const f = tops[Math.floor(i / ROWS)], k = i % ROWS; return { f, r: ROWS - 1, k, val: valOf(f, ROWS - 1, k) }; } };
+}
+function sndNote(hz, t, len, g){
+  const o = actx.createOscillator(), a = actx.createGain();
+  o.type = "triangle"; o.frequency.value = hz;
+  a.gain.setValueAtTime(0, t); a.gain.linearRampToValueAtTime(g, t + 0.006); a.gain.exponentialRampToValueAtTime(0.0001, t + len);
+  o.connect(a); a.connect(actx.destination); o.start(t); o.stop(t + len + 0.02);
+}
+function sndTick(){
+  if (!sndOn.size) return;
+  const t = actx.currentTime + 0.01, len = Math.min(0.6, 1.6 / TEMPO), on = [];
+  headPos.clear();
+  for (const n of sndOn) {
+    const S = noteSeq(n); if (!S) continue;
+    const h = S.at(sndStep); headPos.set(n, h);
+    if (h.val) { const d = S.at(sndStep).val * 4 + S.at(sndStep + 1).val * 2 + S.at(sndStep + 2).val; on.push(sndHz(d + 5) * Math.pow(2, NOTE_SEMI[n] / 12)); }
+  }
+  on.forEach(hz => sndNote(hz, t, len, 0.28 / Math.sqrt(on.length)));
+  sndStep++;
+  sndTimer = setTimeout(sndTick, 1000 / TEMPO);
+}
+function noteUi(){
+  const nf = noteFaces().length;
+  document.querySelectorAll("#noteRow .note").forEach(b => {
+    const n = +b.dataset.n, has = n < nf || (n === 6 && nf <= 6) || n === nf;
+    b.classList.toggle("on", sndOn.has(n));
+    b.title = (n < nf ? `${b.textContent}: читает биты грани ${n + 1} (${n < NB ? "верхней" : "нижней"})` : `${b.textContent}: читает экватор — нижние ряды верхних граней по кругу`) + " и звучит от своей ноты. Щелчок — вкл / выкл";
+  });
+  const fb = document.getElementById("bFaceCol"); if (fb) fb.textContent = "🎨 Грани: " + FACE_MODE_NAME[faceMode];
+  const vt = document.getElementById("vTempo"), st = document.getElementById("sTempo"); if (vt) vt.textContent = TEMPO; if (st) st.value = TEMPO;
+}
+function noteToggle(n){
+  if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; } }
+  if (actx.state === "suspended") actx.resume();
+  if (sndOn.has(n)) sndOn.delete(n); else sndOn.add(n);
+  if (!sndOn.size) { clearTimeout(sndTimer); sndTimer = 0; headPos.clear(); }
+  else if (!sndTimer) sndTick();
+  noteUi();
+}
+
 function draw(){
   ctx.clearRect(0, 0, W, HGT);
   const cUp = css("--up"), cDn = css("--dn"), cEq = css("--eq"), cMem = css("--mem"),
@@ -1062,20 +1155,26 @@ function draw(){
   // Дальние грани рисуются первыми — обычный художник: то, что ближе, ложится поверх.
   shown.sort((a, b) => a.depth - b.depth);
 
+  // v0.043: внутреннее основание (плоскость зеркала) — при раскраске граней рисуется полупрозрачным своим цветом, под лицевыми гранями
+  if (faceMode && NB >= 3) {
+    ctx.beginPath();
+    EQ.forEach((v, i) => { const q = project(v); if (i) ctx.lineTo(q.x, q.y); else ctx.moveTo(q.x, q.y); });
+    ctx.closePath(); ctx.fillStyle = innerCol(); ctx.globalAlpha = 0.16; ctx.fill(); ctx.globalAlpha = 1;
+  }
   // 1. Заливка лицевых граней — еле заметная, чтобы биты не висели в пустоте.
   for (const s of shown) {
     if (!s.front) continue;
     ctx.beginPath();
     ctx.moveTo(s.P[0].x, s.P[0].y); ctx.lineTo(s.P[1].x, s.P[1].y); ctx.lineTo(s.P[2].x, s.P[2].y);
     ctx.closePath();
-    ctx.fillStyle = s.f.up ? cUp : cDn;
+    ctx.fillStyle = faceMode ? faceCol(s.f) : (s.f.up ? cUp : cDn);   // v0.043: каждая грань — своим цветом
     /* Заливка гаснет вместе с гранью (v0.011, баг-репорт: «одна синяя грань не видна, а яркая —
        как типа видна»). Причина была в рассогласовании: рёбра рисуются полной яркостью всегда,
        потому что это силуэт, а заливка стояла на глухих 0.07 и цифры гасли по наклону. Грань,
        повёрнутая почти ребром, выходила пустым ярким контуром — снаружи читалось как «лицевая
        грань, на которой ничего нет». Теперь и заливка идёт по наклону: чем грань круче к взгляду,
        тем она бледнее, и пустой контур перестаёт выглядеть полноценной гранью. */
-    ctx.globalAlpha = 0.035 + 0.075 * Math.max(0, s.facing);
+    ctx.globalAlpha = faceMode ? 0.06 + 0.16 * Math.max(0, s.facing) : 0.035 + 0.075 * Math.max(0, s.facing);   // v0.043: цветная — гуще
     ctx.fill();
   }
   ctx.globalAlpha = 1;
@@ -1200,7 +1299,7 @@ function draw(){
     for (const s of shown) {
       if (!s.front || s.facing < 0.11) continue;
       const face = 0.88 * Math.sqrt((s.facing - 0.11) / (1 - 0.11));
-      const tex = dotTexture(s.f, cUp, cDn, cMem, cPin), T = tex.width, [p0, p1, p2] = s.P;
+      const fc = faceMode ? faceCol(s.f) : null, tex = dotTexture(s.f, fc || cUp, fc || cDn, cMem, cPin), T = tex.width, [p0, p1, p2] = s.P;   // v0.043
       ctx.save();
       ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.closePath(); ctx.clip();
       ctx.globalAlpha = Math.min(1, face / 0.88);
@@ -1215,6 +1314,7 @@ function draw(){
     const G = ROWS > GLOW_ROWS ? 0 : GLOW;   // v0.031: выше 32 рядов свечения нет
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     const rampUp = ramp(cUp, cMem), rampDn = ramp(cDn, cMem);
+    const rampMap = new Map(), rampOf = (c) => { let r = rampMap.get(c); if (!r) { r = ramp(c, cMem); rampMap.set(c, r); } return r; };   // v0.043
     const ramp0 = bitCol ? ramp(col0, cMem) : null, ramp1 = bitCol ? ramp(col1, cMem) : null;   // v0.026
     // v0.023: шрифт — только при смене размера. Размер округлён до 0,5 px: иначе он другой у каждой цифры, и
     // браузер разбирал бы строку шрифта заново сотни тысяч раз за кадр — на плотности 256 это главный тормоз.
@@ -1223,7 +1323,7 @@ function draw(){
     for (const s of shown) {
       if (!s.front) continue;
       const f = s.f;
-      const rmp = f.up ? rampUp : rampDn;
+      const rmp = faceMode ? rampOf(faceCol(f)) : (f.up ? rampUp : rampDn);   // v0.043: биты — цветом своей грани
       /* ГРАНЬ, СТОЯЩАЯ ПОЧТИ РЕБРОМ, ЦИФР НЕ ПОКАЗЫВАЕТ ВОВСЕ (v0.015, баг-репорт с картинкой).
          Кегль цифры считается от РАССТОЯНИЯ, а не от наклона: на косой грани буквы остаются
          прежнего размера, а места под них становится в разы меньше — они наезжают друг на друга
@@ -1294,6 +1394,17 @@ function draw(){
     ctx.shadowBlur = 0;   // рёбра ниже ставят свою тень сами, чужая им ни к чему
   }
 
+  // v0.043: головки нот — бит, который сейчас звучит, горит на теле цветом своей ноты (на отвёрнутой грани — тусклее)
+  if (headPos.size) {
+    const fr = new Map(); for (const s of shown) fr.set(s.f, s.front);
+    for (const [n, h] of headPos) {
+      if (!h || h.r >= ROWS) continue;
+      const q = project(bitPoint(h.f, h.r, h.k)), rad = Math.max(3, DIG * 0.55 * q.k * zoom * (Math.min(W, HGT) / 700));
+      ctx.globalAlpha = fr.get(h.f) ? 1 : 0.35; ctx.fillStyle = NOTE_COL[n]; ctx.shadowColor = NOTE_COL[n]; ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.arc(q.x, q.y, rad, 0, 6.2832); ctx.fill();
+    }
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
   // 4. Видимые рёбра поверх всего; экватор — последним и толще прочих.
   ctx.lineJoin = "round"; ctx.lineCap = "round";
   for (const pass of (showEdges ? ["side", "eq"] : [])) {   // v0.031: рёбра можно спрятать все
@@ -1504,7 +1615,7 @@ function save(){
   try {
     localStorage.setItem(KEY, JSON.stringify({
       ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, showEdges, showDirs, dotMode, zoom, yaw, pitch, stepOp, TICK,
-      showLinks, LINK_EVERY, hoverOn, myBits, mySame, glowV: 1, bitCol, col0, col1, NB, sierp,
+      showLinks, LINK_EVERY, hoverOn, myBits, mySame, glowV: 1, bitCol, col0, col1, NB, sierp, faceMode, TEMPO,
       theme: document.documentElement.getAttribute("data-theme") || ""
     }));
   } catch (e) {}
@@ -1538,6 +1649,8 @@ function load(){
   if (typeof o.myBits === "string" && /^[01]{0,200000}$/.test(o.myBits)) myBits = o.myBits;
   if (typeof o.mySame === "boolean") mySame = o.mySame;
   if (typeof o.sierp === "boolean") sierp = o.sierp;   // v0.035
+  if (o.faceMode === 0 || o.faceMode === 1 || o.faceMode === 2) faceMode = o.faceMode;   // v0.043
+  if (o.TEMPO >= 1 && o.TEMPO <= 24) TEMPO = o.TEMPO | 0;
   if (typeof o.bitCol === "boolean") bitCol = o.bitCol;
   if (/^#[0-9a-f]{6}$/i.test(o.col0 || "")) col0 = o.col0;
   if (/^#[0-9a-f]{6}$/i.test(o.col1 || "")) col1 = o.col1;
@@ -1972,6 +2085,11 @@ const SECS = {
 SECS.init();
 
 load(); rollBits(); syncUI();
+// v0.043: 🎨 грани и ноты
+document.getElementById("bFaceCol").addEventListener("click", () => { faceMode = (faceMode + 1) % 3; dotVer++; noteUi(); save(); });
+document.querySelectorAll("#noteRow .note").forEach(b => b.addEventListener("click", () => noteToggle(+b.dataset.n)));
+document.getElementById("sTempo").addEventListener("input", (e) => { TEMPO = Math.max(1, Math.min(24, +e.target.value | 0)); noteUi(); save(); });
+noteUi();
 /* v0.042: КАРТИНА ИЗ ТРЕУГОЛЬНИКА (запрос пользователя: «открыть выбранную пирамиду прямо здесь, большим знаком»).
    Треугольник (кнопка «◆ Октаэдр» в «🔍 Крупно») открывает страницу с адресом …#treug=R.БИТЫ: R — рядов на грани
    (высота пирамиды + 1), БИТЫ — 0/1 грань за гранью (слоты 0…3 — восточная, южная, западная, северная грани пирамиды:

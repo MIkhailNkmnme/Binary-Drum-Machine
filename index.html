@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.067. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.068. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -81,13 +81,15 @@
              ребро к ребру, как стоя (прямоугольный из ромбов ребро к ребру не сложить — строки перекашиваются, рисунок ломается).
      v0.067: «а если треугольники … катетами вдоль вертикали», по показу — «поменять местами»: лёжа треугольники на боку — вершина у своего
              края экрана, основание к нотам; «кнопки прямо вниз, большие группы разделить»: на телефоне меню — одним столбцом, Черновики —
-             по 5 с просветом; «запустить нажатием — отправить в бесконечность»: нажатая кнопка улетает вдаль и тает в точке, потом страница. -->
+             по 5 с просветом; «запустить нажатием — отправить в бесконечность»: нажатая кнопка улетает вдаль и тает в точке, потом страница.
+     v0.068: «из хаба убери смену языков, пока оставь только рус буквы»: все подписи — русские (и в разметке, чтобы до скрипта не
+             мелькал английский), строки больше не переключаются; сбойные полосы остались, без смены языка. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.067</title>
+    <title>Zerkalius Control Hub — v0.068</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -405,50 +407,50 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.067</div>
+        <div class="ver">v0.068</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
         <!-- v0.048, по снимку «Triangle / Зазеркалиус» — «в одну строку»: главные кнопки — рядом -->
         <div class="mainrow">
-        <a href="Zerkalius-treugolnik.html" class="menu-btn main-engine" data-en="Triangle" data-ru="Треугольник">Triangle</a>
+        <a href="Zerkalius-treugolnik.html" class="menu-btn main-engine" data-en="Triangle" data-ru="Треугольник">Треугольник</a>
         <!-- v0.042: Зазеркалиус — вторая главная кнопка, под Треугольником (слово пользователя «под треугольник»); прежде — в Черновиках -->
-        <a href="zazerkalius/Zerkalius-zazerkalius.html" class="menu-btn main-engine" data-en="Zazerkalius" data-ru="Зазеркалиус">Zazerkalius</a>
+        <a href="zazerkalius/Zerkalius-zazerkalius.html" class="menu-btn main-engine" data-en="Zazerkalius" data-ru="Зазеркалиус">Зазеркалиус</a>
         </div>
 
         <!-- Знак и записи (папка oktaedr\), заведено 2026-09-20; обои — 2026-09-21 -->
         <div class="panel">
-            <div class="panel-title" data-en="◇ Sign &amp; Records" data-ru="◇ Знак и записи">◇ Sign &amp; Records</div>
+            <div class="panel-title" data-en="◇ Sign &amp; Records" data-ru="◇ Знак и записи">◇ Знак и записи</div>
             <div class="row">
-                <a href="Zerkalius-dnevnik.html" class="menu-btn draft-btn" data-en="Logbook" data-ru="Борт-журнал">Logbook</a>
-                <a href="oboi/Zerkalius-oboi.html" class="menu-btn draft-btn" data-en="Wallpaper" data-ru="Обои">Wallpaper</a>
+                <a href="Zerkalius-dnevnik.html" class="menu-btn draft-btn" data-en="Logbook" data-ru="Борт-журнал">Борт-журнал</a>
+                <a href="oboi/Zerkalius-oboi.html" class="menu-btn draft-btn" data-en="Wallpaper" data-ru="Обои">Обои</a>
                 <!-- v0.027: исследование цикла Аниматрицы (папка issledovanie\), 2026-09-24 -->
-                <a href="issledovanie/Zerkalius-issledovanie.html" class="menu-btn draft-btn" data-en="Research" data-ru="Исследование">Research</a>
+                <a href="issledovanie/Zerkalius-issledovanie.html" class="menu-btn draft-btn" data-en="Research" data-ru="Исследование">Исследование</a>
                 <!-- v0.032: сравнение таблиц фигур .tsv (папка sravnenie\), 2026-09-25 -->
-                <a href="sravnenie/Zerkalius-sravnenie.html" class="menu-btn draft-btn" data-en="Compare" data-ru="Сравнение">Compare</a>
+                <a href="sravnenie/Zerkalius-sravnenie.html" class="menu-btn draft-btn" data-en="Compare" data-ru="Сравнение">Сравнение</a>
                 <!-- v0.042: Битмультфильмы — из главных кнопок сюда («Битмультфильмы — в Записи») -->
-                <a href="rezultaty/Zerkalius-rezultaty.html" class="menu-btn draft-btn" data-en="Bit Cartoons" data-ru="Битмультфильмы">Bit Cartoons</a>
+                <a href="rezultaty/Zerkalius-rezultaty.html" class="menu-btn draft-btn" data-en="Bit Cartoons" data-ru="Битмультфильмы">Битмультфильмы</a>
             </div>
         </div>
 
         <!-- v0.049, «перемести Черновики вниз, но не ниже номера версии»: Черновики — последними -->
         <!-- Черновики (до v0.018 — «Лаборатория (Черновики)») — с v0.012 в порядке создания (по первому появлению в git) -->
         <div class="panel">
-            <div class="panel-title" data-en="🔬 Drafts" data-ru="🔬 Черновики">🔬 Drafts</div>
+            <div class="panel-title" data-en="🔬 Drafts" data-ru="🔬 Черновики">🔬 Черновики</div>
             <div class="grid">
                 <!-- v0.033: Code — первым в Черновиках (до этого флагман хаба, v0.008–0.032); остальные — по порядку создания -->
-                <a href="Zerkalius-code.html" class="menu-btn draft-btn" data-en="Zerkalius" data-ru="Зеркалиус">Zerkalius</a>
-                <a href="Zerkalius-genezis.html" class="menu-btn draft-btn" data-en="Genezis" data-ru="Генезис">Genezis</a>
-                <a href="Zerkalius-gpu.html" class="menu-btn draft-btn" data-en="GPU Core + Synth" data-ru="Ядро GPU + синт">GPU Core + Synth</a>
-                <a href="Zerkalius-grid-module.html" class="menu-btn draft-btn" data-en="Grid Module" data-ru="Модуль сетки">Grid Module</a>
-                <a href="Zerkalius-kubits.html" class="menu-btn draft-btn" data-en="Kubits" data-ru="Кубиты">Kubits</a>
-                <a href="fold-layers/Zerkalius-layers.html" class="menu-btn draft-btn" data-en="Fold Layers" data-ru="Слои сгиба">Fold Layers</a>
-                <a href="Zerkalius-ascii-art.html" class="menu-btn draft-btn" data-en="ASCII Art" data-ru="ASCII-арт">ASCII Art</a>
-                <a href="oktaedr/Zerkalius-oktaedr.html" class="menu-btn draft-btn" data-en="Octahedron" data-ru="Октаэдр">Octahedron</a>
+                <a href="Zerkalius-code.html" class="menu-btn draft-btn" data-en="Zerkalius" data-ru="Зеркалиус">Зеркалиус</a>
+                <a href="Zerkalius-genezis.html" class="menu-btn draft-btn" data-en="Genezis" data-ru="Генезис">Генезис</a>
+                <a href="Zerkalius-gpu.html" class="menu-btn draft-btn" data-en="GPU Core + Synth" data-ru="Ядро GPU + синт">Ядро GPU + синт</a>
+                <a href="Zerkalius-grid-module.html" class="menu-btn draft-btn" data-en="Grid Module" data-ru="Модуль сетки">Модуль сетки</a>
+                <a href="Zerkalius-kubits.html" class="menu-btn draft-btn" data-en="Kubits" data-ru="Кубиты">Кубиты</a>
+                <a href="fold-layers/Zerkalius-layers.html" class="menu-btn draft-btn" data-en="Fold Layers" data-ru="Слои сгиба">Слои сгиба</a>
+                <a href="Zerkalius-ascii-art.html" class="menu-btn draft-btn" data-en="ASCII Art" data-ru="ASCII-арт">ASCII-арт</a>
+                <a href="oktaedr/Zerkalius-oktaedr.html" class="menu-btn draft-btn" data-en="Octahedron" data-ru="Октаэдр">Октаэдр</a>
                 <!-- v0.042: Зазеркалиус — в главные; Cone (zazerkalius/Zerkalius-konus.html) убран из Черновиков, сама страница жива -->
-                <a href="lively/Zerkalius-lively.html" class="menu-btn draft-btn" data-en="Lively Wallpaper" data-ru="Обои Lively">Lively Wallpaper</a>
+                <a href="lively/Zerkalius-lively.html" class="menu-btn draft-btn" data-en="Lively Wallpaper" data-ru="Обои Lively">Обои Lively</a>
                 <!-- v0.064: прошлый хаб — с крутящимся конусом и нотами (замороженная копия v0.058) -->
-                <a href="Zerkalius-hub-konus.html" class="menu-btn draft-btn" data-en="Hub + Cone" data-ru="Хаб с конусом">Hub + Cone</a>
+                <a href="Zerkalius-hub-konus.html" class="menu-btn draft-btn" data-en="Hub + Cone" data-ru="Хаб с конусом">Хаб с конусом</a>
             </div>
         </div>
 
@@ -520,8 +522,9 @@
                 try { if (bg && bg.contentWindow) bg.contentWindow.postMessage({ zerkTitle: lang === 'ru' ? 'Зеркалиус' : 'Zerkalius' }, '*'); } catch (e) {} } };
             // старт: строки сверху вниз и надпись обоев — поочерёдно en / ru, со случайного начала
             const r0 = Math.random() < 0.5 ? 0 : 1;
-            rowsNow().sort((a, b) => a.top - b.top).forEach((row, i) => { const lang = (i + r0) % 2 ? 'ru' : 'en'; row.list.forEach(b => setLang(b, lang)); });
-            TITLE.lang = r0 ? 'en' : 'ru';
+            // v0.068, «из хаба убери смену языков, пока оставь только рус буквы»: всё — по-русски, и больше не переключается
+            btns.forEach(b => setLang(b, 'ru'));
+            TITLE.lang = 'ru';
             const titleStart = () => TITLE.set(TITLE.lang);
             window.addEventListener('message', e => { if (bg && e.source === bg.contentWindow && e.data && e.data.zerkReady) titleStart(); });
             // v0.043: ♫ Звук живого фона — сообщение в фон; фон отвечает, звучит ли (zerkSndOn), — по нему горит кнопка
@@ -604,12 +607,9 @@
                     nextFlip = now + 2000 + Math.random() * 1000;
                     // v0.025: очередь надписи обоев. v0.026: её доля — четверть, а не 1/(строк+1): при семи-восьми
                     // строках надпись менялась раз в ~20 с, и казалось, что не меняется вовсе.
-                    if (Math.random() < 0.25) return TITLE.set(TITLE.lang === 'ru' ? 'en' : 'ru');
+                    // v0.068: смены языка нет — строка только вздрагивает сбоем, подписи остаются русскими
                     const rows = rowsNow(); const row = rows[Math.floor(Math.random() * rows.length)];
-                    if (row) {
-                        const lang = row.list[0].dataset.lang === 'ru' ? 'en' : 'ru';   // вся строка — на один язык
-                        return glitch(row.top, row.bottom, () => row.list.forEach(b => setLang(b, lang)));
-                    }
+                    if (row) return glitch(row.top, row.bottom);
                 }
                 if (CALM || Math.random() > 0.30) return;   // v0.028: в тихом режиме случайных сбоев нет
                 const rs = btns.map(b => b.getBoundingClientRect());
