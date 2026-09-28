@@ -972,7 +972,7 @@ function renderTpl(){
   Z.tpl.forEach((t, k) => {
     const tip = t.rows.length === 1 ? t.rows[0].slice(0, 200) : t.rows.length + " стр.: " + t.rows.slice(0, 6).map(r => r.slice(0, 40)).join(" / ");
     h += '<div class="tpl mine"><button class="tb" data-u="' + k + '" title="' + esc(tip) + ' · щелчок — заменить (столбик — весь столбик, строка — текущую), Shift + щелчок — вставить под текущей · двойной щелчок — переименовать">' + esc(t.name) + "</button>" +
-         (Z.tplRef === k ? '<button class="tsv" data-s="' + k + '" title="💾 Записать в этот шаблон нынешние биты: столбик — весь столбик рабочего поля, строка — текущую строку. Шаблон меняется сам, номера строк перестают гореть золотом. Правый щелчок — вернуть прежние биты шаблона (ещё раз — снова новые)">💾</button>' : "") +   // v0.298
+         (Z.tplRef === k ? '<button class="tsv" data-s="' + k + '" title="💾 Записать в этот шаблон нынешние биты — весь столбик рабочего поля. Шаблон меняется сам, номера строк перестают гореть золотом. Правый щелчок — вернуть прежние биты шаблона (ещё раз — снова новые)">💾</button>' : "") +   // v0.298
          '<button class="tref' + (Z.tplRef === k ? " on" : "") + '" data-r="' + k + '" title="' + (Z.tplRef === k ? "Эталон: номера строк, отличающихся от этого шаблона, — золотом. Щелчок — выключить сравнение" : "Сравнивать строки с этим шаблоном: номера изменённых — золотом") + '">⚑</button>' +
          '<button class="tx" data-x="' + k + '" title="Удалить этот шаблон">✕</button></div>';
   });
@@ -7088,13 +7088,13 @@ function init(){
        («Столбик · 27 стр.»), обновляется под новый размер; своё имя пользователя не трогается. */
     else if (b.dataset.s !== undefined) {
       const t = Z.tpl[+b.dataset.s]; if (!t) return;
-      const rows = t.rows.length > 1 ? Z.rows.slice() : [cur()];
+      const rows = Z.rows.slice();   // v0.300: шаблон — всегда весь столбик (прежде у шаблона-строки — текущая строка)
       if (rows.length === t.rows.length && rows.every((r, i) => r === t.rows[i])) { say(`💾 «${t.name}» — и так такой же, менять нечего.`); return; }
       const n = rows.reduce((a, r, i) => a + (r !== t.rows[i] ? 1 : 0), 0) + Math.max(0, t.rows.length - rows.length);
       t.prev = { rows: t.rows, name: t.name };   // v0.299: прежние биты — для правого щелчка по 💾
       if (t.name === tplName(t.rows)) t.name = tplName(rows);
       t.rows = rows; renderTpl(); renderRows(); save();
-      say(`💾 Шаблон «${t.name}» перезаписан: ${rows.length > 1 ? rows.length + " стр., изменено " + n : "строка " + rows[0].length + " бит"}.`);
+      say(`💾 Шаблон «${t.name}» перезаписан: ${rows.length} стр., изменено ${n}.`);
     }
     else if (b.dataset.r !== undefined) {   // v0.037: ⚑ — эталон для сравнения
       const k = +b.dataset.r; Z.tplRef = Z.tplRef === k ? -1 : k;
@@ -7174,7 +7174,7 @@ function init(){
     Z.rows = R.rows; syncLane(); Z.cur = 0; renderAll(); save();
     say(`✂ Нарезано: ${U} — ${R.items.length} шт., высота ${h} (${R.bands} полос, строки +${R.g}), ${TRI_ORD[Z.triOrd || "rows"]} — друг под другом, ${R.rows.length} стр. ↩ вернёт.`);
   };
-  $("bTplRow").onclick = () => { const rows = [cur()]; Z.tpl.push({ name: tplName(rows), rows }); renderTpl(); save(); say(`Строка ${Z.cur + 1} (${cur().length} бит) сохранена шаблоном. Щелчок по нему — вставить под текущей.`); };
+  // v0.300, «шаблоны — только все строки, а не по одной»: «＋ Строка» (сохранить одну строку шаблоном) снята
   $("bTplSave").onclick = () => $("bTplAll").onclick();   // v0.296: «💾 Сохр» в шапке — как «＋ Столбик»
   $("bTplAll").onclick = () => { const rows = Z.rows.slice(); Z.tpl.push({ name: tplName(rows), rows }); Z.tplRef = Z.tpl.length - 1; renderTpl(); renderRows(); save(); say(`Столбик (${rows.length} стр.) сохранён шаблоном.`); };   // v0.037: сохранённый столбик — новый эталон; v0.038: комментарий съедал конец строки — страница не запускалась
   // Разделитель поля и окон: ширина поля в пикселях, двойной щелчок — по умолчанию.
