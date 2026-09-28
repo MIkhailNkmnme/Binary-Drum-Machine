@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.314. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.315. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.314</title>
+<title>Zazerkalius — v0.315</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -563,6 +563,18 @@ body.zen #coneTxtWin{display:none !important}
    _js/slider-arrows.js) — у всех одной длины, 140 px вместо 60…90: сама дорожка ~108 px, прежде ~30…60 (стрелки съедали свои 32 px
    из прежней ширины). В узком месте (левая панель) может ужаться, но не растягивается */
 .zerk-range-wrap{width:140px !important;flex:0 1 auto !important}
+/* v0.315, по снимку группы «Звук» — «дай возможность уголком менять вручную размер» и «и перетаскивание за любую пустую область»:
+   в правом нижнем углу группы — уголок .cgsz: тянешь — ширина и высота группы (Z.cgrpSize, помнится), двойной щелчок по нему — прежний
+   размер. Кнопки в группе переносятся по новой ширине. Группу теперь тащат не только за подпись, а за любое место без кнопок, полей и списков */
+.cgrp{position:relative}
+.cgrp.csz{box-sizing:border-box;overflow:hidden}
+.cgrp.csz > .cgb{max-width:none !important;flex:1 1 auto;min-width:0;align-content:flex-start}
+#w-cone .cgrp,#paneGrp .cgrp{cursor:move}
+#w-cone .cgrp :is(select,input,label),#paneGrp .cgrp :is(select,input,label){cursor:default}
+.cgrp > .cgsz{position:absolute;right:0;bottom:0;width:11px;height:11px;cursor:nwse-resize;touch-action:none;opacity:.45;
+  background:linear-gradient(135deg, transparent 45%, var(--gc, var(--dim)) 45% 55%, transparent 55% 70%, var(--gc, var(--dim)) 70% 80%, transparent 80%)}
+.cgrp > .cgsz:hover{opacity:1}
+.cgrp.cmin > .cgsz,.cgrp.cdrag > .cgsz{display:none}
 /* v0.183, по снимку группы «Вид» — «в каждой полоске подели длину пополам, расположи в 2 ряда, кнопки ровно друг под другом»:
    группа — сетка в два ряда: подпись слева на оба ряда, дальше столбцы (их число --cols = половина кнопок, ставит cgrpCols);
    кнопки одного столбца — одной ширины, ровно одна под другой */
@@ -876,7 +888,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.314</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.315</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1695,8 +1707,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0314"></script>
-<script src="zz-ui.js?v=0314"></script>
+<script src="zz-core.js?v=0315"></script>
+<script src="zz-ui.js?v=0315"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>

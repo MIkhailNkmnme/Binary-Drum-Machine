@@ -22,7 +22,7 @@ const ZZ_BG = (() => { try { return !!ZZ_SOLO && (new URLSearchParams(location.s
    весь Zazerkalius в состоянии пресета: окна, конус, лазер, поля строк. Память не читается и не пишется: гость крутит и гоняет
    лазер, его собственные строки и раскладка не тронуты, а ссылка при каждом открытии снова даёт пресет как есть. */
 const ZZ_PRESET_FULL = !!ZZ_PRESET && !ZZ_SOLO;
-const ZZ_PRESET_LAYOUT = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "ctw", "cgrpPos", "cgrpDock", "cgrpMove", "paneW", "paneWUser", "padPos", "tpl", "tplRef", "pins", "coneBtns"];   // конусу одному (?solo=cone) — ни к чему
+const ZZ_PRESET_LAYOUT = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "ctw", "cgrpPos", "cgrpSize", "cgrpDock", "cgrpMove", "paneW", "paneWUser", "padPos", "tpl", "tplRef", "pins", "coneBtns"];   // конусу одному (?solo=cone) — ни к чему
 const ZZ_KEY = ZZ_BG ? "zazerkalius_bg" : ZZ_SOLO ? "zazerkalius_solo_" + ZZ_SOLO.slice(2) : "zazerkalius_v1";
 /* v0.030: окна можно вынести в отдельное окно браузера (⧉); их элементы живут уже в чужом документе,
    поэтому поиск по id смотрит и туда — иначе вынесенное окно перестало бы обновляться. */
@@ -5373,6 +5373,10 @@ function cgrpInit(){
   const tl = document.querySelector("#w-cone .wbody > .tools"); if (!tl) return;
   if (!Z.cgrpPos || typeof Z.cgrpPos !== "object") Z.cgrpPos = {};
   if (!Z.cgrpMin || typeof Z.cgrpMin !== "object") Z.cgrpMin = {};   // v0.204: свёрнутые до заголовка
+  if (!Z.cgrpSize || typeof Z.cgrpSize !== "object") Z.cgrpSize = {};   // v0.315: размер, заданный уголком { имя: { w, h } }
+  // v0.315: размер группы — уголком; у свёрнутой (cmin) — свой, до заголовка
+  const sizeApply = (g) => { const s = !g.classList.contains("cmin") && Z.cgrpSize[g.dataset.g]; g.classList.toggle("csz", !!s); g.style.width = s ? s.w + "px" : ""; g.style.height = s ? s.h + "px" : ""; };
+  const NOGRAB = "button, input, select, textarea, label, a, canvas, .gzen, .cgsz";   // v0.315: всё остальное в группе — хват
   const wb = tl.parentElement; let zTop = 10;
   const groups = [...tl.querySelectorAll(":scope > .cgrp")];
   /* v0.238, по снимку групп «Аниматрица», «Лазер», «Кручение» — «все кнопки разъехались — компактными, и размер стандартизируй»: кнопки
@@ -5406,12 +5410,24 @@ function cgrpInit(){
     zb.addEventListener("pointerdown", (e) => { e.stopPropagation(); e.preventDefault(); if (e.button !== 0) return; const k = g.dataset.g; if (Z.cgrpZen[k]) delete Z.cgrpZen[k]; else Z.cgrpZen[k] = true; zUi(); save();
       say(Z.cgrpZen[k] ? `🧘 Группа «${k}» — видна и в дзене.` : `🧘 Группа «${k}» в дзене не видна.`); });
     zb.addEventListener("dblclick", (e) => e.stopPropagation());
-    lab.title = "Тяни — перенести группу куда угодно (поверх холста); двойной щелчок по группе — свернуть до заголовка и обратно; правый щелчок по заголовку — обратно на полосу";
+    lab.title = "Тяни (за подпись или любое пустое место группы) — перенести группу куда угодно (поверх холста); двойной щелчок по группе — свернуть до заголовка и обратно; правый щелчок по заголовку — обратно на полосу";
     g.classList.toggle("cmin", !!Z.cgrpMin[g.dataset.g]);
     g.style.minHeight = Z.cgrpMin[g.dataset.g] > 0 ? Z.cgrpMin[g.dataset.g] + "px" : "";   // v0.207: свёрнутая — прежней высоты
-    lab.addEventListener("pointerdown", (e) => {
-      if (e.button !== 0) return;
-      e.preventDefault(); try { lab.setPointerCapture(e.pointerId); } catch (err) { /* уже отпущен */ }
+    { const sz = document.createElement("span"); sz.className = "cgsz"; sz.title = "Тяни — размер группы; двойной щелчок — прежний размер"; g.appendChild(sz);
+      sz.addEventListener("pointerdown", (e) => {
+        if (e.button !== 0) return;
+        e.preventDefault(); e.stopPropagation(); try { sz.setPointerCapture(e.pointerId); } catch (err) { /* уже отпущен */ }
+        const r = g.getBoundingClientRect(), x0 = e.clientX, y0 = e.clientY; let moved = false;
+        const mv = (ev) => { moved = true; Z.cgrpSize[g.dataset.g] = { w: Math.max(60, Math.round(r.width + ev.clientX - x0)), h: Math.max(24, Math.round(r.height + ev.clientY - y0)) }; sizeApply(g); };
+        const up = () => { sz.removeEventListener("pointermove", mv); sz.removeEventListener("pointerup", up); sz.removeEventListener("pointercancel", up); if (moved) { place(g); save(); } };
+        sz.addEventListener("pointermove", mv); sz.addEventListener("pointerup", up); sz.addEventListener("pointercancel", up);
+      });
+      sz.addEventListener("dblclick", (e) => { e.preventDefault(); e.stopPropagation(); if (!Z.cgrpSize[g.dataset.g]) return; delete Z.cgrpSize[g.dataset.g]; sizeApply(g); place(g); save(); });
+    }
+    sizeApply(g);
+    g.addEventListener("pointerdown", (e) => {   // v0.315: прежде — только за подпись (lab), теперь за любое пустое место группы
+      if (e.button !== 0 || e.target.closest(NOGRAB)) return;
+      e.preventDefault(); try { g.setPointerCapture(e.pointerId); } catch (err) { /* уже отпущен */ }
       /* v0.252: пока тащат — группа висит над всей страницей (.cdrag, position: fixed), отпустил — решается, куда: над левой панелью —
          встаёт туда (в ряд с другими, перед той, над которой отпустил), иначе — висит поверх холста, как прежде (Z.cgrpPos). */
       const r = g.getBoundingClientRect(), x0 = e.clientX, y0 = e.clientY, dx = x0 - r.left, dy = y0 - r.top; let moved = false, lx = x0, ly = y0;
@@ -5424,27 +5440,27 @@ function cgrpInit(){
         const P = $("rowsPane"); if (P) P.classList.toggle("cgover", paneHit(lx, ly));   // (в дзене панели нет — paneHit ложь)
       };
       const up = () => {
-        lab.removeEventListener("pointermove", mv); lab.removeEventListener("pointerup", up); lab.removeEventListener("pointercancel", up);
+        g.removeEventListener("pointermove", mv); g.removeEventListener("pointerup", up); g.removeEventListener("pointercancel", up);
         if (!moved) return;
         const gr = g.getBoundingClientRect();
-        g.classList.remove("cdrag"); document.body.classList.remove("cgdrag"); g.style.width = ""; const P = $("rowsPane"); if (P) P.classList.remove("cgover");
+        g.classList.remove("cdrag"); document.body.classList.remove("cgdrag"); sizeApply(g); const P = $("rowsPane"); if (P) P.classList.remove("cgover");
         if (paneHit(lx, ly)) { dock(g, lx, ly); save(); return; }
         if (g.parentElement !== tl) undock(g);
         const tr = tl.getBoundingClientRect(); Z.cgrpPos[g.dataset.g] = { x: gr.left - tr.left, y: gr.top - tr.top }; place(g); save();
       };
-      lab.addEventListener("pointermove", mv); lab.addEventListener("pointerup", up); lab.addEventListener("pointercancel", up);
+      g.addEventListener("pointermove", mv); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
     });
     /* v0.204, по снимку группы «Аниматрица» — «двойной клик по группе сворачивает её до заголовка»: двойной щелчок по заголовку или
        пустому месту группы (не по кнопке, полю, списку) — свернуть до заголовка, ещё раз — развернуть; Z.cgrpMin { имя: true }. Возврат
        вынесенной группы на полосу, что был на двойном щелчке по заголовку (v0.177), — теперь правый щелчок по заголовку. */
     g.addEventListener("dblclick", (e) => {
-      if (e.target.closest("button, input, select, textarea, label, .gzen")) return;
+      if (e.target.closest("button, input, select, textarea, label, .gzen, .cgsz")) return;
       e.preventDefault(); e.stopPropagation();
       /* v0.207, «высота остаётся как была — нужно»: свёрнутая группа сужается до заголовка, а высоту держит прежнюю (Z.cgrpMin — её пиксели),
          чтобы соседние группы и полоса не прыгали. */
       const key = g.dataset.g, on = !Z.cgrpMin[key];
       if (on) Z.cgrpMin[key] = g.offsetHeight; else delete Z.cgrpMin[key];
-      g.classList.toggle("cmin", on); g.style.minHeight = on ? Z.cgrpMin[key] + "px" : ""; cgrpCols(); place(g); save();
+      g.classList.toggle("cmin", on); g.style.minHeight = on ? Z.cgrpMin[key] + "px" : ""; sizeApply(g); cgrpCols(); place(g); save();
     });
     lab.addEventListener("contextmenu", (e) => {
       e.preventDefault();
