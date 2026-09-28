@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.360. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.361. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.360</title>
+<title>Zazerkalius — v0.361</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -81,7 +81,7 @@ code{font-family:var(--ff);font-size:.95em}
 #w-cone .tools .cgb .w2.w2.w2,#paneGrp .cgb .w2.w2.w2{width:calc(var(--bu) * 2 + 3px) !important}
 #w-cone .tools .cgb .w4.w4.w4,#paneGrp .cgb .w4.w4.w4{width:calc(var(--bu) * 4 + 9px) !important}
 /* v0.356, по снимкам «⏸ на проходе» и «45°» — «размеры 2»: эти два — ровно в 2 кнопки, где бы ни стояли (на полосе, над холстом, на панели) */
-#w-cone .tools .cgb #bConeClockStop#bConeClockStop,#paneGrp .cgb #bConeClockStop#bConeClockStop{width:calc(var(--bu) * 2 + 3px) !important;min-width:0 !important;max-width:none !important;flex:0 0 auto !important}
+#w-cone .tools .cgb #bConeClockStop#bConeClockStop,#paneGrp .cgb #bConeClockStop#bConeClockStop,#w-cone .tools .cgb #bConeDir#bConeDir,#paneGrp .cgb #bConeDir#bConeDir{   /* v0.361: и «↻ по часовой» — «размер 2» */ width:calc(var(--bu) * 2 + 3px) !important;min-width:0 !important;max-width:none !important;flex:0 0 auto !important}
 /* v0.360, по снимкам «🎯 до строки | 10» и «↻ | 45°» — «ширина 2 им», «также»: каждая пара — один блок (.cunit.cu2) ровно в 2 кнопки, переносится
    между группами целиком; поле номера и ↻ — в полкнопки, кнопка и список — на остальное */
 #w-cone .tools .cgb > span.cu2,#paneGrp .cgb > span.cu2{width:calc(var(--bu) * 2 + 3px);box-sizing:border-box;display:inline-flex !important;flex-wrap:nowrap !important;gap:3px}
@@ -1005,7 +1005,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.360</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.361</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1161,14 +1161,13 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
     <button id="bCutClr" title="🗑 Стереть все строки под чертой — насовсем, во всех полях (↩ вернёт)">🗑</button>   <!-- v0.290: в правом нижнем углу поля строк -->
     <!-- v0.225: под чертой поля — достройка строк (тянешь черту вниз) и свои шаблоны; при отрисовке поля переносится в #cutSlot -->
     <div id="cutPanel">
-      <span class="cpl" title="Тянешь черту под строками вниз — новые строки достраиваются от строки над ней">достроить:</span>
+      <!-- v0.361, по снимку «достроить: 🔺 Серп 90 · ⤒ из-под черты» — «„Заменить“ удали, слово „достроить“ убери, жёлтая обводка — либо-либо» -->
       <button id="bCutR90" title="🔺 Серп 90 — Серпинский по треугольнику: строки растут на 1 бит (или над чертой одна строка) — Паскаль, на бит длиннее (1 → 11 → 101…); растут на 2 — правило 90, на 2 бита">🔺 Серп 90</button>
       <button id="bCutR30" title="Правило 30 — строка на 2 бита длиннее, хаос">30</button>
       <button id="bCutMask" title="Маска: следующая строка — маска подряд, на бит длиннее">маска</button><input id="cutMask" value="01" title="Маска из 0 и 1 (по умолчанию 01)" style="width:52px">
       <!-- v0.353: «▮ стенка» и её столбец — в «Аниматрицу», в блок «❄ Заморозка» («▮ Столб»); на достройку действует оттуда же -->
       <!-- v0.307, «отсюда убери то, что не относится к построению от линии»: ✂ нарезка и встроенные шаблоны — в левой панели -->
       <span class="cpl" title="Что делать со строками, которые уже лежат под чертой, когда тянешь её вниз. Подсветка — только когда там что-то есть">под чертой:</span>
-      <button id="bCutHid" title="Заменить: включено — строки, что были под чертой, заменяются новыми (удаляются); выключено — сдвигаются вниз и остаются под чертой, ниже новых. Вместе с «⤒ из-под черты» не бывает: включил одну — другая гаснет">Заменить</button>
       <button id="bCutTake" class="on" title="⤒ Из-под черты (по умолчанию вкл): тянешь черту вниз — сперва возвращаются строки, что лежат под чертой, и только когда они кончились — достраиваются новые. Выкл — сразу достраиваются новые. Вместе с «Заменить» не бывает: включил одну — другая гаснет">⤒ из-под черты</button>
       <div id="tplBar">
       <!-- v0.300, «шаблоны — только все строки, а не по одной»: «＋ Строка» снята -->
@@ -1848,8 +1847,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0360"></script>
-<script src="zz-ui.js?v=0360"></script>
+<script src="zz-core.js?v=0361"></script>
+<script src="zz-ui.js?v=0361"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
