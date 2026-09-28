@@ -705,9 +705,22 @@ function coneBitFlip(b){
   Z.rows[b.i] = s.slice(0, b.j) + v + s.slice(b.j + 1); syncLane();
   renderAll(); save(); say(`◯ Строка ${b.i + 1}, бит ${b.j + 1}: ${s[b.j]} → ${v} — и в поле строк. ↩ вернёт.`);
 }
+/* v0.276, по снимку списка «1 поле … 4 поля» — «здесь ＋ создать (поле), и показывать только, если создано 1, 2, 3 поля»: в списке —
+   только поля, что есть (1 … сколько сейчас), и «＋ создать поле», пока их меньше 4 */
+function laneCountUi(){
+  const s = document.getElementById("laneCount"); if (!s) return;
+  const n = Math.max(1, Math.min(4, Z.laneCount | 0 || 1));
+  if (s.dataset.n !== String(n)) {
+    let h = ""; for (let k = 1; k <= n; k++) h += `<option value="${k}">${k} ${k === 1 ? "поле" : "поля"}</option>`;
+    if (n < 4) h += '<option value="new">＋ создать поле</option>';
+    s.innerHTML = h; s.dataset.n = String(n);
+  }
+  s.value = String(n);
+}
 function renderRows(){
   if (rowEditing >= 0) return;
   syncLane();
+  laneCountUi();   // v0.276
   if (typeof renderCone === "function") { clearTimeout(renderRows._cone); renderRows._cone = setTimeout(renderCone, 0); }   // v0.076: выделение в поле — и в конусе
   if (ovControls()) { renderRowsOver(); return; }   // v0.018
   const L = $("rowList"), N = Z.laneCount || 1;
@@ -2956,7 +2969,7 @@ function setupCone(){
     if (Z.coneOutOn) {
       Z.coneOutBak = { t, rows: (Z.lanes[t] || []).slice() };   // что было в поле — в запас
       if (!Z.coneClock) { Z.coneClock = true; $("coneClock").checked = true; }
-      if ((Z.laneCount | 0) < t + 1) { $("laneCount").value = String(t + 1); $("laneCount").onchange({ target: $("laneCount") }); }
+      if ((Z.laneCount | 0) < t + 1) $("laneCount").onchange({ target: { value: String(t + 1) } });   // v0.276: в списке — только есть поля, число передаём прямо
       coneOutSync(); renderRows();
       say(`✎ Пишу в поле ${t + 1}: строки из нулей той же длины (+ строка для заполнения); куда упадёт луч — там «1». Прежнее поле ${t + 1} — в запасе, правый щелчок по ✎ вернёт.`);
     } else say(`✎ Больше не пишу в поле ${t + 1} — что там есть, остаётся.`);
@@ -6179,8 +6192,16 @@ function init(){
     list.addEventListener("pointerup", up);
   });
   // v0.015: число полей строк
-  $("laneCount").value = String(Z.laneCount);
+  laneCountUi();
   $("laneCount").onchange = (e) => {
+    if (e.target.value === "new") {   // v0.276: ＋ создать поле — ещё одно, и оно рабочее
+      const k = Math.min(3, Z.laneCount | 0); if ((Z.laneCount | 0) >= 4) { laneCountUi(); return; }
+      syncLane(); Z.laneCount = k + 1; laneCountUi();
+      const old = (Z.lanes[k] || []).length > 1 || (Z.lanes[k] && Z.lanes[k][0] !== "1");
+      switchLane(k, 0, true);
+      say(`＋ Поле ${k + 1} — ${old ? "вернулось со своими строками (" + Z.lanes[k].length + " стр.)" : "новое"}, оно рабочее. ✕ в заголовке поля — удалить.`);
+      return;
+    }
     Z.laneCount = Math.max(1, Math.min(4, +e.target.value || 1));
     if (Z.lane >= Z.laneCount) switchLane(0, undefined, true); else { renderAll(); save(); }
     say(Z.laneCount > 1 ? `Полей строк — ${Z.laneCount}, у каждого своя ось. Рабочее — поле ${Z.lane + 1}; сменить — щелчок по полю или ← / →.` : "Одно поле строк. Остальные поля не стёрты — вернутся, если полей снова станет больше.");
