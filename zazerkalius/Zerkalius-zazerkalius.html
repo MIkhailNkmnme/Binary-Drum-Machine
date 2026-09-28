@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.284. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.285. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.284</title>
+<title>Zazerkalius — v0.285</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -474,7 +474,8 @@ body.zen #coneRecBar{z-index:6}   /* v0.256: «кнопки записи вид�
 #coneBtns > button:focus-visible{outline:1px solid var(--gold);outline-offset:1px}
 body.bgmode #coneBtns{display:none}
 #cone3Pad{position:absolute;right:8px;bottom:8px;z-index:2;display:grid;grid-template-columns:repeat(3,28px);grid-auto-rows:28px;gap:3px}   /* v0.157: кнопки 3D на холсте */
-#cone3Pad.flat > button:not(.c3home){visibility:hidden}   /* v0.164: в плоском виде на панели — только зелёная «всё на места» */
+#cone3Pad.flat > button:not(.c3home){display:none}   /* v0.285, «ужми пульт в плоском виде»: скрытые кнопки 3D места не держат — пульт: ↺ ⠿ и строка ▶ крутить / ↻ (было visibility:hidden — пустые ряды) */
+#cone3Pad.flat > .c3grip{grid-column:3}   /* v0.164: в плоском виде на панели — только зелёная «всё на места» */
 #cone3Pad .c3top{position:absolute;left:-1px;right:-1px;bottom:calc(100% + 4px);display:flex;gap:4px}   /* v0.270: 🧊 3D и ⧗ зеркало над пультом; v0.273 — ровно по ширине пульта */
 #cone3Pad .c3top button{flex:1 1 0;min-width:0;width:auto;height:26px;padding:0 2px;font-size:11px;white-space:nowrap;overflow:hidden;background:var(--panel)}
 #cone3Pad .c3top button.on{color:var(--gold);border-color:var(--gold)}
@@ -841,7 +842,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.284</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.285</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1644,8 +1645,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0284"></script>
-<script src="zz-ui.js?v=0284"></script>
+<script src="zz-core.js?v=0285"></script>
+<script src="zz-ui.js?v=0285"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>
