@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.306. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.307. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.306</title>
+<title>Zazerkalius — v0.307</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -111,7 +111,7 @@ body.pane-icons #rowsPane{overflow-y:auto;overflow-x:hidden}
 body.pane-icons #bPaneIcons{position:static;margin:6px 4px;font-size:13px}
 body.pane-icons #rowsPane .pane-head,body.pane-icons #maskBar,body.pane-icons #maskBar2 select,
 body.pane-icons #rowsPane #tplList .tpl-sep,body.pane-icons #rowsPane #tplList .tx,body.pane-icons #rowsPane #tplList input,body.pane-icons #tplMine .tref,body.pane-icons #tplMine .tx,body.pane-icons #tplMine .tsv{display:none}
-body.pane-icons #rowBtns,body.pane-icons #fileBtns,body.pane-icons #saveBtns,body.pane-icons #maskBar2,body.pane-icons #rowsPane #tplBar,body.pane-icons #rowsPane #tplList{display:flex;flex-direction:column;gap:4px;padding:6px 4px;border-top:1px solid var(--line)}
+body.pane-icons #rowBtns,body.pane-icons #triBtns,body.pane-icons #fileBtns,body.pane-icons #saveBtns,body.pane-icons #maskBar2,body.pane-icons #rowsPane #tplBar,body.pane-icons #rowsPane #tplList{display:flex;flex-direction:column;gap:4px;padding:6px 4px;border-top:1px solid var(--line)}
 body.pane-icons #rowsPane #tplList{flex:0 0 auto;overflow:visible;min-height:0}
 body.pane-icons #rowsPane #tplList .tpl{display:block}
 body.pane-icons #rowsPane button{width:100%;padding:4px 0;text-align:center;font-size:15px;white-space:nowrap;overflow:hidden}
@@ -443,6 +443,7 @@ body.zen #bCutClr,body.bgmode #bCutClr{display:none !important}
 #tplBar button{flex:1;padding:2px 4px}
 #tplList{flex:1;overflow:auto;padding:0 10px 10px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-content:start;gap:3px 4px;min-height:60px}   /* v0.153: шаблоны — по два в ряд; свои (с ⚑ и ✕) — во всю ширину */
 #tplList .tpl-sep,#tplList .tpl.mine{grid-column:1 / -1}
+#triBtns{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:0 10px 8px}   /* v0.307: ✂ нарезка — группой в левой панели */
 #tplList .tpl{min-width:0}
 #tplList .tb{min-width:0;white-space:nowrap}
 /* v0.156, «в один размер все, минимальный который»: кнопки и списки левой панели — одной высоты по самой низкой (24 px, как «＋ Строка») и с одними отступами */
@@ -855,7 +856,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.306</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.307</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -930,6 +931,15 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
       </select>
       <button id="bMaskTri" title="Построить от текущей (выделенной) строки и вставить под ней (↩ вернёт). Строк: 🔺 Паскаль и маской — по длине строки, но не меньше 16; ▽ спуск — до одного бита; ◯ кольцом — пока строка не повторится">△ Строить</button>
     </div>
+    <!-- v0.307: из-под черты поля строк — ✂ нарезка треугольника (v0.234) и встроенные шаблоны-заготовки (v0.010) -->
+    <div class="pane-head" title="✂ Нарезать треугольник строк на маленькие ▲ высотой h (как в Треугольнике) и поставить их друг под другом">✂ Нарезать треугольник</div>
+    <div id="triBtns">
+      <button id="bTriCut" title="✂ Нарезать треугольник строк на фигуры высотой h и поставить их друг под другом (↩ вернёт)">✂</button><button id="bTriUnit" title="Фигуры: ▲, ▼, ▼ перевёрнутые, ▲▼, ◇ ромбы, ⧗ часы — щелчок дальше, правый назад">▲</button><input id="triH" type="number" min="2" max="256" value="16" title="Высота ▲ — строк в каждом" style="width:46px">
+      <button id="bTriOrd" title="Порядок: по рядам, вдоль левой стороны, вдоль правой — каждый в обе стороны; щелчок дальше, правый назад">по рядам →</button>
+      <button id="bTriEmpty" class="on" title="Без пустых: ▲ из одних нулей не ставить">без пустых</button>
+    </div>
+    <div class="pane-head" title="Встроенные заготовки: щелчок — вставить под текущей строкой">Заготовки</div>
+    <div id="tplList"></div>
     <!-- v0.010: шаблоны — по щелчку вставляются под текущей строкой; свои — «＋ Строку» / «＋ Столбик» -->
     <!-- v0.059: «в левое меню» — шрифт и размер цифр перенесены из шапки сюда -->
     <!-- v0.217: блок «Шрифт» переехал в полосу над строками -->
@@ -1007,10 +1017,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
       <button id="bCutR30" title="Правило 30 — строка на 2 бита длиннее, хаос">30</button>
       <button id="bCutMask" title="Маска: следующая строка — маска подряд, на бит длиннее">маска</button><input id="cutMask" value="01" title="Маска из 0 и 1 (по умолчанию 01)" style="width:52px">
       <button id="bBar" title="▮ Стенка: одна клетка заморожена — не обновляется и держит начальное значение, сигнал на ней отражается или гаснет (как в статье «Barriers in Cellular Automata»). Действует на достройку Серп 90 / 30, заготовки Аниматрицы и карту ▦ 256">▮ стенка</button><input id="barOff" type="number" value="-8" min="-512" max="512" title="Столбец стенки от вершины треугольника: 0 — по центру, минус — влево, плюс — вправо" style="width:50px">
-      <span class="cpl" title="✂ Нарезать треугольник строк на маленькие ▲ высотой h (как в Треугольнике) и поставить их друг под другом">нарезать:</span>
-      <button id="bTriCut" title="✂ Нарезать треугольник строк на фигуры высотой h и поставить их друг под другом (↩ вернёт)">✂</button><button id="bTriUnit" title="Фигуры: ▲, ▼, ▼ перевёрнутые, ▲▼, ◇ ромбы, ⧗ часы — щелчок дальше, правый назад">▲</button><input id="triH" type="number" min="2" max="256" value="16" title="Высота ▲ — строк в каждом" style="width:46px">
-      <button id="bTriOrd" title="Порядок: по рядам, вдоль левой стороны, вдоль правой — каждый в обе стороны; щелчок дальше, правый назад">по рядам →</button>
-      <button id="bTriEmpty" class="on" title="Без пустых: ▲ из одних нулей не ставить">без пустых</button>
+      <!-- v0.307, «отсюда убери то, что не относится к построению от линии»: ✂ нарезка и встроенные шаблоны — в левой панели -->
       <span class="cpl" title="Что делать со строками, которые уже лежат под чертой, когда тянешь её вниз. Подсветка — только когда там что-то есть">под чертой:</span>
       <button id="bCutHid" title="Заменить: включено — строки, что были под чертой, заменяются новыми (удаляются); выключено — сдвигаются вниз и остаются под чертой, ниже новых. Вместе с «⤒ из-под черты» не бывает: включил одну — другая гаснет">Заменить</button>
       <button id="bCutTake" class="on" title="⤒ Из-под черты (по умолчанию вкл): тянешь черту вниз — сперва возвращаются строки, что лежат под чертой, и только когда они кончились — достраиваются новые. Выкл — сразу достраиваются новые. Вместе с «Заменить» не бывает: включил одну — другая гаснет">⤒ из-под черты</button>
@@ -1018,7 +1025,6 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
       <!-- v0.300, «шаблоны — только все строки, а не по одной»: «＋ Строка» снята -->
       <!-- v0.301: «＋ Столбик» снят — новый шаблон теперь «＋ новый» в группе «Сохранение» -->
       </div>
-      <div id="tplList"></div>
     </div>
     <!-- v0.025: сюда пристыковываются окна, перетащенные за шапку под поле строк -->
     <div id="fieldDock"></div>
@@ -1670,8 +1676,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0306"></script>
-<script src="zz-ui.js?v=0306"></script>
+<script src="zz-core.js?v=0307"></script>
+<script src="zz-ui.js?v=0307"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>
