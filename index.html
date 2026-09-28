@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.051. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.052. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -44,12 +44,14 @@
      v0.051: «пусть все кнопки меню будут затемнены, пока не включится музыка, и любой щелчок по странице включает все ноты, если ни одна
              не включена»; «значки нот пониже и побольше». Браузер не даёт звуку начаться без щелчка, поэтому первый щелчок в хабе
              (и по кнопке меню тоже) не уводит со страницы, а включает обе головки; кнопки светлеют, когда фон ответил, что звучит
-             (или через 1,5 с, если фон молчит, чтобы меню не осталось запертым). Ноты — 40 px, под надписью Zerkalius. -->
+             (или через 1,5 с, если фон молчит, чтобы меню не осталось запертым). Ноты — 40 px, под надписью Zerkalius.
+     v0.052: «да, если в кеше нет ничего, то так» — притушенное меню только у того, у кого музыка ещё ни разу не звучала: как только
+             фон ответил «звучит», в localStorage ложится zerk_hub_snd = 1, и дальше хаб открывается сразу светлым, щелчки не перехватывает. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Control Hub — v0.051</title>
+    <title>Zerkalius Control Hub — v0.052</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -294,7 +296,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.051</div>
+        <div class="ver">v0.052</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -416,9 +418,11 @@
                включена»: body.hush — меню притушено. Первый щелчок где угодно (кроме самих нот — они включают свою головку) никуда не ведёт,
                а шлёт фону { zerkSnd: true } — обе головки. Фон мог ещё не дочитаться — тогда повтор раз в 0,5 с (повтор безвреден: звучит —
                ничего не меняет), пока фон не ответит. Меню светлеет, когда фон ответил «звучит», или через 1,5 с — чтобы не остаться запертым */
-            document.body.classList.add('hush');
-            let woke = false, tries = 0, heard = false;
-            const wake = () => { heard = true; document.body.classList.remove('hush'); };
+            // v0.052: «да, если в кеше нет ничего, то так» — музыка уже звучала у этого посетителя (zerk_hub_snd в localStorage) — меню сразу светлое
+            let known = false; try { known = localStorage.getItem('zerk_hub_snd') === '1'; } catch (e) {}
+            if (!known) document.body.classList.add('hush');
+            let woke = known, tries = 0, heard = false;
+            const wake = () => { heard = true; document.body.classList.remove('hush'); try { localStorage.setItem('zerk_hub_snd', '1'); } catch (e) {} };
             const sendAll = () => { if (heard || tries++ > 12) return; try { bg.contentWindow.postMessage({ zerkSnd: true }, '*'); } catch (e) {} setTimeout(sendAll, 500); };
             document.addEventListener('click', e => {
                 if (woke) return; woke = true;
