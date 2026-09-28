@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.346. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.347. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.346</title>
+<title>Zazerkalius — v0.347</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -373,6 +373,7 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 body.nocur .rw.cur:not(.sel):not(:hover) > .no{background:var(--bg) !important}
 #rowList ::selection{background:rgba(185,140,240,.5)}
 ::highlight(sndbit){background-color:#22d3ee;color:#111}   /* v0.260: бит, который сейчас звучит (♫ звук, ◉ бит) */
+::highlight(zwall){background-color:rgba(194,94,52,.75);color:#fff}   /* v0.347: 🧱 стенка — замороженные биты */
 ::highlight(conebit){background-color:var(--gold);color:#111}   /* v0.173: бит под мышью на конусе — в своей строке */
 /* v0.157, по снимку выделенного треугольника — «выделения символов поправь»: полоса выделения — во всю высоту шрифта (~1.32 кегля),
    а шаг строк 1.25, в ужатом поле до 0.7 — полупрозрачные полосы соседних строк налезали друг на друга ступенями. Ячейка бит режет
@@ -968,7 +969,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.346</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.347</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1580,7 +1581,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
           <!-- v0.198, «аниматрицу надо ещё сюда»: волна из Треугольника — переписывает строки поля, конус меняется на ходу -->
           <div class="cgrp gc cg-anim" title="🌊 Аниматрица, как в Треугольнике: волна идёт сверху вниз, каждая строка переписывается операцией с уже переписанной строкой над ней; дошла до низа — проход. Строки разной длины складываются по углу на конусе: бит нижнего кольца — с тем битом верхнего, что лежит на том же луче из центра (с учётом поворота колец). Картина повторилась — цикл"><span class="glab">Аниматрица</span>
             <button id="bAnimPlay" title="▶ Волна: гнать Аниматрицу без остановки со скоростью ползунка рядом (строки поля меняются, ↩ вернёт всё разом). Ещё раз — стоп">▶ волна</button>
-            <button id="bAnimHome" title="⤺ Возврат: все биты поля — какие были до первой волны (проход 0), сколько бы проходов ни прошло; счёт проходов и цикла — с нуля (↩ вернёт)">⤺ возврат</button>
+            <button id="bAnimHome" title="⤺ Возврат: все биты поля — какие были до первой волны (проход 0), сколько бы проходов ни прошло; счёт проходов и цикла — с нуля (↩ вернёт)">⤺ возврат</button><button id="bWall" title="🧱 Стенка: выдели биты мышью в строках и нажми — они помечены и заморожены, волна их не меняет. Выделил биты, которые уже в стенке, — снимаются. Правый щелчок — снять всю стенку">🧱 стенка</button>
             <button id="bAnimBack" title="⏮ К началу нынешнего прохода; стоит в начале — на проход назад (↩ вернёт)">⏮</button>
             <button id="bAnimStep" title="▷| Один шаг волны: переписать одну строку (↩ вернёт)">▷|</button>
             <button id="bAnimPass" title="⏭ Весь проход разом: волна от верха до низа (↩ вернёт)">⏭</button>
@@ -1803,8 +1804,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0346"></script>
-<script src="zz-ui.js?v=0346"></script>
+<script src="zz-core.js?v=0347"></script>
+<script src="zz-ui.js?v=0347"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

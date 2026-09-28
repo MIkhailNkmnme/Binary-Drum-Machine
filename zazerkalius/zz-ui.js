@@ -385,7 +385,7 @@ function renderRowsOver(){
   $("fieldInfo").title = $("fieldInfo").textContent + ROW_METR_TIP;   // v0.077: целиком — в подсказке
   fieldInfoFit();   // v0.209
   $("rowList").classList.toggle("dimsel", rowSel.size > 0); $("rowList").classList.toggle("dimcur", !rowSel.size && !document.body.classList.contains("nocur"));   // v0.213 / v0.221: выделение (или выбранная строка) — остальные строки гаснут
-  rowsFit(); rowsLockAllPlace(); rowBitMark();   // v0.153, v0.167, v0.173
+  rowsFit(); rowsLockAllPlace(); rowBitMark(); wallMark();   // v0.153, v0.167, v0.173; v0.347 — стенка
   const c = L.querySelector(".rw.cur > .no");
   if (c) c.scrollIntoView({ block: "nearest" });
 }
@@ -858,7 +858,7 @@ function renderRows(){
   $("fieldInfo").title = $("fieldInfo").textContent + ROW_METR_TIP;   // v0.077: целиком — в подсказке
   fieldInfoFit();   // v0.209
   $("rowList").classList.toggle("dimsel", rowSel.size > 0); $("rowList").classList.toggle("dimcur", !rowSel.size && !document.body.classList.contains("nocur"));   // v0.213 / v0.221: выделение (или выбранная строка) — остальные строки гаснут
-  rowsFit(); rowsLockAllPlace(); rowBitMark();   // v0.153, v0.167, v0.173
+  rowsFit(); rowsLockAllPlace(); rowBitMark(); wallMark();   // v0.153, v0.167, v0.173; v0.347 — стенка
   // v0.242, «черту тяну вниз — прыгает всё вверх»: пока черту тащат, поле не прокручивается к текущей строке
   if (document.body.classList.contains("cutdrag")) return;
   const c = L.querySelector(".rw.cur > .bits.la") || L.querySelector(".rw.cur > .no");
@@ -892,6 +892,40 @@ function textSelInRows(){
   return out.length ? out : null;
 }
 function clearTextSel(){ const s = window.getSelection && window.getSelection(); if (s) s.removeAllRanges(); }
+/* v0.347, по снимку выделенных бит — «выделенные биты кнопку Стенка помечает и морозит»: 🧱 стенка — выделенные мышью биты рабочего поля
+   помечаются (кирпичным фоном в строках) и замораживаются: волна Аниматрицы их не переписывает, они держат своё значение, а соседи
+   считаются от них как обычно. Z.walls { строка: [[a, b), …] } — отрезки бит, слитые и по порядку; помнится и едет в «💾 Всё». */
+function wallRows(){ if (!Z.walls || typeof Z.walls !== "object" || Array.isArray(Z.walls)) Z.walls = {}; return Z.walls; }
+function wallNorm(list){ const a = list.filter(p => p[1] > p[0]).sort((x, y) => x[0] - y[0]), o = [];
+  for (const [x, y] of a) { const t = o[o.length - 1]; if (t && x <= t[1]) t[1] = Math.max(t[1], y); else o.push([x, y]); } return o; }
+function wallCovers(r, a, b){ const w = Z.walls && Z.walls[r]; return !!w && w.some(([x, y]) => x <= a && y >= b); }
+function wallMask(r, n){   // замороженные биты строки r длины n — массив 0/1 или null
+  const w = Z.walls && Z.walls[r]; if (!w || !w.length) return null;
+  const m = new Uint8Array(n); for (const [x, y] of w) for (let j = Math.max(0, x); j < Math.min(n, y); j++) m[j] = 1; return m;
+}
+function wallCount(){ let c = 0; for (const k in (Z.walls || {})) for (const [x, y] of Z.walls[k]) c += y - x; return c; }
+function wallToggle(parts){   // выделение целиком в стенке — снять его из стенки; иначе — добавить
+  const W = wallRows(), off = parts.every(p => wallCovers(p.i, p.a, p.b));
+  for (const p of parts) {
+    const cur = W[p.i] || [];
+    if (!off) W[p.i] = wallNorm(cur.concat([[p.a, p.b]]));
+    else { const o = []; for (const [x, y] of cur) { if (y <= p.a || x >= p.b) o.push([x, y]); else { if (x < p.a) o.push([x, p.a]); if (y > p.b) o.push([p.b, y]); } } W[p.i] = o; }
+    if (!W[p.i].length) delete W[p.i];
+  }
+  return !off;
+}
+function wallMark(){   // подсветка стенки в строках (Highlight API — строки не перерисовываются)
+  if (!window.CSS || !CSS.highlights || typeof Highlight === "undefined") return;
+  const L = $("rowList"), rs = [], W = Z.walls || {};
+  for (const k in W) {
+    const bx = L && L.querySelector('.rw[data-r="' + k + '"] .bx'); if (!bx) continue;
+    const at = (j) => { const w = document.createTreeWalker(bx, NodeFilter.SHOW_TEXT); let c = 0, nd, last = null;
+      while ((nd = w.nextNode())) { const n = nd.textContent.length; last = nd; if (c + n > j) return [nd, j - c]; c += n; }
+      return last ? [last, last.textContent.length] : null; };
+    for (const [x, y] of W[k]) { const p = at(x), q = at(y); if (!p || !q) continue; const rg = document.createRange(); try { rg.setStart(p[0], p[1]); rg.setEnd(q[0], q[1]); if (!rg.collapsed) rs.push(rg); } catch (e) { /* строка короче стенки */ } }
+  }
+  if (rs.length) CSS.highlights.set("zwall", new Highlight(...rs)); else CSS.highlights.delete("zwall");
+}
 /* Del: выделенные символы → из строк; иначе выделенные строки → целиком; иначе — текущая строка. */
 let delAtEnd = false;   // v0.021: последний Del снёс нижнюю строку — вверх не идём
 function deleteSelection(){
@@ -3361,7 +3395,8 @@ function setupCone(){
     if (aRow >= N - 1) aRow = 0;
     const A = R[aRow], B = R[aRow + 1], nA = A.length, nB = B.length, rA = coneRotOf(aRow), rB = coneRotOf(aRow + 1), f = ANIM_OPS[Z.animOp] || ANIM_OPS.xor;
     let o = "";
-    for (let j = 0; j < nB; j++) { let k = Math.floor((j + 0.5 - rB) / nB * nA + rA) % nA; if (k < 0) k += nA; o += f(A.charCodeAt(k) & 1, B.charCodeAt(j) & 1) ? "1" : "0"; }
+    const fz = wallMask(aRow + 1, nB);   // v0.347: 🧱 стенка — замороженные биты держат своё значение
+    for (let j = 0; j < nB; j++) { if (fz && fz[j]) { o += B[j]; continue; } let k = Math.floor((j + 0.5 - rB) / nB * nA + rA) % nA; if (k < 0) k += nA; o += f(A.charCodeAt(k) & 1, B.charCodeAt(j) & 1) ? "1" : "0"; }
     R[aRow + 1] = o;
     if (++aRow < N - 1) return;
     aRow = 0; aPass++;
@@ -3426,6 +3461,20 @@ function setupCone(){
     const k = animKey(); aRow = 0; aPass = 0; aPer = 0; aPer0 = 0; animSeen = new Map([[animHash(k), 0]]); animHist = [{ p: 0, rows: R.slice() }];
     animDone(); say("⤺ Все биты — какие были до волны (проход 0). ↩ вернёт.");
   };
+  {   // v0.347: 🧱 стенка — выделение берётся в момент нажатия (щелчок по кнопке выделение не сбрасывает)
+    const b = $("bWall"), ui = () => { const n = wallCount(); b.classList.toggle("on", n > 0); b.textContent = n ? "🧱 " + n : "🧱 стенка"; };
+    let got = null;
+    b.addEventListener("mousedown", (e) => { got = textSelInRows(); e.preventDefault(); });
+    b.onclick = () => {
+      const parts = got || textSelInRows(); got = null;
+      if (!parts) { say(wallCount() ? `🧱 В стенке ${wallCount()} бит. Выдели биты мышью — добавить (или снять, если они уже в стенке); правый щелчок — снять всю.` : "🧱 Выдели биты мышью в строках — и нажми: они станут стенкой (волна их не меняет)."); return; }
+      const on = wallToggle(parts), n = parts.reduce((a, p) => a + p.b - p.a, 0);
+      clearTextSel(); save(); wallMark(); ui();
+      say(on ? `🧱 Стенка: ${n} бит заморожено — волна их не меняет. Всего в стенке ${wallCount()}.` : `🧱 Снято со стенки ${n} бит. Осталось ${wallCount()}.`);
+    };
+    b.oncontextmenu = (e) => { e.preventDefault(); if (!wallCount()) return; Z.walls = {}; save(); wallMark(); ui(); say("🧱 Стенка снята целиком."); };
+    ui();
+  }
   $("animOp").value = Z.animOp || "xor";
   $("animOp").onchange = (e) => { Z.animOp = e.target.value; save(); };
   $("animByPass").checked = !!Z.animByPass;   // v0.199
