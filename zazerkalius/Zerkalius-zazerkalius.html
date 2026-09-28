@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.280. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.281. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.280</title>
+<title>Zazerkalius — v0.281</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -815,8 +815,21 @@ body.zen #w-cone .wbody > .tools > :not(.cgrp.zenon){display:none !important}
 body.zen #w-cone .wbody > .tools > .cgrp.zenon{pointer-events:auto;background:color-mix(in srgb, var(--panel) 82%, transparent)}
 body.bgmode #w-cone .wbody > .tools{display:none !important}
 
+/* v0.281, «режим редактирования панелей — переставлять кнопки и давать им названия или оставлять только значки» */
+button.blab{font-size:0 !important}
+button.blab::before{content:attr(data-lab);font-size:12px;line-height:1;white-space:nowrap}
+body.cedit .pnl button:not(#bEdit){outline:1px dashed color-mix(in srgb, var(--acc) 70%, transparent);outline-offset:-1px;cursor:grab}
+body.cedit .pnl label,body.cedit .pnl select,body.cedit .pnl input{cursor:grab}
+body.cedit .pnl button.bsel{outline:2px solid var(--gold)}
+#btnEd{position:fixed;z-index:70;display:flex;flex-wrap:wrap;align-items:center;gap:4px;max-width:340px;padding:6px;border:1px solid var(--acc);border-radius:6px;background:var(--panel);box-shadow:0 4px 16px rgba(0,0,0,.45);font-size:12px}
+#btnEd input{width:170px;height:24px;box-sizing:border-box;font-size:12px;padding:0 5px}
+#btnEd button{height:24px;padding:0 7px;font-size:12px}
+#btnEd .bedraw{flex:1 1 100%;color:var(--dim);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* v0.258: кнопку тащат в другую группу конуса — группа под ней подсвечена */
-.cgrp.cgdrop{box-shadow:inset 0 0 0 2px var(--acc) !important}
+body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !important}   /* v0.281: группа «Дзен» — только в ✎ Правке и в дзене (пустая — только в Правке) */
+#zenGrp{border-style:dashed}
+#zenBtns:empty::after{content:"сюда — копии";font-size:11px;color:var(--dim);padding:0 6px}
+.cgrp.cgdrop,.pnl.cgdrop{box-shadow:inset 0 0 0 2px var(--acc) !important}   /* v0.281: и полосы кнопок окон, и шапка */
 </style>
 <script>
 /* v0.185: ?preset=<имя> — подключить пресет presety/<имя>.js до скрипта страницы (document.write — синхронно, и с диска тоже) */
@@ -825,7 +838,7 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.280</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.281</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -846,6 +859,7 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
   <button id="bHome" title="⭐ Умолчание: запомнить нынешние биты ВСЕХ полей, положения колец и настройки. Потом «↺ Начальные» возвращает эти биты, «⟲ всё на места» — эти положения колец и настройки конуса. Файл, открытый «📂 Всё», сам становится умолчанием. Горит — своё умолчание есть. Правый щелчок — забыть (снова встроенное 1, 11, 101…)">⭐ Умолчание</button>
   <!-- v0.182, «кнопка пресетов цветовой гаммы» -->
   <button id="bPal" title="🎨 Цветовая гамма: цвета единиц, нулей и акцент — в строках, конусе и окнах. Щелчок — следующая, правый щелчок — предыдущая. «Исходная» — как было">🎨 Исходная</button>
+  <button id="bEdit" title="✎ Правка панелей: щелчок по кнопке панели — не нажать, а дать ей своё название или оставить только значок; тяни кнопку — переставить (в своей группе или в другую). Ещё раз или Esc — выйти">✎ Правка</button>
   <button id="bTheme" title="Светлый или тёмный фон всей страницы. Выбор запоминается; пока не выбран — как в системе">☀ Светлый</button>
   <button id="bPack" title="Окна сами прижимаются к верху: свернул, растянул или перетащил окно — нижние поднимаются и занимают место. Щелчок — выключить / включить">⤒ К верху</button>
   <button id="bFieldSide" title="⇆ Поле строк справа: окна (конус и остальные) — слева, поле строк — справа; ещё раз — как было. Ширина поля тянется разделителем, как прежде">⇆ поле справа</button>
@@ -1362,12 +1376,15 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
       <div class="wbody">
         <div class="tools">   <!-- v0.135: кнопки — по группам (вид · кольца · кручение · лазер · запись); счёт кругов — отдельной строкой -->
           <!-- v0.180, по снимку группы «Вид» — «пересобрать, дать значки, сократить текст»: подписи короткие, со значками; полные — в подсказках (◯ к наименьшему, 🎨 одинаковые — цветом, 👁 только выделенные, ◔ сектора к центру, ⬡ многоугольники, 🧊 3D, ⧗ зеркало вниз, ↕ высота, ✳ лучи) -->
+          <!-- v0.281, «в режиме настройки кнопок нужна группа Дзен — туда кнопки копируются, а не перемещаются»: копии кнопок для дзена -->
+          <div class="cgrp cg-zen" id="zenGrp" title="🧘 Дзен: копии кнопок, что видны в дзене. В ✎ Правке тяни сюда кнопку из любой панели — встанет копия (оригинал на месте); копию тянешь — переставить, вытащил наружу или правый щелчок в Правке — убрать"><span class="glab">Дзен</span><div class="cgb" id="zenBtns"></div></div>
           <div class="cgrp" title="Как нарисован конус"><span class="glab">Вид</span>
             <button id="bConeCanon" title="◯ К наименьшему: повернуть каждую строку к наименьшему виду — одинаковые кольца встанут одинаково и в поле строк (↩ вернёт)">◯ к мин.</button>
             <!-- v0.168, «рядом с кнопкой — Неподв.»: неподвижные биты — здесь, у «◯ к наименьшему» (прежде — над полем строк) -->
             <button id="bShowFix" title="Неподвижные биты прямо в строках, щелчок — по кругу: выкл → 🔴 ⇄ при развороте (бит равен своему зеркальному: бит k и бит «длина−1−k») → 🟢 ⇄🔁 при реверс-инверсии (бит НЕ равен зеркальному: разворот с инверсией возвращает его на место) → выкл. Числа у номеров — по тому же режиму">🔴 неподв.</button>
             <label class="dim" title="🎨 Одинаковые — цветом: кольца с одним ожерельем (совпадают поворотом) — одной цветной обводкой; в плоском виде"><input type="checkbox" id="coneSame" checked> 🎨 одинак.</label>
             <label class="dim" title="Скрыть все кольца, кроме выделенных (и текущего). Выделить несколько — Ctrl + щелчок по кольцу (или по номерам строк в поле: Ctrl — добавить, Shift — диапазон)"><input type="checkbox" id="coneOnlySel"> 👁 выдел.</label>
+            <label class="dim" title="🚫 Запрет выбора колец на холсте конуса: щелчок не делает кольцо текущим, Ctrl + щелчок не выделяет, наведение не обводит кольцо. Сдвиг вида, Shift + щелчок (бит) и Ctrl + тянуть (крутить кольцо) — как были. Строки в поле выбираются как обычно"><input type="checkbox" id="coneNoPick"> 🚫 выбор</label>
             <label class="dim" title="Сектора к центру: каждый бит выделенных колец (ничего не выделено — текущего) закрашивает свой сектор до центра своим цветом, полупрозрачно, к центру бледнея. Выделить несколько — Ctrl + щелчок по кольцу"><input type="checkbox" id="coneSect"> ◔ сектора</label>
             <label class="dim" title="◯ Чистые кольца: без контура (голубой внутри, оранжевый снаружи) и без прорезей между битами — у колец, краски и строки для заполнения; текущее кольцо — без обводки (видно по яркости)"><input type="checkbox" id="coneClean"> ◯ чистые</label>
             <label class="dim" title="⬡ Многоугольники: строка из n бит — правильный n-угольник вместо кольца (3 бита — треугольник, 4 — квадрат…), бит — сторона, границы бит — вершины. Конус становится ступенчатой пирамидой; в 3D — тоже. Строка из 1 бита — точка в центре, из 2 бит — две Г углом в центре, в разные стороны (вместе — крест); граница между битами — черта в щели между Г. Всё остальное — лучи, оси, хорды, кручение — работает так же"><input type="checkbox" id="conePoly"> ⬡ многоуг.</label>
@@ -1624,8 +1641,8 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0280"></script>
-<script src="zz-ui.js?v=0280"></script>
+<script src="zz-core.js?v=0281"></script>
+<script src="zz-ui.js?v=0281"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>

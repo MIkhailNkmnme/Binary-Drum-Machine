@@ -2731,6 +2731,7 @@ function setupCone(){
       const up = () => {
         cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", up); cv.removeEventListener("pointercancel", up); cv.style.cursor = "grab";
         if (moved) { coneAimSettle(); return; }
+        if (Z.coneNoPick) return;   // v0.281: 🚫 выбор колец
         if (rowSel.has(0)) rowSel.delete(0); else rowSel.add(0);   // v0.248: Ctrl + щелчок — выделить / снять, как у остальных колец
         renderRows(); renderCone(); say(`◯ Выделено колец: ${rowSel.size}. Кольцо строки 1 при луч-часах крутится с Ctrl — вместе с вырезом, защёлкивается лучом в щели кольца 2.`);
       };
@@ -2749,6 +2750,7 @@ function setupCone(){
       const upP = () => {
         cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", upP); cv.removeEventListener("pointercancel", upP); cv.style.cursor = "grab";
         if (!movedP && bit) { conePan = p0; coneBitFlip(bit); return; }   // v0.231: Shift + щелчок по сектору — сменить бит (v0.173 — Ctrl)
+        if (!movedP && h !== -1 && Z.coneNoPick) { conePan = p0; renderCone(); return; }   // v0.281, «нужна кнопка запрета выделения колец»: 🚫 выбор — щелчок по кольцу ничего не выбирает
         if (!movedP && h !== -1 && ctrl) {   // v0.231: с Ctrl; v0.076: щелчок по кольцу — выделить / снять (то же выделение, что в поле); v0.173 — с Shift (Ctrl — смена бита)
           conePan = p0;
           if (rowSel.has(h.i)) rowSel.delete(h.i); else rowSel.add(h.i);
@@ -2766,7 +2768,7 @@ function setupCone(){
   });
   cv.addEventListener("pointermove", (e) => {
     if (!coneDrag) {   // наведение: обвести кольцо и его строку в поле
-      const h = coneRing(e), i = h === -1 || h.fill !== undefined ? -1 : h.i;
+      const h = coneRing(e), i = h === -1 || h.fill !== undefined || Z.coneNoPick ? -1 : h.i;   // v0.281: 🚫 выбор — и без обводки при наведении
       const b = coneBitAt(e), bc = (b ? b.i + ":" + b.j : "") !== (coneBitHover ? coneBitHover.i + ":" + coneBitHover.j : "");   // v0.173
       if (bc) { coneBitHover = b; rowBitMark(); cv.title = b ? `Строка ${b.i + 1}, бит ${b.j + 1}: ${Z.rows[b.i][b.j]} · Shift + щелчок — сменить · Ctrl + щелчок — выделить кольцо · Ctrl + тянуть — крутить кольцо` : ""; }
       if (i !== coneHover) { coneHover = i; coneHoverRow(i); renderCone(); } else if (bc) renderCone();
@@ -2792,6 +2794,7 @@ function setupCone(){
     const D = coneDrag; coneDrag = null; cv.style.cursor = "grab";
     const n = D.base.length, k = ((D.applied % n) + n) % n;
     if (Math.abs(D.turn) < 0.02) {   // v0.248: кольцо берётся только с Ctrl — не повернул, значит Ctrl + щелчок: выделить / снять
+      if (Z.coneNoPick) { coneRot[D.i] = D.v0; renderCone(); return; }   // v0.281: 🚫 выбор
       coneRot[D.i] = D.v0; if (rowSel.has(D.i)) rowSel.delete(D.i); else rowSel.add(D.i); renderRows(); renderCone();
       say(`◯ Выделено колец: ${rowSel.size}` + (Z.coneOnlySel ? " — видны только они и текущее." : ". Галка «только выделенные» скроет остальные.")); return;
     }
@@ -3875,6 +3878,9 @@ function setupCone(){
   $("coneSect").checked = !!Z.coneSect;   // v0.079
   $("coneSect").onchange = (e) => { Z.coneSect = e.target.checked; save(); renderCone(); };
   $("coneOnlySel").checked = !!Z.coneOnlySel;   // v0.076
+  $("coneNoPick").checked = !!Z.coneNoPick;   // v0.281
+  $("coneNoPick").onchange = (e) => { Z.coneNoPick = e.target.checked; if (Z.coneNoPick && coneHover !== -1) { coneHover = -1; coneHoverRow(-1); } save(); renderCone();
+    say(Z.coneNoPick ? "🚫 Кольца на холсте не выбираются: щелчок, Ctrl + щелчок и наведение их не трогают. Сдвиг вида и Ctrl + тянуть — как были." : "◯ Кольца снова выбираются щелчком (Ctrl — выделить)."); };
   $("coneOnlySel").onchange = (e) => { Z.coneOnlySel = e.target.checked; save(); renderCone(); if (Z.coneOnlySel && !rowSel.size) say("◯ Выделенных колец нет — видно только текущее. Ctrl + щелчок по кольцу — выделить."); };
   $("coneLock").checked = Z.coneLock !== false;   // v0.055: по умолчанию включён
   // v0.259, «не должно быть разницы, по какому — общий сразу все открывает и снимает, стирая различие»: общий замок запирает / отпирает
@@ -5172,6 +5178,7 @@ function cgrpInit(){
     /* v0.256, «в режиме дзен показывать все кнопки и группы вкладок, которые отмечу (надо у них кнопку сделать)»: 🧘 в заголовке группы —
        отметить; отмеченные группы видны и в дзене (поверх конуса, где стоят; с левой панели — на время дзена у верхнего края). Z.cgrpZen. */
     if (!Z.cgrpZen || typeof Z.cgrpZen !== "object") Z.cgrpZen = {};
+    if (!Z.zenGrpInit) { Z.cgrpZen["дзен"] = true; Z.zenGrpInit = 1; }   // v0.281: группа «Дзен» — видна в дзене с первого раза (дальше — как отметишь 🧘)
     const zb = document.createElement("span"); zb.className = "gzen"; lab.appendChild(zb);
     const zUi = () => { const on = !!Z.cgrpZen[g.dataset.g]; g.classList.toggle("zenon", on); zb.textContent = "🧘"; zb.title = on ? "🧘 Видна в дзене — щелчок: не показывать" : "🧘 Показывать эту группу и в дзене"; };
     zUi();
@@ -5289,6 +5296,8 @@ function cgrpInit(){
   };
   // v0.258: у каждой кнопки группы — её «дом» (куда вернуть); перенесённые между группами — на свои места
   groups.forEach(g => { const b = g.querySelector(":scope > .cgb"); if (b) b.querySelectorAll("button, label, select, input").forEach(el => { if (!el.dataset.home) el.dataset.home = g.dataset.g; }); });
+  // v0.281: и исходный сосед справа (ссылкой, "" — последней): перенос в конец своей же группы теперь запоминается (прежде забывался)
+  groups.forEach(g => { const b = g.querySelector(":scope > .cgb"); if (b) [...b.children].forEach(el => { const n = el.nextElementSibling, c = n && (n.tagName === "LABEL" ? n.querySelector("input") : n); el.dataset.home0 = c ? btnKey(c) : ""; }); });
   if (Z.cgrpMove && typeof Z.cgrpMove === "object") for (const [k, m] of Object.entries(Z.cgrpMove)) {
     const el = cgrpMoveEl(cgrpRefEl(k)), g = groups.find(c => c.dataset.g === m.g), cgb = g && g.querySelector(":scope > .cgb");
     if (!el || !cgb || el.contains(g)) continue;
@@ -5302,6 +5311,144 @@ function cgrpInit(){
    кнопка уже на холсте — не удваивается, а переезжает. Копия жмёт оригинал ($ находит его и в вынесенном окне) и горит, как он (.on).
    Копию тянешь по холсту — переезжает; вытащил за холст, правый щелчок или Delete — убрана. Места — Z.coneBtns [{ id, x, y }], x и y —
    доли ширины и высоты холста (растянул окно — кнопки остаются на своих местах холста). Фон хаба и показ пресета их не рисуют. */
+/* v0.281, по снимку «Кручения» — «дай мне возможность включать режим редактирования панелей — там переставлять кнопки и давать им
+   названия или оставлять только значки». ✎ Правка в шапке: щелчок по кнопке группы (в конусе и на левой панели) не нажимает её, а
+   открывает редактор — своё название, «◉ только значок», «↺ как было», и то же для всей группы; тянуть — переставить (v0.258, работает
+   и без режима). Текст самой кнопки не трогается — его по-прежнему меняет код (▶ крутить → ⏸ стоп); подпись рисуется поверх
+   (data-lab + ::before), значок берётся из живого текста. Своё название без значка получает живой значок кнопки впереди. Хранится
+   Z.btnLab { ссылка: { t: название, m: "ico" } } — только по действию пользователя. */
+function btnRef(el){   // кнопка или флажок → { id } или { sel } (единственный по data-… внутри блока с именем); v0.249 — из coneBtnsInit
+  if (!el) return null;
+  if (el.id) return { id: el.id };
+  const d = Object.entries(el.dataset || {}).find(([k]) => !/^(home|home0|lab)$/.test(k)), box = el.parentElement && el.parentElement.closest("[id]"); if (!d || !box) return null;
+  const sel = `#${CSS.escape(box.id)} ${el.tagName.toLowerCase()}[data-${d[0].replace(/[A-Z]/g, c => "-" + c.toLowerCase())}="${CSS.escape(d[1])}"]`;
+  return document.querySelectorAll(sel).length === 1 ? { sel } : null;
+}
+function btnKey(el){ const r = btnRef(el); return r ? (r.sel || "#" + r.id) : ""; }
+function btnIcon(raw){ const f = (raw || "").trim().split(/\s+/)[0] || ""; return f && !/[\p{L}\p{N}]/u.test(f) ? f : ""; }
+function btnLabApply(el){
+  if (!el || el.tagName !== "BUTTON") return;
+  const c = Z.btnLab && Z.btnLab[btnKey(el)], raw = (el.textContent || "").replace(/\s+/g, " ").trim(), ic = btnIcon(raw);
+  let t = raw;
+  if (c && c.m === "ico" && ic) t = ic;
+  else if (c && c.t) t = (ic && !btnIcon(c.t) ? ic + " " : "") + c.t;
+  if (t !== raw) { el.dataset.lab = t; el.classList.add("blab"); } else if (el.classList.contains("blab")) { delete el.dataset.lab; el.classList.remove("blab"); }
+}
+/* v0.281, «сделай, чтобы кнопки можно было перемещать по любым группам-панелям»: панель — группа конуса (и на левой панели), полоса
+   кнопок любого окна (.tools) и шапка. Кнопку или галку тянешь в любую из них — переезжает (сама, не копия); место — Z.btnMove
+   { ссылка: { p: панель, before: ссылка | null } }, панель — имя группы, «окно/номер полосы» или «#top». Z.cgrpMove (v0.258) читается
+   по-прежнему; переставил кнопку заново — её запись переходит в Z.btnMove. */
+const PANEL_SEL = ".cgrp > .cgb, .win .tools, #top";
+function panelOf(node){
+  const p = node && node.closest ? node.closest(PANEL_SEL) : null;
+  if (!p || p.querySelector(":scope > .cgrp") || node.closest("#btnEd, #coneBtns, #coneMain, #cone3Pad")) return null;   // внешняя полоса конуса — не панель, её группы — панели
+  return p;
+}
+function panelKey(p){
+  if (!p) return "";
+  if (p.classList.contains("cgb")) return (p.parentElement && p.parentElement.dataset.g) || "";
+  if (p.id === "top") return "#top";
+  const w = p.closest(".win"); return w ? w.id + "/" + [...w.querySelectorAll(".tools")].indexOf(p) : "";
+}
+function panelByKey(k){
+  if (!k) return null;
+  if (k === "#top") return document.getElementById("top");
+  if (k.includes("/")) { const [id, i] = k.split("/"), w = document.getElementById(id); return w ? w.querySelectorAll(".tools")[+i] || null : null; }
+  return document.querySelector(`.cgrp[data-g="${CSS.escape(k)}"] > .cgb`);
+}
+function panelName(p){
+  if (!p) return "";
+  if (p.classList.contains("cgb")) return "группа «" + panelKey(p) + "»";
+  if (p.id === "top") return "шапка";
+  const w = p.closest(".win"); return "окно «" + ((w && w.dataset.title) || (w && w.id) || "") + "»";
+}
+function panelHomes(){   // у каждой кнопки панели — её дом и исходный сосед справа (куда вернуть); панели помечены .pnl
+  document.querySelectorAll(PANEL_SEL).forEach((p) => {
+    if (p.querySelector(":scope > .cgrp")) return;
+    const k = panelKey(p); if (!k) return;
+    p.classList.add("pnl");
+    p.querySelectorAll("button, label, select, input").forEach(el => { if (!el.dataset.home) el.dataset.home = k; });
+    [...p.children].forEach(el => { if (el.dataset.home0 === undefined) { const n = el.nextElementSibling, c = n && (n.tagName === "LABEL" ? n.querySelector("input") : n); el.dataset.home0 = c ? btnKey(c) : ""; } });
+  });
+  if (Z.btnMove && typeof Z.btnMove === "object") for (const [k, m] of Object.entries(Z.btnMove)) {
+    const el = cgrpMoveEl(cgrpRefEl(k)), p = panelByKey(m && m.p);
+    if (!el || !p || el.contains(p)) continue;
+    const bf = cgrpMoveEl(cgrpRefEl(m.before)); p.insertBefore(el, bf && bf.parentElement === p ? bf : null);
+  }
+}
+function panelEditInit(){
+  if (ZZ_BG) return;
+  if (!Z.btnLab || typeof Z.btnLab !== "object") Z.btnLab = {};
+  panelHomes();
+  const all = () => [...document.querySelectorAll(".pnl button")].filter(b => panelOf(b) && !b.closest("#zenBtns"));
+  all().forEach(btnLabApply);
+  // код меняет текст кнопок сам (▶ крутить → ⏸ стоп) — подпись следом; свои перемены (data-lab) — атрибуты, их наблюдатель не видит
+  const mo = new MutationObserver((ms) => { const s = new Set(); for (const m of ms) { const b = (m.target.nodeType === 1 ? m.target : m.target.parentElement); const x = b && b.closest && b.closest("button"); if (x) s.add(x); } s.forEach(btnLabApply); });
+  document.querySelectorAll(".cgrp, .pnl").forEach(g => mo.observe(g, { childList: true, characterData: true, subtree: true }));
+  let ed = null, cur = null;
+  const close = () => { if (ed) ed.remove(); ed = null; if (cur) cur.classList.remove("bsel"); cur = null; };
+  const set = (el, c) => {
+    const k = btnKey(el); if (!k) return;
+    if (c && (c.t || c.m)) Z.btnLab[k] = c; else delete Z.btnLab[k];
+    btnLabApply(el); save(); cgrpCols();
+  };
+  const open = (b) => {
+    close();
+    const k = btnKey(b);
+    if (!k) { say("✎ У этой кнопки нет своего имени — её название не запомнится. Перетащить можно."); return; }
+    cur = b; b.classList.add("bsel");
+    const c = Z.btnLab[k] || {}, raw = (b.textContent || "").replace(/\s+/g, " ").trim(), ic = btnIcon(raw), g = panelOf(b) || b.parentElement;
+    ed = document.createElement("div"); ed.id = "btnEd";
+    ed.innerHTML = '<span class="bedraw"></span><input type="text" spellcheck="false"><button data-e="ok" title="Готово (Enter)">✓</button>' +
+      '<button data-e="ico" title="Только значок (' + (ic || "у этой кнопки значка нет") + ')">◉ значок</button><button data-e="def" title="Как было: исходная подпись, своё название стёрто">↺ как было</button>' +
+      '<button data-e="gico" title="Всем кнопкам этой панели, у которых есть значок, — только значок">◉ вся панель</button><button data-e="gdef" title="Всей панели — исходные подписи">↺ вся панель</button>';
+    ed.querySelector(".bedraw").textContent = "Кнопка: " + raw + (b.title ? " — " + b.title.split(/ — |\. /)[0] : "");
+    const inp = ed.querySelector("input"); inp.value = c.t || ""; inp.placeholder = raw + " — своё название";
+    if (!ic) ed.querySelector('[data-e="ico"]').disabled = true;
+    document.body.appendChild(ed);
+    const r = b.getBoundingClientRect(), W = ed.offsetWidth, H = ed.offsetHeight;
+    ed.style.left = Math.round(Math.max(4, Math.min(r.left, innerWidth - W - 4))) + "px";
+    ed.style.top = Math.round(r.bottom + 4 + H > innerHeight ? Math.max(4, r.top - H - 4) : r.bottom + 4) + "px";
+    inp.oninput = () => set(b, inp.value.trim() ? { t: inp.value.trim() } : null);
+    inp.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); close(); } else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(); } };
+    ed.onclick = (e) => {
+      const x = e.target.closest("button[data-e]"); if (!x) return;
+      const w = x.dataset.e;
+      if (w === "ok") close();
+      else if (w === "ico") { set(b, { t: inp.value.trim() || undefined, m: "ico" }); }
+      else if (w === "def") { inp.value = ""; set(b, null); }
+      else if (w === "gico" || w === "gdef") {
+        let n = 0;
+        g.querySelectorAll("button").forEach(y => { const k2 = btnKey(y); if (!k2) return; const c2 = Z.btnLab[k2] || {};
+          if (w === "gico") { if (!btnIcon((y.textContent || "").trim())) return; Z.btnLab[k2] = Object.assign({}, c2, { m: "ico" }); }
+          else delete Z.btnLab[k2];
+          btnLabApply(y); n++; });
+        if (w === "gdef") inp.value = "";
+        save(); cgrpCols(); say(w === "gico" ? `◉ Только значки — ${n} кнопок панели.` : `↺ Исходные подписи — ${n} кнопок панели.`);
+      }
+    };
+    setTimeout(() => { inp.focus(); inp.select(); }, 0);
+  };
+  const on = (v) => {
+    document.body.classList.toggle("cedit", v); $("bEdit").classList.toggle("on", v); if (!v) close();
+    say(v ? "✎ Правка панелей: щелчок по кнопке — своё название или только значок; тяни — переставить в любую панель: группы конуса, полосы окон, шапку. Esc или ✎ — выйти." : "✎ Правка панелей — выключена, кнопки снова жмутся.");
+  };
+  $("bEdit").onclick = () => on(!document.body.classList.contains("cedit"));
+  // в режиме правки кнопки групп не жмутся: нажатие, щелчок, двойной и правый не доходят до их обработчиков (перетаскивание — работает)
+  const hit = (e) => { if (!document.body.classList.contains("cedit") || !e.target.closest) return null; const x = e.target.closest("button, label, select, input"); return x && x.id !== "bEdit" && !x.closest("#zenBtns") && panelOf(x) ? x : null; };
+  for (const t of ["pointerdown", "mousedown", "pointerup", "mouseup", "dblclick", "contextmenu", "auxclick", "change", "input"]) document.addEventListener(t, (e) => {
+    const x = hit(e); if (!x) return;
+    e.stopPropagation();
+    if (x.tagName !== "BUTTON" && (t === "mousedown" || t === "contextmenu")) e.preventDefault();   // списки не раскрываются, ползунки не едут
+    if (t === "contextmenu") e.preventDefault();
+  }, true);
+  document.addEventListener("click", (e) => {
+    const x = hit(e); if (!x) { if (ed && !e.target.closest("#btnEd")) close(); return; }
+    e.stopPropagation(); e.preventDefault();
+    const b = x.closest("button"); if (b) open(b); else say("✎ Галки, списки и ползунки пока не переименовываются — только переставляются перетаскиванием.");
+  }, true);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("cedit")) { if (ed) close(); else on(false); } }, true);
+}
 function coneBtnsInit(){
   const host = $("coneMain"); if (!host || ZZ_BG) return;
   if (!Array.isArray(Z.coneBtns)) Z.coneBtns = [];
@@ -5314,12 +5461,7 @@ function coneBtnsInit(){
   const CHK = "input[type=checkbox],input[type=radio]";
   const srcOf = (it) => !it ? null : it.sel ? document.querySelector(it.sel) : $(it.id);
   const refKey = (it) => it.sel || "#" + it.id;
-  const refOf = (el) => {   // кнопка или флажок → { id } или { sel }
-    if (el.id) return { id: el.id };
-    const d = Object.entries(el.dataset || {})[0], box = el.parentElement && el.parentElement.closest("[id]"); if (!d || !box) return null;
-    const sel = `#${CSS.escape(box.id)} ${el.tagName.toLowerCase()}[data-${d[0].replace(/[A-Z]/g, c => "-" + c.toLowerCase())}="${CSS.escape(d[1])}"]`;
-    return document.querySelectorAll(sel).length === 1 ? { sel } : null;
-  };
+  const refOf = btnRef;   // v0.281: общая (и для ✎ Правки); служебные data-home / data-lab ссылкой не считаются
   const grabOf = (t) => {   // что тянут: кнопка (не копия на холсте) или метка с флажком
     if (!t || !t.closest) return null;
     const b = t.closest("button"); if (b) return b.closest("#coneBtns") ? null : b;
@@ -5329,7 +5471,7 @@ function coneBtnsInit(){
   const isChk = (src) => src.tagName === "INPUT" && (src.type === "checkbox" || src.type === "radio");
   const lab = (src) => {
     if (src.tagName === "INPUT") { const l = src.closest("label"); return (l ? l.textContent : "").replace(/\s+/g, " ").trim() || (src.title || src.id || "").slice(0, 24); }
-    return (src.textContent || "").replace(/\s+/g, " ").trim() || (src.title || "").split(/ — |: |\. /)[0].slice(0, 24) || src.id;
+    return (src.dataset && src.dataset.lab) || (src.textContent || "").replace(/\s+/g, " ").trim() || (src.title || "").split(/ — |: |\. /)[0].slice(0, 24) || src.id;   // v0.281: своё название (✎) — и у копии
   };
   const refresh = () => {
     for (const b of L.children) {
@@ -5406,31 +5548,99 @@ function coneBtnsInit(){
   /* v0.258, «надо у всех вкладок, чтобы могли — и между вкладками»: кнопку или галку любой группы конуса можно перетащить в другую
      группу — она (сама, не копия) переезжает туда, перед той кнопкой, над которой отпустил (над правой половиной — после неё). Место
      помнится (Z.cgrpMove { ссылка: { g: группа, before: ссылка | null } }); вернуть — перетащить обратно в свою группу. */
-  const grpAt = (e) => { const g = e.target && e.target.closest && e.target.closest(".cgrp"); return g && g.dataset.g && !e.target.closest("#coneMain") ? g : null; };
-  const clearDrop = () => document.querySelectorAll(".cgrp.cgdrop").forEach(x => x.classList.remove("cgdrop"));
+  const grpAt = (e) => { const p = panelOf(e.target); return p && p.classList.contains("pnl") ? p : null; };   // v0.281: любая панель (группа конуса, полоса окна, шапка)
+  const hlOf = (p) => p.classList.contains("cgb") ? p.parentElement : p;
+  const clearDrop = () => document.querySelectorAll(".cgdrop").forEach(x => x.classList.remove("cgdrop"));
   document.addEventListener("dragover", (e) => {
     if (!isBtn(e) || drag) return; const g = grpAt(e); clearDrop(); if (!g) return;
-    e.preventDefault(); e.dataTransfer.dropEffect = "move"; g.classList.add("cgdrop");
+    e.preventDefault(); e.dataTransfer.dropEffect = "move"; hlOf(g).classList.add("cgdrop");
   });
   document.addEventListener("dragend", clearDrop, true);
   document.addEventListener("drop", (e) => {
     if (!isBtn(e) || drag) return; const g = grpAt(e); clearDrop(); if (!g) return;
     e.preventDefault();
     let r = null; try { r = JSON.parse(e.dataTransfer.getData(TYPE)); } catch (err) { r = null; }
-    const src = srcOf(r), el = src && cgrpMoveEl(src); if (!el || !el.dataset.home || el.contains(g)) return;   // только кнопки групп конуса
-    const cgb = g.querySelector(".cgb") || g, over = e.target.closest && e.target.closest(".cgb > *");
+    const src = srcOf(r), el = src && cgrpMoveEl(src); if (!el || !el.dataset.home || el.contains(g)) return;   // только кнопки панелей
+    const cgb = g; let over = e.target; while (over && over.parentElement !== cgb) over = over.parentElement;
     let before = null;
     if (over && over !== el && over.parentElement === cgb) { const q = over.getBoundingClientRect(); before = e.clientX < q.left + q.width / 2 ? over : over.nextElementSibling; }
     if (before === el) before = el.nextElementSibling;
     cgb.insertBefore(el, before);
-    if (!Z.cgrpMove || typeof Z.cgrpMove !== "object") Z.cgrpMove = {};
     const bref = before ? refOf(ctlOf(before)) : null;
-    const k = refKey(r);
-    if (el.dataset.home === g.dataset.g && !bref) delete Z.cgrpMove[k];   // вернулась в свою группу — забыть
-    else Z.cgrpMove[k] = { g: g.dataset.g, before: bref ? refKey(bref) : null };
+    const k = refKey(r), pk = panelKey(g);
+    if (!Z.btnMove || typeof Z.btnMove !== "object") Z.btnMove = {};
+    if (Z.cgrpMove && Z.cgrpMove[k]) delete Z.cgrpMove[k];   // v0.281: запись v0.258 — в прошлое, место теперь в Z.btnMove
+    const home = el.dataset.home === pk && (bref ? refKey(bref) : "") === el.dataset.home0;
+    if (home) delete Z.btnMove[k]; else Z.btnMove[k] = { p: pk, before: bref ? refKey(bref) : null };
     save(); cgrpCols();
-    say(el.dataset.home === g.dataset.g ? `«${lab(src)}» — снова в своей группе.` : `«${lab(src)}» — теперь в группе «${g.dataset.g}». Вернуть — перетащи обратно в «${el.dataset.home}».`);
+    say(home ? `«${lab(src)}» — снова на своём месте.` : `«${lab(src)}» — теперь: ${panelName(g)}. Вернуть — перетащи обратно (${panelName(panelByKey(el.dataset.home))}).`);
   });
+  /* v0.281, «в режиме настройки кнопок нужна группа Дзен — туда кнопки копируются, а не перемещаются»: группа «Дзен» (#zenGrp) видна в ✎
+     Правке и в дзене (отмечена 🧘 с первого раза). Кнопку или галку любой панели бросил в неё — встала копия (оригинал на месте), как у
+     копий на холсте: жмёт оригинал, горит, как он. Копию тянешь внутри — переставить; вытащил наружу или правый щелчок в Правке — убрана.
+     Z.zenBtns [{ id } | { sel }]. */
+  const Zb = $("zenBtns");
+  if (Zb) {
+    if (!Array.isArray(Z.zenBtns)) Z.zenBtns = [];
+    const TZ = "text/zz-zen";
+    const zRender = () => {
+      Zb.innerHTML = "";
+      Z.zenBtns.forEach((it, k) => {
+        const src = srcOf(it), b = document.createElement("button");
+        b.type = "button"; b.draggable = true; b.dataset.zk = k; b.textContent = src ? lab(src) : "?";
+        b.title = (src ? (src.title || (src.closest("label") || {}).title || lab(src)) : "Этой кнопки сейчас нет") + " · копия в «Дзене»";
+        Zb.appendChild(b);
+      });
+      $("zenGrp").classList.toggle("empty", !Z.zenBtns.length); zRefresh();
+    };
+    const zRefresh = () => {
+      for (const b of Zb.children) {
+        const src = srcOf(Z.zenBtns[+b.dataset.zk]); b.classList.toggle("gone", !src); if (!src) continue;
+        b.classList.toggle("on", src.classList.contains("on") || (isChk(src) && src.checked)); b.disabled = !!src.disabled && !document.body.classList.contains("cedit");
+        const t = lab(src); if (b.textContent !== t) b.textContent = t;
+      }
+    };
+    const zDel = (k) => { const it = Z.zenBtns[k]; if (!it) return; const src = srcOf(it); Z.zenBtns.splice(k, 1); zRender(); save(); say(`🧘 «${src ? lab(src) : refKey(it)}» — убрана из «Дзена».`); };
+    const edit = () => document.body.classList.contains("cedit");
+    Zb.addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-zk]"); if (!b) return; e.stopPropagation(); e.preventDefault();
+      if (edit()) { say("🧘 Копия в «Дзене»: тяни — переставить; вытащи наружу или правый щелчок — убрать. Подпись — как у оригинала."); return; }
+      const src = srcOf(Z.zenBtns[+b.dataset.zk]); if (!src) { say("Этой кнопки сейчас нет."); return; }
+      if (b._pd) { b._pd = false; setTimeout(zRefresh, 0); return; }
+      src.click(); zRefresh(); setTimeout(zRefresh, 0);
+    });
+    Zb.addEventListener("pointerdown", (e) => {   // как у копий на холсте (v0.249): кнопки, что действуют на нажатие, получают его
+      const b = e.target.closest("button[data-zk]"); if (!b || e.button !== 0 || edit()) return;
+      const src = srcOf(Z.zenBtns[+b.dataset.zk]); b._pd = false; if (!src || src.tagName === "INPUT") return;
+      const ev = new PointerEvent("pointerdown", { bubbles: true, cancelable: true, button: 0, pointerId: e.pointerId, clientX: e.clientX, clientY: e.clientY });
+      src.dispatchEvent(ev); b._pd = ev.defaultPrevented;
+    });
+    Zb.addEventListener("contextmenu", (e) => { const b = e.target.closest("button[data-zk]"); if (!b) return; e.preventDefault(); e.stopPropagation(); if (edit()) zDel(+b.dataset.zk); });
+    let zd = null;
+    Zb.addEventListener("dragstart", (e) => {
+      const b = e.target.closest && e.target.closest("button[data-zk]"); if (!b) return;
+      e.stopPropagation(); zd = { k: +b.dataset.zk, done: false };
+      e.dataTransfer.setData(TZ, String(zd.k)); e.dataTransfer.setData(TYPE, JSON.stringify({ zen: zd.k })); e.dataTransfer.effectAllowed = "move";
+    });
+    Zb.addEventListener("dragend", (e) => { const d = zd; zd = null; if (d && !d.done && e.dataTransfer && e.dataTransfer.dropEffect === "none") zDel(d.k); });
+    Zb.addEventListener("dragover", (e) => { if (!isBtn(e)) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = zd ? "move" : "copy"; clearDrop(); $("zenGrp").classList.add("cgdrop"); });
+    Zb.addEventListener("drop", (e) => {
+      if (!isBtn(e)) return; e.preventDefault(); e.stopPropagation(); clearDrop();
+      const over = e.target.closest && e.target.closest("button[data-zk]");
+      let at = over ? +over.dataset.zk + (e.clientX > over.getBoundingClientRect().left + over.offsetWidth / 2 ? 1 : 0) : Z.zenBtns.length;
+      if (zd) {   // переставить копию
+        const it = Z.zenBtns.splice(zd.k, 1)[0]; if (at > zd.k) at--; Z.zenBtns.splice(at, 0, it); zd.done = true; zRender(); save(); return;
+      }
+      let r = null; try { r = JSON.parse(e.dataTransfer.getData(TYPE)); } catch (err) { r = null; }
+      const src = srcOf(r); if (!src || r.zen !== undefined) return;
+      const ref = r.sel ? { sel: r.sel } : { id: r.id }, was = Z.zenBtns.findIndex(t => refKey(t) === refKey(ref));
+      if (was >= 0) { Z.zenBtns.splice(was, 1); if (at > was) at--; }
+      Z.zenBtns.splice(at, 0, ref); zRender(); save();
+      say(was >= 0 ? `🧘 «${lab(src)}» — переставлена в «Дзене».` : `🧘 «${lab(src)}» — копия в «Дзене» (оригинал на месте). Видна в дзене.`);
+    });
+    setInterval(() => { if (Zb.children.length && Zb.offsetParent) zRefresh(); }, 400);
+    zRender();
+  }
   host.addEventListener("dragover", (e) => { if (!isBtn(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = drag ? "move" : "copy"; });
   host.addEventListener("drop", (e) => {
     if (!isBtn(e)) return;
@@ -5876,6 +6086,7 @@ function init(){
   ctwInit();   // v0.158
   cgrpInit();   // v0.177
   coneBtnsInit();   // v0.203
+  try { panelEditInit(); } catch (err) { console.error(err); }   // v0.281: сбой правки панелей не должен останавливать остальной запуск
   leftBarsInit();   // v0.270
   if (window.ResizeObserver && $("fieldInfoBar")) new ResizeObserver(() => fieldInfoFit()).observe($("fieldInfoBar"));   // v0.209: поле шире/уже — сведения по месту
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fieldInfoFit());   // v0.212: шрифт догрузился — кнопки над колонками ещё раз по месту
