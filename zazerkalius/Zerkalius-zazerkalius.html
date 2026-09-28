@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.324. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.325. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.324</title>
+<title>Zazerkalius — v0.325</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -391,8 +391,6 @@ body.rowdrag #rowList,body.rowdrag #rowList *{user-select:none !important;-webki
 #rowList.multi .rw.hid .bits.la{background:transparent}
 /* v0.244: щелчок по строке за чертой — удалить её и всё до черты; наведёшь — что уйдёт, красное */
 .rw.hid > .bits,.rw.hid > .trk{cursor:pointer}
-.rw.hid.hdel > .bits,.rw.hid.hdel > .trk,.rw.hid.hdel .ob{color:#f87171 !important;opacity:.75}
-.rw.hid.hdel > .no{color:#f87171;opacity:.9}
 /* v0.153, «в строках уменьши межстрочный отступ до 0.7 минимум, когда не все строки помещаются по высоте»: поле ужато (.rlsq) —
    колонка номеров (замок, поворот, номер, числа) не выше строки бит: её значки и цифры мельчают вместе с шагом строк */
 #rowList.rlsq{--rlpx:calc(var(--fs) * var(--rlh, 1.25))}
@@ -920,7 +918,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.324</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.325</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1751,8 +1749,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0324"></script>
-<script src="zz-ui.js?v=0324"></script>
+<script src="zz-core.js?v=0325"></script>
+<script src="zz-ui.js?v=0325"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

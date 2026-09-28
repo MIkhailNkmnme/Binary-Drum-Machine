@@ -6495,35 +6495,18 @@ function init(){
     say(`◯ Кольцо ${i + 1} — снова по общей галке «запрет сдвига строк».`);
   }, true);
   let rowNocurWas = false;   // v0.220: была ли строка «снята» до этого нажатия
-  /* v0.244, по снимку строк за чертой — «чтобы можно было кликнуть на нижние биты и удалить всё сразу до линии»: щелчок по строке
-     за чертой (по битам, не по номеру) — она и все строки между ней и чертой удаляются насовсем, во всех полях; строки ниже неё
-     поднимаются к черте. Наведёшь — то, что уйдёт, красное. ↩ вернёт. */
-  const hidAt = (e) => { const r = e.target.closest(".rw.hid"); return r && !e.target.closest(".no") ? r : null; };
-  let hidLast = null;
-  const hidMark = (r) => { if (r === hidLast) return; hidLast = r; const all = [...$("rowList").querySelectorAll(".rw.hid")], j = r ? all.indexOf(r) : -1; all.forEach((x, q) => x.classList.toggle("hdel", q <= j)); };
+  /* v0.244 (снято в v0.325, «наведение на бит под чертой — убери удаление по клику»): щелчок по строке за чертой удалял её и все
+     строки до черты, наведение красило их красным. Больше нет — строки под чертой удаляет только 🗑. */
   /* v0.246: подсветка столбика номеров при наведении — классом (.rnhov), а не :has(:hover) в CSS: тот пересчитывал стили всего поля
      на каждое движение мыши по строкам */
   $("rowList").addEventListener("mouseover", (e) => {
-    if (!document.body.classList.contains("cutdrag")) hidMark(hidAt(e));
     const L = $("rowList"), on = !!e.target.closest(".rw > .no > .rn"); if (L.classList.contains("rnhov") !== on) L.classList.toggle("rnhov", on);
     // v0.278, по снимку строки «66 стр. · 2211 бит · текущая 32 … · H 0.99 · ⇄ 56%» — «эту надпись убери здесь и помести её в подсказку
     // для номеров»: под строками её нет, она — в подсказке номера (вторым абзацем, свежая на каждое наведение)
     const no = e.target.closest(".rw[data-r] > .no");
     if (no && FIELD_INFO) { if (no.dataset.t0 === undefined) no.dataset.t0 = no.title; no.title = no.dataset.t0 + "\n\n" + (FIELD_INFO.title || FIELD_INFO.textContent); }
   });
-  $("rowList").addEventListener("mouseleave", () => { hidMark(null); $("rowList").classList.remove("rnhov"); });
-  $("rowList").addEventListener("click", (e) => {
-    const r = hidAt(e); if (!r || rowEditing >= 0) return;
-    e.stopPropagation(); e.preventDefault();
-    const j = [...$("rowList").querySelectorAll(".rw.hid")].indexOf(r); if (j < 0) return;
-    const pre = undoState(); let n = 0;
-    if (!Array.isArray(Z.lanesHid)) Z.lanesHid = [];
-    for (let l = 0; l < (Z.laneCount || 1); l++) { const h = hidRows(l); n = Math.max(n, Math.min(h.length, j + 1)); Z.lanesHid[l] = h.slice(j + 1); }
-    if (!n) return;
-    undoPush(pre); renderAll(); save();
-    const left = hidCount();
-    say(`🗑 Удалено ${n} стр. за чертой` + (left ? ` — ещё ${left} стр. поднялись к черте.` : " — под чертой пусто.") + " ↩ вернёт.");
-  });
+  $("rowList").addEventListener("mouseleave", () => { $("rowList").classList.remove("rnhov"); });
   $("rowList").addEventListener("pointerdown", (e) => {
     if (e.target.closest("#cutPanel")) return;
     rowNocurWas = document.body.classList.contains("nocur");
