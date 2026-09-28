@@ -1,4 +1,4 @@
-<!-- Zerkalius Гранидус — v0.056. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Гранидус — v0.057. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Гранидус — v0.056</title>
+<title>Zerkalius Гранидус — v0.057</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -109,6 +109,9 @@
   #faceRow{ display:grid; grid-template-columns:repeat(4, 1fr); gap:3px; }
   #faceRow .vw{ display:flex; flex-direction:column; align-items:center; gap:1px; padding:2px 1px 3px; text-align:center; font-size:10px; line-height:1.1; }
   #faceRow .vw canvas{ width:40px; height:34px; display:block; cursor:inherit; }
+  #edgeRow{ display:grid; grid-template-columns:repeat(4, 1fr); gap:3px; }
+  #edgeRow .vw{ display:flex; flex-direction:column; align-items:center; gap:1px; padding:2px 1px 3px; text-align:center; font-size:10px; line-height:1.1; }
+  #edgeRow .vw canvas{ width:40px; height:34px; display:block; cursor:inherit; }
   #viewRow{ display:grid; grid-template-columns:repeat(3, 1fr); gap:4px; }
   #viewRow .vw{ display:flex; flex-direction:column; align-items:center; gap:1px; padding:2px 2px 3px; text-align:center; font-size:10px; line-height:1.1; }
   #viewRow .vw canvas{ width:52px; height:40px; display:block; cursor:inherit; }
@@ -283,7 +286,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.056</div>
+<div id="ver">v0.057</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -480,6 +483,8 @@
     своей грани (ряд за рядом от вершины; 1 — звучит, 0 — пауза, высота — по трём битам с этого места) и звучит от своей ноты, поэтому
     несколько включённых дают созвучие. Нота, у которой грани нет, читает экватор — нижние ряды верхних граней по кругу (у бипирамиды
     из 3 граней это Си, внутреннее основание). Бит, который сейчас звучит, горит на теле цветом своей ноты. Темп — ползунком.</li>
+    <li><b>Ребро на ребро</b> (v0.057) — картинки «×N» под видами на грань: виды, где рёбер совпадает больше всего (легли на одну прямую
+    или видны торцом), N — сколько совпадений. Считаются для нынешнего тела и пересчитываются при смене основания.</li>
     <li><b>Щелчок по полю</b> (v0.055) — мимо битов, не сдвигая мышь: вращение стоп, ещё щелчок — снова крутится (как «⟳ Вращение» и пробел).
     Потянул — это поворот, вращение не переключается. По биту — закрепление, как прежде.</li>
     <li><b>✛ Оси</b> (v0.053) — оси через центр от вершины к противоположной (штрихом: Верх–Низ, у чётного основания и диаметры экватора;
@@ -580,6 +585,8 @@
   <div class="row" id="viewRow"></div>
   <!-- v0.050, «три ребра к нам»: виды прямо на грань — ▲ верхние слева, ▼ нижние справа, по сторонам света -->
   <div class="row" id="faceRow"></div>
+  <!-- v0.057, «вот такие виды, где по максимуму возможного ребро на ребро» — считаются для нынешнего тела -->
+  <div class="row" id="edgeRow"></div>
   <!-- v0.051, «кнопку: выделяю грань — первое нажатие — вид, она ближе, второе — она дальше, за другими гранями» -->
   <button id="bFaceGo" title="Грань к себе / от себя. Выбрать грань: нажми кнопку и щёлкни грань на теле (или Alt + щелчок по грани в любой момент). Потом каждое нажатие: 1-е — прямо на неё, она ближе всех; 2-е — с обратной стороны, она дальше всех, за другими гранями; и так по кругу. Правый щелчок — выбрать другую">◭ Грань…</button>
   <div class="set">
@@ -2279,14 +2286,15 @@ const viewYaw = (v) => v[2];
 const FE = Math.atan(1 / Math.SQRT2);
 const FACEV = [["fu-nw", "▲СЗ", vFrom(225), FE], ["fu-ne", "▲СВ", vFrom(315), FE], ["fd-nw", "▼СЗ", vFrom(225), -FE], ["fd-ne", "▼СВ", vFrom(315), -FE],
                ["fu-sw", "▲ЮЗ", vFrom(135), FE], ["fu-se", "▲ЮВ", vFrom(45), FE], ["fd-sw", "▼ЮЗ", vFrom(135), -FE], ["fd-se", "▼ЮВ", vFrom(45), -FE]];
+let EDGEV = [];   // v0.057: виды «ребро на ребро» — считаются для нынешнего тела (edgeViews)
 const viewRow = document.getElementById("viewRow"), faceRow = document.getElementById("faceRow");
 faceRow.innerHTML = FACEV.map(v => `<button type="button" class="vw" data-v="${v[0]}" title="Прямо на ${v[1][0] === "▲" ? "верхнюю" : "нижнюю"} грань ${v[1].slice(1)}: три её ребра к нам; вращение останавливается"><canvas></canvas><span>${v[1]}</span></button>`).join("");
 viewRow.innerHTML = VIEWS.map(v => Array.isArray(v) ? `<button type="button" class="vw" data-v="${v[0]}" title="Вид ${VIEW_TIP[v[0]]}: тело плавно встаёт так, вращение останавливается"><canvas></canvas><span>${v[1]}</span></button>`
   : `<button type="button" class="vroll" data-r="${v === "rl" ? 1 : -1}" title="Кувырок на 90° ${v === "rl" ? "против часовой" : "по часовой"} вокруг взгляда: наверх встаёт соседняя вершина (например, Ю посередине — В или З наверху)">${v === "rl" ? "↶" : "↷"}</button>`).join("");
 function viewThumbs(){
   const cu = css("--up"), cd = css("--dn"), ce = css("--eq"), dpr = Math.min(window.devicePixelRatio || 1, 2);
-  document.querySelectorAll("#viewRow .vw, #faceRow .vw").forEach(b => {
-    const v = VIEWS.concat(FACEV).find(x => Array.isArray(x) && x[0] === b.dataset.v), c = b.querySelector("canvas"), w = c.clientWidth || 52, h = c.clientHeight || 40;
+  document.querySelectorAll("#viewRow .vw, #faceRow .vw, #edgeRow .vw").forEach(b => {
+    const v = VIEWS.concat(FACEV, EDGEV).find(x => Array.isArray(x) && x[0] === b.dataset.v), c = b.querySelector("canvas"), w = c.clientWidth || 52, h = c.clientHeight || 40;
     if (c.width !== Math.round(w * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
     const g = c.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
     const vy = viewYaw(v), cy = Math.cos(vy), sy = Math.sin(vy), cx = Math.cos(v[3]), sx = Math.sin(v[3]), S = Math.min(w, h) * 0.42;
@@ -2319,10 +2327,61 @@ const viewClick = (e) => {
   const r = e.target.closest(".vroll");
   if (r) { const q = Math.PI / 2; viewGo(yaw, pitch, Math.round((roll + q * +r.dataset.r) / q) * q); return; }   // кувырок — к ровным 90°
   const b = e.target.closest(".vw"); if (!b) return;
-  const v = VIEWS.concat(FACEV).find(x => Array.isArray(x) && x[0] === b.dataset.v); if (!v) return;
+  const v = VIEWS.concat(FACEV, EDGEV).find(x => Array.isArray(x) && x[0] === b.dataset.v); if (!v) return;
   viewGo(viewYaw(v), v[3], 0);   // вид из розы и на грань — без крена
 };
 viewRow.addEventListener("click", viewClick); faceRow.addEventListener("click", viewClick);
+/* v0.057, по снимку Зеркалидуса почти «ребро на ребро» — «вот такие виды, где по максимуму возможного ребро на ребро». Считается для
+   нынешнего тела (любое основание). Кандидаты взгляда: вдоль каждой пары вершин (они сливаются) и вдоль пересечений плоскостей, в которых
+   лежат пары рёбер (такая плоскость видна прямой — её рёбра ложатся на одну линию). Для каждого — счёт совпадений: сколько рёбер легло на
+   уже занятую прямую (k рёбер на прямой — k − 1) плюс сколько рёбер видно торцом (точкой). Берутся лучшие (верхний счёт; если их меньше
+   четырёх — и следующий), до восьми, картинками «×N» под видами на грань; из пары «d / −d» — вид сверху. Пересчёт — при смене основания. */
+const edgeRow = document.getElementById("edgeRow");
+function edgeViews(){
+  const V = [T, B, ...EQ], E = EDGES.map(e => [e.a, e.b]);
+  const nz = (v) => { const L = Math.hypot(v[0], v[1], v[2]); return L < 1e-9 ? null : [v[0] / L, v[1] / L, v[2] / L]; };
+  const cands = [], add = (d0) => {
+    let d = d0 && nz(d0); if (!d) return;
+    if (d[1] < -1e-9 || (Math.abs(d[1]) <= 1e-9 && d[2] < 0)) d = d.map(x => -x);
+    if (!cands.some(c => Math.abs(dot(c, d)) > 0.99995)) cands.push(d);
+  };
+  for (let i = 0; i < V.length; i++) for (let j = i + 1; j < V.length; j++) add(sub(V[j], V[i]));
+  const N = [];
+  for (let i = 0; i < E.length; i++) for (let j = i + 1; j < E.length; j++) {
+    const a = E[i], b = E[j], u = sub(a[1], a[0]), w = sub(b[1], b[0]), r = sub(b[0], a[0]);
+    if (Math.abs(dot(cross(u, w), r)) > 1e-6) continue;   // не в одной плоскости
+    const n = nz(cross(u, w)) || nz(cross(u, r)); if (!n) continue;
+    if (!N.some(m => Math.abs(dot(m, n)) > 0.99995)) N.push(n);
+  }
+  for (let i = 0; i < N.length; i++) for (let j = i + 1; j < N.length; j++) add(cross(N[i], N[j]));
+  const score = (d) => {
+    const u = nz(cross(Math.abs(d[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], d)), w = cross(d, u), P = (p) => [dot(p, u), dot(p, w)];
+    let deg = 0; const lines = [];
+    for (const [a, b] of E) {
+      const A = P(a), Q = P(b), dx = Q[0] - A[0], dy = Q[1] - A[1], L = Math.hypot(dx, dy);
+      if (L < 1e-6) { deg++; continue; }
+      let ux = dx / L, uy = dy / L; if (ux < -1e-9 || (Math.abs(ux) <= 1e-9 && uy < 0)) { ux = -ux; uy = -uy; }
+      const off = A[0] * uy - A[1] * ux;
+      const l = lines.find(q => Math.abs(q.ux * uy - q.uy * ux) < 1e-6 && Math.abs(q.off - off) < 1e-6);
+      if (l) l.k++; else lines.push({ ux, uy, off, k: 1 });
+    }
+    return deg + lines.reduce((t, l) => t + l.k - 1, 0);
+  };
+  const sc = cands.map(d => ({ d, s: score(d) })).filter(c => c.s > 0).sort((a, b) => b.s - a.s);
+  if (!sc.length) return [];
+  const top = sc[0].s, pick = sc.filter(c => c.s === top);
+  if (pick.length < 4) { const nx = sc.find(c => c.s < top); if (nx) pick.push(...sc.filter(c => c.s === nx.s)); }
+  return pick.slice(0, 8).map((c, i) => [`ee${i}`, `×${c.s}`, Math.atan2(-c.d[0], c.d[2]), Math.atan2(c.d[1], Math.hypot(c.d[0], c.d[2])), c.s]);
+}
+let edgeNB = -1;
+function edgeRowBuild(){
+  EDGEV = edgeViews(); edgeNB = NB;
+  edgeRow.innerHTML = EDGEV.map(v => `<button type="button" class="vw" data-v="${v[0]}" title="Ребро на ребро: совпадений ${v[4]} (рёбра на одной прямой и торцом); вращение останавливается"><canvas></canvas><span>${v[1]}</span></button>`).join("");
+}
+edgeRow.addEventListener("click", viewClick);
+edgeRowBuild();
+{ const syncUI2 = syncUI; syncUI = function(){ syncUI2.apply(this, arguments); if (NB !== edgeNB) { edgeRowBuild(); viewThumbs(); } }; }
+viewThumbs();
 /* v0.051, «кнопку: выделяю грань — первое нажатие на неё — вид, она ближе, второе — она дальше, за другими гранями от меня». Выбранная
    грань — { slot, up } (переживает смену основания, пока такая грань есть), обведена светящейся рамкой цвета закрепления, у отвёрнутой —
    пунктир. Выбрать: «◭ Грань…» и щелчок по грани (или Alt + щелчок в любой момент) — берётся ближайшая к глазу грань под курсором.
