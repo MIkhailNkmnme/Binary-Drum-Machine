@@ -7908,3 +7908,21 @@ function bgApply(){   // v0.184: живой фон хаба (?solo=cone&bg=1)
 }
 init();
 if (ZZ_BG) bgApply();
+/* v0.346, по снимку списка «◫ по центру / ◧ влево / ◨ вправо» — «в три значка»: списки выравнивания (поле строк, Спуск, ⊿ Сложить) —
+   тремя кнопками-значками слитной полоской; горит выбранная. Сам список остаётся (спрятан): его значение, события и память — прежние,
+   кнопка лишь ставит значение и шлёт change; значение, выставленное из кода, кнопки подхватывают сами */
+(function selIcons(){
+  const hook = (sel, upd) => { const d = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value");
+    try { Object.defineProperty(sel, "value", { configurable: true, get() { return d.get.call(this); }, set(x) { d.set.call(this, x); upd(); } }); } catch (err) { /* хватит событий */ } };
+  ["rowsAlign", "descentAlign", "foldAlign"].forEach((id) => {
+    const sel = $(id); if (!sel || sel.dataset.seg) return; sel.dataset.seg = "1";
+    const box = document.createElement("span"); box.className = "segi"; box.title = sel.title;
+    const bs = [...sel.options].map((o) => { const t = o.textContent.trim(), sp = t.indexOf(" "), b = document.createElement("button");
+      b.type = "button"; b.textContent = sp > 0 ? t.slice(0, sp) : t; b.title = sp > 0 ? t.slice(sp + 1) : t; b.dataset.v = o.value;
+      b.onclick = () => { if (sel.value === o.value) return; sel.value = o.value; sel.dispatchEvent(new Event("change", { bubbles: true })); };
+      box.appendChild(b); return b; });
+    const upd = () => bs.forEach(b => b.classList.toggle("on", b.dataset.v === sel.value));
+    sel.after(box); sel.hidden = true; sel.style.display = "none";
+    hook(sel, upd); sel.addEventListener("change", upd); upd();
+  });
+})();
