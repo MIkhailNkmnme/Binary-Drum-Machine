@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.048. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.049. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -36,12 +36,14 @@
      v0.045: по снимку «v0.043» — «это вниз»: номер версии — внизу по центру экрана.
      v0.046: по снимку «♫ Звук ■» — «оставь только символ музыки, без рамки»: один ♫ без рамки и фона; звучит — бирюзовый, мигает свечением.
      v0.047: «головку по столбцам» — звук фона в две головки: строки подряд + столбцы сверху вниз (Zazerkalius v0.383, «стр+стл»).
-     v0.048: «в одну строку» — Triangle и Зазеркалиус рядом (.mainrow). -->
+     v0.048: «в одну строку» — Triangle и Зазеркалиус рядом (.mainrow).
+     v0.049: «перемести Черновики вниз, но не ниже номера версии» — Черновики последними, под «Знаком и записями»; снизу у хаба
+             запас не меньше 44 px, чтобы нижняя панель не заезжала на номер версии (он прибит к низу экрана). -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Control Hub — v0.048</title>
+    <title>Zerkalius Control Hub — v0.049</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -69,7 +71,7 @@
             position: relative; z-index: 1;
             height: 100vh; box-sizing: border-box;
             display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
-            padding: 0 24px 6vh;
+            padding: 0 24px max(6vh, 44px);   /* v0.049: снизу — не меньше 44 px: под нижней панелью номер версии (.ver, bottom 10px) */
             gap: 22px;
         }
 
@@ -273,7 +275,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.048</div>
+        <div class="ver">v0.049</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -284,6 +286,22 @@
         <a href="zazerkalius/Zerkalius-zazerkalius.html" class="menu-btn main-engine" data-en="Zazerkalius" data-ru="Зазеркалиус">Zazerkalius</a>
         </div>
 
+        <!-- Знак и записи (папка oktaedr\), заведено 2026-09-20; обои — 2026-09-21 -->
+        <div class="panel">
+            <div class="panel-title" data-en="◇ Sign &amp; Records" data-ru="◇ Знак и записи">◇ Sign &amp; Records</div>
+            <div class="row">
+                <a href="Zerkalius-dnevnik.html" class="menu-btn draft-btn" data-en="Logbook" data-ru="Борт-журнал">Logbook</a>
+                <a href="oboi/Zerkalius-oboi.html" class="menu-btn draft-btn" data-en="Wallpaper" data-ru="Обои">Wallpaper</a>
+                <!-- v0.027: исследование цикла Аниматрицы (папка issledovanie\), 2026-09-24 -->
+                <a href="issledovanie/Zerkalius-issledovanie.html" class="menu-btn draft-btn" data-en="Research" data-ru="Исследование">Research</a>
+                <!-- v0.032: сравнение таблиц фигур .tsv (папка sravnenie\), 2026-09-25 -->
+                <a href="sravnenie/Zerkalius-sravnenie.html" class="menu-btn draft-btn" data-en="Compare" data-ru="Сравнение">Compare</a>
+                <!-- v0.042: Битмультфильмы — из главных кнопок сюда («Битмультфильмы — в Записи») -->
+                <a href="rezultaty/Zerkalius-rezultaty.html" class="menu-btn draft-btn" data-en="Bit Cartoons" data-ru="Битмультфильмы">Bit Cartoons</a>
+            </div>
+        </div>
+
+        <!-- v0.049, «перемести Черновики вниз, но не ниже номера версии»: Черновики — последними -->
         <!-- Черновики (до v0.018 — «Лаборатория (Черновики)») — с v0.012 в порядке создания (по первому появлению в git) -->
         <div class="panel">
             <div class="panel-title" data-en="🔬 Drafts" data-ru="🔬 Черновики">🔬 Drafts</div>
@@ -299,21 +317,6 @@
                 <a href="oktaedr/Zerkalius-oktaedr.html" class="menu-btn draft-btn" data-en="Octahedron" data-ru="Октаэдр">Octahedron</a>
                 <!-- v0.042: Зазеркалиус — в главные; Cone (zazerkalius/Zerkalius-konus.html) убран из Черновиков, сама страница жива -->
                 <a href="lively/Zerkalius-lively.html" class="menu-btn draft-btn" data-en="Lively Wallpaper" data-ru="Обои Lively">Lively Wallpaper</a>
-            </div>
-        </div>
-
-        <!-- Знак и записи (папка oktaedr\), заведено 2026-09-20; обои — 2026-09-21 -->
-        <div class="panel">
-            <div class="panel-title" data-en="◇ Sign &amp; Records" data-ru="◇ Знак и записи">◇ Sign &amp; Records</div>
-            <div class="row">
-                <a href="Zerkalius-dnevnik.html" class="menu-btn draft-btn" data-en="Logbook" data-ru="Борт-журнал">Logbook</a>
-                <a href="oboi/Zerkalius-oboi.html" class="menu-btn draft-btn" data-en="Wallpaper" data-ru="Обои">Wallpaper</a>
-                <!-- v0.027: исследование цикла Аниматрицы (папка issledovanie\), 2026-09-24 -->
-                <a href="issledovanie/Zerkalius-issledovanie.html" class="menu-btn draft-btn" data-en="Research" data-ru="Исследование">Research</a>
-                <!-- v0.032: сравнение таблиц фигур .tsv (папка sravnenie\), 2026-09-25 -->
-                <a href="sravnenie/Zerkalius-sravnenie.html" class="menu-btn draft-btn" data-en="Compare" data-ru="Сравнение">Compare</a>
-                <!-- v0.042: Битмультфильмы — из главных кнопок сюда («Битмультфильмы — в Записи») -->
-                <a href="rezultaty/Zerkalius-rezultaty.html" class="menu-btn draft-btn" data-en="Bit Cartoons" data-ru="Битмультфильмы">Bit Cartoons</a>
             </div>
         </div>
 
