@@ -613,7 +613,7 @@ function hidRowHtml(i, cells){ return '<div class="rw hid" data-h="' + i + '"><s
 const RL_MAX = 1.25, RL_MIN = 0.7;
 function rowsFit(){
   // v0.265: пока тянут черту — шаг строк прежний, даже размер поля не меряем (каждый замер — полная раскладка); подгонка — когда отпустят
-  if (document.body.classList.contains("cutdrag") && $("rowList") && $("rowList").style.getPropertyValue("--rlh")) return;
+  if ((document.body.classList.contains("cutdrag") || document.body.classList.contains("wdrag")) && $("rowList") && $("rowList").style.getPropertyValue("--rlh")) return;   // v0.269: и пока тянут ширину поля
   const L = $("rowList"); if (!L || !L.clientHeight) return;
   const was = L.style.getPropertyValue("--rlh");
   /* v0.246, «почему всё тормозит»: каждая подгонка — 4–5 полных раскладок поля (на 260 строках — по 0,1 с). Строк, шрифта и размера
@@ -647,7 +647,7 @@ function rowsFitDone(){ if (Z.tri90) tri90Apply(); }   // ◸ 90° считае�
 /* v0.209, по снимку «i3 стр. · 934 бит…» (начало сведений ушло под колонку номеров и замков) — «подвинь надпись»: сведения не заходят
    под левую колонку — начинаются сразу за ней, не влезли — многоточие в конце (целиком — в подсказке). */
 function fieldInfoFit(){
-  if (document.body.classList.contains("cutdrag")) return;   // v0.265: пока тянут черту — кнопки над столбиками не двигаем (замер — раскладка поля); поставятся, когда отпустят
+  if (document.body.classList.contains("cutdrag") || document.body.classList.contains("wdrag")) return;   // v0.269: и ширину поля; v0.265: пока тянут черту — кнопки над столбиками не двигаем (замер — раскладка поля); поставятся, когда отпустят
   const fi = $("fieldInfo"), bar = $("fieldInfoBar"); if (!fi || !bar) return;
   const no = document.querySelector("#rowList .rw > .no"), w = no ? no.getBoundingClientRect().right - bar.getBoundingClientRect().left : 90;
   const setMW = (el, v) => { if (el.style.maxWidth !== v) el.style.maxWidth = v; };   // v0.246: то же значение — не трогать (иначе лишняя раскладка всего поля)
@@ -6024,6 +6024,7 @@ function init(){
       edge = requestAnimationFrame(edgeTick);
     };
     const move = (ev) => {
+      if (!(ev.buttons & 1)) { up(); return; }   // v0.269: кнопку отпустили, а pointerup потерялся — черта не едет дальше сама
       lastY = ev.clientY;
       if (!edge) edge = requestAnimationFrame(edgeTick);
       if (!raf) raf = requestAnimationFrame(step);
@@ -6568,16 +6569,38 @@ function init(){
     const nr = document.querySelector("#rowList .rw[data-r] > .no"), fl = $("field").getBoundingClientRect().left;
     const minW = nr ? Math.max(60, Math.ceil(nr.getBoundingClientRect().right - fl) + 8) : 100;
     const sg = document.body.classList.contains("field-right") ? -1 : 1;   // v0.091: поле справа — тянешь влево, поле шире
-    let on = false;
+    /* v0.269, по снимку сжатого поля — «зависание при перетаскивании за границу: курсор уже отпустил, а она сама двигается и всё
+       тормозит»: на 180 строках каждый шаг ширины — 1–2 с (раскладка и отрисовка всего поля, подгонка шага строк, кнопки над столбиками),
+       и граница догоняла мышь уже после отпускания. Теперь ширина ставится не чаще кадра, подгонки — один раз, когда отпустили; а если
+       кадр всё равно дольше 0,1 с — дальше поле не перекладывается, граница идёт за мышью тонкой чертой, ширина — когда отпустили. */
+    const fr = $("field").getBoundingClientRect();
+    let on = false, lastX = x0, raf = 0, slow = false, ghost = null;
+    const wAt = () => Math.max(minW, Math.min(window.innerWidth - 520, Math.round(w0 + sg * (lastX - x0))));
+    const ghostAt = () => {
+      if (!ghost) { ghost = document.createElement("div"); ghost.id = "wGhost"; document.body.appendChild(ghost); }
+      const w = wAt(), x = sg > 0 ? fr.left + w : fr.right - w;
+      ghost.style.cssText = `left:${Math.round(x) - 1}px;top:${Math.round(fr.top)}px;height:${Math.round(fr.height)}px`;
+    };
+    const apply = () => {
+      raf = 0;
+      if (slow) { ghostAt(); return; }
+      const t = performance.now(); Z.rowsW = wAt(); applyRowsW();
+      requestAnimationFrame(() => { if (performance.now() - t > 100) slow = true; });
+    };
     const move = (ev) => {
       const dx = ev.clientX - x0;
       if (!on) { if (strict && (Math.abs(dx) < 6 || Math.abs(dx) < Math.abs(ev.clientY - y0))) return; on = true; try { list.setPointerCapture(ev.pointerId); } catch (er) { /* отпущен */ } document.body.classList.add("wdrag"); }
-      Z.rowsW = Math.max(minW, Math.min(window.innerWidth - 520, Math.round(w0 + sg * dx))); applyRowsW();
+      if (!(ev.buttons & 1)) { up(); return; }   // кнопку отпустили, а pointerup потерялся — не тянуть дальше
+      lastX = ev.clientX;
+      if (!raf) raf = requestAnimationFrame(apply);
     };
     const up = () => {
       list.removeEventListener("pointermove", move); list.removeEventListener("pointerup", up); list.removeEventListener("pointercancel", up);
       if (!on) return;
-      document.body.classList.remove("wdrag"); packWins(); save(); renderPointers(); fieldInfoFit();
+      on = false; if (raf) { cancelAnimationFrame(raf); raf = 0; }
+      if (ghost) { ghost.remove(); ghost = null; }
+      Z.rowsW = wAt(); applyRowsW();
+      document.body.classList.remove("wdrag"); packWins(); save(); renderPointers(); rowsFit(); fieldInfoFit();
       const kill = (ev) => { ev.stopPropagation(); ev.preventDefault(); };   // тянули — это не щелчок по номеру
       window.addEventListener("click", kill, { capture: true, once: true }); setTimeout(() => window.removeEventListener("click", kill, true), 0);
     };
