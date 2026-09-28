@@ -3347,11 +3347,11 @@ function setupCone(){
   const animHash = (s) => { let h1 = 0xdeadbeef, h2 = 0x41c6ce57; for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
     h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909); h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
     return (h2 >>> 0).toString(36) + ":" + (h1 >>> 0).toString(36) + ":" + s.length; };
-  let animRaf = 0, animT0 = 0, animAcc = 0, animSig = null, aRow = 0, aPass = 0, aPer = 0, aPer0 = 0, animSeen = new Map(), animHist = [];
+  let animRaf = 0, animT0 = 0, animAcc = 0, animSig = null, aRow = 0, aPass = 0, aPer = 0, aPer0 = 0, animSeen = new Map(), animHist = [], animStart = null;   // v0.331: animStart — биты до первой волны
   const animKey = () => Z.rows.join(",");
   const animSync = () => {
     const k = animKey(); if (animSig === k) return;
-    animSig = k; aRow = 0; aPass = 0; aPer = 0; aPer0 = 0; animSeen = new Map([[animHash(k), 0]]); animHist = [{ p: 0, rows: Z.rows.slice() }];
+    animSig = k; aRow = 0; aPass = 0; aPer = 0; aPer0 = 0; animSeen = new Map([[animHash(k), 0]]); animHist = [{ p: 0, rows: Z.rows.slice() }]; animStart = Z.rows.slice();
   };
   const animStep1 = () => {   // одна строка волны
     const R = Z.rows, N = R.length; if (N < 2) return;
@@ -3411,6 +3411,17 @@ function setupCone(){
     aPass = e.p; aRow = 0; if (aPer && aPer0 + aPer > aPass) { aPer = 0; aPer0 = 0; }
     for (const [h, p] of animSeen) if (p > aPass) animSeen.delete(h);
     animDone(); say(`⏮ К началу прохода ${aPass}.`);
+  };
+  /* v0.331, «в группу Аниматрица — кнопку: возврат всех битов на какие были»: ⤺ возврат — поле снова такое, каким было до первой волны
+     (проход 0), сколько бы проходов ни прошло; счёт проходов и цикла — с нуля. «До первой волны» — с последней правки строк не волной
+     (руками, шаблоном, заготовкой, ↩): после неё волна начинает заново. ↩ вернёт то, что было перед возвратом. */
+  $("bAnimHome").onclick = () => {
+    animSet(false); if (!animGuard()) return; animSync();
+    if (!animStart || (aPass === 0 && aRow === 0)) { say("⤺ Волна ещё не шла — биты и так те, что были."); animUi(); return; }
+    undoPush(undoState());
+    const R = Z.rows; R.length = 0; animStart.forEach(s => R.push(s));
+    const k = animKey(); aRow = 0; aPass = 0; aPer = 0; aPer0 = 0; animSeen = new Map([[animHash(k), 0]]); animHist = [{ p: 0, rows: R.slice() }];
+    animDone(); say("⤺ Все биты — какие были до волны (проход 0). ↩ вернёт.");
   };
   $("animOp").value = Z.animOp || "xor";
   $("animOp").onchange = (e) => { Z.animOp = e.target.value; save(); };
