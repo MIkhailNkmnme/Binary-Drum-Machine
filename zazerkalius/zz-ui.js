@@ -5459,9 +5459,14 @@ function cgrpInit(){
   const sizeApply = (g) => {
     const s = !g.classList.contains("cmin") && Z.cgrpSize[g.dataset.g]; g.classList.toggle("csz", !!s);
     if (!s) { g.style.width = g.style.height = ""; return; }
-    g.style.width = s.w + "px"; g.style.height = "";   // высота — сперва по содержимому
-    const b = g.querySelector(":scope > .cgb"); if (b && b.scrollWidth > b.clientWidth + 1) g.style.width = (s.w + b.scrollWidth - b.clientWidth) + "px";
-    g.style.height = Math.max(s.h, g.offsetHeight) + "px";
+    g.style.width = s.w + "px"; g.style.height = "";   // v0.334: высота — всегда по кнопкам (выше — пустое место снизу)
+    const b = g.querySelector(":scope > .cgb"); if (!b) return;
+    if (b.scrollWidth > b.clientWidth + 1) g.style.width = (s.w + b.scrollWidth - b.clientWidth) + "px";   // не уже самой широкой кнопки
+    /* v0.334, «не давать размера больше, если пустые области появляются»: ширина прижимается к правому краю самого длинного ряда кнопок —
+       справа пустого места нет, и шире, чем все кнопки в один ряд, группа не становится */
+    const br = b.getBoundingClientRect(); let right = br.left;
+    for (const c of b.children) { const r = c.getBoundingClientRect(); if (r.width) right = Math.max(right, r.right); }
+    const extra = Math.floor(br.right - right - 1); if (right > br.left && extra > 0) g.style.width = (parseFloat(g.style.width) - extra) + "px";
   };
   const NOGRAB = "button, input, select, textarea, label, a, canvas, .gzen, .cgsz";   // v0.315: всё остальное в группе — хват
   const wb = tl.parentElement; let zTop = 10;

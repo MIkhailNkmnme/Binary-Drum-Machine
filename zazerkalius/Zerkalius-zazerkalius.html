@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.333. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.334. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.333</title>
+<title>Zazerkalius — v0.334</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -592,6 +592,9 @@ body.zen #w-cone #coneMain{bottom:0}
   background:linear-gradient(135deg, transparent 45%, var(--gc, var(--dim)) 45% 55%, transparent 55% 70%, var(--gc, var(--dim)) 70% 80%, transparent 80%)}
 .cgrp > .cgsz:hover{opacity:1}
 .cgrp.cmin > .cgsz,.cgrp.cdrag > .cgsz{display:none}
+/* v0.334, по снимку «АНИМАТРИЦА 🧘» — «заголовок группы — как кнопка размерами»: подпись группы — высотой в кнопку (24 px) и не уже
+   кнопки (--bu), сверху слева, вровень с первым рядом кнопок (прежде тянулась во всю высоту группы). У свёрнутой группы — как была */
+#w-cone .tools > .cgrp:not(.cmin) > .glab,#paneGrp .cgrp:not(.cmin) > .glab{align-self:flex-start;height:24px;min-width:var(--bu);box-sizing:border-box;margin:1px 0 0 !important;padding:0 4px !important;display:flex;align-items:center;justify-content:center}
 /* v0.327, «текст убрать в поля»: поле с подписью (стр., сид, от … °, ↔, ⌖×) — шириной в кнопку, подпись — мелко внутри поля (cgrpInit),
    слева или справа, мышь сквозь неё; стрелок-вертушек у числа нет (колесо и ↑ ↓ меняют число, как прежде) */
 #w-cone .tools .cgb > label.fin,#paneGrp .cgb > label.fin{position:relative;width:var(--bu) !important;flex:0 0 auto !important;padding:0 !important;justify-content:flex-start !important}
@@ -938,7 +941,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.333</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.334</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1770,8 +1773,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0333"></script>
-<script src="zz-ui.js?v=0333"></script>
+<script src="zz-core.js?v=0334"></script>
+<script src="zz-ui.js?v=0334"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
