@@ -3727,7 +3727,12 @@ function setupCone(){
   };
   // v0.257: в чтении по очереди / парами — какие строки звучат, видно сообщением (строки поля не трогаем — выделение остаётся твоим)
   const sndShow = (g) => { if (!document.body.classList.contains("zen")) say(`♫ Звучит ${g.length > 1 ? "пара строк" : "строка"} ${g.map(r => r + 1).join(" + ")}`); };
-  const sndLoop = () => { if (!sndT) return; sndTick(); sndT = setTimeout(sndLoop, 1000 / (Z.sndSp || 6)); };
+  /* v0.374, по снимку «◀ ⏯ дальше ■ ▶» — «по умолчанию выделить стрелку, и запоминать последнюю выделенную — при плее задаёт направление»:
+     Z.sndDir — 1 (▶, по умолчанию) или −1 (◀), горит своя стрелка. Звучит — стрелка меняет направление, звук идёт дальше; не звучит — шаг,
+     как прежде, и тоже задаёт направление. Назад — sndStep идёт вниз по кругу периода (sndPer) */
+  const sndLoop = () => { if (!sndT) return;
+    if (Z.sndDir < 0) { const per = sndPer(); if (per) sndStep = ((sndStep - 2) % per + per) % per; }
+    sndTick(); sndT = setTimeout(sndLoop, 1000 / (Z.sndSp || 6)); };
   /* v0.345, по снимку «♫ звук» — «пауза и шаг вперёд-назад, стрелки справа-слева»: ◀ ♫ звук ▶ и ⏸. Пауза держит место (sndStep)
      и подсветку бита, ⏯ — дальше с того же места; ◀ ▶ — один шаг назад / вперёд (звучит он один), звук при этом встаёт на паузу.
      Период шага — по режиму: длина текущей строки, самой длинной из звучащих, всех строк подряд или ширина поля */
@@ -3739,12 +3744,13 @@ function setupCone(){
     const on = !!sndT || sndPaused, b = $("bSnd"); b.classList.toggle("on", on); b.classList.toggle("run", !!sndT);   // v0.351: звучит — рамка мигает (на паузе — нет)
     b.textContent = sndT ? "⏸ пауза" : sndPaused ? "⏯ дальше" : "♫ звук";
     b.title = sndT ? "⏸ Пауза: звук встаёт, место и подсветка бита остаются (■ рядом — стоп совсем)" : sndPaused ? "⏯ Дальше с того же места (■ рядом — стоп совсем)" : "♫ Звук: поле звучит; ещё щелчок — пауза, ■ рядом — стоп. Строки меняются на ходу — звучит уже новое. Идёт и в запись ⏺ / mp4 конуса";
+    { const bb = $("bSndB"), bf = $("bSndF"), back = Z.sndDir < 0; if (bb) { bb.classList.toggle("on", back); bb.title = "◀ Назад: звучит — играть в обратную сторону; не звучит — шаг назад (звук на паузе). Горит — направление"; } if (bf) { bf.classList.toggle("on", !back); bf.title = "▶ Вперёд: звучит — играть вперёд; не звучит — шаг вперёд (звук на паузе). Горит — направление"; } }   // v0.374
     const p = $("bSndP"); if (p) { p.disabled = !on; p.classList.remove("on"); p.textContent = "■"; p.title = on ? "■ Стоп: звук совсем, следующий пуск — с начала" : "■ Стоп (звук не идёт)"; }
     snd2Label();   // v0.337: остановлен — «⁑ авто»
   };
   const sndSet = (on) => {
     sndPaused = false;
-    if (on) { sndCtx(); sndStep = 0; sndT = setTimeout(sndLoop, 0); } else { clearTimeout(sndT); sndT = 0; sndMark(null); }
+    if (on) { sndCtx(); sndStep = Z.sndDir < 0 ? 1 : 0; sndT = setTimeout(sndLoop, 0); }   // v0.374: назад — с последнего шага else { clearTimeout(sndT); sndT = 0; sndMark(null); }
     sndUi();
   };
   const sndPer = () => {
@@ -3768,8 +3774,10 @@ function setupCone(){
   };
   $("bSnd").onclick = () => { if (sndT) sndPause(true); else if (sndPaused) sndPause(false); else sndSet(true); };   // v0.371: пуск / пауза / дальше
   if ($("bSndP")) $("bSndP").onclick = () => { if (sndT || sndPaused) sndSet(false); };   // v0.371: ■ стоп
-  if ($("bSndB")) $("bSndB").onclick = () => sndStepBy(-1);
-  if ($("bSndF")) $("bSndF").onclick = () => sndStepBy(1);
+  const sndDirSet = (d) => { const was = Z.sndDir < 0 ? -1 : 1; Z.sndDir = d; save(); if (sndT) { sndUi(); if (was !== d) say(d < 0 ? "◀ Звук — назад." : "▶ Звук — вперёд."); } else sndStepBy(d); };   // v0.374
+  if ($("bSndB")) $("bSndB").onclick = () => sndDirSet(-1);
+  if ($("bSndF")) $("bSndF").onclick = () => sndDirSet(1);
+  sndUi();
   $("sndMode").value = Z.sndMode || "row";
   $("sndMode").onchange = (e) => { Z.sndMode = e.target.value; sndStep = 0; save(); };
   const sndMarkUi = () => $("bSndMark").classList.toggle("on", Z.sndMark !== false);   // v0.260
