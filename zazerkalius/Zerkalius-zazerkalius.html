@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.351. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.352. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.351</title>
+<title>Zazerkalius — v0.352</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -590,6 +590,9 @@ body.zen #coneTxtWin{display:none !important}
 #coneTxtWin.min .ctwHead{border-bottom:none}
 #bCtwPin{font-size:11px}
 #bCtwPin.on{border-color:var(--acc);color:var(--acc)}
+/* v0.352, по снимку окна текста — «всё нераскрыто по ползункам, надо, чтоб видно было»: полосы прокрутки в окне — заметные (были тонкие,
+   тёмные на тёмном): текст, вылет, прогноз и лог листаются и вбок, и вниз, и видно, что есть что листать */
+#coneTxtWin, #coneTxtWin *{scrollbar-width:auto;scrollbar-color:color-mix(in srgb, var(--txt) 45%, transparent) color-mix(in srgb, var(--bg) 70%, transparent)}
 body.solo #w-cone .wbody{padding-bottom:var(--ctwH, 0px);box-sizing:border-box}   /* страница одного конуса — холст над полосой */
 body.zen #w-cone #coneMain{bottom:0}
 #w-cone #coneCv{border-radius:6px}
@@ -988,7 +991,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.351</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.352</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1825,8 +1828,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0351"></script>
-<script src="zz-ui.js?v=0351"></script>
+<script src="zz-core.js?v=0352"></script>
+<script src="zz-ui.js?v=0352"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

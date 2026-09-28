@@ -5537,13 +5537,15 @@ function ctwInit(){
     if (c.pin) {
       const r = coneBox(); W.style.visibility = r ? "" : "hidden"; if (!r) return;
       const h = min ? head.offsetHeight + 2 : c.h, top = Math.min(Math.round(r.bottom + 2), vh - h);
-      const k = [r.left, top, r.width, h, min].join(); if (k === last) return; last = k;
-      W.style.left = Math.round(r.left) + "px"; W.style.top = Math.max(0, top) + "px"; W.style.width = Math.round(r.width) + "px";
+      const L = Math.max(0, Math.round(r.left)), R = Math.min(vw, Math.round(r.right)), wd = Math.max(220, R - L);   // v0.352: не шире экрана
+      const k = [L, top, wd, h, min].join(); if (k === last) return; last = k;
+      W.style.left = Math.min(L, Math.max(0, vw - wd)) + "px"; W.style.top = Math.max(0, top) + "px"; W.style.width = wd + "px";
       W.style.height = min ? "" : c.h + "px";
     } else {
       W.style.visibility = ""; last = "";
       const w = Math.max(220, Math.min(c.w || 420, vw)), h = min ? head.offsetHeight + 2 : Math.max(110, Math.min(c.fh || 260, vh));
-      c.x = Math.max(0, Math.min(Math.round(c.x ?? 40), vw - 120)); c.y = Math.max(0, Math.min(Math.round(c.y ?? 80), vh - 30));
+      // v0.352, по снимку окна, обрезанного справа, — «всё нераскрыто, надо, чтоб видно было»: свободное окно — целиком на экране (с кнопками 📌 ▾ ✕)
+      c.x = Math.max(0, Math.min(Math.round(c.x ?? 40), vw - w)); c.y = Math.max(0, Math.min(Math.round(c.y ?? 80), vh - (min ? 30 : h)));
       W.style.left = c.x + "px"; W.style.top = c.y + "px"; W.style.width = w + "px"; W.style.height = min ? "" : h + "px";
     }
   };
