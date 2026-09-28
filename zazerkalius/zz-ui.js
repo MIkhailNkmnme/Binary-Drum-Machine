@@ -8265,7 +8265,8 @@ function init(){
     parkSync(); Z.z++; el.style.zIndex = Z.z; packWins(); save(); renderAll();
     el.scrollIntoView({ block: "nearest" });
   };
-  const sideUi = () => { document.body.classList.toggle("field-right", !!Z.fieldRight); $("bFieldSide").classList.toggle("on", !!Z.fieldRight); };
+  const sideUi = () => { document.body.classList.toggle("field-right", !!Z.fieldRight); $("bFieldSide").classList.toggle("on", !!Z.fieldRight);
+    $("bFieldSide").textContent = Z.fieldRight ? "⇆ строки слева" : "⇆ строки справа"; };   // v0.412, «строки — слева»: подпись — куда переставит щелчок
   sideUi(); requestAnimationFrame(() => { parkSync(); packWins(); });
   $("bFieldSide").onclick = () => { Z.fieldRight = !Z.fieldRight; sideUi(); parkSync(); save(); requestAnimationFrame(() => { packWins(); renderAll(); renderPointers(); });
     say(Z.fieldRight ? "⇆ Окна слева, поле строк справа. Окно, прикреплённое под полем, перетащи за шапку на левую сторону — встанет среди окон." : "⇆ Поле строк снова слева."); };
