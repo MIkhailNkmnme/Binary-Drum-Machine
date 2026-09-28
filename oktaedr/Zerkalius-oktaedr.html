@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.049. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Октаэдр — v0.050. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.049</title>
+<title>Zerkalius Октаэдр — v0.050</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -103,9 +103,13 @@
     border-radius:50%; background:var(--up); }
   .row{ display:flex; gap:4px; }
   /* v0.047, «октаэдр — все виды разложи так же (малыми картинками)», «кнопки вида: сверху, снизу…»: шесть картинок-кнопок вида, по три в ряд */
+  #faceRow{ display:grid; grid-template-columns:repeat(4, 1fr); gap:3px; }
+  #faceRow .vw{ display:flex; flex-direction:column; align-items:center; gap:1px; padding:2px 1px 3px; text-align:center; font-size:10px; line-height:1.1; }
+  #faceRow .vw canvas{ width:40px; height:34px; display:block; cursor:inherit; }
   #viewRow{ display:grid; grid-template-columns:repeat(3, 1fr); gap:4px; }
   #viewRow .vw{ display:flex; flex-direction:column; align-items:center; gap:1px; padding:2px 2px 3px; text-align:center; font-size:10px; line-height:1.1; }
   #viewRow .vw canvas{ width:52px; height:40px; display:block; cursor:inherit; }
+  #viewRow .vroll{ font-size:18px; line-height:1; text-align:center; padding:2px; }   /* v0.050: кувырок ↶ ↷ по бокам от «снизу» */
   /* v0.043: ноты До…Си — выключенная серая, включённая горит цветом своей ноты (--c), как в хабе */
   #noteRow{ flex-wrap:wrap; }
   #noteRow .note{ flex:1 0 40px; padding:5px 2px; font-weight:700; color:#7d8388; border-color:#4a5056; }
@@ -276,7 +280,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.049</div>
+<div id="ver">v0.050</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -477,7 +481,9 @@
     <li><b>Виды</b> (v0.047; v0.049 — розой ветров) — картинки под «⌖», как на компасе: СЗ С СВ / З сверху В / ЮЗ Ю ЮВ и «снизу». «Ю» — зритель на
     юге. С С, В, Ю, З взгляд — на вершину, с СВ, ЮВ, ЮЗ, СЗ — на ребро; сверху — север наверху. На каждой — тело с этой стороны
     (верхние рёбра цветом верха, нижние — низа, экватор — ярче). Щелчок — тело плавно поворачивается так и вращение останавливается,
-    чтобы вид держался; «⟳ Вращение» — снова крутить. С рёбер (СВ, ЮВ, ЮЗ, СЗ) переднее ребро ложится на заднее.</li>
+    чтобы вид держался; «⟳ Вращение» — снова крутить. С рёбер (СВ, ЮВ, ЮЗ, СЗ) переднее ребро ложится на заднее.
+    По бокам от «снизу» — <b>↶ ↷ кувырок</b> (v0.050): картинка поворачивается на 90° вокруг взгляда, наверх встаёт соседняя вершина — так
+    получаются все положения (Ю посередине и В наверху, и т.д.). Вид из розы крен снимает, «⌖» — тоже.</li>
     <li><b>Shift + тянуть</b> (v0.048) — крутить только по горизонтали, наклон стоит. Shift + щелчок без сдвига — по-прежнему правка бита.</li>
     <li><b>☯ Дзен</b> (первая кнопка в полосе меню сверху) — убрать с экрана всё, кроме тела: панель, заголовок, версию, подсказку.
     Вход и выход: кнопка, клавиша Z, щелчок колесом мыши, а из Дзена ещё и Escape. Состояние не
@@ -560,6 +566,8 @@
   <button id="bReset">⌖ Вид сверху</button>
   <!-- v0.047: виды — картинками; щелчок — тело плавно встаёт так, вращение останавливается -->
   <div class="row" id="viewRow"></div>
+  <!-- v0.050, «три ребра к нам»: виды прямо на грань — ▲ верхние слева, ▼ нижние справа, по сторонам света -->
+  <div class="row" id="faceRow"></div>
   <div class="set">
     <label>Размер цифр: <b id="vSize">13</b></label>
     <div class="srow">
@@ -1073,6 +1081,10 @@ function bitPoint(f, r, k){
    зеркала (Y) и pitch вокруг горизонтали. Перспектива простая, в одно деление: чем дальше точка,
    тем меньше её масштаб, — этого хватает, чтобы объём читался, и ничего лишнего считать не надо. */
 let yaw = 0.6, pitch = -0.42, zoom = 1, spin = true, showDigits = true, showHidden = true;
+/* v0.050, «когда Ю посередине, В — верх, тоже все»: КРЕН — поворот картинки вокруг взгляда (после поворота и наклона). Им наверх встаёт
+   любая вершина: кнопки ↶ ↷ под розой видов крутят на 90°. Вращение (spin) по-прежнему вокруг оси тела Верх–Низ — с креном она на экране
+   наклонена, так и должно быть. Мышь с креном ведёт себя как без него: сдвиг пересчитывается в повёрнутую картинку. */
+let roll = 0;
 // v0.031: все рёбра разом (запрос: «кнопку скрытия рёбер»). «△ Скрытые рёбра» прячет только дальние.
 let showEdges = true;
 const CAM = 4.2;
@@ -1084,7 +1096,9 @@ function rot(p){
   const z = -p[0] * sy + p[2] * cy;
   const y = p[1] * cx - z * sx;
   const z2 = p[1] * sx + z * cx;
-  return [x, y, z2];
+  if (!roll) return [x, y, z2];
+  const cr = Math.cos(roll), sr = Math.sin(roll);   // v0.050: крен
+  return [x * cr - y * sr, x * sr + y * cr, z2];
 }
 const cv = document.getElementById("cv");
 const ctx = cv.getContext("2d");
@@ -1580,12 +1594,15 @@ cv.addEventListener("pointermove", (e) => {
     return;
   }
   if (!moved && Math.hypot(e.clientX - downX, e.clientY - downY) > 4) moved = true;
-  yaw += (e.clientX - lastX) * 0.008;
+  // v0.050: с креном сдвиг мыши — в повёрнутую картинку (без крена — как было: вправо — yaw, вниз — наклон)
+  const ddx = e.clientX - lastX, ddy = e.clientY - lastY, rc = Math.cos(roll), rs = Math.sin(roll);
+  const mX = ddx * rc - ddy * rs, mY = ddx * rs + ddy * rc;
+  yaw += mX * 0.008;
   // Наклон зажат чуть меньше прямого угла: ровно с ребра октаэдр вырождается в линию, и
   // смотреть там не на что.
   // v0.048, «с зажатым Shift — кручение по горизонтали только»: с Shift наклон не трогается (Shift + щелчок без сдвига — по-прежнему правка
   // бита). Предел — не меньше нынешнего наклона: после вида ровно сверху / снизу (90°) тело больше не прыгает на 83° при первом движении.
-  if (!e.shiftKey) { const lim = Math.max(1.45, Math.abs(pitch)); pitch = Math.max(-lim, Math.min(lim, pitch - (e.clientY - lastY) * 0.008)); }
+  if (!e.shiftKey) { const lim = Math.max(1.45, Math.abs(pitch)); pitch = Math.max(-lim, Math.min(lim, pitch - mY * 0.008)); }
   lastX = e.clientX; lastY = e.clientY;
 });
 // Положение тела запоминается тоже — вернувшись на страницу, застаёшь её той же стороной.
@@ -1668,7 +1685,7 @@ bTheme.onclick = () => {
   else document.documentElement.setAttribute("data-theme", "green");
   syncUI();
 };
-bReset.onclick = () => { yaw = 0.6; pitch = -0.42; zoom = 1; save(); };
+bReset.onclick = () => { yaw = 0.6; pitch = -0.42; roll = 0; zoom = 1; save(); };   // v0.050: и крен
 
 /* ═══ ПОЛЗУНКИ И ПАМЯТЬ БРАУЗЕРА ══════════════════════════════════════════════════════════════
    Настройки переживают перезагрузку — как и в самом приложении, где всё живёт в памяти браузера и
@@ -1683,7 +1700,7 @@ const vRows = document.getElementById("vRows"), vSize = document.getElementById(
 function save(){
   try {
     localStorage.setItem(KEY, JSON.stringify({
-      ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, showEdges, showDirs, dotMode, zoom, yaw, pitch, stepOp, TICK,
+      ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, showEdges, showDirs, dotMode, zoom, yaw, pitch, roll, stepOp, TICK,
       showLinks, LINK_EVERY, hoverOn, myBits, mySame, glowV: 1, bitCol, col0, col1, NB, sierp, faceMode, TEMPO,
       theme: document.documentElement.getAttribute("data-theme") || ""
     }));
@@ -1709,6 +1726,7 @@ function load(){
   if (o.zoom > 0.4 && o.zoom < 3.1) zoom = o.zoom;
   if (typeof o.yaw === "number") yaw = o.yaw;
   if (typeof o.pitch === "number") pitch = o.pitch;
+  if (typeof o.roll === "number") roll = o.roll;   // v0.050
   if (o.theme === "green") document.documentElement.setAttribute("data-theme", "green");
   if (o.stepOp === "rev" || o.stepOp === "revinv" || o.stepOp === "roll" || o.stepOp === "animL" || o.stepOp === "animR") stepOp = o.stepOp;
   if (o.TICK >= 60 && o.TICK <= 1200) TICK = o.TICK | 0;
@@ -2217,15 +2235,22 @@ const D2R = Math.PI / 180, vFrom = (deg) => (deg - 90) * D2R;
 const VIEWS = [["nw", "СЗ", vFrom(225), 0], ["n", "С", vFrom(270), 0], ["ne", "СВ", vFrom(315), 0],
                ["w", "З", vFrom(180), 0], ["top", "сверху", 0, Math.PI / 2], ["e", "В", vFrom(0), 0],
                ["sw", "ЮЗ", vFrom(135), 0], ["s", "Ю", vFrom(90), 0], ["se", "ЮВ", vFrom(45), 0],
-               null, ["bot", "снизу", 0, -Math.PI / 2], null];
+               "rl", ["bot", "снизу", 0, -Math.PI / 2], "rr"];
 const VIEW_TIP = { n: "с севера", ne: "с северо-востока", e: "с востока", se: "с юго-востока", s: "с юга", sw: "с юго-запада", w: "с запада", nw: "с северо-запада", top: "сверху", bot: "снизу" };
 const viewYaw = (v) => v[2];
-const viewRow = document.getElementById("viewRow");
-viewRow.innerHTML = VIEWS.map(v => v ? `<button type="button" class="vw" data-v="${v[0]}" title="Вид ${VIEW_TIP[v[0]]}: тело плавно встаёт так, вращение останавливается"><canvas></canvas><span>${v[1]}</span></button>` : "<span></span>").join("");
+/* v0.050, «три ребра к нам» (снимок — вид с ребра): вид прямо на грань — её три ребра к нам, контур тела — шестиугольник. У октаэдра
+   нормаль грани Верх–Ю–В — (1, 1, 1): направление ЮВ (45°), подъём atan(1/√2) ≈ 35,3°; нижние — тот же угол вниз. */
+const FE = Math.atan(1 / Math.SQRT2);
+const FACEV = [["fu-nw", "▲СЗ", vFrom(225), FE], ["fu-ne", "▲СВ", vFrom(315), FE], ["fd-nw", "▼СЗ", vFrom(225), -FE], ["fd-ne", "▼СВ", vFrom(315), -FE],
+               ["fu-sw", "▲ЮЗ", vFrom(135), FE], ["fu-se", "▲ЮВ", vFrom(45), FE], ["fd-sw", "▼ЮЗ", vFrom(135), -FE], ["fd-se", "▼ЮВ", vFrom(45), -FE]];
+const viewRow = document.getElementById("viewRow"), faceRow = document.getElementById("faceRow");
+faceRow.innerHTML = FACEV.map(v => `<button type="button" class="vw" data-v="${v[0]}" title="Прямо на ${v[1][0] === "▲" ? "верхнюю" : "нижнюю"} грань ${v[1].slice(1)}: три её ребра к нам; вращение останавливается"><canvas></canvas><span>${v[1]}</span></button>`).join("");
+viewRow.innerHTML = VIEWS.map(v => Array.isArray(v) ? `<button type="button" class="vw" data-v="${v[0]}" title="Вид ${VIEW_TIP[v[0]]}: тело плавно встаёт так, вращение останавливается"><canvas></canvas><span>${v[1]}</span></button>`
+  : `<button type="button" class="vroll" data-r="${v === "rl" ? 1 : -1}" title="Кувырок на 90° ${v === "rl" ? "против часовой" : "по часовой"} вокруг взгляда: наверх встаёт соседняя вершина (например, Ю посередине — В или З наверху)">${v === "rl" ? "↶" : "↷"}</button>`).join("");
 function viewThumbs(){
   const cu = css("--up"), cd = css("--dn"), ce = css("--eq"), dpr = Math.min(window.devicePixelRatio || 1, 2);
-  viewRow.querySelectorAll(".vw").forEach(b => {
-    const v = VIEWS.find(x => x && x[0] === b.dataset.v), c = b.querySelector("canvas"), w = c.clientWidth || 52, h = c.clientHeight || 40;
+  document.querySelectorAll("#viewRow .vw, #faceRow .vw").forEach(b => {
+    const v = VIEWS.concat(FACEV).find(x => Array.isArray(x) && x[0] === b.dataset.v), c = b.querySelector("canvas"), w = c.clientWidth || 52, h = c.clientHeight || 40;
     if (c.width !== Math.round(w * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
     const g = c.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
     const vy = viewYaw(v), cy = Math.cos(vy), sy = Math.sin(vy), cx = Math.cos(v[3]), sx = Math.sin(v[3]), S = Math.min(w, h) * 0.42;
@@ -2241,21 +2266,27 @@ function viewThumbs(){
   });
 }
 let viewAnim = 0;
-viewRow.addEventListener("click", (e) => {
-  const b = e.target.closest(".vw"); if (!b) return;
-  const v = VIEWS.find(x => x && x[0] === b.dataset.v); if (!v) return;
+const shortA = (a) => { const TAU = 2 * Math.PI; a = ((a % TAU) + TAU) % TAU; return a > Math.PI ? a - TAU : a; };
+function viewGo(Y, Pt, Rl){   // v0.050: плавно к повороту Y, наклону Pt, крену Rl — кратчайшим путём; вращение стоп
   spin = false; bSpin.classList.remove("act");
-  const y0 = yaw, p0 = pitch, TAU = 2 * Math.PI;
-  let dy = ((viewYaw(v) - y0) % TAU + TAU) % TAU; if (dy > Math.PI) dy -= TAU;   // кратчайшим путём
+  const y0 = yaw, p0 = pitch, r0 = roll, dy = shortA(Y - y0), dr = shortA(Rl - r0);
   const t0 = performance.now(), D = 350, id = ++viewAnim;
   const step = (t) => {
     if (id !== viewAnim) return;
     const u = Math.min(1, (t - t0) / D), k = u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
-    yaw = y0 + dy * k; pitch = p0 + (v[3] - p0) * k;
-    if (u < 1) requestAnimationFrame(step); else save();
+    yaw = y0 + dy * k; pitch = p0 + (Pt - p0) * k; roll = r0 + dr * k;
+    if (u < 1) requestAnimationFrame(step); else { roll = shortA(roll); if (Math.abs(roll) < 1e-9) roll = 0; save(); }
   };
   requestAnimationFrame(step);
-});
+}
+const viewClick = (e) => {
+  const r = e.target.closest(".vroll");
+  if (r) { const q = Math.PI / 2; viewGo(yaw, pitch, Math.round((roll + q * +r.dataset.r) / q) * q); return; }   // кувырок — к ровным 90°
+  const b = e.target.closest(".vw"); if (!b) return;
+  const v = VIEWS.concat(FACEV).find(x => Array.isArray(x) && x[0] === b.dataset.v); if (!v) return;
+  viewGo(viewYaw(v), v[3], 0);   // вид из розы и на грань — без крена
+};
+viewRow.addEventListener("click", viewClick); faceRow.addEventListener("click", viewClick);
 { const syncUI0 = syncUI; syncUI = function(){ syncUI0.apply(this, arguments); viewThumbs(); }; }
 viewThumbs();
 /* v0.044: СТРОКИ ИЗ ZAZERKALIUS. Окно «◆ Октаэдр» шлёт столбик строк поля ({ type: "zz-rows", rows }) при открытии и при каждой
