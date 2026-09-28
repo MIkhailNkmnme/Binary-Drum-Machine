@@ -6053,9 +6053,7 @@ function init(){
   // v0.010: двойной щелчок — правка строки на месте.
   $("rowList").ondblclick = (e) => {
     if (rowEditing >= 0) return;
-    if (e.target.closest(".rw > .no > .rn") && !e.target.closest(".fctl")) {   // v0.237, сброс ширины — «по номерам»: двойной щелчок по номеру — ширина поля по умолчанию
-      Z.rowsW = 0; $("main").style.removeProperty("--rowsW"); save(); packWins(); renderPointers(); fieldInfoFit(); say("↔ Ширина поля строк — по умолчанию."); return;
-    }
+    // v0.274: двойной щелчок по номеру ширину больше не сбрасывает — это делает двойной щелчок по границе поля
     // v0.112: двойной щелчок по черте — вернуть все строки (черту тащат с захватом указателя — щелчок приходит полю, смотрим, что под ним)
     const pt = document.elementFromPoint(e.clientX, e.clientY);
     if (pt && pt.closest(".cutln")) { cutMove(Infinity); return; }
@@ -6716,11 +6714,10 @@ function init(){
     list.addEventListener("pointermove", move); list.addEventListener("pointerup", up); list.addEventListener("pointercancel", up);
     addEventListener("pointerup", up, true); addEventListener("pointercancel", up, true); addEventListener("blur", up);   // отпустили где угодно — конец
   };
-  $("rowList").addEventListener("pointerdown", (e) => {
-    const no = e.target.closest(".rw > .no > .rn"); if (!no || e.target.closest(".fctl") || e.button !== 0 || rowEditing >= 0) return;   // v0.219: «хват только у номеров, не дальше»
-    rowsWDrag(e, $("rowList"), true);
-  });
+  // v0.274, «перетаскивание за номера убери — там сейчас есть граница»: ширину поля меняет только граница #fieldEdge (номера — снова просто
+  // выбор строки); двойной щелчок по границе — ширина по умолчанию (прежде — по номеру, v0.237)
   $("fieldEdge").addEventListener("pointerdown", (e) => { if (e.button !== 0) return; e.preventDefault(); rowsWDrag(e, $("fieldEdge"), false); });
+  $("fieldEdge").addEventListener("dblclick", () => { Z.rowsW = 0; applyRowsW(); save(); packWins(); renderPointers(); rowsFit(); fieldInfoFit(); say("↔ Ширина поля строк — по умолчанию."); });
   // v0.091: ⇆ поле строк справа — окна слева
   /* v0.094, «и все остальные кнопки в левом режиме убрать под меню левое» (снимок: стопка свёрнутых шапок окон): при «⇆ поле
      справа» свёрнутые окна не стоят на столе, а кнопками — в левой панели под шаблонами; щелчок — развернуть окно на стол. */
