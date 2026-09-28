@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.052. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Октаэдр — v0.053. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.052</title>
+<title>Zerkalius Октаэдр — v0.053</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -280,7 +280,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.052</div>
+<div id="ver">v0.053</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -477,6 +477,9 @@
     своей грани (ряд за рядом от вершины; 1 — звучит, 0 — пауза, высота — по трём битам с этого места) и звучит от своей ноты, поэтому
     несколько включённых дают созвучие. Нота, у которой грани нет, читает экватор — нижние ряды верхних граней по кругу (у бипирамиды
     из 3 граней это Си, внутреннее основание). Бит, который сейчас звучит, горит на теле цветом своей ноты. Темп — ползунком.</li>
+    <li><b>✛ Оси</b> (v0.053) — оси через центр от вершины к противоположной (штрихом: Верх–Низ, у чётного основания и диаметры экватора;
+    у октаэдра их три) и внутренние диагонали — от вершины к вершине сквозь тело, не по ребру (точками: у 5 граней — диагонали
+    пятиугольника, у 6 — короткие). У треугольной бипирамиды ось одна — Верх–Низ.</li>
     <li><b>⌖ Вид сверху</b> — вернуть камеру в исходное положение.</li>
     <li><b>Виды</b> (v0.047; v0.049 — розой ветров) — картинки под «⌖», как на компасе: СЗ С СВ / З сверху В / ЮЗ Ю ЮВ и «снизу». «Ю» — зритель на
     юге. С С, В, Ю, З взгляд — на вершину, с СВ, ЮВ, ЮЗ, СЗ — на ребро; сверху — север наверху. На каждой — тело с этой стороны
@@ -566,6 +569,7 @@
   <button id="bEdges" class="act" title="E. Все рёбра тела, и экватор тоже">◇ Рёбра</button>
   <button id="bEdge" class="act">△ Скрытые рёбра</button>
   <button id="bDirs" class="act" title="C">🧭 Стороны света</button>
+  <button id="bAxes" class="act" title="Оси — через центр от вершины к противоположной (штрихом) и внутренние диагонали — от вершины к вершине сквозь тело, не по ребру (точками)">✛ Оси</button>
   <button id="bReset">⌖ Вид сверху</button>
   <!-- v0.047: виды — картинками; щелчок — тело плавно встаёт так, вращение останавливается -->
   <div class="row" id="viewRow"></div>
@@ -1090,6 +1094,7 @@ let yaw = 0.6, pitch = -0.42, zoom = 1, spin = true, showDigits = true, showHidd
    любая вершина: кнопки ↶ ↷ под розой видов крутят на 90°. Вращение (spin) по-прежнему вокруг оси тела Верх–Низ — с креном она на экране
    наклонена, так и должно быть. Мышь с креном ведёт себя как без него: сдвиг пересчитывается в повёрнутую картинку. */
 let roll = 0;
+let showAxes = true;   // v0.053: оси и внутренние диагонали (см. drawAxes)
 // v0.031: все рёбра разом (запрос: «кнопку скрытия рёбер»). «△ Скрытые рёбра» прячет только дальние.
 let showEdges = true;
 const CAM = 4.2;
@@ -1709,7 +1714,7 @@ const vRows = document.getElementById("vRows"), vSize = document.getElementById(
 function save(){
   try {
     localStorage.setItem(KEY, JSON.stringify({
-      ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, showEdges, showDirs, dotMode, zoom, yaw, pitch, roll, stepOp, TICK,
+      ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, showEdges, showDirs, dotMode, zoom, yaw, pitch, roll, showAxes, stepOp, TICK,
       showLinks, LINK_EVERY, hoverOn, myBits, mySame, glowV: 1, bitCol, col0, col1, NB, sierp, faceMode, TEMPO,
       theme: document.documentElement.getAttribute("data-theme") || ""
     }));
@@ -1736,6 +1741,7 @@ function load(){
   if (typeof o.yaw === "number") yaw = o.yaw;
   if (typeof o.pitch === "number") pitch = o.pitch;
   if (typeof o.roll === "number") roll = o.roll;   // v0.050
+  if (typeof o.showAxes === "boolean") showAxes = o.showAxes;   // v0.053
   if (o.theme === "green") document.documentElement.setAttribute("data-theme", "green");
   if (o.stepOp === "rev" || o.stepOp === "revinv" || o.stepOp === "roll" || o.stepOp === "animL" || o.stepOp === "animR") stepOp = o.stepOp;
   if (o.TICK >= 60 && o.TICK <= 1200) TICK = o.TICK | 0;
@@ -2340,7 +2346,35 @@ function drawSelFace(){
   ctx.restore();
 }
 { const draw0 = draw; draw = function(){ draw0.apply(this, arguments); drawSelFace(); }; }
-{ const syncUI1 = syncUI; syncUI = function(){ syncUI1.apply(this, arguments); faceUi(); }; }
+/* v0.053, «сделай оси видными во всех фигурах, и те, что не оси, но от вершины к вершине не по ребру, а внутри идут». Все пары вершин тела
+   (Верх, Низ, углы основания), которые не ребро: середина в центре — ОСЬ (штрих, цвет экватора): Верх–Низ всегда, у чётного основания и
+   диаметры экватора (у октаэдра — три оси); остальные — ВНУТРЕННИЕ ДИАГОНАЛИ (точками, цвет закрепления): у 5 граней — пять диагоналей
+   пятиугольника, у 6 — шесть коротких. Рисуются поверх тела, полупрозрачно: они внутри, а грани у нас стеклянные. Кнопка «✛ Оси». */
+function innerLines(){
+  const V = [T, B, ...EQ], out = [];
+  const isEdge = (a, b) => EDGES.some(e => (e.a === a && e.b === b) || (e.a === b && e.b === a));
+  for (let i = 0; i < V.length; i++) for (let j = i + 1; j < V.length; j++) {
+    const a = V[i], b = V[j]; if (isEdge(a, b)) continue;
+    out.push({ a, b, axis: Math.hypot(a[0] + b[0], a[1] + b[1], a[2] + b[2]) < 1e-6 });
+  }
+  return out;
+}
+function drawAxes(){
+  if (!showAxes) return;
+  const cA = css("--eq"), cD = css("--pin");
+  ctx.save(); ctx.lineCap = "round";
+  for (const L of innerLines()) {
+    const p = project(L.a), q = project(L.b);
+    ctx.strokeStyle = L.axis ? cA : cD; ctx.globalAlpha = L.axis ? 0.6 : 0.5; ctx.lineWidth = L.axis ? 1.5 : 1.2;
+    ctx.setLineDash(L.axis ? [7, 5] : [1.5, 4]);
+    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+  }
+  ctx.restore();
+}
+{ const draw1 = draw; draw = function(){ draw1.apply(this, arguments); drawAxes(); }; }
+const bAxes = document.getElementById("bAxes");
+bAxes.onclick = () => { showAxes = !showAxes; bAxes.classList.toggle("act", showAxes); save(); };
+{ const syncUI1 = syncUI; syncUI = function(){ syncUI1.apply(this, arguments); faceUi(); if (typeof bAxes !== "undefined") bAxes.classList.toggle("act", showAxes); }; }
 faceUi();
 { const syncUI0 = syncUI; syncUI = function(){ syncUI0.apply(this, arguments); viewThumbs(); }; }
 viewThumbs();
