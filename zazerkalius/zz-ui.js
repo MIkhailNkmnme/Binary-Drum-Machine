@@ -6217,6 +6217,24 @@ function paneFoldApply(){
     paneFoldBody(h).forEach(e => e.classList.toggle("pane-fold-hid", f));
   });
 }
+/* v0.323, «колёсико в левой панели — скролл всех окон»: колесо над левой панелью прокручивает стол со всеми окнами (#desk). Если под
+   мышью то, что прокручивается само и ещё может (группы на панели, шаблоны, панель значками), — крутится оно, как прежде; поле ввода
+   в фокусе — его. Shift + колесо — стол вбок, Ctrl + колесо — масштаб страницы, как всегда. */
+function paneWheelInit(){
+  const P = $("rowsPane"), D = $("desk"); if (!P || !D) return;
+  P.addEventListener("wheel", (e) => {
+    if (e.ctrlKey || e.metaKey) return;
+    const k = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? D.clientHeight : 1, dy = e.deltaY * k, dx = e.deltaX * k;
+    for (let n = e.target; n && n.nodeType === 1; n = n.parentElement) {
+      if (n === document.activeElement && /^(INPUT|SELECT|TEXTAREA)$/.test(n.tagName)) return;
+      const oy = getComputedStyle(n).overflowY;
+      if (dy && !e.shiftKey && (oy === "auto" || oy === "scroll") && n.scrollHeight > n.clientHeight + 1 && (dy < 0 ? n.scrollTop > 0 : n.scrollTop + n.clientHeight < n.scrollHeight - 1)) return;
+      if (n === P) break;
+    }
+    e.preventDefault();
+    D.scrollBy(e.shiftKey ? { left: dy || dx } : { left: dx, top: dy });
+  }, { passive: false });
+}
 function paneFoldInit(){
   document.querySelectorAll("#rowsPane > .pane-head:not([id])").forEach(h => {
     const t = h.getAttribute("title"); h.setAttribute("title", (t ? t + " · " : "") + "Щелчок по заголовку — свернуть / развернуть группу");
@@ -7695,6 +7713,7 @@ function init(){
   renderAll();
   applyPaneIcons();   // v0.035: панель значками — как запомнено (шаблоны уже нарисованы)
   paneFoldInit();   // v0.310
+  paneWheelInit();   // v0.323
   // Шрифт мог догрузиться позже — ширина ячейки бита изменится, скобки надо переложить.
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => renderPointers());
   // v0.017: ширина стола известна только теперь (разделитель поставлен) — окна под неё; и при смене размера окна браузера.
