@@ -436,13 +436,20 @@ function cutPanelMount(){
 }
 /* v0.290, «вот тут в нижний угол всегда»: 🗑 лежит в #field поверх поля строк — в правом нижнем углу его видимой части, левее и выше
    полос прокрутки. Место пересчитывается при каждой отрисовке поля и при смене размеров поля (ResizeObserver). */
+/* v0.293, «убери влево значок и уведомление — за значки, если накладываются»: 🗑 — в ЛЕВОМ нижнем углу, выше полосы прокрутки, и
+   лежит прямо в body (position:fixed, z-index 51) — из #field (там isolation) его над уведомлением #msg (z-index 50) не поднять.
+   Место — по видимой части #rowList на экране; поле скрыто — 🗑 тоже. */
 const CLR_BTN = document.getElementById("bCutClr");
+if (CLR_BTN) document.body.appendChild(CLR_BTN);
 function clrPlace(){
-  const L = document.getElementById("rowList"), F = document.getElementById("field"); if (!CLR_BTN || !L || !F) return;
-  CLR_BTN.style.right = (F.clientWidth - (L.offsetLeft + L.clientWidth) + 6) + "px";
-  CLR_BTN.style.bottom = (F.clientHeight - (L.offsetTop + L.clientHeight) + 4) + "px";
+  const L = document.getElementById("rowList"); if (!CLR_BTN || !L) return;
+  const r = L.getBoundingClientRect(), off = !L.getClientRects().length || r.width < 40 || r.height < 30;
+  CLR_BTN.style.visibility = off ? "hidden" : ""; if (off) return;
+  CLR_BTN.style.left = (r.left + L.clientLeft + 6) + "px";
+  CLR_BTN.style.bottom = (window.innerHeight - (r.top + L.clientTop + L.clientHeight) + 4) + "px";
 }
 if (window.ResizeObserver) { const ro = new ResizeObserver(() => clrPlace()); ["rowList", "field"].forEach(id => { const e = document.getElementById(id); if (e) ro.observe(e); }); }
+window.addEventListener("resize", () => clrPlace());
 /* v0.288, «убери выделение, когда нет внизу ничего»: «Заменить» и «⤒ из-под черты» — про строки, что уже лежат под чертой; когда там
    пусто, обе ничего не делают, и подсветка не горит. Сохранённый выбор не меняется — подсветится, как только под чертой появятся строки. */
 function cutHidUi(){

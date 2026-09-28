@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.292. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.293. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.292</title>
+<title>Zazerkalius — v0.293</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -425,8 +425,11 @@ body.field-hidden #fieldEdge,body.zen #fieldEdge{display:none}
 #cutPanel button.on{background:transparent}
 /* v0.290, по снимку поля — «вот тут в нижний угол всегда»: 🗑 — не в панели под чертой, а в правом нижнем углу видимой части поля строк,
    поверх; при прокрутке и при коротком поле стоит там же (место считает clrPlace в zz-ui.js). v0.289 — в конце панели. */
-#bCutClr{position:absolute;z-index:5;font-size:18px;line-height:1;padding:2px 4px;background:var(--panel);border:1px solid var(--line);border-radius:4px}
+/* v0.293, по снимку уведомления поверх 🗑 — «убери влево значок и уведомление убери за значки, если накладываются»: 🗑 — в ЛЕВОМ
+   нижнем углу поля строк и лежит на уровне страницы (fixed), выше уведомления #msg (z-index 50). */
+#bCutClr{position:fixed;z-index:51;font-size:18px;line-height:1;padding:2px 4px;background:var(--panel);border:1px solid var(--line);border-radius:4px}
 #bCutClr:disabled{opacity:.35;cursor:default}
+body.zen #bCutClr,body.bgmode #bCutClr{display:none !important}
 #cutPanel #tplBar{display:contents}
 #cutPanel #tplList{display:contents}
 #cutPanel .tpl{display:inline-flex;gap:2px;flex:0 0 auto;min-width:0}
@@ -847,7 +850,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.292</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.293</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1651,8 +1654,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0292"></script>
-<script src="zz-ui.js?v=0292"></script>
+<script src="zz-core.js?v=0293"></script>
+<script src="zz-ui.js?v=0293"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>
