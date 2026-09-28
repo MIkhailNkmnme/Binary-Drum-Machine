@@ -5563,6 +5563,15 @@ function cgrpInit(){
   if (!Z.cgrpPos || typeof Z.cgrpPos !== "object") Z.cgrpPos = {};
   if (!Z.cgrpMin || typeof Z.cgrpMin !== "object") Z.cgrpMin = {};   // v0.204: свёрнутые до заголовка
   if (!Z.cgrpSize || typeof Z.cgrpSize !== "object") Z.cgrpSize = {};   // v0.315: размер, заданный уголком { имя: { w, h } }
+  /* v0.348, «наборы кнопок — кроме тех, что только для конуса (кручение, кольца), — если переместить целиком на поле строк, то дать туда
+     попасть, если частью — то так же, как сейчас»: группа, отпущенная ЦЕЛИКОМ над полем строк, встаёт поверх поля (.cfld, position: fixed)
+     и ездит вместе с ним (ширина поля, панель, окно). Место — Z.cgrpFld { имя: { x, y } } от угла поля. Частью — как прежде: над холстом,
+     прижатая к окну конуса. Назад — вытащить с поля или правый щелчок по заголовку. Кольца и Кручение на поле не встают. Поле спрятано,
+     дзен или страница одного конуса — группа на полосе конуса, место на поле помнится */
+  if (!Z.cgrpFld || typeof Z.cgrpFld !== "object") Z.cgrpFld = {};
+  const FLD_NO = { "кольца": 1, "кручение": 1 };
+  const fldRect = () => { const F = $("field"), B = document.body.classList; if (!F || B.contains("field-hidden") || B.contains("zen") || B.contains("solo")) return null; const r = F.getBoundingClientRect(); return r.width > 20 && r.height > 20 ? r : null; };
+  const fldFits = (g, gr) => { if (FLD_NO[g.dataset.g]) return false; const fr = fldRect(); return !!fr && gr.left >= fr.left - 1 && gr.top >= fr.top - 1 && gr.right <= fr.right + 1 && gr.bottom <= fr.bottom + 1; };
   // v0.315: размер группы — уголком; у свёрнутой (cmin) — свой, до заголовка
   /* v0.332, по снимку группы «Вид», сжатой уголком до одной подписи, — «кнопки, если не помещаются в группе, — не давать размера»: группа
      не уже самой широкой кнопки и не ниже, чем нужно её кнопкам при этой ширине. Сохранённый размер не переписывается — меньший просто
@@ -5609,6 +5618,13 @@ function cgrpInit(){
     if (b) inp.style.paddingRight = `calc(${b}ch + 6px)`;
   }));
   const place = (g) => {
+    const f = !FLD_NO[g.dataset.g] && g.parentElement === tl && Z.cgrpFld[g.dataset.g], fr = f && fldRect();   // v0.348: на поле строк
+    g.classList.toggle("cfld", !!fr);
+    if (fr) {
+      g.classList.add("cfloat"); const gw = g.offsetWidth, gh = g.offsetHeight;
+      const x = Math.max(0, Math.min(f.x, fr.width - gw)), y = Math.max(0, Math.min(f.y, fr.height - gh));
+      g.style.left = Math.round(fr.left + x) + "px"; g.style.top = Math.round(fr.top + y) + "px"; return;
+    }
     const p = Z.cgrpPos[g.dataset.g]; g.classList.toggle("cfloat", !!p);
     if (!p) { g.style.left = g.style.top = ""; return; }
     const tr = tl.getBoundingClientRect(), br = wb.getBoundingClientRect(), gw = g.offsetWidth, gh = g.offsetHeight;
@@ -5660,14 +5676,17 @@ function cgrpInit(){
         lx = ev.clientX; ly = ev.clientY;
         g.style.left = Math.round(lx - dx) + "px"; g.style.top = Math.round(ly - dy) + "px";
         const P = $("rowsPane"); if (P) P.classList.toggle("cgover", paneHit(lx, ly));   // (в дзене панели нет — paneHit ложь)
+        const F = $("field"); if (F) F.classList.toggle("cgover", !paneHit(lx, ly) && fldFits(g, g.getBoundingClientRect()));   // v0.348: целиком над полем
       };
       const up = () => {
         g.removeEventListener("pointermove", mv); g.removeEventListener("pointerup", up); g.removeEventListener("pointercancel", up);
         if (!moved) return;
-        const gr = g.getBoundingClientRect();
+        const gr = g.getBoundingClientRect(), onF = !paneHit(lx, ly) && fldFits(g, gr), F = $("field"); if (F) F.classList.remove("cgover");   // v0.348
         g.classList.remove("cdrag"); document.body.classList.remove("cgdrag"); sizeApply(g); const P = $("rowsPane"); if (P) P.classList.remove("cgover");
-        if (paneHit(lx, ly)) { dock(g, lx, ly); save(); return; }
+        if (paneHit(lx, ly)) { delete Z.cgrpFld[g.dataset.g]; dock(g, lx, ly); save(); return; }
         if (g.parentElement !== tl) undock(g);
+        if (onF) { const fr = fldRect(); Z.cgrpFld[g.dataset.g] = { x: Math.round(gr.left - fr.left), y: Math.round(gr.top - fr.top) }; delete Z.cgrpPos[g.dataset.g]; place(g); save(); return; }   // v0.348: целиком на поле строк
+        delete Z.cgrpFld[g.dataset.g];
         const tr = tl.getBoundingClientRect(); Z.cgrpPos[g.dataset.g] = { x: gr.left - tr.left, y: gr.top - tr.top }; place(g); save();
       };
       g.addEventListener("pointermove", mv); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
@@ -5687,6 +5706,7 @@ function cgrpInit(){
     lab.addEventListener("contextmenu", (e) => {
       e.preventDefault();
       if (g.parentElement !== tl) { undock(g); place(g); save(); return; }   // v0.252: с левой панели — обратно на полосу
+      if (Z.cgrpFld[g.dataset.g]) { delete Z.cgrpFld[g.dataset.g]; delete Z.cgrpPos[g.dataset.g]; place(g); save(); return; }   // v0.348: с поля строк — на полосу
       if (!Z.cgrpPos[g.dataset.g]) return; delete Z.cgrpPos[g.dataset.g]; place(g); save();
     });
     place(g);
@@ -5763,6 +5783,11 @@ function cgrpInit(){
     const bf = cgrpMoveEl(cgrpRefEl(m.before)); cgb.insertBefore(el, bf && bf.parentElement === cgb ? bf : null);
   }
   addEventListener("resize", () => groups.forEach(place));
+  { // v0.348: поле строк меняет место и размер (ширина поля, панель, спрятать, дзен) — группы на нём едут следом
+    const F = $("field"), re = () => groups.forEach(g => { if (Z.cgrpFld[g.dataset.g] && !g.classList.contains("cdrag")) place(g); });   // тащимую — не трогать
+    if (F && window.ResizeObserver) new ResizeObserver(re).observe(F);
+    new MutationObserver(re).observe(document.body, { attributes: true, attributeFilter: ["class"] });
+  }
   cgrpCols();
   cgbIcons();   // v0.317: подписи кнопок меняются (▶ / ⏸, «только значки») — пересчёт, кто значок
   { let t = 0; const mo = new MutationObserver(() => { if (!t) t = requestAnimationFrame(() => { t = 0; cgbIcons(); cgbSnap(); }); });   // v0.335: и ширины 1 / 2 / 4
