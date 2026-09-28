@@ -1,4 +1,4 @@
-<!-- Zerkalius Гранидус — v0.057. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Гранидус — v0.058. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Гранидус — v0.057</title>
+<title>Zerkalius Гранидус — v0.058</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -253,6 +253,11 @@
   html.zzemb .tab-sec{ --gc:#6cb4ff; background:color-mix(in srgb, var(--gc) 13%, var(--zp)); border:1px solid color-mix(in srgb, var(--gc) 50%, transparent);
     border-radius:6px; padding:3px 6px 6px; gap:4px; }
   html.zzemb .tab-sec:hover, html.zzemb .tab-sec.floating{ border-color:var(--gc); }
+  /* v0.058, по снимку «Картины» с полосой прокрутки внизу — «нижний скролл»: ряд оснований ▽1 … ⬡6 с кнопками Зазеркалиуса был шире
+     раздела; кнопки ряда — компактнее, делят ширину поровну; горизонтальной прокрутки у разделов и панелей нет вовсе */
+  html.zzemb #baseRow{ gap:3px; }
+  html.zzemb #baseRow button{ flex:1 1 0; min-width:0; padding:3px 0; font-size:11.5px; letter-spacing:0; overflow:hidden; }
+  .tab-sec.floating, .dock{ overflow-x:hidden; }
   html.zzemb .tab-sec[data-tab="pic"]{ --gc:#4fd1a0; }   html.zzemb .tab-sec[data-tab="view"]{ --gc:#6cb4ff; }
   html.zzemb .tab-sec[data-tab="color"]{ --gc:#f0abfc; } html.zzemb .tab-sec[data-tab="notes"]{ --gc:#b98cff; }
   html.zzemb .tab-sec[data-tab="rev"]{ --gc:#ff9a52; }   html.zzemb .tab-sec[data-tab="links"]{ --gc:#ff6b8e; }
@@ -286,7 +291,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.057</div>
+<div id="ver">v0.058</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -483,6 +488,8 @@
     своей грани (ряд за рядом от вершины; 1 — звучит, 0 — пауза, высота — по трём битам с этого места) и звучит от своей ноты, поэтому
     несколько включённых дают созвучие. Нота, у которой грани нет, читает экватор — нижние ряды верхних граней по кругу (у бипирамиды
     из 3 граней это Си, внутреннее основание). Бит, который сейчас звучит, горит на теле цветом своей ноты. Темп — ползунком.</li>
+    <li><b>Совпадения</b> (v0.058) — строка под видами, на ходу: вершины, рёбра, грани — всего → различимо в нынешнем виде (рёбра торцом —
+    точкой, грани ребром — линией), и оси — сколько видно торцом и сколько легло на ребро. Считается по линии взгляда, без перспективы.</li>
     <li><b>Ребро на ребро</b> (v0.057) — картинки «×N» под видами на грань: виды, где рёбер совпадает больше всего (легли на одну прямую
     или видны торцом), N — сколько совпадений. Считаются для нынешнего тела и пересчитываются при смене основания.</li>
     <li><b>Щелчок по полю</b> (v0.055) — мимо битов, не сдвигая мышь: вращение стоп, ещё щелчок — снова крутится (как «⟳ Вращение» и пробел).
@@ -587,6 +594,8 @@
   <div class="row" id="faceRow"></div>
   <!-- v0.057, «вот такие виды, где по максимуму возможного ребро на ребро» — считаются для нынешнего тела -->
   <div class="row" id="edgeRow"></div>
+  <!-- v0.058, «также подсчёт всех вершин, граней — какие совпали при виде на меня», «и с осями»: счёт для нынешнего вида, на ходу -->
+  <div class="cap" id="coinInfo" title="Что совпало в нынешнем виде (по линии взгляда, без перспективы, с небольшим допуском): всего → различимо. Рёбра торцом — видны точкой; грани ребром — видны линией; оси торцом — точкой, по ребру — легли на ребро"></div>
   <!-- v0.051, «кнопку: выделяю грань — первое нажатие — вид, она ближе, второе — она дальше, за другими гранями» -->
   <button id="bFaceGo" title="Грань к себе / от себя. Выбрать грань: нажми кнопку и щёлкни грань на теле (или Alt + щелчок по грани в любой момент). Потом каждое нажатие: 1-е — прямо на неё, она ближе всех; 2-е — с обратной стороны, она дальше всех, за другими гранями; и так по кругу. Правый щелчок — выбрать другую">◭ Грань…</button>
   <div class="set">
@@ -2379,6 +2388,49 @@ function edgeRowBuild(){
   edgeRow.innerHTML = EDGEV.map(v => `<button type="button" class="vw" data-v="${v[0]}" title="Ребро на ребро: совпадений ${v[4]} (рёбра на одной прямой и торцом); вращение останавливается"><canvas></canvas><span>${v[1]}</span></button>`).join("");
 }
 edgeRow.addEventListener("click", viewClick);
+/* v0.058, «также подсчёт всех вершин, граней — какие совпали при виде на меня», «и с осями». Под видами — строка для НЫНЕШНЕГО вида,
+   обновляется на ходу: вершины всего → различимо; рёбра всего → различимых прямых (торцом — видны точкой); грани всего → различимо
+   (одна легла на другую — одна; ребром — видны линией); оси и внутренние диагонали — сколько торцом и сколько легло на ребро. Считается по
+   линии взгляда без перспективы (rot, x и y), допуск 0,012 радиуса тела: при ручном повороте ровного совпадения не бывает. */
+const coinInfo = document.getElementById("coinInfo");
+let coinLast = "";
+function coinCount(){
+  const tol = 0.012, V = [T, B, ...EQ], R = V.map(v => rot(v)), n = V.length;
+  const gid = new Array(n).fill(-1); let g = 0;
+  for (let i = 0; i < n; i++) { if (gid[i] >= 0) continue; gid[i] = g; for (let j = i + 1; j < n; j++) if (gid[j] < 0 && Math.hypot(R[i][0] - R[j][0], R[i][1] - R[j][1]) < tol) gid[j] = g; g++; }
+  const idx = (p) => V.indexOf(p);
+  const lines = [];
+  const lineOf = (A, Q) => {   // прямая по двум точкам: { ux, uy, off } или null (точка)
+    const dx = Q[0] - A[0], dy = Q[1] - A[1], L = Math.hypot(dx, dy); if (L < tol) return null;
+    let ux = dx / L, uy = dy / L; if (ux < -1e-9 || (Math.abs(ux) <= 1e-9 && uy < 0)) { ux = -ux; uy = -uy; }
+    return { ux, uy, off: A[0] * uy - A[1] * ux };
+  };
+  const same = (a, b) => Math.abs(a.ux * b.uy - a.uy * b.ux) < tol && Math.abs(a.off - b.off) < tol;
+  let eDot = 0;
+  for (const e of EDGES) {
+    const l = lineOf(R[idx(e.a)], R[idx(e.b)]);
+    if (!l) { eDot++; continue; }
+    if (!lines.some(q => same(q, l))) lines.push(l);
+  }
+  const tri = new Set(); let fEdge = 0;
+  for (const f of FACES) {
+    const [a, b, c] = f.v.map(v => R[idx(v)]);
+    const area = Math.abs((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])) / 2;
+    if (area < tol) { fEdge++; continue; }
+    tri.add(f.v.map(v => gid[idx(v)]).sort((x, y) => x - y).join(","));
+  }
+  let aDot = 0, aOn = 0, aN = 0;
+  for (const L of innerLines()) {
+    aN++;
+    const l = lineOf(R[idx(L.a)], R[idx(L.b)]);
+    if (!l) { aDot++; continue; }
+    if (lines.some(q => same(q, l))) aOn++;
+  }
+  return `вершины ${n}→${g} · рёбра ${EDGES.length}→${lines.length + eDot}${eDot ? ` (торцом ${eDot})` : ""}` +
+    ` · грани ${FACES.length}→${tri.size + fEdge}${fEdge ? ` (ребром ${fEdge})` : ""}` +
+    (aN ? ` · оси: торцом ${aDot}, по ребру ${aOn}` : "");
+}
+{ const draw2 = draw; draw = function(){ draw2.apply(this, arguments); const t = coinCount(); if (t !== coinLast) { coinLast = t; coinInfo.textContent = t; } }; }
 edgeRowBuild();
 { const syncUI2 = syncUI; syncUI = function(){ syncUI2.apply(this, arguments); if (NB !== edgeNB) { edgeRowBuild(); viewThumbs(); } }; }
 viewThumbs();
