@@ -972,7 +972,7 @@ function renderTpl(){
   Z.tpl.forEach((t, k) => {
     const tip = t.rows.length === 1 ? t.rows[0].slice(0, 200) : t.rows.length + " стр.: " + t.rows.slice(0, 6).map(r => r.slice(0, 40)).join(" / ");
     h += '<div class="tpl mine"><button class="tb" data-u="' + k + '" title="' + esc(tip) + ' · щелчок — заменить (столбик — весь столбик, строка — текущую), Shift + щелчок — вставить под текущей · двойной щелчок — переименовать">' + esc(t.name) + "</button>" +
-         (Z.tplRef === k ? '<button class="tsv" data-s="' + k + '" title="💾 Записать в этот шаблон нынешние биты: столбик — весь столбик рабочего поля, строка — текущую строку. Шаблон меняется сам (прежние биты не сохраняются), номера строк перестают гореть золотом">💾</button>' : "") +   // v0.298
+         (Z.tplRef === k ? '<button class="tsv" data-s="' + k + '" title="💾 Записать в этот шаблон нынешние биты: столбик — весь столбик рабочего поля, строка — текущую строку. Шаблон меняется сам, номера строк перестают гореть золотом. Правый щелчок — вернуть прежние биты шаблона (ещё раз — снова новые)">💾</button>' : "") +   // v0.298
          '<button class="tref' + (Z.tplRef === k ? " on" : "") + '" data-r="' + k + '" title="' + (Z.tplRef === k ? "Эталон: номера строк, отличающихся от этого шаблона, — золотом. Щелчок — выключить сравнение" : "Сравнивать строки с этим шаблоном: номера изменённых — золотом") + '">⚑</button>' +
          '<button class="tx" data-x="' + k + '" title="Удалить этот шаблон">✕</button></div>';
   });
@@ -7091,6 +7091,7 @@ function init(){
       const rows = t.rows.length > 1 ? Z.rows.slice() : [cur()];
       if (rows.length === t.rows.length && rows.every((r, i) => r === t.rows[i])) { say(`💾 «${t.name}» — и так такой же, менять нечего.`); return; }
       const n = rows.reduce((a, r, i) => a + (r !== t.rows[i] ? 1 : 0), 0) + Math.max(0, t.rows.length - rows.length);
+      t.prev = { rows: t.rows, name: t.name };   // v0.299: прежние биты — для правого щелчка по 💾
       if (t.name === tplName(t.rows)) t.name = tplName(rows);
       t.rows = rows; renderTpl(); renderRows(); save();
       say(`💾 Шаблон «${t.name}» перезаписан: ${rows.length > 1 ? rows.length + " стр., изменено " + n : "строка " + rows[0].length + " бит"}.`);
@@ -7113,6 +7114,18 @@ function init(){
     if (n && n.trim()) { t.name = n.trim().slice(0, 60); renderTpl(); save(); }
   };
   for (const id of ["tplList", "tplMine"]) { $(id).onclick = tplClick; $(id).ondblclick = tplDbl; }
+  /* v0.299, «да» на «правый щелчок по 💾 — вернуть прежнюю версию»: 💾 помнит, какими были биты шаблона до записи (t.prev), правый
+     щелчок меняет их местами — прежние возвращаются, записанные уходят в запас; ещё раз — снова записанные. */
+  $("tplMine").oncontextmenu = (e) => {
+    const b = e.target.closest("button[data-s]"); if (!b) return;
+    e.preventDefault();
+    const t = Z.tpl[+b.dataset.s]; if (!t) return;
+    if (!t.prev || !Array.isArray(t.prev.rows) || !t.prev.rows.length) { say(`💾 У «${t.name}» прежней версии нет — 💾 ещё не записывал.`); return; }
+    const was = { rows: t.rows, name: t.name };
+    t.rows = t.prev.rows; t.name = t.prev.name || t.name; t.prev = was;
+    renderTpl(); renderRows(); save();
+    say(`💾 Шаблон «${t.name}» — прежние биты (${t.rows.length > 1 ? t.rows.length + " стр." : t.rows[0].length + " бит"}). Правый щелчок ещё раз — снова записанные.`);
+  };
   const cutUi = () => {   // v0.225: кнопки достройки под чертой
     const m = Z.cutGen || "r90";
     $("bCutR90").classList.toggle("on", m === "r90"); $("bCutR30").classList.toggle("on", m === "r30"); $("bCutMask").classList.toggle("on", m === "mask");
