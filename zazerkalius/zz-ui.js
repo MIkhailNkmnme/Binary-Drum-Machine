@@ -6150,6 +6150,33 @@ function iconizePane(){
     b.textContent = ic;
   });
 }
+/* v0.310, «скрывай вкладки при нажатии заголовка»: щелчок по заголовку группы левой панели (.pane-head) сворачивает всё, что под ним,
+   до следующего заголовка; ещё щелчок — разворачивает. Какие свёрнуты — Z.paneFold (по тексту заголовка), помнится. Заголовки с id
+   (◯ Группы конуса, Окна — их показывает и прячет код) и хват ширины панели не трогаются. В панели значками свёрнутое видно. */
+function paneFoldBody(h){
+  const out = [];
+  for (let e = h.nextElementSibling; e && !e.classList.contains("pane-head"); e = e.nextElementSibling) if (e.id !== "paneEdge") out.push(e);
+  return out;
+}
+function paneFoldApply(){
+  if (!Z.paneFold || typeof Z.paneFold !== "object") Z.paneFold = {};
+  document.querySelectorAll("#rowsPane > .pane-head:not([id])").forEach(h => {
+    const k = h.textContent.trim(), f = !!Z.paneFold[k];
+    h.classList.add("pf"); h.classList.toggle("folded", f);
+    paneFoldBody(h).forEach(e => e.classList.toggle("pane-fold-hid", f));
+  });
+}
+function paneFoldInit(){
+  document.querySelectorAll("#rowsPane > .pane-head:not([id])").forEach(h => {
+    const t = h.getAttribute("title"); h.setAttribute("title", (t ? t + " · " : "") + "Щелчок по заголовку — свернуть / развернуть группу");
+  });
+  paneFoldApply();
+  $("rowsPane").addEventListener("click", (e) => {
+    const h = e.target.closest("#rowsPane > .pane-head:not([id])"); if (!h) return;
+    const k = h.textContent.trim(); Z.paneFold[k] = !Z.paneFold[k]; if (!Z.paneFold[k]) delete Z.paneFold[k];
+    paneFoldApply(); save(); if (typeof packWins === "function") packWins();
+  });
+}
 function applyPaneIcons(){
   document.body.classList.toggle("pane-icons", !!Z.paneIcons);
   const t = $("bPaneIcons");
@@ -7614,6 +7641,7 @@ function init(){
 
   renderAll();
   applyPaneIcons();   // v0.035: панель значками — как запомнено (шаблоны уже нарисованы)
+  paneFoldInit();   // v0.310
   // Шрифт мог догрузиться позже — ширина ячейки бита изменится, скобки надо переложить.
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => renderPointers());
   // v0.017: ширина стола известна только теперь (разделитель поставлен) — окна под неё; и при смене размера окна браузера.
