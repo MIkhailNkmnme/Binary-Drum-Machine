@@ -1,4 +1,4 @@
-<!-- Zerkalius Гранидус — v0.064. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Гранидус — v0.065. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Гранидус — v0.064</title>
+<title>Zerkalius Гранидус — v0.065</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -298,7 +298,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.064</div>
+<div id="ver">v0.065</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -495,6 +495,7 @@
     своей грани (ряд за рядом от вершины; 1 — звучит, 0 — пауза, высота — по трём битам с этого места) и звучит от своей ноты, поэтому
     несколько включённых дают созвучие. Нота, у которой грани нет, читает экватор — нижние ряды верхних граней по кругу (у бипирамиды
     из 3 граней это Си, внутреннее основание). Бит, который сейчас звучит, горит на теле цветом своей ноты. Темп — ползунком.</li>
+    <li><b>▰ Подсветка граней</b> (v0.065) — полупрозрачная заливка граней вкл / выкл; без неё тело — одни рёбра и биты.</li>
     <li><b>□ △ ▷ Клетки</b> (v0.061) — форма бита в режиме «⠿ Точки»: квадрат, треугольник с горизонтальным основанием (остриё к вершине
     грани), треугольник с вертикальным основанием (остриё вдоль ряда). У нижних граней — зеркально. Включает и сам режим точек.</li>
     <li><b>Склейка разделов</b> (v0.059) — плавающие разделы, прилипшие один под другим, едут вместе, если тянуть верхний; нижний — отрывается.</li>
@@ -585,6 +586,7 @@
   <button id="bDotShape" title="Форма клетки бита в режиме «⠿ Точки», по кругу: □ квадрат → △ треугольник с горизонтальным основанием (остриё к вершине грани) → ▷ треугольник с вертикальным основанием (остриё вдоль ряда). У нижних граней — зеркально">□ Клетки</button>
   <button id="bEdges" class="act" title="E. Все рёбра тела, и экватор тоже">◇ Рёбра</button>
   <button id="bEdge" class="act">△ Скрытые рёбра</button>
+  <button id="bFill" class="act" title="Подсветка граней: полупрозрачная заливка граней цветом верха и низа (в раскраске «каждая своим» — цветом грани) и внутреннего основания. Выключить — грани прозрачные, остаются рёбра и биты">▰ Подсветка граней</button>
   <div class="set">
     <label>Размер цифр: <b id="vSize">13</b></label>
     <div class="srow">
@@ -1141,6 +1143,7 @@ let yaw = 0.6, pitch = -0.42, zoom = 1, spin = true, showDigits = true, showHidd
    любая вершина: кнопки ↶ ↷ под розой видов крутят на 90°. Вращение (spin) по-прежнему вокруг оси тела Верх–Низ — с креном она на экране
    наклонена, так и должно быть. Мышь с креном ведёт себя как без него: сдвиг пересчитывается в повёрнутую картинку. */
 let roll = 0;
+let showFill = true;   // v0.065: подсветка (заливка) граней — вкл / выкл
 let showAxes = true;   // v0.053: оси и внутренние диагонали (см. drawAxes)
 // v0.031: все рёбра разом (запрос: «кнопку скрытия рёбер»). «△ Скрытые рёбра» прячет только дальние.
 let showEdges = true;
@@ -1294,14 +1297,14 @@ function draw(){
   shown.sort((a, b) => a.depth - b.depth);
 
   // v0.043: внутреннее основание (плоскость зеркала) — при раскраске граней рисуется полупрозрачным своим цветом, под лицевыми гранями
-  if (faceMode && NB >= 3) {
+  if (faceMode && NB >= 3 && showFill) {   // v0.065: и основание — с подсветкой граней
     ctx.beginPath();
     EQ.forEach((v, i) => { const q = project(v); if (i) ctx.lineTo(q.x, q.y); else ctx.moveTo(q.x, q.y); });
     ctx.closePath(); ctx.fillStyle = innerCol(); ctx.globalAlpha = 0.16; ctx.fill(); ctx.globalAlpha = 1;
   }
   // 1. Заливка лицевых граней — еле заметная, чтобы биты не висели в пустоте.
   for (const s of shown) {
-    if (!s.front) continue;
+    if (!s.front || !showFill) continue;   // v0.065: «подсветку граней — откл / вкл»
     ctx.beginPath();
     ctx.moveTo(s.P[0].x, s.P[0].y); ctx.lineTo(s.P[1].x, s.P[1].y); ctx.lineTo(s.P[2].x, s.P[2].y);
     ctx.closePath();
@@ -1733,6 +1736,8 @@ bEdge.onclick = () => { showHidden = !showHidden; bEdge.classList.toggle("act", 
 bDirs.onclick = () => { showDirs = !showDirs; bDirs.classList.toggle("act", showDirs); };   // v0.029
 bDots.onclick = () => { dotMode = !dotMode; bDots.classList.toggle("act", dotMode); };      // v0.031
 const bDotShape = document.getElementById("bDotShape");   // v0.061
+const bFill = document.getElementById("bFill");   // v0.065
+bFill.onclick = () => { showFill = !showFill; bFill.classList.toggle("act", showFill); save(); };
 bDotShape.onclick = () => { dotShape = (dotShape + 1) % 3; bDotShape.textContent = DOT_SHAPE_TXT[dotShape]; bDotShape.classList.toggle("act", dotShape > 0); if (!dotMode) bDots.onclick(); save(); };
 bEdges.onclick = () => { showEdges = !showEdges; bEdges.classList.toggle("act", showEdges); }; // v0.031
 bRoll.onclick = () => { myBits = ""; sierp = false; rollBits(); myInfoUpd(); syncUI(); save(); };
@@ -1770,7 +1775,7 @@ const vRows = document.getElementById("vRows"), vSize = document.getElementById(
 function save(){
   try {
     localStorage.setItem(KEY, JSON.stringify({
-      ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, showEdges, showDirs, dotMode, dotShape, zoom, yaw, pitch, roll, showAxes, stepOp, TICK,
+      ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, showEdges, showDirs, dotMode, dotShape, zoom, yaw, pitch, roll, showAxes, showFill, stepOp, TICK,
       showLinks, LINK_EVERY, hoverOn, myBits, mySame, glowV: 1, bitCol, col0, col1, NB, sierp, faceMode, TEMPO,
       theme: document.documentElement.getAttribute("data-theme") || ""
     }));
@@ -1799,6 +1804,7 @@ function load(){
   if (typeof o.pitch === "number") pitch = o.pitch;
   if (typeof o.roll === "number") roll = o.roll;   // v0.050
   if (typeof o.showAxes === "boolean") showAxes = o.showAxes;   // v0.053
+  if (typeof o.showFill === "boolean") showFill = o.showFill;   // v0.065
   if (o.theme === "green") document.documentElement.setAttribute("data-theme", "green");
   if (o.stepOp === "rev" || o.stepOp === "revinv" || o.stepOp === "roll" || o.stepOp === "animL" || o.stepOp === "animR") stepOp = o.stepOp;
   if (o.TICK >= 60 && o.TICK <= 1200) TICK = o.TICK | 0;
@@ -2560,7 +2566,7 @@ function drawAxes(){
 { const draw1 = draw; draw = function(){ draw1.apply(this, arguments); drawAxes(); }; }
 const bAxes = document.getElementById("bAxes");
 bAxes.onclick = () => { showAxes = !showAxes; bAxes.classList.toggle("act", showAxes); save(); };
-{ const syncUI1 = syncUI; syncUI = function(){ syncUI1.apply(this, arguments); faceUi(); bDotShape.textContent = DOT_SHAPE_TXT[dotShape]; bDotShape.classList.toggle("act", dotShape > 0); if (typeof bAxes !== "undefined") bAxes.classList.toggle("act", showAxes); }; }
+{ const syncUI1 = syncUI; syncUI = function(){ syncUI1.apply(this, arguments); faceUi(); bDotShape.textContent = DOT_SHAPE_TXT[dotShape]; bDotShape.classList.toggle("act", dotShape > 0); bFill.classList.toggle("act", showFill); if (typeof bAxes !== "undefined") bAxes.classList.toggle("act", showAxes); }; }
 faceUi();
 { const syncUI0 = syncUI; syncUI = function(){ syncUI0.apply(this, arguments); viewThumbs(); }; }
 viewThumbs();
