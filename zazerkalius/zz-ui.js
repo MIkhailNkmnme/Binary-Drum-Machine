@@ -5711,6 +5711,17 @@ function cgrpInit(){
     if (a) inp.style.paddingLeft = `calc(${a}ch + 6px)`;
     if (b) inp.style.paddingRight = `calc(${b}ch + 6px)`;
   }));
+  /* v0.366: магнит — край тащимой группы ближе SNAP px к краю окна конуса, поля строк или другой группы (любой стороной: вплотную или вровень) —
+     встаёт ровно на него; по горизонтали и вертикали — отдельно, ближайший край. Координаты — экранные */
+  const SNAP = 10;
+  const snapXY = (g, x, y, w, h) => {
+    const xs = [], ys = [], add = (q) => { if (q && q.width > 4 && q.height > 4) { xs.push(q.left, q.right); ys.push(q.top, q.bottom); } };
+    add(wb.getBoundingClientRect());
+    const F = $("field"); if (F && F.getClientRects().length) add(F.getBoundingClientRect());
+    groups.forEach(o => { if (o !== g && o.getClientRects().length) add(o.getBoundingClientRect()); });
+    const best = (v, len, list) => { let d = SNAP + 1; for (const t of list) for (const e of [v, v + len]) if (Math.abs(t - e) < Math.abs(d)) d = t - e; return Math.abs(d) <= SNAP ? v + d : v; };
+    return [best(x, w, xs), best(y, h, ys)];
+  };
   const place = (g) => {
     const f = !FLD_NO[g.dataset.g] && g.parentElement === tl && Z.cgrpFld[g.dataset.g], fr = f && fldRect();   // v0.348: на поле строк
     g.classList.toggle("cfld", !!fr);
@@ -5724,8 +5735,9 @@ function cgrpInit(){
     const tr = tl.getBoundingClientRect(), br = wb.getBoundingClientRect(), gw = g.offsetWidth, gh = g.offsetHeight;
     /* v0.215, «пусть вкладки уезжают за поле строк, но не заголовком»: вправо группа может уйти за край окна (под поле строк), а край держит
        только её заголовок — он всегда виден, за него и вытаскивают обратно. Влево заголовок первым, поэтому там — как было. */
-    const lb = g.querySelector(".glab"), keep = lb ? Math.min(gw, Math.ceil(lb.getBoundingClientRect().right - g.getBoundingClientRect().left) + 2) : gw;
-    const x = Math.max(br.left - tr.left, Math.min(p.x, br.right - tr.left - keep)), y = Math.max(br.top - tr.top, Math.min(p.y, br.bottom - tr.top - gh));
+    /* v0.366, по снимку «Кольца», ушедших под поле строк, — «группы не скрывать теперь, а примагничивать к границам, всем, по всему периметру»:
+       группа — всегда целиком внутри окна конуса (v0.215 «уезжают под поле строк» снято); притягивается к краям при перетаскивании (snapXY) */
+    const x = Math.max(br.left - tr.left, Math.min(p.x, br.right - tr.left - gw)), y = Math.max(br.top - tr.top, Math.min(p.y, br.bottom - tr.top - gh));
     g.style.left = Math.round(x) + "px"; g.style.top = Math.round(y) + "px";
   };
   groups.forEach((g) => {
@@ -5779,7 +5791,7 @@ function cgrpInit(){
         if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return;
         if (!moved) { moved = true; g.style.width = r.width + "px"; g.classList.add("cdrag"); document.body.classList.add("cgdrag"); }
         lx = ev.clientX; ly = ev.clientY;
-        g.style.left = Math.round(lx - dx) + "px"; g.style.top = Math.round(ly - dy) + "px";
+        { const [sx, sy] = snapXY(g, lx - dx, ly - dy, r.width, g.offsetHeight); g.style.left = Math.round(sx) + "px"; g.style.top = Math.round(sy) + "px"; }   // v0.366: магнит
         const P = $("rowsPane"); if (P) P.classList.toggle("cgover", paneHit(lx, ly));   // (в дзене панели нет — paneHit ложь)
         const F = $("field"); if (F) F.classList.toggle("cgover", !paneHit(lx, ly) && fldFits(g, g.getBoundingClientRect()));   // v0.348: целиком над полем
       };
