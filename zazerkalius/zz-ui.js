@@ -2883,7 +2883,12 @@ function cone3DDraw(g, o){
   const m1 = at(Math.max(0, N - 1), -Math.PI / 2, ringR(Math.max(0, N - 1)) + 0.1), m2 = at(Math.max(0, N - 1), -Math.PI / 2, ringR(Math.max(0, N - 1)) + 0.6);
   g.strokeStyle = cg; g.globalAlpha = 0.35; g.lineWidth = dpr; g.beginPath(); g.moveTo(m1[0], m1[1]); g.lineTo(m2[0], m2[1]); g.stroke(); g.globalAlpha = 1;
   g.fillStyle = cT; g.globalAlpha = 0.7; g.font = `${Math.round(11 * dpr)}px system-ui, sans-serif`;
-  if (!document.body.classList.contains("zen")) g.fillText(`3D · поворот ${Math.round((Z.cone3Yaw ?? 30) % 360)}° · наклон ${Math.round(Z.cone3El ?? 50)}° · высота ×${(hk).toFixed(1)}`, 8 * dpr, 16 * dpr);
+  /* v0.415, по снимку «◯ Конус» с текстом под ним — «за заголовком текст какой-то, подвинь его вправо»: строка 3D начинается сразу за
+     заголовком окна (текст заголовка меряется диапазоном — сама ячейка тянется на всю шапку); без шапки (страница конуса) — у края, как было */
+  let x3 = 8;
+  { const cvx = $("coneCv"), wt = document.querySelector("#w-cone .whead .wt");
+    if (cvx && wt && wt.getClientRects().length) { const rg = document.createRange(); rg.selectNodeContents(wt); x3 = Math.max(8, rg.getBoundingClientRect().right - cvx.getBoundingClientRect().left + 14); } }
+  if (!document.body.classList.contains("zen")) g.fillText(`3D · поворот ${Math.round((Z.cone3Yaw ?? 30) % 360)}° · наклон ${Math.round(Z.cone3El ?? 50)}° · высота ×${(hk).toFixed(1)}`, x3 * dpr, 16 * dpr);
   g.globalAlpha = 1;
 }
 function coneRing(e){
