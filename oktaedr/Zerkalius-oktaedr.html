@@ -1,4 +1,4 @@
-<!-- Zerkalius Гранидус — v0.061. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Гранидус — v0.062. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Гранидус — v0.061</title>
+<title>Zerkalius Гранидус — v0.062</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -54,7 +54,9 @@
   .dock.empty{ display:none; }
   /* v0.030: пустая панель во время перетаскивания проступает на всю высоту — это и есть полоса магнита
      (см. SECS.dockUnder): видно, куда раздел прилипнет. */
-  body.tab-dragging .dock.empty{ display:flex; min-height:calc(100vh - 120px); border:1px dashed var(--line); border-radius:4px; }
+  /* v0.062, по снимку пунктирного поля — «эти поля убери»: пустая панель больше не проступает пунктиром всё перетаскивание — только та, на
+     которую указывает магнит (светится, .drop-hover) */
+  body.tab-dragging .dock.empty.drop-hover{ display:flex; min-height:calc(100vh - 120px); border-radius:4px; }
   .dock.drop-hover{ outline:2px solid var(--up); outline-offset:2px; border-radius:4px; box-shadow:0 0 16px var(--up); }
   /* v0.046, «такое же примагничивание надо»: плавающий раздел прилипает к краям соседних разделов, панелей и окна — тот, к кому прилип, светится */
   .tab-sec.snap, .dock.snap{ box-shadow:0 0 0 1px var(--up), 0 0 14px var(--up) !important; }
@@ -296,7 +298,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.061</div>
+<div id="ver">v0.062</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -2126,6 +2128,10 @@ const SECS = {
     };
     document.addEventListener("pointermove", (e) => this.move(e));
     document.addEventListener("pointerup", () => this.end());
+    // v0.062: отпустили мышь за рамкой (окно Зазеркалиуса) или ушли из окна — перетаскивание кончилось, а не повисло
+    document.addEventListener("pointercancel", () => this.end());
+    window.addEventListener("blur", () => this.end());
+    document.documentElement.addEventListener("pointerleave", (e) => { if (this.drag && !e.buttons) this.end(); });
     window.addEventListener("resize", () => this.all().filter(f => f.classList.contains("floating"))
       .forEach(f => this.clamp(f, parseFloat(f.style.left) || 0, parseFloat(f.style.top) || 0)));
     const onMode = () => this.applyMode();
@@ -2223,6 +2229,7 @@ const SECS = {
   },
   move(e){
     const d = this.drag; if (!d) return;
+    if (!e.buttons) { this.end(); return; }   // v0.062: кнопку отпустили где-то вне страницы — не тащить дальше
     if (!d.started) {
       if (Math.abs(e.clientX - d.x0) < 4 && Math.abs(e.clientY - d.y0) < 4) return;   // это был щелчок
       const r = d.sec.getBoundingClientRect();
