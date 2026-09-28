@@ -4952,6 +4952,17 @@ window.addEventListener("message", (e) => {
 });
 if ($("bOktSync")) $("bOktSync").onclick = () => { Z.oktSync = Z.oktSync === false; oktSent = null; save(); renderOkt(); };
 if ($("bOktOpen")) $("bOktOpen").onclick = () => window.open("../oktaedr/Zerkalius-oktaedr.html", "_blank");
+/* v0.407, «развёртку не найду»: новое окно встало в самый низ стола. «✦ развёртка» в окне Гранидуса — показать её: из списка окон слева
+   (при «⇆ поле справа») — тем же щелчком, свёрнутую — развернуть; поднять наверх, прокрутить к ней, мигнуть рамкой. */
+if ($("bRazvShow")) $("bRazvShow").onclick = () => {
+  const el = $("w-razv"); if (!el) return;
+  const pb = document.querySelector('#paneWins button[data-w="w-razv"]'); if (pb) pb.click();
+  if (el.classList.contains("collapsed")) { const bc = el.querySelector(".bc"); if (bc) bc.click(); }
+  Z.z++; el.style.zIndex = Z.z;
+  el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 800);
+  renderRazv();
+};
 
 /* ─── 🧪 Поиск структуры (v0.042) ─────────────────────────────────────────────────────────────
    Живое окно: считает при каждой отрисовке, если не свёрнуто; результат запоминается по ленте и номеру строки. */
