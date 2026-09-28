@@ -3651,7 +3651,95 @@ function setupCone(){
     requestAnimationFrame(step);
     say(`↻1 Пишу ровно один оборот — ${D < 60 ? D.toFixed(1) + " с" : Math.round(D / 6) / 10 + " мин"} (${bitm ? P + " бит" : "360°"}, ${fmt}); остановится сам. Вкладку не сворачивай — иначе кадры встанут.${wasClock ? " Лазер на время записи выключен." : ""}`);
   };
-  $("bConeRecTurn").onclick = recTurn;
+  /* v0.283, «запись конуса для обоев можно как-то независимо сделать, чтоб не тормозил, даже если в браузере тормозит»: ↻1 пишет не в
+     реальном времени (MediaRecorder снимал экран как есть — подтормозил кадр, и в ролике рывок), а ПОКАДРОВО: фаза кручения для кадра k —
+     ровно s0 + P·k/N, кадр рисуется, уходит в кодировщик H.264 браузера (WebCodecs) с меткой времени k/fps, файл собирает mp4-muxer
+     (jsdelivr, грузится при первой записи). Сколько бы кадр ни считался, в ролике они идут ровно; медленный компьютер просто дольше пишет.
+     N кадров — ровно один период, последний — за шаг до начала: ролик замыкается без скачка. 60 кадров/с (правый щелчок по ↻1 — 30/60).
+     Звука нет (обои). Ещё раз ↻1 — отмена. Нет WebCodecs или не загрузился упаковщик — прежняя запись в реальном времени. */
+  let offRun = null;
+  const recTurnOff = async () => {
+    if (offRun) { offRun.stop = true; return; }
+    if (rec || recBusy || turnOn) return;
+    const m = Z.coneSpinMode || "all", sp = Z.coneAutoSp ?? 30, dir = sp < 0 ? -1 : 1, bitm = coneBitMode(m);
+    let P, v;
+    if (bitm) { const L = coneCycleBits(); if (L > 1000000000n) { say(`↻1 Цикл «по биту» — ${coneBigFmt(L)} бит: такой ролик не записать. Возьми «всё целиком» или «навстречу по строкам» (360°).`); return; } P = Number(L); v = Math.abs(sp) / 10; }
+    else { P = 360; v = Math.abs(sp); }
+    const D = P / v;
+    if (!(D > 0.2)) { say("↻1 Скорость кручения — ноль: оборот не записать."); return; }
+    if (D > 1800) { say(`↻1 Один оборот на этой скорости — ${Math.round(D / 60)} мин: слишком долго. Прибавь скорость ползунком «▶ крутить».`); return; }
+    const fps = Z.coneRecFps === 30 ? 30 : 60, N = Math.max(2, Math.round(D * fps));
+    const cvx = $("coneCv"), b = $("bConeRecTurn");
+    renderCone();
+    const W = cvx.width & ~1, H = cvx.height & ~1;   // H.264 — только чётные стороны
+    if (W < 16 || H < 16) { say("↻1 Холст конуса слишком мал для видео."); return; }
+    offRun = { stop: false }; const run = offRun;
+    b.classList.add("on"); b.textContent = "…";
+    let MX = null;
+    try { MX = await import("https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/+esm"); } catch (err) { MX = null; }
+    const bitrate = Math.round(Math.max(4e6, Math.min(40e6, W * H * fps * 0.1)));
+    let cfg = null;
+    if (MX) for (const codec of ["avc1.640034", "avc1.640033", "avc1.640028", "avc1.4d0028", "avc1.42001f"]) {
+      const c = { codec, width: W, height: H, bitrate, framerate: fps, avc: { format: "avc" } };
+      try { const s = await VideoEncoder.isConfigSupported(c); if (s && s.supported) { cfg = c; break; } } catch (err) { /* не этот */ }
+    }
+    if (!MX || !cfg || run.stop) {
+      offRun = null; b.classList.remove("on"); b.textContent = "↻1";
+      if (run.stop) return;
+      say(!MX ? "↻1 Не загрузился упаковщик mp4 (нужен интернет) — пишу по-старому, в реальном времени." : `↻1 Кодировщик H.264 браузера не берёт ${W}×${H} — пишу по-старому, в реальном времени.`);
+      return recTurn();
+    }
+    const muxer = new MX.Muxer({ target: new MX.ArrayBufferTarget(), video: { codec: "avc", width: W, height: H, frameRate: fps }, fastStart: "in-memory" });
+    let encErr = null;
+    const enc = new VideoEncoder({ output: (ch, meta) => muxer.addVideoChunk(ch, meta), error: (e) => { encErr = e; } });
+    enc.configure(cfg);
+    const wasAuto = !!autoRaf, wasClock = !!Z.coneClock; autoSet(false);
+    const key = m === "all" ? "coneSpin" : "coneSpinPh", s0 = Z[key] || 0;
+    if (wasClock) Z.coneClock = false;
+    conePan = [0, 0]; coneHover = -1;   // v0.236: конус — в середину кадра; обводка наведения в ролик не идёт
+    document.body.classList.add("conerec2");
+    const tmp = document.createElement("canvas"); tmp.width = W; tmp.height = H; const tx = tmp.getContext("2d");
+    // вкладку можно свернуть: MessageChannel не притормаживается, как таймеры скрытой вкладки
+    const yieldNow = () => new Promise(r => { const c = new MessageChannel(); c.port1.onmessage = () => r(); c.port2.postMessage(0); });
+    const T0 = performance.now(); let lastUi = 0;
+    say(`↻1 Пишу один оборот покадрово: ${N} кадров, ${fps} к/с, ${W}×${H} — ролик ${D < 60 ? D.toFixed(1) + " с" : Math.round(D / 6) / 10 + " мин"}. Ровно, даже если браузер тормозит; ↻1 ещё раз — отмена.${wasClock ? " Лазер на время записи выключен." : ""}`);
+    try {
+      for (let k = 0; k < N; k++) {
+        if (run.stop || encErr) break;
+        const ph = s0 + dir * P * k / N;
+        Z[key] = m === "all" ? ((ph % 360) + 360) % 360 : ph;
+        coneHover = -1; renderCone();
+        tx.drawImage(cvx, 0, 0, W, H, 0, 0, W, H);
+        const fr = new VideoFrame(tmp, { timestamp: Math.round(k * 1e6 / fps), duration: Math.round(1e6 / fps) });
+        enc.encode(fr, { keyFrame: k % (fps * 2) === 0 }); fr.close();
+        while (enc.encodeQueueSize > 6 && !encErr) await new Promise(r => { if ("ondequeue" in enc) enc.addEventListener("dequeue", r, { once: true }); else setTimeout(r, 4); });
+        const now = performance.now();
+        if (now - lastUi > 300) {
+          lastUi = now; const pc = Math.floor(k * 100 / N), left = k ? (now - T0) / k * (N - k) / 1000 : 0;
+          b.textContent = pc + "%"; b.title = `↻1 Покадровая запись: кадр ${k} из ${N} (${pc}%), осталось ~${left < 60 ? Math.ceil(left) + " с" : Math.ceil(left / 60) + " мин"}. Щелчок — отмена`;
+        }
+        await yieldNow();
+      }
+      if (!run.stop && !encErr) await enc.flush();
+    } catch (err) { encErr = encErr || err; }
+    try { enc.close(); } catch (err) { /* уже закрыт */ }
+    Z[key] = s0; if (wasClock) Z.coneClock = true;
+    document.body.classList.remove("conerec2"); offRun = null; b.classList.remove("on"); b.textContent = "↻1"; b.title = turnTitle();
+    renderCone(); save(); if (wasAuto) autoSet(true);
+    if (run.stop) { say("↻1 Покадровая запись отменена — файл не сохранён."); return; }
+    if (encErr) { say("↻1 Ошибка кодировщика: " + (encErr.message || encErr) + " — файл не сохранён."); return; }
+    muxer.finalize();
+    const blob = new Blob([muxer.target.buffer], { type: "video/mp4" }), a = document.createElement("a");
+    const dd = new Date(), p2 = (x) => String(x).padStart(2, "0");
+    a.href = URL.createObjectURL(blob); a.download = `Zerkalius-konus-oborot-${dd.getFullYear()}${p2(dd.getMonth() + 1)}${p2(dd.getDate())}-${p2(dd.getHours())}${p2(dd.getMinutes())}${p2(dd.getSeconds())}.mp4`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    const took = (performance.now() - T0) / 1000;
+    say(`↻1 Готово: ${a.download} — ровно один оборот, ${N} кадров по ${fps} к/с, ${W}×${H}, ${(blob.size / 1048576).toFixed(1)} МБ; считалось ${took < 60 ? took.toFixed(0) + " с" : (took / 60).toFixed(1) + " мин"}. Крутится по кругу без скачка.`);
+  };
+  const turnTitle = () => `↻1 Ровно один оборот для обоев — покадрово: каждый кадр считается сколько нужно, в ролике всё ровно, даже если браузер тормозит (${Z.coneRecFps === 30 ? 30 : 60} кадров/с, .mp4, без звука). Ролик замыкается без скачка. «Всё целиком» и «навстречу по строкам» — 360°, «по биту» — пока все кольца разом не вернутся на места. Скорость и направление — с «▶ крутить». Лазер на время записи выключен. Ещё раз — отмена. Правый щелчок — 30 / 60 кадров/с`;
+  $("bConeRecTurn").title = turnTitle();
+  $("bConeRecTurn").onclick = () => (window.VideoEncoder && window.VideoFrame ? recTurnOff() : recTurn());
+  $("bConeRecTurn").oncontextmenu = (e) => { e.preventDefault(); if (offRun) return; Z.coneRecFps = Z.coneRecFps === 30 ? 60 : 30; save(); $("bConeRecTurn").title = turnTitle(); say(`↻1 Запись оборота — ${Z.coneRecFps} кадров/с.`); };
   /* v0.267, «как записывать видео в области строк?» → вариант 1: поле строк — не холст, captureStream у него нет. Пишем саму вкладку
      (браузер спрашивает «Поделиться этой вкладкой?») и обрезаем кадр по полю строк (CropTarget, Chrome / Edge) — в файле ровно то, что
      на экране: подсветка, звучащий бит, черта, прокрутка.

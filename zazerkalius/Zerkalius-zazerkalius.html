@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.282. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.283. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.282</title>
+<title>Zazerkalius — v0.283</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -446,6 +446,7 @@ body.pane-icons #paneWins{padding:4px}
 #coneRecBar{position:absolute;left:8px;bottom:8px;z-index:2;display:flex;gap:4px;align-items:center}   /* v0.256: кнопки записи одной полосой */
 #w-cone #coneRecBar > button{position:relative;min-width:32px;height:32px;padding:0 7px;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;margin:0}
 #w-cone #coneRecBar > #bConeRecMp4,#w-cone #coneRecBar > #bConeRecTurn{font-size:12px}
+body.conerec2 #coneCv{pointer-events:none}   /* v0.283: пока ↻1 пишет покадрово — холст мышью не трогается (ни наведения, ни сдвига) */
 #w-cone #coneRecBar > #bConeRecTurn.on{color:var(--gold);border-color:var(--gold)}   /* v0.270: ↻1 — идёт запись одного оборота */
 #w-cone #coneRecBar > #bConeRecPause{display:none} body.conerec #w-cone #coneRecBar > #bConeRecPause{display:flex}
 #w-cone #coneRecBar > #bConeRecPause.on,#w-cone #coneRecBar > #bConeFrame.on{color:var(--gold);border-color:var(--gold)}
@@ -840,7 +841,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.282</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.283</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1643,8 +1644,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0282"></script>
-<script src="zz-ui.js?v=0282"></script>
+<script src="zz-core.js?v=0283"></script>
+<script src="zz-ui.js?v=0283"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>
