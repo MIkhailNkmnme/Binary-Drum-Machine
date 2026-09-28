@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.315. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.316. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.315</title>
+<title>Zazerkalius — v0.316</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -575,6 +575,11 @@ body.zen #coneTxtWin{display:none !important}
   background:linear-gradient(135deg, transparent 45%, var(--gc, var(--dim)) 45% 55%, transparent 55% 70%, var(--gc, var(--dim)) 70% 80%, transparent 80%)}
 .cgrp > .cgsz:hover{opacity:1}
 .cgrp.cmin > .cgsz,.cgrp.cdrag > .cgsz{display:none}
+/* v0.316, «ползунки, если не в строке, то все друг под другом, и выровняй»: ползунки, что стоят подряд (↕ и ▬ в «Виде», ♩ и 🔊 в «Звуке»), —
+   каждый своей строкой во всю ширину группы, один под другим; значок слева — в столбце одной ширины, дорожки начинаются от одного края.
+   Одиночный ползунок среди кнопок (скорость кручения, щель лазера, ⚡ волны) — в ряду, как был */
+#w-cone .tools .cgb > label:has(> .zerk-range-wrap):has(+ label > .zerk-range-wrap),#w-cone .tools .cgb > label:has(> .zerk-range-wrap) + label:has(> .zerk-range-wrap),
+#paneGrp .cgb > label:has(> .zerk-range-wrap):has(+ label > .zerk-range-wrap),#paneGrp .cgb > label:has(> .zerk-range-wrap) + label:has(> .zerk-range-wrap){flex:0 0 100%;display:grid !important;grid-template-columns:1.7em 140px auto;justify-content:start !important;align-items:center;column-gap:4px;padding:0 4px !important;box-sizing:border-box}
 /* v0.183, по снимку группы «Вид» — «в каждой полоске подели длину пополам, расположи в 2 ряда, кнопки ровно друг под другом»:
    группа — сетка в два ряда: подпись слева на оба ряда, дальше столбцы (их число --cols = половина кнопок, ставит cgrpCols);
    кнопки одного столбца — одной ширины, ровно одна под другой */
@@ -888,7 +893,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.315</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.316</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1707,8 +1712,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0315"></script>
-<script src="zz-ui.js?v=0315"></script>
+<script src="zz-core.js?v=0316"></script>
+<script src="zz-ui.js?v=0316"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>
