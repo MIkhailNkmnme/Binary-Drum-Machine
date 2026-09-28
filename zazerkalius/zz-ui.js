@@ -3971,7 +3971,7 @@ function renderPyr(force){
    края колонки: родная спрятана (прокрутка колесом та же), своя тонкая — слева; бегунок тянется, щелчок по полосе — на экран выше/ниже,
    колесо над ней крутит колонку. Направление письма (rtl) не трогаем: окна на столе стоят от левого края, rtl увёл бы их за край. */
 function leftBarsInit(){
-  const mk = (el, id, when) => {
+  const mk = (el, id, when, off) => {
     if (!el) return;
     const bar = document.createElement("div"); bar.id = id; bar.className = "lbar"; bar.innerHTML = "<i></i>"; document.body.appendChild(bar);
     const th = bar.firstChild; let raf = 0, h = 24;
@@ -3983,7 +3983,7 @@ function leftBarsInit(){
       if (!on) { bar.style.display = "none"; return; }
       const r = el.getBoundingClientRect(), ch = el.clientHeight, sh = el.scrollHeight;
       h = Math.max(24, ch * ch / sh);
-      bar.style.cssText = `display:block;left:${Math.round(r.left)}px;top:${Math.round(r.top)}px;height:${ch}px`;
+      bar.style.cssText = `display:block;left:${Math.round(r.left + (off ? off() : 0))}px;top:${Math.round(r.top)}px;height:${ch}px`;
       th.style.cssText = `height:${Math.round(h)}px;transform:translateY(${Math.round((ch - h) * el.scrollTop / (sh - ch))}px)`;
     };
     const q = () => { if (!raf) raf = requestAnimationFrame(upd); };
@@ -4004,7 +4004,9 @@ function leftBarsInit(){
     q();
   };
   const B = document.body;
-  mk($("desk"), "deskBar", () => B.classList.contains("field-right") && !B.classList.contains("zen"));
+  /* v0.272, «скролл и граница — друг на друге»: у левого края стола — хват ширины левой панели (#paneEdge, 3 px в стол); полоса — правее него */
+  const paneEdgeR = () => { const e = $("paneEdge"); if (!e || !e.getClientRects().length) return 0; return Math.max(0, Math.ceil(e.getBoundingClientRect().right - $("desk").getBoundingClientRect().left) + 1); };
+  mk($("desk"), "deskBar", () => B.classList.contains("field-right") && !B.classList.contains("zen"), paneEdgeR);
   mk($("rowsPane"), "paneBar", () => !B.classList.contains("zen"));
 }
 function setupPyr(){

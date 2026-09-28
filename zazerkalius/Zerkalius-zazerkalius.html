@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.271. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.272. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.271</title>
+<title>Zazerkalius — v0.272</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -395,6 +395,7 @@ body.rowdrag #rowList,body.rowdrag #rowList *{user-select:none !important;-webki
 .rw.fillrw .fdel:hover{color:var(--red);background:rgba(255,107,107,.18)}
 #fieldEdge{position:absolute;top:0;bottom:0;right:0;width:6px;z-index:6;cursor:ew-resize}   /* v0.224: хват у границы поля (со стороны стола) */
 body.field-right #fieldEdge{right:auto;left:0}
+body:not(.field-right) #rowList{margin-right:6px}   /* v0.272, «скролл и граница — друг на друге»: поле слева — хват ширины (6 px у правого края поля) лежал на полосе прокрутки строк; полоса — левее хвата */
 #fieldEdge:hover,body.wdrag #fieldEdge{background:color-mix(in srgb, var(--acc) 35%, transparent)}
 /* v0.270: полоса прокрутки колонки слева от поля строк — у её левого края, а не вплотную к номерам */
 .lbarOn{scrollbar-width:none !important}
@@ -808,7 +809,7 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.271</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.272</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1605,8 +1606,8 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0271"></script>
-<script src="zz-ui.js?v=0271"></script>
+<script src="zz-core.js?v=0272"></script>
+<script src="zz-ui.js?v=0272"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>
