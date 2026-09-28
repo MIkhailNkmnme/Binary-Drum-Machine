@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.340. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.341. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.340</title>
+<title>Zazerkalius — v0.341</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -955,7 +955,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.340</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.341</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1609,8 +1609,9 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
           <!-- v0.240, «звук из бит»: поле звучит — строка тактом или столбцы аккордами -->
           <div class="cgrp gc cg-snd" title="♫ Звук из бит: строка тактом (1 — нота, высота — по трём битам) или столбцы поля аккордами (высота — по номеру строки)"><span class="glab">Звук</span>
             <button id="bSnd" title="♫ Звук: поле звучит, пока не нажато ещё раз. Строки меняются на ходу — звучит уже новое. Идёт и в запись ⏺ / mp4 конуса — даже если включить посреди записи">♫ звук</button>
-            <select id="sndMode" title="Что звучит (1 — нота, 0 — пауза, высота — число из трёх бит с этого места). Строка — текущая тактом слева направо. Выделенные разом — все выделенные строки (до 8) одновременно, каждая своим голосом. По очереди — чтение: строки одна за другой, как текст (выделенные, нет выделения — всё поле). По 2 строки — пары строк разом, потом следующая пара. Столбцы — шаг — столбец поля: звучат строки с 1 в нём (до 8), высота — по номеру строки">
-              <option value="row">строка</option><option value="sel">выделенные разом</option><option value="seq">по очереди</option><option value="pair">по 2 строки</option><option value="col">столбцы</option>
+            <select id="sndMode" title="Что звучит (1 — нота, 0 — пауза, высота — число из трёх бит с этого места). Строка — текущая тактом слева направо. Разом — все выделенные строки (до 8) одновременно, каждая своим голосом. Подряд — чтение: строки одна за другой, как текст (выделенные, нет выделения — всё поле). По 2 — пары строк разом, потом следующая пара. Столбцы — шаг — столбец поля: звучат строки с 1 в нём (до 8), высота — по номеру строки">
+              <!-- v0.341, «сократи, чтобы в размер 1 уместились»: было «выделенные разом», «по очереди», «по 2 строки» — список шёл в 2 кнопки -->
+              <option value="row">строка</option><option value="sel" title="Все выделенные строки разом, каждая своим голосом">разом</option><option value="seq" title="По очереди: строки одна за другой, как текст">подряд</option><option value="pair" title="По 2 строки: пара разом, потом следующая">по 2</option><option value="col">столбцы</option>
             </select>
             <select id="sndWave" title="Тембр. Разные — у каждой строки (голоса) свой: треугольник, квадрат, пила, синус, дальше — октавой выше и ниже. Или один на всех">
               <option value="mix">🎨 разные</option><option value="triangle">△ треугольник</option><option value="sine">∿ синус</option><option value="square">▢ квадрат</option><option value="sawtooth">⩘ пила</option><option value="bell">🔔 колокол</option>
@@ -1788,8 +1789,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0340"></script>
-<script src="zz-ui.js?v=0340"></script>
+<script src="zz-core.js?v=0341"></script>
+<script src="zz-ui.js?v=0341"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
