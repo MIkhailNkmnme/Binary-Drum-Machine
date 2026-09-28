@@ -6489,9 +6489,14 @@ function init(){
     // v0.112: двойной щелчок по черте — вернуть все строки (черту тащат с захватом указателя — щелчок приходит полю, смотрим, что под ним)
     const pt = document.elementFromPoint(e.clientX, e.clientY);
     if (pt && pt.closest(".cutln")) { cutMove(Infinity); return; }
-    const r = e.target.closest(".rw"); if (!r || r.classList.contains("lhrow") || r.classList.contains("hid") || r.classList.contains("fillrw")) return;
-    // v0.266: строку выделяет одиночный щелчок по биту (выше); двойной ничего не выбирает — только убираем выделенное им слово
-    if (e.target.closest(".bits")) { e.preventDefault(); clearTextSel(); }
+    /* v0.291, «двойной клик по полю строк — должен убирать все выделения»: где угодно в поле (кроме черты и панели под ней) — снято всё:
+       выделенные строки, подсветка текущей (как Esc), выделенный текст и выделение оси. До v0.290 двойной щелчок только убирал слово,
+       выделенное им самим на битах (v0.266). */
+    if (e.target.closest("#cutPanel, button, input, select, textarea, label, a")) return;
+    e.preventDefault();
+    const n = rowSel.size; rowSel.clear(); rowSelAnchor = -1; clearTextSel(); document.body.classList.add("nocur"); axSel = -1;
+    renderRows(); renderCone();
+    say(n ? `Выделение снято со всех строк (${n}).` : "Выделение снято.");
   };
   // v0.018: поля колонками / наложением; оси тащатся за ручки
   $("laneView").value = Z.laneView || "cols";
