@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.375. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.376. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.375</title>
+<title>Zazerkalius — v0.376</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1022,7 +1022,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.375</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.376</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1691,7 +1691,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
             <select id="sndWave" title="Тембр. Разные — у каждой строки (голоса) свой: треугольник, квадрат, пила, синус, дальше — октавой выше и ниже. Или один на всех">
               <option value="mix">🎨 разные</option><option value="triangle">△ треугольник</option><option value="sine">∿ синус</option><option value="square">▢ квадрат</option><option value="sawtooth">⩘ пила</option><option value="bell">🔔 колокол</option>
             </select>
-            <button id="bSndMark" class="on" title="◉ Показывать, какой бит сейчас звучит: в строках поля он подсвечен (по умолчанию вкл)">◉ бит</button>
+            <button id="bSndMark" class="on" title="◉ Головки: звучащие биты (головки чтения) подсвечены в строках поля и на конусе — в 2D обводкой сектора, в 3D точкой (по умолчанию вкл)">◉ головки</button>
             <!-- v0.318, «кнопку режим 2 бита — чтобы сразу с 2 битов шёл звук, и задать как-то расстояние»: вторая «головка» чтения -->
             <button id="bSnd2" title="⁑ Авто: сколько бит строки звучит разом и на каком расстоянии — берётся из строки, следующей за ближайшей строкой из одних 1 выше читаемой: сколько в ней 1 — столько бит (до 8), где стоят — на таком расстоянии впереди читаемого, по кругу строки (у Серпинского под 1111 — 10001: два бита через 4). Читаешь дальше вниз — прошёл новую строку из 1, и шаблон меняется сам; что звучит сейчас — на кнопке («⁑ 2×8» — два бита через 8). Строки из одних 1 выше нет — два бита через ↔. ◉ подсвечивает все звучащие биты">⁑ авто</button>
             <label class="dim" title="↔ Расстояние между двумя звучащими битами, в битах (1 — соседние), — когда «⁑ авто» включено, а строки из одних 1 выше читаемой нет (и в «столбцах»). Больше длины строки — по кругу">↔ <input type="number" id="snd2d" min="1" max="4096" step="1" value="4" style="width:52px"></label>
@@ -1868,8 +1868,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0375"></script>
-<script src="zz-ui.js?v=0375"></script>
+<script src="zz-core.js?v=0376"></script>
+<script src="zz-ui.js?v=0376"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

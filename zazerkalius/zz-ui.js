@@ -1712,6 +1712,15 @@ function renderCone(){
       }
     }
   }
+  if (window.zzSndHeads) {   // v0.376: ◉ головки звука — обводка сектора звучащего бита
+    g.strokeStyle = "#22d3ee"; g.lineWidth = Math.max(2 * dpr, Math.min(dr * 0.14, 5 * dpr)); g.shadowColor = "#22d3ee"; g.shadowBlur = 8 * dpr;
+    for (const [i, j] of window.zzSndHeads) {
+      if (i >= N || !shown(i)) continue; const n = (Z.rows[i] || "").length; if (!n || j >= n) continue;
+      const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, a = -Math.PI / 2 + (j - coneRotOf(i)) * step;
+      g.beginPath(); if (n > 1) { coneArc(g, cx, cy, i, rout, a, a + step); coneArc(g, cx, cy, i, rin, a + step, a, true); g.closePath(); } else { g.arc(cx, cy, rout, 0, 2 * Math.PI); } g.stroke();
+    }
+    g.shadowBlur = 0;
+  }
   if (fillOn) {   // v0.114: кольцо для заполнения — ячейки пунктиром, заполненные — цветом бита; бит 0 — сверху, как у всех
     const f = fillDraft(), n = f.length, rin = r0 + N * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, rotF = coneFillRot();   // v0.117: крутится со всеми
     const gp = n > 1 && !coneNoGap() && !Z.coneClean ? Math.min(step * 0.1, 1.5 * dpr / Math.max(1, rin)) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216
@@ -2767,6 +2776,15 @@ function cone3DDraw(g, o){
   g.globalAlpha = 1;
   g.lineWidth = Math.max(1.5 * dpr, Math.min(sc * 0.08, 4 * dpr));
   for (const t of ticks) { g.strokeStyle = t.col; g.beginPath(); g.moveTo(t.p[0], t.p[1]); g.lineTo(t.q[0], t.q[1]); g.stroke(); }
+  if (window.zzSndHeads) {   // v0.376: ◉ головки звука — точка на звучащем бите
+    g.fillStyle = "#22d3ee"; g.shadowColor = "#22d3ee"; g.shadowBlur = 10 * dpr;
+    for (const [i, j] of window.zzSndHeads) {
+      if (i >= N || !shown(i)) continue; const n = (Z.rows[i] || "").length; if (!n || j >= n) continue;
+      const q = at(i, -Math.PI / 2 + (j - coneRotOf(i) + 0.5) * 2 * Math.PI / n, ringR(i));
+      g.beginPath(); g.arc(q[0], q[1], Math.max(3 * dpr, Math.min(sc * 0.18, 9 * dpr)), 0, 2 * Math.PI); g.fill();
+    }
+    g.shadowBlur = 0;
+  }
   /* v0.243, «3D-режим — при виде сбоку и сверху, когда ровно, показывает биты»: наклон ровно 0° (сбоку) или 90° (сверху) — на
      каждом бите его цифра. Сбоку — только ближняя половина кольца (дальняя за ней); сверху зеркало под основанием не подписывается
      (лежит ровно под верхним). Цифра — по ширине бита на экране: у краёв сбоку, где биты сжаты, мелкие не пишутся. */
@@ -3655,7 +3673,13 @@ function setupCone(){
   const sndList = (allIfNone) => rowSel.size ? [...rowSel].filter(i => i < Z.rows.length).sort((a, b) => a - b) : allIfNone ? Z.rows.map((_, i) => i) : [Z.cur];
   /* v0.260, «покажи, какой бит сейчас играется в строках (кнопку, по умолчанию вкл)»: ◉ бит — в строках поля подсвечен бит, на котором
      сейчас каждая звучащая строка (Highlight API, строки не перерисовываются). Z.sndMark, по умолчанию вкл. */
+  /* v0.376, по снимку «Звука» — «кнопку показать головки на битах строк и в конусе»: «◉ головки» (была «◉ бит») — звучащие биты видны и
+     в строках (как было), и на конусе: в 2D — обводка сектора бита, в 3D — точка на бите (zzSndHeads — [строка, бит]) */
+  let sndConeRaf = 0;
+  const sndMarkCone = (P) => { const was = !!window.zzSndHeads; window.zzSndHeads = Z.sndMark === false || !P || !P.length ? null : P.slice();
+    if ((was || window.zzSndHeads) && !sndConeRaf) sndConeRaf = requestAnimationFrame(() => { sndConeRaf = 0; renderCone(); }); };
   const sndMark = (P) => {
+    sndMarkCone(P);   // v0.376
     if (!window.CSS || !CSS.highlights || typeof Highlight === "undefined") return;
     if (Z.sndMark === false || !P || !P.length) { CSS.highlights.delete("sndbit"); return; }
     const Lr = $("rowList"), rs = [];
@@ -3784,8 +3808,9 @@ function setupCone(){
   $("sndMode").onchange = (e) => { Z.sndMode = e.target.value; sndStep = 0; save(); };
   const sndMarkUi = () => $("bSndMark").classList.toggle("on", Z.sndMark !== false);   // v0.260
   sndMarkUi();
-  $("bSndMark").onclick = () => { Z.sndMark = Z.sndMark === false; sndMarkUi(); save(); if (Z.sndMark === false) sndMark(null);
-    say(Z.sndMark !== false ? "◉ Звучащий бит подсвечен в строках." : "◉ Звучащий бит не подсвечивается."); };
+  $("bSndMark").onclick = () => { Z.sndMark = Z.sndMark === false; sndMarkUi(); save(); if (Z.sndMark === false) sndMark(null);   // v0.376: и на конусе
+
+    say(Z.sndMark !== false ? "◉ Головки видны: звучащие биты подсвечены в строках и на конусе." : "◉ Головки не показываются."); };
   const snd2Ui = () => { $("bSnd2").classList.toggle("on", !!Z.snd2); $("snd2d").disabled = !Z.snd2; snd2Label(); };   // v0.318: ⁑ 2 бита и ↔; v0.337 — авто
   snd2Ui();
   $("bSnd2").onclick = () => { Z.snd2 = !Z.snd2; snd2Ui(); save(); say(Z.snd2 ? `⁑ Авто: сколько бит звучит разом и на каком расстоянии — по строке под ближайшей строкой из одних 1 выше читаемой; такой нет — два бита через ↔ ${Z.snd2d || 4}.` : "⁑ Звучит один бит."); };
