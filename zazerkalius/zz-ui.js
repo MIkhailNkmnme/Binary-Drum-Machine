@@ -5748,6 +5748,14 @@ function cgrpInit(){
     if (!Z.cgrpZen || typeof Z.cgrpZen !== "object") Z.cgrpZen = {};
     if (!Z.zenGrpInit) { Z.cgrpZen["дзен"] = true; Z.zenGrpInit = 1; }   // v0.281: группа «Дзен» — видна в дзене с первого раза (дальше — как отметишь 🧘)
     const zb = document.createElement("span"); zb.className = "gzen"; lab.appendChild(zb);
+    // v0.367: закрытая группа (Z.cgrpOff) не видна; у «Гаммы» — ✕ закрыть (открыть — «🎨» в шапке)
+    if (!Z.cgrpOff || typeof Z.cgrpOff !== "object") Z.cgrpOff = {};
+    g.classList.toggle("coff", !!Z.cgrpOff[g.dataset.g]);
+    if (g.dataset.g === "гамма") {
+      const x = document.createElement("span"); x.className = "gx"; x.textContent = "✕"; x.title = "Закрыть группу «Гамма» (открыть — «🎨» в шапке)"; lab.appendChild(x);
+      x.addEventListener("pointerdown", (e) => { e.stopPropagation(); e.preventDefault(); if (e.button !== 0) return; window.cgrpHide("гамма"); });
+      x.addEventListener("dblclick", (e) => e.stopPropagation());
+    }
     const zUi = () => { const on = !!Z.cgrpZen[g.dataset.g]; g.classList.toggle("zenon", on); zb.textContent = "🧘"; zb.title = on ? "🧘 Видна в дзене — щелчок: не показывать" : "🧘 Показывать эту группу и в дзене"; };
     zUi();
     zb.addEventListener("pointerdown", (e) => { e.stopPropagation(); e.preventDefault(); if (e.button !== 0) return; const k = g.dataset.g; if (Z.cgrpZen[k]) delete Z.cgrpZen[k]; else Z.cgrpZen[k] = true; zUi(); save();
@@ -5900,6 +5908,20 @@ function cgrpInit(){
     const bf = cgrpMoveEl(cgrpRefEl(m.before)); cgb.insertBefore(el, bf && bf.parentElement === cgb ? bf : null);
   }
   addEventListener("resize", () => groups.forEach(place));
+  /* v0.367: снаружи (кнопка «🎨» в шапке) — открыть группу: снять «закрыта» и «свёрнута», мигнуть рамкой; если её всё равно не видно
+     (окно конуса закрыто или свёрнуто) — поставить на левую панель. Закрыть — спрятать. Открыта ли и видна — cgrpShown */
+  window.cgrpShown = (k) => { const g = groups.find(c => c.dataset.g === k); return !!g && !Z.cgrpOff[k] && !g.classList.contains("cmin") && g.getClientRects().length > 0; };
+  window.cgrpHide = (k) => { const g = groups.find(c => c.dataset.g === k); if (!g) return; Z.cgrpOff[k] = true; g.classList.add("coff"); save(); if (window.palUi) palUi(); };
+  window.cgrpShow = (k) => {
+    const g = groups.find(c => c.dataset.g === k); if (!g) return;
+    delete Z.cgrpOff[k]; g.classList.remove("coff");
+    if (Z.cgrpMin[k]) { delete Z.cgrpMin[k]; g.classList.remove("cmin"); g.style.minHeight = ""; }
+    cgbSnap(); sizeApply(g); place(g);
+    if (!g.getClientRects().length && g.parentElement === tl && box && !document.body.classList.contains("pane-icons")) { delete Z.cgrpPos[k]; delete Z.cgrpFld[k]; g.classList.remove("cfloat", "cfld"); g.style.left = g.style.top = ""; box.appendChild(g); dockSync(); }
+    g.style.zIndex = ++zTop; g.classList.remove("cflash"); void g.offsetWidth; g.classList.add("cflash"); setTimeout(() => g.classList.remove("cflash"), 1600);
+    try { g.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (err) { /* нет места */ }
+    save(); if (window.palUi) palUi();
+  };
   { // v0.348: поле строк меняет место и размер (ширина поля, панель, спрятать, дзен) — группы на нём едут следом
     const F = $("field"), re = () => groups.forEach(g => { if (Z.cgrpFld[g.dataset.g] && !g.classList.contains("cdrag")) place(g); });   // тащимую — не трогать
     if (F && window.ResizeObserver) new ResizeObserver(re).observe(F);
@@ -6530,6 +6552,12 @@ function palApply(){
   const P = ZZ_PALS[(Z.pal | 0) % ZZ_PALS.length] || ZZ_PALS[0], st = document.documentElement.style, v = P.dark ? (themeIsLight() ? P.light : P.dark) : null;
   ["--b1", "--b0", "--acc"].forEach((k, i) => { if (v) st.setProperty(k, v[i]); else st.removeProperty(k); });
   const b = $("bPal"); if (b) b.textContent = "🎨 " + P.name;
+  palUi();
+}
+function palUi(){   // v0.367: в группе «Гамма» горит выбранная; «🎨» в шапке горит, пока группа открыта
+  const k = (Z.pal | 0) % ZZ_PALS.length;
+  document.querySelectorAll(".cg-pal button[data-pal]").forEach(b => b.classList.toggle("on", +b.dataset.pal === k));
+  const b = $("bPal"); if (b && window.cgrpShown) b.classList.toggle("on", cgrpShown("гамма"));
 }
 function palStep(d){
   Z.pal = (((Z.pal | 0) + d) % ZZ_PALS.length + ZZ_PALS.length) % ZZ_PALS.length; palApply(); save(); renderAll();
@@ -8013,8 +8041,12 @@ function init(){
   packLabel();
   $("bPack").onclick = () => { Z.pack = !Z.pack; packLabel(); packWins(); save(); say(Z.pack ? "⤒ Окна прижимаются к верху." : "⤒ Выключено: окна стоят там, где их поставили."); };
   $("bTheme").onclick = () => { Z.theme = themeIsLight() ? "dark" : "light"; applyTheme(); save(); renderAll(); };
-  $("bPal").onclick = () => palStep(1);   // v0.182
-  $("bPal").oncontextmenu = (e) => { e.preventDefault(); palStep(-1); };
+  // v0.367: «🎨» в шапке — вызов группы «Гамма» (закрыта / свёрнута / не видна — открыть, открыта — закрыть); правый щелчок — следующая гамма
+  $("bPal").onclick = () => { if (!window.cgrpShow) { palStep(1); return; } if (cgrpShown("гамма")) cgrpHide("гамма"); else cgrpShow("гамма"); palUi(); };
+  $("bPal").oncontextmenu = (e) => { e.preventDefault(); palStep(1); };
+  document.querySelectorAll(".cg-pal button[data-pal]").forEach(b => b.onclick = () => {
+    Z.pal = +b.dataset.pal; palApply(); save(); renderAll(); say(`🎨 Гамма «${ZZ_PALS[Z.pal].name}».`); });
+  palUi();
   if (window.matchMedia) matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => { if (!Z.theme) { palApply(); renderAll(); } });
   // v0.035: левая панель значками — переключатель и слежение за перерисованными кнопками
   $("bPaneIcons").onclick = () => { Z.paneIcons = !Z.paneIcons; applyPaneIcons(); save(); packWins(); };
