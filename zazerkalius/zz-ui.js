@@ -5720,6 +5720,17 @@ function cgrpInit(){
       sz.addEventListener("dblclick", (e) => { e.preventDefault(); e.stopPropagation(); if (!Z.cgrpSize[g.dataset.g]) return; delete Z.cgrpSize[g.dataset.g]; sizeApply(g); place(g); save(); });
     }
     sizeApply(g);
+    /* v0.354, «прокрутка на группе кнопок — в Конусе например — так же, как на поле конуса, а не скролл панелей надо»: колесо над группой
+       конуса (на полосе и поверх холста) — то же, что над холстом: масштаб конуса вокруг курсора; над группой на поле строк — листает
+       строки. Стол с окнами при этом не едет. Группы на левой панели — как прежде (листают панель), число или список в фокусе — меняют
+       своё значение, Ctrl + колесо — масштаб страницы */
+    g.addEventListener("wheel", (e) => {
+      if (g.parentElement !== tl || e.ctrlKey || e.metaKey) return;
+      const a = document.activeElement; if (a && g.contains(a) && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName) && a.contains(e.target)) return;
+      e.preventDefault();
+      if (g.classList.contains("cfld")) { const L = $("rowList"); if (L) { const k = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? L.clientHeight : 1; L.scrollTop += e.deltaY * k; L.scrollLeft += e.deltaX * k; } return; }
+      const cv = $("coneCv"); if (cv) cv.dispatchEvent(new WheelEvent("wheel", { deltaX: e.deltaX, deltaY: e.deltaY, deltaMode: e.deltaMode, clientX: e.clientX, clientY: e.clientY, bubbles: true, cancelable: true }));
+    }, { passive: false });
     g.addEventListener("pointerdown", (e) => {   // v0.315: прежде — только за подпись (lab), теперь за любое пустое место группы
       if (e.button !== 0 || e.target.closest(NOGRAB)) return;
       e.preventDefault(); try { g.setPointerCapture(e.pointerId); } catch (err) { /* уже отпущен */ }
