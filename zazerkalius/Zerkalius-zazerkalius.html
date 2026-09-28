@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.332. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.333. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.332</title>
+<title>Zazerkalius — v0.333</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -615,11 +615,12 @@ body.zen #w-cone #coneMain{bottom:0}
    v0.320, «не отделяй их при перестановках — это одно», «уменьши длину, и значки первыми, потом текст сокращ.»: ◁ ↻ бит ▷ и ◀ [ось] ▶ —
    блоки .cunit, длиной в две кнопки: стрелки в полкнопки, в середине подпись или список в кнопку; строку не рвут */
 #w-cone .tools .cgb > label:has(> .zerk-range-wrap),#paneGrp .cgb > label:has(> .zerk-range-wrap){width:calc(var(--bu) * 2 + 3px) !important;flex:0 0 auto !important;display:flex !important;justify-content:flex-start !important;gap:3px;padding:0 4px !important;box-sizing:border-box}
-/* v0.322, по снимку «⚡ ── 32 стр/с» — «тут число может прям в ползунок закинуть?»: число ползунка (⚡ волна, скорость кручения, щель) —
-   поверх самой дорожки, по её середине, мелко и с тенью; мышь сквозь него. Такой ползунок — тоже в две кнопки, как все (было — в три) */
-#w-cone .tools .cgb > label:has(> .zerk-range-wrap + span),#paneGrp .cgb > label:has(> .zerk-range-wrap + span){position:relative}
-#w-cone .tools .cgb > label:has(> .zerk-range-wrap + span) > .zerk-range-wrap + span,#paneGrp .cgb > label:has(> .zerk-range-wrap + span) > .zerk-range-wrap + span{position:absolute !important;top:0;bottom:0;left:20px;right:20px;display:flex !important;align-items:center;justify-content:center;min-width:0 !important;pointer-events:none;font-size:10px;font-weight:600;color:var(--txt);text-shadow:0 0 3px var(--bg),0 0 3px var(--bg),0 0 2px var(--bg);white-space:nowrap}
-#w-cone .tools .cgb > label:has(> .sli):has(> .zerk-range-wrap + span) > .zerk-range-wrap + span,#paneGrp .cgb > label:has(> .sli):has(> .zerk-range-wrap + span) > .zerk-range-wrap + span{left:calc(1.5em + 23px)}
+/* v0.333, по снимку «◂──●──▸ 30°/с» у скорости кручения — «все ползунки — текст в ползунок»: число любого ползунка страницы (скорость
+   кручения, ⚡ волна, щель, этажей пирамиды…) переезжает внутрь обёртки ползунка (.rv, скрипт в конце страницы) и лежит по середине
+   дорожки, между стрелками ◂ ▸, мелко и с тенью; мышь сквозь него. Прежнее v0.322 ловило только ползунки прямо в группе — у кручения
+   метка глубже, число оставалось справа */
+.zerk-range-wrap:has(> .rv){position:relative}
+.zerk-range-wrap > .rv{position:absolute !important;top:0;bottom:0;left:16px;right:16px;display:flex !important;align-items:center;justify-content:center;min-width:0 !important;margin:0 !important;pointer-events:none;font-size:10px;font-weight:600;color:var(--txt);text-shadow:0 0 3px var(--bg),0 0 3px var(--bg),0 0 2px var(--bg);white-space:nowrap;overflow:hidden}
 #w-cone .tools .cgb > label > .sli,#paneGrp .cgb > label > .sli{flex:0 0 auto;min-width:1.5em;text-align:center}
 #w-cone .tools .cgb > label > .zerk-range-wrap,#paneGrp .cgb > label > .zerk-range-wrap{width:auto !important;flex:1 1 0 !important;min-width:0}
 #w-cone .tools .cgb > span.cunit,#paneGrp .cgb > span.cunit{display:inline-flex;flex-wrap:nowrap !important;gap:3px;flex:0 0 auto}
@@ -937,7 +938,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.332</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.333</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1769,13 +1770,15 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0332"></script>
-<script src="zz-ui.js?v=0332"></script>
+<script src="zz-core.js?v=0333"></script>
+<script src="zz-ui.js?v=0333"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>
+<!-- v0.333: число ползунка (соседний span) — внутрь его обёртки ◂ ▸, поверх дорожки (стрелки ставит модуль выше, в DOMContentLoaded; это — следом) -->
+<script>document.addEventListener("DOMContentLoaded", () => document.querySelectorAll(".zerk-range-wrap > input[type=range]").forEach((r) => { const w = r.parentElement; let n = w.nextSibling; while (n && n.nodeType === 3 && !n.textContent.trim()) n = n.nextSibling; if (n && n.nodeType === 1 && n.tagName === "SPAN" && !n.querySelector("input, button, select")) { n.classList.add("rv"); w.appendChild(n); } }));</script>
 <script src="../_js/recorder.js" data-bez-knopki></script>
 </body>
 </html>
