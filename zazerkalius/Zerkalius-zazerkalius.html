@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.388. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.389. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.388</title>
+<title>Zazerkalius — v0.389</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -398,6 +398,10 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 body.nocur .rw.cur:not(.sel):not(:hover) > .no{background:var(--bg) !important}
 #rowList ::selection{background:rgba(185,140,240,.5)}
 ::highlight(sndbit2){background-color:#ffd166;color:#111}   /* v0.383: столбцовая головка «стр+стл» */
+/* v0.389: в фоне хаба (body.bgmode) головки — семь нот радугой (цвета — sndHeadCol в zz-ui.js): sndbit — До, sndbit2 — Ре, дальше Ми…Си */
+body.bgmode ::highlight(sndbit){background-color:#ff5f6d} body.bgmode ::highlight(sndbit2){background-color:#ff9f43}
+::highlight(sndbit3){background-color:#ffe066;color:#111} ::highlight(sndbit4){background-color:#7ee787;color:#111} ::highlight(sndbit5){background-color:#4dd4ff;color:#111}
+::highlight(sndbit6){background-color:#6b8cff;color:#111} ::highlight(sndbit7){background-color:#c38cf5;color:#111}
 ::highlight(sndbit){background-color:#22d3ee;color:#111}   /* v0.260: бит, который сейчас звучит (♫ звук, ◉ бит) */
 ::highlight(zbar){background-color:rgba(59,130,246,.7);color:#fff}   /* v0.353: ▮ Столб — замороженный столбец */
 ::highlight(zwall){background-color:rgba(194,94,52,.75);color:#fff}   /* v0.347: 🧱 стенка — замороженные биты */
@@ -1037,7 +1041,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.388</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.389</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1884,8 +1888,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0388"></script>
-<script src="zz-ui.js?v=0388"></script>
+<script src="zz-core.js?v=0389"></script>
+<script src="zz-ui.js?v=0389"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

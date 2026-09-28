@@ -1716,7 +1716,7 @@ function renderCone(){
   if (window.zzSndHeads) {   // v0.376: ◉ головки звука — обводка сектора звучащего бита
     g.lineWidth = Math.max(2 * dpr, Math.min(dr * 0.14, 5 * dpr)); g.shadowBlur = 8 * dpr;
     for (const [i, j, kd] of window.zzSndHeads) {
-      g.strokeStyle = g.shadowColor = kd === 1 ? "#ffd166" : "#22d3ee";   // v0.383: столбцовая — золотом
+      g.strokeStyle = g.shadowColor = sndHeadCol(kd);   // v0.383: столбцовая — золотом
       if (i >= N || !shown(i)) continue; const n = (Z.rows[i] || "").length; if (!n || j >= n) continue;
       const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, a = -Math.PI / 2 + (j - coneRotOf(i)) * step;
       g.beginPath(); if (n > 1) { coneArc(g, cx, cy, i, rout, a, a + step); coneArc(g, cx, cy, i, rin, a + step, a, true); g.closePath(); } else { g.arc(cx, cy, rout, 0, 2 * Math.PI); } g.stroke();
@@ -2781,7 +2781,7 @@ function cone3DDraw(g, o){
   if (window.zzSndHeads) {   // v0.376: ◉ головки звука — точка на звучащем бите
     g.shadowBlur = 10 * dpr;
     for (const [i, j, kd] of window.zzSndHeads) {
-      g.fillStyle = g.shadowColor = kd === 1 ? "#ffd166" : "#22d3ee";   // v0.383: столбцовая — золотом
+      g.fillStyle = g.shadowColor = sndHeadCol(kd);   // v0.383: столбцовая — золотом
       if (i >= N || !shown(i)) continue; const n = (Z.rows[i] || "").length; if (!n || j >= n) continue;
       const q = at(i, -Math.PI / 2 + (j - coneRotOf(i) + 0.5) * 2 * Math.PI / n, ringR(i));
       g.beginPath(); g.arc(q[0], q[1], Math.max(3 * dpr, Math.min(sc * 0.18, 9 * dpr)), 0, 2 * Math.PI); g.fill();
@@ -2863,7 +2863,7 @@ function cone3DDraw(g, o){
       let xl = Infinity, xr = -Infinity;
       for (let q = 0; q < 72; q++) { const p = at(N - 1, q / 72 * 2 * Math.PI, ringR(N - 1) + 0.4); xl = Math.min(xl, p[0]); xr = Math.max(xr, p[0]); }
       const RN = N, cell = hpx / RN, gap = Math.max(2 * dpr, cell * 1.2), s1 = cell * 0.78, s0 = cell * 0.34;
-      const heads = new Map((window.zzSndHeads || []).map(([r, j, kd]) => [r + ":" + j, kd === 1 ? "#ffd166" : "#22d3ee"]));   // v0.383: столбцовая — золотом
+      const heads = new Map((window.zzSndHeads || []).map(([r, j, kd]) => [r + ":" + j, sndHeadCol(kd)]));   // v0.383: столбцовая — золотом
       for (let r = 0; r < RN; r++) {
         const s = Z.rows[r] || "", y = apex[1] + r * cell;
         for (let j = 0; j < s.length; j++) {
@@ -2921,6 +2921,14 @@ function coneRotOf(i){
   if (m === "obit") return base - (i % 2 ? -1 : 1) * ph;   // v0.161
   if (m === "opp") { const n = (Z.rows[i] || "").length || 1; return base - (i % 2 ? -1 : 1) * ph / 360 * n; }
   return base;
+}
+/* v0.389, «добавь ещё нот — До Ре Ми Фа Соль Ля Си; серыми, не включёнными, при включении — цветные» и «разве не 7 всего нот в музыке?» —
+   головок звука семь, по нотам, и цвет по номеру kd радугой: 0 До — красный (строки подряд, бывший ♫), 1 Ре — оранжевый (столбцы, бывший ♪),
+   2 Ми — жёлтый, 3 Фа — зелёный, 4 Соль — голубой, 5 Ля — синий, 6 Си — фиолетовый. Одна функция на поле строк, 2D, 3D и пирамиды.
+   Радуга — только в фоне хаба (body.bgmode); в самой странице головки прежние: строчная — бирюза, столбцовая — золото */
+function sndHeadCol(kd){
+  if (!document.body.classList.contains("bgmode")) return (kd | 0) === 1 ? "#ffd166" : "#22d3ee";
+  return ["#ff5f6d", "#ff9f43", "#ffe066", "#7ee787", "#4dd4ff", "#6b8cff", "#c38cf5"][kd | 0] || "#ff5f6d";
 }
 function coneRotStr(s, k){ const n = s.length; k = ((k % n) + n) % n; return k ? s.slice(k) + s.slice(0, k) : s; }
 function setupCone(){
@@ -3713,15 +3721,14 @@ function setupCone(){
   const sndMark = (P) => {
     sndMarkCone(P);   // v0.376
     if (!window.CSS || !CSS.highlights || typeof Highlight === "undefined") return;
-    if (Z.sndMark === false || !P || !P.length) { CSS.highlights.delete("sndbit"); CSS.highlights.delete("sndbit2"); return; }
-    const Lr = $("rowList"), rs = [], rs2 = [];   // v0.383: rs2 — столбцовая головка (третий элемент 1) — золотом
+    if (Z.sndMark === false || !P || !P.length) { for (let q = 0; q < 7; q++) CSS.highlights.delete(q ? "sndbit" + (q + 1) : "sndbit"); return; }
+    const Lr = $("rowList"), G = [];   // v0.383: столбцовая головка (третий элемент 1) — золотом; v0.389 — у каждой из семи своя подсветка sndbit, sndbit2…sndbit7
     for (const [r, j, kd] of P) {
       const bx = Lr.querySelector('.rw[data-r="' + r + '"] .bx'); if (!bx) continue;
       const w = document.createTreeWalker(bx, NodeFilter.SHOW_TEXT); let k = 0, nd;
-      while ((nd = w.nextNode())) { const n = nd.textContent.length; if (k + n <= j) { k += n; continue; } const rg = document.createRange(); rg.setStart(nd, j - k); rg.setEnd(nd, j - k + 1); (kd === 1 ? rs2 : rs).push(rg); break; }   // в .bx только 0 и 1
+      while ((nd = w.nextNode())) { const n = nd.textContent.length; if (k + n <= j) { k += n; continue; } const rg = document.createRange(); rg.setStart(nd, j - k); rg.setEnd(nd, j - k + 1); (G[kd | 0] = G[kd | 0] || []).push(rg); break; }   // в .bx только 0 и 1
     }
-    if (rs.length) CSS.highlights.set("sndbit", new Highlight(...rs)); else CSS.highlights.delete("sndbit");
-    if (rs2.length) CSS.highlights.set("sndbit2", new Highlight(...rs2)); else CSS.highlights.delete("sndbit2");
+    for (let q = 0; q < 7; q++) { const nm = q ? "sndbit" + (q + 1) : "sndbit"; if (G[q] && G[q].length) CSS.highlights.set(nm, new Highlight(...G[q])); else CSS.highlights.delete(nm); }
   };
   /* v0.388, по снимку подсветки бита — «как будто бы сдвиг есть звука с картинкой»: подсветка ставилась сразу, а звук доходит до колонок
      позже — на задержку вывода звуковой карты (ctx.baseLatency + ctx.outputLatency; на Windows десятки мс, в Bluetooth-наушниках 0,2–0,3 с,
@@ -3749,7 +3756,15 @@ function setupCone(){
   let snd2Last = null, sndRC = null;   // v0.383: sndRC — разметка столбцов для «стр+стл»
   /* v0.387, «2 и более значков, каждый отдельно вкл/выкл»: у «стр+стл» головки включаются по отдельности — sndHR строчная, sndHC столбцовая.
      Их переключает фон хаба (сообщение { zerkSndHead: "r" | "c", on }); в самой странице обе всегда включены */
-  let sndHR = true, sndHC = true;
+  /* v0.389: головок семь, по нотам — sndHeadsOn, набор включённых. До (r) — строки подряд и Ре (c) — столбцы сверху вниз, бас, как были;
+     Ми — строки задом наперёд (с конца поля, справа налево), Фа — столбцы снизу вверх, Соль — диагональ ↘ (каждый шаг — следующая строка
+     и следующий бит), Ля — диагональ ↙ (строки снизу вверх), Си — случайный бит поля. В фоне хаба у каждой головки своя тоника: мелодия
+     сдвинута так, что звучит от своей ноты (база звукоряда — ля; До — на 3 полутона выше, Ре — на 5…), и несколько включённых звучат
+     созвучием; в самой странице («стр+стл») сдвига нет. Цвет — sndHeadCol(kd) */
+  const SND_HEADS = { r: { kd: 0, semi: 3 }, c: { kd: 1, semi: 5 }, mi: { kd: 2, semi: 7 }, fa: { kd: 3, semi: 8 }, sol: { kd: 4, semi: 10 },
+    la: { kd: 5, semi: 0 }, si: { kd: 6, semi: 2 } };
+  const sndSemi = (id) => ZZ_BG && SND_HEADS[id].semi ? Math.pow(2, SND_HEADS[id].semi / 12) : 1;
+  let sndHeadsOn = new Set(["r", "c"]);
   const sndAuto = (r) => {
     if (!(r >= 0)) return null;
     for (let i = Math.min(r, Z.rows.length - 2); i >= 0; i--) {
@@ -3789,20 +3804,37 @@ function setupCone(){
          сверху вниз (только строки, где он есть), потом следующий (золото, звучит октавой ниже — бас). Обе — на одном счёте шагов */
       const L = sndList(true); if (!L.length) return;
       const lens = L.map(r => (Z.rows[r] || "").length), tot = lens.reduce((a, b) => a + b, 0); if (!tot) return;
-      const k = sndStep % tot; sndStep = k + 1;
-      let gi = 0, kk = k; while (kk >= lens[gi]) { kk -= lens[gi]; gi++; }
+      const k = sndStep % tot; sndStep = k + 1, H = sndHeadsOn, n = L.length;
+      const rpos = (x) => { let g = 0; while (x >= lens[g]) { x -= lens[g]; g++; } return [g, x]; };   // v0.389: место x-го бита при чтении строк подряд
+      const [gi, kk] = rpos(k);
       const on = [], r1 = L[gi], s1 = Z.rows[r1];
-      if (sndHR) sndOffs(s1.length, r1).forEach((o) => { const j = (kk + o) % s1.length; P.push([r1, j]); const hz = sndBitHz(s1, j); if (hz) on.push([hz, gi % 4]); });
-      if (kk === 0 && sndHR) sndShow([r1]);
+      if (H.has("r")) sndOffs(s1.length, r1).forEach((o) => { const j = (kk + o) % s1.length; P.push([r1, j]); const hz = sndBitHz(s1, j); if (hz) on.push([hz * sndSemi("r"), gi % 4]); });
+      if (kk === 0 && H.has("r")) sndShow([r1]);
       const key = L.length + ":" + tot + ":" + L[0] + ":" + L[L.length - 1];
       if (!sndRC || sndRC.key !== key) {   // сколько строк доходит до каждого столбца — один раз на поле
         const W = Math.max(...lens), cnt = new Array(W).fill(0); lens.forEach(x => { for (let c = 0; c < x; c++) cnt[c]++; });
         const cum = []; let a = 0; for (let c = 0; c < W; c++) { cum.push(a); a += cnt[c]; }
-        sndRC = { key, cum };
+        sndRC = { key, cum, cnt };
       }
-      let lo = 0, hi = sndRC.cum.length - 1; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (sndRC.cum[mid] <= k) lo = mid; else hi = mid - 1; }
-      let rem = k - sndRC.cum[lo];
-      if (sndHC) for (let q = 0; q < L.length; q++) if (lens[q] > lo) { if (rem-- === 0) { const r2 = L[q], s2 = Z.rows[r2]; P.push([r2, lo, 1]); const hz = sndBitHz(s2, lo); if (hz) on.push([hz / 2, 8]); break; } }
+      // v0.389: место x-го бита при обходе по столбцам — [строка, столбец]; up(столбец) — этот столбец снизу вверх
+      const cpos = (x, up) => {
+        let lo = 0, hi = sndRC.cum.length - 1; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (sndRC.cum[mid] <= x) lo = mid; else hi = mid - 1; }
+        let rem = x - sndRC.cum[lo]; if (up && up(lo)) rem = sndRC.cnt[lo] - 1 - rem;
+        for (let q = 0; q < n; q++) if (lens[q] > lo && rem-- === 0) return [L[q], lo];
+        return null;
+      };
+      const bit = (p, id, f, v) => {   // головка id звучит на бите p = [строка, бит]; f — октава, v — голос
+        if (!p) return; const s = Z.rows[p[0]]; if (!s || !(p[1] < s.length)) return;
+        P.push([p[0], p[1], SND_HEADS[id].kd]);
+        const hz = sndBitHz(s, p[1]); if (hz) on.push([hz * f * sndSemi(id), v]);
+      };
+      if (H.has("c")) bit(cpos(k), "c", 0.5, 8);
+      const at = (g, x) => [L[g], x];
+      if (H.has("mi")) bit(at(...rpos(tot - 1 - k)), "mi", 1, 3);
+      if (H.has("fa")) bit(cpos(k, () => true), "fa", 1, 0);
+      if (H.has("sol") && lens[k % n]) bit([L[k % n], k % lens[k % n]], "sol", 1, 3);
+      if (H.has("la") && lens[n - 1 - k % n]) bit([L[n - 1 - k % n], k % lens[n - 1 - k % n]], "la", 1, 0);
+      if (H.has("si")) bit(at(...rpos((Math.imul(k + 1, 2654435761) >>> 0) % tot)), "si", 1, 3);
       on.forEach(([hz, v]) => sndNote(hz, t, len, 0.32 / Math.sqrt(on.length), v));
     } else if (m === "seq" || m === "pair") {   // v0.257: чтение — строки одна за другой (по 2 — парами разом), выделенные или всё поле
       const L = sndList(true), G = m === "pair" ? 2 : 1, groups = [];
@@ -3878,12 +3910,13 @@ function setupCone(){
   if (ZZ_BG) addEventListener("message", (e) => {
     const d = e.data; if (!d || typeof d !== "object" || (d.zerkSnd === undefined && d.zerkSndHead === undefined)) return;
     Z.sndMode = "rc"; Z.sndMark = true; rowSel.clear();   // v0.383: в фоне — две головки, строки и столбцы
-    if (d.zerkSndHead) {   // v0.387: одна головка — вкл / выкл; звук молчал — включается только она; обе выключены — звук встаёт
-      const h = d.zerkSndHead === "c" ? "c" : "r", on = !!d.on;
-      if (!sndT) { if (!on) return; sndHR = h === "r"; sndHC = h === "c"; sndSet(true); }
-      else { if (h === "r") sndHR = on; else sndHC = on; if (!sndHR && !sndHC) { sndSet(false); sndHR = sndHC = true; } }
-    } else if (d.zerkSnd) { sndHR = sndHC = true; if (!sndT) sndSet(true); } else { sndSet(false); sndHR = sndHC = true; }
-    try { if (e.source) e.source.postMessage({ zerkSndOn: !!sndT, zerkSndR: !!sndT && sndHR, zerkSndC: !!sndT && sndHC }, "*"); } catch (err) { /* хаб с другого адреса */ }
+    const RC = () => new Set(["r", "c"]);
+    if (d.zerkSndHead) {   // v0.387: одна головка — вкл / выкл; звук молчал — включается только она; все выключены — звук встаёт (v0.389 — любая из семи)
+      const h = SND_HEADS[d.zerkSndHead] ? d.zerkSndHead : "r", on = !!d.on;
+      if (!sndT) { if (!on) return; sndHeadsOn = new Set([h]); sndSet(true); }
+      else { if (on) sndHeadsOn.add(h); else sndHeadsOn.delete(h); if (!sndHeadsOn.size) { sndSet(false); sndHeadsOn = RC(); } }
+    } else if (d.zerkSnd) { if (!sndT) { sndHeadsOn = RC(); sndSet(true); } } else { sndSet(false); sndHeadsOn = RC(); }
+    try { if (e.source) e.source.postMessage({ zerkSndOn: !!sndT, zerkSndHeads: sndT ? [...sndHeadsOn] : [], zerkSndR: !!sndT && sndHeadsOn.has("r"), zerkSndC: !!sndT && sndHeadsOn.has("c") }, "*"); } catch (err) { /* хаб с другого адреса */ }
   });
   if ($("bSndP")) $("bSndP").onclick = () => { if (sndT || sndPaused) sndSet(false); };   // v0.371: ■ стоп
   const sndDirSet = (d) => { const was = Z.sndDir < 0 ? -1 : 1; Z.sndDir = d; save(); if (sndT) { sndUi(); if (was !== d) say(d < 0 ? "◀ Звук — назад." : "▶ Звук — вперёд."); } else sndStepBy(d); };   // v0.374
