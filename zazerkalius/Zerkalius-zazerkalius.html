@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.402. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.403. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.402</title>
+<title>Zazerkalius — v0.403</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -751,10 +751,12 @@ button.rh1.on{--rbc:var(--gold)}
 button.tri-l,button.tri-r,button.tri-u,button.tri-d{--rbc:var(--line);border-radius:0 !important;padding:0 !important;background-repeat:no-repeat}
 button.tri-l:hover,button.tri-r:hover,button.tri-u:hover,button.tri-d:hover{--rbc:var(--acc)}
 button.tri-l.on,button.tri-r.on,button.tri-u.on,button.tri-d.on{--rbc:var(--gold)}
-button.tri-l{clip-path:polygon(0 50%,100% 0,100% 100%);border-width:0 1px 0 0 !important;padding-left:30% !important;
-  background-image:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));background-size:100% 50%;background-position:0 0,0 100%}
-button.tri-r{clip-path:polygon(0 0,100% 50%,0 100%);border-width:0 0 0 1px !important;padding-right:30% !important;
-  background-image:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));background-size:100% 50%;background-position:0 0,0 100%}
+/* v0.403, «треугольники — стоят все, но горизонт один, у всех»: ◀ ▶ больше не лежат на боку — прямоугольные, стоят основанием на той же нижней
+   черте, что и ▲; остриё — в сторону стрелки вдоль черты, прямой угол — с другой стороны. ▲ ▼ — в той же полосе, как были */
+button.tri-l{clip-path:polygon(0 100%,100% 0,100% 100%);border-width:0 1px 1px 0 !important;padding:7px 0 0 38% !important;
+  background-image:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));background-size:100% 100%;background-position:0 0}
+button.tri-r{clip-path:polygon(0 0,100% 100%,0 100%);border-width:0 0 1px 1px !important;padding:7px 38% 0 0 !important;
+  background-image:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));background-size:100% 100%;background-position:0 0}
 button.tri-u{clip-path:polygon(50% 0,100% 100%,0 100%);border-width:0 0 1px 0 !important;padding-top:5px !important;
   background-image:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));background-size:50% 100%;background-position:0 0,100% 0}
 button.tri-d{clip-path:polygon(0 0,100% 0,50% 100%);border-width:1px 0 0 0 !important;padding-bottom:5px !important;
@@ -1102,7 +1104,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.402</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.403</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1976,8 +1978,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0402"></script>
-<script src="zz-ui.js?v=0402"></script>
+<script src="zz-core.js?v=0403"></script>
+<script src="zz-ui.js?v=0403"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
