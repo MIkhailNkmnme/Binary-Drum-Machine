@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.311. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.312. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.311</title>
+<title>Zazerkalius — v0.312</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -206,6 +206,9 @@ body.nocur .rw.cur .bits > .bx,body.nocur .rw.cur .bits > .bxo{background:var(--
 .pane-head.pf::after{content:"▾";float:right;opacity:.6}
 .pane-head.pf.folded::after{content:"▸"}
 body:not(.pane-icons) .pane-fold-hid{display:none !important}
+/* v0.312, по снимку свёрнутых групп — «чтобы кнопка обратно развернуть не заезжала вверх»: ◂ (#bPaneIcons, в углу панели) лежала
+   поверх первого заголовка «💾 Страница целиком» и закрывала его ▸ / ▾ — свёрнутую группу было не развернуть. Заголовок кончается левее кнопки */
+body:not(.pane-icons) #bPaneIcons + .pane-head{padding-right:44px}
 #rowInputBar{display:flex;gap:4px;padding:0 10px 6px}
 #rowInput{flex:1 1 180px;min-width:120px;max-width:340px;font-family:var(--ff)}   /* v0.063: уже — рядом встали поля и выравнивание */
 #rowInputBar{flex-wrap:wrap;align-items:center}
@@ -862,7 +865,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.311</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.312</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1681,8 +1684,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0311"></script>
-<script src="zz-ui.js?v=0311"></script>
+<script src="zz-core.js?v=0312"></script>
+<script src="zz-ui.js?v=0312"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>
