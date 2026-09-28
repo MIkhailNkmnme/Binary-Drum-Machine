@@ -6551,7 +6551,7 @@ const ZZ_PALS = [
 function palApply(){
   const P = ZZ_PALS[(Z.pal | 0) % ZZ_PALS.length] || ZZ_PALS[0], st = document.documentElement.style, v = P.dark ? (themeIsLight() ? P.light : P.dark) : null;
   ["--b1", "--b0", "--acc"].forEach((k, i) => { if (v) st.setProperty(k, v[i]); else st.removeProperty(k); });
-  const b = $("bPal"); if (b) b.textContent = "🎨 " + P.name;
+  const b = $("bPal"); if (b) { b.textContent = "🎨 Гамма"; b.title = `🎨 Гамма (сейчас «${P.name}»): щелчок — открыть группу «Гамма» со всеми гаммами (открыта — закрыть); правый щелчок — следующая гамма`; }   // v0.369: подпись — «Гамма», выбранная — в подсказке и в группе
   palUi();
 }
 function palUi(){   // v0.367: в группе «Гамма» горит выбранная; «🎨» в шапке горит, пока группа открыта
