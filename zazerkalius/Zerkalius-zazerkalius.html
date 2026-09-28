@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.326. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.327. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.326</title>
+<title>Zazerkalius — v0.327</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -592,6 +592,14 @@ body.zen #w-cone #coneMain{bottom:0}
   background:linear-gradient(135deg, transparent 45%, var(--gc, var(--dim)) 45% 55%, transparent 55% 70%, var(--gc, var(--dim)) 70% 80%, transparent 80%)}
 .cgrp > .cgsz:hover{opacity:1}
 .cgrp.cmin > .cgsz,.cgrp.cdrag > .cgsz{display:none}
+/* v0.327, «текст убрать в поля»: поле с подписью (стр., сид, от … °, ↔, ⌖×) — шириной в кнопку, подпись — мелко внутри поля (cgrpInit),
+   слева или справа, мышь сквозь неё; стрелок-вертушек у числа нет (колесо и ↑ ↓ меняют число, как прежде) */
+#w-cone .tools .cgb > label.fin,#paneGrp .cgb > label.fin{position:relative;width:var(--bu) !important;flex:0 0 auto !important;padding:0 !important;justify-content:flex-start !important}
+#w-cone .tools .cgb > label.fin > input,#paneGrp .cgb > label.fin > input{width:100% !important;height:24px;margin:0 !important;box-sizing:border-box;-moz-appearance:textfield;appearance:textfield}
+#w-cone .tools .cgb > label.fin > input::-webkit-inner-spin-button,#w-cone .tools .cgb > label.fin > input::-webkit-outer-spin-button,#paneGrp .cgb > label.fin > input::-webkit-inner-spin-button,#paneGrp .cgb > label.fin > input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+#w-cone .tools .cgb > label.fin > .fpre,#w-cone .tools .cgb > label.fin > .fpost,#paneGrp .cgb > label.fin > .fpre,#paneGrp .cgb > label.fin > .fpost{position:absolute;top:0;bottom:0;display:flex;align-items:center;font-size:10px;color:var(--dim);pointer-events:none;white-space:nowrap}
+#w-cone .tools .cgb > label.fin > .fpre,#paneGrp .cgb > label.fin > .fpre{left:5px}
+#w-cone .tools .cgb > label.fin > .fpost,#paneGrp .cgb > label.fin > .fpost{right:5px}
 /* v0.317, по снимку группы «Звук» — «всем кнопкам и спискам — стандарт длины кнопок, если в строку более чем 1 помещается, то туда»:
    у кнопок, кнопок-галок и списков в группах одна ширина --bu (80 px); кнопка-значок (не больше двух знаков: ◀ ▶| ↻ ⏮ 01 — класс .ib,
    ставит cgbIcons) — в полширины, две такие = одна обычная. Сколько влезает в строку, столько и встаёт, столбцы ровные. Длинная
@@ -929,7 +937,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.326</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.327</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1760,8 +1768,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0326"></script>
-<script src="zz-ui.js?v=0326"></script>
+<script src="zz-core.js?v=0327"></script>
+<script src="zz-ui.js?v=0327"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

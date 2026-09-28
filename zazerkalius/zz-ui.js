@@ -5459,6 +5459,18 @@ function cgrpInit(){
     const f = l.firstChild; if (!f || f.nodeType !== 3 || !f.textContent.trim()) return;
     const sp = document.createElement("span"); sp.className = "sli"; sp.textContent = f.textContent.trim(); l.replaceChild(sp, f);
   }));
+  /* v0.327, по снимку «256 стр. · сид 1» — «текст убрать в поля»: подпись у числового / текстового поля группы — внутри самого поля:
+     что стояло перед полем (сид, от, ↔, ⌖×) — слева в нём (.fpre), что после (стр., °) — справа (.fpost); поле отступает под них */
+  groups.forEach((g) => g.querySelectorAll("label").forEach((l) => {
+    const inp = l.querySelector("input[type=number], input[type=text]"); if (!inp || l.querySelector("input[type=range], input[type=checkbox]")) return;
+    const pre = [], post = []; let after = false;
+    [...l.childNodes].forEach((n) => { if (n === inp) after = true; else if (n.nodeType === 3 && n.textContent.trim()) (after ? post : pre).push(n); });
+    if (!pre.length && !post.length) return;
+    const mk = (nodes, cls) => { if (!nodes.length) return 0; const t = nodes.map(n => n.textContent.trim()).join(" "); nodes.forEach(n => n.remove()); const sp = document.createElement("span"); sp.className = cls; sp.textContent = t; l.appendChild(sp); return [...t].length; };
+    const a = mk(pre, "fpre"), b = mk(post, "fpost"); l.classList.add("fin");
+    if (a) inp.style.paddingLeft = `calc(${a}ch + 6px)`;
+    if (b) inp.style.paddingRight = `calc(${b}ch + 6px)`;
+  }));
   const place = (g) => {
     const p = Z.cgrpPos[g.dataset.g]; g.classList.toggle("cfloat", !!p);
     if (!p) { g.style.left = g.style.top = ""; return; }
