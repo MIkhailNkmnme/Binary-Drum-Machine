@@ -4988,17 +4988,7 @@ window.addEventListener("wheel", (e) => {
   const w = e.target.closest && e.target.closest(".win");
   if (w && w !== zActiveWin) e.stopPropagation();   // неактивное окно — колесо листает стол
 }, { capture: true, passive: true });
-/* v0.407, «развёртку не найду»: новое окно встало в самый низ стола. «✦ развёртка» в окне Гранидуса — показать её: из списка окон слева
-   (при «⇆ поле справа») — тем же щелчком, свёрнутую — развернуть; поднять наверх, прокрутить к ней, мигнуть рамкой. */
-if ($("bRazvShow")) $("bRazvShow").onclick = () => {
-  const el = $("w-razv"); if (!el) return;
-  const pb = document.querySelector('#paneWins button[data-w="w-razv"]'); if (pb) pb.click();
-  if (el.classList.contains("collapsed")) { const bc = el.querySelector(".bc"); if (bc) bc.click(); }
-  Z.z++; el.style.zIndex = Z.z;
-  el.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 800);
-  renderRazv();
-};
+// v0.410: кнопка «✦ развёртка» из окна Гранидуса переехала в шапку (закреплённое окно, см. razvPin0)
 
 /* ─── 🧪 Поиск структуры (v0.042) ─────────────────────────────────────────────────────────────
    Живое окно: считает при каждой отрисовке, если не свёрнуто; результат запоминается по ленте и номеру строки. */
@@ -7830,6 +7820,7 @@ function init(){
   const winShow = (id) => {
     const el = $(id); if (!el) return;
     if (id === "w-help" && !Z.helpOn) { $("bHelp").click(); }
+    { const pb = document.querySelector('#paneWins button[data-w="' + id + '"]'); if (pb) pb.click(); }   // v0.410: и из списка окон слева
     if (el.classList.contains("collapsed")) el.querySelector(".bc").click();
     Z.z++; el.style.zIndex = Z.z;
     el.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -7865,6 +7856,13 @@ function init(){
   document.addEventListener("dblclick", pinCatch, true);
   document.addEventListener("pointerdown", (e) => { if (pinMode && e.target.closest(".whead") && !e.target.closest("button")) e.stopPropagation(); }, true);   // шапку не таскать
   document.addEventListener("keydown", (e) => { if (pinMode && e.key === "Escape") { e.preventDefault(); $("bPinMode").click(); } }, true);
+  /* v0.410, по снимкам «✦ развёртка» и шапки с «◆ Гранидус», «◯ Конус» — «сюда»: окно развёртки — закреплённой кнопкой в шапке, сразу за
+     Гранидусом (или в конце). Один раз (Z.razvPin0): открепишь правым щелчком — само не вернётся. */
+  if (!Z.razvPin0) {
+    Z.razvPin0 = true;
+    if (!Z.pins.some(p => p.t === "w" && p.id === "w-razv")) { const k = Z.pins.findIndex(p => p.t === "w" && p.id === "w-okt"); Z.pins.splice(k >= 0 ? k + 1 : Z.pins.length, 0, { t: "w", id: "w-razv" }); }
+    save();
+  }
   renderPins();
   /* v0.052, «при изменении текста всё дёргается, на многих меню так же»: живые тексты окон меняют число строк
      (другая строка, наведение) — и всё, что под ними (холст конуса, таблицы, виды), прыгает вверх-вниз. Текст окна теперь
