@@ -3549,27 +3549,54 @@ function setupCone(){
     if (rs.length) CSS.highlights.set("sndbit", new Highlight(...rs)); else CSS.highlights.delete("sndbit");
   };
   const sndTick = () => {
-    const P = []; sndTick1(P); sndMark(P);
+    const P = []; snd2Last = null; sndTick1(P); sndMark(P); snd2Label();
   };
   // v0.318: ⁑ 2 бита — смещения читающих «головок» в строке длины n: [0] или [0, ↔] (по кругу; совпали — одна)
-  const sndOffs = (n) => { if (!Z.snd2 || n < 2) return [0]; const d = (Math.round(Z.snd2d || 4) % n + n) % n; return d ? [0, d] : [0]; };
+  /* v0.337, по снимку «⁑ 2 бита» — «пусть определяет количество бит и расстояние по строке, следующей после строки, где все 1-цы, и
+     автоматом переключает при плее»: над читаемой строкой r (или она сама) ищется ближайшая строка из одних 1; следующая за ней строка —
+     шаблон головок: сколько в ней 1 — столько бит звучит разом (до 8), где они стоят — на таком расстоянии от читаемого (у Серпинского
+     под 1111 — 10001: два бита через 4). Строк из одних 1 выше нет — как прежде, два бита через ↔. Считается на каждом шаге — читаешь
+     дальше вниз, прошёл следующую строку из 1 — шаблон сменился сам; что звучит сейчас — на кнопке. */
+  let snd2Last = null;
+  const sndAuto = (r) => {
+    if (!(r >= 0)) return null;
+    for (let i = Math.min(r, Z.rows.length - 2); i >= 0; i--) {
+      const s = Z.rows[i]; if (!s || s.indexOf("0") >= 0) continue;
+      const t = Z.rows[i + 1], p = []; for (let j = 0; t && j < t.length && p.length < 8; j++) if (t[j] === "1") p.push(j);
+      return p.length ? p.map(x => x - p[0]) : null;
+    }
+    return null;
+  };
+  const sndOffs = (n, r) => {
+    if (!Z.snd2 || n < 2) return [0];
+    const a = sndAuto(r);
+    if (a) { const o = a.map(d => d % n).filter((d, i, A) => A.indexOf(d) === i); if (!snd2Last) snd2Last = a; return o; }
+    const d = (Math.round(Z.snd2d || 4) % n + n) % n; if (!snd2Last) snd2Last = d ? [0, d] : [0]; return d ? [0, d] : [0];
+  };
+  const snd2Label = () => {   // v0.337: что звучит сейчас — на кнопке: «⁑ 2×8» (два бита через 8), «⁑ 3: 0,2,6» (неровно)
+    const b = $("bSnd2"); if (!b) return;
+    let t = "⁑ авто";
+    if (Z.snd2 && sndT && snd2Last) { const a = snd2Last, k = a.length, d = k > 1 ? a[1] - a[0] : 0, even = a.every((x, i) => x === i * d);
+      t = k < 2 ? "⁑ 1" : even ? `⁑ ${k}×${d}` : `⁑ ${k}: ${a.join(",")}`; }
+    if (b.textContent !== t) b.textContent = t;
+  };
   const sndTick1 = (P) => {
     const sp = Z.sndSp || 6, len = Math.min(0.6, 1.6 / sp), t = snd.ctx.currentTime + 0.01, sc = sndSc(), m = Z.sndMode || "row";
     if (m === "row") {
       const s = cur(); if (!s) return;
       const i = sndStep % s.length; sndStep = i + 1;
-      const on = []; sndOffs(s.length).forEach((o, h) => { const j = (i + o) % s.length; P.push([Z.cur, j]); const hz = sndBitHz(s, j); if (hz) on.push([hz, h]); });
+      const on = []; sndOffs(s.length, Z.cur).forEach((o, h) => { const j = (i + o) % s.length; P.push([Z.cur, j]); const hz = sndBitHz(s, j); if (hz) on.push([hz, h]); });
       on.forEach(([hz, v]) => sndNote(hz, t, len, 0.35 / Math.sqrt(on.length), v));   // v0.318: при ⁑ — два голоса
     } else if (m === "sel") {   // v0.257: выделенные строки (нет выделения — текущая) звучат разом, каждая своим голосом и в своём такте
       const L = sndList(false).slice(0, 8), k = sndStep++;
-      const on = []; L.forEach((r, v) => { const s = Z.rows[r]; if (s) sndOffs(s.length).forEach((o) => { const j = (k + o) % s.length; P.push([r, j]); const hz = sndBitHz(s, j); if (hz) on.push([hz, v]); }); });
+      const on = []; L.forEach((r, v) => { const s = Z.rows[r]; if (s) sndOffs(s.length, r).forEach((o) => { const j = (k + o) % s.length; P.push([r, j]); const hz = sndBitHz(s, j); if (hz) on.push([hz, v]); }); });
       on.forEach(([hz, v]) => sndNote(hz, t, len, 0.32 / Math.sqrt(on.length), v));
     } else if (m === "seq" || m === "pair") {   // v0.257: чтение — строки одна за другой (по 2 — парами разом), выделенные или всё поле
       const L = sndList(true), G = m === "pair" ? 2 : 1, groups = [];
       for (let j = 0; j < L.length; j += G) groups.push(L.slice(j, j + G));
       const lens = groups.map(g => Math.max(...g.map(r => (Z.rows[r] || "").length), 1)), tot = lens.reduce((a, b) => a + b, 0); if (!tot) return;
       let k = sndStep % tot; sndStep = k + 1; let gi = 0; while (k >= lens[gi]) { k -= lens[gi]; gi++; }
-      const on = []; groups[gi].forEach((r, v) => { const s = Z.rows[r]; if (s && k < s.length) sndOffs(s.length).forEach((o) => { const j = (k + o) % s.length; P.push([r, j]); const hz = sndBitHz(s, j); if (hz) on.push([hz, L.indexOf(r) % 12]); }); });
+      const on = []; groups[gi].forEach((r, v) => { const s = Z.rows[r]; if (s && k < s.length) sndOffs(s.length, r).forEach((o) => { const j = (k + o) % s.length; P.push([r, j]); const hz = sndBitHz(s, j); if (hz) on.push([hz, L.indexOf(r) % 12]); }); });
       on.forEach(([hz, v]) => sndNote(hz, t, len, 0.33 / Math.sqrt(on.length), v));
       if (k === 0) sndShow(groups[gi]);   // строка (пара) началась — сказать, какая
     } else {
@@ -3588,6 +3615,7 @@ function setupCone(){
   const sndSet = (on) => {
     if (on) { sndCtx(); sndStep = 0; sndT = setTimeout(sndLoop, 0); } else { clearTimeout(sndT); sndT = 0; sndMark(null); }
     const b = $("bSnd"); b.classList.toggle("on", on); b.textContent = on ? "■ звук" : "♫ звук";
+    snd2Label();   // v0.337: остановлен — «⁑ авто»
   };
   $("bSnd").onclick = () => sndSet(!sndT);
   $("sndMode").value = Z.sndMode || "row";
@@ -3596,9 +3624,9 @@ function setupCone(){
   sndMarkUi();
   $("bSndMark").onclick = () => { Z.sndMark = Z.sndMark === false; sndMarkUi(); save(); if (Z.sndMark === false) sndMark(null);
     say(Z.sndMark !== false ? "◉ Звучащий бит подсвечен в строках." : "◉ Звучащий бит не подсвечивается."); };
-  const snd2Ui = () => { $("bSnd2").classList.toggle("on", !!Z.snd2); $("snd2d").disabled = !Z.snd2; };   // v0.318: ⁑ 2 бита и ↔
+  const snd2Ui = () => { $("bSnd2").classList.toggle("on", !!Z.snd2); $("snd2d").disabled = !Z.snd2; snd2Label(); };   // v0.318: ⁑ 2 бита и ↔; v0.337 — авто
   snd2Ui();
-  $("bSnd2").onclick = () => { Z.snd2 = !Z.snd2; snd2Ui(); save(); say(Z.snd2 ? `⁑ Звучат два бита разом: где идёт чтение и через ${Z.snd2d || 4} впереди.` : "⁑ Звучит один бит."); };
+  $("bSnd2").onclick = () => { Z.snd2 = !Z.snd2; snd2Ui(); save(); say(Z.snd2 ? `⁑ Авто: сколько бит звучит разом и на каком расстоянии — по строке под ближайшей строкой из одних 1 выше читаемой; такой нет — два бита через ↔ ${Z.snd2d || 4}.` : "⁑ Звучит один бит."); };
   $("snd2d").value = Z.snd2d || 4;
   $("snd2d").oninput = (e) => { const v = Math.round(+e.target.value); if (v >= 1) Z.snd2d = v; };
   $("snd2d").onchange = (e) => { e.target.value = Z.snd2d || 4; save(); };
