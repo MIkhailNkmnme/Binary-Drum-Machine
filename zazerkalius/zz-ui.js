@@ -5654,10 +5654,25 @@ function cgrpInit(){
   addEventListener("resize", () => groups.forEach(place));
   cgrpCols();
   cgbIcons();   // v0.317: подписи кнопок меняются (▶ / ⏸, «только значки») — пересчёт, кто значок
-  { let t = 0; const mo = new MutationObserver(() => { if (!t) t = requestAnimationFrame(() => { t = 0; cgbIcons(); }); });
+  { let t = 0; const mo = new MutationObserver(() => { if (!t) t = requestAnimationFrame(() => { t = 0; cgbIcons(); cgbSnap(); }); });   // v0.335: и ширины 1 / 2 / 4
     groups.forEach(g => mo.observe(g, { childList: true, characterData: true, subtree: true })); }
+  cgbSnap();
 }
 // v0.317, «всем кнопкам и спискам — стандарт длины»: кнопка в группе, где не больше двух знаков (◀ ▶| ↻ ⏮ 01), — значок, в полширины (.ib)
+/* v0.335, «стандарт ширины кнопки — ширины только 1, 2, 4»: всё в группе, что стояло своей шириной (подпись группы, «весь:», «по биту:»,
+   полоса режимов кручения, «🎯 до строки», голые поля, счёт Аниматрицы), — шириной ровно в 1, 2 или 4 кнопки (с зазорами между ними):
+   наименьшую, в которую влезает. Кнопки, списки, поля с подписью — уже в 1, ползунки и блоки ◀ [ ] ▶ — в 2; значки — в полкнопки (v0.317) */
+const CG_FREE = ".cgrp > .glab, .cgrp > .cgb > .glab2, .cgrp > .cgb > span:not(.cunit), .cgrp > .cgb > input";
+function cgbSnap(){
+  const bu = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--bu")) || 80, gp = 3, W = (k) => k * bu + (k - 1) * gp;
+  document.querySelectorAll(CG_FREE).forEach((el) => {
+    if (!el.getClientRects().length) return;
+    const w0 = el.style.width; el.style.width = "max-content"; const w = el.getBoundingClientRect().width;
+    const k = w <= W(1) + 0.5 ? 1 : w <= W(2) + 0.5 ? 2 : 4, t = W(k) + "px";
+    el.style.width = t; if (!el.style.boxSizing) el.style.boxSizing = "border-box";
+    if (w0 !== t) el.style.flex = "0 0 auto";
+  });
+}
 function cgbIcons(){
   document.querySelectorAll(".cgrp > .cgb button:not(.zerk-arrow)").forEach((b) => { const on = [...b.textContent.trim()].length <= 2; if (b.classList.contains("ib") !== on) b.classList.toggle("ib", on); });
 }
