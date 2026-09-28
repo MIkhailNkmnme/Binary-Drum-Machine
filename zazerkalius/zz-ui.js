@@ -3712,9 +3712,14 @@ function setupCone(){
      и подсветку бита, ⏯ — дальше с того же места; ◀ ▶ — один шаг назад / вперёд (звучит он один), звук при этом встаёт на паузу.
      Период шага — по режиму: длина текущей строки, самой длинной из звучащих, всех строк подряд или ширина поля */
   let sndPaused = false;
+  /* v0.371, по снимку «■ звук | ⏯ дальше» — «пауза и звук — 1 размер, и рядом 0,5 — стоп; когда не включён, стоп неактивен»: одна кнопка
+     в 1 ширину — ♫ звук (пуск) → ⏸ пауза (звучит) → ⏯ дальше (на паузе); рядом ■ в полкнопки — стоп совсем (следующий пуск — с начала),
+     неактивна, пока звук не идёт и не на паузе */
   const sndUi = () => {
-    const on = !!sndT || sndPaused, b = $("bSnd"); b.classList.toggle("on", on); b.textContent = on ? "■ звук" : "♫ звук"; b.classList.toggle("run", !!sndT);   // v0.351: звучит — рамка мигает (на паузе — нет)
-    const p = $("bSndP"); if (p) { p.classList.toggle("on", sndPaused); p.textContent = sndPaused ? "⏯ дальше" : "⏸ пауза";   /* v0.368: кнопкой в 1 ширину, с подписью */ p.title = sndPaused ? "⏯ Дальше с того же места" : sndT ? "⏸ Пауза: звук встаёт, место и подсветка бита остаются" : "⏸ Пауза (звук не идёт)"; }
+    const on = !!sndT || sndPaused, b = $("bSnd"); b.classList.toggle("on", on); b.classList.toggle("run", !!sndT);   // v0.351: звучит — рамка мигает (на паузе — нет)
+    b.textContent = sndT ? "⏸ пауза" : sndPaused ? "⏯ дальше" : "♫ звук";
+    b.title = sndT ? "⏸ Пауза: звук встаёт, место и подсветка бита остаются (■ рядом — стоп совсем)" : sndPaused ? "⏯ Дальше с того же места (■ рядом — стоп совсем)" : "♫ Звук: поле звучит; ещё щелчок — пауза, ■ рядом — стоп. Строки меняются на ходу — звучит уже новое. Идёт и в запись ⏺ / mp4 конуса";
+    const p = $("bSndP"); if (p) { p.disabled = !on; p.classList.remove("on"); p.textContent = "■"; p.title = on ? "■ Стоп: звук совсем, следующий пуск — с начала" : "■ Стоп (звук не идёт)"; }
     snd2Label();   // v0.337: остановлен — «⁑ авто»
   };
   const sndSet = (on) => {
@@ -3741,8 +3746,8 @@ function setupCone(){
     if (d < 0) sndStep = ((sndStep - 2) % per + per) % per; else sndStep = (sndStep % per + per) % per;
     sndTick(); sndUi();
   };
-  $("bSnd").onclick = () => sndSet(!(sndT || sndPaused));
-  if ($("bSndP")) $("bSndP").onclick = () => { if (sndPaused) sndPause(false); else if (sndT) sndPause(true); else sndSet(true); };
+  $("bSnd").onclick = () => { if (sndT) sndPause(true); else if (sndPaused) sndPause(false); else sndSet(true); };   // v0.371: пуск / пауза / дальше
+  if ($("bSndP")) $("bSndP").onclick = () => { if (sndT || sndPaused) sndSet(false); };   // v0.371: ■ стоп
   if ($("bSndB")) $("bSndB").onclick = () => sndStepBy(-1);
   if ($("bSndF")) $("bSndF").onclick = () => sndStepBy(1);
   $("sndMode").value = Z.sndMode || "row";
