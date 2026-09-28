@@ -3575,39 +3575,64 @@ function setupCone(){
   $("bConeRec").onclick = () => recGo("webm");
   $("bConeRecMp4").onclick = () => recGo("mp4");   // v0.250
   /* v0.267, «как записывать видео в области строк?» → вариант 1: поле строк — не холст, captureStream у него нет. Пишем саму вкладку
-     (браузер один раз спрашивает «Поделиться этой вкладкой?») и обрезаем кадр по полю строк (CropTarget, Chrome / Edge) — в файле
-     ровно то, что на экране: подсветка, звучащий бит, черта, прокрутка. Звук — дорожка «♫ Звук», как у записи конуса. Пока идёт
-     запись — поле обведено красным пунктиром снаружи (в файл не идёт), ⏸ — пауза (рамка жёлтая). Формат — mp4, если браузер умеет. */
-  let rrec = null, rrT = 0, rrPause = 0, rrPausedAt = 0;
+     (браузер спрашивает «Поделиться этой вкладкой?») и обрезаем кадр по полю строк (CropTarget, Chrome / Edge) — в файле ровно то, что
+     на экране: подсветка, звучащий бит, черта, прокрутка.
+     v0.268, «а если одну кнопку на всё — и потом выбор окна кликом: либо строки, либо конус, и потом 3D»: одна ⏺ в шапке; нажал —
+     наводишь на окно (строки, ◯ конус, 🧊 вид, ▲ пирамида) — оно обведено, щелчок — пишется оно, Esc или щелчок мимо — отмена.
+     Холсты (конус, вид, пирамида) пишутся напрямую, без вопроса браузера и без кнопок поверх; поле строк — вкладкой с обрезкой.
+     Звук — дорожка «♫ Звук», как у записи конуса. Пока идёт запись — окно обведено красным пунктиром снаружи (в файл не идёт),
+     ⏸ — пауза (рамка жёлтая). Формат — mp4, если браузер умеет, иначе webm. */
+  const REC_T = [["rowList", "поле строк", "stroki"], ["coneCv", "конус", "konus"], ["viewCv", "🧊 вид", "vid"], ["pyrCv", "пирамида", "piramida"]];
+  let rrec = null, rrT = 0, rrPause = 0, rrPausedAt = 0, rrEl = null, rrPick = null;
   const rrUi = () => {
     const b = $("bRowsRec"), p = $("bRowsRecPause");
-    b.classList.toggle("on", !!rrec); b.textContent = rrec ? "⏹" : "⏺";
+    b.classList.toggle("on", !!rrec || !!rrPick); b.textContent = rrec ? "⏹" : "⏺";
     p.classList.toggle("on", !!rrPausedAt); p.textContent = rrPausedAt ? "▶" : "⏸";
     document.body.classList.toggle("rowsrec", !!rrec); document.body.classList.toggle("rowsrecp", !!rrPausedAt);
+    document.querySelectorAll(".recon").forEach(x => x.classList.remove("recon"));
+    if (rrec && rrEl) rrEl.classList.add("recon");
   };
   $("bRowsRecPause").onclick = () => {
     if (!rrec) return;
-    if (rrec.state === "recording") { rrec.pause(); rrPausedAt = Date.now(); say("⏸ Запись поля строк на паузе — в файл не идёт. ▶ — дальше."); }
-    else if (rrec.state === "paused") { rrec.resume(); rrPause += Date.now() - rrPausedAt; rrPausedAt = 0; say("▶ Запись поля строк идёт дальше — в тот же файл."); }
+    if (rrec.state === "recording") { rrec.pause(); rrPausedAt = Date.now(); say("⏸ Запись на паузе — в файл не идёт. ▶ — дальше."); }
+    else if (rrec.state === "paused") { rrec.resume(); rrPause += Date.now() - rrPausedAt; rrPausedAt = 0; say("▶ Запись идёт дальше — в тот же файл."); }
     rrUi();
   };
-  $("bRowsRec").onclick = async () => {
-    if (rrec) { rrec.stop(); return; }
-    const md = navigator.mediaDevices, L = $("rowList");
-    if (!md || !md.getDisplayMedia || typeof MediaRecorder === "undefined") { say("⏺ Этот браузер не умеет записывать вкладку — нужен Chrome или Edge."); return; }
-    let cap = null;
-    try { cap = await md.getDisplayMedia({ video: { frameRate: 30 }, audio: false, preferCurrentTab: true, selfBrowserSurface: "include", surfaceSwitching: "exclude", monitorTypeSurfaces: "exclude" }); }
-    catch (err) { cap = null; }
-    if (!cap) { say("⏺ Запись поля строк отменена — вкладку не дали."); return; }
-    const vt = cap.getVideoTracks()[0], ss = vt.getSettings ? vt.getSettings() : {};
-    let cropped = false;
-    if (ss.displaySurface === "browser" || ss.displaySurface === undefined) {
-      try { if (window.CropTarget && vt.cropTo) { await vt.cropTo(await CropTarget.fromElement(L)); cropped = true; } } catch (err) { cropped = false; }
-    }
-    if (!cropped) {
-      cap.getTracks().forEach(t => t.stop());
-      say(ss.displaySurface && ss.displaySurface !== "browser" ? "⏺ Выбрано не эта вкладка — поле строк так не вырезать. Ещё раз ⏺ и в окне выбора — «Эта вкладка»." : "⏺ Этот браузер не умеет вырезать кусок вкладки — нужен Chrome или Edge (с 2022 года).");
-      return;
+  const recTargetAt = (t) => {
+    for (const [id, name, file] of REC_T) { const el = $(id); if (el && el.offsetParent && el.getClientRects().length && el.contains(t)) return { el, name, file }; }
+    return null;
+  };
+  const pickEnd = () => {
+    if (!rrPick) return;
+    document.removeEventListener("pointerover", rrPick.over, true); document.removeEventListener("pointerdown", rrPick.down, true);
+    document.removeEventListener("click", rrPick.click, true); document.removeEventListener("keydown", rrPick.key, true);
+    document.querySelectorAll(".recpk").forEach(x => x.classList.remove("recpk")); document.body.classList.remove("recpick");
+    rrPick = null; rrUi();
+  };
+  const recStart = async (T) => {
+    const el = T.el, isCv = el.tagName === "CANVAS";
+    let cap = null, vt = null;
+    if (typeof MediaRecorder === "undefined") { say("⏺ Этот браузер не умеет записывать видео."); return; }
+    if (isCv) {
+      if (!el.captureStream) { say("⏺ Этот браузер не умеет записывать холст."); return; }
+      vt = el.captureStream(30).getVideoTracks()[0];
+    } else {
+      const md = navigator.mediaDevices;
+      if (!md || !md.getDisplayMedia) { say("⏺ Этот браузер не умеет записывать вкладку — нужен Chrome или Edge."); return; }
+      try { cap = await md.getDisplayMedia({ video: { frameRate: 30 }, audio: false, preferCurrentTab: true, selfBrowserSurface: "include", surfaceSwitching: "exclude", monitorTypeSurfaces: "exclude" }); }
+      catch (err) { cap = null; }
+      if (!cap) { say("⏺ Запись отменена — вкладку не дали."); return; }
+      vt = cap.getVideoTracks()[0];
+      const ss = vt.getSettings ? vt.getSettings() : {};
+      let cropped = false;
+      if (ss.displaySurface === "browser" || ss.displaySurface === undefined) {
+        try { if (window.CropTarget && vt.cropTo) { await vt.cropTo(await CropTarget.fromElement(el)); cropped = true; } } catch (err) { cropped = false; }
+      }
+      if (!cropped) {
+        cap.getTracks().forEach(t => t.stop());
+        say(ss.displaySurface && ss.displaySurface !== "browser" ? "⏺ Выбрана не эта вкладка — окно так не вырезать. Ещё раз ⏺ и в окне выбора — «Эта вкладка»." : "⏺ Этот браузер не умеет вырезать кусок вкладки — нужен Chrome или Edge (с 2022 года).");
+        return;
+      }
     }
     let at = null;
     if (window.AudioContext || window.webkitAudioContext) { try { sndCtx(); at = snd.rec.stream.getAudioTracks()[0].clone(); } catch (err) { at = null; } }
@@ -3615,29 +3640,50 @@ function setupCone(){
       : ["video/mp4;codecs=avc1.42E01E", "video/mp4;codecs=avc1", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
     const mime = want.find(m => MediaRecorder.isTypeSupported(m)) || "", mp4 = mime.startsWith("video/mp4");
     const stream = new MediaStream([vt].concat(at ? [at] : [])), chunks = [];
-    const r = rrec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 8e6 } : undefined);
+    const r = rrec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: isCv ? 12e6 : 8e6 } : undefined);
+    rrEl = el;
     r.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
     r.onstop = async () => {
-      clearInterval(rrT); stream.getTracks().forEach(t => t.stop()); cap.getTracks().forEach(t => t.stop());
+      clearInterval(rrT); stream.getTracks().forEach(t => t.stop()); if (cap) cap.getTracks().forEach(t => t.stop());
       if (rrPausedAt) { rrPause += Date.now() - rrPausedAt; rrPausedAt = 0; }
-      const pausedMs = rrPause; rrPause = 0; rrec = null; rrUi();
+      const pausedMs = rrPause; rrPause = 0; rrec = null; rrEl = null; rrUi();
       let blob = new Blob(chunks, { type: mp4 ? "video/mp4" : "video/webm" });
       const R = window.__zerkRecorder;
       if (!mp4 && R && R.fixWebm) blob = await R.fixWebm(blob, Date.now() - t0 - pausedMs);   // длительность в заголовок webm (как у конуса)
       const a = document.createElement("a"), d = new Date(), p2 = (x) => String(x).padStart(2, "0");
-      a.href = URL.createObjectURL(blob); a.download = `Zerkalius-stroki-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.${mp4 ? "mp4" : "webm"}`;
+      a.href = URL.createObjectURL(blob); a.download = `Zerkalius-${T.file}-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.${mp4 ? "mp4" : "webm"}`;
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-      $("bRowsRec").title = $("bRowsRec").dataset.t || $("bRowsRec").title;
-      say(`⏺ Видео поля строк сохранено: ${a.download} (${(blob.size / 1048576).toFixed(1)} МБ).`);
+      b.title = b.dataset.t || b.title;
+      say(`⏺ Видео (${T.name}) сохранено: ${a.download} (${(blob.size / 1048576).toFixed(1)} МБ).`);
     };
     vt.addEventListener("ended", () => { if (r.state !== "inactive") r.stop(); });   // «Остановить показ» в браузере — стоп и сохранить
     r.start(1000);
-    const t0 = Date.now(), b = $("bRowsRec"); b.dataset.t = b.dataset.t || b.title;
+    const t0 = Date.now(), b = $("bRowsRec"), p2s = (x) => String(x).padStart(2, "0");
     rrPause = 0; rrPausedAt = 0; rrUi();
-    const tick = () => { const s = Math.floor((Date.now() - t0 - rrPause - (rrPausedAt ? Date.now() - rrPausedAt : 0)) / 1000); b.title = `⏹ ${rrPausedAt ? "Пауза" : "Идёт запись поля строк"} ${p2s(Math.floor(s / 60))}:${p2s(s % 60)} — щелчок: стоп и сохранить`; };
-    const p2s = (x) => String(x).padStart(2, "0");
+    const tick = () => { const s = Math.floor((Date.now() - t0 - rrPause - (rrPausedAt ? Date.now() - rrPausedAt : 0)) / 1000); b.title = `⏹ ${rrPausedAt ? "Пауза" : "Идёт запись"}: ${T.name} ${p2s(Math.floor(s / 60))}:${p2s(s % 60)} — щелчок: стоп и сохранить`; };
     tick(); rrT = setInterval(tick, 500);
-    say(`⏺ Пишу поле строк${mp4 ? " в mp4" : ""} — всё, что в красной рамке. Ещё раз ⏹ — стоп и сохранить, ⏸ — пауза.`);
+    if (el.id === "coneCv") { conePan = [0, 0]; renderCone(); }   // конус — в середину кадра, как у ⏺ конуса
+    say(`⏺ Пишу: ${T.name}${mp4 ? " в mp4" : ""} — что в красной рамке.${isCv ? " Холст пишется, когда меняется." : ""} ⏹ в шапке — стоп и сохранить, ⏸ — пауза.`);
+  };
+  $("bRowsRec").dataset.t = $("bRowsRec").title;
+  $("bRowsRec").onclick = () => {
+    if (rrec) { rrec.stop(); return; }
+    if (rrPick) { pickEnd(); say("⏺ Выбор окна для записи отменён."); return; }
+    const over = (e) => { document.querySelectorAll(".recpk").forEach(x => x.classList.remove("recpk")); const T = recTargetAt(e.target); if (T) T.el.classList.add("recpk"); };
+    const down = (e) => { if (e.target.closest("#bRowsRec")) return; e.stopPropagation(); e.preventDefault(); };   // выбор — не щелчок по окну: конус не крутится, строки не выделяются
+    const click = (e) => {
+      if (e.target.closest("#bRowsRec")) return;
+      e.stopPropagation(); e.preventDefault();
+      const T = recTargetAt(e.target); pickEnd();
+      if (!T) { say("⏺ Мимо окон — запись не начата."); return; }
+      recStart(T);
+    };
+    const key = (e) => { if (e.key === "Escape") { e.stopPropagation(); e.preventDefault(); pickEnd(); say("⏺ Выбор окна для записи отменён."); } };
+    rrPick = { over, down, click, key };
+    document.addEventListener("pointerover", over, true); document.addEventListener("pointerdown", down, true);
+    document.addEventListener("click", click, true); document.addEventListener("keydown", key, true);
+    document.body.classList.add("recpick"); rrUi();
+    say("⏺ Щёлкни, что записывать: поле строк, ◯ конус, 🧊 вид или ▲ пирамиду (обводится под мышью). Esc — отмена.");
   };
   $("bConeRotClear").onclick = () => {   // v0.101: «как это снять — накрутку?»
     const T = rowSel.size ? [...rowSel] : Z.rows.map((_, i) => i);

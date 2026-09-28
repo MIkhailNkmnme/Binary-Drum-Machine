@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.267. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.268. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.267</title>
+<title>Zazerkalius — v0.268</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -447,9 +447,10 @@ body.pane-icons #paneWins{padding:4px}
 #ecaMap .ecaC span{position:absolute;left:2px;top:2px;font:9px/1 monospace;color:var(--dim);pointer-events:none}
 #coneRecFrame{position:absolute;z-index:1;display:none;pointer-events:none;box-sizing:border-box;border:2px dashed var(--red);border-radius:4px}   /* v0.236: кадр видео при записи конуса */
 #coneRecFrame span{position:absolute;top:4px;left:50%;transform:translateX(-50%);font:11px/1.3 monospace;color:var(--red);background:rgba(0,0,0,.6);padding:1px 6px;border-radius:3px;white-space:nowrap}
-#bRowsRecPause{display:none} body.rowsrec #bRowsRecPause{display:inline-block}   /* v0.267: видео поля строк */
+#bRowsRecPause{display:none} body.rowsrec #bRowsRecPause{display:inline-block}   /* v0.267–0.268: видео — одна ⏺ в шапке */
 #bRowsRec.on,#bRowsRecPause.on{color:var(--gold);border-color:var(--gold)}
-body.rowsrec #rowList{outline:2px dashed #e11d48;outline-offset:1px} body.rowsrec.rowsrecp #rowList{outline-color:var(--gold)}   /* рамка — снаружи поля, в файл не идёт */
+.recon{outline:2px dashed #e11d48 !important;outline-offset:1px} body.rowsrecp .recon{outline-color:var(--gold) !important}
+body.recpick .recpk{outline:3px solid var(--gold) !important;outline-offset:1px;cursor:crosshair !important}   /* v0.268: выбор окна для записи */   /* рамка — снаружи поля, в файл не идёт */
 body.zen #coneRecBar{z-index:6}   /* v0.256: «кнопки записи видео — всегда»: в дзене видны (прежде — прятались) */
 /* v0.203: кнопки на холсте конуса (как в Layers) — слой поверх холста, мышь ловят только сами кнопки */
 #coneBtns{position:absolute;inset:0;pointer-events:none;z-index:3}
@@ -797,7 +798,7 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.267</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.268</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -805,6 +806,8 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
   <span class="sp"></span>
+  <!-- v0.268, «одну кнопку на всё — и потом выбор окна кликом: строки, конус, 3D»: ⏺ в шапке — щелчок, затем щелчок по окну -->
+  <button id="bRowsRec" title="⏺ Видео: нажми, затем щёлкни окно, которое записывать, — поле строк, ◯ конус (и в 3D), 🧊 вид или ▲ пирамиду (под мышью обводится; Esc — отмена). Холсты пишутся напрямую; поле строк — вкладкой, обрезанной по полю: браузер спросит «Поделиться этой вкладкой?» — жми «Поделиться». Со звуком «♫ Звук», .mp4 (где браузер не умеет — .webm). Ещё раз — стоп и сохранить. Chrome / Edge">⏺</button><button id="bRowsRecPause" title="⏸ Пауза записи — ещё раз: дальше в тот же файл">⏸</button>
   <!-- v0.155, «эту наверх перед Сохр.»: 🧘 дзен — в шапке, перед «💾 Всё» (прежде — в группе «Запись» у конуса) -->
   <button id="bConeTxt" title="📝 Текст конуса и лог лазера — плавающим окном поверх всего. Ещё раз — закрыть">📝 Текст</button>
   <button id="bConeZen" title="🧘 Дзен: только конус и пульт у холста, на весь экран — без панелей и строк. Кручение, свет, 3D — как настроены. Щелчок колесом по конусу — войти и выйти, Esc — выйти. Колесо или + − — масштаб, тянуть с зажатым колесом или стрелки (Shift — крупнее шаг) — сдвиг">🧘 дзен</button>
@@ -912,8 +915,6 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
       <button id="bLoad" title="📂 Загрузить текстовый файл со строками (.txt) — каждая строка файла становится строкой столбика, всё кроме 0 и 1 выбрасывается, пустые строки пропускаются. Столбик заменяется целиком (↩ вернёт). Файл можно и просто перетащить на страницу">📂</button>
       <button id="bSaveTxt" title="💾 Сохранить столбик в текстовый файл — строка на строку, тот же вид, что читает 📂">💾</button>
       <input type="file" id="fileIn" accept=".txt,.csv,.dat,text/plain" hidden>
-      <!-- v0.267: видео поля строк — запись вкладки, обрезанная по полю строк -->
-      <button id="bRowsRec" title="⏺ Видео поля строк (.mp4, где браузер не умеет — .webm): пишется вкладка, обрезанная по полю строк, — ровно как на экране: подсветка, звучащий бит, черта, прокрутка; со звуком «♫ Звук». При старте браузер спросит «Поделиться этой вкладкой?» — жми «Поделиться». Ещё раз — стоп и сохранить. Chrome / Edge">⏺</button><button id="bRowsRecPause" title="⏸ Пауза записи поля строк — ещё раз: дальше в тот же файл">⏸</button>
       <!-- v0.036: у номеров — неподвижные·меняющиеся и 0·1; красным — неподвижные биты прямо в строках -->
       <button id="bShowFM" title="У номера строки — сколько в ней НЕПОДВИЖНЫХ бит (разворот ⇄ их не трогает, красным) и МЕНЯЮЩИХСЯ (серым): 2·6">⇄ н·м</button>
       <button id="bTri90" title="◸ 90°: межсимвольный интервал подбирается сам так, чтобы треугольник в поле был прямоугольным при вершине — стороны под 45°: каждая строка сдвигается на полсимвола ровно на высоту строки. Считается от шрифта и размера; ещё раз — как было. В наложении полей не действует">◸ 90°</button>
@@ -1592,8 +1593,8 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0267"></script>
-<script src="zz-ui.js?v=0267"></script>
+<script src="zz-core.js?v=0268"></script>
+<script src="zz-ui.js?v=0268"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>
