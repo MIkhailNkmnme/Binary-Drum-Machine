@@ -4845,41 +4845,46 @@ function razvUnfold(tree){
   }
   return { F, pos };
 }
-function renderRazv(){
-  const cv = $("razvCv"); if (!cv) return;
-  $("razvV").value = String(Z.razvV | 0); $("bRazvLbl").classList.toggle("on", Z.razvLbl !== false);   // v0.399: галка → кнопка
-  if (!winOpen("w-razv")) return;
-  const dpr = window.devicePixelRatio || 1, W = Math.max(50, cv.clientWidth), H = Math.max(50, cv.clientHeight);
+/* v0.405, «развёртку покажи малыми картинками все сразу, и при выборе одной из них — крупно; выпадающий список не нужен»: над холстом —
+   шесть маленьких развёрток (щелчок — эта крупно, выбранная в золотой рамке, имя варианта — в подсказке), крупная — на холсте, как было.
+   Рисует одна razvDraw: у малой нет подписей, крест мельче, биты — только если клетка не мельче 1,2 px (иначе грани заливкой). Малые
+   перерисовываются, только когда поменялись строки, цвета или размер (razvThumbKey). */
+const RAZV_NAME = ["А · центр — вершина T", "Б · центр — вершина экватора", "В · центр — ребро экватора (зеркало)", "Г · центр — боковое ребро",
+  "Д · два больших треугольника", "Е · лента из 8 граней"];
+function razvDraw(cv, vi, big){
+  const dpr = window.devicePixelRatio || 1, W = Math.max(20, cv.clientWidth), H = Math.max(20, cv.clientHeight);
   if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
   const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
-  const [tree, C] = RAZV_V[Z.razvV | 0] || RAZV_V[0], { F, pos } = razvUnfold(tree);
+  const [tree, C] = RAZV_V[vi] || RAZV_V[0], { F, pos } = razvUnfold(tree);
   let cx, cy;
   if (C[0] === "v") [cx, cy] = pos[C[1]][C[2]];
   else if (C[0] === "e") { const a = pos[C[1]][C[2]], b = pos[C[1]][C[3]]; cx = (a[0] + b[0]) / 2; cy = (a[1] + b[1]) / 2; }
   else { const P = Object.values(pos[C[1]]); cx = (P[0][0] + P[1][0] + P[2][0]) / 3; cy = (P[0][1] + P[1][1] + P[2][1]) / 3; }
   let ex = 0.01, ey = 0.01;
   for (const P of Object.values(pos)) for (const [x, y] of Object.values(P)) { ex = Math.max(ex, Math.abs(x - cx)); ey = Math.max(ey, Math.abs(y - cy)); }
-  const pad = 14, k = Math.min((W / 2 - pad) / ex, (H / 2 - pad) / ey), T = ([x, y]) => [W / 2 + (x - cx) * k, H / 2 + (y - cy) * k];
+  const pad = big ? 14 : 4, k = Math.min((W / 2 - pad) / ex, (H / 2 - pad) / ey), T = ([x, y]) => [W / 2 + (x - cx) * k, H / 2 + (y - cy) * k];
   const cs = getComputedStyle(document.documentElement), cU = cs.getPropertyValue("--acc2").trim() || "#4dd4ff", cD = cs.getPropertyValue("--gold").trim() || "#e8b64a";
   const L = Z.rows.map(s => String(s).replace(/[^01]/g, "")), R = Math.max(2, Math.min(160, L.length));
-  const cell = k / R, rad1 = Math.max(0.7, cell * 0.3), rad0 = cell * 0.12, lbl = Z.razvLbl !== false;
+  const cell = k / R, rad1 = Math.max(0.7, cell * 0.3), rad0 = cell * 0.12, lbl = big && Z.razvLbl !== false, dots = big || cell >= 1.2;
   for (const f of Object.keys(pos)) {
     const up = f[0] === "U", col = up ? cU : cD, [A, Lv, Rv] = F[f].map(v => T(pos[f][v]));
     g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(Lv[0], Lv[1]); g.lineTo(Rv[0], Rv[1]); g.closePath();
-    g.globalAlpha = 0.1; g.fillStyle = col; g.fill(); g.globalAlpha = 1; g.strokeStyle = col; g.lineWidth = 1.4; g.stroke();
-    g.fillStyle = col;
-    for (let r = 0; r < R; r++) {
-      const row = L[r] || "";
-      for (let q = 0; q <= r; q++) {
-        const v = (row[q] === "1" ? 1 : 0) ^ (up ? 0 : 1);
-        if (!v && rad0 < 0.8) continue;
-        const a = (r - q + 1 / 3) / R, b = (q + 1 / 3) / R, x = A[0] + a * (Lv[0] - A[0]) + b * (Rv[0] - A[0]), y = A[1] + a * (Lv[1] - A[1]) + b * (Rv[1] - A[1]);
-        g.globalAlpha = v ? 1 : 0.3;
-        const rd = v ? rad1 : rad0;
-        if (rd < 1.6) g.fillRect(x - rd, y - rd, 2 * rd, 2 * rd); else { g.beginPath(); g.arc(x, y, rd, 0, 2 * Math.PI); g.fill(); }
+    g.globalAlpha = dots ? 0.1 : 0.3; g.fillStyle = col; g.fill(); g.globalAlpha = 1; g.strokeStyle = col; g.lineWidth = big ? 1.4 : 1; g.stroke();
+    if (dots) {
+      g.fillStyle = col;
+      for (let r = 0; r < R; r++) {
+        const row = L[r] || "";
+        for (let q = 0; q <= r; q++) {
+          const v = (row[q] === "1" ? 1 : 0) ^ (up ? 0 : 1);
+          if (!v && rad0 < 0.8) continue;
+          const a = (r - q + 1 / 3) / R, b = (q + 1 / 3) / R, x = A[0] + a * (Lv[0] - A[0]) + b * (Rv[0] - A[0]), y = A[1] + a * (Lv[1] - A[1]) + b * (Rv[1] - A[1]);
+          g.globalAlpha = v ? 1 : 0.3;
+          const rd = v ? rad1 : rad0;
+          if (rd < 1.6) g.fillRect(x - rd, y - rd, 2 * rd, 2 * rd); else { g.beginPath(); g.arc(x, y, rd, 0, 2 * Math.PI); g.fill(); }
+        }
       }
+      g.globalAlpha = 1;
     }
-    g.globalAlpha = 1;
     if (lbl) {
       const mx = (A[0] + Lv[0] + Rv[0]) / 3 + (Lv[0] + Rv[0] - 2 * A[0]) / 6 * 0.55, my = (A[1] + Lv[1] + Rv[1]) / 3 + (Lv[1] + Rv[1] - 2 * A[1]) / 6 * 0.55;
       g.font = "bold 12px system-ui, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
@@ -4887,9 +4892,22 @@ function renderRazv(){
       g.textAlign = "left"; g.font = "11px system-ui, sans-serif"; g.strokeText(F[f][0], A[0] + 4, A[1] - 5); g.fillStyle = "#ff9a9a"; g.fillText(F[f][0], A[0] + 4, A[1] - 5);
     }
   }
-  g.strokeStyle = "#ff3b3b"; g.lineWidth = 2.5; g.beginPath(); g.moveTo(W / 2 - 9, H / 2); g.lineTo(W / 2 + 9, H / 2); g.moveTo(W / 2, H / 2 - 9); g.lineTo(W / 2, H / 2 + 9); g.stroke();
+  const m = big ? 9 : 4;
+  g.strokeStyle = "#ff3b3b"; g.lineWidth = big ? 2.5 : 1.5; g.beginPath(); g.moveTo(W / 2 - m, H / 2); g.lineTo(W / 2 + m, H / 2); g.moveTo(W / 2, H / 2 - m); g.lineTo(W / 2, H / 2 + m); g.stroke();
 }
-if ($("razvV")) $("razvV").onchange = (e) => { Z.razvV = +e.target.value; save(); renderRazv(); };
+let razvThumbKey = "";
+function renderRazv(){
+  const cv = $("razvCv"), tb = $("razvThumbs"); if (!cv || !tb) return;
+  $("bRazvLbl").classList.toggle("on", Z.razvLbl !== false);   // v0.399: галка → кнопка
+  if (!tb.children.length) tb.innerHTML = RAZV_V.map((_, i) => `<canvas data-v="${i}" title="${RAZV_NAME[i]} — щелчок: крупно"></canvas>`).join("");
+  const vi = Math.min(RAZV_V.length - 1, Math.max(0, Z.razvV | 0));
+  [...tb.children].forEach(c => c.classList.toggle("on", +c.dataset.v === vi));
+  if (!winOpen("w-razv")) return;
+  razvDraw(cv, vi, true);
+  const cs = getComputedStyle(document.documentElement), key = Z.rows.join("|") + "/" + cs.getPropertyValue("--acc2") + cs.getPropertyValue("--gold") + "/" + (window.devicePixelRatio || 1) + "/" + tb.clientWidth;
+  if (key !== razvThumbKey) { razvThumbKey = key; [...tb.children].forEach(c => razvDraw(c, +c.dataset.v, false)); }
+}
+if ($("razvThumbs")) $("razvThumbs").onclick = (e) => { const c = e.target.closest("canvas[data-v]"); if (!c) return; Z.razvV = +c.dataset.v; save(); renderRazv(); };
 if ($("bRazvLbl")) $("bRazvLbl").onclick = () => { Z.razvLbl = Z.razvLbl === false; save(); renderRazv(); };
 if ($("razvCv") && window.ResizeObserver) new ResizeObserver(() => renderRazv()).observe($("razvCv"));
 
