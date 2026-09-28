@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.295. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.296. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.295</title>
+<title>Zazerkalius — v0.296</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -85,6 +85,10 @@ body.pane-icons #fontBar{display:none}
 #pinBar{display:flex;gap:4px;align-items:center;min-width:0;flex:0 1 auto;overflow-x:auto;scrollbar-width:thin}
 #pinBar button{font-size:12px;padding:2px 8px;white-space:nowrap;max-width:190px;overflow:hidden;text-overflow:ellipsis;flex:0 0 auto}
 #pinBar button.pinw{border-style:dashed}
+#tplMine{display:flex;gap:4px;align-items:center;min-width:0;flex:0 1 auto;overflow-x:auto;scrollbar-width:thin}   /* v0.296: свои шаблоны — в шапке */
+#tplMine .tpl{flex:0 0 auto;gap:2px}
+#tplMine .tb{font-size:12px;padding:2px 8px;white-space:nowrap;max-width:190px}
+#tplMine .tref,#tplMine .tx{font-size:12px;padding:2px 5px}
 body.pinmode button:not(#bPinMode):not(#top button):not(#pinBar button),body.pinmode .whead{outline:1px dashed var(--gold);outline-offset:1px;cursor:copy}
 .win.flash{box-shadow:0 0 0 2px var(--gold),0 8px 24px rgba(0,0,0,.35)}
 /* v0.010: три колонки — слева кнопки и шаблоны, В ЦЕНТРЕ поле строк, справа окна; между полем и окнами
@@ -850,13 +854,16 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.295</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.296</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
+  <!-- v0.296, по снимку своего шаблона «Столбик · 27 стр.» под чертой — «это на верхнее меню, и кнопку Сохр (биты)»: свои шаблоны — в шапке -->
+  <button id="bTplSave" title="💾 Сохр: сохранить все биты рабочего поля (весь столбик) своим шаблоном — он встанет здесь же, в шапке, и станет эталоном ⚑. Щелчок по своему шаблону — заменить столбик, Shift + щелчок — вставить под текущей, двойной щелчок — переименовать">💾 Сохр</button>
+  <div id="tplMine"></div>
   <span class="sp"></span>
   <!-- v0.268, «одну кнопку на всё — и потом выбор окна кликом: строки, конус, 3D»: ⏺ в шапке — щелчок, затем щелчок по окну -->
   <button id="bRowsRec" title="⏺ Видео: нажми, затем щёлкни окно, которое записывать, — поле строк, ◯ конус (и в 3D), 🧊 вид или ▲ пирамиду (под мышью обводится; Esc — отмена). Холсты пишутся напрямую; поле строк — вкладкой, обрезанной по полю: браузер спросит «Поделиться этой вкладкой?» — жми «Поделиться». Со звуком «♫ Звук», .mp4 (где браузер не умеет — .webm). Ещё раз — стоп и сохранить. Chrome / Edge">⏺</button><button id="bRowsRecPause" title="⏸ Пауза записи — ещё раз: дальше в тот же файл">⏸</button>
@@ -1654,8 +1661,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0295"></script>
-<script src="zz-ui.js?v=0295"></script>
+<script src="zz-core.js?v=0296"></script>
+<script src="zz-ui.js?v=0296"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>

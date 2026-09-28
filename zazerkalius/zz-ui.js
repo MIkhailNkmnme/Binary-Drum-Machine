@@ -968,14 +968,14 @@ function renderTpl(){
   TPL_BUILTIN.forEach((t, k) => {
     h += '<div class="tpl"><button class="tb" data-b="' + k + '" title="' + esc(t.title) + '">' + esc(t.name) + "</button></div>";
   });
-  if (Z.tpl.length) h += '<div class="tpl-sep">свои</div>';
+  $("tplList").innerHTML = h; h = "";   // v0.296: под чертой — только встроенные; свои — в шапке (#tplMine)
   Z.tpl.forEach((t, k) => {
     const tip = t.rows.length === 1 ? t.rows[0].slice(0, 200) : t.rows.length + " стр.: " + t.rows.slice(0, 6).map(r => r.slice(0, 40)).join(" / ");
     h += '<div class="tpl mine"><button class="tb" data-u="' + k + '" title="' + esc(tip) + ' · щелчок — заменить (столбик — весь столбик, строка — текущую), Shift + щелчок — вставить под текущей · двойной щелчок — переименовать">' + esc(t.name) + "</button>" +
          '<button class="tref' + (Z.tplRef === k ? " on" : "") + '" data-r="' + k + '" title="' + (Z.tplRef === k ? "Эталон: номера строк, отличающихся от этого шаблона, — золотом. Щелчок — выключить сравнение" : "Сравнивать строки с этим шаблоном: номера изменённых — золотом") + '">⚑</button>' +
          '<button class="tx" data-x="' + k + '" title="Удалить этот шаблон">✕</button></div>';
   });
-  $("tplList").innerHTML = h;
+  $("tplMine").innerHTML = h;
 }
 function tplName(rows){
   if (rows.length > 1) return `Столбик · ${rows.length} стр.`;
@@ -7078,7 +7078,7 @@ function init(){
         (Z.maskMode === "descent" && rows.length < n ? ` Спуск кончается на одном бите — строк не больше длины строки (${m.length}).` : "") + ringTxt + " ↩ вернёт.");
   };
   // Шаблоны
-  $("tplList").onclick = (e) => {
+  const tplClick = (e) => {   // v0.296: и под чертой (встроенные), и в шапке (свои)
     const b = e.target.closest("button"); if (!b) return;
     if (b.dataset.b !== undefined) { const t = TPL_BUILTIN[+b.dataset.b]; tplInsert(t.rows(), t.name); }
     else if (b.dataset.u !== undefined) { const t = Z.tpl[+b.dataset.u]; if (t) (e.shiftKey ? tplInsert : tplReplace)(t.rows.slice(), t.name); }   // v0.066
@@ -7093,12 +7093,13 @@ function init(){
       renderTpl(); renderRows(); save(); if (t) say(`Шаблон «${t.name}» удалён.`);
     }
   };
-  $("tplList").ondblclick = (e) => {
+  const tplDbl = (e) => {
     const b = e.target.closest("button[data-u]"); if (!b) return;
     const t = Z.tpl[+b.dataset.u]; if (!t) return;
     const n = window.prompt("Имя шаблона", t.name);
     if (n && n.trim()) { t.name = n.trim().slice(0, 60); renderTpl(); save(); }
   };
+  for (const id of ["tplList", "tplMine"]) { $(id).onclick = tplClick; $(id).ondblclick = tplDbl; }
   const cutUi = () => {   // v0.225: кнопки достройки под чертой
     const m = Z.cutGen || "r90";
     $("bCutR90").classList.toggle("on", m === "r90"); $("bCutR30").classList.toggle("on", m === "r30"); $("bCutMask").classList.toggle("on", m === "mask");
@@ -7148,6 +7149,7 @@ function init(){
     say(`✂ Нарезано: ${U} — ${R.items.length} шт., высота ${h} (${R.bands} полос, строки +${R.g}), ${TRI_ORD[Z.triOrd || "rows"]} — друг под другом, ${R.rows.length} стр. ↩ вернёт.`);
   };
   $("bTplRow").onclick = () => { const rows = [cur()]; Z.tpl.push({ name: tplName(rows), rows }); renderTpl(); save(); say(`Строка ${Z.cur + 1} (${cur().length} бит) сохранена шаблоном. Щелчок по нему — вставить под текущей.`); };
+  $("bTplSave").onclick = () => $("bTplAll").onclick();   // v0.296: «💾 Сохр» в шапке — как «＋ Столбик»
   $("bTplAll").onclick = () => { const rows = Z.rows.slice(); Z.tpl.push({ name: tplName(rows), rows }); Z.tplRef = Z.tpl.length - 1; renderTpl(); renderRows(); save(); say(`Столбик (${rows.length} стр.) сохранён шаблоном.`); };   // v0.037: сохранённый столбик — новый эталон; v0.038: комментарий съедал конец строки — страница не запускалась
   // Разделитель поля и окон: ширина поля в пикселях, двойной щелчок — по умолчанию.
   const applyRowsW = () => { if (Z.rowsW > 0) $("main").style.setProperty("--rowsW", Z.rowsW + "px"); else $("main").style.removeProperty("--rowsW"); };
