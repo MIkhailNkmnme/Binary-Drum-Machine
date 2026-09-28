@@ -1,4 +1,4 @@
-<!-- Zerkalius Гранидус — v0.055. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Гранидус — v0.056. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Гранидус — v0.055</title>
+<title>Zerkalius Гранидус — v0.056</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -45,7 +45,10 @@
      тогда она проступает пунктиром — видно, куда можно бросить. Своя прокрутка: разделов много, а
      окно бывает низким. Снизу оставлено место под значок ⌂. */
   .dock{ position:fixed; top:12px; display:flex; flex-direction:column; gap:6px; width:196px;
-    max-height:calc(100vh - 70px); overflow-y:auto; scrollbar-width:thin; }
+    max-height:calc(100vh - 70px); overflow-y:auto; scrollbar-width:none; }
+  /* v0.056, «скролл убери; если примагничивание делает высоту больше, чем окно влезает, — не магнитить»: полосы прокрутки у панелей нет
+     (колесо листает, если окно потом сузили); магнит не берёт раздел, с которым панель не влезла бы по высоте (см. SECS.fits) */
+  .dock::-webkit-scrollbar{ display:none; }
   #panel{ left:12px; }
   #panelR{ right:12px; top:40px; }
   .dock.empty{ display:none; }
@@ -280,7 +283,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.055</div>
+<div id="ver">v0.056</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -2139,6 +2142,14 @@ const SECS = {
     return [x, y];
   },
   snapGlow(hit){ document.querySelectorAll(".tab-sec.snap, .dock.snap").forEach(o => { if (!hit || !hit.has(o)) o.classList.remove("snap"); }); if (hit) hit.forEach(o => o.classList.add("snap")); },
+  /* v0.056: влезет ли панель по высоте, если в неё встанет раздел sec. Уже стоящий в ней (переставляют) — влезает всегда. Предел — её
+     max-height (окно минус поля). Не влезает — магнит панель не берёт, раздел остаётся плавающим. */
+  fits(dock, sec){
+    if (sec.parentElement === dock) return true;
+    const lim = parseFloat(getComputedStyle(dock).maxHeight) || (innerHeight - 70);
+    const has = dock.classList.contains("empty") ? 0 : dock.scrollHeight;
+    return has + (has ? 6 : 0) + sec.offsetHeight <= lim;
+  },
   dockUnder(x, y){
     const [L, R] = this.docks();
     if (x <= this.MAG) return L;
@@ -2159,7 +2170,8 @@ const SECS = {
       d.dx = d.x0 - r.left; d.dy = d.y0 - r.top; d.started = true;
       d.sec.classList.add("dragging"); document.body.classList.add("tab-dragging");
     }
-    const dock = this.dockUnder(e.clientX, e.clientY);
+    let dock = this.dockUnder(e.clientX, e.clientY);
+    if (dock && !this.fits(dock, d.sec)) dock = null;   // v0.056: не влезет по высоте — не магнитить
     this.docks().forEach(p => p.classList.toggle("drop-hover", p === dock));
     if (dock) {
       if (d.sec.classList.contains("floating")) { d.sec.classList.remove("floating"); d.sec.style.left = d.sec.style.top = ""; }
