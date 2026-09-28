@@ -3810,7 +3810,7 @@ function setupCone(){
   sndMarkUi();
   $("bSndMark").onclick = () => { Z.sndMark = Z.sndMark === false; sndMarkUi(); save(); if (Z.sndMark === false) sndMark(null);   // v0.376: и на конусе
 
-    say(Z.sndMark !== false ? "◉ Головки видны: звучащие биты подсвечены в строках и на конусе." : "◉ Головки не показываются."); };
+    say(Z.sndMark !== false ? "◉ Показать — вкл: звучащие биты (головки) подсвечены в строках и на конусе." : "◉ Показать — выкл: звучащие биты не подсвечиваются."); };
   const snd2Ui = () => { $("bSnd2").classList.toggle("on", !!Z.snd2); $("snd2d").disabled = !Z.snd2; snd2Label(); };   // v0.318: ⁑ 2 бита и ↔; v0.337 — авто
   snd2Ui();
   $("bSnd2").onclick = () => { Z.snd2 = !Z.snd2; snd2Ui(); save(); say(Z.snd2 ? `⁑ Авто: сколько бит звучит разом и на каком расстоянии — по строке под ближайшей строкой из одних 1 выше читаемой; такой нет — два бита через ↔ ${Z.snd2d || 4}.` : "⁑ Звучит один бит."); };
