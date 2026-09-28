@@ -5713,7 +5713,7 @@ function init(){
   $("rowList").addEventListener("pointerdown", (e) => {
     if (e.target.closest("#cutPanel")) return;
     rowNocurWas = document.body.classList.contains("nocur");
-    if (e.target.closest(".rw[data-r] > .bits")) return;   // v0.254: по битам одиночный щелчок ничего не выбирает — подсветку не трогаем
+    if (e.target.closest(".rw[data-r] > .bits")) return;   // v0.254: по битам подсветку здесь не трогаем — щелчок по биту выделяет строку сам (v0.266)
     if (e.target.closest(".rlk, .rrot")) return;   // v0.261, «нажимаю на 6 замок, а выделяется строка 21»: замок и ↻ — не выбор строки, подсветку текущей не зажигают
     // v0.263, «когда скролл двинул нижний — выделение само пришло в 17 строку»: полоса прокрутки, пустое место поля, строки под чертой,
     // кнопки под чертой — не выбор строки; подсветку текущей зажигает только нажатие на номер строки
@@ -5748,6 +5748,8 @@ function init(){
       if (!rows) return;
       document.body.classList.remove("rowdrag"); if (raf) { cancelAnimationFrame(raf); raf = 0; }
       clearTextSel(); renderAll(); save();
+      const eat = (ev) => { ev.stopPropagation(); ev.preventDefault(); };   // v0.266: щелчок в конце протяжки — не выбор одной строки
+      addEventListener("click", eat, true); setTimeout(() => removeEventListener("click", eat, true), 0);
       say(`▤ Выделено строк: ${rowSel.size}. Del удалит, Ctrl+C скопирует, Esc снимет.`);
     };
     addEventListener("pointermove", mv); addEventListener("pointerup", up); addEventListener("pointercancel", up);
@@ -5821,7 +5823,18 @@ function init(){
       Z.cur = i; renderAll(); save();
       return;
     }
-    // v0.254: по битам одиночный щелчок ничего не выбирает — выделение двойным щелчком (ниже) или протяжкой
+    /* v0.266, «выделение сделай по 1 клику, но только по битам, вне бит — перетаскивание поля»: щелчок по самому биту (цифре) —
+       выделить строку (ещё раз по ней же — снять, Ctrl — добавить / убрать, Shift — диапазон). Мимо бит — ничего (там протяжка
+       двигает поле, v0.264). Протянул по символам в строке — это выделение символов, строку не выбирает. */
+    if (!e.target.closest(".bx") || e.detail > 1 || textSelInRows() || !(+r.dataset.r < Z.rows.length)) return;
+    clearTextSel(); document.body.classList.remove("nocur");
+    if (e.shiftKey && rowSelAnchor >= 0) {
+      if (!(e.ctrlKey || e.metaKey)) rowSel.clear();
+      for (let k = Math.min(rowSelAnchor, i); k <= Math.max(rowSelAnchor, i); k++) rowSel.add(k);
+    } else if (e.ctrlKey || e.metaKey) { if (rowSel.has(i)) rowSel.delete(i); else rowSel.add(i); rowSelAnchor = i; }
+    else if (Z.cur === i && !rowNocurWas && (!rowSel.size || (rowSel.size === 1 && rowSel.has(i)))) { rowUnselect(); return; }   // v0.220: по выделенной — снять
+    else { rowSel.clear(); rowSel.add(i); rowSelAnchor = i; }
+    Z.cur = i; renderAll(); save();
   };
   // v0.010: двойной щелчок — правка строки на месте.
   $("rowList").ondblclick = (e) => {
@@ -5833,21 +5846,8 @@ function init(){
     const pt = document.elementFromPoint(e.clientX, e.clientY);
     if (pt && pt.closest(".cutln")) { cutMove(Infinity); return; }
     const r = e.target.closest(".rw"); if (!r || r.classList.contains("lhrow") || r.classList.contains("hid") || r.classList.contains("fillrw")) return;
-    e.preventDefault();
-    const sel = window.getSelection && window.getSelection(); if (sel) sel.removeAllRanges();
-    if (Z.laneCount > 1 && Z.laneView === "over") {   // v0.018
-      say("Править строку на месте — в виде «колонками». Здесь — поле ввода сверху: Shift+Enter заменит текущую строку рабочего поля.");
-      return;
-    }
-    const cell = e.target.closest(".bits");
-    if (cell && +cell.dataset.l !== Z.lane) switchLane(+cell.dataset.l, +r.dataset.r, true);
-    // v0.254: двойной щелчок по строке — выделить её (прежде — править; править теперь F2 / Enter)
-    const i = +r.dataset.r; if (!(i < Z.rows.length)) return;
-    clearTextSel(); document.body.classList.remove("nocur");
-    if (e.ctrlKey || e.metaKey) { if (rowSel.has(i)) rowSel.delete(i); else rowSel.add(i); rowSelAnchor = i; }
-    else if (Z.cur === i && !rowNocurWas && (!rowSel.size || (rowSel.size === 1 && rowSel.has(i)))) { rowUnselect(); return; }   // v0.220: по выделенной — снять
-    else { rowSel.clear(); rowSel.add(i); rowSelAnchor = i; }
-    Z.cur = i; renderAll(); save();
+    // v0.266: строку выделяет одиночный щелчок по биту (выше); двойной ничего не выбирает — только убираем выделенное им слово
+    if (e.target.closest(".bits")) { e.preventDefault(); clearTextSel(); }
   };
   // v0.018: поля колонками / наложением; оси тащатся за ручки
   $("laneView").value = Z.laneView || "cols";
