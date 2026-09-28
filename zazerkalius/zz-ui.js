@@ -3723,8 +3723,22 @@ function setupCone(){
     if (rs.length) CSS.highlights.set("sndbit", new Highlight(...rs)); else CSS.highlights.delete("sndbit");
     if (rs2.length) CSS.highlights.set("sndbit2", new Highlight(...rs2)); else CSS.highlights.delete("sndbit2");
   };
+  /* v0.388, по снимку подсветки бита — «как будто бы сдвиг есть звука с картинкой»: подсветка ставилась сразу, а звук доходит до колонок
+     позже — на задержку вывода звуковой карты (ctx.baseLatency + ctx.outputLatency; на Windows десятки мс, в Bluetooth-наушниках 0,2–0,3 с,
+     больше шага при 6 битах в секунду) и ещё на 10 мс, на которые нота ставится вперёд. Теперь подсветка (в строках и на конусе) ставится
+     с той же задержкой — вместе со звуком. Пока идёт запись видео, задержки нет: в ролик звук пишется до колонок, без неё.
+     sndGen — номер пуска: отложенная подсветка от остановленного звука уже не ставится */
+  let sndGen = 0, sndLatSaid = false;
+  const sndLat = () => {
+    if (!snd || rec || rrec) return 0;
+    const c = snd.ctx, L = (c.baseLatency || 0) + (c.outputLatency || 0) + 0.01;
+    if (!sndLatSaid && c.outputLatency) { sndLatSaid = true; console.info(`♫ Задержка звука до колонок: ${Math.round(L * 1000)} мс — подсветка бита сдвинута на столько же`); }
+    return L;
+  };
   const sndTick = () => {
-    const P = []; snd2Last = null; sndTick1(P); sndMark(P); snd2Label();
+    const P = []; snd2Last = null; sndTick1(P); snd2Label();
+    const L = sndLat(), g = sndGen;
+    if (L > 0.015) setTimeout(() => { if (g === sndGen) sndMark(P); }, L * 1000); else sndMark(P);
   };
   // v0.318: ⁑ 2 бита — смещения читающих «головок» в строке длины n: [0] или [0, ↔] (по кругу; совпали — одна)
   /* v0.337, по снимку «⁑ 2 бита» — «пусть определяет количество бит и расстояние по строке, следующей после строки, где все 1-цы, и
@@ -3834,7 +3848,8 @@ function setupCone(){
   };
   const sndSet = (on) => {
     sndPaused = false;
-    if (on) { sndCtx(); sndStep = Z.sndDir < 0 ? 1 : 0; sndT = setTimeout(sndLoop, 0); }   // v0.374: назад — с последнего шага else { clearTimeout(sndT); sndT = 0; sndMark(null); }
+    /* v0.388: «else» ветки стоп с v0.374 стоял ВНУТРИ комментария — ■ и выключение обеих нот в хабе звук не останавливали */
+    if (on) { sndCtx(); sndStep = Z.sndDir < 0 ? 1 : 0; sndT = setTimeout(sndLoop, 0); } else { clearTimeout(sndT); sndT = 0; sndGen++; sndMark(null); }   // v0.374: назад — с последнего шага
     sndUi();
   };
   const sndPer = () => {
