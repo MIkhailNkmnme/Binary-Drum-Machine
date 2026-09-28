@@ -3371,8 +3371,9 @@ function setupCone(){
   };
   const animUi = () => {
     const N = Z.rows.length;
-    $("animInfo").textContent = `проход ${aPass} · волна ${aRow}/${Math.max(0, N - 1)}` + (aPer ? ` · цикл ${aPer}` : "");
-    const sp = animSpOf(Z.animSp ?? 40); $("animSpV").textContent = (sp < 10 ? sp.toFixed(1).replace(".", ",") : Math.round(sp)) + (Z.animByPass ? " цикл/с" : " стр/с");
+    // v0.329, «проход — это же цикл?»: нет — проход = волна сверху донизу; цикл = через сколько проходов картина повторилась
+    $("animInfo").textContent = `проход ${aPass} · волна ${aRow}/${Math.max(0, N - 1)}` + (aPer ? ` · цикл ${aPer} прох. (с ${aPer0}-го)` : "");
+    const sp = animSpOf(Z.animSp ?? 40); $("animSpV").textContent = (sp < 10 ? sp.toFixed(1).replace(".", ",") : Math.round(sp)) + (Z.animByPass ? " прох/с" : " стр/с");   // v0.329: было «цикл/с» — считает проходы
   };
   const animDone = () => { animSig = animKey(); renderAll(); save(); animUi(); };
   const animGuard = () => { if (rowsLocked()) return false; if (Z.rows.length < 2) { say("🌊 Аниматрице нужно хотя бы две строки."); return false; } return true; };
@@ -3383,7 +3384,7 @@ function setupCone(){
     let n = Math.floor(animAcc); animAcc -= n;
     if (n) {
       animSync(); const t0 = performance.now();
-      /* v0.199, «по циклу аниматрицы»: ⟳ циклами — за шаг плеера весь проход волны (как «Плеер — целыми циклами» в Треугольнике);
+      /* v0.199, «по циклу аниматрицы»: ⟳ циклами (с v0.329 — «⟳ проходами») — за шаг плеера весь проход волны (как «Плеер — целыми циклами» в Треугольнике);
          начат посреди прохода — сперва дойти до его конца. На экране — только картины на границе циклов. */
       if (Z.animByPass) while (n-- > 0) { const p = aPass; let g = Z.rows.length + 1; do animStep1(); while (aPass === p && --g > 0); if (performance.now() - t0 > 30) { animAcc = 0; break; } }
       else while (n-- > 0) { animStep1(); if ((n & 63) === 0 && performance.now() - t0 > 30) { animAcc = 0; break; } }   // не успевает — не копить долг

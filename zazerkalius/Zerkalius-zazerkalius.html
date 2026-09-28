@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.328. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.329. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.328</title>
+<title>Zazerkalius — v0.329</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -937,7 +937,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.328</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.329</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1554,8 +1554,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
             <select id="animOp" title="Операция волны: бит сверху (уже переписанный) и бит снизу. Цикл дают XOR и XNOR; NAND и NOR разгоняются и мигают; AND и OR замирают за проход">
               <option value="xor">⊕ XOR</option><option value="xnor">XNOR</option><option value="nand">NAND</option><option value="nor">NOR</option><option value="and">AND</option><option value="or">OR</option>
             </select>
-            <label class="dim" title="⟳ Циклами: ▶ волна идёт целыми циклами — за шаг весь проход волны от верха до низа, конус показывает только готовые циклы (как «Плеер — целыми циклами» в Треугольнике). Скорость — циклов в секунду"><input type="checkbox" id="animByPass"> ⟳ циклами</label>
-            <label class="dim" title="Скорость волны, по логарифму: 0,5…5000 строк в секунду (с ⟳ циклами — циклов в секунду)">⚡ <input type="range" id="animSp" min="0" max="100" step="1" value="40" style="width:90px;vertical-align:middle"> <span id="animSpV" style="display:inline-block;min-width:5em;font-variant-numeric:tabular-nums"></span></label>
+            <label class="dim" title="⟳ Проходами: ▶ волна идёт целыми проходами — за шаг весь проход волны от верха до низа, конус показывает только готовые проходы (в Треугольнике это «Плеер — целыми циклами»). Скорость — проходов в секунду. Цикл — другое: число проходов, через которое картина повторяется (пишется справа, когда найден)"><input type="checkbox" id="animByPass"> ⟳ проходами</label>
+            <label class="dim" title="Скорость волны, по логарифму: 0,5…5000 строк в секунду (с ⟳ проходами — проходов в секунду)">⚡ <input type="range" id="animSp" min="0" max="100" step="1" value="40" style="width:90px;vertical-align:middle"> <span id="animSpV" style="display:inline-block;min-width:5em;font-variant-numeric:tabular-nums"></span></label>
             <select id="animPreset" title="Заготовка: поле строк заменяется целиком (↩ вернёт), строк — сколько в поле рядом (по умолчанию 256), сид — начальная строка. Правила — элементарные автоматы из сида, строка — световой конус (на 2 бита длиннее предыдущей); из одной «1» правила группы «Серпинский» дают один и тот же треугольник, различаются с сида, где единицы стоят рядом (11, 1101…). Последовательности — строка i из первых i + 1 членов">
               <option value="">📋 заготовка…</option>
               <optgroup label="Серпинский">
@@ -1768,8 +1768,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0328"></script>
-<script src="zz-ui.js?v=0328"></script>
+<script src="zz-core.js?v=0329"></script>
+<script src="zz-ui.js?v=0329"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
