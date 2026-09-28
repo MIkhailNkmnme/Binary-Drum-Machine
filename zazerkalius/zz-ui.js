@@ -619,7 +619,11 @@ function cutAsk(k, down = true){
     const go = () => {
       const N = Math.min(CUT_GEN_MAX, Math.round(+inp.value));
       if (N >= 1 && N !== cutHeight()) { const pre = undoState(); cutAt(N, !Z.rowLock); cutMove(null, pre); rowsFit(); fieldInfoFit(); }
-      inp.value = cutHeight(); inp.focus(); inp.select();   // v0.338: окошко остаётся на месте — можно ещё раз
+      /* v0.355, по снимку «↧ до 64» — «после применения показать след. цифру»: в окошке — уже следующая степень двойки в ту же сторону
+         (вниз: 64 → 128, вверх: 64 → 32), Enter — и дальше; своё число набирается поверх */
+      const h = cutHeight(); let q = 1;
+      if (box._down) { while (q <= h) q *= 2; q = Math.min(CUT_GEN_MAX, q); } else { while (q * 2 < h) q *= 2; if (q >= h) q = h; }
+      inp.value = q; inp.focus(); inp.select();   // v0.338: окошко остаётся на месте — можно ещё раз
     };
     const away = (e) => { if (!box.contains(e.target)) close(); };
     box._open = () => { addEventListener("pointerdown", away, true); };
@@ -627,7 +631,7 @@ function cutAsk(k, down = true){
     box.addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; if (b.dataset.a === "ok") go(); else close(); });
   }
   let p = 1; if (down) while (p < k) p *= 2; else while (p * 2 <= k) p *= 2;   // вниз — ближайшая степень двойки сверху, вверх — снизу
-  const inp = box.querySelector("input"); inp.value = Math.min(CUT_GEN_MAX, p);
+  const inp = box.querySelector("input"); inp.value = Math.min(CUT_GEN_MAX, p); box._down = down;   // v0.355: куда шли — туда и следующее число
   const ln = document.querySelector("#rowList .cutln"), r = ln ? ln.getBoundingClientRect() : null;
   box.hidden = false;
   const bw = box.offsetWidth, bh = box.offsetHeight;
