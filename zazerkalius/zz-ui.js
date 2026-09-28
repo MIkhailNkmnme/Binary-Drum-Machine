@@ -3927,6 +3927,36 @@ function setupCone(){
   $("sndMode").onchange = (e) => { Z.sndMode = e.target.value; sndStep = 0; save(); };
   const sndMarkUi = () => $("bSndMark").classList.toggle("on", Z.sndMark !== false);   // v0.260
   sndMarkUi();
+  /* v0.391, «кнопку записи звука»: ⏺ в группе «Звук» пишет дорожку «♫ Звука» (snd.rec — та же, что идёт в видео) в файл: .webm (opus), где
+     webm не пишется — .m4a. Щелчок — старт (звук молчал — включается), ещё щелчок — стоп и файл в «Загрузки». Звук остановили посреди
+     записи — в файле дальше тишина, запись идёт, пока не нажмёшь ⏺ ещё раз. Время записи — в подсказке кнопки */
+  let srec = null, srecT = 0;
+  $("bSndRec").onclick = async () => {
+    const b = $("bSndRec");
+    if (srec) { srec.stop(); return; }
+    if (typeof MediaRecorder === "undefined" || !(window.AudioContext || window.webkitAudioContext)) { say("⏺ Этот браузер не умеет записывать звук."); return; }
+    sndCtx(); if (!sndT) { if (sndPaused) sndPause(false); else sndSet(true); }
+    const at = snd.rec.stream.getAudioTracks()[0]; if (!at) { say("⏺ Нет дорожки звука — запись не начата."); return; }
+    const tr = at.clone(), stream = new MediaStream([tr]), chunks = [];
+    const mime = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4;codecs=mp4a.40.2", "audio/mp4"].find(m => MediaRecorder.isTypeSupported(m)) || "", m4a = mime.startsWith("audio/mp4");
+    const r = srec = new MediaRecorder(stream, mime ? { mimeType: mime, audioBitsPerSecond: 192000 } : undefined), t0 = Date.now();
+    r.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    r.onstop = async () => {
+      clearInterval(srecT); tr.stop(); srec = null; b.classList.remove("on"); b.textContent = "⏺";
+      b.title = "⏺ Запись звука: пишет то, что играет «♫ звук», в файл .webm (только звук, без видео). Звук молчал — включится сам. Ещё щелчок — стоп, файл скачивается";
+      let blob = new Blob(chunks, { type: m4a ? "audio/mp4" : "audio/webm" });
+      const R = window.__zerkRecorder;   // как у видео: у webm из MediaRecorder в заголовке нет длительности — дописывает общий recorder.js
+      if (!m4a && R && R.fixWebm) { try { blob = await R.fixWebm(blob, Date.now() - t0); } catch (err) { /* файл как есть */ } }
+      const a = document.createElement("a"), d = new Date(), p2 = (x) => String(x).padStart(2, "0");
+      a.href = URL.createObjectURL(blob); a.download = `Zerkalius-zvuk-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.${m4a ? "m4a" : "webm"}`;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      say(`⏺ Звук сохранён: ${a.download} (${(blob.size / 1048576).toFixed(1)} МБ).`);
+    };
+    r.start(1000); b.classList.add("on"); b.textContent = "⏹";
+    const tick = () => { const s = Math.floor((Date.now() - t0) / 1000); b.title = `⏹ Идёт запись звука ${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")} — щелчок: стоп и файл`; };
+    tick(); srecT = setInterval(tick, 1000);
+    say("⏺ Запись звука пошла. Ещё щелчок по ⏹ — стоп, файл скачается.");
+  };
   $("bSndMark").onclick = () => { Z.sndMark = Z.sndMark === false; sndMarkUi(); save(); if (Z.sndMark === false) sndMark(null);   // v0.376: и на конусе
 
     say(Z.sndMark !== false ? "◉ Показать — вкл: звучащие биты (головки) подсвечены в строках и на конусе." : "◉ Показать — выкл: звучащие биты не подсвечиваются."); };

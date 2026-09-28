@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.390. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.391. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.390</title>
+<title>Zazerkalius — v0.391</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -670,6 +670,8 @@ body.zen #w-cone #coneMain{bottom:0}
 .cgrp.coff{display:none !important}
 #w-cone .tools .cgb > span.csnd > #bSnd#bSnd,#paneGrp .cgb > span.csnd > #bSnd#bSnd{width:var(--bu) !important;flex:0 0 auto !important;min-width:0 !important;max-width:none !important}   /* v0.368; v0.371 — звук / пауза в 1, ■ стоп — в полкнопки (значок) */
 #bSndP:disabled{opacity:.35;cursor:default}
+#bSndRec.on{color:#ff4d5e !important;border-color:#ff4d5e !important;animation:zSndRecBlink 1s ease-in-out infinite}   /* v0.391: идёт запись звука */
+@keyframes zSndRecBlink{50%{opacity:.45}}
 .cgrp > .glab > .gx{margin-left:6px;cursor:pointer;opacity:.55;font-size:11px}
 .cgrp > .glab > .gx:hover{opacity:1}
 .cgrp.cflash{animation:zRunBlink .5s ease-in-out 3}
@@ -1048,7 +1050,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.390</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.391</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1718,6 +1720,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
             <select id="sndWave" title="Тембр. Разные — у каждой строки (голоса) свой: треугольник, квадрат, пила, синус, дальше — октавой выше и ниже. Или один на всех">
               <option value="mix">🎨 разные</option><option value="triangle">△ треугольник</option><option value="sine">∿ синус</option><option value="square">▢ квадрат</option><option value="sawtooth">⩘ пила</option><option value="bell">🔔 колокол</option>
             </select>
+            <!-- v0.391, «кнопку записи звука»: ⏺ — запись «♫ Звука» в файл (только звук), значок — в полкнопки -->
+            <button id="bSndRec" title="⏺ Запись звука: пишет то, что играет «♫ звук», в файл .webm (только звук, без видео). Звук молчал — включится сам. Ещё щелчок — стоп, файл скачивается">⏺</button>
             <button id="bSndMark" class="on" title="◉ Показать головки: звучащие биты (головки чтения) подсвечены в строках поля и на конусе — в 2D обводкой сектора, в 3D точкой (по умолчанию вкл)">◉ показать</button>
             <!-- v0.318, «кнопку режим 2 бита — чтобы сразу с 2 битов шёл звук, и задать как-то расстояние»: вторая «головка» чтения -->
             <button id="bSnd2" title="⁑ Авто: сколько бит строки звучит разом и на каком расстоянии — берётся из строки, следующей за ближайшей строкой из одних 1 выше читаемой: сколько в ней 1 — столько бит (до 8), где стоят — на таком расстоянии впереди читаемого, по кругу строки (у Серпинского под 1111 — 10001: два бита через 4). Читаешь дальше вниз — прошёл новую строку из 1, и шаблон меняется сам; что звучит сейчас — на кнопке («⁑ 2×8» — два бита через 8). Строки из одних 1 выше нет — два бита через ↔. ◉ подсвечивает все звучащие биты">⁑ авто</button>
@@ -1895,8 +1899,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0390"></script>
-<script src="zz-ui.js?v=0390"></script>
+<script src="zz-core.js?v=0391"></script>
+<script src="zz-ui.js?v=0391"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
