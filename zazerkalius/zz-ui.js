@@ -107,12 +107,32 @@ function save(){
   if (sessLoading) return;
   try { localStorage.setItem(ZZ_KEY, JSON.stringify(Z)); } catch (e) { /* нет хранилища — не беда */ }
 }
-let msgTimer = 0;
+let msgTimer = 0, tipEl = null, tipTimer = 0, tipShown = false;
 function say(t){
   const m = $("msg");
+  clearTimeout(tipTimer); tipShown = false;   // v0.294: сообщение перекрывает подсказку
   m.textContent = t; m.classList.add("show");
   clearTimeout(msgTimer); msgTimer = setTimeout(() => m.classList.remove("show"), Math.min(12000, 2500 + t.length * 45));
 }
+/* v0.294, по снимку всплывшей подсказки шаблона — «все подсказки показывай в области уведомлений»: подсказки браузера (title) не
+   всплывают у мыши — их текст идёт в #msg внизу, пока мышь над элементом (через 250 мс). На время наведения title переезжает в
+   data-zz-tip (иначе браузер покажет и своё окошко) и возвращается при уходе мыши и при нажатии — код, читающий .title, его видит. */
+function tipOff(keepMsg){
+  clearTimeout(tipTimer);
+  if (tipEl) { if (!tipEl.hasAttribute("title") && tipEl.dataset.zzTip != null) tipEl.setAttribute("title", tipEl.dataset.zzTip); delete tipEl.dataset.zzTip; tipEl = null; }
+  if (tipShown && !keepMsg) { tipShown = false; $("msg").classList.remove("show"); }
+}
+document.addEventListener("mouseover", (e) => {
+  const el = e.target && e.target.closest ? e.target.closest("[title], [data-zz-tip]") : null;
+  if (el === tipEl) return;
+  tipOff();
+  if (!el) return;
+  const t = el.getAttribute("title") || el.dataset.zzTip || ""; if (!t.trim()) return;
+  tipEl = el; el.dataset.zzTip = t; el.removeAttribute("title");
+  tipTimer = setTimeout(() => { const m = $("msg"); clearTimeout(msgTimer); m.textContent = t; m.classList.add("show"); tipShown = true; }, 250);
+}, true);
+document.addEventListener("mouseout", (e) => { if (tipEl && !(e.relatedTarget && tipEl.contains(e.relatedTarget))) tipOff(); }, true);
+document.addEventListener("pointerdown", () => tipOff(true), true);   // нажали — title на место до обработчиков; подсказку сменит их сообщение
 function cur(){ return Z.rows[Z.cur] || ""; }
 /* v0.015: поля строк. Z.rows — ссылка на рабочее поле; кнопки по-прежнему могут присвоить Z.rows новый
    массив — syncLane() (в save, snapshot, renderRows) кладёт его обратно в Z.lanes. */
