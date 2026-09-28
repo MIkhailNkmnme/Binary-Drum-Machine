@@ -2745,17 +2745,26 @@ function coneRotOf(i){
 function coneRotStr(s, k){ const n = s.length; k = ((k % n) + n) % n; return k ? s.slice(k) + s.slice(0, k) : s; }
 function setupCone(){
   const cv = $("coneCv");
+  /* v0.309, «поле Конус — одиночный клик без перемещения — снять выделение»: щелчок по холсту конуса без сдвига (без Ctrl и Shift) —
+     как Esc: выделенные кольца (строки) сняты, подсветки текущего нет. Прежде (v0.248) щелчок по кольцу делал его строку текущей. */
+  const coneUnsel = () => {
+    if (!rowSel.size && document.body.classList.contains("nocur")) return;
+    const n = rowSel.size; rowSel.clear(); rowSelAnchor = -1; document.body.classList.add("nocur"); renderRows(); renderCone();
+    say(n ? `◯ Выделение снято (${n}).` : "◯ Выделение снято.");
+  };
   cv.addEventListener("pointerdown", (e) => {
     if (e.button !== 0) return;
     if (Z.cone3d) {   // v0.082: в объёме — тянешь: вращать (с Ctrl — сдвиг)
       e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = e.ctrlKey ? "move" : "grabbing";
       const x0 = e.clientX, y0 = e.clientY, yw0 = Z.cone3Yaw ?? 30, el0 = Z.cone3El ?? 50, p0 = conePan.slice(), dpr = window.devicePixelRatio || 1, ctrl = e.ctrlKey;
+      let moved3 = false;   // v0.309
       const mv = (ev) => {
+        if (Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) > 3) moved3 = true;
         if (ctrl) conePan = [p0[0] + (ev.clientX - x0) * dpr, p0[1] + (ev.clientY - y0) * dpr];
         else { Z.cone3Yaw = yw0 + (ev.clientX - x0) * 0.5; Z.cone3El = Math.max(0, Math.min(90, el0 + (ev.clientY - y0) * 0.4)); }
         renderCone();
       };
-      const up3 = () => { cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", up3); cv.removeEventListener("pointercancel", up3); cv.style.cursor = "grab"; save(); };
+      const up3 = () => { cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", up3); cv.removeEventListener("pointercancel", up3); cv.style.cursor = "grab"; save(); if (!moved3 && !ctrl) coneUnsel(); };   // v0.309
       cv.addEventListener("pointermove", mv); cv.addEventListener("pointerup", up3); cv.addEventListener("pointercancel", up3);
       return;
     }
@@ -2798,6 +2807,7 @@ function setupCone(){
       const upP = () => {
         cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", upP); cv.removeEventListener("pointercancel", upP); cv.style.cursor = "grab";
         if (!movedP && bit) { conePan = p0; coneBitFlip(bit); return; }   // v0.231: Shift + щелчок по сектору — сменить бит (v0.173 — Ctrl)
+        if (!movedP && !ctrl && !shift) { conePan = p0; coneUnsel(); return; }   // v0.309: щелчок без сдвига — снять выделение
         if (!movedP && h !== -1 && Z.coneNoPick) { conePan = p0; renderCone(); return; }   // v0.281, «нужна кнопка запрета выделения колец»: 🚫 выбор — щелчок по кольцу ничего не выбирает
         if (!movedP && h !== -1 && ctrl) {   // v0.231: с Ctrl; v0.076: щелчок по кольцу — выделить / снять (то же выделение, что в поле); v0.173 — с Shift (Ctrl — смена бита)
           conePan = p0;
@@ -2806,7 +2816,6 @@ function setupCone(){
           say(`◯ Выделено колец: ${rowSel.size}` + (Z.coneOnlySel ? " — видны только они и текущее." : ". Галка «только выделенные» скроет остальные."));
           return;
         }
-        if (!movedP && h !== -1 && h.i !== Z.cur) { conePan = p0; Z.cur = h.i; renderAll(); save(); }   // щелчок по кольцу — выбрать строку
       };
       cv.addEventListener("pointermove", mv); cv.addEventListener("pointerup", upP); cv.addEventListener("pointercancel", upP);
       return;
@@ -6467,7 +6476,8 @@ function init(){
   /* v0.220, по снимку выделенной строки 110011 — «клик по выделенной строке — снять выделение»: щелчок по текущей (или единственной
      выделенной) строке — как Esc: выделение снято, текущей нет; ещё щелчок — снова выбрана. */
   const rowUnselect = () => { rowSel.clear(); rowSelAnchor = -1; clearTextSel(); document.body.classList.add("nocur"); renderRows(); renderCone(); };
-  $("coneCv").addEventListener("pointerdown", () => { if (document.body.classList.contains("nocur") && !Z.cone3d) { document.body.classList.remove("nocur"); } });   // v0.107: щелчок по кольцам — подсветка текущего снова   // v0.106: действие со строками — подсветка текущей снова видна
+  // v0.309: нажатие по конусу больше не зажигает подсветку текущего (v0.107) — одиночный щелчок там снимает выделение
+  // $("coneCv") pointerdown → nocur снят — убрано;   // v0.107: щелчок по кольцам — подсветка текущего снова   // v0.106: действие со строками — подсветка текущей снова видна
   document.addEventListener("keydown", (e) => { if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "PageUp" || e.key === "PageDown" || e.key === "Home" || e.key === "End") document.body.classList.remove("nocur"); }, true);
   $("rowList").onclick = (e) => {
     if (rowEditing >= 0) return;
