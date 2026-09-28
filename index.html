@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.061. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.062. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -66,13 +66,15 @@
      v0.060: «1-2-3-1 — такой треугольник-стрелка»: ряды 1, 2, 3 и древко 1 — До; Ре Ми; Фа Соль Ля; Си (под Соль).
      v0.061: «на хаб надо видеозапись»: ⏺ в правом верхнем углу — ролик кадра формата устройства (телефон 1080×1920, компьютер
              1920×1080): стрелка нот, как горят и мигают, и конус, если он виден; звук нот — прямо из фона (Zazerkalius v0.394).
-             И meta viewport: без неё телефон рисовал хаб шириной 980 px, уменьшенным (ноты мелкие, правила узкого экрана спали). -->
+             И meta viewport: без неё телефон рисовал хаб шириной 980 px, уменьшенным (ноты мелкие, правила узкого экрана спали).
+     v0.062: по снимку «D» — «D = Ре?» → «да» на «писать слогами»: по-английски ноты — не буквами C D E F G A B, а слогами латиницей:
+             Do Re Mi Fa Sol La Si. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.061</title>
+    <title>Zerkalius Control Hub — v0.062</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -337,25 +339,25 @@
     <button id="hubRec" type="button" title="⏺ Видео хаба: ролик в формате устройства (телефон — 1080×1920, компьютер — 1920×1080) — ноты, как горят, и их звук; конус — если он виден. Ещё щелчок — стоп, файл скачивается">⏺</button>
     <div id="hubSndBox">
         <div class="nrow n1">
-            <button class="hubSnd" data-h="r" type="button" data-ru="До" data-en="C" style="--c:#ff5f6d" title="До: головка звука фона — строки подряд, слева направо; звучит от ноты до. Щелчок — вкл / выкл, отдельно от остальных">До</button>
+            <button class="hubSnd" data-h="r" type="button" data-ru="До" data-en="Do" style="--c:#ff5f6d" title="До: головка звука фона — строки подряд, слева направо; звучит от ноты до. Щелчок — вкл / выкл, отдельно от остальных">До</button>
         </div>
         <div class="nrow n2">
-            <button class="hubSnd" data-h="c" type="button" data-ru="Ре" data-en="D" style="--c:#ff9f43" title="Ре: головка звука фона — столбцы сверху вниз, октавой ниже — бас; звучит от ноты ре. Щелчок — вкл / выкл, отдельно от остальных">Ре</button>
-            <button class="hubSnd" data-h="mi" type="button" data-ru="Ми" data-en="E" style="--c:#ffe066" title="Ми: головка звука фона — строки задом наперёд — с конца поля, справа налево; звучит от ноты ми. Щелчок — вкл / выкл, отдельно от остальных">Ми</button>
+            <button class="hubSnd" data-h="c" type="button" data-ru="Ре" data-en="Re" style="--c:#ff9f43" title="Ре: головка звука фона — столбцы сверху вниз, октавой ниже — бас; звучит от ноты ре. Щелчок — вкл / выкл, отдельно от остальных">Ре</button>
+            <button class="hubSnd" data-h="mi" type="button" data-ru="Ми" data-en="Mi" style="--c:#ffe066" title="Ми: головка звука фона — строки задом наперёд — с конца поля, справа налево; звучит от ноты ми. Щелчок — вкл / выкл, отдельно от остальных">Ми</button>
         </div>
         <div class="nrow n3">
-            <button class="hubSnd" data-h="fa" type="button" data-ru="Фа" data-en="F" style="--c:#7ee787" title="Фа: головка звука фона — столбцы снизу вверх; звучит от ноты фа. Щелчок — вкл / выкл, отдельно от остальных">Фа</button>
-            <button class="hubSnd" data-h="sol" type="button" data-ru="Соль" data-en="G" style="--c:#4dd4ff" title="Соль: головка звука фона — диагональ ↘ — каждый шаг следующая строка и следующий бит; звучит от ноты соль. Щелчок — вкл / выкл, отдельно от остальных">Соль</button>
-            <button class="hubSnd" data-h="la" type="button" data-ru="Ля" data-en="A" style="--c:#6b8cff" title="Ля: головка звука фона — диагональ ↙ — строки снизу вверх; звучит от ноты ля. Щелчок — вкл / выкл, отдельно от остальных">Ля</button>
+            <button class="hubSnd" data-h="fa" type="button" data-ru="Фа" data-en="Fa" style="--c:#7ee787" title="Фа: головка звука фона — столбцы снизу вверх; звучит от ноты фа. Щелчок — вкл / выкл, отдельно от остальных">Фа</button>
+            <button class="hubSnd" data-h="sol" type="button" data-ru="Соль" data-en="Sol" style="--c:#4dd4ff" title="Соль: головка звука фона — диагональ ↘ — каждый шаг следующая строка и следующий бит; звучит от ноты соль. Щелчок — вкл / выкл, отдельно от остальных">Соль</button>
+            <button class="hubSnd" data-h="la" type="button" data-ru="Ля" data-en="La" style="--c:#6b8cff" title="Ля: головка звука фона — диагональ ↙ — строки снизу вверх; звучит от ноты ля. Щелчок — вкл / выкл, отдельно от остальных">Ля</button>
         </div>
         <div class="nrow n4">
-            <button class="hubSnd" data-h="si" type="button" data-ru="Си" data-en="B" style="--c:#c38cf5" title="Си: головка звука фона — случайный бит поля; звучит от ноты си. Щелчок — вкл / выкл, отдельно от остальных">Си</button>
+            <button class="hubSnd" data-h="si" type="button" data-ru="Си" data-en="Si" style="--c:#c38cf5" title="Си: головка звука фона — случайный бит поля; звучит от ноты си. Щелчок — вкл / выкл, отдельно от остальных">Си</button>
         </div>
     </div>
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.061</div>
+        <div class="ver">v0.062</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -426,7 +428,7 @@
             // надпись обоев; на Windows Server визуальные эффекты выключены по умолчанию, и хаб там стоял
             // молча английским. Теперь тихий режим гасит только полосы: язык по строкам меняется всегда.
             const CALM = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-            const btns = Array.from(document.querySelectorAll('.menu-btn, .panel-title, .hubSnd'));   // v0.023: и названия групп; v0.057 — и ноты (C D E F G A B / До…Си)
+            const btns = Array.from(document.querySelectorAll('.menu-btn, .panel-title, .hubSnd'));   // v0.023: и названия групп; v0.057 — и ноты (v0.062: Do Re Mi… / До Ре Ми…)
             let busy = false;
             const rowsNow = () => {   // строки — по верхнему краю кнопок (пересчёт на каждый сбой: окно могли сжать)
                 const m = new Map();
