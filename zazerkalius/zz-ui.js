@@ -3411,6 +3411,7 @@ function setupCone(){
     const N = Z.rows.length;
     // v0.329, «проход — это же цикл?»: нет — проход = волна сверху донизу; цикл = через сколько проходов картина повторилась
     $("animInfo").textContent = `проход ${aPass} · волна ${aRow}/${Math.max(0, N - 1)}` + (aPer ? ` · цикл ${aPer} прох. (с ${aPer0}-го)` : "");
+    { const f = $("animInfoF"); if (f) f.textContent = $("animInfo").textContent; }   // v0.350: и вверху поля строк, справа
     const sp = animSpOf(Z.animSp ?? 40); $("animSpV").textContent = (sp < 10 ? sp.toFixed(1).replace(".", ",") : Math.round(sp)) + (Z.animByPass ? " прох/с" : " стр/с");   // v0.329: было «цикл/с» — считает проходы
   };
   const animDone = () => { animSig = animKey(); renderAll(); save(); animUi(); };
