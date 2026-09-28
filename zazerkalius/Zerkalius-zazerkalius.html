@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.341. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.342. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.341</title>
+<title>Zazerkalius — v0.342</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -640,6 +640,12 @@ body.zen #w-cone #coneMain{bottom:0}
 .zerk-range-wrap > .rv{position:absolute !important;top:0;bottom:0;left:16px;right:16px;display:flex !important;align-items:center;justify-content:center;min-width:0 !important;margin:0 !important;pointer-events:none;font-size:10px;font-weight:600;color:var(--txt);text-shadow:0 0 3px var(--bg),0 0 3px var(--bg),0 0 2px var(--bg);white-space:nowrap;overflow:hidden}
 #w-cone .tools .cgb > label > .sli,#paneGrp .cgb > label > .sli{flex:0 0 auto;min-width:1.5em;text-align:center}
 #w-cone .tools .cgb > label > .zerk-range-wrap,#paneGrp .cgb > label > .zerk-range-wrap{width:auto !important;flex:1 1 0 !important;min-width:0}
+/* v0.342, «ползункам также как и кнопкам фон, рамку, размер стандарт»: ползунок в группе (со значком, стрелками ◂ ▸ и числом внутри) —
+   в рамке и на фоне кнопки, высотой в кнопку (24 px); и ползунок скорости кручения между ◀ ▶ — тоже */
+#w-cone .tools .cgb label:has(> .zerk-range-wrap),#paneGrp .cgb label:has(> .zerk-range-wrap){height:24px;box-sizing:border-box;padding:0 4px !important;border:1px solid var(--line);border-radius:4px;background:var(--panel2);display:inline-flex !important;align-items:center;gap:3px}
+#w-cone .tools .cgb label:has(> .zerk-range-wrap):hover,#paneGrp .cgb label:has(> .zerk-range-wrap):hover{border-color:var(--acc)}
+#w-cone .tools .cgb .cstep > label:has(> .zerk-range-wrap),#paneGrp .cgb .cstep > label:has(> .zerk-range-wrap){width:calc(var(--bu) * 2 + 3px);flex:0 0 auto}
+#w-cone .tools .cgb .cstep > label > .zerk-range-wrap,#paneGrp .cgb .cstep > label > .zerk-range-wrap{width:auto !important;flex:1 1 0 !important;min-width:0}
 #w-cone .tools .cgb > span.cunit,#paneGrp .cgb > span.cunit{display:inline-flex;flex-wrap:nowrap !important;gap:3px;flex:0 0 auto}
 #w-cone .tools .cgb > span.cunit > .glab2,#paneGrp .cgb > span.cunit > .glab2{width:var(--bu);text-align:center;white-space:nowrap}
 /* v0.183, по снимку группы «Вид» — «в каждой полоске подели длину пополам, расположи в 2 ряда, кнопки ровно друг под другом»:
@@ -955,7 +961,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.341</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.342</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1789,8 +1795,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0341"></script>
-<script src="zz-ui.js?v=0341"></script>
+<script src="zz-core.js?v=0342"></script>
+<script src="zz-ui.js?v=0342"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
