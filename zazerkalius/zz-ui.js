@@ -6540,7 +6540,7 @@ function applyTheme(){
    (--b1), нулей (--b0) и акцент (--acc) — ими красятся и строки, и конус, и окна; у каждой — свой набор для тёмной и светлой темы.
    «Исходная» — цвета страницы как были. Выбор — Z.pal (номер), едет и в «💾 Всё». */
 const ZZ_PALS = [
-  { name: "Исходная" },
+  { name: "Настраиваемая" },   // v0.370: была «Исходная» — цвета страницы; теперь свои 1 / 0 / акцент (Z.palCust), не заданы — как было
   { name: "Янтарь", dark: ["#ffd166", "#94804f", "#ffb347"], light: ["#8a5a00", "#d8c7a0", "#b86e00"] },
   { name: "Океан", dark: ["#38bdf8", "#40709a", "#22d3ee"], light: ["#0369a1", "#a5c8e0", "#0e7490"] },
   { name: "Лес", dark: ["#6ee7a0", "#4f8466", "#4ade80"], light: ["#166534", "#a7c7b0", "#15803d"] },
@@ -6548,15 +6548,38 @@ const ZZ_PALS = [
   { name: "Огонь", dark: ["#ff7a45", "#8a5443", "#fb923c"], light: ["#c2410c", "#e7bfae", "#ea580c"] },
   { name: "Контраст", dark: ["#ffffff", "#5a6272", "#e8ecf4"], light: ["#000000", "#cfd3db", "#1c2130"] },
 ];
+/* v0.370, по снимку группы «Гамма» — «кнопки со своими цветами; Исходная — это Настраиваемая, к ней выбор цветов 0 и 1 и ещё что там»:
+   кнопки гамм окрашены своими цветами (надпись — цвет единиц, фон — с оттенком нулей, рамка — акцент; выбранная — обведена акцентом).
+   «Настраиваемая» (прежняя «Исходная») — свои цвета единиц, нулей и акцента: три выбора цвета рядом с ней. Свои — у каждой темы
+   отдельно, Z.palCust = { dark: [1, 0, акцент], light: […] }; не заданы — цвета страницы, как было. Правый щелчок по «Настраиваемой» —
+   вернуть цвета страницы */
+const PAL_K = ["--b1", "--b0", "--acc"];
+function palHex(c){ try { const x = document.createElement("canvas").getContext("2d"); x.fillStyle = "#000"; x.fillStyle = String(c || "").trim() || "#000"; const v = x.fillStyle; if (v[0] === "#") return v; const m = v.match(/\d+(\.\d+)?/g); return m ? "#" + m.slice(0, 3).map(n => (+n | 0).toString(16).padStart(2, "0")).join("") : "#000000"; } catch (e) { return "#000000"; } }
+function palBase(){   // цвета страницы без гаммы (для нынешней темы)
+  const st = document.documentElement.style, keep = PAL_K.map(k => st.getPropertyValue(k));
+  PAL_K.forEach(k => st.removeProperty(k));
+  const cs = getComputedStyle(document.documentElement), v = PAL_K.map(k => palHex(cs.getPropertyValue(k)));
+  PAL_K.forEach((k, i) => { if (keep[i]) st.setProperty(k, keep[i]); });
+  return v;
+}
+function palTheme(){ return themeIsLight() ? "light" : "dark"; }
+function palCust(){ const c = Z.palCust && Z.palCust[palTheme()]; return Array.isArray(c) && c.length === 3 ? c : null; }
+function palColors(i){ const P = ZZ_PALS[i] || ZZ_PALS[0]; return P.dark ? (themeIsLight() ? P.light : P.dark) : (palCust() || palBase()); }
 function palApply(){
-  const P = ZZ_PALS[(Z.pal | 0) % ZZ_PALS.length] || ZZ_PALS[0], st = document.documentElement.style, v = P.dark ? (themeIsLight() ? P.light : P.dark) : null;
-  ["--b1", "--b0", "--acc"].forEach((k, i) => { if (v) st.setProperty(k, v[i]); else st.removeProperty(k); });
+  const k = (Z.pal | 0) % ZZ_PALS.length, P = ZZ_PALS[k] || ZZ_PALS[0], st = document.documentElement.style, v = P.dark ? (themeIsLight() ? P.light : P.dark) : palCust();
+  PAL_K.forEach((key, i) => { if (v) st.setProperty(key, v[i]); else st.removeProperty(key); });
   const b = $("bPal"); if (b) { b.textContent = "🎨 Гамма"; b.title = `🎨 Гамма (сейчас «${P.name}»): щелчок — открыть группу «Гамма» со всеми гаммами (открыта — закрыть); правый щелчок — следующая гамма`; }   // v0.369: подпись — «Гамма», выбранная — в подсказке и в группе
   palUi();
 }
-function palUi(){   // v0.367: в группе «Гамма» горит выбранная; «🎨» в шапке горит, пока группа открыта
+function palUi(){   // v0.367: в группе «Гамма» горит выбранная; «🎨» в шапке горит, пока группа открыта; v0.370 — кнопки своими цветами
   const k = (Z.pal | 0) % ZZ_PALS.length;
-  document.querySelectorAll(".cg-pal button[data-pal]").forEach(b => b.classList.toggle("on", +b.dataset.pal === k));
+  document.querySelectorAll(".cg-pal button[data-pal]").forEach(b => {
+    const i = +b.dataset.pal, v = palColors(i);
+    b.classList.toggle("on", i === k);
+    b.style.setProperty("--pc1", v[0]); b.style.setProperty("--pc0", v[1]); b.style.setProperty("--pca", v[2]);
+  });
+  const c = palColors(0);
+  [["palC1", 0], ["palC0", 1], ["palCa", 2]].forEach(([id, i]) => { const el = $(id); if (el && document.activeElement !== el) el.value = palHex(c[i]); });
   const b = $("bPal"); if (b && window.cgrpShown) b.classList.toggle("on", cgrpShown("гамма"));
 }
 function palStep(d){
@@ -8045,7 +8068,14 @@ function init(){
   $("bPal").onclick = () => { if (!window.cgrpShow) { palStep(1); return; } if (cgrpShown("гамма")) cgrpHide("гамма"); else cgrpShow("гамма"); palUi(); };
   $("bPal").oncontextmenu = (e) => { e.preventDefault(); palStep(1); };
   document.querySelectorAll(".cg-pal button[data-pal]").forEach(b => b.onclick = () => {
-    Z.pal = +b.dataset.pal; palApply(); save(); renderAll(); say(`🎨 Гамма «${ZZ_PALS[Z.pal].name}».`); });
+    Z.pal = +b.dataset.pal; palApply(); save(); renderAll(); say(`🎨 Гамма «${ZZ_PALS[Z.pal].name}».` + (Z.pal ? "" : " Цвета 1, 0 и акцента — рядом; правый щелчок — цвета страницы.")); });
+  { const b0 = document.querySelector('.cg-pal button[data-pal="0"]');   // v0.370: правый щелчок по «Настраиваемой» — цвета страницы
+    if (b0) b0.oncontextmenu = (e) => { e.preventDefault(); if (Z.palCust) delete Z.palCust[palTheme()]; Z.pal = 0; palApply(); save(); renderAll(); say("🎨 Настраиваемая — цвета страницы (для этой темы)."); }; }
+  { let raf = 0;   // v0.370: свои цвета «Настраиваемой»: 1, 0, акцент — для нынешней темы; тянешь в выборе цвета — меняется сразу
+    [["palC1", 0], ["palC0", 1], ["palCa", 2]].forEach(([id, i]) => { const el = $(id); if (!el) return;
+      el.oninput = () => { const t = palTheme(); if (!Z.palCust || typeof Z.palCust !== "object") Z.palCust = {}; const c = (palCust() || palBase()).slice(); c[i] = el.value; Z.palCust[t] = c; Z.pal = 0; palApply();
+        if (!raf) raf = requestAnimationFrame(() => { raf = 0; renderAll(); }); };
+      el.onchange = () => { save(); say(`🎨 Настраиваемая: ${["единицы", "нули", "акцент"][i]} — ${el.value}.`); }; }); }
   palUi();
   if (window.matchMedia) matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => { if (!Z.theme) { palApply(); renderAll(); } });
   // v0.035: левая панель значками — переключатель и слежение за перерисованными кнопками

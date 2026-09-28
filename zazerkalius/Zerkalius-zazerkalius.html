@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.369. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.370. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.369</title>
+<title>Zazerkalius — v0.370</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -656,6 +656,11 @@ body.zen #w-cone #coneMain{bottom:0}
 .cgrp > .glab > .gx:hover{opacity:1}
 .cgrp.cflash{animation:zRunBlink .5s ease-in-out 3}
 #bPal.on{border-color:var(--acc);color:var(--acc)}
+/* v0.370: кнопки гамм — своими цветами (--pc1 единицы, --pc0 нули, --pca акцент — ставит palUi); выбор цветов «Настраиваемой» — в полкнопки */
+.cg-pal button[data-pal]{color:var(--pc1) !important;background:color-mix(in srgb, var(--pc0) 35%, var(--panel2)) !important;border-color:color-mix(in srgb, var(--pca) 55%, transparent) !important}
+.cg-pal button[data-pal].on{border-color:var(--pca) !important;box-shadow:inset 0 0 0 1px var(--pca),0 0 6px color-mix(in srgb, var(--pca) 70%, transparent) !important}
+#w-cone .tools .cgb > label.pcol,#paneGrp .cgb > label.pcol{width:calc((var(--bu) - 3px) / 2) !important;flex:0 0 auto !important;padding:0 3px !important;gap:2px;justify-content:space-between;border:1px solid var(--line);border-radius:4px;background:var(--panel2);box-sizing:border-box}
+label.pcol > span{font-size:11px;color:var(--dim)} label.pcol > input[type=color]{width:20px;height:18px;padding:0;border:none;background:none;cursor:pointer}
 /* v0.334, по снимку «АНИМАТРИЦА 🧘» — «заголовок группы — как кнопка размерами»: подпись группы — высотой в кнопку (24 px) и не уже
    кнопки (--bu), сверху слева, вровень с первым рядом кнопок (прежде тянулась во всю высоту группы). У свёрнутой группы — как была */
 #w-cone .tools > .cgrp:not(.cmin) > .glab,#paneGrp .cgrp:not(.cmin) > .glab{align-self:flex-start;height:24px;min-width:0;box-sizing:border-box;margin:1px 0 0 !important;padding:0 4px !important;display:flex;align-items:center;justify-content:center}
@@ -1015,7 +1020,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.369</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.370</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1696,7 +1701,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
           </div>
           <!-- v0.367, по снимку «🎨 Роза» — «группа кнопок: сразу все показать в ней, а сюда кнопку вызова этой группы, если группа закрыта» -->
           <div class="cgrp gc cg-pal" title="🎨 Гамма: цвета единиц, нулей и акцент — в строках, конусе и окнах; у каждой свои для тёмной и светлой темы. ✕ — закрыть группу, открыть — «🎨» в шапке"><span class="glab">Гамма</span>
-            <button data-pal="0" title="🎨 Гамма «Исходная»">Исходная</button><button data-pal="1" title="🎨 Гамма «Янтарь»">Янтарь</button><button data-pal="2" title="🎨 Гамма «Океан»">Океан</button><button data-pal="3" title="🎨 Гамма «Лес»">Лес</button><button data-pal="4" title="🎨 Гамма «Роза»">Роза</button><button data-pal="5" title="🎨 Гамма «Огонь»">Огонь</button><button data-pal="6" title="🎨 Гамма «Контраст»">Контраст</button>
+            <button data-pal="0" title="🎨 Настраиваемая: свои цвета единиц, нулей и акцента — выбор цвета рядом (1, 0, а). Не заданы — цвета страницы. Правый щелчок — вернуть цвета страницы">Настраиваемая</button><label class="pcol" title="Цвет единиц (1) — в «Настраиваемой»"><span>1</span><input type="color" id="palC1"></label><label class="pcol" title="Цвет нулей (0) — в «Настраиваемой»"><span>0</span><input type="color" id="palC0"></label><label class="pcol" title="Акцент — рамки, подписи, выделение — в «Настраиваемой»"><span>а</span><input type="color" id="palCa"></label><button data-pal="1" title="🎨 Гамма «Янтарь»">Янтарь</button><button data-pal="2" title="🎨 Гамма «Океан»">Океан</button><button data-pal="3" title="🎨 Гамма «Лес»">Лес</button><button data-pal="4" title="🎨 Гамма «Роза»">Роза</button><button data-pal="5" title="🎨 Гамма «Огонь»">Огонь</button><button data-pal="6" title="🎨 Гамма «Контраст»">Контраст</button>
           </div>
           <div class="cgrp gc cg-las" title="⌖ Луч-часы: пустые кольца до 256, ширина щели, довод строки 1, пауза на проходе"><span class="glab">Лазер</span>
             <label class="dim" title="⌖ Луч-часы: из центра через вырез в кольце строки 1 идёт луч наружу. Вырез один (золотой), крутится вместе с кольцом: тяни кольцо строки 1 мышью — крутится только оно и защёлкивается лучом в щели кольца 2; или ⌖◁ ⌖▷. Кольцо он проходит только в щель — там, где у кольца граница между битами; попал на бит — упирается в стену (красная черта), и этот бит красится золотом с «1» (упал ещё раз — «11», «111»…). Пока включены луч-часы, ячейки колец строк пустые — чёрные, без 0/1: единицы в них ставит лазер (биты строк в поле не меняются). Прошёл все кольца — падает в строку для заполнения, и её ячейка под лучом становится «1». Как зубья часов: крути кольца (▶ каждое по биту / навстречу, или мышью) — щели то сходятся, то расходятся; миг, когда сошлись, ловится и между кадрами (вспышка). Видно в плоском виде"><input type="checkbox" id="coneClock"> ⌖ луч-часы</label>
@@ -1861,8 +1866,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0369"></script>
-<script src="zz-ui.js?v=0369"></script>
+<script src="zz-core.js?v=0370"></script>
+<script src="zz-ui.js?v=0370"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
