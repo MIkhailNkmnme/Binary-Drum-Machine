@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.337. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.338. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.337</title>
+<title>Zazerkalius — v0.338</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -68,6 +68,8 @@ code{font-family:var(--ff);font-size:.95em}
 /* v0.324: окошко «↧ до [N] ✓ ✕» у черты под строками — появляется, когда черту протянули вниз (cutAsk в zz-ui.js) */
 #cutAsk{position:fixed;z-index:60;display:flex;align-items:center;gap:4px;padding:4px 6px;background:var(--panel);border:1px solid var(--acc);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.45);font-size:12px}
 #cutAsk[hidden]{display:none}
+#cutCnt{position:fixed;z-index:61;pointer-events:none;padding:1px 6px;background:var(--panel);border:1px solid var(--acc);border-radius:4px;font-size:12px;font-variant-numeric:tabular-nums;box-shadow:0 3px 10px rgba(0,0,0,.4)}   /* v0.338: число строк у курсора, пока тянут черту */
+#cutCnt[hidden]{display:none}
 #cutAsk input{width:64px;height:22px;box-sizing:border-box;font-size:12px;padding:0 4px}
 #cutAsk button{height:22px;padding:0 7px;font-size:12px;line-height:1}
 /* v0.321, по снимку значка ⌂ в левом нижнем углу — «это наверх, перед заголовком»: значок «в Хаб» (общий _js/hub-link.js) переставлен
@@ -946,7 +948,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.337</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.338</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1778,8 +1780,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0337"></script>
-<script src="zz-ui.js?v=0337"></script>
+<script src="zz-core.js?v=0338"></script>
+<script src="zz-ui.js?v=0338"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

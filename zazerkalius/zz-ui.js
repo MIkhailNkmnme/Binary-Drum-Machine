@@ -604,7 +604,10 @@ function cutLine(){
    и можно руками набрать номер строки»: протянул черту вниз и отпустил — у черты окошко «↧ до [N] ✓ ✕». N — ближайшая степень двойки не
    меньше того, до куда дотянул (дотянул до 3 — 4, до 9 — 16; до 1024 — предел достройки). Число можно набрать своё; Enter или ✓ —
    достроить (или вернуть из-под черты, как тянул бы) до строки N, Esc или ✕ — оставить как есть. Одна точка ↩ на каждое действие. */
-function cutAsk(k){
+/* v0.338, «и вверх, и при применении строки надо удерживать на месте это окно, чтобы ещё раз нажать можно»: окошко — и после протяжки
+   вверх (там по умолчанию ближайшая степень двойки снизу: дотянул до 11 — 8); Enter / ✓ перестраивает поле, а окошко остаётся открытым
+   на том же месте, число снова выделено — можно набрать другое и применить ещё раз. Закрывают ✕, Esc, щелчок мимо. */
+function cutAsk(k, down = true){
   let box = document.getElementById("cutAsk");
   if (!box) {
     box = document.createElement("div"); box.id = "cutAsk"; box.hidden = true;
@@ -614,16 +617,16 @@ function cutAsk(k){
     const inp = box.querySelector("input");
     const close = () => { box.hidden = true; removeEventListener("pointerdown", away, true); };
     const go = () => {
-      const N = Math.min(CUT_GEN_MAX, Math.round(+inp.value)); close();
-      if (!(N >= 1) || N === cutHeight()) return;
-      const pre = undoState(); cutAt(N, !Z.rowLock); cutMove(null, pre); rowsFit(); fieldInfoFit();
+      const N = Math.min(CUT_GEN_MAX, Math.round(+inp.value));
+      if (N >= 1 && N !== cutHeight()) { const pre = undoState(); cutAt(N, !Z.rowLock); cutMove(null, pre); rowsFit(); fieldInfoFit(); }
+      inp.value = cutHeight(); inp.focus(); inp.select();   // v0.338: окошко остаётся на месте — можно ещё раз
     };
     const away = (e) => { if (!box.contains(e.target)) close(); };
     box._open = () => { addEventListener("pointerdown", away, true); };
     inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); go(); } else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(); } else e.stopPropagation(); });
     box.addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; if (b.dataset.a === "ok") go(); else close(); });
   }
-  let p = 1; while (p < k) p *= 2;
+  let p = 1; if (down) while (p < k) p *= 2; else while (p * 2 <= k) p *= 2;   // вниз — ближайшая степень двойки сверху, вверх — снизу
   const inp = box.querySelector("input"); inp.value = Math.min(CUT_GEN_MAX, p);
   const ln = document.querySelector("#rowList .cutln"), r = ln ? ln.getBoundingClientRect() : null;
   box.hidden = false;
@@ -6796,7 +6799,10 @@ function init(){
     const ln = e.target.closest(".cutln"); if (!ln || e.button !== 0 || rowEditing >= 0) return;
     e.preventDefault(); e.stopPropagation();
     const list = $("rowList"), pre = undoState(), H0 = cutHeight();   // v0.324: H0 — сколько строк было до протяжки
-    let raf = 0, moved = false, lastY = e.clientY;
+    let raf = 0, moved = false, lastY = e.clientY, lastX = e.clientX;
+    /* v0.338, «число строк показывалось прямо во время протяжки»: у курсора — живая метка «N стр.» */
+    let cnt = document.getElementById("cutCnt"); if (!cnt) { cnt = document.createElement("div"); cnt.id = "cutCnt"; document.body.appendChild(cnt); }
+    const cntShow = () => { cnt.textContent = cutHeight() + " стр."; cnt.style.left = Math.round(lastX + 14) + "px"; cnt.style.top = Math.round(lastY + 12) + "px"; cnt.hidden = false; };
     list.setPointerCapture(e.pointerId);
     document.body.classList.add("cutdrag");
     const at = (y) => {   // сколько строк над курсором: середина строки выше него
@@ -6813,6 +6819,7 @@ function init(){
       const k = at(lastY);
       if (k === cutHeight()) return;
       cutAt(k, !Z.rowLock); moved = true; renderRows();   // v0.225: вниз — достраивать (если строки не заперты)
+      cntShow();
     };
     /* v0.242: у края поля (или окна) — прокрутка, пока курсор там, даже если мышь стоит: черта дотягивается до строк за краем */
     let edge = 0;
@@ -6827,7 +6834,7 @@ function init(){
     };
     const move = (ev) => {
       if (!(ev.buttons & 1)) { up(); return; }   // v0.269: кнопку отпустили, а pointerup потерялся — черта не едет дальше сама
-      lastY = ev.clientY;
+      lastY = ev.clientY; lastX = ev.clientX; if (moved) cntShow();
       if (!edge) edge = requestAnimationFrame(edgeTick);
       if (!raf) raf = requestAnimationFrame(step);
     };
@@ -6841,7 +6848,8 @@ function init(){
       if (moved) cutMove(null, pre);
       document.body.classList.remove("cutdrag");   // v0.242: после итоговой перерисовки — поле остаётся там, где отпустили
       rowsFit(); fieldInfoFit();   // v0.265: шаг строк и кнопки над столбиками — один раз, когда отпустили
-      if (moved && cutHeight() > H0) cutAsk(cutHeight());   // v0.324: протянул вниз — окошко «до строки N»
+      cnt.hidden = true;
+      if (moved && cutHeight() !== H0) cutAsk(cutHeight(), cutHeight() > H0);   // v0.324: протянул — окошко «до строки N»; v0.338 — и вверх
     };
     list.addEventListener("pointermove", move);
     list.addEventListener("pointerup", up);
