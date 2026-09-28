@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.374. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.375. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.374</title>
+<title>Zazerkalius — v0.375</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1022,7 +1022,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.374</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.375</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1590,7 +1590,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
             <label class="dim" title="◯ Чистые кольца: без контура (голубой внутри, оранжевый снаружи) и без прорезей между битами — у колец, краски и строки для заполнения; текущее кольцо — без обводки (видно по яркости)"><input type="checkbox" id="coneClean"> ◯ чистые</label>
             <label class="dim" title="⬡ Многоугольники: строка из n бит — правильный n-угольник вместо кольца (3 бита — треугольник, 4 — квадрат…), бит — сторона, границы бит — вершины. Конус становится ступенчатой пирамидой; в 3D — тоже. Строка из 1 бита — точка в центре, из 2 бит — две Г углом в центре, в разные стороны (вместе — крест); граница между битами — черта в щели между Г. Всё остальное — лучи, оси, хорды, кручение — работает так же"><input type="checkbox" id="conePoly"> ⬡ многоуг.</label>
             <label class="dim" title="3D: кольца на своих высотах — конус поднят, видно нити, лучи, хорды. Тяни — вращать, Ctrl — сдвиг, колесо — масштаб, Alt + двойной щелчок — вид по умолчанию. Крутить кольца и выделять щелчком — в плоском виде"><input type="checkbox" id="cone3d"> 🧊 3D</label>
-            <label class="dim" style="display:none" title="⧗ Зеркало вниз — октаэдр, как в знаке Zerkalius: под основанием (последним кольцом) — та же пирамида вниз, отражённая и инвертированная (0 ↔ 1). Видно в 3D — галка его включит"><input type="checkbox" id="coneOcta"> ⧗ зеркало</label><select id="coneOctaSel" title="⧗ Зеркало вниз (октаэдр): под основанием — та же пирамида вниз, отражённая и инвертированная (0 ↔ 1). Нет — выключено; выдел. — только кольца выделенных строк (нет выделения — текущей); все — все кольца"><option value="off">⧗ нет</option><option value="cur">⧗ выдел.</option><option value="all">⧗ все</option></select>
+            <label class="dim" style="display:none" title="⧗ Зеркало вниз — октаэдр, как в знаке Zerkalius: под основанием (последним кольцом) — та же пирамида вниз, отражённая и инвертированная (0 ↔ 1). Видно в 3D — галка его включит"><input type="checkbox" id="coneOcta"> ⧗ зеркало</label><select id="coneOctaSel" title="⧗ Зеркало вниз (октаэдр): под основанием — та же пирамида вниз, отражённая и инвертированная (0 ↔ 1). Нет — выключено; выдел. — только кольца выделенных строк (нет выделения — текущей); все — все кольца"><option value="off">⧗ нет</option><option value="cur">⧗ выдел.</option><option value="all">⧗ все</option></select><!-- v0.375, «Вид — кнопка показ / скрыть (по умолчанию «показать») дуги битов» --><button id="bConeArcs" class="on" title="◠ Дуги битов на конусе: показать / скрыть (по умолчанию показаны). Скрыты — остаются границы между битами, кольца, лучи и лазер; и в 2D, и в 3D, и у зеркала">◠ дуги</button>
             <label class="dim" title="01 Цифры бит в 3D: при наклоне ровно 0° (сбоку) или 90° (сверху) на каждом бите — его 0 или 1. По умолчанию выкл"><input type="checkbox" id="cone3Dig"> 01</label>
             <!-- v0.318, «в Вид — кнопку: подсветить 1 бит каждой строки» -->
             <label class="dim" title="① Первый бит каждой строки (самый левый в поле строк) — золотой обводкой на своём кольце: видно, откуда строка начинается и куда она повёрнута. В 3D — золотой чертой по биту"><input type="checkbox" id="coneBit1"> ① 1-й бит</label>
@@ -1868,8 +1868,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0374"></script>
-<script src="zz-ui.js?v=0374"></script>
+<script src="zz-core.js?v=0375"></script>
+<script src="zz-ui.js?v=0375"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

@@ -1637,6 +1637,7 @@ function renderCone(){
       let col = fix ? (MI ? (MI.c180 ? coneCss("--green", "#6ee7a0") : cR) : Z.showFix === "ir" ? coneCss("--green", "#6ee7a0") : cR) : s[j] === "1" ? c1 : c0;
       if (MI && MI.odd) col = MI.cls[j] === 2 ? coneCss("--green", "#6ee7a0") : MI.cls[j] === 1 ? cg : cR;   // v0.081: против пары — сколько совпало
       if (blank) col = cE;   // v0.131: при луч-часах ячейка пустая — чёрная, без 0/1
+      if (Z.coneArcs === false) continue;   // v0.375: «◠ дуги» выключены — дуг битов нет (границы, кольца, лучи — как были)
       g.beginPath(); coneArc(g, cx, cy, i, rout, a + gap, a + step - gap); coneArc(g, cx, cy, i, rin, a + step - gap, a + gap, true); g.closePath();   // v0.109: у многоугольника — сторона
       /* v0.078, «чётче границы внутри кольца и цвета ярче — сливаются»: заливка плотнее (у единиц и неподвижных — почти
          сплошная, у нулей — заметная), символ поверх единицы — цветом фона (контраст на плотной заливке), у нуля — своим
@@ -2752,6 +2753,7 @@ function cone3DDraw(g, o){
   // v0.103: ✨ свет в объёме — ближнее ярче, единицы с ореолом
   let nMin = Infinity, nMax = -Infinity; if (Z.coneGlow) for (const it of items) { nMin = Math.min(nMin, it.near); nMax = Math.max(nMax, it.near); }
   for (const it of items) {
+    if (Z.coneArcs === false) break;   // v0.375: «◠ дуги» выключены — в 3D дуг битов нет (и у зеркала)
     g.beginPath();
     if (it.dot) g.arc(it.pts[0][0], it.pts[0][1], lw * 0.9, 0, 2 * Math.PI);   // v0.110: точка
     else { g.moveTo(it.pts[0][0], it.pts[0][1]); for (let q = 1; q < it.pts.length; q++) g.lineTo(it.pts[q][0], it.pts[q][1]); }
@@ -4268,6 +4270,8 @@ function setupCone(){
   };
   $("coneGlow").checked = !!Z.coneGlow;   // v0.103
   $("coneGlow").onchange = (e) => { Z.coneGlow = e.target.checked; save(); renderCone(); if (Z.coneGlow) say("✨ Лампа горит. На тёмном фоне («☾ Тёмный» в шапке) — ярче всего."); };
+  { const b = $("bConeArcs"), ui = () => b.classList.toggle("on", Z.coneArcs !== false);   // v0.375: ◠ дуги битов — показать / скрыть, по умолчанию показаны
+    if (b) { ui(); b.onclick = () => { Z.coneArcs = Z.coneArcs === false; ui(); save(); renderCone(); say(Z.coneArcs !== false ? "◠ Дуги битов на конусе — видны." : "◠ Дуги битов скрыты: остались границы между битами, кольца, лучи и лазер."); }; } }
   $("coneOcta").checked = !!Z.coneOcta;   // v0.100
   $("coneOcta").onchange = (e) => { Z.coneOcta = e.target.checked; if (Z.coneOcta && !Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } save(); renderCone();
     if (Z.coneOcta) say("⧗ Октаэдр: под основанием — та же пирамида вниз, отражённая и инвертированная (0 ↔ 1), как в знаке Zerkalius. Крути мышью.");
