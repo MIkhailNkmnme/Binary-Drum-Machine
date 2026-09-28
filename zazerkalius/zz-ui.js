@@ -5231,9 +5231,20 @@ function cgrpInit(){
       edge.addEventListener("pointerdown", (e) => {
         if (e.button !== 0) return; e.preventDefault(); try { edge.setPointerCapture(e.pointerId); } catch (err) {}
         const P = $("rowsPane"), w0 = P.getBoundingClientRect().width, x0 = e.clientX; document.body.classList.add("wdrag");
-        const mv = (ev) => { Z.paneW = Math.round(Math.max(180, Math.min(innerWidth * 0.7, w0 + ev.clientX - x0))); Z.paneWUser = true; paneWApply(false); };
-        const up = () => { edge.removeEventListener("pointermove", mv); edge.removeEventListener("pointerup", up); edge.removeEventListener("pointercancel", up); document.body.classList.remove("wdrag"); save(); requestAnimationFrame(() => { if (typeof packWins === "function") packWins(); renderAll(); }); };
-        edge.addEventListener("pointermove", mv); edge.addEventListener("pointerup", up); edge.addEventListener("pointercancel", up);
+        // v0.271: как у ширины поля — пока тянут, за мышью тонкая черта, ширина панели встаёт, когда отпустили (живая перекладка тормозила)
+        const pr = P.getBoundingClientRect(); let lx = x0, raf = 0, done = false; const g = document.createElement("div"); g.id = "wGhost"; document.body.appendChild(g);
+        const wAt = () => Math.round(Math.max(180, Math.min(innerWidth * 0.7, w0 + lx - x0)));
+        const draw = () => { raf = 0; g.style.cssText = `left:${Math.round(pr.left + wAt()) - 1}px;top:${Math.round(pr.top)}px;height:${Math.round(pr.height)}px`; };
+        draw();
+        const mv = (ev) => { if (!(ev.buttons & 1)) { up(); return; } lx = ev.clientX; if (!raf) raf = requestAnimationFrame(draw); };
+        const up = () => {
+          if (done) return; done = true;
+          edge.removeEventListener("pointermove", mv); edge.removeEventListener("pointerup", up); edge.removeEventListener("pointercancel", up); removeEventListener("pointerup", up, true); removeEventListener("blur", up);
+          if (raf) cancelAnimationFrame(raf); g.remove();
+          if (wAt() !== Math.round(w0)) { Z.paneW = wAt(); Z.paneWUser = true; paneWApply(false); }
+          document.body.classList.remove("wdrag"); save(); requestAnimationFrame(() => { if (typeof packWins === "function") packWins(); renderAll(); });
+        };
+        edge.addEventListener("pointermove", mv); edge.addEventListener("pointerup", up); edge.addEventListener("pointercancel", up); addEventListener("pointerup", up, true); addEventListener("blur", up);
       });
       edge.addEventListener("dblclick", () => { delete Z.paneWUser; paneWApply(true); save(); renderAll(); });
     }
@@ -6119,8 +6130,11 @@ function init(){
       if (!edge) edge = requestAnimationFrame(edgeTick);
       if (!raf) raf = requestAnimationFrame(step);
     };
+    let fin = false;
     const up = () => {
+      if (fin) return; fin = true;   // v0.271: и с окна, и с поля — один раз
       list.removeEventListener("pointermove", move); list.removeEventListener("pointerup", up); list.removeEventListener("pointercancel", up);
+      removeEventListener("pointerup", up, true); removeEventListener("blur", up);
       if (edge) { cancelAnimationFrame(edge); edge = 0; }
       if (raf) { cancelAnimationFrame(raf); step(); }
       if (moved) cutMove(null, pre);
@@ -6130,6 +6144,7 @@ function init(){
     list.addEventListener("pointermove", move);
     list.addEventListener("pointerup", up);
     list.addEventListener("pointercancel", up);
+    addEventListener("pointerup", up, true); addEventListener("blur", up);   // v0.271: отпустили где угодно (и окно потеряло фокус) — конец протяжки
   });
   $("rowList").addEventListener("pointerdown", (e) => {
     const hd = e.target.closest(".axh"); if (!hd || e.button !== 0) return;
@@ -6663,38 +6678,41 @@ function init(){
        тормозит»: на 180 строках каждый шаг ширины — 1–2 с (раскладка и отрисовка всего поля, подгонка шага строк, кнопки над столбиками),
        и граница догоняла мышь уже после отпускания. Теперь ширина ставится не чаще кадра, подгонки — один раз, когда отпустили; а если
        кадр всё равно дольше 0,1 с — дальше поле не перекладывается, граница идёт за мышью тонкой чертой, ширина — когда отпустили. */
+    /* v0.271, «тормоза от этой границы остались — граница отдельно от курсора тянется иногда»: (1) нажал на номер, повёл вниз (не вбок)
+       и отпустил вне поля — «отпущено» до поля не доходило, слушатели оставались, и следующее движение над полем тянуло границу без
+       нажатой кнопки. Теперь «отпущено» ловится на всём окне, а движение без нажатой кнопки сразу заканчивает протяжку. (2) Поле во время
+       протяжки больше не перекладывается совсем: за мышью идёт тонкая черта (там встанет граница), ширина — когда отпустили. */
     const fr = $("field").getBoundingClientRect();
-    let on = false, lastX = x0, raf = 0, slow = false, ghost = null;
+    let on = false, lastX = x0, raf = 0, ghost = null, done = false;
     const wAt = () => Math.max(minW, Math.min(window.innerWidth - 520, Math.round(w0 + sg * (lastX - x0))));
     const ghostAt = () => {
+      raf = 0; if (!on) return;
       if (!ghost) { ghost = document.createElement("div"); ghost.id = "wGhost"; document.body.appendChild(ghost); }
       const w = wAt(), x = sg > 0 ? fr.left + w : fr.right - w;
       ghost.style.cssText = `left:${Math.round(x) - 1}px;top:${Math.round(fr.top)}px;height:${Math.round(fr.height)}px`;
     };
-    const apply = () => {
-      raf = 0;
-      if (slow) { ghostAt(); return; }
-      const t = performance.now(); Z.rowsW = wAt(); applyRowsW();
-      requestAnimationFrame(() => { if (performance.now() - t > 100) slow = true; });
-    };
     const move = (ev) => {
+      if (!(ev.buttons & 1)) { up(); return; }   // кнопку уже отпустили — протяжки нет
       const dx = ev.clientX - x0;
       if (!on) { if (strict && (Math.abs(dx) < 6 || Math.abs(dx) < Math.abs(ev.clientY - y0))) return; on = true; try { list.setPointerCapture(ev.pointerId); } catch (er) { /* отпущен */ } document.body.classList.add("wdrag"); }
-      if (!(ev.buttons & 1)) { up(); return; }   // кнопку отпустили, а pointerup потерялся — не тянуть дальше
       lastX = ev.clientX;
-      if (!raf) raf = requestAnimationFrame(apply);
+      if (!raf) raf = requestAnimationFrame(ghostAt);
     };
     const up = () => {
+      if (done) return; done = true;
       list.removeEventListener("pointermove", move); list.removeEventListener("pointerup", up); list.removeEventListener("pointercancel", up);
-      if (!on) return;
-      on = false; if (raf) { cancelAnimationFrame(raf); raf = 0; }
+      removeEventListener("pointerup", up, true); removeEventListener("pointercancel", up, true); removeEventListener("blur", up);
+      if (raf) { cancelAnimationFrame(raf); raf = 0; }
       if (ghost) { ghost.remove(); ghost = null; }
+      if (!on) return;
+      on = false;
       Z.rowsW = wAt(); applyRowsW();
       document.body.classList.remove("wdrag"); packWins(); save(); renderPointers(); rowsFit(); fieldInfoFit();
       const kill = (ev) => { ev.stopPropagation(); ev.preventDefault(); };   // тянули — это не щелчок по номеру
       window.addEventListener("click", kill, { capture: true, once: true }); setTimeout(() => window.removeEventListener("click", kill, true), 0);
     };
     list.addEventListener("pointermove", move); list.addEventListener("pointerup", up); list.addEventListener("pointercancel", up);
+    addEventListener("pointerup", up, true); addEventListener("pointercancel", up, true); addEventListener("blur", up);   // отпустили где угодно — конец
   };
   $("rowList").addEventListener("pointerdown", (e) => {
     const no = e.target.closest(".rw > .no > .rn"); if (!no || e.target.closest(".fctl") || e.button !== 0 || rowEditing >= 0) return;   // v0.219: «хват только у номеров, не дальше»
