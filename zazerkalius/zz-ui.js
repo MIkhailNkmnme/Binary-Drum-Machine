@@ -6699,7 +6699,19 @@ function cgrpCols(){   // v0.183: у каждой группы — столбц�
     const n = [...g.children].filter(c => !c.classList.contains("glab") && getComputedStyle(c).display !== "none").length;
     g.style.setProperty("--cols", Math.max(1, Math.ceil(n / 2)));
   });
+  rhombTag();   // v0.401
 }
+/* v0.401, «все кнопки ромбами, равнобедр, пока те, что 1 размера»: кнопка группы (конус, левая панель) шириной ровно в одну --bu — класс .rh1
+   (вытянутый ромб, см. CSS). Ширина — вычисленная, а не измеренная: у спрятанной кнопки (только для 3D и т.п.) она та же, и ромбом кнопка
+   показывается сразу. Полкнопки (.ib), стрелки ползунков и кнопки в 2 и больше не трогаются. */
+function rhombTag(){
+  const bu = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--bu")) || 80;
+  document.querySelectorAll("#w-cone .tools .cgb button, #paneGrp .cgb button").forEach(b => {
+    const w = parseFloat(getComputedStyle(b).width);
+    b.classList.toggle("rh1", Math.abs(w - bu) < 1.5 && !b.classList.contains("ib") && !b.classList.contains("zerk-arrow"));
+  });
+}
+window.addEventListener("load", () => setTimeout(rhombTag, 0));
 function soloApply(){
   const el = $(ZZ_SOLO); if (!el) return;
   document.body.classList.add("solo");

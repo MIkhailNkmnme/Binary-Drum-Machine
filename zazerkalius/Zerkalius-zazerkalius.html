@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.400. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.401. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.400</title>
+<title>Zazerkalius — v0.401</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -731,6 +731,18 @@ label.pcol > span{font-size:11px;color:var(--dim)} label.pcol > input[type=color
    ставит cgbIcons) — в полширины, две такие = одна обычная. Сколько влезает в строку, столько и встаёт, столбцы ровные. Длинная
    подпись обрезается (целиком — во всплывающей подсказке у кнопки) */
 :root{--bu:80px}
+/* v0.401, «все кнопки теперь ромбами» — «равнобедр» — «пока те, что 1 размера»: кнопки групп шириной в одну --bu (метит rhombTag — класс
+   .rh1) — вытянутым ромбом: верх и низ ровные, на концах — равнобедренные треугольники с вершиной посередине высоты (глубина 12 px — у кнопки
+   в 24 px это прямой угол). Нажимается только ромб (clip-path). Рамка скосов — четыре диагонали фоном (цвет --rbc: как рамка — обычная,
+   наведение сиреневое, включённая золотая), верх и низ — своя рамка кнопки. Полкнопки-значки (.ib) и кнопки в 2 и больше — как были */
+button.rh1{--rbc:var(--line);clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%);border-left-width:0 !important;border-right-width:0 !important;border-radius:0 !important;padding-left:10px !important;padding-right:10px !important;
+  background-image:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),
+    linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),
+    linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),
+    linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));
+  background-size:12px 50%;background-position:0 0,0 100%,100% 0,100% 100%;background-repeat:no-repeat}
+button.rh1:hover{--rbc:var(--acc)}
+button.rh1.on{--rbc:var(--gold)}
 #w-cone .tools .cgb button:not(.zerk-arrow),#w-cone .tools .cgb select,#w-cone .tools .cgb label:has(> input[type=checkbox]),#paneGrp .cgb button:not(.zerk-arrow),#paneGrp .cgb select,#paneGrp .cgb label:has(> input[type=checkbox]){width:var(--bu) !important;min-width:0 !important;max-width:none !important;flex:0 0 auto !important;box-sizing:border-box;overflow:hidden}
 #w-cone .tools .cgb button.ib:not(.zerk-arrow),#paneGrp .cgb button.ib:not(.zerk-arrow){width:calc((var(--bu) - 3px) / 2) !important;padding:0 !important}
 #w-cone .tools .cgb select,#paneGrp .cgb select{padding-left:3px !important;padding-right:0 !important}
@@ -1074,7 +1086,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.400</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.401</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1948,8 +1960,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0400"></script>
-<script src="zz-ui.js?v=0400"></script>
+<script src="zz-core.js?v=0401"></script>
+<script src="zz-ui.js?v=0401"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
