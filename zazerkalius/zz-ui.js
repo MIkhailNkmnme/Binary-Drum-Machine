@@ -5387,30 +5387,43 @@ window.addEventListener("beforeunload", () => { for (const w of popups.values())
 /* v0.158, «это всё (текст конуса и лог лазера) в отдельное окно с полным закрытием, плавающим везде, кнопку в верхнее меню»:
    #coneBot переезжает в #coneTxtWin — окно position:fixed поверх всего, тянется за шапку (не за край экрана), размер — за угол.
    ✕ закрывает совсем, «📝 Текст» в шапке открывает и закрывает. Z.ctw = { open, x, y, w, h } — в пикселях окна браузера. */
+/* v0.326, по снимку окна «📝 Текст конуса и лог лазера» — «в низ конуса на всю длину, и с возможностью скрытия»: окно больше не плавает
+   поверх всего — оно пристёгнуто к низу окна конуса полосой во всю его ширину, холст конуса кончается над ним (--ctwH). Тянешь заголовок
+   вверх / вниз — высота; ▾ в заголовке (или двойной щелчок по нему) — скрыть текст, остаётся одна полоса-заголовок, ▴ — вернуть.
+   «📝 Текст» в шапке и ✕ — убрать совсем, как прежде. Z.ctw = { open, h, min } (x, y, w прежнего плавающего окна больше не нужны). */
 function ctwInit(){
-  const W = $("coneTxtWin"), cb = $("coneBot"); if (!W || !cb) return;
+  const W = $("coneTxtWin"), cb = $("coneBot"), C = $("w-cone"); if (!W || !cb || !C) return;
   W.querySelector(".ctwBody").appendChild(cb); cb.style.top = "";
-  if (!Z.ctw || typeof Z.ctw !== "object") Z.ctw = { open: true, w: 420, h: 260, x: innerWidth - 440, y: innerHeight - 290 };
-  const clamp = () => {
-    const c = Z.ctw; c.w = Math.max(220, Math.min(c.w | 0 || 420, innerWidth)); c.h = Math.max(110, Math.min(c.h | 0 || 260, innerHeight));
-    c.x = Math.max(0, Math.min(c.x | 0, innerWidth - 80)); c.y = Math.max(0, Math.min(c.y | 0, innerHeight - 28));
-    Object.assign(W.style, { left: c.x + "px", top: c.y + "px", width: c.w + "px", height: c.h + "px" });
+  C.appendChild(W);
+  if (!Z.ctw || typeof Z.ctw !== "object") Z.ctw = { open: true };
+  const head = W.querySelector(".ctwHead"), bMin = document.createElement("button");
+  bMin.id = "bCtwMin"; bMin.type = "button"; head.insertBefore(bMin, $("bCtwClose"));
+  let lastH = null;
+  const lay = () => {
+    const c = Z.ctw, open = c.open !== false, min = !!c.min;
+    W.hidden = !open; W.classList.toggle("min", min);
+    $("bConeTxt").classList.toggle("on", open);
+    bMin.textContent = min ? "▴" : "▾"; bMin.title = min ? "Показать текст конуса и лог лазера" : "Скрыть текст — останется одна полоса-заголовок (двойной щелчок по заголовку — то же)";
+    c.h = Math.max(60, Math.min(Math.round(c.h) || 180, Math.max(60, C.clientHeight - 80)));
+    W.style.height = min ? "" : c.h + "px";
+    const H = open ? (min ? head.offsetHeight : c.h) + "px" : "0px";
+    if (H !== lastH) { lastH = H; C.style.setProperty("--ctwH", H); renderCone(); }
   };
-  const show = (on) => { Z.ctw.open = !!on; W.hidden = !on; $("bConeTxt").classList.toggle("on", !!on); if (on) clamp(); };
-  show(Z.ctw.open !== false);
-  $("bConeTxt").onclick = () => { show(W.hidden); save(); };
-  $("bCtwClose").onclick = () => { show(false); save(); };
-  const head = W.querySelector(".ctwHead");
-  head.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0 || e.target.closest("button")) return;
+  const flip = () => { Z.ctw.min = !Z.ctw.min; lay(); save(); };
+  bMin.onclick = flip;
+  head.addEventListener("dblclick", (e) => { if (!e.target.closest("button")) flip(); });
+  $("bConeTxt").onclick = () => { Z.ctw.open = Z.ctw.open === false; lay(); save(); };
+  $("bCtwClose").onclick = () => { Z.ctw.open = false; lay(); save(); };
+  head.addEventListener("pointerdown", (e) => {   // заголовок — хват высоты
+    if (e.button !== 0 || e.target.closest("button") || Z.ctw.min) return;
     e.preventDefault(); head.setPointerCapture(e.pointerId);
-    const x0 = e.clientX - Z.ctw.x, y0 = e.clientY - Z.ctw.y;
-    const mv = (ev) => { Z.ctw.x = ev.clientX - x0; Z.ctw.y = ev.clientY - y0; clamp(); };
+    const y0 = e.clientY, h0 = W.offsetHeight;
+    const mv = (ev) => { Z.ctw.h = h0 - (ev.clientY - y0); lay(); };
     const up = () => { head.removeEventListener("pointermove", mv); head.removeEventListener("pointerup", up); head.removeEventListener("pointercancel", up); save(); };
     head.addEventListener("pointermove", mv); head.addEventListener("pointerup", up); head.addEventListener("pointercancel", up);
   });
-  if (window.ResizeObserver) { let t = 0; new ResizeObserver(() => { if (W.hidden) return; const w = W.offsetWidth, h = W.offsetHeight; if (w !== Z.ctw.w || h !== Z.ctw.h) { Z.ctw.w = w; Z.ctw.h = h; clearTimeout(t); t = setTimeout(save, 300); } }).observe(W); }
-  addEventListener("resize", () => { if (!W.hidden) clamp(); });
+  if (window.ResizeObserver) new ResizeObserver(() => lay()).observe(C);
+  lay();
 }
 /* v0.177, по снимку полосы групп конуса — «возможность перетаскивать каждую группу в любое место, с фоновым перекрытием всех ниже»:
    группу (Вид, Кольца, Кручение, Лазер) тянут за её подпись — она выходит из полосы и висит поверх холста на непрозрачной подложке,
