@@ -5924,6 +5924,7 @@ function setupWin(el){
   head.innerHTML = '<span class="wt">' + esc(el.dataset.title || el.id) + "</span>" +
     (el.querySelector(".whint") ? '<button class="bh" title="Подсказка: что это и почему">?</button>' : "") +
     '<button class="bm" title="⛶ На всю правую половину: окно встаёт наверх во всю ширину и высоту места справа от поля строк, остальные — под ним. Ещё раз — вернуть, как было">⛶</button>' +   // v0.060
+    (el.id === "w-cone" && !ZZ_SOLO ? '<button class="bsolo" title="↗ Конус отдельно — в новой вкладке (эта же страница с ?solo=cone: одно окно конуса и поле строк, своя память)">↗</button>' : "") +   // v0.303
     '<button class="bp" title="В отдельное окно браузера — например, на второй монитор. Ещё раз ⧉ или закрыть то окно — вернуть">⧉</button>' +
     '<button class="bc" title="Свернуть / развернуть">–</button>';
   el.insertBefore(head, el.firstChild);
@@ -5949,6 +5950,10 @@ function setupWin(el){
     grip.addEventListener("pointermove", move); grip.addEventListener("pointerup", up); grip.addEventListener("pointercancel", up);
   });
   head.querySelector(".bp").onclick = () => { if (popups.has(el.id)) popIn(el.id); else popOut(el); };   // v0.030
+  /* v0.303, по снимку шапки «◯ Конус» — «сюда кнопку для открытия в …/Zerkalius-zazerkalius.html?solo=cone»: ↗ открывает эту же страницу
+     с ?solo=cone в новой вкладке — адрес от нынешнего, так что и на localhost, и на сайте. */
+  const bSolo = head.querySelector(".bsolo");
+  if (bSolo) bSolo.onclick = () => { window.open(location.pathname + "?solo=cone", "_blank"); };
   /* v0.060, «сюда кнопку — на всю оставшуюся половину окна после поля строк, а все остальные под ним»: ⛶ ставит окно
      на верх стола во всю его ширину и видимую высоту, прежнее место запоминается (w.max0); остальные сдвигаются ниже —
      при «⤒ К верху» их укладывает packWins, без него — сдвигаются на высоту окна. Ещё раз ⛶ — место назад. */
