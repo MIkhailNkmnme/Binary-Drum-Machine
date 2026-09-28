@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.272. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.273. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.272</title>
+<title>Zazerkalius — v0.273</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -468,8 +468,8 @@ body.zen #coneRecBar{z-index:6}   /* v0.256: «кнопки записи вид�
 body.bgmode #coneBtns{display:none}
 #cone3Pad{position:absolute;right:8px;bottom:8px;z-index:2;display:grid;grid-template-columns:repeat(3,28px);grid-auto-rows:28px;gap:3px}   /* v0.157: кнопки 3D на холсте */
 #cone3Pad.flat > button:not(.c3home){visibility:hidden}   /* v0.164: в плоском виде на панели — только зелёная «всё на места» */
-#cone3Pad .c3top{position:absolute;right:-1px;bottom:calc(100% + 5px);display:flex;gap:4px}   /* v0.270: 🧊 3D и ⧗ зеркало над пультом */
-#cone3Pad .c3top button{width:auto;height:26px;padding:0 8px;font-size:13px;white-space:nowrap;background:var(--panel)}
+#cone3Pad .c3top{position:absolute;left:-1px;right:-1px;bottom:calc(100% + 4px);display:flex;gap:4px}   /* v0.270: 🧊 3D и ⧗ зеркало над пультом; v0.273 — ровно по ширине пульта */
+#cone3Pad .c3top button{flex:1 1 0;min-width:0;width:auto;height:26px;padding:0 2px;font-size:11px;white-space:nowrap;overflow:hidden;background:var(--panel)}
 #cone3Pad .c3top button.on{color:var(--gold);border-color:var(--gold)}
 #cone3Pad .c3home{color:var(--green);border-color:var(--green);font-weight:700}
 #cone3Pad .c3grip{display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:16px;cursor:move;touch-action:none;user-select:none;border-radius:4px}   /* v0.179: ручка пульта */
@@ -809,7 +809,7 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.272</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.273</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1472,7 +1472,7 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
           <!-- v0.157, «в поле конуса кнопки управления для 3D»: в правом нижнем углу холста, только в 3D -->
           <div id="cone3Pad" class="flat">
             <!-- v0.270, по снимку пульта с «🧊 3D» над ним — «сюда выбор 3D поставь примерно так» и «⧗ зеркало — туда же»: те же галки, что в «Виде», — кнопками над пультом, видны всегда -->
-            <div class="c3top"><button id="bC3d" title="🧊 3D вкл / выкл — то же, что галка «🧊 3D» в «Виде»: кольца на своих высотах">🧊 3D</button><button id="bC3Octa" title="⧗ Зеркало вниз вкл / выкл — то же, что галка «⧗ зеркало» в «Виде»: под основанием та же пирамида вниз, отражённая и инвертированная (видно в 3D)">⧗ зеркало</button></div>
+            <div class="c3top"><button id="bC3d" title="🧊 3D вкл / выкл — то же, что галка «🧊 3D» в «Виде»: кольца на своих высотах">🧊 3D</button><button id="bC3Octa" title="⧗ Зеркало вниз вкл / выкл — то же, что галка «⧗ зеркало» в «Виде»: под основанием та же пирамида вниз, отражённая и инвертированная (видно в 3D)">⧗ зерк.</button></div>
             <button data-c3="yaw-" title="Повернуть влево на 15° (держи — дальше)">⟲</button><button data-c3="el+" title="Наклон: смотреть сверху круче на 10°">▲</button><button data-c3="yaw+" title="Повернуть вправо на 15° (держи — дальше)">⟳</button>
             <button data-c3="z-" title="Мельче">−</button><button data-c3="home" title="Вид по умолчанию: поворот 30°, наклон 50°, масштаб 1, без сдвига (то же — Alt + двойной щелчок)">⌂</button><button data-c3="z+" title="Крупнее">＋</button>
             <button data-c3="allhome" class="c3home" title="⟲ Всё на места — как кнопка «⟲ всё на места» у кручения: накрутка колец, кручение, счёт, довод строки 1">↺</button><button data-c3="el-" title="Наклон: смотреть сбоку положе на 10°">▼</button><span class="c3grip" title="Тяни — перенести пульт куда угодно по холсту; двойной щелчок — обратно в угол">⠿</span>
@@ -1606,8 +1606,8 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0272"></script>
-<script src="zz-ui.js?v=0272"></script>
+<script src="zz-core.js?v=0273"></script>
+<script src="zz-ui.js?v=0273"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>
