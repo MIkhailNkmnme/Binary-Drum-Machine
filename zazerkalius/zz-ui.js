@@ -6491,9 +6491,21 @@ function init(){
     if (pt && pt.closest(".cutln")) { cutMove(Infinity); return; }
     /* v0.291, «двойной клик по полю строк — должен убирать все выделения»: где угодно в поле (кроме черты и панели под ней) — снято всё:
        выделенные строки, подсветка текущей (как Esc), выделенный текст и выделение оси. До v0.290 двойной щелчок только убирал слово,
-       выделенное им самим на битах (v0.266). */
+       выделенное им самим на битах (v0.266). v0.292: по строке — выделить её, снимает всё только двойной щелчок мимо строк. */
     if (e.target.closest("#cutPanel, button, input, select, textarea, label, a")) return;
     e.preventDefault();
+    /* v0.292, «2 щелчка по строке — выделение, а по битам одинарный, как сейчас»: двойной щелчок по строке рабочего поля (номер, биты,
+       пустое место в строке) — выделить её; снять всё — двойной щелчок мимо строк. Заголовки полей, ручки осей, строка для заполнения —
+       ничего; строка чужого поля — его уже сделал рабочим одиночный щелчок. */
+    if (e.target.closest(".lh, .axrow, .fillrw")) return;
+    const r = e.target.closest(".rw");
+    if (r && !r.classList.contains("lhrow") && !r.classList.contains("hid")) {
+      const c = e.target.closest(".bits, .ob"), i = +r.dataset.r;
+      if ((c && +c.dataset.l !== Z.lane) || !(i < Z.rows.length)) return;
+      clearTextSel(); document.body.classList.remove("nocur"); axSel = -1;
+      rowSel.clear(); rowSel.add(i); rowSelAnchor = i; Z.cur = i; renderAll(); save();
+      return;
+    }
     const n = rowSel.size; rowSel.clear(); rowSelAnchor = -1; clearTextSel(); document.body.classList.add("nocur"); axSel = -1;
     renderRows(); renderCone();
     say(n ? `Выделение снято со всех строк (${n}).` : "Выделение снято.");
