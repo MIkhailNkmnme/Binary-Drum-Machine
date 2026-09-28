@@ -612,14 +612,20 @@ function hidRowHtml(i, cells){ return '<div class="rw hid" data-h="' + i + '"><s
    Ужатое поле (.rlsq) держит и колонку номеров в высоту строки, иначе замок 🔒 не дал бы строке стать ниже. */
 const RL_MAX = 1.25, RL_MIN = 0.7;
 function rowsFit(){
+  // v0.265: пока тянут черту — шаг строк прежний, даже размер поля не меряем (каждый замер — полная раскладка); подгонка — когда отпустят
+  if (document.body.classList.contains("cutdrag") && $("rowList") && $("rowList").style.getPropertyValue("--rlh")) return;
   const L = $("rowList"); if (!L || !L.clientHeight) return;
   const was = L.style.getPropertyValue("--rlh");
   /* v0.246, «почему всё тормозит»: каждая подгонка — 4–5 полных раскладок поля (на 260 строках — по 0,1 с). Строк, шрифта и размера
      поля столько же, сколько в прошлый раз, и всё помещается — шаг строки прежний, раскладка одна. */
   const n = L.querySelectorAll(".rw:not(.lhrow)").length, fs = Z.fs || 16;
-  const key = [n, fs, Z.ff, Z.laneCount, L.clientHeight, L.clientWidth].join("|");
+  const base = [fs, Z.ff, Z.laneCount, L.clientHeight, L.clientWidth].join("|"), key = n + "|" + base;
   if (rowsFit.key === key && (+was && +was <= RL_MIN + 1e-6 || L.scrollHeight <= L.clientHeight + 1)) return;   // и когда ужато до предела — теснее всё равно некуда
-  rowsFit.key = key;
+  /* v0.265, «зависание у границы перетаскивания строк поля»: пока тянут черту, строк на каждом шаге другое число — и подгонка каждый
+     раз заново раскладывала поле 4–5 раз (на 400 строках — 0,6 с на шаг). Теперь: пока черту тянут — шаг строк прежний (подгонка —
+     когда отпустят); строк стало больше, а шаг и так самый тесный — тоже прежний, без раскладок. */
+  if (rowsFit.base === base && +was && +was <= RL_MIN + 1e-6 && n >= (rowsFit.n || 0)) { rowsFit.key = key; rowsFit.n = n; return; }
+  rowsFit.key = key; rowsFit.base = base; rowsFit.n = n;
   L.classList.remove("rlsq"); L.style.removeProperty("--rlh");
   if (L.scrollHeight <= L.clientHeight + 1) { if (was) rowsFitDone(); return; }
   if (!n) return;
@@ -641,6 +647,7 @@ function rowsFitDone(){ if (Z.tri90) tri90Apply(); }   // ◸ 90° считае�
 /* v0.209, по снимку «i3 стр. · 934 бит…» (начало сведений ушло под колонку номеров и замков) — «подвинь надпись»: сведения не заходят
    под левую колонку — начинаются сразу за ней, не влезли — многоточие в конце (целиком — в подсказке). */
 function fieldInfoFit(){
+  if (document.body.classList.contains("cutdrag")) return;   // v0.265: пока тянут черту — кнопки над столбиками не двигаем (замер — раскладка поля); поставятся, когда отпустят
   const fi = $("fieldInfo"), bar = $("fieldInfoBar"); if (!fi || !bar) return;
   const no = document.querySelector("#rowList .rw > .no"), w = no ? no.getBoundingClientRect().right - bar.getBoundingClientRect().left : 90;
   const setMW = (el, v) => { if (el.style.maxWidth !== v) el.style.maxWidth = v; };   // v0.246: то же значение — не трогать (иначе лишняя раскладка всего поля)
@@ -5916,6 +5923,7 @@ function init(){
       if (raf) { cancelAnimationFrame(raf); step(); }
       if (moved) cutMove(null, pre);
       document.body.classList.remove("cutdrag");   // v0.242: после итоговой перерисовки — поле остаётся там, где отпустили
+      rowsFit(); fieldInfoFit();   // v0.265: шаг строк и кнопки над столбиками — один раз, когда отпустили
     };
     list.addEventListener("pointermove", move);
     list.addEventListener("pointerup", up);
