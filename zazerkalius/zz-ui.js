@@ -5418,7 +5418,7 @@ function ctwInit(){
     bMin.textContent = min ? "▴" : "▾"; bMin.title = min ? "Показать текст конуса и лог лазера" : "Скрыть текст — останется одна полоса-заголовок (двойной щелчок по заголовку — то же)";
     c.h = Math.max(60, Math.min(Math.round(c.h) || 180, Math.max(60, C.clientHeight - 80)));
     W.style.height = min ? "" : c.h + "px";
-    const H = open ? (min ? head.offsetHeight : c.h) + "px" : "0px";
+    const H = open && !min ? c.h + "px" : "0px";   // v0.336: скрыт — холст до самого низа, прозрачный заголовок лежит поверх
     if (H !== lastH) { lastH = H; C.style.setProperty("--ctwH", H); renderCone(); }
   };
   const flip = () => { Z.ctw.min = !Z.ctw.min; lay(); save(); };
