@@ -4087,6 +4087,7 @@ function setupCone(){
   $("cone3Pad").addEventListener("pointerdown", (e) => {
     const b = e.target.closest("button[data-c3]"); if (!b) return;
     e.preventDefault(); const k = b.dataset.c3;
+    if (!Z.cone3d && k !== "allhome") return;   // v0.314: в плоском виде кнопки 3D видны, но приглушены и не жмутся
     if (k === "allhome") { $("bConeAllHome").click(); return; }   // v0.164, «сюда же «Всё на места» — значком, зелёным»
     c3Do(k);
     if (k === "home") { save(); return; }
