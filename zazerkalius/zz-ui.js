@@ -5602,7 +5602,7 @@ function cgrpInit(){
          чтобы соседние группы и полоса не прыгали. */
       const key = g.dataset.g, on = !Z.cgrpMin[key];
       if (on) Z.cgrpMin[key] = g.offsetHeight; else delete Z.cgrpMin[key];
-      g.classList.toggle("cmin", on); g.style.minHeight = on ? Z.cgrpMin[key] + "px" : ""; sizeApply(g); cgrpCols(); place(g); save();
+      g.classList.toggle("cmin", on); g.style.minHeight = on ? Z.cgrpMin[key] + "px" : ""; cgbSnap(); sizeApply(g); cgrpCols(); place(g); save();
     });
     lab.addEventListener("contextmenu", (e) => {
       e.preventDefault();
@@ -5694,15 +5694,22 @@ function cgrpInit(){
    полоса режимов кручения, «🎯 до строки», голые поля, счёт Аниматрицы), — шириной ровно в 1, 2 или 4 кнопки (с зазорами между ними):
    наименьшую, в которую влезает. Кнопки, списки, поля с подписью — уже в 1, ползунки и блоки ◀ [ ] ▶ — в 2; значки — в полкнопки (v0.317) */
 const CG_FREE = ".cgrp > .glab, .cgrp > .cgb > .glab2, .cgrp > .cgb > span:not(.cunit), .cgrp > .cgb > input";
+/* v0.339, по снимку «Вида» («🔴 неподв. ⇄» обрезана с обеих сторон) — «не совсем расположил»: кнопки, кнопки-галки и списки, которым
+   мало одной ширины, — в 2 кнопки (или в 4), а не обрезаны (классы .w2 / .w4). Замер — разом для всех (одна перекладка страницы, а не на
+   каждый элемент: при ▶ волне счёт меняется каждый кадр) */
+const CG_BTN = ".cgrp > .cgb button:not(.zerk-arrow), .cgrp > .cgb label:has(> input[type=checkbox]), .cgrp > .cgb select";
 function cgbSnap(){
   const bu = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--bu")) || 80, gp = 3, W = (k) => k * bu + (k - 1) * gp;
-  document.querySelectorAll(CG_FREE).forEach((el) => {
-    if (!el.getClientRects().length) return;
-    const w0 = el.style.width; el.style.width = "max-content"; const w = el.getBoundingClientRect().width;
-    const k = w <= W(1) + 0.5 ? 1 : w <= W(2) + 0.5 ? 2 : 4, t = W(k) + "px";
-    el.style.width = t; if (!el.style.boxSizing) el.style.boxSizing = "border-box";
-    if (w0 !== t) el.style.flex = "0 0 auto";
-  });
+  const kOf = (w) => w <= W(1) + 0.5 ? 1 : w <= W(2) + 0.5 ? 2 : 4;
+  const vis = (el) => el.getClientRects().length > 0;
+  const free = [...document.querySelectorAll(CG_FREE)].filter(vis);
+  const btn = [...document.querySelectorAll(CG_BTN)].filter(el => vis(el) && !el.classList.contains("ib") && !el.closest(".cunit"));
+  free.forEach(el => { el.style.width = "max-content"; el.style.flex = "0 0 auto"; if (!el.style.boxSizing) el.style.boxSizing = "border-box"; });
+  btn.forEach(el => el.classList.add("wm"));
+  const wf = free.map(el => el.getBoundingClientRect().width), wb = btn.map(el => el.getBoundingClientRect().width);
+  btn.forEach(el => el.classList.remove("wm"));
+  free.forEach((el, i) => { el.style.width = W(kOf(wf[i])) + "px"; });
+  btn.forEach((el, i) => { const k = kOf(wb[i]); if (el.classList.contains("w2") !== (k === 2)) el.classList.toggle("w2", k === 2); if (el.classList.contains("w4") !== (k === 4)) el.classList.toggle("w4", k === 4); });
 }
 function cgbIcons(){
   document.querySelectorAll(".cgrp > .cgb button:not(.zerk-arrow)").forEach((b) => { const on = [...b.textContent.trim()].length <= 2; if (b.classList.contains("ib") !== on) b.classList.toggle("ib", on); });

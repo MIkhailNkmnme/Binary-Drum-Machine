@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.338. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.339. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.338</title>
+<title>Zazerkalius — v0.339</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -70,6 +70,13 @@ code{font-family:var(--ff);font-size:.95em}
 #cutAsk[hidden]{display:none}
 #cutCnt{position:fixed;z-index:61;pointer-events:none;padding:1px 6px;background:var(--panel);border:1px solid var(--acc);border-radius:4px;font-size:12px;font-variant-numeric:tabular-nums;box-shadow:0 3px 10px rgba(0,0,0,.4)}   /* v0.338: число строк у курсора, пока тянут черту */
 #cutCnt[hidden]{display:none}
+/* v0.339: кнопка, галка-кнопка или список, которым мало одной ширины, — в 2 или 4 кнопки (cgbSnap); .wm — на миг замера.
+   Счёт Аниматрицы — полем: высотой в кнопку, с фоном и рамкой, текст по центру («также размер кнопок, и поле текста выдели фоном или
+   рамкой, выровняй по центру») */
+#w-cone .tools .cgb .wm.wm.wm,#paneGrp .cgb .wm.wm.wm{width:max-content !important;min-width:0 !important;max-width:none !important;flex:0 0 auto !important}
+#w-cone .tools .cgb .w2.w2.w2,#paneGrp .cgb .w2.w2.w2{width:calc(var(--bu) * 2 + 3px) !important}
+#w-cone .tools .cgb .w4.w4.w4,#paneGrp .cgb .w4.w4.w4{width:calc(var(--bu) * 4 + 9px) !important}
+#animInfo{display:inline-flex;align-items:center;justify-content:center;height:24px;box-sizing:border-box;padding:0 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel2);color:var(--txt);font-size:12px}
 #cutAsk input{width:64px;height:22px;box-sizing:border-box;font-size:12px;padding:0 4px}
 #cutAsk button{height:22px;padding:0 7px;font-size:12px;line-height:1}
 /* v0.321, по снимку значка ⌂ в левом нижнем углу — «это наверх, перед заголовком»: значок «в Хаб» (общий _js/hub-link.js) переставлен
@@ -948,7 +955,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.338</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.339</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1780,8 +1787,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0338"></script>
-<script src="zz-ui.js?v=0338"></script>
+<script src="zz-core.js?v=0339"></script>
+<script src="zz-ui.js?v=0339"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
