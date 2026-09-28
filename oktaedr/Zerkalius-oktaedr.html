@@ -1,4 +1,4 @@
-<!-- Zerkalius Гранидус — v0.058. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Гранидус — v0.059. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Гранидус — v0.058</title>
+<title>Zerkalius Гранидус — v0.059</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -106,15 +106,20 @@
     border-radius:50%; background:var(--up); }
   .row{ display:flex; gap:4px; }
   /* v0.047, «октаэдр — все виды разложи так же (малыми картинками)», «кнопки вида: сверху, снизу…»: шесть картинок-кнопок вида, по три в ряд */
-  #faceRow{ display:grid; grid-template-columns:repeat(4, 1fr); gap:3px; }
+  #faceRow{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:3px; }
   #faceRow .vw{ display:flex; flex-direction:column; align-items:center; gap:1px; padding:2px 1px 3px; text-align:center; font-size:10px; line-height:1.1; }
-  #faceRow .vw canvas{ width:40px; height:34px; display:block; cursor:inherit; }
-  #edgeRow{ display:grid; grid-template-columns:repeat(4, 1fr); gap:3px; }
+  #faceRow .vw canvas{ width:100%; max-width:40px; height:auto; aspect-ratio:40 / 34; display:block; cursor:inherit; }
+  #edgeRow{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:3px; }
   #edgeRow .vw{ display:flex; flex-direction:column; align-items:center; gap:1px; padding:2px 1px 3px; text-align:center; font-size:10px; line-height:1.1; }
-  #edgeRow .vw canvas{ width:40px; height:34px; display:block; cursor:inherit; }
-  #viewRow{ display:grid; grid-template-columns:repeat(3, 1fr); gap:4px; }
+  #edgeRow .vw canvas{ width:100%; max-width:40px; height:auto; aspect-ratio:40 / 34; display:block; cursor:inherit; }
+  /* v0.059, по снимку «Вида» с полосами прокрутки — «скролл»: сетки видов ужимаются по ширине раздела (прежде столбец не бывал уже
+     картинки и сетка выпирала вбок); у плавающих разделов, как у панелей (v0.056), полосы прокрутки нет — колесо листает */
+  #viewRow .vw, #faceRow .vw, #edgeRow .vw{ min-width:0; }
+  .tab-sec.floating{ scrollbar-width:none; }
+  .tab-sec.floating::-webkit-scrollbar{ display:none; }
+  #viewRow{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:4px; }
   #viewRow .vw{ display:flex; flex-direction:column; align-items:center; gap:1px; padding:2px 2px 3px; text-align:center; font-size:10px; line-height:1.1; }
-  #viewRow .vw canvas{ width:52px; height:40px; display:block; cursor:inherit; }
+  #viewRow .vw canvas{ width:100%; max-width:52px; height:auto; aspect-ratio:52 / 40; display:block; cursor:inherit; }
   #viewRow .vroll{ font-size:18px; line-height:1; text-align:center; padding:2px; }   /* v0.050: кувырок ↶ ↷ по бокам от «снизу» */
   /* v0.043: ноты До…Си — выключенная серая, включённая горит цветом своей ноты (--c), как в хабе */
   #noteRow{ flex-wrap:wrap; }
@@ -291,7 +296,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.058</div>
+<div id="ver">v0.059</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -488,6 +493,7 @@
     своей грани (ряд за рядом от вершины; 1 — звучит, 0 — пауза, высота — по трём битам с этого места) и звучит от своей ноты, поэтому
     несколько включённых дают созвучие. Нота, у которой грани нет, читает экватор — нижние ряды верхних граней по кругу (у бипирамиды
     из 3 граней это Си, внутреннее основание). Бит, который сейчас звучит, горит на теле цветом своей ноты. Темп — ползунком.</li>
+    <li><b>Склейка разделов</b> (v0.059) — плавающие разделы, прилипшие один под другим, едут вместе, если тянуть верхний; нижний — отрывается.</li>
     <li><b>Совпадения</b> (v0.058) — строка под видами, на ходу: вершины, рёбра, грани — всего → различимо в нынешнем виде (рёбра торцом —
     точкой, грани ребром — линией), и оси — сколько видно торцом и сколько легло на ребро. Считается по линии взгляда, без перспективы.</li>
     <li><b>Ребро на ребро</b> (v0.057) — картинки «×N» под видами на грань: виды, где рёбер совпадает больше всего (легли на одну прямую
@@ -2143,7 +2149,8 @@ const SECS = {
   SNAP: 10,
   snapTo(sec, x, y){
     const w = sec.offsetWidth, h = sec.offsetHeight, S = this.SNAP, T = [];
-    this.all().forEach(o => { if (o !== sec && o.classList.contains("floating") && !o.classList.contains("off")) T.push([o, o.getBoundingClientRect()]); });
+    const att = (this.drag && this.drag.att) || [];   // v0.059: едущие следом — не цели магнита
+    this.all().forEach(o => { if (o !== sec && o.classList.contains("floating") && !o.classList.contains("off") && !att.some(a => a.el === o)) T.push([o, o.getBoundingClientRect()]); });
     this.docks().forEach(p => { if (!p.classList.contains("empty")) T.push([p, p.getBoundingClientRect()]); });
     T.push([null, { left: 0, right: innerWidth, top: 0, bottom: innerHeight }]);
     let dx = S + 1, dy = S + 1, ex = null, ey = null;
@@ -2156,6 +2163,22 @@ const SECS = {
     if (Math.abs(dy) <= S) { y += dy; if (ey) hit.add(ey); }
     this.snapGlow(hit);
     return [x, y];
+  },
+  /* v0.059, по снимку «Цвета» над «Нотами» — «верхнюю, если тянуть, — не размагничивай»: плавающие разделы, прилипшие снизу (верх ровно
+     на низу, вровень хоть частью по ширине), и прилипшие к ним — цепочкой — едут вместе с тем, кого тянут; смещение каждого — от него.
+     Тянешь нижний — он отрывается, как прежде. */
+  chain(sec){
+    const R0 = sec.getBoundingClientRect(), out = [], q = [sec];
+    const fl = this.all().filter(o => o !== sec && o.classList.contains("floating") && !o.classList.contains("off"));
+    while (q.length) {
+      const ra = q.shift().getBoundingClientRect();
+      for (const o of fl) {
+        if (out.some(x => x.el === o)) continue;
+        const r = o.getBoundingClientRect();
+        if (Math.abs(r.top - ra.bottom) <= 3 && r.left < ra.right - 4 && r.right > ra.left + 4) { out.push({ el: o, dx: r.left - R0.left, dy: r.top - R0.top }); q.push(o); }
+      }
+    }
+    return out;
   },
   snapGlow(hit){ document.querySelectorAll(".tab-sec.snap, .dock.snap").forEach(o => { if (!hit || !hit.has(o)) o.classList.remove("snap"); }); if (hit) hit.forEach(o => o.classList.add("snap")); },
   /* v0.056: влезет ли панель по высоте, если в неё встанет раздел sec. Уже стоящий в ней (переставляют) — влезает всегда. Предел — её
@@ -2185,6 +2208,7 @@ const SECS = {
       const r = d.sec.getBoundingClientRect();
       d.dx = d.x0 - r.left; d.dy = d.y0 - r.top; d.started = true;
       d.sec.classList.add("dragging"); document.body.classList.add("tab-dragging");
+      d.att = d.sec.classList.contains("floating") ? this.chain(d.sec) : [];   // v0.059: прилипшие снизу едут следом
     }
     let dock = this.dockUnder(e.clientX, e.clientY);
     if (dock && !this.fits(dock, d.sec)) dock = null;   // v0.056: не влезет по высоте — не магнитить
@@ -2199,6 +2223,8 @@ const SECS = {
       if (!d.sec.classList.contains("floating")) { d.sec.classList.add("floating"); document.body.appendChild(d.sec); }
       const [sx, sy] = this.snapTo(d.sec, e.clientX - d.dx, e.clientY - d.dy);   // v0.046: магнит
       this.clamp(d.sec, sx, sy);
+      const bx = parseFloat(d.sec.style.left) || 0, by = parseFloat(d.sec.style.top) || 0;   // v0.059: цепочка — следом
+      (d.att || []).forEach(a => { a.el.style.left = Math.round(bx + a.dx) + "px"; a.el.style.top = Math.round(by + a.dy) + "px"; });
     }
     if (dock) this.snapGlow(null);
   },
