@@ -1314,6 +1314,7 @@ function coneHoverRow(i){
 }
 function renderCone(){
   if (!winOpen("w-cone")) return;
+  { const b3 = $("bC3d"), bo = $("bC3Octa"); if (b3) b3.classList.toggle("on", !!Z.cone3d); if (bo) bo.classList.toggle("on", !!Z.coneOcta); }   // v0.270: кнопки над пультом — как галки
   { const p3 = $("cone3Pad"); if (p3) p3.classList.toggle("flat", !Z.cone3d); }   // v0.157: кнопки 3D — только в 3D; v0.164: в 2D — одна зелёная «всё на места»
   const cv = $("coneCv"); if (!cv) return;
   const R = cv.getBoundingClientRect(); if (R.width < 20 || R.height < 20) return;
@@ -3574,6 +3575,51 @@ function setupCone(){
   };
   $("bConeRec").onclick = () => recGo("webm");
   $("bConeRecMp4").onclick = () => recGo("mp4");   // v0.250
+  /* v0.270, «кнопку „записать ровно один оборот“ — видео повторяется без скачка» (для обоев Lively): ↻1 — запись ровно одного цикла
+     кручения, по часам записи, а не кадров: «всё целиком» и «навстречу по строкам» — 360°, «по биту» — пока все кольца разом не
+     вернутся на места (НОК длин строк, бит). Кручение ведёт сама запись: от места, где конус стоит, до того же места; последний кадр —
+     за миг до начала, поэтому конец ролика стыкуется с началом. Скорость и направление — с ползунка «▶ крутить». Лазер в записи оборота
+     не работает (он меняет рисунок — цикл бы не замкнулся). ⏸ — пауза, как обычно; ⏹ — стоп раньше срока. */
+  let turnOn = false;
+  const recTurn = async () => {
+    if (rec) { rec.stop(); return; }
+    if (recBusy || turnOn) return;
+    const m = Z.coneSpinMode || "all", sp = Z.coneAutoSp ?? 30, dir = sp < 0 ? -1 : 1, bitm = coneBitMode(m);
+    let P, v;   // цикл и скорость — в единицах фазы (градусы или биты) в секунду
+    if (bitm) { const L = coneCycleBits(); if (L > 1000000000n) { say(`↻1 Цикл «по биту» — ${coneBigFmt(L)} бит: такой ролик не записать. Возьми «всё целиком» или «навстречу по строкам» (360°).`); return; } P = Number(L); v = Math.abs(sp) / 10; }
+    else { P = 360; v = Math.abs(sp); }
+    const D = P / v;
+    if (!(D > 0.2)) { say("↻1 Скорость кручения — ноль: оборот не записать."); return; }
+    if (D > 1800) { say(`↻1 Один оборот на этой скорости — ${Math.round(D / 60)} мин: слишком долго. Прибавь скорость ползунком «▶ крутить».`); return; }
+    const wasAuto = !!autoRaf, wasClock = !!Z.coneClock; autoSet(false);
+    const key = m === "all" ? "coneSpin" : "coneSpinPh", s0 = Z[key] || 0;
+    if (wasClock) Z.coneClock = false;
+    const fmt = typeof MediaRecorder !== "undefined" && ["video/mp4;codecs=avc1.42E01E", "video/mp4"].some(x => MediaRecorder.isTypeSupported(x)) ? "mp4" : "webm";
+    turnOn = true; $("bConeRecTurn").classList.add("on");
+    await recGo(fmt);
+    const fin = () => {
+      turnOn = false; $("bConeRecTurn").classList.remove("on");
+      Z[key] = s0; if (wasClock) Z.coneClock = true; renderCone(); save();
+      if (wasAuto) autoSet(true);
+    };
+    if (!rec) { fin(); return; }
+    const r = rec; let t0 = performance.now(), last = t0;
+    const step = () => {
+      if (rec !== r || r.state === "inactive") { fin(); return; }   // остановили ⏹ раньше срока
+      const now = performance.now();
+      if (recPausedAt) t0 += now - last;   // на паузе время оборота стоит
+      last = now;
+      const e = (now - t0) / 1000;
+      if (e >= D) { r.stop(); fin(); say(`↻1 Записан ровно один оборот (${D < 60 ? D.toFixed(1) + " с" : Math.round(D / 6) / 10 + " мин"}) — ролик можно крутить по кругу без скачка.`); return; }
+      const ph = s0 + dir * v * e;
+      Z[key] = m === "all" ? ((ph % 360) + 360) % 360 : ph;
+      renderCone();
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+    say(`↻1 Пишу ровно один оборот — ${D < 60 ? D.toFixed(1) + " с" : Math.round(D / 6) / 10 + " мин"} (${bitm ? P + " бит" : "360°"}, ${fmt}); остановится сам. Вкладку не сворачивай — иначе кадры встанут.${wasClock ? " Лазер на время записи выключен." : ""}`);
+  };
+  $("bConeRecTurn").onclick = recTurn;
   /* v0.267, «как записывать видео в области строк?» → вариант 1: поле строк — не холст, captureStream у него нет. Пишем саму вкладку
      (браузер спрашивает «Поделиться этой вкладкой?») и обрезаем кадр по полю строк (CropTarget, Chrome / Edge) — в файле ровно то, что
      на экране: подсветка, звучащий бит, черта, прокрутка.
@@ -3784,6 +3830,8 @@ function setupCone(){
     place();
     if (window.ResizeObserver) new ResizeObserver(place).observe(host);
   }
+  $("bC3d").onclick = () => $("cone3d").click();   // v0.270: 🧊 3D и ⧗ зеркало над пультом жмут те же галки «Вида»
+  $("bC3Octa").onclick = () => $("coneOcta").click();
   $("cone3Pad").addEventListener("pointerdown", (e) => {
     const b = e.target.closest("button[data-c3]"); if (!b) return;
     e.preventDefault(); const k = b.dataset.c3;
@@ -3917,6 +3965,47 @@ function renderPyr(force){
   $("pyrOut").innerHTML = `Затравка: ${esc(D.what)}. Этажей ${D.n} (k = ${D.K0}…${Kend})` + (D.cut ? ` — остановлено на ${D.n} из ${D.want}: больше ${PYR_MAXONES} единиц не рисую` : "") + `.\n` +
     (one ? `Показан один этаж k = ${kShow}` : show < D.n ? `Показаны этажи до k = ${kShow}` : "Показаны все этажи") + `: единиц <b>${shownOnes}</b>` + (one ? "" : ` из ${D.ones}`) + `. На этаже k = ${kShow} единиц <b>${onesK}</b>` +
     ((Z.pyrSeed || "one") === "one" ? ` = 3^${pc} (в двоичной записи ${kShow} = ${kShow.toString(2)} единиц ${pc}) — у тетраэдра Серпинского всегда так.` : ".");
+}
+/* v0.270, по снимку полосы прокрутки вплотную к номерам строк — «этот скролл перемести влево конуса»: у колонки слева от поля строк
+   (стол с конусом при «⇆ поле справа», левая панель) полоса прокрутки стояла справа — между ней и номерами. Теперь полоса — у левого
+   края колонки: родная спрятана (прокрутка колесом та же), своя тонкая — слева; бегунок тянется, щелчок по полосе — на экран выше/ниже,
+   колесо над ней крутит колонку. Направление письма (rtl) не трогаем: окна на столе стоят от левого края, rtl увёл бы их за край. */
+function leftBarsInit(){
+  const mk = (el, id, when) => {
+    if (!el) return;
+    const bar = document.createElement("div"); bar.id = id; bar.className = "lbar"; bar.innerHTML = "<i></i>"; document.body.appendChild(bar);
+    const th = bar.firstChild; let raf = 0, h = 24;
+    const upd = () => {
+      raf = 0;
+      const want = when();
+      el.classList.toggle("lbarOn", want);
+      const on = want && el.getClientRects().length && el.scrollHeight > el.clientHeight + 1;
+      if (!on) { bar.style.display = "none"; return; }
+      const r = el.getBoundingClientRect(), ch = el.clientHeight, sh = el.scrollHeight;
+      h = Math.max(24, ch * ch / sh);
+      bar.style.cssText = `display:block;left:${Math.round(r.left)}px;top:${Math.round(r.top)}px;height:${ch}px`;
+      th.style.cssText = `height:${Math.round(h)}px;transform:translateY(${Math.round((ch - h) * el.scrollTop / (sh - ch))}px)`;
+    };
+    const q = () => { if (!raf) raf = requestAnimationFrame(upd); };
+    el.addEventListener("scroll", q); addEventListener("resize", q);
+    if (window.ResizeObserver) new ResizeObserver(q).observe(el);
+    new MutationObserver(q).observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    new MutationObserver(q).observe(el, { attributes: true, attributeFilter: ["style", "class"], subtree: true, childList: true });
+    bar.addEventListener("wheel", (e) => { e.preventDefault(); el.scrollTop += e.deltaY; }, { passive: false });
+    bar.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return; e.preventDefault(); e.stopPropagation();
+      if (e.target !== th) { const tr = th.getBoundingClientRect(); el.scrollTop += (e.clientY < tr.top ? -1 : 1) * el.clientHeight * 0.9; return; }
+      const y0 = e.clientY, s0 = el.scrollTop, k = (el.scrollHeight - el.clientHeight) / Math.max(1, el.clientHeight - h);
+      bar.setPointerCapture(e.pointerId); bar.classList.add("drag");
+      const mv = (ev) => { el.scrollTop = s0 + (ev.clientY - y0) * k; };
+      const up = () => { bar.removeEventListener("pointermove", mv); bar.removeEventListener("pointerup", up); bar.removeEventListener("pointercancel", up); bar.classList.remove("drag"); };
+      bar.addEventListener("pointermove", mv); bar.addEventListener("pointerup", up); bar.addEventListener("pointercancel", up);
+    });
+    q();
+  };
+  const B = document.body;
+  mk($("desk"), "deskBar", () => B.classList.contains("field-right") && !B.classList.contains("zen"));
+  mk($("rowsPane"), "paneBar", () => !B.classList.contains("zen"));
 }
 function setupPyr(){
   const cv = $("pyrCv"); if (!cv) return;
@@ -5745,6 +5834,7 @@ function init(){
   ctwInit();   // v0.158
   cgrpInit();   // v0.177
   coneBtnsInit();   // v0.203
+  leftBarsInit();   // v0.270
   if (window.ResizeObserver && $("fieldInfoBar")) new ResizeObserver(() => fieldInfoFit()).observe($("fieldInfoBar"));   // v0.209: поле шире/уже — сведения по месту
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fieldInfoFit());   // v0.212: шрифт догрузился — кнопки над колонками ещё раз по месту
   $("bRowsStartTop").onclick = () => $("bRowsStart").click();   // v0.212: «↺» над номерами — то же, что «↺ Начало»

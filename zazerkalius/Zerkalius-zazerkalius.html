@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.269. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.270. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.269</title>
+<title>Zazerkalius — v0.270</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -396,6 +396,11 @@ body.rowdrag #rowList,body.rowdrag #rowList *{user-select:none !important;-webki
 #fieldEdge{position:absolute;top:0;bottom:0;right:0;width:6px;z-index:6;cursor:ew-resize}   /* v0.224: хват у границы поля (со стороны стола) */
 body.field-right #fieldEdge{right:auto;left:0}
 #fieldEdge:hover,body.wdrag #fieldEdge{background:color-mix(in srgb, var(--acc) 35%, transparent)}
+/* v0.270: полоса прокрутки колонки слева от поля строк — у её левого края, а не вплотную к номерам */
+.lbarOn{scrollbar-width:none !important}
+.lbar{position:fixed;z-index:40;width:7px;display:none;cursor:default;touch-action:none}
+.lbar > i{display:block;width:5px;margin-left:1px;border-radius:3px;background:var(--line);opacity:.9}
+.lbar:hover > i,.lbar.drag > i{background:color-mix(in srgb, var(--acc) 55%, var(--line))}
 #wGhost{position:fixed;z-index:60;width:3px;background:var(--acc);opacity:.85;pointer-events:none}   /* v0.269: граница поля при тяжёлом поле — черта за мышью, ширина — когда отпустили */
 body.field-hidden #fieldEdge,body.zen #fieldEdge{display:none}
 .rw.fillrw > .no{color:var(--acc)}
@@ -433,7 +438,8 @@ body.pane-icons #paneWins{padding:4px}
 #w-cone #coneMain{position:absolute;inset:0;z-index:0;min-height:0}
 #coneRecBar{position:absolute;left:8px;bottom:8px;z-index:2;display:flex;gap:4px;align-items:center}   /* v0.256: кнопки записи одной полосой */
 #w-cone #coneRecBar > button{position:relative;min-width:32px;height:32px;padding:0 7px;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;margin:0}
-#w-cone #coneRecBar > #bConeRecMp4{font-size:12px}
+#w-cone #coneRecBar > #bConeRecMp4,#w-cone #coneRecBar > #bConeRecTurn{font-size:12px}
+#w-cone #coneRecBar > #bConeRecTurn.on{color:var(--gold);border-color:var(--gold)}   /* v0.270: ↻1 — идёт запись одного оборота */
 #w-cone #coneRecBar > #bConeRecPause{display:none} body.conerec #w-cone #coneRecBar > #bConeRecPause{display:flex}
 #w-cone #coneRecBar > #bConeRecPause.on,#w-cone #coneRecBar > #bConeFrame.on{color:var(--gold);border-color:var(--gold)}
 #coneRecFrame.paused{border-color:var(--gold)} #coneRecFrame.paused span{color:var(--gold)}
@@ -461,6 +467,9 @@ body.zen #coneRecBar{z-index:6}   /* v0.256: «кнопки записи вид�
 body.bgmode #coneBtns{display:none}
 #cone3Pad{position:absolute;right:8px;bottom:8px;z-index:2;display:grid;grid-template-columns:repeat(3,28px);grid-auto-rows:28px;gap:3px}   /* v0.157: кнопки 3D на холсте */
 #cone3Pad.flat > button:not(.c3home){visibility:hidden}   /* v0.164: в плоском виде на панели — только зелёная «всё на места» */
+#cone3Pad .c3top{position:absolute;right:-1px;bottom:calc(100% + 5px);display:flex;gap:4px}   /* v0.270: 🧊 3D и ⧗ зеркало над пультом */
+#cone3Pad .c3top button{width:auto;height:26px;padding:0 8px;font-size:13px;white-space:nowrap;background:var(--panel)}
+#cone3Pad .c3top button.on{color:var(--gold);border-color:var(--gold)}
 #cone3Pad .c3home{color:var(--green);border-color:var(--green);font-weight:700}
 #cone3Pad .c3grip{display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:16px;cursor:move;touch-action:none;user-select:none;border-radius:4px}   /* v0.179: ручка пульта */
 #cone3Pad .c3grip:hover{color:var(--acc2);background:rgba(34,211,238,.15)}
@@ -799,7 +808,7 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.269</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.270</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1458,9 +1467,11 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
           <canvas id="coneCv" style="flex:1 1 auto;min-width:0;width:0;min-height:260px;display:block;cursor:grab;background:var(--panel2);border-radius:4px;touch-action:none"></canvas>
           <!-- v0.155, «в одну квадратную кнопку внизу холста слева»: группа «Запись» — одна кнопка ⏺ в левом нижнем углу холста -->
           <!-- v0.256: кнопки записи — одной полосой в левом нижнем углу холста (видны и в дзене): ⏺ webm, mp4, ⏸ пауза (пока пишет), ▣ кадр -->
-          <div id="coneRecBar"><button id="bConeRec" title="⏺ Видео: запись холста конуса (только сам конус, без кнопок) в файл .webm. Ещё раз — стоп и сохранить. Правый щелчок — звук ПК вкл/выкл. Удобно вместе с «▶ крутить»">⏺</button><button id="bConeRecMp4" title="⏺ mp4: запись холста конуса в файл .mp4 (H.264). Ещё раз — стоп и сохранить. Правый щелчок — звук ПК вкл/выкл">mp4</button><button id="bConeRecPause" title="⏸ Пауза записи">⏸</button><button id="bConeFrame" title="▣ Кадр видео: конус — в середину кадра, как будет на видео, и рамка кадра на холсте (в файл не идёт). Ещё раз — убрать рамку">▣</button></div>
+          <div id="coneRecBar"><button id="bConeRec" title="⏺ Видео: запись холста конуса (только сам конус, без кнопок) в файл .webm. Ещё раз — стоп и сохранить. Правый щелчок — звук ПК вкл/выкл. Удобно вместе с «▶ крутить»">⏺</button><button id="bConeRecMp4" title="⏺ mp4: запись холста конуса в файл .mp4 (H.264). Ещё раз — стоп и сохранить. Правый щелчок — звук ПК вкл/выкл">mp4</button><button id="bConeRecTurn" title="↻1 Ровно один оборот: запись сама идёт от места, где конус стоит, до того же места и останавливается — ролик крутится по кругу без скачка (для обоев Lively). «Всё целиком» и «навстречу по строкам» — 360°, «по биту» — пока все кольца разом не вернутся на места. Скорость и направление — с «▶ крутить». Файл .mp4 (где браузер не умеет — .webm). Лазер на время записи выключен">↻1</button><button id="bConeRecPause" title="⏸ Пауза записи">⏸</button><button id="bConeFrame" title="▣ Кадр видео: конус — в середину кадра, как будет на видео, и рамка кадра на холсте (в файл не идёт). Ещё раз — убрать рамку">▣</button></div>
           <!-- v0.157, «в поле конуса кнопки управления для 3D»: в правом нижнем углу холста, только в 3D -->
           <div id="cone3Pad" class="flat">
+            <!-- v0.270, по снимку пульта с «🧊 3D» над ним — «сюда выбор 3D поставь примерно так» и «⧗ зеркало — туда же»: те же галки, что в «Виде», — кнопками над пультом, видны всегда -->
+            <div class="c3top"><button id="bC3d" title="🧊 3D вкл / выкл — то же, что галка «🧊 3D» в «Виде»: кольца на своих высотах">🧊 3D</button><button id="bC3Octa" title="⧗ Зеркало вниз вкл / выкл — то же, что галка «⧗ зеркало» в «Виде»: под основанием та же пирамида вниз, отражённая и инвертированная (видно в 3D)">⧗ зеркало</button></div>
             <button data-c3="yaw-" title="Повернуть влево на 15° (держи — дальше)">⟲</button><button data-c3="el+" title="Наклон: смотреть сверху круче на 10°">▲</button><button data-c3="yaw+" title="Повернуть вправо на 15° (держи — дальше)">⟳</button>
             <button data-c3="z-" title="Мельче">−</button><button data-c3="home" title="Вид по умолчанию: поворот 30°, наклон 50°, масштаб 1, без сдвига (то же — Alt + двойной щелчок)">⌂</button><button data-c3="z+" title="Крупнее">＋</button>
             <button data-c3="allhome" class="c3home" title="⟲ Всё на места — как кнопка «⟲ всё на места» у кручения: накрутка колец, кручение, счёт, довод строки 1">↺</button><button data-c3="el-" title="Наклон: смотреть сбоку положе на 10°">▼</button><span class="c3grip" title="Тяни — перенести пульт куда угодно по холсту; двойной щелчок — обратно в угол">⠿</span>
@@ -1594,8 +1605,8 @@ body.bgmode #w-cone .wbody > .tools{display:none !important}
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0269"></script>
-<script src="zz-ui.js?v=0269"></script>
+<script src="zz-core.js?v=0270"></script>
+<script src="zz-ui.js?v=0270"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>
