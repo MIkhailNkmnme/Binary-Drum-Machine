@@ -4892,6 +4892,23 @@ function razvDraw(cv, vi, big){
       g.textAlign = "left"; g.font = "11px system-ui, sans-serif"; g.strokeText(F[f][0], A[0] + 4, A[1] - 5); g.fillStyle = "#ff9a9a"; g.fillText(F[f][0], A[0] + 4, A[1] - 5);
     }
   }
+  /* v0.406, «и в развёртке оси покажи»: у октаэдра грани со общим ребром — ромб, его дальние углы — противоположные вершины (концы оси).
+     Через каждую склейку дерева развёртки — штрих между ними цветом оси: Верх–Низ светлая, E0–E2 розовая, E1–E3 зелёная; все вершины
+     развёртки — точки цвета своей оси (одна вершина тела на развёртке бывает в нескольких местах). Только на крупной, кнопка «✛ оси». */
+  if (big && Z.razvAx !== false) {
+    const AXC = { T: "#e8edf5", B: "#e8edf5", E0: "#ff7ab6", E2: "#ff7ab6", E1: "#6ee7a0", E3: "#6ee7a0" };
+    const opp = (a, b) => (a === "T" && b === "B") || (a === "B" && b === "T") || (a[0] === "E" && b[0] === "E" && Math.abs(+a[1] - +b[1]) === 2);
+    g.save(); g.lineCap = "round"; g.lineWidth = 1.8; g.setLineDash([7, 5]); g.globalAlpha = 0.9;
+    for (const [p, c] of tree) {
+      const sh = F[p].filter(v => F[c].includes(v)), o = F[p].find(v => !sh.includes(v)), n = F[c].find(v => !sh.includes(v));
+      if (!opp(o, n)) continue;
+      const a = T(pos[p][o]), b = T(pos[c][n]);
+      g.strokeStyle = AXC[o]; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke();
+    }
+    g.setLineDash([]); g.globalAlpha = 1;
+    for (const f of Object.keys(pos)) for (const v of F[f]) { const q = T(pos[f][v]); g.fillStyle = AXC[v]; g.beginPath(); g.arc(q[0], q[1], 3.4, 0, 2 * Math.PI); g.fill(); }
+    g.restore();
+  }
   const m = big ? 9 : 4;
   g.strokeStyle = "#ff3b3b"; g.lineWidth = big ? 2.5 : 1.5; g.beginPath(); g.moveTo(W / 2 - m, H / 2); g.lineTo(W / 2 + m, H / 2); g.moveTo(W / 2, H / 2 - m); g.lineTo(W / 2, H / 2 + m); g.stroke();
 }
@@ -4899,6 +4916,7 @@ let razvThumbKey = "";
 function renderRazv(){
   const cv = $("razvCv"), tb = $("razvThumbs"); if (!cv || !tb) return;
   $("bRazvLbl").classList.toggle("on", Z.razvLbl !== false);   // v0.399: галка → кнопка
+  $("bRazvAx").classList.toggle("on", Z.razvAx !== false);   // v0.406
   if (!tb.children.length) tb.innerHTML = RAZV_V.map((_, i) => `<canvas data-v="${i}" title="${RAZV_NAME[i]} — щелчок: крупно"></canvas>`).join("");
   const vi = Math.min(RAZV_V.length - 1, Math.max(0, Z.razvV | 0));
   [...tb.children].forEach(c => c.classList.toggle("on", +c.dataset.v === vi));
@@ -4909,6 +4927,7 @@ function renderRazv(){
 }
 if ($("razvThumbs")) $("razvThumbs").onclick = (e) => { const c = e.target.closest("canvas[data-v]"); if (!c) return; Z.razvV = +c.dataset.v; save(); renderRazv(); };
 if ($("bRazvLbl")) $("bRazvLbl").onclick = () => { Z.razvLbl = Z.razvLbl === false; save(); renderRazv(); };
+if ($("bRazvAx")) $("bRazvAx").onclick = () => { Z.razvAx = Z.razvAx === false; save(); renderRazv(); };   // v0.406
 if ($("razvCv") && window.ResizeObserver) new ResizeObserver(() => renderRazv()).observe($("razvCv"));
 
 /* ─── ◆ Октаэдр (v0.396) ─────────────────────────────────────────────────────────────────────
