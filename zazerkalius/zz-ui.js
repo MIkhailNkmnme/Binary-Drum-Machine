@@ -6701,14 +6701,18 @@ function cgrpCols(){   // v0.183: у каждой группы — столбц�
   });
   rhombTag();   // v0.401
 }
-/* v0.401, «все кнопки ромбами, равнобедр, пока те, что 1 размера»: кнопка группы (конус, левая панель) шириной ровно в одну --bu — класс .rh1
-   (вытянутый ромб, см. CSS). Ширина — вычисленная, а не измеренная: у спрятанной кнопки (только для 3D и т.п.) она та же, и ромбом кнопка
-   показывается сразу. Полкнопки (.ib), стрелки ползунков и кнопки в 2 и больше не трогаются. */
+/* v0.401, «все кнопки ромбами, равнобедр» — кнопка группы (конус, левая панель) — вытянутым ромбом (класс .rh1, см. CSS).
+   v0.402, «размер 1, 2, 4, 8, 16 — сколько помещается целых ромбов», «треугольник — это стрелки, 4 штуки»: ромбом — кнопки всех размеров, в
+   которые помещается хотя бы один целый ромб 24 px; кнопка, на которой одна стрелка ◀ ▶ ▲ ▼ (◄ ►), — треугольником (.tri-l|r|u|d).
+   Ширина — вычисленная, а не измеренная: у спрятанной до поры кнопки (только для 3D и т.п.) она та же, и форма у неё сразу своя.
+   Стрелки ползунков (.zerk-arrow) не трогаются. */
+const RH_TRI = { "◀": "l", "◄": "l", "▶": "r", "►": "r", "▲": "u", "▼": "d" };
 function rhombTag(){
-  const bu = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--bu")) || 80;
   document.querySelectorAll("#w-cone .tools .cgb button, #paneGrp .cgb button").forEach(b => {
-    const w = parseFloat(getComputedStyle(b).width);
-    b.classList.toggle("rh1", Math.abs(w - bu) < 1.5 && !b.classList.contains("ib") && !b.classList.contains("zerk-arrow"));
+    if (b.classList.contains("zerk-arrow")) return;
+    const ar = RH_TRI[b.textContent.trim()], w = parseFloat(getComputedStyle(b).width);
+    b.classList.toggle("rh1", !ar && w >= 23.5);
+    for (const k of ["l", "r", "u", "d"]) b.classList.toggle("tri-" + k, ar === k);
   });
 }
 window.addEventListener("load", () => setTimeout(rhombTag, 0));
