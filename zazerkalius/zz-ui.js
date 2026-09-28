@@ -3714,7 +3714,7 @@ function setupCone(){
   let sndPaused = false;
   const sndUi = () => {
     const on = !!sndT || sndPaused, b = $("bSnd"); b.classList.toggle("on", on); b.textContent = on ? "■ звук" : "♫ звук"; b.classList.toggle("run", !!sndT);   // v0.351: звучит — рамка мигает (на паузе — нет)
-    const p = $("bSndP"); if (p) { p.classList.toggle("on", sndPaused); p.textContent = sndPaused ? "⏯" : "⏸"; p.title = sndPaused ? "⏯ Дальше с того же места" : sndT ? "⏸ Пауза: звук встаёт, место и подсветка бита остаются" : "⏸ Пауза (звук не идёт)"; }
+    const p = $("bSndP"); if (p) { p.classList.toggle("on", sndPaused); p.textContent = sndPaused ? "⏯ дальше" : "⏸ пауза";   /* v0.368: кнопкой в 1 ширину, с подписью */ p.title = sndPaused ? "⏯ Дальше с того же места" : sndT ? "⏸ Пауза: звук встаёт, место и подсветка бита остаются" : "⏸ Пауза (звук не идёт)"; }
     snd2Label();   // v0.337: остановлен — «⁑ авто»
   };
   const sndSet = (on) => {
