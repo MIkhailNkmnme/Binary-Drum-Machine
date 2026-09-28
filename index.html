@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.055. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.056. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -52,12 +52,14 @@
              семь значков-нот: До (бывший ♫, строки подряд), Ре (бывший ♪, столбцы, бас), Ми, Фа, Соль, Ля, Си — у каждой своя головка
              звука фона (Zazerkalius v0.389). Выключенная — серая, включённая горит своим цветом радуги, тем же, что её бит на конусе.
      v0.055: «кнопки хаба не делать активными, пока все ноты не включить (в первый раз)» — меню притушено и не нажимается, пока хоть раз
-             не загорятся все семь нот разом; тогда — отметка zerk_hub_all7 в localStorage, и дальше меню живое сразу. -->
+             не загорятся все семь нот разом; тогда — отметка zerk_hub_all7 в localStorage, и дальше меню живое сразу.
+     v0.056: «нужна и пауза при клике на странице, и плей — после паузы с того же момента, а сброс как-то иначе»: щелчок по пустому месту —
+             пауза / дальше (звук и кручение конуса), правый щелчок по пустому месту — сброс: все семь нот с начала (Zazerkalius v0.392). -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Control Hub — v0.055</title>
+    <title>Zerkalius Control Hub — v0.056</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -177,6 +179,7 @@
                   color: #7d8388; background: none; border: none; text-shadow: 0 0 6px #000, 0 0 3px #000; }   /* v0.046: без рамки; v0.054 — серая, пока выключена */
         .hubSnd:hover { color: #c9ced2; text-shadow: 0 0 10px var(--c), 0 0 3px #000; }
         .hubSnd.on { color: var(--c); animation: hub-snd-blink 1.1s ease-in-out infinite; }
+        #hubSndBox.paused .hubSnd.on { animation: none; opacity: .8; }   /* v0.056: пауза — ноты горят, но не мигают */
         /* v0.055: щелчок по запертому меню — серые ноты вспыхивают своим цветом (включи нас) */
         #hubSndBox.nudge .hubSnd:not(.on) { animation: hub-snd-nudge .42s ease-in-out 3; }
         @keyframes hub-snd-nudge { 50% { color: var(--c); text-shadow: 0 0 16px var(--c), 0 0 4px #000; transform: scale(1.15); } }
@@ -312,7 +315,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.055</div>
+        <div class="ver">v0.056</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -448,18 +451,33 @@
             const fallback = () => setTimeout(() => { if (!heard) unlock(); }, 3000);
             const sendAll = () => { if (heard || tries++ > 12) return; try { bg.contentWindow.postMessage({ zerkSnd: true }, '*'); } catch (e) {} setTimeout(sendAll, 500); };
             const nudge = () => { const b = document.getElementById('hubSndBox'); if (!b) return; b.classList.remove('nudge'); void b.offsetWidth; b.classList.add('nudge'); clearTimeout(nudgeT); nudgeT = setTimeout(() => b.classList.remove('nudge'), 1300); };
+            /* v0.056, «нужна и пауза при клике на странице, и плей — после паузы с того же момента, а сброс как-то иначе»: щелчок по пустому
+               месту (не по нотам, кнопкам и ссылкам) — пауза / дальше: фон сам знает, звучит ли, и отвечает (zerkSndPaused — ноты горят без
+               мигания). Правый щелчок по пустому месту — сброс: все семь нот, звук с начала, конус с начального положения. Самый первый
+               щелчок, как прежде, включает До и Ре */
+            const post = (m) => { try { bg.contentWindow.postMessage(m, '*'); } catch (e) {} };
             document.addEventListener('click', e => {
-                if (unlocked) return;
-                if (e.target.closest && e.target.closest('.hubSnd')) { if (!started) { started = true; fallback(); } return; }
-                e.preventDefault(); e.stopPropagation();
-                if (!started) { started = true; if (bg) sendAll(); fallback(); } else nudge();
+                const t = e.target, note = t.closest && t.closest('.hubSnd'), link = t.closest && t.closest('a, button');
+                if (note) { if (!started) { started = true; fallback(); } return; }
+                if (link) {
+                    if (unlocked) return;
+                    e.preventDefault(); e.stopPropagation();
+                    if (!started) { started = true; if (bg) sendAll(); fallback(); } else nudge();
+                    return;
+                }
+                if (!started) { started = true; if (bg) sendAll(); fallback(); return; }
+                if (bg) post({ zerkSndToggle: true });
+            }, true);
+            document.addEventListener('contextmenu', e => {
+                if (e.target.closest && e.target.closest('a, button')) return;
+                e.preventDefault(); started = true; if (bg) post({ zerkSndReset: true });
             }, true);
             // v0.050: два значка — ♫ строки и ♪ столбцы; каждый шлёт { zerkSndHead, on }, фон отвечает, какие головки звучат (zerkSndR / zerkSndC)
             { const sbs = Array.from(document.querySelectorAll('.hubSnd'));
               if (sbs.length && bg) { sbs.forEach(b => { b.onclick = () => { try { bg.contentWindow.postMessage({ zerkSndHead: b.dataset.h, on: !b.classList.contains('on') }, '*'); } catch (e) {} }; });
                 window.addEventListener('message', e => { if (e.source === bg.contentWindow && e.data && e.data.zerkSndOn !== undefined) {
                   const d = e.data, hs = Array.isArray(d.zerkSndHeads) ? d.zerkSndHeads : (d.zerkSndOn ? ['r', 'c'] : []);   // v0.054: какие из семи звучат
-                  sbs.forEach(b => b.classList.toggle('on', hs.includes(b.dataset.h))); wake(); if (sbs.every(b => b.classList.contains('on'))) unlock(); } }); } }   // v0.055: горят все семь — меню живое
+                  sbs.forEach(b => b.classList.toggle('on', hs.includes(b.dataset.h))); document.getElementById('hubSndBox').classList.toggle('paused', !!d.zerkSndPaused); wake(); if (sbs.every(b => b.classList.contains('on'))) unlock(); } }); } }   // v0.055: горят все семь — меню живое
             if (bg) { bg.addEventListener('load', () => setTimeout(titleStart, 300)); setTimeout(titleStart, 1500); }   // запасной путь
             const glitch = (y0, y1, mid) => {
                 if (CALM) { if (mid) mid(); return; }   // v0.028: тихий режим — язык меняется сразу, без полос

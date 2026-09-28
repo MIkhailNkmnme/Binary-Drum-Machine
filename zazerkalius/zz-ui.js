@@ -3908,15 +3908,30 @@ function setupCone(){
   /* v0.381: фон хаба — звук по кнопке «♫ Звук» хаба (сообщение { zerkSnd: true | false }): строки подряд, головки видны на конусе и в обеих
      пирамидах; хабу — ответ { zerkSndOn }, чтобы кнопка горела */
   if (ZZ_BG) addEventListener("message", (e) => {
-    const d = e.data; if (!d || typeof d !== "object" || (d.zerkSnd === undefined && d.zerkSndHead === undefined)) return;
+    const d = e.data; if (!d || typeof d !== "object" || (d.zerkSnd === undefined && d.zerkSndHead === undefined && !d.zerkSndToggle && !d.zerkSndReset)) return;
     Z.sndMode = "rc"; Z.sndMark = true; rowSel.clear();   // v0.383: в фоне — две головки, строки и столбцы
     const RC = () => new Set(["r", "c"]);
-    if (d.zerkSndHead) {   // v0.387: одна головка — вкл / выкл; звук молчал — включается только она; все выключены — звук встаёт (v0.389 — любая из семи)
+    /* v0.392, «нужна и пауза при клике на странице, и плей — после паузы с того же момента, а сброс как-то иначе»: щелчок по пустому месту
+       хаба (zerkSndToggle) — пауза: звук встаёт на месте (sndPause), конус перестаёт крутиться; ещё щелчок — дальше с того же шага, те же ноты,
+       конус крутится дальше. Сброс — правый щелчок (zerkSndReset): все семь нот, звук с начала, конус — в начальное положение и крутится */
+    const coneGo = (on) => { if ($("bConeAuto").classList.contains("on") !== on) $("bConeAuto").click(); };
+    if (d.zerkSndReset) {
+      clearTimeout(sndT); sndT = 0; sndPaused = false; sndGen++;
+      sndHeadsOn = new Set(Object.keys(SND_HEADS)); sndSet(true);
+      Z.coneSpin = 0; Z.coneSpinPh = 0; coneGo(true); renderCone();
+    } else if (d.zerkSndToggle) {
+      if (sndT) { sndPause(true); coneGo(false); }
+      else if (sndPaused) { sndPause(false); coneGo(true); }
+      else { sndHeadsOn = RC(); sndSet(true); coneGo(true); }
+    } else if (d.zerkSndHead) {   // v0.387: одна головка — вкл / выкл; звук молчал — включается только она; все выключены — звук встаёт (v0.389 — любая из семи)
       const h = SND_HEADS[d.zerkSndHead] ? d.zerkSndHead : "r", on = !!d.on;
-      if (!sndT) { if (!on) return; sndHeadsOn = new Set([h]); sndSet(true); }
+      if (sndPaused) {   // v0.392: на паузе — включил ноту: она добавляется, и всё идёт дальше с того же места; выключил последнюю — стоп
+        if (on) { sndHeadsOn.add(h); sndPause(false); coneGo(true); } else { sndHeadsOn.delete(h); if (!sndHeadsOn.size) { sndSet(false); sndHeadsOn = RC(); } }
+      } else if (!sndT) { if (!on) return; sndHeadsOn = new Set([h]); sndSet(true); }
       else { if (on) sndHeadsOn.add(h); else sndHeadsOn.delete(h); if (!sndHeadsOn.size) { sndSet(false); sndHeadsOn = RC(); } }
-    } else if (d.zerkSnd) { if (!sndT) { sndHeadsOn = RC(); sndSet(true); } } else { sndSet(false); sndHeadsOn = RC(); }
-    try { if (e.source) e.source.postMessage({ zerkSndOn: !!sndT, zerkSndHeads: sndT ? [...sndHeadsOn] : [], zerkSndR: !!sndT && sndHeadsOn.has("r"), zerkSndC: !!sndT && sndHeadsOn.has("c") }, "*"); } catch (err) { /* хаб с другого адреса */ }
+    } else if (d.zerkSnd) { if (!sndT && !sndPaused) { sndHeadsOn = RC(); sndSet(true); } } else { sndSet(false); sndHeadsOn = RC(); }
+    const live = !!sndT || sndPaused;
+    try { if (e.source) e.source.postMessage({ zerkSndOn: live, zerkSndPaused: sndPaused, zerkSndHeads: live ? [...sndHeadsOn] : [], zerkSndR: live && sndHeadsOn.has("r"), zerkSndC: live && sndHeadsOn.has("c") }, "*"); } catch (err) { /* хаб с другого адреса */ }
   });
   if ($("bSndP")) $("bSndP").onclick = () => { if (sndT || sndPaused) sndSet(false); };   // v0.371: ■ стоп
   const sndDirSet = (d) => { const was = Z.sndDir < 0 ? -1 : 1; Z.sndDir = d; save(); if (sndT) { sndUi(); if (was !== d) say(d < 0 ? "◀ Звук — назад." : "▶ Звук — вперёд."); } else sndStepBy(d); };   // v0.374
