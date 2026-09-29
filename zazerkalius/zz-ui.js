@@ -5074,17 +5074,40 @@ function triLive(){
   const p2 = triRGB(V("--panel2", "#1c2230")), mix = (c, a) => { const q = triRGB(c); return `rgb(${p2.map((x, i) => Math.round(x + (q[i] - x) * a)).join(",")})`; };
   const txt = V("--txt", "#e6edf3"), REAL = { 1: mix(txt, 0.16), 2: mix(V("--gold", "#ffd166"), 0.42), 3: mix("#e5484d", 0.6), 8: mix(txt, 0.7) };
   const col = (k) => REAL[k] || mix(TRI_COL[k][0], 0.42), dpr = window.devicePixelRatio || 1;
+  // v0.434: фон живого вида и поля цветов (пустое значение — по теме; поле цвета показывает нынешний)
+  box.style.background = Z.triBg || "";
+  const hex = (c) => "#" + triRGB(c).map(v => Math.round(v).toString(16).padStart(2, "0")).join("");
+  $("triBg").value = hex(Z.triBg || V("--panel", "#161b22")); $("triLn").value = hex(Z.triLn || "#d8dde8");
+  const mode0 = Z.triLnMode == null ? 1 : Z.triLnMode, bl = $("bTriLn");
+  bl.textContent = ["— без обводки", "▵ каждый", "⬡ по группам"][mode0]; bl.classList.toggle("on", mode0 > 0);
   box.querySelectorAll("canvas").forEach(cv => {
     const z = +cv.dataset.z || 1, s = 24 * z / Math.sqrt(3), hh = 12 * z, pad = 4 * z, t = s / 2;
     const W = Math.ceil(2 * pad + (Z.triN + 1) * t), H = Math.ceil(2 * pad + Z.triR * hh);
     cv.style.width = W + "px"; cv.style.height = H + "px"; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+    const K = (r, c) => { const k = Z.triCells[r + "_" + c] | 0; return TRI_COL[k] ? k : 0; };
+    const pts = (r, c) => { const x = pad + c * t, y0 = pad + r * hh, y1 = y0 + hh; return (r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + s, y0], [x + t, y1]]; };
     for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) {
-      const k = Z.triCells[r + "_" + c]; if (!k || !TRI_COL[k]) continue;
-      const x = pad + c * t, y0 = pad + r * hh, y1 = y0 + hh, P = (r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + s, y0], [x + t, y1]];
+      const k = K(r, c); if (!k) continue;
+      const P = pts(r, c);
       g.beginPath(); g.moveTo(P[0][0], P[0][1]); g.lineTo(P[1][0], P[1][1]); g.lineTo(P[2][0], P[2][1]); g.closePath();
       g.fillStyle = col(k); g.fill(); g.strokeStyle = col(k); g.lineWidth = 0.6; g.stroke();   // шов в цвет — без просветов между треугольниками
-      g.strokeStyle = "rgba(216,221,232,.2)"; g.lineWidth = 1; g.stroke();
+    }
+    /* v0.434, «цвет обводки, отключать её», «также границы по группам цветов»: Z.triLnMode — 1 каждый треугольник (по умолчанию), 2 — только
+       границы групп: ребро, за которым другой цвет или пусто; 0 — без обводки. Цвет — Z.triLn (нет — бледная, как сетка в кнопках).
+       Соседи: ▲ (r + c чётное) — основание вниз (r + 1, c), бока (r, c − 1) и (r, c + 1); ▼ — основание вверх (r − 1, c), бока те же */
+    const mode = Z.triLnMode == null ? 1 : Z.triLnMode;
+    if (mode) {
+      g.strokeStyle = Z.triLn || "rgba(216,221,232,.2)"; g.lineWidth = 1; g.lineCap = "round"; g.beginPath();
+      for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) {
+        const k = K(r, c); if (!k) continue;
+        const P = pts(r, c), up = (r + c) % 2 === 0, base = up ? [r + 1, c] : [r - 1, c];
+        for (const [a, b, n] of [[0, 1, base], [0, 2, [r, c - 1]], [1, 2, [r, c + 1]]]) {
+          if (mode === 2 && n[0] >= 0 && n[0] < Z.triR && n[1] >= 0 && n[1] < Z.triN && K(n[0], n[1]) === k) continue;
+          g.moveTo(P[a][0], P[a][1]); g.lineTo(P[b][0], P[b][1]);
+        }
+      }
+      g.stroke();
     }
   });
 }
@@ -5107,6 +5130,11 @@ if ($("triCv")) {
   const dim = (id, key, lo, hi) => { $(id).onchange = () => { Z[key] = Math.max(lo, Math.min(hi, parseInt($(id).value, 10) || Z[key])); save(); renderTri(); }; };
   dim("triR", "triR", 1, 12); dim("triN", "triN", 1, 99);
   $("bTriNum").onclick = () => { Z.triNum = Z.triNum === false; save(); renderTri(); };
+  // v0.434: живой вид — фон, цвет обводки, режим обводки по кругу: каждый треугольник → по группам цветов → без обводки
+  $("triBg").oninput = () => { Z.triBg = $("triBg").value; save(); triLive(); };
+  $("triLn").oninput = () => { Z.triLn = $("triLn").value; if (!(Z.triLnMode > 0) && Z.triLnMode != null) Z.triLnMode = 1; save(); triLive(); };
+  $("bTriLn").onclick = () => { const m = Z.triLnMode == null ? 1 : Z.triLnMode; Z.triLnMode = (m + 1) % 3; save(); triLive(); };
+  $("bTriLiveDef").onclick = () => { Z.triBg = null; Z.triLn = null; Z.triLnMode = 1; save(); triLive(); };
   $("bTriClr").onclick = () => { triState(); Z.triCells = {}; save(); renderTri(); };
   const snap = () => ({ R: Z.triR, N: Z.triN, c: Object.assign({}, Z.triCells) });
   $("bTriNew").onclick = () => { triState(); Z.triScenes.push(snap()); Z.triCur = Z.triScenes.length - 1; save(); renderTri(); say(`△ Сцена ${Z.triCur + 1} сохранена.`); };

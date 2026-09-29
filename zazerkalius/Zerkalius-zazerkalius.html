@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.433. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.434. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.433</title>
+<title>Zazerkalius — v0.434</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -397,6 +397,8 @@ body:not(.okt-live) #oktShield{display:block}
 /* v0.433, «можно сразу вживую смотреть, как будет выглядеть?»: под сеткой — она же кнопками, 1:1 и ×2, на фоне панели групп */
 #triLive{display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px;margin-top:6px;padding:8px;background:var(--panel);border:1px solid var(--line);border-radius:6px}
 #triLive canvas{display:block}
+/* v0.434, «только реальный размер, менять фон и цвет обводки, и отключать её»: ×2 убран; фон — у самого блока (Z.triBg), цветовые поля */
+#w-tri input[type=color]{width:28px;height:22px;padding:0 1px;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer;vertical-align:middle}
 /* v0.405, «развёртку покажи малыми картинками все сразу, при выборе одной из них — крупно; выпадающий список не нужен» */
 #razvThumbs{display:flex;flex-wrap:wrap;gap:4px}
 #razvThumbs canvas{width:72px;height:56px;display:block;box-sizing:border-box;border:1px solid var(--line);border-radius:4px;background:var(--panel2);cursor:pointer}
@@ -1201,7 +1203,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.433</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.434</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1981,7 +1983,13 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
           <button id="bTriCopy" title="Все сцены — текстом в буфер обмена (вставить в сообщение Claude)">⧉ в буфер</button>
         </div>
         <canvas id="triCv"></canvas>
-        <div id="triLive" title="Живьём: как сетка выглядит кнопками — в настоящем размере (высота 24 px) и вдвое крупнее; цвета — как у кнопок (серый — обычная, золотой — горящая, красный — стоп)"><canvas data-z="1"></canvas><canvas data-z="2"></canvas></div>
+        <div class="tools">
+          <label class="dim" title="Фон живого вида (по умолчанию — как у панели групп)">фон <input id="triBg" type="color"></label>
+          <label class="dim" title="Цвет обводки треугольников в живом виде">обводка <input id="triLn" type="color"></label>
+          <button id="bTriLn" title="Обводка треугольников в живом виде. Горит — видна">▵ обводка</button>
+          <button id="bTriLiveDef" title="Фон и обводку — как были (по теме страницы)">↺</button>
+        </div>
+        <div id="triLive" title="Живьём: как сетка выглядит кнопками — в настоящем размере (высота 24 px); цвета — как у кнопок (серый — обычная, золотой — горящая, красный — стоп)"><canvas data-z="1"></canvas></div>
       </div>
     </section>
 
@@ -2096,8 +2104,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0433"></script>
-<script src="zz-ui.js?v=0433"></script>
+<script src="zz-core.js?v=0434"></script>
+<script src="zz-ui.js?v=0434"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
