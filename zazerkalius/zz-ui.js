@@ -3879,7 +3879,7 @@ function setupCone(){
      неактивна, пока звук не идёт и не на паузе */
   const sndUi = () => {
     const on = !!sndT || sndPaused, b = $("bSnd"); b.classList.toggle("on", on); b.classList.toggle("run", !!sndT);   // v0.351: звучит — рамка мигает (на паузе — нет)
-    b.textContent = sndT ? "⏸ пауза" : sndPaused ? "⏯ дальше" : "♫ звук";
+    b.textContent = sndT ? "⏸" : sndPaused ? "⏯" : "♫";   // v0.423, «звук — уменьши длину, оставь там только символ, без текста» (слова — в подсказке)
     b.title = sndT ? "⏸ Пауза: звук встаёт, место и подсветка бита остаются (■ рядом — стоп совсем)" : sndPaused ? "⏯ Дальше с того же места (■ рядом — стоп совсем)" : "♫ Звук: поле звучит; ещё щелчок — ⏸ пауза (место и головки остаются), ещё — ⏯ дальше; ■ рядом — стоп и в начало. Строки меняются на ходу — звучит уже новое. Идёт и в запись ⏺ / mp4 конуса";
     { const bb = $("bSndB"), bf = $("bSndF"), back = Z.sndDir < 0; if (bb) { bb.classList.toggle("on", back); bb.title = "◀ Назад: звучит — играть в обратную сторону; не звучит — шаг назад (звук на паузе). Горит — направление"; } if (bf) { bf.classList.toggle("on", !back); bf.title = "▶ Вперёд: звучит — играть вперёд; не звучит — шаг вперёд (звук на паузе). Горит — направление"; } }   // v0.374
     const p = $("bSndP"); if (p) { p.disabled = !on; p.classList.remove("on"); p.classList.toggle("run", !!sndT);   /* v0.377: ■ мигает вместе со звуком */ p.textContent = "■"; p.title = on ? "■ Стоп и в начало: звук встаёт совсем, следующий пуск — с первого бита" : "■ Стоп и в начало (звук не идёт)"; }
@@ -6819,6 +6819,8 @@ function joinTag(){
         const tt = h / (2 * Math.sqrt(3)), same = (L === "(") === (R === ")"), w0 = parseFloat(b.dataset.w0 || getComputedStyle(b).width) || 0;
         if (!b.dataset.w0) b.dataset.w0 = w0;
         let u = w0 / tt; u = same ? Math.max(2, 2 * Math.round(u / 2)) : Math.max(3, 2 * Math.round((u - 1) / 2) + 1);
+        // v0.423, «на странице длинная какая-то СТОП»: длина может быть задана прямо — data-k (треугольников по средней черте): 2k, у «остриё–выемка» 2k + 1
+        if (+b.dataset.k > 0) u = same ? 2 * +b.dataset.k : 2 * +b.dataset.k + 1;
         b.style.setProperty("width", (u * tt).toFixed(2) + "px", "important");
       }
       b.classList.add("jz");
@@ -6826,6 +6828,15 @@ function joinTag(){
       b.classList.toggle("jr-tip", R === ")"); b.classList.toggle("jr-notch", R === "(");
       b.classList.toggle("jarrow", !!RH_TRI[b.textContent.trim()]);
       b.style.setProperty("--t", (h / (2 * Math.sqrt(3))).toFixed(2) + "px");
+      /* v0.423, по рисунку (стоп) = ()()() — «тут правильно, а на странице»: внутри кнопки сцепки — сетка её треугольников, как на рисунке:
+         средняя черта и косые под ±60° через каждую вершину на средней черте (шаг — сторона s = 2t); от острия слева вершины — с x = 0, от
+         выемки — с x = t. Картинка SVG — пятым слоем фона, рамка кнопки её обрезает. */
+      { const t2 = h / (2 * Math.sqrt(3)), sd = 2 * t2, x0 = L === "(" ? 0 : t2;
+        const W = RH_TRI[b.textContent.trim()] ? 3 * t2 : (parseFloat(b.style.width) || parseFloat(getComputedStyle(b).width) || 0);   // стрелка — 3t, до пересчёта стиля
+        let d = `M0 ${h / 2}H${W.toFixed(2)}`;
+        for (let M = x0 - sd; M <= W + sd; M += sd) d += `M${(M - t2).toFixed(2)} 0L${(M + t2).toFixed(2)} ${h}M${(M + t2).toFixed(2)} 0L${(M - t2).toFixed(2)} ${h}`;
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><path d="${d}" stroke="rgba(216,221,232,.2)" stroke-width="1" fill="none"/></svg>`;
+        b.style.setProperty("--lat", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`); }
     });
   });
 }
