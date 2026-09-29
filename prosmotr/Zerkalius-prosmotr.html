@@ -1,4 +1,4 @@
-<!-- Zerkalius Просмотр GIF — v0.002. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
+<!-- Zerkalius Просмотр GIF — v0.003. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
      на страницу), листать по кадру и через 2 / 4 / 8, играть с любой скоростью, отметить участок «с — по» и положить в склейку;
      участки — из разных GIF, в любом порядке; склейку посмотреть и скачать одним GIF. Всё в самой странице, без библиотек:
      свой разбор GIF (LZW, палитры, прозрачность, способы смены кадра, чересстрочность) и своя сборка (тот же LZW, что в Code).
@@ -7,13 +7,16 @@
      v0.002: «масштабировать колёсиком, клик — выбор определённого набора GIF и его раскладки, так же с размерами ромбов и
              треугольников». Колесо — масштаб к курсору, мышью — двигать; галка у GIF — в набор; набор играет разом, кадр в
              кадр, раскладкой: в ряд, столбиком, сеткой, △ треугольником (ряды 1, 2, 3 …), ◇ ромбом (1, 2 … n … 2, 1); у
-             треугольника и ромба — размер в рядах, клетки заполняются GIF набора по кругу; раскладку — в GIF и PNG. -->
+             треугольника и ромба — размер в рядах, клетки заполняются GIF набора по кругу; раскладку — в GIF и PNG.
+     v0.003: по снимку «склейка кадр 13 / 64 · Zerkalius-romby-… #49 · 250 мс» — «тут текст прыгает, название файла надо в сторонку»: счётчик
+             и имя файла — два поля постоянной ширины; имя (в склейке оно меняется от кадра к кадру) — в своём, бледнее, длинное — с многоточием,
+             целиком — в подсказке. Ползунок кадров больше не дёргается. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Просмотр GIF — v0.002</title>
+<title>Zerkalius Просмотр GIF — v0.003</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -46,7 +49,9 @@
   .bar { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
   .bar .sp { flex: 1; }
   #pos { flex: 1; min-width: 120px; accent-color: #ffcc00; }
-  .num { color: #ffcc00; min-width: 150px; text-align: right; }
+  /* v0.003, «текст прыгает — название файла в сторонку»: счётчик и имя — постоянной ширины, ползунок не дёргается */
+  .num { color: #ffcc00; flex: 0 0 auto; width: 30ch; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+  .numName { color: #8a94a6; flex: 0 0 auto; width: 38ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ab { color: #22d3ee; }
   .tot { color: #8a94a6; font-size: 11px; }
   .lbl { color: #8a94a6; font-size: 11px; }
@@ -58,7 +63,7 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.002</span></h1>
+    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.003</span></h1>
     <div class="bar">
       <button id="openBtn" title="Открыть один или несколько GIF (их можно и просто бросить на страницу)">📂 Открыть GIF</button>
       <input type="file" id="file" accept="image/gif,.gif" multiple>
@@ -112,6 +117,7 @@
     <div class="bar">
       <input type="range" id="pos" min="0" max="0" value="0" title="Кадр">
       <span class="num" id="num">—</span>
+      <span class="numName" id="numName"></span>
     </div>
     <div class="bar">
       <button id="aBtn" title="Начало участка — этот кадр ( [ )">[ с</button>
@@ -303,7 +309,7 @@ const lutOf = g => g.lut || (g.lut = Uint32Array.from(g.cols.map(c => (255 << 24
 function draw() {
   const ref = SEQ[S.i];
   if (!ref) { $('num').textContent = '—'; cv.width = 1; cv.height = 1; return; }
-  let W, H, label;
+  let W, H, label, nameTxt = '';   // v0.003: nameTxt — имя файла (набор) — в своё поле, в стороне от счётчика
   if (ref[0] === -1) {
     const G = geom(); W = G.W; H = G.H;
     if (off.width !== W || off.height !== H) { off.width = W; off.height = H; }
@@ -315,20 +321,22 @@ function draw() {
       for (let y = 0; y < g.H; y++) { const o = (c.y + y) * W + c.x, s = y * g.W; for (let x = 0; x < g.W; x++) d32[o + x] = lut[fr[s + x]]; }
     }
     octx.putImageData(img, 0, 0);
-    label = 'набор ' + setList().length + ' GIF · ' + G.cells.length + ' клеток · кадр ' + (S.i + 1) + ' / ' + SEQ.length;
+    label = 'кадр ' + (S.i + 1) + ' / ' + SEQ.length; nameTxt = 'набор ' + setList().length + ' GIF · ' + G.cells.length + ' клеток';
   } else {
     const g = S.gifs[ref[0]], fr = g.frames[ref[1]]; W = g.W; H = g.H;
     if (off.width !== W || off.height !== H) { off.width = W; off.height = H; }
     const img = octx.createImageData(W, H), d32 = new Uint32Array(img.data.buffer), lut = lutOf(g);
     for (let k = 0; k < fr.length; k++) d32[k] = lut[fr[k]];
     octx.putImageData(img, 0, 0);
-    label = (S.mont ? 'склейка ' : '') + 'кадр ' + (S.i + 1) + ' / ' + SEQ.length + (S.mont ? ' · ' + g.name.replace(/\.gif$/i, '') + ' #' + (ref[1] + 1) : '') + ' · ' + g.delays[ref[1]] + ' мс';
+    label = (S.mont ? 'склейка ' : '') + 'кадр ' + (S.i + 1) + ' / ' + SEQ.length + ' · ' + g.delays[ref[1]] + ' мс';
+    nameTxt = S.mont ? g.name.replace(/\.gif$/i, '') + ' #' + (ref[1] + 1) : '';
   }
   const z = zoomNow(W, H), CW = Math.max(1, Math.round(W * z)), CH = Math.max(1, Math.round(H * z));
   if (cv.width !== CW || cv.height !== CH) { cv.width = CW; cv.height = CH; }
   ctx.imageSmoothingEnabled = false; ctx.drawImage(off, 0, 0, CW, CH);
   $('pos').value = S.i;
   $('num').textContent = label + (S.zoom === 'fit' ? '' : ' · ×' + (+z.toFixed(2)));
+  { const nm = $('numName'); if (nm.textContent !== nameTxt) { nm.textContent = nameTxt; nm.title = nameTxt; } }
 }
 function fitZoom(W, H) { const box = $('view').getBoundingClientRect(); return Math.max(0.05, Math.min((box.width - 12) / W, (box.height - 12) / H)); }
 function zoomNow(W, H) { return S.zoom === 'fit' ? fitZoom(W, H) : S.zoom; }
