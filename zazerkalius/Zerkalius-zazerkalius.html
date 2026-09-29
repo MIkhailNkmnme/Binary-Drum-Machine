@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.437. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.438. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.437</title>
+<title>Zazerkalius — v0.438</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -408,6 +408,7 @@ body:not(.okt-live) #oktShield{display:block}
 #razvThumbs{display:flex;flex-wrap:wrap;gap:4px}
 #razvThumbs canvas{width:72px;height:56px;display:block;box-sizing:border-box;border:1px solid var(--line);border-radius:4px;background:var(--panel2);cursor:pointer}
 #razvThumbs canvas:hover{border-color:var(--acc)}
+#razvThumbs canvas.own{border-style:dashed}   /* v0.438: свои развёртки — пунктирной рамкой */
 #razvThumbs canvas.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
 #w-pyr .wbody{display:flex;flex-direction:column}   /* v0.109: холст пирамиды растёт с окном */
 #w-pyr .wbody > *{flex:0 0 auto}
@@ -1208,7 +1209,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.437</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.438</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1964,6 +1965,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
           <button id="bRazv3" title="Развёртка Зеркалидуса — треугольная пирамида и её зеркало, 6 граней (знак Zerkalius)">△ Зеркалидус</button>
           <button id="bRazv4" title="Развёртка Четырёхгранидуса — октаэдр, 8 граней">◇ Октаэдр</button>
           <div id="razvThumbs"></div>
+          <button id="bRazvOwn" title="＋ Своя развёртка: копия выбранной. На ней щелчок по треугольнику — его зеркала через все три ребра; щелчок у ребра — зеркало через это ребро; правый щелчок — убрать треугольник. Через основание зеркало меняет верх ↔ низ (цвет и биты), через бок — нет">＋ своя</button>
           <button id="bRazvLbl" title="Подписи граней (U0–U3, D0–D3) и вершин T, B. Горит — видны">🏷 подписи</button>
           <button id="bRazvAx" title="Оси на развёртке: у октаэдра две грани с общим ребром — ромб, его дальние углы — противоположные вершины, концы оси; штрих через каждую склейку. Верх–Низ — светлая, E0–E2 — розовая, E1–E3 — зелёная; каждая вершина помечена точкой цвета своей оси. Горит — видны">✛ оси</button>
         </div>
@@ -2120,8 +2122,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0437"></script>
-<script src="zz-ui.js?v=0437"></script>
+<script src="zz-core.js?v=0438"></script>
+<script src="zz-ui.js?v=0438"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

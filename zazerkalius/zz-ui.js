@@ -4918,19 +4918,29 @@ function razvDraw(cv, vi, big){
   const dpr = window.devicePixelRatio || 1, W = Math.max(20, cv.clientWidth), H = Math.max(20, cv.clientHeight);
   if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
   const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
-  const RS = razvSet(), [tree, C] = RS.V[vi] || RS.V[0], { F, pos } = razvUnfold(tree, RS.nb);   // v0.408: тело — Зеркалидус или октаэдр
-  let cx, cy;
-  if (C[0] === "v") [cx, cy] = pos[C[1]][C[2]];
-  else if (C[0] === "e") { const a = pos[C[1]][C[2]], b = pos[C[1]][C[3]]; cx = (a[0] + b[0]) / 2; cy = (a[1] + b[1]) / 2; }
-  else { const P = Object.values(pos[C[1]]); cx = (P[0][0] + P[1][0] + P[2][0]) / 3; cy = (P[0][1] + P[1][1] + P[2][1]) / 3; }
+  const RS = razvSet(), own = razvOwnOf(vi);
+  /* v0.438: своя развёртка (vi = "o<номер>") — список граней {u — верхняя, P — [вершина, левая, правая]}; центр — середина охвата */
+  let tree = [], C = null, F = {}, pos = {}, faces, cx, cy;
+  if (own) {
+    faces = own.f.map((f, i) => ({ n: (f.u ? "U" : "D") + own.f.slice(0, i).filter(q => !!q.u === !!f.u).length, up: !!f.u, P: f.P, ap: f.u ? "T" : "B" }));
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const f of faces) for (const [x, y] of f.P) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
+  } else {
+    [tree, C] = RS.V[vi] || RS.V[0]; ({ F, pos } = razvUnfold(tree, RS.nb));   // v0.408: тело — Зеркалидус или октаэдр
+    faces = Object.keys(pos).map(f => ({ n: f, up: f[0] === "U", P: F[f].map(v => pos[f][v]), ap: F[f][0] }));
+    if (C[0] === "v") [cx, cy] = pos[C[1]][C[2]];
+    else if (C[0] === "e") { const a = pos[C[1]][C[2]], b = pos[C[1]][C[3]]; cx = (a[0] + b[0]) / 2; cy = (a[1] + b[1]) / 2; }
+    else { const P = Object.values(pos[C[1]]); cx = (P[0][0] + P[1][0] + P[2][0]) / 3; cy = (P[0][1] + P[1][1] + P[2][1]) / 3; }
+  }
   let ex = 0.01, ey = 0.01;
-  for (const P of Object.values(pos)) for (const [x, y] of Object.values(P)) { ex = Math.max(ex, Math.abs(x - cx)); ey = Math.max(ey, Math.abs(y - cy)); }
+  for (const f of faces) for (const [x, y] of f.P) { ex = Math.max(ex, Math.abs(x - cx)); ey = Math.max(ey, Math.abs(y - cy)); }
   const pad = big ? 14 : 4, k = Math.min((W / 2 - pad) / ex, (H / 2 - pad) / ey), T = ([x, y]) => [W / 2 + (x - cx) * k, H / 2 + (y - cy) * k];
+  if (big) razvXf = { cx, cy, k, W, H, own: own ? vi : null };   // v0.438: для щелчков по своей развёртке
   const cs = getComputedStyle(document.documentElement), cU = cs.getPropertyValue("--acc2").trim() || "#4dd4ff", cD = cs.getPropertyValue("--gold").trim() || "#e8b64a";
   const L = Z.rows.map(s => String(s).replace(/[^01]/g, "")), R = Math.max(2, Math.min(160, L.length));
   const cell = k / R, rad1 = Math.max(0.7, cell * 0.3), rad0 = cell * 0.12, lbl = big && Z.razvLbl !== false, dots = big || cell >= 1.2;
-  for (const f of Object.keys(pos)) {
-    const up = f[0] === "U", col = up ? cU : cD, [A, Lv, Rv] = F[f].map(v => T(pos[f][v]));
+  for (const fc of faces) {
+    const f = fc.n, up = fc.up, col = up ? cU : cD, [A, Lv, Rv] = fc.P.map(T);
     g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(Lv[0], Lv[1]); g.lineTo(Rv[0], Rv[1]); g.closePath();
     g.globalAlpha = dots ? 0.1 : 0.3; g.fillStyle = col; g.fill(); g.globalAlpha = 1; g.strokeStyle = col; g.lineWidth = big ? 1.4 : 1; g.stroke();
     if (dots) {
@@ -4952,12 +4962,13 @@ function razvDraw(cv, vi, big){
       const mx = (A[0] + Lv[0] + Rv[0]) / 3 + (Lv[0] + Rv[0] - 2 * A[0]) / 6 * 0.55, my = (A[1] + Lv[1] + Rv[1]) / 3 + (Lv[1] + Rv[1] - 2 * A[1]) / 6 * 0.55;
       g.font = "bold 12px system-ui, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
       g.lineWidth = 3; g.strokeStyle = "rgba(0,0,0,.75)"; g.strokeText(f, mx, my); g.fillStyle = "#e6edf3"; g.fillText(f, mx, my);
-      g.textAlign = "left"; g.font = "11px system-ui, sans-serif"; g.strokeText(F[f][0], A[0] + 4, A[1] - 5); g.fillStyle = "#ff9a9a"; g.fillText(F[f][0], A[0] + 4, A[1] - 5);
+      g.textAlign = "left"; g.font = "11px system-ui, sans-serif"; g.strokeText(fc.ap, A[0] + 4, A[1] - 5); g.fillStyle = "#ff9a9a"; g.fillText(fc.ap, A[0] + 4, A[1] - 5);
     }
   }
   /* v0.406, «и в развёртке оси покажи»: у октаэдра грани со общим ребром — ромб, его дальние углы — противоположные вершины (концы оси).
      Через каждую склейку дерева развёртки — штрих между ними цветом оси: Верх–Низ светлая, E0–E2 розовая, E1–E3 зелёная; все вершины
      развёртки — точки цвета своей оси (одна вершина тела на развёртке бывает в нескольких местах). Только на крупной, кнопка «✛ оси». */
+  if (own) return;   // v0.438: у своей развёртки ни осей (нет дерева склеек), ни креста центра
   if (big && Z.razvAx !== false) {
     // v0.408: ось — пара вершин с серединой в центре тела (у Зеркалидуса только Верх–Низ); вершина без оси — серая
     const P3 = { T: [0, 1, 0], B: [0, -1, 0] }; for (let i = 0; i < RS.nb; i++) P3["E" + i] = [Math.cos(2 * Math.PI * i / RS.nb), 0, Math.sin(2 * Math.PI * i / RS.nb)];
@@ -4978,22 +4989,87 @@ function razvDraw(cv, vi, big){
   const m = big ? 9 : 4;
   g.strokeStyle = "#ff3b3b"; g.lineWidth = big ? 2.5 : 1.5; g.beginPath(); g.moveTo(W / 2 - m, H / 2); g.lineTo(W / 2 + m, H / 2); g.moveTo(W / 2, H / 2 - m); g.lineTo(W / 2, H / 2 + m); g.stroke();
 }
-let razvThumbKey = "";
+let razvThumbKey = "", razvXf = null;
+/* v0.438, по снимку развёртки Зеркалидуса с Серпинским — «добавь свою развёртку: из имеющихся создаёт копию, потом при клике по треугольнику
+   просто копирует его по всем трём граням — зеркалит; если по грани (ребру) ткнуть — по этой грани зеркалит». Свои — Z.razvOwn [{nb, f: [{u, P}]}],
+   u — верхняя (голубая, вершина T) или нижняя (золотая, B, биты инвертированы), P — [вершина, левая, правая] в единицах ребра. Зеркало грани
+   через ребро — отражение всех трёх её точек (порядок тот же — биты ложатся зеркально). Через основание (левая–правая) род меняется: верхняя ↔
+   нижняя, как U0 ↔ D0 через экватор; через боковое ребро — тот же род, как U0 ↔ U1. На место, где грань уже есть, копия не ложится. Выбранная
+   — Z.razvV = "o<номер>"; миниатюры своих — после шести обычных, правый щелчок по ней — удалить. */
+const razvOwnOf = (v) => (typeof v === "string" && v[0] === "o" && Array.isArray(Z.razvOwn) && Z.razvOwn[+v.slice(1)]) || null;
+const razvCur = () => { const RS = razvSet(); return razvOwnOf(Z.razvV) ? Z.razvV : Math.min(RS.V.length - 1, Math.max(0, Z.razvV | 0)); };
+function razvMirror(f, a, b){   // грань f через её ребро (a, b — номера вершин)
+  const [x1, y1] = f.P[a], [x2, y2] = f.P[b], dx = x2 - x1, dy = y2 - y1, L = dx * dx + dy * dy;
+  const P = f.P.map(([x, y]) => { const t = ((x - x1) * dx + (y - y1) * dy) / L, fx = x1 + t * dx, fy = y1 + t * dy; return [+(2 * fx - x).toFixed(6), +(2 * fy - y).toFixed(6)]; });
+  return { u: (a === 1 && b === 2) ? (f.u ? 0 : 1) : (f.u ? 1 : 0), P };
+}
+const razvCen = (f) => [(f.P[0][0] + f.P[1][0] + f.P[2][0]) / 3, (f.P[0][1] + f.P[1][1] + f.P[2][1]) / 3];
+const razvFree = (own, nf) => { const c = razvCen(nf); return !own.f.some(f => { const q = razvCen(f); return Math.hypot(q[0] - c[0], q[1] - c[1]) < 0.05; }); };
 function renderRazv(){
   const cv = $("razvCv"), tb = $("razvThumbs"); if (!cv || !tb) return;
   $("bRazvLbl").classList.toggle("on", Z.razvLbl !== false);   // v0.399: галка → кнопка
   $("bRazvAx").classList.toggle("on", Z.razvAx !== false);   // v0.406
-  const RS = razvSet();
-  if (tb.dataset.nb !== String(RS.nb)) { tb.dataset.nb = RS.nb; tb.innerHTML = RS.V.map((_, i) => `<canvas data-v="${i}" title="${RS.N[i]} — щелчок: крупно"></canvas>`).join(""); razvThumbKey = ""; }
+  const RS = razvSet(), OW = Array.isArray(Z.razvOwn) ? Z.razvOwn : [];
+  const tk = RS.nb + "/" + OW.length;
+  if (tb.dataset.nb !== tk) {
+    tb.dataset.nb = tk; razvThumbKey = "";
+    tb.innerHTML = RS.V.map((_, i) => `<canvas data-v="${i}" title="${RS.N[i]} — щелчок: крупно"></canvas>`).join("")
+      + OW.map((_, i) => `<canvas data-v="o${i}" class="own" title="Своя ${i + 1} — щелчок: крупно и править (щелчок по треугольнику — зеркала через три ребра, у ребра — через него; правый — убрать треугольник). Правый щелчок здесь — удалить свою">`).join("");
+  }
   $("bRazv3").classList.toggle("on", RS.nb === 3); $("bRazv4").classList.toggle("on", RS.nb === 4);   // v0.408
-  const vi = Math.min(RS.V.length - 1, Math.max(0, Z.razvV | 0));
-  [...tb.children].forEach(c => c.classList.toggle("on", +c.dataset.v === vi));
+  const vi = razvCur();
+  [...tb.children].forEach(c => c.classList.toggle("on", c.dataset.v === String(vi)));
+  cv.style.cursor = razvOwnOf(vi) ? "crosshair" : "";
   if (!winOpen("w-razv")) return;
   razvDraw(cv, vi, true);
-  const cs = getComputedStyle(document.documentElement), key = Z.rows.join("|") + "/" + cs.getPropertyValue("--acc2") + cs.getPropertyValue("--gold") + "/" + (window.devicePixelRatio || 1) + "/" + tb.clientWidth;
-  if (key !== razvThumbKey) { razvThumbKey = key; [...tb.children].forEach(c => razvDraw(c, +c.dataset.v, false)); }
+  const cs = getComputedStyle(document.documentElement), key = Z.rows.join("|") + "/" + cs.getPropertyValue("--acc2") + cs.getPropertyValue("--gold") + "/" + (window.devicePixelRatio || 1) + "/" + tb.clientWidth + "/" + (Z.razvOwnV | 0);
+  if (key !== razvThumbKey) { razvThumbKey = key; [...tb.children].forEach(c => razvDraw(c, c.classList.contains("own") ? c.dataset.v : +c.dataset.v, false)); }
 }
-if ($("razvThumbs")) $("razvThumbs").onclick = (e) => { const c = e.target.closest("canvas[data-v]"); if (!c) return; Z.razvV = +c.dataset.v; save(); renderRazv(); };
+if ($("bRazvOwn")) $("bRazvOwn").onclick = () => {   // v0.438: копия выбранной (обычной или своей) — новой своей
+  const RS = razvSet(), vi = razvCur(), src = razvOwnOf(vi);
+  let f;
+  if (src) f = src.f.map(q => ({ u: q.u, P: q.P.map(p => p.slice()) }));
+  else { const { F, pos } = razvUnfold(RS.V[vi][0], RS.nb); f = Object.keys(pos).map(n => ({ u: n[0] === "U" ? 1 : 0, P: F[n].map(v => pos[n][v].map(x => +x.toFixed(6))) })); }
+  if (!Array.isArray(Z.razvOwn)) Z.razvOwn = [];
+  Z.razvOwn.push({ nb: RS.nb, f }); Z.razvV = "o" + (Z.razvOwn.length - 1); Z.razvOwnV = (Z.razvOwnV | 0) + 1;
+  save(); renderRazv(); say(`✦ Своя развёртка ${Z.razvOwn.length} — копия. Щелчок по треугольнику — зеркала через три ребра, у ребра — через него, правый — убрать.`);
+};
+if ($("razvCv")) {
+  const cv = $("razvCv");
+  cv.addEventListener("contextmenu", (e) => { if (razvOwnOf(razvCur())) e.preventDefault(); });
+  cv.addEventListener("pointerdown", (e) => {
+    const vi = razvCur(), own = razvOwnOf(vi), X = razvXf; if (!own || !X || X.own !== vi) return;
+    const b = cv.getBoundingClientRect(), px = e.clientX - b.left, py = e.clientY - b.top;
+    const U = (p) => [X.W / 2 + (p[0] - X.cx) * X.k, X.H / 2 + (p[1] - X.cy) * X.k];   // единицы → пиксели
+    const inside = (f) => { const [A, B, C] = f.P.map(U), s = (p, q, w) => (p[0] - w[0]) * (q[1] - w[1]) - (q[0] - w[0]) * (p[1] - w[1]), P = [px, py], d1 = s(P, A, B), d2 = s(P, B, C), d3 = s(P, C, A); return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0)); };
+    const segD = (p, q) => { const L = (q[0] - p[0]) ** 2 + (q[1] - p[1]) ** 2, t = Math.max(0, Math.min(1, ((px - p[0]) * (q[0] - p[0]) + (py - p[1]) * (q[1] - p[1])) / L)); return Math.hypot(px - p[0] - t * (q[0] - p[0]), py - p[1] - t * (q[1] - p[1])); };
+    const done = (n) => { Z.razvOwnV = (Z.razvOwnV | 0) + 1; save(); renderRazv(); if (!n) say("✦ Туда уже есть треугольники — зеркало не легло."); };
+    if (e.button === 2) {   // убрать треугольник (последний — нет)
+      const i = own.f.findIndex(inside); if (i < 0 || own.f.length < 2) return;
+      own.f.splice(i, 1); done(1); return;
+    }
+    if (e.button !== 0) return;
+    // у ребра (ближе 7 px) — зеркало через это ребро той грани, у которой по ту сторону пусто
+    const near = [];
+    for (const f of own.f) for (const [a, c] of [[0, 1], [0, 2], [1, 2]]) { const d = segD(U(f.P[a]), U(f.P[c])); if (d < 7) near.push([d, f, a, c]); }
+    near.sort((p, q) => p[0] - q[0]);
+    if (near.length) {
+      for (const [, f, a, c] of near) { const nf = razvMirror(f, a, c); if (razvFree(own, nf)) { own.f.push(nf); done(1); return; } }
+      done(0); return;
+    }
+    const f = own.f.find(inside); if (!f) return;
+    let n = 0; for (const [a, c] of [[1, 2], [0, 1], [0, 2]]) { const nf = razvMirror(f, a, c); if (razvFree(own, nf)) { own.f.push(nf); n++; } }
+    done(n);
+  });
+}
+if ($("razvThumbs")) $("razvThumbs").addEventListener("contextmenu", (e) => {   // v0.438: правый щелчок по своей — удалить
+  const c = e.target.closest("canvas.own"); if (!c) return; e.preventDefault();
+  const i = +c.dataset.v.slice(1), cur = razvOwnOf(Z.razvV) ? +String(Z.razvV).slice(1) : -1;
+  Z.razvOwn.splice(i, 1);
+  if (cur === i) Z.razvV = 0; else if (cur > i) Z.razvV = "o" + (cur - 1);
+  Z.razvOwnV = (Z.razvOwnV | 0) + 1; save(); renderRazv(); say(`✦ Своя развёртка ${i + 1} удалена.`);
+});
+if ($("razvThumbs")) $("razvThumbs").onclick = (e) => { const c = e.target.closest("canvas[data-v]"); if (!c) return; Z.razvV = c.classList.contains("own") ? c.dataset.v : +c.dataset.v; save(); renderRazv(); };
 if ($("bRazvLbl")) $("bRazvLbl").onclick = () => { Z.razvLbl = Z.razvLbl === false; save(); renderRazv(); };
 if ($("bRazv3")) $("bRazv3").onclick = () => { Z.razvNB = 3; save(); renderRazv(); };   // v0.408
 if ($("bRazv4")) $("bRazv4").onclick = () => { Z.razvNB = 4; save(); renderRazv(); };
