@@ -5042,7 +5042,7 @@ function renderTri(){
   $("bTriSave").textContent = Z.triCur >= 0 ? `💾 в ${Z.triCur + 1}` : "💾 сохранить";
   if (!winOpen("w-tri")) return;
   const W = cv.clientWidth || 400, pad = triGeo.pad;
-  const s = Math.max(8, Math.min(72, (W - 2 * pad) / ((Z.triN + 1) / 2))), hh = s * Math.sqrt(3) / 2, H = Math.ceil(2 * pad + Z.triR * hh);
+  const s = Math.max(8, Math.min(72, (W - 2 * pad) / ((Z.triN + 1) / 2))), hh = s * Math.sqrt(3) / 2, H = Math.ceil(2 * pad + Z.triR * hh + 6);   // v0.435: +6 — полоса-ручка под рядами
   triGeo.s = s; triGeo.hh = hh;
   cv.style.height = H + "px";
   const dpr = window.devicePixelRatio || 1;
@@ -5062,6 +5062,8 @@ function renderTri(){
   g.strokeStyle = txt; g.globalAlpha = 0.25; g.setLineDash([4, 4]);
   for (let r = 1; r < Z.triR; r += 2) { const y = pad + r * hh; g.beginPath(); g.moveTo(pad, y); g.lineTo(pad + (Z.triN + 1) * s / 2, y); g.stroke(); }
   g.setLineDash([]); g.globalAlpha = 1;
+  { const yb = pad + Z.triR * hh + 7, xc = W / 2; g.strokeStyle = txt; g.globalAlpha = 0.35; g.lineWidth = 2; g.lineCap = "round";   // v0.435: ручка — тянуть ± ряды
+    g.beginPath(); g.moveTo(xc - 18, yb - 2); g.lineTo(xc + 18, yb - 2); g.moveTo(xc - 18, yb + 2); g.lineTo(xc + 18, yb + 2); g.stroke(); g.globalAlpha = 1; g.lineWidth = 1; }
   triLive();
 }
 /* v0.433, «можно сразу вживую смотреть, как будет выглядеть?»: та же сетка кнопками — высота двух рядов 24 px (1:1) и 48 (×2), фон — панель
@@ -5112,8 +5114,25 @@ function triLive(){
   });
 }
 if ($("triCv")) {
-  const cv = $("triCv"); let paint = -1;
+  const cv = $("triCv"); let paint = -1, rowDrag = false;
   const at = (e) => { const b = cv.getBoundingClientRect(); return triHit(e.clientX - b.left, e.clientY - b.top); };
+  /* v0.435, «тянуть за границу вниз-вверх — ± число строк»: нижняя граница сетки (полоса под последним рядом) тянется мышью — рядов
+     столько, сколько целых рядов до мыши (1…12); закраска рядов, которые ушли, остаётся в памяти и вернётся, если ряды вернуть */
+  const nearBottom = (e) => { const b = cv.getBoundingClientRect(), y = e.clientY - b.top; return y >= triGeo.pad + Z.triR * triGeo.hh - 3; };
+  cv.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0 || !triGeo.hh || !nearBottom(e)) return;
+    rowDrag = true; cv.setPointerCapture(e.pointerId); e.stopImmediatePropagation();
+  });
+  cv.addEventListener("pointermove", (e) => {
+    if (rowDrag) {
+      const b = cv.getBoundingClientRect(), R = Math.max(1, Math.min(12, Math.round((e.clientY - b.top - triGeo.pad) / triGeo.hh)));
+      if (R !== Z.triR) { Z.triR = R; renderTri(); }
+      return;
+    }
+    if (paint < 0) cv.style.cursor = triGeo.hh && nearBottom(e) ? "ns-resize" : "";
+  });
+  const rowEnd = () => { if (rowDrag) { rowDrag = false; save(); } };
+  cv.addEventListener("pointerup", rowEnd); cv.addEventListener("pointercancel", rowEnd);
   const put = (h) => { if (!h) return; const key = h[0] + "_" + h[1]; if ((Z.triCells[key] | 0) === paint) return; if (paint) Z.triCells[key] = paint; else delete Z.triCells[key]; renderTri(); };
   cv.addEventListener("contextmenu", (e) => e.preventDefault());
   cv.addEventListener("pointerdown", (e) => {
