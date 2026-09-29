@@ -3885,15 +3885,22 @@ function setupCone(){
     /* v0.425, «стоп — выполняет стоп и паузу; при стопе стрелки — шаг, при паузе — плей; пауза — нажать — стоп, ничего не меняется; плей не
        нужен», «как запустить из стопа — поставить паузу»: ◆ показывает состояние (■ стоп, ⏸ пауза — горит, ♫ играет — мигает); стрелка
        направления шире (jwide), ◆ сдвигается к другой */
-    const p = $("bSndP"); if (p) { p.disabled = false; p.classList.toggle("on", sndPaused || !!sndT); p.classList.remove("run");   // v0.427: мигает стрелка, не ◆
-      p.textContent = sndT ? "♫" : sndPaused ? "⏸" : "■";
-      p.title = sndT ? "◆ Играет — щелчок: пауза (место остаётся)" : sndPaused ? "◆ Пауза — стрелка: играть в её сторону; щелчок: стоп (место то же)" : "◆ Стоп — стрелка: шаг в её сторону; щелчок: пауза (потом стрелка — играть)"; }
+    /* v0.430, «начало: тишина, стрелка вправо горит одна, в середине значок плей (ноту убери); нажать плей — стрелка и плей объединятся
+       цветом и станут !) — вертикальная палка и стрелка, типа пауза со стрелкой; нажать на них — пауза»: стоп — в ◆ ⏵ (не ▶ — по ▶ joinTag
+       узнаёт стрелку), щелчок — играть в сторону горящей стрелки; играет — в ◆ ❙, ◆ и стрелка направления одного цвета и мигают вместе
+      (◆ ❙ + стрелка = «пауза со стрелкой»), щелчок по любой из них — пауза; пауза — ⏸, горит (щелчок — стоп, стрелка — играть). Стрелка
+       направления всегда одинарная (двойная «))» v0.429 снята) */
+    const p = $("bSndP"); if (p) { p.disabled = false; p.classList.toggle("on", sndPaused || !!sndT); p.classList.toggle("run", !!sndT);
+      p.textContent = sndT ? "❙" : sndPaused ? "⏸" : "⏵";
+      p.title = sndT ? "❙ Играет — щелчок (или по горящей стрелке): пауза, место остаётся" : sndPaused ? "⏸ Пауза — стрелка: играть в её сторону; щелчок: стоп (место то же)" : "⏵ Играть — в сторону горящей стрелки. Стрелки на стопе — шаг"; }
     { const bb = $("bSndB"), bf = $("bSndF"), back = Z.sndDir < 0, wide = (x, w) => { if (x && x.classList.contains("jwide") !== w) { x.classList.toggle("jwide", w); x._jw = 1; } };
-      wide(bb, back); wide(bf, !back);
-      // v0.427, «стрелка мигать должна фоном»: пока звук играет, фоном мигает стрелка направления (◆ — горит, не мигает)
+      wide(bb, false); wide(bf, false);
+      // v0.427, «стрелка мигать должна фоном»: пока звук играет, фоном мигает стрелка направления; с v0.430 — вместе с ◆
       if (bb) bb.classList.toggle("run", !!sndT && back); if (bf) bf.classList.toggle("run", !!sndT && !back);
-      if (bb) bb.title = "◀ Назад: стоп — шаг назад; пауза или играет — играть назад. Двойная ◀◀ — направление (играет — мигает)";   // v0.429
-      if (bf) bf.title = "▶ Вперёд: стоп — шаг вперёд; пауза или играет — играть вперёд. Двойная ▶▶ — направление (играет — мигает)";
+      // v0.430, «при плее другая стрелка становится красной — это стоп»
+      if (bb) bb.classList.toggle("jstop", !!sndT && !back); if (bf) bf.classList.toggle("jstop", !!sndT && back);
+      if (bb) bb.title = sndT ? (back ? "◀ Играет назад — щелчок: пауза" : "◀ Красная — стоп (место то же)") : "◀ Назад: стоп — шаг назад; пауза — играть назад";   // v0.430
+      if (bf) bf.title = sndT ? (!back ? "▶ Играет вперёд — щелчок: пауза" : "▶ Красная — стоп (место то же)") : "▶ Вперёд: стоп — шаг вперёд; пауза — играть вперёд";
       if ((bb && bb._jw) || (bf && bf._jw)) { if (bb) bb._jw = 0; if (bf) bf._jw = 0; if (typeof joinTag === "function") joinTag(); } }
     snd2Label();   // v0.337: остановлен — «⁑ авто»
   };
@@ -3953,10 +3960,11 @@ function setupCone(){
     try { if (e.source) e.source.postMessage({ zerkSndOn: live, zerkSndPaused: sndPaused, zerkSndHeads: live ? [...sndHeadsOn] : [], zerkSndR: live && sndHeadsOn.has("r"), zerkSndC: live && sndHeadsOn.has("c") }, "*"); } catch (err) { /* хаб с другого адреса */ }
   });
   // v0.425: ◆ — играет → пауза; пауза → стоп (место то же); стоп → пауза (дальше стрелка — играть)
+  // v0.430: стоп → ⏵ играть сразу (с того же места, в сторону горящей стрелки); прежде стоп → пауза, а играть — стрелкой
   if ($("bSndP")) $("bSndP").onclick = () => {
     if (sndT) sndPause(true);
     else if (sndPaused) { sndPaused = false; sndUi(); }
-    else { sndPaused = true; sndCtx(); sndUi(); }
+    else sndPause(false);
   };
   // v0.425: стрелка — направление; стоп — шаг (стоп остаётся), пауза — играть, играет — играть в её сторону
   const sndStepStop = (d) => {
@@ -3966,7 +3974,10 @@ function setupCone(){
     sndTick(); sndUi();
   };
   const sndDirSet = (d) => {
-    const was = Z.sndDir < 0 ? -1 : 1; Z.sndDir = d; save();
+    const was = Z.sndDir < 0 ? -1 : 1;
+    if (sndT && was === d) { sndPause(true); return; }   // v0.430: играет — щелчок по горящей стрелке («!)» вместе с ◆) — пауза
+    if (sndT) { clearTimeout(sndT); sndT = 0; sndPaused = false; sndUi(); return; }   // v0.430, «при плее другая стрелка становится красной — это стоп» (место то же)
+    Z.sndDir = d; save();
     if (sndT) { sndUi(); if (was !== d) say(d < 0 ? "◀ Звук — назад." : "▶ Звук — вперёд."); }
     else if (sndPaused) sndPause(false);
     else sndStepStop(d);
