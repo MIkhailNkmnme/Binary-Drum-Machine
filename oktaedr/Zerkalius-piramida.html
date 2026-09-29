@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.001. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.002. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.001</title>
+<title>Zerkalius Пирамида — v0.002</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -19,6 +19,10 @@
   Точки решётки: P(i, j, k) = i·e1 + j·e2 + k·e3, где e1, e2, e3 — рёбра единичного тетраэдра от вершины вниз, i + j + k ≤ L.
   «Раздвинуть» — каждая часть отъезжает от центра пирамиды, и слои 1-3-6 видны поштучно.
   Рисуется на холсте: грани всех частей сортируются по глубине (художник), полупрозрачная заливка и рёбра.
+  v0.002, «сделай приближение, масштабирование и достройку отражения от любой грани по клику»: колесо / два пальца — ближе-дальше
+  к точке под курсором; правая кнопка, Shift или два пальца — сдвиг вида; щелчок по грани — зеркальная копия этой части через эту
+  грань (садится вплотную, грань к грани); по достроенным тоже можно щёлкать; такая часть уже стоит — второй раз не ставится.
+  Грань под курсором обведена. ⌖ — вид как был, ✕ — убрать достроенное.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -49,9 +53,10 @@
     <button id="bDn" class="on" title="Тетраэдры остриём вниз — в провалах между октаэдрами">▼ низ</button>
   </div>
   <div class="row"><button id="bSpin" class="on" title="Вращение (пробел)">⟳ вращение</button></div>
+  <div class="row"><button id="bView" title="Приближение и сдвиг — как было">⌖ вид</button><button id="bClr" title="Убрать все достроенные отражения">✕ отражения</button></div>
   <div id="count"></div>
 </div>
-<div id="ver">v0.001</div>
+<div id="ver">v0.002</div>
 <script>
 const cv = document.getElementById("cv"), g = cv.getContext("2d");
 const NOTE_COL = ["#ff5f6d", "#ff9f43", "#ffe066", "#7ee787", "#4dd4ff", "#6b8cff", "#c38cf5"];
@@ -61,14 +66,14 @@ const H = Math.sqrt(2 / 3), R0 = 1 / Math.sqrt(3);
 const E = [0, 1, 2].map(i => { const a = Math.PI / 2 + i * 2 * Math.PI / 3; return [R0 * Math.cos(a), -H, R0 * Math.sin(a)]; });
 const P = (i, j, k) => [i * E[0][0] + j * E[1][0] + k * E[2][0], i * E[0][1] + j * E[1][1] + k * E[2][1], i * E[0][2] + j * E[1][2] + k * E[2][2]];
 const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
-function pieces(){
-  const out = [];
+function pieces(all){   // all — все части, без фильтров ▲ ◆ ▼ (проверка, стоит ли уже часть на месте)
+  const out = [], sU = all || showUp, sO = all || showOct, sD = all || showDn;
   for (let i = 0; i <= L; i++) for (let j = 0; i + j <= L; j++) for (let k = 0; i + j + k <= L; k++) {
     const n = i + j + k, p = P(i, j, k), a = E[0], b = E[1], c = E[2];
-    if (n <= L - 1 && showUp) out.push({ kind: "up", layer: n, v: [p, add(p, a), add(p, b), add(p, c)], f: [[0,1,2],[0,2,3],[0,3,1],[1,3,2]] });
-    if (n <= L - 2 && showOct) { const q = [add(p, a), add(p, b), add(p, c), add(add(p, a), b), add(add(p, b), c), add(add(p, a), c)];
+    if (n <= L - 1 && sU) out.push({ kind: "up", layer: n, v: [p, add(p, a), add(p, b), add(p, c)], f: [[0,1,2],[0,2,3],[0,3,1],[1,3,2]] });
+    if (n <= L - 2 && sO) { const q = [add(p, a), add(p, b), add(p, c), add(add(p, a), b), add(add(p, b), c), add(add(p, a), c)];
       out.push({ kind: "oct", layer: n + 1, v: q, f: null }); }
-    if (n <= L - 3 && showDn) { const ab = add(add(p, a), b), bc = add(add(p, b), c), ac = add(add(p, a), c), abc = add(ab, c);
+    if (n <= L - 3 && sD) { const ab = add(add(p, a), b), bc = add(add(p, b), c), ac = add(add(p, a), c), abc = add(ab, c);
       out.push({ kind: "dn", layer: n + 2, v: [ab, bc, ac, abc], f: [[0,1,2],[0,1,3],[1,2,3],[0,2,3]] }); }
   }
   return out;
@@ -80,39 +85,87 @@ function resize(){ dpr = window.devicePixelRatio || 1; W = cv.clientWidth; Hh = 
 addEventListener("resize", resize); resize();
 function rot(p){ const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
   const x = p[0] * cy + p[2] * sy, z = -p[0] * sy + p[2] * cy, y = p[1] * cp - z * sp, z2 = p[1] * sp + z * cp; return [x, y, z2]; }
+// v0.002: приближение, сдвиг вида и достроенные отражения (extra — части в мировых координатах, как у пирамиды)
+let zoom = 1, panX = 0, panY = 0, extra = [], hover = null, lastFaces = [], note = "", noteT = 0;
+const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const centroid = (v) => v.reduce((s, q) => add(s, q), [0, 0, 0]).map(x => x / v.length);
+const facesOf = (pc) => pc.kind === "oct" ? OCT_F : pc.f;
+const colOf = (pc) => pc.col || (pc.kind === "up" ? NOTE_COL[pc.layer % 7] : pc.kind === "oct" ? "#8fa3b8" : "#5b4a7a");
 function draw(){
   g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, Hh);
-  const list = pieces(), cen = [0, -H * L * 0.75, 0];   // центр большого тетраэдра: вершина в 0, центр — на ¾ высоты
-  const sc = Math.min(W, Hh) / (L * 1.9 + 1), faces = [];
+  const list = pieces().concat(extra), cen = [0, -H * L * 0.75, 0];   // центр большого тетраэдра: вершина в 0, центр — на ¾ высоты
+  const sc = Math.min(W, Hh) / (L * 1.9 + 1) * zoom, faces = [];
   let cnt = { up: 0, oct: 0, dn: 0 };
   for (const pc of list) {
-    cnt[pc.kind]++;
-    const c = pc.v.reduce((s, v) => add(s, v), [0, 0, 0]).map(x => x / pc.v.length), off = [(c[0] - cen[0]) * X, (c[1] - cen[1]) * X, (c[2] - cen[2]) * X];
+    if (!pc.ref) cnt[pc.kind]++;
+    const c = centroid(pc.v), off = [(c[0] - cen[0]) * X, (c[1] - cen[1]) * X, (c[2] - cen[2]) * X];
     const vs = pc.v.map(v => rot([v[0] + off[0] - cen[0], v[1] + off[1] - cen[1], v[2] + off[2] - cen[2]]));
-    const col = pc.kind === "up" ? NOTE_COL[pc.layer % 7] : pc.kind === "oct" ? "#8fa3b8" : "#5b4a7a";
-    for (const f of (pc.kind === "oct" ? OCT_F : pc.f)) {
-      const t = f.map(i => vs[i]);
-      const n = [(t[1][1]-t[0][1])*(t[2][2]-t[0][2]) - (t[1][2]-t[0][2])*(t[2][1]-t[0][1]), (t[1][2]-t[0][2])*(t[2][0]-t[0][0]) - (t[1][0]-t[0][0])*(t[2][2]-t[0][2]), (t[1][0]-t[0][0])*(t[2][1]-t[0][1]) - (t[1][1]-t[0][1])*(t[2][0]-t[0][0])];
-      const nl = Math.hypot(...n) || 1, light = Math.abs(n[2] / nl);
-      faces.push({ t, z: (t[0][2] + t[1][2] + t[2][2]) / 3, col, light, kind: pc.kind });
+    const col = colOf(pc);
+    for (const fi of facesOf(pc)) {
+      const t = fi.map(i => vs[i]);
+      const n = cross3(sub3(t[1], t[0]), sub3(t[2], t[0])), nl = Math.hypot(...n) || 1, light = Math.abs(n[2] / nl);
+      faces.push({ t, z: (t[0][2] + t[1][2] + t[2][2]) / 3, col, light, kind: pc.kind, pc, fi });
     }
   }
   faces.sort((a, b) => a.z - b.z);
-  const cx = W / 2, cy = Hh * 0.5;
+  const cx = W / 2 + panX, cy = Hh * 0.5 + panY;
   for (const f of faces) {
-    g.beginPath(); f.t.forEach((p, i) => { const x = cx + p[0] * sc, y = cy - p[1] * sc; if (i) g.lineTo(x, y); else g.moveTo(x, y); }); g.closePath();
+    f.s = f.t.map(p => [cx + p[0] * sc, cy - p[1] * sc]);
+    g.beginPath(); f.s.forEach((q, i) => { if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); g.closePath();
     g.globalAlpha = (f.kind === "oct" ? 0.28 : 0.55) * (0.45 + 0.55 * f.light); g.fillStyle = f.col; g.fill();
-    g.globalAlpha = 0.85; g.strokeStyle = f.col; g.lineWidth = 1; g.stroke();
+    g.globalAlpha = 0.85; g.strokeStyle = f.col; g.lineWidth = f.pc.ref ? 1.6 : 1; g.stroke();
   }
+  if (hover) {   // грань под курсором — обведена: по ней щелчок и поставит отражение
+    const f = faces.find(q => q.pc === hover.pc && q.fi === hover.fi);
+    if (f) { g.globalAlpha = 1; g.strokeStyle = "#ffffff"; g.lineWidth = 2.5; g.beginPath(); f.s.forEach((q, i) => { if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); g.closePath(); g.stroke(); }
+  }
+  lastFaces = faces;
   g.globalAlpha = 1;
   const sum = (n) => n * (n + 1) / 2, rows = []; for (let n = 0; n < L; n++) rows.push(sum(n + 1));
-  document.getElementById("count").innerHTML = `▲ ${cnt.up} (по слоям ${rows.join(", ")}) · ◆ ${cnt.oct} · ▼ ${cnt.dn}`;
+  document.getElementById("count").innerHTML = `▲ ${cnt.up} (по слоям ${rows.join(", ")}) · ◆ ${cnt.oct} · ▼ ${cnt.dn}` + (extra.length ? ` · отражений ${extra.length}` : "") + (note && performance.now() < noteT ? `<br>${note}` : "");
 }
-function frame(){ if (spin && !drag) yaw += 0.004; draw(); requestAnimationFrame(frame); }
-let drag = false, lx = 0, ly = 0;
-cv.addEventListener("pointerdown", e => { drag = true; lx = e.clientX; ly = e.clientY; cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing"; });
-cv.addEventListener("pointermove", e => { if (!drag) return; yaw += (e.clientX - lx) * 0.008; pitch = Math.max(-1.5, Math.min(1.5, pitch + (e.clientY - ly) * 0.008)); lx = e.clientX; ly = e.clientY; });
-cv.addEventListener("pointerup", () => { drag = false; cv.style.cursor = "grab"; });
+function pick(x, y){   // самая ближняя грань под точкой (грани отсортированы от дальних к ближним)
+  for (let i = lastFaces.length - 1; i >= 0; i--) {
+    const [a, b, c] = lastFaces[i].s, d1 = (x - b[0]) * (a[1] - b[1]) - (a[0] - b[0]) * (y - b[1]), d2 = (x - c[0]) * (b[1] - c[1]) - (b[0] - c[0]) * (y - c[1]), d3 = (x - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (y - a[1]);
+    if (!((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0))) return lastFaces[i];
+  }
+  return null;
+}
+function reflect(f){   // зеркальная копия части через щёлкнутую грань — садится по ту сторону, грань к грани
+  const pc = f.pc, a = pc.v[f.fi[0]], b = pc.v[f.fi[1]], c = pc.v[f.fi[2]];
+  const n0 = cross3(sub3(b, a), sub3(c, a)), nl = Math.hypot(...n0), n = n0.map(x => x / nl);
+  const v2 = pc.v.map(q => { const d = dot3(sub3(q, a), n); return [q[0] - 2 * d * n[0], q[1] - 2 * d * n[1], q[2] - 2 * d * n[2]]; });
+  const c2 = centroid(v2), all = pieces(true).concat(extra);
+  if (all.some(q => q.v.length === v2.length && Math.hypot(...sub3(centroid(q.v), c2)) < 1e-6)) { note = "здесь уже стоит такая часть"; noteT = performance.now() + 1500; return; }
+  extra.push({ kind: pc.kind, layer: pc.layer, v: v2, f: pc.f, col: colOf(pc), ref: true });
+}
+function frame(){ if (spin && !ptrs.size) yaw += 0.004; draw(); requestAnimationFrame(frame); }
+const ptrs = new Map(); let downX = 0, downY = 0, moved = false, btn = 0, lx = 0, ly = 0, pinch0 = 0, zoom0 = 1, mid0 = null, pan0 = null;
+const zoomAt = (mx, my, z1) => { z1 = Math.max(0.2, Math.min(12, z1)); const qx = (mx - W / 2 - panX) / zoom, qy = (my - Hh / 2 - panY) / zoom; zoom = z1; panX = mx - W / 2 - qx * zoom; panY = my - Hh / 2 - qy * zoom; };
+const two = () => { const [p, q] = [...ptrs.values()]; return { d: Math.hypot(p.x - q.x, p.y - q.y), m: [(p.x + q.x) / 2, (p.y + q.y) / 2] }; };
+cv.addEventListener("pointerdown", e => {
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); cv.setPointerCapture(e.pointerId);
+  if (ptrs.size === 1) { downX = lx = e.clientX; downY = ly = e.clientY; moved = false; btn = e.button; cv.style.cursor = "grabbing"; }
+  if (ptrs.size === 2) { const t = two(); pinch0 = t.d; zoom0 = zoom; mid0 = t.m; pan0 = [panX, panY]; moved = true; }
+});
+cv.addEventListener("pointermove", e => {
+  if (!ptrs.has(e.pointerId)) { if (e.pointerType === "mouse") { const f = pick(e.clientX, e.clientY); hover = f ? { pc: f.pc, fi: f.fi } : null; cv.style.cursor = f ? "pointer" : "grab"; } return; }
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (ptrs.size === 2) { const t = two(); zoom = zoom0; panX = pan0[0]; panY = pan0[1]; zoomAt(mid0[0], mid0[1], zoom0 * t.d / (pinch0 || 1)); panX += t.m[0] - mid0[0]; panY += t.m[1] - mid0[1]; return; }
+  if (Math.abs(e.clientX - downX) + Math.abs(e.clientY - downY) > 5) moved = true;
+  const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY;
+  if (btn === 2 || btn === 1 || e.shiftKey) { panX += dx; panY += dy; }
+  else { yaw += dx * 0.008; pitch = Math.max(-1.5, Math.min(1.5, pitch + dy * 0.008)); }
+});
+const up = (e) => {
+  const was = ptrs.size; ptrs.delete(e.pointerId);
+  if (was === 1 && !moved && btn === 0 && e.type === "pointerup") { const f = pick(e.clientX, e.clientY); if (f) reflect(f); }
+  if (!ptrs.size) cv.style.cursor = "grab";
+};
+cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+cv.addEventListener("contextmenu", e => e.preventDefault());
+cv.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, zoom * Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
 const sL = document.getElementById("sL"), sX = document.getElementById("sX");
 const ui = () => { document.getElementById("vL").textContent = L; document.getElementById("vX").textContent = Math.round(X * 100);
   [["bUp", showUp], ["bOct", showOct], ["bDn", showDn], ["bSpin", spin]].forEach(([id, on]) => document.getElementById(id).classList.toggle("on", on)); };
@@ -122,6 +175,8 @@ document.getElementById("bUp").onclick = () => { showUp = !showUp; ui(); };
 document.getElementById("bOct").onclick = () => { showOct = !showOct; ui(); };
 document.getElementById("bDn").onclick = () => { showDn = !showDn; ui(); };
 document.getElementById("bSpin").onclick = () => { spin = !spin; ui(); };
+document.getElementById("bView").onclick = () => { zoom = 1; panX = panY = 0; };
+document.getElementById("bClr").onclick = () => { extra = []; hover = null; };
 addEventListener("keydown", e => { if (e.code === "Space") { spin = !spin; ui(); e.preventDefault(); } });
 L = +sL.value; X = +sX.value / 100; ui(); frame();
 </script>
