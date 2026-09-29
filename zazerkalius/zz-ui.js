@@ -4937,18 +4937,21 @@ function razvDraw(cv, vi, big){
   const pad = big ? 14 : 4, k = Math.min((W / 2 - pad) / ex, (H / 2 - pad) / ey), T = ([x, y]) => [W / 2 + (x - cx) * k, H / 2 + (y - cy) * k];
   if (big) razvXf = { cx, cy, k, W, H, own: own ? vi : null };   // v0.438: для щелчков по своей развёртке
   const cs = getComputedStyle(document.documentElement), cU = cs.getPropertyValue("--acc2").trim() || "#4dd4ff", cD = cs.getPropertyValue("--gold").trim() || "#e8b64a";
-  const L = Z.rows.map(s => String(s).replace(/[^01]/g, "")), R = Math.max(2, Math.min(160, L.length));
+  const L = Z.rows.map(s => String(s).replace(/[^01]/g, "")), R0 = Math.max(2, Math.min(160, L.length));
+  const RB = big && Z.razvRomb ? razvRombs() : null, nRB = RB ? RB.list.length : 0;   // v0.440: ◇ ромбы из кадров
+  const R = nRB ? RB.h + 1 : R0;
   const cell = k / R, rad1 = Math.max(0.7, cell * 0.3), rad0 = cell * 0.12, lbl = big && Z.razvLbl !== false, dots = big || cell >= 1.2;
   for (const fc of faces) {
     const f = fc.n, up = fc.up, col = up ? cU : cD, [A, Lv, Rv] = fc.P.map(T);
+    const rb = nRB ? RB.list[(razvRombSeq + (parseInt(f.slice(1), 10) || 0)) % nRB] : null;   // v0.440: ромб пары граней
     g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(Lv[0], Lv[1]); g.lineTo(Rv[0], Rv[1]); g.closePath();
     g.globalAlpha = dots ? 0.1 : 0.3; g.fillStyle = col; g.fill(); g.globalAlpha = 1; g.strokeStyle = col; g.lineWidth = big ? 1.4 : 1; g.stroke();
     if (dots) {
       g.fillStyle = col;
       for (let r = 0; r < R; r++) {
-        const row = L[r] || "";
+        const row = rb ? (up ? rb.u : rb.d)[r] : (L[r] || "");
         for (let q = 0; q <= r; q++) {
-          const v = (row[q] === "1" ? 1 : 0) ^ (up ? 0 : 1);
+          const v = rb ? row[q] : (row[q] === "1" ? 1 : 0) ^ (up ? 0 : 1);   // v0.440: у ромба низ — свой, без инверсии
           if (!v && rad0 < 0.8) continue;
           const a = (r - q + 1 / 3) / R, b = (q + 1 / 3) / R, x = A[0] + a * (Lv[0] - A[0]) + b * (Rv[0] - A[0]), y = A[1] + a * (Lv[1] - A[1]) + b * (Rv[1] - A[1]);
           g.globalAlpha = v ? 1 : 0.3;
@@ -5449,6 +5452,16 @@ function renderOkt(){
   if (!winOpen("w-okt")) return;
   if (!fr.getAttribute("src")) { fr.src = "../oktaedr/Zerkalius-oktaedr.html?zz"; return; }
   if (!oktReady || Z.oktSync === false) return;
+  if (Z.razvRomb) {   // v0.440: ◇ ромбы из кадров — на 3D-тело, пары граней по ромбу (четыре — хватит и октаэдру)
+    const RB = razvRombs(), n = RB.list.length;
+    if (n) {
+      const kk = "R" + RB.S + "/" + razvRombSeq + "/" + Z.rows.join("|"); if (kk === oktSent) return;
+      oktSent = kk;
+      const list = [0, 1, 2, 3].map(i => { const p = RB.list[(razvRombSeq + i) % n]; return { u: p.u, d: p.d }; });
+      try { fr.contentWindow.postMessage({ type: "zz-rhombs", h: RB.h, list }, "*"); } catch (e) {}
+      return;
+    }
+  }
   const k = Z.rows.join("|"); if (k === oktSent) return;
   oktSent = k;
   try { fr.contentWindow.postMessage({ type: "zz-rows", rows: Z.rows.slice() }, "*"); } catch (e) {}
@@ -5460,6 +5473,58 @@ window.addEventListener("message", (e) => {
 });
 if ($("bOktSync")) $("bOktSync").onclick = () => { Z.oktSync = Z.oktSync === false; oktSent = null; save(); renderOkt(); };
 if ($("bOktOpen")) $("bOktOpen").onclick = () => window.open("../oktaedr/Zerkalius-oktaedr.html", "_blank");
+/* v0.440: ◇ РОМБЫ ИЗ КАДРОВ НА ТРИРАМИДУСЕ (слова пользователя: «самое главное — натянуть Аниматрицу на ТриРамидус», «ромбы из
+   кадров», «раскадровка — развёртка есть», «на html — Зазеркалиус»; выбрано: кадры листаются, и на развёртке, и на 3D-теле). Ромбы —
+   те же, что режет ◇ сетка в Code (Code 35.54, 35.78), только в координатах поля: строка r, место q (в строке r — r + 1 бит).
+   Ромб высотой S = 2h с верхней вершиной (r0, q0) — { q0 ≤ q ≤ q0 + h, r0 − q0 ≤ r − q ≤ r0 − q0 + h }; вершины ромбов — (e·h, j·h),
+   j = 0…e, ряд e годится, пока r0 + 2h не ниже последней строки. Горизонтальная диагональ (строка r0 + h) режет ромб на две грани тела:
+   верх u — ряд k от вершины T, места q0…q0 + k; низ d — ряд k от вершины B = строка r0 + 2h − k, места q0 + h − k … q0 + h (место 0 —
+   у того же угла экватора Ei, что и у верхней, поэтому на общем ребре обе половины сходятся). Пара граней i (Ui + Di — ромб
+   развёртки «В») получает ромб (кадр + i) по кругу; кадр сдвигается на один каждые Z.razvRombMs мс. Низ — настоящий низ ромба,
+   не инверсия верха. На развёртке — только крупная (малые картинки — как были); в Гранидус уходит сообщение zz-rhombs (Гранидус v0.069). */
+var razvRombSeq = 0, razvRombTimer = 0;
+function razvRombs(){
+  const S = [8, 16, 32, 64].includes(+Z.razvRombS) ? +Z.razvRombS : 32, h = S / 2;
+  const L = Z.rows.map(s => String(s).replace(/[^01]/g, "")), R = L.length;
+  const bit = (r, q) => (L[r] && L[r][q] === "1" ? 1 : 0), list = [];
+  for (let e = 0; e * h + 2 * h <= R - 1; e++) for (let j = 0; j <= e; j++) {
+    const r0 = e * h, q0 = j * h, u = [], d = [];
+    for (let k = 0; k <= h; k++) {
+      const a = [], b = [];
+      for (let q = 0; q <= k; q++) { a.push(bit(r0 + k, q0 + q)); b.push(bit(r0 + 2 * h - k, q0 + h - k + q)); }
+      u.push(a); d.push(b);
+    }
+    list.push({ u, d, e, j });
+  }
+  return { S, h, list };
+}
+function razvRombTick(){
+  clearTimeout(razvRombTimer); razvRombTimer = 0;
+  if (!Z.razvRomb || Z.razvRombP) return;
+  razvRombTimer = setTimeout(() => {
+    razvRombTimer = 0;
+    const n = razvRombs().list.length; razvRombSeq = n ? (razvRombSeq + 1) % n : 0;
+    try { renderRazv(); } catch (e) { console.error(e); }
+    try { renderOkt(); } catch (e) { console.error(e); }
+    razvRombTick();
+  }, Math.max(20, +Z.razvRombMs || 400));
+}
+if ($("bRazvRomb")) {
+  const sync = () => {
+    $("bRazvRomb").classList.toggle("on", !!Z.razvRomb);
+    $("razvRombS").value = String([8, 16, 32, 64].includes(+Z.razvRombS) ? +Z.razvRombS : 32);
+    $("razvRombMs").value = String(+Z.razvRombMs || 400);
+    $("bRazvRombP").textContent = Z.razvRombP ? "▶" : "⏸";
+  };
+  $("bRazvRomb").onclick = () => {
+    Z.razvRomb = !Z.razvRomb; razvRombSeq = 0; oktSent = null; save(); sync(); renderRazv(); renderOkt(); razvRombTick();
+    if (Z.razvRomb) { const RB = razvRombs(); say(RB.list.length ? `◇ Ромбы из кадров: ${RB.list.length} ромбов по ${RB.S} строк — листаются по парам граней.` : `◇ Ромбы из кадров: в поле меньше ${RB.S + 1} строк — выберите ромб меньше.`); }
+  };
+  $("razvRombS").onchange = () => { Z.razvRombS = +$("razvRombS").value; razvRombSeq = 0; save(); renderRazv(); renderOkt(); };
+  $("razvRombMs").oninput = () => { Z.razvRombMs = +$("razvRombMs").value; save(); razvRombTick(); };
+  $("bRazvRombP").onclick = () => { Z.razvRombP = !Z.razvRombP; save(); sync(); razvRombTick(); };
+  sync(); razvRombTick();
+}
 /* v0.409, «клик вне поля окна — скролл листает окна». Активное окно — то, в котором последний раз нажали мышь (zActiveWin); нажали вне
    окон — активного нет. Колесо над НЕактивным окном до его холстов и групп не доходит (перехват на входе, stopPropagation) — работает
    обычная прокрутка, стол листается. Над активным — как было (масштаб конуса, пирамиды…). Окно Гранидуса — чужая страница в рамке, колесо

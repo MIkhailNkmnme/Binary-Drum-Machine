@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.439. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.440. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.439</title>
+<title>Zazerkalius — v0.440</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1209,7 +1209,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.439</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.440</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1967,6 +1967,11 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
           <div id="razvThumbs"></div>
           <button id="bRazvOwn" title="＋ Своя развёртка: копия выбранной. На ней щелчок по треугольнику — его зеркала через все три ребра; щелчок у ребра — зеркало через это ребро; правый щелчок — убрать треугольник. Через основание зеркало меняет верх ↔ низ (цвет и биты), через бок — нет">＋ своя</button>
           <button id="bRazvLbl" title="Подписи граней (U0–U3, D0–D3) и вершин T, B. Горит — видны">🏷 подписи</button>
+          <!-- v0.440: ◇ ромбы из кадров — ромбы Аниматрицы на парах граней Ui + Di, листаются; то же уходит в 3D Гранидуса -->
+          <button id="bRazvRomb" title="◇ Ромбы из кадров: поле строк режется на ромбы (как ◇ сетка в Code), каждый ромб — по горизонтальной диагонали: верх — на верхнюю грань Ui, низ — на нижнюю Di; пары граней берут ромбы подряд, и ромбы листаются как кадры. При идущей Аниматрице ромбы меняются вместе с волной. То же — на 3D-теле в окне «◆ Гранидус» (при «⇄ строки → грани»). Горит — включено">◇ ромбы из кадров</button>
+          <select id="razvRombS" title="Высота ромба в строках поля (как шаг ◇ сетки в Code); у половины — вдвое меньше рядов + 1"><option value="8">ромб 8</option><option value="16">ромб 16</option><option value="32">ромб 32</option><option value="64">ромб 64</option></select>
+          <label class="dim" title="Скорость: мс на кадр (сдвиг ромбов на один)">⏱ <input id="razvRombMs" type="range" min="30" max="3000" step="10"></label>
+          <button id="bRazvRombP" title="Пауза / дальше">⏸</button>
           <button id="bRazvAx" title="Оси на развёртке: у октаэдра две грани с общим ребром — ромб, его дальние углы — противоположные вершины, концы оси; штрих через каждую склейку. Верх–Низ — светлая, E0–E2 — розовая, E1–E3 — зелёная; каждая вершина помечена точкой цвета своей оси. Горит — видны">✛ оси</button>
         </div>
         <canvas id="razvCv"></canvas>
@@ -2122,8 +2127,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0439"></script>
-<script src="zz-ui.js?v=0439"></script>
+<script src="zz-core.js?v=0440"></script>
+<script src="zz-ui.js?v=0440"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

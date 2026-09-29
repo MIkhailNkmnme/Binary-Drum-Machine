@@ -1,4 +1,4 @@
-<!-- Zerkalius Гранидус — v0.068. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Гранидус — v0.069. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Гранидус — v0.068</title>
+<title>Zerkalius Гранидус — v0.069</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -299,7 +299,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.068</div>
+<div id="ver">v0.069</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -807,6 +807,7 @@ let ROWS = 13, DIG = 13, SPEED = 42, GLOW = 0;   // v0.023: свечение п�
    Значение ползунка не трогаем: вернулись к 32 и ниже — свечение снова то, что было выставлено. */
 const GLOW_ROWS = 32;
 let bits = [];
+let botBits = null;   // v0.069: свои биты нижних граней (ромбы из кадров Zazerkalius); null — низ = инверсия верха
 /* СВОИ БИТЫ (v0.020, запрос пользователя: «нужна возможность свои биты вписывать»).
    myBits — вписанная строка из одних 0 и 1; пустая — картина случайная, как было всегда.
    Раскладка — по порядку чтения: грань за гранью (0…3), в грани ряд за рядом от вершины, в ряду слева
@@ -842,7 +843,7 @@ let stepNo = 0, stillPct = null;
    нулю, счётчик снова покажет 0, но память-то набрана — гасить её в этот момент было бы враньём. */
 let memOn = false;
 function rollBits(){
-  bits = []; keep = []; dotVer++;
+  bits = []; keep = []; botBits = null; dotVer++;   // v0.069: новая картина — низ снова зеркало верха
   const src = myBits;   // v0.020: вписанные свои биты; пусто — случайные
   let i = 0;
   for (let s = 0; s < NB; s++) {   // v0.034: слотов столько, сколько граней у основания
@@ -1024,7 +1025,7 @@ function dotTexture(f, cUp, cDn, cMem, cPin){
   const col = new Uint32Array(N * (N + 1) / 2);
   const half = f.up ? CU : CD, face = bits[f.slot], mem = keep[f.slot];
   for (let r = 0, i = 0; r < N; r++) for (let k = 0; k <= r; k++, i++) {
-    const val = f.up ? face[r][k] : (face[r][k] ^ 1);
+    const val = f.up ? face[r][k] : (botBits ? botBits[f.slot][r][k] : (face[r][k] ^ 1));   // v0.069
     let c = bitCol ? (val ? C1 : C0) : half;
     if (!bitCol && !val) c = [c[0] * DOT_DIM | 0, c[1] * DOT_DIM | 0, c[2] * DOT_DIM | 0];
     let al = 255;
@@ -1215,7 +1216,7 @@ const sndOn = new Set(), headPos = new Map();
 const sndHz = (deg) => { const P = [0, 2, 4, 7, 9], o = Math.floor(deg / 5); return 110 * Math.pow(2, (P[deg % 5] + 12 * o) / 12); };
 function noteSeq(n){   // что читает нота n: { len, at(i) → { f, r, k, val } }
   const FL = noteFaces(), T = ROWS * (ROWS + 1) / 2;
-  const valOf = (f, r, k) => { const raw = bits[f.slot] && bits[f.slot][r] ? bits[f.slot][r][k] : 0; return f.up ? raw : (raw ^ 1); };
+  const valOf = (f, r, k) => { const raw = bits[f.slot] && bits[f.slot][r] ? bits[f.slot][r][k] : 0; return f.up ? raw : (botBits && botBits[f.slot] && botBits[f.slot][r] ? botBits[f.slot][r][k] : (raw ^ 1)); };   // v0.069
   if (n < FL.length) { const f = FL[n];
     return { len: T, at: (i) => { i = ((i % T) + T) % T; const r = Math.floor((Math.sqrt(8 * i + 1) - 1) / 2), k = i - r * (r + 1) / 2; return { f, r, k, val: valOf(f, r, k) }; } }; }
   const tops = FTOP.slice(0, NB).filter(Boolean), L = tops.length * ROWS;
@@ -1480,7 +1481,7 @@ function draw(){
       for (let r = 0; r < ROWS; r++) {
         for (let k = 0; k <= r; k++) {
           const raw = bits[f.slot][r][k];
-          const val = f.up ? raw : (raw ^ 1);
+          const val = f.up ? raw : (botBits ? botBits[f.slot][r][k] : (raw ^ 1));   // v0.069
           const rm = bitCol ? (val ? ramp1 : ramp0) : rmp;   // v0.026: цвет по значению или по половине
           const p = project(bitPoint(f, r, k));
           const size = DIG * p.k * zoom * (Math.min(W, HGT) / 700);
@@ -2617,8 +2618,29 @@ function zzRows(rows){
   rollBits(); if (typeof unpinAll === "function") unpinAll(); syncUI();
   myArea.value = L.slice(0, R).join("\n"); myInfoUpd(); save();
 }
+/* v0.069: РОМБЫ ИЗ КАДРОВ ИЗ ZAZERKALIUS («натянуть Аниматрицу на ТриРамидус — ромбы из кадров»). Окно шлёт
+   { type: "zz-rhombs", h, list: [{ u, d }, …] }: ромб поля высотой 2h, разрезанный по горизонтальной диагонали, — u: верхняя
+   половина (ряд k от вершины T, k + 1 бит), d: нижняя (ряд k от вершины B, место k — от того же угла экватора, что у верхней).
+   Пара граней slot получает ромб list[slot % длина]. Нижняя грань берёт СВОИ биты (botBits), а не инверсию верхней: у ромба
+   низ — настоящее продолжение картины. Любая новая картина (rollBits: свои биты, строки, ↻) снимает botBits — низ снова зеркало. */
+function zzRhombs(list, h){
+  if (!Array.isArray(list) || !list.length) return;
+  const R = Math.max(2, Math.min(ROWS_MAX, (h | 0) + 1));
+  const fit = (rows) => { const out = []; for (let r = 0; r < R; r++) { const a = []; for (let k = 0; k <= r; k++) a.push(rows && rows[r] && rows[r][k] ? 1 : 0); out.push(a); } return out; };
+  const same = ROWS === R && bits.length === NB && botBits;
+  if (!same) {
+    ROWS = R; sRows.value = R; vRows.textContent = R;
+    myBits = ""; mySame = false; sierp = false;
+    rollBits(); if (typeof unpinAll === "function") unpinAll();
+  }
+  const top = [], bot = [];
+  for (let s = 0; s < NB; s++) { const p = list[s % list.length] || {}; top.push(fit(p.u)); bot.push(fit(p.d)); }
+  bits = top; botBits = bot; dotVer++;
+  if (!same) syncUI();
+}
 if (ZZ_EMB) {
   window.addEventListener("message", (e) => { if (e.source === window.parent && e.data && e.data.type === "zz-rows") zzRows(e.data.rows); });
+  window.addEventListener("message", (e) => { if (e.source === window.parent && e.data && e.data.type === "zz-rhombs") zzRhombs(e.data.list, e.data.h); });   // v0.069
   try { window.parent.postMessage({ type: "zz-okt-ready" }, "*"); } catch (e) {}
 }
 /* ═══ ГОРЯЧИЕ КЛАВИШИ (v0.006, запрос пользователя) ═══════════════════════════════════════════
