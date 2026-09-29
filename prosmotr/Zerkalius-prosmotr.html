@@ -1,4 +1,4 @@
-<!-- Zerkalius Просмотр GIF — v0.005. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
+<!-- Zerkalius Просмотр GIF — v0.006. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
      на страницу), листать по кадру и через 2 / 4 / 8, играть с любой скоростью, отметить участок «с — по» и положить в склейку;
      участки — из разных GIF, в любом порядке; склейку посмотреть и скачать одним GIF. Всё в самой странице, без библиотек:
      свой разбор GIF (LZW, палитры, прозрачность, способы смены кадра, чересстрочность) и своя сборка (тот же LZW, что в Code).
@@ -14,13 +14,16 @@
      v0.004: «пауза по щелчку»: щелчок по картинке (без протяжки — протяжка по-прежнему двигает вид) — пауза / играть, как пробел.
      v0.005: «у GIF общая сцена — надо строчную прокрутку вверх-вниз, туда-сюда, на огромных скоростях; задавать шаг прыжков
              размерами ромбов или треугольников». Сцена (GIF или раскладка) крутится по кругу, как барабан строк: ↓ ↑ или ↕
-             туда-сюда с размахом; прыжок — 1 … 512 строк, строка — сколько-то px; скорость — до 5000 прыжков в секунду. -->
+             туда-сюда с размахом; прыжок — 1 … 512 строк, строка — сколько-то px; скорость — до 5000 прыжков в секунду.
+     v0.006: «надо постолбцовую ещё свёртку, нарезку», «если не ромбовую…» — ось прокрутки: по строкам, по столбцам, по
+             диагоналям ↘ ↙ (вдоль рёбер ромбов); нарезка — полосы шириной в прыжок поперёк движения: целиком, встречно
+             (соседние в разные стороны), лесенкой (каждая следующая — на прыжок больше). -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Просмотр GIF — v0.005</title>
+<title>Zerkalius Просмотр GIF — v0.006</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -67,7 +70,7 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.005</span></h1>
+    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.006</span></h1>
     <div class="bar">
       <button id="openBtn" title="Открыть один или несколько GIF (их можно и просто бросить на страницу)">📂 Открыть GIF</button>
       <input type="file" id="file" accept="image/gif,.gif" multiple>
@@ -133,10 +136,21 @@
     <!-- v0.005: строчная прокрутка сцены по кругу -->
     <div class="bar">
       <button id="scrBtn" title="Прокрутка сцены по кругу — вкл / выкл (кадры при этом играют и листаются как обычно)">⇅ Прокрутка</button>
-      <select id="scrDir" title="Куда крутить">
-        <option value="down" selected>↓ вниз</option>
-        <option value="up">↑ вверх</option>
-        <option value="both">↕ туда-сюда</option>
+      <select id="scrAxis" title="Ось прокрутки: по строкам, по столбцам или по диагонали — вдоль рёбер ромбов">
+        <option value="rows" selected>≡ по строкам</option>
+        <option value="cols">‖ по столбцам</option>
+        <option value="diagR">↘ по диагонали</option>
+        <option value="diagL">↙ по диагонали</option>
+      </select>
+      <select id="scrDir" title="Куда крутить: вперёд (вниз / вправо / по диагонали вниз), назад или туда-сюда">
+        <option value="down" selected>→ вперёд</option>
+        <option value="up">← назад</option>
+        <option value="both">⇄ туда-сюда</option>
+      </select>
+      <select id="scrCut" title="Нарезка: полосы шириной в прыжок, поперёк движения">
+        <option value="all" selected>целиком</option>
+        <option value="counter">полосы встречно</option>
+        <option value="stairs">полосы лесенкой</option>
       </select>
       <select id="scrStep" title="Прыжок — сколько строк: размером ромба или треугольника">
         <option value="1">прыжок 1 строка</option>
@@ -380,18 +394,33 @@ function blit() {
   const z = zoomNow(W, H), CW = Math.max(1, Math.round(W * z)), CH = Math.max(1, Math.round(H * z));
   if (cv.width !== CW || cv.height !== CH) { cv.width = CW; cv.height = CH; }
   ctx.imageSmoothingEnabled = false;
-  const sh = ((Math.round(S.shift) % H) + H) % H;
-  if (!sh) ctx.drawImage(off, 0, 0, CW, CH);
-  else {
-    const y1 = Math.round((H - sh) * CH / H);
-    ctx.drawImage(off, 0, sh, W, H - sh, 0, 0, CW, y1);
-    ctx.drawImage(off, 0, 0, W, sh, 0, y1, CW, CH - y1);
+  /* v0.006: ось и нарезка. Точка экрана (x, y) показывает точку сцены (x + sx, y + sy) по кругу; у полосы k свой сдвиг —
+     сдвиг × множитель (целиком 1, встречно ±1, лесенкой k + 1) × направление оси. Полосы режутся поперёк движения:
+     по столбцам — горизонтальными лентами, иначе — вертикальными. Каждая полоса — до четырёх кусков сцены. */
+  const ax = $('scrAxis').value, cut = $('scrCut').value;
+  const u = { rows: [0, 1], cols: [1, 0], diagR: [1, 1], diagL: [-1, 1] }[ax] || [0, 1];
+  const md = (v, m) => ((v % m) + m) % m, kx = CW / W, ky = CH / H;
+  const split = (a, len, sh, M) => { const s0 = md(a + sh, M), l1 = Math.min(len, M - s0); return l1 >= len ? [[a, s0, len]] : [[a, s0, l1], [a + l1, 0, len - l1]]; };
+  const piece = (rx, ry, rw, rh, sx, sy) => {
+    for (const [dx, sx0, lw] of split(rx, rw, sx, W)) for (const [dy, sy0, lh] of split(ry, rh, sy, H)) {
+      const X0 = Math.round(dx * kx), X1 = Math.round((dx + lw) * kx), Y0 = Math.round(dy * ky), Y1 = Math.round((dy + lh) * ky);
+      if (X1 > X0 && Y1 > Y0) ctx.drawImage(off, sx0, sy0, lw, lh, X0, Y0, X1 - X0, Y1 - Y0);
+    }
+  };
+  const band = Math.max(1, jumpPx()), acrossX = ax !== 'cols', L = acrossX ? W : H;
+  const n = cut === 'all' ? 1 : Math.max(1, Math.ceil(L / band));
+  for (let k = 0; k < n; k++) {
+    const f = cut === 'all' ? 1 : cut === 'counter' ? (k % 2 ? -1 : 1) : k + 1;
+    const sx = Math.round(S.shift * f * u[0]), sy = Math.round(S.shift * f * u[1]);
+    if (n === 1) piece(0, 0, W, H, sx, sy);
+    else if (acrossX) piece(k * band, 0, Math.min(band, W - k * band), H, sx, sy);
+    else piece(0, k * band, W, Math.min(band, H - k * band), sx, sy);
   }
   $('pos').value = S.i;
   $('num').textContent = (S.label || '') + (S.zoom === 'fit' ? '' : ' · ×' + (+z.toFixed(2)));
   { const nm = $('numName'), nt = S.nameTxt || ''; if (nm && nm.textContent !== nt) { nm.textContent = nt; nm.title = nt; } }
-  const px = Math.max(1, parseInt($('scrPx').value, 10) || 1);
-  $('scrVal').textContent = 'сдвиг ' + Math.round(sh / px) + ' стр.';
+  const px = Math.max(1, parseInt($('scrPx').value, 10) || 1), LL = ax === 'cols' ? W : H;
+  $('scrVal').textContent = 'сдвиг ' + Math.round(md(-S.shift, LL) / px) + (ax === 'cols' ? ' столб.' : ' стр.');
 }
 function fitZoom(W, H) { const box = $('view').getBoundingClientRect(); return Math.max(0.05, Math.min((box.width - 12) / W, (box.height - 12) / H)); }
 function zoomNow(W, H) { return S.zoom === 'fit' ? fitZoom(W, H) : S.zoom; }
@@ -426,7 +455,8 @@ const scrSpeed = () => Math.round(Math.pow(5000, (parseInt($('scrSpeed').value, 
 const jumpPx = () => (parseInt($('scrStep').value, 10) || 1) * Math.max(1, parseInt($('scrPx').value, 10) || 1);
 function jump(n) {   // n прыжков; + — картинка вниз
   if (!n || !off.height) return;
-  const H = off.height; S.shift = (((S.shift - n * jumpPx()) % H) + H) % H;
+  S.shift -= n * jumpPx();   // v0.006: без свёртки по модулю — у полос свой множитель, каждая сворачивается сама
+  if (Math.abs(S.shift) > 1e12) S.shift = 0;
 }
 function scrTick(t) {
   if (!S.scr) return;
@@ -455,6 +485,8 @@ showSpeed();
 $('scrSpeed').addEventListener('input', showSpeed);
 $('scrBtn').addEventListener('click', () => scrOn(!S.scr));
 $('scrDir').addEventListener('change', () => { S.scrN = 0; S.scrDir = 1; });
+$('scrAxis').addEventListener('change', () => { S.shift = 0; S.scrN = 0; S.scrDir = 1; if (SEQ.length) blit(); });   // v0.006
+$('scrCut').addEventListener('change', () => { if (SEQ.length) blit(); });
 $('scrUpBtn').addEventListener('click', () => { jump(-1); if (SEQ.length) blit(); });
 $('scrDnBtn').addEventListener('click', () => { jump(1); if (SEQ.length) blit(); });
 $('scrZeroBtn').addEventListener('click', () => { S.shift = 0; S.scrN = 0; S.scrDir = 1; if (SEQ.length) blit(); });
