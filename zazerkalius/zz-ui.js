@@ -5051,17 +5051,40 @@ function renderTri(){
   const cs = getComputedStyle(document.documentElement), line = cs.getPropertyValue("--line").trim() || "#555", txt = cs.getPropertyValue("--txt").trim() || "#ddd";
   const num = Z.triNum !== false && s >= 22;
   g.lineJoin = "round"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `${Math.max(9, Math.min(14, s * 0.26))}px Segoe UI, Arial`;
+  /* v0.436, «обводка и фон — в построении, а не только в результате; и там удалять линии обводки; обводка по группам — все касающиеся
+     одного цвета треугольники обводит только граничной рамкой»: фон и обводка (цвет, режим) — общие для сетки и живого вида. Пустые
+     треугольники — бледной сеткой всегда (иначе не видно, куда щёлкать); закрашенные — заливка без своих линий (шов в цвет), обводка — по режиму:
+     ▵ каждый — все рёбра, ⬡ по группам — только рёбра, за которыми другой цвет или пусто, без обводки — никаких. Пунктир средней черты — только в ▵ */
+  cv.style.background = Z.triBg || "";
+  const mode = Z.triLnMode == null ? 1 : Z.triLnMode, K = (r, c) => { const k = Z.triCells[r + "_" + c] | 0; return TRI_COL[k] ? k : 0; };
+  const tri = (P) => { g.beginPath(); g.moveTo(P[0][0], P[0][1]); g.lineTo(P[1][0], P[1][1]); g.lineTo(P[2][0], P[2][1]); g.closePath(); };
   for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) {
-    const P = triPts(r, c), k = Z.triCells[r + "_" + c];
-    g.beginPath(); g.moveTo(P[0][0], P[0][1]); g.lineTo(P[1][0], P[1][1]); g.lineTo(P[2][0], P[2][1]); g.closePath();
-    if (k && TRI_COL[k]) { g.fillStyle = TRI_COL[k][0]; g.globalAlpha = 0.85; g.fill(); g.globalAlpha = 1; }
-    g.strokeStyle = line; g.lineWidth = 1; g.stroke();
-    if (num) { g.fillStyle = k ? "#0e1116" : txt; g.globalAlpha = k ? 0.9 : 0.45; g.fillText(r * Z.triN + c + 1, (P[0][0] + P[1][0] + P[2][0]) / 3, (P[0][1] + P[1][1] + P[2][1]) / 3); g.globalAlpha = 1; }
+    const P = triPts(r, c), k = K(r, c); tri(P);
+    if (k) { g.fillStyle = TRI_COL[k][0]; g.fill(); g.strokeStyle = TRI_COL[k][0]; g.lineWidth = 0.6; g.stroke(); }
+    else { g.strokeStyle = line; g.globalAlpha = 0.5; g.lineWidth = 1; g.stroke(); g.globalAlpha = 1; }
   }
-  // средняя черта каждой пары рядов (кнопка — два ряда) — пунктиром
-  g.strokeStyle = txt; g.globalAlpha = 0.25; g.setLineDash([4, 4]);
-  for (let r = 1; r < Z.triR; r += 2) { const y = pad + r * hh; g.beginPath(); g.moveTo(pad, y); g.lineTo(pad + (Z.triN + 1) * s / 2, y); g.stroke(); }
-  g.setLineDash([]); g.globalAlpha = 1;
+  if (mode) {
+    g.strokeStyle = Z.triLn || line; g.lineWidth = mode === 2 ? 2 : 1; g.lineCap = "round"; g.beginPath();
+    for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) {
+      const k = K(r, c); if (!k) continue;
+      const P = triPts(r, c), base = (r + c) % 2 === 0 ? [r + 1, c] : [r - 1, c];
+      for (const [a, b, n] of [[0, 1, base], [0, 2, [r, c - 1]], [1, 2, [r, c + 1]]]) {
+        if (mode === 2 && n[0] >= 0 && n[0] < Z.triR && n[1] >= 0 && n[1] < Z.triN && K(n[0], n[1]) === k) continue;
+        g.moveTo(P[a][0], P[a][1]); g.lineTo(P[b][0], P[b][1]);
+      }
+    }
+    g.stroke(); g.lineWidth = 1;
+  }
+  if (num) for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) {
+    const P = triPts(r, c), k = K(r, c);
+    g.fillStyle = k ? "#0e1116" : txt; g.globalAlpha = k ? 0.9 : 0.45; g.fillText(r * Z.triN + c + 1, (P[0][0] + P[1][0] + P[2][0]) / 3, (P[0][1] + P[1][1] + P[2][1]) / 3); g.globalAlpha = 1;
+  }
+  // средняя черта каждой пары рядов (кнопка — два ряда) — пунктиром; v0.436 — только в режиме «каждый»
+  if (mode === 1) {
+    g.strokeStyle = txt; g.globalAlpha = 0.25; g.setLineDash([4, 4]);
+    for (let r = 1; r < Z.triR; r += 2) { const y = pad + r * hh; g.beginPath(); g.moveTo(pad, y); g.lineTo(pad + (Z.triN + 1) * s / 2, y); g.stroke(); }
+    g.setLineDash([]); g.globalAlpha = 1;
+  }
   { const yb = pad + Z.triR * hh + 7, xc = W / 2; g.strokeStyle = txt; g.globalAlpha = 0.35; g.lineWidth = 2; g.lineCap = "round";   // v0.435: ручка — тянуть ± ряды
     g.beginPath(); g.moveTo(xc - 18, yb - 2); g.lineTo(xc + 18, yb - 2); g.moveTo(xc - 18, yb + 2); g.lineTo(xc + 18, yb + 2); g.stroke(); g.globalAlpha = 1; g.lineWidth = 1; }
   triLive();
@@ -5150,10 +5173,11 @@ if ($("triCv")) {
   dim("triR", "triR", 1, 12); dim("triN", "triN", 1, 99);
   $("bTriNum").onclick = () => { Z.triNum = Z.triNum === false; save(); renderTri(); };
   // v0.434: живой вид — фон, цвет обводки, режим обводки по кругу: каждый треугольник → по группам цветов → без обводки
-  $("triBg").oninput = () => { Z.triBg = $("triBg").value; save(); triLive(); };
-  $("triLn").oninput = () => { Z.triLn = $("triLn").value; if (!(Z.triLnMode > 0) && Z.triLnMode != null) Z.triLnMode = 1; save(); triLive(); };
-  $("bTriLn").onclick = () => { const m = Z.triLnMode == null ? 1 : Z.triLnMode; Z.triLnMode = (m + 1) % 3; save(); triLive(); };
-  $("bTriLiveDef").onclick = () => { Z.triBg = null; Z.triLn = null; Z.triLnMode = 1; save(); triLive(); };
+  // v0.436: фон и обводка — и в сетке построения, поэтому перерисовывается всё (renderTri зовёт и живой вид)
+  $("triBg").oninput = () => { Z.triBg = $("triBg").value; save(); renderTri(); };
+  $("triLn").oninput = () => { Z.triLn = $("triLn").value; if (!(Z.triLnMode > 0) && Z.triLnMode != null) Z.triLnMode = 1; save(); renderTri(); };
+  $("bTriLn").onclick = () => { const m = Z.triLnMode == null ? 1 : Z.triLnMode; Z.triLnMode = (m + 1) % 3; save(); renderTri(); };
+  $("bTriLiveDef").onclick = () => { Z.triBg = null; Z.triLn = null; Z.triLnMode = 1; save(); renderTri(); };
   $("bTriClr").onclick = () => { triState(); Z.triCells = {}; save(); renderTri(); };
   const snap = () => ({ R: Z.triR, N: Z.triN, c: Object.assign({}, Z.triCells) });
   $("bTriNew").onclick = () => { triState(); Z.triScenes.push(snap()); Z.triCur = Z.triScenes.length - 1; save(); renderTri(); say(`△ Сцена ${Z.triCur + 1} сохранена.`); };

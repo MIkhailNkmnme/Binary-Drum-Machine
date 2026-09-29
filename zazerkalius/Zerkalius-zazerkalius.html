@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.435. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.436. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.435</title>
+<title>Zazerkalius — v0.436</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1203,7 +1203,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.435</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.436</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1982,13 +1982,13 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
           <span id="triScenes"></span>
           <button id="bTriCopy" title="Все сцены — текстом в буфер обмена (вставить в сообщение Claude)">⧉ в буфер</button>
         </div>
-        <canvas id="triCv"></canvas>
-        <div class="tools">
-          <label class="dim" title="Фон живого вида (по умолчанию — как у панели групп)">фон <input id="triBg" type="color"></label>
-          <label class="dim" title="Цвет обводки треугольников в живом виде">обводка <input id="triLn" type="color"></label>
-          <button id="bTriLn" title="Обводка треугольников в живом виде. Горит — видна">▵ обводка</button>
+        <div class="tools">   <!-- v0.436: фон и обводка — для сетки построения и живого вида вместе -->
+          <label class="dim" title="Фон сетки и живого вида (по умолчанию — по теме страницы)">фон <input id="triBg" type="color"></label>
+          <label class="dim" title="Цвет обводки закрашенных треугольников — в сетке и в живом виде">обводка <input id="triLn" type="color"></label>
+          <button id="bTriLn" title="Обводка закрашенных треугольников, по кругу: ▵ каждый — все рёбра; ⬡ по группам — только граница каждой группы касающихся треугольников одного цвета; без обводки. Пустые треугольники в сетке — всегда бледной сеткой">▵ обводка</button>
           <button id="bTriLiveDef" title="Фон и обводку — как были (по теме страницы)">↺</button>
         </div>
+        <canvas id="triCv"></canvas>
         <div id="triLive" title="Живьём: как сетка выглядит кнопками — в настоящем размере (высота 24 px); цвета — как у кнопок (серый — обычная, золотой — горящая, красный — стоп)"><canvas data-z="1"></canvas></div>
       </div>
     </section>
@@ -2104,8 +2104,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0435"></script>
-<script src="zz-ui.js?v=0435"></script>
+<script src="zz-core.js?v=0436"></script>
+<script src="zz-ui.js?v=0436"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
