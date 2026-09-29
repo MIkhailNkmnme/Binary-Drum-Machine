@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.420. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.421. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.420</title>
+<title>Zazerkalius — v0.421</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -777,7 +777,12 @@ span.cjoin > button.jz{--rbc:var(--line);--t:6.93px;--l0:0px;--lm:0px;--r0:100%;
   clip-path:polygon(var(--l0) 0,var(--r0) 0,var(--rm) 50%,var(--r0) 100%,var(--l0) 100%,var(--lm) 50%);
   border-left-width:0 !important;border-right-width:0 !important;border-radius:0 !important;padding-left:calc(var(--t) + 2px) !important;padding-right:calc(var(--t) + 2px) !important;
   background-image:var(--g1),var(--g2),var(--g3),var(--g4);background-size:var(--t) 50%;background-position:0 0,0 100%,100% 0,100% 100%;background-repeat:no-repeat}
-span.cjoin > button.jz + button.jz{margin-left:calc(2px - var(--t)) !important}
+/* v0.421, по снимку ряда «Звука» — «без пробелов соедини, различи фоном»: соседняя кнопка заходит ровно на --t (прежде минус 2 px —
+   волосок, он и выемки выглядели пробелами); кнопки различаются фоном — через одну светлее; выключенная в сцепке не прозрачная, а бледная
+   надписью (иначе на её месте — дыра) */
+span.cjoin > button.jz + button.jz{margin-left:calc(-1 * var(--t)) !important}
+span.cjoin > button.jz:nth-child(even){background-color:color-mix(in srgb, var(--panel2) 84%, var(--txt)) !important}
+span.cjoin > button.jz:disabled{opacity:1 !important;color:color-mix(in srgb, var(--txt) 35%, transparent) !important}
 span.cjoin > button.jz:hover{--rbc:var(--acc)}
 span.cjoin > button.jz.on{--rbc:var(--gold)}
 span.cjoin > button.jl-tip{--l0:var(--t);--lm:0px;--g1:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));--g2:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px))}
@@ -1158,7 +1163,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.420</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.421</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2032,8 +2037,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0420"></script>
-<script src="zz-ui.js?v=0420"></script>
+<script src="zz-core.js?v=0421"></script>
+<script src="zz-ui.js?v=0421"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
