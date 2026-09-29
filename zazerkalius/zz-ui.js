@@ -1723,6 +1723,13 @@ function renderCone(){
     }
     g.shadowBlur = 0;
   }
+  if (window.zzMusRay && !Z.cone3d) {   // v0.441: 🎵 головка музыкального лазера — луч из центра до записанной ноты (прошёл все строки — за край), на конце точка
+    const M = window.zzMusRay, a = -Math.PI / 2 + M.a * Math.PI / 180, i = Math.min(M.stop, N);
+    const rs = M.stop < N ? (r0 + i * dr + dr * band / 2) * coneRho(i, a) : r0 + N * dr + dr * 0.5, px = cx + rs * Math.cos(a), py = cy + rs * Math.sin(a);
+    g.save(); g.lineCap = "round"; g.strokeStyle = g.shadowColor = cg; g.shadowBlur = 10 * dpr; g.globalAlpha = 0.85; g.lineWidth = Math.max(1.5 * dpr, Math.min(dr * 0.12, 3 * dpr));
+    g.beginPath(); g.moveTo(cx, cy); g.lineTo(px, py); g.stroke();
+    g.globalAlpha = 1; g.fillStyle = "#fff7d6"; g.beginPath(); g.arc(px, py, Math.max(3 * dpr, Math.min(dr * 0.22, 6 * dpr)), 0, 2 * Math.PI); g.fill(); g.restore();
+  }
   if (fillOn) {   // v0.114: кольцо для заполнения — ячейки пунктиром, заполненные — цветом бита; бит 0 — сверху, как у всех
     const f = fillDraft(), n = f.length, rin = r0 + N * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, rotF = coneFillRot();   // v0.117: крутится со всеми
     const gp = n > 1 && !coneNoGap() && !Z.coneClean ? Math.min(step * 0.1, 1.5 * dpr / Math.max(1, rin)) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216
@@ -4040,6 +4047,67 @@ function setupCone(){
   $("sndVol").value = Z.sndVol ?? 50;
   $("sndVol").oninput = (e) => { Z.sndVol = +e.target.value; if (snd) snd.out.gain.value = Z.sndVol / 100; };
   $("sndVol").onchange = () => save();
+  /* v0.441, «конус — сделай музыкальный инструмент автомузыкальный: лазер — это головка, ходит по кругу, музыкальный режим лазера; на битах
+     ноты, биты сам делает: в 0 стреляет — 0 переворачивается в ноту, след. раз попадает в неё — там уже 1 — нота; нота — в зависимости от
+     строки»: «🎵 музыка» в «Лазере». Головка — луч из центра — ходит по кругу по часовой, за шаг на 1/T круга (T — бит в самой длинной
+     строке; головка — посреди ячейки самого длинного кольца), темп — ♩ «Звука». На каждом шаге луч идёт наружу кольцо за кольцом и в каждом
+     смотрит бит строки под собой: «1» — звучит нота этой строки, луч идёт дальше; «0» — становится «1» (нота записана, золотом), луч
+     здесь стоит. Правило (Z.coneMusRule): «счёт» (по умолчанию) — прозвучавшая «1» снова «0», каждый луч — двоичный счётчик (строка 1 —
+     младший бит): строка 1 звучит через шаг, строка 2 реже… ритм складывается сам, как в драм-машине; «копит» — «1» остаётся, рисунок
+     только растёт. Высота — по строке: строка 1 — ниже всех, дальше вверх по ладу «Звука» (три октавы по кругу), тембр «🎨 разные» — у
+     каждой строки свой, голосов разом не больше 8 (поровну из звучащих), громкость — «Звука». Биты пишутся прямо в строки поля (и в конус);
+     при пуске — точка отмены, ↩ вернёт строки как были. «∅» — все строки в нули той же длины: лазер наберёт ноты с нуля. Луч-часы и
+     солнце при пуске выключаются — у них ячейки колец пустые, а музыке нужны биты. Головка — Z.coneMusK (номер шага), помнится. */
+  let musT = 0, musSaved = 0;
+  const musRule = () => Z.coneMusRule === "keep" ? "keep" : "count";
+  const musUi = () => { const b = $("bConeMus"); if (b) b.classList.toggle("on", !!musT); const r = $("coneMusRule"); if (r) r.value = musRule(); };
+  const musTick = () => {
+    const N = Math.min(Z.rows.length, CONE_MAX), T = coneMaxLen(), k = ((Math.round(Z.coneMusK || 0) % T) + T) % T, a = (k + 0.5) * 360 / T;
+    Z.coneMusK = (k + 1) % T;
+    const on = [], P = [], cnt = musRule() === "count"; let stop = N, ch = false;
+    for (let r = 0; r < N; r++) {
+      const s = Z.rows[r], n = s.length; if (!n) continue;
+      const j = ((Math.floor(a / 360 * n + coneRotOf(r) + 1e-9) % n) + n) % n;
+      if (s[j] === "1") { on.push(r); P.push([r, j, 0]); if (cnt) { Z.rows[r] = s.slice(0, j) + "0" + s.slice(j + 1); ch = true; } }
+      else { Z.rows[r] = s.slice(0, j) + "1" + s.slice(j + 1); ch = true; P.push([r, j, 1]); stop = r; break; }
+    }
+    if (ch) syncLane();
+    if (on.length) {
+      sndCtx(); const sp = Z.sndSp || 6, len = Math.min(0.6, 1.6 / sp), t = snd.ctx.currentTime + 0.01, sc = sndSc(), M = sc.length * 3;
+      const V = on.length > 8 ? Array.from({ length: 8 }, (_, q) => on[Math.round(q * (on.length - 1) / 7)]) : on;
+      V.forEach(r => sndNote(sndHz(sc.length + r % M), t, len, 0.32 / Math.sqrt(V.length), r));
+    }
+    const show = () => { if (!musT) return; window.zzMusRay = { a, stop }; if (ch) renderRows(); else renderCone(); sndMark(P); };   // как у «Звука» (v0.388): картинка — вместе со звуком
+    const L = sndLat(); if (L > 0.015) setTimeout(show, L * 1000); else show();
+    if (Date.now() - musSaved > 5000) { musSaved = Date.now(); save(); }
+  };
+  const musLoop = () => {
+    if (!musT) return;
+    if (Z.rowLock) { musSet(false); say("🎵 Строки заперты — музыка встала."); return; }
+    musTick(); musT = setTimeout(musLoop, 1000 / (Z.sndSp || 6));
+  };
+  const musSet = (on) => {
+    if (on === !!musT) return;
+    if (on) {
+      if (rowsLocked()) return;
+      if (Z.coneSun) $("bConeSun").click();
+      if (Z.coneClock) { const c = $("coneClock"); c.checked = false; c.onchange({ target: c }); }
+      undoPush(undoState()); sndCtx(); musSaved = Date.now(); musT = setTimeout(musLoop, 0);
+      say(`🎵 Музыка лазера: головка идёт по кругу — «1» звучит нотой своей строки, в «0» луч пишет ноту и стоит` + (musRule() === "count" ? "; прозвучавшая «1» снова «0» (счёт)." : "; ноты копятся.") + " Темп, лад, тембр и громкость — в «Звуке». ↩ вернёт строки.");
+    } else { clearTimeout(musT); musT = 0; window.zzMusRay = null; sndMark(null); renderCone(); save(); }
+    musUi();
+  };
+  if ($("bConeMus")) {
+    musUi();
+    $("bConeMus").onclick = () => musSet(!musT);
+    $("coneMusRule").onchange = (e) => { Z.coneMusRule = e.target.value === "keep" ? "keep" : "count"; save();
+      say(Z.coneMusRule === "keep" ? "🎵 Копит: «1» после звука остаётся — рисунок растёт." : "🎵 Счёт: «1» звучит и снова «0» — каждый луч как двоичный счётчик."); };
+    $("bConeMusZero").onclick = () => {
+      try { snapshot(); } catch (err) { if (err.message === "ZZ_LOCK") return; throw err; }
+      Z.rows = Z.rows.map(s => "0".repeat(s.length)); syncLane(); Z.coneMusK = 0; renderAll(); save();
+      say("∅ Все строки — нули той же длины: 🎵 лазер наберёт ноты сам. ↩ вернёт.");
+    };
+  }
   /* v0.235, «подключать надо настройку — звук с компа»: правый щелчок по ⏺ — писать ли вместе с конусом звук ПК (Z.coneRecSnd,
      на кнопке значок ♪). Звук берётся захватом экрана — браузер при старте спросит, что показать: на Windows системный звук
      отдаётся только с «Весь экран» и галкой «Поделиться системным звуком», у вкладки — «звук вкладки». Картинка захвата в
