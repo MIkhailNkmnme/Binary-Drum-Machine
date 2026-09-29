@@ -4117,7 +4117,7 @@ function setupCone(){
         const r = L.r, n = Z.rows[r].length, e = musEdge() ? musGap(n, coneRotOf(r), L.a) : -1, j = e >= 0 ? e : musCell(n, coneRotOf(r), L.a);
         if (Z.rows[r][j] === "1") note(r);
         P.push([r, j, 0]); seg.push([L.a, r, "on"]);
-        coneRot[r] = ((Math.round(coneRot[r] || 0) + 1) % n + n) % n;
+        coneRot[r] = (((coneRot[r] || 0) + 1) % n + n) % n;   // v0.445: без округления — подвинутое до границы кольцо держит её под головкой
         if (++L.c >= n) { L.on = false; busy.delete(r); L.r = r + 1; }
       } else for (let ev = 0; ev < 4; ev++) {   // в пути — наружу до щели или стены
         let r = L.r; while (r < N && (busy.has(r) || !Z.rows[r].length)) r++;
@@ -4134,9 +4134,15 @@ function setupCone(){
           if (write && s[j] === "0") { Z.rows[r] = put(s, j, "1"); ch = true; P.push([r, j, 1]); }
           L.r = r; L.on = true; L.c = 0; busy.add(r); seg.push([L.a, r, "in"]); break;
         }
-        if (musEdge() && s[j] === "0") {   // v0.444: упёрлась в «0» — стоит перед ним (пишет — «0» становится «1»)
+        /* v0.445, по снимку — «всё встало тут»: при «границе» головка перед «0» стояла и писала «1», на следующем шаге эта «1» была стеной —
+           гасла в «0», головка отражалась… и так без конца: у строки 1 из одного бита граница одна, наверху, кольцо не двигается — через
+           центр не проходил никто. Теперь упёрлась в «0» — сама подвигает кольцо, пока граница перед этим битом (против часовой от
+           головки) не встанет под неё, и встаёт на кольцо (пишет — этот «0» становится «1» и звучит первым). «1» — по-прежнему стена. */
+        if (musEdge() && s[j] === "0") {
+          const n = s.length, x = L.a / 360 * n + coneRotOf(r);
+          coneRot[r] = (((coneRot[r] || 0) - (x - Math.floor(x + 1e-9))) % n + n) % n;
           if (write) { Z.rows[r] = put(s, j, "1"); ch = true; P.push([r, j, 1]); }
-          L.r = r; seg.push([L.a, r, "wall"]); break;
+          L.r = r; L.on = true; L.c = 0; busy.add(r); seg.push([L.a, r, "in"]); break;
         }
         if (s[j] === "0") {   // щель — встать на кольцо
           if (write) { Z.rows[r] = put(s, j, "1"); ch = true; P.push([r, j, 1]); }
