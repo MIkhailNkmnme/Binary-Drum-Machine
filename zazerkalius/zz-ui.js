@@ -3892,8 +3892,8 @@ function setupCone(){
       wide(bb, back); wide(bf, !back);
       // v0.427, «стрелка мигать должна фоном»: пока звук играет, фоном мигает стрелка направления (◆ — горит, не мигает)
       if (bb) bb.classList.toggle("run", !!sndT && back); if (bf) bf.classList.toggle("run", !!sndT && !back);
-      if (bb) bb.title = "◀ Назад: стоп — шаг назад; пауза или играет — играть назад. Широкая — направление";
-      if (bf) bf.title = "▶ Вперёд: стоп — шаг вперёд; пауза или играет — играть вперёд. Широкая — направление";
+      if (bb) bb.title = "◀ Назад: стоп — шаг назад; пауза или играет — играть назад. Двойная ◀◀ — направление (играет — мигает)";   // v0.429
+      if (bf) bf.title = "▶ Вперёд: стоп — шаг вперёд; пауза или играет — играть вперёд. Двойная ▶▶ — направление (играет — мигает)";
       if ((bb && bb._jw) || (bf && bf._jw)) { if (bb) bb._jw = 0; if (bf) bf._jw = 0; if (typeof joinTag === "function") joinTag(); } }
     snd2Label();   // v0.337: остановлен — «⁑ авто»
   };
@@ -6865,7 +6865,14 @@ function joinTag(){
         let d = `M0 ${h / 2}H${W.toFixed(2)}`;
         for (let M = x0 - sd; M <= W + sd; M += sd) d += `M${(M - t2).toFixed(2)} 0L${(M + t2).toFixed(2)} ${h}M${(M + t2).toFixed(2)} 0L${(M - t2).toFixed(2)} ${h}`;
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><path d="${d}" stroke="rgba(216,221,232,.2)" stroke-width="1" fill="none"/></svg>`;
-        b.style.setProperty("--lat", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`); }
+        b.style.setProperty("--lat", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
+        /* v0.429, «две стрелки „))“»: у широкой стрелки (5t) — черта по стыку двух шевронов (маска для ::before, см. CSS). ▶ (выемка слева):
+           первый шеврон 0…3t, стык — (2t, 0) → (3t, h/2) → (2t, h); ◀ (остриё слева): стык — (3t, 0) → (2t, h/2) → (3t, h) */
+        if (RH_TRI[b.textContent.trim()] && b.classList.contains("jwide")) {
+          const a = L === "(" ? 3 * t2 : 2 * t2, m = L === "(" ? 2 * t2 : 3 * t2;
+          const dv = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><path d="M${a.toFixed(2)} 0L${m.toFixed(2)} ${h / 2}L${a.toFixed(2)} ${h}" stroke="#000" stroke-width="2" fill="none"/></svg>`;
+          b.style.setProperty("--jdiv", `url("data:image/svg+xml,${encodeURIComponent(dv)}")`);
+        } else b.style.removeProperty("--jdiv"); }
     });
   });
 }

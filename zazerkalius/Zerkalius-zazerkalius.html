@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.428. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.429. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.428</title>
+<title>Zazerkalius — v0.429</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -780,7 +780,8 @@ span.cjoin > button.jz{--rbc:var(--line);--t:6.93px;--l0:0px;--lm:0px;--r0:100%;
 /* v0.421, по снимку ряда «Звука» — «без пробелов соедини, различи фоном»: соседняя кнопка заходит ровно на --t (прежде минус 2 px —
    волосок, он и выемки выглядели пробелами); кнопки различаются фоном — через одну светлее; выключенная в сцепке не прозрачная, а бледная
    надписью (иначе на её месте — дыра) */
-span.cjoin > button.jz + button.jz{margin-left:calc(-1 * var(--t)) !important}
+span.cjoin > button.jz ~ button.jz{margin-left:calc(-1 * var(--t)) !important}   /* v0.429, «убери пробел между левой стрелкой и стопом»: «+» не
+   срабатывал, когда между кнопками спрятанная ♫ (она не .jz) — ◆ не заходила в выемку ◀; «~» — каждая следующая .jz, спрятанные не мешают */
 span.cjoin > button.jz:nth-child(even){background-color:color-mix(in srgb, var(--panel2) 84%, var(--txt)) !important}
 span.cjoin > button.jz:disabled{opacity:1 !important;color:color-mix(in srgb, var(--txt) 35%, transparent) !important}
 /* v0.424, «границы не делай, фоном подсветку меняй»: у кнопок сцепки ни контура, ни скосов — только заливка (через одну темнее / светлее)
@@ -793,6 +794,9 @@ span.cjoin > button.jz.on{background-color:color-mix(in srgb, var(--panel2) 58%,
 span.cjoin > button.jz{position:relative;isolation:isolate}
 @keyframes zRunOv{0%,100%{opacity:.6}50%{opacity:0}}
 span.cjoin > button.jz.run::after{content:"";position:absolute;inset:0;z-index:-1;background:var(--gold);pointer-events:none;animation:zRunOv 1.1s ease-in-out infinite}
+/* v0.429, «стрелка, что нажата последней, — две стрелки „))“, обе мигают фоном»: широкая стрелка направления (5t) — две стрелки по 4
+   треугольника, вторая остриём в выемку первой; между ними черта цветом панели (маска --jdiv, ставит joinTag) — поверх мигания, обе мигают вместе */
+span.cjoin > button.jarrow.jwide::before{content:"";position:absolute;inset:0;z-index:1;background:var(--panel);pointer-events:none;-webkit-mask:var(--jdiv, none) 0 0 / 100% 100% no-repeat;mask:var(--jdiv, none) 0 0 / 100% 100% no-repeat}
 /* v0.425, «( ( (!Стоп) ) )» — «( — стрелка, ! — ромб из 2 треугольников, пробел отделяет кнопки», «плей не нужен», «стоп смещается в сторону
    другой стрелки, а текущая нажатая стрелка расширяется»: ряд «Звука» — ◀ ◆ ▶; ♫ спрятана (в сцепке не считается); ◆ — ромб из двух
    треугольников; стрелка текущего направления — шире (5t вместо 3t), ◆ от этого сдвигается к другой */
@@ -1181,7 +1185,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.428</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.429</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2055,8 +2059,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0428"></script>
-<script src="zz-ui.js?v=0428"></script>
+<script src="zz-core.js?v=0429"></script>
+<script src="zz-ui.js?v=0429"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
