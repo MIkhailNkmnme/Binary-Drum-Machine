@@ -1,4 +1,4 @@
-<!-- Zerkalius Просмотр GIF — v0.004. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
+<!-- Zerkalius Просмотр GIF — v0.005. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
      на страницу), листать по кадру и через 2 / 4 / 8, играть с любой скоростью, отметить участок «с — по» и положить в склейку;
      участки — из разных GIF, в любом порядке; склейку посмотреть и скачать одним GIF. Всё в самой странице, без библиотек:
      свой разбор GIF (LZW, палитры, прозрачность, способы смены кадра, чересстрочность) и своя сборка (тот же LZW, что в Code).
@@ -11,13 +11,16 @@
      v0.003: по снимку «склейка кадр 13 / 64 · Zerkalius-romby-… #49 · 250 мс» — «тут текст прыгает, название файла надо в сторонку»: счётчик
              и имя файла — два поля постоянной ширины; имя (в склейке оно меняется от кадра к кадру) — в своём, бледнее, длинное — с многоточием,
              целиком — в подсказке. Ползунок кадров больше не дёргается.
-     v0.004: «пауза по щелчку»: щелчок по картинке (без протяжки — протяжка по-прежнему двигает вид) — пауза / играть, как пробел. -->
+     v0.004: «пауза по щелчку»: щелчок по картинке (без протяжки — протяжка по-прежнему двигает вид) — пауза / играть, как пробел.
+     v0.005: «у GIF общая сцена — надо строчную прокрутку вверх-вниз, туда-сюда, на огромных скоростях; задавать шаг прыжков
+             размерами ромбов или треугольников». Сцена (GIF или раскладка) крутится по кругу, как барабан строк: ↓ ↑ или ↕
+             туда-сюда с размахом; прыжок — 1 … 512 строк, строка — сколько-то px; скорость — до 5000 прыжков в секунду. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Просмотр GIF — v0.004</title>
+<title>Zerkalius Просмотр GIF — v0.005</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -64,7 +67,7 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.004</span></h1>
+    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.005</span></h1>
     <div class="bar">
       <button id="openBtn" title="Открыть один или несколько GIF (их можно и просто бросить на страницу)">📂 Открыть GIF</button>
       <input type="file" id="file" accept="image/gif,.gif" multiple>
@@ -127,6 +130,35 @@
       <span class="sp"></span>
       <button id="addBtn" title="Положить участок в склейку — с выбранным шагом (Enter)">➕ В склейку</button>
     </div>
+    <!-- v0.005: строчная прокрутка сцены по кругу -->
+    <div class="bar">
+      <button id="scrBtn" title="Прокрутка сцены по кругу — вкл / выкл (кадры при этом играют и листаются как обычно)">⇅ Прокрутка</button>
+      <select id="scrDir" title="Куда крутить">
+        <option value="down" selected>↓ вниз</option>
+        <option value="up">↑ вверх</option>
+        <option value="both">↕ туда-сюда</option>
+      </select>
+      <select id="scrStep" title="Прыжок — сколько строк: размером ромба или треугольника">
+        <option value="1">прыжок 1 строка</option>
+        <option value="2">2 строки</option>
+        <option value="4">4 строки</option>
+        <option value="8" selected>8 — ромб / △ 8</option>
+        <option value="16">16 — ромб / △ 16</option>
+        <option value="32">32 — ромб / △ 32</option>
+        <option value="64">64 — ромб / △ 64</option>
+        <option value="128">128 — ромб / △ 128</option>
+        <option value="256">256 — ромб / △ 256</option>
+        <option value="512">512 — ромб / △ 512</option>
+      </select>
+      <span class="lbl">строка</span><input type="number" id="scrPx" min="1" max="32" step="1" value="1" title="Сколько пикселей GIF в одной строке текста (у GIF из Code клетка бывает 2–4 px)" style="width:46px;"><span class="lbl">px</span>
+      <span class="lbl">размах</span><input type="number" id="scrAmp" min="1" max="4096" step="1" value="8" title="Туда-сюда: сколько прыжков в одну сторону, потом обратно" style="width:56px;">
+      <input type="range" id="scrSpeed" min="0" max="100" value="40" title="Скорость: прыжков в секунду, от 1 до 5000 (вправо — быстрее)" style="width:110px; accent-color:#22d3ee;">
+      <span class="lbl" id="scrSpeedVal" style="min-width:64px;">—</span>
+      <button id="scrUpBtn" class="mini" title="Прыжок вверх вручную (↑)">▲</button>
+      <button id="scrDnBtn" class="mini" title="Прыжок вниз вручную (↓)">▼</button>
+      <button id="scrZeroBtn" class="mini" title="Сдвиг — в ноль">0</button>
+      <span class="sel" id="scrVal">сдвиг 0</span>
+    </div>
   </div>
 
   <div class="panel">
@@ -148,6 +180,7 @@
 
 <script>
 /* ---------- разбор GIF ---------- */
+let GIF_ID = 0;   // v0.005: у каждого открытого GIF свой номер — для кэша картинки сцены
 function lzwDecode(minSize, data, n) {
   const out = new Uint8Array(n), clear = 1 << minSize, eoi = clear + 1;
   const prefix = new Int16Array(4096), suffix = new Uint8Array(4096), first = new Uint8Array(4096), stack = new Uint8Array(4097);
@@ -221,7 +254,7 @@ function parseGif(buf, name) {
     } else break;
   }
   if (!frames.length) throw new Error('в GIF нет кадров');
-  return { name, W, H, cols, frames, delays };
+  return { id: ++GIF_ID, name, W, H, cols, frames, delays };
 }
 
 /* ---------- сборка GIF (тот же LZW, что в Code) ---------- */
@@ -268,7 +301,8 @@ function download(blob, name) { const a = document.createElement('a'); a.href = 
 
 /* ---------- состояние ---------- */
 const $ = id => document.getElementById(id);
-const S = { gifs: [], cur: -1, mont: false, segs: [], i: 0, a: null, b: null, playing: false, rev: false, timer: 0, zoom: 'fit', sel: new Set() };
+const S = { gifs: [], cur: -1, mont: false, segs: [], i: 0, a: null, b: null, playing: false, rev: false, timer: 0, zoom: 'fit', sel: new Set(),
+  shift: 0, scr: false, scrDir: 1, scrN: 0, scrAcc: 0, scrLast: 0, scrRaf: 0, offKey: '' };   // v0.005: shift — сдвиг сцены в px (по кругу)
 const GAP = 4, GAP_COL = [16, 18, 24];   // v0.002: между клетками раскладки — тёмная щель
 const layout = () => $('laySel').value;
 const setList = () => S.gifs.map((_, k) => k).filter(k => S.sel.has(k));
@@ -309,8 +343,13 @@ const cv = $('cv'), ctx = cv.getContext('2d'), off = document.createElement('can
 const lutOf = g => g.lut || (g.lut = Uint32Array.from(g.cols.map(c => (255 << 24) | (c[2] << 16) | (c[1] << 8) | c[0])));
 function draw() {
   const ref = SEQ[S.i];
-  if (!ref) { $('num').textContent = '—'; cv.width = 1; cv.height = 1; return; }
+  if (!ref) { $('num').textContent = '—'; cv.width = 1; cv.height = 1; S.offKey = ''; return; }
   let W, H, label, nameTxt = '';   // v0.003: nameTxt — имя файла (набор) — в своё поле, в стороне от счётчика
+  // v0.005: картинка сцены строится заново, только когда сменился кадр или набор; прокрутка лишь сдвигает её при выводе
+  const gid = k => S.gifs[k] ? S.gifs[k].id : 0;
+  const key = JSON.stringify([ref[0] === -1 ? -1 : gid(ref[0]), ref[1], S.mont, layOn() ? [layout(), $('laySize').value, setList().map(gid)] : 0]);
+  if (key === S.offKey) { blit(); return; }
+  S.offKey = key;
   if (ref[0] === -1) {
     const G = geom(); W = G.W; H = G.H;
     if (off.width !== W || off.height !== H) { off.width = W; off.height = H; }
@@ -332,12 +371,27 @@ function draw() {
     label = (S.mont ? 'склейка ' : '') + 'кадр ' + (S.i + 1) + ' / ' + SEQ.length + ' · ' + g.delays[ref[1]] + ' мс';
     nameTxt = S.mont ? g.name.replace(/\.gif$/i, '') + ' #' + (ref[1] + 1) : '';
   }
+  S.label = label; S.nameTxt = nameTxt;
+  blit();
+}
+// v0.005: вывод на экран — масштаб и сдвиг по кругу (строка shift источника — вверху экрана)
+function blit() {
+  const W = off.width, H = off.height;
   const z = zoomNow(W, H), CW = Math.max(1, Math.round(W * z)), CH = Math.max(1, Math.round(H * z));
   if (cv.width !== CW || cv.height !== CH) { cv.width = CW; cv.height = CH; }
-  ctx.imageSmoothingEnabled = false; ctx.drawImage(off, 0, 0, CW, CH);
+  ctx.imageSmoothingEnabled = false;
+  const sh = ((Math.round(S.shift) % H) + H) % H;
+  if (!sh) ctx.drawImage(off, 0, 0, CW, CH);
+  else {
+    const y1 = Math.round((H - sh) * CH / H);
+    ctx.drawImage(off, 0, sh, W, H - sh, 0, 0, CW, y1);
+    ctx.drawImage(off, 0, 0, W, sh, 0, y1, CW, CH - y1);
+  }
   $('pos').value = S.i;
-  $('num').textContent = label + (S.zoom === 'fit' ? '' : ' · ×' + (+z.toFixed(2)));
-  { const nm = $('numName'); if (nm.textContent !== nameTxt) { nm.textContent = nameTxt; nm.title = nameTxt; } }
+  $('num').textContent = (S.label || '') + (S.zoom === 'fit' ? '' : ' · ×' + (+z.toFixed(2)));
+  { const nm = $('numName'), nt = S.nameTxt || ''; if (nm && nm.textContent !== nt) { nm.textContent = nt; nm.title = nt; } }
+  const px = Math.max(1, parseInt($('scrPx').value, 10) || 1);
+  $('scrVal').textContent = 'сдвиг ' + Math.round(sh / px) + ' стр.';
 }
 function fitZoom(W, H) { const box = $('view').getBoundingClientRect(); return Math.max(0.05, Math.min((box.width - 12) / W, (box.height - 12) / H)); }
 function zoomNow(W, H) { return S.zoom === 'fit' ? fitZoom(W, H) : S.zoom; }
@@ -363,6 +417,48 @@ window.addEventListener('mouseup', e => {   // v0.004: щелчок без пр�
   if (pan && Math.abs(e.clientX - pan.x) + Math.abs(e.clientY - pan.y) < 5 && SEQ.length) play(!S.playing);
   pan = null; view.classList.remove('pan');
 });
+
+/* ---------- строчная прокрутка (v0.005) ----------
+   Сдвиг сцены по кругу, прыжками: прыжок = строк × px на строку. ↓ — картинка едет вниз, ↑ — вверх, ↕ — туда-сюда: размах
+   прыжков в одну сторону, потом обратно. Скорость — прыжков в секунду по степени (1 … 5000); на больших скоростях за один кадр
+   экрана делается сразу много прыжков, картинка выводится раз за кадр. */
+const scrSpeed = () => Math.round(Math.pow(5000, (parseInt($('scrSpeed').value, 10) || 0) / 100));
+const jumpPx = () => (parseInt($('scrStep').value, 10) || 1) * Math.max(1, parseInt($('scrPx').value, 10) || 1);
+function jump(n) {   // n прыжков; + — картинка вниз
+  if (!n || !off.height) return;
+  const H = off.height; S.shift = (((S.shift - n * jumpPx()) % H) + H) % H;
+}
+function scrTick(t) {
+  if (!S.scr) return;
+  const dt = S.scrLast ? Math.min(0.25, (t - S.scrLast) / 1000) : 0; S.scrLast = t;
+  S.scrAcc += dt * scrSpeed();
+  let n = Math.floor(S.scrAcc); S.scrAcc -= n;
+  if (n > 0) {
+    const dir = $('scrDir').value;
+    if (dir === 'both') {
+      const amp = Math.max(1, parseInt($('scrAmp').value, 10) || 1);
+      let moved = 0;
+      while (n > 0) { const k = Math.min(n, amp - S.scrN); moved += k * S.scrDir; S.scrN += k; n -= k; if (S.scrN >= amp) { S.scrN = 0; S.scrDir = -S.scrDir; } }
+      jump(moved);
+    } else jump(dir === 'up' ? -n : n);
+    if (SEQ.length) blit();
+  }
+  S.scrRaf = requestAnimationFrame(scrTick);
+}
+function scrOn(on) {
+  S.scr = on; cancelAnimationFrame(S.scrRaf); S.scrLast = 0; S.scrAcc = 0;
+  $('scrBtn').classList.toggle('on', on);
+  if (on) S.scrRaf = requestAnimationFrame(scrTick);
+}
+const showSpeed = () => { $('scrSpeedVal').textContent = scrSpeed() + ' / с'; };
+showSpeed();
+$('scrSpeed').addEventListener('input', showSpeed);
+$('scrBtn').addEventListener('click', () => scrOn(!S.scr));
+$('scrDir').addEventListener('change', () => { S.scrN = 0; S.scrDir = 1; });
+$('scrUpBtn').addEventListener('click', () => { jump(-1); if (SEQ.length) blit(); });
+$('scrDnBtn').addEventListener('click', () => { jump(1); if (SEQ.length) blit(); });
+$('scrZeroBtn').addEventListener('click', () => { S.shift = 0; S.scrN = 0; S.scrDir = 1; if (SEQ.length) blit(); });
+$('scrPx').addEventListener('input', () => { if (SEQ.length) blit(); });
 
 /* ---------- игра ---------- */
 function play(on) {
@@ -527,6 +623,8 @@ document.addEventListener('keydown', e => {
   else if (k === ']') setAB('b');
   else if (k === 'Enter') addSeg();
   else if (k === '0') { S.zoom = 'fit'; $('zoomSel').value = 'fit'; draw(); }
+  else if (k === 'ArrowUp') { jump(-1); if (SEQ.length) blit(); e.preventDefault(); }   // v0.005: прыжок прокрутки
+  else if (k === 'ArrowDown') { jump(1); if (SEQ.length) blit(); e.preventDefault(); }
 });
 refresh();
 </script>
