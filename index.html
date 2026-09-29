@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.070. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.071. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -85,13 +85,15 @@
      v0.068: «из хаба убери смену языков, пока оставь только рус буквы»: все подписи — русские (и в разметке, чтобы до скрипта не
              мелькал английский), строки больше не переключаются; сбойные полосы остались, без смены языка.
      v0.070: «в черн[овики]» — кнопка «Пирамида» (oktaedr/Zerkalius-piramida.html: сверху 1, под ней 3, 6, 10… — тетраэдры с октаэдрами
-             гранями друг к другу). -->
+             гранями друг к другу).
+     v0.071: «Просмотр GIF» (prosmotr/Zerkalius-prosmotr.html) в «Знаке и записях», за Битмультфильмами: покадровый просмотр
+             GIF, через 2 / 4 / 8, участки и склейка одним GIF. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.070</title>
+    <title>Zerkalius Control Hub — v0.071</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -409,7 +411,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.070</div>
+        <div class="ver">v0.071</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -432,6 +434,8 @@
                 <a href="sravnenie/Zerkalius-sravnenie.html" class="menu-btn draft-btn" data-en="Compare" data-ru="Сравнение">Сравнение</a>
                 <!-- v0.042: Битмультфильмы — из главных кнопок сюда («Битмультфильмы — в Записи») -->
                 <a href="rezultaty/Zerkalius-rezultaty.html" class="menu-btn draft-btn" data-en="Bit Cartoons" data-ru="Битмультфильмы">Битмультфильмы</a>
+                <!-- v0.071: просмотр и склейка GIF (папка prosmotr\), 2026-09-29 -->
+                <a href="prosmotr/Zerkalius-prosmotr.html" class="menu-btn draft-btn" data-en="GIF Viewer" data-ru="Просмотр GIF">Просмотр GIF</a>
             </div>
         </div>
 

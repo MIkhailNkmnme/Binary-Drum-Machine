@@ -21,7 +21,7 @@
     const depth = location.pathname.replace(/\/[^/]*$/, '').split('/').filter(Boolean).length;
     // На GitHub Pages проект лежит в корне домена, поэтому считаем от текущей папки:
     // в корне это index.html, во вложенной папке — на уровень выше.
-    const up = depth > 0 && /\/(fold|fold-layers|oktaedr|zazerkalius|lively|oboi|issledovanie|rezultaty|sravnenie)\//.test(location.pathname) ? '../' : '';
+    const up = depth > 0 && /\/(fold|fold-layers|oktaedr|zazerkalius|lively|oboi|issledovanie|rezultaty|sravnenie|prosmotr)\//.test(location.pathname) ? '../' : '';
     const href = up + 'index.html', logo = up + 'oktaedr/zerkalius-mark.svg';
 
     function favicon() {
