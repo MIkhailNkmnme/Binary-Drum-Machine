@@ -5062,6 +5062,31 @@ function renderTri(){
   g.strokeStyle = txt; g.globalAlpha = 0.25; g.setLineDash([4, 4]);
   for (let r = 1; r < Z.triR; r += 2) { const y = pad + r * hh; g.beginPath(); g.moveTo(pad, y); g.lineTo(pad + (Z.triN + 1) * s / 2, y); g.stroke(); }
   g.setLineDash([]); g.globalAlpha = 1;
+  triLive();
+}
+/* v0.433, «можно сразу вживую смотреть, как будет выглядеть?»: та же сетка кнопками — высота двух рядов 24 px (1:1) и 48 (×2), фон — панель
+   групп, пустые треугольники — фон. Цвета — как у кнопок сцепки: серый — светлая кнопка (panel2 + 16% текста), золотой — горящая (+42% золота),
+   красный — стоп (+60% красного), прочие — +42% своего; внутри закрашенных — бледная сетка, как в кнопках (rgba .2) */
+function triRGB(c){ const g = triRGB.g || (triRGB.g = document.createElement("canvas").getContext("2d")); g.fillStyle = "#000"; g.fillStyle = c; const v = g.fillStyle; if (v[0] === "#") return [1, 3, 5].map(i => parseInt(v.slice(i, i + 2), 16)); const m = v.match(/[\d.]+/g) || [0, 0, 0]; return m.slice(0, 3).map(Number); }
+function triLive(){
+  const box = $("triLive"); if (!box || !winOpen("w-tri")) return;
+  const cs = getComputedStyle(document.documentElement), V = (n, d) => cs.getPropertyValue(n).trim() || d;
+  const p2 = triRGB(V("--panel2", "#1c2230")), mix = (c, a) => { const q = triRGB(c); return `rgb(${p2.map((x, i) => Math.round(x + (q[i] - x) * a)).join(",")})`; };
+  const txt = V("--txt", "#e6edf3"), REAL = { 1: mix(txt, 0.16), 2: mix(V("--gold", "#ffd166"), 0.42), 3: mix("#e5484d", 0.6), 8: mix(txt, 0.7) };
+  const col = (k) => REAL[k] || mix(TRI_COL[k][0], 0.42), dpr = window.devicePixelRatio || 1;
+  box.querySelectorAll("canvas").forEach(cv => {
+    const z = +cv.dataset.z || 1, s = 24 * z / Math.sqrt(3), hh = 12 * z, pad = 4 * z, t = s / 2;
+    const W = Math.ceil(2 * pad + (Z.triN + 1) * t), H = Math.ceil(2 * pad + Z.triR * hh);
+    cv.style.width = W + "px"; cv.style.height = H + "px"; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+    for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) {
+      const k = Z.triCells[r + "_" + c]; if (!k || !TRI_COL[k]) continue;
+      const x = pad + c * t, y0 = pad + r * hh, y1 = y0 + hh, P = (r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + s, y0], [x + t, y1]];
+      g.beginPath(); g.moveTo(P[0][0], P[0][1]); g.lineTo(P[1][0], P[1][1]); g.lineTo(P[2][0], P[2][1]); g.closePath();
+      g.fillStyle = col(k); g.fill(); g.strokeStyle = col(k); g.lineWidth = 0.6; g.stroke();   // шов в цвет — без просветов между треугольниками
+      g.strokeStyle = "rgba(216,221,232,.2)"; g.lineWidth = 1; g.stroke();
+    }
+  });
 }
 if ($("triCv")) {
   const cv = $("triCv"); let paint = -1;
