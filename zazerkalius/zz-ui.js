@@ -6786,12 +6786,20 @@ function cgrpCols(){   // v0.183: у каждой группы — столбц�
    Ширина — вычисленная, а не измеренная: у спрятанной до поры кнопки (только для 3D и т.п.) она та же, и форма у неё сразу своя.
    Стрелки ползунков (.zerk-arrow) не трогаются. */
 const RH_TRI = { "◀": "l", "◄": "l", "▶": "r", "►": "r", "▲": "u", "▼": "d" };
+/* v0.416, «цельные треугольники»: формы — из целых равносторонних треугольников. Высота кнопки h — два ряда по h / 2, сторона s = h / √3,
+   --t = s / 2 (глубина острия 120°). Ромб-кнопка — k = ⌊w / s⌋ треугольников по средней черте, поля --m = (w − k·s) / 2; стрелка ◀ ▶ —
+   шеврон шириной 3t (--m = (w − 3t) / 2), ▲ ▼ — шириной h и высотой 3t (--m = (w − h) / 2, --my = (h − 3t) / 2). */
 function rhombTag(){
   document.querySelectorAll("#w-cone .tools .cgb button, #paneGrp .cgb button").forEach(b => {
     if (b.classList.contains("zerk-arrow")) return;
-    const ar = RH_TRI[b.textContent.trim()], w = parseFloat(getComputedStyle(b).width);
-    b.classList.toggle("rh1", !ar && w >= 23.5);
+    const ar = RH_TRI[b.textContent.trim()], cs = getComputedStyle(b), w = parseFloat(cs.width) || 0, h = parseFloat(cs.height) || 24;
+    const sd = h / Math.sqrt(3), t = sd / 2, px = (v) => Math.max(0, v).toFixed(2) + "px";
+    b.classList.toggle("rh1", !ar && w >= sd);
     for (const k of ["l", "r", "u", "d"]) b.classList.toggle("tri-" + k, ar === k);
+    b.style.setProperty("--t", px(t)); b.style.setProperty("--h2", px(h / 2));
+    if (ar === "l" || ar === "r") b.style.setProperty("--m", px((w - 3 * t) / 2));
+    else if (ar) { b.style.setProperty("--m", px((w - h) / 2)); b.style.setProperty("--my", px((h - 3 * t) / 2)); }
+    else { const k = Math.max(1, Math.floor((w + 0.01) / sd)); b.style.setProperty("--m", px((w - k * sd) / 2)); }
   });
 }
 window.addEventListener("load", () => setTimeout(rhombTag, 0));

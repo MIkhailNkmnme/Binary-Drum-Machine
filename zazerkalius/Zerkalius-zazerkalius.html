@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.415. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.416. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.415</title>
+<title>Zazerkalius — v0.416</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -748,12 +748,13 @@ label.pcol > span{font-size:11px;color:var(--dim)} label.pcol > input[type=color
    .rh1) — вытянутым ромбом: верх и низ ровные, на концах — равнобедренные треугольники с вершиной посередине высоты (глубина 12 px — у кнопки
    в 24 px это прямой угол). Нажимается только ромб (clip-path). Рамка скосов — четыре диагонали фоном (цвет --rbc: как рамка — обычная,
    наведение сиреневое, включённая золотая), верх и низ — своя рамка кнопки. Полкнопки-значки (.ib) и кнопки в 2 и больше — как были */
-button.rh1{--rbc:var(--line);clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%);border-left-width:0 !important;border-right-width:0 !important;border-radius:0 !important;padding-left:10px !important;padding-right:10px !important;
-  background-image:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),
-    linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),
-    linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),
-    linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));
-  background-size:12px 50%;background-position:0 0,0 100%,100% 0,100% 100%;background-repeat:no-repeat}
+/* v0.416, по снимку развёртки — «кнопки собирать из таких, края кнопок такие же», «скосы под 120, остриё тупое, 120», «цельные треугольники»:
+   кнопка — полоса из ЦЕЛЫХ равносторонних треугольников в два ряда по полвысоты (сторона s = h / √3, ≈ 13,9 px при 24): верхний ряд
+   ▲▼▲…▲, нижний — зеркально; на концах остриё 120°, все углы 120°. Длина — сколько целых треугольников влезает в ширину кнопки (k · s),
+   по центру; --m — поле с каждой стороны, --t = s / 2 — глубина острия (ставит rhombTag). Прежде (v0.401) — острия 90°, глубина 12 px */
+button.rh1{--rbc:var(--line);--m:0px;--t:6.93px;clip-path:polygon(calc(var(--m) + var(--t)) 0,calc(100% - var(--m) - var(--t)) 0,calc(100% - var(--m)) 50%,calc(100% - var(--m) - var(--t)) 100%,calc(var(--m) + var(--t)) 100%,var(--m) 50%);border-left-width:0 !important;border-right-width:0 !important;border-radius:0 !important;padding-left:8px !important;padding-right:8px !important;
+  background-image:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));
+  background-size:var(--t) 50%;background-position:var(--m) 0,var(--m) 100%,calc(100% - var(--m)) 0,calc(100% - var(--m)) 100%;background-repeat:no-repeat}
 button.rh1:hover{--rbc:var(--acc)}
 button.rh1.on{--rbc:var(--gold)}
 /* v0.402, «треугольник — это стрелки, 4 штуки»: кнопка-стрелка ◀ ▶ ▲ ▼ (класс .tri-l|r|u|d, ставит rhombTag) — равнобедренный треугольник
@@ -761,18 +762,23 @@ button.rh1.on{--rbc:var(--gold)}
 button.tri-l,button.tri-r,button.tri-u,button.tri-d{--rbc:var(--line);border-radius:0 !important;padding:0 !important;background-repeat:no-repeat}
 button.tri-l:hover,button.tri-r:hover,button.tri-u:hover,button.tri-d:hover{--rbc:var(--acc)}
 button.tri-l.on,button.tri-r.on,button.tri-u.on,button.tri-d.on{--rbc:var(--gold)}
-/* v0.404, «треугольники кладём на горизонт: Л — вверх и У — вниз, но не Й, то есть Х в общем случае» (v0.403 — прямоугольные, «Й» — отменено).
-   Горизонт — средняя черта кнопки, одна у всех (на ней же острия ромбов). Треугольники — четверти квадрата, разрезанного крестом Х: у всех
-   остриё в центре, на горизонте. ▲ (Л) — нижняя четверть: основание внизу, остриё вверх до горизонта; ▼ (У) — верхняя: основание вверху,
-   остриё вниз до горизонта; ◀ ▶ — боковые: остриё на горизонте, основание — дальний край. ▲▼ вместе — ⧗, ◀▶ — ⋈ */
-button.tri-l{clip-path:polygon(0 50%,100% 0,100% 100%);border-width:0 1px 0 0 !important;padding-left:30% !important;
-  background-image:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));background-size:100% 50%;background-position:0 0,0 100%}
-button.tri-r{clip-path:polygon(0 0,100% 50%,0 100%);border-width:0 0 0 1px !important;padding-right:30% !important;
-  background-image:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));background-size:100% 50%;background-position:0 0,0 100%}
-button.tri-u{clip-path:polygon(0 100%,100% 100%,50% 50%);border-width:0 0 1px 0 !important;padding-top:11px !important;font-size:9px !important;line-height:1 !important;
-  background-image:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));background-size:50% 50%;background-position:0 100%,100% 100%}
-button.tri-d{clip-path:polygon(0 0,100% 0,50% 50%);border-width:1px 0 0 0 !important;padding-bottom:11px !important;font-size:9px !important;line-height:1 !important;
-  background-image:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));background-size:50% 50%;background-position:0 0,100% 0}
+/* v0.416, «вот стрелки, одна стрелка из 4 треугольников» (снимок: шеврон из развёртки): стрелка — шеврон из четырёх целых
+   равносторонних треугольников того же размера, что у кнопок (сторона s, --t = s / 2): остриё 120° в сторону стрелки, с другой стороны —
+   выемка. ◀ ▶ — 3t × h, ▲ ▼ — h × 3t (--h2 = h / 2); по центру места (--m, --my ставит rhombTag). Скосы — диагонали фоном, прямые края —
+   рамка кнопки или черта фоном. Прежде (v0.404) — четверти креста Х */
+button.tri-l,button.tri-r,button.tri-u,button.tri-d{--m:0px;--my:0px;--t:6.93px;--h2:12px;text-align:center}
+button.tri-l{clip-path:polygon(var(--m) 50%,calc(var(--m) + var(--t)) 0,calc(var(--m) + 3 * var(--t)) 0,calc(var(--m) + 2 * var(--t)) 50%,calc(var(--m) + 3 * var(--t)) 100%,calc(var(--m) + var(--t)) 100%);border-width:1px 0 !important;font-size:10px !important;
+  background-image:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));background-size:var(--t) 50%;background-position:var(--m) 0,var(--m) 100%,calc(var(--m) + 2 * var(--t)) 0,calc(var(--m) + 2 * var(--t)) 100%}
+button.tri-r{clip-path:polygon(var(--m) 0,calc(var(--m) + 2 * var(--t)) 0,calc(var(--m) + 3 * var(--t)) 50%,calc(var(--m) + 2 * var(--t)) 100%,var(--m) 100%,calc(var(--m) + var(--t)) 50%);border-width:1px 0 !important;font-size:10px !important;
+  background-image:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));background-size:var(--t) 50%;background-position:var(--m) 0,var(--m) 100%,calc(var(--m) + 2 * var(--t)) 0,calc(var(--m) + 2 * var(--t)) 100%}
+button.tri-u{clip-path:polygon(calc(var(--m) + var(--h2)) var(--my),calc(var(--m) + 2 * var(--h2)) calc(var(--my) + var(--t)),calc(var(--m) + 2 * var(--h2)) calc(var(--my) + 3 * var(--t)),calc(var(--m) + var(--h2)) calc(var(--my) + 2 * var(--t)),var(--m) calc(var(--my) + 3 * var(--t)),var(--m) calc(var(--my) + var(--t)));border-width:0 !important;font-size:9px !important;line-height:1 !important;padding-bottom:3px !important;
+  background-image:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(var(--rbc),var(--rbc)),linear-gradient(var(--rbc),var(--rbc));
+  background-size:var(--h2) var(--t),var(--h2) var(--t),var(--h2) var(--t),var(--h2) var(--t),1.5px calc(2 * var(--t)),1.5px calc(2 * var(--t));
+  background-position:var(--m) var(--my),calc(var(--m) + var(--h2)) var(--my),var(--m) calc(var(--my) + 2 * var(--t)),calc(var(--m) + var(--h2)) calc(var(--my) + 2 * var(--t)),var(--m) calc(var(--my) + var(--t)),calc(var(--m) + 2 * var(--h2) - 1.5px) calc(var(--my) + var(--t))}
+button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) calc(var(--my) + var(--t)),calc(var(--m) + 2 * var(--h2)) var(--my),calc(var(--m) + 2 * var(--h2)) calc(var(--my) + 2 * var(--t)),calc(var(--m) + var(--h2)) calc(var(--my) + 3 * var(--t)),var(--m) calc(var(--my) + 2 * var(--t)));border-width:0 !important;font-size:9px !important;line-height:1 !important;padding-top:3px !important;
+  background-image:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(var(--rbc),var(--rbc)),linear-gradient(var(--rbc),var(--rbc));
+  background-size:var(--h2) var(--t),var(--h2) var(--t),var(--h2) var(--t),var(--h2) var(--t),1.5px calc(2 * var(--t)),1.5px calc(2 * var(--t));
+  background-position:var(--m) var(--my),calc(var(--m) + var(--h2)) var(--my),var(--m) calc(var(--my) + 2 * var(--t)),calc(var(--m) + var(--h2)) calc(var(--my) + 2 * var(--t)),var(--m) var(--my),calc(var(--m) + 2 * var(--h2) - 1.5px) var(--my)}
 #w-cone .tools .cgb button:not(.zerk-arrow),#w-cone .tools .cgb select,#w-cone .tools .cgb label:has(> input[type=checkbox]),#paneGrp .cgb button:not(.zerk-arrow),#paneGrp .cgb select,#paneGrp .cgb label:has(> input[type=checkbox]){width:var(--bu) !important;min-width:0 !important;max-width:none !important;flex:0 0 auto !important;box-sizing:border-box;overflow:hidden}
 #w-cone .tools .cgb button.ib:not(.zerk-arrow),#paneGrp .cgb button.ib:not(.zerk-arrow){width:calc((var(--bu) - 3px) / 2) !important;padding:0 !important}
 #w-cone .tools .cgb select,#paneGrp .cgb select{padding-left:3px !important;padding-right:0 !important}
@@ -1126,7 +1132,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.415</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.416</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2000,8 +2006,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0415"></script>
-<script src="zz-ui.js?v=0415"></script>
+<script src="zz-core.js?v=0416"></script>
+<script src="zz-ui.js?v=0416"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
