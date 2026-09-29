@@ -6812,6 +6812,15 @@ function joinTag(){
     const e = sp.dataset.ends || "", bs = [...sp.children].filter(c => c.tagName === "BUTTON");
     bs.forEach((b, i) => {
       const L = e[i], R = e[i + 1], h = parseFloat(getComputedStyle(b).height) || 24;
+      /* v0.422, «(стоп) — из скольких собран так: ()()()?» → «2 — подгони все под целые треугольники»: длина кнопки сцепки — целое число
+         треугольников. В глубинах острия t: концы одного рода (остриё–остриё, выемка–выемка) — чётное 2k (k треугольников по ряду), разного
+         (остриё–выемка, как стрелка) — нечётное 2n + 1; ближайшее к нынешней ширине, не меньше 2 и 3. Стрелки — 3 (4 треугольника). */
+      if (!RH_TRI[b.textContent.trim()]) {
+        const tt = h / (2 * Math.sqrt(3)), same = (L === "(") === (R === ")"), w0 = parseFloat(b.dataset.w0 || getComputedStyle(b).width) || 0;
+        if (!b.dataset.w0) b.dataset.w0 = w0;
+        let u = w0 / tt; u = same ? Math.max(2, 2 * Math.round(u / 2)) : Math.max(3, 2 * Math.round((u - 1) / 2) + 1);
+        b.style.setProperty("width", (u * tt).toFixed(2) + "px", "important");
+      }
       b.classList.add("jz");
       b.classList.toggle("jl-tip", L === "("); b.classList.toggle("jl-notch", L === ")");
       b.classList.toggle("jr-tip", R === ")"); b.classList.toggle("jr-notch", R === "(");
