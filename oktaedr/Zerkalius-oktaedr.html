@@ -1,4 +1,4 @@
-<!-- Zerkalius Гранидус — v0.066. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Гранидус — v0.067. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Гранидус — v0.066</title>
+<title>Zerkalius Гранидус — v0.067</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -298,7 +298,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.066</div>
+<div id="ver">v0.067</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -2222,6 +2222,10 @@ const SECS = {
     return has + (has ? 6 : 0) + sec.offsetHeight <= lim;
   },
   dockUnder(x, y){
+    /* v0.067, по снимку окна «◆ Гранидус» в Zazerkalius — «тут окна закрепляются ещё и справа, слева — два поля есть невидимых, убери их»:
+       в окне Zazerkalius (?zz) полос магнита у краёв нет — раздел, отпущенный у края, остаётся плавающим (прилипает только к соседям и
+       краям окна, snapTo). Отдельная страница Гранидуса — как была */
+    if (ZZ_EMB) return null;
     const [L, R] = this.docks();
     if (x <= this.MAG) return L;
     if (x >= innerWidth - this.MAG) return R;
