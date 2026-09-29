@@ -4092,8 +4092,16 @@ function setupCone(){
   const MUS_COL = ["#ff5f6d", "#ff9f43", "#ffe066", "#7ee787", "#4dd4ff", "#6b8cff", "#c38cf5"];
   const musN = () => Math.max(1, Math.min(12, Math.round(+Z.coneMusN) || 7));
   let musL = [];
-  const musInit = () => { const H = musN(), T = coneMaxLen(); musL = Array.from({ length: H }, (_, h) => ({ a: h * 360 / H + 180 / T, r: 0, on: false, c: 0 })); };
+  /* v0.444, на «щель — сейчас «0», другой вариант — граница между битами, как у луч-часов» — «делай»: щель выбирается (Z.coneMusSlit):
+     «0» — как было; «граница» — головка встаёт на кольцо только там, где под ней граница бит (в пределах половины ползунка «щель», как
+     луч-часы) и крутит его, стоя на этой границе, — звучит бит по часовой от неё. Не на границе — упирается в бит: «1» — стена (гаснет,
+     головка отражается сквозь центр), «0» — стоит перед ним («пишет» — «0» становится «1», нота записана; на следующем шаге это уже стена).
+     Головки при «границе» — ровно на углах 360° / число, без сдвига на полбита: головка на 0° видит границы всех колец, пока они не
+     повёрнуты. Кольца, которых головка не занимает, стоят — чтобы щели сходились с головками, нужно «▶ крутить» (по биту / навстречу). */
+  const musEdge = () => Z.coneMusSlit === "edge";
+  const musInit = () => { const H = musN(), T = coneMaxLen(), o = musEdge() ? 0 : 180 / T; musL = Array.from({ length: H }, (_, h) => ({ a: h * 360 / H + o, r: 0, on: false, c: 0 })); };
   const musCell = (n, rot, a) => ((Math.floor(a / 360 * n + rot + 1e-9) % n) + n) % n;
+  const musGap = (n, rot, a) => { const x = a / 360 * n + rot, k = Math.round(x); return Math.abs(x - k) * 2 * Math.PI / n <= coneSlitHalf(n) + 1e-9 ? ((k % n) + n) % n : -1; };   // v0.444: граница под головкой → бит по часовой от неё, иначе −1
   const musTick = () => {
     const N = Math.min(Z.rows.length, CONE_MAX), H = musN(), sc = sndSc(), write = musWrite();
     if (musL.length !== H) musInit();
@@ -4106,7 +4114,7 @@ function setupCone(){
       const deg = sc[h % sc.length] + 12 * Math.floor(h / sc.length), seg = [];
       const note = (r) => { const f = 130.81 * Math.pow(2, (deg + 12 * oct(r)) / 12), key = Math.round(f * 10); if (!hz.has(key)) hz.set(key, [f, h]); };
       if (L.on) {   // на кольце: бит под головкой звучит, кольцо — на бит дальше
-        const r = L.r, n = Z.rows[r].length, j = musCell(n, coneRotOf(r), L.a);
+        const r = L.r, n = Z.rows[r].length, e = musEdge() ? musGap(n, coneRotOf(r), L.a) : -1, j = e >= 0 ? e : musCell(n, coneRotOf(r), L.a);
         if (Z.rows[r][j] === "1") note(r);
         P.push([r, j, 0]); seg.push([L.a, r, "on"]);
         coneRot[r] = ((Math.round(coneRot[r] || 0) + 1) % n + n) % n;
@@ -4121,7 +4129,15 @@ function setupCone(){
           } else seg.push([L.a, N, "out"]);
           L.r = 0; break;
         }
-        const s = Z.rows[r], j = musCell(s.length, coneRotOf(r), L.a);
+        const s = Z.rows[r], e = musEdge() ? musGap(s.length, coneRotOf(r), L.a) : -1, j = e >= 0 ? e : musCell(s.length, coneRotOf(r), L.a);
+        if (musEdge() && e >= 0) {   // v0.444: граница бит — встать на кольцо
+          if (write && s[j] === "0") { Z.rows[r] = put(s, j, "1"); ch = true; P.push([r, j, 1]); }
+          L.r = r; L.on = true; L.c = 0; busy.add(r); seg.push([L.a, r, "in"]); break;
+        }
+        if (musEdge() && s[j] === "0") {   // v0.444: упёрлась в «0» — стоит перед ним (пишет — «0» становится «1»)
+          if (write) { Z.rows[r] = put(s, j, "1"); ch = true; P.push([r, j, 1]); }
+          L.r = r; seg.push([L.a, r, "wall"]); break;
+        }
         if (s[j] === "0") {   // щель — встать на кольцо
           if (write) { Z.rows[r] = put(s, j, "1"); ch = true; P.push([r, j, 1]); }
           L.r = r; L.on = true; L.c = 0; busy.add(r); seg.push([L.a, r, "in"]); break;
@@ -4162,6 +4178,9 @@ function setupCone(){
     $("bConeMus").onclick = () => musSet(!musT);
     const mn = $("coneMusN"); mn.value = musN();   // v0.442: сколько головок
     mn.onchange = () => { Z.coneMusN = +mn.value; Z.coneMusN = musN(); mn.value = Z.coneMusN; save(); };
+    const sl = $("coneMusSlit"); sl.value = musEdge() ? "edge" : "zero";   // v0.444: щель — «0» или граница бит
+    sl.onchange = () => { Z.coneMusSlit = sl.value === "edge" ? "edge" : "zero"; if (musT) musInit(); save();
+      say(musEdge() ? "🎵 Щель — граница бит (как у луч-часов): головка встаёт на кольцо, только когда под ней граница; иначе «1» — стена, перед «0» стоит. Чтобы щели сходились с головками — «▶ крутить» по биту или навстречу." : "🎵 Щель — «0»: головка встаёт на кольцо в «0», от «1» отражается."); };
     $("coneMusIn").onchange = (e) => { Z.coneMusIn = e.target.value === "read" ? "read" : "write"; save();   // v0.443
       say(musWrite() ? "🎵 Пишет: головка, встав в щель, ставит там «1» — нота записана." : "🎵 Читает: щель остаётся «0» — головка только играет кольцо; «1» гаснут от отражений."); };
     $("bConeMusZero").onclick = () => {
