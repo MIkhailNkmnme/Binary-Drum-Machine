@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.431. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.432. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.431</title>
+<title>Zazerkalius — v0.432</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -384,6 +384,16 @@ body:not(.okt-live) #oktShield{display:block}
 #w-razv .wbody{display:flex;flex-direction:column}
 #w-razv .wbody > *{flex:0 0 auto}
 #w-razv .wbody > #razvCv{flex:1 1 0;min-height:260px;width:100%;display:block;background:var(--panel2);border-radius:4px}
+/* v0.432, окно «△ Сетка» — сетка равносторонних треугольников, красить щелчком и мышью, сцены 1, 2, … */
+#w-tri .wbody{display:flex;flex-direction:column}
+#w-tri .wbody > *{flex:0 0 auto}
+#w-tri .tools{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+#w-tri #triCv{width:100%;display:block;background:var(--panel2);border-radius:4px;touch-action:none;cursor:crosshair}
+#w-tri input[type=number]{width:44px}
+#triPal,#triScenes{display:inline-flex;flex-wrap:wrap;gap:3px}
+#triPal button{width:24px;height:24px;padding:0;border-radius:4px}
+#triPal button.on{box-shadow:0 0 0 2px var(--txt)}
+#triScenes button{min-width:28px;padding:0 6px}
 /* v0.405, «развёртку покажи малыми картинками все сразу, при выборе одной из них — крупно; выпадающий список не нужен» */
 #razvThumbs{display:flex;flex-wrap:wrap;gap:4px}
 #razvThumbs canvas{width:72px;height:56px;display:block;box-sizing:border-box;border:1px solid var(--line);border-radius:4px;background:var(--panel2);cursor:pointer}
@@ -1188,7 +1198,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.431</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.432</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1951,6 +1961,26 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
       </div>
     </section>
 
+    <!-- △ СЕТКА (v0.432): «окно с этими треугольниками — сделать сцены: выделяю цветом какие-то, сохраняю сцену 1, потом 2…» -->
+    <section class="win" id="w-tri" data-title="△ Сетка">
+      <div class="wbody">
+        <div class="tools">
+          <span id="triPal"></span>
+          <label class="dim" title="Сколько рядов треугольников (кнопка — 2 ряда)">ряды <input id="triR" type="number" min="1" max="12" value="2"></label>
+          <label class="dim" title="Сколько треугольников в ряду">в ряду <input id="triN" type="number" min="1" max="99" value="25"></label>
+          <button id="bTriNum" title="Номера треугольников. Горит — видны">№</button>
+          <button id="bTriClr" title="Очистить сетку (сохранённые сцены не трогает)">✕ очистить</button>
+        </div>
+        <div class="tools">
+          <button id="bTriSave" title="Сохранить: в выбранную сцену (горит), а если ни одна не выбрана — новой">💾 сохранить</button>
+          <button id="bTriNew" title="Сохранить новой сценой — следующим номером">＋ сцена</button>
+          <span id="triScenes"></span>
+          <button id="bTriCopy" title="Все сцены — текстом в буфер обмена (вставить в сообщение Claude)">⧉ в буфер</button>
+        </div>
+        <canvas id="triCv"></canvas>
+      </div>
+    </section>
+
     <!-- ▲ ПИРАМИДА ПАСКАЛЯ (v0.109) -->
     <section class="win" id="w-pyr" data-title="▲ Пирамида Паскаля">
       <div class="whint">
@@ -2062,8 +2092,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0431"></script>
-<script src="zz-ui.js?v=0431"></script>
+<script src="zz-core.js?v=0432"></script>
+<script src="zz-ui.js?v=0432"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
