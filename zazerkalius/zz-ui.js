@@ -3885,11 +3885,13 @@ function setupCone(){
     /* v0.425, «стоп — выполняет стоп и паузу; при стопе стрелки — шаг, при паузе — плей; пауза — нажать — стоп, ничего не меняется; плей не
        нужен», «как запустить из стопа — поставить паузу»: ◆ показывает состояние (■ стоп, ⏸ пауза — горит, ♫ играет — мигает); стрелка
        направления шире (jwide), ◆ сдвигается к другой */
-    const p = $("bSndP"); if (p) { p.disabled = false; p.classList.toggle("on", sndPaused); p.classList.toggle("run", !!sndT);
+    const p = $("bSndP"); if (p) { p.disabled = false; p.classList.toggle("on", sndPaused || !!sndT); p.classList.remove("run");   // v0.427: мигает стрелка, не ◆
       p.textContent = sndT ? "♫" : sndPaused ? "⏸" : "■";
       p.title = sndT ? "◆ Играет — щелчок: пауза (место остаётся)" : sndPaused ? "◆ Пауза — стрелка: играть в её сторону; щелчок: стоп (место то же)" : "◆ Стоп — стрелка: шаг в её сторону; щелчок: пауза (потом стрелка — играть)"; }
     { const bb = $("bSndB"), bf = $("bSndF"), back = Z.sndDir < 0, wide = (x, w) => { if (x && x.classList.contains("jwide") !== w) { x.classList.toggle("jwide", w); x._jw = 1; } };
       wide(bb, back); wide(bf, !back);
+      // v0.427, «стрелка мигать должна фоном»: пока звук играет, фоном мигает стрелка направления (◆ — горит, не мигает)
+      if (bb) bb.classList.toggle("run", !!sndT && back); if (bf) bf.classList.toggle("run", !!sndT && !back);
       if (bb) bb.title = "◀ Назад: стоп — шаг назад; пауза или играет — играть назад. Широкая — направление";
       if (bf) bf.title = "▶ Вперёд: стоп — шаг вперёд; пауза или играет — играть вперёд. Широкая — направление";
       if ((bb && bb._jw) || (bf && bf._jw)) { if (bb) bb._jw = 0; if (bf) bf._jw = 0; if (typeof joinTag === "function") joinTag(); } }
