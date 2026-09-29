@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.417. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.418. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.417</title>
+<title>Zazerkalius — v0.418</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -770,10 +770,12 @@ button.tri-l,button.tri-r,button.tri-u,button.tri-d{--m:0px;--my:0px;--t:6.93px;
 /* v0.417, по снимку шеврона с ▶ внутри — «теперь значки им не нужны»: знак стрелки не виден (форма и есть стрелка); сам символ в кнопке
    остался — по нему rhombTag узнаёт стрелку и её сторону */
 button.tri-l,button.tri-r,button.tri-u,button.tri-d{color:transparent !important;text-shadow:none !important}
-button.tri-l{clip-path:polygon(var(--m) 50%,calc(var(--m) + var(--t)) 0,calc(var(--m) + 3 * var(--t)) 0,calc(var(--m) + 2 * var(--t)) 50%,calc(var(--m) + 3 * var(--t)) 100%,calc(var(--m) + var(--t)) 100%);border-width:1px 0 !important;font-size:10px !important;
-  background-image:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));background-size:var(--t) 50%;background-position:var(--m) 0,var(--m) 100%,calc(var(--m) + 2 * var(--t)) 0,calc(var(--m) + 2 * var(--t)) 100%}
-button.tri-r{clip-path:polygon(var(--m) 0,calc(var(--m) + 2 * var(--t)) 0,calc(var(--m) + 3 * var(--t)) 50%,calc(var(--m) + 2 * var(--t)) 100%,var(--m) 100%,calc(var(--m) + var(--t)) 50%);border-width:1px 0 !important;font-size:10px !important;
-  background-image:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));background-size:var(--t) 50%;background-position:var(--m) 0,var(--m) 100%,calc(var(--m) + 2 * var(--t)) 0,calc(var(--m) + 2 * var(--t)) 100%}
+/* v0.418, по снимку «◀ ⏯ дальше ■ ▶» — «добавь слева два треугольника»: горизонтальные стрелки — шеврон из ШЕСТИ треугольников (5t):
+   два добавлены со стороны выемки — у ▶ слева, у ◀ справа; стрелка длиннее и ближе к соседней кнопке. ▲ ▼ — из четырёх (шесть по высоте не влезают) */
+button.tri-l{clip-path:polygon(var(--m) 50%,calc(var(--m) + var(--t)) 0,calc(var(--m) + 5 * var(--t)) 0,calc(var(--m) + 4 * var(--t)) 50%,calc(var(--m) + 5 * var(--t)) 100%,calc(var(--m) + var(--t)) 100%);border-width:1px 0 !important;font-size:10px !important;
+  background-image:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));background-size:var(--t) 50%;background-position:var(--m) 0,var(--m) 100%,calc(var(--m) + 4 * var(--t)) 0,calc(var(--m) + 4 * var(--t)) 100%}
+button.tri-r{clip-path:polygon(var(--m) 0,calc(var(--m) + 4 * var(--t)) 0,calc(var(--m) + 5 * var(--t)) 50%,calc(var(--m) + 4 * var(--t)) 100%,var(--m) 100%,calc(var(--m) + var(--t)) 50%);border-width:1px 0 !important;font-size:10px !important;
+  background-image:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));background-size:var(--t) 50%;background-position:var(--m) 0,var(--m) 100%,calc(var(--m) + 4 * var(--t)) 0,calc(var(--m) + 4 * var(--t)) 100%}
 button.tri-u{clip-path:polygon(calc(var(--m) + var(--h2)) var(--my),calc(var(--m) + 2 * var(--h2)) calc(var(--my) + var(--t)),calc(var(--m) + 2 * var(--h2)) calc(var(--my) + 3 * var(--t)),calc(var(--m) + var(--h2)) calc(var(--my) + 2 * var(--t)),var(--m) calc(var(--my) + 3 * var(--t)),var(--m) calc(var(--my) + var(--t)));border-width:0 !important;font-size:9px !important;line-height:1 !important;padding-bottom:3px !important;
   background-image:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(var(--rbc),var(--rbc)),linear-gradient(var(--rbc),var(--rbc));
   background-size:var(--h2) var(--t),var(--h2) var(--t),var(--h2) var(--t),var(--h2) var(--t),1.5px calc(2 * var(--t)),1.5px calc(2 * var(--t));
@@ -1135,7 +1137,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.417</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.418</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2009,8 +2011,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0417"></script>
-<script src="zz-ui.js?v=0417"></script>
+<script src="zz-core.js?v=0418"></script>
+<script src="zz-ui.js?v=0418"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

@@ -6797,7 +6797,7 @@ function rhombTag(){
     b.classList.toggle("rh1", !ar && w >= sd);
     for (const k of ["l", "r", "u", "d"]) b.classList.toggle("tri-" + k, ar === k);
     b.style.setProperty("--t", px(t)); b.style.setProperty("--h2", px(h / 2));
-    if (ar === "l" || ar === "r") b.style.setProperty("--m", px((w - 3 * t) / 2));
+    if (ar === "l" || ar === "r") b.style.setProperty("--m", px((w - 5 * t) / 2));   // v0.418: ◀ ▶ — из шести треугольников (5t)
     else if (ar) { b.style.setProperty("--m", px((w - h) / 2)); b.style.setProperty("--my", px((h - 3 * t) / 2)); }
     else { const k = Math.max(1, Math.floor((w + 0.01) / sd)); b.style.setProperty("--m", px((w - k * sd) / 2)); }
   });
