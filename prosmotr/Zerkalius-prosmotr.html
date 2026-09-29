@@ -1,4 +1,4 @@
-<!-- Zerkalius Просмотр GIF — v0.007. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
+<!-- Zerkalius Просмотр GIF — v0.008. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
      на страницу), листать по кадру и через 2 / 4 / 8, играть с любой скоростью, отметить участок «с — по» и положить в склейку;
      участки — из разных GIF, в любом порядке; склейку посмотреть и скачать одним GIF. Всё в самой странице, без библиотек:
      свой разбор GIF (LZW, палитры, прозрачность, способы смены кадра, чересстрочность) и своя сборка (тот же LZW, что в Code).
@@ -25,13 +25,18 @@
              участки отдельно по нечётным и чётным кадрам: ромб — пока дыры растут, сброс — новый ромб, между ними — шум;
              участки — в склейку. Склейку можно сортировать: по порядку, нечёт / чёт вперёд, по длине, по крупности ромбов,
              наоборот, вперемешку. Под ползунком — полоска-график дыр по кадрам (нечётные — жёлтым, чётные — голубым),
-             щелчок по ней — к кадру. -->
+             щелчок по ней — к кадру.
+     v0.008: по снимку столба ромбов — «как по сетке ромбов разрезать и потом их проиграть по порядку своих размеров в
+             группу». «◇ Резать»: кадр режется по сетке ромбов от вершины треугольника (вершина и наклон ищутся сами), ромбы
+             одного размера — группой: на своих местах с зазором, в строку или сеткой. Размер — 8 … 512 строк или «все»:
+             весь фильм ромбами 16, потом 32, 64 … (или от крупных к мелким). Нарезку — в GIF. Чётность кадров теперь — по
+             номеру кадра в GIF, а не по месту в ленте (в склейке и нарезке они разные). -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Просмотр GIF — v0.007</title>
+<title>Zerkalius Просмотр GIF — v0.008</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -80,7 +85,7 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.007</span></h1>
+    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.008</span></h1>
     <div class="bar">
       <button id="openBtn" title="Открыть один или несколько GIF (их можно и просто бросить на страницу)">📂 Открыть GIF</button>
       <input type="file" id="file" accept="image/gif,.gif" multiple>
@@ -103,6 +108,31 @@
       <button id="selAllBtn" class="mini" title="Все открытые — в набор">☑ все</button>
       <button id="selNoneBtn" class="mini" title="Снять набор">☐ никого</button>
       <button id="layGifBtn" class="mini" title="Скачать раскладку набора одним GIF — все кадры с выбранным шагом">💾 раскладку GIF</button>
+    </div>
+    <!-- v0.008: нарезка кадра по сетке ромбов -->
+    <div class="lbl sel">◇ Нарезка по ромбам</div>
+    <div class="bar">
+      <button id="rcutBtn" title="Резать кадр по сетке ромбов от вершины треугольника — вкл / выкл (GIF или склейка; с раскладкой набора — нет)">◇ Резать</button>
+      <select id="rcutSize" title="Размер ромба в строках (строка — px из поля «строка» у прокрутки). «Все» — группы ромбов одного размера играют по очереди: весь фильм ромбами одного размера, потом следующего">
+        <option value="up" selected>все: мелкие → крупные</option>
+        <option value="down">все: крупные → мелкие</option>
+        <option value="8">ромб 8</option>
+        <option value="16">ромб 16</option>
+        <option value="32">ромб 32</option>
+        <option value="64">ромб 64</option>
+        <option value="128">ромб 128</option>
+        <option value="256">ромб 256</option>
+        <option value="512">ромб 512</option>
+      </select>
+    </div>
+    <div class="bar">
+      <select id="rcutLay" title="Как разложить группу ромбов: на своих местах, раздвинутые зазором; в строку по порядку (ряд за рядом, слева направо); сеткой">
+        <option value="place" selected>на местах</option>
+        <option value="line">в строку</option>
+        <option value="grid">сеткой</option>
+      </select>
+      <input type="number" id="rcutGap" min="0" max="64" step="1" value="4" title="Зазор между ромбами, px" style="width:46px;"><span class="lbl">px</span>
+      <button id="rcutGifBtn" class="mini" title="Скачать нарезку одним GIF — все кадры, с шагом и чётностью">💾 GIF</button>
     </div>
   </div>
 
@@ -372,7 +402,12 @@ const layout = () => $('laySel').value;
 const setList = () => S.gifs.map((_, k) => k).filter(k => S.sel.has(k));
 const layOn = () => !S.mont && layout() !== 'one' && setList().length > 0;
 // последовательность: кадры открытого GIF, склейки — пары [номер GIF, номер кадра]; раскладка — номера кадров 0 … самый длинный
-function seq() {
+function seq() {   // v0.008: с нарезкой по ромбам — [GIF, кадр, размер ромба]; «все» — весь фильм по каждому размеру подряд
+  const base = seqBase(); if (!rcutOn() || !base.length) return base;
+  const out = []; for (const s of rcutSizes(base)) for (const r of base) out.push([r[0], r[1], s]);
+  return out;
+}
+function seqBase() {
   if (S.mont) { const out = []; for (const sg of S.segs) for (let f = sg.a; sg.a <= sg.b ? f <= sg.b : f >= sg.b; f += (sg.a <= sg.b ? sg.st : -sg.st)) out.push([sg.g, f]); return out; }
   if (layOn()) { const n = Math.max(...setList().map(k => S.gifs[k].frames.length)); return Array.from({ length: n }, (_, f) => [-1, f]); }
   const g = S.gifs[S.cur]; if (!g) return [];
@@ -402,6 +437,93 @@ function geom() {
   return { W, H, cells };
 }
 
+/* ---------- нарезка по ромбам (v0.008) ----------
+   Треугольник GIF: вершина (cx, t), по строке вниз край уходит на k px вбок. Сетка ромбов размера s (строк) — от вершины,
+   вдоль рёбер: u = (x − cx) / k + (y − t), v = (y − t) − (x − cx) / k; ромб (i, j) — где u в [i·s, (i + 1)·s), v в [j·s, (j + 1)·s).
+   Его верх — (cx + (i − j)·k·s/2, t + (i + j)·s/2), высота s, ширина k·s; ряд ромбов r = i + j — r + 1 штук. Берутся только
+   целые ромбы. Вершину и наклон ищем по кадру: цвет клеток — самый частый не чёрный (так подпись «проход … · кадр …» другим
+   цветом не мешает), вершина — первая строка с ним, наклон — наибольший полуразмах строки на её глубину. */
+const rcutOn = () => !!S.rcut && !layOn();
+function rgeoOf(g) {
+  if (g.rgeo) return g.rgeo;
+  const W = g.W, H = g.H, fr = g.frames[0], cnt = new Uint32Array(g.cols.length);
+  for (let p = 0; p < fr.length; p++) cnt[fr[p]]++;
+  let c = 1; for (let q = 2; q < cnt.length; q++) if (cnt[q] > cnt[c]) c = q;
+  let t = -1, cx = (W - 1) / 2, k = 1;
+  for (let y = 0; y < H; y++) {
+    let x0 = -1, x1 = -1; const o = y * W;
+    for (let x = 0; x < W; x++) if (fr[o + x] === c) { if (x0 < 0) x0 = x; x1 = x; }
+    if (x0 < 0) continue;
+    if (t < 0) { t = y; cx = (x0 + x1) / 2; continue; }
+    if (y - t >= 8) k = Math.max(cx - x0, x1 - cx) / (y - t);   // последняя, самая глубокая строка — точнее всего
+  }
+  if (t < 0) t = 0;
+  const kr = Math.round(k * 4) / 4; if (kr > 0 && Math.abs(kr - k) / kr < 0.03) k = kr;   // почти ровный наклон — ровный
+  return (g.rgeo = { t: t, cx: cx, k: Math.max(0.25, k) });
+}
+const rowPx = () => Math.max(1, parseInt($('scrPx').value, 10) || 1);
+const rFits = (g, s) => s * rowPx() <= g.H - rgeoOf(g).t;
+function rcutSizes(base) {
+  const v = $('rcutSize').value, g = S.gifs[base[0][0]];
+  if (v !== 'up' && v !== 'down') return [parseInt(v, 10) || 64];
+  const L = [16, 32, 64, 128, 256, 512].filter(s => !g || rFits(g, s));
+  return v === 'up' ? L : L.reverse();
+}
+// карта нарезки: откуда (пиксель кадра) и куда (пиксель сцены) — для размера, раскладки и зазора; кадр потом кладётся за один проход
+function rmap(g, size) {
+  const lay = $('rcutLay').value, gap = Math.max(0, parseInt($('rcutGap').value, 10) || 0), s = size * rowPx(), key = s + '|' + lay + '|' + gap;
+  g.rmaps = g.rmaps || new Map(); if (g.rmaps.has(key)) return g.rmaps.get(key);
+  if (g.rmaps.size > 12) g.rmaps.clear();
+  const G = rgeoOf(g), W = g.W, H = g.H, hs = s / 2, k = G.k, tw = Math.ceil(s * k) + 1, th = s;
+  const R = Math.floor((H - G.t - s) / hs), T = [];
+  for (let r = 0; r <= R; r++) for (let i = 0; i <= r; i++) { const j = r - i; T.push({ i: i, j: j, bx: Math.floor(G.cx + (i - j) * hs * k - hs * k), by: G.t + r * hs }); }
+  if (!T.length) { const M0 = { W: 1, H: 1, n: 0, src: new Int32Array(0), dst: new Int32Array(0) }; g.rmaps.set(key, M0); return M0; }
+  // места ромбов в сцене
+  if (lay === 'place') for (const q of T) { q.X = q.bx + (q.i - q.j) * gap; q.Y = q.by + (q.i + q.j) * gap; }
+  else {
+    const cols = lay === 'grid' ? Math.max(1, Math.ceil(Math.sqrt(T.length * th / tw))) : Math.max(1, Math.floor((8192 + gap) / (tw + gap)));
+    T.forEach((q, n) => { q.X = (n % cols) * (tw + gap); q.Y = Math.floor(n / cols) * (th + gap); });
+  }
+  let mx = Infinity, my = Infinity, SW = 0, SH = 0;
+  for (const q of T) { mx = Math.min(mx, q.X); my = Math.min(my, q.Y); }
+  for (const q of T) { q.X -= mx; q.Y -= my; SW = Math.max(SW, q.X + tw); SH = Math.max(SH, q.Y + th); }
+  const src = [], dst = [];
+  for (const q of T) for (let yy = 0; yy < th; yy++) {
+    const y = q.by + yy; if (y < 0 || y >= H) continue;
+    for (let xx = 0; xx < tw; xx++) {
+      const x = q.bx + xx; if (x < 0 || x >= W) continue;
+      const dx = (x - G.cx) / k, dy = y - G.t;
+      if (Math.floor((dx + dy) / s) !== q.i || Math.floor((dy - dx) / s) !== q.j) continue;
+      src.push(y * W + x); dst.push((q.Y + yy) * SW + q.X + xx);
+    }
+  }
+  const M = { W: SW, H: SH, n: T.length, src: Int32Array.from(src), dst: Int32Array.from(dst) };
+  g.rmaps.set(key, M); return M;
+}
+$('rcutBtn').addEventListener('click', () => { S.rcut = !S.rcut; $('rcutBtn').classList.toggle('on', S.rcut); S.i = 0; refresh(); });
+$('rcutSize').addEventListener('change', () => { S.i = 0; if (S.rcut) refresh(); });
+$('rcutLay').addEventListener('change', () => { if (S.rcut) draw(); });
+$('rcutGap').addEventListener('input', () => { if (S.rcut) draw(); });
+// нарезка — одним GIF: кадры с шагом и чётностью; группы разного размера — по центру общего поля
+$('rcutGifBtn').addEventListener('click', () => {
+  if (!rcutOn() || !SEQ.length) { alert('Включите ◇ Резать'); return; }
+  const w = parWant(), st = w === undefined ? step() : Math.max(1, stepEff() >> 1);
+  const refs = SEQ.filter(r => w === undefined || r[1] % 2 === w).filter((_, n) => n % st === 0);
+  const used = [...new Set(refs.map(r => r[0]))], U = unify(used, GAP_COL);
+  if (!U) { alert('Вместе больше 256 цветов — одним GIF не собрать'); return; }
+  const maps = refs.map(r => rmap(S.gifs[r[0]], r[2]));
+  const OW = Math.max(...maps.map(M => M.W)), OH = Math.max(...maps.map(M => M.H));
+  if (refs.length * OW * OH > 4e8) { alert('Слишком большой GIF — возьмите шаг больше или один размер ромба'); return; }
+  const frames = refs.map((r, n) => {
+    const M = maps[n], fr = S.gifs[r[0]].frames[r[1]], mp = U.maps[r[0]], out = new Uint8Array(OW * OH).fill(U.ex);
+    const ox = Math.floor((OW - M.W) / 2), oy = Math.floor((OH - M.H) / 2);
+    for (let p = 0; p < M.src.length; p++) { const d = M.dst[p], y = (d / M.W) | 0, x = d - y * M.W; out[(oy + y) * OW + ox + x] = mp[fr[M.src[p]]]; }
+    return out;
+  });
+  const cs = Math.max(2, Math.round((parseInt($('outMs').value, 10) || 100) / 10)), sz = $('rcutSize').value;
+  download(encodeGif(frames, OW, OH, U.pal, cs), 'Zerkalius-romby-narezka-' + (sz === 'up' || sz === 'down' ? 'vse-' + sz : sz) + '-' + frames.length + '-kadrov.gif');
+});
+
 /* ---------- показ ---------- */
 const cv = $('cv'), ctx = cv.getContext('2d'), off = document.createElement('canvas'), octx = off.getContext('2d');
 const lutOf = g => g.lut || (g.lut = Uint32Array.from(g.cols.map(c => (255 << 24) | (c[2] << 16) | (c[1] << 8) | c[0])));
@@ -411,10 +533,20 @@ function draw() {
   let W, H, label, nameTxt = '';   // v0.003: nameTxt — имя файла (набор) — в своё поле, в стороне от счётчика
   // v0.005: картинка сцены строится заново, только когда сменился кадр или набор; прокрутка лишь сдвигает её при выводе
   const gid = k => S.gifs[k] ? S.gifs[k].id : 0;
-  const key = JSON.stringify([ref[0] === -1 ? -1 : gid(ref[0]), ref[1], S.mont, layOn() ? [layout(), $('laySize').value, setList().map(gid)] : 0]);
+  const key = JSON.stringify([ref[0] === -1 ? -1 : gid(ref[0]), ref[1], ref[2] || 0, S.mont, layOn() ? [layout(), $('laySize').value, setList().map(gid)] : 0,
+    ref[2] ? [$('rcutLay').value, $('rcutGap').value, $('scrPx').value] : 0]);
   if (key === S.offKey) { blit(); return; }
   S.offKey = key;
-  if (ref[0] === -1) {
+  if (ref[2]) {   // v0.008: ромбы одного размера — группой
+    const g = S.gifs[ref[0]], M = rmap(g, ref[2]), fr = g.frames[ref[1]], lut = lutOf(g); W = M.W; H = M.H;
+    if (off.width !== W || off.height !== H) { off.width = W; off.height = H; }
+    const img = octx.createImageData(W, H), d32 = new Uint32Array(img.data.buffer);
+    d32.fill((255 << 24) | (GAP_COL[2] << 16) | (GAP_COL[1] << 8) | GAP_COL[0]);
+    const src = M.src, dst = M.dst; for (let p = 0; p < src.length; p++) d32[dst[p]] = lut[fr[src[p]]];
+    octx.putImageData(img, 0, 0);
+    label = (S.mont ? 'склейка ' : '') + 'кадр ' + (S.i + 1) + ' / ' + SEQ.length + ' · ' + g.delays[ref[1]] + ' мс';
+    nameTxt = '◇ ' + ref[2] + ' × ' + M.n + ' · #' + (ref[1] + 1) + (S.mont ? ' · ' + g.name.replace(/\.gif$/i, '') : '');
+  } else if (ref[0] === -1) {
     const G = geom(); W = G.W; H = G.H;
     if (off.width !== W || off.height !== H) { off.width = W; off.height = H; }
     const img = octx.createImageData(W, H), d32 = new Uint32Array(img.data.buffer);
@@ -483,10 +615,15 @@ function go(i, dir) {
   const n = SEQ.length, loop = $('loopBtn').classList.contains('on'), w = parWant();
   const fit = v => loop ? ((v % n) + n) % n : Math.max(0, Math.min(n - 1, v));
   i = fit(i);
-  if (w !== undefined && i % 2 !== w) {
-    const d = dir || (i < S.i ? -1 : 1);
-    let j = i + d; if (!loop && (j < 0 || j >= n)) j = i - d;
-    i = fit(j);
+  if (w !== undefined && SEQ[i][1] % 2 !== w) {   // v0.008: чётность — по номеру кадра в GIF (в склейке и нарезке он не равен месту)
+    const d = dir || (i < S.i ? -1 : 1), ok = j => SEQ[j][1] % 2 === w;
+    let f = -1;
+    for (const dd of [d, -d]) {
+      let j = i;
+      for (let q = 0; q < n && f < 0; q++) { j += dd; if (loop) j = ((j % n) + n) % n; else if (j < 0 || j >= n) break; if (ok(j)) f = j; }
+      if (f >= 0) break;
+    }
+    if (f >= 0) i = f;
   }
   S.i = i; draw();
 }
@@ -556,7 +693,7 @@ $('scrCut').addEventListener('change', () => { if (SEQ.length) blit(); });
 $('scrUpBtn').addEventListener('click', () => { jump(-1); if (SEQ.length) blit(); });
 $('scrDnBtn').addEventListener('click', () => { jump(1); if (SEQ.length) blit(); });
 $('scrZeroBtn').addEventListener('click', () => { S.shift = 0; S.scrN = 0; S.scrDir = 1; if (SEQ.length) blit(); });
-$('scrPx').addEventListener('input', () => { if (SEQ.length) blit(); });
+$('scrPx').addEventListener('input', () => { if (S.rcut) refresh(); else if (SEQ.length) blit(); });   // v0.008: строка px — и размер ромба нарезки
 
 /* ---------- разбор на ромбы (v0.007) ----------
    Дыра — чёрное место не меньше «px» в поперечнике: точка, у которой в квадрате px × px вокруг нет ни одной светлой.
