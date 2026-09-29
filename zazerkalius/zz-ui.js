@@ -6792,6 +6792,7 @@ const RH_TRI = { "◀": "l", "◄": "l", "▶": "r", "►": "r", "▲": "u", "�
 function rhombTag(){
   document.querySelectorAll("#w-cone .tools .cgb button, #paneGrp .cgb button").forEach(b => {
     if (b.classList.contains("zerk-arrow")) return;
+    if (b.closest(".cjoin")) { b.classList.remove("rh1", "tri-l", "tri-r", "tri-u", "tri-d"); return; }   // v0.419: в сцепке — своя форма (joinTag)
     const ar = RH_TRI[b.textContent.trim()], cs = getComputedStyle(b), w = parseFloat(cs.width) || 0, h = parseFloat(cs.height) || 24;
     const sd = h / Math.sqrt(3), t = sd / 2, px = (v) => Math.max(0, v).toFixed(2) + "px";
     b.classList.toggle("rh1", !ar && w >= sd);
@@ -6803,6 +6804,23 @@ function rhombTag(){
   });
 }
 window.addEventListener("load", () => setTimeout(rhombTag, 0));
+/* v0.419: СЦЕПКА ряда (.cjoin, data-ends — по знаку на край: «(» остриём влево, «)» — вправо). Кнопка i: левый край — знак i («(» —
+   остриё, «)» — выемка), правый — знак i + 1 («)» — остриё, «(» — выемка). Глубина острия --t = h / (2√3) — остриё 120°, как у кнопок из
+   треугольников. Зовётся из rhombTag (после каждой раскладки групп). */
+function joinTag(){
+  document.querySelectorAll("span.cjoin").forEach(sp => {
+    const e = sp.dataset.ends || "", bs = [...sp.children].filter(c => c.tagName === "BUTTON");
+    bs.forEach((b, i) => {
+      const L = e[i], R = e[i + 1], h = parseFloat(getComputedStyle(b).height) || 24;
+      b.classList.add("jz");
+      b.classList.toggle("jl-tip", L === "("); b.classList.toggle("jl-notch", L === ")");
+      b.classList.toggle("jr-tip", R === ")"); b.classList.toggle("jr-notch", R === "(");
+      b.classList.toggle("jarrow", !!RH_TRI[b.textContent.trim()]);
+      b.style.setProperty("--t", (h / (2 * Math.sqrt(3))).toFixed(2) + "px");
+    });
+  });
+}
+{ const rt0 = rhombTag; rhombTag = function(){ rt0(); joinTag(); }; }
 function soloApply(){
   const el = $(ZZ_SOLO); if (!el) return;
   document.body.classList.add("solo");

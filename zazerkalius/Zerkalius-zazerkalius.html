@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.418. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.419. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.418</title>
+<title>Zazerkalius — v0.419</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -767,6 +767,24 @@ button.tri-l.on,button.tri-r.on,button.tri-u.on,button.tri-d.on{--rbc:var(--gold
    выемка. ◀ ▶ — 3t × h, ▲ ▼ — h × 3t (--h2 = h / 2); по центру места (--m, --my ставит rhombTag). Скосы — диагонали фоном, прямые края —
    рамка кнопки или черта фоном. Прежде (v0.404) — четверти креста Х */
 button.tri-l,button.tri-r,button.tri-u,button.tri-d{--m:0px;--my:0px;--t:6.93px;--h2:12px;text-align:center}
+/* v0.419, «)( )звук((Стоп)) — вот так буду обозначать», «((звук((Стоп)) — да»: СЦЕПКА — кнопки ряда вплотную, остриё одной входит в выемку
+   соседней. Запись краёв ряда — data-ends у блока (.cjoin), по знаку на каждый край слева направо: «(» — край острием влево (у левой
+   кнопки на нём выемка, у правой — остриё), «)» — острием вправо (у левой — остриё, у правой — выемка). Остриё 120°, глубина --t (как у
+   кнопок из треугольников, ставит joinTag); соседняя кнопка заходит на --t (минус 2 px — волосок между). Скосы — диагонали фоном, их
+   направления — --g1…--g4 от формы края. Стрелки в сцепке — без знака. «Звук»: ◀ звук ■ ▶ = «((())». */
+span.cjoin{gap:0 !important}
+span.cjoin > button.jz{--rbc:var(--line);--t:6.93px;--l0:0px;--lm:0px;--r0:100%;--rm:100%;
+  clip-path:polygon(var(--l0) 0,var(--r0) 0,var(--rm) 50%,var(--r0) 100%,var(--l0) 100%,var(--lm) 50%);
+  border-left-width:0 !important;border-right-width:0 !important;border-radius:0 !important;padding-left:calc(var(--t) + 2px) !important;padding-right:calc(var(--t) + 2px) !important;
+  background-image:var(--g1),var(--g2),var(--g3),var(--g4);background-size:var(--t) 50%;background-position:0 0,0 100%,100% 0,100% 100%;background-repeat:no-repeat}
+span.cjoin > button.jz + button.jz{margin-left:calc(2px - var(--t)) !important}
+span.cjoin > button.jz:hover{--rbc:var(--acc)}
+span.cjoin > button.jz.on{--rbc:var(--gold)}
+span.cjoin > button.jl-tip{--l0:var(--t);--lm:0px;--g1:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));--g2:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px))}
+span.cjoin > button.jl-notch{--l0:0px;--lm:var(--t);--g1:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));--g2:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px))}
+span.cjoin > button.jr-tip{--r0:calc(100% - var(--t));--rm:100%;--g3:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));--g4:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px))}
+span.cjoin > button.jr-notch{--r0:100%;--rm:calc(100% - var(--t));--g3:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));--g4:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px))}
+span.cjoin > button.jarrow{color:transparent !important;text-shadow:none !important}
 /* v0.417, по снимку шеврона с ▶ внутри — «теперь значки им не нужны»: знак стрелки не виден (форма и есть стрелка); сам символ в кнопке
    остался — по нему rhombTag узнаёт стрелку и её сторону */
 button.tri-l,button.tri-r,button.tri-u,button.tri-d{color:transparent !important;text-shadow:none !important}
@@ -1137,7 +1155,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.418</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.419</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1799,7 +1817,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
           </div>
           <!-- v0.240, «звук из бит»: поле звучит — строка тактом или столбцы аккордами -->
           <div class="cgrp gc cg-snd" title="♫ Звук из бит (1 — нота, 0 — пауза, высота — по трём битам с этого места). ◀ ▶ — направление (горит) и шаг; ♫ звук → ⏸ пауза → ⏯ дальше; ■ — стоп и в начало. Ниже: что звучит, тембр, ◉ показать головки, ⁑ авто — сколько бит разом, лад, ♩ темп, 🔊 громкость"><span class="glab">Звук</span>
-            <!-- v0.345, «пауза и шаг вперёд-назад, стрелки справа-слева»: ◀ ♫ звук ▶ — один блок; ⏸ рядом --><!-- v0.368, по снимку «■ звук» — «раздели на 2 по 1 размера, паузу сюда»: ◀ [♫ звук] [⏸ пауза] ▶ — один блок, звук и пауза по 1 кнопке --><span class="cunit csnd"><button id="bSndB" title="◀ Назад: звучит — играть в обратную сторону; не звучит — шаг назад (звук на паузе). Горит — направление">◀</button><button id="bSnd" title="♫ Звук: поле звучит; ещё щелчок — ⏸ пауза (место и головки остаются), ещё — ⏯ дальше; ■ рядом — стоп и в начало. Строки меняются на ходу — звучит уже новое. Идёт и в запись ⏺ / mp4 конуса — даже если включить посреди записи">♫ звук</button><button id="bSndP" title="■ Стоп и в начало (звук не идёт)" disabled>■</button><button id="bSndF" title="▶ Вперёд: звучит — играть вперёд; не звучит — шаг вперёд (звук на паузе). Горит — направление (по умолчанию)">▶</button></span>
+            <!-- v0.345, «пауза и шаг вперёд-назад, стрелки справа-слева»: ◀ ♫ звук ▶ — один блок; ⏸ рядом --><!-- v0.368, по снимку «■ звук» — «раздели на 2 по 1 размера, паузу сюда»: ◀ [♫ звук] [⏸ пауза] ▶ — один блок, звук и пауза по 1 кнопке --><span class="cunit csnd cjoin" data-ends="((())"><button id="bSndB" title="◀ Назад: звучит — играть в обратную сторону; не звучит — шаг назад (звук на паузе). Горит — направление">◀</button><button id="bSnd" title="♫ Звук: поле звучит; ещё щелчок — ⏸ пауза (место и головки остаются), ещё — ⏯ дальше; ■ рядом — стоп и в начало. Строки меняются на ходу — звучит уже новое. Идёт и в запись ⏺ / mp4 конуса — даже если включить посреди записи">♫ звук</button><button id="bSndP" title="■ Стоп и в начало (звук не идёт)" disabled>■</button><button id="bSndF" title="▶ Вперёд: звучит — играть вперёд; не звучит — шаг вперёд (звук на паузе). Горит — направление (по умолчанию)">▶</button></span>
             <select id="sndMode" title="Что звучит (1 — нота, 0 — пауза, высота — число из трёх бит с этого места). Строка — текущая тактом слева направо. Разом — все выделенные строки (до 8) одновременно, каждая своим голосом. Подряд — чтение: строки одна за другой, как текст (выделенные, нет выделения — всё поле). По 2 — пары строк разом, потом следующая пара. Столбцы — шаг — столбец поля: звучат строки с 1 в нём (до 8), высота — по номеру строки">
               <!-- v0.341, «сократи, чтобы в размер 1 уместились»: было «выделенные разом», «по очереди», «по 2 строки» — список шёл в 2 кнопки -->
               <option value="row">строка</option><option value="sel" title="Все выделенные строки разом, каждая своим голосом">разом</option><option value="seq" title="По очереди: строки одна за другой, как текст">подряд</option><option value="pair" title="По 2 строки: пара разом, потом следующая">по 2</option><option value="col">столбцы</option><option value="rc" title="Строки + столбцы: две головки разом — одна читает строки подряд (бирюза), другая идёт по столбцам сверху вниз (золото, октавой ниже)">стр+стл</option>
@@ -2011,8 +2029,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0418"></script>
-<script src="zz-ui.js?v=0418"></script>
+<script src="zz-core.js?v=0419"></script>
+<script src="zz-ui.js?v=0419"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
