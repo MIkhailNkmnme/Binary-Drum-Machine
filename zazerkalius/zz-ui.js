@@ -3882,7 +3882,17 @@ function setupCone(){
     b.textContent = sndT ? "⏸" : sndPaused ? "⏯" : "♫";   // v0.423, «звук — уменьши длину, оставь там только символ, без текста» (слова — в подсказке)
     b.title = sndT ? "⏸ Пауза: звук встаёт, место и подсветка бита остаются (■ рядом — стоп совсем)" : sndPaused ? "⏯ Дальше с того же места (■ рядом — стоп совсем)" : "♫ Звук: поле звучит; ещё щелчок — ⏸ пауза (место и головки остаются), ещё — ⏯ дальше; ■ рядом — стоп и в начало. Строки меняются на ходу — звучит уже новое. Идёт и в запись ⏺ / mp4 конуса";
     { const bb = $("bSndB"), bf = $("bSndF"), back = Z.sndDir < 0; if (bb) { bb.classList.toggle("on", back); bb.title = "◀ Назад: звучит — играть в обратную сторону; не звучит — шаг назад (звук на паузе). Горит — направление"; } if (bf) { bf.classList.toggle("on", !back); bf.title = "▶ Вперёд: звучит — играть вперёд; не звучит — шаг вперёд (звук на паузе). Горит — направление"; } }   // v0.374
-    const p = $("bSndP"); if (p) { p.disabled = !on; p.classList.remove("on"); p.classList.toggle("run", !!sndT);   /* v0.377: ■ мигает вместе со звуком */ p.textContent = "■"; p.title = on ? "■ Стоп и в начало: звук встаёт совсем, следующий пуск — с первого бита" : "■ Стоп и в начало (звук не идёт)"; }
+    /* v0.425, «стоп — выполняет стоп и паузу; при стопе стрелки — шаг, при паузе — плей; пауза — нажать — стоп, ничего не меняется; плей не
+       нужен», «как запустить из стопа — поставить паузу»: ◆ показывает состояние (■ стоп, ⏸ пауза — горит, ♫ играет — мигает); стрелка
+       направления шире (jwide), ◆ сдвигается к другой */
+    const p = $("bSndP"); if (p) { p.disabled = false; p.classList.toggle("on", sndPaused); p.classList.toggle("run", !!sndT);
+      p.textContent = sndT ? "♫" : sndPaused ? "⏸" : "■";
+      p.title = sndT ? "◆ Играет — щелчок: пауза (место остаётся)" : sndPaused ? "◆ Пауза — стрелка: играть в её сторону; щелчок: стоп (место то же)" : "◆ Стоп — стрелка: шаг в её сторону; щелчок: пауза (потом стрелка — играть)"; }
+    { const bb = $("bSndB"), bf = $("bSndF"), back = Z.sndDir < 0, wide = (x, w) => { if (x && x.classList.contains("jwide") !== w) { x.classList.toggle("jwide", w); x._jw = 1; } };
+      wide(bb, back); wide(bf, !back);
+      if (bb) bb.title = "◀ Назад: стоп — шаг назад; пауза или играет — играть назад. Широкая — направление";
+      if (bf) bf.title = "▶ Вперёд: стоп — шаг вперёд; пауза или играет — играть вперёд. Широкая — направление";
+      if ((bb && bb._jw) || (bf && bf._jw)) { if (bb) bb._jw = 0; if (bf) bf._jw = 0; if (typeof joinTag === "function") joinTag(); } }
     snd2Label();   // v0.337: остановлен — «⁑ авто»
   };
   const sndSet = (on) => {
@@ -3940,8 +3950,25 @@ function setupCone(){
     const live = !!sndT || sndPaused;
     try { if (e.source) e.source.postMessage({ zerkSndOn: live, zerkSndPaused: sndPaused, zerkSndHeads: live ? [...sndHeadsOn] : [], zerkSndR: live && sndHeadsOn.has("r"), zerkSndC: live && sndHeadsOn.has("c") }, "*"); } catch (err) { /* хаб с другого адреса */ }
   });
-  if ($("bSndP")) $("bSndP").onclick = () => { if (sndT || sndPaused) sndSet(false); };   // v0.371: ■ стоп
-  const sndDirSet = (d) => { const was = Z.sndDir < 0 ? -1 : 1; Z.sndDir = d; save(); if (sndT) { sndUi(); if (was !== d) say(d < 0 ? "◀ Звук — назад." : "▶ Звук — вперёд."); } else sndStepBy(d); };   // v0.374
+  // v0.425: ◆ — играет → пауза; пауза → стоп (место то же); стоп → пауза (дальше стрелка — играть)
+  if ($("bSndP")) $("bSndP").onclick = () => {
+    if (sndT) sndPause(true);
+    else if (sndPaused) { sndPaused = false; sndUi(); }
+    else { sndPaused = true; sndCtx(); sndUi(); }
+  };
+  // v0.425: стрелка — направление; стоп — шаг (стоп остаётся), пауза — играть, играет — играть в её сторону
+  const sndStepStop = (d) => {
+    const per = sndPer(); if (!per) return;
+    sndCtx();
+    if (d < 0) sndStep = ((sndStep - 2) % per + per) % per; else sndStep = (sndStep % per + per) % per;
+    sndTick(); sndUi();
+  };
+  const sndDirSet = (d) => {
+    const was = Z.sndDir < 0 ? -1 : 1; Z.sndDir = d; save();
+    if (sndT) { sndUi(); if (was !== d) say(d < 0 ? "◀ Звук — назад." : "▶ Звук — вперёд."); }
+    else if (sndPaused) sndPause(false);
+    else sndStepStop(d);
+  };
   if ($("bSndB")) $("bSndB").onclick = () => sndDirSet(-1);
   if ($("bSndF")) $("bSndF").onclick = () => sndDirSet(1);
   sndUi();
@@ -6809,7 +6836,7 @@ window.addEventListener("load", () => setTimeout(rhombTag, 0));
    треугольников. Зовётся из rhombTag (после каждой раскладки групп). */
 function joinTag(){
   document.querySelectorAll("span.cjoin").forEach(sp => {
-    const e = sp.dataset.ends || "", bs = [...sp.children].filter(c => c.tagName === "BUTTON");
+    const e = sp.dataset.ends || "", bs = [...sp.children].filter(c => c.tagName === "BUTTON" && !c.hidden);   // v0.425: спрятанные — не в сцепке
     bs.forEach((b, i) => {
       const L = e[i], R = e[i + 1], h = parseFloat(getComputedStyle(b).height) || 24;
       /* v0.422, «(стоп) — из скольких собран так: ()()()?» → «2 — подгони все под целые треугольники»: длина кнопки сцепки — целое число
@@ -6832,7 +6859,7 @@ function joinTag(){
          средняя черта и косые под ±60° через каждую вершину на средней черте (шаг — сторона s = 2t); от острия слева вершины — с x = 0, от
          выемки — с x = t. Картинка SVG — пятым слоем фона, рамка кнопки её обрезает. */
       { const t2 = h / (2 * Math.sqrt(3)), sd = 2 * t2, x0 = L === "(" ? 0 : t2;
-        const W = RH_TRI[b.textContent.trim()] ? 3 * t2 : (parseFloat(b.style.width) || parseFloat(getComputedStyle(b).width) || 0);   // стрелка — 3t, до пересчёта стиля
+        const W = RH_TRI[b.textContent.trim()] ? (b.classList.contains("jwide") ? 5 : 3) * t2 : (parseFloat(b.style.width) || parseFloat(getComputedStyle(b).width) || 0);   // стрелка — 3t (широкая — 5t), до пересчёта стиля
         let d = `M0 ${h / 2}H${W.toFixed(2)}`;
         for (let M = x0 - sd; M <= W + sd; M += sd) d += `M${(M - t2).toFixed(2)} 0L${(M + t2).toFixed(2)} ${h}M${(M + t2).toFixed(2)} 0L${(M - t2).toFixed(2)} ${h}`;
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><path d="${d}" stroke="rgba(216,221,232,.2)" stroke-width="1" fill="none"/></svg>`;
