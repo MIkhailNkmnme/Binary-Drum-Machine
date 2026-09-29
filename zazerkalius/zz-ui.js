@@ -1772,13 +1772,21 @@ function renderCone(){
       }
     }
   }
-  if (window.zzMusRay && !Z.cone3d) {   // v0.441: 🎵 головка музыкального лазера — луч из центра до записанной ноты, на конце точка; v0.442 — головок несколько, у каждой свой цвет; в кольце для заполнения — до его середины, прошёл и его — за край
-    g.save(); g.lineCap = "round"; g.shadowBlur = 10 * dpr; g.lineWidth = Math.max(1.5 * dpr, Math.min(dr * 0.12, 3 * dpr));
+  if (window.zzMusRay && !Z.cone3d) {   // v0.441: 🎵 головка музыкального лазера — луч из центра, на конце точка; v0.442 — головок несколько, у каждой свой цвет
+    /* v0.443: у головки за шаг — отрезки пути [угол, кольцо, что]: «on» / «in» — стоит на кольце (до его середины, точка светлая), «wall» —
+       упёрлась в «1» и отразилась (до внутреннего края кольца, точка красная, дальше — бледный отрезок обратно сквозь центр), «fill» —
+       в кольце для заполнения, «out» — за краем. Кольцо, которое головка занимает, обведено её цветом */
+    g.save(); g.lineCap = "round"; const lw = Math.max(1.5 * dpr, Math.min(dr * 0.12, 3 * dpr)), pr = Math.max(3 * dpr, Math.min(dr * 0.22, 6 * dpr));
     for (const M of window.zzMusRay) {
-      const a = -Math.PI / 2 + M.a * Math.PI / 180, i = Math.min(M.stop, N);
-      const rs = M.stop < N ? (r0 + i * dr + dr * band / 2) * coneRho(i, a) : M.stop === N ? r0 + N * dr + dr * band / 2 : r0 + (N + 1) * dr + dr * 0.3, px = cx + rs * Math.cos(a), py = cy + rs * Math.sin(a);
-      g.strokeStyle = g.shadowColor = M.c || cg; g.globalAlpha = 0.85; g.beginPath(); g.moveTo(cx, cy); g.lineTo(px, py); g.stroke();
-      g.globalAlpha = 1; g.fillStyle = "#fff7d6"; g.beginPath(); g.arc(px, py, Math.max(3 * dpr, Math.min(dr * 0.22, 6 * dpr)), 0, 2 * Math.PI); g.fill();
+      const col = M.c || cg;
+      if (M.ring >= 0 && M.ring < N) { g.strokeStyle = col; g.globalAlpha = 0.45; g.lineWidth = Math.max(2 * dpr, dr * band * 0.35); g.beginPath(); coneArc(g, cx, cy, M.ring, r0 + M.ring * dr + dr * band / 2, 0, 2 * Math.PI); g.stroke(); }
+      M.seg.forEach(([deg, i, kd], q) => {
+        const a = -Math.PI / 2 + deg * Math.PI / 180, last = q === M.seg.length - 1;
+        const rs = kd === "wall" ? (r0 + i * dr) * coneRho(i, a) : i < N ? (r0 + i * dr + dr * band / 2) * coneRho(i, a) : kd === "fill" ? r0 + N * dr + dr * band / 2 : r0 + (N + 1) * dr, px = cx + rs * Math.cos(a), py = cy + rs * Math.sin(a);
+        g.strokeStyle = g.shadowColor = col; g.shadowBlur = last ? 10 * dpr : 0; g.globalAlpha = last ? 0.9 : 0.4; g.lineWidth = lw;
+        g.beginPath(); g.moveTo(cx, cy); g.lineTo(px, py); g.stroke(); g.shadowBlur = 0;
+        g.globalAlpha = last ? 1 : 0.6; g.fillStyle = kd === "wall" ? cR : "#fff7d6"; g.beginPath(); g.arc(px, py, pr, 0, 2 * Math.PI); g.fill();
+      });
     }
     g.restore();
   }
@@ -4062,42 +4070,67 @@ function setupCone(){
      при пуске — точка отмены, ↩ вернёт строки как были. «∅» — все строки в нули той же длины: лазер наберёт ноты с нуля. Луч-часы и
      солнце при пуске выключаются — у них ячейки колец пустые, а музыке нужны биты. Головка — Z.coneMusK (номер шага), помнится. */
   let musT = 0, musSaved = 0;
-  const musRule = () => Z.coneMusRule === "keep" ? "keep" : "count";
-  const musUi = () => { const b = $("bConeMus"); if (b) b.classList.toggle("on", !!musT); const r = $("coneMusRule"); if (r) r.value = musRule(); };
+  const musWrite = () => Z.coneMusIn !== "read";
+  const musUi = () => { const b = $("bConeMus"); if (b) b.classList.toggle("on", !!musT); const r = $("coneMusIn"); if (r) r.value = musWrite() ? "write" : "read"; };
   /* v0.442, «7 лазеров пусть — у каждого своя нота, по углу 360 на 7; и если на последней строке 0, то продолжаем — пишем в неё биты 1-0-1-0»:
-     головок столько, сколько в поле «×» рядом с 🎵 (Z.coneMusN, 1…12, по умолчанию 7), через 360° / число, идут по кругу вместе. У каждой
-     своя нота — ступень лада «Звука» от До (в мажоре — До Ре Ми Фа Соль Ля Си), свой тембр («🎨 разные») и свой цвет луча; строка теперь
-     задаёт октаву: внутренняя треть колец — низ, средняя — середина, внешняя — верх. Луч, прошедший все строки, не уходит за край, а
-     продолжает в кольцо для заполнения (пунктир снаружи; строка под чертой в поле): там ячейка всегда перещёлкивается 1 → 0 → 1 → 0 —
-     пустая или «0» становится «1» (записана), «1» звучит и становится «0», при любом правиле. Головки за шаг идут по очереди от первой,
-     одна и та же ячейка (у строки 1 она на весь круг) может достаться нескольким — каждая видит то, что оставила предыдущая. Одинаковые
-     ноты за шаг звучат один раз, голосов разом — не больше 12. */
+     головок столько, сколько в поле «×» рядом с 🎵 (Z.coneMusN, 1…12, по умолчанию 7), через 360° / число. У каждой своя нота — ступень
+     лада «Звука» от До (в мажоре — До Ре Ми Фа Соль Ля Си), свой тембр («🎨 разные») и свой цвет луча; строка задаёт октаву: внутренняя
+     треть колец — низ, средняя — середина, внешняя — верх. Прошедшая все строки головка — в кольцо для заполнения: там ячейка всегда
+     перещёлкивается 1 → 0 → 1 → 0 — пустая или «0» становится «1», «1» звучит и становится «0». Одинаковые ноты за шаг звучат один раз,
+     голосов разом — не больше 12. */
+  /* v0.443, «пусть лазер, попадая на строку, занимает её, пока всю по кругу не пройдёт; остальные проходят мимо неё; как проиграл — к
+     следующей идёт; встаёт на строку только в щель и двигает её; при выходе идёт дальше; если 1-ца — отражается и идёт в другую сторону,
+     сквозь центр даже; 1 при этом становится 0». Головки больше не бегут по кругу — стоят каждая на своём угле и двигают кольца.
+     Головка идёт из центра наружу, кольцо за кольцом. Кольцо занято другой головкой — проходит мимо. Под головкой «0» — щель: головка
+     встаёт на кольцо, занимает его («пишет» — щель становится «1», нота записана; «читает» — остаётся «0») и двигает — за шаг на бит,
+     бит под ней звучит её нотой, если «1». Прошла весь круг (шагов — сколько бит в строке, кольцо вернулось на место) — выходит и идёт
+     к следующему. Под головкой «1» — стена: «1» становится «0», головка отражается и идёт обратно сквозь центр — на противоположную
+     сторону (угол + 180°) и оттуда снова наружу. Прошла все строки — строка для заполнения (1-0-1-0, как в v0.442) и снова из центра,
+     тем же углом. Кольцо двигается «на вид» (coneRot — как запертое кольцо мышью): строка не сдвигается, биты те же. За шаг у головки
+     в пути не больше 4 событий (стен подряд). Правило «счёт / копит» v0.441 ушло вместе с бегом по кругу — вместо него «пишет / читает».
+     Головки — musL [{ a — угол°, r — кольцо (в пути — с какого идти), on — занимает, c — шагов по кругу }]; с пуском — все в центре. */
   const MUS_COL = ["#ff5f6d", "#ff9f43", "#ffe066", "#7ee787", "#4dd4ff", "#6b8cff", "#c38cf5"];
   const musN = () => Math.max(1, Math.min(12, Math.round(+Z.coneMusN) || 7));
+  let musL = [];
+  const musInit = () => { const H = musN(), T = coneMaxLen(); musL = Array.from({ length: H }, (_, h) => ({ a: h * 360 / H + 180 / T, r: 0, on: false, c: 0 })); };
+  const musCell = (n, rot, a) => ((Math.floor(a / 360 * n + rot + 1e-9) % n) + n) % n;
   const musTick = () => {
-    const N = Math.min(Z.rows.length, CONE_MAX), T = coneMaxLen(), k = ((Math.round(Z.coneMusK || 0) % T) + T) % T, H = musN(), sc = sndSc();
-    Z.coneMusK = (k + 1) % T;
-    const fillOn = !Z.cone3d && Z.rows.length <= CONE_MAX, cnt = musRule() === "count", P = [], rays = [], hz = new Map();
+    const N = Math.min(Z.rows.length, CONE_MAX), H = musN(), sc = sndSc(), write = musWrite();
+    if (musL.length !== H) musInit();
+    const fillOn = !Z.cone3d && Z.rows.length <= CONE_MAX, P = [], rays = [], hz = new Map(), busy = new Set();
     let ch = false, fch = false;
     const oct = (r) => Math.min(2, Math.floor(r * 3 / (N + 1)));
-    for (let h = 0; h < H; h++) {
-      const a = (((k + 0.5) * 360 / T + h * 360 / H) % 360 + 360) % 360, deg = sc[h % sc.length] + 12 * Math.floor(h / sc.length);
+    const put = (s, j, v) => s.slice(0, j) + v + s.slice(j + 1);
+    musL.forEach(L => { if (L.on && L.r < N && Z.rows[L.r].length) busy.add(L.r); else L.on = false; });
+    musL.forEach((L, h) => {
+      const deg = sc[h % sc.length] + 12 * Math.floor(h / sc.length), seg = [];
       const note = (r) => { const f = 130.81 * Math.pow(2, (deg + 12 * oct(r)) / 12), key = Math.round(f * 10); if (!hz.has(key)) hz.set(key, [f, h]); };
-      let stop = N + 1;
-      for (let r = 0; r < N; r++) {
-        const s = Z.rows[r], n = s.length; if (!n) continue;
-        const j = ((Math.floor(a / 360 * n + coneRotOf(r) + 1e-9) % n) + n) % n;
-        if (s[j] === "1") { note(r); P.push([r, j, 0]); if (cnt) { Z.rows[r] = s.slice(0, j) + "0" + s.slice(j + 1); ch = true; } }
-        else { Z.rows[r] = s.slice(0, j) + "1" + s.slice(j + 1); ch = true; P.push([r, j, 1]); stop = r; break; }
+      if (L.on) {   // на кольце: бит под головкой звучит, кольцо — на бит дальше
+        const r = L.r, n = Z.rows[r].length, j = musCell(n, coneRotOf(r), L.a);
+        if (Z.rows[r][j] === "1") note(r);
+        P.push([r, j, 0]); seg.push([L.a, r, "on"]);
+        coneRot[r] = ((Math.round(coneRot[r] || 0) + 1) % n + n) % n;
+        if (++L.c >= n) { L.on = false; busy.delete(r); L.r = r + 1; }
+      } else for (let ev = 0; ev < 4; ev++) {   // в пути — наружу до щели или стены
+        let r = L.r; while (r < N && (busy.has(r) || !Z.rows[r].length)) r++;
+        if (r >= N) {   // все строки позади — строка для заполнения, потом снова из центра
+          if (fillOn) {
+            const f = fillDraft(), j = musCell(f.length, coneFillRot(), L.a);
+            if (f[j] === "1") { note(N); Z.fillCells = put(f, j, "0"); } else Z.fillCells = put(f, j, "1");
+            fch = true; seg.push([L.a, N, "fill"]);
+          } else seg.push([L.a, N, "out"]);
+          L.r = 0; break;
+        }
+        const s = Z.rows[r], j = musCell(s.length, coneRotOf(r), L.a);
+        if (s[j] === "0") {   // щель — встать на кольцо
+          if (write) { Z.rows[r] = put(s, j, "1"); ch = true; P.push([r, j, 1]); }
+          L.r = r; L.on = true; L.c = 0; busy.add(r); seg.push([L.a, r, "in"]); break;
+        }
+        Z.rows[r] = put(s, j, "0"); ch = true; P.push([r, j, 1]); seg.push([L.a, r, "wall"]);   // «1» — стена: гаснет, головка — сквозь центр на другую сторону
+        L.a = (L.a + 180) % 360; L.r = 0;
       }
-      if (stop > N && fillOn) {   // прошёл все строки — в кольцо для заполнения: 1 → 0 → 1 → 0
-        const f = fillDraft(), n = f.length, j = ((Math.floor(a / 360 * n + coneFillRot() + 1e-9) % n) + n) % n;
-        if (f[j] === "1") { note(N); Z.fillCells = f.slice(0, j) + "0" + f.slice(j + 1); }
-        else { Z.fillCells = f.slice(0, j) + "1" + f.slice(j + 1); stop = N; }
-        fch = true;
-      }
-      rays.push({ a, stop, c: MUS_COL[h % 7] });
-    }
+      rays.push({ c: MUS_COL[h % 7], seg, ring: L.on ? L.r : -1 });
+    });
     if (ch) syncLane();
     if (hz.size) {
       sndCtx(); const sp = Z.sndSp || 6, len = Math.min(0.6, 1.6 / sp), t = snd.ctx.currentTime + 0.01;
@@ -4106,7 +4139,7 @@ function setupCone(){
     }
     const show = () => { if (!musT) return; window.zzMusRay = rays; if (ch || fch) renderRows(); else renderCone(); sndMark(P); };   // как у «Звука» (v0.388): картинка — вместе со звуком
     const L = sndLat(); if (L > 0.015) setTimeout(show, L * 1000); else show();
-    if (Date.now() - musSaved > 5000) { musSaved = Date.now(); save(); }
+    if (Date.now() - musSaved > 5000) { musSaved = Date.now(); Z.coneRot = coneRot.map(x => Math.round(x || 0)); save(); }
   };
   const musLoop = () => {
     if (!musT) return;
@@ -4119,9 +4152,9 @@ function setupCone(){
       if (rowsLocked()) return;
       if (Z.coneSun) $("bConeSun").click();
       if (Z.coneClock) { const c = $("coneClock"); c.checked = false; c.onchange({ target: c }); }
-      undoPush(undoState()); sndCtx(); musSaved = Date.now(); musT = setTimeout(musLoop, 0);
-      say(`🎵 Музыка лазера: ${musN()} голов${musN() === 1 ? "ка" : musN() < 5 ? "ки" : "ок"} через ${Math.round(3600 / musN()) / 10}°, у каждой своя нота (строка — октава); «1» звучит, в «0» луч пишет ноту и стоит` + (musRule() === "count" ? ", прозвучавшая «1» снова «0» (счёт)" : ", ноты копятся") + "; прошёл все строки — пишет в строку для заполнения 1-0-1-0. Темп, лад и громкость — в «Звуке». ↩ вернёт строки.");
-    } else { clearTimeout(musT); musT = 0; window.zzMusRay = null; sndMark(null); renderCone(); save(); }
+      undoPush(undoState()); sndCtx(); musInit(); musSaved = Date.now(); musT = setTimeout(musLoop, 0);
+      say(`🎵 Музыка лазера: ${musN()} голов${musN() === 1 ? "ка" : musN() < 5 ? "ки" : "ок"} через ${Math.round(3600 / musN()) / 10}°, у каждой своя нота (строка — октава). Из центра наружу: «0» — щель, головка встаёт на кольцо и крутит его полный круг, играя его «1»; «1» — стена: гаснет, головка отражается сквозь центр. Занятое кольцо другие проходят мимо. ↩ вернёт строки.`);
+    } else { clearTimeout(musT); musT = 0; window.zzMusRay = null; sndMark(null); Z.coneRot = coneRot.map(x => Math.round(x || 0)); renderCone(); save(); }
     musUi();
   };
   if ($("bConeMus")) {
@@ -4129,11 +4162,11 @@ function setupCone(){
     $("bConeMus").onclick = () => musSet(!musT);
     const mn = $("coneMusN"); mn.value = musN();   // v0.442: сколько головок
     mn.onchange = () => { Z.coneMusN = +mn.value; Z.coneMusN = musN(); mn.value = Z.coneMusN; save(); };
-    $("coneMusRule").onchange = (e) => { Z.coneMusRule = e.target.value === "keep" ? "keep" : "count"; save();
-      say(Z.coneMusRule === "keep" ? "🎵 Копит: «1» после звука остаётся — рисунок растёт." : "🎵 Счёт: «1» звучит и снова «0» — каждый луч как двоичный счётчик."); };
+    $("coneMusIn").onchange = (e) => { Z.coneMusIn = e.target.value === "read" ? "read" : "write"; save();   // v0.443
+      say(musWrite() ? "🎵 Пишет: головка, встав в щель, ставит там «1» — нота записана." : "🎵 Читает: щель остаётся «0» — головка только играет кольцо; «1» гаснут от отражений."); };
     $("bConeMusZero").onclick = () => {
       try { snapshot(); } catch (err) { if (err.message === "ZZ_LOCK") return; throw err; }
-      Z.rows = Z.rows.map(s => "0".repeat(s.length)); syncLane(); Z.coneMusK = 0; renderAll(); save();
+      Z.rows = Z.rows.map(s => "0".repeat(s.length)); syncLane(); renderAll(); save();
       say("∅ Все строки — нули той же длины: 🎵 лазер наберёт ноты сам. ↩ вернёт.");
     };
   }
