@@ -1,4 +1,4 @@
-<!-- Zerkalius Просмотр GIF — v0.003. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
+<!-- Zerkalius Просмотр GIF — v0.004. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
      на страницу), листать по кадру и через 2 / 4 / 8, играть с любой скоростью, отметить участок «с — по» и положить в склейку;
      участки — из разных GIF, в любом порядке; склейку посмотреть и скачать одним GIF. Всё в самой странице, без библиотек:
      свой разбор GIF (LZW, палитры, прозрачность, способы смены кадра, чересстрочность) и своя сборка (тот же LZW, что в Code).
@@ -10,13 +10,14 @@
              треугольника и ромба — размер в рядах, клетки заполняются GIF набора по кругу; раскладку — в GIF и PNG.
      v0.003: по снимку «склейка кадр 13 / 64 · Zerkalius-romby-… #49 · 250 мс» — «тут текст прыгает, название файла надо в сторонку»: счётчик
              и имя файла — два поля постоянной ширины; имя (в склейке оно меняется от кадра к кадру) — в своём, бледнее, длинное — с многоточием,
-             целиком — в подсказке. Ползунок кадров больше не дёргается. -->
+             целиком — в подсказке. Ползунок кадров больше не дёргается.
+     v0.004: «пауза по щелчку»: щелчок по картинке (без протяжки — протяжка по-прежнему двигает вид) — пауза / играть, как пробел. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Просмотр GIF — v0.003</title>
+<title>Zerkalius Просмотр GIF — v0.004</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -63,7 +64,7 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.003</span></h1>
+    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.004</span></h1>
     <div class="bar">
       <button id="openBtn" title="Открыть один или несколько GIF (их можно и просто бросить на страницу)">📂 Открыть GIF</button>
       <input type="file" id="file" accept="image/gif,.gif" multiple>
@@ -358,7 +359,10 @@ view.addEventListener('wheel', e => {
 let pan = null;
 view.addEventListener('mousedown', e => { if (e.button !== 0) return; pan = { x: e.clientX, y: e.clientY, l: view.scrollLeft, t: view.scrollTop }; view.classList.add('pan'); });
 window.addEventListener('mousemove', e => { if (!pan) return; view.scrollLeft = pan.l - (e.clientX - pan.x); view.scrollTop = pan.t - (e.clientY - pan.y); });
-window.addEventListener('mouseup', () => { pan = null; view.classList.remove('pan'); });
+window.addEventListener('mouseup', e => {   // v0.004: щелчок без протяжки — пауза / играть (протяжка, как прежде, двигает вид)
+  if (pan && Math.abs(e.clientX - pan.x) + Math.abs(e.clientY - pan.y) < 5 && SEQ.length) play(!S.playing);
+  pan = null; view.classList.remove('pan');
+});
 
 /* ---------- игра ---------- */
 function play(on) {
