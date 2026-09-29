@@ -1,4 +1,4 @@
-<!-- Zerkalius Гранидус — v0.067. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Гранидус — v0.068. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Гранидус — v0.067</title>
+<title>Zerkalius Гранидус — v0.068</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -210,35 +210,36 @@
      Поэтому панель переезжает ВНИЗ отдельным листом: два столбца, своя прокрутка, ограничение по
      высоте и отступ под системную полосу (env(safe-area-inset-bottom) — вырез и «домашняя»
      полоска на iPhone). Кнопки крупнее: палец — не курсор. */
+  /* v0.068: в окне Zazerkalius (html.zzemb) узкого режима нет — ни листа снизу, ни ⚙; все разделы плавающие (см. SECS) */
   @media (max-width: 720px){
-    #ver{ font-size:10px; top:11px; }
-    #hint{ display:none; }
-    #gear{ display:block; }
+    :where(html:not(.zzemb)) #ver{ font-size:10px; top:11px; }
+    :where(html:not(.zzemb)) #hint{ display:none; }
+    :where(html:not(.zzemb)) #gear{ display:block; }
     /* v0.026: лист снизу — стопка разделов; кнопки внутри раздела по две в ряд, как раньше во всём
        листе. Правой панели и плавающих окон на телефоне нет: все разделы собираются в лист (см. SECS). */
-    #panel{ left:0; right:0; bottom:0; top:auto; width:auto; z-index:2;
+    :where(html:not(.zzemb)) #panel{ left:0; right:0; bottom:0; top:auto; width:auto; z-index:2;
       display:flex; flex-direction:column; gap:6px;
       padding:9px 10px calc(10px + env(safe-area-inset-bottom));
       background:var(--panel); border-top:1px solid var(--line);
       max-height:56vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
-    #panel.hidden{ display:none; }
+    :where(html:not(.zzemb)) #panel.hidden{ display:none; }
     /* ⌂ «в Хаб» (v0.019) — с нижнего угла наверх, рядом с ⚙: внизу лист панели, значок лёг бы на него. */
-    body #zerkHubBtn{ top:8px; bottom:auto; left:58px; }
-    #panelR{ display:none !important; }
-    .tab-sec{ display:grid; grid-template-columns:1fr 1fr; gap:6px; align-content:start; }
-    .tab-sec > .set, .tab-sec > .cap, .tab-sec > .row, .tab-sec > #stepInfo, .tab-sec > .sec-head,
-    .tab-sec > #myBox{ grid-column:1 / -1; }
-    .sec-head{ cursor:default; }
-    #menuTabs{ top:50px; max-width:calc(100vw - 20px); }   /* ниже ⚙ и ⌂ в верхнем левом углу */
-    #stepInfo{ text-align:center; padding-bottom:2px; }
-    button{ padding:8px 10px; font-size:13px; }
-    .arr{ min-width:38px; padding:7px 4px; font-size:13px; }
-    .set input[type=range]{ height:5px; }
-    .set input[type=range]::-webkit-slider-thumb{ width:17px; height:17px; }
+    :where(html:not(.zzemb)) body #zerkHubBtn{ top:8px; bottom:auto; left:58px; }
+    :where(html:not(.zzemb)) #panelR{ display:none !important; }
+    :where(html:not(.zzemb)) .tab-sec{ display:grid; grid-template-columns:1fr 1fr; gap:6px; align-content:start; }
+    :where(html:not(.zzemb)) .tab-sec > .set, :where(html:not(.zzemb)) .tab-sec > .cap, :where(html:not(.zzemb)) .tab-sec > .row, :where(html:not(.zzemb)) .tab-sec > #stepInfo, :where(html:not(.zzemb)) .tab-sec > .sec-head,
+    :where(html:not(.zzemb)) .tab-sec > #myBox{ grid-column:1 / -1; }
+    :where(html:not(.zzemb)) .sec-head{ cursor:default; }
+    :where(html:not(.zzemb)) #menuTabs{ top:50px; max-width:calc(100vw - 20px); }   /* ниже ⚙ и ⌂ в верхнем левом углу */
+    :where(html:not(.zzemb)) #stepInfo{ text-align:center; padding-bottom:2px; }
+    :where(html:not(.zzemb)) button{ padding:8px 10px; font-size:13px; }
+    :where(html:not(.zzemb)) .arr{ min-width:38px; padding:7px 4px; font-size:13px; }
+    :where(html:not(.zzemb)) .set input[type=range]{ height:5px; }
+    :where(html:not(.zzemb)) .set input[type=range]::-webkit-slider-thumb{ width:17px; height:17px; }
     /* На телефоне методичка занимает экран целиком: обрезать её рамкой там нечем и незачем. */
-    #help{ width:100vw; max-height:100vh; height:100%; border-radius:0; border:0;
+    :where(html:not(.zzemb)) #help{ width:100vw; max-height:100vh; height:100%; border-radius:0; border:0;
       padding:16px 16px calc(24px + env(safe-area-inset-bottom)); }
-    #help td:first-child{ width:104px; }
+    :where(html:not(.zzemb)) #help td:first-child{ width:104px; }
   }
   /* v0.044: окно «◆ Октаэдр» в Zazerkalius (адрес ?zz) — значок «в Хаб» внутри окна не нужен, Хаб — у самой страницы */
   html.zzemb #zerkHubBtn{ display:none !important; }
@@ -298,7 +299,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.067</div>
+<div id="ver">v0.068</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -2106,7 +2107,7 @@ const SECS = {
   // v0.030: v1 → v2 — раскладка по умолчанию стала двухпанельной; старая запись (всё слева) иначе
   // перекрыла бы её у всех, кто уже открывал страницу.
   KEY_LAY: "zerkalius-oktaedr-layout-v2" + (ZZ_EMB ? "-zz" : ""),
-  narrow: window.matchMedia("(max-width: 720px)"),
+  narrow: window.matchMedia(ZZ_EMB ? "not all" : "(max-width: 720px)"),   // v0.068: в окне Zazerkalius узкого режима (листа) нет
   drag: null,
   all(){ return Array.from(document.querySelectorAll(".tab-sec")); },
   docks(){ return [document.getElementById("panel"), document.getElementById("panelR")]; },
@@ -2234,6 +2235,11 @@ const SECS = {
   // Плавающее окно не уводим за край: шапка должна оставаться на экране, иначе его не за что взять.
   clamp(f, x, y){
     const w = f.offsetWidth || 196, KEEP = 60;
+    if (ZZ_EMB) {   // v0.068: в окне Zazerkalius раздел целиком в окне по ширине (по снимку «ВИД» уходил за правый край), шапка — в окне по высоте
+      f.style.left = Math.round(Math.max(0, Math.min(innerWidth - w, x))) + "px";
+      f.style.top = Math.round(Math.max(0, Math.min(innerHeight - 24, y))) + "px";
+      return;
+    }
     f.style.left = Math.round(Math.min(innerWidth - KEEP, Math.max(KEEP - w, x))) + "px";
     f.style.top = Math.round(Math.min(innerHeight - 24, Math.max(0, y))) + "px";
   },
@@ -2308,7 +2314,31 @@ const SECS = {
       if (l && l.z === "float") { sec.classList.add("floating"); document.body.appendChild(sec); this.clamp(sec, l.x, l.y); }
     });
   },
-  applyMode(){ if (this.narrow.matches) this.home(true); else this.restore(); this.sync(); }
+  applyMode(){ if (this.narrow.matches) this.home(true); else this.restore(); if (ZZ_EMB) this.floatAll(); this.sync(); },
+  /* v0.068, по снимкам окна «◆ Гранидус» — «окна закрепляются ещё справа, слева — два поля невидимых, убери их»: в окне Zazerkalius боковых
+     панелей нет — все разделы плавающие. Лежавшие в панели (по умолчанию или в старой раскладке) встают плавающими столбиками: левой панели —
+     от левого края вправо, правой — от правого края влево, сверху вниз, не влезает по высоте — следующий столбик. Потом записывается */
+  floatAll(){
+    const [L, R] = this.docks(), G = 8, W = 196;
+    const groups = [[L, 1], [R, -1]].map(([dock, dir]) => [Array.from(dock.children).filter(c => c.classList.contains("tab-sec")), dir]);
+    if (!groups.some(([l]) => l.length)) return;
+    groups.forEach(([l]) => l.forEach(sec => { sec.classList.add("floating"); document.body.appendChild(sec); }));
+    const stack = () => groups.forEach(([l, dir]) => {
+      let col = 0, y = G;
+      l.forEach(sec => {
+        const off = sec.classList.contains("off");
+        sec.classList.remove("off");   // спрятанный — меряется открытым, потом прячется снова
+        const h = sec.offsetHeight || 120;
+        if (y > G && y + h > innerHeight - G) { col++; y = G; }
+        this.clamp(sec, dir > 0 ? G + col * (W + G) : innerWidth - G - W - col * (W + G), y);
+        y += h + G;
+        if (off) sec.classList.add("off");
+      });
+    });
+    stack(); this.save();
+    // высоты разделов (картинки «Вида» и т. п.) окончательны только после отрисовки — столбики ещё раз, если их пока не трогали
+    setTimeout(() => { if (!this.drag) { stack(); this.save(); } }, 400);
+  },
 };
 SECS.init();
 

@@ -7370,6 +7370,9 @@ function setupWin(el){
     '<button class="bp" title="В отдельное окно браузера — например, на второй монитор. Ещё раз ⧉ или закрыть то окно — вернуть">⧉</button>' +
     '<button class="bc" title="Свернуть / развернуть">–</button>';
   el.insertBefore(head, el.firstChild);
+  /* v0.439, по снимку полосы «⇄ строки → грани | ↗» над Гранидусом — «и это тоже ненужная полоса»: обе кнопки — в шапку окна, перед ⛶,
+     полосы нет, место — Гранидусу */
+  if (el.id === "w-okt") { const tl = el.querySelector(".wbody > .tools"); if (tl) { const bm = head.querySelector(".bm"); [...tl.children].forEach(b => head.insertBefore(b, bm)); tl.remove(); } }
   // v0.043: полоса вдоль всего нижнего края — тянешь, меняется высота (угол справа внизу остаётся — ширина и высота)
   const grip = document.createElement("div");
   grip.className = "wgrip"; grip.title = "Тяни — высота окна";
