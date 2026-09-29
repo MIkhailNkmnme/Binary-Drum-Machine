@@ -4103,7 +4103,12 @@ function setupCone(){
   const musCell = (n, rot, a) => ((Math.floor(a / 360 * n + rot + 1e-9) % n) + n) % n;
   const musGap = (n, rot, a) => { const x = a / 360 * n + rot, k = Math.round(x); return Math.abs(x - k) * 2 * Math.PI / n <= coneSlitHalf(n) + 1e-9 ? ((k % n) + n) % n : -1; };   // v0.444: граница под головкой → бит по часовой от неё, иначе −1
   const musTick = () => {
-    const N = Math.min(Z.rows.length, CONE_MAX), H = musN(), sc = sndSc(), write = musWrite();
+    /* v0.446, «лазеры должны крутиться и двигать биты»: головки снова идут по кругу по часовой — за шаг на 1/T круга (T — бит в самой
+       длинной строке), и в пути, и на кольце. Кольцо, на котором стоит головка, едет ей навстречу (против часовой) на 1 − n/T бита за
+       шаг (n — бит в строке): головка относительно кольца проходит ровно бит за шаг, ни один не пропуская, а на экране двигаются оба —
+       и головка, и биты (у самого длинного кольца оно почти стоит, у внутренних — бежит). Какой бит под головкой — считается от бита
+       входа (L.j0) и числа шагов, не пересчётом угла: так дробные сдвиги не сбивают счёт. Полный круг относительно кольца — выход. */
+    const N = Math.min(Z.rows.length, CONE_MAX), H = musN(), sc = sndSc(), write = musWrite(), T = coneMaxLen(), da = 360 / T;
     if (musL.length !== H) musInit();
     const fillOn = !Z.cone3d && Z.rows.length <= CONE_MAX, P = [], rays = [], hz = new Map(), busy = new Set();
     let ch = false, fch = false;
@@ -4113,13 +4118,15 @@ function setupCone(){
     musL.forEach((L, h) => {
       const deg = sc[h % sc.length] + 12 * Math.floor(h / sc.length), seg = [];
       const note = (r) => { const f = 130.81 * Math.pow(2, (deg + 12 * oct(r)) / 12), key = Math.round(f * 10); if (!hz.has(key)) hz.set(key, [f, h]); };
-      if (L.on) {   // на кольце: бит под головкой звучит, кольцо — на бит дальше
-        const r = L.r, n = Z.rows[r].length, e = musEdge() ? musGap(n, coneRotOf(r), L.a) : -1, j = e >= 0 ? e : musCell(n, coneRotOf(r), L.a);
+      if (L.on) {   // на кольце: бит под головкой звучит; головка — на 1/T круга по часовой, кольцо — навстречу, вместе ровно бит
+        const r = L.r, n = Z.rows[r].length, j = (((L.j0 | 0) + L.c) % n + n) % n;
         if (Z.rows[r][j] === "1") note(r);
         P.push([r, j, 0]); seg.push([L.a, r, "on"]);
-        coneRot[r] = (((coneRot[r] || 0) + 1) % n + n) % n;   // v0.445: без округления — подвинутое до границы кольцо держит её под головкой
+        L.a = (L.a + da) % 360;
+        coneRot[r] = (((coneRot[r] || 0) + 1 - n / T) % n + n) % n;   // v0.445: без округления — подвинутое до границы кольцо держит её под головкой
         if (++L.c >= n) { L.on = false; busy.delete(r); L.r = r + 1; }
-      } else for (let ev = 0; ev < 4; ev++) {   // в пути — наружу до щели или стены
+      } else for (let ev = 0; ev < 4; ev++) {   // в пути — наружу до щели или стены; v0.446: головка — на 1/T круга дальше
+        if (ev === 0) L.a = (L.a + da) % 360;
         let r = L.r; while (r < N && (busy.has(r) || !Z.rows[r].length)) r++;
         if (r >= N) {   // все строки позади — строка для заполнения, потом снова из центра
           if (fillOn) {
@@ -4132,7 +4139,7 @@ function setupCone(){
         const s = Z.rows[r], e = musEdge() ? musGap(s.length, coneRotOf(r), L.a) : -1, j = e >= 0 ? e : musCell(s.length, coneRotOf(r), L.a);
         if (musEdge() && e >= 0) {   // v0.444: граница бит — встать на кольцо
           if (write && s[j] === "0") { Z.rows[r] = put(s, j, "1"); ch = true; P.push([r, j, 1]); }
-          L.r = r; L.on = true; L.c = 0; busy.add(r); seg.push([L.a, r, "in"]); break;
+          L.r = r; L.on = true; L.c = 0; L.j0 = j; busy.add(r); seg.push([L.a, r, "in"]); break;
         }
         /* v0.445, по снимку — «всё встало тут»: при «границе» головка перед «0» стояла и писала «1», на следующем шаге эта «1» была стеной —
            гасла в «0», головка отражалась… и так без конца: у строки 1 из одного бита граница одна, наверху, кольцо не двигается — через
@@ -4142,11 +4149,11 @@ function setupCone(){
           const n = s.length, x = L.a / 360 * n + coneRotOf(r);
           coneRot[r] = (((coneRot[r] || 0) - (x - Math.floor(x + 1e-9))) % n + n) % n;
           if (write) { Z.rows[r] = put(s, j, "1"); ch = true; P.push([r, j, 1]); }
-          L.r = r; L.on = true; L.c = 0; busy.add(r); seg.push([L.a, r, "in"]); break;
+          L.r = r; L.on = true; L.c = 0; L.j0 = j; busy.add(r); seg.push([L.a, r, "in"]); break;
         }
         if (s[j] === "0") {   // щель — встать на кольцо
           if (write) { Z.rows[r] = put(s, j, "1"); ch = true; P.push([r, j, 1]); }
-          L.r = r; L.on = true; L.c = 0; busy.add(r); seg.push([L.a, r, "in"]); break;
+          L.r = r; L.on = true; L.c = 0; L.j0 = j; busy.add(r); seg.push([L.a, r, "in"]); break;
         }
         Z.rows[r] = put(s, j, "0"); ch = true; P.push([r, j, 1]); seg.push([L.a, r, "wall"]);   // «1» — стена: гаснет, головка — сквозь центр на другую сторону
         L.a = (L.a + 180) % 360; L.r = 0;
