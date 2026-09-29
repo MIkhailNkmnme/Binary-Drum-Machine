@@ -5007,11 +5007,17 @@ if ($("razvCv") && window.ResizeObserver) new ResizeObserver(() => renderRazv())
    новой; щелчок по номеру — открыть, правый — удалить. «⧉ в буфер» — все сцены текстом: по цветам номера треугольников (счёт по рядам с 1). */
 const TRI_COL = [null, ["#8b949e", "серый"], ["#ffd166", "золотой"], ["#e5484d", "красный"], ["#22d3ee", "голубой"], ["#f472b6", "розовый"], ["#4ade80", "зелёный"], ["#a78bfa", "сиреневый"], ["#f8fafc", "белый"]];
 const triGeo = { s: 0, hh: 0, pad: 8 };
+const TRI_S1 = 24 / Math.sqrt(3), TRI_S9 = 90;   // v0.437: «масштаб до реального менять» — настоящая сторона (кнопка 24 px = два ряда) … крупно
+/* v0.437: инструменты палитры — Z.triCol: цвет 1…8 — кисть (красит треугольник), 0 — ластик, −1 ☝ выбор группы, −2 ✦ точка в узел,
+   −3 ╱ линия по ребру. У ✦ и ╱ свой цвет — Z.triTCol (выбирается в палитре, пока инструмент горит) */
 function triState(){
   if (!Array.isArray(Z.triScenes)) Z.triScenes = [];
-  if (!Z.triCells || typeof Z.triCells !== "object") Z.triCells = {};
-  Z.triR = Math.max(1, Math.min(12, Z.triR | 0 || 2)); Z.triN = Math.max(1, Math.min(99, Z.triN | 0 || 25));
-  if (!(Z.triCol >= 0 && Z.triCol < TRI_COL.length)) Z.triCol = 2;
+  for (const k of ["triCells", "triGLn", "triGIn", "triGTx", "triDots", "triLines"]) if (!Z[k] || typeof Z[k] !== "object") Z[k] = {};
+  Z.triR = Math.max(1, Z.triR | 0 || 2); Z.triN = Math.max(1, Z.triN | 0 || 25);   // v0.437: считаются сами — сколько влезает в окно (renderTri)
+  if (!(Z.triS >= TRI_S1 - 0.001 && Z.triS <= TRI_S9)) Z.triS = 40;
+  if (!(Z.triCol >= -3 && Z.triCol < TRI_COL.length)) Z.triCol = 2;
+  if (!(Z.triTCol >= 1 && Z.triTCol < TRI_COL.length)) Z.triTCol = 2;
+  if (!(Z.triDotD > 0)) Z.triDotD = 3; if (!(Z.triLW > 0)) Z.triLW = 2;   // диаметр точки и толщина линии — в пикселях НАСТОЯЩЕГО размера
   if (!(Z.triCur >= 0 && Z.triCur < Z.triScenes.length)) Z.triCur = -1;
 }
 function triPts(r, c){   // три вершины треугольника в пикселях холста (без учёта dpr)
@@ -5030,71 +5036,183 @@ function triHit(px, py){
   }
   return null;
 }
+/* v0.437, «ставить светящиеся точки в узлы», «с диаметром задаваемым»: узел — вершина сетки. Линия j (0…R) — y = pad + j·hh; на ней узлы
+   x = pad + i·t, где i + j нечётное. Точки — Z.triDots {"j_i": [цвет, диаметр]}; ✦ — щелчок у узла ставит точку (тот же цвет ещё раз или
+   правый щелчок — убрать). «рисовать чисто обводкой разного цвета»: ╱ — линия по ребру сетки, Z.triLines {"j1_i1|j2_i2": [цвет, толщина]},
+   щелчок и протяжка — по рёбрам под мышью (с того же цвета начал — стирает) */
+const triNodeXY = (j, i) => [triGeo.pad + i * triGeo.s / 2, triGeo.pad + j * triGeo.hh];
+const triNodeOf = (x, y) => [Math.round((y - triGeo.pad) / triGeo.hh), Math.round((x - triGeo.pad) / (triGeo.s / 2))];
+function triNode(px, py){
+  const { s, hh, pad } = triGeo; if (!s) return null;
+  const t = s / 2, j = Math.round((py - pad) / hh); if (j < 0 || j > Z.triR) return null;
+  let i = Math.round((px - pad) / t); if ((i + j) % 2 === 0) i += (px - pad) / t > i ? 1 : -1;
+  if (i < 0 || i > Z.triN + 1) return null;
+  return Math.hypot(pad + i * t - px, pad + j * hh - py) <= s * 0.4 ? [j, i] : null;
+}
+function triEdgeAt(px, py){   // ближайшее ребро треугольника под мышью — ключ "j1_i1|j2_i2" (узлы по порядку)
+  const h = triHit(px, py); if (!h) return null;
+  const P = triPts(h[0], h[1]); let best = null, bd = 1e9;
+  for (const [a, b] of [[0, 1], [0, 2], [1, 2]]) {
+    const [x1, y1] = P[a], [x2, y2] = P[b], L = (x2 - x1) ** 2 + (y2 - y1) ** 2, u = Math.max(0, Math.min(1, ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / L));
+    const d = Math.hypot(px - x1 - u * (x2 - x1), py - y1 - u * (y2 - y1));
+    if (d < bd) { bd = d; best = [triNodeOf(x1, y1), triNodeOf(x2, y2)]; }
+  }
+  const k = best.map(n => n.join("_")).sort(); return k.join("|");
+}
+const triVal = (v) => Array.isArray(v) ? v : [v | 0, 0];   // [цвет, размер]
+function triLinesDraw(g, xy, sc){
+  g.save(); g.lineCap = "round";
+  for (const [key, v] of Object.entries(Z.triLines)) {
+    const [k, w] = triVal(v); if (!TRI_COL[k]) continue;
+    const [A, B] = key.split("|").map(p => p.split("_").map(Number)); if (Math.max(A[0], B[0]) > Z.triR || Math.max(A[1], B[1]) > Z.triN + 1) continue;
+    const p = xy(A[0], A[1]), q = xy(B[0], B[1]);
+    g.strokeStyle = TRI_COL[k][0]; g.lineWidth = Math.max(0.5, (w || Z.triLW) * sc); g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(q[0], q[1]); g.stroke();
+  }
+  g.restore();
+}
+function triDotsDraw(g, xy, sc){
+  for (const [key, v] of Object.entries(Z.triDots)) {
+    const [k, d] = triVal(v), [j, i] = key.split("_").map(Number); if (j > Z.triR || i > Z.triN + 1 || !TRI_COL[k]) continue;
+    const [x, y] = xy(j, i), c = TRI_COL[k][0], rad = Math.max(0.8, (d || Z.triDotD) * sc / 2);
+    g.save(); g.fillStyle = c; g.shadowColor = c; g.shadowBlur = rad * 3;
+    for (let n = 0; n < 2; n++) { g.beginPath(); g.arc(x, y, rad, 0, 2 * Math.PI); g.fill(); }   // дважды — свечение ярче
+    g.shadowBlur = 0; g.fillStyle = "#fff"; g.globalAlpha = 0.85; g.beginPath(); g.arc(x, y, rad * 0.45, 0, 2 * Math.PI); g.fill();
+    g.restore();
+  }
+}
+/* v0.437, по снимку «⬡ по группам» — «дать выбирать цвет обводки каждой группе, и внутри неё сетку или нет, и сетку вне групп», «ставить
+   буквы-символы на группы». ГРУППА — касающиеся рёбрами треугольники одного цвета (обход в ширину). Её настройки лежат на самих треугольниках
+   (Z.triGLn — цвет обводки, Z.triGIn — сетка внутри да/нет, Z.triGTx — символ; ключ "r_c"), группа берёт первое найденное у своих; «☝» выбирает
+   группу, настройка пишется всем её треугольникам. Перекрашенный или стёртый треугольник свои настройки теряет. Соседи: ▲ (r + c чётное) —
+   основание вниз (r + 1, c), бока (r, c − 1) и (r, c + 1); ▼ — основание вверх (r − 1, c). Рёбра в порядке вершин [0-1 основание, 0-2, 1-2]. */
+const triNb = (r, c) => [[0, 1, (r + c) % 2 === 0 ? [r + 1, c] : [r - 1, c]], [0, 2, [r, c - 1]], [1, 2, [r, c + 1]]];
+function triModel(d){
+  const R = d.R, N = d.N, K = (r, c) => { if (r < 0 || r >= R || c < 0 || c >= N) return 0; const k = d.c[r + "_" + c] | 0; return TRI_COL[k] ? k : 0; };
+  const cid = {}, comps = [];
+  for (let r = 0; r < R; r++) for (let c = 0; c < N; c++) {
+    const k = K(r, c), key0 = r + "_" + c; if (!k || cid[key0] != null) continue;
+    const g = { k, cells: [], ln: null, inn: null, tx: "" }, q = [[r, c]]; cid[key0] = comps.length;
+    while (q.length) {
+      const [a, b] = q.shift(), key = a + "_" + b; g.cells.push([a, b]);
+      if (g.ln == null && d.gl && d.gl[key]) g.ln = d.gl[key];
+      if (g.inn == null && d.gi && typeof d.gi[key] === "boolean") g.inn = d.gi[key];
+      if (!g.tx && d.gt && d.gt[key]) g.tx = d.gt[key];
+      for (const [, , n] of triNb(a, b)) { const nk = n[0] + "_" + n[1]; if (K(n[0], n[1]) === k && cid[nk] == null) { cid[nk] = comps.length; q.push(n); } }
+    }
+    comps.push(g);
+  }
+  return { K, cid, comps };
+}
+const triCurData = () => ({ R: Z.triR, N: Z.triN, c: Z.triCells, gl: Z.triGLn, gi: Z.triGIn, gt: Z.triGTx });
+/* обводка по модели: граница группы — если режим не «без обводки»; рёбра внутри — если у группы «сетка внутри» (не задано — как режим: да в ▵ каждый,
+   нет в ⬡ по группам). Цвет — свой у группы, иначе общий. bw — толщина границы, sel — выбранная группа (пунктиром поверх) */
+function triEdges(g, M, pts, defLn, bw, sel, selCol){
+  const mode = Z.triLnMode == null ? 1 : Z.triLnMode;
+  g.lineCap = "round";
+  M.comps.forEach((gr, gi) => {
+    const inner = gr.inn != null ? gr.inn : mode === 1, B = new Path2D(), I = new Path2D();
+    for (const [r, c] of gr.cells) {
+      const P = pts(r, c);
+      for (const [a, b, n] of triNb(r, c)) {
+        const same = M.cid[n[0] + "_" + n[1]] === gi;
+        if (same) { if (!inner || n[0] * 1000 + n[1] < r * 1000 + c) continue; I.moveTo(P[a][0], P[a][1]); I.lineTo(P[b][0], P[b][1]); }
+        else { B.moveTo(P[a][0], P[a][1]); B.lineTo(P[b][0], P[b][1]); }
+      }
+    }
+    g.strokeStyle = gr.ln || defLn;
+    if (inner) { g.lineWidth = 1; g.stroke(I); }
+    if (mode) { g.lineWidth = bw; g.stroke(B); }
+    if (gi === sel) { g.save(); g.strokeStyle = selCol; g.lineWidth = 2; g.setLineDash([5, 4]); g.stroke(B); g.restore(); }
+  });
+}
+function triText(g, M, pts, col, size){   // символ группы — посередине её треугольников
+  g.textAlign = "center"; g.textBaseline = "middle"; g.font = `bold ${size}px Segoe UI, Arial`;
+  for (const gr of M.comps) {
+    if (!gr.tx) continue;
+    let x = 0, y = 0; for (const [r, c] of gr.cells) { const P = pts(r, c); x += (P[0][0] + P[1][0] + P[2][0]) / 3; y += (P[0][1] + P[1][1] + P[2][1]) / 3; }
+    g.fillStyle = col; g.fillText(gr.tx, x / gr.cells.length, y / gr.cells.length);
+  }
+}
+const triSelComp = (M) => { const i = Z.triSel != null ? M.cid[Z.triSel] : null; return i == null ? -1 : i; };
 function renderTri(){
   const cv = $("triCv"); if (!cv) return;
   triState();
-  $("triR").value = Z.triR; $("triN").value = Z.triN;
+  $("triS").value = Z.triS; $("bTriS1").classList.toggle("on", Z.triS <= TRI_S1 + 0.01);
+  $("triDotD").value = Z.triDotD; $("triLW").value = Z.triLW;
   $("bTriNum").classList.toggle("on", Z.triNum !== false);
+  $("bTriOut").classList.toggle("on", Z.triOut !== false);
   const pal = $("triPal");
-  if (!pal.children.length) pal.innerHTML = TRI_COL.map((k, i) => i ? `<button data-c="${i}" title="${k[1]}" style="background:${k[0]}"></button>` : `<button data-c="0" title="Ластик — стирать">⌫</button>`).join("");
-  [...pal.children].forEach(b => b.classList.toggle("on", +b.dataset.c === Z.triCol));
+  if (!pal.children.length) pal.innerHTML = `<button data-c="-1" title="☝ Выбрать группу: щелчок по группе — её обводка, сетка внутри и символ (строка «группа»). Alt + щелчок — то же любым инструментом">☝</button>`
+    + `<button data-c="-2" title="✦ Точка в узел: щелчок у вершины — светящаяся точка диаметром ⌀ (цвет — выбери в палитре, пока ✦ горит); ещё щелчок тем же цветом или правый — убрать">✦</button>`
+    + `<button data-c="-3" title="╱ Линия по ребру: щелчок или протяжка — рёбра сетки цветной линией толщиной ═ (цвет — в палитре, пока ╱ горит); начал с линии того же цвета или правой кнопкой — стирает">╱</button>`
+    + TRI_COL.map((k, i) => i ? `<button data-c="${i}" title="${k[1]}" style="background:${k[0]}"></button>` : `<button data-c="0" title="Ластик — стирать">⌫</button>`).join("");
+  const tool = Z.triCol < -1;
+  [...pal.children].forEach(b => { const c = +b.dataset.c; b.classList.toggle("on", c === Z.triCol || (tool && c === Z.triTCol)); });
+  for (const c of ["-2", "-3"]) pal.querySelector(`[data-c="${c}"]`).style.color = TRI_COL[Z.triTCol][0];
   $("triScenes").innerHTML = Z.triScenes.map((_, i) => `<button data-i="${i}" class="${i === Z.triCur ? "on" : ""}" title="Сцена ${i + 1}: щелчок — открыть, правый — удалить">${i + 1}</button>`).join("");
   $("bTriSave").textContent = Z.triCur >= 0 ? `💾 в ${Z.triCur + 1}` : "💾 сохранить";
   if (!winOpen("w-tri")) return;
-  const W = cv.clientWidth || 400, pad = triGeo.pad;
-  const s = Math.max(8, Math.min(72, (W - 2 * pad) / ((Z.triN + 1) / 2))), hh = s * Math.sqrt(3) / 2, H = Math.ceil(2 * pad + Z.triR * hh + 6);   // v0.435: +6 — полоса-ручка под рядами
+  /* v0.437, «сделай сетку сразу на всё окно», «и масштаб до реального менять»: холст — на всё свободное место окна, треугольники — стороной
+     Z.triS (ползунок, от настоящей до крупной; «1:1» — сразу настоящая); рядов и треугольников в ряду — сколько целых влезает (прежде поля
+     «ряды / в ряду» и ручка снизу, v0.435 — сняты: рядов больше — окно выше). Закраска держится за номер ряда и места */
+  const W = cv.clientWidth || 400, H = cv.clientHeight || 200, pad = triGeo.pad, s = Z.triS, hh = s * Math.sqrt(3) / 2;
+  Z.triR = Math.max(1, Math.floor((H - 2 * pad) / hh)); Z.triN = Math.max(1, Math.floor((W - 2 * pad) / (s / 2)) - 1);
   triGeo.s = s; triGeo.hh = hh;
-  cv.style.height = H + "px";
+  const M = triModel(triCurData()), sel = triSelComp(M);
+  if (sel < 0) Z.triSel = null;
+  const cs = getComputedStyle(document.documentElement), line = cs.getPropertyValue("--line").trim() || "#555", txt = cs.getPropertyValue("--txt").trim() || "#ddd";
+  const hex = (c) => "#" + triRGB(c).map(v => Math.round(v).toString(16).padStart(2, "0")).join("");
+  const gr = sel >= 0 ? M.comps[sel] : null, mode = Z.triLnMode == null ? 1 : Z.triLnMode;
+  $("triGrp").hidden = !gr;   // строка «группа» — только когда группа выбрана
+  if (gr) {
+    $("triGrpLab").textContent = `группа · ${TRI_COL[gr.k][1]} · ${gr.cells.length}`;
+    $("triGLn").value = hex(gr.ln || Z.triLn || "#d8dde8");
+    $("bTriGIn").classList.toggle("on", gr.inn != null ? gr.inn : mode === 1);
+    if (document.activeElement !== $("triGTx")) $("triGTx").value = gr.tx || "";
+  }
   const dpr = window.devicePixelRatio || 1;
   if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
   const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
-  const cs = getComputedStyle(document.documentElement), line = cs.getPropertyValue("--line").trim() || "#555", txt = cs.getPropertyValue("--txt").trim() || "#ddd";
-  const num = Z.triNum !== false && s >= 22;
-  g.lineJoin = "round"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `${Math.max(9, Math.min(14, s * 0.26))}px Segoe UI, Arial`;
-  /* v0.436, «обводка и фон — в построении, а не только в результате; и там удалять линии обводки; обводка по группам — все касающиеся
-     одного цвета треугольники обводит только граничной рамкой»: фон и обводка (цвет, режим) — общие для сетки и живого вида. Пустые
-     треугольники — бледной сеткой всегда (иначе не видно, куда щёлкать); закрашенные — заливка без своих линий (шов в цвет), обводка — по режиму:
-     ▵ каждый — все рёбра, ⬡ по группам — только рёбра, за которыми другой цвет или пусто, без обводки — никаких. Пунктир средней черты — только в ▵ */
+  const num = Z.triNum !== false && s >= 26;
+  g.lineJoin = "round";
+  /* v0.436: фон и обводка — общие для сетки и живого вида; закрашенные — заливка без своих линий (шов в цвет), обводка — по режиму.
+     v0.437: пустые треугольники — бледной сеткой, если «▦ вне групп» горит (выключишь — пустое место чистое) */
   cv.style.background = Z.triBg || "";
-  const mode = Z.triLnMode == null ? 1 : Z.triLnMode, K = (r, c) => { const k = Z.triCells[r + "_" + c] | 0; return TRI_COL[k] ? k : 0; };
   const tri = (P) => { g.beginPath(); g.moveTo(P[0][0], P[0][1]); g.lineTo(P[1][0], P[1][1]); g.lineTo(P[2][0], P[2][1]); g.closePath(); };
   for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) {
-    const P = triPts(r, c), k = K(r, c); tri(P);
+    const P = triPts(r, c), k = M.K(r, c); tri(P);
     if (k) { g.fillStyle = TRI_COL[k][0]; g.fill(); g.strokeStyle = TRI_COL[k][0]; g.lineWidth = 0.6; g.stroke(); }
-    else { g.strokeStyle = line; g.globalAlpha = 0.5; g.lineWidth = 1; g.stroke(); g.globalAlpha = 1; }
+    else if (Z.triOut !== false) { g.strokeStyle = line; g.globalAlpha = 0.5; g.lineWidth = 1; g.stroke(); g.globalAlpha = 1; }
   }
-  if (mode) {
-    g.strokeStyle = Z.triLn || line; g.lineWidth = mode === 2 ? 2 : 1; g.lineCap = "round"; g.beginPath();
+  triEdges(g, M, triPts, Z.triLn || line, mode === 2 ? 2 : 1, sel, txt);
+  if (num) {
+    g.textAlign = "center"; g.textBaseline = "middle"; g.font = `${Math.max(9, Math.min(14, s * 0.26))}px Segoe UI, Arial`;
     for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) {
-      const k = K(r, c); if (!k) continue;
-      const P = triPts(r, c), base = (r + c) % 2 === 0 ? [r + 1, c] : [r - 1, c];
-      for (const [a, b, n] of [[0, 1, base], [0, 2, [r, c - 1]], [1, 2, [r, c + 1]]]) {
-        if (mode === 2 && n[0] >= 0 && n[0] < Z.triR && n[1] >= 0 && n[1] < Z.triN && K(n[0], n[1]) === k) continue;
-        g.moveTo(P[a][0], P[a][1]); g.lineTo(P[b][0], P[b][1]);
-      }
+      const P = triPts(r, c), k = M.K(r, c), gt = k && M.comps[M.cid[r + "_" + c]].tx;
+      g.fillStyle = k ? "#0e1116" : txt; g.globalAlpha = gt ? 0.3 : k ? 0.9 : 0.45; g.fillText(r * Z.triN + c + 1, (P[0][0] + P[1][0] + P[2][0]) / 3, (P[0][1] + P[1][1] + P[2][1]) / 3); g.globalAlpha = 1;
     }
-    g.stroke(); g.lineWidth = 1;
   }
-  if (num) for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) {
-    const P = triPts(r, c), k = K(r, c);
-    g.fillStyle = k ? "#0e1116" : txt; g.globalAlpha = k ? 0.9 : 0.45; g.fillText(r * Z.triN + c + 1, (P[0][0] + P[1][0] + P[2][0]) / 3, (P[0][1] + P[1][1] + P[2][1]) / 3); g.globalAlpha = 1;
-  }
+  triText(g, M, triPts, "#0e1116", Math.max(9, Math.min(40, s * 0.62)));
   // средняя черта каждой пары рядов (кнопка — два ряда) — пунктиром; v0.436 — только в режиме «каждый»
-  if (mode === 1) {
-    g.strokeStyle = txt; g.globalAlpha = 0.25; g.setLineDash([4, 4]);
+  if (mode === 1 && Z.triOut !== false) {
+    g.strokeStyle = txt; g.globalAlpha = 0.25; g.setLineDash([4, 4]); g.lineWidth = 1;
     for (let r = 1; r < Z.triR; r += 2) { const y = pad + r * hh; g.beginPath(); g.moveTo(pad, y); g.lineTo(pad + (Z.triN + 1) * s / 2, y); g.stroke(); }
     g.setLineDash([]); g.globalAlpha = 1;
   }
-  { const yb = pad + Z.triR * hh + 7, xc = W / 2; g.strokeStyle = txt; g.globalAlpha = 0.35; g.lineWidth = 2; g.lineCap = "round";   // v0.435: ручка — тянуть ± ряды
-    g.beginPath(); g.moveTo(xc - 18, yb - 2); g.lineTo(xc + 18, yb - 2); g.moveTo(xc - 18, yb + 2); g.lineTo(xc + 18, yb + 2); g.stroke(); g.globalAlpha = 1; g.lineWidth = 1; }
-  triLive();
+  const sc = s / TRI_S1;   // размеры точек и линий заданы для настоящего размера — в сетке крупнее во столько же раз
+  triLinesDraw(g, triNodeXY, sc);
+  triDotsDraw(g, triNodeXY, sc);
+  triLive(M);
 }
-/* v0.433, «можно сразу вживую смотреть, как будет выглядеть?»: та же сетка кнопками — высота двух рядов 24 px (1:1) и 48 (×2), фон — панель
-   групп, пустые треугольники — фон. Цвета — как у кнопок сцепки: серый — светлая кнопка (panel2 + 16% текста), золотой — горящая (+42% золота),
-   красный — стоп (+60% красного), прочие — +42% своего; внутри закрашенных — бледная сетка, как в кнопках (rgba .2) */
+/* v0.433, «можно сразу вживую смотреть, как будет выглядеть?»: та же сетка кнопками — высота двух рядов 24 px (с v0.434 — только 1:1), фон —
+   панель групп, пустые треугольники — фон. Цвета — как у кнопок сцепки: серый — светлая кнопка (panel2 + 16% текста), золотой — горящая
+   (+42% золота), красный — стоп (+60% красного), прочие — +42% своего. Обводка, символы, линии, точки, «▦ вне групп» — как в сетке (v0.437).
+   С v0.437 — только занятая часть сетки (от первого до последнего закрашенного ряда и места, с линиями и точками), иначе при сетке на всё
+   окно он раздувается; ориентация треугольников — по настоящим номерам */
 function triRGB(c){ const g = triRGB.g || (triRGB.g = document.createElement("canvas").getContext("2d")); g.fillStyle = "#000"; g.fillStyle = c; const v = g.fillStyle; if (v[0] === "#") return [1, 3, 5].map(i => parseInt(v.slice(i, i + 2), 16)); const m = v.match(/[\d.]+/g) || [0, 0, 0]; return m.slice(0, 3).map(Number); }
-function triLive(){
+function triLive(M){
   const box = $("triLive"); if (!box || !winOpen("w-tri")) return;
+  M = M || triModel(triCurData());
   const cs = getComputedStyle(document.documentElement), V = (n, d) => cs.getPropertyValue(n).trim() || d;
   const p2 = triRGB(V("--panel2", "#1c2230")), mix = (c, a) => { const q = triRGB(c); return `rgb(${p2.map((x, i) => Math.round(x + (q[i] - x) * a)).join(",")})`; };
   const txt = V("--txt", "#e6edf3"), REAL = { 1: mix(txt, 0.16), 2: mix(V("--gold", "#ffd166"), 0.42), 3: mix("#e5484d", 0.6), 8: mix(txt, 0.7) };
@@ -5105,87 +5223,111 @@ function triLive(){
   $("triBg").value = hex(Z.triBg || V("--panel", "#161b22")); $("triLn").value = hex(Z.triLn || "#d8dde8");
   const mode0 = Z.triLnMode == null ? 1 : Z.triLnMode, bl = $("bTriLn");
   bl.textContent = ["— без обводки", "▵ каждый", "⬡ по группам"][mode0]; bl.classList.toggle("on", mode0 > 0);
+  let r0 = 1e9, r1 = -1, c0 = 1e9, c1 = -1;
+  const grow = (a, b, c, d) => { r0 = Math.min(r0, a); r1 = Math.max(r1, b); c0 = Math.min(c0, c); c1 = Math.max(c1, d); };
+  for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) if (M.K(r, c)) grow(r, r, c, c);
+  const node = (j, i) => { if (j > Z.triR || i > Z.triN + 1) return; grow(Math.max(0, j - 1), Math.min(Z.triR - 1, j), Math.max(0, i - 2), Math.min(Z.triN - 1, i)); };
+  for (const key of Object.keys(Z.triDots)) { const [j, i] = key.split("_").map(Number); node(j, i); }
+  for (const key of Object.keys(Z.triLines)) for (const p of key.split("|")) { const [j, i] = p.split("_").map(Number); node(j, i); }
+  if (r1 < 0) { r0 = 0; r1 = 1; c0 = 0; c1 = 5; }
   box.querySelectorAll("canvas").forEach(cv => {
     const z = +cv.dataset.z || 1, s = 24 * z / Math.sqrt(3), hh = 12 * z, pad = 4 * z, t = s / 2;
-    const W = Math.ceil(2 * pad + (Z.triN + 1) * t), H = Math.ceil(2 * pad + Z.triR * hh);
+    const W = Math.ceil(2 * pad + (c1 - c0 + 2) * t), H = Math.ceil(2 * pad + (r1 - r0 + 1) * hh);
     cv.style.width = W + "px"; cv.style.height = H + "px"; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
-    const K = (r, c) => { const k = Z.triCells[r + "_" + c] | 0; return TRI_COL[k] ? k : 0; };
-    const pts = (r, c) => { const x = pad + c * t, y0 = pad + r * hh, y1 = y0 + hh; return (r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + s, y0], [x + t, y1]]; };
-    for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) {
-      const k = K(r, c); if (!k) continue;
-      const P = pts(r, c);
+    const pts = (r, c) => { const x = pad + (c - c0) * t, y0 = pad + (r - r0) * hh, y1 = y0 + hh; return (r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + s, y0], [x + t, y1]]; };
+    for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+      const k = M.K(r, c), P = pts(r, c);
       g.beginPath(); g.moveTo(P[0][0], P[0][1]); g.lineTo(P[1][0], P[1][1]); g.lineTo(P[2][0], P[2][1]); g.closePath();
-      g.fillStyle = col(k); g.fill(); g.strokeStyle = col(k); g.lineWidth = 0.6; g.stroke();   // шов в цвет — без просветов между треугольниками
+      if (k) { g.fillStyle = col(k); g.fill(); g.strokeStyle = col(k); g.lineWidth = 0.6; g.stroke(); }   // шов в цвет — без просветов между треугольниками
+      else if (Z.triOut !== false) { g.strokeStyle = "rgba(216,221,232,.12)"; g.lineWidth = 1; g.stroke(); }
     }
-    /* v0.434, «цвет обводки, отключать её», «также границы по группам цветов»: Z.triLnMode — 1 каждый треугольник (по умолчанию), 2 — только
-       границы групп: ребро, за которым другой цвет или пусто; 0 — без обводки. Цвет — Z.triLn (нет — бледная, как сетка в кнопках).
-       Соседи: ▲ (r + c чётное) — основание вниз (r + 1, c), бока (r, c − 1) и (r, c + 1); ▼ — основание вверх (r − 1, c), бока те же */
-    const mode = Z.triLnMode == null ? 1 : Z.triLnMode;
-    if (mode) {
-      g.strokeStyle = Z.triLn || "rgba(216,221,232,.2)"; g.lineWidth = 1; g.lineCap = "round"; g.beginPath();
-      for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) {
-        const k = K(r, c); if (!k) continue;
-        const P = pts(r, c), up = (r + c) % 2 === 0, base = up ? [r + 1, c] : [r - 1, c];
-        for (const [a, b, n] of [[0, 1, base], [0, 2, [r, c - 1]], [1, 2, [r, c + 1]]]) {
-          if (mode === 2 && n[0] >= 0 && n[0] < Z.triR && n[1] >= 0 && n[1] < Z.triN && K(n[0], n[1]) === k) continue;
-          g.moveTo(P[a][0], P[a][1]); g.lineTo(P[b][0], P[b][1]);
-        }
-      }
-      g.stroke();
-    }
+    triEdges(g, M, pts, Z.triLn || "rgba(216,221,232,.2)", 1, -1, "");
+    triText(g, M, pts, txt, 12 * z);
+    const xy = (j, i) => [pad + (i - c0) * t, pad + (j - r0) * hh];
+    triLinesDraw(g, xy, z); triDotsDraw(g, xy, z);
   });
 }
 if ($("triCv")) {
-  const cv = $("triCv"); let paint = -1, rowDrag = false;
-  const at = (e) => { const b = cv.getBoundingClientRect(); return triHit(e.clientX - b.left, e.clientY - b.top); };
-  /* v0.435, «тянуть за границу вниз-вверх — ± число строк»: нижняя граница сетки (полоса под последним рядом) тянется мышью — рядов
-     столько, сколько целых рядов до мыши (1…12); закраска рядов, которые ушли, остаётся в памяти и вернётся, если ряды вернуть */
-  const nearBottom = (e) => { const b = cv.getBoundingClientRect(), y = e.clientY - b.top; return y >= triGeo.pad + Z.triR * triGeo.hh - 3; };
-  cv.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0 || !triGeo.hh || !nearBottom(e)) return;
-    rowDrag = true; cv.setPointerCapture(e.pointerId); e.stopImmediatePropagation();
-  });
-  cv.addEventListener("pointermove", (e) => {
-    if (rowDrag) {
-      const b = cv.getBoundingClientRect(), R = Math.max(1, Math.min(12, Math.round((e.clientY - b.top - triGeo.pad) / triGeo.hh)));
-      if (R !== Z.triR) { Z.triR = R; renderTri(); }
-      return;
-    }
-    if (paint < 0) cv.style.cursor = triGeo.hh && nearBottom(e) ? "ns-resize" : "";
-  });
-  const rowEnd = () => { if (rowDrag) { rowDrag = false; save(); } };
-  cv.addEventListener("pointerup", rowEnd); cv.addEventListener("pointercancel", rowEnd);
-  const put = (h) => { if (!h) return; const key = h[0] + "_" + h[1]; if ((Z.triCells[key] | 0) === paint) return; if (paint) Z.triCells[key] = paint; else delete Z.triCells[key]; renderTri(); };
+  const cv = $("triCv"); let paint = -1, line = null;
+  const rel = (e) => { const b = cv.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; };
+  const at = (e) => triHit(...rel(e));
+  cv.addEventListener("pointermove", (e) => { if (paint < 0 && !line) cv.style.cursor = Z.triCol === -1 ? "pointer" : Z.triCol < -1 ? "cell" : ""; });
+  const put = (h) => {
+    if (!h) return; const key = h[0] + "_" + h[1]; if ((Z.triCells[key] | 0) === paint) return;
+    if (paint) Z.triCells[key] = paint; else delete Z.triCells[key];
+    delete Z.triGLn[key]; delete Z.triGIn[key]; delete Z.triGTx[key];   // v0.437: перекрашенный — не в прежней группе, её настройки не несёт
+    renderTri();
+  };
+  const putLine = (key) => {   // v0.437: ╱ — ребро цветной линией (line.set) или стереть
+    if (!key) return; const v = Z.triLines[key];
+    if (line.set) { const nv = [Z.triTCol, Z.triLW]; if (v && triVal(v)[0] === nv[0] && triVal(v)[1] === nv[1]) return; Z.triLines[key] = nv; }
+    else { if (!v) return; delete Z.triLines[key]; }
+    renderTri();
+  };
   cv.addEventListener("contextmenu", (e) => e.preventDefault());
   cv.addEventListener("pointerdown", (e) => {
-    triState(); const h = at(e); if (!h) return;
+    triState(); const h = at(e);
+    if (e.altKey && e.button === 0 || Z.triCol === -1) {   // v0.437: ☝ (или Alt) — выбрать группу, не красить
+      Z.triSel = h && Z.triCells[h[0] + "_" + h[1]] ? h[0] + "_" + h[1] : null; save(); renderTri(); return;
+    }
+    if (Z.triCol === -2) {   // v0.437: ✦ — точка в узел
+      const n = triNode(...rel(e)); if (!n) return;
+      const key = n[0] + "_" + n[1], v = Z.triDots[key];
+      if (e.button === 2 || (v && triVal(v)[0] === Z.triTCol)) delete Z.triDots[key]; else Z.triDots[key] = [Z.triTCol, Z.triDotD];
+      save(); renderTri(); return;
+    }
+    if (Z.triCol === -3) {
+      const key = triEdgeAt(...rel(e)); if (!key) return;
+      const v = Z.triLines[key]; line = { set: !(e.button === 2 || (v && triVal(v)[0] === Z.triTCol)) };
+      cv.setPointerCapture(e.pointerId); putLine(key); return;
+    }
+    if (!h) return;
     const k = Z.triCells[h[0] + "_" + h[1]] | 0;
     paint = e.button === 2 ? 0 : (k === Z.triCol ? 0 : Z.triCol);   // тот же цвет ещё раз — стереть
     cv.setPointerCapture(e.pointerId); put(h);
   });
-  cv.addEventListener("pointermove", (e) => { if (paint >= 0) put(at(e)); });
-  const end = () => { if (paint >= 0) { paint = -1; save(); } };
+  cv.addEventListener("pointermove", (e) => { if (paint >= 0) put(at(e)); else if (line) putLine(triEdgeAt(...rel(e))); });
+  const end = () => { if (paint >= 0 || line) { paint = -1; line = null; save(); } };
   cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end);
   if (window.ResizeObserver) new ResizeObserver(() => renderTri()).observe(cv);
-  $("triPal").onclick = (e) => { const b = e.target.closest("button[data-c]"); if (!b) return; Z.triCol = +b.dataset.c; save(); renderTri(); };
-  const dim = (id, key, lo, hi) => { $(id).onchange = () => { Z[key] = Math.max(lo, Math.min(hi, parseInt($(id).value, 10) || Z[key])); save(); renderTri(); }; };
-  dim("triR", "triR", 1, 12); dim("triN", "triN", 1, 99);
+  // v0.437: пока горит ✦ или ╱, цвет палитры — их цвет (инструмент остаётся); тот же инструмент ещё раз — назад к кисти
+  $("triPal").onclick = (e) => {
+    const b = e.target.closest("button[data-c]"); if (!b) return; const c = +b.dataset.c;
+    if (c < -1 && Z.triCol === c) Z.triCol = Z.triPrevCol > 0 ? Z.triPrevCol : 2;
+    else if (Z.triCol < -1 && c >= 1) Z.triTCol = c;
+    else { if (Z.triCol >= 1) Z.triPrevCol = Z.triCol; Z.triCol = c; }
+    save(); renderTri();
+  };
+  $("triS").oninput = () => { Z.triS = Math.max(TRI_S1, Math.min(TRI_S9, +$("triS").value || 40)); save(); renderTri(); };
+  $("bTriS1").onclick = () => { if (Z.triS <= TRI_S1 + 0.01) Z.triS = Z.triS0 > TRI_S1 ? Z.triS0 : 40; else { Z.triS0 = Z.triS; Z.triS = TRI_S1; } save(); renderTri(); };
+  $("triDotD").onchange = () => { Z.triDotD = Math.max(0.5, Math.min(40, +$("triDotD").value || 3)); save(); renderTri(); };
+  $("triLW").onchange = () => { Z.triLW = Math.max(0.5, Math.min(20, +$("triLW").value || 2)); save(); renderTri(); };
   $("bTriNum").onclick = () => { Z.triNum = Z.triNum === false; save(); renderTri(); };
   // v0.434: живой вид — фон, цвет обводки, режим обводки по кругу: каждый треугольник → по группам цветов → без обводки
   // v0.436: фон и обводка — и в сетке построения, поэтому перерисовывается всё (renderTri зовёт и живой вид)
   $("triBg").oninput = () => { Z.triBg = $("triBg").value; save(); renderTri(); };
   $("triLn").oninput = () => { Z.triLn = $("triLn").value; if (!(Z.triLnMode > 0) && Z.triLnMode != null) Z.triLnMode = 1; save(); renderTri(); };
   $("bTriLn").onclick = () => { const m = Z.triLnMode == null ? 1 : Z.triLnMode; Z.triLnMode = (m + 1) % 3; save(); renderTri(); };
-  $("bTriLiveDef").onclick = () => { Z.triBg = null; Z.triLn = null; Z.triLnMode = 1; save(); renderTri(); };
-  $("bTriClr").onclick = () => { triState(); Z.triCells = {}; save(); renderTri(); };
-  const snap = () => ({ R: Z.triR, N: Z.triN, c: Object.assign({}, Z.triCells) });
+  $("bTriOut").onclick = () => { Z.triOut = Z.triOut === false; save(); renderTri(); };   // v0.437: сетка вне групп
+  $("bTriLiveDef").onclick = () => { Z.triBg = null; Z.triLn = null; Z.triLnMode = 1; Z.triOut = true; save(); renderTri(); };
+  // v0.437: выбранная группа — своя обводка, сетка внутри, символ (пишутся всем её треугольникам)
+  const selGr = () => { const M = triModel(triCurData()), i = triSelComp(M); return i < 0 ? null : M.comps[i]; };
+  const setAll = (map, v) => { const gr = selGr(); if (!gr) return; for (const [r, c] of gr.cells) { const key = r + "_" + c; if (v === null || v === "") delete Z[map][key]; else Z[map][key] = v; } save(); renderTri(); };
+  $("triGLn").oninput = () => setAll("triGLn", $("triGLn").value);
+  $("bTriGIn").onclick = () => { const gr = selGr(); if (!gr) return; const mode = Z.triLnMode == null ? 1 : Z.triLnMode; setAll("triGIn", !(gr.inn != null ? gr.inn : mode === 1)); };
+  $("triGTx").oninput = () => setAll("triGTx", $("triGTx").value.trim());
+  $("bTriGDef").onclick = () => { const gr = selGr(); if (!gr) return; for (const [r, c] of gr.cells) { const key = r + "_" + c; delete Z.triGLn[key]; delete Z.triGIn[key]; delete Z.triGTx[key]; } save(); renderTri(); };
+  $("bTriClr").onclick = () => { triState(); for (const k of ["triCells", "triGLn", "triGIn", "triGTx", "triDots", "triLines"]) Z[k] = {}; Z.triSel = null; save(); renderTri(); };
+  const cp = (o) => Object.assign({}, o);
+  const snap = () => ({ R: Z.triR, N: Z.triN, c: cp(Z.triCells), gl: cp(Z.triGLn), gi: cp(Z.triGIn), gt: cp(Z.triGTx), d: cp(Z.triDots), l: cp(Z.triLines) });
   $("bTriNew").onclick = () => { triState(); Z.triScenes.push(snap()); Z.triCur = Z.triScenes.length - 1; save(); renderTri(); say(`△ Сцена ${Z.triCur + 1} сохранена.`); };
   $("bTriSave").onclick = () => { triState(); if (Z.triCur < 0) { $("bTriNew").click(); return; } Z.triScenes[Z.triCur] = snap(); save(); renderTri(); say(`△ Сцена ${Z.triCur + 1} перезаписана.`); };
   $("triScenes").onclick = (e) => {
     const b = e.target.closest("button[data-i]"); if (!b) return; triState();
     const i = +b.dataset.i, sc = Z.triScenes[i]; if (!sc) return;
-    Z.triCur = i; Z.triR = sc.R; Z.triN = sc.N; Z.triCells = Object.assign({}, sc.c); save(); renderTri();
+    Z.triCur = i; Z.triCells = cp(sc.c); Z.triGLn = cp(sc.gl); Z.triGIn = cp(sc.gi); Z.triGTx = cp(sc.gt); Z.triDots = cp(sc.d); Z.triLines = cp(sc.l); Z.triSel = null;
+    save(); renderTri();
   };
   $("triScenes").addEventListener("contextmenu", (e) => {
     const b = e.target.closest("button[data-i]"); if (!b) return; e.preventDefault(); triState();
@@ -5195,12 +5337,24 @@ if ($("triCv")) {
   });
   $("bTriCopy").onclick = () => {
     triState(); if (!Z.triScenes.length) { say("△ Сцен пока нет — «＋ сцена» сохраняет."); return; }
+    const NL = String.fromCharCode(10), cn = (k) => (TRI_COL[k] || [0, "?"])[1];
     const out = Z.triScenes.map((sc, i) => {
       const by = {};
       for (const [key, k] of Object.entries(sc.c)) { const [r, c] = key.split("_").map(Number); (by[k] = by[k] || []).push(r * sc.N + c + 1); }
-      const parts = Object.keys(by).sort((a, b) => a - b).map(k => `${(TRI_COL[k] || [0, "?"])[1]}: ${by[k].sort((a, b) => a - b).join(", ")}`);
-      return `Сцена ${i + 1} (рядов ${sc.R}, в ряду ${sc.N}) — ${parts.length ? parts.join("; ") : "пусто"}`;
-    }).join(String.fromCharCode(10));
+      const parts = Object.keys(by).sort((a, b) => a - b).map(k => `${cn(k)}: ${by[k].sort((a, b) => a - b).join(", ")}`);
+      const M = triModel({ R: sc.R, N: sc.N, c: sc.c, gl: sc.gl, gi: sc.gi, gt: sc.gt }), more = [];
+      for (const g of M.comps) {   // v0.437: группы со своими настройками
+        if (!(g.tx || g.ln || g.inn != null)) continue;
+        const ids = g.cells.map(([r, c]) => r * sc.N + c + 1).sort((a, b) => a - b), bits = [];
+        if (g.tx) bits.push(`символ «${g.tx}»`); if (g.ln) bits.push(`обводка ${g.ln}`); if (g.inn != null) bits.push(`сетка внутри ${g.inn ? "да" : "нет"}`);
+        more.push(`  группа ${cn(g.k)} [${ids.join(", ")}]: ${bits.join(", ")}`);
+      }
+      const dots = {}; for (const [key, v] of Object.entries(sc.d || {})) { const [k, d] = triVal(v); (dots[k] = dots[k] || []).push(key.replace("_", ":") + (d ? ` ⌀${d}` : "")); }
+      for (const k of Object.keys(dots)) more.push(`  точки ${cn(k)} (линия:узел): ${dots[k].join(", ")}`);
+      const lines = {}; for (const [key, v] of Object.entries(sc.l || {})) { const [k, w] = triVal(v); (lines[k] = lines[k] || []).push(key.split("|").map(p => p.replace("_", ":")).join("–") + (w ? ` ═${w}` : "")); }
+      for (const k of Object.keys(lines)) more.push(`  линии ${cn(k)} (узел–узел): ${lines[k].join(", ")}`);
+      return `Сцена ${i + 1} (рядов ${sc.R}, в ряду ${sc.N}) — ${parts.length ? parts.join("; ") : "пусто"}` + (more.length ? NL + more.join(NL) : "");
+    }).join(NL);
     const done = () => say(`△ ${Z.triScenes.length} сцен — в буфере.`);
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(out).then(done, () => { prompt("Скопируй:", out); });
     else prompt("Скопируй:", out);

@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.436. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.437. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.436</title>
+<title>Zazerkalius — v0.437</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -390,6 +390,11 @@ body:not(.okt-live) #oktShield{display:block}
 #w-tri .tools{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
 #w-tri #triCv{width:100%;display:block;background:var(--panel2);border-radius:4px;touch-action:none;cursor:crosshair}
 #w-tri input[type=number]{width:44px}
+/* v0.437, «сетку сразу на всё окно»: холст сетки занимает всё свободное место окна (рядов — сколько влезает); ползунок масштаба, поле символа */
+#w-tri .wbody > #triCv{flex:1 1 0;min-height:60px}
+#w-tri input[type=range]{width:110px;vertical-align:middle}
+#w-tri #triGTx{width:64px}
+#w-tri #triGrp[hidden]{display:none !important}
 #triPal,#triScenes{display:inline-flex;flex-wrap:wrap;gap:3px}
 #triPal button{width:24px;height:24px;padding:0;border-radius:4px}
 #triPal button.on{box-shadow:0 0 0 2px var(--txt)}
@@ -1203,7 +1208,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.436</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.437</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1971,8 +1976,11 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
       <div class="wbody">
         <div class="tools">
           <span id="triPal"></span>
-          <label class="dim" title="Сколько рядов треугольников (кнопка — 2 ряда)">ряды <input id="triR" type="number" min="1" max="12" value="2"></label>
-          <label class="dim" title="Сколько треугольников в ряду">в ряду <input id="triN" type="number" min="1" max="99" value="25"></label>
+          <!-- v0.437: рядов и треугольников в ряду — сколько влезает в окно; вместо полей «ряды / в ряду» — масштаб, ⌀ точки, толщина линии -->
+          <label class="dim" title="Масштаб сетки: сторона треугольника — от настоящей (как в кнопках, 1:1) до крупной">🔍 <input id="triS" type="range" min="13.8564" max="90" step="0.01"></label>
+          <button id="bTriS1" title="1:1 — настоящий размер (два ряда = кнопка 24 px); ещё раз — прежний масштаб">1:1</button>
+          <label class="dim" title="⌀ Диаметр новой точки ✦, px настоящего размера">⌀ <input id="triDotD" type="number" min="0.5" max="40" step="0.5"></label>
+          <label class="dim" title="═ Толщина новой линии ╱, px настоящего размера">═ <input id="triLW" type="number" min="0.5" max="20" step="0.5"></label>
           <button id="bTriNum" title="Номера треугольников. Горит — видны">№</button>
           <button id="bTriClr" title="Очистить сетку (сохранённые сцены не трогает)">✕ очистить</button>
         </div>
@@ -1986,7 +1994,15 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
           <label class="dim" title="Фон сетки и живого вида (по умолчанию — по теме страницы)">фон <input id="triBg" type="color"></label>
           <label class="dim" title="Цвет обводки закрашенных треугольников — в сетке и в живом виде">обводка <input id="triLn" type="color"></label>
           <button id="bTriLn" title="Обводка закрашенных треугольников, по кругу: ▵ каждый — все рёбра; ⬡ по группам — только граница каждой группы касающихся треугольников одного цвета; без обводки. Пустые треугольники в сетке — всегда бледной сеткой">▵ обводка</button>
+          <button id="bTriOut" title="▦ Сетка вне групп: пустые треугольники — бледной сеткой (в сетке и в живом виде). Горит — видна">▦ вне групп</button>
           <button id="bTriLiveDef" title="Фон и обводку — как были (по теме страницы)">↺</button>
+        </div>
+        <div class="tools" id="triGrp" hidden>   <!-- v0.437: выбранная ☝ группа — своя обводка, сетка внутри, символ -->
+          <span id="triGrpLab" class="dim"></span>
+          <label class="dim" title="Цвет обводки этой группы">обводка <input id="triGLn" type="color"></label>
+          <button id="bTriGIn" title="▦ Сетка внутри группы — рёбра между её треугольниками. Горит — видна">▦ внутри</button>
+          <label class="dim" title="Буква или символ посередине группы">символ <input id="triGTx" type="text" maxlength="12"></label>
+          <button id="bTriGDef" title="Снять свои настройки группы (обводка, сетка внутри, символ — как у всех)">↺</button>
         </div>
         <canvas id="triCv"></canvas>
         <div id="triLive" title="Живьём: как сетка выглядит кнопками — в настоящем размере (высота 24 px); цвета — как у кнопок (серый — обычная, золотой — горящая, красный — стоп)"><canvas data-z="1"></canvas></div>
@@ -2104,8 +2120,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0436"></script>
-<script src="zz-ui.js?v=0436"></script>
+<script src="zz-core.js?v=0437"></script>
+<script src="zz-ui.js?v=0437"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
