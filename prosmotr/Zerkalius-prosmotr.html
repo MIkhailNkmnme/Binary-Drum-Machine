@@ -1,4 +1,4 @@
-<!-- Zerkalius Просмотр GIF — v0.006. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
+<!-- Zerkalius Просмотр GIF — v0.007. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
      на страницу), листать по кадру и через 2 / 4 / 8, играть с любой скоростью, отметить участок «с — по» и положить в склейку;
      участки — из разных GIF, в любом порядке; склейку посмотреть и скачать одним GIF. Всё в самой странице, без библиотек:
      свой разбор GIF (LZW, палитры, прозрачность, способы смены кадра, чересстрочность) и своя сборка (тот же LZW, что в Code).
@@ -17,13 +17,21 @@
              туда-сюда с размахом; прыжок — 1 … 512 строк, строка — сколько-то px; скорость — до 5000 прыжков в секунду.
      v0.006: «надо постолбцовую ещё свёртку, нарезку», «если не ромбовую…» — ось прокрутки: по строкам, по столбцам, по
              диагоналям ↘ ↙ (вдоль рёбер ромбов); нарезка — полосы шириной в прыжок поперёк движения: целиком, встречно
-             (соседние в разные стороны), лесенкой (каждая следующая — на прыжок больше). -->
+             (соседние в разные стороны), лесенкой (каждая следующая — на прыжок больше).
+     v0.007: разбор GIF «Аниматрица шаг1 проходы 526–781»: ромбы то растут, то сбрасываются, а соседние кадры мигают (чётные
+             вдвое плотнее) — «да (поле кадра, только нечётные), и потом надо разобрать весь гиф, поделить на ромбы различной
+             длины и сортировать по чёт / нечёт, и ещё как, и просто по порядку». Поле «кадр №»; кадры: все / нечётные /
+             чётные. «◇ Разобрать» — в каждом кадре доля пустых ромбов (чёрных дыр внутри картинки), по ней GIF делится на
+             участки отдельно по нечётным и чётным кадрам: ромб — пока дыры растут, сброс — новый ромб, между ними — шум;
+             участки — в склейку. Склейку можно сортировать: по порядку, нечёт / чёт вперёд, по длине, по крупности ромбов,
+             наоборот, вперемешку. Под ползунком — полоска-график дыр по кадрам (нечётные — жёлтым, чётные — голубым),
+             щелчок по ней — к кадру. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Просмотр GIF — v0.006</title>
+<title>Zerkalius Просмотр GIF — v0.007</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -64,13 +72,15 @@
   .lbl { color: #8a94a6; font-size: 11px; }
   .sel { color: #22d3ee; }
   input[type=file] { display: none; }
+  /* v0.007: полоска-график дыр по кадрам */
+  #graph { width: 100%; height: 34px; display: none; background: #07080b; border: 1px solid #2c303a; border-radius: 3px; cursor: pointer; }
   @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; height: auto; } .view { height: 60vh; } }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.006</span></h1>
+    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.007</span></h1>
     <div class="bar">
       <button id="openBtn" title="Открыть один или несколько GIF (их можно и просто бросить на страницу)">📂 Открыть GIF</button>
       <input type="file" id="file" accept="image/gif,.gif" multiple>
@@ -111,6 +121,11 @@
         <option value="8">через 8</option>
         <option value="16">через 16</option>
       </select>
+      <select id="parSel" title="Какие кадры: все, только нечётные (1, 3, 5 …) или только чётные (2, 4, 6 …) — листать, играть и класть в склейку">
+        <option value="all" selected>все кадры</option>
+        <option value="odd">нечётные</option>
+        <option value="even">чётные</option>
+      </select>
       <span class="lbl">мс</span><input type="number" id="msInp" min="10" max="5000" step="10" value="100" title="Сколько миллисекунд держать кадр при игре">
       <button id="revBtn" title="Играть назад">⇆</button>
       <button id="loopBtn" class="on" title="По кругу: дошёл до конца — снова с начала">🔁</button>
@@ -123,9 +138,11 @@
     </div>
     <div class="bar">
       <input type="range" id="pos" min="0" max="0" value="0" title="Кадр">
+      <input type="number" id="frInp" min="1" max="1" step="1" value="1" title="Кадр № — набрать и Enter (или стрелками поля)">
       <span class="num" id="num">—</span>
       <span class="numName" id="numName"></span>
     </div>
+    <canvas id="graph" height="34" title="Доля пустых ромбов по кадрам: нечётные — жёлтым, чётные — голубым; щелчок — к кадру"></canvas>
     <div class="bar">
       <button id="aBtn" title="Начало участка — этот кадр ( [ )">[ с</button>
       <button id="bBtn" title="Конец участка — этот кадр ( ] )">по ]</button>
@@ -176,9 +193,42 @@
   </div>
 
   <div class="panel">
+    <!-- v0.007: разбор на ромбы -->
+    <div class="lbl">◇ Разбор на ромбы</div>
+    <div class="bar">
+      <button id="rombBtn" title="Разобрать выбранный GIF: в каждом кадре — доля пустых ромбов; GIF делится на участки отдельно по нечётным и чётным кадрам (ромб — пока ромбы растут, сброс — новый ромб, между ними — шум) и участки кладутся в склейку">◇ Разобрать</button>
+      <input type="number" id="rombHole" min="3" max="99" step="2" value="15" title="Дыра — от скольких px в поперечнике чёрное место считается ромбом" style="width:46px;"><span class="lbl">px</span>
+    </div>
+    <div class="bar">
+      <select id="rombWhat" title="Какие участки класть в склейку">
+        <option value="romb" selected>только ромбы</option>
+        <option value="all">весь GIF: ромбы и шум</option>
+        <option value="noise">только шум</option>
+      </select>
+      <select id="rombPar" title="Участки из нечётных кадров, из чётных или из тех и других">
+        <option value="both" selected>чёт и нечёт</option>
+        <option value="odd">нечётные</option>
+        <option value="even">чётные</option>
+      </select>
+    </div>
     <div class="lbl">Склейка</div>
     <div class="list" id="segs"></div>
     <div class="tot" id="segTot">пусто</div>
+    <div class="bar">
+      <select id="sortSel" title="Переставить участки склейки">
+        <option value="" selected>⇅ сортировать…</option>
+        <option value="order">по порядку</option>
+        <option value="odd">нечётные, потом чётные</option>
+        <option value="even">чётные, потом нечётные</option>
+        <option value="long">длинные вперёд</option>
+        <option value="short">короткие вперёд</option>
+        <option value="big">крупные ромбы вперёд</option>
+        <option value="small">мелкие ромбы вперёд</option>
+        <option value="kind">ромбы, потом шум</option>
+        <option value="rev">наоборот</option>
+        <option value="mix">вперемешку</option>
+      </select>
+    </div>
     <div class="bar">
       <button id="showMontBtn" title="Смотреть склейку в просмотре (ещё раз — вернуться к GIF)">▶ Смотреть склейку</button>
     </div>
@@ -417,6 +467,8 @@ function blit() {
     else piece(0, k * band, W, Math.min(band, H - k * band), sx, sy);
   }
   $('pos').value = S.i;
+  { const fi = $('frInp'); fi.max = SEQ.length; if (document.activeElement !== fi) fi.value = S.i + 1; }   // v0.007
+  drawGraph();
   $('num').textContent = (S.label || '') + (S.zoom === 'fit' ? '' : ' · ×' + (+z.toFixed(2)));
   { const nm = $('numName'), nt = S.nameTxt || ''; if (nm && nm.textContent !== nt) { nm.textContent = nt; nm.title = nt; } }
   const px = Math.max(1, parseInt($('scrPx').value, 10) || 1), LL = ax === 'cols' ? W : H;
@@ -424,8 +476,22 @@ function blit() {
 }
 function fitZoom(W, H) { const box = $('view').getBoundingClientRect(); return Math.max(0.05, Math.min((box.width - 12) / W, (box.height - 12) / H)); }
 function zoomNow(W, H) { return S.zoom === 'fit' ? fitZoom(W, H) : S.zoom; }
-function go(i) { if (!SEQ.length) return; const n = SEQ.length; S.i = $('loopBtn').classList.contains('on') ? ((i % n) + n) % n : Math.max(0, Math.min(n - 1, i)); draw(); }
+/* v0.007: кадры — все, нечётные (1, 3, 5 … — номер с нуля чётный) или чётные; неподходящий кадр пропускается в сторону движения */
+const parWant = () => ({ odd: 0, even: 1 }[$('parSel').value]);
+function go(i, dir) {
+  if (!SEQ.length) return;
+  const n = SEQ.length, loop = $('loopBtn').classList.contains('on'), w = parWant();
+  const fit = v => loop ? ((v % n) + n) % n : Math.max(0, Math.min(n - 1, v));
+  i = fit(i);
+  if (w !== undefined && i % 2 !== w) {
+    const d = dir || (i < S.i ? -1 : 1);
+    let j = i + d; if (!loop && (j < 0 || j >= n)) j = i - d;
+    i = fit(j);
+  }
+  S.i = i; draw();
+}
 const step = () => parseInt($('stepSel').value, 10) || 1;
+const stepEff = () => { const s = step(); return parWant() !== undefined && s % 2 ? s * 2 : s; };   // v0.007: при чёт / нечёт шаг — чётный
 
 /* ---------- масштаб колесом и перетаскивание (v0.002) ---------- */
 const view = $('view');
@@ -492,15 +558,143 @@ $('scrDnBtn').addEventListener('click', () => { jump(1); if (SEQ.length) blit();
 $('scrZeroBtn').addEventListener('click', () => { S.shift = 0; S.scrN = 0; S.scrDir = 1; if (SEQ.length) blit(); });
 $('scrPx').addEventListener('input', () => { if (SEQ.length) blit(); });
 
+/* ---------- разбор на ромбы (v0.007) ----------
+   Дыра — чёрное место не меньше «px» в поперечнике: точка, у которой в квадрате px × px вокруг нет ни одной светлой.
+   Считается только внутри картинки — в каждой строке от первой светлой точки до последней, чтобы фон вокруг треугольника
+   не шёл в счёт. Доля дыр по кадрам — g.holes. Участки режутся отдельно по нечётным и чётным кадрам (соседние мигают):
+   ромб — пока дыры есть и не падают (упали ниже DROP от прежнего — сброс, новый ромб), без дыр — шум; ромб в один кадр — шум. */
+const HOLE_MIN = 0.0005, DROP = 0.9;
+function holeFrac(fr, W, H, r, B) {
+  const hz = B.hz, cnt = B.cnt; cnt.fill(0);
+  for (let y = 0; y < H; y++) {   // по строке: есть ли светлая в [x − r, x + r]
+    const o = y * W; let c = 0;
+    for (let x = 0; x < Math.min(r, W); x++) if (fr[o + x]) c++;
+    for (let x = 0; x < W; x++) {
+      if (x + r < W && fr[o + x + r]) c++;
+      if (x - r - 1 >= 0 && fr[o + x - r - 1]) c--;
+      hz[o + x] = c > 0 ? 1 : 0;
+    }
+  }
+  for (let y = 0; y < Math.min(r, H); y++) { const o = y * W; for (let x = 0; x < W; x++) cnt[x] += hz[o + x]; }
+  let holes = 0, area = 0;
+  for (let y = 0; y < H; y++) {   // по столбцу: то же в [y − r, y + r], и сразу счёт в пределах строки картинки
+    if (y + r < H) { const o = (y + r) * W; for (let x = 0; x < W; x++) cnt[x] += hz[o + x]; }
+    if (y - r - 1 >= 0) { const o = (y - r - 1) * W; for (let x = 0; x < W; x++) cnt[x] -= hz[o + x]; }
+    const o = y * W; let x0 = 0, x1 = W - 1;
+    while (x0 < W && !fr[o + x0]) x0++;
+    if (x0 >= W) continue;
+    while (!fr[o + x1]) x1--;
+    area += x1 - x0 + 1;
+    for (let x = x0; x <= x1; x++) if (!cnt[x]) holes++;
+  }
+  return area ? holes / area : 0;
+}
+function analyze(g, px, done) {
+  if (g.holes && g.holesPx === px) { done(); return; }
+  const n = g.frames.length, out = new Float32Array(n), r = Math.max(1, px >> 1), btn = $('rombBtn'), txt = btn.textContent;
+  const B = { hz: new Uint8Array(g.W * g.H), cnt: new Int32Array(g.W) };
+  let k = 0;
+  const chunk = () => {
+    const t0 = performance.now();
+    while (k < n && performance.now() - t0 < 40) { out[k] = holeFrac(g.frames[k], g.W, g.H, r, B); k++; }
+    if (k < n) { btn.textContent = '◇ ' + Math.round(k / n * 100) + '%'; setTimeout(chunk, 0); return; }
+    btn.textContent = txt; g.holes = out; g.holesPx = px; done();
+  };
+  chunk();
+}
+function pieces(g, gi) {
+  const h = g.holes, n = h.length, out = [];
+  for (const p of [0, 1]) {
+    const list = []; let cur = null;
+    for (let f = p; f < n; f += 2) {
+      const kind = h[f] > HOLE_MIN ? 'romb' : 'noise';
+      if (!cur || cur.kind !== kind || (kind === 'romb' && h[f] < h[cur.b] * DROP)) { cur = { kind: kind, a: f, b: f }; list.push(cur); }
+      else cur.b = f;
+    }
+    const merged = [];
+    for (const q of list) {
+      if (q.kind === 'romb' && q.a === q.b) q.kind = 'noise';
+      const last = merged[merged.length - 1];
+      if (last && last.kind === 'noise' && q.kind === 'noise') last.b = q.b; else merged.push(q);
+    }
+    for (const q of merged) { let pk = 0; for (let f = q.a; f <= q.b; f += 2) pk = Math.max(pk, h[f]); out.push({ g: gi, a: q.a, b: q.b, st: 2, kind: q.kind, peak: pk }); }
+  }
+  return out.sort((x, y) => x.a - y.a);
+}
+$('rombBtn').addEventListener('click', () => {
+  if (S.busy) return;
+  const g = S.gifs[S.cur]; if (!g) { alert('Сначала откройте GIF'); return; }
+  const px = Math.max(3, parseInt($('rombHole').value, 10) || 15);
+  S.busy = true;
+  analyze(g, px, () => {
+    S.busy = false;
+    const gi = S.gifs.indexOf(g); if (gi < 0) return;
+    const what = $('rombWhat').value, par = $('rombPar').value;
+    S.segs.push(...pieces(g, gi).filter(q => (what === 'all' || q.kind === what) && (par === 'both' || (par === 'odd') === (q.a % 2 === 0))));
+    S.offKey = ''; refresh();
+  });
+});
+// сортировка склейки; у участков, положенных руками, длина и крупность считаются так же (крупность — если GIF разобран)
+const segLen = s => Math.floor(Math.abs(s.b - s.a) / s.st) + 1;
+function segPeak(s) {
+  if (s.peak !== undefined) return s.peak;
+  const h = S.gifs[s.g] && S.gifs[s.g].holes; if (!h) return 0;
+  let pk = 0; for (let f = s.a; s.a <= s.b ? f <= s.b : f >= s.b; f += (s.a <= s.b ? s.st : -s.st)) pk = Math.max(pk, h[f]);
+  return pk;
+}
+const segPar = s => s.st % 2 ? 1 : (s.a % 2 ? 2 : 0);   // 0 — нечётные кадры, 2 — чётные, 1 — вперемешку
+$('sortSel').addEventListener('change', () => {
+  const m = $('sortSel').value; $('sortSel').value = '';
+  if (!m || S.segs.length < 2) return;
+  const ord = (x, y) => x.g - y.g || Math.min(x.a, x.b) - Math.min(y.a, y.b);
+  const kindR = s => s.kind === 'romb' ? 0 : s.kind === 'noise' ? 2 : 1;
+  const L = S.segs;
+  if (m === 'order') L.sort(ord);
+  else if (m === 'odd') L.sort((x, y) => segPar(x) - segPar(y) || ord(x, y));
+  else if (m === 'even') L.sort((x, y) => segPar(y) - segPar(x) || ord(x, y));
+  else if (m === 'long') L.sort((x, y) => segLen(y) - segLen(x) || ord(x, y));
+  else if (m === 'short') L.sort((x, y) => segLen(x) - segLen(y) || ord(x, y));
+  else if (m === 'big') L.sort((x, y) => segPeak(y) - segPeak(x) || ord(x, y));
+  else if (m === 'small') L.sort((x, y) => segPeak(x) - segPeak(y) || ord(x, y));
+  else if (m === 'kind') L.sort((x, y) => kindR(x) - kindR(y) || ord(x, y));
+  else if (m === 'rev') L.reverse();
+  else if (m === 'mix') for (let i = L.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [L[i], L[j]] = [L[j], L[i]]; }
+  if (S.mont) S.i = 0;
+  refresh();
+});
+// полоска-график: доля дыр по кадрам того, что сейчас смотрится (GIF или склейка); нечётные — жёлтым, чётные — голубым
+const gcv = $('graph'), gctx = gcv.getContext('2d');
+function drawGraph() {
+  const vals = SEQ.map(r => r[0] >= 0 && S.gifs[r[0]] && S.gifs[r[0]].holes ? S.gifs[r[0]].holes[r[1]] : -1);
+  const any = vals.some(v => v >= 0);
+  gcv.style.display = any ? 'block' : 'none'; if (!any) return;
+  const Wd = Math.max(1, gcv.clientWidth | 0), Hd = gcv.height; if (gcv.width !== Wd) gcv.width = Wd;
+  gctx.clearRect(0, 0, Wd, Hd);
+  let mx = 1e-6; for (const v of vals) if (v > mx) mx = v;
+  const n = vals.length, bw = Wd / n, gap = bw > 3 ? 1 : 0;
+  for (let i = 0; i < n; i++) {
+    const v = vals[i]; if (v < 0) continue;
+    const h = Math.max(1, Math.round(v / mx * (Hd - 3)));
+    gctx.fillStyle = SEQ[i][1] % 2 ? '#22d3ee' : '#ffcc00';
+    gctx.fillRect(i * bw, Hd - h, Math.max(1, bw - gap), h);
+  }
+  gctx.fillStyle = '#ffffff'; gctx.fillRect(Math.floor((S.i + 0.5) * bw), 0, 1, Hd);
+}
+let gDrag = false;
+const gPick = e => { const r = gcv.getBoundingClientRect(); if (!SEQ.length || !r.width) return; go(Math.max(0, Math.min(SEQ.length - 1, Math.floor((e.clientX - r.left) / r.width * SEQ.length))), 1); };
+gcv.addEventListener('mousedown', e => { gDrag = true; gPick(e); });
+window.addEventListener('mousemove', e => { if (gDrag) gPick(e); });
+window.addEventListener('mouseup', () => { gDrag = false; });
+
 /* ---------- игра ---------- */
 function play(on) {
   S.playing = on; clearTimeout(S.timer); $('playBtn').textContent = on ? '⏸' : '▶';
   if (!on) return;
   const tick = () => {
     if (!S.playing) return;
-    const n = SEQ.length, nx = S.i + (S.rev ? -step() : step());
+    const n = SEQ.length, nx = S.i + (S.rev ? -stepEff() : stepEff());
     if (!$('loopBtn').classList.contains('on') && (nx < 0 || nx >= n)) { play(false); return; }
-    go(nx);
+    go(nx, S.rev ? -1 : 1);
     S.timer = setTimeout(tick, Math.max(10, parseInt($('msInp').value, 10) || 100));
   };
   S.timer = setTimeout(tick, Math.max(10, parseInt($('msInp').value, 10) || 100));
@@ -532,7 +726,9 @@ function lists() {
     const d = document.createElement('div'); d.className = 'item';
     d.innerHTML = '<div class="row"><span class="grow"><b></b></span><button class="mini" title="Выше">↑</button><button class="mini" title="Ниже">↓</button><button class="mini" title="Убрать">✕</button></div><div class="sub"></div>';
     d.querySelector('b').textContent = (k + 1) + '. ' + S.gifs[sg.g].name;
-    d.querySelector('.sub').textContent = 'кадры ' + (sg.a + 1) + ' → ' + (sg.b + 1) + (sg.st > 1 ? ', через ' + sg.st : '') + ' · ' + n + ' шт.';
+    d.querySelector('.sub').textContent = 'кадры ' + (sg.a + 1) + ' → ' + (sg.b + 1) + (sg.st > 1 ? ', через ' + sg.st : '') + ' · ' + n + ' шт.'
+      + (sg.kind ? ' · ' + (sg.kind === 'romb' ? '◇ ромб, дыр до ' + (sg.peak * 100).toFixed(1) + '%' : 'шум') + ' · ' + (sg.a % 2 ? 'чёт' : 'нечёт') : '');   // v0.007
+    if (sg.kind) d.style.boxShadow = 'inset 3px 0 0 ' + (sg.kind === 'romb' ? '#ffcc00' : '#3a3f4c');
     const [up, dn, x] = d.querySelectorAll('button');
     up.addEventListener('click', () => { if (k > 0) { [S.segs[k - 1], S.segs[k]] = [S.segs[k], S.segs[k - 1]]; refresh(); } });
     dn.addEventListener('click', () => { if (k < S.segs.length - 1) { [S.segs[k + 1], S.segs[k]] = [S.segs[k], S.segs[k + 1]]; refresh(); } });
@@ -566,16 +762,18 @@ window.addEventListener('dragleave', e => { if (!e.relatedTarget) view.classList
 window.addEventListener('drop', e => { e.preventDefault(); view.classList.remove('drop'); openFiles(Array.from(e.dataTransfer.files)); });
 
 /* ---------- кнопки ---------- */
-$('firstBtn').addEventListener('click', () => { S.i = 0; draw(); });
-$('lastBtn').addEventListener('click', () => { S.i = SEQ.length - 1; draw(); });
-$('prevBtn').addEventListener('click', () => go(S.i - step()));
-$('nextBtn').addEventListener('click', () => go(S.i + step()));
+$('firstBtn').addEventListener('click', () => go(0, 1));
+$('lastBtn').addEventListener('click', () => go(SEQ.length - 1, -1));
+$('prevBtn').addEventListener('click', () => go(S.i - stepEff(), -1));
+$('nextBtn').addEventListener('click', () => go(S.i + stepEff(), 1));
+$('parSel').addEventListener('change', () => go(S.i, 1));
+$('frInp').addEventListener('input', () => { const v = parseInt($('frInp').value, 10); if (v >= 1) go(v - 1, 1); });
 $('playBtn').addEventListener('click', () => play(!S.playing));
 $('revBtn').addEventListener('click', () => { S.rev = !S.rev; $('revBtn').classList.toggle('on', S.rev); });
 $('loopBtn').addEventListener('click', () => $('loopBtn').classList.toggle('on'));
 $('zoomSel').addEventListener('change', () => { const v = $('zoomSel').value; S.zoom = v === 'fit' ? 'fit' : parseFloat(v); draw(); });
 window.addEventListener('resize', draw);
-$('pos').addEventListener('input', () => { S.i = parseInt($('pos').value, 10) || 0; draw(); });
+$('pos').addEventListener('input', () => go(parseInt($('pos').value, 10) || 0, 1));
 $('aBtn').addEventListener('click', () => setAB('a'));
 $('bBtn').addEventListener('click', () => setAB('b'));
 function setAB(w) { if (!SEQ.length || S.mont || layOn()) return; S[w] = SEQ[S.i][1]; abTxt(); }
@@ -583,8 +781,10 @@ $('addBtn').addEventListener('click', addSeg);
 function addSeg() {
   if (S.mont || layOn() || S.cur < 0) return;
   const n = S.gifs[S.cur].frames.length;
-  const a = S.a !== null ? S.a : 0, b = S.b !== null ? S.b : n - 1;
-  S.segs.push({ g: S.cur, a: a, b: b, st: step() });
+  const w = parWant(), a = S.a !== null ? S.a : (w || 0);
+  let b = S.b !== null ? S.b : n - 1;
+  if (w !== undefined && (b - a) % 2) b += a <= b ? -1 : 1;   // v0.007: конец — той же чётности, что начало
+  S.segs.push({ g: S.cur, a: a, b: b, st: stepEff() });
   S.a = S.b = null; abTxt(); lists();
 }
 $('showMontBtn').addEventListener('click', () => { if (!S.segs.length && !S.mont) return; S.mont = !S.mont; S.i = 0; refresh(); });
@@ -646,11 +846,11 @@ $('layGifBtn').addEventListener('click', () => {
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' && e.target.type === 'number') return;
   const k = e.key;
-  if (k === 'ArrowLeft') { go(S.i - (e.shiftKey ? 1 : step())); e.preventDefault(); }
-  else if (k === 'ArrowRight') { go(S.i + (e.shiftKey ? 1 : step())); e.preventDefault(); }
+  if (k === 'ArrowLeft') { go(S.i - (e.shiftKey ? 1 : stepEff()), -1); e.preventDefault(); }
+  else if (k === 'ArrowRight') { go(S.i + (e.shiftKey ? 1 : stepEff()), 1); e.preventDefault(); }
   else if (k === ' ') { play(!S.playing); e.preventDefault(); }
-  else if (k === 'Home') { S.i = 0; draw(); }
-  else if (k === 'End') { S.i = SEQ.length - 1; draw(); }
+  else if (k === 'Home') go(0, 1);
+  else if (k === 'End') go(SEQ.length - 1, -1);
   else if (k === '[') setAB('a');
   else if (k === ']') setAB('b');
   else if (k === 'Enter') addSeg();
