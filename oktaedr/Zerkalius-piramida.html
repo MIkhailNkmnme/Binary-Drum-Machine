@@ -1,0 +1,130 @@
+<!-- Zerkalius Пирамида — v0.001. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zerkalius Пирамида — v0.001</title>
+<!--
+  ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
+  Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
+  под ней ещё больше, и т. д.».
+  Ответ — да, но не одними бипирамидами (у них боковые грани наклонные: цепочка грань к грани закручивается спиралью, а вокруг
+  ребра пять тетраэдров оставляют щель ~7,4°). Без щелей это делают тетраэдры вместе с октаэдрами: тетраэдрово-октаэдрическая
+  укладка пространства. Большой тетраэдр со стороной L режется на:
+    ▲ тетраэдры остриём вверх — в слое n (сверху, с нуля) их (n+1)(n+2)/2: 1, 3, 6, 10… (всего L(L+1)(L+2)/6);
+    ◆ октаэдры — между слоями: 0, 1, 3, 6… (всего (L−1)L(L+1)/6);
+    ▼ тетраэдры остриём вниз — в провалах: 0, 0, 1, 3… (всего (L−2)(L−1)L/6).
+  Каждая грань любой части прилегает к грани соседа целиком: ▲ и ▼ — только к октаэдрам, октаэдр — к тем и другим.
+  Точки решётки: P(i, j, k) = i·e1 + j·e2 + k·e3, где e1, e2, e3 — рёбра единичного тетраэдра от вершины вниз, i + j + k ≤ L.
+  «Раздвинуть» — каждая часть отъезжает от центра пирамиды, и слои 1-3-6 видны поштучно.
+  Рисуется на холсте: грани всех частей сортируются по глубине (художник), полупрозрачная заливка и рёбра.
+-->
+<style>
+  :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
+  html,body{ margin:0; height:100%; background:var(--bg); color:var(--fg); font:13px/1.35 system-ui, sans-serif; overflow:hidden; }
+  #cv{ position:fixed; inset:0; width:100%; height:100%; touch-action:none; cursor:grab; }
+  #panel{ position:fixed; left:12px; top:12px; width:210px; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px; display:flex; flex-direction:column; gap:8px; }
+  #panel h1{ margin:0; font-size:14px; letter-spacing:2px; color:var(--acc); font-weight:600; }
+  label.s{ display:flex; flex-direction:column; gap:3px; color:var(--dim); }
+  label.s b{ color:var(--fg); }
+  input[type=range]{ width:100%; }
+  .row{ display:flex; gap:4px; flex-wrap:wrap; }
+  button{ flex:1 0 auto; background:#0c0f14; color:var(--dim); border:1px solid var(--line); border-radius:4px; padding:5px 6px; cursor:pointer; font:inherit; }
+  button.on{ color:var(--fg); border-color:var(--acc); }
+  #count{ color:var(--dim); font-size:12px; }
+  #ver{ position:fixed; right:10px; bottom:8px; color:var(--dim); font:11px monospace; }
+  @media (max-width:600px){ #panel{ left:8px; right:8px; top:auto; bottom:8px; width:auto; } }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="panel">
+  <h1>ПИРАМИДА</h1>
+  <label class="s">Слоёв: <b id="vL">4</b><input type="range" id="sL" min="1" max="7" step="1" value="4"></label>
+  <label class="s">Раздвинуть: <b id="vX">0</b><input type="range" id="sX" min="0" max="100" step="1" value="35"></label>
+  <div class="row">
+    <button id="bUp" class="on" title="Тетраэдры остриём вверх: в слоях 1, 3, 6, 10…">▲ верх</button>
+    <button id="bOct" class="on" title="Октаэдры — между слоями, к ним тетраэдры прилегают гранями">◆ окта</button>
+    <button id="bDn" class="on" title="Тетраэдры остриём вниз — в провалах между октаэдрами">▼ низ</button>
+  </div>
+  <div class="row"><button id="bSpin" class="on" title="Вращение (пробел)">⟳ вращение</button></div>
+  <div id="count"></div>
+</div>
+<div id="ver">v0.001</div>
+<script>
+const cv = document.getElementById("cv"), g = cv.getContext("2d");
+const NOTE_COL = ["#ff5f6d", "#ff9f43", "#ffe066", "#7ee787", "#4dd4ff", "#6b8cff", "#c38cf5"];
+let L = 4, X = 0.35, showUp = true, showOct = true, showDn = true, spin = true, yaw = 0.5, pitch = 0.35;
+// рёбра единичного тетраэдра от вершины вниз: основание — правильный треугольник, высота √(2/3)
+const H = Math.sqrt(2 / 3), R0 = 1 / Math.sqrt(3);
+const E = [0, 1, 2].map(i => { const a = Math.PI / 2 + i * 2 * Math.PI / 3; return [R0 * Math.cos(a), -H, R0 * Math.sin(a)]; });
+const P = (i, j, k) => [i * E[0][0] + j * E[1][0] + k * E[2][0], i * E[0][1] + j * E[1][1] + k * E[2][1], i * E[0][2] + j * E[1][2] + k * E[2][2]];
+const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+function pieces(){
+  const out = [];
+  for (let i = 0; i <= L; i++) for (let j = 0; i + j <= L; j++) for (let k = 0; i + j + k <= L; k++) {
+    const n = i + j + k, p = P(i, j, k), a = E[0], b = E[1], c = E[2];
+    if (n <= L - 1 && showUp) out.push({ kind: "up", layer: n, v: [p, add(p, a), add(p, b), add(p, c)], f: [[0,1,2],[0,2,3],[0,3,1],[1,3,2]] });
+    if (n <= L - 2 && showOct) { const q = [add(p, a), add(p, b), add(p, c), add(add(p, a), b), add(add(p, b), c), add(add(p, a), c)];
+      out.push({ kind: "oct", layer: n + 1, v: q, f: null }); }
+    if (n <= L - 3 && showDn) { const ab = add(add(p, a), b), bc = add(add(p, b), c), ac = add(add(p, a), c), abc = add(ab, c);
+      out.push({ kind: "dn", layer: n + 2, v: [ab, bc, ac, abc], f: [[0,1,2],[0,1,3],[1,2,3],[0,2,3]] }); }
+  }
+  return out;
+}
+// грани октаэдра: вершины a, b, c, a+b, b+c, a+c — восемь треугольников
+const OCT_F = [[0,1,3],[1,2,4],[2,0,5],[3,4,5],[0,3,5],[1,4,3],[2,5,4],[0,1,2]];
+let W = 0, Hh = 0, dpr = 1;
+function resize(){ dpr = window.devicePixelRatio || 1; W = cv.clientWidth; Hh = cv.clientHeight; cv.width = W * dpr; cv.height = Hh * dpr; }
+addEventListener("resize", resize); resize();
+function rot(p){ const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const x = p[0] * cy + p[2] * sy, z = -p[0] * sy + p[2] * cy, y = p[1] * cp - z * sp, z2 = p[1] * sp + z * cp; return [x, y, z2]; }
+function draw(){
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, Hh);
+  const list = pieces(), cen = [0, -H * L * 0.75, 0];   // центр большого тетраэдра: вершина в 0, центр — на ¾ высоты
+  const sc = Math.min(W, Hh) / (L * 1.9 + 1), faces = [];
+  let cnt = { up: 0, oct: 0, dn: 0 };
+  for (const pc of list) {
+    cnt[pc.kind]++;
+    const c = pc.v.reduce((s, v) => add(s, v), [0, 0, 0]).map(x => x / pc.v.length), off = [(c[0] - cen[0]) * X, (c[1] - cen[1]) * X, (c[2] - cen[2]) * X];
+    const vs = pc.v.map(v => rot([v[0] + off[0] - cen[0], v[1] + off[1] - cen[1], v[2] + off[2] - cen[2]]));
+    const col = pc.kind === "up" ? NOTE_COL[pc.layer % 7] : pc.kind === "oct" ? "#8fa3b8" : "#5b4a7a";
+    for (const f of (pc.kind === "oct" ? OCT_F : pc.f)) {
+      const t = f.map(i => vs[i]);
+      const n = [(t[1][1]-t[0][1])*(t[2][2]-t[0][2]) - (t[1][2]-t[0][2])*(t[2][1]-t[0][1]), (t[1][2]-t[0][2])*(t[2][0]-t[0][0]) - (t[1][0]-t[0][0])*(t[2][2]-t[0][2]), (t[1][0]-t[0][0])*(t[2][1]-t[0][1]) - (t[1][1]-t[0][1])*(t[2][0]-t[0][0])];
+      const nl = Math.hypot(...n) || 1, light = Math.abs(n[2] / nl);
+      faces.push({ t, z: (t[0][2] + t[1][2] + t[2][2]) / 3, col, light, kind: pc.kind });
+    }
+  }
+  faces.sort((a, b) => a.z - b.z);
+  const cx = W / 2, cy = Hh * 0.5;
+  for (const f of faces) {
+    g.beginPath(); f.t.forEach((p, i) => { const x = cx + p[0] * sc, y = cy - p[1] * sc; if (i) g.lineTo(x, y); else g.moveTo(x, y); }); g.closePath();
+    g.globalAlpha = (f.kind === "oct" ? 0.28 : 0.55) * (0.45 + 0.55 * f.light); g.fillStyle = f.col; g.fill();
+    g.globalAlpha = 0.85; g.strokeStyle = f.col; g.lineWidth = 1; g.stroke();
+  }
+  g.globalAlpha = 1;
+  const sum = (n) => n * (n + 1) / 2, rows = []; for (let n = 0; n < L; n++) rows.push(sum(n + 1));
+  document.getElementById("count").innerHTML = `▲ ${cnt.up} (по слоям ${rows.join(", ")}) · ◆ ${cnt.oct} · ▼ ${cnt.dn}`;
+}
+function frame(){ if (spin && !drag) yaw += 0.004; draw(); requestAnimationFrame(frame); }
+let drag = false, lx = 0, ly = 0;
+cv.addEventListener("pointerdown", e => { drag = true; lx = e.clientX; ly = e.clientY; cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing"; });
+cv.addEventListener("pointermove", e => { if (!drag) return; yaw += (e.clientX - lx) * 0.008; pitch = Math.max(-1.5, Math.min(1.5, pitch + (e.clientY - ly) * 0.008)); lx = e.clientX; ly = e.clientY; });
+cv.addEventListener("pointerup", () => { drag = false; cv.style.cursor = "grab"; });
+const sL = document.getElementById("sL"), sX = document.getElementById("sX");
+const ui = () => { document.getElementById("vL").textContent = L; document.getElementById("vX").textContent = Math.round(X * 100);
+  [["bUp", showUp], ["bOct", showOct], ["bDn", showDn], ["bSpin", spin]].forEach(([id, on]) => document.getElementById(id).classList.toggle("on", on)); };
+sL.oninput = () => { L = +sL.value; ui(); };
+sX.oninput = () => { X = +sX.value / 100; ui(); };
+document.getElementById("bUp").onclick = () => { showUp = !showUp; ui(); };
+document.getElementById("bOct").onclick = () => { showOct = !showOct; ui(); };
+document.getElementById("bDn").onclick = () => { showDn = !showDn; ui(); };
+document.getElementById("bSpin").onclick = () => { spin = !spin; ui(); };
+addEventListener("keydown", e => { if (e.code === "Space") { spin = !spin; ui(); e.preventDefault(); } });
+L = +sL.value; X = +sX.value / 100; ui(); frame();
+</script>
+<script src="../_js/hub-link.js"></script>
+</body>
+</html>
