@@ -1,29 +1,35 @@
-<!-- Zerkalius Просмотр GIF — v0.001. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
+<!-- Zerkalius Просмотр GIF — v0.002. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
      на страницу), листать по кадру и через 2 / 4 / 8, играть с любой скоростью, отметить участок «с — по» и положить в склейку;
      участки — из разных GIF, в любом порядке; склейку посмотреть и скачать одним GIF. Всё в самой странице, без библиотек:
      свой разбор GIF (LZW, палитры, прозрачность, способы смены кадра, чересстрочность) и своя сборка (тот же LZW, что в Code).
      v0.001: заведена 2026-09-29 по слову пользователя («нужен GIF-просмотрщик нормальный, чтобы покадрово, через кадр 2, 4, и
-             разные участки выбирать, склеивать»). Цветов на один GIF — до 256 (у GIF из Zerkalius их 4–8). -->
+             разные участки выбирать, склеивать»). Цветов на один GIF — до 256 (у GIF из Zerkalius их 4–8).
+     v0.002: «масштабировать колёсиком, клик — выбор определённого набора GIF и его раскладки, так же с размерами ромбов и
+             треугольников». Колесо — масштаб к курсору, мышью — двигать; галка у GIF — в набор; набор играет разом, кадр в
+             кадр, раскладкой: в ряд, столбиком, сеткой, △ треугольником (ряды 1, 2, 3 …), ◇ ромбом (1, 2 … n … 2, 1); у
+             треугольника и ромба — размер в рядах, клетки заполняются GIF набора по кругу; раскладку — в GIF и PNG. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Просмотр GIF — v0.001</title>
+<title>Zerkalius Просмотр GIF — v0.002</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
   body { margin: 0; background: #0b0c10; color: #d7e1eb; font: 13px/1.35 'Roboto Mono', Consolas, monospace; user-select: none; }
   h1 { margin: 0; font-size: 16px; color: #ffcc00; font-weight: bold; }
-  .wrap { display: grid; grid-template-columns: 230px 1fr 280px; gap: 8px; height: 100vh; padding: 8px; }
+  .wrap { display: grid; grid-template-columns: 240px 1fr 280px; gap: 8px; height: 100vh; padding: 8px; }
   .panel { background: #15171e; border: 1px solid #2c303a; border-radius: 5px; padding: 8px; display: flex; flex-direction: column; gap: 6px; min-height: 0; }
   .list { flex: 1; overflow: auto; display: flex; flex-direction: column; gap: 4px; min-height: 0; }
   .item { padding: 5px 6px; border: 1px solid #2c303a; border-radius: 4px; background: #1c1f28; cursor: pointer; font-size: 11px; }
   .item.on { border-color: #ffcc00; background: #2a2412; }
+  .item.insel { box-shadow: inset 3px 0 0 #22d3ee; }
   .item b { color: #ffcc00; font-weight: normal; }
   .item .sub { color: #8a94a6; }
-  .item .row { display: flex; gap: 3px; align-items: center; }
+  .item .row { display: flex; gap: 4px; align-items: center; }
   .item .row .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item input[type=checkbox] { margin: 0; accent-color: #22d3ee; cursor: pointer; }
   button, select, input[type=number] { font: inherit; font-size: 12px; background: #202430; color: #d7e1eb; border: 1px solid #3a3f4c; border-radius: 3px; padding: 3px 7px; }
   button { cursor: pointer; }
   button:hover { border-color: #ffcc00; }
@@ -32,9 +38,11 @@
   button.mini { padding: 0 5px; font-size: 11px; }
   input[type=number] { width: 64px; }
   .stage { display: flex; flex-direction: column; gap: 6px; min-height: 0; min-width: 0; }
-  .view { flex: 1; min-height: 0; background: #000; border: 1px solid #2c303a; border-radius: 5px; overflow: auto; display: flex; align-items: center; justify-content: center; position: relative; }
+  /* v0.002: картинка по центру, а если крупнее окна — прокрутка (margin:auto вместо центровки флексом — иначе левый край уходит) */
+  .view { flex: 1; min-height: 0; background: #000; border: 1px solid #2c303a; border-radius: 5px; overflow: auto; display: flex; position: relative; cursor: grab; }
+  .view.pan { cursor: grabbing; }
   .view.drop { outline: 2px dashed #22d3ee; outline-offset: -6px; }
-  #cv { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+  #cv { image-rendering: pixelated; image-rendering: crisp-edges; display: block; margin: auto; flex: none; }
   .bar { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
   .bar .sp { flex: 1; }
   #pos { flex: 1; min-width: 120px; accent-color: #ffcc00; }
@@ -42,6 +50,7 @@
   .ab { color: #22d3ee; }
   .tot { color: #8a94a6; font-size: 11px; }
   .lbl { color: #8a94a6; font-size: 11px; }
+  .sel { color: #22d3ee; }
   input[type=file] { display: none; }
   @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; height: auto; } .view { height: 60vh; } }
 </style>
@@ -49,17 +58,34 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.001</span></h1>
+    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.002</span></h1>
     <div class="bar">
       <button id="openBtn" title="Открыть один или несколько GIF (их можно и просто бросить на страницу)">📂 Открыть GIF</button>
       <input type="file" id="file" accept="image/gif,.gif" multiple>
     </div>
-    <div class="lbl">Открытые</div>
+    <div class="lbl">Открытые <span class="sel" title="Галка у GIF — в набор">· ☑ — в набор</span></div>
     <div class="list" id="gifs"></div>
+    <div class="lbl sel">Набор</div>
+    <div class="bar">
+      <select id="laySel" title="Как показывать набор (галки у GIF): один — только выбранный GIF; остальные — все GIF набора разом, кадр в кадр">
+        <option value="one" selected>▭ один GIF</option>
+        <option value="row">⇢ в ряд</option>
+        <option value="col">⇣ столбиком</option>
+        <option value="grid">▦ сеткой</option>
+        <option value="tri">△ треугольником</option>
+        <option value="rhomb">◇ ромбом</option>
+      </select>
+      <input type="number" id="laySize" min="0" max="16" step="1" value="0" title="Размер треугольника или ромба — рядов (0 — сколько надо, чтобы поместился весь набор); клетки заполняются GIF набора по кругу" style="width:52px;">
+    </div>
+    <div class="bar">
+      <button id="selAllBtn" class="mini" title="Все открытые — в набор">☑ все</button>
+      <button id="selNoneBtn" class="mini" title="Снять набор">☐ никого</button>
+      <button id="layGifBtn" class="mini" title="Скачать раскладку набора одним GIF — все кадры с выбранным шагом">💾 раскладку GIF</button>
+    </div>
   </div>
 
   <div class="stage">
-    <div class="view" id="view" title="Бросьте сюда GIF"><canvas id="cv" width="1" height="1"></canvas></div>
+    <div class="view" id="view" title="Колесо — масштаб к курсору, тянуть мышью — двигать; сюда можно бросить GIF"><canvas id="cv" width="1" height="1"></canvas></div>
     <div class="bar">
       <button class="big" id="firstBtn" title="К первому кадру (Home)">⏮</button>
       <button class="big" id="prevBtn" title="Назад на шаг (←; Shift+← — на один кадр)">◀</button>
@@ -76,11 +102,12 @@
       <span class="lbl">мс</span><input type="number" id="msInp" min="10" max="5000" step="10" value="100" title="Сколько миллисекунд держать кадр при игре">
       <button id="revBtn" title="Играть назад">⇆</button>
       <button id="loopBtn" class="on" title="По кругу: дошёл до конца — снова с начала">🔁</button>
-      <select id="zoomSel" title="Масштаб картинки">
+      <select id="zoomSel" title="Масштаб картинки (или колесом над ней)">
         <option value="fit" selected>вписать</option>
         <option value="1">×1</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option><option value="6">×6</option><option value="8">×8</option>
+        <option value="custom" disabled>×?</option>
       </select>
-      <button id="pngBtn" title="Скачать этот кадр картинкой PNG">🖼 PNG</button>
+      <button id="pngBtn" title="Скачать то, что на экране (кадр или раскладку), картинкой PNG">🖼 PNG</button>
     </div>
     <div class="bar">
       <input type="range" id="pos" min="0" max="0" value="0" title="Кадр">
@@ -103,7 +130,7 @@
       <button id="showMontBtn" title="Смотреть склейку в просмотре (ещё раз — вернуться к GIF)">▶ Смотреть склейку</button>
     </div>
     <div class="bar">
-      <span class="lbl">мс на кадр</span><input type="number" id="outMs" min="20" max="5000" step="10" value="100" title="Задержка кадра в скачанном GIF">
+      <span class="lbl">мс на кадр</span><input type="number" id="outMs" min="20" max="5000" step="10" value="100" title="Задержка кадра в скачанном GIF (склейка и раскладка)">
       <button id="saveBtn" title="Собрать склейку одним GIF и скачать">💾 Скачать GIF</button>
     </div>
     <div class="bar">
@@ -230,43 +257,100 @@ function encodeGif(frames, w, h, palette, delayCs) {
   parts.push(Uint8Array.of(0x3B));
   return new Blob(parts, { type: 'image/gif' });
 }
+function download(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000); }
 
 /* ---------- состояние ---------- */
 const $ = id => document.getElementById(id);
-const S = { gifs: [], cur: -1, mont: false, segs: [], i: 0, a: null, b: null, playing: false, rev: false, timer: 0 };
-// последовательность на экране: кадры открытого GIF или склейки — пары [номер GIF, номер кадра]
+const S = { gifs: [], cur: -1, mont: false, segs: [], i: 0, a: null, b: null, playing: false, rev: false, timer: 0, zoom: 'fit', sel: new Set() };
+const GAP = 4, GAP_COL = [16, 18, 24];   // v0.002: между клетками раскладки — тёмная щель
+const layout = () => $('laySel').value;
+const setList = () => S.gifs.map((_, k) => k).filter(k => S.sel.has(k));
+const layOn = () => !S.mont && layout() !== 'one' && setList().length > 0;
+// последовательность: кадры открытого GIF, склейки — пары [номер GIF, номер кадра]; раскладка — номера кадров 0 … самый длинный
 function seq() {
   if (S.mont) { const out = []; for (const sg of S.segs) for (let f = sg.a; sg.a <= sg.b ? f <= sg.b : f >= sg.b; f += (sg.a <= sg.b ? sg.st : -sg.st)) out.push([sg.g, f]); return out; }
+  if (layOn()) { const n = Math.max(...setList().map(k => S.gifs[k].frames.length)); return Array.from({ length: n }, (_, f) => [-1, f]); }
   const g = S.gifs[S.cur]; if (!g) return [];
   return g.frames.map((_, f) => [S.cur, f]);
 }
 let SEQ = [];
 function refresh() { SEQ = seq(); S.i = Math.max(0, Math.min(S.i, SEQ.length - 1)); $('pos').max = Math.max(0, SEQ.length - 1); draw(); lists(); }
 
+/* ---------- раскладка набора (v0.002) ----------
+   Клетка — самый большой GIF набора; GIF в клетке по центру. Клетки заполняются GIF набора по порядку и по кругу.
+   △ — ряды 1, 2, 3 … R, каждый ряд по центру; ◇ — ряды 1, 2 … m … 2, 1. Размер (рядов) 0 — наименьший, куда влезает набор. */
+function geom() {
+  const L = setList(), n = L.length, cw = Math.max(...L.map(k => S.gifs[k].W)), ch = Math.max(...L.map(k => S.gifs[k].H));
+  const mode = layout(), sz = parseInt($('laySize').value, 10) || 0;
+  let rows = [];   // число клеток в каждом ряду
+  if (mode === 'row') rows = [n];
+  else if (mode === 'col') rows = Array(n).fill(1);
+  else if (mode === 'grid') { const c = Math.ceil(Math.sqrt(n)); for (let left = n; left > 0; left -= c) rows.push(Math.min(c, left)); }
+  else if (mode === 'tri') { let R = sz; if (!R) { R = 1; while (R * (R + 1) / 2 < n) R++; } for (let r = 1; r <= R; r++) rows.push(r); }
+  else if (mode === 'rhomb') { let m = sz; if (!m) { m = 1; while (m * m < n) m++; } for (let r = 1; r <= m; r++) rows.push(r); for (let r = m - 1; r >= 1; r--) rows.push(r); }
+  const maxRow = Math.max(...rows), W = maxRow * cw + (maxRow - 1) * GAP, H = rows.length * ch + (rows.length - 1) * GAP;
+  const cells = []; let q = 0;
+  rows.forEach((cnt, r) => {
+    const rw = cnt * cw + (cnt - 1) * GAP, x0 = Math.floor((W - rw) / 2), y = r * (ch + GAP);
+    for (let c = 0; c < cnt; c++) { const g = L[q % n]; q++; const G = S.gifs[g]; cells.push({ g: g, x: x0 + c * (cw + GAP) + Math.floor((cw - G.W) / 2), y: y + Math.floor((ch - G.H) / 2), cx: x0 + c * (cw + GAP), cy: y, cw: cw, ch: ch }); }
+  });
+  return { W, H, cells };
+}
+
 /* ---------- показ ---------- */
 const cv = $('cv'), ctx = cv.getContext('2d'), off = document.createElement('canvas'), octx = off.getContext('2d');
+const lutOf = g => g.lut || (g.lut = Uint32Array.from(g.cols.map(c => (255 << 24) | (c[2] << 16) | (c[1] << 8) | c[0])));
 function draw() {
   const ref = SEQ[S.i];
   if (!ref) { $('num').textContent = '—'; cv.width = 1; cv.height = 1; return; }
-  const g = S.gifs[ref[0]], fr = g.frames[ref[1]];
-  if (off.width !== g.W || off.height !== g.H) { off.width = g.W; off.height = g.H; }
-  const img = octx.createImageData(g.W, g.H), d32 = new Uint32Array(img.data.buffer);
-  const lut = g.lut || (g.lut = Uint32Array.from(g.cols.map(c => (255 << 24) | (c[2] << 16) | (c[1] << 8) | c[0])));
-  for (let k = 0; k < fr.length; k++) d32[k] = lut[fr[k]];
-  octx.putImageData(img, 0, 0);
-  const z = zoom(g), W = Math.round(g.W * z), H = Math.round(g.H * z);
-  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
-  ctx.imageSmoothingEnabled = false; ctx.drawImage(off, 0, 0, W, H);
+  let W, H, label;
+  if (ref[0] === -1) {
+    const G = geom(); W = G.W; H = G.H;
+    if (off.width !== W || off.height !== H) { off.width = W; off.height = H; }
+    const img = octx.createImageData(W, H), d32 = new Uint32Array(img.data.buffer);
+    d32.fill((255 << 24) | (GAP_COL[2] << 16) | (GAP_COL[1] << 8) | GAP_COL[0]);
+    for (const c of G.cells) {
+      const g = S.gifs[c.g], lut = lutOf(g), fr = g.frames[ref[1] % g.frames.length], bl = lut[0];
+      for (let y = 0; y < c.ch; y++) d32.fill(bl, (c.cy + y) * W + c.cx, (c.cy + y) * W + c.cx + c.cw);
+      for (let y = 0; y < g.H; y++) { const o = (c.y + y) * W + c.x, s = y * g.W; for (let x = 0; x < g.W; x++) d32[o + x] = lut[fr[s + x]]; }
+    }
+    octx.putImageData(img, 0, 0);
+    label = 'набор ' + setList().length + ' GIF · ' + G.cells.length + ' клеток · кадр ' + (S.i + 1) + ' / ' + SEQ.length;
+  } else {
+    const g = S.gifs[ref[0]], fr = g.frames[ref[1]]; W = g.W; H = g.H;
+    if (off.width !== W || off.height !== H) { off.width = W; off.height = H; }
+    const img = octx.createImageData(W, H), d32 = new Uint32Array(img.data.buffer), lut = lutOf(g);
+    for (let k = 0; k < fr.length; k++) d32[k] = lut[fr[k]];
+    octx.putImageData(img, 0, 0);
+    label = (S.mont ? 'склейка ' : '') + 'кадр ' + (S.i + 1) + ' / ' + SEQ.length + (S.mont ? ' · ' + g.name.replace(/\.gif$/i, '') + ' #' + (ref[1] + 1) : '') + ' · ' + g.delays[ref[1]] + ' мс';
+  }
+  const z = zoomNow(W, H), CW = Math.max(1, Math.round(W * z)), CH = Math.max(1, Math.round(H * z));
+  if (cv.width !== CW || cv.height !== CH) { cv.width = CW; cv.height = CH; }
+  ctx.imageSmoothingEnabled = false; ctx.drawImage(off, 0, 0, CW, CH);
   $('pos').value = S.i;
-  $('num').textContent = (S.mont ? 'склейка ' : '') + 'кадр ' + (S.i + 1) + ' / ' + SEQ.length + (S.mont ? ' · ' + g.name.replace(/\.gif$/i, '') + ' #' + (ref[1] + 1) : '') + ' · ' + g.delays[ref[1]] + ' мс';
+  $('num').textContent = label + (S.zoom === 'fit' ? '' : ' · ×' + (+z.toFixed(2)));
 }
-function zoom(g) {
-  const v = $('zoomSel').value; if (v !== 'fit') return parseFloat(v);
-  const box = $('view').getBoundingClientRect();
-  return Math.max(0.1, Math.min((box.width - 12) / g.W, (box.height - 12) / g.H));
-}
+function fitZoom(W, H) { const box = $('view').getBoundingClientRect(); return Math.max(0.05, Math.min((box.width - 12) / W, (box.height - 12) / H)); }
+function zoomNow(W, H) { return S.zoom === 'fit' ? fitZoom(W, H) : S.zoom; }
 function go(i) { if (!SEQ.length) return; const n = SEQ.length; S.i = $('loopBtn').classList.contains('on') ? ((i % n) + n) % n : Math.max(0, Math.min(n - 1, i)); draw(); }
 const step = () => parseInt($('stepSel').value, 10) || 1;
+
+/* ---------- масштаб колесом и перетаскивание (v0.002) ---------- */
+const view = $('view');
+view.addEventListener('wheel', e => {
+  if (!SEQ.length) return;
+  e.preventDefault();
+  const W = off.width, H = off.height, z0 = zoomNow(W, H), z1 = Math.max(0.05, Math.min(64, z0 * (e.deltaY < 0 ? 1.2 : 1 / 1.2)));
+  const r = cv.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;   // точка под курсором — доля картинки
+  S.zoom = z1; $('zoomSel').value = [1, 2, 3, 4, 6, 8].includes(+z1.toFixed(3)) ? String(+z1.toFixed(3)) : 'custom';
+  draw();
+  const r2 = cv.getBoundingClientRect();
+  view.scrollLeft += (r2.left + fx * r2.width) - e.clientX; view.scrollTop += (r2.top + fy * r2.height) - e.clientY;
+}, { passive: false });
+let pan = null;
+view.addEventListener('mousedown', e => { if (e.button !== 0) return; pan = { x: e.clientX, y: e.clientY, l: view.scrollLeft, t: view.scrollTop }; view.classList.add('pan'); });
+window.addEventListener('mousemove', e => { if (!pan) return; view.scrollLeft = pan.l - (e.clientX - pan.x); view.scrollTop = pan.t - (e.clientY - pan.y); });
+window.addEventListener('mouseup', () => { pan = null; view.classList.remove('pan'); });
 
 /* ---------- игра ---------- */
 function play(on) {
@@ -286,14 +370,18 @@ function play(on) {
 function lists() {
   const gl = $('gifs'); gl.innerHTML = '';
   S.gifs.forEach((g, k) => {
-    const d = document.createElement('div'); d.className = 'item' + (!S.mont && k === S.cur ? ' on' : '');
-    d.innerHTML = '<div class="row"><span class="grow"><b></b></span><button class="mini" title="Закрыть">✕</button></div><div class="sub"></div>';
+    const d = document.createElement('div'); d.className = 'item' + (!S.mont && !layOn() && k === S.cur ? ' on' : '') + (S.sel.has(k) ? ' insel' : '');
+    d.innerHTML = '<div class="row"><input type="checkbox" title="В набор"><span class="grow"><b></b></span><button class="mini" title="Закрыть">✕</button></div><div class="sub"></div>';
     d.querySelector('b').textContent = g.name;
     d.querySelector('.sub').textContent = g.frames.length + ' кадров · ' + g.W + '×' + g.H + ' · ' + g.cols.length + ' цв.';
-    d.addEventListener('click', () => { S.mont = false; S.cur = k; S.i = 0; S.a = S.b = null; $('msInp').value = g.delays[0]; abTxt(); refresh(); });
+    const ck = d.querySelector('input'); ck.checked = S.sel.has(k);
+    ck.addEventListener('click', e => e.stopPropagation());
+    ck.addEventListener('change', () => { if (ck.checked) S.sel.add(k); else S.sel.delete(k); refresh(); });
+    d.addEventListener('click', () => { S.mont = false; S.cur = k; S.i = 0; S.a = S.b = null; if (layout() !== 'one') $('laySel').value = 'one'; $('msInp').value = g.delays[0]; abTxt(); refresh(); });
     d.querySelector('button').addEventListener('click', e => {
       e.stopPropagation();
       S.segs = S.segs.filter(s => s.g !== k).map(s => ({ ...s, g: s.g > k ? s.g - 1 : s.g }));
+      S.sel = new Set([...S.sel].filter(x => x !== k).map(x => x > k ? x - 1 : x));
       S.gifs.splice(k, 1); if (S.cur >= S.gifs.length) S.cur = S.gifs.length - 1; if (!S.segs.length) S.mont = false; refresh();
     });
     gl.appendChild(d);
@@ -333,7 +421,6 @@ async function openFiles(files) {
 }
 $('openBtn').addEventListener('click', () => $('file').click());
 $('file').addEventListener('change', e => { openFiles(Array.from(e.target.files)); e.target.value = ''; });
-const view = $('view');
 window.addEventListener('dragover', e => { e.preventDefault(); view.classList.add('drop'); });
 window.addEventListener('dragleave', e => { if (!e.relatedTarget) view.classList.remove('drop'); });
 window.addEventListener('drop', e => { e.preventDefault(); view.classList.remove('drop'); openFiles(Array.from(e.dataTransfer.files)); });
@@ -346,15 +433,15 @@ $('nextBtn').addEventListener('click', () => go(S.i + step()));
 $('playBtn').addEventListener('click', () => play(!S.playing));
 $('revBtn').addEventListener('click', () => { S.rev = !S.rev; $('revBtn').classList.toggle('on', S.rev); });
 $('loopBtn').addEventListener('click', () => $('loopBtn').classList.toggle('on'));
-$('zoomSel').addEventListener('change', draw);
+$('zoomSel').addEventListener('change', () => { const v = $('zoomSel').value; S.zoom = v === 'fit' ? 'fit' : parseFloat(v); draw(); });
 window.addEventListener('resize', draw);
 $('pos').addEventListener('input', () => { S.i = parseInt($('pos').value, 10) || 0; draw(); });
 $('aBtn').addEventListener('click', () => setAB('a'));
 $('bBtn').addEventListener('click', () => setAB('b'));
-function setAB(w) { if (!SEQ.length || S.mont) return; S[w] = SEQ[S.i][1]; abTxt(); }
+function setAB(w) { if (!SEQ.length || S.mont || layOn()) return; S[w] = SEQ[S.i][1]; abTxt(); }
 $('addBtn').addEventListener('click', addSeg);
 function addSeg() {
-  if (S.mont || S.cur < 0) return;
+  if (S.mont || layOn() || S.cur < 0) return;
   const n = S.gifs[S.cur].frames.length;
   const a = S.a !== null ? S.a : 0, b = S.b !== null ? S.b : n - 1;
   S.segs.push({ g: S.cur, a: a, b: b, st: step() });
@@ -362,35 +449,57 @@ function addSeg() {
 }
 $('showMontBtn').addEventListener('click', () => { if (!S.segs.length && !S.mont) return; S.mont = !S.mont; S.i = 0; refresh(); });
 $('clearBtn').addEventListener('click', () => { S.segs = []; S.mont = false; refresh(); });
+$('laySel').addEventListener('change', () => { S.i = 0; refresh(); });
+$('laySize').addEventListener('input', () => draw());
+$('selAllBtn').addEventListener('click', () => { S.sel = new Set(S.gifs.map((_, k) => k)); if (layout() === 'one') $('laySel').value = 'grid'; refresh(); });
+$('selNoneBtn').addEventListener('click', () => { S.sel.clear(); refresh(); });
 $('pngBtn').addEventListener('click', () => {
   const ref = SEQ[S.i]; if (!ref) return;
-  off.toBlob(bl => { const a = document.createElement('a'); a.href = URL.createObjectURL(bl); a.download = S.gifs[ref[0]].name.replace(/\.gif$/i, '') + '-kadr-' + (ref[1] + 1) + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000); });
+  const nm = ref[0] === -1 ? 'Zerkalius-raskladka-' + layout() + '-kadr-' + (ref[1] + 1) : S.gifs[ref[0]].name.replace(/\.gif$/i, '') + '-kadr-' + (ref[1] + 1);
+  off.toBlob(bl => download(bl, nm + '.png'));
 });
+
+// общая палитра для нескольких GIF: фон (чёрный) — 0; щель раскладки — свой цвет
+function unify(used, extra) {
+  const pal = [[0, 0, 0]], key = new Map([[0, 0]]), maps = {};
+  const idx = c => { const kk = (c[0] << 16) | (c[1] << 8) | c[2]; let m = key.get(kk); if (m === undefined) { m = pal.length; pal.push(c); key.set(kk, m); } return m; };
+  for (const k of used) maps[k] = Uint8Array.from(S.gifs[k].cols.map(c => Math.min(255, idx(c))));
+  const ex = extra ? idx(extra) : 0;
+  return pal.length > 256 ? null : { pal, maps, ex };
+}
 $('saveBtn').addEventListener('click', () => {
   if (!S.segs.length) return;
   const refs = []; for (const sg of S.segs) for (let f = sg.a; sg.a <= sg.b ? f <= sg.b : f >= sg.b; f += (sg.a <= sg.b ? sg.st : -sg.st)) refs.push([sg.g, f]);
   const used = [...new Set(refs.map(r => r[0]))];
   const OW = Math.max(...used.map(k => S.gifs[k].W)), OH = Math.max(...used.map(k => S.gifs[k].H));
-  // общая палитра: цвета всех GIF склейки; фон (чёрный) — 0
-  const pal = [[0, 0, 0]], key = new Map([[0, 0]]), maps = {};
-  for (const k of used) {
-    maps[k] = Uint8Array.from(S.gifs[k].cols.map(c => {
-      const kk = (c[0] << 16) | (c[1] << 8) | c[2]; let m = key.get(kk);
-      if (m === undefined) { m = pal.length; pal.push(c); key.set(kk, m); }
-      return Math.min(255, m);
-    }));
-  }
-  if (pal.length > 256) { alert('Вместе больше 256 цветов — склейку одним GIF не собрать'); return; }
+  const U = unify(used); if (!U) { alert('Вместе больше 256 цветов — склейку одним GIF не собрать'); return; }
   const frames = refs.map(([k, f]) => {
-    const g = S.gifs[k], src = g.frames[f], mp = maps[k], out = new Uint8Array(OW * OH);
+    const g = S.gifs[k], src = g.frames[f], mp = U.maps[k], out = new Uint8Array(OW * OH);
     const ox = Math.floor((OW - g.W) / 2), oy = Math.floor((OH - g.H) / 2);
     for (let y = 0; y < g.H; y++) { const b = (oy + y) * OW + ox; for (let x = 0; x < g.W; x++) out[b + x] = mp[src[y * g.W + x]]; }
     return out;
   });
   const cs = Math.max(2, Math.round((parseInt($('outMs').value, 10) || 100) / 10));
-  const blob = encodeGif(frames, OW, OH, pal, cs);
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = 'Zerkalius-skleyka-' + frames.length + '-kadrov.gif'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  download(encodeGif(frames, OW, OH, U.pal, cs), 'Zerkalius-skleyka-' + frames.length + '-kadrov.gif');
+});
+// v0.002: раскладка набора — одним GIF, все кадры с выбранным шагом
+$('layGifBtn').addEventListener('click', () => {
+  if (!layOn()) { alert('Отметьте GIF галками и выберите раскладку'); return; }
+  const G = geom(), used = setList(), U = unify(used, GAP_COL);
+  if (!U) { alert('Вместе больше 256 цветов — раскладку одним GIF не собрать'); return; }
+  const n = Math.max(...used.map(k => S.gifs[k].frames.length)), st = step(), frames = [];
+  if ((Math.ceil(n / st)) * G.W * G.H > 4e8) { alert('Слишком большая раскладка для одного GIF — возьмите шаг больше или меньше клеток'); return; }
+  for (let f = 0; f < n; f += st) {
+    const out = new Uint8Array(G.W * G.H).fill(U.ex);
+    for (const c of G.cells) {
+      const g = S.gifs[c.g], mp = U.maps[c.g], src = g.frames[f % g.frames.length];
+      for (let y = 0; y < c.ch; y++) out.fill(mp[0], (c.cy + y) * G.W + c.cx, (c.cy + y) * G.W + c.cx + c.cw);
+      for (let y = 0; y < g.H; y++) { const o = (c.y + y) * G.W + c.x, s = y * g.W; for (let x = 0; x < g.W; x++) out[o + x] = mp[src[s + x]]; }
+    }
+    frames.push(out);
+  }
+  const cs = Math.max(2, Math.round((parseInt($('outMs').value, 10) || 100) / 10));
+  download(encodeGif(frames, G.W, G.H, U.pal, cs), 'Zerkalius-raskladka-' + layout() + '-' + used.length + 'gif-' + frames.length + '-kadrov.gif');
 });
 
 /* ---------- клавиши ---------- */
@@ -405,6 +514,7 @@ document.addEventListener('keydown', e => {
   else if (k === '[') setAB('a');
   else if (k === ']') setAB('b');
   else if (k === 'Enter') addSeg();
+  else if (k === '0') { S.zoom = 'fit'; $('zoomSel').value = 'fit'; draw(); }
 });
 refresh();
 </script>
